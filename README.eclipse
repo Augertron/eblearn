@@ -1,0 +1,32 @@
+# 
+# How to work with eblearn from within Eclipse
+#
+
+* Get the Eclipse CDT (C/C++ development tools), version 4.0 or above: 
+http://www.eclipse.org/cdt/
+
+* Rename any existing eblearn project directories that might get overwritten.
+Right-click on any existing copies of eblearn and select "rename".
+
+*  Download Subclipse, the Eclipse plugin for svn:
+http://subclipse.tigris.org/install.html
+Make sure to install all suggested packages from subclipse, not just the mandatory ones.
+
+* Check out the svn repositories from within Eclipse:
+Right-click in a blank area of the project list, and select "Import". 
+Select "svn project".
+Enter https://sourceforge.net/projects/eblearn/ as the repo address. 
+Import the the repository root. Do not import its subdirectories "eblearn" or "libeblearn" individually.
+
+* Download the mnist data set if you want to run the unit tests:
+http://yann.lecun.com/exdb/mnist/
+
+* Run configure.sh from the new root directory, follow the prompts.
+
+* Generate eclipse project files from cmake. 
+You may need cmake 2.6 or above. Within the eblearn root directory (eblearn, not eblearn/eblearn), run:
+$  cmake -G"Eclipse CDT4 - Unix Makefiles" .
+For more info, see http://www.cmake.org/Wiki/Eclipse_CDT4_Generator
+
+* Get Eclipse to see the newly generated project metadata files:
+Within Eclipse, right-click on the eblearn root directory and select "Refresh".
