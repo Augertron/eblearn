@@ -1,2 +1,4 @@
 
+extern "C" {
 #include "@CBLAS_INCLUDE_FILE@"
+}
