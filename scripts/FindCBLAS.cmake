@@ -58,7 +58,7 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
       ELSE(APPLE)
         FIND_LIBRARY(${_prefix}_${_library}_LIBRARY
           NAMES ${_library}
-          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64 ENV 
+          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64 /usr/local/lib/atlas /usr/lib/atlas /usr/local/lib64/atlas /usr/lib64/atlas ENV 
           LD_LIBRARY_PATH 
           )
       ENDIF(APPLE)
@@ -162,6 +162,19 @@ IF(NOT CBLAS_LIBRARIES)
     ""
     "cblas;f77blas;atlas"
     "cblas.h"
+    TRUE
+    )
+ENDIF(NOT CBLAS_LIBRARIES)
+
+IF(NOT CBLAS_LIBRARIES)
+  # CBLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
+  CHECK_ALL_LIBRARIES(
+    CBLAS_LIBRARIES
+    CBLAS
+    cblas_dgemm
+    ""
+    "cblas;f77blas;atlas"
+    "atlas/cblas.h"
     TRUE
     )
 ENDIF(NOT CBLAS_LIBRARIES)
