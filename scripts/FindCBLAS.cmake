@@ -18,7 +18,7 @@
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckIncludeFile)
 
-MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_include)
+MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_include _check_function)
   # This macro checks for the existence of the combination of fortran libraries
   # given by _list.  If the combination is found, this macro checks (using the 
   # Check_Fortran_Function_Exists macro) whether can link against that library
@@ -92,12 +92,13 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
 
   IF(_libraries_work)
     # Test this combination of libraries.
-    SET(CMAKE_REQUIRED_LIBRARIES ${_flags} ${${LIBRARIES}})
-    CHECK_FUNCTION_EXISTS(${_name} ${_prefix}${_combined_name}_WORKS)
-    SET(CMAKE_REQUIRED_LIBRARIES)
-    MARK_AS_ADVANCED(${_prefix}${_combined_name}_WORKS)
-    SET(_libraries_work ${${_prefix}${_combined_name}_WORKS})
-
+    IF(_check_function)
+      SET(CMAKE_REQUIRED_LIBRARIES ${_flags} ${${LIBRARIES}})
+      CHECK_FUNCTION_EXISTS(${_name} ${_prefix}${_combined_name}_WORKS)
+      SET(CMAKE_REQUIRED_LIBRARIES)
+      MARK_AS_ADVANCED(${_prefix}${_combined_name}_WORKS)
+      SET(_libraries_work ${${_prefix}${_combined_name}_WORKS})
+    ENDIF(_check_function)
     IF(_libraries_work)
       MESSAGE(STATUS "Checking for [${__list}] -- libraries found")
     ENDIF(_libraries_work)
@@ -124,6 +125,7 @@ IF(NOT CBLAS_LIBRARIES)
     "mkl;guide;pthread"
     "mkl_cblas.h"
     TRUE
+    TRUE
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
@@ -136,6 +138,7 @@ IF(NOT CBLAS_LIBRARIES)
     ""
     "mkl_ia32;guide;pthread"
     "mkl_cblas.h"
+    TRUE
     TRUE
     )
 ENDIF(NOT CBLAS_LIBRARIES)
@@ -150,6 +153,7 @@ IF(NOT CBLAS_LIBRARIES)
     "mkl_em64t;guide;pthread"
     "mkl_cblas.h"
     ON
+    TRUE
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
@@ -163,6 +167,7 @@ IF(NOT CBLAS_LIBRARIES)
     "cblas;f77blas;atlas"
     "cblas.h"
     TRUE
+    FALSE
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
@@ -176,6 +181,7 @@ IF(NOT CBLAS_LIBRARIES)
     "cblas;f77blas;atlas"
     "atlas/cblas.h"
     TRUE
+    FALSE
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
@@ -189,6 +195,7 @@ IF(NOT CBLAS_LIBRARIES)
     "Accelerate"
     "Accelerate/Accelerate.h"
     FALSE
+    TRUE
     )
   
 ENDIF(NOT CBLAS_LIBRARIES)
@@ -202,6 +209,7 @@ IF( NOT CBLAS_LIBRARIES )
     "vecLib"
     "vecLib/vecLib.h"
     FALSE
+    TRUE
     )
 ENDIF( NOT CBLAS_LIBRARIES )
 
