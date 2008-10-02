@@ -391,9 +391,9 @@ ELSE (_boost_IN_CACHE)
           # pre-1.36.0.
           SET(_boost_COMPILER "")
         ENDIF(Boost_MINOR_VERSION)
-      ELSE()
+      ELSE(APPLE)
         SET (_boost_COMPILER "-gcc${_boost_COMPILER_VERSION}")
-      ENDIF()
+      ENDIF(APPLE)
     ENDIF (NOT CMAKE_COMPILER_IS_GNUCC)
   ENDIF(UNIX)
 
