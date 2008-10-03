@@ -164,10 +164,10 @@ IF(NOT CBLAS_LIBRARIES)
     CBLAS
     cblas_dgemm
     ""
-    "cblas;f77blas;atlas"
+    "cblas"
     "cblas.h"
     TRUE
-    FALSE
+    TRUE
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
@@ -178,10 +178,10 @@ IF(NOT CBLAS_LIBRARIES)
     CBLAS
     cblas_dgemm
     ""
-    "cblas;f77blas;atlas"
+    "cblas"
     "atlas/cblas.h"
     TRUE
-    FALSE
+    TRUE
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
