@@ -39,7 +39,10 @@ IF(CBLAS_FOUND)
   INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
   TARGET_LINK_LIBRARIES(eblearn ${CBLAS_LIBRARIES})
   CONFIGURE_FILE("include/DummyBlas.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/include/DummyBlas.h")
+ELSE(CBLAS_FOUND)
+  MESSAGE(FATAL_ERROR "CBLAS library not found. Please specify library  location")
 ENDIF(CBLAS_FOUND)
+MESSAGE("${APPLE_FRAMEWORK_FOUND}")
 
 # IPP
 ################################################################################
