@@ -157,34 +157,6 @@ IF(NOT CBLAS_LIBRARIES)
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
-IF(NOT CBLAS_LIBRARIES)
-  # CBLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
-  CHECK_ALL_LIBRARIES(
-    CBLAS_LIBRARIES
-    CBLAS
-    cblas_dgemm
-    ""
-    "cblas"
-    "cblas.h"
-    TRUE
-    TRUE
-    )
-ENDIF(NOT CBLAS_LIBRARIES)
-
-IF(NOT CBLAS_LIBRARIES)
-  # CBLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
-  CHECK_ALL_LIBRARIES(
-    CBLAS_LIBRARIES
-    CBLAS
-    cblas_dgemm
-    ""
-    "cblas"
-    "atlas/cblas.h"
-    TRUE
-    TRUE
-    )
-ENDIF(NOT CBLAS_LIBRARIES)
-
 # Apple CBLAS library?
 IF(NOT CBLAS_LIBRARIES)
   CHECK_ALL_LIBRARIES(
@@ -212,6 +184,34 @@ IF( NOT CBLAS_LIBRARIES )
     TRUE
     )
 ENDIF( NOT CBLAS_LIBRARIES )
+
+IF(NOT CBLAS_LIBRARIES)
+  # CBLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
+  CHECK_ALL_LIBRARIES(
+    CBLAS_LIBRARIES
+    CBLAS
+    cblas_dgemm
+    ""
+    "cblas"
+    "cblas.h"
+    TRUE
+    TRUE
+    )
+ENDIF(NOT CBLAS_LIBRARIES)
+
+IF(NOT CBLAS_LIBRARIES)
+  # CBLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
+  CHECK_ALL_LIBRARIES(
+    CBLAS_LIBRARIES
+    CBLAS
+    cblas_dgemm
+    ""
+    "cblas"
+    "atlas/cblas.h"
+    TRUE
+    TRUE
+    )
+ENDIF(NOT CBLAS_LIBRARIES)
 
 IF(CBLAS_LIBRARIES)
   SET(CBLAS_FOUND TRUE)
