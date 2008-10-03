@@ -157,33 +157,39 @@ IF(NOT CBLAS_LIBRARIES)
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
-# Apple CBLAS library?
-IF(NOT CBLAS_LIBRARIES)
-  CHECK_ALL_LIBRARIES(
-    CBLAS_LIBRARIES
-    CBLAS
-    cblas_dgemm
-    ""
-    "Accelerate"
-    "Accelerate/Accelerate.h"
-    FALSE
-    TRUE
-    )
+IF(APPLE)
+  SET(APPLE_FRAMEWORK_FOUND)
+  # Apple CBLAS library?
+  IF(NOT CBLAS_LIBRARIES)
+    CHECK_ALL_LIBRARIES(
+      CBLAS_LIBRARIES
+      CBLAS
+      cblas_dgemm
+      ""
+      "Accelerate"
+      "Accelerate/Accelerate.h"
+      FALSE
+      TRUE
+      )
+    
+  ENDIF(NOT CBLAS_LIBRARIES)
   
-ENDIF(NOT CBLAS_LIBRARIES)
-
-IF( NOT CBLAS_LIBRARIES )
-  CHECK_ALL_LIBRARIES(
-    CBLAS_LIBRARIES
-    CBLAS
-    cblas_dgemm
-    ""
-    "vecLib"
-    "vecLib/vecLib.h"
-    FALSE
-    TRUE
-    )
-ENDIF( NOT CBLAS_LIBRARIES )
+  IF( NOT CBLAS_LIBRARIES )
+    CHECK_ALL_LIBRARIES(
+      CBLAS_LIBRARIES
+      CBLAS
+      cblas_dgemm
+      ""
+      "vecLib"
+      "vecLib/vecLib.h"
+      FALSE
+      TRUE
+      )
+  ENDIF( NOT CBLAS_LIBRARIES )
+  IF(CBLAS_LIBRARIES)
+    SET(APPLE_FRAMEWORK_FOUND TRUE)
+  ENDIF(CBLAS_LIBRARIES)
+ENDIF(APPLE)
 
 IF(NOT CBLAS_LIBRARIES)
   # CBLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
