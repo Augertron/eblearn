@@ -42,7 +42,6 @@ IF(CBLAS_FOUND)
 ELSE(CBLAS_FOUND)
   MESSAGE(FATAL_ERROR "CBLAS library not found. Please specify library  location")
 ENDIF(CBLAS_FOUND)
-MESSAGE("${APPLE_FRAMEWORK_FOUND}")
 
 # IPP
 ################################################################################
