@@ -778,7 +778,7 @@ public:
 	//! and <energy> (an idx0-state) the energy.
 	char update(intg a, class_state *co, ubyte cd, state_idx *en);
 
-	void test(class_state *co, class_state *cd, state_idx *en);
+	void test(class_state *co, ubyte cd, state_idx *en);
 
 	//! return a list with the age, the number of samples
 	//! (number of calls to update since the last clear),

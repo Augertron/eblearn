@@ -1250,7 +1250,8 @@ void edist_cost::fprop(state_idx *in, Idx<ubyte> *desired, state_idx *energy) {
 	 intg ini = in->x.dim(1);
 	 intg inj = in->x.dim(2);
    dist->resize(1, ini, inj);
-   Idx<double> inx(in->x.transpose((int[]){1, 2, 0}));
+   int tr[] = {1, 2, 0};
+   Idx<double> inx(in->x.transpose(tr));
 	 Idx<double> distx(dist->x.select(0, 0));
    // loop over spatial dimensions
    { idx_bloop2(inx1, inx, double, dx1, distx, double) {
@@ -1273,8 +1274,10 @@ void edist_cost::bprop(state_idx *in, Idx<ubyte> *desired, state_idx *energy) {
    logadded_dist->dx.set(energy->dx.get(), 0);
    logadder->bprop(dist, logadded_dist);
    // backprop through Euclidean distance
-   Idx<double> tinx(in->x.transpose((int[]) {1, 2, 0}));
-	 Idx<double> tindx(in->dx.transpose((int []) {1, 2, 0}));
+   int tr1[] = {1, 2, 0};
+   int tr2[] = {1, 2, 0};
+   Idx<double> tinx(in->x.transpose(tr1));
+	 Idx<double> tindx(in->dx.transpose(tr2));
 	 Idx<double> distdx(dist->dx.select(0, 0));
 	 // loop over last two dimensions
 	 { idx_bloop3(linx, tinx, double, lindx, tindx, double, ldistdx, distdx, double) {
@@ -1340,8 +1343,22 @@ char classifier_meter::update(intg a, class_state *co, ubyte cd, state_idx *en) 
 	return crrct;
 }
 
-void classifier_meter::test(class_state *co, class_state *cd, state_idx *en) {
-	err_not_implemented();
+void classifier_meter::test(class_state *co, ubyte cd, state_idx *en) {
+	intg crrct = this->correctp(co->output_class, cd);
+	age = 0;
+	energy = en->x.get();
+	confidence = co->confidence;
+	total_energy = energy;
+	total_correct = 0;
+	total_punt = 0;
+	total_error = 0;
+	if (crrct == 1)
+		total_correct = 1;
+	else if (crrct == 0)
+		total_punt = 1;
+	else if (crrct == -1)
+		total_error = 1;
+	size = 1;
 }
 
 void classifier_meter::info() {
@@ -1463,7 +1480,8 @@ void softmax::fprop( state_idx *in, state_idx *out){
 			double mm = idx_max(in->x);
 			idx_addc(in->x, -mm, pp);
 			idx_dotc(pp, beta, dot);
-			double d = idx_sum(dot);
+			double out_sum = 0.0;
+			double d = idx_sum(dot, &out_sum);
 			idx_dotc(dot, (double)(1/d), out->x);
 		}
 	}
