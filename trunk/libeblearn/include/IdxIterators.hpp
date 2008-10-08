@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <numeric>
 #include <cassert>
+#include <limits>
 
 namespace ebl { 
 

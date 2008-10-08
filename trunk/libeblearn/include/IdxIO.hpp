@@ -110,7 +110,7 @@ template<class T> inline T endian(T ptr) {
 // TODO: if types differ, print warning and cast to expected type
 template<typename T> bool load_matrix(Idx<T>& m, const char *filename) {
 	// open file
-	FILE *fp = fopen(filename, "r");
+	FILE *fp = fopen(filename, "rb");
 	if (!fp) {
 		cerr << "load_matrix failed to open " << filename << "." << endl;
 		return false;
@@ -187,7 +187,7 @@ template<typename T> bool load_matrix(Idx<T>& m, const char *filename) {
 // TODO: use c++ IO to catch IO exceptions more easily
 template<typename T> bool save_matrix(Idx<T>& m, const char *filename) {
 	int v, i;
-	FILE *fp = fopen(filename, "w");
+	FILE *fp = fopen(filename, "wb");
 	
 	if (!fp) {
 		cerr << "save_matrix failed (" << filename << ")." << endl;
