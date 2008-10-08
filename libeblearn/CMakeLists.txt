@@ -28,6 +28,8 @@ add_library (eblearn SHARED
 		     src/Numerics.cpp  
 		     src/Trainer.cpp
 		     src/EbmTester.cpp
+		     src/sdnn_modules.cpp
+		     src/net_cscscfe.cpp
 		     )
 
 # check for external libraries
