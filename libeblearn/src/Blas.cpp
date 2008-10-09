@@ -93,9 +93,9 @@ template<> double idx_sum(Idx<double> &inp, double *out) {
 //    z = cblas_dasum(inp.dim(0), inp.idx_ptr(), inp.mod(0));
 //  } else if (inp.contiguousp()) {
 //    z = cblas_dasum(inp.nelements(), inp.idx_ptr(), 1);
-*/  
+*/
   } else {
-      idx_aloop1(pinp,inp,double) { 
+      idx_aloop1(pinp,inp,double) {
     	z += *pinp; }
   }
   if (out != NULL) {
@@ -139,10 +139,10 @@ double idx_dot(Idx<double> &i1, Idx<double> &i2) {
 	   // recursive version
 	   { double z = 0; idx_bloop2(li1, i1, double, li2, i2, double) { z += idx_dot(li1, li2); } return z; },
 	   // any version
-	   { double z = 0; 
+	   { double z = 0;
 //	     IdxIter<double> ii1; IdxIter<double> ii2;
-//	     idx_aloop2_on(ii1, i1, ii2, i2) { z += (*ii1)*(*ii2); } 
-	     idx_aloop2(ii1, i1, double, ii2, i2, double) { z += (*ii1)*(*ii2); } 
+//	     idx_aloop2_on(ii1, i1, ii2, i2) { z += (*ii1)*(*ii2); }
+	     idx_aloop2(ii1, i1, double, ii2, i2, double) { z += (*ii1)*(*ii2); }
 	     return z; }
 	   );
 }
@@ -158,10 +158,10 @@ float idx_dot(Idx<float> &i1, Idx<float> &i2) {
 	   // recursive version
 	   { float z = 0; idx_bloop2(li1, i1, float, li2, i2, float) { z += idx_dot(li1, li2); } return z; },
 	   // any version
-	   { float z = 0; 
+	   { float z = 0;
 //	     IdxIter<float> ii1; IdxIter<float> ii2;
-//	     idx_aloop2_on(ii1, i1, ii2, i2) { z += (*ii1)*(*ii2); } 
-	     idx_aloop2(ii1, i1, float, ii2, i2, float) { z += (*ii1)*(*ii2); } 
+//	     idx_aloop2_on(ii1, i1, ii2, i2) { z += (*ii1)*(*ii2); }
+	     idx_aloop2(ii1, i1, float, ii2, i2, float) { z += (*ii1)*(*ii2); }
 	     return z; }
 	   );
 }
@@ -172,12 +172,12 @@ float idx_dot(Idx<float> &i1, Idx<float> &i2) {
 void idx_m2dotm1(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
   check_m2dotm1(a,x,y);
   if (a.mod(0) > a.mod(1)) {
-      cblas_dgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),  
-		  1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0), 
+      cblas_dgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
+		  1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0),
 		  0.0, y.idx_ptr(), y.mod(0));
     } else {
-      cblas_dgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),  
-		  1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0), 
+      cblas_dgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),
+		  1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0),
 		  0.0, y.idx_ptr(), y.mod(0));
     }
 }
@@ -186,12 +186,12 @@ void idx_m2dotm1(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
 void idx_m2dotm1(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
   check_m2dotm1(a,x,y);
   if (a.mod(0) > a.mod(1)) {
-    cblas_sgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1), 
-		1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0), 
+    cblas_sgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
+		1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0),
 		0.0, y.idx_ptr(), y.mod(0));
   } else {
-    cblas_sgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),  
-		1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0), 
+    cblas_sgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),
+		1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0),
 		0.0, y.idx_ptr(), y.mod(0));
   }
 }
@@ -200,12 +200,12 @@ void idx_m2dotm1(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
 void idx_m2dotm1acc(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
   check_m2dotm1(a,x,y);
   if (a.mod(0) > a.mod(1)) {
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),  
-		1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0), 
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
+		1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0),
 		1.0, y.idx_ptr(), y.mod(0));
   } else {
-    cblas_dgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),  
-		1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0), 
+    cblas_dgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),
+		1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0),
 		1.0, y.idx_ptr(), y.mod(0));
   }
 }
@@ -215,19 +215,19 @@ void idx_m2dotm1acc(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
 void idx_m2dotm1acc(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
   check_m2dotm1(a,x,y);
   if (a.mod(0) > a.mod(1)) {
-    cblas_sgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1), 
-		1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0), 
+    cblas_sgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
+		1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0),
 		1.0, y.idx_ptr(), y.mod(0));
   } else {
-    cblas_sgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),  
-		1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0), 
+    cblas_sgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),
+		1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0),
 		1.0, y.idx_ptr(), y.mod(0));
   }
 }
 
 ////////////////////////////////////////////////////////////////
 
-// square matrix-vector multiplication: y <- a.x
+// square matrix-vector multiplication: Yi = sum((Aij)^2 * Xj)
 void idx_m2squdotm1(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
   check_m2dotm1(a,x,y);
   idx_bloop2(la,a,double, ly,y,double) {
@@ -236,14 +236,14 @@ void idx_m2squdotm1(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
     double *py = ly.idx_ptr();
     // we don't use bloop for efficiency
     *py = 0;
-    for(intg i=0; i<la.dim(0); i++) { 
-      *py += (*pa)*(*pa)*(*px); 
-      pa += amod; px += xmod; 
+    for(intg i=0; i<la.dim(0); i++) {
+      *py += (*pa)*(*pa)*(*px);
+      pa += amod; px += xmod;
     }
   }
 }
 
-// square matrix-vector multiplication: y <- a.x
+// square matrix-vector multiplication: Yi = sum((Aij)^2 * Xj)
 void idx_m2squdotm1(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
   check_m2dotm1(a,x,y);
   idx_bloop2(la,a,float, ly,y,float) {
@@ -252,14 +252,14 @@ void idx_m2squdotm1(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
     float *py = ly.idx_ptr();
     // we don't use bloop for efficiency
     *py = 0;
-    for(intg i=0; i<la.dim(0); i++) { 
-      *py += (*pa)*(*pa)*(*px); 
-      pa += amod; px += xmod; 
+    for(intg i=0; i<la.dim(0); i++) {
+      *py += (*pa)*(*pa)*(*px);
+      pa += amod; px += xmod;
     }
   }
 }
 
-// square matrix-vector multiplication: y <- y + a.x
+// square matrix-vector multiplication: Yi += sum((Aij)^2 * Xj)
 void idx_m2squdotm1acc(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
   check_m2dotm1(a,x,y);
   idx_bloop2(la,a,double, ly,y,double) {
@@ -267,14 +267,14 @@ void idx_m2squdotm1acc(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
     double *px =  x.idx_ptr(); intg xmod = x.mod(0);
     double *py = ly.idx_ptr();
     // we don't use bloop for efficiency
-    for(intg i=0; i<la.dim(0); i++) { 
-      *py += (*pa)*(*pa)*(*px); 
-      pa += amod; px += xmod; 
+    for(intg i=0; i<la.dim(0); i++) {
+      *py += (*pa)*(*pa)*(*px);
+      pa += amod; px += xmod;
     }
   }
 }
 
-// square matrix-vector multiplication: y <- y + a.x
+// square matrix-vector multiplication: Yi += sum((Aij)^2 * Xj)
 void idx_m2squdotm1acc(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
   check_m2dotm1(a,x,y);
   idx_bloop2(la,a,float, ly,y,float) {
@@ -282,9 +282,9 @@ void idx_m2squdotm1acc(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
     float *px =  x.idx_ptr(); intg xmod = x.mod(0);
     float *py = ly.idx_ptr();
     // we don't use bloop for efficiency
-    for(intg i=0; i<la.dim(0); i++) { 
-      *py += (*pa)*(*pa)*(*px); 
-      pa += amod; px += xmod; 
+    for(intg i=0; i<la.dim(0); i++) {
+      *py += (*pa)*(*pa)*(*px);
+      pa += amod; px += xmod;
     }
   }
 }
@@ -295,8 +295,8 @@ void idx_m2squdotm1acc(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
 void idx_m1extm1(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
   check_m1extm1(x,y,a);
   idx_clear(a);
-  cblas_dger(CblasRowMajor, a.dim(0), a.dim(1), 
-	      1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0), 
+  cblas_dger(CblasRowMajor, a.dim(0), a.dim(1),
+	      1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
 	      a.idx_ptr(), a.mod(0));
 }
 
@@ -304,31 +304,31 @@ void idx_m1extm1(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
 void idx_m1extm1(Idx<float> &x, Idx<float> &y, Idx<float> &a) {
   check_m1extm1(x,y,a);
   idx_clear(a);
-  cblas_sger(CblasRowMajor, a.dim(0), a.dim(1), 
-	      1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0), 
+  cblas_sger(CblasRowMajor, a.dim(0), a.dim(1),
+	      1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
 	      a.idx_ptr(), a.mod(0));
 }
 
 // vector-vector outer product: a <- a + x.y'
 void idx_m1extm1acc(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
   check_m1extm1(x,y,a);
-  cblas_dger(CblasRowMajor, a.dim(0), a.dim(1), 
-	      1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0), 
+  cblas_dger(CblasRowMajor, a.dim(0), a.dim(1),
+	      1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
 	      a.idx_ptr(), a.mod(0));
 }
 
 // vector-vector outer product: a <- a + x.y'
 void idx_m1extm1acc(Idx<float> &x, Idx<float> &y, Idx<float> &a) {
   check_m1extm1(x,y,a);
-  cblas_sger(CblasRowMajor, a.dim(0), a.dim(1), 
-	      1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0), 
+  cblas_sger(CblasRowMajor, a.dim(0), a.dim(1),
+	      1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
 	      a.idx_ptr(), a.mod(0));
 }
 
 ////////////////////////////////////////////////////////////////
 // squext operations
 
-// vector-vector outer product: a <- x.y'
+// Aij = Xi * Yj^2
 void idx_m1squextm1(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
   check_m1extm1(x,y,a);
   idx_bloop2(lx,x,double, la,a,double) {
@@ -340,7 +340,7 @@ void idx_m1squextm1(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
   }
 }
 
-// vector-vector outer product: a <- x.y'
+//Aij = Xi * Yj^2
 void idx_m1squextm1(Idx<float> &x, Idx<float> &y, Idx<float> &a) {
   check_m1extm1(x,y,a);
   idx_bloop2(lx,x,float, la,a,float) {
@@ -351,7 +351,7 @@ void idx_m1squextm1(Idx<float> &x, Idx<float> &y, Idx<float> &a) {
   }
 }
 
-// vector-vector outer product: a <- a + x.y'
+// Aij += Xi * Yj^2
 void idx_m1squextm1acc(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
   check_m1extm1(x,y,a);
   idx_bloop2(lx,x,double, la,a,double) {
@@ -362,7 +362,7 @@ void idx_m1squextm1acc(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
   }
 }
 
-// vector-vector outer product: a <- a + x.y'
+// Aij += Xi * Yj^2
 void idx_m1squextm1acc(Idx<float> &x, Idx<float> &y, Idx<float> &a) {
   check_m1extm1(x,y,a);
   idx_bloop2(lx,x,float, la,a,float) {
@@ -378,19 +378,19 @@ void idx_m1squextm1acc(Idx<float> &x, Idx<float> &y, Idx<float> &a) {
 
 void norm_columns(Idx<double> &m) {
   if ( m.order() != 2) { ylerror("norm_columns: must be an Idx2"); }
-  idx_eloop1(lm,m,double) { 
+  idx_eloop1(lm,m,double) {
     double *p = lm.idx_ptr();
-    double z = cblas_dnrm2(m.dim(0),p,m.mod(0)); 
-    cblas_dscal(m.dim(0),1/z,p,m.mod(0)); 
+    double z = cblas_dnrm2(m.dim(0),p,m.mod(0));
+    cblas_dscal(m.dim(0),1/z,p,m.mod(0));
   }
 }
 
 void norm_columns(Idx<float> &m) {
   if ( m.order() != 2) { ylerror("norm_columns: must be an Idx2"); }
-  idx_eloop1(lm,m,float) { 
+  idx_eloop1(lm,m,float) {
     float *p = lm.idx_ptr();
-    float z = cblas_snrm2(m.dim(0),p,m.mod(0)); 
-    cblas_sscal(m.dim(0),1/z,p,m.mod(0)); 
+    float z = cblas_snrm2(m.dim(0),p,m.mod(0));
+    cblas_sscal(m.dim(0),1/z,p,m.mod(0));
   }
 }
 

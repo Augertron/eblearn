@@ -89,7 +89,6 @@ namespace ebl {
 
 //! check that matrix a and vector x,y are compatible
 //! for a matrix-vector multiplication y <- a.x.
-//! resize y if necessary.
 template<class T> void check_m2dotm1(Idx<T> &m, Idx<T> &x, Idx<T> &y);
 template<class T> void check_m1extm1(Idx<T> &x, Idx<T> &y, Idx<T> &m);
 
@@ -212,36 +211,36 @@ template<class T> void idx_m2extm2(Idx<T> &i1, Idx<T> &i2, Idx<T> &o1);
 //! outer product between matrices with accumulation. Gives a 4-tensor: R_ijkl += M1_ij * M2_kl
 template<class T> void idx_m2extm2acc(Idx<T> &i1, Idx<T> &i2, Idx<T> &o1);
 
-//! square outer product of <m1> and <m2>. M3ij += M1i * M2j^2
+//! square outer product of <m1> and <m2>. M3_ijkl += M1_ij * (M2_kl)^2
 template<class T> void idx_m2squextm2acc(Idx<T> &i1, Idx<T> &i2, Idx<T> &o1);
 
-//! matrix-matrix dot product. element-wise square-multiplication
+//! returns sum(M1_ij * (M2_ij)^2) in the output Idx0
 template<typename T> void idx_m2squdotm2(Idx<T>& i1, Idx<T>& i2, Idx<T>& o);
 
-//! matrix-matrix dot product. element-wise square-multiplication, add into a Idx0
+//! accumulates sum(M1_ij * (M2_ij)^2) in the output Idx0
 template<typename T> void idx_m2squdotm2acc(Idx<T>& i1, Idx<T>& i2, Idx<T>& o);
 
-//! vector-vector outer product y <- x.x'
+//! vector-vector outer product a <- x.y'
 void idx_m1extm1(Idx<double> &a, Idx<double> &x, Idx<double> &y);
 void idx_m1extm1(Idx<float> &a, Idx<float> &x, Idx<float> &y);
 
-//! vector-vector outer product y <- y + x.x'
+//! vector-vector outer product a <- a + x.y'
 void idx_m1extm1acc(Idx<double> &a, Idx<double> &x, Idx<double> &y);
 void idx_m1extm1acc(Idx<float> &a, Idx<float> &x, Idx<float> &y);
 
-//! square matrix vector multiplication
+//! square matrix vector multiplication : Yi = sum((Aij)^2 * Xj)
 void idx_m2squdotm1(Idx<double> &a, Idx<double> &x, Idx<double> &y);
 void idx_m2squdotm1(Idx<float> &a, Idx<float> &x, Idx<float> &y);
 
-//! square matrix vector multiplication
+//! square matrix vector multiplication : Yi += sum((Aij)^2 * Xj)
 void idx_m2squdotm1acc(Idx<double> &a, Idx<double> &x, Idx<double> &y);
 void idx_m2squdotm1acc(Idx<float> &a, Idx<float> &x, Idx<float> &y);
 
-//! vector-vector outer product y <- x.x'
+//! Aij = Xi * Yj^2
 void idx_m1squextm1(Idx<double> &a, Idx<double> &x, Idx<double> &y);
 void idx_m1squextm1(Idx<float> &a, Idx<float> &x, Idx<float> &y);
 
-//! vector-vector outer product y <- y + x.x'
+//! Aij += Xi * Yj^2
 void idx_m1squextm1acc(Idx<double> &a, Idx<double> &x, Idx<double> &y);
 void idx_m1squextm1acc(Idx<float> &a, Idx<float> &x, Idx<float> &y);
 
