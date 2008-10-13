@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -75,7 +75,7 @@ inline string get_magic_str(int magic) {
 /*! Reverses order of bytes in <n> items of size <sz>
     starting at memory location <ptr>
     This is a tool for writing/reading file formats that are portable
-    across systems with processors that represent long-words 
+    across systems with processors that represent long-words
     differently in memory (Sparc vs Intel-Pentium for ex.)
     It can be called from inline-C as C_reverse8(ptr,n);
 
@@ -89,11 +89,11 @@ template<class T> inline void reverse_n(T *ptr, int n) {
 		char *uptr = mptr + sizeof (T);
 		if (sizeof (T) >= 2)
 		{ tmp = mptr[0]; mptr[0]=uptr[-1]; uptr[-1]=tmp; }
-		if (sizeof (T) >= 4) 
+		if (sizeof (T) >= 4)
 		{ tmp = mptr[1]; mptr[1]=uptr[-2]; uptr[-2]=tmp; }
-		if (sizeof (T) >= 6) 
+		if (sizeof (T) >= 6)
 		{ tmp = mptr[2]; mptr[2]=uptr[-3]; uptr[-3]=tmp; }
-		if (sizeof (T) >= 8) 
+		if (sizeof (T) >= 8)
 		{ tmp = mptr[3]; mptr[3]=uptr[-4]; uptr[-4]=tmp; }
 		mptr = uptr;
 	}
@@ -115,11 +115,11 @@ template<typename T> bool load_matrix(Idx<T>& m, const char *filename) {
 		cerr << "load_matrix failed to open " << filename << "." << endl;
 		return false;
 	}
-		
-	int magic, ndim, v; 
+
+	int magic, ndim, v;
 	int ndim_min = 3; // the standard header requires at least 3 dimensions even empty ones.
 	intg *dims = NULL;
-	
+
 	// header: read magic number
 	fread(&magic, sizeof (int), 1, fp);
 	int magic_vincent = endian(magic);
@@ -127,7 +127,7 @@ template<typename T> bool load_matrix(Idx<T>& m, const char *filename) {
 	magic_vincent &= ~0xF;
 	if ((magic != get_magic<T>()) && (magic_vincent != get_magic_vincent<T>())) {
 		cerr << "load_matrix failed (" << filename << "): ";
-		cerr << get_magic_str(get_magic<T>()) << " expected, "; 
+		cerr << get_magic_str(get_magic<T>()) << " expected, ";
 		cerr << get_magic_str(magic) << " found." << endl;
 		return false;
 	}
@@ -177,8 +177,76 @@ template<typename T> bool load_matrix(Idx<T>& m, const char *filename) {
 				6 < ndim ? dims[6] : -1,
 				7 < ndim ? dims[7] : -1);
 	// body
-	{ idx_aloop1(i, m, T) fread(&(*i), sizeof (T), 1, fp); }		
+	{ idx_aloop1(i, m, T) fread(&(*i), sizeof (T), 1, fp); }
 	fclose(fp);
+	free(dims);
+	return true;
+}
+
+template<typename T> bool load_matrix(Idx<T>& m, istream &stream) {
+
+	int magic, ndim, v;
+	int ndim_min = 3; // the standard header requires at least 3 dimensions even empty ones.
+	intg *dims = NULL;
+
+	// header: read magic number
+	stream.read((char*)&magic, sizeof (int));
+	int magic_vincent = endian(magic);
+	ndim = endian(magic) & 0xF;
+	magic_vincent &= ~0xF;
+	if ((magic != get_magic<T>()) && (magic_vincent != get_magic_vincent<T>())) {
+		cerr << "load_matrix failed : ";
+		cerr << get_magic_str(get_magic<T>()) << " expected, ";
+		cerr << get_magic_str(magic) << " found." << endl;
+		return false;
+	}
+	// standard header
+	if (magic == get_magic<T>()) {
+		// read number of dimensions
+		stream.read((char*)&ndim, sizeof (int));
+		if (ndim > MAXDIMS) {
+			cerr << "load_matrix failed : ";
+			cerr << " too many dimensions: " << ndim << " (MAXDIMS = " << MAXDIMS << ")." << endl;
+			return false;
+		}
+	}
+	else if (magic_vincent == get_magic_vincent<T>()) {
+		ndim_min = ndim;
+	}
+	if (ndim != m.order()) {
+		cerr << "load_matrix failed : ";
+		cerr << "expected order of " << m.order() << " but found ";
+		cerr << ndim << " in file." << endl;
+		return false;
+	}
+
+	dims = (intg *) malloc(ndim * sizeof (intg));
+	// header: read each dimension
+	for (int i = 0; (i < ndim) || (i < ndim_min); ++i) {
+		stream.read((char*)&v, sizeof (int));
+		if (magic_vincent == get_magic_vincent<T>())
+			v = endian(v);
+		if (i < ndim) {
+			dims[i] = v;
+			if (v <= 0) {
+				cerr << "load_matrix failed : ";
+				cerr << " dimension is negative or 0." << endl;
+				free(dims);
+				return false;
+			}
+		}
+	}
+	// TODO: implement Idx constructor accepting array of dimensions and modify code below.
+	m.resize(0 < ndim ? dims[0] : -1,
+			  1 < ndim ? dims[1] : -1,
+				2 < ndim ? dims[2] : -1,
+				3 < ndim ? dims[3] : -1,
+				4 < ndim ? dims[4] : -1,
+				5 < ndim ? dims[5] : -1,
+				6 < ndim ? dims[6] : -1,
+				7 < ndim ? dims[7] : -1);
+	// body
+	{ idx_aloop1(i, m, T) stream.read((char*)&(*i), sizeof (T)); }
 	free(dims);
 	return true;
 }
@@ -188,7 +256,7 @@ template<typename T> bool load_matrix(Idx<T>& m, const char *filename) {
 template<typename T> bool save_matrix(Idx<T>& m, const char *filename) {
 	int v, i;
 	FILE *fp = fopen(filename, "wb");
-	
+
 	if (!fp) {
 		cerr << "save_matrix failed (" << filename << ")." << endl;
 		return false;
@@ -206,8 +274,28 @@ template<typename T> bool save_matrix(Idx<T>& m, const char *filename) {
 		fwrite(&v, sizeof (int), 1, fp);
 	}
 	// body
-	{ idx_aloop1(i, m, T) fwrite(&(*i), sizeof (T), 1, fp); }		
+	{ idx_aloop1(i, m, T) fwrite(&(*i), sizeof (T), 1, fp); }
 	fclose(fp);
+	return true;
+}
+
+template<typename T> bool save_matrix(Idx<T>& m, ostream &stream) {
+	int v, i;
+
+	// header
+	v = get_magic<T>();
+	stream.write((char*)&v, sizeof (int));
+	v = m.order();
+	stream.write((char*)&v, sizeof (int));
+	for (i = 0; (i < m.order()) || (i < 3); ++i) {
+		if (i < m.order())
+			v = m.dim(i);
+		else
+			v = 1;
+		stream.write((char*)&v, sizeof (int));
+	}
+	// body
+	{ idx_aloop1(i, m, T) stream.write((char*)&(*i), sizeof (T)); }
 	return true;
 }
 
