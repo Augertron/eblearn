@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -59,7 +59,7 @@ using namespace std;
 #define MAGIC_INT_VINCENT			0x0C00
 #define MAGIC_FLOAT_VINCENT		0x0D00
 #define MAGIC_DOUBLE_VINCENT	0x0E00
- 
+
 namespace ebl {
 
 // TODO: implement all types.
@@ -68,10 +68,12 @@ namespace ebl {
 //! Loads a matrix from file filename and returns it.
 //! Returns true if successful, false otherwise.
 template<typename T> bool load_matrix(Idx<T>& m, const char *filename);
+template<typename T> bool load_matrix(Idx<T>& m, istream &stream);
 
 //! Saves a matrix m in file filename.
 //! Returns true if successful, false otherwise.
 template<typename T> bool save_matrix(Idx<T>& m, const char *filename);
+template<typename T> bool save_matrix(Idx<T>& m, ostream &stream);
 
 } // end namespace ebl
 
