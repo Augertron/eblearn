@@ -50,6 +50,7 @@ using namespace std;
 #define MAGIC_BYTE_MATRIX	    0x1e3d4c55
 #define MAGIC_SHORT_MATRIX	 	0x1e3d4c56
 #define MAGIC_SHORT8_MATRIX	 	0x1e3d4c57
+#define MAGIC_LONG_MATRIX		0x1e3d4c58
 #define MAGIC_ASCII_MATRIX	 	0x2e4d4154	/* '.MAT' */
 
 // pascal vincent's magic numbers
