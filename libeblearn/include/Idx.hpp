@@ -98,6 +98,84 @@ namespace ebl {
 
 ////////////////////////////////////////////////////////////////
 
+// TODO: these macros are untested (YLC)
+
+//! cidxN_bloopX: macros to loop simultaneously over elements 
+//! of X Idx'es of order at least N. Can be used as follows:
+//! { double *z0, *z1; 
+//!   intg i;
+//!   cidx1_bloop2(i, z0, myidx0, z1, myidx1) { *z0 = *z1 + 4; }
+//! }
+//! { float *z0;
+//!   intg i,j;
+//!   cidx2_bloop1(i, j, z0, myidx0) { *z0 *= 2; }
+//! }
+//! Variable i is a loop index, myidx0 is an Idx of any type whose
+//! order must be at least 1, and and z0 is a pointer to the numerical 
+//! type of myidx0.
+//! It is best to enclose each cidx1_bloopX in its own brace scope
+//! because the macro creates temprary variables with a fixed name.
+//! These macros should be used over the idx_aloopX macros whenever
+//! possible, because they are considerably more efficient.
+//! unlike the aloop macros, these macros manipulate regular pointers 
+//! with simple incrementation, as opposed to iterators with complicated 
+//! logic.
+#define cidx1_bloop1(i,p0,src0)		\
+  if ((src0).order() < 1) ylerror("Idx has wrong order"); \
+  intg _n0 = (src0).dim(0), _m0 = (src0).mod(0);		\
+  for (i=0, p0=(src0).idx_ptr(); i<_n0; i++, p0+=_m0) 
+
+#define cidx1_bloop2(i,p0,src0,p1,src1)		 \
+  if (((src0).order() < 1)||((src1).order() < 1))  ylerror("Idx has wrong order"); \
+  intg _n0 = (src0).dim(0), _m0 = (src0).mod(0); _m1 = (src1).mod(0);	 \
+  idx_checkdim2_all(src0,src1,0)					\
+  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(); i<_n0; i++, p0+=_m0, p1+=_m1) 
+
+#define cidx1_bloop3(i,p0,src0,p1,src1,p2,src2)		 \
+  intg _n0 = (src0).dim(0), _m0 = (src0).mod(0), _m1 = (src1).mod(0), _m2 = (src2).mod(0); \
+  idx_checkdim3_all(src0,src1,src2,0)					\
+  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(), p2=(src2).idx_ptr(); i<_n0; i++, p0+=_m0, p1+=_m1, p2+=_m2) 
+
+#define cidx1_bloop4(i,p0,src0,p1,src1,p2,src2,p3,src3)	 \
+  intg _n0 = (src0).dim(0), _m0 = (src0).mod(0), _m1 = (src1).mod(0), _m2 = (src2).mod(0), _m3 = (src3).mod(0); \
+    idx_checkdim4_all(src0,src1,src2,src3,0)				\
+    for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(), p2=(src2).idx_ptr(), p3=(src3).idx_ptr(); i<_n0; i++, p0+=_m0, p1+=_m1, p2+=_m2, p3+=_m3) 
+
+
+#define cidx2_bloop1(i,j,p0,src0)			  \
+  if ((src0).order() < 2) ylerror("Idx has wrong order"); \
+  intg _n00 = (src0).dim(0), _m00 = (src0).mod(0);		\
+  intg _n01 = (src0).dim(1), _m01 = (src0).mod(1);		\
+  for (i=0, p0=(src0).idx_ptr(); i<_n00; i++, p0+=_m00-_n01*_m01) \
+  for (j=0; i<_n01; j++, p0+=_m01) 
+
+#define cidx2_bloop2(i,j,p0,src0,p1,src1)		  \
+  if ((src0).order() < 2) ylerror("Idx has wrong order"); \
+  intg _n00 = (src0).dim(0), _m00 = (src0).mod(0);		\
+  intg _n01 = (src0).dim(1), _m01 = (src0).mod(1);		\
+  intg _n10 = (src1).dim(0), _m10 = (src1).mod(0);		\
+  intg _n11 = (src1).dim(1), _m11 = (src1).mod(1);		\
+  idx_checkdim2_all(src0,src1,0)					\
+  idx_checkdim2_all(src0,src1,1)					\
+  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(); i<_n00; i++, p0+=_m00-_n01*_m01, p1+=_m10-_n11*_m11) \
+    for (j=0; i<_n01; j++, p0+=_m01, p1+=_m11) 
+
+#define cidx2_bloop3(i,j,p0,src0,p1,src1,p2,src2)		  \
+  if ((src0).order() < 2) ylerror("Idx has wrong order"); \
+  intg _n00 = (src0).dim(0), _m00 = (src0).mod(0);		\
+  intg _n01 = (src0).dim(1), _m01 = (src0).mod(1);		\
+  intg _n10 = (src1).dim(0), _m10 = (src1).mod(0);		\
+  intg _n11 = (src1).dim(1), _m11 = (src1).mod(1);		\
+  intg _n20 = (src2).dim(0), _m20 = (src2).mod(0);		\
+  intg _n21 = (src2).dim(1), _m21 = (src2).mod(1);		\
+  idx_checkdim3_all(src0,src1,src2,0)					\
+  idx_checkdim3_all(src0,src1,src2,1)					\
+  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(), p2=(src2).idx_ptr(); i<_n00; i++, p0+=_m00-_n01*_m01, p1+=_m10-_n11*_m11, p2+=_m20-_n21*_m21) \
+    for (j=0; i<_n01; j++, p0+=_m01, p1+=_m11, p2+=_m21) 
+
+
+////////////////////////////////////////////////////////////////
+
 //! call these macros like this:
 //! { idx_bloop1(la, a) { r += la.get(); } }
 //! exmaple: matrix-vector product  a x b -> c
@@ -168,7 +246,9 @@ namespace ebl {
 
 
 ////////////////////////////////////////////////////////////////
-// aloop macros: loop over all elements
+// aloop macros: loop over all elements of an Idx
+// These macros are somewhat inefficient and should be used as little
+// as possible, or whenever simplicity is preferable to speed.
 
 // Loops over all elements of an idx. This takes a pointer to
 // the data type of idx elements, and a blank IdxIter object:
