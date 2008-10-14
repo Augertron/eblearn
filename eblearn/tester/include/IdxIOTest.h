@@ -11,11 +11,12 @@ class IdxIOTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST(test_save_load_matrix_int);
   CPPUNIT_TEST(test_save_load_matrix_float);
   CPPUNIT_TEST(test_save_load_matrix_double);
+  CPPUNIT_TEST(test_save_load_matrix_long);
   CPPUNIT_TEST_SUITE_END();
 
 private:
   // member variables
-  
+
 public:
   //! This function is called before each test function is called.
   void setUp();
@@ -27,6 +28,7 @@ public:
   void test_save_load_matrix_int();
   void test_save_load_matrix_float();
   void test_save_load_matrix_double();
+  void test_save_load_matrix_long();
 };
 
 #endif /* IDXIOTEST_H_ */
