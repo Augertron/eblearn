@@ -49,11 +49,13 @@ template<> 				inline int get_magic<ubyte>() 	{ return MAGIC_BYTE_MATRIX; }
 template<>   			inline int get_magic<int>() 		{ return MAGIC_INTEGER_MATRIX; }
 template<>   			inline int get_magic<float>() 	{ return MAGIC_FLOAT_MATRIX; }
 template<> 				inline int get_magic<double>() 	{ return MAGIC_DOUBLE_MATRIX; }
+template<>				inline int get_magic<long>() 	{ return MAGIC_LONG_MATRIX; }
 template<class T>	inline int get_magic_vincent() { ylerror("matrix type not implemented."); return 0; }
 template<> 				inline int get_magic_vincent<ubyte>() 	{ return MAGIC_UBYTE_VINCENT; }
 template<>   			inline int get_magic_vincent<int>() 		{ return MAGIC_INT_VINCENT; }
 template<>   			inline int get_magic_vincent<float>() 	{ return MAGIC_FLOAT_VINCENT; }
 template<> 				inline int get_magic_vincent<double>() 	{ return MAGIC_DOUBLE_VINCENT; }
+template<> 				inline int get_magic_vincent<long>() 	{ return 0x0000; }
 
 // type to string function for debug message.
 inline string get_magic_str(int magic) {
@@ -63,6 +65,7 @@ inline string get_magic_str(int magic) {
 	case MAGIC_INTEGER_MATRIX: 	return "int";
 	case MAGIC_FLOAT_MATRIX: 		return "float";
 	case MAGIC_DOUBLE_MATRIX: 	return "double";
+	case MAGIC_LONG_MATRIX:			return "long";
 	// pascal vincent format
 	case MAGIC_UBYTE_VINCENT: 	return "ubyte (pascal vincent)";
 	case MAGIC_INT_VINCENT: 		return "int (pascal vincent)";
@@ -105,7 +108,6 @@ template<class T> inline T endian(T ptr) {
 	return v;
 }
 
-// TODO: intg support
 // TODO: use c++ IO to catch IO exceptions more easily
 // TODO: if types differ, print warning and cast to expected type
 template<typename T> bool load_matrix(Idx<T>& m, const char *filename) {
