@@ -1,1 +1,0 @@
-/usr/bin/c++   -g   CMakeFiles/facenet.dir/src/facenet.o CMakeFiles/facenet.dir/src/main.o  -o ../../../bin/facenet -rdynamic ../../../bin/libeblearn_gui.so ../../../bin/libeblearn.so -lcblas -lQtCore -lQtGui -Wl,-rpath,/home/cyril/workspace/eblearn/bin 
