@@ -361,12 +361,12 @@ template <class T> class Idx {
   IdxSpec spec;
 
   //! Pretty-prints IDx metadata to a file pointer.
-  void pretty(FILE *);
-  void pretty(std::ostream& out);
+  virtual void pretty(FILE *);
+  virtual void pretty(std::ostream& out);
 
   //! Pretty-prints elements to a stream.
-  void printElems(); // calls printElems( std::cout );
-  void printElems( std::ostream& out );
+  virtual void printElems(); // calls printElems( std::cout );
+  virtual void printElems( std::ostream& out );
   // void printElems( FILE* out );  doesn't work (cf implementation)
 
   //! destructor: unlocks the Srg.
@@ -375,12 +375,12 @@ template <class T> class Idx {
   // TODO: Find out why code such as Idx<float> = 1 compiles
   // (even without default operator below).
   // default operator below outputs an error that this is forbidden.
-  Idx<T>& operator=(T other){
+  virtual Idx<T>& operator=(T other){
   	ylerror("Forbidden Idx assignment. Idx can only be assigned another Idx.");
   	return *this;
   }
 
-  Idx<T>& operator=(const Idx<T>& other) {
+  virtual Idx<T>& operator=(const Idx<T>& other) {
   	Srg<T> *tmp = NULL;
   	if (this->storage != NULL)
   		tmp = this->storage;
@@ -392,7 +392,7 @@ template <class T> class Idx {
 	  return *this;
   }
 
-  Idx<T> operator[](const intg i) {
+  virtual Idx<T> operator[](const intg i) {
 	  return this->select(0,i);
   }
 
@@ -453,15 +453,15 @@ template <class T> class Idx {
 
   //! change the offset of an Idx. The Storage is
   //! resized accordingly. Returns the new offset.
-  intg setoffset(intg o);
+  virtual intg setoffset(intg o);
 
   //! resize an Idx. The order (ndim) is not allowed to change.
   //! This is to prevent nasty bugs.
-  void resize(intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,
+  virtual void resize(intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,
 	      intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
 
   //! same as resize, but the storage is enlarged by a step of s_chunk if needed
-  void resize_chunk(intg s_chunk, intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,
+  virtual void resize_chunk(intg s_chunk, intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,
 	      intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
   /**
    * Resizes the Idx using the dimension sizes listed
@@ -524,41 +524,41 @@ template <class T> class Idx {
   //! "unfolding" the n -th dimension. The size of the new dimension
   //! is k. This essentially manipulates the mod array to make
   //! convolutions look like matrix-vector multiplies.
-  Idx<T> unfold(int d, intg k, intg s);
+  virtual Idx<T> unfold(int d, intg k, intg s);
 
   // field access
 
   //! return pointer to storage
-  Srg<T> *getstorage() { return storage; }
+  virtual Srg<T> *getstorage() { return storage; }
 
   //! return size of Idx in d-th dimension.
-  intg dim(int d) { return spec.dim[d]; }
+  virtual intg dim(int d) { return spec.dim[d]; }
 
   //! return const ptr to dims
-  const intg* dims(){ return spec.dim; }
+  virtual const intg* dims(){ return spec.dim; }
 
   //! return stride of Idx in d-th dimension.
-  intg mod(int d) { return spec.mod[d]; }
+  virtual intg mod(int d) { return spec.mod[d]; }
 
   //! return const ptr to mods
-  const intg* mods(){ return spec.mod; }
+  virtual const intg* mods(){ return spec.mod; }
 
   //! return order of Idx (number of dimensions).
-  int order() { return spec.ndim; }
+  virtual int order() { return spec.ndim; }
 
   //! return offset of Idx.
-  intg offset() { return spec.offset; }
+  virtual intg offset() { return spec.offset; }
 
   //! return total number of elements
-  intg nelements() { return spec.nelements(); }
+  virtual intg nelements() { return spec.nelements(); }
 
   //! return total footprint in the storage
   //! (index after last cell occupied in the storage)
-  intg footprint() { return spec.footprint(); }
+  virtual intg footprint() { return spec.footprint(); }
 
   //! return true if elements of Idx are
   //! contiguous in memory.
-  bool contiguousp() { return spec.contiguousp(); }
+  virtual bool contiguousp() { return spec.contiguousp(); }
 
   //! return element if this is an Idx0,
   //! otherwise generate an error
@@ -569,44 +569,44 @@ template <class T> class Idx {
 //  }
 
   //! return pointer on data chunk (on first element)
-  T *idx_ptr() {  return storage->data + spec.offset; }
+  virtual T *idx_ptr() {  return storage->data + spec.offset; }
 
   //! return a pointer to an element (Idx0 version)
-  T *ptr() { if (spec.ndim != 0) ylerror("not an Idx0"); return storage->data + spec.offset; }
+  virtual T *ptr() { if (spec.ndim != 0) ylerror("not an Idx0"); return storage->data + spec.offset; }
 
   //! return a pointer to an element (Idx1 version)
-  T *ptr(intg i0);
+  virtual T *ptr(intg i0);
   //! return a pointer to an element (Idx2 version)
-  T *ptr(intg i0, intg i1);
+  virtual T *ptr(intg i0, intg i1);
   //! return a pointer to an element (Idx3 version)
-  T *ptr(intg i0, intg i1, intg i2);
+  virtual T *ptr(intg i0, intg i1, intg i2);
   //! return a pointer to an element (generic version)
-  T *ptr(intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, intg i6=-1, intg i7=-1);
+  virtual T *ptr(intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, intg i6=-1, intg i7=-1);
 
   //! return the value of an element (Idx0 version)
-  T get();
+  virtual T get();
   //! return the value of an element (Idx1 version)
-  T get(intg i0);
+  virtual T get(intg i0);
   //! return the value of an element (Idx2 version)
-  T get(intg i0, intg i1);
+  virtual T get(intg i0, intg i1);
   //! return the value of an element (Idx3 version)
-  T get(intg i0, intg i1, intg i2);
+  virtual T get(intg i0, intg i1, intg i2);
   //! return the value of an element (generic version)
-  T get(intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, intg i6=-1, intg i7=-1);
+  virtual T get(intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, intg i6=-1, intg i7=-1);
 
   //! sets the value of an element (Idx0 version)
-  T set(T val);
+  virtual T set(T val);
   //! sets the value of an element (Idx1 version)
-  T set(T val, intg i0);
+  virtual T set(T val, intg i0);
   //! sets the value of an element (Idx2 version)
-  T set(T val, intg i0, intg i1);
+  virtual T set(T val, intg i0, intg i1);
   //! sets the value of an element (Idx3 version)
-  T set(T val, intg i0, intg i1, intg i2);
+  virtual T set(T val, intg i0, intg i1, intg i2);
   //! sets the value of an element (generic version)
-  T set(T val, intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, intg i6=-1, intg i7=-1);
+  virtual T set(T val, intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, intg i6=-1, intg i7=-1);
 
   //! print content of Idx on stream
-  int fdump(FILE *f);
+  virtual int fdump(FILE *f);
 
 
 

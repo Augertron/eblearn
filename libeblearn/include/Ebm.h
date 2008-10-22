@@ -154,22 +154,22 @@ public:
 	virtual ~state_idx();
 
 	//! clear x
-	void clear();
+	virtual void clear();
 
 	//! clear gradients dx
-	void clear_dx();
+	virtual void clear_dx();
 
 	//! clear diag hessians ddx
-	void clear_ddx();
+	virtual void clear_ddx();
 
 	//! return number of elements
-	intg nelements();
+	virtual intg nelements();
 
 	//! return footprint in storages
-	intg footprint();
+	virtual intg footprint();
 
 	//! same as footprint
-	intg size();
+	virtual intg size();
 
 	//! update with gradient descent
 	virtual void update_gd(gd_param &arg);
