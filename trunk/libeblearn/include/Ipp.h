@@ -36,7 +36,7 @@ namespace ebl {
 #ifndef Ipp_H
 #define Ipp_H
 
-#include "Idx.h"
+#include "libidx.h"
 #include <ipp.h>
 
 ////////////////////////////////////////////////////////////////

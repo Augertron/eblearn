@@ -33,7 +33,7 @@
 #ifndef DATASOURCE_HPP_
 #define DATASOURCE_HPP_
 
-#include "Blas.h"
+#include "libidx.h"
 
 namespace ebl {
 

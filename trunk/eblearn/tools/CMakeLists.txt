@@ -16,6 +16,7 @@ add_library (eblearn_tools SHARED
 # add include directories
 ################################################################################
 include_directories (include)
+include_directories (${LIBIDX_INCLUDE_DIR})
 include_directories (${LIBEBLEARN_INCLUDE_DIR})
 SET(EBLEARN_TOOLS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 # find boost
@@ -28,4 +29,4 @@ ENDIF(Boost_FOUND)
   
 # link executable with external libraries
 ################################################################################
-target_link_libraries (eblearn_tools eblearn)
+target_link_libraries (eblearn_tools eblearn idx)
