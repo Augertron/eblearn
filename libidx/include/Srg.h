@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 
-#include "Defines.h"
+#include "LibidxDefines.h"
 
 namespace ebl {
 

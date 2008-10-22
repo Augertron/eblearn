@@ -9,6 +9,7 @@
 
 include_directories (include)
 include_directories(${LIBEBLEARN_INCLUDE_DIR})
+include_directories(${LIBIDX_INCLUDE_DIR})
 SET(EBLEARN_GUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 
 FIND_PACKAGE(Qt4)
@@ -31,7 +32,7 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   
   # link executable with external libraries
   ################################################################################
-  target_link_libraries (eblearn_gui eblearn)
+  target_link_libraries (eblearn_gui eblearn idx)
   target_link_libraries (eblearn_gui ${QT_QTCORE_LIBRARY})
   target_link_libraries (eblearn_gui ${QT_QTGUI_LIBRARY})
   

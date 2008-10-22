@@ -33,7 +33,7 @@
 #define Blas_H
 
 #include <math.h>
-#include "DummyBlas.h"
+#include "IdxBlas.h"
 
 #include "Numerics.h"
 #include "Idx.h"

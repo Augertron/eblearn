@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef Defines_H
-#define Defines_H
+#ifndef LibidxDefines_H
+#define LibidxDefines_H
 
 #include <stdio.h>
 
@@ -55,15 +55,15 @@
 // not used right now
 #define ITER(x) x##__iter
 
-/* namespace ebl { */
+namespace ebl {
 
-/* // intg is used for array indexing, hence should be */
-/* // defined as long if you want very large arrays */
-/* // on 64 bit machines. */
-/* typedef long intg; */
-/* typedef unsigned char ubyte; */
+// intg is used for array indexing, hence should be
+// defined as long if you want very large arrays
+// on 64 bit machines.
+typedef long intg;
+typedef unsigned char ubyte;
 
-/* } // end namespace ebl */
+} // end namespace ebl
 
 
 #endif

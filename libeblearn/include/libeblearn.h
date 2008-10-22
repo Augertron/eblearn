@@ -33,11 +33,8 @@
 #ifndef libeblearn_H
 #define libeblearn_H
 
-#include "Numerics.h"
-#include "Srg.h"
-#include "Idx.h"
-#include "Blas.h"
-#include "IdxIO.h"
+#include "Defines.h"
+#include "libidx.h"
 #include "Ebm.h"
 #include "Generators.h"
 #include "Net.h"

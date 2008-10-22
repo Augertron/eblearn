@@ -28,42 +28,17 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ***************************************************************************/
+ *****************************************************************************/
 
-#ifndef Defines_H
-#define Defines_H
+#ifndef libidx_H
+#define libidx_H
 
-#include <stdio.h>
-
-#ifndef NULL
-#define NULL (void*)0
-#endif
-
-// #define DEBUG_ON
-
-#ifdef DEBUG_ON
-#define DEBUG(s,d) fprintf(stderr,s,d)
-#else
-#define DEBUG(s,d)
-#endif
-
-// TODO: should be changed to throwing
-// an exception or something.
-// void ylerror(const char *s);
-#define ylerror(s)   { printf("%s\n",s); } //exit(-1); }
-
-// not used right now
-#define ITER(x) x##__iter
-
-/* namespace ebl { */
-
-/* // intg is used for array indexing, hence should be */
-/* // defined as long if you want very large arrays */
-/* // on 64 bit machines. */
-/* typedef long intg; */
-/* typedef unsigned char ubyte; */
-
-/* } // end namespace ebl */
-
+#include "LibidxDefines.h"
+#include "Numerics.h"
+#include "Srg.h"
+#include "Idx.h"
+#include "Blas.h"
+#include "IdxIO.h"
+#include "Generators.h"
 
 #endif

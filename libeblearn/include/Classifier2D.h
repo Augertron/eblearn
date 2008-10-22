@@ -33,7 +33,7 @@
 #define CLASSIFIER2D_H_
 
 #include "Net.h"
-#include "Idx.h"
+#include "libidx.h"
 
 namespace ebl {
 

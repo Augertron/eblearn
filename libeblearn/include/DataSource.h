@@ -33,7 +33,7 @@
 #ifndef DATASOURCE_H_
 #define DATASOURCE_H_
 
-#include "Idx.h"
+#include "libidx.h"
 #include "Ebm.h"
 
 namespace ebl {

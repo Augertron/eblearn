@@ -9,6 +9,7 @@
 
 include_directories (include)
 include_directories(${LIBEBLEARN_INCLUDE_DIR})
+include_directories(${LIBIDX_INCLUDE_DIR})
 include_directories(${EBLEARN_GUI_INCLUDE_DIR})
 
 FIND_PACKAGE(Qt4)
@@ -29,7 +30,7 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   
   # link executable with external libraries
   ################################################################################
-  target_link_libraries (facenet eblearn)
+  target_link_libraries (facenet eblearn idx)
   target_link_libraries (facenet eblearn_gui)
 
   

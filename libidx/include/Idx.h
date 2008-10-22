@@ -41,7 +41,7 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
-#include "Defines.h"
+#include "LibidxDefines.h"
 #include "Srg.h"
 
 namespace ebl {
