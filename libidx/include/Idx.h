@@ -46,6 +46,20 @@
 
 namespace ebl {
 
+
+/*! \mainpage libidx Library Main Page
+ *
+ * \section intro_sec Introduction
+ *
+ * This is the introduction.
+ *
+ * \section install_sec Installation
+ *
+ * \subsection step1 Step 1: TODO
+ *  
+ * TODO
+ */
+
 const int MAXDIMS=8;
 
 // Forward declarations of iterators
