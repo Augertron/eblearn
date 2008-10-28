@@ -37,6 +37,19 @@
 
 namespace ebl {
 
+/*! \mainpage libeblearn Library Main Page
+ *
+ * \section intro_sec Introduction
+ *
+ * This is the introduction.
+ *
+ * \section install_sec Installation
+ *
+ * \subsection step1 Step 1: TODO
+ *  
+ * TODO
+ */
+
 //! see numerics.h for description
 extern bool drand_ini;
 
