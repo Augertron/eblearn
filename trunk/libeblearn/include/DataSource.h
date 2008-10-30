@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -39,35 +39,39 @@
 namespace ebl {
 
   template<typename I, typename L> class LabeledDataSource {
-  protected:	
+  protected:
     Idx<I> *data;
     Idx<L> *labels;
     typename Idx<I>::dimension_iterator dataIter;
     typename Idx<L>::dimension_iterator labelsIter;
 
   public:
+	//! Do not use, for subclasses using different kind of inputs
+	LabeledDataSource(){};
+
+
     //! Constructor takes all input data and corresponding labels.
     //! @param inputs: An N+1-dimensional Idx of N-dimensional inputs.
     //! @param labels: A 1-dimensional Idx of corresponding labels.
     LabeledDataSource(Idx<I> *inputs, Idx<L> *labels);
-	
+
     virtual ~LabeledDataSource() {};
-	
+
     //! Copies the current datum to a state and label.
     void virtual fprop(state_idx *datum, Idx<L> *label);
-	
+
     //! Returns the number of data instances contained in this data source.
-    int size();
-	
+    virtual int size();
+
     //! Returns the index of the datum currently pointed to.
     // TODO: implement or get rid of tell?
-    int tell();
-	
+    virtual int tell(){return -1;};
+
     //! Move to the next datum.
-    void next();
-	
+    virtual void next();
+
     //! Move to the beginning of the data.
-    void seek_begin();
+    virtual void seek_begin();
   };
 
   ////////////////////////////////////////////////////////////////
@@ -75,7 +79,7 @@ namespace ebl {
   //! a data source appropriate for most learning algorithms
   //! that take input data in the form of an idx3
   //! and a label in the form of an idx0 of L.
-  //! This includes most supervised learning algorithms 
+  //! This includes most supervised learning algorithms
   //! implemented in this library.
   template<class I, class L>
     class MnistDataSource : public LabeledDataSource<I, L> {
@@ -85,19 +89,19 @@ namespace ebl {
     double bias;
     double coeff;
 
-    //! create a <dsource-mnist>. 
+    //! create a <dsource-mnist>.
     //! <inp> must be a ubyte-matrix of input patterns
     //! and <lbl> a ubyte-matrix of labels.
     //! <w> and <h> are the size of the output, in which
     //! the actual images will be centered.
     //! <bias> and <coeff> are used to shift and scale
     //! the values.
-    MnistDataSource(Idx<I> *inp, Idx<L> *lbl, intg w, intg h, double b, 
+    MnistDataSource(Idx<I> *inp, Idx<L> *lbl, intg w, intg h, double b,
 		    double c);
     virtual ~MnistDataSource () {}
 
     //! get the current item and copy the sample into
-    //! <out> (an idx3-state) and the corresponding 
+    //! <out> (an idx3-state) and the corresponding
     //! label into <lbl> (and idx0 of int).
     void virtual fprop(state_idx *out, Idx<L> *label);
   };
@@ -105,7 +109,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   /*
   //! a data source constructed by taking patterns in
-  //! an existing data source whose indices are within a 
+  //! an existing data source whose indices are within a
   //! given range.
   template<class I, class L>
   class DataSourceNarrow : public LabeledDataSource<I, L> {
@@ -114,11 +118,11 @@ namespace ebl {
   intg offset;
   intg size;
 
-  //! make a new data source by taking <size> items 
+  //! make a new data source by taking <size> items
   //! from the data source passed as argument, starting
   //! at item <offset>.
   DataSourceNarrow(LabeledDataSource<I, L> *b, intg siz, intg off);
-	
+
   virtual ~DataSourceNarrow () {}
 
   //! returns size given through constructor.
