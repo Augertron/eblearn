@@ -16,22 +16,27 @@ void spBlasTest::test_copy(){
 	spIdx<int> sptest2(0, 4, 4);
 	idx_copy(sptest, sptest2);
 
-	sptest.printElems();
-	sptest.pretty(cout);
-	sptest2.printElems();
-	sptest2.pretty(cout);
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL(sptest.get(i,j), (intg)sptest2.get(i, j));
+		};
+	};
 
 	spIdx<ubyte> sptest3(0, 4, 4);
 	idx_copy(sptest, sptest3);
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL(sptest.get(i,j), (intg)sptest3.get(i, j));
+		};
+	};
 
 	spIdx<double> sptest4(0, 4, 4);
 	idx_copy(sptest, sptest4);
-
-	spIdx<double> sptest5(0, 4, 4, 6);
-	idx_copy(sptest, sptest5);
-
-	spIdx<double> sptest6(0, 3, 4);
-	idx_copy(sptest, sptest6);
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL(sptest.get(i,j), (intg)sptest4.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_copy2(){
@@ -43,13 +48,14 @@ void spBlasTest::test_copy2(){
 
 	Idx<int> test(4,4, 4);
 	idx_copy(sptest, test);
-	test.printElems();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			for(int k=0; k<4; k++){
+				CPPUNIT_ASSERT_EQUAL(sptest.get(i,j,k), (intg)test.get(i, j, k));
+			};
+		};
+	};
 
-	Idx<int> test2(4, 5, 4);
-	idx_copy(sptest, test2);
-
-	Idx<int> test3(4, 4);
-	idx_copy(sptest, test3);
 }
 
 void spBlasTest::test_copy3(){
@@ -61,9 +67,11 @@ void spBlasTest::test_copy3(){
 
 	spIdx<int> sptest(0,2,2);
 	idx_copy(test, sptest);
-
-	sptest.printElems();
-	sptest.pretty();
+	for(int i = 0; i<2; i++){
+		for(int j = 0; j<2; j++){
+			CPPUNIT_ASSERT_EQUAL((int)test.get(i,j), sptest.get(i, j));
+		};
+	};
 
 	Idx<double> test2(2,2);
 	test2.set(1.5, 0, 0);
@@ -72,8 +80,11 @@ void spBlasTest::test_copy3(){
 	spIdx<ubyte> sptest2(0, 2, 2);
 	idx_copy(test2, sptest2);
 
-	sptest2.printElems();
-	sptest2.pretty();
+	for(int i = 0; i<2; i++){
+		for(int j = 0; j<2; j++){
+			CPPUNIT_ASSERT_EQUAL((ubyte)test2.get(i,j), sptest2.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_clear(){
@@ -84,8 +95,11 @@ void spBlasTest::test_clear(){
 	sptest.set(4, 3, 0);
 
 	idx_clear(sptest);
-	sptest.printElems();
-	sptest.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL((intg)BACKGROUND, sptest.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_minus(){
@@ -101,17 +115,11 @@ void spBlasTest::test_minus(){
 	sptest2.set(4, 3, 0);
 
 	idx_minus(sptest, sptest2);
-	sptest2.printElems();
-	sptest2.pretty();
-
-	spIdx<intg> sptest3(0, 4, 3);
-	sptest3.set(2, 1, 2);
-	sptest3.set(3, 2, 1);
-	sptest3.set(4, 3, 0);
-
-	idx_minus(sptest, sptest3);
-	sptest3.printElems();
-	sptest3.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL(-sptest.get(i,j), sptest2.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_inv(){
@@ -127,9 +135,14 @@ void spBlasTest::test_inv(){
 	sptest2.set(4, 3, 0);
 
 	idx_inv(sptest, sptest2);
-	sptest2.printElems();
-	sptest2.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			double k = sptest.get(i,j);
+			CPPUNIT_ASSERT_EQUAL((k == BACKGROUND)? BACKGROUND : 1/k, sptest2.get(i, j));
+		};
+	};
 }
+
 void spBlasTest::test_add(){
 	spIdx<double> sptest(0, 4, 4);
 	sptest.set(1, 0, 1);
@@ -144,8 +157,11 @@ void spBlasTest::test_add(){
 	spIdx<double> sptest3(0,4,4);
 
 	idx_add(sptest, sptest2, sptest3);
-	sptest3.printElems();
-	sptest3.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL(sptest.get(i,j)+sptest2.get(i,j), sptest3.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_sub(){
@@ -162,8 +178,11 @@ void spBlasTest::test_sub(){
 	spIdx<double> sptest3(0,4,4);
 
 	idx_sub(sptest, sptest2, sptest3);
-	sptest3.printElems();
-	sptest3.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL(sptest.get(i,j)-sptest2.get(i,j), sptest3.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_mul(){
@@ -180,8 +199,11 @@ void spBlasTest::test_mul(){
 	spIdx<double> sptest3(0,4,4);
 
 	idx_mul(sptest, sptest2, sptest3);
-	sptest3.printElems();
-	sptest3.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL(sptest.get(i,j)*sptest2.get(i,j), sptest3.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_addc(){
@@ -196,8 +218,12 @@ void spBlasTest::test_addc(){
 	sptest2.set(3, 1, 3);
 
 	idx_addc(sptest, (double)-3, sptest2);
-	sptest2.printElems();
-	sptest2.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			double k = sptest.get(i,j);
+			CPPUNIT_ASSERT_EQUAL((k==BACKGROUND)? BACKGROUND : k-3, sptest2.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_addcacc(){
@@ -211,9 +237,17 @@ void spBlasTest::test_addcacc(){
 	sptest2.set(2, 1, 2);
 	sptest2.set(3, 1, 3);
 
+	spIdx<double> sptest3(0,4,4);
+	idx_copy(sptest2, sptest3);
+
 	idx_addcacc(sptest, (double)-3, sptest2);
-	sptest2.printElems();
-	sptest2.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			double k = sptest.get(i,j);
+			k = (k==BACKGROUND)? BACKGROUND : k-3;
+			CPPUNIT_ASSERT_EQUAL(k + sptest3.get(i,j), sptest2.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_dotc(){
@@ -228,14 +262,19 @@ void spBlasTest::test_dotc(){
 	sptest2.set(3, 1, 3);
 
 	idx_dotc(sptest, (double)-3, sptest2);
-	sptest2.printElems();
-	sptest2.pretty();
-
-	spIdx<double> sptest3(0, 4, 4);
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			double k = sptest.get(i,j);
+			CPPUNIT_ASSERT_EQUAL((k==BACKGROUND)? BACKGROUND : k*(-3), sptest2.get(i, j));
+		};
+	};
 
 	idx_dotc(sptest, (double)0, sptest2);
-	sptest3.printElems();
-	sptest3.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL( (double)BACKGROUND, sptest2.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_dotcacc(){
@@ -249,9 +288,17 @@ void spBlasTest::test_dotcacc(){
 	sptest2.set(2, 1, 2);
 	sptest2.set(3, 1, 3);
 
+	spIdx<double> sptest3(0, 4, 4);
+	idx_copy(sptest2, sptest3);
+
 	idx_dotcacc(sptest, (double)-3, sptest2);
-	sptest2.printElems();
-	sptest2.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			double k = sptest.get(i,j);
+			k = (k==BACKGROUND)? BACKGROUND : k*(-3);
+			CPPUNIT_ASSERT_EQUAL(k + sptest3.get(i,j), sptest2.get(i, j));
+		};
+	};
 
 }
 
@@ -268,8 +315,11 @@ void spBlasTest::test_subsquare(){
 
 	spIdx<double> sptest3(0, 4, 4);
 	idx_subsquare(sptest, sptest2, sptest3);
-	sptest3.printElems();
-	sptest3.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL((sptest.get(i,j) - sptest2.get(i,j))*(sptest.get(i,j) - sptest2.get(i,j)), sptest3.get(i, j));
+		};
+	};
 }
 
 void spBlasTest::test_lincomb(){
@@ -285,26 +335,32 @@ void spBlasTest::test_lincomb(){
 
 	spIdx<double> sptest3(0, 4, 4);
 	idx_lincomb(sptest, (double)-3, sptest2, (double)2, sptest3);
-	sptest3.printElems();
-	sptest3.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL(-3 * sptest.get(i,j) + 2 * sptest2.get(i,j), sptest3.get(i, j));
+		};
+	};
 
 	spIdx<double> sptest4(0, 4, 4);
 	idx_lincomb(sptest, (double)0, sptest2, (double)0, sptest4);
-	sptest4.printElems();
-	sptest4.pretty();
+	CPPUNIT_ASSERT_EQUAL(true, sptest4.isempty());
 }
 
 void spBlasTest::test_abs(){
-	spIdx<double> sptest(0, 4, 4);
+	spIdx<int> sptest(0, 4, 4);
 	sptest.set(1, 0, 1);
 	sptest.set(-2, 1, 2);
 	sptest.set(3, 2, 3);
 	sptest.set(-4, 3, 0);
 
-	spIdx<double> sptest2(0, 4, 4);
+	spIdx<int> sptest2(0, 4, 4);
 	idx_abs(sptest, sptest2);
-	sptest2.printElems();
-	sptest2.pretty();
+	for(int i = 0; i<4; i++){
+		for(int j = 0; j<4; j++){
+			CPPUNIT_ASSERT_EQUAL(abs(sptest.get(i,j)), sptest2.get(i, j));
+		};
+	};
+
 }
 
 void spBlasTest::test_indexmax(){
@@ -314,7 +370,7 @@ void spBlasTest::test_indexmax(){
 	sptest.set(3, 2, 3);
 	sptest.set(-4, 3, 0);
 
-	cout << idx_indexmax(sptest);
+	CPPUNIT_ASSERT_EQUAL((intg)2, idx_indexmax(sptest));
 }
 
 void spBlasTest::test_sqrdist(){
@@ -328,11 +384,11 @@ void spBlasTest::test_sqrdist(){
 	sptest2.set(2, 1, 2);
 	sptest2.set(3, 1, 3);
 
-	cout << "\n" << idx_sqrdist(sptest, sptest2) << "\n";
+	CPPUNIT_ASSERT_EQUAL((double)35, idx_sqrdist(sptest, sptest2));
 
 	Idx<double> res;
 	idx_sqrdist(sptest, sptest2, res);
-	cout << res.get();
+	CPPUNIT_ASSERT_EQUAL(res.get(), idx_sqrdist(sptest, sptest2));
 }
 
 void spBlasTest::test_m2dotm1(){
@@ -350,9 +406,11 @@ void spBlasTest::test_m2dotm1(){
 	x.set(3,3);
 
 	idx_m2dotm1(sptest, x, y);
-	y.printElems();
+	CPPUNIT_ASSERT_EQUAL((float)16, y.get(0));
+	CPPUNIT_ASSERT_EQUAL((float)4, y.get(1));
+	CPPUNIT_ASSERT_EQUAL((float)9, y.get(2));
+	CPPUNIT_ASSERT_EQUAL((float)0, y.get(3));
 }
-
 
 void spBlasTest::test_m2dotm1sp(){
 	spIdx<double> sptest(0, 4, 4);
@@ -369,7 +427,10 @@ void spBlasTest::test_m2dotm1sp(){
 	x.set(3,3);
 
 	idx_m2dotm1(sptest, x, y);
-	y.printElems();
+	CPPUNIT_ASSERT_EQUAL((double)16, y.get(0));
+	CPPUNIT_ASSERT_EQUAL((double)4, y.get(1));
+	CPPUNIT_ASSERT_EQUAL((double)9, y.get(2));
+	CPPUNIT_ASSERT_EQUAL((double)0, y.get(3));
 }
 
 void spBlasTest::test_m2dotm1acc(){
@@ -390,8 +451,14 @@ void spBlasTest::test_m2dotm1acc(){
 	y.set(2,2);
 	y.set(3,3);
 
+	Idx<float> y2(4);
+	idx_copy(y, y2);
+
 	idx_m2dotm1acc(sptest, x, y);
-	y.printElems();
+	CPPUNIT_ASSERT_EQUAL((float)16 + y2.get(0), y.get(0));
+	CPPUNIT_ASSERT_EQUAL((float)4 + y2.get(1), y.get(1));
+	CPPUNIT_ASSERT_EQUAL((float)9 + y2.get(2), y.get(2));
+	CPPUNIT_ASSERT_EQUAL((float)0 + y2.get(3), y.get(3));
 }
 
 void spBlasTest::test_m2dotm1accsp(){
@@ -412,8 +479,14 @@ void spBlasTest::test_m2dotm1accsp(){
 	y.set(2,2);
 	y.set(3,3);
 
+	spIdx<double> y2(0, 4);
+	idx_copy(y, y2);
+
 	idx_m2dotm1acc(sptest, x, y);
-	y.printElems();
+	CPPUNIT_ASSERT_EQUAL((double)16 + y2.get(0), y.get(0));
+	CPPUNIT_ASSERT_EQUAL((double)4 + y2.get(1), y.get(1));
+	CPPUNIT_ASSERT_EQUAL((double)9 + y2.get(2), y.get(2));
+	CPPUNIT_ASSERT_EQUAL((double)0 + y2.get(3), y.get(3));
 }
 
 void spBlasTest::test_m2extm2(){
@@ -430,8 +503,6 @@ void spBlasTest::test_m2extm2(){
 	sptest2.printElems();
 	sptest2.pretty();
 
-	spIdx<double> sptest3(0, 4, 4, 4, 3);
-	idx_m2extm2(sptest, sptest, sptest3);
 }
 
 void spBlasTest::test_m2extm2acc(){

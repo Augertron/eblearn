@@ -40,6 +40,12 @@ namespace ebl {
 
 template<class I, class L> class spLabeledDataSource : public LabeledDataSource<I, L> {
 
+	/**************************************
+	 * a new subclass of the LabeledDataSource
+	 * It doesn't use iterators, since these haven't been
+	 * created for spIdxs
+	 */
+
 protected:
 	intg index;
     spIdx<I> *data;

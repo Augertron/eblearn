@@ -39,6 +39,20 @@ namespace ebl {
 
 template <class T> class spIdx : public Idx<T> {
 
+	/**********************************************
+	 *  Model chosen for the Sparse Idxs :
+	 *  spIdxs are made of 2 Idxs :
+	 *     - the index idx, which is NxNdim, where myindex.select(0,P)
+	 *     stores the positions in each dimension of the Pth element
+	 *     - the values idx, which is a vector N long, where myvalues.get(P)
+	 *     is the value of the Pth element
+	 *  N is different and superior to Nelem, to prevent from having to resize
+	 *  the idxs too often.
+	 *
+	 *  Due to the "sparse" caracteristic, the minimum order of a
+	 *  spIdx is 1 (vector)
+	 */
+
   private:
 
 	  int ndim;
@@ -53,26 +67,24 @@ template <class T> class spIdx : public Idx<T> {
 	  //! checks that the number of arguments corresponds to ndim (ie all the following arguments are -1 (or negatives))
 	  bool has_right_dimension(intg i0, intg i1=-1, intg i2=-1, intg i3=-1, intg i4=-1, intg i5=-1, intg i6=-1, intg i7=-1);
 
+	  //! recursive function used by the sort function
 	  void rec_sort(intg *ptrind, int modind, T *ptrval, int modval, intg nind);
   public:
 
+	  //! This constructor doesn't do anything (no idx is created)
+	  //! therefore you should not use it, or only for derived classes
 	  spIdx();
 	  //! generic constructor from values and associated index.
 	  spIdx(intg &dims, intg nelems, Idx<T> &ind, Idx<T> &val);
 
 	  //! generic constructor with number of non-zero elements,
 	  //! the number of dims and the sizes of these dimensions.
-	  //! Important : if you set Nelems != 0, do not use set to fill these elements !
-	  //! Fill them by acceding directly to index and values.
-	  //! We recommand that you always use Nelems = 0 and fill with set.
+	  //! @param Nelemmax will be used to create the index and values idxs,
+	  //! but nelem will still be set to 0
 	  spIdx(intg Nelemmax, int Ndim, const intg* dims);
 
 	  //! this constructor stores the values on the given storage at the given offset
 	  //! (if no offset, it will use the storage footprint as offset).
-	  //! Be careful : Nelemmax should be as close as possible (or superior) to the maximum
-	  //! number of non-background elements you are expecting, particularly if you
-	  //! store something else on the same storage at a greater offset (you won't be
-	  //! able to resize correctly this spIdx)
 	  spIdx(intg Nelemmax, int Ndim, const intg* dims, Srg<T> *srg, intg o);
 	  spIdx(intg Nelemmax, int Ndim, const intg* dims, Srg<T> *srg);
 
@@ -80,9 +92,7 @@ template <class T> class spIdx : public Idx<T> {
 	  spIdx( const spIdx<T>& other );
 
 	  //! creates an Idx of any order.
-	  //! see before for warning about Nelems
 	  spIdx(intg Nelemmax, intg s0, intg s1=-1, intg s2=-1, intg s3=-1, intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
-
 	  spIdx(intg Nelemmax, intg o, Srg<T> *srg, intg s0, intg s1=-1, intg s2=-1, intg s3=-1, intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
 	  spIdx(intg Nelemmax, Srg<T> *srg, intg s0, intg s1=-1, intg s2=-1, intg s3=-1, intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
 
@@ -104,7 +114,7 @@ template <class T> class spIdx : public Idx<T> {
 		  return *this;
 	  }
 
-	  //! equal operator, performs a complete copy
+	  //! equal operator, points to the idxs of @param other
 	  spIdx<T>& operator=(const spIdx<T>& other) {
 		  *(this->myindex) = *(other.myindex);
 		  *(this->myvalues) = *(other.myvalues);
@@ -161,7 +171,7 @@ template <class T> class spIdx : public Idx<T> {
 
 	  //! return order of spIdx (number of dimensions).
 	  int order() { return ndim; }
-	  //! stes order of spIdx (number of dimensions).
+	  //! sets order of spIdx (number of dimensions).
 	  void set_order(int i){ this->ndim = i;}
 
 	  //! return true if there is no non-background value in the spIdx.
@@ -200,11 +210,12 @@ template <class T> class spIdx : public Idx<T> {
 
 	  //! returns the position in the "values" idx of the value corresponding to the given coordinates
 	  intg pos_to_index(intg i0, intg i1=-1, intg i2=-1, intg i3=-1, intg i4=-1, intg i5=-1, intg i6=-1, intg i7=-1);
-
+	  //! return the index values of the item indexed by pos in the index idx (ie the values of index.select(0, pos) )
 	  void index_to_pos(intg pos, intg &i0, intg &i1, intg &i2, intg &i3, intg &i4, intg &i5, intg &i6, intg &i7);
 
+	  //! check if there are background values in the matrix, and erase the corresponding element
 	  void clean();
-
+	  //! sort the matrix in lexicographical order of the index
 	  void sort();
 
 //! the following methods are the Idx-methods not used by the spIdx
@@ -235,7 +246,9 @@ template <class T> class spIdx : public Idx<T> {
 
 };
 
+//! compares lexicographically the first @param ndim elements of pointer @param pt1 in pointer @param pt2
 bool superior_to(intg* pt1, intg* pt2, int ndim);
+//! copy the first @param ndim elements of pointer @param pt1 in pointer @param pt2
 template<class T> void copy(T* pt1, T* pt2, int ndim);
 
 }

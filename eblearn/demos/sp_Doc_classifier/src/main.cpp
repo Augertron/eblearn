@@ -32,8 +32,14 @@
 #include "preprocess.h"
 #include "spex.h"
 
+//! this global variable is the number of data samples that will be loaded in
+//! the training database.
 intg trainsize = 10000;
 
+//! the first argument is the path to the data ( ../eblearn/demos/sp_Doc_classifier/data
+//! if you follow the instructions in the Readme), the second argument is optional :
+//! write "true" if you need to preprocess the data (the first time you use
+//! the application)
 int main(int argc, const char **argv){
 	string path;
 	bool preproc = false;

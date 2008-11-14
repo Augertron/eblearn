@@ -132,6 +132,7 @@ void spnet::forget(forget_param_linear forgetparam){
 	mylinmodule.forget(forgetparam);
 }
 
+/////////////////////////////////////////////////
 sptrainer::sptrainer(const string fname):
 	doclabels(trainsize),
 	docs(0, trainsize, 50)

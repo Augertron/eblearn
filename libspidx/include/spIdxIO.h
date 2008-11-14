@@ -37,7 +37,9 @@
 
 namespace ebl {
 
-template<typename T> bool load_matrix(spIdx<T>& m, const char *filename);
+//! writes Nelem, then the order, the dimensions, and finally calls save_matrix on
+//! myindex and myvalues
+template<typename T> bool save_matrix(spIdx<T>& m, const char *filename);
 
 template<typename T> bool load_matrix(spIdx<T>& m, const char *filename);
 

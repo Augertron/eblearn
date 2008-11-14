@@ -37,6 +37,9 @@
 
 namespace ebl {
 
+//! most of the blas functions have been implemented to support spIdxs
+//! IMPORTANT : functions such as addc only add the constant to the non-background values!!
+
 template<class T> class spIdx;
 
 
@@ -57,7 +60,7 @@ template<class T> void check_m1extm1(Idx<T> &x, Idx<T> &y, Idx<T> &m);
 
 
 ////////////////////////////////////////////////////////////////
-//! fill with zero
+//! fill with background (ie empty the idxs)
 template<class T> void idx_clear(spIdx<T> &inp);
 
 //! negate all elements
@@ -93,7 +96,7 @@ template<class T> void idx_dotcacc(spIdx<T> &inp, T c, spIdx<T> &out);
 //! square of difference of each term:  out <- (i1-i2)^2
 template<class T> void idx_subsquare(spIdx<T> &i1, Idx<T> &i2, spIdx<T> &out);
 
-//! compute linear combination of two Idx
+//! compute linear combination of two spIdx
 template<class T> void idx_lincomb(spIdx<T> &i1, T k1, spIdx<T> &i2, T k2, spIdx<T> &out);
 
 //! hyperbolic tangent
@@ -142,7 +145,7 @@ float idx_dot(spIdx<float> &i1, Idx<float> &i2);
 template<class T> void check_m2dotm1(spIdx<T> &m, Idx<T> &x, Idx<T> &y);
 template<class T> void check_m2dotm1(spIdx<T> &m, spIdx<T> &x, spIdx<T> &y);
 
-//! matrix-vector multiplication y <- a.x : sparse matrix, dense or sparse vector
+//! matrix-vector multiplication y <- a.x : sparse or dense matrix, dense or sparse vector
 void idx_m2dotm1(spIdx<double> &a, Idx<double> &x, Idx<double> &y);
 void idx_m2dotm1(spIdx<float> &a, Idx<float> &x, Idx<float> &y);
 void idx_m2dotm1(spIdx<double> &a, spIdx<double> &x, spIdx<double> &y);
@@ -155,15 +158,6 @@ void idx_m2dotm1acc(spIdx<double> &a, Idx<double> &x, Idx<double> &y);
 void idx_m2dotm1acc(spIdx<float> &a, Idx<float> &x, Idx<float> &y);
 void idx_m2dotm1acc(spIdx<double> &a, spIdx<double> &x, spIdx<double> &y);
 void idx_m2dotm1acc(spIdx<float> &a, spIdx<float> &x, spIdx<float> &y);
-
-//! 4-tensor by 2-matrix multiplication R_ij = sum_kl M1_ijkl * M2_kl
-//template<class T> void idx_m4dotm2(Idx<T> &i1, Idx<T> &i2, Idx<T> &o1);
-
-//! 4-tensor by 2-matrix multiplication with accumulation R_ij += sum_kl M1_ijkl * M2_kl
-//template<class T> void idx_m4dotm2acc(Idx<T> &i1, Idx<T> &i2, Idx<T> &o1);
-
-//! multiply vector <m2> by matrix <m1> using square of <m1> elements M3i += sum_j M1ij^2 * M2j
-//template<class T> void idx_m4squdotm2acc(Idx<T> &i1, Idx<T> &i2, Idx<T> &o1);
 
 //! outer product between matrices. Gives a 4-tensor: R_ijkl = M1_ij * M2_kl
 template<class T> void idx_m2extm2(spIdx<T> &i1, spIdx<T> &i2, spIdx<T> &o1);
