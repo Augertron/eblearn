@@ -353,36 +353,28 @@ template<class T> intg spIdx<T>::pos_to_index(intg i0, intg i1, intg i2, intg i3
 		pos++;
 		if(pos >= nelem) break;
 		intg s0 = ind.get(0);
-		if(s0 > i0) break;
 		if(s0==i0){
 			if(ndim >= 2) {
 				intg s1 = ind.get(1);
-				if(s1 > i1) break;
-				else if(s1==i1){
+				if(s1==i1){
 					if(ndim >= 3) {
 						intg s2 = ind.get(2);
-						if(s2 > i2) break;
-						else if(s2==i2){
+						if(s2==i2){
 							if(ndim >= 4) {
 								intg s3 = ind.get(3);
-								if(s3 > i3) break;
-								else if(s3==i3){
+								if(s3==i3){
 									if(ndim >= 5) {
 										intg s4 = ind.get(4);
-										if(s4 > i4) break;
-										else if(s4==i4){
+										if(s4==i4){
 											if(ndim >= 6) {
 												intg s5 = ind.get(5);
-												if(s5 > i5) break;
-												else if(s5==i5){
+												if(s5==i5){
 													if(ndim >= 7) {
 														intg s6 = ind.get(6);
-														if(s6 > i6) break;
-														else if(s6==i6){
+														if(s6==i6){
 															if(ndim >= 8) {
 																intg s7 = ind.get(7);
-																if(s7 > i7) break;
-																else if(s7==i7){
+																if(s7==i7){
 																	found = true;
 																	break;
 																}
@@ -440,7 +432,6 @@ template<class T> void spIdx<T>::index_to_pos(intg pos, intg &i0, intg &i1, intg
 	i7 = (ndim >= 8)? *(myptr + pos * mymod[0] + 7* mymod[1]) : -1;
 }
 
-//! return the value of an element
 template<class T> T spIdx<T>::get(intg i0, intg i1, intg i2, intg i3, intg i4, intg i5, intg i6, intg i7){
 	if(!has_right_dimension(i0, i1, i2, i3, i4, i5, i6, i7)){ylerror("spIdx: bad number of arguments in get"); return (T)BACKGROUND;}
 	if(!is_within_bounds(i0, i1, i2, i3, i4, i5, i6, i7)){
@@ -456,7 +447,6 @@ template<class T> T spIdx<T>::get(intg i0, intg i1, intg i2, intg i3, intg i4, i
 	}
 }
 
-//! sets the value of an element (generic version)
 template<class T> T spIdx<T>::set(T val, intg i0, intg i1, intg i2, intg i3, intg i4, intg i5, intg i6, intg i7){
 	if(!has_right_dimension(i0, i1, i2, i3, i4, i5, i6, i7)) {ylerror("spIdx: bad number of arguments in set"); return (T)BACKGROUND; };
 	if(!is_within_bounds(i0, i1, i2, i3, i4, i5, i6, i7)){
@@ -521,7 +511,6 @@ template<class T> void spIdx<T>::clean(){
 	myvalues->resize(N);
 }
 
-//! Pretty-prints IDx metadata to a file pointer.
 template<class T> void spIdx<T>::pretty(FILE *f){
 	fprintf(f, "spIdx: at address %ld \n",(intg)this);
 	fprintf(f, "  dimensions : ");
@@ -544,7 +533,6 @@ template<class T> void spIdx<T>::pretty(std::ostream& out){
 	myvalues->pretty(out);
 }
 
-//! Pretty-prints elements to a stream.
 template<class T> void spIdx<T>::printElems(){ printElems(std::cout);}
 
 template<class T> void spIdx<T>::printElems( std::ostream& out ){

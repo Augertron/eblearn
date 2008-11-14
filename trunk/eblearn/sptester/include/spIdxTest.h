@@ -41,14 +41,13 @@ using namespace ebl;
 //! Test class for spIdx class
 class spIdxTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(spIdxTest);
-  //CPPUNIT_TEST(test_set);
-  //CPPUNIT_TEST(test_get);
-  //CPPUNIT_TEST(test_const);
-  //CPPUNIT_TEST(test_narrow);
-  //CPPUNIT_TEST(test_select);
-  //CPPUNIT_TEST(test_transpose);
-  //CPPUNIT_TEST(test_resize);
-  //CPPUNIT_TEST(test_sort);
+  CPPUNIT_TEST(test_set_get);
+  CPPUNIT_TEST(test_const);
+  CPPUNIT_TEST(test_narrow);
+  CPPUNIT_TEST(test_select);
+  CPPUNIT_TEST(test_transpose);
+  CPPUNIT_TEST(test_resize);
+  CPPUNIT_TEST(test_sort);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -61,8 +60,7 @@ public:
   void tearDown(){};
 
   // Test functions
-  void test_set();
-  void test_get();
+  void test_set_get();
   void test_const();
   void test_narrow();
   void test_select();

@@ -42,7 +42,7 @@ using namespace ebl;
 //! Test class for spIdx class
 class spIdxIOTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(spIdxIOTest);
-  //CPPUNIT_TEST(test_saveandload_spidx);
+  CPPUNIT_TEST(test_saveandload_spidx);
   CPPUNIT_TEST_SUITE_END();
 
 private:

@@ -32,7 +32,9 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-
+//! this constant defines the background value of the sparse matrices :
+//! if not otherwise specified, a value in the matrix will be assumed to be
+//! the background value
 #define BACKGROUND 0
 
 #endif

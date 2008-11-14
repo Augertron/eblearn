@@ -93,7 +93,6 @@ template<class T1, class T2> void idx_copy(Idx<T1> &src, spIdx<T2> &dst){
 }
 
 ////////////////////////////////////////////////////////////////
-//! fill with zero
 template<class T> void idx_clear(spIdx<T> &inp){
 	inp.set_nelements(0);
 	inp.set_values(new Idx<T>(1));

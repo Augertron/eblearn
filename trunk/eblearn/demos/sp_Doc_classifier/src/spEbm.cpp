@@ -9,12 +9,10 @@
 namespace ebl {
 
 
-//! Constructs a state_idx of order 0
 state_spidx::state_spidx():
 	x(), dx(), ddx()
 	{}
 
-//! Constructor. A state_idx can have up to 8 dimensions.
 state_spidx::state_spidx(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5, intg s6, intg s7):
 	x(0,s0,s1,s2,s3,s4,s5,s6,s7),
 	dx(0,s0,s1,s2,s3,s4,s5,s6,s7),
@@ -25,10 +23,6 @@ state_spidx::state_spidx(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5, i
 		clear_ddx();
 	}
 
-//! this appends the state_idx into the same Srg as the
-//! state_idx passed as argument. This is useful for
-//! allocating multiple state_idx inside a parameter.
-//! This replaces the Lush function alloc_state_idx.
 state_spidx::state_spidx(parameter *st, intg Nelem, intg s0, intg s1, intg s2, intg s3, intg s4, intg s5, intg s6, intg s7) :
 	x(Nelem, st->x.footprint(), st->x.getstorage(), s0, s1, s2, s3, s4, s5, s6, s7),
 	dx(Nelem, st->dx.footprint(), st->dx.getstorage(), s0, s1, s2, s3, s4, s5, s6, s7),

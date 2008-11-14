@@ -41,28 +41,31 @@ using namespace ebl;
 //! Test class for spIdx class
 class spBlasTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(spBlasTest);
-  //CPPUNIT_TEST(test_copy);
-  //CPPUNIT_TEST(test_copy2);
-  //CPPUNIT_TEST(test_copy3);
-  //CPPUNIT_TEST(test_clear);
-  //CPPUNIT_TEST(test_minus);
-  //CPPUNIT_TEST(test_inv);
-  //CPPUNIT_TEST(test_add);
-  //CPPUNIT_TEST(test_sub);
-  //CPPUNIT_TEST(test_mul);
-  //CPPUNIT_TEST(test_addc);
-  //CPPUNIT_TEST(test_addcacc);
-  //CPPUNIT_TEST(test_dotc);
-  //CPPUNIT_TEST(test_dotcacc);
-  //CPPUNIT_TEST(test_subsquare);
-  //CPPUNIT_TEST(test_lincomb);
-  //CPPUNIT_TEST(test_abs);
-  //CPPUNIT_TEST(test_indexmax);
-  //CPPUNIT_TEST(test_sqrdist);
-  //CPPUNIT_TEST(test_m2dotm1);
-  //CPPUNIT_TEST(test_m2dotm1sp);
-  //CPPUNIT_TEST(test_m2dotm1acc);
-  //CPPUNIT_TEST(test_m2dotm1accsp);
+  CPPUNIT_TEST(test_copy);
+  CPPUNIT_TEST(test_copy2);
+  CPPUNIT_TEST(test_copy3);
+  CPPUNIT_TEST(test_clear);
+  CPPUNIT_TEST(test_minus);
+  CPPUNIT_TEST(test_inv);
+  CPPUNIT_TEST(test_add);
+  CPPUNIT_TEST(test_sub);
+  CPPUNIT_TEST(test_mul);
+  CPPUNIT_TEST(test_addc);
+  CPPUNIT_TEST(test_addcacc);
+  CPPUNIT_TEST(test_dotc);
+  CPPUNIT_TEST(test_dotcacc);
+  CPPUNIT_TEST(test_subsquare);
+  CPPUNIT_TEST(test_lincomb);
+  CPPUNIT_TEST(test_abs);
+  CPPUNIT_TEST(test_indexmax);
+  CPPUNIT_TEST(test_sqrdist);
+  CPPUNIT_TEST(test_m2dotm1);
+  CPPUNIT_TEST(test_m2dotm1sp);
+  CPPUNIT_TEST(test_m2dotm1acc);
+  CPPUNIT_TEST(test_m2dotm1accsp);
+  //! the following tests are working fine but haven't been
+  //! implemented with CPPUNIT_ASSERT, so you'll have to verify
+  //! by hand if you uncomment them
   //CPPUNIT_TEST(test_m2extm2);
   //CPPUNIT_TEST(test_m2extm2acc);
   //CPPUNIT_TEST(test_m2squextm2acc);

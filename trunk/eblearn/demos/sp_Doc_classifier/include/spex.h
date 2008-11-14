@@ -38,10 +38,24 @@
 #include "spDataSource.h"
 #include "spEbm.h"
 
+//! loads the data from the sources. see the Readme for details about
+//! how to get the data used for this project
 void load(const char *fname, spIdx<double> &xp, Idx<ubyte> &yp);
 
 class spnet {
 
+	/*******************************************
+	 * neural net structure used for the project :
+	 * a -log(softmax) on top of a linear module
+	 * to perform a logarithmic regression
+	 *
+	 * The loss function is
+	 * Loss(X,y,W) = -Wy.X + log SUM_z exp(Wz.X) + |W|1
+	 *
+	 *	Where Wi is the i-th line of W and the SUM is made
+	 *	on every classes, and |W|1 is the sum on each
+	 *	absolute value of the elements in W
+	 */
 protected :
 	state_spidx *inter;
 
@@ -52,7 +66,10 @@ public :
 	spnet(parameter *p, Idx<intg>* connection_table, intg in, intg out, double beta, Idx<ubyte> *classes);
 	~spnet();
 
+	//! the fprop propagates the input thrue the modules, then computes the winning
+	//! class, and claculates the energy as a fuction of the desired label
 	void fprop(state_spidx *in, state_spidx *out, Idx<ubyte> *label, class_state *output, state_idx *energy);
+	//! the bprop propagates the output backward through the modules
 	void bprop(state_spidx *in, state_spidx *out);
 	void forget(forget_param_linear forgetparam);
 
@@ -60,6 +77,9 @@ public :
 
 class sptrainer{
 
+	/***********************************************
+	 * Trainer used to train the previous net
+	 */
 public:
 	int nclasses;
 	intg age;
@@ -78,10 +98,15 @@ public:
 	state_idx *energy;
 
 public:
+	//! creates the complete training structure : creates the net,
+	//! loads the data and creates all the structures needed for the training
 	sptrainer(const string fname);
 	~sptrainer();
 
+	//! npass is the number of times the trainer will go through the dataset
+	//! to choose the size of the dataset, modify trainsize on main.cpp
 	void train(int npass);
+	//! this is the training function on one example of the dataset
 	void train_online();
 	void test();
 };
