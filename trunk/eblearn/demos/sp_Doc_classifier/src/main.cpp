@@ -34,7 +34,8 @@
 
 //! this global variable is the number of data samples that will be loaded in
 //! the training database.
-intg trainsize = 10000;
+intg trainsize = 20000;
+intg testsize = 10000;
 
 //! the first argument is the path to the data ( ../eblearn/demos/sp_Doc_classifier/data
 //! if you follow the instructions in the Readme), the second argument is optional :
@@ -54,7 +55,8 @@ int main(int argc, const char **argv){
 	if(preproc) preprocess(path);
 
 	string trainfile = path + "/test.dat.gz";
-	sptrainer mytrainer(trainfile);
+	string testfile = path + "/train.dat.gz";
+	sptrainer mytrainer(trainfile, testfile);
 	mytrainer.train(1);
 
 	return 0;

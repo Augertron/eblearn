@@ -40,7 +40,7 @@
 
 //! loads the data from the sources. see the Readme for details about
 //! how to get the data used for this project
-void load(const char *fname, spIdx<double> &xp, Idx<ubyte> &yp);
+void load(const char *fname, spIdx<double> &xp, Idx<ubyte> &yp, intg loadsize);
 
 class spnet {
 
@@ -83,15 +83,15 @@ class sptrainer{
 public:
 	int nclasses;
 	intg age;
-	Idx<ubyte> *labels, *label, doclabels;
-	spIdx<double> docs;
+	Idx<ubyte> *labels, *label, doclabels, doclabels2;
+	spIdx<double> docs, docs2;
 	Idx<intg> *myconnections;
 
-	spLabeledDataSource<double, ubyte> *mydatasource;
+	spLabeledDataSource<double, ubyte> *mydatasource, *mytestsource;
 	parameter *myparam;
 	gd_param *gdp;
 	spnet *mynet;
-	classifier_meter* trainmeter;
+	classifier_meter *trainmeter, *testmeter;
 
 	state_spidx *in, *out;
 	class_state *output;
@@ -100,7 +100,7 @@ public:
 public:
 	//! creates the complete training structure : creates the net,
 	//! loads the data and creates all the structures needed for the training
-	sptrainer(const string fname);
+	sptrainer(const string trainname, const string testname);
 	~sptrainer();
 
 	//! npass is the number of times the trainer will go through the dataset
