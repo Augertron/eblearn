@@ -7,8 +7,9 @@
 #include "spex.h"
 
 extern intg trainsize;
+extern intg testsize;
 
-void load(const char *fname, spIdx<double> &xp, Idx<ubyte> &yp)
+void load(const char *fname, spIdx<double> &xp, Idx<ubyte> &yp, intg loadsize)
 {
 	cout << "Loading " << fname << "." << endl;
 
@@ -83,7 +84,7 @@ void load(const char *fname, spIdx<double> &xp, Idx<ubyte> &yp)
 		currentdoc++;
 		if(y <= 0) ncount++;
 		else pcount++;
-		if (trainsize > 0 && currentdoc >= (intg)trainsize) break;
+		if (loadsize > 0 && currentdoc >= (intg)loadsize) break;
 		if( currentdoc % 1000 == 0) cout << "loaded doc #" << currentdoc << "\n";
 	}
 	cout << "Read " << pcount << "+" << ncount << "=" << pcount + ncount << " examples." << endl;
@@ -133,9 +134,11 @@ void spnet::forget(forget_param_linear forgetparam){
 }
 
 /////////////////////////////////////////////////
-sptrainer::sptrainer(const string fname):
+sptrainer::sptrainer(const string trainname, const string testname):
 	doclabels(trainsize),
-	docs(0, trainsize, 50)
+	doclabels2(testsize),
+	docs(0, trainsize, 50),
+	docs2(0, testsize, 50)
 {
 	nclasses = 2;
 	labels = new Idx<ubyte>(nclasses);
@@ -144,11 +147,18 @@ sptrainer::sptrainer(const string fname):
 	}
 
 	//! load training examples
-	load(fname.c_str(), docs, doclabels);
+	load(trainname.c_str(), docs, doclabels, trainsize);
 	docs.index()->resize(docs.nelements(), docs.index()->dim(1));
 	docs.values()->resize(docs.nelements());
 
 	mydatasource = new spLabeledDataSource<double, ubyte>(&docs, &doclabels);
+
+	//! load testing examples
+	load(testname.c_str(), docs2, doclabels2, testsize);
+	docs2.index()->resize(docs2.nelements(), docs2.index()->dim(1));
+	docs2.values()->resize(docs2.nelements());
+
+	mytestsource = new spLabeledDataSource<double, ubyte>(&docs2, &doclabels2);
 
 	//! create elements of the trainer
 	// probleme de table...
@@ -158,6 +168,7 @@ sptrainer::sptrainer(const string fname):
 	gdp = new gd_param(0.05, 0, 0, 0, 0, 0, 0, 0, 0);
 	mynet = new spnet(myparam, myconnections, docs.dim(1), nclasses, 1, labels);
 	trainmeter = new classifier_meter();
+	testmeter = new classifier_meter();
 
 	in = new state_spidx(docs.dim(1));
 	label = new Idx<ubyte>();
@@ -176,6 +187,7 @@ sptrainer::~sptrainer(){
 	delete gdp;
 	delete mynet;
 	delete trainmeter;
+	delete testmeter;
 
 	delete in;
 	delete out;
@@ -216,6 +228,7 @@ void sptrainer::train_online(){
 }
 
 void sptrainer::test(){
+	//! test on training set
 	mydatasource->seek_begin();
 	trainmeter->clear();
 	cout << "testing :\n";
@@ -225,6 +238,18 @@ void sptrainer::test(){
 		trainmeter->update(age, output, label->get(), energy);
 		mydatasource->next();
 	}
+	cout << "training set :";
 	trainmeter->display();
+
+	mytestsource->seek_begin();
+	testmeter->clear();
+	for (int i = 0; i < mytestsource->size(); ++i) {
+		mytestsource->fprop(in, label);
+		mynet->fprop(in, out, label, output, energy);
+		testmeter->update(age, output, label->get(), energy);
+		mytestsource->next();
+	}
+	cout << "testing set :";
+	testmeter->display();
 
 }
