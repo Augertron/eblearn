@@ -13,21 +13,6 @@ include_directories (include)
 include_directories(${LIBEBLEARN_INCLUDE_DIR})
 include_directories(${LIBIDX_INCLUDE_DIR})
 include_directories(${EBLEARN_TOOLS_INCLUDE_DIR})
-include_directories(${EBLEARN_GUI_INCLUDE_DIR})
-
-# do we have gui
-###############################################################################
-FIND_PACKAGE(Qt4)
-IF (QT_FOUND) #-----------------------------------------------------------------
-  include_directories (${QT_INCLUDE_DIR})
-  include_directories (${QT_QTGUI_INCLUDE_DIR})
-  include_directories (${QT_QTCORE_INCLUDE_DIR})
-  # set __GUI__variable
-  ##############################################################################
-  SET(USE_EBLEARN_GUI 1)
-  INCLUDE_DIRECTORIES(${EBLEARN_GUI_INCLUDE_DIR})
-ENDIF (QT_FOUND) #--------------------------------------------------------------
-CONFIGURE_FILE("include/EbmGuiTest.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/include/EbmGuiTest.h")
 
 # check for external libraries
 ################################################################################
@@ -59,9 +44,6 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   ################################################################################
   target_link_libraries (eblearn_tester eblearn idx)
   target_link_libraries (eblearn_tester eblearn_tools)
-  IF(QT_FOUND)
-    target_link_libraries (eblearn_tester eblearn_gui)
-  ENDIF(QT_FOUND)
   target_link_libraries (eblearn_tester ${CPPUNIT_LIBRARY})
   
   # write parameters for execution in run.init
