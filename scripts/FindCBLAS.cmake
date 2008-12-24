@@ -199,7 +199,7 @@ IF(NOT CBLAS_LIBRARIES)
     cblas_dgemm
     ""
     "cblas"
-    "cblas.h"
+    "atlas/cblas.h"
     TRUE
     TRUE
     )
@@ -213,7 +213,7 @@ IF(NOT CBLAS_LIBRARIES)
     cblas_dgemm
     ""
     "cblas"
-    "atlas/cblas.h"
+    "cblas.h"
     TRUE
     TRUE
     )
