@@ -1,3 +1,3 @@
 #!/bin/sh
 
-rm -Rf obj bin
+rm -Rf build/Debug/* build/Release/* bin/*
