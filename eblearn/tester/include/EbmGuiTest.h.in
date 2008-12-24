@@ -1,7 +1,0 @@
-
-#cmakedefine USE_EBLEARN_GUI @USE_EBLEARN_GUI@
-
-#ifdef USE_EBLEARN_GUI
-#define __GUI__ 1
-#endif
-

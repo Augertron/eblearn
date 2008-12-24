@@ -463,7 +463,6 @@ int testBlas02() {
 #include <cppunit/TestResult.h>
 #include <cppunit/BriefTestProgressListener.h>
 
-#include "EbmGuiTest.h"
 #include "BlasTest.h"
 #include "EbmTest.h"
 #include "IdxIOTest.h"
@@ -473,10 +472,6 @@ int testBlas02() {
 #include "IdxIteratorsTest.h"
 #include "Classifier2DTest.h"
 #include "ImageTest.h"
-
-#ifdef __GUI__
-#include "libeblearn_gui.h"
-#endif
 
 using namespace std;
 
@@ -526,10 +521,6 @@ int main(int argc, char **argv)
   }
   cout << endl;
 
-#ifdef __GUI__
-  QApplication a(argc, argv);
-#endif
-
   // cppunit tests
   CppUnit::TextUi::TestRunner runner;
   runner.addTest(IdxTest::suite());
@@ -546,10 +537,6 @@ int main(int argc, char **argv)
   runner.eventManager().addListener(&listener);
   // Run all tests
   runner.run();
-
-#ifdef __GUI__
-  a.exec();
-#endif
 
   if (gl_mnist_dir) delete gl_mnist_dir;
   if (gl_data_dir) delete gl_data_dir;
