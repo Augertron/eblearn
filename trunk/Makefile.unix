@@ -5,4 +5,5 @@ debug:
 clean:
 	rm -rf build/Debug/*
 	rm -rf build/Release/*
+	rm -rf bin/*
 all:release
