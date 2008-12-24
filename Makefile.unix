@@ -1,8 +1,11 @@
 debug:
-	cd build/Debug && cmake -DCMAKE_BUILD_TYPE=Debug ../.. && make all VERBOSE=1 && cd ../..
+	cd build/Debug && cmake -DCMAKE_BUILD_TYPE=Debug ../.. && make all && cd ../..
 release:
-	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make all VERBOSE=1 && cd ../..
+	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make all && cd ../..
 clean:
 	cd build/Debug && make clean && cd ../..
 	cd build/Release && make clean && cd ../..
+wipeout:
+	rm -rf build/Debug/*
+	rm -rf build/Release/*
 all:release
