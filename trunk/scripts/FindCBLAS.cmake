@@ -75,6 +75,9 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
   # Test include
   SET(_bug_search_include ${_search_include}) #CMAKE BUG!!! SHOULD NOT BE THAT
   IF(_bug_search_include)
+    IF(${_prefix}${_combined_name}_INCLUDE)
+      SET(${_prefix}${_combined_name}_INCLUDE ${${_prefix}${_combined_name}_INCLUDE}-NOTFOUND)
+    ENDIF(${_prefix}${_combined_name}_INCLUDE)
     FIND_PATH(${_prefix}${_combined_name}_INCLUDE ${_include} ${_paths})
     MARK_AS_ADVANCED(${_prefix}${_combined_name}_INCLUDE)
     IF(${_prefix}${_combined_name}_INCLUDE)
@@ -205,6 +208,7 @@ IF(NOT CBLAS_LIBRARIES)
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
+
 IF(NOT CBLAS_LIBRARIES)
   # CBLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
   CHECK_ALL_LIBRARIES(
@@ -226,13 +230,13 @@ ELSE(CBLAS_LIBRARIES)
 ENDIF(CBLAS_LIBRARIES)
 
 IF(NOT CBLAS_FOUND AND CBLAS_FIND_REQUIRED)
-  MESSAGE(FATAL_ERROR "CBLAS library not found. Please specify library  location")
+  MESSAGE(FATAL_ERROR "CBLAS library not found. Please install cblas or atlas libraries as explained in README.txt")
 ENDIF(NOT CBLAS_FOUND AND CBLAS_FIND_REQUIRED)
 
 IF(NOT CBLAS_FIND_QUIETLY)
   IF(CBLAS_FOUND)
     MESSAGE(STATUS "CBLAS library found")
   ELSE(CBLAS_FOUND)
-    MESSAGE(STATUS "CBLAS library not found. Please specify library location")
+    MESSAGE(FATAL_ERROR "CBLAS library not found. Please install cblas or atlas libraries as explained in README.txt")
   ENDIF(CBLAS_FOUND)
 ENDIF(NOT CBLAS_FIND_QUIETLY)
