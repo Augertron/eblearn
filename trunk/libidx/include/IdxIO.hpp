@@ -125,15 +125,20 @@ namespace ebl {
     }
 
     int magic, ndim, v;
-    int ndim_min = 3; // the standard header requires at least 3 dimensions even empty ones.
+    int ndim_min = 3; // std header requires at least 3 dims even empty ones.
     intg *dims = NULL;
 
     // header: read magic number
-    fread(&magic, sizeof (int), 1, fp);
+    if (fread(&magic, sizeof (int), 1, fp) != 1) {
+      cerr << "failed to read " << filename << "." << endl;
+      fclose(fp);
+      return false;
+    }
     int magic_vincent = endian(magic);
     ndim = endian(magic) & 0xF;
     magic_vincent &= ~0xF;
-    if ((magic != get_magic<T>()) && (magic_vincent != get_magic_vincent<T>())) {
+    if ((magic != get_magic<T>()) && 
+	(magic_vincent != get_magic_vincent<T>())) {
       cerr << "load_matrix failed (" << filename << "): ";
       cerr << get_magic_str(get_magic<T>()) << " expected, ";
       cerr << get_magic_str(magic) << " found." << endl;
@@ -142,10 +147,16 @@ namespace ebl {
     // standard header
     if (magic == get_magic<T>()) {
       // read number of dimensions
-      fread(&ndim, sizeof (int), 1, fp);
+      if (fread(&ndim, sizeof (int), 1, fp) != 1) {
+	cerr << "failed to read " << filename << "." << endl;
+	fclose(fp);
+	return false;
+      }
       if (ndim > MAXDIMS) {
 	cerr << "load_matrix failed (" << filename << "): ";
-	cerr << " too many dimensions: " << ndim << " (MAXDIMS = " << MAXDIMS << ")." << endl;
+	cerr << " too many dimensions: " << ndim << " (MAXDIMS = ";
+	cerr << MAXDIMS << ")." << endl;
+	fclose(fp);
 	return false;
       }
     }
@@ -156,13 +167,18 @@ namespace ebl {
       cerr << "load_matrix failed (" << filename << "): ";
       cerr << "expected order of " << m.order() << " but found ";
       cerr << ndim << " in file." << endl;
+      fclose(fp);
       return false;
     }
 
     dims = (intg *) malloc(ndim * sizeof (intg));
     // header: read each dimension
     for (int i = 0; (i < ndim) || (i < ndim_min); ++i) {
-      fread(&v, sizeof (int), 1, fp);
+      if (fread(&v, sizeof (int), 1, fp) != 1) {
+	cerr << "failed to read " << filename << "." << endl;
+	fclose(fp);
+	return false;
+      }
       if (magic_vincent == get_magic_vincent<T>())
 	v = endian(v);
       if (i < ndim) {
@@ -171,11 +187,13 @@ namespace ebl {
 	  cerr << "load_matrix failed (" << filename << "): ";
 	  cerr << " dimension is negative or 0." << endl;
 	  free(dims);
+	  fclose(fp);
 	  return false;
 	}
       }
     }
-    // TODO: implement Idx constructor accepting array of dimensions and modify code below.
+    // TODO: implement Idx constructor accepting array of dimensions 
+    // and modify code below.
     m.resize(0 < ndim ? dims[0] : -1,
 	     1 < ndim ? dims[1] : -1,
 	     2 < ndim ? dims[2] : -1,
@@ -192,9 +210,8 @@ namespace ebl {
   }
 
   template<typename T> bool load_matrix(Idx<T>& m, istream &stream) {
-
     int magic, ndim, v;
-    int ndim_min = 3; // the standard header requires at least 3 dimensions even empty ones.
+    int ndim_min = 3; // std header requires at least 3 dims even empty ones.
     intg *dims = NULL;
 
     // header: read magic number
@@ -202,7 +219,8 @@ namespace ebl {
     int magic_vincent = endian(magic);
     ndim = endian(magic) & 0xF;
     magic_vincent &= ~0xF;
-    if ((magic != get_magic<T>()) && (magic_vincent != get_magic_vincent<T>())) {
+    if ((magic != get_magic<T>()) 
+	&& (magic_vincent != get_magic_vincent<T>())) {
       cerr << "load_matrix failed : ";
       cerr << get_magic_str(get_magic<T>()) << " expected, ";
       cerr << get_magic_str(magic) << " found." << endl;
@@ -214,7 +232,8 @@ namespace ebl {
       stream.read((char*)&ndim, sizeof (int));
       if (ndim > MAXDIMS) {
 	cerr << "load_matrix failed : ";
-	cerr << " too many dimensions: " << ndim << " (MAXDIMS = " << MAXDIMS << ")." << endl;
+	cerr << " too many dimensions: " << ndim << " (MAXDIMS = ";
+	cerr << MAXDIMS << ")." << endl;
 	return false;
       }
     }
@@ -244,7 +263,8 @@ namespace ebl {
 	}
       }
     }
-    // TODO: implement Idx constructor accepting array of dimensions and modify code below.
+    // TODO: implement Idx constructor accepting array of dimensions 
+    // and modify code below.
     m.resize(0 < ndim ? dims[0] : -1,
 	     1 < ndim ? dims[1] : -1,
 	     2 < ndim ? dims[2] : -1,
@@ -271,15 +291,27 @@ namespace ebl {
     }
     // header
     v = get_magic<T>();
-    fwrite(&v, sizeof (int), 1, fp);
+    if (fwrite(&v, sizeof (int), 1, fp) != 1) {
+      cerr << "failed to write to " << filename << "." << endl;
+      fclose(fp);
+      return false;
+    }
     v = m.order();
-    fwrite(&v, sizeof (int), 1, fp);
+    if (fwrite(&v, sizeof (int), 1, fp) != 1) {
+      cerr << "failed to write to " << filename << "." << endl;
+      fclose(fp);
+      return false;
+    }
     for (i = 0; (i < m.order()) || (i < 3); ++i) {
       if (i < m.order())
 	v = m.dim(i);
       else
 	v = 1;
-      fwrite(&v, sizeof (int), 1, fp);
+      if (fwrite(&v, sizeof (int), 1, fp) != 1) {
+	cerr << "failed to write to " << filename << "." << endl;
+	fclose(fp);
+	return false;
+      }
     }
     // body
     { idx_aloop1(i, m, T) fwrite(&(*i), sizeof (T), 1, fp); }
