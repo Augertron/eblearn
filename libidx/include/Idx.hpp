@@ -234,14 +234,15 @@ namespace ebl {
 
 // eloop macros
 
-#define idx_eloop1(dst0,src0,type0) \
+#define idx_eloop1(dst0,src0,type0)		\
   DimIter<type0> dst0(src0,src0.order()-1);	\
   for ( ; dst0.notdone(); ++dst0)
 
-#define idx_eloop2(dst0,src0,type0,dst1,src1,type1)				\
-  if ( (src0).dim((src0).order()) != (src1).dim((src1).order()) ) ylerror("incompatible Idxs for bloop\n"); \
-  DimIter<type0> dst0(src0,(src0).order()-1); \
-  DimIter<type1> dst1(src1,(src1).order()-1); \
+#define idx_eloop2(dst0,src0,type0,dst1,src1,type1)			\
+  if ( (src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1) ) \
+    ylerror("incompatible Idxs for bloop\n");				\
+  DimIter<type0> dst0(src0,(src0).order()-1);				\
+  DimIter<type1> dst1(src1,(src1).order()-1);				\
   for ( ; dst0.notdone(); ++dst0, ++dst1)
 
 
@@ -323,14 +324,15 @@ namespace ebl {
 
 // eloop macros
 
-#define idx_eloop1(dst0,src0,type0) \
+#define idx_eloop1(dst0,src0,type0)		\
   IdxLooper<type0> dst0(src0,src0.order()-1);	\
   for ( ; dst0.notdone(); dst0.next())
 
-#define idx_eloop2(dst0,src0,type0,dst1,src1,type1)				\
-  if ( (src0).dim((src0).order()) != (src1).dim((src1).order()) ) ylerror("incompatible Idxs for bloop\n"); \
-  IdxLooper<type0> dst0(src0,(src0).order()-1); \
-  IdxLooper<type1> dst1(src1,(src1).order()-1); \
+#define idx_eloop2(dst0,src0,type0,dst1,src1,type1)			\
+  if ( (src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1) ) \
+    ylerror("incompatible Idxs for bloop\n");				\
+  IdxLooper<type0> dst0(src0,(src0).order()-1);				\
+  IdxLooper<type1> dst1(src1,(src1).order()-1);				\
   for ( ; dst0.notdone(); dst0.next(), dst1.next())
 
 
@@ -802,18 +804,27 @@ template <class T> T Idx<T>::set(T val, intg i0, intg i1, intg i2, intg i3, intg
 
 template <class T> int Idx<T>::fdump(FILE *f) {
   if (spec.ndim == 0) {
-    fprintf(f,"[@ %g]\n",this->get());
+    std::ostringstream oss;
+    // fprintf(f,"[@ %g]\n",this->get());
+    oss << "[@ " << this->get() << "]\n";
+    fputs(oss.str().data(), f);
   } else if (spec.ndim == 1) {
-    fprintf(f,"[");
+    std::ostringstream oss;
+    // fprintf(f,"[");
+    oss << "[";
     for (intg i=0; i<dim(0); i += mod(0)) {
-      fprintf(f,"%g ",(storage->data)[spec.offset + i]);
+      // fprintf(f,"%g ",(storage->data)[spec.offset + i]);
+      oss << (storage->data)[spec.offset + i] << " ";
     }
-    fprintf(f,"]\n");
+    // fprintf(f,"]\n");
+    oss << "]\n";
+    fputs(oss.str().data(), f);
   } else {
     fprintf(f,"[");
     { idx_bloop1(p,*this,T) { p.fdump(f); } }
     fprintf(f,"]\n");
   }
+
   return 0;
 }
 
