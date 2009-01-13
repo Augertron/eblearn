@@ -1,2 +1,3 @@
 ADD_SUBDIRECTORY(facenet)
 #ADD_SUBDIRECTORY(sp_Doc_classifier)
+ADD_SUBDIRECTORY(cluster)

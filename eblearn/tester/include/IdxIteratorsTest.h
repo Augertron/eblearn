@@ -8,6 +8,10 @@
 class IdxIteratorsTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(IdxIteratorsTest);
   CPPUNIT_TEST(test_scalariter);
+  CPPUNIT_TEST(test_ElemIter_shifting);
+  CPPUNIT_TEST(test_ElemIter_parallelism);
+  CPPUNIT_TEST(test_DimensionIterator_shifting);
+  CPPUNIT_TEST(test_matrixMultiply);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -21,6 +25,10 @@ public:
 
   // Test functions
   void test_scalariter();
+  void test_ElemIter_shifting();
+  void test_ElemIter_parallelism();
+  void test_DimensionIterator_shifting();
+  void test_matrixMultiply();
 };
 
 #endif /* IDXITERATORSTEST_H_ */
