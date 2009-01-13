@@ -204,3 +204,53 @@ void EbmTest::test_state_copy() {
 	CPPUNIT_ASSERT(9*a.ddx.footprint() == idx_sqrdist(a.ddx,b.ddx));
 }
 
+void EbmTest::test_Ebm01() {
+  CPPUNIT_ASSERT(false); // TODO: create automatic test
+ printf("*** testEbm01\n");
+ parameter p(100);
+ printf("x:\n");
+ p.x.pretty(stdout);
+ printf("dx:\n");
+ p.dx.pretty(stdout);
+ printf("ddx:\n");
+ p.ddx.pretty(stdout);
+ printf("gradient:\n");
+ p.gradient.pretty(stdout);
+ }
+
+void EbmTest::test_Ebm02() {
+  CPPUNIT_ASSERT(false); // TODO: create automatic test
+ double i;
+ forget_param_linear fgp(1, 0.5);
+ parameter p(100);
+ double wdata[] = {1000,100,10,1, -1000,-100,-10,-1, 1e7,1e6,1e5,1e4};
+ double bdata[] = {0.6,-0.7,8000};
+ state_idx in(4,1,1);
+ state_idx out(3,1,1);
+ stdsigmoid_module sigmod;
+ f_layer fl(&p,4,3,1,1,&sigmod);
+ fl.forget(fgp);
+ // { int i=0; idx_aloop1(lw,fl.weight->x,double) { *lw = wdata[i++]; } }
+ // { int i=0; idx_aloop1(lw,fl.bias->x,double) { *lw = bdata[i++]; } }
+ { i=1; idx_aloop1(lin,in.x,double) { *lin = i++; } }
+ { i=1; idx_aloop1(lout,out.dx,double) { *lout = i++; } }
+ { i=1; idx_aloop1(lout,out.ddx,double) { *lout = i++; } }
+ printf("weight=\n");
+ fl.weight->x.fdump(stdout);
+ { printf("in.x: ["); idx_aloop1(lin,in.x,double) { printf("%g ", *lin); } printf("]\n"); }
+
+ printf("fprop\n");
+ fl.fprop(&in,&out);
+ { printf("fl.sum->x: ["); idx_aloop1(lin,fl.sum->x,double) { printf("%g ", *lin); } printf("]\n"); }
+ { printf("out.x: ["); idx_aloop1(lin,out.x,double) { printf("%g ",*lin); } printf("]\n"); }
+
+ printf("bprop\n");
+ fl.bprop(&in,&out);
+ { printf("fl.sum->dx: ["); idx_aloop1(lin,fl.sum->dx,double) { printf("%g ",*lin); } printf("]\n"); }
+ { printf("in.dx: ["); idx_aloop1(lin,in.dx,double) { printf("%g ",*lin); } printf("]\n"); }
+
+ printf("bbprop\n");
+ fl.bbprop(&in,&out);
+ { printf("in.ddx: ["); idx_aloop1(lin,in.ddx,double) { printf("%g ",*lin); } printf("]\n"); }
+ }
+

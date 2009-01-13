@@ -7,7 +7,13 @@
 //! Test class for IdxIO class
 class IdxTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(IdxTest);
-  CPPUNIT_TEST(test_get);
+  CPPUNIT_TEST(test_Idx_get);
+  CPPUNIT_TEST(test_Srg);
+  CPPUNIT_TEST(test_IdxSpec);
+  CPPUNIT_TEST(test_Idx_operations);
+  CPPUNIT_TEST(test_Idx_resize);
+  CPPUNIT_TEST(test_IdxIter);
+  CPPUNIT_TEST(test_Idx_macros);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -20,6 +26,12 @@ public:
   void tearDown();
 
   // Test functions
-  void test_get();
+  void test_Idx_get();
+  void test_Srg();
+  void test_IdxSpec();
+  void test_Idx_operations();
+  void test_Idx_resize();
+  void test_IdxIter();
+  void test_Idx_macros();
 };
 #endif /*IDXTEST_*/

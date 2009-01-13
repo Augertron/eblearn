@@ -12,6 +12,8 @@ class EbmTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST(test_slayer);
   CPPUNIT_TEST(test_softmax);
   CPPUNIT_TEST(test_state_copy);
+  CPPUNIT_TEST(test_Ebm01);
+  CPPUNIT_TEST(test_Ebm02);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -29,6 +31,8 @@ public:
   void test_slayer();
   void test_softmax();
   void test_state_copy();
+  void test_Ebm01();
+  void test_Ebm02();
 };
 
 #endif /* EBMTEST_H_ */

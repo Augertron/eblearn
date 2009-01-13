@@ -365,3 +365,92 @@ void BlasTest::test_huge_vec() {
 //   double dd = idx_dot(hv,hv);
 //   CPPUNIT_ASSERT((int)dd == hv.footprint());
 }
+
+
+// int testBlas01() {
+// 	printf("\n****************************************************************\n");
+// 	printf("*** testBlas01\n");
+
+// 	Idx<double> m1(2, 5);
+// 	Idx<double> m2(2, 5);
+// #if USING_STL_ITERS
+// 	int ii = 0;
+// 	idx_aloop2(lm1,m1,double,lm2,m2,double) {*lm1 = *lm2 = ++ii;}
+// #else
+// 	idx_aloop2(lm1, m1, double, lm2, m2, double) {
+// 		*lm1 = *lm2 = (double)lm1.i;
+// 	}
+// #endif
+// 	printf("idx_dot(m1,m2)=%g (should be 285)\n", idx_dot(m1, m2));
+
+// 	// non contiguous
+// 	Idx<double> nm1 = m1.narrow(1, 3, 1);
+// 	Idx<double> nm2 = m2.narrow(1, 3, 1);
+// 	printf("idx_dot(nm1,nm2)=%g (should be 163)\n", idx_dot(nm1, nm2));
+
+// 	printf("==== norm_columns(m1)\n");
+// 	norm_columns(m1);
+// 	idx_bloop1(lm, m1, double) {
+// 		idx_bloop1(llm, lm, double) {
+// 			printf("%g, ", llm.get());
+// 		}
+// 		printf("\n");
+// 	}
+
+// 	return 0;
+// }
+
+// int testBlas02() {
+// 	printf("\n****************************************************************\n");
+// 	printf("*** testBlas02\n");
+
+// 	{
+// 		printf("==== idx_m2dotm1(m,x,y)\n");
+// 		double mdata[] = { 1000, 100, 10, 1, -1000, -100, -10, -1, 1e7, 1e6,
+// 				1e5, 1e4 };
+// 		// Idx<double> z(3,6);
+// 		// Idx<double> m = z.narrow(1,4,1);
+// 		Idx<double> z(4, 3);
+// 		Idx<double> m = z.transpose(0, 1);
+// 		double xdata[] = { 2, 3, 4, 6 };
+// 		Idx<double> x(4);
+// 		Idx<double> y(3);
+// 		int i;
+// 		i = 0;
+// 		idx_aloop1(lm, m, double) {
+// 			*lm = mdata[i++];
+// 		}
+// 		i = 0;
+// 		idx_aloop1(lx, x, double) {
+// 			*lx = xdata[i++];
+// 		}
+// 		m.pretty(stdout);
+// 		idx_m2dotm1(m, x, y);
+// 		y.pretty(stdout);
+// 		idx_aloop1(ly, y, double) {
+// 			printf("%g, ", *ly);
+// 		}
+// 	}
+
+// 	{
+// 		printf("==== idx_m1extm1(x,y,m)\n");
+// 		Idx<double> m(3, 4);
+// 		Idx<double> x(3);
+// 		Idx<double> y(4);
+// 		double i;
+// 		i = 1;
+// 		idx_aloop1(lx, x, double) {
+// 			*lx = i++;
+// 		}
+// 		i = 1;
+// 		idx_aloop1(ly, y, double) {
+// 			*ly = i++;
+// 		}
+// 		idx_m1extm1(x, y, m);
+// 		idx_aloop1(lm, m, double) {
+// 			printf("%g, ", *lm);
+// 		}
+// 		printf("\n");
+// 	}
+// 	return 0;
+// }
