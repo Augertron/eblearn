@@ -12,7 +12,6 @@
 include_directories (include)
 include_directories(${LIBEBLEARN_INCLUDE_DIR})
 include_directories(${LIBIDX_INCLUDE_DIR})
-include_directories(${LIBCLUSTER_INCLUDE_DIR})
 include_directories(${EBLEARN_TOOLS_INCLUDE_DIR})
 
 # check for external libraries
@@ -52,7 +51,6 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   # link executable with external libraries
   ##############################################################################
   target_link_libraries (eblearn_tester eblearn idx)
-  target_link_libraries (eblearn_tester cluster idx)
   target_link_libraries (eblearn_tester eblearn_tools)
   target_link_libraries (eblearn_tester ${CPPUNIT_LIBRARY})
   
