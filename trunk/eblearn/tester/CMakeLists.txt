@@ -58,9 +58,9 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   ##############################################################################
   IF (EXISTS "${EXECUTABLE_OUTPUT_PATH}/run.init")
     FILE(READ "${EXECUTABLE_OUTPUT_PATH}/run.init" TEMP1)
-    STRING(REGEX MATCH "[-]data .*/data" MATCHED "${TEMP1}")
+    STRING(REGEX MATCH "[-]data .*[.][.]/data" MATCHED "${TEMP1}")
     IF (MATCHED)
-      STRING(REGEX REPLACE "[-]data .*/data" 
+      STRING(REGEX REPLACE "[-]data .*[.][.]/data" 
 	"-data ${CMAKE_CURRENT_SOURCE_DIR}/../data" TEMP2 "${TEMP1}")
       FILE(WRITE "${EXECUTABLE_OUTPUT_PATH}/run.init" "${TEMP2}") 
     ELSE (MATCHED)
