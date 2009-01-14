@@ -50,6 +50,6 @@ echo -n "\t"
 
 #ouputing arguments to main() for runtime
 mkdir bin 2> /dev/null
-echo "-mnist $MNIST" >> bin/run.init
+echo "\n-mnist $MNIST" >> bin/run.init
 
 echo "Configuration done."
