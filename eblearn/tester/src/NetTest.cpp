@@ -13,6 +13,7 @@ void NetTest::tearDown() {
 }
 
 void NetTest::test_lenet5_mnist() {
+  init_drand(time(NULL));
   CPPUNIT_ASSERT_MESSAGE(*gl_mnist_errmsg, gl_mnist_dir != NULL);
   intg trsize, tesize;
   trsize = 2000; tesize = 1000; // small demo  
@@ -117,4 +118,8 @@ void NetTest::test_lenet5_mnist() {
     thetrainer.test(&test_ds, &testmeter);
     testmeter.display();
   }
+  CPPUNIT_ASSERT(((trainmeter.total_correct * 100) 
+		  / (double) trainmeter.size) >= 94);
+  CPPUNIT_ASSERT(((testmeter.total_correct * 100) 
+		  / (double) testmeter.size) >= 94);
 }

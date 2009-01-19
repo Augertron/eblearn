@@ -98,7 +98,7 @@ int main(int argc, char **argv)
   runner.addTest(ImageTest::suite());
   runner.addTest(DataSourceTest::suite());
   runner.addTest(Classifier2DTest::suite());
-  //  runner.addTest(NetTest::suite());
+  runner.addTest(NetTest::suite());
 
   // run all tests
   runner.run();
