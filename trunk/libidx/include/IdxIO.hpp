@@ -203,7 +203,9 @@ namespace ebl {
 	     6 < ndim ? dims[6] : -1,
 	     7 < ndim ? dims[7] : -1);
     // body
-    { idx_aloop1(i, m, T) fread(&(*i), sizeof (T), 1, fp); }
+    int res;
+    { idx_aloop1(i, m, T) 
+	res = fread(&(*i), sizeof (T), 1, fp); }
     fclose(fp);
     free(dims);
     return true;
@@ -314,7 +316,9 @@ namespace ebl {
       }
     }
     // body
-    { idx_aloop1(i, m, T) fwrite(&(*i), sizeof (T), 1, fp); }
+    int res;
+    { idx_aloop1(i, m, T) 
+	res = fwrite(&(*i), sizeof (T), 1, fp); }
     fclose(fp);
     return true;
   }
