@@ -41,7 +41,8 @@ void ClusterTest::tearDown() {
 // }
 
 void ClusterTest::test_ints() {
-  CPPUNIT_ASSERT(false); // todo: implement
+  CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
+
 //   const int K = 4;
 //   // generate 16 data points
 //   const int N = 2;
@@ -85,7 +86,8 @@ void ClusterTest::test_ints() {
 }
   
 void ClusterTest::test_doubles() {
-  CPPUNIT_ASSERT(false); // todo: implement
+  CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
+
 //   const int K = 4;
 //   // generate 100 data points with dimension 16
 //   Idx<double> vectors(100, 16);
