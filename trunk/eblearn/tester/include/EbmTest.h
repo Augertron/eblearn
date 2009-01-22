@@ -9,11 +9,13 @@ class EbmTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(EbmTest);
   CPPUNIT_TEST(test_clayer_fprop);
   CPPUNIT_TEST(test_full_table);
-  CPPUNIT_TEST(test_slayer);
   CPPUNIT_TEST(test_softmax);
   CPPUNIT_TEST(test_state_copy);
   CPPUNIT_TEST(test_Ebm01);
   CPPUNIT_TEST(test_Ebm02);
+  CPPUNIT_TEST(test_jacobian_slayer);
+  CPPUNIT_TEST(test_jacobian_clayer);
+  CPPUNIT_TEST(test_jacobian_param_clayer);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -28,11 +30,13 @@ public:
   // Test functions
   void test_clayer_fprop();
   void test_full_table();
-  void test_slayer();
   void test_softmax();
   void test_state_copy();
   void test_Ebm01();
   void test_Ebm02();
+  void test_jacobian_slayer();
+  void test_jacobian_clayer();
+  void test_jacobian_param_clayer();
 };
 
 #endif /* EBMTEST_H_ */
