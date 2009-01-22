@@ -1,4 +1,5 @@
 #include "EbmTest.h"
+#include "EbmTester.h"
 
 using namespace std;
 using namespace ebl;
@@ -75,16 +76,6 @@ void EbmTest::test_full_table() {
   CPPUNIT_ASSERT_EQUAL((intg) 1, m.get(5, 0));
   CPPUNIT_ASSERT_EQUAL((intg) 2, m.get(5, 1));
 }
-
-void EbmTest::test_slayer() {
-  CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
-
-  parameter p(10000);
-  int ki = 4, kj = 4, thick = 1, si = 2, sj =2;
-  stdsigmoid_module sqsh;
-  s_layer x(&p, ki, kj, thick, si, sj, &sqsh);
-}
-
 
 void EbmTest::test_softmax(){
   CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
@@ -260,3 +251,40 @@ void EbmTest::test_Ebm02() {
   { printf("in.ddx: ["); idx_aloop1(lin,in.ddx,double) { printf("%g ",*lin); } printf("]\n"); }
 }
 
+void EbmTest::test_jacobian_slayer() {
+  parameter p(10000);
+  int ki = 4, kj = 4, thick = 1, si = 2, sj =2;
+  stdsigmoid_module sqsh;
+  s_layer s(&p, ki, kj, thick, si, sj, &sqsh);
+  state_idx in(1, 8, 8);
+  state_idx out(1, 1, 1);
+
+  ModuleTester mt;
+  mt.test_jacobian(&s, &in, &out);
+  CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
+}
+
+void EbmTest::test_jacobian_clayer() {
+  intg ini = 3;
+  intg inj = 3;
+  intg ki = 2;
+  intg kj = 2;
+  intg si = 1 + ini - ki;
+  intg sj = 1 + inj - kj;
+  state_idx in(1, ini, inj);
+  state_idx out(1, si, sj);
+  Idx<intg> table(1, 2);
+  idx_clear(table);
+  Idx<intg> tableout = table.select(1, 1);
+  intg thick = 1 + idx_max(tableout);
+  stdsigmoid_module sqsh;
+  parameter prm(10000);
+  c_layer c(&prm, ki, kj, 1, 1, &table, thick, si, sj, &sqsh);
+
+  ModuleTester mt;
+  mt.test_jacobian(&c, &in, &out);
+  CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
+}
+
+void EbmTest::test_jacobian_param_clayer() {
+}
