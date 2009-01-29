@@ -79,7 +79,8 @@ void net_cscscf::init(parameter *prm, intg ini, intg inj,
 	s1_state = new state_idx(thick1, s1_sizi, s1_sizj);
 	c2_module = new c_layer(prm, ki2, kj2, 1, 1, tbl2, thick2, c2_sizi, c2_sizj, c2_squash);
 	c2_state = new state_idx(thick2, c2_sizi, c2_sizj);
-  f_module = new f_layer(prm, thick2, outthick, c2_sizi, c2_sizj, f_squash);
+	  f_module = new f_layer(prm, thick2, outthick, c2_sizi, c2_sizj, f_squash);
+	//  f_module = new nn_layer_full(prm, thick2, outthick);
 }
 
 net_cscscf::~net_cscscf() {
