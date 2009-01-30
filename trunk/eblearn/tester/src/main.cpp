@@ -27,6 +27,7 @@ string *gl_mnist_dir = NULL;
 string *gl_data_dir = NULL;
 string *gl_mnist_errmsg = NULL;
 string *gl_data_errmsg = NULL;
+bool    color_print = true;
 
 void parse_args(int argc, char **argv) {
   // Read arguments from run.init file in working directory
@@ -65,6 +66,14 @@ void parse_args(int argc, char **argv) {
   }
   if (gl_data_dir == NULL) {
     cout << "Warning: " << *gl_data_errmsg << endl;
+  }
+  
+  // Read arguments from shell input
+  for (int i = 1; i < argc; ++i) {
+    if (strcmp(argv[i], "-nocolor") == 0) {
+      color_print = false;
+      cout << "Not using colors in shell." << endl;
+    }
   }
 }
 

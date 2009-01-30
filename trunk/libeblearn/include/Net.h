@@ -54,7 +54,7 @@ namespace ebl {
     c_layer 	                    *c2_module;
     state_idx                       *c2_state;
     module_1_1<state_idx,state_idx> *c2_squash;
-    f_layer 	                    *f_module;
+        f_layer 	                    *f_module;
     //	nn_layer_full 	            *f_module;
     module_1_1<state_idx,state_idx> *f_squash;
 

@@ -3,9 +3,9 @@
 #include <cppunit/TestFailure.h>
 #include <cppunit/portability/Stream.h>
 
+extern bool color_print;
 
 CPPUNIT_NS_BEGIN
-
 
 BriefTestProgressListener::BriefTestProgressListener()
     : m_lastTestFailed( false )
@@ -39,10 +39,17 @@ BriefTestProgressListener::addFailure( const TestFailure &failure )
 void 
 BriefTestProgressListener::endTest( Test *test )
 {
-  if ( !m_lastTestFailed )
-    stdCOut()  <<  " : \033[1;32m[OK]\033[0m";
-  else 
-    stdCOut()  <<  " \033[1;31m[Failed]\033[0m";
+  if ( !m_lastTestFailed ) {
+    stdCOut() << " : ";
+    if (color_print) stdCOut() << "\033[1;32m";
+    stdCOut() << "[OK]";
+    if (color_print) stdCOut() << "\033[0m";
+  }
+  else { 
+    if (color_print) stdCOut() << "\033[1;31m";
+    stdCOut()  <<  " [Failed]";
+    if (color_print) stdCOut() << "\033[0m";
+  }
   stdCOut() << "\n";
 }
 
