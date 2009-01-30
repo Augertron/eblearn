@@ -3,6 +3,8 @@
 
 using namespace CppUnit;
 
+extern bool color_print;
+
 MyTextOutputter::MyTextOutputter( TestResultCollector *result,
                               OStream &stream )
   : TextOutputter(result, stream)
@@ -17,7 +19,10 @@ void
 MyTextOutputter::printHeader()
 {
   if ( m_result->wasSuccessful() ) {
-    m_stream << "\033[1;32m[OK]\033[0m  (";
+    if (color_print) m_stream << "\033[1;32m";
+    m_stream << "[OK]";
+    if (color_print) m_stream << "\033[0m";
+    m_stream << " (";
     m_stream << m_result->runTests () << " tests)" ;
   } else {
     //    printFailureWarning();
@@ -28,14 +33,28 @@ MyTextOutputter::printHeader()
 void 
 MyTextOutputter::printStatistics()
 {
-  m_stream << "\033[1;32m[OK:\033[0m ";
+  if (color_print) m_stream << "\033[1;32m";
+  m_stream << "[OK:";
+  if (color_print) m_stream << "\033[0m ";
   m_stream <<  m_result->runTests() 
     - m_result->testFailures() - m_result->testErrors();
-  m_stream << "\033[1;32m]\033[0m ";
-  m_stream << " \033[1;31m[Failed: \033[0m"  <<  m_result->testFailures();
-  m_stream << "\033[1;31m]\033[0m ";
-  m_stream << " \033[1;31m[Errors:\033[0m "  <<  m_result->testErrors();
-  m_stream << "\033[1;31m]\033[0m ";
+  if (color_print) m_stream << "\033[1;32m";
+  m_stream << "] ";
+  if (color_print) m_stream << "\033[0m";
+  if (color_print) m_stream << " \033[1;31m";
+  m_stream << "[Failed: ";
+  if (color_print) m_stream << "\033[0m";
+  m_stream <<  m_result->testFailures();
+  if (color_print) m_stream << "\033[1;31m";
+  m_stream << "] ";
+  if (color_print) m_stream << "\033[0m";
+  if (color_print) m_stream << "\033[1;31m";
+  m_stream << "[Errors: ";
+  if (color_print) m_stream << "\033[0m";
+  m_stream <<  m_result->testErrors();
+  if (color_print) m_stream << "\033[1;31m";
+  m_stream << "] ";
+  if (color_print) m_stream << "\033[0m";
   m_stream  <<  "\n";
 }
 
