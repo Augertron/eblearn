@@ -34,22 +34,22 @@
 
 namespace ebl {
 
-////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////
 
-// derivative of tanh
-double dtanh(double x) {
-  double e = exp(-2*(double)(x));
-  double e1 = 1+e;
-  return ((4*e)/(e1*e1));
-}
+  // derivative of tanh
+  double dtanh(double x) {
+    double e = exp(-2*(double)(x));
+    double e1 = 1+e;
+    return ((4*e)/(e1*e1));
+  }
 
 
-////////////////////////////////////////////////////////////////
-// "standard" sigmoid
+  ////////////////////////////////////////////////////////////////
+  // "standard" sigmoid
 
-// stdsigmoid(x)
-// stdsigmoid(x)
-// Rational polynomial for computing 1.71593428 tanh (0.66666666 x)
+  // stdsigmoid(x)
+  // stdsigmoid(x)
+  // Rational polynomial for computing 1.71593428 tanh (0.66666666 x)
 
 
 #define PR  ((double)0.66666666)
@@ -59,46 +59,46 @@ double dtanh(double x) {
 #define A2   ((double)(0.0078125*PR*PR))
 #define A3   ((double)(0.000325520833333*PR*PR*PR))
 
-double stdsigmoid(double x)
-{
-  register double y;
+  double stdsigmoid(double x)
+  {
+    register double y;
 
-  if (x >= 0.0)
+    if (x >= 0.0)
+      if (x < (double)13)
+	y = A0+x*(A1+x*(A2+x*(A3)));
+      else
+	return PO;
+    else
+      if (x > -(double)13)
+	y = A0-x*(A1-x*(A2-x*(A3)));
+      else
+	return -PO;
+    y *= y;
+    y *= y;
+    y *= y;
+    y *= y;
+    return (x > 0.0) ? PO*(y-1.0)/(y+1.0) : PO*(1.0-y)/(y+1.0);
+  }
+
+  // derivative of the above
+  double dstdsigmoid(double x)
+  {
+    if (x < 0.0)
+      x = -x;
     if (x < (double)13)
-      y = A0+x*(A1+x*(A2+x*(A3)));
+      {
+	register double y;
+	y = A0+x*(A1+x*(A2+x*(A3)));
+	y *= y;
+	y *= y;
+	y *= y;
+	y *= y;
+	y = (y-1.0)/(y+1.0);
+	return PR*PO - PR*PO*y*y;
+      }
     else
-      return PO;
-  else
-    if (x > -(double)13)
-      y = A0-x*(A1-x*(A2-x*(A3)));
-    else
-      return -PO;
-  y *= y;
-  y *= y;
-  y *= y;
-  y *= y;
-  return (x > 0.0) ? PO*(y-1.0)/(y+1.0) : PO*(1.0-y)/(y+1.0);
-}
-
-// derivative of the above
-double dstdsigmoid(double x)
-{
-  if (x < 0.0)
-    x = -x;
-  if (x < (double)13)
-    {
-      register double y;
-      y = A0+x*(A1+x*(A2+x*(A3)));
-      y *= y;
-      y *= y;
-      y *= y;
-      y *= y;
-      y = (y-1.0)/(y+1.0);
-      return PR*PO - PR*PO*y*y;
-    }
-  else
-    return 0.0;
-}
+      return 0.0;
+  }
 
 #undef PR
 #undef PO
@@ -108,97 +108,97 @@ double dstdsigmoid(double x)
 #undef A3
 
 
-////////////////////////////////////////////////////////////////
-// random number generator.
-// same as in Lush
+  ////////////////////////////////////////////////////////////////
+  // random number generator.
+  // same as in Lush
 
 #define MMASK  0x7fffffffL
 #define MSEED  161803398L
 #define FAC    ((float)(1.0/(1.0+MMASK)))
 #define FAC2   ((float)(1.0/0x01000000L))
 
-static int inext, inextp;
-static int ma[56];		/* Should not be modified */
+  static int inext, inextp;
+  static int ma[56];		/* Should not be modified */
 
-bool drand_ini = false;
+  bool drand_ini = false;
 
-void init_drand(int x){
-	drand_ini = true;
-	dseed(x);
-}
-
-void dseed(int x) {
-  int mj, mk;
-  int i, ii;
-
-  mj = MSEED - (x < 0 ? -x : x);
-  mj &= MMASK;
-  ma[55] = mj;
-  mk = 1;
-  for (i = 1; i <= 54; i++) {
-    ii = (21 * i) % 55;
-    ma[ii] = mk;
-    mk = (mj - mk) & MMASK;
-    mj = ma[ii];
+  void init_drand(int x){
+    drand_ini = true;
+    dseed(x);
   }
-  for (ii = 1; ii <= 4; ii++)
-    for (i = 1; i < 55; i++) {
-      ma[i] -= ma[1 + (i + 30) % 55];
-      ma[i] &= MMASK;
+
+  void dseed(int x) {
+    int mj, mk;
+    int i, ii;
+
+    mj = MSEED - (x < 0 ? -x : x);
+    mj &= MMASK;
+    ma[55] = mj;
+    mk = 1;
+    for (i = 1; i <= 54; i++) {
+      ii = (21 * i) % 55;
+      ma[ii] = mk;
+      mk = (mj - mk) & MMASK;
+      mj = ma[ii];
     }
-  inext = 0;
-  inextp = 31;			/* Special constant */
-}
+    for (ii = 1; ii <= 4; ii++)
+      for (i = 1; i < 55; i++) {
+	ma[i] -= ma[1 + (i + 30) % 55];
+	ma[i] &= MMASK;
+      }
+    inext = 0;
+    inextp = 31;			/* Special constant */
+  }
 
 
-double drand(void) {
-  register int mj;
-  if (++inext == 56)
-    inext = 1;
-  if (++inextp == 56)
-    inextp = 1;
-  mj = ((ma[inext] - ma[inextp]) * 84589 + 45989) & MMASK;
-  ma[inext] = mj;
-  return (double)(mj * FAC);
-}
-
-double drand(double v) { return v*2*drand()-v; }
-double drand(double v0, double v1) { return (v1-v0)*drand()+v0; }
-
-double dgauss(void) {
-  /*
-   * Now a quick and dirty way to build
-   * a quasi-normal random number.
-   */
-  register int i;
-  register int mj, sum;
-  mj = 0;
-  sum = 0;
-  for (i = 12; i; i--) {
+  double drand(void) {
+    register int mj;
     if (++inext == 56)
       inext = 1;
     if (++inextp == 56)
       inextp = 1;
-    mj = (ma[inext] - ma[inextp]) & MMASK;
+    mj = ((ma[inext] - ma[inextp]) * 84589 + 45989) & MMASK;
     ma[inext] = mj;
-    if (mj & 0x00800000L)
-      mj |= 0xff000000L;
-    else
-      mj &= 0x00ffffffL;
-    sum += mj;
+    return (double)(mj * FAC);
   }
-  ma[inext] = (mj * 84589 + 45989) & MMASK;
-  return (double)(sum * FAC2);
-}
 
-double dgauss(double sigma) { return sigma*dgauss(); }
-double dgauss(double m, double sigma) { return sigma*dgauss() + m; }
+  double drand(double v) { return v*2*drand()-v; }
+  double drand(double v0, double v1) { return (v1-v0)*drand()+v0; }
+
+  double dgauss(void) {
+    /*
+     * Now a quick and dirty way to build
+     * a quasi-normal random number.
+     */
+    register int i;
+    register int mj, sum;
+    mj = 0;
+    sum = 0;
+    for (i = 12; i; i--) {
+      if (++inext == 56)
+	inext = 1;
+      if (++inextp == 56)
+	inextp = 1;
+      mj = (ma[inext] - ma[inextp]) & MMASK;
+      ma[inext] = mj;
+      if (mj & 0x00800000L)
+	mj |= 0xff000000L;
+      else
+	mj &= 0x00ffffffL;
+      sum += mj;
+    }
+    ma[inext] = (mj * 84589 + 45989) & MMASK;
+    return (double)(sum * FAC2);
+  }
+
+  double dgauss(double sigma) { return sigma*dgauss(); }
+  double dgauss(double m, double sigma) { return sigma*dgauss() + m; }
 
 #undef MMASK
 #undef MSEED
 #undef FAC
 #undef FAC2
 
-////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////
 
 } // end namespace ebl

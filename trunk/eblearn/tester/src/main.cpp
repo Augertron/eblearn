@@ -79,16 +79,6 @@ int main(int argc, char **argv)
   parse_args(argc, argv);
   cout << "***********************************************************" << endl;
 
-  /*  
-      try 
-       {
-       //     cout << "toto";
-    throw 42;
-       }
-    catch (int i) { cout << "tata";}
-  */
-
-
   // cppunit tests
   CppUnit::BriefTestProgressListener listener;
   CppUnit::TestResultCollector collector;

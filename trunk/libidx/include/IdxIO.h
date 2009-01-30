@@ -43,38 +43,38 @@
 using namespace std;
 
 // standard lush magic numbers
-#define MAGIC_FLOAT_MATRIX		0x1e3d4c51
-#define MAGIC_PACKED_MATRIX	 	0x1e3d4c52
-#define MAGIC_DOUBLE_MATRIX	 	0x1e3d4c53
+#define MAGIC_FLOAT_MATRIX	0x1e3d4c51
+#define MAGIC_PACKED_MATRIX	0x1e3d4c52
+#define MAGIC_DOUBLE_MATRIX	0x1e3d4c53
 #define MAGIC_INTEGER_MATRIX	0x1e3d4c54
-#define MAGIC_BYTE_MATRIX	    0x1e3d4c55
-#define MAGIC_SHORT_MATRIX	 	0x1e3d4c56
-#define MAGIC_SHORT8_MATRIX	 	0x1e3d4c57
-#define MAGIC_LONG_MATRIX		0x1e3d4c58
-#define MAGIC_ASCII_MATRIX	 	0x2e4d4154	/* '.MAT' */
+#define MAGIC_BYTE_MATRIX	0x1e3d4c55
+#define MAGIC_SHORT_MATRIX	0x1e3d4c56
+#define MAGIC_SHORT8_MATRIX	0x1e3d4c57
+#define MAGIC_LONG_MATRIX	0x1e3d4c58
+#define MAGIC_ASCII_MATRIX	0x2e4d4154	/* '.MAT' */
 
 // pascal vincent's magic numbers
-#define MAGIC_UBYTE_VINCENT		0x0800
-#define MAGIC_BYTE_VINCENT		0x0900
-#define MAGIC_SHORT_VINCENT		0x0B00
-#define MAGIC_INT_VINCENT			0x0C00
-#define MAGIC_FLOAT_VINCENT		0x0D00
+#define MAGIC_UBYTE_VINCENT	0x0800
+#define MAGIC_BYTE_VINCENT	0x0900
+#define MAGIC_SHORT_VINCENT	0x0B00
+#define MAGIC_INT_VINCENT	0x0C00
+#define MAGIC_FLOAT_VINCENT	0x0D00
 #define MAGIC_DOUBLE_VINCENT	0x0E00
 
 namespace ebl {
 
-// TODO: implement all types.
-// TODO: is check for endianess required?
+  // TODO: implement all types.
+  // TODO: is check for endianess required?
 
-//! Loads a matrix from file filename and returns it.
-//! Returns true if successful, false otherwise.
-template<typename T> bool load_matrix(Idx<T>& m, const char *filename);
-template<typename T> bool load_matrix(Idx<T>& m, istream &stream);
+  //! Loads a matrix from file filename and returns it.
+  //! Returns true if successful, false otherwise.
+  template<typename T> bool load_matrix(Idx<T>& m, const char *filename);
+  template<typename T> bool load_matrix(Idx<T>& m, istream &stream);
 
-//! Saves a matrix m in file filename.
-//! Returns true if successful, false otherwise.
-template<typename T> bool save_matrix(Idx<T>& m, const char *filename);
-template<typename T> bool save_matrix(Idx<T>& m, ostream &stream);
+  //! Saves a matrix m in file filename.
+  //! Returns true if successful, false otherwise.
+  template<typename T> bool save_matrix(Idx<T>& m, const char *filename);
+  template<typename T> bool save_matrix(Idx<T>& m, ostream &stream);
 
 } // end namespace ebl
 

@@ -35,56 +35,57 @@ namespace ebl {
 
 #include "Ipp.h"
 
-// TODO: handle non contiguous?
-int ipp_convolution_float(Idx<float> &in, Idx<float> &ker, Idx<float> &out) {
-  if ((in.dim(0) > INT_MAX) || (in.dim(1) > INT_MAX) ||
-      (ker.dim(0) > INT_MAX) || (ker.dim(1) > INT_MAX) ||
-      (in.mod(0) > INT_MAX) || (ker.mod(0) > INT_MAX) ||
-      (out.mod(0) > INT_MAX))
-    ylerror("TODO: Cannot use long with IPP.");
+  // TODO: handle non contiguous?
+  int ipp_convolution_float(Idx<float> &in, Idx<float> &ker, Idx<float> &out) {
+    if ((in.dim(0) > INT_MAX) || (in.dim(1) > INT_MAX) ||
+	(ker.dim(0) > INT_MAX) || (ker.dim(1) > INT_MAX) ||
+	(in.mod(0) > INT_MAX) || (ker.mod(0) > INT_MAX) ||
+	(out.mod(0) > INT_MAX))
+      ylerror("TODO: Cannot use long with IPP.");
   
-  int instep	= sizeof (float) * (int) in.mod(0);
-  int kerstep	= sizeof (float) * (int) ker.mod(0);
-  int outstep	= sizeof (float) * (int) out.mod(0);
-  IppiSize insize, kersize;
+    int instep	= sizeof (float) * (int) in.mod(0);
+    int kerstep	= sizeof (float) * (int) ker.mod(0);
+    int outstep	= sizeof (float) * (int) out.mod(0);
+    IppiSize insize, kersize;
   
-  insize.height = in.dim(0);
-  insize.width = in.dim(1);
-  kersize.height = ker.dim(0);
-  kersize.width = ker.dim(1);
-  return ippiConvValid_32f_C1R(in.idx_ptr(),instep,insize,
-			       ker.idx_ptr(),kerstep,kersize,
-			       out.idx_ptr(),outstep);
-}
+    insize.height = in.dim(0);
+    insize.width = in.dim(1);
+    kersize.height = ker.dim(0);
+    kersize.width = ker.dim(1);
+    return ippiConvValid_32f_C1R(in.idx_ptr(),instep,insize,
+				 ker.idx_ptr(),kerstep,kersize,
+				 out.idx_ptr(),outstep);
+  }
 
-int ipp_add_float(Idx<float> &in1, Idx<float> &in2) {
-  IppiSize	insize;
-  int		instep;
+  int ipp_add_float(Idx<float> &in1, Idx<float> &in2) {
+    IppiSize	insize;
+    int		instep;
 
-  if ((in1.dim(0) > INT_MAX) || (in1.dim(1) > INT_MAX) ||
-      (in1.mod(0) > INT_MAX))
-    ylerror("TODO: Cannot use long with IPP.");
+    if ((in1.dim(0) > INT_MAX) || (in1.dim(1) > INT_MAX) ||
+	(in1.mod(0) > INT_MAX))
+      ylerror("TODO: Cannot use long with IPP.");
   
-  insize.height = in1.dim(0);
-  insize.width = in1.dim(1); 
-  instep = sizeof (float) * in1.mod(0);
-  return ippiAdd_32f_C1IR(in1.ptr(), instep, in2.ptr(), instep, insize);
-}
+    insize.height = in1.dim(0);
+    insize.width = in1.dim(1); 
+    instep = sizeof (float) * in1.mod(0);
+    return ippiAdd_32f_C1IR(in1.ptr(), instep, in2.ptr(), instep, insize);
+  }
 
-int ipp_addc_nip_float(Idx<float> &in, float constant, Idx<float> &out) {
-  IppiSize	insize;
-  int		instep, outstep;
+  int ipp_addc_nip_float(Idx<float> &in, float constant, Idx<float> &out) {
+    IppiSize	insize;
+    int		instep, outstep;
 
-  if ((in.dim(0) > INT_MAX) || (in.dim(1) > INT_MAX) ||
-      (in.mod(0) > INT_MAX) || (out.mod(0) > INT_MAX))
-    ylerror("TODO: Cannot use long with IPP.");
+    if ((in.dim(0) > INT_MAX) || (in.dim(1) > INT_MAX) ||
+	(in.mod(0) > INT_MAX) || (out.mod(0) > INT_MAX))
+      ylerror("TODO: Cannot use long with IPP.");
 
-  insize.height = in.dim(0);
-  insize.width = in.dim(1); 
-  instep = sizeof (float) * in.mod(0);
-  outstep = sizeof (float) * out.mod(0);
-  return ippiAddC_32f_C1R(in.ptr(), instep, constant, out.ptr(), outstep, insize);
-}
+    insize.height = in.dim(0);
+    insize.width = in.dim(1); 
+    instep = sizeof (float) * in.mod(0);
+    outstep = sizeof (float) * out.mod(0);
+    return ippiAddC_32f_C1R(in.ptr(), instep, constant, out.ptr(), outstep, 
+			    insize);
+  }
 
 #endif
 

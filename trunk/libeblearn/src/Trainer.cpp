@@ -36,74 +36,75 @@ using namespace std;
 
 namespace ebl {
 
-eb_trainer::eb_trainer(idx3_supervised_module *m, parameter *p,
-		state_idx *e, state_idx *in) {
-  machine = m;
-  param = p;
-  age = 0;
-  energy_owned = false;
-  input_owned = false;
-  if (e != NULL)
-  	energy = e;
-  else {
-    // set energy slot to default idx0-ddstate
-    energy = new state_idx();
-    energy_owned = true;
-    energy->dx.set(1.0);
-    energy->ddx.set(0.0);
+  eb_trainer::eb_trainer(idx3_supervised_module *m, parameter *p,
+			 state_idx *e, state_idx *in) {
+    machine = m;
+    param = p;
+    age = 0;
+    energy_owned = false;
+    input_owned = false;
+    if (e != NULL)
+      energy = e;
+    else {
+      // set energy slot to default idx0-ddstate
+      energy = new state_idx();
+      energy_owned = true;
+      energy->dx.set(1.0);
+      energy->ddx.set(0.0);
+    }
+    if (in != NULL)
+      input = in;
+    else {
+      input = new state_idx(1, 1, 1);
+      input_owned = true;
+    }
   }
-  if (in != NULL)
-  	input = in;
-  else {
-  	input = new state_idx(1, 1, 1);
-  	input_owned = true;
+
+  eb_trainer::~eb_trainer() {
+    if (energy_owned) delete energy;
+    if (input_owned) delete input;
   }
-}
 
-eb_trainer::~eb_trainer() {
-	if (energy_owned) delete energy;
-	if (input_owned) delete input;
-}
+  ////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////
-
-supervised::supervised(idx3_supervised_module *m, parameter *p,
-		state_idx *e, state_idx *in,
-		class_state *out, Idx<ubyte> *des)
-: eb_trainer(m, p, e, in) {
-  output_owned = true;
-  desired_owned = true;
-  if (out != NULL)
-  	output = out;
-  else {
-    output = new class_state(2);
+  supervised::supervised(idx3_supervised_module *m, parameter *p,
+			 state_idx *e, state_idx *in,
+			 class_state *out, Idx<ubyte> *des)
+  : eb_trainer(m, p, e, in) {
     output_owned = true;
-  }
-  if (des != NULL)
-    desired = des;
-  else {
-    desired = new Idx<ubyte>();
     desired_owned = true;
+    if (out != NULL)
+      output = out;
+    else {
+      output = new class_state(2);
+      output_owned = true;
+    }
+    if (des != NULL)
+      desired = des;
+    else {
+      desired = new Idx<ubyte>();
+      desired_owned = true;
+    }
   }
-}
 
-supervised::~supervised() {
-	if (output_owned) delete output;
-	if (desired_owned) delete desired;
-}
-
+  supervised::~supervised() {
+    if (output_owned) delete output;
+    if (desired_owned) delete desired;
+  }
 
 
-////////////////////////////////////////////////////////////////
 
-supervised_gradient::supervised_gradient(idx3_supervised_module *m, parameter *p,
-		state_idx *e, state_idx *in,
-		class_state *out, Idx<ubyte> *des)
-: supervised(m, p, e, in, out, des) {
-}
+  ////////////////////////////////////////////////////////////////
 
-supervised_gradient::~supervised_gradient() {
-}
+  supervised_gradient::supervised_gradient(idx3_supervised_module *m, 
+					   parameter *p,
+					   state_idx *e, state_idx *in,
+					   class_state *out, Idx<ubyte> *des)
+  : supervised(m, p, e, in, out, des) {
+  }
+
+  supervised_gradient::~supervised_gradient() {
+  }
 
 
 } // end namespace ebl

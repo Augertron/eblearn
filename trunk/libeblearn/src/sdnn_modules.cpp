@@ -35,12 +35,12 @@ using namespace ebl;
 
 ///////////////////////////////////////////////////
 // <Idx.hpp> eloop macros
-#define idx_eloop4(dst0,src0,type0, dst1,src1,type1, dst2,src2,type2, dst3,src3,type3)				\
+#define idx_eloop4(dst0,src0,type0, dst1,src1,type1, dst2,src2,type2, dst3,src3,type3) \
   if ( ((src0).dim((src0).order()) != (src1).dim((src1).order())) || ((src0).dim((src0).order()) != (src2).dim((src2).order())) ) ylerror("incompatible Idxs for eloop\n"); \
-  DimIter<type0> dst0(src0,(src0).order()-1); \
-  DimIter<type1> dst1(src1,(src1).order()-1); \
-  DimIter<type2> dst2(src2,(src2).order()-1); \
-  DimIter<type3> dst3(src3,(src3).order()-1); \
+  DimIter<type0> dst0(src0,(src0).order()-1);				\
+  DimIter<type1> dst1(src1,(src1).order()-1);				\
+  DimIter<type2> dst2(src2,(src2).order()-1);				\
+  DimIter<type3> dst3(src3,(src3).order()-1);				\
   for ( ; dst0.notdone(); ++dst0, ++dst1, ++dst2, ++dst3)
 
 // <Blas.hpp>
@@ -56,48 +56,48 @@ template<class T> T idx_f1logdotf1(Idx<T> &m, Idx<T> &p) {
 
 // <Blas.hpp>
 template<class T1, class T2> void idx_sortup(Idx<T1> &m, Idx<T2> &p) {
-	idx_checkorder2(m, 1, p, 1);
-	if (m.mod(0) != 1) ylerror("idx_sortdown: vector is not contiguous");
-	if (p.mod(0) != 1) ylerror("idx_sortdown: vector is not contiguous");
-	intg n = m.dim(0);
-	intg z = p.dim(0);
-	if (n != z) ylerror("idx_sortdown: vectors have different sizes");
-	if (n > 1) {
-		int l,j,ir,i;
-		T1 *ra, rra;
-		T2 *rb, rrb;
+  idx_checkorder2(m, 1, p, 1);
+  if (m.mod(0) != 1) ylerror("idx_sortdown: vector is not contiguous");
+  if (p.mod(0) != 1) ylerror("idx_sortdown: vector is not contiguous");
+  intg n = m.dim(0);
+  intg z = p.dim(0);
+  if (n != z) ylerror("idx_sortdown: vectors have different sizes");
+  if (n > 1) {
+    int l,j,ir,i;
+    T1 *ra, rra;
+    T2 *rb, rrb;
 
-		ra = (T1*)m.idx_ptr() -1;
-		rb = (T2*)p.idx_ptr() -1;
+    ra = (T1*)m.idx_ptr() -1;
+    rb = (T2*)p.idx_ptr() -1;
 
-		l = (n >> 1) + 1;
-		ir = n;
-		for (;;) {
-			if (l > 1) {
-				rra=ra[--l];
-				rrb=rb[l];
-			} else {
-				rra=ra[ir];
-				rrb=rb[ir];
-				ra[ir]=ra[1];
-				rb[ir]=rb[1];
-				if (--ir == 1) {
-					ra[1]=rra;
-					rb[1]=rrb;
-					return ; } }
-			i=l;
-			j=l << 1;
-			while (j <= ir)	{
-				if (j < ir && ra[j] < ra[j+1]) ++j;
-				if (rra < ra[j]) {
-					ra[i]=ra[j];
-					rb[i]=rb[j];
-					j += (i=j);
-				} else j=ir+1; }
-			ra[i]=rra;
-			rb[i]=rrb;
-		}
-	}
+    l = (n >> 1) + 1;
+    ir = n;
+    for (;;) {
+      if (l > 1) {
+	rra=ra[--l];
+	rrb=rb[l];
+      } else {
+	rra=ra[ir];
+	rrb=rb[ir];
+	ra[ir]=ra[1];
+	rb[ir]=rb[1];
+	if (--ir == 1) {
+	  ra[1]=rra;
+	  rb[1]=rrb;
+	  return ; } }
+      i=l;
+      j=l << 1;
+      while (j <= ir)	{
+	if (j < ir && ra[j] < ra[j+1]) ++j;
+	if (rra < ra[j]) {
+	  ra[i]=ra[j];
+	  rb[i]=rb[j];
+	  j += (i=j);
+	} else j=ir+1; }
+      ra[i]=rra;
+      rb[i]=rrb;
+    }
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -105,14 +105,14 @@ template<class T1, class T2> void idx_sortup(Idx<T1> &m, Idx<T2> &p) {
 
 sdnnclass_state::sdnnclass_state(int n)
 {
-	sorted_classes = new Idx<int>(n, 100);
-	sorted_scores = new Idx<double>(n, 100);
+  sorted_classes = new Idx<int>(n, 100);
+  sorted_scores = new Idx<double>(n, 100);
 }
 
 sdnnclass_state::~sdnnclass_state()
 {
-	delete sorted_classes;
-	delete sorted_scores;
+  delete sorted_classes;
+  delete sorted_scores;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -120,64 +120,64 @@ sdnnclass_state::~sdnnclass_state()
 
 sdnn_classer::sdnn_classer(Idx<int> *classes, Idx<double> *pr, int ini, int inj, parameter *prm)
 {
-	junk_param = new state_idx(prm);
-	intg cdim0 = classes->dim(0);
-	if (pr->dim(0) != cdim0 + 1)
-		throw("[sdnn-classer] priors and classes have incompatible sizes");
-	priors = pr;
-	classindex2label = classes;
-	logadded_distjunk = new state_idx(cdim0 + 1, 100);
+  junk_param = new state_idx(prm);
+  intg cdim0 = classes->dim(0);
+  if (pr->dim(0) != cdim0 + 1)
+    throw("[sdnn-classer] priors and classes have incompatible sizes");
+  priors = pr;
+  classindex2label = classes;
+  logadded_distjunk = new state_idx(cdim0 + 1, 100);
 }
 
 sdnn_classer::~sdnn_classer()
 {
-	delete junk_param;
-	delete logadded_distjunk;
+  delete junk_param;
+  delete logadded_distjunk;
 }
 
 void sdnn_classer::set_junk_cost(float c)
 {
-	junk_param->x.set(sqrt(2.0 * c));
+  junk_param->x.set(sqrt(2.0 * c));
 }
 
 void sdnn_classer::fprop(state_idx *in, sdnnclass_state *out)
 {
-	// logadd over spatial dimensions
-	out->sorted_classes->resize(in->x.dim(0) + 1, in->x.dim(2));
-	out->sorted_scores->resize(in->x.dim(0) + 1, in->x.dim(2));
-	logadded_distjunk->resize(in->x.dim(0) + 1, in->x.dim(2));
-	{
-		Idx<double> inx = in->x.select(1, 0);
-		idx_eloop4(lax,inx,double, outclasses,*out->sorted_classes,int, outscores,*out->sorted_scores,double, lajx,logadded_distjunk->x,double)
-		{
-			intg s = lax.dim(0);
-			Idx<int> noutclasses(outclasses.narrow(0, s, 0));
-			idx_copy(*classindex2label, noutclasses);
-			// write label for junk class
-			outclasses.set(-1, s);
-			Idx<double> nlajx(lajx.narrow(0, s, 0));
-			idx_copy(lax, nlajx);
-			// junk score is appended at the end of tmp
-			// score for junk is half square of junk parameter
-			{Idx<double> jpx(junk_param->x);
-			lajx.set((0.5 * jpx.get() * jpx.get()), s);}
-			// compute unconstrained score (normalization constant)
-			double e = idx_f1logdotf1(lajx, *priors);
-			idx_aloop3(sc,outscores,double, d,lajx,double, p,*priors,double)
-			{
-				*sc = e + (*d) - log(*p);
-			}
+  // logadd over spatial dimensions
+  out->sorted_classes->resize(in->x.dim(0) + 1, in->x.dim(2));
+  out->sorted_scores->resize(in->x.dim(0) + 1, in->x.dim(2));
+  logadded_distjunk->resize(in->x.dim(0) + 1, in->x.dim(2));
+  {
+    Idx<double> inx = in->x.select(1, 0);
+    idx_eloop4(lax,inx,double, outclasses,*out->sorted_classes,int, outscores,*out->sorted_scores,double, lajx,logadded_distjunk->x,double)
+      {
+	intg s = lax.dim(0);
+	Idx<int> noutclasses(outclasses.narrow(0, s, 0));
+	idx_copy(*classindex2label, noutclasses);
+	// write label for junk class
+	outclasses.set(-1, s);
+	Idx<double> nlajx(lajx.narrow(0, s, 0));
+	idx_copy(lax, nlajx);
+	// junk score is appended at the end of tmp
+	// score for junk is half square of junk parameter
+	{Idx<double> jpx(junk_param->x);
+	  lajx.set((0.5 * jpx.get() * jpx.get()), s);}
+	// compute unconstrained score (normalization constant)
+	double e = idx_f1logdotf1(lajx, *priors);
+	idx_aloop3(sc,outscores,double, d,lajx,double, p,*priors,double)
+	  {
+	    *sc = e + (*d) - log(*p);
+	  }
 			
-			//TODO: check
-			Idx<double> gg(outscores.nelements());
-			idx_copy(outscores, gg);
-			Idx<int> hh(outclasses.nelements());
-			idx_copy(outclasses, hh);
-			idx_sortup(gg, hh);
-			idx_copy(gg, outscores);
-			idx_copy(hh, outclasses);
-		}
-	}
+	//TODO: check
+	Idx<double> gg(outscores.nelements());
+	idx_copy(outscores, gg);
+	Idx<int> hh(outclasses.nelements());
+	idx_copy(outclasses, hh);
+	idx_sortup(gg, hh);
+	idx_copy(gg, outscores);
+	idx_copy(hh, outclasses);
+      }
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -185,20 +185,20 @@ void sdnn_classer::fprop(state_idx *in, sdnnclass_state *out)
 
 sdnn_module::sdnn_module(net_cscscfe *m, sdnn_classer *cl)
 {
-	mout = new state_idx(1, 1, 1);
-	machine = m;
-	classifier = cl;
+  mout = new state_idx(1, 1, 1);
+  machine = m;
+  classifier = cl;
 }
 
 sdnn_module::~sdnn_module()
 {
-	delete mout;
+  delete mout;
 }
 
 void sdnn_module::fprop(state_idx *input, sdnnclass_state *output)
 {
-	machine->fprop(input, mout);
-	classifier->fprop(mout, output);
+  machine->fprop(input, mout);
+  classifier->fprop(mout, output);
 }
 
 

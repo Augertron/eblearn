@@ -1,7 +1,7 @@
 #include "Classifier2DTest.h"
 
 #ifdef __GUI__
-  #include "libeblearn_gui.h"
+#include "libeblearn_gui.h"
 #endif
 
 using namespace ebl;

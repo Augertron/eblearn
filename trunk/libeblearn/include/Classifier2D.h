@@ -37,62 +37,65 @@
 
 namespace ebl {
 
-class Classifier2D {
-public:
-	parameter 	*theparam;
-	lenet7			*thenet;
-	int					height;
-	int					width;
-	Idx<ubyte>	grabbed;
-	Idx<ubyte>	grabbed2;
-	double			contrast;
-	double			brightness;
-	double			coeff;
-	double			bias;
-	Idx<int>		sizes;
-	Idx<void*>	inputs;		//! state_idx*
-	Idx<void*>	outputs;	//! state_idx*
-	Idx<void*>  results;		//! Idx<double>*
-	Idx<double> smoothing_kernel;
-	Idx<const char*> labels;
+  class Classifier2D {
+  public:
+    parameter 	        *theparam;
+    lenet7		*thenet;
+    int			height;
+    int			width;
+    Idx<ubyte>	        grabbed;
+    Idx<ubyte>	        grabbed2;
+    double		contrast;
+    double		brightness;
+    double		coeff;
+    double		bias;
+    Idx<int>		sizes;
+    Idx<void*>	        inputs;		//! state_idx*
+    Idx<void*>	        outputs;	//! state_idx*
+    Idx<void*>          results;	//! Idx<double>*
+    Idx<double>         smoothing_kernel;
+    Idx<const char*>    labels;
 	
-  Classifier2D(const char *paramfile, Idx<int> &sz, Idx<const char*> &lbls,
-  		double b, double c, int h, int w);
-  virtual ~Classifier2D();
+    Classifier2D(const char *paramfile, Idx<int> &sz, Idx<const char*> &lbls,
+		 double b, double c, int h, int w);
+    virtual ~Classifier2D();
 
-  Idx<double> fprop(ubyte *img, float zoom, double threshold = 1.8, int objsize = 60);
+    Idx<double> fprop(ubyte *img, float zoom, double threshold = 1.8, 
+		      int objsize = 60);
   
-  // Sub functions
-  Idx<ubyte> multi_res_prep(ubyte *img, float zoom);
-  Idx<double> multi_res_fprop(double threshold, int objsize);
-	Idx<double> postprocess_output(double threshold, int objsize);
-	//! mark local maxima (in space and feature) of in r.
-	//! Put winning class in (r i j 0) and score (normalized
-	//! to 0 1) in (r i j 1).
-	void mark_maxima(Idx<double> &in, Idx<double> &inc, 
-			Idx<double> &r, double threshold);
-	Idx<double> prune(Idx<double> &res);
-};
+    // Sub functions
+    Idx<ubyte> multi_res_prep(ubyte *img, float zoom);
+    Idx<double> multi_res_fprop(double threshold, int objsize);
+    Idx<double> postprocess_output(double threshold, int objsize);
+    //! mark local maxima (in space and feature) of in r.
+    //! Put winning class in (r i j 0) and score (normalized
+    //! to 0 1) in (r i j 1).
+    void mark_maxima(Idx<double> &in, Idx<double> &inc, 
+		     Idx<double> &r, double threshold);
+    Idx<double> prune(Idx<double> &res);
+  };
 
-////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////
 
-class Classifier2DBinoc : public Classifier2D {
-public:
+  class Classifier2DBinoc : public Classifier2D {
+  public:
 	
-  Classifier2DBinoc(const char *paramfile, Idx<int> &sz, Idx<const char*> &lbls,
-  		double b, double c, int h, int w);
-  virtual ~Classifier2DBinoc();
+    Classifier2DBinoc(const char *paramfile, Idx<int> &sz, 
+		      Idx<const char*> &lbls,
+		      double b, double c, int h, int w);
+    virtual ~Classifier2DBinoc();
   
-  //! Compute multi-resolution inputs and fprop through each.
-  Idx<double> fprop(ubyte *left, ubyte *right, 
-  		float zoom, int dx, int dy, double threshold = 1.8, int objsize = 60);
+    //! Compute multi-resolution inputs and fprop through each.
+    Idx<double> fprop(ubyte *left, ubyte *right, 
+		      float zoom, int dx, int dy, double threshold = 1.8, 
+		      int objsize = 60);
   
-  // Sub functions
-  void multi_res_prep(ubyte *left, ubyte *right, 
-  		int dx, int dy, float zoom);
-};
+    // Sub functions
+    void multi_res_prep(ubyte *left, ubyte *right, 
+			int dx, int dy, float zoom);
+  };
 
-////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////
 
 } // end namespace ebl
 
