@@ -30,8 +30,10 @@ FIND_PACKAGE(CBLAS)
 IF(CBLAS_FOUND)
   INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
   TARGET_LINK_LIBRARIES(idx ${CBLAS_LIBRARIES})
-  CONFIGURE_FILE("include/IdxBlas.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/include/IdxBlas.h")
+  CONFIGURE_FILE("include/IdxBlas.h.in" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/IdxBlas.h")
 ELSE(CBLAS_FOUND)
-  MESSAGE(FATAL_ERROR "CBLAS library not found. Please specify library  location")
+  MESSAGE(FATAL_ERROR 
+    "CBLAS library not found. Please specify library  location")
 ENDIF(CBLAS_FOUND)
 

@@ -39,23 +39,23 @@ namespace ebl {
 #include "libidx.h"
 #include <ipp.h>
 
-////////////////////////////////////////////////////////////////
-// Idx to IPP wrapper functions
+  ////////////////////////////////////////////////////////////////
+  // Idx to IPP wrapper functions
 
-//! compute a 2D convolution of <in> with kernel <ker>
-//! and write result into <out>
-//! <ker> is actually in reverse order, so you might
-//! want to reverse it first.
-int ipp_convolution_float(Idx<float> &in, Idx<float> &ker, Idx<float> &out);
+  //! compute a 2D convolution of <in> with kernel <ker>
+  //! and write result into <out>
+  //! <ker> is actually in reverse order, so you might
+  //! want to reverse it first.
+  int ipp_convolution_float(Idx<float> &in, Idx<float> &ker, Idx<float> &out);
 
-//! this calls ippiAdd_32f_C1IR
-//! This does component-wise addition of 2 matrices of floats. The result is 
-//! saved in the second idx
-int ipp_add_float(Idx<float> &in1, Idx<float> &in2);
+  //! this calls ippiAdd_32f_C1IR
+  //! This does component-wise addition of 2 matrices of floats. The result is 
+  //! saved in the second idx
+  int ipp_add_float(Idx<float> &in1, Idx<float> &in2);
 
-//! this calls ippiAddC_32f_C1R
-//! This adds a constant to each component of an idx of floats. NOT In place
-int ipp_addc_nip_float(Idx<float> &in, float constant, Idx<float> &out);
+  //! this calls ippiAddC_32f_C1R
+  //! This adds a constant to each component of an idx of floats. NOT In place
+  int ipp_addc_nip_float(Idx<float> &in, float constant, Idx<float> &out);
 
 #endif
 
