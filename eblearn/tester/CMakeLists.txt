@@ -43,7 +43,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
 
   # compilation flags
   ##############################################################################
-  FIND_PACKAGE(Boost COMPONENTS filesystem regex)
+  FIND_PACKAGE(Boost COMPONENTS system filesystem regex)
   IF (Boost_FOUND)
     SET (CMAKE_CXX_FLAGS "-D__BOOST__")
   ENDIF (Boost_FOUND)
