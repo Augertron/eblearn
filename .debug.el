@@ -6,5 +6,6 @@
 (setq auto-fill-mode 1)
 (setq-default fill-column 80)
 (setq-default indent-tabs-mode t) 
+(global-set-key [f12] 'compile)
 (print "*** Debugging eblearn_tester with emacs and gdb.***")
 (print "type \"r -nocolor\" to start debugging eblearn_tester")
