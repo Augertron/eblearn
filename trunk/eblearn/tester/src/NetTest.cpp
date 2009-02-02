@@ -13,7 +13,10 @@ void NetTest::tearDown() {
 }
 
 void NetTest::test_lenet5_mnist() {
-  init_drand(time(NULL));
+  // for testing purposes, we always initialize the randomization with 0 so 
+  // that we know the exact results. 
+  // in the real world, init_drand should be called with time(NULL) as argument.
+  init_drand(0); // fixed randomization
   CPPUNIT_ASSERT_MESSAGE(*gl_mnist_errmsg, gl_mnist_dir != NULL);
   intg trsize, tesize;
   trsize = 2000; tesize = 1000; // small demo  
@@ -92,6 +95,10 @@ void NetTest::test_lenet5_mnist() {
   // and set individual espilons
   //printf("computing diagonal hessian and learning rates\n");
   thetrainer.compute_diaghessian(&train_ds, 100, 0.02);
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(0.985363, 
+			       idx_min(thetrainer.param->epsilons), 0.000001);
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(49.851524, 
+			       idx_max(thetrainer.param->epsilons), 0.000001);
 
   // do training iterations 
   printf("training with %d training samples and %d test samples\n", 
@@ -118,8 +125,10 @@ void NetTest::test_lenet5_mnist() {
     thetrainer.test(&test_ds, &testmeter);
     testmeter.display();
   }
-  CPPUNIT_ASSERT(((trainmeter.total_correct * 100) 
-		  / (double) trainmeter.size) >= 94);
-  CPPUNIT_ASSERT(((testmeter.total_correct * 100) 
-		  / (double) testmeter.size) >= 94);
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(97.15,
+			       ((trainmeter.total_correct * 100) 
+				/ (double) trainmeter.size), 0.01);
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(95.80,
+			       ((testmeter.total_correct * 100) 
+				/ (double) testmeter.size), 0.01);
 }

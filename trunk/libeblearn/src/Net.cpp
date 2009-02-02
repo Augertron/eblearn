@@ -51,24 +51,24 @@ void net_cscscf::init(parameter *prm, intg ini, intg inj,
   intg thick0 = 1 + idx_max(tblmax);
   intg c0_sizi = 1 + ini - ki0;
   intg c0_sizj = 1 + inj - kj0;
-  c0_squash = new stdsigmoid_module();
+  c0_squash = new tanh_module();
   intg s0_sizi = c0_sizi / si0;
   intg s0_sizj = c0_sizj / sj0;
-  s0_squash = new stdsigmoid_module();
+  s0_squash = new tanh_module();
   tblmax = tbl1->select(1, 1);
   intg thick1 = 1 + idx_max(tblmax);
   intg c1_sizi = 1 + s0_sizi - ki1;
   intg c1_sizj = 1 + s0_sizj - kj1;
-  c1_squash = new stdsigmoid_module();
+  c1_squash = new tanh_module();
   intg s1_sizi = c1_sizi / si1;
   intg s1_sizj = c1_sizj / sj1;
-  s1_squash = new stdsigmoid_module();
+  s1_squash = new tanh_module();
   tblmax = tbl2->select(1, 1);
   intg thick2 = 1 + idx_max(tblmax);
   intg c2_sizi = 1 + s1_sizi - ki2;
   intg c2_sizj = 1 + s1_sizj - kj2;
-  c2_squash = new stdsigmoid_module();
-  f_squash = new stdsigmoid_module();
+  c2_squash = new tanh_module();
+  f_squash = new tanh_module();
 
   c0_module = new c_layer(prm, ki0, kj0, 1, 1, tbl0, thick0, c0_sizi, c0_sizj, 
 			  c0_squash);
@@ -83,8 +83,9 @@ void net_cscscf::init(parameter *prm, intg ini, intg inj,
   c2_module = new c_layer(prm, ki2, kj2, 1, 1, tbl2, thick2, c2_sizi, c2_sizj, 
 			  c2_squash);
   c2_state = new state_idx(thick2, c2_sizi, c2_sizj);
-  f_module = new f_layer(prm, thick2, outthick, c2_sizi, c2_sizj, f_squash);
-  //	  f_module = new nn_layer_full(prm, thick2, outthick);
+ f_module = new f_layer(prm, thick2, outthick, c2_sizi, c2_sizj, f_squash);
+ //   f_module = new nn_layer_full(prm, c2_state->x.nelements(), 
+ //			       outthick * c2_sizj * c2_sizj);
 }
 
 net_cscscf::~net_cscscf() {

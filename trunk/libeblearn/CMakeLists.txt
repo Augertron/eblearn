@@ -20,6 +20,8 @@ ADD_LIBRARY (eblearn SHARED
 		     src/DataSource.cpp  
 		     src/Defines.cpp  
 		     src/Ebm.cpp  
+		     src/EbmStates.cpp  
+		     src/Gbm.cpp  
 		     src/Image.cpp  
 		     src/Ipp.cpp  
 		     src/libeblearn.cpp  
