@@ -1,5 +1,4 @@
 #include "EbmTest.h"
-#include "EbmTester.h"
 
 using namespace std;
 using namespace ebl;

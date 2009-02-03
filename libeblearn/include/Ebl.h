@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
+ *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,12 +29,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBM_H_
-#define EBM_H_
+#ifndef EBL_H_
+#define EBL_H_
 
 #include "Idx.h"
 #include "Blas.h"
-#include "EbmStates.h"
+#include "EblStates.h"
 
 namespace ebl {
 
@@ -409,6 +409,6 @@ namespace ebl {
 
 } // namespace ebl {
 
-#include "Ebm.hpp"
+#include "Ebl.hpp"
 
-#endif /* EBM_H_ */
+#endif /* EBL_H_ */

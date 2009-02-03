@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
+ *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,13 +35,15 @@
 
 #include "Defines.h"
 #include "libidx.h"
-#include "Ebm.h"
+#include "Gbl.h"
+#include "Ebl.h"
+#include "EblStates.h"
+#include "EblTester.h"
 #include "Generators.h"
 #include "Net.h"
 #include "DataSource.h"
 #include "Trainer.h"
 #include "Classifier2D.h"
 #include "Image.h"
-#include "EbmTester.h"
 
 #endif

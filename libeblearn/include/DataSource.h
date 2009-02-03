@@ -34,7 +34,7 @@
 #define DATASOURCE_H_
 
 #include "libidx.h"
-#include "Ebm.h"
+#include "Ebl.h"
 
 namespace ebl {
 

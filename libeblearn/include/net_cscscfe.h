@@ -32,7 +32,7 @@
 #ifndef NET_CSCSCFE_H_
 #define NET_CSCSCFE_H_
 
-#include "Ebm.h"
+#include "Ebl.h"
 #include "Net.h"
 
 namespace ebl {

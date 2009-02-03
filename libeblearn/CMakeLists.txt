@@ -19,15 +19,15 @@ ADD_LIBRARY (eblearn SHARED
 		     src/Classifier2D.cpp  
 		     src/DataSource.cpp  
 		     src/Defines.cpp  
-		     src/Ebm.cpp  
-		     src/EbmStates.cpp  
-		     src/Gbm.cpp  
+		     src/Gbl.cpp  
+		     src/Ebl.cpp  
+		     src/EblStates.cpp  
+		     src/EblTester.cpp
 		     src/Image.cpp  
 		     src/Ipp.cpp  
 		     src/libeblearn.cpp  
 		     src/Net.cpp  
 		     src/Trainer.cpp
-		     src/EbmTester.cpp
 		     src/sdnn_modules.cpp
 		     src/net_cscscfe.cpp
 		     )
