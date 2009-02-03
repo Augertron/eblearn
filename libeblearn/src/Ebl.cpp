@@ -30,6 +30,7 @@
  ***************************************************************************/
 
 #include "Ebl.h"
+#include "EblBasic.h"
 #include "IdxIO.h"
 
 using namespace std;
@@ -39,154 +40,6 @@ namespace ebl {
   void err_not_implemented()
   {
     ylerror("member function not implemented for this class");
-  }
-
-  ////////////////////////////////////////////////////////////////
-
-  linear_module::linear_module(parameter *p, intg in, intg out)
-  {
-    w = new state_idx(p, out, in);
-  }
-
-  linear_module::~linear_module()
-  {
-    delete w;
-  }
-
-  void linear_module::fprop(state_idx *in, state_idx *out)
-  {
-    //	intg instride = 0;
-    //	intg outstride = 0;
-    //	if (in->x.order() == 1)
-    //	{
-    //		instride = in->x.mod(0);
-    //	}
-    //	else if (in->x.contiguousp())
-    //	{
-    //		instride = 1;
-    //	}
-    //	if (out->x.order() == 1)
-    //	{
-    //		outstride = out->x.mod(0);
-    //		out->resize(w->x.dim(0));
-    //	}
-    //	else if (out->x.contiguousp())
-    //	{
-    //		outstride = 1;
-    //	}
-    //	if ( (instride == 0)||(outstride==0))
-    //	{
-    //		ylerror("linear_module::fprop: state must 1D or contiguous");
-    //	}
-    //	else
-    //	{
-    //		if (out->x.nelements() != w->x.dim(0))
-    //		{
-    //			ylerror("linear_module::fprop: output has wrong size");
-    //		}
-    //		else
-    //		{
-    //			idx_m2dotm1(w->x, in->x, out->x);
-    //		}
-    //	}
-    state_idx in1(in); // TODO: temporary, find a cleaner solution
-    out->resize(w->x.dim(0));
-    idx_m2dotm1(w->x, in1.x, out->x);
-  }
-
-  void linear_module::bprop(state_idx *in, state_idx *out)
-  {
-    state_idx in1(in); // TODO: temporary, find a cleaner solution
-    intg instride = 0;
-    intg outstride = 0;
-    if (in1.x.order() == 1)
-      {
-	instride = in1.x.mod(0);
-      }
-    else if (in1.x.contiguousp())
-      {
-	instride = 1;
-      }
-    if (out->x.order() == 1)
-      {
-	outstride = out->x.mod(0);
-      }
-    else if (out->x.contiguousp())
-      {
-	outstride = 1;
-      }
-    if ( (instride == 0)||(outstride==0))
-      {
-	ylerror("linear_module::fprop: state must 1D or contiguous");
-      }
-    else
-      {
-	if (out->x.nelements() != w->x.dim(0))
-	  {
-	    ylerror("linear_module::fprop: output has wrong size");
-	  }
-	else
-	  {
-	    Idx<double> twx(w->x.transpose(0, 1));
-	    idx_m1extm1(out->dx, in1.x, w->dx);
-	    idx_m2dotm1(twx, out->dx, in1.dx);
-	  }
-      }
-  }
-
-  void linear_module::bbprop(state_idx *in, state_idx *out)
-  {
-    state_idx in1(in); // TODO: temporary, find a cleaner solution
-    intg instride = 0;
-    intg outstride = 0;
-    if (in1.x.order() == 1)
-      {
-	instride = in1.x.mod(0);
-      }
-    else if (in1.x.contiguousp())
-      {
-	instride = 1;
-      }
-    if (out->x.order() == 1)
-      {
-	outstride = out->x.mod(0);
-      }
-    else if (out->x.contiguousp())
-      {
-	outstride = 1;
-      }
-    if ( (instride == 0)||(outstride==0))
-      {
-	ylerror("linear_module::fprop: state must 1D or contiguous");
-      }
-    else
-      {
-	if (out->x.nelements() != w->x.dim(0))
-	  {
-	    ylerror("linear_module::fprop: output has wrong size");
-	  }
-	else
-	  {
-	    Idx<double> twx = w->x.transpose(0, 1);
-	    idx_m1squextm1(out->ddx, in1.x, w->ddx);
-	    idx_m2squdotm1(twx, out->ddx, in1.ddx);
-	  }
-      }
-  }
-
-  void linear_module::forget(forget_param_linear &fp)
-  {
-    double fanin = w->x.dim(1);
-    double z = fp.value / pow(fanin, fp.exponent);
-    if(!drand_ini) printf("You have not initialized random sequence. \
-Please call init_drand() before using this function !\n");
-    idx_aloop1(lx,w->x,double)
-      {	*lx = drand(z);}
-  }
-
-  void linear_module::normalize()
-  {
-    norm_columns(w->x);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -246,44 +99,6 @@ Please call init_drand() before using this function !\n");
   {
   }
 
-  ////////////////////////////////////////////////////////////////
-
-  addc_module::addc_module(parameter *p, intg size)
-  {
-    bias = new state_idx(p,size);
-  }
-
-  addc_module::~addc_module()
-  {
-    delete bias;
-  }
-
-  void addc_module::fprop(state_idx* in, state_idx* out)
-  {
-    out->resize(bias->x.dim(0));
-    idx_add(in->x,bias->x,out->x);
-  }
-
-  void addc_module::bprop(state_idx* in, state_idx* out)
-  {
-    idx_copy(out->dx,in->dx);
-    idx_copy(out->dx,bias->dx);
-  }
-
-  void addc_module::bbprop(state_idx* in, state_idx* out)
-  {
-    idx_copy(out->ddx,in->ddx);
-    idx_copy(out->ddx,bias->ddx);
-  }
-
-  void addc_module::forget(forget_param_linear& fp)
-  {
-    idx_clear(bias->x);
-  }
-
-  void addc_module::normalize()
-  {
-  }
   ////////////////////////////////////////////////////////////////
 
   nn_layer_full::nn_layer_full(parameter *p, intg ninputs, intg noutputs)

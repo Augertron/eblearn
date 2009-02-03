@@ -35,6 +35,8 @@
 #include "Idx.h"
 #include "Blas.h"
 #include "EblStates.h"
+#include "EblBasic.h"
+#include "EblArch.h"
 
 namespace ebl {
 
@@ -55,181 +57,6 @@ namespace ebl {
   extern bool drand_ini;
 
   void err_not_implemented();
-
-  ////////////////////////////////////////////////////////////////
-  // templates for generic modules
-
-  //! abstract class for a module with one input and one output.
-  template<class Tin, class Tout> class module_1_1 {
-  public:
-    virtual ~module_1_1() {
-    }
-    virtual void fprop(Tin *in, Tout *out);
-    virtual void bprop(Tin *in, Tout *out);
-    virtual void bbprop(Tin *in, Tout *out);
-    virtual void forget(forget_param_linear& fp);
-    virtual void normalize();
-  };
-
-  ////////////////////////////////////////////////////////////////
-
-  //! abstract class for a module with two inputs and one output.
-  template<class Tin1, class Tin2, class Tout> class module_2_1 {
-  public:
-    virtual ~module_2_1() {
-    }
-    ;
-    virtual void fprop(Tin1 *in1, Tin2 *in2, Tout *out);
-    virtual void bprop(Tin1 *in1, Tin2 *in2, Tout *out);
-    virtual void bbprop(Tin1 *in1, Tin2 *in2, Tout *out);
-    virtual void forget(forget_param &fp);
-    virtual void normalize();
-  };
-
-  ////////////////////////////////////////////////////////////////
-
-  //! abstract class for a module with one inputs and one energy output.
-  template<class Tin> class ebm_1 {
-  public:
-    virtual ~ebm_1() {
-    }
-    ;
-    virtual void fprop(Tin *in, state_idx *energy);
-    virtual void bprop(Tin *in, state_idx *energy);
-    virtual void bbprop(Tin *in, state_idx *energy);
-    virtual void forget(forget_param &fp);
-    virtual void normalize();
-  };
-
-  ////////////////////////////////////////////////////////////////
-
-  //! abstract class for a module with two inputs and one energy output.
-  template<class Tin1, class Tin2> class ebm_2 {
-  public:
-    virtual ~ebm_2() {
-    }
-    ;
-    //! fprop: compute output from input
-    virtual void fprop(Tin1 *i1, Tin2 *i2, state_idx *energy);
-    //! bprop: compute gradient wrt inputs, given gradient wrt output
-    virtual void bprop(Tin1 *i1, Tin2 *i2, state_idx *energy);
-    //! bprop: compute diaghession wrt inputs, given diaghessian wrt output
-    virtual void bbprop(Tin1 *i1, Tin2 *i2, state_idx *energy);
-
-    virtual void bprop1_copy(Tin1 *i1, Tin2 *i2, state_idx *energy);
-    virtual void bprop2_copy(Tin1 *i1, Tin2 *i2, state_idx *energy);
-    virtual void bbprop1_copy(Tin1 *i1, Tin2 *i2, state_idx *energy);
-    virtual void bbprop2_copy(Tin1 *i1, Tin2 *i2, state_idx *energy);
-    virtual void forget(forget_param &fp);
-    virtual void normalize();
-
-    //! compute value of in1 that minimizes the energy, given in2
-    virtual double infer1(Tin1 *i1, Tin2 *i2, state_idx *energy,
-			  infer_param *ip) {
-      return 0;
-    }
-    //! compute value of in2 that minimizes the energy, given in1
-    virtual double infer2(Tin1 *i1, Tin2 *i2, state_idx *energy,
-			  infer_param *ip) {
-      return 0;
-    }
-  };
-
-  ////////////////////////////////////////////////////////////////
-  // generic architectures
-
-  template<class Tin, class Thid, class Tout> 
-    class layers_2: public module_1_1<Tin, Tout> {
-  public:
-    module_1_1<Tin, Thid> *layer1;
-    Thid *hidden;
-    module_1_1<Thid, Tout> *layer2;
-
-    layers_2(module_1_1<Tin, Thid> *l1, Thid *h, module_1_1<Thid, Tout> *l2);
-    virtual ~layers_2();
-    void fprop(Tin *in, Tout *out);
-    void bprop(Tin *in, Tout *out);
-    void bbprop(Tin *in, Tout *out);
-    void forget(forget_param &fp);
-    void normalize();
-  };
-
-  template<class T> class layers_n: public module_1_1<T, T> {
-  public:
-    std::vector< module_1_1<T, T>* > *modules;
-    std::vector< T* > *hiddens;
-
-    layers_n();
-    layers_n(bool oc);
-    virtual ~layers_n();
-    void addModule(module_1_1 <T, T>* module, T* hidden);
-    void fprop(T *in, T *out);
-    void bprop(T *in, T *out);
-    void bbprop(T *in, T *out);
-    void forget(forget_param_linear &fp);
-    void normalize();
-  private:
-    bool own_contents;
-  };
-
-  ////////////////////////////////////////////////////////////////
-  //
-
-  //! standard 1 input EBM with one module-1-1, and one ebm-1 on top.
-  //! fc stands for "function+cost".
-  template<class Tin, class Thid> class fc_ebm1: public ebm_1<Tin> {
-  public:
-    module_1_1<Tin, Thid> *fmod;
-    Thid *fout;
-    ebm_1<Thid> *fcost;
-
-    fc_ebm1(module_1_1<Tin, Thid> *fm, Thid *fo, ebm_1<Thid> *fc);
-    virtual ~fc_ebm1();
-
-    void fprop(Tin *in, state_idx *energy);
-    void bprop(Tin *in, state_idx *energy);
-    void bbprop(Tin *in, state_idx *energy);
-    void forget(forget_param &fp);
-  };
-
-  ////////////////////////////////////////////////////////////////
-
-  //! standard 2 input EBM with one module-1-1, and one ebm-2 on top.
-  //! fc stands for "function+cost".
-  template<class Tin1, class Tin2, class Thid> 
-    class fc_ebm2: public ebm_2<Tin1, Tin2> {
-  public:
-    module_1_1<Tin1, Thid> *fmod;
-    Thid *fout;
-    ebm_2<Thid, Tin2> *fcost;
-
-    fc_ebm2(module_1_1<Tin1, Thid> *fm, Thid *fo, ebm_2<Thid, Tin2> *fc);
-    virtual ~fc_ebm2();
-
-    void fprop(Tin1 *in1, Tin2 *in2, state_idx *energy);
-    void bprop(Tin1 *in1, Tin2 *in2, state_idx *energy);
-    void bbprop(Tin1 *in1, Tin2 *in2, state_idx *energy);
-    void forget(forget_param &fp);
-  };
-
-  ////////////////////////////////////////////////////////////////
-  // linear module
-  // It's different from f_layer in that it is
-  // not spatially replicable and does not operate
-  // on 3D state_idx.
-
-  class linear_module: public module_1_1<state_idx, state_idx> {
-  public:
-    state_idx *w;
-
-    virtual ~linear_module();
-    linear_module(parameter *p, intg in, intg out);
-    void fprop(state_idx *in, state_idx *out);
-    void bprop(state_idx *in, state_idx *out);
-    void bbprop(state_idx *in, state_idx *out);
-    void forget(forget_param_linear &fp);
-    void normalize();
-  };
 
   ////////////////////////////////////////////////////////////////
 
@@ -261,27 +88,6 @@ namespace ebl {
     void forget(forget_param_linear &fp);
     void normalize();
   };
-
-  ////////////////////////////////////////////////////////////////
-
-  //! constant add
-  class addc_module: public module_1_1<state_idx, state_idx> {
-  public:
-    // coefficients
-    state_idx* bias;
-    addc_module(parameter *p, intg size);
-    ~addc_module();
-    //! fprop from in to out
-    void fprop(state_idx *in, state_idx *out);
-    //! bprop
-    void bprop(state_idx *in, state_idx *out);
-    //! bbprop
-    void bbprop(state_idx *in, state_idx *out);
-    void forget(forget_param_linear &fp);
-    void normalize();
-  };
-
-
 
   ////////////////////////////////////////////////////////////////
 
@@ -408,7 +214,5 @@ namespace ebl {
   };
 
 } // namespace ebl {
-
-#include "Ebl.hpp"
 
 #endif /* EBL_H_ */
