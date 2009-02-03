@@ -32,8 +32,8 @@
 #ifndef NET_H_
 #define NET_H_
 
-#include "Ebm.h"
-#include "Gbm.h"
+#include "Ebl.h"
+#include "Gbl.h"
 
 namespace ebl {
 

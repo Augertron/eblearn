@@ -1,11 +1,11 @@
 /*
- * EbmTester.cpp
+ * EblTester.cpp
  *
  *  Created on: Sep 26, 2008
  *      Author: koray
  */
 
-#include "EbmTester.h"
+#include "EblTester.h"
 
 ModuleTester::ModuleTester() {
   this->out = stdout;

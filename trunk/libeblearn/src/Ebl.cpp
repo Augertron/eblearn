@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "Ebm.h"
+#include "Ebl.h"
 #include "IdxIO.h"
 
 using namespace std;

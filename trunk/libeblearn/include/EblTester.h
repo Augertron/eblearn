@@ -1,14 +1,14 @@
 /*
- * EbmTester.h
+ * EblTester.h
  *
  *  Created on: Sep 26, 2008
  *      Author: koray
  */
 
-#ifndef EBMTESTER_H_
-#define EBMTESTER_H_
+#ifndef EBLTESTER_H_
+#define EBLTESTER_H_
 
-#include "Ebm.h"
+#include "Ebl.h"
 #include <stdio.h>
 #include <iostream>
 #include <sstream>
@@ -158,4 +158,4 @@ private:
     void randomize_idx(Idx<double>& m);
 };
 
-#endif /* EBMTESTER_H_ */
+#endif /* EBLTESTER_H_ */

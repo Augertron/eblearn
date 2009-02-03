@@ -29,13 +29,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef GBM_H_
-#define GBM_H_
+#ifndef GBL_H_
+#define GBL_H_
 
 #include "Idx.h"
 #include "Blas.h"
-#include "EbmStates.h"
-#include "Ebm.h"
+#include "EblStates.h"
+#include "Ebl.h"
 
 namespace ebl {
 
@@ -392,4 +392,4 @@ namespace ebl {
 
 } // namespace ebl {
 
-#endif /* GBM_H_ */
+#endif /* GBL_H_ */
