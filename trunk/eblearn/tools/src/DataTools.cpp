@@ -32,6 +32,7 @@
 #include "DataTools.h"
 #include "Image.h"
 #include "IdxIO.h"
+#include <algorithm>
 
 #ifdef __BOOST__
 
@@ -159,6 +160,16 @@ namespace ebl {
     return pairs;
   }
 
+  //! Finds all images corresponding to the imgPatternLeft pattern in directory 
+  //! imgDir, assigns for each a class name corresponding to the first directory
+  //! level found, crops to square and resizes all images to width*width size.
+  //! If imgPatternRight is not null, two images are stored for each example, 
+  //! bringing the stereo dimension sdim from 1 to 2.
+  //! Finally outputs all N examples found in a single matrix files as follow:
+  //! outDir/dset_images.mat: 
+  //!   (ubyte) N x width x width x 6 (G or GG, RGB or RGBRGB)
+  //! outDir/dset_labels.mat: 	(int)   N
+  //! outDir/dset_classes.mat:  (ubyte) Nclasses x 128
   bool imageDirToIdx(const char *imgDir, unsigned int width,
 		     const char *imgExtension, const char *imgPatternLeft, 
 		     const char *outDir, const char *imgPatternRight, 
@@ -184,10 +195,12 @@ namespace ebl {
     if (verbose) {
       cout << nclasses << " classes found. Now collecting images..." << endl;
     }
+
     Idx<ubyte> 	classes(nclasses, 128); // Nclasses x 128
     Idx<float> 	images(1, width, width, 1); // N x w x w x rgbrgb
-    Idx<int>		labels(1); // N
-    Idx<ubyte> tmp;
+    Idx<int>	labels(1); // N
+    Idx<ubyte>  tmp;
+
     idx_clear(classes);
     images.resize(0, images.dim(1), images.dim(2), images.dim(3)); // empty idx
     labels.resize(0); // empty idx
@@ -197,7 +210,8 @@ namespace ebl {
 	tmp = classes.select(0, i);
 	// copy class name
 	memcpy(tmp.idx_ptr(), itr->leaf().c_str(), 
-	       itr->leaf().length() * sizeof (ubyte));
+	       min((size_t) 128, itr->leaf().length()) * sizeof (ubyte));
+	*(tmp.idx_ptr() +  min((size_t) 128, itr->leaf().length())) = '\0';
 	// process subdirs to extract images into the single image idx
 	processDir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
 		   imgPatternRight, width, images, labels, i, verbose, 
