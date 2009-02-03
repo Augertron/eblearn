@@ -173,17 +173,19 @@ ENDMACRO (_Boost_ADJUST_LIB_VARS)
 #-------------------------------------------------------------------------------
 
 
-SET( _boost_IN_CACHE TRUE)
-IF(Boost_INCLUDE_DIR)
-  FOREACH(COMPONENT ${Boost_FIND_COMPONENTS})
-    STRING(TOUPPER ${COMPONENT} COMPONENT)
-    IF(NOT Boost_${COMPONENT}_FOUND)
-      SET( _boost_IN_CACHE FALSE)
-    ENDIF(NOT Boost_${COMPONENT}_FOUND)
-  ENDFOREACH(COMPONENT)
-ELSE(Boost_INCLUDE_DIR)
-  SET( _boost_IN_CACHE FALSE)
-ENDIF(Boost_INCLUDE_DIR)
+# we don't want to check for boost in cache
+SET( _boost_IN_CACHE FALSE)
+#SET( _boost_IN_CACHE TRUE)
+#IF(Boost_INCLUDE_DIR)
+#  FOREACH(COMPONENT ${Boost_FIND_COMPONENTS})
+#    STRING(TOUPPER ${COMPONENT} COMPONENT)
+#    IF(NOT Boost_${COMPONENT}_FOUND)
+#      SET( _boost_IN_CACHE FALSE)
+#    ENDIF(NOT Boost_${COMPONENT}_FOUND)
+#  ENDFOREACH(COMPONENT)
+#ELSE(Boost_INCLUDE_DIR)
+#  SET( _boost_IN_CACHE FALSE)
+#ENDIF(Boost_INCLUDE_DIR)
 
 IF (_boost_IN_CACHE)
   # in cache already
