@@ -39,6 +39,7 @@
 #include "Idx.h"
 #include "Blas.h"
 #include "IdxIO.h"
+#include "Image.h"
 #include "Generators.h"
 
 #endif

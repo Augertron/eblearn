@@ -184,6 +184,8 @@ namespace ebl {
   void IdxSpec::copy( const IdxSpec &src) {
     DEBUG("IdxSpec::copy: %ld\n",(intg)this);
     offset = src.offset;
+    // we do not initialize ndim before setndim here because it may already 
+    // be initialized.
     setndim(src.ndim);
     if (ndim > 0) {
       memcpy(dim, src.dim, ndim * sizeof(intg));
@@ -192,9 +194,8 @@ namespace ebl {
   }
 
   // copy constructor
-  IdxSpec::IdxSpec( const IdxSpec& src) : dim(NULL), mod(NULL)
+  IdxSpec::IdxSpec( const IdxSpec& src) : ndim(0), dim(NULL), mod(NULL)
   { copy(src); }
-
 
   // constructor for Idx0 with offset 0.
   // Can be used to build an empty/blank Idx.
@@ -232,6 +233,7 @@ namespace ebl {
       ylerror("negative dimension"); }
     dim = NULL; mod = NULL;
     offset = o;
+    ndim = 0; // required in constructors to avoid side effects in setndim
     setndim(1);
     dim[0] = size0;
     mod[0] = 1;
@@ -243,6 +245,7 @@ namespace ebl {
       ylerror("negative dimension"); }
     dim = NULL; mod = NULL;
     offset = o;
+    ndim = 0; // required in constructors to avoid side effects in setndim
     setndim(2);
     dim[0] = size0;
     mod[0] = size1;
@@ -256,6 +259,7 @@ namespace ebl {
       ylerror("negative dimension"); }
     dim = NULL; mod = NULL;
     offset = o;
+    ndim = 0; // required in constructors to avoid side effects in setndim
     setndim(3);
     dim[0] = size0;
     mod[0] = size1 * size2;
@@ -273,6 +277,7 @@ namespace ebl {
     intg md = 1;
     dim = NULL; mod = NULL;
     offset = o;
+    ndim = 0; // required in constructors to avoid side effects in setndim
     try {
       if (s7>=0) { 
 	if (!ndimset) { setndim(8); ndimset = true; } 
@@ -317,6 +322,7 @@ namespace ebl {
     DEBUG("IdxSpec::IdxSpec: %ld\n",(intg)this);
     dim = NULL; mod = NULL;
     offset = o;
+    ndim = 0; // required in constructors to avoid side effects in setndim
     setndim(n);
     for (int i=0; i<n; i++) { 
       if ( dim[i]<0 ) { ylerror("negative dimension"); }

@@ -33,7 +33,6 @@
 #define IMAGE_H_
 
 #include "libidx.h"
-#include "Defines.h"
 
 namespace ebl {
 

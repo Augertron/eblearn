@@ -18,6 +18,7 @@ add_library (idx SHARED
 		     src/Blas.cpp  
 		     src/LibidxDefines.cpp  
 		     src/Idx.cpp  
+		     src/Image.cpp  
 		     src/Numerics.cpp  
 		     src/libidx.cpp  
 		     )

@@ -29,9 +29,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "Image.h"
 #include <algorithm>
 #include <stdio.h>
+#include <inttypes.h>
+
+#include "Image.h"
 #include "Blas.h"
 #include "Idx.h"
 
@@ -152,8 +154,10 @@ namespace ebl {
     switch (type) {
     case 3: // PPM ASCII
       int res;
+      unsigned int val;
       { idx_aloop1(o, out, ubyte) {
-  	  res = fscanf(fp, "%u", &(*o));
+  	  res = fscanf(fp, "%u", &val);
+	  *o = (unsigned char) val;
 	}}
       break ;
     case 6: // PPM binary

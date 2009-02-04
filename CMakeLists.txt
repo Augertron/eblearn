@@ -22,8 +22,27 @@ SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts 
 		      ${CMAKE_BINARY_DIR}/cmake ${CMAKE_MODULE_PATH})
 
+# Check that electric-fence and valgrind are installed for (debug mode only)
+SET(EFENCE_FLAG "")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+
+  FIND_PACKAGE(EFence)
+  IF (NOT EFENCE_FOUND) 
+    MESSAGE("*** Please install electric-fence to catch memory-related bugs in debug mode ***\n")
+  ELSEIF (EFENCE_FOUND) 
+    SET(EFENCE_FLAG "-lefence")
+  ENDIF (NOT EFENCE_FOUND) 
+
+  FIND_PACKAGE(Valgrind)
+  IF (NOT VALGRIND_FOUND) 
+    MESSAGE("*** Please install valgrind to catch memory-related bugs in debug mode ***")
+    MESSAGE("*** Call 'valgrind ./myprogram' at least once before committing ***\n")
+  ENDIF (NOT VALGRIND_FOUND) 
+
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+
 SET(CMAKE_CXX_FLAGS_DEBUG 
-      "-g -Wall -ggdb -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers"
+      "${EFENCE_FLAG} -g -Wall -ggdb -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic"
       CACHE STRING "Debug builds CMAKE CXX flags " FORCE )
 
 SET(LIBIDX_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libidx/include)
