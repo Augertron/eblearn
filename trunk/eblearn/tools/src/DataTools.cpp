@@ -205,17 +205,17 @@ namespace ebl {
     images.resize(0, images.dim(1), images.dim(2), images.dim(3)); // empty idx
     labels.resize(0); // empty idx
     int i = 0;
-    for (directory_iterator itr(imgp); itr != end_itr; ++itr, ++i) {
+    for (directory_iterator itr(imgp); itr != end_itr; itr++) {
       if (is_directory(itr->status())) {
 	tmp = classes.select(0, i);
 	// copy class name
 	memcpy(tmp.idx_ptr(), itr->leaf().c_str(), 
-	       min((size_t) 128, itr->leaf().length()) * sizeof (ubyte));
-	*(tmp.idx_ptr() +  min((size_t) 128, itr->leaf().length())) = '\0';
+	       min((size_t) 128, itr->leaf().length() + 1) * sizeof (ubyte));
 	// process subdirs to extract images into the single image idx
 	processDir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
 		   imgPatternRight, width, images, labels, i, verbose, 
 		   &binocular, toYUV);
+	++i; // increment only for directories
       }
     }
     if (verbose) {
