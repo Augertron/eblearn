@@ -219,8 +219,8 @@ void EbmTest::test_Ebm02() {
   double i;
   forget_param_linear fgp(1, 0.5);
   parameter p(100);
-  double wdata[] = {1000,100,10,1, -1000,-100,-10,-1, 1e7,1e6,1e5,1e4};
-  double bdata[] = {0.6,-0.7,8000};
+  //  double wdata[] = {1000,100,10,1, -1000,-100,-10,-1, 1e7,1e6,1e5,1e4};
+  //  double bdata[] = {0.6,-0.7,8000};
   state_idx in(4,1,1);
   state_idx out(3,1,1);
   stdsigmoid_module sigmod;
