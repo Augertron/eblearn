@@ -2,7 +2,7 @@
 #define IMAGETEST_
 
 #include <cppunit/extensions/HelperMacros.h>
-#include "libeblearn.h"
+#include "libidx.h"
 
 //! Test class for Image class
 class ImageTest : public CppUnit::TestFixture  {

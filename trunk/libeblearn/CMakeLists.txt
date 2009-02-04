@@ -24,7 +24,6 @@ ADD_LIBRARY (eblearn SHARED
 		     src/EblStates.cpp  
 		     src/EblBasic.cpp  
 		     src/EblTester.cpp
-		     src/Image.cpp  
 		     src/Ipp.cpp  
 		     src/libeblearn.cpp  
 		     src/Net.cpp  

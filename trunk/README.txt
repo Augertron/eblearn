@@ -21,7 +21,8 @@ Installation and compilation:
 					  libboost-regex-dev \
 	       	     	  		  libqt4-core libqt4-dev libqt4-gui \
                	     	  		  libcppunit-dev
-
+       *for developers only*
+       	    	     sudo apt-get install valgrind electric-fence
        *details*
 
        compilation:  sudo apt-get install cmake g++
@@ -30,6 +31,7 @@ Installation and compilation:
   		     	  	  	  libboost-regex-dev
      libeblearn-gui: sudo apt-get install libqt4-core libqt4-dev libqt4-gui \
      eblearn_tester: sudo apt-get install libcppunit-dev
+          debugging: sudo apt-get install valgrind electric-fence
 					      
     2. Compilation
        ./build.sh
@@ -102,14 +104,6 @@ Instructions
           default install directory of macports, then
           /opt/local/include will contain the macports versions of
           packages.
-
-    * (??) Remove a problematic memcpy (??)
-          o Edit the file "eblearn/eblearn/tools/src/DataTools.cpp"
-          and locate the only instance of "memcpy" in that file and
-          comment it. As far as I can tell its not used at all
-          anyway. Including this line seems to corrupt memory
-          somewhere and the boost directory iterator doesn't properly
-          terminate, producing a seg fault. 
 
     * Build eblearn
           o At this point, you can use the standard instructions to
