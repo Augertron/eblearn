@@ -40,9 +40,9 @@ void parse_args(int argc, char **argv) {
   gl_data_errmsg =
     new string("Data directory is unknown, some tests will be ignored");
   string s;
-  ifstream in("run.init");
+  ifstream in("../run.init");
   if (!in) {
-    cout << "Warning: failed to open run.init, please run configure.sh";
+    cout << "Warning: failed to open ../run.init, please run configure.sh";
     cout << endl;
   }
   else {
