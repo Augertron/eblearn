@@ -24,7 +24,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts
 
 # Check that electric-fence and valgrind are installed for (debug mode only)
 SET(EFENCE_FLAG "")
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
   FIND_PACKAGE(EFence)
   IF (NOT EFENCE_FOUND) 
