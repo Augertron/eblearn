@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
+ *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,12 +39,12 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-
   //! Idx elements and dimensions error checking macros
 
   //! Calls ylerror if src0 and src1 have different number of elements.
 #define idx_checknelems2_all(src0, src1)				\
-  if ((src0).nelements() != (src1).nelements()) ylerror("incompatible Idx sizes\n");
+  if ((src0).nelements() != (src1).nelements())				\
+    ylerror("incompatible Idx sizes\n");
 
   //! Calls ylerror if src0 and src1 and src2 have different number of elements.
 #define idx_checknelems3_all(src0, src1, src2)		\
@@ -64,12 +64,14 @@ namespace ebl {
 
   //! Calls ylerror if src0,src1,src2 and o0,o1,o2 do not match.
 #define idx_checkorder3(src0, o0, src1, o1, src2, o2)			\
-  if (((src0).order() != o0) || ((src1).order() != o1) || ((src2).order() != o2)) \
+  if (((src0).order() != o0) || ((src1).order() != o1)			\
+      || ((src2).order() != o2))					\
     ylerror("Idx have incompatible orders");
 
   //! Calls ylerror if src0.order(), src1.order() and src2.order() differ
 #define idx_checkorder3_all(src0, src1, src2)				\
-  if (((src0).order() != (src1).order()) || ((src0).order() != (src2).order())) \
+  if (((src0).order() != (src1).order())				\
+      || ((src0).order() != (src2).order()))				\
     ylerror("Idx have incompatible orders");
 
   //! Calls ylerror if src0.dim(0) and src1.dim(d1) don't match e0,e1
@@ -97,7 +99,6 @@ namespace ebl {
     ylerror("Idx have incompatible dimensions");
 
   ////////////////////////////////////////////////////////////////
-
   // TODO: these macros are untested (YLC)
 
   //! cidxN_bloopX: macros to loop simultaneously over elements 
@@ -126,21 +127,30 @@ namespace ebl {
   for (i=0, p0=(src0).idx_ptr(); i<_n0; i++, p0+=_m0) 
 
 #define cidx1_bloop2(i,p0,src0,p1,src1)					\
-  if (((src0).order() < 1)||((src1).order() < 1))  ylerror("Idx has wrong order"); \
+  if (((src0).order() < 1)||((src1).order() < 1))			\
+    ylerror("Idx has wrong order");					\
   intg _n0 = (src0).dim(0), _m0 = (src0).mod(0); _m1 = (src1).mod(0);	\
   idx_checkdim2_all(src0,src1,0)					\
-  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(); i<_n0; i++, p0+=_m0, p1+=_m1) 
+  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr();			\
+       i<_n0;								\
+       i++, p0+=_m0, p1+=_m1) 
 
 #define cidx1_bloop3(i,p0,src0,p1,src1,p2,src2)				\
-  intg _n0 = (src0).dim(0), _m0 = (src0).mod(0), _m1 = (src1).mod(0), _m2 = (src2).mod(0); \
+  intg _n0 = (src0).dim(0), _m0 = (src0).mod(0);			\
+  intg _m1 = (src1).mod(0), _m2 = (src2).mod(0);			\
   idx_checkdim3_all(src0,src1,src2,0)					\
-  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(), p2=(src2).idx_ptr(); i<_n0; i++, p0+=_m0, p1+=_m1, p2+=_m2) 
+  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(), p2=(src2).idx_ptr();\
+       i<_n0;								\
+       i++, p0+=_m0, p1+=_m1, p2+=_m2) 
 
 #define cidx1_bloop4(i,p0,src0,p1,src1,p2,src2,p3,src3)			\
-  intg _n0 = (src0).dim(0), _m0 = (src0).mod(0), _m1 = (src1).mod(0), _m2 = (src2).mod(0), _m3 = (src3).mod(0); \
+  intg _n0 = (src0).dim(0), _m0 = (src0).mod(0), _m1 = (src1).mod(0);	\
+  intg _m2 = (src2).mod(0), _m3 = (src3).mod(0);			\
   idx_checkdim4_all(src0,src1,src2,src3,0)				\
-  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(), p2=(src2).idx_ptr(), p3=(src3).idx_ptr(); i<_n0; i++, p0+=_m0, p1+=_m1, p2+=_m2, p3+=_m3) 
-
+  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(),			\
+	 p2=(src2).idx_ptr(), p3=(src3).idx_ptr();			\
+       i<_n0;								\
+       i++, p0+=_m0, p1+=_m1, p2+=_m2, p3+=_m3) 
 
 #define cidx2_bloop1(i,j,p0,src0)					\
   if ((src0).order() < 2) ylerror("Idx has wrong order");		\
@@ -157,7 +167,9 @@ namespace ebl {
   intg _n11 = (src1).dim(1), _m11 = (src1).mod(1);			\
   idx_checkdim2_all(src0,src1,0)					\
   idx_checkdim2_all(src0,src1,1)					\
-  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(); i<_n00; i++, p0+=_m00-_n01*_m01, p1+=_m10-_n11*_m11) \
+  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr();			\
+       i<_n00;								\
+       i++, p0+=_m00-_n01*_m01, p1+=_m10-_n11*_m11)			\
     for (j=0; i<_n01; j++, p0+=_m01, p1+=_m11) 
 
 #define cidx2_bloop3(i,j,p0,src0,p1,src1,p2,src2)			\
@@ -170,9 +182,10 @@ namespace ebl {
   intg _n21 = (src2).dim(1), _m21 = (src2).mod(1);			\
   idx_checkdim3_all(src0,src1,src2,0)					\
   idx_checkdim3_all(src0,src1,src2,1)					\
-  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(), p2=(src2).idx_ptr(); i<_n00; i++, p0+=_m00-_n01*_m01, p1+=_m10-_n11*_m11, p2+=_m20-_n21*_m21) \
+  for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr(), p2=(src2).idx_ptr(); \
+       i<_n00;								\
+       i++, p0+=_m00-_n01*_m01, p1+=_m10-_n11*_m11, p2+=_m20-_n21*_m21) \
     for (j=0; i<_n01; j++, p0+=_m01, p1+=_m11, p2+=_m21) 
-
 
   ////////////////////////////////////////////////////////////////
 
@@ -356,16 +369,16 @@ namespace ebl {
   // this loops simultaneously over all elements of 2 Idxs.
   // The two Idxs can have different structures as long as they have
   // the same total number of elements.
-#define idx_aloop2_on(itr0,src0,itr1,src1)				\
-  idx_checknelems2_all(src0, src1);					\
-  for ( itr0.init(src0), itr1.init(src1);				\
-	itr0.notdone();							\
+#define idx_aloop2_on(itr0,src0,itr1,src1)	\
+  idx_checknelems2_all(src0, src1);		\
+  for ( itr0.init(src0), itr1.init(src1);	\
+	itr0.notdone();				\
 	itr0.next(), itr1.next())
 
-#define idx_aloop3_on(itr0,src0,itr1,src1,itr2,src2)			\
-  idx_checknelems3_all(src0, src1, src2);				\
-  for (itr0.init(src0), itr1.init(src1), itr2.init(src2);		\
-       itr0.notdone();							\
+#define idx_aloop3_on(itr0,src0,itr1,src1,itr2,src2)		\
+  idx_checknelems3_all(src0, src1, src2);			\
+  for (itr0.init(src0), itr1.init(src1), itr2.init(src2);	\
+       itr0.notdone();						\
        itr0.next(), itr1.next(), itr2.next())
 
   // high level aloop macros.
@@ -415,94 +428,6 @@ namespace ebl {
      }
   */
 
-  template <typename T>
-  void Idx<T>::printElems( std::ostream& out ){
-    printElems_impl(0, out);
-  }
-
-  template <typename T>
-  void Idx<T>::printElems(){
-    this->printElems( std::cout );
-  }
-
-  template<class T> inline T printElems_impl_cast(T val) {
-    return val;
-  }
-
-  // specialization for ubyte to print as unsigned integers.
-  inline unsigned int printElems_impl_cast(ubyte val) {
-    return (unsigned int) val;
-  }
-
-  template <typename T>
-  void Idx<T>::printElems_impl( int indent, std::ostream& out ){
-    static const std::string lbrace = "[";
-    static const std::string rbrace = "]";
-    static const std::string sep = " ";
-    std::ostringstream oss;
-    for( unsigned int ii = 0; ii < lbrace.length(); ++ii ){
-      oss<<" ";
-    }
-    const std::string tab(oss.str());
-
-    // printing a 0-dimensional tensor
-    if( order() == 0 ){
-      out<<lbrace<<"@"<<sep<< printElems_impl_cast(get()) <<sep<<rbrace<<"\n";
-    }
-    // printing a 1-D tensor
-    else if( order() == 1 ){
-      out<<lbrace<<sep;
-      for( int ii = 0; ii < dim(0); ++ii ){
-	out<< printElems_impl_cast(get(ii)) <<sep;
-      }
-      out<<rbrace<<"\n";
-    }
-    // printing a multidimensional tensor
-    else{
-
-      // opening brace
-      out<<lbrace;
-
-      // print subtensors.
-      Idx<T> subtensor(storage, spec.offset);
-      for( int dimInd = 0; dimInd < dim(0); ++dimInd ){
-
-	// only print indent if this isn't the first subtensor.
-	if( dimInd > 0 ){
-	  for( int ii = 0; ii < indent+1; ++ii ){
-	    out<<(tab);
-	  }
-	}
-
-	// print subtensor
-	spec.select_into(&subtensor.spec, 0, dimInd);
-	subtensor.printElems_impl( indent+1, out );
-
-	// only print the newline if this isn't the last subtensor.
-	if( dimInd < (dim(0)-1)){
-	  out<<"\n";
-	}
-
-      }
-
-      // closing brace
-      out<<rbrace<<"\n";
-    }
-  }
-
-  template <class T> void Idx<T>::pretty(FILE *f) {
-    fprintf(f,"Idx: at address %ld\n",(intg)this);
-    fprintf(f,"  storage=%ld (size=%ld)\n",(intg)storage,storage->size());
-    spec.pretty(f);
-  }
-
-  template <class T> void Idx<T>::pretty(std::ostream& out){
-    out << "Idx: at address " << (intg)this << "\n";
-    out << "  storage=" <<  (intg)storage << "(size=" << storage->size();
-    out << "\n";
-    spec.pretty(out);
-  }
-
   template <class T> Idx<T>::~Idx() {
     DEBUG("Idx::destructor %ld\n",long(this));
     storage->unlock();
@@ -531,27 +456,12 @@ namespace ebl {
   //	storage->lock();
   // }
 
-  template <class T> Idx<T>::Idx(Srg<T> *srg, IdxSpec &s) {
-    spec = s;
-    storage = srg;
-    growstorage();
-    storage->lock();
-  }
 
-  template <class T> Idx<T>::Idx(Srg<T> *srg, intg o) : spec(o) {
-    storage = srg;
-    growstorage();
-    storage->lock();
-  }
+  ////////////////////////////////////////////////////////////////
+  // specific constructors for each number of dimensions
 
   template <class T> Idx<T>::Idx() : spec(0) {
     storage = new Srg<T>();
-    growstorage();
-    storage->lock();
-  }
-
-  template <class T> Idx<T>::Idx(Srg<T> *srg, intg o, intg size0) : spec(o,size0) {
-    storage = srg;
     growstorage();
     storage->lock();
   }
@@ -562,44 +472,83 @@ namespace ebl {
     storage->lock();
   }
 
-  template <class T> Idx<T>::Idx(Srg<T> *srg, intg o, intg size0, intg size1) : spec(o,size0,size1) {
-    storage = srg;
-    growstorage();
-    storage->lock();
-  }
-
   template <class T> Idx<T>::Idx(intg size0, intg size1) : spec(0,size0,size1) {
     storage = new Srg<T>();
     growstorage();
     storage->lock();
   }
 
-  template <class T> Idx<T>::Idx(Srg<T> *srg, intg o, intg size0, intg size1, intg size2) : spec(o,size0,size1,size2) {
-    storage = srg;
-    growstorage();
-    storage->lock();
-  }
-
-  template <class T> Idx<T>::Idx(intg size0, intg size1, intg size2) : spec(0,size0,size1,size2) {
+  template <class T> Idx<T>::Idx(intg size0, intg size1, intg size2)
+    : spec(0,size0,size1,size2) {
     storage = new Srg<T>();
     growstorage();
     storage->lock();
   }
 
-  template <class T> Idx<T>::Idx(Srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3, intg s4, intg s5, intg s6, intg s7) : spec(o,s0,s1,s2,s3,s4,s5,s6,s7) {
-    storage = srg;
-    growstorage();
-    storage->lock();
-  }
-
-  template <class T> Idx<T>::Idx(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5, intg s6, intg s7) : spec(0,s0,s1,s2,s3,s4,s5,s6,s7) {
+  template <class T> 
+  Idx<T>::Idx(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
+	      intg s6, intg s7) : spec(0,s0,s1,s2,s3,s4,s5,s6,s7) {
     storage = new Srg<T>();
     growstorage();
     storage->lock();
   }
 
+  ////////////////////////////////////////////////////////////////
+  // constructors from existing Srg and offset
 
-  template <class T> intg Idx<T>::setoffset(intg o) {
+  template <class T> 
+  Idx<T>::Idx(Srg<T> *srg, IdxSpec &s) {
+    spec = s;
+    storage = srg;
+    growstorage();
+    storage->lock();
+  }
+
+  template <class T> 
+  Idx<T>::Idx(Srg<T> *srg, intg o) : spec(o) {
+    storage = srg;
+    growstorage();
+    storage->lock();
+  }
+
+  template <class T> 
+  Idx<T>::Idx(Srg<T> *srg, intg o, intg size0)
+    : spec(o,size0) {
+    storage = srg;
+    growstorage();
+    storage->lock();
+  }
+
+  template <class T> 
+  Idx<T>::Idx(Srg<T> *srg, intg o, intg size0, intg size1)
+    : spec(o,size0,size1) {
+    storage = srg;
+    growstorage();
+    storage->lock();
+  }
+
+  template <class T> 
+  Idx<T>::Idx(Srg<T> *srg, intg o, intg size0, intg size1, intg size2)
+    : spec(o,size0,size1,size2) {
+    storage = srg;
+    growstorage();
+    storage->lock();
+  }
+
+  template <class T> 
+  Idx<T>::Idx(Srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3,
+	      intg s4, intg s5, intg s6, intg s7)
+    : spec(o,s0,s1,s2,s3,s4,s5,s6,s7) {
+    storage = srg;
+    growstorage();
+    storage->lock();
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // resize functions
+  
+  template <class T> 
+  intg Idx<T>::setoffset(intg o) {
     if (o<0) { ylerror("Idx::setoffset: offset must be positive"); }
     if (o > spec.offset) {
       spec.setoffset(o);
@@ -611,32 +560,22 @@ namespace ebl {
     }
   }
 
-  template <class T> void Idx<T>::resize(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5, intg s6, intg s7) {
+  template <class T> 
+  void Idx<T>::resize(intg s0, intg s1, intg s2, intg s3, 
+					 intg s4, intg s5, intg s6, intg s7) {
     spec.resize(s0,s1,s2,s3,s4,s5,s6,s7);
     growstorage();
   }
 
-  template <class T> void Idx<T>::resize_chunk(intg s_chunk, intg s0, intg s1, intg s2, intg s3, intg s4, intg s5, intg s6, intg s7) {
+  template <class T> 
+  void Idx<T>::resize_chunk(intg s_chunk, intg s0, intg s1, intg s2, intg s3, 
+			    intg s4, intg s5, intg s6, intg s7) {
     spec.resize(s0,s1,s2,s3,s4,s5,s6,s7);
     growstorage_chunk(s_chunk);
   }
 
-  //template<typename T, typename SizeIter>
-  //void Idx<T>::resize( SizeIter& sizesBegin, SizeIter& sizesEnd ){
-  //	const int ndims = std::distance( sizesBegin, sizesEnd );
-  //	if ( ndims > MAXDIMS ){
-  //		std::ostringstream oss;
-  //		oss<<"Number of dimensions ("<<ndims<<") exceeds MAX_DIMS ("<<MAXDIMS<<")";
-  //		ylerror(oss.str());
-  //	}
-  //
-  //	std::vector<T> sizes(ndims+1);
-  //	std::copy(sizesBegin, sizesEnd, sizes.begin());
-  //	sizes.back() = -1;
-  //	spec.resize( sizesBegin, sizesEnd );
-  //	growstorage();
-  //}
-
+  ////////////////////////////////////////////////////////////////
+  // Idx manipulation functions
 
   template <class T> Idx<T> Idx<T>::select(int d, intg i) {
     Idx<T> r(storage,spec.getoffset());
@@ -668,6 +607,28 @@ namespace ebl {
     return r;
   }
 
+  template <class T> Idx<T> Idx<T>::view_as_order(int n) {
+    if (n < 0) {
+      ylerror("view_as_order: input dimension must be positive");
+      return *this;
+    }
+    if (n == spec.ndim)
+      return *this;
+    else {
+      if (n == 1) {
+	Idx<T> r(getstorage(), 0, spec.nelements());
+	return r;
+      } 
+      else if (n > spec.ndim) {
+	Idx<T> r(getstorage(), 0, spec.nelements()); // TODO: fixme
+	return r;
+      }
+      else {
+	ylerror("view_as_order is not defined when n < current order");
+	return *this;
+      }
+    }
+  }
 
   ////////////////////////////////////////////////////////////////
   // access methods
@@ -812,6 +773,97 @@ namespace ebl {
   // set an element of an Idx of any order.
   template <class T> T Idx<T>::set(T val, intg i0, intg i1, intg i2, intg i3, intg i4, intg i5, intg i6, intg i7) {
     return *ptr(i0,i1,i2,i3,i4,i5,i6,i7) = val;
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // print functions
+
+  template <typename T>
+  void Idx<T>::printElems( std::ostream& out ){
+    printElems_impl(0, out);
+  }
+
+  template <typename T>
+  void Idx<T>::printElems(){
+    this->printElems( std::cout );
+  }
+
+  template<class T> inline T printElems_impl_cast(T val) {
+    return val;
+  }
+
+  // specialization for ubyte to print as unsigned integers.
+  inline unsigned int printElems_impl_cast(ubyte val) {
+    return (unsigned int) val;
+  }
+
+  template <typename T>
+  void Idx<T>::printElems_impl( int indent, std::ostream& out ){
+    static const std::string lbrace = "[";
+    static const std::string rbrace = "]";
+    static const std::string sep = " ";
+    std::ostringstream oss;
+    for( unsigned int ii = 0; ii < lbrace.length(); ++ii ){
+      oss<<" ";
+    }
+    const std::string tab(oss.str());
+
+    // printing a 0-dimensional tensor
+    if( order() == 0 ){
+      out<<lbrace<<"@"<<sep<< printElems_impl_cast(get()) <<sep<<rbrace<<"\n";
+    }
+    // printing a 1-D tensor
+    else if( order() == 1 ){
+      out<<lbrace<<sep;
+      for( int ii = 0; ii < dim(0); ++ii ){
+	out<< printElems_impl_cast(get(ii)) <<sep;
+      }
+      out<<rbrace<<"\n";
+    }
+    // printing a multidimensional tensor
+    else{
+
+      // opening brace
+      out<<lbrace;
+
+      // print subtensors.
+      Idx<T> subtensor(storage, spec.offset);
+      for( int dimInd = 0; dimInd < dim(0); ++dimInd ){
+
+	// only print indent if this isn't the first subtensor.
+	if( dimInd > 0 ){
+	  for( int ii = 0; ii < indent+1; ++ii ){
+	    out<<(tab);
+	  }
+	}
+
+	// print subtensor
+	spec.select_into(&subtensor.spec, 0, dimInd);
+	subtensor.printElems_impl( indent+1, out );
+
+	// only print the newline if this isn't the last subtensor.
+	if( dimInd < (dim(0)-1)){
+	  out<<"\n";
+	}
+
+      }
+
+      // closing brace
+      out<<rbrace<<"\n";
+    }
+  }
+
+  template <class T> void Idx<T>::pretty(FILE *f) {
+    fprintf(f,"Idx: at address %ld\n",(intg)this);
+    fprintf(f,"  storage=%ld (size=%ld)\n",(intg)storage,storage->size());
+    spec.pretty(f);
+  }
+
+  template <class T> void Idx<T>::pretty(std::ostream& out){
+    out << "Idx: at address " << (intg)this << "\n";
+    out << "  storage=" <<  (intg)storage << "(size=" << storage->size();
+    out << "\n";
+    spec.pretty(out);
   }
 
   template <class T> int Idx<T>::fdump(FILE *f) {

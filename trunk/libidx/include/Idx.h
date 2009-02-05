@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
+ *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -335,52 +335,9 @@ namespace ebl {
 
   public:
 
-    // STL-like typedefs
-    typedef T value_type;
-    typedef ScalarIter<value_type> scalar_iterator;
-    typedef ReverseScalarIter<value_type> reverse_scalar_iterator;
-    typedef DimIter<value_type> dimension_iterator;
-    typedef ReverseDimIter<value_type> reverse_dimension_iterator;
-
-    /* -----  STL-style iterator creators  ----- */
-
-    //! Returns an iterator over all the elements.
-    scalar_iterator scalars_begin();
-
-    //! Returns a terminated iterator over all the elements.
-    scalar_iterator scalars_end();
-
-    //! Returns a reversed-order iterator over all the elements.
-    reverse_scalar_iterator scalars_rbegin();
-
-    //! Returns a terminated reversed-order iterator over all the elements.
-    reverse_scalar_iterator scalars_rend();
-
-    //! Returns an iterator for the given dimension.
-    dimension_iterator dim_begin( int dim );
-
-    //! Returns a terminated iterator for the given dimension.
-    dimension_iterator dim_end( int dim );
-
-    //! Returns an iterator for the given dimension.
-    reverse_dimension_iterator dim_rbegin( int dim );
-
-    //! Returns a terminated iterator for the given dimension.
-    reverse_dimension_iterator dim_rend( int dim );
-
-
     //! IdxSpec that contains the order,
     //! offset, dimensions and strides.
     IdxSpec spec;
-
-    //! Pretty-prints IDx metadata to a file pointer.
-    virtual void pretty(FILE *);
-    virtual void pretty(std::ostream& out);
-
-    //! Pretty-prints elements to a stream.
-    virtual void printElems(); // calls printElems( std::cout );
-    virtual void printElems( std::ostream& out );
-    // void printElems( FILE* out );  doesn't work (cf implementation)
 
     //! destructor: unlocks the Srg.
     virtual ~Idx();
@@ -423,14 +380,9 @@ namespace ebl {
     //! generic constructor with dims and mods creates
     //! the storage and set offset to zero.
     Idx(int n, intg *dims, intg *mods);
+    
 
-    //! specific constructors for each number of dimensions
-
-    //! creates an Idx0 with existing Srg and offset.
-    Idx(Srg<T> *srg, intg o);
-    //! creates an Idx0 from scratch;
-    Idx();
-
+    
   Idx( const Idx<T>& other )
     :storage(other.storage),
       spec(other.spec)
@@ -438,33 +390,76 @@ namespace ebl {
 	  storage->lock();
 	}
 
-    // create an Idx0 and fill it with val.
-    // removed because ambiguous.
-    // Idx(T val);
+    ////////////////////////////////////////////////////////////////
+    //! specific constructors for each number of dimensions
 
-    //! creates an Idx1 of size size0, with existing Srg and offset.
-    Idx(Srg<T> *srg, intg o, intg size0);
+    //! creates an Idx0 from scratch;
+    Idx();
     //! creates an Idx1 of size size0.
     Idx(intg size0);
-
-    //! creates an Idx2 of size (size0,size1),
-    //! with existing Srg and offset.
-    Idx(Srg<T> *srg, intg o, intg size0, intg size1);
     //! creates an Idx2 of size (size0,size1).
     Idx(intg size0, intg size1);
-
-    //! creates an Idx3 of size (size0,size1,size2),
-    //! with existing Srg and offset.
-    Idx(Srg<T> *srg, intg o, intg size0, intg size1, intg size2);
     //! creates an Idx3 of size (size0,size1,size2).
     Idx(intg size0, intg size1, intg size2);
-
-    //! creates an Idx of any order with existing Srg and offset.
-    Idx(Srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3, intg s4=-1, 
-	intg s5=-1, intg s6=-1, intg s7=-1);
     //! creates an Idx of any order.
     Idx(intg s0, intg s1, intg s2, intg s3, intg s4=-1, intg s5=-1, intg s6=-1,
 	intg s7=-1);
+
+    ////////////////////////////////////////////////////////////////
+    //! constructors from existing Srg and offset
+
+    //! creates an Idx0 with existing Srg and offset.
+    Idx(Srg<T> *srg, intg o);
+    //! creates an Idx1 of size size0, with existing Srg and offset.
+    Idx(Srg<T> *srg, intg o, intg size0);
+    //! creates an Idx2 of size (size0,size1),
+    //! with existing Srg and offset.
+    Idx(Srg<T> *srg, intg o, intg size0, intg size1);
+    //! creates an Idx3 of size (size0,size1,size2),
+    //! with existing Srg and offset.
+    Idx(Srg<T> *srg, intg o, intg size0, intg size1, intg size2);
+    //! creates an Idx of any order with existing Srg and offset.
+    Idx(Srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3, intg s4=-1, 
+	intg s5=-1, intg s6=-1, intg s7=-1);
+
+    ////////////////////////////////////////////////////////////////
+    //! STL-like iterators 
+
+    //! STL-like typedefs
+    typedef T value_type;
+    typedef ScalarIter<value_type> scalar_iterator;
+    typedef ReverseScalarIter<value_type> reverse_scalar_iterator;
+    typedef DimIter<value_type> dimension_iterator;
+    typedef ReverseDimIter<value_type> reverse_dimension_iterator;
+
+    /* -----  STL-style iterator creators  ----- */
+
+    //! Returns an iterator over all the elements.
+    scalar_iterator scalars_begin();
+
+    //! Returns a terminated iterator over all the elements.
+    scalar_iterator scalars_end();
+
+    //! Returns a reversed-order iterator over all the elements.
+    reverse_scalar_iterator scalars_rbegin();
+
+    //! Returns a terminated reversed-order iterator over all the elements.
+    reverse_scalar_iterator scalars_rend();
+
+    //! Returns an iterator for the given dimension.
+    dimension_iterator dim_begin( int dim );
+
+    //! Returns a terminated iterator for the given dimension.
+    dimension_iterator dim_end( int dim );
+
+    //! Returns an iterator for the given dimension.
+    reverse_dimension_iterator dim_rbegin( int dim );
+
+    //! Returns a terminated iterator for the given dimension.
+    reverse_dimension_iterator dim_rend( int dim );
+
+    ////////////////////////////////////////////////////////////////
+    //! resize functions
 
     //! change the offset of an Idx. The Storage is
     //! resized accordingly. Returns the new offset.
@@ -480,6 +475,8 @@ namespace ebl {
     virtual void resize_chunk(intg s_chunk, intg s0=-1, intg s1=-1, intg s2=-1,
 			      intg s3=-1, intg s4=-1, intg s5=-1, intg s6=-1, 
 			      intg s7=-1);
+
+
     /**
      * Resizes the Idx using the dimension sizes listed
      * in a sequence.
@@ -487,7 +484,7 @@ namespace ebl {
      * @param sizesEnd: An iterator type, points to one past the last size.
      */
     template<typename SizeIter>
-      void resize( SizeIter& sizesBegin, SizeIter& sizesEnd ){
+      void resize( SizeIter& sizesBegin, SizeIter& sizesEnd) {
       const int ndims = std::distance( sizesBegin, sizesEnd );
       if ( ndims > MAXDIMS ){
 	std::ostringstream oss;
@@ -502,6 +499,9 @@ namespace ebl {
       spec.resize( sizesBegin, sizesEnd );
       growstorage();
     }
+
+    ////////////////////////////////////////////////////////////////
+    //! Idx manipulation functions
 
     //! select: return a new Idx corresponding to
     //! a slice of the current Idx with slice i
@@ -544,7 +544,17 @@ namespace ebl {
     //! convolutions look like matrix-vector multiplies.
     virtual Idx<T> unfold(int d, intg k, intg s);
 
-    // field access
+    //! Returns a new Idx with an order n.
+    //! if n == 1, the data is viewed as a 1D idx, regardless of its
+    //!   current order.
+    //! if n > 1 and n > current order, then extra dimensions of size 1
+    //!   are added.
+    //! if n > 1 and n < current order, this is undefined, an error is raised.
+    //! if n == current order, an identical Idx is returned.
+    Idx<T> view_as_order(int n);
+
+    ////////////////////////////////////////////////////////////////
+    //! field access functions
 
     //! return pointer to storage
     virtual Srg<T> *getstorage() { return storage; }
@@ -586,6 +596,9 @@ namespace ebl {
     //    } else { ylerror("Idx::operator*: only an Idx0 can be dereferenced"); }
     //  }
 
+    ////////////////////////////////////////////////////////////////
+    //! data access functions
+
     //! return pointer on data chunk (on first element)
     virtual T *idx_ptr() {  return storage->data + spec.offset; }
 
@@ -626,6 +639,18 @@ namespace ebl {
     //! sets the value of an element (generic version)
     virtual T set(T val, intg i0, intg i1, intg i2, intg i3, intg i4=-1, 
 		  intg i5=-1, intg i6=-1, intg i7=-1);
+
+    ////////////////////////////////////////////////////////////////
+    //! print functions
+
+    //! Pretty-prints IDx metadata to a file pointer.
+    virtual void pretty(FILE *);
+    virtual void pretty(std::ostream& out);
+
+    //! Pretty-prints elements to a stream.
+    virtual void printElems(); // calls printElems( std::cout );
+    virtual void printElems( std::ostream& out );
+    // void printElems( FILE* out );  doesn't work (cf implementation)
 
     //! print content of Idx on stream
     virtual int fdump(FILE *f);
