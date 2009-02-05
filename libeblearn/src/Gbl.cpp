@@ -82,16 +82,8 @@ Please call init_drand() before using this function !\n");
 	{
 	  idx_bloop2(llinx,linx,double, lloutx,loutx,double)
 	    {
-	      // fprintf(stdout,"f_layer::fprop\n");
-	      // weight->x.pretty(stdout);
-	      // weight->x.fdump(stdout);
-	      // llinx.pretty(stdout);
-	      // llinx.fdump(stdout);
-	      // lloutx.pretty(stdout);
 	      // multiply weight matrix by input
 	      idx_m2dotm1(weight->x, llinx, lloutx);
-	      // lloutx.pretty(stdout);
-	      // lloutx.fdump(stdout);
 	    }
 	}
     }

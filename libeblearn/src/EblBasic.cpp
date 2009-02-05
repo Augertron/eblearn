@@ -36,6 +36,9 @@ using namespace std;
 
 namespace ebl {
 
+  ////////////////////////////////////////////////////////////////
+  // linear_module
+
   linear_module::linear_module(parameter *p, intg in, intg out)
   {
     w = new state_idx(p, out, in);
@@ -178,6 +181,174 @@ Please call init_drand() before using this function !\n");
   }
 
   void linear_module::normalize()
+  {
+    norm_columns(w->x);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // linear_module 
+
+  linear_module_dim0::linear_module_dim0(parameter *p, intg in, intg out)
+  {
+    w = new state_idx(p, out, in);
+  }
+
+  linear_module_dim0::~linear_module_dim0()
+  {
+    delete w;
+  }
+
+  void linear_module_dim0::fprop(state_idx *in, state_idx *out)
+  {
+    //	intg instride = 0;
+    //	intg outstride = 0;
+    //	if (in->x.order() == 1)
+    //	{
+    //		instride = in->x.mod(0);
+    //	}
+    //	else if (in->x.contiguousp())
+    //	{
+    //		instride = 1;
+    //	}
+    //	if (out->x.order() == 1)
+    //	{
+    //		outstride = out->x.mod(0);
+    //		out->resize(w->x.dim(0));
+    //	}
+    //	else if (out->x.contiguousp())
+    //	{
+    //		outstride = 1;
+    //	}
+    //	if ( (instride == 0)||(outstride==0))
+    //	{
+    //		ylerror("linear_module_dim0::fprop: state must 1D or contiguous");
+    //	}
+    //	else
+    //	{
+    //		if (out->x.nelements() != w->x.dim(0))
+    //		{
+    //			ylerror("linear_module_dim0::fprop: output has wrong size");
+    //		}
+    //		else
+    //		{
+    //			idx_m2dotm1(w->x, in->x, out->x);
+    //		}
+    //	}
+
+    // check that input and output have at most 4 dimensions
+    if ((in->x.order() > 4) || (out->x.order() > 4))
+      ylerror("linear_module_dim0: currently only 4-order idx are supported");
+    // see input and output as idx of order 4
+    Idx<double> inx = in->x.view_as_order(4);
+    Idx<double> outx = in->x.view_as_order(4);
+    // loop over last 3 dimensions and call linear combination on first dim
+    { idx_eloop2(linx,inx,double, loutx,outx,double) {
+	idx_eloop2(llinx,linx,double, lloutx,loutx,double) {
+	  idx_eloop2(lllinx,llinx,double, llloutx,lloutx,double) {
+	    // multiply weight matrix by input
+	    idx_m2dotm1(w->x, lllinx, llloutx);
+	  }
+	}
+      }}
+    
+
+
+    state_idx in1(in); // TODO: temporary, find a cleaner solution
+    out->resize(w->x.dim(0));
+    idx_m2dotm1(w->x, in1.x, out->x);
+  }
+
+  void linear_module_dim0::bprop(state_idx *in, state_idx *out)
+  {
+    state_idx in1(in); // TODO: temporary, find a cleaner solution
+    intg instride = 0;
+    intg outstride = 0;
+    if (in1.x.order() == 1)
+      {
+	instride = in1.x.mod(0);
+      }
+    else if (in1.x.contiguousp())
+      {
+	instride = 1;
+      }
+    if (out->x.order() == 1)
+      {
+	outstride = out->x.mod(0);
+      }
+    else if (out->x.contiguousp())
+      {
+	outstride = 1;
+      }
+    if ( (instride == 0)||(outstride==0))
+      {
+	ylerror("linear_module_dim0::fprop: state must 1D or contiguous");
+      }
+    else
+      {
+	if (out->x.nelements() != w->x.dim(0))
+	  {
+	    ylerror("linear_module_dim0::fprop: output has wrong size");
+	  }
+	else
+	  {
+	    Idx<double> twx(w->x.transpose(0, 1));
+	    idx_m1extm1(out->dx, in1.x, w->dx);
+	    idx_m2dotm1(twx, out->dx, in1.dx);
+	  }
+      }
+  }
+
+  void linear_module_dim0::bbprop(state_idx *in, state_idx *out)
+  {
+    state_idx in1(in); // TODO: temporary, find a cleaner solution
+    intg instride = 0;
+    intg outstride = 0;
+    if (in1.x.order() == 1)
+      {
+	instride = in1.x.mod(0);
+      }
+    else if (in1.x.contiguousp())
+      {
+	instride = 1;
+      }
+    if (out->x.order() == 1)
+      {
+	outstride = out->x.mod(0);
+      }
+    else if (out->x.contiguousp())
+      {
+	outstride = 1;
+      }
+    if ( (instride == 0)||(outstride==0))
+      {
+	ylerror("linear_module_dim0::fprop: state must 1D or contiguous");
+      }
+    else
+      {
+	if (out->x.nelements() != w->x.dim(0))
+	  {
+	    ylerror("linear_module_dim0::fprop: output has wrong size");
+	  }
+	else
+	  {
+	    Idx<double> twx = w->x.transpose(0, 1);
+	    idx_m1squextm1(out->ddx, in1.x, w->ddx);
+	    idx_m2squdotm1(twx, out->ddx, in1.ddx);
+	  }
+      }
+  }
+
+  void linear_module_dim0::forget(forget_param_linear &fp)
+  {
+    double fanin = w->x.dim(1);
+    double z = fp.value / pow(fanin, fp.exponent);
+    if(!drand_ini) printf("You have not initialized random sequence. \
+Please call init_drand() before using this function !\n");
+    idx_aloop1(lx,w->x,double)
+      {	*lx = drand(z);}
+  }
+
+  void linear_module_dim0::normalize()
   {
     norm_columns(w->x);
   }

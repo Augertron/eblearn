@@ -44,10 +44,10 @@ namespace ebl {
   void err_not_implemented();
 
   ////////////////////////////////////////////////////////////////
-  // linear module
-  // It's different from f_layer in that it is
-  // not spatially replicable and does not operate
-  // on 3D state_idx.
+  //! linear module
+  //! It's different from linear_module_dim0 in that it is
+  //! not spatially replicable.
+  //! It can operate on idx of any order but will seem them as 1D idx.
 
   class linear_module: public module_1_1<state_idx, state_idx> {
   public:
@@ -63,8 +63,29 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  //! linear module dim0
+  //! It's different from linear_module in that it is
+  //! spatially replicable: it applies the linear combination only
+  //! to the first dimension of the idxs (dim 0).
+  //! It can operate on idx of any order up to 4 dimensions (adding
+  //! extra dimensions of size 1 for idxs with less than 4 dimensions).
 
-  //! constant add
+  class linear_module_dim0: public module_1_1<state_idx, state_idx> {
+  public:
+    state_idx *w;
+
+    virtual ~linear_module_dim0();
+    linear_module_dim0(parameter *p, intg in, intg out);
+    void fprop(state_idx *in, state_idx *out);
+    void bprop(state_idx *in, state_idx *out);
+    void bbprop(state_idx *in, state_idx *out);
+    void forget(forget_param_linear &fp);
+    void normalize();
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! constant add module
+
   class addc_module: public module_1_1<state_idx, state_idx> {
   public:
     // coefficients
