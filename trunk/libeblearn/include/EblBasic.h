@@ -48,7 +48,6 @@ namespace ebl {
   //! It's different from linear_module_dim0 in that it is
   //! not spatially replicable.
   //! It can operate on idx of any order but will seem them as 1D idx.
-
   class linear_module: public module_1_1<state_idx, state_idx> {
   public:
     state_idx *w;
@@ -69,11 +68,10 @@ namespace ebl {
   //! to the first dimension of the idxs (dim 0).
   //! It can operate on idx of any order up to 4 dimensions (adding
   //! extra dimensions of size 1 for idxs with less than 4 dimensions).
-
   class linear_module_dim0: public linear_module {
   public:
     linear_module_dim0(parameter *p, intg in, intg out);
-    virtual ~linear_module_dim0();
+    virtual ~linear_module_dim0() {};
     virtual void fprop(state_idx *in, state_idx *out);
     virtual void bprop(state_idx *in, state_idx *out);
     virtual void bbprop(state_idx *in, state_idx *out);
@@ -81,13 +79,16 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! constant add module
-
+  //! It's different from addc_module_dim0 in that it is
+  //! not spatially replicable.
+  //! It can operate on idx of any order but will seem them as 1D idx.
   class addc_module: public module_1_1<state_idx, state_idx> {
   public:
     // coefficients
     state_idx* bias;
+
     addc_module(parameter *p, intg size);
-    ~addc_module();
+    virtual ~addc_module();
     //! fprop from in to out
     void fprop(state_idx *in, state_idx *out);
     //! bprop
@@ -96,6 +97,25 @@ namespace ebl {
     void bbprop(state_idx *in, state_idx *out);
     void forget(forget_param_linear &fp);
     void normalize();
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! constant add module dim0
+  //! It's different from addc_module in that it is
+  //! spatially replicable: it adds a constant only
+  //! to the first dimension of the idxs (dim 0).
+  //! It can operate on idx of any order up to 4 dimensions (adding
+  //! extra dimensions of size 1 for idxs with less than 4 dimensions).
+  class addc_module_dim0: public addc_module {
+  public:
+    addc_module_dim0(parameter *p, intg size);
+    virtual ~addc_module_dim0() {};
+    //! fprop from in to out
+    void fprop(state_idx *in, state_idx *out);
+    //! bprop
+    void bprop(state_idx *in, state_idx *out);
+    //! bbprop
+    void bbprop(state_idx *in, state_idx *out);
   };
 
 } // namespace ebl {

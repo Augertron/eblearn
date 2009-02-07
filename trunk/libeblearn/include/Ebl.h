@@ -98,7 +98,7 @@ namespace ebl {
     //! linear module for weight matrix
     linear_module_dim0 *linear;
     //! bias vector
-    state_idx *bias;
+    addc_module_dim0 *adder;
     //! weighted sum
     state_idx *sum;
     //! the non-linear function
