@@ -14,6 +14,7 @@ class IdxTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST(test_Idx_resize);
   CPPUNIT_TEST(test_IdxIter);
   CPPUNIT_TEST(test_Idx_macros);
+  CPPUNIT_TEST(test_view_as_order);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -33,5 +34,6 @@ public:
   void test_Idx_resize();
   void test_IdxIter();
   void test_Idx_macros();
+  void test_view_as_order();
 };
 #endif /*IDXTEST_*/

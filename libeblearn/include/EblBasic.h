@@ -53,13 +53,13 @@ namespace ebl {
   public:
     state_idx *w;
 
-    virtual ~linear_module();
     linear_module(parameter *p, intg in, intg out);
-    void fprop(state_idx *in, state_idx *out);
-    void bprop(state_idx *in, state_idx *out);
-    void bbprop(state_idx *in, state_idx *out);
-    void forget(forget_param_linear &fp);
-    void normalize();
+    virtual ~linear_module();
+    virtual void fprop(state_idx *in, state_idx *out);
+    virtual void bprop(state_idx *in, state_idx *out);
+    virtual void bbprop(state_idx *in, state_idx *out);
+    virtual void forget(forget_param_linear &fp);
+    virtual void normalize();
   };
 
   ////////////////////////////////////////////////////////////////
@@ -70,17 +70,13 @@ namespace ebl {
   //! It can operate on idx of any order up to 4 dimensions (adding
   //! extra dimensions of size 1 for idxs with less than 4 dimensions).
 
-  class linear_module_dim0: public module_1_1<state_idx, state_idx> {
+  class linear_module_dim0: public linear_module {
   public:
-    state_idx *w;
-
-    virtual ~linear_module_dim0();
     linear_module_dim0(parameter *p, intg in, intg out);
-    void fprop(state_idx *in, state_idx *out);
-    void bprop(state_idx *in, state_idx *out);
-    void bbprop(state_idx *in, state_idx *out);
-    void forget(forget_param_linear &fp);
-    void normalize();
+    virtual ~linear_module_dim0();
+    virtual void fprop(state_idx *in, state_idx *out);
+    virtual void bprop(state_idx *in, state_idx *out);
+    virtual void bbprop(state_idx *in, state_idx *out);
   };
 
   ////////////////////////////////////////////////////////////////

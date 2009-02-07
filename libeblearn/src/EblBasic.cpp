@@ -189,13 +189,10 @@ Please call init_drand() before using this function !\n");
   // linear_module 
 
   linear_module_dim0::linear_module_dim0(parameter *p, intg in, intg out)
-  {
-    w = new state_idx(p, out, in);
+    : linear_module(p, in, out) {
   }
 
-  linear_module_dim0::~linear_module_dim0()
-  {
-    delete w;
+  linear_module_dim0::~linear_module_dim0() {
   }
 
   void linear_module_dim0::fprop(state_idx *in, state_idx *out)
@@ -240,7 +237,7 @@ Please call init_drand() before using this function !\n");
       ylerror("linear_module_dim0: currently only 4-order idx are supported");
     // see input and output as idx of order 4
     Idx<double> inx = in->x.view_as_order(4);
-    Idx<double> outx = in->x.view_as_order(4);
+    Idx<double> outx = out->x.view_as_order(4);
     // loop over last 3 dimensions and call linear combination on first dim
     { idx_eloop2(linx,inx,double, loutx,outx,double) {
 	idx_eloop2(llinx,linx,double, lloutx,loutx,double) {
@@ -250,12 +247,6 @@ Please call init_drand() before using this function !\n");
 	  }
 	}
       }}
-    
-
-
-    state_idx in1(in); // TODO: temporary, find a cleaner solution
-    out->resize(w->x.dim(0));
-    idx_m2dotm1(w->x, in1.x, out->x);
   }
 
   void linear_module_dim0::bprop(state_idx *in, state_idx *out)
@@ -336,21 +327,6 @@ Please call init_drand() before using this function !\n");
 	    idx_m2squdotm1(twx, out->ddx, in1.ddx);
 	  }
       }
-  }
-
-  void linear_module_dim0::forget(forget_param_linear &fp)
-  {
-    double fanin = w->x.dim(1);
-    double z = fp.value / pow(fanin, fp.exponent);
-    if(!drand_ini) printf("You have not initialized random sequence. \
-Please call init_drand() before using this function !\n");
-    idx_aloop1(lx,w->x,double)
-      {	*lx = drand(z);}
-  }
-
-  void linear_module_dim0::normalize()
-  {
-    norm_columns(w->x);
   }
 
   ////////////////////////////////////////////////////////////////

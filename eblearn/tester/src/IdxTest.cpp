@@ -494,3 +494,39 @@ void IdxTest::test_Idx_macros() {
   }
 }
 
+void IdxTest::test_view_as_order() {
+  int cnt;
+
+  Idx<double> i8(2, 2, 2, 2, 2, 2, 2, 2);
+  Idx<double> i8_1(i8.view_as_order(1));
+  CPPUNIT_ASSERT_EQUAL(1, i8_1.order());
+  CPPUNIT_ASSERT_EQUAL((intg) 256, i8_1.nelements());
+  CPPUNIT_ASSERT_EQUAL((intg) 256, i8_1.dim(0));
+  CPPUNIT_ASSERT_EQUAL((intg) 1, i8_1.mod(0));
+  cnt = 0;
+  idx_bloop1(ii, i8_1, double) {
+    cnt++;
+  }
+  CPPUNIT_ASSERT_EQUAL(256, cnt);  
+
+  Idx<double> i1(42);
+  Idx<double> i1_8(i1.view_as_order(8));
+  CPPUNIT_ASSERT_EQUAL(8, i1_8.order());
+  CPPUNIT_ASSERT_EQUAL((intg) 42, i1_8.nelements());
+  CPPUNIT_ASSERT_EQUAL((intg) 42, i1_8.dim(0));
+  for (int i = 1; i < 8; ++i) {
+    CPPUNIT_ASSERT_EQUAL((intg) 1, i1_8.dim(i));
+  }
+  cnt = 0;
+  idx_bloop1(ii, i1_8, double) {
+    idx_bloop1(iii, ii, double) {
+      idx_bloop1(iiii, iii, double) {
+	idx_bloop1(iiiii, iiii, double) {
+	  idx_bloop1(iiiiii, iiiii, double) {
+	    idx_bloop1(iiiiiii, iiiiii, double) {
+	      idx_bloop1(iiiiiiii, iiiiiii, double) {
+		idx_bloop1(iiiiiiiii, iiiiiiii, double) {
+		    cnt++;
+		  }}}}}}}}
+  CPPUNIT_ASSERT_EQUAL(42, cnt);
+}

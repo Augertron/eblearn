@@ -70,6 +70,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   class dummyt {  bool someunk; };
+  class IdxDim;
 
   //! IdxSpec contains all the characteristics of an Idx,
   //! except the storage. It includes the order (number of dimensions)
@@ -109,6 +110,16 @@ namespace ebl {
     //! the same offset as the original.
     intg resize(intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,
 		intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
+    
+    //! resize the spec and return the new footprint,
+    //! using dimensions contained in an IdxDim. 
+    //! The order is not allowed to change.
+    intg resize(const IdxDim &d);
+
+    //! resize dimension <dimn> with size <size> and return new footprint.
+    //! only already allocated dimensions can be resized 
+    //! (order is not allowed to change).
+    intg resize1(intg dimn, intg size);
 
     template<typename SizeIter> intg resize( SizeIter& dimsBegin, 
 					     SizeIter& dimsEnd ){
@@ -143,19 +154,26 @@ namespace ebl {
     //! set the offset and return the new value
     intg setoffset(intg o) { return offset = o; }
 
+    //! initialize a spec with offset o and 8 dimensions
+    void init_spec(intg o, intg s0, intg s1, intg s2, intg s3, 
+		   intg s4, intg s5, intg s6, intg s7);
+
   public:
 
     //! the destructor of IdxSpec deallocates the dim and mod arrays.
-    ~IdxSpec();
+    virtual ~IdxSpec();
 
     //! assignment operator overloading.
-    const IdxSpec& operator=( const IdxSpec& src);
+    const IdxSpec& operator=(const IdxSpec& src);
 
     //! copy IdxSpec src into current IdxSpec
-    void copy( const IdxSpec& src);
+    void copy(const IdxSpec& src);
 
     //! copy constructor from IdxSpec src
-    IdxSpec( const IdxSpec& src);
+    IdxSpec(const IdxSpec& src);
+
+    ////////////////////////////////////////////////////////////////
+    //! specific constructors for each number of dimensions
 
     //! This creates an IdxSpec0 with offset 0.
     //! This can be used to build an empty/blank IdxSpec.
@@ -176,10 +194,17 @@ namespace ebl {
     //! Generic constructor with offset.
     IdxSpec(intg o, intg s0, intg s1, intg s2, intg s3,
 	    intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
-
+    
     //! Creates an IdxSpec of order n from arrays of dims and mods.
     //! The arrays are copied.
     IdxSpec(intg o, int n, intg *ldim, intg *lmod);
+
+    //! construct an IdxSpec from an array of dimensions contained in an IdxDim,
+    //! with offset o
+    IdxSpec(intg o, const IdxDim &d);
+
+    ////////////////////////////////////////////////////////////////
+    //! access methods
 
     //! return the offset of IdxSpec
     intg getoffset() { return offset; }
@@ -190,34 +215,25 @@ namespace ebl {
     //! return the memory footprint, including the offset.
     //! The storage of an Idx containing this IdxSpec must
     //! be have at least this size.
-    intg footprint()  {
-      intg r = offset + 1;
-      for(int i=0; i<ndim; i++){ r += mod[i]*(dim[i]-1); }
-      return r;
-    }
+    intg footprint();
 
     //! total number of elements accessed by IdxSpec
-    intg nelements() {
-      intg r = 1;
-      for(int i=0; i<ndim; i++){ r *= dim[i]; }
-      return r;
-    }
+    intg nelements();
 
     //! returns true if the IdxSpec elements are
     //! in a continuous chunk of memory. This is useful
     //! to optimize iterators over the data.
-    bool contiguousp() {
-      intg size = 1; bool r = true;
-      for(int i=ndim-1; i>=0; i--){
-	if (size != mod[i]) r = false;
-	size *= dim[i];
-      }
-      return r;
-    }
+    bool contiguousp();
+
+    ////////////////////////////////////////////////////////////////
+    //! print methods
 
     //! pretty-prints the IdxSpec on the specified file.
     void pretty(FILE *f);
     void pretty(std::ostream& out);
+
+    ////////////////////////////////////////////////////////////////
+    //! manipulation methods
 
     //! select: return a new IdxSpec corresponding to
     //! a slice of the current IdxSpec with slice i
@@ -280,8 +296,12 @@ namespace ebl {
     //! current IdxSpec.
     intg unfold_inplace(int d, intg k, intg s);
 
+    ////////////////////////////////////////////////////////////////
+    //! friends
+
     // horrible syntax to declare a template class friend.
     // isn't C++ wonderful?
+    friend class IdxDim;
     template <class T> friend class IdxIter;
     template <class T> friend class IdxLooper;
     template <class T> friend class Idx;
@@ -292,7 +312,6 @@ namespace ebl {
     template <class T> friend class DimIter;
     template <class T> friend class ReverseDimIter;
 
-
     friend bool same_dim(IdxSpec &s1, IdxSpec &s2);
   };
 
@@ -300,7 +319,6 @@ namespace ebl {
   //! i.e. if all their dimensions are equal (regardless
   //! of strides).
   bool same_dim(IdxSpec &s1, IdxSpec &s2);
-
 
   ////////////////////////////////////////////////////////////////
 
@@ -310,10 +328,6 @@ namespace ebl {
   //! points to the data. Several Idx can point to the same
   //! data.
   template <class T> class Idx {
-
-    //! Pretty-prints elements to a stream.
-    //friend std::ostream& operator<<( std::ostream& out, Idx<T>& tensor );
-
   private:
 
     //! pointer to the Srg structure that contains the data.
@@ -371,18 +385,12 @@ namespace ebl {
     //Idx( Idx<T>& other );
     //Idx( const Idx<T>& other );
 
-    //! generic constructor with IdxSpec.
-    Idx(Srg<T> *srg, IdxSpec &s);
 
-    //! constructor without offset: appends to current storage.
-    Idx(Srg<T> *srg, int n, intg *dims, intg *mods);
 
     //! generic constructor with dims and mods creates
     //! the storage and set offset to zero.
     Idx(int n, intg *dims, intg *mods);
-    
-
-    
+        
   Idx( const Idx<T>& other )
     :storage(other.storage),
       spec(other.spec)
@@ -404,10 +412,16 @@ namespace ebl {
     //! creates an Idx of any order.
     Idx(intg s0, intg s1, intg s2, intg s3, intg s4=-1, intg s5=-1, intg s6=-1,
 	intg s7=-1);
+    //! creates an Idx from an array of dimensions contained in an IdxDim
+    Idx(const IdxDim &d);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from existing Srg and offset
 
+    //! generic constructor with IdxSpec.
+    Idx(Srg<T> *srg, IdxSpec &s);
+    //! constructor with existing storage and array pointers for dim and mod
+    Idx(Srg<T> *srg, intg o, intg n, intg *dims, intg *mods);
     //! creates an Idx0 with existing Srg and offset.
     Idx(Srg<T> *srg, intg o);
     //! creates an Idx1 of size size0, with existing Srg and offset.
@@ -421,6 +435,7 @@ namespace ebl {
     //! creates an Idx of any order with existing Srg and offset.
     Idx(Srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3, intg s4=-1, 
 	intg s5=-1, intg s6=-1, intg s7=-1);
+    Idx(Srg<T> *srg, intg o, const IdxDim &d);
 
     ////////////////////////////////////////////////////////////////
     //! STL-like iterators 
@@ -459,7 +474,7 @@ namespace ebl {
     reverse_dimension_iterator dim_rend( int dim );
 
     ////////////////////////////////////////////////////////////////
-    //! resize functions
+    //! resize methods
 
     //! change the offset of an Idx. The Storage is
     //! resized accordingly. Returns the new offset.
@@ -469,6 +484,13 @@ namespace ebl {
     //! This is to prevent nasty bugs.
     virtual void resize(intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,
 			intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
+
+    //! resize an Idx with dimensions contained in an IdxDim. 
+    //! The order is not allowed to change.
+    virtual void resize(const IdxDim &d);
+
+    //! resize 1 dimension of an Idx. The order is not allowed to change.
+    virtual void resize1(intg dimn, intg size);
 
     //! same as resize, but the storage is enlarged by a step of s_chunk 
     //! if needed
@@ -501,7 +523,7 @@ namespace ebl {
     }
 
     ////////////////////////////////////////////////////////////////
-    //! Idx manipulation functions
+    //! Idx manipulation methods
 
     //! select: return a new Idx corresponding to
     //! a slice of the current Idx with slice i
@@ -554,7 +576,7 @@ namespace ebl {
     Idx<T> view_as_order(int n);
 
     ////////////////////////////////////////////////////////////////
-    //! field access functions
+    //! field access methods
 
     //! return pointer to storage
     virtual Srg<T> *getstorage() { return storage; }
@@ -597,7 +619,7 @@ namespace ebl {
     //  }
 
     ////////////////////////////////////////////////////////////////
-    //! data access functions
+    //! data access methods
 
     //! return pointer on data chunk (on first element)
     virtual T *idx_ptr() {  return storage->data + spec.offset; }
@@ -641,7 +663,10 @@ namespace ebl {
 		  intg i5=-1, intg i6=-1, intg i7=-1);
 
     ////////////////////////////////////////////////////////////////
-    //! print functions
+    //! print methods
+
+    //! Pretty-prints elements to a stream.
+    //friend std::ostream& operator<<( std::ostream& out, Idx<T>& tensor );
 
     //! Pretty-prints IDx metadata to a file pointer.
     virtual void pretty(FILE *);
@@ -754,6 +779,23 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 #endif // if USING_STL_ITERS == 0
+
+  class IdxDim {
+  private:
+    intg dim[MAXDIMS];
+   
+  public:
+    IdxDim(IdxSpec &s) {
+      memcpy(dim, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
+      // set remaining to -1
+      memset(dim + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg)); 
+    }
+    void setdim(intg dimn, intg size) { dim[dimn] = size; }
+    virtual ~IdxDim() {};
+
+    // friends
+    friend class IdxSpec;
+  };
 
 } // end namespace ebl
 
