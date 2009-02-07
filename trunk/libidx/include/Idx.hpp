@@ -456,7 +456,6 @@ namespace ebl {
   //	storage->lock();
   // }
 
-
   ////////////////////////////////////////////////////////////////
   // specific constructors for each number of dimensions
 
@@ -493,12 +492,26 @@ namespace ebl {
     storage->lock();
   }
 
+  template <class T> Idx<T>::Idx(const IdxDim &d) : spec(0, d) {
+    storage = new Srg<T>();
+    growstorage();
+    storage->lock();
+  }
+
   ////////////////////////////////////////////////////////////////
   // constructors from existing Srg and offset
 
   template <class T> 
   Idx<T>::Idx(Srg<T> *srg, IdxSpec &s) {
     spec = s;
+    storage = srg;
+    growstorage();
+    storage->lock();
+  }
+
+  template <class T>
+  Idx<T>::Idx(Srg<T> *srg, intg o, intg n, intg *dims, intg *mods) 
+    : spec(o, n, dims, mods) {
     storage = srg;
     growstorage();
     storage->lock();
@@ -544,8 +557,16 @@ namespace ebl {
     storage->lock();
   }
 
+  template <class T> 
+  Idx<T>::Idx(Srg<T> *srg, intg o, const IdxDim &d) 
+    : spec(o, d) {
+    storage = srg;
+    growstorage();
+    storage->lock();
+  }
+
   ////////////////////////////////////////////////////////////////
-  // resize functions
+  // resize methods
   
   template <class T> 
   intg Idx<T>::setoffset(intg o) {
@@ -568,6 +589,18 @@ namespace ebl {
   }
 
   template <class T> 
+  void Idx<T>::resize(const IdxDim &d) {
+    spec.resize(d);
+    growstorage();
+  }
+
+  template <class T> 
+  void Idx<T>::resize1(intg dimn, intg size) {
+    spec.resize1(dimn, size);
+    growstorage();
+  }
+
+  template <class T> 
   void Idx<T>::resize_chunk(intg s_chunk, intg s0, intg s1, intg s2, intg s3, 
 			    intg s4, intg s5, intg s6, intg s7) {
     spec.resize(s0,s1,s2,s3,s4,s5,s6,s7);
@@ -575,7 +608,7 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // Idx manipulation functions
+  // Idx manipulation methods
 
   template <class T> Idx<T> Idx<T>::select(int d, intg i) {
     Idx<T> r(storage,spec.getoffset());
@@ -620,7 +653,17 @@ namespace ebl {
 	return r;
       } 
       else if (n > spec.ndim) {
-	Idx<T> r(getstorage(), 0, spec.nelements()); // TODO: fixme
+	intg *ldim = new intg[n];
+	intg *lmod = new intg[n];
+	memcpy(ldim, spec.dim, spec.ndim * sizeof (intg));
+	memcpy(lmod, spec.mod, spec.ndim * sizeof (intg));
+	for (int i = spec.ndim; i < n; ++i) {
+	  ldim[i] = 1;
+	  lmod[i] = 1;
+	}
+	Idx<T> r(getstorage(), spec.getoffset(), n, ldim, lmod);
+	delete ldim;
+	delete lmod;
 	return r;
       }
       else {
@@ -631,7 +674,7 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // access methods
+  // pointer access methods
 
   // get element of Idx1
   template <class T> T *Idx<T>::ptr(intg i0) {
@@ -654,13 +697,14 @@ namespace ebl {
     if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) ylerror("index 1 out of bound");
     if ((i2 < 0) || (i2 >= spec.dim[2])) ylerror("index 2 out of bound");
-    return storage->data + spec.offset + i0*spec.mod[0] + i1*spec.mod[1] + i2*spec.mod[2];
+    return storage->data + spec.offset + i0*spec.mod[0] + i1*spec.mod[1] 
+      + i2*spec.mod[2];
   }
-
 
   // return a pointer to an element of an Idx
   // generic function for order>3
-  template <class T> T *Idx<T>::ptr(intg i0, intg i1, intg i2, intg i3, intg i4, intg i5, intg i6, intg i7) {
+  template <class T> T *Idx<T>::ptr(intg i0, intg i1, intg i2, intg i3, 
+				    intg i4, intg i5, intg i6, intg i7) {
     try {
       // check that we passed the right number of indices
       // and that they are all positive
@@ -699,7 +743,7 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // get
+  // get methods
 
   // get element of Idx0
   template <class T> T Idx<T>::get() {
@@ -728,16 +772,18 @@ namespace ebl {
     if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) ylerror("index 1 out of bound");
     if ((i2 < 0) || (i2 >= spec.dim[2])) ylerror("index 2 out of bound");
-    return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1] + i2*spec.mod[2]];
+    return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1] 
+			   + i2*spec.mod[2]];
   }
 
   // get element of an Idx of any order
-  template <class T> T Idx<T>::get(intg i0, intg i1, intg i2, intg i3, intg i4, intg i5, intg i6, intg i7) {
+  template <class T> T Idx<T>::get(intg i0, intg i1, intg i2, intg i3, 
+				   intg i4, intg i5, intg i6, intg i7) {
     return *ptr(i0,i1,i2,i3,i4,i5,i6,i7);
   }
 
   ////////////////////////////////////////////////////////////////
-  // set
+  // set methods
 
   // set the element of Idx0
   template <class T> T Idx<T>::set(T val) {
@@ -766,17 +812,18 @@ namespace ebl {
     if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) ylerror("index 1 out of bound");
     if ((i2 < 0) || (i2 >= spec.dim[2])) ylerror("index 2 out of bound");
-    return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1] + i2*spec.mod[2]] = val;
+    return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1] 
+			   + i2*spec.mod[2]] = val;
   }
 
-
   // set an element of an Idx of any order.
-  template <class T> T Idx<T>::set(T val, intg i0, intg i1, intg i2, intg i3, intg i4, intg i5, intg i6, intg i7) {
+  template <class T> T Idx<T>::set(T val, intg i0, intg i1, intg i2, intg i3, 
+				   intg i4, intg i5, intg i6, intg i7) {
     return *ptr(i0,i1,i2,i3,i4,i5,i6,i7) = val;
   }
 
   ////////////////////////////////////////////////////////////////
-  // print functions
+  // print methods
 
   template <typename T>
   void Idx<T>::printElems( std::ostream& out ){
@@ -798,12 +845,12 @@ namespace ebl {
   }
 
   template <typename T>
-  void Idx<T>::printElems_impl( int indent, std::ostream& out ){
+  void Idx<T>::printElems_impl( int indent, std::ostream& out ) {
     static const std::string lbrace = "[";
     static const std::string rbrace = "]";
     static const std::string sep = " ";
     std::ostringstream oss;
-    for( unsigned int ii = 0; ii < lbrace.length(); ++ii ){
+    for( unsigned int ii = 0; ii < lbrace.length(); ++ii ) {
       oss<<" ";
     }
     const std::string tab(oss.str());
@@ -845,9 +892,7 @@ namespace ebl {
 	if( dimInd < (dim(0)-1)){
 	  out<<"\n";
 	}
-
       }
-
       // closing brace
       out<<rbrace<<"\n";
     }
@@ -888,52 +933,51 @@ namespace ebl {
       { idx_bloop1(p,*this,T) { p.fdump(f); } }
       fprintf(f,"]\n");
     }
-
     return 0;
   }
 
   ////////////////////////////////////////////////////////////////
   // STL-style iterator creators
-  template <typename T> typename Idx<T>::scalar_iterator Idx<T>::scalars_begin(){
+
+  template <typename T> 
+  typename Idx<T>::scalar_iterator Idx<T>::scalars_begin(){
     return scalar_iterator(*this);
   }
 
-  template <typename T> typename Idx<T>::scalar_iterator Idx<T>::scalars_end(){
+  template <typename T> 
+  typename Idx<T>::scalar_iterator Idx<T>::scalars_end(){
     return scalar_iterator(*this, false);
   }
 
-  template <typename T> typename Idx<T>::reverse_scalar_iterator Idx<T>::scalars_rbegin(){
+  template <typename T> 
+  typename Idx<T>::reverse_scalar_iterator Idx<T>::scalars_rbegin(){
     return reverse_scalar_iterator(*this);
   }
 
-  template <typename T> typename Idx<T>::reverse_scalar_iterator Idx<T>::scalars_rend(){
+  template <typename T> 
+  typename Idx<T>::reverse_scalar_iterator Idx<T>::scalars_rend(){
     return reverse_scalar_iterator(*this);
   }
 
   template <typename T>
-  typename Idx<T>::dimension_iterator
-  Idx<T>::dim_begin(int dd){
+  typename Idx<T>::dimension_iterator Idx<T>::dim_begin(int dd){
     return dimension_iterator(*this,dd);
   }
 
   template <typename T>
-  typename Idx<T>::dimension_iterator
-  Idx<T>::dim_end(int dd){
+  typename Idx<T>::dimension_iterator Idx<T>::dim_end(int dd){
     return dimension_iterator(*this,dd,false);
   }
 
   template <typename T>
-  typename Idx<T>::reverse_dimension_iterator
-  Idx<T>::dim_rbegin(int dd){
+  typename Idx<T>::reverse_dimension_iterator Idx<T>::dim_rbegin(int dd){
     return reverse_dimension_iterator(*this,dd);
   }
 
   template <typename T>
-  typename Idx<T>::reverse_dimension_iterator
-  Idx<T>::dim_rend(int dd){
+  typename Idx<T>::reverse_dimension_iterator Idx<T>::dim_rend(int dd){
     return reverse_dimension_iterator(*this,dd,false);
   }
-
 
 #if USING_STL_ITERS == 0
   ////////////////////////////////////////////////////////////////
@@ -941,7 +985,8 @@ namespace ebl {
   // It is actually a subclass of Idx.
   // These are not C++ iterators in the classical sense.
 
-  template <class T> IdxLooper<T>::IdxLooper(Idx<T> &idx, int ld) : Idx<T>((dummyt*)0) {
+  template <class T> 
+  IdxLooper<T>::IdxLooper(Idx<T> &idx, int ld) : Idx<T>((dummyt*)0) {
     i = 0;
     dimd = idx.spec.dim[ld];
     modd = idx.spec.mod[ld];
@@ -961,7 +1006,6 @@ namespace ebl {
 
   // return true when done.
   template <class T> bool IdxLooper<T>::notdone() { return ( i < dimd ); }
-
 
   ////////////////////////////////////////////////////////////////
   // a pointer that loops over all elements
@@ -1008,7 +1052,7 @@ namespace ebl {
 
   template <class T> bool IdxIter<T>::notdone() { return ( i < n ); }
 
-#endif // IF USING_STL_ITERS == 1
+#endif // IF USING_STL_ITERS == 0
 
 } // namespace ebl
 

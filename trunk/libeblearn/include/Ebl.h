@@ -96,7 +96,7 @@ namespace ebl {
   class nn_layer_full: public module_1_1<state_idx, state_idx> {
   public:
     //! linear module for weight matrix
-    linear_module *linear;
+    linear_module_dim0 *linear;
     //! bias vector
     state_idx *bias;
     //! weighted sum
@@ -107,7 +107,7 @@ namespace ebl {
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
-    nn_layer_full(parameter *p, intg ninputs, intg noutputs);
+    nn_layer_full(parameter *p, state_idx *instate, intg noutputs);
     virtual ~nn_layer_full();
     //! fprop from in to out
     void fprop(state_idx *in, state_idx *out);

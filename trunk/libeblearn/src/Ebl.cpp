@@ -101,11 +101,13 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  nn_layer_full::nn_layer_full(parameter *p, intg ninputs, intg noutputs)
+  nn_layer_full::nn_layer_full(parameter *p, state_idx *instate, intg noutputs)
   {
-    linear = new linear_module(p, ninputs, noutputs);
+    IdxDim d(instate->x.spec); // use same dimensions as instate
+    d.setdim(0, noutputs); // except for the first one
+    linear = new linear_module_dim0(p, instate->x.dim(0), noutputs);
     bias = new state_idx(p, noutputs);
-    sum = new state_idx(noutputs);
+    sum = new state_idx(d);
     sigmoid = new tanh_module();
   }
 
@@ -119,7 +121,10 @@ namespace ebl {
 
   void nn_layer_full::fprop(state_idx *in, state_idx *out)
   {
-    out->resize(bias->x.dim(0), out->x.dim(1), out->x.dim(2));
+    IdxDim d(in->x.spec); // use same dimensions as in
+    d.setdim(0, bias->x.dim(0)); // except for the first one
+    out->resize(d);
+    sum->resize(d);
     linear->fprop(in, sum);
     idx_add(sum->x, bias->x, sum->x);
     sigmoid->fprop(sum, out);

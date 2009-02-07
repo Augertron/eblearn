@@ -88,18 +88,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // state_idx
 
-  void state_idx::clear()
+  state_idx::~state_idx()
   {
-    idx_clear(x);
   }
-  void state_idx::clear_dx()
-  {
-    idx_clear(dx);
-  }
-  void state_idx::clear_ddx()
-  {
-    idx_clear(ddx);
-  }
+
+  ////////////////////////////////////////////////////////////////
+  // constructors from specific dimensions using a parameter
 
   state_idx::state_idx() :
     x(), dx(), ddx()
@@ -143,12 +137,14 @@ namespace ebl {
     clear_ddx();
   }
 
-  state_idx::state_idx(state_idx *si) :
-    x(si->x.getstorage(), 0, si->x.nelements()), 
-    dx(si->dx.getstorage(), 0, si->dx.nelements()), 
-    ddx(si->ddx.getstorage(), 0, si->ddx.nelements())
-  {
+  state_idx::state_idx(const IdxDim &d) : x(d), dx(d), ddx(d) {
+    clear();
+    clear_dx();
+    clear_ddx();
   }
+
+  ////////////////////////////////////////////////////////////////
+  // constructors from specific dimensions using a parameter
 
   state_idx::state_idx(parameter *st) :
     x(st->x.getstorage(), st->x.footprint()), 
@@ -207,9 +203,44 @@ namespace ebl {
     clear_ddx();
   }
 
-  state_idx::~state_idx()
+  state_idx::state_idx(parameter *st, const IdxDim &d) 
+    : x(st->x.getstorage(), st->x.footprint(), d), 
+      dx(st->x.getstorage(), st->x.footprint(), d),
+      ddx(st->x.getstorage(), st->x.footprint(), d) {
+    st->resize(st->footprint() + nelements());
+    clear();
+    clear_dx();
+    clear_ddx();
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // constructors from other state_idx's dimensions
+
+  state_idx::state_idx(state_idx *si) :
+    x(si->x.getstorage(), 0, si->x.nelements()), 
+    dx(si->dx.getstorage(), 0, si->dx.nelements()), 
+    ddx(si->ddx.getstorage(), 0, si->ddx.nelements())
   {
   }
+
+  ////////////////////////////////////////////////////////////////
+  // clear methods
+
+  void state_idx::clear()
+  {
+    idx_clear(x);
+  }
+  void state_idx::clear_dx()
+  {
+    idx_clear(dx);
+  }
+  void state_idx::clear_ddx()
+  {
+    idx_clear(ddx);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // information methods
 
   intg state_idx::nelements()
   {
@@ -224,23 +255,46 @@ namespace ebl {
     return x.footprint();
   }
 
+  ////////////////////////////////////////////////////////////////
+  // resize methods
+
   void state_idx::resize(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
-			 intg s6, intg s7)
-  {
+			 intg s6, intg s7) {
     x.resize(s0, s1, s2, s3, s4, s5, s6, s7);
     dx.resize(s0, s1, s2, s3, s4, s5, s6, s7);
     ddx.resize(s0, s1, s2, s3, s4, s5, s6, s7);
   }
 
-  void state_idx::resizeAs(state_idx& s)
+  void state_idx::resize(const IdxDim &d) {
+    x.resize(d);
+    dx.resize(d);
+    ddx.resize(d);
+  }
+
+  void state_idx::resize1(intg dimn, intg size) {
+    x.resize1(dimn, size);
+    dx.resize1(dimn, size);
+    ddx.resize1(dimn, size);
+  }
+
+  void state_idx::resize_as(state_idx& s)
   {
     if (x.order() != s.x.order())
-      ylerror("State_Idx::resizeAs accepts states with same number of \
+      ylerror("state_idx::resize_as only accepts states with same number of \
 dimensions");
-    intg dims[8] ={-1,-1,-1,-1,-1,-1,-1,-1};
-    for (int i=0; i<x.order(); i++){
-      dims[i] = s.x.dim(i);
-    }
+    intg dims[8] = {-1,-1,-1,-1,-1,-1,-1,-1};
+    memcpy(dims, s.x.dims(), s.x.order() * sizeof (intg));
+    resize(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6],dims[7]);
+  }
+
+  void state_idx::resize_as_but1(state_idx& s, intg fixed_dim)
+  {
+    if (x.order() != s.x.order())
+      ylerror("state_idx::resize_as_but1 only accepts states with same number \
+of dimensions");
+    intg dims[8] = {-1,-1,-1,-1,-1,-1,-1,-1};
+    memcpy(dims, s.x.dims(), s.x.order() * sizeof (intg));
+    dims[fixed_dim] = x.dim(fixed_dim);
     resize(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6],dims[7]);
   }
 

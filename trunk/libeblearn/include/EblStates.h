@@ -121,12 +121,20 @@ namespace ebl {
   //! class that stores a vector/tensor state
   class state_idx: public state {
   public:
+    virtual ~state_idx();
+
+    ////////////////////////////////////////////////////////////////
+    //! member variables
+
     //! state itself
     Idx<double> x;
     //! gradient of loss with respect to state
     Idx<double> dx;
     //! diag hessian of loss with respect to state
     Idx<double> ddx;
+
+    ////////////////////////////////////////////////////////////////
+    //! constructors from specific dimensions
 
     //! Constructs a state_idx of order 0
     state_idx();
@@ -139,8 +147,10 @@ namespace ebl {
     //! Constructor. A state_idx can have up to 8 dimensions.
     state_idx(intg s0, intg s1, intg s2, intg s3, intg s4 = -1, intg s5 = -1,
 	      intg s6 = -1, intg s7 = -1);
-    //! Constructs a state_idx with order 1 based on given state_idx si.
-    state_idx(state_idx *si);
+    state_idx(const IdxDim &d);
+
+    ////////////////////////////////////////////////////////////////
+    //! constructors from specific dimensions using a parameter
 
     //! this appends the state_idx into the same Srg as the
     //! state_idx passed as argument. This is useful for
@@ -152,8 +162,16 @@ namespace ebl {
     state_idx(parameter *st, intg s0, intg s1, intg s2);
     state_idx(parameter *st, intg s0, intg s1, intg s2, intg s3, intg s4 = -1,
 	      intg s5 = -1, intg s6 = -1, intg s7 = -1);
+    state_idx(parameter *st, const IdxDim &d);
 
-    virtual ~state_idx();
+    ////////////////////////////////////////////////////////////////
+    //! constructors from other state_idx
+
+    //! Constructs a state_idx with order 1 based on given state_idx si.
+    state_idx(state_idx *si);
+
+    ////////////////////////////////////////////////////////////////
+    //! clear methods
 
     //! clear x
     virtual void clear();
@@ -163,6 +181,9 @@ namespace ebl {
 
     //! clear diag hessians ddx
     virtual void clear_ddx();
+
+    ////////////////////////////////////////////////////////////////
+    //! information methods
 
     //! return number of elements
     virtual intg nelements();
@@ -176,11 +197,27 @@ namespace ebl {
     //! update with gradient descent
     virtual void update_gd(gd_param &arg);
 
+    ////////////////////////////////////////////////////////////////
+    //! resize methods
+
     //! resize. The order cannot be changed with this.
     virtual void resize(intg s0 = -1, intg s1 = -1, intg s2 = -1, intg s3 = -1,
 			intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
 
-    virtual void resizeAs(state_idx &s);
+    //! resize with dimensions contained in an IdxDim. order cannot be changed.
+    virtual void resize(const IdxDim &d);
+
+    //! resize one dimension <dimn> with size <size>. 
+    //! The order cannot be changed.
+    virtual void resize1(intg dimn, intg size);
+    
+    //! resizes this state_idx with same sizes a <s>.
+    //! Both state_idx are required to have the same order.
+    virtual void resize_as(state_idx& s);
+
+    //! same as resize_as but leave dimension <fixed_dim> untouched.
+    //! Both state_idx are required to have the same order.
+    virtual void resize_as_but1(state_idx& s, intg fixed_dim);
 
     virtual void resize(const intg* dimsBegin, const intg* dimsEnd);
 

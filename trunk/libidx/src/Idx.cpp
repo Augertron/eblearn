@@ -44,7 +44,7 @@ namespace ebl {
   int IdxSpec::setndim(int n) {
     try {
       if ((n<0) || (n>MAXDIMS)) {
-	throw("Idx: cannot set ndim");
+	throw("Idx: cannot set ndim, ndim < 0 or ndim > MAXDIMS");
       } else {
 	// if new ndim is zero or larger than before: deallocate arrays
 	if ((n == 0) || (n > ndim)) {
@@ -63,7 +63,7 @@ namespace ebl {
 	return ndim;
       }
     }
-    catch(char *s) {
+    catch(const char *s) {
       ylerror(s);
       return -1;
     }
@@ -75,7 +75,7 @@ namespace ebl {
   int IdxSpec::setndim(int n, intg *ldim, intg *lmod) {
     try {
       if ((n<1) || (n>=MAXDIMS)) { 
-	throw("Idx: cannot set ndim"); 
+	throw("Idx: cannot set ndim, ndim < 0 or ndim > MAXDIMS");
       } else {
 	if (dim) { delete []dim; }
 	if (mod) { delete []mod; }
@@ -85,7 +85,7 @@ namespace ebl {
 	return ndim;
       }
     }
-    catch(char *s) {
+    catch(const char *s) {
       ylerror(s);
       return -1;
     }
@@ -161,9 +161,31 @@ namespace ebl {
       fprintf(stderr,"ndim=%d, sizes: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld\n",
 	      ndim,s0,s1,s2,s3,s4,s5,s6,s6);
       ylerror("IdxSpec::resize: dimensions are incompatible"); }
-    return md + offset;
+    return md + offset; // return new footprint
   }
 
+  intg IdxSpec::resize(const IdxDim &d) {
+    return resize(d.dim[0], d.dim[1], d.dim[2], d.dim[3], 
+		  d.dim[4], d.dim[5], d.dim[6], d.dim[7]); 
+  }
+
+  // resize one dimension <dimn> with size <size>.
+  // only already allocated dimensions can be resized 
+  // (order is not allowed to change)
+  intg IdxSpec::resize1(intg dimn, intg size) {
+    if ((dimn >= ndim) || (dimn < 0)) 
+      ylerror("IdxSpec::resize1: cannot resize an unallocated dimension");
+    if (size < 0)
+      ylerror("IdxSpec::resize1: cannot resize with a negative size");
+    // since we know the current spec is valid, no need for error checking,
+    // simply assign new dimension and propagate new mods.
+    dim[dimn] = size;
+    for (int i = dimn - 1; i >= 0; --i) {
+      mod[i] = dim[i + 1] * mod[i + 1];
+    }
+    return mod[0] * dim[0] + offset; // return new footprint
+  }
+  
   ////////////////////////////////////////////////////////////////
   // public methods
 
@@ -273,6 +295,12 @@ namespace ebl {
   IdxSpec::IdxSpec(intg o,
 		   intg s0, intg s1, intg s2, intg s3, 
 		   intg s4, intg s5, intg s6, intg s7) {
+    init_spec(o, s0, s1, s2, s3, s4, s5, s6, s7);
+  }
+
+  // generic constructor for any dimension.
+  void IdxSpec::init_spec(intg o, intg s0, intg s1, intg s2, intg s3, 
+			  intg s4, intg s5, intg s6, intg s7) {
     bool ndimset = false;
     intg md = 1;
     dim = NULL; mod = NULL;
@@ -316,6 +344,11 @@ namespace ebl {
     catch(int v) { ylerror("IdxSpec: bad dimensions in constructor"); }
   }
 
+  IdxSpec::IdxSpec(intg o, const IdxDim &d) {
+    init_spec(o, d.dim[0], d.dim[1], d.dim[2], d.dim[3], d.dim[4], d.dim[5], 
+	      d.dim[6], d.dim[7]);
+  }
+
   // generic constructor for any dimension.
   // The dim and mod arrays past as argument are copied.
   IdxSpec::IdxSpec(intg o, int n, intg *ldim, intg *lmod) {
@@ -329,8 +362,28 @@ namespace ebl {
       dim[i] = ldim[i]; mod[i] = lmod[i]; }
   }
 
+  intg IdxSpec::footprint()  {
+    intg r = offset + 1;
+    for(int i=0; i<ndim; i++){ r += mod[i]*(dim[i]-1); }
+    return r;
+  }
 
+  //! total number of elements accessed by IdxSpec
+  intg IdxSpec::nelements() {
+    intg r = 1;
+    for(int i=0; i<ndim; i++){ r *= dim[i]; }
+    return r;
+  }
 
+  bool IdxSpec::contiguousp() {
+    intg size = 1; bool r = true;
+    for(int i=ndim-1; i>=0; i--){
+      if (size != mod[i]) r = false;
+      size *= dim[i];
+    }
+    return r;
+  }
+  
   ////////////////////////////////////////////////////////////////
 
   // pretty print 
