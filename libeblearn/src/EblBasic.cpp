@@ -85,21 +85,22 @@ namespace ebl {
     //			idx_m2dotm1(w->x, in->x, out->x);
     //		}
     //	}
-    state_idx in1(in); // TODO: temporary, find a cleaner solution
+    Idx<double> inx = in->x.view_as_order(1);
     out->resize(w->x.dim(0));
-    idx_m2dotm1(w->x, in1.x, out->x);
+    idx_m2dotm1(w->x, inx, out->x);
   }
 
   void linear_module::bprop(state_idx *in, state_idx *out)
   {
-    state_idx in1(in); // TODO: temporary, find a cleaner solution
+    Idx<double> inx = in->x.view_as_order(1);
+    Idx<double> indx = in->dx.view_as_order(1);
     intg instride = 0;
     intg outstride = 0;
-    if (in1.x.order() == 1)
+    if (inx.order() == 1)
       {
-	instride = in1.x.mod(0);
+	instride = inx.mod(0);
       }
-    else if (in1.x.contiguousp())
+    else if (inx.contiguousp())
       {
 	instride = 1;
       }
@@ -124,22 +125,23 @@ namespace ebl {
 	else
 	  {
 	    Idx<double> twx(w->x.transpose(0, 1));
-	    idx_m1extm1(out->dx, in1.x, w->dx);
-	    idx_m2dotm1(twx, out->dx, in1.dx);
+	    idx_m1extm1(out->dx, inx, w->dx);
+	    idx_m2dotm1(twx, out->dx, indx);
 	  }
       }
   }
 
   void linear_module::bbprop(state_idx *in, state_idx *out)
   {
-    state_idx in1(in); // TODO: temporary, find a cleaner solution
+    Idx<double> inx = in->x.view_as_order(1);
+    Idx<double> inddx = in->ddx.view_as_order(1);
     intg instride = 0;
     intg outstride = 0;
-    if (in1.x.order() == 1)
+    if (inx.order() == 1)
       {
-	instride = in1.x.mod(0);
+	instride = inx.mod(0);
       }
-    else if (in1.x.contiguousp())
+    else if (inx.contiguousp())
       {
 	instride = 1;
       }
@@ -164,8 +166,8 @@ namespace ebl {
 	else
 	  {
 	    Idx<double> twx = w->x.transpose(0, 1);
-	    idx_m1squextm1(out->ddx, in1.x, w->ddx);
-	    idx_m2squdotm1(twx, out->ddx, in1.ddx);
+	    idx_m1squextm1(out->ddx, inx, w->ddx);
+	    idx_m2squdotm1(twx, out->ddx, inddx);
 	  }
       }
   }
@@ -228,6 +230,8 @@ Please call init_drand() before using this function !\n");
     //			idx_m2dotm1(w->x, in->x, out->x);
     //		}
     //	}
+
+    // TODO: resize out?
 
     // check that input and output have at most 4 dimensions
     if ((in->x.order() > 4) || (out->x.order() > 4))
@@ -404,6 +408,7 @@ Please call init_drand() before using this function !\n");
 	  idx_eloop2(lllinx,llinx,double, llloutx,lloutx,double) {
 	    idx_copy(llloutx, lllinx);
 	    idx_copy(llloutx, bias->dx);
+	    // TODO: correct?
 	  }
 	}
       }}
@@ -419,6 +424,7 @@ Please call init_drand() before using this function !\n");
 	  idx_eloop2(lllinx,llinx,double, llloutx,lloutx,double) {
 	    idx_copy(llloutx, lllinx);
 	    idx_copy(llloutx, bias->dx);
+	    // TODO: correct?
 	  }
 	}
       }}
