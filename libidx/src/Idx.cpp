@@ -357,9 +357,10 @@ namespace ebl {
     offset = o;
     ndim = 0; // required in constructors to avoid side effects in setndim
     setndim(n);
-    for (int i=0; i<n; i++) { 
-      if ( dim[i]<0 ) { ylerror("negative dimension"); }
-      dim[i] = ldim[i]; mod[i] = lmod[i]; }
+    for (int i = 0; i < n; i++) { 
+      if (ldim[i] < 0) ylerror("negative dimension");
+      dim[i] = ldim[i]; mod[i] = lmod[i]; 
+    }
   }
 
   intg IdxSpec::footprint()  {

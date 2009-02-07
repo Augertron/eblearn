@@ -1382,7 +1382,7 @@ nn_layer_full_GUI::nn_layer_full_GUI(nn_layer_full* layer, state_idx *in, state_
 	layer(layer)
 	{
 		add_box(new linear_module_GUI(layer->linear, "linear module", this, mutex));
-		add_box(new state_Idx_Gui(layer->bias, "bias", this, mutex));
+		add_box(new state_Idx_Gui(layer->adder->bias, "bias", this, mutex));
 		add_box(new state_Idx_Gui(layer->sum, "sum", this, mutex));
 		add_box(new module_1_1_GUI("sigmoid", this, mutex));
 	}
@@ -1392,7 +1392,7 @@ nn_layer_full_GUI::nn_layer_full_GUI(nn_layer_full* layer, const char* title, QW
 	layer(layer)
 	{
 		add_box(new linear_module_GUI(layer->linear, "linear module", this, mutex));
-		add_box(new state_Idx_Gui(layer->bias, "bias", this, mutex));
+		add_box(new state_Idx_Gui(layer->adder->bias, "bias", this, mutex));
 		add_box(new state_Idx_Gui(layer->sum, "sum", this, mutex));
 		add_box(new module_1_1_GUI("sigmoid", this, mutex));
 	}

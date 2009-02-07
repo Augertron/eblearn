@@ -103,51 +103,52 @@ namespace ebl {
 
   nn_layer_full::nn_layer_full(parameter *p, state_idx *instate, intg noutputs)
   {
-    IdxDim d(instate->x.spec); // use same dimensions as instate
-    d.setdim(0, noutputs); // except for the first one
     linear = new linear_module_dim0(p, instate->x.dim(0), noutputs);
-    bias = new state_idx(p, noutputs);
-    sum = new state_idx(d);
+    adder = new addc_module_dim0(p, noutputs);
+    sum = NULL;
     sigmoid = new tanh_module();
   }
 
   nn_layer_full::~nn_layer_full()
   {
     delete sigmoid;
-    delete sum;
-    delete bias;
+    if (sum) delete sum;
+    delete adder;
     delete linear;
   }
 
   void nn_layer_full::fprop(state_idx *in, state_idx *out)
   {
+    // 1. resize output and sum
     IdxDim d(in->x.spec); // use same dimensions as in
-    d.setdim(0, bias->x.dim(0)); // except for the first one
+    d.setdim(0, adder->bias->x.dim(0)); // except for the first one
     out->resize(d);
-    sum->resize(d);
+    if (!sum) sum = new state_idx(d);
+    else sum->resize(d);
+    // 2. fprop
     linear->fprop(in, sum);
-    idx_add(sum->x, bias->x, sum->x);
+    adder->fprop(sum, sum);
     sigmoid->fprop(sum, out);
   }
 
   void nn_layer_full::bprop(state_idx *in, state_idx *out)
   {
     sigmoid->bprop(sum, out);
-    idx_copy(sum->dx, bias->dx);
+    adder->bprop(sum, sum);
     linear->bprop(in, sum);
   }
 
   void nn_layer_full::bbprop(state_idx *in, state_idx *out)
   {
     sigmoid->bbprop(sum, out);
-    idx_copy(sum->ddx, bias->ddx);
+    adder->bbprop(sum, sum);
     linear->bbprop(in, sum);
   }
 
   void nn_layer_full::forget(forget_param_linear &fp)
   {
     linear->forget(fp);
-    idx_clear(bias->x);
+    adder->forget(fp);
   }
 
   ////////////////////////////////////////////////////////////////////////
