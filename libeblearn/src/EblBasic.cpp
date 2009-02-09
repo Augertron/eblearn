@@ -283,9 +283,24 @@ Please call init_drand() before using this function !\n");
 	  }
 	else
 	  {
+	    // see input and output as idx of order 4
+	    Idx<double> inx = in->x.view_as_order(4);
+	    Idx<double> outx = out->x.view_as_order(4);
+	    Idx<double> indx = in->dx.view_as_order(4);
+	    Idx<double> outdx = out->dx.view_as_order(4);
 	    Idx<double> twx(w->x.transpose(0, 1));
-	    idx_m1extm1(out->dx, in1.x, w->dx);
-	    idx_m2dotm1(twx, out->dx, in1.dx);
+	    // loop over last 3 dimensions and bprop on first dim
+	    { idx_eloop4(linx,inx,double, lindx,indx,double, 
+			 loutx,outx,double, loutdx,outdx,double) {
+		idx_eloop4(llinx,linx,double, llindx,lindx,double,
+			   lloutx,loutx,double, lloutdx,loutdx,double) {
+		  idx_eloop4(lllinx,llinx,double, lllindx,llindx,double,
+			     llloutx,lloutx,double, llloutdx,lloutdx,double) {
+		    idx_m1extm1(llloutdx, lllinx, w->dx);
+		    idx_m2dotm1(twx, llloutdx, lllindx);
+		  }
+		}
+	      }}
 	  }
       }
   }
@@ -323,9 +338,25 @@ Please call init_drand() before using this function !\n");
 	  }
 	else
 	  {
-	    Idx<double> twx = w->x.transpose(0, 1);
-	    idx_m1squextm1(out->ddx, in1.x, w->ddx);
-	    idx_m2squdotm1(twx, out->ddx, in1.ddx);
+
+	    // see input and output as idx of order 4
+	    Idx<double> inx = in->x.view_as_order(4);
+	    Idx<double> inddx = in->ddx.view_as_order(4);
+	    Idx<double> outddx = out->ddx.view_as_order(4);
+	    Idx<double> twx(w->x.transpose(0, 1));
+	    // loop over last 3 dimensions and bprop on first dim
+	    { idx_eloop3(linx,inx,double, linddx,inddx,double, 
+			 loutddx,outddx,double) {
+		idx_eloop3(llinx,linx,double, llinddx,linddx,double,
+			   lloutddx,loutddx,double) {
+		  idx_eloop3(lllinx,llinx,double, lllinddx,llinddx,double,
+			     llloutddx,lloutddx,double) {
+		    idx_m1squextm1(llloutddx, lllinx, w->ddx);
+		    idx_m2squdotm1(twx, llloutddx, lllinddx);
+		  }
+		}
+	      }}
+
 	  }
       }
   }
@@ -345,20 +376,31 @@ Please call init_drand() before using this function !\n");
 
   void addc_module::fprop(state_idx* in, state_idx* out)
   {
-    out->resize(bias->x.dim(0));
-    idx_add(in->x,bias->x,out->x);
+    out->resize1(0, bias->x.dim(0));
+    idx_bloop3(inx, in->x, double, biasx, bias->x, double, outx, out->x, double)
+      {
+	idx_addc(inx, biasx.get(), outx);
+      }
   }
 
   void addc_module::bprop(state_idx* in, state_idx* out)
   {
-    idx_copy(out->dx,in->dx);
-    idx_copy(out->dx,bias->dx);
+    idx_bloop3(indx, in->dx, double, biasdx, bias->dx, double, 
+	       outdx, out->dx, double)
+      {
+	idx_copy(outdx, indx); // TODO: needed?
+	idx_sumacc(outdx, biasdx);
+      }
   }
 
   void addc_module::bbprop(state_idx* in, state_idx* out)
   {
-    idx_copy(out->ddx,in->ddx);
-    idx_copy(out->ddx,bias->ddx);
+    idx_bloop3(inddx, in->ddx, double, biasddx, bias->ddx, double, 
+	       outddx, out->ddx, double)
+      {
+	idx_copy(outddx, inddx); // TODO: needed?
+	idx_sumacc(outddx, biasddx);
+      }
   }
 
   void addc_module::forget(forget_param_linear& fp)
@@ -368,66 +410,6 @@ Please call init_drand() before using this function !\n");
 
   void addc_module::normalize()
   {
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // addc_module_dim0
-
-  addc_module_dim0::addc_module_dim0(parameter *p, intg size)
-    : addc_module(p, size) {
-  }
-
-  void addc_module_dim0::fprop(state_idx* in, state_idx* out)
-  {
-    // TODO: resize out?
-    
-    // check that input and output have at most 4 dimensions
-    if ((in->x.order() > 4) || (out->x.order() > 4))
-      ylerror("addc_module_dim0: currently only 4-order idx are supported");
-    // see input and output as idx of order 4
-    Idx<double> inx = in->x.view_as_order(4);
-    Idx<double> outx = out->x.view_as_order(4);
-    // loop over last 3 dimensions and add constant on first dim
-    { idx_eloop2(linx,inx,double, loutx,outx,double) {
-	idx_eloop2(llinx,linx,double, lloutx,loutx,double) {
-	  idx_eloop2(lllinx,llinx,double, llloutx,lloutx,double) {
-	    // add bias
-	    idx_add(lllinx, bias->x, llloutx);
-	  }
-	}
-      }}
-  }
-  
-  void addc_module_dim0::bprop(state_idx* in, state_idx* out)
-  {
-    Idx<double> inx = in->dx.view_as_order(4);
-    Idx<double> outx = out->dx.view_as_order(4);
-    // loop over last 3 dimensions and add constant on first dim
-    { idx_eloop2(linx,inx,double, loutx,outx,double) {
-	idx_eloop2(llinx,linx,double, lloutx,loutx,double) {
-	  idx_eloop2(lllinx,llinx,double, llloutx,lloutx,double) {
-	    idx_copy(llloutx, lllinx);
-	    idx_copy(llloutx, bias->dx);
-	    // TODO: correct?
-	  }
-	}
-      }}
-  }
-
-  void addc_module_dim0::bbprop(state_idx* in, state_idx* out)
-  {
-    Idx<double> inx = in->ddx.view_as_order(4);
-    Idx<double> outx = out->ddx.view_as_order(4);
-    // loop over last 3 dimensions and add constant on first dim
-    { idx_eloop2(linx,inx,double, loutx,outx,double) {
-	idx_eloop2(llinx,linx,double, lloutx,loutx,double) {
-	  idx_eloop2(lllinx,llinx,double, llloutx,lloutx,double) {
-	    idx_copy(llloutx, lllinx);
-	    idx_copy(llloutx, bias->dx);
-	    // TODO: correct?
-	  }
-	}
-      }}
   }
 
 } // end namespace ebl

@@ -29,9 +29,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBL_H_
-#define EBL_H_
+#ifndef EBLNONLINEARITY_H_
+#define EBLNONLINEARITY_H_
 
+#include "Defines.h"
 #include "Idx.h"
 #include "Blas.h"
 #include "EblStates.h"
@@ -40,19 +41,71 @@
 
 namespace ebl {
 
-  /*! \mainpage libeblearn Library Main Page
-   *
-   * \section intro_sec Introduction
-   *
-   * This is the introduction.
-   *
-   * \section install_sec Installation
-   *
-   * \subsection step1 Step 1: TODO
-   *  
-   * TODO
-   */
+  ////////////////////////////////////////////////////////////////
+
+  //! a slab of standard Lush sigmoids
+  class stdsigmoid_module: public module_1_1<state_idx, state_idx> {
+  public:
+    //! empty constructor
+    stdsigmoid_module();
+    virtual ~stdsigmoid_module();
+    //! fprop from in to out
+    virtual void fprop(state_idx *in, state_idx *out);
+    //! bprop
+    virtual void bprop(state_idx *in, state_idx *out);
+    //! bbprop
+    virtual void bbprop(state_idx *in, state_idx *out);
+  };
+
+  ////////////////////////////////////////////////////////////////
+
+  //! a slab of tanh
+  class tanh_module: public module_1_1<state_idx, state_idx> {
+  public:
+    //! fprop from in to out
+    void fprop(state_idx *in, state_idx *out);
+    //! bprop
+    void bprop(state_idx *in, state_idx *out);
+    //! bbprop
+    void bbprop(state_idx *in, state_idx *out);
+    void forget(forget_param_linear &fp);
+    void normalize();
+  };
+
+  ////////////////////////////////////////////////////////////////
+
+  //! softmax module
+  //! if in is idx0 -> out is idx0 and equal to 1
+  //! if in is idx1 -> it is just one pool
+  //! if in is idx2 -> it is just one pool
+  //! if in is idx3 -> the last two dimensions are pools
+  //! if in is idx4 -> the last two dimensions are pools
+  //! if in is idx5 -> the last four dimensions are pools
+  //! if in is idx6 -> the last four dimensions are pools
+
+  class softmax: public module_1_1<state_idx, state_idx> {
+
+  public:
+    double beta;
+
+    // <b> is the parameter beta in the softmax
+    // large <b> turns the softmax into a max
+    // <b> equal to 0 turns the softmax into 1/N
+
+  private:
+    void resize_nsame(state_idx *in, state_idx *out, int n);
+
+  public:
+    softmax(double b);
+    ~softmax() {
+    }
+    ;
+    void fprop(state_idx *in, state_idx *out);
+    void bprop(state_idx *in, state_idx *out);
+    void bbprop(state_idx *in, state_idx *out);
+
+  };
 
 } // namespace ebl {
 
-#endif /* EBL_H_ */
+#endif /* EBLNONLINEARITY_H_ */

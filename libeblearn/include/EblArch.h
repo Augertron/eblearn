@@ -32,16 +32,12 @@
 #ifndef EBLARCH_H_
 #define EBLARCH_H_
 
+#include "Defines.h"
 #include "Idx.h"
 #include "Blas.h"
 #include "EblStates.h"
 
 namespace ebl {
-
-  //! see numerics.h for description
-  extern bool drand_ini;
-
-  void err_not_implemented();
 
   ////////////////////////////////////////////////////////////////
   // templates for generic modules
