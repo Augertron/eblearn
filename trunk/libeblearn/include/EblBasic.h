@@ -32,16 +32,13 @@
 #ifndef EBLBASIC_H_
 #define EBLBASIC_H_
 
+#include "Defines.h"
 #include "Idx.h"
 #include "Blas.h"
 #include "EblArch.h"
 #include "EblStates.h"
 
 namespace ebl {
-
-  extern bool drand_ini;
-
-  void err_not_implemented();
 
   ////////////////////////////////////////////////////////////////
   //! linear module
@@ -79,9 +76,8 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! constant add module
-  //! It's different from addc_module_dim0 in that it is
-  //! not spatially replicable.
-  //! It can operate on idx of any order but will seem them as 1D idx.
+  //! This module adds a bias in the first dimension of the input
+  //! and is spatially replicable (the input can have an order greater than 1).
   class addc_module: public module_1_1<state_idx, state_idx> {
   public:
     // coefficients
@@ -97,25 +93,6 @@ namespace ebl {
     void bbprop(state_idx *in, state_idx *out);
     void forget(forget_param_linear &fp);
     void normalize();
-  };
-
-  ////////////////////////////////////////////////////////////////
-  //! constant add module dim0
-  //! It's different from addc_module in that it is
-  //! spatially replicable: it adds a constant only
-  //! to the first dimension of the idxs (dim 0).
-  //! It can operate on idx of any order up to 4 dimensions (adding
-  //! extra dimensions of size 1 for idxs with less than 4 dimensions).
-  class addc_module_dim0: public addc_module {
-  public:
-    addc_module_dim0(parameter *p, intg size);
-    virtual ~addc_module_dim0() {};
-    //! fprop from in to out
-    void fprop(state_idx *in, state_idx *out);
-    //! bprop
-    void bprop(state_idx *in, state_idx *out);
-    //! bbprop
-    void bbprop(state_idx *in, state_idx *out);
   };
 
 } // namespace ebl {

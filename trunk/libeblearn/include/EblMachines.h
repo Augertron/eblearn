@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
- *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,54 +29,49 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef Defines_H
-#define Defines_H
+#ifndef EBLMACHINES_H_
+#define EBLMACHINES_H_
 
-#include <execinfo.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
+#include "Defines.h"
+#include "Idx.h"
+#include "Blas.h"
+#include "EblStates.h"
+#include "EblBasic.h"
+#include "EblArch.h"
+#include "EblNonLinearity.h"
 
-#ifndef NULL
-#define NULL (void*)0
-#endif
+namespace ebl {
 
-// #define DEBUG_ON
+  ////////////////////////////////////////////////////////////////
 
-#ifdef DEBUG_ON
-#define DEBUG(s,d) fprintf(stderr,s,d)
-#else
-#define DEBUG(s,d)
-#endif
+  //! a simple fully-connected neural net layer: linear + tanh non-linearity.
+  //! Unlike the f-layer class, this one is not spatially replicable.
+  class nn_layer_full: public module_1_1<state_idx, state_idx> {
+  public:
+    //! linear module for weight matrix
+    linear_module_dim0 *linear;
+    //! bias vector
+    addc_module *adder;
+    //! weighted sum
+    state_idx *sum;
+    //! the non-linear function
+    tanh_module *sigmoid;
 
-// TODO: should be changed to throwing
-// an exception or something.
-// void ylerror(const char *s);
-#define ylerror(s) {						\
-    std::cerr << "\033[1;31mException:\033[0m " << s;		\
-    std::cerr << " in " << __FUNCTION__ << " at " << __FILE__;	\
-    std::cerr << ":" << __LINE__ << std::endl;			\
-    abort();							\
-  }
+    //! constructor. Arguments are a pointer to a parameter
+    //! in which the trainable weights will be appended,
+    //! the number of inputs, and the number of outputs.
+    nn_layer_full(parameter *p, state_idx *instate, intg noutputs);
+    virtual ~nn_layer_full();
+    //! fprop from in to out
+    void fprop(state_idx *in, state_idx *out);
+    //! bprop
+    void bprop(state_idx *in, state_idx *out);
+    //! bbprop
+    void bbprop(state_idx *in, state_idx *out);
+    //! initialize the weights to random values
+    void forget(forget_param_linear &fp);
+  };
 
-#define err_not_implemented() {						\
-    ylerror("member function not implemented for this class"); }
+} // namespace ebl {
 
-// not used right now
-#define ITER(x) x##__iter
-
-//! see numerics.h for description
-extern bool drand_ini;
-
-/* namespace ebl { */
-
-/* // intg is used for array indexing, hence should be */
-/* // defined as long if you want very large arrays */
-/* // on 64 bit machines. */
-/* typedef long intg; */
-/* typedef unsigned char ubyte; */
-
-/* } // end namespace ebl */
-
-
-#endif
+#endif /* EBLMACHINES_H_ */

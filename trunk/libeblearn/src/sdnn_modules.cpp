@@ -33,16 +33,6 @@
 
 using namespace ebl;
 
-///////////////////////////////////////////////////
-// <Idx.hpp> eloop macros
-#define idx_eloop4(dst0,src0,type0, dst1,src1,type1, dst2,src2,type2, dst3,src3,type3) \
-  if ( ((src0).dim((src0).order()) != (src1).dim((src1).order())) || ((src0).dim((src0).order()) != (src2).dim((src2).order())) ) ylerror("incompatible Idxs for eloop\n"); \
-  DimIter<type0> dst0(src0,(src0).order()-1);				\
-  DimIter<type1> dst1(src1,(src1).order()-1);				\
-  DimIter<type2> dst2(src2,(src2).order()-1);				\
-  DimIter<type3> dst3(src3,(src3).order()-1);				\
-  for ( ; dst0.notdone(); ++dst0, ++dst1, ++dst2, ++dst3)
-
 // <Blas.hpp>
 template<class T> T idx_f1logdotf1(Idx<T> &m, Idx<T> &p) {
   T exp_offset = *(m.idx_ptr());

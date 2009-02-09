@@ -23,7 +23,9 @@ ADD_LIBRARY (eblearn SHARED
 		     src/Ebl.cpp  
 		     src/EblStates.cpp  
 		     src/EblBasic.cpp  
+		     src/EblNonLinearity.cpp  
 		     src/EblTester.cpp
+		     src/EblMachines.cpp  
 		     src/Ipp.cpp  
 		     src/libeblearn.cpp  
 		     src/Net.cpp  

@@ -253,11 +253,31 @@ namespace ebl {
 
 #define idx_eloop2(dst0,src0,type0,dst1,src1,type1)			\
   if ((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
-    ylerror("incompatible Idxs for bloop\n");				\
+    ylerror("incompatible Idxs for eloop\n");				\
   DimIter<type0> dst0(src0,(src0).order()-1);				\
   DimIter<type1> dst1(src1,(src1).order()-1);				\
   for ( ; dst0.notdone(); ++dst0, ++dst1)
 
+#define idx_eloop3(dst0,src0,type0,dst1,src1,type1,dst2,src2,type2)	\
+  if (((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
+      || ((src0).dim((src0).order() - 1) != (src2).dim((src2).order() - 1))) \
+    ylerror("incompatible Idxs for eloop\n");				\
+  DimIter<type0> dst0(src0,(src0).order()-1);				\
+  DimIter<type1> dst1(src1,(src1).order()-1);				\
+  DimIter<type2> dst2(src2,(src2).order()-1);				\
+  for ( ; dst0.notdone(); ++dst0, ++dst1, ++dst2)
+
+#define idx_eloop4(dst0,src0,type0,dst1,src1,type1,			\
+		   dst2,src2,type2,dst3,src3,type3)			\
+  if (((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
+      || ((src0).dim((src0).order() - 1) != (src2).dim((src2).order() - 1)) \
+      || ((src0).dim((src0).order() - 1) != (src3).dim((src3).order() - 1))) \
+    ylerror("incompatible Idxs for eloop\n");				\
+  DimIter<type0> dst0(src0,(src0).order()-1);				\
+  DimIter<type1> dst1(src1,(src1).order()-1);				\
+  DimIter<type2> dst2(src2,(src2).order()-1);				\
+  DimIter<type3> dst3(src3,(src3).order()-1);				\
+  for ( ; dst0.notdone(); ++dst0, ++dst1, ++dst2, ++dst3)
 
   ////////////////////////////////////////////////////////////////
   // aloop macros: loop over all elements of an Idx
@@ -347,10 +367,31 @@ namespace ebl {
 
 #define idx_eloop2(dst0,src0,type0,dst1,src1,type1)			\
   if ((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
-    ylerror("incompatible Idxs for bloop\n");				\
+    ylerror("incompatible Idxs for eloop\n");				\
   IdxLooper<type0> dst0(src0,(src0).order()-1);				\
   IdxLooper<type1> dst1(src1,(src1).order()-1);				\
   for ( ; dst0.notdone(); dst0.next(), dst1.next())
+
+#define idx_eloop3(dst0,src0,type0,dst1,src1,type1,dst2,src2,type2)\
+  if (((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
+      || ((src0).dim((src0).order() - 1) != (src2).dim((src2).order() - 1))) \
+    ylerror("incompatible Idxs for eloop\n");				\
+  IdxLooper<type0> dst0(src0,(src0).order()-1);				\
+  IdxLooper<type1> dst1(src1,(src1).order()-1);				\
+  IdxLooper<type2> dst2(src2,(src2).order()-1);				\
+  for ( ; dst0.notdone(); dst0.next(), dst1.next(), dst2.next())
+
+#define idx_eloop4(dst0,src0,type0,dst1,src1,type1,			\
+		   dst2,src2,type2,dst3,src3,type3)			\
+  if (((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
+      || ((src0).dim((src0).order() - 1) != (src2).dim((src2).order() - 1)) \
+      || ((src0).dim((src0).order() - 1) != (src3).dim((src3).order() - 1))) \
+    ylerror("incompatible Idxs for eloop\n");				\
+  IdxLooper<type0> dst0(src0,(src0).order()-1);				\
+  IdxLooper<type1> dst1(src1,(src1).order()-1);				\
+  IdxLooper<type2> dst2(src2,(src2).order()-1);				\
+  IdxLooper<type3> dst3(src3,(src3).order()-1);				\
+  for ( ; dst0.notdone(); dst0.next(), dst1.next(), dst2.next(), dst3.next())
 
   ////////////////////////////////////////////////////////////////
   // aloop macros: loop over all elements

@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
- *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,54 +29,63 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef Defines_H
-#define Defines_H
+#include "EblMachines.h"
 
-#include <execinfo.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
+using namespace std;
 
-#ifndef NULL
-#define NULL (void*)0
-#endif
+namespace ebl {
 
-// #define DEBUG_ON
+  ////////////////////////////////////////////////////////////////
+  // nn_layer_full
 
-#ifdef DEBUG_ON
-#define DEBUG(s,d) fprintf(stderr,s,d)
-#else
-#define DEBUG(s,d)
-#endif
-
-// TODO: should be changed to throwing
-// an exception or something.
-// void ylerror(const char *s);
-#define ylerror(s) {						\
-    std::cerr << "\033[1;31mException:\033[0m " << s;		\
-    std::cerr << " in " << __FUNCTION__ << " at " << __FILE__;	\
-    std::cerr << ":" << __LINE__ << std::endl;			\
-    abort();							\
+  nn_layer_full::nn_layer_full(parameter *p, state_idx *instate, intg noutputs)
+  {
+    linear = new linear_module_dim0(p, instate->x.dim(0), noutputs);
+    adder = new addc_module(p, noutputs);
+    sum = NULL;
+    sigmoid = new tanh_module();
   }
 
-#define err_not_implemented() {						\
-    ylerror("member function not implemented for this class"); }
+  nn_layer_full::~nn_layer_full()
+  {
+    delete sigmoid;
+    if (sum) delete sum;
+    delete adder;
+    delete linear;
+  }
 
-// not used right now
-#define ITER(x) x##__iter
+  void nn_layer_full::fprop(state_idx *in, state_idx *out)
+  {
+    // 1. resize output and sum
+    IdxDim d(in->x.spec); // use same dimensions as in
+    d.setdim(0, adder->bias->x.dim(0)); // except for the first one
+    out->resize(d);
+    if (!sum) sum = new state_idx(d);
+    else sum->resize(d);
+    // 2. fprop
+    linear->fprop(in, sum);
+    adder->fprop(sum, sum);
+    sigmoid->fprop(sum, out);
+  }
 
-//! see numerics.h for description
-extern bool drand_ini;
+  void nn_layer_full::bprop(state_idx *in, state_idx *out)
+  {
+    sigmoid->bprop(sum, out);
+    adder->bprop(sum, sum);
+    linear->bprop(in, sum);
+  }
 
-/* namespace ebl { */
+  void nn_layer_full::bbprop(state_idx *in, state_idx *out)
+  {
+    sigmoid->bbprop(sum, out);
+    adder->bbprop(sum, sum);
+    linear->bbprop(in, sum);
+  }
 
-/* // intg is used for array indexing, hence should be */
-/* // defined as long if you want very large arrays */
-/* // on 64 bit machines. */
-/* typedef long intg; */
-/* typedef unsigned char ubyte; */
+  void nn_layer_full::forget(forget_param_linear &fp)
+  {
+    linear->forget(fp);
+    adder->forget(fp);
+  }
 
-/* } // end namespace ebl */
-
-
-#endif
+} // end namespace ebl

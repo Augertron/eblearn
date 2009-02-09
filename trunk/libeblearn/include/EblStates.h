@@ -37,11 +37,6 @@
 
 namespace ebl {
 
-  //! see numerics.h for description
-  extern bool drand_ini;
-
-  void err_not_implemented();
-
   class infer_param {
   };
 
