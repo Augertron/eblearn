@@ -545,11 +545,11 @@ Idx<int> facenet::calc_sizes(int height, int width){
 void facenet::show_net(bool kernel, bool prop){
 	if(kernel){
 		ebbox* kernels = new ebbox(0, "kernels");
-		Idx_Gui* c0kernel = new Idx_Gui(&(this->c0_module->kernel->x), DOUBLE, "c0-layer");
+		Idx_Gui* c0kernel = new Idx_Gui(&(this->c0_module->convol->kernel->x), DOUBLE, "c0-layer");
 		kernels->add_box( c0kernel);
-		Idx_Gui* c1kernel = new Idx_Gui(&(this->c1_module->kernel->x), DOUBLE, "c1-layer");
+		Idx_Gui* c1kernel = new Idx_Gui(&(this->c1_module->convol->kernel->x), DOUBLE, "c1-layer");
 		kernels->add_box( c1kernel);
-		Idx_Gui* c2kernel = new Idx_Gui(&(this->c2_module->kernel->x), DOUBLE, "c2-layer");
+		Idx_Gui* c2kernel = new Idx_Gui(&(this->c2_module->convol->kernel->x), DOUBLE, "c2-layer");
 		kernels->add_box( c2kernel);
 		kernels->show();
 	}

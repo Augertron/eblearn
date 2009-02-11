@@ -63,8 +63,7 @@ namespace ebl {
   //! It's different from linear_module in that it is
   //! spatially replicable: it applies the linear combination only
   //! to the first dimension of the idxs (dim 0).
-  //! It can operate on idx of any order up to 4 dimensions (adding
-  //! extra dimensions of size 1 for idxs with less than 4 dimensions).
+  //! It can operate on idx of any order up to 4 dimensions.
   class linear_module_dim0: public linear_module {
   public:
     linear_module_dim0(parameter *p, intg in, intg out);
@@ -72,6 +71,54 @@ namespace ebl {
     virtual void fprop(state_idx *in, state_idx *out);
     virtual void bprop(state_idx *in, state_idx *out);
     virtual void bbprop(state_idx *in, state_idx *out);
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! convolution module 2D
+  //! This module is spatially replicable: it applies 2D convolutions on
+  //! dimensions 1 and 2 (0 contains different layers of information).
+  //! If dimension 3 is present, it loops over it and repeats the convolutions.
+  //! It can operate on idx of any order up to 4 dimensions.
+  class convolution_module_2D: public module_1_1<state_idx, state_idx> {
+  public:
+    state_idx *kernel;
+    intg thickness;
+    intg stridei;
+    intg stridej;
+    Idx<intg> *table;
+    
+    convolution_module_2D(parameter *p, intg kerneli, intg kernelj, 
+			  intg stridei, intg stridej, 
+			  Idx<intg> *table, intg thick);
+    virtual ~convolution_module_2D();
+    virtual void fprop(state_idx *in, state_idx *out);
+    virtual void bprop(state_idx *in, state_idx *out);
+    virtual void bbprop(state_idx *in, state_idx *out);
+    virtual void forget(forget_param_linear &fp);
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! subsampling module 2D
+  //! This module is spatially replicable: it applies 2D subsampling on
+  //! dimensions 1 and 2 (0 contains different layers of information).
+  //! If dimension 3 is present, it loops over it and repeats the subsampling.
+  //! It can operate on idx of any order up to 4 dimensions.
+  class subsampling_module_2D: public module_1_1<state_idx, state_idx> {
+  public:
+    state_idx *coeff;
+    state_idx *sub;
+    intg thickness;
+    intg stridei;
+    intg stridej;
+    Idx<intg> *table;
+    
+    subsampling_module_2D(parameter *p, intg stridei_, intg stridej_,
+			  intg subi, intg subj, intg thick);
+    virtual ~subsampling_module_2D();
+    virtual void fprop(state_idx *in, state_idx *out);
+    virtual void bprop(state_idx *in, state_idx *out);
+    virtual void bbprop(state_idx *in, state_idx *out);
+    virtual void forget(forget_param_linear &fp);
   };
 
   ////////////////////////////////////////////////////////////////

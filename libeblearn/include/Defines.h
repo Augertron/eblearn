@@ -69,6 +69,10 @@
 //! see numerics.h for description
 extern bool drand_ini;
 
+#define check_drand_ini() {					      \
+    if (!drand_ini) printf("You have not initialized random sequence. \
+Please call init_drand(time(NULL)) before using this function !\n"); }
+
 /* namespace ebl { */
 
 /* // intg is used for array indexing, hence should be */
