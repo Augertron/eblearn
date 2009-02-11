@@ -42,7 +42,9 @@ namespace ebl {
   {
     linear = new linear_module_dim0(p, instate->x.dim(0), noutputs);
     adder = new addc_module(p, noutputs);
-    sum = NULL;
+    // the order of sum is not yet known and this is just an internal buffer
+    // that does not need to be save in the parameter, so we allocate it later
+    sum = NULL; 
     sigmoid = new tanh_module();
   }
 
@@ -56,14 +58,14 @@ namespace ebl {
 
   void nn_layer_full::fprop(state_idx *in, state_idx *out)
   {
-    // 1. resize output and sum
+    // resize output and sum
     IdxDim d(in->x.spec); // use same dimensions as in
     d.setdim(0, adder->bias->x.dim(0)); // except for the first one
     out->resize(d);
-    if (!sum) sum = new state_idx(d);
+    if (!sum) sum = new state_idx(d); // we now know the order of sum
     else sum->resize(d);
 
-    // 2. fprop
+    // fprop
     linear->fprop(in, sum);
     adder->fprop(sum, sum);
     sigmoid->fprop(sum, out);

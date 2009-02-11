@@ -41,6 +41,16 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! Idx elements and dimensions error checking macros
 
+  //! Calls ylerror if src0 is not contiguous.
+#define idx_check_contiguous1(src0)				\
+  if (!(src0).contiguousp())					\
+    ylerror("Idx must be contiguous\n");
+
+  //! Calls ylerror if src0 and src1 are not contiguous.
+#define idx_check_contiguous2(src0, src1)				\
+  if (!(src0).contiguousp() || !(src1).contiguousp())			\
+    ylerror("Idx must be contiguous\n");
+
   //! Calls ylerror if src0 and src1 have different number of elements.
 #define idx_checknelems2_all(src0, src1)				\
   if ((src0).nelements() != (src1).nelements())				\
@@ -690,6 +700,7 @@ namespace ebl {
       return *this;
     else {
       if (n == 1) {
+	idx_check_contiguous1(*this); // 
 	Idx<T> r(getstorage(), 0, spec.nelements());
 	return r;
       } 

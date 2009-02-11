@@ -30,7 +30,6 @@
  ***************************************************************************/
 
 #include "EblBasic.h"
-#include "IdxIO.h"
 
 using namespace std;
 
@@ -39,150 +38,53 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // linear_module
 
-  linear_module::linear_module(parameter *p, intg in, intg out)
-  {
+  linear_module::linear_module(parameter *p, intg in, intg out) {
     w = new state_idx(p, out, in);
   }
 
-  linear_module::~linear_module()
-  {
+  linear_module::~linear_module() {
     delete w;
   }
 
-  void linear_module::fprop(state_idx *in, state_idx *out)
-  {
-    //	intg instride = 0;
-    //	intg outstride = 0;
-    //	if (in->x.order() == 1)
-    //	{
-    //		instride = in->x.mod(0);
-    //	}
-    //	else if (in->x.contiguousp())
-    //	{
-    //		instride = 1;
-    //	}
-    //	if (out->x.order() == 1)
-    //	{
-    //		outstride = out->x.mod(0);
-    //		out->resize(w->x.dim(0));
-    //	}
-    //	else if (out->x.contiguousp())
-    //	{
-    //		outstride = 1;
-    //	}
-    //	if ( (instride == 0)||(outstride==0))
-    //	{
-    //		ylerror("linear_module::fprop: state must 1D or contiguous");
-    //	}
-    //	else
-    //	{
-    //		if (out->x.nelements() != w->x.dim(0))
-    //		{
-    //			ylerror("linear_module::fprop: output has wrong size");
-    //		}
-    //		else
-    //		{
-    //			idx_m2dotm1(w->x, in->x, out->x);
-    //		}
-    //	}
-    Idx<double> inx = in->x.view_as_order(1);
-    out->resize(w->x.dim(0));
-    idx_m2dotm1(w->x, inx, out->x);
+  void linear_module::fprop(state_idx *in, state_idx *out) {
+    out->resize(w->x.dim(0)); // resize output based weight matrix
+    Idx<double> inx = in->x.view_as_order(1); // view as 1D Idx
+    Idx<double> outx = out->x.view_as_order(1); // view as 1D Idx
+
+    idx_m2dotm1(w->x, inx, outx); // linear combination
   }
 
-  void linear_module::bprop(state_idx *in, state_idx *out)
-  {
-    Idx<double> inx = in->x.view_as_order(1);
-    Idx<double> indx = in->dx.view_as_order(1);
-    intg instride = 0;
-    intg outstride = 0;
-    if (inx.order() == 1)
-      {
-	instride = inx.mod(0);
-      }
-    else if (inx.contiguousp())
-      {
-	instride = 1;
-      }
-    if (out->x.order() == 1)
-      {
-	outstride = out->x.mod(0);
-      }
-    else if (out->x.contiguousp())
-      {
-	outstride = 1;
-      }
-    if ( (instride == 0)||(outstride==0))
-      {
-	ylerror("linear_module::fprop: state must 1D or contiguous");
-      }
-    else
-      {
-	if (out->x.nelements() != w->x.dim(0))
-	  {
-	    ylerror("linear_module::fprop: output has wrong size");
-	  }
-	else
-	  {
-	    Idx<double> twx(w->x.transpose(0, 1));
-	    idx_m1extm1(out->dx, inx, w->dx);
-	    idx_m2dotm1(twx, out->dx, indx);
-	  }
-      }
+  void linear_module::bprop(state_idx *in, state_idx *out) {
+    Idx<double> inx = in->x.view_as_order(1); // view as 1D Idx
+    Idx<double> indx = in->dx.view_as_order(1); // view as 1D Idx
+    Idx<double> outdx = out->dx.view_as_order(1); // view as 1D Idx
+    Idx<double> twx(w->x.transpose(0, 1)); // switch dimensions 0 and 1
+    if (outdx.nelements() != w->dx.dim(0)) ylerror("output has wrong size");
+
+    idx_m1extm1(outdx, inx, w->dx);
+    idx_m2dotm1(twx, outdx, indx);
   }
 
-  void linear_module::bbprop(state_idx *in, state_idx *out)
-  {
-    Idx<double> inx = in->x.view_as_order(1);
-    Idx<double> inddx = in->ddx.view_as_order(1);
-    intg instride = 0;
-    intg outstride = 0;
-    if (inx.order() == 1)
-      {
-	instride = inx.mod(0);
-      }
-    else if (inx.contiguousp())
-      {
-	instride = 1;
-      }
-    if (out->x.order() == 1)
-      {
-	outstride = out->x.mod(0);
-      }
-    else if (out->x.contiguousp())
-      {
-	outstride = 1;
-      }
-    if ( (instride == 0)||(outstride==0))
-      {
-	ylerror("linear_module::fprop: state must 1D or contiguous");
-      }
-    else
-      {
-	if (out->x.nelements() != w->x.dim(0))
-	  {
-	    ylerror("linear_module::fprop: output has wrong size");
-	  }
-	else
-	  {
-	    Idx<double> twx = w->x.transpose(0, 1);
-	    idx_m1squextm1(out->ddx, inx, w->ddx);
-	    idx_m2squdotm1(twx, out->ddx, inddx);
-	  }
-      }
+  void linear_module::bbprop(state_idx *in, state_idx *out) {
+    Idx<double> inx = in->x.view_as_order(1); // view as 1D Idx
+    Idx<double> inddx = in->ddx.view_as_order(1); // view as 1D Idx
+    Idx<double> outddx = out->ddx.view_as_order(1); // view as 1D Idx
+    Idx<double> twx = w->x.transpose(0, 1); // switch dimensions 0 and 1
+    if (outddx.nelements() != w->ddx.dim(0)) ylerror("output has wrong size");
+
+    idx_m1squextm1(outddx, inx, w->ddx);
+    idx_m2squdotm1(twx, outddx, inddx);
   }
 
-  void linear_module::forget(forget_param_linear &fp)
-  {
+  void linear_module::forget(forget_param_linear &fp) {
     double fanin = w->x.dim(1);
     double z = fp.value / pow(fanin, fp.exponent);
-    check_drand_ini();
+    check_drand_ini(); // check that the random seed was initialized
     idx_aloop1(lx,w->x,double)
       {	*lx = drand(z);}
   }
 
-  void linear_module::normalize()
-  {
+  void linear_module::normalize() {
     norm_columns(w->x);
   }
 
@@ -193,51 +95,20 @@ namespace ebl {
     : linear_module(p, in, out) {
   }
 
-  void linear_module_dim0::fprop(state_idx *in, state_idx *out)
-  {
-    //	intg instride = 0;
-    //	intg outstride = 0;
-    //	if (in->x.order() == 1)
-    //	{
-    //		instride = in->x.mod(0);
-    //	}
-    //	else if (in->x.contiguousp())
-    //	{
-    //		instride = 1;
-    //	}
-    //	if (out->x.order() == 1)
-    //	{
-    //		outstride = out->x.mod(0);
-    //		out->resize(w->x.dim(0));
-    //	}
-    //	else if (out->x.contiguousp())
-    //	{
-    //		outstride = 1;
-    //	}
-    //	if ( (instride == 0)||(outstride==0))
-    //	{
-    //		ylerror("linear_module_dim0::fprop: state must 1D or contiguous");
-    //	}
-    //	else
-    //	{
-    //		if (out->x.nelements() != w->x.dim(0))
-    //		{
-    //			ylerror("linear_module_dim0::fprop: output has wrong size");
-    //		}
-    //		else
-    //		{
-    //			idx_m2dotm1(w->x, in->x, out->x);
-    //		}
-    //	}
-
-    // TODO: resize out?
-
+  void linear_module_dim0::fprop(state_idx *in, state_idx *out) {
+    // resize output based in input dimensions
+    IdxDim d(in->x.spec); // use same dimensions as in
+    d.setdim(0, w->x.dim(0)); // except for the first one
+    out->resize(d);
     // check that input and output have at most 4 dimensions
     if ((in->x.order() > 4) || (out->x.order() > 4))
       ylerror("linear_module_dim0: currently only 4-order idx are supported");
-    // see input and output as idx of order 4
-    Idx<double> inx = in->x.view_as_order(4);
-    Idx<double> outx = out->x.view_as_order(4);
+    // see input and output as Idx of order 4, so that this module is replicable
+    // in up to 3 dimensions (dim 0 for the linear combination operations and
+    // remaining dimensions for 1D, 2D or 3D replication)
+    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
+    Idx<double> outx = out->x.view_as_order(4); // add extra dims if necessary
+
     // loop over last 3 dimensions and call linear combination on first dim
     { idx_eloop2(linx,inx,double, loutx,outx,double) {
 	idx_eloop2(llinx,linx,double, lloutx,loutx,double) {
@@ -249,111 +120,53 @@ namespace ebl {
       }}
   }
 
-  void linear_module_dim0::bprop(state_idx *in, state_idx *out)
-  {
-    intg instride = 0;
-    intg outstride = 0;
-    if (in->x.order() == 1)
-      {
-	instride = in->x.mod(0);
-      }
-    else if (in->x.contiguousp())
-      {
-	instride = 1;
-      }
-    if (out->x.order() == 1)
-      {
-	outstride = out->x.mod(0);
-      }
-    else if (out->x.contiguousp())
-      {
-	outstride = 1;
-      }
-    if ( (instride == 0)||(outstride==0))
-      {
-	ylerror("linear_module_dim0::fprop: state must 1D or contiguous");
-      }
-    else
-      {
-	if (out->x.nelements() != w->x.dim(0))
-	  {
-	    ylerror("linear_module_dim0::fprop: output has wrong size");
+  void linear_module_dim0::bprop(state_idx *in, state_idx *out) {
+    // see input and output as Idx of order 4, so that this module is replicable
+    // in up to 3 dimensions (dim 0 for the linear combination operations and
+    // remaining dimensions for 1D, 2D or 3D replication)
+    Idx<double> inx = in->x.view_as_order(4);
+    Idx<double> outx = out->x.view_as_order(4);
+    Idx<double> indx = in->dx.view_as_order(4);
+    Idx<double> outdx = out->dx.view_as_order(4);
+    Idx<double> twx(w->x.transpose(0, 1));
+    if (outdx.dim(0) != w->dx.dim(0)) ylerror("output has wrong size");
+	    
+    // loop over last 3 dimensions and bprop on first dim
+    { idx_eloop4(linx,inx,double, lindx,indx,double, 
+		 loutx,outx,double, loutdx,outdx,double) {
+	idx_eloop4(llinx,linx,double, llindx,lindx,double,
+		   lloutx,loutx,double, lloutdx,loutdx,double) {
+	  idx_eloop4(lllinx,llinx,double, lllindx,llindx,double,
+		     llloutx,lloutx,double, llloutdx,lloutdx,double) {
+	    idx_m1extm1(llloutdx, lllinx, w->dx);
+	    idx_m2dotm1(twx, llloutdx, lllindx);
 	  }
-	else
-	  {
-	    // see input and output as idx of order 4
-	    Idx<double> inx = in->x.view_as_order(4);
-	    Idx<double> outx = out->x.view_as_order(4);
-	    Idx<double> indx = in->dx.view_as_order(4);
-	    Idx<double> outdx = out->dx.view_as_order(4);
-	    Idx<double> twx(w->x.transpose(0, 1));
-	    // loop over last 3 dimensions and bprop on first dim
-	    { idx_eloop4(linx,inx,double, lindx,indx,double, 
-			 loutx,outx,double, loutdx,outdx,double) {
-		idx_eloop4(llinx,linx,double, llindx,lindx,double,
-			   lloutx,loutx,double, lloutdx,loutdx,double) {
-		  idx_eloop4(lllinx,llinx,double, lllindx,llindx,double,
-			     llloutx,lloutx,double, llloutdx,lloutdx,double) {
-		    idx_m1extm1(llloutdx, lllinx, w->dx);
-		    idx_m2dotm1(twx, llloutdx, lllindx);
-		  }
-		}
-	      }}
-	  }
-      }
+	}
+      }}
   }
 
-  void linear_module_dim0::bbprop(state_idx *in, state_idx *out)
-  {
-    intg instride = 0;
-    intg outstride = 0;
-    if (in->x.order() == 1)
-      {
-	instride = in->x.mod(0);
-      }
-    else if (in->x.contiguousp())
-      {
-	instride = 1;
-      }
-    if (out->x.order() == 1)
-      {
-	outstride = out->x.mod(0);
-      }
-    else if (out->x.contiguousp())
-      {
-	outstride = 1;
-      }
-    if ( (instride == 0)||(outstride==0))
-      {
-	ylerror("linear_module_dim0::fprop: state must 1D or contiguous");
-      }
-    else
-      {
-	if (out->x.nelements() != w->x.dim(0))
-	  {
-	    ylerror("linear_module_dim0::fprop: output has wrong size");
+  void linear_module_dim0::bbprop(state_idx *in, state_idx *out) {
+    // see input and output as Idx of order 4, so that this module is replicable
+    // in up to 3 dimensions (dim 0 for the linear combination operations and
+    // remaining dimensions for 1D, 2D or 3D replication)
+    Idx<double> inx = in->x.view_as_order(4);
+    Idx<double> inddx = in->ddx.view_as_order(4);
+    Idx<double> outddx = out->ddx.view_as_order(4);
+    Idx<double> twx(w->x.transpose(0, 1));
+    if (outddx.dim(0) != w->ddx.dim(0)) ylerror("output has wrong size");
+    
+    // loop over last 3 dimensions and bbprop on first dim
+    { idx_eloop3(linx,inx,double, linddx,inddx,double, 
+		 loutddx,outddx,double) {
+	idx_eloop3(llinx,linx,double, llinddx,linddx,double,
+		   lloutddx,loutddx,double) {
+	  idx_eloop3(lllinx,llinx,double, lllinddx,llinddx,double,
+		     llloutddx,lloutddx,double) {
+	    idx_m1squextm1(llloutddx, lllinx, w->ddx);
+	    idx_m2squdotm1(twx, llloutddx, lllinddx);
 	  }
-	else
-	  {
-	    // see input and output as idx of order 4
-	    Idx<double> inx = in->x.view_as_order(4);
-	    Idx<double> inddx = in->ddx.view_as_order(4);
-	    Idx<double> outddx = out->ddx.view_as_order(4);
-	    Idx<double> twx(w->x.transpose(0, 1));
-	    // loop over last 3 dimensions and bprop on first dim
-	    { idx_eloop3(linx,inx,double, linddx,inddx,double, 
-			 loutddx,outddx,double) {
-		idx_eloop3(llinx,linx,double, llinddx,linddx,double,
-			   lloutddx,loutddx,double) {
-		  idx_eloop3(lllinx,llinx,double, lllinddx,llinddx,double,
-			     llloutddx,lloutddx,double) {
-		    idx_m1squextm1(llloutddx, lllinx, w->ddx);
-		    idx_m2squdotm1(twx, llloutddx, lllinddx);
-		  }
-		}
-	      }}
-	  }
-      }
+	}
+      }}
   }
 
   ////////////////////////////////////////////////////////////////
@@ -362,8 +175,7 @@ namespace ebl {
   convolution_module_2D::convolution_module_2D(parameter *p, 
 					       intg kerneli, intg kernelj, 
 					       intg ri, intg rj, 
-					       Idx<intg> *tbl, intg thick)
-  {
+					       Idx<intg> *tbl, intg thick) {
     table = tbl;
     kernel = new state_idx(p, tbl->dim(0), kerneli, kernelj);
     thickness = thick;
@@ -371,91 +183,55 @@ namespace ebl {
     stridej = rj;
   }
 
-  convolution_module_2D::~convolution_module_2D()
-  {
+  convolution_module_2D::~convolution_module_2D() {
     delete kernel;
   }
 
   void convolution_module_2D::fprop(state_idx *in, state_idx *out)
   {
-    //	intg instride = 0;
-    //	intg outstride = 0;
-    //	if (in->x.order() == 1)
-    //	{
-    //		instride = in->x.mod(0);
-    //	}
-    //	else if (in->x.contiguousp())
-    //	{
-    //		instride = 1;
-    //	}
-    //	if (out->x.order() == 1)
-    //	{
-    //		outstride = out->x.mod(0);
-    //		out->resize(w->x.dim(0));
-    //	}
-    //	else if (out->x.contiguousp())
-    //	{
-    //		outstride = 1;
-    //	}
-    //	if ( (instride == 0)||(outstride==0))
-    //	{
-    //		ylerror("convolution_module_2D::fprop: state must 1D or contiguous");
-    //	}
-    //	else
-    //	{
-    //		if (out->x.nelements() != w->x.dim(0))
-    //		{
-    //			ylerror("convolution_module_2D::fprop: output has wrong size");
-    //		}
-    //		else
-    //		{
-    //			idx_m2dotm1(w->x, in->x, out->x);
-    //		}
-    //	}
-
-     // check that input and output have at most 4 dimensions
-//     if ((in->x.order() > 4) || (out->x.order() > 4))
-//       ylerror("convolution_module_2D: currently only 4-order idx are supported");
-
-    // see input and output as idx of order 4
-//     Idx<double> inx = in->x.view_as_order(4);
-//     Idx<double> outx = out->x.view_as_order(4);
-
     intg ki = kernel->x.dim(1);
     intg kj = kernel->x.dim(2);
     intg sini = in->x.dim(1);
     intg sinj = in->x.dim(2);
 
+    // check sizes
     if (((sini - (ki - stridei)) % stridei != 0) || 
 	((sinj - (kj - stridej)) % stridej != 0))
       ylerror("inconsistent input size, kernel size, and subsampling ratio.");
     if ((stridei != 1) || (stridej != 1))
       ylerror("stride > 1 not implemented yet.");
-
+    // check that input and output have at most 4 dimensions
+    if ((in->x.order() > 4) || (out->x.order() > 4))
+      ylerror("convolution_module_2D: currently supporting 4-order Idx only");
+    // unfolding input for a faster convolution operation
     Idx<double> uuin(in->x.unfold(1, ki, stridei));
     uuin = uuin.unfold(2, kj, stridej);
-    Idx<double> lki(kernel->x.dim(1), kernel->x.dim(2));
-
-    // resize output if necessary
-    IdxDim d(in->x.spec);
-    d.setdim(0, thickness);
-    d.setdim(1, uuin.dim(1));
-    d.setdim(2, uuin.dim(2));
+    // resize output based in input dimensions
+    IdxDim d(in->x.spec); // use same dimensions as in
+    d.setdim(0, thickness); // except for the first one
+    d.setdim(1, uuin.dim(1)); // convolution trims dimensions a bit
+    d.setdim(2, uuin.dim(2)); // convolution trims dimensions a bit
     out->resize(d);
+    // see input and output as Idx of order 4, so that this module is replicable
+    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
+    // are the 2D dimensions to convolve and dim3 is the optional extra 
+    // dimension if we want to work with 3D data by 2D replication).
+    Idx<double> uuinx = uuin.view_as_order(6); // uuin has order 5, so we use 6
+    Idx<double> outx = out->x.view_as_order(4);
 
-    Idx<double> inx = in->x;
-    Idx<double> outx = out->x;
     idx_clear(outx);
     // generic convolution
-    //    {	idx_eloop2(uuuin, uuin, double, outx, out->x, double) {
-    {	idx_bloop2(lk, kernel->x, double, lt, *table, intg)	{
-	  Idx<double> suin(uuin.select(0, lt->get(0)));
-	  Idx<double> sout(outx.select(0, lt->get(1)));
+    // loop on extra 4th dimension
+    { idx_eloop2(uuuin, uuinx, double, ooutx, outx, double) {
+	// loop on 2D slices
+    	idx_bloop2(lk, kernel->x, double, lt, *table, intg) {
+	  Idx<double> suin(uuuin.select(0, lt->get(0)));
+	  Idx<double> sout(ooutx.select(0, lt->get(1)));
 	  idx_m4dotm2acc(suin, lk, sout);
-	  //	}
+	}
       }}
   }
-
+  
   void convolution_module_2D::bprop(state_idx *in, state_idx *out)
   {
     intg instride = 0;
@@ -787,54 +563,57 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // addc_module
 
-  addc_module::addc_module(parameter *p, intg size)
-  {
+  addc_module::addc_module(parameter *p, intg size) {
     bias = new state_idx(p,size);
   }
 
-  addc_module::~addc_module()
-  {
+  addc_module::~addc_module() {
     delete bias;
   }
 
-  void addc_module::fprop(state_idx* in, state_idx* out)
-  {
-    out->resize1(0, bias->x.dim(0));
+  void addc_module::fprop(state_idx* in, state_idx* out) {
+    if (in != out) { // resize only when input and output are different
+      IdxDim d(in->x.spec); // use same dimensions as in
+      d.setdim(0, bias->x.dim(0)); // except for the first one
+      out->resize(d);
+    }
+
+    // add each bias to entire slices cut from the first dimension
     idx_bloop3(inx, in->x, double, biasx, bias->x, double, outx, out->x, double)
       {
 	idx_addc(inx, biasx.get(), outx);
       }
   }
 
-  void addc_module::bprop(state_idx* in, state_idx* out)
-  {
+  void addc_module::bprop(state_idx* in, state_idx* out) {
+    if ((in != out) && (in->dx.nelements() != out->dx.nelements()))
+      ylerror("output has wrong size");
+    
     idx_bloop3(indx, in->dx, double, biasdx, bias->dx, double, 
-	       outdx, out->dx, double)
-      {
-	if (in != out)
-	  idx_copy(outdx, indx); // only pass on info if necessary
-	idx_sumacc(outdx, biasdx);
-      }
+	       outdx, out->dx, double) {
+      if (in != out)
+	idx_copy(outdx, indx); // only pass on info if necessary
+      idx_sumacc(outdx, biasdx);
+    }
   }
 
-  void addc_module::bbprop(state_idx* in, state_idx* out)
-  {
+  void addc_module::bbprop(state_idx* in, state_idx* out) {
+    if ((in != out) && (in->ddx.nelements() != out->ddx.nelements()))
+      ylerror("output has wrong size");
+    
     idx_bloop3(inddx, in->ddx, double, biasddx, bias->ddx, double, 
-	       outddx, out->ddx, double)
-      {
-	if (in != out)
-	  idx_copy(outddx, inddx); // only pass on info if necessary
-	idx_sumacc(outddx, biasddx);
-      }
+	       outddx, out->ddx, double) {
+      if (in != out)
+	idx_copy(outddx, inddx); // only pass on info if necessary
+      idx_sumacc(outddx, biasddx);
+    }
   }
-
-  void addc_module::forget(forget_param_linear& fp)
-  {
+  
+  void addc_module::forget(forget_param_linear& fp) {
     idx_clear(bias->x);
   }
 
-  void addc_module::normalize()
-  {
+  void addc_module::normalize() {
   }
 
 } // end namespace ebl
