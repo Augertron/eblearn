@@ -41,35 +41,56 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  //! linear module
-  //! It's different from linear_module_dim0 in that it is
-  //! not spatially replicable.
-  //! It can operate on idx of any order but will seem them as 1D idx.
+  //! The linear module provides a linear combination of the input in
+  //! with its internal weight matrix w and puts the result in the output.
+  //! It is different from linear_module_dim0 in that it is
+  //! not spatially replicable. It can still operate on Idx of any order 
+  //! but will seem them as 1D idx (requiring contiguity).
   class linear_module: public module_1_1<state_idx, state_idx> {
   public:
     state_idx *w;
 
+    //! Constructor.
+    //! \param p is used to store all parametric variables in a single place.
+    //! \param in the size of the input to the linear combination.
+    //! \param out the size of the output to the linear combination.
     linear_module(parameter *p, intg in, intg out);
+    //! 
     virtual ~linear_module();
+    //! forward propagation from in to out
     virtual void fprop(state_idx *in, state_idx *out);
+    //! backward propagation from out to in
     virtual void bprop(state_idx *in, state_idx *out);
+    //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx *in, state_idx *out);
+    //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
+    //! normalize
     virtual void normalize();
   };
 
   ////////////////////////////////////////////////////////////////
-  //! linear module dim0
-  //! It's different from linear_module in that it is
+  //! The linear module (dim0) provides a linear combination of the input in
+  //! with its internal weight matrix w and puts the result in the output.
+  //! It is different from linear_module in that it is
   //! spatially replicable: it applies the linear combination only
-  //! to the first dimension of the idxs (dim 0).
+  //! on the first dimension of the idxs (dim 0) and replicates the operation
+  //! to remaining (3) dimensions if present (yielding 1D, 2D, or 3D replication
+  //! if dimensions 1, 2 and 3 are present respectively).
   //! It can operate on idx of any order up to 4 dimensions.
   class linear_module_dim0: public linear_module {
   public:
+    //! Constructor.
+    //! \param p is used to store all parametric variables in a single place.
+    //! \param in the size of the input to the linear combination.
+    //! \param out the size of the output to the linear combination.
     linear_module_dim0(parameter *p, intg in, intg out);
     virtual ~linear_module_dim0() {};
+    //! forward propagation from in to out
     virtual void fprop(state_idx *in, state_idx *out);
+    //! backward propagation from out to in
     virtual void bprop(state_idx *in, state_idx *out);
+    //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx *in, state_idx *out);
   };
 
@@ -85,15 +106,21 @@ namespace ebl {
     intg thickness;
     intg stridei;
     intg stridej;
-    Idx<intg> *table;
+    Idx<intg> *table; //!< the table of connections between input and output
     
+    //! Constructor.
+    //! \param p is used to store all parametric variables in a single place.
     convolution_module_2D(parameter *p, intg kerneli, intg kernelj, 
 			  intg stridei, intg stridej, 
 			  Idx<intg> *table, intg thick);
     virtual ~convolution_module_2D();
+    //! forward propagation from in to out
     virtual void fprop(state_idx *in, state_idx *out);
+    //! backward propagation from out to in
     virtual void bprop(state_idx *in, state_idx *out);
+    //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx *in, state_idx *out);
+    //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
   };
 
@@ -110,35 +137,45 @@ namespace ebl {
     intg thickness;
     intg stridei;
     intg stridej;
-    Idx<intg> *table;
     
+    //! Constructor.
+    //! \param p is used to store all parametric variables in a single place.
     subsampling_module_2D(parameter *p, intg stridei_, intg stridej_,
 			  intg subi, intg subj, intg thick);
     virtual ~subsampling_module_2D();
+    //! forward propagation from in to out
     virtual void fprop(state_idx *in, state_idx *out);
+    //! backward propagation from out to in
     virtual void bprop(state_idx *in, state_idx *out);
+    //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx *in, state_idx *out);
     virtual void forget(forget_param_linear &fp);
   };
 
   ////////////////////////////////////////////////////////////////
-  //! constant add module
-  //! This module adds a bias in the first dimension of the input
-  //! and is spatially replicable (the input can have an order greater than 1).
+  //! The constant add module adds biases to the first dimension of the input
+  //! and puts the results in the output. This module is spatially replicable 
+  //! (the input can have an order greater than 1 and the operation will apply
+  //! to all elements).
   class addc_module: public module_1_1<state_idx, state_idx> {
   public:
-    // coefficients
-    state_idx* bias;
+    state_idx* bias; //!< the biases
 
+    //! Constructor.
+    //! \param p is used to store all parametric variables in a single place.
+    //! \param size is the number of biases, or the size of dimensions 0 of 
+    //! inputs and outputs.
     addc_module(parameter *p, intg size);
     virtual ~addc_module();
-    //! fprop from in to out
+    //! forward propagation from in to out
     void fprop(state_idx *in, state_idx *out);
-    //! bprop
+    //! backward propagation from out to in
     void bprop(state_idx *in, state_idx *out);
-    //! bbprop
+    //! second-derivative backward propagation from out to in
     void bbprop(state_idx *in, state_idx *out);
+    //! forgetting weights by replacing with random values
     void forget(forget_param_linear &fp);
+    //! normalizing
     void normalize();
   };
 
