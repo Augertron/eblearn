@@ -58,8 +58,7 @@ namespace ebl {
   {
     idx_clear(bias->x);
     double z = fp.value / pow(weight->x.dim(1), fp.exponent);
-    if(!drand_ini) printf("You have not initialized random sequence. \
-Please call init_drand() before using this function !\n");
+    check_drand_ini();
     idx_aloop1(w,weight->x,double)
       {	*w = drand(z);}
   }
@@ -194,8 +193,7 @@ Please call init_drand() before using this function !\n");
     intg hsize = kx.dim(2);
     Idx<intg> ts(table->select(1, 1));
     Idx<int> fanin(1 + idx_max(ts));
-    if(!drand_ini) printf("You have not initialized random sequence. \
-Please call init_drand() before using this function !\n");
+    check_drand_ini();
     idx_clear(fanin);
     { idx_bloop1(tab, *table, intg)	{
 	fanin.set(1 + fanin.get(tab.get(1)), tab.get(1)); }}

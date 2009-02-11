@@ -176,8 +176,7 @@ namespace ebl {
   {
     double fanin = w->x.dim(1);
     double z = fp.value / pow(fanin, fp.exponent);
-    if(!drand_ini) printf("You have not initialized random sequence. \
-Please call init_drand() before using this function !\n");
+    check_drand_ini();
     idx_aloop1(lx,w->x,double)
       {	*lx = drand(z);}
   }
@@ -252,14 +251,13 @@ Please call init_drand() before using this function !\n");
 
   void linear_module_dim0::bprop(state_idx *in, state_idx *out)
   {
-    state_idx in1(in); // TODO: temporary, find a cleaner solution
     intg instride = 0;
     intg outstride = 0;
-    if (in1.x.order() == 1)
+    if (in->x.order() == 1)
       {
-	instride = in1.x.mod(0);
+	instride = in->x.mod(0);
       }
-    else if (in1.x.contiguousp())
+    else if (in->x.contiguousp())
       {
 	instride = 1;
       }
@@ -307,14 +305,13 @@ Please call init_drand() before using this function !\n");
 
   void linear_module_dim0::bbprop(state_idx *in, state_idx *out)
   {
-    state_idx in1(in); // TODO: temporary, find a cleaner solution
     intg instride = 0;
     intg outstride = 0;
-    if (in1.x.order() == 1)
+    if (in->x.order() == 1)
       {
-	instride = in1.x.mod(0);
+	instride = in->x.mod(0);
       }
-    else if (in1.x.contiguousp())
+    else if (in->x.contiguousp())
       {
 	instride = 1;
       }
@@ -338,7 +335,6 @@ Please call init_drand() before using this function !\n");
 	  }
 	else
 	  {
-
 	    // see input and output as idx of order 4
 	    Idx<double> inx = in->x.view_as_order(4);
 	    Idx<double> inddx = in->ddx.view_as_order(4);
@@ -356,9 +352,436 @@ Please call init_drand() before using this function !\n");
 		  }
 		}
 	      }}
-
 	  }
       }
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // convolution_module_2D
+
+  convolution_module_2D::convolution_module_2D(parameter *p, 
+					       intg kerneli, intg kernelj, 
+					       intg ri, intg rj, 
+					       Idx<intg> *tbl, intg thick)
+  {
+    table = tbl;
+    kernel = new state_idx(p, tbl->dim(0), kerneli, kernelj);
+    thickness = thick;
+    stridei = ri;
+    stridej = rj;
+  }
+
+  convolution_module_2D::~convolution_module_2D()
+  {
+    delete kernel;
+  }
+
+  void convolution_module_2D::fprop(state_idx *in, state_idx *out)
+  {
+    //	intg instride = 0;
+    //	intg outstride = 0;
+    //	if (in->x.order() == 1)
+    //	{
+    //		instride = in->x.mod(0);
+    //	}
+    //	else if (in->x.contiguousp())
+    //	{
+    //		instride = 1;
+    //	}
+    //	if (out->x.order() == 1)
+    //	{
+    //		outstride = out->x.mod(0);
+    //		out->resize(w->x.dim(0));
+    //	}
+    //	else if (out->x.contiguousp())
+    //	{
+    //		outstride = 1;
+    //	}
+    //	if ( (instride == 0)||(outstride==0))
+    //	{
+    //		ylerror("convolution_module_2D::fprop: state must 1D or contiguous");
+    //	}
+    //	else
+    //	{
+    //		if (out->x.nelements() != w->x.dim(0))
+    //		{
+    //			ylerror("convolution_module_2D::fprop: output has wrong size");
+    //		}
+    //		else
+    //		{
+    //			idx_m2dotm1(w->x, in->x, out->x);
+    //		}
+    //	}
+
+     // check that input and output have at most 4 dimensions
+//     if ((in->x.order() > 4) || (out->x.order() > 4))
+//       ylerror("convolution_module_2D: currently only 4-order idx are supported");
+
+    // see input and output as idx of order 4
+//     Idx<double> inx = in->x.view_as_order(4);
+//     Idx<double> outx = out->x.view_as_order(4);
+
+    intg ki = kernel->x.dim(1);
+    intg kj = kernel->x.dim(2);
+    intg sini = in->x.dim(1);
+    intg sinj = in->x.dim(2);
+
+    if (((sini - (ki - stridei)) % stridei != 0) || 
+	((sinj - (kj - stridej)) % stridej != 0))
+      ylerror("inconsistent input size, kernel size, and subsampling ratio.");
+    if ((stridei != 1) || (stridej != 1))
+      ylerror("stride > 1 not implemented yet.");
+
+    Idx<double> uuin(in->x.unfold(1, ki, stridei));
+    uuin = uuin.unfold(2, kj, stridej);
+    Idx<double> lki(kernel->x.dim(1), kernel->x.dim(2));
+
+    // resize output if necessary
+    IdxDim d(in->x.spec);
+    d.setdim(0, thickness);
+    d.setdim(1, uuin.dim(1));
+    d.setdim(2, uuin.dim(2));
+    out->resize(d);
+
+    Idx<double> inx = in->x;
+    Idx<double> outx = out->x;
+    idx_clear(outx);
+    // generic convolution
+    //    {	idx_eloop2(uuuin, uuin, double, outx, out->x, double) {
+    {	idx_bloop2(lk, kernel->x, double, lt, *table, intg)	{
+	  Idx<double> suin(uuin.select(0, lt->get(0)));
+	  Idx<double> sout(outx.select(0, lt->get(1)));
+	  idx_m4dotm2acc(suin, lk, sout);
+	  //	}
+      }}
+  }
+
+  void convolution_module_2D::bprop(state_idx *in, state_idx *out)
+  {
+    intg instride = 0;
+    intg outstride = 0;
+    if (in->x.order() == 1)
+      {
+	instride = in->x.mod(0);
+      }
+    else if (in->x.contiguousp())
+      {
+	instride = 1;
+      }
+    if (out->x.order() == 1)
+      {
+	outstride = out->x.mod(0);
+      }
+    else if (out->x.contiguousp())
+      {
+	outstride = 1;
+      }
+    if ( (instride == 0)||(outstride==0))
+      {
+	ylerror("convolution_module_2D::fprop: state must 1D or contiguous");
+      }
+    else
+      {
+// 	if (out->x.nelements() != w->x.dim(0))
+// 	  {
+// 	    ylerror("convolution_module_2D::fprop: output has wrong size");
+// 	  }
+// 	else
+// 	  {
+	    // backprop through convolution
+	    idx_clear(in->dx);
+	    Idx<double> uuin(in->dx.unfold(1, (kernel->dx).dim(1), stridei));
+	    uuin = uuin.unfold(2, (kernel->dx).dim(2), stridej);
+	    Idx<double> uuinf(in->x.unfold(1, (kernel->dx).dim(1), stridei));
+	    uuinf = uuinf.unfold(2, (kernel->dx).dim(2), stridej);
+	    int transp[5] = { 0, 3, 4, 1, 2 };
+	    Idx<double> borp(uuinf.transpose(transp));
+	    { idx_bloop3 (lk, kernel->dx, double, lkf, kernel->x, double, 
+			  lt, *table, intg) {
+		intg islice = lt.get(0);
+		Idx<double> suin(uuin.select(0, islice));
+		Idx<double> sborp(borp.select(0, islice));
+		Idx<double> sout((out->dx).select(0, lt.get(1)));
+		// backward convolution
+		idx_m2extm2acc(sout, lkf, suin);
+		// compute gradient for kernel
+		idx_m4dotm2acc(sborp, sout, lk);
+	      }}
+	    //	  }
+      }
+  }
+
+  void convolution_module_2D::bbprop(state_idx *in, state_idx *out)
+  {
+    intg instride = 0;
+    intg outstride = 0;
+    if (in->x.order() == 1)
+      {
+	instride = in->x.mod(0);
+      }
+    else if (in->x.contiguousp())
+      {
+	instride = 1;
+      }
+    if (out->x.order() == 1)
+      {
+	outstride = out->x.mod(0);
+      }
+    else if (out->x.contiguousp())
+      {
+	outstride = 1;
+      }
+    if ( (instride == 0)||(outstride==0))
+      {
+	ylerror("convolution_module_2D::fprop: state must 1D or contiguous");
+      }
+    else
+      {
+// 	if (out->x.nelements() != w->x.dim(0))
+// 	  {
+// 	    ylerror("convolution_module_2D::fprop: output has wrong size");
+// 	  }
+// 	else
+// 	  {
+	    // backprop through convolution
+	    idx_clear(in->ddx);
+	    Idx<double> uuin(in->ddx.unfold(1, (kernel->ddx).dim(1), stridei));
+	    uuin = uuin.unfold(2, (kernel->ddx).dim(2), stridej);
+	    Idx<double> uuinf(in->x.unfold(1, (kernel->ddx).dim(1), stridei));
+	    uuinf = uuinf.unfold(2, (kernel->ddx).dim(2), stridej);
+	    int transp[5] = { 0, 3, 4, 1, 2 };
+	    Idx<double> borp(uuinf.transpose(transp));
+	    {	idx_bloop3 (lk, kernel->ddx, double, lkf, kernel->x, double, 
+			    lt, *table, intg) {
+		intg islice = lt.get(0);
+		Idx<double> suin(uuin.select(0, islice));
+		Idx<double> sborp(borp.select(0, islice));
+		Idx<double> sout((out->ddx).select(0, lt.get(1)));
+		// backward convolution
+		idx_m2squextm2acc(sout, lkf, suin);
+		// compute gradient for kernel
+		idx_m4squdotm2acc(sborp, sout, lk);
+	      }}
+	    //	  }
+      }
+  }
+
+  void convolution_module_2D::forget(forget_param_linear &fp)
+  {
+    Idx<double> kx(kernel->x);
+    intg vsize = kx.dim(1);
+    intg hsize = kx.dim(2);
+    Idx<intg> ts(table->select(1, 1));
+    Idx<int> fanin(1 + idx_max(ts));
+    check_drand_ini();
+    idx_clear(fanin);
+    { idx_bloop1(tab, *table, intg)	{
+	fanin.set(1 + fanin.get(tab.get(1)), tab.get(1)); }}
+    { idx_bloop2(tab, *table, intg, x, kx, double) {
+	double s = fp.value / pow((vsize * hsize * fanin.get(tab.get(1))), 
+				  fp.exponent);
+	{	idx_bloop1(lx, x, double)	{
+	    {	idx_bloop1(llx, lx, double) {
+		double n = drand(-s, s);
+		llx.set(n);
+	      }}
+	  }}
+      }}
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // subsampling_module_2D
+
+  subsampling_module_2D::subsampling_module_2D(parameter *p, 
+					       intg stridei_, intg stridej_,
+					       intg subi, intg subj, 
+					       intg thick)
+  {
+    coeff = new state_idx(p, thick);
+    sub = new state_idx(thick, subi, subj);
+    thickness = thick;
+    stridei = stridei_;
+    stridej = stridej_;
+  }
+
+  subsampling_module_2D::~subsampling_module_2D()
+  {
+    delete coeff;
+    delete sub;
+  }
+
+  void subsampling_module_2D::fprop(state_idx *in, state_idx *out)
+  {
+    //	intg instride = 0;
+    //	intg outstride = 0;
+    //	if (in->x.order() == 1)
+    //	{
+    //		instride = in->x.mod(0);
+    //	}
+    //	else if (in->x.contiguousp())
+    //	{
+    //		instride = 1;
+    //	}
+    //	if (out->x.order() == 1)
+    //	{
+    //		outstride = out->x.mod(0);
+    //		out->resize(w->x.dim(0));
+    //	}
+    //	else if (out->x.contiguousp())
+    //	{
+    //		outstride = 1;
+    //	}
+    //	if ( (instride == 0)||(outstride==0))
+    //	{
+    //		ylerror("subsampling_module_2D::fprop: state must 1D or contiguous");
+    //	}
+    //	else
+    //	{
+    //		if (out->x.nelements() != w->x.dim(0))
+    //		{
+    //			ylerror("subsampling_module_2D::fprop: output has wrong size");
+    //		}
+    //		else
+    //		{
+    //			idx_m2dotm1(w->x, in->x, out->x);
+    //		}
+    //	}
+
+     // check that input and output have at most 4 dimensions
+//     if ((in->x.order() > 4) || (out->x.order() > 4))
+//       ylerror("subsampling_module_2D: currently only 4-order idx are supported");
+
+    // see input and output as idx of order 4
+//     Idx<double> inx = in->x.view_as_order(4);
+//     Idx<double> outx = out->x.view_as_order(4);
+
+    intg sin_t = in->x.dim(0);
+    intg sin_i = in->x.dim(1);
+    intg sin_j = in->x.dim(2);
+    intg si = sin_i / stridei;
+    intg sj = sin_j / stridej;
+
+    if( (sin_i % stridei) != 0 ||
+	(sin_j % stridej) != 0)
+      ylerror("inconsistent input size and subsampleing ratio");
+    sub->resize(sin_t, si, sj);
+    out->resize(sin_t, si, sj);
+    // 1. subsampling ( coeff * average )
+    idx_clear(sub->x);
+    { idx_bloop4(lix, in->x, double, lsx, sub->x, double,
+		 lcx, coeff->x, double, ltx, out->x, double) {
+	Idx<double> uuin(lix->unfold(1, stridej, stridej));
+	uuin = uuin.unfold(0, stridei, stridei);
+	{ idx_eloop1(z1, uuin, double) {
+	    { idx_eloop1(z2, z1, double) {
+		idx_add(z2, lsx, lsx);
+	      }
+	    }
+	  }
+	}
+	idx_dotc(lsx, lcx.get(), ltx);
+      }
+    }
+  }
+
+  void subsampling_module_2D::bprop(state_idx *in, state_idx *out)
+  {
+    intg instride = 0;
+    intg outstride = 0;
+    if (in->x.order() == 1)
+      {
+	instride = in->x.mod(0);
+      }
+    else if (in->x.contiguousp())
+      {
+	instride = 1;
+      }
+    if (out->x.order() == 1)
+      {
+	outstride = out->x.mod(0);
+      }
+    else if (out->x.contiguousp())
+      {
+	outstride = 1;
+      }
+    if ( (instride == 0)||(outstride==0))
+      {
+	ylerror("subsampling_module_2D::fprop: state must 1D or contiguous");
+      }
+    else
+      {
+// 	if (out->x.nelements() != w->x.dim(0))
+// 	  {
+// 	    ylerror("subsampling_module_2D::fprop: output has wrong size");
+// 	  }
+// 	else
+// 	  {
+	{ idx_bloop3(lcdx, coeff->dx, double, ltdx, out->dx, double,
+		     lsx, sub->x, double) {
+	    idx_dotacc(lsx, ltdx, lcdx);
+	  }}
+	// 4.
+	{ idx_bloop4(lidx, in->dx, double, lsdx, sub->dx, double,
+		     lcx, coeff->x, double, ltdx2, out->dx, double) {
+	    idx_dotc(ltdx2, lcx.get(), lsdx);
+	    idx_m2oversample(lsdx, stridei, stridej, lidx);
+	  }}
+	    //	  }
+      }
+  }
+
+  void subsampling_module_2D::bbprop(state_idx *in, state_idx *out)
+  {
+    intg instride = 0;
+    intg outstride = 0;
+    if (in->x.order() == 1)
+      {
+	instride = in->x.mod(0);
+      }
+    else if (in->x.contiguousp())
+      {
+	instride = 1;
+      }
+    if (out->x.order() == 1)
+      {
+	outstride = out->x.mod(0);
+      }
+    else if (out->x.contiguousp())
+      {
+	outstride = 1;
+      }
+    if ( (instride == 0)||(outstride==0))
+      {
+	ylerror("subsampling_module_2D::fprop: state must 1D or contiguous");
+      }
+    else
+      {
+// 	if (out->x.nelements() != w->x.dim(0))
+// 	  {
+// 	    ylerror("subsampling_module_2D::fprop: output has wrong size");
+// 	  }
+// 	else
+// 	  {
+
+	{ idx_bloop3(lcdx, coeff->ddx, double, ltdx, out->ddx, double,
+		     lsx, sub->x, double) {
+	    idx_m2squdotm2acc(lsx, ltdx, lcdx);
+	  }}
+	// 4.
+	{ idx_bloop4(lidx, in->ddx, double, lsdx, sub->ddx, double,
+		     lcx, coeff->x, double, ltdx2, out->ddx, double) {
+	    double cf = lcx.get();
+	    idx_dotc(ltdx2, cf * cf, lsdx);
+	    idx_m2oversample(lsdx, stridei, stridej, lidx);
+	  }}
+
+      }
+  }
+
+  void subsampling_module_2D::forget(forget_param_linear &fp)
+  {
+    double c = fp.value / pow(stridei * stridej, fp.exponent);
+    idx_fill(coeff->x, c);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -388,7 +811,8 @@ Please call init_drand() before using this function !\n");
     idx_bloop3(indx, in->dx, double, biasdx, bias->dx, double, 
 	       outdx, out->dx, double)
       {
-	idx_copy(outdx, indx); // TODO: needed?
+	if (in != out)
+	  idx_copy(outdx, indx); // only pass on info if necessary
 	idx_sumacc(outdx, biasdx);
       }
   }
@@ -398,7 +822,8 @@ Please call init_drand() before using this function !\n");
     idx_bloop3(inddx, in->ddx, double, biasddx, bias->ddx, double, 
 	       outddx, out->ddx, double)
       {
-	idx_copy(outddx, inddx); // TODO: needed?
+	if (in != out)
+	  idx_copy(outddx, inddx); // only pass on info if necessary
 	idx_sumacc(outddx, biasddx);
       }
   }
