@@ -102,7 +102,7 @@ namespace ebl {
     out->resize(d);
     // check that input and output have at most 4 dimensions
     if ((in->x.order() > 4) || (out->x.order() > 4))
-      ylerror("linear_module_dim0: currently only 4-order idx are supported");
+      ylerror("linear_module_dim0: supporting up to order 4 Idx only");
     // see input and output as Idx of order 4, so that this module is replicable
     // in up to 3 dimensions (dim 0 for the linear combination operations and
     // remaining dimensions for 1D, 2D or 3D replication)
@@ -132,12 +132,11 @@ namespace ebl {
     if (outdx.dim(0) != w->dx.dim(0)) ylerror("output has wrong size");
 	    
     // loop over last 3 dimensions and bprop on first dim
-    { idx_eloop4(linx,inx,double, lindx,indx,double, 
-		 loutx,outx,double, loutdx,outdx,double) {
-	idx_eloop4(llinx,linx,double, llindx,lindx,double,
-		   lloutx,loutx,double, lloutdx,loutdx,double) {
-	  idx_eloop4(lllinx,llinx,double, lllindx,llindx,double,
-		     llloutx,lloutx,double, llloutdx,lloutdx,double) {
+    { idx_eloop3(linx,inx,double, lindx,indx,double, loutdx,outdx,double) {
+	idx_eloop3(llinx,linx,double, llindx,lindx,double, 
+		   lloutdx,loutdx,double) {
+	  idx_eloop3(lllinx,llinx,double, lllindx,llindx,double, 
+		     llloutdx,lloutdx,double) {
 	    idx_m1extm1(llloutdx, lllinx, w->dx);
 	    idx_m2dotm1(twx, llloutdx, lllindx);
 	  }
@@ -176,11 +175,11 @@ namespace ebl {
 					       intg kerneli, intg kernelj, 
 					       intg ri, intg rj, 
 					       Idx<intg> *tbl, intg thick) {
-    table = tbl;
-    kernel = new state_idx(p, tbl->dim(0), kerneli, kernelj);
+    table     = tbl;
+    kernel    = new state_idx(p, tbl->dim(0), kerneli, kernelj);
     thickness = thick;
-    stridei = ri;
-    stridej = rj;
+    stridei   = ri;
+    stridej   = rj;
   }
 
   convolution_module_2D::~convolution_module_2D() {
@@ -201,7 +200,7 @@ namespace ebl {
       ylerror("stride > 1 not implemented yet.");
     // check that input and output have at most 4 dimensions
     if ((in->x.order() > 4) || (out->x.order() > 4))
-      ylerror("convolution_module_2D: currently supporting 4-order Idx only");
+      ylerror("convolution_module_2D: supporting up to order 4 Idx only");
     // unfolding input for a faster convolution operation
     Idx<double> uuin(in->x.unfold(1, ki, stridei));
     uuin = uuin.unfold(2, kj, stridej);
@@ -215,7 +214,7 @@ namespace ebl {
     // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
     // are the 2D dimensions to convolve and dim3 is the optional extra 
     // dimension if we want to work with 3D data by 2D replication).
-    Idx<double> inx = in->x.view_as_order(4);
+    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
     Idx<double> outx = out->x.view_as_order(4);
 
     idx_clear(outx);
@@ -235,48 +234,68 @@ namespace ebl {
   }
   
   void convolution_module_2D::bprop(state_idx *in, state_idx *out) {
-    // TODO make it replicable on 4th dim
-    // backprop through convolution
-    idx_clear(in->dx);
-    Idx<double> uuin(in->dx.unfold(1, (kernel->dx).dim(1), stridei));
-    uuin = uuin.unfold(2, (kernel->dx).dim(2), stridej);
-    Idx<double> uuinf(in->x.unfold(1, (kernel->dx).dim(1), stridei));
-    uuinf = uuinf.unfold(2, (kernel->dx).dim(2), stridej);
-    int transp[5] = { 0, 3, 4, 1, 2 };
-    Idx<double> borp(uuinf.transpose(transp));
-    { idx_bloop3 (lk, kernel->dx, double, lkf, kernel->x, double, 
-		  lt, *table, intg) {
-	intg islice = lt.get(0);
-	Idx<double> suin(uuin.select(0, islice));
-	Idx<double> sborp(borp.select(0, islice));
-	Idx<double> sout((out->dx).select(0, lt.get(1)));
-	// backward convolution
-	idx_m2extm2acc(sout, lkf, suin);
-	// compute gradient for kernel
-	idx_m4dotm2acc(sborp, sout, lk);
+    // see input and output as Idx of order 4, so that this module is replicable
+    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
+    // are the 2D dimensions to convolve and dim3 is the optional extra 
+    // dimension if we want to work with 3D data by 2D replication).
+    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
+    Idx<double> indx = in->dx.view_as_order(4);
+    Idx<double> outdx = out->dx.view_as_order(4);
+    // loop on extra 4th dimension
+    { idx_eloop3(linx,inx,double, lindx,indx,double, loutdx,outdx,double) {
+	
+	// backprop through convolution
+	idx_clear(lindx);
+	Idx<double> uuin(lindx.unfold(1, (kernel->dx).dim(1), stridei));
+	uuin = uuin.unfold(2, (kernel->dx).dim(2), stridej);
+	Idx<double> uuinf(linx.unfold(1, (kernel->dx).dim(1), stridei));
+	uuinf = uuinf.unfold(2, (kernel->dx).dim(2), stridej);
+	int transp[5] = { 0, 3, 4, 1, 2 };
+	Idx<double> borp(uuinf.transpose(transp));
+	{ idx_bloop3 (lk, kernel->dx, double, lkf, kernel->x, double, 
+		      lt, *table, intg) {
+	    intg islice = lt.get(0);
+	    Idx<double> suin(uuin.select(0, islice));
+	    Idx<double> sborp(borp.select(0, islice));
+	    Idx<double> sout((loutdx).select(0, lt.get(1)));
+	    // backward convolution
+	    idx_m2extm2acc(sout, lkf, suin);
+	    // compute gradient for kernel
+	    idx_m4dotm2acc(sborp, sout, lk);
+	  }}
       }}
   }
 
   void convolution_module_2D::bbprop(state_idx *in, state_idx *out) {
-    // TODO make it replicable on 4th dim
-    // backprop through convolution
-    idx_clear(in->ddx);
-    Idx<double> uuin(in->ddx.unfold(1, (kernel->ddx).dim(1), stridei));
-    uuin = uuin.unfold(2, (kernel->ddx).dim(2), stridej);
-    Idx<double> uuinf(in->x.unfold(1, (kernel->ddx).dim(1), stridei));
-    uuinf = uuinf.unfold(2, (kernel->ddx).dim(2), stridej);
-    int transp[5] = { 0, 3, 4, 1, 2 };
-    Idx<double> borp(uuinf.transpose(transp));
-    {	idx_bloop3 (lk, kernel->ddx, double, lkf, kernel->x, double, 
-		    lt, *table, intg) {
-	intg islice = lt.get(0);
-	Idx<double> suin(uuin.select(0, islice));
-	Idx<double> sborp(borp.select(0, islice));
-	Idx<double> sout((out->ddx).select(0, lt.get(1)));
-	// backward convolution
-	idx_m2squextm2acc(sout, lkf, suin);
-	// compute gradient for kernel
-	idx_m4squdotm2acc(sborp, sout, lk);
+    // see input and output as Idx of order 4, so that this module is replicable
+    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
+    // are the 2D dimensions to convolve and dim3 is the optional extra 
+    // dimension if we want to work with 3D data by 2D replication).
+    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
+    Idx<double> inddx = in->ddx.view_as_order(4);
+    Idx<double> outddx = out->ddx.view_as_order(4);
+    // loop on extra 4th dimension
+    { idx_eloop3(linx,inx,double, linddx,inddx,double, loutddx,outddx,double) {
+	
+	// backprop through convolution
+	idx_clear(linddx);
+	Idx<double> uuin(linddx.unfold(1, (kernel->ddx).dim(1), stridei));
+	uuin = uuin.unfold(2, (kernel->ddx).dim(2), stridej);
+	Idx<double> uuinf(linx.unfold(1, (kernel->ddx).dim(1), stridei));
+	uuinf = uuinf.unfold(2, (kernel->ddx).dim(2), stridej);
+	int transp[5] = { 0, 3, 4, 1, 2 };
+	Idx<double> borp(uuinf.transpose(transp));
+	{ idx_bloop3 (lk, kernel->ddx, double, lkf, kernel->x, double, 
+		      lt, *table, intg) {
+	    intg islice = lt.get(0);
+	    Idx<double> suin(uuin.select(0, islice));
+	    Idx<double> sborp(borp.select(0, islice));
+	    Idx<double> sout((loutddx).select(0, lt.get(1)));
+	    // backward convolution
+	    idx_m2squextm2acc(sout, lkf, suin);
+	    // compute gradient for kernel
+	    idx_m4squdotm2acc(sborp, sout, lk);
+	  }}
       }}
   }
 
@@ -293,8 +312,8 @@ namespace ebl {
     { idx_bloop2(tab, *table, intg, x, kx, double) {
 	double s = fp.value / pow((vsize * hsize * fanin.get(tab.get(1))), 
 				  fp.exponent);
-	{	idx_bloop1(lx, x, double)	{
-	    {	idx_bloop1(llx, lx, double) {
+	{ idx_bloop1(lx, x, double) {
+	    { idx_bloop1(llx, lx, double) {
 		double n = drand(-s, s);
 		llx.set(n);
 	      }}
@@ -309,11 +328,11 @@ namespace ebl {
 					       intg stridei_, intg stridej_,
 					       intg subi, intg subj, 
 					       intg thick) {
-    coeff = new state_idx(p, thick);
-    sub = new state_idx(thick, subi, subj);
+    coeff     = new state_idx(p, thick);
+    sub	      = new state_idx(thick, subi, subj);
     thickness = thick;
-    stridei = stridei_;
-    stridej = stridej_;
+    stridei   = stridei_;
+    stridej   = stridej_;
   }
 
   subsampling_module_2D::~subsampling_module_2D() {
@@ -321,176 +340,103 @@ namespace ebl {
     delete sub;
   }
 
-  void subsampling_module_2D::fprop(state_idx *in, state_idx *out)
-  {
-    //	intg instride = 0;
-    //	intg outstride = 0;
-    //	if (in->x.order() == 1)
-    //	{
-    //		instride = in->x.mod(0);
-    //	}
-    //	else if (in->x.contiguousp())
-    //	{
-    //		instride = 1;
-    //	}
-    //	if (out->x.order() == 1)
-    //	{
-    //		outstride = out->x.mod(0);
-    //		out->resize(w->x.dim(0));
-    //	}
-    //	else if (out->x.contiguousp())
-    //	{
-    //		outstride = 1;
-    //	}
-    //	if ( (instride == 0)||(outstride==0))
-    //	{
-    //		ylerror("subsampling_module_2D::fprop: state must 1D or contiguous");
-    //	}
-    //	else
-    //	{
-    //		if (out->x.nelements() != w->x.dim(0))
-    //		{
-    //			ylerror("subsampling_module_2D::fprop: output has wrong size");
-    //		}
-    //		else
-    //		{
-    //			idx_m2dotm1(w->x, in->x, out->x);
-    //		}
-    //	}
-
-     // check that input and output have at most 4 dimensions
-//     if ((in->x.order() > 4) || (out->x.order() > 4))
-//       ylerror("subsampling_module_2D: currently only 4-order idx are supported");
-
-    // see input and output as idx of order 4
-//     Idx<double> inx = in->x.view_as_order(4);
-//     Idx<double> outx = out->x.view_as_order(4);
-
-    intg sin_t = in->x.dim(0);
+  void subsampling_module_2D::fprop(state_idx *in, state_idx *out) {
     intg sin_i = in->x.dim(1);
     intg sin_j = in->x.dim(2);
     intg si = sin_i / stridei;
     intg sj = sin_j / stridej;
-
-    if( (sin_i % stridei) != 0 ||
-	(sin_j % stridej) != 0)
+    // check sizes
+    if ((sin_i % stridei) != 0 || (sin_j % stridej) != 0)
       ylerror("inconsistent input size and subsampleing ratio");
-    sub->resize(sin_t, si, sj);
-    out->resize(sin_t, si, sj);
-    // 1. subsampling ( coeff * average )
-    idx_clear(sub->x);
-    { idx_bloop4(lix, in->x, double, lsx, sub->x, double,
-		 lcx, coeff->x, double, ltx, out->x, double) {
-	Idx<double> uuin(lix->unfold(1, stridej, stridej));
-	uuin = uuin.unfold(0, stridei, stridei);
-	{ idx_eloop1(z1, uuin, double) {
-	    { idx_eloop1(z2, z1, double) {
+    // check that input and output have at most 4 dimensions
+    if ((in->x.order() > 4) || (out->x.order() > 4))
+      ylerror("subsampling_module_2D: supporting up to order 4 Idx only");
+    // resize output and sub based in input dimensions
+    IdxDim d(in->x.spec); // use same dimensions as in
+    d.setdim(1, si); // new size after subsampling
+    d.setdim(2, sj); // new size after subsampling
+    out->resize(d);
+    sub->resize(d);
+    // see input and output as Idx of order 4, so that this module is replicable
+    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
+    // are the 2D dimensions to subsample and dim3 is the optional extra 
+    // dimension if we want to work with 3D data by 2D replication).
+    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
+    Idx<double> subx = sub->x.view_as_order(4);
+    Idx<double> outx = out->x.view_as_order(4);
+    // loop on extra 4th dimension
+    { idx_eloop3(linx,inx,double, lsubx,subx,double, loutx,outx,double) {
+
+	// subsampling ( coeff * average )
+	idx_clear(lsubx);
+	{ idx_bloop4(lix, linx, double, lsx, lsubx, double,
+		     lcx, coeff->x, double, ltx, loutx, double) {
+	    Idx<double> uuin(lix->unfold(1, stridej, stridej));
+	    uuin = uuin.unfold(0, stridei, stridei);
+	    idx_eloop1(z1, uuin, double) {
+	      idx_eloop1(z2, z1, double) {
 		idx_add(z2, lsx, lsx);
 	      }
 	    }
-	  }
+	    idx_dotc(lsx, lcx.get(), ltx);
+	  }}
+      }}
+  }
+
+  void subsampling_module_2D::bprop(state_idx *in, state_idx *out) {
+    // see input and output as Idx of order 4, so that this module is replicable
+    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
+    // are the 2D dimensions to oversample and dim3 is the optional extra 
+    // dimension if we want to work with 3D data by 2D replication).
+    Idx<double> indx = in->dx.view_as_order(4); // add extra dims if necessary
+    Idx<double> subx = sub->x.view_as_order(4);
+    Idx<double> subdx = sub->dx.view_as_order(4);
+    Idx<double> outdx = out->dx.view_as_order(4);
+    // loop on extra 4th dimension
+    { idx_eloop4(lindx,indx,double, lsubx,subx,double, lsubdx,subdx,double, 
+		 loutdx,outdx,double) {
+	
+	// oversampling
+	idx_bloop3(lcdx, coeff->dx, double, ltdx, loutdx, double,
+		   lsx, lsubx, double) {
+	  idx_dotacc(lsx, ltdx, lcdx);
 	}
-	idx_dotc(lsx, lcx.get(), ltx);
-      }
-    }
+	idx_bloop4(lidx, lindx, double, lsdx, lsubdx, double,
+		   lcx, coeff->x, double, ltdx2, loutdx, double) {
+	  idx_dotc(ltdx2, lcx.get(), lsdx);
+	  idx_m2oversample(lsdx, stridei, stridej, lidx);
+	}
+      }}
   }
 
-  void subsampling_module_2D::bprop(state_idx *in, state_idx *out)
-  {
-    intg instride = 0;
-    intg outstride = 0;
-    if (in->x.order() == 1)
-      {
-	instride = in->x.mod(0);
-      }
-    else if (in->x.contiguousp())
-      {
-	instride = 1;
-      }
-    if (out->x.order() == 1)
-      {
-	outstride = out->x.mod(0);
-      }
-    else if (out->x.contiguousp())
-      {
-	outstride = 1;
-      }
-    if ( (instride == 0)||(outstride==0))
-      {
-	ylerror("subsampling_module_2D::fprop: state must 1D or contiguous");
-      }
-    else
-      {
-// 	if (out->x.nelements() != w->x.dim(0))
-// 	  {
-// 	    ylerror("subsampling_module_2D::fprop: output has wrong size");
-// 	  }
-// 	else
-// 	  {
-	{ idx_bloop3(lcdx, coeff->dx, double, ltdx, out->dx, double,
-		     lsx, sub->x, double) {
-	    idx_dotacc(lsx, ltdx, lcdx);
-	  }}
-	// 4.
-	{ idx_bloop4(lidx, in->dx, double, lsdx, sub->dx, double,
-		     lcx, coeff->x, double, ltdx2, out->dx, double) {
-	    idx_dotc(ltdx2, lcx.get(), lsdx);
-	    idx_m2oversample(lsdx, stridei, stridej, lidx);
-	  }}
-	    //	  }
-      }
+  void subsampling_module_2D::bbprop(state_idx *in, state_idx *out) {
+    // see input and output as Idx of order 4, so that this module is replicable
+    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
+    // are the 2D dimensions to oversample and dim3 is the optional extra 
+    // dimension if we want to work with 3D data by 2D replication).
+    Idx<double> inddx = in->ddx.view_as_order(4); // add extra dims if necessary
+    Idx<double> subx = sub->x.view_as_order(4);
+    Idx<double> subddx = sub->ddx.view_as_order(4);
+    Idx<double> outddx = out->ddx.view_as_order(4);
+    // loop on extra 4th dimension
+    { idx_eloop4(linddx,inddx,double, lsubx,subx,double, lsubddx,subddx,double, 
+		 loutddx,outddx,double) {
+	
+	// oversampling
+	idx_bloop3(lcdx, coeff->ddx, double, ltdx, loutddx, double,
+		   lsx, lsubx, double) {
+	  idx_m2squdotm2acc(lsx, ltdx, lcdx);
+	}
+	idx_bloop4(lidx, linddx, double, lsdx, lsubddx, double,
+		   lcx, coeff->x, double, ltdx2, loutddx, double) {
+	  double cf = lcx.get();
+	  idx_dotc(ltdx2, cf * cf, lsdx);
+	  idx_m2oversample(lsdx, stridei, stridej, lidx);
+	}
+      }}
   }
 
-  void subsampling_module_2D::bbprop(state_idx *in, state_idx *out)
-  {
-    intg instride = 0;
-    intg outstride = 0;
-    if (in->x.order() == 1)
-      {
-	instride = in->x.mod(0);
-      }
-    else if (in->x.contiguousp())
-      {
-	instride = 1;
-      }
-    if (out->x.order() == 1)
-      {
-	outstride = out->x.mod(0);
-      }
-    else if (out->x.contiguousp())
-      {
-	outstride = 1;
-      }
-    if ( (instride == 0)||(outstride==0))
-      {
-	ylerror("subsampling_module_2D::fprop: state must 1D or contiguous");
-      }
-    else
-      {
-// 	if (out->x.nelements() != w->x.dim(0))
-// 	  {
-// 	    ylerror("subsampling_module_2D::fprop: output has wrong size");
-// 	  }
-// 	else
-// 	  {
-
-	{ idx_bloop3(lcdx, coeff->ddx, double, ltdx, out->ddx, double,
-		     lsx, sub->x, double) {
-	    idx_m2squdotm2acc(lsx, ltdx, lcdx);
-	  }}
-	// 4.
-	{ idx_bloop4(lidx, in->ddx, double, lsdx, sub->ddx, double,
-		     lcx, coeff->x, double, ltdx2, out->ddx, double) {
-	    double cf = lcx.get();
-	    idx_dotc(ltdx2, cf * cf, lsdx);
-	    idx_m2oversample(lsdx, stridei, stridej, lidx);
-	  }}
-
-      }
-  }
-
-  void subsampling_module_2D::forget(forget_param_linear &fp)
-  {
+  void subsampling_module_2D::forget(forget_param_linear &fp) {
     double c = fp.value / pow(stridei * stridej, fp.exponent);
     idx_fill(coeff->x, c);
   }
