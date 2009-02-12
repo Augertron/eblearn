@@ -95,23 +95,23 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-  //! convolution module 2D
-  //! This module is spatially replicable: it applies 2D convolutions on
-  //! dimensions 1 and 2 (0 contains different layers of information).
-  //! If dimension 3 is present, it loops over it and repeats the convolutions.
-  //! It can operate on idx of any order up to 4 dimensions.
+  //! The convolution module 2D applies 2-dimensional convolutions on dimensions
+  //! 1 and 2 (0 contains different layers of information to be connected to the
+  //! output layers based on the connections table) of the input and puts the
+  //! results in the output. It is spatially replicable in the sense that if
+  //! dimension 3 is present, it loops over it and repeats the convolutions.
   class convolution_module_2D: public module_1_1<state_idx, state_idx> {
   public:
-    state_idx *kernel;
-    intg thickness;
-    intg stridei;
-    intg stridej;
-    Idx<intg> *table; //!< the table of connections between input and output
+    state_idx	*kernel;
+    intg	 thickness;
+    intg	 stridei;
+    intg	 stridej;
+    Idx<intg>	*table; //!< the table of connections between input and output
     
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     convolution_module_2D(parameter *p, intg kerneli, intg kernelj, 
-			  intg stridei, intg stridej, 
+			  intg  stridei, intg stridej, 
 			  Idx<intg> *table, intg thick);
     virtual ~convolution_module_2D();
     //! forward propagation from in to out
@@ -132,11 +132,11 @@ namespace ebl {
   //! It can operate on idx of any order up to 4 dimensions.
   class subsampling_module_2D: public module_1_1<state_idx, state_idx> {
   public:
-    state_idx *coeff;
-    state_idx *sub;
-    intg thickness;
-    intg stridei;
-    intg stridej;
+    state_idx	*coeff;
+    state_idx	*sub;
+    intg	 thickness;
+    intg	 stridei;
+    intg	 stridej;
     
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
