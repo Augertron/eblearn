@@ -9,7 +9,8 @@
 #include "libeblearn.h"
 #include "MyTextOutputter.h"
 #include "BlasTest.h"
-#include "EbmTest.h"
+#include "GblTest.h"
+#include "EblBasicTest.h"
 #include "IdxIOTest.h"
 #include "DataSourceTest.h"
 #include "NetTest.h"
@@ -99,11 +100,12 @@ int main(int argc, char **argv)
   runner.setOutputter(outputter);
 
   // adding test suites
-  runner.addTest(ClusterTest::suite());
+  //runner.addTest(ClusterTest::suite());
   runner.addTest(IdxTest::suite());
   runner.addTest(IdxIteratorsTest::suite());
   runner.addTest(BlasTest::suite());
-  runner.addTest(EbmTest::suite());
+  runner.addTest(GblTest::suite());
+  runner.addTest(EblBasicTest::suite());
   runner.addTest(IdxIOTest::suite());
   runner.addTest(ImageTest::suite());
   runner.addTest(DataSourceTest::suite());

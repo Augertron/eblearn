@@ -37,7 +37,7 @@ namespace ebl {
 
   ModuleTester::ModuleTester() {
     this->out = stdout;
-    this->acc_thres = 1e-8;
+    this->acc_thres = 1e-6;
     this->rrange = 2;
     this->jac_fprop = Idx<double>(1,1);
     this->jac_bprop = Idx<double>(1,1);
@@ -64,9 +64,9 @@ namespace ebl {
     delete kk;
   }
 
-  void ModuleTester::test_jacobian(module_1_1<state_idx,state_idx> *module, 
-				   state_idx *in, state_idx *out)
-  {
+  Idx<double> ModuleTester::test_jacobian(module_1_1<state_idx,state_idx> 
+					  *module, state_idx *in, 
+					  state_idx *out) {
     forget_param_linear fp(2,0);
 
     // just to resize states
@@ -87,8 +87,7 @@ namespace ebl {
     get_jacobian_fprop(module,in,out,jac_fprop);
     get_jacobian_bprop(module,in,out,jac_bprop);
 
-    std::cout <<"kk"<<std::endl;
-    report_err(jac_fprop,jac_bprop,"jacobian input");
+    return get_errs(jac_fprop,jac_bprop);
   }
 
   void ModuleTester::test_jacobian_param(parameter *p, 
@@ -209,25 +208,32 @@ namespace ebl {
   {
   }
 
-  void ModuleTester::report_err(Idx<double>& a, Idx<double>& b, const char* msg)
+  Idx<double> ModuleTester::get_errs(Idx<double>& a, Idx<double>& b)
   {
     double maxdist;
     double totdist = idx_sqrdist(a,b);
-    std::stringstream ss(std::stringstream::in |std::stringstream::out);
-
     // max distance
     idx_sub(a,b,a);
     idx_abs(a,a);
     maxdist = idx_max(a);
+    Idx<double> errs(2);
+    errs.set(maxdist, 0);
+    errs.set(totdist, 1);
+    return errs;
+  }
 
+  void ModuleTester::report_err(Idx<double>& a, Idx<double>& b, const char* msg)
+  {
+    Idx<double> errs = get_errs(a, b);
+    std::stringstream ss(std::stringstream::in |std::stringstream::out);
     // report results
     ss << "Max " << msg << " distance";
-    fprintf(this->out,"%-40s = %-15g %15s\n",ss.str().c_str(),maxdist,
-	    ((maxdist<this->acc_thres)?"OK":"NOT OK"));
+    fprintf(this->out,"%-40s = %-15g %15s\n",ss.str().c_str(), errs.get(0),
+	    ((errs.get(0) < this->acc_thres)?"OK":"NOT OK"));
     ss.str("");
     ss << "Total " << msg << "distance";
-    fprintf(this->out,"%-40s = %-15g %15s\n",ss.str().c_str(),totdist,
-	    ((totdist<this->acc_thres)?"OK":"NOT OK"));
+    fprintf(this->out,"%-40s = %-15g %15s\n",ss.str().c_str(), errs.get(1),
+	    ((errs.get(1) < this->acc_thres)?"OK":"NOT OK"));
     fflush(this->out);
   }
 

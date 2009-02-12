@@ -47,14 +47,10 @@ namespace ebl {
   //! a simple fully-connected neural net layer: linear + tanh non-linearity.
   class nn_layer_full: public module_1_1<state_idx, state_idx> {
   public:
-    //! linear module for weight matrix
-    linear_module_dim0 *linear;
-    //! bias vector
-    addc_module        *adder;
-    //! the non-linear function
-    tanh_module        *sigmoid;
-    //! weighted sum
-    state_idx          *sum;
+    linear_module_dim0 *linear;  //!< linear module for weight matrix
+    addc_module        *adder;   //!< bias vector
+    tanh_module        *sigmoid; //!< the non-linear function
+    state_idx          *sum;     //!< weighted sum
 
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
@@ -75,14 +71,10 @@ namespace ebl {
   //! a convolution neural net layer: convolution + tanh non-linearity.
   class nn_layer_convolution: public module_1_1<state_idx, state_idx> {
   public:
-    //! linear module for weight matrix
-    convolution_module_2D *convol;
-    //! bias vector
-    addc_module           *adder;
-    //! the non-linear function
-    tanh_module           *sigmoid;
-    //! convolution result
-    state_idx             *sum;
+    convolution_module_2D *convol;  //!< linear module for weight matrix
+    addc_module           *adder;   //!< bias vector
+    tanh_module           *sigmoid; //!< the non-linear function
+    state_idx             *sum;     //!< convolution result
 
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
@@ -104,14 +96,10 @@ namespace ebl {
   //! a subsampling neural net layer: subsampling + tanh non-linearity.
   class nn_layer_subsampling: public module_1_1<state_idx, state_idx> {
   public:
-    //! linear module for weight matrix
-    subsampling_module_2D *subsampler;
-    //! bias vector
-    addc_module           *adder;
-    //! the non-linear function
-    tanh_module           *sigmoid;
-    //! subsampling result
-    state_idx             *sum;
+    subsampling_module_2D *subsampler; //!< linear module for weight matrix
+    addc_module           *adder;      //!< bias vector
+    tanh_module           *sigmoid;    //!< the non-linear function
+    state_idx             *sum;        //!< subsampling result
 
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,

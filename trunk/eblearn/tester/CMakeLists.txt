@@ -30,7 +30,8 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
     src/Classifier2DTest.cpp
     src/ClusterTest.cpp
     src/DataSourceTest.cpp
-    src/EbmTest.cpp
+    src/GblTest.cpp
+    src/EblBasicTest.cpp
     src/IdxIOTest.cpp
     src/IdxIteratorsTest.cpp
     src/IdxTest.cpp

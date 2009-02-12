@@ -1,15 +1,15 @@
-#include "EbmTest.h"
+#include "GblTest.h"
 
 using namespace std;
 using namespace ebl;
 
-void EbmTest::setUp() {
+void GblTest::setUp() {
 }
 
-void EbmTest::tearDown() {
+void GblTest::tearDown() {
 }
 
-void EbmTest::test_clayer_fprop() {
+void GblTest::test_clayer_fprop() {
   intg ini = 3;
   intg inj = 3;
   intg ki = 2;
@@ -60,7 +60,7 @@ void EbmTest::test_clayer_fprop() {
   CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0, (out.x).get(0, 1, 1), 0.000001);
 }
 
-void EbmTest::test_full_table() {
+void GblTest::test_full_table() {
   Idx<intg> m = full_table(2, 3);
   CPPUNIT_ASSERT_EQUAL((intg) 0, m.get(0, 0));
   CPPUNIT_ASSERT_EQUAL((intg) 0, m.get(0, 1));
@@ -76,7 +76,7 @@ void EbmTest::test_full_table() {
   CPPUNIT_ASSERT_EQUAL((intg) 2, m.get(5, 1));
 }
 
-void EbmTest::test_softmax(){
+void GblTest::test_softmax(){
   CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
 
   state_idx *in = new state_idx(2,2,2,2,2,2);
@@ -171,7 +171,7 @@ void EbmTest::test_softmax(){
   delete out;
 }
 
-void EbmTest::test_state_copy() {
+void GblTest::test_state_copy() {
   state_idx a(4,4);
 
   dseed(32);
@@ -198,92 +198,3 @@ void EbmTest::test_state_copy() {
   CPPUNIT_ASSERT(9*a.ddx.footprint() == idx_sqrdist(a.ddx,b.ddx));
 }
 
-void EbmTest::test_Ebm01() {
-  CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
-
-  printf("*** testEbm01\n");
-  parameter p(100);
-  printf("x:\n");
-  p.x.pretty(stdout);
-  printf("dx:\n");
-  p.dx.pretty(stdout);
-  printf("ddx:\n");
-  p.ddx.pretty(stdout);
-  printf("gradient:\n");
-  p.gradient.pretty(stdout);
-}
-
-void EbmTest::test_Ebm02() {
-  CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
-
-  double i;
-  forget_param_linear fgp(1, 0.5);
-  parameter p(100);
-  //  double wdata[] = {1000,100,10,1, -1000,-100,-10,-1, 1e7,1e6,1e5,1e4};
-  //  double bdata[] = {0.6,-0.7,8000};
-  state_idx in(4,1,1);
-  state_idx out(3,1,1);
-  stdsigmoid_module sigmod;
-  f_layer fl(&p,4,3,1,1,&sigmod);
-  fl.forget(fgp);
-  // { int i=0; idx_aloop1(lw,fl.weight->x,double) { *lw = wdata[i++]; } }
-  // { int i=0; idx_aloop1(lw,fl.bias->x,double) { *lw = bdata[i++]; } }
-  { i=1; idx_aloop1(lin,in.x,double) { *lin = i++; } }
-  { i=1; idx_aloop1(lout,out.dx,double) { *lout = i++; } }
-  { i=1; idx_aloop1(lout,out.ddx,double) { *lout = i++; } }
-  printf("weight=\n");
-  fl.weight->x.fdump(stdout);
-  { printf("in.x: ["); idx_aloop1(lin,in.x,double) { printf("%g ", *lin); } printf("]\n"); }
-
-  printf("fprop\n");
-  fl.fprop(&in,&out);
-  { printf("fl.sum->x: ["); idx_aloop1(lin,fl.sum->x,double) { printf("%g ", *lin); } printf("]\n"); }
-  { printf("out.x: ["); idx_aloop1(lin,out.x,double) { printf("%g ",*lin); } printf("]\n"); }
-
-  printf("bprop\n");
-  fl.bprop(&in,&out);
-  { printf("fl.sum->dx: ["); idx_aloop1(lin,fl.sum->dx,double) { printf("%g ",*lin); } printf("]\n"); }
-  { printf("in.dx: ["); idx_aloop1(lin,in.dx,double) { printf("%g ",*lin); } printf("]\n"); }
-
-  printf("bbprop\n");
-  fl.bbprop(&in,&out);
-  { printf("in.ddx: ["); idx_aloop1(lin,in.ddx,double) { printf("%g ",*lin); } printf("]\n"); }
-}
-
-void EbmTest::test_jacobian_slayer() {
-  parameter p(10000);
-  int ki = 4, kj = 4, thick = 1, si = 2, sj =2;
-  stdsigmoid_module sqsh;
-  s_layer s(&p, ki, kj, thick, si, sj, &sqsh);
-  state_idx in(1, 8, 8);
-  state_idx out(1, 1, 1);
-
-  ModuleTester mt;
-  mt.test_jacobian(&s, &in, &out);
-  CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
-}
-
-void EbmTest::test_jacobian_clayer() {
-  intg ini = 3;
-  intg inj = 3;
-  intg ki = 2;
-  intg kj = 2;
-  intg si = 1 + ini - ki;
-  intg sj = 1 + inj - kj;
-  state_idx in(1, ini, inj);
-  state_idx out(1, si, sj);
-  Idx<intg> table(1, 2);
-  idx_clear(table);
-  Idx<intg> tableout = table.select(1, 1);
-  intg thick = 1 + idx_max(tableout);
-  stdsigmoid_module sqsh;
-  parameter prm(10000);
-  c_layer c(&prm, ki, kj, 1, 1, &table, thick, si, sj, &sqsh);
-
-  ModuleTester mt;
-  mt.test_jacobian(&c, &in, &out);
-  CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
-}
-
-void EbmTest::test_jacobian_param_clayer() {
-}

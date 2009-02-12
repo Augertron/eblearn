@@ -83,8 +83,8 @@ namespace ebl {
      * in     : pointer to state_idx
      * out    : pointer to state_idx
      */
-    void test_jacobian(module_1_1<state_idx,state_idx> *module, state_idx *in, 
-		       state_idx *out);
+    Idx<double> test_jacobian(module_1_1<state_idx,state_idx> *module, 
+			      state_idx *in, state_idx *out);
     /*
      * test the derivative of output wrt parameters of the module
      * p      : pointer to parameter object that was used to allocate the 
@@ -191,6 +191,11 @@ namespace ebl {
      * c : message to use
      */
     void report_err(Idx<double>& a, Idx<double>& b, const char* msg);
+    /*
+     * a : first Idx to compare
+     * b : second Idx to compare
+     */
+    Idx<double> get_errs(Idx<double>& a, Idx<double>& b);
     /*
      * assigns random numbers to every element of give idx
      */
