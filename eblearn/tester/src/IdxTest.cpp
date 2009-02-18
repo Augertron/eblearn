@@ -392,7 +392,6 @@ void IdxTest::test_IdxIter() {
 	jump = 0;
     }
   }
-  delete zptr;
 #endif
   
   // Testing idx_aloop1() on qq
@@ -518,7 +517,7 @@ void IdxTest::test_view_as_order() {
     CPPUNIT_ASSERT_EQUAL((intg) 1, i1_8.dim(i));
   }
   cnt = 0;
-  idx_bloop1(ii, i1_8, double) {
+  { idx_bloop1(ii, i1_8, double) {
     idx_bloop1(iii, ii, double) {
       idx_bloop1(iiii, iii, double) {
 	idx_bloop1(iiiii, iiii, double) {
@@ -527,6 +526,6 @@ void IdxTest::test_view_as_order() {
 	      idx_bloop1(iiiiiiii, iiiiiii, double) {
 		idx_bloop1(iiiiiiiii, iiiiiiii, double) {
 		    cnt++;
-		  }}}}}}}}
+		}}}}}}}}}
   CPPUNIT_ASSERT_EQUAL(42, cnt);
 }

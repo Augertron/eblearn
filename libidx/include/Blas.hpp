@@ -77,7 +77,8 @@ template<class T> void idx_subsquare(Idx<T> &i1, Idx<T> &i2, Idx<T> &out) {
 }
 
 // not very efficient. There must be a more parallel way of doing this
-template<class T> void idx_lincomb(Idx<T> &i1, T k1, Idx<T> &i2, T k2, Idx<T> &out) {
+template<class T> void idx_lincomb(Idx<T> &i1, T k1, Idx<T> &i2, T k2, 
+				   Idx<T> &out) {
   IdxIter<T> pi1; IdxIter<T> pi2; IdxIter<T> pout;
   idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout =  k1*(*pi1) + k2*(*pi2); }
 }
@@ -103,10 +104,9 @@ template<class T> void idx_dstdsigmoid(Idx<T> &inp, Idx<T> &out) {
 }
 
 template<class T> void idx_abs(Idx<T>& inp, Idx<T>& out) {
-	IdxIter<T> pinp(inp); IdxIter<T> pout(out);
-	idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(fabs((double)*pinp)); }
+  IdxIter<T> pinp; IdxIter<T> pout;
+  idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(fabs((double)*pinp)); }
 }
-
 
 // there is a much faster and parallel way
 // of doing this using a tree.
@@ -132,42 +132,6 @@ template<class T> T idx_sumsqr(Idx<T> &inp) {
 
 ////////////////////////////////////////////////////////////////////////
 #else
-
-// generic copy for two different types.
-//template<class T1, class T2> void idx_copy(Idx<T1> &src, Idx<T2> &dst) {
-////  IdxIter<T1> isrc;
-////  IdxIter<T2> idst;
-////  idx_aloop2_on(isrc, src, idst, dst) { *idst = (T2)(*isrc); }
-//  {idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }}
-//}
-
-//// generic copy for two different types.
-//template<class T1, class T2> void idx_copy(Idx<T1> &src, Idx<T2> &dst) {
-////  IdxIter<T1> isrc;
-////  IdxIter<T2> idst;
-////  idx_aloop2_on(isrc, src, idst, dst) { *idst = (T2)(*isrc); }
-//  {idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }}
-//}
-
-template<class T1, class T2> void idx_copy(Idx<T1> &src, Idx<T2> &dst){
-	{ idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }}
-}
-
-// generic copy for the same type.
-template<class T> void idx_copy(Idx<T> &src, Idx<T> &dst) {
-  intg N1=src.nelements();
-  intg N2 =dst.nelements();
-  if (N1 != N2) { ylerror("idx_op: Idxs have different number of elements\n"); }
-  if ( (src.order() == 0) && (dst.order() == 0) ) {
-    *(dst.idx_ptr()) = *(src.idx_ptr());
-  } else if ( src.contiguousp() && dst.contiguousp() ) {
-    /* they are both contiguous: call the stride 1 routine */
-    memcpy(dst.idx_ptr(), src.idx_ptr(), N1 * sizeof(T));
-  } else {
-    /* else, they don't have the same structure: do it "by hand". This is slower */
-    {idx_aloop2(isrc, src, T, idst, dst, T) { *idst = *isrc; }}
-  }
-}
 
 template<class T> void idx_clear(Idx<T> &inp) {
   ScalarIter<T> pinp(inp);
@@ -293,6 +257,42 @@ template<class T> T idx_sumsqr(Idx<T> &inp) {
 }
 
 #endif
+
+// generic copy for two different types.
+//template<class T1, class T2> void idx_copy(Idx<T1> &src, Idx<T2> &dst) {
+////  IdxIter<T1> isrc;
+////  IdxIter<T2> idst;
+////  idx_aloop2_on(isrc, src, idst, dst) { *idst = (T2)(*isrc); }
+//  {idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }}
+//}
+
+//// generic copy for two different types.
+//template<class T1, class T2> void idx_copy(Idx<T1> &src, Idx<T2> &dst) {
+////  IdxIter<T1> isrc;
+////  IdxIter<T2> idst;
+////  idx_aloop2_on(isrc, src, idst, dst) { *idst = (T2)(*isrc); }
+//  {idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }}
+//}
+
+template<class T1, class T2> void idx_copy(Idx<T1> &src, Idx<T2> &dst){
+  idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }
+}
+
+// generic copy for the same type.
+template<class T> void idx_copy(Idx<T> &src, Idx<T> &dst) {
+  intg N1=src.nelements();
+  intg N2 =dst.nelements();
+  if (N1 != N2) { ylerror("idx_op: Idxs have different number of elements\n"); }
+  if ( (src.order() == 0) && (dst.order() == 0) ) {
+    *(dst.idx_ptr()) = *(src.idx_ptr());
+  } else if ( src.contiguousp() && dst.contiguousp() ) {
+    /* they are both contiguous: call the stride 1 routine */
+    memcpy(dst.idx_ptr(), src.idx_ptr(), N1 * sizeof(T));
+  } else {
+    // else, they don't have the same structure: do it "by hand". This is slower
+    {idx_aloop2(isrc, src, T, idst, dst, T) { *idst = *isrc; }}
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Functions without iterators

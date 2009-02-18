@@ -61,8 +61,8 @@ namespace ebl {
     Idx<double> twx(w->x.transpose(0, 1)); // switch dimensions 0 and 1
     if (outdx.nelements() != w->dx.dim(0)) ylerror("output has wrong size");
 
-    idx_m1extm1(outdx, inx, w->dx);
-    idx_m2dotm1(twx, outdx, indx);
+    idx_m1extm1(outdx, inx, w->dx); // backprop to weights
+    idx_m2dotm1(twx, outdx, indx); // backprop to input
   }
 
   void linear_module::bbprop(state_idx *in, state_idx *out) {
@@ -72,8 +72,8 @@ namespace ebl {
     Idx<double> twx = w->x.transpose(0, 1); // switch dimensions 0 and 1
     if (outddx.nelements() != w->ddx.dim(0)) ylerror("output has wrong size");
 
-    idx_m1squextm1(outddx, inx, w->ddx);
-    idx_m2squdotm1(twx, outddx, inddx);
+    idx_m1squextm1(outddx, inx, w->ddx); // backprop to weights
+    idx_m2squdotm1(twx, outddx, inddx); // backprop to input
   }
 
   void linear_module::forget(forget_param_linear &fp) {
@@ -86,6 +86,75 @@ namespace ebl {
 
   void linear_module::normalize() {
     norm_columns(w->x);
+  }
+
+  void linear_module::resize_output(state_idx *in, state_idx *out) {
+    // resize output based on input dimensions
+    IdxDim d(in->x.spec); // use same dimensions as in
+    d.setdim(0, w->x.dim(0)); // except for the first one
+    out->resize(d);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // module_1_1_replicable
+
+  // recursively loop over the last dimensions of input in and out until
+  // reaching the operating order.
+  // then execute the appropriate function based on the prop code:
+  // 1: fprop
+  // 2: bprop
+  // 3: bbprop
+  void module_eloop2(module_1_1_replicable *m,
+		     int prop, state_idx *in, state_idx *out) {
+    module_1_1<state_idx, state_idx> *m2 = 
+      dynamic_cast<module_1_1<state_idx,state_idx>*>(m);
+    if (m2->order() == in->x.order()) {
+      switch (prop) {
+      case 1: m->fprop2(in, out); break ;
+      case 2: m->bprop2(in, out); break ;
+      case 3: m->bbprop2(in, out); break ;
+      default: ylerror("no such code"); break ;
+      }
+    } else if (m2->order() > in->x.order()) {
+      ylerror("the order of the input should be greater or equal to module's\
+ operating order");
+    } else {
+      state_idx_eloop2(iin, *in, oout, *out) {
+	module_eloop2(m, prop, &iin, &oout);
+      }
+    }
+  }
+  
+  // check that orders of input and module are compatible
+  void check_orders(module_1_1<state_idx, state_idx> *m, state_idx* in) {
+    if (in->x.order() < 0)
+      ylerror("module_1_1_replicable cannot replicate this module (order -1)");
+    if (in->x.order() < m->order())
+      ylerror("input order must be greater or equal to module's operating \
+order");
+    if (in->x.order() > MAXDIMS)
+      ylerror("cannot replicate using more dimensions than MAXDIMS");
+  }
+
+  module_1_1_replicable::module_1_1_replicable() {}
+  module_1_1_replicable::~module_1_1_replicable() {}
+
+  void module_1_1_replicable::fprop(state_idx *in, state_idx *out) {
+    module_1_1<state_idx, state_idx> *m = 
+      dynamic_cast<module_1_1<state_idx,state_idx>*>(this);
+    check_orders(m, in); // check for orders compatibility
+    m->resize_output(in, out); // resize output
+    module_eloop2(dynamic_cast<module_1_1_replicable*>(this), 1, in, out);
+    }
+
+  void module_1_1_replicable::bprop(state_idx *in, state_idx *out) {
+    check_orders(dynamic_cast<module_1_1<state_idx,state_idx>*>(this), in);
+    module_eloop2(dynamic_cast<module_1_1_replicable*>(this), 2, in, out);
+  }
+
+  void module_1_1_replicable::bbprop(state_idx *in, state_idx *out) {
+    check_orders(dynamic_cast<module_1_1<state_idx,state_idx>*>(this), in);
+    module_eloop2(dynamic_cast<module_1_1_replicable*>(this), 3, in, out);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -226,8 +295,8 @@ namespace ebl {
 	uuin = uuin.unfold(2, kj, stridej);
 	// loop on 2D slice for each convolution kernel
     	idx_bloop2(lk, kernel->x, double, lt, *table, intg) {
-	  Idx<double> suin(uuin.select(0, lt->get(0)));
-	  Idx<double> sout(ooutx.select(0, lt->get(1)));
+	  Idx<double> suin(uuin.select(0, lt.get(0)));
+	  Idx<double> sout(ooutx.select(0, lt.get(1)));
 	  idx_m4dotm2acc(suin, lk, sout);
 	}
       }}
@@ -371,7 +440,7 @@ namespace ebl {
 	idx_clear(lsubx);
 	{ idx_bloop4(lix, linx, double, lsx, lsubx, double,
 		     lcx, coeff->x, double, ltx, loutx, double) {
-	    Idx<double> uuin(lix->unfold(1, stridej, stridej));
+	    Idx<double> uuin(lix.unfold(1, stridej, stridej));
 	    uuin = uuin.unfold(0, stridei, stridei);
 	    idx_eloop1(z1, uuin, double) {
 	      idx_eloop1(z2, z1, double) {

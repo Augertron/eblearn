@@ -48,7 +48,7 @@ void e_layer::forget(forget_param_linear &fp)
 {
   dseed(0);
   idx_aloop1(w,weight->x,double)
-    {	*w = drand(fp.value);}
+    { *w = drand(fp.value);}
 }
 
 void e_layer::fprop(state_idx *in, state_idx *out)
@@ -71,9 +71,9 @@ void e_layer::fprop(state_idx *in, state_idx *out)
 	    // loop over outputs
 	    idx_bloop2(w,weight->x,double, o,lloutx,double)
 	      {
-		idx_sqrdist(*w, *llinx, *o);
+		idx_sqrdist(w, llinx, o);
 		o.set(o.get() * 0.5);
-		//idx_dotc(*o, (double)0.5, *o);
+		//idx_dotc(o, (double)0.5, o);
 	      }
 	  }
       }
@@ -100,9 +100,9 @@ void e_layer::bprop(state_idx *in, state_idx *out)
 	      double g = od.get();
 	      if (g != 0)
 		{
-		  idx_sub(*llinx, *w, tmp);
-		  idx_dotcacc(tmp, g, *llindx);
-		  idx_dotcacc(tmp, -g, *wd);
+		  idx_sub(llinx, w, tmp);
+		  idx_dotcacc(tmp, g, llindx);
+		  idx_dotcacc(tmp, -g, wd);
 		}
 	    }
 	}}

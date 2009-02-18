@@ -52,6 +52,9 @@ namespace ebl {
     virtual void bbprop(Tin *in, Tout *out);
     virtual void forget(forget_param_linear& fp);
     virtual void normalize();
+    //! returns the order at which the module operates.
+    virtual int  order();
+    virtual void resize_output(Tin *in, Tout *out);
   };
 
   ////////////////////////////////////////////////////////////////

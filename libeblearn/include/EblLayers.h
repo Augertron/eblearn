@@ -48,6 +48,7 @@ namespace ebl {
   class nn_layer_full: public module_1_1<state_idx, state_idx> {
   public:
     linear_module_dim0 *linear;  //!< linear module for weight matrix
+    //    linear_module_replicable *linear;  //!< linear module for weight matrix
     addc_module        *adder;   //!< bias vector
     tanh_module        *sigmoid; //!< the non-linear function
     state_idx          *sum;     //!< weighted sum

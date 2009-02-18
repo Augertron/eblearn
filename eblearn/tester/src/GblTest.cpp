@@ -94,8 +94,8 @@ void GblTest::test_softmax(){
 	idx_bloop2(iiii, iii, double, oooo, ooo, double){
 	  idx_bloop2(iiiii, iiii, double, ooooo, oooo, double){
 	    idx_bloop2(iiiiii, iiiii, double, oooooo, ooooo, double){
-	      iiiiii->set(drand((double)1));
-	      oooooo->set(drand((double)1));
+	      iiiiii.set(drand((double)1));
+	      oooooo.set(drand((double)1));
 	    }
 	  }
 	}

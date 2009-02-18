@@ -241,7 +241,7 @@ template<class T> void image_warp(Idx<T> &in, Idx<T> &out, Idx<T> &background,
   		ppi = llpi.get();
   		ppj = llpj.get();
       image_interpolate_bilin(background.idx_ptr(), pin, indimi, indimj,
-      		inmodi, inmodj, ppi, ppj, llout->idx_ptr(), (int) out.dim(2));
+      		inmodi, inmodj, ppi, ppj, llout.idx_ptr(), (int) out.dim(2));
   	}}
   }}
 }
@@ -259,7 +259,7 @@ template<class T> void image_warp_fast(Idx<T> &in, Idx<T> &out, T *background,
 	  int outsize = out.dim(2);
 	  { idx_bloop3(lout, out, T, lpi, pi, int, lpj, pj, int) {
 	  	{ idx_bloop3(llout, lout, T, llpi, lpi, int, llpj, lpj, int) {
-	  		outt = llout->idx_ptr();
+	  		outt = llout.idx_ptr();
 	  		ppi = llpi.get();
 	  		ppj = llpj.get();
   		  li = (ppi+0x7f) >> 16;
@@ -431,8 +431,8 @@ template<class T> void compute_bilin_transform(Idx<int> &dispi, Idx<int> &dispj,
 	{ idx_bloop2(ispi, dispi, int, ispj, dispj, int) {
 		p = 0;
 		{ idx_bloop2(di, ispi, int, dj, ispj, int) {
-			di->set(my0 * p + my1 * q + my2 * p * q + my3);
-			dj->set(mx0 * p + mx1 * q + mx2 * p * q + mx3);
+			di.set(my0 * p + my1 * q + my2 * p * q + my3);
+			dj.set(mx0 * p + mx1 * q + mx2 * p * q + mx3);
 			p++;
 		}}
 		q++;
