@@ -304,7 +304,6 @@ namespace ebl {
 #define idx_aloop1_on(itr0,src0)		\
   for ( ; itr0.notdone(); ++itr0)
 
-
   // this loops simultaneously over all elements of 2 Idxs.
   // The two Idxs can have different structures as long as they have
   // the same total number of elements.
@@ -312,18 +311,15 @@ namespace ebl {
   idx_checknelems2_all(src0, src1);		\
   for ( ; itr0.notdone(); ++itr0, ++itr1)
 
-
 #define idx_aloop3_on(itr0,src0,itr1,src1,itr2,src2)	\
   idx_checknelems3_all(src0, src1, src2);		\
   for (; itr0.notdone(); ++itr0, ++itr1, ++itr2)
-
 
   // high level aloop macros.
   // These should be enclosed in braces, to avoid name clashes
 #define idx_aloop1(itr0,src0,type0)		\
   ScalarIter<type0> itr0(src0);			\
   idx_aloop1_on(itr0,src0)
-
 
 #define idx_aloop2(itr0,src0,type0,itr1,src1,type1)	\
   ScalarIter<type0> itr0(src0);				\
@@ -416,7 +412,6 @@ namespace ebl {
 #define idx_aloop1_on(itr0,src0)			\
   for ( itr0.init(src0); itr0.notdone(); itr0.next())
 
-
   // this loops simultaneously over all elements of 2 Idxs.
   // The two Idxs can have different structures as long as they have
   // the same total number of elements.
@@ -440,7 +435,7 @@ namespace ebl {
 
 #define idx_aloop2(itr0,src0,type0,itr1,src1,type1)	\
   IdxIter<type0> itr0;					\
-  IdxIter<type0> itr1;					\
+  IdxIter<type1> itr1;					\
   idx_checknelems2_all(src0, src1);			\
   for (itr0.init(src0), itr1.init(src1);		\
        itr0.notdone();					\
@@ -448,8 +443,8 @@ namespace ebl {
 
 #define idx_aloop3(itr0,src0,type0,itr1,src1,type1,itr2,src2,type2)	\
   IdxIter<type0> itr0;							\
-  IdxIter<type0> itr1;							\
-  IdxIter<type0> itr2;							\
+  IdxIter<type1> itr1;							\
+  IdxIter<type2> itr2;							\
   idx_checknelems3_all(src0, src1, src2);				\
   for (itr0.init(src0), itr1.init(src1), itr2.init(src2);		\
        itr0.notdone();							\
@@ -699,8 +694,14 @@ namespace ebl {
     if (n == spec.ndim)
       return *this;
     else {
-      if (n == 1) {
-	idx_check_contiguous1(*this); // 
+      if ((n == 1) && (spec.ndim == 1)) {
+	// the order is already 1, do nothing and return current Idx.
+	return *this; 
+      }
+      else if (n == 1) {
+	// the order is not 1, check that data is contiguous and return 
+	// a 1D Idx.
+	idx_check_contiguous1(*this);
 	Idx<T> r(getstorage(), 0, spec.nelements());
 	return r;
       } 
@@ -1064,7 +1065,7 @@ namespace ebl {
   // of an Idx
 
   // empty constructor;
-  template <class T> IdxIter<T>::IdxIter() { };
+  template <class T> IdxIter<T>::IdxIter() { }
 
   template <class T> T *IdxIter<T>::init(Idx<T> &idx) {
     iterand = &idx;

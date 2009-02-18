@@ -223,6 +223,11 @@ namespace ebl {
   {
   }
 
+  state_idx::state_idx(Idx<double> _x, Idx<double> _dx, Idx<double> _ddx) :
+    x(_x), dx(_dx), ddx(_ddx)
+  {
+  }
+
   ////////////////////////////////////////////////////////////////
   // clear methods
 
@@ -448,6 +453,33 @@ of dimensions");
   {
     idx_addc(ddeltax, mu, epsilons);
     idx_inv(epsilons, epsilons);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // StateIdxLooper
+
+  StateIdxLooper::StateIdxLooper(state_idx &s, int ld) 
+    : state_idx(s.x.select(ld, 0), 
+		s.dx.select(ld, 0), 
+		s.ddx.select(ld, 0)),
+      lx(s.x, ld), ldx(s.dx, ld), lddx(s.ddx, ld) {
+  }
+  
+  StateIdxLooper::~StateIdxLooper() {
+  }
+  
+  void StateIdxLooper::next() {
+    lx.next();
+    ldx.next();
+    lddx.next();
+    x = lx;
+    dx = ldx;
+    ddx = lddx;
+  }
+
+  // return true when done.
+  bool StateIdxLooper::notdone() { 
+    return lx.notdone(); 
   }
 
 } // end namespace ebl

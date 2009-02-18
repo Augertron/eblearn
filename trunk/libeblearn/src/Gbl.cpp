@@ -230,8 +230,8 @@ namespace ebl {
     idx_clear(sum->x);
     // generic convolution
     {	idx_bloop2(lk, kernel->x, double, lt, *table, intg)	{
-	Idx<double> suin(uuin.select(0, lt->get(0)));
-	Idx<double> sout((sum->x).select(0, lt->get(1)));
+	Idx<double> suin(uuin.select(0, lt.get(0)));
+	Idx<double> sout((sum->x).select(0, lt.get(1)));
 	idx_m4dotm2acc(suin, lk, sout);
       }}
     // add bias
@@ -428,7 +428,7 @@ namespace ebl {
     idx_clear(sub->x);
     { idx_bloop4(lix, in->x, double, lsx, sub->x, double,
 		 lcx, coeff->x, double, ltx, sum->x, double) {
-	Idx<double> uuin(lix->unfold(1, stridej, stridej));
+	Idx<double> uuin(lix.unfold(1, stridej, stridej));
 	uuin = uuin.unfold(0, stridei, stridei);
 	{ idx_eloop1(z1, uuin, double) {
 	    { idx_eloop1(z2, z1, double) {
@@ -529,8 +529,8 @@ namespace ebl {
 	  double mini = m.get(0, 0);
 	  { idx_bloop1(m1, m, double) {
 	      { idx_bloop1(m0, m1, double) {
-		  if (m0->get() < mini)
-		    mini = m0->get();
+		  if (m0.get() < mini)
+		    mini = m0.get();
 		}
 	      }
 	    }
@@ -548,7 +548,7 @@ namespace ebl {
 	  }
 	  sx.set(r);
 	  // put result in output
-	  outx->set(mini - log(r));
+	  outx.set(mini - log(r));
 	}
       }
     }
@@ -569,7 +569,7 @@ namespace ebl {
 		   ed, expdist, double, sx, sumexp, double) {
 	  { idx_bloop2(m1, m, double, ed1, ed, double) {
 	      { idx_bloop2(m0, m1, double, ed0, ed1, double) {
-		  *m0 = ed0.get() * o->get() / sx->get();
+		  m0.set(ed0.get() * o.get() / sx.get());
 		}
 	      }
 	    }
@@ -581,7 +581,7 @@ namespace ebl {
 
   void logadd_layer::bbprop(state_idx *in, state_idx *out) {
     { idx_bloop2(o, out->ddx, double, i, in->ddx, double) {
-  	idx_fill(*i, o->get());
+  	idx_fill(i, o.get());
       }
     }
   }
@@ -597,7 +597,7 @@ namespace ebl {
       printf("warning: [edist-cost] largest label is huuuge\n");
     label2classindex = Idx<ubyte>(1 + imax);
     { idx_bloop1(v, label2classindex, ubyte) {
-  	v->set(0);
+  	v.set(0);
       }
     }
     for (intg i = 0; i < classes->dim(0); ++i)
@@ -622,7 +622,7 @@ namespace ebl {
 	{ idx_bloop2(inx0, inx1, double, dx0, dx1, double) {
 	    // distance between desired prototype and output
 	    // at current location
-	    idx_sqrdist(p, *inx0, *dx0);
+	    idx_sqrdist(p, inx0, dx0);
   	  }
 	}
       }

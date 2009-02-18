@@ -201,50 +201,54 @@ void BlasTest::test_idx_copy(){
 
 	dseed(2);
 	idx_bloop1(i, m1, double){
-		idx_bloop1(ii, i, double){
-			idx_bloop1(iii, ii, double){
-				iii->set(255*drand());
-			}
-		}
+	  idx_bloop1(ii, i, double){
+	    idx_bloop1(iii, ii, double){
+	      iii.set(255*drand());
+	    }
+	  }
 	}
 
 	idx_copy(m1, m2);
 	for(int i = 0; i < 3; i++)
-		for(int j = 0; j < 5; j++)
-			for(int k = 0; k < 4; k++)
-				CPPUNIT_ASSERT_EQUAL(m1.get(i,j,k), m2.get(i,j,k));
+	  for(int j = 0; j < 5; j++)
+	    for(int k = 0; k < 4; k++)
+	      CPPUNIT_ASSERT_EQUAL(m1.get(i,j,k), m2.get(i,j,k));
 
 	idx_copy(m1, m3);
 	for(int i = 0; i < 3; i++)
-		for(int j = 0; j < 5; j++)
-			for(int k = 0; k < 4; k++)
-				CPPUNIT_ASSERT_EQUAL((float)m1.get(i,j,k), m3.get(i,j,k));
+	  for(int j = 0; j < 5; j++)
+	    for(int k = 0; k < 4; k++)
+	      CPPUNIT_ASSERT_EQUAL((float)m1.get(i,j,k), m3.get(i,j,k));
 
 	idx_copy(m1, m4);
 	for(int i = 0; i < 3; i++)
-		for(int j = 0; j < 5; j++)
-			for(int k = 0; k < 4; k++)
-				CPPUNIT_ASSERT_EQUAL((int)floor(m1.get(i,j,k)), (int)m4.get(i,j,k));
+	  for(int j = 0; j < 5; j++)
+	    for(int k = 0; k < 4; k++)
+	      CPPUNIT_ASSERT_EQUAL((int)floor(m1.get(i,j,k)), 
+				   (int)m4.get(i,j,k));
 
 	idx_copy(m1, m5);
 	for(int i = 0; i < 3; i++)
-		for(int j = 0; j < 5; j++)
-			for(int k = 0; k < 4; k++)
-				CPPUNIT_ASSERT_EQUAL((ubyte)floor(m1.get(i,j,k)), m5.get(i,j,k));
+	  for(int j = 0; j < 5; j++)
+	    for(int k = 0; k < 4; k++)
+	      CPPUNIT_ASSERT_EQUAL((ubyte)floor(m1.get(i,j,k)), m5.get(i,j,k));
 
 	void* m6 = (void*) new Idx<double>(3, 5, 4);
 	idx_copy(m1, *(static_cast<Idx<double>*>(m6)));
 	for(int i = 0; i < 3; i++)
-		for(int j = 0; j < 5; j++)
-			for(int k = 0; k < 4; k++)
-				CPPUNIT_ASSERT_EQUAL(m1.get(i,j,k), static_cast<Idx<double>*>(m6)->get(i,j,k));
+	  for(int j = 0; j < 5; j++)
+	    for(int k = 0; k < 4; k++)
+	      CPPUNIT_ASSERT_EQUAL(m1.get(i,j,k), 
+				   static_cast<Idx<double>*>(m6)->get(i,j,k));
 
 	Idx<ubyte> m7(3, 5, 4);
 	idx_copy(*(static_cast<Idx<double>*>(m6)), m7);
 	for(int i = 0; i < 3; i++)
-		for(int j = 0; j < 5; j++)
-			for(int k = 0; k < 4; k++)
-				CPPUNIT_ASSERT_EQUAL(m7.get(i,j,k), (ubyte) static_cast<Idx<double>*>(m6)->get(i,j,k));
+	  for(int j = 0; j < 5; j++)
+	    for(int k = 0; k < 4; k++)
+	      CPPUNIT_ASSERT_EQUAL(m7.get(i,j,k), 
+				   (ubyte) static_cast<Idx<double>*>
+				   (m6)->get(i,j,k));
 
 
 	Idx<double>m8(3, 5, 2);
@@ -252,118 +256,118 @@ void BlasTest::test_idx_copy(){
 	Idx<ubyte>m9(3, 5, 2);
 	idx_clear(m9);
 	idx_copy(m8, m9);
-//	m8.printElems();
-//	printf("\n ********************************************* \n");
-//	m9.printElems();
+	//	m8.printElems();
+	//	printf("\n ********************************************* \n");
+	//	m9.printElems();
 	for(int i = 0; i < 3; i++)
-		for(int j = 0; j < 5; j++)
-			for(int k = 0; k < 2; k++)
-				CPPUNIT_ASSERT_EQUAL((ubyte)m8.get(i,j,k), m9.get(i,j,k));
+	  for(int j = 0; j < 5; j++)
+	    for(int k = 0; k < 2; k++)
+	      CPPUNIT_ASSERT_EQUAL((ubyte)m8.get(i,j,k), m9.get(i,j,k));
 
 	Idx<ubyte>m10(3, 5, 4);
 	Idx<ubyte>m11(3, 5, 2);
 	m11 = m10.narrow(2, 2, 2);
 	idx_copy(m8, m11);
 	for(int i = 0; i < 3; i++)
-		for(int j = 0; j < 5; j++)
-			for(int k = 0; k < 2; k++)
-				CPPUNIT_ASSERT_EQUAL((ubyte)m8.get(i,j,k), m11.get(i,j,k));
+	  for(int j = 0; j < 5; j++)
+	    for(int k = 0; k < 2; k++)
+	      CPPUNIT_ASSERT_EQUAL((ubyte)m8.get(i,j,k), m11.get(i,j,k));
 	delete static_cast<Idx<double>*>(m6);
 }
 
 void BlasTest::test_idx_copy2(){
-	Idx<double> m1(5, 3, 4);
+  Idx<double> m1(5, 3, 4);
 
-	dseed(2);
-	idx_bloop1(i, m1, double){
-		idx_bloop1(ii, i, double){
-			idx_bloop1(iii, ii, double){
-				iii->set(255*drand());
-			}
-		}
-	}
+  dseed(2);
+  idx_bloop1(i, m1, double){
+    idx_bloop1(ii, i, double){
+      idx_bloop1(iii, ii, double){
+	iii.set(255*drand());
+      }
+    }
+  }
 
-	Idx<double>m8(5, 3, 2);
-	m8 = m1.narrow(2,2,0);
-	Idx<ubyte>m9(5, 3, 2);
+  Idx<double>m8(5, 3, 2);
+  m8 = m1.narrow(2,2,0);
+  Idx<ubyte>m9(5, 3, 2);
 
-	idx_copy(m8, m9);
-	//m8.printElems();
-	//printf("\n ********************************************* \n");
-	//m9.printElems();
-	for(int i = 0; i < 5; i++)
-		for(int j = 0; j < 3; j++)
-			for(int k = 0; k < 2; k++)
-				CPPUNIT_ASSERT_EQUAL((ubyte)m8.get(i,j,k), m9.get(i,j,k));
+  idx_copy(m8, m9);
+  //m8.printElems();
+  //printf("\n ********************************************* \n");
+  //m9.printElems();
+  for(int i = 0; i < 5; i++)
+    for(int j = 0; j < 3; j++)
+      for(int k = 0; k < 2; k++)
+	CPPUNIT_ASSERT_EQUAL((ubyte)m8.get(i,j,k), m9.get(i,j,k));
 
 }
 
 void BlasTest::test_idx_abs() {
-	{
-	  Idx<double> m2(20, 20);
-	  Idx<double> m2a(20, 20);
-	  idx_clear(m2);
-	  idx_clear(m2a);
+  {
+    Idx<double> m2(20, 20);
+    Idx<double> m2a(20, 20);
+    idx_clear(m2);
+    idx_clear(m2a);
 
-	  dseed(2);
-	  idx_bloop1(i,m2,double){
-		  idx_bloop1(ii,i,double){
-			  ii->set(drand(-2,2));
-		  }
-	  }
-	  idx_abs(m2,m2a);
-	  idx_bloop2(i,m2,double,j,m2a,double){
-		  idx_bloop2(ii,i,double,jj,j,double){
-			  if(ii->get() < 0.0){
-				  CPPUNIT_ASSERT(-(ii->get()) == jj->get());
-			  }else{
-				  CPPUNIT_ASSERT(ii->get() == jj->get());
-			  }
-		  }
-	  }
+    dseed(2);
+    { idx_bloop1(i,m2,double){
+      idx_bloop1(ii,i,double){
+	ii.set(drand(-2,2));
+      }
+      }}
+    idx_abs(m2,m2a);
+    { idx_bloop2(i,m2,double,j,m2a,double){
+      idx_bloop2(ii,i,double,jj,j,double){
+	if(ii.get() < 0.0){
+	  CPPUNIT_ASSERT(-(ii.get()) == jj.get());
+	}else{
+	  CPPUNIT_ASSERT(ii.get() == jj.get());
 	}
-	{
-	  // repeat for int
-	  Idx<int> m2(20, 20);
-	  Idx<int> m2a(20, 20);
-	  idx_clear(m2);
-	  idx_clear(m2a);
+      }
+      }}
+  }
+  {
+    // repeat for int
+    Idx<int> m2(20, 20);
+    Idx<int> m2a(20, 20);
+    idx_clear(m2);
+    idx_clear(m2a);
 
-	  dseed(2);
-	  idx_bloop1(i,m2,int){
-		  idx_bloop1(ii,i,int){
-		    ii->set((int)drand(-2,2));
-		  }
-	  }
-	  idx_abs(m2,m2a);
-	  idx_bloop2(i,m2,int,j,m2a,int){
-		  idx_bloop2(ii,i,int,jj,j,int){
-			  if(ii->get() < 0.0){
-				  CPPUNIT_ASSERT(-(ii->get()) == jj->get());
-			  }else{
-				  CPPUNIT_ASSERT(ii->get() == jj->get());
-			  }
-		  }
-	  }
+    dseed(2);
+    { idx_bloop1(i,m2,int){
+      idx_bloop1(ii,i,int){
+	ii.set((int)drand(-2,2));
+      }
+      }}
+    idx_abs(m2,m2a);
+    { idx_bloop2(i,m2,int,j,m2a,int){
+      idx_bloop2(ii,i,int,jj,j,int){
+	if(ii.get() < 0.0){
+	  CPPUNIT_ASSERT(-(ii.get()) == jj.get());
+	}else{
+	  CPPUNIT_ASSERT(ii.get() == jj.get());
 	}
+      }
+      }}
+  }
 }
 
 void BlasTest::test_huge_vec() {
 
   // this would not run on many systems
   // disable until a cmake trick is implemented
-//   intg size = 0;
-//   if (LONG_MAX > INT_MAX){
-//     size = INT_MAX/2; // for now leave like this, I can't make things run on humair now.
-//   }
-//   else{
-//     size = INT_MAX/2;
-//   }
-//   Idx<double> hv(size);
-//   idx_fill(hv, 1.0);
-//   // dot with itself
-//   double dd = idx_dot(hv,hv);
-//   CPPUNIT_ASSERT((int)dd == hv.footprint());
+  //   intg size = 0;
+  //   if (LONG_MAX > INT_MAX){
+  //     size = INT_MAX/2; // for now leave like this, I can't make things run on humair now.
+  //   }
+  //   else{
+  //     size = INT_MAX/2;
+  //   }
+  //   Idx<double> hv(size);
+  //   idx_fill(hv, 1.0);
+  //   // dot with itself
+  //   double dd = idx_dot(hv,hv);
+  //   CPPUNIT_ASSERT((int)dd == hv.footprint());
 }
 
 

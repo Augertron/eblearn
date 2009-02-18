@@ -53,6 +53,13 @@ namespace ebl {
   template<class Tin, class Tout>
   void module_1_1<Tin,Tout>::normalize() { err_not_implemented(); }
 
+  template<class Tin, class Tout>
+  int module_1_1<Tin,Tout>::order() { return -1; }
+
+  template<class Tin, class Tout>
+  void module_1_1<Tin,Tout>::resize_output(Tin *in, Tout *out) { 
+    err_not_implemented(); }
+
   ////////////////////////////////////////////////////////////////
 
   template<class Tin1, class Tin2, class Tout>

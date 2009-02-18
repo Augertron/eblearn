@@ -33,7 +33,7 @@
 #ifndef Idx_H
 #define Idx_H
 
-#define USING_STL_ITERS 1
+#define USING_STL_ITERS 0
 
 #include <stdio.h>
 #include <iostream>

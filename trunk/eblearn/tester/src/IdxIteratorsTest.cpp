@@ -18,6 +18,7 @@ void IdxIteratorsTest::tearDown() {
 }
 
 void IdxIteratorsTest::test_scalariter() {
+#if USING_STL_ITERS == 1
   Idx<double> m1(2, 2);
   Idx<double> m2(2, 2);
   double c = 42;
@@ -35,6 +36,7 @@ void IdxIteratorsTest::test_scalariter() {
   CPPUNIT_ASSERT_EQUAL(84.0, m1.get(0, 1));
   CPPUNIT_ASSERT_EQUAL(43.0, m1.get(1, 0));
   CPPUNIT_ASSERT_EQUAL(0.0,  m1.get(1, 1));
+#endif
 }
 
 void IdxIteratorsTest::test_ElemIter_shifting(){

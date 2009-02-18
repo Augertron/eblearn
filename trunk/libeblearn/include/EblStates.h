@@ -165,6 +165,9 @@ namespace ebl {
     //! Constructs a state_idx with order 1 based on given state_idx si.
     state_idx(state_idx *si);
 
+    //! Constructs a state_idx from a state_idx's 3 internal Idx
+    state_idx(Idx<double> x, Idx<double> dx, Idx<double> ddx);
+
     ////////////////////////////////////////////////////////////////
     //! clear methods
 
@@ -247,6 +250,47 @@ namespace ebl {
     bool load(const char *s);
     void save(const char *s);
   };
+
+  ////////////////////////////////////////////////////////////////
+  //! state_idx iterator
+  class StateIdxLooper : public state_idx {
+  public:
+    IdxLooper<double> lx;
+    IdxLooper<double> ldx;
+    IdxLooper<double> lddx;
+
+    //! generic constructor loops over dimensin ld
+    StateIdxLooper(state_idx &s, int ld);
+    virtual ~StateIdxLooper();
+
+    //! return true if loop is over
+    bool notdone();
+
+    //! increment to next item.
+    void next();
+  };
+
+#define state_idx_eloop1(dst0,src0)			\
+  StateIdxLooper dst0(src0, (src0).x.order() - 1);	\
+  for ( ; dst0.notdone(); dst0.next())
+
+#define state_idx_eloop2(dst0,src0,dst1,src1)				\
+  if ((src0).x.dim((src0).x.order() - 1) != (src1).x.dim((src1).x.order() - 1))\
+    ylerror("incompatible state_idx for eloop\n");			\
+  StateIdxLooper dst0(src0,(src0).x.order()-1);				\
+  StateIdxLooper dst1(src1,(src1).x.order()-1);				\
+  for ( ; dst0.notdone(); dst0.next(), dst1.next())
+
+#define idxstate_eloop3(dst0,src0,dst1,src1,dst2,src2)			\
+  if (((src0).x.dim((src0).x.order() - 1)				\
+       != (src1).x.dim((src1).x.order() - 1))				\
+      || ((src0).x.dim((src0).x.order() - 1)				\
+	  != (src2).x.dim((src2).x.order() - 1)))			\
+    ylerror("incompatible Idxs for eloop\n");				\
+  StateIdxLooper dst0(src0,(src0).x.order()-1);				\
+  StateIdxLooper dst1(src1,(src1).x.order()-1);				\
+  StateIdxLooper dst2(src2,(src2).x.order()-1);				\
+  for ( ; dst0.notdone(); dst0.next(), dst1.next(), dst2.next())
 
 } // namespace ebl {
 
