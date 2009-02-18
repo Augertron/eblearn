@@ -54,7 +54,7 @@ namespace ebl {
   void module_1_1<Tin,Tout>::normalize() { err_not_implemented(); }
 
   template<class Tin, class Tout>
-  int module_1_1<Tin,Tout>::order() { return -1; }
+  int module_1_1<Tin,Tout>::replicable_order() { return -1; }
 
   template<class Tin, class Tout>
   void module_1_1<Tin,Tout>::resize_output(Tin *in, Tout *out) { 
@@ -390,6 +390,81 @@ hidden states in layers_n");
   void fc_ebm2<Tin1,Tin2,Thid>::forget(forget_param &fp) {
     fmod->forget(fp);
     fcost->forget(fp);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // generic replicable modules classes
+
+  //! recursively loop over the last dimensions of input in and out until
+  //! reaching the operating order, then call the original fprop of module m.
+  template<class T>
+  void module_eloop2_fprop(T *m, state_idx *in, state_idx *out) {
+    if (m->replicable_order() == in->x.order()) {
+      m->T::fprop(in, out);
+    } else if (m->replicable_order() > in->x.order()) {
+      ylerror("the order of the input should be greater or equal to module's\
+ operating order");
+    } else {
+      state_idx_eloop2(iin, *in, oout, *out) {
+	module_eloop2_fprop(m, &iin, &oout);
+      }
+    }
+  }
+
+  //! recursively loop over the last dimensions of input in and out until
+  //! reaching the operating order, then call the original bprop of module m.
+  template<class T>
+  void module_eloop2_bprop(T *m, state_idx *in, state_idx *out) {
+    if (m->replicable_order() == in->x.order()) {
+      m->T::bprop(in, out);
+    } else if (m->replicable_order() > in->x.order()) {
+      ylerror("the order of the input should be greater or equal to module's\
+ operating order");
+    } else {
+      state_idx_eloop2(iin, *in, oout, *out) {
+	module_eloop2_bprop(m, &iin, &oout);
+      }
+    }
+  }
+
+  //! recursively loop over the last dimensions of input in and out until
+  //! reaching the operating order, then call the original bbprop of module m.
+  template<class T>
+  void module_eloop2_bbprop(T *m, state_idx *in, state_idx *out) {
+    if (m->replicable_order() == in->x.order()) {
+      m->T::bbprop(in, out);
+    } else if (m->replicable_order() > in->x.order()) {
+      ylerror("the order of the input should be greater or equal to module's\
+ operating order");
+    } else {
+      state_idx_eloop2(iin, *in, oout, *out) {
+	module_eloop2_bbprop(m, &iin, &oout);
+      }
+    }
+  }
+
+  template<class T>
+  module_1_1_replicable<T>::module_1_1_replicable(T *m) : module(m) {}
+  template<class T>
+  module_1_1_replicable<T>::~module_1_1_replicable() {}
+
+  template<class T>
+  void module_1_1_replicable<T>::fprop(state_idx *in, state_idx *out) {
+    check_replicable_orders(module, in); // check for orders compatibility
+    module->resize_output(in, out); // resize output
+    module_eloop2_fprop<T>(module, in, out);
+    }
+
+  template<class T>
+  void module_1_1_replicable<T>::bprop(state_idx *in, state_idx *out) {
+    check_replicable_orders(module, in); // check for orders compatibility
+    module_eloop2_bprop<T>(module, in, out);
+  }
+
+  template<class T>
+  void module_1_1_replicable<T>::bbprop(state_idx *in, state_idx *out) {
+    check_replicable_orders(module, in); // check for orders compatibility
+    module_eloop2_bbprop<T>(module, in, out);
   }
 
 } // end namespace ebl

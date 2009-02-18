@@ -96,68 +96,6 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // module_1_1_replicable
-
-  // recursively loop over the last dimensions of input in and out until
-  // reaching the operating order.
-  // then execute the appropriate function based on the prop code:
-  // 1: fprop
-  // 2: bprop
-  // 3: bbprop
-  void module_eloop2(module_1_1_replicable *m,
-		     int prop, state_idx *in, state_idx *out) {
-    module_1_1<state_idx, state_idx> *m2 = 
-      dynamic_cast<module_1_1<state_idx,state_idx>*>(m);
-    if (m2->order() == in->x.order()) {
-      switch (prop) {
-      case 1: m->fprop2(in, out); break ;
-      case 2: m->bprop2(in, out); break ;
-      case 3: m->bbprop2(in, out); break ;
-      default: ylerror("no such code"); break ;
-      }
-    } else if (m2->order() > in->x.order()) {
-      ylerror("the order of the input should be greater or equal to module's\
- operating order");
-    } else {
-      state_idx_eloop2(iin, *in, oout, *out) {
-	module_eloop2(m, prop, &iin, &oout);
-      }
-    }
-  }
-  
-  // check that orders of input and module are compatible
-  void check_orders(module_1_1<state_idx, state_idx> *m, state_idx* in) {
-    if (in->x.order() < 0)
-      ylerror("module_1_1_replicable cannot replicate this module (order -1)");
-    if (in->x.order() < m->order())
-      ylerror("input order must be greater or equal to module's operating \
-order");
-    if (in->x.order() > MAXDIMS)
-      ylerror("cannot replicate using more dimensions than MAXDIMS");
-  }
-
-  module_1_1_replicable::module_1_1_replicable() {}
-  module_1_1_replicable::~module_1_1_replicable() {}
-
-  void module_1_1_replicable::fprop(state_idx *in, state_idx *out) {
-    module_1_1<state_idx, state_idx> *m = 
-      dynamic_cast<module_1_1<state_idx,state_idx>*>(this);
-    check_orders(m, in); // check for orders compatibility
-    m->resize_output(in, out); // resize output
-    module_eloop2(dynamic_cast<module_1_1_replicable*>(this), 1, in, out);
-    }
-
-  void module_1_1_replicable::bprop(state_idx *in, state_idx *out) {
-    check_orders(dynamic_cast<module_1_1<state_idx,state_idx>*>(this), in);
-    module_eloop2(dynamic_cast<module_1_1_replicable*>(this), 2, in, out);
-  }
-
-  void module_1_1_replicable::bbprop(state_idx *in, state_idx *out) {
-    check_orders(dynamic_cast<module_1_1<state_idx,state_idx>*>(this), in);
-    module_eloop2(dynamic_cast<module_1_1_replicable*>(this), 3, in, out);
-  }
-
-  ////////////////////////////////////////////////////////////////
   // linear_module 
 
   linear_module_dim0::linear_module_dim0(parameter *p, intg in, intg out)

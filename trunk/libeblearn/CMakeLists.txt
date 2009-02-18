@@ -19,6 +19,7 @@ ADD_LIBRARY (eblearn SHARED
 		     src/Defines.cpp  
 		     src/Gbl.cpp  
 		     src/Ebl.cpp  
+		     src/EblArch.cpp  
 		     src/EblStates.cpp  
 		     src/EblBasic.cpp  
 		     src/EblNonLinearity.cpp  
