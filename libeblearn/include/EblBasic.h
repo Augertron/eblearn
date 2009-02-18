@@ -40,18 +40,6 @@
 
 namespace ebl {
 
-  class module_1_1_replicable {// : public module_1_1<state_idx, state_idx> {
-  public:
-    module_1_1_replicable();
-    virtual ~module_1_1_replicable();
-    virtual void fprop(state_idx *in, state_idx *out);
-    virtual void bprop(state_idx *in, state_idx *out);
-    virtual void bbprop(state_idx *in, state_idx *out);
-    virtual void fprop2(state_idx *in, state_idx *out) { ylerror("fprop2"); };
-    virtual void bprop2(state_idx *in, state_idx *out) { ylerror("fprop2"); };
-    virtual void bbprop2(state_idx *in, state_idx *out) { ylerror("fprop2"); };
-  };
-
   ////////////////////////////////////////////////////////////////
   //! The linear module provides a linear combination of the input in
   //! with its internal weight matrix w and puts the result in the output.
@@ -76,7 +64,7 @@ namespace ebl {
     //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx *in, state_idx *out);
     //! order of operation
-    virtual int order() { return 1; }
+    virtual int replicable_order() { return 1; }
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! normalize
@@ -85,25 +73,11 @@ namespace ebl {
     virtual void resize_output(state_idx *in, state_idx *out);
   };
 
-  class linear_module_replicable 
-    : public linear_module, public module_1_1_replicable {
-  public:
-    linear_module_replicable(parameter *p, intg in, intg out)
-      : linear_module(p, in, out), module_1_1_replicable() {}
-    virtual ~linear_module_replicable() { } 
-    virtual void fprop(state_idx *in, state_idx *out) {
-      module_1_1_replicable::fprop(in, out); }
-    virtual void bprop(state_idx *in, state_idx *out) {
-      module_1_1_replicable::bprop(in, out); }
-    virtual void bbprop(state_idx *in, state_idx *out) {
-      module_1_1_replicable::bbprop(in, out); }
-    virtual void fprop2(state_idx *in, state_idx *out) {
-      linear_module::fprop(in, out); }
-    virtual void bprop2(state_idx *in, state_idx *out) {
-      linear_module::bprop(in, out); }
-    virtual void bbprop2(state_idx *in, state_idx *out) {
-      linear_module::bbprop(in, out); }
- };
+  //! Declaring the replicable version of linear_module
+  DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable, 
+				linear_module,
+				(parameter *p, intg in, intg out),
+				(p, in, out));
 
   ////////////////////////////////////////////////////////////////
   //! The linear module (dim0) provides a linear combination of the input in
@@ -159,7 +133,7 @@ namespace ebl {
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! order of operation
-    virtual int order() { return 3; }
+    virtual int replicable_order() { return 3; }
   };
 
   ////////////////////////////////////////////////////////////////
@@ -190,7 +164,7 @@ namespace ebl {
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! order of operation
-    virtual int order() { return 3; }
+    virtual int replicable_order() { return 3; }
   };
 
   ////////////////////////////////////////////////////////////////

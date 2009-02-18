@@ -53,7 +53,7 @@ namespace ebl {
     virtual void forget(forget_param_linear& fp);
     virtual void normalize();
     //! returns the order at which the module operates.
-    virtual int  order();
+    virtual int  replicable_order();
     virtual void resize_output(Tin *in, Tout *out);
   };
 
@@ -197,6 +197,57 @@ namespace ebl {
     void bbprop(Tin1 *in1, Tin2 *in2, state_idx *energy);
     void forget(forget_param &fp);
   };
+
+  ////////////////////////////////////////////////////////////////
+  // helper functions
+
+  //! check that m and in are compatible for replication
+  void check_replicable_orders(module_1_1<state_idx, state_idx> *m, 
+			       state_idx* in);
+
+  ////////////////////////////////////////////////////////////////
+  // generic replicable module classes
+
+  //! This modules loops over replicable dimensions and calls <module>'s
+  //! functions when reaching <module>'s replicable_order.
+  //! Note: Multiple inheritance could have been cleaner but would have required
+  //! frequent dynamic_casts from the user.
+  template<class T> class module_1_1_replicable {
+  public:
+    T *module;
+    module_1_1_replicable(T *m);
+    virtual ~module_1_1_replicable();
+    virtual void fprop(state_idx *in, state_idx *out);
+    virtual void bprop(state_idx *in, state_idx *out);
+    virtual void bbprop(state_idx *in, state_idx *out);
+  };
+
+
+  //! A macro to declare a module_1_1<state_idx,state_idx> as replicable
+  //! over extra dimensions beyond the module's replicable_order.
+  //! \param replicable_module is the new class name
+  //! \param base_module is the module_1_1<state_idx,state_idx> to be replicated
+  //! \param type_arguments are the arguments to the base_module's constructor 
+  //!   along with their type (use parenthesis)
+  //! \param arguments are the naked arguments (use parenthesis)
+  //! \example   DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable, 
+  //!                                          linear_module,
+  //!			                       (parameter *p, intg in, intg ou),
+  //!			                       (p, in, out));
+  //! Note: Multiple inheritance could have been cleaner but would have required
+  //! frequent dynamic_casts from the user.
+#define DECLARE_REPLICABLE_MODULE_1_1(replicable_module, base_module,	\
+				  types_arguments, arguments)		\
+  class replicable_module : public base_module {			\
+  public:								\
+    module_1_1_replicable<base_module> rep;				\
+    replicable_module types_arguments : base_module arguments, rep(this) {} \
+    virtual ~replicable_module() {}					\
+    virtual void fprop(state_idx *in, state_idx *out) { rep.fprop(in, out); } \
+    virtual void bprop(state_idx *in, state_idx *out) { rep.bprop(in, out); }\
+    virtual void bbprop(state_idx *in, state_idx *out) { rep.bbprop(in, out); }\
+    }
+
 
 } // namespace ebl {
 
