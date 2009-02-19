@@ -221,7 +221,6 @@ namespace ebl {
     virtual void bbprop(state_idx *in, state_idx *out);
   };
 
-
   //! A macro to declare a module_1_1<state_idx,state_idx> as replicable
   //! over extra dimensions beyond the module's replicable_order.
   //! \param replicable_module is the new class name
@@ -241,13 +240,13 @@ namespace ebl {
   public:								\
     module_1_1_replicable<base_module> rep;				\
     replicable_module types_arguments : base_module arguments, rep(this) { \
-      bResize = false; }						\
+      bResize = false;							\
+      if (replicable_order() <= 0) ylerror("this module is not replicable"); } \
     virtual ~replicable_module() {}					\
     virtual void fprop(state_idx *in, state_idx *out) { rep.fprop(in, out); } \
     virtual void bprop(state_idx *in, state_idx *out) { rep.bprop(in, out); } \
     virtual void bbprop(state_idx *in, state_idx *out){ rep.bbprop(in, out); }\
     }
-
 
 } // namespace ebl {
 

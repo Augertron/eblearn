@@ -235,6 +235,55 @@ namespace ebl {
   }
 
   void subsampling_module_2D::fprop(state_idx *in, state_idx *out) {
+    if (bResize) resize_output(in, out); // resize (iff necessary)
+    // subsampling ( coeff * average )
+    idx_clear(sub->x);
+    { idx_bloop4(lix, in->x, double, lsx, sub->x, double,
+		 lcx, coeff->x, double, ltx, out->x, double) {
+	Idx<double> uuin(lix.unfold(1, stridej, stridej));
+	uuin = uuin.unfold(0, stridei, stridei);
+	idx_eloop1(z1, uuin, double) {
+	  idx_eloop1(z2, z1, double) {
+	    idx_add(z2, lsx, lsx); // average
+	  }
+	}
+	idx_dotc(lsx, lcx.get(), ltx); // coeff
+      }}
+  }
+
+  void subsampling_module_2D::bprop(state_idx *in, state_idx *out) {
+    // oversampling
+    idx_bloop3(lcdx, coeff->dx, double, ltdx, out->dx, double,
+	       lsx, sub->x, double) {
+      idx_dotacc(lsx, ltdx, lcdx);
+    }
+    idx_bloop4(lidx, in->dx, double, lsdx, sub->dx, double,
+	       lcx, coeff->x, double, ltdx2, out->dx, double) {
+      idx_dotc(ltdx2, lcx.get(), lsdx);
+      idx_m2oversample(lsdx, stridei, stridej, lidx);
+    }
+  }
+
+  void subsampling_module_2D::bbprop(state_idx *in, state_idx *out) {	
+    // oversampling
+    idx_bloop3(lcdx, coeff->ddx, double, ltdx, out->ddx, double,
+	       lsx, sub->x, double) {
+      idx_m2squdotm2acc(lsx, ltdx, lcdx);
+    }
+    idx_bloop4(lidx, in->ddx, double, lsdx, sub->ddx, double,
+	       lcx, coeff->x, double, ltdx2, out->ddx, double) {
+      double cf = lcx.get();
+      idx_dotc(ltdx2, cf * cf, lsdx);
+      idx_m2oversample(lsdx, stridei, stridej, lidx);
+    }
+  }
+
+  void subsampling_module_2D::forget(forget_param_linear &fp) {
+    double c = fp.value / pow(stridei * stridej, fp.exponent);
+    idx_fill(coeff->x, c);
+  }
+
+  void subsampling_module_2D::resize_output(state_idx *in, state_idx *out) {
     intg sin_i = in->x.dim(1);
     intg sin_j = in->x.dim(2);
     intg si = sin_i / stridei;
@@ -242,98 +291,133 @@ namespace ebl {
     // check sizes
     if ((sin_i % stridei) != 0 || (sin_j % stridej) != 0)
       ylerror("inconsistent input size and subsampleing ratio");
-    // check that input and output have at most 4 dimensions
-    if ((in->x.order() > 4) || (out->x.order() > 4))
-      ylerror("subsampling_module_2D: supporting up to order 4 Idx only");
     // resize output and sub based in input dimensions
     IdxDim d(in->x.spec); // use same dimensions as in
     d.setdim(1, si); // new size after subsampling
     d.setdim(2, sj); // new size after subsampling
     out->resize(d);
     sub->resize(d);
-    // see input and output as Idx of order 4, so that this module is replicable
-    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
-    // are the 2D dimensions to subsample and dim3 is the optional extra 
-    // dimension if we want to work with 3D data by 2D replication).
-    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
-    Idx<double> subx = sub->x.view_as_order(4);
-    Idx<double> outx = out->x.view_as_order(4);
-    // loop on extra 4th dimension
-    { idx_eloop3(linx,inx,double, lsubx,subx,double, loutx,outx,double) {
-
-	// subsampling ( coeff * average )
-	idx_clear(lsubx);
-	{ idx_bloop4(lix, linx, double, lsx, lsubx, double,
-		     lcx, coeff->x, double, ltx, loutx, double) {
-	    Idx<double> uuin(lix.unfold(1, stridej, stridej));
-	    uuin = uuin.unfold(0, stridei, stridei);
-	    idx_eloop1(z1, uuin, double) {
-	      idx_eloop1(z2, z1, double) {
-		idx_add(z2, lsx, lsx);
-	      }
-	    }
-	    idx_dotc(lsx, lcx.get(), ltx);
-	  }}
-      }}
   }
 
-  void subsampling_module_2D::bprop(state_idx *in, state_idx *out) {
-    // see input and output as Idx of order 4, so that this module is replicable
-    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
-    // are the 2D dimensions to oversample and dim3 is the optional extra 
-    // dimension if we want to work with 3D data by 2D replication).
-    Idx<double> indx = in->dx.view_as_order(4); // add extra dims if necessary
-    Idx<double> subx = sub->x.view_as_order(4);
-    Idx<double> subdx = sub->dx.view_as_order(4);
-    Idx<double> outdx = out->dx.view_as_order(4);
-    // loop on extra 4th dimension
-    { idx_eloop4(lindx,indx,double, lsubx,subx,double, lsubdx,subdx,double, 
-		 loutdx,outdx,double) {
+//   ////////////////////////////////////////////////////////////////
+//   // subsampling_module_2D
+
+//   subsampling_module_2D::subsampling_module_2D(parameter *p, 
+// 					       intg stridei_, intg stridej_,
+// 					       intg subi, intg subj, 
+// 					       intg thick) {
+//     coeff     = new state_idx(p, thick);
+//     sub	      = new state_idx(thick, subi, subj);
+//     thickness = thick;
+//     stridei   = stridei_;
+//     stridej   = stridej_;
+//   }
+
+//   subsampling_module_2D::~subsampling_module_2D() {
+//     delete coeff;
+//     delete sub;
+//   }
+
+//   void subsampling_module_2D::fprop(state_idx *in, state_idx *out) {
+//     intg sin_i = in->x.dim(1);
+//     intg sin_j = in->x.dim(2);
+//     intg si = sin_i / stridei;
+//     intg sj = sin_j / stridej;
+//     // check sizes
+//     if ((sin_i % stridei) != 0 || (sin_j % stridej) != 0)
+//       ylerror("inconsistent input size and subsampleing ratio");
+//     // check that input and output have at most 4 dimensions
+//     if ((in->x.order() > 4) || (out->x.order() > 4))
+//       ylerror("subsampling_module_2D: supporting up to order 4 Idx only");
+//     // resize output and sub based in input dimensions
+//     IdxDim d(in->x.spec); // use same dimensions as in
+//     d.setdim(1, si); // new size after subsampling
+//     d.setdim(2, sj); // new size after subsampling
+//     out->resize(d);
+//     sub->resize(d);
+//     // see input and output as Idx of order 4, so that this module is replicable
+//     // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
+//     // are the 2D dimensions to subsample and dim3 is the optional extra 
+//     // dimension if we want to work with 3D data by 2D replication).
+//     Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
+//     Idx<double> subx = sub->x.view_as_order(4);
+//     Idx<double> outx = out->x.view_as_order(4);
+//     // loop on extra 4th dimension
+//     { idx_eloop3(linx,inx,double, lsubx,subx,double, loutx,outx,double) {
+
+// 	// subsampling ( coeff * average )
+// 	idx_clear(lsubx);
+// 	{ idx_bloop4(lix, linx, double, lsx, lsubx, double,
+// 		     lcx, coeff->x, double, ltx, loutx, double) {
+// 	    Idx<double> uuin(lix.unfold(1, stridej, stridej));
+// 	    uuin = uuin.unfold(0, stridei, stridei);
+// 	    idx_eloop1(z1, uuin, double) {
+// 	      idx_eloop1(z2, z1, double) {
+// 		idx_add(z2, lsx, lsx);
+// 	      }
+// 	    }
+// 	    idx_dotc(lsx, lcx.get(), ltx);
+// 	  }}
+//       }}
+//   }
+
+//   void subsampling_module_2D::bprop(state_idx *in, state_idx *out) {
+//     // see input and output as Idx of order 4, so that this module is replicable
+//     // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
+//     // are the 2D dimensions to oversample and dim3 is the optional extra 
+//     // dimension if we want to work with 3D data by 2D replication).
+//     Idx<double> indx = in->dx.view_as_order(4); // add extra dims if necessary
+//     Idx<double> subx = sub->x.view_as_order(4);
+//     Idx<double> subdx = sub->dx.view_as_order(4);
+//     Idx<double> outdx = out->dx.view_as_order(4);
+//     // loop on extra 4th dimension
+//     { idx_eloop4(lindx,indx,double, lsubx,subx,double, lsubdx,subdx,double, 
+// 		 loutdx,outdx,double) {
 	
-	// oversampling
-	idx_bloop3(lcdx, coeff->dx, double, ltdx, loutdx, double,
-		   lsx, lsubx, double) {
-	  idx_dotacc(lsx, ltdx, lcdx);
-	}
-	idx_bloop4(lidx, lindx, double, lsdx, lsubdx, double,
-		   lcx, coeff->x, double, ltdx2, loutdx, double) {
-	  idx_dotc(ltdx2, lcx.get(), lsdx);
-	  idx_m2oversample(lsdx, stridei, stridej, lidx);
-	}
-      }}
-  }
+// 	// oversampling
+// 	idx_bloop3(lcdx, coeff->dx, double, ltdx, loutdx, double,
+// 		   lsx, lsubx, double) {
+// 	  idx_dotacc(lsx, ltdx, lcdx);
+// 	}
+// 	idx_bloop4(lidx, lindx, double, lsdx, lsubdx, double,
+// 		   lcx, coeff->x, double, ltdx2, loutdx, double) {
+// 	  idx_dotc(ltdx2, lcx.get(), lsdx);
+// 	  idx_m2oversample(lsdx, stridei, stridej, lidx);
+// 	}
+//       }}
+//   }
 
-  void subsampling_module_2D::bbprop(state_idx *in, state_idx *out) {
-    // see input and output as Idx of order 4, so that this module is replicable
-    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
-    // are the 2D dimensions to oversample and dim3 is the optional extra 
-    // dimension if we want to work with 3D data by 2D replication).
-    Idx<double> inddx = in->ddx.view_as_order(4); // add extra dims if necessary
-    Idx<double> subx = sub->x.view_as_order(4);
-    Idx<double> subddx = sub->ddx.view_as_order(4);
-    Idx<double> outddx = out->ddx.view_as_order(4);
-    // loop on extra 4th dimension
-    { idx_eloop4(linddx,inddx,double, lsubx,subx,double, lsubddx,subddx,double, 
-		 loutddx,outddx,double) {
+//   void subsampling_module_2D::bbprop(state_idx *in, state_idx *out) {
+//     // see input and output as Idx of order 4, so that this module is replicable
+//     // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
+//     // are the 2D dimensions to oversample and dim3 is the optional extra 
+//     // dimension if we want to work with 3D data by 2D replication).
+//     Idx<double> inddx = in->ddx.view_as_order(4); // add extra dims if necessary
+//     Idx<double> subx = sub->x.view_as_order(4);
+//     Idx<double> subddx = sub->ddx.view_as_order(4);
+//     Idx<double> outddx = out->ddx.view_as_order(4);
+//     // loop on extra 4th dimension
+//     { idx_eloop4(linddx,inddx,double, lsubx,subx,double, lsubddx,subddx,double, 
+// 		 loutddx,outddx,double) {
 	
-	// oversampling
-	idx_bloop3(lcdx, coeff->ddx, double, ltdx, loutddx, double,
-		   lsx, lsubx, double) {
-	  idx_m2squdotm2acc(lsx, ltdx, lcdx);
-	}
-	idx_bloop4(lidx, linddx, double, lsdx, lsubddx, double,
-		   lcx, coeff->x, double, ltdx2, loutddx, double) {
-	  double cf = lcx.get();
-	  idx_dotc(ltdx2, cf * cf, lsdx);
-	  idx_m2oversample(lsdx, stridei, stridej, lidx);
-	}
-      }}
-  }
+// 	// oversampling
+// 	idx_bloop3(lcdx, coeff->ddx, double, ltdx, loutddx, double,
+// 		   lsx, lsubx, double) {
+// 	  idx_m2squdotm2acc(lsx, ltdx, lcdx);
+// 	}
+// 	idx_bloop4(lidx, linddx, double, lsdx, lsubddx, double,
+// 		   lcx, coeff->x, double, ltdx2, loutddx, double) {
+// 	  double cf = lcx.get();
+// 	  idx_dotc(ltdx2, cf * cf, lsdx);
+// 	  idx_m2oversample(lsdx, stridei, stridej, lidx);
+// 	}
+//       }}
+//   }
 
-  void subsampling_module_2D::forget(forget_param_linear &fp) {
-    double c = fp.value / pow(stridei * stridej, fp.exponent);
-    idx_fill(coeff->x, c);
-  }
+//   void subsampling_module_2D::forget(forget_param_linear &fp) {
+//     double c = fp.value / pow(stridei * stridej, fp.exponent);
+//     idx_fill(coeff->x, c);
+//   }
 
   ////////////////////////////////////////////////////////////////
   // addc_module
