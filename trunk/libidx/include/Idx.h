@@ -615,10 +615,19 @@ namespace ebl {
     //  T &operator*() {
     //    if (spec.ndim==0) {
     //      return *(storage->data + spec.offset);
-    //    } else { ylerror("Idx::operator*: only an Idx0 can be dereferenced"); }
+    //    } else { ylerror("Idx::operator*: only an Idx0 can be dereferenced");}
     //  }
+ 
+    //! return true if this Idx has same order and dimensions as IdxDim d.
+    //! i.e. if all their dimensions are equal (regardless of strides).
+    virtual bool same_dim(const IdxDim &d);
 
-    ////////////////////////////////////////////////////////////////
+    //! return true if this Idx has same order and dimensions s0 .. s7
+    //! i.e. if all their dimensions are equal (regardless of strides).
+    virtual bool same_dim(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
+			  intg s6, intg s7);
+
+   ////////////////////////////////////////////////////////////////
     //! data access methods
 
     //! return pointer on data chunk (on first element)
@@ -781,16 +790,21 @@ namespace ebl {
 #endif // if USING_STL_ITERS == 0
 
   class IdxDim {
-  private:
-    intg dim[MAXDIMS];
-   
   public:
+    intg dim[MAXDIMS];
+    intg ndim;
+
     IdxDim(IdxSpec &s) {
+      ndim = s.ndim;
       memcpy(dim, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
       // set remaining to -1
       memset(dim + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg)); 
     }
-    void setdim(intg dimn, intg size) { dim[dimn] = size; }
+    void setdim(intg dimn, intg size) {
+      if (dimn >= ndim)
+	ylerror("cannot change the order of IdxDim");
+      dim[dimn] = size; 
+    }
     virtual ~IdxDim() {};
 
     // friends

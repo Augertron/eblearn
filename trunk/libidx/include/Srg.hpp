@@ -108,7 +108,7 @@ template <class T> intg Srg<T>::growsize(intg s) {
 }
 
 template<class T> intg Srg<T>::growsize_chunk(intg s, intg s_chunk){
-	if(s > size_) { return this->changesize(s + s_chunk); } else {return size_;}
+  if(s > size_) { return this->changesize(s + s_chunk); } else {return size_;}
 }
 
 // decrement refcount and free if it reaches zero

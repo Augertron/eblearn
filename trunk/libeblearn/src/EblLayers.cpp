@@ -40,8 +40,7 @@ namespace ebl {
 
   nn_layer_full::nn_layer_full(parameter *p, state_idx *instate, intg noutputs)
   {
-    linear = new linear_module_dim0(p, instate->x.dim(0), noutputs);
-    //    linear = new linear_module_replicable(p, instate->x.dim(0), noutputs);
+    linear = new linear_module_replicable(p, instate->x.dim(0), noutputs);
     adder = new addc_module(p, noutputs);
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
@@ -100,7 +99,8 @@ namespace ebl {
 					     intg ri, intg rj, 
 					     Idx<intg> *tbl, intg thick)
   {
-    convol = new convolution_module_2D(p, kerneli, kernelj, ri, rj, tbl, thick);
+    convol = new convolution_module_2D_replicable(p, kerneli, kernelj, ri, rj, 
+						  tbl, thick);
     adder = new addc_module(p, thick);
     sum = NULL;
     sigmoid = new tanh_module();

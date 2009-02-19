@@ -80,31 +80,6 @@ namespace ebl {
 				(p, in, out));
 
   ////////////////////////////////////////////////////////////////
-  //! The linear module (dim0) provides a linear combination of the input in
-  //! with its internal weight matrix w and puts the result in the output.
-  //! It is different from linear_module in that it is
-  //! spatially replicable: it applies the linear combination only
-  //! on the first dimension of the idxs (dim 0) and replicates the operation
-  //! to remaining (3) dimensions if present (yielding 1D, 2D, or 3D replication
-  //! if dimensions 1, 2 and 3 are present respectively).
-  //! It can operate on idx of any order up to 4 dimensions.
-  class linear_module_dim0: public linear_module {
-  public:
-    //! Constructor.
-    //! \param p is used to store all parametric variables in a single place.
-    //! \param in the size of the input to the linear combination.
-    //! \param out the size of the output to the linear combination.
-    linear_module_dim0(parameter *p, intg in, intg out);
-    virtual ~linear_module_dim0() {};
-    //! forward propagation from in to out
-    virtual void fprop(state_idx *in, state_idx *out);
-    //! backward propagation from out to in
-    virtual void bprop(state_idx *in, state_idx *out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx *in, state_idx *out);
-  };
-
-  ////////////////////////////////////////////////////////////////
   //! The convolution module 2D applies 2-dimensional convolutions on dimensions
   //! 1 and 2 (0 contains different layers of information to be connected to the
   //! output layers based on the connections table) of the input and puts the
@@ -134,7 +109,16 @@ namespace ebl {
     virtual void forget(forget_param_linear &fp);
     //! order of operation
     virtual int replicable_order() { return 3; }
+    //! resize the output based on input dimensions
+    virtual void resize_output(state_idx *in, state_idx *out);
   };
+
+  //! Declaring the replicable version of linear_module
+  DECLARE_REPLICABLE_MODULE_1_1(convolution_module_2D_replicable, 
+				convolution_module_2D,
+				(parameter *p, intg ki, intg kj, intg si, 
+				 intg sj, Idx<intg> *table, intg thick),
+				(p, ki, kj, si, sj, table, thick));
 
   ////////////////////////////////////////////////////////////////
   //! subsampling module 2D

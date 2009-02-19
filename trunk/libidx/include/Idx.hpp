@@ -630,20 +630,28 @@ namespace ebl {
   template <class T> 
   void Idx<T>::resize(intg s0, intg s1, intg s2, intg s3, 
 					 intg s4, intg s5, intg s6, intg s7) {
-    spec.resize(s0,s1,s2,s3,s4,s5,s6,s7);
-    growstorage();
+    if (!same_dim(s0,s1,s2,s3,s4,s5,s6,s7)) { // save some time
+      spec.resize(s0,s1,s2,s3,s4,s5,s6,s7);
+      growstorage();
+    }
   }
 
   template <class T> 
   void Idx<T>::resize(const IdxDim &d) {
-    spec.resize(d);
-    growstorage();
+    if (d.ndim > spec.ndim) ylerror("cannot change order of Idx in resize");
+    if (!same_dim(d)) { // save some time if dims are same
+      spec.resize(d);
+      growstorage();
+    }
   }
 
   template <class T> 
   void Idx<T>::resize1(intg dimn, intg size) {
-    spec.resize1(dimn, size);
-    growstorage();
+    if (dimn > spec.ndim) ylerror("cannot change order of Idx in resize");
+    if (spec.dim[dimn] != size) {
+      spec.resize1(dimn, size);
+      growstorage();
+    }
   }
 
   template <class T> 
@@ -651,6 +659,42 @@ namespace ebl {
 			    intg s4, intg s5, intg s6, intg s7) {
     spec.resize(s0,s1,s2,s3,s4,s5,s6,s7);
     growstorage_chunk(s_chunk);
+  }
+
+  // return true if this Idx has same order and dimensions as IdxDim d.
+  // i.e. if all their dimensions are equal (regardless of strides).
+  template <class T> 
+  bool Idx<T>::same_dim(const IdxDim &d) {
+    if (spec.ndim != d.ndim) 
+      return false; 
+    for (int i=0; i < spec.ndim; ++i)
+      if (spec.dim[i] != d.dim[i]) 
+	return false;
+    return true;
+  }
+
+  // return true if this Idx has same order and dimensions s0 .. s7
+  // i.e. if all their dimensions are equal (regardless of strides).
+  template <class T> 
+  bool Idx<T>::same_dim(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
+			 intg s6, intg s7) {
+    if ((s7 >= 0) && (spec.ndim < 8)) return false;
+    if ((spec.ndim == 8) && (s7 != spec.dim[7])) return false;
+    if ((s6 >= 0) && (spec.ndim < 7)) return false;
+    if ((spec.ndim >= 7) && (s6 != spec.dim[6])) return false;
+    if ((s5 >= 0) && (spec.ndim < 6)) return false;
+    if ((spec.ndim >= 6) && (s5 != spec.dim[5])) return false;
+    if ((s4 >= 0) && (spec.ndim < 5)) return false;
+    if ((spec.ndim >= 5) && (s4 != spec.dim[4])) return false;
+    if ((s3 >= 0) && (spec.ndim < 4)) return false;
+    if ((spec.ndim >= 4) && (s3 != spec.dim[3])) return false;
+    if ((s2 >= 0) && (spec.ndim < 3)) return false;
+    if ((spec.ndim >= 3) && (s2 != spec.dim[2])) return false;
+    if ((s1 >= 0) && (spec.ndim < 2)) return false;
+    if ((spec.ndim >= 2) && (s1 != spec.dim[1])) return false;
+    if ((s0 >= 0) && (spec.ndim < 1)) return false;
+    if ((spec.ndim >= 1) && (s0 != spec.dim[0])) return false;
+    return true;
   }
 
   ////////////////////////////////////////////////////////////////
