@@ -41,11 +41,11 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  //! The linear module provides a linear combination of the input in
+  // linear_module
+  //! This module applies a linears combination of the input <in> 
   //! with its internal weight matrix w and puts the result in the output.
-  //! It is different from linear_module_dim0 in that it is
-  //! not spatially replicable. It can still operate on Idx of any order 
-  //! but will seem them as 1D idx (requiring contiguity).
+  //! This module has a replicable order of 1, if the input has a bigger order,
+  //! use the replicable version of this module: linear_module_replicable.
   class linear_module: public module_1_1<state_idx, state_idx> {
   public:
     state_idx *w;
@@ -73,18 +73,26 @@ namespace ebl {
     virtual void resize_output(state_idx *in, state_idx *out);
   };
 
-  //! Declaring the replicable version of linear_module
+  //! The replicable version of linear_module.
+  //! If the input has a bigger order than the replicable_order() of 
+  //! linear_module, then this module loops on extra dimensions until
+  //! it reaches the replicable order, and then calls the base module 
+  //! linear_module.
+  //! For example, if the base module works on an order of 1, an input with
+  //! dimensions <42x9x9> will produce a 9x9 grid where each box contains
+  //! the output of the processing of each <42> slice.
   DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable, 
 				linear_module,
 				(parameter *p, intg in, intg out),
 				(p, in, out));
 
   ////////////////////////////////////////////////////////////////
-  //! The convolution module 2D applies 2-dimensional convolutions on dimensions
-  //! 1 and 2 (0 contains different layers of information to be connected to the
-  //! output layers based on the connections table) of the input and puts the
-  //! results in the output. It is spatially replicable in the sense that if
-  //! dimension 3 is present, it loops over it and repeats the convolutions.
+  // convolution_module_2D
+  //! This module applies 2D convolutions on dimensions 1 and 2 
+  //! (0 contains different layers of information).
+  //! This module has a replicable order of 3, if the input has a bigger order,
+  //! use the replicable version of this module:
+  //! convolution_module_2D_replicable.
   class convolution_module_2D: public module_1_1<state_idx, state_idx> {
   public:
     state_idx	*kernel;
@@ -113,7 +121,14 @@ namespace ebl {
     virtual void resize_output(state_idx *in, state_idx *out);
   };
 
-  //! Declaring the replicable version of linear_module
+  //! The replicable version of convolution_module_2D.
+  //! If the input has a bigger order than the replicable_order() of 
+  //! convolution_module_2D, then this module loops on extra dimensions until
+  //! it reaches the replicable order, and then calls the base module 
+  //! convolution_module_2D.
+  //! For example, if the base module works on an order of 3, an input with
+  //! dimensions <2x16x16x9x9> will produce a 9x9 grid where each box contains
+  //! the output of the processing of each <2x16x16> slice.
   DECLARE_REPLICABLE_MODULE_1_1(convolution_module_2D_replicable, 
 				convolution_module_2D,
 				(parameter *p, intg ki, intg kj, intg si, 
@@ -121,11 +136,12 @@ namespace ebl {
 				(p, ki, kj, si, sj, table, thick));
 
   ////////////////////////////////////////////////////////////////
-  //! subsampling module 2D
-  //! This module is spatially replicable: it applies 2D subsampling on
-  //! dimensions 1 and 2 (0 contains different layers of information).
-  //! If dimension 3 is present, it loops over it and repeats the subsampling.
-  //! It can operate on idx of any order up to 4 dimensions.
+  // subsampling_module_2D
+  //! This module applies 2D subsampling on dimensions 1 and 2 
+  //! (0 contains different layers of information).
+  //! This module has a replicable order of 3, if the input has a bigger order,
+  //! use the replicable version of this module:
+  //! subsampling_module_2D_replicable.
   class subsampling_module_2D: public module_1_1<state_idx, state_idx> {
   public:
     state_idx	*coeff;
@@ -149,9 +165,26 @@ namespace ebl {
     virtual void forget(forget_param_linear &fp);
     //! order of operation
     virtual int replicable_order() { return 3; }
+    //! resize the output based on input dimensions
+    virtual void resize_output(state_idx *in, state_idx *out);
   };
 
+  //! The replicable version of subsampling_module_2D.
+  //! If the input has a bigger order than the replicable_order() of 
+  //! subsampling_module_2D, then this module loops on extra dimensions until
+  //! it reaches the replicable order, and then calls the base module 
+  //! subsampling_module_2D.
+  //! For example, if the base module works on an order of 3, an input with
+  //! dimensions <2x16x16x9x9> will produce a 9x9 grid where each box contains
+  //! the output of the processing of each <2x16x16> slice.
+  DECLARE_REPLICABLE_MODULE_1_1(subsampling_module_2D_replicable, 
+				subsampling_module_2D,
+				(parameter *p, intg sti, intg stj, intg subi, 
+				 intg subj, intg thick),
+				(p, sti, stj, subi, subj, thick));
+
   ////////////////////////////////////////////////////////////////
+  // addc_module
   //! The constant add module adds biases to the first dimension of the input
   //! and puts the results in the output. This module is spatially replicable 
   //! (the input can have an order greater than 1 and the operation will apply
