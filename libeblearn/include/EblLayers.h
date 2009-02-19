@@ -97,7 +97,7 @@ namespace ebl {
   //! a subsampling neural net layer: subsampling + tanh non-linearity.
   class nn_layer_subsampling: public module_1_1<state_idx, state_idx> {
   public:
-    subsampling_module_2D *subsampler; //!< subsampling module
+    subsampling_module_2D_replicable *subsampler; //!< subsampling module
     addc_module           *adder;      //!< bias vector
     tanh_module           *sigmoid;    //!< the non-linear function
     state_idx             *sum;        //!< subsampling result

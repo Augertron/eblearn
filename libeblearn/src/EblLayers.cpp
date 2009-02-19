@@ -157,8 +157,8 @@ namespace ebl {
 					     intg subi, intg subj, 
 					     intg thick)
   {
-    subsampler = new subsampling_module_2D(p, stridei, stridej, subi, subj, 
-					   thick);
+    subsampler = new subsampling_module_2D_replicable(p, stridei, stridej, 
+						      subi, subj, thick);
     adder = new addc_module(p, thick);
     sum = NULL;
     sigmoid = new tanh_module();
