@@ -47,7 +47,7 @@ namespace ebl {
   }
 
   void linear_module::fprop(state_idx *in, state_idx *out) {
-    out->resize(w->x.dim(0)); // resize output based weight matrix
+    if (bResize) resize_output(in, out); // resize (iff necessary)
     Idx<double> inx = in->x.view_as_order(1); // view as 1D Idx
     Idx<double> outx = out->x.view_as_order(1); // view as 1D Idx
 
@@ -96,86 +96,6 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // linear_module 
-
-  linear_module_dim0::linear_module_dim0(parameter *p, intg in, intg out)
-    : linear_module(p, in, out) {
-  }
-
-  void linear_module_dim0::fprop(state_idx *in, state_idx *out) {
-    // resize output based in input dimensions
-    IdxDim d(in->x.spec); // use same dimensions as in
-    d.setdim(0, w->x.dim(0)); // except for the first one
-    out->resize(d);
-    // check that input and output have at most 4 dimensions
-    if ((in->x.order() > 4) || (out->x.order() > 4))
-      ylerror("linear_module_dim0: supporting up to order 4 Idx only");
-    // see input and output as Idx of order 4, so that this module is replicable
-    // in up to 3 dimensions (dim 0 for the linear combination operations and
-    // remaining dimensions for 1D, 2D or 3D replication)
-    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
-    Idx<double> outx = out->x.view_as_order(4); // add extra dims if necessary
-
-    // loop over last 3 dimensions and call linear combination on first dim
-    { idx_eloop2(linx,inx,double, loutx,outx,double) {
-	idx_eloop2(llinx,linx,double, lloutx,loutx,double) {
-	  idx_eloop2(lllinx,llinx,double, llloutx,lloutx,double) {
-	    // multiply weight matrix by input
-	    idx_m2dotm1(w->x, lllinx, llloutx);
-	  }
-	}
-      }}
-  }
-
-  void linear_module_dim0::bprop(state_idx *in, state_idx *out) {
-    // see input and output as Idx of order 4, so that this module is replicable
-    // in up to 3 dimensions (dim 0 for the linear combination operations and
-    // remaining dimensions for 1D, 2D or 3D replication)
-    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
-    Idx<double> outx = out->x.view_as_order(4); // add extra dims if necessary
-    Idx<double> indx = in->dx.view_as_order(4); // add extra dims if necessary
-    Idx<double> outdx = out->dx.view_as_order(4); // add extra dims if necessary
-    Idx<double> twx(w->x.transpose(0, 1));
-    if (outdx.dim(0) != w->dx.dim(0)) ylerror("output has wrong size");
-	    
-    // loop over last 3 dimensions and bprop on first dim
-    { idx_eloop3(linx,inx,double, lindx,indx,double, loutdx,outdx,double) {
-	idx_eloop3(llinx,linx,double, llindx,lindx,double, 
-		   lloutdx,loutdx,double) {
-	  idx_eloop3(lllinx,llinx,double, lllindx,llindx,double, 
-		     llloutdx,lloutdx,double) {
-	    idx_m1extm1(llloutdx, lllinx, w->dx);
-	    idx_m2dotm1(twx, llloutdx, lllindx);
-	  }
-	}
-      }}
-  }
-
-  void linear_module_dim0::bbprop(state_idx *in, state_idx *out) {
-    // see input and output as Idx of order 4, so that this module is replicable
-    // in up to 3 dimensions (dim 0 for the linear combination operations and
-    // remaining dimensions for 1D, 2D or 3D replication)
-    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
-    Idx<double> inddx = in->ddx.view_as_order(4); // add extra dims if necessary
-    Idx<double> outddx = out->ddx.view_as_order(4);
-    Idx<double> twx(w->x.transpose(0, 1));
-    if (outddx.dim(0) != w->ddx.dim(0)) ylerror("output has wrong size");
-    
-    // loop over last 3 dimensions and bbprop on first dim
-    { idx_eloop3(linx,inx,double, linddx,inddx,double, 
-		 loutddx,outddx,double) {
-	idx_eloop3(llinx,linx,double, llinddx,linddx,double,
-		   lloutddx,loutddx,double) {
-	  idx_eloop3(lllinx,llinx,double, lllinddx,llinddx,double,
-		     llloutddx,lloutddx,double) {
-	    idx_m1squextm1(llloutddx, lllinx, w->ddx);
-	    idx_m2squdotm1(twx, llloutddx, lllinddx);
-	  }
-	}
-      }}
-  }
-
-  ////////////////////////////////////////////////////////////////
   // convolution_module_2D
 
   convolution_module_2D::convolution_module_2D(parameter *p, 
@@ -193,116 +113,60 @@ namespace ebl {
     delete kernel;
   }
 
-  void convolution_module_2D::fprop(state_idx *in, state_idx *out) {
-    intg ki = kernel->x.dim(1);
-    intg kj = kernel->x.dim(2);
-    intg sini = in->x.dim(1);
-    intg sinj = in->x.dim(2);
-
-    // check sizes
-    if (((sini - (ki - stridei)) % stridei != 0) || 
-	((sinj - (kj - stridej)) % stridej != 0))
-      ylerror("inconsistent input size, kernel size, and subsampling ratio.");
-    if ((stridei != 1) || (stridej != 1))
-      ylerror("stride > 1 not implemented yet.");
-    // check that input and output have at most 4 dimensions
-    if ((in->x.order() > 4) || (out->x.order() > 4))
-      ylerror("convolution_module_2D: supporting up to order 4 Idx only");
+  void convolution_module_2D::fprop(state_idx *in, state_idx *out){
+    if (bResize) resize_output(in, out); // resize (iff necessary)
     // unfolding input for a faster convolution operation
-    Idx<double> uuin(in->x.unfold(1, ki, stridei));
-    uuin = uuin.unfold(2, kj, stridej);
-    // resize output based in input dimensions
-    IdxDim d(in->x.spec); // use same dimensions as in
-    d.setdim(0, thickness); // except for the first one
-    d.setdim(1, uuin.dim(1)); // convolution trims dimensions a bit
-    d.setdim(2, uuin.dim(2)); // convolution trims dimensions a bit
-    out->resize(d);
-    // see input and output as Idx of order 4, so that this module is replicable
-    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
-    // are the 2D dimensions to convolve and dim3 is the optional extra 
-    // dimension if we want to work with 3D data by 2D replication).
-    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
-    Idx<double> outx = out->x.view_as_order(4);
+    Idx<double> uuin(in->x.unfold(1, kernel->x.dim(1), stridei));
+    uuin = uuin.unfold(2, kernel->x.dim(2), stridej);
+    idx_clear(out->x);
+    // convolve 2D slice for each convolution kernel
+    { idx_bloop2(lk, kernel->x, double, lt, *table, intg) {
+      Idx<double> suin(uuin.select(0, lt.get(0)));
+      Idx<double> sout((out->x).select(0, lt.get(1)));
 
-    idx_clear(outx);
-    // generic convolution
-    // loop on extra 4th dimension
-    { idx_eloop2(iinx, inx, double, ooutx, outx, double) {
-	// unfold 2D slice for the convolution
-	uuin = iinx.unfold(1, ki, stridei);
-	uuin = uuin.unfold(2, kj, stridej);
-	// loop on 2D slice for each convolution kernel
-    	idx_bloop2(lk, kernel->x, double, lt, *table, intg) {
-	  Idx<double> suin(uuin.select(0, lt.get(0)));
-	  Idx<double> sout(ooutx.select(0, lt.get(1)));
-	  idx_m4dotm2acc(suin, lk, sout);
-	}
+      idx_m4dotm2acc(suin, lk, sout); // 2D convolution
       }}
   }
   
   void convolution_module_2D::bprop(state_idx *in, state_idx *out) {
-    // see input and output as Idx of order 4, so that this module is replicable
-    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
-    // are the 2D dimensions to convolve and dim3 is the optional extra 
-    // dimension if we want to work with 3D data by 2D replication).
-    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
-    Idx<double> indx = in->dx.view_as_order(4);
-    Idx<double> outdx = out->dx.view_as_order(4);
-    // loop on extra 4th dimension
-    { idx_eloop3(linx,inx,double, lindx,indx,double, loutdx,outdx,double) {
-	
-	// backprop through convolution
-	idx_clear(lindx);
-	Idx<double> uuin(lindx.unfold(1, (kernel->dx).dim(1), stridei));
-	uuin = uuin.unfold(2, (kernel->dx).dim(2), stridej);
-	Idx<double> uuinf(linx.unfold(1, (kernel->dx).dim(1), stridei));
-	uuinf = uuinf.unfold(2, (kernel->dx).dim(2), stridej);
-	int transp[5] = { 0, 3, 4, 1, 2 };
-	Idx<double> borp(uuinf.transpose(transp));
-	{ idx_bloop3 (lk, kernel->dx, double, lkf, kernel->x, double, 
-		      lt, *table, intg) {
-	    intg islice = lt.get(0);
-	    Idx<double> suin(uuin.select(0, islice));
-	    Idx<double> sborp(borp.select(0, islice));
-	    Idx<double> sout((loutdx).select(0, lt.get(1)));
-	    // backward convolution
-	    idx_m2extm2acc(sout, lkf, suin);
-	    // compute gradient for kernel
-	    idx_m4dotm2acc(sborp, sout, lk);
-	  }}
+    // backprop through convolution
+    idx_clear(in->dx);
+    Idx<double> uuin(in->dx.unfold(1, (kernel->dx).dim(1), stridei));
+    uuin = uuin.unfold(2, (kernel->dx).dim(2), stridej);
+    Idx<double> uuinf(in->x.unfold(1, (kernel->dx).dim(1), stridei));
+    uuinf = uuinf.unfold(2, (kernel->dx).dim(2), stridej);
+    int transp[5] = { 0, 3, 4, 1, 2 };
+    Idx<double> borp(uuinf.transpose(transp));
+    { idx_bloop3 (lk, kernel->dx, double, lkf, kernel->x, double, 
+		  lt, *table, intg) {
+	intg islice = lt.get(0);
+	Idx<double> suin(uuin.select(0, islice));
+	Idx<double> sborp(borp.select(0, islice));
+	Idx<double> sout(out->dx.select(0, lt.get(1)));
+
+	idx_m2extm2acc(sout, lkf, suin); // backward convolution
+	idx_m4dotm2acc(sborp, sout, lk); // compute gradient for kernel
       }}
   }
 
   void convolution_module_2D::bbprop(state_idx *in, state_idx *out) {
-    // see input and output as Idx of order 4, so that this module is replicable
-    // in the 4th dimension if present (dim 0 is the input layers, dims 1 and 2
-    // are the 2D dimensions to convolve and dim3 is the optional extra 
-    // dimension if we want to work with 3D data by 2D replication).
-    Idx<double> inx = in->x.view_as_order(4); // add extra dims if necessary
-    Idx<double> inddx = in->ddx.view_as_order(4);
-    Idx<double> outddx = out->ddx.view_as_order(4);
-    // loop on extra 4th dimension
-    { idx_eloop3(linx,inx,double, linddx,inddx,double, loutddx,outddx,double) {
-	
-	// backprop through convolution
-	idx_clear(linddx);
-	Idx<double> uuin(linddx.unfold(1, (kernel->ddx).dim(1), stridei));
-	uuin = uuin.unfold(2, (kernel->ddx).dim(2), stridej);
-	Idx<double> uuinf(linx.unfold(1, (kernel->ddx).dim(1), stridei));
-	uuinf = uuinf.unfold(2, (kernel->ddx).dim(2), stridej);
-	int transp[5] = { 0, 3, 4, 1, 2 };
-	Idx<double> borp(uuinf.transpose(transp));
-	{ idx_bloop3 (lk, kernel->ddx, double, lkf, kernel->x, double, 
-		      lt, *table, intg) {
-	    intg islice = lt.get(0);
-	    Idx<double> suin(uuin.select(0, islice));
-	    Idx<double> sborp(borp.select(0, islice));
-	    Idx<double> sout((loutddx).select(0, lt.get(1)));
-	    // backward convolution
-	    idx_m2squextm2acc(sout, lkf, suin);
-	    // compute gradient for kernel
-	    idx_m4squdotm2acc(sborp, sout, lk);
-	  }}
+    // backprop through convolution
+    idx_clear(in->ddx);
+    Idx<double> uuin(in->ddx.unfold(1, (kernel->ddx).dim(1), stridei));
+    uuin = uuin.unfold(2, (kernel->ddx).dim(2), stridej);
+    Idx<double> uuinf(in->x.unfold(1, (kernel->ddx).dim(1), stridei));
+    uuinf = uuinf.unfold(2, (kernel->ddx).dim(2), stridej);
+    int transp[5] = { 0, 3, 4, 1, 2 };
+    Idx<double> borp(uuinf.transpose(transp));
+    { idx_bloop3 (lk, kernel->ddx, double, lkf, kernel->x, double, 
+		  lt, *table, intg) {
+	intg islice = lt.get(0);
+	Idx<double> suin(uuin.select(0, islice));
+	Idx<double> sborp(borp.select(0, islice));
+	Idx<double> sout((out->ddx).select(0, lt.get(1)));
+	    
+	idx_m2squextm2acc(sout, lkf, suin); // backward convolution
+	idx_m4squdotm2acc(sborp, sout, lk); // compute gradient for kernel
       }}
   }
 
@@ -326,6 +190,29 @@ namespace ebl {
 	      }}
 	  }}
       }}
+  }
+
+  void convolution_module_2D::resize_output(state_idx *in, state_idx *out) {
+    intg ki = kernel->x.dim(1);
+    intg kj = kernel->x.dim(2);
+    intg sini = in->x.dim(1);
+    intg sinj = in->x.dim(2);
+
+    // check sizes
+    if (((sini - (ki - stridei)) % stridei != 0) || 
+	((sinj - (kj - stridej)) % stridej != 0))
+      ylerror("inconsistent input size, kernel size, and subsampling ratio.");
+    if ((stridei != 1) || (stridej != 1))
+      ylerror("stride > 1 not implemented yet.");
+    // unfolding input for a faster convolution operation
+    Idx<double> uuin(in->x.unfold(1, ki, stridei));
+    uuin = uuin.unfold(2, kj, stridej);
+    // resize output based in input dimensions
+    IdxDim d(in->x.spec); // use same dimensions as in
+    d.setdim(0, thickness); // except for the first one
+    d.setdim(1, uuin.dim(1)); // convolution trims dimensions a bit
+    d.setdim(2, uuin.dim(2)); // convolution trims dimensions a bit
+    out->resize(d);
   }
 
   ////////////////////////////////////////////////////////////////

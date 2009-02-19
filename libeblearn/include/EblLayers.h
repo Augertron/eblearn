@@ -47,8 +47,7 @@ namespace ebl {
   //! a simple fully-connected neural net layer: linear + tanh non-linearity.
   class nn_layer_full: public module_1_1<state_idx, state_idx> {
   public:
-    linear_module_dim0 *linear;  //!< linear module for weight matrix
-    //    linear_module_replicable *linear;  //!< linear module for weight matrix
+    linear_module_replicable *linear;  //!< linear module for weight matrix
     addc_module        *adder;   //!< bias vector
     tanh_module        *sigmoid; //!< the non-linear function
     state_idx          *sum;     //!< weighted sum
@@ -72,7 +71,8 @@ namespace ebl {
   //! a convolution neural net layer: convolution + tanh non-linearity.
   class nn_layer_convolution: public module_1_1<state_idx, state_idx> {
   public:
-    convolution_module_2D *convol;  //!< linear module for weight matrix
+    //!< convolution module
+    convolution_module_2D_replicable *convol;
     addc_module           *adder;   //!< bias vector
     tanh_module           *sigmoid; //!< the non-linear function
     state_idx             *sum;     //!< convolution result
@@ -97,7 +97,7 @@ namespace ebl {
   //! a subsampling neural net layer: subsampling + tanh non-linearity.
   class nn_layer_subsampling: public module_1_1<state_idx, state_idx> {
   public:
-    subsampling_module_2D *subsampler; //!< linear module for weight matrix
+    subsampling_module_2D *subsampler; //!< subsampling module
     addc_module           *adder;      //!< bias vector
     tanh_module           *sigmoid;    //!< the non-linear function
     state_idx             *sum;        //!< subsampling result

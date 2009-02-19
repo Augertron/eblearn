@@ -55,7 +55,7 @@
 // void ylerror(const char *s);
 #define ylerror(s) {						\
     std::cerr << "\033[1;31mException:\033[0m " << s;		\
-    std::cerr << " in " << __FUNCTION__ << " at " << __FILE__;	\
+    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
     std::cerr << ":" << __LINE__ << std::endl;			\
     abort();							\
   }

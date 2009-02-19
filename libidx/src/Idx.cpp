@@ -123,6 +123,8 @@ namespace ebl {
 		       intg s4, intg s5, intg s6, intg s7) {
     intg md = 1;
     try {
+      // resizeing non-contiguous is forbiden to prevent nasty bugs
+      if (!contiguousp()) throw(42);
       if (ndim==0) { throw(0); }  // can't resize Idx0
       if (s7>=0) { 
 	if (ndim<8) throw(8); 
@@ -158,9 +160,16 @@ namespace ebl {
       } else { if (ndim>0) throw(-1); }
     }
     catch(int v) { 
-      fprintf(stderr,"ndim=%d, sizes: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld\n",
-	      ndim,s0,s1,s2,s3,s4,s5,s6,s6);
-      ylerror("IdxSpec::resize: dimensions are incompatible"); }
+      if (v == 42) {
+	ylerror("Resizing non-contiguous Idx is not allowed"); 
+      }
+      else {
+	fprintf(stderr,
+		"ndim=%d, sizes: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld\n",
+		ndim,s0,s1,s2,s3,s4,s5,s6,s6);
+	ylerror("IdxSpec::resize: dimensions are incompatible"); 
+      }
+    }
     return md + offset; // return new footprint
   }
 
@@ -173,6 +182,8 @@ namespace ebl {
   // only already allocated dimensions can be resized 
   // (order is not allowed to change)
   intg IdxSpec::resize1(intg dimn, intg size) {
+    // resizeing non-contiguous is forbiden to prevent nasty bugs
+    if (!contiguousp()) ylerror("Resizing non-contiguous Idx is not allowed"); 
     if ((dimn >= ndim) || (dimn < 0)) 
       ylerror("IdxSpec::resize1: cannot resize an unallocated dimension");
     if (size < 0)

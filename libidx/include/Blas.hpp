@@ -333,7 +333,10 @@ template<class T> void rev_idx2_tr (Idx<T> &m, Idx<T> &n) {
 
 // TODO-0 write specialized blas version in cpp
 template<class T> void idx_m4dotm2(Idx<T> &i1, Idx<T> &i2, Idx<T> &o1) {
-	idx_checkorder3(i1, 4, i2, 2, o1, 2);
+  idx_checkorder3(i1, 4, i2, 2, o1, 2); // check for compatible orders
+  if ((i1.dim(0) != o1.dim(0)) || (i1.dim(1) != o1.dim(1)) 
+      || (i1.dim(2) != i2.dim(0)) || (i1.dim(3) != i2.dim(1)))
+    ylerror("incompatible dimensions");
   T *c1, *c1_2;
   T *c2, *c2_0;
   T *c1_0, *c1_1;
@@ -377,7 +380,10 @@ template<class T> void idx_m4dotm2(Idx<T> &i1, Idx<T> &i2, Idx<T> &o1) {
 
 // TODO-0 write specialized blas version in cpp
 template<class T> void idx_m4dotm2acc(Idx<T> &i1, Idx<T> &i2, Idx<T> &o1) {
-	idx_checkorder3(i1, 4, i2, 2, o1, 2);
+  idx_checkorder3(i1, 4, i2, 2, o1, 2); // check for compatible orders
+  if ((i1.dim(0) != o1.dim(0)) || (i1.dim(1) != o1.dim(1)) 
+      || (i1.dim(2) != i2.dim(0)) || (i1.dim(3) != i2.dim(1)))
+    ylerror("incompatible dimensions");
   T *c1, *c1_2;
   T *c2, *c2_0;
   T *c1_0, *c1_1;

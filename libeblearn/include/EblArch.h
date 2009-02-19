@@ -45,8 +45,9 @@ namespace ebl {
   //! abstract class for a module with one input and one output.
   template<class Tin, class Tout> class module_1_1 {
   public:
-    virtual ~module_1_1() {
-    }
+    bool bResize; // tells module to resize output or not
+    module_1_1() { bResize = true; } // by default, resize output
+    virtual ~module_1_1() {}
     virtual void fprop(Tin *in, Tout *out);
     virtual void bprop(Tin *in, Tout *out);
     virtual void bbprop(Tin *in, Tout *out);
@@ -62,9 +63,7 @@ namespace ebl {
   //! abstract class for a module with two inputs and one output.
   template<class Tin1, class Tin2, class Tout> class module_2_1 {
   public:
-    virtual ~module_2_1() {
-    }
-    ;
+    virtual ~module_2_1() {};
     virtual void fprop(Tin1 *in1, Tin2 *in2, Tout *out);
     virtual void bprop(Tin1 *in1, Tin2 *in2, Tout *out);
     virtual void bbprop(Tin1 *in1, Tin2 *in2, Tout *out);
@@ -241,11 +240,12 @@ namespace ebl {
   class replicable_module : public base_module {			\
   public:								\
     module_1_1_replicable<base_module> rep;				\
-    replicable_module types_arguments : base_module arguments, rep(this) {} \
+    replicable_module types_arguments : base_module arguments, rep(this) { \
+      bResize = false; }						\
     virtual ~replicable_module() {}					\
     virtual void fprop(state_idx *in, state_idx *out) { rep.fprop(in, out); } \
-    virtual void bprop(state_idx *in, state_idx *out) { rep.bprop(in, out); }\
-    virtual void bbprop(state_idx *in, state_idx *out) { rep.bbprop(in, out); }\
+    virtual void bprop(state_idx *in, state_idx *out) { rep.bprop(in, out); } \
+    virtual void bbprop(state_idx *in, state_idx *out){ rep.bbprop(in, out); }\
     }
 
 

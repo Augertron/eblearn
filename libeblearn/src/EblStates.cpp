@@ -265,53 +265,47 @@ namespace ebl {
 
   void state_idx::resize(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
 			 intg s6, intg s7) {
-    x.resize(s0, s1, s2, s3, s4, s5, s6, s7);
-    dx.resize(s0, s1, s2, s3, s4, s5, s6, s7);
-    ddx.resize(s0, s1, s2, s3, s4, s5, s6, s7);
+    if (!x.same_dim(s0, s1, s2, s3, s4, s5, s6, s7)) { // save some time
+      x.resize(s0, s1, s2, s3, s4, s5, s6, s7);
+      dx.resize(s0, s1, s2, s3, s4, s5, s6, s7);
+      ddx.resize(s0, s1, s2, s3, s4, s5, s6, s7);
+    }
   }
 
   void state_idx::resize(const IdxDim &d) {
-    x.resize(d);
-    dx.resize(d);
-    ddx.resize(d);
+    if (!x.same_dim(d)) { // save some time if dimensions are the same
+      x.resize(d);
+      dx.resize(d);
+      ddx.resize(d);
+    }
   }
 
   void state_idx::resize1(intg dimn, intg size) {
-    x.resize1(dimn, size);
-    dx.resize1(dimn, size);
-    ddx.resize1(dimn, size);
+    if (x.dim(dimn) != size) { // save some time if size is already set.
+      x.resize1(dimn, size);
+      dx.resize1(dimn, size);
+      ddx.resize1(dimn, size);
+    }
   }
 
-  void state_idx::resize_as(state_idx& s)
-  {
-    if (x.order() != s.x.order())
-      ylerror("state_idx::resize_as only accepts states with same number of \
-dimensions");
-    intg dims[8] = {-1,-1,-1,-1,-1,-1,-1,-1};
-    memcpy(dims, s.x.dims(), s.x.order() * sizeof (intg));
-    resize(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6],dims[7]);
+  void state_idx::resize_as(state_idx& s) {
+    IdxDim d(s.x.spec); // use same dimensions as s
+    resize(d);
   }
 
-  void state_idx::resize_as_but1(state_idx& s, intg fixed_dim)
-  {
-    if (x.order() != s.x.order())
-      ylerror("state_idx::resize_as_but1 only accepts states with same number \
-of dimensions");
-    intg dims[8] = {-1,-1,-1,-1,-1,-1,-1,-1};
-    memcpy(dims, s.x.dims(), s.x.order() * sizeof (intg));
-    dims[fixed_dim] = x.dim(fixed_dim);
-    resize(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6],dims[7]);
+  void state_idx::resize_as_but1(state_idx& s, intg fixed_dim) {
+    IdxDim d(s.x.spec); // use same dimensions as s
+    d.setdim(fixed_dim, x.dim(fixed_dim));
+    resize(d);
   }
 
-  void state_idx::resize(const intg* dimsBegin, const intg* dimsEnd)
-  {
+  void state_idx::resize(const intg* dimsBegin, const intg* dimsEnd) {
     x.resize(dimsBegin, dimsEnd);
     dx.resize(dimsBegin, dimsEnd);
     ddx.resize(dimsBegin, dimsEnd);
   }
 
-  void state_idx::update_gd(gd_param &arg)
-  {
+  void state_idx::update_gd(gd_param &arg) {
     if (arg.decay_l2 > 0)
       {
 	idx_dotcacc(x, arg.decay_l2, dx);
