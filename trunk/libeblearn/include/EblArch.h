@@ -58,8 +58,6 @@ namespace ebl {
     virtual void resize_output(Tin *in, Tout *out);
   };
 
-  ////////////////////////////////////////////////////////////////
-
   //! abstract class for a module with two inputs and one output.
   template<class Tin1, class Tin2, class Tout> class module_2_1 {
   public:
@@ -76,9 +74,7 @@ namespace ebl {
   //! abstract class for a module with one inputs and one energy output.
   template<class Tin> class ebm_1 {
   public:
-    virtual ~ebm_1() {
-    }
-    ;
+    virtual ~ebm_1() {};
     virtual void fprop(Tin *in, state_idx *energy);
     virtual void bprop(Tin *in, state_idx *energy);
     virtual void bbprop(Tin *in, state_idx *energy);
@@ -91,9 +87,7 @@ namespace ebl {
   //! abstract class for a module with two inputs and one energy output.
   template<class Tin1, class Tin2> class ebm_2 {
   public:
-    virtual ~ebm_2() {
-    }
-    ;
+    virtual ~ebm_2() {};
     //! fprop: compute output from input
     virtual void fprop(Tin1 *i1, Tin2 *i2, state_idx *energy);
     //! bprop: compute gradient wrt inputs, given gradient wrt output
@@ -158,8 +152,6 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-  //
-
   //! standard 1 input EBM with one module-1-1, and one ebm-1 on top.
   //! fc stands for "function+cost".
   template<class Tin, class Thid> class fc_ebm1: public ebm_1<Tin> {
@@ -178,7 +170,6 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-
   //! standard 2 input EBM with one module-1-1, and one ebm-2 on top.
   //! fc stands for "function+cost".
   template<class Tin1, class Tin2, class Thid> 
