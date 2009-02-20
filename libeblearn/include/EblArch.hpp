@@ -33,6 +33,7 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  // module_1_1
 
   template<class Tin, class Tout>
   void module_1_1<Tin,Tout>::fprop(Tin *in, Tout *out) { 
@@ -61,6 +62,7 @@ namespace ebl {
     err_not_implemented(); }
 
   ////////////////////////////////////////////////////////////////
+  // module_2_1
 
   template<class Tin1, class Tin2, class Tout>
   void module_2_1<Tin1,Tin2,Tout>::fprop(Tin1 *in1, Tin2 *in2, Tout *out) { 
@@ -82,6 +84,7 @@ namespace ebl {
   void module_2_1<Tin1,Tin2,Tout>::normalize() { err_not_implemented(); }
 
   ////////////////////////////////////////////////////////////////
+  // ebm_1
 
   template<class Tin>
   void ebm_1<Tin>::fprop(Tin *in, state_idx *energy) { err_not_implemented(); }
@@ -99,6 +102,7 @@ namespace ebl {
   void ebm_1<Tin>::normalize() { err_not_implemented(); }
 
   ////////////////////////////////////////////////////////////////
+  // ebm_2
 
   template<class Tin1, class Tin2>
   void ebm_2<Tin1,Tin2>::fprop(Tin1 *i1, Tin2 *i2, state_idx *energy) { 
@@ -187,13 +191,13 @@ namespace ebl {
   // N layer module
 
   template<class T> layers_n<T>::layers_n() {
-    modules = new  std::vector< module_1_1 <T,T>* >();
+    modules = new std::vector< module_1_1 <T,T>* >();
     hiddens = new std::vector< T* >();
     this->own_contents = true;
   }
 
   template<class T> layers_n<T>::layers_n(bool oc) {
-    modules = new  std::vector< module_1_1 <T,T>* >();
+    modules = new std::vector< module_1_1 <T,T>* >();
     hiddens = new std::vector< T* >();
     this->own_contents = oc;
   }
