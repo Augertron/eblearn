@@ -38,9 +38,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // nn_layer_full
 
-  nn_layer_full::nn_layer_full(parameter *p, state_idx *instate, intg noutputs)
+  nn_layer_full::nn_layer_full(parameter *p, intg indim0, intg noutputs)
   {
-    linear = new linear_module_replicable(p, instate->x.dim(0), noutputs);
+    linear = new linear_module_replicable(p, indim0, noutputs);
     adder = new addc_module(p, noutputs);
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later

@@ -543,28 +543,29 @@ Idx<int> facenet::calc_sizes(int height, int width){
 }
 
 void facenet::show_net(bool kernel, bool prop){
-	if(kernel){
-		ebbox* kernels = new ebbox(0, "kernels");
-		Idx_Gui* c0kernel = new Idx_Gui(&(this->c0_module->convol->kernel->x), DOUBLE, "c0-layer");
-		kernels->add_box( c0kernel);
-		Idx_Gui* c1kernel = new Idx_Gui(&(this->c1_module->convol->kernel->x), DOUBLE, "c1-layer");
-		kernels->add_box( c1kernel);
-		Idx_Gui* c2kernel = new Idx_Gui(&(this->c2_module->convol->kernel->x), DOUBLE, "c2-layer");
-		kernels->add_box( c2kernel);
-		kernels->show();
-	}
-	if(prop){
-		ebbox* eprop = new ebbox(0, "propagation");
-		Idx_Gui* c0prop = new Idx_Gui((void*)&(this->c0_state->x), DOUBLE, "c0-prop");
-		eprop->add_box( c0prop);
-		Idx_Gui* c1prop = new Idx_Gui((void*)&(this->c1_state->x), DOUBLE, "c1-prop");
-		eprop->add_box( c1prop);
-		Idx_Gui* c2prop = new Idx_Gui((void*)&(this->c2_state->x), DOUBLE, "c2-prop");
-		eprop->add_box( c2prop);
-		Idx_Gui* oprop = new Idx_Gui((void*)&(((state_idx*)(outputs.get(0)))->x), DOUBLE, "outputs");
-		eprop->add_box( oprop);
-		eprop->show();
-	}
+// 	if(kernel){
+// 		ebbox* kernels = new ebbox(0, "kernels");
+// 		Idx_Gui* c0kernel = new Idx_Gui(&(this->c0_module->convol->kernel->x), DOUBLE, "c0-layer");
+// 		kernels->add_box( c0kernel);
+// 		Idx_Gui* c1kernel = new Idx_Gui(&(this->c1_module->convol->kernel->x), DOUBLE, "c1-layer");
+// 		kernels->add_box( c1kernel);
+// 		Idx_Gui* c2kernel = new Idx_Gui(&(this->c2_module->convol->kernel->x), DOUBLE, "c2-layer");
+// 		kernels->add_box( c2kernel);
+// 		kernels->show();
+// 	}
+// 	if(prop){
+// 		ebbox* eprop = new ebbox(0, "propagation");
+// 		Idx_Gui* c0prop = new Idx_Gui((void*)&(this->c0_state->x), DOUBLE, "c0-prop");
+// 		eprop->add_box( c0prop);
+// 		Idx_Gui* c1prop = new Idx_Gui((void*)&(this->c1_state->x), DOUBLE, "c1-prop");
+// 		eprop->add_box( c1prop);
+// 		Idx_Gui* c2prop = new Idx_Gui((void*)&(this->c2_state->x), DOUBLE, "c2-prop");
+// 		eprop->add_box( c2prop);
+// 		Idx_Gui* oprop = new Idx_Gui((void*)&(((state_idx*)(outputs.get(0)))->x), DOUBLE, "outputs");
+// 		eprop->add_box( oprop);
+// 		eprop->show();
+// 	}
+  ylerror("not implemented");
 }
 
 

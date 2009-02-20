@@ -55,7 +55,7 @@ public:
 /* * * * * * * * * * *
   * Detector
   * * * * * * * * * * */
-class facenet : public net_cscscf {
+class facenet : public nn_machine_cscscf {
 public:
 	parameter 	*theparam;
 	Idx<intg>   table0, table1, table2;
