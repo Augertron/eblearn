@@ -71,16 +71,15 @@ namespace ebl {
   class net_cscscfe : public module_1_1<state_idx, state_idx>
     {
     public:
-      net_cscscf		*net;
+      nn_machine_cscscf	*net;
       state_idx		*netout;
-      e_layer			*rbf;
+      e_layer		*rbf;
 
       //! makes a new net_cscscfe module.
       //! <n> is a net-cscscf, <e> is an e-dist layer,
       //! <thick> is the number of outputs.
       //! <si>,<sj> are the initial replication factors.
-      net_cscscfe(net_cscscf *n, e_layer *e, int thick, int si, int sj);
-
+      net_cscscfe(nn_machine_cscscf *n, e_layer *e, int thick, int si, int sj);
       virtual ~net_cscscfe();
 
       //! initialize the weights to random values

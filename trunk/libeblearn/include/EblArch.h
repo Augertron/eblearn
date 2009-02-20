@@ -142,6 +142,7 @@ namespace ebl {
     layers_n(bool oc);
     virtual ~layers_n();
     void addModule(module_1_1 <T, T>* module, T* hidden);
+    void addLastModule(module_1_1 <T, T>* module);
     void fprop(T *in, T *out);
     void bprop(T *in, T *out);
     void bbprop(T *in, T *out);

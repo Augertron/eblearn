@@ -116,7 +116,7 @@ void e_layer::bbprop(state_idx *in, state_idx *out)
 
 /////////////////////////////////////////////////////////////////////////////
 
-net_cscscfe::net_cscscfe(net_cscscf *n, e_layer *e, int thick, int si, int sj)
+net_cscscfe::net_cscscfe(nn_machine_cscscf *n, e_layer *e, int thick, int si, int sj)
 {
   net = n;
   netout = new state_idx(thick, si, sj);

@@ -232,6 +232,11 @@ hidden states in layers_n");
   }
 
   template<class T>
+  void layers_n<T>::addLastModule(module_1_1 <T, T>* module) {
+    addModule(module, NULL);
+  }
+
+  template<class T>
   void layers_n<T>::fprop(T* in, T* out){
     if (modules->empty())
       ylerror("trying to fprop through empty layers_n");

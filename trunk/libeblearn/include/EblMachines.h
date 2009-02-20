@@ -46,21 +46,23 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
-  class net_cscscf : public module_1_1<state_idx, state_idx> {
+  class nn_machine_cscscf : public layers_n<state_idx> {
   public:
-    nn_layer_convolution            *c0_module;
-    state_idx                       *c0_state;
-    nn_layer_subsampling            *s0_module;
-    state_idx                       *s0_state;
-    nn_layer_convolution            *c1_module;
-    state_idx                       *c1_state;
-    nn_layer_subsampling            *s1_module;
-    state_idx                       *s1_state;
-    nn_layer_convolution            *c2_module;
-    state_idx                       *c2_state;
-    nn_layer_full 	            *f_module;
+    //! Empty constructor, awaiting for initialization by the user via the 
+    //! init() function.
+    nn_machine_cscscf();
+    //! Complete constructor, calls the init() function.
+    //! See the init() description for complete arguments description.
+    nn_machine_cscscf(parameter *prm, intg ini, intg inj, intg ki0, intg kj0, 
+		      Idx<intg> *tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+		      Idx<intg> *tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+		      Idx<intg> *tbl2, intg outthick);
+    virtual ~nn_machine_cscscf();
 
-    //! makes a new net-cscscf module.
+    //! The init function creates the machine by stacking the modules in this
+    //! order (c-s-c-s-c-f): nn_layer_convolution, nn_layer_subsampling, 
+    //! nn_layer_convolution, nn_layer_subsampling, nn_layer_convolution, 
+    //! nn_layer_full.
     //! <ini> <inj>: expected max size of input for preallocation of internal 
     //! states
     //! <ki0> <kj0>: kernel size for first convolutional layer
@@ -71,28 +73,10 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    net_cscscf() {}
-    net_cscscf(parameter *prm, intg ini, intg inj, 
-	       intg ki0, intg kj0, Idx<intg> *tbl0, intg si0, intg sj0,
-	       intg ki1, intg kj1, Idx<intg> *tbl1, intg si1, intg sj1,
-	       intg ki2, intg kj2, Idx<intg> *tbl2, 
-	       intg outthick);
-    virtual void init(parameter *prm, intg ini, intg inj, 
-		      intg ki0, intg kj0, Idx<intg> *tbl0, intg si0, intg sj0,
-		      intg ki1, intg kj1, Idx<intg> *tbl1, intg si1, intg sj1,
-		      intg ki2, intg kj2, Idx<intg> *tbl2, 
-		      intg outthick);
-	
-    virtual ~net_cscscf();
-	
-    //! initialize the weights to random values
-    void forget(forget_param_linear &fp);
-    //! fprop from in to out
-    virtual void fprop(state_idx *in, state_idx *out);
-    //! bprop
-    virtual void bprop(state_idx *in, state_idx *out);
-    //! bbprop
-    virtual void bbprop(state_idx *in, state_idx *out);
+    void init(parameter *prm, intg ini, intg inj, intg ki0, intg kj0, 
+	      Idx<intg> *tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+	      Idx<intg> *tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+	      Idx<intg> *tbl2, intg outthick);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -120,7 +104,7 @@ namespace ebl {
   //!  (setq p (new idx1-ddparam 0 0.1 0.02 0.02 80000))
   //!  (setq z (new-lenet5 32 32 5 5 2 2 5 5 2 2 120 10 p))
   //! </code>}
-  class lenet5 : public net_cscscf {
+  class lenet5 : public nn_machine_cscscf {
   public:
     Idx<intg> table0;	
     Idx<intg> table1;	
@@ -134,9 +118,8 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-
   //! Lenet7, similar to lenet5 with different neural connections.
-  class lenet7 : public net_cscscf {
+  class lenet7 : public nn_machine_cscscf {
   public:
     Idx<intg> table0;	
     Idx<intg> table1;	
@@ -154,12 +137,13 @@ namespace ebl {
   //! stored in an idx0 of int.
   class idx3_supervised_module {
   public:
-    net_cscscf 		*machine;
+    nn_machine_cscscf	*machine;
     state_idx		*mout;
     edist_cost 		*cost;
     max_classer 	*classifier;
 
-    idx3_supervised_module(net_cscscf *m, edist_cost *c, max_classer *cl);
+    idx3_supervised_module(nn_machine_cscscf *m, edist_cost *c, 
+			   max_classer *cl);
     virtual ~idx3_supervised_module();
 
     void fprop(state_idx *input, class_state *output, 

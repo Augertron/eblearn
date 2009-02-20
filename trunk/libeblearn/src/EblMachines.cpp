@@ -36,23 +36,32 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  
-  net_cscscf::net_cscscf(parameter *prm, intg ini, intg inj,
-			 intg ki0, intg kj0, Idx<intg> *tbl0, 
-			 intg si0, intg sj0,
-			 intg ki1, intg kj1, Idx<intg> *tbl1, 
-			 intg si1, intg sj1,
-			 intg ki2, intg kj2, Idx<intg> *tbl2,
-			 intg outthick) {
+  // nn_machine_cscscf
+
+  // the empty constructor (must call init afterwards)
+  nn_machine_cscscf::nn_machine_cscscf()
+    : layers_n<state_idx>(true) { // owns modules, responsible for deleting it
+  }
+
+  nn_machine_cscscf::nn_machine_cscscf(parameter *prm, intg ini, intg inj,
+				       intg ki0, intg kj0, Idx<intg> *tbl0, 
+				       intg si0, intg sj0,
+				       intg ki1, intg kj1, Idx<intg> *tbl1, 
+				       intg si1, intg sj1,
+				       intg ki2, intg kj2, Idx<intg> *tbl2,
+				       intg outthick)
+    : layers_n<state_idx>(true) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 si1, sj1, ki2, kj2, tbl2, outthick);
   }
+  
+  nn_machine_cscscf::~nn_machine_cscscf() {}
 
-  void net_cscscf::init(parameter *prm, intg ini, intg inj,
-			intg ki0, intg kj0, Idx<intg> *tbl0, intg si0, intg sj0,
-			intg ki1, intg kj1, Idx<intg> *tbl1, intg si1, intg sj1,
-			intg ki2, intg kj2, Idx<intg> *tbl2,
-			intg outthick) {
+  void nn_machine_cscscf::init(parameter *prm, intg ini, intg inj,
+			       intg ki0, intg kj0, Idx<intg> *tbl0, intg si0, 
+			       intg sj0, intg ki1, intg kj1, Idx<intg> *tbl1, 
+			       intg si1, intg sj1, intg ki2, intg kj2, 
+			       Idx<intg> *tbl2, intg outthick) {
     Idx<intg> tblmax = tbl0->select(1, 1);
     intg thick0 = 1 + idx_max(tblmax);
     intg c0_sizi = 1 + ini - ki0;
@@ -70,72 +79,21 @@ namespace ebl {
     intg c2_sizi = 1 + s1_sizi - ki2;
     intg c2_sizj = 1 + s1_sizj - kj2;
 
-    c0_module = new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0, thick0);
-    c0_state  = new state_idx(thick0, c0_sizi, c0_sizj);
-    s0_module = new nn_layer_subsampling(prm, si0, sj0, s0_sizi, s0_sizj, 
-					 thick0);
-    s0_state  = new state_idx(thick0, s0_sizi, s0_sizj);
-    c1_module = new nn_layer_convolution(prm, ki1, kj1, 1, 1, tbl1, thick1);
-    c1_state  = new state_idx(thick1, c1_sizi, c1_sizj);
-    s1_module = new nn_layer_subsampling(prm, si1, sj1, s1_sizi, s1_sizj, 
-					 thick1);
-    s1_state  = new state_idx(thick1, s1_sizi, s1_sizj);
-    c2_module = new nn_layer_convolution(prm, ki2, kj2, 1, 1, tbl2, thick2);
-    c2_state  = new state_idx(thick2, c2_sizi, c2_sizj);
-    f_module  = new nn_layer_full(prm, c2_state, outthick);
-  }
-
-  net_cscscf::~net_cscscf() {
-    delete c0_module;
-    delete c0_state;
-    delete s0_module;
-    delete s0_state;
-    delete c1_module;
-    delete c1_state;
-    delete s1_module;
-    delete s1_state;
-    delete c2_module;
-    delete c2_state;
-    delete f_module;
-  }
-
-  void net_cscscf::forget(forget_param_linear &fp) {
-    c0_module->forget(fp);
-    s0_module->forget(fp);
-    c1_module->forget(fp);
-    s1_module->forget(fp);
-    c2_module->forget(fp);
-    f_module->forget(fp);
-  }
-
-  void net_cscscf::fprop(state_idx *in, state_idx *out) {
-    c0_module->fprop(in, c0_state);
-    s0_module->fprop(c0_state, s0_state);
-    c1_module->fprop(s0_state, c1_state);
-    s1_module->fprop(c1_state, s1_state);
-    c2_module->fprop(s1_state, c2_state);
-    f_module->fprop(c2_state, out);
-  }
-
-  void net_cscscf::bprop(state_idx *in, state_idx *out) {
-    f_module->bprop(c2_state, out);
-    c2_module->bprop(s1_state, c2_state);
-    s1_module->bprop(c1_state, s1_state);
-    c1_module->bprop(s0_state, c1_state);
-    s0_module->bprop(c0_state, s0_state);
-    c0_module->bprop(in, c0_state);
-  }
-
-  void net_cscscf::bbprop(state_idx *in, state_idx *out) {
-    f_module->bbprop(c2_state, out);
-    c2_module->bbprop(s1_state, c2_state);
-    s1_module->bbprop(c1_state, s1_state);
-    c1_module->bbprop(s0_state, c1_state);
-    s0_module->bbprop(c0_state, s0_state);
-    c0_module->bbprop(in, c0_state);
+    addModule(new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0, thick0),
+	      new state_idx(thick0, c0_sizi, c0_sizj));
+    addModule(new nn_layer_subsampling(prm, si0, sj0, s0_sizi, s0_sizj, thick0),
+	      new state_idx(thick0, s0_sizi, s0_sizj));
+    addModule(new nn_layer_convolution(prm, ki1, kj1, 1, 1, tbl1, thick1),
+	      new state_idx(thick1, c1_sizi, c1_sizj));
+    addModule(new nn_layer_subsampling(prm, si1, sj1, s1_sizi, s1_sizj, thick1),
+	      new state_idx(thick1, s1_sizi, s1_sizj));
+    addModule(new nn_layer_convolution(prm, ki2, kj2, 1, 1, tbl2, thick2),
+	      new state_idx(thick2, c2_sizi, c2_sizj));
+    addLastModule(new nn_layer_full(prm, thick2, outthick));
   }
 
   ////////////////////////////////////////////////////////////////
+  // lenet5
 
   lenet5::lenet5(parameter *net_param,
 		 intg image_height, intg image_width,
@@ -180,6 +138,7 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////////////
+  // lenet7
 
   lenet7::lenet7(parameter *net_param,
 		 intg image_height, intg image_width) {
@@ -240,7 +199,8 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////////////
 
-  idx3_supervised_module::idx3_supervised_module(net_cscscf *m, edist_cost *c,
+  idx3_supervised_module::idx3_supervised_module(nn_machine_cscscf *m, 
+						 edist_cost *c,
 						 max_classer *cl) {
     mout = new state_idx(1, 1, 1);
     machine = m;
