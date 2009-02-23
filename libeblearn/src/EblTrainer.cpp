@@ -35,5 +35,41 @@ using namespace std;
 
 namespace ebl {
 
+//   trainer::trainer(trainable_machine<state_idx,state_idx,state_idx> *tm,
+// 		   parameter *p) {
+//     tmachine = tm;
+//     param = p;
+//     input1 = new state_idx(1); // TODO
+//     input2 = new state_idx(1); // TODO
+//   }
+
+//   trainer::~trainer() {
+//     delete input;
+//   }
+  
+//   intg trainer::run(Idx<double> &sample, Idx<double> &energies) {
+//     // input->resize like sample in dim0 // TODO
+//     idx_copy(sample, input->x); // copy sample in input state
+//     tmachine->fprop(input, energies);
+//     // return tmachine->infer2(); // idx-d1indexmin(ener
+//   }
+  
+//   bool trainer::test_sample(Idx<double> &sample, Idx<double> &label) {
+//   }
+
+//   Idx<double> trainer::learn_sample(Idx<double> &sample, Idx<double> &label,
+// 				    gd_param &arg) {
+//     // input->resize like sample in dim0 // TODO
+//     idx_copy(sample, input->x); // copy sample in input state
+//     tmachine->fprop(input, energy);
+//     tmachine->bprop(input, 
+//   }
+
+//   Idx<double> trainer::test(Idx<double> &samples, Idx<double> &labels) {
+//   }
+  
+//   double trainer::train(Idx<double> &samples, Idx<double> &label,
+// 			int niter, gd_param &arg) {
+//   }
 
 } // end namespace ebl

@@ -61,8 +61,8 @@ namespace ebl {
     Idx<double> twx(w->x.transpose(0, 1)); // switch dimensions 0 and 1
     if (outdx.nelements() != w->dx.dim(0)) ylerror("output has wrong size");
 
-    idx_m1extm1(outdx, inx, w->dx); // backprop to weights
-    idx_m2dotm1(twx, outdx, indx); // backprop to input
+    idx_m1extm1acc(outdx, inx, w->dx); // backprop to weights
+    idx_m2dotm1acc(twx, outdx, indx); // backprop to input
   }
 
   void linear_module::bbprop(state_idx *in, state_idx *out) {
@@ -72,8 +72,8 @@ namespace ebl {
     Idx<double> twx = w->x.transpose(0, 1); // switch dimensions 0 and 1
     if (outddx.nelements() != w->ddx.dim(0)) ylerror("output has wrong size");
 
-    idx_m1squextm1(outddx, inx, w->ddx); // backprop to weights
-    idx_m2squdotm1(twx, outddx, inddx); // backprop to input
+    idx_m1squextm1acc(outddx, inx, w->ddx); // backprop to weights
+    idx_m2squdotm1acc(twx, outddx, inddx); // backprop to input
   }
 
   void linear_module::forget(forget_param_linear &fp) {
@@ -81,7 +81,7 @@ namespace ebl {
     double z = fp.value / pow(fanin, fp.exponent);
     check_drand_ini(); // check that the random seed was initialized
     idx_aloop1(lx,w->x,double)
-      {	*lx = drand(z);}
+      {	*lx = drand(-z, z);}
   }
 
   void linear_module::normalize() {

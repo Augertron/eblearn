@@ -236,4 +236,17 @@ namespace ebl {
     machine->bbprop(input, mout);
   }
 
+  ////////////////////////////////////////////////////////////////
+  // euclidean trainable machine
+
+  euclidean_trainable_machine::euclidean_trainable_machine(module_1_1<state_idx,
+							   state_idx> *m)
+    : trainable_machine<state_idx,state_idx,state_idx>(m, 
+						       new euclidean_module) {
+  }
+
+  euclidean_trainable_machine::~euclidean_trainable_machine() {
+    delete cost;
+  }
+
 } // end namespace ebl

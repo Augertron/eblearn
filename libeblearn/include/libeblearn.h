@@ -39,6 +39,7 @@
 #include "Ebl.h"
 #include "EblStates.h"
 #include "EblBasic.h"
+#include "EblCost.h"
 #include "EblLayers.h"
 #include "EblMachines.h"
 #include "EblNonLinearity.h"

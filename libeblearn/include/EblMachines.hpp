@@ -29,26 +29,46 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "EblCost.h"
-
-using namespace std;
-
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // euclidean_module
-  
-  void euclidean_module::fprop(state_idx *in1, state_idx *in2, state_idx *out) {
-    idx_sqrdist(in1->x, in2->x, out->x); // squared distance between in1 and in2
-    idx_dotc(out->x, 0.5, out->x); // multiply by .5
+  ////////////////////////////////////////////////////////////////////////
+  // trainable machine
+
+  template<class Tin1, class Tin2, class Tout>
+  trainable_machine<Tin1, Tin2, Tout>::trainable_machine(module_1_1<Tin1,Tout> 
+							 *machine_,
+							 module_2_1<Tin1,Tin2,
+							 Tout> 
+							 *cost_) {
+    machine = machine_;
+    cost = cost_;
+    mout = new state_idx(1); // TODO
   }
-  
-  void euclidean_module::bprop(state_idx *in1, state_idx *in2, state_idx *out) {
-    idx_checkorder1(out->x, 0); // out->x must have an order of 0
-    idx_sub(in1->x, in2->x, in1->dx); // derivative with respect to in1
-    ylerror("TODO");
-    //    idx_dotc(in1->dx, out->dx, in1->dx); // multiply by energy derivative
-    idx_minus(in1->dx, in2->dx); // derivative with respect to in2
+
+  template<class Tin1, class Tin2, class Tout>
+  trainable_machine<Tin1, Tin2, Tout>::~trainable_machine() {
+    delete mout;
+  }
+
+  template<class Tin1, class Tin2, class Tout>
+  void trainable_machine<Tin1, Tin2, Tout>::fprop(Tin1 *in1, Tin2 *in2, 
+						  Tout *out) {
+    machine->fprop(in1, mout);
+    cost->fprop(mout, in2, out);
+  }
+
+  template<class Tin1, class Tin2, class Tout>
+  void trainable_machine<Tin1, Tin2, Tout>::bprop(Tin1 *in1, Tin2 *in2, 
+						  Tout *out) {
+    cost->bprop(mout, in2, out);
+    machine->bprop(in1, mout);
+  }
+
+  template<class Tin1, class Tin2, class Tout>
+  void trainable_machine<Tin1, Tin2, Tout>::bbprop(Tin1 *in1, Tin2 *in2, 
+						   Tout *out) {
+    cost->bbprop(mout, in2, out);
+    machine->bbprop(in1, mout);
   }
 
 } // end namespace ebl
