@@ -41,11 +41,10 @@ namespace ebl {
   //! 0.5 times the sum of square difference between
   //! the components of the inputs. The two inputs
   //! must be states of the same size.
-  template<state_idx, state_idx, state_idx> 
-    class euclidean_module : public module_2_1 {
+  class euclidean_module : public module_2_1<state_idx,state_idx,state_idx> {
   public:
     euclidean_module() {}
-    virtual ~euclidean_module() {};
+    virtual ~euclidean_module() {}
 
     //! Computes 0.5 times the sum of square difference between
     //! the components of state <input1> and the components of

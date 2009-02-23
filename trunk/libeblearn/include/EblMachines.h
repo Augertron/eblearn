@@ -38,6 +38,7 @@
 #include "Blas.h"
 #include "EblStates.h"
 #include "EblBasic.h"
+#include "EblCost.h"
 #include "EblArch.h"
 #include "EblNonLinearity.h"
 #include "EblLayers.h"
@@ -156,7 +157,36 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  //! trainable machine
+  template<class Tin1, class Tin2, class Tout>
+  class trainable_machine : public module_2_1<Tin1, Tin2, Tout> {
+  public:
+    module_1_1<Tin1,Tout> *machine; // machine
+    module_2_1<Tin1,Tin2,Tout> *cost; // cost function
+    state_idx *mout;
 
+    trainable_machine(module_1_1<Tin1,Tout> *machine_,
+		      module_2_1<Tin1,Tin2,Tout> *cost_);
+    virtual ~trainable_machine();
+    virtual void fprop(Tin1 *in1, Tin2 *in2, Tout *out);
+    virtual void bprop(Tin1 *in1, Tin2 *in2, Tout *out);
+    virtual void bbprop(Tin1 *in1, Tin2 *in2, Tout *out);
+  };
+  
+  ////////////////////////////////////////////////////////////////
+  //! euclidean trainable machine
+  class euclidean_trainable_machine 
+    : public trainable_machine<state_idx,state_idx,state_idx> {
+  public:
+    module_1_1<state_idx,state_idx> *machine; // machine
+    module_2_1<state_idx,state_idx,state_idx> *cost; // cost function
+
+    euclidean_trainable_machine(module_1_1<state_idx,state_idx> *machine_);
+    virtual ~euclidean_trainable_machine();
+  };
+  
 } // namespace ebl {
+
+#include "EblMachines.hpp"
 
 #endif /* EBLMACHINES_H_ */
