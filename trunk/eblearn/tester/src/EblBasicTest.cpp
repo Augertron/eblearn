@@ -23,7 +23,7 @@ void EblBasicTest::test_nn_layer_convolution_fprop() {
   Idx<intg> tableout = table.select(1, 1);
   intg thick = 1 + idx_max(tableout);
   parameter prm(10000);
-  nn_layer_convolution c(&prm, ki, kj, 1, 1, &table, thick);
+  nn_layer_convolution c(prm, ki, kj, 1, 1, &table, thick);
   double fact = 0.05;
 
   (in.x).set(1, 0, 0, 0);
@@ -65,7 +65,7 @@ void EblBasicTest::test_jacobian_nn_layer_convolution() {
   Idx<intg> tableout = table.select(1, 1);
   intg thick = 1 + idx_max(tableout);
   parameter prm(10000);
-  nn_layer_convolution c(&prm, ki, kj, 1, 1, &table, thick);
+  nn_layer_convolution c(prm, ki, kj, 1, 1, &table, thick);
 
   ModuleTester mt;
   Idx<double> errs = mt.test_jacobian(&c, &in, &out);
@@ -78,7 +78,7 @@ void EblBasicTest::test_jacobian_nn_layer_convolution() {
 void EblBasicTest::test_jacobian_nn_layer_subsampling() {
   parameter p(10000);
   int ki = 4, kj = 4, thick = 1, si = 2, sj =2;
-  nn_layer_subsampling s(&p, ki, kj, si, sj, thick);
+  nn_layer_subsampling s(p, ki, kj, si, sj, thick);
   state_idx in(1, 8, 8);
   state_idx out(1, 1, 1);
 

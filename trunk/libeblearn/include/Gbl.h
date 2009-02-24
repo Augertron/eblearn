@@ -36,6 +36,7 @@
 #include "Blas.h"
 #include "EblStates.h"
 #include "Ebl.h"
+#include "EblMachines.h"
 
 namespace ebl {
 
@@ -64,7 +65,7 @@ namespace ebl {
     //! si: initial size in first spatial dimension
     //! sj: initial size in decond spatial dimension
     //! sq: pointer to squashing module
-    f_layer(parameter *p, intg tin, intg tout, intg si, intg sj, 
+    f_layer(parameter &p, intg tin, intg tout, intg si, intg sj, 
 	    module_1_1<state_idx, state_idx> *sq);
     //! fprop from in to out
     void fprop(state_idx *in, state_idx *out);
@@ -114,7 +115,7 @@ namespace ebl {
     //! sj: horizontal size for preallocation of internal state
     //! sqsh: a squashing function module that operates on idx3-state.
     //! prm: an idx1-ddparam from which the parameters will be allocated
-    c_layer(parameter *prm, intg ki, intg kj, intg ri, intg rj, Idx<intg> *tbl,
+    c_layer(parameter &prm, intg ki, intg kj, intg ri, intg rj, Idx<intg> *tbl,
 	    intg thick, intg si, intg sj,
 	    module_1_1<state_idx, state_idx> *sqsh);
     //! set the convolution stride
@@ -151,7 +152,7 @@ namespace ebl {
     //! sj: horizontal size for preallocation of internal state
     //! sqsh: a squashing function module that operates on idx3-state.
     //! prm: an idx1-ddparam from which the parameters will be allocated
-  c_layer_ipp(parameter *prm, intg ki, intg kj, intg ri, intg rj, 
+  c_layer_ipp(parameter &prm, intg ki, intg kj, intg ri, intg rj, 
 	      Idx<intg> *tbl, intg thick, intg si, intg sj, 
 	      module_1_1<state_idx,state_idx> *sqsh)
     : c_layer(prm, ki, kj, ri, rj, tbl, thick, si, sj, sqsh)
@@ -163,13 +164,6 @@ namespace ebl {
   };
 
 #endif
-
-  ////////////////////////////////////////////////////////////////
-
-  //! Creates a table of full connections between layers.
-  //! An Idx<intg> is allocated and returned. The caller is responsible
-  //! for deleting this Idx.
-  Idx<intg> full_table(intg a, intg b);
 
   ////////////////////////////////////////////////////////////////
 
@@ -192,7 +186,7 @@ namespace ebl {
     //! <si>  vertical size for preallocation of internal state
     //! <sj>  horizontal size for preallocation of internal state
     //! <sqsh> pointer to a squashing function module that operates
-    s_layer(parameter *p, intg ki, intg kj, intg thick, intg si, intg sj,
+    s_layer(parameter &p, intg ki, intg kj, intg thick, intg si, intg sj,
 	    module_1_1<state_idx, state_idx> *sqsh);
     virtual ~s_layer();
     void fprop(state_idx *in, state_idx *out);
@@ -388,6 +382,32 @@ namespace ebl {
     ;
 
     void fprop(state_idx *in, class_state *out);
+  };
+
+  ////////////////////////////////////////////////////////////////
+
+  //! a module that takes an idx3 as input, runs it through
+  //! a machine, and runs the output of the machine through
+  //! a cost function whose second output is the desired label
+  //! stored in an idx0 of int.
+  class idx3_supervised_module {
+  public:
+    nn_machine_cscscf	*machine;
+    state_idx		*mout;
+    edist_cost 		*cost;
+    max_classer 	*classifier;
+
+    idx3_supervised_module(nn_machine_cscscf *m, edist_cost *c, 
+			   max_classer *cl);
+    virtual ~idx3_supervised_module();
+
+    void fprop(state_idx *input, class_state *output, 
+	       Idx<ubyte> *desired, state_idx *energy);
+    void use(state_idx *input, class_state *output);
+    void bprop(state_idx *input, class_state *output, 
+	       Idx<ubyte> *desired, state_idx *energy);
+    void bbprop(state_idx *input, class_state *output, 
+  		Idx<ubyte> *desired, state_idx *energy);
   };
 
 } // namespace ebl {

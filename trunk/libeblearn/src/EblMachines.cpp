@@ -43,7 +43,7 @@ namespace ebl {
     : layers_n<state_idx>(true) { // owns modules, responsible for deleting it
   }
 
-  nn_machine_cscscf::nn_machine_cscscf(parameter *prm, intg ini, intg inj,
+  nn_machine_cscscf::nn_machine_cscscf(parameter &prm, intg ini, intg inj,
 				       intg ki0, intg kj0, Idx<intg> *tbl0, 
 				       intg si0, intg sj0,
 				       intg ki1, intg kj1, Idx<intg> *tbl1, 
@@ -57,7 +57,7 @@ namespace ebl {
   
   nn_machine_cscscf::~nn_machine_cscscf() {}
 
-  void nn_machine_cscscf::init(parameter *prm, intg ini, intg inj,
+  void nn_machine_cscscf::init(parameter &prm, intg ini, intg inj,
 			       intg ki0, intg kj0, Idx<intg> *tbl0, intg si0, 
 			       intg sj0, intg ki1, intg kj1, Idx<intg> *tbl1, 
 			       intg si1, intg sj1, intg ki2, intg kj2, 
@@ -93,10 +93,25 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // helper function
+  
+  Idx<intg> full_table(intg a, intg b) {
+    Idx<intg> m(a * b, 2);
+    intg p = 0;
+    for (intg j = 0; j < b; ++j) {
+      for (intg i = 0; i < a; ++i) {
+	m.set(i, p, 0);
+	m.set(j, p, 1);
+	p++;
+      }
+    }
+    return m;
+  }
+
+  ////////////////////////////////////////////////////////////////
   // lenet5
 
-  lenet5::lenet5(parameter *net_param,
-		 intg image_height, intg image_width,
+  lenet5::lenet5(parameter &prm, intg image_height, intg image_width,
 		 intg ki0, intg kj0, intg si0, intg sj0,
 		 intg ki1, intg kj1, intg si1, intg sj1,
 		 intg hid, intg output_size) {
@@ -131,17 +146,14 @@ namespace ebl {
     intg ki2 = (((image_height - ki0 + 1) / si0) - ki1 + 1) / si1;
     intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
 
-    this->init(net_param, image_height, image_width,
-	       ki0, kj0, &table0, si0, sj0,
-	       ki1, kj1, &table1, si1, sj1,
-	       ki2, kj2, &table2, output_size);
+    this->init(prm, image_height, image_width, ki0, kj0, &table0, si0, sj0,
+	       ki1, kj1, &table1, si1, sj1, ki2, kj2, &table2, output_size);
   }
 
   ////////////////////////////////////////////////////////////////////////
   // lenet7
 
-  lenet7::lenet7(parameter *net_param,
-		 intg image_height, intg image_width) {
+  lenet7::lenet7(parameter &prm, intg image_height, intg image_width) {
     intg ki0 = 5, kj0 = 5;
     intg si0 = 4, sj0 = 4;
     intg ki1 = 6, kj1 = 6;
@@ -191,62 +203,20 @@ namespace ebl {
     intg ki2 = (((image_height - ki0 + 1) / si0) - ki1 + 1) / si1;
     intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
 
-    this->init(net_param, image_height, image_width,
-	       ki0, kj0, &table0, si0, sj0,
-	       ki1, kj1, &table1, si1, sj1,
-	       ki2, kj2, &table2, output_size);
-  }
-
-  ////////////////////////////////////////////////////////////////////////
-
-  idx3_supervised_module::idx3_supervised_module(nn_machine_cscscf *m, 
-						 edist_cost *c,
-						 max_classer *cl) {
-    mout = new state_idx(1, 1, 1);
-    machine = m;
-    cost = c;
-    classifier = cl;
-  }
-
-  idx3_supervised_module::~idx3_supervised_module() {
-    delete mout;
-  }
-
-  void idx3_supervised_module::fprop(state_idx *input, class_state *output,
-				     Idx<ubyte> *desired, state_idx *energy) {
-    machine->fprop(input, mout);
-    classifier->fprop(mout, output);
-    cost->fprop(mout, desired, energy);
-  }
-
-  void idx3_supervised_module::use(state_idx *input, class_state *output) {
-    machine->fprop(input, mout);
-    classifier->fprop(mout, output);
-  }
-
-  void idx3_supervised_module::bprop(state_idx *input, class_state *output,
-				     Idx<ubyte> *desired, state_idx *energy) {
-    cost->bprop(mout, desired, energy);
-    machine->bprop(input, mout);
-  }
-
-  void idx3_supervised_module::bbprop(state_idx *input, class_state *output,
-				      Idx<ubyte> *desired, state_idx *energy) {
-    cost->bbprop(mout, desired, energy);
-    machine->bbprop(input, mout);
+    this->init(prm, image_height, image_width, ki0, kj0, &table0, si0, sj0,
+	       ki1, kj1, &table1, si1, sj1, ki2, kj2, &table2, output_size);
   }
 
   ////////////////////////////////////////////////////////////////
   // euclidean trainable machine
 
   euclidean_trainable_machine::euclidean_trainable_machine(module_1_1<state_idx,
-							   state_idx> *m)
-    : trainable_machine<state_idx,state_idx,state_idx>(m, 
-						       new euclidean_module) {
+							   state_idx> &m,
+							   Idx<double> &t)
+    : trainable_machine<state_idx,state_idx,state_idx>(m, cost), cost(t) {
   }
 
   euclidean_trainable_machine::~euclidean_trainable_machine() {
-    delete cost;
   }
 
 } // end namespace ebl

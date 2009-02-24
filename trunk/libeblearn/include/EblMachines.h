@@ -33,7 +33,6 @@
 #define EBLMACHINES_H_
 
 #include "Defines.h"
-#include "Gbl.h"
 #include "Idx.h"
 #include "Blas.h"
 #include "EblStates.h"
@@ -54,7 +53,7 @@ namespace ebl {
     nn_machine_cscscf();
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    nn_machine_cscscf(parameter *prm, intg ini, intg inj, intg ki0, intg kj0, 
+    nn_machine_cscscf(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
 		      Idx<intg> *tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		      Idx<intg> *tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 		      Idx<intg> *tbl2, intg outthick);
@@ -74,11 +73,19 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter *prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      Idx<intg> *tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      Idx<intg> *tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      Idx<intg> *tbl2, intg outthick);
   };
+
+  ////////////////////////////////////////////////////////////////
+  // helper functions
+
+  //! Creates a table of full connections between layers.
+  //! An Idx<intg> is allocated and returned. The caller is responsible
+  //! for deleting this Idx.
+  Idx<intg> full_table(intg a, intg b);
 
   ////////////////////////////////////////////////////////////////
   //! create a new instance of net-cscscf implementing a LeNet-5 type
@@ -111,7 +118,7 @@ namespace ebl {
     Idx<intg> table1;	
     Idx<intg> table2;	
 		
-    lenet5(parameter *net_param, intg image_height, intg image_width,
+    lenet5(parameter &prm, intg image_height, intg image_width,
 	   intg ki0, intg kj0, intg si0, intg sj0,
 	   intg ki1, intg kj1, intg si1, intg sj1,
 	   intg hid, intg output_size);
@@ -126,34 +133,8 @@ namespace ebl {
     Idx<intg> table1;	
     Idx<intg> table2;	
 		
-    lenet7(parameter *net_param, intg image_height, intg image_width);
+    lenet7(parameter &prm, intg image_height, intg image_width);
     virtual ~lenet7() {}
-  };
-
-  ////////////////////////////////////////////////////////////////
-
-  //! a module that takes an idx3 as input, runs it through
-  //! a machine, and runs the output of the machine through
-  //! a cost function whose second output is the desired label
-  //! stored in an idx0 of int.
-  class idx3_supervised_module {
-  public:
-    nn_machine_cscscf	*machine;
-    state_idx		*mout;
-    edist_cost 		*cost;
-    max_classer 	*classifier;
-
-    idx3_supervised_module(nn_machine_cscscf *m, edist_cost *c, 
-			   max_classer *cl);
-    virtual ~idx3_supervised_module();
-
-    void fprop(state_idx *input, class_state *output, 
-	       Idx<ubyte> *desired, state_idx *energy);
-    void use(state_idx *input, class_state *output);
-    void bprop(state_idx *input, class_state *output, 
-	       Idx<ubyte> *desired, state_idx *energy);
-    void bbprop(state_idx *input, class_state *output, 
-  		Idx<ubyte> *desired, state_idx *energy);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -161,12 +142,12 @@ namespace ebl {
   template<class Tin1, class Tin2, class Tout>
   class trainable_machine : public module_2_1<Tin1, Tin2, Tout> {
   public:
-    module_1_1<Tin1,Tout> *machine; // machine
-    module_2_1<Tin1,Tin2,Tout> *cost; // cost function
+    module_1_1<Tin1,Tout> &machine; // machine
+    module_2_1<Tin1,Tin2,Tout> &cost; // cost function
     state_idx *mout;
 
-    trainable_machine(module_1_1<Tin1,Tout> *machine_,
-		      module_2_1<Tin1,Tin2,Tout> *cost_);
+    trainable_machine(module_1_1<Tin1,Tout> &machine_,
+		      module_2_1<Tin1,Tin2,Tout> &cost_);
     virtual ~trainable_machine();
     virtual void fprop(Tin1 *in1, Tin2 *in2, Tout *out);
     virtual void bprop(Tin1 *in1, Tin2 *in2, Tout *out);
@@ -178,10 +159,9 @@ namespace ebl {
   class euclidean_trainable_machine 
     : public trainable_machine<state_idx,state_idx,state_idx> {
   public:
-    module_1_1<state_idx,state_idx> *machine; // machine
-    module_2_1<state_idx,state_idx,state_idx> *cost; // cost function
-
-    euclidean_trainable_machine(module_1_1<state_idx,state_idx> *machine_);
+    euclidean_module cost; // euclidean cost function
+    euclidean_trainable_machine(module_1_1<state_idx,state_idx> &machine_,
+				Idx<double> &targets);
     virtual ~euclidean_trainable_machine();
   };
   

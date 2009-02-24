@@ -647,49 +647,60 @@ template<typename T> void idx_m2squdotm2acc(Idx<T>& i1, Idx<T>& i2, Idx<T>& o) {
 	*d1 = f;
 }
 
-// Fu Jie Huang, May 20, 2008
-template<typename T>
-void idx_m2oversample(Idx<T>& small, intg nlin, intg ncol, Idx<T>& big)
-{
-	Idx<T> uin  = big.unfold(0, nlin, nlin);
-	Idx<T> uuin = uin.unfold(1, ncol, ncol);
-	idx_eloop1(z1, uuin, T) {
-		idx_eloop1( z2, z1, T) {
-			idx_copy(small, z2);
-		}
+  // Fu Jie Huang, May 20, 2008
+  template<typename T>
+  void idx_m2oversample(Idx<T>& small, intg nlin, intg ncol, Idx<T>& big)
+  {
+    Idx<T> uin  = big.unfold(0, nlin, nlin);
+    Idx<T> uuin = uin.unfold(1, ncol, ncol);
+    idx_eloop1(z1, uuin, T) {
+      idx_eloop1( z2, z1, T) {
+	idx_copy(small, z2);
+      }
+    }
+  }
+
+  template <class T> T idx_max(Idx<T> &m) {
+    T v = *(m.idx_ptr());
+    { idx_aloop1(i, m, T) {
+	if (*i > v) v = *i;
+      }}
+    return v;
+  }
+
+  template <class T> T idx_min(Idx<T> &m) {
+    T v = *(m.idx_ptr());
+    { idx_aloop1(i, m, T) {
+	if (*i < v) v = *i;
+      }}
+    return v;
+  }
+
+  template<class T> intg idx_indexmax(Idx<T> &m) {
+    intg i = 0, imax = 0;
+    T v = *(m.idx_ptr());
+    { idx_aloop1(me, m, T) {
+	if (*me > v) {
+	  v = *me;
+	  imax = i;
 	}
-}
-
-template <class T> T idx_max(Idx<T> &m) {
-  T v = *(m.idx_ptr());
-  { idx_aloop1(i, m, T) {
-	  if (*i > v) v = *i;
-    }
+	i++;
+      }}
+    return imax;
   }
-  return v;
-}
 
-template <class T> T idx_min(Idx<T> &m) {
-  T v = *(m.idx_ptr());
-  { idx_aloop1(i, m, T) {
-	  if (*i < v) v = *i;
-    }
+  template<class T> intg idx_indexmin(Idx<T> &m) {
+    intg i = 0, imin = 0;
+    T v = *(m.idx_ptr());
+    { idx_aloop1(me, m, T) {
+	if (*me < v) {
+	  v = *me;
+	  imin = i;
+	}
+	i++;
+      }}
+    return imin;
   }
-  return v;
-}
-
-template<class T> intg idx_indexmax(Idx<T> &m) {
-	intg i = 0, imax = 0;
-	T v = *(m.idx_ptr());
-	{ idx_aloop1(me, m, T) {
-		if (*me > v) {
-			v = *me;
-			imax = i;
-		}
-		i++;
-	}}
-	return imax;
-}
 
 template<class T1, class T2> void idx_sortdown(Idx<T1> &m, Idx<T2> &p) {
 	idx_checkorder2(m, 1, p, 1);

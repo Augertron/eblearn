@@ -70,8 +70,8 @@ void NetTest::test_lenet5_mnist_ebl() {
   }
 
   parameter theparam(60000); // create trainable parameter
-  lenet5 l5(&theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10); // the network
-  euclidean_trainable_machine etm(&l5); // create an euclidean-trainable machine
+  lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10); // the network
+  euclidean_trainable_machine etm(l5, targets); // create an euclidean-trainable machine
 //   trainer t(etm); // create the trainer
 
 //     //edist_cost cost(&labels, 1, 1, &targets);
@@ -194,7 +194,7 @@ void NetTest::test_lenet5_mnist() {
   parameter theparam(60000);
 
   // create the network
-  lenet5 l5(&theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10);
+  lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10);
   edist_cost cost(&labels, 1, 1, &targets);
   max_classer c(&labels);
   idx3_supervised_module thenet(&l5, &cost, &c); 

@@ -38,7 +38,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  f_layer::f_layer(parameter *p, intg tin, intg tout, intg si, intg sj,
+  f_layer::f_layer(parameter &p, intg tin, intg tout, intg si, intg sj,
 		   module_1_1<state_idx,state_idx> *sq)
   {
     weight = new state_idx(p, tout, tin);
@@ -158,7 +158,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  c_layer::c_layer(parameter *p, intg ki, intg kj, intg ri, intg rj, 
+  c_layer::c_layer(parameter &p, intg ki, intg kj, intg ri, intg rj, 
 		   Idx<intg> *tbl, intg thick, intg si, intg sj, 
 		   module_1_1<state_idx,state_idx> *sqsh)
   {
@@ -375,24 +375,9 @@ namespace ebl {
 
 #endif
 
-  ////////////////////////////////////////////////////////////////
-
-  Idx<intg> full_table(intg a, intg b) {
-    Idx<intg> m(a * b, 2);
-    intg p = 0;
-    for (intg j = 0; j < b; ++j) {
-      for (intg i = 0; i < a; ++i) {
-	m.set(i, p, 0);
-	m.set(j, p, 1);
-	p++;
-      }
-    }
-    return m;
-  }
-
   ////////////////////////////////////////////////////////////////////////
 
-  s_layer::s_layer(parameter *p, intg ki, intg kj, intg thick, intg si, intg sj,
+  s_layer::s_layer(parameter &p, intg ki, intg kj, intg thick, intg si, intg sj,
 		   module_1_1<state_idx, state_idx> *sqsh) :
     stridei(ki), stridej(kj), squash(sqsh)
   {
@@ -805,6 +790,45 @@ rejects=%3.2f%%\n",
     idx_sortdown(*(out->sorted_scores), *(out->sorted_classes));
     out->output_class = out->sorted_classes->get(0);
     out->confidence = out->sorted_scores->get(0);
+  }
+
+  ////////////////////////////////////////////////////////////////////////
+
+  idx3_supervised_module::idx3_supervised_module(nn_machine_cscscf *m, 
+						 edist_cost *c,
+						 max_classer *cl) {
+    mout = new state_idx(1, 1, 1);
+    machine = m;
+    cost = c;
+    classifier = cl;
+  }
+
+  idx3_supervised_module::~idx3_supervised_module() {
+    delete mout;
+  }
+
+  void idx3_supervised_module::fprop(state_idx *input, class_state *output,
+				     Idx<ubyte> *desired, state_idx *energy) {
+    machine->fprop(input, mout);
+    classifier->fprop(mout, output);
+    cost->fprop(mout, desired, energy);
+  }
+
+  void idx3_supervised_module::use(state_idx *input, class_state *output) {
+    machine->fprop(input, mout);
+    classifier->fprop(mout, output);
+  }
+
+  void idx3_supervised_module::bprop(state_idx *input, class_state *output,
+				     Idx<ubyte> *desired, state_idx *energy) {
+    cost->bprop(mout, desired, energy);
+    machine->bprop(input, mout);
+  }
+
+  void idx3_supervised_module::bbprop(state_idx *input, class_state *output,
+				      Idx<ubyte> *desired, state_idx *energy) {
+    cost->bbprop(mout, desired, energy);
+    machine->bbprop(input, mout);
   }
 
 } // end namespace ebl

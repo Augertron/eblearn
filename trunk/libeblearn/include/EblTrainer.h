@@ -41,55 +41,55 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // trainer
 
-/*   class trainer { */
-/*   public: */
-/*     trainable_machine<state_idx,state_idx,state_idx>	*tmachine; */
-/*     parameter					        *param; */
-/*     Idx<double> *input; */
+  class trainer {
+  public:
+    trainable_machine<state_idx,state_idx,state_idx>	&tmachine;
+    parameter					        &param;
+    Idx<double> *input;
     
-/*     trainer(trainable_machine<state_idx,state_idx,state_idx> *tm, parameter *p); */
-/*     virtual ~trainer(); */
+    trainer(trainable_machine<state_idx,state_idx,state_idx> &tm, parameter &p);
+    virtual ~trainer();
 
-/*     //! take an input and a vector of possible labels (each of which */
-/*     //! is a vector, hence <label-set> is a matrix) and */
-/*     //! return the index of the label that minimizes the energy */
-/*     //! fill up the vector <energies> with the energy produced by each */
-/*     //! possible label. The first dimension of <label-set> must be equal */
-/*     //! to the dimension of <energies>. */
-/*     intg run(Idx<double> sample, Idx<double> &energies); */
+    //! take an input and a vector of possible labels (each of which
+    //! is a vector, hence <label-set> is a matrix) and
+    //! return the index of the label that minimizes the energy
+    //! fill up the vector <energies> with the energy produced by each
+    //! possible label. The first dimension of <label-set> must be equal
+    //! to the dimension of <energies>.
+    intg run(Idx<double> &sample, Idx<double> &energies);
 
-/*     //! Test a single sample and its label <label> (an integer), and */
-/*     //! return a list with the energy for the correct label and an */
-/*     //! integer which is equal to 1 if the sample was incorrectly classified */
-/*     //! and 0 if it was correctly classified. */
-/*     //! <label-set> is a matrix where the i-th row is the desired output */
-/*     //! for the i-th category. */
-/*     bool test_sample(Idx<double> &sample, Idx<double> &label); */
+    //! Test a single sample and its label <label> (an integer), and
+    //! return a list with the energy for the correct label and an
+    //! integer which is equal to 1 if the sample was incorrectly classified
+    //! and 0 if it was correctly classified.
+    //! <label-set> is a matrix where the i-th row is the desired output
+    //! for the i-th category.
+    bool test_sample(Idx<double> &sample, Idx<double> &label);
 
-/*     //! perform a learning update on one sample. <sample> is the input */
-/*     //! sample, <label> is the desired category (an integer), <label-set> is */
-/*     //! a matrix where  the i-th row is the desired output */
-/*     //! for the i-th category, and <update-args> is a list of arguments */
-/*     //! for the parameter update method (e.g. learning rate and weight decay). */
-/*     Idx<double> learn_sample(Idx<double> &sample, Idx<double> &label, */
-/* 			     gd_param &arg); */
+    //! perform a learning update on one sample. <sample> is the input
+    //! sample, <label> is the desired category (an integer), <label-set> is
+    //! a matrix where  the i-th row is the desired output
+    //! for the i-th category, and <update-args> is a list of arguments
+    //! for the parameter update method (e.g. learning rate and weight decay).
+    Idx<double> learn_sample(Idx<double> &sample, Idx<double> &label,
+			     gd_param &arg);
 
-/*     //! Measure the average energy and classification error rate */
-/*     //! on a dataset. <samples> is a matrix that contains the */
-/*     //! training samples, <labels> contains the desired categories, */
-/*     //! and <label-set> is a matrix whose rows are */
-/*     //! the desired output for each category. This */
-/*     //! returns a list with average loss and proportion of errors */
-/*     Idx<double>	test(Idx<double> &samples, Idx<double> &labels); */
+    //! Measure the average energy and classification error rate
+    //! on a dataset. <samples> is a matrix that contains the
+    //! training samples, <labels> contains the desired categories,
+    //! and <label-set> is a matrix whose rows are
+    //! the desired output for each category. This
+    //! returns a list with average loss and proportion of errors
+    Idx<double>	test(Idx<double> &samples, Idx<double> &labels);
 
-/*     //! train for <niter> sweeps over the training set. <samples> contains the */
-/*     //! inputs samples, and <labels> the corresponding desired categories */
-/*     //! <labels>. */
-/*     //! return the average energy computed on-the-fly. */
-/*     //! <update-args> is a list of arguments for the parameter */
-/*     //! update method (e.g. learning rate and weight decay). */
-/*     double train(Idx<double> &samples, Idx<double> &label, */
-/* 		 int niter, gd_param &arg); */
+    //! train for <niter> sweeps over the training set. <samples> contains the
+    //! inputs samples, and <labels> the corresponding desired categories
+    //! <labels>.
+    //! return the average energy computed on-the-fly.
+    //! <update-args> is a list of arguments for the parameter
+    //! update method (e.g. learning rate and weight decay).
+    double train(Idx<double> &samples, Idx<double> &label,
+		 int niter, gd_param &arg);
   };
 
 } // namespace ebl {

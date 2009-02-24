@@ -54,7 +54,7 @@ namespace ebl {
     //! \param p is used to store all parametric variables in a single place.
     //! \param in the size of the input to the linear combination.
     //! \param out the size of the output to the linear combination.
-    linear_module(parameter *p, intg in, intg out);
+    linear_module(parameter &p, intg in, intg out);
     //! 
     virtual ~linear_module();
     //! forward propagation from in to out
@@ -83,7 +83,7 @@ namespace ebl {
   //! the output of the processing of each <42> slice.
   DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable, 
 				linear_module,
-				(parameter *p, intg in, intg out),
+				(parameter &p, intg in, intg out),
 				(p, in, out));
 
   ////////////////////////////////////////////////////////////////
@@ -103,7 +103,7 @@ namespace ebl {
     
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
-    convolution_module_2D(parameter *p, intg kerneli, intg kernelj, 
+    convolution_module_2D(parameter &p, intg kerneli, intg kernelj, 
 			  intg  stridei, intg stridej, 
 			  Idx<intg> *table, intg thick);
     virtual ~convolution_module_2D();
@@ -131,7 +131,7 @@ namespace ebl {
   //! the output of the processing of each <2x16x16> slice.
   DECLARE_REPLICABLE_MODULE_1_1(convolution_module_2D_replicable, 
 				convolution_module_2D,
-				(parameter *p, intg ki, intg kj, intg si, 
+				(parameter &p, intg ki, intg kj, intg si, 
 				 intg sj, Idx<intg> *table, intg thick),
 				(p, ki, kj, si, sj, table, thick));
 
@@ -152,7 +152,7 @@ namespace ebl {
     
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
-    subsampling_module_2D(parameter *p, intg stridei_, intg stridej_,
+    subsampling_module_2D(parameter &p, intg stridei_, intg stridej_,
 			  intg subi, intg subj, intg thick);
     virtual ~subsampling_module_2D();
     //! forward propagation from in to out
@@ -179,7 +179,7 @@ namespace ebl {
   //! the output of the processing of each <2x16x16> slice.
   DECLARE_REPLICABLE_MODULE_1_1(subsampling_module_2D_replicable, 
 				subsampling_module_2D,
-				(parameter *p, intg sti, intg stj, intg subi, 
+				(parameter &p, intg sti, intg stj, intg subi, 
 				 intg subj, intg thick),
 				(p, sti, stj, subi, subj, thick));
 
@@ -197,7 +197,7 @@ namespace ebl {
     //! \param p is used to store all parametric variables in a single place.
     //! \param size is the number of biases, or the size of dimensions 0 of 
     //! inputs and outputs.
-    addc_module(parameter *p, intg size);
+    addc_module(parameter &p, intg size);
     virtual ~addc_module();
     //! forward propagation from in to out
     virtual void fprop(state_idx *in, state_idx *out);

@@ -39,7 +39,7 @@ e_layer::~e_layer(void)
 {
 }
 
-e_layer::e_layer(parameter *prm, intg tin, intg tout)
+e_layer::e_layer(parameter &prm, intg tin, intg tout)
 {
   weight = new state_idx(prm, tout, tin);
 }

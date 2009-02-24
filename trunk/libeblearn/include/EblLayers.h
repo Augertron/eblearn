@@ -55,7 +55,7 @@ namespace ebl {
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
-    nn_layer_full(parameter *p, intg indim0, intg noutputs);
+    nn_layer_full(parameter &p, intg indim0, intg noutputs);
     virtual ~nn_layer_full();
     //! fprop from in to out
     void fprop(state_idx *in, state_idx *out);
@@ -80,7 +80,7 @@ namespace ebl {
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
-    nn_layer_convolution(parameter *p, intg kerneli, intg kernelj, 
+    nn_layer_convolution(parameter &p, intg kerneli, intg kernelj, 
 			 intg ri, intg rj, Idx<intg> *tbl, intg thick);
     virtual ~nn_layer_convolution();
     //! fprop from in to out
@@ -105,7 +105,7 @@ namespace ebl {
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
-    nn_layer_subsampling(parameter *p, intg stridei, intg stridej,
+    nn_layer_subsampling(parameter &p, intg stridei, intg stridej,
 					     intg subi, intg subj, 
 					     intg thick);
     virtual ~nn_layer_subsampling();

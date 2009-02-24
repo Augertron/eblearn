@@ -38,7 +38,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // nn_layer_full
 
-  nn_layer_full::nn_layer_full(parameter *p, intg indim0, intg noutputs)
+  nn_layer_full::nn_layer_full(parameter &p, intg indim0, intg noutputs)
   {
     linear = new linear_module_replicable(p, indim0, noutputs);
     adder = new addc_module(p, noutputs);
@@ -94,7 +94,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // nn_layer_convolution
 
-  nn_layer_convolution::nn_layer_convolution(parameter *p, 
+  nn_layer_convolution::nn_layer_convolution(parameter &p, 
 					     intg kerneli, intg kernelj, 
 					     intg ri, intg rj, 
 					     Idx<intg> *tbl, intg thick)
@@ -152,7 +152,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // nn_layer_subsampling
 
-  nn_layer_subsampling::nn_layer_subsampling(parameter *p,
+  nn_layer_subsampling::nn_layer_subsampling(parameter &p,
 					     intg stridei, intg stridej,
 					     intg subi, intg subj, 
 					     intg thick)

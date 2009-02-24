@@ -146,68 +146,68 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // constructors from specific dimensions using a parameter
 
-  state_idx::state_idx(parameter *st) :
-    x(st->x.getstorage(), st->x.footprint()), 
-    dx(st->dx.getstorage(), st->dx.footprint()), 
-    ddx(st->ddx.getstorage(), st->ddx.footprint())
+  state_idx::state_idx(parameter &st) :
+    x(st.x.getstorage(), st.x.footprint()), 
+    dx(st.dx.getstorage(), st.dx.footprint()), 
+    ddx(st.ddx.getstorage(), st.ddx.footprint())
   {
-    st->resize(st->footprint() + nelements());
+    st.resize(st.footprint() + nelements());
     clear();
     clear_dx();
     clear_ddx();
   }
 
-  state_idx::state_idx(parameter *st, intg s0) :
-    x(st->x.getstorage(), st->x.footprint(), s0), 
-    dx(st->dx.getstorage(), st->dx.footprint(), s0), 
-    ddx(st->ddx.getstorage(), st->ddx.footprint(), s0)
+  state_idx::state_idx(parameter &st, intg s0) :
+    x(st.x.getstorage(), st.x.footprint(), s0), 
+    dx(st.dx.getstorage(), st.dx.footprint(), s0), 
+    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0)
   {
-    st->resize(st->footprint() + nelements());
+    st.resize(st.footprint() + nelements());
     clear();
     clear_dx();
     clear_ddx();
   }
 
-  state_idx::state_idx(parameter *st, intg s0, intg s1) :
-    x(st->x.getstorage(), st->x.footprint(), s0, s1), 
-    dx(st->dx.getstorage(), st->dx.footprint(), s0, s1), 
-    ddx(st->ddx.getstorage(), st->ddx.footprint(), s0, s1)
+  state_idx::state_idx(parameter &st, intg s0, intg s1) :
+    x(st.x.getstorage(), st.x.footprint(), s0, s1), 
+    dx(st.dx.getstorage(), st.dx.footprint(), s0, s1), 
+    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0, s1)
   {
-    st->resize(st->footprint() + nelements());
+    st.resize(st.footprint() + nelements());
     clear();
     clear_dx();
     clear_ddx();
   }
 
-  state_idx::state_idx(parameter *st, intg s0, intg s1, intg s2) :
-    x(st->x.getstorage(), st->x.footprint(), s0, s1, s2), 
-    dx(st->dx.getstorage(), st->dx.footprint(), s0, s1, s2), 
-    ddx(st->ddx.getstorage(), st->ddx.footprint(), s0, s1, s2)
+  state_idx::state_idx(parameter &st, intg s0, intg s1, intg s2) :
+    x(st.x.getstorage(), st.x.footprint(), s0, s1, s2), 
+    dx(st.dx.getstorage(), st.dx.footprint(), s0, s1, s2), 
+    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0, s1, s2)
   {
-    st->resize(st->footprint() + nelements());
+    st.resize(st.footprint() + nelements());
     clear();
     clear_dx();
     clear_ddx();
   }
 
-  state_idx::state_idx(parameter *st, intg s0, intg s1, intg s2, intg s3,
+  state_idx::state_idx(parameter &st, intg s0, intg s1, intg s2, intg s3,
 		       intg s4, intg s5, intg s6, intg s7) :
-    x(st->x.getstorage(), st->x.footprint(), s0, s1, s2, s3, s4, s5, s6, s7),
-    dx(st->dx.getstorage(), st->dx.footprint(), s0, s1, s2, s3, s4, s5, s6,s7), 
-    ddx(st->ddx.getstorage(), st->ddx.footprint(), 
+    x(st.x.getstorage(), st.x.footprint(), s0, s1, s2, s3, s4, s5, s6, s7),
+    dx(st.dx.getstorage(), st.dx.footprint(), s0, s1, s2, s3, s4, s5, s6,s7), 
+    ddx(st.ddx.getstorage(), st.ddx.footprint(), 
 	s0, s1, s2, s3, s4, s5, s6, s7)
   {
-    st->resize(st->footprint() + nelements());
+    st.resize(st.footprint() + nelements());
     clear();
     clear_dx();
     clear_ddx();
   }
 
-  state_idx::state_idx(parameter *st, const IdxDim &d) 
-    : x(st->x.getstorage(), st->x.footprint(), d), 
-      dx(st->x.getstorage(), st->x.footprint(), d),
-      ddx(st->x.getstorage(), st->x.footprint(), d) {
-    st->resize(st->footprint() + nelements());
+  state_idx::state_idx(parameter &st, const IdxDim &d) 
+    : x(st.x.getstorage(), st.x.footprint(), d), 
+      dx(st.x.getstorage(), st.x.footprint(), d),
+      ddx(st.x.getstorage(), st.x.footprint(), d) {
+    st.resize(st.footprint() + nelements());
     clear();
     clear_dx();
     clear_ddx();

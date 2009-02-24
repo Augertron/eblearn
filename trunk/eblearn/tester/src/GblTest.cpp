@@ -24,7 +24,7 @@ void GblTest::test_clayer_fprop() {
   intg thick = 1 + idx_max(tableout);
   stdsigmoid_module sqsh;
   parameter prm(10000);
-  c_layer c(&prm, ki, kj, 1, 1, &table, thick, si, sj, &sqsh);
+  c_layer c(prm, ki, kj, 1, 1, &table, thick, si, sj, &sqsh);
   double fact = 0.05;
 
   (in.x).set(1, 0, 0, 0);

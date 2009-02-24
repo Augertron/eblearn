@@ -42,7 +42,7 @@ namespace ebl {
 			     Idx<const char*> &lbls,
 			     double b, double c, int h, int w) {
     theparam = new parameter(60000);
-    thenet = new lenet7(theparam, 96, 96);
+    thenet = new lenet7(*theparam, 96, 96);
     theparam->load(paramfile);
     height = h;
     width = w;
