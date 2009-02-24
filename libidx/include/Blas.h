@@ -282,6 +282,9 @@ namespace ebl {
   //! returns index of largest element of m.
   template<class T> intg idx_indexmax(Idx<T> &m);
 
+  //! returns index of smallest element of m.
+  template<class T> intg idx_indexmin(Idx<T> &m);
+
   ////////////////////////////////////////////////////////////////
   // sort functions
 

@@ -56,7 +56,7 @@ namespace ebl {
       //! new e-layer (Eucliden distance RBF). <tin> is the
       //! thickness of the input layer, <tout> is the thickness 
       //! of the output layer, <prm> is the parameter.
-      e_layer(parameter *prm, intg tin, intg tout);	
+      e_layer(parameter &prm, intg tin, intg tout);	
       //! fprop from in to out
       void fprop(state_idx *in, state_idx *out);
       //! bprop

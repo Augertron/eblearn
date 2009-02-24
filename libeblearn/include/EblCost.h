@@ -37,19 +37,35 @@
 
 namespace ebl {
 
+  //! cost module base class
+  class cost_module : public module_2_1<state_idx,state_idx,state_idx> {
+  public:
+    Idx<double> &targets;
+    state_idx in2;
+    state_idx out;
+
+    cost_module(Idx<double> &targets_);
+    virtual ~cost_module();
+
+    virtual void fprop(state_idx *in1, int label, state_idx *out) = 0;
+    virtual void fprop_energies(state_idx *in1, Idx<double> &energies);
+    virtual void bprop(state_idx *in1, state_idx *in2, state_idx *out) = 0;
+    virtual int infer2(Idx<double> &energies);
+  };
+
   //! A module with 2 inputs that computes
   //! 0.5 times the sum of square difference between
   //! the components of the inputs. The two inputs
   //! must be states of the same size.
-  class euclidean_module : public module_2_1<state_idx,state_idx,state_idx> {
+  class euclidean_module : public cost_module {
   public:
-    euclidean_module() {}
-    virtual ~euclidean_module() {}
+    euclidean_module(Idx<double> &targets_);
+    virtual ~euclidean_module();
 
     //! Computes 0.5 times the sum of square difference between
     //! the components of state <input1> and the components of
     //! state <input2>. Write the result into 0-dimensional state <output>.
-    virtual void fprop(state_idx *in1, state_idx *in2, state_idx *out);
+    virtual void fprop(state_idx *in1, int label, state_idx *out);
 
     //! Back-propagates gradients through <euclidean-module>.
     //! This multiplies the gradient of some function with respect

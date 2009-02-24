@@ -151,13 +151,13 @@ namespace ebl {
     //! state_idx passed as argument. This is useful for
     //! allocating multiple state_idx inside a parameter.
     //! This replaces the Lush function alloc_state_idx.
-    state_idx(parameter *st);
-    state_idx(parameter *st, intg s0);
-    state_idx(parameter *st, intg s0, intg s1);
-    state_idx(parameter *st, intg s0, intg s1, intg s2);
-    state_idx(parameter *st, intg s0, intg s1, intg s2, intg s3, intg s4 = -1,
+    state_idx(parameter &st);
+    state_idx(parameter &st, intg s0);
+    state_idx(parameter &st, intg s0, intg s1);
+    state_idx(parameter &st, intg s0, intg s1, intg s2);
+    state_idx(parameter &st, intg s0, intg s1, intg s2, intg s3, intg s4 = -1,
 	      intg s5 = -1, intg s6 = -1, intg s7 = -1);
-    state_idx(parameter *st, const IdxDim &d);
+    state_idx(parameter &st, const IdxDim &d);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from other state_idx

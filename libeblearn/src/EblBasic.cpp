@@ -38,7 +38,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // linear_module
 
-  linear_module::linear_module(parameter *p, intg in, intg out) {
+  linear_module::linear_module(parameter &p, intg in, intg out) {
     w = new state_idx(p, out, in);
   }
 
@@ -98,7 +98,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // convolution_module_2D
 
-  convolution_module_2D::convolution_module_2D(parameter *p, 
+  convolution_module_2D::convolution_module_2D(parameter &p, 
 					       intg kerneli, intg kernelj, 
 					       intg ri, intg rj, 
 					       Idx<intg> *tbl, intg thick) {
@@ -218,7 +218,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // subsampling_module_2D
 
-  subsampling_module_2D::subsampling_module_2D(parameter *p, 
+  subsampling_module_2D::subsampling_module_2D(parameter &p, 
 					       intg stridei_, intg stridej_,
 					       intg subi, intg subj, 
 					       intg thick) {
@@ -302,7 +302,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // addc_module
 
-  addc_module::addc_module(parameter *p, intg size) {
+  addc_module::addc_module(parameter &p, intg size) {
     bias = new state_idx(p,size);
   }
 
