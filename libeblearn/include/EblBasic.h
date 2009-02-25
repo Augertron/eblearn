@@ -48,7 +48,7 @@ namespace ebl {
   //! use the replicable version of this module: linear_module_replicable.
   class linear_module: public module_1_1<state_idx, state_idx> {
   public:
-    state_idx *w;
+    state_idx w;
 
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
@@ -58,11 +58,11 @@ namespace ebl {
     //! 
     virtual ~linear_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx *in, state_idx *out);
+    virtual void fprop(state_idx &in, state_idx &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx *in, state_idx *out);
+    virtual void bprop(state_idx &in, state_idx &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx *in, state_idx *out);
+    virtual void bbprop(state_idx &in, state_idx &out);
     //! order of operation
     virtual int replicable_order() { return 1; }
     //! forgetting weights by replacing with random values
@@ -70,7 +70,7 @@ namespace ebl {
     //! normalize
     virtual void normalize();
     //! resize the output based on input dimensions
-    virtual void resize_output(state_idx *in, state_idx *out);
+    virtual void resize_output(state_idx &in, state_idx &out);
   };
 
   //! The replicable version of linear_module.
@@ -95,30 +95,30 @@ namespace ebl {
   //! convolution_module_2D_replicable.
   class convolution_module_2D: public module_1_1<state_idx, state_idx> {
   public:
-    state_idx	*kernel;
+    state_idx	 kernel;
     intg	 thickness;
     intg	 stridei;
     intg	 stridej;
-    Idx<intg>	*table; //!< the table of connections between input and output
+    Idx<intg>	&table;	//!< the table of connections between input and output
     
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     convolution_module_2D(parameter &p, intg kerneli, intg kernelj, 
 			  intg  stridei, intg stridej, 
-			  Idx<intg> *table, intg thick);
+			  Idx<intg> &table, intg thick);
     virtual ~convolution_module_2D();
     //! forward propagation from in to out
-    virtual void fprop(state_idx *in, state_idx *out);
+    virtual void fprop(state_idx &in, state_idx &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx *in, state_idx *out);
+    virtual void bprop(state_idx &in, state_idx &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx *in, state_idx *out);
+    virtual void bbprop(state_idx &in, state_idx &out);
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! order of operation
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
-    virtual void resize_output(state_idx *in, state_idx *out);
+    virtual void resize_output(state_idx &in, state_idx &out);
   };
 
   //! The replicable version of convolution_module_2D.
@@ -132,7 +132,7 @@ namespace ebl {
   DECLARE_REPLICABLE_MODULE_1_1(convolution_module_2D_replicable, 
 				convolution_module_2D,
 				(parameter &p, intg ki, intg kj, intg si, 
-				 intg sj, Idx<intg> *table, intg thick),
+				 intg sj, Idx<intg> &table, intg thick),
 				(p, ki, kj, si, sj, table, thick));
 
   ////////////////////////////////////////////////////////////////
@@ -144,8 +144,8 @@ namespace ebl {
   //! subsampling_module_2D_replicable.
   class subsampling_module_2D: public module_1_1<state_idx, state_idx> {
   public:
-    state_idx	*coeff;
-    state_idx	*sub;
+    state_idx	 coeff;
+    state_idx	 sub;
     intg	 thickness;
     intg	 stridei;
     intg	 stridej;
@@ -156,17 +156,17 @@ namespace ebl {
 			  intg subi, intg subj, intg thick);
     virtual ~subsampling_module_2D();
     //! forward propagation from in to out
-    virtual void fprop(state_idx *in, state_idx *out);
+    virtual void fprop(state_idx &in, state_idx &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx *in, state_idx *out);
+    virtual void bprop(state_idx &in, state_idx &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx *in, state_idx *out);
+    virtual void bbprop(state_idx &in, state_idx &out);
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! order of operation
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
-    virtual void resize_output(state_idx *in, state_idx *out);
+    virtual void resize_output(state_idx &in, state_idx &out);
   };
 
   //! The replicable version of subsampling_module_2D.
@@ -191,7 +191,7 @@ namespace ebl {
   //! to all elements).
   class addc_module: public module_1_1<state_idx, state_idx> {
   public:
-    state_idx* bias; //!< the biases
+    state_idx  bias; //!< the biases
 
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
@@ -200,11 +200,11 @@ namespace ebl {
     addc_module(parameter &p, intg size);
     virtual ~addc_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx *in, state_idx *out);
+    virtual void fprop(state_idx &in, state_idx &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx *in, state_idx *out);
+    virtual void bprop(state_idx &in, state_idx &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx *in, state_idx *out);
+    virtual void bbprop(state_idx &in, state_idx &out);
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! normalizing

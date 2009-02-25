@@ -36,50 +36,28 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // cost_module
-  
-  cost_module::cost_module(Idx<double> &targets_)
-    : targets(targets_), in2(1), out(1) {
-  }
-
-  cost_module::~cost_module() {
-  }
-
-  void cost_module::fprop_energies(state_idx *in1, Idx<double> &energies) {
-    int label = 0;
-    idx_bloop1(e, energies, double) {
-      fprop(in1, label++, &out);
-      idx_copy(out.x, e);
-    }
-  }
-
-  int cost_module::infer2(Idx<double> &energies) {
-    return idx_indexmin(energies);
-  }
-
-  ////////////////////////////////////////////////////////////////
   // euclidean_module
   
   euclidean_module::euclidean_module(Idx<double> &targets_)
-    : cost_module(targets_) {
+    : cost_module<state_idx,int,state_idx>(targets_) {
   }
 
   euclidean_module::~euclidean_module() {
   }
 
-  void euclidean_module::fprop(state_idx *in1, int label, state_idx *out) {
+  void euclidean_module::fprop(state_idx &in1, int &label, state_idx &out) {
     Idx<double> target = targets.select(0, label);
     idx_copy(target, in2.x);
     // squared distance between in1 and target
-    idx_sqrdist(in1->x, in2.x, out->x);
-    idx_dotc(out->x, 0.5, out->x); // multiply by .5
+    idx_sqrdist(in1.x, in2.x, out.x);
+    idx_dotc(out.x, 0.5, out.x); // multiply by .5
   }
   
-  void euclidean_module::bprop(state_idx *in1, state_idx *in2, state_idx *out) {
-    idx_checkorder1(out->x, 0); // out->x must have an order of 0
-    idx_sub(in1->x, in2->x, in1->dx); // derivative with respect to in1
-    idx_dotc(in1->dx, out->dx.get(), in1->dx); // multiply by energy derivative
-    idx_minus(in1->dx, in2->dx); // derivative with respect to in2
+  void euclidean_module::bprop(state_idx &in1, int &label, state_idx &out) {
+    idx_checkorder1(out.x, 0); // out.x must have an order of 0
+    idx_sub(in1.x, in2.x, in1.dx); // derivative with respect to in1
+    idx_dotc(in1.dx, out.dx.get(), in1.dx); // multiply by energy derivative
+    idx_minus(in1.dx, in2.dx); // derivative with respect to in2
   }
 
 } // end namespace ebl

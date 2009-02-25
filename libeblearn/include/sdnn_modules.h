@@ -104,15 +104,15 @@ namespace ebl {
   class sdnn_module
   {
   public:
-    net_cscscfe				*machine;
+    net_cscscfe				&machine;
     state_idx				*mout;
-    sdnn_classer			*classifier;
+    sdnn_classer			&classifier;
 
-    sdnn_module(net_cscscfe *m, sdnn_classer *cl);
+    sdnn_module(net_cscscfe &m, sdnn_classer &cl);
 
     virtual ~sdnn_module();
 
-    void fprop(state_idx *input, sdnnclass_state *output);
+    void fprop(state_idx &input, sdnnclass_state &output);
   };
 
 

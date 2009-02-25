@@ -1299,7 +1299,7 @@ layers_2_GUI::layers_2_GUI(layers_2<state_idx, state_idx, state_idx>* layer2, st
 	{
 		add_box(new state_Idx_Gui(in, "in", this, mutex));
 		add_box(new module_1_1_GUI("layer 1", this, mutex));
-		add_box(new state_Idx_Gui(layer2->hidden, "hidden", this, mutex));
+		add_box(new state_Idx_Gui(&layer2->hidden, "hidden", this, mutex));
 		add_box(new module_1_1_GUI("layer 2", this, mutex));
 		add_box(new state_Idx_Gui(out, "out", this, mutex));
 	}
@@ -1309,7 +1309,7 @@ layers_2_GUI::layers_2_GUI(layers_2<state_idx, state_idx, state_idx>* layer2, co
 	layer2(layer2)
 	{
 		add_box(new module_1_1_GUI("layer 1", this, mutex));
-		add_box(new state_Idx_Gui(layer2->hidden, "hidden", this, mutex));
+		add_box(new state_Idx_Gui(&layer2->hidden, "hidden", this, mutex));
 		add_box(new module_1_1_GUI("layer 2", this, mutex));
 	}
 
@@ -1322,7 +1322,7 @@ fc_ebm1_GUI::fc_ebm1_GUI(fc_ebm1<state_idx, state_idx>* ebm1, state_idx* in, sta
 	{
 		add_box(new state_Idx_Gui(in, "in", this, mutex));
 		add_box(new module_1_1_GUI("layer 1", this, mutex));
-		add_box(new state_Idx_Gui(ebm1->fout, "out", this, mutex));
+		add_box(new state_Idx_Gui(&ebm1->fout, "out", this, mutex));
 		add_box(new module_1_1_GUI("layer 2", this, mutex));
 		add_box(new state_Idx_Gui(energy, "energy", this, mutex));
 	}
@@ -1332,7 +1332,7 @@ fc_ebm1_GUI::fc_ebm1_GUI(fc_ebm1<state_idx, state_idx>* ebm1,const char* title, 
 	ebm1(ebm1)
 	{
 		add_box(new module_1_1_GUI("layer 1", this, mutex));
-		add_box(new state_Idx_Gui(ebm1->fout, "out", this, mutex));
+		add_box(new state_Idx_Gui(&ebm1->fout, "out", this, mutex));
 		add_box(new module_1_1_GUI("layer 2", this, mutex));
 	}
 
@@ -1347,7 +1347,7 @@ fc_ebm2_GUI::fc_ebm2_GUI(fc_ebm2<state_idx, state_idx, state_idx>* ebm2, state_i
 		add_box(new state_Idx_Gui(in1, "in1", this, mutex));
 		add_box(new state_Idx_Gui(in2, "in2", this, mutex));
 		add_box(new module_1_1_GUI("layer 1", this, mutex));
-		add_box(new state_Idx_Gui(ebm2->fout, "out", this, mutex));
+		add_box(new state_Idx_Gui(&ebm2->fout, "out", this, mutex));
 		add_box(new module_1_1_GUI("layer 2", this, mutex));
 		add_box(new state_Idx_Gui(energy, "energy", this, mutex));
 	}
@@ -1357,7 +1357,7 @@ fc_ebm2_GUI::fc_ebm2_GUI(fc_ebm2<state_idx, state_idx, state_idx>* ebm2, const c
 	ebm2(ebm2)
 	{
 		add_box(new module_1_1_GUI("layer 1", this, mutex));
-		add_box(new state_Idx_Gui(ebm2->fout, "out", this, mutex));
+		add_box(new state_Idx_Gui(&ebm2->fout, "out", this, mutex));
 		add_box(new module_1_1_GUI("layer 2", this, mutex));
 	}
 
@@ -1366,14 +1366,14 @@ linear_module_GUI::linear_module_GUI(linear_module* module, state_idx *in, state
 	module_1_1_GUI(in, out, title, parent, mutex),
 	module(module)
 	{
-		add_box(new state_Idx_Gui(module->w, "w", this, mutex));
+		add_box(new state_Idx_Gui(&module->w, "w", this, mutex));
 	}
 
 linear_module_GUI::linear_module_GUI(linear_module* module, const char* title, QWidget *parent, QMutex* mutex):
 	module_1_1_GUI(title, parent, mutex),
 	module(module)
 	{
-		add_box(new state_Idx_Gui(module->w, "w", this, mutex));
+		add_box(new state_Idx_Gui(&module->w, "w", this, mutex));
 	}
 
 /* * * * * * * * * * * * * * * * * * * * * * */
@@ -1381,9 +1381,9 @@ nn_layer_full_GUI::nn_layer_full_GUI(nn_layer_full* layer, state_idx *in, state_
 	module_1_1_GUI(in, out, title, parent, mutex),
 	layer(layer)
 	{
-	  add_box(new linear_module_GUI(layer->linear, 
+	  add_box(new linear_module_GUI(&layer->linear, 
 					"linear module", this, mutex));
-		add_box(new state_Idx_Gui(layer->adder->bias, "bias", this, mutex));
+		add_box(new state_Idx_Gui(&layer->adder.bias, "bias", this, mutex));
 		add_box(new state_Idx_Gui(layer->sum, "sum", this, mutex));
 		add_box(new module_1_1_GUI("sigmoid", this, mutex));
 	}
@@ -1392,9 +1392,9 @@ nn_layer_full_GUI::nn_layer_full_GUI(nn_layer_full* layer, const char* title, QW
 	module_1_1_GUI(title, parent, mutex),
 	layer(layer)
 	{
-	  add_box(new linear_module_GUI(layer->linear,
+	  add_box(new linear_module_GUI(&layer->linear,
 					"linear module", this, mutex));
-		add_box(new state_Idx_Gui(layer->adder->bias, "bias", this, mutex));
+		add_box(new state_Idx_Gui(&layer->adder.bias, "bias", this, mutex));
 		add_box(new state_Idx_Gui(layer->sum, "sum", this, mutex));
 		add_box(new module_1_1_GUI("sigmoid", this, mutex));
 	}

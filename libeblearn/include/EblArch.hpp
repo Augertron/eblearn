@@ -36,15 +36,15 @@ namespace ebl {
   // module_1_1
 
   template<class Tin, class Tout>
-  void module_1_1<Tin,Tout>::fprop(Tin *in, Tout *out) { 
+  void module_1_1<Tin,Tout>::fprop(Tin &in, Tout &out) { 
     err_not_implemented(); }
 
   template<class Tin, class Tout>
-  void module_1_1<Tin,Tout>::bprop(Tin *in, Tout *out) { 
+  void module_1_1<Tin,Tout>::bprop(Tin &in, Tout &out) { 
     err_not_implemented(); }
 
   template<class Tin, class Tout>
-  void module_1_1<Tin,Tout>::bbprop(Tin *in, Tout *out) { 
+  void module_1_1<Tin,Tout>::bbprop(Tin &in, Tout &out) { 
     err_not_implemented(); }
 
   template<class Tin, class Tout>
@@ -58,22 +58,22 @@ namespace ebl {
   int module_1_1<Tin,Tout>::replicable_order() { return -1; }
 
   template<class Tin, class Tout>
-  void module_1_1<Tin,Tout>::resize_output(Tin *in, Tout *out) { 
+  void module_1_1<Tin,Tout>::resize_output(Tin &in, Tout &out) { 
     err_not_implemented(); }
 
   ////////////////////////////////////////////////////////////////
   // module_2_1
 
   template<class Tin1, class Tin2, class Tout>
-  void module_2_1<Tin1,Tin2,Tout>::fprop(Tin1 *in1, Tin2 *in2, Tout *out) { 
+  void module_2_1<Tin1,Tin2,Tout>::fprop(Tin1 &in1, Tin2 &in2, Tout &out) { 
     err_not_implemented(); }
 
   template<class Tin1, class Tin2, class Tout>
-  void module_2_1<Tin1,Tin2,Tout>::bprop(Tin1 *in1, Tin2 *in2, Tout *out) { 
+  void module_2_1<Tin1,Tin2,Tout>::bprop(Tin1 &in1, Tin2 &in2, Tout &out) { 
     err_not_implemented(); }
 
   template<class Tin1, class Tin2, class Tout>
-  void module_2_1<Tin1,Tin2,Tout>::bbprop(Tin1 *in1, Tin2 *in2, Tout *out) { 
+  void module_2_1<Tin1,Tin2,Tout>::bbprop(Tin1 &in1, Tin2 &in2, Tout &out) { 
     err_not_implemented(); }
 
   template<class Tin1, class Tin2, class Tout>
@@ -87,13 +87,13 @@ namespace ebl {
   // ebm_1
 
   template<class Tin>
-  void ebm_1<Tin>::fprop(Tin *in, state_idx *energy) { err_not_implemented(); }
+  void ebm_1<Tin>::fprop(Tin &in, state_idx &energy) { err_not_implemented(); }
 
   template<class Tin>
-  void ebm_1<Tin>::bprop(Tin *in, state_idx *energy) { err_not_implemented(); }
+  void ebm_1<Tin>::bprop(Tin &in, state_idx &energy) { err_not_implemented(); }
 
   template<class Tin>
-  void ebm_1<Tin>::bbprop(Tin *in, state_idx *energy) { err_not_implemented(); }
+  void ebm_1<Tin>::bbprop(Tin &in, state_idx &energy) { err_not_implemented(); }
 
   template<class Tin>
   void ebm_1<Tin>::forget(forget_param &fp) { err_not_implemented(); }
@@ -105,31 +105,31 @@ namespace ebl {
   // ebm_2
 
   template<class Tin1, class Tin2>
-  void ebm_2<Tin1,Tin2>::fprop(Tin1 *i1, Tin2 *i2, state_idx *energy) { 
+  void ebm_2<Tin1,Tin2>::fprop(Tin1 &i1, Tin2 &i2, state_idx &energy) { 
     err_not_implemented(); }
 
   template<class Tin1, class Tin2>
-  void ebm_2<Tin1,Tin2>::bprop(Tin1 *i1, Tin2 *i2, state_idx *energy) { 
+  void ebm_2<Tin1,Tin2>::bprop(Tin1 &i1, Tin2 &i2, state_idx &energy) { 
     err_not_implemented(); }
 
   template<class Tin1, class Tin2>
-  void ebm_2<Tin1,Tin2>::bbprop(Tin1 *i1, Tin2 *i2, state_idx *energy) { 
+  void ebm_2<Tin1,Tin2>::bbprop(Tin1 &i1, Tin2 &i2, state_idx &energy) { 
     err_not_implemented(); }
 
   template<class Tin1, class Tin2>
-  void ebm_2<Tin1,Tin2>::bprop1_copy(Tin1 *i1, Tin2 *i2, state_idx *energy) { 
+  void ebm_2<Tin1,Tin2>::bprop1_copy(Tin1 &i1, Tin2 &i2, state_idx &energy) { 
     err_not_implemented(); }
 
   template<class Tin1, class Tin2>
-  void ebm_2<Tin1,Tin2>::bprop2_copy(Tin1 *i1, Tin2 *i2, state_idx *energy) { 
+  void ebm_2<Tin1,Tin2>::bprop2_copy(Tin1 &i1, Tin2 &i2, state_idx &energy) { 
     err_not_implemented(); }
 
   template<class Tin1, class Tin2>
-  void ebm_2<Tin1,Tin2>::bbprop1_copy(Tin1 *i1, Tin2 *i2, state_idx *energy) { 
+  void ebm_2<Tin1,Tin2>::bbprop1_copy(Tin1 &i1, Tin2 &i2, state_idx &energy) { 
     err_not_implemented(); }
 
   template<class Tin1, class Tin2>
-  void ebm_2<Tin1,Tin2>::bbprop2_copy(Tin1 *i1, Tin2 *i2, state_idx *energy) { 
+  void ebm_2<Tin1,Tin2>::bbprop2_copy(Tin1 &i1, Tin2 &i2, state_idx &energy) { 
     err_not_implemented(); }
 
   template<class Tin1, class Tin2>
@@ -143,11 +143,9 @@ namespace ebl {
   // two layer module
 
   template<class Tin, class Thid, class Tout>
-  layers_2<Tin,Thid,Tout>::layers_2(module_1_1<Tin,Thid> *l1, Thid *h,
-				    module_1_1<Thid,Tout> *l2) {
-    layer1 = l1;
-    hidden = h;
-    layer2 = l2;
+  layers_2<Tin,Thid,Tout>::layers_2(module_1_1<Tin,Thid> &l1, Thid &h,
+				    module_1_1<Thid,Tout> &l2)
+    : layer1(l1), hidden(h), layer2(l2) {
   }
 
   // Do nothing. Module doesn't have ownership of sub-modules
@@ -155,35 +153,35 @@ namespace ebl {
   layers_2<Tin,Thid,Tout>::~layers_2() { }
 
   template<class Tin, class Thid, class Tout>
-  void layers_2<Tin,Thid,Tout>::fprop(Tin *in, Tout *out) {
-    layer1->fprop(in, hidden);
-    layer2->fprop(hidden, out);
+  void layers_2<Tin,Thid,Tout>::fprop(Tin &in, Tout &out) {
+    layer1.fprop(in, hidden);
+    layer2.fprop(hidden, out);
   }
 
   template<class Tin, class Thid, class Tout>
-  void layers_2<Tin,Thid,Tout>::bprop(Tin *in, Tout *out) {
-    hidden->clear_dx();
-    layer2->bprop(hidden, out);
-    layer1->bprop(in, hidden);
+  void layers_2<Tin,Thid,Tout>::bprop(Tin &in, Tout &out) {
+    hidden.clear_dx();
+    layer2.bprop(hidden, out);
+    layer1.bprop(in, hidden);
   }
 
   template<class Tin, class Thid, class Tout>
-  void layers_2<Tin,Thid,Tout>::bbprop(Tin *in, Tout *out) {
-    hidden->clear_ddx();
-    layer2->bbprop(hidden, out);
-    layer1->bbprop(in, hidden);
+  void layers_2<Tin,Thid,Tout>::bbprop(Tin &in, Tout &out) {
+    hidden.clear_ddx();
+    layer2.bbprop(hidden, out);
+    layer1.bbprop(in, hidden);
   }
 
   template<class Tin, class Thid, class Tout>
   void layers_2<Tin,Thid,Tout>::forget(forget_param &fp) {
-    layer1->forget(fp);
-    layer2->forget(fp);
+    layer1.forget(fp);
+    layer2.forget(fp);
   }
 
   template<class Tin, class Thid, class Tout>
   void layers_2<Tin,Thid,Tout>::normalize() {
-    layer1->normalize();
-    layer2->normalize();
+    layer1.normalize();
+    layer2.normalize();
   }
 
 
@@ -237,25 +235,25 @@ hidden states in layers_n");
   }
 
   template<class T>
-  void layers_n<T>::fprop(T* in, T* out){
+  void layers_n<T>::fprop(T& in, T& out){
     if (modules->empty())
       ylerror("trying to fprop through empty layers_n");
 
-    T* hi = in;
-    T* ho = in;
+    T* hi = &in;
+    T* ho = &in;
 
     // last will be manual
     int niter = modules->size()-1;
     for(int i=0; i<niter; i++){
       ho = (*hiddens)[i];
-      (*modules)[i]->fprop(hi,ho);
+      (*modules)[i]->fprop(*hi,*ho);
       hi = ho;
     }
-    (*modules)[niter]->fprop(ho,out);
+    (*modules)[niter]->fprop(*ho,out);
   }
 
   template<class T>
-  void layers_n<T>::bprop(T* in, T* out){
+  void layers_n<T>::bprop(T& in, T& out){
     if (modules->empty())
       ylerror("trying to bprop through empty layers_n");
 
@@ -263,21 +261,21 @@ hidden states in layers_n");
     for (unsigned int i=0; i<hiddens->size(); i++){
       (*hiddens)[i]->clear_dx();
     }
-    T* hi = out;
-    T* ho = out;
+    T* hi = &out;
+    T* ho = &out;
 
     // last will be manual
     int niter = modules->size()-1;
     for(int i=niter; i>0; i--){
       hi = (*hiddens)[i-1];
-      (*modules)[i]->bprop(hi,ho);
+      (*modules)[i]->bprop(*hi,*ho);
       ho = hi;
     }
-    (*modules)[0]->bprop(in,ho);
+    (*modules)[0]->bprop(in,*ho);
   }
 
   template<class T>
-  void layers_n<T>::bbprop(T* in, T* out){
+  void layers_n<T>::bbprop(T& in, T& out){
     if (modules->empty())
       ylerror("trying to bbprop through empty layers_n");
 
@@ -286,17 +284,17 @@ hidden states in layers_n");
       (*hiddens)[i]->clear_ddx();
     }
 
-    T* hi = out;
-    T* ho = out;
+    T* hi = &out;
+    T* ho = &out;
 
     // last will be manual
     int niter = modules->size()-1;
     for(int i=niter; i>0; i--){
       hi = (*hiddens)[i-1];
-      (*modules)[i]->bbprop(hi,ho);
+      (*modules)[i]->bbprop(*hi,*ho);
       ho = hi;
     }
-    (*modules)[0]->bbprop(in,ho);
+    (*modules)[0]->bbprop(in,*ho);
   }
 
   template<class T>
@@ -323,82 +321,77 @@ hidden states in layers_n");
   ////////////////////////////////////////////////////////////////
 
   template<class Tin, class Thid>
-  fc_ebm1<Tin,Thid>::fc_ebm1(module_1_1<Tin,Thid> *fm, Thid *fo, 
-			     ebm_1<Thid> *fc) {
-    fmod = fm;
-    fout = fo;
-    fcost = fc;
+  fc_ebm1<Tin,Thid>::fc_ebm1(module_1_1<Tin,Thid> &fm, Thid &fo,ebm_1<Thid> &fc)
+    : fmod(fm), fout(fo), fcost(fc) {
   }
 
   template<class Tin, class Thid>
   fc_ebm1<Tin,Thid>::~fc_ebm1() {}
 
   template<class Tin, class Thid>
-  void fc_ebm1<Tin,Thid>::fprop(Tin *in, state_idx *energy) {
-    fmod->fprop(in, fout);
-    fcost->fprop(fout, energy);
+  void fc_ebm1<Tin,Thid>::fprop(Tin &in, state_idx &energy) {
+    fmod.fprop(in, fout);
+    fcost.fprop(fout, energy);
   }
 
   template<class Tin, class Thid>
-  void fc_ebm1<Tin,Thid>::bprop(Tin *in, state_idx *energy) {
-    fout->clear_dx();
-    fcost->bprop(fout, energy);
-    fmod->bprop(in, fout);
+  void fc_ebm1<Tin,Thid>::bprop(Tin &in, state_idx &energy) {
+    fout.clear_dx();
+    fcost.bprop(fout, energy);
+    fmod.bprop(in, fout);
   }
 
   template<class Tin, class Thid>
-  void fc_ebm1<Tin,Thid>::bbprop(Tin *in, state_idx *energy) {
-    fout->clear_ddx();
-    fcost->bbprop(fout, energy);
-    fmod->bbprop(in, fout);
+  void fc_ebm1<Tin,Thid>::bbprop(Tin &in, state_idx &energy) {
+    fout.clear_ddx();
+    fcost.bbprop(fout, energy);
+    fmod.bbprop(in, fout);
   }
 
   template<class Tin, class Thid>
   void fc_ebm1<Tin,Thid>::forget(forget_param &fp) {
-    fmod->forget(fp);
-    fcost->forget(fp);
+    fmod.forget(fp);
+    fcost.forget(fp);
   }
 
   ////////////////////////////////////////////////////////////////
 
   template<class Tin1, class Tin2, class Thid>
-  fc_ebm2<Tin1,Tin2,Thid>::fc_ebm2(module_1_1<Tin1,Thid> *fm, Thid *fo, 
-				   ebm_2<Thid,Tin2> *fc) {
-    fmod = fm;
-    fout = fo;
-    fcost = fc;
+  fc_ebm2<Tin1,Tin2,Thid>::fc_ebm2(module_1_1<Tin1,Thid> &fm, Thid &fo, 
+				   ebm_2<Thid,Tin2> &fc)
+    : fmod(fm), fout(fo), fcost(fc) {
   }
 
   template<class Tin1, class Tin2, class Thid>
   fc_ebm2<Tin1,Tin2,Thid>::~fc_ebm2() {}
 
   template<class Tin1, class Tin2, class Thid>
-  void fc_ebm2<Tin1,Tin2,Thid>::fprop(Tin1 *in1, Tin2 *in2, state_idx *energy) {
-    fmod->fprop(in1, fout);
-    fcost->fprop(fout, in2, energy);
+  void fc_ebm2<Tin1,Tin2,Thid>::fprop(Tin1 &in1, Tin2 &in2, state_idx &energy) {
+    fmod.fprop(in1, fout);
+    fcost.fprop(fout, in2, energy);
   }
 
   template<class Tin1, class Tin2, class Thid>
-  void fc_ebm2<Tin1,Tin2,Thid>::bprop(Tin1 *in1, Tin2 *in2, state_idx *energy) {
-    fout->clear_dx();
-    in2->clear_dx();
-    fcost->bprop(fout, in2, energy);
-    fmod->bprop(in1, fout);
+  void fc_ebm2<Tin1,Tin2,Thid>::bprop(Tin1 &in1, Tin2 &in2, state_idx &energy) {
+    fout.clear_dx();
+    in2.clear_dx();
+    fcost.bprop(fout, in2, energy);
+    fmod.bprop(in1, fout);
   }
 
 
   template<class Tin1, class Tin2, class Thid>
-  void fc_ebm2<Tin1,Tin2,Thid>::bbprop(Tin1 *in1, Tin2 *in2, state_idx *energy){
-    fout->clear_ddx();
-    in2->clear_ddx();
-    fcost->bbprop(fout, in2, energy);
-    fmod->bbprop(in1, fout);
+  void fc_ebm2<Tin1,Tin2,Thid>::bbprop(Tin1 &in1, Tin2 &in2, state_idx &energy){
+    fout.clear_ddx();
+    in2.clear_ddx();
+    fcost.bbprop(fout, in2, energy);
+    fmod.bbprop(in1, fout);
   }
 
   template<class Tin1, class Tin2, class Thid>
   void fc_ebm2<Tin1,Tin2,Thid>::forget(forget_param &fp) {
-    fmod->forget(fp);
-    fcost->forget(fp);
+    fmod.forget(fp);
+    fcost.forget(fp);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -407,15 +400,15 @@ hidden states in layers_n");
   //! recursively loop over the last dimensions of input in and out until
   //! reaching the operating order, then call the original fprop of module m.
   template<class T>
-  void module_eloop2_fprop(T *m, state_idx *in, state_idx *out) {
-    if (m->replicable_order() == in->x.order()) {
-      m->T::fprop(in, out);
-    } else if (m->replicable_order() > in->x.order()) {
+  void module_eloop2_fprop(T &m, state_idx &in, state_idx &out) {
+    if (m.replicable_order() == in.x.order()) {
+      m.T::fprop(in, out);
+    } else if (m.replicable_order() > in.x.order()) {
       ylerror("the order of the input should be greater or equal to module's\
  operating order");
     } else {
-      state_idx_eloop2(iin, *in, oout, *out) {
-	module_eloop2_fprop(m, &iin, &oout);
+      state_idx_eloop2(iin, in, oout, out) {
+	module_eloop2_fprop(m, iin, oout);
       }
     }
   }
@@ -423,15 +416,15 @@ hidden states in layers_n");
   //! recursively loop over the last dimensions of input in and out until
   //! reaching the operating order, then call the original bprop of module m.
   template<class T>
-  void module_eloop2_bprop(T *m, state_idx *in, state_idx *out) {
-    if (m->replicable_order() == in->x.order()) {
-      m->T::bprop(in, out);
-    } else if (m->replicable_order() > in->x.order()) {
+  void module_eloop2_bprop(T &m, state_idx &in, state_idx &out) {
+    if (m.replicable_order() == in.x.order()) {
+      m.T::bprop(in, out);
+    } else if (m.replicable_order() > in.x.order()) {
       ylerror("the order of the input should be greater or equal to module's\
  operating order");
     } else {
-      state_idx_eloop2(iin, *in, oout, *out) {
-	module_eloop2_bprop(m, &iin, &oout);
+      state_idx_eloop2(iin, in, oout, out) {
+	module_eloop2_bprop(m, iin, oout);
       }
     }
   }
@@ -439,39 +432,39 @@ hidden states in layers_n");
   //! recursively loop over the last dimensions of input in and out until
   //! reaching the operating order, then call the original bbprop of module m.
   template<class T>
-  void module_eloop2_bbprop(T *m, state_idx *in, state_idx *out) {
-    if (m->replicable_order() == in->x.order()) {
-      m->T::bbprop(in, out);
-    } else if (m->replicable_order() > in->x.order()) {
+  void module_eloop2_bbprop(T &m, state_idx &in, state_idx &out) {
+    if (m.replicable_order() == in.x.order()) {
+      m.T::bbprop(in, out);
+    } else if (m.replicable_order() > in.x.order()) {
       ylerror("the order of the input should be greater or equal to module's\
  operating order");
     } else {
-      state_idx_eloop2(iin, *in, oout, *out) {
-	module_eloop2_bbprop(m, &iin, &oout);
+      state_idx_eloop2(iin, in, oout, out) {
+	module_eloop2_bbprop(m, iin, oout);
       }
     }
   }
 
   template<class T>
-  module_1_1_replicable<T>::module_1_1_replicable(T *m) : module(m) {}
+  module_1_1_replicable<T>::module_1_1_replicable(T &m) : module(m) {}
   template<class T>
   module_1_1_replicable<T>::~module_1_1_replicable() {}
 
   template<class T>
-  void module_1_1_replicable<T>::fprop(state_idx *in, state_idx *out) {
+  void module_1_1_replicable<T>::fprop(state_idx &in, state_idx &out) {
     check_replicable_orders(module, in); // check for orders compatibility
-    module->resize_output(in, out); // resize output
+    module.resize_output(in, out); // resize output
     module_eloop2_fprop<T>(module, in, out);
     }
 
   template<class T>
-  void module_1_1_replicable<T>::bprop(state_idx *in, state_idx *out) {
+  void module_1_1_replicable<T>::bprop(state_idx &in, state_idx &out) {
     check_replicable_orders(module, in); // check for orders compatibility
     module_eloop2_bprop<T>(module, in, out);
   }
 
   template<class T>
-  void module_1_1_replicable<T>::bbprop(state_idx *in, state_idx *out) {
+  void module_1_1_replicable<T>::bbprop(state_idx &in, state_idx &out) {
     check_replicable_orders(module, in); // check for orders compatibility
     module_eloop2_bbprop<T>(module, in, out);
   }

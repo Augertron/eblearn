@@ -203,7 +203,7 @@ namespace ebl {
   Idx<double> Classifier2D::multi_res_fprop(double threshold, int objsize) {
     // fprop network on different resolutions
     { idx_bloop2(in, inputs, void*, out, outputs, void*) {
-	thenet->fprop((state_idx*) in.get(), (state_idx*) out.get()); 
+	thenet->fprop(*((state_idx*) in.get()), *((state_idx*) out.get())); 
       }}
     // post process outputs
     Idx<double> res = postprocess_output(threshold, objsize);

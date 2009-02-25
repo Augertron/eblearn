@@ -135,7 +135,7 @@ facenet::facenet(const char *paramfile){
 	table2 = custom_table(16, 80);
 
 	//! initializes the net (cscscf) and charges the weights if needed
-	init(*theparam, 42, 42, 7, 7, &table0, 2, 2, 7, 7, &table1, 2, 2, 6, 6, &table2, 2);
+	init(*theparam, 42, 42, 7, 7, table0, 2, 2, 7, 7, table1, 2, 2, 6, 6, table2, 2);
 	if((paramfile != NULL) && (theparam->load(paramfile))){
 		printf("Weights loaded. \n");
 	}
@@ -475,8 +475,8 @@ Idx<ubyte> facenet::multi_res_prep(Idx<ubyte> *img, float zoom) {
 Idx<double> facenet::multi_res_fprop(double threshold, int objsize) {
 	//! fprop network on different resolutions
 	{ idx_bloop2(in, inputs, void*, out, outputs, void*) {
-		fprop((state_idx*) in.get(), (state_idx*) out.get());
-		}}
+	    fprop(*((state_idx*) in.get()), *((state_idx*) out.get()));
+	  }}
 	//! post process outputs
 	Idx<double> res = postprocess_output(threshold, objsize);
 	//! prune results

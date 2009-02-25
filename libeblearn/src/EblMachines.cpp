@@ -44,11 +44,11 @@ namespace ebl {
   }
 
   nn_machine_cscscf::nn_machine_cscscf(parameter &prm, intg ini, intg inj,
-				       intg ki0, intg kj0, Idx<intg> *tbl0, 
+				       intg ki0, intg kj0, Idx<intg> &tbl0, 
 				       intg si0, intg sj0,
-				       intg ki1, intg kj1, Idx<intg> *tbl1, 
+				       intg ki1, intg kj1, Idx<intg> &tbl1, 
 				       intg si1, intg sj1,
-				       intg ki2, intg kj2, Idx<intg> *tbl2,
+				       intg ki2, intg kj2, Idx<intg> &tbl2,
 				       intg outthick)
     : layers_n<state_idx>(true) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
@@ -58,23 +58,23 @@ namespace ebl {
   nn_machine_cscscf::~nn_machine_cscscf() {}
 
   void nn_machine_cscscf::init(parameter &prm, intg ini, intg inj,
-			       intg ki0, intg kj0, Idx<intg> *tbl0, intg si0, 
-			       intg sj0, intg ki1, intg kj1, Idx<intg> *tbl1, 
+			       intg ki0, intg kj0, Idx<intg> &tbl0, intg si0, 
+			       intg sj0, intg ki1, intg kj1, Idx<intg> &tbl1, 
 			       intg si1, intg sj1, intg ki2, intg kj2, 
-			       Idx<intg> *tbl2, intg outthick) {
-    Idx<intg> tblmax = tbl0->select(1, 1);
+			       Idx<intg> &tbl2, intg outthick) {
+    Idx<intg> tblmax = tbl0.select(1, 1);
     intg thick0 = 1 + idx_max(tblmax);
     intg c0_sizi = 1 + ini - ki0;
     intg c0_sizj = 1 + inj - kj0;
     intg s0_sizi = c0_sizi / si0;
     intg s0_sizj = c0_sizj / sj0;
-    tblmax = tbl1->select(1, 1);
+    tblmax = tbl1.select(1, 1);
     intg thick1 = 1 + idx_max(tblmax);
     intg c1_sizi = 1 + s0_sizi - ki1;
     intg c1_sizj = 1 + s0_sizj - kj1;
     intg s1_sizi = c1_sizi / si1;
     intg s1_sizj = c1_sizj / sj1;
-    tblmax = tbl2->select(1, 1);
+    tblmax = tbl2.select(1, 1);
     intg thick2 = 1 + idx_max(tblmax);
     intg c2_sizi = 1 + s1_sizi - ki2;
     intg c2_sizj = 1 + s1_sizj - kj2;
@@ -146,8 +146,8 @@ namespace ebl {
     intg ki2 = (((image_height - ki0 + 1) / si0) - ki1 + 1) / si1;
     intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
 
-    this->init(prm, image_height, image_width, ki0, kj0, &table0, si0, sj0,
-	       ki1, kj1, &table1, si1, sj1, ki2, kj2, &table2, output_size);
+    this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
+	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -203,8 +203,8 @@ namespace ebl {
     intg ki2 = (((image_height - ki0 + 1) / si0) - ki1 + 1) / si1;
     intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
 
-    this->init(prm, image_height, image_width, ki0, kj0, &table0, si0, sj0,
-	       ki1, kj1, &table1, si1, sj1, ki2, kj2, &table2, output_size);
+    this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
+	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -213,7 +213,7 @@ namespace ebl {
   euclidean_trainable_machine::euclidean_trainable_machine(module_1_1<state_idx,
 							   state_idx> &m,
 							   Idx<double> &t)
-    : trainable_machine<state_idx,state_idx,state_idx>(m, cost), cost(t) {
+    : trainable_machine<state_idx,int,state_idx>(m, cost), cost(t) {
   }
 
   euclidean_trainable_machine::~euclidean_trainable_machine() {

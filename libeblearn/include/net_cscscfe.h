@@ -50,7 +50,7 @@ namespace ebl {
     {
     public:
       //! weight matrix
-      state_idx *weight;
+      state_idx weight;
 
       virtual ~e_layer(void);
       //! new e-layer (Eucliden distance RBF). <tin> is the
@@ -58,11 +58,11 @@ namespace ebl {
       //! of the output layer, <prm> is the parameter.
       e_layer(parameter &prm, intg tin, intg tout);	
       //! fprop from in to out
-      void fprop(state_idx *in, state_idx *out);
+      void fprop(state_idx &in, state_idx &out);
       //! bprop
-      void bprop(state_idx *in, state_idx *out);
+      void bprop(state_idx &in, state_idx &out);
       //! bbprop
-      void bbprop(state_idx *in, state_idx *out);
+      void bbprop(state_idx &in, state_idx &out);
       //! initialize the weights to random values
       void forget(forget_param_linear &fp);
     };
@@ -71,25 +71,25 @@ namespace ebl {
   class net_cscscfe : public module_1_1<state_idx, state_idx>
     {
     public:
-      nn_machine_cscscf	*net;
-      state_idx		*netout;
-      e_layer		*rbf;
+      nn_machine_cscscf	&net;
+      state_idx		netout;
+      e_layer		&rbf;
 
       //! makes a new net_cscscfe module.
       //! <n> is a net-cscscf, <e> is an e-dist layer,
       //! <thick> is the number of outputs.
       //! <si>,<sj> are the initial replication factors.
-      net_cscscfe(nn_machine_cscscf *n, e_layer *e, int thick, int si, int sj);
+      net_cscscfe(nn_machine_cscscf &n, e_layer &e, int thick, int si, int sj);
       virtual ~net_cscscfe();
 
       //! initialize the weights to random values
       void forget(forget_param_linear &fp);
       //! fprop from in to out
-      virtual void fprop(state_idx *in, state_idx *out);
+      virtual void fprop(state_idx &in, state_idx &out);
       //! bprop
-      virtual void bprop(state_idx *in, state_idx *out);
+      virtual void bprop(state_idx &in, state_idx &out);
       //! bbprop
-      virtual void bbprop(state_idx *in, state_idx *out);
+      virtual void bbprop(state_idx &in, state_idx &out);
     };
 
 } // end namespace ebl

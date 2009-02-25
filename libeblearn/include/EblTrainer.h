@@ -35,6 +35,7 @@
 #include "Blas.h"
 #include "EblArch.h"
 #include "EblMachines.h"
+#include "Datasource.h"
 
 namespace ebl {
 
@@ -58,29 +59,21 @@ namespace ebl {
     //! to the dimension of <energies>.
     intg run(Idx<double> &sample, Idx<double> &energies);
 
-    //! Test a single sample and its label <label> (an integer), and
-    //! return a list with the energy for the correct label and an
-    //! integer which is equal to 1 if the sample was incorrectly classified
-    //! and 0 if it was correctly classified.
-    //! <label-set> is a matrix where the i-th row is the desired output
-    //! for the i-th category.
-    bool test_sample(Idx<double> &sample, Idx<double> &label);
+    //! Test a single sample and its label <label> (an integer).
+    //! Returns true if the sample was correctly classified, false otherwise.
+    bool test_sample(Idx<double> &sample, int label);
 
     //! perform a learning update on one sample. <sample> is the input
     //! sample, <label> is the desired category (an integer), <label-set> is
     //! a matrix where  the i-th row is the desired output
     //! for the i-th category, and <update-args> is a list of arguments
     //! for the parameter update method (e.g. learning rate and weight decay).
-    Idx<double> learn_sample(Idx<double> &sample, Idx<double> &label,
-			     gd_param &arg);
+    Idx<double> learn_sample(Idx<double> &sample, int label, gd_param &arg);
 
     //! Measure the average energy and classification error rate
-    //! on a dataset. <samples> is a matrix that contains the
-    //! training samples, <labels> contains the desired categories,
-    //! and <label-set> is a matrix whose rows are
-    //! the desired output for each category. This
+    //! on a dataset.
     //! returns a list with average loss and proportion of errors
-    Idx<double>	test(Idx<double> &samples, Idx<double> &labels);
+    Idx<double>	test(LabeledDataSource &ds);
 
     //! train for <niter> sweeps over the training set. <samples> contains the
     //! inputs samples, and <labels> the corresponding desired categories
@@ -88,8 +81,7 @@ namespace ebl {
     //! return the average energy computed on-the-fly.
     //! <update-args> is a list of arguments for the parameter
     //! update method (e.g. learning rate and weight decay).
-    double train(Idx<double> &samples, Idx<double> &label,
-		 int niter, gd_param &arg);
+    double train(LabeledDataSource &ds, int niter, gd_param &args);
   };
 
 } // namespace ebl {
