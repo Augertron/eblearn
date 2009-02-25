@@ -86,7 +86,7 @@ void GblTest::test_softmax(){
 
   // init
   dseed(1);
-  module->fprop(in, out);
+  module->fprop(*in, *out);
   srand(time(NULL));
   idx_bloop2(i, in->x, double, o, out->x, double){
     idx_bloop2(ii, i, double, oo, o, double){
@@ -104,11 +104,11 @@ void GblTest::test_softmax(){
   }
 
   // fprop, bprop, bbprop
-  module->fprop(in, out);
+  module->fprop(*in, *out);
   in->clear_dx();
-  module->bprop(in, out);
+  module->bprop(*in, *out);
   in->clear_ddx();
-  module->bbprop(in, out);
+  module->bbprop(*in, *out);
 
   /*print
     printf(" Input\n");

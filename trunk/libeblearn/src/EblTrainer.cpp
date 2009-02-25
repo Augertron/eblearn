@@ -54,22 +54,26 @@ namespace ebl {
     return tmachine.infer2(); // infer answer from energies
   }
   
-  bool trainer::test_sample(Idx<double> &sample, Idx<double> &label) {
+  bool trainer::test_sample(Idx<double> &sample, int label) {
+    Idx<double> energies();
+    int answer = run(sample, energies);
+    return (label == answer); // return true if correct answer
   }
 
-  Idx<double> trainer::learn_sample(Idx<double> &sample, Idx<double> &label,
-				    gd_param &arg) {
+  Idx<double> trainer::learn_sample(Idx<double> &sample, int label, 
+				    gd_param &args) {
     // input->resize like sample in dim0 // TODO
     idx_copy(sample, input->x); // copy sample in input state
-    tmachine.fprop(input, energy);
-    tmachine.bprop(input, 
+    tmachine.fprop(input, label, energy);
+    tmachine.bprop(input, label, energy);
+    param.update(args);
+    //    return energy
   }
 
-  Idx<double> trainer::test(Idx<double> &samples, Idx<double> &labels) {
+  Idx<double> trainer::test(LabeledDataSource &ds) {
   }
   
-  double trainer::train(Idx<double> &samples, Idx<double> &label,
-			int niter, gd_param &arg) {
+  double trainer::train(LabeledDataSource &ds, int niter, gd_param &args) {
   }
 
 } // end namespace ebl

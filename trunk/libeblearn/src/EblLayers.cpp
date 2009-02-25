@@ -39,56 +39,45 @@ namespace ebl {
   // nn_layer_full
 
   nn_layer_full::nn_layer_full(parameter &p, intg indim0, intg noutputs)
-  {
-    linear = new linear_module_replicable(p, indim0, noutputs);
-    adder = new addc_module(p, noutputs);
+    : linear(p, indim0, noutputs), adder(p, noutputs), sigmoid() {
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
     sum = NULL; 
-    sigmoid = new tanh_module();
   }
 
-  nn_layer_full::~nn_layer_full()
-  {
-    delete sigmoid;
+  nn_layer_full::~nn_layer_full() {
     if (sum) delete sum;
-    delete adder;
-    delete linear;
   }
 
-  void nn_layer_full::fprop(state_idx *in, state_idx *out)
-  {
+  void nn_layer_full::fprop(state_idx &in, state_idx &out) {
     // resize output and sum
-    IdxDim d(in->x.spec); // use same dimensions as in
-    d.setdim(0, adder->bias->x.dim(0)); // except for the first one
-    out->resize(d);
+    IdxDim d(in.x.spec); // use same dimensions as in
+    d.setdim(0, adder.bias.x.dim(0)); // except for the first one
+    out.resize(d);
     if (!sum) sum = new state_idx(d); // we now know the order of sum
     else sum->resize(d);
 
     // fprop
-    linear->fprop(in, sum);
-    adder->fprop(sum, sum);
-    sigmoid->fprop(sum, out);
+    linear.fprop(in, *sum);
+    adder.fprop(*sum, *sum);
+    sigmoid.fprop(*sum, out);
   }
 
-  void nn_layer_full::bprop(state_idx *in, state_idx *out)
-  {
-    sigmoid->bprop(sum, out);
-    adder->bprop(sum, sum);
-    linear->bprop(in, sum);
+  void nn_layer_full::bprop(state_idx &in, state_idx &out) {
+    sigmoid.bprop(*sum, out);
+    adder.bprop(*sum, *sum);
+    linear.bprop(in, *sum);
   }
 
-  void nn_layer_full::bbprop(state_idx *in, state_idx *out)
-  {
-    sigmoid->bbprop(sum, out);
-    adder->bbprop(sum, sum);
-    linear->bbprop(in, sum);
+  void nn_layer_full::bbprop(state_idx &in, state_idx &out) {
+    sigmoid.bbprop(*sum, out);
+    adder.bbprop(*sum, *sum);
+    linear.bbprop(in, *sum);
   }
 
-  void nn_layer_full::forget(forget_param_linear &fp)
-  {
-    linear->forget(fp);
-    adder->forget(fp);
+  void nn_layer_full::forget(forget_param_linear &fp) {
+    linear.forget(fp);
+    adder.forget(fp);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -97,56 +86,45 @@ namespace ebl {
   nn_layer_convolution::nn_layer_convolution(parameter &p, 
 					     intg kerneli, intg kernelj, 
 					     intg ri, intg rj, 
-					     Idx<intg> *tbl, intg thick)
-  {
-    convol = new convolution_module_2D_replicable(p, kerneli, kernelj, ri, rj, 
-						  tbl, thick);
-    adder = new addc_module(p, thick);
+					     Idx<intg> &tbl, intg thick) 
+    : convol(p, kerneli, kernelj, ri, rj, tbl, thick), adder(p, thick),
+      sigmoid() {
     sum = NULL;
-    sigmoid = new tanh_module();
   }
 
-  nn_layer_convolution::~nn_layer_convolution()
-  {
-    delete convol;
-    delete sigmoid;
+  nn_layer_convolution::~nn_layer_convolution() {
     if (sum) delete sum;
-    delete adder;
   }
 
-  void nn_layer_convolution::fprop(state_idx *in, state_idx *out)
-  {
+  void nn_layer_convolution::fprop(state_idx &in, state_idx &out) {
     // 1. resize sum
-    IdxDim d(in->x.spec); // use same dimensions as in
-    d.setdim(0, convol->thickness); // except for the first one
+    IdxDim d(in.x.spec); // use same dimensions as in
+    d.setdim(0, convol.thickness); // except for the first one
     if (!sum) sum = new state_idx(d);
     else sum->resize(d);
 
     // 2. fprop
-    convol->fprop(in, sum);
-    out->resize_as(*sum); // resize output
-    adder->fprop(sum, sum);
-    sigmoid->fprop(sum, out);
+    convol.fprop(in, *sum);
+    out.resize_as(*sum); // resize output
+    adder.fprop(*sum, *sum);
+    sigmoid.fprop(*sum, out);
   }
 
-  void nn_layer_convolution::bprop(state_idx *in, state_idx *out)
-  {
-    sigmoid->bprop(sum, out);
-    adder->bprop(sum, sum);
-    convol->bprop(in, sum);
+  void nn_layer_convolution::bprop(state_idx &in, state_idx &out) {
+    sigmoid.bprop(*sum, out);
+    adder.bprop(*sum, *sum);
+    convol.bprop(in, *sum);
   }
 
-  void nn_layer_convolution::bbprop(state_idx *in, state_idx *out)
-  {
-    sigmoid->bbprop(sum, out);
-    adder->bbprop(sum, sum);
-    convol->bbprop(in, sum);
+  void nn_layer_convolution::bbprop(state_idx &in, state_idx &out) {
+    sigmoid.bbprop(*sum, out);
+    adder.bbprop(*sum, *sum);
+    convol.bbprop(in, *sum);
   }
 
-  void nn_layer_convolution::forget(forget_param_linear &fp)
-  {
-    convol->forget(fp);
-    adder->forget(fp);
+  void nn_layer_convolution::forget(forget_param_linear &fp) {
+    convol.forget(fp);
+    adder.forget(fp);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -156,55 +134,44 @@ namespace ebl {
 					     intg stridei, intg stridej,
 					     intg subi, intg subj, 
 					     intg thick)
-  {
-    subsampler = new subsampling_module_2D_replicable(p, stridei, stridej, 
-						      subi, subj, thick);
-    adder = new addc_module(p, thick);
+    : subsampler(p, stridei, stridej, subi, subj, thick), adder(p, thick),
+      sigmoid() {
     sum = NULL;
-    sigmoid = new tanh_module();
   }
 
-  nn_layer_subsampling::~nn_layer_subsampling()
-  {
-    delete subsampler;
-    delete sigmoid;
+  nn_layer_subsampling::~nn_layer_subsampling() {
     if (sum) delete sum;
-    delete adder;
   }
 
-  void nn_layer_subsampling::fprop(state_idx *in, state_idx *out)
-  {
+  void nn_layer_subsampling::fprop(state_idx &in, state_idx &out) {
     // 1. resize sum
-    IdxDim d(in->x.spec); // use same dimensions as in
-    d.setdim(0, subsampler->thickness); // except for the first one
+    IdxDim d(in.x.spec); // use same dimensions as in
+    d.setdim(0, subsampler.thickness); // except for the first one
     if (!sum) sum = new state_idx(d);
     else sum->resize(d);
 
     // 2. fprop
-    subsampler->fprop(in, sum);
-    out->resize_as(*sum); // resize output
-    adder->fprop(sum, sum);
-    sigmoid->fprop(sum, out);
+    subsampler.fprop(in, *sum);
+    out.resize_as(*sum); // resize output
+    adder.fprop(*sum, *sum);
+    sigmoid.fprop(*sum, out);
   }
 
-  void nn_layer_subsampling::bprop(state_idx *in, state_idx *out)
-  {
-    sigmoid->bprop(sum, out);
-    adder->bprop(sum, sum);
-    subsampler->bprop(in, sum);
+  void nn_layer_subsampling::bprop(state_idx &in, state_idx &out) {
+    sigmoid.bprop(*sum, out);
+    adder.bprop(*sum, *sum);
+    subsampler.bprop(in, *sum);
   }
 
-  void nn_layer_subsampling::bbprop(state_idx *in, state_idx *out)
-  {
-    sigmoid->bbprop(sum, out);
-    adder->bbprop(sum, sum);
-    subsampler->bbprop(in, sum);
+  void nn_layer_subsampling::bbprop(state_idx &in, state_idx &out) {
+    sigmoid.bbprop(*sum, out);
+    adder.bbprop(*sum, *sum);
+    subsampler.bbprop(in, *sum);
   }
 
-  void nn_layer_subsampling::forget(forget_param_linear &fp)
-  {
-    subsampler->forget(fp);
-    adder->forget(fp);
+  void nn_layer_subsampling::forget(forget_param_linear &fp) {
+    subsampler.forget(fp);
+    adder.forget(fp);
   }
 
 } // end namespace ebl

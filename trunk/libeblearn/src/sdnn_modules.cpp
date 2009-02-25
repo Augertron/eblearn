@@ -173,11 +173,9 @@ void sdnn_classer::fprop(state_idx *in, sdnnclass_state *out)
 //////////////////////////////////////////////////////////////////////////////
 ////// sdnn_module ///////
 
-sdnn_module::sdnn_module(net_cscscfe *m, sdnn_classer *cl)
-{
+sdnn_module::sdnn_module(net_cscscfe &m, sdnn_classer &cl) 
+  : machine(m), classifier(cl) {
   mout = new state_idx(1, 1, 1);
-  machine = m;
-  classifier = cl;
 }
 
 sdnn_module::~sdnn_module()
@@ -185,10 +183,10 @@ sdnn_module::~sdnn_module()
   delete mout;
 }
 
-void sdnn_module::fprop(state_idx *input, sdnnclass_state *output)
+void sdnn_module::fprop(state_idx &input, sdnnclass_state &output)
 {
-  machine->fprop(input, mout);
-  classifier->fprop(mout, output);
+  machine.fprop(input, *mout);
+  classifier.fprop(mout, &output);
 }
 
 

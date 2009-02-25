@@ -99,13 +99,13 @@ namespace ebl {
 
     }
     // call squashing function
-    squash->fprop(sum, out);
+    squash->fprop(*sum, *out);
   }
 
   void f_layer::bprop(state_idx *in, state_idx *out)
   {
     // backprop through squasher
-    squash->bprop(sum, out);
+    squash->bprop(*sum, *out);
     // compute gradient of bias
     {
       idx_bloop2(lha,sum->dx,double, lb,bias->dx,double)
@@ -136,7 +136,7 @@ namespace ebl {
   void f_layer::bbprop(state_idx *in, state_idx *out)
   {
     // backprop through squasher
-    squash->bbprop(sum, out);
+    squash->bbprop(*sum, *out);
     // compute gradient of bias
     {	idx_bloop2(lha, sum->ddx, double, lb, bias->ddx, double) {
 	idx_sumacc(lha, lb); }}
@@ -240,13 +240,13 @@ namespace ebl {
 	idx_addc(sumx, biasx.get(), sumx);
       }}
     // call squashing function
-    squash->fprop(sum, out);
+    squash->fprop(*sum, *out);
   }
 
   void c_layer::bprop(state_idx *in, state_idx *out)
   {
     // backprop gradient through squasher
-    squash->bprop(sum, out);
+    squash->bprop(*sum, *out);
     // compute gradient of bias
     {	idx_bloop2(lha, sum->dx, double, lb, bias->dx, double) {
 	idx_sumacc(lha, lb); }}
@@ -274,7 +274,7 @@ namespace ebl {
   void c_layer::bbprop(state_idx *in, state_idx *out)
   {
     // backprop gradient through squasher
-    squash->bbprop(sum, out);
+    squash->bbprop(*sum, *out);
     // compute gradient of bias
     { idx_bloop2(lha, sum->ddx, double, lb, bias->ddx, double) {
 	idx_sumacc(lha, lb); }}
@@ -339,12 +339,12 @@ namespace ebl {
       }
     }
     // call squashing function
-    squash->fprop(sum, out);
+    squash->fprop(*sum, *out);
   }
 
   void c_layer_ipp::bprop (state_idx *in, state_idx *out) {
     // backprop gradient through squasher
-    squash->bprop(sum, out);
+    squash->bprop(*sum, *out);
     // compute gradient of bias
     { idx_bloop2(lha, sum->dx, double, lb, bias->dx, double) {
 	idx_sumacc(lha, lb);
@@ -432,13 +432,13 @@ namespace ebl {
       }
     }
     // 3. call squashing function
-    squash->fprop(sum, out);
+    squash->fprop(*sum, *out);
   }
 
   void s_layer::bprop(state_idx *in, state_idx *out)
   {
     // 1.
-    squash->bprop(sum, out);
+    squash->bprop(*sum, *out);
     // 2.
     { idx_bloop2(lha, sum->dx, double, lb, bias->dx, double) {
 	idx_sumacc(lha, lb);
@@ -459,7 +459,7 @@ namespace ebl {
   void s_layer::bbprop(state_idx *in, state_idx *out)
   {
     // 1.
-    squash->bbprop(sum, out);
+    squash->bbprop(*sum, *out);
     // 2.
     { idx_bloop2(lha, sum->ddx, double, lb, bias->ddx, double) {
 	idx_sumacc(lha, lb);
@@ -809,26 +809,26 @@ rejects=%3.2f%%\n",
 
   void idx3_supervised_module::fprop(state_idx *input, class_state *output,
 				     Idx<ubyte> *desired, state_idx *energy) {
-    machine->fprop(input, mout);
+    machine->fprop(*input, *mout);
     classifier->fprop(mout, output);
     cost->fprop(mout, desired, energy);
   }
 
   void idx3_supervised_module::use(state_idx *input, class_state *output) {
-    machine->fprop(input, mout);
+    machine->fprop(*input, *mout);
     classifier->fprop(mout, output);
   }
 
   void idx3_supervised_module::bprop(state_idx *input, class_state *output,
 				     Idx<ubyte> *desired, state_idx *energy) {
     cost->bprop(mout, desired, energy);
-    machine->bprop(input, mout);
+    machine->bprop(*input, *mout);
   }
 
   void idx3_supervised_module::bbprop(state_idx *input, class_state *output,
 				      Idx<ubyte> *desired, state_idx *energy) {
     cost->bbprop(mout, desired, energy);
-    machine->bbprop(input, mout);
+    machine->bbprop(*input, *mout);
   }
 
 } // end namespace ebl

@@ -54,9 +54,9 @@ namespace ebl {
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
     nn_machine_cscscf(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
-		      Idx<intg> *tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
-		      Idx<intg> *tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-		      Idx<intg> *tbl2, intg outthick);
+		      Idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+		      Idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+		      Idx<intg> &tbl2, intg outthick);
     virtual ~nn_machine_cscscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -74,9 +74,9 @@ namespace ebl {
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
     void init(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
-	      Idx<intg> *tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
-	      Idx<intg> *tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-	      Idx<intg> *tbl2, intg outthick);
+	      Idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+	      Idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+	      Idx<intg> &tbl2, intg outthick);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -149,15 +149,15 @@ namespace ebl {
     trainable_machine(module_1_1<Tin1,Tout> &machine_,
 		      module_2_1<Tin1,Tin2,Tout> &cost_);
     virtual ~trainable_machine();
-    virtual void fprop(Tin1 *in1, Tin2 *in2, Tout *out);
-    virtual void bprop(Tin1 *in1, Tin2 *in2, Tout *out);
-    virtual void bbprop(Tin1 *in1, Tin2 *in2, Tout *out);
+    virtual void fprop(Tin1 &in1, Tin2 &in2, Tout &out);
+    virtual void bprop(Tin1 &in1, Tin2 &in2, Tout &out);
+    virtual void bbprop(Tin1 &in1, Tin2 &in2, Tout &out);
   };
   
   ////////////////////////////////////////////////////////////////
   //! euclidean trainable machine
   class euclidean_trainable_machine 
-    : public trainable_machine<state_idx,state_idx,state_idx> {
+    : public trainable_machine<state_idx,int,state_idx> {
   public:
     euclidean_module cost; // euclidean cost function
     euclidean_trainable_machine(module_1_1<state_idx,state_idx> &machine_,

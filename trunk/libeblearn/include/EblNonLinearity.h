@@ -50,11 +50,11 @@ namespace ebl {
     stdsigmoid_module();
     virtual ~stdsigmoid_module();
     //! fprop from in to out
-    virtual void fprop(state_idx *in, state_idx *out);
+    virtual void fprop(state_idx &in, state_idx &out);
     //! bprop
-    virtual void bprop(state_idx *in, state_idx *out);
+    virtual void bprop(state_idx &in, state_idx &out);
     //! bbprop
-    virtual void bbprop(state_idx *in, state_idx *out);
+    virtual void bbprop(state_idx &in, state_idx &out);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -63,11 +63,11 @@ namespace ebl {
   class tanh_module: public module_1_1<state_idx, state_idx> {
   public:
     //! fprop from in to out
-    void fprop(state_idx *in, state_idx *out);
+    void fprop(state_idx &in, state_idx &out);
     //! bprop
-    void bprop(state_idx *in, state_idx *out);
+    void bprop(state_idx &in, state_idx &out);
     //! bbprop
-    void bbprop(state_idx *in, state_idx *out);
+    void bbprop(state_idx &in, state_idx &out);
     void forget(forget_param_linear &fp);
     void normalize();
   };
@@ -93,16 +93,16 @@ namespace ebl {
     // <b> equal to 0 turns the softmax into 1/N
 
   private:
-    void resize_nsame(state_idx *in, state_idx *out, int n);
+    void resize_nsame(state_idx &in, state_idx &out, int n);
 
   public:
     softmax(double b);
     ~softmax() {
     }
     ;
-    void fprop(state_idx *in, state_idx *out);
-    void bprop(state_idx *in, state_idx *out);
-    void bbprop(state_idx *in, state_idx *out);
+    void fprop(state_idx &in, state_idx &out);
+    void bprop(state_idx &in, state_idx &out);
+    void bbprop(state_idx &in, state_idx &out);
 
   };
 
