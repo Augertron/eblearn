@@ -32,41 +32,5 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////////////
-  // trainable machine
-
-  template<class Tin1, class Tin2, class Tout>
-  trainable_machine<Tin1, Tin2, Tout>::trainable_machine(module_1_1<Tin1,Tout> 
-							 &machine_,
-							 module_2_1<Tin1,Tin2,
-							 Tout> &cost_)
-    : machine(machine_), cost(cost_) {
-    mout = new state_idx(1); // TODO
-  }
-
-  template<class Tin1, class Tin2, class Tout>
-  trainable_machine<Tin1, Tin2, Tout>::~trainable_machine() {
-    delete mout;
-  }
-
-  template<class Tin1, class Tin2, class Tout>
-  void trainable_machine<Tin1, Tin2, Tout>::fprop(Tin1 &in1, Tin2 &in2, 
-						  Tout &out) {
-    machine.fprop(in1, *mout);
-    cost.fprop(*mout, in2, out);
-  }
-
-  template<class Tin1, class Tin2, class Tout>
-  void trainable_machine<Tin1, Tin2, Tout>::bprop(Tin1 &in1, Tin2 &in2, 
-						  Tout &out) {
-    cost.bprop(*mout, in2, out);
-    machine.bprop(in1, *mout);
-  }
-
-  template<class Tin1, class Tin2, class Tout>
-  void trainable_machine<Tin1, Tin2, Tout>::bbprop(Tin1 &in1, Tin2 &in2, 
-						   Tout &out) {
-    cost.bbprop(*mout, in2, out);
-    machine.bbprop(in1, *mout);
-  }
 
 } // end namespace ebl

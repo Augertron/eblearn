@@ -43,7 +43,6 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-
   //! a simple fully-connected neural net layer: linear + tanh non-linearity.
   class nn_layer_full: public module_1_1<state_idx, state_idx> {
   public:

@@ -25,6 +25,7 @@ ADD_LIBRARY (eblearn SHARED
 		     src/EblNonLinearity.cpp  
 		     src/EblTester.cpp
 		     src/EblLayers.cpp  
+		     src/EblLogger.cpp  
 		     src/EblMachines.cpp  
 		     src/Ipp.cpp  
 		     src/libeblearn.cpp  

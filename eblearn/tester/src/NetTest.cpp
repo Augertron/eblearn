@@ -47,9 +47,9 @@ void NetTest::test_lenet5_mnist_ebl() {
   train_labels = train_labels.narrow(0, trsize, 0);
   test_data = test_data.narrow(0, tesize, 5000 - (0.5 * tesize)); 
   test_labels = test_labels.narrow(0, tesize, 5000 - (0.5 * tesize));
-  MnistDataSource<ubyte,ubyte> test_ds(&test_data, &test_labels, 
+  MnistDataSource<ubyte,ubyte> test_ds(test_data, test_labels, 
 				       32, 32, 0.0, 0.01);
-  MnistDataSource<ubyte,ubyte> train_ds(&train_data, &train_labels, 
+  MnistDataSource<ubyte,ubyte> train_ds(train_data, train_labels, 
 					32, 32, 0.0, 0.01);
 	
   // number of classes
@@ -71,8 +71,9 @@ void NetTest::test_lenet5_mnist_ebl() {
 
   parameter theparam(60000); // create trainable parameter
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10); // the network
-  euclidean_trainable_machine etm(l5, targets); // create an euclidean-trainable machine
-//   trainer t(etm); // create the trainer
+  supervised_euclidean_machine etm(l5, targets); // supervised euclidean machine
+  //  supervised_trainer<ubyte,ubyte> t((fc_ebm2<state_idx,state_idx,int>&)etm, 
+  //				    theparam); // create the trainer
 
 //     //edist_cost cost(&labels, 1, 1, &targets);
 //   max_classer c(&labels);
@@ -168,9 +169,9 @@ void NetTest::test_lenet5_mnist() {
   train_labels = train_labels.narrow(0, trsize, 0);
   test_data = test_data.narrow(0, tesize, 5000 - (0.5 * tesize)); 
   test_labels = test_labels.narrow(0, tesize, 5000 - (0.5 * tesize));
-  MnistDataSource<ubyte,ubyte> test_ds(&test_data, &test_labels, 
+  MnistDataSource<ubyte,ubyte> test_ds(test_data, test_labels, 
 				       32, 32, 0.0, 0.01);
-  MnistDataSource<ubyte,ubyte> train_ds(&train_data, &train_labels, 
+  MnistDataSource<ubyte,ubyte> train_ds(train_data, train_labels, 
 					32, 32, 0.0, 0.01);
 	
   // number of classes

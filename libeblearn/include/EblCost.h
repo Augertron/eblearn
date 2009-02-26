@@ -38,27 +38,25 @@
 namespace ebl {
 
   //! cost module base class
-  template<class Tin1, class Tin2, class Tout>
-    class cost_module : public module_2_1<Tin1, Tin2, Tout> {
+  template<class Tin1, class Tin2>
+    class cost_module : public ebm_2<Tin1, Tin2> {
   public:
     Idx<double> &targets;
     state_idx in2;
     state_idx out;
+    Idx<double> energies;
 
     cost_module(Idx<double> &targets_);
     virtual ~cost_module();
 
-    virtual void fprop(Tin1 &in1, Tin2 &label, Tout &out) = 0;
     virtual void fprop_energies(Tin1 &in1, Idx<double> &energies);
-    virtual void bprop(Tin1 &in1, Tin2 &label, Tout &out) = 0;
-    virtual int infer2(Idx<double> &energies);
   };
 
   //! A module with 2 inputs that computes
   //! 0.5 times the sum of square difference between
   //! the components of the inputs. The two inputs
   //! must be states of the same size.
-  class euclidean_module : public cost_module<state_idx,int,state_idx> {
+  class euclidean_module : public cost_module<state_idx,int> {
   public:
     euclidean_module(Idx<double> &targets_);
     virtual ~euclidean_module();
@@ -75,6 +73,10 @@ namespace ebl {
     //! The result is written into the <dx> slots of <input1> and
     //! <input2>.
     virtual void bprop(state_idx &in1, int &label, state_idx &out);
+
+    //! compute value of in2 that minimizes the energy, given in1
+    virtual double infer2(state_idx &i1, int &i2, state_idx &energy,
+			  infer_param &ip);
   };
 
 } // namespace ebl {

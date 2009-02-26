@@ -791,7 +791,7 @@ template<class T> void idx_clip(Idx<T> &i1, T m, Idx<T> &o1) {
 }
 
 template<class T> void idx_2dconvol(Idx<T> &in, Idx<T> &kernel, Idx<T> &out) {
-	idx_checkorder3(in, 2, kernel, 2, out, 2);
+  idx_checkorder3(in, 2, kernel, 2, out, 2);
   Idx<T> uin(in.unfold(0, kernel.dim(0), 1));
   uin = uin.unfold(1, kernel.dim(1), 1);
   idx_m4dotm2(uin, kernel, out);

@@ -195,8 +195,7 @@ namespace ebl {
     x(st.x.getstorage(), st.x.footprint(), s0, s1, s2, s3, s4, s5, s6, s7),
     dx(st.dx.getstorage(), st.dx.footprint(), s0, s1, s2, s3, s4, s5, s6,s7), 
     ddx(st.ddx.getstorage(), st.ddx.footprint(), 
-	s0, s1, s2, s3, s4, s5, s6, s7)
-  {
+	s0, s1, s2, s3, s4, s5, s6, s7) {
     st.resize(st.footprint() + nelements());
     clear();
     clear_dx();
@@ -216,48 +215,44 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // constructors from other state_idx's dimensions
 
-  state_idx::state_idx(state_idx *si) :
-    x(si->x.getstorage(), 0, si->x.nelements()), 
-    dx(si->dx.getstorage(), 0, si->dx.nelements()), 
-    ddx(si->ddx.getstorage(), 0, si->ddx.nelements())
-  {
-  }
-
-  state_idx::state_idx(Idx<double> _x, Idx<double> _dx, Idx<double> _ddx) :
-    x(_x), dx(_dx), ddx(_ddx)
-  {
+  state_idx::state_idx(const Idx<double> &_x, const Idx<double> &_dx, 
+		       const Idx<double> &_ddx) :
+    x(_x), dx(_dx), ddx(_ddx) {
   }
 
   ////////////////////////////////////////////////////////////////
   // clear methods
 
-  void state_idx::clear()
-  {
+  void state_idx::clear() {
     idx_clear(x);
   }
-  void state_idx::clear_dx()
-  {
+
+  void state_idx::clear_dx() {
     idx_clear(dx);
   }
-  void state_idx::clear_ddx()
-  {
+
+  void state_idx::clear_ddx() {
     idx_clear(ddx);
   }
 
   ////////////////////////////////////////////////////////////////
   // information methods
 
-  intg state_idx::nelements()
-  {
+  intg state_idx::nelements() {
     return x.nelements();
   }
-  intg state_idx::footprint()
-  {
+
+  intg state_idx::footprint() {
     return x.footprint();
   }
-  intg state_idx::size()
-  {
+
+  intg state_idx::size() {
     return x.footprint();
+  }
+
+  IdxDim state_idx::getIdxDim() {
+    IdxDim d(x.spec);
+    return d;
   }
 
   ////////////////////////////////////////////////////////////////
