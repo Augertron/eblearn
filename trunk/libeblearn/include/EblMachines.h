@@ -146,7 +146,7 @@ namespace ebl {
     state_idx		fout;	// hidden state between fmod and fcost
 
     supervised_euclidean_machine(module_1_1<state_idx,state_idx> &machine_,
-				Idx<double> &targets);
+				 Idx<double> &targets, IdxDim &dims);
     virtual ~supervised_euclidean_machine();
   };
   

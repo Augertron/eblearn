@@ -697,6 +697,11 @@ namespace ebl {
     return true;
   }
 
+  template <class T> IdxDim& Idx<T>::getIdxDim(IdxDim& d) {
+    d.read(spec);
+    return d;
+  }
+
   ////////////////////////////////////////////////////////////////
   // Idx manipulation methods
 

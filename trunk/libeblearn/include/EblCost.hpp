@@ -36,22 +36,11 @@ namespace ebl {
   
   template<class Tin1, class Tin2>  
   cost_module<Tin1, Tin2>::cost_module(Idx<double> &targets_)
-    : targets(targets_), in2(1), out(1), energies(targets_.dim(0)) {
+    : targets(targets_), in2(targets.select(0, 0)), energies(targets_.dim(0)) {
   }
 
   template<class Tin1, class Tin2>  
   cost_module<Tin1, Tin2>::~cost_module() {
-  }
-
-  template<class Tin1, class Tin2>  
-  void cost_module<Tin1, Tin2>::fprop_energies(Tin1 &in1, 
-					       Idx<double> &energies) {
-    Tin2 label = 0;
-    idx_bloop1(e, energies, double) {
-      fprop(in1, label, out);
-      idx_copy(out.x, e);
-      label++;
-    }
   }
 
 } // end namespace ebl

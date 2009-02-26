@@ -40,13 +40,13 @@ namespace ebl {
 
   template<typename Tdata, typename Tlabel> class LabeledDataSource {
   public:
-    Idx<Tdata>					&data;
-    Idx<Tlabel>					&labels;
+    Idx<Tdata>					 data;
+    Idx<Tlabel>					 labels;
     typename Idx<Tdata>::dimension_iterator	 dataIter;
     typename Idx<Tlabel>::dimension_iterator	 labelsIter;
 
     //! Do not use, for subclasses using different kind of inputs
-    LabeledDataSource(){};
+    LabeledDataSource();
 
     //! Constructor takes all input data and corresponding labels.
     //! @param inputs: An N+1-dimensional Idx of N-dimensional inputs.
@@ -86,6 +86,9 @@ namespace ebl {
     intg height;
     double bias;
     double coeff;
+    
+    //! Empty constructor. Requires subsequent call to init().
+    MnistDataSource() {};
 
     //! create a <dsource-mnist>.
     //! <inp> must be a ubyte-matrix of input patterns
@@ -98,11 +101,31 @@ namespace ebl {
 		    double c);
     virtual ~MnistDataSource () {}
 
+    void init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, intg w, intg h, double b,
+	      double c);
+
     //! get the current item and copy the sample into
     //! <out> (an idx3-state) and the corresponding
     //! label into <lbl> (and idx0 of int).
     void virtual fprop(state_idx &out, Idx<Tlabel> &label);
   };
+
+  ////////////////////////////////////////////////////////////////
+  // Helper functions
+  
+  //! look for mnist dataset in <directory> and load training and testing set
+  //! into train_ds and test_ds.
+  //! return true upon success.
+  template<class Tdata, class Tlabel>
+  bool load_mnist_dataset(const char *directory,
+			  MnistDataSource<Tdata,Tlabel> &train_ds, 
+			  MnistDataSource<Tdata,Tlabel> &test_ds,
+			  int train_size, int test_size);
+
+  //! Fill a matrix with 1-of-n code.
+  //! Return an Idx<double> with <nclasses> targets in it, where the target
+  //! value for the correct answer is target and -target for the rest.
+  Idx<double> create_target_matrix(intg nclasses, double target);
 
   ////////////////////////////////////////////////////////////////
   /*

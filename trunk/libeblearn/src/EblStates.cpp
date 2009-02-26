@@ -143,6 +143,13 @@ namespace ebl {
     clear_ddx();
   }
 
+  state_idx::state_idx(Idx<double> m) :
+    x(m.getIdxDim(idxdim)), dx(m.getIdxDim(idxdim)), ddx(m.getIdxDim(idxdim)) {
+    clear();
+    clear_dx();
+    clear_ddx();
+  }
+
   ////////////////////////////////////////////////////////////////
   // constructors from specific dimensions using a parameter
 
@@ -248,11 +255,6 @@ namespace ebl {
 
   intg state_idx::size() {
     return x.footprint();
-  }
-
-  IdxDim state_idx::getIdxDim() {
-    IdxDim d(x.spec);
-    return d;
   }
 
   ////////////////////////////////////////////////////////////////

@@ -385,8 +385,6 @@ namespace ebl {
     //Idx( Idx<T>& other );
     //Idx( const Idx<T>& other );
 
-
-
     //! generic constructor with dims and mods creates
     //! the storage and set offset to zero.
     Idx(int n, intg *dims, intg *mods);
@@ -627,6 +625,9 @@ namespace ebl {
     virtual bool same_dim(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
 			  intg s6, intg s7);
 
+    //! copies order and dimensions of this Idx into the passed IdxDim d.
+    virtual IdxDim& getIdxDim(IdxDim& d);
+
    ////////////////////////////////////////////////////////////////
     //! data access methods
 
@@ -793,18 +794,29 @@ namespace ebl {
   public:
     intg dim[MAXDIMS];
     intg ndim;
+    
+    //! Empty constructor
+    IdxDim() {
+      ndim = -1;
+    }
 
-    IdxDim(IdxSpec &s) {
+    IdxDim(const IdxSpec &s) {
+      read(s);
+    }
+
+    void read(const IdxSpec &s) {
       ndim = s.ndim;
       memcpy(dim, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
       // set remaining to -1
       memset(dim + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg)); 
     }
+
     void setdim(intg dimn, intg size) {
       if (dimn >= ndim)
 	ylerror("cannot change the order of IdxDim");
       dim[dimn] = size; 
     }
+
     virtual ~IdxDim() {};
 
     // friends

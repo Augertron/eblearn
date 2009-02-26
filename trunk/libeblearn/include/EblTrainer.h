@@ -49,14 +49,14 @@ namespace ebl {
   template<class Tdata, class Tlabel>
     class supervised_trainer {
   public:
-    fc_ebm2<state_idx,state_idx,int>	&tmachine;
+    fc_ebm2<state_idx,int,state_idx>	&machine;
     parameter				&param;
     state_idx				*input;
     state_idx				 energy;
-    Idx<int>				 label;
+    Idx<Tlabel>				 label;
     intg				 age;
     
-    supervised_trainer(fc_ebm2<state_idx,state_idx,int> &tm, 
+    supervised_trainer(fc_ebm2<state_idx,int,state_idx> &m, 
 		       parameter &p);
     virtual ~supervised_trainer();
 
@@ -66,24 +66,23 @@ namespace ebl {
     //! fill up the vector <energies> with the energy produced by each
     //! possible label. The first dimension of <label-set> must be equal
     //! to the dimension of <energies>.
-    int run(Idx<double> &sample, Idx<double> &energies);
+    int run(Idx<double> &sample, infer_param &infp);
 
     //! Test a single sample and its label <label> (an integer).
     //! Returns true if the sample was correctly classified, false otherwise.
-    bool test_sample(Idx<double> &sample, int label);
+    bool test_sample(Idx<double> &sample, int label, infer_param &infp);
 
     //! perform a learning update on one sample. <sample> is the input
     //! sample, <label> is the desired category (an integer), <label-set> is
     //! a matrix where  the i-th row is the desired output
     //! for the i-th category, and <update-args> is a list of arguments
     //! for the parameter update method (e.g. learning rate and weight decay).
-    Idx<double> learn_sample(Idx<double> &sample, int label, gd_param &arg);
+    Idx<double> learn_sample(state_idx *sample, int label, gd_param &arg);
 
     //! Measure the average energy and classification error rate
     //! on a dataset.
     //! returns a list with average loss and proportion of errors
-    Idx<double> test(LabeledDataSource<Tdata, Tlabel> &ds, 
-		     classifier_meter &log);
+    void test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log);
 
     //! train for <niter> sweeps over the training set. <samples> contains the
     //! inputs samples, and <labels> the corresponding desired categories
@@ -101,7 +100,6 @@ namespace ebl {
 
 } // namespace ebl {
 
-//###################################################################
-//#include "EblTrainer.hpp"
+#include "EblTrainer.hpp"
 
 #endif /* EBLTRAINER_H_ */
