@@ -45,7 +45,7 @@ namespace ebl {
     ds->seek_begin();
     mtr->clear();
     for (int i = 0; i < ds->size(); ++i) {
-      ds->fprop(input, desired);
+      ds->fprop(*input, *desired);
       machine->fprop(input, output, desired, energy);
       mtr->update(age, output, desired->get(), energy);
       ds->next();
@@ -70,7 +70,7 @@ namespace ebl {
 					 intg n, gd_param *gdp, 
 					 double kappa = 0.0) {
     for (int i = 0; i < n; ++i) {
-      ds->fprop(input, desired);
+      ds->fprop(*input, *desired);
       machine->fprop(input, output, desired, energy);
       mtr->update(age, output, desired->get(), energy);
       param->clear_dx();
@@ -111,7 +111,7 @@ namespace ebl {
 						intg n, double mu) {
     param->clear_ddeltax();
     for (int i = 0; i < n; ++i) {
-      ds->fprop(input, desired);
+      ds->fprop(*input, *desired);
       machine->fprop(input, output, desired, energy);
       param->clear_dx();
       machine->bprop(input, output, desired, energy);

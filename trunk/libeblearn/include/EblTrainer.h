@@ -35,21 +35,30 @@
 #include "Blas.h"
 #include "EblArch.h"
 #include "EblMachines.h"
-#include "Datasource.h"
+#include "EblLogger.h"
+#include "DataSource.h"
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // trainer
+  //! Generic Trainer
+  // TODO: templated generic trainer class
 
-  class trainer {
+  ////////////////////////////////////////////////////////////////
+  //! Supervised Trainer
+  template<class Tdata, class Tlabel>
+    class supervised_trainer {
   public:
-    trainable_machine<state_idx,state_idx,state_idx>	&tmachine;
-    parameter					        &param;
-    Idx<double> *input;
+    fc_ebm2<state_idx,state_idx,int>	&tmachine;
+    parameter				&param;
+    state_idx				*input;
+    state_idx				 energy;
+    Idx<int>				 label;
+    intg				 age;
     
-    trainer(trainable_machine<state_idx,state_idx,state_idx> &tm, parameter &p);
-    virtual ~trainer();
+    supervised_trainer(fc_ebm2<state_idx,state_idx,int> &tm, 
+		       parameter &p);
+    virtual ~supervised_trainer();
 
     //! take an input and a vector of possible labels (each of which
     //! is a vector, hence <label-set> is a matrix) and
@@ -57,7 +66,7 @@ namespace ebl {
     //! fill up the vector <energies> with the energy produced by each
     //! possible label. The first dimension of <label-set> must be equal
     //! to the dimension of <energies>.
-    intg run(Idx<double> &sample, Idx<double> &energies);
+    int run(Idx<double> &sample, Idx<double> &energies);
 
     //! Test a single sample and its label <label> (an integer).
     //! Returns true if the sample was correctly classified, false otherwise.
@@ -73,7 +82,8 @@ namespace ebl {
     //! Measure the average energy and classification error rate
     //! on a dataset.
     //! returns a list with average loss and proportion of errors
-    Idx<double>	test(LabeledDataSource &ds);
+    Idx<double> test(LabeledDataSource<Tdata, Tlabel> &ds, 
+		     classifier_meter &log);
 
     //! train for <niter> sweeps over the training set. <samples> contains the
     //! inputs samples, and <labels> the corresponding desired categories
@@ -81,9 +91,17 @@ namespace ebl {
     //! return the average energy computed on-the-fly.
     //! <update-args> is a list of arguments for the parameter
     //! update method (e.g. learning rate and weight decay).
-    double train(LabeledDataSource &ds, int niter, gd_param &args);
+    void train(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log, 
+	       gd_param &args, int niter);
+
+    //! compute hessian
+    void compute_diaghessian(LabeledDataSource<Tdata, Tlabel> &ds, intg niter, 
+			     double mu);
   };
 
 } // namespace ebl {
+
+//###################################################################
+//#include "EblTrainer.hpp"
 
 #endif /* EBLTRAINER_H_ */

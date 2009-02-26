@@ -208,15 +208,17 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // euclidean trainable machine
+  // supervised euclidean machine
 
-  euclidean_trainable_machine::euclidean_trainable_machine(module_1_1<state_idx,
-							   state_idx> &m,
-							   Idx<double> &t)
-    : trainable_machine<state_idx,int,state_idx>(m, cost), cost(t) {
+  supervised_euclidean_machine::
+  supervised_euclidean_machine(module_1_1<state_idx,state_idx> &m,
+			       Idx<double> &t)
+    : fc_ebm2<state_idx,int,state_idx>(m, fout, 
+					    (ebm_2<state_idx,int>&)fcost), 
+      fcost(t), fout(1) { // TODO make it any size
   }
 
-  euclidean_trainable_machine::~euclidean_trainable_machine() {
+  supervised_euclidean_machine::~supervised_euclidean_machine() {
   }
 
 } // end namespace ebl

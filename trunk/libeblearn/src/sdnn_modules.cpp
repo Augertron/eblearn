@@ -108,9 +108,9 @@ sdnnclass_state::~sdnnclass_state()
 //////////////////////////////////////////////////////////////////////////////
 ////// sdnn_classer ////////
 
-sdnn_classer::sdnn_classer(Idx<int> *classes, Idx<double> *pr, int ini, int inj, parameter *prm)
-{
-  junk_param = new state_idx(prm);
+sdnn_classer::sdnn_classer(Idx<int> *classes, Idx<double> *pr, int ini, 
+			   int inj, parameter *prm) {
+  junk_param = new state_idx(*prm);
   intg cdim0 = classes->dim(0);
   if (pr->dim(0) != cdim0 + 1)
     throw("[sdnn-classer] priors and classes have incompatible sizes");

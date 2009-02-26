@@ -31,14 +31,14 @@ void DataSourceTest::test_LabeledDataSource() {
   Idx<int> labels(ndata);
   std::generate(labels.scalars_begin(), labels.scalars_end(), Counter<int>());
 
-  LabeledDataSource<double, int> ds(&data, &labels);
+  LabeledDataSource<double, int> ds(data, labels);
 
   // Print out two epochs
   {
     state_idx datum(1, 2, 3);
     Idx<int> label;
     for (int age = 0; age < ndata * 2; ++age) {
-      ds.fprop(&datum, &label);
+      ds.fprop(datum, label);
       /*			cout<<"Datum:"<<endl;
 				datum.x.printElems();
 				cout<<"Label: ";
@@ -62,11 +62,11 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
   Idx<ubyte> data(1, 1, 1), labels(1);
   CPPUNIT_ASSERT(load_matrix<ubyte>(data, datafile.c_str()) == true);
   CPPUNIT_ASSERT(load_matrix<ubyte>(labels, labelfile.c_str()) == true);
-  LabeledDataSource<ubyte,ubyte> ds(&data, &labels);
+  LabeledDataSource<ubyte,ubyte> ds(data, labels);
   state_idx datum(1, 28, 28);
   Idx<ubyte> label;
   for (int i = 0; i < 5; i++) {
-    ds.fprop(&datum, &label);
+    ds.fprop(datum, label);
     /* cout<<"Datum:"<<endl;
        datum.x.printElems();
        cout<<"Label: ";

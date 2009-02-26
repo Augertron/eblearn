@@ -38,34 +38,32 @@
 
 namespace ebl {
 
-  template<typename I, typename L> class LabeledDataSource {
-  protected:
-    Idx<I> *data;
-    Idx<L> *labels;
-    typename Idx<I>::dimension_iterator dataIter;
-    typename Idx<L>::dimension_iterator labelsIter;
-
+  template<typename Tdata, typename Tlabel> class LabeledDataSource {
   public:
-	//! Do not use, for subclasses using different kind of inputs
-	LabeledDataSource(){};
+    Idx<Tdata>					&data;
+    Idx<Tlabel>					&labels;
+    typename Idx<Tdata>::dimension_iterator	 dataIter;
+    typename Idx<Tlabel>::dimension_iterator	 labelsIter;
 
+    //! Do not use, for subclasses using different kind of inputs
+    LabeledDataSource(){};
 
     //! Constructor takes all input data and corresponding labels.
     //! @param inputs: An N+1-dimensional Idx of N-dimensional inputs.
     //! @param labels: A 1-dimensional Idx of corresponding labels.
-    LabeledDataSource(Idx<I> *inputs, Idx<L> *labels);
+    LabeledDataSource(Idx<Tdata> &inputs, Idx<Tlabel> &labels);
 
     virtual ~LabeledDataSource() {};
 
     //! Copies the current datum to a state and label.
-    void virtual fprop(state_idx *datum, Idx<L> *label);
+    void virtual fprop(state_idx &datum, Idx<Tlabel> &label);
 
     //! Returns the number of data instances contained in this data source.
     virtual int size();
 
     //! Returns the index of the datum currently pointed to.
     // TODO: implement or get rid of tell?
-    virtual int tell(){return -1;};
+    virtual int tell() { return -1; };
 
     //! Move to the next datum.
     virtual void next();
@@ -81,8 +79,8 @@ namespace ebl {
   //! and a label in the form of an idx0 of L.
   //! This includes most supervised learning algorithms
   //! implemented in this library.
-  template<class I, class L>
-    class MnistDataSource : public LabeledDataSource<I, L> {
+  template<class Tdata, class Tlabel>
+    class MnistDataSource : public LabeledDataSource<Tdata, Tlabel> {
   public:
     intg width;
     intg height;
@@ -96,14 +94,14 @@ namespace ebl {
     //! the actual images will be centered.
     //! <bias> and <coeff> are used to shift and scale
     //! the values.
-    MnistDataSource(Idx<I> *inp, Idx<L> *lbl, intg w, intg h, double b,
+    MnistDataSource(Idx<Tdata> &inp, Idx<Tlabel> &lbl, intg w, intg h, double b,
 		    double c);
     virtual ~MnistDataSource () {}
 
     //! get the current item and copy the sample into
     //! <out> (an idx3-state) and the corresponding
     //! label into <lbl> (and idx0 of int).
-    void virtual fprop(state_idx *out, Idx<L> *label);
+    void virtual fprop(state_idx &out, Idx<Tlabel> &label);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -111,17 +109,17 @@ namespace ebl {
   //! a data source constructed by taking patterns in
   //! an existing data source whose indices are within a
   //! given range.
-  template<class I, class L>
-  class DataSourceNarrow : public LabeledDataSource<I, L> {
+  template<class Tdata, class Tlabel>
+  class DataSourceNarrow : public LabeledDataSource<Tdata, Tlabel> {
   public:
-  LabeledDataSource<I, L> *base;
+  LabeledDataSource<Tdata, Tlabel> *base;
   intg offset;
   intg size;
 
   //! make a new data source by taking <size> items
   //! from the data source passed as argument, starting
   //! at item <offset>.
-  DataSourceNarrow(LabeledDataSource<I, L> *b, intg siz, intg off);
+  DataSourceNarrow(LabeledDataSource<Tdata, Tlabel> *b, intg siz, intg off);
 
   virtual ~DataSourceNarrow () {}
 
@@ -129,7 +127,7 @@ namespace ebl {
   intg size();
 
   //! copy current item and label into <out> and <lbl>.
-  void fprop(state_idx &out, Idx<L> &label);
+  void fprop(state_idx &out, Idx<Tlabel> &label);
   };
   */
 

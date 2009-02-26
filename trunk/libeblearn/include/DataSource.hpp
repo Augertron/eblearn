@@ -37,103 +37,102 @@
 
 namespace ebl {
 
-template<typename T, typename L>
-LabeledDataSource<T,L>::LabeledDataSource(Idx<T> *data, Idx<L> *labels)
-	//:data(data),
-	// labels(labels),
-	:dataIter(*data, 0),
-    labelsIter(*labels,0)
-{
-	this->data = data;
-	this->labels = labels;
-}
+  template<typename Tdata, typename Tlabel>
+  LabeledDataSource<Tdata,Tlabel>::LabeledDataSource(Idx<Tdata> &data_, 
+						     Idx<Tlabel> &labels_)
+    : data(data_), labels(labels_), dataIter(data, 0), labelsIter(labels, 0) {
+  }
 
-template<typename T, typename L>
-int LabeledDataSource<T,L>::size() {
-	return this->data->dim(0);
-}
+  template<typename Tdata, typename Tlabel>
+  int LabeledDataSource<Tdata,Tlabel>::size() {
+    return data.dim(0);
+  }
 
-template<typename T, typename L>
-void LabeledDataSource<T,L>::fprop(state_idx *state, Idx<L> *label) {
-	//state->setndim(data.order()-1)
-	//state.resize(data.dims()+1, data.dims()+data.order());
-	state->resize(1, data->dim(1), data->dim(2)); // TODO: make this generic
-	//label->resize();
-	idx_copy(*dataIter, state->x);
-	idx_copy(*labelsIter, *label);
-}
+  template<typename Tdata, typename Tlabel>
+  void LabeledDataSource<Tdata,Tlabel>::fprop(state_idx &state, 
+					      Idx<Tlabel> &label) {
+    //state.setndim(data.order()-1)
+    //state.resize(data.dims()+1, data.dims()+data.order());
+    state.resize(1, data.dim(1), data.dim(2)); // TODO: make this generic
+    //label.resize();
+    idx_copy(*dataIter, state.x);
+    idx_copy(*labelsIter, label);
+  }
 
-template<typename T, typename L>
-void LabeledDataSource<T,L>::next() {
-	++dataIter;
-	++labelsIter;
+  template<typename Tdata, typename Tlabel>
+  void LabeledDataSource<Tdata,Tlabel>::next() {
+    ++dataIter;
+    ++labelsIter;
 
-	if(!dataIter.notdone()) {
-		dataIter = data->dim_begin(0);
-		labelsIter = labels->dim_begin(0);
-	}
-}
+    if(!dataIter.notdone()) {
+      dataIter = data.dim_begin(0);
+      labelsIter = labels.dim_begin(0);
+    }
+  }
 
-template<typename T, typename L>
-void LabeledDataSource<T,L>::seek_begin() {
-  dataIter = data->dim_begin(0);
-	labelsIter = labels->dim_begin(0);
-}
+  template<typename Tdata, typename Tlabel>
+  void LabeledDataSource<Tdata,Tlabel>::seek_begin() {
+    dataIter = data.dim_begin(0);
+    labelsIter = labels.dim_begin(0);
+  }
 
-////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////
 
-template<class I, class L>
-MnistDataSource<I, L>::MnistDataSource(Idx<I> *inp, Idx<L> *lbl,
-		intg w, intg h, double b, double c)
-	: LabeledDataSource<I, L>(inp, lbl) {
-  bias = b;
-  coeff = c;
-  width = w;
-  height = h;
-}
+  template<class Tdata, class Tlabel>
+  MnistDataSource<Tdata, Tlabel>::MnistDataSource(Idx<Tdata> &inp, 
+						  Idx<Tlabel> &lbl,
+						  intg w, intg h, 
+						  double b, double c)
+    : LabeledDataSource<Tdata, Tlabel>(inp, lbl) {
+    bias = b;
+    coeff = c;
+    width = w;
+    height = h;
+  }
 
-template<class I, class L>
-void MnistDataSource<I, L>::fprop(state_idx *out, Idx<L> *label) {
-  out->resize(1, height, width);
-  intg ni = (this->data)->dim(1);
-  intg nj = (this->data)->dim(2);
-  intg di = 0.5 * (height - ni);
-  intg dj = 0.5 * (width - nj);
-  idx_fill(out->x, bias * coeff);
-  Idx<double> tgt = (out->x).select(0, 0);
-  tgt = tgt.narrow(0, ni, di);
-  tgt = tgt.narrow(1, nj, dj);
-  idx_copy(*(this->dataIter), tgt);
-  idx_addc(out->x, bias, out->x);
-  idx_dotc(out->x, coeff, out->x);
-  label->set(this->labelsIter->get());
-}
+  template<class Tdata, class Tlabel>
+  void MnistDataSource<Tdata, Tlabel>::fprop(state_idx &out, 
+					     Idx<Tlabel> &label) {
+    out.resize(1, height, width);
+    intg ni = this->data.dim(1);
+    intg nj = this->data.dim(2);
+    intg di = 0.5 * (height - ni);
+    intg dj = 0.5 * (width - nj);
+    idx_fill(out.x, bias * coeff);
+    Idx<double> tgt = out.x.select(0, 0);
+    tgt = tgt.narrow(0, ni, di);
+    tgt = tgt.narrow(1, nj, dj);
+    idx_copy(*(this->dataIter), tgt);
+    idx_addc(out.x, bias, out.x);
+    idx_dotc(out.x, coeff, out.x);
+    label.set((this->labelsIter).get());
+  }
 
-////////////////////////////////////////////////////////////////
-/*
-// TODO: implement seek
-template<class I, class L>
-DataSourceNarrow<I, L>::DataSourceNarrow(LabeledDataSource<I, L> *b,
-		intg siz, intg off) {
-  if ((siz + off) > b->size())
-  	ylerror("illegal range for narrow-db");
+  ////////////////////////////////////////////////////////////////
+  /*
+  // TODO: implement seek
+  template<class Tdata, class Tlabel>
+  DataSourceNarrow<Tdata, Tlabel>::DataSourceNarrow(LabeledDataSource<Tdata, Tlabel> *b,
+  intg siz, intg off) {
+  if ((siz + off) > b.size())
+  ylerror("illegal range for narrow-db");
   if ((off < 0) || (siz < 0))
-    ylerror("offset and size of narrow-db must be positive");
+  ylerror("offset and size of narrow-db must be positive");
   base = b;
   offset = off;
   size = siz;
   current = 0;
-}
+  }
 
-intg DataSourceNarrow<I, L>::size() {
-	return size;
-}
+  intg DataSourceNarrow<Tdata, Tlabel>::size() {
+  return size;
+  }
 
-void fprop(state_idx &out, Idx<L> &label) {
-  base->seek(offset + current);
-  base->fprop(out,label);
-}
-*/
+  void fprop(state_idx &out, Idx<Tlabel> &label) {
+  base.seek(offset + current);
+  base.fprop(out,label);
+  }
+  */
 
 } // end namespace ebl
 

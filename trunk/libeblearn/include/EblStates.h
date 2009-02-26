@@ -162,11 +162,9 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! constructors from other state_idx
 
-    //! Constructs a state_idx with order 1 based on given state_idx si.
-    state_idx(state_idx *si);
-
     //! Constructs a state_idx from a state_idx's 3 internal Idx
-    state_idx(Idx<double> x, Idx<double> dx, Idx<double> ddx);
+    state_idx(const Idx<double> &x, const Idx<double> &dx, 
+	      const Idx<double> &ddx);
 
     ////////////////////////////////////////////////////////////////
     //! clear methods
@@ -194,7 +192,11 @@ namespace ebl {
 
     //! update with gradient descent
     virtual void update_gd(gd_param &arg);
-
+      
+    //! return an IdxDim object describing the order and dimensions of internal
+    //! buffers.
+    virtual IdxDim getIdxDim();
+      
     ////////////////////////////////////////////////////////////////
     //! resize methods
 

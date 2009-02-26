@@ -44,6 +44,8 @@
 #include "EblMachines.h"
 #include "EblNonLinearity.h"
 #include "EblTester.h"
+#include "EblLogger.h"
+#include "EblTrainer.h"
 #include "Generators.h"
 #include "Net.h"
 #include "DataSource.h"

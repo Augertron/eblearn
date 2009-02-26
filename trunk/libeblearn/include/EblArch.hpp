@@ -29,7 +29,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-////////////////////////////////////////////////////////////////
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -133,10 +132,19 @@ namespace ebl {
     err_not_implemented(); }
 
   template<class Tin1, class Tin2>
-  void ebm_2<Tin1,Tin2>::forget(forget_param &fp) { err_not_implemented(); }
+  void ebm_2<Tin1,Tin2>::forget(forget_param_linear &fp) { 
+    err_not_implemented(); }
 
   template<class Tin1, class Tin2>
   void ebm_2<Tin1,Tin2>::normalize() { err_not_implemented(); }
+
+  template<class Tin1, class Tin2>
+  double ebm_2<Tin1,Tin2>::infer1(Tin1 &i1, Tin2 &i2, state_idx &energy,
+				infer_param &ip) { err_not_implemented(); }
+  
+  template<class Tin1, class Tin2>
+  double ebm_2<Tin1,Tin2>::infer2(Tin1 &i1, Tin2 &i2, state_idx &energy,
+				infer_param &ip) { err_not_implemented(); }
 
 
   ////////////////////////////////////////////////////////////////
@@ -374,24 +382,30 @@ hidden states in layers_n");
   template<class Tin1, class Tin2, class Thid>
   void fc_ebm2<Tin1,Tin2,Thid>::bprop(Tin1 &in1, Tin2 &in2, state_idx &energy) {
     fout.clear_dx();
-    in2.clear_dx();
+    // in2.clear_dx(); // TODO this assumes Tin2 == state_idx
     fcost.bprop(fout, in2, energy);
     fmod.bprop(in1, fout);
   }
 
-
   template<class Tin1, class Tin2, class Thid>
   void fc_ebm2<Tin1,Tin2,Thid>::bbprop(Tin1 &in1, Tin2 &in2, state_idx &energy){
     fout.clear_ddx();
-    in2.clear_ddx();
+    // in2.clear_ddx(); // TODO this assumes Tin2 == state_idx
     fcost.bbprop(fout, in2, energy);
     fmod.bbprop(in1, fout);
   }
 
   template<class Tin1, class Tin2, class Thid>
-  void fc_ebm2<Tin1,Tin2,Thid>::forget(forget_param &fp) {
+  void fc_ebm2<Tin1,Tin2,Thid>::forget(forget_param_linear &fp) {
     fmod.forget(fp);
     fcost.forget(fp);
+  }
+
+  template<class Tin1, class Tin2, class Thid>
+  double fc_ebm2<Tin1,Tin2,Thid>::infer2(Tin1 &i1, Tin2 &i2, state_idx &energy,
+			 infer_param &ip) {
+    fprop(i1, i2, energy); // first propagate all the way up
+    return fcost.infer2(i1, i2, energy, ip); // then infer from energy
   }
 
   ////////////////////////////////////////////////////////////////

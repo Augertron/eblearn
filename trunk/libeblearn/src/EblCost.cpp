@@ -39,7 +39,7 @@ namespace ebl {
   // euclidean_module
   
   euclidean_module::euclidean_module(Idx<double> &targets_)
-    : cost_module<state_idx,int,state_idx>(targets_) {
+    : cost_module<state_idx,int>(targets_) {
   }
 
   euclidean_module::~euclidean_module() {
@@ -58,6 +58,18 @@ namespace ebl {
     idx_sub(in1.x, in2.x, in1.dx); // derivative with respect to in1
     idx_dotc(in1.dx, out.dx.get(), in1.dx); // multiply by energy derivative
     idx_minus(in1.dx, in2.dx); // derivative with respect to in2
+  }
+
+  double euclidean_module::infer2(state_idx &i1, int &label, state_idx &energy,
+				  infer_param &ip) {
+    label = 0;
+    idx_bloop1(e, energies, double) {
+      fprop(i1, label, out);
+      idx_copy(out.x, e);
+      label++;
+    }
+    label = idx_indexmin(energies);
+    return 0.0;
   }
 
 } // end namespace ebl
