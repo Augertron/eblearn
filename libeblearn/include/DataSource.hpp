@@ -38,6 +38,11 @@
 namespace ebl {
 
   template<typename Tdata, typename Tlabel>
+  LabeledDataSource<Tdata,Tlabel>::LabeledDataSource()
+    : data(1), labels(1), dataIter(data, 0), labelsIter(labels, 0) {
+  }
+
+  template<typename Tdata, typename Tlabel>
   LabeledDataSource<Tdata,Tlabel>::LabeledDataSource(Idx<Tdata> &data_, 
 						     Idx<Tlabel> &labels_)
     : data(data_), labels(labels_), dataIter(data, 0), labelsIter(labels, 0) {
@@ -91,6 +96,22 @@ namespace ebl {
   }
 
   template<class Tdata, class Tlabel>
+  void MnistDataSource<Tdata, Tlabel>::init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, 
+					    intg w, intg h, double b, double c){
+    this->data = inp;
+    this->labels = lbl;
+    typename Idx<Tdata>::dimension_iterator	 dIter(inp, 0);
+    typename Idx<Tlabel>::dimension_iterator	 lIter(lbl, 0);
+    this->dataIter = dIter;
+    this->labelsIter = lIter;
+    bias = b;
+    coeff = c;
+    width = w;
+    height = h;
+
+  }
+
+  template<class Tdata, class Tlabel>
   void MnistDataSource<Tdata, Tlabel>::fprop(state_idx &out, 
 					     Idx<Tlabel> &label) {
     out.resize(1, height, width);
@@ -106,6 +127,50 @@ namespace ebl {
     idx_addc(out.x, bias, out.x);
     idx_dotc(out.x, coeff, out.x);
     label.set((this->labelsIter).get());
+  }
+
+  template<class Tdata, class Tlabel>
+  bool load_mnist_dataset(const char *dir, 
+			  MnistDataSource<Tdata,Tlabel> &train_ds, 
+			  MnistDataSource<Tdata,Tlabel> &test_ds,
+			  int train_size, int test_size) {
+    // loading train and test datasets
+    string train_datafile = dir;
+    string train_labelfile = dir;
+    string test_datafile = dir;
+    string test_labelfile = dir;
+    train_datafile += "/train-images-idx3-ubyte";
+    train_labelfile += "/train-labels-idx1-ubyte";
+    test_datafile += "/t10k-images-idx3-ubyte";
+    test_labelfile += "/t10k-labels-idx1-ubyte";
+    Idx<Tdata> train_data(1, 1, 1), test_data(1, 1, 1);
+    Idx<Tlabel> train_labels(1), test_labels(1);
+    if (!load_matrix<Tdata>(train_data, train_datafile.c_str())) {
+      std::cerr << "Mnist dataset, failed to load " << train_datafile << endl;
+      ylerror("Failed to load dataset file");
+    }
+    if (!load_matrix<Tlabel>(train_labels, train_labelfile.c_str())) {
+      std::cerr << "Mnist dataset, failed to load " << train_labelfile << endl;
+      ylerror("Failed to load dataset file");
+    }
+    if (!load_matrix<Tdata>(test_data, test_datafile.c_str())) {
+      std::cerr << "Mnist dataset, failed to load " << test_datafile << endl;
+      ylerror("Failed to load dataset file");
+    }
+    if (!load_matrix<Tlabel>(test_labels, test_labelfile.c_str())) {
+      std::cerr << "Mnist dataset, failed to load " << test_labelfile << endl;
+      ylerror("Failed to load dataset file");
+    }
+    
+    // TODO: implement DataSourceNarrow instead of manually narrowing here.
+    train_data = train_data.narrow(0, train_size, 0); 
+    train_labels = train_labels.narrow(0, train_size, 0);
+    test_data = test_data.narrow(0, test_size, 5000 - (0.5 * test_size)); 
+    test_labels = test_labels.narrow(0, test_size, 5000 - (0.5 * test_size));
+
+    test_ds.init(test_data, test_labels, 32, 32, 0.0, 0.01);
+    train_ds.init(train_data, train_labels, 32, 32, 0.0, 0.01);
+    return true;
   }
 
   ////////////////////////////////////////////////////////////////

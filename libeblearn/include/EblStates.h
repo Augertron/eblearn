@@ -120,7 +120,11 @@ namespace ebl {
 
     ////////////////////////////////////////////////////////////////
     //! member variables
+  private:
+    //! an object containing an order and dimensons to help for Idx creations
+    IdxDim	idxdim;
 
+  public:
     //! state itself
     Idx<double> x;
     //! gradient of loss with respect to state
@@ -142,7 +146,13 @@ namespace ebl {
     //! Constructor. A state_idx can have up to 8 dimensions.
     state_idx(intg s0, intg s1, intg s2, intg s3, intg s4 = -1, intg s5 = -1,
 	      intg s6 = -1, intg s7 = -1);
+    //! Constructor. Use the order and dimensions contained in passed IdxDim d.
     state_idx(const IdxDim &d);
+    //! Constructor. Use the order and dimensions contained in passed Idx idx.
+    //! Beware that the Idx is passed by copy, to allow special cases like
+    //! passing an Idx resulting from a select() operation for example.
+    //! Use this constructor only where it is ok (time-wise) to do a copy.
+    state_idx(Idx<double> m);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from specific dimensions using a parameter
@@ -192,10 +202,6 @@ namespace ebl {
 
     //! update with gradient descent
     virtual void update_gd(gd_param &arg);
-      
-    //! return an IdxDim object describing the order and dimensions of internal
-    //! buffers.
-    virtual IdxDim getIdxDim();
       
     ////////////////////////////////////////////////////////////////
     //! resize methods

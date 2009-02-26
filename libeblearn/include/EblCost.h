@@ -41,15 +41,17 @@ namespace ebl {
   template<class Tin1, class Tin2>
     class cost_module : public ebm_2<Tin1, Tin2> {
   public:
+    //! all the input targets
     Idx<double> &targets;
-    state_idx in2;
-    state_idx out;
-    Idx<double> energies;
+    //! a temporary buffer where targets are copied based on input label
+    state_idx	 in2;
+    //! the energy for each target
+    Idx<double>	 energies;
 
+    //! Constructor. Keep a reference to targets and allocate other buffers
+    //! based on the targets order and dimensions.
     cost_module(Idx<double> &targets_);
     virtual ~cost_module();
-
-    virtual void fprop_energies(Tin1 &in1, Idx<double> &energies);
   };
 
   //! A module with 2 inputs that computes
@@ -62,17 +64,26 @@ namespace ebl {
     virtual ~euclidean_module();
 
     //! Computes 0.5 times the sum of square difference between
-    //! the components of state <input1> and the components of
-    //! state <input2>. Write the result into 0-dimensional state <output>.
-    virtual void fprop(state_idx &in1, int &label, state_idx &out);
+    //! the components of state <in1> and the components of
+    //! state <in2> (where a copy of the target corresponding to <label>
+    //! is copied. Write the result into 0-dimensional state <energy>.
+    virtual void fprop(state_idx &in1, int &label, state_idx &energy);
 
     //! Back-propagates gradients through <euclidean-module>.
     //! This multiplies the gradient of some function with respect
-    //! to <output> (stored in the <dx> slot of <output>) by the
+    //! to <energy> (stored in the <dx> slot of <energy>) by the
     //! jacobian of the <euclidean-module> with respect to its inputs.
-    //! The result is written into the <dx> slots of <input1> and
-    //! <input2>.
-    virtual void bprop(state_idx &in1, int &label, state_idx &out);
+    //! The result is written into the <dx> slots of <in1> and
+    //! <in2>.
+    virtual void bprop(state_idx &in1, int &label, state_idx &energy);
+
+    //! mse has this funny property that the bbprop method mixes up the
+    //! the first derivative after with the second derivative before, and
+    //! vice versa. Only the first combination is used here.
+    virtual void bbprop(state_idx &in1, int &label, state_idx &energy);
+
+    //! TODO: implement?
+    virtual void forget(forget_param_linear &fp) {}
 
     //! compute value of in2 that minimizes the energy, given in1
     virtual double infer2(state_idx &i1, int &i2, state_idx &energy,

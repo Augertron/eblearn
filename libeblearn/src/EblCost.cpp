@@ -45,27 +45,34 @@ namespace ebl {
   euclidean_module::~euclidean_module() {
   }
 
-  void euclidean_module::fprop(state_idx &in1, int &label, state_idx &out) {
+  void euclidean_module::fprop(state_idx &in1, int &label, state_idx &energy) {
     Idx<double> target = targets.select(0, label);
     idx_copy(target, in2.x);
     // squared distance between in1 and target
-    idx_sqrdist(in1.x, in2.x, out.x);
-    idx_dotc(out.x, 0.5, out.x); // multiply by .5
+    idx_sqrdist(in1.x, in2.x, energy.x);
+    idx_dotc(energy.x, 0.5, energy.x); // multiply by .5
   }
   
-  void euclidean_module::bprop(state_idx &in1, int &label, state_idx &out) {
-    idx_checkorder1(out.x, 0); // out.x must have an order of 0
+  void euclidean_module::bprop(state_idx &in1, int &label, state_idx &energy) {
+    idx_checkorder1(energy.x, 0); // energy.x must have an order of 0
     idx_sub(in1.x, in2.x, in1.dx); // derivative with respect to in1
-    idx_dotc(in1.dx, out.dx.get(), in1.dx); // multiply by energy derivative
+    idx_dotc(in1.dx, energy.dx.get(), in1.dx); // multiply by energy derivative
     idx_minus(in1.dx, in2.dx); // derivative with respect to in2
+  }
+
+  // mse has this funny property that the bbprop method mixes up the
+  // the first derivative after with the second derivative before, and
+  // vice versa. Only the first combination is used here.
+  void euclidean_module::bbprop(state_idx &in1, int &label, state_idx &energy) {
+    idx_fill(in1.ddx, energy.dx.get());
   }
 
   double euclidean_module::infer2(state_idx &i1, int &label, state_idx &energy,
 				  infer_param &ip) {
     label = 0;
     idx_bloop1(e, energies, double) {
-      fprop(i1, label, out);
-      idx_copy(out.x, e);
+      fprop(i1, label, energy);
+      idx_copy(energy.x, e);
       label++;
     }
     label = idx_indexmin(energies);
