@@ -1,0 +1,152 @@
+<html>
+  <head>
+    <title>Eblearn project homepage</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <link rel="stylesheet" href="web/main.css" type="text/css" media="screen">
+    <link rel="stylesheet" href="web/index_004.css" type="text/css" 
+	  media="screen">
+    <link rel="stylesheet" type="text/css" href="web/styles.css" media="all">
+ </head>
+ <body>
+    <div id="globalWrapper">
+     <h2>Download</h2>
+     <p>
+The project is still on pre-release version, so there is no pre-packed
+version of the library. Still, you are welcome to visit the <a href="https://sourceforge.net/projects/eblearn/" target="new_page">sourceforge page</a> and browse the <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/" target="new_page">SVN repository</a>, where the project is updated very regularly at the moment.</p>
+     <p>
+     You can get the current source tree with the following command: <br>
+     <code><b>
+     svn co https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk  eblearn
+     </b></code>
+     <br>
+     </p>
+
+     <h2>Installation</h2>
+     <h3>Ubuntu</h3>
+     <p>
+       <h4>Required external packages (Non-Proprietary)</h4>
+       <h5>all packages: libeblearn, libidx, tool libraries, tester and demos
+       </h5>
+       <code>$ 
+	   	     sudo apt-get install cmake g++
+         	     	  	  	  libatlas-base-dev
+	       	 	  		  libboost-filesystem-dev
+					  libboost-regex-dev
+	       	     	  		  libqt4-core libqt4-dev libqt4-gui
+               	     	  		  libcppunit-dev
+	 </code>
+       <h5>libeblearn and libidx only (tools, testers and some demos will not compile)</h5>
+       <code>$ 
+	   	     sudo apt-get install cmake g++
+         	     	  	  	  libatlas-base-dev
+	 </code>
+       <h5>for developers only (tools for bug-free development)</h5>
+       <code>$ 
+       	    	     sudo apt-get install valgrind electric-fence
+	 </code>
+       <h4>Compilation</h4>
+       <code>$ 
+	 ./build.sh
+	 </code>
+
+       <h4>Execution</h4>
+       <code>
+	 $ ./configure.sh<br>
+	 $ cd bin<br>
+	 $ ./eblearn_tester<br>
+	 $./mnist "your-mnist-directory"
+	 </code>
+    </p>
+
+     <h3>MAC OS X</h3>
+     <p>
+(by George Williams from 
+    http://movement.nyu.edu/internal/Main/EblearnMacosNotes)<br>
+
+    These are some notes that should help you get eblearn to compile
+ and run on macos. They are based on revision 115 of the subversion
+ source repository of the eblearn source.</p>
+    
+       <h4>Required external packages (Non-Proprietary)</h4>
+       <h5>Install cmake</h5>
+          o I installed from the src tarball (cmake-2.6.2.tar.gz)
+          which you can get here at
+          http://www.cmake.org/cmake/resources/software.html.
+
+          <br>
+          o Consult the README.txt in the top level directory and note
+          that the steps to compile and install are "./bootstrap;
+          make; sudo make install".
+
+    <h5>Install libatlas</h5>
+          o I installed from the src tarball (Atlas-C++-0.6.1.tar.gz)
+          which you can get here at
+          http://sourceforge.net/projects/worldforge/
+
+          <br>
+          o The standard "configure/make/sudo make install" will do. 
+
+    <h5>Install cppunit</h5>
+          o I installed from the src tarball (cppunit-1.12.1.tar.gz)
+          which you can get here at
+          http://apps.sourceforge.net/mediawiki/cppunit/.
+
+          <br>
+          o The standard "configure/make/sudo make install" will do. 
+
+    <h5>Install mnist databases</h5>
+          o You get these here http://yann.lecun.com/exdb/mnist/.
+          <br>
+          o You will need to unpack the data
+          <br>
+          o You will need the full path to the data directory later on 
+    <h5>Install boost</h5>
+          o You should be able to install from the most recent boost
+          version. I found a "macports" version, which is much easier
+          to install.
+
+          <br>
+          o Macports install - If you don't have macports, use the
+          tarball instructions here:
+          http://www.macports.org/install.php. I installed from the
+          tarball MacPorts-1.7.0.tar.gz.
+
+          <br>
+          o Macports boost - cd into the macports bin directory and
+          type ">> sudo ./ports install boost". This may take a
+          while. 
+
+    <h5>Download and adjust eblearn build</h5>
+          o Download from the subversion repository: ">> svn export
+          https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk
+          eblearn"<br>
+
+          o Modify the build to find boost headers. Locate the file
+          "eblearn/scripts/FindBoost.cmake" and insert the line at the
+          top of the file "SET(BOOST_INCLUDE_DIR
+          /opt/local/include)". Assuming you did not change the
+          default install directory of macports, then
+          /opt/local/include will contain the macports versions of
+          packages.
+
+       <h4>Compilation</h4>
+          o At this point, you can use the standard instructions to
+          build and configure eblearn
+          <br>
+          o cd into the toplevel eblearn directory, and type
+          ">>./clean.sh" (just in case you did a previous build with
+          this src tree.)
+          <br>
+          o Then type ">> ./build.sh".
+          <br>
+          o Then type ">>./configure.sh". You'll need the full path to
+          your local mnist data dir. 
+
+       <h4>Execution</h4>
+          o cd into "bin" and type "./eblearn_tester".
+          <br>
+          o all the implemented unit tests should pass 
+</p>
+ 
+   </div>
+   </body></html>
