@@ -12,24 +12,24 @@ int main(int argc, char **argv) {
   intg trsize = 2000; // maximum training set size: 60000
   intg tesize = 1000; // maximum testing set size:  10000
   
-  // load MNIST datasets: trize for training set and tesize for testing set
+  //! load MNIST datasets: trize for training set and tesize for testing set
   MnistDataSource<ubyte,ubyte> train_ds, test_ds;
   load_mnist_dataset(argv[1], train_ds, test_ds, trsize, tesize);
 
-  // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
+  //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
 
-  // create the network weights, network and trainer
+  //! create the network weights, network and trainer
   IdxDim dims(train_ds.data.spec); // get order and dimenions from data
   parameter theparam(60000); // create trainable parameter
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
   supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam);
 
-  // a classifier-meter measures classification errors
+  //! a classifier-meter measures classification errors
   classifier_meter trainmeter, testmeter;
 
-  // initialize the network weights
+  //! initialize the network weights
   forget_param_linear fgp(1, 0.5);
   thenet.forget(fgp);
 
