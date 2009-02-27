@@ -40,7 +40,7 @@
 
 namespace ebl {
 
-  /*! \mainpage libeblearn Library Main Page
+   /*! \mainpage libeblearn Library Main Page
    *
    * \section intro_sec Introduction
    *
