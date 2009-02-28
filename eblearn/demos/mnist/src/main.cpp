@@ -43,6 +43,7 @@ int main(int argc, char **argv) {
 	       /* double a_v */ 0.0,
 	       /* double a_t */ 0.0,
 	       /* double g_t*/ 	0.0);
+  infer_param infp;
 	
   // estimate second derivative on 100 iterations, using mu=0.02
   cout << "Computing second derivatives on MNIST dataset: ";
@@ -54,10 +55,10 @@ int main(int argc, char **argv) {
   for (int i = 0; i < 5; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
     cout << "training: " << flush;
-    thetrainer.test(train_ds, trainmeter);
+    thetrainer.test(train_ds, trainmeter, infp);
     trainmeter.display();
     cout << " testing: " << flush;
-    thetrainer.test(test_ds, testmeter);
+    thetrainer.test(test_ds, testmeter, infp);
     testmeter.display();
   }
   return 0;

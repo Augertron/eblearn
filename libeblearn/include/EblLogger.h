@@ -120,6 +120,7 @@ namespace ebl {
     //! <desired> (an idx0 of int) the desired category,
     //! and <energy> (an idx0-state) the energy.
     char update(intg a, class_state *co, ubyte cd, state_idx *en);
+    void update(intg age_, bool correct, state_idx &en);
 
     void test(class_state *co, ubyte cd, state_idx *en);
 

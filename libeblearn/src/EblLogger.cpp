@@ -80,6 +80,18 @@ namespace ebl {
     return crrct;
   }
 
+  void classifier_meter::update(intg age_, bool correct, state_idx &en) {
+    age = age_;
+    energy = en.x.get();
+    confidence = 0; // TODO? co->confidence;
+    total_energy += energy;
+    if (correct)
+      total_correct++;
+    else
+      total_error++;
+    size++;
+  }
+
   void classifier_meter::test(class_state *co, ubyte cd, state_idx *en) {
     intg crrct = this->correctp(co->output_class, cd);
     age = 0;

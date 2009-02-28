@@ -67,15 +67,16 @@ void NetTest::test_lenet5_mnist_ebl() {
 	       /* double a_v */ 0.0,
 	       /* double a_t */ 0.0,
 	       /* double g_t*/ 	0.0);
+  infer_param infp;
 	
   // this goes at about 25 examples per second on a PIIIM 800MHz
   for (int i = 0; i < 5; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
     cout << "training: " << flush;
-    thetrainer.test(train_ds, trainmeter);
+    thetrainer.test(train_ds, trainmeter, infp);
     trainmeter.display();
     cout << " testing: " << flush;
-    thetrainer.test(test_ds, testmeter);
+    thetrainer.test(test_ds, testmeter, infp);
     testmeter.display();
   }
   CPPUNIT_ASSERT_DOUBLES_EQUAL(97.15,

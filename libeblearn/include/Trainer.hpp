@@ -72,7 +72,7 @@ namespace ebl {
     for (int i = 0; i < n; ++i) {
       ds->fprop(*input, *desired);
       machine->fprop(input, output, desired, energy);
-      mtr->update(age, output, desired->get(), energy);
+      //   mtr->update(age, output, desired->get(), energy);
       param->clear_dx();
       machine->bprop(input, output, desired, energy);
       param->update_gd(*gdp);

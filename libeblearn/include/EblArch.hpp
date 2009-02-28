@@ -405,7 +405,7 @@ hidden states in layers_n");
   double fc_ebm2<Tin1,Tin2,Thid>::infer2(Tin1 &i1, Tin2 &i2, state_idx &energy,
 			 infer_param &ip) {
     fprop(i1, i2, energy); // first propagate all the way up
-    return fcost.infer2(i1, i2, energy, ip); // then infer from energy
+    return fcost.infer2(fout, i2, energy, ip); // then infer from energy
   }
 
   ////////////////////////////////////////////////////////////////
