@@ -66,23 +66,24 @@ namespace ebl {
     //! fill up the vector <energies> with the energy produced by each
     //! possible label. The first dimension of <label-set> must be equal
     //! to the dimension of <energies>.
-    int run(Idx<double> &sample, infer_param &infp);
+    int run(state_idx &input, infer_param &infp);
 
     //! Test a single sample and its label <label> (an integer).
     //! Returns true if the sample was correctly classified, false otherwise.
-    bool test_sample(Idx<double> &sample, int label, infer_param &infp);
+    bool test_sample(state_idx &input, int label, infer_param &infp);
 
     //! perform a learning update on one sample. <sample> is the input
     //! sample, <label> is the desired category (an integer), <label-set> is
     //! a matrix where  the i-th row is the desired output
     //! for the i-th category, and <update-args> is a list of arguments
     //! for the parameter update method (e.g. learning rate and weight decay).
-    Idx<double> learn_sample(state_idx *sample, int label, gd_param &arg);
+    Idx<double> learn_sample(state_idx &input, int label, gd_param &arg);
 
     //! Measure the average energy and classification error rate
     //! on a dataset.
     //! returns a list with average loss and proportion of errors
-    void test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log);
+    void test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log,
+	      infer_param &infp);
 
     //! train for <niter> sweeps over the training set. <samples> contains the
     //! inputs samples, and <labels> the corresponding desired categories
@@ -96,6 +97,11 @@ namespace ebl {
     //! compute hessian
     void compute_diaghessian(LabeledDataSource<Tdata, Tlabel> &ds, intg niter, 
 			     double mu);
+
+    //! Resize <input> based on the datasource. If <input> is not allocated,
+    //! allocate it. 
+    //! TODO: If order or dimensions have changed, reallocate.
+    void resize_input(LabeledDataSource<Tdata, Tlabel> &ds);
   };
 
 } // namespace ebl {

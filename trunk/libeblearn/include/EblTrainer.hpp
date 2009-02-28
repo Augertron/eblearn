@@ -49,44 +49,42 @@ namespace ebl {
   }
   
   template <class Tdata, class Tlabel>  
-  int supervised_trainer<Tdata, Tlabel>::run(Idx<double> &sample, 
+  int supervised_trainer<Tdata, Tlabel>::run(state_idx &input, 
 					     infer_param &infp) {
-    IdxDim d(sample.spec);
-    if (!input) input = new state_idx(d);
-    else input->resize(d);
-    idx_copy(sample, input->x); // copy sample in input state
     int answer = -1;
-    machine.infer2(*input, answer, energy, infp); // infer answer from energies
+    machine.infer2(input, answer, energy, infp); // infer answer from energies
     return answer;
   }
   
   template <class Tdata, class Tlabel>  
   bool supervised_trainer<Tdata, Tlabel>::
-  test_sample(Idx<double> &sample, int label, infer_param &infp) {
-    int answer = run(sample, infp);
+  test_sample(state_idx &input, int label, infer_param &infp) {
+    int answer = run(input, infp);
     return (label == answer); // return true if correct answer
   }
 
   template <class Tdata, class Tlabel>  
   Idx<double> supervised_trainer<Tdata, Tlabel>::
-  learn_sample(state_idx *input, int label, gd_param &args) {
-    machine.fprop(*input, label, energy);
+  learn_sample(state_idx &input, int label, gd_param &args) {
+    machine.fprop(input, label, energy);
     param.clear_dx();
-    machine.bprop(*input, label, energy);
+    machine.bprop(input, label, energy);
     param.update(args);
     return energy.x.get();
   }
 
   template <class Tdata, class Tlabel>  
   void supervised_trainer<Tdata, Tlabel>::
-  test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log) {
+  test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log,
+       infer_param &infp) {
     ds.seek_begin();
     log.clear();
+    resize_input(ds);
+    bool correct;
     for (int i = 0; i < ds.size(); ++i) {
       ds.fprop(*input, label);
-      int lab = label.get();
-      machine.fprop(*input, lab, energy);
-      //      log.update(age, output, label.get(), energy);
+      correct = test_sample(*input, label.get(), infp);
+      log.update(age, correct, energy);
       ds.next();
     }
   }
@@ -97,16 +95,16 @@ namespace ebl {
 	gd_param &args, int niter) {
     ds.seek_begin();
     log.clear();
-    IdxDim d(ds.data.spec);
-    if (!input) input = new state_idx(d);
-    else input->resize(d);
-    for (int i = 0; i < niter; ++i) {
-      ds.fprop(*input, label);
-      int lab = label.get();
-      learn_sample(input, lab, args);
-      //      log.update(age, output, label.get(), energy);
-      age++;
-      ds.next();
+    resize_input(ds);
+    for (int i = 0; i < niter; ++i) { // niter iterations
+      for (int j = 0; j < ds.size(); ++j) { // training on entire training set
+	ds.fprop(*input, label);
+	int lab = label.get();
+	learn_sample(*input, lab, args);
+	//      log.update(age, output, label.get(), energy);
+	age++;
+	ds.next();
+      }
     }
   }
 
@@ -132,6 +130,14 @@ namespace ebl {
     param.compute_epsilons(mu);
     cout << "diaghessian inf: " << idx_min(param.epsilons);
     cout << " sup: " << idx_max(param.epsilons) << endl;
+  }
+
+  template <class Tdata, class Tlabel>  
+  void supervised_trainer<Tdata, Tlabel>::
+  resize_input(LabeledDataSource<Tdata, Tlabel> &ds) {
+    IdxDim d(ds.data.spec);
+    if (!input) input = new state_idx(d);
+    else input->resize(d);
   }
 
 } // end namespace ebl
