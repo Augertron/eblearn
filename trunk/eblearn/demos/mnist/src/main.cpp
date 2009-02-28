@@ -5,12 +5,12 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 
 // argv[1] is expected to contain the directory of the mnist dataset
 int main(int argc, char **argv) {
-  cout << endl << "* MNIST demo: learning handwritten digits using the eblearn";
+  cout << "* MNIST demo: learning handwritten digits using the eblearn";
   cout << " C++ library *" << endl;
   init_drand(time(NULL)); // initialize random seed
 
-  intg trsize = 2000; // maximum training set size: 60000
-  intg tesize = 1000; // maximum testing set size:  10000
+  intg trsize = 60000; // maximum training set size: 60000
+  intg tesize = 10000; // maximum testing set size:  10000
   
   //! load MNIST datasets: trize for training set and tesize for testing set
   MnistDataSource<ubyte,ubyte> train_ds, test_ds;
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   // do training iterations 
   cout << "Training network on MNIST with " << train_ds.size();
   cout << " training samples and " << test_ds.size() << " test samples" << endl;
-  for (int i = 0; i < 5; ++i) {
+  for (int i = 0; i < 10; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
     cout << "training: " << flush;
     thetrainer.test(train_ds, trainmeter, infp);
