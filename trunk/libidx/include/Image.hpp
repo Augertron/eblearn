@@ -90,8 +90,8 @@ template<class T> Idx<T> image_resize(Idx<T> &image, double w, double h, int mod
 	}
 	else ylerror("image_resize: illegal mode or desired dimensions");
 	// compute closest integer subsampling ratio
-	rw = (int) imw / w;
-	rh = (int) imh / h;
+	rw = (int) (imw / w);
+	rh = (int) (imh / h);
 	// subsample by integer ratio if necessary
 	if ((0 != rh) || (0 != rw)) {
 		im = image_subsample(im, rh, rw);
@@ -99,7 +99,7 @@ template<class T> Idx<T> image_resize(Idx<T> &image, double w, double h, int mod
 		imh = im.dim(0);
 	}
 	// resample from subsampled image with bilinear interpolation
-	Idx<T> rez(h, w, (im.order() == 3) ? im.dim(2) : 1);
+	Idx<T> rez((intg) h, (intg) w, (im.order() == 3) ? im.dim(2) : 1);
 	Idx<T> bg(4);
 	idx_clear(bg);
 	// the 0.5 thingies are necessary because warp-bilin interprets
@@ -413,20 +413,20 @@ template<class T> void compute_bilin_transform(Idx<int> &dispi, Idx<int> &dispj,
 	float x21 = x2 - x1;
 	float x43 = x4 - x3;
 	float x23 = x2 - x3;
-	int mx0 = k * ((q3 * x21) + (q1 * x43));
-	int mx1 = k * ((p3 * x41) + (p1 * x23));
-	int mx2 = (-k) * (x41 + x23);
-	int mx3 = k * (((p3 * q3 * x1) + (p1 * q1 * x3)) -
-			((p1 * q3 * x2) + (p3 * q1 * x4)));
+	int mx0 = (int) (k * ((q3 * x21) + (q1 * x43)));
+	int mx1 = (int) (k * ((p3 * x41) + (p1 * x23)));
+	int mx2 = (int) ((-k) * (x41 + x23));
+	int mx3 = (int) (k * (((p3 * q3 * x1) + (p1 * q1 * x3)) -
+			      ((p1 * q3 * x2) + (p3 * q1 * x4))));
 	float y41 = y4 - y1;
 	float y21 = y2 - y1;
 	float y43 = y4 - y3;
 	float y23 = y2 - y3;
-	int my0 = k * ((q3 * y21) + (q1 * y43));
-	int my1 = k * ((p3 * y41) + (p1 * y23));
-	int my2 = (-k) * (y41 + y23);
-	int my3 = k * (((p3 * q3 * y1) + (p1 * q1 * y3)) -
-			((p1 * q3 * y2) + (p3 * q1 * y4)));
+	int my0 = (int) (k * ((q3 * y21) + (q1 * y43)));
+	int my1 = (int) (k * ((p3 * y41) + (p1 * y23)));
+	int my2 = (int) ((-k) * (y41 + y23));
+	int my3 = (int) (k * (((p3 * q3 * y1) + (p1 * q1 * y3)) -
+			      ((p1 * q3 * y2) + (p3 * q1 * y4))));
 	int q = 0, p = 0;
 	{ idx_bloop2(ispi, dispi, int, ispj, dispj, int) {
 		p = 0;
