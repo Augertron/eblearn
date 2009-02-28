@@ -224,21 +224,22 @@ namespace ebl {
     rlist.resize(0, rlist.dim(1));
     { idx_bloop1(re, res, double) {
 	double score = re.get(1);
-	int px = re.get(2);
-	int py = re.get(3);
-	int bx = re.get(4);
-	int by = re.get(5);
+	int px = (int) re.get(2);
+	int py = (int) re.get(3);
+	int bx = (int) re.get(4);
+	int by = (int) re.get(5);
 	// if its center is inside the box of a higher-scoring obj, kill it
 	bool ok = true;
 	{ idx_bloop1(o, res, double) {
 	    double scoreo = o.get(1);
-	    int pxo = o.get(2);
-	    int pyo = o.get(3);
-	    int bxo = o.get(4);
-	    int byo = o.get(5);
+	    int pxo = (int) o.get(2);
+	    int pyo = (int) o.get(3);
+	    int bxo = (int) o.get(4);
+	    int byo = (int) o.get(5);
 	    if ((score < scoreo) && 
-		collide_rect(px - 0.5 * bx, py - 0.5 * by, bx, by, 
-			     pxo - (0.5 * bxo),	pyo - (0.5 * byo), bxo, byo))
+		collide_rect((int) (px - 0.5 * bx), (int) (py - 0.5 * by), 
+			     bx, by, (int) (pxo - (0.5 * bxo)),	
+			     (int) (pyo - (0.5 * byo)), bxo, byo))
 	      ok = false;
 	  }}
 	if (ok) {

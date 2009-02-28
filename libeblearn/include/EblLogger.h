@@ -92,7 +92,7 @@ namespace ebl {
     intg total_correct;
     intg total_error;
     intg total_punt;
-    intg total_energy;
+    double total_energy;
 
     //! Create a new <classifier-meter> using <comparison-function>
     //! to compare actual and desired answers. By default

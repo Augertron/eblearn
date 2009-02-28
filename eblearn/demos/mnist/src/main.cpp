@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   // do training iterations 
   cout << "Training network on MNIST with " << train_ds.size();
   cout << " training samples and " << test_ds.size() << " test samples" << endl;
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 100; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
     cout << "training: " << flush;
     thetrainer.test(train_ds, trainmeter, infp);
