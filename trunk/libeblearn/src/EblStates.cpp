@@ -57,6 +57,8 @@ namespace ebl {
   {
     value = v;
     exponent = e;
+    if (e == 0)
+      ylerror("Cannot use an exponent of 0 in forget param");
   }
 
   ////////////////////////////////////////////////////////////////
