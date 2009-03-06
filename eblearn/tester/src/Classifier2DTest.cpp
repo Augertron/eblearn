@@ -34,12 +34,6 @@ void Classifier2DTest::test_norb() {
     lbl.set(labels[i], i);
   Classifier2D cb(mono_net.c_str(), sz, lbl, 0.0, 0.01, 240, 320);
   Idx<double> res = cb.fprop(left.idx_ptr(), 1, 1.8, 60);
-  // display
-  /*	Idx_Gui *ig = new Idx_Gui(&left, UBYTE);
-	ig->setvmin(0);
-	ig->setvmax(255);
-	ig->show();
-  */	// tests
   CPPUNIT_ASSERT(res.dim(0) == 1); // only 1 object
   CPPUNIT_ASSERT(res.get(0, 0) == 2); // plane
 }

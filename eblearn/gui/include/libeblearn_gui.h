@@ -3,7 +3,6 @@
 
 #include "ebm_gui.h"
 #include "ui_ebbox.h"
-
-
+#include "Window.h"
 
 #endif /*LIBEBLEARN_GUI_H_*/
