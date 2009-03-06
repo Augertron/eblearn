@@ -1,7 +1,7 @@
 #include "ImageTest.h"
 
 #ifdef __GUI__
-#include "ebm_gui.h"
+#include "libeblearn_gui.h"
 #endif
 
 extern string *gl_data_dir;
@@ -37,8 +37,11 @@ void ImageTest::test_resize() {
 
   pnm_fread_into_rgbx(imgfile.c_str(), im);
   im = image_resize(im, 50, 50, 1);
-  //	ebwindow *w = new ebwindow;
-  //	w->RGB_draw_matrix(&im, UBYTE, 0, 0, 4, 4);
+
+#ifdef __GUI__  
+  new_window(w);
+  w->gray_draw_matrix(&im, UBYTE, 0, 0, 0, 255);
+#endif
 }
 
 void ImageTest::test_pnm_P3() {
@@ -66,7 +69,7 @@ void ImageTest::test_pnm_P6() {
   imgfile += "/pnm/rgb_P6.ppm";
   pnm_fread_into_rgbx(imgfile.c_str(), im);
 #ifdef __GUI__
-  ebwindow *w = new ebwindow;
+  //ebwindow *w = new ebwindow;
   // TODO: this does not work
   //  w->RGB_draw_matrix(&im, UBYTE, 0, 0, 100, 100);
 #endif

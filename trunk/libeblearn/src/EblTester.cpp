@@ -67,7 +67,7 @@ namespace ebl {
   Idx<double> ModuleTester::test_jacobian(module_1_1<state_idx,state_idx> 
 					  &module, state_idx &in, 
 					  state_idx &out) {
-    forget_param_linear fp(2,0);
+    forget_param_linear fp(2,0.5);
 
     // just to resize states
     module.fprop(in,out);

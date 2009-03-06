@@ -20,6 +20,10 @@
 #include "ClusterTest.h"
 #include "ImageTest.h"
 
+#ifdef __GUI__
+#include "libeblearn_gui.h"
+#endif
+
 using namespace std;
 using namespace CppUnit;
 
@@ -89,6 +93,10 @@ int main(int argc, char **argv)
   parse_args(argc, argv);
   cout << "***********************************************************" << endl;
 
+#ifdef __GUI__
+  QApplication a(argc, argv);
+#endif
+
   // cppunit tests
   CppUnit::BriefTestProgressListener listener;
   CppUnit::TestResultCollector collector;
@@ -110,7 +118,7 @@ int main(int argc, char **argv)
   runner.addTest(ImageTest::suite());
   runner.addTest(DataSourceTest::suite());
   runner.addTest(Classifier2DTest::suite());
-  runner.addTest(NetTest::suite());
+  //  runner.addTest(NetTest::suite());
 
   // run all tests
   runner.run();
@@ -120,6 +128,10 @@ int main(int argc, char **argv)
     outputter->printHeader(); 
     cout << endl;
   }
+
+#ifdef __GUI__
+   a.exec();
+#endif
 
   if (gl_mnist_dir) delete gl_mnist_dir;
   if (gl_data_dir) delete gl_data_dir;

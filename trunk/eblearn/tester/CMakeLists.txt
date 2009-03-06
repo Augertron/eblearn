@@ -14,6 +14,17 @@ include_directories(${LIBEBLEARN_INCLUDE_DIR})
 include_directories(${LIBIDX_INCLUDE_DIR})
 include_directories(${EBLEARN_TOOLS_INCLUDE_DIR})
 
+FIND_PACKAGE(Qt4)
+IF (QT_FOUND) #-----------------------------------------------------------------
+  # add include directories
+  ##############################################################################
+  include_directories(${EBLEARN_GUI_INCLUDE_DIR})
+  include_directories(${QT_INCLUDE_DIR})
+  include_directories(${QT_QTGUI_INCLUDE_DIR})
+  include_directories(${QT_QTCORE_INCLUDE_DIR})
+  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GUI__")
+ENDIF (QT_FOUND) #--------------------------------------------------------------
+
 # check for external libraries
 ################################################################################
 # CPPUnit
@@ -49,7 +60,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
      IF (${Boost_MINOR_VERSION} GREATER 34)
         FIND_PACKAGE(Boost COMPONENTS system filesystem regex)
      ENDIF(${Boost_MINOR_VERSION} GREATER 34)
-     SET (CMAKE_CXX_FLAGS "-D__BOOST__")
+     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__BOOST__")
   ENDIF (Boost_FOUND)
   
   # link executable with external libraries
@@ -57,6 +68,9 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   target_link_libraries (eblearn_tester eblearn idx)
   target_link_libraries (eblearn_tester eblearn_tools)
   target_link_libraries (eblearn_tester ${CPPUNIT_LIBRARY})
+  IF (QT_FOUND) #---------------------------------------------------------------
+    target_link_libraries (eblearn_tester eblearn_gui)
+  ENDIF (QT_FOUND) #------------------------------------------------------------
   
   # write parameters for execution in run.init
   ##############################################################################
