@@ -32,76 +32,64 @@
 #ifndef WINDOW_H_
 #define WINDOW_H_
 
+#include <QPixmap>
+#include <QWidget>
 #include <QtGui>
-#include <qpixmap.h>
 #include <QResizeEvent>
 #include <math.h>
-#include <QtCore/QVariant>
-#include <QtGui/QAction>
-#include <QtGui/QApplication>
-#include <QtGui/QButtonGroup>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QPushButton>
-#include <QtGui/QWidget>
 
-#include "libidx.h"
-#include "ebm_gui.h"
-//#include "ui_ebbox.h"
-
-//enum idx_type { DOUBLE, FLOAT, INTG, UBYTE };
+#include "RenderThread.h"
 
 namespace ebl {
 
-#define new_window(w) Window *w = new Window()
-
 //! Window is a simple "whiteboard" on which you can display
-//! idxs with gray_draw_matrix and RGB_draw_matrix
+//! Idxs with for example gray_draw_matrix and RGB_draw_matrix.
+//! Warning: do not use electric fence with QT as it is unstable.
 class Window : public QWidget { 
-  //    Q_OBJECT
- private:
-  QPixmap* mydisplay;
-  QLabel* mylabel;
-  QPainter* painter;
+  Q_OBJECT
+  private:
+    QPixmap		pixmap;
+    QPoint		pixmapOffset;
+    double		pixmapScale;
+    double		curScale;
+    int			scaleIncr;
+  public:
+    RenderThread	thread;
 
-  void resizeEvent (QResizeEvent *event);
+  protected:
+    void paintEvent(QPaintEvent *event);
+    void resizeEvent(QResizeEvent *event);
+    void wheelEvent(QWheelEvent *event);
+    
+  private slots:
+    void updatePixmap(const QImage &im, double scaleFactor);
 
- public:
-  //! Be careful to create a whiteboard big enough for your pictures, since 
-  //! you won't be able to make it bigger after (ie resizing the window will 
-  //! scale the content, you won't have more space to draw on)
-  Window(int height = 500, int width = 500);
-  virtual ~Window();
+  public:
+    //! Be careful to create a whiteboard big enough for your pictures, since 
+    //! you won't be able to make it bigger after (ie resizing the window will 
+    //! scale the content, you won't have more space to draw on)
+    Window(int argc, char **argv, int height = 500, int width = 500);
+    virtual ~Window();
+  };
 
-  //! gray_draw_matrix displays your idx2 or the first layer of your idx3 in
-  //! grayscale on the whiteboard. This function does a copy of your idx and
-  //! won't change in in any way !
-  //! @param idx and @param type are, like before, used to templatize the
-  //! function
-  //! @param x and @param y are the coordinates of the top-left corner of
-  //! your picture on the whiteboard
-  //! @param minv and @param maxv are the min and max values to set colors.
-  //! If left to zero, the min of your idx will be set to 0 and the max will
-  //! be 255
-  //! @param zoomx and @param zoomy are the zoom factors in width and height
-  //! @param mutex is used if you want to protect your idx (multi-thread)
-  void gray_draw_matrix(void* idx, idx_type type, int x = 0, int y = 0,
-			int minv = 0, int maxv = 0, int zoomx = 1,
-			int zoomy = 1, QMutex* mutex = NULL);
+  //! Global pointer to window, allows to call for example 
+  //! window->gray_draw_matrix from anywhere in the code.
+  extern ebl::RenderThread *window;
 
-  //! rgb_draw_matrix displays the 3 firsts layers of your idx3 as a
-  //! RGB picture on the whiteboard.
-  //! Attention : it won't change the values in your idx, so if you want a
-  //! good display, you have to make it an idx3 with values between 0 and 255
-  //! This function does a copy of your idx and won't change in in any way !
-  //! @param idx and @param type are, like before, used to templatize the
-  //! function
-  //! @param x and @param y are the coordinates of the top-left corner of
-  //! your picture on the whiteboard
-  //! @param zoomx and @param zoomy are the zoom factors in width and height
-  //! @param mutex is used if you want to protect your idx (multi-thread)
-  void rgb_draw_matrix(void* idx, idx_type type, int x = 0, int y = 0,
-		       int zoomx = 1, int zoomy = 1, QMutex* mutex = NULL);
-};
+  //! This macro is intended to replace your int main(int argc, char **argv)
+  //! declaration and hides the declaration of the application and thread.
+  //! What happens is QT takes over the main thread and runs your code
+  //! in a thread.
+#define MAIN_QTHREAD()				\
+  using namespace ebl;				\
+  int main(int argc, char **argv) {		\
+    QApplication a(argc, argv);			\
+    ebl::Window w(argc, argv);			\
+    window = &(w.thread);			\
+    a.exec();					\
+    return 0;					\
+  }						\
+  void RenderThread::run()
 
 } // namespace ebl {
 

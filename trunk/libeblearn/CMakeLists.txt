@@ -13,6 +13,17 @@ INCLUDE_DIRECTORIES(include)
 INCLUDE_DIRECTORIES(${LIBIDX_INCLUDE_DIR})
 SET(LIBEBLEARN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 
+FIND_PACKAGE(Qt4)
+IF (QT_FOUND) #-----------------------------------------------------------------
+  # add include directories
+  ##############################################################################
+  include_directories(${EBLEARN_GUI_INCLUDE_DIR})
+  include_directories(${QT_INCLUDE_DIR})
+  include_directories(${QT_QTGUI_INCLUDE_DIR})
+  include_directories(${QT_QTCORE_INCLUDE_DIR})
+  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GUI__")
+ENDIF (QT_FOUND) #--------------------------------------------------------------
+
 # compile library
 ################################################################################
 ADD_LIBRARY (eblearn SHARED
@@ -40,3 +51,6 @@ ADD_LIBRARY (eblearn SHARED
 
 ## link against libidx
 TARGET_LINK_LIBRARIES(eblearn idx)
+IF (QT_FOUND) #---------------------------------------------------------------
+  target_link_libraries (eblearn eblearn_gui)
+ENDIF (QT_FOUND) #------------------------------------------------------------
