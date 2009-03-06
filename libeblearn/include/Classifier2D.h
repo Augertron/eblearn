@@ -34,6 +34,7 @@
 
 #include "Net.h"
 #include "libidx.h"
+#include "libeblearn.h"
 
 namespace ebl {
 

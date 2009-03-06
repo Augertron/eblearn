@@ -82,20 +82,13 @@ void parse_args(int argc, char **argv) {
   }
 }
 
-//#include <exception>
-
-int main(int argc, char **argv)
-{
+MAIN_QTHREAD() { 
   cout << endl;
   cout << "***** Unit tester for libeblearn and libidx libraries *****" << endl;
   cout << "***********************************************************" << endl;
   // parse arguments
   parse_args(argc, argv);
   cout << "***********************************************************" << endl;
-
-#ifdef __GUI__
-  QApplication a(argc, argv);
-#endif
 
   // cppunit tests
   CppUnit::BriefTestProgressListener listener;
@@ -108,7 +101,7 @@ int main(int argc, char **argv)
   runner.setOutputter(outputter);
 
   // adding test suites
-  //runner.addTest(ClusterTest::suite());
+  runner.addTest(ClusterTest::suite());
   runner.addTest(IdxTest::suite());
   runner.addTest(IdxIteratorsTest::suite());
   runner.addTest(BlasTest::suite());
@@ -118,7 +111,7 @@ int main(int argc, char **argv)
   runner.addTest(ImageTest::suite());
   runner.addTest(DataSourceTest::suite());
   runner.addTest(Classifier2DTest::suite());
-  //  runner.addTest(NetTest::suite());
+  runner.addTest(NetTest::suite());
 
   // run all tests
   runner.run();
@@ -129,14 +122,8 @@ int main(int argc, char **argv)
     cout << endl;
   }
 
-#ifdef __GUI__
-   a.exec();
-#endif
-
   if (gl_mnist_dir) delete gl_mnist_dir;
   if (gl_data_dir) delete gl_data_dir;
   if (gl_mnist_errmsg) delete gl_mnist_errmsg;
   if (gl_data_errmsg) delete gl_data_errmsg;
-
-  return 0;
 }

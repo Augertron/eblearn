@@ -39,8 +39,7 @@ void ImageTest::test_resize() {
   im = image_resize(im, 50, 50, 1);
 
 #ifdef __GUI__  
-  new_window(w);
-  w->gray_draw_matrix(&im, UBYTE, 0, 0, 0, 255);
+  window->gray_draw_matrix(&im, UBYTE, 0, 0, 0, 255);
 #endif
 }
 

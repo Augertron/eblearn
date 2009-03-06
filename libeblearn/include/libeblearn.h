@@ -53,4 +53,8 @@
 #include "Classifier2D.h"
 #include "Image.h"
 
+#ifdef __GUI__
+#include "libeblearn_gui.h"
+#endif
+
 #endif

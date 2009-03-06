@@ -31,7 +31,6 @@
 
 #include "Classifier2D.h"
 #include "Image.h"
-
 #include <algorithm>
 
 using namespace std;
@@ -169,6 +168,9 @@ namespace ebl {
   Idx<ubyte> Classifier2D::multi_res_prep(ubyte *img, float zoom) {
     // copy input images locally
     memcpy(grabbed.idx_ptr(), img, height * width * sizeof (ubyte));
+#ifdef __GUI__
+      window->gray_draw_matrix(&grabbed, UBYTE, 0, 0, 0, 255);
+#endif
     // prepare multi resolutions input
     Idx<double> inx;
     int ni = ((state_idx*) inputs.get(0))->x.dim(1);
@@ -265,6 +267,9 @@ namespace ebl {
 		       (unsigned int) (zoom * re.get(5)));
       }}
     memcpy(img, grabbed.idx_ptr(), height * width * sizeof (ubyte));
+#ifdef __GUI__
+    window->gray_draw_matrix(&grabbed, UBYTE, 0, 200, 0, 255);
+#endif
     return res;
   }
 

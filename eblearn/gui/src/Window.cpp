@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "Window.h"
+#include "Window.moc"
 
 using namespace std;
 
@@ -38,146 +38,75 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // Window
 
-  Window::Window(int height, int width) {
+  RenderThread *window = NULL;
+
+  Window::Window(int argc, char** argv, int height, int width) 
+    : pixmap(width, height), pixmapScale(1.0),
+      curScale(1.0), scaleIncr(1), thread(argc, argv) {
     resize(width, height);
-    mylabel = new QLabel(this);
-    mylabel->setGeometry(QRect(0, 0, width, height));
-    mylabel->setScaledContents(true);
-    mydisplay = new QPixmap(width, height);
-    QColor color;
-    color.setRgb(255, 255, 255);
-    mydisplay->fill(color.rgb());
-    mylabel->setPixmap(*mydisplay);
-    painter = new QPainter(mydisplay);
-    show();
+    qRegisterMetaType<QImage>("QImage");
+    connect(&thread, SIGNAL(renderedImage(const QImage &, double)),
+	    this, SLOT(updatePixmap(const QImage &, double)));
+    thread.start();
   }
 
   Window::~Window() {
   }
 
+ void Window::updatePixmap(const QImage &im, double scaleFactor) {
+   pixmap = QPixmap::fromImage(im);
+   pixmapOffset = QPoint();
+   show();
+   update();
+ }
+
+ void Window::wheelEvent(QWheelEvent *event) {
+   int sign = (event->delta() > 0)? 1 : -1;
+   scaleIncr += sign;
+   if (scaleIncr == 0) {
+     if (sign > 0)
+       scaleIncr = 1;
+     else
+       scaleIncr = -2;
+   }
+   if (scaleIncr >= 1)
+     pixmapScale = scaleIncr;
+   else
+     pixmapScale = fabs(1 / (double)scaleIncr);
+   update();
+ }
+
+  void Window::paintEvent(QPaintEvent * /* event */) {
+     QPainter painter(this);
+     painter.fillRect(rect(), Qt::white);
+     if (curScale == pixmapScale) {
+         painter.drawPixmap(pixmapOffset, pixmap);
+     } else {
+       double scaleFactor = pixmapScale / curScale;
+       painter.save();
+       painter.scale(scaleFactor, scaleFactor);
+       QRectF exposed = painter.matrix().inverted().mapRect(rect())
+	 .adjusted(-1, -1, 1, 1);
+       painter.drawPixmap(exposed, pixmap, exposed);
+       painter.restore();
+     }
+     
+     QString text = tr("Use mouse wheel zoom.");
+     QFontMetrics metrics = painter.fontMetrics();
+     int textWidth = metrics.width(text);
+     
+     painter.setPen(Qt::NoPen);
+     painter.setBrush(QColor(0, 0, 0, 127));
+     painter.drawRect((width() - textWidth) / 2 - 5, 0, textWidth + 10,
+		      metrics.lineSpacing() + 5);
+     painter.setPen(Qt::white);
+     painter.drawText((width() - textWidth) / 2,
+		      metrics.leading() + metrics.ascent(), text);
+  }
+
   void Window::resizeEvent (QResizeEvent *event){
     resize(event->size());
-    mylabel->resize(event->size());
-  }
-
-  void Window::gray_draw_matrix(void* idx, idx_type type, int x, int y, 
-				   int minv, int maxv, int zoomx, int zoomy, 
-				   QMutex* mutex){
-    if(mutex != NULL) mutex->lock();
-    int order = static_cast<Idx<double>*>(idx)->order();
-    if(order < 2){
-      ylerror("not designed for idx0 and idx1");
-      if(mutex != NULL) mutex->unlock();
-      return;
-    }
-    int height = (order == 2 )? static_cast<Idx<double>*>(idx)->dim(0): static_cast<Idx<double>*>(idx)->dim(0);
-    int width = (order == 2 )? static_cast<Idx<double>*>(idx)->dim(1): static_cast<Idx<double>*>(idx)->dim(1);
-    Idx<ubyte>* mycopy = new Idx<ubyte>(height, width);
-
-    int min, max;
-    if((minv == 0)&&(maxv == 0)){
-      min = idx_min(*mycopy);
-      max = idx_max(*mycopy);
-    } else {
-      min = minv;
-      max = maxv;
-    }
-
-    if(type == DOUBLE){
-      Idx<double> test1(height, width);
-      if(order==2) idx_copy(*(static_cast<Idx<double>*>(idx)), test1);
-      else {
-	Idx<double> bla = static_cast<Idx<double>*>(idx)->select(0,0);
-	idx_copy(bla, test1);
-      }
-      idx_dotc( test1, (double)(255/(max-min)), test1);
-      idx_addc( test1, (double)(-min*255/(max-min)), test1);
-      idx_copy( test1, *mycopy);
-    }
-    if(type == FLOAT){
-      Idx<float> test2(height, width);
-      if(order==2) idx_copy(*(static_cast<Idx<float>*>(idx)), test2);
-      else {
-	Idx<float> bla = static_cast<Idx<float>*>(idx)->select(0,0);
-	idx_copy(bla, test2);
-      }
-      idx_dotc( test2, (float)(255/(max-min)), test2);
-      idx_addc( test2, (float)(-min*255/(max-min)), test2);
-      idx_copy( test2, *mycopy);
-    }
-    if(type == INTG){
-      if(order==2) idx_copy(*(static_cast<Idx<intg>*>(idx)), *mycopy);
-      else {
-	Idx<intg> test3 = static_cast<Idx<intg>*>(idx)->select(2,0);
-	idx_copy(test3, *mycopy);
-      }
-      idx_dotc(*mycopy, (ubyte)(255/(max-min)), *mycopy);
-      idx_addc(*mycopy, (ubyte)(-min*255/(max-min)), *mycopy);
-    }
-    if(type == UBYTE){
-      if(order==2) idx_copy(*(static_cast<Idx<ubyte>*>(idx)), *mycopy);
-      else {
-	Idx<ubyte> test4 = static_cast<Idx<ubyte>*>(idx)->select(2,0);
-	idx_copy(test4, *mycopy);
-      }
-      idx_dotc(*mycopy, (ubyte)(255/(max-min)), *mycopy);
-      idx_addc(*mycopy, (ubyte)(-min*255/(max-min)), *mycopy);
-    }
-    if(mutex != NULL) mutex->unlock();
-
-    QImage* image;
-    QVector<QRgb> table(256);
-    for (int i = 0; i < 256; i++){
-      table[i] = qRgb(i, i, i);
-    }
-    image = new QImage((uchar*)mycopy->idx_ptr(), width, height, width * sizeof(unsigned char), QImage::Format_Indexed8);
-    image->setColorTable(table);
-    //    image = new QImage(image->scaled(width*zoomx, height*zoomy));
-    painter->drawImage(x, y, *image);
-
-    mylabel->setPixmap(*mydisplay);
-  }
-
-  void Window::rgb_draw_matrix(void* idx, idx_type type, int x, int y, 
-				  int zoomx, int zoomy, QMutex* mutex){
-    Idx<double> *d = static_cast<Idx<double>*>(idx);
-    if(mutex != NULL) mutex->lock();
-    int order = d->order();
-    if(order != 3){
-      ylerror("designed for idx3 only !");
-      if(mutex != NULL) mutex->unlock();
-      return;
-    }
-    int width = d->dim(0);
-    int height = d->dim(1);
-    Idx<ubyte> myimage(height, width, 3);
-    Idx<ubyte> mypartimage = myimage; // myimage.narrow(2,3,0);
-    if(type == DOUBLE){
-      Idx<double> test1 = static_cast<Idx<double>*>(idx)->narrow(2,3,0);
-      idx_copy(test1, mypartimage);
-    }
-    if(type == FLOAT){
-      Idx<float> test2 = static_cast<Idx<float>*>(idx)->narrow(2,3,0);
-      idx_copy(test2, mypartimage);
-    }
-    if(type == INTG){
-      Idx<intg> test3 = static_cast<Idx<intg>*>(idx)->narrow(2,3,0);
-      idx_copy(test3, mypartimage);
-    }
-    if(type == UBYTE){
-      Idx<ubyte> *test4 = static_cast<Idx<ubyte>*>(idx); //->narrow(2,3,0);
-      idx_copy(*test4, mypartimage);
-    }
-    if(mutex != NULL) mutex->unlock();
-
-
-    QImage* image;
-    image = new QImage((uchar*)myimage.idx_ptr(), width, height, width * sizeof(unsigned char), QImage::Format_RGB32);
-    //   image = new QImage(image->scaled(width*zoomx, height*zoomy).rgbSwapped());
-    painter->drawImage(x, y, *image);
-
-    mylabel->setPixmap(*mydisplay);
-    show();
+    //    mylabel->resize(event->size());
   }
 
 } // end namespace ebl

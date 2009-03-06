@@ -41,7 +41,7 @@ IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-#SET(EFENCE_FLAG "")
+SET(EFENCE_FLAG "")
 SET(CMAKE_CXX_FLAGS_DEBUG 
       "${EFENCE_FLAG} -g -Wall -ggdb -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic"
       CACHE STRING "Debug builds CMAKE CXX flags " FORCE )
