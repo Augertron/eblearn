@@ -48,7 +48,7 @@ void ImageTest::test_resize() {
   pnm_fread_into_rgbx(imgfile.c_str(), im);
   im = im.select(2, 0);
 #ifdef __GUI__  
-    GREY_DRAW_MATRIX(im, 0, 0, (ubyte)0, (ubyte)0, 4.0, 4.0);
+  window_grey_draw_matrix(im, 0, 0, (ubyte)0, (ubyte)0, 4.0, 4.0);
   int hy = im.dim(0) * 4;
 #endif
 
@@ -57,7 +57,7 @@ void ImageTest::test_resize() {
 #ifdef __GUI__  
   int wx = 0;
   for (int i = 0; i < 10; ++i) {
-    GREY_DRAW_MATRIX(im, hy + 2, wx);
+    window_grey_draw_matrix(im, hy + 2, wx);
     wx += im.dim(1) + 2;
   }
   sleep(2.0);

@@ -42,6 +42,19 @@
 
 class QImage;
 
+#define MUTEX_WAIT_MSEC 1000 // milliseconds wait until giving up on gui draw
+
+#define WINDOW_FUNCTION_DECLARATION(fn)					\
+  if (!window) cerr << "Warning: GUI window object unavailable." << endl; \
+  if (window) window->fn
+
+#define window_grey_draw_matrix WINDOW_FUNCTION_DECLARATION(grey_draw_matrix)
+#define window_clear WINDOW_FUNCTION_DECLARATION(clear)
+#define window_quit WINDOW_FUNCTION_DECLARATION(quit)
+
+#define lock_failed_warning() \
+cerr << "Warning: failed to open GUI lock for drawing operation." << endl;
+
 namespace ebl {
 
   class RenderThread : public QThread {
@@ -52,12 +65,13 @@ namespace ebl {
     char		**argv;
     Idx<ubyte>		 *buffer;
     QVector<QRgb>	  colorTable;
-    QMutex		 *mutex;
   public:
     QImage		 *qimage;
+    QMutex		 *mutex;
 
     RenderThread(int argc_, char **argv_);
     virtual ~RenderThread();
+    void quit();
     void clear();
 
     //! gray_draw_matrix displays your idx2 or the first layer of your idx3 in
@@ -78,6 +92,7 @@ namespace ebl {
 
   signals:
     void renderedImage();
+    void appquit();
 
   protected:
     virtual void run();

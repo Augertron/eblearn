@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 
   // run all tests
   runner.run();
-
+  
   // print summary
   if (!collector.wasSuccessful()) {
     outputter->printHeader(); 
@@ -131,6 +131,7 @@ int main(int argc, char **argv) {
   if (gl_mnist_errmsg) delete gl_mnist_errmsg;
   if (gl_data_errmsg) delete gl_data_errmsg;
 
+  //  window_quit(); // quit program (do not wait for window to be closed)
 #ifndef __GUI__
   return 0;
 #endif
