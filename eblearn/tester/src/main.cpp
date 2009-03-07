@@ -82,7 +82,11 @@ void parse_args(int argc, char **argv) {
   }
 }
 
+#ifdef __GUI__
 MAIN_QTHREAD() { 
+#else
+int main(int argc, char **argv) {
+#endif
   cout << endl;
   cout << "***** Unit tester for libeblearn and libidx libraries *****" << endl;
   cout << "***********************************************************" << endl;
@@ -126,4 +130,8 @@ MAIN_QTHREAD() {
   if (gl_data_dir) delete gl_data_dir;
   if (gl_mnist_errmsg) delete gl_mnist_errmsg;
   if (gl_data_errmsg) delete gl_data_errmsg;
+
+#ifndef __GUI__
+  return 0;
+#endif
 }

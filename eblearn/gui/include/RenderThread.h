@@ -38,64 +38,57 @@
 #include <QWaitCondition>
 #include <QtGui>
 
-  class QImage;
+#include "libidx.h"
+
+class QImage;
 
 namespace ebl {
-
-  /* *
-   * these are the different types of idxs supported.
-   * it has been created to "templatize" the display of the idxs,
-   * because Qt does not allow templates of Q_OBJECTs
-   * */
-  enum idx_type { DOUBLE, FLOAT, INTG, UBYTE };
 
   class RenderThread : public QThread {
     Q_OBJECT
 
   private:
-    int argc;
-    char **argv;
-
+    int			  argc;
+    char		**argv;
+    Idx<ubyte>		 *buffer;
+    QVector<QRgb>	  colorTable;
+    QMutex		 *mutex;
   public:
-    RenderThread(int argc_, char **argv_) : argc(argc_), argv(argv_) {};
-    
-  //! gray_draw_matrix displays your idx2 or the first layer of your idx3 in
-  //! grayscale on the whiteboard. This function does a copy of your idx and
-  //! won't change in in any way !
-  //! @param idx and @param type are, like before, used to templatize the
-  //! function
-  //! @param x and @param y are the coordinates of the top-left corner of
-  //! your picture on the whiteboard
-  //! @param minv and @param maxv are the min and max values to set colors.
-  //! If left to zero, the min of your idx will be set to 0 and the max will
-  //! be 255
-  //! @param zoomx and @param zoomy are the zoom factors in width and height
-  //! @param mutex is used if you want to protect your idx (multi-thread)
-  void gray_draw_matrix(void* idx, idx_type type, int x = 0, int y = 0,
-			int minv = 0, int maxv = 0, int zoomx = 1,
-			int zoomy = 1, QMutex* mutex = NULL);
+    QImage		 *qimage;
 
-  //! rgb_draw_matrix displays the 3 firsts layers of your idx3 as a
-  //! RGB picture on the whiteboard.
-  //! Attention : it won't change the values in your idx, so if you want a
-  //! good display, you have to make it an idx3 with values between 0 and 255
-  //! This function does a copy of your idx and won't change in in any way !
-  //! @param idx and @param type are, like before, used to templatize the
-  //! function
-  //! @param x and @param y are the coordinates of the top-left corner of
-  //! your picture on the whiteboard
-  //! @param zoomx and @param zoomy are the zoom factors in width and height
-  //! @param mutex is used if you want to protect your idx (multi-thread)
-  void rgb_draw_matrix(void* idx, idx_type type, int x = 0, int y = 0,
-		       int zoomx = 1, int zoomy = 1, QMutex* mutex = NULL);
+    RenderThread(int argc_, char **argv_);
+    virtual ~RenderThread();
+    void clear();
+
+    //! gray_draw_matrix displays your idx2 or the first layer of your idx3 in
+    //! grayscale on the whiteboard. This function does a copy of your idx and
+    //! won't change in in any way !
+    //! @param idx and @param type are, like before, used to templatize the
+    //! function
+    //! @param x and @param y are the coordinates of the top-left corner of
+    //! your picture on the whiteboard
+    //! @param minv and @param maxv are the min and max values to set colors.
+    //! If left to zero, the min of your idx will be set to 0 and the max will
+    //! be 255
+    //! @param zoomw and @param zoomh are the zoom factors in width and height
+    template<class T>
+      void grey_draw_matrix(Idx<T> &im, int x = 0, int y = 0, 
+			    T minv = 0, T maxv = 0, 
+			    double zoomw = 1.0, double zoomh = 1.0);
 
   signals:
-    void renderedImage(const QImage &im, double scaleFactor);
+    void renderedImage();
 
   protected:
     virtual void run();
+
+  private:
+    void resize(int h, int w);
+    void copy(Idx<ubyte> &im, int x, int y);    
   };
 
 } // namespace ebl {
+
+#include "RenderThread.hpp"
 
 #endif /* RENDERTHREAD_H_ */

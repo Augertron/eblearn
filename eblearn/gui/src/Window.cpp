@@ -41,72 +41,116 @@ namespace ebl {
   RenderThread *window = NULL;
 
   Window::Window(int argc, char** argv, int height, int width) 
-    : pixmap(width, height), pixmapScale(1.0),
-      curScale(1.0), scaleIncr(1), thread(argc, argv) {
+    : pixmapScale(1.0), curScale(1.0), scaleIncr(1), 
+      thread(argc, argv) {
+    pixmap = new QPixmap(width, height);
     resize(width, height);
     qRegisterMetaType<QImage>("QImage");
-    connect(&thread, SIGNAL(renderedImage(const QImage &, double)),
-	    this, SLOT(updatePixmap(const QImage &, double)));
+    connect(&thread, SIGNAL(renderedImage()),
+	    this, SLOT(updatePixmap()));
     thread.start();
   }
 
   Window::~Window() {
+    delete pixmap;
   }
 
- void Window::updatePixmap(const QImage &im, double scaleFactor) {
-   pixmap = QPixmap::fromImage(im);
-   pixmapOffset = QPoint();
-   show();
-   update();
- }
-
- void Window::wheelEvent(QWheelEvent *event) {
-   int sign = (event->delta() > 0)? 1 : -1;
-   scaleIncr += sign;
-   if (scaleIncr == 0) {
-     if (sign > 0)
-       scaleIncr = 1;
-     else
-       scaleIncr = -2;
-   }
-   if (scaleIncr >= 1)
-     pixmapScale = scaleIncr;
-   else
-     pixmapScale = fabs(1 / (double)scaleIncr);
-   update();
- }
+  void Window::updatePixmap() {
+    QMutex mu;
+    QMutexLocker locker(&mu);
+    QImage *im = thread.qimage;
+    if (im) {
+      if ((pixmap->width() != im->width()) 
+	  || (pixmap->height() != im->height())) {
+	delete pixmap;
+	pixmap = new QPixmap(im->width(), im->height());
+      }
+      *pixmap = QPixmap::fromImage(*im);
+      show();
+      update();
+    }
+  }
 
   void Window::paintEvent(QPaintEvent * /* event */) {
-     QPainter painter(this);
-     painter.fillRect(rect(), Qt::white);
-     if (curScale == pixmapScale) {
-         painter.drawPixmap(pixmapOffset, pixmap);
-     } else {
-       double scaleFactor = pixmapScale / curScale;
-       painter.save();
-       painter.scale(scaleFactor, scaleFactor);
-       QRectF exposed = painter.matrix().inverted().mapRect(rect())
-	 .adjusted(-1, -1, 1, 1);
-       painter.drawPixmap(exposed, pixmap, exposed);
-       painter.restore();
-     }
+    QPainter painter(this);
+    painter.fillRect(rect(), Qt::white);
+    if (curScale == pixmapScale) {
+      painter.drawPixmap(pixmapOffset, *pixmap);
+    } else {
+      double scaleFactor = pixmapScale / curScale;
+      painter.save();
+      painter.translate(pixmapOffset);
+      painter.scale(scaleFactor, scaleFactor);
+      QRectF exposed = painter.matrix().inverted().mapRect(rect())
+	.adjusted(-1, -1, 1, 1);
+      painter.drawPixmap(exposed, *pixmap, exposed);
+      painter.restore();
+    }
      
-     QString text = tr("Use mouse wheel zoom.");
-     QFontMetrics metrics = painter.fontMetrics();
-     int textWidth = metrics.width(text);
+    QString text = tr("Use mouse wheel to zoom, left click to drag.");
+    QFontMetrics metrics = painter.fontMetrics();
+    int textWidth = metrics.width(text);
      
-     painter.setPen(Qt::NoPen);
-     painter.setBrush(QColor(0, 0, 0, 127));
-     painter.drawRect((width() - textWidth) / 2 - 5, 0, textWidth + 10,
-		      metrics.lineSpacing() + 5);
-     painter.setPen(Qt::white);
-     painter.drawText((width() - textWidth) / 2,
-		      metrics.leading() + metrics.ascent(), text);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(0, 0, 0, 127));
+    painter.drawRect((width() - textWidth) / 2 - 5, 0, textWidth + 10,
+		     metrics.lineSpacing() + 5);
+    painter.setPen(Qt::white);
+    painter.drawText((width() - textWidth) / 2,
+		     metrics.leading() + metrics.ascent(), text);
   }
 
-  void Window::resizeEvent (QResizeEvent *event){
-    resize(event->size());
-    //    mylabel->resize(event->size());
+  void Window::wheelEvent(QWheelEvent *event) {
+    float precision = .25;
+    float sign = (event->delta() > 0)? precision : -precision;
+    if ((scaleIncr >= -1) && (scaleIncr <= 1)) {
+      if (sign > 0)
+	scaleIncr = 1.0;
+      else
+	scaleIncr = -1;
+    }
+    scaleIncr += sign;
+    if ((scaleIncr >= -1) && (scaleIncr <= 1)) {
+      if (sign > 0)
+	scaleIncr = 1.0;
+      else
+	scaleIncr = -1;
+    }
+    if (scaleIncr >= 1)
+      pixmapScale = scaleIncr;
+    else
+      pixmapScale = fabs(1 / scaleIncr);
+    update();
+  }
+
+  void Window::mousePressEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
+      lastDragPos = event->pos();
+      QCursor qc(Qt::SizeAllCursor);
+      setCursor(qc);
+    }
+  }
+
+  void Window::mouseMoveEvent(QMouseEvent *event) {
+    if (event->buttons() & Qt::LeftButton) {
+      pixmapOffset += event->pos() - lastDragPos;
+      lastDragPos = event->pos();
+      update();
+    }
+  }
+
+  void Window::mouseReleaseEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
+      pixmapOffset += event->pos() - lastDragPos;
+      lastDragPos = QPoint();
+      
+      int deltaX = (width() - pixmap->width()) / 2 - pixmapOffset.x();
+      int deltaY = (height() - pixmap->height()) / 2 - pixmapOffset.y();
+      scroll(deltaX, deltaY);
+      QCursor qc(Qt::ArrowCursor);
+      setCursor(qc);
+      update();
+    }
   }
 
 } // end namespace ebl

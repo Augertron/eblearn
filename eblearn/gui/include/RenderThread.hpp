@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
- *   All rights reserved.
+ *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,52 +29,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef LibidxDefines_H
-#define LibidxDefines_H
+#ifndef RENDERTHREAD_HPP_
+#define RENDERTHREAD_HPP_
 
-#include <stdio.h>
-#include <execinfo.h>
-#include <stdlib.h>
-#include <iostream>
-
-#ifndef NULL
-#define NULL (void*)0
-#endif
-
-// #define DEBUG_ON
-
-#ifdef DEBUG_ON
-#define DEBUG(s,d) fprintf(stderr,s,d)
-#else
-#define DEBUG(s,d)
-#endif
-
-// TODO: should be changed to throwing
-// an exception or something.
-// void ylerror(const char *s);
-//#define ylerror(s)   { printf("%s\n",s); } //exit(-1); }
-#define ylerror(s) {						\
-    std::cerr << "\033[1;31mException:\033[0m " << s;		\
-    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
-    std::cerr << ":" << __LINE__ << std::endl;			\
-    abort();							\
-  }
-
-// not used right now
-#define ITER(x) x##__iter
-
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+using namespace std;
 
 namespace ebl {
-
-  // intg is used for array indexing, hence should be
-  // defined as long if you want very large arrays
-  // on 64 bit machines.
-  typedef long intg;
-  typedef unsigned char ubyte;
+  
+  template<class T>
+  void RenderThread::grey_draw_matrix(Idx<T> &im, int x, int y, T minv, T maxv, 
+				      double zoomw, double zoomh){
+    Idx<ubyte> uim = grey_image_to_ubyte<T>(im, minv, maxv, zoomw, zoomh);
+    copy(uim, x, y);
+    // send image to main gui thread
+    emit renderedImage();
+  }
+  
+  void grey_draw_matrix(Idx<double> &im, int x, int y, double minv, double maxv,
+			double zoomw, double zoomh);
+  void grey_draw_matrix(Idx<int> &im, int x, int y, int minv, int maxv,
+			double zoomw, double zoomh);
+  void grey_draw_matrix(Idx<ubyte> &im, int x, int y, ubyte minv, ubyte maxv,
+			double zoomw, double zoomh);
 
 } // end namespace ebl
 
-
-#endif
+#endif /* RENDERTHREAD_HPP_ */
