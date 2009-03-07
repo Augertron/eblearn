@@ -35,13 +35,18 @@
 
 using namespace std;
 
+int xw = 0; // global drawing coordinates
+int yh = 0; // global drawing coordinates
+
 namespace ebl {
 
   Classifier2D::Classifier2D(const char *paramfile, Idx<int> &sz, 
 			     Idx<const char*> &lbls,
-			     double b, double c, int h, int w) {
+			     double b, double c, int h, int w,
+			     int nn_h_, int nn_w_) 
+    : nn_h(nn_h_), nn_w(nn_w_) {
     theparam = new parameter(60000);
-    thenet = new lenet7(*theparam, 96, 96);
+    thenet = new lenet7(*theparam, nn_h, nn_w);
     theparam->load(paramfile);
     height = h;
     width = w;
@@ -137,25 +142,27 @@ namespace ebl {
     Idx<double> rlist(1, 6);
     rlist.resize(0, rlist.dim(1));
     Idx<double> in0x(((state_idx*) inputs.get(0))->x);
+    intg s0i = in0x.dim(1);
     intg s0j = in0x.dim(2);
     { idx_bloop3(input, inputs, void*, output, outputs, void*, 
 		 r, results, void*) {    	 
 	Idx<double> inx(((state_idx*) input.get())->x);
 	intg sj = inx.dim(2);
 	int i = 0, j = 0;
-	double scale = s0j / sj;
+	double scale = s0j / (double) sj;
 	{ idx_bloop1(re, *((Idx<double>*) r.get()), double) {
 	    j = 0;
+	    double scalewidth = s0i / (double) (scale * (nn_h + re.dim(0) - 1));
 	    { idx_bloop1(ree, re, double) {
 		if (ree.get(1) > threshold) {
 		  intg ri = rlist.dim(0);
 		  rlist.resize(ri + 1, rlist.dim(1));
 		  rlist.set(ree.get(0), ri, 0);
 		  rlist.set(ree.get(1), ri, 1);
-		  rlist.set((48 + (12 * j)) * scale, ri, 2);
-		  rlist.set((48 + (12 * i)) * scale, ri, 3);
-		  rlist.set(objsize * scale, ri, 4);
-		  rlist.set(objsize * scale, ri, 5);
+		  rlist.set((int) (i * scalewidth) + nn_h/2, ri, 2);
+		  rlist.set((int) (j * scalewidth) + nn_w/2, ri, 3);
+		  rlist.set(nn_h * scale, ri, 4);
+		  rlist.set(nn_w * scale, ri, 5);
 		}
 		j++;
 	      }}
@@ -169,7 +176,10 @@ namespace ebl {
     // copy input images locally
     memcpy(grabbed.idx_ptr(), img, height * width * sizeof (ubyte));
 #ifdef __GUI__
-      window->gray_draw_matrix(&grabbed, UBYTE, 0, 0, 0, 255);
+    WINDOW_CLEAR();
+    GREY_DRAW_MATRIX(grabbed);
+    xw = grabbed.dim(1) + 2;
+    yh = 0;
 #endif
     // prepare multi resolutions input
     Idx<double> inx;
@@ -198,15 +208,37 @@ namespace ebl {
   	idx_copy(imres, inx1);
   	idx_addc(inx, bias, inx);
   	idx_dotc(inx, coeff, inx);
+#ifdef __GUI__
+	GREY_DRAW_MATRIX(imres, yh, xw);
+	xw += imres.dim(1) + 2;
+#endif
       }}
+    xw = 0;
+    yh += grabbed.dim(0) + 2;
     return display;
   }
 
   Idx<double> Classifier2D::multi_res_fprop(double threshold, int objsize) {
     // fprop network on different resolutions
+    int hmax = ((state_idx*) outputs.get(0))->x.dim(1);
     { idx_bloop2(in, inputs, void*, out, outputs, void*) {
-	thenet->fprop(*((state_idx*) in.get()), *((state_idx*) out.get())); 
+	state_idx *ii = ((state_idx*) in.get());
+	state_idx *oo = ((state_idx*) out.get());
+	thenet->fprop(*ii, *oo); 
+#ifdef __GUI__
+ 	double vmin = idx_min(oo->x);
+	double vmax = idx_max(oo->x);
+	int hcat = 0;
+	double zoom = 10.0;
+	{ idx_bloop1(category, oo->x, double) {
+	    GREY_DRAW_MATRIX(category, yh + hcat, xw, vmin, vmax, 
+				     zoom, zoom);
+	    hcat += hmax * zoom + 2;
+	  }}
+	xw += oo->x.dim(2) * zoom + 2;
+#endif	
       }}
+    xw += 10;
     // post process outputs
     Idx<double> res = postprocess_output(threshold, objsize);
     res = prune(res);
@@ -256,6 +288,7 @@ namespace ebl {
 
   Idx<double> Classifier2D::fprop(ubyte *img, float zoom, double threshold, 
 				  int objsize) {
+    memcpy(grabbed.idx_ptr(), img, height * width * sizeof (ubyte));
     Idx<ubyte> display = this->multi_res_prep(img, 0.5);
     Idx<double> res = this->multi_res_fprop(threshold, objsize);
     { idx_bloop1(re, res, double) {
@@ -268,7 +301,8 @@ namespace ebl {
       }}
     memcpy(img, grabbed.idx_ptr(), height * width * sizeof (ubyte));
 #ifdef __GUI__
-    window->gray_draw_matrix(&grabbed, UBYTE, 0, 200, 0, 255);
+    GREY_DRAW_MATRIX(grabbed, yh, xw);
+    xw += grabbed.dim(1) + 2;
 #endif
     return res;
   }

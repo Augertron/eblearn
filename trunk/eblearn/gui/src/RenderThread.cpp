@@ -40,131 +40,79 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // RenderThread
 
-  void RenderThread::run() {
-    ylerror("The run method of RenderThread must be overridden and contain your\
-code");
-  }
-
-  void RenderThread::gray_draw_matrix(void* idx, idx_type type, int x, int y, 
-				   int minv, int maxv, int zoomx, int zoomy, 
-				   QMutex* mutex){
-    if(mutex != NULL) mutex->lock();
-    int order = static_cast<Idx<double>*>(idx)->order();
-    if(order < 2){
-      ylerror("not designed for idx0 and idx1");
-      if(mutex != NULL) mutex->unlock();
-      return;
-    }
-    int height = (order == 2 )? static_cast<Idx<double>*>(idx)->dim(0): static_cast<Idx<double>*>(idx)->dim(0);
-    int width = (order == 2 )? static_cast<Idx<double>*>(idx)->dim(1): static_cast<Idx<double>*>(idx)->dim(1);
-    Idx<ubyte>* mycopy = new Idx<ubyte>(height, width);
-
-    int min, max;
-    if((minv == 0)&&(maxv == 0)){
-      min = idx_min(*mycopy);
-      max = idx_max(*mycopy);
-    } else {
-      min = minv;
-      max = maxv;
-    }
-
-    if(type == DOUBLE){
-      Idx<double> test1(height, width);
-      if(order==2) idx_copy(*(static_cast<Idx<double>*>(idx)), test1);
-      else {
-	Idx<double> bla = static_cast<Idx<double>*>(idx)->select(0,0);
-	idx_copy(bla, test1);
-      }
-      idx_dotc( test1, (double)(255/(max-min)), test1);
-      idx_addc( test1, (double)(-min*255/(max-min)), test1);
-      idx_copy( test1, *mycopy);
-    }
-    if(type == FLOAT){
-      Idx<float> test2(height, width);
-      if(order==2) idx_copy(*(static_cast<Idx<float>*>(idx)), test2);
-      else {
-	Idx<float> bla = static_cast<Idx<float>*>(idx)->select(0,0);
-	idx_copy(bla, test2);
-      }
-      idx_dotc( test2, (float)(255/(max-min)), test2);
-      idx_addc( test2, (float)(-min*255/(max-min)), test2);
-      idx_copy( test2, *mycopy);
-    }
-    if(type == INTG){
-      if(order==2) idx_copy(*(static_cast<Idx<intg>*>(idx)), *mycopy);
-      else {
-	Idx<intg> test3 = static_cast<Idx<intg>*>(idx)->select(2,0);
-	idx_copy(test3, *mycopy);
-      }
-      idx_dotc(*mycopy, (ubyte)(255/(max-min)), *mycopy);
-      idx_addc(*mycopy, (ubyte)(-min*255/(max-min)), *mycopy);
-    }
-    if(type == UBYTE){
-      if(order==2) idx_copy(*(static_cast<Idx<ubyte>*>(idx)), *mycopy);
-      else {
-	Idx<ubyte> test4 = static_cast<Idx<ubyte>*>(idx)->select(2,0);
-	idx_copy(test4, *mycopy);
-      }
-      idx_dotc(*mycopy, (ubyte)(255/(max-min)), *mycopy);
-      idx_addc(*mycopy, (ubyte)(-min*255/(max-min)), *mycopy);
-    }
-    if(mutex != NULL) mutex->unlock();
-
-    QImage* image;
-    QVector<QRgb> table(256);
+  RenderThread::RenderThread(int argc_, char **argv_) 
+    : colorTable(256) {
+    mutex = new QMutex(QMutex::Recursive);
+    QMutexLocker locker(mutex);
+    argc = argc_;
+    argv = argv_;
+    buffer = NULL;
+    qimage = NULL;
     for (int i = 0; i < 256; i++){
-      table[i] = qRgb(i, i, i);
+      colorTable[i] = qRgb(i, i, i);
     }
-    image = new QImage((uchar*)mycopy->idx_ptr(), width, height, width * sizeof(unsigned char), QImage::Format_Indexed8);
-    image->setColorTable(table);
-    //    image = new QImage(image->scaled(width*zoomx, height*zoomy));
-    //    painter->drawImage(x, y, *image);
-
-    //    mylabel->setPixmap(*mydisplay);
-
-    emit renderedImage(*image, 1.0);
   }
 
-  void RenderThread::rgb_draw_matrix(void* idx, idx_type type, int x, int y, 
-				  int zoomx, int zoomy, QMutex* mutex){
-//     Idx<double> *d = static_cast<Idx<double>*>(idx);
-//     if(mutex != NULL) mutex->lock();
-//     int order = d->order();
-//     if(order != 3){
-//       ylerror("designed for idx3 only !");
-//       if(mutex != NULL) mutex->unlock();
-//       return;
-//     }
-//     int width = d->dim(0);
-//     int height = d->dim(1);
-//     Idx<ubyte> myimage(height, width, 3);
-//     Idx<ubyte> mypartimage = myimage; // myimage.narrow(2,3,0);
-//     if(type == DOUBLE){
-//       Idx<double> test1 = static_cast<Idx<double>*>(idx)->narrow(2,3,0);
-//       idx_copy(test1, mypartimage);
-//     }
-//     if(type == FLOAT){
-//       Idx<float> test2 = static_cast<Idx<float>*>(idx)->narrow(2,3,0);
-//       idx_copy(test2, mypartimage);
-//     }
-//     if(type == INTG){
-//       Idx<intg> test3 = static_cast<Idx<intg>*>(idx)->narrow(2,3,0);
-//       idx_copy(test3, mypartimage);
-//     }
-//     if(type == UBYTE){
-//       Idx<ubyte> *test4 = static_cast<Idx<ubyte>*>(idx); //->narrow(2,3,0);
-//       idx_copy(*test4, mypartimage);
-//     }
-//     if(mutex != NULL) mutex->unlock();
+  RenderThread::~RenderThread() {
+    QMutexLocker locker(mutex);
+    if (buffer)
+      delete buffer;
+    if (qimage)
+      delete qimage;
+    delete mutex;
+    wait();
+  }
 
+  void RenderThread::resize(int h, int w) {
+    QMutexLocker locker(mutex);
+    if (!buffer) {
+      buffer = new Idx<ubyte>(h, w);
+      idx_fill(*buffer, (ubyte) 255);
+    }
+    else {
+      Idx<ubyte> *inew = new Idx<ubyte>(h, w);
+      idx_fill(*inew, (ubyte) 255);
+      Idx<ubyte> tmpnew = inew->narrow(0, MIN(h, buffer->dim(0)), 0);
+      tmpnew = tmpnew.narrow(1, MIN(w, buffer->dim(1)), 0);
+      Idx<ubyte> tmpbuf = buffer->narrow(0, MIN(h, buffer->dim(0)), 0);
+      tmpbuf = tmpbuf.narrow(1, MIN(w, buffer->dim(1)), 0);
+      idx_copy(tmpbuf, tmpnew);
+      delete buffer;
+      buffer = inew;
+    }
+    if (qimage)
+      delete qimage;
+    qimage = new QImage((unsigned char*) buffer->idx_ptr(), 
+			buffer->dim(1), buffer->dim(0), 
+			buffer->dim(1) * sizeof (unsigned char),
+			QImage::Format_Indexed8);
+    qimage->setColorTable(colorTable);
+  }
 
-//     QImage* image;
-//     image = new QImage((uchar*)myimage.idx_ptr(), width, height, width * sizeof(unsigned char), QImage::Format_RGB32);
-//     //   image = new QImage(image->scaled(width*zoomx, height*zoomy).rgbSwapped());
-//     painter->drawImage(x, y, *image);
+  void RenderThread::copy(Idx<ubyte> &im, int x, int y) {
+    //    QMutexLocker locker(mutex);
+    int h = MAX(buffer?buffer->dim(0):0, x + im.dim(0));
+    int w = MAX(buffer?buffer->dim(1):0, y + im.dim(1));
+    if (!buffer)
+      resize(h, w);
+    else if ((h > buffer->dim(0)) || (w > buffer->dim(1)))
+      resize(h, w);
+    Idx<ubyte> tmpbuf = buffer->narrow(0, im.dim(0), x);
+    tmpbuf = tmpbuf.narrow(1, im.dim(1), y);
+    idx_copy(im, tmpbuf);    
+  }
 
-//     mylabel->setPixmap(*mydisplay);
-//     show();
+  void RenderThread::clear() {
+    QMutexLocker locker(mutex);
+    if (buffer) {
+      idx_fill(*buffer, (ubyte) 255);
+      emit renderedImage();
+    }
+  }
+
+  void RenderThread::run() {
+    ylerror("The run2 method of RenderThread must be overridden and contain \
+your code");
   }
 
 } // end namespace ebl

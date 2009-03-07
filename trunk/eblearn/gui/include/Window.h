@@ -48,33 +48,39 @@ namespace ebl {
 class Window : public QWidget { 
   Q_OBJECT
   private:
-    QPixmap		pixmap;
+    QPixmap	       *pixmap;
     QPoint		pixmapOffset;
+    QPoint		lastDragPos;
     double		pixmapScale;
     double		curScale;
-    int			scaleIncr;
+    float		scaleIncr;
   public:
     RenderThread	thread;
 
   protected:
     void paintEvent(QPaintEvent *event);
-    void resizeEvent(QResizeEvent *event);
     void wheelEvent(QWheelEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
     
   private slots:
-    void updatePixmap(const QImage &im, double scaleFactor);
+    void updatePixmap();
 
   public:
     //! Be careful to create a whiteboard big enough for your pictures, since 
     //! you won't be able to make it bigger after (ie resizing the window will 
     //! scale the content, you won't have more space to draw on)
-    Window(int argc, char **argv, int height = 500, int width = 500);
+    Window(int argc, char **argv, int height = 600, int width = 800);
     virtual ~Window();
   };
 
   //! Global pointer to window, allows to call for example 
   //! window->gray_draw_matrix from anywhere in the code.
   extern ebl::RenderThread *window;
+
+#define GREY_DRAW_MATRIX if (window) window->grey_draw_matrix
+#define WINDOW_CLEAR() if (window) window->clear()
 
   //! This macro is intended to replace your int main(int argc, char **argv)
   //! declaration and hides the declaration of the application and thread.

@@ -56,9 +56,12 @@ namespace ebl {
     Idx<void*>          results;	//! Idx<double>*
     Idx<double>         smoothing_kernel;
     Idx<const char*>    labels;
+    int			nn_h;
+    int			nn_w;
 	
     Classifier2D(const char *paramfile, Idx<int> &sz, Idx<const char*> &lbls,
-		 double b, double c, int h, int w);
+		 double b, double c, int h, int w, 
+		 int nn_h = 96, int nn_w = 96);
     virtual ~Classifier2D();
 
     Idx<double> fprop(ubyte *img, float zoom, double threshold = 1.8, 

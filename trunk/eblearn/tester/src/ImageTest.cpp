@@ -18,28 +18,49 @@ void ImageTest::tearDown() {
 
 void ImageTest::test_resize() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-  Idx<ubyte> m(3, 4);
+  Idx<ubyte> m(6, 8);
   Idx<ubyte> res;
 	
   int i = 0;
   { idx_aloop1(m0, m, ubyte) {
       *m0 = i++;
     }}
-  //	m.printElems();
-  res = image_resize(m, 1, 2, 1);
-  //	res.printElems();
-  CPPUNIT_ASSERT(res.get(0, 0) == 2);
-  CPPUNIT_ASSERT(res.get(1, 0) == 8);
+  //m.printElems();
+  res = image_resize(m, 4, 3, 1);
+  //res.printElems();
+  CPPUNIT_ASSERT(res.get(0, 0) == 4);
+  CPPUNIT_ASSERT(res.get(0, 1) == 6);
+  CPPUNIT_ASSERT(res.get(0, 2) == 8);
+  CPPUNIT_ASSERT(res.get(0, 3) == 10);
+  CPPUNIT_ASSERT(res.get(1, 0) == 20);
+  CPPUNIT_ASSERT(res.get(1, 1) == 22);
+  CPPUNIT_ASSERT(res.get(1, 2) == 24);
+  CPPUNIT_ASSERT(res.get(1, 3) == 26);
+  CPPUNIT_ASSERT(res.get(2, 0) == 36);
+  CPPUNIT_ASSERT(res.get(2, 1) == 38);
+  CPPUNIT_ASSERT(res.get(2, 2) == 40);
+  CPPUNIT_ASSERT(res.get(2, 3) == 42);
 	
   Idx<ubyte> im(1, 1, 1);
   string imgfile = *gl_data_dir;
   imgfile += "/pnm/hat_P6.ppm";
 
   pnm_fread_into_rgbx(imgfile.c_str(), im);
-  im = image_resize(im, 50, 50, 1);
+  im = im.select(2, 0);
+#ifdef __GUI__  
+    GREY_DRAW_MATRIX(im, 0, 0, (ubyte)0, (ubyte)0, 4.0, 4.0);
+  int hy = im.dim(0) * 4;
+#endif
+
+  im = image_resize(im, 250, 250);
 
 #ifdef __GUI__  
-  window->gray_draw_matrix(&im, UBYTE, 0, 0, 0, 255);
+  int wx = 0;
+  for (int i = 0; i < 10; ++i) {
+    GREY_DRAW_MATRIX(im, hy + 2, wx);
+    wx += im.dim(1) + 2;
+  }
+  sleep(2.0);
 #endif
 }
 

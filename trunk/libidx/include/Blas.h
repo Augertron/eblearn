@@ -104,6 +104,11 @@ namespace ebl {
   template<class T1, class T2> void idx_copy(Idx<T1> &src, Idx<T2> &dst);
   //template<class T> void idx_copy(Idx<T> &src, Idx<T> &dst);
 
+  //! copy src into dst but prevent under and overflow if values in src
+  //! are bigger than maximum and minimum values of type T1.
+  //! Caution: note that this is slower than a reguler idx_copy.
+  template<class T1, class T2> void idx_copy_clip(Idx<T1> &src, Idx<T2> &dst);
+
   ////////////////////////////////////////////////////////////////
   //! fill with zero
   template<class T> void idx_clear(Idx<T> &inp);
@@ -129,12 +134,36 @@ namespace ebl {
   //! add a constant to each element:  o1 <- i1+c;
   template<class T> void idx_addc(Idx<T> &inp, T c, Idx<T> &out);
 
+  //! add a constant to each element:  o1 <- i1+c;
+  //! This version bounds the new values to minimum and maximum of type T,
+  //! for example in the case of an underflow with type ubyte, the new value
+  //! will be 0, for an overflow it will be 255. 
+  //! Caution: This is slower than a regular idx_addc.
+  //! Warning: bounding not working when T=double (TODO)
+  template<class T> void idx_addc_bounded(Idx<T> &inp, T c, Idx<T> &out);
+
+  //! subtract a constant to each element:  o1 <- i1-c;
+  //! This version bounds the new values to minimum and maximum of type T,
+  //! for example in the case of an underflow with type ubyte, the new value
+  //! will be 0, for an overflow it will be 255. 
+  //! Caution: This is slower than a regular idx_subc.
+  //! Warning: bounding not working when T=double (TODO)
+  template<class T> void idx_subc_bounded(Idx<T> &inp, T c, Idx<T> &out);
+
   //! add a constant to each element and accumulate
   //! result: o1 <- o1 + i1+c;
   template<class T> void idx_addcacc(Idx<T> &inp, T c, Idx<T> &out);
 
   //! multiply all elements by a constant:  o1 <- i1*c;
   template<class T> void idx_dotc(Idx<T> &inp, T c, Idx<T> &out);
+
+  //! multiply all elements by a constant:  o1 <- i1*c;
+  //! This version bounds the new values to minimum and maximum of type T,
+  //! for example in the case of an underflow with type ubyte, the new value
+  //! will be 0, for an overflow it will be 255. 
+  //! Caution: This is slower than a regular idx_dotc.
+  //! Warning: bounding not working when T=double (TODO)
+  template<class T> void idx_dotc_bounded(Idx<T> &inp, T c, Idx<T> &out);
 
   //! multiply all elements by a constant and accumulate
   //! result: o1 <- o1 + i1*c;
