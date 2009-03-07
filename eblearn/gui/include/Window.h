@@ -66,6 +66,7 @@ class Window : public QWidget {
     
   private slots:
     void updatePixmap();
+    void appquit();
 
   public:
     //! Be careful to create a whiteboard big enough for your pictures, since 
@@ -79,9 +80,6 @@ class Window : public QWidget {
   //! window->gray_draw_matrix from anywhere in the code.
   extern ebl::RenderThread *window;
 
-#define GREY_DRAW_MATRIX if (window) window->grey_draw_matrix
-#define WINDOW_CLEAR() if (window) window->clear()
-
   //! This macro is intended to replace your int main(int argc, char **argv)
   //! declaration and hides the declaration of the application and thread.
   //! What happens is QT takes over the main thread and runs your code
@@ -92,6 +90,7 @@ class Window : public QWidget {
     QApplication a(argc, argv);			\
     ebl::Window w(argc, argv);			\
     window = &(w.thread);			\
+    w.thread.start();				\
     a.exec();					\
     return 0;					\
   }						\

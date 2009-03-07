@@ -38,11 +38,14 @@ namespace ebl {
   
   template<class T>
   void RenderThread::grey_draw_matrix(Idx<T> &im, int x, int y, T minv, T maxv, 
-				      double zoomw, double zoomh){
-    Idx<ubyte> uim = grey_image_to_ubyte<T>(im, minv, maxv, zoomw, zoomh);
-    copy(uim, x, y);
-    // send image to main gui thread
-    emit renderedImage();
+				      double zoomw, double zoomh) {
+    if (mutex->tryLock(MUTEX_WAIT_MSEC)) {
+      Idx<ubyte> uim = grey_image_to_ubyte<T>(im, minv, maxv, zoomw, zoomh);
+      copy(uim, x, y);
+      // send image to main gui thread
+      emit renderedImage();
+      mutex->unlock();
+    } else lock_failed_warning();
   }
   
   void grey_draw_matrix(Idx<double> &im, int x, int y, double minv, double maxv,

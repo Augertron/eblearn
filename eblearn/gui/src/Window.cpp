@@ -46,29 +46,33 @@ namespace ebl {
     pixmap = new QPixmap(width, height);
     resize(width, height);
     qRegisterMetaType<QImage>("QImage");
-    connect(&thread, SIGNAL(renderedImage()),
-	    this, SLOT(updatePixmap()));
-    thread.start();
+    connect(&thread, SIGNAL(renderedImage()), this, SLOT(updatePixmap()));
+    connect(&thread, SIGNAL(appquit()), this, SLOT(appquit()));
   }
 
   Window::~Window() {
     delete pixmap;
   }
 
+  void Window::appquit() {
+    exit(0);
+  }
+
   void Window::updatePixmap() {
-    QMutex mu;
-    QMutexLocker locker(&mu);
-    QImage *im = thread.qimage;
-    if (im) {
-      if ((pixmap->width() != im->width()) 
-	  || (pixmap->height() != im->height())) {
-	delete pixmap;
-	pixmap = new QPixmap(im->width(), im->height());
+    if (thread.mutex->tryLock(MUTEX_WAIT_MSEC)) {
+      QImage *im = thread.qimage;
+      if (im) {
+	if ((pixmap->width() != im->width()) 
+	    || (pixmap->height() != im->height())) {
+	  delete pixmap;
+	  pixmap = new QPixmap(im->width(), im->height());
+	}
+	*pixmap = QPixmap::fromImage(*im);
       }
-      *pixmap = QPixmap::fromImage(*im);
-      show();
-      update();
-    }
+      thread.mutex->unlock();
+    } else lock_failed_warning();
+    show();
+    update();
   }
 
   void Window::paintEvent(QPaintEvent * /* event */) {
