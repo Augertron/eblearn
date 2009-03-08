@@ -17,7 +17,11 @@ void NetTest::tearDown() {
 }
 
 void NetTest::test_lenet5_mnist_ebl() {
-  cout << endl;
+#ifdef __GUI__  
+  gui.new_window("Demo MNIST");
+  RenderThread &cout = gui;
+#endif
+  //  cout << endl;
   // for testing purposes, we always initialize the randomization with 0 so 
   // that we know the exact results. 
   // in the real world, init_drand should be called with time(NULL) as argument.
@@ -38,12 +42,12 @@ void NetTest::test_lenet5_mnist_ebl() {
   parameter theparam(60000); // create trainable parameter
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
-  supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam);
+  supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam, gui);
 
-   // a classifier-meter measures classification errors
-   classifier_meter trainmeter;
-   classifier_meter testmeter;
-
+  // a classifier-meter measures classification errors
+  classifier_meter trainmeter(cout);
+  classifier_meter testmeter(cout);
+   
   // initialize the network weights
   forget_param_linear fgp(1, 0.5);
   thenet.forget(fgp);
@@ -58,15 +62,8 @@ void NetTest::test_lenet5_mnist_ebl() {
 			       idx_max(thetrainer.param.epsilons), 0.000001);
 
   // do training iterations 
-  printf("training with %d training samples and %d test samples\n", 
-	 train_ds.size(), test_ds.size());
-#ifdef __GUI__  
-  gui.new_window("Demo MNIST");
-  ostringstream o;
-  o << "training with " << train_ds.size() << " training samples and ";
-  o << test_ds.size() << " test samples\n" << endl;
-  gui << new std::string(o.str());
-#endif
+  cout << "training with " << train_ds.size() << " training samples and ";
+  cout << test_ds.size() << " test samples" << endl;
 	
   // gradient parameters
   gd_param gdp(/* double leta*/ 0.0001,

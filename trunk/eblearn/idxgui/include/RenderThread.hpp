@@ -45,6 +45,15 @@ namespace ebl {
     emit gui_drawImage(uim, h0, w0);
   }
 
+  template<class T> 
+  ostream& RenderThread::operator<<(T val) {
+    *((ostringstream*)this) << val;
+    emit addText(new std::string(str()));
+    cout << str();
+    str("");
+    return *((ostream*)this);
+  }
+
 } // end namespace ebl
 
 #endif /* RENDERTHREAD_HPP_ */

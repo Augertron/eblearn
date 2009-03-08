@@ -55,9 +55,10 @@ namespace ebl {
     state_idx				 energy;
     Idx<Tlabel>				 label;
     intg				 age;
+    ostream				&cout;
     
     supervised_trainer(fc_ebm2<state_idx,int,state_idx> &m, 
-		       parameter &p);
+		       parameter &p, ostream& cout = std::cout);
     virtual ~supervised_trainer();
 
     //! take an input and a vector of possible labels (each of which

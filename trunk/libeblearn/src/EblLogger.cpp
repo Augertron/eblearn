@@ -37,7 +37,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////////////
 
-  classifier_meter::classifier_meter() {
+  classifier_meter::classifier_meter(ostream &cout_) : cout(cout_) {
     this->clear();
   }
 
@@ -132,13 +132,12 @@ namespace ebl {
   }
 
   void classifier_meter::display() {
-    printf("[%5d]  size=%3d  energy=%g  correct=%3.2f%%  errors=%3.2f%%  \
-rejects=%3.2f%%\n",
-	   (int) age, (int) size,
-	   total_energy / (double) size,
-	   (total_correct * 100) / (double) size,
-	   (total_error * 100) / (double) size,
-	   (total_punt * 100) / (double) size);
+    cout << "[" << (int) age << "]  size=" <<  (int) size;
+    cout << "energy=" << total_energy / (double) size;
+    cout << "  correct=" <<  (total_correct * 100) / (double) size;
+    cout << "%%  errors=" << (total_error * 100) / (double) size;
+    cout << "%% rejects=" << (total_punt * 100) / (double) size << "%%";
+    cout << endl;
   }
 
   bool classifier_meter::save() {

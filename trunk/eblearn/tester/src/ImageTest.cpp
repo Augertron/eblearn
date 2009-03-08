@@ -52,7 +52,8 @@ void ImageTest::test_resize() {
   //  im = image_resize(im, im.dim(0) + 10, im.dim(1) + 10);
   im = image_resize(im, 100, 100);
   gui.draw_matrix(im, 0, 0, (ubyte)0, (ubyte)0, 4.0, 4.0);
-  gui << new std::string("* MNIST demo: learning handwritten digits using the eblearn C++ library *\n Computing second derivatives on MNIST dataset: diaghessian inf: 0.985298 sup: 49.7398\n Training network on MNIST with 2000 training samples and 1000 test samples\n training: [ 2000]  size=2000  energy=0.19  correct=88.80%  errors=11.20%  rejects=0.00%\n  testing: [ 2000]  size=1000  energy=0.163  correct=90.50%  errors=9.50%  rejects=0.00%\n training: [ 4000]  size=2000  energy=0.1225  correct=93.25%  errors=6.75%  rejects=0.00%\n  testing: [ 4000]  size=1000  energy=0.121  correct=92.80%  errors=7.20%  rejects=0.00%\n training: [ 6000]  size=2000  energy=0.084  correct=95.45%  errors=4.55%  rejects=0.00%\n  testing: [ 6000]  size=1000  energy=0.098  correct=94.70%  errors=5.30%  rejects=0.00%\ntraining: [ 8000]  size=2000  energy=0.065  correct=96.45%  errors=3.55%  rejects=0.00%\n testing: [ 8000]  size=1000  energy=0.095  correct=95.20%  errors=4.80%  rejects=0.00%\ntraining: [10000]  size=2000  energy=0.0545  correct=97.15%  errors=2.85%  rejects=0.00%\n testing: [10000]  size=1000  energy=0.094  correct=95.80%  errors=4.20%  rejects=0.00%");
+  RenderThread &cout = gui;
+  cout << "Testing images operations..." << endl;
   int hy = im.dim(0) * 4;
 #endif
 

@@ -83,7 +83,7 @@ namespace ebl {
   void Window::addText(const std::string *s) {
     text += *s;
     delete s;
-    update_window();
+    update_window(false);
   }
 
   void Window::buffer_resize(int h, int w) {
@@ -130,14 +130,15 @@ namespace ebl {
     }
   }
 
-  void Window::update_window() {
+  void Window::update_window(bool activate) {
     update(); 
     // saving pixmap if silent or show it otherwise
     if (silent) 
       save(savefname.c_str());
     else {
       show();
-      activateWindow();
+      if (activate)
+	activateWindow();
     }
   }
   
