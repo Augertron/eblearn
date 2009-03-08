@@ -18,7 +18,7 @@ FIND_PACKAGE(Qt4)
 IF (QT_FOUND) #-----------------------------------------------------------------
   # add include directories
   ##############################################################################
-  include_directories(${EBLEARN_GUI_INCLUDE_DIR})
+  include_directories(${IDXGUI_INCLUDE_DIR})
   include_directories(${QT_INCLUDE_DIR})
   include_directories(${QT_QTGUI_INCLUDE_DIR})
   include_directories(${QT_QTCORE_INCLUDE_DIR})
@@ -69,7 +69,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   target_link_libraries (eblearn_tester eblearn_tools)
   target_link_libraries (eblearn_tester ${CPPUNIT_LIBRARY})
   IF (QT_FOUND) #---------------------------------------------------------------
-    target_link_libraries (eblearn_tester eblearn_gui)
+    target_link_libraries (eblearn_tester idxgui)
   ENDIF (QT_FOUND) #------------------------------------------------------------
   
   # write parameters for execution in run.init

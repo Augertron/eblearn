@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
- *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,33 +27,24 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef libeblearn_H
-#define libeblearn_H
+#ifndef RENDERTHREAD_HPP_
+#define RENDERTHREAD_HPP_
 
-#include "Defines.h"
-#include "libidx.h"
-#include "Gbl.h"
-#include "Ebl.h"
-#include "EblStates.h"
-#include "EblBasic.h"
-#include "EblCost.h"
-#include "EblLayers.h"
-#include "EblMachines.h"
-#include "EblNonLinearity.h"
-#include "EblTester.h"
-#include "EblLogger.h"
-#include "EblTrainer.h"
-#include "Generators.h"
-#include "Net.h"
-#include "DataSource.h"
-#include "Trainer.h"
-#include "Classifier2D.h"
-#include "Image.h"
+using namespace std;
 
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif
+namespace ebl {
+  
+  template<class T>
+  void RenderThread::g_draw_matrix(Idx<T> &im, int h0, int w0, T minv, T maxv,
+				   double zoomw, double zoomh) {
+    Idx<ubyte> *uim = new Idx<ubyte>(grey_image_to_ubyte<T>(im, minv, maxv, 
+							    zoomw, zoomh));
+    // send image to main gui thread
+    emit drawImage(uim, h0, w0);
+  }
 
-#endif
+} // end namespace ebl
+
+#endif /* RENDERTHREAD_HPP_ */

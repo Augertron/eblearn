@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
- *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,33 +27,49 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef libeblearn_H
-#define libeblearn_H
+#include "RenderThread.moc"
 
-#include "Defines.h"
-#include "libidx.h"
-#include "Gbl.h"
-#include "Ebl.h"
-#include "EblStates.h"
-#include "EblBasic.h"
-#include "EblCost.h"
-#include "EblLayers.h"
-#include "EblMachines.h"
-#include "EblNonLinearity.h"
-#include "EblTester.h"
-#include "EblLogger.h"
-#include "EblTrainer.h"
-#include "Generators.h"
-#include "Net.h"
-#include "DataSource.h"
-#include "Trainer.h"
-#include "Classifier2D.h"
-#include "Image.h"
+using namespace std;
 
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif
+namespace ebl {
 
-#endif
+  ////////////////////////////////////////////////////////////////
+  // RenderThread
+
+  RenderThread::RenderThread(int argc_, char **argv_) {
+    argc = argc_;
+    argv = argv_;
+  }
+
+  RenderThread::~RenderThread() {
+    wait();
+  }
+
+  void RenderThread::g_quit() {
+    emit appquit();
+  }
+
+  void RenderThread::g_clear() {
+    emit clear();
+  }
+
+  void RenderThread::g_new_window(const char *wname, unsigned int *wid) {
+    emit new_window(wname, wid);
+  }
+
+  void RenderThread::g_select_window(unsigned int wid) {
+    emit select_window(wid);
+  }
+
+  void RenderThread::operator<<(const std::string *s) {
+    emit addText(s);
+  }
+
+  void RenderThread::run() {
+    ylerror("The run2 method of RenderThread must be overridden and contain \
+your code");
+  }
+
+} // end namespace ebl
