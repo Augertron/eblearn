@@ -45,16 +45,28 @@
 
 namespace ebl {
 
-//! Window is a simple "whiteboard" on which you can display
-//! Idxs with for example gray_draw_matrix and RGB_draw_matrix.
-//! Warning: do not use electric fence with QT as it is unstable.
-class GuiThread : public QWidget { 
-  Q_OBJECT
+  //! Global pointer to gui, allows to call for example 
+  //! gui.draw_matrix() from anywhere in the code.
+  extern ebl::RenderThread gui;
+
+
+  //! Window is a simple "whiteboard" on which you can display
+  //! Idxs with for example gray_draw_matrix and RGB_draw_matrix.
+  //! Warning: do not use electric fence with QT as it is unstable.
+  class GuiThread : public QWidget { 
+    Q_OBJECT
   private:
-    unsigned int		wcur;
-    std::vector<Window*>	windows;
+    unsigned int		 wcur;
+    unsigned int		 nwid;
+    std::vector<Window*>	 windows;
+    bool			 silent;
+    std::string			 savefname;
   public:
-    RenderThread		thread;
+    RenderThread		&thread;
+
+  public:
+    GuiThread(int argc, char **argv);
+    virtual ~GuiThread();
 
   private slots:
     void window_destroyed(QObject *obj);
@@ -62,17 +74,10 @@ class GuiThread : public QWidget {
     void updatePixmap(Idx<ubyte> *img, int h0, int w0);
     void appquit();
     void clear();
-    void new_window(const char *wname = NULL, unsigned int *wid = NULL);
+    void new_window(const char *wname = NULL);
     void select_window(unsigned int wid);
-
-  public:
-    GuiThread(int argc, char **argv);
-    virtual ~GuiThread();
+    void set_silent(const std::string *filename = NULL);
   };
-
-  //! Global pointer to window, allows to call for example 
-  //! window->gray_draw_matrix from anywhere in the code.
-  extern ebl::RenderThread *window;
 
   //! This macro is intended to replace your int main(int argc, char **argv)
   //! declaration and hides the declaration of the application and thread.
@@ -83,13 +88,12 @@ class GuiThread : public QWidget {
   int main(int argc, char **argv) {		\
     QApplication a(argc, argv);			\
     ebl::GuiThread gt(argc, argv);		\
-    window = &(gt.thread);			\
     gt.thread.start();				\
     a.exec();					\
     return 0;					\
   }						\
   void RenderThread::run()
-
+  
 } // namespace ebl {
 
 #endif /* GUITHREAD_H_ */

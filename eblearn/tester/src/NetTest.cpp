@@ -61,11 +61,11 @@ void NetTest::test_lenet5_mnist_ebl() {
   printf("training with %d training samples and %d test samples\n", 
 	 train_ds.size(), test_ds.size());
 #ifdef __GUI__  
-  gui_new_window("Demo MNIST");
+  gui.new_window("Demo MNIST");
   ostringstream o;
   o << "training with " << train_ds.size() << " training samples and ";
   o << test_ds.size() << " test samples\n" << endl;
-  *window << new std::string(o.str());
+  gui << new std::string(o.str());
 #endif
 	
   // gradient parameters

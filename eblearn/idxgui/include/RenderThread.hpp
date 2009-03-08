@@ -37,12 +37,12 @@ using namespace std;
 namespace ebl {
   
   template<class T>
-  void RenderThread::g_draw_matrix(Idx<T> &im, int h0, int w0, T minv, T maxv,
-				   double zoomw, double zoomh) {
+  void RenderThread::draw_matrix(Idx<T> &im, int h0, int w0, T minv, T maxv,
+				 double zoomw, double zoomh) {
     Idx<ubyte> *uim = new Idx<ubyte>(grey_image_to_ubyte<T>(im, minv, maxv, 
 							    zoomw, zoomh));
     // send image to main gui thread
-    emit drawImage(uim, h0, w0);
+    emit gui_drawImage(uim, h0, w0);
   }
 
 } // end namespace ebl

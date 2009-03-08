@@ -87,6 +87,7 @@ MAIN_QTHREAD() {
 #else
 int main(int argc, char **argv) {
 #endif
+  //  gui.set_silent();
   cout << endl;
   cout << "***** Unit tester for libeblearn and libidx libraries *****" << endl;
   cout << "***********************************************************" << endl;
