@@ -81,7 +81,7 @@ class Window : public QWidget {
     void mouseReleaseEvent(QMouseEvent *event);
     
     void buffer_resize(int h, int w);
-    void update_window();
+    void update_window(bool activate = true);
   };
 
 } // namespace ebl {

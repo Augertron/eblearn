@@ -36,11 +36,14 @@
 #include <QWaitCondition>
 #include <QtGui>
 
+#include <ostream>
 #include "libidx.h"
+
+using namespace std;
 
 namespace ebl {
 
-  class RenderThread : public QThread {
+  class RenderThread : public QThread, public ostringstream {
     Q_OBJECT
       
   private:
@@ -57,7 +60,7 @@ namespace ebl {
     void clear();
     unsigned int new_window(const char *wname = NULL);
     void select_window(unsigned int wid);
-    void operator<<(const std::string *s);
+    template<class T> ostream& operator<<(T val);
     void set_silent();
     void set_silent(const std::string *filename);
     void set_silent(const char *filename);

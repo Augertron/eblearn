@@ -93,6 +93,7 @@ namespace ebl {
     intg total_error;
     intg total_punt;
     double total_energy;
+    ostream &cout;
 
     //! Create a new <classifier-meter> using <comparison-function>
     //! to compare actual and desired answers. By default
@@ -100,7 +101,8 @@ namespace ebl {
     //! It takes two integer arguments, and returns 1 if they
     //! are equal, -1 if they are different, and 0 if
     //! the first argument is -1 (which means reject).
-    classifier_meter(); // TODO: allow passing of comparison function
+    // TODO: allow passing of comparison function
+    classifier_meter(ostream &cout = std::cout);
     ~classifier_meter() {
     }
     ;

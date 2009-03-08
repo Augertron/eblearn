@@ -45,6 +45,7 @@ namespace ebl {
     argc = argc_;
     argv = argv_;
     nwid = nwid_;
+    str("");
   }
 
   RenderThread::~RenderThread() {
@@ -69,10 +70,6 @@ namespace ebl {
 
   void RenderThread::select_window(unsigned int wid) {
     emit gui_select_window(wid);
-  }
-
-  void RenderThread::operator<<(const std::string *s) {
-    emit addText(s);
   }
 
   void RenderThread::set_silent() {

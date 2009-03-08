@@ -42,7 +42,7 @@ namespace ebl {
   RenderThread gui;
 
   GuiThread::GuiThread(int argc, char** argv) 
-    : wcur(0), nwid(0), thread(gui), silent(false) {
+    : wcur(0), nwid(0), silent(false), thread(gui) {
     thread.init(argc, argv, &nwid);
     connect(&thread, SIGNAL(gui_drawImage(Idx<ubyte> *, int, int)),
 	    this,   SLOT(updatePixmap(Idx<ubyte> *, int, int)));
