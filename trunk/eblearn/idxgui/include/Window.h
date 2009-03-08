@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
- *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,33 +27,57 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef libeblearn_H
-#define libeblearn_H
+#ifndef WINDOW_H_
+#define WINDOW_H_
 
-#include "Defines.h"
+#include <QPixmap>
+#include <QWidget>
+#include <QtGui>
+#include <QResizeEvent>
+#include <math.h>
+#include <iostream>
+
 #include "libidx.h"
-#include "Gbl.h"
-#include "Ebl.h"
-#include "EblStates.h"
-#include "EblBasic.h"
-#include "EblCost.h"
-#include "EblLayers.h"
-#include "EblMachines.h"
-#include "EblNonLinearity.h"
-#include "EblTester.h"
-#include "EblLogger.h"
-#include "EblTrainer.h"
-#include "Generators.h"
-#include "Net.h"
-#include "DataSource.h"
-#include "Trainer.h"
-#include "Classifier2D.h"
-#include "Image.h"
+#include "RenderThread.h"
 
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif
+namespace ebl {
 
-#endif
+class Window : public QWidget { 
+  Q_OBJECT
+  private:
+    QPixmap		*pixmap;
+    QPoint		 pixmapOffset;
+    QPoint		 lastDragPos;
+    double		 pixmapScale;
+    double		 curScale;
+    float		 scaleIncr;
+    Idx<ubyte>		*buffer;
+    QVector<QRgb>	 colorTable;
+    QImage		*qimage;
+    std::string          text;
+
+  public:
+    Window(const char *wname = NULL, int height = 600, int width = 800);
+    virtual ~Window();
+
+    void addText(const std::string *s);
+    void updatePixmap(Idx<ubyte> *img, int h0, int w0);
+    void clear();
+    void drawText(QPainter &painter);
+
+  protected:
+    void paintEvent(QPaintEvent *event);
+    void wheelEvent(QWheelEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
+    
+    void buffer_resize(int h, int w);
+    
+  };
+
+} // namespace ebl {
+
+#endif /* WINDOW_H_ */

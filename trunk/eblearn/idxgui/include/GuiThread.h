@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
- *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,33 +27,69 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef libeblearn_H
-#define libeblearn_H
+#ifndef GUITHREAD_H_
+#define GUITHREAD_H_
 
-#include "Defines.h"
+#include <QPixmap>
+#include <QWidget>
+#include <QtGui>
+#include <QResizeEvent>
+#include <math.h>
+#include <vector>
+
 #include "libidx.h"
-#include "Gbl.h"
-#include "Ebl.h"
-#include "EblStates.h"
-#include "EblBasic.h"
-#include "EblCost.h"
-#include "EblLayers.h"
-#include "EblMachines.h"
-#include "EblNonLinearity.h"
-#include "EblTester.h"
-#include "EblLogger.h"
-#include "EblTrainer.h"
-#include "Generators.h"
-#include "Net.h"
-#include "DataSource.h"
-#include "Trainer.h"
-#include "Classifier2D.h"
-#include "Image.h"
+#include "Window.h"
+#include "RenderThread.h"
 
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif
+namespace ebl {
 
-#endif
+//! Window is a simple "whiteboard" on which you can display
+//! Idxs with for example gray_draw_matrix and RGB_draw_matrix.
+//! Warning: do not use electric fence with QT as it is unstable.
+class GuiThread : public QWidget { 
+  Q_OBJECT
+  private:
+    unsigned int		wcur;
+    std::vector<Window*>	windows;
+  public:
+    RenderThread		thread;
+
+  private slots:
+    void window_destroyed(QObject *obj);
+    void addText(const std::string *s);
+    void updatePixmap(Idx<ubyte> *img, int h0, int w0);
+    void appquit();
+    void clear();
+    void new_window(const char *wname = NULL, unsigned int *wid = NULL);
+    void select_window(unsigned int wid);
+
+  public:
+    GuiThread(int argc, char **argv);
+    virtual ~GuiThread();
+  };
+
+  //! Global pointer to window, allows to call for example 
+  //! window->gray_draw_matrix from anywhere in the code.
+  extern ebl::RenderThread *window;
+
+  //! This macro is intended to replace your int main(int argc, char **argv)
+  //! declaration and hides the declaration of the application and thread.
+  //! What happens is QT takes over the main thread and runs your code
+  //! in a thread.
+#define MAIN_QTHREAD()				\
+  using namespace ebl;				\
+  int main(int argc, char **argv) {		\
+    QApplication a(argc, argv);			\
+    ebl::GuiThread gt(argc, argv);		\
+    window = &(gt.thread);			\
+    gt.thread.start();				\
+    a.exec();					\
+    return 0;					\
+  }						\
+  void RenderThread::run()
+
+} // namespace ebl {
+
+#endif /* GUITHREAD_H_ */

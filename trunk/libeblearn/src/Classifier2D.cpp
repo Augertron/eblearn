@@ -176,8 +176,8 @@ namespace ebl {
     // copy input images locally
     memcpy(grabbed.idx_ptr(), img, height * width * sizeof (ubyte));
 #ifdef __GUI__
-    window_clear();
-    window_grey_draw_matrix(grabbed);
+    gui_new_window("Classifier2D");
+    gui_draw_matrix(grabbed);
     xw = grabbed.dim(1) + 2;
     yh = 0;
 #endif
@@ -209,7 +209,7 @@ namespace ebl {
   	idx_addc(inx, bias, inx);
   	idx_dotc(inx, coeff, inx);
 #ifdef __GUI__
-	window_grey_draw_matrix(imres, yh, xw);
+	gui_draw_matrix(imres, yh, xw);
 	xw += imres.dim(1) + 2;
 #endif
       }}
@@ -231,7 +231,7 @@ namespace ebl {
 	int hcat = 0;
 	double zoom = 10.0;
 	{ idx_bloop1(category, oo->x, double) {
-	    window_grey_draw_matrix(category, yh + hcat, xw, vmin, vmax, 
+	    gui_draw_matrix(category, yh + hcat, xw, vmin, vmax, 
 				     zoom, zoom);
 	    hcat += hmax * zoom + 2;
 	  }}
@@ -301,7 +301,7 @@ namespace ebl {
       }}
     memcpy(img, grabbed.idx_ptr(), height * width * sizeof (ubyte));
 #ifdef __GUI__
-    window_grey_draw_matrix(grabbed, yh, xw);
+    gui_draw_matrix(grabbed, yh, xw);
     xw += grabbed.dim(1) + 2;
 #endif
     return res;

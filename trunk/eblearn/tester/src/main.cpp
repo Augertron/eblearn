@@ -21,7 +21,7 @@
 #include "ImageTest.h"
 
 #ifdef __GUI__
-#include "libeblearn_gui.h"
+#include "libidxgui.h"
 #endif
 
 using namespace std;
