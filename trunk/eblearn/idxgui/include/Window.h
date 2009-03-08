@@ -57,11 +57,17 @@ class Window : public QWidget {
     QVector<QRgb>	 colorTable;
     QImage		*qimage;
     std::string          text;
+    bool		 silent;
+    unsigned int	 id;
+    std::string		 savefname;
 
   public:
-    Window(const char *wname = NULL, int height = 600, int width = 800);
+    Window(unsigned int wid, const char *wname = NULL, 
+	   int height = 600, int width = 800);
     virtual ~Window();
 
+    void save(const char *filename);
+    void set_silent(const std::string *filename);
     void addText(const std::string *s);
     void updatePixmap(Idx<ubyte> *img, int h0, int w0);
     void clear();
@@ -75,7 +81,7 @@ class Window : public QWidget {
     void mouseReleaseEvent(QMouseEvent *event);
     
     void buffer_resize(int h, int w);
-    
+    void update_window();
   };
 
 } // namespace ebl {

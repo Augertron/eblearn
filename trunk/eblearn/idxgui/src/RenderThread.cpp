@@ -38,33 +38,56 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // RenderThread
 
-  RenderThread::RenderThread(int argc_, char **argv_) {
+  RenderThread::RenderThread() {
+  }
+
+  void RenderThread::init(int argc_, char **argv_, unsigned int *nwid_) {
     argc = argc_;
     argv = argv_;
+    nwid = nwid_;
   }
 
   RenderThread::~RenderThread() {
     wait();
   }
 
-  void RenderThread::g_quit() {
+  void RenderThread::quit() {
     emit appquit();
   }
 
-  void RenderThread::g_clear() {
-    emit clear();
+  void RenderThread::clear() {
+    emit gui_clear();
   }
 
-  void RenderThread::g_new_window(const char *wname, unsigned int *wid) {
-    emit new_window(wname, wid);
+  unsigned int RenderThread::new_window(const char *wname) {
+    // TODO: add mutex
+    unsigned int wid = *nwid;
+    (*nwid)++; // increment number of windows
+    emit gui_new_window(wname);
+    return wid;
   }
 
-  void RenderThread::g_select_window(unsigned int wid) {
-    emit select_window(wid);
+  void RenderThread::select_window(unsigned int wid) {
+    emit gui_select_window(wid);
   }
 
   void RenderThread::operator<<(const std::string *s) {
     emit addText(s);
+  }
+
+  void RenderThread::set_silent() {
+    emit gui_set_silent(NULL);
+  }
+
+  void RenderThread::set_silent(const std::string *filename) {
+    emit gui_set_silent(filename);
+  }
+
+  void RenderThread::set_silent(const char *filename) {
+    if (filename)
+      emit gui_set_silent(new std::string(filename));
+    else
+      emit gui_set_silent(NULL);
   }
 
   void RenderThread::run() {

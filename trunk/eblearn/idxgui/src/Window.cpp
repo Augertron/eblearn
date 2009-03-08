@@ -38,15 +38,15 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // Window
 
-  Window::Window(const char *wname, int height, int width) 
+  Window::Window(unsigned int wid, const char *wname, int height, int width) 
     : pixmapScale(1.0), curScale(1.0), scaleIncr(1), colorTable(256),
-      text("") {
+      text(""), silent(false), id(wid), savefname("") {
     setAttribute(Qt::WA_DeleteOnClose);
     if (wname) {
       QString q(wname);
       setWindowTitle(q);
     }
-    pixmap = new QPixmap(width, height);
+    pixmap = new QPixmap(1, 1);
     buffer = NULL;
     qimage = NULL;
     for (int i = 0; i < 256; i++){
@@ -63,9 +63,27 @@ namespace ebl {
       delete qimage;
   }
 
+  void Window::save(const char *filename) {
+    QPixmap p = QPixmap::grabWidget(this, rect());
+    if (!p.save(filename, "PNG", 90))
+      cerr << "Warning: failed to save window to " << filename << "." << endl;
+  }
+  
+  void Window::set_silent(const std::string *filename) {
+    silent = true;
+    ostringstream o;
+    if ((filename) && (strcmp(filename->c_str(), "") != 0))
+      o << *filename << ".";
+    o << id << ".png";
+    savefname = o.str();
+    hide();
+    update();
+  }
+
   void Window::addText(const std::string *s) {
     text += *s;
     delete s;
+    update_window();
   }
 
   void Window::buffer_resize(int h, int w) {
@@ -107,9 +125,19 @@ namespace ebl {
       idx_copy(*img, tmpbuf);
       // copy buffer to pixmap
       *pixmap = QPixmap::fromImage(*qimage);
-      show();
-      update();
       delete img;
+      update_window();
+    }
+  }
+
+  void Window::update_window() {
+    update(); 
+    // saving pixmap if silent or show it otherwise
+    if (silent) 
+      save(savefname.c_str());
+    else {
+      show();
+      activateWindow();
     }
   }
   
@@ -140,17 +168,20 @@ namespace ebl {
      
     drawText(painter);
 
-    QString txt = tr("Use mouse wheel to zoom, left click to drag.");
-    QFontMetrics metrics = painter.fontMetrics();
-    int textWidth = metrics.width(txt);
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(0, 0, 0, 127));
-    painter.drawRect((width() - textWidth) / 2 - 5, height() - 15, 
-		     textWidth + 10,
-		     metrics.lineSpacing() + 5);
-    painter.setPen(Qt::white);
-    painter.drawText((width() - textWidth) / 2,
-		     height() - 15 + metrics.leading() + metrics.ascent(), txt);
+    if (!silent) {
+      QString txt = tr("Use mouse wheel to zoom, left click to drag.");
+      QFontMetrics metrics = painter.fontMetrics();
+      int textWidth = metrics.width(txt);
+      painter.setPen(Qt::NoPen);
+      painter.setBrush(QColor(0, 0, 0, 127));
+      painter.drawRect((width() - textWidth) / 2 - 5, height() - 15, 
+		       textWidth + 10,
+		       metrics.lineSpacing() + 5);
+      painter.setPen(Qt::white);
+      painter.drawText((width() - textWidth) / 2,
+		       height() - 15 + metrics.leading() + metrics.ascent(), 
+		       txt);
+    }
   }
 
   void Window::drawText(QPainter &painter) {

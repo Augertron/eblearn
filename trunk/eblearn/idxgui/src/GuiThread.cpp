@@ -38,20 +38,24 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // GuiThread
 
-  RenderThread *window = NULL;
+  // global variable
+  RenderThread gui;
 
   GuiThread::GuiThread(int argc, char** argv) 
-    : wcur(0), thread(argc, argv) {
-    connect(&thread, SIGNAL(drawImage(Idx<ubyte> *, int, int)),
+    : wcur(0), nwid(0), thread(gui), silent(false) {
+    thread.init(argc, argv, &nwid);
+    connect(&thread, SIGNAL(gui_drawImage(Idx<ubyte> *, int, int)),
 	    this,   SLOT(updatePixmap(Idx<ubyte> *, int, int)));
     connect(&thread, SIGNAL(appquit()), this, SLOT(appquit()));
-    connect(&thread, SIGNAL(clear()), this, SLOT(clear()));
-    connect(&thread, SIGNAL(new_window(const char*, unsigned int*)), 
-	    this, SLOT(new_window(const char*, unsigned int*)));
-    connect(&thread, SIGNAL(select_window(unsigned int)), 
+    connect(&thread, SIGNAL(gui_clear()), this, SLOT(clear()));
+    connect(&thread, SIGNAL(gui_new_window(const char*)), 
+	    this, SLOT(new_window(const char*)));
+    connect(&thread, SIGNAL(gui_select_window(unsigned int)), 
 	    this, SLOT(select_window(unsigned int)));
     connect(&thread, SIGNAL(addText(const std::string*)), 
 	    this, SLOT(addText(const std::string*)));
+    connect(&thread, SIGNAL(gui_set_silent(const std::string *)), 
+	    this, SLOT(set_silent(const std::string *)));
   }
 
   GuiThread::~GuiThread() {
@@ -72,16 +76,28 @@ namespace ebl {
       windows[wcur]->addText(s);
   }
 
+  void GuiThread::set_silent(const std::string *filename) {
+    silent = true;
+    for (vector<Window*>::iterator i = windows.begin(); i != windows.end(); ++i)
+      {
+	if (*i)
+	  (*i)->set_silent(filename);
+      }
+    if (filename) {
+      savefname = *filename;
+      delete filename;
+    }
+  }
+
   void GuiThread::appquit() {
     exit(0);
   }
 
   void GuiThread::updatePixmap(Idx<ubyte> *img, int h0, int w0) {
     if (windows.size() == 0)
-      new_window(NULL, &wcur);
+      new_window();
     if (windows[wcur]) {
       windows[wcur]->updatePixmap(img, h0, w0);
-      windows[wcur]->activateWindow();
     }
   }
 
@@ -90,23 +106,23 @@ namespace ebl {
       windows[wcur]->clear();
   }
 
-  void GuiThread::new_window(const char *wname, unsigned int *wid) {
-    windows.push_back(new Window(wname));
+  void GuiThread::new_window(const char *wname) {
+    windows.push_back(new Window(windows.size(), wname, 600, 800));
     wcur = windows.size() - 1;
-    if (wid)
-      *wid = wcur;
+    if (silent)
+      windows[wcur]->set_silent(&savefname);
     connect(windows[wcur], SIGNAL(destroyed(QObject*)), 
 	    this, SLOT(window_destroyed(QObject*)));
   }
 
   void GuiThread::select_window(unsigned int wid) {
     if (wid >= windows.size()) {
-      cerr << "IdxGui Warning: trying to draw in unknown window id (";
+      cerr << "IdxGui Warning: trying to select an unknown window (id = ";
       cerr << wid << ")." << endl;
     }
     else {
       wcur = wid;
-      if (windows[wcur]) {
+      if ((windows[wcur]) && (!silent)) {
 	windows[wcur]->show();
       }
     }

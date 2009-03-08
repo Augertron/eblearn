@@ -38,18 +38,6 @@
 
 #include "libidx.h"
 
-#define MUTEX_WAIT_MSEC 1000 // milliseconds wait until giving up on gui draw
-
-#define WINDOW_FUNCTION_DECLARATION(fn)					\
-  if (!window) cerr << "Warning: GUI window object unavailable." << endl; \
-  if (window) window->fn
-
-#define gui_draw_matrix WINDOW_FUNCTION_DECLARATION(g_draw_matrix)
-#define gui_clear WINDOW_FUNCTION_DECLARATION(g_clear)
-#define gui_quit WINDOW_FUNCTION_DECLARATION(g_quit)
-#define gui_new_window WINDOW_FUNCTION_DECLARATION(g_new_window)
-#define gui_select_window WINDOW_FUNCTION_DECLARATION(g_select_window)
-
 namespace ebl {
 
   class RenderThread : public QThread {
@@ -58,16 +46,21 @@ namespace ebl {
   private:
     int		  argc;
     char	**argv;
+    unsigned int *nwid;
 
   public:
-    RenderThread(int argc_, char **argv_);
+    RenderThread();
+    void init(int argc_, char **argv_, unsigned int *nwid);
     virtual ~RenderThread();
 
-    void g_quit();
-    void g_clear();
-    void g_new_window(const char *wname = NULL, unsigned int *wid = NULL);
-    void g_select_window(unsigned int wid);
+    void quit();
+    void clear();
+    unsigned int new_window(const char *wname = NULL);
+    void select_window(unsigned int wid);
     void operator<<(const std::string *s);
+    void set_silent();
+    void set_silent(const std::string *filename);
+    void set_silent(const char *filename);
 
     //! gray_draw_matrix displays your idx2 or the first layer of your idx3 in
     //! grayscale on the whiteboard. This function does a copy of your idx and
@@ -81,17 +74,18 @@ namespace ebl {
     //! be 255
     //! @param zoomw and @param zoomh are the zoom factors in width and height
     template<class T>
-      void g_draw_matrix(Idx<T> &im, int h0 = 0, int w0 = 0, 
+      void draw_matrix(Idx<T> &im, int h0 = 0, int w0 = 0, 
 		       T minv = 0, T maxv = 0, 
 		       double zoomw = 1.0, double zoomh = 1.0);
 
   signals:
-    void drawImage(Idx<ubyte> *img, int h0, int w0);
+    void gui_drawImage(Idx<ubyte> *img, int h0, int w0);
     void appquit();
-    void clear();
-    void new_window(const char *wname, unsigned int *wid);
-    void select_window(unsigned int wid);
+    void gui_clear();
+    void gui_new_window(const char *wname);
+    void gui_select_window(unsigned int wid);
     void addText(const std::string *s);
+    void gui_set_silent(const std::string *filename);
     
   protected:
     virtual void run();
