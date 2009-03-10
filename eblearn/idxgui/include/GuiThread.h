@@ -71,10 +71,11 @@ namespace ebl {
   private slots:
     void window_destroyed(QObject *obj);
     void addText(const std::string *s);
-    void updatePixmap(Idx<ubyte> *img, int h0, int w0);
+    void updatePixmap(Idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void appquit();
     void clear();
-    void new_window(const char *wname = NULL);
+    void new_window(const char *wname = NULL, unsigned int h = 0, 
+		    unsigned int w = 0);
     void select_window(unsigned int wid);
     void set_silent(const std::string *filename = NULL);
   };

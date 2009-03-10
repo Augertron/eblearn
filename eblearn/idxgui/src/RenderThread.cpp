@@ -60,11 +60,12 @@ namespace ebl {
     emit gui_clear();
   }
 
-  unsigned int RenderThread::new_window(const char *wname) {
+  unsigned int RenderThread::new_window(const char *wname, unsigned int h, 
+					unsigned int w) {
     // TODO: add mutex
     unsigned int wid = *nwid;
     (*nwid)++; // increment number of windows
-    emit gui_new_window(wname);
+    emit gui_new_window(wname, h, w);
     return wid;
   }
 

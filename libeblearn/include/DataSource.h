@@ -36,6 +36,12 @@
 #include "libidx.h"
 #include "Ebl.h"
 
+#ifdef __GUI__
+#include "libidxgui.h"
+#endif 
+
+using namespace std;
+
 namespace ebl {
 
   template<typename Tdata, typename Tlabel> class LabeledDataSource {
@@ -44,16 +50,25 @@ namespace ebl {
     Idx<Tlabel>					 labels;
     typename Idx<Tdata>::dimension_iterator	 dataIter;
     typename Idx<Tlabel>::dimension_iterator	 labelsIter;
+    unsigned int				 height;
+    unsigned int				 width;
+    vector<string*>				*lblstr;
 
-    //! Do not use, for subclasses using different kind of inputs
+    //! CAUTION: This empty constructor requires a subsequent call to init().
     LabeledDataSource();
+
+    void init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, vector<string*> *lblstr);
 
     //! Constructor takes all input data and corresponding labels.
     //! @param inputs: An N+1-dimensional Idx of N-dimensional inputs.
     //! @param labels: A 1-dimensional Idx of corresponding labels.
-    LabeledDataSource(Idx<Tdata> &inputs, Idx<Tlabel> &labels);
+    //! @param lblstr: A vector of strings describing each label. When passed,
+    //! this class takes ownership of the data and will destroy the vector and
+    //! its content in the destructor.
+    LabeledDataSource(Idx<Tdata> &inputs, Idx<Tlabel> &labels, 
+		      vector<string*> *lblstr = NULL);
 
-    virtual ~LabeledDataSource() {};
+    virtual ~LabeledDataSource();
 
     //! Copies the current datum to a state and label.
     void virtual fprop(state_idx &datum, Idx<Tlabel> &label);
@@ -70,6 +85,18 @@ namespace ebl {
 
     //! Move to the beginning of the data.
     virtual void seek_begin();
+
+#ifdef __GUI__
+
+    virtual void display(unsigned int nh, unsigned int nw, 
+			 const char *wname = "Dataset", 
+			 unsigned int h0 = 0, unsigned int w0 = 0, 
+			 double zoom = 1.0);
+
+    virtual void draw(unsigned int nh, unsigned int nw, unsigned int h0 = 0, 
+		      unsigned int w0 = 0, double zoom = 1.0);
+
+#endif
   };
 
   ////////////////////////////////////////////////////////////////
@@ -82,12 +109,10 @@ namespace ebl {
   template<class Tdata, class Tlabel>
     class MnistDataSource : public LabeledDataSource<Tdata, Tlabel> {
   public:
-    intg width;
-    intg height;
     double bias;
     double coeff;
     
-    //! Empty constructor. Requires subsequent call to init().
+    //! Empty constructor. CAUTION: Requires subsequent call to init().
     MnistDataSource() {};
 
     //! create a <dsource-mnist>.
@@ -108,6 +133,14 @@ namespace ebl {
     //! <out> (an idx3-state) and the corresponding
     //! label into <lbl> (and idx0 of int).
     void virtual fprop(state_idx &out, Idx<Tlabel> &label);
+
+#ifdef __GUI__
+
+    virtual void display(unsigned int nh, unsigned int nw, 
+			 const char *wname = "MNIST Dataset", 
+			 unsigned int h0 = 0, unsigned int w0 = 0, 
+			 double zoom = 1.0);
+#endif
   };
 
   ////////////////////////////////////////////////////////////////

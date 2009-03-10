@@ -44,12 +44,15 @@ namespace ebl {
   GuiThread::GuiThread(int argc, char** argv) 
     : wcur(0), nwid(0), silent(false), thread(gui) {
     thread.init(argc, argv, &nwid);
-    connect(&thread, SIGNAL(gui_drawImage(Idx<ubyte> *, int, int)),
-	    this,   SLOT(updatePixmap(Idx<ubyte> *, int, int)));
+    connect(&thread, SIGNAL(gui_drawImage(Idx<ubyte> *, 
+					  unsigned int, unsigned int)),
+	    this,   SLOT(updatePixmap(Idx<ubyte> *, 
+				      unsigned int, unsigned int)));
     connect(&thread, SIGNAL(appquit()), this, SLOT(appquit()));
     connect(&thread, SIGNAL(gui_clear()), this, SLOT(clear()));
-    connect(&thread, SIGNAL(gui_new_window(const char*)), 
-	    this, SLOT(new_window(const char*)));
+    connect(&thread, SIGNAL(gui_new_window(const char*, unsigned int, 
+					   unsigned int)), 
+	    this, SLOT(new_window(const char*, unsigned int, unsigned int)));
     connect(&thread, SIGNAL(gui_select_window(unsigned int)), 
 	    this, SLOT(select_window(unsigned int)));
     connect(&thread, SIGNAL(addText(const std::string*)), 
@@ -93,7 +96,8 @@ namespace ebl {
     exit(0);
   }
 
-  void GuiThread::updatePixmap(Idx<ubyte> *img, int h0, int w0) {
+  void GuiThread::updatePixmap(Idx<ubyte> *img, unsigned int h0, 
+			       unsigned int w0) {
     if (windows.size() == 0)
       new_window();
     if (windows[wcur]) {
@@ -106,8 +110,8 @@ namespace ebl {
       windows[wcur]->clear();
   }
 
-  void GuiThread::new_window(const char *wname) {
-    windows.push_back(new Window(windows.size(), wname, 600, 800));
+  void GuiThread::new_window(const char *wname, unsigned int h, unsigned int w){
+    windows.push_back(new Window(windows.size(), wname, h, w));
     wcur = windows.size() - 1;
     if (silent)
       windows[wcur]->set_silent(&savefname);

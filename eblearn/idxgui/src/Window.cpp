@@ -53,6 +53,8 @@ namespace ebl {
       colorTable[i] = qRgb(i, i, i);
     }
     clear();
+    if ((height != 0) && (width != 0))
+      buffer_resize(height, width);
   }
 
   Window::~Window() {
@@ -112,13 +114,16 @@ namespace ebl {
     qimage->setColorTable(colorTable);
   }
 
-  void Window::updatePixmap(Idx<ubyte> *img, int h0, int w0) {
+  void Window::updatePixmap(Idx<ubyte> *img, unsigned int h0, unsigned int w0) {
     if (img) {
-      int h = MAX(buffer?buffer->dim(0):0, h0 + img->dim(0));
-      int w = MAX(buffer?buffer->dim(1):0, w0 + img->dim(1));
+      unsigned int h = MAX(buffer?(unsigned int)buffer->dim(0):0, 
+			   h0 + img->dim(0));
+      unsigned int w = MAX(buffer?(unsigned int)buffer->dim(1):0, 
+			   w0 + img->dim(1));
       if (!buffer)
 	buffer_resize(h, w);
-      else if ((h > buffer->dim(0)) || (w > buffer->dim(1)))
+      else if ((h > (unsigned int) buffer->dim(0)) || 
+	       (w > (unsigned int) buffer->dim(1)))
 	buffer_resize(h, w);
       Idx<ubyte> tmpbuf = buffer->narrow(0, img->dim(0), h0);
       tmpbuf = tmpbuf.narrow(1, img->dim(1), w0);
@@ -156,7 +161,9 @@ namespace ebl {
     painter.fillRect(rect(), Qt::white);
     if (curScale == pixmapScale) {
       painter.drawPixmap(pixmapOffset, *pixmap);
-    } else {
+      drawText(painter);
+    } 
+    else {
       double scaleFactor = pixmapScale / curScale;
       painter.save();
       painter.translate(pixmapOffset);
@@ -164,10 +171,9 @@ namespace ebl {
       QRectF exposed = 
 	painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
       painter.drawPixmap(exposed, *pixmap, exposed);
+      drawText(painter);
       painter.restore();
     }
-     
-    drawText(painter);
 
     if (!silent) {
       QString txt = tr("Use mouse wheel to zoom, left click to drag.");
