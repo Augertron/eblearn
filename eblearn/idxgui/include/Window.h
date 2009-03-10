@@ -60,6 +60,8 @@ class Window : public QWidget {
     bool		 silent;
     unsigned int	 id;
     std::string		 savefname;
+    unsigned int	 text_h0;
+    unsigned int	 text_w0;
 
   public:
     Window(unsigned int wid, const char *wname = NULL, 
@@ -72,6 +74,7 @@ class Window : public QWidget {
     void updatePixmap(Idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void clear();
     void drawText(QPainter &painter);
+    void set_text_origin(unsigned int h0, unsigned int w0);
 
   protected:
     void paintEvent(QPaintEvent *event);

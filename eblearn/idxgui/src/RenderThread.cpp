@@ -46,6 +46,7 @@ namespace ebl {
     argv = argv_;
     nwid = nwid_;
     str("");
+    set_cout_and_gui();
   }
 
   RenderThread::~RenderThread() {
@@ -91,6 +92,49 @@ namespace ebl {
   void RenderThread::run() {
     ylerror("The run2 method of RenderThread must be overridden and contain \
 your code");
+  }
+
+  void RenderThread::add_text(std::string *s) {
+    emit gui_add_text(s);    
+  }
+
+  void RenderThread::set_text_origin(unsigned int h0, unsigned int w0) {
+    emit gui_set_text_origin(h0, w0);    
+  }
+
+  RenderThread& att(RenderThread& r, unsigned int h0, unsigned int w0) {
+    r.set_text_origin(h0, w0);
+    return r;
+  }
+
+  ManipInfra<unsigned int, unsigned int> at(unsigned int h0, unsigned int w0) {
+    return (ManipInfra<unsigned int, unsigned int>(att, h0, w0));
+  }
+
+  RenderThread& fcout_and_gui(RenderThread& r) {
+    r.set_cout_and_gui();
+    return r;
+  }
+
+  ManipInfra<int, int> cout_and_gui() {
+    return (ManipInfra<int, int>(fcout_and_gui));
+  }
+
+  RenderThread& fgui_only(RenderThread& r) {
+    r.set_gui_only();
+    return r;
+  }
+
+  ManipInfra<int, int> gui_only() {
+    return (ManipInfra<int, int>(fgui_only));
+  }
+
+  void RenderThread::set_cout_and_gui() {
+    cout_output = true;
+  }
+
+  void RenderThread::set_gui_only() {
+    cout_output = false;
   }
 
 } // end namespace ebl

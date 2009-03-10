@@ -139,6 +139,7 @@ namespace ebl {
   void LabeledDataSource<Tdata,Tlabel>::draw(unsigned int nh, unsigned int nw,
 					     unsigned int h0, unsigned int w0,
 					     double zoom) {
+    gui << gui_only();
     IdxDim d(data.spec);
     state_idx s(d);
     Idx<double> m = s.x.select(0, 0);
@@ -152,7 +153,7 @@ namespace ebl {
 	m = s.x.select(0, 0);
 	gui.draw_matrix(m, h, w, 0.0, 0.0, zoom, zoom);
 	if ((lblstr) && (lblstr->at((int)lbl.get()))) {
-	  gui  << "     " << (lblstr->at((int)lbl.get()))->c_str();
+	  gui << at(ih, iw) << "     " << (lblstr->at((int)lbl.get()))->c_str();
 	}
 	w += m.dim(1) + 1;
       }

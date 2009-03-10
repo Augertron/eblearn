@@ -50,6 +50,8 @@ namespace ebl {
     int		  argc;
     char	**argv;
     unsigned int *nwid;
+  public:
+    bool         cout_output;
 
   public:
     RenderThread();
@@ -61,7 +63,14 @@ namespace ebl {
     unsigned int new_window(const char *wname = NULL, unsigned int h = 0,
 			    unsigned int w = 0);
     void select_window(unsigned int wid);
-    template<class T> ostream& operator<<(T val);
+
+    template<class T> friend
+      RenderThread& operator<<(RenderThread& r, const T val);
+
+    void add_text(std::string *s);
+    void set_text_origin(unsigned int h0, unsigned int w0);
+    void set_cout_and_gui();
+    void set_gui_only();
     void set_silent();
     void set_silent(const std::string *filename);
     void set_silent(const char *filename);
@@ -88,7 +97,8 @@ namespace ebl {
     void gui_clear();
     void gui_new_window(const char *wname, unsigned int h, unsigned int w);
     void gui_select_window(unsigned int wid);
-    void addText(const std::string *s);
+    void gui_add_text(const std::string *s);
+    void gui_set_text_origin(unsigned int h0, unsigned int w0);
     void gui_set_silent(const std::string *filename);
     
   protected:
