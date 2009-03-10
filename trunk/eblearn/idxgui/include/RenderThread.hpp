@@ -45,13 +45,57 @@ namespace ebl {
     emit gui_drawImage(uim, h0, w0);
   }
 
+  template<class T1, class T2>
+  class ManipInfra {
+  public:
+    ManipInfra(RenderThread& (*pFun) (RenderThread&))
+      : manipFun0(pFun), val1(0), val2(0), nval(0) {}
+    ManipInfra(RenderThread& (*pFun) (RenderThread&, T1), T1 val1_)
+      : manipFun1(pFun), val1(val1_), val2(0), nval(1) {}
+    ManipInfra(RenderThread& (*pFun) (RenderThread&, T1, T2), 
+	       T1 val1_, T2 val2_)
+      : manipFun2(pFun), val1(val1_), val2(val2_), nval(2) {}
+
+    void operator() (RenderThread& r) const {
+      switch (nval) {
+      case 0: manipFun0(r); break ;
+      case 1: manipFun1(r, val1); break ;
+      case 2: manipFun2(r, val1, val2); break ;
+      default: ylerror("unknown mode");
+      }
+    }
+  private:
+    RenderThread& (*manipFun0) (RenderThread&);
+    RenderThread& (*manipFun1) (RenderThread&, T1);
+    RenderThread& (*manipFun2) (RenderThread&, T1, T2);
+    T1 val1;
+    T2 val2;
+    int nval;
+  };
+
+  RenderThread& att(RenderThread& r, unsigned int h0, unsigned int w0);
+  ManipInfra<unsigned int, unsigned int> at(unsigned int h0, unsigned int w0);
+
+  RenderThread& fcout_and_gui(RenderThread& r);
+  ManipInfra<int, int> cout_and_gui();
+
+  RenderThread& fgui_only(RenderThread& r);
+  ManipInfra<int, int> gui_only();
+
+  template<class T1, class T2> 
+  RenderThread& operator<<(RenderThread& r, const ManipInfra<T1, T2> &manip) {
+    manip(r);
+    return r;
+  }
+
   template<class T> 
-  ostream& RenderThread::operator<<(T val) {
-    *((ostringstream*)this) << val;
-    emit addText(new std::string(str()));
-    cout << str();
-    str("");
-    return *((ostream*)this);
+  RenderThread& operator<<(RenderThread& r, const T val) {
+    ostringstream o;
+    o << val;
+    r.add_text(new std::string(o.str()));
+    if (r.cout_output)
+      cout << o;
+    return r;
   }
 
 } // end namespace ebl

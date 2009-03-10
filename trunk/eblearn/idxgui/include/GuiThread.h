@@ -70,7 +70,8 @@ namespace ebl {
 
   private slots:
     void window_destroyed(QObject *obj);
-    void addText(const std::string *s);
+    void add_text(const std::string *s);
+    void set_text_origin(unsigned int h0, unsigned int w0);
     void updatePixmap(Idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void appquit();
     void clear();

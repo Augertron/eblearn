@@ -55,8 +55,10 @@ namespace ebl {
 	    this, SLOT(new_window(const char*, unsigned int, unsigned int)));
     connect(&thread, SIGNAL(gui_select_window(unsigned int)), 
 	    this, SLOT(select_window(unsigned int)));
-    connect(&thread, SIGNAL(addText(const std::string*)), 
-	    this, SLOT(addText(const std::string*)));
+    connect(&thread, SIGNAL(gui_add_text(const std::string*)), 
+	    this, SLOT(add_text(const std::string*)));
+    connect(&thread, SIGNAL(gui_set_text_origin(unsigned int, unsigned int)), 
+	    this, SLOT(set_text_origin(unsigned int, unsigned int)));
     connect(&thread, SIGNAL(gui_set_silent(const std::string *)), 
 	    this, SLOT(set_silent(const std::string *)));
   }
@@ -74,9 +76,14 @@ namespace ebl {
       }
   }
 
-  void GuiThread::addText(const std::string *s) {
+  void GuiThread::add_text(const std::string *s) {
     if (windows[wcur])
       windows[wcur]->addText(s);
+  }
+
+  void GuiThread::set_text_origin(unsigned int h0, unsigned int w0) {
+    if (windows[wcur])
+      windows[wcur]->set_text_origin(h0, w0);
   }
 
   void GuiThread::set_silent(const std::string *filename) {

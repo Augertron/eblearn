@@ -55,6 +55,8 @@ namespace ebl {
     clear();
     if ((height != 0) && (width != 0))
       buffer_resize(height, width);
+    text_h0 = 0;
+    text_w0 = 0;
   }
 
   Window::~Window() {
@@ -86,6 +88,11 @@ namespace ebl {
     text += *s;
     delete s;
     update_window(false);
+  }
+  
+  void Window::set_text_origin(unsigned int h0, unsigned int w0) {
+    text_h0 = h0;
+    text_w0 = w0;
   }
 
   void Window::buffer_resize(int h, int w) {
