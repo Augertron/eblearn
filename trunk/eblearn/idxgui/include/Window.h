@@ -63,13 +63,13 @@ class Window : public QWidget {
 
   public:
     Window(unsigned int wid, const char *wname = NULL, 
-	   int height = 600, int width = 800);
+	   int height = 0, int width = 0);
     virtual ~Window();
 
     void save(const char *filename);
     void set_silent(const std::string *filename);
     void addText(const std::string *s);
-    void updatePixmap(Idx<ubyte> *img, int h0, int w0);
+    void updatePixmap(Idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void clear();
     void drawText(QPainter &painter);
 

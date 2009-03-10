@@ -18,10 +18,10 @@ void NetTest::tearDown() {
 
 void NetTest::test_lenet5_mnist_ebl() {
 #ifdef __GUI__  
-  gui.new_window("Demo MNIST");
-  RenderThread &cout = gui;
+  //  gui.new_window("Demo MNIST");
+  //  RenderThread &cout = gui;
 #endif
-  //  cout << endl;
+  cout << endl;
   // for testing purposes, we always initialize the randomization with 0 so 
   // that we know the exact results. 
   // in the real world, init_drand should be called with time(NULL) as argument.
@@ -33,6 +33,8 @@ void NetTest::test_lenet5_mnist_ebl() {
   // load MNIST dataset
   MnistDataSource<ubyte,ubyte> train_ds, test_ds;
   load_mnist_dataset(gl_mnist_dir->c_str(), train_ds, test_ds, trsize, tesize);
+    train_ds.display(15, 15);
+    test_ds.display(15, 15);
 
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
@@ -42,7 +44,7 @@ void NetTest::test_lenet5_mnist_ebl() {
   parameter theparam(60000); // create trainable parameter
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
-  supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam, gui);
+  supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam, cout);
 
   // a classifier-meter measures classification errors
   classifier_meter trainmeter(cout);

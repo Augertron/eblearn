@@ -37,8 +37,8 @@ using namespace std;
 namespace ebl {
   
   template<class T>
-  void RenderThread::draw_matrix(Idx<T> &im, int h0, int w0, T minv, T maxv,
-				 double zoomw, double zoomh) {
+  void RenderThread::draw_matrix(Idx<T> &im, unsigned int h0, unsigned int w0, 
+				 T minv, T maxv, double zoomw, double zoomh) {
     Idx<ubyte> *uim = new Idx<ubyte>(grey_image_to_ubyte<T>(im, minv, maxv, 
 							    zoomw, zoomh));
     // send image to main gui thread

@@ -58,7 +58,8 @@ namespace ebl {
 
     void quit();
     void clear();
-    unsigned int new_window(const char *wname = NULL);
+    unsigned int new_window(const char *wname = NULL, unsigned int h = 0,
+			    unsigned int w = 0);
     void select_window(unsigned int wid);
     template<class T> ostream& operator<<(T val);
     void set_silent();
@@ -77,15 +78,15 @@ namespace ebl {
     //! be 255
     //! @param zoomw and @param zoomh are the zoom factors in width and height
     template<class T>
-      void draw_matrix(Idx<T> &im, int h0 = 0, int w0 = 0, 
+      void draw_matrix(Idx<T> &im, unsigned int h0 = 0, unsigned int w0 = 0, 
 		       T minv = 0, T maxv = 0, 
 		       double zoomw = 1.0, double zoomh = 1.0);
 
   signals:
-    void gui_drawImage(Idx<ubyte> *img, int h0, int w0);
+    void gui_drawImage(Idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void appquit();
     void gui_clear();
-    void gui_new_window(const char *wname);
+    void gui_new_window(const char *wname, unsigned int h, unsigned int w);
     void gui_select_window(unsigned int wid);
     void addText(const std::string *s);
     void gui_set_silent(const std::string *filename);

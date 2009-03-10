@@ -22,16 +22,18 @@ void Classifier2DTest::test_norb() {
   mono_net += "/norb/20040618-1628-031617-lenet7-jitt-bg-mono-demo-4082400.prm";
   string imgfile = *gl_data_dir;
   imgfile += "/norb/plane_left.mat";
+
   const char labels[5][10] = {"animal", "human", "plane", "truck", "car"};
   Idx<const char*> lbl(5);
+  for (int i = 0; i < lbl.nelements(); ++i)
+    lbl.set(labels[i], i);
+
   int sizes[] = { 9, 6, 4, 2 };	
   Idx<ubyte> left(1, 1);
   CPPUNIT_ASSERT(load_matrix<ubyte>(left, imgfile.c_str()) == true);
   left = image_resize(left, 320, 240, 1);
   Idx<int> sz(sizeof (sizes) / sizeof (int));
   memcpy(sz.idx_ptr(), sizes, sizeof (sizes));
-  for (int i = 0; i < lbl.nelements(); ++i)
-    lbl.set(labels[i], i);
   Classifier2D cb(mono_net.c_str(), sz, lbl, 0.0, 0.01, 240, 320);
   Idx<double> res = cb.fprop(left.idx_ptr(), 1, 1.8, 60);
 //   CPPUNIT_ASSERT(res.dim(0) == 1); // only 1 object
