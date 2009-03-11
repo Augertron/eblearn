@@ -45,6 +45,7 @@ void NetTest::test_lenet5_mnist_ebl() {
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
   supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam, cout);
+  thetrainer.set_display(15, 15);
 
   // a classifier-meter measures classification errors
   classifier_meter trainmeter(cout);
@@ -79,6 +80,12 @@ void NetTest::test_lenet5_mnist_ebl() {
 	       /* double g_t*/ 	0.0);
   infer_param infp;
 	
+  cout << "training: " << flush;
+  thetrainer.test(train_ds, trainmeter, infp);
+  trainmeter.display();
+  cout << " testing: " << flush;
+  thetrainer.test(test_ds, testmeter, infp);
+  testmeter.display();
   // this goes at about 25 examples per second on a PIIIM 800MHz
   for (int i = 0; i < 5; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);

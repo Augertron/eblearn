@@ -152,14 +152,12 @@ namespace ebl {
 	next();
 	m = s.x.select(0, 0);
 	gui.draw_matrix(m, h, w, 0.0, 0.0, zoom, zoom);
-	if ((lblstr) && (lblstr->at((int)lbl.get()))) {
-	  gui << at(ih, iw) << "     " << (lblstr->at((int)lbl.get()))->c_str();
-	}
+	if ((lblstr) && (lblstr->at((int)lbl.get())))
+	  gui << at(h + 1, w + 1) << (lblstr->at((int)lbl.get()))->c_str();
 	w += m.dim(1) + 1;
       }
       w = w0;
       h += m.dim(0) + 1;
-      gui << "\n\n";
     }
     seek_begin();
   }

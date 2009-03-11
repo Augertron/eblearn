@@ -42,10 +42,24 @@
 #include "libidx.h"
 #include "RenderThread.h"
 
+using namespace std;
+
 namespace ebl {
 
-class Window : public QWidget { 
-  Q_OBJECT
+  class Text : public string {
+  private:
+    string		*str;
+  public:
+    unsigned int	 h0;
+    unsigned int	 w0;
+    
+  public:
+    Text(unsigned int h0, unsigned int w0);
+    ~Text();
+  };
+
+  class Window : public QWidget { 
+    Q_OBJECT
   private:
     QPixmap		*pixmap;
     QPoint		 pixmapOffset;
@@ -56,10 +70,11 @@ class Window : public QWidget {
     Idx<ubyte>		*buffer;
     QVector<QRgb>	 colorTable;
     QImage		*qimage;
-    std::string          text;
+    vector<Text*>        texts;
+    Text*		 text;
     bool		 silent;
     unsigned int	 id;
-    std::string		 savefname;
+    string		 savefname;
     unsigned int	 text_h0;
     unsigned int	 text_w0;
 

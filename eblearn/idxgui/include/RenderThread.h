@@ -90,6 +90,11 @@ namespace ebl {
       void draw_matrix(Idx<T> &im, unsigned int h0 = 0, unsigned int w0 = 0, 
 		       T minv = 0, T maxv = 0, 
 		       double zoomw = 1.0, double zoomh = 1.0);
+    template<class T>
+      void draw_matrix_frame(Idx<T> &im, ubyte r, ubyte g, ubyte b,
+			     unsigned int h0 = 0, unsigned int w0 = 0, 
+			     T minv = 0, T maxv = 0, 
+			     double zoomw = 1.0, double zoomh = 1.0);
 
   signals:
     void gui_drawImage(Idx<ubyte> *img, unsigned int h0, unsigned int w0);

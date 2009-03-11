@@ -36,11 +36,21 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  // Text
+
+  Text::Text(unsigned int h0_, unsigned int w0_)
+    : string(""), h0(h0_), w0(w0_) {
+  }
+
+  Text::~Text() {
+  }
+
+  ////////////////////////////////////////////////////////////////
   // Window
 
   Window::Window(unsigned int wid, const char *wname, int height, int width) 
     : pixmapScale(1.0), curScale(1.0), scaleIncr(1), colorTable(256),
-      text(""), silent(false), id(wid), savefname("") {
+      texts(), silent(false), id(wid), savefname("") {
     setAttribute(Qt::WA_DeleteOnClose);
     if (wname) {
       QString q(wname);
@@ -57,6 +67,7 @@ namespace ebl {
       buffer_resize(height, width);
     text_h0 = 0;
     text_w0 = 0;
+    text = NULL; // current text
   }
 
   Window::~Window() {
@@ -65,6 +76,9 @@ namespace ebl {
       delete buffer;
     if (qimage)
       delete qimage;
+    for (vector<Text*>::iterator i = texts.begin(); i != texts.end(); ++i)
+      if (*i)
+	delete (*i);
   }
 
   void Window::save(const char *filename) {
@@ -85,7 +99,11 @@ namespace ebl {
   }
 
   void Window::addText(const std::string *s) {
-    text += *s;
+    if (!text) {
+      text = new Text(text_h0, text_w0);
+      texts.push_back(text);
+    }
+    *text += *s;
     delete s;
     update_window(false);
   }
@@ -93,6 +111,8 @@ namespace ebl {
   void Window::set_text_origin(unsigned int h0, unsigned int w0) {
     text_h0 = h0;
     text_w0 = w0;
+    text = new Text(text_h0, text_w0);
+    texts.push_back(text);
   }
 
   void Window::buffer_resize(int h, int w) {
@@ -166,21 +186,15 @@ namespace ebl {
   void Window::paintEvent(QPaintEvent * /* event */) {
     QPainter painter(this);
     painter.fillRect(rect(), Qt::white);
-    if (curScale == pixmapScale) {
-      painter.drawPixmap(pixmapOffset, *pixmap);
-      drawText(painter);
-    } 
-    else {
-      double scaleFactor = pixmapScale / curScale;
-      painter.save();
-      painter.translate(pixmapOffset);
-      painter.scale(scaleFactor, scaleFactor);
-      QRectF exposed = 
-	painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
-      painter.drawPixmap(exposed, *pixmap, exposed);
-      drawText(painter);
-      painter.restore();
-    }
+    double scaleFactor = pixmapScale / curScale;
+    painter.save();
+    painter.translate(pixmapOffset);
+    painter.scale(scaleFactor, scaleFactor);
+    QRectF exposed = 
+      painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
+    painter.drawPixmap(exposed, *pixmap, exposed);
+    drawText(painter);
+    painter.restore();
 
     if (!silent) {
       QString txt = tr("Use mouse wheel to zoom, left click to drag.");
@@ -199,17 +213,24 @@ namespace ebl {
   }
 
   void Window::drawText(QPainter &painter) {
-    QString txt(text.c_str());
-    QRectF bg;
-    painter.setPen(Qt::white);
-    painter.drawText(rect(), Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
-		     txt, &bg);
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(0, 0, 0, 127));
-    painter.drawRect(bg);
-    painter.setPen(Qt::white);
-    painter.drawText(rect(), Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
-		     txt, &bg);
+    for (vector<Text*>::iterator i = texts.begin(); i != texts.end(); ++i) {
+      if (*i) {
+	QString txt((*i)->c_str());
+	QRectF bg;
+	painter.setPen(Qt::white);
+	QRect qr = rect();
+	qr.setLeft((*i)->w0);
+	qr.setTop((*i)->h0);
+	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
+			 txt, &bg);
+	painter.setPen(Qt::NoPen);
+	painter.setBrush(QColor(0, 0, 0, 127));
+	painter.drawRect(bg);
+	painter.setPen(Qt::white);
+	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
+			 txt, &bg);
+      }
+    }
   }
 
   void Window::wheelEvent(QWheelEvent *event) {

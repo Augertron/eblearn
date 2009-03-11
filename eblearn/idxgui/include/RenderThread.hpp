@@ -45,6 +45,25 @@ namespace ebl {
     emit gui_drawImage(uim, h0, w0);
   }
 
+  template<class T>
+  void RenderThread::draw_matrix_frame(Idx<T> &im, ubyte r, ubyte g, ubyte b,
+				       unsigned int h0, unsigned int w0, 
+				       T minv, T maxv, 
+				       double zoomw, double zoomh) {
+    Idx<ubyte> uim = grey_image_to_ubyte<T>(im, minv, maxv, zoomw, zoomh);
+    Idx<ubyte> tmp(uim.dim(0) + 2, uim.dim(1) + 2);
+    Idx<ubyte> *fim = new Idx<ubyte>(tmp);
+    Idx<ubyte> tmp2 = tmp.narrow(0, uim.dim(0), 1);
+    tmp2 = tmp2.narrow(1, uim.dim(1), 1);
+    idx_copy(uim, tmp2);
+    tmp2 = tmp.narrow(0, 1, 0); idx_fill(tmp2, r);
+    tmp2 = tmp.narrow(0, 1, tmp.dim(0) - 2); idx_fill(tmp2, r);
+    tmp2 = tmp.narrow(1, 1, 0); idx_fill(tmp2, r);
+    tmp2 = tmp.narrow(1, 1, tmp.dim(1) - 2); idx_fill(tmp2, r);
+    // send image to main gui thread
+    emit gui_drawImage(fim, h0, w0);
+  }
+
   template<class T1, class T2>
   class ManipInfra {
   public:
