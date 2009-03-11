@@ -49,13 +49,13 @@ namespace ebl {
   private:
     int		  argc;
     char	**argv;
-    unsigned int *nwid;
+    unsigned int  nwid;
   public:
     bool         cout_output;
 
   public:
     RenderThread();
-    void init(int argc_, char **argv_, unsigned int *nwid);
+    void init(int argc_, char **argv_);
     virtual ~RenderThread();
 
     void quit();

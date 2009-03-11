@@ -80,6 +80,17 @@ namespace ebl {
     adder.forget(fp);
   }
 
+  void nn_layer_full::display_fprop(state_idx &in, state_idx &out,
+					   unsigned int &h0, unsigned int &w0) {
+#ifdef __GUI__
+    unsigned int h = h0, w = w0;
+    idx_bloop1(m, in.x, double) {
+      gui.draw_matrix(m, h, w);
+      h += m.dim(0) + 1;
+    }
+#endif
+  }
+
   ////////////////////////////////////////////////////////////////
   // nn_layer_convolution
 
@@ -127,6 +138,17 @@ namespace ebl {
     adder.forget(fp);
   }
 
+  void nn_layer_convolution::display_fprop(state_idx &in, state_idx &out,
+					   unsigned int &h0, unsigned int &w0) {
+#ifdef __GUI__
+    unsigned int h = h0, w = w0;
+    idx_bloop1(m, in.x, double) {
+      gui.draw_matrix(m, h, w);
+      h += m.dim(0) + 1;
+    }
+#endif
+  }
+
   ////////////////////////////////////////////////////////////////
   // nn_layer_subsampling
 
@@ -172,6 +194,17 @@ namespace ebl {
   void nn_layer_subsampling::forget(forget_param_linear &fp) {
     subsampler.forget(fp);
     adder.forget(fp);
+  }
+
+  void nn_layer_subsampling::display_fprop(state_idx &in, state_idx &out,
+					   unsigned int &h0, unsigned int &w0) {
+#ifdef __GUI__
+    unsigned int h = h0, w = w0;
+    idx_bloop1(m, in.x, double) {
+      gui.draw_matrix(m, h, w);
+      h += m.dim(0) + 1;
+    }
+#endif
   }
 
 } // end namespace ebl

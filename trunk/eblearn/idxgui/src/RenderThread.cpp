@@ -41,10 +41,10 @@ namespace ebl {
   RenderThread::RenderThread() {
   }
 
-  void RenderThread::init(int argc_, char **argv_, unsigned int *nwid_) {
+  void RenderThread::init(int argc_, char **argv_) {
     argc = argc_;
     argv = argv_;
-    nwid = nwid_;
+    nwid = 0;
     str("");
     set_cout_and_gui();
   }
@@ -64,8 +64,8 @@ namespace ebl {
   unsigned int RenderThread::new_window(const char *wname, unsigned int h, 
 					unsigned int w) {
     // TODO: add mutex
-    unsigned int wid = *nwid;
-    (*nwid)++; // increment number of windows
+    unsigned int wid = nwid;
+    nwid++; // increment number of windows
     emit gui_new_window(wname, h, w);
     return wid;
   }

@@ -163,7 +163,7 @@ namespace ebl {
       // copy buffer to pixmap
       *pixmap = QPixmap::fromImage(*qimage);
       delete img;
-      update_window();
+      update_window(false);
     }
   }
 

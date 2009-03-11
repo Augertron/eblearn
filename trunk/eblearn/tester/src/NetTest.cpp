@@ -43,11 +43,11 @@ void NetTest::test_lenet5_mnist_ebl() {
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
   supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam, cout);
-  thetrainer.set_display(15, 15);
+  thetrainer.set_display(10, 10);
 
   // a classifier-meter measures classification errors
-  classifier_meter trainmeter(cout);
-  classifier_meter testmeter(cout);
+  classifier_meter trainmeter;
+  classifier_meter testmeter;
    
   // initialize the network weights
   forget_param_linear fgp(1, 0.5);
@@ -78,13 +78,13 @@ void NetTest::test_lenet5_mnist_ebl() {
 	       /* double g_t*/ 	0.0);
   infer_param infp;
 	
-  //  thetrainer.test(train_ds, trainmeter, infp);
-  thetrainer.test(test_ds, testmeter, infp);
+  thetrainer.test(train_ds, trainmeter, infp);
+  thetrainer.test(test_ds, testmeter, infp, true);
   // this goes at about 25 examples per second on a PIIIM 800MHz
   for (int i = 0; i < 5; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
-    //    thetrainer.test(train_ds, trainmeter, infp);
-    thetrainer.test(test_ds, testmeter, infp);
+    thetrainer.test(train_ds, trainmeter, infp);
+    thetrainer.test(test_ds, testmeter, infp, true);
   }
   CPPUNIT_ASSERT_DOUBLES_EQUAL(97.15,
 			       ((trainmeter.total_correct * 100) 

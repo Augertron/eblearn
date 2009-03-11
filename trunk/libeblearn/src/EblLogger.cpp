@@ -31,13 +31,18 @@
 
 #include "EblLogger.h"
 
+#ifdef __GUI__
+#include "libidxgui.h"
+#define cout gui
+#endif 
+
 using namespace std;
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////////////
 
-  classifier_meter::classifier_meter(ostream &cout_) : cout(cout_) {
+  classifier_meter::classifier_meter() {
     this->clear();
   }
 
@@ -131,13 +136,12 @@ namespace ebl {
     err_not_implemented();
   }
 
-  void classifier_meter::display(ostream &cout) { //RenderThread &cout) {
-    cout << "[" << (int) age << "]  size=" <<  (int) size;
-    cout << "energy=" << total_energy / (double) size;
+  void classifier_meter::display() {
+    cout << "[" << (int) age << "]  sz=" <<  (int) size;
+    cout << " energy=" << total_energy / (double) size;
     cout << "  correct=" <<  (total_correct * 100) / (double) size;
-    cout << "%%  errors=" << (total_error * 100) / (double) size;
-    cout << "%% rejects=" << (total_punt * 100) / (double) size << "%%";
-    cout << endl;
+    cout << "% errors=" << (total_error * 100) / (double) size;
+    cout << "% rejects=" << (total_punt * 100) / (double) size << "%";
   }
 
   bool classifier_meter::save() {

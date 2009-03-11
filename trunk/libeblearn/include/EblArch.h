@@ -56,6 +56,9 @@ namespace ebl {
     //! returns the order at which the module operates.
     virtual int  replicable_order();
     virtual void resize_output(Tin &in, Tout &out);
+    //! display fprop at (h0, w0)
+    virtual void display_fprop(Tin &in, Tout &out,
+			       unsigned int &h0, unsigned int &w0);
   };
 
   //! abstract class for a module with two inputs and one output.
@@ -142,6 +145,8 @@ namespace ebl {
     void bbprop(T &in, T &out);
     void forget(forget_param_linear &fp);
     void normalize();
+    //! display fprop at (h0, w0)
+    void display_fprop(T &in, T &out, unsigned int &h0, unsigned int &w0);
   private:
     bool own_contents;
   };
