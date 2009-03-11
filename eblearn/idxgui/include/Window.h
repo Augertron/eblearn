@@ -88,6 +88,7 @@ namespace ebl {
     void addText(const std::string *s);
     void updatePixmap(Idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void clear();
+    void clear_text();
     void drawText(QPainter &painter);
     void set_text_origin(unsigned int h0, unsigned int w0);
 

@@ -37,6 +37,10 @@
 #include "Blas.h"
 #include "EblStates.h"
 
+#ifdef __GUI__
+#include "libidxgui.h"
+#endif 
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -141,7 +145,7 @@ namespace ebl {
     //! the average energy, the percentage of correctly
     //! recognize samples, the percentage of erroneously
     //! recognized samples, and the percentage of rejected samples.
-    void display();
+    void display(ostream& cout = std::cout);//RenderThread &cout = ebl::gui);
     bool save();
     bool load();
   };

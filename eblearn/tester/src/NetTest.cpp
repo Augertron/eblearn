@@ -33,8 +33,6 @@ void NetTest::test_lenet5_mnist_ebl() {
   // load MNIST dataset
   MnistDataSource<ubyte,ubyte> train_ds, test_ds;
   load_mnist_dataset(gl_mnist_dir->c_str(), train_ds, test_ds, trsize, tesize);
-    train_ds.display(15, 15);
-    test_ds.display(15, 15);
 
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
@@ -80,21 +78,13 @@ void NetTest::test_lenet5_mnist_ebl() {
 	       /* double g_t*/ 	0.0);
   infer_param infp;
 	
-  cout << "training: " << flush;
-  thetrainer.test(train_ds, trainmeter, infp);
-  trainmeter.display();
-  cout << " testing: " << flush;
+  //  thetrainer.test(train_ds, trainmeter, infp);
   thetrainer.test(test_ds, testmeter, infp);
-  testmeter.display();
   // this goes at about 25 examples per second on a PIIIM 800MHz
   for (int i = 0; i < 5; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
-    cout << "training: " << flush;
-    thetrainer.test(train_ds, trainmeter, infp);
-    trainmeter.display();
-    cout << " testing: " << flush;
+    //    thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
-    testmeter.display();
   }
   CPPUNIT_ASSERT_DOUBLES_EQUAL(97.15,
 			       ((trainmeter.total_correct * 100) 

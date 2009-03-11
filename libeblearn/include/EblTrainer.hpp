@@ -39,8 +39,8 @@ namespace ebl {
   supervised_trainer(fc_ebm2<state_idx,	int, state_idx> &m, parameter &p,
 		     ostream &cout_)
     : display(false), display_nh(0), display_nw(0), display_h0(0), 
-      display_w0(0), display_zoom(1.0), machine(m), param(p), energy(), 
-      label(), age(0), cout(cout_) {
+      display_w0(0), display_zoom(1.0), iteration(0),
+      machine(m), param(p), energy(), label(), age(0), cout(cout_) {
     input = NULL; // allocated when input is passed, based in its order/dims
     energy.dx.set(1.0);
     energy.ddx.set(0.0);
@@ -56,13 +56,18 @@ namespace ebl {
 						      unsigned int nw,
 						      unsigned int h0, 
 						      unsigned int w0,
-						      double zoom) {
+						      double zoom, int wid,
+						      const char *title) {
+#ifdef __GUI__
     display = true;
     display_nh = nh;
     display_nw = nw;
     display_h0 = h0;
     display_w0 = w0;
     display_zoom = zoom;
+    display_wid = (wid >= 0) ? wid : 
+      gui.new_window((title ? title : "Supervised Trainer"));
+#endif
   }
   
   template <class Tdata, class Tlabel>  
@@ -95,8 +100,12 @@ namespace ebl {
   test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log,
        infer_param &infp) {
 #ifdef __GUI__
-    gui.new_window("Supervised Trainer: Classification Results");
-    unsigned int h = display_h0, w = display_w0, nh = 0;
+    if (display) {
+      gui.select_window(display_wid);
+      gui.clear();
+      gui << gui_only();
+    }
+    unsigned int h = display_h0 + 15, w = display_w0, nh = 0;
 #endif
     ds.seek_begin();
     log.clear();
@@ -124,6 +133,17 @@ namespace ebl {
       }
 #endif
     }
+#ifdef __GUI__
+    if (display) {
+      gui << cout_and_gui() << at(0, 0) << ds.name;
+      gui << ": iteration " << iteration << " ";
+    }
+    //    RenderThread &cout = display ? gui : cout;
+    log.display(gui);
+#else
+    log.display(cout);
+#endif
+    iteration++;
   }
   
   template <class Tdata, class Tlabel>  

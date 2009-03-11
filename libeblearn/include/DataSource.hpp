@@ -48,20 +48,23 @@ namespace ebl {
   template<typename Tdata, typename Tlabel>
   LabeledDataSource<Tdata,Tlabel>::LabeledDataSource(Idx<Tdata> &data_, 
 						     Idx<Tlabel> &labels_,
+						     const char *name_,
 						     vector<string*> *lblstr_) 
     : data(data_), labels(labels_), dataIter(data, 0), labelsIter(labels, 0) {
-    init(data_, labels_, lblstr_);
+    init(data_, labels_, name_, lblstr_);
   }
 
   template<class Tdata, class Tlabel>
   void LabeledDataSource<Tdata, Tlabel>::init(Idx<Tdata> &data_, 
 					      Idx<Tlabel> &labels_,
+					      const char *name_,
 					      vector<string*> *lblstr_) {
     this->data = data_;
     this->labels = labels_;
     this->height = data.dim(1);
     this->width = data.dim(2);
     this->lblstr = lblstr_;
+    this->name = (name_ ? name_ : "Unknown Dataset");
     typename Idx<Tdata>::dimension_iterator	 dIter(this->data, 0);
     typename Idx<Tlabel>::dimension_iterator	 lIter(this->labels, 0);
     this->dataIter = dIter;
@@ -122,23 +125,28 @@ namespace ebl {
     labelsIter = labels.dim_begin(0);
   }
 
-#ifdef __GUI__
-
   template<typename Tdata, typename Tlabel>
   void LabeledDataSource<Tdata,Tlabel>::display(unsigned int nh, 
 						unsigned int nw,
-						const char *wname,
 						unsigned int h0,
 						unsigned int w0,
-						double zoom) {
-    gui.new_window(wname, nh * (height + 1) - 1, nw * (width + 1) - 1);
+						double zoom,
+						int wid,
+						const char *wname) {
+#ifdef __GUI__
+    display_wid = (wid >= 0) ? wid : 
+      gui.new_window((wname ? wname : name), 
+		     nh * (height + 1) - 1, nw * (width + 1) - 1);
+    gui.select_window(display_wid);
     draw(nh, nw, h0, w0, zoom);
+#endif
   }
 
   template<typename Tdata, typename Tlabel>
   void LabeledDataSource<Tdata,Tlabel>::draw(unsigned int nh, unsigned int nw,
 					     unsigned int h0, unsigned int w0,
 					     double zoom) {
+#ifdef __GUI__
     gui << gui_only();
     IdxDim d(data.spec);
     state_idx s(d);
@@ -160,9 +168,8 @@ namespace ebl {
       h += m.dim(0) + 1;
     }
     seek_begin();
-  }
-
 #endif
+  }
 
   ////////////////////////////////////////////////////////////////
 
@@ -170,8 +177,9 @@ namespace ebl {
   MnistDataSource<Tdata, Tlabel>::MnistDataSource(Idx<Tdata> &inp, 
 						  Idx<Tlabel> &lbl,
 						  intg w, intg h, 
-						  double b, double c)
-    : LabeledDataSource<Tdata, Tlabel>(inp, lbl, NULL) {
+						  double b, double c,
+						  const char *name_)
+    : LabeledDataSource<Tdata, Tlabel>(inp, lbl, name_, NULL) {
     bias = b;
     coeff = c;
     this->width = w;
@@ -180,8 +188,9 @@ namespace ebl {
 
   template<class Tdata, class Tlabel>
   void MnistDataSource<Tdata, Tlabel>::init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, 
-					    intg w, intg h, double b, double c){
-    LabeledDataSource<Tdata, Tlabel>::init(inp, lbl, NULL);
+					    intg w, intg h, double b, double c,
+    					    const char *name_) {
+    LabeledDataSource<Tdata, Tlabel>::init(inp, lbl, name_, NULL);
     bias = b;
     coeff = c;
     this->width = w;
@@ -245,22 +254,20 @@ namespace ebl {
     test_data = test_data.narrow(0, test_size, 5000 - (0.5 * test_size)); 
     test_labels = test_labels.narrow(0, test_size, 5000 - (0.5 * test_size));
 
-    test_ds.init(test_data, test_labels, 32, 32, 0.0, 0.01);
-    train_ds.init(train_data, train_labels, 32, 32, 0.0, 0.01);
+    test_ds.init(test_data, test_labels, 32, 32, 0.0, 0.01, 
+		 "MNIST TESTING set");
+    train_ds.init(train_data, train_labels, 32, 32, 0.0, 0.01,
+		  "MNIST TRAINING set");
     return true;
   }
 
-#ifdef __GUI__
-
   template<typename Tdata, typename Tlabel>
   void MnistDataSource<Tdata,Tlabel>::display(unsigned int nh, unsigned int nw,
-					     const char *wname,
-					     unsigned int h0, unsigned int w0,
-					     double zoom) {
-    LabeledDataSource<Tdata, Tlabel>::display(nh, nw, wname, h0, w0);
+					      unsigned int h0, unsigned int w0,
+					      double zoom, int wid,
+					      const char *wname) {
+    LabeledDataSource<Tdata, Tlabel>::display(nh, nw, h0, w0, zoom, wid, wname);
   }
-
-#endif 
 
   ////////////////////////////////////////////////////////////////
   /*

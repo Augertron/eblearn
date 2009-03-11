@@ -131,7 +131,7 @@ namespace ebl {
     err_not_implemented();
   }
 
-  void classifier_meter::display() {
+  void classifier_meter::display(ostream &cout) { //RenderThread &cout) {
     cout << "[" << (int) age << "]  size=" <<  (int) size;
     cout << "energy=" << total_energy / (double) size;
     cout << "  correct=" <<  (total_correct * 100) / (double) size;

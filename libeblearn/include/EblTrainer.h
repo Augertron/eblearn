@@ -59,6 +59,8 @@ namespace ebl {
     unsigned int	display_h0;
     unsigned int	display_w0;
     double		display_zoom;
+    unsigned int	display_wid;
+    unsigned int	iteration;
 
   public:
     fc_ebm2<state_idx,int,state_idx>	&machine;
@@ -74,7 +76,8 @@ namespace ebl {
     virtual ~supervised_trainer();
 
     void set_display(unsigned int nh, unsigned int nw, unsigned int h0 = 0, 
-		     unsigned int w0 = 0, double zoom = 1.0);
+		     unsigned int w0 = 0, double zoom = 1.0, int wid = -1,
+		     const char *title = NULL);
 
     //! take an input and a vector of possible labels (each of which
     //! is a vector, hence <label-set> is a matrix) and

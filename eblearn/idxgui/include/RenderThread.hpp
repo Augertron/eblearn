@@ -113,7 +113,7 @@ namespace ebl {
     o << val;
     r.add_text(new std::string(o.str()));
     if (r.cout_output)
-      cout << o;
+      cout << o.str();
     return r;
   }
 

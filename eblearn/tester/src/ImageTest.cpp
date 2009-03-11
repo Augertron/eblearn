@@ -1,5 +1,7 @@
 #include "ImageTest.h"
 
+//#define __SHOW__
+
 #ifdef __GUI__
 #include "libidxgui.h"
 #endif
@@ -48,6 +50,7 @@ void ImageTest::test_resize() {
   pnm_fread_into_rgbx(imgfile.c_str(), im);
   im = im.select(2, 0);
 #ifdef __GUI__  
+#ifdef __SHOW__
   unsigned int wid = gui.new_window("ImageTest");
   //  im = image_resize(im, im.dim(0) + 10, im.dim(1) + 10);
   im = image_resize(im, 100, 100);
@@ -56,10 +59,12 @@ void ImageTest::test_resize() {
   cout << "Testing images operations..." << endl;
   int hy = im.dim(0) * 4;
 #endif
+#endif
 
   im = image_resize(im, 250, 250);
 
 #ifdef __GUI__  
+#ifdef __SHOW__
   int wx = 0;
 //   gui.new_window("ImageTest2");
 //   for (int i = 0; i < 10; ++i) {
@@ -73,6 +78,7 @@ void ImageTest::test_resize() {
     gui.draw_matrix(im, hy + 2, wx);
     wx += im.dim(1) + 2;
   }
+#endif
 #endif
 }
 
