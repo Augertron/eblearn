@@ -53,11 +53,14 @@ namespace ebl {
     unsigned int				 height;
     unsigned int				 width;
     vector<string*>				*lblstr;
+    const char					*name;
+    unsigned int				 display_wid;
 
     //! CAUTION: This empty constructor requires a subsequent call to init().
     LabeledDataSource();
 
-    void init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, vector<string*> *lblstr);
+    void init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, const char *name,
+	      vector<string*> *lblstr);
 
     //! Constructor takes all input data and corresponding labels.
     //! @param inputs: An N+1-dimensional Idx of N-dimensional inputs.
@@ -66,6 +69,7 @@ namespace ebl {
     //! this class takes ownership of the data and will destroy the vector and
     //! its content in the destructor.
     LabeledDataSource(Idx<Tdata> &inputs, Idx<Tlabel> &labels, 
+		      const char *name = NULL,
 		      vector<string*> *lblstr = NULL);
 
     virtual ~LabeledDataSource();
@@ -86,17 +90,13 @@ namespace ebl {
     //! Move to the beginning of the data.
     virtual void seek_begin();
 
-#ifdef __GUI__
-
     virtual void display(unsigned int nh, unsigned int nw, 
-			 const char *wname = "Dataset", 
 			 unsigned int h0 = 0, unsigned int w0 = 0, 
-			 double zoom = 1.0);
+			 double zoom = 1.0, int wid = -1, 
+			 const char *wname = NULL);
 
     virtual void draw(unsigned int nh, unsigned int nw, unsigned int h0 = 0, 
 		      unsigned int w0 = 0, double zoom = 1.0);
-
-#endif
   };
 
   ////////////////////////////////////////////////////////////////
@@ -122,25 +122,23 @@ namespace ebl {
     //! the actual images will be centered.
     //! <bias> and <coeff> are used to shift and scale
     //! the values.
-    MnistDataSource(Idx<Tdata> &inp, Idx<Tlabel> &lbl, intg w, intg h, double b,
-		    double c);
+    MnistDataSource(Idx<Tdata> &inp, Idx<Tlabel> &lbl,
+		    intg w, intg h, double b, double c, 
+		    const char *name = NULL);
     virtual ~MnistDataSource () {}
 
-    void init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, intg w, intg h, double b,
-	      double c);
+    virtual void init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, intg w, intg h, 
+		      double b, double c, const char *name);
 
     //! get the current item and copy the sample into
     //! <out> (an idx3-state) and the corresponding
     //! label into <lbl> (and idx0 of int).
-    void virtual fprop(state_idx &out, Idx<Tlabel> &label);
-
-#ifdef __GUI__
+    virtual void fprop(state_idx &out, Idx<Tlabel> &label);
 
     virtual void display(unsigned int nh, unsigned int nw, 
-			 const char *wname = "MNIST Dataset", 
 			 unsigned int h0 = 0, unsigned int w0 = 0, 
-			 double zoom = 1.0);
-#endif
+			 double zoom = 1.0, int wid = -1,
+			 const char *wname = NULL);
   };
 
   ////////////////////////////////////////////////////////////////

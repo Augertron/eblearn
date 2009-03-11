@@ -76,9 +76,14 @@ namespace ebl {
       delete buffer;
     if (qimage)
       delete qimage;
+    clear_text();
+  }
+
+  void Window::clear_text() {
     for (vector<Text*>::iterator i = texts.begin(); i != texts.end(); ++i)
       if (*i)
 	delete (*i);
+    texts.clear();
   }
 
   void Window::save(const char *filename) {
@@ -175,12 +180,11 @@ namespace ebl {
   }
   
   void Window::clear() {
-    delete buffer;
-    delete qimage;
-    buffer = NULL;
-    qimage = NULL;
+    if (buffer)
+      idx_fill(*buffer, (ubyte) 255);
     if (pixmap) 
       pixmap->fill(Qt::white);
+    clear_text();
   }
 
   void Window::paintEvent(QPaintEvent * /* event */) {
