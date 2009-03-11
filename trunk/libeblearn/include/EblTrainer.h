@@ -38,6 +38,10 @@
 #include "EblLogger.h"
 #include "DataSource.h"
 
+#ifdef __GUI__
+#include "libidxgui.h"
+#endif 
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -48,6 +52,14 @@ namespace ebl {
   //! Supervised Trainer
   template<class Tdata, class Tlabel>
     class supervised_trainer {
+  private:
+    bool		display;
+    unsigned int	display_nh;
+    unsigned int	display_nw;
+    unsigned int	display_h0;
+    unsigned int	display_w0;
+    double		display_zoom;
+
   public:
     fc_ebm2<state_idx,int,state_idx>	&machine;
     parameter				&param;
@@ -61,6 +73,9 @@ namespace ebl {
 		       parameter &p, ostream& cout = std::cout);
     virtual ~supervised_trainer();
 
+    void set_display(unsigned int nh, unsigned int nw, unsigned int h0 = 0, 
+		     unsigned int w0 = 0, double zoom = 1.0);
+
     //! take an input and a vector of possible labels (each of which
     //! is a vector, hence <label-set> is a matrix) and
     //! return the index of the label that minimizes the energy
@@ -71,7 +86,8 @@ namespace ebl {
 
     //! Test a single sample and its label <label> (an integer).
     //! Returns true if the sample was correctly classified, false otherwise.
-    bool test_sample(state_idx &input, int label, infer_param &infp);
+    bool test_sample(state_idx &input, int label, int &answer, 
+		     infer_param &infp);
 
     //! perform a learning update on one sample. <sample> is the input
     //! sample, <label> is the desired category (an integer), <label-set> is

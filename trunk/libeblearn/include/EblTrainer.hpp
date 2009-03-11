@@ -38,7 +38,9 @@ namespace ebl {
   supervised_trainer<Tdata, Tlabel>::
   supervised_trainer(fc_ebm2<state_idx,	int, state_idx> &m, parameter &p,
 		     ostream &cout_)
-    : machine(m), param(p), energy(), label(), age(0), cout(cout_) {
+    : display(false), display_nh(0), display_nw(0), display_h0(0), 
+      display_w0(0), display_zoom(1.0), machine(m), param(p), energy(), 
+      label(), age(0), cout(cout_) {
     input = NULL; // allocated when input is passed, based in its order/dims
     energy.dx.set(1.0);
     energy.ddx.set(0.0);
@@ -47,6 +49,20 @@ namespace ebl {
   template <class Tdata, class Tlabel>  
   supervised_trainer<Tdata, Tlabel>::~supervised_trainer() {
     if (input) delete input;
+  }
+
+  template <class Tdata, class Tlabel>  
+  void supervised_trainer<Tdata, Tlabel>::set_display(unsigned int nh,
+						      unsigned int nw,
+						      unsigned int h0, 
+						      unsigned int w0,
+						      double zoom) {
+    display = true;
+    display_nh = nh;
+    display_nw = nw;
+    display_h0 = h0;
+    display_w0 = w0;
+    display_zoom = zoom;
   }
   
   template <class Tdata, class Tlabel>  
@@ -59,8 +75,8 @@ namespace ebl {
   
   template <class Tdata, class Tlabel>  
   bool supervised_trainer<Tdata, Tlabel>::
-  test_sample(state_idx &input, int label, infer_param &infp) {
-    int answer = run(input, infp);
+  test_sample(state_idx &input, int label, int &answer, infer_param &infp) {
+    answer = run(input, infp);
     return (label == answer); // return true if correct answer
   }
 
@@ -78,15 +94,35 @@ namespace ebl {
   void supervised_trainer<Tdata, Tlabel>::
   test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log,
        infer_param &infp) {
+#ifdef __GUI__
+    gui.new_window("Supervised Trainer: Classification Results");
+    unsigned int h = display_h0, w = display_w0, nh = 0;
+#endif
     ds.seek_begin();
     log.clear();
     resize_input(ds);
     bool correct;
+    int answer;
     for (int i = 0; i < ds.size(); ++i) {
       ds.fprop(*input, label);
-      correct = test_sample(*input, label.get(), infp);
+      correct = test_sample(*input, label.get(), answer, infp);
       log.update(age, correct, energy);
       ds.next();
+#ifdef __GUI__
+      if ((display) && (nh < display_nh)) {
+	Idx<double> m = input->x.select(0, 0);
+	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h, w, 0.0, 0.0, 
+			      display_zoom, display_zoom);
+	if ((ds.lblstr) && (ds.lblstr->at(answer)))
+	  gui << at(h + 1, w + 1) << (ds.lblstr->at(answer))->c_str();
+	w += m.dim(1) + 1;
+	if (((i + 1) % display_nw == 0) && (i > 1)) {  
+	  w = display_w0;
+	  h += m.dim(0) + 1;
+	  nh++;
+	}
+      }
+#endif
     }
   }
   
