@@ -40,6 +40,10 @@
 #include "EblArch.h"
 #include "EblNonLinearity.h"
 
+#ifdef __GUI__
+#include "libidxgui.h"
+#endif 
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -64,6 +68,9 @@ namespace ebl {
     void bbprop(state_idx &in, state_idx &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
+    //! display fprop at (h0, w0)
+    void display_fprop(state_idx &in, state_idx &out,
+		       unsigned int &h0, unsigned int &w0);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -90,6 +97,9 @@ namespace ebl {
     void bbprop(state_idx &in, state_idx &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
+    //! display fprop at (h0, w0)
+    void display_fprop(state_idx &in, state_idx &out,
+		       unsigned int &h0, unsigned int &w0);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -116,6 +126,9 @@ namespace ebl {
     void bbprop(state_idx &in, state_idx &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
+    //! display fprop at (h0, w0)
+    void display_fprop(state_idx &in, state_idx &out,
+		       unsigned int &h0, unsigned int &w0);
   };
 
 } // namespace ebl {

@@ -97,7 +97,6 @@ namespace ebl {
     intg total_error;
     intg total_punt;
     double total_energy;
-    ostream &cout;
 
     //! Create a new <classifier-meter> using <comparison-function>
     //! to compare actual and desired answers. By default
@@ -106,7 +105,7 @@ namespace ebl {
     //! are equal, -1 if they are different, and 0 if
     //! the first argument is -1 (which means reject).
     // TODO: allow passing of comparison function
-    classifier_meter(ostream &cout = std::cout);
+    classifier_meter();
     ~classifier_meter() {
     }
     ;
@@ -145,7 +144,7 @@ namespace ebl {
     //! the average energy, the percentage of correctly
     //! recognize samples, the percentage of erroneously
     //! recognized samples, and the percentage of rejected samples.
-    void display(ostream& cout = std::cout);//RenderThread &cout = ebl::gui);
+    void display();
     bool save();
     bool load();
   };

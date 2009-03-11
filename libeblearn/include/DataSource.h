@@ -46,6 +46,8 @@ namespace ebl {
 
   template<typename Tdata, typename Tlabel> class LabeledDataSource {
   public:
+    double					 bias;
+    double					 coeff;
     Idx<Tdata>					 data;
     Idx<Tlabel>					 labels;
     typename Idx<Tdata>::dimension_iterator	 dataIter;
@@ -59,8 +61,8 @@ namespace ebl {
     //! CAUTION: This empty constructor requires a subsequent call to init().
     LabeledDataSource();
 
-    void init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, const char *name,
-	      vector<string*> *lblstr);
+    void init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, double b, double c, 
+	      const char *name, vector<string*> *lblstr);
 
     //! Constructor takes all input data and corresponding labels.
     //! @param inputs: An N+1-dimensional Idx of N-dimensional inputs.
@@ -69,6 +71,7 @@ namespace ebl {
     //! this class takes ownership of the data and will destroy the vector and
     //! its content in the destructor.
     LabeledDataSource(Idx<Tdata> &inputs, Idx<Tlabel> &labels, 
+		      double b = 0.0, double c = 0.01,
 		      const char *name = NULL,
 		      vector<string*> *lblstr = NULL);
 

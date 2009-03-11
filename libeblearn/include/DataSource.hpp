@@ -41,22 +41,25 @@ namespace ebl {
 
   template<typename Tdata, typename Tlabel>
   LabeledDataSource<Tdata,Tlabel>::LabeledDataSource()
-    : data(1), labels(1), dataIter(data, 0), labelsIter(labels, 0),
-      height(0), width(0), lblstr(NULL) {
+    : bias(0.0), coeff(0.0), data(1), labels(1), dataIter(data, 0), 
+      labelsIter(labels, 0), height(0), width(0), lblstr(NULL) {
   }
 
   template<typename Tdata, typename Tlabel>
   LabeledDataSource<Tdata,Tlabel>::LabeledDataSource(Idx<Tdata> &data_, 
 						     Idx<Tlabel> &labels_,
+						     double b, double c,
 						     const char *name_,
 						     vector<string*> *lblstr_) 
-    : data(data_), labels(labels_), dataIter(data, 0), labelsIter(labels, 0) {
-    init(data_, labels_, name_, lblstr_);
+    : bias(b), coeff(c), data(data_), labels(labels_), dataIter(data, 0), 
+      labelsIter(labels, 0) {
+    init(data_, labels_, b, c, name_, lblstr_);
   }
 
   template<class Tdata, class Tlabel>
   void LabeledDataSource<Tdata, Tlabel>::init(Idx<Tdata> &data_, 
 					      Idx<Tlabel> &labels_,
+					      double b, double c,
 					      const char *name_,
 					      vector<string*> *lblstr_) {
     this->data = data_;
@@ -64,6 +67,8 @@ namespace ebl {
     this->height = data.dim(1);
     this->width = data.dim(2);
     this->lblstr = lblstr_;
+    this->bias = b;
+    this->coeff = c;
     this->name = (name_ ? name_ : "Unknown Dataset");
     typename Idx<Tdata>::dimension_iterator	 dIter(this->data, 0);
     typename Idx<Tlabel>::dimension_iterator	 lIter(this->labels, 0);
@@ -97,14 +102,28 @@ namespace ebl {
     return data.dim(0);
   }
 
+//   template<typename Tdata, typename Tlabel>
+//   void LabeledDataSource<Tdata,Tlabel>::fprop(state_idx &state, 
+// 					      Idx<Tlabel> &label) {
+//     IdxDim d(data.spec);
+//     d.setdim(0, 1);
+//     state.resize(d);
+//     //label.resize();
+//     idx_copy(*dataIter, state.x);
+//     idx_copy(*labelsIter, label);
+//   }
+
   template<typename Tdata, typename Tlabel>
-  void LabeledDataSource<Tdata,Tlabel>::fprop(state_idx &state, 
+  void LabeledDataSource<Tdata,Tlabel>::fprop(state_idx &out, 
 					      Idx<Tlabel> &label) {
     IdxDim d(data.spec);
     d.setdim(0, 1);
-    state.resize(d);
-    //label.resize();
-    idx_copy(*dataIter, state.x);
+    out.resize(d);
+    idx_fill(out.x, bias * coeff);
+    Idx<double> tgt = out.x.select(0, 0);
+    idx_copy(*(this->dataIter), tgt);
+    idx_addc(out.x, bias, out.x);
+    idx_dotc(out.x, coeff, out.x);
     idx_copy(*labelsIter, label);
   }
 
@@ -179,9 +198,7 @@ namespace ebl {
 						  intg w, intg h, 
 						  double b, double c,
 						  const char *name_)
-    : LabeledDataSource<Tdata, Tlabel>(inp, lbl, name_, NULL) {
-    bias = b;
-    coeff = c;
+    : LabeledDataSource<Tdata, Tlabel>(inp, lbl, b, c, name_, NULL) {
     this->width = w;
     this->height = h;
   }
@@ -190,7 +207,7 @@ namespace ebl {
   void MnistDataSource<Tdata, Tlabel>::init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, 
 					    intg w, intg h, double b, double c,
     					    const char *name_) {
-    LabeledDataSource<Tdata, Tlabel>::init(inp, lbl, name_, NULL);
+    LabeledDataSource<Tdata, Tlabel>::init(inp, lbl, b, c, name_, NULL);
     bias = b;
     coeff = c;
     this->width = w;

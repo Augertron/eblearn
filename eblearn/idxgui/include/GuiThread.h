@@ -49,15 +49,14 @@ namespace ebl {
   //! gui.draw_matrix() from anywhere in the code.
   extern ebl::RenderThread gui;
 
-
   //! Window is a simple "whiteboard" on which you can display
   //! Idxs with for example gray_draw_matrix and RGB_draw_matrix.
   //! Warning: do not use electric fence with QT as it is unstable.
   class GuiThread : public QWidget { 
     Q_OBJECT
   private:
-    unsigned int		 wcur;
-    unsigned int		 nwid;
+    int				 wcur;
+    unsigned int		 nwindows;
     std::vector<Window*>	 windows;
     bool			 silent;
     std::string			 savefname;
@@ -89,6 +88,7 @@ namespace ebl {
   using namespace ebl;				\
   int main(int argc, char **argv) {		\
     QApplication a(argc, argv);			\
+    a.setQuitOnLastWindowClosed(false);		\
     ebl::GuiThread gt(argc, argv);		\
     gt.thread.start();				\
     a.exec();					\

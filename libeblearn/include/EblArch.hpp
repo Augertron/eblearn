@@ -60,6 +60,11 @@ namespace ebl {
   void module_1_1<Tin,Tout>::resize_output(Tin &in, Tout &out) { 
     err_not_implemented(); }
 
+  template<class Tin, class Tout>
+  void module_1_1<Tin,Tout>::display_fprop(Tin &in, Tout &out, 
+					   unsigned int &h0, unsigned int &w0) {
+    err_not_implemented(); }
+
   ////////////////////////////////////////////////////////////////
   // module_2_1
 
@@ -324,6 +329,23 @@ hidden states in layers_n");
     for(unsigned int i=0; i<modules->size(); i++){
       (*modules)[i]->normalize();
     }
+  }
+
+  template<class T>
+  void layers_n<T>::display_fprop(T &in, T &out, 
+				  unsigned int &h0, unsigned int &w0) {
+    if (modules->empty())
+      ylerror("trying to display_fprop through empty layers_n");
+    T* hi = &in;
+    T* ho = &in;
+    // last will be manual
+    int niter = modules->size()-1;
+    for(int i=0; i<niter; i++){
+      ho = (*hiddens)[i];
+      (*modules)[i]->display_fprop(*hi,*ho, h0, w0);
+      hi = ho;
+    }
+    (*modules)[niter]->display_fprop(*ho, out, h0, w0);
   }
 
   ////////////////////////////////////////////////////////////////

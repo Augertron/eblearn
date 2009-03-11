@@ -38,8 +38,8 @@ namespace ebl {
   supervised_trainer<Tdata, Tlabel>::
   supervised_trainer(fc_ebm2<state_idx,	int, state_idx> &m, parameter &p,
 		     ostream &cout_)
-    : display(false), display_nh(0), display_nw(0), display_h0(0), 
-      display_w0(0), display_zoom(1.0), iteration(0),
+    : display_nh(0), display_nw(0), display_h0(0), 
+      display_w0(0), display_zoom(1.0), iteration(-1), iteration_ptr(NULL),
       machine(m), param(p), energy(), label(), age(0), cout(cout_) {
     input = NULL; // allocated when input is passed, based in its order/dims
     energy.dx.set(1.0);
@@ -59,7 +59,6 @@ namespace ebl {
 						      double zoom, int wid,
 						      const char *title) {
 #ifdef __GUI__
-    display = true;
     display_nh = nh;
     display_nw = nw;
     display_h0 = h0;
@@ -98,52 +97,83 @@ namespace ebl {
   template <class Tdata, class Tlabel>  
   void supervised_trainer<Tdata, Tlabel>::
   test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log,
-       infer_param &infp) {
-#ifdef __GUI__
-    if (display) {
-      gui.select_window(display_wid);
-      gui.clear();
-      gui << gui_only();
-    }
-    unsigned int h = display_h0 + 15, w = display_w0, nh = 0;
-#endif
+       infer_param &infp, bool display) {
     ds.seek_begin();
     log.clear();
     resize_input(ds);
     bool correct;
     int answer;
+    if (!iteration_ptr) 
+      iteration_ptr = (void *) &ds;
+    if (iteration_ptr == (void *) &ds)
+      ++iteration;
+#ifdef __GUI__
+    unsigned int h = display_h0 + 35, w = display_w0, nh = 0, w01 = display_w0;
+    unsigned int h2 = h, w2 = display_w0, w02 = display_w0, i2 = 0;
+    if (display) {
+      gui.select_window(display_wid);
+      gui.clear();
+      ds.fprop(*input, label);
+      Idx<double> m = input->x.select(0, 0);
+      w01 = display_w0 + display_nw * (m.dim(1) + 1) + 10;
+      w02 = display_w0 + (display_nw * (m.dim(1) + 2) + 10) * 2;
+      w = w01;
+      w2 = w02;
+      gui << cout_and_gui() << at(0, 0) << ds.name;
+      gui << ": iter# " << iteration << " ";
+      gui << gui_only();
+      gui << at(display_h0 + 17, display_w0) << "Groundtruth";
+      gui << at(display_h0 + 17, w01) << "Correct & incorrect answers";
+      gui << at(display_h0 + 17, w02) << "Incorrect only";
+      ds.display(display_nh, display_nw, h, display_w0, display_zoom,
+		 display_wid);
+    } else
+      cout << ds.name << ": iter# " << iteration << " ";
+#endif
     for (int i = 0; i < ds.size(); ++i) {
       ds.fprop(*input, label);
       correct = test_sample(*input, label.get(), answer, infp);
       log.update(age, correct, energy);
       ds.next();
 #ifdef __GUI__
-      if ((display) && (nh < display_nh)) {
+      if (display) {
 	Idx<double> m = input->x.select(0, 0);
-	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h, w, 0.0, 0.0, 
-			      display_zoom, display_zoom);
-	if ((ds.lblstr) && (ds.lblstr->at(answer)))
-	  gui << at(h + 1, w + 1) << (ds.lblstr->at(answer))->c_str();
-	w += m.dim(1) + 1;
-	if (((i + 1) % display_nw == 0) && (i > 1)) {  
-	  w = display_w0;
-	  h += m.dim(0) + 1;
-	  nh++;
+	// display all display_nh*display_nw incorrect or correct answers
+	if (nh < display_nh) {
+	  gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h, w,
+				0.0, 0.0, 
+				display_zoom, display_zoom);
+	  if ((ds.lblstr) && (ds.lblstr->at(answer)))
+	    gui << at(h + 2, w + 2) << (ds.lblstr->at(answer))->c_str();
+	  w += m.dim(1) + 2;
+	  if (((i + 1) % display_nw == 0) && (i > 1)) {  
+	    w = w01;
+	    h += m.dim(0) + 2;
+	    nh++;
+	  }
 	}
+	// display first display_nh*display_nw incorrect answers
+	if ((i2 < display_nh * display_nw) && (!correct)) {
+	  gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h2, w2, 0.0, 0.0, 
+				display_zoom, display_zoom);
+	  if ((ds.lblstr) && (ds.lblstr->at(answer)))
+	    gui << at(h2 + 2, w2 + 2) << (ds.lblstr->at(answer))->c_str();
+	  w2 += m.dim(1) + 2;
+	  if (((i2 + 1) % display_nw == 0) && (i2 > 1)) {  
+	    w2 = w02;
+	    h2 += m.dim(0) + 2;
+	  }
+	}
+	if (!correct)
+	  i2++;
       }
 #endif
     }
 #ifdef __GUI__
-    if (display) {
-      gui << cout_and_gui() << at(0, 0) << ds.name;
-      gui << ": iteration " << iteration << " ";
-    }
-    //    RenderThread &cout = display ? gui : cout;
-    log.display(gui);
-#else
-    log.display(cout);
+    gui << at(0, 200) << cout_and_gui();
 #endif
-    iteration++;
+    log.display();
+    cout << endl;
   }
   
   template <class Tdata, class Tlabel>  

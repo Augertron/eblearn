@@ -53,14 +53,14 @@ namespace ebl {
   template<class Tdata, class Tlabel>
     class supervised_trainer {
   private:
-    bool		display;
-    unsigned int	display_nh;
-    unsigned int	display_nw;
-    unsigned int	display_h0;
-    unsigned int	display_w0;
-    double		display_zoom;
-    unsigned int	display_wid;
-    unsigned int	iteration;
+    unsigned int	 display_nh;
+    unsigned int	 display_nw;
+    unsigned int	 display_h0;
+    unsigned int	 display_w0;
+    double		 display_zoom;
+    unsigned int	 display_wid;
+    int			 iteration;
+    void		*iteration_ptr;
 
   public:
     fc_ebm2<state_idx,int,state_idx>	&machine;
@@ -103,7 +103,7 @@ namespace ebl {
     //! on a dataset.
     //! returns a list with average loss and proportion of errors
     void test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log,
-	      infer_param &infp);
+	      infer_param &infp, bool display = false);
 
     //! train for <niter> sweeps over the training set. <samples> contains the
     //! inputs samples, and <labels> the corresponding desired categories

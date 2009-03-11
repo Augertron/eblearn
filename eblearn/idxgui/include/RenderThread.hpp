@@ -57,9 +57,9 @@ namespace ebl {
     tmp2 = tmp2.narrow(1, uim.dim(1), 1);
     idx_copy(uim, tmp2);
     tmp2 = tmp.narrow(0, 1, 0); idx_fill(tmp2, r);
-    tmp2 = tmp.narrow(0, 1, tmp.dim(0) - 2); idx_fill(tmp2, r);
+    tmp2 = tmp.narrow(0, 1, tmp.dim(0) - 1); idx_fill(tmp2, r);
     tmp2 = tmp.narrow(1, 1, 0); idx_fill(tmp2, r);
-    tmp2 = tmp.narrow(1, 1, tmp.dim(1) - 2); idx_fill(tmp2, r);
+    tmp2 = tmp.narrow(1, 1, tmp.dim(1) - 1); idx_fill(tmp2, r);
     // send image to main gui thread
     emit gui_drawImage(fim, h0, w0);
   }
@@ -113,7 +113,7 @@ namespace ebl {
     o << val;
     r.add_text(new std::string(o.str()));
     if (r.cout_output)
-      cout << o.str();
+      cout << o.str() << flush;
     return r;
   }
 
