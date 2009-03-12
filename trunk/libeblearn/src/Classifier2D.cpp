@@ -35,8 +35,8 @@
 
 using namespace std;
 
-int xw = 0; // global drawing coordinates
-int yh = 0; // global drawing coordinates
+unsigned int xw = 0; // global drawing coordinates
+unsigned int yh = 0; // global drawing coordinates
 
 namespace ebl {
 
@@ -221,15 +221,19 @@ namespace ebl {
   Idx<double> Classifier2D::multi_res_fprop(double threshold, int objsize) {
     // fprop network on different resolutions
     int hmax = ((state_idx*) outputs.get(0))->x.dim(1);
+    int show = 0, k = 0;
     { idx_bloop2(in, inputs, void*, out, outputs, void*) {
 	state_idx *ii = ((state_idx*) in.get());
 	state_idx *oo = ((state_idx*) out.get());
 	thenet->fprop(*ii, *oo); 
 #ifdef __GUI__
+	unsigned yhh = yh + grabbed.dim(0) + 2;
+	if (k == show)
+	  thenet->display_fprop(*ii, *oo, yhh, xw, 1.0, true);
  	double vmin = idx_min(oo->x);
 	double vmax = idx_max(oo->x);
 	int hcat = 0;
-	double zoom = 10.0;
+	double zoom = 5.0;
 	{ idx_bloop1(category, oo->x, double) {
 	    gui.draw_matrix(category, yh + hcat, xw, vmin, vmax, 
 				     zoom, zoom);
@@ -237,6 +241,7 @@ namespace ebl {
 	  }}
 	xw += oo->x.dim(2) * zoom + 2;
 #endif	
+	k++;
       }}
     xw += 10;
     // post process outputs
@@ -292,12 +297,15 @@ namespace ebl {
     Idx<ubyte> display = this->multi_res_prep(img, 0.5);
     Idx<double> res = this->multi_res_fprop(threshold, objsize);
     { idx_bloop1(re, res, double) {
-	image_draw_box(display, (ubyte)255,
-		       (unsigned int) (zoom * (re.get(2) - (0.5 * re.get(4)))),
-		       (unsigned int) (zoom * (display.dim(1) - re.get(3) 
-					       - (0.5 * re.get(5)))),
-		       (unsigned int) (zoom * re.get(4)),
-		       (unsigned int) (zoom * re.get(5)));
+	unsigned int h = zoom * (re.get(2) - (0.5 * re.get(4)));
+	unsigned int w = zoom * (display.dim(1) - re.get(3) 
+				 - (0.5 * re.get(5)));
+	unsigned int height = zoom * re.get(4);
+	unsigned int width = zoom * re.get(5);
+#ifdef __GUI__
+	gui << at(yh + h + 1, xw + w + 1) << labels.get((re.get(0)));
+#endif
+	image_draw_box(display, (ubyte)255, h, w, height, width);
       }}
     memcpy(img, grabbed.idx_ptr(), height * width * sizeof (ubyte));
 #ifdef __GUI__
