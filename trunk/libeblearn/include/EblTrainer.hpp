@@ -66,6 +66,7 @@ namespace ebl {
     display_zoom = zoom;
     display_wid = (wid >= 0) ? wid : 
       gui.new_window((title ? title : "Supervised Trainer"));
+    fpropdisplay_wid = gui.new_window("Supervised Trainer: fprop");
 #endif
   }
   
@@ -110,11 +111,19 @@ namespace ebl {
 #ifdef __GUI__
     unsigned int h = display_h0 + 35, w = display_w0, nh = 0, w01 = display_w0;
     unsigned int h2 = h, w2 = display_w0, w02 = display_w0, i2 = 0;
+    int nfdisp = 4;
+    unsigned int wfdisp = 0, hfdisp = 0;
     if (display) {
-      gui.select_window(display_wid);
-      gui.clear();
       ds.fprop(*input, label);
       Idx<double> m = input->x.select(0, 0);
+
+      // fprop display
+      gui.select_window(fpropdisplay_wid);
+      gui.clear();
+
+      // datasets displays
+      gui.select_window(display_wid);
+      gui.clear();
       w01 = display_w0 + display_nw * (m.dim(1) + 1) + 10;
       w02 = display_w0 + (display_nw * (m.dim(1) + 2) + 10) * 2;
       w = w01;
@@ -137,6 +146,14 @@ namespace ebl {
       ds.next();
 #ifdef __GUI__
       if (display) {
+	// display fprop
+	if (i < nfdisp) {
+	  gui.select_window(fpropdisplay_wid);
+	  machine.fmod.display_fprop(*input, machine.fout, hfdisp, wfdisp, 2.0);
+	  wfdisp += 10;
+	}
+
+	gui.select_window(display_wid);
 	Idx<double> m = input->x.select(0, 0);
 	// display all display_nh*display_nw incorrect or correct answers
 	if (nh < display_nh) {

@@ -70,7 +70,7 @@ namespace ebl {
     void forget(forget_param_linear &fp);
     //! display fprop at (h0, w0)
     void display_fprop(state_idx &in, state_idx &out,
-		       unsigned int &h0, unsigned int &w0);
+		       unsigned int &h0, unsigned int &w0, double zoom);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -99,7 +99,7 @@ namespace ebl {
     void forget(forget_param_linear &fp);
     //! display fprop at (h0, w0)
     void display_fprop(state_idx &in, state_idx &out,
-		       unsigned int &h0, unsigned int &w0);
+		       unsigned int &h0, unsigned int &w0, double zoom);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -128,7 +128,7 @@ namespace ebl {
     void forget(forget_param_linear &fp);
     //! display fprop at (h0, w0)
     void display_fprop(state_idx &in, state_idx &out,
-		       unsigned int &h0, unsigned int &w0);
+		       unsigned int &h0, unsigned int &w0, double zoom);
   };
 
 } // namespace ebl {

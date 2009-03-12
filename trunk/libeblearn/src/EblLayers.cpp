@@ -81,13 +81,15 @@ namespace ebl {
   }
 
   void nn_layer_full::display_fprop(state_idx &in, state_idx &out,
-					   unsigned int &h0, unsigned int &w0) {
+					   unsigned int &h0, unsigned int &w0,
+					   double zoom) {
 #ifdef __GUI__
     unsigned int h = h0, w = w0;
     idx_bloop1(m, in.x, double) {
-      gui.draw_matrix(m, h, w);
-      h += m.dim(0) + 1;
+      gui.draw_matrix(m, h, w, 0.0, 0.0, zoom, zoom);
+      h += m.dim(0) * zoom + 1;
     }
+    w0 += m.dim(1) * zoom + 1;
 #endif
   }
 
@@ -139,13 +141,24 @@ namespace ebl {
   }
 
   void nn_layer_convolution::display_fprop(state_idx &in, state_idx &out,
-					   unsigned int &h0, unsigned int &w0) {
+					   unsigned int &h0, unsigned int &w0,
+					   double zoom) {
 #ifdef __GUI__
     unsigned int h = h0, w = w0;
     idx_bloop1(m, in.x, double) {
-      gui.draw_matrix(m, h, w);
-      h += m.dim(0) + 1;
+      gui.draw_matrix(m, h, w, 0.0, 0.0, zoom, zoom);
+      h += m.dim(0) * zoom + 1;
     }
+    w0 += m.dim(1) * zoom + 1;
+    w = w0;
+    h = h0;
+    idx_bloop1(mk, convol.kernel.x, double) {
+      if (h < 500) {
+	gui.draw_matrix(mk, h, w, 0.0, 0.0, zoom, zoom);
+	h += mk.dim(0) * zoom + 1;
+      }
+    }
+    w0 += mk.dim(1) * zoom + 1;
 #endif
   }
 
@@ -197,13 +210,24 @@ namespace ebl {
   }
 
   void nn_layer_subsampling::display_fprop(state_idx &in, state_idx &out,
-					   unsigned int &h0, unsigned int &w0) {
+					   unsigned int &h0, unsigned int &w0,
+					   double zoom) {
 #ifdef __GUI__
     unsigned int h = h0, w = w0;
     idx_bloop1(m, in.x, double) {
-      gui.draw_matrix(m, h, w);
-      h += m.dim(0) + 1;
+      gui.draw_matrix(m, h, w, 0.0, 0.0, zoom, zoom);
+      h += m.dim(0) * zoom + 1;
     }
+    w0 += m.dim(1) * zoom + 1;
+    w = w0;
+    h = h0;
+    idx_bloop1(mk, subsampler.sub.x, double) {
+      if (h < 500) {
+	gui.draw_matrix(mk, h, w, 0.0, 0.0, zoom, zoom);
+	h += mk.dim(0) * zoom + 1;
+      }
+    }
+    w0 += mk.dim(1) * zoom + 1;
 #endif
   }
 
