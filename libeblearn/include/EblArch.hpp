@@ -62,7 +62,8 @@ namespace ebl {
 
   template<class Tin, class Tout>
   void module_1_1<Tin,Tout>::display_fprop(Tin &in, Tout &out, 
-					   unsigned int &h0, unsigned int &w0) {
+					   unsigned int &h0, unsigned int &w0,
+					   double zoom) {
     err_not_implemented(); }
 
   ////////////////////////////////////////////////////////////////
@@ -333,7 +334,8 @@ hidden states in layers_n");
 
   template<class T>
   void layers_n<T>::display_fprop(T &in, T &out, 
-				  unsigned int &h0, unsigned int &w0) {
+				  unsigned int &h0, unsigned int &w0,
+				  double zoom) {
     if (modules->empty())
       ylerror("trying to display_fprop through empty layers_n");
     T* hi = &in;
@@ -342,10 +344,20 @@ hidden states in layers_n");
     int niter = modules->size()-1;
     for(int i=0; i<niter; i++){
       ho = (*hiddens)[i];
-      (*modules)[i]->display_fprop(*hi,*ho, h0, w0);
+      (*modules)[i]->display_fprop(*hi,*ho, h0, w0, zoom);
       hi = ho;
     }
-    (*modules)[niter]->display_fprop(*ho, out, h0, w0);
+    (*modules)[niter]->display_fprop(*ho, out, h0, w0, zoom);
+#ifdef __GUI__
+    unsigned int h = h0, w = w0;
+    idx_bloop1(m, out.x, double) {
+      gui.draw_matrix(m, h, w, -1.0, 1.0, zoom * 5, zoom * 5);
+      h += m.dim(0) * zoom * 5 + 1;
+    }
+    w0 += m.dim(1) * zoom * 5 + 1;
+    w = w0;
+    h = h0;
+#endif
   }
 
   ////////////////////////////////////////////////////////////////

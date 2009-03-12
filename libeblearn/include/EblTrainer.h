@@ -59,6 +59,7 @@ namespace ebl {
     unsigned int	 display_w0;
     double		 display_zoom;
     unsigned int	 display_wid;
+    unsigned int	 fpropdisplay_wid;
     int			 iteration;
     void		*iteration_ptr;
 

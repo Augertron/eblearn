@@ -37,6 +37,10 @@
 #include "Blas.h"
 #include "EblStates.h"
 
+#ifdef __GUI__
+#include "libidxgui.h"
+#endif 
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -58,7 +62,7 @@ namespace ebl {
     virtual void resize_output(Tin &in, Tout &out);
     //! display fprop at (h0, w0)
     virtual void display_fprop(Tin &in, Tout &out,
-			       unsigned int &h0, unsigned int &w0);
+			       unsigned int &h0, unsigned int &w0, double zoom);
   };
 
   //! abstract class for a module with two inputs and one output.
@@ -146,7 +150,8 @@ namespace ebl {
     void forget(forget_param_linear &fp);
     void normalize();
     //! display fprop at (h0, w0)
-    void display_fprop(T &in, T &out, unsigned int &h0, unsigned int &w0);
+    void display_fprop(T &in, T &out, unsigned int &h0, unsigned int &w0,
+		       double zoom);
   private:
     bool own_contents;
   };
