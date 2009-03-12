@@ -63,7 +63,7 @@ namespace ebl {
   template<class Tin, class Tout>
   void module_1_1<Tin,Tout>::display_fprop(Tin &in, Tout &out, 
 					   unsigned int &h0, unsigned int &w0,
-					   double zoom) {
+					   double zoom, bool show_out) {
     err_not_implemented(); }
 
   ////////////////////////////////////////////////////////////////
@@ -335,7 +335,7 @@ hidden states in layers_n");
   template<class T>
   void layers_n<T>::display_fprop(T &in, T &out, 
 				  unsigned int &h0, unsigned int &w0,
-				  double zoom) {
+				  double zoom, bool show_out) {
     if (modules->empty())
       ylerror("trying to display_fprop through empty layers_n");
     T* hi = &in;
@@ -349,14 +349,19 @@ hidden states in layers_n");
     }
     (*modules)[niter]->display_fprop(*ho, out, h0, w0, zoom);
 #ifdef __GUI__
-    unsigned int h = h0, w = w0;
-    idx_bloop1(m, out.x, double) {
-      gui.draw_matrix(m, h, w, -1.0, 1.0, zoom * 5, zoom * 5);
-      h += m.dim(0) * zoom * 5 + 1;
+    if (show_out) { 
+      unsigned int h = h0, w = w0;
+      // display outputs text
+      gui << gui_only() << at(h, w) << "outputs:" << out.x.dim(0) << "x";
+      gui << out.x.dim(1) << "x" << out.x.dim(2);
+      w += 150;
+      // display outputs
+      idx_bloop1(m, out.x, double) {
+	gui.draw_matrix(m, h, w, -1.0, 1.0, zoom * 5, zoom * 5);
+	w += m.dim(1) * zoom * 5 + 1;
+      }
+      h0 += m.dim(0) * zoom * 5 + 1;
     }
-    w0 += m.dim(1) * zoom * 5 + 1;
-    w = w0;
-    h = h0;
 #endif
   }
 
@@ -440,6 +445,15 @@ hidden states in layers_n");
 			 infer_param &ip) {
     fprop(i1, i2, energy); // first propagate all the way up
     return fcost.infer2(fout, i2, energy, ip); // then infer from energy
+  }
+
+  template<class Tin1, class Tin2, class Thid>
+  void fc_ebm2<Tin1,Tin2,Thid>::display_fprop(Tin1 &i1, Tin2 &i2, 
+					     state_idx &energy, 
+					     unsigned int &h0, unsigned int &w0,
+					     double zoom, bool show_out) {
+    fmod.display_fprop(i1, fout, h0, w0, zoom, true);
+    // TODO add energy, answer display
   }
 
   ////////////////////////////////////////////////////////////////
