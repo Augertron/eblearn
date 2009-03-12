@@ -98,6 +98,7 @@ namespace ebl {
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
+    void keyPressEvent(QKeyEvent *event);
     
     void buffer_resize(int h, int w);
     void update_window(bool activate = true);

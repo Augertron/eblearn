@@ -224,11 +224,13 @@ namespace ebl {
 	painter.setPen(Qt::white);
 	QRect qr = rect();
 	qr.setLeft((*i)->w0);
-	qr.setTop((*i)->h0);
+	qr.setTop((*i)->h0 - 1);
 	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
 			 txt, &bg);
 	painter.setPen(Qt::NoPen);
 	painter.setBrush(QColor(0, 0, 0, 127));
+	bg.setTop(bg.top() + 1);
+	bg.setHeight(bg.height() - 3);
 	painter.drawRect(bg);
 	painter.setPen(Qt::white);
 	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
@@ -288,6 +290,11 @@ namespace ebl {
       setCursor(qc);
       update();
     }
+  }
+
+  void Window::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Escape)
+      close();
   }
 
 } // end namespace ebl

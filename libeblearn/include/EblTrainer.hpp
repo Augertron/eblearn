@@ -66,7 +66,7 @@ namespace ebl {
     display_zoom = zoom;
     display_wid = (wid >= 0) ? wid : 
       gui.new_window((title ? title : "Supervised Trainer"));
-    fpropdisplay_wid = gui.new_window("Supervised Trainer: fprop");
+    fpropdisplay_wid = gui.new_window("Supervised Trainer: fprop", 500, 500);
 #endif
   }
   
@@ -111,7 +111,7 @@ namespace ebl {
 #ifdef __GUI__
     unsigned int h = display_h0 + 35, w = display_w0, nh = 0, w01 = display_w0;
     unsigned int h2 = h, w2 = display_w0, w02 = display_w0, i2 = 0;
-    int nfdisp = 4;
+    int nfdisp = 2;
     unsigned int wfdisp = 0, hfdisp = 0;
     if (display) {
       ds.fprop(*input, label);
@@ -149,8 +149,8 @@ namespace ebl {
 	// display fprop
 	if (i < nfdisp) {
 	  gui.select_window(fpropdisplay_wid);
-	  machine.fmod.display_fprop(*input, machine.fout, hfdisp, wfdisp, 2.0);
-	  wfdisp += 10;
+	  machine.display_fprop(*input, answer, energy, hfdisp, wfdisp, 3.0);
+	  hfdisp += 10;
 	}
 
 	gui.select_window(display_wid);
