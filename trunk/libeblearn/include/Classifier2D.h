@@ -40,27 +40,28 @@ namespace ebl {
 
   class Classifier2D {
   public:
-    parameter 	        *theparam;
-    lenet7		*thenet;
-    int			height;
-    int			width;
-    Idx<ubyte>	        grabbed;
-    Idx<ubyte>	        grabbed2;
-    double		contrast;
-    double		brightness;
-    double		coeff;
-    double		bias;
-    Idx<int>		sizes;
-    Idx<void*>	        inputs;		//! state_idx*
-    Idx<void*>	        outputs;	//! state_idx*
-    Idx<void*>          results;	//! Idx<double>*
-    Idx<double>         smoothing_kernel;
-    Idx<const char*>    labels;
-    int			nn_h;
-    int			nn_w;
+    module_1_1<state_idx,state_idx>	&thenet;
+    int					 height;
+    int					 width;
+    Idx<ubyte>				 grabbed;
+    Idx<ubyte>				 grabbed2;
+    double				 contrast;
+    double				 brightness;
+    double				 coeff;
+    double				 bias;
+    Idx<int>				 sizes;
+    Idx<void*>				 inputs;	//! state_idx*
+    Idx<void*>				 outputs;	//! state_idx*
+    Idx<void*>				 results;	//! Idx<double>*
+    Idx<double>				 smoothing_kernel;
+    Idx<const char*>			 labels;
+    int					 nn_h;
+    int					 nn_w;
 	
-    Classifier2D(const char *paramfile, Idx<int> &sz, Idx<const char*> &lbls,
-		 double b, double c, int h, int w, 
+    //! Constructor.
+    Classifier2D(module_1_1<state_idx, state_idx> &thenet, 
+		 Idx<int> &sz, 
+		 Idx<const char*> &lbls, double b, double c, int h, int w, 
 		 int nn_h = 96, int nn_w = 96);
     virtual ~Classifier2D();
 
@@ -84,8 +85,8 @@ namespace ebl {
   class Classifier2DBinoc : public Classifier2D {
   public:
 	
-    Classifier2DBinoc(const char *paramfile, Idx<int> &sz, 
-		      Idx<const char*> &lbls,
+    Classifier2DBinoc(module_1_1<state_idx, state_idx> &thenet,
+		      Idx<int> &sz, Idx<const char*> &lbls,
 		      double b, double c, int h, int w);
     virtual ~Classifier2DBinoc();
   

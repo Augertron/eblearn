@@ -20,9 +20,21 @@
 	  <h2>2. build your network</h2>
 	  <h2>3. train your network</h2>
 	  <h2>4. run your network</h2>
-	  
-<div id="vc_markup"><pre>
-    <a id="l_1"></a><span class="hl line">      </span><span class="hl dir">#include</span> <span class="hl dstr">&quot;libeblearn.h&quot;</span><span class="hl dir"></span>
+	    <h3>Multi-resolution detection: Classifier2D</h3>
+	    <p>While the Trainer class takes a module_1_1 and trains it on a dataset, the Classifier2D class takes a trained network as input (loading a 'parameter' saved in an Idx file) to detect objects in images of any size and at different resolution. It resizes the input image to different sizes based on the passed resolutions parameters and applies the network at each scale. Finally, the values in the outputs of the network that are higher than a certain threshold will return a positive detection at the position in the image and a specific scale.</p>
+	   
+	    <div id="vc_markup"><pre>
+  // parameter, network and classifier
+  // load the previously saved weights of a trained network
+  parameter theparam(1);
+  // input to the network will be 96x96 and there are 5 outputs
+  lenet7_binocular thenet(theparam, 96, 96, 5);
+  theparam.load_x(mono_net.c_str());
+  Classifier2D cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
+
+  // find category of image
+  Idx<double> res = cb.fprop(left.idx_ptr(), 1, 1.8, 60);
+
 </pre></div>
 </td></tr></table>
 	</tr>

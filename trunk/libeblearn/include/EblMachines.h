@@ -127,14 +127,35 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Lenet7, similar to lenet5 with different neural connections.
+  //! This network takes a 1-layer image as input.
   class lenet7 : public nn_machine_cscscf {
   public:
     Idx<intg> table0;	
     Idx<intg> table1;	
     Idx<intg> table2;	
 		
-    lenet7(parameter &prm, intg image_height, intg image_width);
+    //! @param output_size the number of ouputs. For a 5 class classifier
+    //!        like NORB, this would be 5.
+    lenet7(parameter &prm, intg image_height, intg image_width,
+	   intg output_size);
     virtual ~lenet7() {}
+  };
+  
+  ////////////////////////////////////////////////////////////////
+  //! Lenet7_binocular, similar to lenet5 with different neural connections.
+  //! This network expects a 2-layer image containing each stereoscopic left
+  //! and right images.
+  class lenet7_binocular : public nn_machine_cscscf {
+  public:
+    Idx<intg> table0;	
+    Idx<intg> table1;	
+    Idx<intg> table2;	
+		
+    //! @param output_size the number of ouputs. For a 5 class classifier
+    //!        like NORB, this would be 5.
+    lenet7_binocular(parameter &prm, intg image_height, intg image_width,
+		     intg output_size);
+    virtual ~lenet7_binocular() {}
   };
   
   ////////////////////////////////////////////////////////////////

@@ -128,11 +128,11 @@ namespace ebl {
 
     layers_2(module_1_1<Tin, Thid> &l1, Thid &h, module_1_1<Thid, Tout> &l2);
     virtual ~layers_2();
-    void fprop(Tin &in, Tout &out);
-    void bprop(Tin &in, Tout &out);
-    void bbprop(Tin &in, Tout &out);
-    void forget(forget_param &fp);
-    void normalize();
+    virtual void fprop(Tin &in, Tout &out);
+    virtual void bprop(Tin &in, Tout &out);
+    virtual void bbprop(Tin &in, Tout &out);
+    virtual void forget(forget_param &fp);
+    virtual void normalize();
   };
 
   template<class T> class layers_n: public module_1_1<T, T> {
@@ -145,11 +145,11 @@ namespace ebl {
     virtual ~layers_n();
     void addModule(module_1_1 <T, T>* module, T* hidden);
     void addLastModule(module_1_1 <T, T>* module);
-    void fprop(T &in, T &out);
-    void bprop(T &in, T &out);
-    void bbprop(T &in, T &out);
-    void forget(forget_param_linear &fp);
-    void normalize();
+    virtual void fprop(T &in, T &out);
+    virtual void bprop(T &in, T &out);
+    virtual void bbprop(T &in, T &out);
+    virtual void forget(forget_param_linear &fp);
+    virtual void normalize();
     //! display fprop at (h0, w0)
     void display_fprop(T &in, T &out, unsigned int &h0, unsigned int &w0,
 		       double zoom, bool show_out = true);
