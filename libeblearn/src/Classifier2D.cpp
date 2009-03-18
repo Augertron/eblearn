@@ -40,14 +40,12 @@ unsigned int yh = 0; // global drawing coordinates
 
 namespace ebl {
 
-  Classifier2D::Classifier2D(const char *paramfile, Idx<int> &sz, 
+  Classifier2D::Classifier2D(module_1_1<state_idx,state_idx> &thenet_, 
+			     Idx<int> &sz, 
 			     Idx<const char*> &lbls,
 			     double b, double c, int h, int w,
 			     int nn_h_, int nn_w_) 
-    : nn_h(nn_h_), nn_w(nn_w_) {
-    theparam = new parameter(60000);
-    thenet = new lenet7(*theparam, nn_h, nn_w);
-    theparam->load(paramfile);
+    : thenet(thenet_), nn_h(nn_h_), nn_w(nn_w_) {
     height = h;
     width = w;
     grabbed = Idx<ubyte>(height, width);
@@ -76,8 +74,6 @@ namespace ebl {
   }
 
   Classifier2D::~Classifier2D() {
-    delete theparam;
-    delete thenet;
     { idx_bloop3(in, inputs, void*, out, outputs, void*, r, results, void*) {
 	delete((state_idx*) in.get());
 	delete((state_idx*) out.get());
@@ -225,11 +221,11 @@ namespace ebl {
     { idx_bloop2(in, inputs, void*, out, outputs, void*) {
 	state_idx *ii = ((state_idx*) in.get());
 	state_idx *oo = ((state_idx*) out.get());
-	thenet->fprop(*ii, *oo); 
+	thenet.fprop(*ii, *oo); 
 #ifdef __GUI__
 	unsigned yhh = yh + grabbed.dim(0) + 2;
 	if (k == show)
-	  thenet->display_fprop(*ii, *oo, yhh, xw, 1.0, true);
+	  thenet.display_fprop(*ii, *oo, yhh, xw, 1.0, true);
  	double vmin = idx_min(oo->x);
 	double vmax = idx_max(oo->x);
 	int hcat = 0;
@@ -317,10 +313,10 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  Classifier2DBinoc::Classifier2DBinoc(const char *paramfile, 
+  Classifier2DBinoc::Classifier2DBinoc(module_1_1<state_idx, state_idx> &thenet,
 				       Idx<int> &sz, Idx<const char*> &lbls,
 				       double b, double c, int h, int w)
-    : Classifier2D(paramfile, sz, lbls, b, c, h, w) {
+    : Classifier2D(thenet, sz, lbls, b, c, h, w) {
     grabbed2 = Idx<ubyte>(height, width);
   }
 

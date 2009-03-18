@@ -36,7 +36,16 @@ void Classifier2DTest::test_norb() {
   left = image_resize(left, 320, 240, 1);
   Idx<int> sz(sizeof (sizes) / sizeof (int));
   memcpy(sz.idx_ptr(), sizes, sizeof (sizes));
-  Classifier2D cb(mono_net.c_str(), sz, lbl, 0.0, 0.01, 240, 320);
+
+  // parameter, network and classifier
+  // load the previously saved weights of a trained network
+  parameter theparam(1);
+  // input to the network will be 96x96 and there are 5 outputs
+  lenet7_binocular thenet(theparam, 96, 96, 5);
+  theparam.load_x(mono_net.c_str());
+  Classifier2D cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
+
+  // find category of image
   Idx<double> res = cb.fprop(left.idx_ptr(), 1, 1.8, 60);
   CPPUNIT_ASSERT(res.dim(0) == 1); // only 1 object
   CPPUNIT_ASSERT(res.get(0, 0) == 2); // plane
@@ -61,23 +70,21 @@ void Classifier2DTest::test_norb_binoc() {
   memcpy(sz.idx_ptr(), sizes, sizeof (sizes));
   for (int i = 0; i < lbl.nelements(); ++i)
     lbl.set(labels[i], i);
-  Classifier2DBinoc cb(binoc_net.c_str(), sz, lbl, 0.0, 0.01, 240, 320);
 
+  // parameter, network and classifier
+  // load the previously saved weights of a trained network
+  parameter theparam(1);
+  // input to the network will be 96x96 and there are 5 outputs
+  lenet7_binocular thenet(theparam, 96, 96, 5);
+  theparam.load_x(binoc_net.c_str());
+  Classifier2DBinoc cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
+
+  // find category of image
   left = image_resize(left, 320, 240, 1);
   right = image_resize(right, 320, 240, 1);
   //idx_copy(left, right);
   Idx<double> res = cb.fprop(left.idx_ptr(), right.idx_ptr(), 
 			     1, 0, 40, 1.8, 60);
-  // display
-  /*	Idx_Gui *ig = new Idx_Gui(&left, UBYTE);
-	ig->setvmin(0);
-	ig->setvmax(255);
-	ig->show();
-	Idx_Gui *ig2 = new Idx_Gui(&right, UBYTE);
-	ig2->setvmin(0);
-	ig2->setvmax(255);
-	ig2->show();
-  */	// tests
   CPPUNIT_ASSERT(res.dim(0) == 1); // only 1 object
   CPPUNIT_ASSERT(res.get(0, 0) == 2); // plane
 }

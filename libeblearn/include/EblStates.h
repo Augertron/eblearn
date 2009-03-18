@@ -242,8 +242,13 @@ namespace ebl {
     Idx<double> epsilons;
     Idx<double> ddeltax;
 
-    //! constructor
+    //! initialize the parameter with size initial_size.
     parameter(intg initial_size = 100);
+
+    //! initialize the parameter with a previously saved x component.
+    parameter(const char *param_filename);
+
+    //! destructor
     virtual ~parameter();
 
     virtual void resize(intg s0);
@@ -255,8 +260,12 @@ namespace ebl {
     void update_ddeltax(double knew, double kold);
     void set_epsilons(double m);
     void compute_epsilons(double mu);
-    bool load(const char *s);
-    void save(const char *s);
+
+    //! load a parameter file into the x component.
+    bool load_x(const char *param_filename);
+
+    //! save the x component to a file.
+    void save_x(const char *param_filename);
   };
 
   ////////////////////////////////////////////////////////////////

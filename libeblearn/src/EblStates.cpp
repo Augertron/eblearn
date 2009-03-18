@@ -332,6 +332,30 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // parameter
 
+  parameter::parameter(intg initial_size) 
+    : state_idx(initial_size), gradient(initial_size), deltax(initial_size),
+      epsilons(initial_size), ddeltax(initial_size) {
+    idx_clear(x);
+    idx_clear(dx);
+    idx_clear(ddx);
+    idx_clear(gradient);
+    idx_clear(deltax);
+    idx_clear(epsilons);
+    idx_clear(ddeltax);
+    resize(0);
+  }
+
+  parameter::parameter(const char *param_filename) 
+    : state_idx(1), gradient(1), deltax(1), epsilons(1), ddeltax(1) {
+    if (!load_x(param_filename)) {
+      cerr << "failed to open " << param_filename << endl;
+      ylerror("failed to load parameter file in parameter constructor");
+    }
+  }
+
+  parameter::~parameter() {
+  }
+
   // TODO-0: BUG: a parameter object casted in state_idx* and called
   // with resize(n) calls state_idx::resize instead of parameter::resize
   // a temporary unclean solution is to use the same parameters as
@@ -349,25 +373,7 @@ namespace ebl {
     ddeltax.resize(s0);
   }
 
-  parameter::parameter(intg initial_size) :
-    state_idx(initial_size), gradient(initial_size), deltax(initial_size),
-    epsilons(initial_size), ddeltax(initial_size)
-  {
-    idx_clear(x);
-    idx_clear(dx);
-    idx_clear(ddx);
-    idx_clear(gradient);
-    idx_clear(deltax);
-    idx_clear(epsilons);
-    idx_clear(ddeltax);
-    resize(0);
-  }
-
-  parameter::~parameter()
-  {
-  }
-
-  bool parameter::load(const char *s) {
+  bool parameter::load_x(const char *s) {
     /*	Idx<double> m(1, 1), tmp(1);
 	if (!load_matrix(m, s))
 	return false;
