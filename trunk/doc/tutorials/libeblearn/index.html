@@ -14,9 +14,61 @@
       
       <table class="toccolours" style="margin: 0pt 0pt 1em 1em; padding: 0px; width: 170px;" align="left">
 	<tr>
-	  <h2>energy-based learning</h2>
-	  <h2>modular architecture</h2>
+	  <h2>Energy-based learning</h2>
+	    <p>What is the energy-based learning?</p>
+	  <h2>Modular architecture</h2>
+	    <p>Eblearn was designed modular.</p>
+	  <h1>Supervised Learning</h1>
+	    <p>Eblearn provides supervised learning algorithms as well as semi-supervised and unsupervised ones. They can be used independently or combined, we will focus on supervised algorithms only in this section.</p>
 	  <h2>1. build your dataset</h2>
+	    <h3>What data should you provide to the network?</h3>
+	    <h3>Creating datasets from image directories</h3>
+	      <p>Once you have grouped all your images in different directories for each class, call imageDirToIdx() to transform them into a dataset object (a matrix of images with their corresponding label). This function will extract the label information from the file directory structure: at the source level, each directory is a class named after the directory name. Then all images found in subdirectories (regardless of their names or hierarchy) are assigned the same label and are added to the dataset.
+	      </p>
+	      <p>Here is the prototype of imageDirToIdx(). It takes in order the source directory where to find the images, the desired width (and height) of the input images to the network (images will be resize and cropped to a square of size width x width), the image pattern to look for, an optional left image pattern (in case of stereoscopic pairs of images), an optional output directory, an optional right image pattern, an optional verbose flag, an optional prefix name for the output files (e.g. train or test to differentiate between training and testing sets), and an optional flag to transform images in YUV color space (easier to learn than RGB). This function returns false upon failure and outputs dataset files as described further below.</p>
+
+              <div id="vc_markup"><pre><span class="hl kwb">bool</span> <span class="hl kwd">imageDirToIdx</span><span class="hl sym">(</span><span class="hl kwb">const char</span> <span class="hl sym">*</span>imgDir<span class="hl sym">,</span>
+                   <span class="hl kwb">unsigned int</span> width<span class="hl sym">,</span>
+                   <span class="hl kwb">const char</span> <span class="hl sym">*</span>imgExtension <span class="hl sym">=</span> defaultExtensionPattern<span class="hl sym">,</span> <span class="hl slc">// eg: &quot;.*[.]ppm&quot;</span>
+                   <span class="hl kwb">const char</span> <span class="hl sym">*</span>imgPatternLeft <span class="hl sym">=</span> NULL<span class="hl sym">,</span> <span class="hl slc">// eg: &quot;_L&quot;</span>
+                   <span class="hl kwb">const char</span> <span class="hl sym">*</span>outDir <span class="hl sym">=</span> NULL<span class="hl sym">,</span>
+                   <span class="hl kwb">const char</span> <span class="hl sym">*</span>imgPatternRight <span class="hl sym">=</span> NULL<span class="hl sym">,</span>  <span class="hl slc">// eg: &quot;_R&quot;</span>
+                   <span class="hl kwb">bool</span> verbose <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">,</span>
+                   <span class="hl kwb">const char</span> <span class="hl sym">*</span>prefix <span class="hl sym">=</span> NULL<span class="hl sym">,</span> <span class="hl slc">// eg: &quot;_train&quot; or &quot;test_&quot;</span>
+                   <span class="hl kwb">bool</span> toYUV <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">);</span>  <span class="hl slc">// convert images to YUV if true</span></pre></div>
+
+	      <p>
+	      <p>For example with the following directory structrure, imageDirToIdx() will automatically build a dataset with 2 different labels, "car" and "human" and will contain 5 images in total:
+              </p>
+
+              <div id="vc_markup"><pre>/data$ ls -R *
+car:
+auto.png  car01.png
+
+human:
+human1  human2
+
+human/human1:
+img01.png
+
+human/human2:
+img01.png  img02.png</pre></div>
+	      
+	      <p>And the function call would be:</p>
+              <div id="vc_markup"><pre>imageDirToIdx("/data", 42, ".*[.]png");
+(or imageDirToIdx("/data", 42, ".*[.]png", NULL, "/datasets");)</pre></div>
+	      <p>This will create 3 files in the output directory "/datasets" (which can be omitted):</p>
+	      <ol>
+		<li>dset_images.mat: a ubyte matrix of size <i>N x width x width x M</i>, where N is the number of images and M the number of channels which can be 1 or 3 if the input images are in greyscale or color or 2 or 6 if two (stereoscopic) images are passed instead of one. Here are the possible channel configurations: <i>G or GG, RGB or RGBRGB</i>.</li>
+		<li>dset_labels.mat: an int matrix of size <i>Nclasses</i> containing labels id numbers, e.g. 0, 1, ...</li>
+		<li>dset_classes.mat: a ubyte matrix of size <i>Nclasses x 128</i> containing the names of each class.</li>
+		</ol>
+	      </p>
+	      <p><u>Note:</u> this function is located in the tools library (trunk/eblearn/tools) and requires boost libraries: boost-filesystem and boost-regex.</p>
+
+	    <h3>Loading datasets into a LabeledDataSource object</h3>
+	      <p></p>
+
 	  <h2>2. build your network</h2>
 	  <h2>3. train your network</h2>
 	  <h2>4. run your network</h2>
