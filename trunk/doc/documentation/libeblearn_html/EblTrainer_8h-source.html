@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>libeblearn: /home/pierre/eblearn-trunk/libeblearn/include/EblTrainer.h Source File</title>
+<title>libeblearn: /media/e/eblearn-trunk/libeblearn/include/EblTrainer.h Source File</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -14,7 +14,7 @@
       <li><a href="examples.html"><span>Examples</span></a></li>
     </ul>
   </div>
-<h1>/home/pierre/eblearn-trunk/libeblearn/include/EblTrainer.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="comment">/***************************************************************************</span>
+<h1>/media/e/eblearn-trunk/libeblearn/include/EblTrainer.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="comment">/***************************************************************************</span>
 <a name="l00002"></a>00002 <span class="comment"> *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *</span>
 <a name="l00003"></a>00003 <span class="comment"> *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *</span>
 <a name="l00004"></a>00004 <span class="comment"> *</span>
@@ -54,46 +54,70 @@
 <a name="l00038"></a>00038 <span class="preprocessor">#include "EblLogger.h"</span>
 <a name="l00039"></a>00039 <span class="preprocessor">#include "DataSource.h"</span>
 <a name="l00040"></a>00040 
-<a name="l00041"></a>00041 <span class="keyword">namespace </span>ebl {
-<a name="l00042"></a>00042 
-<a name="l00045"></a>00045   <span class="comment">// TODO: templated generic trainer class</span>
+<a name="l00041"></a>00041 <span class="preprocessor">#ifdef __GUI__</span>
+<a name="l00042"></a>00042 <span class="preprocessor"></span><span class="preprocessor">#include "libidxgui.h"</span>
+<a name="l00043"></a>00043 <span class="preprocessor">#endif </span>
+<a name="l00044"></a>00044 <span class="preprocessor"></span>
+<a name="l00045"></a>00045 <span class="keyword">namespace </span>ebl {
 <a name="l00046"></a>00046 
-<a name="l00049"></a>00049   <span class="keyword">template</span>&lt;<span class="keyword">class</span> Tdata, <span class="keyword">class</span> Tlabel&gt;
-<a name="l00050"></a><a class="code" href="classebl_1_1supervised__trainer.html">00050</a>     <span class="keyword">class </span><a class="code" href="classebl_1_1supervised__trainer.html">supervised_trainer</a> {
-<a name="l00051"></a>00051   <span class="keyword">public</span>:
-<a name="l00052"></a>00052     <a class="code" href="classebl_1_1fc__ebm2.html">fc_ebm2&lt;state_idx,int,state_idx&gt;</a>    &amp;machine;
-<a name="l00053"></a>00053     <a class="code" href="classebl_1_1parameter.html">parameter</a>                           &amp;param;
-<a name="l00054"></a>00054     <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a>                           *input;
-<a name="l00055"></a>00055     <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a>                            energy;
-<a name="l00056"></a>00056     Idx&lt;Tlabel&gt;                          label;
-<a name="l00057"></a>00057     intg                                 age;
-<a name="l00058"></a>00058     
-<a name="l00059"></a>00059     <a class="code" href="classebl_1_1supervised__trainer.html">supervised_trainer</a>(<a class="code" href="classebl_1_1fc__ebm2.html">fc_ebm2&lt;state_idx,int,state_idx&gt;</a> &amp;m, 
-<a name="l00060"></a>00060                        <a class="code" href="classebl_1_1parameter.html">parameter</a> &amp;p);
-<a name="l00061"></a>00061     <span class="keyword">virtual</span> ~<a class="code" href="classebl_1_1supervised__trainer.html">supervised_trainer</a>();
-<a name="l00062"></a>00062 
-<a name="l00069"></a>00069     <span class="keywordtype">int</span> <a class="code" href="classebl_1_1supervised__trainer.html#4689475fe2f2e48c5eb9bd5f09d209fd">run</a>(Idx&lt;double&gt; &amp;sample, infer_param &amp;infp);
-<a name="l00070"></a>00070 
-<a name="l00073"></a>00073     <span class="keywordtype">bool</span> <a class="code" href="classebl_1_1supervised__trainer.html#ad0d176af7e57bf08896f7efa1393b2a">test_sample</a>(Idx&lt;double&gt; &amp;sample, <span class="keywordtype">int</span> label, infer_param &amp;infp);
-<a name="l00074"></a>00074 
-<a name="l00080"></a>00080     Idx&lt;double&gt; <a class="code" href="classebl_1_1supervised__trainer.html#f9253a62fc0a0668de53cace6462eda3">learn_sample</a>(<a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> *sample, <span class="keywordtype">int</span> label, <a class="code" href="classebl_1_1gd__param.html">gd_param</a> &amp;arg);
-<a name="l00081"></a>00081 
-<a name="l00085"></a>00085     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1supervised__trainer.html#8fbe75989c3e7adc5e53ae0acb26e701">test</a>(LabeledDataSource&lt;Tdata, Tlabel&gt; &amp;ds, <a class="code" href="classebl_1_1classifier__meter.html">classifier_meter</a> &amp;log);
-<a name="l00086"></a>00086 
-<a name="l00093"></a>00093     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1supervised__trainer.html#e4d4897c67df38d8868aef355032b4fe">train</a>(LabeledDataSource&lt;Tdata, Tlabel&gt; &amp;ds, <a class="code" href="classebl_1_1classifier__meter.html">classifier_meter</a> &amp;log, 
-<a name="l00094"></a>00094                <a class="code" href="classebl_1_1gd__param.html">gd_param</a> &amp;args, <span class="keywordtype">int</span> niter);
+<a name="l00049"></a>00049   <span class="comment">// TODO: templated generic trainer class</span>
+<a name="l00050"></a>00050 
+<a name="l00053"></a>00053   <span class="keyword">template</span>&lt;<span class="keyword">class</span> Tdata, <span class="keyword">class</span> Tlabel&gt;
+<a name="l00054"></a><a class="code" href="classebl_1_1supervised__trainer.html">00054</a>     <span class="keyword">class </span><a class="code" href="classebl_1_1supervised__trainer.html">supervised_trainer</a> {
+<a name="l00055"></a>00055   <span class="keyword">private</span>:
+<a name="l00056"></a>00056     <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>         display_nh;
+<a name="l00057"></a>00057     <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>         display_nw;
+<a name="l00058"></a>00058     <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>         display_h0;
+<a name="l00059"></a>00059     <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>         display_w0;
+<a name="l00060"></a>00060     <span class="keywordtype">double</span>               display_zoom;
+<a name="l00061"></a>00061     <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>         display_wid;
+<a name="l00062"></a>00062     <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>         fpropdisplay_wid;
+<a name="l00063"></a>00063     <span class="keywordtype">int</span>                  iteration;
+<a name="l00064"></a>00064     <span class="keywordtype">void</span>                *iteration_ptr;
+<a name="l00065"></a>00065 
+<a name="l00066"></a>00066   <span class="keyword">public</span>:
+<a name="l00067"></a>00067     <a class="code" href="classebl_1_1fc__ebm2.html">fc_ebm2&lt;state_idx,int,state_idx&gt;</a>    &amp;machine;
+<a name="l00068"></a>00068     <a class="code" href="classebl_1_1parameter.html">parameter</a>                           &amp;param;
+<a name="l00069"></a>00069     <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a>                           *input;
+<a name="l00070"></a>00070     <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a>                            energy;
+<a name="l00071"></a>00071     Idx&lt;Tlabel&gt;                          label;
+<a name="l00072"></a>00072     intg                                 age;
+<a name="l00073"></a>00073     ostream                             &amp;cout;
+<a name="l00074"></a>00074     
+<a name="l00075"></a>00075     <a class="code" href="classebl_1_1supervised__trainer.html">supervised_trainer</a>(<a class="code" href="classebl_1_1fc__ebm2.html">fc_ebm2&lt;state_idx,int,state_idx&gt;</a> &amp;m, 
+<a name="l00076"></a>00076                        <a class="code" href="classebl_1_1parameter.html">parameter</a> &amp;p, ostream&amp; cout = std::cout);
+<a name="l00077"></a>00077     <span class="keyword">virtual</span> ~<a class="code" href="classebl_1_1supervised__trainer.html">supervised_trainer</a>();
+<a name="l00078"></a>00078 
+<a name="l00079"></a>00079     <span class="keywordtype">void</span> set_display(<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> nh, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> nw, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> h0 = 0, 
+<a name="l00080"></a>00080                      <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> w0 = 0, <span class="keywordtype">double</span> zoom = 1.0, <span class="keywordtype">int</span> wid = -1,
+<a name="l00081"></a>00081                      <span class="keyword">const</span> <span class="keywordtype">char</span> *title = NULL);
+<a name="l00082"></a>00082 
+<a name="l00089"></a>00089     <span class="keywordtype">int</span> <a class="code" href="classebl_1_1supervised__trainer.html#27266cc7b64334255dc646b33ea351c7">run</a>(<a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> &amp;input, infer_param &amp;infp);
+<a name="l00090"></a>00090 
+<a name="l00093"></a>00093     <span class="keywordtype">bool</span> <a class="code" href="classebl_1_1supervised__trainer.html#a088a41796b911a76680306719a44102">test_sample</a>(<a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> &amp;input, <span class="keywordtype">int</span> label, <span class="keywordtype">int</span> &amp;answer, 
+<a name="l00094"></a>00094                      infer_param &amp;infp);
 <a name="l00095"></a>00095 
-<a name="l00097"></a>00097     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1supervised__trainer.html#9f728de27be40cf2ac43dea5678c222a" title="compute hessian">compute_diaghessian</a>(LabeledDataSource&lt;Tdata, Tlabel&gt; &amp;ds, intg niter, 
-<a name="l00098"></a>00098                              <span class="keywordtype">double</span> mu);
-<a name="l00099"></a>00099   };
-<a name="l00100"></a>00100 
-<a name="l00101"></a>00101 } <span class="comment">// namespace ebl {</span>
+<a name="l00101"></a>00101     Idx&lt;double&gt; <a class="code" href="classebl_1_1supervised__trainer.html#34eace3f645e823c01017d1d123e5ff0">learn_sample</a>(<a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> &amp;input, <span class="keywordtype">int</span> label, <a class="code" href="classebl_1_1gd__param.html">gd_param</a> &amp;arg);
 <a name="l00102"></a>00102 
-<a name="l00103"></a>00103 <span class="preprocessor">#include "EblTrainer.hpp"</span>
-<a name="l00104"></a>00104 
-<a name="l00105"></a>00105 <span class="preprocessor">#endif </span><span class="comment">/* EBLTRAINER_H_ */</span>
+<a name="l00106"></a>00106     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1supervised__trainer.html#6814cc5466befb4a9793adaf04654bcc">test</a>(LabeledDataSource&lt;Tdata, Tlabel&gt; &amp;ds, <a class="code" href="classebl_1_1classifier__meter.html">classifier_meter</a> &amp;log,
+<a name="l00107"></a>00107               infer_param &amp;infp, <span class="keywordtype">bool</span> display = <span class="keyword">false</span>);
+<a name="l00108"></a>00108 
+<a name="l00115"></a>00115     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1supervised__trainer.html#e4d4897c67df38d8868aef355032b4fe">train</a>(LabeledDataSource&lt;Tdata, Tlabel&gt; &amp;ds, <a class="code" href="classebl_1_1classifier__meter.html">classifier_meter</a> &amp;log, 
+<a name="l00116"></a>00116                <a class="code" href="classebl_1_1gd__param.html">gd_param</a> &amp;args, <span class="keywordtype">int</span> niter);
+<a name="l00117"></a>00117 
+<a name="l00119"></a>00119     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1supervised__trainer.html#9f728de27be40cf2ac43dea5678c222a" title="compute hessian">compute_diaghessian</a>(LabeledDataSource&lt;Tdata, Tlabel&gt; &amp;ds, intg niter, 
+<a name="l00120"></a>00120                              <span class="keywordtype">double</span> mu);
+<a name="l00121"></a>00121 
+<a name="l00125"></a>00125     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1supervised__trainer.html#e6ab4937140ca984465e117272666527">resize_input</a>(LabeledDataSource&lt;Tdata, Tlabel&gt; &amp;ds);
+<a name="l00126"></a>00126   };
+<a name="l00127"></a>00127 
+<a name="l00128"></a>00128 } <span class="comment">// namespace ebl {</span>
+<a name="l00129"></a>00129 
+<a name="l00130"></a>00130 <span class="preprocessor">#include "EblTrainer.hpp"</span>
+<a name="l00131"></a>00131 
+<a name="l00132"></a>00132 <span class="preprocessor">#endif </span><span class="comment">/* EBLTRAINER_H_ */</span>
 </pre></div></div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Thu Feb 26 18:53:41 2009 for libeblearn by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Mar 30 18:15:26 2009 for libeblearn by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

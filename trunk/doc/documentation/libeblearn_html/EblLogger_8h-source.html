@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>libeblearn: /home/pierre/eblearn-trunk/libeblearn/include/EblLogger.h Source File</title>
+<title>libeblearn: /media/e/eblearn-trunk/libeblearn/include/EblLogger.h Source File</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -14,7 +14,7 @@
       <li><a href="examples.html"><span>Examples</span></a></li>
     </ul>
   </div>
-<h1>/home/pierre/eblearn-trunk/libeblearn/include/EblLogger.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="comment">/***************************************************************************</span>
+<h1>/media/e/eblearn-trunk/libeblearn/include/EblLogger.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="comment">/***************************************************************************</span>
 <a name="l00002"></a>00002 <span class="comment"> *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *</span>
 <a name="l00003"></a>00003 <span class="comment"> *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *</span>
 <a name="l00004"></a>00004 <span class="comment"> *</span>
@@ -53,75 +53,81 @@
 <a name="l00037"></a>00037 <span class="preprocessor">#include "Blas.h"</span>
 <a name="l00038"></a>00038 <span class="preprocessor">#include "EblStates.h"</span>
 <a name="l00039"></a>00039 
-<a name="l00040"></a>00040 <span class="keyword">namespace </span>ebl {
-<a name="l00041"></a>00041 
-<a name="l00043"></a>00043 
-<a name="l00048"></a><a class="code" href="classebl_1_1class__state.html">00048</a>   <span class="keyword">class </span><a class="code" href="classebl_1_1class__state.html">class_state</a> {
-<a name="l00049"></a>00049   <span class="keyword">public</span>:
-<a name="l00050"></a>00050     ubyte output_class;
-<a name="l00051"></a>00051     <span class="keywordtype">float</span> confidence;
-<a name="l00052"></a>00052     Idx&lt;ubyte&gt; *sorted_classes;
-<a name="l00053"></a>00053     Idx&lt;float&gt; *sorted_scores;
-<a name="l00054"></a>00054 
-<a name="l00055"></a>00055     <a class="code" href="classebl_1_1class__state.html">class_state</a>(ubyte n);
-<a name="l00056"></a>00056     ~<a class="code" href="classebl_1_1class__state.html">class_state</a>();
-<a name="l00057"></a>00057     <span class="keywordtype">void</span> resize(ubyte n);
-<a name="l00058"></a>00058   };
-<a name="l00059"></a>00059 
-<a name="l00081"></a>00081 
-<a name="l00085"></a>00085   <span class="comment">// TODO: allow definition of different comparison functions.</span>
-<a name="l00086"></a><a class="code" href="classebl_1_1classifier__meter.html">00086</a>   <span class="keyword">class </span><a class="code" href="classebl_1_1classifier__meter.html">classifier_meter</a> {
-<a name="l00087"></a>00087   <span class="keyword">public</span>:
-<a name="l00088"></a>00088     <span class="keywordtype">double</span> energy;
-<a name="l00089"></a>00089     <span class="keywordtype">float</span> confidence;
-<a name="l00090"></a>00090     intg size;
-<a name="l00091"></a>00091     intg age;
-<a name="l00092"></a>00092     intg total_correct;
-<a name="l00093"></a>00093     intg total_error;
-<a name="l00094"></a>00094     intg total_punt;
-<a name="l00095"></a>00095     intg total_energy;
-<a name="l00096"></a>00096 
-<a name="l00103"></a>00103     <a class="code" href="classebl_1_1classifier__meter.html#f797c6412d8b269dc254b71d9e451d1d">classifier_meter</a>(); <span class="comment">// TODO: allow passing of comparison function</span>
-<a name="l00104"></a>00104     ~<a class="code" href="classebl_1_1classifier__meter.html">classifier_meter</a>() {
-<a name="l00105"></a>00105     }
-<a name="l00106"></a>00106     ;
-<a name="l00107"></a>00107 
-<a name="l00110"></a>00110     <span class="keywordtype">int</span> <a class="code" href="classebl_1_1classifier__meter.html#28d9ff55e23e7e5c2b4061ae32970a69">correctp</a>(ubyte co, ubyte cd);
-<a name="l00111"></a>00111 
-<a name="l00114"></a>00114     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1classifier__meter.html#e6f644eafc3b3b1adfc86020b5f57661">clear</a>();
-<a name="l00115"></a>00115     <span class="keywordtype">void</span> resize(intg sz);
+<a name="l00040"></a>00040 <span class="preprocessor">#ifdef __GUI__</span>
+<a name="l00041"></a>00041 <span class="preprocessor"></span><span class="preprocessor">#include "libidxgui.h"</span>
+<a name="l00042"></a>00042 <span class="preprocessor">#endif </span>
+<a name="l00043"></a>00043 <span class="preprocessor"></span>
+<a name="l00044"></a>00044 <span class="keyword">namespace </span>ebl {
+<a name="l00045"></a>00045 
+<a name="l00047"></a>00047 
+<a name="l00052"></a><a class="code" href="classebl_1_1class__state.html">00052</a>   <span class="keyword">class </span><a class="code" href="classebl_1_1class__state.html">class_state</a> {
+<a name="l00053"></a>00053   <span class="keyword">public</span>:
+<a name="l00054"></a>00054     ubyte output_class;
+<a name="l00055"></a>00055     <span class="keywordtype">float</span> confidence;
+<a name="l00056"></a>00056     Idx&lt;ubyte&gt; *sorted_classes;
+<a name="l00057"></a>00057     Idx&lt;float&gt; *sorted_scores;
+<a name="l00058"></a>00058 
+<a name="l00059"></a>00059     <a class="code" href="classebl_1_1class__state.html">class_state</a>(ubyte n);
+<a name="l00060"></a>00060     ~<a class="code" href="classebl_1_1class__state.html">class_state</a>();
+<a name="l00061"></a>00061     <span class="keywordtype">void</span> resize(ubyte n);
+<a name="l00062"></a>00062   };
+<a name="l00063"></a>00063 
+<a name="l00085"></a>00085 
+<a name="l00089"></a>00089   <span class="comment">// TODO: allow definition of different comparison functions.</span>
+<a name="l00090"></a><a class="code" href="classebl_1_1classifier__meter.html">00090</a>   <span class="keyword">class </span><a class="code" href="classebl_1_1classifier__meter.html">classifier_meter</a> {
+<a name="l00091"></a>00091   <span class="keyword">public</span>:
+<a name="l00092"></a>00092     <span class="keywordtype">double</span> energy;
+<a name="l00093"></a>00093     <span class="keywordtype">float</span> confidence;
+<a name="l00094"></a>00094     intg size;
+<a name="l00095"></a>00095     intg age;
+<a name="l00096"></a>00096     intg total_correct;
+<a name="l00097"></a>00097     intg total_error;
+<a name="l00098"></a>00098     intg total_punt;
+<a name="l00099"></a>00099     <span class="keywordtype">double</span> total_energy;
+<a name="l00100"></a>00100 
+<a name="l00107"></a>00107     <span class="comment">// TODO: allow passing of comparison function</span>
+<a name="l00108"></a>00108     <a class="code" href="classebl_1_1classifier__meter.html#f797c6412d8b269dc254b71d9e451d1d">classifier_meter</a>();
+<a name="l00109"></a>00109     ~<a class="code" href="classebl_1_1classifier__meter.html">classifier_meter</a>() {
+<a name="l00110"></a>00110     }
+<a name="l00111"></a>00111     ;
+<a name="l00112"></a>00112 
+<a name="l00115"></a>00115     <span class="keywordtype">int</span> <a class="code" href="classebl_1_1classifier__meter.html#28d9ff55e23e7e5c2b4061ae32970a69">correctp</a>(ubyte co, ubyte cd);
 <a name="l00116"></a>00116 
-<a name="l00122"></a>00122     <span class="keywordtype">char</span> <a class="code" href="classebl_1_1classifier__meter.html#de0186f17b32921e312f5a297c60b685">update</a>(intg a, <a class="code" href="classebl_1_1class__state.html">class_state</a> *co, ubyte cd, <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> *en);
-<a name="l00123"></a>00123 
-<a name="l00124"></a>00124     <span class="keywordtype">void</span> test(<a class="code" href="classebl_1_1class__state.html">class_state</a> *co, ubyte cd, <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> *en);
-<a name="l00125"></a>00125 
-<a name="l00131"></a>00131     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1classifier__meter.html#303ea6353c92c3325f04e0d761f1c275">info</a>();
-<a name="l00132"></a>00132     <span class="keywordtype">void</span> info_sprint();
-<a name="l00133"></a>00133     <span class="keywordtype">void</span> info_print();
-<a name="l00134"></a>00134 
-<a name="l00141"></a>00141     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1classifier__meter.html#4328680e870d05e51442ffd9dcc137de">display</a>();
-<a name="l00142"></a>00142     <span class="keywordtype">bool</span> save();
-<a name="l00143"></a>00143     <span class="keywordtype">bool</span> load();
-<a name="l00144"></a>00144   };
-<a name="l00145"></a>00145 
-<a name="l00147"></a>00147 
-<a name="l00153"></a><a class="code" href="classebl_1_1max__classer.html">00153</a>   <span class="keyword">class </span><a class="code" href="classebl_1_1max__classer.html">max_classer</a> { <span class="comment">// TODO: idx3-classer</span>
-<a name="l00154"></a>00154   <span class="keyword">public</span>:
-<a name="l00156"></a><a class="code" href="classebl_1_1max__classer.html#6c6a5a25f8f6ccf98dcd6ade44bfc8dd">00156</a>     Idx&lt;ubyte&gt; *<a class="code" href="classebl_1_1max__classer.html#6c6a5a25f8f6ccf98dcd6ade44bfc8dd" title="a vector that maps output unit index to a label">classindex2label</a>; 
-<a name="l00157"></a>00157 
-<a name="l00160"></a>00160     <a class="code" href="classebl_1_1max__classer.html#bda02412f4f40216b784c823734b84e0">max_classer</a>(Idx&lt;ubyte&gt; *classes);
-<a name="l00161"></a>00161     ~<a class="code" href="classebl_1_1max__classer.html">max_classer</a>() {
-<a name="l00162"></a>00162     }
-<a name="l00163"></a>00163     ;
-<a name="l00164"></a>00164 
-<a name="l00165"></a>00165     <span class="keywordtype">void</span> fprop(<a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> *in, <a class="code" href="classebl_1_1class__state.html">class_state</a> *out);
-<a name="l00166"></a>00166   };
-<a name="l00167"></a>00167 
-<a name="l00168"></a>00168 } <span class="comment">// namespace ebl {</span>
-<a name="l00169"></a>00169 
-<a name="l00170"></a>00170 <span class="preprocessor">#endif </span><span class="comment">/* EBLLOGGER_H_ */</span>
+<a name="l00119"></a>00119     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1classifier__meter.html#e6f644eafc3b3b1adfc86020b5f57661">clear</a>();
+<a name="l00120"></a>00120     <span class="keywordtype">void</span> resize(intg sz);
+<a name="l00121"></a>00121 
+<a name="l00127"></a>00127     <span class="keywordtype">char</span> <a class="code" href="classebl_1_1classifier__meter.html#de0186f17b32921e312f5a297c60b685">update</a>(intg a, <a class="code" href="classebl_1_1class__state.html">class_state</a> *co, ubyte cd, <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> *en);
+<a name="l00128"></a>00128     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1classifier__meter.html#de0186f17b32921e312f5a297c60b685">update</a>(intg age_, <span class="keywordtype">bool</span> correct, <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> &amp;en);
+<a name="l00129"></a>00129 
+<a name="l00130"></a>00130     <span class="keywordtype">void</span> test(<a class="code" href="classebl_1_1class__state.html">class_state</a> *co, ubyte cd, <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> *en);
+<a name="l00131"></a>00131 
+<a name="l00137"></a>00137     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1classifier__meter.html#303ea6353c92c3325f04e0d761f1c275">info</a>();
+<a name="l00138"></a>00138     <span class="keywordtype">void</span> info_sprint();
+<a name="l00139"></a>00139     <span class="keywordtype">void</span> info_print();
+<a name="l00140"></a>00140 
+<a name="l00147"></a>00147     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1classifier__meter.html#4328680e870d05e51442ffd9dcc137de">display</a>();
+<a name="l00148"></a>00148     <span class="keywordtype">bool</span> save();
+<a name="l00149"></a>00149     <span class="keywordtype">bool</span> load();
+<a name="l00150"></a>00150   };
+<a name="l00151"></a>00151 
+<a name="l00153"></a>00153 
+<a name="l00159"></a><a class="code" href="classebl_1_1max__classer.html">00159</a>   <span class="keyword">class </span><a class="code" href="classebl_1_1max__classer.html">max_classer</a> { <span class="comment">// TODO: idx3-classer</span>
+<a name="l00160"></a>00160   <span class="keyword">public</span>:
+<a name="l00162"></a><a class="code" href="classebl_1_1max__classer.html#6c6a5a25f8f6ccf98dcd6ade44bfc8dd">00162</a>     Idx&lt;ubyte&gt; *<a class="code" href="classebl_1_1max__classer.html#6c6a5a25f8f6ccf98dcd6ade44bfc8dd" title="a vector that maps output unit index to a label">classindex2label</a>; 
+<a name="l00163"></a>00163 
+<a name="l00166"></a>00166     <a class="code" href="classebl_1_1max__classer.html#bda02412f4f40216b784c823734b84e0">max_classer</a>(Idx&lt;ubyte&gt; *classes);
+<a name="l00167"></a>00167     ~<a class="code" href="classebl_1_1max__classer.html">max_classer</a>() {
+<a name="l00168"></a>00168     }
+<a name="l00169"></a>00169     ;
+<a name="l00170"></a>00170 
+<a name="l00171"></a>00171     <span class="keywordtype">void</span> fprop(<a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> *in, <a class="code" href="classebl_1_1class__state.html">class_state</a> *out);
+<a name="l00172"></a>00172   };
+<a name="l00173"></a>00173 
+<a name="l00174"></a>00174 } <span class="comment">// namespace ebl {</span>
+<a name="l00175"></a>00175 
+<a name="l00176"></a>00176 <span class="preprocessor">#endif </span><span class="comment">/* EBLLOGGER_H_ */</span>
 </pre></div></div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Thu Feb 26 18:53:41 2009 for libeblearn by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Mar 30 18:15:26 2009 for libeblearn by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>

@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<title>libeblearn: /home/pierre/eblearn-trunk/libeblearn/include/EblStates.h Source File</title>
+<title>libeblearn: /media/e/eblearn-trunk/libeblearn/include/EblStates.h Source File</title>
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
@@ -14,7 +14,7 @@
       <li><a href="examples.html"><span>Examples</span></a></li>
     </ul>
   </div>
-<h1>/home/pierre/eblearn-trunk/libeblearn/include/EblStates.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="comment">/***************************************************************************</span>
+<h1>/media/e/eblearn-trunk/libeblearn/include/EblStates.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="comment">/***************************************************************************</span>
 <a name="l00002"></a>00002 <span class="comment"> *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *</span>
 <a name="l00003"></a>00003 <span class="comment"> *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *</span>
 <a name="l00004"></a>00004 <span class="comment"> *</span>
@@ -179,63 +179,68 @@
 <a name="l00242"></a>00242     Idx&lt;double&gt; epsilons;
 <a name="l00243"></a>00243     Idx&lt;double&gt; ddeltax;
 <a name="l00244"></a>00244 
-<a name="l00246"></a>00246     <a class="code" href="classebl_1_1parameter.html#92abba748bf4b773fdb22a9d5c1acb52" title="constructor">parameter</a>(intg initial_size = 100);
-<a name="l00247"></a>00247     <span class="keyword">virtual</span> ~<a class="code" href="classebl_1_1parameter.html">parameter</a>();
-<a name="l00248"></a>00248 
-<a name="l00249"></a>00249     <span class="keyword">virtual</span> <span class="keywordtype">void</span> resize(intg s0);
-<a name="l00250"></a>00250     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1parameter.html#d8c2082d4f633b7b7bc3006fc957941f" title="update with gradient descent">update_gd</a>(<a class="code" href="classebl_1_1gd__param.html">gd_param</a> &amp;arg);
-<a name="l00251"></a>00251     <span class="keyword">virtual</span> <span class="keywordtype">void</span> update(<a class="code" href="classebl_1_1gd__param.html">gd_param</a> &amp;arg);
-<a name="l00252"></a>00252     <span class="keywordtype">void</span> clear_deltax();
-<a name="l00253"></a>00253     <span class="keywordtype">void</span> update_deltax(<span class="keywordtype">double</span> knew, <span class="keywordtype">double</span> kold);
-<a name="l00254"></a>00254     <span class="keywordtype">void</span> clear_ddeltax();
-<a name="l00255"></a>00255     <span class="keywordtype">void</span> update_ddeltax(<span class="keywordtype">double</span> knew, <span class="keywordtype">double</span> kold);
-<a name="l00256"></a>00256     <span class="keywordtype">void</span> set_epsilons(<span class="keywordtype">double</span> m);
-<a name="l00257"></a>00257     <span class="keywordtype">void</span> compute_epsilons(<span class="keywordtype">double</span> mu);
-<a name="l00258"></a>00258     <span class="keywordtype">bool</span> load(<span class="keyword">const</span> <span class="keywordtype">char</span> *s);
-<a name="l00259"></a>00259     <span class="keywordtype">void</span> save(<span class="keyword">const</span> <span class="keywordtype">char</span> *s);
-<a name="l00260"></a>00260   };
-<a name="l00261"></a>00261 
-<a name="l00264"></a><a class="code" href="classebl_1_1StateIdxLooper.html">00264</a>   <span class="keyword">class </span><a class="code" href="classebl_1_1StateIdxLooper.html">StateIdxLooper</a> : <span class="keyword">public</span> <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> {
-<a name="l00265"></a>00265   <span class="keyword">public</span>:
-<a name="l00266"></a>00266     IdxLooper&lt;double&gt; lx;
-<a name="l00267"></a>00267     IdxLooper&lt;double&gt; ldx;
-<a name="l00268"></a>00268     IdxLooper&lt;double&gt; lddx;
-<a name="l00269"></a>00269 
-<a name="l00271"></a>00271     <a class="code" href="classebl_1_1StateIdxLooper.html#7b96291703aeff7661f3b5d37ea57e3b" title="generic constructor loops over dimensin ld">StateIdxLooper</a>(<a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> &amp;s, <span class="keywordtype">int</span> ld);
-<a name="l00272"></a>00272     <span class="keyword">virtual</span> ~<a class="code" href="classebl_1_1StateIdxLooper.html">StateIdxLooper</a>();
-<a name="l00273"></a>00273 
-<a name="l00275"></a>00275     <span class="keywordtype">bool</span> <a class="code" href="classebl_1_1StateIdxLooper.html#7b27d716370b1018c40c6722b7ec86ed" title="return true if loop is over">notdone</a>();
-<a name="l00276"></a>00276 
-<a name="l00278"></a>00278     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1StateIdxLooper.html#3f816b39e4a79ffa238160d9cc99a423" title="increment to next item.">next</a>();
-<a name="l00279"></a>00279   };
-<a name="l00280"></a>00280 
-<a name="l00281"></a>00281 <span class="preprocessor">#define state_idx_eloop1(dst0,src0)                     \</span>
-<a name="l00282"></a>00282 <span class="preprocessor">  StateIdxLooper dst0(src0, (src0).x.order() - 1);      \</span>
-<a name="l00283"></a>00283 <span class="preprocessor">  for ( ; dst0.notdone(); dst0.next())</span>
-<a name="l00284"></a>00284 <span class="preprocessor"></span>
-<a name="l00285"></a>00285 <span class="preprocessor">#define state_idx_eloop2(dst0,src0,dst1,src1)                           \</span>
-<a name="l00286"></a>00286 <span class="preprocessor">  if ((src0).x.dim((src0).x.order() - 1) != (src1).x.dim((src1).x.order() - 1))\</span>
-<a name="l00287"></a>00287 <span class="preprocessor">    ylerror("incompatible state_idx for eloop\n");                      \</span>
-<a name="l00288"></a>00288 <span class="preprocessor">  StateIdxLooper dst0(src0,(src0).x.order()-1);                         \</span>
-<a name="l00289"></a>00289 <span class="preprocessor">  StateIdxLooper dst1(src1,(src1).x.order()-1);                         \</span>
-<a name="l00290"></a>00290 <span class="preprocessor">  for ( ; dst0.notdone(); dst0.next(), dst1.next())</span>
-<a name="l00291"></a>00291 <span class="preprocessor"></span>
-<a name="l00292"></a>00292 <span class="preprocessor">#define idxstate_eloop3(dst0,src0,dst1,src1,dst2,src2)                  \</span>
-<a name="l00293"></a>00293 <span class="preprocessor">  if (((src0).x.dim((src0).x.order() - 1)                               \</span>
-<a name="l00294"></a>00294 <span class="preprocessor">       != (src1).x.dim((src1).x.order() - 1))                           \</span>
-<a name="l00295"></a>00295 <span class="preprocessor">      || ((src0).x.dim((src0).x.order() - 1)                            \</span>
-<a name="l00296"></a>00296 <span class="preprocessor">          != (src2).x.dim((src2).x.order() - 1)))                       \</span>
-<a name="l00297"></a>00297 <span class="preprocessor">    ylerror("incompatible Idxs for eloop\n");                           \</span>
-<a name="l00298"></a>00298 <span class="preprocessor">  StateIdxLooper dst0(src0,(src0).x.order()-1);                         \</span>
-<a name="l00299"></a>00299 <span class="preprocessor">  StateIdxLooper dst1(src1,(src1).x.order()-1);                         \</span>
-<a name="l00300"></a>00300 <span class="preprocessor">  StateIdxLooper dst2(src2,(src2).x.order()-1);                         \</span>
-<a name="l00301"></a>00301 <span class="preprocessor">  for ( ; dst0.notdone(); dst0.next(), dst1.next(), dst2.next())</span>
-<a name="l00302"></a>00302 <span class="preprocessor"></span>
-<a name="l00303"></a>00303 } <span class="comment">// namespace ebl {</span>
-<a name="l00304"></a>00304 
-<a name="l00305"></a>00305 <span class="preprocessor">#endif </span><span class="comment">/* EBLSTATES_H_ */</span>
+<a name="l00246"></a>00246     <a class="code" href="classebl_1_1parameter.html#92abba748bf4b773fdb22a9d5c1acb52" title="initialize the parameter with size initial_size.">parameter</a>(intg initial_size = 100);
+<a name="l00247"></a>00247 
+<a name="l00249"></a>00249     <a class="code" href="classebl_1_1parameter.html#92abba748bf4b773fdb22a9d5c1acb52" title="initialize the parameter with size initial_size.">parameter</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *param_filename);
+<a name="l00250"></a>00250 
+<a name="l00252"></a>00252     <span class="keyword">virtual</span> <a class="code" href="classebl_1_1parameter.html#955a8a0809801989208f82be192b4ca4" title="destructor">~parameter</a>();
+<a name="l00253"></a>00253 
+<a name="l00254"></a>00254     <span class="keyword">virtual</span> <span class="keywordtype">void</span> resize(intg s0);
+<a name="l00255"></a>00255     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1parameter.html#d8c2082d4f633b7b7bc3006fc957941f" title="update with gradient descent">update_gd</a>(<a class="code" href="classebl_1_1gd__param.html">gd_param</a> &amp;arg);
+<a name="l00256"></a>00256     <span class="keyword">virtual</span> <span class="keywordtype">void</span> update(<a class="code" href="classebl_1_1gd__param.html">gd_param</a> &amp;arg);
+<a name="l00257"></a>00257     <span class="keywordtype">void</span> clear_deltax();
+<a name="l00258"></a>00258     <span class="keywordtype">void</span> update_deltax(<span class="keywordtype">double</span> knew, <span class="keywordtype">double</span> kold);
+<a name="l00259"></a>00259     <span class="keywordtype">void</span> clear_ddeltax();
+<a name="l00260"></a>00260     <span class="keywordtype">void</span> update_ddeltax(<span class="keywordtype">double</span> knew, <span class="keywordtype">double</span> kold);
+<a name="l00261"></a>00261     <span class="keywordtype">void</span> set_epsilons(<span class="keywordtype">double</span> m);
+<a name="l00262"></a>00262     <span class="keywordtype">void</span> compute_epsilons(<span class="keywordtype">double</span> mu);
+<a name="l00263"></a>00263 
+<a name="l00265"></a>00265     <span class="keywordtype">bool</span> <a class="code" href="classebl_1_1parameter.html#021d55e6145a9fd32caee8e26517978b" title="load a parameter file into the x component.">load_x</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *param_filename);
+<a name="l00266"></a>00266 
+<a name="l00268"></a>00268     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1parameter.html#2c6367b0df711d547f9c5a0b354c6472" title="save the x component to a file.">save_x</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *param_filename);
+<a name="l00269"></a>00269   };
+<a name="l00270"></a>00270 
+<a name="l00273"></a><a class="code" href="classebl_1_1StateIdxLooper.html">00273</a>   <span class="keyword">class </span><a class="code" href="classebl_1_1StateIdxLooper.html">StateIdxLooper</a> : <span class="keyword">public</span> <a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> {
+<a name="l00274"></a>00274   <span class="keyword">public</span>:
+<a name="l00275"></a>00275     IdxLooper&lt;double&gt; lx;
+<a name="l00276"></a>00276     IdxLooper&lt;double&gt; ldx;
+<a name="l00277"></a>00277     IdxLooper&lt;double&gt; lddx;
+<a name="l00278"></a>00278 
+<a name="l00280"></a>00280     <a class="code" href="classebl_1_1StateIdxLooper.html#7b96291703aeff7661f3b5d37ea57e3b" title="generic constructor loops over dimensin ld">StateIdxLooper</a>(<a class="code" href="classebl_1_1state__idx.html" title="class that stores a vector/tensor state">state_idx</a> &amp;s, <span class="keywordtype">int</span> ld);
+<a name="l00281"></a>00281     <span class="keyword">virtual</span> ~<a class="code" href="classebl_1_1StateIdxLooper.html">StateIdxLooper</a>();
+<a name="l00282"></a>00282 
+<a name="l00284"></a>00284     <span class="keywordtype">bool</span> <a class="code" href="classebl_1_1StateIdxLooper.html#7b27d716370b1018c40c6722b7ec86ed" title="return true if loop is over">notdone</a>();
+<a name="l00285"></a>00285 
+<a name="l00287"></a>00287     <span class="keywordtype">void</span> <a class="code" href="classebl_1_1StateIdxLooper.html#3f816b39e4a79ffa238160d9cc99a423" title="increment to next item.">next</a>();
+<a name="l00288"></a>00288   };
+<a name="l00289"></a>00289 
+<a name="l00290"></a>00290 <span class="preprocessor">#define state_idx_eloop1(dst0,src0)                     \</span>
+<a name="l00291"></a>00291 <span class="preprocessor">  StateIdxLooper dst0(src0, (src0).x.order() - 1);      \</span>
+<a name="l00292"></a>00292 <span class="preprocessor">  for ( ; dst0.notdone(); dst0.next())</span>
+<a name="l00293"></a>00293 <span class="preprocessor"></span>
+<a name="l00294"></a>00294 <span class="preprocessor">#define state_idx_eloop2(dst0,src0,dst1,src1)                           \</span>
+<a name="l00295"></a>00295 <span class="preprocessor">  if ((src0).x.dim((src0).x.order() - 1) != (src1).x.dim((src1).x.order() - 1))\</span>
+<a name="l00296"></a>00296 <span class="preprocessor">    ylerror("incompatible state_idx for eloop\n");                      \</span>
+<a name="l00297"></a>00297 <span class="preprocessor">  StateIdxLooper dst0(src0,(src0).x.order()-1);                         \</span>
+<a name="l00298"></a>00298 <span class="preprocessor">  StateIdxLooper dst1(src1,(src1).x.order()-1);                         \</span>
+<a name="l00299"></a>00299 <span class="preprocessor">  for ( ; dst0.notdone(); dst0.next(), dst1.next())</span>
+<a name="l00300"></a>00300 <span class="preprocessor"></span>
+<a name="l00301"></a>00301 <span class="preprocessor">#define idxstate_eloop3(dst0,src0,dst1,src1,dst2,src2)                  \</span>
+<a name="l00302"></a>00302 <span class="preprocessor">  if (((src0).x.dim((src0).x.order() - 1)                               \</span>
+<a name="l00303"></a>00303 <span class="preprocessor">       != (src1).x.dim((src1).x.order() - 1))                           \</span>
+<a name="l00304"></a>00304 <span class="preprocessor">      || ((src0).x.dim((src0).x.order() - 1)                            \</span>
+<a name="l00305"></a>00305 <span class="preprocessor">          != (src2).x.dim((src2).x.order() - 1)))                       \</span>
+<a name="l00306"></a>00306 <span class="preprocessor">    ylerror("incompatible Idxs for eloop\n");                           \</span>
+<a name="l00307"></a>00307 <span class="preprocessor">  StateIdxLooper dst0(src0,(src0).x.order()-1);                         \</span>
+<a name="l00308"></a>00308 <span class="preprocessor">  StateIdxLooper dst1(src1,(src1).x.order()-1);                         \</span>
+<a name="l00309"></a>00309 <span class="preprocessor">  StateIdxLooper dst2(src2,(src2).x.order()-1);                         \</span>
+<a name="l00310"></a>00310 <span class="preprocessor">  for ( ; dst0.notdone(); dst0.next(), dst1.next(), dst2.next())</span>
+<a name="l00311"></a>00311 <span class="preprocessor"></span>
+<a name="l00312"></a>00312 } <span class="comment">// namespace ebl {</span>
+<a name="l00313"></a>00313 
+<a name="l00314"></a>00314 <span class="preprocessor">#endif </span><span class="comment">/* EBLSTATES_H_ */</span>
 </pre></div></div>
-<hr size="1"><address style="text-align: right;"><small>Generated on Thu Feb 26 18:53:41 2009 for libeblearn by&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generated on Mon Mar 30 18:15:26 2009 for libeblearn by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>
