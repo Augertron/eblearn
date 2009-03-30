@@ -1,5 +1,6 @@
 <html>
   <head>
+    <title>EBLearn: libeblearn Tutorial</title>
     <link rel="stylesheet" href="../../web/main.css" type="text/css" 
 	  media="screen">
     <link rel="stylesheet" href="../../web/index_004.css" type="text/css" 
@@ -8,6 +9,8 @@
 	  media="all">
   </head>
   <body>
+    <!--#include virtual="../../nav.html" --> 
+
     <div id="globalWrapper">
       <h1 id="firstHeading" class="firstHeading"><b>libeblearn tutorial:</b> energy-based learning in C++</h1>
       <h3 id="siteSub">By <a href="http://sermanet.free.fr">Pierre Sermanet</a> and <a href="http://yann.lecun.com/">Yann LeCun</a> (New York University)</h3><br><br>

@@ -1,13 +1,20 @@
 <html>
   <head>
-    <title>Eblearn project homepage</title>
+    <title>EBLearn: Energy-Based Learning, a C++ Machine Learning Library</title>
     <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-    <link rel="stylesheet" href="web/main.css" type="text/css" media="screen">
-    <link rel="stylesheet" href="web/index_004.css" type="text/css" 
-	  media="screen">
-    <link rel="stylesheet" type="text/css" href="web/styles.css" media="all">
- </head>
- <body>
+    <link rel="stylesheet" href="http://eblearn.sourceforge.net/web/main.css" 
+	  type="text/css" media="screen">
+    <link rel="stylesheet" 
+	  href="http://eblearn.sourceforge.net/web/index_004.css" 
+	  type="text/css" media="screen">
+    <link rel="stylesheet" type="text/css" 
+	  href="http://eblearn.sourceforge.net/web/styles.css" media="all">
+    <link rel="shortcut icon" 
+	  href="http://eblearn.sourceforge.net/web/logo2.ico">
+  </head>
+  <body>
+    <!--#include virtual="nav.html" --> 
+
     <div id="globalWrapper">
      <h2>What is the eblearn project ?</h2>
 
@@ -65,4 +72,5 @@ learning lab, led by <a href="http://yann.lecun.com/">Yann Lecun</a>. You can fi
      </ul>
  
    </div>
+
    </body></html>
