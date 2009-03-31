@@ -45,8 +45,239 @@
       <p>What is the energy-based learning?</p>
 
       <a name="modarchi"></a>
-      <h2>Modular architecture</h2>
-      <p>Eblearn was designed modular.</p>
+      <h2>Modular Architecture and Building Blocks</h2>
+      <p>Eblearn was designed to be modular so that any module can be
+	arranged is different ways with other modules to form
+	different layers and different machines. There are 2 main
+	types of modules
+	(declared in <a href="../../documentation/libeblearn_html/EblArch_8h-source.html">EblArch.h</a>):
+	<ul>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1module__1__1.html">module_1_1</a>: a module with 1 input and 1 output.</li>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1module__2__1.html">module_2_1</a>: a module with 2 inputs and 1 output.</li>
+	</ul></p>
+      <p>Each module derives from one of those two base classes and
+	implements the fprop, bprop, bbprop and forget methods:
+	<ul>
+	  <li><strong>fprop:</strong> the
+	    forward-propagation method which propagates the input(s) through
+	    the module to the output. In the rest of this tutorial, a
+	    module will usually be described by what its fprop method does.</li>
+	  <li><strong>bprop:</strong> the backward-propagation method which
+	  propagates back the output though the module and the
+	  input(s). This method usually updates the parameters to be
+	  learned inside the module using for example derivatives, and
+	  also propagates derivatives to the input of the module so
+	  that preceding modules can also be back-propagated.</li>
+	  <li><strong>bbprop:</strong> the second-order
+	  backward-propagation 
+	  method. In the case of the Lenet networks for example, this
+	  is used to compute second-order derivatives and adapt
+	  learning rates accordingly for each parameter to speed-up
+	  the learning process.</li>
+	  <li><strong>forget:</strong> initializes the weights of the
+	  modules to random, based on a forget_param_linear object.</li>
+	</ul>
+      </p>
+
+      <p>We will describe below some modules and show how they are
+      combined with other modules. We first describe a few basic
+      modules that are used to form 
+      layers that are again used to form machines. Note that all the
+      modules that we are describing (basic modules, layers and
+      machines) derive from module_1_1 or
+      module_2_1 which means that you can write and combine your own
+      modules in your own ways, which are not restricted to the way we
+      describe here.
+      
+      <h3>Basic module examples</h3>
+      <h4>constant addition, linear, convolution and subsampling modules</h3>
+      <p>Those basic modules (found
+      in <a href="../..//documentation/libeblearn_html/EblBasic_8h-source.html">EblBasic.h</a>)
+      are used in the LeNet architecture to perform the basic
+      operations:
+	<ul>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1addc__module.html">addc_module</a>:
+	  this module adds a constant to each element of the input and
+	  puts the result in the output.
+	  </li>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1linear__module.html">linear_module</a>: this module does a linear combination of the
+	  input and its internal weights and puts the result in the output.
+	  </li>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1convolution__module__2D.html">convolution_module_2D</a>:
+	  convolves 2D input (dimensions 1 and 2, dimension 0 may have
+	  a size more than 1) using the internal weights as kernels
+	  and puts the result in the output. 
+	  </li>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1subsampling__module__2D.html">subsampling_module_2D</a>:
+	  subsamples 2D input (dimensions 1 and 2) and puts the result
+	  in the output.
+	  </li>
+	</ul>
+      </p>
+
+      <h4>non-linear modules</h3>
+      <p>These modules (<a href="../../documentation/libeblearn_html/EblNonLinearity_8h-source.html">EblNonLinearity.h</a>) perform non-linear operations:
+	<ul>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1tanh__module.html">tanh_module</a>:
+	  applies the hyperbolic tangent function on the input and
+	  puts the result in the output.
+	  </li>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1stdsigmoid__module.html">stdsigmoid_module</a>:
+	  applies the standard sigmoid function on the input and
+	  puts the result in the output.
+	  </li>
+	</ul>
+      </p>
+
+      <h3>Layer examples</h3>
+      <p>These layers
+      (<a href="../../documentation/libeblearn_html/EblLayers_8h-source.html">EblLayers.h</a>)
+      are built by stacking the basic modules
+      described previously on top of each other to form more
+      complicated operations:
+	<ul>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1nn__layer__full.html">nn_layer_full</a>:
+	  a fully-connected layer which performs a linear combination
+	  of the input and the internal weights, adds a bias and
+	  applies a sigmoid. As always, the result is put in the
+	  output. This layer is build by stacking up a
+	  linear_module_replicable
+	  (see <a href="#replicability">Replicability</a>), 
+	  an addc_module and a tanh_module.
+	  </li>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1nn__layer__convolution.html">nn_layer_convolution</a>:
+	  a convolution layer which performs a 2D convolution
+	  on the input, adds a bias and 
+	  applies a sigmoid, putting the result in the output. This
+	  layer is build by stacking up a convolution_module_2D_replicable, 
+	  an addc_module and a tanh_module.
+	  </li>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1nn__layer__subsampling.html">nn_layer_subsampling</a>:
+	  a subsampling layer which subsamples the input, adds a bias and
+	  applies a sigmoid, putting the results in the output. This
+	  layer is build by stacking up a subsampling_module_2D_replicable, 
+	  an addc_module and a tanh_module.
+	  </li>
+	</ul>
+      </p>
+
+      <h3>Machine examples</h3>
+      <p>Like the layers are built by assembling basic modules,
+      machines
+      (<a href="../../documentation/libeblearn_html/EblLayers_8h-source.html">EblMachines.h</a>)
+      can be built by assembling layers together, for instance the
+      following machines:
+
+
+      <div class="thumb tright">
+      <div class="thumbinner" style="width:377px;"><a href="img/train_machine.png" class="image" title="train_machine"><img alt="" src="img/train_machine.png" width="377" border="0" class="thumbimage" /></a>
+	<div class="thumbcaption">Overview of the architecture of the
+	supervised_euclidean_machine, a module_2_1 (2 inputs and 1
+	output) that combine many module_1_1 (1 input and 1 output)
+	modules and one module_2_1, the euclidean_module. This
+	architecture is useful during the training phase where the
+	bprop method is called, whereas during the testing phase
+	only the lenet7 block will be used and only the fprop method
+	will be called.</div></div></div>
+
+
+	<ul>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1nn__machine__cscscf.html">nn_machine_cscscf</a>:
+	  a LeNet type machine which calls in order the following
+	  layers: convolution (c), subsampling (s), convolution (c),
+	  subsampling (s), convolution (c) and finally a
+	  fully-connected layer (f). This machine is parametrized by
+	  the size of the input, the sizes of the convolution and
+	  subsampling kernels, the size of the fully connected layer
+	  output and the number of outputs. 
+	  </li>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1lenet5.html">lenet5</a>:
+	    this machine is a nn_machine_cscscf with a particular
+	    configuration, it takes a 32x32 input, then applies 5x5
+	    convolution kernels, 2x2 subsampling kernels, 5x5
+	    convolutions, 2x2 subsamplings, 1x1 convolutions and full
+	    connections between a 120-dimensional input to 10 outputs.
+	    This specific network is used for the 10-digits handwriten
+	    caracters recognition
+	    (see <a href="../../demos/mnist/index.shtml">MNIST demo</a>). 
+	  </li>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1lenet7.html">lenet7</a>:
+	    similarly to lenet5, this machine is a nn_machine_cscscf
+	    with a particular 
+	    configuration. It takes a 96x96 input, then applies 5x5
+	    convolution kernels, 4x4 subsampling kernels, 6x6
+	    convolutions, 3x3 subsamplings, 6x6 convolutions and full
+	    connections between a 100-dimensional input to 5 outputs.
+	    This network was specifically designed for
+	    the <a href="../../demos/norb/index.shtml">NORB demo</a>
+	    but can be an inspiration for similar object recognition tasks.
+	  </li>
+
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1lenet7__binocular.html">lenet7_binocular</a>:
+	    This network is almost identical to lenet7 except that it
+	    accepts stereoscopic images as input.
+	  </li>
+	</ul>
+      </p>
+      
+      <div class="thumbinner" style="width:500px;"><a href="img/lenet7.png" class="image" title="lenet7"><img alt="" src="img/lenet7.png" width="500" border="0" class="thumbimage" /></a>
+	<div class="thumbcaption">The lenet7_binocular neural network
+	architecture: there are 2 stereoscopic 96x96 images as input,
+	5x5 convolutions are performed, then 4x4 subsampling, 6x6
+	convolutions, 3x3 subsampling, 6x6 convolutions and full
+	connections to the 5 outputs.</div></div>
+
+      <h3>Trainable machines</h3>
+      <p>The modules described in the previous sections need to be
+	encapsulated in a module_2_1 with a loss function modules in
+	order to be trained supervised. For example, to train the
+	nn_machine_cscscf machines, we combine it with a euclidean cost module:
+	<ul>
+	  <li><a href="../../documentation/libeblearn_html/classebl_1_1supervised__euclidean__machine.html">supervised_euclidean_machine</a>:
+	    a module_2_1 machine containing a module_1_1 (in the NORB
+	    demo case a lenet7 machine) and a euclidean_module. Thus
+	    this machines takes an input which is propagated in the
+	    module_1_1 and a groundtruth label as second input. The
+	    output of the module_1_1 is then compared to the
+	    groundtruth using the euclidean_module which takes the
+	    squared distance between the output and the groundtruth.
+	    During the training phase, the weights are then modified
+	    based on the gradient of the error in the back-propagation process.
+	  </li>
+	</ul>
+      </p>
+
+      <a name="replicability"></a>
+      <h3>Module Replicability</h3>
+      <p>Modules usually operate on a specific number of dimensions, for
+	example the convolution_module_2D only accepts inputs with 3
+	dimensions (because it applies 2D convolution on dimensions 1 and
+	2, dimension 0 is used according to a connection table). Thus if
+	extra dimensions are present (e.g. 4D or 5D)
+	one might want to loop over the extra dimensions and call the
+	convolution_module_2 on each 3D subsets. We call this
+	replicability because the module is replicated over the 3rd and
+	4th dimensions (the output also has 2 extra dimensions).
+      </p> 
+      <p>To make a module replicable, use the
+	DECLARE_REPLICABLE_MODULE_1_1 macro
+	(in <a href="../../documentation/libeblearn_html/EblArch_8h-source.html">EblArch.h</a>).
+	It will automatically declare
+	your module_1_1 as replicable and loop over extra
+	dimensions if present. For example, here is the code to
+	declare the convolution_module_2D as replicable:
+
+	<div id="vc_markup"><pre>
+DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable, 
+                              linear_module,
+                              (parameter &p, intg in, intg out),
+                              (p, in, out));</div></pre>
+	where <i>linear_module_replicable</i> is the name of the new module,
+	<i>linear_module</i> is the name of the base
+	module, <i>(parameter &p, intg in, intg out)</i> is the
+	prototype of the parameters to the constructor of the module
+	and <i>(p, in, out)</i> the parameters themselves.
+      </p>
 
       <a name="suplearning"></a>
       <h1>Supervised Learning</h1>
