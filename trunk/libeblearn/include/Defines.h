@@ -50,16 +50,6 @@
 #define DEBUG(s,d)
 #endif
 
-// TODO: should be changed to throwing
-// an exception or something.
-// void ylerror(const char *s);
-#define ylerror(s) {						\
-    std::cerr << "\033[1;31mException:\033[0m " << s;		\
-    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
-    std::cerr << ":" << __LINE__ << std::endl;			\
-    abort();							\
-  }
-
 #define err_not_implemented() {						\
     ylerror("member function not implemented for this class"); }
 

@@ -26,6 +26,13 @@
 	    <ul>
 	      <li><a href="#eblearning">Energy-Based Learning</li>
 	      <li><a href="#modarchi">Modular Architecture</li>
+	      <ul>
+		<li><a href="#basic_modules">Basic Modules</a></li>
+		<li><a href="#layer_modules">Layer Modules</a></li>
+		<li><a href="#machine_modules">Machine Modules</a></li>
+		<li><a href="#trainable_machine_modules">
+		    Trainable Machine Modules</a></li>
+	      </ul>
 	      <li><a href="#suplearning">Supervised Learning</li>
 	      <ul>
 		<li><a href="#sup_build_dataset">1. Build your Dataset</a></li>
@@ -78,10 +85,18 @@
 	  modules to random, based on a forget_param_linear object.</li>
 	</ul>
       </p>
+      <p>Note that the type of inputs and outputs the modules
+      accept are <i>state_idx</i> objects which are temporary buffers
+      containing the results of a module's processing. For example, an
+      fprop call will fill the <i>x</i> slot of the
+      output <i>state_idx</i>, whereas a bprop call will fill
+      the <i>dx</i> slot of the input <i>state_idx</i> (using
+      the <i>dx</i> slot of the output <i>state_idx</i>).
+      </p>
 
-      <p>We will describe below some modules and show how they are
-      combined with other modules. We first describe a few basic
-      modules that are used to form 
+      <p>Next we describe some modules and show how they are
+      combined with other modules. We first talk about a few basic
+      modules, which are then used to form 
       layers that are again used to form machines. Note that all the
       modules that we are describing (basic modules, layers and
       machines) derive from module_1_1 or
@@ -89,6 +104,7 @@
       modules in your own ways, which are not restricted to the way we
       describe here.
       
+      <a name="basic_modules"></a>
       <h3>Basic module examples</h3>
       <h4>constant addition, linear, convolution and subsampling modules</h3>
       <p>Those basic modules (found
@@ -129,7 +145,8 @@
 	</ul>
       </p>
 
-      <h3>Layer examples</h3>
+      <a name="layer_modules"></a>
+      <h3>Layer module examples</h3>
       <p>These layers
       (<a href="../../documentation/libeblearn_html/EblLayers_8h-source.html">EblLayers.h</a>)
       are built by stacking the basic modules
@@ -161,7 +178,8 @@
 	</ul>
       </p>
 
-      <h3>Machine examples</h3>
+      <a name="machine_modules"></a>
+      <h3>Machine module examples</h3>
       <p>Like the layers are built by assembling basic modules,
       machines
       (<a href="../../documentation/libeblearn_html/EblLayers_8h-source.html">EblMachines.h</a>)
@@ -170,7 +188,10 @@
 
 
       <div class="thumb tright">
-      <div class="thumbinner" style="width:377px;"><a href="img/train_machine.png" class="image" title="train_machine"><img alt="" src="img/train_machine.png" width="377" border="0" class="thumbimage" /></a>
+      <div class="thumbinner" style="width:377px;">
+	<a href="img/train_machine.png" class="image" title="train_machine">
+	  <img src="img/train_machine_small.png" width="377" border="0" class="thumbimage" />
+	</a>
 	<div class="thumbcaption">Overview of the architecture of the
 	supervised_euclidean_machine, a module_2_1 (2 inputs and 1
 	output) that combine many module_1_1 (1 input and 1 output)
@@ -178,7 +199,9 @@
 	architecture is useful during the training phase where the
 	bprop method is called, whereas during the testing phase
 	only the lenet7 block will be used and only the fprop method
-	will be called.</div></div></div>
+	will be called. Note that state_idx::x are temporary buffers
+	containing outputs of fprops in between modules and
+	state_idx::dx contain outputs of bprops.</div></div></div> 
 
 
 	<ul>
@@ -220,14 +243,17 @@
 	</ul>
       </p>
       
-      <div class="thumbinner" style="width:500px;"><a href="img/lenet7.png" class="image" title="lenet7"><img alt="" src="img/lenet7.png" width="500" border="0" class="thumbimage" /></a>
+      <div class="thumbinner" style="width:500px;">
+	<a href="img/lenet7.png" class="image" title="lenet7">
+	  <img alt="" src="img/lenet7.png" width="500" border="0" class="thumbimage" /></a>
 	<div class="thumbcaption">The lenet7_binocular neural network
 	architecture: there are 2 stereoscopic 96x96 images as input,
 	5x5 convolutions are performed, then 4x4 subsampling, 6x6
 	convolutions, 3x3 subsampling, 6x6 convolutions and full
 	connections to the 5 outputs.</div></div>
 
-      <h3>Trainable machines</h3>
+      <a name="trainable_machine_modules"></a>
+      <h3>Trainable machine modules</h3>
       <p>The modules described in the previous sections need to be
 	encapsulated in a module_2_1 with a loss function modules in
 	order to be trained supervised. For example, to train the
