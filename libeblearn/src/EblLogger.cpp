@@ -33,7 +33,7 @@
 
 #ifdef __GUI__
 #include "libidxgui.h"
-#define cout gui
+//#define cout gui
 #endif 
 
 using namespace std;
