@@ -187,12 +187,13 @@
       following machines:
 
 
+      <a name="figb"></a>
       <div class="thumb tright">
       <div class="thumbinner" style="width:377px;">
 	<a href="img/train_machine.png" class="image" title="train_machine">
 	  <img src="img/train_machine_small.png" width="377" border="0" class="thumbimage" />
 	</a>
-	<div class="thumbcaption">Overview of the architecture of the
+	<div class="thumbcaption">b. Overview of the architecture of the
 	supervised_euclidean_machine, a module_2_1 (2 inputs and 1
 	output) that combine many module_1_1 (1 input and 1 output)
 	modules and one module_2_1, the euclidean_module. This
@@ -243,10 +244,11 @@
 	</ul>
       </p>
       
+      <a name="figa"></a>
       <div class="thumbinner" style="width:500px;">
 	<a href="img/lenet7.png" class="image" title="lenet7">
 	  <img alt="" src="img/lenet7.png" width="500" border="0" class="thumbimage" /></a>
-	<div class="thumbcaption">The lenet7_binocular neural network
+	<div class="thumbcaption">a. The lenet7_binocular neural network
 	architecture: there are 2 stereoscopic 96x96 images as input,
 	5x5 convolutions are performed, then 4x4 subsampling, 6x6
 	convolutions, 3x3 subsampling, 6x6 convolutions and full
@@ -310,7 +312,7 @@ DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable,
       <p>Eblearn provides supervised learning algorithms as well as semi-supervised and unsupervised ones. They can be used independently or combined, we will focus on supervised algorithms only in this section.</p>
 
       <a name="sup_build_dataset"></a>
-      <h2>1. build your dataset</h2>
+      <h2>1. Build your dataset</h2>
       <h3>What data should you provide to the network?</h3>
       <h3>Creating datasets from image directories</h3>
       <p>Once you have grouped all your images in different directories for each class, call imageDirToIdx() to transform them into a dataset object (a matrix of images with their corresponding label). This function will extract the label information from the file directory structure: at the source level, each directory is a class named after the directory name. Then all images found in subdirectories (regardless of their names or hierarchy) are assigned the same label and are added to the dataset.
@@ -360,15 +362,172 @@ img01.png  img02.png</pre></div>
       <p></p>
       
       <a name="sup_build_nn"></a>
-      <h2>2. build your network</h2>
-
+      <h2>2. Build your network</h2>
+      <p>The eblearn neural networks are build by combining modules
+	together as introduced at the beginning of this
+	tutorial. Depending on your application, you may want to write
+	your own modules or combine already existing modules in
+	different ways. For example for simple applications (See
+	Perceptron demo), you may want to have just one fully-connected
+	layer in your machine. For more complex tasks, some
+	architectures are already built-in, such as the lenet5 and
+	lenet7 architectures. The lenet5 and lenet7 classes derive from
+	the nn_machine_cscscf class and only specify specific sizes for
+	the input, kernels and outputs. As
+	described <a href="#machine_modules">earlier</a>,  the lenet5
+	architecture is capable of learning handwritten caracter
+	recognition (10 categories) while the lenet7 was used for object
+	recognition (5 categories).
+      </p>
+      <p>Your application will probably be different than the MNIST or
+	NORB applications but if your goal is object recognition you
+	want to reuse the nn_machine_cscscf class and the lenet5
+	or lenet7 parameters but change a few of them (See the
+	<a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/trunk/libeblearn/src/EblMachines.cpp?view=markup"
+	target="_blank">constructors
+	of lenet5 and lenet7</a> for more details). The main 
+	changes you will have to do are:
+	<ul>
+	  <li><strong>number of outputs</strong>: for MNIST this is
+	    equal to 10 and for NORB it is 
+	    5. If you attempt to build a system that can recognize 15
+	    different categories, this value will be 15.</li>
+	  <li><strong>size of the input</strong>: this is 1x32x32 for
+	    MNIST, 1x96x96 for NORB and 
+	    2x96x96 for the binocular version of NORB. If you have
+	    multiple channels (e.g. RGB, YUV or binocular greyscale
+	    inputs), you may have to rework the connection table
+	    between the input and the first convolution layer.</li>
+	  <li><strong>connection tables</strong>: if there is no
+	    pre-configured network with the same number of input channels as
+	    you do, you have to modify the connection table with the
+	    first layer. In nn_machine_cscscf, this table is
+	    the <i>table0</i> object in the constructors in <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/trunk/libeblearn/src/EblMachines.cpp?view=markup"
+	target="_blank">EblMachines.cpp</a>. It specifies which input
+	    channels will be convolved into which feature map. For
+	    example in lenet7, it's a full table of size 6 because the
+	    only greyscale channel is connected to all 6 features maps of
+	    the first convolution. Whereas in lenet7_binocular, we
+	    have 2 channels as input and each of the 12 feature maps may receive
+	    only 1 channel output ({0, 0}, {0, 1}, {1, 2}, {1, 3}) or
+	    combine both ({0, 4}, {1, 4}, {0, 5}, {1, 5}, {0, 6}, {1,
+	    6}, {0, 7}, {1, 7}). {1, 2} means that the channel 1 of
+	    the input is processed through the convolution layer and
+	    put in the 2nd feature map. Similarly, {0, 7} and {1, 7}
+	    mean that both channels of the input are combined into the
+	    7th feature map of the first layer.
+	  </li>
+	  <li><strong>sizes of kernels</strong>: depending on the
+	  complexity of the tasks, you may want to increase or
+	  decreases the sizes of the kernels (convolution or
+	  subsampling kernels), again specified in the constructors of
+	  the nn_machine_cscscf machines. Those sizes determine the
+	  number of parameters to learn in your network. The more
+	  complex, the more parameters are necessary.</li>
+	</ul>
+      </p>
+      <p>Remember that once you chose your network parameters and
+      trained your network, you have to reuse the exact same
+      parameters when running it. The trained network will be saved in
+      a single parameter file and to be reused correctly it needs to
+      be loaded with the exact same network it was trained with.</p>
+      <p>You now have your dataset and a network architecture, you are
+      ready to train it.</p>
+	
       <a name="sup_train_nn"></a>
-      <h2>3. train your network</h2>
+      <h2>3. Train your network</h2>
+      <h3>a. Make your network trainable</h3>
+      <p>First you need to make your network trainable. Currently it is a
+	module_1_1 object (as shown in <a href="#figb">figure b</a>)
+	that is not trainable but only runable (e.g. lenet7). To make
+	it trainable, you need to encapsulate it in a module_2_1 with
+	a loss function module which will compute an error distance to
+	the target label (e.g. plane label) so that the network knows
+	how much it should correct its weights in order to give the
+	right answer.</p>
+      <p>For instance,
+	the <a href="../../documentation/libeblearn_html/classebl_1_1supervised__euclidean__machine.html">supervised_euclidean_machine</a>
+	class is a module_2_1 object that takes a module_1_1 in its
+	constructor and the output targets for each output class. 
+	When presented with an input image and a label, it computes
+	the network output (energies) via the fprop method and computes the
+	euclidean distance between the network output and the target
+	output. Then to learn from the errors, the bprop method is
+	called and backpropagates the gradients of the errors all the
+	way back through the network.	
+      </p>
+      <h3>b. Create a trainer</h3>
+      <p>The training procedure can be handled in the supervised case by
+	the  <a href="../../documentation/libeblearn_html/classebl_1_1supervised__trainer.html">supervised_trainer</a>
+	class. This class takes a trainable machine (a module_2_1) and
+	a <a href="../../documentation/libeblearn_html/DataSource_8h-source.html">LabeledDataSource</a> to train and test on the dataset.
+      </p>
+      <h3>c. Compute the second derivatives (bbprop)</h3>
+      <p>The second derivatives are used to set individual learning
+	rates for each parameter of the network, to help speed-up the
+	learning process and also improve the quality of the learning.
+	The second derivatives are computed over say a hundred
+	iterations once before starting the 
+	training. They are back-propagated through the bbprop
+	methodes.</p>
+      <p>To compute the second derivatives, call the
+	compute_diaghessian method of the trainer as follow:
+	<div id="vc_markup"><pre>
+thetrainer.compute_diaghessian(train_ds, iterations, 0.02);</pre></div>
+	where <i>train_ds</i> is your training
+	dataset, <i>iterations</i> is the number of iterations,
+	typically 100.
+
+      <h3>d. Train and test</h3>
+      After computing the second derivatives, you can iteratively train and test
+      the network. By testing the results on both the training and the
+      testing sets after each training iteration, you will get a sense
+      of the convergence of the training. Here is an example of
+      training for 100 iterations and displaying the training-set and
+      testing-set results at each step:
+
+      <div id="vc_markup"><pre>
+<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">100</span><span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
+    thetrainer<span class="hl sym">.</span><span class="hl kwd">train</span><span class="hl sym">(</span>train_ds<span class="hl sym">,</span> trainmeter<span class="hl sym">,</span> gdp<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">);</span>
+    cout <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;training: &quot;</span> <span class="hl sym">&lt;&lt;</span> flush<span class="hl sym">;</span>
+    thetrainer<span class="hl sym">.</span><span class="hl kwd">test</span><span class="hl sym">(</span>train_ds<span class="hl sym">,</span> trainmeter<span class="hl sym">,</span> infp<span class="hl sym">);</span>
+    trainmeter<span class="hl sym">.</span><span class="hl kwd">display</span><span class="hl sym">();</span>
+    cout <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot; testing: &quot;</span> <span class="hl sym">&lt;&lt;</span> flush<span class="hl sym">;</span>
+    thetrainer<span class="hl sym">.</span><span class="hl kwd">test</span><span class="hl sym">(</span>test_ds<span class="hl sym">,</span> testmeter<span class="hl sym">,</span> infp<span class="hl sym">);</span>
+    testmeter<span class="hl sym">.</span><span class="hl kwd">display</span><span class="hl sym">();</span>
+  <span class="hl sym">}</span></pre></div>
+      </p>
+      <p>Here is a typical output of what you should see when training
+      your network:
+	    <pre>
+$ ./mnist /d/taf/data/mnist
+* MNIST demo: learning handwritten digits using the eblearn C++ library *
+Computing second derivatives on MNIST dataset: diaghessian inf: 0.985298 sup: 49.7398
+Training network on MNIST with 2000 training samples and 1000 test samples
+training: [ 2000]  size=2000  energy=0.19  correct=88.80%  errors=11.20%  rejects=0.00%
+ testing: [ 2000]  size=1000  energy=0.163  correct=90.50%  errors=9.50%  rejects=0.00%
+training: [ 4000]  size=2000  energy=0.1225  correct=93.25%  errors=6.75%  rejects=0.00%
+ testing: [ 4000]  size=1000  energy=0.121  correct=92.80%  errors=7.20%  rejects=0.00%
+training: [ 6000]  size=2000  energy=0.084  correct=95.45%  errors=4.55%  rejects=0.00%
+ testing: [ 6000]  size=1000  energy=0.098  correct=94.70%  errors=5.30%  rejects=0.00%
+training: [ 8000]  size=2000  energy=0.065  correct=96.45%  errors=3.55%  rejects=0.00%
+ testing: [ 8000]  size=1000  energy=0.095  correct=95.20%  errors=4.80%  rejects=0.00%
+training: [10000]  size=2000  energy=0.0545  correct=97.15%  errors=2.85%  rejects=0.00%
+ testing: [10000]  size=1000  energy=0.094  correct=95.80%  errors=4.20%  rejects=0.00%</pre>
+	</p>
 
       <a name="sup_run_nn"></a>
-      <h2>4. run your network</h2>
+      <h2>4. Run your network</h2>
       <h3>Multi-resolution detection: Classifier2D</h3>
-      <p>While the Trainer class takes a module_1_1 and trains it on a dataset, the Classifier2D class takes a trained network as input (loading a 'parameter' saved in an Idx file) to detect objects in images of any size and at different resolution. It resizes the input image to different sizes based on the passed resolutions parameters and applies the network at each scale. Finally, the values in the outputs of the network that are higher than a certain threshold will return a positive detection at the position in the image and a specific scale.</p>
+      <p>While the Trainer class takes a module_1_1 and trains it on a
+      dataset, the Classifier2D class takes a trained network as input
+      (loading a 'parameter' saved in an Idx file) to detect objects
+      in images of any size and at different resolution. It resizes
+      the input image to different sizes based on the passed
+      resolutions parameters and applies the network at each
+      scale. Finally, the values in the outputs of the network that
+      are higher than a certain threshold will return a positive
+      detection at the position in the image and a specific scale.</p> 
 	   
       <div id="vc_markup">
 <pre>// parameter, network and classifier
