@@ -1,3 +1,4 @@
 ADD_SUBDIRECTORY(mnist)
+ADD_SUBDIRECTORY(posture)
 #ADD_SUBDIRECTORY(facenet)
 #ADD_SUBDIRECTORY(sp_Doc_classifier)

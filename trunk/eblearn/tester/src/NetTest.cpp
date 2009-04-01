@@ -38,7 +38,7 @@ void NetTest::test_lenet5_mnist_ebl() {
   Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
 
   // create the network weights, network and trainer
-  IdxDim dims(train_ds.data); // get order and dimensions from data
+  IdxDim dims(train_ds.sample_dims()); // get order and dimensions of sample
   parameter theparam(60000); // create trainable parameter
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
