@@ -7,6 +7,10 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 int main(int argc, char **argv) {
   cout << "* MNIST demo: learning handwritten digits using the eblearn";
   cout << " C++ library *" << endl;
+  if (argc != 2) {
+    cout << "Usage: ./mnist <my mnist directory>" << endl;
+    ylerror("MNIST path not specified");
+  }
   init_drand(time(NULL)); // initialize random seed
 
   intg trsize = 60000; // maximum training set size: 60000
