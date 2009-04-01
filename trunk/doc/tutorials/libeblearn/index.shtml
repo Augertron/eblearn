@@ -39,6 +39,7 @@
 		<li><a href="#sup_build_nn">2. Build your Neural Network</a></li>
 		<li><a href="#sup_train_nn">3. Train your Network</a></li>
 		<li><a href="#sup_run_nn">4. Run your Network</a></li>
+		<li><a href="#sup_freading">Further Reading</a></li>
 	      </ul>
 	      <li><a href="#unsuplearning">Unsupervised Learning</li>
 	      <li><a href="#semisuplearning">Semi-supervised Learning</li>
@@ -50,6 +51,21 @@
       <a name="eblearning"></a>
       <h2>Energy-based learning</h2>
       <p>What is the energy-based learning?</p>
+      <p>More resources on energy-based models:
+	<ul>
+	  <li><a href="http://www.cs.nyu.edu/~yann/research/ebm/index.html">
+	      http://www.cs.nyu.edu/~yann/research/ebm/index.html</a>:
+	      tutorials, talks, videos and publications on EBMs.<li>
+	  <li><a href="http://yann.lecun.com/exdb/publis/index.html#lecun-06">[LeCun
+	  et al 2006]</a>: <strong>A Tutorial on Energy-Based Learning</strong>, in
+	  Bakir et al. (eds) "Predicting Structured Outputs", MIT
+	  Press 2006: a 60-page tutorial on energy-based learning,
+	  with an emphasis on structured-output models. The tutorial
+	  includes an annotated bibliography of discriminative
+	  learning, with a simple view of CRF, maximum-margin Markov
+	  nets, and graph transformer networks.</li>
+	</ul>
+      </p>
 
       <a name="modarchi"></a>
       <h2>Modular Architecture and Building Blocks</h2>
@@ -450,9 +466,10 @@ img01.png  img02.png</pre></div>
 	class is a module_2_1 object that takes a module_1_1 in its
 	constructor and the output targets for each output class. 
 	When presented with an input image and a label, it computes
-	the network output (energies) via the fprop method and computes the
+	the network output via the fprop method and computes the
 	euclidean distance between the network output and the target
-	output. Then to learn from the errors, the bprop method is
+	output. Then to learn from the errors (or minimize the
+	energies), the bprop method is 
 	called and backpropagates the gradients of the errors all the
 	way back through the network.	
       </p>
@@ -541,6 +558,46 @@ Classifier2D cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
 // find category of image
 Idx<double> res = cb.fprop(left.idx_ptr(), 1, 1.8, 60);</pre></div>
 
+      <a name="sup_freading"></a>
+      <h2>Further Reading</h2>
+      <p>Here are resources that might be helpful in understanding in
+	more details how the supervised convolutional neural networks
+	work:
+	<ul>
+	  <li><a href="http://yann.lecun.com/ex/research/index.html">
+	    http://yann.lecun.com/ex/research/index.html</a>: Yann
+	    LeCun's research in machine learning, contains many links
+	    to published papers about convolutional neural networks
+	    and applications.</li>
+	  <li><a href="http://yann.lecun.com/exdb/publis/index.html#lecun-98">[LeCun et al.,
+	  1998]</a>: <strong>Gradient-Based Learning Applied 
+	  to Document Recognition</strong> (Proc. IEEE 1998): A long
+	  and 
+	  detailed paper on convolutional nets, graph transformer
+	  networks, and discriminative training methods for sequence
+	  labeling. We show how to build systems that integrate
+	  segmentation, feature extraction, classification, contextual
+	  post-processing, and language modeling into one single
+	  learning machine trained end-to-end. Applications to
+	  handwriting recognition and face detection are
+	  described.</li>
+	  <li><a href="http://yann.lecun.com/exdb/publis/index.html#lecun-98b">[LeCun
+	  et al., 1998]</a>: <strong>Efficient 
+	  BackProp</strong>: all the tricks and the theory behind them
+	  to efficiently train neural networks with backpropagation,
+	  including how to compute the optimal learning rate, how to
+	  back-propagate second derivatives, and other sundries.</li> 
+	  <li><a href="http://yann.lecun.com/exdb/publis/index.html#selected">
+	      Yann LeCun's research</a></li>
+	  <li><a href="http://www.cs.nyu.edu/~yann/research/norb/index.html">The
+	  NORB project</a>: a 5-class object recognition system using
+	  supervised neural networks.</li>
+	  <li><a href="http://www.cs.nyu.edu/~yann/research/lagr/index.html">The
+	  LAGR project</a>: DARPA's Learning Applied to Ground Robots
+	  using supervised and unsupervised neural networks algorithms.</li>
+	</ul>
+      </p>
+	    
       <a name="unsuplearning"></a>
       <h1>Unsupervised Learning</h1>
 
