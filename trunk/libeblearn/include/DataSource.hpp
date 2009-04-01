@@ -108,7 +108,12 @@ namespace ebl {
   template<typename Tdata, typename Tlabel>
   IdxDim LabeledDataSource<Tdata,Tlabel>::sample_dims() {
     IdxDim d(data.select(0, 0));
-    return d;
+    IdxDim d2(data);
+    d2.setdim(0, 1);
+    if (data.order() == 3)
+      return d2;
+    else 
+      return d;
   }
 
 //   template<typename Tdata, typename Tlabel>
