@@ -108,6 +108,7 @@ namespace ebl {
       iteration_ptr = (void *) &ds;
     if (iteration_ptr == (void *) &ds)
       ++iteration;
+    cout << ds.name << ": iter# " << iteration << " ";
 #ifdef __GUI__
     unsigned int h = display_h0 + 35, w = display_w0, nh = 0, w01 = display_w0;
     unsigned int h2 = h, w2 = display_w0, w02 = display_w0, i2 = 0;
@@ -128,7 +129,9 @@ namespace ebl {
       w02 = display_w0 + (display_nw * (m.dim(1) + 2) + 10) * 2;
       w = w01;
       w2 = w02;
-      gui << cout_and_gui() << at(0, 0) << ds.name;
+      //      gui << cout_and_gui();
+      gui << gui_only();
+      gui << at(0, 0) << ds.name;
       gui << ": iter# " << iteration << " ";
       gui << gui_only();
       gui << at(display_h0 + 17, display_w0) << "Groundtruth";
@@ -136,8 +139,8 @@ namespace ebl {
       gui << at(display_h0 + 17, w02) << "Incorrect only";
       ds.display(display_nh, display_nw, h, display_w0, display_zoom,
 		 display_wid);
-    } else
-      cout << ds.name << ": iter# " << iteration << " ";
+    } 
+    //    else cout << ds.name << ": iter# " << iteration << " ";
 #endif
     for (int i = 0; i < ds.size(); ++i) {
       ds.fprop(*input, label);

@@ -40,9 +40,9 @@ int main(int argc, char **argv) {
   //testingSet = testingSet.select(3, 0);
 
   LabeledDataSource<float,int> train_ds(trainingSet, trainingLabels,
-					  0.0, 0.01, NULL, NULL);
+					0.0, 0.01, "Posture Training Set");
   LabeledDataSource<float,int> test_ds(testingSet, testingLabels,
-					  0.0, 0.01, NULL, NULL);
+				       0.0, 0.01, "Posture Testing Set");
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
@@ -89,14 +89,8 @@ int main(int argc, char **argv) {
   cout << " training samples and " << test_ds.size() << " test samples" << endl;
   for (int i = 0; i < 100; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
-    cout << endl;
-    cout << "training: " << flush << endl;
     thetrainer.test(train_ds, trainmeter, infp);
-    //    trainmeter.display();
-    cout << endl;
-    cout << "testing: " << flush << endl;
     thetrainer.test(test_ds, testmeter, infp);
-    //    testmeter.display();
   }
 
   // Store the trained conv-net to a file...
