@@ -1156,6 +1156,14 @@ namespace ebl {
 
 #endif // IF USING_STL_ITERS == 0
 
+  ////////////////////////////////////////////////////////////////
+  // IdxDim
+  
+  template <class T>
+  IdxDim::IdxDim(const Idx<T> &i) {
+    read(i.spec);
+  }
+  
 } // namespace ebl
 
 #endif

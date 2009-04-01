@@ -216,9 +216,7 @@ namespace ebl {
   void supervised_trainer<Tdata, Tlabel>::
   compute_diaghessian(LabeledDataSource<Tdata, Tlabel> &ds, intg niter, 
 		      double mu) {
-    IdxDim d(ds.data.spec);
-    if (!input) input = new state_idx(d);
-    else input->resize(d);
+    resize_input(ds);
     param.clear_ddeltax();
     for (int i = 0; i < niter; ++i) {
       ds.fprop(*input, label);
@@ -239,7 +237,7 @@ namespace ebl {
   template <class Tdata, class Tlabel>  
   void supervised_trainer<Tdata, Tlabel>::
   resize_input(LabeledDataSource<Tdata, Tlabel> &ds) {
-    IdxDim d(ds.data.spec);
+    IdxDim d = ds.sample_dims();
     if (!input) input = new state_idx(d);
     else input->resize(d);
   }

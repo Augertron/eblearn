@@ -38,7 +38,7 @@ void NetTest::test_lenet5_mnist_ebl() {
   Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
 
   // create the network weights, network and trainer
-  IdxDim dims(train_ds.data.spec); // get order and dimenions from data
+  IdxDim dims(train_ds.data); // get order and dimensions from data
   parameter theparam(60000); // create trainable parameter
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
@@ -129,10 +129,8 @@ void NetTest::test_lenet5_mnist() {
   train_labels = train_labels.narrow(0, trsize, 0);
   test_data = test_data.narrow(0, tesize, 5000 - (0.5 * tesize)); 
   test_labels = test_labels.narrow(0, tesize, 5000 - (0.5 * tesize));
-  MnistDataSource<ubyte,ubyte> test_ds(test_data, test_labels, 
-				       32, 32, 0.0, 0.01);
-  MnistDataSource<ubyte,ubyte> train_ds(train_data, train_labels, 
-					32, 32, 0.0, 0.01);
+  MnistDataSource<ubyte,ubyte> test_ds(test_data, test_labels, 0.0, 0.01);
+  MnistDataSource<ubyte,ubyte> train_ds(train_data, train_labels, 0.0, 0.01);
 	
   // number of classes
   intg nclasses = 10;

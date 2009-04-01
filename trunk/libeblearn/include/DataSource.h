@@ -83,6 +83,10 @@ namespace ebl {
     //! Returns the number of data instances contained in this data source.
     virtual int size();
 
+    //! Returns an IdxDim object describing the order (number of dimensions)
+    //! and the size of each dimension of a single sample outputed by fprop.
+    virtual IdxDim sample_dims();
+
     //! Returns the index of the datum currently pointed to.
     // TODO: implement or get rid of tell?
     virtual int tell() { return -1; };
@@ -103,6 +107,7 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  // MnistDataSource
 
   //! a data source appropriate for most learning algorithms
   //! that take input data in the form of an idx3
@@ -125,13 +130,16 @@ namespace ebl {
     //! the actual images will be centered.
     //! <bias> and <coeff> are used to shift and scale
     //! the values.
-    MnistDataSource(Idx<Tdata> &inp, Idx<Tlabel> &lbl,
-		    intg w, intg h, double b, double c, 
+    MnistDataSource(Idx<Tdata> &inp, Idx<Tlabel> &lbl, double b, double c, 
 		    const char *name = NULL);
     virtual ~MnistDataSource () {}
 
-    virtual void init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, intg w, intg h, 
+    virtual void init(Idx<Tdata> &inp, Idx<Tlabel> &lbl,
 		      double b, double c, const char *name);
+
+    //! Returns an IdxDim object describing the order (number of dimensions)
+    //! and the size of each dimension of a single sample outputed by fprop.
+    virtual IdxDim sample_dims();
 
     //! get the current item and copy the sample into
     //! <out> (an idx3-state) and the corresponding

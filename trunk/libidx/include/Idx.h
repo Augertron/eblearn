@@ -790,34 +790,32 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 #endif // if USING_STL_ITERS == 0
 
+  //! This class allows to extract dimensions information from existing Idx
+  //! objects in order to create other Idx objects with the same order without
+  //! knowning their order in advance. It does not allow to change the order
+  //! but one can modify the size of a particular dimension via the setdim 
+  //! method.
   class IdxDim {
   public:
+    // slots
     intg dim[MAXDIMS];
     intg ndim;
-    
-    //! Empty constructor
-    IdxDim() {
-      ndim = -1;
-    }
 
-    IdxDim(const IdxSpec &s) {
-      read(s);
-    }
+    //! Empty constructor.
+    IdxDim();
+    //! Create an IdxDim based on the information found in an IdxSpec.
+    IdxDim(const IdxSpec &s);
+    //! Create an IdxDim based on the information found in an Idx<T>.
+    template <class T> IdxDim(const Idx<T> &i);
 
-    void read(const IdxSpec &s) {
-      ndim = s.ndim;
-      memcpy(dim, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
-      // set remaining to -1
-      memset(dim + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg)); 
-    }
+    //! Change the dimensions dimn to size size.
+    void setdim(intg dimn, intg size);
 
-    void setdim(intg dimn, intg size) {
-      if (dimn >= ndim)
-	ylerror("cannot change the order of IdxDim");
-      dim[dimn] = size; 
-    }
+    //! Destructor.
+    virtual ~IdxDim();
 
-    virtual ~IdxDim() {};
+    //! Extract dimensions information from an IdxSpec
+    void read(const IdxSpec &s);
 
     // friends
     friend class IdxSpec;
