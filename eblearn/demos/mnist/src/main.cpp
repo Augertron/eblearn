@@ -58,12 +58,8 @@ int main(int argc, char **argv) {
   cout << " training samples and " << test_ds.size() << " test samples" << endl;
   for (int i = 0; i < 100; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
-    cout << "training: " << flush;
     thetrainer.test(train_ds, trainmeter, infp);
-    trainmeter.display();
-    cout << " testing: " << flush;
     thetrainer.test(test_ds, testmeter, infp);
-    testmeter.display();
   }
   return 0;
 }
