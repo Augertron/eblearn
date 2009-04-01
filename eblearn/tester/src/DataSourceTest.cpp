@@ -20,6 +20,7 @@ void DataSourceTest::tearDown() {
 }
 
 void DataSourceTest::test_LabeledDataSource() {
+  CPPUNIT_ASSERT_MESSAGE("TODO: fixme", false);
   const int ndata = 5;
 
   // Fill data with decreasing negative numbers
@@ -54,6 +55,7 @@ void DataSourceTest::test_LabeledDataSource() {
 
 // test function for mnist data source (requires special matrix header reading).
 void DataSourceTest::test_mnist_LabeledDataSource() {
+  CPPUNIT_ASSERT_MESSAGE("TODO: fixme", false);
   CPPUNIT_ASSERT_MESSAGE(*gl_mnist_errmsg, gl_mnist_dir != NULL);
   string datafile = *gl_mnist_dir;
   string labelfile = *gl_mnist_dir;
