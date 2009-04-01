@@ -32,6 +32,7 @@
 		<li><a href="#machine_modules">Machine Modules</a></li>
 		<li><a href="#trainable_machine_modules">
 		    Trainable Machine Modules</a></li>
+		<li><a href="#gui">GUI display</a></li>
 	      </ul>
 	      <li><a href="#suplearning">Supervised Learning</li>
 	      <ul>
@@ -323,6 +324,41 @@ DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable,
 	and <i>(p, in, out)</i> the parameters themselves.
       </p>
 
+      <a name="figc"></a>
+      <div class="thumb tright">
+      <div class="thumbinner" style="width:377px;">
+	<a href="../../demos/mnist/img/mnist_fprop.png" class="image"
+	   title="eblearn gui">
+	  <img src="../../demos/mnist/img/mnist_fprop.png" width="377"
+	  border="0" class="thumbimage" /> 
+	</a>
+	<div class="thumbcaption">c. Example display of the eblearn
+	GUI. A call to <i>module_1_1::display_fprop</i> will display
+	all the internal feature maps and their corresponding
+	description and sizes, providing that each module implemented
+	their display method. On top are the input images, at the
+	bottom the network outputs.</div></div></div> 
+
+      <a name="gui"></a>
+      <h2>GUI display</h2>
+      <p>If the QT library is present on your system, the eblearn project
+	will automatically compile the GUI libraries corresponding to
+	libidx and libeblearn. Thus it
+	produces the libeblearngui  library which provides display
+	functions for the eblearn modules. For instance, it implements
+	the <i>display_fprop</i> methods for each <i>module_1_1</i>, thus
+	allowing to display every stage of the internal representations
+	of the neural network by calling that method on the top-level
+	module (See figure c).
+      </p>
+      <p>For more details about the GUI features, refer to the GUI
+	section in the libidx tutorial. Briefly, the libidxgui provides
+	a global object <i>"gui"</i> which can open new windows
+	(<i>gui.new_window()</i>), draw matrices
+	(<i>gui.draw_matrix()</i>), draw text 
+	(<i>gui << at(42, 42) << "42" << endl</i>) and some other
+      functionalities.</p>
+
       <a name="suplearning"></a>
       <h1>Supervised Learning</h1>
       <p>Eblearn provides supervised learning algorithms as well as semi-supervised and unsupervised ones. They can be used independently or combined, we will focus on supervised algorithms only in this section.</p>
@@ -373,6 +409,19 @@ img01.png  img02.png</pre></div>
       </ol>
       </p>
       <p><u>Note:</u> this function is located in the tools library (trunk/eblearn/tools) and requires boost libraries: boost-filesystem and boost-regex.</p>
+
+      <a name="figd"></a>
+      <div class="thumb tright">
+      <div class="thumbinner" style="width:500px;">
+	<a href="../../demos/mnist/img/mnist_datasets.png" class="image"
+	   title="mnist datasets">
+	  <img src="../../demos/mnist/img/mnist_datasets.png" width="500"
+	  border="0" class="thumbimage" /> 
+	</a>
+	<div class="thumbcaption">d. Example display of the MNIST
+	dataset after a call to <i>LabeledDataSource::display()</i>,
+	which displays groundtruth (left), correct and incorrect
+	answers (middle) and incorrect only (right).</div></div></div> 
 
       <h3>Loading datasets into a LabeledDataSource object</h3>
       <p></p>
@@ -535,6 +584,28 @@ training: [10000]  size=2000  energy=0.0545  correct=97.15%  errors=2.85%  rejec
 
       <a name="sup_run_nn"></a>
       <h2>4. Run your network</h2>
+
+      <a name="fige"></a>
+      <div class="thumb tright">
+      <div class="thumbinner" style="width:500px;">
+	<a href="../../demos/norb/img/norb_plane.png" class="image"
+	   title="mnist datasets">
+	  <img src="../../demos/norb/img/norb_plane.png" width="500"
+	  border="0" class="thumbimage" /> 
+	</a>
+	<div class="thumbcaption">e. Output display of the
+	multi-resolution detection provided by the <i>Classified2D</i>
+	class (top 2 rows, below are the internal network
+	representations). The plane is resized to different
+	resolutions to handle multiple scales and the output of each
+	class for each resolution is shown on the left. The brighter
+	the output, the stronger response for the corresponding
+	class. The 3rd row of the network outputs corresponds to the
+	plane category, which has the strongest responses in the top
+	right of the images, yielding the plane bounding box
+	classification on the right.</div></div></div> 
+
+
       <h3>Multi-resolution detection: Classifier2D</h3>
       <p>While the Trainer class takes a module_1_1 and trains it on a
       dataset, the Classifier2D class takes a trained network as input
@@ -589,6 +660,7 @@ Idx<double> res = cb.fprop(left.idx_ptr(), 1, 1.8, 60);</pre></div>
 	  back-propagate second derivatives, and other sundries.</li> 
 	  <li><a href="http://yann.lecun.com/exdb/publis/index.html#selected">
 	      Yann LeCun's research</a></li>
+	  <li><a href="http://www.cs.nyu.edu/~yann/2008f-G22-2565-001/schedule.html">Yann LeCun's Machine Learning class at NYU</a></li>
 	  <li><a href="http://www.cs.nyu.edu/~yann/research/norb/index.html">The
 	  NORB project</a>: a 5-class object recognition system using
 	  supervised neural networks.</li>
