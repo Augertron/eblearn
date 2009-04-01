@@ -26,11 +26,8 @@ int main(int argc, char **argv) {
   cout << "Training the ConvNet" << endl;
   init_drand(time(NULL)); // initialize random seed
 
-  intg trsize = 900;
-  intg tesize = 300;
-
   //! load datasets: trsize for training set and tesize for testing set
-  Idx<double> trainingSet(1,1,1,1), testingSet(1,1,1,1);
+  Idx<float> trainingSet(1,1,1,1), testingSet(1,1,1,1);
   Idx<int> trainingLabels(1), testingLabels(1);
 
   load_matrix(trainingSet, "data/idx/dset_mono_train_images.mat");
@@ -42,16 +39,16 @@ int main(int argc, char **argv) {
   //trainingSet = trainingSet.select(3, 0);
   //testingSet = testingSet.select(3, 0);
 
-  LabeledDataSource<double,int> train_ds(trainingSet, trainingLabels,
+  LabeledDataSource<float,int> train_ds(trainingSet, trainingLabels,
 					  0.0, 0.01, NULL, NULL);
-  LabeledDataSource<double,int> test_ds(testingSet, testingLabels,
+  LabeledDataSource<float,int> test_ds(testingSet, testingLabels,
 					  0.0, 0.01, NULL, NULL);
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
 
   //! create the network weights, network and trainer
-  IdxDim dims(train_ds.data.spec); // get order and dimenions from data
+  IdxDim dims = train_ds.sample_dims(); // get order and dimensions of samples
   parameter theparam(120000); // create trainable parameter
   lenet5 l5(/* Stores the weights */ theparam, 
 	    /* Input size */         46, 46, 
@@ -62,7 +59,7 @@ int main(int argc, char **argv) {
 	    /* F5 Size */            80, 
 	    /* Output size */        targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
-  supervised_trainer<double,int> thetrainer(thenet, theparam);
+  supervised_trainer<float,int> thetrainer(thenet, theparam);
 
   //! a classifier-meter measures classification errors
   classifier_meter trainmeter, testmeter;
@@ -95,11 +92,11 @@ int main(int argc, char **argv) {
     cout << endl;
     cout << "training: " << flush << endl;
     thetrainer.test(train_ds, trainmeter, infp);
-    trainmeter.display();
+    //    trainmeter.display();
     cout << endl;
     cout << "testing: " << flush << endl;
     thetrainer.test(test_ds, testmeter, infp);
-    testmeter.display();
+    //    testmeter.display();
   }
 
   // Store the trained conv-net to a file...

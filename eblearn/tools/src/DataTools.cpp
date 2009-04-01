@@ -254,6 +254,8 @@ namespace ebl {
     dsetpairs += "_pairs.mat";
     Idx<int> pairs = makePairs(labels);
     save_matrix(pairs, dsetpairs.c_str());
+    int tr[4] = { 0, 3, 1, 2 };
+    images = images.transpose(tr);
     save_matrix(images, dsetimages.c_str());
     save_matrix(labels, dsetlabels.c_str());
     save_matrix(classes, dsetclasses.c_str());
