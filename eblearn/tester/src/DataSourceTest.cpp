@@ -31,11 +31,11 @@ void DataSourceTest::test_LabeledDataSource() {
   Idx<int> labels(ndata);
   std::generate(labels.scalars_begin(), labels.scalars_end(), Counter<int>());
 
-  LabeledDataSource<double, int> ds(data, labels);
+  LabeledDataSource<double, int> ds(data, labels, 0.0, 1.0);
 
   // Print out two epochs
   {
-    state_idx datum(1, 2, 3);
+    state_idx datum(2, 3);
     Idx<int> label;
     for (int age = 0; age < ndata * 2; ++age) {
       ds.fprop(datum, label);
@@ -47,7 +47,7 @@ void DataSourceTest::test_LabeledDataSource() {
       */			 
       ds.next();
     }
-    CPPUNIT_ASSERT_EQUAL(-29.0, datum.x.get(0, 1, 2));
+    CPPUNIT_ASSERT_EQUAL(-29.0, datum.x.get(1, 2));
     CPPUNIT_ASSERT_EQUAL(4, label.get());
   }
 }
@@ -62,8 +62,8 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
   Idx<ubyte> data(1, 1, 1), labels(1);
   CPPUNIT_ASSERT(load_matrix<ubyte>(data, datafile.c_str()) == true);
   CPPUNIT_ASSERT(load_matrix<ubyte>(labels, labelfile.c_str()) == true);
-  LabeledDataSource<ubyte,ubyte> ds(data, labels);
-  state_idx datum(1, 28, 28);
+  LabeledDataSource<ubyte,ubyte> ds(data, labels, 0.0, 1.0);
+  state_idx datum(28, 28);
   Idx<ubyte> label;
   for (int i = 0; i < 5; i++) {
     ds.fprop(datum, label);
@@ -76,7 +76,7 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
   }
   // briefly test some values of the 5th element of mnist
   CPPUNIT_ASSERT_EQUAL((unsigned int) 4, (unsigned int) label.get());
-  CPPUNIT_ASSERT_EQUAL((unsigned int) 236, (unsigned int) datum.x.get(0, 9, 9));
+  CPPUNIT_ASSERT_EQUAL((unsigned int) 236, (unsigned int) datum.x.get(9, 9));
 }
 
 void DataSourceTest::test_imageDirToIdx() {

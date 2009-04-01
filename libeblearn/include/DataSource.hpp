@@ -39,6 +39,9 @@ using namespace std;
 
 namespace ebl {
 
+  ////////////////////////////////////////////////////////////////
+  // LabeledDataSource
+
   template<typename Tdata, typename Tlabel>
   LabeledDataSource<Tdata,Tlabel>::LabeledDataSource()
     : bias(0.0), coeff(0.0), data(1), labels(1), dataIter(data, 0), 
@@ -52,7 +55,7 @@ namespace ebl {
 						     const char *name_,
 						     vector<string*> *lblstr_) 
     : bias(b), coeff(c), data(data_), labels(labels_), dataIter(data, 0), 
-      labelsIter(labels, 0) {
+      labelsIter(labels, 0), height(data.dim(1)), width(data.dim(2)) {
     init(data_, labels_, b, c, name_, lblstr_);
   }
 
@@ -102,6 +105,12 @@ namespace ebl {
     return data.dim(0);
   }
 
+  template<typename Tdata, typename Tlabel>
+  IdxDim LabeledDataSource<Tdata,Tlabel>::sample_dims() {
+    IdxDim d(data.select(0, 0));
+    return d;
+  }
+
 //   template<typename Tdata, typename Tlabel>
 //   void LabeledDataSource<Tdata,Tlabel>::fprop(state_idx &state, 
 // 					      Idx<Tlabel> &label) {
@@ -116,12 +125,9 @@ namespace ebl {
   template<typename Tdata, typename Tlabel>
   void LabeledDataSource<Tdata,Tlabel>::fprop(state_idx &out, 
 					      Idx<Tlabel> &label) {
-    IdxDim d(data.spec);
-    d.setdim(0, 1);
-    out.resize(d);
+    out.resize(sample_dims());
     idx_fill(out.x, bias * coeff);
-    Idx<double> tgt = out.x.select(0, 0);
-    idx_copy(*(this->dataIter), tgt);
+    idx_copy(*(this->dataIter), out.x);
     idx_addc(out.x, bias, out.x);
     idx_dotc(out.x, coeff, out.x);
     idx_copy(*labelsIter, label);
@@ -167,7 +173,7 @@ namespace ebl {
 					     double zoom) {
 #ifdef __GUI__
     gui << gui_only();
-    IdxDim d(data.spec);
+    IdxDim d = sample_dims();
     state_idx s(d);
     Idx<double> m = s.x.select(0, 0);
     Idx<Tlabel> lbl;
@@ -191,33 +197,40 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // MnistDataSource
 
   template<class Tdata, class Tlabel>
   MnistDataSource<Tdata, Tlabel>::MnistDataSource(Idx<Tdata> &inp, 
 						  Idx<Tlabel> &lbl,
-						  intg w, intg h, 
 						  double b, double c,
 						  const char *name_)
     : LabeledDataSource<Tdata, Tlabel>(inp, lbl, b, c, name_, NULL) {
-    this->width = w;
-    this->height = h;
   }
 
   template<class Tdata, class Tlabel>
   void MnistDataSource<Tdata, Tlabel>::init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, 
-					    intg w, intg h, double b, double c,
+					    double b, double c,
     					    const char *name_) {
     LabeledDataSource<Tdata, Tlabel>::init(inp, lbl, b, c, name_, NULL);
+    this->height = 32; // mnist is actually 28x28, but we add some padding
+    this->width = 32;
     bias = b;
     coeff = c;
-    this->width = w;
-    this->height = h;
+  }
+
+  template<class Tdata, class Tlabel>
+  IdxDim MnistDataSource<Tdata,Tlabel>::sample_dims() {
+    IdxDim d(this->data);
+    d.setdim(0, 1);
+    d.setdim(1, this->height); // use the padding size, not the true data size
+    d.setdim(2, this->width);
+    return d;
   }
 
   template<class Tdata, class Tlabel>
   void MnistDataSource<Tdata, Tlabel>::fprop(state_idx &out, 
 					     Idx<Tlabel> &label) {
-    out.resize(1, this->height, this->width);
+    out.resize(this->sample_dims());
     intg ni = this->data.dim(1);
     intg nj = this->data.dim(2);
     intg di = 0.5 * (this->height - ni);
@@ -271,10 +284,10 @@ namespace ebl {
     test_data = test_data.narrow(0, test_size, 5000 - (0.5 * test_size)); 
     test_labels = test_labels.narrow(0, test_size, 5000 - (0.5 * test_size));
 
-    test_ds.init(test_data, test_labels, 32, 32, 0.0, 0.01, 
-		 "MNIST TESTING set");
-    train_ds.init(train_data, train_labels, 32, 32, 0.0, 0.01,
-		  "MNIST TRAINING set");
+    Idx<Tdata> test_data2(test_data.dim(0), test_data.dim(1), test_data.dim(2), 3);
+    Idx<Tdata> train_data2(test_data.dim(0), test_data.dim(1), test_data.dim(2), 3);
+    test_ds.init(test_data, test_labels, 0.0, 0.01, "MNIST TESTING set");
+    train_ds.init(train_data, train_labels, 0.0, 0.01, "MNIST TRAINING set");
     return true;
   }
 

@@ -634,4 +634,31 @@ namespace ebl {
     return true;
   }
 
+  ////////////////////////////////////////////////////////////////
+  // IdxDim
+  
+  IdxDim::~IdxDim() {
+  }
+
+  IdxDim::IdxDim() {
+    ndim = -1;
+  }
+  
+  IdxDim::IdxDim(const IdxSpec &s) {
+    read(s);
+  }
+  
+  void IdxDim::read(const IdxSpec &s) {
+    ndim = s.ndim;
+    memcpy(dim, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
+    // set remaining to -1
+    memset(dim + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg)); 
+  }
+  
+  void IdxDim::setdim(intg dimn, intg size) {
+    if (dimn >= ndim)
+      ylerror("cannot change the order of IdxDim");
+    dim[dimn] = size; 
+  }
+
 } // end namespace ebl
