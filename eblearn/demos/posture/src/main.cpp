@@ -16,12 +16,13 @@
  * space in these 6 classes.
  *
  * By using the raw dataset, the ConvNet converges to 100% good results on the 
- * training dataset, and 86% on the testing set... in 6 iterations !!
+ * training dataset, and 86% on the testing set... in 6 iterations !
  *
  * The script expand-dataset.py (in $EBLEARN/eblearn/data/posture/) can be run
  * (requires Python) to create other images from the raw dataset 
  * (rotated/rescaled). Doing this helps reaching better results on the testing 
- * set.
+ * set (unknown results). The training takes much more time, obviously,
+ * but should yield better results.
  *
  * Feel free to change/tweak the paramaters of the ConvNet, in the class
  * ConvNetPosture. 
