@@ -21,9 +21,10 @@ int main(int argc, char **argv) {
   string pathToIdxTest = pathToData+"/idx/dset_mono_test_images.mat";
   string pathToIdxTeLabels = pathToData+"/idx/dset_mono_test_labels.mat";
   
-  //! create an Idx file for the datasets, if 'gen-idx' is supplied
-  if (argc > 1)
-    if (strcmp(argv[1], "gen-idx") == 0) generateIdxDataSet(pathToData);
+  //! create an Idx file for the datasets, if 'train-only' is not supplied
+  if (argc > 1) {
+    if (strcmp(argv[1], "train-only") != 0) generateIdxDataSet(pathToData);
+  } else if (argc == 1) generateIdxDataSet(pathToData);
 
   cout << endl << "Training the ConvNet" << endl;
   init_drand(time(NULL)); // initialize random seed
@@ -41,7 +42,7 @@ int main(int argc, char **argv) {
 					trainingLabels, // Labels
 					0.0, // Bias to be added to images
 					0.01, // Coef to scale images
-					NULL, "Posture Training Set");
+					"Posture Training Set");
   LabeledDataSource<float,int> test_ds(testingSet, testingLabels,
 				       0.0, 0.01, "Posture Testing Set");
 
