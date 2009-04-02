@@ -36,32 +36,14 @@ int main(int argc, char **argv) {
   load_matrix(testingSet, pathToIdxTest.c_str());
   load_matrix(testingLabels, pathToIdxTeLabels.c_str());
 
-<<<<<<< .mine
   //! create two labeled data sources, for training and testing
   LabeledDataSource<float,int> train_ds(trainingSet, // Data source
 					trainingLabels, // Labels
 					0.0, // Bias to be added to images
 					0.01, // Coef to scale images
-					NULL, NULL);
-=======
-  load_matrix(trainingSet, "data/idx/dset_mono_train_images.mat");
-  load_matrix(trainingLabels, "data/idx/dset_mono_train_labels.mat");
-  load_matrix(testingSet, "data/idx/dset_mono_test_images.mat");
-  load_matrix(testingLabels, "data/idx/dset_mono_test_labels.mat");
-
-  // Get rid of the RGB data, only keep one channel per image
-  //trainingSet = trainingSet.select(3, 0);
-  //testingSet = testingSet.select(3, 0);
-
-  LabeledDataSource<float,int> train_ds(trainingSet, trainingLabels,
-					0.0, 0.01, "Posture Training Set");
->>>>>>> .r191
+					NULL, "Posture Training Set");
   LabeledDataSource<float,int> test_ds(testingSet, testingLabels,
-<<<<<<< .mine
-				       0.0, 0.01, NULL, NULL);
-=======
 				       0.0, 0.01, "Posture Testing Set");
->>>>>>> .r191
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
