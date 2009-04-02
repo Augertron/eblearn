@@ -1,4 +1,37 @@
 
+/* Posture estimation ConvNet.
+ * In this example we build a ConvNet based on a generic CSCSCF architecture.
+ * For that we create a class named ConvNetPosture
+ * Everything can be redefined for this ConvNet:
+ *  - the nb of feature maps we want per layer,
+ *  - the connections between them,
+ *  - the size of the kernels and subsample masks...
+ * 
+ * In the main function, we load a database of images (pnm images) and first 
+ * package them in an Idx file (format used by EBLearn to handle matrices).
+ * These images contiain 6 different human postures: bending, standing...
+ * and are separated in two sets: one for training, the other one for testing.
+ *
+ * Then we load these Idx files and train our ConvNet to separate the output
+ * space in these 6 classes.
+ *
+ * By using the raw dataset, the ConvNet converges to 100% good results on the 
+ * training dataset, and 86% on the testing set.
+ *
+ * The script expand-dataset.py (in $EBLEARN/eblearn/data/posture/) can be run
+ * (requires Python) to create other images from the raw dataset 
+ * (rotated/rescaled). Doing this helps reaching better results on the testing 
+ * set.
+ *
+ * Feel free to change/tweak the paramaters of the ConvNet, in the class
+ * ConvNetPosture. 
+ *
+ * Syntax:
+ *   posture             -> creates the Idx files and train the ConvNet
+ *   posture train-only  -> expect the Idx to be present, and train the ConvNet
+ *
+ * Clement Farabet (cfarabet@nyu.edu) || April 2009.
+ */
 
 #include "libeblearn.h"
 #include "DataTools.h"
@@ -11,6 +44,76 @@ using namespace ebl;
 
 void generateIdxDataSet(string pathToData);
 string getPathToData();
+
+/* Here we define the ConvNet to be used for posture estimation:
+ * This ConvNet inherits from the CSCSCF architecture, a classical stackup 
+ * layers. In this class, we simply redefine:
+ *  - the nb of feature maps we want,
+ *  - the connections between them,
+ *  - the size of the kernels and subsample masks.
+ */ 
+class ConvNetPosture : public nn_machine_cscscf {
+public:
+  Idx<intg> table0;	
+  Idx<intg> table1;	
+  Idx<intg> table2;	
+  
+  ConvNetPosture(parameter &trainableParam, 
+		 intg image_height, 
+		 intg image_width, 
+		 intg output_size) {
+    // Define the number of feature maps per layer (C0, C1, C2)
+    intg featureMaps0 = 6;
+    intg featureMaps1 = 12;
+    intg featureMaps2 = 40;
+
+    // Define tables of connections between layers.
+    // These two are fully connected layer, i.e. each feature map in a layer
+    // is connected to every feature map in the previous layer
+    table0 = full_table(1, featureMaps0); // from input to C0
+    table2 = full_table(featureMaps1, featureMaps2); // from S1 to C2
+
+    // ... whereas the connections there are sparse (S0 to C1):
+    table1 = Idx<intg>(60, 2); // from S0 to C1
+    intg tbl[60][2] =
+      {{0, 0},  {1, 0},  {2, 0}, // 0,1,2 in S0 connected to 0 in C1
+       {1, 1},  {2, 1},  {3, 1}, // and so on...
+       {2, 2},  {3, 2},  {4, 2},
+       {3, 3},  {4, 3},  {5, 3},
+       {4, 4},  {5, 4},  {0, 4},
+       {5, 5},  {0, 5},  {1, 5},
+
+       {0, 6},  {1, 6},  {2, 6},  {3, 6},
+       {1, 7},  {2, 7},  {3, 7},  {4, 7},
+       {2, 8},  {3, 8},  {4, 8},  {5, 8},
+       {3, 9},  {4, 9},  {5, 9},  {0, 9},
+       {4, 10}, {5, 10}, {0, 10}, {1, 10},
+
+       {0, 15}, {1, 15}, {2, 15}, {3, 15}, {4, 15}, {5, 15}};
+    memcpy(table1.idx_ptr(), tbl, table1.nelements() * sizeof (intg));
+    
+    // Finally we initialize the architecture of the ConvNet.
+    // Make sure that the output dim is 1x1 for the images in your dataset:
+    // ((((image_height - ki0 + 1) / si0) - ki1 + 1) / si1) - ki2 + 1 = 1
+    // ((((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1) - kj2 + 1 = 1
+    //
+    this->init(trainableParam, // Param that holds the weights of the ConvNet
+	       image_height, // Dim of input image
+	       image_width, 
+	       7, 7, // Dim of kernel in C0
+	       table0, // Table of connections btwn input layer and C0 
+	       2, 2, // Subsample mask size in S0
+	       7, 7, // Dim of kernel in C1
+	       table1, // Table of connections btwn S0 and C1 
+	       2, 2, // Subsample mask size ni S1
+	       7, 7, // Dim of kernel in C1
+	       table2, // Table of connections btwn S1 and C2
+	       output_size // Nb of classes
+	       );
+  }
+  // Destructor not used
+  virtual ~ConvNetPosture() {}
+};
 
 int main(int argc, char **argv) {
   
@@ -53,18 +156,14 @@ int main(int argc, char **argv) {
   IdxDim dims = train_ds.sample_dims(); // get order and dimensions of samples
   parameter theparam(120000); // create trainable parameter
 
-  // create the architecture of the conv net. lenet5 is a generic cscscf network
-  lenet5 l5(/* Stores the weights */ theparam, 
-	    /* Input size */         46, 46, 
-	    /* C0 kernel size */     7, 7, 
-	    /* S1 mask size */       2, 2, 
-	    /* C2 kernel size */     7, 7, 
-	    /* S3 mask size */       2, 2, 
-	    /* F5 Size */            80, 
-	    /* Output size */        targets.dim(0));
+  // instantiate the ConvNet
+  ConvNetPosture myConvNet(theparam, // Trainable parameter
+			   trainingSet.dim(3), // Input height
+			   trainingSet.dim(2), // Input width
+			   targets.dim(0)); // Nb of classes
 
   //! combine the conv net with targets -> gives a supervised system
-  supervised_euclidean_machine thenet(l5, targets, dims);
+  supervised_euclidean_machine thenet(myConvNet, targets, dims);
   supervised_trainer<float,int> thetrainer(thenet, theparam);
 
   //! a classifier-meter measures classification errors
@@ -90,11 +189,15 @@ int main(int argc, char **argv) {
   cout << "Computing second derivatives on the dataset: ";
   thetrainer.compute_diaghessian(train_ds, 100, 0.02);
 
-  // do training iterations
+  // training, and testing...
   cout << "Training network on posture images with " << train_ds.size();
   cout << " training samples and " << test_ds.size() << " test samples" << endl;
   for (int i = 0; i < 100; ++i) {
+    cout << endl;
+    // Training on the whole dataset:
     thetrainer.train(train_ds, trainmeter, gdp, 1);
+
+    // then test the current ConvNet on both training set and test set:
     thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
   }
