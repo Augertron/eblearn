@@ -1,35 +1,49 @@
+
+
 #include "libeblearn.h"
 #include "DataTools.h"
 #include <cstring>
+#include <iostream>
+#include <fstream>
+
 using namespace std;
 using namespace ebl;
 
-// argv[1] is expected to contain the directory of the dataset
+void generateIdxDataSet(string pathToData);
+string getPathToData();
+
 int main(int argc, char **argv) {
   
-  // Create an Idx file for the datasets, if 'gen-idx' is supplied
-  if (strcmp(argv[1], "gen-idx") == 0) {
-    cout << "Converting images to idx object" << endl;
-    imageDirToIdx("data/train", 46, ".*[.]ppm", 
-		  NULL, "data/idx/", NULL, true,
-		  "_train", false);
-    imageDirToIdx("data/test", 46, ".*[.]ppm", NULL, "data/idx/", NULL, true,
-		  "_test", false);
-    return 0;
-  }
-  // Train if 'train' is supplied
-  else if (strcmp(argv[1], "train") != 0) {
-    cout << "syntax: test gen OR test train" << endl;
-    return 0;
-  }
+  // Useful paths to datasets
+  string pathToData = getPathToData() + "/posture";
+  string pathToIdxTrain = pathToData+"/idx/dset_mono_train_images.mat";
+  string pathToIdxTrLabels = pathToData+"/idx/dset_mono_train_labels.mat";
+  string pathToIdxTest = pathToData+"/idx/dset_mono_test_images.mat";
+  string pathToIdxTeLabels = pathToData+"/idx/dset_mono_test_labels.mat";
+  
+  //! create an Idx file for the datasets, if 'gen-idx' is supplied
+  if (argc > 1)
+    if (strcmp(argv[1], "gen-idx") == 0) generateIdxDataSet(pathToData);
 
-  cout << "Training the ConvNet" << endl;
+  cout << endl << "Training the ConvNet" << endl;
   init_drand(time(NULL)); // initialize random seed
 
-  //! load datasets: trsize for training set and tesize for testing set
+  //! load dataset from Idx files
   Idx<float> trainingSet(1,1,1,1), testingSet(1,1,1,1);
   Idx<int> trainingLabels(1), testingLabels(1);
+  load_matrix(trainingSet, pathToIdxTrain.c_str());
+  load_matrix(trainingLabels, pathToIdxTrLabels.c_str());
+  load_matrix(testingSet, pathToIdxTest.c_str());
+  load_matrix(testingLabels, pathToIdxTeLabels.c_str());
 
+<<<<<<< .mine
+  //! create two labeled data sources, for training and testing
+  LabeledDataSource<float,int> train_ds(trainingSet, // Data source
+					trainingLabels, // Labels
+					0.0, // Bias to be added to images
+					0.01, // Coef to scale images
+					NULL, NULL);
+=======
   load_matrix(trainingSet, "data/idx/dset_mono_train_images.mat");
   load_matrix(trainingLabels, "data/idx/dset_mono_train_labels.mat");
   load_matrix(testingSet, "data/idx/dset_mono_test_images.mat");
@@ -41,8 +55,13 @@ int main(int argc, char **argv) {
 
   LabeledDataSource<float,int> train_ds(trainingSet, trainingLabels,
 					0.0, 0.01, "Posture Training Set");
+>>>>>>> .r191
   LabeledDataSource<float,int> test_ds(testingSet, testingLabels,
+<<<<<<< .mine
+				       0.0, 0.01, NULL, NULL);
+=======
 				       0.0, 0.01, "Posture Testing Set");
+>>>>>>> .r191
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
@@ -50,6 +69,8 @@ int main(int argc, char **argv) {
   //! create the network weights, network and trainer
   IdxDim dims = train_ds.sample_dims(); // get order and dimensions of samples
   parameter theparam(120000); // create trainable parameter
+
+  // create the architecture of the conv net. lenet5 is a generic cscscf network
   lenet5 l5(/* Stores the weights */ theparam, 
 	    /* Input size */         46, 46, 
 	    /* C0 kernel size */     7, 7, 
@@ -58,6 +79,8 @@ int main(int argc, char **argv) {
 	    /* S3 mask size */       2, 2, 
 	    /* F5 Size */            80, 
 	    /* Output size */        targets.dim(0));
+
+  //! combine the conv net with targets -> gives a supervised system
   supervised_euclidean_machine thenet(l5, targets, dims);
   supervised_trainer<float,int> thetrainer(thenet, theparam);
 
@@ -100,5 +123,39 @@ int main(int argc, char **argv) {
   return 0;
 }
 
- 
 
+
+// generate Idx files from a given set of images.
+void generateIdxDataSet(string pathToData) {
+  string pathTrainingSet = pathToData+"/train";
+  string pathTestingSet = pathToData+"/test";
+  string pathToIdx = pathToData+"/idx";
+  
+  cout << "Converting images to idx object" << endl;
+  imageDirToIdx(pathTrainingSet.c_str(), 46, ".*[.]ppm", 
+		NULL, pathToIdx.c_str(), NULL, true,
+		"_train", false);
+  imageDirToIdx(pathTestingSet.c_str(), 46, ".*[.]ppm", 
+		NULL, pathToIdx.c_str(), NULL, true,
+		"_test", false);
+}
+
+// return the path of the database, based on run.init
+string getPathToData() {
+  string s;
+  ifstream in("../run.init");
+  if (!in) {
+    cout << "Warning: failed to open ../run.init, please run configure.sh";
+    cout << endl;
+  }
+  else {
+    while (!in.eof()) {
+      in >> s;
+      if (s == "-data") {
+	in >> s;
+      }
+    }
+  }
+  in.close();
+  return s;
+}
