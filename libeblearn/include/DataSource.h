@@ -80,6 +80,10 @@ namespace ebl {
     //! Copies the current datum to a state and label.
     void virtual fprop(state_idx &datum, Idx<Tlabel> &label);
 
+    //! shuffle dataset, based on the number of classes
+    //! assume the same nb of samples in each class
+    void virtual shuffle();
+
     //! Returns the number of data instances contained in this data source.
     virtual int size();
 
