@@ -127,6 +127,38 @@ namespace ebl {
 //     idx_copy(*labelsIter, label);
 //   }
 
+
+  template<typename Tdata, typename Tlabel>
+  void LabeledDataSource<Tdata,Tlabel>::shuffle() {
+    // create a target Idx with the same dimensions
+    IdxDim dataDim = data.getIdxDim(dataDim);
+    Idx<Tdata> shuffledData(dataDim);
+    IdxDim labelsDim = labels.getIdxDim(labelsDim);
+    Idx<Tlabel> shuffledLabels(labelsDim);
+    // get the nb of classes
+    intg nbOfClasses = 1+idx_max(labels);
+    intg nbOfSamples = data.dim(0);
+    intg nbOfSamplesPerClass = nbOfSamples / nbOfClasses;
+    // create new dataset...
+    intg iterator=0;
+    for(int i = 0; i<nbOfSamples; i++){
+      Idx<Tdata> oneSample = data[iterator];
+      Idx<Tdata> destSample = shuffledData[i];
+      idx_copy(oneSample, destSample);
+
+      Idx<Tlabel> oneLabel = labels[iterator];
+      Idx<Tlabel> destLabel = shuffledLabels[i];
+      idx_copy(oneLabel, destLabel);
+
+      iterator += nbOfSamplesPerClass;
+      if (iterator >= nbOfSamples)
+	iterator = (iterator % nbOfSamples) + 1;
+    }
+    // replace the original dataset, and labels
+    data = shuffledData;
+    labels = shuffledLabels;
+  }
+
   template<typename Tdata, typename Tlabel>
   void LabeledDataSource<Tdata,Tlabel>::fprop(state_idx &out, 
 					      Idx<Tlabel> &label) {

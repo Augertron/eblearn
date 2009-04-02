@@ -16,7 +16,7 @@
  * space in these 6 classes.
  *
  * By using the raw dataset, the ConvNet converges to 100% good results on the 
- * training dataset, and 86% on the testing set.
+ * training dataset, and 86% on the testing set... in 6 iterations !!
  *
  * The script expand-dataset.py (in $EBLEARN/eblearn/data/posture/) can be run
  * (requires Python) to create other images from the raw dataset 
@@ -46,8 +46,8 @@ void generateIdxDataSet(string pathToData);
 string getPathToData();
 
 /* Here we define the ConvNet to be used for posture estimation:
- * This ConvNet inherits from the CSCSCF architecture, a classical stackup 
- * layers. In this class, we simply redefine:
+ * This ConvNet inherits from the CSCSCF architecture, a classical stackup of
+ * 3 convolutional layers. In this class, we simply redefine:
  *  - the nb of feature maps we want,
  *  - the connections between them,
  *  - the size of the kernels and subsample masks.
@@ -74,8 +74,8 @@ public:
     table2 = full_table(featureMaps1, featureMaps2); // from S1 to C2
 
     // ... whereas the connections there are sparse (S0 to C1):
-    table1 = Idx<intg>(60, 2); // from S0 to C1
-    intg tbl[60][2] =
+    table1 = Idx<intg>(44, 2); // from S0 to C1
+    intg tbl[44][2] =
       {{0, 0},  {1, 0},  {2, 0}, // 0,1,2 in S0 connected to 0 in C1
        {1, 1},  {2, 1},  {3, 1}, // and so on...
        {2, 2},  {3, 2},  {4, 2},
@@ -149,6 +149,9 @@ int main(int argc, char **argv) {
   LabeledDataSource<float,int> test_ds(testingSet, testingLabels,
 				       0.0, 0.01, "Posture Testing Set");
 
+  //! shuffle the training datasource
+  train_ds.shuffle();
+
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
 
@@ -192,7 +195,7 @@ int main(int argc, char **argv) {
   // training, and testing...
   cout << "Training network on posture images with " << train_ds.size();
   cout << " training samples and " << test_ds.size() << " test samples" << endl;
-  for (int i = 0; i < 100; ++i) {
+  for (int i = 0; i < 10; ++i) {
     cout << endl;
     // Training on the whole dataset:
     thetrainer.train(train_ds, trainmeter, gdp, 1);
