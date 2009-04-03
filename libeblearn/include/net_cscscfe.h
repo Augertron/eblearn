@@ -32,8 +32,8 @@
 #ifndef NET_CSCSCFE_H_
 #define NET_CSCSCFE_H_
 
-#include "Ebl.h"
-#include "Net.h"
+#include "libidx.h"
+#include "ebl_machines.h"
 
 namespace ebl {
 
