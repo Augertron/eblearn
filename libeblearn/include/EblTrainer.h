@@ -86,7 +86,7 @@ namespace ebl {
     //! fill up the vector <energies> with the energy produced by each
     //! possible label. The first dimension of <label-set> must be equal
     //! to the dimension of <energies>.
-    int run(state_idx &input, infer_param &infp);
+    int run(state_idx &input, infer_param &infp, int *label = NULL);
 
     //! Test a single sample and its label <label> (an integer).
     //! Returns true if the sample was correctly classified, false otherwise.

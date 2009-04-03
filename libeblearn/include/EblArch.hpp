@@ -149,8 +149,9 @@ namespace ebl {
 				infer_param &ip) { err_not_implemented(); }
   
   template<class Tin1, class Tin2>
-  double ebm_2<Tin1,Tin2>::infer2(Tin1 &i1, Tin2 &i2, state_idx &energy,
-				infer_param &ip) { err_not_implemented(); }
+  double ebm_2<Tin1,Tin2>::infer2(Tin1 &i1, Tin2 &i2, infer_param &ip,
+				  int *label, state_idx *energy) { 
+    err_not_implemented(); }
 
 
   ////////////////////////////////////////////////////////////////
@@ -441,10 +442,10 @@ hidden states in layers_n");
   }
 
   template<class Tin1, class Tin2, class Thid>
-  double fc_ebm2<Tin1,Tin2,Thid>::infer2(Tin1 &i1, Tin2 &i2, state_idx &energy,
-			 infer_param &ip) {
-    fprop(i1, i2, energy); // first propagate all the way up
-    return fcost.infer2(fout, i2, energy, ip); // then infer from energy
+  double fc_ebm2<Tin1,Tin2,Thid>::infer2(Tin1 &i1, Tin2 &i2, infer_param &ip,
+					 int *label, state_idx *energy) {
+    fmod.fprop(i1, fout); // first propagate all the way up
+    return fcost.infer2(fout, i2, ip, label, energy); //then infer from energies
   }
 
   template<class Tin1, class Tin2, class Thid>

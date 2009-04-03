@@ -112,8 +112,9 @@ namespace ebl {
     virtual double infer1(Tin1 &i1, Tin2 &i2, state_idx &energy,
 			  infer_param &ip);
     //! compute value of in2 that minimizes the energy, given in1
-    virtual double infer2(Tin1 &i1, Tin2 &i2, state_idx &energy,
-			  infer_param &ip);
+    //! if label is given, fill the corresponding energy.
+    virtual double infer2(Tin1 &i1, Tin2 &i2, infer_param &ip,
+			  int *label = NULL, state_idx *energy = NULL);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -192,8 +193,8 @@ namespace ebl {
     virtual void bprop(Tin1 &in1, Tin2 &in2, state_idx &energy);
     virtual void bbprop(Tin1 &in1, Tin2 &in2, state_idx &energy);
     virtual void forget(forget_param_linear &fp);
-    virtual double infer2(Tin1 &i1, Tin2 &i2, state_idx &energy,
-			  infer_param &ip);
+    virtual double infer2(Tin1 &i1, Tin2 &i2, infer_param &ip, 
+			  int *label = NULL, state_idx *energy = NULL);
     virtual void display_fprop(Tin1 &i1, Tin2 &i2, state_idx &energy, 
 			       unsigned int &h0, unsigned int &w0,
 			       double zoom, bool show_out = false);

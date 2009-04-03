@@ -67,16 +67,110 @@ namespace ebl {
     idx_fill(in1.ddx, energy.dx.get());
   }
 
-  double euclidean_module::infer2(state_idx &i1, int &label, state_idx &energy,
-				  infer_param &ip) {
-    label = 0;
+  double euclidean_module::infer2(state_idx &i1, int &infered_label, 
+				  infer_param &ip, 
+				  int *label, state_idx *energy) {
+    infered_label = 0;
+    state_idx tmp;
     idx_bloop1(e, energies, double) {
-      fprop(i1, label, energy);
-      idx_copy(energy.x, e);
-      label++;
+      fprop(i1, infered_label, tmp);
+      idx_copy(tmp.x, e);
+      infered_label++;
     }
-    label = idx_indexmin(energies);
+    // TODO: use logadd_layer like in gblearn2 on energies?
+    if (label && energy) // if groundtruth is passed, fill in its energy
+      energy->x.set(energies.get(*label)); 
+    infered_label = idx_indexmin(energies);
     return 0.0;
+  }
+
+  ////////////////////////////////////////////////////////////////////////
+  // logadd_layer
+
+  logadd_layer::logadd_layer(intg thick, intg si, intg sj) {
+    expdist = Idx<double>(thick, si, sj);
+    sumexp = Idx<double>(thick);		// scaled partition function
+  }
+
+  void logadd_layer::fprop(state_idx *in, state_idx *out) {
+    intg thick = in->x.dim(0);
+    intg si = in->x.dim(1);
+    intg sj = in->x.dim(2);
+    expdist.resize(thick, si, sj);
+    out->x.resize(thick);
+    if (1 == (si * sj)) {
+      // save time and precision if no replication
+      Idx<double> inx(in->x.select(2, 0));
+      Idx<double> m(inx.select(1, 0));
+      Idx<double> ed(expdist.select(2, 0));
+      Idx<double> ed1(ed.select(1, 0));
+      idx_fill(ed1, 1.0);
+      idx_fill(sumexp, 1.0);
+      idx_copy(m, out->x);
+    }	else {
+      // spatially replicated
+      // loop over output units
+      { idx_bloop4(m, in->x, double, outx, out->x, double,
+		   ed, expdist, double, sx, sumexp, double) {
+	  // first compute smallest element of m
+	  double mini = m.get(0, 0);
+	  { idx_bloop1(m1, m, double) {
+	      { idx_bloop1(m0, m1, double) {
+		  if (m0.get() < mini)
+		    mini = m0.get();
+		}
+	      }
+	    }
+	  }
+	  // now do log-add, and save exponentials
+	  double r = 0.0;
+	  double w = 1 / (si * sj);
+	  { idx_bloop2(m1, m, double, ed1, ed, double) {
+	      { idx_bloop2(m0, m1, double, ed0, ed1, double) {
+		  ed0.set(w * exp(mini - m0.get()));
+		  r += ed0.get();
+		}
+	      }
+	    }
+	  }
+	  sx.set(r);
+	  // put result in output
+	  outx.set(mini - log(r));
+	}
+      }
+    }
+  }
+
+  void logadd_layer::bprop(state_idx *in, state_idx *out) {
+    intg si = in->dx.dim(1);
+    intg sj = in->dx.dim(2);
+    if ((si * sj) == 1) {
+      // save time and precision if no replication
+      Idx<double> indx(in->dx.select(2, 0));
+      Idx<double> m(indx.select(1, 0));
+      idx_copy(out->dx, m);
+    } else {
+      // spatially replicated
+      // loop over output units
+      { idx_bloop4(m, in->dx, double, o, out->dx, double,
+		   ed, expdist, double, sx, sumexp, double) {
+	  { idx_bloop2(m1, m, double, ed1, ed, double) {
+	      { idx_bloop2(m0, m1, double, ed0, ed1, double) {
+		  m0.set(ed0.get() * o.get() / sx.get());
+		}
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  void logadd_layer::bbprop(state_idx *in, state_idx *out) {
+    { idx_bloop2(o, out->ddx, double, i, in->ddx, double) {
+  	idx_fill(i, o.get());
+      }
+    }
   }
 
 } // end namespace ebl

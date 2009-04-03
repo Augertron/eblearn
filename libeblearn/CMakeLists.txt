@@ -17,7 +17,7 @@ FIND_PACKAGE(Qt4)
 IF (QT_FOUND) #-----------------------------------------------------------------
   # add include directories
   ##############################################################################
-  include_directories(${IDXGUI_INCLUDE_DIR})
+  include_directories(${LIBIDXGUI_INCLUDE_DIR})
   include_directories(${QT_INCLUDE_DIR})
   include_directories(${QT_QTGUI_INCLUDE_DIR})
   include_directories(${QT_QTCORE_INCLUDE_DIR})
@@ -27,7 +27,6 @@ ENDIF (QT_FOUND) #--------------------------------------------------------------
 # compile library
 ################################################################################
 ADD_LIBRARY (eblearn SHARED
-		     src/Defines.cpp  
 		     src/Ebl.cpp  
 		     src/EblArch.cpp  
 		     src/EblStates.cpp  
@@ -39,14 +38,10 @@ ADD_LIBRARY (eblearn SHARED
 		     src/EblLogger.cpp  
 		     src/EblMachines.cpp  
 		     src/Ipp.cpp  
-		     src/libeblearn.cpp  
-		     src/Net.cpp  
-		     src/Trainer.cpp
 		     src/sdnn_modules.cpp
 		     src/net_cscscfe.cpp
 		     src/Classifier2D.cpp  
 		     src/DataSource.cpp  
-		     src/Gbl.cpp  
 		     )
 
 ## link against libidx

@@ -32,6 +32,8 @@
 
 #include "Idx.h"
 
+using namespace std;
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -445,10 +447,12 @@ namespace ebl {
   // 3. XXX: creates a new IdxSpec and returns it.
 
   intg IdxSpec::select_into(IdxSpec *dst, int d, intg n) {
-    try {
-      if (ndim <= 0) throw("cannot select a scalar");
+    if (ndim <= 0) ylerror("cannot select a scalar");
+    if ((n < 0) || (n >= dim[d])) {
+      cerr << "error: trying to select layer " << n;
+      cerr << " in dimension " << d << endl;
+      ylerror("idx::select error");
     }
-    catch(const char *s) { ylerror(s); return -1;}
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim-1);
     dst->offset = offset + n * mod[d];

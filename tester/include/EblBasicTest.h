@@ -15,6 +15,8 @@ class EblBasicTest : public CppUnit::TestFixture  {
 /*   CPPUNIT_TEST(test_Ebm02); */
   CPPUNIT_TEST(test_jacobian_nn_layer_convolution);
   CPPUNIT_TEST(test_jacobian_nn_layer_subsampling);
+  CPPUNIT_TEST(test_softmax);
+  CPPUNIT_TEST(test_state_copy);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -35,6 +37,8 @@ public:
 /*   void test_Ebm02(); */
   void test_jacobian_nn_layer_convolution();
   void test_jacobian_nn_layer_subsampling();
+  void test_softmax();
+  void test_state_copy();
 };
 
 #endif /* EBLBASICTEST_H_ */
