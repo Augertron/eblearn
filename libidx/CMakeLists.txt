@@ -15,12 +15,10 @@ SET(LIBIDX_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 # compile library
 ################################################################################
 add_library (idx SHARED
-		     src/Blas.cpp  
-		     src/LibidxDefines.cpp  
-		     src/Idx.cpp  
-		     src/Image.cpp  
-		     src/Numerics.cpp  
-		     src/libidx.cpp  
+		     src/blas.cpp  
+		     src/idx.cpp  
+		     src/image.cpp  
+		     src/numerics.cpp  
 		     )
 
 # check for external libraries
@@ -31,8 +29,8 @@ FIND_PACKAGE(CBLAS)
 IF(CBLAS_FOUND)
   INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
   TARGET_LINK_LIBRARIES(idx ${CBLAS_LIBRARIES})
-  CONFIGURE_FILE("include/IdxBlas.h.in" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/IdxBlas.h")
+  CONFIGURE_FILE("include/idxblas.h.in" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/idxblas.h")
 ELSE(CBLAS_FOUND)
   MESSAGE(FATAL_ERROR 
     "CBLAS library not found. Please specify library  location")

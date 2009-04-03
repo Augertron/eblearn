@@ -33,12 +33,12 @@
 #ifndef IDXIO_H_
 #define IDXIO_H_
 
-#include "Idx.h"
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <iterator>
-#include "IdxIterators.h"
+#include "idx.h"
+#include "idx_iterators.h"
 
 using namespace std;
 
@@ -78,7 +78,7 @@ namespace ebl {
 
 } // end namespace ebl
 
-#include "IdxIO.hpp"
+#include "idxIO.hpp"
 
 #endif /* IDXIO_H_ */
 

@@ -29,8 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-
-#include "Numerics.h"
+#include "numerics.h"
 
 namespace ebl {
 

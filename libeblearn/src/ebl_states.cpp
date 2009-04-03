@@ -30,7 +30,7 @@
  ***************************************************************************/
 
 #include "ebl_states.h"
-#include "IdxIO.h"
+#include "libidx.h"
 
 using namespace std;
 

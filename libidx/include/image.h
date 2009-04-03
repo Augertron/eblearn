@@ -269,6 +269,6 @@ namespace ebl {
 
 } // end namespace ebl
 
-#include "Image.hpp"
+#include "image.hpp"
 
 #endif /* IMAGE_H_ */

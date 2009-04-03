@@ -33,9 +33,9 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include "Image.h"
-#include "Blas.h"
-#include "Idx.h"
+#include "image.h"
+#include "blas.h"
+#include "idx.h"
 
 using namespace std;
 

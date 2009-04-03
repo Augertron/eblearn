@@ -1,6 +1,5 @@
-#include "Blas.h"
+#include "libidx.h"
 #include "ClusterTest.h"
-#include "Idx.h"
 
 #include <iostream>
 

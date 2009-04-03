@@ -33,10 +33,10 @@
 #define Blas_H
 
 #include <math.h>
-#include "IdxBlas.h"
+#include "idxblas.h"
 
-#include "Numerics.h"
-#include "Idx.h"
+#include "numerics.h"
+#include "idx.h"
 
 namespace ebl {
 
@@ -346,6 +346,6 @@ namespace ebl {
 
 } // end namespace ebl
 
-#include "Blas.hpp"
+#include "blas.hpp"
 
 #endif
