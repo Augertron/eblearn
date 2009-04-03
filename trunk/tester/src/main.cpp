@@ -9,7 +9,6 @@
 #include "libeblearn.h"
 #include "MyTextOutputter.h"
 #include "BlasTest.h"
-#include "GblTest.h"
 #include "EblBasicTest.h"
 #include "IdxIOTest.h"
 #include "DataSourceTest.h"
@@ -110,7 +109,6 @@ int main(int argc, char **argv) {
   runner.addTest(IdxTest::suite());
   runner.addTest(IdxIteratorsTest::suite());
   runner.addTest(BlasTest::suite());
-  runner.addTest(GblTest::suite());
   runner.addTest(EblBasicTest::suite());
   runner.addTest(IdxIOTest::suite());
   runner.addTest(ImageTest::suite());

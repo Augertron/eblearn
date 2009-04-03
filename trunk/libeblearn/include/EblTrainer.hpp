@@ -72,16 +72,18 @@ namespace ebl {
   
   template <class Tdata, class Tlabel>  
   int supervised_trainer<Tdata, Tlabel>::run(state_idx &input, 
-					     infer_param &infp) {
+					     infer_param &infp,
+					     int *label) {
     int answer = -1;
-    machine.infer2(input, answer, energy, infp); // infer answer from energies
+    // infer answer from energies and fill energy of correct answer
+    machine.infer2(input, answer, infp, label, &energy);
     return answer;
   }
   
   template <class Tdata, class Tlabel>  
   bool supervised_trainer<Tdata, Tlabel>::
   test_sample(state_idx &input, int label, int &answer, infer_param &infp) {
-    answer = run(input, infp);
+    answer = run(input, infp, &label);
     return (label == answer); // return true if correct answer
   }
 

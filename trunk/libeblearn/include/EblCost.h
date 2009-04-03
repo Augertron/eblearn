@@ -86,8 +86,28 @@ namespace ebl {
     virtual void forget(forget_param_linear &fp) {}
 
     //! compute value of in2 that minimizes the energy, given in1
-    virtual double infer2(state_idx &i1, int &i2, state_idx &energy,
-			  infer_param &ip);
+    virtual double infer2(state_idx &i1, int &i2, infer_param &ip, 
+			  int *label = NULL, state_idx *energy = NULL);
+  };
+
+  ////////////////////////////////////////////////////////////////
+
+  //! performs a log-add over spatial dimensions of an idx3-state
+  //! output is an idx1-state
+  class logadd_layer { //: public module_1_1<state_idx, state_idx> { // TODO
+  public:
+    Idx<double> expdist;
+    Idx<double> sumexp;
+
+    logadd_layer(intg thick, intg si, intg sj);
+    virtual ~logadd_layer() {
+    }
+    void fprop(state_idx *in, state_idx *out);
+    void bprop(state_idx *in, state_idx *out);
+
+    //! this is not algebraically correct, but it's
+    //! numerically more stable (at least, I think so).
+    void bbprop(state_idx *in, state_idx *out);
   };
 
 } // namespace ebl {

@@ -12,13 +12,13 @@
 include_directories (include)
 include_directories(${LIBEBLEARN_INCLUDE_DIR})
 include_directories(${LIBIDX_INCLUDE_DIR})
-include_directories(${EBLEARN_TOOLS_INCLUDE_DIR})
+include_directories(${LIBEBLEARN_TOOLS_INCLUDE_DIR})
 
 FIND_PACKAGE(Qt4)
 IF (QT_FOUND) #-----------------------------------------------------------------
   # add include directories
   ##############################################################################
-  include_directories(${IDXGUI_INCLUDE_DIR})
+  include_directories(${LIBIDXGUI_INCLUDE_DIR})
   include_directories(${QT_INCLUDE_DIR})
   include_directories(${QT_QTGUI_INCLUDE_DIR})
   include_directories(${QT_QTCORE_INCLUDE_DIR})
@@ -41,7 +41,6 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
     src/Classifier2DTest.cpp
     src/ClusterTest.cpp
     src/DataSourceTest.cpp
-    src/GblTest.cpp
     src/EblBasicTest.cpp
     src/IdxIOTest.cpp
     src/IdxIteratorsTest.cpp
