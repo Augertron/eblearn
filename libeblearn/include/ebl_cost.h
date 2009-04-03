@@ -29,11 +29,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBLCOST_H_
-#define EBLCOST_H_
+#ifndef EBL_COST_H_
+#define EBL_COST_H_
 
-#include "Blas.h"
-#include "EblArch.h"
+#include "libidx.h"
+#include "ebl_arch.h"
 
 namespace ebl {
 
@@ -112,6 +112,6 @@ namespace ebl {
 
 } // namespace ebl {
 
-#include "EblCost.hpp"
+#include "ebl_cost.hpp"
 
 #endif /* EBLCOST_H_ */

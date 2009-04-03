@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "EblLogger.h"
+#include "ebl_logger.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"

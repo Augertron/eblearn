@@ -29,30 +29,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBL_H_
-#define EBL_H_
+#include "ebl_arch.h"
 
-#include "Idx.h"
-#include "Blas.h"
-#include "EblStates.h"
-#include "EblBasic.h"
-#include "EblArch.h"
+using namespace std;
 
 namespace ebl {
 
-   /*! \mainpage libeblearn Library Main Page
-   *
-   * \section intro_sec Introduction
-   *
-   * This is the introduction.
-   *
-   * \section install_sec Installation
-   *
-   * \subsection step1 Step 1: TODO
-   *  
-   * TODO
-   */
+  // check that orders of input and module are compatible
+  void check_replicable_orders(module_1_1<state_idx, state_idx> &m, 
+			       state_idx& in) {
+    if (in.x.order() < 0)
+      ylerror("module_1_1_replicable cannot replicate this module (order -1)");
+    if (in.x.order() < m.replicable_order())
+      ylerror("input order must be greater or equal to module's operating \
+order");
+    if (in.x.order() > MAXDIMS)
+      ylerror("cannot replicate using more dimensions than MAXDIMS");
+  }
 
-} // namespace ebl {
-
-#endif /* EBL_H_ */
+} // end namespace ebl

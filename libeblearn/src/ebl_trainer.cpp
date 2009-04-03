@@ -29,7 +29,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "Net.h"
+#include "ebl_trainer.h"
 
-using namespace ebl;
+using namespace std;
 
+namespace ebl {
+
+} // end namespace ebl

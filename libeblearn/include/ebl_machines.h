@@ -29,18 +29,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBLMACHINES_H_
-#define EBLMACHINES_H_
+#ifndef EBL_MACHINES_H_
+#define EBL_MACHINES_H_
 
-#include "Defines.h"
-#include "Idx.h"
-#include "Blas.h"
-#include "EblStates.h"
-#include "EblBasic.h"
-#include "EblCost.h"
-#include "EblArch.h"
-#include "EblNonLinearity.h"
-#include "EblLayers.h"
+#include "defines.h"
+#include "libidx.h"
+#include "ebl_states.h"
+#include "ebl_basic.h"
+#include "ebl_cost.h"
+#include "ebl_arch.h"
+#include "ebl_nonlinearity.h"
+#include "ebl_layers.h"
 
 namespace ebl {
 
@@ -173,6 +172,6 @@ namespace ebl {
   
 } // namespace ebl {
 
-#include "EblMachines.hpp"
+#include "ebl_machines.hpp"
 
-#endif /* EBLMACHINES_H_ */
+#endif /* EBL_MACHINES_H_ */

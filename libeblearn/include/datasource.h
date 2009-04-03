@@ -33,8 +33,9 @@
 #ifndef DATASOURCE_H_
 #define DATASOURCE_H_
 
+#include "defines.h"
 #include "libidx.h"
-#include "Ebl.h"
+#include "ebl_states.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"
@@ -202,6 +203,6 @@ namespace ebl {
 
 } // end namespace ebl
 
-#include "DataSource.hpp"
+#include "datasource.hpp"
 
 #endif /* DATASOURCE_H_ */

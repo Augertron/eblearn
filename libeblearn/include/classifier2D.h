@@ -32,8 +32,6 @@
 #ifndef CLASSIFIER2D_H_
 #define CLASSIFIER2D_H_
 
-#include "Net.h"
-#include "libidx.h"
 #include "libeblearn.h"
 
 namespace ebl {

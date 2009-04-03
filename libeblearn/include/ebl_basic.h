@@ -29,14 +29,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBLBASIC_H_
-#define EBLBASIC_H_
+#ifndef EBL_BASIC_H_
+#define EBL_BASIC_H_
 
-#include "Defines.h"
-#include "Idx.h"
-#include "Blas.h"
-#include "EblArch.h"
-#include "EblStates.h"
+#include "defines.h"
+#include "libidx.h"
+#include "ebl_arch.h"
+#include "ebl_states.h"
 
 namespace ebl {
 
@@ -213,4 +212,4 @@ namespace ebl {
 
 } // namespace ebl {
 
-#endif /* EBLBASIC_H_ */
+#endif /* EBL_BASIC_H_ */
