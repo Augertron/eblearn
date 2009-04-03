@@ -32,7 +32,7 @@
 #ifndef SDNN_MODULES_H_
 #define SDNN_MODULES_H_
 
-#include "Ebl.h"
+#include "libidx.h"
 #include "net_cscscfe.h"
 
 namespace ebl {
