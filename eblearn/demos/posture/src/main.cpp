@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
   // training, and testing...
   cout << "Training network on posture images with " << train_ds.size();
   cout << " training samples and " << test_ds.size() << " test samples" << endl;
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 50; ++i) {
     cout << endl;
     // Training on the whole dataset:
     thetrainer.train(train_ds, trainmeter, gdp, 1);
