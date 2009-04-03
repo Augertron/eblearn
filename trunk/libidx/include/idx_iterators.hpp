@@ -1,5 +1,5 @@
-#ifndef IDXITER_HPP_
-#define IDXITER_HPP_
+#ifndef IDX_ITERATORS_HPP_
+#define IDX_ITERATORS_HPP_
 
 #include <algorithm>
 #include <numeric>
@@ -742,4 +742,4 @@ ReverseDimIter<T>::operator==( const ReverseDimIter<T>& other ){
 
 } // end namespace ebl
 
-#endif /*IDXITER_HPP_*/
+#endif /* IDX_ITERATORS_HPP_*/

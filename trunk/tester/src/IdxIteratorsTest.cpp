@@ -1,8 +1,5 @@
-#include "Idx.h"
-#include "IdxIterators.h"
+#include "libidx.h"
 #include "IdxIteratorsTest.h"
-#include "Generators.h"
-#include "Blas.h"
 #include <iostream>
 #include <ctime>
 //#include <parallel/algorithm>
@@ -169,28 +166,3 @@ void IdxIteratorsTest::test_DimensionIterator_shifting(){
     CPPUNIT_ASSERT_EQUAL(3, (int) kk->dim(1));
   }
 }
-
-void IdxIteratorsTest::test_matrixMultiply(){
-  typedef Idx<double> Tensor;
-  typedef Tensor::dimension_iterator DIter;
-  typedef Tensor::scalar_iterator SIter;
-	
-  Tensor mat(2,3);
-  Tensor vec(mat.dim(1));
-  Tensor outvec(mat.dim(0));
-	
-  // fill with sequential numbers
-  std::generate(mat.scalars_begin(), mat.scalars_end(), Counter<>());
-  std::generate(vec.scalars_begin(), vec.scalars_end(), Counter<>());
-
-  // iterate over rows
-  DIter rowIter(mat,0);
-  SIter vecElemIter(vec), outElemIter(outvec);
-  for( ; rowIter.notdone(); ++rowIter, ++vecElemIter, ++outElemIter){
-    *outElemIter = idx_dot(*rowIter, vec);
-  }
-
-  CPPUNIT_ASSERT_EQUAL(5.0, outvec.get(0));
-  CPPUNIT_ASSERT_EQUAL(14.0, outvec.get(1));
-}
-

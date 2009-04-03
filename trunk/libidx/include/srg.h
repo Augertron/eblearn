@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 
-#include "LibidxDefines.h"
+#include "defines.h"
 
 namespace ebl {
 
@@ -123,7 +123,7 @@ template <class T> class Srg{
 
 } // end namespace ebl
 
-#include "Srg.hpp"
+#include "srg.hpp"
 
 #endif	/* _SRG_H */
 

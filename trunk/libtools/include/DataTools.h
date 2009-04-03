@@ -33,8 +33,7 @@
 #ifndef DATATOOLS_H_
 #define DATATOOLS_H_
 
-#include "Idx.h"
-#include "Blas.h"
+#include "libidx.h"
 
 namespace ebl {
 

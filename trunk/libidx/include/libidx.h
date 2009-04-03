@@ -33,13 +33,12 @@
 #ifndef libidx_H
 #define libidx_H
 
-#include "LibidxDefines.h"
-#include "Numerics.h"
-#include "Srg.h"
-#include "Idx.h"
-#include "Blas.h"
-#include "IdxIO.h"
-#include "Image.h"
-#include "Generators.h"
+#include "defines.h"
+#include "numerics.h"
+#include "srg.h"
+#include "idx.h"
+#include "blas.h"
+#include "idxIO.h"
+#include "image.h"
 
 #endif

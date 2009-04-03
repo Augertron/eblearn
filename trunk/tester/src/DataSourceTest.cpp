@@ -18,40 +18,6 @@ void DataSourceTest::setUp() {
 void DataSourceTest::tearDown() {
 }
 
-void DataSourceTest::test_LabeledDataSource() {
-  CPPUNIT_ASSERT_MESSAGE("TODO: fixme", false);
-  const int ndata = 5;
-
-  // Fill data with decreasing negative numbers
-  Idx<double> data(ndata, 2, 3);
-  std::generate(data.scalars_begin(), data.scalars_end(), Counter<double>(0,
-									  -1));
-
-  // Fill labels with increasing positive numbers
-  Idx<int> labels(ndata);
-  std::generate(labels.scalars_begin(), labels.scalars_end(), Counter<int>());
-
-  LabeledDataSource<double, int> ds(data, labels, 0.0, 1.0);
-
-  // Print out two epochs
-  {
-    state_idx datum(2, 3);
-    Idx<int> label;
-    for (int age = 0; age < ndata * 2; ++age) {
-      ds.fprop(datum, label);
-      /*			cout<<"Datum:"<<endl;
-				datum.x.printElems();
-				cout<<"Label: ";
-				label.printElems();
-				cout<<endl;
-      */			 
-      ds.next();
-    }
-    CPPUNIT_ASSERT_EQUAL(-29.0, datum.x.get(1, 2));
-    CPPUNIT_ASSERT_EQUAL(4, label.get());
-  }
-}
-
 // test function for mnist data source (requires special matrix header reading).
 void DataSourceTest::test_mnist_LabeledDataSource() {
   CPPUNIT_ASSERT_MESSAGE("TODO: fixme", false);

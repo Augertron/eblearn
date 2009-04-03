@@ -30,8 +30,6 @@
  ***************************************************************************/
 
 #include "DataTools.h"
-#include "Image.h"
-#include "IdxIO.h"
 #include <algorithm>
 
 #ifdef __BOOST__

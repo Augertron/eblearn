@@ -41,8 +41,8 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
-#include "LibidxDefines.h"
-#include "Srg.h"
+#include "defines.h"
+#include "srg.h"
 
 namespace ebl {
 
@@ -703,7 +703,7 @@ namespace ebl {
 
 } // end namespace ebl
 
-#include "IdxIterators.h"
+#include "idx_iterators.h"
 
 namespace ebl {
 
@@ -824,7 +824,7 @@ namespace ebl {
 } // end namespace ebl
 
 ////////////////////////////////////////////////////////////////
-#include "IdxIterators.hpp"
-#include "Idx.hpp"
+#include "idx_iterators.hpp"
+#include "idx.hpp"
 
 #endif
