@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "EblMachines.h"
+#include "ebl_machines.h"
 
 using namespace std;
 

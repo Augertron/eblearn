@@ -29,19 +29,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBLTESTER_H_
-#define EBLTESTER_H_
+#ifndef EBL_TESTER_H_
+#define EBL_TESTER_H_
 
 #include <stdio.h>
 #include <iostream>
 #include <sstream>
 #include <ostream>
 
-#include "Idx.h"
-#include "Blas.h"
-#include "EblStates.h"
-#include "EblBasic.h"
-#include "EblArch.h"
+#include "libidx.h"
+#include "ebl_states.h"
+#include "ebl_basic.h"
+#include "ebl_arch.h"
 
 namespace ebl {
 
@@ -240,4 +239,4 @@ namespace ebl {
 
 } // namespace ebl {
 
-#endif /* EBLTESTER_H_ */
+#endif /* EBL_TESTER_H_ */

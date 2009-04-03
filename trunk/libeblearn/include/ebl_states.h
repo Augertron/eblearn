@@ -29,11 +29,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBLSTATES_H_
-#define EBLSTATES_H_
+#ifndef EBL_STATES_H_
+#define EBL_STATES_H_
 
-#include "Idx.h"
-#include "Blas.h"
+#include "libidx.h"
 
 namespace ebl {
 
@@ -311,4 +310,4 @@ namespace ebl {
 
 } // namespace ebl {
 
-#endif /* EBLSTATES_H_ */
+#endif /* EBL_STATES_H_ */

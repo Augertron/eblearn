@@ -29,8 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "Classifier2D.h"
-#include "Image.h"
+#include "classifier2D.h"
 #include <algorithm>
 
 using namespace std;

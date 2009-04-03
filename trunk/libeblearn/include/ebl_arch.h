@@ -29,13 +29,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBLARCH_H_
-#define EBLARCH_H_
+#ifndef EBL_ARCH_H_
+#define EBL_ARCH_H_
 
-#include "Defines.h"
-#include "Idx.h"
-#include "Blas.h"
-#include "EblStates.h"
+#include "libidx.h"
+#include "defines.h"
+#include "ebl_states.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"
@@ -253,6 +252,6 @@ namespace ebl {
 
 } // namespace ebl {
 
-#include "EblArch.hpp"
+#include "ebl_arch.hpp"
 
-#endif /* EBLARCH_H_ */
+#endif /* EBL_ARCH_H_ */

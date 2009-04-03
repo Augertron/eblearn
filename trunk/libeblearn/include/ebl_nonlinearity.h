@@ -29,15 +29,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBLNONLINEARITY_H_
-#define EBLNONLINEARITY_H_
+#ifndef EBL_NONLINEARITY_H_
+#define EBL_NONLINEARITY_H_
 
-#include "Defines.h"
-#include "Idx.h"
-#include "Blas.h"
-#include "EblStates.h"
-#include "EblBasic.h"
-#include "EblArch.h"
+#include "defines.h"
+#include "libidx.h"
+#include "ebl_states.h"
+#include "ebl_basic.h"
+#include "ebl_arch.h"
 
 namespace ebl {
 
@@ -108,4 +107,4 @@ namespace ebl {
 
 } // namespace ebl {
 
-#endif /* EBLNONLINEARITY_H_ */
+#endif /* EBL_NONLINEARITY_H_ */

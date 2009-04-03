@@ -7,8 +7,8 @@
 //! Test class for Blas class
 class NetTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(NetTest);
-  CPPUNIT_TEST(test_lenet5_mnist);
   CPPUNIT_TEST(test_full_table);
+  CPPUNIT_TEST(test_lenet5_mnist);
   CPPUNIT_TEST_SUITE_END();
 
 private:

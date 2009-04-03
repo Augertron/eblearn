@@ -29,14 +29,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBLTRAINER_H_
-#define EBLTRAINER_H_
+#ifndef EBL_TRAINER_H_
+#define EBL_TRAINER_H_
 
-#include "Blas.h"
-#include "EblArch.h"
-#include "EblMachines.h"
-#include "EblLogger.h"
-#include "DataSource.h"
+#include "libidx.h"
+#include "ebl_arch.h"
+#include "ebl_machines.h"
+#include "ebl_logger.h"
+#include "datasource.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"
@@ -127,6 +127,6 @@ namespace ebl {
 
 } // namespace ebl {
 
-#include "EblTrainer.hpp"
+#include "ebl_trainer.hpp"
 
-#endif /* EBLTRAINER_H_ */
+#endif /* EBL_TRAINER_H_ */

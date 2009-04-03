@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "EblLayers.h"
+#include "ebl_layers.h"
 
 using namespace std;
 

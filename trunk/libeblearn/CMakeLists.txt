@@ -27,21 +27,20 @@ ENDIF (QT_FOUND) #--------------------------------------------------------------
 # compile library
 ################################################################################
 ADD_LIBRARY (eblearn SHARED
-		     src/Ebl.cpp  
-		     src/EblArch.cpp  
-		     src/EblStates.cpp  
-		     src/EblCost.cpp  
-		     src/EblBasic.cpp  
-		     src/EblNonLinearity.cpp  
-		     src/EblTester.cpp
-		     src/EblLayers.cpp  
-		     src/EblLogger.cpp  
-		     src/EblMachines.cpp  
-		     src/Ipp.cpp  
+		     src/ebl_arch.cpp  
+		     src/ebl_states.cpp  
+		     src/ebl_cost.cpp  
+		     src/ebl_basic.cpp  
+		     src/ebl_nonlinearity.cpp  
+		     src/ebl_tester.cpp
+		     src/ebl_layers.cpp  
+		     src/ebl_logger.cpp  
+		     src/ebl_machines.cpp  
+		     src/ipp.cpp  
 		     src/sdnn_modules.cpp
 		     src/net_cscscfe.cpp
-		     src/Classifier2D.cpp  
-		     src/DataSource.cpp  
+		     src/classifier2D.cpp  
+		     src/datasource.cpp  
 		     )
 
 ## link against libidx

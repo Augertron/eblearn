@@ -29,16 +29,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBLLAYERS_H_
-#define EBLLAYERS_H_
+#ifndef EBL_LAYERS_H_
+#define EBL_LAYERS_H_
 
-#include "Defines.h"
-#include "Idx.h"
-#include "Blas.h"
-#include "EblStates.h"
-#include "EblBasic.h"
-#include "EblArch.h"
-#include "EblNonLinearity.h"
+#include "defines.h"
+#include "libidx.h"
+#include "ebl_states.h"
+#include "ebl_basic.h"
+#include "ebl_arch.h"
+#include "ebl_nonlinearity.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"
@@ -136,4 +135,4 @@ namespace ebl {
 
 } // namespace ebl {
 
-#endif /* EBLLAYERS_H_ */
+#endif /* EBL_LAYERS_H_ */

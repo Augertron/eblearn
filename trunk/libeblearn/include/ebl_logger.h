@@ -29,13 +29,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBLLOGGER_H_
-#define EBLLOGGER_H_
+#ifndef EBL_LOGGER_H_
+#define EBL_LOGGER_H_
 
-#include "Defines.h"
-#include "Idx.h"
-#include "Blas.h"
-#include "EblStates.h"
+#include "defines.h"
+#include "libidx.h"
+#include "ebl_states.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"
@@ -173,4 +172,4 @@ namespace ebl {
 
 } // namespace ebl {
 
-#endif /* EBLLOGGER_H_ */
+#endif /* EBL_LOGGER_H_ */
