@@ -119,7 +119,7 @@ namespace ebl {
     return true;
   }
 
-  bool pnm_fread_into_rgbx(const char* fname, Idx<ubyte> &out){
+  bool pnm_fread_into_rgbx(const char* fname, idx<ubyte> &out){
     FILE *fp = fopen(fname, "r");
     if (!fp) {
       cerr << "failed to open " << fname << endl;
@@ -130,14 +130,14 @@ namespace ebl {
     return bla;
   }
 
-  bool pnm_fread_into_rgbx(FILE *fp, Idx<ubyte> &out) {
+  bool pnm_fread_into_rgbx(FILE *fp, idx<ubyte> &out) {
     idx_checkorder1(out, 3);
 
     int type, ncol, nlin, ncolo, nlino, ncmpo, vmax;
     unsigned int size;
     if (!pnm_header(fp, &type, &ncol, &nlin, &vmax))
       return false;
-    // TODO: allow PNM > 255 when Idx out is int
+    // TODO: allow PNM > 255 when idx out is int
     if (vmax > 255) {
       cerr << "values range from 0 to " << vmax;
       cerr << ". Only ubyte are supported (0 .. 255)." << endl;
@@ -210,7 +210,7 @@ namespace ebl {
   }
 
 
-  bool image_read_rgbx(const char *fname, Idx<ubyte> &out){
+  bool image_read_rgbx(const char *fname, idx<ubyte> &out){
 
     /* TODO : add a line in the config to detect "convert" path
        char myconvert[100];
@@ -353,9 +353,9 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  void YUVGlobalNormalization(Idx<float> &yuv) {
+  void YUVGlobalNormalization(idx<float> &yuv) {
     idx_checkorder1(yuv, 3);
-    Idx<float> tmp = yuv.select(2, 0);
+    idx<float> tmp = yuv.select(2, 0);
     idx_addc(tmp, (float) -131.35, tmp);
     idx_dotc(tmp, (float)    0.01, tmp);
     tmp = yuv.select(2, 1);
@@ -369,8 +369,8 @@ namespace ebl {
   /////////////////////////////////////////////////////////////////
 
   void image_rotscale_rect(int w, int h, double cx, double cy,
-			   double angle, double coeff, Idx<intg> &wh,
-			   Idx<double> &cxcy){
+			   double angle, double coeff, idx<intg> &wh,
+			   idx<double> &cxcy){
     double sa = sin(0.017453292*angle);
     double ca = cos(0.017453292*angle);
     double x1 = 0;

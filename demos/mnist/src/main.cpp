@@ -17,14 +17,14 @@ int main(int argc, char **argv) {
   intg tesize = 10000; // maximum testing set size:  10000
   
   //! load MNIST datasets: trize for training set and tesize for testing set
-  MnistDataSource<ubyte,ubyte> train_ds, test_ds;
+  mnist_datasource<ubyte,ubyte> train_ds, test_ds;
   load_mnist_dataset(argv[1], train_ds, test_ds, trsize, tesize);
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
-  Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
+  idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
 
   //! create the network weights, network and trainer
-  IdxDim dims(train_ds.sample_dims()); // get order and dimensions of sample
+  idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
   parameter theparam(60000); // create trainable parameter
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);

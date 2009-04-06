@@ -29,8 +29,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef RENDERTHREAD_H_
-#define RENDERTHREAD_H_
+#ifndef IDXGUI_H_
+#define IDXGUI_H_
 
 #include <QThread>
 #include <QWaitCondition>
@@ -43,7 +43,7 @@ using namespace std;
 
 namespace ebl {
 
-  class RenderThread : public QThread, public ostringstream {
+  class idxgui : public QThread, public ostringstream {
     Q_OBJECT
       
   private:
@@ -54,9 +54,9 @@ namespace ebl {
     bool         cout_output;
 
   public:
-    RenderThread();
+    idxgui();
     void init(int argc_, char **argv_);
-    virtual ~RenderThread();
+    virtual ~idxgui();
 
     void quit();
     void clear();
@@ -65,7 +65,7 @@ namespace ebl {
     void select_window(unsigned int wid);
 
     template<class T> friend
-      RenderThread& operator<<(RenderThread& r, const T val);
+      idxgui& operator<<(idxgui& r, const T val);
 
     void add_text(std::string *s);
     void set_text_origin(unsigned int h0, unsigned int w0);
@@ -87,17 +87,17 @@ namespace ebl {
     //! be 255
     //! @param zoomw and @param zoomh are the zoom factors in width and height
     template<class T>
-      void draw_matrix(Idx<T> &im, unsigned int h0 = 0, unsigned int w0 = 0, 
+      void draw_matrix(idx<T> &im, unsigned int h0 = 0, unsigned int w0 = 0, 
 		       T minv = 0, T maxv = 0, 
 		       double zoomw = 1.0, double zoomh = 1.0);
     template<class T>
-      void draw_matrix_frame(Idx<T> &im, ubyte r, ubyte g, ubyte b,
+      void draw_matrix_frame(idx<T> &im, ubyte r, ubyte g, ubyte b,
 			     unsigned int h0 = 0, unsigned int w0 = 0, 
 			     T minv = 0, T maxv = 0, 
 			     double zoomw = 1.0, double zoomh = 1.0);
 
   signals:
-    void gui_drawImage(Idx<ubyte> *img, unsigned int h0, unsigned int w0);
+    void gui_drawImage(idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void appquit();
     void gui_clear();
     void gui_new_window(const char *wname, unsigned int h, unsigned int w);
@@ -112,6 +112,6 @@ namespace ebl {
 
 } // namespace ebl {
 
-#include "RenderThread.hpp"
+#include "idxgui.hpp"
 
-#endif /* RENDERTHREAD_H_ */
+#endif /* GUI_H_ */

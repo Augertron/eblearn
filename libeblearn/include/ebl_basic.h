@@ -98,13 +98,13 @@ namespace ebl {
     intg	 thickness;
     intg	 stridei;
     intg	 stridej;
-    Idx<intg>	&table;	//!< the table of connections between input and output
+    idx<intg>	&table;	//!< the table of connections between input and output
     
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     convolution_module_2D(parameter &p, intg kerneli, intg kernelj, 
 			  intg  stridei, intg stridej, 
-			  Idx<intg> &table, intg thick);
+			  idx<intg> &table, intg thick);
     virtual ~convolution_module_2D();
     //! forward propagation from in to out
     virtual void fprop(state_idx &in, state_idx &out);
@@ -131,7 +131,7 @@ namespace ebl {
   DECLARE_REPLICABLE_MODULE_1_1(convolution_module_2D_replicable, 
 				convolution_module_2D,
 				(parameter &p, intg ki, intg kj, intg si, 
-				 intg sj, Idx<intg> &table, intg thick),
+				 intg sj, idx<intg> &table, intg thick),
 				(p, ki, kj, si, sj, table, thick));
 
   ////////////////////////////////////////////////////////////////

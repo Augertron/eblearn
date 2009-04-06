@@ -87,7 +87,7 @@ namespace ebl {
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
     nn_layer_convolution(parameter &p, intg kerneli, intg kernelj, 
-			 intg ri, intg rj, Idx<intg> &tbl, intg thick);
+			 intg ri, intg rj, idx<intg> &tbl, intg thick);
     virtual ~nn_layer_convolution();
     //! fprop from in to out
     void fprop(state_idx &in, state_idx &out);

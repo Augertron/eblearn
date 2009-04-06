@@ -115,7 +115,7 @@ namespace ebl {
   void softmax::fprop( state_idx &in, state_idx &out){
     int n=in.x.order();
     if(n==0){
-      Idx<double> ib;
+      idx<double> ib;
       ib.set(1);
       idx_copy(ib, out.x);
     }
@@ -123,8 +123,8 @@ namespace ebl {
       resize_nsame(in, out, n);
       if( n > 6) {ylerror("illegal type")}
       else{
-	Idx<double> pp(new Srg<double>(), in.x.spec);
-	Idx<double> dot(new Srg<double>(), in.x.spec);
+	idx<double> pp(new Srg<double>(), in.x.spec);
+	idx<double> dot(new Srg<double>(), in.x.spec);
 	double mm = idx_max(in.x);
 	idx_addc(in.x, -mm, pp);
 	idx_dotc(pp, beta, dot);
@@ -140,8 +140,8 @@ namespace ebl {
     if( n == 0) return;
     if( n > 6 ) { ylerror("illegal type")}
     else{
-      Idx<double> pp(new Srg<double>(), out.dx.spec);
-      Idx<double> mul(new Srg<double>(), out.dx.spec);
+      idx<double> pp(new Srg<double>(), out.dx.spec);
+      idx<double> mul(new Srg<double>(), out.dx.spec);
       double dot = idx_dot(out.dx, out.x);
       idx_addc(out.dx, -dot, pp);
       idx_mul(out.x, pp, mul);
@@ -154,12 +154,12 @@ namespace ebl {
     if( n == 0) return;
     if( n > 6 ) { ylerror("illegal type")}
     else{
-      Idx<double> mul(new Srg<double>(), out.x.spec);
-      Idx<double> dot(new Srg<double>(), out.x.spec);
-      Idx<double> pp(new Srg<double>(), out.x.spec);
-      Idx<double> mul2(new Srg<double>(), out.x.spec);
-      Idx<double> pp2(new Srg<double>(), out.x.spec);
-      Idx<double> mul3(new Srg<double>(), out.x.spec);
+      idx<double> mul(new Srg<double>(), out.x.spec);
+      idx<double> dot(new Srg<double>(), out.x.spec);
+      idx<double> pp(new Srg<double>(), out.x.spec);
+      idx<double> mul2(new Srg<double>(), out.x.spec);
+      idx<double> pp2(new Srg<double>(), out.x.spec);
+      idx<double> mul3(new Srg<double>(), out.x.spec);
       idx_mul(out.x, out.x, mul);
       idx_dotc(out.x, (double)-2, dot);
       idx_addc(dot, (double)1, pp);

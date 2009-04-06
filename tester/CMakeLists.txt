@@ -65,7 +65,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   # link executable with external libraries
   ##############################################################################
   target_link_libraries (eblearn_tester eblearn idx)
-  target_link_libraries (eblearn_tester eblearn_tools)
+  target_link_libraries (eblearn_tester eblearntools)
   target_link_libraries (eblearn_tester ${CPPUNIT_LIBRARY})
   IF (QT_FOUND) #---------------------------------------------------------------
     target_link_libraries (eblearn_tester idxgui)

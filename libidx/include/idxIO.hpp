@@ -116,7 +116,7 @@ namespace ebl {
 
   // TODO: use c++ IO to catch IO exceptions more easily
   // TODO: if types differ, print warning and cast to expected type
-  template<typename T> bool load_matrix(Idx<T>& m, const char *filename) {
+  template<typename T> bool load_matrix(idx<T>& m, const char *filename) {
     // open file
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
@@ -192,7 +192,7 @@ namespace ebl {
 	}
       }
     }
-    // TODO: implement Idx constructor accepting array of dimensions 
+    // TODO: implement idx constructor accepting array of dimensions 
     // and modify code below.
     m.resize(0 < ndim ? dims[0] : -1,
 	     1 < ndim ? dims[1] : -1,
@@ -211,7 +211,7 @@ namespace ebl {
     return true;
   }
 
-  template<typename T> bool load_matrix(Idx<T>& m, istream &stream) {
+  template<typename T> bool load_matrix(idx<T>& m, istream &stream) {
     int magic, ndim, v;
     int ndim_min = 3; // std header requires at least 3 dims even empty ones.
     intg *dims = NULL;
@@ -265,7 +265,7 @@ namespace ebl {
 	}
       }
     }
-    // TODO: implement Idx constructor accepting array of dimensions 
+    // TODO: implement idx constructor accepting array of dimensions 
     // and modify code below.
     m.resize(0 < ndim ? dims[0] : -1,
 	     1 < ndim ? dims[1] : -1,
@@ -283,7 +283,7 @@ namespace ebl {
 
   // TODO: intg support
   // TODO: use c++ IO to catch IO exceptions more easily
-  template<typename T> bool save_matrix(Idx<T>& m, const char *filename) {
+  template<typename T> bool save_matrix(idx<T>& m, const char *filename) {
     int v, i;
     FILE *fp = fopen(filename, "wb");
 
@@ -323,7 +323,7 @@ namespace ebl {
     return true;
   }
 
-  template<typename T> bool save_matrix(Idx<T>& m, ostream &stream) {
+  template<typename T> bool save_matrix(idx<T>& m, ostream &stream) {
     int v, i;
 
     // header

@@ -59,8 +59,8 @@ namespace ebl {
     // main matrix multiplication
     {
       int tr[] = { 2, 1, 0 };
-      Idx<double> inx(in.x.transpose(tr));
-      Idx<double> outx(out.x.transpose(tr));
+      idx<double> inx(in.x.transpose(tr));
+      idx<double> outx(out.x.transpose(tr));
       // loop over spatial dimensions
       idx_bloop2(linx,inx,double, loutx,outx,double)
 	{
@@ -82,10 +82,10 @@ namespace ebl {
   {
     // backprop through weight matrix
     int tr[] = { 2, 1, 0 };
-    Idx<double> inx(in.x.transpose(tr));
-    Idx<double> indx(in.dx.transpose(tr));
-    Idx<double> outdx(out.dx.transpose(tr));
-    Idx<double> tmp(inx.dim(2));
+    idx<double> inx(in.x.transpose(tr));
+    idx<double> indx(in.dx.transpose(tr));
+    idx<double> outdx(out.dx.transpose(tr));
+    idx<double> tmp(inx.dim(2));
     idx_clear(indx);
     //loop over last two dimensions
     { idx_bloop3(linx,inx,double, lindx,indx,double, loutdx,outdx,double) {

@@ -49,21 +49,21 @@ using namespace std;
 
 namespace ebl {
 
-  template<class T> Idx<T> image_crop(Idx<T> &in, int x, int y, int w, int h){
-    Idx<T> bla = in.narrow(0, h, y).narrow(1, w, x);
-    Idx<T> bla3(bla.dim(0), bla.dim(1), bla.order() < 3 ? -1 : bla.dim(2));
+  template<class T> idx<T> image_crop(idx<T> &in, int x, int y, int w, int h){
+    idx<T> bla = in.narrow(0, h, y).narrow(1, w, x);
+    idx<T> bla3(bla.dim(0), bla.dim(1), bla.order() < 3 ? -1 : bla.dim(2));
     idx_copy(bla, bla3);
     return bla3;
   }
 
-  template<class T> Idx<T> image_resize(Idx<T> &image, double w, double h, 
+  template<class T> idx<T> image_resize(idx<T> &image, double w, double h, 
 					int mode) {
     if (image.order() < 2) ylerror("image must have at least an order of 2.");
     // if data is not contiguous, copy it to a contiguous buffer
-    Idx<T> contim(image);
+    idx<T> contim(image);
     if (!image.contiguousp()) {
-      IdxDim d(image.spec);
-      Idx<T> tmp(d);
+      idxdim d(image.spec);
+      idx<T> tmp(d);
       idx_copy(image, tmp);
       contim = tmp;
     }
@@ -107,8 +107,8 @@ namespace ebl {
       imh = contim.dim(0);
     }
     // resample from subsampled image with bilinear interpolation
-    Idx<T> rez((intg) h, (intg) w, (contim.order() == 3) ? contim.dim(2) : 1);
-    Idx<T> bg(4);
+    idx<T> rez((intg) h, (intg) w, (contim.order() == 3) ? contim.dim(2) : 1);
+    idx<T> bg(4);
     idx_clear(bg);
     // the 0.5 thingies are necessary because warp-bilin interprets
     // integer coordinates as being at the center of each pixel.
@@ -122,14 +122,14 @@ namespace ebl {
   }
 
   template<class T> 
-  Idx<ubyte> grey_image_to_ubyte(Idx<T> &im, T minv, T maxv, 
+  idx<ubyte> grey_image_to_ubyte(idx<T> &im, T minv, T maxv, 
 				 double zoomw, double zoomh) {
     if ((im.order() < 2) || (im.order() > 3) || 
 	((im.order() == 3) && (im.dim(2) != 1))) 
-      ylerror("expecting a 2D Idx or a 3D Idx with 1 channel only");
-    Idx<T> im1(im.dim(0), im.dim(1));
+      ylerror("expecting a 2D idx or a 3D idx with 1 channel only");
+    idx<T> im1(im.dim(0), im.dim(1));
     if ((im.order() == 3) && (im.dim(2) == 1)) {
-      Idx<T> tmp = im.select(2, 0);
+      idx<T> tmp = im.select(2, 0);
       idx_copy(tmp, im1); // copy data to make it contiguous
     }
     else
@@ -147,26 +147,26 @@ namespace ebl {
     }
     int newh = im1.dim(0) * zoomh;
     int neww = im1.dim(1) * zoomw;
-    Idx<T> im2 = ((newh == im1.dim(0)) && (neww == im1.dim(1))) ?
+    idx<T> im2 = ((newh == im1.dim(0)) && (neww == im1.dim(1))) ?
       im1 : image_resize(im1, newh, neww);
-    Idx<ubyte> image(newh, neww);
+    idx<ubyte> image(newh, neww);
     idx_subc_bounded(im2, minv, im2);
     idx_dotc_bounded(im2, (T) (255.0 / (double) (maxv - minv)), im2);
     idx_copy_clip(im2, image);
     return image;
   }
 
-  template<class T> Idx<T> image_subsample_grayscale(Idx<T> &in, int nlin, int ncol) {
+  template<class T> idx<T> image_subsample_grayscale(idx<T> &in, int nlin, int ncol) {
     intg h = in.dim(0);
     intg w = in.dim(1);
     intg nh = h / nlin;
     intg nw = w / ncol;
-    Idx<T> out(nh, nw);
+    idx<T> out(nh, nw);
     if ((nlin == 1) && (ncol == 1)) {
       idx_copy(in, out);
       return out;
     }
-    Idx<T> inp = in.narrow(0, nlin * nh, 0);
+    idx<T> inp = in.narrow(0, nlin * nh, 0);
     inp = inp.narrow(1, ncol * nw, 0);
     T *_idx2loopc1, *pin;
     T *_idx2loopc2, *pout;
@@ -207,17 +207,17 @@ namespace ebl {
     return out;
   }
 
-  template<class T> Idx<T> image_subsample_rgb(Idx<T> &in, int nlin, int ncol) {
+  template<class T> idx<T> image_subsample_rgb(idx<T> &in, int nlin, int ncol) {
     intg h = in.dim(0);
     intg w = in.dim(1);
     intg nh = h / nlin;
     intg nw = w / ncol;
-    Idx<T> out(nh, nw, in.dim(2));
+    idx<T> out(nh, nw, in.dim(2));
     if ((nlin == 1) && (ncol == 1)) {
       idx_copy(in, out);
       return out;
     }
-    Idx<T> inp = in.narrow(0, nlin * nh, 0).narrow(1, ncol * nw, 0);
+    idx<T> inp = in.narrow(0, nlin * nh, 0).narrow(1, ncol * nw, 0);
     T *in_line, *pin;
     T *out_line, *pout;
     int i, _imax = out.dim(0);
@@ -243,7 +243,7 @@ namespace ebl {
     return out;
   }
 
-  template<class T> Idx<T> image_subsample(Idx<T> &in, int nlin, int ncol) {
+  template<class T> idx<T> image_subsample(idx<T> &in, int nlin, int ncol) {
     switch (in.order()) {
     case 2:
       return image_subsample_grayscale(in, nlin, ncol);
@@ -255,14 +255,14 @@ namespace ebl {
     }
   }
 
-  template<class T> void image_warp_quad(Idx<T> &in, Idx<T> &out,
-					 Idx<T> &background, int mode,
+  template<class T> void image_warp_quad(idx<T> &in, idx<T> &out,
+					 idx<T> &background, int mode,
 					 float x1, float y1, float x2, float y2, float x3, float y3,
 					 float x4, float y4, float p1, float q1, float p3, float q3) {
     intg outi = out.dim(0);
     intg outj = out.dim(1);
-    Idx<int> dispi(outi, outj);
-    Idx<int> dispj(outi, outj);
+    idx<int> dispi(outi, outj);
+    idx<int> dispj(outi, outj);
     compute_bilin_transform<float>(dispi, dispj, x1, y1, x2, y2, x3, y3,
 				   x4, y4, p1, q1, p3, q3);
     if (0 == mode)
@@ -272,8 +272,8 @@ namespace ebl {
   }
 
 
-  template<class T> void image_warp(Idx<T> &in, Idx<T> &out, Idx<T> &background,
-				    Idx<int> &pi, Idx<int> &pj) {
+  template<class T> void image_warp(idx<T> &in, idx<T> &out, idx<T> &background,
+				    idx<int> &pi, idx<int> &pj) {
     T* pin = in.idx_ptr();
     int indimi = in.dim(0);
     int indimj = in.dim(1);
@@ -290,8 +290,8 @@ namespace ebl {
       }}
   }
 
-  template<class T> void image_warp_fast(Idx<T> &in, Idx<T> &out, T *background,
-					 Idx<int> &pi, Idx<int> &pj) {
+  template<class T> void image_warp_fast(idx<T> &in, idx<T> &out, T *background,
+					 idx<int> &pi, idx<int> &pj) {
     T* pin = in.idx_ptr();
     int indimi = in.dim(0);
     int indimj = in.dim(1);
@@ -445,7 +445,7 @@ namespace ebl {
     }
   }
 
-  template<class T> void compute_bilin_transform(Idx<int> &dispi, Idx<int> &dispj,
+  template<class T> void compute_bilin_transform(idx<int> &dispi, idx<int> &dispj,
 						 float x1, float y1, float x2, float y2, float x3, float y3,
 						 float x4, float y4, float p1, float q1, float p3, float q3) {
     // compute transformation matrix from coordinates
@@ -483,9 +483,9 @@ namespace ebl {
       }}
   }
 
-  template<class T> void image_rotscale(Idx<T> &src, Idx<T> &out,
+  template<class T> void image_rotscale(idx<T> &src, idx<T> &out,
 					double sx, double sy, double dx, double dy,
-					double angle, double coeff, Idx<ubyte> &bg){
+					double angle, double coeff, idx<ubyte> &bg){
     double q = 1000;
     double coeff_inv = 1/coeff;
     double sa = q*sin(angle * 0.017453292);
@@ -509,7 +509,7 @@ namespace ebl {
 
 
 
-  template<class T> void image_draw_box(Idx<T> &img, T val,
+  template<class T> void image_draw_box(idx<T> &img, T val,
 					unsigned int x, unsigned int y, unsigned int dx, unsigned int dy) {
     idx_checkorder1(img, 2);
     for (unsigned int i = x; i < x + dx; ++i) {
@@ -522,16 +522,16 @@ namespace ebl {
     }
   }
 
-  template<class T> bool pnm_fread_into_rgbx(const char *fname, Idx<T> &out) {
-    Idx<ubyte> tmp(1,1,1);
+  template<class T> bool pnm_fread_into_rgbx(const char *fname, idx<T> &out) {
+    idx<ubyte> tmp(1,1,1);
     bool ret = pnm_fread_into_rgbx(fname, tmp);
     out.resize(tmp.dim(0), tmp.dim(1), tmp.dim(2));
     idx_copy(tmp, out);
     return ret;
   }
 
-  template<class T> bool image_read_rgbx(const char *fname, Idx<T> &out) {
-    Idx<ubyte> tmp(1,1,1);
+  template<class T> bool image_read_rgbx(const char *fname, idx<T> &out) {
+    idx<ubyte> tmp(1,1,1);
     bool ret = image_read_rgbx(fname, tmp);
     out.resize(tmp.dim(0), tmp.dim(1), tmp.dim(2));
     idx_copy(tmp, out);
@@ -541,7 +541,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // Utilities
 
-  template<class T> void RGBtoYUV1D(Idx<T> &rgb, Idx<T> &yuv) {
+  template<class T> void RGBtoYUV1D(idx<T> &rgb, idx<T> &yuv) {
     if (rgb.idx_ptr() == yuv.idx_ptr()) {
       ylerror("RGBtoYUV: dst must be different than src");
       return ;
@@ -551,7 +551,7 @@ namespace ebl {
     yuv.set(-(0.148 * rgb.get(0)) - (0.291 * rgb.get(1)) + 0.439 * rgb.get(2) + 128, 2);
   }
 
-  template<class T> void RGBtoYUV(Idx<T> &rgb, Idx<T> &yuv) {
+  template<class T> void RGBtoYUV(idx<T> &rgb, idx<T> &yuv) {
     idx_checknelems2_all(rgb, yuv);
     switch (rgb.order()) {
     case 1: // process 1 pixel
@@ -569,7 +569,7 @@ namespace ebl {
     }
   }
 
-  template<class T> void YUVtoRGB1D(Idx<T> &yuv, Idx<T> &rgb) {
+  template<class T> void YUVtoRGB1D(idx<T> &yuv, idx<T> &rgb) {
     if (rgb.idx_ptr() == yuv.idx_ptr()) {
       ylerror("YUVtoRGB: dst must be different than src");
       return ;
@@ -580,7 +580,7 @@ namespace ebl {
     rgb.set(1.164 * (yuv.get(0) - 16) + 1.596 * (yuv.get(2) - 128), 2);
   }
 
-  template<class T> void YUVtoRGB(Idx<T> &yuv, Idx<T> &rgb) {
+  template<class T> void YUVtoRGB(idx<T> &yuv, idx<T> &rgb) {
     idx_checknelems2_all(rgb, yuv);
     switch (yuv.order()) {
     case 1: // process 1 pixel

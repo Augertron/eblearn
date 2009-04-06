@@ -52,8 +52,8 @@ namespace ebl {
   public:
     ubyte output_class;
     float confidence;
-    Idx<ubyte> *sorted_classes;
-    Idx<float> *sorted_scores;
+    idx<ubyte> *sorted_classes;
+    idx<float> *sorted_scores;
 
     class_state(ubyte n);
     ~class_state();
@@ -158,11 +158,11 @@ namespace ebl {
   class max_classer { // TODO: idx3-classer
   public:
     //! a vector that maps output unit index to a label
-    Idx<ubyte> *classindex2label; 
+    idx<ubyte> *classindex2label; 
 
     //! makes a new max-classer. <classes> is an integer vector
     //! which contains the labels associated with each output.
-    max_classer(Idx<ubyte> *classes);
+    max_classer(idx<ubyte> *classes);
     ~max_classer() {
     }
     ;

@@ -36,12 +36,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // size compatibility checking functions
 
-  template<class T> void check_m2dotm1(Idx<T> &m, Idx<T> &x, Idx<T> &y) {
+  template<class T> void check_m2dotm1(idx<T> &m, idx<T> &x, idx<T> &y) {
     idx_checkorder3(m, 2, x, 1, y, 1);
     idx_checkdim2(y, 0, m.dim(0), x, 0, m.dim(1));
   }
 
-  template<class T> void check_m1extm1(Idx<T> &x, Idx<T> &y, Idx<T> &m) {
+  template<class T> void check_m1extm1(idx<T> &x, idx<T> &y, idx<T> &m) {
     idx_checkorder3(m, 2, x, 1, y, 1);
     idx_checkdim2(y, 0, m.dim(1), x, 0, m.dim(0));
   }
@@ -49,7 +49,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   // specialization for doubles: can use blas versions.
-  void idx_copy(Idx<double> &src, Idx<double> &dst) {
+  void idx_copy(idx<double> &src, idx<double> &dst) {
     idxop_ii(src, dst,
 	     // idx0 version
 	     { *(dst.idx_ptr()) = *(src.idx_ptr()); },
@@ -69,7 +69,7 @@ namespace ebl {
   }
 
   // specialization for floats: can use blas versions.
-  void idx_copy(Idx<float> &src, Idx<float> &dst) {
+  void idx_copy(idx<float> &src, idx<float> &dst) {
     idxop_ii(src, dst,
 	     // idx0 version
 	     { *(dst.idx_ptr()) = *(src.idx_ptr()); },
@@ -90,7 +90,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  template<> double idx_sum(Idx<double> &inp, double *out) {
+  template<> double idx_sum(idx<double> &inp, double *out) {
     double z = 0;
     if (inp.order() == 0) {
       z = inp.get();
@@ -111,7 +111,7 @@ namespace ebl {
     return z;
   }
 
-  template<> float idx_sum(Idx<float> &inp, float *out) {
+  template<> float idx_sum(idx<float> &inp, float *out) {
     float z = 0;
     if (inp.order() == 0) {
       z = inp.get();
@@ -121,7 +121,7 @@ namespace ebl {
 	 } else if (inp.contiguousp()) {
 	 z = cblas_sasum(inp.nelements(), inp.idx_ptr(), 1);
       */  } else {
-      //      IdxIter<float> pinp;
+      //      idxiter<float> pinp;
       //      idx_aloop1_on(pinp,inp) { z += *pinp; }
       idx_aloop1(pinp,inp,float) { z += *pinp; }
     }
@@ -134,7 +134,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  double idx_dot(Idx<double> &i1, Idx<double> &i2) {
+  double idx_dot(idx<double> &i1, idx<double> &i2) {
     idxop_ii(i1, i2,
 	     // idx0 version
 	     { return *(i1.idx_ptr()) * *(i2.idx_ptr()); },
@@ -148,7 +148,7 @@ namespace ebl {
 		 z += idx_dot(li1, li2); } return z; },
 	     // any version
 	     { double z = 0;
-	       //     IdxIter<double> ii1; IdxIter<double> ii2;
+	       //     idxiter<double> ii1; idxiter<double> ii2;
 	       //     idx_aloop2_on(ii1, i1, ii2, i2) { z += (*ii1)*(*ii2); }
 	       idx_aloop2(ii1, i1, double, ii2, i2, double) { 
 		 z += (*ii1)*(*ii2); }
@@ -156,7 +156,7 @@ namespace ebl {
 	     );
   }
 
-  float idx_dot(Idx<float> &i1, Idx<float> &i2) {
+  float idx_dot(idx<float> &i1, idx<float> &i2) {
     idxop_ii(i1, i2,
 	     // idx0 version
 	     { return *(i1.idx_ptr()) * *(i2.idx_ptr()); },
@@ -170,7 +170,7 @@ namespace ebl {
 		 z += idx_dot(li1, li2); } return z; },
 	     // any version
 	     { float z = 0;
-	       //     IdxIter<float> ii1; IdxIter<float> ii2;
+	       //     idxiter<float> ii1; idxiter<float> ii2;
 	       //     idx_aloop2_on(ii1, i1, ii2, i2) { z += (*ii1)*(*ii2); }
 	       idx_aloop2(ii1, i1, float, ii2, i2, float) { 
 		 z += (*ii1)*(*ii2); }
@@ -181,7 +181,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   // matrix-vector multiplication: y <- a.x
-  void idx_m2dotm1(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
+  void idx_m2dotm1(idx<double> &a, idx<double> &x, idx<double> &y) {
     check_m2dotm1(a,x,y);
     if (a.mod(0) > a.mod(1)) {
       cblas_dgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
@@ -195,7 +195,7 @@ namespace ebl {
   }
 
   // matrix-vector multiplication: y <- a.x
-  void idx_m2dotm1(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
+  void idx_m2dotm1(idx<float> &a, idx<float> &x, idx<float> &y) {
     check_m2dotm1(a,x,y);
     if (a.mod(0) > a.mod(1)) {
       cblas_sgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
@@ -209,7 +209,7 @@ namespace ebl {
   }
 
   // matrix-vector multiplication: y <- y + a.x
-  void idx_m2dotm1acc(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
+  void idx_m2dotm1acc(idx<double> &a, idx<double> &x, idx<double> &y) {
     check_m2dotm1(a,x,y);
     if (a.mod(0) > a.mod(1)) {
       cblas_dgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
@@ -224,7 +224,7 @@ namespace ebl {
 
 
   // matrix-vector multiplication: y <- y + a.x
-  void idx_m2dotm1acc(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
+  void idx_m2dotm1acc(idx<float> &a, idx<float> &x, idx<float> &y) {
     check_m2dotm1(a,x,y);
     if (a.mod(0) > a.mod(1)) {
       cblas_sgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
@@ -240,7 +240,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   // square matrix-vector multiplication: Yi = sum((Aij)^2 * Xj)
-  void idx_m2squdotm1(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
+  void idx_m2squdotm1(idx<double> &a, idx<double> &x, idx<double> &y) {
     check_m2dotm1(a,x,y);
     idx_bloop2(la,a,double, ly,y,double) {
       double *pa = la.idx_ptr(); intg amod = la.mod(0);
@@ -256,7 +256,7 @@ namespace ebl {
   }
 
   // square matrix-vector multiplication: Yi = sum((Aij)^2 * Xj)
-  void idx_m2squdotm1(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
+  void idx_m2squdotm1(idx<float> &a, idx<float> &x, idx<float> &y) {
     check_m2dotm1(a,x,y);
     idx_bloop2(la,a,float, ly,y,float) {
       float *pa = la.idx_ptr(); intg amod = la.mod(0);
@@ -272,7 +272,7 @@ namespace ebl {
   }
 
   // square matrix-vector multiplication: Yi += sum((Aij)^2 * Xj)
-  void idx_m2squdotm1acc(Idx<double> &a, Idx<double> &x, Idx<double> &y) {
+  void idx_m2squdotm1acc(idx<double> &a, idx<double> &x, idx<double> &y) {
     check_m2dotm1(a,x,y);
     idx_bloop2(la,a,double, ly,y,double) {
       double *pa = la.idx_ptr(); intg amod = la.mod(0);
@@ -287,7 +287,7 @@ namespace ebl {
   }
 
   // square matrix-vector multiplication: Yi += sum((Aij)^2 * Xj)
-  void idx_m2squdotm1acc(Idx<float> &a, Idx<float> &x, Idx<float> &y) {
+  void idx_m2squdotm1acc(idx<float> &a, idx<float> &x, idx<float> &y) {
     check_m2dotm1(a,x,y);
     idx_bloop2(la,a,float, ly,y,float) {
       float *pa = la.idx_ptr(); intg amod = la.mod(0);
@@ -304,7 +304,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   // vector-vector outer product: a <- x.y'
-  void idx_m1extm1(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
+  void idx_m1extm1(idx<double> &x, idx<double> &y, idx<double> &a) {
     check_m1extm1(x,y,a);
     idx_clear(a);
     cblas_dger(CblasRowMajor, a.dim(0), a.dim(1),
@@ -313,7 +313,7 @@ namespace ebl {
   }
 
   // vector-vector outer product: a <- x.y'
-  void idx_m1extm1(Idx<float> &x, Idx<float> &y, Idx<float> &a) {
+  void idx_m1extm1(idx<float> &x, idx<float> &y, idx<float> &a) {
     check_m1extm1(x,y,a);
     idx_clear(a);
     cblas_sger(CblasRowMajor, a.dim(0), a.dim(1),
@@ -322,7 +322,7 @@ namespace ebl {
   }
 
   // vector-vector outer product: a <- a + x.y'
-  void idx_m1extm1acc(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
+  void idx_m1extm1acc(idx<double> &x, idx<double> &y, idx<double> &a) {
     check_m1extm1(x,y,a);
     cblas_dger(CblasRowMajor, a.dim(0), a.dim(1),
 	       1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
@@ -330,7 +330,7 @@ namespace ebl {
   }
 
   // vector-vector outer product: a <- a + x.y'
-  void idx_m1extm1acc(Idx<float> &x, Idx<float> &y, Idx<float> &a) {
+  void idx_m1extm1acc(idx<float> &x, idx<float> &y, idx<float> &a) {
     check_m1extm1(x,y,a);
     cblas_sger(CblasRowMajor, a.dim(0), a.dim(1),
 	       1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
@@ -341,7 +341,7 @@ namespace ebl {
   // squext operations
 
   // Aij = Xi * Yj^2
-  void idx_m1squextm1(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
+  void idx_m1squextm1(idx<double> &x, idx<double> &y, idx<double> &a) {
     check_m1extm1(x,y,a);
     idx_bloop2(lx,x,double, la,a,double) {
       // TODO: change to aloop
@@ -353,7 +353,7 @@ namespace ebl {
   }
 
   //Aij = Xi * Yj^2
-  void idx_m1squextm1(Idx<float> &x, Idx<float> &y, Idx<float> &a) {
+  void idx_m1squextm1(idx<float> &x, idx<float> &y, idx<float> &a) {
     check_m1extm1(x,y,a);
     idx_bloop2(lx,x,float, la,a,float) {
       idx_bloop2(ly,y,float, lla,la,float) {
@@ -364,7 +364,7 @@ namespace ebl {
   }
 
   // Aij += Xi * Yj^2
-  void idx_m1squextm1acc(Idx<double> &x, Idx<double> &y, Idx<double> &a) {
+  void idx_m1squextm1acc(idx<double> &x, idx<double> &y, idx<double> &a) {
     check_m1extm1(x,y,a);
     idx_bloop2(lx,x,double, la,a,double) {
       idx_bloop2(ly,y,double, lla,la,double) {
@@ -375,7 +375,7 @@ namespace ebl {
   }
 
   // Aij += Xi * Yj^2
-  void idx_m1squextm1acc(Idx<float> &x, Idx<float> &y, Idx<float> &a) {
+  void idx_m1squextm1acc(idx<float> &x, idx<float> &y, idx<float> &a) {
     check_m1extm1(x,y,a);
     idx_bloop2(lx,x,float, la,a,float) {
       idx_bloop2(ly,y,float, lla,la,float) {
@@ -389,8 +389,8 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  void norm_columns(Idx<double> &m) {
-    if ( m.order() != 2) { ylerror("norm_columns: must be an Idx2"); }
+  void norm_columns(idx<double> &m) {
+    if ( m.order() != 2) { ylerror("norm_columns: must be an idx2"); }
     idx_eloop1(lm,m,double) {
       double *p = lm.idx_ptr();
       double z = cblas_dnrm2(m.dim(0),p,m.mod(0));
@@ -398,8 +398,8 @@ namespace ebl {
     }
   }
 
-  void norm_columns(Idx<float> &m) {
-    if ( m.order() != 2) { ylerror("norm_columns: must be an Idx2"); }
+  void norm_columns(idx<float> &m) {
+    if ( m.order() != 2) { ylerror("norm_columns: must be an idx2"); }
     idx_eloop1(lm,m,float) {
       float *p = lm.idx_ptr();
       float z = cblas_snrm2(m.dim(0),p,m.mod(0));

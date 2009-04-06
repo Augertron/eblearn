@@ -68,13 +68,13 @@ namespace ebl {
 
   //! Loads a matrix from file filename and returns it.
   //! Returns true if successful, false otherwise.
-  template<typename T> bool load_matrix(Idx<T>& m, const char *filename);
-  template<typename T> bool load_matrix(Idx<T>& m, istream &stream);
+  template<typename T> bool load_matrix(idx<T>& m, const char *filename);
+  template<typename T> bool load_matrix(idx<T>& m, istream &stream);
 
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
-  template<typename T> bool save_matrix(Idx<T>& m, const char *filename);
-  template<typename T> bool save_matrix(Idx<T>& m, ostream &stream);
+  template<typename T> bool save_matrix(idx<T>& m, const char *filename);
+  template<typename T> bool save_matrix(idx<T>& m, ostream &stream);
 
 } // end namespace ebl
 

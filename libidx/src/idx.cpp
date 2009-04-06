@@ -43,10 +43,10 @@ namespace ebl {
   // This is used to allocate/deallocate the dim/mod arrays.
   // It is also used to deallocate them by passing a zero argument.
   // Hence, if ndim is reduced, the arrays are preserved.
-  int IdxSpec::setndim(int n) {
+  int idxspec::setndim(int n) {
     try {
       if ((n<0) || (n>MAXDIMS)) {
-	throw("Idx: cannot set ndim, ndim < 0 or ndim > MAXDIMS");
+	throw("idx: cannot set ndim, ndim < 0 or ndim > MAXDIMS");
       } else {
 	// if new ndim is zero or larger than before: deallocate arrays
 	if ((n == 0) || (n > ndim)) {
@@ -74,10 +74,10 @@ namespace ebl {
   // set the order (number of dimensions).
   // using pre-allocated mod/dim arrays.
   // Probably not useful.
-  int IdxSpec::setndim(int n, intg *ldim, intg *lmod) {
+  int idxspec::setndim(int n, intg *ldim, intg *lmod) {
     try {
       if ((n<1) || (n>=MAXDIMS)) { 
-	throw("Idx: cannot set ndim, ndim < 0 or ndim > MAXDIMS");
+	throw("idx: cannot set ndim, ndim < 0 or ndim > MAXDIMS");
       } else {
 	if (dim) { delete []dim; }
 	if (mod) { delete []mod; }
@@ -93,18 +93,18 @@ namespace ebl {
     }
   }
 
-  //intg IdxSpec::resize( intg* dimsBegin, intg* dimsEnd ){
+  //intg idxspec::resize( intg* dimsBegin, intg* dimsEnd ){
   //	
   //	const int nArgDims = std::distance(dimsBegin, dimsEnd);
   //
   //	// Error-check the supplied number of dims.
   //	if( ndim == 0 ){
-  //		ylerror("Cannot call resize on a 0-dimensional IdxSpec.");	
+  //		ylerror("Cannot call resize on a 0-dimensional idxspec.");	
   //	}
   //	else if( ndim != nArgDims ){
   //		std::ostringstream oss;
   //		oss<<"Number of supplied dimension sizes ("<<nArgDims;
-  //            oss<<") doesn't match IdxSpec's number of dims ("<<ndim<<")";
+  //            oss<<") doesn't match idxspec's number of dims ("<<ndim<<")";
   //		ylerror(oss.str().c_str());
   //	}
   //	
@@ -121,13 +121,13 @@ namespace ebl {
   //}
 
   // resizing: order is not allowed to change
-  intg IdxSpec::resize(intg s0, intg s1, intg s2, intg s3, 
+  intg idxspec::resize(intg s0, intg s1, intg s2, intg s3, 
 		       intg s4, intg s5, intg s6, intg s7) {
     intg md = 1;
     try {
       // resizeing non-contiguous is forbiden to prevent nasty bugs
       if (!contiguousp()) throw(42);
-      if (ndim==0) { throw(0); }  // can't resize Idx0
+      if (ndim==0) { throw(0); }  // can't resize idx0
       if (s7>=0) { 
 	if (ndim<8) throw(8); 
 	dim[7] = s7; mod[7] = md; md *= s7; 
@@ -163,19 +163,19 @@ namespace ebl {
     }
     catch(int v) { 
       if (v == 42) {
-	ylerror("Resizing non-contiguous Idx is not allowed"); 
+	ylerror("Resizing non-contiguous idx is not allowed"); 
       }
       else {
 	fprintf(stderr,
 		"ndim=%d, sizes: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld\n",
 		ndim,s0,s1,s2,s3,s4,s5,s6,s6);
-	ylerror("IdxSpec::resize: dimensions are incompatible"); 
+	ylerror("idxspec::resize: dimensions are incompatible"); 
       }
     }
     return md + offset; // return new footprint
   }
 
-  intg IdxSpec::resize(const IdxDim &d) {
+  intg idxspec::resize(const idxdim &d) {
     return resize(d.dim[0], d.dim[1], d.dim[2], d.dim[3], 
 		  d.dim[4], d.dim[5], d.dim[6], d.dim[7]); 
   }
@@ -183,13 +183,13 @@ namespace ebl {
   // resize one dimension <dimn> with size <size>.
   // only already allocated dimensions can be resized 
   // (order is not allowed to change)
-  intg IdxSpec::resize1(intg dimn, intg size) {
+  intg idxspec::resize1(intg dimn, intg size) {
     // resizeing non-contiguous is forbiden to prevent nasty bugs
-    if (!contiguousp()) ylerror("Resizing non-contiguous Idx is not allowed"); 
+    if (!contiguousp()) ylerror("Resizing non-contiguous idx is not allowed"); 
     if ((dimn >= ndim) || (dimn < 0)) 
-      ylerror("IdxSpec::resize1: cannot resize an unallocated dimension");
+      ylerror("idxspec::resize1: cannot resize an unallocated dimension");
     if (size < 0)
-      ylerror("IdxSpec::resize1: cannot resize with a negative size");
+      ylerror("idxspec::resize1: cannot resize with a negative size");
     // since we know the current spec is valid, no need for error checking,
     // simply assign new dimension and propagate new mods.
     dim[dimn] = size;
@@ -203,21 +203,21 @@ namespace ebl {
   // public methods
 
   // destructor: deletes dim/mod arrays
-  IdxSpec::~IdxSpec() {
-    DEBUG("IdxSpec::~IdxSpec: %ld\n",(intg)this);
+  idxspec::~idxspec() {
+    DEBUG("idxspec::~idxspec: %ld\n",(intg)this);
     setndim(0);
   }
 
   // assignment operators: copies new dim/mod arrays
-  const IdxSpec& IdxSpec::operator=(const IdxSpec &src) {
+  const idxspec& idxspec::operator=(const idxspec &src) {
     if (this != &src) { copy(src); }
     return *this;
   }
 
   // copy method: this allocates new dim/mod arrays
   // and copies them from original
-  void IdxSpec::copy( const IdxSpec &src) {
-    DEBUG("IdxSpec::copy: %ld\n",(intg)this);
+  void idxspec::copy( const idxspec &src) {
+    DEBUG("idxspec::copy: %ld\n",(intg)this);
     offset = src.offset;
     // we do not initialize ndim before setndim here because it may already 
     // be initialized.
@@ -229,18 +229,18 @@ namespace ebl {
   }
 
   // copy constructor
-  IdxSpec::IdxSpec( const IdxSpec& src) : ndim(0), dim(NULL), mod(NULL)
+  idxspec::idxspec( const idxspec& src) : ndim(0), dim(NULL), mod(NULL)
   { copy(src); }
 
-  // constructor for Idx0 with offset 0.
-  // Can be used to build an empty/blank Idx.
-  IdxSpec::IdxSpec() {
+  // constructor for idx0 with offset 0.
+  // Can be used to build an empty/blank idx.
+  idxspec::idxspec() {
     ndim = 0;
     offset = 0;
     dim = NULL; mod = NULL;
   }
 
-  //IdxSpec::IdxSpec( const IdxSpec& other )
+  //idxspec::idxspec( const idxspec& other )
   //	:ndim(other.ndim),
   //	 offset(other.offset),
   //	 dim(NULL),
@@ -255,15 +255,15 @@ namespace ebl {
   //	}
   //}
 
-  // constructor for Idx0 with offset
-  IdxSpec::IdxSpec(intg o) {
+  // constructor for idx0 with offset
+  idxspec::idxspec(intg o) {
     ndim = 0;
     offset = o;
     dim = NULL; mod = NULL;
   }
 
-  // constructor for Idx1
-  IdxSpec::IdxSpec(intg o, intg size0) {
+  // constructor for idx1
+  idxspec::idxspec(intg o, intg size0) {
     if ( size0 < 0) { 
       ylerror("negative dimension"); }
     dim = NULL; mod = NULL;
@@ -274,8 +274,8 @@ namespace ebl {
     mod[0] = 1;
   }
 
-  // constructor for Idx2
-  IdxSpec::IdxSpec(intg o, intg size0, intg size1) {
+  // constructor for idx2
+  idxspec::idxspec(intg o, intg size0, intg size1) {
     if ( (size0<0)||(size1<0)) { 
       ylerror("negative dimension"); }
     dim = NULL; mod = NULL;
@@ -288,8 +288,8 @@ namespace ebl {
     mod[1] = 1;
   }
 
-  // constructor for Idx3
-  IdxSpec::IdxSpec(intg o, intg size0, intg size1, intg size2) {
+  // constructor for idx3
+  idxspec::idxspec(intg o, intg size0, intg size1, intg size2) {
     if ( (size0<0)||(size1<0)||(size2<0)) { 
       ylerror("negative dimension"); }
     dim = NULL; mod = NULL;
@@ -305,14 +305,14 @@ namespace ebl {
   }
 
   // generic constructor for any dimension.
-  IdxSpec::IdxSpec(intg o,
+  idxspec::idxspec(intg o,
 		   intg s0, intg s1, intg s2, intg s3, 
 		   intg s4, intg s5, intg s6, intg s7) {
     init_spec(o, s0, s1, s2, s3, s4, s5, s6, s7);
   }
 
   // generic constructor for any dimension.
-  void IdxSpec::init_spec(intg o, intg s0, intg s1, intg s2, intg s3, 
+  void idxspec::init_spec(intg o, intg s0, intg s1, intg s2, intg s3, 
 			  intg s4, intg s5, intg s6, intg s7) {
     bool ndimset = false;
     intg md = 1;
@@ -354,18 +354,18 @@ namespace ebl {
       } else { if (ndimset) { throw(-1); } }
       if (!ndimset) { setndim(0); }
     }
-    catch(int v) { ylerror("IdxSpec: bad dimensions in constructor"); }
+    catch(int v) { ylerror("idxspec: bad dimensions in constructor"); }
   }
 
-  IdxSpec::IdxSpec(intg o, const IdxDim &d) {
+  idxspec::idxspec(intg o, const idxdim &d) {
     init_spec(o, d.dim[0], d.dim[1], d.dim[2], d.dim[3], d.dim[4], d.dim[5], 
 	      d.dim[6], d.dim[7]);
   }
 
   // generic constructor for any dimension.
   // The dim and mod arrays past as argument are copied.
-  IdxSpec::IdxSpec(intg o, int n, intg *ldim, intg *lmod) {
-    DEBUG("IdxSpec::IdxSpec: %ld\n",(intg)this);
+  idxspec::idxspec(intg o, int n, intg *ldim, intg *lmod) {
+    DEBUG("idxspec::idxspec: %ld\n",(intg)this);
     dim = NULL; mod = NULL;
     offset = o;
     ndim = 0; // required in constructors to avoid side effects in setndim
@@ -376,20 +376,20 @@ namespace ebl {
     }
   }
 
-  intg IdxSpec::footprint()  {
+  intg idxspec::footprint()  {
     intg r = offset + 1;
     for(int i=0; i<ndim; i++){ r += mod[i]*(dim[i]-1); }
     return r;
   }
 
-  //! total number of elements accessed by IdxSpec
-  intg IdxSpec::nelements() {
+  //! total number of elements accessed by idxspec
+  intg idxspec::nelements() {
     intg r = 1;
     for(int i=0; i<ndim; i++){ r *= dim[i]; }
     return r;
   }
 
-  bool IdxSpec::contiguousp() {
+  bool idxspec::contiguousp() {
     intg size = 1; bool r = true;
     for(int i=ndim-1; i>=0; i--){
       if (size != mod[i]) r = false;
@@ -401,9 +401,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   // pretty print 
-  void IdxSpec::pretty(FILE *f) {
+  void idxspec::pretty(FILE *f) {
     int i;
-    fprintf(f,"  IdxSpec %ld\n",(intg)this);
+    fprintf(f,"  idxspec %ld\n",(intg)this);
     fprintf(f,"    ndim=%d\n",ndim);
     fprintf(f,"    offset=%ld\n",offset);
     if (ndim>0) {
@@ -420,9 +420,9 @@ namespace ebl {
     fprintf(f,"    contiguous= %s\n",(contiguousp())?"yes":"no");
   }
 
-  void IdxSpec::pretty(std::ostream& out) {
+  void idxspec::pretty(std::ostream& out) {
     int i;
-    out << "  IdxSpec " << (intg)this << "\n";
+    out << "  idxspec " << (intg)this << "\n";
     out << "    ndim= " << ndim << "\n";
     out << "    offset= " << offset << "\n";
     if (ndim>0) {
@@ -442,11 +442,11 @@ namespace ebl {
   // select, narrow, unfold, etc
   // Each function has 3 version: 
   // 1. XXX_into: which writes the result
-  // into an existing IdxSpec apssed as argument.
-  // 2. XXX_inplace: writes into the current IdxSpec
-  // 3. XXX: creates a new IdxSpec and returns it.
+  // into an existing idxspec apssed as argument.
+  // 2. XXX_inplace: writes into the current idxspec
+  // 3. XXX: creates a new idxspec and returns it.
 
-  intg IdxSpec::select_into(IdxSpec *dst, int d, intg n) {
+  intg idxspec::select_into(idxspec *dst, int d, intg n) {
     if (ndim <= 0) ylerror("cannot select a scalar");
     if ((n < 0) || (n >= dim[d])) {
       cerr << "error: trying to select layer " << n;
@@ -456,7 +456,7 @@ namespace ebl {
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim-1);
     dst->offset = offset + n * mod[d];
-    if (ndim -1 > 0) { // dim and mod don't exist for Idx0
+    if (ndim -1 > 0) { // dim and mod don't exist for idx0
       for (int j=0; j<d; j++) {
 	dst->dim[j] = dim[j];
 	dst->mod[j] = mod[j];
@@ -469,20 +469,20 @@ namespace ebl {
     return n;
   }
 
-  intg IdxSpec::select_inplace(int d, intg n) {
+  intg idxspec::select_inplace(int d, intg n) {
     return select_into(this, d, n);
   }
 
-  IdxSpec IdxSpec::select(int d, intg n) {
-    // create new IdxSpec of order ndim-1
-    IdxSpec r;
+  idxspec idxspec::select(int d, intg n) {
+    // create new idxspec of order ndim-1
+    idxspec r;
     select_into(&r, d, n);
     return r;
   }
   
   ////////////////////////////////////////////////////////////////
 
-  intg IdxSpec::narrow_into(IdxSpec *dst, int d, intg s, intg o) {
+  intg idxspec::narrow_into(idxspec *dst, int d, intg s, intg o) {
     try {
       if (ndim <= 0) throw("cannot narrow a scalar");
       if ((d < 0) || (d>=ndim)) throw("narrow: illegal dimension index");
@@ -501,13 +501,13 @@ namespace ebl {
     return s;
   }
 
-  intg IdxSpec::narrow_inplace(int d, intg s, intg o) {
+  intg idxspec::narrow_inplace(int d, intg s, intg o) {
     return narrow_into(this, d, s, o);
   }
 
-  IdxSpec IdxSpec::narrow(int d, intg s, intg o) {
-    // create new IdxSpec of order ndim
-    IdxSpec r;
+  idxspec idxspec::narrow(int d, intg s, intg o) {
+    // create new idxspec of order ndim
+    idxspec r;
     narrow_into(&r, d, s, o);
     return r;
   }
@@ -515,8 +515,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // transpose
 
-  // tranpose two dimensions into pre-existing IdxSpec
-  int IdxSpec::transpose_into(IdxSpec *dst, int d1, int d2) {
+  // tranpose two dimensions into pre-existing idxspec
+  int idxspec::transpose_into(idxspec *dst, int d1, int d2) {
     try {
       if ((d1 < 0) || (d1 >= ndim) || 
 	  (d2 < 0) || (d2 >= ndim)) 
@@ -538,7 +538,7 @@ namespace ebl {
   }
 
   // tranpose all dims with a permutation vector
-  int IdxSpec::transpose_into(IdxSpec *dst, int *p) {
+  int idxspec::transpose_into(idxspec *dst, int *p) {
     try {
       for (int i=0; i<ndim; i++) {
 	if ((p[i] < 0) || (p[i] >= ndim)) 
@@ -569,22 +569,22 @@ namespace ebl {
     return ndim;
   }
 
-  int IdxSpec::transpose_inplace(int d1, int d2) {
+  int idxspec::transpose_inplace(int d1, int d2) {
     return transpose_into(this, d1, d2);
   }
 
-  int IdxSpec::transpose_inplace(int *p) {
+  int idxspec::transpose_inplace(int *p) {
     return transpose_into(this, p);
   }
 
-  IdxSpec IdxSpec::transpose(int d1, int d2) {
-    IdxSpec r;
+  idxspec idxspec::transpose(int d1, int d2) {
+    idxspec r;
     transpose_into(&r, d1, d2);
     return r;
   }
 
-  IdxSpec IdxSpec::transpose(int *p) {
-    IdxSpec r;
+  idxspec idxspec::transpose(int *p) {
+    idxspec r;
     transpose_into(&r, p);
     return r;
   }
@@ -593,10 +593,10 @@ namespace ebl {
   // unfold
 
   // d: dimension; k: kernel size; s: stride.
-  intg IdxSpec::unfold_into(IdxSpec *dst, int d, intg k, intg s) {
+  intg idxspec::unfold_into(idxspec *dst, int d, intg k, intg s) {
     intg ns; // size of newly created dimension
     try {
-      if (ndim <= 0) throw("cannot unfold an Idx of maximum order");
+      if (ndim <= 0) throw("cannot unfold an idx of maximum order");
       if ((d < 0) || (d>=ndim)) throw("unfold: illegal dimension index");
       if ((k < 1) || (s < 1)) throw("unfold: kernel and stride must be >= 1");
       ns = 1+ (dim[d]-k)/s;
@@ -618,12 +618,12 @@ namespace ebl {
     return ns;
   }
 
-  intg IdxSpec::unfold_inplace(int d, intg k, intg s) {
+  intg idxspec::unfold_inplace(int d, intg k, intg s) {
     return unfold_into(this, d, k, s);
   }
 
-  IdxSpec IdxSpec::unfold(int d, intg k, intg s) {
-    IdxSpec r;
+  idxspec idxspec::unfold(int d, intg k, intg s) {
+    idxspec r;
     unfold_into(&r, d, k, s);
     return r;
   }
@@ -632,36 +632,36 @@ namespace ebl {
 
   // return true if two idxspec have the same dimensions,
   // i.e. if all their dimensions are equal (regardless of strides).
-  bool same_dim(IdxSpec &s1, IdxSpec &s2) {
+  bool same_dim(idxspec &s1, idxspec &s2) {
     if ( s1.ndim != s2.ndim ) return false; 
     for (int i=0; i<s1.ndim; i++) { if (s1.dim[i] != s2.dim[i]) return false; }
     return true;
   }
 
   ////////////////////////////////////////////////////////////////
-  // IdxDim
+  // idxdim
   
-  IdxDim::~IdxDim() {
+  idxdim::~idxdim() {
   }
 
-  IdxDim::IdxDim() {
+  idxdim::idxdim() {
     ndim = -1;
   }
   
-  IdxDim::IdxDim(const IdxSpec &s) {
+  idxdim::idxdim(const idxspec &s) {
     read(s);
   }
   
-  void IdxDim::read(const IdxSpec &s) {
+  void idxdim::read(const idxspec &s) {
     ndim = s.ndim;
     memcpy(dim, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
     // set remaining to -1
     memset(dim + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg)); 
   }
   
-  void IdxDim::setdim(intg dimn, intg size) {
+  void idxdim::setdim(intg dimn, intg size) {
     if (dimn >= ndim)
-      ylerror("cannot change the order of IdxDim");
+      ylerror("cannot change the order of idxdim");
     dim[dimn] = size; 
   }
 

@@ -47,17 +47,17 @@ namespace ebl {
 
   void linear_module::fprop(state_idx &in, state_idx &out) {
     if (bResize) resize_output(in, out); // resize (iff necessary)
-    Idx<double> inx = in.x.view_as_order(1); // view as 1D Idx
-    Idx<double> outx = out.x.view_as_order(1); // view as 1D Idx
+    idx<double> inx = in.x.view_as_order(1); // view as 1D idx
+    idx<double> outx = out.x.view_as_order(1); // view as 1D idx
 
     idx_m2dotm1(w.x, inx, outx); // linear combination
   }
 
   void linear_module::bprop(state_idx &in, state_idx &out) {
-    Idx<double> inx = in.x.view_as_order(1); // view as 1D Idx
-    Idx<double> indx = in.dx.view_as_order(1); // view as 1D Idx
-    Idx<double> outdx = out.dx.view_as_order(1); // view as 1D Idx
-    Idx<double> twx(w.x.transpose(0, 1)); // switch dimensions 0 and 1
+    idx<double> inx = in.x.view_as_order(1); // view as 1D idx
+    idx<double> indx = in.dx.view_as_order(1); // view as 1D idx
+    idx<double> outdx = out.dx.view_as_order(1); // view as 1D idx
+    idx<double> twx(w.x.transpose(0, 1)); // switch dimensions 0 and 1
     if (outdx.nelements() != w.dx.dim(0)) ylerror("output has wrong size");
 
     idx_m1extm1acc(outdx, inx, w.dx); // backprop to weights
@@ -65,10 +65,10 @@ namespace ebl {
   }
 
   void linear_module::bbprop(state_idx &in, state_idx &out) {
-    Idx<double> inx = in.x.view_as_order(1); // view as 1D Idx
-    Idx<double> inddx = in.ddx.view_as_order(1); // view as 1D Idx
-    Idx<double> outddx = out.ddx.view_as_order(1); // view as 1D Idx
-    Idx<double> twx = w.x.transpose(0, 1); // switch dimensions 0 and 1
+    idx<double> inx = in.x.view_as_order(1); // view as 1D idx
+    idx<double> inddx = in.ddx.view_as_order(1); // view as 1D idx
+    idx<double> outddx = out.ddx.view_as_order(1); // view as 1D idx
+    idx<double> twx = w.x.transpose(0, 1); // switch dimensions 0 and 1
     if (outddx.nelements() != w.ddx.dim(0)) ylerror("output has wrong size");
 
     idx_m1squextm1acc(outddx, inx, w.ddx); // backprop to weights
@@ -89,7 +89,7 @@ namespace ebl {
 
   void linear_module::resize_output(state_idx &in, state_idx &out) {
     // resize output based on input dimensions
-    IdxDim d(in.x.spec); // use same dimensions as in
+    idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, w.x.dim(0)); // except for the first one
     out.resize(d);
   }
@@ -100,7 +100,7 @@ namespace ebl {
   convolution_module_2D::convolution_module_2D(parameter &p, 
 					       intg kerneli, intg kernelj, 
 					       intg ri, intg rj, 
-					       Idx<intg> &tbl, intg thick) 
+					       idx<intg> &tbl, intg thick) 
     : kernel(p, tbl.dim(0), kerneli, kernelj), thickness(thick),
       stridei(ri), stridej(rj), table(tbl) {
   }
@@ -111,13 +111,13 @@ namespace ebl {
   void convolution_module_2D::fprop(state_idx &in, state_idx &out){
     if (bResize) resize_output(in, out); // resize (iff necessary)
     // unfolding input for a faster convolution operation
-    Idx<double> uuin(in.x.unfold(1, kernel.x.dim(1), stridei));
+    idx<double> uuin(in.x.unfold(1, kernel.x.dim(1), stridei));
     uuin = uuin.unfold(2, kernel.x.dim(2), stridej);
     idx_clear(out.x);
     // convolve 2D slice for each convolution kernel
     { idx_bloop2(lk, kernel.x, double, lt, table, intg) {
-      Idx<double> suin(uuin.select(0, lt.get(0)));
-      Idx<double> sout((out.x).select(0, lt.get(1)));
+      idx<double> suin(uuin.select(0, lt.get(0)));
+      idx<double> sout((out.x).select(0, lt.get(1)));
 
       idx_m4dotm2acc(suin, lk, sout); // 2D convolution
       }}
@@ -126,18 +126,18 @@ namespace ebl {
   void convolution_module_2D::bprop(state_idx &in, state_idx &out) {
     // backprop through convolution
     idx_clear(in.dx);
-    Idx<double> uuin(in.dx.unfold(1, (kernel.dx).dim(1), stridei));
+    idx<double> uuin(in.dx.unfold(1, (kernel.dx).dim(1), stridei));
     uuin = uuin.unfold(2, (kernel.dx).dim(2), stridej);
-    Idx<double> uuinf(in.x.unfold(1, (kernel.dx).dim(1), stridei));
+    idx<double> uuinf(in.x.unfold(1, (kernel.dx).dim(1), stridei));
     uuinf = uuinf.unfold(2, (kernel.dx).dim(2), stridej);
     int transp[5] = { 0, 3, 4, 1, 2 };
-    Idx<double> borp(uuinf.transpose(transp));
+    idx<double> borp(uuinf.transpose(transp));
     { idx_bloop3 (lk, kernel.dx, double, lkf, kernel.x, double, 
 		  lt, table, intg) {
 	intg islice = lt.get(0);
-	Idx<double> suin(uuin.select(0, islice));
-	Idx<double> sborp(borp.select(0, islice));
-	Idx<double> sout(out.dx.select(0, lt.get(1)));
+	idx<double> suin(uuin.select(0, islice));
+	idx<double> sborp(borp.select(0, islice));
+	idx<double> sout(out.dx.select(0, lt.get(1)));
 
 	idx_m2extm2acc(sout, lkf, suin); // backward convolution
 	idx_m4dotm2acc(sborp, sout, lk); // compute gradient for kernel
@@ -147,18 +147,18 @@ namespace ebl {
   void convolution_module_2D::bbprop(state_idx &in, state_idx &out) {
     // backprop through convolution
     idx_clear(in.ddx);
-    Idx<double> uuin(in.ddx.unfold(1, (kernel.ddx).dim(1), stridei));
+    idx<double> uuin(in.ddx.unfold(1, (kernel.ddx).dim(1), stridei));
     uuin = uuin.unfold(2, (kernel.ddx).dim(2), stridej);
-    Idx<double> uuinf(in.x.unfold(1, (kernel.ddx).dim(1), stridei));
+    idx<double> uuinf(in.x.unfold(1, (kernel.ddx).dim(1), stridei));
     uuinf = uuinf.unfold(2, (kernel.ddx).dim(2), stridej);
     int transp[5] = { 0, 3, 4, 1, 2 };
-    Idx<double> borp(uuinf.transpose(transp));
+    idx<double> borp(uuinf.transpose(transp));
     { idx_bloop3 (lk, kernel.ddx, double, lkf, kernel.x, double, 
 		  lt, table, intg) {
 	intg islice = lt.get(0);
-	Idx<double> suin(uuin.select(0, islice));
-	Idx<double> sborp(borp.select(0, islice));
-	Idx<double> sout((out.ddx).select(0, lt.get(1)));
+	idx<double> suin(uuin.select(0, islice));
+	idx<double> sborp(borp.select(0, islice));
+	idx<double> sout((out.ddx).select(0, lt.get(1)));
 	    
 	idx_m2squextm2acc(sout, lkf, suin); // backward convolution
 	idx_m4squdotm2acc(sborp, sout, lk); // compute gradient for kernel
@@ -166,11 +166,11 @@ namespace ebl {
   }
 
   void convolution_module_2D::forget(forget_param_linear &fp) {
-    Idx<double> kx(kernel.x);
+    idx<double> kx(kernel.x);
     intg vsize = kx.dim(1);
     intg hsize = kx.dim(2);
-    Idx<intg> ts(table.select(1, 1));
-    Idx<int> fanin(1 + idx_max(ts));
+    idx<intg> ts(table.select(1, 1));
+    idx<int> fanin(1 + idx_max(ts));
     check_drand_ini();
     idx_clear(fanin);
     { idx_bloop1(tab, table, intg)	{
@@ -200,10 +200,10 @@ namespace ebl {
     if ((stridei != 1) || (stridej != 1))
       ylerror("stride > 1 not implemented yet.");
     // unfolding input for a faster convolution operation
-    Idx<double> uuin(in.x.unfold(1, ki, stridei));
+    idx<double> uuin(in.x.unfold(1, ki, stridei));
     uuin = uuin.unfold(2, kj, stridej);
     // resize output based in input dimensions
-    IdxDim d(in.x.spec); // use same dimensions as in
+    idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, thickness); // except for the first one
     d.setdim(1, uuin.dim(1)); // convolution trims dimensions a bit
     d.setdim(2, uuin.dim(2)); // convolution trims dimensions a bit
@@ -230,7 +230,7 @@ namespace ebl {
     idx_clear(sub.x);
     { idx_bloop4(lix, in.x, double, lsx, sub.x, double,
 		 lcx, coeff.x, double, ltx, out.x, double) {
-	Idx<double> uuin(lix.unfold(1, stridej, stridej));
+	idx<double> uuin(lix.unfold(1, stridej, stridej));
 	uuin = uuin.unfold(0, stridei, stridei);
 	idx_eloop1(z1, uuin, double) {
 	  idx_eloop1(z2, z1, double) {
@@ -282,7 +282,7 @@ namespace ebl {
     if ((sin_i % stridei) != 0 || (sin_j % stridej) != 0)
       ylerror("inconsistent input size and subsampleing ratio");
     // resize output and sub based in input dimensions
-    IdxDim d(in.x.spec); // use same dimensions as in
+    idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(1, si); // new size after subsampling
     d.setdim(2, sj); // new size after subsampling
     out.resize(d);
@@ -301,7 +301,7 @@ namespace ebl {
 
   void addc_module::fprop(state_idx& in, state_idx& out) {
     if (&in != &out) { // resize only when input and output are different
-      IdxDim d(in.x.spec); // use same dimensions as in
+      idxdim d(in.x.spec); // use same dimensions as in
       d.setdim(0, bias.x.dim(0)); // except for the first one
       out.resize(d);
     }
@@ -362,15 +362,15 @@ namespace ebl {
 //       ylerror("inconsistent input size, kernel size, and subsampling ratio.");
 //     if ((stridei != 1) || (stridej != 1))
 //       ylerror("stride > 1 not implemented yet.");
-//     Idx<double> uuin = in->x.unfold(1, ki, stridei);
+//     idx<double> uuin = in->x.unfold(1, ki, stridei);
 //     uuin = uuin.spec.unfold_inplace(2, kj, stridej);
-//     Idx<double> lki = Idx<double>(kernel->x.dim(1), kernel->x.dim(2));
+//     idx<double> lki = idx<double>(kernel->x.dim(1), kernel->x.dim(2));
 //     // resize output if necessary
 //     sum->resize(thickness, uuin.dim(1), uuin.dim(2));
 //     out->resize(thickness, uuin.dim(1), uuin.dim(2));
 //     idx_clear(sum->x);
 //     // generic convolution
-//     Idx<double> tout = Idx<double>(sum->x.dim(1), sum->x.dim(2));
+//     idx<double> tout = idx<double>(sum->x.dim(1), sum->x.dim(2));
 //     { idx_bloop2(lk, kernel->x, double, lt, *table, intg) {
 // 	rev_idx2_tr(*lk, lki);
 // 	//      ipp_convolution_float(in->x.select(0, lt.get(0)), lki, tout);

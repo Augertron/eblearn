@@ -102,7 +102,7 @@ namespace ebl {
 
 
 template<typename T>
-bool ScalarIter_Base<T>::dataIsSequential( Idx<T>& idx ){
+bool ScalarIter_Base<T>::dataIsSequential( idx<T>& idx ){
 	if( !idx.spec.contiguousp() ){
 		return false;
 	}
@@ -268,7 +268,7 @@ void ScalarIter_Base<T>::decr_noncontiguous(){
 
 
 template<typename T>
-ScalarIter_Base<T>::ScalarIter_Base(Idx<T>& idx)
+ScalarIter_Base<T>::ScalarIter_Base(idx<T>& idx)
 	:spec(idx.spec), 
 	 data(idx.getstorage()->data + idx.spec.offset),
 	 dataEnd(NULL)
@@ -318,7 +318,7 @@ ScalarIter_Base<T>::operator=( const ScalarIter_Base<T>& other ){
 }
 
 template<typename T>
-ScalarIter<T>::ScalarIter( Idx<T>& idx, bool isBeginning )
+ScalarIter<T>::ScalarIter( idx<T>& idx, bool isBeginning )
 	:ScalarIter_Base<T>(idx)
 {
 	
@@ -441,7 +441,7 @@ std::ostream& operator<<( std::ostream& out, ScalarIter_Base<T>& si ){
 
 
 template<typename T>
-ReverseScalarIter<T>::ReverseScalarIter( Idx<T>& idx, bool isBeginning )
+ReverseScalarIter<T>::ReverseScalarIter( idx<T>& idx, bool isBeginning )
 	:ScalarIter_Base<T>(idx)
 {
 
@@ -533,8 +533,8 @@ ReverseScalarIter<T> ReverseScalarIter<T>::operator--(int){
 }
 
 template<typename T>
-DimIter_Base<T>::DimIter_Base(Idx<T>& idx, int dimInd)
-	: Idx<T>(idx.select((dimInd >= 0 ? dimInd : dimInd + idx.order()), 0))
+DimIter_Base<T>::DimIter_Base(idx<T>& i, int dimInd)
+	: idx<T>(i.select((dimInd >= 0 ? dimInd : dimInd + i.order()), 0))
 //	 dimInd(dimInd),
 //	 dimMod(idx.spec.mod[dimInd]),
 //	 dataEnd(idx.getstorage()->data + ( idx.spec.offset + 
@@ -545,18 +545,18 @@ DimIter_Base<T>::DimIter_Base(Idx<T>& idx, int dimInd)
 {
 	if( dimInd < 0 ){
 		ylerror("DimIter_Base: negative looping dimension");
-		dimInd += idx.order();
+		dimInd += i.order();
 	}
 	//this->subtensor = idx.select(dimInd,0);
 	this->dimInd = dimInd;
-	this->dimMod = idx.spec.mod[dimInd];
-	this->dataEnd = idx.getstorage()->data + 
-			  		( idx.spec.offset + idx.spec.mod[dimInd] * idx.spec.dim[dimInd] );
+	this->dimMod = i.spec.mod[dimInd];
+	this->dataEnd = i.getstorage()->data + 
+			  		( i.spec.offset + i.spec.mod[dimInd] * i.spec.dim[dimInd] );
 }
 
 template<typename T>
 DimIter_Base<T>::DimIter_Base( const DimIter_Base<T>& other )
-	:Idx<T>(other),
+	:idx<T>(other),
 	 dimInd(other.dimInd),
 	 dimMod(other.dimMod),
 	 //subtensor(*this),
@@ -566,7 +566,7 @@ DimIter_Base<T>::DimIter_Base( const DimIter_Base<T>& other )
 template<typename T>
 DimIter_Base<T>&
 DimIter_Base<T>::operator=( const DimIter_Base<T>& other ){
-	Idx<T>::operator=(other);
+	idx<T>::operator=(other);
 	dimInd = other.dimInd;
 	dimMod = other.dimMod;
 	//subtensor = other.subtensor;
@@ -583,13 +583,13 @@ bool DimIter_Base<T>::operator==( const DimIter_Base& other ){
 }
 
 template<typename T>
-Idx<T>& DimIter_Base<T>::operator*(){
+idx<T>& DimIter_Base<T>::operator*(){
 	return *this;
 	//return subtensor;
 }
 
 template<typename T>
-Idx<T>* DimIter_Base<T>::operator->(){
+idx<T>* DimIter_Base<T>::operator->(){
 	return this;
 	//return subtensor;
 }
@@ -612,11 +612,11 @@ bool DimIter_Base<T>::notdone(){
 }
 
 template<typename T>
-DimIter<T>::DimIter( Idx<T>& idx, int dimInd, bool isBeginning )
+DimIter<T>::DimIter( idx<T>& idx, int dimInd, bool isBeginning )
 	: DimIter_Base<T>(idx, dimInd)
 {
 	if(!isBeginning){
-		// increment spec.offset so that the first Idx elemetn points to dataEnd
+		// increment spec.offset so that the first idx elemetn points to dataEnd
 		T* dataBegin = this->getstorage()->data + this->spec.offset;
 		this->spec.offset += std::distance( dataBegin, this->dataEnd );
 		assert(this->getstorage()->data + this->spec.offset == this->dataEnd);
@@ -674,7 +674,7 @@ DimIter<T>::operator==( const DimIter<T>& other ){
 
 
 template<typename T>
-ReverseDimIter<T>::ReverseDimIter( Idx<T>& idx, int dimInd, bool isBeginning )
+ReverseDimIter<T>::ReverseDimIter( idx<T>& idx, int dimInd, bool isBeginning )
 	:DimIter_Base<T>(idx, dimInd, isBeginning)
 {
 	T* data = this->subtensor.storage()->data;

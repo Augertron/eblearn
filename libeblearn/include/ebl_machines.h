@@ -53,9 +53,9 @@ namespace ebl {
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
     nn_machine_cscscf(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
-		      Idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
-		      Idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-		      Idx<intg> &tbl2, intg outthick);
+		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+		      idx<intg> &tbl2, intg outthick);
     virtual ~nn_machine_cscscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -73,18 +73,18 @@ namespace ebl {
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
     void init(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
-	      Idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
-	      Idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-	      Idx<intg> &tbl2, intg outthick);
+	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+	      idx<intg> &tbl2, intg outthick);
   };
 
   ////////////////////////////////////////////////////////////////
   // helper functions
 
   //! Creates a table of full connections between layers.
-  //! An Idx<intg> is allocated and returned. The caller is responsible
-  //! for deleting this Idx.
-  Idx<intg> full_table(intg a, intg b);
+  //! An idx<intg> is allocated and returned. The caller is responsible
+  //! for deleting this idx.
+  idx<intg> full_table(intg a, intg b);
 
   ////////////////////////////////////////////////////////////////
   //! create a new instance of net-cscscf implementing a LeNet-5 type
@@ -113,9 +113,9 @@ namespace ebl {
   //! </code>}
   class lenet5 : public nn_machine_cscscf {
   public:
-    Idx<intg> table0;	
-    Idx<intg> table1;	
-    Idx<intg> table2;	
+    idx<intg> table0;	
+    idx<intg> table1;	
+    idx<intg> table2;	
 		
     lenet5(parameter &prm, intg image_height, intg image_width,
 	   intg ki0, intg kj0, intg si0, intg sj0,
@@ -129,9 +129,9 @@ namespace ebl {
   //! This network takes a 1-layer image as input.
   class lenet7 : public nn_machine_cscscf {
   public:
-    Idx<intg> table0;	
-    Idx<intg> table1;	
-    Idx<intg> table2;	
+    idx<intg> table0;	
+    idx<intg> table1;	
+    idx<intg> table2;	
 		
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
@@ -146,9 +146,9 @@ namespace ebl {
   //! and right images.
   class lenet7_binocular : public nn_machine_cscscf {
   public:
-    Idx<intg> table0;	
-    Idx<intg> table1;	
-    Idx<intg> table2;	
+    idx<intg> table0;	
+    idx<intg> table1;	
+    idx<intg> table2;	
 		
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
@@ -166,7 +166,7 @@ namespace ebl {
     state_idx		fout;	// hidden state between fmod and fcost
 
     supervised_euclidean_machine(module_1_1<state_idx,state_idx> &machine_,
-				 Idx<double> &targets, IdxDim &dims);
+				 idx<double> &targets, idxdim &dims);
     virtual ~supervised_euclidean_machine();
   };
   

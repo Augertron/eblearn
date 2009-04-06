@@ -34,7 +34,7 @@
 using namespace ebl;
 
 // <Blas.hpp>
-template<class T> T idx_f1logdotf1(Idx<T> &m, Idx<T> &p) {
+template<class T> T idx_f1logdotf1(idx<T> &m, idx<T> &p) {
   T exp_offset = *(m.idx_ptr());
   T r = 0;
   //first compute smallest element of m
@@ -45,7 +45,7 @@ template<class T> T idx_f1logdotf1(Idx<T> &m, Idx<T> &p) {
 }
 
 // <Blas.hpp>
-template<class T1, class T2> void idx_sortup(Idx<T1> &m, Idx<T2> &p) {
+template<class T1, class T2> void idx_sortup(idx<T1> &m, idx<T2> &p) {
   idx_checkorder2(m, 1, p, 1);
   if (m.mod(0) != 1) ylerror("idx_sortdown: vector is not contiguous");
   if (p.mod(0) != 1) ylerror("idx_sortdown: vector is not contiguous");
@@ -95,8 +95,8 @@ template<class T1, class T2> void idx_sortup(Idx<T1> &m, Idx<T2> &p) {
 
 sdnnclass_state::sdnnclass_state(int n)
 {
-  sorted_classes = new Idx<int>(n, 100);
-  sorted_scores = new Idx<double>(n, 100);
+  sorted_classes = new idx<int>(n, 100);
+  sorted_scores = new idx<double>(n, 100);
 }
 
 sdnnclass_state::~sdnnclass_state()
@@ -108,7 +108,7 @@ sdnnclass_state::~sdnnclass_state()
 //////////////////////////////////////////////////////////////////////////////
 ////// sdnn_classer ////////
 
-sdnn_classer::sdnn_classer(Idx<int> *classes, Idx<double> *pr, int ini, 
+sdnn_classer::sdnn_classer(idx<int> *classes, idx<double> *pr, int ini, 
 			   int inj, parameter *prm) {
   junk_param = new state_idx(*prm);
   intg cdim0 = classes->dim(0);
@@ -137,19 +137,19 @@ void sdnn_classer::fprop(state_idx *in, sdnnclass_state *out)
   out->sorted_scores->resize(in->x.dim(0) + 1, in->x.dim(2));
   logadded_distjunk->resize(in->x.dim(0) + 1, in->x.dim(2));
   {
-    Idx<double> inx = in->x.select(1, 0);
+    idx<double> inx = in->x.select(1, 0);
     idx_eloop4(lax,inx,double, outclasses,*out->sorted_classes,int, outscores,*out->sorted_scores,double, lajx,logadded_distjunk->x,double)
       {
 	intg s = lax.dim(0);
-	Idx<int> noutclasses(outclasses.narrow(0, s, 0));
+	idx<int> noutclasses(outclasses.narrow(0, s, 0));
 	idx_copy(*classindex2label, noutclasses);
 	// write label for junk class
 	outclasses.set(-1, s);
-	Idx<double> nlajx(lajx.narrow(0, s, 0));
+	idx<double> nlajx(lajx.narrow(0, s, 0));
 	idx_copy(lax, nlajx);
 	// junk score is appended at the end of tmp
 	// score for junk is half square of junk parameter
-	{Idx<double> jpx(junk_param->x);
+	{idx<double> jpx(junk_param->x);
 	  lajx.set((0.5 * jpx.get() * jpx.get()), s);}
 	// compute unconstrained score (normalization constant)
 	double e = idx_f1logdotf1(lajx, *priors);
@@ -159,9 +159,9 @@ void sdnn_classer::fprop(state_idx *in, sdnnclass_state *out)
 	  }
 			
 	//TODO: check
-	Idx<double> gg(outscores.nelements());
+	idx<double> gg(outscores.nelements());
 	idx_copy(outscores, gg);
-	Idx<int> hh(outclasses.nelements());
+	idx<int> hh(outclasses.nelements());
 	idx_copy(outclasses, hh);
 	idx_sortup(gg, hh);
 	idx_copy(gg, outscores);

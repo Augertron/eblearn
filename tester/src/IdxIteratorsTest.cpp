@@ -16,8 +16,8 @@ void IdxIteratorsTest::tearDown() {
 
 void IdxIteratorsTest::test_scalariter() {
 #if USING_STL_ITERS == 1
-  Idx<double> m1(2, 2);
-  Idx<double> m2(2, 2);
+  idx<double> m1(2, 2);
+  idx<double> m2(2, 2);
   double c = 42;
   idx_clear(m1);
   idx_clear(m2);
@@ -38,20 +38,20 @@ void IdxIteratorsTest::test_scalariter() {
 
 void IdxIteratorsTest::test_ElemIter_shifting(){
   typedef double real;
-  Idx<real> idx(3, 5, 2);
+  idx<real> m(3, 5, 2);
   int ii = 0, jj = 0, kk = 0;
 
-  for( Idx<real>::scalar_iterator iter(idx); iter.notdone(); ++iter){
+  for( idx<real>::scalar_iterator iter(m); iter.notdone(); ++iter){
     *iter = ii++;
   }
 
   int tpInds[3] = {1,0,2}; 
-  Idx<real> idx2= idx.narrow(2,1,0).transpose(tpInds); // .narrow(1,3,1);
+  idx<real> idx2= m.narrow(2,1,0).transpose(tpInds); // .narrow(1,3,1);
 
   ii = 0;
   jj = 0;
   kk = 0;
-  for( Idx<real>::scalar_iterator iter(idx2); iter.notdone(); ++iter){
+  for( idx<real>::scalar_iterator iter(idx2); iter.notdone(); ++iter){
     CPPUNIT_ASSERT_EQUAL(idx2.get(ii, jj, kk), *iter);
     if (++kk >= idx2.dim(2)) {
       ++jj;
@@ -66,7 +66,7 @@ void IdxIteratorsTest::test_ElemIter_shifting(){
   ii = idx2.dim(0) - 1;
   jj = idx2.dim(1) - 1;
   kk = idx2.dim(2) - 1;
-  for( Idx<real>::reverse_scalar_iterator iter(idx2); iter.notdone(); ++iter){
+  for( idx<real>::reverse_scalar_iterator iter(idx2); iter.notdone(); ++iter){
     CPPUNIT_ASSERT_EQUAL(idx2.get(ii, jj, kk), *iter);
     if (--kk < 0) {
       --jj;
@@ -84,8 +84,8 @@ void IdxIteratorsTest::test_ElemIter_shifting(){
   int iir = idx2.dim(0) - 1;
   int jjr = idx2.dim(1) - 1;
   int kkr = idx2.dim(2) - 1;
-  Idx<real>::reverse_scalar_iterator riter(idx2);
-  Idx<real>::scalar_iterator iter(idx2);
+  idx<real>::reverse_scalar_iterator riter(idx2);
+  idx<real>::scalar_iterator iter(idx2);
   for( ; riter.notdone(); ++riter, ++iter ){
 
     // forward iter
@@ -114,7 +114,7 @@ void IdxIteratorsTest::test_ElemIter_shifting(){
   ii = 0;
   jj = 0;
   kk = 0;
-  for( Idx<real>::scalar_iterator sii(idx2), sjj(idx2); 
+  for( idx<real>::scalar_iterator sii(idx2), sjj(idx2); 
        sii.notdone(); ++sii, ++sjj ){
     // forward iter
     CPPUNIT_ASSERT_EQUAL(idx2.get(ii, jj, kk), *sii);
@@ -131,7 +131,7 @@ void IdxIteratorsTest::test_ElemIter_shifting(){
 }
 
 void IdxIteratorsTest::test_ElemIter_parallelism(){
-//   Idx<unsigned char> idx1(50, 1024, 1024); // 50 meg image stack
+//   idx<unsigned char> idx1(50, 1024, 1024); // 50 meg image stack
 	
 //   clock_t startTime = clock();
 //   std::generate( idx1.scalars_begin(), idx1.scalars_end(), &std::rand );
@@ -141,7 +141,7 @@ void IdxIteratorsTest::test_ElemIter_parallelism(){
 }
 
 void IdxIteratorsTest::test_DimensionIterator_shifting(){
-  Idx<double> idx1(2,3,4);
+  idx<double> idx1(2,3,4);
   for( int ii = 0; ii < idx1.dim(0); ++ii ){
     for( int jj = 0; jj < idx1.dim(1); ++jj ){
       for( int kk = 0; kk < idx1.dim(2); ++kk ){
@@ -150,7 +150,7 @@ void IdxIteratorsTest::test_DimensionIterator_shifting(){
     }
   }
 	
-  typedef Idx<double>::dimension_iterator DIter;
+  typedef idx<double>::dimension_iterator DIter;
   for( DIter ii(idx1,0); ii.notdone(); ++ii){
     CPPUNIT_ASSERT_EQUAL(3, (int) ii->dim(0));
     CPPUNIT_ASSERT_EQUAL(4, (int) ii->dim(1));

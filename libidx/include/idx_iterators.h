@@ -44,7 +44,7 @@ template<typename T> std::ostream& operator<<( std::ostream&, ScalarIter_Base<T>
 #if 0
 /**
  * Base class for indexing iterators that loop over
- * all of the scalars of an Idx in "row-major" order
+ * all of the scalars of an idx in "row-major" order
  * (i.e. the last dimension changes the fastest).
  */
 class IndexingScalarIterator_Base{
@@ -92,14 +92,14 @@ protected:
 #endif
 
 /**
- * Base class for scalar iterators of Idx. Assumes that Idx doesn't 
+ * Base class for scalar iterators of idx. Assumes that idx doesn't 
  * move its data during iteration. Uses simple and fast pointer 
  * incrementation if the idx subtends a contiguous region of memory.
  */
 template<typename T>
 class ScalarIter_Base{
 	
-	//! Outputs the Idx indices of this iterator.
+	//! Outputs the idx indices of this iterator.
 	friend std::ostream& operator<< <>( std::ostream& out, ScalarIter_Base<T>& si );
 	
 public:
@@ -127,9 +127,9 @@ protected:
 	 * Returns true if the idx is contiguous in memory, and its
 	 * elements are laid out in order of increasing memory.
 	 */
-	static bool dataIsSequential( Idx<T>& idx );	
+	static bool dataIsSequential( idx<T>& idx );	
 	
-	//! The Idx indices that the iterator currently points to.
+	//! The idx indices that the iterator currently points to.
 	/* 
 	 * TODO: is this static allocation worth it, or should it be 
 	 * dynamically allocated?
@@ -140,8 +140,8 @@ protected:
 	 */
 	int inds[MAXDIMS];
 	
-	//! A reference to the Idx's IdxSpec.
-	IdxSpec& spec;
+	//! A reference to the idx's idxspec.
+	idxspec& spec;
 	
 	//! A pointer to the current element.
 	T* data;
@@ -158,14 +158,14 @@ protected:
 	//enum IncrPolicy{ CONTIGUOUS, NONCONTIGUOUS, NUM_OF_INCRPOLICIES };
 	//IncrPolicy incrPolicy;
 
-//	// Purely to check that two iterators are iterating over the same Idx.
-//	const Idx<T>* const idxPtr; 
+//	// Purely to check that two iterators are iterating over the same idx.
+//	const idx<T>* const idxPtr; 
 
 	//! Copy constructor.
 	ScalarIter_Base( const ScalarIter_Base<T>& );
 
 	//! Constructs an ALoopIter pointing at the first element of idx.
-	ScalarIter_Base( Idx<T>& spec );
+	ScalarIter_Base( idx<T>& spec );
 
 	/**
 	 * Equality operator. Keep protected to prevent comparisons between
@@ -197,7 +197,7 @@ protected:
 //template<typename T> bool operator!=( const ScalarIter<T>&, const ScalarIter<T>& );
 
 /**
- * Iterates over the scalars of an Idx in the order that they are laid out
+ * Iterates over the scalars of an idx in the order that they are laid out
  * in memory ("row major"). 
  */
 template<typename T>
@@ -231,12 +231,12 @@ public:
 	/**
 	 * Constructor.
 	 * 
-	 * @param idx is the Idx to iterator over.
+	 * @param idx is the idx to iterator over.
 	 * @param atBeginning indicates whether to initialize this 
-	 * iterator at the beginning of the Idx, or at one past the 
+	 * iterator at the beginning of the idx, or at one past the 
 	 * last element.
 	 */
-	ScalarIter( Idx<T>& idx, bool atBeginning = true );
+	ScalarIter( idx<T>& idx, bool atBeginning = true );
 	
 	//! Copy constructor.
 	ScalarIter( const ScalarIter<T>& other );
@@ -284,7 +284,7 @@ class ReverseScalarIter : public ScalarIter_Base<T>, public std::iterator<std::b
 public:
 	
 	//! Constructor.
-	ReverseScalarIter( Idx<T>& idx, bool isBeginning = true );
+	ReverseScalarIter( idx<T>& idx, bool isBeginning = true );
 
 	//! Preincrement operator.
 	inline ReverseScalarIter& operator++();
@@ -303,25 +303,25 @@ public:
 
 /**
  * Base class for iterators that iterate over a single dimension
- * of an Idx tensor, returning sub-tensors with one less dimension.
- * Subclasses Idx<T>, for ease of use in looping macros.
+ * of an idx tensor, returning sub-tensors with one less dimension.
+ * Subclasses idx<T>, for ease of use in looping macros.
  */
 template<typename T>
-class DimIter_Base : public Idx<T>{
+class DimIter_Base : public idx<T>{
 	
 public:
 	
 	//! Dereference operator, for STL-compatibility.
-	inline Idx<T>& operator*();
+	inline idx<T>& operator*();
 	
 	//! Pointer dereference operator, for STL-compatibility.
-	inline Idx<T>* operator->();
+	inline idx<T>* operator->();
 	
 	//! Returns false iff this iterator is done iterating.
 	inline bool notdone();	
 
 //	//! Implicit conversion to an idx, for use in looping macros
-//	inline operator Idx<T>&(){
+//	inline operator idx<T>&(){
 //		return subtensor;
 //	}
 	
@@ -334,7 +334,7 @@ public:
 	int dimMod;
 
 	//! The sub-tensor that the iterator currently points to.
-	//Idx<T>& subtensor;
+	//idx<T>& subtensor;
 
 	/** 
 	 * Points to the data at one past the last element, for 
@@ -344,7 +344,7 @@ public:
 
 	
 	//! Constructor.
-	DimIter_Base( Idx<T>&, int dimInd );
+	DimIter_Base( idx<T>&, int dimInd );
 	
 	//! Copy constructor
 	DimIter_Base( const DimIter_Base<T>& );
@@ -370,7 +370,7 @@ class DimIter: public DimIter_Base<T>, public std::iterator<std::bidirectional_i
 public:
 	
 	//! Constructor.
-	DimIter<T>( Idx<T>& idx, int dimInd, bool isBeginning = true );
+	DimIter<T>( idx<T>& idx, int dimInd, bool isBeginning = true );
 	
 	//! Copy constructor.
 	DimIter<T>( const DimIter<T>& );
@@ -402,7 +402,7 @@ class ReverseDimIter: public DimIter_Base<T>, public std::iterator<std::bidirect
 public:
 	
 	//! Constructor.
-	ReverseDimIter<T>( Idx<T>& idx, int dimInd, bool isBeginning = true );
+	ReverseDimIter<T>( idx<T>& idx, int dimInd, bool isBeginning = true );
 	
 	//! Copy constructor.
 	ReverseDimIter<T>( const ReverseDimIter<T>& );

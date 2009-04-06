@@ -44,11 +44,11 @@ namespace ebl {
   }
 
   nn_machine_cscscf::nn_machine_cscscf(parameter &prm, intg ini, intg inj,
-				       intg ki0, intg kj0, Idx<intg> &tbl0, 
+				       intg ki0, intg kj0, idx<intg> &tbl0, 
 				       intg si0, intg sj0,
-				       intg ki1, intg kj1, Idx<intg> &tbl1, 
+				       intg ki1, intg kj1, idx<intg> &tbl1, 
 				       intg si1, intg sj1,
-				       intg ki2, intg kj2, Idx<intg> &tbl2,
+				       intg ki2, intg kj2, idx<intg> &tbl2,
 				       intg outthick)
     : layers_n<state_idx>(true) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
@@ -58,11 +58,11 @@ namespace ebl {
   nn_machine_cscscf::~nn_machine_cscscf() {}
 
   void nn_machine_cscscf::init(parameter &prm, intg ini, intg inj,
-			       intg ki0, intg kj0, Idx<intg> &tbl0, intg si0, 
-			       intg sj0, intg ki1, intg kj1, Idx<intg> &tbl1, 
+			       intg ki0, intg kj0, idx<intg> &tbl0, intg si0, 
+			       intg sj0, intg ki1, intg kj1, idx<intg> &tbl1, 
 			       intg si1, intg sj1, intg ki2, intg kj2, 
-			       Idx<intg> &tbl2, intg outthick) {
-    Idx<intg> tblmax = tbl0.select(1, 1);
+			       idx<intg> &tbl2, intg outthick) {
+    idx<intg> tblmax = tbl0.select(1, 1);
     intg thick0 = 1 + idx_max(tblmax);
     intg c0_sizi = 1 + ini - ki0;
     intg c0_sizj = 1 + inj - kj0;
@@ -95,8 +95,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // helper function
   
-  Idx<intg> full_table(intg a, intg b) {
-    Idx<intg> m(a * b, 2);
+  idx<intg> full_table(intg a, intg b) {
+    idx<intg> m(a * b, 2);
     intg p = 0;
     for (intg j = 0; j < b; ++j) {
       for (intg i = 0; i < a; ++i) {
@@ -116,7 +116,7 @@ namespace ebl {
 		 intg ki1, intg kj1, intg si1, intg sj1,
 		 intg hid, intg output_size) {
     table0 = full_table(1, 6);
-    table1 = Idx<intg>(60, 2);
+    table1 = idx<intg>(60, 2);
     table2 = full_table(16, hid);
     intg tbl[60][2] =
       {{0, 0},  {1, 0},  {2, 0},
@@ -162,7 +162,7 @@ namespace ebl {
     intg hid = 100;
 
     table0 = full_table(1, 6);
-    table1 = Idx<intg>(96, 2);
+    table1 = idx<intg>(96, 2);
     intg tbl1[96][2] =
       {{0,  0}, {2,  0}, {4,  0}, {5,  0},
        {0,  1}, {2,  1}, {4,  1}, {6,  1},
@@ -212,14 +212,14 @@ namespace ebl {
     intg si1 = 3, sj1 = 3;
     intg hid = 100;
 
-    table0 = Idx<intg>(12, 2);
+    table0 = idx<intg>(12, 2);
     intg tbl0[12][2] =
       {{0, 0},  {0, 1},  {1, 2},
        {1, 3},  {0, 4},  {1, 4},
        {0, 5},  {1, 5},  {0, 6},
        {1, 6},  {0, 7},  {1, 7}};
     memcpy(table0.idx_ptr(), tbl0, table0.nelements() * sizeof (intg));
-    table1 = Idx<intg>(96, 2);
+    table1 = idx<intg>(96, 2);
     intg tbl1[96][2] =
       {{0,  0}, {2,  0}, {4,  0}, {5,  0},
        {0,  1}, {2,  1}, {4,  1}, {6,  1},
@@ -263,7 +263,7 @@ namespace ebl {
 
   supervised_euclidean_machine::
   supervised_euclidean_machine(module_1_1<state_idx,state_idx> &m,
-			       Idx<double> &t, IdxDim &dims)
+			       idx<double> &t, idxdim &dims)
     : fc_ebm2<state_idx,int,state_idx>(m, fout, (ebm_2<state_idx,int>&)fcost), 
       fcost(t), fout(dims) {
   }

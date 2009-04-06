@@ -42,7 +42,7 @@ namespace ebl {
 // This is placed in an hpp file so that implementation files can instanciate templates.
 
 ////////////////////////////////////////////////////////////////
-// the creation of an Idx should call lock() on the Srg,
+// the creation of an idx should call lock() on the Srg,
 // and its destruction should call unlock().
 
 // simplest constructor builds an empty Srg
@@ -80,7 +80,7 @@ template <class T> intg Srg<T>::size() { return size_; }
 // low-level resize: can grow and shrink
 // returns -1 on failure.
 // Self should be used with care, because shrinking
-// an Srg that has Idx pointing to it is very dangerous.
+// an Srg that has idx pointing to it is very dangerous.
 // In most case, the grow() method should be used.
 template <class T> intg Srg<T>::changesize(intg s) {
   if (s == 0) {
@@ -101,7 +101,7 @@ template <class T> intg Srg<T>::changesize(intg s) {
 }
 
 // this grows the size of the srg if necessary.
-// This is called when a new Idx is created on the Srg.
+// This is called when a new idx is created on the Srg.
 // returns -1 on failure.
 template <class T> intg Srg<T>::growsize(intg s) {
   if (s > size_) { return this->changesize(s); } else { return size_; }

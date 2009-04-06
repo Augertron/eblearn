@@ -39,12 +39,12 @@ namespace ebl {
     this->out = stdout;
     this->acc_thres = 1e-6;
     this->rrange = 2;
-    this->jac_fprop = Idx<double>(1,1);
-    this->jac_bprop = Idx<double>(1,1);
-    this->jac_fprop_param = Idx<double>(1,1);
-    this->jac_bprop_param = Idx<double>(1,1);
+    this->jac_fprop = idx<double>(1,1);
+    this->jac_bprop = idx<double>(1,1);
+    this->jac_fprop_param = idx<double>(1,1);
+    this->jac_bprop_param = idx<double>(1,1);
 
-    kk = new Idx<double>(100,100);
+    kk = new idx<double>(100,100);
     init_drand(time(NULL));
   }
 
@@ -64,7 +64,7 @@ namespace ebl {
     delete kk;
   }
 
-  Idx<double> ModuleTester::test_jacobian(module_1_1<state_idx,state_idx> 
+  idx<double> ModuleTester::test_jacobian(module_1_1<state_idx,state_idx> 
 					  &module, state_idx &in, 
 					  state_idx &out) {
     forget_param_linear fp(2,0.5);
@@ -123,7 +123,7 @@ namespace ebl {
   void ModuleTester::get_jacobian_fprop(module_1_1<state_idx,state_idx> 
 					&module, 
 					state_idx &in, state_idx &out,
-					Idx<double>& jac)
+					idx<double>& jac)
   {
     state_idx sina = in.make_copy(); //x-small
     state_idx sinb = in.make_copy(); //x+small
@@ -144,7 +144,7 @@ namespace ebl {
 	module.fprop(sina, souta);
 	module.fprop(sinb, soutb);
 	idx_sub(soutb.x,souta.x,soutb.x);
-	Idx<double> j = jac.select(0,cnt);
+	idx<double> j = jac.select(0,cnt);
 	idx_dotc(soutb.x,1.0/(2*small),j);
 	cnt++;
       }
@@ -155,7 +155,7 @@ namespace ebl {
 					      module_1_1<state_idx,state_idx> 
 					      &module, 
 					      state_idx &in, 
-					      state_idx &out,Idx<double>& jac)
+					      state_idx &out,idx<double>& jac)
   {
     state_idx souta = out.make_copy(); //f(x-small)
     state_idx soutb = out.make_copy(); //f(x+small)
@@ -172,7 +172,7 @@ namespace ebl {
 	module.fprop(in, soutb);
 	*px = *px - small;
 	idx_sub(soutb.x,souta.x,soutb.x);
-	Idx<double> j = jac.select(0,cnt);
+	idx<double> j = jac.select(0,cnt);
 	idx_dotc(soutb.x,1.0/(2*small),j);
 	cnt++;
       }
@@ -182,7 +182,7 @@ namespace ebl {
   void ModuleTester::get_jacobian_bprop(module_1_1<state_idx,state_idx> 
 					&module, 
 					state_idx &in, state_idx &out,
-					Idx<double>& jac)
+					idx<double>& jac)
   {
     jac.resize(in.size(),out.size());
     idx_clear(jac);
@@ -193,7 +193,7 @@ namespace ebl {
 	idx_clear(in.dx);
 	*dx = 1.0;
 	module.bprop(in, out);
-	Idx<double> j = jac.select(1,cnt);
+	idx<double> j = jac.select(1,cnt);
 	idx_copy(in.dx,j);
 	cnt++;
       }
@@ -204,11 +204,11 @@ namespace ebl {
 					      module_1_1<state_idx,state_idx> 
 					      &module, 
 					      state_idx &in, state_idx &out,
-					      Idx<double>& jac)
+					      idx<double>& jac)
   {
   }
 
-  Idx<double> ModuleTester::get_errs(Idx<double>& a, Idx<double>& b)
+  idx<double> ModuleTester::get_errs(idx<double>& a, idx<double>& b)
   {
     double maxdist;
     double totdist = idx_sqrdist(a,b);
@@ -216,15 +216,15 @@ namespace ebl {
     idx_sub(a,b,a);
     idx_abs(a,a);
     maxdist = idx_max(a);
-    Idx<double> errs(2);
+    idx<double> errs(2);
     errs.set(maxdist, 0);
     errs.set(totdist, 1);
     return errs;
   }
 
-  void ModuleTester::report_err(Idx<double>& a, Idx<double>& b, const char* msg)
+  void ModuleTester::report_err(idx<double>& a, idx<double>& b, const char* msg)
   {
-    Idx<double> errs = get_errs(a, b);
+    idx<double> errs = get_errs(a, b);
     std::stringstream ss(std::stringstream::in |std::stringstream::out);
     // report results
     ss << "Max " << msg << " distance";
@@ -237,7 +237,7 @@ namespace ebl {
     fflush(this->out);
   }
 
-  void ModuleTester::randomize_idx(Idx<double>& m)
+  void ModuleTester::randomize_idx(idx<double>& m)
   {
     idx_aloop1(v,m,double) {
       *v = drand(this->rrange);
@@ -306,9 +306,9 @@ namespace ebl {
     int ndim_in = in.x.nelements();
     int ndim_out = in.x.nelements();
     // used to store the jacobian calculated via bprop
-    Idx<double> jac_fprop(ndim_in, ndim_out); 
+    idx<double> jac_fprop(ndim_in, ndim_out); 
     //  used to store the jacobian calculated via prturbations
-    Idx<double> jac_bprop(ndim_in, ndim_out); 
+    idx<double> jac_bprop(ndim_in, ndim_out); 
 
     // creation of jac_fprop
     module.fprop(in, out);
@@ -321,7 +321,7 @@ namespace ebl {
 		  in.clear_dx();
 		  ooo.set(1);
 		  module.bprop(in, out);
-		  Idx<double> bla = jac_bprop.select(1, cnt);
+		  idx<double> bla = jac_bprop.select(1, cnt);
 		  idx_copy(in.dx, bla);
 		  cnt++;
 		}
@@ -345,11 +345,11 @@ namespace ebl {
 	  in2.x.set(in2.x.get( d1, d2, d3) - small, d1, d2, d3);
 	  module.fprop(in1, out1);
 	  module.fprop(in2, out2);
-	  Idx<double> sub(new Srg<double>(), out1.x.spec);
-	  Idx<double> dot(new Srg<double>(), out1.x.spec);
+	  idx<double> sub(new Srg<double>(), out1.x.spec);
+	  idx<double> dot(new Srg<double>(), out1.x.spec);
 	  idx_sub(out1.x, out2.x, sub);
 	  idx_dotc(sub, 0.5/small, dot);
-	  Idx<double> bla2 = jac_fprop.select(0, cnt);
+	  idx<double> bla2 = jac_fprop.select(0, cnt);
 	  idx_copy(dot, bla2);
 	  cnt++;
 	}
@@ -391,7 +391,7 @@ namespace ebl {
     module.bbprop(in, out);
 
     // used to store the bbprop calculated via perturbation
-    Idx<double> bbprop_p(in.x.dim(0), in.x.dim(1), in.x.dim(2)); 
+    idx<double> bbprop_p(in.x.dim(0), in.x.dim(1), in.x.dim(2)); 
 
     // creation of bbprop_p
     int cnt = 0;
@@ -413,10 +413,10 @@ namespace ebl {
 	  // calculated via
 	  // fprop(...), fprop(...+small) and fprop(...-small). the second 
 	  // derivative is then 2*a
-	  Idx<double> ad(new Srg<double>(), out1.x.spec);
-	  Idx<double> sub(new Srg<double>(), out1.x.spec);
-	  Idx<double> dot(new Srg<double>(), out1.x.spec);
-	  Idx<double> dot2(new Srg<double>(), out1.x.spec);
+	  idx<double> ad(new Srg<double>(), out1.x.spec);
+	  idx<double> sub(new Srg<double>(), out1.x.spec);
+	  idx<double> dot(new Srg<double>(), out1.x.spec);
+	  idx<double> dot2(new Srg<double>(), out1.x.spec);
 	  idx_add(out1.x, out2.x, ad);
 	  idx_dotc(out.x, (double)2, dot);
 	  idx_sub(ad, dot, sub);
@@ -458,7 +458,7 @@ namespace ebl {
     }
 
     // used to store the bbprop calculated via perturbation
-    Idx<double> bprop_p(in.x.dim(0), in.x.dim(1), in.x.dim(2)); 
+    idx<double> bprop_p(in.x.dim(0), in.x.dim(1), in.x.dim(2)); 
 
     // creation of bprop_p
     int cnt = 0;
@@ -477,8 +477,8 @@ namespace ebl {
 	  module.fprop(in1, out1);
 	  module.fprop(in2, out2);
 
-	  Idx<double> sub(new Srg<double>(), out1.x.spec);
-	  Idx<double> dot(new Srg<double>(), out1.x.spec);
+	  idx<double> sub(new Srg<double>(), out1.x.spec);
+	  idx<double> dot(new Srg<double>(), out1.x.spec);
 	  idx_sub(out1.x, out2.x, sub);
 	  idx_dotc(sub, 0.5/small, dot);
 	  bprop_p.set(dot.get( d1, d2, d3), d1, d2, d3);

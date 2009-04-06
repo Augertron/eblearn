@@ -38,7 +38,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // euclidean_module
   
-  euclidean_module::euclidean_module(Idx<double> &targets_)
+  euclidean_module::euclidean_module(idx<double> &targets_)
     : cost_module<state_idx,int>(targets_) {
   }
 
@@ -46,7 +46,7 @@ namespace ebl {
   }
 
   void euclidean_module::fprop(state_idx &in1, int &label, state_idx &energy) {
-    Idx<double> target = targets.select(0, label);
+    idx<double> target = targets.select(0, label);
     idx_copy(target, in2.x);
     // squared distance between in1 and target
     idx_sqrdist(in1.x, in2.x, energy.x);
@@ -88,8 +88,8 @@ namespace ebl {
   // logadd_layer
 
   logadd_layer::logadd_layer(intg thick, intg si, intg sj) {
-    expdist = Idx<double>(thick, si, sj);
-    sumexp = Idx<double>(thick);		// scaled partition function
+    expdist = idx<double>(thick, si, sj);
+    sumexp = idx<double>(thick);		// scaled partition function
   }
 
   void logadd_layer::fprop(state_idx *in, state_idx *out) {
@@ -100,10 +100,10 @@ namespace ebl {
     out->x.resize(thick);
     if (1 == (si * sj)) {
       // save time and precision if no replication
-      Idx<double> inx(in->x.select(2, 0));
-      Idx<double> m(inx.select(1, 0));
-      Idx<double> ed(expdist.select(2, 0));
-      Idx<double> ed1(ed.select(1, 0));
+      idx<double> inx(in->x.select(2, 0));
+      idx<double> m(inx.select(1, 0));
+      idx<double> ed(expdist.select(2, 0));
+      idx<double> ed1(ed.select(1, 0));
       idx_fill(ed1, 1.0);
       idx_fill(sumexp, 1.0);
       idx_copy(m, out->x);
@@ -146,8 +146,8 @@ namespace ebl {
     intg sj = in->dx.dim(2);
     if ((si * sj) == 1) {
       // save time and precision if no replication
-      Idx<double> indx(in->dx.select(2, 0));
-      Idx<double> m(indx.select(1, 0));
+      idx<double> indx(in->dx.select(2, 0));
+      idx<double> m(indx.select(1, 0));
       idx_copy(out->dx, m);
     } else {
       // spatially replicated

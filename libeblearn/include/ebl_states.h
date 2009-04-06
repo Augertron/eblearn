@@ -120,16 +120,16 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! member variables
   private:
-    //! an object containing an order and dimensons to help for Idx creations
-    IdxDim	idxdim;
+    //! an object containing an order and dimensons to help for idx creations
+    idxdim	dims;
 
   public:
     //! state itself
-    Idx<double> x;
+    idx<double> x;
     //! gradient of loss with respect to state
-    Idx<double> dx;
+    idx<double> dx;
     //! diag hessian of loss with respect to state
-    Idx<double> ddx;
+    idx<double> ddx;
 
     ////////////////////////////////////////////////////////////////
     //! constructors from specific dimensions
@@ -145,13 +145,13 @@ namespace ebl {
     //! Constructor. A state_idx can have up to 8 dimensions.
     state_idx(intg s0, intg s1, intg s2, intg s3, intg s4 = -1, intg s5 = -1,
 	      intg s6 = -1, intg s7 = -1);
-    //! Constructor. Use the order and dimensions contained in passed IdxDim d.
-    state_idx(const IdxDim &d);
-    //! Constructor. Use the order and dimensions contained in passed Idx idx.
-    //! Beware that the Idx is passed by copy, to allow special cases like
-    //! passing an Idx resulting from a select() operation for example.
+    //! Constructor. Use the order and dimensions contained in passed idxdim d.
+    state_idx(const idxdim &d);
+    //! Constructor. Use the order and dimensions contained in passed idx idx.
+    //! Beware that the idx is passed by copy, to allow special cases like
+    //! passing an idx resulting from a select() operation for example.
     //! Use this constructor only where it is ok (time-wise) to do a copy.
-    state_idx(Idx<double> m);
+    state_idx(idx<double> m);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from specific dimensions using a parameter
@@ -166,14 +166,14 @@ namespace ebl {
     state_idx(parameter &st, intg s0, intg s1, intg s2);
     state_idx(parameter &st, intg s0, intg s1, intg s2, intg s3, intg s4 = -1,
 	      intg s5 = -1, intg s6 = -1, intg s7 = -1);
-    state_idx(parameter &st, const IdxDim &d);
+    state_idx(parameter &st, const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from other state_idx
 
-    //! Constructs a state_idx from a state_idx's 3 internal Idx
-    state_idx(const Idx<double> &x, const Idx<double> &dx, 
-	      const Idx<double> &ddx);
+    //! Constructs a state_idx from a state_idx's 3 internal idx
+    state_idx(const idx<double> &x, const idx<double> &dx, 
+	      const idx<double> &ddx);
 
     ////////////////////////////////////////////////////////////////
     //! clear methods
@@ -209,8 +209,8 @@ namespace ebl {
     virtual void resize(intg s0 = -1, intg s1 = -1, intg s2 = -1, intg s3 = -1,
 			intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
 
-    //! resize with dimensions contained in an IdxDim. order cannot be changed.
-    virtual void resize(const IdxDim &d);
+    //! resize with dimensions contained in an idxdim. order cannot be changed.
+    virtual void resize(const idxdim &d);
 
     //! resize one dimension <dimn> with size <size>. 
     //! The order cannot be changed.
@@ -236,10 +236,10 @@ namespace ebl {
   //! parameter vector.
   class parameter: public state_idx {
   public:
-    Idx<double> gradient;
-    Idx<double> deltax;
-    Idx<double> epsilons;
-    Idx<double> ddeltax;
+    idx<double> gradient;
+    idx<double> deltax;
+    idx<double> epsilons;
+    idx<double> ddeltax;
 
     //! initialize the parameter with size initial_size.
     parameter(intg initial_size = 100);
@@ -269,15 +269,15 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! state_idx iterator
-  class StateIdxLooper : public state_idx {
+  class state_idxlooper : public state_idx {
   public:
-    IdxLooper<double> lx;
-    IdxLooper<double> ldx;
-    IdxLooper<double> lddx;
+    idxlooper<double> lx;
+    idxlooper<double> ldx;
+    idxlooper<double> lddx;
 
     //! generic constructor loops over dimensin ld
-    StateIdxLooper(state_idx &s, int ld);
-    virtual ~StateIdxLooper();
+    state_idxlooper(state_idx &s, int ld);
+    virtual ~state_idxlooper();
 
     //! return true if loop is over
     bool notdone();
@@ -287,25 +287,25 @@ namespace ebl {
   };
 
 #define state_idx_eloop1(dst0,src0)			\
-  StateIdxLooper dst0(src0, (src0).x.order() - 1);	\
+  state_idxlooper dst0(src0, (src0).x.order() - 1);	\
   for ( ; dst0.notdone(); dst0.next())
 
 #define state_idx_eloop2(dst0,src0,dst1,src1)				\
   if ((src0).x.dim((src0).x.order() - 1) != (src1).x.dim((src1).x.order() - 1))\
     ylerror("incompatible state_idx for eloop\n");			\
-  StateIdxLooper dst0(src0,(src0).x.order()-1);				\
-  StateIdxLooper dst1(src1,(src1).x.order()-1);				\
+  state_idxlooper dst0(src0,(src0).x.order()-1);			\
+  state_idxlooper dst1(src1,(src1).x.order()-1);			\
   for ( ; dst0.notdone(); dst0.next(), dst1.next())
 
-#define idxstate_eloop3(dst0,src0,dst1,src1,dst2,src2)			\
+#define state_idx_eloop3(dst0,src0,dst1,src1,dst2,src2)			\
   if (((src0).x.dim((src0).x.order() - 1)				\
        != (src1).x.dim((src1).x.order() - 1))				\
       || ((src0).x.dim((src0).x.order() - 1)				\
 	  != (src2).x.dim((src2).x.order() - 1)))			\
-    ylerror("incompatible Idxs for eloop\n");				\
-  StateIdxLooper dst0(src0,(src0).x.order()-1);				\
-  StateIdxLooper dst1(src1,(src1).x.order()-1);				\
-  StateIdxLooper dst2(src2,(src2).x.order()-1);				\
+    ylerror("incompatible idxs for eloop\n");				\
+  state_idxlooper dst0(src0,(src0).x.order()-1);			\
+  state_idxlooper dst1(src1,(src1).x.order()-1);			\
+  state_idxlooper dst2(src2,(src2).x.order()-1);			\
   for ( ; dst0.notdone(); dst0.next(), dst1.next(), dst2.next())
 
 } // namespace ebl {

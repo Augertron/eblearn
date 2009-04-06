@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef DATATOOLS_H_
-#define DATATOOLS_H_
+#ifndef DATASET_GENERATION_H_
+#define DATASET_GENERATION_H_
 
 #include "libidx.h"
 
@@ -51,17 +51,17 @@ namespace ebl {
   //!   (ubyte) N x width x width x 6 (G or GG, RGB or RGBRGB)
   //! outDir/dset_labels.mat: 	(int)   N
   //! outDir/dset_classes.mat:  (ubyte) Nclasses x 128
-  bool imageDirToIdx(const char *imgDir, 
-		     unsigned int width,
-		     //eg: ".*[.]ppm"
-		     const char *imgExtension = defaultExtensionPattern,
-		     const char *imgPatternLeft = NULL, // eg: "_L"
-		     const char *outDir = NULL, 
-		     const char *imgPatternRight = NULL,  // eg: "_R"
-		     bool verbose = false,
-		     const char *prefix = NULL, // eg: "_train" or "test_"
-		     bool toYUV = false);  // convert images to YUV if true
+  bool imagedir_to_idx(const char *imgDir, 
+		       unsigned int width,
+		       //eg: ".*[.]ppm"
+		       const char *imgExtension = defaultExtensionPattern,
+		       const char *imgPatternLeft = NULL, // eg: "_L"
+		       const char *outDir = NULL, 
+		       const char *imgPatternRight = NULL,  // eg: "_R"
+		       bool verbose = false,
+		       const char *prefix = NULL, // eg: "_train" or "test_"
+		       bool toYUV = false);  // convert images to YUV if true
 
 } // end namespace ebl
 
-#endif /* DATATOOLS_H_ */
+#endif /* DATASET_GENERATION_H_ */

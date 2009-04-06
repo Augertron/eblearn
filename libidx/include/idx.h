@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef Idx_H
-#define Idx_H
+#ifndef idx_H
+#define idx_H
 
 #define USING_STL_ITERS 0
 
@@ -70,15 +70,15 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   class dummyt {  bool someunk; };
-  class IdxDim;
+  class idxdim;
 
-  //! IdxSpec contains all the characteristics of an Idx,
+  //! idxspec contains all the characteristics of an idx,
   //! except the storage. It includes the order (number of dimensions)
   //! the offset, and the dim and mod arrays.
-  //! having an IdxSpec class separate from Idx allows us to write
+  //! having an idxspec class separate from idx allows us to write
   //! generic manipulation functions that do not depend on the
   //! type of the storage.
-  class IdxSpec {
+  class idxspec {
 
   private:
 
@@ -102,7 +102,7 @@ namespace ebl {
     intg *mod;
 
     //! resize the spec and return the new footprint.
-    //! this is private because only Idx can call this
+    //! this is private because only idx can call this
     //! so that the storage gets properly resized.
     //! We do not allow the order to be changed with this,
     //! only the size of each dimension can be modified.
@@ -112,9 +112,9 @@ namespace ebl {
 		intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
     
     //! resize the spec and return the new footprint,
-    //! using dimensions contained in an IdxDim. 
+    //! using dimensions contained in an idxdim. 
     //! The order is not allowed to change.
-    intg resize(const IdxDim &d);
+    intg resize(const idxdim &d);
 
     //! resize dimension <dimn> with size <size> and return new footprint.
     //! only already allocated dimensions can be resized 
@@ -127,12 +127,12 @@ namespace ebl {
 
       // Error-check the supplied number of dims.
       if( ndim == 0 ){
-	ylerror("Cannot call resize on a 0-dimensional IdxSpec.");
+	ylerror("Cannot call resize on a 0-dimensional idxspec.");
       }
       else if( ndim != nArgDims ){
 	std::ostringstream oss;
 	oss<<"Number of supplied dimension sizes ("<<nArgDims;
-	oss<<") doesn't match IdxSpec's number of dims ("<<ndim<<")";
+	oss<<") doesn't match idxspec's number of dims ("<<ndim<<")";
 	ylerror(oss.str().c_str());
       }
 
@@ -160,67 +160,67 @@ namespace ebl {
 
   public:
 
-    //! the destructor of IdxSpec deallocates the dim and mod arrays.
-    virtual ~IdxSpec();
+    //! the destructor of idxspec deallocates the dim and mod arrays.
+    virtual ~idxspec();
 
     //! assignment operator overloading.
-    const IdxSpec& operator=(const IdxSpec& src);
+    const idxspec& operator=(const idxspec& src);
 
-    //! copy IdxSpec src into current IdxSpec
-    void copy(const IdxSpec& src);
+    //! copy idxspec src into current idxspec
+    void copy(const idxspec& src);
 
-    //! copy constructor from IdxSpec src
-    IdxSpec(const IdxSpec& src);
+    //! copy constructor from idxspec src
+    idxspec(const idxspec& src);
 
     ////////////////////////////////////////////////////////////////
     //! specific constructors for each number of dimensions
 
-    //! This creates an IdxSpec0 with offset 0.
-    //! This can be used to build an empty/blank IdxSpec.
-    IdxSpec();
+    //! This creates an idxspec0 with offset 0.
+    //! This can be used to build an empty/blank idxspec.
+    idxspec();
 
-    //! Creates an IdxSpec0 with offset o.
-    IdxSpec(intg o);
+    //! Creates an idxspec0 with offset o.
+    idxspec(intg o);
 
-    //! Creates an IdxSpec1 with offset o.
-    IdxSpec(intg o, intg size0);
+    //! Creates an idxspec1 with offset o.
+    idxspec(intg o, intg size0);
 
-    //! Creates an IdxSpec2 with offset o.
-    IdxSpec(intg o, intg size0, intg size1);
+    //! Creates an idxspec2 with offset o.
+    idxspec(intg o, intg size0, intg size1);
 
-    //! Creates an IdxSpec3 with offset o.
-    IdxSpec(intg o, intg size0, intg size1, intg size2);
+    //! Creates an idxspec3 with offset o.
+    idxspec(intg o, intg size0, intg size1, intg size2);
 
     //! Generic constructor with offset.
-    IdxSpec(intg o, intg s0, intg s1, intg s2, intg s3,
+    idxspec(intg o, intg s0, intg s1, intg s2, intg s3,
 	    intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
     
-    //! Creates an IdxSpec of order n from arrays of dims and mods.
+    //! Creates an idxspec of order n from arrays of dims and mods.
     //! The arrays are copied.
-    IdxSpec(intg o, int n, intg *ldim, intg *lmod);
+    idxspec(intg o, int n, intg *ldim, intg *lmod);
 
-    //! construct an IdxSpec from an array of dimensions contained in an IdxDim,
+    //! construct an idxspec from an array of dimensions contained in an idxdim,
     //! with offset o
-    IdxSpec(intg o, const IdxDim &d);
+    idxspec(intg o, const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
     //! access methods
 
-    //! return the offset of IdxSpec
+    //! return the offset of idxspec
     intg getoffset() { return offset; }
 
     //! return the order (number of dimensions).
     int getndim() { return ndim; }
 
     //! return the memory footprint, including the offset.
-    //! The storage of an Idx containing this IdxSpec must
+    //! The storage of an idx containing this idxspec must
     //! be have at least this size.
     intg footprint();
 
-    //! total number of elements accessed by IdxSpec
+    //! total number of elements accessed by idxspec
     intg nelements();
 
-    //! returns true if the IdxSpec elements are
+    //! returns true if the idxspec elements are
     //! in a continuous chunk of memory. This is useful
     //! to optimize iterators over the data.
     bool contiguousp();
@@ -228,72 +228,72 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! print methods
 
-    //! pretty-prints the IdxSpec on the specified file.
+    //! pretty-prints the idxspec on the specified file.
     void pretty(FILE *f);
     void pretty(std::ostream& out);
 
     ////////////////////////////////////////////////////////////////
     //! manipulation methods
 
-    //! select: return a new IdxSpec corresponding to
-    //! a slice of the current IdxSpec with slice i
+    //! select: return a new idxspec corresponding to
+    //! a slice of the current idxspec with slice i
     //! in dimension d. In other words, if m is an
-    //! IdxSpec of order 2 of size (10,4), the call
-    //! IdxSpec p = m.select(0,3) will set p to
-    //! an IdxSpec or order 1 containing the 4-th
+    //! idxspec of order 2 of size (10,4), the call
+    //! idxspec p = m.select(0,3) will set p to
+    //! an idxspec or order 1 containing the 4-th
     //! row of m.
-    IdxSpec select(int d, intg i);
+    idxspec select(int d, intg i);
     //! select_into: same as select, but modifies an existing
-    //! IdxSpec instead of returning a new one.
-    intg select_into(IdxSpec *dst, int d, intg n);
+    //! idxspec instead of returning a new one.
+    intg select_into(idxspec *dst, int d, intg n);
     //! select_inplace: same as select, but modifies the
-    //! current IdxSpec.
+    //! current idxspec.
     intg select_inplace(int d, intg i);
 
-    //! narrow: return a new IdxSpec in which the d-th
+    //! narrow: return a new idxspec in which the d-th
     //! dimension has been reduced to size s, starting
     //! at item o. In other words, if m is an
-    //! IdxSpec of order 2 of size (10,4), the call
-    //! IdxSpec p = m.narrow(0,6,2) will set p to
-    //! an IdxSpec or order 2 of size (6,4) whose rows
+    //! idxspec of order 2 of size (10,4), the call
+    //! idxspec p = m.narrow(0,6,2) will set p to
+    //! an idxspec or order 2 of size (6,4) whose rows
     //! are rows 2 to 7 of m.
-    IdxSpec narrow(int d, intg s, intg o);
+    idxspec narrow(int d, intg s, intg o);
     //! narrow_into: same as narrow, but modifies an existing
-    //! IdxSpec instead of returning a new one.
-    intg narrow_into(IdxSpec *dst, int d, intg s, intg o);
+    //! idxspec instead of returning a new one.
+    intg narrow_into(idxspec *dst, int d, intg s, intg o);
     //! narrow_inplace: same as narrow, but modifies the
-    //! current IdxSpec.
+    //! current idxspec.
     intg narrow_inplace(int d, intg s, intg o);
 
     //! transpose: transpose dimensions d1 and d2.
-    IdxSpec transpose(int d1, int d2);
+    idxspec transpose(int d1, int d2);
     //! transpose all dimensions through permutation matrix p.
-    IdxSpec transpose(int *p);
+    idxspec transpose(int *p);
     //! same as transpose, but modifies an existing
-    //! IdxSpec instead of returning a new one.
-    int transpose_into(IdxSpec *dst, int d1, int d2);
+    //! idxspec instead of returning a new one.
+    int transpose_into(idxspec *dst, int d1, int d2);
     //! same as transpose, but modifies an existing
-    //! IdxSpec instead of returning a new one.
-    int transpose_into(IdxSpec *dst, int *p);
+    //! idxspec instead of returning a new one.
+    int transpose_into(idxspec *dst, int *p);
     //! transpose_inplace: same as transpose, but modifies the
-    //! current IdxSpec.
+    //! current idxspec.
     int transpose_inplace(int d1, int d2);
     //! transpose_inplace: same as transpose, but modifies the
-    //! current IdxSpec.
+    //! current idxspec.
     int transpose_inplace(int *p);
 
-    //! unfold: prepare an IdxSpec for a convolution.
+    //! unfold: prepare an idxspec for a convolution.
     //! Returns an idx on the same storage as m (pointing to the
     //! same data) with an added dimension at the end obtained by
     //! "unfolding" the n -th dimension. The size of the new dimension
     //! is k. This essentially manipulates the mod array to make
     //! convolutions look like matrix-vector multiplies.
-    IdxSpec unfold(int d, intg k, intg s);
+    idxspec unfold(int d, intg k, intg s);
     //! same as unfold, but modifies an existing
-    //! IdxSpec instead of returning a new one.
-    intg unfold_into(IdxSpec *dst, int d, intg k, intg s);
+    //! idxspec instead of returning a new one.
+    intg unfold_into(idxspec *dst, int d, intg k, intg s);
     //! unfold_into: same as unfold, but modifies the
-    //! current IdxSpec.
+    //! current idxspec.
     intg unfold_inplace(int d, intg k, intg s);
 
     ////////////////////////////////////////////////////////////////
@@ -301,10 +301,10 @@ namespace ebl {
 
     // horrible syntax to declare a template class friend.
     // isn't C++ wonderful?
-    friend class IdxDim;
-    template <class T> friend class IdxIter;
-    template <class T> friend class IdxLooper;
-    template <class T> friend class Idx;
+    friend class idxdim;
+    template <class T> friend class idxiter;
+    template <class T> friend class idxlooper;
+    template <class T> friend class idx;
     template <class T> friend class ScalarIter_Base;
     template <class T> friend class ScalarIter;
     template <class T> friend class ReverseScalarIter;
@@ -312,22 +312,22 @@ namespace ebl {
     template <class T> friend class DimIter;
     template <class T> friend class ReverseDimIter;
 
-    friend bool same_dim(IdxSpec &s1, IdxSpec &s2);
+    friend bool same_dim(idxspec &s1, idxspec &s2);
   };
 
   //! return true if two idxspec have the same dimensions,
   //! i.e. if all their dimensions are equal (regardless
   //! of strides).
-  bool same_dim(IdxSpec &s1, IdxSpec &s2);
+  bool same_dim(idxspec &s1, idxspec &s2);
 
   ////////////////////////////////////////////////////////////////
 
-  //! Idx: main tensor class. This can represent vectors,
+  //! idx: main tensor class. This can represent vectors,
   //! matrices, and tensors up to 8 dimensions.
-  //! An Idx is merely an access structure that
-  //! points to the data. Several Idx can point to the same
+  //! An idx is merely an access structure that
+  //! points to the data. Several idx can point to the same
   //! data.
-  template <class T> class Idx {
+  template <class T> class idx {
   private:
 
     //! pointer to the Srg structure that contains the data.
@@ -344,27 +344,27 @@ namespace ebl {
 
   protected:
     //! fake constructor that does nothing.
-    //! This is called by the IdxLooper constructor
-    Idx(dummyt *dummy);
+    //! This is called by the idxlooper constructor
+    idx(dummyt *dummy);
 
   public:
 
-    //! IdxSpec that contains the order,
+    //! idxspec that contains the order,
     //! offset, dimensions and strides.
-    IdxSpec spec;
+    idxspec spec;
 
     //! destructor: unlocks the Srg.
-    virtual ~Idx();
+    virtual ~idx();
 
-    // TODO: Find out why code such as Idx<float> = 1 compiles
+    // TODO: Find out why code such as idx<float> = 1 compiles
     // (even without default operator below).
     // default operator below outputs an error that this is forbidden.
-    virtual Idx<T>& operator=(T other){
-      ylerror("Forbidden Idx assignment. Idx can only be assigned another Idx");
+    virtual idx<T>& operator=(T other){
+      ylerror("Forbidden idx assignment. idx can only be assigned another idx");
       return *this;
     }
 
-    virtual Idx<T>& operator=(const Idx<T>& other) {
+    virtual idx<T>& operator=(const idx<T>& other) {
       Srg<T> *tmp = NULL;
       if (this->storage != NULL)
 	tmp = this->storage;
@@ -376,20 +376,20 @@ namespace ebl {
       return *this;
     }
 
-    virtual Idx<T> operator[](const intg i) {
+    virtual idx<T> operator[](const intg i) {
       return this->select(0,i);
     }
 
     //! Copy constructor. Prevents implcit calls via '='.
     // Keep this 'explicit' until we decide to implement operator=.
-    //Idx( Idx<T>& other );
-    //Idx( const Idx<T>& other );
+    //idx( idx<T>& other );
+    //idx( const idx<T>& other );
 
     //! generic constructor with dims and mods creates
     //! the storage and set offset to zero.
-    Idx(int n, intg *dims, intg *mods);
+    idx(int n, intg *dims, intg *mods);
         
-  Idx( const Idx<T>& other )
+  idx( const idx<T>& other )
     :storage(other.storage),
       spec(other.spec)
 	{
@@ -399,41 +399,41 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! specific constructors for each number of dimensions
 
-    //! creates an Idx0 from scratch;
-    Idx();
-    //! creates an Idx1 of size size0.
-    Idx(intg size0);
-    //! creates an Idx2 of size (size0,size1).
-    Idx(intg size0, intg size1);
-    //! creates an Idx3 of size (size0,size1,size2).
-    Idx(intg size0, intg size1, intg size2);
-    //! creates an Idx of any order.
-    Idx(intg s0, intg s1, intg s2, intg s3, intg s4=-1, intg s5=-1, intg s6=-1,
+    //! creates an idx0 from scratch;
+    idx();
+    //! creates an idx1 of size size0.
+    idx(intg size0);
+    //! creates an idx2 of size (size0,size1).
+    idx(intg size0, intg size1);
+    //! creates an idx3 of size (size0,size1,size2).
+    idx(intg size0, intg size1, intg size2);
+    //! creates an idx of any order.
+    idx(intg s0, intg s1, intg s2, intg s3, intg s4=-1, intg s5=-1, intg s6=-1,
 	intg s7=-1);
-    //! creates an Idx from an array of dimensions contained in an IdxDim
-    Idx(const IdxDim &d);
+    //! creates an idx from an array of dimensions contained in an idxdim
+    idx(const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from existing Srg and offset
 
-    //! generic constructor with IdxSpec.
-    Idx(Srg<T> *srg, IdxSpec &s);
+    //! generic constructor with idxspec.
+    idx(Srg<T> *srg, idxspec &s);
     //! constructor with existing storage and array pointers for dim and mod
-    Idx(Srg<T> *srg, intg o, intg n, intg *dims, intg *mods);
-    //! creates an Idx0 with existing Srg and offset.
-    Idx(Srg<T> *srg, intg o);
-    //! creates an Idx1 of size size0, with existing Srg and offset.
-    Idx(Srg<T> *srg, intg o, intg size0);
-    //! creates an Idx2 of size (size0,size1),
+    idx(Srg<T> *srg, intg o, intg n, intg *dims, intg *mods);
+    //! creates an idx0 with existing Srg and offset.
+    idx(Srg<T> *srg, intg o);
+    //! creates an idx1 of size size0, with existing Srg and offset.
+    idx(Srg<T> *srg, intg o, intg size0);
+    //! creates an idx2 of size (size0,size1),
     //! with existing Srg and offset.
-    Idx(Srg<T> *srg, intg o, intg size0, intg size1);
-    //! creates an Idx3 of size (size0,size1,size2),
+    idx(Srg<T> *srg, intg o, intg size0, intg size1);
+    //! creates an idx3 of size (size0,size1,size2),
     //! with existing Srg and offset.
-    Idx(Srg<T> *srg, intg o, intg size0, intg size1, intg size2);
-    //! creates an Idx of any order with existing Srg and offset.
-    Idx(Srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3, intg s4=-1, 
+    idx(Srg<T> *srg, intg o, intg size0, intg size1, intg size2);
+    //! creates an idx of any order with existing Srg and offset.
+    idx(Srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3, intg s4=-1, 
 	intg s5=-1, intg s6=-1, intg s7=-1);
-    Idx(Srg<T> *srg, intg o, const IdxDim &d);
+    idx(Srg<T> *srg, intg o, const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
     //! STL-like iterators 
@@ -474,20 +474,20 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! resize methods
 
-    //! change the offset of an Idx. The Storage is
+    //! change the offset of an idx. The Storage is
     //! resized accordingly. Returns the new offset.
     virtual intg setoffset(intg o);
 
-    //! resize an Idx. The order (ndim) is not allowed to change.
+    //! resize an idx. The order (ndim) is not allowed to change.
     //! This is to prevent nasty bugs.
     virtual void resize(intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,
 			intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
 
-    //! resize an Idx with dimensions contained in an IdxDim. 
+    //! resize an idx with dimensions contained in an idxdim. 
     //! The order is not allowed to change.
-    virtual void resize(const IdxDim &d);
+    virtual void resize(const idxdim &d);
 
-    //! resize 1 dimension of an Idx. The order is not allowed to change.
+    //! resize 1 dimension of an idx. The order is not allowed to change.
     virtual void resize1(intg dimn, intg size);
 
     //! same as resize, but the storage is enlarged by a step of s_chunk 
@@ -498,7 +498,7 @@ namespace ebl {
 
 
     /**
-     * Resizes the Idx using the dimension sizes listed
+     * Resizes the idx using the dimension sizes listed
      * in a sequence.
      * @param sizesBegin: An iterator type, points to beginning of size list.
      * @param sizesEnd: An iterator type, points to one past the last size.
@@ -521,57 +521,57 @@ namespace ebl {
     }
 
     ////////////////////////////////////////////////////////////////
-    //! Idx manipulation methods
+    //! idx manipulation methods
 
-    //! select: return a new Idx corresponding to
-    //! a slice of the current Idx with slice i
+    //! select: return a new idx corresponding to
+    //! a slice of the current idx with slice i
     //! in dimension d. In other words, if m is an
-    //! Idx of order 2 of size (10,4), the call
-    //! Idx p = m.select(0,3) will set p to
-    //! an Idx or order 1 containing the 4-th
+    //! idx of order 2 of size (10,4), the call
+    //! idx p = m.select(0,3) will set p to
+    //! an idx or order 1 containing the 4-th
     //! row of m.
-    Idx<T> select(int d, intg i);
+    idx<T> select(int d, intg i);
 
-    //! narrow: return a new Idx in which the d-th
+    //! narrow: return a new idx in which the d-th
     //! dimension has been reduced to size s, starting
     //! at item o. In other words, if m is an
-    //! Idx of order 2 of size (10,4), the call
-    //! Idx p = m.narrow(0,6,2) will set p to
-    //! an Idx or order 2 of size (6,4) whose rows
+    //! idx of order 2 of size (10,4), the call
+    //! idx p = m.narrow(0,6,2) will set p to
+    //! an idx or order 2 of size (6,4) whose rows
     //! are rows 2 to 7 of m.
-    Idx<T> narrow(int d, intg s, intg o);
+    idx<T> narrow(int d, intg s, intg o);
 
-    //! Return an new Idx in which dimensions
+    //! Return an new idx in which dimensions
     //! d1 and d2 are transposed. No data is actually
-    //! moved around, this merely manipulates the Idx
+    //! moved around, this merely manipulates the idx
     //! structure itself.
-    Idx<T> transpose(int d1, int d2);
+    idx<T> transpose(int d1, int d2);
 
-    //! Return an new Idx in which the dimensions
+    //! Return an new idx in which the dimensions
     //! are permuted using the permutation vector p.
     //! For example, if m is an idx of size (2,4,6),
     //! int p[] = {1,2,0}; m.transpose(p);
-    //! returns an Idx of size (4,6,2). No data is actually
-    //! moved around, this merely manipulates the Idx
+    //! returns an idx of size (4,6,2). No data is actually
+    //! moved around, this merely manipulates the idx
     //! structure itself.
-    Idx<T> transpose(int *p);
+    idx<T> transpose(int *p);
 
-    //! Return a new Idx prepared for a convolution.
+    //! Return a new idx prepared for a convolution.
     //! Returns an idx on the same storage as m (pointing to the
     //! same data) with an added dimension at the end obtained by
     //! "unfolding" the n -th dimension. The size of the new dimension
     //! is k. This essentially manipulates the mod array to make
     //! convolutions look like matrix-vector multiplies.
-    virtual Idx<T> unfold(int d, intg k, intg s);
+    virtual idx<T> unfold(int d, intg k, intg s);
 
-    //! Returns a new Idx with an order n.
+    //! Returns a new idx with an order n.
     //! if n == 1, the data is viewed as a 1D idx, regardless of its
     //!   current order.
     //! if n > 1 and n > current order, then extra dimensions of size 1
     //!   are added.
     //! if n > 1 and n < current order, this is undefined, an error is raised.
-    //! if n == current order, an identical Idx is returned.
-    Idx<T> view_as_order(int n);
+    //! if n == current order, an identical idx is returned.
+    idx<T> view_as_order(int n);
 
     ////////////////////////////////////////////////////////////////
     //! field access methods
@@ -579,22 +579,22 @@ namespace ebl {
     //! return pointer to storage
     virtual Srg<T> *getstorage() { return storage; }
 
-    //! return size of Idx in d-th dimension.
+    //! return size of idx in d-th dimension.
     virtual intg dim(int d) { return spec.dim[d]; }
 
     //! return const ptr to dims
     virtual const intg* dims(){ return spec.dim; }
 
-    //! return stride of Idx in d-th dimension.
+    //! return stride of idx in d-th dimension.
     virtual intg mod(int d) { return spec.mod[d]; }
 
     //! return const ptr to mods
     virtual const intg* mods(){ return spec.mod; }
 
-    //! return order of Idx (number of dimensions).
+    //! return order of idx (number of dimensions).
     virtual int order() { return spec.ndim; }
 
-    //! return offset of Idx.
+    //! return offset of idx.
     virtual intg offset() { return spec.offset; }
 
     //! return total number of elements
@@ -604,29 +604,29 @@ namespace ebl {
     //! (index after last cell occupied in the storage)
     virtual intg footprint() { return spec.footprint(); }
 
-    //! return true if elements of Idx are
+    //! return true if elements of idx are
     //! contiguous in memory.
     virtual bool contiguousp() { return spec.contiguousp(); }
 
-    //! return element if this is an Idx0,
+    //! return element if this is an idx0,
     //! otherwise generate an error
     //  T &operator*() {
     //    if (spec.ndim==0) {
     //      return *(storage->data + spec.offset);
-    //    } else { ylerror("Idx::operator*: only an Idx0 can be dereferenced");}
+    //    } else { ylerror("idx::operator*: only an idx0 can be dereferenced");}
     //  }
  
-    //! return true if this Idx has same order and dimensions as IdxDim d.
+    //! return true if this idx has same order and dimensions as idxdim d.
     //! i.e. if all their dimensions are equal (regardless of strides).
-    virtual bool same_dim(const IdxDim &d);
+    virtual bool same_dim(const idxdim &d);
 
-    //! return true if this Idx has same order and dimensions s0 .. s7
+    //! return true if this idx has same order and dimensions s0 .. s7
     //! i.e. if all their dimensions are equal (regardless of strides).
     virtual bool same_dim(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
 			  intg s6, intg s7);
 
-    //! copies order and dimensions of this Idx into the passed IdxDim d.
-    virtual IdxDim& getIdxDim(IdxDim& d);
+    //! copies order and dimensions of this idx into the passed idxdim d.
+    virtual idxdim& getidxdim(idxdim& d);
 
    ////////////////////////////////////////////////////////////////
     //! data access methods
@@ -634,39 +634,39 @@ namespace ebl {
     //! return pointer on data chunk (on first element)
     virtual T *idx_ptr() {  return storage->data + spec.offset; }
 
-    //! return a pointer to an element (Idx0 version)
-    virtual T *ptr() { if (spec.ndim != 0) ylerror("not an Idx0"); 
+    //! return a pointer to an element (idx0 version)
+    virtual T *ptr() { if (spec.ndim != 0) ylerror("not an idx0"); 
       return storage->data + spec.offset; }
 
-    //! return a pointer to an element (Idx1 version)
+    //! return a pointer to an element (idx1 version)
     virtual T *ptr(intg i0);
-    //! return a pointer to an element (Idx2 version)
+    //! return a pointer to an element (idx2 version)
     virtual T *ptr(intg i0, intg i1);
-    //! return a pointer to an element (Idx3 version)
+    //! return a pointer to an element (idx3 version)
     virtual T *ptr(intg i0, intg i1, intg i2);
     //! return a pointer to an element (generic version)
     virtual T *ptr(intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, 
 		   intg i6=-1, intg i7=-1);
 
-    //! return the value of an element (Idx0 version)
+    //! return the value of an element (idx0 version)
     virtual T get();
-    //! return the value of an element (Idx1 version)
+    //! return the value of an element (idx1 version)
     virtual T get(intg i0);
-    //! return the value of an element (Idx2 version)
+    //! return the value of an element (idx2 version)
     virtual T get(intg i0, intg i1);
-    //! return the value of an element (Idx3 version)
+    //! return the value of an element (idx3 version)
     virtual T get(intg i0, intg i1, intg i2);
     //! return the value of an element (generic version)
     virtual T get(intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, 
 		  intg i6=-1, intg i7=-1);
 
-    //! sets the value of an element (Idx0 version)
+    //! sets the value of an element (idx0 version)
     virtual T set(T val);
-    //! sets the value of an element (Idx1 version)
+    //! sets the value of an element (idx1 version)
     virtual T set(T val, intg i0);
-    //! sets the value of an element (Idx2 version)
+    //! sets the value of an element (idx2 version)
     virtual T set(T val, intg i0, intg i1);
-    //! sets the value of an element (Idx3 version)
+    //! sets the value of an element (idx3 version)
     virtual T set(T val, intg i0, intg i1, intg i2);
     //! sets the value of an element (generic version)
     virtual T set(T val, intg i0, intg i1, intg i2, intg i3, intg i4=-1, 
@@ -676,7 +676,7 @@ namespace ebl {
     //! print methods
 
     //! Pretty-prints elements to a stream.
-    //friend std::ostream& operator<<( std::ostream& out, Idx<T>& tensor );
+    //friend std::ostream& operator<<( std::ostream& out, idx<T>& tensor );
 
     //! Pretty-prints IDx metadata to a file pointer.
     virtual void pretty(FILE *);
@@ -687,7 +687,7 @@ namespace ebl {
     virtual void printElems( std::ostream& out );
     // void printElems( FILE* out );  doesn't work (cf implementation)
 
-    //! print content of Idx on stream
+    //! print content of idx on stream
     virtual int fdump(FILE *f);
 
 #if USING_STL_ITERS == 0
@@ -695,8 +695,8 @@ namespace ebl {
     // use U for type symbol otherwise the compiler
     // complains about T.
 
-    template <class U> friend class IdxIter;
-    template <class U> friend class IdxLooper;
+    template <class U> friend class idxiter;
+    template <class U> friend class idxlooper;
 #endif
 
   };
@@ -710,13 +710,13 @@ namespace ebl {
 #if USING_STL_ITERS == 0
 
   ////////////////////////////////////////////////////////////////
-  // Idx Iterators are a subclass of Idx
+  // idx Iterators are a subclass of idx
 
-  //! IdxLooper: a kind of iterator used by bloop
-  //! and eloop macros. IdxLooper is a subclass of Idx,
+  //! idxlooper: a kind of iterator used by bloop
+  //! and eloop macros. idxlooper is a subclass of idx,
   //! It is used as follows:
-  //! for (IdxLooper z(&idx,0); z.notdone(); z.next()) { .... }
-  template <class T> class IdxLooper : public Idx<T> {
+  //! for (idxlooper z(&idx,0); z.notdone(); z.next()) { .... }
+  template <class T> class idxlooper : public idx<T> {
 
   public:
     intg i;  // loop index
@@ -724,7 +724,7 @@ namespace ebl {
     intg modd; // stride in dimension being iterated upon
 
     //! generic constructor loops over dimensin ld
-    IdxLooper(Idx<T> &idx, int ld);
+    idxlooper(idx<T> &m, int ld);
 
     //! return true if loop is over
     bool notdone();
@@ -736,50 +736,50 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-  // Idx Iterators: gives you a pointer to the actual data,
-  // unlike IdxLooper which gives you another Idx.
+  // idx Iterators: gives you a pointer to the actual data,
+  // unlike idxlooper which gives you another idx.
 
-  //! IdxIter allows to iterate over all elements of an Idx.
+  //! idxiter allows to iterate over all elements of an idx.
   //! Although it can be used directly, it is easier to use
   //! it with the idx_aloopX macros. Example:
-  //!  IdxIter<double> idx;
+  //!  idxiter<double> idx;
   //!  for ( idx.init(m); idx.notdone(); idx.next() ) {
   //!    printf("%g ",*idx);
   //!  }
   //! Here is an example that uses the aloop macro to fill up
-  //! an Idx with numbers corresponding to the loop index:
-  //! IdxIter<double> idx;
+  //! an idx with numbers corresponding to the loop index:
+  //! idxiter<double> idx;
   //! idx_aloop_on(idx,m) { *idx = idx.i; }
   //! At any point during the loop, the indices of the element
   //! being worked on is stored in idx.d[k] for k=0
   //! to idx.order()-1.
-  template <class T> class IdxIter {
+  template <class T> class idxiter {
 
   public:
     //! pointer to current item
     T *data;
     //! number of elements visited so far (loop index)
     intg i;
-    //! total number of elements in Idx
+    //! total number of elements in idx
     intg n;
     //! dimension being looped over
     int j;
-    //! loop index array for non-contiguous Idx
+    //! loop index array for non-contiguous idx
     intg d[MAXDIMS];
-    //! pointer to Idx being looped over.
-    Idx<T> *iterand;
+    //! pointer to idx being looped over.
+    idx<T> *iterand;
 
     //! empty constructor;
-    IdxIter();
+    idxiter();
 
-    //! Initialize an IdxIter to the start of
-    //! the Idx passed as argument.
-    T *init(Idx<T> &idx);
+    //! Initialize an idxiter to the start of
+    //! the idx passed as argument.
+    T *init(idx<T> &m);
 
     //! Return true while the loop is not completed
     bool notdone();
 
-    //! Increments IdxIter to next element
+    //! Increments idxiter to next element
     T *next();
 
     //! dereferencing operator: returns data item.
@@ -790,35 +790,35 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 #endif // if USING_STL_ITERS == 0
 
-  //! This class allows to extract dimensions information from existing Idx
-  //! objects in order to create other Idx objects with the same order without
+  //! This class allows to extract dimensions information from existing idx
+  //! objects in order to create other idx objects with the same order without
   //! knowning their order in advance. It does not allow to change the order
   //! but one can modify the size of a particular dimension via the setdim 
   //! method.
-  class IdxDim {
+  class idxdim {
   public:
     // slots
     intg dim[MAXDIMS];
     intg ndim;
 
     //! Empty constructor.
-    IdxDim();
-    //! Create an IdxDim based on the information found in an IdxSpec.
-    IdxDim(const IdxSpec &s);
-    //! Create an IdxDim based on the information found in an Idx<T>.
-    template <class T> IdxDim(const Idx<T> &i);
+    idxdim();
+    //! Create an idxdim based on the information found in an idxspec.
+    idxdim(const idxspec &s);
+    //! Create an idxdim based on the information found in an idx<T>.
+    template <class T> idxdim(const idx<T> &i);
 
     //! Change the dimensions dimn to size size.
     void setdim(intg dimn, intg size);
 
     //! Destructor.
-    virtual ~IdxDim();
+    virtual ~idxdim();
 
-    //! Extract dimensions information from an IdxSpec
-    void read(const IdxSpec &s);
+    //! Extract dimensions information from an idxspec
+    void read(const idxspec &s);
 
     // friends
-    friend class IdxSpec;
+    friend class idxspec;
   };
 
 } // end namespace ebl

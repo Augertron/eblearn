@@ -9,17 +9,17 @@ void IdxTest::setUp() {
 void IdxTest::tearDown() {
 }
 
-// Testing Idx get
+// Testing idx get
 void IdxTest::test_Idx_get() {
-  Idx<double> t0;
-  Idx<double> t1(2);
-  Idx<double> t2(2,2);
-  Idx<double> t3(2,2,2);
-  Idx<double> t4(2,2,2,2);
-  Idx<double> t5(2,2,2,2,2);
-  Idx<double> t6(2,2,2,2,2,2);
-  Idx<double> t7(2,2,2,2,2,2,2);
-  Idx<double> t8(2,2,2,2,2,2,2,2);
+  idx<double> t0;
+  idx<double> t1(2);
+  idx<double> t2(2,2);
+  idx<double> t3(2,2,2);
+  idx<double> t4(2,2,2,2);
+  idx<double> t5(2,2,2,2,2);
+  idx<double> t6(2,2,2,2,2,2);
+  idx<double> t7(2,2,2,2,2,2,2);
+  idx<double> t8(2,2,2,2,2,2,2,2);
   t0.set(1);
   t1.set(1, 0);
   t2.set(1, 0, 1);
@@ -60,22 +60,22 @@ void IdxTest::test_Srg() {
   CPPUNIT_ASSERT_EQUAL(30, (int) s->size());
 }
 
-// Testing IdxSpec constructors, select, transpose, unfold
+// Testing idxspec constructors, select, transpose, unfold
 void IdxTest::test_IdxSpec() {
-  IdxSpec *sp = new IdxSpec(5, 4, 3);
+  idxspec *sp = new idxspec(5, 4, 3);
   CPPUNIT_ASSERT_EQUAL(2, (int) sp->getndim());
   CPPUNIT_ASSERT_EQUAL(5, (int) sp->getoffset());
   CPPUNIT_ASSERT_EQUAL(4, (int) sp->select(1, 0).nelements());
   CPPUNIT_ASSERT_EQUAL(3, (int) sp->select(0, 0).nelements());
   delete sp;
 
-  IdxSpec spec1(0, 5, 6);
+  idxspec spec1(0, 5, 6);
   CPPUNIT_ASSERT_EQUAL(2, (int) spec1.getndim());
   CPPUNIT_ASSERT_EQUAL(0, (int) spec1.getoffset());
   CPPUNIT_ASSERT_EQUAL(5, (int) spec1.select(1, 0).nelements());
   CPPUNIT_ASSERT_EQUAL(6, (int) spec1.select(0, 0).nelements());
 
-  IdxSpec spec2(0, 10);
+  idxspec spec2(0, 10);
   CPPUNIT_ASSERT_EQUAL(1, (int) spec2.getndim());
   CPPUNIT_ASSERT_EQUAL(0, (int) spec2.getoffset());
   CPPUNIT_ASSERT_EQUAL(10, (int) spec2.nelements());
@@ -110,27 +110,27 @@ void IdxTest::test_IdxSpec() {
   CPPUNIT_ASSERT_EQUAL(6, (int) spec2.select(1, 0).nelements());
   CPPUNIT_ASSERT_EQUAL(5, (int) spec2.select(0, 0).nelements());
 
-  IdxSpec specu(0, 2, 3, 2, 4, 5, 1);
+  idxspec specu(0, 2, 3, 2, 4, 5, 1);
   CPPUNIT_ASSERT_EQUAL(6, (int) specu.getndim());
   CPPUNIT_ASSERT_EQUAL(0, (int) specu.getoffset());
   CPPUNIT_ASSERT_EQUAL(240, (int) specu.nelements());
 }
 
-// Testing Idx constructors, select, narrow, transpose, unfold
+// Testing idx constructors, select, narrow, transpose, unfold
 void IdxTest::test_Idx_operations() {
-  Idx<double> m0;
+  idx<double> m0;
   CPPUNIT_ASSERT_EQUAL(0, (int) m0.order());
   CPPUNIT_ASSERT_EQUAL(0, (int) m0.offset());
   CPPUNIT_ASSERT_EQUAL(true, m0.contiguousp());
 
-  Idx<int> m1((intg)5);
+  idx<int> m1((intg)5);
   CPPUNIT_ASSERT_EQUAL(1, (int) m1.order());
   CPPUNIT_ASSERT_EQUAL(0, (int) m1.offset());
   CPPUNIT_ASSERT_EQUAL(true, m1.contiguousp());
   CPPUNIT_ASSERT_EQUAL(5, (int) m1.dim(0));
   CPPUNIT_ASSERT_EQUAL(1, (int) m1.mod(0));
 
-  Idx<float> m2(3, 4);
+  idx<float> m2(3, 4);
   CPPUNIT_ASSERT_EQUAL(2, (int) m2.order());
   CPPUNIT_ASSERT_EQUAL(0, (int) m2.offset());
   CPPUNIT_ASSERT_EQUAL(true, m2.contiguousp());
@@ -139,7 +139,7 @@ void IdxTest::test_Idx_operations() {
   CPPUNIT_ASSERT_EQUAL(4, (int) m2.mod(0));
   CPPUNIT_ASSERT_EQUAL(1, (int) m2.mod(1));
 
-  Idx<float> m3(2, 4, 3);
+  idx<float> m3(2, 4, 3);
   CPPUNIT_ASSERT_EQUAL(3, (int) m3.order());
   CPPUNIT_ASSERT_EQUAL(0, (int) m3.offset());
   CPPUNIT_ASSERT_EQUAL(true, m3.contiguousp());
@@ -150,7 +150,7 @@ void IdxTest::test_Idx_operations() {
   CPPUNIT_ASSERT_EQUAL(3, (int) m3.mod(1));
   CPPUNIT_ASSERT_EQUAL(1, (int) m3.mod(2));
 
-  Idx<float> m6(2, 4, 3, 2, 5, 4);
+  idx<float> m6(2, 4, 3, 2, 5, 4);
   CPPUNIT_ASSERT_EQUAL(6, (int) m6.order());
   CPPUNIT_ASSERT_EQUAL(0, (int) m6.offset());
   CPPUNIT_ASSERT_EQUAL(true, m6.contiguousp());
@@ -167,7 +167,7 @@ void IdxTest::test_Idx_operations() {
   CPPUNIT_ASSERT_EQUAL(4, (int) m6.mod(4));
   CPPUNIT_ASSERT_EQUAL(1, (int) m6.mod(5));
 
-  Idx<double> *nm3 = new Idx<double>(2,4,3);
+  idx<double> *nm3 = new idx<double>(2,4,3);
   CPPUNIT_ASSERT_EQUAL(3, (int) nm3->order());
   CPPUNIT_ASSERT_EQUAL(0, (int) nm3->offset());
   CPPUNIT_ASSERT_EQUAL(true, nm3->contiguousp());
@@ -179,7 +179,7 @@ void IdxTest::test_Idx_operations() {
   CPPUNIT_ASSERT_EQUAL(1, (int) nm3->mod(2));
   delete nm3;
 
-  Idx<double> ma(3, 10, 20); 
+  idx<double> ma(3, 10, 20); 
   CPPUNIT_ASSERT_EQUAL(3, (int) ma.order());
   CPPUNIT_ASSERT_EQUAL(0, (int) ma.offset());
   CPPUNIT_ASSERT_EQUAL(true, ma.contiguousp());
@@ -190,7 +190,7 @@ void IdxTest::test_Idx_operations() {
   CPPUNIT_ASSERT_EQUAL(20, (int) ma.mod(1));
   CPPUNIT_ASSERT_EQUAL(1, (int) ma.mod(2));
 
-  Idx<double> ms = ma.select(0, 1);
+  idx<double> ms = ma.select(0, 1);
   CPPUNIT_ASSERT_EQUAL(2, (int) ms.order());
   CPPUNIT_ASSERT_EQUAL(200, (int) ms.offset());
   CPPUNIT_ASSERT_EQUAL(true, ms.contiguousp());
@@ -199,7 +199,7 @@ void IdxTest::test_Idx_operations() {
   CPPUNIT_ASSERT_EQUAL(20, (int) ms.mod(0));
   CPPUNIT_ASSERT_EQUAL(1, (int) ms.mod(1));
 
-  Idx<double> mn = ma.narrow(2, 8, 4);
+  idx<double> mn = ma.narrow(2, 8, 4);
   CPPUNIT_ASSERT_EQUAL(3, (int) mn.order());
   CPPUNIT_ASSERT_EQUAL(4, (int) mn.offset());
   CPPUNIT_ASSERT_EQUAL(false, mn.contiguousp());
@@ -210,7 +210,7 @@ void IdxTest::test_Idx_operations() {
   CPPUNIT_ASSERT_EQUAL(20, (int) mn.mod(1));
   CPPUNIT_ASSERT_EQUAL(1, (int) mn.mod(2));
 
-  Idx<double> mt = ma.transpose(1, 2);
+  idx<double> mt = ma.transpose(1, 2);
   CPPUNIT_ASSERT_EQUAL(3, (int) mt.order());
   CPPUNIT_ASSERT_EQUAL(0, (int) mt.offset());
   CPPUNIT_ASSERT_EQUAL(false, mt.contiguousp());
@@ -221,7 +221,7 @@ void IdxTest::test_Idx_operations() {
   CPPUNIT_ASSERT_EQUAL(1, (int) mt.mod(1));
   CPPUNIT_ASSERT_EQUAL(20, (int) mt.mod(2));
 
-  Idx<double> mu = ma.unfold(2, 6, 2);
+  idx<double> mu = ma.unfold(2, 6, 2);
   CPPUNIT_ASSERT_EQUAL(4, (int) mu.order());
   CPPUNIT_ASSERT_EQUAL(0, (int) mu.offset());
   CPPUNIT_ASSERT_EQUAL(false, mu.contiguousp());
@@ -235,10 +235,10 @@ void IdxTest::test_Idx_operations() {
   CPPUNIT_ASSERT_EQUAL(1, (int) mu.mod(3));
 }
 
-  // testing Idx constructor from Srg, Idx resize
+  // testing idx constructor from Srg, idx resize
 void IdxTest::test_Idx_resize() {
   Srg<float> *srgptr = new Srg<float>(0);
-  Idx<float> m1(srgptr, srgptr->size(), 3, 4);
+  idx<float> m1(srgptr, srgptr->size(), 3, 4);
 
   CPPUNIT_ASSERT_EQUAL(m1.getstorage(), srgptr);
   CPPUNIT_ASSERT_EQUAL((int) m1.footprint(), (int) srgptr->size());
@@ -249,7 +249,7 @@ void IdxTest::test_Idx_resize() {
   CPPUNIT_ASSERT_EQUAL(4, (int) m1.select(0, 0).nelements());
   CPPUNIT_ASSERT_EQUAL(true, m1.contiguousp());
 
-  Idx<float> m2(srgptr, srgptr->size(), 2, 5);
+  idx<float> m2(srgptr, srgptr->size(), 2, 5);
 
   CPPUNIT_ASSERT_EQUAL(m2.getstorage(), srgptr);
   CPPUNIT_ASSERT_EQUAL((int) m2.footprint(), (int) srgptr->size());
@@ -259,7 +259,7 @@ void IdxTest::test_Idx_resize() {
   CPPUNIT_ASSERT_EQUAL(5, (int) m2.select(0, 0).nelements());
   CPPUNIT_ASSERT_EQUAL(true, m2.contiguousp());
 
-  Idx<float> m3(srgptr, srgptr->size(), 6);
+  idx<float> m3(srgptr, srgptr->size(), 6);
 
   CPPUNIT_ASSERT_EQUAL(m3.getstorage(), srgptr);
   CPPUNIT_ASSERT_EQUAL((int) m3.footprint(), (int) srgptr->size());
@@ -268,7 +268,7 @@ void IdxTest::test_Idx_resize() {
   CPPUNIT_ASSERT_EQUAL(6, (int) m3.nelements());
   CPPUNIT_ASSERT_EQUAL(true, m3.contiguousp());
 
-  Idx<double> m(8, 3, 4, 5);
+  idx<double> m(8, 3, 4, 5);
 
   CPPUNIT_ASSERT_EQUAL(4, (int) m.order());
   CPPUNIT_ASSERT_EQUAL(0, (int) m.offset());
@@ -317,10 +317,10 @@ void IdxTest::test_Idx_resize() {
   CPPUNIT_ASSERT_EQUAL(1080, (int) m.getstorage()->size());
 }
 
-// Testing IdxIter and aloop macros
+// Testing idxIter and aloop macros
 void IdxTest::test_IdxIter() {
-  Idx<double> m(3, 4);
-  Idx<double> p(4, 3);
+  idx<double> m(3, 4);
+  idx<double> p(4, 3);
 
   CPPUNIT_ASSERT_EQUAL(2, (int) m.order());
   CPPUNIT_ASSERT_EQUAL(0, (int) m.offset());
@@ -339,7 +339,7 @@ void IdxTest::test_IdxIter() {
   CPPUNIT_ASSERT_EQUAL(1, (int) p.mod(1));
 
   // this is for test purpose: this is
-  // a bad way to loop over an Idx.
+  // a bad way to loop over an idx.
   // Use aloop macro instead.
   for (intg i0 = 0; i0<3; i0++) {
     for (intg i1 = 0; i1<4; i1++) {
@@ -348,7 +348,7 @@ void IdxTest::test_IdxIter() {
     }
   }
 
-  // Testing IdxIter on m (contiguous)
+  // Testing idxIter on m (contiguous)
   double *ptr = m.idx_ptr();
   CPPUNIT_ASSERT_EQUAL(true, m.contiguousp());
 
@@ -358,14 +358,14 @@ void IdxTest::test_IdxIter() {
   }
 #else
   double *idxptr;
-  IdxIter<double> idx;
-  for (idxptr = idx.init(m); idx.notdone(); idxptr = idx.next() ) {
+  idxiter<double> iter;
+  for (idxptr = iter.init(m); iter.notdone(); idxptr = iter.next() ) {
     CPPUNIT_ASSERT_EQUAL(*(ptr++), *idxptr);
   }
 #endif
 
-  // Testing IdxIter on m.narrow(1,2,1) (non-contiguous)
-  Idx<double> z = m.narrow(1, 2, 1);
+  // Testing idxIter on m.narrow(1,2,1) (non-contiguous)
+  idx<double> z = m.narrow(1, 2, 1);
   ptr = z.idx_ptr();
   int jump = 0;
   CPPUNIT_ASSERT_EQUAL(false, z.contiguousp());
@@ -382,7 +382,7 @@ void IdxTest::test_IdxIter() {
   }
 #else
   double *zptr;
-  IdxIter<double> ziter;
+  idxiter<double> ziter;
   for (zptr = ziter.init(z); ziter.notdone(); zptr = ziter.next() ) {
     CPPUNIT_ASSERT_EQUAL(*ptr, *zptr);
     ptr++;
@@ -395,7 +395,7 @@ void IdxTest::test_IdxIter() {
 #endif
   
   // Testing idx_aloop1() on qq
-  Idx<double> qq(4, 5);
+  idx<double> qq(4, 5);
   //{ idx_aloop1(p,qq,double) { *p = 2 * p.i; } }
   int ii = 0;
   {
@@ -424,10 +424,10 @@ void IdxTest::test_IdxIter() {
   }
 }
 
-// Testing IdxLooper and bloop/eloop macros
+// Testing idxLooper and bloop/eloop macros
 void IdxTest::test_Idx_macros() {
-  Idx<double> m(3, 4);
-  Idx<double> p(3, 5);
+  idx<double> m(3, 4);
+  idx<double> p(3, 5);
 
   int offset = 0;
   {
@@ -496,8 +496,8 @@ void IdxTest::test_Idx_macros() {
 void IdxTest::test_view_as_order() {
   int cnt;
 
-  Idx<double> i8(2, 2, 2, 2, 2, 2, 2, 2);
-  Idx<double> i8_1(i8.view_as_order(1));
+  idx<double> i8(2, 2, 2, 2, 2, 2, 2, 2);
+  idx<double> i8_1(i8.view_as_order(1));
   CPPUNIT_ASSERT_EQUAL(1, i8_1.order());
   CPPUNIT_ASSERT_EQUAL((intg) 256, i8_1.nelements());
   CPPUNIT_ASSERT_EQUAL((intg) 256, i8_1.dim(0));
@@ -508,8 +508,8 @@ void IdxTest::test_view_as_order() {
   }
   CPPUNIT_ASSERT_EQUAL(256, cnt);  
 
-  Idx<double> i1(42);
-  Idx<double> i1_8(i1.view_as_order(8));
+  idx<double> i1(42);
+  idx<double> i1_8(i1.view_as_order(8));
   CPPUNIT_ASSERT_EQUAL(8, i1_8.order());
   CPPUNIT_ASSERT_EQUAL((intg) 42, i1_8.nelements());
   CPPUNIT_ASSERT_EQUAL((intg) 42, i1_8.dim(0));

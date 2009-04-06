@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "Window.moc"
+#include "window.moc"
 
 using namespace std;
 
@@ -123,15 +123,15 @@ namespace ebl {
   void Window::buffer_resize(int h, int w) {
     resize(w, h);
     if (!buffer) {
-      buffer = new Idx<ubyte>(h, w);
+      buffer = new idx<ubyte>(h, w);
       idx_fill(*buffer, (ubyte) 255);
     }
     else {
-      Idx<ubyte> *inew = new Idx<ubyte>(h, w);
+      idx<ubyte> *inew = new idx<ubyte>(h, w);
       idx_fill(*inew, (ubyte) 255);
-      Idx<ubyte> tmpnew = inew->narrow(0, MIN(h, buffer->dim(0)), 0);
+      idx<ubyte> tmpnew = inew->narrow(0, MIN(h, buffer->dim(0)), 0);
       tmpnew = tmpnew.narrow(1, MIN(w, buffer->dim(1)), 0);
-      Idx<ubyte> tmpbuf = buffer->narrow(0, MIN(h, buffer->dim(0)), 0);
+      idx<ubyte> tmpbuf = buffer->narrow(0, MIN(h, buffer->dim(0)), 0);
       tmpbuf = tmpbuf.narrow(1, MIN(w, buffer->dim(1)), 0);
       idx_copy(tmpbuf, tmpnew);
       delete buffer;
@@ -146,7 +146,7 @@ namespace ebl {
     qimage->setColorTable(colorTable);
   }
 
-  void Window::updatePixmap(Idx<ubyte> *img, unsigned int h0, unsigned int w0) {
+  void Window::updatePixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0) {
     if (img) {
       unsigned int h = MAX(buffer?(unsigned int)buffer->dim(0):0, 
 			   h0 + img->dim(0));
@@ -157,7 +157,7 @@ namespace ebl {
       else if ((h > (unsigned int) buffer->dim(0)) || 
 	       (w > (unsigned int) buffer->dim(1)))
 	buffer_resize(h, w);
-      Idx<ubyte> tmpbuf = buffer->narrow(0, img->dim(0), h0);
+      idx<ubyte> tmpbuf = buffer->narrow(0, img->dim(0), h0);
       tmpbuf = tmpbuf.narrow(1, img->dim(1), w0);
       idx_copy(*img, tmpbuf);
       // copy buffer to pixmap

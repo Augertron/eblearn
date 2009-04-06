@@ -18,9 +18,9 @@ void EblBasicTest::test_nn_layer_convolution_fprop() {
   intg sj = 1 + inj - kj;
   state_idx in(1, ini, inj);
   state_idx out(1, si, sj);
-  Idx<intg> table(1, 2);
+  idx<intg> table(1, 2);
   idx_clear(table);
-  Idx<intg> tableout = table.select(1, 1);
+  idx<intg> tableout = table.select(1, 1);
   intg thick = 1 + idx_max(tableout);
   parameter prm(10000);
   nn_layer_convolution c(prm, ki, kj, 1, 1, table, thick);
@@ -60,15 +60,15 @@ void EblBasicTest::test_jacobian_nn_layer_convolution() {
   intg sj = 1 + inj - kj;
   state_idx in(1, ini, inj);
   state_idx out(1, si, sj);
-  Idx<intg> table(1, 2);
+  idx<intg> table(1, 2);
   idx_clear(table);
-  Idx<intg> tableout = table.select(1, 1);
+  idx<intg> tableout = table.select(1, 1);
   intg thick = 1 + idx_max(tableout);
   parameter prm(10000);
   nn_layer_convolution c(prm, ki, kj, 1, 1, table, thick);
 
   ModuleTester mt;
-  Idx<double> errs = mt.test_jacobian(c, in, out);
+  idx<double> errs = mt.test_jacobian(c, in, out);
 //   cout << "err0: " << errs.get(0) << " err1: " << errs.get(1);
 //   cout << " thres " << mt.get_acc_thres();
   CPPUNIT_ASSERT(errs.get(0) < mt.get_acc_thres());
@@ -83,7 +83,7 @@ void EblBasicTest::test_jacobian_nn_layer_subsampling() {
   state_idx out(1, 1, 1);
 
   ModuleTester mt;
-  Idx<double> errs = mt.test_jacobian(s, in, out);
+  idx<double> errs = mt.test_jacobian(s, in, out);
 //   cout << "err0: " << errs.get(0) << " err1: " << errs.get(1);
 //   cout << " thres " << mt.get_acc_thres();
   CPPUNIT_ASSERT(errs.get(0) < mt.get_acc_thres());
@@ -167,8 +167,8 @@ void EblBasicTest::test_softmax(){
     out->ddx.pretty(stdout);
     printf("\n");
   */
-  Idx<double> ib3 = in->x.select(0,0).select(0,0), calc_out = out->x.select(0,0).select(0,0);
-  Idx<double> ib(new Srg<double>(), ib3.spec), des_out(new Srg<double>(), ib3.spec);
+  idx<double> ib3 = in->x.select(0,0).select(0,0), calc_out = out->x.select(0,0).select(0,0);
+  idx<double> ib(new Srg<double>(), ib3.spec), des_out(new Srg<double>(), ib3.spec);
   idx_dotc(ib3, module->beta, ib);
   idx_exp(ib);
   double ib2 = 1/idx_sum(ib);
