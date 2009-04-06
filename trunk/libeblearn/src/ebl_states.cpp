@@ -139,14 +139,14 @@ namespace ebl {
     clear_ddx();
   }
 
-  state_idx::state_idx(const IdxDim &d) : x(d), dx(d), ddx(d) {
+  state_idx::state_idx(const idxdim &d) : x(d), dx(d), ddx(d) {
     clear();
     clear_dx();
     clear_ddx();
   }
 
-  state_idx::state_idx(Idx<double> m) :
-    x(m.getIdxDim(idxdim)), dx(m.getIdxDim(idxdim)), ddx(m.getIdxDim(idxdim)) {
+  state_idx::state_idx(idx<double> m) :
+    x(m.getidxdim(dims)), dx(m.getidxdim(dims)), ddx(m.getidxdim(dims)) {
     clear();
     clear_dx();
     clear_ddx();
@@ -211,7 +211,7 @@ namespace ebl {
     clear_ddx();
   }
 
-  state_idx::state_idx(parameter &st, const IdxDim &d) 
+  state_idx::state_idx(parameter &st, const idxdim &d) 
     : x(st.x.getstorage(), st.x.footprint(), d), 
       dx(st.x.getstorage(), st.x.footprint(), d),
       ddx(st.x.getstorage(), st.x.footprint(), d) {
@@ -224,8 +224,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // constructors from other state_idx's dimensions
 
-  state_idx::state_idx(const Idx<double> &_x, const Idx<double> &_dx, 
-		       const Idx<double> &_ddx) :
+  state_idx::state_idx(const idx<double> &_x, const idx<double> &_dx, 
+		       const idx<double> &_ddx) :
     x(_x), dx(_dx), ddx(_ddx) {
   }
 
@@ -271,7 +271,7 @@ namespace ebl {
     }
   }
 
-  void state_idx::resize(const IdxDim &d) {
+  void state_idx::resize(const idxdim &d) {
     if (!x.same_dim(d)) { // save some time if dimensions are the same
       x.resize(d);
       dx.resize(d);
@@ -288,12 +288,12 @@ namespace ebl {
   }
 
   void state_idx::resize_as(state_idx& s) {
-    IdxDim d(s.x.spec); // use same dimensions as s
+    idxdim d(s.x.spec); // use same dimensions as s
     resize(d);
   }
 
   void state_idx::resize_as_but1(state_idx& s, intg fixed_dim) {
-    IdxDim d(s.x.spec); // use same dimensions as s
+    idxdim d(s.x.spec); // use same dimensions as s
     d.setdim(fixed_dim, x.dim(fixed_dim));
     resize(d);
   }
@@ -374,7 +374,7 @@ namespace ebl {
   }
 
   bool parameter::load_x(const char *s) {
-    /*	Idx<double> m(1, 1), tmp(1);
+    /*	idx<double> m(1, 1), tmp(1);
 	if (!load_matrix(m, s))
 	return false;
 	this->resize(m.dim(1));
@@ -387,7 +387,7 @@ namespace ebl {
 	tmp = m.select(0, 6); idx_copy(tmp, ddeltax);
 	return true;
     */
-    Idx<double> m(1);
+    idx<double> m(1);
     if (!load_matrix(m, s))
       return false;
     this->resize(m.dim(0));
@@ -455,19 +455,19 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // StateIdxLooper
+  // state_idxlooper
 
-  StateIdxLooper::StateIdxLooper(state_idx &s, int ld) 
+  state_idxlooper::state_idxlooper(state_idx &s, int ld) 
     : state_idx(s.x.select(ld, 0), 
 		s.dx.select(ld, 0), 
 		s.ddx.select(ld, 0)),
       lx(s.x, ld), ldx(s.dx, ld), lddx(s.ddx, ld) {
   }
   
-  StateIdxLooper::~StateIdxLooper() {
+  state_idxlooper::~state_idxlooper() {
   }
   
-  void StateIdxLooper::next() {
+  void state_idxlooper::next() {
     lx.next();
     ldx.next();
     lddx.next();
@@ -477,7 +477,7 @@ namespace ebl {
   }
 
   // return true when done.
-  bool StateIdxLooper::notdone() { 
+  bool state_idxlooper::notdone() { 
     return lx.notdone(); 
   }
 

@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "DataTools.h"
+#include "dataset_generation.h"
 #include <algorithm>
 
 #ifdef __BOOST__
@@ -47,15 +47,15 @@ namespace ebl {
   // Utility functions to prepare a dataset from raw images.
 
   //! Recursively goes through dir, looking for files matching extension ext.
-  void processDir(const char *dir, const char *ext, const char* leftp, 
-		  const char *rightp, unsigned int width, Idx<float> &images,
-		  Idx<int> &labels, int label, bool verbose, bool *binocular, 
+  void process_dir(const char *dir, const char *ext, const char* leftp, 
+		  const char *rightp, unsigned int width, idx<float> &images,
+		  idx<int> &labels, int label, bool verbose, bool *binocular, 
 		  bool toYUV) {
     regex eExt(ext);
     string el(".*");
-    Idx<float> limg(1, 1, 1);
-    Idx<float> rimg(1, 1, 1);
-    Idx<float> tmp;
+    idx<float> limg(1, 1, 1);
+    idx<float> rimg(1, 1, 1);
+    idx<float> tmp;
     if (leftp) {
       el += leftp;
       el += ".*";
@@ -68,7 +68,7 @@ namespace ebl {
     directory_iterator end_itr; // default construction yields past-the-end
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
       if (is_directory(itr->status())) {
-	processDir(itr->path().string().c_str(), ext, leftp, rightp, width, 
+	process_dir(itr->path().string().c_str(), ext, leftp, rightp, width, 
 		   images, labels, label, verbose, binocular, toYUV);
       } else if (regex_match(itr->leaf().c_str(), what, eExt)) {
 	if (regex_match(itr->leaf().c_str(), what, eLeft)) {
@@ -141,8 +141,8 @@ namespace ebl {
   }
 
   //! Return an idx of dimensions Nx2 containing all possible N similar pairs.
-  Idx<int> makePairs(Idx<int> &labels) {
-    Idx<int> pairs(1, 2);
+  idx<int> make_pairs(idx<int> &labels) {
+    idx<int> pairs(1, 2);
     pairs.resize(0, pairs.dim(1));
     int n = 1;
     for (int i = 0; i < labels.dim(0); ++i) {
@@ -168,14 +168,14 @@ namespace ebl {
   //!   (ubyte) N x width x width x 6 (G or GG, RGB or RGBRGB)
   //! outDir/dset_labels.mat: 	(int)   N
   //! outDir/dset_classes.mat:  (ubyte) Nclasses x 128
-  bool imageDirToIdx(const char *imgDir, unsigned int width,
-		     const char *imgExtension, const char *imgPatternLeft, 
-		     const char *outDir, const char *imgPatternRight, 
-		     bool verbose, const char *prefix, bool toYUV) {
+  bool imagedir_to_idx(const char *imgDir, unsigned int width,
+		       const char *imgExtension, const char *imgPatternLeft, 
+		       const char *outDir, const char *imgPatternRight, 
+		       bool verbose, const char *prefix, bool toYUV) {
     path imgp(imgDir);
     bool binocular = false;
     if (!exists(imgp)) {
-      ylerror("imageDirToIdx: path does not exist");
+      ylerror("imagedir_to_idx: path does not exist");
       return false;
     }
     // build class list
@@ -187,17 +187,17 @@ namespace ebl {
       }
     }
     if (nclasses == 0) {
-      ylerror("ImageDirToIdx: no classes found");
+      ylerror("ImageDirToidx: no classes found");
       return false;
     }
     if (verbose) {
       cout << nclasses << " classes found. Now collecting images..." << endl;
     }
 
-    Idx<ubyte> 	classes(nclasses, 128); // Nclasses x 128
-    Idx<float> 	images(1, width, width, 1); // N x w x w x rgbrgb
-    Idx<int>	labels(1); // N
-    Idx<ubyte>  tmp;
+    idx<ubyte> 	classes(nclasses, 128); // Nclasses x 128
+    idx<float> 	images(1, width, width, 1); // N x w x w x rgbrgb
+    idx<int>	labels(1); // N
+    idx<ubyte>  tmp;
 
     idx_clear(classes);
     images.resize(0, images.dim(1), images.dim(2), images.dim(3)); // empty idx
@@ -210,7 +210,7 @@ namespace ebl {
 	memcpy(tmp.idx_ptr(), itr->leaf().c_str(), 
 	       min((size_t) 128, itr->leaf().length() + 1) * sizeof (ubyte));
 	// process subdirs to extract images into the single image idx
-	processDir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
+	process_dir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
 		   imgPatternRight, width, images, labels, i, verbose, 
 		   &binocular, toYUV);
 	++i; // increment only for directories
@@ -250,7 +250,7 @@ namespace ebl {
     dsetpairs += cular;
     if (prefix) dsetpairs += prefix;
     dsetpairs += "_pairs.mat";
-    Idx<int> pairs = makePairs(labels);
+    idx<int> pairs = make_pairs(labels);
     save_matrix(pairs, dsetpairs.c_str());
     int tr[4] = { 0, 3, 1, 2 };
     images = images.transpose(tr);

@@ -20,5 +20,5 @@ add_executable (posture
   
 # link executable with external libraries
 ################################################################################
-target_link_libraries (posture eblearn idx eblearn_tools)
+target_link_libraries (posture eblearn idx eblearntools)
   

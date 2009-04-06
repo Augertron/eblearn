@@ -29,8 +29,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef GUITHREAD_H_
-#define GUITHREAD_H_
+#ifndef GUI_THREAD_H_
+#define GUI_THREAD_H_
 
 #include <QPixmap>
 #include <QWidget>
@@ -40,19 +40,19 @@
 #include <vector>
 
 #include "libidx.h"
-#include "Window.h"
-#include "RenderThread.h"
+#include "window.h"
+#include "idxgui.h"
 
 namespace ebl {
 
   //! Global pointer to gui, allows to call for example 
   //! gui.draw_matrix() from anywhere in the code.
-  extern ebl::RenderThread gui;
+  extern ebl::idxgui gui;
 
   //! Window is a simple "whiteboard" on which you can display
-  //! Idxs with for example gray_draw_matrix and RGB_draw_matrix.
+  //! idxs with for example gray_draw_matrix and RGB_draw_matrix.
   //! Warning: do not use electric fence with QT as it is unstable.
-  class GuiThread : public QWidget { 
+  class gui_thread : public QWidget { 
     Q_OBJECT
   private:
     int				 wcur;
@@ -61,17 +61,17 @@ namespace ebl {
     bool			 silent;
     std::string			 savefname;
   public:
-    RenderThread		&thread;
+    idxgui		        &thread;
 
   public:
-    GuiThread(int argc, char **argv);
-    virtual ~GuiThread();
+    gui_thread(int argc, char **argv);
+    virtual ~gui_thread();
 
   private slots:
     void window_destroyed(QObject *obj);
     void add_text(const std::string *s);
     void set_text_origin(unsigned int h0, unsigned int w0);
-    void updatePixmap(Idx<ubyte> *img, unsigned int h0, unsigned int w0);
+    void updatePixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void appquit();
     void clear();
     void new_window(const char *wname = NULL, unsigned int h = 0, 
@@ -89,13 +89,13 @@ namespace ebl {
   int main(int argc, char **argv) {		\
     QApplication a(argc, argv);			\
     a.setQuitOnLastWindowClosed(false);		\
-    ebl::GuiThread gt(argc, argv);		\
+    ebl::gui_thread gt(argc, argv);		\
     gt.thread.start();				\
     a.exec();					\
     return 0;					\
   }						\
-  void RenderThread::run()
+  void idxgui::run()
   
 } // namespace ebl {
 
-#endif /* GUITHREAD_H_ */
+#endif /* GUI_THREAD_H_ */

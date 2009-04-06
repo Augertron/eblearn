@@ -68,7 +68,7 @@ namespace ebl {
     parameter				&param;
     state_idx				*input;
     state_idx				 energy;
-    Idx<Tlabel>				 label;
+    idx<Tlabel>				 label;
     intg				 age;
     ostream				&cout;
     
@@ -98,12 +98,12 @@ namespace ebl {
     //! a matrix where  the i-th row is the desired output
     //! for the i-th category, and <update-args> is a list of arguments
     //! for the parameter update method (e.g. learning rate and weight decay).
-    Idx<double> learn_sample(state_idx &input, int label, gd_param &arg);
+    idx<double> learn_sample(state_idx &input, int label, gd_param &arg);
 
     //! Measure the average energy and classification error rate
     //! on a dataset.
     //! returns a list with average loss and proportion of errors
-    void test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log,
+    void test(labeled_datasource<Tdata, Tlabel> &ds, classifier_meter &log,
 	      infer_param &infp, bool display = false);
 
     //! train for <niter> sweeps over the training set. <samples> contains the
@@ -112,17 +112,17 @@ namespace ebl {
     //! return the average energy computed on-the-fly.
     //! <update-args> is a list of arguments for the parameter
     //! update method (e.g. learning rate and weight decay).
-    void train(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log, 
+    void train(labeled_datasource<Tdata, Tlabel> &ds, classifier_meter &log, 
 	       gd_param &args, int niter);
 
     //! compute hessian
-    void compute_diaghessian(LabeledDataSource<Tdata, Tlabel> &ds, intg niter, 
+    void compute_diaghessian(labeled_datasource<Tdata, Tlabel> &ds, intg niter, 
 			     double mu);
 
     //! Resize <input> based on the datasource. If <input> is not allocated,
     //! allocate it. 
     //! TODO: If order or dimensions have changed, reallocate.
-    void resize_input(LabeledDataSource<Tdata, Tlabel> &ds);
+    void resize_input(labeled_datasource<Tdata, Tlabel> &ds);
   };
 
 } // namespace ebl {

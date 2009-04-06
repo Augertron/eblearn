@@ -38,7 +38,7 @@ namespace ebl {
 
   //! crop rectangle (<x>,<y>,<w>,<h>) from image <in>
   //! and return the result (a copy).
-  template<class T> Idx<T> image_crop(Idx<T> &in, int x, int y, int w, int h);
+  template<class T> idx<T> image_crop(idx<T> &in, int x, int y, int w, int h);
 
   //! resize a greyscale image to any size using bilinear interpolation
   //! Appropriate local averaging (smoothing) is performed for scaling
@@ -62,13 +62,13 @@ namespace ebl {
   //! The sizes of the output image are rounded to nearest integers
   //! smaller than the computed sizes, or to 1, whichever is largest.
   template<class T> 
-    Idx<T> image_resize(Idx<T> &im, double w, double h, int mode = 1);
+    idx<T> image_resize(idx<T> &im, double w, double h, int mode = 1);
 
   //! This function takes 2D images (only)  as input of type T and converts
   //! it to a ubyte image, by mapping the range [minv, maxv] to [0,255]
   //! and applying zoom factors zoomx and zoomy along each axis.
   template<class T> 
-    Idx<ubyte> grey_image_to_ubyte(Idx<T> &im, T minv, T maxv, 
+    idx<ubyte> grey_image_to_ubyte(idx<T> &im, T minv, T maxv, 
 				   double zoomw, double zoomh);
 
   //! subsamples image <in> with integer ratios <nlin> (vertical) <ncol>
@@ -78,7 +78,7 @@ namespace ebl {
   //! size of <in> divided by <ncol> (resp <nlin>).
   //!
   //! returns (copy-matrix <in>) when subsample rate is 1
-  template<class T> Idx<T> image_subsample(Idx<T> &in, int nlin, int ncol);
+  template<class T> idx<T> image_subsample(idx<T> &in, int nlin, int ncol);
 
   //! ((-flt-) x1 y1 x2 y2 x3 y3 x4 y4 p1 q1 p3 q3):
   //! ((-int-) background mode):
@@ -100,7 +100,7 @@ namespace ebl {
   //! execution time on sparc 10 is about
   //! 5 ms in mode 0 and 10 ms in mode 1 for a 32x32 target image.
   template<class T> 
-    void image_warp_quad(Idx<T> &in, Idx<T> &out, Idx<T> &background, int mode,
+    void image_warp_quad(idx<T> &in, idx<T> &out, idx<T> &background, int mode,
 			 float x1, float y1, float x2, float y2, float x3, 
 			 float y3, float x4, float y4, float p1, float q1, 
 			 float p3, float q3);
@@ -116,8 +116,8 @@ namespace ebl {
   //! can be filled up using compute-bilin-transform or similar functions.
   //! Pixel values are antialiased using bilinear interpolation.
   template<class T> 
-    void image_warp(Idx<T> &in, Idx<T> &out, Idx<T> &background, 
-		    Idx<int> &pi, Idx<int> &pj);
+    void image_warp(idx<T> &in, idx<T> &out, idx<T> &background, 
+		    idx<int> &pi, idx<int> &pj);
 
   //! fast version, not interpolation.
   //! RETURNS: Null
@@ -132,8 +132,8 @@ namespace ebl {
   //! This is essentially identical to warp-ubimage, except no antialiasing
   //! is performed (it goes a lot faster, but is not nearly as nice).
   template<class T> 
-    void image_warp_fast(Idx<T> &in, Idx<T> &out, T *background,
-			 Idx<int> &pi, Idx<int> &pj);
+    void image_warp_fast(idx<T> &in, idx<T> &out, T *background,
+			 idx<int> &pi, idx<int> &pj);
 
   //! RETURNS: (-ubyte-)
   //! SIDE EFFECTS: None
@@ -174,7 +174,7 @@ namespace ebl {
   //! warp-shimage, or warp-shimage-fast.
   //! This function makes minimal use of floating point arithmetics.
   template<class T> 
-    void compute_bilin_transform(Idx<int> &dispi, Idx<int> &dispj, 
+    void compute_bilin_transform(idx<int> &dispi, idx<int> &dispj, 
 				 float x1, float y1, float x2, float y2, 
 				 float x3, float y3, float x4, float y4, 
 				 float p1, float q1, float p3, float q3);
@@ -192,17 +192,17 @@ namespace ebl {
   //! Example :
   //!		int w = m.dim(1);
   //! 	int h = m.dim(0);
-  //! 	Idx<double> wh(2);
-  //! 	Idx<double> cxcy(2);
-  //! 	Idx<ubyte> bg(4);
+  //! 	idx<double> wh(2);
+  //! 	idx<double> cxcy(2);
+  //! 	idx<ubyte> bg(4);
   //! 	image_rotscale_rect( w, h, hotx-src, hoty-src, angle, coeff, wh, cxcy);
-  //! 	Idx<ubyte> z(wh.get(1), wh.get(0), 4);
+  //! 	idx<ubyte> z(wh.get(1), wh.get(0), 4);
   //! 	image_rotscale( m, z, hotx-src, hoty-src, cxcy.get(0), cxcy.get(1), 
   //!   angle, coeff, bg);
   template<class T> 
-    void image_rotscale(Idx<T> &src, Idx<T> &out, double sx, double sy, 
+    void image_rotscale(idx<T> &src, idx<T> &out, double sx, double sy, 
 			double dx, double dy, double angle, double coeff, 
-			Idx<ubyte> &bg);
+			idx<ubyte> &bg);
 
   //! Given an input image of width <w>, height <h>, with a "hot" point
   //! at coordinate <cx> and <cy>, this function computes the width,
@@ -213,11 +213,11 @@ namespace ebl {
   //! <wh> and <cxcy> which must be idx1 of floats with two elements.
   //! This function should be called before rgbaim-rotscale.
   void image_rotscale_rect(int w, int h, double cx, double cy, double angle, 
-			   double coeff, Idx<intg> &wh, Idx<double> &cxcy);
+			   double coeff, idx<intg> &wh, idx<double> &cxcy);
 
   //! Draw a box in img.
   template<class T> 
-    void image_draw_box(Idx<T> &img, T val, unsigned int x, unsigned int y, 
+    void image_draw_box(idx<T> &img, T val, unsigned int x, unsigned int y, 
 			unsigned int dx, unsigned int dy);
 
   bool collide_rect(int x1, int y1, int w1, int h1,
@@ -236,18 +236,18 @@ namespace ebl {
   //! at least 3. Appropriate conversion is performed.
   //! extra color components (beyond the first 3) are left
   //! untouched.
-  bool pnm_fread_into_rgbx(FILE *fp, Idx<ubyte> &out);
-  bool pnm_fread_into_rgbx(const char *fname, Idx<ubyte> &out);
+  bool pnm_fread_into_rgbx(FILE *fp, idx<ubyte> &out);
+  bool pnm_fread_into_rgbx(const char *fname, idx<ubyte> &out);
   template<class T>
-    bool pnm_fread_into_rgbx(const char *fname, Idx<T> &out);
+    bool pnm_fread_into_rgbx(const char *fname, idx<T> &out);
 
 
   //! read any kind of image that can be converted to a PPM by ImageMagick
   //! See above for description, as it is the same function used,
   //! after a conversion to PPM
-  bool image_read_rgbx(const char *fname, Idx<ubyte> &out);
+  bool image_read_rgbx(const char *fname, idx<ubyte> &out);
   template<class T>
-    bool image_read_rgbx(const char *fname, Idx<T> &out);
+    bool image_read_rgbx(const char *fname, idx<T> &out);
 
 
 
@@ -257,15 +257,15 @@ namespace ebl {
   //! Convert all pixels of rgb idx to yuv pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
-  template<class T> void RGBtoYUV(Idx<T> &rgb, Idx<T> &yuv);
+  template<class T> void RGBtoYUV(idx<T> &rgb, idx<T> &yuv);
 
   //! Convert all pixels of yuv idx to rgb pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
-  template<class T> void YUVtoRGB(Idx<T> &yuv, Idx<T> &rgb);
+  template<class T> void YUVtoRGB(idx<T> &yuv, idx<T> &rgb);
 
   //! Normalize a YUV image (wxhx3), centered between on [-2.5 .. 2.5]
-  void YUVGlobalNormalization(Idx<float> &yuv);
+  void YUVGlobalNormalization(idx<float> &yuv);
 
 } // end namespace ebl
 

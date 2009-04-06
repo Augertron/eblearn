@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "GuiThread.moc"
+#include "gui_thread.moc"
 
 using namespace std;
 
@@ -39,14 +39,14 @@ namespace ebl {
   // GuiThread
 
   // global variable
-  RenderThread gui;
+  idxgui gui;
 
-  GuiThread::GuiThread(int argc, char** argv) 
+  gui_thread::gui_thread(int argc, char** argv) 
     : wcur(-1), nwindows(0), silent(false), thread(gui) {
     thread.init(argc, argv);
-    connect(&thread, SIGNAL(gui_drawImage(Idx<ubyte> *, 
+    connect(&thread, SIGNAL(gui_drawImage(idx<ubyte> *, 
 					  unsigned int, unsigned int)),
-	    this,   SLOT(updatePixmap(Idx<ubyte> *, 
+	    this,   SLOT(updatePixmap(idx<ubyte> *, 
 				      unsigned int, unsigned int)));
     connect(&thread, SIGNAL(appquit()), this, SLOT(appquit()));
     connect(&thread, SIGNAL(gui_clear()), this, SLOT(clear()));
@@ -63,14 +63,14 @@ namespace ebl {
 	    this, SLOT(set_silent(const std::string *)));
   }
 
-  GuiThread::~GuiThread() {
+  gui_thread::~gui_thread() {
     cout << "destructor ****" << endl;
     for (vector<Window*>::iterator i = windows.begin(); i != windows.end(); ++i)
       if (*i)
 	delete *i;
   }
 
-  void GuiThread::window_destroyed(QObject *obj) {
+  void gui_thread::window_destroyed(QObject *obj) {
     for (vector<Window*>::iterator i = windows.begin(); i != windows.end(); ++i)
       {
 	if (*i == obj) {
@@ -80,17 +80,17 @@ namespace ebl {
       }
   }
 
-  void GuiThread::add_text(const std::string *s) {
+  void gui_thread::add_text(const std::string *s) {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->addText(s);
   }
 
-  void GuiThread::set_text_origin(unsigned int h0, unsigned int w0) {
+  void gui_thread::set_text_origin(unsigned int h0, unsigned int w0) {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->set_text_origin(h0, w0);
   }
 
-  void GuiThread::set_silent(const std::string *filename) {
+  void gui_thread::set_silent(const std::string *filename) {
     silent = true;
     for (vector<Window*>::iterator i = windows.begin(); i != windows.end(); ++i)
       {
@@ -103,25 +103,26 @@ namespace ebl {
     }
   }
 
-  void GuiThread::appquit() {
+  void gui_thread::appquit() {
     exit(0);
   }
 
-  void GuiThread::updatePixmap(Idx<ubyte> *img, unsigned int h0, 
+  void gui_thread::updatePixmap(idx<ubyte> *img, unsigned int h0, 
 			       unsigned int w0) {
-    if (nwindows == 0)
-      new_window();
+    //    if (nwindows == 0)
+    //  new_window();
     if ((wcur >= 0) && (windows[wcur])) {
       windows[wcur]->updatePixmap(img, h0, w0);
     }
   }
 
-  void GuiThread::clear() {
+  void gui_thread::clear() {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->clear();
   }
 
-  void GuiThread::new_window(const char *wname, unsigned int h, unsigned int w){
+  void gui_thread::new_window(const char *wname, unsigned int h, 
+			      unsigned int w){
     windows.push_back(new Window(windows.size(), wname, h, w));
     wcur = windows.size() - 1;
     nwindows++;
@@ -131,15 +132,16 @@ namespace ebl {
     	    this, SLOT(window_destroyed(QObject*)));
   }
 
-  void GuiThread::select_window(unsigned int wid) {
+  void gui_thread::select_window(unsigned int wid) {
     if (wid >= windows.size()) {
-      cerr << "IdxGui Warning: trying to select an unknown window (id = ";
+      cerr << "idxGui Warning: trying to select an unknown window (id = ";
       cerr << wid << ")." << endl;
     }
     else if (windows[wid] == NULL) {
-      cerr << 
-	"IdxGui Warning: trying to select an window that was destroyed (id = ";
-      cerr << wid << ")." << endl;
+      wcur = -1;
+      //cerr << 
+      //"idxGui Warning: trying to select an window that was destroyed (id = ";
+      //cerr << wid << ")." << endl;
     }
     else {
       wcur = wid;

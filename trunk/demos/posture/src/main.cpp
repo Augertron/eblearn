@@ -8,11 +8,11 @@
  *  - the size of the kernels and subsample masks...
  * 
  * In the main function, we load a database of images (pnm images) and first 
- * package them in an Idx file (format used by EBLearn to handle matrices).
+ * package them in an idx file (format used by EBLearn to handle matrices).
  * These images contiain 6 different human postures: bending, standing...
  * and are separated in two sets: one for training, the other one for testing.
  *
- * Then we load these Idx files and train our ConvNet to separate the output
+ * Then we load these idx files and train our ConvNet to separate the output
  * space in these 6 classes.
  *
  * By using the raw dataset, the ConvNet converges to 100% good results on the 
@@ -29,14 +29,14 @@
  * ConvNetPosture. 
  *
  * Syntax:
- *   posture             -> creates the Idx files and train the ConvNet
- *   posture train-only  -> expect the Idx to be present, and train the ConvNet
+ *   posture             -> creates the idx files and train the ConvNet
+ *   posture train-only  -> expect the idx to be present, and train the ConvNet
  *
  * Clement Farabet (cfarabet@nyu.edu) || April 2009.
  */
 
 #include "libeblearn.h"
-#include "DataTools.h"
+#include "libeblearntools.h"
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -44,7 +44,7 @@
 using namespace std;
 using namespace ebl;
 
-void generateIdxDataSet(string pathToData);
+void generateidxDataSet(string pathToData);
 string getPathToData();
 
 /* Here we define the ConvNet to be used for posture estimation:
@@ -56,9 +56,9 @@ string getPathToData();
  */ 
 class ConvNetPosture : public nn_machine_cscscf {
 public:
-  Idx<intg> table0;	
-  Idx<intg> table1;	
-  Idx<intg> table2;	
+  idx<intg> table0;	
+  idx<intg> table1;	
+  idx<intg> table2;	
   
   ConvNetPosture(parameter &trainableParam, 
 		 intg image_height, 
@@ -76,7 +76,7 @@ public:
     table2 = full_table(featureMaps1, featureMaps2); // from S1 to C2
 
     // ... whereas the connections there are sparse (S0 to C1):
-    table1 = Idx<intg>(44, 2); // from S0 to C1
+    table1 = idx<intg>(44, 2); // from S0 to C1
     intg tbl[44][2] =
       {{0, 0},  {1, 0},  {2, 0}, // 0,1,2 in S0 connected to 0 in C1
        {1, 1},  {2, 1},  {3, 1}, // and so on...
@@ -126,39 +126,39 @@ int main(int argc, char **argv) {
   string pathToIdxTest = pathToData+"/idx/dset_mono_test_images.mat";
   string pathToIdxTeLabels = pathToData+"/idx/dset_mono_test_labels.mat";
   
-  //! create an Idx file for the datasets, if 'train-only' is not supplied
+  //! create an idx file for the datasets, if 'train-only' is not supplied
   if (argc > 1) {
-    if (strcmp(argv[1], "train-only") != 0) generateIdxDataSet(pathToData);
-  } else if (argc == 1) generateIdxDataSet(pathToData);
+    if (strcmp(argv[1], "train-only") != 0) generateidxDataSet(pathToData);
+  } else if (argc == 1) generateidxDataSet(pathToData);
 
   cout << endl << "Training the ConvNet" << endl;
   init_drand(time(NULL)); // initialize random seed
 
-  //! load dataset from Idx files
-  Idx<float> trainingSet(1,1,1,1), testingSet(1,1,1,1);
-  Idx<int> trainingLabels(1), testingLabels(1);
+  //! load dataset from idx files
+  idx<float> trainingSet(1,1,1,1), testingSet(1,1,1,1);
+  idx<int> trainingLabels(1), testingLabels(1);
   load_matrix(trainingSet, pathToIdxTrain.c_str());
   load_matrix(trainingLabels, pathToIdxTrLabels.c_str());
   load_matrix(testingSet, pathToIdxTest.c_str());
   load_matrix(testingLabels, pathToIdxTeLabels.c_str());
 
   //! create two labeled data sources, for training and testing
-  LabeledDataSource<float,int> train_ds(trainingSet, // Data source
+  labeled_datasource<float,int> train_ds(trainingSet, // Data source
 					trainingLabels, // Labels
 					0.0, // Bias to be added to images
 					0.01, // Coef to scale images
 					"Posture Training Set");
-  LabeledDataSource<float,int> test_ds(testingSet, testingLabels,
+  labeled_datasource<float,int> test_ds(testingSet, testingLabels,
 				       0.0, 0.01, "Posture Testing Set");
 
   //! shuffle the training datasource
   train_ds.shuffle();
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
-  Idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
+  idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
 
   //! create the network weights, network and trainer
-  IdxDim dims = train_ds.sample_dims(); // get order and dimensions of samples
+  idxdim dims = train_ds.sample_dims(); // get order and dimensions of samples
   parameter theparam(120000); // create trainable parameter
 
   // instantiate the ConvNet
@@ -216,17 +216,17 @@ int main(int argc, char **argv) {
 
 
 
-// generate Idx files from a given set of images.
-void generateIdxDataSet(string pathToData) {
+// generate idx files from a given set of images.
+void generateidxDataSet(string pathToData) {
   string pathTrainingSet = pathToData+"/train";
   string pathTestingSet = pathToData+"/test";
   string pathToIdx = pathToData+"/idx";
   
   cout << "Converting images to idx object" << endl;
-  imageDirToIdx(pathTrainingSet.c_str(), 46, ".*[.]ppm", 
+  imagedir_to_idx(pathTrainingSet.c_str(), 46, ".*[.]ppm", 
 		NULL, pathToIdx.c_str(), NULL, true,
 		"_train", false);
-  imageDirToIdx(pathTestingSet.c_str(), 46, ".*[.]ppm", 
+  imagedir_to_idx(pathTestingSet.c_str(), 46, ".*[.]ppm", 
 		NULL, pathToIdx.c_str(), NULL, true,
 		"_test", false);
 }

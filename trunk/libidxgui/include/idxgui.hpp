@@ -29,31 +29,31 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef RENDERTHREAD_HPP_
-#define RENDERTHREAD_HPP_
+#ifndef IDXGUI_HPP_
+#define IDXGUI_HPP_
 
 using namespace std;
 
 namespace ebl {
   
   template<class T>
-  void RenderThread::draw_matrix(Idx<T> &im, unsigned int h0, unsigned int w0, 
+  void idxgui::draw_matrix(idx<T> &im, unsigned int h0, unsigned int w0, 
 				 T minv, T maxv, double zoomw, double zoomh) {
-    Idx<ubyte> *uim = new Idx<ubyte>(grey_image_to_ubyte<T>(im, minv, maxv, 
+    idx<ubyte> *uim = new idx<ubyte>(grey_image_to_ubyte<T>(im, minv, maxv, 
 							    zoomw, zoomh));
     // send image to main gui thread
     emit gui_drawImage(uim, h0, w0);
   }
 
   template<class T>
-  void RenderThread::draw_matrix_frame(Idx<T> &im, ubyte r, ubyte g, ubyte b,
+  void idxgui::draw_matrix_frame(idx<T> &im, ubyte r, ubyte g, ubyte b,
 				       unsigned int h0, unsigned int w0, 
 				       T minv, T maxv, 
 				       double zoomw, double zoomh) {
-    Idx<ubyte> uim = grey_image_to_ubyte<T>(im, minv, maxv, zoomw, zoomh);
-    Idx<ubyte> tmp(uim.dim(0) + 2, uim.dim(1) + 2);
-    Idx<ubyte> *fim = new Idx<ubyte>(tmp);
-    Idx<ubyte> tmp2 = tmp.narrow(0, uim.dim(0), 1);
+    idx<ubyte> uim = grey_image_to_ubyte<T>(im, minv, maxv, zoomw, zoomh);
+    idx<ubyte> tmp(uim.dim(0) + 2, uim.dim(1) + 2);
+    idx<ubyte> *fim = new idx<ubyte>(tmp);
+    idx<ubyte> tmp2 = tmp.narrow(0, uim.dim(0), 1);
     tmp2 = tmp2.narrow(1, uim.dim(1), 1);
     idx_copy(uim, tmp2);
     tmp2 = tmp.narrow(0, 1, 0); idx_fill(tmp2, r);
@@ -67,15 +67,15 @@ namespace ebl {
   template<class T1, class T2>
   class ManipInfra {
   public:
-    ManipInfra(RenderThread& (*pFun) (RenderThread&))
+    ManipInfra(idxgui& (*pFun) (idxgui&))
       : manipFun0(pFun), val1(0), val2(0), nval(0) {}
-    ManipInfra(RenderThread& (*pFun) (RenderThread&, T1), T1 val1_)
+    ManipInfra(idxgui& (*pFun) (idxgui&, T1), T1 val1_)
       : manipFun1(pFun), val1(val1_), val2(0), nval(1) {}
-    ManipInfra(RenderThread& (*pFun) (RenderThread&, T1, T2), 
+    ManipInfra(idxgui& (*pFun) (idxgui&, T1, T2), 
 	       T1 val1_, T2 val2_)
       : manipFun2(pFun), val1(val1_), val2(val2_), nval(2) {}
 
-    void operator() (RenderThread& r) const {
+    void operator() (idxgui& r) const {
       switch (nval) {
       case 0: manipFun0(r); break ;
       case 1: manipFun1(r, val1); break ;
@@ -84,31 +84,31 @@ namespace ebl {
       }
     }
   private:
-    RenderThread& (*manipFun0) (RenderThread&);
-    RenderThread& (*manipFun1) (RenderThread&, T1);
-    RenderThread& (*manipFun2) (RenderThread&, T1, T2);
+    idxgui& (*manipFun0) (idxgui&);
+    idxgui& (*manipFun1) (idxgui&, T1);
+    idxgui& (*manipFun2) (idxgui&, T1, T2);
     T1 val1;
     T2 val2;
     int nval;
   };
 
-  RenderThread& att(RenderThread& r, unsigned int h0, unsigned int w0);
+  idxgui& att(idxgui& r, unsigned int h0, unsigned int w0);
   ManipInfra<unsigned int, unsigned int> at(unsigned int h0, unsigned int w0);
 
-  RenderThread& fcout_and_gui(RenderThread& r);
+  idxgui& fcout_and_gui(idxgui& r);
   ManipInfra<int, int> cout_and_gui();
 
-  RenderThread& fgui_only(RenderThread& r);
+  idxgui& fgui_only(idxgui& r);
   ManipInfra<int, int> gui_only();
 
   template<class T1, class T2> 
-  RenderThread& operator<<(RenderThread& r, const ManipInfra<T1, T2> &manip) {
+  idxgui& operator<<(idxgui& r, const ManipInfra<T1, T2> &manip) {
     manip(r);
     return r;
   }
 
   template<class T> 
-  RenderThread& operator<<(RenderThread& r, const T val) {
+  idxgui& operator<<(idxgui& r, const T val) {
     ostringstream o;
     o << val;
     r.add_text(new std::string(o.str()));
@@ -119,4 +119,4 @@ namespace ebl {
 
 } // end namespace ebl
 
-#endif /* RENDERTHREAD_HPP_ */
+#endif /* IDXGUI_HPP_ */

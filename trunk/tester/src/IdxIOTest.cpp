@@ -10,8 +10,8 @@ void IdxIOTest::tearDown() {
 }
 
 template<class T> void test_save_load_matrix() {
-	Idx<T> m(9, 9);
-	Idx<T> l(1, 1);
+	idx<T> m(9, 9);
+	idx<T> l(1, 1);
 	string fname= "/tmp/libeblearn_tester_matrix.mat";
 
 	// initialize values
@@ -51,7 +51,7 @@ void IdxIOTest::test_save_load_matrix_double() {
 }
 
 void IdxIOTest::test_save_load_matrix_long() {
-	Idx<intg> test(3,3);
+	idx<intg> test(3,3);
 	test.set(2147483647, 0, 0);
 	test.set(2147483646, 0, 1);
 	test.set(2147483645, 0, 2);
@@ -64,7 +64,7 @@ void IdxIOTest::test_save_load_matrix_long() {
 
 	CPPUNIT_ASSERT(save_matrix(test, "/tmp/libeblearn_tester_matrix.mat") == true);
 
-	Idx<long> m(1,1);
+	idx<long> m(1,1);
 	CPPUNIT_ASSERT(load_matrix(m, "/tmp/libeblearn_tester_matrix.mat") == true);
 
 	{ idx_aloop2(i, test, long, j, m, long) {

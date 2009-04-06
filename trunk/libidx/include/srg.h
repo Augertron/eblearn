@@ -40,14 +40,14 @@
 namespace ebl {
 
 ////////////////////////////////////////////////////////////////
-// Srg: storage area for Idx data.
+// Srg: storage area for idx data.
 
 //! Srg is a container for arrays of data. It contains
 //! a pointer to a dynamically allocated chunk of data,
 //! a size, and a reference counter. Access structures
-//! such as Idx, point to an Srg that contains the data.
-//! Several Idx's can share an Srg allowing access to the
-//! data in multiple ways. Whenever an Idx is created that
+//! such as idx, point to an Srg that contains the data.
+//! Several idx's can share an Srg allowing access to the
+//! data in multiple ways. Whenever an idx is created that
 //! that points an Srg, the reference counter of that Srg
 //! is incremented through the lock() member function.
 //! When the reference counter is reaches 0, the Srg
@@ -62,7 +62,7 @@ template <class T> class Srg{
  private:
   //! number of allocated items
   intg size_;
-  //! reference counter: tells us how many Idx point here
+  //! reference counter: tells us how many idx point here
   int refcount;
 
   //! destructor: deallocates the data.
@@ -88,7 +88,7 @@ template <class T> class Srg{
   intg size();
 
   //! change size to s. This must be used with extreme caution,
-  //! because reducing the size of an Srg ma cause some Idx
+  //! because reducing the size of an Srg ma cause some idx
   //! that point to it to access non-existent data.
   intg changesize(intg s);
 
@@ -103,7 +103,7 @@ template <class T> class Srg{
   int unlock();
 
   //! lock: increment reference counter.
-  //! This is called wheneve a new Idx is created
+  //! This is called wheneve a new idx is created
   //! on the Srg.
   int lock();
 

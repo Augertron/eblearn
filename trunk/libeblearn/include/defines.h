@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef Defines_H
-#define Defines_H
+#ifndef EBLEARN_DEFINES_H
+#define EBLEARN_DEFINES_H
 
 #include <execinfo.h>
 #include <stdio.h>
@@ -74,4 +74,4 @@ Please call init_drand(time(NULL)) before using this function !\n"); }
 /* } // end namespace ebl */
 
 
-#endif
+#endif /* EBLEARN_DEFINES */

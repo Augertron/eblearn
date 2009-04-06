@@ -2,7 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <string>
-#include "DataTools.h"
+#include "libeblearntools.h"
 
 using namespace std;
 using namespace ebl;
@@ -26,12 +26,12 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
   string labelfile = *gl_mnist_dir;
   datafile += "/t10k-images-idx3-ubyte";
   labelfile += "/t10k-labels-idx1-ubyte";
-  Idx<ubyte> data(1, 1, 1), labels(1);
+  idx<ubyte> data(1, 1, 1), labels(1);
   CPPUNIT_ASSERT(load_matrix<ubyte>(data, datafile.c_str()) == true);
   CPPUNIT_ASSERT(load_matrix<ubyte>(labels, labelfile.c_str()) == true);
-  LabeledDataSource<ubyte,ubyte> ds(data, labels, 0.0, 1.0);
+  labeled_datasource<ubyte,ubyte> ds(data, labels, 0.0, 1.0);
   state_idx datum(28, 28);
-  Idx<ubyte> label;
+  idx<ubyte> label;
   for (int i = 0; i < 5; i++) {
     ds.fprop(datum, label);
     /* cout<<"Datum:"<<endl;
@@ -49,7 +49,7 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
 void DataSourceTest::test_imageDirToIdx() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
 #ifdef __BOOST__
-  CPPUNIT_ASSERT(imageDirToIdx(gl_data_dir->c_str(), 48, ".*[.]ppm", 
+  CPPUNIT_ASSERT(imagedir_to_idx(gl_data_dir->c_str(), 48, ".*[.]ppm", 
 			       NULL, "/tmp") == true);
 #else
   CPPUNIT_ASSERT_MESSAGE("Not tested because of missing Boost libraries", 

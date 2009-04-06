@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef LibidxDefines_H
-#define LibidxDefines_H
+#ifndef LIBIDX_DEFINES_H_
+#define LIBIDX_DEFINES_H_
 
 #include <stdio.h>
 #include <execinfo.h>
@@ -82,5 +82,4 @@ namespace ebl {
 
 } // end namespace ebl
 
-
-#endif
+#endif /* LIBIDX_DEFINES_H_ */

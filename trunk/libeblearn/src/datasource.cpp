@@ -35,9 +35,9 @@ using namespace std;
 
 namespace ebl {
 
-  Idx<double> create_target_matrix(intg nclasses, double target) {
+  idx<double> create_target_matrix(intg nclasses, double target) {
     // fill matrix with 1-of-n code
-    Idx<double> targets(nclasses, nclasses);
+    idx<double> targets(nclasses, nclasses);
     idx_fill(targets, -target);
     for (int i = 0; i < nclasses; ++i) { 
       targets.set(target, i, i);

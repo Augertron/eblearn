@@ -40,17 +40,17 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // LabeledDataSource
+  // labeled_datasource
 
   template<typename Tdata, typename Tlabel>
-  LabeledDataSource<Tdata,Tlabel>::LabeledDataSource()
+  labeled_datasource<Tdata,Tlabel>::labeled_datasource()
     : bias(0.0), coeff(0.0), data(1), labels(1), dataIter(data, 0), 
       labelsIter(labels, 0), height(0), width(0), lblstr(NULL) {
   }
 
   template<typename Tdata, typename Tlabel>
-  LabeledDataSource<Tdata,Tlabel>::LabeledDataSource(Idx<Tdata> &data_, 
-						     Idx<Tlabel> &labels_,
+  labeled_datasource<Tdata,Tlabel>::labeled_datasource(idx<Tdata> &data_, 
+						     idx<Tlabel> &labels_,
 						     double b, double c,
 						     const char *name_,
 						     vector<string*> *lblstr_) 
@@ -60,8 +60,8 @@ namespace ebl {
   }
 
   template<class Tdata, class Tlabel>
-  void LabeledDataSource<Tdata, Tlabel>::init(Idx<Tdata> &data_, 
-					      Idx<Tlabel> &labels_,
+  void labeled_datasource<Tdata, Tlabel>::init(idx<Tdata> &data_, 
+					      idx<Tlabel> &labels_,
 					      double b, double c,
 					      const char *name_,
 					      vector<string*> *lblstr_) {
@@ -73,8 +73,8 @@ namespace ebl {
     this->bias = b;
     this->coeff = c;
     this->name = (name_ ? name_ : "Unknown Dataset");
-    typename Idx<Tdata>::dimension_iterator	 dIter(this->data, 0);
-    typename Idx<Tlabel>::dimension_iterator	 lIter(this->labels, 0);
+    typename idx<Tdata>::dimension_iterator	 dIter(this->data, 0);
+    typename idx<Tlabel>::dimension_iterator	 lIter(this->labels, 0);
     this->dataIter = dIter;
     this->labelsIter = lIter;
     if (!this->lblstr) { // no names are given, use indexes as names
@@ -90,7 +90,7 @@ namespace ebl {
   }
 
   template<typename Tdata, typename Tlabel>
-  LabeledDataSource<Tdata,Tlabel>::~LabeledDataSource() {
+  labeled_datasource<Tdata,Tlabel>::~labeled_datasource() {
     if (lblstr) { // this class owns lblstr and its content
       vector<string*>::iterator i = lblstr->begin();
       for ( ; i != lblstr->end(); ++i)
@@ -101,14 +101,14 @@ namespace ebl {
   }
 
   template<typename Tdata, typename Tlabel>
-  int LabeledDataSource<Tdata,Tlabel>::size() {
+  int labeled_datasource<Tdata,Tlabel>::size() {
     return data.dim(0);
   }
 
   template<typename Tdata, typename Tlabel>
-  IdxDim LabeledDataSource<Tdata,Tlabel>::sample_dims() {
-    IdxDim d(data.select(0, 0));
-    IdxDim d2(data);
+  idxdim labeled_datasource<Tdata,Tlabel>::sample_dims() {
+    idxdim d(data.select(0, 0));
+    idxdim d2(data);
     d2.setdim(0, 1);
     if (data.order() == 3)
       return d2;
@@ -117,9 +117,9 @@ namespace ebl {
   }
 
 //   template<typename Tdata, typename Tlabel>
-//   void LabeledDataSource<Tdata,Tlabel>::fprop(state_idx &state, 
-// 					      Idx<Tlabel> &label) {
-//     IdxDim d(data.spec);
+//   void labeled_datasource<Tdata,Tlabel>::fprop(state_idx &state, 
+// 					      idx<Tlabel> &label) {
+//     idxdim d(data.spec);
 //     d.setdim(0, 1);
 //     state.resize(d);
 //     //label.resize();
@@ -129,12 +129,12 @@ namespace ebl {
 
 
   template<typename Tdata, typename Tlabel>
-  void LabeledDataSource<Tdata,Tlabel>::shuffle() {
-    // create a target Idx with the same dimensions
-    IdxDim dataDim = data.getIdxDim(dataDim);
-    Idx<Tdata> shuffledData(dataDim);
-    IdxDim labelsDim = labels.getIdxDim(labelsDim);
-    Idx<Tlabel> shuffledLabels(labelsDim);
+  void labeled_datasource<Tdata,Tlabel>::shuffle() {
+    // create a target idx with the same dimensions
+    idxdim dataDim = data.getidxdim(dataDim);
+    idx<Tdata> shuffledData(dataDim);
+    idxdim labelsDim = labels.getidxdim(labelsDim);
+    idx<Tlabel> shuffledLabels(labelsDim);
     // get the nb of classes
     intg nbOfClasses = 1+idx_max(labels);
     intg nbOfSamples = data.dim(0);
@@ -142,12 +142,12 @@ namespace ebl {
     // create new dataset...
     intg iterator=0;
     for(int i = 0; i<nbOfSamples; i++){
-      Idx<Tdata> oneSample = data[iterator];
-      Idx<Tdata> destSample = shuffledData[i];
+      idx<Tdata> oneSample = data[iterator];
+      idx<Tdata> destSample = shuffledData[i];
       idx_copy(oneSample, destSample);
 
-      Idx<Tlabel> oneLabel = labels[iterator];
-      Idx<Tlabel> destLabel = shuffledLabels[i];
+      idx<Tlabel> oneLabel = labels[iterator];
+      idx<Tlabel> destLabel = shuffledLabels[i];
       idx_copy(oneLabel, destLabel);
 
       iterator += nbOfSamplesPerClass;
@@ -160,8 +160,8 @@ namespace ebl {
   }
 
   template<typename Tdata, typename Tlabel>
-  void LabeledDataSource<Tdata,Tlabel>::fprop(state_idx &out, 
-					      Idx<Tlabel> &label) {
+  void labeled_datasource<Tdata,Tlabel>::fprop(state_idx &out, 
+					      idx<Tlabel> &label) {
     out.resize(sample_dims());
     idx_fill(out.x, bias * coeff);
     idx_copy(*(this->dataIter), out.x);
@@ -171,7 +171,7 @@ namespace ebl {
   }
 
   template<typename Tdata, typename Tlabel>
-  void LabeledDataSource<Tdata,Tlabel>::next() {
+  void labeled_datasource<Tdata,Tlabel>::next() {
     ++dataIter;
     ++labelsIter;
 
@@ -182,13 +182,13 @@ namespace ebl {
   }
 
   template<typename Tdata, typename Tlabel>
-  void LabeledDataSource<Tdata,Tlabel>::seek_begin() {
+  void labeled_datasource<Tdata,Tlabel>::seek_begin() {
     dataIter = data.dim_begin(0);
     labelsIter = labels.dim_begin(0);
   }
 
   template<typename Tdata, typename Tlabel>
-  void LabeledDataSource<Tdata,Tlabel>::display(unsigned int nh, 
+  void labeled_datasource<Tdata,Tlabel>::display(unsigned int nh, 
 						unsigned int nw,
 						unsigned int h0,
 						unsigned int w0,
@@ -205,15 +205,15 @@ namespace ebl {
   }
 
   template<typename Tdata, typename Tlabel>
-  void LabeledDataSource<Tdata,Tlabel>::draw(unsigned int nh, unsigned int nw,
+  void labeled_datasource<Tdata,Tlabel>::draw(unsigned int nh, unsigned int nw,
 					     unsigned int h0, unsigned int w0,
 					     double zoom) {
 #ifdef __GUI__
     gui << gui_only();
-    IdxDim d = sample_dims();
+    idxdim d = sample_dims();
     state_idx s(d);
-    Idx<double> m = s.x.select(0, 0);
-    Idx<Tlabel> lbl;
+    idx<double> m = s.x.select(0, 0);
+    idx<Tlabel> lbl;
     seek_begin();
     unsigned int h = h0, w = w0;
     for (unsigned int ih = 0; ih < nh; ++ih) {
@@ -234,21 +234,21 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // MnistDataSource
+  // mnist_datasource
 
   template<class Tdata, class Tlabel>
-  MnistDataSource<Tdata, Tlabel>::MnistDataSource(Idx<Tdata> &inp, 
-						  Idx<Tlabel> &lbl,
+  mnist_datasource<Tdata, Tlabel>::mnist_datasource(idx<Tdata> &inp, 
+						  idx<Tlabel> &lbl,
 						  double b, double c,
 						  const char *name_)
-    : LabeledDataSource<Tdata, Tlabel>(inp, lbl, b, c, name_, NULL) {
+    : labeled_datasource<Tdata, Tlabel>(inp, lbl, b, c, name_, NULL) {
   }
 
   template<class Tdata, class Tlabel>
-  void MnistDataSource<Tdata, Tlabel>::init(Idx<Tdata> &inp, Idx<Tlabel> &lbl, 
+  void mnist_datasource<Tdata, Tlabel>::init(idx<Tdata> &inp, idx<Tlabel> &lbl, 
 					    double b, double c,
     					    const char *name_) {
-    LabeledDataSource<Tdata, Tlabel>::init(inp, lbl, b, c, name_, NULL);
+    labeled_datasource<Tdata, Tlabel>::init(inp, lbl, b, c, name_, NULL);
     this->height = 32; // mnist is actually 28x28, but we add some padding
     this->width = 32;
     bias = b;
@@ -256,8 +256,8 @@ namespace ebl {
   }
 
   template<class Tdata, class Tlabel>
-  IdxDim MnistDataSource<Tdata,Tlabel>::sample_dims() {
-    IdxDim d(this->data);
+  idxdim mnist_datasource<Tdata,Tlabel>::sample_dims() {
+    idxdim d(this->data);
     d.setdim(0, 1);
     d.setdim(1, this->height); // use the padding size, not the true data size
     d.setdim(2, this->width);
@@ -265,15 +265,15 @@ namespace ebl {
   }
 
   template<class Tdata, class Tlabel>
-  void MnistDataSource<Tdata, Tlabel>::fprop(state_idx &out, 
-					     Idx<Tlabel> &label) {
+  void mnist_datasource<Tdata, Tlabel>::fprop(state_idx &out, 
+					     idx<Tlabel> &label) {
     out.resize(this->sample_dims());
     intg ni = this->data.dim(1);
     intg nj = this->data.dim(2);
     intg di = 0.5 * (this->height - ni);
     intg dj = 0.5 * (this->width - nj);
     idx_fill(out.x, bias * coeff);
-    Idx<double> tgt = out.x.select(0, 0);
+    idx<double> tgt = out.x.select(0, 0);
     tgt = tgt.narrow(0, ni, di);
     tgt = tgt.narrow(1, nj, dj);
     idx_copy(*(this->dataIter), tgt);
@@ -284,8 +284,8 @@ namespace ebl {
 
   template<class Tdata, class Tlabel>
   bool load_mnist_dataset(const char *dir, 
-			  MnistDataSource<Tdata,Tlabel> &train_ds, 
-			  MnistDataSource<Tdata,Tlabel> &test_ds,
+			  mnist_datasource<Tdata,Tlabel> &train_ds, 
+			  mnist_datasource<Tdata,Tlabel> &test_ds,
 			  int train_size, int test_size) {
     // loading train and test datasets
     string train_datafile = dir;
@@ -296,8 +296,8 @@ namespace ebl {
     train_labelfile += "/train-labels-idx1-ubyte";
     test_datafile += "/t10k-images-idx3-ubyte";
     test_labelfile += "/t10k-labels-idx1-ubyte";
-    Idx<Tdata> train_data(1, 1, 1), test_data(1, 1, 1);
-    Idx<Tlabel> train_labels(1), test_labels(1);
+    idx<Tdata> train_data(1, 1, 1), test_data(1, 1, 1);
+    idx<Tlabel> train_labels(1), test_labels(1);
     if (!load_matrix<Tdata>(train_data, train_datafile.c_str())) {
       std::cerr << "Mnist dataset, failed to load " << train_datafile << endl;
       ylerror("Failed to load dataset file");
@@ -321,26 +321,26 @@ namespace ebl {
     test_data = test_data.narrow(0, test_size, 5000 - (0.5 * test_size)); 
     test_labels = test_labels.narrow(0, test_size, 5000 - (0.5 * test_size));
 
-    Idx<Tdata> test_data2(test_data.dim(0), test_data.dim(1), test_data.dim(2), 3);
-    Idx<Tdata> train_data2(test_data.dim(0), test_data.dim(1), test_data.dim(2), 3);
+    idx<Tdata> test_data2(test_data.dim(0), test_data.dim(1), test_data.dim(2), 3);
+    idx<Tdata> train_data2(test_data.dim(0), test_data.dim(1), test_data.dim(2), 3);
     test_ds.init(test_data, test_labels, 0.0, 0.01, "MNIST TESTING set");
     train_ds.init(train_data, train_labels, 0.0, 0.01, "MNIST TRAINING set");
     return true;
   }
 
   template<typename Tdata, typename Tlabel>
-  void MnistDataSource<Tdata,Tlabel>::display(unsigned int nh, unsigned int nw,
+  void mnist_datasource<Tdata,Tlabel>::display(unsigned int nh, unsigned int nw,
 					      unsigned int h0, unsigned int w0,
 					      double zoom, int wid,
 					      const char *wname) {
-    LabeledDataSource<Tdata, Tlabel>::display(nh, nw, h0, w0, zoom, wid, wname);
+    labeled_datasource<Tdata, Tlabel>::display(nh, nw, h0, w0, zoom, wid, wname);
   }
 
   ////////////////////////////////////////////////////////////////
   /*
   // TODO: implement seek
   template<class Tdata, class Tlabel>
-  DataSourceNarrow<Tdata, Tlabel>::DataSourceNarrow(LabeledDataSource<Tdata, Tlabel> *b,
+  DataSourceNarrow<Tdata, Tlabel>::DataSourceNarrow(labeled_datasource<Tdata, Tlabel> *b,
   intg siz, intg off) {
   if ((siz + off) > b.size())
   ylerror("illegal range for narrow-db");
@@ -356,7 +356,7 @@ namespace ebl {
   return size;
   }
 
-  void fprop(state_idx &out, Idx<Tlabel> &label) {
+  void fprop(state_idx &out, idx<Tlabel> &label) {
   base.seek(offset + current);
   base.fprop(out,label);
   }

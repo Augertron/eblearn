@@ -46,8 +46,8 @@ namespace ebl {
   public:
     int				output_class;
     double 			confidence;
-    Idx<int>		*sorted_classes;
-    Idx<double>		*sorted_scores;
+    idx<int>		*sorted_classes;
+    idx<double>		*sorted_scores;
 
     sdnnclass_state(int n);
 
@@ -67,10 +67,10 @@ namespace ebl {
   {
   public:
     //! a vector that maps output unit index to a label
-    Idx<int>	*classindex2label;
+    idx<int>	*classindex2label;
     state_idx	*junk_param;
     state_idx	*logadded_distjunk;
-    Idx<double>	*priors;
+    idx<double>	*priors;
 
     //! makes a new sdnn-classer. The arguments are identical
     //! to that of sdnn-cost. In fact if an sdnn-classer is to
@@ -79,7 +79,7 @@ namespace ebl {
     //! sharing the parameter can be done by first building the
     //! classer, then reducing the size of the parameter by one,
     //! then creating the cost.
-    sdnn_classer(Idx<int> *classes, Idx<double> *pr, int ini, int inj, 
+    sdnn_classer(idx<int> *classes, idx<double> *pr, int ini, int inj, 
 		 parameter *prm);
 
     virtual ~sdnn_classer();

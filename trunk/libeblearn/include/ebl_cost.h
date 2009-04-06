@@ -42,15 +42,15 @@ namespace ebl {
     class cost_module : public ebm_2<Tin1, Tin2> {
   public:
     //! all the input targets
-    Idx<double> &targets;
+    idx<double> &targets;
     //! a temporary buffer where targets are copied based on input label
     state_idx	 in2;
     //! the energy for each target
-    Idx<double>	 energies;
+    idx<double>	 energies;
 
     //! Constructor. Keep a reference to targets and allocate other buffers
     //! based on the targets order and dimensions.
-    cost_module(Idx<double> &targets_);
+    cost_module(idx<double> &targets_);
     virtual ~cost_module();
   };
 
@@ -60,7 +60,7 @@ namespace ebl {
   //! must be states of the same size.
   class euclidean_module : public cost_module<state_idx,int> {
   public:
-    euclidean_module(Idx<double> &targets_);
+    euclidean_module(idx<double> &targets_);
     virtual ~euclidean_module();
 
     //! Computes 0.5 times the sum of square difference between
@@ -96,8 +96,8 @@ namespace ebl {
   //! output is an idx1-state
   class logadd_layer { //: public module_1_1<state_idx, state_idx> { // TODO
   public:
-    Idx<double> expdist;
-    Idx<double> sumexp;
+    idx<double> expdist;
+    idx<double> sumexp;
 
     logadd_layer(intg thick, intg si, intg sj);
     virtual ~logadd_layer() {

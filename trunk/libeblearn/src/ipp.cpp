@@ -36,7 +36,7 @@ namespace ebl {
 #include "ipp.h"
 
   // TODO: handle non contiguous?
-  int ipp_convolution_float(Idx<float> &in, Idx<float> &ker, Idx<float> &out) {
+  int ipp_convolution_float(idx<float> &in, idx<float> &ker, idx<float> &out) {
     if ((in.dim(0) > INT_MAX) || (in.dim(1) > INT_MAX) ||
 	(ker.dim(0) > INT_MAX) || (ker.dim(1) > INT_MAX) ||
 	(in.mod(0) > INT_MAX) || (ker.mod(0) > INT_MAX) ||
@@ -57,7 +57,7 @@ namespace ebl {
 				 out.idx_ptr(),outstep);
   }
 
-  int ipp_add_float(Idx<float> &in1, Idx<float> &in2) {
+  int ipp_add_float(idx<float> &in1, idx<float> &in2) {
     IppiSize	insize;
     int		instep;
 
@@ -71,7 +71,7 @@ namespace ebl {
     return ippiAdd_32f_C1IR(in1.ptr(), instep, in2.ptr(), instep, insize);
   }
 
-  int ipp_addc_nip_float(Idx<float> &in, float constant, Idx<float> &out) {
+  int ipp_addc_nip_float(idx<float> &in, float constant, idx<float> &out) {
     IppiSize	insize;
     int		instep, outstep;
 

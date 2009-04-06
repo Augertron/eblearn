@@ -88,7 +88,7 @@ namespace ebl {
   }
 
   template <class Tdata, class Tlabel>  
-  Idx<double> supervised_trainer<Tdata, Tlabel>::
+  idx<double> supervised_trainer<Tdata, Tlabel>::
   learn_sample(state_idx &input, int label, gd_param &args) {
     machine.fprop(input, label, energy);
     param.clear_dx();
@@ -99,7 +99,7 @@ namespace ebl {
 
   template <class Tdata, class Tlabel>  
   void supervised_trainer<Tdata, Tlabel>::
-  test(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log,
+  test(labeled_datasource<Tdata, Tlabel> &ds, classifier_meter &log,
        infer_param &infp, bool display) {
     ds.seek_begin();
     log.clear();
@@ -118,7 +118,7 @@ namespace ebl {
     unsigned int wfdisp = 0, hfdisp = 0;
     if (display) {
       ds.fprop(*input, label);
-      Idx<double> m = input->x.select(0, 0);
+      idx<double> m = input->x.select(0, 0);
 
       // fprop display
       gui.select_window(fpropdisplay_wid);
@@ -159,7 +159,7 @@ namespace ebl {
 	}
 
 	gui.select_window(display_wid);
-	Idx<double> m = input->x.select(0, 0);
+	idx<double> m = input->x.select(0, 0);
 	// display all display_nh*display_nw incorrect or correct answers
 	if (nh < display_nh) {
 	  gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h, w,
@@ -200,7 +200,7 @@ namespace ebl {
   
   template <class Tdata, class Tlabel>  
   void supervised_trainer<Tdata, Tlabel>::
-  train(LabeledDataSource<Tdata, Tlabel> &ds, classifier_meter &log, 
+  train(labeled_datasource<Tdata, Tlabel> &ds, classifier_meter &log, 
 	gd_param &args, int niter) {
     ds.seek_begin();
     log.clear();
@@ -219,7 +219,7 @@ namespace ebl {
 
   template <class Tdata, class Tlabel>  
   void supervised_trainer<Tdata, Tlabel>::
-  compute_diaghessian(LabeledDataSource<Tdata, Tlabel> &ds, intg niter, 
+  compute_diaghessian(labeled_datasource<Tdata, Tlabel> &ds, intg niter, 
 		      double mu) {
     resize_input(ds);
     param.clear_ddeltax();
@@ -241,8 +241,8 @@ namespace ebl {
 
   template <class Tdata, class Tlabel>  
   void supervised_trainer<Tdata, Tlabel>::
-  resize_input(LabeledDataSource<Tdata, Tlabel> &ds) {
-    IdxDim d = ds.sample_dims();
+  resize_input(labeled_datasource<Tdata, Tlabel> &ds) {
+    idxdim d = ds.sample_dims();
     if (!input) input = new state_idx(d);
     else input->resize(d);
   }

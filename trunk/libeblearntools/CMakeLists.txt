@@ -10,8 +10,8 @@
 # compile library
 ################################################################################
 
-add_library (eblearn_tools SHARED
-  src/DataTools.cpp
+add_library (eblearntools SHARED
+  src/dataset_generation.cpp
   )
 
 # add include directories
@@ -32,14 +32,14 @@ IF (Boost_FOUND)
   INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
   ##LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
   IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(eblearn_tools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} 
+    TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} 
       ${Boost_REGEX_LIBRARY})
   ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(eblearn_tools ${Boost_FILESYSTEM_LIBRARY} 
+    TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
       ${Boost_REGEX_LIBRARY})
   ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 ENDIF(Boost_FOUND)
   
 # link executable with external libraries
 ################################################################################
-target_link_libraries (eblearn_tools eblearn idx)
+target_link_libraries (eblearntools eblearn idx)

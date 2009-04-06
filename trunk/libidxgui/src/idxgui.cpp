@@ -29,19 +29,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "RenderThread.moc"
+#include "idxgui.moc"
 
 using namespace std;
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // RenderThread
+  // idxgui
 
-  RenderThread::RenderThread() {
+  idxgui::idxgui() {
   }
 
-  void RenderThread::init(int argc_, char **argv_) {
+  void idxgui::init(int argc_, char **argv_) {
     argc = argc_;
     argv = argv_;
     nwid = 0;
@@ -49,19 +49,19 @@ namespace ebl {
     set_cout_and_gui();
   }
 
-  RenderThread::~RenderThread() {
+  idxgui::~idxgui() {
     wait();
   }
 
-  void RenderThread::quit() {
+  void idxgui::quit() {
     emit appquit();
   }
 
-  void RenderThread::clear() {
+  void idxgui::clear() {
     emit gui_clear();
   }
 
-  unsigned int RenderThread::new_window(const char *wname, unsigned int h, 
+  unsigned int idxgui::new_window(const char *wname, unsigned int h, 
 					unsigned int w) {
     // TODO: add mutex
     unsigned int wid = nwid;
@@ -70,39 +70,39 @@ namespace ebl {
     return wid;
   }
 
-  void RenderThread::select_window(unsigned int wid) {
+  void idxgui::select_window(unsigned int wid) {
     emit gui_select_window(wid);
   }
 
-  void RenderThread::set_silent() {
+  void idxgui::set_silent() {
     emit gui_set_silent(NULL);
   }
 
-  void RenderThread::set_silent(const std::string *filename) {
+  void idxgui::set_silent(const std::string *filename) {
     emit gui_set_silent(filename);
   }
 
-  void RenderThread::set_silent(const char *filename) {
+  void idxgui::set_silent(const char *filename) {
     if (filename)
       emit gui_set_silent(new std::string(filename));
     else
       emit gui_set_silent(NULL);
   }
 
-  void RenderThread::run() {
-    ylerror("The run2 method of RenderThread must be overridden and contain \
+  void idxgui::run() {
+    ylerror("The run2 method of idxgui must be overridden and contain \
 your code");
   }
 
-  void RenderThread::add_text(std::string *s) {
+  void idxgui::add_text(std::string *s) {
     emit gui_add_text(s);    
   }
 
-  void RenderThread::set_text_origin(unsigned int h0, unsigned int w0) {
+  void idxgui::set_text_origin(unsigned int h0, unsigned int w0) {
     emit gui_set_text_origin(h0, w0);    
   }
 
-  RenderThread& att(RenderThread& r, unsigned int h0, unsigned int w0) {
+  idxgui& att(idxgui& r, unsigned int h0, unsigned int w0) {
     r.set_text_origin(h0, w0);
     return r;
   }
@@ -111,7 +111,7 @@ your code");
     return (ManipInfra<unsigned int, unsigned int>(att, h0, w0));
   }
 
-  RenderThread& fcout_and_gui(RenderThread& r) {
+  idxgui& fcout_and_gui(idxgui& r) {
     r.set_cout_and_gui();
     return r;
   }
@@ -120,7 +120,7 @@ your code");
     return (ManipInfra<int, int>(fcout_and_gui));
   }
 
-  RenderThread& fgui_only(RenderThread& r) {
+  idxgui& fgui_only(idxgui& r) {
     r.set_gui_only();
     return r;
   }
@@ -129,11 +129,11 @@ your code");
     return (ManipInfra<int, int>(fgui_only));
   }
 
-  void RenderThread::set_cout_and_gui() {
+  void idxgui::set_cout_and_gui() {
     cout_output = true;
   }
 
-  void RenderThread::set_gui_only() {
+  void idxgui::set_gui_only() {
     cout_output = false;
   }
 

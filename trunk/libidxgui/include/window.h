@@ -40,7 +40,7 @@
 #include <iostream>
 
 #include "libidx.h"
-#include "RenderThread.h"
+#include "idxgui.h"
 
 using namespace std;
 
@@ -67,7 +67,7 @@ namespace ebl {
     double		 pixmapScale;
     double		 curScale;
     float		 scaleIncr;
-    Idx<ubyte>		*buffer;
+    idx<ubyte>		*buffer;
     QVector<QRgb>	 colorTable;
     QImage		*qimage;
     vector<Text*>        texts;
@@ -86,7 +86,7 @@ namespace ebl {
     void save(const char *filename);
     void set_silent(const std::string *filename);
     void addText(const std::string *s);
-    void updatePixmap(Idx<ubyte> *img, unsigned int h0, unsigned int w0);
+    void updatePixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void clear();
     void clear_text();
     void drawText(QPainter &painter);

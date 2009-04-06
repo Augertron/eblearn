@@ -40,22 +40,22 @@ namespace ebl {
 #include <ipp.h>
 
   ////////////////////////////////////////////////////////////////
-  // Idx to IPP wrapper functions
+  // idx to IPP wrapper functions
 
   //! compute a 2D convolution of <in> with kernel <ker>
   //! and write result into <out>
   //! <ker> is actually in reverse order, so you might
   //! want to reverse it first.
-  int ipp_convolution_float(Idx<float> &in, Idx<float> &ker, Idx<float> &out);
+  int ipp_convolution_float(idx<float> &in, idx<float> &ker, idx<float> &out);
 
   //! this calls ippiAdd_32f_C1IR
   //! This does component-wise addition of 2 matrices of floats. The result is 
   //! saved in the second idx
-  int ipp_add_float(Idx<float> &in1, Idx<float> &in2);
+  int ipp_add_float(idx<float> &in1, idx<float> &in2);
 
   //! this calls ippiAddC_32f_C1R
   //! This adds a constant to each component of an idx of floats. NOT In place
-  int ipp_addc_nip_float(Idx<float> &in, float constant, Idx<float> &out);
+  int ipp_addc_nip_float(idx<float> &in, float constant, idx<float> &out);
 
 #endif
 

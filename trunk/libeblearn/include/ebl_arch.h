@@ -237,7 +237,7 @@ namespace ebl {
   //! Note: Multiple inheritance could have been cleaner but would have required
   //! frequent dynamic_casts from the user.
 #define DECLARE_REPLICABLE_MODULE_1_1(replicable_module, base_module,	\
-				  types_arguments, arguments)		\
+				      types_arguments, arguments)	\
   class replicable_module : public base_module {			\
   public:								\
     module_1_1_replicable<base_module> rep;				\
@@ -247,8 +247,8 @@ namespace ebl {
     virtual ~replicable_module() {}					\
     virtual void fprop(state_idx &in, state_idx &out) { rep.fprop(in, out); } \
     virtual void bprop(state_idx &in, state_idx &out) { rep.bprop(in, out); } \
-    virtual void bbprop(state_idx &in, state_idx &out){ rep.bbprop(in, out); }\
-    }
+    virtual void bbprop(state_idx &in, state_idx &out){ rep.bbprop(in, out); } \
+  }
 
 } // namespace ebl {
 

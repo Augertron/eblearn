@@ -20,8 +20,8 @@ void ImageTest::tearDown() {
 
 void ImageTest::test_resize() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-  Idx<ubyte> m(6, 8);
-  Idx<ubyte> res;
+  idx<ubyte> m(6, 8);
+  idx<ubyte> res;
 	
   int i = 0;
   { idx_aloop1(m0, m, ubyte) {
@@ -43,7 +43,7 @@ void ImageTest::test_resize() {
   CPPUNIT_ASSERT(res.get(2, 2) == 40);
   CPPUNIT_ASSERT(res.get(2, 3) == 42);
 	
-  Idx<ubyte> im(1, 1, 1);
+  idx<ubyte> im(1, 1, 1);
   string imgfile = *gl_data_dir;
   imgfile += "/pnm/hat_P6.ppm";
 
@@ -84,7 +84,7 @@ void ImageTest::test_resize() {
 
 void ImageTest::test_pnm_P3() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-  Idx<ubyte> im(1, 1, 3);
+  idx<ubyte> im(1, 1, 3);
   string imgfile = *gl_data_dir;
   imgfile += "/pnm/rgb_P3.ppm";
   pnm_fread_into_rgbx(imgfile.c_str(), im);
@@ -102,7 +102,7 @@ void ImageTest::test_pnm_P3() {
 
 void ImageTest::test_pnm_P6() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-  Idx<ubyte> im(1, 1, 3);
+  idx<ubyte> im(1, 1, 3);
   string imgfile = *gl_data_dir;
   imgfile += "/pnm/rgb_P6.ppm";
   pnm_fread_into_rgbx(imgfile.c_str(), im);
@@ -121,8 +121,8 @@ void ImageTest::test_pnm_P6() {
 
 void ImageTest::test_yuvrgb() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-  Idx<ubyte> im(1, 1, 3);
-  Idx<ubyte> imb(1, 1, 3);
+  idx<ubyte> im(1, 1, 3);
+  idx<ubyte> imb(1, 1, 3);
   string imgfile = *gl_data_dir;
   imgfile += "/pnm/rgb_P6.ppm";
   pnm_fread_into_rgbx(imgfile.c_str(), im);
@@ -140,10 +140,10 @@ void ImageTest::test_yuvrgb() {
   CPPUNIT_ASSERT(imb.get(0, 2, 1) == 109);
   CPPUNIT_ASSERT(imb.get(0, 2, 2) == 239);
 
-  Idx<ubyte> im0(1, 1, 1);
-  Idx<ubyte> im1(1, 1, 1);
-  Idx<ubyte> im2(1, 1, 1);
-  Idx<ubyte> im3(1, 1, 1);
+  idx<ubyte> im0(1, 1, 1);
+  idx<ubyte> im1(1, 1, 1);
+  idx<ubyte> im2(1, 1, 1);
+  idx<ubyte> im3(1, 1, 1);
   pnm_fread_into_rgbx(imgfile.c_str(), im0);
   im1 = image_resize(im0, 200, 100, 0);
   im2 = image_resize(im0, 200, 100, 0);

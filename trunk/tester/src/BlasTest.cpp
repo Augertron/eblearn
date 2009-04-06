@@ -9,7 +9,7 @@ void BlasTest::tearDown() {
 }
 
 void BlasTest::test_idx_min_max() {
-  Idx<double> m2(2, 2);
+  idx<double> m2(2, 2);
   idx_clear(m2);
   m2.set(0.0, 0, 0);
   m2.set(42.0, 0, 1);
@@ -20,10 +20,10 @@ void BlasTest::test_idx_min_max() {
 }
 
 void BlasTest::test_idx_sums() {
-		Idx<double> m(3, 4);
-		Idx<double> m0;
-		Idx<unsigned char> mc(3, 4);
-		Idx<unsigned char> mc0;
+		idx<double> m(3, 4);
+		idx<double> m0;
+		idx<unsigned char> mc(3, 4);
+		idx<unsigned char> mc0;
 		idx_clear(m);
 		idx_clear(m0);
 		idx_clear(mc);
@@ -52,8 +52,8 @@ void BlasTest::test_idx_sums() {
 }
 
 void BlasTest::test_idx_sortdown() {
-	Idx<double> m(5);
-	Idx<unsigned char> mc(5);
+	idx<double> m(5);
+	idx<unsigned char> mc(5);
 	double i;
 	i = 1;
 	idx_aloop2(lm, m, double, lmc, mc, unsigned char) {
@@ -79,8 +79,8 @@ void BlasTest::test_idx_sortdown() {
 }
 
 void BlasTest::test_idx_sqrdist() {
-	Idx<double> m(5);
-	Idx<double> mc(5);
+	idx<double> m(5);
+	idx<double> mc(5);
 	double i;
 	i = 1;
 	idx_aloop2(lm, m, double, lmc, mc, double) {
@@ -96,7 +96,7 @@ void BlasTest::test_idx_sqrdist() {
 }
 
 void BlasTest::test_idx_exp() {
-	  Idx<double> m2(2, 2);
+	  idx<double> m2(2, 2);
 	  idx_clear(m2);
 	  m2.set(0.0, 0, 0);
 	  m2.set(1.0, 0, 1);
@@ -110,8 +110,8 @@ void BlasTest::test_idx_exp() {
 }
 
 void BlasTest::test_idx_m2oversample() {
-	Idx<double> m(2, 2);
-	Idx<double> o(4, 4);
+	idx<double> m(2, 2);
+	idx<double> o(4, 4);
 	m.set(1.0, 0, 0);
 	m.set(2.0, 0, 1);
 	m.set(3.0, 1, 0);
@@ -138,9 +138,9 @@ void BlasTest::test_idx_m2oversample() {
 }
 
 void BlasTest::test_idx_m2squdotm1() {
-	Idx<double> m1(2, 2);
-	Idx<double> m2(2);
-	Idx<double> m3(2);
+	idx<double> m1(2, 2);
+	idx<double> m2(2);
+	idx<double> m3(2);
 	m1.set(2.0, 0, 0);
 	m1.set(2.0, 0, 1);
 	m1.set(3.0, 1, 0);
@@ -157,9 +157,9 @@ void BlasTest::test_idx_m2squdotm1() {
 }
 
 void BlasTest::test_idx_m2extm2acc() {
-	Idx<double> m1(2, 2);
-	Idx<double> m2(2, 2);
-	Idx<double> m3(2, 2, 2, 2);
+	idx<double> m1(2, 2);
+	idx<double> m2(2, 2);
+	idx<double> m3(2, 2, 2, 2);
 	m1 = m1.transpose(0, 1);
 	m2 = m2.transpose(0, 1);
 	m3 = m3.transpose(1, 2);
@@ -193,11 +193,11 @@ void BlasTest::test_idx_m2extm2acc() {
 }
 
 void BlasTest::test_idx_copy(){
-	Idx<double> m1(3, 5, 4);
-	Idx<double> m2(3, 5, 4);
-	Idx<float> m3(3, 5, 4);
-	Idx<intg> m4(3, 5, 4);
-	Idx<ubyte> m5(3, 5, 4);
+	idx<double> m1(3, 5, 4);
+	idx<double> m2(3, 5, 4);
+	idx<float> m3(3, 5, 4);
+	idx<intg> m4(3, 5, 4);
+	idx<ubyte> m5(3, 5, 4);
 
 	dseed(2);
 	idx_bloop1(i, m1, double){
@@ -233,27 +233,27 @@ void BlasTest::test_idx_copy(){
 	    for(int k = 0; k < 4; k++)
 	      CPPUNIT_ASSERT_EQUAL((ubyte)floor(m1.get(i,j,k)), m5.get(i,j,k));
 
-	void* m6 = (void*) new Idx<double>(3, 5, 4);
-	idx_copy(m1, *(static_cast<Idx<double>*>(m6)));
+	void* m6 = (void*) new idx<double>(3, 5, 4);
+	idx_copy(m1, *(static_cast<idx<double>*>(m6)));
 	for(int i = 0; i < 3; i++)
 	  for(int j = 0; j < 5; j++)
 	    for(int k = 0; k < 4; k++)
 	      CPPUNIT_ASSERT_EQUAL(m1.get(i,j,k), 
-				   static_cast<Idx<double>*>(m6)->get(i,j,k));
+				   static_cast<idx<double>*>(m6)->get(i,j,k));
 
-	Idx<ubyte> m7(3, 5, 4);
-	idx_copy(*(static_cast<Idx<double>*>(m6)), m7);
+	idx<ubyte> m7(3, 5, 4);
+	idx_copy(*(static_cast<idx<double>*>(m6)), m7);
 	for(int i = 0; i < 3; i++)
 	  for(int j = 0; j < 5; j++)
 	    for(int k = 0; k < 4; k++)
 	      CPPUNIT_ASSERT_EQUAL(m7.get(i,j,k), 
-				   (ubyte) static_cast<Idx<double>*>
+				   (ubyte) static_cast<idx<double>*>
 				   (m6)->get(i,j,k));
 
 
-	Idx<double>m8(3, 5, 2);
+	idx<double>m8(3, 5, 2);
 	m8 = m1.narrow(2,2,2);
-	Idx<ubyte>m9(3, 5, 2);
+	idx<ubyte>m9(3, 5, 2);
 	idx_clear(m9);
 	idx_copy(m8, m9);
 	//	m8.printElems();
@@ -264,19 +264,19 @@ void BlasTest::test_idx_copy(){
 	    for(int k = 0; k < 2; k++)
 	      CPPUNIT_ASSERT_EQUAL((ubyte)m8.get(i,j,k), m9.get(i,j,k));
 
-	Idx<ubyte>m10(3, 5, 4);
-	Idx<ubyte>m11(3, 5, 2);
+	idx<ubyte>m10(3, 5, 4);
+	idx<ubyte>m11(3, 5, 2);
 	m11 = m10.narrow(2, 2, 2);
 	idx_copy(m8, m11);
 	for(int i = 0; i < 3; i++)
 	  for(int j = 0; j < 5; j++)
 	    for(int k = 0; k < 2; k++)
 	      CPPUNIT_ASSERT_EQUAL((ubyte)m8.get(i,j,k), m11.get(i,j,k));
-	delete static_cast<Idx<double>*>(m6);
+	delete static_cast<idx<double>*>(m6);
 }
 
 void BlasTest::test_idx_copy2(){
-  Idx<double> m1(5, 3, 4);
+  idx<double> m1(5, 3, 4);
 
   dseed(2);
   idx_bloop1(i, m1, double){
@@ -287,9 +287,9 @@ void BlasTest::test_idx_copy2(){
     }
   }
 
-  Idx<double>m8(5, 3, 2);
+  idx<double>m8(5, 3, 2);
   m8 = m1.narrow(2,2,0);
-  Idx<ubyte>m9(5, 3, 2);
+  idx<ubyte>m9(5, 3, 2);
 
   idx_copy(m8, m9);
   //m8.printElems();
@@ -304,8 +304,8 @@ void BlasTest::test_idx_copy2(){
 
 void BlasTest::test_idx_abs() {
   {
-    Idx<double> m2(20, 20);
-    Idx<double> m2a(20, 20);
+    idx<double> m2(20, 20);
+    idx<double> m2a(20, 20);
     idx_clear(m2);
     idx_clear(m2a);
 
@@ -328,8 +328,8 @@ void BlasTest::test_idx_abs() {
   }
   {
     // repeat for int
-    Idx<int> m2(20, 20);
-    Idx<int> m2a(20, 20);
+    idx<int> m2(20, 20);
+    idx<int> m2a(20, 20);
     idx_clear(m2);
     idx_clear(m2a);
 
@@ -363,7 +363,7 @@ void BlasTest::test_huge_vec() {
   //   else{
   //     size = INT_MAX/2;
   //   }
-  //   Idx<double> hv(size);
+  //   idx<double> hv(size);
   //   idx_fill(hv, 1.0);
   //   // dot with itself
   //   double dd = idx_dot(hv,hv);
@@ -375,8 +375,8 @@ void BlasTest::test_huge_vec() {
 // 	printf("\n****************************************************************\n");
 // 	printf("*** testBlas01\n");
 
-// 	Idx<double> m1(2, 5);
-// 	Idx<double> m2(2, 5);
+// 	idx<double> m1(2, 5);
+// 	idx<double> m2(2, 5);
 // #if USING_STL_ITERS
 // 	int ii = 0;
 // 	idx_aloop2(lm1,m1,double,lm2,m2,double) {*lm1 = *lm2 = ++ii;}
@@ -388,8 +388,8 @@ void BlasTest::test_huge_vec() {
 // 	printf("idx_dot(m1,m2)=%g (should be 285)\n", idx_dot(m1, m2));
 
 // 	// non contiguous
-// 	Idx<double> nm1 = m1.narrow(1, 3, 1);
-// 	Idx<double> nm2 = m2.narrow(1, 3, 1);
+// 	idx<double> nm1 = m1.narrow(1, 3, 1);
+// 	idx<double> nm2 = m2.narrow(1, 3, 1);
 // 	printf("idx_dot(nm1,nm2)=%g (should be 163)\n", idx_dot(nm1, nm2));
 
 // 	printf("==== norm_columns(m1)\n");
@@ -412,13 +412,13 @@ void BlasTest::test_huge_vec() {
 // 		printf("==== idx_m2dotm1(m,x,y)\n");
 // 		double mdata[] = { 1000, 100, 10, 1, -1000, -100, -10, -1, 1e7, 1e6,
 // 				1e5, 1e4 };
-// 		// Idx<double> z(3,6);
-// 		// Idx<double> m = z.narrow(1,4,1);
-// 		Idx<double> z(4, 3);
-// 		Idx<double> m = z.transpose(0, 1);
+// 		// idx<double> z(3,6);
+// 		// idx<double> m = z.narrow(1,4,1);
+// 		idx<double> z(4, 3);
+// 		idx<double> m = z.transpose(0, 1);
 // 		double xdata[] = { 2, 3, 4, 6 };
-// 		Idx<double> x(4);
-// 		Idx<double> y(3);
+// 		idx<double> x(4);
+// 		idx<double> y(3);
 // 		int i;
 // 		i = 0;
 // 		idx_aloop1(lm, m, double) {
@@ -438,9 +438,9 @@ void BlasTest::test_huge_vec() {
 
 // 	{
 // 		printf("==== idx_m1extm1(x,y,m)\n");
-// 		Idx<double> m(3, 4);
-// 		Idx<double> x(3);
-// 		Idx<double> y(4);
+// 		idx<double> m(3, 4);
+// 		idx<double> x(3);
+// 		idx<double> y(4);
 // 		double i;
 // 		i = 1;
 // 		idx_aloop1(lx, x, double) {

@@ -51,7 +51,7 @@ namespace ebl {
 
   void nn_layer_full::fprop(state_idx &in, state_idx &out) {
     // resize output and sum
-    IdxDim d(in.x.spec); // use same dimensions as in
+    idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, adder.bias.x.dim(0)); // except for the first one
     out.resize(d);
     if (!sum) sum = new state_idx(d); // we now know the order of sum
@@ -104,7 +104,7 @@ namespace ebl {
   nn_layer_convolution::nn_layer_convolution(parameter &p, 
 					     intg kerneli, intg kernelj, 
 					     intg ri, intg rj, 
-					     Idx<intg> &tbl, intg thick) 
+					     idx<intg> &tbl, intg thick) 
     : convol(p, kerneli, kernelj, ri, rj, tbl, thick), adder(p, thick),
       sigmoid() {
     sum = NULL;
@@ -116,7 +116,7 @@ namespace ebl {
 
   void nn_layer_convolution::fprop(state_idx &in, state_idx &out) {
     // 1. resize sum
-    IdxDim d(in.x.spec); // use same dimensions as in
+    idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, convol.thickness); // except for the first one
     if (!sum) sum = new state_idx(d);
     else sum->resize(d);
@@ -195,7 +195,7 @@ namespace ebl {
 
   void nn_layer_subsampling::fprop(state_idx &in, state_idx &out) {
     // 1. resize sum
-    IdxDim d(in.x.spec); // use same dimensions as in
+    idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, subsampler.thickness); // except for the first one
     if (!sum) sum = new state_idx(d);
     else sum->resize(d);

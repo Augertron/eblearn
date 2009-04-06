@@ -157,8 +157,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////////////
 
   class_state::class_state(ubyte n) {
-    sorted_classes = new Idx<ubyte>(n);
-    sorted_scores = new Idx<float>(n);
+    sorted_classes = new idx<ubyte>(n);
+    sorted_scores = new idx<float>(n);
   }
 
   class_state::~class_state() {
@@ -173,7 +173,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////////////
 
-  max_classer::max_classer(Idx<ubyte> *classes) {
+  max_classer::max_classer(idx<ubyte> *classes) {
     classindex2label = classes;
   }
 

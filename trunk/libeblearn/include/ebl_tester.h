@@ -74,7 +74,7 @@ namespace ebl {
     //! module : pointer to a module_1_1
     //! in     : pointer to state_idx
     //! out    : pointer to state_idx
-    Idx<double> test_jacobian(module_1_1<state_idx,state_idx> &module, 
+    idx<double> test_jacobian(module_1_1<state_idx,state_idx> &module, 
 			      state_idx &in, state_idx &out);
 
     //! test the derivative of output wrt parameters of the module
@@ -114,15 +114,15 @@ namespace ebl {
     // output stream
     FILE* out;
     // jacobian from fprop
-    Idx<double> jac_fprop;
+    idx<double> jac_fprop;
     // jacobian from bprop;
-    Idx<double> jac_bprop;
+    idx<double> jac_bprop;
     // jacobian from fprop wrt param
-    Idx<double> jac_fprop_param;
+    idx<double> jac_fprop_param;
     // jacobian from bprop wrt param
-    Idx<double> jac_bprop_param;
+    idx<double> jac_bprop_param;
 
-    Idx<double>* kk;
+    idx<double>* kk;
 
 
     //! get jacobian using 1st order central finite differnce approximation for 
@@ -131,7 +131,7 @@ namespace ebl {
     //! in     : pointer to state_idx
     //! out    : pointer to state_idx
     void get_jacobian_fprop(module_1_1<state_idx,state_idx> &module, 
-			    state_idx &in, state_idx &out,Idx<double>& jac);
+			    state_idx &in, state_idx &out,idx<double>& jac);
 
     //! get jacobian using 1st order central finite differnce approximation for 
     //! derivative of output wrt parameter
@@ -144,14 +144,14 @@ namespace ebl {
     void get_jacobian_fprop_param(parameter &p, 
 				  module_1_1<state_idx,state_idx> &module, 
 				  state_idx &in, state_idx &out,
-				  Idx<double>& jac);
+				  idx<double>& jac);
 
     //! get jacobian using bprop for derivative of output wrt input
     //! module : pointer to a module_1_1
     //! in     : pointer to state_idx
     //! out    : pointer to state_idx
     void get_jacobian_bprop(module_1_1<state_idx,state_idx> &module, 
-			    state_idx &in, state_idx &out,Idx<double>& jac);
+			    state_idx &in, state_idx &out,idx<double>& jac);
     //! get jacobian using bprop for derivative of output wrt parameter
     //! p      : pointer to parameter object that was used to allocate the 
     //!          parameters of module. this parameter object should contain the 
@@ -162,19 +162,19 @@ namespace ebl {
     void get_jacobian_bprop_param(parameter &p, 
 				  module_1_1<state_idx,state_idx> &module, 
 				  state_idx &in, state_idx &out,
-				  Idx<double>& jac);
+				  idx<double>& jac);
 
-    //! a : first Idx to compare
-    //! b : second Idx to compare
+    //! a : first idx to compare
+    //! b : second idx to compare
     //! c : message to use
-    void report_err(Idx<double>& a, Idx<double>& b, const char* msg);
+    void report_err(idx<double>& a, idx<double>& b, const char* msg);
 
-    //! a : first Idx to compare
-    //! b : second Idx to compare
-    Idx<double> get_errs(Idx<double>& a, Idx<double>& b);
+    //! a : first idx to compare
+    //! b : second idx to compare
+    idx<double> get_errs(idx<double>& a, idx<double>& b);
 
     //! assigns random numbers to every element of give idx
-    void randomize_idx(Idx<double>& m);
+    void randomize_idx(idx<double>& m);
   };
 
   ////////////////////////////////////////////////////////////////
