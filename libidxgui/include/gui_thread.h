@@ -32,10 +32,10 @@
 #ifndef GUI_THREAD_H_
 #define GUI_THREAD_H_
 
-#include <QPixmap>
-#include <QWidget>
-#include <QtGui>
-#include <QResizeEvent>
+#include <QtGui/QPixmap>
+#include <QtGui/QWidget>
+#include <QtGui/QtGui>
+#include <QtGui/QResizeEvent>
 #include <math.h>
 #include <vector>
 
@@ -94,7 +94,7 @@ namespace ebl {
     a.exec();					\
     return 0;					\
   }						\
-  void idxgui::run()
+  int idxgui::run_main()
   
 } // namespace ebl {
 

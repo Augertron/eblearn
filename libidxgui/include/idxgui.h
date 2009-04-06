@@ -32,9 +32,9 @@
 #ifndef IDXGUI_H_
 #define IDXGUI_H_
 
-#include <QThread>
-#include <QWaitCondition>
-#include <QtGui>
+#include <QtCore/QThread>
+#include <QtCore/QWaitCondition>
+#include <QtGui/QtGui>
 
 #include <ostream>
 #include "libidx.h"
@@ -108,6 +108,7 @@ namespace ebl {
     
   protected:
     virtual void run();
+    virtual int run_main();
   };
 
 } // namespace ebl {
