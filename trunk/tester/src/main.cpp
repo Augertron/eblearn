@@ -131,7 +131,5 @@ int main(int argc, char **argv) {
   if (gl_data_errmsg) delete gl_data_errmsg;
 
   //  window_quit(); // quit program (do not wait for window to be closed)
-#ifndef __GUI__
   return 0;
-#endif
 }

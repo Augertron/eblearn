@@ -90,8 +90,11 @@ namespace ebl {
   }
 
   void idxgui::run() {
-    ylerror("The run2 method of idxgui must be overridden and contain \
-your code");
+    run_main();
+  }
+
+  int idxgui::run_main() {
+    ylerror("run_main not implemented");
   }
 
   void idxgui::add_text(std::string *s) {
