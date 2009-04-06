@@ -19,8 +19,9 @@
  * training dataset, and 86% on the testing set... in 6 iterations !
  *
  * The script expand-dataset.py (in $EBLEARN/data/posture/) can be run
- * (requires Python) to create other images from the raw dataset 
- * (rotated/rescaled). Doing this helps reaching better results on the testing 
+ * to create other images from the raw dataset (requires Python, and the image
+ * library PIL - http://www.pythonware.com/products/pil/).
+ * Doing this helps reaching better results on the testing 
  * set (unknown results). The training takes much more time, obviously,
  * but should yield better results.
  *
@@ -90,7 +91,7 @@ public:
        {3, 9},  {4, 9},  {5, 9},  {0, 9},
        {4, 10}, {5, 10}, {0, 10}, {1, 10},
 
-       {0, 15}, {1, 15}, {2, 15}, {3, 15}, {4, 15}, {5, 15}};
+       {0, 11}, {1, 11}, {2, 11}, {3, 11}, {4, 11}, {5, 11}};
     memcpy(table1.idx_ptr(), tbl, table1.nelements() * sizeof (intg));
     
     // Finally we initialize the architecture of the ConvNet.
