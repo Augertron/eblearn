@@ -74,7 +74,6 @@ namespace ebl {
     text_h0 = 0;
     text_w0 = 0;
     txt = NULL; // current text
-    arro = NULL; // current arrow
   }
 
   Window::~Window() {
@@ -92,6 +91,9 @@ namespace ebl {
       if (*i)
 	delete (*i);
     texts.clear();
+    txt = NULL;
+    text_h0 = 0;
+    text_w0 = 0;
   }
 
   void Window::clear_arrows() {
@@ -239,6 +241,7 @@ namespace ebl {
   }
 
   void Window::draw_arrows(QPainter &painter) {
+    int len_factor = 1;
     int ax1, ay1, ax2, ay2;
     painter.setBrush(QColor(255, 255, 255, 127));
     painter.setPen(Qt::red);
@@ -259,8 +262,8 @@ namespace ebl {
 	double angle = atan2( (double) ay1 - ay2, (double) ax1 - ax2);
 	double hypotenuse = sqrt( pow(ay1 - ay2, 2) + pow(ax1 - ax2, 2));
 	/* Here we lengthen the arrow by a factor of three. */
-	ax2 = (int) (ax1 - 3 * hypotenuse * cos(angle));
-	ay2 = (int) (ay1 - 3 * hypotenuse * sin(angle));
+	ax2 = (int) (ax1 - len_factor * hypotenuse * cos(angle));
+	ay2 = (int) (ay1 - len_factor * hypotenuse * sin(angle));
 	painter.drawLine(ax1, ay1, ax2, ay2);
 	ax1 = (int) (ax2 + 9 * cos(angle + M_PI / 4));
 	ay1 = (int) (ay2 + 9 * sin(angle + M_PI / 4));
