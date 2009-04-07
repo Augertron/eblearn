@@ -47,8 +47,6 @@ using namespace std;
 namespace ebl {
 
   class text : public string {
-  private:
-    string		*str;
   public:
     unsigned int	 h0, w0;
     text(unsigned int h0, unsigned int w0);
@@ -56,8 +54,6 @@ namespace ebl {
   };
 
   class arrow {
-  private:
-    string		*str;
   public:
     int	                 h1, w1, h2, w2;
     arrow(int h1, int w1, int h2, int w2);
@@ -79,7 +75,6 @@ namespace ebl {
     vector<text*>        texts;
     text*		 txt;
     vector<arrow*>        arrows;
-    arrow*		 arro;
     bool		 silent;
     unsigned int	 id;
     string		 savefname;
