@@ -68,6 +68,7 @@ namespace ebl {
       idxgui& operator<<(idxgui& r, const T val);
 
     void add_text(std::string *s);
+    void add_arrow(int h1, int w1, int h2, int w2);
     void set_text_origin(unsigned int h0, unsigned int w0);
     void set_cout_and_gui();
     void set_gui_only();
@@ -103,6 +104,7 @@ namespace ebl {
     void gui_new_window(const char *wname, unsigned int h, unsigned int w);
     void gui_select_window(unsigned int wid);
     void gui_add_text(const std::string *s);
+    void gui_add_arrow(int h1, int w1, int h2, int w2);
     void gui_set_text_origin(unsigned int h0, unsigned int w0);
     void gui_set_silent(const std::string *filename);
     

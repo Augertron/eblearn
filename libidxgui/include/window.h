@@ -46,16 +46,22 @@ using namespace std;
 
 namespace ebl {
 
-  class Text : public string {
+  class text : public string {
   private:
     string		*str;
   public:
-    unsigned int	 h0;
-    unsigned int	 w0;
-    
+    unsigned int	 h0, w0;
+    text(unsigned int h0, unsigned int w0);
+    ~text() {};
+  };
+
+  class arrow {
+  private:
+    string		*str;
   public:
-    Text(unsigned int h0, unsigned int w0);
-    ~Text();
+    int	                 h1, w1, h2, w2;
+    arrow(int h1, int w1, int h2, int w2);
+    ~arrow() {};
   };
 
   class Window : public QWidget { 
@@ -70,8 +76,10 @@ namespace ebl {
     idx<ubyte>		*buffer;
     QVector<QRgb>	 colorTable;
     QImage		*qimage;
-    vector<Text*>        texts;
-    Text*		 text;
+    vector<text*>        texts;
+    text*		 txt;
+    vector<arrow*>        arrows;
+    arrow*		 arro;
     bool		 silent;
     unsigned int	 id;
     string		 savefname;
@@ -85,11 +93,14 @@ namespace ebl {
 
     void save(const char *filename);
     void set_silent(const std::string *filename);
-    void addText(const std::string *s);
-    void updatePixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
+    void add_text(const std::string *s);
+    void add_arrow(int h1, int w1, int h2, int w2);
+    void update_pixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void clear();
     void clear_text();
-    void drawText(QPainter &painter);
+    void clear_arrows();
+    void draw_text(QPainter &painter);
+    void draw_arrows(QPainter &painter);
     void set_text_origin(unsigned int h0, unsigned int w0);
 
   protected:

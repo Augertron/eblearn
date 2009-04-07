@@ -101,6 +101,10 @@ namespace ebl {
     emit gui_add_text(s);    
   }
 
+  void idxgui::add_arrow(int h1, int w1, int h2, int w2) {
+    emit gui_add_arrow(h1, w1, h2, w2);
+  }
+
   void idxgui::set_text_origin(unsigned int h0, unsigned int w0) {
     emit gui_set_text_origin(h0, w0);    
   }
