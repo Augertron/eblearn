@@ -61,6 +61,7 @@ using namespace ebl;
   // Thanks to David Stavens for his demo of optical flow with OpenCV
   // ( http://ai.stanford.edu/~dstavens/cs223b/ ).
 
+#ifdef __OPENCV__
   idx<ubyte> ipl2idx(IplImage *im) {
     idx<ubyte> f(im->height, im->width);
     memcpy(f.idx_ptr(), im->imageData, im->width * im->height * sizeof (ubyte));
@@ -83,6 +84,7 @@ using namespace ebl;
 	exit(-1);
       }
   }
+#endif
 
 #ifdef __GUI__
   MAIN_QTHREAD() {
