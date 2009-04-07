@@ -57,6 +57,8 @@ namespace ebl {
 	    this, SLOT(select_window(unsigned int)));
     connect(&thread, SIGNAL(gui_add_text(const std::string*)), 
 	    this, SLOT(add_text(const std::string*)));
+    connect(&thread, SIGNAL(gui_add_arrow(int, int, int, int)), 
+	    this, SLOT(add_arrow(int, int, int, int)));
     connect(&thread, SIGNAL(gui_set_text_origin(unsigned int, unsigned int)), 
 	    this, SLOT(set_text_origin(unsigned int, unsigned int)));
     connect(&thread, SIGNAL(gui_set_silent(const std::string *)), 
@@ -82,7 +84,12 @@ namespace ebl {
 
   void gui_thread::add_text(const std::string *s) {
     if ((wcur >= 0) && (windows[wcur]))
-      windows[wcur]->addText(s);
+      windows[wcur]->add_text(s);
+  }
+
+  void gui_thread::add_arrow(int x1, int y1, int x2, int y2) {
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->add_arrow(x1, y1, x2, y2);
   }
 
   void gui_thread::set_text_origin(unsigned int h0, unsigned int w0) {
@@ -112,7 +119,7 @@ namespace ebl {
     //    if (nwindows == 0)
     //  new_window();
     if ((wcur >= 0) && (windows[wcur])) {
-      windows[wcur]->updatePixmap(img, h0, w0);
+      windows[wcur]->update_pixmap(img, h0, w0);
     }
   }
 

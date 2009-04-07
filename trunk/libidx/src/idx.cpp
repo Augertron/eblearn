@@ -486,8 +486,12 @@ namespace ebl {
     try {
       if (ndim <= 0) throw("cannot narrow a scalar");
       if ((d < 0) || (d>=ndim)) throw("narrow: illegal dimension index");
-      if ((o < 0)||(s < 1)||(s+o > dim[d])) 
+      if ((o < 0)||(s < 1)||(s+o > dim[d])) {
+	cerr << "trying to narrow dimension " << d << " to size " << s;
+	cerr << " starting at offset " << o << " (dimension " << d << " is ";
+	cerr << dim[d] << " large)." << endl;
 	throw("narrow: illegal size/offset");
+      }
     }
     catch(const char *s) { ylerror(s); return -1;}
     // this preserves the dim/mod arrays if dst == this

@@ -30,19 +30,25 @@
  ***************************************************************************/
 
 #include "window.moc"
+#include <qstyle.h>
+#include <math.h>
 
 using namespace std;
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // Text
+  // text
 
-  Text::Text(unsigned int h0_, unsigned int w0_)
+  text::text(unsigned int h0_, unsigned int w0_)
     : string(""), h0(h0_), w0(w0_) {
   }
 
-  Text::~Text() {
+  ////////////////////////////////////////////////////////////////
+  // arrow
+
+  arrow::arrow(int h1_, int w1_, int h2_, int w2_)
+    : h1(h1_), w1(w1_), h2(h2_), w2(w2_) {
   }
 
   ////////////////////////////////////////////////////////////////
@@ -67,7 +73,8 @@ namespace ebl {
       buffer_resize(height, width);
     text_h0 = 0;
     text_w0 = 0;
-    text = NULL; // current text
+    txt = NULL; // current text
+    arro = NULL; // current arrow
   }
 
   Window::~Window() {
@@ -77,13 +84,21 @@ namespace ebl {
     if (qimage)
       delete qimage;
     clear_text();
+    clear_arrows();
   }
 
   void Window::clear_text() {
-    for (vector<Text*>::iterator i = texts.begin(); i != texts.end(); ++i)
+    for (vector<text*>::iterator i = texts.begin(); i != texts.end(); ++i)
       if (*i)
 	delete (*i);
     texts.clear();
+  }
+
+  void Window::clear_arrows() {
+    for (vector<arrow*>::iterator i = arrows.begin(); i != arrows.end(); ++i)
+      if (*i)
+	delete (*i);
+    arrows.clear();
   }
 
   void Window::save(const char *filename) {
@@ -103,21 +118,26 @@ namespace ebl {
     update();
   }
 
-  void Window::addText(const std::string *s) {
-    if (!text) {
-      text = new Text(text_h0, text_w0);
-      texts.push_back(text);
+  void Window::add_text(const std::string *s) {
+    if (!txt) {
+      txt = new text(text_h0, text_w0);
+      texts.push_back(txt);
     }
-    *text += *s;
+    *txt += *s;
     delete s;
+    update_window(false);
+  }
+  
+  void Window::add_arrow(int h1, int w1, int h2, int w2) {
+    arrows.push_back(new arrow(h1, w1, h2, w2));
     update_window(false);
   }
   
   void Window::set_text_origin(unsigned int h0, unsigned int w0) {
     text_h0 = h0;
     text_w0 = w0;
-    text = new Text(text_h0, text_w0);
-    texts.push_back(text);
+    txt = new text(text_h0, text_w0);
+    texts.push_back(txt);
   }
 
   void Window::buffer_resize(int h, int w) {
@@ -146,7 +166,8 @@ namespace ebl {
     qimage->setColorTable(colorTable);
   }
 
-  void Window::updatePixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0) {
+  void Window::update_pixmap(idx<ubyte> *img, unsigned int h0, 
+			     unsigned int w0) {
     if (img) {
       unsigned int h = MAX(buffer?(unsigned int)buffer->dim(0):0, 
 			   h0 + img->dim(0));
@@ -185,10 +206,11 @@ namespace ebl {
     if (pixmap) 
       pixmap->fill(Qt::white);
     clear_text();
+    clear_arrows();
   }
 
   void Window::paintEvent(QPaintEvent * /* event */) {
-    QPainter painter(this);
+    QStylePainter painter(this);
     painter.fillRect(rect(), Qt::white);
     double scaleFactor = pixmapScale / curScale;
     painter.save();
@@ -197,9 +219,9 @@ namespace ebl {
     QRectF exposed = 
       painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
     painter.drawPixmap(exposed, *pixmap, exposed);
-    drawText(painter);
+    draw_text(painter);
     painter.restore();
-
+    draw_arrows(painter);
     if (!silent) {
       QString txt = tr("Use mouse wheel to zoom, left click to drag.");
       QFontMetrics metrics = painter.fontMetrics();
@@ -216,8 +238,43 @@ namespace ebl {
     }
   }
 
-  void Window::drawText(QPainter &painter) {
-    for (vector<Text*>::iterator i = texts.begin(); i != texts.end(); ++i) {
+  void Window::draw_arrows(QPainter &painter) {
+    int ax1, ay1, ax2, ay2;
+    painter.setBrush(QColor(255, 255, 255, 127));
+    painter.setPen(Qt::red);
+    for (vector<arrow*>::iterator i = arrows.begin(); i != arrows.end(); ++i) {
+      if (*i) {
+
+//     QStyleOption opt;
+//     opt.rect.setWidth(100);
+//     opt.rect.setHeight(150);
+//     QPixmap qp = painter.standardPixmap(QStyle::SP_ArrowUp, &opt);
+//     painter.drawPixmap(exposed, qp, exposed);
+//     painter.drawPrimitive(QStyle::PE_IndicatorSpinUp, opt);
+
+	ax1 = (*i)->h1;
+	ay1 = (*i)->w1;
+	ax2 = (*i)->h2;
+	ay2 = (*i)->w2;
+	double angle = atan2( (double) ay1 - ay2, (double) ax1 - ax2);
+	double hypotenuse = sqrt( pow(ay1 - ay2, 2) + pow(ax1 - ax2, 2));
+	/* Here we lengthen the arrow by a factor of three. */
+	ax2 = (int) (ax1 - 3 * hypotenuse * cos(angle));
+	ay2 = (int) (ay1 - 3 * hypotenuse * sin(angle));
+	painter.drawLine(ax1, ay1, ax2, ay2);
+	ax1 = (int) (ax2 + 9 * cos(angle + M_PI / 4));
+	ay1 = (int) (ay2 + 9 * sin(angle + M_PI / 4));
+	painter.drawLine(ax1, ay1, ax2, ay2);
+	ax1 = (int) (ax2 + 9 * cos(angle - M_PI / 4));
+	ay1 = (int) (ay2 + 9 * sin(angle - M_PI / 4));
+	painter.drawLine(ax1, ay1, ax2, ay2);
+      }
+    }
+    painter.setPen(Qt::black);
+  }
+
+  void Window::draw_text(QPainter &painter) {
+    for (vector<text*>::iterator i = texts.begin(); i != texts.end(); ++i) {
       if (*i) {
 	QString txt((*i)->c_str());
 	QRectF bg;
