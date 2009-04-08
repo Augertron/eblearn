@@ -75,6 +75,8 @@ namespace ebl {
     void set_silent();
     void set_silent(const std::string *filename);
     void set_silent(const char *filename);
+    void enable_updates();
+    void disable_updates();
 
     //! gray_draw_matrix displays your idx2 or the first layer of your idx3 in
     //! grayscale on the whiteboard. This function does a copy of your idx and
@@ -107,6 +109,7 @@ namespace ebl {
     void gui_add_arrow(int h1, int w1, int h2, int w2);
     void gui_set_text_origin(unsigned int h0, unsigned int w0);
     void gui_set_silent(const std::string *filename);
+    void gui_set_wupdate(bool update);
     
   protected:
     virtual void run();

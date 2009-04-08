@@ -109,6 +109,14 @@ namespace ebl {
     emit gui_set_text_origin(h0, w0);    
   }
 
+  void idxgui::enable_updates() {
+    emit gui_set_wupdate(true);    
+  }
+
+  void idxgui::disable_updates() {
+    emit gui_set_wupdate(false);    
+  }
+
   idxgui& att(idxgui& r, unsigned int h0, unsigned int w0) {
     r.set_text_origin(h0, w0);
     return r;
