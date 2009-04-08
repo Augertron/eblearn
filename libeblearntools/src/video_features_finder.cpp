@@ -46,10 +46,10 @@
 #include "libidxgui.h"
 #endif
 
-#define NFEATURES 100
-#define FEATURE_WIDTH 24
-#define FEATURE_HEIGHT 24
-#define FRAME_JUMP 10
+#define NFEATURES 50
+#define FEATURE_WIDTH 44
+#define FEATURE_HEIGHT 44
+#define FRAME_JUMP 5
 #define FEATURE_ZOOM 2
 
 using namespace std;
@@ -99,6 +99,11 @@ using namespace ebl;
       cerr << "Usage example: videoffinder video.avi" << endl;
       return -1;
     }
+
+    vector< vector< idx<ubyte>* > *> features;
+    vector< pair<int, int> *> features_xy;
+    bool first_time = true;
+
     cout << "input video: " << argv[1] << endl;
     /* Create an object that decodes the input video stream. */
     CvCapture *input_video = cvCaptureFromFile(argv[1]);
@@ -136,6 +141,7 @@ using namespace ebl;
     cout << "new windows." << endl;
     unsigned int mainwin = gui.new_window("eblearn window");
     unsigned int featwin = gui.new_window("features");
+    unsigned int featswin = gui.new_window("fixed features", 300, 300);
     gui << "window size: " << FEATURE_HEIGHT << "x" << FEATURE_WIDTH << endl;
     gui.select_window(mainwin);
 #endif
@@ -256,8 +262,20 @@ using namespace ebl;
 	 * "frame1_features" will contain the feature points.
 	 * "number_of_features" will be set to a value <= 400 indicating the number of feature points found.
 	 */
-	cvGoodFeaturesToTrack(frame1_1C, eig_image, temp_image, frame1_features, &number_of_features, .01, .01, NULL);
-
+	if (first_time)
+	  cvGoodFeaturesToTrack(frame1_1C, eig_image, temp_image, frame1_features, &number_of_features, .01, .01, NULL);
+	else {
+	  for (unsigned int i = 0; i < (unsigned int) number_of_features; i++) {
+	    if (i < features_xy.size()) {
+	      frame1_features[i].x = features_xy[i]->first;
+	      frame1_features[i].y = features_xy[i]->second;
+	    } else {
+	      frame1_features[i].x = 0;
+	      frame1_features[i].y = 0;
+	    }
+	  }
+	}
+	
 	/* Pyramidal Lucas Kanade Optical Flow! */
 
 	/* This array will contain the locations of the points from frame 1 in frame 2. */
@@ -320,17 +338,30 @@ using namespace ebl;
 	    int f2y = p2y - optical_flow_window.height / 2;
 	    int f2x = p2x - optical_flow_window.width / 2;
 
-#ifdef __GUI__
-	    gui.select_window(mainwin);
-	    gui.add_arrow(p1x, p1y, p2x, p2y);
-
-	    gui.select_window(featwin);
 	    if ((f1y < 0) || (f1x < 0) || (f2y < 0) || (f2x < 0)
 		|| (f1y + optical_flow_window.height >= im1.dim(0))
 		|| (f1x + optical_flow_window.width >= im1.dim(1))
 		|| (f2y + optical_flow_window.height >= im2.dim(0))
 		|| (f2x + optical_flow_window.width >= im2.dim(1)))
 	      continue ;
+
+	    if (!first_time) {
+	      if (i < features_xy.size()) {
+		idx<ubyte>* win = new idx<ubyte>(optical_flow_window.height,
+						 optical_flow_window.width);
+		idx<ubyte> f2 = im2.narrow(0, optical_flow_window.height, f2y);
+		f2 = f2.narrow(1, optical_flow_window.width, f2x);
+		idx_copy(f2, *win);
+		features[i]->push_back(win);
+		features_xy[i]->first = p2x;
+		features_xy[i]->second = p2y;
+	      }
+	    }
+#ifdef __GUI__
+	    gui.select_window(mainwin);
+	    gui.add_arrow(p1x, p1y, p2x, p2y);
+
+	    gui.select_window(featwin);
 	    idx<ubyte> f1 = im1.narrow(0, optical_flow_window.height, f1y);
 	    f1 = f1.narrow(1, optical_flow_window.width, f1x);
 	    idx<ubyte> f2 = im2.narrow(0, optical_flow_window.height, f2y);
@@ -347,7 +378,57 @@ using namespace ebl;
 	    }
 #endif
 	  }
-	sleep(5);
+	
+	if (first_time) {
+	  first_time = false;
+	  vector<idx<ubyte>*> *feature;
+	  idx<ubyte> *win;
+	  for(int i = 0; i < number_of_features; i++) {
+	    if ( optical_flow_found_feature[i] == 0 )	continue;
+	    int p1x = frame1_features[i].x;
+	    int p1y = frame1_features[i].y;
+	    int p2x = frame2_features[i].x;
+	    int p2y = frame2_features[i].y;
+	    int f1y = p1y - optical_flow_window.height / 2;
+	    int f1x = p1x - optical_flow_window.width / 2;
+	    int f2y = p2y - optical_flow_window.height / 2;
+	    int f2x = p2x - optical_flow_window.width / 2;
+	    if ((f1y < 0) || (f1x < 0) || (f2y < 0) || (f2x < 0)
+		|| (f1y + optical_flow_window.height >= im1.dim(0))
+		|| (f1x + optical_flow_window.width >= im1.dim(1))
+		|| (f2y + optical_flow_window.height >= im2.dim(0))
+		|| (f2x + optical_flow_window.width >= im2.dim(1)))
+	      continue ;
+	    feature = new vector<idx<ubyte>*>;
+	    win = new idx<ubyte>(optical_flow_window.height,
+				 optical_flow_window.width);
+	    idx<ubyte> f2 = im2.narrow(0, optical_flow_window.height, f2y);
+	    f2 = f2.narrow(1, optical_flow_window.width, f2x);
+	    idx_copy(f2, *win);
+	    feature->push_back(win);
+	    features.push_back(feature);
+	    features_xy.push_back(new pair<int,int>(p2x, p2y));
+	  }
+	}
+
+	// draw fixed features
+	gui.select_window(featswin);
+	gui.clear();
+	int hh = 0, ww = 0;
+	vector<vector<idx<ubyte>*> *>::iterator i = features.begin();
+	vector<pair<int,int>*>::iterator p = features_xy.begin();
+	for ( ; i != features.end(); ++i, ++p) {
+	  vector<idx<ubyte>*>::iterator j = (*i)->begin();
+	  for ( ; j != (*i)->end(); ++j) {
+	    gui.draw_matrix(**j, hh, ww);
+	    ww += optical_flow_window.width + 1;
+	  }
+	  gui << at(hh, ww) << "(" << (*p)->first << ", " << (*p)->second << ")";
+	  hh += optical_flow_window.height + 1;
+	  ww = 0;
+	}
+
+	sleep(3);
       }
 #endif /* __OPENCV__ */
     return 0;
