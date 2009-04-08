@@ -74,6 +74,7 @@ namespace ebl {
     text_h0 = 0;
     text_w0 = 0;
     txt = NULL; // current text
+    wupdate = true; // always update display
   }
 
   Window::~Window() {
@@ -84,6 +85,14 @@ namespace ebl {
       delete qimage;
     clear_text();
     clear_arrows();
+  }
+
+  void Window::set_wupdate(bool ud) {
+    if (wupdate != ud) {
+      wupdate = ud;
+      if (wupdate)
+	update_window(false);
+    }
   }
 
   void Window::clear_text() {
@@ -191,14 +200,16 @@ namespace ebl {
   }
 
   void Window::update_window(bool activate) {
-    update(); 
-    // saving pixmap if silent or show it otherwise
-    if (silent) 
-      save(savefname.c_str());
-    else {
-      show();
-      if (activate)
-	activateWindow();
+    if (wupdate) {
+      update(); 
+      // saving pixmap if silent or show it otherwise
+      if (silent) 
+	save(savefname.c_str());
+      else {
+	show();
+	if (activate)
+	  activateWindow();
+      }
     }
   }
   

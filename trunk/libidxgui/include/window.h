@@ -80,12 +80,14 @@ namespace ebl {
     string		 savefname;
     unsigned int	 text_h0;
     unsigned int	 text_w0;
+    bool                 wupdate;
 
   public:
     Window(unsigned int wid, const char *wname = NULL, 
 	   int height = 0, int width = 0);
     virtual ~Window();
 
+    void set_wupdate(bool ud);
     void save(const char *filename);
     void set_silent(const std::string *filename);
     void add_text(const std::string *s);

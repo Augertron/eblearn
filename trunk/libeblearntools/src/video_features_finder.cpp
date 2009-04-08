@@ -324,6 +324,12 @@ using namespace ebl;
 	 */
 	cvCalcOpticalFlowPyrLK(frame1_1C, frame2_1C, pyramid1, pyramid2, frame1_features, frame2_features, number_of_features, optical_flow_window, 5, optical_flow_found_feature, optical_flow_feature_error, optical_flow_termination_criteria, 0 );
 		
+#ifdef __GUI__
+	gui.select_window(mainwin);
+	gui.disable_updates();
+	gui.select_window(featwin);
+	gui.disable_updates();
+#endif
 	for(int i = 0; i < number_of_features; i++)
 	  {
 	    // If Pyramidal Lucas Kanade didn't really find the feature, skip it.
@@ -346,7 +352,7 @@ using namespace ebl;
 	      continue ;
 
 	    if (!first_time) {
-	      if (i < features_xy.size()) {
+	      if (((unsigned int) i) < features_xy.size()) {
 		idx<ubyte>* win = new idx<ubyte>(optical_flow_window.height,
 						 optical_flow_window.width);
 		idx<ubyte> f2 = im2.narrow(0, optical_flow_window.height, f2y);
@@ -379,6 +385,12 @@ using namespace ebl;
 #endif
 	  }
 	
+#ifdef __GUI__
+	gui.select_window(mainwin);
+	gui.enable_updates();
+	gui.select_window(featwin);
+	gui.enable_updates();
+
 	if (first_time) {
 	  first_time = false;
 	  vector<idx<ubyte>*> *feature;
@@ -413,6 +425,7 @@ using namespace ebl;
 
 	// draw fixed features
 	gui.select_window(featswin);
+	gui.disable_updates();
 	gui.clear();
 	int hh = 0, ww = 0;
 	vector<vector<idx<ubyte>*> *>::iterator i = features.begin();
@@ -427,6 +440,8 @@ using namespace ebl;
 	  hh += optical_flow_window.height + 1;
 	  ww = 0;
 	}
+	gui.enable_updates();
+#endif
 
 	sleep(3);
       }

@@ -63,6 +63,8 @@ namespace ebl {
 	    this, SLOT(set_text_origin(unsigned int, unsigned int)));
     connect(&thread, SIGNAL(gui_set_silent(const std::string *)), 
 	    this, SLOT(set_silent(const std::string *)));
+    connect(&thread, SIGNAL(gui_set_wupdate(bool)), 
+	    this, SLOT(set_wupdate(bool)));
   }
 
   gui_thread::~gui_thread() {
@@ -95,6 +97,11 @@ namespace ebl {
   void gui_thread::set_text_origin(unsigned int h0, unsigned int w0) {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->set_text_origin(h0, w0);
+  }
+
+  void gui_thread::set_wupdate(bool update) {
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->set_wupdate(update);
   }
 
   void gui_thread::set_silent(const std::string *filename) {
