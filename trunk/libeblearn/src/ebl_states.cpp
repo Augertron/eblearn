@@ -373,6 +373,12 @@ namespace ebl {
     ddeltax.resize(s0);
   }
 
+  bool parameter::save_x(const char *s) {
+    if (!save_matrix(x, s))
+      return false;
+    return true;
+  }
+
   bool parameter::load_x(const char *s) {
     /*	idx<double> m(1, 1), tmp(1);
 	if (!load_matrix(m, s))

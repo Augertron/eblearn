@@ -44,7 +44,7 @@
 using namespace std;
 using namespace ebl;
 
-void generateidxDataSet(string pathToData);
+void generate_idx_data_set(string pathToData);
 string getPathToData();
 
 /* Here we define the ConvNet to be used for posture estimation:
@@ -128,8 +128,8 @@ int main(int argc, char **argv) {
   
   //! create an idx file for the datasets, if 'train-only' is not supplied
   if (argc > 1) {
-    if (strcmp(argv[1], "train-only") != 0) generateidxDataSet(pathToData);
-  } else if (argc == 1) generateidxDataSet(pathToData);
+    if (strcmp(argv[1], "train-only") != 0) generate_idx_data_set(pathToData);
+  } else if (argc == 1) generate_idx_data_set(pathToData);
 
   cout << endl << "Training the ConvNet" << endl;
   init_drand(time(NULL)); // initialize random seed
@@ -208,7 +208,7 @@ int main(int argc, char **argv) {
   }
 
   // Store the trained conv-net to a file...
-  //theparam.save_x("data/trained_conv_net");
+  theparam.save_x("data/trained_conv_net");
   // to get is back: theparam.load_x("data/trained_conv_net.mat");
 
   return 0;
@@ -216,8 +216,9 @@ int main(int argc, char **argv) {
 
 
 
-// generate idx files from a given set of images.
-void generateidxDataSet(string pathToData) {
+// generate Idx files from a given set of images.
+void generate_idx_data_set(string pathToData) {
+
   string pathTrainingSet = pathToData+"/train";
   string pathTestingSet = pathToData+"/test";
   string pathToIdx = pathToData+"/idx";
