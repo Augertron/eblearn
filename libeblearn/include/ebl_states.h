@@ -264,7 +264,7 @@ namespace ebl {
     bool load_x(const char *param_filename);
 
     //! save the x component to a file.
-    void save_x(const char *param_filename);
+    bool save_x(const char *param_filename);
   };
 
   ////////////////////////////////////////////////////////////////
