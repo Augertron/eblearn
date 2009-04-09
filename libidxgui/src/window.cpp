@@ -271,7 +271,7 @@ namespace ebl {
 	ax2 = (*i)->h2;
 	ay2 = (*i)->w2;
 	double angle = atan2( (double) ay1 - ay2, (double) ax1 - ax2);
-	double hypotenuse = sqrt( pow(ay1 - ay2, 2) + pow(ax1 - ax2, 2));
+	double hypotenuse = sqrt( pow((float)ay1 - ay2, 2) + pow((float)ax1 - ax2, 2));
 	/* Here we lengthen the arrow by a factor of three. */
 	ax2 = (int) (ax1 - len_factor * hypotenuse * cos(angle));
 	ay2 = (int) (ay1 - len_factor * hypotenuse * sin(angle));
