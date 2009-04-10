@@ -80,6 +80,8 @@ namespace ebl {
     if ((height != 0) && (width != 0))
       buffer_resize(height, width);
     wupdate = true; // always update display
+    text_fg_color.setRgb(255, 255, 255, 255);
+    text_bg_color.setRgb(0, 0, 0, 127);
   }
 
   Window::~Window() {
@@ -182,6 +184,14 @@ namespace ebl {
   void Window::add_image(idx<ubyte> &img, unsigned int h0, unsigned int w0) {
     images.push_back(new image(img, h0, w0));
     update_window(false);
+  }
+
+  void Window::set_text_colors(unsigned char fg_r, unsigned char fg_g, 
+			       unsigned char fg_b, unsigned char fg_a,
+			       unsigned char bg_r, unsigned char bg_g, 
+			       unsigned char bg_b, unsigned char bg_a) {
+    text_fg_color.setRgb(fg_r, fg_g, fg_b);
+    text_bg_color.setRgb(bg_r, bg_g, bg_b);    
   }
   
   void Window::set_text_origin(unsigned int h0, unsigned int w0) {
@@ -346,18 +356,18 @@ namespace ebl {
       if (*i) {
 	QString txt((*i)->c_str());
 	QRectF bg;
-	painter.setPen(Qt::white);
+	painter.setPen(text_fg_color);
 	QRect qr = rect();
 	qr.setLeft((*i)->w0);
 	qr.setTop((*i)->h0 - 1);
 	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
 			 txt, &bg);
 	painter.setPen(Qt::NoPen);
-	painter.setBrush(QColor(0, 0, 0, 127));
+	painter.setBrush(text_bg_color);
 	bg.setTop(bg.top() + 1);
 	bg.setHeight(bg.height() - 3);
 	painter.drawRect(bg);
-	painter.setPen(Qt::white);
+	painter.setPen(text_fg_color);
 	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
 			 txt, &bg);
       }

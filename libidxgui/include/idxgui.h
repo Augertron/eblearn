@@ -67,9 +67,15 @@ namespace ebl {
     template<class T> friend
       idxgui& operator<<(idxgui& r, const T val);
 
-    void add_text(std::string *s);
     void add_arrow(int h1, int w1, int h2, int w2);
-    void set_text_origin(unsigned int h0, unsigned int w0);
+    void set_text_colors(unsigned char fg_r, unsigned char fg_g, 
+			 unsigned char fg_b, unsigned char fg_a,
+			 unsigned char bg_r, unsigned char bg_g, 
+			 unsigned char bg_b, unsigned char bg_a);
+    void set_text_colors(int fg_r, int fg_g, 
+			 int fg_b, int fg_a,
+			 int bg_r, int bg_g, 
+			 int bg_b, int bg_a);
     void set_cout_and_gui();
     void set_gui_only();
     void set_silent();
@@ -99,6 +105,10 @@ namespace ebl {
 			     T minv = 0, T maxv = 0, 
 			     double zoomw = 1.0, double zoomh = 1.0);
 
+    void add_text(std::string *s);
+    void set_text_origin(unsigned int h0, unsigned int w0);
+  private:
+
   signals:
     void gui_drawImage(idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void appquit();
@@ -108,6 +118,10 @@ namespace ebl {
     void gui_add_text(const std::string *s);
     void gui_add_arrow(int h1, int w1, int h2, int w2);
     void gui_set_text_origin(unsigned int h0, unsigned int w0);
+    void gui_set_text_colors(unsigned char fg_r, unsigned char fg_g, 
+			     unsigned char fg_b, unsigned char fg_a,
+			     unsigned char bg_r, unsigned char bg_g, 
+			     unsigned char bg_b, unsigned char bg_a);
     void gui_set_silent(const std::string *filename);
     void gui_set_wupdate(bool update);
     

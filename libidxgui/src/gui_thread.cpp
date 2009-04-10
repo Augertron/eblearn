@@ -61,6 +61,14 @@ namespace ebl {
 	    this, SLOT(add_arrow(int, int, int, int)));
     connect(&thread, SIGNAL(gui_set_text_origin(unsigned int, unsigned int)), 
 	    this, SLOT(set_text_origin(unsigned int, unsigned int)));
+    connect(&thread, SIGNAL(gui_set_text_colors(unsigned char, unsigned char, 
+						unsigned char, unsigned char,
+						unsigned char, unsigned char, 
+						unsigned char, unsigned char)), 
+	    this, SLOT(set_text_colors(unsigned char, unsigned char, 
+				       unsigned char, unsigned char,
+				       unsigned char, unsigned char, 
+				       unsigned char, unsigned char)));
     connect(&thread, SIGNAL(gui_set_silent(const std::string *)), 
 	    this, SLOT(set_silent(const std::string *)));
     connect(&thread, SIGNAL(gui_set_wupdate(bool)), 
@@ -97,6 +105,15 @@ namespace ebl {
   void gui_thread::set_text_origin(unsigned int h0, unsigned int w0) {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->set_text_origin(h0, w0);
+  }
+
+  void gui_thread::set_text_colors(unsigned char fg_r, unsigned char fg_g, 
+				   unsigned char fg_b, unsigned char fg_a,
+				   unsigned char bg_r, unsigned char bg_g, 
+				   unsigned char bg_b, unsigned char bg_a) { 
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->set_text_colors(fg_r, fg_g, fg_b, fg_a, 
+				     bg_r, bg_g, bg_b, bg_a);
   }
 
   void gui_thread::set_wupdate(bool update) {

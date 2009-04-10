@@ -34,89 +34,97 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // supervised_trainer_gui
 
-  template <class Tdata, class Tlabel>  
-  supervised_trainer_gui<Tdata, Tlabel>::
-  supervised_trainer_gui(supervised_trainer<Tdata, Tlabel> &st_)
-    : datasource_wid(-1), internals_wid(-1), st(st_) {
+  supervised_trainer_gui::supervised_trainer_gui()
+    : datasource_wid(-1), internals_wid(-1) {
+  }
+
+  supervised_trainer_gui::~supervised_trainer_gui() {
   }
 
   template <class Tdata, class Tlabel>  
-  supervised_trainer_gui<Tdata, Tlabel>::~supervised_trainer_gui() {
-  }
-
-  template <class Tdata, class Tlabel>  
-  void supervised_trainer_gui<Tdata, Tlabel>::
-  display_datasource(labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
-		  unsigned int display_nh, unsigned int display_nw, 
-		  unsigned int display_h0, 
-		  unsigned int display_w0, double display_zoom, 
-		  int wid, const char *title) {
+  void supervised_trainer_gui::
+  display_datasource(supervised_trainer<Tdata, Tlabel> &st,
+		     labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
+		     unsigned int nh, unsigned int nw, unsigned int h0, 
+		     unsigned int w0, double zoom, int wid, const char *title) {
+    // if no window given, create a new one or reuse previous one
     datasource_wid = (wid >= 0) ? wid : 
       ((datasource_wid >= 0) ? datasource_wid :
        gui.new_window((title ? title : "Supervised Trainer")));
     gui.select_window(datasource_wid);
     gui.disable_updates();
     gui.clear();
-    //    log.clear();
+    // init datasource
     ds.seek_begin();
     st.resize_input(ds);
-    bool correct;
-    int answer;
-    cout << ds.name << ": iter# " << st.iteration << " ";
-    unsigned int h = display_h0 + 35, w = display_w0, nh = 0, w01 = display_w0;
-    unsigned int h2 = h, w2 = display_w0, w02 = display_w0, i2 = 0;
+    // find out sample size
     ds.fprop(*st.input, st.label);
     idx<double> m = st.input->x.select(0, 0);
-    
-    //    else cout << ds.name << ": iter# " << iteration << " ";
-    for (unsigned int i = 0; i < ds.size(); ++i) {
+    // top left coordinates of datasets display 1 and 2
+    unsigned int w01 = nh * (m.dim(0) + 2) + 5, h01 = h0 + 35;
+    unsigned int w02 = (nh * (m.dim(0) + 2) + 5) * 2, h02 = h0 + 35;
+    // working variables
+    unsigned int h1 = h01, w1 = w01, nh1 = 0;
+    unsigned int h2 = h02, w2 = w02, i2 = 0;
+    bool correct;
+    int answer;
+
+    gui.set_text_colors(0, 0, 0, 255, 255, 255, 255, 127);
+    gui << gui_only();
+    gui << at(h0, w0) << ds.name;
+    gui << at(h0 + 17, w0) << "Groundtruth";
+    gui << at(h0 + 17, w01) << "Correct & incorrect answers";
+    gui << at(h0 + 17, w02) << "Incorrect only";
+
+    // 0. display dataset with groundtruth labels
+    dsgui.display(ds, nh, nw, h0 + 35, w0, zoom, datasource_wid);
+
+    // loop on nh * nw first samples
+    for (unsigned int i = 0; (i < ds.size()) && (i2 < nh * nw); ++i) {
+      // test sample
       ds.fprop(*st.input, st.label);
       correct = st.test_sample(*st.input, st.label.get(), answer, infp);
-      //      log.update(age, correct, energy);
       ds.next();
       idx<double> m = st.input->x.select(0, 0);
-      // display all display_nh*display_nw incorrect or correct answers
-      if (nh < display_nh) {
-	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h, w,
-			      0.0, 0.0, 
-			      display_zoom, display_zoom);
+
+      // 1. display dataset with incorrect and correct answers
+      if (nh1 < nh) {
+	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h1, w1, 0.0, 0.0, 
+			      zoom, zoom);
 	if ((ds.lblstr) && (ds.lblstr->at(answer)))
-	  gui << at(h + 2, w + 2) << (ds.lblstr->at(answer))->c_str();
-	w += m.dim(1) + 2;
-	if (((i + 1) % display_nw == 0) && (i > 1)) {  
-	  w = w01;
-	  h += m.dim(0) + 2;
-	  nh++;
+	  gui << at(h1 + 2, w1 + 2) << (ds.lblstr->at(answer))->c_str();
+	w1 += m.dim(1) + 2;
+	if (((i + 1) % nw == 0) && (i > 1)) {  
+	  w1 = w01;
+	  h1 += m.dim(0) + 2;
+	  nh1++;
 	}
       }
-	// display first display_nh*display_nw incorrect answers
-      if ((i2 < display_nh * display_nw) && (!correct)) {
-	  gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h2, w2, 0.0, 0.0, 
-				display_zoom, display_zoom);
-	  if ((ds.lblstr) && (ds.lblstr->at(answer)))
-	    gui << at(h2 + 2, w2 + 2) << (ds.lblstr->at(answer))->c_str();
-	  w2 += m.dim(1) + 2;
-	  if (((i2 + 1) % display_nw == 0) && (i2 > 1)) {  
-	    w2 = w02;
-	    h2 += m.dim(0) + 2;
-	  }
+      // 2. display first nh * nw incorrect answers
+      if (!correct) {
+	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h2, w2, 0.0, 0.0, 
+			      zoom, zoom);
+	if ((ds.lblstr) && (ds.lblstr->at(answer)))
+	  gui << at(h2 + 2, w2 + 2) << (ds.lblstr->at(answer))->c_str();
+	w2 += m.dim(1) + 2;
+	if (((i2 + 1) % nw == 0) && (i2 > 1)) {  
+	  w2 = w02;
+	  h2 += m.dim(0) + 2;
+	}
+	i2++;
       }
-	if (!correct)
-	  i2++;
     }
-    gui << at(0, 200) << cout_and_gui();
-    //    log.display();
-    cout << endl;
     gui.enable_updates();
   }
 
   template <class Tdata, class Tlabel>  
-  void supervised_trainer_gui<Tdata, Tlabel>::
-  display_internals(labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
-		  unsigned int ninternals, 
-		  unsigned int display_h0, 
-		  unsigned int display_w0, double display_zoom, 
-		  int wid, const char *title) {
+  void supervised_trainer_gui::
+  display_internals(supervised_trainer<Tdata, Tlabel> &st,
+		    labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
+		    unsigned int ninternals, 
+		    unsigned int display_h0, 
+		    unsigned int display_w0, double display_zoom, 
+		    int wid, const char *title) {
     internals_wid = (wid >= 0) ? wid : 
       ((internals_wid >= 0) ? internals_wid :
        gui.new_window((title ? 
@@ -124,22 +132,22 @@ namespace ebl {
     gui.select_window(internals_wid);
     gui.disable_updates();
     gui.clear();
-    //    log.clear();
     ds.seek_begin();
     st.resize_input(ds);
     bool correct;
     int answer;
-    cout << ds.name << ": iter# " << st.iteration << " ";
     unsigned int wfdisp = 0, hfdisp = 0;
     ds.fprop(*st.input, st.label);
     idx<double> m = st.input->x.select(0, 0);
     
+    // display first ninternals samples
     for (unsigned int i = 0; (i < ds.size()) && (i < ninternals); ++i) {
       ds.fprop(*st.input, st.label);
       correct = st.test_sample(*st.input, st.label.get(), answer, infp);
       //      log.update(age, correct, energy);
       ds.next();
-      st.machine.display_fprop(*st.input, answer, st.energy, hfdisp, wfdisp, 3.0);
+      st.machine.display_fprop(*st.input, answer, st.energy, hfdisp, wfdisp, 
+			       3.0);
       hfdisp += 10;
     }
     gui.enable_updates();

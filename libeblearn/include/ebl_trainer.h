@@ -114,7 +114,7 @@ namespace ebl {
     void resize_input(labeled_datasource<Tdata, Tlabel> &ds);
 
     // friends
-    template<class Td, class Tl> friend class supervised_trainer_gui;
+    friend class supervised_trainer_gui;
   };
 
 } // namespace ebl {

@@ -43,19 +43,24 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // labeled_datasource_gui
 
-  template<typename Tdata, typename Tlabel> class labeled_datasource_gui {
+  class labeled_datasource_gui {
   private:
     unsigned int	 display_wid;
-    labeled_datasource<Tdata, Tlabel>	&ds;
 
   public:
-    labeled_datasource_gui(labeled_datasource<Tdata, Tlabel> &ds);
+    labeled_datasource_gui();
     virtual ~labeled_datasource_gui();
 
-    virtual void display(unsigned int nh, unsigned int nw, 
-			 unsigned int h0 = 0, unsigned int w0 = 0, 
-			 double zoom = 1.0, int wid = -1, 
-			 const char *wname = NULL);
+    //! display the first nh * nw samples of dataset ds at coordinates (h0, w0),
+    //! with zoom <zoom>. If a window id <wid> is specified, use that window,
+    //! otherwise create a new window and reuse it.
+    //! <wname> is an optional window title.
+    template<class Tdata, class Tlabel>
+      void display(labeled_datasource<Tdata, Tlabel> &ds,
+		   unsigned int nh, unsigned int nw, 
+		   unsigned int h0 = 0, unsigned int w0 = 0, 
+		   double zoom = 1.0, int wid = -1, 
+		   const char *wname = NULL);
   };
 
 } // end namespace ebl
