@@ -73,6 +73,10 @@ namespace ebl {
     void add_text(const std::string *s);
     void add_arrow(int x1, int y1, int x2, int y2);
     void set_text_origin(unsigned int h0, unsigned int w0);
+    void set_text_colors(unsigned char fg_r, unsigned char fg_g, 
+			 unsigned char fg_b, unsigned char fg_a,
+			 unsigned char bg_r, unsigned char bg_g, 
+			 unsigned char bg_b, unsigned char bg_a);
     void updatePixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void appquit();
     void clear();

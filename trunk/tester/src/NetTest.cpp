@@ -35,30 +35,6 @@ void NetTest::test_lenet5_mnist() {
   mnist_datasource<ubyte,ubyte> train_ds, test_ds;
   load_mnist_dataset(gl_mnist_dir->c_str(), train_ds, test_ds, trsize, tesize);
 
-//   int display_w0 = 0, display_h0 = 0, display_nw = 10, display_nh = 10, w = 0;
-//   int w01 = 0, w02 = 0, h = 0;
-//       // datasets displays
-//   //      gui.select_window(display_wid);
-   int display_wid = gui.new_window();
-//   gui.clear();
-//   w01 = display_w0 + display_nw * (m.dim(1) + 1) + 10;
-//   w02 = display_w0 + (display_nw * (m.dim(1) + 2) + 10) * 2;
-//   w = w01;
-//   w2 = w02;
-//       //      gui << cout_and_gui();
-//       gui << gui_only();
-//       gui << at(0, 0) << ds.name;
-//       gui << ": iter# " << iteration << " ";
-//       gui << gui_only();
-//       gui << at(display_h0 + 17, display_w0) << "Groundtruth";
-//       gui << at(display_h0 + 17, w01) << "Correct & incorrect answers";
-//       gui << at(display_h0 + 17, w02) << "Incorrect only";
-   labeled_datasource_gui<ubyte, ubyte> dsgui(test_ds);
-   dsgui.display(10, 10, 0, 0, 1, display_wid);
-      //      dsgui.display(display_nh, display_nw, h, display_w0, display_zoom,
-      //		    display_wid);
-   
-
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
 
@@ -68,7 +44,7 @@ void NetTest::test_lenet5_mnist() {
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
   supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam, cout);
-  supervised_trainer_gui<ubyte, ubyte> stgui(thetrainer);
+  supervised_trainer_gui stgui;
 
   // a classifier-meter measures classification errors
   classifier_meter trainmeter;
@@ -105,15 +81,15 @@ void NetTest::test_lenet5_mnist() {
 	
   thetrainer.test(train_ds, trainmeter, infp);
   thetrainer.test(test_ds, testmeter, infp);
-  stgui.display_datasource(test_ds, infp, 10, 10);
-  stgui.display_internals(test_ds, infp, 2);
+  stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
+  stgui.display_internals(thetrainer, test_ds, infp, 2);
   // this goes at about 25 examples per second on a PIIIM 800MHz
   for (int i = 0; i < 5; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
     thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
-    stgui.display_datasource(test_ds, infp, 10, 10);
-    stgui.display_internals(test_ds, infp, 2);
+    stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
+    stgui.display_internals(thetrainer, test_ds, infp, 2);
   }
   CPPUNIT_ASSERT_DOUBLES_EQUAL(97.15,
 			       ((trainmeter.total_correct * 100) 

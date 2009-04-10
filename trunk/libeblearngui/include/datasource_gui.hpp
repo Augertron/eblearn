@@ -42,24 +42,17 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // labeled_datasource_gui
 
-  template<typename Tdata, typename Tlabel>
-  labeled_datasource_gui<Tdata,Tlabel>
-  ::labeled_datasource_gui(labeled_datasource<Tdata, Tlabel> &ds_)
-    : ds(ds_) {
+  labeled_datasource_gui::labeled_datasource_gui() {
+  }
+
+  labeled_datasource_gui::~labeled_datasource_gui() {
   }
 
   template<typename Tdata, typename Tlabel>
-  labeled_datasource_gui<Tdata,Tlabel>::~labeled_datasource_gui() {
-  }
-
-  template<typename Tdata, typename Tlabel>
-  void labeled_datasource_gui<Tdata,Tlabel>::display(unsigned int nh, 
-						     unsigned int nw,
-						     unsigned int h0,
-						     unsigned int w0,
-						     double zoom,
-						     int wid,
-						     const char *wname) {
+  void labeled_datasource_gui::display(labeled_datasource<Tdata, Tlabel> &ds,
+				       unsigned int nh, unsigned int nw,
+				       unsigned int h0, unsigned int w0,
+				       double zoom, int wid, const char *wname) {
     display_wid = (wid >= 0) ? wid : 
       gui.new_window((wname ? wname : ds.name), 
 		     nh * (ds.height + 1) - 1, nw * (ds.width + 1) - 1);

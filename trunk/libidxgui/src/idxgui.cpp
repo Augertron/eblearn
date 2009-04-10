@@ -109,6 +109,23 @@ namespace ebl {
     emit gui_set_text_origin(h0, w0);    
   }
 
+  void idxgui::set_text_colors(int fg_r, int fg_g, 
+			       int fg_b, int fg_a,
+			       int bg_r, int bg_g, 
+			       int bg_b, int bg_a) {
+    set_text_colors((unsigned char) fg_r, (unsigned char) fg_g, 
+		    (unsigned char) fg_b, (unsigned char) fg_a, 
+		    (unsigned char) bg_r, (unsigned char) bg_g, 
+		    (unsigned char) bg_b, (unsigned char) bg_a);
+  }
+  void idxgui::set_text_colors(unsigned char fg_r, unsigned char fg_g, 
+			       unsigned char fg_b, unsigned char fg_a,
+			       unsigned char bg_r, unsigned char bg_g, 
+			       unsigned char bg_b, unsigned char bg_a) {
+    emit gui_set_text_colors(fg_r, fg_g, fg_b, fg_a, 
+			    bg_r, bg_g, bg_b, bg_a);
+  }
+
   void idxgui::enable_updates() {
     emit gui_set_wupdate(true);    
   }

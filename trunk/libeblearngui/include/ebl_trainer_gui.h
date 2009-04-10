@@ -34,36 +34,49 @@
 
 #include "libidxgui.h"
 #include "libeblearn.h"
+#include "datasource_gui.h"
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Supervised Trainer gui
 
-  template<class Tdata, class Tlabel>
-    class supervised_trainer_gui {
+  class supervised_trainer_gui {
   private:
-    unsigned int			 display_nh;
-    unsigned int			 display_nw;
-    unsigned int			 display_h0;
-    unsigned int			 display_w0;
-    double				 display_zoom;
-    int					 datasource_wid;
-    int					 internals_wid;
-    supervised_trainer<Tdata, Tlabel>	&st;
+    unsigned int		display_nh;
+    unsigned int		display_nw;
+    unsigned int		display_h0;
+    unsigned int		display_w0;
+    int				datasource_wid;
+    int				internals_wid;
+    labeled_datasource_gui	dsgui;
 
   public:
-    supervised_trainer_gui(supervised_trainer<Tdata, Tlabel> &st);
+    supervised_trainer_gui();
     virtual ~supervised_trainer_gui();
-
-    void display_datasource(labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
-			 unsigned int nh, unsigned int nw, unsigned int h0 = 0, 
-			 unsigned int w0 = 0, double zoom = 1.0, int wid = -1,
-			 const char *title = NULL);
-    void display_internals(labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
-			 unsigned int ninternals, unsigned int h0 = 0, 
-			 unsigned int w0 = 0, double zoom = 1.0, int wid = -1,
-			 const char *title = NULL);
+    
+    //! displays nh x nw samples of the datasource ds 3 times:
+    //! 1- with groundtruth labels
+    //! 2- with classification answers, correct and wrong
+    //! 3- samples with wrong answers only
+    template<class Tdata, class Tlabel>
+      void display_datasource(supervised_trainer<Tdata, Tlabel> &st,
+			      labeled_datasource<Tdata, Tlabel> &ds,
+			      infer_param &infp,
+			      unsigned int nh, unsigned int nw, 
+			      unsigned int h0 = 0, unsigned int w0 = 0, 
+			      double zoom = 1.0, int wid = -1,
+			      const char *title = NULL);
+    
+    //! displays internal states of the <ninternals> first samples of ds.
+    template<class Tdata, class Tlabel>
+      void display_internals(supervised_trainer<Tdata, Tlabel> &st,
+			     labeled_datasource<Tdata, Tlabel> &ds, 
+			     infer_param &infp,
+			     unsigned int ninternals, 
+			     unsigned int h0 = 0, unsigned int w0 = 0, 
+			     double zoom = 1.0, int wid = -1,
+			     const char *title = NULL);
   };
 
 } // namespace ebl {
