@@ -43,7 +43,8 @@ ADD_LIBRARY (eblearn SHARED
 		     src/datasource.cpp  
 		     )
 
-## link against libidx
+# linking
+################################################################################
 TARGET_LINK_LIBRARIES(eblearn idx)
 IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (eblearn idxgui)

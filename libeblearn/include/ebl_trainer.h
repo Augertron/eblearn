@@ -53,13 +53,6 @@ namespace ebl {
   template<class Tdata, class Tlabel>
     class supervised_trainer {
   private:
-    unsigned int	 display_nh;
-    unsigned int	 display_nw;
-    unsigned int	 display_h0;
-    unsigned int	 display_w0;
-    double		 display_zoom;
-    unsigned int	 display_wid;
-    unsigned int	 fpropdisplay_wid;
     int			 iteration;
     void		*iteration_ptr;
 
@@ -75,10 +68,6 @@ namespace ebl {
     supervised_trainer(fc_ebm2<state_idx,int,state_idx> &m, 
 		       parameter &p, ostream& cout = std::cout);
     virtual ~supervised_trainer();
-
-    void set_display(unsigned int nh, unsigned int nw, unsigned int h0 = 0, 
-		     unsigned int w0 = 0, double zoom = 1.0, int wid = -1,
-		     const char *title = NULL);
 
     //! take an input and a vector of possible labels (each of which
     //! is a vector, hence <label-set> is a matrix) and
@@ -104,7 +93,7 @@ namespace ebl {
     //! on a dataset.
     //! returns a list with average loss and proportion of errors
     void test(labeled_datasource<Tdata, Tlabel> &ds, classifier_meter &log,
-	      infer_param &infp, bool display = false);
+	      infer_param &infp);
 
     //! train for <niter> sweeps over the training set. <samples> contains the
     //! inputs samples, and <labels> the corresponding desired categories
@@ -123,6 +112,9 @@ namespace ebl {
     //! allocate it. 
     //! TODO: If order or dimensions have changed, reallocate.
     void resize_input(labeled_datasource<Tdata, Tlabel> &ds);
+
+    // friends
+    template<class Td, class Tl> friend class supervised_trainer_gui;
   };
 
 } // namespace ebl {

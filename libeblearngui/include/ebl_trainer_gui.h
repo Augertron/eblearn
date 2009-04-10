@@ -29,73 +29,45 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef WINDOW_H_
-#define WINDOW_H_
+#ifndef EBL_TRAINER_GUI_H_
+#define EBL_TRAINER_GUI_H_
 
-#include <QPixmap>
-#include <QWidget>
-#include <QtGui>
-#include <QResizeEvent>
-#include <math.h>
-
-#include "RenderThread.h"
+#include "libidxgui.h"
+#include "libeblearn.h"
 
 namespace ebl {
 
-//! Window is a simple "whiteboard" on which you can display
-//! Idxs with for example gray_draw_matrix and RGB_draw_matrix.
-//! Warning: do not use electric fence with QT as it is unstable.
-class Window : public QWidget { 
-  Q_OBJECT
+  ////////////////////////////////////////////////////////////////
+  //! Supervised Trainer gui
+
+  template<class Tdata, class Tlabel>
+    class supervised_trainer_gui {
   private:
-    QPixmap	       *pixmap;
-    QPoint		pixmapOffset;
-    QPoint		lastDragPos;
-    double		pixmapScale;
-    double		curScale;
-    float		scaleIncr;
-  public:
-    RenderThread	thread;
-
-  protected:
-    void paintEvent(QPaintEvent *event);
-    void wheelEvent(QWheelEvent *event);
-    void mousePressEvent(QMouseEvent *event);
-    void mouseMoveEvent(QMouseEvent *event);
-    void mouseReleaseEvent(QMouseEvent *event);
-    
-  private slots:
-    void updatePixmap();
-    void appquit();
+    unsigned int			 display_nh;
+    unsigned int			 display_nw;
+    unsigned int			 display_h0;
+    unsigned int			 display_w0;
+    double				 display_zoom;
+    int					 datasource_wid;
+    int					 internals_wid;
+    supervised_trainer<Tdata, Tlabel>	&st;
 
   public:
-    //! Be careful to create a whiteboard big enough for your pictures, since 
-    //! you won't be able to make it bigger after (ie resizing the window will 
-    //! scale the content, you won't have more space to draw on)
-    Window(int argc, char **argv, int height = 600, int width = 800);
-    virtual ~Window();
+    supervised_trainer_gui(supervised_trainer<Tdata, Tlabel> &st);
+    virtual ~supervised_trainer_gui();
+
+    void display_datasource(labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
+			 unsigned int nh, unsigned int nw, unsigned int h0 = 0, 
+			 unsigned int w0 = 0, double zoom = 1.0, int wid = -1,
+			 const char *title = NULL);
+    void display_internals(labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
+			 unsigned int ninternals, unsigned int h0 = 0, 
+			 unsigned int w0 = 0, double zoom = 1.0, int wid = -1,
+			 const char *title = NULL);
   };
-
-  //! Global pointer to window, allows to call for example 
-  //! window->gray_draw_matrix from anywhere in the code.
-  extern ebl::RenderThread *window;
-
-  //! This macro is intended to replace your int main(int argc, char **argv)
-  //! declaration and hides the declaration of the application and thread.
-  //! What happens is QT takes over the main thread and runs your code
-  //! in a thread.
-#define MAIN_QTHREAD()				\
-  using namespace ebl;				\
-  int main(int argc, char **argv) {		\
-    QApplication a(argc, argv);			\
-    ebl::Window w(argc, argv);			\
-    window = &(w.thread);			\
-    w.thread.start();				\
-    a.exec();					\
-    return 0;					\
-  }						\
-  void RenderThread::run()
 
 } // namespace ebl {
 
-#endif /* WINDOW_H_ */
+#include "ebl_trainer_gui.hpp"
+
+#endif /* EBL_TRAINER_GUI_H_ */

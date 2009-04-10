@@ -337,6 +337,8 @@ hidden states in layers_n");
   void layers_n<T>::display_fprop(T &in, T &out, 
 				  unsigned int &h0, unsigned int &w0,
 				  double zoom, bool show_out) {
+#ifdef __GUI__
+    gui.disable_updates();
     if (modules->empty())
       ylerror("trying to display_fprop through empty layers_n");
     T* hi = &in;
@@ -349,7 +351,6 @@ hidden states in layers_n");
       hi = ho;
     }
     (*modules)[niter]->display_fprop(*ho, out, h0, w0, zoom);
-#ifdef __GUI__
     if (show_out) { 
       unsigned int h = h0, w = w0;
       // display outputs text
@@ -363,6 +364,7 @@ hidden states in layers_n");
       }
       h0 += m.dim(0) * zoom * 5 + 1;
     }
+    gui.enable_updates();
 #endif
   }
 

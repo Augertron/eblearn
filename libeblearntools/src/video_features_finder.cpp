@@ -443,7 +443,7 @@ using namespace ebl;
 	gui.enable_updates();
 #endif
 
-	sleep(3);
+	sleep(2);
       }
 #endif /* __OPENCV__ */
     return 0;

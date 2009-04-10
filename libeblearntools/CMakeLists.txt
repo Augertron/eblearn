@@ -8,15 +8,6 @@
 ################################################################################
 
 
-# compile library
-################################################################################
-add_library (eblearntools SHARED
-  src/dataset_generation.cpp
-  )
-add_executable (videoffinder
-  src/video_features_finder.cpp
-  )
-
 # add include directories
 ################################################################################
 include_directories (include)
@@ -34,13 +25,6 @@ IF (Boost_FOUND)
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__BOOST__")
   INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
   ##LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 ENDIF(Boost_FOUND)
   
 # find opencv
@@ -50,11 +34,6 @@ IF (OpenCV_FOUND)
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__OPENCV__")
   INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
   LINK_DIRECTORIES(${OpenCV_LIBRARY_DIRS})
-  TARGET_LINK_LIBRARIES(eblearntools 
-    ${OpenCV_CV_LIBRARY} 
-    ${OpenCV_CXCORE_LIBRARY} 
-    ${OpenCV_HIGHGUI_LIBRARY} 
-    )
 ENDIF(OpenCV_FOUND)
   
 # find QT
@@ -68,14 +47,43 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GUI__")
 ENDIF (QT_FOUND) #--------------------------------------------------------------
 
+# compile library
+################################################################################
+add_library (eblearntools SHARED
+  src/dataset_generation.cpp
+  )
+
 # link executable with external libraries
 ################################################################################
 target_link_libraries (eblearntools eblearn idx)
-target_link_libraries (videoffinder eblearn idx)
-IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (videoffinder idxgui)
-ENDIF (QT_FOUND) #------------------------------------------------------------
-IF (OpenCV_FOUND) #-----------------------------------------------------------
-  target_link_libraries (videoffinder cv highgui cxcore)
-ENDIF (OpenCV_FOUND) #--------------------------------------------------------
+IF (${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+ELSE(${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
+    ${Boost_REGEX_LIBRARY})
+ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 
+IF (NOT Boost_FOUND)
+  MESSAGE(STATUS "___WARNING___: libeblearntools is compiled but missing capabilities because of missing Boost libraries.")
+ENDIF (NOT Boost_FOUND) #-------------------------------------------------------
+
+IF (OpenCV_FOUND) #-------------------------------------------------------------
+# compile library
+################################################################################
+add_executable (videoffinder
+  src/video_features_finder.cpp
+  )
+
+# link executable with external libraries
+################################################################################
+target_link_libraries (videoffinder eblearn idx)
+IF (QT_FOUND)
+  target_link_libraries (videoffinder idxgui)
+ENDIF (QT_FOUND)
+IF (OpenCV_FOUND)
+  target_link_libraries (videoffinder cv highgui cxcore)
+ENDIF (OpenCV_FOUND)
+
+ELSE (OpenCV_FOUND)
+  MESSAGE(STATUS "___WARNING___: videoffinder won't be compiled because of missing OpenCV libraries.")
+ENDIF (OpenCV_FOUND) #----------------------------------------------------------

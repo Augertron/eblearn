@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2009 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -60,6 +60,14 @@ namespace ebl {
     ~arrow() {};
   };
 
+  class image {
+  public:
+    unsigned int         h0, w0;
+    idx<ubyte>           img;
+    image(idx<ubyte> &img, unsigned int h0, unsigned int w0);
+    ~image() {};
+  };
+
   class Window : public QWidget { 
     Q_OBJECT
   private:
@@ -70,11 +78,14 @@ namespace ebl {
     double		 curScale;
     float		 scaleIncr;
     idx<ubyte>		*buffer;
+    unsigned int         buffer_maxh;
+    unsigned int         buffer_maxw;
     QVector<QRgb>	 colorTable;
     QImage		*qimage;
     vector<text*>        texts;
     text*		 txt;
-    vector<arrow*>        arrows;
+    vector<arrow*>       arrows;
+    vector<image*>       images;
     bool		 silent;
     unsigned int	 id;
     string		 savefname;
@@ -92,24 +103,36 @@ namespace ebl {
     void set_silent(const std::string *filename);
     void add_text(const std::string *s);
     void add_arrow(int h1, int w1, int h2, int w2);
+    void add_image(idx<ubyte> &img, unsigned int h0, unsigned int w0);
+    //! add img to the window and delete img.
     void update_pixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
+    //! add img to the window.
+    void update_pixmap(idx<ubyte> &img, unsigned int h0, unsigned int w0);
     void clear();
-    void clear_text();
-    void clear_arrows();
-    void draw_text(QPainter &painter);
-    void draw_arrows(QPainter &painter);
     void set_text_origin(unsigned int h0, unsigned int w0);
 
   protected:
+    // clear methods
+    void clear_text();
+    void clear_arrows();
+    void clear_images();
+
+    // event methods
     void paintEvent(QPaintEvent *event);
     void wheelEvent(QWheelEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void keyPressEvent(QKeyEvent *event);
-    
+
+    // update methods
     void buffer_resize(int h, int w);
     void update_window(bool activate = true);
+
+    // painting/drawing methods
+    void draw_text(QPainter &painter);
+    void draw_arrows(QPainter &painter);
+    void draw_images();
   };
 
 } // namespace ebl {

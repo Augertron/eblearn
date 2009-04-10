@@ -101,7 +101,7 @@ namespace ebl {
   }
 
   template<typename Tdata, typename Tlabel>
-  int labeled_datasource<Tdata,Tlabel>::size() {
+  unsigned int labeled_datasource<Tdata,Tlabel>::size() {
     return data.dim(0);
   }
 
@@ -185,52 +185,6 @@ namespace ebl {
   void labeled_datasource<Tdata,Tlabel>::seek_begin() {
     dataIter = data.dim_begin(0);
     labelsIter = labels.dim_begin(0);
-  }
-
-  template<typename Tdata, typename Tlabel>
-  void labeled_datasource<Tdata,Tlabel>::display(unsigned int nh, 
-						unsigned int nw,
-						unsigned int h0,
-						unsigned int w0,
-						double zoom,
-						int wid,
-						const char *wname) {
-#ifdef __GUI__
-    display_wid = (wid >= 0) ? wid : 
-      gui.new_window((wname ? wname : name), 
-		     nh * (height + 1) - 1, nw * (width + 1) - 1);
-    gui.select_window(display_wid);
-    draw(nh, nw, h0, w0, zoom);
-#endif
-  }
-
-  template<typename Tdata, typename Tlabel>
-  void labeled_datasource<Tdata,Tlabel>::draw(unsigned int nh, unsigned int nw,
-					     unsigned int h0, unsigned int w0,
-					     double zoom) {
-#ifdef __GUI__
-    gui << gui_only();
-    idxdim d = sample_dims();
-    state_idx s(d);
-    idx<double> m = s.x.select(0, 0);
-    idx<Tlabel> lbl;
-    seek_begin();
-    unsigned int h = h0, w = w0;
-    for (unsigned int ih = 0; ih < nh; ++ih) {
-      for (unsigned int iw = 0; iw < nw; ++iw) {
-	fprop(s, lbl);
-	next();
-	m = s.x.select(0, 0);
-	gui.draw_matrix(m, h, w, 0.0, 0.0, zoom, zoom);
-	if ((lblstr) && (lblstr->at((int)lbl.get())))
-	  gui << at(h + 1, w + 1) << (lblstr->at((int)lbl.get()))->c_str();
-	w += m.dim(1) + 1;
-      }
-      w = w0;
-      h += m.dim(0) + 1;
-    }
-    seek_begin();
-#endif
   }
 
   ////////////////////////////////////////////////////////////////
@@ -326,14 +280,6 @@ namespace ebl {
     test_ds.init(test_data, test_labels, 0.0, 0.01, "MNIST TESTING set");
     train_ds.init(train_data, train_labels, 0.0, 0.01, "MNIST TRAINING set");
     return true;
-  }
-
-  template<typename Tdata, typename Tlabel>
-  void mnist_datasource<Tdata,Tlabel>::display(unsigned int nh, unsigned int nw,
-					      unsigned int h0, unsigned int w0,
-					      double zoom, int wid,
-					      const char *wname) {
-    labeled_datasource<Tdata, Tlabel>::display(nh, nw, h0, w0, zoom, wid, wname);
   }
 
   ////////////////////////////////////////////////////////////////

@@ -9,7 +9,7 @@
 
 include_directories (include)
 include_directories(${LIBIDX_INCLUDE_DIR})
-SET(IDXGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
+SET(LIBIDXGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 
 FIND_PACKAGE(Qt4)
 IF (QT_FOUND) #-----------------------------------------------------------------
@@ -54,4 +54,6 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   target_link_libraries (idxgui ${QT_QTCORE_LIBRARY})
   target_link_libraries (idxgui ${QT_QTGUI_LIBRARY})
   
+ELSE (QT_FOUND) #---------------------------------------------------------------
+  MESSAGE(STATUS "___WARNING___: libidxgui won't be compiled because of missing QT libraries.")
 ENDIF (QT_FOUND) #--------------------------------------------------------------
