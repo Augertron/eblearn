@@ -41,7 +41,11 @@ using namespace std;
 using namespace boost::filesystem;
 using namespace boost;
 
+#endif
+
 namespace ebl {
+
+#ifdef __BOOST__
 
   ////////////////////////////////////////////////////////////////
   // Utility functions to prepare a dataset from raw images.
@@ -158,6 +162,8 @@ namespace ebl {
     return pairs;
   }
 
+#endif 
+
   //! Finds all images corresponding to the imgPatternLeft pattern in directory 
   //! imgDir, assigns for each a class name corresponding to the first directory
   //! level found, crops to square and resizes all images to width*width size.
@@ -172,6 +178,7 @@ namespace ebl {
 		       const char *imgExtension, const char *imgPatternLeft, 
 		       const char *outDir, const char *imgPatternRight, 
 		       bool verbose, const char *prefix, bool toYUV) {
+#ifdef __BOOST__
     path imgp(imgDir);
     bool binocular = false;
     if (!exists(imgp)) {
@@ -257,9 +264,9 @@ namespace ebl {
     save_matrix(images, dsetimages.c_str());
     save_matrix(labels, dsetlabels.c_str());
     save_matrix(classes, dsetclasses.c_str());
+#endif /* __BOOST__ */
     return true;
   }
 
 } // end namespace ebl
 
-#endif /* __BOOST__ */

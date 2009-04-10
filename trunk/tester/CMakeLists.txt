@@ -19,6 +19,7 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   # add include directories
   ##############################################################################
   include_directories(${LIBIDXGUI_INCLUDE_DIR})
+  include_directories(${LIBEBLEARNGUI_INCLUDE_DIR})
   include_directories(${QT_INCLUDE_DIR})
   include_directories(${QT_QTGUI_INCLUDE_DIR})
   include_directories(${QT_QTCORE_INCLUDE_DIR})
@@ -69,6 +70,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   target_link_libraries (eblearn_tester ${CPPUNIT_LIBRARY})
   IF (QT_FOUND) #---------------------------------------------------------------
     target_link_libraries (eblearn_tester idxgui)
+    target_link_libraries (eblearn_tester eblearngui)
   ENDIF (QT_FOUND) #------------------------------------------------------------
   
   # write parameters for execution in run.init

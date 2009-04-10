@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2008 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,32 +29,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef RENDERTHREAD_HPP_
-#define RENDERTHREAD_HPP_
+#include "datasource_gui.h"
 
 using namespace std;
 
 namespace ebl {
-  
-  template<class T>
-  void RenderThread::grey_draw_matrix(Idx<T> &im, int x, int y, T minv, T maxv, 
-				      double zoomw, double zoomh) {
-    if (mutex->tryLock(MUTEX_WAIT_MSEC)) {
-      Idx<ubyte> uim = grey_image_to_ubyte<T>(im, minv, maxv, zoomw, zoomh);
-      copy(uim, x, y);
-      // send image to main gui thread
-      emit renderedImage();
-      mutex->unlock();
-    } else lock_failed_warning();
-  }
-  
-  void grey_draw_matrix(Idx<double> &im, int x, int y, double minv, double maxv,
-			double zoomw, double zoomh);
-  void grey_draw_matrix(Idx<int> &im, int x, int y, int minv, int maxv,
-			double zoomw, double zoomh);
-  void grey_draw_matrix(Idx<ubyte> &im, int x, int y, ubyte minv, ubyte maxv,
-			double zoomw, double zoomh);
 
 } // end namespace ebl
-
-#endif /* RENDERTHREAD_HPP_ */

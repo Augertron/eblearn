@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2009 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -52,6 +52,14 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // image
+
+  image::image(idx<ubyte> &img_, unsigned int h0_, unsigned int w0_)
+    : h0(h0_), w0(w0_), img(img_.dim(0), img_.dim(1)) {
+    idx_copy(img_, img);
+  }
+
+  ////////////////////////////////////////////////////////////////
   // Window
 
   Window::Window(unsigned int wid, const char *wname, int height, int width) 
@@ -71,9 +79,6 @@ namespace ebl {
     clear();
     if ((height != 0) && (width != 0))
       buffer_resize(height, width);
-    text_h0 = 0;
-    text_w0 = 0;
-    txt = NULL; // current text
     wupdate = true; // always update display
   }
 
@@ -85,14 +90,20 @@ namespace ebl {
       delete qimage;
     clear_text();
     clear_arrows();
+    clear_images();
   }
 
-  void Window::set_wupdate(bool ud) {
-    if (wupdate != ud) {
-      wupdate = ud;
-      if (wupdate)
-	update_window(false);
-    }
+  ////////////////////////////////////////////////////////////////
+  // clear methods
+
+  void Window::clear() {
+    if (buffer)
+      idx_fill(*buffer, (ubyte) 255);
+    if (pixmap) 
+      pixmap->fill(Qt::white);
+    clear_text();
+    clear_arrows();
+    clear_images();
   }
 
   void Window::clear_text() {
@@ -112,6 +123,27 @@ namespace ebl {
     arrows.clear();
   }
 
+  void Window::clear_images() {
+    for (vector<image*>::iterator i = images.begin(); i != images.end(); ++i)
+      if (*i)
+	delete (*i);
+    images.clear();
+    buffer_maxh = 0;
+    buffer_maxw = 0;
+  }
+
+  ////////////////////////////////////////////////////////////////
+
+  void Window::set_wupdate(bool ud) {
+    if (wupdate != ud) {
+      wupdate = ud;
+      if (wupdate) {
+	draw_images();
+	update_window(false);
+      }
+    }
+  }
+
   void Window::save(const char *filename) {
     QPixmap p = QPixmap::grabWidget(this, rect());
     if (!p.save(filename, "PNG", 90))
@@ -129,6 +161,9 @@ namespace ebl {
     update();
   }
 
+  ////////////////////////////////////////////////////////////////
+  // add methods
+
   void Window::add_text(const std::string *s) {
     if (!txt) {
       txt = new text(text_h0, text_w0);
@@ -144,6 +179,11 @@ namespace ebl {
     update_window(false);
   }
   
+  void Window::add_image(idx<ubyte> &img, unsigned int h0, unsigned int w0) {
+    images.push_back(new image(img, h0, w0));
+    update_window(false);
+  }
+  
   void Window::set_text_origin(unsigned int h0, unsigned int w0) {
     text_h0 = h0;
     text_w0 = w0;
@@ -151,51 +191,71 @@ namespace ebl {
     texts.push_back(txt);
   }
 
+  ////////////////////////////////////////////////////////////////
+  // update methods
+
   void Window::buffer_resize(int h, int w) {
-    resize(w, h);
-    if (!buffer) {
-      buffer = new idx<ubyte>(h, w);
-      idx_fill(*buffer, (ubyte) 255);
+    if ((!buffer || (buffer->dim(0) != h) || (buffer->dim(1) != w))
+	&& ((h != 0) && (w != 0))) {
+      resize(w, h);
+      if (!buffer) {
+	buffer = new idx<ubyte>(h, w);
+	idx_fill(*buffer, (ubyte) 255);
+      }
+      else {
+	idx<ubyte> *inew = new idx<ubyte>(h, w);
+	idx_fill(*inew, (ubyte) 255);
+	idx<ubyte> tmpnew = inew->narrow(0, MIN(h, buffer->dim(0)), 0);
+	tmpnew = tmpnew.narrow(1, MIN(w, buffer->dim(1)), 0);
+	idx<ubyte> tmpbuf = buffer->narrow(0, MIN(h, buffer->dim(0)), 0);
+	tmpbuf = tmpbuf.narrow(1, MIN(w, buffer->dim(1)), 0);
+	idx_copy(tmpbuf, tmpnew);
+	delete buffer;
+	buffer = inew;
+      }
+      if (qimage)
+	delete qimage;
+      qimage = new QImage((unsigned char*) buffer->idx_ptr(), 
+			  buffer->dim(1), buffer->dim(0), 
+			  buffer->dim(1) * sizeof (unsigned char),
+			  QImage::Format_Indexed8);
+      qimage->setColorTable(colorTable);
     }
-    else {
-      idx<ubyte> *inew = new idx<ubyte>(h, w);
-      idx_fill(*inew, (ubyte) 255);
-      idx<ubyte> tmpnew = inew->narrow(0, MIN(h, buffer->dim(0)), 0);
-      tmpnew = tmpnew.narrow(1, MIN(w, buffer->dim(1)), 0);
-      idx<ubyte> tmpbuf = buffer->narrow(0, MIN(h, buffer->dim(0)), 0);
-      tmpbuf = tmpbuf.narrow(1, MIN(w, buffer->dim(1)), 0);
-      idx_copy(tmpbuf, tmpnew);
-      delete buffer;
-      buffer = inew;
-    }
-    if (qimage)
-      delete qimage;
-    qimage = new QImage((unsigned char*) buffer->idx_ptr(), 
-			buffer->dim(1), buffer->dim(0), 
-			buffer->dim(1) * sizeof (unsigned char),
-			QImage::Format_Indexed8);
-    qimage->setColorTable(colorTable);
   }
 
   void Window::update_pixmap(idx<ubyte> *img, unsigned int h0, 
 			     unsigned int w0) {
     if (img) {
-      unsigned int h = MAX(buffer?(unsigned int)buffer->dim(0):0, 
-			   h0 + img->dim(0));
-      unsigned int w = MAX(buffer?(unsigned int)buffer->dim(1):0, 
-			   w0 + img->dim(1));
+      update_pixmap(*img, h0, w0);
+      delete img;
+    }
+  }
+
+  void Window::update_pixmap(idx<ubyte> &img, unsigned int h0, 
+			     unsigned int w0) {
+    unsigned int h = MAX(buffer?(unsigned int)buffer->dim(0):0, 
+			 h0 + img.dim(0));
+    unsigned int w = MAX(buffer?(unsigned int)buffer->dim(1):0, 
+			 w0 + img.dim(1));
+    if (wupdate) {
       if (!buffer)
 	buffer_resize(h, w);
       else if ((h > (unsigned int) buffer->dim(0)) || 
 	       (w > (unsigned int) buffer->dim(1)))
 	buffer_resize(h, w);
-      idx<ubyte> tmpbuf = buffer->narrow(0, img->dim(0), h0);
-      tmpbuf = tmpbuf.narrow(1, img->dim(1), w0);
-      idx_copy(*img, tmpbuf);
+      idx<ubyte> tmpbuf = buffer->narrow(0, img.dim(0), h0);
+      tmpbuf = tmpbuf.narrow(1, img.dim(1), w0);
+      idx_copy(img, tmpbuf);
       // copy buffer to pixmap
       *pixmap = QPixmap::fromImage(*qimage);
-      delete img;
       update_window(false);
+    }
+    else { // don't add the image if wupdate is false
+      // instead keep it in a list of images to be displayed later
+      add_image(img, h0, w0);
+      // and remember the maximum size of the display buffer
+      buffer_maxh = h;
+      buffer_maxw = w;
     }
   }
 
@@ -213,14 +273,8 @@ namespace ebl {
     }
   }
   
-  void Window::clear() {
-    if (buffer)
-      idx_fill(*buffer, (ubyte) 255);
-    if (pixmap) 
-      pixmap->fill(Qt::white);
-    clear_text();
-    clear_arrows();
-  }
+  ////////////////////////////////////////////////////////////////
+  // painting/drawing methods
 
   void Window::paintEvent(QPaintEvent * /* event */) {
     QStylePainter painter(this);
@@ -309,6 +363,20 @@ namespace ebl {
       }
     }
   }
+
+  void Window::draw_images() {
+    buffer_resize(buffer_maxh, buffer_maxw); // resize to maximum size first
+    // then display all images not displayed
+    for (vector<image*>::iterator i = images.begin(); i != images.end(); ++i)
+      if (*i) {
+	update_pixmap((*i)->img, (*i)->h0, (*i)->w0);
+	delete (*i);
+      }
+    images.clear();
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // events methods
 
   void Window::wheelEvent(QWheelEvent *event) {
     float precision = .25;

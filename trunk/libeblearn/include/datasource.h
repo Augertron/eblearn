@@ -37,10 +37,6 @@
 #include "libidx.h"
 #include "ebl_states.h"
 
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif 
-
 using namespace std;
 
 namespace ebl {
@@ -86,7 +82,7 @@ namespace ebl {
     void virtual shuffle();
 
     //! Returns the number of data instances contained in this data source.
-    virtual int size();
+    virtual unsigned int size();
 
     //! Returns an idxdim object describing the order (number of dimensions)
     //! and the size of each dimension of a single sample outputed by fprop.
@@ -101,14 +97,6 @@ namespace ebl {
 
     //! Move to the beginning of the data.
     virtual void seek_begin();
-
-    virtual void display(unsigned int nh, unsigned int nw, 
-			 unsigned int h0 = 0, unsigned int w0 = 0, 
-			 double zoom = 1.0, int wid = -1, 
-			 const char *wname = NULL);
-
-    virtual void draw(unsigned int nh, unsigned int nw, unsigned int h0 = 0, 
-		      unsigned int w0 = 0, double zoom = 1.0);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -150,11 +138,6 @@ namespace ebl {
     //! <out> (an idx3-state) and the corresponding
     //! label into <lbl> (and idx0 of int).
     virtual void fprop(state_idx &out, idx<Tlabel> &label);
-
-    virtual void display(unsigned int nh, unsigned int nw, 
-			 unsigned int h0 = 0, unsigned int w0 = 0, 
-			 double zoom = 1.0, int wid = -1,
-			 const char *wname = NULL);
   };
 
   ////////////////////////////////////////////////////////////////
