@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "ebl_trainer.h"
+#include "classifier.h"
 
 using namespace std;
 

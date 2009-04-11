@@ -31,12 +31,14 @@
  * Syntax:
  *   posture             -> creates the idx files and train the ConvNet
  *   posture train-only  -> expect the idx to be present, and train the ConvNet
+ *   posture test-only   -> expect the network to be trained, and runs a test
  *
- * Clement Farabet (cfarabet@nyu.edu) || April 2009.
+ * Clement Farabet (clement.farabet@gmail.com) || April 2009.
  */
 
 #include "libeblearn.h"
 #include "libeblearntools.h"
+#include "classifier_gen.h"
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -125,13 +127,16 @@ int main(int argc, char **argv) {
   string pathToIdxTrLabels = pathToData+"/idx/dset_mono_train_labels.mat";
   string pathToIdxTest = pathToData+"/idx/dset_mono_test_images.mat";
   string pathToIdxTeLabels = pathToData+"/idx/dset_mono_test_labels.mat";
-  
-  //! create an idx file for the datasets, if 'train-only' is not supplied
-  if (argc > 1) {
-    if (strcmp(argv[1], "train-only") != 0) generate_idx_data_set(pathToData);
-  } else if (argc == 1) generate_idx_data_set(pathToData);
+  string pathToTrainedWeights = pathToData+"/trained-convnet/weights.mat";
 
-  cout << endl << "Training the ConvNet" << endl;
+  //! create an idx file for the datasets, if 'train-only' is not supplied
+  if (argc > 1 
+      && strcmp(argv[1], "train-only") != 0
+      && strcmp(argv[1], "test-only") != 0) {
+    generate_idx_data_set(pathToData);
+  } else if (argc == 1)
+    generate_idx_data_set(pathToData);  
+
   init_drand(time(NULL)); // initialize random seed
 
   //! load dataset from idx files
@@ -144,12 +149,12 @@ int main(int argc, char **argv) {
 
   //! create two labeled data sources, for training and testing
   labeled_datasource<float,int> train_ds(trainingSet, // Data source
-					trainingLabels, // Labels
-					0.0, // Bias to be added to images
-					0.01, // Coef to scale images
-					"Posture Training Set");
+					 trainingLabels, // Labels
+					 0.0, // Bias to be added to images
+					 0.01, // Coef to scale images
+					 "Posture Training Set");
   labeled_datasource<float,int> test_ds(testingSet, testingLabels,
-				       0.0, 0.01, "Posture Testing Set");
+					0.0, 0.01, "Posture Testing Set");
 
   //! shuffle the training datasource
   train_ds.shuffle();
@@ -159,24 +164,24 @@ int main(int argc, char **argv) {
 
   //! create the network weights, network and trainer
   idxdim dims = train_ds.sample_dims(); // get order and dimensions of samples
-  parameter theparam(120000); // create trainable parameter
+  parameter myConvNetWeights(1); // create trainable parameter
 
   // instantiate the ConvNet
-  ConvNetPosture myConvNet(theparam, // Trainable parameter
+  ConvNetPosture myConvNet(myConvNetWeights, // Trainable parameter
 			   trainingSet.dim(3), // Input height
 			   trainingSet.dim(2), // Input width
 			   targets.dim(0)); // Nb of classes
 
   //! combine the conv net with targets -> gives a supervised system
-  supervised_euclidean_machine thenet(myConvNet, targets, dims);
-  supervised_trainer<float,int> thetrainer(thenet, theparam);
+  supervised_euclidean_machine mySupervisedNet(myConvNet, targets, dims);
+  supervised_trainer<float,int> myTrainer(mySupervisedNet, myConvNetWeights);
 
   //! a classifier-meter measures classification errors
   classifier_meter trainmeter, testmeter;
 
   //! initialize the network weights
   forget_param_linear fgp(1, 0.5);
-  thenet.forget(fgp);
+  mySupervisedNet.forget(fgp);
 
   // learning parameters
   gd_param gdp(/* double leta*/ 0.0001,
@@ -190,9 +195,17 @@ int main(int argc, char **argv) {
 	       /* double g_t*/ 	0.0);
   infer_param infp;
 
+  if (argc > 1 && strcmp(argv[1], "test-only") == 0)
+    goto test;
+
   // estimate second derivative on 100 iterations, using mu=0.02
-  cout << "Computing second derivatives on the dataset: ";
-  thetrainer.compute_diaghessian(train_ds, 100, 0.02);
+  cout << endl << "Training the ConvNet. Type ./posture test-only to skip" 
+       << endl;
+  cout << "Computing second derivatives on the dataset." << endl;
+  cout << "See 'Efficient Backprop', LeCun et al., 1998" << endl;
+  cout << "This is essential to set up initial learning rates "
+       << "for each weight in the network." << endl;
+  myTrainer.compute_diaghessian(train_ds, 100, 0.02);
 
   // training, and testing...
   cout << "Training network on posture images with " << train_ds.size();
@@ -200,16 +213,67 @@ int main(int argc, char **argv) {
   for (int i = 0; i < 50; ++i) {
     cout << endl;
     // Training on the whole dataset:
-    thetrainer.train(train_ds, trainmeter, gdp, 1);
+    myTrainer.train(train_ds, trainmeter, gdp, 1);
 
     // then test the current ConvNet on both training set and test set:
-    thetrainer.test(train_ds, trainmeter, infp);
-    thetrainer.test(test_ds, testmeter, infp);
+    myTrainer.test(train_ds, trainmeter, infp);
+    myTrainer.test(test_ds, testmeter, infp);
+
+    double errorTrain = 1-(trainmeter.total_correct / (double)trainmeter.size);
+    // Error -> 0 when training is done
+    if (errorTrain == 0) 
+      break;
   }
 
   // Store the trained conv-net to a file...
-  theparam.save_x("data/trained_conv_net");
-  // to get is back: theparam.load_x("data/trained_conv_net.mat");
+  cout << endl << "Saving weights to " << pathToTrainedWeights << endl;
+  myConvNetWeights.save_x(pathToTrainedWeights.c_str());
+
+  if (argc > 1 && strcmp(argv[1], "train-only") == 0)
+    return 0;
+
+ test:
+  // Load the trained conv-net, if existing
+  myConvNetWeights.load_x(pathToTrainedWeights.c_str());
+  cout << "Loading weights from " << pathToTrainedWeights << endl;
+
+  // Select an image to be classified. train_ds is NBx3x46x46. we keep 1x46x46
+  idx<float> testSample = train_ds.data[35]; // Select a random sample
+  idx<float> testSampleGrayscale = testSample[1]; // discard color
+
+  // instantiate the ConvNet
+  ConvNetPosture myTrainedConvNet(myConvNetWeights, // Trained weights
+				  testSampleGrayscale.dim(0), // Input height
+				  testSampleGrayscale.dim(1), // Input width
+				  targets.dim(0)); // Nb of classes
+
+  // different sizes to be recognized during classification
+  // the first it the size of objects during training
+  // square objects is assumed
+  idx<int> objectSizes(1); 
+  objectSizes.set(46, 0);
+
+  // these are the labels of the different classes 
+  // each object will be classified in one of those classes
+  idx<const char*> objectLabels(6);
+  objectLabels.set("bend", 0);
+  objectLabels.set("hand1up", 1);
+  objectLabels.set("hand2up", 2);
+  objectLabels.set("squart", 3);
+  objectLabels.set("stand", 4);
+  objectLabels.set("swinghand", 5);
+
+  //! a classifier needs a trained module, a list of scales, and the classes
+  classifier_gen<float> myClassifier(myTrainedConvNet, // The trained ConvNet
+				     objectSizes,  // sizes of objects
+				     objectLabels, // Labels of classes
+				     testSampleGrayscale, // Sample to classify
+				     0.0, // Bias to be added to inputs
+				     0.01 // Coef to scale inputs
+				     );
+
+  // do a pass, classify
+  myClassifier.classify();
 
   return 0;
 }

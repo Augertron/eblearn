@@ -1,9 +1,9 @@
 ################################################################################
 #
-# CMake configuration for the mnist demo project
+# CMake configuration for the posture demo project
 #
 # Author(s):
-#   Pierre Sermanet, pierre.sermanet@gmail.com, New York University
+#   Clement farabet, clement.farabet@gmail.com, New York University
 #
 ################################################################################
 
