@@ -41,6 +41,7 @@ ADD_LIBRARY (eblearn SHARED
 		     src/net_cscscfe.cpp
 		     src/classifier2D.cpp  
 		     src/datasource.cpp  
+		     src/classifier_gen.cpp
 		     )
 
 # linking
