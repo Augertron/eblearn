@@ -141,7 +141,7 @@ using namespace ebl;
     cout << "new windows." << endl;
     unsigned int mainwin = gui.new_window("eblearn window");
     unsigned int featwin = gui.new_window("features");
-    unsigned int featswin = gui.new_window("fixed features", 300, 300);
+    unsigned int featswin = gui.new_window("fixed features", 300, 1000);
     gui << "window size: " << FEATURE_HEIGHT << "x" << FEATURE_WIDTH << endl;
     gui.select_window(mainwin);
 #endif

@@ -61,8 +61,8 @@ namespace ebl {
   // image
 
   image::image(idx<ubyte> &img_, unsigned int h0_, unsigned int w0_)
-    : h0(h0_), w0(w0_), img(img_.dim(0), img_.dim(1)) {
-    idx_copy(img_, img);
+    : h0(h0_), w0(w0_) {
+    img = img_;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -150,6 +150,7 @@ namespace ebl {
       wupdate = ud;
       if (wupdate) {
 	draw_images();
+	repaint();
 	update_window(false);
       }
     }
