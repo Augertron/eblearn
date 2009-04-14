@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <iostream>
+#include <iomanip>
 
 #ifdef __OPENCV__
 #include <opencv/cv.h>
@@ -183,6 +184,10 @@ using namespace ebl;
 	    fprintf(stderr, "Error: Hmm. The end came sooner than we thought.\n");
 	    return -1;
 	  }
+	ostringstream fname;
+	fname << "img_" << setfill('0') << setw(5) << current_frame << ".jpg";
+	cout << "writing " << fname.str() << endl;
+	cvSaveImage(fname.str().c_str(), frame);
 	/* Allocate another image if not already allocated.
 	 * Image has ONE channel of color (ie: monochrome) with 8-bit "color" depth.
 	 * This is the image format OpenCV algorithms actually operate on (mostly).

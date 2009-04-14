@@ -76,17 +76,19 @@ namespace ebl {
     w = w0;
     h = h0;
     // display kernels text
-    gui << gui_only()<< at(h, w) << "kernels:" << nn.convol.kernel.x.dim(0) << "x";
+    gui << gui_only()<< at(h, w) << "kernels:" ;
+    gui << nn.convol.kernel.x.dim(0) << "x";
     gui << nn.convol.kernel.x.dim(1) << "x" << nn.convol.kernel.x.dim(2);
     w += 150;
     // display kernels
+    zoom *= 4;
     idx_bloop1(mk, nn.convol.kernel.x, double) {
-      if (w < 500) {
+      if (w - w0 < 500) {
 	gui.draw_matrix(mk, h, w, zoom, zoom);
 	w += mk.dim(1) * zoom + 1;
       }
     }
-    h0 += mk.dim(0) * zoom + 1;
+    h0 += MAX(15, mk.dim(0) * zoom + 1);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -111,16 +113,18 @@ namespace ebl {
     h = h0;
     // display kernels text
     gui << gui_only()<< at(h, w) << "kernels:" << nn.subsampler.sub.x.dim(0);
-    gui << "x" << nn.subsampler.sub.x.dim(1) << "x" << nn.subsampler.sub.x.dim(2);
+    gui << "x" << in.x.dim(1) / nn.subsampler.sub.x.dim(1);
+    gui << "x" << in.x.dim(2) / nn.subsampler.sub.x.dim(2);
     w += 150;
-    // display kernels
-    idx_bloop1(mk, nn.subsampler.sub.x, double) {
-      if (w < 500) {
-	gui.draw_matrix(mk, h, w, zoom, zoom);
-	w += mk.dim(1) * zoom + 1;
-      }
-    }
-    h0 += mk.dim(0) * zoom + 1;
+//     // display kernels
+//     idx_bloop1(mk, nn.subsampler.sub.x, double) {
+//       if (w < 500) {
+// 	gui.draw_matrix(mk, h, w, zoom, zoom);
+// 	w += mk.dim(1) * zoom + 1;
+//       }
+//     }
+//     h0 += mk.dim(0) * zoom + 1;
+    h0 += 15;
   }
 
 } // end namespace ebl
