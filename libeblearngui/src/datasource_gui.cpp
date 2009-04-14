@@ -35,4 +35,10 @@ using namespace std;
 
 namespace ebl {
 
+  labeled_datasource_gui::labeled_datasource_gui() {
+  }
+
+  labeled_datasource_gui::~labeled_datasource_gui() {
+  }
+
 } // end namespace ebl

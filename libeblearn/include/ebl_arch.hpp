@@ -60,12 +60,6 @@ namespace ebl {
   void module_1_1<Tin,Tout>::resize_output(Tin &in, Tout &out) { 
     err_not_implemented(); }
 
-  template<class Tin, class Tout>
-  void module_1_1<Tin,Tout>::display_fprop(Tin &in, Tout &out, 
-					   unsigned int &h0, unsigned int &w0,
-					   double zoom, bool show_out) {
-    err_not_implemented(); }
-
   ////////////////////////////////////////////////////////////////
   // module_2_1
 
@@ -333,41 +327,6 @@ hidden states in layers_n");
     }
   }
 
-  template<class T>
-  void layers_n<T>::display_fprop(T &in, T &out, 
-				  unsigned int &h0, unsigned int &w0,
-				  double zoom, bool show_out) {
-#ifdef __GUI__
-    gui.disable_updates();
-    if (modules->empty())
-      ylerror("trying to display_fprop through empty layers_n");
-    T* hi = &in;
-    T* ho = &in;
-    // last will be manual
-    int niter = modules->size()-1;
-    for(int i=0; i<niter; i++){
-      ho = (*hiddens)[i];
-      (*modules)[i]->display_fprop(*hi,*ho, h0, w0, zoom);
-      hi = ho;
-    }
-    (*modules)[niter]->display_fprop(*ho, out, h0, w0, zoom);
-    if (show_out) { 
-      unsigned int h = h0, w = w0;
-      // display outputs text
-      gui << gui_only() << at(h, w) << "outputs:" << out.x.dim(0) << "x";
-      gui << out.x.dim(1) << "x" << out.x.dim(2);
-      w += 150;
-      // display outputs
-      idx_bloop1(m, out.x, double) {
-	gui.draw_matrix(m, h, w, -1.0, 1.0, zoom * 5, zoom * 5);
-	w += m.dim(1) * zoom * 5 + 1;
-      }
-      h0 += m.dim(0) * zoom * 5 + 1;
-    }
-    gui.enable_updates();
-#endif
-  }
-
   ////////////////////////////////////////////////////////////////
 
   template<class Tin, class Thid>
@@ -448,15 +407,6 @@ hidden states in layers_n");
 					 int *label, state_idx *energy) {
     fmod.fprop(i1, fout); // first propagate all the way up
     return fcost.infer2(fout, i2, ip, label, energy); //then infer from energies
-  }
-
-  template<class Tin1, class Tin2, class Thid>
-  void fc_ebm2<Tin1,Tin2,Thid>::display_fprop(Tin1 &i1, Tin2 &i2, 
-					     state_idx &energy, 
-					     unsigned int &h0, unsigned int &w0,
-					     double zoom, bool show_out) {
-    fmod.display_fprop(i1, fout, h0, w0, zoom, true);
-    // TODO add energy, answer display
   }
 
   ////////////////////////////////////////////////////////////////

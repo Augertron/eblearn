@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
- *   All rights reserved.
+ *   Copyright (C) 2009 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,23 +27,55 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef libeblearn_H
-#define libeblearn_H
+#ifndef EBL_LAYERS_GUI_H_
+#define EBL_LAYERS_GUI_H_
 
-#include "defines.h"
-#include "libidx.h"
-#include "ebl_states.h"
-#include "ebl_basic.h"
-#include "ebl_cost.h"
-#include "ebl_layers.h"
-#include "ebl_machines.h"
-#include "ebl_nonlinearity.h"
-#include "ebl_tester.h"
-#include "ebl_logger.h"
-#include "ebl_trainer.h"
-#include "datasource.h"
-#include "classifier2D.h"
+#include "libidxgui.h"
+#include "libeblearn.h"
 
-#endif
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+
+  class nn_layer_full_gui {
+  public:
+    nn_layer_full_gui();
+    virtual ~nn_layer_full_gui();
+
+    static void display_fprop(nn_layer_full &nn,
+			      state_idx &in, state_idx &out,
+			      unsigned int &h0, unsigned int &w0, double zoom,
+			      bool show_out = false);
+  };
+
+  ////////////////////////////////////////////////////////////////
+
+  class nn_layer_convolution_gui {
+  public:
+    nn_layer_convolution_gui();
+    virtual ~nn_layer_convolution_gui();
+
+    static void display_fprop(nn_layer_convolution &nn,
+			      state_idx &in, state_idx &out,
+			      unsigned int &h0, unsigned int &w0, double zoom,
+			      bool show_out = false);
+  };
+
+  ////////////////////////////////////////////////////////////////
+
+  class nn_layer_subsampling_gui {
+  public:
+    nn_layer_subsampling_gui();
+    virtual ~nn_layer_subsampling_gui();
+
+    static void display_fprop(nn_layer_subsampling &nn,
+			      state_idx &in, state_idx &out,
+			      unsigned int &h0, unsigned int &w0, double zoom,
+			      bool show_out = false);
+  };
+
+} // namespace ebl {
+
+#endif /* EBL_LAYERS_GUI_H_ */

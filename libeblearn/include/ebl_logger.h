@@ -36,10 +36,6 @@
 #include "libidx.h"
 #include "ebl_states.h"
 
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif 
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////

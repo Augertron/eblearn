@@ -34,9 +34,6 @@
 
 using namespace std;
 
-unsigned int xw = 0; // global drawing coordinates
-unsigned int yh = 0; // global drawing coordinates
-
 namespace ebl {
 
   classifier2D::classifier2D(module_1_1<state_idx,state_idx> &thenet_, 
@@ -170,12 +167,6 @@ namespace ebl {
   idx<ubyte> classifier2D::multi_res_prep(ubyte *img, float zoom) {
     // copy input images locally
     memcpy(grabbed.idx_ptr(), img, height * width * sizeof (ubyte));
-#ifdef __GUI__
-    gui.new_window("classifier2D");
-    gui.draw_matrix(grabbed);
-    xw = grabbed.dim(1) + 2;
-    yh = 0;
-#endif
     // prepare multi resolutions input
     idx<double> inx;
     int ni = ((state_idx*) inputs.get(0))->x.dim(1);
@@ -203,42 +194,17 @@ namespace ebl {
   	idx_copy(imres, inx1);
   	idx_addc(inx, bias, inx);
   	idx_dotc(inx, coeff, inx);
-#ifdef __GUI__
-	gui.draw_matrix(imres, yh, xw);
-	xw += imres.dim(1) + 2;
-#endif
       }}
-    xw = 0;
-    yh += grabbed.dim(0) + 2;
     return display;
   }
 
   idx<double> classifier2D::multi_res_fprop(double threshold, int objsize) {
     // fprop network on different resolutions
-    int hmax = ((state_idx*) outputs.get(0))->x.dim(1);
-    int show = 0, k = 0;
     { idx_bloop2(in, inputs, void*, out, outputs, void*) {
 	state_idx *ii = ((state_idx*) in.get());
 	state_idx *oo = ((state_idx*) out.get());
 	thenet.fprop(*ii, *oo); 
-#ifdef __GUI__
-	unsigned yhh = yh + grabbed.dim(0) + 2;
-	if (k == show)
-	  thenet.display_fprop(*ii, *oo, yhh, xw, 1.0, true);
- 	double vmin = idx_min(oo->x);
-	double vmax = idx_max(oo->x);
-	int hcat = 0;
-	double zoom = 5.0;
-	{ idx_bloop1(category, oo->x, double) {
-	    gui.draw_matrix(category, yh + hcat, xw, vmin, vmax, 
-				     zoom, zoom);
-	    hcat += hmax * zoom + 2;
-	  }}
-	xw += oo->x.dim(2) * zoom + 2;
-#endif	
-	k++;
       }}
-    xw += 10;
     // post process outputs
     idx<double> res = postprocess_output(threshold, objsize);
     res = prune(res);
@@ -297,16 +263,9 @@ namespace ebl {
 				 - (0.5 * re.get(5)));
 	unsigned int height = zoom * re.get(4);
 	unsigned int width = zoom * re.get(5);
-#ifdef __GUI__
-	gui << at(yh + h + 1, xw + w + 1) << labels.get((re.get(0)));
-#endif
 	image_draw_box(display, (ubyte)255, h, w, height, width);
       }}
     memcpy(img, grabbed.idx_ptr(), height * width * sizeof (ubyte));
-#ifdef __GUI__
-    gui.draw_matrix(grabbed, yh, xw);
-    xw += grabbed.dim(1) + 2;
-#endif
     return res;
   }
 

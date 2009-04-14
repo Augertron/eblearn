@@ -49,7 +49,13 @@ namespace ebl {
   class text : public string {
   public:
     unsigned int	 h0, w0;
-    text(unsigned int h0, unsigned int w0);
+    bool                 pos_reset;
+    unsigned char        fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
+    text(unsigned int h0, unsigned int w0, bool pos_reset = false,
+	 unsigned char fg_r = 255, unsigned char fg_g = 255, 
+	 unsigned char fg_b = 255, unsigned char fg_a = 255,
+	 unsigned char bg_r = 0, unsigned char bg_g = 0, 
+	 unsigned char bg_b = 0, unsigned char bg_a = 127);
     ~text() {};
   };
 
@@ -91,9 +97,11 @@ namespace ebl {
     string		 savefname;
     unsigned int	 text_h0;
     unsigned int	 text_w0;
+    bool                 pos_reset; // text position was reset or not
     bool                 wupdate;
     QColor               text_fg_color;
     QColor               text_bg_color;
+    unsigned char        fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
 
   public:
     Window(unsigned int wid, const char *wname = NULL, 

@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2009 by Pierre Sermanet   *
+ *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,23 +28,22 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef libeblearn_H
-#define libeblearn_H
+#include "ebl_trainer_gui.h"
 
-#include "defines.h"
-#include "libidx.h"
-#include "ebl_states.h"
-#include "ebl_basic.h"
-#include "ebl_cost.h"
-#include "ebl_layers.h"
-#include "ebl_machines.h"
-#include "ebl_nonlinearity.h"
-#include "ebl_tester.h"
-#include "ebl_logger.h"
-#include "ebl_trainer.h"
-#include "datasource.h"
-#include "classifier2D.h"
+using namespace std;
 
-#endif
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // supervised_trainer_gui
+
+  supervised_trainer_gui::supervised_trainer_gui()
+    : datasource_wid(-1), internals_wid(-1) {
+  }
+
+  supervised_trainer_gui::~supervised_trainer_gui() {
+  }
+
+} // end namespace ebl

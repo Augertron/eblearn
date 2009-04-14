@@ -38,10 +38,6 @@
 #include "ebl_logger.h"
 #include "datasource.h"
 
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif 
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
