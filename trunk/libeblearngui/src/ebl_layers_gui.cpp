@@ -47,12 +47,15 @@ namespace ebl {
     gui << gui_only() << at(h, w) << "full in:" << in.x.dim(0) << "x";
     gui << in.x.dim(1) << "x" << in.x.dim(2);
     w += 150;
+    zoom *= 5;
     // display inputs
     idx_bloop1(m, in.x, double) {
-      gui.draw_matrix(m, h, w, zoom * 5, zoom, -1.0, 1.0);
-      w += m.dim(1) * zoom + 1;
+      if (w - w0 < 500) {
+	gui.draw_matrix(m, h, w, zoom, zoom, -1.0, 1.0);
+	w += m.dim(1) * zoom + 1;
+      }
     }
-    h0 += m.dim(0) * zoom * 5 + 1;
+    h0 += MAX(10, m.dim(0) * zoom + 1);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -60,7 +63,8 @@ namespace ebl {
 
   void nn_layer_convolution_gui::display_fprop(nn_layer_convolution &nn,
 					       state_idx &in, state_idx &out,
-					       unsigned int &h0, unsigned int &w0,
+					       unsigned int &h0, 
+					       unsigned int &w0,
 					       double zoom, bool show_out) {
     unsigned int h = h0, w = w0;
     // display input text
@@ -88,7 +92,7 @@ namespace ebl {
 	w += mk.dim(1) * zoom + 1;
       }
     }
-    h0 += MAX(15, mk.dim(0) * zoom + 1);
+    h0 += MAX(10, mk.dim(0) * zoom + 1);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -96,7 +100,8 @@ namespace ebl {
 
   void nn_layer_subsampling_gui::display_fprop(nn_layer_subsampling &nn,
 					       state_idx &in, state_idx &out,
-					       unsigned int &h0, unsigned int &w0,
+					       unsigned int &h0, 
+					       unsigned int &w0,
 					       double zoom, bool show_out) {
     unsigned int h = h0, w = w0;
     // display input text
@@ -124,7 +129,7 @@ namespace ebl {
 //       }
 //     }
 //     h0 += mk.dim(0) * zoom + 1;
-    h0 += 15;
+    h0 += 10;
   }
 
 } // end namespace ebl
