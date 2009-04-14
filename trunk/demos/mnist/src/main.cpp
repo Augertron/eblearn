@@ -47,7 +47,7 @@ int main(int argc, char **argv) { // regular main without gui
   thenet.forget(fgp);
 
   // learning parameters
-  gd_param gdp(/* double leta*/ 0.0002,
+  gd_param gdp(/* double leta*/ 0.0001,
 	       /* double ln */ 	0.0,
 	       /* double l1 */ 	0.0,
 	       /* double l2 */ 	0.0,
