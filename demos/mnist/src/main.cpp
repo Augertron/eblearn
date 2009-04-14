@@ -1,10 +1,18 @@
 #include "libeblearn.h"
 
+#ifdef __GUI__
+#include "libeblearngui.h"
+#endif
+
 using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
 
 // argv[1] is expected to contain the directory of the mnist dataset
-int main(int argc, char **argv) {
+#ifdef __GUI__
+MAIN_QTHREAD() { // this is the macro replacing main to enable multithreaded gui
+#else
+int main(int argc, char **argv) { // regular main without gui
+#endif
   cout << "* MNIST demo: learning handwritten digits using the eblearn";
   cout << " C++ library *" << endl;
   if (argc != 2) {
@@ -29,6 +37,7 @@ int main(int argc, char **argv) {
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
   supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam);
+  supervised_trainer_gui stgui; // the gui to display supervised_trainer
 
   //! a classifier-meter measures classification errors
   classifier_meter trainmeter, testmeter;
@@ -38,7 +47,7 @@ int main(int argc, char **argv) {
   thenet.forget(fgp);
 
   // learning parameters
-  gd_param gdp(/* double leta*/ 0.0001,
+  gd_param gdp(/* double leta*/ 0.0002,
 	       /* double ln */ 	0.0,
 	       /* double l1 */ 	0.0,
 	       /* double l2 */ 	0.0,
@@ -53,13 +62,22 @@ int main(int argc, char **argv) {
   cout << "Computing second derivatives on MNIST dataset: ";
   thetrainer.compute_diaghessian(train_ds, 100, 0.02);
 
-  // do training iterations 
+  // first show classification results without training
+  thetrainer.test(train_ds, trainmeter, infp);
+  thetrainer.test(test_ds, testmeter, infp);
+  stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
+  stgui.display_internals(thetrainer, test_ds, infp, 2);
+
+  // now do training iterations 
   cout << "Training network on MNIST with " << train_ds.size();
-  cout << " training samples and " << test_ds.size() << " test samples" << endl;
+  cout << " training samples and " << test_ds.size() << " test samples:" << endl;
   for (int i = 0; i < 100; ++i) {
-    thetrainer.train(train_ds, trainmeter, gdp, 1);
-    thetrainer.test(train_ds, trainmeter, infp);
-    thetrainer.test(test_ds, testmeter, infp);
+    thetrainer.train(train_ds, trainmeter, gdp, 1);	         // train
+    thetrainer.test(train_ds, trainmeter, infp);	         // test
+    thetrainer.test(test_ds, testmeter, infp);	                 // test
+    stgui.display_datasource(thetrainer, test_ds, infp, 10, 10); // display
+    stgui.display_internals(thetrainer, test_ds, infp, 2);       // display
+    thetrainer.compute_diaghessian(train_ds, 100, 0.02); // recompute 2nd der
   }
   return 0;
 }
