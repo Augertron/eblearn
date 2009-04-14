@@ -34,13 +34,6 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // supervised_trainer_gui
 
-  supervised_trainer_gui::supervised_trainer_gui()
-    : datasource_wid(-1), internals_wid(-1) {
-  }
-
-  supervised_trainer_gui::~supervised_trainer_gui() {
-  }
-
   template <class Tdata, class Tlabel>  
   void supervised_trainer_gui::
   display_datasource(supervised_trainer<Tdata, Tlabel> &st,
@@ -69,13 +62,13 @@ namespace ebl {
     bool correct;
     int answer;
 
-    gui.set_text_colors(0, 0, 0, 255, 255, 255, 255, 127);
-    gui << gui_only();
+    gui << set_colors(255, 0, 0, 255, 255, 255, 255, 127) << gui_only();
     gui << at(h0, w0) << ds.name;
+    gui << black_on_white();
     gui << at(h0 + 17, w0) << "Groundtruth";
     gui << at(h0 + 17, w01) << "Correct & incorrect answers";
     gui << at(h0 + 17, w02) << "Incorrect only";
-
+    gui << white_on_transparent();
     // 0. display dataset with groundtruth labels
     dsgui.display(ds, nh, nw, h0 + 35, w0, zoom, datasource_wid);
 
@@ -89,8 +82,7 @@ namespace ebl {
 
       // 1. display dataset with incorrect and correct answers
       if (nh1 < nh) {
-	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h1, w1, 0.0, 0.0, 
-			      zoom, zoom);
+	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h1, w1, zoom, zoom);
 	if ((ds.lblstr) && (ds.lblstr->at(answer)))
 	  gui << at(h1 + 2, w1 + 2) << (ds.lblstr->at(answer))->c_str();
 	w1 += m.dim(1) + 2;
@@ -102,8 +94,7 @@ namespace ebl {
       }
       // 2. display first nh * nw incorrect answers
       if (!correct) {
-	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h2, w2, 0.0, 0.0, 
-			      zoom, zoom);
+	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h2, w2, zoom, zoom);
 	if ((ds.lblstr) && (ds.lblstr->at(answer)))
 	  gui << at(h2 + 2, w2 + 2) << (ds.lblstr->at(answer))->c_str();
 	w2 += m.dim(1) + 2;
@@ -141,13 +132,14 @@ namespace ebl {
     idx<double> m = st.input->x.select(0, 0);
     
     // display first ninternals samples
+    fc_ebm2_gui mg;
     for (unsigned int i = 0; (i < ds.size()) && (i < ninternals); ++i) {
       ds.fprop(*st.input, st.label);
       correct = st.test_sample(*st.input, st.label.get(), answer, infp);
       //      log.update(age, correct, energy);
       ds.next();
-      st.machine.display_fprop(*st.input, answer, st.energy, hfdisp, wfdisp, 
-			       3.0);
+      mg.display_fprop(st.machine, *st.input, answer, st.energy, 
+		       hfdisp, wfdisp, 3.0, true, internals_wid);
       hfdisp += 10;
     }
     gui.enable_updates();

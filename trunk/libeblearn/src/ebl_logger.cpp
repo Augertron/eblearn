@@ -31,11 +31,6 @@
 
 #include "ebl_logger.h"
 
-#ifdef __GUI__
-#include "libidxgui.h"
-//#define cout gui
-#endif 
-
 using namespace std;
 
 namespace ebl {

@@ -80,24 +80,6 @@ namespace ebl {
     adder.forget(fp);
   }
 
-  void nn_layer_full::display_fprop(state_idx &in, state_idx &out,
-				    unsigned int &h0, unsigned int &w0,
-				    double zoom, bool show_out) {
-#ifdef __GUI__
-    unsigned int h = h0, w = w0;
-    // display input text
-    gui << gui_only() << at(h, w) << "full in:" << in.x.dim(0) << "x";
-    gui << in.x.dim(1) << "x" << in.x.dim(2);
-    w += 150;
-    // display inputs
-    idx_bloop1(m, in.x, double) {
-      gui.draw_matrix(m, h, w, -1.0, 1.0, zoom, zoom * 5);
-      w += m.dim(1) * zoom + 1;
-    }
-    h0 += m.dim(0) * zoom * 5 + 1;
-#endif
-  }
-
   ////////////////////////////////////////////////////////////////
   // nn_layer_convolution
 
@@ -145,38 +127,6 @@ namespace ebl {
     adder.forget(fp);
   }
 
-  void nn_layer_convolution::display_fprop(state_idx &in, state_idx &out,
-					   unsigned int &h0, unsigned int &w0,
-					   double zoom, bool show_out) {
-#ifdef __GUI__
-    unsigned int h = h0, w = w0;
-    // display input text
-    gui << gui_only() << at(h, w) << "conv. in:" << in.x.dim(0) << "x";
-    gui << in.x.dim(1) << "x" << in.x.dim(2);
-    w += 150;
-    // display inputs
-    idx_bloop1(m, in.x, double) {
-      gui.draw_matrix(m, h, w, 0.0, 0.0, zoom, zoom);
-      w += m.dim(1) * zoom + 1;
-    }
-    h0 += m.dim(0) * zoom + 1;
-    w = w0;
-    h = h0;
-    // display kernels text
-    gui << gui_only()<< at(h, w) << "kernels:" << convol.kernel.x.dim(0) << "x";
-    gui << convol.kernel.x.dim(1) << "x" << convol.kernel.x.dim(2);
-    w += 150;
-    // display kernels
-    idx_bloop1(mk, convol.kernel.x, double) {
-      if (w < 500) {
-	gui.draw_matrix(mk, h, w, 0.0, 0.0, zoom, zoom);
-	w += mk.dim(1) * zoom + 1;
-      }
-    }
-    h0 += mk.dim(0) * zoom + 1;
-#endif
-  }
-
   ////////////////////////////////////////////////////////////////
   // nn_layer_subsampling
 
@@ -222,38 +172,6 @@ namespace ebl {
   void nn_layer_subsampling::forget(forget_param_linear &fp) {
     subsampler.forget(fp);
     adder.forget(fp);
-  }
-
-  void nn_layer_subsampling::display_fprop(state_idx &in, state_idx &out,
-					   unsigned int &h0, unsigned int &w0,
-					   double zoom, bool show_out) {
-#ifdef __GUI__
-    unsigned int h = h0, w = w0;
-    // display input text
-    gui << gui_only() << at(h, w) << "ssampl. in:" << in.x.dim(0) << "x";
-    gui << in.x.dim(1) << "x" << in.x.dim(2);
-    w += 150;
-    // display inputs
-    idx_bloop1(m, in.x, double) {
-      gui.draw_matrix(m, h, w, 0.0, 0.0, zoom, zoom);
-      w += m.dim(1) * zoom + 1;
-    }
-    h0 += m.dim(0) * zoom + 1;
-    w = w0;
-    h = h0;
-    // display kernels text
-    gui << gui_only()<< at(h, w) << "kernels:" << subsampler.sub.x.dim(0);
-    gui << "x" << subsampler.sub.x.dim(1) << "x" << subsampler.sub.x.dim(2);
-    w += 150;
-    // display kernels
-    idx_bloop1(mk, subsampler.sub.x, double) {
-      if (w < 500) {
-	gui.draw_matrix(mk, h, w, 0.0, 0.0, zoom, zoom);
-	w += mk.dim(1) * zoom + 1;
-      }
-    }
-    h0 += mk.dim(0) * zoom + 1;
-#endif
   }
 
 } // end namespace ebl

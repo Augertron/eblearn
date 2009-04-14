@@ -42,6 +42,8 @@
 using namespace std;
 
 namespace ebl {
+  
+  template<class T1, class T2> class ManipInfra;
 
   class idxgui : public QThread, public ostringstream {
     Q_OBJECT
@@ -59,32 +61,40 @@ namespace ebl {
     virtual ~idxgui();
 
     void quit();
+    
+    //! clears the window.
     void clear();
+
+    //! creates a new window.
     unsigned int new_window(const char *wname = NULL, unsigned int h = 0,
 			    unsigned int w = 0);
+
+    //! selects window wid.
     void select_window(unsigned int wid);
 
+    //! operator<< for text drawing on the gui.
     template<class T> friend
       idxgui& operator<<(idxgui& r, const T val);
 
+    //! draws an arrow from (h1, w1) to (h2, w2).
     void add_arrow(int h1, int w1, int h2, int w2);
-    void set_text_colors(unsigned char fg_r, unsigned char fg_g, 
-			 unsigned char fg_b, unsigned char fg_a,
-			 unsigned char bg_r, unsigned char bg_g, 
-			 unsigned char bg_b, unsigned char bg_a);
-    void set_text_colors(int fg_r, int fg_g, 
-			 int fg_b, int fg_a,
-			 int bg_r, int bg_g, 
-			 int bg_b, int bg_a);
-    void set_cout_and_gui();
-    void set_gui_only();
+
+    //! do not show windows, instead save them in png files in current directory.
     void set_silent();
+    //! do not show windows, instead save them in png files in current directory.
     void set_silent(const std::string *filename);
+    //! do not show windows, instead save them in png files in current directory.
     void set_silent(const char *filename);
-    void enable_updates();
+
+    //! do not update display until enable_updates is called again.
+    //! this should make the display faster.
     void disable_updates();
 
-    //! gray_draw_matrix displays your idx2 or the first layer of your idx3 in
+    //! allow display updates and display if it was previously off after a 
+    //! call to disable_updates().
+    void enable_updates();
+
+    //! draw_matrix displays your idx2 or the first layer of your idx3 in
     //! grayscale on the whiteboard. This function does a copy of your idx and
     //! won't change in in any way !
     //! @param idx and @param type are, like before, used to templatize the
@@ -97,16 +107,56 @@ namespace ebl {
     //! @param zoomw and @param zoomh are the zoom factors in width and height
     template<class T>
       void draw_matrix(idx<T> &im, unsigned int h0 = 0, unsigned int w0 = 0, 
-		       T minv = 0, T maxv = 0, 
-		       double zoomw = 1.0, double zoomh = 1.0);
+		       double zoomh = 1.0, double zoomw = 1.0,
+		       T minv = 0, T maxv = 0);
+    
+    //! same as draw_matrix but draws a frame of color (r,g,b) around it.
     template<class T>
       void draw_matrix_frame(idx<T> &im, ubyte r, ubyte g, ubyte b,
 			     unsigned int h0 = 0, unsigned int w0 = 0, 
-			     T minv = 0, T maxv = 0, 
-			     double zoomw = 1.0, double zoomh = 1.0);
+			     double zoomh = 1.0, double zoomw = 1.0,
+			     T minv = 0, T maxv = 0);
 
+    //! same a draw_matrix but overlays the string <str> in the top left corner.
+    template<class T>
+      void draw_matrix(idx<T> &im, const char *str, 
+		       unsigned int h0 = 0, unsigned int w0 = 0, 
+		       double zoomh = 1.0, double zoomw = 1.0,
+		       T minv = 0, T maxv = 0);
+
+    //! use the << operator instead of this function to add text to the gui.
+    //! for example: gui << "text" << endl;
     void add_text(std::string *s);
+
+    //! use the at() function instead of this function to set the text origins.
+    //! for example: gui << at(42, 0) << "text";
     void set_text_origin(unsigned int h0, unsigned int w0);
+
+    //! use the set_colors() function instead of this function to set the text
+    //! and background colors and transparency.
+    //! for example: gui << set_colors(255, 255, 255, 255, 0, 0, 0, 127);
+    //! this sets the text color to fully opaque white on a semi-transparent black
+    //! background.
+    void set_text_colors(unsigned char fg_r, unsigned char fg_g, 
+			 unsigned char fg_b, unsigned char fg_a,
+			 unsigned char bg_r, unsigned char bg_g, 
+			 unsigned char bg_b, unsigned char bg_a);
+    //! see unsigned char version.
+    void set_text_colors(int fg_r, int fg_g, 
+			 int fg_b, int fg_a,
+			 int bg_r, int bg_g, 
+			 int bg_b, int bg_a);
+
+    //! use the cout_and_gui() function instead of this function to output
+    //! text on both std::cout and the gui.
+    //! for example: gui << cout_and_gui() << "text";
+    void set_cout_and_gui();
+
+    //! use the gui_only() function instead of this function to output
+    //! text on only the gui and not std::cout.
+    //! for example: gui << gui_only() << "text";
+    void set_gui_only();
+
   private:
 
   signals:
@@ -129,6 +179,55 @@ namespace ebl {
     virtual void run();
     virtual int run_main();
   };
+
+  //! specifies the origin of the text to draw.
+  //! calling 'gui << at(42, 0) << "text";' will draw "text" at height 42
+  //! and with 0.
+  ManipInfra<unsigned int, unsigned int> at(unsigned int h0, unsigned int w0);
+  idxgui& att(idxgui& r, unsigned int h0, unsigned int w0);
+
+  //! specifies to output text to both the gui and std::cout.
+  //! usage: gui << cout_and_gui();
+  ManipInfra<int, int> cout_and_gui();
+  idxgui& fcout_and_gui(idxgui& r);
+
+  //! specifies to output text to both the gui and std::cout.
+  //! usage: gui << gui_only();
+  ManipInfra<int, int> gui_only();
+  idxgui& fgui_only(idxgui& r);
+
+  //! set the text color to black on white background with optional transparency 
+  //! factors fg_a and bg_a respectively for foreground and background colors,
+  //! ranging from 0 to 255.
+  //! usage: gui << black_on_white();
+  //! usage: gui << black_on_white(127);
+  //! usage: gui << black_on_white(50, 255);
+  ManipInfra<unsigned char, unsigned char> 
+  black_on_white(unsigned char fg_a = 255,
+		 unsigned char bg_a = 255);
+  idxgui& fblack_on_white(idxgui& r, unsigned char fg_a, 
+			  unsigned char bg_a);
+
+  //! set the text color to white on a transparent background 
+  //! (transparency = 127 with black background).
+  idxgui& fwhite_on_transparent(idxgui& r);
+  ManipInfra<int, int> white_on_transparent();
+
+  //! set the text color to rgba on a rgba background where each value ranges from
+  //! 0 to 255.
+  //! usage: gui << set_colors(255, 255, 255, 255, 0, 0, 0, 127);
+  //! this sets the text color to fully opaque white on a semi-transparent black
+  //! background.
+  ManipInfra<unsigned char, unsigned char> 
+  set_colors(unsigned char fg_r, unsigned char fg_g, 
+	     unsigned char fg_b, unsigned char fg_a,
+	     unsigned char bg_r, unsigned char bg_g, 
+	     unsigned char bg_b, unsigned char bg_a);
+  idxgui& fset_colors(idxgui& r, 
+		      unsigned char fg_r, unsigned char fg_g, 
+		      unsigned char fg_b, unsigned char fg_a,
+		      unsigned char bg_r, unsigned char bg_g, 
+		      unsigned char bg_b, unsigned char bg_a);
 
 } // namespace ebl {
 

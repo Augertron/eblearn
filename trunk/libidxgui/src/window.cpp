@@ -40,8 +40,14 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // text
 
-  text::text(unsigned int h0_, unsigned int w0_)
-    : string(""), h0(h0_), w0(w0_) {
+  text::text(unsigned int h0_, unsigned int w0_, bool pos_reset_,
+	     unsigned char fg_r_, unsigned char fg_g_, 
+	     unsigned char fg_b_, unsigned char fg_a_,
+	     unsigned char bg_r_, unsigned char bg_g_, 
+	     unsigned char bg_b_, unsigned char bg_a_)
+    : string(""), h0(h0_), w0(w0_), pos_reset(pos_reset_),
+      fg_r(fg_r_), fg_g(fg_g_), fg_b(fg_b_), fg_a(fg_a_), 
+      bg_r(bg_r_), bg_g(bg_g_), bg_b(bg_b_), bg_a(bg_a_) {
   }
 
   ////////////////////////////////////////////////////////////////
@@ -82,6 +88,9 @@ namespace ebl {
     wupdate = true; // always update display
     text_fg_color.setRgb(255, 255, 255, 255);
     text_bg_color.setRgb(0, 0, 0, 127);
+    buffer_maxh = height;
+    buffer_maxw = width;
+    pos_reset = true;
   }
 
   Window::~Window() {
@@ -168,12 +177,14 @@ namespace ebl {
 
   void Window::add_text(const std::string *s) {
     if (!txt) {
-      txt = new text(text_h0, text_w0);
+      txt = new text(text_h0, text_w0, pos_reset, fg_r, fg_g, fg_b, fg_a,
+		     bg_r, bg_g, bg_b, bg_a);
       texts.push_back(txt);
     }
     *txt += *s;
     delete s;
     update_window(false);
+    pos_reset = false;
   }
   
   void Window::add_arrow(int h1, int w1, int h2, int w2) {
@@ -186,26 +197,33 @@ namespace ebl {
     update_window(false);
   }
 
-  void Window::set_text_colors(unsigned char fg_r, unsigned char fg_g, 
-			       unsigned char fg_b, unsigned char fg_a,
-			       unsigned char bg_r, unsigned char bg_g, 
-			       unsigned char bg_b, unsigned char bg_a) {
-    text_fg_color.setRgb(fg_r, fg_g, fg_b);
-    text_bg_color.setRgb(bg_r, bg_g, bg_b);    
+  void Window::set_text_colors(unsigned char fg_r_, unsigned char fg_g_, 
+			       unsigned char fg_b_, unsigned char fg_a_,
+			       unsigned char bg_r_, unsigned char bg_g_, 
+			       unsigned char bg_b_, unsigned char bg_a_) {
+    fg_r = fg_r_;
+    fg_g = fg_g_;
+    fg_b = fg_b_;
+    fg_a = fg_a_;
+    bg_r = bg_r_;
+    bg_g = bg_g_;
+    bg_b = bg_b_;
+    bg_a = bg_a_;
+    txt = NULL;
   }
   
   void Window::set_text_origin(unsigned int h0, unsigned int w0) {
     text_h0 = h0;
     text_w0 = w0;
-    txt = new text(text_h0, text_w0);
-    texts.push_back(txt);
+    txt = NULL;
+    pos_reset = true;
   }
 
   ////////////////////////////////////////////////////////////////
   // update methods
 
   void Window::buffer_resize(int h, int w) {
-    if ((!buffer || (buffer->dim(0) != h) || (buffer->dim(1) != w))
+    if ((!buffer || (buffer->dim(0) < h) || (buffer->dim(1) < w))
 	&& ((h != 0) && (w != 0))) {
       resize(w, h);
       if (!buffer) {
@@ -352,16 +370,31 @@ namespace ebl {
   }
 
   void Window::draw_text(QPainter &painter) {
+    unsigned int th = 0, tw = 0;
     for (vector<text*>::iterator i = texts.begin(); i != texts.end(); ++i) {
       if (*i) {
+	text_fg_color.setRgb((*i)->fg_r, (*i)->fg_g, (*i)->fg_b, (*i)->fg_a);
+	text_bg_color.setRgb((*i)->bg_r, (*i)->bg_g, (*i)->bg_b, (*i)->bg_a); 
 	QString txt((*i)->c_str());
 	QRectF bg;
 	painter.setPen(text_fg_color);
 	QRect qr = rect();
-	qr.setLeft((*i)->w0);
-	qr.setTop((*i)->h0 - 1);
+	qr.setLeft((*i)->pos_reset ? (*i)->w0 : tw);
+	qr.setTop( (*i)->pos_reset ? (*i)->h0 - 1 : th);
+
+// 	// resize buffer if text is out?
+// 	QRect br = painter.boundingRect(qr, Qt::AlignLeft & Qt::TextWordWrap 
+// 					& Qt::AlignTop, txt);
+// 	buffer_maxh = MAX(buffer?(unsigned int)buffer->dim(0):0, 
+// 			  (*i)->h0 + br.height());
+// 	buffer_maxw = MAX(buffer?(unsigned int)buffer->dim(1):0, 
+// 			  (*i)->w0 + br.width());
+// 	buffer_resize(buffer_maxh, buffer_maxw);
+
 	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
 			 txt, &bg);
+	th = bg.top();
+	tw = bg.right();
 	painter.setPen(Qt::NoPen);
 	painter.setBrush(text_bg_color);
 	bg.setTop(bg.top() + 1);

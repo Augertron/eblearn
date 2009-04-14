@@ -1,9 +1,7 @@
 #include "Classifier2DTest.h"
 
-// #define __SHOW__
-
 #ifdef __GUI__
-#include "libidxgui.h"
+#include "libeblearngui.h"
 #endif
 
 using namespace ebl;
@@ -44,6 +42,11 @@ void Classifier2DTest::test_norb() {
   lenet7_binocular thenet(theparam, 96, 96, 5);
   theparam.load_x(mono_net.c_str());
   classifier2D cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
+
+#ifdef __GUI__
+  classifier2D_gui cgui;
+  cgui.display_all(cb, left.idx_ptr(), 1, 1.8, 60);
+#endif
 
   // find category of image
   idx<double> res = cb.fprop(left.idx_ptr(), 1, 1.8, 60);

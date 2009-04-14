@@ -38,19 +38,28 @@ namespace ebl {
   
   template<class T>
   void idxgui::draw_matrix(idx<T> &im, unsigned int h0, unsigned int w0, 
-				 T minv, T maxv, double zoomw, double zoomh) {
-    idx<ubyte> *uim = new idx<ubyte>(grey_image_to_ubyte<T>(im, minv, maxv, 
-							    zoomw, zoomh));
+			   double zoomh, double zoomw, T minv, T maxv) {
+    idx<ubyte> *uim = new idx<ubyte>(grey_image_to_ubyte<T>(im, zoomh, zoomw,
+							    minv, maxv));
     // send image to main gui thread
     emit gui_drawImage(uim, h0, w0);
   }
 
   template<class T>
+  void idxgui::draw_matrix(idx<T> &im, const char *str,
+			   unsigned int h0, unsigned int w0, 
+			   double zoomh, double zoomw, T minv, T maxv) {
+    draw_matrix(im, h0, w0, zoomh, zoomw, minv, maxv);
+    if (str)
+      (*this) << white_on_transparent() << gui_only() << at(h0, w0) << str;
+  }
+
+  template<class T>
   void idxgui::draw_matrix_frame(idx<T> &im, ubyte r, ubyte g, ubyte b,
-				       unsigned int h0, unsigned int w0, 
-				       T minv, T maxv, 
-				       double zoomw, double zoomh) {
-    idx<ubyte> uim = grey_image_to_ubyte<T>(im, minv, maxv, zoomw, zoomh);
+				 unsigned int h0, unsigned int w0, 
+				 double zoomh, double zoomw,
+				 T minv, T maxv) {
+    idx<ubyte> uim = grey_image_to_ubyte<T>(im, zoomh, zoomw, minv, maxv);
     idx<ubyte> tmp(uim.dim(0) + 2, uim.dim(1) + 2);
     idx<ubyte> *fim = new idx<ubyte>(tmp);
     idx<ubyte> tmp2 = tmp.narrow(0, uim.dim(0), 1);
@@ -74,12 +83,19 @@ namespace ebl {
     ManipInfra(idxgui& (*pFun) (idxgui&, T1, T2), 
 	       T1 val1_, T2 val2_)
       : manipFun2(pFun), val1(val1_), val2(val2_), nval(2) {}
+    ManipInfra(idxgui& (*pFun) (idxgui&, T1, T2, T2, T2, T2, T2, T2, T2), 
+	       T1 val1_, T2 val2_, T2 val3_, T2 val4_, 
+	       T2 val5_, T2 val6_, T2 val7_, T2 val8_)
+      : manipFun8(pFun), val1(val1_), val2(val2_), val3(val3_), val4(val4_), 
+	val5(val5_), val6(val6_), val7(val7_), val8(val8_), nval(8) {}
 
     void operator() (idxgui& r) const {
       switch (nval) {
       case 0: manipFun0(r); break ;
       case 1: manipFun1(r, val1); break ;
       case 2: manipFun2(r, val1, val2); break ;
+      case 8: manipFun8(r, val1, val2, val3, val4, val5, val6, val7, val8);
+	break ;
       default: ylerror("unknown mode");
       }
     }
@@ -87,20 +103,13 @@ namespace ebl {
     idxgui& (*manipFun0) (idxgui&);
     idxgui& (*manipFun1) (idxgui&, T1);
     idxgui& (*manipFun2) (idxgui&, T1, T2);
+    idxgui& (*manipFun8) (idxgui&, T1, T2, T2, T2, T2, T2, T2, T2);
     T1 val1;
-    T2 val2;
+    T2 val2, val3, val4, val5, val6, val7, val8;
     int nval;
   };
 
-  idxgui& att(idxgui& r, unsigned int h0, unsigned int w0);
-  ManipInfra<unsigned int, unsigned int> at(unsigned int h0, unsigned int w0);
-
-  idxgui& fcout_and_gui(idxgui& r);
-  ManipInfra<int, int> cout_and_gui();
-
-  idxgui& fgui_only(idxgui& r);
-  ManipInfra<int, int> gui_only();
-
+  
   template<class T1, class T2> 
   idxgui& operator<<(idxgui& r, const ManipInfra<T1, T2> &manip) {
     manip(r);

@@ -54,7 +54,7 @@ void ImageTest::test_resize() {
   unsigned int wid = gui.new_window("ImageTest");
   //  im = image_resize(im, im.dim(0) + 10, im.dim(1) + 10);
   im = image_resize(im, 100, 100);
-  gui.draw_matrix(im, 0, 0, (ubyte)0, (ubyte)0, 4.0, 4.0);
+  gui.draw_matrix(im, 0, 0, 4.0, 4.0);
   RenderThread &cout = gui;
   cout << "Testing images operations..." << endl;
   int hy = im.dim(0) * 4;
@@ -152,12 +152,4 @@ void ImageTest::test_yuvrgb() {
   idx_clear(im3);
   RGBtoYUV(im1, im2);
   YUVtoRGB(im2, im3);
-  /*
-    ebwindow *w = new ebwindow(500, 500);
-    w->RGB_draw_matrix(&im, UBYTE, 150, 0, 100, 100);
-    w->RGB_draw_matrix(&imb, UBYTE, 150, 100, 100, 100);
-    w->RGB_draw_matrix(&im1, UBYTE, 0, 0, 1, 1);
-    w->RGB_draw_matrix(&im2, UBYTE, 0, im0.dim(1) * 1 + 30, 1, 1);
-    w->RGB_draw_matrix(&im3, UBYTE, 0, im0.dim(1) * 2 + 30, 1, 1);
-  */
 }

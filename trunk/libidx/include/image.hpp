@@ -122,8 +122,8 @@ namespace ebl {
   }
 
   template<class T> 
-  idx<ubyte> grey_image_to_ubyte(idx<T> &im, T minv, T maxv, 
-				 double zoomw, double zoomh) {
+  idx<ubyte> grey_image_to_ubyte(idx<T> &im, double zoomh, double zoomw,
+				 T minv, T maxv) {
     if ((im.order() < 2) || (im.order() > 3) || 
 	((im.order() == 3) && (im.dim(2) != 1))) 
       ylerror("expecting a 2D idx or a 3D idx with 1 channel only");

@@ -372,11 +372,9 @@ using namespace ebl;
 	    f1 = f1.narrow(1, optical_flow_window.width, f1x);
 	    idx<ubyte> f2 = im2.narrow(0, optical_flow_window.height, f2y);
 	    f2 = f2.narrow(1, optical_flow_window.width, f2x);
-	    gui.draw_matrix(f1, h0, w0, (ubyte) 0, (ubyte) 0, 
-			    FEATURE_ZOOM, FEATURE_ZOOM); 
+	    gui.draw_matrix(f1, h0, w0, FEATURE_ZOOM, FEATURE_ZOOM); 
 	    w0 += optical_flow_window.width * FEATURE_ZOOM + 1;
-	    gui.draw_matrix(f2, h0, w0, (ubyte) 0, (ubyte) 0, 
-			    FEATURE_ZOOM, FEATURE_ZOOM); 
+	    gui.draw_matrix(f2, h0, w0, FEATURE_ZOOM, FEATURE_ZOOM); 
 	    w0 += optical_flow_window.width * FEATURE_ZOOM + 4;
 	    if (w0 > 900) {
 	      w0 = 0;

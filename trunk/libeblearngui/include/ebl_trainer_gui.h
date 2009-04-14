@@ -35,6 +35,7 @@
 #include "libidxgui.h"
 #include "libeblearn.h"
 #include "datasource_gui.h"
+#include "ebl_arch_gui.h"
 
 namespace ebl {
 

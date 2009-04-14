@@ -161,6 +161,45 @@ namespace ebl {
     return (ManipInfra<int, int>(fgui_only));
   }
 
+  idxgui& fblack_on_white(idxgui& r, unsigned char fg_a, unsigned char bg_a) {
+    r.set_text_colors(0, 0, 0, (int) fg_a, 255, 255, 255, (int) bg_a);
+    return r;
+  }
+
+  ManipInfra<unsigned char, unsigned char> black_on_white(unsigned char fg_a, 
+							  unsigned char bg_a) {
+    return (ManipInfra<unsigned char, unsigned char>(fblack_on_white, 
+						     fg_a, bg_a));
+  }
+
+  idxgui& fwhite_on_transparent(idxgui& r) {
+    r.set_text_colors(255, 255, 255, 255, 0, 0, 0, 127);
+    return r;
+  }
+
+  ManipInfra<int, int> white_on_transparent() {
+    return (ManipInfra<int, int>(fwhite_on_transparent));
+  }
+
+  idxgui& fset_colors(idxgui& r, unsigned char fg_r, unsigned char fg_g, 
+		      unsigned char fg_b, unsigned char fg_a,
+		      unsigned char bg_r, unsigned char bg_g, 
+		      unsigned char bg_b, unsigned char bg_a) {
+    r.set_text_colors(fg_r, fg_g, fg_b, fg_a, 
+		      bg_r, bg_g, bg_b, bg_a);
+    return r;
+  }
+
+  ManipInfra<unsigned char, unsigned char> 
+  set_colors(unsigned char fg_r, unsigned char fg_g, 
+	     unsigned char fg_b, unsigned char fg_a,
+	     unsigned char bg_r, unsigned char bg_g, 
+	     unsigned char bg_b, unsigned char bg_a) {
+    return (ManipInfra<unsigned char, unsigned char>(fset_colors,
+						     fg_r, fg_g, fg_b, fg_a, 
+						     bg_r, bg_g, bg_b, bg_a));
+  }
+
   void idxgui::set_cout_and_gui() {
     cout_output = true;
   }
