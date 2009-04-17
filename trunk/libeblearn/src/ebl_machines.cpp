@@ -63,21 +63,40 @@ namespace ebl {
 			       intg si1, intg sj1, intg ki2, intg kj2, 
 			       idx<intg> &tbl2, intg outthick) {
     idx<intg> tblmax = tbl0.select(1, 1);
-    intg thick0 = 1 + idx_max(tblmax);
+    int tblmax0 = idx_max(tblmax);
+    intg thick0 = 1 + tblmax0;
     intg c0_sizi = 1 + ini - ki0;
     intg c0_sizj = 1 + inj - kj0;
     intg s0_sizi = c0_sizi / si0;
     intg s0_sizj = c0_sizj / sj0;
     tblmax = tbl1.select(1, 1);
-    intg thick1 = 1 + idx_max(tblmax);
+    int tblmax1 = idx_max(tblmax);
+    intg thick1 = 1 + tblmax1;
     intg c1_sizi = 1 + s0_sizi - ki1;
     intg c1_sizj = 1 + s0_sizj - kj1;
     intg s1_sizi = c1_sizi / si1;
     intg s1_sizj = c1_sizj / sj1;
     tblmax = tbl2.select(1, 1);
-    intg thick2 = 1 + idx_max(tblmax);
+    int tblmax2 = idx_max(tblmax);
+    intg thick2 = 1 + tblmax2;
     intg c2_sizi = 1 + s1_sizi - ki2;
     intg c2_sizj = 1 + s1_sizj - kj2;
+    
+    // check that table values are consistent
+    tblmax = tbl1.select(1, 0);
+    if (idx_max(tblmax) != tblmax0) {
+      cerr << "error: the maximum number of outputs of table0 (" << tblmax0 + 1;
+      cerr << ") is different than the maximum number of inputs in table1 (";
+      cerr << idx_max(tblmax) + 1 << ")." << endl;
+      ylerror("tables inconsistency in nn_machine_cscscf constructor");
+    }
+    tblmax = tbl2.select(1, 0);
+    if (idx_max(tblmax) != tblmax1) {
+      cerr << "error: the maximum number of outputs of table1 (" << tblmax1 + 1;
+      cerr << ") is different than the maximum number of inputs in table2 (";
+      cerr << idx_max(tblmax) + 1 << ")." << endl;
+      ylerror("tables inconsistency in nn_machine_cscscf constructor");
+    }
 
     addModule(new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0, thick0),
 	      new state_idx(thick0, c0_sizi, c0_sizj));
@@ -161,7 +180,7 @@ namespace ebl {
     intg si1 = 3, sj1 = 3;
     intg hid = 100;
 
-    table0 = full_table(1, 6);
+    table0 = full_table(1, 8);
     table1 = idx<intg>(96, 2);
     intg tbl1[96][2] =
       {{0,  0}, {2,  0}, {4,  0}, {5,  0},

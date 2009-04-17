@@ -12,14 +12,22 @@
     <!--#include virtual="../../nav.html" --> 
 
     <div id="globalWrapper">
-      <h1 id="firstHeading" class="firstHeading"><b>libeblearn tutorial:</b> energy-based learning in C++</h1>
-      <h3 id="siteSub">By <a href="http://sermanet.free.fr">Pierre Sermanet</a> and <a href="http://yann.lecun.com/">Yann LeCun</a> (New York University)</h3><br><br>
+      <h1 id="firstHeading" class="firstHeading"><b>libeblearn
+      tutorial:</b> energy-based learning in C++</h1> 
+      <h3 id="siteSub">By <a href="http://sermanet.free.fr">Pierre
+      Sermanet</a> and <a href="http://yann.lecun.com/">Yann LeCun</a>
+      (New York University)</h3><br><br> 
 
-      <p>The eblearn (energy-based learning) C++ library <b>libeblearn</b> contains machine learning algorithms which can be used for computer vision.
-      The library has a generic and modular architecture, allowing easy prototyping and building of different algorithms 
+      <p>The eblearn (energy-based learning) C++
+      library <b>libeblearn</b> contains machine learning algorithms
+      which can be used for computer vision. 
+      The library has a generic and modular architecture, allowing
+      easy prototyping and building of different algorithms  
       (supervised or unsupervised learning) and configurations
-      from basic modules. Those algorithms were used for a variety for applications, including robotics with the 
-      <a href="http://www.cs.nyu.edu/~yann/research/lagr/">Learning Applied to Ground Robots</a> DARPA project (LAGR).</p>
+      from basic modules. Those algorithms were used for a variety for
+      applications, including robotics with the  
+      <a href="http://www.cs.nyu.edu/~yann/research/lagr/">Learning
+      Applied to Ground Robots</a> DARPA project (LAGR).</p> 
       
       <table class="toc" style="width: 250px;" summary="Contents">
 	<tr><td><div id="toctitle"><h2>Contents</h2></div>
@@ -51,9 +59,14 @@
       
       <a name="eblearning"></a>
       <h2>Energy-based learning</h2>
-      <p>What is the energy-based learning?</p>
+      <p>What is the energy-based learning?<br>FIXME.</p>
       <p>More resources on energy-based models:
 	<ul>
+	  <li><a href="http://videolectures.net/mlss05us_lecun_ebmli/">
+	      [video-lecture] Energy-based
+	  models & Learning for Invariant Image Recognition</a>:
+	    a 4-hour video of a tutorial on energy-based models by Yann LeCun at
+	  the Machine Learning Summer School in Chicago in 2005.</li>
 	  <li><a href="http://www.cs.nyu.edu/~yann/research/ebm/index.html">
 	      http://www.cs.nyu.edu/~yann/research/ebm/index.html</a>:
 	      tutorials, talks, videos and publications on EBMs.<li>
