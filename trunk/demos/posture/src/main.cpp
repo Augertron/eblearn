@@ -200,11 +200,11 @@ int main(int argc, char **argv) {
 
   // estimate second derivative on 100 iterations, using mu=0.02
   cout << endl << "Training the ConvNet. Type ./posture test-only to skip" 
-       << endl;
+       << endl << endl;
   cout << "Computing second derivatives on the dataset." << endl;
   cout << "See 'Efficient Backprop', LeCun et al., 1998" << endl;
   cout << "This is essential to set up initial learning rates "
-       << "for each weight in the network." << endl;
+       << "for each weight in the network." << endl << endl;
   myTrainer.compute_diaghessian(train_ds, 100, 0.02);
 
   // training, and testing...
@@ -233,12 +233,8 @@ int main(int argc, char **argv) {
     return 0;
 
  test:
-  // Load the trained conv-net, if existing
-  myConvNetWeights.load_x(pathToTrainedWeights.c_str());
-  cout << "Loading weights from " << pathToTrainedWeights << endl;
-
   // Select an image to be classified. train_ds is NBx3x46x46. we keep 1x46x46
-  idx<float> testSample = train_ds.data[35]; // Select a random sample
+  idx<float> testSample = train_ds.data[22]; // Select a random sample
   idx<float> testSampleGrayscale = testSample[1]; // discard color
 
   // instantiate the ConvNet
@@ -247,10 +243,14 @@ int main(int argc, char **argv) {
 				  testSampleGrayscale.dim(1), // Input width
 				  targets.dim(0)); // Nb of classes
 
+  // Load the trained conv-net, if existing
+  myConvNetWeights.load_x(pathToTrainedWeights.c_str());
+  cout << "Loading weights from " << pathToTrainedWeights << endl;
+
   // different sizes to be recognized during classification
   // the first it the size of objects during training
   // square objects is assumed
-  idx<int> objectSizes(1); 
+  idx<int> objectSizes(1);  
   objectSizes.set(46, 0);
 
   // these are the labels of the different classes 
@@ -273,7 +273,7 @@ int main(int argc, char **argv) {
 				     );
 
   // do a pass, classify
-  myClassifier.classify();
+  myClassifier.classify(0.3);
 
   return 0;
 }

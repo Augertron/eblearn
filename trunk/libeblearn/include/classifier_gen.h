@@ -67,8 +67,7 @@ namespace ebl {
     idx<double> classify(double threshold = 1);
     
     //! find maximas in output layer
-    void mark_maxima(idx<double> &in, idx<double> &inc, 
-		     idx<double> &res, double threshold);
+    void mark_maxima(double threshold);
 
     //! prune btwn scales
     idx<double> map_to_list(double threshold = 1);
