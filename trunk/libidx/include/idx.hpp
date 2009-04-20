@@ -1038,6 +1038,16 @@ namespace ebl {
     return 0;
   }
 
+  template <class T> 
+  std::ostream& operator<<(std::ostream& out, idx<T>& m) {
+    out << "idx:";
+    out << m.dim(0);
+    for (int i = 1; i < m.order(); ++i) {
+      out << "x" << m.dim(i);
+    }
+    return out;
+  }
+
   ////////////////////////////////////////////////////////////////
   // STL-style iterator creators
 

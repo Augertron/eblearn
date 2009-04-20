@@ -701,6 +701,10 @@ namespace ebl {
 
   };
 
+  //! idx print operator.
+  template <class T> 
+    std::ostream& operator<<(std::ostream& out, idx<T>& m);  
+
 } // end namespace ebl
 
 #include "idx_iterators.h"
@@ -816,10 +820,13 @@ namespace ebl {
 
     //! Extract dimensions information from an idxspec
     void read(const idxspec &s);
-
+    
     // friends
     friend class idxspec;
   };
+
+  //! idxdim print operator.
+  std::ostream& operator<<(std::ostream& out, idxdim& d);  
 
 } // end namespace ebl
 

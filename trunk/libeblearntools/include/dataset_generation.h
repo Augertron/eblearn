@@ -48,7 +48,7 @@ namespace ebl {
   //! bringing the stereo dimension sdim from 1 to 2.
   //! Finally outputs all N examples found in a single matrix files as follow:
   //! outDir/dset_images.mat: 
-  //!   (ubyte) N x width x width x 6 (G or GG, RGB or RGBRGB)
+  //!   (ubyte) N x 6 (G or GG, RGB or RGBRGB) x width x width
   //! outDir/dset_labels.mat: 	(int)   N
   //! outDir/dset_classes.mat:  (ubyte) Nclasses x 128
   bool imagedir_to_idx(const char *imgDir, 

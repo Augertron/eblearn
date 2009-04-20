@@ -81,22 +81,6 @@ namespace ebl {
     intg thick2 = 1 + tblmax2;
     intg c2_sizi = 1 + s1_sizi - ki2;
     intg c2_sizj = 1 + s1_sizj - kj2;
-    
-    // check that table values are consistent
-    tblmax = tbl1.select(1, 0);
-    if (idx_max(tblmax) != tblmax0) {
-      cerr << "error: the maximum number of outputs of table0 (" << tblmax0 + 1;
-      cerr << ") is different than the maximum number of inputs in table1 (";
-      cerr << idx_max(tblmax) + 1 << ")." << endl;
-      ylerror("tables inconsistency in nn_machine_cscscf constructor");
-    }
-    tblmax = tbl2.select(1, 0);
-    if (idx_max(tblmax) != tblmax1) {
-      cerr << "error: the maximum number of outputs of table1 (" << tblmax1 + 1;
-      cerr << ") is different than the maximum number of inputs in table2 (";
-      cerr << idx_max(tblmax) + 1 << ")." << endl;
-      ylerror("tables inconsistency in nn_machine_cscscf constructor");
-    }
 
     addModule(new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0, thick0),
 	      new state_idx(thick0, c0_sizi, c0_sizj));
@@ -285,6 +269,8 @@ namespace ebl {
 			       idx<double> &t, idxdim &dims)
     : fc_ebm2<state_idx,int,state_idx>(m, fout, (ebm_2<state_idx,int>&)fcost), 
       fcost(t), fout(dims) {
+    cout << "supervised_euclidean_machine: input samples size is ";
+    cout << dims << "." << endl; 
   }
 
   supervised_euclidean_machine::~supervised_euclidean_machine() {
