@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun, Pierre Sermanet, Clement Farabet *
+ *   Copyright (C) 2008 by Yann LeCun, Pierre Sermanet, Clement Farabet    *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com, clement.farabet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ namespace ebl {
     module_1_1<state_idx,state_idx>	 &thenet;
     int                                  input_width;
     int                                  input_height;
-    double				 coef; 
+    double				 coef;
     double				 bias;
     idx<int>				 sizes;
     idx<const char*>			 labels;
@@ -54,23 +54,23 @@ namespace ebl {
   public:	
     //! Constructor.  
     classifier_gen(module_1_1<state_idx,state_idx> &net_,
-	       idx<int> &sizes_, 
-	       idx<const char*> &labels_,
-	       idx<Tdata> &sample_,
-	       double bias_, double coef_);
+		   idx<int> &sizes_, 
+		   idx<const char*> &labels_,
+		   idx<Tdata> &sample_,
+		   double bias_, double coef_);
     ~classifier_gen();
 
     //! do a fprop on thenet with multiple rescaled inputs
     void multi_res_fprop();
 
     //! call multi_res_fprop(), and analyze the output map
-    idx<double> classify(double threshold = 1);
+    idx<double> classify(double threshold);
     
     //! find maximas in output layer
     void mark_maxima(double threshold);
 
     //! prune btwn scales
-    idx<double> map_to_list(double threshold = 1);
+    idx<double> map_to_list(double threshold);
 
   };
 

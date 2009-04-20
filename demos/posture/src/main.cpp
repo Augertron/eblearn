@@ -168,8 +168,8 @@ int main(int argc, char **argv) {
 
   // instantiate the ConvNet
   ConvNetPosture myConvNet(myConvNetWeights, // Trainable parameter
-			   trainingSet.dim(3), // Input height
-			   trainingSet.dim(2), // Input width
+			   trainingSet.dim(2), // Input height
+			   trainingSet.dim(3), // Input width
 			   targets.dim(0)); // Nb of classes
 
   //! combine the conv net with targets -> gives a supervised system
@@ -234,8 +234,9 @@ int main(int argc, char **argv) {
 
  test:
   // Select an image to be classified. train_ds is NBx3x46x46. we keep 1x46x46
-  idx<float> testSample = train_ds.data[22]; // Select a random sample
+  idx<float> testSample = test_ds.data[22]; // Select a random sample
   idx<float> testSampleGrayscale = testSample[1]; // discard color
+  cout << "Loading a random example in class 'hand1up'" << endl << endl;
 
   // instantiate the ConvNet
   ConvNetPosture myTrainedConvNet(myConvNetWeights, // Trained weights
@@ -244,13 +245,16 @@ int main(int argc, char **argv) {
 				  targets.dim(0)); // Nb of classes
 
   // Load the trained conv-net, if existing
-  myConvNetWeights.load_x(pathToTrainedWeights.c_str());
-  cout << "Loading weights from " << pathToTrainedWeights << endl;
+  if (myConvNetWeights.load_x(pathToTrainedWeights.c_str()) == false) {
+    cout << "Couldn't load weights" << endl;
+    return 0;
+  } else 
+    cout << "Loading weights from " << pathToTrainedWeights << endl;
 
   // different sizes to be recognized during classification
   // the first it the size of objects during training
   // square objects is assumed
-  idx<int> objectSizes(1);  
+  idx<int> objectSizes(1);
   objectSizes.set(46, 0);
 
   // these are the labels of the different classes 
@@ -264,7 +268,7 @@ int main(int argc, char **argv) {
   objectLabels.set("swinghand", 5);
 
   //! a classifier needs a trained module, a list of scales, and the classes
-  classifier_gen<float> myClassifier(myTrainedConvNet, // The trained ConvNet
+  classifier_gen<float> myClassifier(myConvNet, // The trained ConvNet
 				     objectSizes,  // sizes of objects
 				     objectLabels, // Labels of classes
 				     testSampleGrayscale, // Sample to classify
@@ -273,7 +277,7 @@ int main(int argc, char **argv) {
 				     );
 
   // do a pass, classify
-  myClassifier.classify(0.3);
+  myClassifier.classify(0);
 
   return 0;
 }
