@@ -67,7 +67,7 @@ namespace ebl {
 	in.set((void*) new state_idx(1, 
 				     scaled_input_height,
 				     scaled_input_width));
-	out.set((void*) new state_idx(labels.nelements(), 
+	out.set((void*) new state_idx(labels.nelements()+1, 
 				      1, 
 				      1));
 	r.set((void*) new idx<double>(1,
@@ -103,30 +103,17 @@ namespace ebl {
     // write result in m. rescale result to [0 1]
     mark_maxima(threshold);
 
-    idx<double> rlist;
-    cout << "Raw results: " << endl;
-
-    { idx_bloop1(max_map, results, void*) {
-	{ idx_bloop1(max_map_row, *((idx<double>*) max_map.get()), double) {
-	    { idx_bloop1(max_map_result, max_map_row, double) {
-		cout << "Class: " << max_map_result.get(0) << " -- "
-		     << "Value: " << max_map_result.get(1) << endl;
-	      }}
-	  }}
-      }}
-    return rlist;
-
     // prune results btwn scales
-    rlist = map_to_list(threshold);
+    idx<double> rlist = map_to_list(threshold);
 
     // Display results
-    cout << " results: ";
+    cout << endl << " Results: ";
     if (rlist.dim(0) == 0) 
       cout << "no object found." << endl;
     else {
       { idx_bloop1(re, rlist, double) {
 	  re.printElems();
-	  cout << " " << labels.get((int)re.get(0));
+	  cout << " " << labels.get((int)re.get(0)) << endl;
 	}}
     }
 
@@ -153,12 +140,10 @@ namespace ebl {
   	idx_dotc(inx, coef, inx);
 	
 	// Run fprop for each scale
-	state_idx *ii = ((state_idx*) in.get());
-	state_idx *oo = ((state_idx*) out.get());
+	state_idx *ii = (state_idx*)(in.get());
+	state_idx *oo = (state_idx*)(out.get());
 	thenet.fprop(*ii, *oo);
-	
-	for (int i=0; i<7; i++) 
-	  cout << oo->x.get(i,0,0) << endl;
+
       }}
 
   }
@@ -178,14 +163,10 @@ namespace ebl {
 		{ idx_bloop2(max_map_result, max_map_row, double,
 			     raw_map_pix, raw_map_row, double)  {
 		    double pix_val = raw_map_pix.get();
-		    cout << "pix val: " << pix_val << endl;
 		    if (pix_val > max_map_result.get(1)
 			&& pix_val > threshold) {
 		      max_map_result.set(winnning_class, 0);
 		      max_map_result.set(pix_val, 1);
-		    } else {
-		      max_map_result.set(-1, 0);
-		      max_map_result.set(0, 1);
 		    }
 		  }}
 	      }}
