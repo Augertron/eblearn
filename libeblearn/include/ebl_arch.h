@@ -143,6 +143,12 @@ namespace ebl {
     virtual void forget(forget_param_linear &fp);
     virtual void normalize();
 
+    // TODO change these methods to handle any kind of dimensions
+    intg input_height, input_width;
+    intg output_height, output_width;
+    virtual void set_input_size(intg &height, intg &width);
+    virtual void set_output_size(intg &height, intg &width);
+
   private:
     bool own_contents;
   };

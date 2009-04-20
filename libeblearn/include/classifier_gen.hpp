@@ -40,7 +40,7 @@ using namespace std;
 namespace ebl {
 
   template <class Tdata>
-  classifier_gen<Tdata>::classifier_gen(module_1_1<state_idx,state_idx> &net_,
+  classifier_gen<Tdata>::classifier_gen(layers_n<state_idx> &net_,
 				idx<int> &sizes_, 
 				idx<const char*> &labels_,
 				idx<Tdata> &sample_,
@@ -62,16 +62,21 @@ namespace ebl {
 		 out, outputs, void*,
 		 r, results, void*) {
 	// Compute the input sizes for each scale
-	intg scaled_input_height = input_height * *(sizes.ptr(0)) / *size.ptr();
-	intg scaled_input_width = input_height * *(sizes.ptr(0)) / *size.ptr();
+	intg scaled_input_height = input_height / *size.ptr();
+	intg scaled_input_width = input_width / *size.ptr();
+
+	// Adapt the size to the network structure:
+	thenet.set_input_size(scaled_input_height, 
+			      scaled_input_width);
+
 	in.set((void*) new state_idx(1, 
-				     scaled_input_height,
-				     scaled_input_width));
+				     thenet.input_height,
+				     thenet.input_width));
 	out.set((void*) new state_idx(labels.nelements()+1, 
-				      1, 
-				      1));
-	r.set((void*) new idx<double>(1,
-				      1,
+				      thenet.output_height, 
+				      thenet.output_width));
+	r.set((void*) new idx<double>(thenet.output_height,
+				      thenet.output_width,
 				      2)); // (class,score)
       }}
     cout << endl << "Classifier initialized" << endl;
@@ -107,7 +112,7 @@ namespace ebl {
     idx<double> rlist = map_to_list(threshold);
 
     // Display results
-    cout << endl << " Results: ";
+    cout << endl << " Results: " << endl;
     if (rlist.dim(0) == 0) 
       cout << "no object found." << endl;
     else {
@@ -116,6 +121,7 @@ namespace ebl {
 	  cout << " " << labels.get((int)re.get(0)) << endl;
 	}}
     }
+    cout << "Nb of results: " << rlist.dim(0) << endl;
 
     return rlist;
   }
@@ -156,19 +162,41 @@ namespace ebl {
 	intg winnning_class = 0;
 	idx<double> raw_maps = ((state_idx*) out_map.get())->x;
 	idx<double> max_map = *((idx<double>*) res_map.get());
-	idx_clear(max_map);
+
+	double y_max = (double)(raw_maps.dim(1));
+	double x_max = (double)(raw_maps.dim(2));
+	double x=0, y=0;
+
+	idx_fill(max_map, (double)-1);
 	{ idx_bloop1(raw_map, raw_maps, double) {
 	    { idx_bloop2(max_map_row, max_map, double,
 			 raw_map_row, raw_map, double) {
+		x = 0;
 		{ idx_bloop2(max_map_result, max_map_row, double,
 			     raw_map_pix, raw_map_row, double)  {
 		    double pix_val = raw_map_pix.get();
 		    if (pix_val > max_map_result.get(1)
 			&& pix_val > threshold) {
-		      max_map_result.set(winnning_class, 0);
-		      max_map_result.set(pix_val, 1);
+		      intg local_max, i,j, 
+			i_max = (y+5<=y_max) ? y+5 : y_max,
+			j_max = (x+5<=x_max) ? x+5 : x_max;
+		      local_max = 1;
+		      for (i = (y-5>=0) ? y-5 : 0; i < i_max; i++) {
+			for (j = (x-5>=0) ? x-5 : 0; j < j_max; j++) {
+			  if (pix_val <= raw_map.get(i,j)
+			      && i!=y && j!=x) {
+			    local_max = 0;
+			  }
+			}
+		      }
+		      if (local_max == 1) {
+			max_map_result.set(winnning_class, 0);
+			max_map_result.set(pix_val, 1);
+		      }
 		    }
+		    x++;
 		  }}
+		y++;
 	      }}
 	    winnning_class++;
 	  }}
@@ -179,27 +207,35 @@ namespace ebl {
   idx<double> classifier_gen<Tdata>::map_to_list(double threshold) {
     
     // make a list that contains the results
-    idx<double> rlist(1, 4);
+    idx<double> rlist(1, 5);
     rlist.resize(0, rlist.dim(1));
     idx<double> in0x(((state_idx*) inputs.get(0))->x);
-    intg s0i = in0x.dim(1);
-    intg s0j = in0x.dim(2);
+    intg in_x0 = in0x.dim(2);
+    intg offset_x = 0, offset_y = 0;
     { idx_bloop3(input, inputs, void*, 
 		 output, outputs, void*, 
 		 r, results, void*) {    	 
-	idx<double> inx(((state_idx*) input.get())->x);
-	double scale = s0j / (double)(inx.dim(2));
+	double in_y = (double)(((state_idx*) input.get())->x.dim(1));
+	double in_x = (double)(((state_idx*) input.get())->x.dim(2));
+	double out_y = (double)(((state_idx*) output.get())->x.dim(1));
+	double out_x = (double)(((state_idx*) output.get())->x.dim(2));
+	double scale = in_x0 / in_x;
+	offset_y = 0;
 	{ idx_bloop1(re, *((idx<double>*) r.get()), double) {
+	    offset_x = 0;
 	    { idx_bloop1(ree, re, double) {
 		if (ree.get(1) > threshold) {
 		  intg ri = rlist.dim(0);
 		  rlist.resize(ri + 1, rlist.dim(1));
-		  rlist.set(ree.get(0), ri, 0);
-		  rlist.set(ree.get(1), ri, 1);
-		  rlist.set(scale, ri, 2);
-		  rlist.set(scale, ri, 3);
+		  rlist.set(ree.get(0), ri, 0); // Class
+		  rlist.set(ree.get(1), ri, 1); // Confidence (1 is the best)
+		  rlist.set(scale, ri, 2); // Scale
+		  rlist.set(offset_x/out_x*in_x, ri, 3); // Offset X in input
+		  rlist.set(offset_y/out_y*in_y, ri, 4); // Offset Y in input 
 		}
+		offset_x++;
 	      }}
+	    offset_y++;
 	  }}
       }}
   return rlist;
