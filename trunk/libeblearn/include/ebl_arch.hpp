@@ -327,6 +327,16 @@ hidden states in layers_n");
     }
   }
 
+  template<class T>
+  void layers_n<T>::set_input_size(intg &height, intg &width){
+    err_not_implemented();
+  }
+
+  template<class T>
+  void layers_n<T>::set_output_size(intg &height, intg &width){
+    err_not_implemented();
+  }
+
   ////////////////////////////////////////////////////////////////
 
   template<class Tin, class Thid>

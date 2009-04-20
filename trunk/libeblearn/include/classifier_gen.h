@@ -39,7 +39,7 @@ namespace ebl {
 
   template <class Tdata> class classifier_gen {
   private:
-    module_1_1<state_idx,state_idx>	 &thenet;
+    layers_n<state_idx>          	 &thenet;
     int                                  input_width;
     int                                  input_height;
     double				 coef;
@@ -53,7 +53,7 @@ namespace ebl {
 
   public:	
     //! Constructor.  
-    classifier_gen(module_1_1<state_idx,state_idx> &net_,
+    classifier_gen(layers_n<state_idx> &net_,
 		   idx<int> &sizes_, 
 		   idx<const char*> &labels_,
 		   idx<Tdata> &sample_,
