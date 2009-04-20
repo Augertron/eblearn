@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun, Pierre Sermanet, Clement Farabet *
+ *   Copyright (C) 2008 by Yann LeCun, Pierre Sermanet, Clement Farabet    *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com, clement.farabet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,11 +70,10 @@ namespace ebl {
 	out.set((void*) new state_idx(labels.nelements(), 
 				      1, 
 				      1));
-	r.set((void*) new idx<double>(1, 
-				      1, 
+	r.set((void*) new idx<double>(1,
+				      1,
 				      2)); // (class,score)
       }}
-    
     cout << endl << "Classifier initialized" << endl;
   }
    
@@ -94,29 +93,31 @@ namespace ebl {
     
     // do a fprop for each scaled input sample
     cout << "Running multiscale fprop on module" << endl;
-    this->multi_res_fprop();
+    multi_res_fprop();
     
     // parse result
     // parse output feature map to extract positions of detections
     cout << "Parsing output" << endl;
     
-    { idx_bloop2(out, outputs, void*, resu, results, void*) {
-	idx<double> outx = ((state_idx*) out.get())->x;
-	int c = outx.dim(0);
-	int h = outx.dim(1);
-	int w = outx.dim(2);
-	idx<double> in(c, w, h);
-	idx<double> inc(in);
-	idx_fill(in, 0.0);
-	idx_clip(outx, 0.0, inc);
-	idx_copy(in, inc);
-	// find points that are local maxima spatial and class-wise
-	// write result in m. rescale result to [0 1]
-	mark_maxima(in, inc, *((idx<double>*) resu.get()), threshold);
+    // find points that are local maxima spatial and class-wise
+    // write result in m. rescale result to [0 1]
+    mark_maxima(threshold);
+
+    idx<double> rlist;
+    cout << "Raw results: " << endl;
+
+    { idx_bloop1(max_map, results, void*) {
+	{ idx_bloop1(max_map_row, *((idx<double>*) max_map.get()), double) {
+	    { idx_bloop1(max_map_result, max_map_row, double) {
+		cout << "Class: " << max_map_result.get(0) << " -- "
+		     << "Value: " << max_map_result.get(1) << endl;
+	      }}
+	  }}
       }}
+    return rlist;
 
     // prune results btwn scales
-    idx<double> rlist = map_to_list(threshold);
+    rlist = map_to_list(threshold);
 
     // Display results
     cout << " results: ";
@@ -138,7 +139,9 @@ namespace ebl {
     // generate multi-resolution input
     idx<double> inx;
     int ni, nj;
-    { idx_bloop1(in, inputs, void*) {
+    { idx_bloop2(in, inputs, void*,
+		 out, outputs, void*) {
+
 	// Get size for each scale
   	inx = ((state_idx*) in.get())->x;
   	ni = inx.dim(1);
@@ -148,48 +151,49 @@ namespace ebl {
   	idx_copy(imres, inx0);
   	idx_addc(inx, bias, inx);
   	idx_dotc(inx, coef, inx);
-      }}
-
-    // Run fprop for each scale
-    { idx_bloop2(in, inputs, void*, 
-		 out, outputs, void*) {
+	
+	// Run fprop for each scale
 	state_idx *ii = ((state_idx*) in.get());
 	state_idx *oo = ((state_idx*) out.get());
-	thenet.fprop(*ii, *oo); 
+	thenet.fprop(*ii, *oo);
+	
+	for (int i=0; i<7; i++) 
+	  cout << oo->x.get(i,0,0) << endl;
       }}
 
   }
 
   template <class Tdata> 
-  void classifier_gen<Tdata>::mark_maxima(idx<double> &in, idx<double> &inc, 
-					  idx<double> &res, double threshold) {
-    idx_clear(res);
-    int tr[] = { 1, 2, 0 };
-    idx<double> s(inc.transpose(tr));
-    idx<double> z(in.transpose(tr));
-    //z = z.unfold(0, 3, 1);
-    //z = z.unfold(1, 3, 1);
-    { idx_bloop3(se, s, double, ze, z, double, re, res, double) {
-	{ idx_bloop3(see, se, double, zee, ze, double, ree, re, double)  {
-	    // find winning class
-	    intg w = idx_indexmax(see);
-	    double c = see.get(w);
-	    // look if above threshold and local maximum
-	    ree.set(-1.0, 0),
-	      ree.set(-100.0, 1);
-	    if ((c > threshold) &&
-		(c > zee.get(w, 0, 0)) && (c > zee.get(w, 0, 1)) 
-		&& (c > zee.get(w, 0, 2)) &&
-		(c > zee.get(w, 1, 0)) && (c > zee.get(w, 1, 2)) &&
-		(c > zee.get(w, 2, 0)) && (c > zee.get(w, 2, 1)) 
-		&& (c > zee.get(w, 2, 2))) {
-	      ree.set(w, 0);
-	      ree.set(c, 1);
-	    }
+  void classifier_gen<Tdata>::mark_maxima(double threshold) {
+    
+    { idx_bloop2(out_map, outputs, void*, 
+		 res_map, results, void*) {
+	intg winnning_class = 0;
+	idx<double> raw_maps = ((state_idx*) out_map.get())->x;
+	idx<double> max_map = *((idx<double>*) res_map.get());
+	idx_clear(max_map);
+	{ idx_bloop1(raw_map, raw_maps, double) {
+	    { idx_bloop2(max_map_row, max_map, double,
+			 raw_map_row, raw_map, double) {
+		{ idx_bloop2(max_map_result, max_map_row, double,
+			     raw_map_pix, raw_map_row, double)  {
+		    double pix_val = raw_map_pix.get();
+		    cout << "pix val: " << pix_val << endl;
+		    if (pix_val > max_map_result.get(1)
+			&& pix_val > threshold) {
+		      max_map_result.set(winnning_class, 0);
+		      max_map_result.set(pix_val, 1);
+		    } else {
+		      max_map_result.set(-1, 0);
+		      max_map_result.set(0, 1);
+		    }
+		  }}
+	      }}
+	    winnning_class++;
 	  }}
       }}
   }
-
+  
   template <class Tdata> 
   idx<double> classifier_gen<Tdata>::map_to_list(double threshold) {
     
