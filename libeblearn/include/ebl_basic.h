@@ -99,6 +99,7 @@ namespace ebl {
     intg	 stridei;
     intg	 stridej;
     idx<intg>	&table;	//!< the table of connections between input and output
+    intg         tablemax;
     
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.

@@ -416,7 +416,7 @@ img01.png  img02.png</pre></div>
 (or imageDirToIdx("/data", 42, ".*[.]png", NULL, "/datasets", NULL, false, "_train", true);)</pre></div>
       <p>This will create 3 files in the output directory "/datasets" (which can be omitted):</p>
       <ol>
-	<li>dset_images.mat: a ubyte matrix of size <i>N x width x width x M</i>, where N is the number of images and M the number of channels which can be 1 or 3 if the input images are in greyscale or color or 2 or 6 if two (stereoscopic) images are passed instead of one. Here are the possible channel configurations: <i>G or GG, RGB or RGBRGB</i>.</li>
+	<li>dset_images.mat: a ubyte matrix of size <i>N x M x width x width</i>, where N is the number of images and M the number of channels which can be 1 or 3 if the input images are in greyscale or color or 2 or 6 if two (stereoscopic) images are passed instead of one. Here are the possible channel configurations: <i>G or GG, RGB or RGBRGB</i>.</li>
 	<li>dset_labels.mat: an int matrix of size <i>Nclasses</i> containing labels id numbers, e.g. 0, 1, ...</li>
 	<li>dset_classes.mat: a ubyte matrix of size <i>Nclasses x 128</i> containing the names of each class.</li>
       </ol>

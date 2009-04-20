@@ -277,8 +277,8 @@ int main(int argc, char **argv) {
 
   //! instantiate the ConvNet
   generic_conv_net myConvNet(myConvNetWeights, //! Trainable parameter
-			     320, //! Max input height
-			     320, //! Max input width
+			     46, //! Max input height
+			     46, //! Max input width
 			     targets.dim(0)); //! Nb of classes
 
   //! combine the conv net with targets -> gives a supervised system

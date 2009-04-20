@@ -669,4 +669,16 @@ namespace ebl {
     dim[dimn] = size; 
   }
 
+  std::ostream& operator<<(std::ostream& out, idxdim& d) {
+    if (d.ndim <= 0)
+      out << "<empty>";
+    else {
+      out << d.dim[0];
+      for (int i = 1; i < d.ndim; ++i) {
+	out << "x" << d.dim[i];
+      }
+    }
+    return out;
+  }
+
 } // end namespace ebl
