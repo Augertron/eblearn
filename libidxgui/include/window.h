@@ -141,7 +141,7 @@ namespace ebl {
 
     // update methods
     void buffer_resize(int h, int w);
-    void update_window(bool activate = true);
+    void update_window(bool activate = false);
 
     // painting/drawing methods
     void draw_text(QPainter &painter);

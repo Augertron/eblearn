@@ -86,8 +86,7 @@ namespace ebl {
     if ((height != 0) && (width != 0))
       buffer_resize(height, width);
     wupdate = true; // always update display
-    text_fg_color.setRgb(255, 255, 255, 255);
-    text_bg_color.setRgb(0, 0, 0, 127);
+    set_text_colors(255, 255, 255, 255, 0, 0, 0, 127);
     buffer_maxh = height;
     buffer_maxw = width;
     pos_reset = true;
@@ -115,6 +114,7 @@ namespace ebl {
     clear_text();
     clear_arrows();
     clear_images();
+    update_window();
   }
 
   void Window::clear_text() {
@@ -149,10 +149,13 @@ namespace ebl {
     if (wupdate != ud) {
       wupdate = ud;
       if (wupdate) {
+	setUpdatesEnabled(true);
 	draw_images();
 	repaint();
-	update_window(false);
+	update_window();
       }
+      else
+	setUpdatesEnabled(false);
     }
   }
 
@@ -184,18 +187,18 @@ namespace ebl {
     }
     *txt += *s;
     delete s;
-    update_window(false);
+    update_window();
     pos_reset = false;
   }
   
   void Window::add_arrow(int h1, int w1, int h2, int w2) {
     arrows.push_back(new arrow(h1, w1, h2, w2));
-    update_window(false);
+    update_window();
   }
   
   void Window::add_image(idx<ubyte> &img, unsigned int h0, unsigned int w0) {
     images.push_back(new image(img, h0, w0));
-    update_window(false);
+    update_window();
   }
 
   void Window::set_text_colors(unsigned char fg_r_, unsigned char fg_g_, 
@@ -277,7 +280,7 @@ namespace ebl {
       idx_copy(img, tmpbuf);
       // copy buffer to pixmap
       *pixmap = QPixmap::fromImage(*qimage);
-      update_window(false);
+      update_window();
     }
     else { // don't add the image if wupdate is false
       // instead keep it in a list of images to be displayed later
