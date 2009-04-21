@@ -655,6 +655,16 @@ namespace ebl {
   idxdim::idxdim(const idxspec &s) {
     read(s);
   }
+
+  idxdim::idxdim(intg s0, intg s1, intg s2, intg s3,
+		 intg s4, intg s5, intg s6, intg s7) {
+    dim[0] = s0; dim[1] = s1; dim[2] = s2; dim[3] = s3;
+    dim[4] = s4; dim[5] = s5; dim[6] = s6; dim[7] = s7;
+    ndim = 0;
+    for (int i=0; i<8; i++)
+      if (dim[i] >= 0) ndim++;
+      else break;
+  }
   
   void idxdim::read(const idxspec &s) {
     ndim = s.ndim;

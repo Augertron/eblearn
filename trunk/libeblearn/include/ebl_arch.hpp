@@ -60,6 +60,16 @@ namespace ebl {
   void module_1_1<Tin,Tout>::resize_output(Tin &in, Tout &out) { 
     err_not_implemented(); }
 
+  template<class Tin, class Tout>
+  idxdim module_1_1<Tin,Tout>::adapt_input_size(idxdim &i_size) {
+    //  err_not_implemented(); 
+  }
+
+  template<class Tin, class Tout>
+  idxdim module_1_1<Tin,Tout>::get_input_size_from_output(idxdim o_size) {
+    //  err_not_implemented(); 
+  }
+
   ////////////////////////////////////////////////////////////////
   // module_2_1
 
@@ -325,16 +335,6 @@ hidden states in layers_n");
     for(unsigned int i=0; i<modules->size(); i++){
       (*modules)[i]->normalize();
     }
-  }
-
-  template<class T>
-  void layers_n<T>::set_input_size(intg &height, intg &width){
-    err_not_implemented();
-  }
-
-  template<class T>
-  void layers_n<T>::set_output_size(intg &height, intg &width){
-    err_not_implemented();
   }
 
   ////////////////////////////////////////////////////////////////
