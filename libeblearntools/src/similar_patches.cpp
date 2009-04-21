@@ -68,17 +68,18 @@ namespace ebl {
       idx<ubyte> im2 = im.narrow(0, pheight, h0);
       im2 = im2.narrow(1, pwidth, w0);
       idx_copy(im2, *patch);
-      // if current spot is NULL, create a new vector
+      // if current slot is NULL, create a new vector
       if (current_patches[index] == NULL)
 	current_patches[index] = new vector<idx<ubyte>*>;
-      current_patches[index]->push_back(patch);
+      vector<idx<ubyte>*> *patchlist = current_patches[index];
+      patchlist->push_back(patch);
       current_patches_xy[index].first = w;
       current_patches_xy[index].second = h;
       // we reached the maximum number of patches, add group in
       // database and free spot for a new patch
-      if (current_patches[index]->size() >= max_similar_patches) {
+      if (patchlist->size() >= max_similar_patches) {
 	// add group of similar patches to dataset
-	dataset.push_back(current_patches[index]);
+	dataset.push_back(patchlist);
 	// free up patch spot
 	current_patches[index] = NULL;
       }
@@ -98,8 +99,9 @@ namespace ebl {
     unsigned int h = 0, w = 0;
     vector<vector<idx<ubyte>*>*>::iterator i = dataset.begin();
     for ( ; (i != dataset.end()) && (h < maxh); ++i) {
-      if ((*i) != NULL) {
-	vector<idx<ubyte>*>::iterator k = (*i)->begin();
+      vector<idx<ubyte>*> *plist = *i;
+      if (plist != NULL) {
+	vector<idx<ubyte>*>::iterator k = plist->begin();
 	for ( ; (k != (*i)->end()) && (h < maxh); ++k) {
 	  if (w + (*k)->dim(1) > maxw) {
 	    w = 0;
