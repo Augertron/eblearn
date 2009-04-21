@@ -103,7 +103,6 @@ namespace ebl {
 
   template <class Tdata> class classifierNMS : public classifier2D {
   public:
-    module_1_1<state_idx, state_idx> 	 &thenet;
     int                                  input_width;
     int                                  input_height;
     double				 coef;

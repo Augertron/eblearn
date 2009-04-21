@@ -39,7 +39,7 @@
 
 #include "libeblearn.h"
 #ifdef __GUI__
-#include "classifier2D_gui.h"
+#include "libeblearngui.h"
 #endif
 #include "libeblearntools.h"
 
@@ -197,8 +197,11 @@ public:
 
 };
 
+#ifdef __GUI__
+MAIN_QTHREAD() { 
+#else
 int main(int argc, char **argv) {
-  
+#endif
   //! Useful paths to datasets
   string pathToData = getPathToData() + "/posture";
   string pathToIdxTrain = pathToData+"/idx/dset_mono_train_images.mat";
@@ -212,10 +215,10 @@ int main(int argc, char **argv) {
   if (argc > 1 
       && strcmp(argv[1], "train-only") != 0
       && strcmp(argv[1], "test-only") != 0) {
-    cout << "Getting images from " << pathToData << flush << endl;
+    //    cout << "Getting images from " << pathToData << flush << endl;
     generate_idx_data_set(pathToData);
   } else if (argc == 1) { 
-    cout << "Getting images from " << pathToData << flush << endl;
+    //    cout << "Getting images from " << pathToData << flush << endl;
     generate_idx_data_set(pathToData);
   }
 
@@ -397,6 +400,7 @@ string getPathToData() {
       in >> s;
       if (s == "-data") {
 	in >> s;
+	break ;
       }
     }
   }
