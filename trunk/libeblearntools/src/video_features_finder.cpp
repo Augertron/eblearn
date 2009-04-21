@@ -178,7 +178,9 @@ using namespace ebl;
 	frame = cvQueryFrame( input_video );
 	if (frame == NULL) {
 	  cout << "end of video." << endl;
+#ifdef __GUI__
 	  gui.enable_updates();
+#endif
 	  break ;
 	}
 
@@ -221,7 +223,9 @@ using namespace ebl;
 	frame = cvQueryFrame( input_video );
 	if (frame == NULL) {
 	  cout << "end of video." << endl;
+#ifdef __GUI__
 	  gui.enable_updates();
+#endif
 	  break ;
 	}
 	allocateOnDemand( &frame2_1C, frame_size, IPL_DEPTH_8U, 1 );
