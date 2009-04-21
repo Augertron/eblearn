@@ -33,6 +33,9 @@
 #define classifier_gen_HPP
 
 #include "classifier_gen.h"
+#ifdef __GUI__
+#include "libeblearngui.h"
+#endif
 #include <ostream>
 
 using namespace std;
@@ -140,6 +143,13 @@ namespace ebl {
 	state_idx *ii = (state_idx*)(in.get());
 	state_idx *oo = (state_idx*)(out.get());
 	thenet.fprop(*ii, *oo);
+
+	//! display results
+        #ifdef __GUI__
+	module_1_1_gui displayer;
+	displayer.display_fprop(myConvNet, *ii, *oo);
+	cout << "Displaying network" << endl;
+	#endif
       }}
 
   }
