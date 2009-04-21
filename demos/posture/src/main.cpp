@@ -223,6 +223,10 @@ int main(int argc, char **argv) {
   load_matrix(testingSet, pathToIdxTest.c_str());
   load_matrix(testingLabels, pathToIdxTeLabels.c_str());
 
+  //! Discard the rgb info, and keep the green chan.
+  trainingSet = trainingSet.select(1,1);
+  testingSet = testingSet.select(1,1);
+
   //! create two labeled data sources, for training and testing
   labeled_datasource<float,int> train_ds(trainingSet, //! Data source
 					 trainingLabels, //! Labels
@@ -321,8 +325,9 @@ int main(int argc, char **argv) {
     cout << "Loading weights from " << pathToTrainedWeights << endl;
 
   //! different scales, to recognize different object sizes
-  idx<int> objectSizes(1);
+  idx<double> objectSizes(1);
   objectSizes.set(1, 0);
+  //objectSizes.set(1.3, 0);
 
   //! these are the labels of the different classes 
   //! each object will be classified in one of those classes

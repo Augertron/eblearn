@@ -41,7 +41,7 @@ namespace ebl {
 
   template <class Tdata>
   classifier_gen<Tdata>::classifier_gen(module_1_1<state_idx, state_idx> &net_,
-					idx<int> &sizes_, 
+					idx<double> &sizes_, 
 					idx<const char*> &labels_,
 					idx<Tdata> &sample_,
 					double bias_, double coef_) 
@@ -57,13 +57,13 @@ namespace ebl {
     outputs = idx<void*>(sizes.nelements());
     results = idx<void*>(sizes.nelements());
 
-    { idx_bloop4(size, sizes, int, 
+    { idx_bloop4(size, sizes, double, 
 		 in, inputs, void*, 
 		 out, outputs, void*,
 		 r, results, void*) {
 	// Compute the input sizes for each scale
-	idxdim scaled_dims( input_height / *size.ptr(),
-			    input_width / *size.ptr() );
+	idxdim scaled_dims( (intg)(input_height / size.get()),
+			    (intg)(input_width / size.get()) );
 	// Adapt the size to the network structure:
 	idxdim out_dims = thenet.adapt_input_size(scaled_dims);
 	in.set((void*) new state_idx(1, 
@@ -126,27 +126,20 @@ namespace ebl {
   template <class Tdata> 
   void classifier_gen<Tdata>::multi_res_fprop() {
 
-    // generate multi-resolution input
-    idx<double> inx;
-    int ni, nj;
     { idx_bloop2(in, inputs, void*,
 		 out, outputs, void*) {
-
-	// Get size for each scale
-  	inx = ((state_idx*) in.get())->x;
-  	ni = inx.dim(1);
-  	nj = inx.dim(2);
-  	idx<Tdata> imres = image_resize(sample, nj, ni, 1);
+	// generate multi-resolution input
+  	idx<double> inx = ((state_idx*) in.get())->x;
+  	idx<Tdata> imres = image_resize(sample, inx.dim(2), inx.dim(1), 1);
   	idx<double> inx0 = inx.select(0, 0);
   	idx_copy(imres, inx0);
   	idx_addc(inx, bias, inx);
   	idx_dotc(inx, coef, inx);
-	
+
 	// Run fprop for each scale
 	state_idx *ii = (state_idx*)(in.get());
 	state_idx *oo = (state_idx*)(out.get());
 	thenet.fprop(*ii, *oo);
-
       }}
 
   }
@@ -163,6 +156,7 @@ namespace ebl {
 	double y_max = (double)(raw_maps.dim(1));
 	double x_max = (double)(raw_maps.dim(2));
 	double x=0, y=0;
+	intg nms = (y_max >= 2*6+1) ? ((x_max >= 2*6+1) ? 6 : x_max) : y_max;
 
 	idx_fill(max_map, (double)-1);
 	{ idx_bloop1(raw_map, raw_maps, double) {
@@ -175,8 +169,6 @@ namespace ebl {
 		    double pix_val = raw_map_pix.get();
 		    if (pix_val > max_map_result.get(1)
 			&& pix_val > threshold) {
-		      intg nms = (y_max >= 2*6+1) ?  
-			((x_max >= 2*6+1) ? 6 : x_max) : y_max;
 		      intg local_max, i,j, 
 			i_min = (y+nms<=y_max
 				 )?((y-nms>0)?y-nms:0):y_max-2*nms+1,

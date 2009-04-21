@@ -44,7 +44,7 @@ namespace ebl {
     int                                  input_height;
     double				 coef;
     double				 bias;
-    idx<int>				 sizes;
+    idx<double>				 sizes;
     idx<const char*>			 labels;
     idx<Tdata>                           sample;
     idx<void*>				 inputs;	//! state_idx*
@@ -54,7 +54,7 @@ namespace ebl {
   public:	
     //! Constructor.  
     classifier_gen(module_1_1<state_idx, state_idx> &thenet_,
-		   idx<int> &sizes_, 
+		   idx<double> &sizes_, 
 		   idx<const char*> &labels_,
 		   idx<Tdata> &sample_,
 		   double bias_, double coef_);
