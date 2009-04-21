@@ -69,6 +69,9 @@ namespace ebl {
     memcpy(smoothing_kernel.idx_ptr(), sker, sizeof (sker));
   }
 
+  classifier2D::classifier2D(module_1_1<state_idx, state_idx> &thenet)
+    : thenet(thenet) {}
+
   classifier2D::~classifier2D() {
     { idx_bloop3(in, inputs, void*, out, outputs, void*, r, results, void*) {
 	delete((state_idx*) in.get());

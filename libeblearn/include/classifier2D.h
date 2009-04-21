@@ -61,6 +61,7 @@ namespace ebl {
 		 idx<int> &sz, 
 		 idx<const char*> &lbls, double b, double c, int h, int w, 
 		 int nn_h = 96, int nn_w = 96);
+    classifier2D(module_1_1<state_idx, state_idx> &thenet);
     virtual ~classifier2D();
 
     idx<double> fprop(ubyte *img, float zoom, double threshold = 1.8, 
@@ -100,6 +101,41 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
+  template <class Tdata> class classifierNMS : public classifier2D {
+  public:
+    module_1_1<state_idx, state_idx> 	 &thenet;
+    int                                  input_width;
+    int                                  input_height;
+    double				 coef;
+    double				 bias;
+    idx<double>				 sizes;
+    idx<const char*>			 labels;
+    idx<Tdata>                           sample;
+	
+    //! Constructor.
+    classifierNMS(module_1_1<state_idx, state_idx> &thenet_,
+		   idx<double> &sizes_, 
+		   idx<const char*> &labels_,
+		   idx<Tdata> &sample_,
+		   double bias_, double coef_);
+    ~classifierNMS();
+
+    //! do a fprop on thenet with multiple rescaled inputs
+    void multi_res_fprop();
+
+    //! call multi_res_fprop(), and analyze the output map
+    idx<double> classify(double threshold);
+    
+    //! find maximas in output layer
+    void mark_maxima(double threshold);
+
+    //! prune btwn scales
+    idx<double> map_to_list(double threshold);
+
+  };
+
 } // end namespace ebl
+
+#include "classifier_gen.hpp"
 
 #endif /* CLASSIFIER2D_H_ */

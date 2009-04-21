@@ -32,10 +32,7 @@
 #ifndef classifier_gen_HPP
 #define classifier_gen_HPP
 
-#include "classifier_gen.h"
-#ifdef __GUI__
-#include "libeblearngui.h"
-#endif
+#include "classifier2D.h"
 #include <ostream>
 
 using namespace std;
@@ -43,13 +40,13 @@ using namespace std;
 namespace ebl {
 
   template <class Tdata>
-  classifier_gen<Tdata>::classifier_gen(module_1_1<state_idx, state_idx> &net_,
-					idx<double> &sizes_, 
-					idx<const char*> &labels_,
-					idx<Tdata> &sample_,
-					double bias_, double coef_) 
+  classifierNMS<Tdata>::classifierNMS(module_1_1<state_idx, state_idx> &net_,
+				      idx<double> &sizes_, 
+				      idx<const char*> &labels_,
+				      idx<Tdata> &sample_,
+				      double bias_, double coef_) 
     : thenet(net_), coef(coef_), bias(bias_),
-      sizes(sizes_), labels(labels_), sample(sample_) {
+      sizes(sizes_), labels(labels_), sample(sample_), classifier2D(thenet) {
     
     // size of the sample to process 
     input_height = sample.dim(0);    
@@ -83,7 +80,7 @@ namespace ebl {
   }
    
   template <class Tdata> 
-  classifier_gen<Tdata>::~classifier_gen() {
+  classifierNMS<Tdata>::~classifierNMS() {
     { idx_bloop3(in, inputs, void*, 
 		 out, outputs, void*, 
 		 r, results, void*) {
@@ -94,7 +91,7 @@ namespace ebl {
   }
 
   template <class Tdata> 
-  idx<double> classifier_gen<Tdata>::classify(double threshold) {
+  idx<double> classifierNMS<Tdata>::classify(double threshold) {
     
     // do a fprop for each scaled input sample
     cout << "Running multiscale fprop on module" << endl;
@@ -127,7 +124,7 @@ namespace ebl {
   }
 
   template <class Tdata> 
-  void classifier_gen<Tdata>::multi_res_fprop() {
+  void classifierNMS<Tdata>::multi_res_fprop() {
 
     { idx_bloop2(in, inputs, void*,
 		 out, outputs, void*) {
@@ -143,19 +140,12 @@ namespace ebl {
 	state_idx *ii = (state_idx*)(in.get());
 	state_idx *oo = (state_idx*)(out.get());
 	thenet.fprop(*ii, *oo);
-
-	//! display results
-        #ifdef __GUI__
-	module_1_1_gui displayer;
-	displayer.display_fprop(myConvNet, *ii, *oo);
-	cout << "Displaying network" << endl;
-	#endif
       }}
 
   }
 
   template <class Tdata> 
-  void classifier_gen<Tdata>::mark_maxima(double threshold) {
+  void classifierNMS<Tdata>::mark_maxima(double threshold) {
     
     { idx_bloop2(out_map, outputs, void*, 
 		 res_map, results, void*) {
@@ -211,7 +201,7 @@ namespace ebl {
   }
   
   template <class Tdata> 
-  idx<double> classifier_gen<Tdata>::map_to_list(double threshold) {
+  idx<double> classifierNMS<Tdata>::map_to_list(double threshold) {
     
     // make a list that contains the results
     idx<double> rlist(1, 5);

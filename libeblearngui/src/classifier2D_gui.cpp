@@ -155,4 +155,20 @@ namespace ebl {
     mg.display_fprop(cl.thenet, *ii, *oo, h0, w0, 1.0, true, display_wid_fprop);
   }
 
+  void classifier2D_gui::display_current(classifier2D &cl, 
+					 int wid, const char *wname){
+    display_wid_fprop = (wid >= 0) ? wid : 
+      gui.new_window((wname ? wname : "classifier2D: inputs, outputs & internals"));
+    gui.select_window(display_wid_fprop);
+    gui.disable_updates();
+
+    // draw input and output
+    //display_inputs_outputs(cl, img, zoom, threshold, objsize, h0, w0, dzoom, 
+    //	   display_wid_fprop);
+
+    // draw internal states of first scale
+    module_1_1_gui mg;
+    //mg.display_fprop(cl.thenet, *ii, *oo, 0, 0, 1.0, true, display_wid_fprop);
+  }
+
 } // end namespace ebl

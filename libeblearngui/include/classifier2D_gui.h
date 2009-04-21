@@ -87,6 +87,14 @@ namespace ebl {
 		     double dzoom = 1.0, int wid = -1, 
 		     const char *wname = NULL);
 
+    //! displays all the current state of the classifier. 
+    //! If a window id <wid> is specified, 
+    //! use that window, otherwise create a new window and reuse it.
+    //! <wname> is an optional window title.
+    void display_current(classifier2D &cl, 
+			 int wid = -1, 
+			 const char *wname = NULL);
+
   };
 
 } // end namespace ebl
