@@ -62,12 +62,12 @@ namespace ebl {
 
   template<class Tin, class Tout>
   idxdim module_1_1<Tin,Tout>::adapt_input_size(idxdim &i_size) {
-    //  err_not_implemented(); 
+    err_not_implemented(); 
   }
 
   template<class Tin, class Tout>
   idxdim module_1_1<Tin,Tout>::get_input_size_from_output(idxdim o_size) {
-    //  err_not_implemented(); 
+    err_not_implemented(); 
   }
 
   ////////////////////////////////////////////////////////////////
