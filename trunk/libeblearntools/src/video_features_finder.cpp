@@ -146,21 +146,14 @@ using namespace ebl;
     //  cvNamedWindow("Optical Flow", CV_WINDOW_AUTOSIZE);
 #ifdef __GUI__
     cout << "new windows." << endl;
-    unsigned int mainwin = gui.new_window("eblearn window");
-    unsigned int featwin = gui.new_window("features");
+    unsigned int mainwin = gui.new_window("first and second frames");
+    //unsigned int featwin = gui.new_window("features");
     gui << "window size: " << FEATURE_HEIGHT << "x" << FEATURE_WIDTH << endl;
     gui.select_window(mainwin);
 #endif
     long current_frame = 0;
     while(true)
       {
-#ifdef __GUI__
-	gui.select_window(featwin);
-	gui.clear();
-	gui.select_window(mainwin);
-	gui.clear();
-#endif
-	cout << "loop." << endl;
 	static IplImage *frame = NULL, *frame1 = NULL, *frame1_1C = NULL, *frame2_1C = NULL, *eig_image = NULL, *temp_image = NULL, *pyramid1 = NULL, *pyramid2 = NULL;
 
 	//	unsigned int h0 = 0, w0 = 0;
@@ -185,6 +178,7 @@ using namespace ebl;
 	frame = cvQueryFrame( input_video );
 	if (frame == NULL) {
 	  cout << "end of video." << endl;
+	  gui.enable_updates();
 	  break ;
 	}
 
@@ -212,9 +206,12 @@ using namespace ebl;
 
 	idx<ubyte> im1 = ipl2idx(frame1_1C);
 #ifdef __GUI__
+	float zoom = 1;
 	gui.select_window(mainwin);
-	gui.draw_matrix(im1, imh0, imw0);
-	imh0 += im1.dim(0) + 5;
+	gui.disable_updates();
+	gui.clear();
+	gui.draw_matrix(im1, imh0, imw0, zoom, zoom);
+	imh0 += im1.dim(0) * zoom + 5;
 	gui << "frame #" << current_frame;
 #endif
 
@@ -224,6 +221,7 @@ using namespace ebl;
 	frame = cvQueryFrame( input_video );
 	if (frame == NULL) {
 	  cout << "end of video." << endl;
+	  gui.enable_updates();
 	  break ;
 	}
 	allocateOnDemand( &frame2_1C, frame_size, IPL_DEPTH_8U, 1 );
@@ -231,8 +229,9 @@ using namespace ebl;
 
 	idx<ubyte> im2 = ipl2idx(frame2_1C);
 #ifdef __GUI__
-	gui.draw_matrix(im2, imh0, imw0);
+	gui.draw_matrix(im2, imh0, imw0, zoom, zoom);
 	gui << at(imh0, imw0) << "frame #" << current_frame << endl;
+	cout << endl;
 #endif
 	/* Shi and Tomasi Feature Tracking! */
 
@@ -334,11 +333,18 @@ using namespace ebl;
 	}
 
 #ifdef __GUI__
-	if (current_frame % (FRAME_JUMP * 5) == 0)
+	// draw arrows
+	for(unsigned int i = 0; i < sp.max_current_patches; i++) {
+	  if ( optical_flow_found_feature[i] != 0 ) { // feature found
+	    gui.add_arrow(frame1_features[i].x, frame1_features[i].y, 
+			  frame2_features[i].x, frame2_features[i].y);
+	  }
+	}
+	gui.enable_updates();
+	// draw dataset
+	if (current_frame % (FRAME_JUMP * 50) == 0)
 	  sp.display_dataset(600, 800);
 
-	    gui.select_window(mainwin);
-	    //	    gui.add_arrow(p1x, p1y, p2x, p2y);
 
 // 	    gui.select_window(featwin);
 // 	    idx<ubyte> f1 = im1.narrow(0, optical_flow_window.height, f1y);
