@@ -47,6 +47,9 @@
 #include "libidxgui.h"
 #endif
 
+#include "similar_patches.h"
+
+#define MAX_SIMILAR_PATCHES 5
 #define NFEATURES 50
 #define FEATURE_WIDTH 44
 #define FEATURE_HEIGHT 44
@@ -101,9 +104,6 @@ using namespace ebl;
       return -1;
     }
 
-    vector< vector< idx<ubyte>* > *> features;
-    vector< pair<int, int> *> features_xy;
-    bool first_time = true;
 
     cout << "input video: " << argv[1] << endl;
     /* Create an object that decodes the input video stream. */
@@ -124,6 +124,12 @@ using namespace ebl;
     frame_size.width =
       (int) cvGetCaptureProperty( input_video, CV_CAP_PROP_FRAME_WIDTH );
 
+
+    similar_patches sp(NFEATURES, MAX_SIMILAR_PATCHES, FEATURE_HEIGHT, FEATURE_WIDTH, 
+		       frame_size.height, frame_size.width);
+
+
+
     /* Determine the number of frames in the AVI. */
     long number_of_frames;
     /* Go to the end of the AVI (ie: the fraction is "1") */
@@ -142,7 +148,6 @@ using namespace ebl;
     cout << "new windows." << endl;
     unsigned int mainwin = gui.new_window("eblearn window");
     unsigned int featwin = gui.new_window("features");
-    unsigned int featswin = gui.new_window("fixed features", 300, 1000);
     gui << "window size: " << FEATURE_HEIGHT << "x" << FEATURE_WIDTH << endl;
     gui.select_window(mainwin);
 #endif
@@ -158,7 +163,7 @@ using namespace ebl;
 	cout << "loop." << endl;
 	static IplImage *frame = NULL, *frame1 = NULL, *frame1_1C = NULL, *frame2_1C = NULL, *eig_image = NULL, *temp_image = NULL, *pyramid1 = NULL, *pyramid2 = NULL;
 
-	unsigned int h0 = 0, w0 = 0;
+	//	unsigned int h0 = 0, w0 = 0;
 	unsigned int imh0 = 0, imw0 = 0;
 
 	/* Go to the frame we want.  Important if multiple frames are queried in
@@ -267,17 +272,15 @@ using namespace ebl;
 	 * "frame1_features" will contain the feature points.
 	 * "number_of_features" will be set to a value <= 400 indicating the number of feature points found.
 	 */
-	if (first_time)
-	  cvGoodFeaturesToTrack(frame1_1C, eig_image, temp_image, frame1_features, &number_of_features, .01, .01, NULL);
-	else {
-	  for (unsigned int i = 0; i < (unsigned int) number_of_features; i++) {
-	    if (i < features_xy.size()) {
-	      frame1_features[i].x = features_xy[i]->first;
-	      frame1_features[i].y = features_xy[i]->second;
-	    } else {
-	      frame1_features[i].x = 0;
-	      frame1_features[i].y = 0;
-	    }
+	cvGoodFeaturesToTrack(frame1_1C, eig_image, temp_image, frame1_features, &number_of_features, .01, .01, NULL);
+
+	// reset frame1_features
+	for(int i = 0; i < sp.max_current_patches; i++) {
+	  if (sp.current_patch_empty(i)) {
+	    // add a new feature to track
+	  } else { // replace with latest coordinates
+	    frame1_features[i].x = sp.current_patches_xy[i].first;
+	    frame1_features[i].y = sp.current_patches_xy[i].second;
 	  }
 	}
 	
@@ -329,125 +332,38 @@ using namespace ebl;
 	 */
 	cvCalcOpticalFlowPyrLK(frame1_1C, frame2_1C, pyramid1, pyramid2, frame1_features, frame2_features, number_of_features, optical_flow_window, 5, optical_flow_found_feature, optical_flow_feature_error, optical_flow_termination_criteria, 0 );
 		
+	// add found patches
+	for(int i = 0; i < sp.max_current_patches; i++) {
+	  if ( optical_flow_found_feature[i] != 0 ) { // feature found
+	    if (sp.current_patch_empty(i))	
+	      sp.add_similar_patch(im1, frame1_features[i].y, frame1_features[i].x, i);
+	    sp.add_similar_patch(im2, frame2_features[i].y, frame2_features[i].x, i);
+	  }
+	}
+
 #ifdef __GUI__
-	gui.select_window(mainwin);
-	gui.disable_updates();
-	gui.select_window(featwin);
-	gui.disable_updates();
-#endif
-	for(int i = 0; i < number_of_features; i++)
-	  {
-	    // If Pyramidal Lucas Kanade didn't really find the feature, skip it.
-	    if ( optical_flow_found_feature[i] == 0 )	continue;
+	if (current_frame % (FRAME_JUMP * 5) == 0)
+	  sp.display_dataset(600, 800);
 
-	    int p1x = frame1_features[i].x;
-	    int p1y = frame1_features[i].y;
-	    int p2x = frame2_features[i].x;
-	    int p2y = frame2_features[i].y;
-	    int f1y = p1y - optical_flow_window.height / 2;
-	    int f1x = p1x - optical_flow_window.width / 2;
-	    int f2y = p2y - optical_flow_window.height / 2;
-	    int f2x = p2x - optical_flow_window.width / 2;
-
-	    if ((f1y < 0) || (f1x < 0) || (f2y < 0) || (f2x < 0)
-		|| (f1y + optical_flow_window.height >= im1.dim(0))
-		|| (f1x + optical_flow_window.width >= im1.dim(1))
-		|| (f2y + optical_flow_window.height >= im2.dim(0))
-		|| (f2x + optical_flow_window.width >= im2.dim(1)))
-	      continue ;
-
-	    if (!first_time) {
-	      if (((unsigned int) i) < features_xy.size()) {
-		idx<ubyte>* win = new idx<ubyte>(optical_flow_window.height,
-						 optical_flow_window.width);
-		idx<ubyte> f2 = im2.narrow(0, optical_flow_window.height, f2y);
-		f2 = f2.narrow(1, optical_flow_window.width, f2x);
-		idx_copy(f2, *win);
-		features[i]->push_back(win);
-		features_xy[i]->first = p2x;
-		features_xy[i]->second = p2y;
-	      }
-	    }
-#ifdef __GUI__
 	    gui.select_window(mainwin);
-	    gui.add_arrow(p1x, p1y, p2x, p2y);
+	    //	    gui.add_arrow(p1x, p1y, p2x, p2y);
 
-	    gui.select_window(featwin);
-	    idx<ubyte> f1 = im1.narrow(0, optical_flow_window.height, f1y);
-	    f1 = f1.narrow(1, optical_flow_window.width, f1x);
-	    idx<ubyte> f2 = im2.narrow(0, optical_flow_window.height, f2y);
-	    f2 = f2.narrow(1, optical_flow_window.width, f2x);
-	    gui.draw_matrix(f1, h0, w0, FEATURE_ZOOM, FEATURE_ZOOM); 
-	    w0 += optical_flow_window.width * FEATURE_ZOOM + 1;
-	    gui.draw_matrix(f2, h0, w0, FEATURE_ZOOM, FEATURE_ZOOM); 
-	    w0 += optical_flow_window.width * FEATURE_ZOOM + 4;
-	    if (w0 > 900) {
-	      w0 = 0;
-	      h0 += optical_flow_window.height * FEATURE_ZOOM + 4;
-	    }
+// 	    gui.select_window(featwin);
+// 	    idx<ubyte> f1 = im1.narrow(0, optical_flow_window.height, f1y);
+// 	    f1 = f1.narrow(1, optical_flow_window.width, f1x);
+// 	    idx<ubyte> f2 = im2.narrow(0, optical_flow_window.height, f2y);
+// 	    f2 = f2.narrow(1, optical_flow_window.width, f2x);
+// 	    gui.draw_matrix(f1, h0, w0, FEATURE_ZOOM, FEATURE_ZOOM); 
+// 	    w0 += optical_flow_window.width * FEATURE_ZOOM + 1;
+// 	    gui.draw_matrix(f2, h0, w0, FEATURE_ZOOM, FEATURE_ZOOM); 
+// 	    w0 += optical_flow_window.width * FEATURE_ZOOM + 4;
+// 	    if (w0 > 900) {
+// 	      w0 = 0;
+// 	      h0 += optical_flow_window.height * FEATURE_ZOOM + 4;
+// 	    }
 #endif
 	  }
-	
-#ifdef __GUI__
-	gui.select_window(mainwin);
-	gui.enable_updates();
-	gui.select_window(featwin);
-	gui.enable_updates();
-
-	if (first_time) {
-	  first_time = false;
-	  vector<idx<ubyte>*> *feature;
-	  idx<ubyte> *win;
-	  for(int i = 0; i < number_of_features; i++) {
-	    if ( optical_flow_found_feature[i] == 0 )	continue;
-	    int p1x = frame1_features[i].x;
-	    int p1y = frame1_features[i].y;
-	    int p2x = frame2_features[i].x;
-	    int p2y = frame2_features[i].y;
-	    int f1y = p1y - optical_flow_window.height / 2;
-	    int f1x = p1x - optical_flow_window.width / 2;
-	    int f2y = p2y - optical_flow_window.height / 2;
-	    int f2x = p2x - optical_flow_window.width / 2;
-	    if ((f1y < 0) || (f1x < 0) || (f2y < 0) || (f2x < 0)
-		|| (f1y + optical_flow_window.height >= im1.dim(0))
-		|| (f1x + optical_flow_window.width >= im1.dim(1))
-		|| (f2y + optical_flow_window.height >= im2.dim(0))
-		|| (f2x + optical_flow_window.width >= im2.dim(1)))
-	      continue ;
-	    feature = new vector<idx<ubyte>*>;
-	    win = new idx<ubyte>(optical_flow_window.height,
-				 optical_flow_window.width);
-	    idx<ubyte> f2 = im2.narrow(0, optical_flow_window.height, f2y);
-	    f2 = f2.narrow(1, optical_flow_window.width, f2x);
-	    idx_copy(f2, *win);
-	    feature->push_back(win);
-	    features.push_back(feature);
-	    features_xy.push_back(new pair<int,int>(p2x, p2y));
-	  }
-	}
-
-	// draw fixed features
-	gui.select_window(featswin);
-	gui.disable_updates();
-	gui.clear();
-	int hh = 0, ww = 0;
-	vector<vector<idx<ubyte>*> *>::iterator i = features.begin();
-	vector<pair<int,int>*>::iterator p = features_xy.begin();
-	for ( ; i != features.end(); ++i, ++p) {
-	  vector<idx<ubyte>*>::iterator j = (*i)->begin();
-	  for ( ; j != (*i)->end(); ++j) {
-	    gui.draw_matrix(**j, hh, ww);
-	    ww += optical_flow_window.width + 1;
-	  }
-	  gui << at(hh, ww) << "(" << (*p)->first << ", " << (*p)->second << ")";
-	  hh += optical_flow_window.height + 1;
-	  ww = 0;
-	}
-	gui.enable_updates();
-#endif
-
-	sleep(2);
-      }
+	//	sleep(2);
 #endif /* __OPENCV__ */
     return 0;
   }
