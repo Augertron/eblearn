@@ -45,8 +45,8 @@ namespace ebl {
 				      idx<const char*> &labels_,
 				      idx<Tdata> &sample_,
 				      double bias_, double coef_) 
-    : thenet(net_), coef(coef_), bias(bias_),
-      sizes(sizes_), labels(labels_), sample(sample_), classifier2D(thenet) {
+    : coef(coef_), bias(bias_),
+      sizes(sizes_), labels(labels_), sample(sample_), classifier2D(net_) {
     
     // size of the sample to process 
     input_height = sample.dim(0);    
@@ -81,13 +81,13 @@ namespace ebl {
    
   template <class Tdata> 
   classifierNMS<Tdata>::~classifierNMS() {
-    { idx_bloop3(in, inputs, void*, 
-		 out, outputs, void*, 
-		 r, results, void*) {
-	delete((state_idx*) in.get());
-	delete((state_idx*) out.get());
-	delete((idx<double>*) r.get());
-      }}
+//     { idx_bloop3(in, inputs, void*, 
+// 		 out, outputs, void*, 
+// 		 r, results, void*) {
+// 	delete((state_idx*) in.get());
+// 	delete((state_idx*) out.get());
+// 	delete((idx<double>*) r.get());
+//       }}
   }
 
   template <class Tdata> 

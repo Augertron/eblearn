@@ -182,6 +182,7 @@ namespace ebl {
     path imgp(imgDir);
     bool binocular = false;
     if (!exists(imgp)) {
+      cerr << "cannot find path: " << imgp.string() << endl;
       ylerror("imagedir_to_idx: path does not exist");
       return false;
     }
