@@ -811,6 +811,9 @@ namespace ebl {
     idxdim(const idxspec &s);
     //! Create an idxdim based on the information found in an idx<T>.
     template <class T> idxdim(const idx<T> &i);
+    //! Generic constructor.
+    idxdim(intg s0, intg s1=-1, intg s2=-1, intg s3=-1,
+	   intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
 
     //! Change the dimensions dimn to size size.
     void setdim(intg dimn, intg size);

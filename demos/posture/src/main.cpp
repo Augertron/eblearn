@@ -132,11 +132,12 @@ public:
     //! Make sure that the output is 1x1 for the images in your training set:
     //! ((((image_height - ki0 + 1) / si0) - ki1 + 1) / si1) - ki2 + 1 == 1
     //! ((((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1) - kj2 + 1 == 1
-    set_input_size(image_height, image_width);
+    idxdim image_size(image_height, image_width);
+    adapt_input_size(image_size);
 
     //! Inferred sizes of feature maps
-    intg c0_sizi = input_height-ki0+1,
-      c0_sizj = input_width-kj0+1,
+    intg c0_sizi = image_size.dim[0]-ki0+1,
+      c0_sizj = image_size.dim[1]-kj0+1,
       s0_sizi = c0_sizi / si0,
       s0_sizj = c0_sizj / sj0,
       c1_sizi = 1 + s0_sizi - ki1,
@@ -199,33 +200,22 @@ public:
   //! Destructor not used
   virtual ~generic_conv_net() {}
 
-  void set_input_size(intg &height, intg &width) {
+  idxdim adapt_input_size(idxdim &i_size) {
     // The output is automatically rounded, so we need to recompute the input,
     // by setting the output to the rounded values...
-    cout << "Requesting input size = " << width << "x" << height << endl;
-    output_height = ((((height - ki0 + 1) / si0)
-		      - ki1 + 1) / si1) - ki2 + 1;
-    output_width = ((((width - kj0 + 1) / sj0) 
-		     - kj1 + 1) / sj1) - kj2 + 1;
-    set_output_size(output_height, output_width);
-    cout << "...setting to:" << endl;
-    cout << "Input size = " << input_width << "x" << input_height << endl;
-    cout << "Output size = " << output_width << "x" << output_height << endl;
-    height = input_height;
-    width = input_width;
+    idxdim o_size( ((((i_size.dim[0] - ki0+1) / si0) - ki1+1) / si1) - ki2+1,
+		   ((((i_size.dim[1] - kj0+1) / sj0) - kj1+1) / sj1) - kj2+1 );
+    i_size = get_input_size_from_output(o_size);
+    return o_size;
   }
 
-  void set_output_size(intg &height, intg &width) {
-    output_height = height;
-    output_width = width;
-    input_height = ((height + ki2 - 1) * si1 + ki1 - 1) * si0+ ki0 - 1;
-    input_width = ((width + kj2 - 1) * sj1 + kj1 - 1) * sj0 + kj0 - 1;
+  idxdim get_input_size_from_output(idxdim o_size) {
+    idxdim size( ((o_size.dim[0] + ki2-1) * si1 + ki1-1) * si0 + ki0-1 ,
+		 ((o_size.dim[1] + kj2-1) * sj1 + kj1-1) * sj0 + kj0-1 );
+    return size;
   }
 
 };
-
-
-
 
 int main(int argc, char **argv) {
   
@@ -277,8 +267,8 @@ int main(int argc, char **argv) {
 
   //! instantiate the ConvNet
   generic_conv_net myConvNet(myConvNetWeights, //! Trainable parameter
-			     46, //! Max input height
-			     46, //! Max input width
+			     320, //! Max input height
+			     320, //! Max input width
 			     targets.dim(0)); //! Nb of classes
 
   //! combine the conv net with targets -> gives a supervised system
@@ -379,7 +369,7 @@ int main(int argc, char **argv) {
 				     );
 
   //! do a pass, classify
-  myClassifier.classify(0.7);
+  myClassifier.classify(0.9);
 
   return 0;
 }

@@ -55,6 +55,9 @@ namespace ebl {
     //! returns the order at which the module operates.
     virtual int  replicable_order();
     virtual void resize_output(Tin &in, Tout &out);
+    //! these functions are helpers to resize inputs to a module
+    idxdim adapt_input_size(idxdim &i_size);
+    idxdim get_input_size_from_output(idxdim o_size);
   };
 
   //! abstract class for a module with two inputs and one output.
@@ -142,12 +145,6 @@ namespace ebl {
     virtual void bbprop(T &in, T &out);
     virtual void forget(forget_param_linear &fp);
     virtual void normalize();
-
-    // TODO change these methods to handle any kind of dimensions
-    intg input_height, input_width;
-    intg output_height, output_width;
-    virtual void set_input_size(intg &height, intg &width);
-    virtual void set_output_size(intg &height, intg &width);
 
   private:
     bool own_contents;
