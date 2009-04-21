@@ -102,10 +102,10 @@ namespace ebl {
 					       intg ri, intg rj, 
 					       idx<intg> &tbl, intg thick) 
     : kernel(p, tbl.dim(0), kerneli, kernelj), thickness(thick),
-      stridei(ri), stridej(rj), table(tbl) {
+      stridei(ri), stridej(rj), table(tbl), warnings_shown(false) {
     // check sanity of connection table
     if (table.dim(1) != 2) { // check table order
-      cerr << "error: expecting a table with dimension 1 equal to 2 but found: ";
+      cerr << "error: expecting a table with dim 1 equal to 2 but found: ";
       cerr << table << endl;
       ylerror("connection table error");
     }
@@ -218,7 +218,8 @@ namespace ebl {
       cerr << " in dimension 0 but found: " << in.x << endl;
       ylerror("input size error");
     }
-    if (in.x.dim(0) > tablemax + 1) {
+    if (!warnings_shown && (in.x.dim(0) > tablemax + 1)) {
+      warnings_shown = true;
       cerr << "warning: convolution connection table is not using all inputs,";
       cerr << " the maximum input index used by the table is " << tablemax;
       cerr << " but the input is " << in.x << endl;
