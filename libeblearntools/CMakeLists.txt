@@ -72,6 +72,7 @@ IF (OpenCV_FOUND) #-------------------------------------------------------------
 ################################################################################
 add_executable (videoffinder
   src/video_features_finder.cpp
+  src/similar_patches.cpp
   )
 
 # link executable with external libraries
