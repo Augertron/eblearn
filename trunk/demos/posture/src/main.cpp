@@ -38,8 +38,11 @@
  */
 
 #include "libeblearn.h"
+#ifdef __GUI__
+#include "classifier2D_gui.h"
+#endif
 #include "libeblearntools.h"
-#include "classifier_gen.h"
+
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -209,9 +212,12 @@ int main(int argc, char **argv) {
   if (argc > 1 
       && strcmp(argv[1], "train-only") != 0
       && strcmp(argv[1], "test-only") != 0) {
+    cout << "Getting images from " << pathToData << flush << endl;
     generate_idx_data_set(pathToData);
-  } else if (argc == 1)
-    generate_idx_data_set(pathToData);  
+  } else if (argc == 1) { 
+    cout << "Getting images from " << pathToData << flush << endl;
+    generate_idx_data_set(pathToData);
+  }
 
   init_drand(time(NULL)); //! initialize random seed
 
@@ -340,16 +346,22 @@ int main(int argc, char **argv) {
   objectLabels.set("swinghand", 5);
 
   //! a classifier needs a trained module, a list of scales, and the classes
-  classifier_gen<float> myClassifier(myConvNet, //! The trained ConvNet
-				     objectSizes,  //! sizes of objects
-				     objectLabels, //! Labels of classes
-				     testSample, //! Sample to classify
-				     0.0, //! Bias to be added to inputs
-				     0.01 //! Coef to scale inputs
-				     );
+  classifierNMS<float> myClassifier(myConvNet, //! The trained ConvNet
+				    objectSizes,  //! sizes of objects
+				    objectLabels, //! Labels of classes
+				    testSample, //! Sample to classify
+				    0.0, //! Bias to be added to inputs
+				    0.01 //! Coef to scale inputs
+				    );
 
   //! do a pass, classify
   myClassifier.classify(0.9);
+
+  //! display results
+  #ifdef __GUI__
+  classifier2D_gui displayer;
+  displayer.display_current(myClassifier);
+  #endif
 
   return 0;
 }
