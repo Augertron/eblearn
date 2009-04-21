@@ -29,6 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#include <string>
 #include "similar_patches.h"
 
 using namespace std;
@@ -40,7 +41,7 @@ namespace ebl {
 				   unsigned int ph, unsigned int pw,
 				   unsigned int ih, unsigned int iw) 
     : max_similar_patches(maxsimilar), 
-      pheight(ph), pwidth(pw), iheight(ih), iwidth(iw),
+      pheight(ph), pwidth(pw), iheight(ih), iwidth(iw), display_index(0),
       dataset(),
       current_patches(maxcurrent, NULL), 
       max_current_patches(maxcurrent), 
@@ -59,7 +60,7 @@ namespace ebl {
       int w0 = w - pwidth / 2;
       // don't add patches outsides of the image
       if ((h0 < 0) || (w0 < 0) 
-	  || (w0 + pheight >= iheight) || (w0 + pwidth >= iwidth))
+	  || (h0 + pheight >= iheight) || (w0 + pwidth >= iwidth))
 	return false;
       if (index >= max_current_patches)
 	return false; // the index is wrong
@@ -96,23 +97,85 @@ namespace ebl {
 #ifdef __GUI__
     gui.select_window(wdisplay);
     gui.disable_updates();
+    gui.clear();
     unsigned int h = 0, w = 0;
-    vector<vector<idx<ubyte>*>*>::iterator i = dataset.begin();
-    for ( ; (i != dataset.end()) && (h < maxh); ++i) {
-      vector<idx<ubyte>*> *plist = *i;
+    idx<ubyte> *patch = NULL;
+    for ( ; (display_index < dataset.size()) && (h < maxh); ++display_index) {
+      vector<idx<ubyte>*> *plist = dataset[display_index];
       if (plist != NULL) {
 	vector<idx<ubyte>*>::iterator k = plist->begin();
-	for ( ; (k != (*i)->end()) && (h < maxh); ++k) {
-	  if (w + (*k)->dim(1) > maxw) {
+	for ( ; (k != plist->end()) && (h < maxh); ++k) {
+	  patch = *k;
+	  if (w + patch->dim(1) > maxw) {
 	    w = 0;
-	    h += (*k)->dim(0);
+	    h += patch->dim(0);
 	  }
-	  gui.draw_matrix(**k, h, w);
-	  w += (*k)->dim(1);
+	  gui.draw_matrix(*patch, h, w);
+	  w += patch->dim(1);
 	}
       }
     }
+    gui.enable_updates();
 #endif
+  }
+
+  bool similar_patches::save_dataset(const char *directory) {
+    idx<ubyte> patches(dataset.size() * max_similar_patches, 
+		       1, pheight, pwidth);
+    idx<int> labels(patches.dim(0));
+    int npairs = choose(max_similar_patches, 2);
+    int ipairs = 0;
+    int icurrent = 0;
+    idx<int> pairs(npairs * dataset.size(), 2);
+    idx<ubyte> p;
+    idx<ubyte> *patch = NULL;
+    // filenames
+    string pairs_filename = directory;
+    pairs_filename += "/pairs.mat";
+    string patches_filename = directory;
+    patches_filename += "/patches.mat";
+    string labels_filename = directory;
+    labels_filename += "/labels.mat";
+    // messages
+    cout << "saving " << patches.dim(0) << " patches in ";
+    cout << patches_filename.c_str() << "..." << endl;
+    cout << "saving " << dataset.size() << " different labels in ";
+    cout << labels_filename.c_str() << "..." << endl;
+    cout << "saving " << pairs.dim(0) << " pairs of patches in ";
+    cout << pairs_filename.c_str() << "..." << endl;
+    cout << "(" << npairs << " combinations of pairs in " << dataset.size();
+    cout << " sets of ";
+    cout << max_similar_patches << " similar patches)" << endl;
+
+    // convert dataset list to a big idx
+    for (unsigned int i = 0; i < dataset.size(); ++i) {
+      vector<idx<ubyte>*> *plist = dataset[i];
+      for (unsigned int k = 0; k < plist->size(); ++k) {
+	icurrent = i * max_similar_patches + k;
+	// patch
+	patch = (*plist)[k];
+	p = patches.select(0, icurrent);
+	p = p.select(0, 0);
+	idx_copy(*patch, p);
+	// label
+	labels.set(i, icurrent);
+	// pairs
+	for (int l = 1; k + l < plist->size(); ++l) {
+	  pairs.set(icurrent, ipairs, 0);
+	  pairs.set(icurrent + l, ipairs, 1);
+	  ipairs++;
+	}
+      }
+    }
+    // save files
+    if (!save_matrix(patches, patches_filename.c_str()))
+      return false;
+    if (!save_matrix(labels, labels_filename.c_str()))
+      return false;
+    if (!save_matrix(pairs, pairs_filename.c_str()))
+      return false;
+    cout << "saving done." << endl;
+    return true;
   }
 
   } // end namespace ebl

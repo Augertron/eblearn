@@ -183,16 +183,16 @@ using namespace ebl;
 	 * The solution is to make a copy of the cvQueryFrame() output.
 	 */
 	frame = cvQueryFrame( input_video );
-	if (frame == NULL)
-	  {
-	    /* Why did we get a NULL frame?  We shouldn't be at the end. */
-	    fprintf(stderr, "Error: Hmm. The end came sooner than we thought.\n");
-	    return -1;
-	  }
-	ostringstream fname;
-	fname << "img_" << setfill('0') << setw(5) << current_frame << ".jpg";
-	cout << "writing " << fname.str() << endl;
-	cvSaveImage(fname.str().c_str(), frame);
+	if (frame == NULL) {
+	  cout << "end of video." << endl;
+	  break ;
+	}
+
+// 	ostringstream fname;
+// 	fname << "img_" << setfill('0') << setw(5) << current_frame << ".jpg";
+// 	cout << "writing " << fname.str() << endl;
+// 	cvSaveImage(fname.str().c_str(), frame);
+
 	/* Allocate another image if not already allocated.
 	 * Image has ONE channel of color (ie: monochrome) with 8-bit "color" depth.
 	 * This is the image format OpenCV algorithms actually operate on (mostly).
@@ -222,18 +222,10 @@ using namespace ebl;
 	cvSetCaptureProperty( input_video, CV_CAP_PROP_POS_FRAMES, current_frame);
 	/* Get the second frame of video.  Same principles as the first. */
 	frame = cvQueryFrame( input_video );
-	//       frame = cvQueryFrame( input_video );
-	//       frame = cvQueryFrame( input_video );
-	//       frame = cvQueryFrame( input_video );
-	//       frame = cvQueryFrame( input_video );
-	//       frame = cvQueryFrame( input_video );
-	//       frame = cvQueryFrame( input_video );
-	//       frame = cvQueryFrame( input_video );
-	if (frame == NULL)
-	  {
-	    fprintf(stderr, "Error: Hmm. The end came sooner than we thought.\n");
-	    return -1;
-	  }
+	if (frame == NULL) {
+	  cout << "end of video." << endl;
+	  break ;
+	}
 	allocateOnDemand( &frame2_1C, frame_size, IPL_DEPTH_8U, 1 );
 	cvConvertImage(frame, frame2_1C);//, CV_CVTIMG_FLIP);
 
@@ -275,7 +267,7 @@ using namespace ebl;
 	cvGoodFeaturesToTrack(frame1_1C, eig_image, temp_image, frame1_features, &number_of_features, .01, .01, NULL);
 
 	// reset frame1_features
-	for(int i = 0; i < sp.max_current_patches; i++) {
+	for(unsigned int i = 0; i < sp.max_current_patches; i++) {
 	  if (sp.current_patch_empty(i)) {
 	    // add a new feature to track
 	  } else { // replace with latest coordinates
@@ -333,7 +325,7 @@ using namespace ebl;
 	cvCalcOpticalFlowPyrLK(frame1_1C, frame2_1C, pyramid1, pyramid2, frame1_features, frame2_features, number_of_features, optical_flow_window, 5, optical_flow_found_feature, optical_flow_feature_error, optical_flow_termination_criteria, 0 );
 		
 	// add found patches
-	for(int i = 0; i < sp.max_current_patches; i++) {
+	for(unsigned int i = 0; i < sp.max_current_patches; i++) {
 	  if ( optical_flow_found_feature[i] != 0 ) { // feature found
 	    if (sp.current_patch_empty(i))	
 	      sp.add_similar_patch(im1, frame1_features[i].y, frame1_features[i].x, i);
@@ -365,6 +357,7 @@ using namespace ebl;
 	  }
 	//	sleep(2);
 #endif /* __OPENCV__ */
+    sp.save_dataset(".");
     return 0;
   }
 

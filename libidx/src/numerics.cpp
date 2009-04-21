@@ -30,6 +30,7 @@
  ***************************************************************************/
 
 #include "numerics.h"
+#include "defines.h"
 
 namespace ebl {
 
@@ -41,7 +42,6 @@ namespace ebl {
     double e1 = 1+e;
     return ((4*e)/(e1*e1));
   }
-
 
   ////////////////////////////////////////////////////////////////
   // "standard" sigmoid
@@ -197,6 +197,28 @@ namespace ebl {
 #undef MSEED
 #undef FAC
 #undef FAC2
+
+  ////////////////////////////////////////////////////////////////
+
+  int choose(int n, int k) {
+    if (k > n) {
+      std::cerr << "n choose k with n = " << n << " and k = " << k << std::endl;
+      ylerror("n choose k: k must be <= n");
+    }
+    int nk = n - k;
+    int nf, kf, nkf;
+    int f = 1, i = 1;
+    while ((n > 0) || (k > 0) || (nk > 0)) {
+      f *= i++;  
+      if (--n == 0)
+	nf = f;
+      if (--k == 0)
+	kf = f;
+      if (--nk == 0)
+	nkf = f;
+    }
+    return nf / (kf * nkf);
+  }
 
   ////////////////////////////////////////////////////////////////
 

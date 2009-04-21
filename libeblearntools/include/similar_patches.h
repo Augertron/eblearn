@@ -52,7 +52,8 @@ namespace ebl {
     unsigned int			pwidth;
     unsigned int			iheight;
     unsigned int			iwidth;
-    unsigned int                        wdisplay;    
+    unsigned int                        wdisplay;
+    unsigned int                        display_index;
     vector< vector< idx<ubyte>* > *>	dataset;
     vector< vector< idx<ubyte>* > *>	current_patches;
   public:
@@ -67,6 +68,7 @@ namespace ebl {
 			   int w, unsigned int index);
     bool current_patch_empty(unsigned int index);
     void display_dataset(unsigned int maxh, unsigned int maxw);
+    bool save_dataset(const char *directory);
   };
 
 } // namespace ebl {
