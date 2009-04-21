@@ -45,7 +45,7 @@ namespace ebl {
 					idx<const char*> &labels_,
 					idx<Tdata> &sample_,
 					double bias_, double coef_) 
-    : coef(coef_), bias(bias_), thenet(net_), 
+    : thenet(net_), coef(coef_), bias(bias_),
       sizes(sizes_), labels(labels_), sample(sample_) {
     
     // size of the sample to process 
