@@ -78,16 +78,12 @@ public:
   idx<intg> table2;	
   
   generic_conv_net(parameter &trainableParam, 
-		   intg image_height, 
-		   intg image_width, 
 		   intg output_size) 
     : layers_n<state_idx>(true) { // owns modules
-    init(trainableParam, image_height, image_width, output_size);
+    init(trainableParam, output_size);
   }
   
   void init(parameter &trainableParam, 
-	    intg image_height, 
-	    intg image_width, 
 	    intg output_size) {
     
     cout << "Initializing ConvNet..." << endl;
@@ -121,31 +117,17 @@ public:
 
        {0, 11}, {1, 11}, {2, 11}, {3, 11}, {4, 11}, {5, 11}};
     memcpy(table1.idx_ptr(), tbl, table1.nelements() * sizeof (intg));
-           
-    //! Init parameters of the conv net
+
+    //! Init parameters of the conv net...
+    //! Make sure that the output is 1x1 for the images in your training set:
+    //! ((((image_height - ki0 + 1) / si0) - ki1 + 1) / si1) - ki2 + 1 == 1
+    //! ((((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1) - kj2 + 1 == 1
+
     ki0 = 7, kj0 = 7, //! Dim of kernel in C0 
     si0 = 2, sj0 = 2, //! Dim of kernel in S0 
     ki1 = 7, kj1 = 7, //! Dim of kernel in C1 
     si1 = 2, sj1 = 2, //! Dim of kernel in S1 
     ki2 = 7, kj2 = 7; //! Dim of kernel in C2 
-
-    //! Make sure that the output is 1x1 for the images in your training set:
-    //! ((((image_height - ki0 + 1) / si0) - ki1 + 1) / si1) - ki2 + 1 == 1
-    //! ((((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1) - kj2 + 1 == 1
-    idxdim image_size(image_height, image_width);
-    adapt_input_size(image_size);
-
-    //! Inferred sizes of feature maps
-    intg c0_sizi = image_size.dim[0]-ki0+1,
-      c0_sizj = image_size.dim[1]-kj0+1,
-      s0_sizi = c0_sizi / si0,
-      s0_sizj = c0_sizj / sj0,
-      c1_sizi = 1 + s0_sizi - ki1,
-      c1_sizj = 1 + s0_sizj - kj1,
-      s1_sizi = c1_sizi / si1,
-      s1_sizj = c1_sizj / sj1,
-      c2_sizi = 1 + s1_sizi - ki2,
-      c2_sizj = 1 + s1_sizj - kj2;
 
     //! Finally we initialize the architecture of the ConvNet.
     //! In this case we create a CSCSCF network.
@@ -156,41 +138,36 @@ public:
     addModule(new nn_layer_convolution(trainableParam, //! Shared weights
 				       ki0, kj0, 
 				       1, 1, //! size of subsampling
-				       table0, //! Connx btwn input layer and C0 
+				       table0, //! Conx btwn input layer and C0 
 				       featureMaps0), //! nb of feature maps
 	      //! state_idx holds the feature maps of C0
-	      new state_idx(featureMaps0, 
-			    c0_sizi, c1_sizj));
+	      new state_idx(featureMaps0,1,1));
     //! S0 Layer
     addModule(new nn_layer_subsampling(trainableParam, 
 				       si0, sj0, 
-				       s0_sizi, s0_sizj, 
+				       1,1, 
 				       featureMaps0),
-	      new state_idx(featureMaps0, 
-			    s0_sizi, s0_sizj));
+	      new state_idx(featureMaps0,1,1));
     //! C1 Layer
     addModule(new nn_layer_convolution(trainableParam, 
 				       ki1, kj1, 
 				       1, 1, 
 				       table1, 
 				       featureMaps1),
-	      new state_idx(featureMaps1, 
-			    c1_sizi, c1_sizj));
+	      new state_idx(featureMaps1,1,1));
     //! S1 Layer
     addModule(new nn_layer_subsampling(trainableParam, 
 				       si1, sj1, 
-				       s1_sizi, s1_sizj, 
+				       1,1, 
 				       featureMaps1),
-	      new state_idx(featureMaps1, 
-			    s1_sizi, s1_sizj));
+	      new state_idx(featureMaps1,1,1));
     //! C2 Layer
     addModule(new nn_layer_convolution(trainableParam, 
 				       ki2, kj2, 
 				       1, 1, 
 				       table2, 
 				       featureMaps2),
-	      new state_idx(featureMaps2, 
-			    c2_sizi, c2_sizj));
+	      new state_idx(featureMaps2,1,1));
     //! F Layer
     addLastModule(new nn_layer_full(trainableParam, 
 				    featureMaps2, 
@@ -267,8 +244,6 @@ int main(int argc, char **argv) {
 
   //! instantiate the ConvNet
   generic_conv_net myConvNet(myConvNetWeights, //! Trainable parameter
-			     320, //! Max input height
-			     320, //! Max input width
 			     targets.dim(0)); //! Nb of classes
 
   //! combine the conv net with targets -> gives a supervised system
