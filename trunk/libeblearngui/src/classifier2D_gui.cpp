@@ -51,14 +51,14 @@ namespace ebl {
 				 unsigned int h0, unsigned int w0,
 				 double dzoom, int wid, const char *wname){
     display_wid = (wid >= 0) ? wid : 
-      gui.new_window((wname ? wname : "classifier2D: output"));
-    gui.select_window(display_wid);
-    gui.disable_updates();
+      new_window((wname ? wname : "classifier2D: output"));
+    select_window(display_wid);
+    disable_window_updates();
 
     // draw input
     idx<ubyte> iimg(cl.height, cl.width);
     memcpy(iimg.idx_ptr(), img, cl.height * cl.width * sizeof (ubyte));
-    gui.draw_matrix(iimg, "input", h0, w0, dzoom, dzoom);
+    draw_matrix(iimg, "input", h0, w0, dzoom, dzoom);
     idx<double> res = cl.fprop(img, zoom, threshold, objsize);
     w0 += iimg.dim(1) + 5;
 
@@ -69,9 +69,9 @@ namespace ebl {
 	unsigned int w = zoom * (nj - re.get(3) - (0.5 * re.get(5)));
 	gui << at(h0 + h + 1, w0 + w + 1) << cl.labels.get((re.get(0)));
       }}
-    gui.draw_matrix(cl.grabbed, "output", h0, w0);
+    draw_matrix(cl.grabbed, "output", h0, w0);
 
-    gui.enable_updates();
+    enable_window_updates();
   }
 
   void classifier2D_gui::display_inputs_outputs(classifier2D &cl, ubyte *img, 
@@ -81,10 +81,10 @@ namespace ebl {
 						double dzoom, int wid, 
 						const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
-      gui.new_window((wname ? wname : 
+      new_window((wname ? wname : 
 		      "classifier2D: inputs, outputs & internals"));
-    gui.select_window(display_wid_fprop);
-    gui.disable_updates();
+    select_window(display_wid_fprop);
+    disable_window_updates();
 
     // draw input and output
     display(cl, img, zoom, threshold, objsize, h0, w0, dzoom, display_wid_fprop);
@@ -104,7 +104,7 @@ namespace ebl {
 	// draw inputs
 	s.str("");
 	s << "scale #" << scale << " " << inx.dim(1) << "x" << inx.dim(2);
-	gui.draw_matrix(inx, s.str().c_str(), h, w0);
+	draw_matrix(inx, s.str().c_str(), h, w0);
 
 	// draw outputs
  	double vmin = idx_min(outx);
@@ -120,7 +120,7 @@ namespace ebl {
 	    gui << at(h + ihmax + 5 + hcat, 
 		      w0 + category.dim(0) * czoom + 2);
 	    gui << s.str();
-	    gui.draw_matrix(category, h + ihmax + 5 + hcat, w0, 
+	    draw_matrix(category, h + ihmax + 5 + hcat, w0, 
 			    czoom, czoom, vmin, vmax);
 	    hcat += ohmax * czoom + 2;
 	    lab++;
@@ -130,7 +130,7 @@ namespace ebl {
 	w0 += inx.dim(1) + 5;
 	first_time = false;
       }}
-    gui.enable_updates();
+    enable_window_updates();
   }
 
   void classifier2D_gui::display_all(classifier2D &cl, ubyte *img, float zoom, 
@@ -138,9 +138,9 @@ namespace ebl {
 				     unsigned int h0, unsigned int w0,
 				     double dzoom, int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
-      gui.new_window((wname ? wname : "classifier2D: inputs, outputs & internals"));
-    gui.select_window(display_wid_fprop);
-    gui.disable_updates();
+      new_window((wname ? wname : "classifier2D: inputs, outputs & internals"));
+    select_window(display_wid_fprop);
+    disable_window_updates();
 
     // draw input and output
     display_inputs_outputs(cl, img, zoom, threshold, objsize, h0, w0, dzoom, 
@@ -158,9 +158,9 @@ namespace ebl {
   void classifier2D_gui::display_current(classifier2D &cl, 
 					 int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
-      gui.new_window((wname ? wname : "classifier2D: inputs, outputs & internals"));
-    gui.select_window(display_wid_fprop);
-    gui.disable_updates();
+      new_window((wname ? wname : "classifier2D: inputs, outputs & internals"));
+    select_window(display_wid_fprop);
+    disable_window_updates();
     // draw input and output
     //display_inputs_outputs(cl, img, zoom, threshold, objsize, h0, w0, dzoom, 
     //	   display_wid_fprop);
@@ -171,7 +171,7 @@ namespace ebl {
     state_idx *oo = ((state_idx*) cl.outputs.get(0));
     //    cl.thenet.fprop(*ii, *oo); 
     mg.display_fprop(cl.thenet, *ii, *oo, 0, 0, 1.0, true, display_wid_fprop);
-    gui.enable_updates();
+    enable_window_updates();
   }
 
 } // end namespace ebl

@@ -52,8 +52,8 @@ namespace ebl {
 				     double zoom, bool show_out, int wid,
 				     const char *wname) {
     display_wid_fprop = (wid >= 0) ? wid : 
-      gui.new_window((wname ? wname : "module_1_1 fprop display"));
-    gui.select_window(display_wid_fprop);
+      new_window((wname ? wname : "module_1_1 fprop display"));
+    select_window(display_wid_fprop);
     gui << black_on_white(255, 0) << gui_only();
 
     if (dynamic_cast< layers_n<Tin>* >(&m)) {    
@@ -99,9 +99,9 @@ namespace ebl {
 				     double zoom, bool show_out, int wid,
 				     const char *wname) {
     display_wid_fprop = (wid >= 0) ? wid : 
-      gui.new_window((wname ? wname : "module_2_1 fprop display"));
-    gui.select_window(display_wid_fprop);
-    gui.disable_updates();
+      new_window((wname ? wname : "module_2_1 fprop display"));
+    select_window(display_wid_fprop);
+    disable_window_updates();
     gui << black_on_white(255, 0) << gui_only();
 
     if (dynamic_cast< fc_ebm2<Tin1, Tin2, Tout>* >(&m)) {    
@@ -113,7 +113,7 @@ namespace ebl {
       cerr << "Warning: unknown display function for module_2_1 object";
       cerr << "(" << typeid(m).name() << ")." << endl;
     }
-    gui.enable_updates();
+    enable_window_updates();
   }
 
   ////////////////////////////////////////////////////////////////
@@ -161,7 +161,7 @@ namespace ebl {
       w += 150;
       // display outputs
       idx_bloop1(m, out.x, double) {
-	gui.draw_matrix(m, h, w, zoom * 5, zoom * 5, -1.0, 1.0);
+	draw_matrix(m, h, w, zoom * 5, zoom * 5, -1.0, 1.0);
 	w += m.dim(1) * zoom * 5 + 1;
       }
       h0 += m.dim(0) * zoom * 5 + 1;

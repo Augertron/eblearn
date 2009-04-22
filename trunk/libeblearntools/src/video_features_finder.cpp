@@ -146,10 +146,10 @@ using namespace ebl;
     //  cvNamedWindow("Optical Flow", CV_WINDOW_AUTOSIZE);
 #ifdef __GUI__
     cout << "new windows." << endl;
-    unsigned int mainwin = gui.new_window("first and second frames");
+    unsigned int mainwin = new_window("first and second frames");
     //unsigned int featwin = gui.new_window("features");
     gui << "window size: " << FEATURE_HEIGHT << "x" << FEATURE_WIDTH << endl;
-    gui.select_window(mainwin);
+    select_window(mainwin);
 #endif
     long current_frame = 0;
     while(true)
@@ -178,7 +178,7 @@ using namespace ebl;
 	if (frame == NULL) {
 	  cout << "end of video." << endl;
 #ifdef __GUI__
-	  gui.enable_updates();
+	  enable_window_updates();
 #endif
 	  break ;
 	}
@@ -208,11 +208,11 @@ using namespace ebl;
 	idx<ubyte> im1 = ipl2idx(frame1_1C);
 #ifdef __GUI__
 	float zoom = 1;
-	gui.select_window(mainwin);
-	gui.disable_updates();
-	gui.clear();
+	select_window(mainwin);
+	disable_window_updates();
+	clear_window();
 	unsigned int imh0 = 0, imw0 = 0;
-	gui.draw_matrix(im1, imh0, imw0, zoom, zoom);
+	draw_matrix(im1, imh0, imw0, zoom, zoom);
 	imh0 += im1.dim(0) * zoom + 5;
 	gui << "frame #" << current_frame;
 #endif
@@ -224,7 +224,7 @@ using namespace ebl;
 	if (frame == NULL) {
 	  cout << "end of video." << endl;
 #ifdef __GUI__
-	  gui.enable_updates();
+	  enable_window_updates();
 #endif
 	  break ;
 	}
@@ -233,7 +233,7 @@ using namespace ebl;
 
 	idx<ubyte> im2 = ipl2idx(frame2_1C);
 #ifdef __GUI__
-	gui.draw_matrix(im2, imh0, imw0, zoom, zoom);
+	draw_matrix(im2, imh0, imw0, zoom, zoom);
 	gui << at(imh0, imw0) << "frame #" << current_frame << endl;
 	cout << endl;
 #endif
@@ -340,11 +340,11 @@ using namespace ebl;
 	// draw arrows
 	for(unsigned int i = 0; i < sp.max_current_patches; i++) {
 	  if ( optical_flow_found_feature[i] != 0 ) { // feature found
-	    gui.add_arrow(frame1_features[i].x, frame1_features[i].y, 
+	    draw_arrow(frame1_features[i].x, frame1_features[i].y, 
 			  frame2_features[i].x, frame2_features[i].y);
 	  }
 	}
-	gui.enable_updates();
+	enable_window_updates();
 	// draw dataset
 	if (current_frame % (FRAME_JUMP * 50) == 0)
 	  sp.display_dataset(600, 800);
