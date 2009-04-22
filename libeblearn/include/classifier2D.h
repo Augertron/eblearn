@@ -36,13 +36,13 @@
 
 namespace ebl {
 
-  class classifier2D {
+  template <class Tdata> class classifier2D {
   public:
     module_1_1<state_idx,state_idx>	&thenet;
     int					 height;
     int					 width;
-    idx<ubyte>				 grabbed;
-    idx<ubyte>				 grabbed2;
+    idx<Tdata>				 grabbed;
+    idx<Tdata>				 grabbed2;
     double				 contrast;
     double				 brightness;
     double				 coeff;
@@ -64,11 +64,11 @@ namespace ebl {
     classifier2D(module_1_1<state_idx, state_idx> &thenet);
     virtual ~classifier2D();
 
-    idx<double> fprop(ubyte *img, float zoom, double threshold = 1.8, 
+    idx<double> fprop(idx<Tdata> &img, float zoom, double threshold = 1.8, 
 		      int objsize = 60);
   
     // Sub functions
-    idx<ubyte> multi_res_prep(ubyte *img, float zoom);
+    idx<Tdata> multi_res_prep(idx<Tdata> &img, float zoom);
     idx<double> multi_res_fprop(double threshold, int objsize);
     idx<double> postprocess_output(double threshold, int objsize);
     //! mark local maxima (in space and feature) of in r.
@@ -81,42 +81,57 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  class classifier2D_binocular : public classifier2D {
+  template <class Tdata>
+  class classifier2D_binocular : public classifier2D<Tdata> {
   public:
-	
+    using classifier2D<Tdata>::grabbed;
+    using classifier2D<Tdata>::grabbed2;
+    using classifier2D<Tdata>::height;
+    using classifier2D<Tdata>::width;
+    using classifier2D<Tdata>::coeff;
+    using classifier2D<Tdata>::bias;
+    using classifier2D<Tdata>::inputs;
+    using classifier2D<Tdata>::outputs;
+
     classifier2D_binocular(module_1_1<state_idx, state_idx> &thenet,
 		      idx<int> &sz, idx<const char*> &lbls,
 		      double b, double c, int h, int w);
     virtual ~classifier2D_binocular();
   
     //! Compute multi-resolution inputs and fprop through each.
-    idx<double> fprop(ubyte *left, ubyte *right, 
+    idx<double> fprop(Tdata *left, Tdata *right, 
 		      float zoom, int dx, int dy, double threshold = 1.8, 
 		      int objsize = 60);
   
     // Sub functions
-    void multi_res_prep(ubyte *left, ubyte *right, 
+    void multi_res_prep(Tdata *left, Tdata *right, 
 			int dx, int dy, float zoom);
   };
 
   ////////////////////////////////////////////////////////////////
 
-  template <class Tdata> class classifierNMS : public classifier2D {
+  template <class Tdata>
+  class classifierNMS : public classifier2D<Tdata> {
   public:
-    int                                  input_width;
-    int                                  input_height;
-    double				 coef;
-    double				 bias;
-    idx<double>				 sizes;
-    idx<const char*>			 labels;
-    idx<Tdata>                           sample;
+    double		       coef;
+    double		       bias;
+    idx<double>		       sizes;
+    idx<const char*>	       labels;
+    idx<Tdata>                 sample;
+    using classifier2D<Tdata>::width;
+    using classifier2D<Tdata>::height;
+    using classifier2D<Tdata>::thenet;
+    using classifier2D<Tdata>::inputs;
+    using classifier2D<Tdata>::outputs;
+    using classifier2D<Tdata>::results;
+    using classifier2D<Tdata>::grabbed;
 	
     //! Constructor.
     classifierNMS(module_1_1<state_idx, state_idx> &thenet_,
-		   idx<double> &sizes_, 
-		   idx<const char*> &labels_,
-		   idx<Tdata> &sample_,
-		   double bias_, double coef_);
+		  idx<double> &sizes_, 
+		  idx<const char*> &labels_,
+		  idx<Tdata> &sample_,
+		  double bias_, double coef_);
     ~classifierNMS();
 
     //! do a fprop on thenet with multiple rescaled inputs
@@ -136,5 +151,6 @@ namespace ebl {
 } // end namespace ebl
 
 #include "classifier_gen.hpp"
+#include "classifier2D.hpp"
 
 #endif /* CLASSIFIER2D_H_ */

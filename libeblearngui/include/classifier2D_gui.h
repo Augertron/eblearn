@@ -49,15 +49,17 @@ namespace ebl {
     unsigned int	 display_wid_fprop;
 
   public:
-    classifier2D_gui();
-    virtual ~classifier2D_gui();
+    classifier2D_gui() {};
+    virtual ~classifier2D_gui() {};
 
     //! displays only the output of the classifier after a a call to 
     //! classifier2D::fprop(img, zoom, threshold, objsize) at coordinates 
     //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
-    void display(classifier2D &cl, ubyte *img, float zoom, double threshold,
+    template <class Tdata>
+    void display(classifier2D<Tdata> &cl, idx<Tdata> &img, 
+		 float zoom, double threshold,
 		 int objsize,
 		 unsigned int h0 = 0, unsigned int w0 = 0, 
 		 double dzoom = 1.0, int wid = -1, 
@@ -69,7 +71,9 @@ namespace ebl {
     //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
-    void display_inputs_outputs(classifier2D &cl, ubyte *img, float zoom, 
+    template <class Tdata>
+    void display_inputs_outputs(classifier2D<Tdata> &cl, 
+				idx<Tdata> &img, float zoom, 
 				double threshold, int objsize,
 				unsigned int h0 = 0, unsigned int w0 = 0, 
 				double dzoom = 1.0, int wid = -1, 
@@ -81,8 +85,9 @@ namespace ebl {
     //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
-    void display_all(classifier2D &cl, ubyte *img, float zoom, double threshold,
-		     int objsize,
+    template <class Tdata>
+    void display_all(classifier2D<Tdata> &cl, idx<Tdata> &img, 
+		     float zoom, double threshold, int objsize,
 		     unsigned int h0 = 0, unsigned int w0 = 0, 
 		     double dzoom = 1.0, int wid = -1, 
 		     const char *wname = NULL);
@@ -91,12 +96,16 @@ namespace ebl {
     //! If a window id <wid> is specified, 
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
-    void display_current(classifier2D &cl, 
+    template <class Tdata>
+    void display_current(classifier2D<Tdata> &cl, 
+			 idx<Tdata> &sample,
 			 int wid = -1, 
 			 const char *wname = NULL);
 
   };
 
 } // end namespace ebl
+
+#include "classifier2D_gui.hpp"
 
 #endif /* CLASSIFIER2D_GUI_H_ */

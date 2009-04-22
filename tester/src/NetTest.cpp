@@ -1,7 +1,7 @@
 #include "NetTest.h"
 
 #ifdef __GUI__
-#include "libidxgui.h"
+//#include "libidxgui.h"
 #include "libeblearngui.h"
 #endif
 

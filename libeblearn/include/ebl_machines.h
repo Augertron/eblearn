@@ -46,6 +46,13 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
   class nn_machine_cscscf : public layers_n<state_idx> {
+  protected:
+    intg ki0,  kj0;
+    intg si0,  sj0;
+    intg ki1,  kj1; 
+    intg si1,  sj1; 
+    intg ki2,  kj2;
+
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
@@ -76,6 +83,11 @@ namespace ebl {
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, intg outthick);
+
+    //! these functions are helpers to resize inputs to a module
+    // TODO: improve this crap
+    virtual idxdim adapt_input_size(idxdim &i_size);
+    virtual idxdim get_input_size_from_output(idxdim o_size);
   };
 
   ////////////////////////////////////////////////////////////////

@@ -198,7 +198,7 @@ public:
 };
 
 #ifdef __GUI__
-MAIN_QTHREAD(int, argc, char**, argv) { 
+MAIN_QTHREAD(int, argc, char**, argv) {
 #else
 int main(int argc, char **argv) {
 #endif
@@ -338,9 +338,9 @@ int main(int argc, char **argv) {
     cout << "Loading weights from " << pathToTrainedWeights << endl;
 
   //! different scales, to recognize different object sizes
-  idx<double> objectSizes(1);
-  objectSizes.set(1, 0);
-  //objectSizes.set(1.3, 0);
+  idx<double> scales(1);
+  scales.set(1, 0);
+  //scales.set(1.3, 0);
 
   //! these are the labels of the different classes 
   //! each object will be classified in one of those classes
@@ -354,7 +354,7 @@ int main(int argc, char **argv) {
 
   //! a classifier needs a trained module, a list of scales, and the classes
   classifierNMS<float> myClassifier(myConvNet, //! The trained ConvNet
-				    objectSizes,  //! sizes of objects
+				    scales,  //! sizes of objects
 				    objectLabels, //! Labels of classes
 				    testSample, //! Sample to classify
 				    0.0, //! Bias to be added to inputs
@@ -367,7 +367,7 @@ int main(int argc, char **argv) {
   //! display results
   #ifdef __GUI__
   classifier2D_gui displayer;
-  displayer.display_current(myClassifier);
+  displayer.display_current(myClassifier, testSample);
   #endif
 
   return 0;

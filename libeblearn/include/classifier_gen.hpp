@@ -40,18 +40,19 @@ using namespace std;
 namespace ebl {
 
   template <class Tdata>
-  classifierNMS<Tdata>::classifierNMS(module_1_1<state_idx, state_idx> &net_,
+  classifierNMS<Tdata>::classifierNMS(module_1_1<state_idx, state_idx> &thenet_,
 				      idx<double> &sizes_, 
 				      idx<const char*> &labels_,
 				      idx<Tdata> &sample_,
 				      double bias_, double coef_) 
-    : coef(coef_), bias(bias_),
-      sizes(sizes_), labels(labels_), sample(sample_), classifier2D(net_) {
+    : classifier2D<Tdata>(thenet_), coef(coef_), bias(bias_),
+      sizes(sizes_), labels(labels_), sample(sample_) {
     
     // size of the sample to process 
-    input_height = sample.dim(0);    
-    input_width = sample.dim(1);
-
+    height = sample.dim(0);    
+    width = sample.dim(1);
+    grabbed = idx<Tdata>(height, width);
+   
     // initialize input and output states and result matrices for each size
     inputs = idx<void*>(sizes.nelements());
     outputs = idx<void*>(sizes.nelements());
@@ -62,8 +63,8 @@ namespace ebl {
 		 out, outputs, void*,
 		 r, results, void*) {
 	// Compute the input sizes for each scale
-	idxdim scaled_dims( (intg)(input_height / size.get()),
-			    (intg)(input_width / size.get()) );
+	idxdim scaled_dims( (intg)(height / size.get()),
+			    (intg)(width / size.get()) );
 	// Adapt the size to the network structure:
 	idxdim out_dims = thenet.adapt_input_size(scaled_dims);
 	in.set((void*) new state_idx(1, 
