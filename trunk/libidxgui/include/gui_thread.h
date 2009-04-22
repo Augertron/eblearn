@@ -90,9 +90,9 @@ namespace ebl {
   //! declaration and hides the declaration of the application and thread.
   //! What happens is QT takes over the main thread and runs your code
   //! in a thread.
-#define MAIN_QTHREAD()				\
+#define MAIN_QTHREAD(targc, argc, targv, argv)	\
   using namespace ebl;				\
-  int main(int argc, char **argv) {		\
+  int main(targc argc, targv argv) {		\
     QApplication a(argc, argv);			\
     a.setQuitOnLastWindowClosed(false);		\
     ebl::gui_thread gt(argc, argv);		\

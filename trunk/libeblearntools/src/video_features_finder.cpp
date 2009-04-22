@@ -91,7 +91,7 @@ using namespace ebl;
 #endif
 
 #ifdef __GUI__
-  MAIN_QTHREAD() {
+  MAIN_QTHREAD(int, argc, char **, argv) {
 #else
   int main(int argc, char **argv) {
 #endif

@@ -79,11 +79,11 @@ namespace ebl {
     //! draws an arrow from (h1, w1) to (h2, w2).
     void add_arrow(int h1, int w1, int h2, int w2);
 
-    //! do not show windows, instead save them in png files in current directory.
+    //! do not show windows, instead save them in png files in current dir.
     void set_silent();
-    //! do not show windows, instead save them in png files in current directory.
+    //! do not show windows, instead save them in png files in current dir.
     void set_silent(const std::string *filename);
-    //! do not show windows, instead save them in png files in current directory.
+    //! do not show windows, instead save them in png files in current dir.
     void set_silent(const char *filename);
 
     //! do not update display until enable_updates is called again.
@@ -135,8 +135,8 @@ namespace ebl {
     //! use the set_colors() function instead of this function to set the text
     //! and background colors and transparency.
     //! for example: gui << set_colors(255, 255, 255, 255, 0, 0, 0, 127);
-    //! this sets the text color to fully opaque white on a semi-transparent black
-    //! background.
+    //! this sets the text color to fully opaque white on a semi-transparent
+    //! black background.
     void set_text_colors(unsigned char fg_r, unsigned char fg_g, 
 			 unsigned char fg_b, unsigned char fg_a,
 			 unsigned char bg_r, unsigned char bg_g, 
@@ -196,9 +196,9 @@ namespace ebl {
   ManipInfra<int, int> gui_only();
   idxgui& fgui_only(idxgui& r);
 
-  //! set the text color to black on white background with optional transparency 
-  //! factors fg_a and bg_a respectively for foreground and background colors,
-  //! ranging from 0 to 255.
+  //! set the text color to black on white background with optional 
+  //! transparency factors fg_a and bg_a respectively for foreground and 
+  //! background colors, ranging from 0 to 255.
   //! usage: gui << black_on_white();
   //! usage: gui << black_on_white(127);
   //! usage: gui << black_on_white(50, 255);
