@@ -188,9 +188,12 @@ namespace ebl {
     }
     // build class list
     int nclasses = 0;
+    cmatch what;
+    regex hidden_dir(".svn");
     directory_iterator end_itr; // default construction yields past-the-end
     for (directory_iterator itr(imgp); itr != end_itr; ++itr) {
-      if (is_directory(itr->status())) {
+      if (is_directory(itr->status()) 
+	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
 	nclasses++;
       }
     }
@@ -212,7 +215,8 @@ namespace ebl {
     labels.resize(0); // empty idx
     int i = 0;
     for (directory_iterator itr(imgp); itr != end_itr; itr++) {
-      if (is_directory(itr->status())) {
+      if (is_directory(itr->status())
+	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
 	tmp = classes.select(0, i);
 	// copy class name
 	memcpy(tmp.idx_ptr(), itr->leaf().c_str(), 
