@@ -58,10 +58,15 @@ namespace ebl {
   nn_machine_cscscf::~nn_machine_cscscf() {}
 
   void nn_machine_cscscf::init(parameter &prm, intg ini, intg inj,
-			       intg ki0, intg kj0, idx<intg> &tbl0, intg si0, 
-			       intg sj0, intg ki1, intg kj1, idx<intg> &tbl1, 
-			       intg si1, intg sj1, intg ki2, intg kj2, 
-			       idx<intg> &tbl2, intg outthick) {
+			       intg ki0_, intg kj0_, idx<intg> &tbl0, 
+			       intg si0_, intg sj0_, intg ki1_, intg kj1_, 
+			       idx<intg> &tbl1, intg si1_, intg sj1_, 
+			       intg ki2_, intg kj2_, idx<intg> &tbl2, 
+			       intg outthick) {
+    // Set local params
+    ki0=ki0_; kj0=kj0_; ki1=ki1_; kj1=kj1_; ki2=ki2_; kj2=kj2_; 
+    si0=si0_; sj0=sj0_; si1=si1_; sj1=sj1_;
+
     idx<intg> tblmax = tbl0.select(1, 1);
     int tblmax0 = idx_max(tblmax);
     intg thick0 = 1 + tblmax0;
@@ -93,6 +98,21 @@ namespace ebl {
     addModule(new nn_layer_convolution(prm, ki2, kj2, 1, 1, tbl2, thick2),
 	      new state_idx(thick2, c2_sizi, c2_sizj));
     addLastModule(new nn_layer_full(prm, thick2, outthick));
+  }
+
+  idxdim nn_machine_cscscf::adapt_input_size(idxdim &i_size) {
+    // The output is automatically rounded, so we need to recompute the input,
+    // by setting the output to the rounded values...
+    idxdim o_size( ((((i_size.dim[0] - ki0+1) / si0) - ki1+1) / si1) - ki2+1,
+		   ((((i_size.dim[1] - kj0+1) / sj0) - kj1+1) / sj1) - kj2+1 );
+    i_size = get_input_size_from_output(o_size);
+    return o_size;
+  }
+
+  idxdim nn_machine_cscscf::get_input_size_from_output(idxdim o_size) {
+    idxdim size( ((o_size.dim[0] + ki2-1) * si1 + ki1-1) * si0 + ki0-1 ,
+		 ((o_size.dim[1] + kj2-1) * sj1 + kj1-1) * sj0 + kj0-1 );
+    return size;
   }
 
   ////////////////////////////////////////////////////////////////

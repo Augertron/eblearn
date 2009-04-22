@@ -41,15 +41,15 @@ void Classifier2DTest::test_norb() {
   // input to the network will be 96x96 and there are 5 outputs
   lenet7_binocular thenet(theparam, 96, 96, 5);
   theparam.load_x(mono_net.c_str());
-  classifier2D cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
+  classifier2D<ubyte> cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
 
 #ifdef __GUI__
   classifier2D_gui cgui;
-  cgui.display_all(cb, left.idx_ptr(), 1, 1.8, 60);
+  cgui.display_all(cb, left, 1, 1.8, 60);
 #endif
 
   // find category of image
-  idx<double> res = cb.fprop(left.idx_ptr(), 1, 1.8, 60);
+  idx<double> res = cb.fprop(left, 1, 1.8, 60);
   CPPUNIT_ASSERT(res.dim(0) == 1); // only 1 object
   CPPUNIT_ASSERT(res.get(0, 0) == 2); // plane
 }
@@ -80,7 +80,7 @@ void Classifier2DTest::test_norb_binoc() {
   // input to the network will be 96x96 and there are 5 outputs
   lenet7_binocular thenet(theparam, 96, 96, 5);
   theparam.load_x(binoc_net.c_str());
-  classifier2D_binocular cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
+  classifier2D_binocular<ubyte> cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
 
   // find category of image
   left = image_resize(left, 320, 240, 1);

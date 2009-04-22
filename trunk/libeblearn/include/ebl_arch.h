@@ -56,6 +56,7 @@ namespace ebl {
     virtual int  replicable_order();
     virtual void resize_output(Tin &in, Tout &out);
     //! these functions are helpers to resize inputs to a module
+    // TODO: improve this crap
     virtual idxdim adapt_input_size(idxdim &i_size);
     virtual idxdim get_input_size_from_output(idxdim o_size);
   };
