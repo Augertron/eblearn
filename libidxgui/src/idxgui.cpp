@@ -47,6 +47,7 @@ namespace ebl {
     nwid = 0;
     str("");
     set_cout_and_gui();
+    main_done = false;
   }
 
   idxgui::~idxgui() {
@@ -91,6 +92,7 @@ namespace ebl {
 
   void idxgui::run() {
     run_main(argc, argv);
+    main_done = true;
   }
 
   void idxgui::add_text(std::string *s) {

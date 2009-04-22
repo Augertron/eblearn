@@ -55,6 +55,8 @@ namespace ebl {
   public:
     bool         cout_output;
     int          (*run_main)(int, char**);
+    bool         main_done;
+    
 
   public:
     idxgui();
