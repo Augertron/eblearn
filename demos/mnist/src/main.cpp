@@ -9,7 +9,7 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 
 // argv[1] is expected to contain the directory of the mnist dataset
 #ifdef __GUI__
-MAIN_QTHREAD() { // this is the macro replacing main to enable multithreaded gui
+MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #else
 int main(int argc, char **argv) { // regular main without gui
 #endif
