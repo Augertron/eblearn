@@ -148,7 +148,7 @@ namespace ebl {
     int newh = im1.dim(0) * zoomh;
     int neww = im1.dim(1) * zoomw;
     idx<T> im2 = ((newh == im1.dim(0)) && (neww == im1.dim(1))) ?
-      im1 : image_resize(im1, newh, neww);
+      im1 : image_resize(im1, neww, newh);
     idx<ubyte> image(newh, neww);
     idx_subc_bounded(im2, minv, im2);
     idx_dotc_bounded(im2, (T) (255.0 / (double) (maxv - minv)), im2);
