@@ -198,7 +198,7 @@ public:
 };
 
 #ifdef __GUI__
-MAIN_QTHREAD(int, argc, char **, argv) { 
+MAIN_QTHREAD(int, argc, char**, argv) { 
 #else
 int main(int argc, char **argv) {
 #endif
