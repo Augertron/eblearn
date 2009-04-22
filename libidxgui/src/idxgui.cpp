@@ -90,12 +90,8 @@ namespace ebl {
   }
 
   void idxgui::run() {
-    run_main();
+    run_main(argc, argv);
   }
-
-//   int idxgui::run_main() {
-//     ylerror("run_main not implemented");
-//   }
 
   void idxgui::add_text(std::string *s) {
     emit gui_add_text(s);    

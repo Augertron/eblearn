@@ -54,6 +54,7 @@ namespace ebl {
     unsigned int  nwid;
   public:
     bool         cout_output;
+    int          (*run_main)(int, char**);
 
   public:
     idxgui();
@@ -177,7 +178,7 @@ namespace ebl {
     
   protected:
     virtual void run();
-    virtual int run_main();
+    //    virtual int run_main();
   };
 
   //! specifies the origin of the text to draw.
