@@ -76,7 +76,6 @@ namespace ebl {
   }
 
   gui_thread::~gui_thread() {
-    cout << "destructor ****" << endl;
     for (vector<Window*>::iterator i = windows.begin(); i != windows.end(); ++i)
       if (*i)
 	delete *i;
@@ -90,6 +89,8 @@ namespace ebl {
 	  nwindows--;
 	}
       }
+    if (gui.main_done && (nwindows == 0))
+      appquit();
   }
 
   void gui_thread::add_text(const std::string *s) {
