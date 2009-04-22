@@ -32,6 +32,7 @@
 #ifndef SIMILAR_PATCHES_H_
 #define SIMILAR_PATCHES_H_
 
+#include "libidx.h"
 #ifdef __GUI__
 #include "libidxgui.h"
 #endif
