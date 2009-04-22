@@ -43,10 +43,10 @@ namespace ebl {
     // if no window given, create a new one or reuse previous one
     datasource_wid = (wid >= 0) ? wid : 
       ((datasource_wid >= 0) ? datasource_wid :
-       gui.new_window((title ? title : "Supervised Trainer")));
-    gui.select_window(datasource_wid);
-    gui.disable_updates();
-    gui.clear();
+       new_window((title ? title : "Supervised Trainer")));
+    select_window(datasource_wid);
+    disable_window_updates();
+    clear_window();
     // init datasource
     ds.seek_begin();
     st.resize_input(ds);
@@ -82,7 +82,7 @@ namespace ebl {
 
       // 1. display dataset with incorrect and correct answers
       if (nh1 < nh) {
-	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h1, w1, zoom, zoom);
+	draw_matrix_frame(m, (correct?0:128), 0, 0, h1, w1, zoom, zoom);
 	if ((ds.lblstr) && (ds.lblstr->at(answer)))
 	  gui << at(h1 + 2, w1 + 2) << (ds.lblstr->at(answer))->c_str();
 	w1 += m.dim(1) + 2;
@@ -94,7 +94,7 @@ namespace ebl {
       }
       // 2. display first nh * nw incorrect answers
       if (!correct) {
-	gui.draw_matrix_frame(m, (correct?0:128), 0, 0, h2, w2, zoom, zoom);
+	draw_matrix_frame(m, (correct?0:128), 0, 0, h2, w2, zoom, zoom);
 	if ((ds.lblstr) && (ds.lblstr->at(answer)))
 	  gui << at(h2 + 2, w2 + 2) << (ds.lblstr->at(answer))->c_str();
 	w2 += m.dim(1) + 2;
@@ -105,7 +105,7 @@ namespace ebl {
 	i2++;
       }
     }
-    gui.enable_updates();
+    enable_window_updates();
   }
 
   template <class Tdata, class Tlabel>  
@@ -118,11 +118,11 @@ namespace ebl {
 		    int wid, const char *title) {
     internals_wid = (wid >= 0) ? wid : 
       ((internals_wid >= 0) ? internals_wid :
-       gui.new_window((title ? 
+       new_window((title ? 
 		       title : "Supervised Trainer: internal fprop states")));
-    gui.select_window(internals_wid);
-    gui.disable_updates();
-    gui.clear();
+    select_window(internals_wid);
+    disable_window_updates();
+    clear_window();
     ds.seek_begin();
     st.resize_input(ds);
     bool correct;
@@ -142,7 +142,7 @@ namespace ebl {
 		       hfdisp, wfdisp, 3.0, true, internals_wid);
       hfdisp += 10;
     }
-    gui.enable_updates();
+    enable_window_updates();
   }  
 
 } // end namespace ebl

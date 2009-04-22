@@ -51,7 +51,7 @@ namespace ebl {
     // display inputs
     idx_bloop1(m, in.x, double) {
       if (w - w0 < 500) {
-	gui.draw_matrix(m, h, w, zoom, zoom, -1.0, 1.0);
+	draw_matrix(m, h, w, zoom, zoom, -1.0, 1.0);
 	w += m.dim(1) * zoom + 1;
       }
     }
@@ -73,7 +73,7 @@ namespace ebl {
     w += 150;
     // display inputs
     idx_bloop1(m, in.x, double) {
-      gui.draw_matrix(m, h, w, zoom, zoom);
+      draw_matrix(m, h, w, zoom, zoom);
       w += m.dim(1) * zoom + 1;
     }
     h0 += m.dim(0) * zoom + 1;
@@ -88,7 +88,7 @@ namespace ebl {
     zoom *= 4;
     idx_bloop1(mk, nn.convol.kernel.x, double) {
       if (w - w0 < 500) {
-	gui.draw_matrix(mk, h, w, zoom, zoom);
+	draw_matrix(mk, h, w, zoom, zoom);
 	w += mk.dim(1) * zoom + 1;
       }
     }
@@ -110,7 +110,7 @@ namespace ebl {
     w += 150;
     // display inputs
     idx_bloop1(m, in.x, double) {
-      gui.draw_matrix(m, h, w, zoom, zoom);
+      draw_matrix(m, h, w, zoom, zoom);
       w += m.dim(1) * zoom + 1;
     }
     h0 += m.dim(0) * zoom + 1;
@@ -124,7 +124,7 @@ namespace ebl {
 //     // display kernels
 //     idx_bloop1(mk, nn.subsampler.sub.x, double) {
 //       if (w < 500) {
-// 	gui.draw_matrix(mk, h, w, zoom, zoom);
+// 	draw_matrix(mk, h, w, zoom, zoom);
 // 	w += mk.dim(1) * zoom + 1;
 //       }
 //     }

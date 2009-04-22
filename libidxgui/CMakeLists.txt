@@ -46,6 +46,7 @@ IF (QT_FOUND) #-----------------------------------------------------------------
     src/gui_thread.cpp
     src/idxgui.cpp
     src/window.cpp
+    src/gui.cpp
     )
   
   # link executable with external libraries

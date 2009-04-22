@@ -39,6 +39,7 @@ namespace ebl {
   // idxgui
 
   idxgui::idxgui() {
+    thread_init = false;
   }
 
   void idxgui::init(int argc_, char **argv_) {
@@ -48,22 +49,37 @@ namespace ebl {
     str("");
     set_cout_and_gui();
     main_done = false;
+    thread_init = true;
   }
 
   idxgui::~idxgui() {
     wait();
   }
 
+  void idxgui::check_init() {
+    if (!thread_init) {
+      cerr << "warning: trying to use gui function but gui wasn't initialized.";
+      cerr << endl;
+      cerr << "         replace your \"int main(int argc, char **argv) {\" by:";
+      cerr << endl;
+      cerr << "                      \"MAIN_QTHREAD(int, argc, char**, argv)";
+      cerr << " {\"" << endl; 
+    }
+  }
+
   void idxgui::quit() {
+    check_init();
     emit appquit();
   }
 
   void idxgui::clear() {
+    check_init();
     emit gui_clear();
   }
 
   unsigned int idxgui::new_window(const char *wname, unsigned int h, 
 					unsigned int w) {
+    check_init();
     // TODO: add mutex
     unsigned int wid = nwid;
     nwid++; // increment number of windows
@@ -72,18 +88,22 @@ namespace ebl {
   }
 
   void idxgui::select_window(unsigned int wid) {
+    check_init();
     emit gui_select_window(wid);
   }
 
   void idxgui::set_silent() {
+    check_init();
     emit gui_set_silent(NULL);
   }
 
   void idxgui::set_silent(const std::string *filename) {
+    check_init();
     emit gui_set_silent(filename);
   }
 
   void idxgui::set_silent(const char *filename) {
+    check_init();
     if (filename)
       emit gui_set_silent(new std::string(filename));
     else
@@ -95,15 +115,23 @@ namespace ebl {
     main_done = true;
   }
 
-  void idxgui::add_text(std::string *s) {
+  void idxgui::draw_text(std::string *s) {
+    check_init();
     emit gui_add_text(s);    
   }
 
-  void idxgui::add_arrow(int h1, int w1, int h2, int w2) {
+  void idxgui::draw_text(std::string *s, unsigned int h0, unsigned int w0) {
+    set_text_origin(h0, w0);
+    emit gui_add_text(s);    
+  }
+
+  void idxgui::draw_arrow(int h1, int w1, int h2, int w2) {
+    check_init();
     emit gui_add_arrow(h1, w1, h2, w2);
   }
 
   void idxgui::set_text_origin(unsigned int h0, unsigned int w0) {
+    check_init();
     emit gui_set_text_origin(h0, w0);    
   }
 
@@ -111,6 +139,7 @@ namespace ebl {
 			       int fg_b, int fg_a,
 			       int bg_r, int bg_g, 
 			       int bg_b, int bg_a) {
+    check_init();
     set_text_colors((unsigned char) fg_r, (unsigned char) fg_g, 
 		    (unsigned char) fg_b, (unsigned char) fg_a, 
 		    (unsigned char) bg_r, (unsigned char) bg_g, 
@@ -120,15 +149,18 @@ namespace ebl {
 			       unsigned char fg_b, unsigned char fg_a,
 			       unsigned char bg_r, unsigned char bg_g, 
 			       unsigned char bg_b, unsigned char bg_a) {
+    check_init();
     emit gui_set_text_colors(fg_r, fg_g, fg_b, fg_a, 
 			    bg_r, bg_g, bg_b, bg_a);
   }
 
   void idxgui::enable_updates() {
+    check_init();
     emit gui_set_wupdate(true);    
   }
 
   void idxgui::disable_updates() {
+    check_init();
     emit gui_set_wupdate(false);    
   }
 
@@ -199,10 +231,12 @@ namespace ebl {
   }
 
   void idxgui::set_cout_and_gui() {
+    check_init();
     cout_output = true;
   }
 
   void idxgui::set_gui_only() {
+    check_init();
     cout_output = false;
   }
 

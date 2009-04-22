@@ -47,7 +47,7 @@ namespace ebl {
       max_current_patches(maxcurrent), 
       current_patches_xy(maxcurrent) {
 #ifdef __GUI__
-    wdisplay = gui.new_window("similar_patches");
+    wdisplay = new_window("similar_patches");
 #endif
   }
 
@@ -95,9 +95,9 @@ namespace ebl {
 
   void similar_patches::display_dataset(unsigned int maxh, unsigned int maxw) {
 #ifdef __GUI__
-    gui.select_window(wdisplay);
-    gui.disable_updates();
-    gui.clear();
+    select_window(wdisplay);
+    disable_window_updates();
+    clear_window();
     unsigned int h = 0, w = 0;
     idx<ubyte> *patch = NULL;
     for ( ; (display_index < dataset.size()) && (h < maxh); ++display_index) {
@@ -110,12 +110,12 @@ namespace ebl {
 	    w = 0;
 	    h += patch->dim(0);
 	  }
-	  gui.draw_matrix(*patch, h, w);
+	  draw_matrix(*patch, h, w);
 	  w += patch->dim(1);
 	}
       }
     }
-    gui.enable_updates();
+    enable_window_updates();
 #endif
   }
 

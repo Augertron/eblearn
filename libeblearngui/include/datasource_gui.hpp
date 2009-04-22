@@ -48,10 +48,10 @@ namespace ebl {
 				       unsigned int h0, unsigned int w0,
 				       double zoom, int wid, const char *wname){
     display_wid = (wid >= 0) ? wid : 
-      gui.new_window((wname ? wname : ds.name), 
+      new_window((wname ? wname : ds.name), 
 		     nh * (ds.height + 1) - 1, nw * (ds.width + 1) - 1);
-    gui.select_window(display_wid);
-    gui.disable_updates();
+    select_window(display_wid);
+    disable_window_updates();
     gui << white_on_transparent() << gui_only();
     idxdim d = ds.sample_dims();
     state_idx s(d);
@@ -64,7 +64,7 @@ namespace ebl {
 	ds.fprop(s, lbl);
 	ds.next();
 	m = s.x.select(0, 0);
-	gui.draw_matrix(m, h, w, zoom, zoom);
+	draw_matrix(m, h, w, zoom, zoom);
 	if ((ds.lblstr) && (ds.lblstr->at((int)lbl.get())))
 	  gui << at(h + 1, w + 1) << (ds.lblstr->at((int)lbl.get()))->c_str();
 	w += m.dim(1) + 1;
@@ -73,7 +73,7 @@ namespace ebl {
       h += m.dim(0) + 1;
     }
     ds.seek_begin();
-    gui.enable_updates();
+    enable_window_updates();
   }
 
 } // end namespace ebl

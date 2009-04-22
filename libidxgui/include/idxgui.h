@@ -49,24 +49,20 @@ namespace ebl {
     Q_OBJECT
       
   private:
-    int		  argc;
-    char	**argv;
-    unsigned int  nwid;
+    int			  argc;
+    char		**argv;
+    unsigned int	  nwid;
+    bool		  thread_init;
   public:
-    bool         cout_output;
-    int          (*run_main)(int, char**);
-    bool         main_done;
+    bool		  cout_output;
+    int                 (*run_main)(int, char**);
+    bool		  main_done;
     
 
   public:
     idxgui();
     void init(int argc_, char **argv_);
     virtual ~idxgui();
-
-    void quit();
-    
-    //! clears the window.
-    void clear();
 
     //! creates a new window.
     unsigned int new_window(const char *wname = NULL, unsigned int h = 0,
@@ -80,7 +76,7 @@ namespace ebl {
       idxgui& operator<<(idxgui& r, const T val);
 
     //! draws an arrow from (h1, w1) to (h2, w2).
-    void add_arrow(int h1, int w1, int h2, int w2);
+    void draw_arrow(int h1, int w1, int h2, int w2);
 
     //! do not show windows, instead save them in png files in current dir.
     void set_silent();
@@ -96,6 +92,12 @@ namespace ebl {
     //! allow display updates and display if it was previously off after a 
     //! call to disable_updates().
     void enable_updates();
+
+    //! closes all windows.
+    void quit();
+    
+    //! clears the window.
+    void clear();
 
     //! draw_matrix displays your idx2 or the first layer of your idx3 in
     //! grayscale on the whiteboard. This function does a copy of your idx and
@@ -127,16 +129,24 @@ namespace ebl {
 		       double zoomh = 1.0, double zoomw = 1.0,
 		       T minv = 0, T maxv = 0);
 
-    //! use the << operator instead of this function to add text to the gui.
-    //! for example: gui << "text" << endl;
-    void add_text(std::string *s);
+    //! draws text on the current window.
+    //! you can also use the << operator instead of this function to add text 
+    //! to the gui. for example: gui << "text" << endl;
+    void draw_text(std::string *s);
 
-    //! use the at() function instead of this function to set the text origins.
+    //! draws text on the current window at origin (h0, w0).
+    //! you can also use the << operator instead of this function to add text 
+    //! to the gui. for example: gui << at(h0, w0) << "text" << endl;
+    void draw_text(std::string *s, unsigned int h0, unsigned int w0);
+
+    //! sets the origin of further calls to draw_text or gui << "text".
+    //! you can also use the at() function instead of this one.
     //! for example: gui << at(42, 0) << "text";
     void set_text_origin(unsigned int h0, unsigned int w0);
 
-    //! use the set_colors() function instead of this function to set the text
-    //! and background colors and transparency.
+    //! sets the text color for further calls to draw_text or gui << "text".
+    //! you can also use the set_colors() function to set
+    //! text and background colors and transparency.
     //! for example: gui << set_colors(255, 255, 255, 255, 0, 0, 0, 127);
     //! this sets the text color to fully opaque white on a semi-transparent
     //! black background.
@@ -150,17 +160,20 @@ namespace ebl {
 			 int bg_r, int bg_g, 
 			 int bg_b, int bg_a);
 
-    //! use the cout_and_gui() function instead of this function to output
-    //! text on both std::cout and the gui.
+    //! set the << operator to output text on both std::cout and the current
+    //! window.
+    //! you can also use the cout_and_gui() function.
     //! for example: gui << cout_and_gui() << "text";
     void set_cout_and_gui();
-
-    //! use the gui_only() function instead of this function to output
-    //! text on only the gui and not std::cout.
+    
+    //! set the << operator to output text only to the current window.
+    //! you can also use the gui_only() function and not to std::cout.
     //! for example: gui << gui_only() << "text";
     void set_gui_only();
 
   private:
+    // check that user used MAIN_QTHREAD instead of regular main
+    void check_init(); 
 
   signals:
     void gui_drawImage(idx<ubyte> *img, unsigned int h0, unsigned int w0);
@@ -180,7 +193,6 @@ namespace ebl {
     
   protected:
     virtual void run();
-    //    virtual int run_main();
   };
 
   //! specifies the origin of the text to draw.
@@ -236,4 +248,4 @@ namespace ebl {
 
 #include "idxgui.hpp"
 
-#endif /* GUI_H_ */
+#endif /* IDXGUI_H_ */

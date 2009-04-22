@@ -120,7 +120,7 @@ namespace ebl {
   idxgui& operator<<(idxgui& r, const T val) {
     ostringstream o;
     o << val;
-    r.add_text(new std::string(o.str()));
+    r.draw_text(new std::string(o.str()));
     if (r.cout_output)
       cout << o.str() << flush;
     return r;
