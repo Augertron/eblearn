@@ -91,8 +91,10 @@ namespace ebl {
   //! What happens is QT takes over the main thread and runs your code
   //! in a thread.
 #define MAIN_QTHREAD(targc, argc, targv, argv)	\
+  int run_main(targc argc, targv argv);		\
   using namespace ebl;				\
   int main(targc argc, targv argv) {		\
+    gui.run_main = &run_main;			\
     QApplication a(argc, argv);			\
     a.setQuitOnLastWindowClosed(false);		\
     ebl::gui_thread gt(argc, argv);		\
@@ -100,7 +102,7 @@ namespace ebl {
     a.exec();					\
     return 0;					\
   }						\
-  int idxgui::run_main()
+  int run_main(targc argc, targv argv)
   
 } // namespace ebl {
 
