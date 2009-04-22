@@ -157,7 +157,6 @@ using namespace ebl;
 	static IplImage *frame = NULL, *frame1 = NULL, *frame1_1C = NULL, *frame2_1C = NULL, *eig_image = NULL, *temp_image = NULL, *pyramid1 = NULL, *pyramid2 = NULL;
 
 	//	unsigned int h0 = 0, w0 = 0;
-	unsigned int imh0 = 0, imw0 = 0;
 
 	/* Go to the frame we want.  Important if multiple frames are queried in
 	 * the loop which they of course are for optical flow.  Note that the very
@@ -212,6 +211,7 @@ using namespace ebl;
 	gui.select_window(mainwin);
 	gui.disable_updates();
 	gui.clear();
+	unsigned int imh0 = 0, imw0 = 0;
 	gui.draw_matrix(im1, imh0, imw0, zoom, zoom);
 	imh0 += im1.dim(0) * zoom + 5;
 	gui << "frame #" << current_frame;

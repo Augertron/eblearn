@@ -37,7 +37,6 @@ int main(int argc, char **argv) { // regular main without gui
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
   supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam);
-  supervised_trainer_gui stgui; // the gui to display supervised_trainer
 
   //! a classifier-meter measures classification errors
   classifier_meter trainmeter, testmeter;
@@ -65,8 +64,12 @@ int main(int argc, char **argv) { // regular main without gui
   // first show classification results without training
   thetrainer.test(train_ds, trainmeter, infp);
   thetrainer.test(test_ds, testmeter, infp);
+
+#ifdef __GUI__
+  supervised_trainer_gui stgui; // the gui to display supervised_trainer
   stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
   stgui.display_internals(thetrainer, test_ds, infp, 2);
+#endif
 
   // now do training iterations 
   cout << "Training network on MNIST with " << train_ds.size();
@@ -75,8 +78,10 @@ int main(int argc, char **argv) { // regular main without gui
     thetrainer.train(train_ds, trainmeter, gdp, 1);	         // train
     thetrainer.test(train_ds, trainmeter, infp);	         // test
     thetrainer.test(test_ds, testmeter, infp);	                 // test
+#ifdef __GUI__
     stgui.display_datasource(thetrainer, test_ds, infp, 10, 10); // display
     stgui.display_internals(thetrainer, test_ds, infp, 2);       // display
+#endif
     thetrainer.compute_diaghessian(train_ds, 100, 0.02); // recompute 2nd der
   }
   return 0;
