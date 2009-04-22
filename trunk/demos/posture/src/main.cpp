@@ -310,6 +310,10 @@ int main(int argc, char **argv) {
     //! Error -> 0 when training is done
     if (errorTrain == 0) 
       break;
+    double errorTest = 1-(testmeter.total_correct / (double)testmeter.size);
+    //! Error -> 0 when testing is good !
+    if (errorTest < 0.05) 
+      break;
   }
 
   //! Store the trained conv-net to a file...
