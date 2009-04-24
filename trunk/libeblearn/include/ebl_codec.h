@@ -43,7 +43,23 @@ namespace ebl {
   //! generic coder/decoder module.
   class codec: public ebm_2<state_idx, state_idx> {
   public:
-    state_idx z;
+    // encoder
+    module_1_1<state_idx, state_idx>	encoder;
+    state_idx				enc_out;
+    ebm_2<state_idx, state_idx>		enc_cost;
+    double				weight_energy_enc;
+    state_idx				enc_energy;
+    // z
+    state_idx				z;
+    ebm_2<state_idx, state_idx>		z_cost;
+    double				weight_energy_z;
+    state_idx				z_energy;
+    // decoder
+    module_1_1<state_idx, state_idx>	decoder;
+    state_idx				dec_out;
+    ebm_2<state_idx, state_idx>		dec_cost;
+    double				weight_energy_dec;
+    state_idx				dec_energy;
 
     //! Constructor.
     codec();
@@ -59,6 +75,10 @@ namespace ebl {
     virtual void forget(forget_param_linear &fp);
     //! normalize
     virtual void normalize();
+
+    //! forward propagation of in1 and in2, a simple one pass propagation
+    virtual void fprop_one_pass(state_idx &in1, state_idx &in2, 
+				state_idx &energy);
   };
 
 } // namespace ebl {
