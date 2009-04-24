@@ -54,6 +54,7 @@ namespace ebl {
     char		**argv;
     int	                  nwid;
   public:
+  public:
     bool		  thread_init;
     bool		  cout_output;
     int                 (*run_main)(int, char**);

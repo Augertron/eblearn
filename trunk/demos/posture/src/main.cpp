@@ -273,8 +273,8 @@ int main(int argc, char **argv) {
   //! learning parameters
   gd_param gdp(/* double leta*/ 0.0001,
 	       /* double ln */ 	0.0,
-	       /* double l1 */ 	0.0,
-	       /* double l2 */ 	0.0,
+	       /* double l1 */ 	0.0001,
+	       /* double l2 */ 	0.0001,
 	       /* int dtime */ 	0,
 	       /* double iner */0.0, 
 	       /* double a_v */ 0.0,
@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
       break;
     double errorTest = 1-(testmeter.total_correct / (double)testmeter.size);
     //! Error -> 0 when testing is good !
-    if (errorTest < 0.05) 
+    if (errorTest <= 0.05) 
       break;
   }
 
