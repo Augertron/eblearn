@@ -42,42 +42,61 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! Supervised Trainer gui
 
-  class supervised_trainer_gui {
+  template <class Tdata, class Tlabel>
+    class supervised_trainer_gui : public scroll_box {
   private:
-    unsigned int		display_nh;
-    unsigned int		display_nw;
-    unsigned int		display_h0;
-    unsigned int		display_w0;
-    int				datasource_wid;
-    int				internals_wid;
-    labeled_datasource_gui	dsgui;
+    supervised_trainer<Tdata, Tlabel>          *_st;
+    labeled_datasource<Tdata, Tlabel>          *_ds;
+    labeled_datasource<Tdata, Tlabel>          *_last_ds;
+    infer_param                                *_infp;
+    unsigned int				_nh;
+    unsigned int				_nw;
+    double                                      _zoom;
+    int						datasource_wid;
+    int						internals_wid;
+    bool					scroll;
+    bool					scroll_added;
+    unsigned int                                pos;
+    labeled_datasource_gui<Tdata, Tlabel>      *dsgui;
+    
 
   public:
-    supervised_trainer_gui();
+    //! add scrolling controls if scroll is true.
+    supervised_trainer_gui(bool scroll = false);
     virtual ~supervised_trainer_gui();
     
     //! displays nh x nw samples of the datasource ds 3 times:
     //! 1- with groundtruth labels
     //! 2- with classification answers, correct and wrong
     //! 3- samples with wrong answers only
-    template<class Tdata, class Tlabel>
-      void display_datasource(supervised_trainer<Tdata, Tlabel> &st,
-			      labeled_datasource<Tdata, Tlabel> &ds,
-			      infer_param &infp,
-			      unsigned int nh, unsigned int nw, 
-			      unsigned int h0 = 0, unsigned int w0 = 0, 
-			      double zoom = 1.0, int wid = -1,
-			      const char *title = NULL);
+    void display_datasource(supervised_trainer<Tdata, Tlabel> &st,
+			    labeled_datasource<Tdata, Tlabel> &ds,
+			    infer_param &infp,
+			    unsigned int nh, unsigned int nw, 
+			    unsigned int h0 = 0, unsigned int w0 = 0, 
+			    double zoom = 1.0, int wid = -1,
+			    const char *title = NULL, bool scrolling = false);
     
     //! displays internal states of the <ninternals> first samples of ds.
-    template<class Tdata, class Tlabel>
-      void display_internals(supervised_trainer<Tdata, Tlabel> &st,
-			     labeled_datasource<Tdata, Tlabel> &ds, 
-			     infer_param &infp,
-			     unsigned int ninternals, 
-			     unsigned int h0 = 0, unsigned int w0 = 0, 
-			     double zoom = 1.0, int wid = -1,
-			     const char *title = NULL);
+    void display_internals(supervised_trainer<Tdata, Tlabel> &st,
+			   labeled_datasource<Tdata, Tlabel> &ds, 
+			   infer_param &infp,
+			   unsigned int ninternals, 
+			   unsigned int h0 = 0, unsigned int w0 = 0, 
+			   double zoom = 1.0, int wid = -1,
+			   const char *title = NULL);
+
+    ////////////////////////////////////////////////////////////////
+    // inherited methods to implement for scrolling capabilities
+    
+    //! scrolling method.
+    virtual void display_next ();
+    //! scrolling method.
+    virtual void display_previous ();
+    //! scrolling method.
+    virtual unsigned int max_pages ();
+    //    virtual scroll_box0* copy();
+    virtual supervised_trainer_gui<Tdata,Tlabel>* copy();
   };
 
 } // namespace ebl {

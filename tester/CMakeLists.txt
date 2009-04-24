@@ -37,7 +37,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   
   # compile executable
   ##############################################################################
-  add_executable (eblearn_tester
+  add_executable (tester
     src/BlasTest.cpp
     src/Classifier2DTest.cpp
     src/ClusterTest.cpp
@@ -65,12 +65,12 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   
   # link executable with external libraries
   ##############################################################################
-  target_link_libraries (eblearn_tester eblearn idx)
-  target_link_libraries (eblearn_tester eblearntools)
-  target_link_libraries (eblearn_tester ${CPPUNIT_LIBRARY})
+  target_link_libraries (tester eblearn idx)
+  target_link_libraries (tester eblearntools)
+  target_link_libraries (tester ${CPPUNIT_LIBRARY})
   IF (QT_FOUND) #---------------------------------------------------------------
-    target_link_libraries (eblearn_tester idxgui)
-    target_link_libraries (eblearn_tester eblearngui)
+    target_link_libraries (tester idxgui)
+    target_link_libraries (tester eblearngui)
   ENDIF (QT_FOUND) #------------------------------------------------------------
   
   # write parameters for execution in run.init
@@ -92,7 +92,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   ENDIF (EXISTS "${EXECUTABLE_OUTPUT_PATH}/../run.init")
 
 ELSE (CPPUNIT_FOUND)
-  MESSAGE("Error: CppUnit required to build eblearn_tester")
+  MESSAGE("Error: CppUnit required to build tester")
   
 ENDIF (CPPUNIT_FOUND) #---------------------------------------------------------
  

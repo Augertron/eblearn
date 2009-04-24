@@ -1,4 +1,4 @@
-(setq gud-gdb-command-name "gdb --annotate=3 bin/eblearn_tester ")
+(setq gud-gdb-command-name "gdb --annotate=3 bin/tester ")
 (command-execute 'gdb)
 (setq gdb-many-windows t)
 (setq compile-command "cd .. && make debug")

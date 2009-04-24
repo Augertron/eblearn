@@ -47,6 +47,8 @@ IF (QT_FOUND) #-----------------------------------------------------------------
     src/idxgui.cpp
     src/window.cpp
     src/gui.cpp
+    src/scroll_box0.cpp
+    src/scroll_box.cpp
     )
   
   # link executable with external libraries

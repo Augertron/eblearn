@@ -43,24 +43,45 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // labeled_datasource_gui
 
-  class labeled_datasource_gui {
+  template<class Tdata, class Tlabel>
+    class labeled_datasource_gui : public scroll_box {
   private:
-    unsigned int	 display_wid;
-
+    bool				 scroll;
+    bool				 scroll_added;
+    unsigned int                         pos;
+    int			                 display_wid;
+    labeled_datasource<Tdata, Tlabel>	*_last_ds;
+    unsigned int			 _nh;
+    unsigned int			 _nw;
+    double				 _zoom;
   public:
-    labeled_datasource_gui();
+    labeled_datasource<Tdata, Tlabel>	*_ds;
+
+    //! if scroll is true, then controls to display more pages appear.
+    labeled_datasource_gui(bool scroll = false);
     virtual ~labeled_datasource_gui();
 
     //! display the first nh * nw samples of dataset ds at coordinates (h0, w0),
     //! with zoom <zoom>. If a window id <wid> is specified, use that window,
     //! otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
-    template<class Tdata, class Tlabel>
-      void display(labeled_datasource<Tdata, Tlabel> &ds,
-		   unsigned int nh, unsigned int nw, 
-		   unsigned int h0 = 0, unsigned int w0 = 0, 
-		   double zoom = 1.0, int wid = -1, 
-		   const char *wname = NULL);
+    void display(labeled_datasource<Tdata, Tlabel> &ds,
+		 unsigned int nh, unsigned int nw, 
+		 unsigned int h0 = 0, unsigned int w0 = 0, 
+		 double zoom = 1.0, int wid = -1, 
+		 const char *wname = NULL, bool scrolling = false);
+
+    ////////////////////////////////////////////////////////////////
+    // inherited methods to implement for scrolling capabilities
+    
+    //! scrolling method.
+    virtual void display_next ();
+    //! scrolling method.
+    virtual void display_previous ();
+    //! scrolling method.
+    virtual unsigned int max_pages ();
+    //    virtual scroll_box0* copy();
+    virtual labeled_datasource_gui* copy();
   };
 
 } // end namespace ebl

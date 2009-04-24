@@ -77,18 +77,22 @@ namespace ebl {
     emit gui_clear();
   }
 
-  unsigned int idxgui::new_window(const char *wname, unsigned int h, 
-					unsigned int w) {
+  int idxgui::new_window(const char *wname, unsigned int h, 
+			 unsigned int w) {
     check_init();
     // TODO: add mutex
-    unsigned int wid = nwid;
+    int wid = nwid;
     nwid++; // increment number of windows
     emit gui_new_window(wname, h, w);
     return wid;
   }
 
-  void idxgui::select_window(unsigned int wid) {
+  void idxgui::select_window(int wid) {
     check_init();
+    if (wid < 0) {
+      cerr << "cannot select a window with a negative id: " << wid << endl;
+      ylerror("trying to select_window() with negative id");
+    }
     emit gui_select_window(wid);
   }
 
@@ -238,6 +242,10 @@ namespace ebl {
   void idxgui::set_gui_only() {
     check_init();
     cout_output = false;
+  }
+
+  void idxgui::add_scroll_box(scroll_box0 *sb) {
+    emit gui_add_scroll_box(sb);
   }
 
 } // end namespace ebl

@@ -38,6 +38,7 @@
 
 #include <ostream>
 #include "libidx.h"
+#include "scroll_box0.h"
 
 using namespace std;
 
@@ -51,9 +52,9 @@ namespace ebl {
   private:
     int			  argc;
     char		**argv;
-    unsigned int	  nwid;
-    bool		  thread_init;
+    int	                  nwid;
   public:
+    bool		  thread_init;
     bool		  cout_output;
     int                 (*run_main)(int, char**);
     bool		  main_done;
@@ -65,11 +66,11 @@ namespace ebl {
     virtual ~idxgui();
 
     //! creates a new window.
-    unsigned int new_window(const char *wname = NULL, unsigned int h = 0,
-			    unsigned int w = 0);
+    int new_window(const char *wname = NULL, unsigned int h = 0,
+		   unsigned int w = 0);
 
     //! selects window wid.
-    void select_window(unsigned int wid);
+    void select_window(int wid);
 
     //! operator<< for text drawing on the gui.
     template<class T> friend
@@ -171,6 +172,8 @@ namespace ebl {
     //! for example: gui << gui_only() << "text";
     void set_gui_only();
 
+    void add_scroll_box(scroll_box0* sb);
+
   private:
     // check that user used MAIN_QTHREAD instead of regular main
     void check_init(); 
@@ -180,7 +183,7 @@ namespace ebl {
     void appquit();
     void gui_clear();
     void gui_new_window(const char *wname, unsigned int h, unsigned int w);
-    void gui_select_window(unsigned int wid);
+    void gui_select_window(int wid);
     void gui_add_text(const std::string *s);
     void gui_add_arrow(int h1, int w1, int h2, int w2);
     void gui_set_text_origin(unsigned int h0, unsigned int w0);
@@ -190,6 +193,7 @@ namespace ebl {
 			     unsigned char bg_b, unsigned char bg_a);
     void gui_set_silent(const std::string *filename);
     void gui_set_wupdate(bool update);
+    void gui_add_scroll_box(scroll_box0 *sb);
     
   protected:
     virtual void run();

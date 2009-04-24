@@ -1,7 +1,6 @@
 #include "NetTest.h"
 
 #ifdef __GUI__
-//#include "libidxgui.h"
 #include "libeblearngui.h"
 #endif
 
@@ -43,7 +42,13 @@ void NetTest::test_lenet5_mnist() {
   parameter theparam(60000); // create trainable parameter
   lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
   supervised_euclidean_machine thenet(l5, targets, dims);
-  supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam, cout);
+  supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam);
+
+#ifdef __GUI__
+  labeled_datasource_gui<ubyte, ubyte> dsgui(true);
+  dsgui.display(test_ds, 10, 10);
+  supervised_trainer_gui<ubyte, ubyte> stgui;
+#endif
 
   // a classifier-meter measures classification errors
   classifier_meter trainmeter;
@@ -81,7 +86,6 @@ void NetTest::test_lenet5_mnist() {
   thetrainer.test(train_ds, trainmeter, infp);
   thetrainer.test(test_ds, testmeter, infp);
 #ifdef __GUI__
-  supervised_trainer_gui stgui;
   stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
   stgui.display_internals(thetrainer, test_ds, infp, 2);
 #endif

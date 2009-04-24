@@ -90,6 +90,8 @@ namespace ebl {
     buffer_maxh = height;
     buffer_maxw = width;
     pos_reset = true;
+    scrollbox = NULL;
+    setFocusPolicy(Qt::NoFocus);
   }
 
   Window::~Window() {
@@ -221,6 +223,23 @@ namespace ebl {
     text_w0 = w0;
     txt = NULL;
     pos_reset = true;
+  }
+
+  void Window::add_scroll_box(scroll_box0 *sb) {
+    scrollbox = sb;
+    scrollbox->set_parent(this);
+    cout << "adding scrollbox " << sb << endl;
+  }
+
+  void Window::remove_scroll_box(scroll_box0 *sb) {
+    scrollbox = NULL;
+    cout << "removing scroll box " << sb << endl;
+  }
+
+  void Window::replace_scroll_box_with_copy(scroll_box0 *sb) {
+    cout << "replacing scroll box " << scrollbox << " with a copy: " << endl;
+    scrollbox = sb->copy();
+    cout << scrollbox << endl;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -481,6 +500,42 @@ namespace ebl {
   void Window::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Escape)
       close();
+    else if (event->key() == Qt::Key_Left) {
+      cout << "key left" << endl;
+      if (scrollbox) {
+	cout << "display_previous" << endl;
+	scrollbox->display_previous();
+      }
+    }
+    else if (event->key() == Qt::Key_Right) {
+      cout << "key right" << endl;
+      if (scrollbox) {
+	cout << "display_next" << endl;
+	scrollbox->display_next();
+      }
+    }
+  }
+
+  void Window::scroll_previous() {
+    if (scrollbox)
+      scrollbox->display_previous();
+    else {
+    //    if (scrollbox- != sb) {
+      cerr << "sender: " << sender() << endl;
+      cerr << "warning: trying to call operation on a scroll_box object ";
+      cerr << "that no longer exists.";
+    }    
+  }
+
+  void Window::scroll_next() {
+    if (scrollbox)
+      scrollbox->display_next();
+    else {
+      //    if (scrollbox != sb) {
+      cerr << "sender: " << sender() << endl;
+      cerr << "warning: trying to call operation on a scroll_box object ";
+      cerr << "that no longer exists.";
+    }    
   }
 
 } // end namespace ebl

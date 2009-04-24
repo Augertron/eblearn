@@ -66,7 +66,7 @@ int main(int argc, char **argv) { // regular main without gui
   thetrainer.test(test_ds, testmeter, infp);
 
 #ifdef __GUI__
-  supervised_trainer_gui stgui; // the gui to display supervised_trainer
+  supervised_trainer_gui<ubyte, ubyte> stgui;
   stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
   stgui.display_internals(thetrainer, test_ds, infp, 2);
 #endif

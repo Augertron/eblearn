@@ -342,8 +342,7 @@ public:
 	 */
 	T* dataEnd; 
 
-	
-	//! Constructor.
+	//! Constructor
 	DimIter_Base( idx<T>&, int dimInd );
 	
 	//! Copy constructor

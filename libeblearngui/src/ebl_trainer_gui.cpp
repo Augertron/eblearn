@@ -39,11 +39,4 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // supervised_trainer_gui
 
-  supervised_trainer_gui::supervised_trainer_gui()
-    : datasource_wid(-1), internals_wid(-1) {
-  }
-
-  supervised_trainer_gui::~supervised_trainer_gui() {
-  }
-
 } // end namespace ebl

@@ -187,6 +187,20 @@ namespace ebl {
     labelsIter = labels.dim_begin(0);
   }
 
+  template<typename Tdata, typename Tlabel>
+  labeled_datasource<Tdata,Tlabel>* labeled_datasource<Tdata,Tlabel>::copy() {
+    cout << "datasource::copy."<<endl;
+    // copy data
+    idxdim cdatadim(data);
+    idx<Tdata> cdata(cdatadim);
+    idx_copy(data, cdata);
+    // copy labels
+    idxdim clabelsdim(labels);
+    idx<Tlabel> clabels(clabelsdim);
+    idx_copy(labels, clabels);
+    return new labeled_datasource<Tdata,Tlabel>(cdata, clabels, bias, coeff);
+  }
+
   ////////////////////////////////////////////////////////////////
   // mnist_datasource
 

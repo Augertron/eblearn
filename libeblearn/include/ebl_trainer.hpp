@@ -36,10 +36,9 @@ namespace ebl {
 
   template <class Tdata, class Tlabel>  
   supervised_trainer<Tdata, Tlabel>::
-  supervised_trainer(fc_ebm2<state_idx,	int, state_idx> &m, parameter &p,
-		     ostream &cout_)
+  supervised_trainer(fc_ebm2<state_idx,	int, state_idx> &m, parameter &p)
     : iteration(-1), iteration_ptr(NULL),
-      machine(m), param(p), energy(), label(), age(0), cout(cout_) {
+      machine(m), param(p), energy(), label(), age(0) {
     input = NULL; // allocated when input is passed, based in its order/dims
     energy.dx.set(1.0);
     energy.ddx.set(0.0);
@@ -149,5 +148,10 @@ namespace ebl {
     if (!input) input = new state_idx(d);
     else input->resize(d);
   }
+
+//   supervised_trainer<Tdata, Tlabel>* copy() {
+//     fc_ebm2<state_idx,int,state_idx>	&machine;
+//     parameter				&param;
+//   }
 
 } // end namespace ebl
