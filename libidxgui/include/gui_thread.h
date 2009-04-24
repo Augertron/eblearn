@@ -96,6 +96,7 @@ namespace ebl {
   int run_main(targc argc, targv argv);		\
   using namespace ebl;				\
   int main(targc argc, targv argv) {		\
+    gui.thread_init = true;			\
     gui.run_main = &run_main;			\
     gui.thread_init = true;			\
     QApplication a(argc, argv);			\

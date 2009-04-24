@@ -41,6 +41,22 @@ def cleanDataSet(dirpath):
             if genImgRegEx.match(imgname):
                 os.remove(imgpath)
 
+def makeBackgroundClass(dirpath):
+    'Make a new dir containing background images'
+    print 'Adding a new class containing backgrounds'
+    iter = 0
+    imgBlack = Image.new('RGB', (46,46))
+    for imgclass in os.listdir(dirpath):
+        if (imgclass[0] == '.'): continue
+        for imgname in os.listdir(os.path.join(dirpath, imgclass)):
+            "create one background image for each image in this class"
+            if (imgname[0] == '.'): continue
+            imgpath = os.path.join(dirpath, 'empty', 'empty') \
+                + str(iter) + '.ppm'
+            iter = iter + 1
+            imgBlack.save(imgpath)
+        return
+
 if __name__ == '__main__':
     import sys
     print 'Syntax:\n expand-dataset.py -> generate data'
@@ -50,4 +66,7 @@ if __name__ == '__main__':
         expandDataSet('train')
     elif sys.argv[1] == 'clean':
         cleanDataSet('train')
+    elif sys.argv[1] == 'bgnd':
+        makeBackgroundClass('train')
+        makeBackgroundClass('test')
 
