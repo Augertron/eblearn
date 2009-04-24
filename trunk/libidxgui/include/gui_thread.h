@@ -42,6 +42,7 @@
 #include "libidx.h"
 #include "window.h"
 #include "idxgui.h"
+#include "scroll_box0.h"
 
 namespace ebl {
 
@@ -82,8 +83,9 @@ namespace ebl {
     void clear();
     void new_window(const char *wname = NULL, unsigned int h = 0, 
 		    unsigned int w = 0);
-    void select_window(unsigned int wid);
+    void select_window(int wid);
     void set_silent(const std::string *filename = NULL);
+    void add_scroll_box(scroll_box0 *sb);
   };
 
   //! This macro is intended to replace your int main(int argc, char **argv)
@@ -95,6 +97,7 @@ namespace ebl {
   using namespace ebl;				\
   int main(targc argc, targv argv) {		\
     gui.run_main = &run_main;			\
+    gui.thread_init = true;			\
     QApplication a(argc, argv);			\
     a.setQuitOnLastWindowClosed(false);		\
     ebl::gui_thread gt(argc, argv);		\

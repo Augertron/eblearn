@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Pierre Sermanet *
+ *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "datasource_gui.h"
+#ifndef SCROLL_BOX_H_
+#define SCROLL_BOX_H_
+
+#include <QtGui/QPixmap>
+#include <QtGui/QWidget>
+#include <QtGui/QtGui>
+#include <QtGui/QResizeEvent>
+#include <QtGui/QPushButton>
+#include <math.h>
+#include <iostream>
+
+#include "scroll_box0.h"
+#include "libidxgui.h"
 
 using namespace std;
 
 namespace ebl {
 
-} // end namespace ebl
+  class scroll_box : public scroll_box0 {
+  protected:
+    Window *win;
+
+  public:
+    scroll_box();
+    virtual ~scroll_box();
+    virtual void set_parent(void *parent);
+    virtual void display_controls();
+  };
+
+} // namespace ebl {
+
+#endif /* SCROLL_BOX_H_ */

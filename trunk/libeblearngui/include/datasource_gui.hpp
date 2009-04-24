@@ -43,21 +43,60 @@ namespace ebl {
   // labeled_datasource_gui
 
   template<typename Tdata, typename Tlabel>
-  void labeled_datasource_gui::display(labeled_datasource<Tdata, Tlabel> &ds,
-				       unsigned int nh, unsigned int nw,
-				       unsigned int h0, unsigned int w0,
-				       double zoom, int wid, const char *wname){
-    display_wid = (wid >= 0) ? wid : 
-      new_window((wname ? wname : ds.name), 
-		     nh * (ds.height + 1) - 1, nw * (ds.width + 1) - 1);
-    select_window(display_wid);
-    disable_window_updates();
-    gui << white_on_transparent() << gui_only();
+  labeled_datasource_gui<Tdata, Tlabel>::labeled_datasource_gui(bool scroll_)
+    : scroll(scroll_), scroll_added(false), pos(0), display_wid(-1),
+      _last_ds(NULL), _ds(NULL) {
+  }
+
+  template<typename Tdata, typename Tlabel>
+  labeled_datasource_gui<Tdata, Tlabel>::~labeled_datasource_gui() {
+    if (win)
+      win->replace_scroll_box_with_copy(this);
+  }
+
+  template<typename Tdata, typename Tlabel>
+  void labeled_datasource_gui<Tdata, Tlabel>::
+  display(labeled_datasource<Tdata, Tlabel> &ds,
+	  unsigned int nh, unsigned int nw,
+	  unsigned int h0, unsigned int w0,
+	  double zoom, int wid, const char *wname, bool scrolling){
+    // do a deep copy of dataset only when necessary
+    if (scroll && !scrolling && (_last_ds != &ds)) {
+      if (_ds)
+	delete _ds;
+      _ds = ds.copy();
+    }
+    _last_ds = &ds;
+    // copy parameters
+    _nh = nh;
+    _nw = nw;
+    _h0 = h0;
+    _w0 = w0;
+    _zoom = zoom;
     idxdim d = ds.sample_dims();
     state_idx s(d);
     idx<double> m = s.x.select(0, 0);
     idx<Tlabel> lbl;
+    _h1 = h0 + nh * (m.dim(0) + 1);
+    _w1 = w0 + nw * (m.dim(1) + 1);
+    display_wid = (wid >= 0) ? wid :
+      (display_wid >= 0) ? display_wid :
+      new_window((wname ? wname : ds.name), 
+		 nh * (ds.height + 1) - 1, 
+		 nw * (ds.width + 1) - 1);
+    select_window(display_wid);
+    if (scroll && !scroll_added) {
+      gui.add_scroll_box((scroll_box*) this);
+      scroll_added = true;
+    }
+    disable_window_updates();
+    if (wid == -1) // clear only if we created the window
+      clear_window();
+    gui << white_on_transparent() << gui_only();
     ds.seek_begin();
+    // loop to reach pos
+    for (unsigned int p = 0; p < pos; ++p)
+      ds.next(); // FIXME add a seek(p) method to ds
     unsigned int h = h0, w = w0;
     for (unsigned int ih = 0; ih < nh; ++ih) {
       for (unsigned int iw = 0; iw < nw; ++iw) {
@@ -74,6 +113,43 @@ namespace ebl {
     }
     ds.seek_begin();
     enable_window_updates();
+    display_controls();
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // inherited methods to implement for scrolling capabilities
+
+  template<typename Tdata, typename Tlabel>
+  void labeled_datasource_gui<Tdata, Tlabel>::display_next() {
+    if (next_page()) {
+      pos = MIN(_ds->size(), pos + _nh * _nw);
+      display(*_ds, _nh, _nw, _h0, _w0, _zoom, -1, NULL, true);
+    }
+  }
+
+  template<typename Tdata, typename Tlabel>
+  void labeled_datasource_gui<Tdata, Tlabel>::display_previous() {
+    if (previous_page()) {
+      pos = MAX(0, pos - _nh * _nw);
+      display(*_ds, _nh, _nw, _h0, _w0, _zoom, -1, NULL, true);
+    }
+  }
+
+  template<typename Tdata, typename Tlabel>
+  unsigned int labeled_datasource_gui<Tdata, Tlabel>::max_pages() {
+    return (unsigned int) (_ds->size() / (_nh * _nw));
+  }
+
+  template<typename Tdata, typename Tlabel>
+  labeled_datasource_gui<Tdata,Tlabel>* 
+  labeled_datasource_gui<Tdata, Tlabel>::copy() {
+    //  scroll_box0* labeled_datasource_gui<Tdata, Tlabel>::copy() {
+    cout << "labeled_datasource_gui::copy."<<endl;
+    labeled_datasource_gui<Tdata,Tlabel> *dscopy =
+      new labeled_datasource_gui<Tdata, Tlabel>(*this);
+    dscopy->_ds = _ds;
+    dscopy->_last_ds = _last_ds;
+    return dscopy;
   }
 
 } // end namespace ebl

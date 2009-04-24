@@ -97,6 +97,9 @@ namespace ebl {
 
     //! Move to the beginning of the data.
     virtual void seek_begin();
+
+    //! returns a pointer to a copy on this datasource
+    virtual labeled_datasource<Tdata, Tlabel>* copy();
   };
 
   ////////////////////////////////////////////////////////////////

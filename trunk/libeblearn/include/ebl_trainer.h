@@ -59,10 +59,9 @@ namespace ebl {
     state_idx				 energy;
     idx<Tlabel>				 label;
     intg				 age;
-    ostream				&cout;
     
     supervised_trainer(fc_ebm2<state_idx,int,state_idx> &m, 
-		       parameter &p, ostream& cout = std::cout);
+		       parameter &p);
     virtual ~supervised_trainer();
 
     //! take an input and a vector of possible labels (each of which
@@ -110,7 +109,12 @@ namespace ebl {
     void resize_input(labeled_datasource<Tdata, Tlabel> &ds);
 
     // friends
-    friend class supervised_trainer_gui;
+    //    template <class Tdata, class Tlabel> friend class supervised_trainer_gui;
+    template <class T1, class T2>
+      friend class supervised_trainer_gui;
+
+    //! returns a pointer to a copy on this datasource
+    //    supervised_trainer<Tdata, Tlabel>* copy();
   };
 
 } // namespace ebl {

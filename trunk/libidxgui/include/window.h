@@ -40,7 +40,7 @@
 #include <iostream>
 
 #include "libidx.h"
-#include "idxgui.h"
+#include "scroll_box0.h"
 
 using namespace std;
 
@@ -102,6 +102,7 @@ namespace ebl {
     QColor               text_fg_color;
     QColor               text_bg_color;
     unsigned char        fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
+    scroll_box0         *scrollbox;
 
   public:
     Window(unsigned int wid, const char *wname = NULL, 
@@ -124,6 +125,9 @@ namespace ebl {
 			 unsigned char fg_b, unsigned char fg_a,
 			 unsigned char bg_r, unsigned char bg_g, 
 			 unsigned char bg_b, unsigned char bg_a);
+    void add_scroll_box(scroll_box0 *sb);
+    void remove_scroll_box(scroll_box0 *sb);
+    void replace_scroll_box_with_copy(scroll_box0 *sb);
 
   protected:
     // clear methods
@@ -147,6 +151,10 @@ namespace ebl {
     void draw_text(QPainter &painter);
     void draw_arrows(QPainter &painter);
     void draw_images();
+
+  private slots:
+    void scroll_previous();
+    void scroll_next();
   };
 
 } // namespace ebl {

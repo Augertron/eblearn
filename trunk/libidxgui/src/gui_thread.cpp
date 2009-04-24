@@ -53,8 +53,8 @@ namespace ebl {
     connect(&thread, SIGNAL(gui_new_window(const char*, unsigned int, 
 					   unsigned int)), 
 	    this, SLOT(new_window(const char*, unsigned int, unsigned int)));
-    connect(&thread, SIGNAL(gui_select_window(unsigned int)), 
-	    this, SLOT(select_window(unsigned int)));
+    connect(&thread, SIGNAL(gui_select_window(int)), 
+	    this, SLOT(select_window(int)));
     connect(&thread, SIGNAL(gui_add_text(const std::string*)), 
 	    this, SLOT(add_text(const std::string*)));
     connect(&thread, SIGNAL(gui_add_arrow(int, int, int, int)), 
@@ -73,6 +73,8 @@ namespace ebl {
 	    this, SLOT(set_silent(const std::string *)));
     connect(&thread, SIGNAL(gui_set_wupdate(bool)), 
 	    this, SLOT(set_wupdate(bool)));
+    connect(&thread, SIGNAL(gui_add_scroll_box(scroll_box0*)),
+	    this, SLOT(add_scroll_box(scroll_box0*)));
   }
 
   gui_thread::~gui_thread() {
@@ -164,9 +166,9 @@ namespace ebl {
     	    this, SLOT(window_destroyed(QObject*)));
   }
 
-  void gui_thread::select_window(unsigned int wid) {
-    if (wid >= windows.size()) {
-      cerr << "idxGui Warning: trying to select an unknown window (id = ";
+  void gui_thread::select_window(int wid) {
+    if (wid >= (int) windows.size()) {
+      cerr << "gui Warning: trying to select an unknown window (id = ";
       cerr << wid << ")." << endl;
     }
     else if (windows[wid] == NULL) {
@@ -175,12 +177,21 @@ namespace ebl {
       //"idxGui Warning: trying to select an window that was destroyed (id = ";
       //cerr << wid << ")." << endl;
     }
+    else if (wid < 0) {
+      cerr << "gui warning: trying to select a window with negative id: ";
+      cerr << wid << endl;
+    }
     else {
       wcur = wid;
       if ((windows[wcur]) && (!silent)) {
 	windows[wcur]->show();
       }
     }
+  }
+
+  void gui_thread::add_scroll_box(scroll_box0 *sb) {
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->add_scroll_box(sb);    
   }
 
 } // end namespace ebl

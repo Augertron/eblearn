@@ -38,12 +38,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // gui
 
-  unsigned int new_window(const char *wname, unsigned int h,
-			  unsigned int w) {
-    gui.new_window(wname, h, w);
+  int new_window(const char *wname, unsigned int h,
+		 unsigned int w) {
+    return gui.new_window(wname, h, w);
   }
 
-  void select_window(unsigned int wid) {
+  void select_window(int wid) {
     gui.select_window(wid);
   }
 

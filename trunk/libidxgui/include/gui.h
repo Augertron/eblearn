@@ -41,11 +41,11 @@ using namespace std;
 namespace ebl {
   
   //! creates a new window.
-  unsigned int new_window(const char *wname = NULL, unsigned int h = 0,
-			  unsigned int w = 0);
+  int new_window(const char *wname = NULL, unsigned int h = 0,
+		 unsigned int w = 0);
 
   //! selects window wid.
-  void select_window(unsigned int wid);
+  void select_window(int wid);
 
   //! do not update display until enable_updates is called again.
   //! this should make the display faster.

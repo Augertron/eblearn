@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Pierre Sermanet *
+ *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,44 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "datasource_gui.h"
+#ifndef SCROLL_BOX0_H_
+#define SCROLL_BOX0_H_
+
+#include <QtGui/QPixmap>
+#include <QtGui/QWidget>
+#include <QtGui/QtGui>
+#include <QtGui/QResizeEvent>
+#include <QtGui/QPushButton>
+#include <math.h>
+#include <iostream>
 
 using namespace std;
 
 namespace ebl {
 
-} // end namespace ebl
+  class scroll_box0 {
+  protected:
+    unsigned int page_number;
+    QPushButton *button_next;
+    QPushButton *button_previous;
+    unsigned int _h0;
+    unsigned int _w0;
+    unsigned int _h1;
+    unsigned int _w1;
+
+  public:
+    scroll_box0();
+    virtual ~scroll_box0();
+    virtual void set_parent(void *parent) = 0;
+    virtual void display_next() = 0;
+    virtual void display_previous() = 0;
+    virtual unsigned int max_pages () = 0;
+    virtual void display_controls() = 0;
+    virtual scroll_box0* copy() = 0;
+    bool next_page();
+    bool previous_page();
+  };
+
+} // namespace ebl {
+
+#endif /* SCROLL_BOX0_H_ */

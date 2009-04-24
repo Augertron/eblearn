@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Pierre Sermanet *
+ *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,59 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "datasource_gui.h"
+#include "scroll_box.h"
+#include <ostream>
 
 using namespace std;
 
 namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // scroll_box
+
+  scroll_box::scroll_box() : win(NULL) {
+  }
+  
+  scroll_box::~scroll_box() {
+    cout << "removing scroll box " << this << " of win " << win << endl;
+  }
+
+  void scroll_box::set_parent(void *win_) {
+    if (dynamic_cast<Window*>((Window*)win_)) {
+      win = (Window*) win_;
+      // page controls
+      if (!button_previous) {
+	button_previous = new QPushButton("<", win);
+	button_previous->setGeometry(_w1 - 80, _h0 - 1, 40, 20);
+	win->connect(button_previous, SIGNAL(clicked()), 
+		     (QWidget*) win,
+		     SLOT(scroll_previous()));
+	button_previous->show();
+      }
+      if (!button_next) {
+	button_next = new QPushButton(">", win);
+	button_next->setGeometry(_w1 - 40, _h0 - 1, 40, 20);
+	win->connect(button_next, SIGNAL(clicked()), 
+		     (QWidget*) win, 
+		     SLOT(scroll_next()));
+	button_next->show();
+      }
+    }
+    else
+      ylerror("expected a Window* object");
+  }
+
+  void scroll_box::display_controls() {
+    if (win) {
+      // page count
+      //      gui << black_on_white() << at(h0, w0);
+      //gui << "page " << page_number << "/" << max_pages();
+      win->set_text_colors(0,0,0,255,255,255,255,255);
+      win->set_text_origin(_h0, _w0);
+      ostringstream o("");
+      o << "page " << page_number << "/" << max_pages();
+      win->add_text(new string(o.str()));
+    }
+  }
 
 } // end namespace ebl

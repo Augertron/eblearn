@@ -35,24 +35,63 @@ namespace ebl {
   // supervised_trainer_gui
 
   template <class Tdata, class Tlabel>  
-  void supervised_trainer_gui::
+  supervised_trainer_gui<Tdata, Tlabel>::supervised_trainer_gui(bool scroll_)
+    : _st(NULL), _ds(NULL), _last_ds(NULL), 
+      datasource_wid(-1), internals_wid(-1),
+      scroll(scroll_), scroll_added(false), pos(0), dsgui(NULL) {
+  }
+
+  template <class Tdata, class Tlabel>  
+  supervised_trainer_gui<Tdata, Tlabel>::~supervised_trainer_gui() {
+    if (win)
+      win->replace_scroll_box_with_copy(this);
+  }
+  
+  template <class Tdata, class Tlabel>  
+  void supervised_trainer_gui<Tdata, Tlabel>::
   display_datasource(supervised_trainer<Tdata, Tlabel> &st,
 		     labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
 		     unsigned int nh, unsigned int nw, unsigned int h0, 
-		     unsigned int w0, double zoom, int wid, const char *title) {
-    // if no window given, create a new one or reuse previous one
-    datasource_wid = (wid >= 0) ? wid : 
-      ((datasource_wid >= 0) ? datasource_wid :
-       new_window((title ? title : "Supervised Trainer")));
-    select_window(datasource_wid);
-    disable_window_updates();
-    clear_window();
+		     unsigned int w0, double zoom, int wid, const char *title,
+		     bool scrolling) {
+    // copy parameters
+    _st = &st;
+    _infp = &infp;
+    _nh = nh;
+    _nw = nw;
+    _h0 = h0;
+    _w0 = w0;
+    if (!dsgui)
+      dsgui = new labeled_datasource_gui<Tdata, Tlabel>(false);
+    // do a deep copy of dataset only when necessary
+    if (scroll && !scrolling && (_last_ds != &ds)) {
+      if (_ds)
+	delete _ds;
+      _ds = ds.copy();
+      dsgui->_ds = _ds;
+    }
+    _last_ds = &ds;
     // init datasource
     ds.seek_begin();
     st.resize_input(ds);
     // find out sample size
     ds.fprop(*st.input, st.label);
     idx<double> m = st.input->x.select(0, 0);
+    _h1 = h0 + nh * (m.dim(0) + 1) * 3;
+    _w1 = w0 + nw * (m.dim(1) + 1) * 3;
+    _zoom = zoom;
+    // if no window given, create a new one or reuse previous one
+    datasource_wid = (wid >= 0) ? wid : 
+      ((datasource_wid >= 0) ? datasource_wid :
+       new_window((title ? title : "Supervised Trainer")));
+    select_window(datasource_wid);
+    if (scroll && !scroll_added) {
+      gui.add_scroll_box((scroll_box*) this);
+      scroll_added = true;
+    }
+    disable_window_updates();
+    if (wid == -1) // clear only if we created the window
+      clear_window();
     // top left coordinates of datasets display 1 and 2
     unsigned int w01 = nh * (m.dim(0) + 2) + 5, h01 = h0 + 35;
     unsigned int w02 = (nh * (m.dim(0) + 2) + 5) * 2, h02 = h0 + 35;
@@ -62,6 +101,7 @@ namespace ebl {
     bool correct;
     int answer;
 
+    // display top
     gui << set_colors(255, 0, 0, 255, 255, 255, 255, 127) << gui_only();
     gui << at(h0, w0) << ds.name;
     gui << black_on_white();
@@ -69,10 +109,16 @@ namespace ebl {
     gui << at(h0 + 17, w01) << "Correct & incorrect answers";
     gui << at(h0 + 17, w02) << "Incorrect only";
     gui << white_on_transparent();
+
     // 0. display dataset with groundtruth labels
-    dsgui.display(ds, nh, nw, h0 + 35, w0, zoom, datasource_wid);
+    dsgui->display(ds, nh, nw, h0 + 35, w0, zoom, datasource_wid, NULL, true);
 
     // loop on nh * nw first samples
+    gui << white_on_transparent();
+    // loop to reach pos
+    ds.seek_begin();
+    for (unsigned int p = 0; p < pos; ++p)
+      ds.next(); // FIXME add a seek(p) method to ds
     for (unsigned int i = 0; (i < ds.size()) && (i2 < nh * nw); ++i) {
       // test sample
       ds.fprop(*st.input, st.label);
@@ -109,7 +155,7 @@ namespace ebl {
   }
 
   template <class Tdata, class Tlabel>  
-  void supervised_trainer_gui::
+  void supervised_trainer_gui<Tdata, Tlabel>::
   display_internals(supervised_trainer<Tdata, Tlabel> &st,
 		    labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
 		    unsigned int ninternals, 
@@ -144,5 +190,45 @@ namespace ebl {
     }
     enable_window_updates();
   }  
+
+  ////////////////////////////////////////////////////////////////
+  // inherited methods to implement for scrolling capabilities
+
+  template<typename Tdata, typename Tlabel>
+  void supervised_trainer_gui<Tdata, Tlabel>::display_next() {
+    if (next_page()) {
+      pos = MIN(_ds->size(), pos + _nh * _nw);
+      display_datasource(*_st, *_ds, *_infp, _nh, _nw, _h0, _w0, _zoom,
+			 -1, NULL, true);
+    }
+  }
+
+  template<typename Tdata, typename Tlabel>
+  void supervised_trainer_gui<Tdata, Tlabel>::display_previous() {
+    if (previous_page()) {
+      pos = MAX(0, pos - _nh * _nw);
+      display_datasource(*_st, *_ds, *_infp, _nh, _nw, _h0, _w0, _zoom,
+			 -1, NULL, true);
+    }
+  }
+
+  template<typename Tdata, typename Tlabel>
+  unsigned int supervised_trainer_gui<Tdata, Tlabel>::max_pages() {
+    return dsgui->max_pages();
+  }
+
+  template<typename Tdata, typename Tlabel>
+  supervised_trainer_gui<Tdata,Tlabel>* 
+  supervised_trainer_gui<Tdata, Tlabel>::copy() {
+    //  scroll_box0* supervised_trainer_gui<Tdata, Tlabel>::copy() {
+    cout << "supervsed_trainer_gui::copy."<<endl;
+    supervised_trainer_gui<Tdata, Tlabel> *stcopy = 
+      new supervised_trainer_gui<Tdata, Tlabel>(*this);
+    stcopy->dsgui = dsgui->copy();
+    stcopy->_ds = _ds;
+    stcopy->_last_ds = _last_ds;
+    stcopy->_st = _st;
+    return stcopy;
+  }
 
 } // end namespace ebl

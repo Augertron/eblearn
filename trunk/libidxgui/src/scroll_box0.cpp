@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Pierre Sermanet *
+ *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,37 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "datasource_gui.h"
+#include "scroll_box0.h"
 
 using namespace std;
 
 namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // scroll_box
+
+  scroll_box0::scroll_box0() : page_number(1),
+			     button_next(NULL), button_previous(NULL),
+			     _h0(0), _w0(0), _h1(100), _w1(100) {
+  }
+  
+  scroll_box0::~scroll_box0() {
+  }
+
+  bool scroll_box0::next_page() {
+    if (page_number < max_pages()) {
+      page_number++;
+      return true;
+    }
+    return false;
+  }
+
+  bool scroll_box0::previous_page() {
+    if (page_number > 1) {
+      page_number--;
+      return true;
+    }
+    return false;
+  }
 
 } // end namespace ebl
