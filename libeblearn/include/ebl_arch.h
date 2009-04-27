@@ -56,8 +56,8 @@ namespace ebl {
     virtual int  replicable_order();
     virtual void resize_output(Tin &in, Tout &out);
     //! these two functions can be implemented to help scaling input data
-    virtual idxdim adapt_input_size(idxdim &i_size);
-    virtual idxdim get_input_size_from_output(idxdim o_size);
+    virtual idxdim fprop_size(idxdim &i_size);
+    virtual idxdim bprop_size(const idxdim &o_size);
   };
 
   //! abstract class for a module with two inputs and one output.
@@ -145,8 +145,8 @@ namespace ebl {
     virtual void bbprop(T &in, T &out);
     virtual void forget(forget_param_linear &fp);
     virtual void normalize();
-    virtual idxdim adapt_input_size(idxdim &i_size);
-    virtual idxdim get_input_size_from_output(idxdim o_size);
+    virtual idxdim fprop_size(idxdim &i_size);
+    virtual idxdim bprop_size(const idxdim &o_size);
 
   private:
     bool own_contents;

@@ -89,6 +89,9 @@ namespace ebl {
     void bbprop(state_idx &in, state_idx &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
+    //! these two functions help scaling input data
+    virtual idxdim fprop_size(idxdim &i_size);
+    virtual idxdim bprop_size(const idxdim &o_size);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -115,6 +118,9 @@ namespace ebl {
     void bbprop(state_idx &in, state_idx &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
+    //! these two functions help scaling input data
+    virtual idxdim fprop_size(idxdim &i_size);
+    virtual idxdim bprop_size(const idxdim &o_size);
   };
 
 } // namespace ebl {

@@ -123,8 +123,8 @@ public:
 	      new state_idx(featureMaps0,1,1));
     //! S0 Layer
     addModule(new nn_layer_subsampling(trainableParam, 
+				       2, 2,  //! Dim of stride
 				       2, 2,  //! Dim of subsampling mask
-				       2, 2, 
 				       featureMaps0),
 	      new state_idx(featureMaps0,1,1));
     //! C1 Layer
@@ -221,12 +221,12 @@ int main(int argc, char **argv) {
 
   //! Make sure that the output is 1x1 for the images in your training set
   idxdim data_dims(trainingSet[0]);
-  idxdim convNetOutput = myConvNet.adapt_input_size(data_dims);
+  idxdim convNetOutput = myConvNet.fprop_size(data_dims);
   if (convNetOutput.dim[0] != 1 or convNetOutput.dim[1] != 1
       or trainingSet.dim(1) != data_dims.dim[0]
       or trainingSet.dim(2) != data_dims.dim[1]) {
     convNetOutput.setdim(0,1); convNetOutput.setdim(1,1);
-    data_dims = myConvNet.get_input_size_from_output(convNetOutput);
+    data_dims = myConvNet.bprop_size(convNetOutput);
     cout << "Dataset not adapted for module." << endl;
     cout << "You should resize your training set to: " << data_dims << endl;
     cout << "Or change the convnet params..." << endl;
