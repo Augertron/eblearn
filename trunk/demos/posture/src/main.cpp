@@ -114,43 +114,40 @@ public:
     //! to addModule(...)
 
     //! C0 Layer
-    addModule(new nn_layer_convolution(trainableParam, //! Shared weights
-				       7, 7, //! Dim of kernel 
-				       1, 1, //! size of subsampling
-				       table0, //! Conx btwn input layer and C0 
-				       featureMaps0), //! nb of feature maps
-	      //! state_idx holds the feature maps of C0
-	      new state_idx(featureMaps0,1,1));
+    add_module(new nn_layer_convolution(trainableParam, //! Shared weights
+					7, 7, //! Dim of kernel 
+					1, 1, //! size of subsampling
+					table0), //! Conx btwn input layer and C0 
+	       //! state_idx holds the feature maps of C0
+	       new state_idx(featureMaps0,1,1));
     //! S0 Layer
-    addModule(new nn_layer_subsampling(trainableParam, 
-				       2, 2,  //! Dim of stride
-				       2, 2,  //! Dim of subsampling mask
-				       featureMaps0),
-	      new state_idx(featureMaps0,1,1));
+    add_module(new nn_layer_subsampling(trainableParam, 
+					2, 2,  //! Dim of stride
+					2, 2,  //! Dim of subsampling mask
+					featureMaps0),
+	       new state_idx(featureMaps0,1,1));
     //! C1 Layer
-    addModule(new nn_layer_convolution(trainableParam, 
-				       7, 7,
-				       1, 1, 
-				       table1, 
-				       featureMaps1),
-	      new state_idx(featureMaps1,1,1));
+    add_module(new nn_layer_convolution(trainableParam, 
+					7, 7,
+					1, 1, 
+					table1), 
+	       new state_idx(featureMaps1,1,1));
     //! S1 Layer
-    addModule(new nn_layer_subsampling(trainableParam, 
-				       2, 2, 
-				       2, 2, 
-				       featureMaps1),
-	      new state_idx(featureMaps1,1,1));
+    add_module(new nn_layer_subsampling(trainableParam, 
+					2, 2, 
+					2, 2, 
+					featureMaps1),
+	       new state_idx(featureMaps1,1,1));
     //! C2 Layer
-    addModule(new nn_layer_convolution(trainableParam, 
-				       7, 7,
-				       1, 1, 
-				       table2, 
-				       featureMaps2),
-	      new state_idx(featureMaps2,1,1));
+    add_module(new nn_layer_convolution(trainableParam, 
+					7, 7,
+					1, 1, 
+					table2), 
+	       new state_idx(featureMaps2,1,1));
     //! F Layer
-    addLastModule(new nn_layer_full(trainableParam, 
-				    featureMaps2, 
-				    output_size));
+    add_last_module(new nn_layer_full(trainableParam, 
+				      featureMaps2, 
+				      output_size));
 
   }
   //! Destructor not used

@@ -113,10 +113,6 @@ namespace ebl {
   //! </code>}
   class lenet5 : public nn_machine_cscscf {
   public:
-    idx<intg> table0;	
-    idx<intg> table1;	
-    idx<intg> table2;	
-		
     lenet5(parameter &prm, intg image_height, intg image_width,
 	   intg ki0, intg kj0, intg si0, intg sj0,
 	   intg ki1, intg kj1, intg si1, intg sj1,
@@ -129,10 +125,6 @@ namespace ebl {
   //! This network takes a 1-layer image as input.
   class lenet7 : public nn_machine_cscscf {
   public:
-    idx<intg> table0;	
-    idx<intg> table1;	
-    idx<intg> table2;	
-		
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
     lenet7(parameter &prm, intg image_height, intg image_width,
@@ -146,10 +138,6 @@ namespace ebl {
   //! and right images.
   class lenet7_binocular : public nn_machine_cscscf {
   public:
-    idx<intg> table0;	
-    idx<intg> table1;	
-    idx<intg> table2;	
-		
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
     lenet7_binocular(parameter &prm, intg image_height, intg image_width,

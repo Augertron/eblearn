@@ -99,10 +99,10 @@ namespace ebl {
 
   convolution_module_2D::convolution_module_2D(parameter &p, 
 					       intg kerneli, intg kernelj, 
-					       intg ri, intg rj, 
-					       idx<intg> &tbl, intg thick) 
-    : kernel(p, tbl.dim(0), kerneli, kernelj), thickness(thick),
-      stridei(ri), stridej(rj), table(tbl), warnings_shown(false) {
+					       intg stridei_, intg stridej_, 
+					       idx<intg> &tbl)
+    : warnings_shown(false), kernel(p, tbl.dim(0), kerneli, kernelj), 
+      stridei(stridei_), stridej(stridej_), table(tbl) {
     // check sanity of connection table
     if (table.dim(1) != 2) { // check table order
       cerr << "error: expecting a table with dim 1 equal to 2 but found: ";
@@ -111,6 +111,8 @@ namespace ebl {
     }
     idx<intg> tbl0 = table.select(1, 0);
     tablemax = idx_max(tbl0);
+    idx<intg> tbl1 = table.select(1, 1);
+    thickness = idx_max(tbl1) + 1;
     // check table uses all inputs
     idx<bool> tblcount(tablemax + 1);
     idx_bloop1(tb, table, intg) {
