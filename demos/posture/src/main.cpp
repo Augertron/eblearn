@@ -69,26 +69,12 @@ string getPathToData();
  */ 
 class generic_conv_net : public layers_n<state_idx> {
 private:
-  intg ki0, kj0, //! Dim of kernel in C0 
-    si0, sj0, //! Dim of kernel in S0 
-    ki1, kj1, //! Dim of kernel in C1 
-    si1, sj1, //! Dim of kernel in S1 
-    ki2, kj2; //! Dim of kernel in C2 
-
+  idx<intg> table0, table1, table2;
 public:
-  idx<intg> table0;	
-  idx<intg> table1;	
-  idx<intg> table2;	
   
   generic_conv_net(parameter &trainableParam, 
 		   intg output_size) 
-    : layers_n<state_idx>(true) { // owns modules
-    init(trainableParam, output_size);
-  }
-  
-  void init(parameter &trainableParam, 
-	    intg output_size) {
-    
+    : layers_n<state_idx>(true) { // owns modules  
     cout << "Initializing ConvNet..." << endl;
     
     //! Define the number of feature maps per layer (C0, C1, C2)
@@ -121,16 +107,6 @@ public:
        {0, 11}, {1, 11}, {2, 11}, {3, 11}, {4, 11}, {5, 11}};
     memcpy(table1.idx_ptr(), tbl, table1.nelements() * sizeof (intg));
 
-    //! Init parameters of the conv net...
-    //! Make sure that the output is 1x1 for the images in your training set:
-    //! ((((image_height - ki0 + 1) / si0) - ki1 + 1) / si1) - ki2 + 1 == 1
-    //! ((((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1) - kj2 + 1 == 1
-
-    ki0 = 7, kj0 = 7, //! Dim of kernel in C0 
-    si0 = 2, sj0 = 2, //! Dim of kernel in S0 
-    ki1 = 7, kj1 = 7, //! Dim of kernel in C1 
-    si1 = 2, sj1 = 2, //! Dim of kernel in S1 
-    ki2 = 7, kj2 = 7; //! Dim of kernel in C2 
 
     //! Finally we initialize the architecture of the ConvNet.
     //! In this case we create a CSCSCF network.
@@ -139,7 +115,7 @@ public:
 
     //! C0 Layer
     addModule(new nn_layer_convolution(trainableParam, //! Shared weights
-				       ki0, kj0, 
+				       7, 7, //! Dim of kernel 
 				       1, 1, //! size of subsampling
 				       table0, //! Conx btwn input layer and C0 
 				       featureMaps0), //! nb of feature maps
@@ -147,26 +123,26 @@ public:
 	      new state_idx(featureMaps0,1,1));
     //! S0 Layer
     addModule(new nn_layer_subsampling(trainableParam, 
-				       si0, sj0, 
-				       1,1, 
+				       2, 2,  //! Dim of subsampling mask
+				       2, 2, 
 				       featureMaps0),
 	      new state_idx(featureMaps0,1,1));
     //! C1 Layer
     addModule(new nn_layer_convolution(trainableParam, 
-				       ki1, kj1, 
+				       7, 7,
 				       1, 1, 
 				       table1, 
 				       featureMaps1),
 	      new state_idx(featureMaps1,1,1));
     //! S1 Layer
     addModule(new nn_layer_subsampling(trainableParam, 
-				       si1, sj1, 
-				       1,1, 
+				       2, 2, 
+				       2, 2, 
 				       featureMaps1),
 	      new state_idx(featureMaps1,1,1));
     //! C2 Layer
     addModule(new nn_layer_convolution(trainableParam, 
-				       ki2, kj2, 
+				       7, 7,
 				       1, 1, 
 				       table2, 
 				       featureMaps2),
@@ -179,22 +155,6 @@ public:
   }
   //! Destructor not used
   virtual ~generic_conv_net() {}
-
-  idxdim adapt_input_size(idxdim &i_size) {
-    // The output is automatically rounded, so we need to recompute the input,
-    // by setting the output to the rounded values...
-    idxdim o_size( ((((i_size.dim[0] - ki0+1) / si0) - ki1+1) / si1) - ki2+1,
-		   ((((i_size.dim[1] - kj0+1) / sj0) - kj1+1) / sj1) - kj2+1 );
-    i_size = get_input_size_from_output(o_size);
-    return o_size;
-  }
-
-  idxdim get_input_size_from_output(idxdim o_size) {
-    idxdim size( ((o_size.dim[0] + ki2-1) * si1 + ki1-1) * si0 + ki0-1 ,
-		 ((o_size.dim[1] + kj2-1) * sj1 + kj1-1) * sj0 + kj0-1 );
-    return size;
-  }
-
 };
 
 #ifdef __GUI__
@@ -252,12 +212,26 @@ int main(int argc, char **argv) {
   idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
 
   //! create the network weights, network and trainer
-  idxdim dims = train_ds.sample_dims(); //! get order and dimensions of samples
+  idxdim dims = train_ds.sample_dims(); //! get order and dims of samples
   parameter myConvNetWeights(1); //! create trainable parameter
 
   //! instantiate the ConvNet
   generic_conv_net myConvNet(myConvNetWeights, //! Trainable parameter
 			     targets.dim(0)); //! Nb of classes
+
+  //! Make sure that the output is 1x1 for the images in your training set
+  idxdim data_dims(trainingSet[0]);
+  idxdim convNetOutput = myConvNet.adapt_input_size(data_dims);
+  if (convNetOutput.dim[0] != 1 or convNetOutput.dim[1] != 1
+      or trainingSet.dim(1) != data_dims.dim[0]
+      or trainingSet.dim(2) != data_dims.dim[1]) {
+    convNetOutput.setdim(0,1); convNetOutput.setdim(1,1);
+    data_dims = myConvNet.get_input_size_from_output(convNetOutput);
+    cout << "Dataset not adapted for module." << endl;
+    cout << "You should resize your training set to: " << data_dims << endl;
+    cout << "Or change the convnet params..." << endl;
+    return -1;
+    }
 
   //! combine the conv net with targets -> gives a supervised system
   supervised_euclidean_machine mySupervisedNet(myConvNet, targets, dims);

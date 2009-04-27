@@ -100,21 +100,6 @@ namespace ebl {
     addLastModule(new nn_layer_full(prm, thick2, outthick));
   }
 
-  idxdim nn_machine_cscscf::adapt_input_size(idxdim &i_size) {
-    // The output is automatically rounded, so we need to recompute the input,
-    // by setting the output to the rounded values...
-    idxdim o_size( ((((i_size.dim[0] - ki0+1) / si0) - ki1+1) / si1) - ki2+1,
-		   ((((i_size.dim[1] - kj0+1) / sj0) - kj1+1) / sj1) - kj2+1 );
-    i_size = get_input_size_from_output(o_size);
-    return o_size;
-  }
-
-  idxdim nn_machine_cscscf::get_input_size_from_output(idxdim o_size) {
-    idxdim size( ((o_size.dim[0] + ki2-1) * si1 + ki1-1) * si0 + ki0-1 ,
-		 ((o_size.dim[1] + kj2-1) * sj1 + kj1-1) * sj0 + kj0-1 );
-    return size;
-  }
-
   ////////////////////////////////////////////////////////////////
   // helper function
   

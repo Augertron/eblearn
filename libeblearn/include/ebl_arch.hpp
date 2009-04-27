@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   Copyright (C) 2008 by Yann LeCun, Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
