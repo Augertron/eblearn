@@ -119,4 +119,6 @@ namespace ebl {
 
 } // namespace ebl {
 
+#include "ebl_layers.hpp"
+
 #endif /* EBL_LAYERS_H_ */
