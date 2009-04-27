@@ -78,8 +78,16 @@ namespace ebl {
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
+    //! \param p is used to store all parametric variables in a single place.
+    //! \param kerneli is the height of the convolution kernel
+    //! \param kernelj is the width of the convolution kernel
+    //! \param stridei is the stride at which convolutions are done on 
+    //!        the height axis.
+    //! \param stridej is the stride at which convolutions are done on 
+    //!        the width axis.
+    //! \param table is the convolution connection table.
     nn_layer_convolution(parameter &p, intg kerneli, intg kernelj, 
-			 intg ri, intg rj, idx<intg> &tbl, intg thick);
+			 intg stridei, intg stridej, idx<intg> &tbl);
     virtual ~nn_layer_convolution();
     //! fprop from in to out
     void fprop(state_idx &in, state_idx &out);

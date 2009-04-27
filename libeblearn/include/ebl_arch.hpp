@@ -234,7 +234,7 @@ namespace ebl {
   }
 
   template<class T>
-  void layers_n<T>::addModule(module_1_1 <T, T>* module, T* hidden) {
+  void layers_n<T>::add_module(module_1_1 <T, T>* module, T* hidden) {
     if (modules->size() > hiddens->size())
       ylerror("Inconsistency in layers_n, probably you have passed null \
 hidden layer before");
@@ -249,8 +249,8 @@ hidden states in layers_n");
   }
 
   template<class T>
-  void layers_n<T>::addLastModule(module_1_1 <T, T>* module) {
-    addModule(module, NULL);
+  void layers_n<T>::add_last_module(module_1_1 <T, T>* module) {
+    add_module(module, NULL);
   }
 
   template<class T>

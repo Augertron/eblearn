@@ -450,7 +450,8 @@ namespace ebl {
     if (ndim <= 0) ylerror("cannot select a scalar");
     if ((n < 0) || (n >= dim[d])) {
       cerr << "error: trying to select layer " << n;
-      cerr << " in dimension " << d << endl;
+      cerr << " of dimension " << d << " which is of size ";
+      cerr << dim[d] << "." << endl;
       ylerror("idx::select error");
     }
     // this preserves the dim/mod arrays if dst == this

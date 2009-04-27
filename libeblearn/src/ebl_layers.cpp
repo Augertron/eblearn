@@ -85,9 +85,10 @@ namespace ebl {
 
   nn_layer_convolution::nn_layer_convolution(parameter &p, 
 					     intg kerneli, intg kernelj, 
-					     intg ri, intg rj, 
-					     idx<intg> &tbl, intg thick) 
-    : convol(p, kerneli, kernelj, ri, rj, tbl, thick), adder(p, thick),
+					     intg stridei_, intg stridej_, 
+					     idx<intg> &tbl) 
+    : convol(p, kerneli, kernelj, stridei_, stridej_, tbl), 
+      adder(p, convol.thickness),
       sigmoid() {
     sum = NULL;
   }

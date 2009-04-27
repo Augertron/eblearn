@@ -93,20 +93,28 @@ namespace ebl {
   //! use the replicable version of this module:
   //! convolution_module_2D_replicable.
   class convolution_module_2D: public module_1_1<state_idx, state_idx> {
+  private:
+    intg         tablemax;
+    bool         warnings_shown;
   public:
     state_idx	 kernel;
     intg	 thickness;
     intg	 stridei;
     intg	 stridej;
-    idx<intg>	&table;	//!< the table of connections between input and output
-    intg         tablemax;
-    bool         warnings_shown;
+    idx<intg>	 table;	//!< the table of connections between input and output
     
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
+    //! \param kerneli is the height of the convolution kernel
+    //! \param kernelj is the width of the convolution kernel
+    //! \param stridei is the stride at which convolutions are done on 
+    //!        the height axis.
+    //! \param stridej is the stride at which convolutions are done on 
+    //!        the width axis.
+    //! \param table is the convolution connection table.
     convolution_module_2D(parameter &p, intg kerneli, intg kernelj, 
 			  intg  stridei, intg stridej, 
-			  idx<intg> &table, intg thick);
+			  idx<intg> &table);
     virtual ~convolution_module_2D();
     //! forward propagation from in to out
     virtual void fprop(state_idx &in, state_idx &out);
@@ -133,8 +141,8 @@ namespace ebl {
   DECLARE_REPLICABLE_MODULE_1_1(convolution_module_2D_replicable, 
 				convolution_module_2D,
 				(parameter &p, intg ki, intg kj, intg si, 
-				 intg sj, idx<intg> &table, intg thick),
-				(p, ki, kj, si, sj, table, thick));
+				 intg sj, idx<intg> &table),
+				(p, ki, kj, si, sj, table));
 
   ////////////////////////////////////////////////////////////////
   // subsampling_module_2D
