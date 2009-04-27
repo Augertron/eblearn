@@ -46,13 +46,6 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
   class nn_machine_cscscf : public layers_n<state_idx> {
-  protected:
-    intg ki0,  kj0;
-    intg si0,  sj0;
-    intg ki1,  kj1; 
-    intg si1,  sj1; 
-    intg ki2,  kj2;
-
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.

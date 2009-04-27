@@ -58,14 +58,11 @@ namespace ebl {
   nn_machine_cscscf::~nn_machine_cscscf() {}
 
   void nn_machine_cscscf::init(parameter &prm, intg ini, intg inj,
-			       intg ki0_, intg kj0_, idx<intg> &tbl0, 
-			       intg si0_, intg sj0_, intg ki1_, intg kj1_, 
-			       idx<intg> &tbl1, intg si1_, intg sj1_, 
-			       intg ki2_, intg kj2_, idx<intg> &tbl2, 
+			       intg ki0, intg kj0, idx<intg> &tbl0, 
+			       intg si0, intg sj0, intg ki1, intg kj1, 
+			       idx<intg> &tbl1, intg si1, intg sj1, 
+			       intg ki2, intg kj2, idx<intg> &tbl2, 
 			       intg outthick) {
-    // Set local params
-    ki0=ki0_; kj0=kj0_; ki1=ki1_; kj1=kj1_; ki2=ki2_; kj2=kj2_; 
-    si0=si0_; sj0=sj0_; si1=si1_; sj1=sj1_;
 
     idx<intg> tblmax = tbl0.select(1, 1);
     int tblmax0 = idx_max(tblmax);

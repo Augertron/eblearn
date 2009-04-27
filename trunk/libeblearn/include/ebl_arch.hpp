@@ -61,14 +61,12 @@ namespace ebl {
     err_not_implemented(); }
 
   template<class Tin, class Tout>
-  idxdim module_1_1<Tin,Tout>::adapt_input_size(idxdim &i_size) {
-    err_not_implemented(); 
+  idxdim module_1_1<Tin,Tout>::fprop_size(idxdim &i_size) {
     return i_size;
   }
 
   template<class Tin, class Tout>
-  idxdim module_1_1<Tin,Tout>::get_input_size_from_output(idxdim o_size) {
-    err_not_implemented(); 
+  idxdim module_1_1<Tin,Tout>::bprop_size(const idxdim &o_size) {
     return o_size;
   }
 
@@ -337,6 +335,36 @@ hidden states in layers_n");
     for(unsigned int i=0; i<modules->size(); i++){
       (*modules)[i]->normalize();
     }
+  }
+
+  //! This method modifies i_size to be compliant with the architecture of 
+  //! the module. It also returns the output size corresponding to the new
+  //! input...
+  template<class T>
+  idxdim layers_n<T>::fprop_size(idxdim &i_size) {
+    vector<module_1_1<state_idx, state_idx>*>::iterator iter;
+    idxdim o_size(i_size.dim[0], i_size.dim[1]);
+    //! Loop through all the layers of the module, and update output
+    //! size accordingly.
+    for (iter = modules->begin(); iter != modules->end(); iter++) {
+      o_size = (*iter)->fprop_size(o_size);
+    }
+    //! Recompute the input size to be compliant with the output
+    i_size = bprop_size(o_size);
+    return o_size;
+  }
+
+  //! This method computes the input size of the module for a given output
+  //! size.
+  template<class T>
+  idxdim layers_n<T>::bprop_size(const idxdim &o_size) {
+    vector<module_1_1<state_idx, state_idx>*>::reverse_iterator iter;
+    idxdim i_size(o_size.dim[0], o_size.dim[1]);
+    //! Loop through all the layers of the module, from the end to the beg.
+    for (iter = modules->rbegin(); iter != modules->rend(); iter++) {
+      i_size = (*iter)->bprop_size(i_size);
+    }
+    return i_size;
   }
 
   ////////////////////////////////////////////////////////////////

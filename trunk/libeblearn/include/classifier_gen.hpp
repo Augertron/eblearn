@@ -66,7 +66,7 @@ namespace ebl {
 	idxdim scaled_dims( (intg)(height / size.get()),
 			    (intg)(width / size.get()) );
 	// Adapt the size to the network structure:
-	idxdim out_dims = thenet.adapt_input_size(scaled_dims);
+	idxdim out_dims = thenet.fprop_size(scaled_dims);
 	in.set((void*) new state_idx(1, 
 				     scaled_dims.dim[0],
 				     scaled_dims.dim[1]));
