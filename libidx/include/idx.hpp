@@ -41,72 +41,72 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! idx elements and dimensions error checking macros
 
-  //! Calls ylerror if src0 is not contiguous.
+  //! Calls eblerror if src0 is not contiguous.
 #define idx_check_contiguous1(src0)				\
   if (!(src0).contiguousp())					\
-    ylerror("idx must be contiguous\n");
+    eblerror("idx must be contiguous\n");
 
-  //! Calls ylerror if src0 and src1 are not contiguous.
+  //! Calls eblerror if src0 and src1 are not contiguous.
 #define idx_check_contiguous2(src0, src1)				\
   if (!(src0).contiguousp() || !(src1).contiguousp())			\
-    ylerror("idx must be contiguous\n");
+    eblerror("idx must be contiguous\n");
 
-  //! Calls ylerror if src0 and src1 have different number of elements.
+  //! Calls eblerror if src0 and src1 have different number of elements.
 #define idx_checknelems2_all(src0, src1)				\
   if ((src0).nelements() != (src1).nelements())				\
-    ylerror("incompatible idx sizes\n");
+    eblerror("incompatible idx sizes\n");
 
-  //! Calls ylerror if src0 and src1 and src2 have different number of elements.
+  //! Calls eblerror if src0 and src1 and src2 have different number of elements.
 #define idx_checknelems3_all(src0, src1, src2)		\
   if (((src0).nelements() != (src1).nelements()) ||	\
       ((src0).nelements() != (src2).nelements()))	\
-    ylerror("incompatible idx sizes\n");
+    eblerror("incompatible idx sizes\n");
 
-  //! Calls ylerror if src0 and o0 do not match.
+  //! Calls eblerror if src0 and o0 do not match.
 #define idx_checkorder1(src0, o0)		\
   if ((src0).order() != o0)			\
-    ylerror("idx has wrong order");
+    eblerror("idx has wrong order");
 
-  //! Calls ylerror if src0,src1 and o0,o1 do not match.
+  //! Calls eblerror if src0,src1 and o0,o1 do not match.
 #define idx_checkorder2(src0, o0, src1, o1)		\
   if (((src0).order() != o0) || ((src1).order() != o1)) \
-    ylerror("idx have incompatible orders");
+    eblerror("idx have incompatible orders");
 
-  //! Calls ylerror if src0,src1,src2 and o0,o1,o2 do not match.
+  //! Calls eblerror if src0,src1,src2 and o0,o1,o2 do not match.
 #define idx_checkorder3(src0, o0, src1, o1, src2, o2)			\
   if (((src0).order() != o0) || ((src1).order() != o1)			\
       || ((src2).order() != o2))					\
-    ylerror("idx have incompatible orders");
+    eblerror("idx have incompatible orders");
 
-  //! Calls ylerror if src0.order(), src1.order() and src2.order() differ
+  //! Calls eblerror if src0.order(), src1.order() and src2.order() differ
 #define idx_checkorder3_all(src0, src1, src2)				\
   if (((src0).order() != (src1).order())				\
       || ((src0).order() != (src2).order()))				\
-    ylerror("idx have incompatible orders");
+    eblerror("idx have incompatible orders");
 
-  //! Calls ylerror if src0.dim(0) and src1.dim(d1) don't match e0,e1
+  //! Calls eblerror if src0.dim(0) and src1.dim(d1) don't match e0,e1
 #define idx_checkdim2(src0, d0, e0, src1, d1, e1)	\
   if (((src0).dim(d0) != e0) || ((src1).dim(d1) != e1))	\
-    ylerror("idx have incompatible dimensions");
+    eblerror("idx have incompatible dimensions");
 
-  //! Calls ylerror if src0.dim(d) and src1.dim(d) don't match
+  //! Calls eblerror if src0.dim(d) and src1.dim(d) don't match
 #define idx_checkdim2_all(src0, src1, d)		\
   if ((src0).dim(d) != (src1).dim(d))			\
-    ylerror("idx have incompatible dimensions");
+    eblerror("idx have incompatible dimensions");
 
-  //! Calls ylerror if src0.dim(d) and src1.dim(d) and src2.dim(d) don't match
+  //! Calls eblerror if src0.dim(d) and src1.dim(d) and src2.dim(d) don't match
 #define idx_checkdim3_all(src0, src1, src2, d)		\
   if (((src0).dim(d) != (src1).dim(d)) ||		\
       ((src0).dim(d) != (src2).dim(d)))			\
-    ylerror("idx have incompatible dimensions");
+    eblerror("idx have incompatible dimensions");
 
-  //! Calls ylerror if src0.dim(d) and src1.dim(d) and src2.dim(d)
+  //! Calls eblerror if src0.dim(d) and src1.dim(d) and src2.dim(d)
   //! and src3.dim(d) don't match
 #define idx_checkdim4_all(src0, src1, src2, src3, d)	\
   if (((src0).dim(d) != (src1).dim(d)) ||		\
       ((src0).dim(d) != (src2).dim(d)) ||		\
       ((src0).dim(d) != (src3).dim(d)))			\
-    ylerror("idx have incompatible dimensions");
+    eblerror("idx have incompatible dimensions");
 
   ////////////////////////////////////////////////////////////////
   // TODO: these macros are untested (YLC)
@@ -132,13 +132,13 @@ namespace ebl {
   //! with simple incrementation, as opposed to iterators with complicated 
   //! logic.
 #define cidx1_bloop1(i,p0,src0)					\
-  if ((src0).order() < 1) ylerror("idx has wrong order");	\
+  if ((src0).order() < 1) eblerror("idx has wrong order");	\
   intg _n0 = (src0).dim(0), _m0 = (src0).mod(0);		\
   for (i=0, p0=(src0).idx_ptr(); i<_n0; i++, p0+=_m0) 
 
 #define cidx1_bloop2(i,p0,src0,p1,src1)					\
   if (((src0).order() < 1)||((src1).order() < 1))			\
-    ylerror("idx has wrong order");					\
+    eblerror("idx has wrong order");					\
   intg _n0 = (src0).dim(0), _m0 = (src0).mod(0); _m1 = (src1).mod(0);	\
   idx_checkdim2_all(src0,src1,0)					\
   for (i=0, p0=(src0).idx_ptr(), p1=(src1).idx_ptr();			\
@@ -163,14 +163,14 @@ namespace ebl {
        i++, p0+=_m0, p1+=_m1, p2+=_m2, p3+=_m3) 
 
 #define cidx2_bloop1(i,j,p0,src0)					\
-  if ((src0).order() < 2) ylerror("idx has wrong order");		\
+  if ((src0).order() < 2) eblerror("idx has wrong order");		\
   intg _n00 = (src0).dim(0), _m00 = (src0).mod(0);			\
   intg _n01 = (src0).dim(1), _m01 = (src0).mod(1);			\
   for (i=0, p0=(src0).idx_ptr(); i<_n00; i++, p0+=_m00-_n01*_m01)	\
     for (j=0; i<_n01; j++, p0+=_m01) 
 
 #define cidx2_bloop2(i,j,p0,src0,p1,src1)				\
-  if ((src0).order() < 2) ylerror("idx has wrong order");		\
+  if ((src0).order() < 2) eblerror("idx has wrong order");		\
   intg _n00 = (src0).dim(0), _m00 = (src0).mod(0);			\
   intg _n01 = (src0).dim(1), _m01 = (src0).mod(1);			\
   intg _n10 = (src1).dim(0), _m10 = (src1).mod(0);			\
@@ -183,7 +183,7 @@ namespace ebl {
     for (j=0; i<_n01; j++, p0+=_m01, p1+=_m11) 
 
 #define cidx2_bloop3(i,j,p0,src0,p1,src1,p2,src2)			\
-  if ((src0).order() < 2) ylerror("idx has wrong order");		\
+  if ((src0).order() < 2) eblerror("idx has wrong order");		\
   intg _n00 = (src0).dim(0), _m00 = (src0).mod(0);			\
   intg _n01 = (src0).dim(1), _m01 = (src0).mod(1);			\
   intg _n10 = (src1).dim(0), _m10 = (src1).mod(0);			\
@@ -263,7 +263,7 @@ namespace ebl {
 
 #define idx_eloop2(dst0,src0,type0,dst1,src1,type1)			\
   if ((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
-    ylerror("incompatible idxs for eloop\n");				\
+    eblerror("incompatible idxs for eloop\n");				\
   DimIter<type0> dst0(src0,(src0).order()-1);				\
   DimIter<type1> dst1(src1,(src1).order()-1);				\
   for ( ; dst0.notdone(); ++dst0, ++dst1)
@@ -271,7 +271,7 @@ namespace ebl {
 #define idx_eloop3(dst0,src0,type0,dst1,src1,type1,dst2,src2,type2)	\
   if (((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
       || ((src0).dim((src0).order() - 1) != (src2).dim((src2).order() - 1))) \
-    ylerror("incompatible idxs for eloop\n");				\
+    eblerror("incompatible idxs for eloop\n");				\
   DimIter<type0> dst0(src0,(src0).order()-1);				\
   DimIter<type1> dst1(src1,(src1).order()-1);				\
   DimIter<type2> dst2(src2,(src2).order()-1);				\
@@ -282,7 +282,7 @@ namespace ebl {
   if (((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
       || ((src0).dim((src0).order() - 1) != (src2).dim((src2).order() - 1)) \
       || ((src0).dim((src0).order() - 1) != (src3).dim((src3).order() - 1))) \
-    ylerror("incompatible idxs for eloop\n");				\
+    eblerror("incompatible idxs for eloop\n");				\
   DimIter<type0> dst0(src0,(src0).order()-1);				\
   DimIter<type1> dst1(src1,(src1).order()-1);				\
   DimIter<type2> dst2(src2,(src2).order()-1);				\
@@ -373,7 +373,7 @@ namespace ebl {
 
 #define idx_eloop2(dst0,src0,type0,dst1,src1,type1)			\
   if ((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
-    ylerror("incompatible idxs for eloop\n");				\
+    eblerror("incompatible idxs for eloop\n");				\
   idxlooper<type0> dst0(src0,(src0).order()-1);				\
   idxlooper<type1> dst1(src1,(src1).order()-1);				\
   for ( ; dst0.notdone(); dst0.next(), dst1.next())
@@ -381,7 +381,7 @@ namespace ebl {
 #define idx_eloop3(dst0,src0,type0,dst1,src1,type1,dst2,src2,type2)\
   if (((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
       || ((src0).dim((src0).order() - 1) != (src2).dim((src2).order() - 1))) \
-    ylerror("incompatible idxs for eloop\n");				\
+    eblerror("incompatible idxs for eloop\n");				\
   idxlooper<type0> dst0(src0,(src0).order()-1);				\
   idxlooper<type1> dst1(src1,(src1).order()-1);				\
   idxlooper<type2> dst2(src2,(src2).order()-1);				\
@@ -392,7 +392,7 @@ namespace ebl {
   if (((src0).dim((src0).order() - 1) != (src1).dim((src1).order() - 1)) \
       || ((src0).dim((src0).order() - 1) != (src2).dim((src2).order() - 1)) \
       || ((src0).dim((src0).order() - 1) != (src3).dim((src3).order() - 1))) \
-    ylerror("incompatible idxs for eloop\n");				\
+    eblerror("incompatible idxs for eloop\n");				\
   idxlooper<type0> dst0(src0,(src0).order()-1);				\
   idxlooper<type1> dst1(src1,(src1).order()-1);				\
   idxlooper<type2> dst2(src2,(src2).order()-1);				\
@@ -457,13 +457,13 @@ namespace ebl {
 
   template <class T> void idx<T>::growstorage() {
     if ( storage->growsize(spec.footprint()) < 0) {
-      ylerror("cannot grow storage");
+      eblerror("cannot grow storage");
     }
   }
 
   template <class T> void idx<T>::growstorage_chunk(intg s_chunk){
     if( storage->growsize_chunk(spec.footprint(), s_chunk) < 0) {
-      ylerror("cannot grow storage");
+      eblerror("cannot grow storage");
     }
   }
 
@@ -616,7 +616,7 @@ namespace ebl {
   
   template <class T> 
   intg idx<T>::setoffset(intg o) {
-    if (o<0) { ylerror("idx::setoffset: offset must be positive"); }
+    if (o<0) { eblerror("idx::setoffset: offset must be positive"); }
     if (o > spec.offset) {
       spec.setoffset(o);
       growstorage();
@@ -638,7 +638,7 @@ namespace ebl {
 
   template <class T> 
   void idx<T>::resize(const idxdim &d) {
-    if (d.ndim > spec.ndim) ylerror("cannot change order of idx in resize");
+    if (d.ndim > spec.ndim) eblerror("cannot change order of idx in resize");
     if (!same_dim(d)) { // save some time if dims are same
       spec.resize(d);
       growstorage();
@@ -647,7 +647,7 @@ namespace ebl {
 
   template <class T> 
   void idx<T>::resize1(intg dimn, intg size) {
-    if (dimn > spec.ndim) ylerror("cannot change order of idx in resize");
+    if (dimn > spec.ndim) eblerror("cannot change order of idx in resize");
     if (spec.dim[dimn] != size) {
       spec.resize1(dimn, size);
       growstorage();
@@ -737,7 +737,7 @@ namespace ebl {
 
   template <class T> idx<T> idx<T>::view_as_order(int n) {
     if (n < 0) {
-      ylerror("view_as_order: input dimension must be positive");
+      eblerror("view_as_order: input dimension must be positive");
       return *this;
     }
     if (n == spec.ndim)
@@ -769,7 +769,7 @@ namespace ebl {
 	return r;
       }
       else {
-	ylerror("view_as_order is not defined when n < current order");
+	eblerror("view_as_order is not defined when n < current order");
 	return *this;
       }
     }
@@ -780,25 +780,25 @@ namespace ebl {
 
   // get element of idx1
   template <class T> T *idx<T>::ptr(intg i0) {
-    if (spec.ndim != 1) ylerror("not an idx1");
-    if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
+    if (spec.ndim != 1) eblerror("not an idx1");
+    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     return storage->data + spec.offset + i0*spec.mod[0];
   }
 
   // get element of idx2
   template <class T> T *idx<T>::ptr(intg i0, intg i1) {
-    if (spec.ndim != 2) ylerror("not an idx2");
-    if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
-    if ((i1 < 0) || (i1 >= spec.dim[1])) ylerror("index 1 out of bound");
+    if (spec.ndim != 2) eblerror("not an idx2");
+    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
+    if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
     return storage->data + spec.offset + i0*spec.mod[0] + i1*spec.mod[1];
   }
 
   // get element of idx3
   template <class T> T *idx<T>::ptr(intg i0, intg i1, intg i2) {
-    if (spec.ndim != 3) ylerror("not an idx3");
-    if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
-    if ((i1 < 0) || (i1 >= spec.dim[1])) ylerror("index 1 out of bound");
-    if ((i2 < 0) || (i2 >= spec.dim[2])) ylerror("index 2 out of bound");
+    if (spec.ndim != 3) eblerror("not an idx3");
+    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
+    if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
+    if ((i2 < 0) || (i2 >= spec.dim[2])) eblerror("index 2 out of bound");
     return storage->data + spec.offset + i0*spec.mod[0] + i1*spec.mod[1] 
       + i2*spec.mod[2];
   }
@@ -834,11 +834,11 @@ namespace ebl {
       return storage->data + spec.offset + k;
     }
     catch(int k) {
-      if (k==10) ylerror("idx::get: number of indices and order are different");
+      if (k==10) eblerror("idx::get: number of indices and order are different");
       if (k < 0) {
-	ylerror("idx::get: wrong number of indices, or negative index");
+	eblerror("idx::get: wrong number of indices, or negative index");
       } else {
-	ylerror("idx::get: index out of bound");
+	eblerror("idx::get: index out of bound");
       }
       return NULL;
     }
@@ -849,31 +849,31 @@ namespace ebl {
 
   // get element of idx0
   template <class T> T idx<T>::get() {
-    if (spec.ndim != 0) ylerror("not an idx0");
+    if (spec.ndim != 0) eblerror("not an idx0");
     return (storage->data)[spec.offset];
   }
 
   // get element of idx1
   template <class T> T idx<T>::get(intg i0) {
-    if (spec.ndim != 1) ylerror("not an idx1");
-    if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
+    if (spec.ndim != 1) eblerror("not an idx1");
+    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     return (storage->data)[spec.offset + i0*spec.mod[0]];
   }
 
   // get element of idx2
   template <class T> T idx<T>::get(intg i0, intg i1) {
-    if (spec.ndim != 2) ylerror("not an idx2");
-    if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
-    if ((i1 < 0) || (i1 >= spec.dim[1])) ylerror("index 1 out of bound");
+    if (spec.ndim != 2) eblerror("not an idx2");
+    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
+    if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1]];
   }
 
   // get element of idx3
   template <class T> T idx<T>::get(intg i0, intg i1, intg i2) {
-    if (spec.ndim != 3) ylerror("not an idx3");
-    if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
-    if ((i1 < 0) || (i1 >= spec.dim[1])) ylerror("index 1 out of bound");
-    if ((i2 < 0) || (i2 >= spec.dim[2])) ylerror("index 2 out of bound");
+    if (spec.ndim != 3) eblerror("not an idx3");
+    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
+    if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
+    if ((i2 < 0) || (i2 >= spec.dim[2])) eblerror("index 2 out of bound");
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1] 
 			   + i2*spec.mod[2]];
   }
@@ -889,31 +889,31 @@ namespace ebl {
 
   // set the element of idx0
   template <class T> T idx<T>::set(T val) {
-    if (spec.ndim != 0) ylerror("not an idx0");
+    if (spec.ndim != 0) eblerror("not an idx0");
     return (storage->data)[spec.offset] = val;
   }
 
   // set the element of idx1
   template <class T> T idx<T>::set(T val, intg i0) {
-    if (spec.ndim != 1) ylerror("not an idx1");
-    if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
+    if (spec.ndim != 1) eblerror("not an idx1");
+    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     return (storage->data)[spec.offset + i0*spec.mod[0]] = val;
   }
 
   // set the element of idx2
   template <class T> T idx<T>::set(T val, intg i0, intg i1) {
-    if (spec.ndim != 2) ylerror("not an idx2");
-    if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
-    if ((i1 < 0) || (i1 >= spec.dim[1])) ylerror("index 1 out of bound");
+    if (spec.ndim != 2) eblerror("not an idx2");
+    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
+    if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1]] = val;
   }
 
   // set the element of idx3
   template <class T> T idx<T>::set(T val, intg i0, intg i1, intg i2) {
-    if (spec.ndim != 3) ylerror("not an idx3");
-    if ((i0 < 0) || (i0 >= spec.dim[0])) ylerror("index 0 out of bound");
-    if ((i1 < 0) || (i1 >= spec.dim[1])) ylerror("index 1 out of bound");
-    if ((i2 < 0) || (i2 >= spec.dim[2])) ylerror("index 2 out of bound");
+    if (spec.ndim != 3) eblerror("not an idx3");
+    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
+    if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
+    if ((i2 < 0) || (i2 >= spec.dim[2])) eblerror("index 2 out of bound");
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1] 
 			   + i2*spec.mod[2]] = val;
   }

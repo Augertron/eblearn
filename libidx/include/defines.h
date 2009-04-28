@@ -50,11 +50,7 @@
 #define DEBUG(s,d)
 #endif
 
-// TODO: should be changed to throwing
-// an exception or something.
-// void ylerror(const char *s);
-//#define ylerror(s)   { printf("%s\n",s); } //exit(-1); }
-#define ylerror(s) {						\
+#define eblerror(s) {						\
     std::cerr << "\033[1;31mException:\033[0m " << s;		\
     std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
     std::cerr << ":" << __LINE__ << std::endl;			\
@@ -65,6 +61,8 @@
     backtrace_symbols_fd(array, size, 2);			\
     abort();							\
   }
+
+#define ylerror(s) eblerror(s)
 
 // not used right now
 #define ITER(x) x##__iter

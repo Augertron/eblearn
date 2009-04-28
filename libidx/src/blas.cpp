@@ -390,7 +390,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   void norm_columns(idx<double> &m) {
-    if ( m.order() != 2) { ylerror("norm_columns: must be an idx2"); }
+    if ( m.order() != 2) { eblerror("norm_columns: must be an idx2"); }
     idx_eloop1(lm,m,double) {
       double *p = lm.idx_ptr();
       double z = cblas_dnrm2(m.dim(0),p,m.mod(0));
@@ -399,7 +399,7 @@ namespace ebl {
   }
 
   void norm_columns(idx<float> &m) {
-    if ( m.order() != 2) { ylerror("norm_columns: must be an idx2"); }
+    if ( m.order() != 2) { eblerror("norm_columns: must be an idx2"); }
     idx_eloop1(lm,m,float) {
       float *p = lm.idx_ptr();
       float z = cblas_snrm2(m.dim(0),p,m.mod(0));

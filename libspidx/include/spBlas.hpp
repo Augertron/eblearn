@@ -10,14 +10,14 @@
 namespace ebl {
 
 #define spidx_checkdims(src0,src1) \
-	if((src0).order() != (src1).order()) {ylerror("not the same number of dimensions"); return;} \
+	if((src0).order() != (src1).order()) {eblerror("not the same number of dimensions"); return;} \
 	for(int i = 0; i< (src0).order(); i++) \
-		if((src0).dim(i) != (src1).dim(i)) {ylerror("not the same size of dimensions"); return;}
+		if((src0).dim(i) != (src1).dim(i)) {eblerror("not the same size of dimensions"); return;}
 
 #define spidx_checkdims_rint(src0,src1) \
-	if((src0).order() != (src1).order()) {ylerror("not the same number of dimensions"); return 0;} \
+	if((src0).order() != (src1).order()) {eblerror("not the same number of dimensions"); return 0;} \
 	for(int i = 0; i< (src0).order(); i++) \
-		if((src0).dim(i) != (src1).dim(i)) {ylerror("not the same size of dimensions"); return 0;}
+		if((src0).dim(i) != (src1).dim(i)) {eblerror("not the same size of dimensions"); return 0;}
 
 template<class T1, class T2> void idx_copy(spIdx<T1> &src, spIdx<T2> &dst){
 	spidx_checkdims(src, dst);
@@ -446,13 +446,13 @@ template<class T> void idx_clip(spIdx<T> &i1, T m, spIdx<T> &o1){
 ////////////////////////////////////////////////////////////
 
 template<class T> void check_m2dotm1(spIdx<T> &m, Idx<T> &x, Idx<T> &y) {
-	if ((m.order() != 2) || (x.order() != 1) || (y.order() != 1)) ylerror("Idx have incompatible orders");
-	if ((m.dim(0) != y.dim(0)) || (m.dim(1) != x.dim(0))) ylerror("Idx have incompatible dimensions");
+	if ((m.order() != 2) || (x.order() != 1) || (y.order() != 1)) eblerror("Idx have incompatible orders");
+	if ((m.dim(0) != y.dim(0)) || (m.dim(1) != x.dim(0))) eblerror("Idx have incompatible dimensions");
 }
 
 template<class T> void check_m2dotm1(spIdx<T> &m, spIdx<T> &x, spIdx<T> &y) {
-	if ((m.order() != 2) || (x.order() != 1) || (y.order() != 1)) ylerror("Idx have incompatible orders");
-	if ((m.dim(0) != y.dim(0)) || (m.dim(1) != x.dim(0))) ylerror("Idx have incompatible dimensions");
+	if ((m.order() != 2) || (x.order() != 1) || (y.order() != 1)) eblerror("Idx have incompatible orders");
+	if ((m.dim(0) != y.dim(0)) || (m.dim(1) != x.dim(0))) eblerror("Idx have incompatible dimensions");
 }
 
 
@@ -460,7 +460,7 @@ template<class T> void check_m2dotm1(spIdx<T> &m, spIdx<T> &x, spIdx<T> &y) {
 //! outer product between matrices. Gives a 4-tensor: R_ijkl = M1_ij * M2_kl
 template<class T> void idx_m2extm2(spIdx<T> &i1, spIdx<T> &i2, spIdx<T> &o1){
 	idx_checkorder3(i1, 2, i2, 2, o1, 4);
-	if((i1.dim(0) != o1.dim(0))||(i1.dim(1) != o1.dim(1))||(i2.dim(0) != o1.dim(2))||(i1.dim(1) != o1.dim(3))){ ylerror("m2extm2 : Bad dimensions"); return;}
+	if((i1.dim(0) != o1.dim(0))||(i1.dim(1) != o1.dim(1))||(i2.dim(0) != o1.dim(2))||(i1.dim(1) != o1.dim(3))){ eblerror("m2extm2 : Bad dimensions"); return;}
 	idx_clear(o1);
 	intg *i1_ptr1 = i1.index()->idx_ptr(), *i2_ptr1 = i2.index()->idx_ptr();
 	T *i1_ptr2 = i1.values()->idx_ptr(), *i2_ptr2 = i2.values()->idx_ptr();
@@ -487,7 +487,7 @@ template<class T> void idx_m2extm2(spIdx<T> &i1, spIdx<T> &i2, spIdx<T> &o1){
 //! outer product between matrices with accumulation. Gives a 4-tensor: R_ijkl += M1_ij * M2_kl
 template<class T> void idx_m2extm2acc(spIdx<T> &i1, spIdx<T> &i2, spIdx<T> &o1){
 	idx_checkorder3(i1, 2, i2, 2, o1, 4);
-	if((i1.dim(0) != o1.dim(0))||(i1.dim(1) != o1.dim(1))||(i2.dim(0) != o1.dim(2))||(i1.dim(1) != o1.dim(3))){ ylerror("m2extm2acc : Bad dimensions"); return;}
+	if((i1.dim(0) != o1.dim(0))||(i1.dim(1) != o1.dim(1))||(i2.dim(0) != o1.dim(2))||(i1.dim(1) != o1.dim(3))){ eblerror("m2extm2acc : Bad dimensions"); return;}
 	intg *i1_ptr1 = i1.index()->idx_ptr(), *i2_ptr1 = i2.index()->idx_ptr();
 	T *i1_ptr2 = i1.values()->idx_ptr(), *i2_ptr2 = i2.values()->idx_ptr();
 	const intg *i1mod1 = i1.index()->mods(), i1mod2 = i1.values()->mod(0);
@@ -513,7 +513,7 @@ template<class T> void idx_m2extm2acc(spIdx<T> &i1, spIdx<T> &i2, spIdx<T> &o1){
 //! square outer product of <m1> and <m2>. M3ij += M1i * M2j^2
 template<class T> void idx_m2squextm2acc(spIdx<T> &i1, spIdx<T> &i2, spIdx<T> &o1){
 	idx_checkorder3(i1, 2, i2, 2, o1, 4);
-	if((i1.dim(0) != o1.dim(0))||(i1.dim(1) != o1.dim(1))||(i2.dim(0) != o1.dim(2))||(i1.dim(1) != o1.dim(3))){ ylerror("m2squextm2 : Bad dimensions"); return;}
+	if((i1.dim(0) != o1.dim(0))||(i1.dim(1) != o1.dim(1))||(i2.dim(0) != o1.dim(2))||(i1.dim(1) != o1.dim(3))){ eblerror("m2squextm2 : Bad dimensions"); return;}
 	intg *i1_ptr1 = i1.index()->idx_ptr(), *i2_ptr1 = i2.index()->idx_ptr();
 	T *i1_ptr2 = i1.values()->idx_ptr(), *i2_ptr2 = i2.values()->idx_ptr();
 	const intg *i1mod1 = i1.index()->mods(), i1mod2 = i1.values()->mod(0);
@@ -539,7 +539,7 @@ template<class T> void idx_m2squextm2acc(spIdx<T> &i1, spIdx<T> &i2, spIdx<T> &o
 //! matrix-matrix dot product. element-wise square-multiplication
 template<typename T> void idx_m2squdotm2(spIdx<T>& i1, spIdx<T>& i2, Idx<T>& o){
 	idx_checkorder3(i1, 2, i2, 2, o, 0);
-	if((i1.dim(0) != i2.dim(0))||(i1.dim(1) != i2.dim(1))){ ylerror("m2squdotm2 : Bad dimensions"); return;}
+	if((i1.dim(0) != i2.dim(0))||(i1.dim(1) != i2.dim(1))){ eblerror("m2squdotm2 : Bad dimensions"); return;}
 	T sqrdot = 0;
 	int bla[i2.nelements()];
 	for(intg i = 0; i<i2.nelements(); i++) bla[i] = 0;
@@ -566,7 +566,7 @@ template<typename T> void idx_m2squdotm2acc(spIdx<T>& i1, spIdx<T>& i2, Idx<T>& 
 //! 2D convolution. all arguments are idx2.
 template<class T> void idx_2dconvol(spIdx<T> &in, Idx<T> &kernel, spIdx<T> &out, bool use_nonsparse_algo){
 	idx_checkorder3(in, 2, kernel, 2, out, 2);
-	if((out.dim(0) != (in.dim(0) - kernel.dim(0) + 1))||(out.dim(1) != (in.dim(1) - kernel.dim(1) + 1))){ ylerror("idx_2dconvol : Bad dimensions"); return;}
+	if((out.dim(0) != (in.dim(0) - kernel.dim(0) + 1))||(out.dim(1) != (in.dim(1) - kernel.dim(1) + 1))){ eblerror("idx_2dconvol : Bad dimensions"); return;}
 	idx_clear(out);
 	if(in.isempty()) return;
 	T *kerptr = kernel.idx_ptr();

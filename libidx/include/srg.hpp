@@ -58,7 +58,7 @@ template <class T> Srg<T>::Srg(intg s) {
   refcount = 0;
   data = (T *)NULL;
   if ( ( r=this->changesize(s) ) > 0 ) this->clear();
-  if (r < 0) { ylerror("can't allocate Srg"); }
+  if (r < 0) { eblerror("can't allocate Srg"); }
 }
 
 // destructor: can be called twice when the Srg
@@ -66,7 +66,7 @@ template <class T> Srg<T>::Srg(intg s) {
 // make sure the data is not deallocated twice.
 template <class T> Srg<T>::~Srg() {
   DEBUG("Srg::destructor: refcount=%d\n",refcount);
-  if (refcount != 0) { ylerror("can't delete an Srg with non zero refcount"); }
+  if (refcount != 0) { eblerror("can't delete an Srg with non zero refcount"); }
   if (data != NULL) {
     free((void *)data);
     data = NULL;
@@ -115,7 +115,7 @@ template<class T> intg Srg<T>::growsize_chunk(intg s, intg s_chunk){
 template <class T> int Srg<T>::unlock() {
   refcount--;
   DEBUG("Srg::unlock: refcount=%d\n",refcount);
-  if (refcount<0) { ylerror("Srg has negative refcount"); return refcount; }
+  if (refcount<0) { eblerror("Srg has negative refcount"); return refcount; }
   else {
     if (refcount == 0) { delete this; return 0; } else { return refcount; }
   }

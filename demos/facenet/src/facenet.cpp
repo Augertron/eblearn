@@ -565,7 +565,7 @@ void facenet::show_net(bool kernel, bool prop){
   // 		eprop->add_box( oprop);
   // 		eprop->show();
   // 	}
-  ylerror("not implemented");
+  eblerror("not implemented");
 }
 
 

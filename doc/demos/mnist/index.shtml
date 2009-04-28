@@ -111,7 +111,7 @@
 <a id="l_17"></a><span class="hl line">   17 </span>  cout <span class="hl sym">&lt;&lt;</span> <span class="hl str">" C++ library *"</span> <span class="hl sym">&lt;&lt;</span> endl<span class="hl sym">;</span>
 <a id="l_18"></a><span class="hl line">   18 </span>  <span class="hl kwa">if</span> <span class="hl sym">(</span>argc <span class="hl sym">!=</span> <span class="hl num">2</span><span class="hl sym">) {</span>
 <a id="l_19"></a><span class="hl line">   19 </span>    cout <span class="hl sym">&lt;&lt;</span> <span class="hl str">"Usage: ./mnist &lt;my mnist directory&gt;"</span> <span class="hl sym">&lt;&lt;</span> endl<span class="hl sym">;</span>
-<a id="l_20"></a><span class="hl line">   20 </span>    <span class="hl kwd">ylerror</span><span class="hl sym">(</span><span class="hl str">"MNIST path not specified"</span><span class="hl sym">);</span>
+<a id="l_20"></a><span class="hl line">   20 </span>    <span class="hl kwd">eblerror</span><span class="hl sym">(</span><span class="hl str">"MNIST path not specified"</span><span class="hl sym">);</span>
 <a id="l_21"></a><span class="hl line">   21 </span>  <span class="hl sym">}</span>
 <a id="l_22"></a><span class="hl line">   22 </span>  <span class="hl kwd">init_drand</span><span class="hl sym">(</span><span class="hl kwd">time</span><span class="hl sym">(</span>NULL<span class="hl sym">));</span> <span class="hl slc">// initialize random seed</span>
 <a id="l_23"></a><span class="hl line">   23 </span>

@@ -91,7 +91,7 @@ namespace ebl {
     check_init();
     if (wid < 0) {
       cerr << "cannot select a window with a negative id: " << wid << endl;
-      ylerror("trying to select_window() with negative id");
+      eblerror("trying to select_window() with negative id");
     }
     emit gui_select_window(wid);
   }

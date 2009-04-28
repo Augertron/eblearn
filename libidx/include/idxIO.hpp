@@ -46,7 +46,7 @@ namespace ebl {
   // template functions returning the magic number associated with a 
   // particular type
   template<class T> inline int get_magic() 
-  { ylerror("matrix type not implemented."); return 0; }
+  { eblerror("matrix type not implemented."); return 0; }
   template<> inline int get_magic<ubyte>()        {return MAGIC_BYTE_MATRIX; }
   template<> inline int get_magic<int>()          {return MAGIC_INTEGER_MATRIX;}
   template<> inline int get_magic<float>()        {return MAGIC_FLOAT_MATRIX; }
@@ -55,7 +55,7 @@ namespace ebl {
 
   // Pascal Vincent type
   template<class T> inline int get_magic_vincent() 
-  { ylerror("matrix type not implemented."); return 0; }
+  { eblerror("matrix type not implemented."); return 0; }
   template<> inline int get_magic_vincent<ubyte>(){return MAGIC_UBYTE_VINCENT;}
   template<> inline int get_magic_vincent<int>()  {return MAGIC_INT_VINCENT;}
   template<> inline int get_magic_vincent<float>(){return MAGIC_FLOAT_VINCENT;}

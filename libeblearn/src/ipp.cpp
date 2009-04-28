@@ -41,7 +41,7 @@ namespace ebl {
 	(ker.dim(0) > INT_MAX) || (ker.dim(1) > INT_MAX) ||
 	(in.mod(0) > INT_MAX) || (ker.mod(0) > INT_MAX) ||
 	(out.mod(0) > INT_MAX))
-      ylerror("TODO: Cannot use long with IPP.");
+      eblerror("TODO: Cannot use long with IPP.");
   
     int instep	= sizeof (float) * (int) in.mod(0);
     int kerstep	= sizeof (float) * (int) ker.mod(0);
@@ -63,7 +63,7 @@ namespace ebl {
 
     if ((in1.dim(0) > INT_MAX) || (in1.dim(1) > INT_MAX) ||
 	(in1.mod(0) > INT_MAX))
-      ylerror("TODO: Cannot use long with IPP.");
+      eblerror("TODO: Cannot use long with IPP.");
   
     insize.height = in1.dim(0);
     insize.width = in1.dim(1); 
@@ -77,7 +77,7 @@ namespace ebl {
 
     if ((in.dim(0) > INT_MAX) || (in.dim(1) > INT_MAX) ||
 	(in.mod(0) > INT_MAX) || (out.mod(0) > INT_MAX))
-      ylerror("TODO: Cannot use long with IPP.");
+      eblerror("TODO: Cannot use long with IPP.");
 
     insize.height = in.dim(0);
     insize.width = in.dim(1); 

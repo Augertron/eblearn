@@ -17,7 +17,7 @@ int main(int argc, char **argv) { // regular main without gui
   cout << " C++ library *" << endl;
   if (argc != 2) {
     cout << "Usage: ./mnist <my mnist directory>" << endl;
-    ylerror("MNIST path not specified");
+    eblerror("MNIST path not specified");
   }
   init_drand(time(NULL)); // initialize random seed
 

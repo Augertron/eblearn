@@ -51,7 +51,7 @@
 #endif
 
 #define err_not_implemented() {						\
-    ylerror("member function not implemented for this class"); }
+    eblerror("member function not implemented for this class"); }
 
 // not used right now
 #define ITER(x) x##__iter

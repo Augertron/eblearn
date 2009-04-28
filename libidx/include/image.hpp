@@ -58,7 +58,7 @@ namespace ebl {
 
   template<class T> idx<T> image_resize(idx<T> &image, double w, double h, 
 					int mode) {
-    if (image.order() < 2) ylerror("image must have at least an order of 2.");
+    if (image.order() < 2) eblerror("image must have at least an order of 2.");
     // if data is not contiguous, copy it to a contiguous buffer
     idx<T> contim(image);
     if (!image.contiguousp()) {
@@ -70,14 +70,14 @@ namespace ebl {
     intg imw = contim.dim(1);
     intg imh = contim.dim(0);
     if ((imw == 0) || (imh == 0))
-      ylerror("cannot have dimensions of size 0");
+      eblerror("cannot have dimensions of size 0");
     int rw = 0;
     int rh = 0;
     // determine actual size of output image
     if ((0 == w) || (0 == h)) {
       if (0 == w) {
 	if (0 == h) {
-	  ylerror("desired width and height cannot be both zero");
+	  eblerror("desired width and height cannot be both zero");
 	} else {
 	  w = max(1, (int) (imw * (h / imh)));
 	}
@@ -96,7 +96,7 @@ namespace ebl {
       w = max(1, (int) (w * imw));
       h = max(1, (int) (h * imh));
     }
-    else ylerror("image_resize: illegal mode or desired dimensions");
+    else eblerror("image_resize: illegal mode or desired dimensions");
     // compute closest integer subsampling ratio
     rw = (int) (imw / w);
     rh = (int) (imh / h);
@@ -126,7 +126,7 @@ namespace ebl {
 				 T minv, T maxv) {
     if ((im.order() < 2) || (im.order() > 3) || 
 	((im.order() == 3) && (im.dim(2) != 1))) 
-      ylerror("expecting a 2D idx or a 3D idx with 1 channel only");
+      eblerror("expecting a 2D idx or a 3D idx with 1 channel only");
     idx<T> im1(im.dim(0), im.dim(1));
     if ((im.order() == 3) && (im.dim(2) == 1)) {
       idx<T> tmp = im.select(2, 0);
@@ -135,7 +135,7 @@ namespace ebl {
     else
       idx_copy(im, im1); // copy data to make it contiguous
     if ((zoomw <= 0.0) || (zoomh <= 0.0))
-      ylerror("cannot zoom by a factor <= 0.0");
+      eblerror("cannot zoom by a factor <= 0.0");
     if (minv > maxv) {
       T tmp = minv;
       minv = maxv;
@@ -250,7 +250,7 @@ namespace ebl {
     case 3:
       return image_subsample_rgb(in, nlin, ncol);
     default:
-      ylerror("image must have at least an order of 2.");
+      eblerror("image must have at least an order of 2.");
       return in;
     }
   }
@@ -543,7 +543,7 @@ namespace ebl {
 
   template<class T> void RGBtoYUV1D(idx<T> &rgb, idx<T> &yuv) {
     if (rgb.idx_ptr() == yuv.idx_ptr()) {
-      ylerror("RGBtoYUV: dst must be different than src");
+      eblerror("RGBtoYUV: dst must be different than src");
       return ;
     }
     yuv.set(0.257 * rgb.get(0) + 0.504 * rgb.get(1) + 0.098 * rgb.get(2) + 16, 0);
@@ -565,13 +565,13 @@ namespace ebl {
 	}}
       return ;
     default:
-      ylerror("RGBtoYUV dimension not implemented");
+      eblerror("RGBtoYUV dimension not implemented");
     }
   }
 
   template<class T> void YUVtoRGB1D(idx<T> &yuv, idx<T> &rgb) {
     if (rgb.idx_ptr() == yuv.idx_ptr()) {
-      ylerror("YUVtoRGB: dst must be different than src");
+      eblerror("YUVtoRGB: dst must be different than src");
       return ;
     }
     rgb.set(1.164 * (yuv.get(0) - 16) + 2.018 * (yuv.get(1) - 128), 0);
@@ -594,7 +594,7 @@ namespace ebl {
 	}}
       return ;
     default:
-      ylerror("YUVtoRGB dimension not implemented");
+      eblerror("YUVtoRGB dimension not implemented");
     }
   }
 

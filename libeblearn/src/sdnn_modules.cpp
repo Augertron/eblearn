@@ -47,11 +47,11 @@ template<class T> T idx_f1logdotf1(idx<T> &m, idx<T> &p) {
 // <Blas.hpp>
 template<class T1, class T2> void idx_sortup(idx<T1> &m, idx<T2> &p) {
   idx_checkorder2(m, 1, p, 1);
-  if (m.mod(0) != 1) ylerror("idx_sortdown: vector is not contiguous");
-  if (p.mod(0) != 1) ylerror("idx_sortdown: vector is not contiguous");
+  if (m.mod(0) != 1) eblerror("idx_sortdown: vector is not contiguous");
+  if (p.mod(0) != 1) eblerror("idx_sortdown: vector is not contiguous");
   intg n = m.dim(0);
   intg z = p.dim(0);
-  if (n != z) ylerror("idx_sortdown: vectors have different sizes");
+  if (n != z) eblerror("idx_sortdown: vectors have different sizes");
   if (n > 1) {
     int l,j,ir,i;
     T1 *ra, rra;

@@ -319,7 +319,7 @@ namespace ebl {
   template<class T> void idx_copy(idx<T> &src, idx<T> &dst) {
     intg N1=src.nelements();
     intg N2 =dst.nelements();
-    if (N1 != N2) { ylerror("idx_op: idxs have different number of elements\n"); }
+    if (N1 != N2) { eblerror("idx_op: idxs have different number of elements\n"); }
     if ( (src.order() == 0) && (dst.order() == 0) ) {
       *(dst.idx_ptr()) = *(src.idx_ptr());
     } else if ( src.contiguousp() && dst.contiguousp() ) {
@@ -337,13 +337,13 @@ namespace ebl {
   template<class T> T idx_sumacc(idx<T> &inp, idx<T> &acc) {
     // acc must be of order 0.
     if (acc.order() != 0)
-      ylerror("expecting an idx0 as output");
+      eblerror("expecting an idx0 as output");
     return idx_sum(inp, acc.ptr());
   }
 
   template<class T> void rev_idx2 (idx<T> &m) {
     if (m.order() != 2)
-      ylerror("Expecting idx of order 2");
+      eblerror("Expecting idx of order 2");
     T tmp, *p = m.ptr();
     intg size = m.dim(0) * m.dim(1);
     intg i;
@@ -357,7 +357,7 @@ namespace ebl {
 
   template<class T> void rev_idx2_tr (idx<T> &m, idx<T> &n) {
     if ((m.order() != 2) || (n.order() != 2))
-      ylerror("Expecting idx of order 2");
+      eblerror("Expecting idx of order 2");
     T *p = m.ptr();
     T *q = n.ptr();
     intg size = m.dim(0) * m.dim(1);
@@ -373,7 +373,7 @@ namespace ebl {
     idx_checkorder3(i1, 4, i2, 2, o1, 2); // check for compatible orders
     if ((i1.dim(0) != o1.dim(0)) || (i1.dim(1) != o1.dim(1)) 
 	|| (i1.dim(2) != i2.dim(0)) || (i1.dim(3) != i2.dim(1)))
-      ylerror("incompatible dimensions");
+      eblerror("incompatible dimensions");
     T *c1, *c1_2;
     T *c2, *c2_0;
     T *c1_0, *c1_1;
@@ -420,7 +420,7 @@ namespace ebl {
     idx_checkorder3(i1, 4, i2, 2, o1, 2); // check for compatible orders
     if ((i1.dim(0) != o1.dim(0)) || (i1.dim(1) != o1.dim(1)) 
 	|| (i1.dim(2) != i2.dim(0)) || (i1.dim(3) != i2.dim(1)))
-      ylerror("incompatible dimensions");
+      eblerror("incompatible dimensions");
     T *c1, *c1_2;
     T *c2, *c2_0;
     T *c1_0, *c1_1;
@@ -741,11 +741,11 @@ namespace ebl {
 
   template<class T1, class T2> void idx_sortdown(idx<T1> &m, idx<T2> &p) {
     idx_checkorder2(m, 1, p, 1);
-    if (m.mod(0) != 1) ylerror("idx_sortdown: vector is not contiguous");
-    if (p.mod(0) != 1) ylerror("idx_sortdown: vector is not contiguous");
+    if (m.mod(0) != 1) eblerror("idx_sortdown: vector is not contiguous");
+    if (p.mod(0) != 1) eblerror("idx_sortdown: vector is not contiguous");
     intg n = m.dim(0);
     intg z = p.dim(0);
-    if (n != z) ylerror("idx_sortdown: vectors have different sizes");
+    if (n != z) eblerror("idx_sortdown: vectors have different sizes");
     if (n > 1) {
       int l,j,ir,i;
       T1 *ra, rra;
@@ -798,7 +798,7 @@ namespace ebl {
 
   template<class T> void idx_sqrdist(idx<T> &i1, idx<T> &i2, idx<T> &out) {
     idx_checknelems2_all(i1, i2);
-    if (out.order() != 0) ylerror("idx_sqrdist: expecting an idx of order 0");
+    if (out.order() != 0) eblerror("idx_sqrdist: expecting an idx of order 0");
     out.set(idx_sqrdist(i1, i2));
   }
 
@@ -810,13 +810,13 @@ namespace ebl {
 
   /* TODO: implement generic version of idx_dot
      template <class T> void idx_dot(idx<T> &i1, idx<T> &i2, idx<T> &o1){
-     if (o1.order() != 0) ylerror("Not an idx0");
+     if (o1.order() != 0) eblerror("Not an idx0");
      return o1.set(idx_dot(i1, i2));
      }
   */
 
   template<class T> void idx_dotacc(idx<T> &i1, idx<T> &i2, idx<T> &o) {
-    if (o.order() != 0) ylerror("Not an idx0");
+    if (o.order() != 0) eblerror("Not an idx0");
     o.set(o.get() + idx_dot(i1, i2));
   }
 

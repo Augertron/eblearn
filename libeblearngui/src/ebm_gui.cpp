@@ -321,7 +321,7 @@ void idx_displayGui::displaymatrixlayer(QLabel* container, void* matrix, idx_typ
 	int order = static_cast<Idx<double>*>(matrix)->order();
 
 	// if we try to access to a non-existant layer, error
-	if((order > 2) && (indexofLayer > dim0-1) ) ylerror("non-existant layer");
+	if((order > 2) && (indexofLayer > dim0-1) ) eblerror("non-existant layer");
 
 	// if it is an Idx-1 and idx1_as_array is false, we plot it
 	if(order == 1 && !idx1_as_array){
@@ -572,11 +572,11 @@ Idx_Gui::Idx_Gui(void* idxarg, idx_type argtype, const char* title, QWidget *par
 	idx = idxarg;
 	type = argtype;
 	if(idx == NULL) {
-		ylerror("Idx Null");
+		eblerror("Idx Null");
 		return;
 	}
 	if(static_cast<Idx<double>*>(idx)->order() == 0) {
-		ylerror("Not defined for Idx0");
+		eblerror("Not defined for Idx0");
 		return;
 	}
 
@@ -1091,11 +1091,11 @@ state_Idx_Gui::state_Idx_Gui(state_idx *stateIdx, const char* title, QWidget *pa
 {
 	state = stateIdx;
 	if(state == NULL){
-		ylerror("state_idx null");
+		eblerror("state_idx null");
 		return;
 	}
 	if(state->x.order() == 0) {
-		ylerror("Not defined for Idx0");
+		eblerror("Not defined for Idx0");
 		return;
 	}
 
@@ -1538,7 +1538,7 @@ void ebwindow::gray_draw_matrix(void* idx, idx_type type, int x, int y, int minv
 	if(mutex != NULL) mutex->lock();
 	int order = static_cast<Idx<double>*>(idx)->order();
 	if(order < 2){
-		ylerror("not designed for idx0 and idx1");
+		eblerror("not designed for idx0 and idx1");
 		if(mutex != NULL) mutex->unlock();
 		return;
 	}
@@ -1614,7 +1614,7 @@ void ebwindow::RGB_draw_matrix(void* idx, idx_type type, int x, int y, int zoomx
 	if(mutex != NULL) mutex->lock();
 	int order = static_cast<Idx<double>*>(idx)->order();
 	if(order != 3){
-		ylerror("designed for idx3 only !");
+		eblerror("designed for idx3 only !");
 		if(mutex != NULL) mutex->unlock();
 		return;
 	}

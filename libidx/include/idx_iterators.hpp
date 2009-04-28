@@ -423,7 +423,7 @@ ScalarIter<T>::operator--(int){
 //		case ScalarIter_Base<T>::NONCONTIGUOUS:
 //			decr_noncontiguous();
 //		default:
-//			ylerror("Unrecognized IncrType.");
+//			eblerror("Unrecognized IncrType.");
 //	}
 //	return *this;
 //}
@@ -544,7 +544,7 @@ DimIter_Base<T>::DimIter_Base(idx<T>& i, int dimInd)
 //	 		 (this->subtensor.spec.offset + this->dimMod * idx.spec.dim[dimInd]))
 {
 	if( dimInd < 0 ){
-		ylerror("DimIter_Base: negative looping dimension");
+		eblerror("DimIter_Base: negative looping dimension");
 		dimInd += i.order();
 	}
 	//this->subtensor = idx.select(dimInd,0);

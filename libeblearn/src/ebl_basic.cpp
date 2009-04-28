@@ -58,7 +58,7 @@ namespace ebl {
     idx<double> indx = in.dx.view_as_order(1); // view as 1D idx
     idx<double> outdx = out.dx.view_as_order(1); // view as 1D idx
     idx<double> twx(w.x.transpose(0, 1)); // switch dimensions 0 and 1
-    if (outdx.nelements() != w.dx.dim(0)) ylerror("output has wrong size");
+    if (outdx.nelements() != w.dx.dim(0)) eblerror("output has wrong size");
 
     idx_m1extm1acc(outdx, inx, w.dx); // backprop to weights
     idx_m2dotm1acc(twx, outdx, indx); // backprop to input
@@ -69,7 +69,7 @@ namespace ebl {
     idx<double> inddx = in.ddx.view_as_order(1); // view as 1D idx
     idx<double> outddx = out.ddx.view_as_order(1); // view as 1D idx
     idx<double> twx = w.x.transpose(0, 1); // switch dimensions 0 and 1
-    if (outddx.nelements() != w.ddx.dim(0)) ylerror("output has wrong size");
+    if (outddx.nelements() != w.ddx.dim(0)) eblerror("output has wrong size");
 
     idx_m1squextm1acc(outddx, inx, w.ddx); // backprop to weights
     idx_m2squdotm1acc(twx, outddx, inddx); // backprop to input
@@ -107,7 +107,7 @@ namespace ebl {
     if (table.dim(1) != 2) { // check table order
       cerr << "error: expecting a table with dim 1 equal to 2 but found: ";
       cerr << table << endl;
-      ylerror("connection table error");
+      eblerror("connection table error");
     }
     idx<intg> tbl0 = table.select(1, 0);
     tablemax = idx_max(tbl0);
@@ -218,7 +218,7 @@ namespace ebl {
     if (in.x.dim(0) < tablemax + 1) {
       cerr << "error: expecting input with size " << tablemax + 1;
       cerr << " in dimension 0 but found: " << in.x << endl;
-      ylerror("input size error");
+      eblerror("input size error");
     }
     if (!warnings_shown && (in.x.dim(0) > tablemax + 1)) {
       warnings_shown = true;
@@ -229,9 +229,9 @@ namespace ebl {
     // check sizes
     if (((sini - (ki - stridei)) % stridei != 0) || 
 	((sinj - (kj - stridej)) % stridej != 0))
-      ylerror("inconsistent input size, kernel size, and subsampling ratio.");
+      eblerror("inconsistent input size, kernel size, and subsampling ratio.");
     if ((stridei != 1) || (stridej != 1))
-      ylerror("stride > 1 not implemented yet.");
+      eblerror("stride > 1 not implemented yet.");
     // unfolding input for a faster convolution operation
     idx<double> uuin(in.x.unfold(1, ki, stridei));
     uuin = uuin.unfold(2, kj, stridej);
@@ -313,7 +313,7 @@ namespace ebl {
     intg sj = sin_j / stridej;
     // check sizes
     if ((sin_i % stridei) != 0 || (sin_j % stridej) != 0)
-      ylerror("inconsistent input size and subsampling ratio");
+      eblerror("inconsistent input size and subsampling ratio");
     // resize output and sub based in input dimensions
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(1, si); // new size after subsampling
@@ -348,7 +348,7 @@ namespace ebl {
 
   void addc_module::bprop(state_idx& in, state_idx& out) {
     if ((&in != &out) && (in.dx.nelements() != out.dx.nelements()))
-      ylerror("output has wrong size");
+      eblerror("output has wrong size");
     
     idx_bloop3(indx, in.dx, double, biasdx, bias.dx, double, 
 	       outdx, out.dx, double) {
@@ -360,7 +360,7 @@ namespace ebl {
 
   void addc_module::bbprop(state_idx& in, state_idx& out) {
     if ((&in != &out) && (in.ddx.nelements() != out.ddx.nelements()))
-      ylerror("output has wrong size");
+      eblerror("output has wrong size");
     
     idx_bloop3(inddx, in.ddx, double, biasddx, bias.ddx, double, 
 	       outddx, out.ddx, double) {
@@ -392,9 +392,9 @@ namespace ebl {
 
 //     if (((sini - (ki - stridei) % stridei) != 0) ||
 // 	((sinj - (kj - stridej) % stridej) != 0))
-//       ylerror("inconsistent input size, kernel size, and subsampling ratio.");
+//       eblerror("inconsistent input size, kernel size, and subsampling ratio.");
 //     if ((stridei != 1) || (stridej != 1))
-//       ylerror("stride > 1 not implemented yet.");
+//       eblerror("stride > 1 not implemented yet.");
 //     idx<double> uuin = in->x.unfold(1, ki, stridei);
 //     uuin = uuin.spec.unfold_inplace(2, kj, stridej);
 //     idx<double> lki = idx<double>(kernel->x.dim(1), kernel->x.dim(2));

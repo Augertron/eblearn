@@ -127,13 +127,13 @@ namespace ebl {
 
       // Error-check the supplied number of dims.
       if( ndim == 0 ){
-	ylerror("Cannot call resize on a 0-dimensional idxspec.");
+	eblerror("Cannot call resize on a 0-dimensional idxspec.");
       }
       else if( ndim != nArgDims ){
 	std::ostringstream oss;
 	oss<<"Number of supplied dimension sizes ("<<nArgDims;
 	oss<<") doesn't match idxspec's number of dims ("<<ndim<<")";
-	ylerror(oss.str().c_str());
+	eblerror(oss.str().c_str());
       }
 
       // copy dimensions to dim
@@ -360,7 +360,7 @@ namespace ebl {
     // (even without default operator below).
     // default operator below outputs an error that this is forbidden.
     virtual idx<T>& operator=(T other){
-      ylerror("Forbidden idx assignment. idx can only be assigned another idx");
+      eblerror("Forbidden idx assignment. idx can only be assigned another idx");
       return *this;
     }
 
@@ -510,7 +510,7 @@ namespace ebl {
 	std::ostringstream oss;
 	oss<<"Number of dimensions ("<<ndims<<") exceeds MAX_DIMS (";
 	oss<<MAXDIMS<<")";
-	ylerror(oss.str().c_str());
+	eblerror(oss.str().c_str());
       }
 
       std::vector<T> sizes(ndims+1);
@@ -613,7 +613,7 @@ namespace ebl {
     //  T &operator*() {
     //    if (spec.ndim==0) {
     //      return *(storage->data + spec.offset);
-    //    } else { ylerror("idx::operator*: only an idx0 can be dereferenced");}
+    //    } else { eblerror("idx::operator*: only an idx0 can be dereferenced");}
     //  }
  
     //! return true if this idx has same order and dimensions as idxdim d.
@@ -635,7 +635,7 @@ namespace ebl {
     virtual T *idx_ptr() {  return storage->data + spec.offset; }
 
     //! return a pointer to an element (idx0 version)
-    virtual T *ptr() { if (spec.ndim != 0) ylerror("not an idx0"); 
+    virtual T *ptr() { if (spec.ndim != 0) eblerror("not an idx0"); 
       return storage->data + spec.offset; }
 
     //! return a pointer to an element (idx1 version)

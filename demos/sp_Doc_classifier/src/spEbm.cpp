@@ -80,7 +80,7 @@ void state_spidx::resize(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5, i
 void state_spidx::resizeAs(state_spidx &s)
 {
 	if (x.order() != s.x.order())
-		ylerror("State_spIdx::resizeAs accepts states with same number of dimensions");
+		eblerror("State_spIdx::resizeAs accepts states with same number of dimensions");
 	intg dims[8] ={-1,-1,-1,-1,-1,-1,-1,-1};
 	for (int i=0; i<x.order(); i++){
 		dims[i] = s.x.dim(i);
@@ -164,7 +164,7 @@ void sp_linear_module::normalize(){
 sp_logsoftmax_module::sp_logsoftmax_module(double b, Idx<ubyte> *classes){
 	intg imax = idx_max(*classes);
 	intg imin = idx_min(*classes);
-	if (imin < 0) ylerror("labels must be positive");
+	if (imin < 0) eblerror("labels must be positive");
 	if (imax > 100000) printf("warning: [edist-cost] largest label is huuuge\n");
 	classindex2label = Idx<ubyte>(1 + imax);
 	{ idx_bloop1(v, classindex2label, ubyte) {
