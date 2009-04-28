@@ -86,10 +86,10 @@ public:
 	intg nelements();
 
 	//! return footprint in storages
-	intg footprint(){ ylerror("Not implemented for state_spidx"); return 0;}
+	intg footprint(){ eblerror("Not implemented for state_spidx"); return 0;}
 
 	//! same as footprint
-	intg size(){ ylerror("Not implemented for state_spidx"); return 0;}
+	intg size(){ eblerror("Not implemented for state_spidx"); return 0;}
 
 	//! update with gradient descent
 	void update_gd(gd_param &arg);
@@ -100,11 +100,11 @@ public:
 
 	void resizeAs(state_spidx &s);
 
-	void resize(const intg* dimsBegin, const intg* dimsEnd){ ylerror("Not implemented for state_spidx");}
+	void resize(const intg* dimsBegin, const intg* dimsEnd){ eblerror("Not implemented for state_spidx");}
 
 	//! make a new copy of self
 	state_spidx make_spcopy();
-	state_idx make_copy(){ylerror("Make_copy not implemented for state_spidx, use make_spcopy instead"); state_idx bla; return bla;}
+	state_idx make_copy(){eblerror("Make_copy not implemented for state_spidx, use make_spcopy instead"); state_idx bla; return bla;}
 };
 
 ////////////////////////////////////////////////////////////////

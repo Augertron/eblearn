@@ -183,7 +183,7 @@ namespace ebl {
     bool binocular = false;
     if (!exists(imgp)) {
       cerr << "cannot find path: " << imgp.string() << endl;
-      ylerror("imagedir_to_idx: path does not exist");
+      eblerror("imagedir_to_idx: path does not exist");
       return false;
     }
     // build class list
@@ -198,7 +198,7 @@ namespace ebl {
       }
     }
     if (nclasses == 0) {
-      ylerror("ImageDirToidx: no classes found");
+      eblerror("ImageDirToidx: no classes found");
       return false;
     }
     if (verbose) {

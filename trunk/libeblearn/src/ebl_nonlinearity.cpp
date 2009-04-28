@@ -90,7 +90,7 @@ namespace ebl {
 
   void softmax::resize_nsame(state_idx &in, state_idx &out, int n){
     int nmax = in.x.order();
-    if(n==0||n>nmax) {ylerror("illegal type")}
+    if(n==0||n>nmax) {eblerror("illegal type")}
     else{
       switch(n){
       case 1: out.resize(in.x.dim(0));
@@ -121,7 +121,7 @@ namespace ebl {
     }
     else {
       resize_nsame(in, out, n);
-      if( n > 6) {ylerror("illegal type")}
+      if( n > 6) {eblerror("illegal type")}
       else{
 	idx<double> pp(new Srg<double>(), in.x.spec);
 	idx<double> dot(new Srg<double>(), in.x.spec);
@@ -138,7 +138,7 @@ namespace ebl {
   void softmax::bprop( state_idx &in, state_idx &out){
     int n = in.x.order();
     if( n == 0) return;
-    if( n > 6 ) { ylerror("illegal type")}
+    if( n > 6 ) { eblerror("illegal type")}
     else{
       idx<double> pp(new Srg<double>(), out.dx.spec);
       idx<double> mul(new Srg<double>(), out.dx.spec);
@@ -152,7 +152,7 @@ namespace ebl {
   void softmax::bbprop( state_idx &in, state_idx &out){
     int n = in.x.order();
     if( n == 0) return;
-    if( n > 6 ) { ylerror("illegal type")}
+    if( n > 6 ) { eblerror("illegal type")}
     else{
       idx<double> mul(new Srg<double>(), out.x.spec);
       idx<double> dot(new Srg<double>(), out.x.spec);

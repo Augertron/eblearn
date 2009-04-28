@@ -236,7 +236,7 @@ namespace ebl {
   template<class T>
   void layers_n<T>::add_module(module_1_1 <T, T>* module, T* hidden) {
     if (modules->size() > hiddens->size())
-      ylerror("Inconsistency in layers_n, probably you have passed null \
+      eblerror("Inconsistency in layers_n, probably you have passed null \
 hidden layer before");
 
     modules->push_back(module);
@@ -244,7 +244,7 @@ hidden layer before");
       hiddens->push_back(hidden);
 
     if (modules->size() - hiddens->size() > 1)
-      ylerror("Inconsistency in layers_n, probably you did not allocate enough \
+      eblerror("Inconsistency in layers_n, probably you did not allocate enough \
 hidden states in layers_n");
   }
 
@@ -256,7 +256,7 @@ hidden states in layers_n");
   template<class T>
   void layers_n<T>::fprop(T& in, T& out){
     if (modules->empty())
-      ylerror("trying to fprop through empty layers_n");
+      eblerror("trying to fprop through empty layers_n");
 
     T* hi = &in;
     T* ho = &in;
@@ -274,7 +274,7 @@ hidden states in layers_n");
   template<class T>
   void layers_n<T>::bprop(T& in, T& out){
     if (modules->empty())
-      ylerror("trying to bprop through empty layers_n");
+      eblerror("trying to bprop through empty layers_n");
 
     // clear hidden states
     for (unsigned int i=0; i<hiddens->size(); i++){
@@ -296,7 +296,7 @@ hidden states in layers_n");
   template<class T>
   void layers_n<T>::bbprop(T& in, T& out){
     if (modules->empty())
-      ylerror("trying to bbprop through empty layers_n");
+      eblerror("trying to bbprop through empty layers_n");
 
     // clear hidden states
     for (unsigned int i=0; i<hiddens->size(); i++){
@@ -319,7 +319,7 @@ hidden states in layers_n");
   template<class T>
   void layers_n<T>::forget(forget_param_linear& fp){
     if (modules->empty())
-      ylerror("trying to forget through empty layers_n");
+      eblerror("trying to forget through empty layers_n");
 
     for(unsigned int i=0; i<modules->size(); i++){
       module_1_1<state_idx,state_idx> *tt = (*modules)[i];
@@ -330,7 +330,7 @@ hidden states in layers_n");
   template<class T>
   void layers_n<T>::normalize(){
     if (modules->empty())
-      ylerror("trying to normalize through empty layers_n");
+      eblerror("trying to normalize through empty layers_n");
 
     for(unsigned int i=0; i<modules->size(); i++){
       (*modules)[i]->normalize();
@@ -459,7 +459,7 @@ hidden states in layers_n");
     if (m.replicable_order() == in.x.order()) {
       m.T::fprop(in, out);
     } else if (m.replicable_order() > in.x.order()) {
-      ylerror("the order of the input should be greater or equal to module's\
+      eblerror("the order of the input should be greater or equal to module's\
  operating order");
     } else {
       state_idx_eloop2(iin, in, oout, out) {
@@ -475,7 +475,7 @@ hidden states in layers_n");
     if (m.replicable_order() == in.x.order()) {
       m.T::bprop(in, out);
     } else if (m.replicable_order() > in.x.order()) {
-      ylerror("the order of the input should be greater or equal to module's\
+      eblerror("the order of the input should be greater or equal to module's\
  operating order");
     } else {
       state_idx_eloop2(iin, in, oout, out) {
@@ -491,7 +491,7 @@ hidden states in layers_n");
     if (m.replicable_order() == in.x.order()) {
       m.T::bbprop(in, out);
     } else if (m.replicable_order() > in.x.order()) {
-      ylerror("the order of the input should be greater or equal to module's\
+      eblerror("the order of the input should be greater or equal to module's\
  operating order");
     } else {
       state_idx_eloop2(iin, in, oout, out) {

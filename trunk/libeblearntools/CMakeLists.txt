@@ -68,23 +68,23 @@ IF (NOT Boost_FOUND)
 ENDIF (NOT Boost_FOUND) #-------------------------------------------------------
 
 IF (OpenCV_FOUND) #-------------------------------------------------------------
-# compile library
-################################################################################
-add_executable (videoffinder
-  src/video_features_finder.cpp
-  src/similar_patches.cpp
-  )
+# # compile library
+# ################################################################################
+# add_executable (videoffinder
+#   src/video_features_finder.cpp
+#   src/similar_patches.cpp
+#   )
 
-# link executable with external libraries
-################################################################################
-target_link_libraries (videoffinder eblearn idx)
-IF (QT_FOUND)
-  target_link_libraries (videoffinder idxgui)
-ENDIF (QT_FOUND)
-IF (OpenCV_FOUND)
-  target_link_libraries (videoffinder cv highgui cxcore)
-ENDIF (OpenCV_FOUND)
+# # link executable with external libraries
+# ################################################################################
+# target_link_libraries (videoffinder eblearn idx)
+# IF (QT_FOUND)
+#   target_link_libraries (videoffinder idxgui)
+# ENDIF (QT_FOUND)
+# IF (OpenCV_FOUND)
+#   target_link_libraries (videoffinder cv highgui cxcore)
+# ENDIF (OpenCV_FOUND)
 
-ELSE (OpenCV_FOUND)
-  MESSAGE(STATUS "___WARNING___: videoffinder won't be compiled because of missing OpenCV libraries.")
+# ELSE (OpenCV_FOUND)
+#   MESSAGE(STATUS "___WARNING___: videoffinder won't be compiled because of missing OpenCV libraries.")
 ENDIF (OpenCV_FOUND) #----------------------------------------------------------

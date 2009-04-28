@@ -58,7 +58,7 @@ namespace ebl {
     value = v;
     exponent = e;
     if (e == 0)
-      ylerror("Cannot use an exponent of 0 in forget param");
+      eblerror("Cannot use an exponent of 0 in forget param");
   }
 
   ////////////////////////////////////////////////////////////////
@@ -349,7 +349,7 @@ namespace ebl {
     : state_idx(1), gradient(1), deltax(1), epsilons(1), ddeltax(1) {
     if (!load_x(param_filename)) {
       cerr << "failed to open " << param_filename << endl;
-      ylerror("failed to load parameter file in parameter constructor");
+      eblerror("failed to load parameter file in parameter constructor");
     }
   }
 

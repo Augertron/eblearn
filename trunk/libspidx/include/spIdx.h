@@ -110,7 +110,7 @@ template <class T> class spIdx : public Idx<T> {
 
 
 	  spIdx<T>& operator=(T other){
-		  ylerror("Forbidden spIdx assignment. spIdx can only be assigned another spIdx.");
+		  eblerror("Forbidden spIdx assignment. spIdx can only be assigned another spIdx.");
 		  return *this;
 	  }
 
@@ -223,25 +223,25 @@ template <class T> class spIdx : public Idx<T> {
   public:
 
 
-	  intg setoffset(intg o){ ylerror("Not implemented for spIdx"); return 0;}
-	  void resize_chunk(intg s_chunk, intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1, intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1){ ylerror("Not implemented for spIdx")}
-	  template<typename SizeIter> void resize( SizeIter& sizesBegin, SizeIter& sizesEnd ){ ylerror("Not implemented for spIdx")}
-	  Idx<T> unfold(int d, intg k, intg s){ ylerror("Not implemented for spIdx"); spIdx<T> bla; return bla;}
-	  Srg<T> *getstorage(){ ylerror("Not implemented for spIdx"); return NULL;}
-	  intg mod(int d) { ylerror("Not implemented for spIdx"); return 0;}
-	  const intg* mods(){ ylerror("Not implemented for spIdx"); return 0;}
-	  intg offset() { ylerror("Not implemented for spIdx"); return 0;}
-	  intg footprint() { ylerror("Not implemented for spIdx"); return 0;}
-	  bool contiguousp() { ylerror("Not implemented for spIdx"); return false;}
-	  T *idx_ptr() { ylerror("Not implemented for spIdx"); return 0;}
-	  T *ptr() { ylerror("Not implemented for spIdx"); return 0;}
-	  T *ptr(intg i0){ ylerror("Not implemented for spIdx"); return 0;}
-	  T *ptr(intg i0, intg i1){ ylerror("Not implemented for spIdx"); return 0;}
-	  T *ptr(intg i0, intg i1, intg i2){ ylerror("Not implemented for spIdx"); return 0;}
-	  T *ptr(intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, intg i6=-1, intg i7=-1){ ylerror("Not implemented for spIdx"); return 0;}
-	  T get(){ ylerror("Not implemented for spIdx"); return 0;}
-	  T set(T val){ ylerror("Not implemented for spIdx"); return 0;}
-	  int fdump(FILE *f){ ylerror("Not implemented for spIdx"); return 0;}
+	  intg setoffset(intg o){ eblerror("Not implemented for spIdx"); return 0;}
+	  void resize_chunk(intg s_chunk, intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1, intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1){ eblerror("Not implemented for spIdx")}
+	  template<typename SizeIter> void resize( SizeIter& sizesBegin, SizeIter& sizesEnd ){ eblerror("Not implemented for spIdx")}
+	  Idx<T> unfold(int d, intg k, intg s){ eblerror("Not implemented for spIdx"); spIdx<T> bla; return bla;}
+	  Srg<T> *getstorage(){ eblerror("Not implemented for spIdx"); return NULL;}
+	  intg mod(int d) { eblerror("Not implemented for spIdx"); return 0;}
+	  const intg* mods(){ eblerror("Not implemented for spIdx"); return 0;}
+	  intg offset() { eblerror("Not implemented for spIdx"); return 0;}
+	  intg footprint() { eblerror("Not implemented for spIdx"); return 0;}
+	  bool contiguousp() { eblerror("Not implemented for spIdx"); return false;}
+	  T *idx_ptr() { eblerror("Not implemented for spIdx"); return 0;}
+	  T *ptr() { eblerror("Not implemented for spIdx"); return 0;}
+	  T *ptr(intg i0){ eblerror("Not implemented for spIdx"); return 0;}
+	  T *ptr(intg i0, intg i1){ eblerror("Not implemented for spIdx"); return 0;}
+	  T *ptr(intg i0, intg i1, intg i2){ eblerror("Not implemented for spIdx"); return 0;}
+	  T *ptr(intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, intg i6=-1, intg i7=-1){ eblerror("Not implemented for spIdx"); return 0;}
+	  T get(){ eblerror("Not implemented for spIdx"); return 0;}
+	  T set(T val){ eblerror("Not implemented for spIdx"); return 0;}
+	  int fdump(FILE *f){ eblerror("Not implemented for spIdx"); return 0;}
 
 
 };

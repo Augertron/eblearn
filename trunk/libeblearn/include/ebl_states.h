@@ -292,7 +292,7 @@ namespace ebl {
 
 #define state_idx_eloop2(dst0,src0,dst1,src1)				\
   if ((src0).x.dim((src0).x.order() - 1) != (src1).x.dim((src1).x.order() - 1))\
-    ylerror("incompatible state_idx for eloop\n");			\
+    eblerror("incompatible state_idx for eloop\n");			\
   state_idxlooper dst0(src0,(src0).x.order()-1);			\
   state_idxlooper dst1(src1,(src1).x.order()-1);			\
   for ( ; dst0.notdone(); dst0.next(), dst1.next())
@@ -302,7 +302,7 @@ namespace ebl {
        != (src1).x.dim((src1).x.order() - 1))				\
       || ((src0).x.dim((src0).x.order() - 1)				\
 	  != (src2).x.dim((src2).x.order() - 1)))			\
-    ylerror("incompatible idxs for eloop\n");				\
+    eblerror("incompatible idxs for eloop\n");				\
   state_idxlooper dst0(src0,(src0).x.order()-1);			\
   state_idxlooper dst1(src1,(src1).x.order()-1);			\
   state_idxlooper dst2(src2,(src2).x.order()-1);			\

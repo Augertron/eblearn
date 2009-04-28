@@ -203,7 +203,7 @@ namespace ebl {
   int choose(int n, int k) {
     if (k > n) {
       std::cerr << "n choose k with n = " << n << " and k = " << k << std::endl;
-      ylerror("n choose k: k must be <= n");
+      eblerror("n choose k: k must be <= n");
     }
     int nk = n - k;
     int nf, kf, nkf;

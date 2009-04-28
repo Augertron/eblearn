@@ -94,7 +94,7 @@ template<class T> spIdx<T>::spIdx(intg Nelemmax, intg s0, intg s1, intg s2, intg
 		} else { if (ndimset) { throw(-1); } }
 		if (!ndimset) { throw(0); }
 	}
-	catch(int v) { ylerror("spIdx: bad dimensions in constructor"); }
+	catch(int v) { eblerror("spIdx: bad dimensions in constructor"); }
 	myvalues = new Idx<T>(N);
 	myindex = new Idx<intg>(N, ndim);
 	nelem = 0;
@@ -140,7 +140,7 @@ template<class T> spIdx<T>::spIdx(intg Nelemmax, intg o, Srg<T> *srg, intg s0, i
 		} else { if (ndimset) { throw(-1); } }
 		if (!ndimset) { throw(0); }
 	}
-	catch(int v) { ylerror("spIdx: bad dimensions in constructor"); }
+	catch(int v) { eblerror("spIdx: bad dimensions in constructor"); }
 	myvalues = new Idx<T>(srg, o, N);
 	myindex = new Idx<intg>(N, ndim);
 	nelem = 0;
@@ -167,9 +167,9 @@ template<class T> spIdx<T>::~spIdx(){
 
 
 template<class T> spIdx<T> spIdx<T>::select(int d, intg i){
-	if(ndim == 1) {ylerror("select : cannot use select on a 1-dim spIdx"); return *this;}
-	if((d >= ndim) || (d < 0)) { ylerror("select : illegal dimension index"); return *this;}
-	if((i > mydims[d]) || (i < 0 )) { ylerror("select : illegal offset"); return *this;}
+	if(ndim == 1) {eblerror("select : cannot use select on a 1-dim spIdx"); return *this;}
+	if((d >= ndim) || (d < 0)) { eblerror("select : illegal dimension index"); return *this;}
+	if((i > mydims[d]) || (i < 0 )) { eblerror("select : illegal offset"); return *this;}
 
 	intg newdim[this->ndim-1];
 	for(int j =0; j< d; j++) newdim[j] = mydims[j];
@@ -198,7 +198,7 @@ template<class T> spIdx<T> spIdx<T>::narrow(int d, intg s, intg o){
 		if ((d < 0) || (d>=ndim)) throw("narrow: illegal dimension index");
 		if ((o < 0)||(s < 1)||(s+o > mydims[d])) throw("narrow: illegal size/offset");
 	}
-	catch(const char *s) { ylerror(s); return *this;}
+	catch(const char *s) { eblerror(s); return *this;}
 
 	intg newdim[this->ndim];
 	for(int j =0; j< this->ndim; j++){
@@ -227,9 +227,9 @@ template<class T> spIdx<T> spIdx<T>::narrow(int d, intg s, intg o){
 }
 
 template<class T> void spIdx<T>::resize(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5, intg s6, intg s7){
-	if(!has_right_dimension(s0, s1, s2, s3, s4, s5, s6, s7)) { ylerror("resize : wrong number of parameters"); return;}
+	if(!has_right_dimension(s0, s1, s2, s3, s4, s5, s6, s7)) { eblerror("resize : wrong number of parameters"); return;}
 	intg dims[8] = {s0, s1, s2, s3, s4, s5, s6, s7};
-	for(int i = 0; i < ndim; i++) if(dims[i] <=0){ ylerror("resize : wrong parameters"); return;}
+	for(int i = 0; i < ndim; i++) if(dims[i] <=0){ eblerror("resize : wrong parameters"); return;}
 	if(!((s0 >= mydims[0])
 			|| ((ndim >= 2) && (s1 >= mydims[1]))
 			|| ((ndim >= 3) && (s2 >= mydims[2]))
@@ -271,7 +271,7 @@ template<class T> void spIdx<T>::resize(intg s0, intg s1, intg s2, intg s3, intg
 }
 
 template<class T> spIdx<T> spIdx<T>::transpose(int d1, int d2){
-	if((d1 < 0) || (d1 > ndim-1) || (d2 < 0) || (d2 > ndim-1)) { ylerror("transpose : selected dimensions do not exist in spIdx\n"); return *this;}
+	if((d1 < 0) || (d1 > ndim-1) || (d2 < 0) || (d2 > ndim-1)) { eblerror("transpose : selected dimensions do not exist in spIdx\n"); return *this;}
 	spIdx<T> res(myvalues->dim(0), ndim, mydims);
 	idx_copy(*this, res);
 	res.mydims[d1] = this->mydims[d2];
@@ -287,7 +287,7 @@ template<class T> spIdx<T> spIdx<T>::transpose(int d1, int d2){
 
 template<class T> spIdx<T> spIdx<T>::transpose(int *p){
 	for (int i=0; i<ndim; i++) {
-		if ((p[i] < 0) || (p[i] >= ndim)) ylerror("tranpose: illegal dimension index");
+		if ((p[i] < 0) || (p[i] >= ndim)) eblerror("tranpose: illegal dimension index");
 	}
 	spIdx<T> res(myvalues->dim(0), this->ndim, this->mydims);
 	res.set_nelements(nelem);
@@ -433,9 +433,9 @@ template<class T> void spIdx<T>::index_to_pos(intg pos, intg &i0, intg &i1, intg
 }
 
 template<class T> T spIdx<T>::get(intg i0, intg i1, intg i2, intg i3, intg i4, intg i5, intg i6, intg i7){
-	if(!has_right_dimension(i0, i1, i2, i3, i4, i5, i6, i7)){ylerror("spIdx: bad number of arguments in get"); return (T)BACKGROUND;}
+	if(!has_right_dimension(i0, i1, i2, i3, i4, i5, i6, i7)){eblerror("spIdx: bad number of arguments in get"); return (T)BACKGROUND;}
 	if(!is_within_bounds(i0, i1, i2, i3, i4, i5, i6, i7)){
-		ylerror("spIdx: bad index in get");
+		eblerror("spIdx: bad index in get");
 		return (T)BACKGROUND;
 	}
 	intg pos = pos_to_index(i0, i1, i2, i3, i4, i5, i6, i7);
@@ -448,9 +448,9 @@ template<class T> T spIdx<T>::get(intg i0, intg i1, intg i2, intg i3, intg i4, i
 }
 
 template<class T> T spIdx<T>::set(T val, intg i0, intg i1, intg i2, intg i3, intg i4, intg i5, intg i6, intg i7){
-	if(!has_right_dimension(i0, i1, i2, i3, i4, i5, i6, i7)) {ylerror("spIdx: bad number of arguments in set"); return (T)BACKGROUND; };
+	if(!has_right_dimension(i0, i1, i2, i3, i4, i5, i6, i7)) {eblerror("spIdx: bad number of arguments in set"); return (T)BACKGROUND; };
 	if(!is_within_bounds(i0, i1, i2, i3, i4, i5, i6, i7)){
-		ylerror("spIdx: bad index in set");
+		eblerror("spIdx: bad index in set");
 		return (T)BACKGROUND;
 	}
 	intg pos = pos_to_index(i0, i1, i2, i3, i4, i5, i6, i7);

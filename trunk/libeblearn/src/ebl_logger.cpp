@@ -60,7 +60,7 @@ namespace ebl {
   }
 
   void classifier_meter::resize (intg sz) {
-    ylerror("not implemented");
+    eblerror("not implemented");
   }
 
   char classifier_meter::update(intg a, class_state *co, ubyte cd, 

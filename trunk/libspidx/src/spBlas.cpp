@@ -25,7 +25,7 @@ double idx_dot(spIdx<double> &i1, spIdx<double> &i2){
 		}
 		return z;
 	}
-	ylerror("idx_dot : spIdx don't have the same order");
+	eblerror("idx_dot : spIdx don't have the same order");
 	return 0;
 }
 
@@ -46,7 +46,7 @@ float idx_dot(spIdx<float> &i1, spIdx<float> &i2){
 		}
 		return z;
 	}
-	ylerror("idx_dot : spIdx don't have the same order");
+	eblerror("idx_dot : spIdx don't have the same order");
 	return 0;
 }
 
@@ -67,7 +67,7 @@ double idx_dot(spIdx<double> &i1, Idx<double> &i2){
 		}
 		return z;
 	}
-	ylerror("idx_dot : spIdx don't have the same order");
+	eblerror("idx_dot : spIdx don't have the same order");
 	return 0;
 }
 
@@ -88,7 +88,7 @@ float idx_dot(spIdx<float> &i1, Idx<float> &i2){
 		}
 		return z;
 	}
-	ylerror("idx_dot : spIdx don't have the same order");
+	eblerror("idx_dot : spIdx don't have the same order");
 	return 0;
 }
 

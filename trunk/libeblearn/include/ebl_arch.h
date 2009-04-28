@@ -235,7 +235,7 @@ namespace ebl {
     module_1_1_replicable<base_module> rep;				\
     replicable_module types_arguments : base_module arguments, rep(*this) { \
       bResize = false;							\
-      if (replicable_order() <= 0) ylerror("this module is not replicable"); } \
+      if (replicable_order() <= 0) eblerror("this module is not replicable"); } \
     virtual ~replicable_module() {}					\
     virtual void fprop(state_idx &in, state_idx &out) { rep.fprop(in, out); } \
     virtual void bprop(state_idx &in, state_idx &out) { rep.bprop(in, out); } \

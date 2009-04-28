@@ -96,7 +96,7 @@ namespace ebl {
       case 2: manipFun2(r, val1, val2); break ;
       case 8: manipFun8(r, val1, val2, val3, val4, val5, val6, val7, val8);
 	break ;
-      default: ylerror("unknown mode");
+      default: eblerror("unknown mode");
       }
     }
   private:

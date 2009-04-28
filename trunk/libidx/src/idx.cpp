@@ -66,7 +66,7 @@ namespace ebl {
       }
     }
     catch(const char *s) {
-      ylerror(s);
+      eblerror(s);
       return -1;
     }
   }
@@ -88,7 +88,7 @@ namespace ebl {
       }
     }
     catch(const char *s) {
-      ylerror(s);
+      eblerror(s);
       return -1;
     }
   }
@@ -99,13 +99,13 @@ namespace ebl {
   //
   //	// Error-check the supplied number of dims.
   //	if( ndim == 0 ){
-  //		ylerror("Cannot call resize on a 0-dimensional idxspec.");	
+  //		eblerror("Cannot call resize on a 0-dimensional idxspec.");	
   //	}
   //	else if( ndim != nArgDims ){
   //		std::ostringstream oss;
   //		oss<<"Number of supplied dimension sizes ("<<nArgDims;
   //            oss<<") doesn't match idxspec's number of dims ("<<ndim<<")";
-  //		ylerror(oss.str().c_str());
+  //		eblerror(oss.str().c_str());
   //	}
   //	
   //	// copy dimensions to dim
@@ -163,13 +163,13 @@ namespace ebl {
     }
     catch(int v) { 
       if (v == 42) {
-	ylerror("Resizing non-contiguous idx is not allowed"); 
+	eblerror("Resizing non-contiguous idx is not allowed"); 
       }
       else {
 	fprintf(stderr,
 		"ndim=%d, sizes: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld\n",
 		ndim,s0,s1,s2,s3,s4,s5,s6,s6);
-	ylerror("idxspec::resize: dimensions are incompatible"); 
+	eblerror("idxspec::resize: dimensions are incompatible"); 
       }
     }
     return md + offset; // return new footprint
@@ -185,11 +185,11 @@ namespace ebl {
   // (order is not allowed to change)
   intg idxspec::resize1(intg dimn, intg size) {
     // resizeing non-contiguous is forbiden to prevent nasty bugs
-    if (!contiguousp()) ylerror("Resizing non-contiguous idx is not allowed"); 
+    if (!contiguousp()) eblerror("Resizing non-contiguous idx is not allowed"); 
     if ((dimn >= ndim) || (dimn < 0)) 
-      ylerror("idxspec::resize1: cannot resize an unallocated dimension");
+      eblerror("idxspec::resize1: cannot resize an unallocated dimension");
     if (size < 0)
-      ylerror("idxspec::resize1: cannot resize with a negative size");
+      eblerror("idxspec::resize1: cannot resize with a negative size");
     // since we know the current spec is valid, no need for error checking,
     // simply assign new dimension and propagate new mods.
     dim[dimn] = size;
@@ -265,7 +265,7 @@ namespace ebl {
   // constructor for idx1
   idxspec::idxspec(intg o, intg size0) {
     if ( size0 < 0) { 
-      ylerror("negative dimension"); }
+      eblerror("negative dimension"); }
     dim = NULL; mod = NULL;
     offset = o;
     ndim = 0; // required in constructors to avoid side effects in setndim
@@ -277,7 +277,7 @@ namespace ebl {
   // constructor for idx2
   idxspec::idxspec(intg o, intg size0, intg size1) {
     if ( (size0<0)||(size1<0)) { 
-      ylerror("negative dimension"); }
+      eblerror("negative dimension"); }
     dim = NULL; mod = NULL;
     offset = o;
     ndim = 0; // required in constructors to avoid side effects in setndim
@@ -291,7 +291,7 @@ namespace ebl {
   // constructor for idx3
   idxspec::idxspec(intg o, intg size0, intg size1, intg size2) {
     if ( (size0<0)||(size1<0)||(size2<0)) { 
-      ylerror("negative dimension"); }
+      eblerror("negative dimension"); }
     dim = NULL; mod = NULL;
     offset = o;
     ndim = 0; // required in constructors to avoid side effects in setndim
@@ -354,7 +354,7 @@ namespace ebl {
       } else { if (ndimset) { throw(-1); } }
       if (!ndimset) { setndim(0); }
     }
-    catch(int v) { ylerror("idxspec: bad dimensions in constructor"); }
+    catch(int v) { eblerror("idxspec: bad dimensions in constructor"); }
   }
 
   idxspec::idxspec(intg o, const idxdim &d) {
@@ -371,7 +371,7 @@ namespace ebl {
     ndim = 0; // required in constructors to avoid side effects in setndim
     setndim(n);
     for (int i = 0; i < n; i++) { 
-      if (ldim[i] < 0) ylerror("negative dimension");
+      if (ldim[i] < 0) eblerror("negative dimension");
       dim[i] = ldim[i]; mod[i] = lmod[i]; 
     }
   }
@@ -447,12 +447,12 @@ namespace ebl {
   // 3. XXX: creates a new idxspec and returns it.
 
   intg idxspec::select_into(idxspec *dst, int d, intg n) {
-    if (ndim <= 0) ylerror("cannot select a scalar");
+    if (ndim <= 0) eblerror("cannot select a scalar");
     if ((n < 0) || (n >= dim[d])) {
       cerr << "error: trying to select layer " << n;
       cerr << " of dimension " << d << " which is of size ";
       cerr << dim[d] << "." << endl;
-      ylerror("idx::select error");
+      eblerror("idx::select error");
     }
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim-1);
@@ -494,7 +494,7 @@ namespace ebl {
 	throw("narrow: illegal size/offset");
       }
     }
-    catch(const char *s) { ylerror(s); return -1;}
+    catch(const char *s) { eblerror(s); return -1;}
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim);
     dst->offset = offset + o * mod[d];
@@ -527,7 +527,7 @@ namespace ebl {
 	  (d2 < 0) || (d2 >= ndim)) 
 	throw("tranpose: illegal dimension index");
     }
-    catch(const char *s) { ylerror(s); return -1;}
+    catch(const char *s) { eblerror(s); return -1;}
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim);
     dst->offset = offset;
@@ -550,7 +550,7 @@ namespace ebl {
 	  throw("tranpose: illegal dimension index");
       }
     }
-    catch(const char *s) { ylerror(s); return -1;}
+    catch(const char *s) { eblerror(s); return -1;}
     dst->setndim(ndim);
     dst->offset = offset;
     if (dst == this) {
@@ -608,7 +608,7 @@ namespace ebl {
       if ((ns <= 0) || ( dim[d] != s*(ns-1)+k )) 
 	throw("unfold: kernel and stride incompatible with size");
     }
-    catch(const char *s) { ylerror(s); return -1;}
+    catch(const char *s) { eblerror(s); return -1;}
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim+1);
     dst->offset = offset;
@@ -676,7 +676,7 @@ namespace ebl {
   
   void idxdim::setdim(intg dimn, intg size) {
     if (dimn >= ndim)
-      ylerror("cannot change the order of idxdim");
+      eblerror("cannot change the order of idxdim");
     dim[dimn] = size; 
   }
 

@@ -68,7 +68,7 @@ namespace ebl {
       }
     }
     else
-      ylerror("expected a Window* object");
+      eblerror("expected a Window* object");
   }
 
   void scroll_box::display_controls() {

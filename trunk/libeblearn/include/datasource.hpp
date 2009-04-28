@@ -268,19 +268,19 @@ namespace ebl {
     idx<Tlabel> train_labels(1), test_labels(1);
     if (!load_matrix<Tdata>(train_data, train_datafile.c_str())) {
       std::cerr << "Mnist dataset, failed to load " << train_datafile << endl;
-      ylerror("Failed to load dataset file");
+      eblerror("Failed to load dataset file");
     }
     if (!load_matrix<Tlabel>(train_labels, train_labelfile.c_str())) {
       std::cerr << "Mnist dataset, failed to load " << train_labelfile << endl;
-      ylerror("Failed to load dataset file");
+      eblerror("Failed to load dataset file");
     }
     if (!load_matrix<Tdata>(test_data, test_datafile.c_str())) {
       std::cerr << "Mnist dataset, failed to load " << test_datafile << endl;
-      ylerror("Failed to load dataset file");
+      eblerror("Failed to load dataset file");
     }
     if (!load_matrix<Tlabel>(test_labels, test_labelfile.c_str())) {
       std::cerr << "Mnist dataset, failed to load " << test_labelfile << endl;
-      ylerror("Failed to load dataset file");
+      eblerror("Failed to load dataset file");
     }
     
     // TODO: implement DataSourceNarrow instead of manually narrowing here.
@@ -303,9 +303,9 @@ namespace ebl {
   DataSourceNarrow<Tdata, Tlabel>::DataSourceNarrow(labeled_datasource<Tdata, Tlabel> *b,
   intg siz, intg off) {
   if ((siz + off) > b.size())
-  ylerror("illegal range for narrow-db");
+  eblerror("illegal range for narrow-db");
   if ((off < 0) || (siz < 0))
-  ylerror("offset and size of narrow-db must be positive");
+  eblerror("offset and size of narrow-db must be positive");
   base = b;
   offset = off;
   size = siz;
