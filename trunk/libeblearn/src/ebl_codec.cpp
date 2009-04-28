@@ -48,7 +48,7 @@ namespace ebl {
     // initialize z with a simple one-pass fprop through whole machine
     fprop_one_pass(in1, in2, energy);
     // now do gradient descent to find optimal code z
-    bprop_dec(in1, in2, energy);
+    bprop_optimal_code(in1, in2, energy);
   }
   
   // simple one-pass forward propagation
@@ -76,9 +76,48 @@ namespace ebl {
   }
   
   // multiple-pass bprop on the decoder only to find the optimal code z
-  void codec::bprop_dec(state_idx &in1, state_idx &in2, 
-			state_idx &energy) {
+  void codec::bprop_optimal_code(state_idx &in1, state_idx &in2, 
+				 state_idx &energy, gd_param &infp) {
     z.dx.clear();
+    bprop(y, z, energy); // bprop once to initialize energy
+    gd_param temp_ip(infp.eta, 0, 0, 0, 0, 0, 0, 0, 0); 
+    double old_energy = energy.x.get() + 1;
+    int cnt = 0;
+    int nrvar = z.size();
+    while ((cnt < infp.n)
+	   && check-code-threshold(z, infp)
+	   && (old-energy > energy.x.get())) {
+      old_energy = energy.x.get();
+      z.dx.clear();
+      // bprop through decoder /////////////////////////////////////
+      dec_out.dx.clear();
+      enc_out.dx.clear();
+      idx_dotc(energy.dx, weight_energy_dec, dec_energy.dx);
+      idx_dotc(energy.dx, weight_energy_z, z_energy.dx);
+      z_cost.bprop(z, z_energy);
+      enc_cost.bprop(enc_out, z, enc_energy);
+      dec_cost.bprop(dec_out, y, dec_energy);
+      decoder.bprop(z. dec_out);
+      z.update_gd(temp_ip);
+      // now fprop through decoder /////////////////////////////////
+      decoder.fprop(z, dec_out);
+      z_cost.fprop(z, z_energy);
+      enc_cost.fprop(enc_out, z, enc_energy);
+      dec_cost.fprop(dec_out, y, dec_energy);
+      // add up energy terms ///////////////////////////////////////
+      idx_dotcacc(enc_energy.x, weight_energy_enc, energy.x);
+      idx_dotcacc(dec_energy.x, weight_energy_dec, energy.x);
+      idx_dotcacc(z_energy.x, weight_energy_z, energy.x);
+      cnt++;
+      if ((cnt % infp.anneal_time) == 0)
+	temp_ip.eta *= infp.anneal_value;
+    }
+    /* TODO: for logging
+       (:nr-iter-infer:x cnt) 
+       (:exit-condition:x
+       (if (>= cnt :ip:n) 1 (if (< old-energy (:energy:x)) 3 2)))
+       (==> logger log-optimal this z)
+    */
   }
 
   void codec::bprop(state_idx &in1, state_idx &in2, state_idx &energy) {
