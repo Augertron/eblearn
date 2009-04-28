@@ -76,9 +76,13 @@ namespace ebl {
     //! normalize
     virtual void normalize();
 
+  protected:
     //! forward propagation of in1 and in2, a simple one pass propagation
     virtual void fprop_one_pass(state_idx &in1, state_idx &in2, 
 				state_idx &energy);
+    //! multiple-pass bprop on the decoder only to find the optimal code z
+    virtual void bprop_optimal_code(state_idx &in1, state_idx &in2, 
+				    state_idx &energy, gd_param &infp);
   };
 
 } // namespace ebl {
