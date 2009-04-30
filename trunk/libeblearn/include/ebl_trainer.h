@@ -41,16 +41,62 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  //! Generic Trainer
-  // TODO: templated generic trainer class
+  //! Generic Stochastic Gradient Trainer
+  template<class Tin1, class Tin2>
+    class stochastic_gd_trainer {
+  private:
+    int		                        iteration;
+    void	                       *iteration_ptr;
+
+  public:
+    fc_ebm2<Tin1,Tin2,state_idx>	&machine;
+    parameter				&param;
+    state_idx				 energy;
+    intg				 age;
+    Tin1				*in1;
+    Tin2				*in2;
+    
+    stochastic_gd_trainer(fc_ebm2<Tin1,Tin2,state_idx> &m, 
+			  parameter &p);
+    virtual ~stochastic_gd_trainer();
+
+    //! train for <niter> sweeps over the training set. <samples> contains the
+    //! inputs samples, and <labels> the corresponding desired categories
+    //! <labels>.
+    //! return the average energy computed on-the-fly.
+    //! <update-args> is a list of arguments for the parameter
+    //! update method (e.g. learning rate and weight decay).
+    //! if <compute_hessian> is true, then recompute the hessian matrix
+    //! every <hessian_interval> steps with the parameters <niter_hessian>
+    //! and <mu_hessian>.
+    void train(datasource<Tin1, Tin2> &ds, classifier_meter &log, 
+	       gd_param &args, int niter,
+	       bool compute_hessian, int hessian_interval,
+	       int niter_hessian, double mu_hessian);
+
+    //! train on one sample.
+    void train_sample(datasource<Tin1, Tin2> &ds, gd_param &args);
+
+    //! compute hessian
+    void compute_diaghessian(datasource<Tin1, Tin2> &ds, intg niter, 
+			     double mu);
+
+    //! Resize <input> based on the datasource. If <input> is not allocated,
+    //! allocate it. 
+    //! TODO: If order or dimensions have changed, reallocate.
+    void resize_input(datasource<Tin1, Tin2> &ds);
+
+    template <class T1, class T2>
+      friend class stochastic_gd_trainer_gui;
+  };
 
   ////////////////////////////////////////////////////////////////
   //! Supervised Trainer
   template<class Tdata, class Tlabel>
     class supervised_trainer {
   private:
-    int			 iteration;
-    void		*iteration_ptr;
+    int		                        iteration;
+    void	                       *iteration_ptr;
 
   public:
     fc_ebm2<state_idx,int,state_idx>	&machine;

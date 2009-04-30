@@ -19,6 +19,7 @@ ADD_LIBRARY (eblearn SHARED
 		     src/ebl_arch.cpp  
 		     src/ebl_states.cpp  
 		     src/ebl_cost.cpp  
+#		     src/ebl_codec.cpp  
 		     src/ebl_basic.cpp  
 		     src/ebl_nonlinearity.cpp  
 		     src/ebl_tester.cpp

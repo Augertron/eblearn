@@ -41,19 +41,66 @@ using namespace std;
 
 namespace ebl {
 
-  template<typename Tdata, typename Tlabel> class labeled_datasource {
+  ////////////////////////////////////////////////////////////////
+  //! datasource
+  template<typename Tin1, typename Tin2> class datasource {
   public:
     double					 bias;
     double					 coeff;
-    idx<Tdata>					 data;
-    idx<Tlabel>					 labels;
-    typename idx<Tdata>::dimension_iterator	 dataIter;
-    typename idx<Tlabel>::dimension_iterator	 labelsIter;
+    idx<Tin1>					 data;
+    idx<Tin2>					 labels;
+    typename idx<Tin1>::dimension_iterator	 dataIter;
+    typename idx<Tin2>::dimension_iterator	 labelsIter;
     unsigned int				 height;
     unsigned int				 width;
-    vector<string*>				*lblstr;
     const char					*name;
-    unsigned int				 display_wid;
+
+    //! CAUTION: This empty constructor requires a subsequent call to init().
+    datasource();
+
+    void init(idx<Tin1> &inp, idx<Tin2> &lbl, double b, double c, 
+	      const char *name);
+
+    datasource(idx<Tin1> &inputs, idx<Tin2> &labels, 
+	       double b = 0.0, double c = 0.01,
+	       const char *name = NULL);
+
+    virtual ~datasource();
+
+    //! Copies the current datum to a state and label.
+    virtual void fprop(state_idx &datum, idx<Tin2> &label);
+
+    //! shuffle dataset, based on the number of classes
+    //! assume the same nb of samples in each class
+    virtual void shuffle();
+
+    //! Returns the number of data instances contained in this data source.
+    virtual unsigned int size();
+
+    //! Returns an idxdim object describing the order (number of dimensions)
+    //! and the size of each dimension of a single sample outputed by fprop.
+    virtual idxdim sample_dims();
+
+    //! Returns the index of the datum currently pointed to.
+    // TODO: implement or get rid of tell?
+    virtual int tell() { return -1; };
+
+    //! Move to the next datum.
+    virtual void next();
+
+    //! Move to the beginning of the data.
+    virtual void seek_begin();
+
+    //! returns a pointer to a copy on this datasource
+    virtual datasource<Tin1, Tin2>* copy();
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! labeled_datasource
+  template<typename Tdata, typename Tlabel>
+    class labeled_datasource : public datasource<Tdata, Tlabel> {
+  public:
+    vector<string*>				*lblstr;
 
     //! CAUTION: This empty constructor requires a subsequent call to init().
     labeled_datasource();
@@ -74,37 +121,12 @@ namespace ebl {
 
     virtual ~labeled_datasource();
 
-    //! Copies the current datum to a state and label.
-    void virtual fprop(state_idx &datum, idx<Tlabel> &label);
-
-    //! shuffle dataset, based on the number of classes
-    //! assume the same nb of samples in each class
-    void virtual shuffle();
-
-    //! Returns the number of data instances contained in this data source.
-    virtual unsigned int size();
-
-    //! Returns an idxdim object describing the order (number of dimensions)
-    //! and the size of each dimension of a single sample outputed by fprop.
-    virtual idxdim sample_dims();
-
-    //! Returns the index of the datum currently pointed to.
-    // TODO: implement or get rid of tell?
-    virtual int tell() { return -1; };
-
-    //! Move to the next datum.
-    virtual void next();
-
-    //! Move to the beginning of the data.
-    virtual void seek_begin();
-
     //! returns a pointer to a copy on this datasource
     virtual labeled_datasource<Tdata, Tlabel>* copy();
-  };
+};
 
   ////////////////////////////////////////////////////////////////
-  // mnist_datasource
-
+  //! mnist_datasource
   //! a data source appropriate for most learning algorithms
   //! that take input data in the form of an idx3
   //! and a label in the form of an idx0 of L.
