@@ -172,5 +172,47 @@ namespace ebl {
       }
     }
   }
+  
+  ////////////////////////////////////////////////////////////////
+  // distance_l2
+  distance_l2::distance_l2() { 
+  }
+  
+  distance_l2::~distance_l2() { 
+  }
+  
+  void distance_l2::fprop(state_idx &in1, int &label, state_idx &energy) { 
+    err_not_implemented(); }
+  
+  void distance_l2::bprop(state_idx &in1, int &label, state_idx &energy) { 
+    err_not_implemented(); }
+  
+  void distance_l2::bbprop(state_idx &in1, int &label, state_idx &energy) { 
+    err_not_implemented(); }
+  
+  void distance_l2::forget(forget_param_linear &fp) { 
+    err_not_implemented(); }
+
+  ////////////////////////////////////////////////////////////////
+  // penalty_l1
+
+  penalty_l1::penalty_l1(double threshold_)
+    : threshold(threshold_) { 
+  }
+  
+  penalty_l1::~penalty_l1() { 
+  }
+
+  void penalty_l1::fprop(state_idx &in, state_idx &energy) { 
+    err_not_implemented(); }
+  
+  void penalty_l1::bprop(state_idx &in, state_idx &energy) { 
+    err_not_implemented(); }
+  
+  void penalty_l1::bbprop(state_idx &in, state_idx &energy) { 
+    err_not_implemented(); }
+  
+  void penalty_l1::forget(forget_param_linear &fp) { 
+    err_not_implemented(); }
 
 } // end namespace ebl

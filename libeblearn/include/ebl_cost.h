@@ -37,6 +37,7 @@
 
 namespace ebl {
 
+  ////////////////////////////////////////////////////////////////
   //! cost module base class
   template<class Tin1, class Tin2>
     class cost_module : public ebm_2<Tin1, Tin2> {
@@ -54,6 +55,7 @@ namespace ebl {
     virtual ~cost_module();
   };
 
+  ////////////////////////////////////////////////////////////////
   //! A module with 2 inputs that computes
   //! 0.5 times the sum of square difference between
   //! the components of the inputs. The two inputs
@@ -91,7 +93,6 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-
   //! performs a log-add over spatial dimensions of an idx3-state
   //! output is an idx1-state
   class logadd_layer { //: public module_1_1<state_idx, state_idx> { // TODO
@@ -108,6 +109,35 @@ namespace ebl {
     //! this is not algebraically correct, but it's
     //! numerically more stable (at least, I think so).
     void bbprop(state_idx *in, state_idx *out);
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! distance_l2
+  class distance_l2 : public ebm_2<state_idx, state_idx> {
+  public:
+    distance_l2();
+    virtual ~distance_l2();
+
+    virtual void fprop(state_idx &in1, int &label, state_idx &energy);
+    virtual void bprop(state_idx &in1, int &label, state_idx &energy);
+    virtual void bbprop(state_idx &in1, int &label, state_idx &energy);
+    virtual void forget(forget_param_linear &fp);
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! penalty_l1
+  class penalty_l1 : public ebm_1<state_idx> {
+  private:
+    double threshold;
+
+  public:
+    penalty_l1(double threshold_);
+    virtual ~penalty_l1();
+
+    virtual void fprop(state_idx &in, state_idx &energy);
+    virtual void bprop(state_idx &in, state_idx &energy);
+    virtual void bbprop(state_idx &in, state_idx &energy);
+    virtual void forget(forget_param_linear &fp);
   };
 
 } // namespace ebl {
