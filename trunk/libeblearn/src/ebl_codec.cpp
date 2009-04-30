@@ -38,32 +38,25 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // codec
 
-  codec::codec(module_1_1<state_idx, state_idx>		*encoder_,
-	       ebm_2<state_idx, state_idx>		*enc_cost_,
+  codec::codec(module_1_1<state_idx, state_idx>		&encoder_,
+	       ebm_2<state_idx, state_idx>		&enc_cost_,
 	       double					 weight_energy_enc_,
-	       ebm_2<state_idx, state_idx>		*z_cost_,
+	       ebm_1<state_idx>		                &z_cost_,
 	       double					 weight_energy_z_,
-	       module_1_1<state_idx, state_idx>	        *decoder_,
-	       ebm_2<state_idx, state_idx>		*dec_cost_,
+	       module_1_1<state_idx, state_idx>	        &decoder_,
+	       ebm_2<state_idx, state_idx>		&dec_cost_,
 	       double					 weight_energy_dec_,
-	       bool owns_modules_)
+	       gd_param                                 &infp_)
     : encoder(encoder_), enc_out(1, 1, 1), enc_cost(enc_cost_),
       weight_energy_enc(weight_energy_enc_), enc_energy(),
       z(1, 1, 1), z_cost(z_cost_),
       weight_energy_z(weight_energy_z_), z_energy(),
       decoder(decoder_), dec_out(1, 1, 1), dec_cost(dec_cost_),
       weight_energy_dec(weight_energy_dec_), dec_energy(),
-      owns_modules(owns_modules_) {
+      infp(infp_) {
   }
 
   codec::~codec() {
-    if (owns_modules) {
-      if (encoder) delete encoder;
-      if (enc_cost) delete enc_cost;
-      if (z_cost) delete z_cost;
-      if (decoder) delete decoder;
-      if (dec_cost) delete dec_cost;
-    }
   }
 
   void codec::fprop(state_idx &in1, state_idx &in2, state_idx &energy) {
@@ -73,14 +66,14 @@ namespace ebl {
   
   void codec::bprop(state_idx &in1, state_idx &in2, state_idx &energy) {
      // do gradient descent to find optimal code z
-    bprop_optimal_code(in1, in2, energy);
+    bprop_optimal_code(in1, in2, energy, infp);
     // bprop through all modules
     bprop_one_pass(in1, in2, energy);
  }
 
   void codec::bbprop(state_idx &in1, state_idx &in2, state_idx &energy) {
-    enc_out.ddx.clear();
-    dec_out.ddx.clear();
+    enc_out.clear_ddx();
+    dec_out.clear_ddx();
     // initialize all energy 2nd derivatives with global energy derivative
     // so that we minimize the global cost function
     idx_dotc(energy.ddx, weight_energy_dec, dec_energy.ddx);
@@ -92,7 +85,7 @@ namespace ebl {
     dec_cost.bbprop(dec_out, in2, dec_energy);
     // bprop through encoder/decoder
     decoder.bbprop(z, dec_out);
-    encoder.bbprop(y, enc_out);
+    encoder.bbprop(in1, enc_out);
   }
 
   void codec::forget(forget_param_linear &fp) {
@@ -126,7 +119,7 @@ namespace ebl {
     // fprop through decoder cost.
     dec_cost.fprop(dec_out, in2, dec_energy);
     // add up energy terms
-    energy.x.clear();
+    energy.clear();
     idx_dotcacc(enc_energy.x, weight_energy_enc, energy.x);
     idx_dotcacc(dec_energy.x, weight_energy_dec, energy.x);
     idx_dotcacc(z_energy.x, weight_energy_z, energy.x);
@@ -135,8 +128,8 @@ namespace ebl {
   // simple one-pass backward propagation
   void codec::bprop_one_pass(state_idx &in1, state_idx &in2, 
 			     state_idx &energy) {
-    enc_out.dx.clear();
-    dec_out.dx.clear();
+    enc_out.clear_dx();
+    dec_out.clear_dx();
     // initialize all energy derivatives with global energy derivative
     // so that we minimize the global cost function
     idx_dotc(energy.dx, weight_energy_dec, dec_energy.dx);
@@ -148,38 +141,38 @@ namespace ebl {
     dec_cost.bprop(dec_out, in2, dec_energy);
     // bprop through encoder/decoder
     decoder.bprop(z, dec_out);
-    encoder.bprop(y, enc_out);
+    encoder.bprop(in1, enc_out);
   }
   
   // multiple-pass bprop on the decoder only to find the optimal code z
   void codec::bprop_optimal_code(state_idx &in1, state_idx &in2, 
 				 state_idx &energy, gd_param &infp) {
-    z.dx.clear();
-    bprop(y, z, energy); // bprop once to initialize energy
+    z.clear_dx();
+    bprop(in1, in2, energy); // bprop once to initialize energy
     gd_param temp_ip(infp.eta, 0, 0, 0, 0, 0, 0, 0, 0); 
     double old_energy = energy.x.get() + 1;
-    int cnt = 0;
+    double cnt = 0;
     int nrvar = z.size();
     while ((cnt < infp.n)
-	   && check-code-threshold(z, infp)
-	   && (old-energy > energy.x.get())) {
+	   && check_code_threshold(z, infp)
+	   && (old_energy > energy.x.get())) {
       old_energy = energy.x.get();
-      z.dx.clear();
+      z.clear_dx();
       // bprop through decoder /////////////////////////////////////
-      dec_out.dx.clear();
-      enc_out.dx.clear();
+      dec_out.clear_dx();
+      enc_out.clear_dx();
       idx_dotc(energy.dx, weight_energy_dec, dec_energy.dx);
       idx_dotc(energy.dx, weight_energy_z, z_energy.dx);
       z_cost.bprop(z, z_energy);
       enc_cost.bprop(enc_out, z, enc_energy);
-      dec_cost.bprop(dec_out, y, dec_energy);
-      decoder.bprop(z. dec_out);
+      dec_cost.bprop(dec_out, in2, dec_energy);
+      decoder.bprop(z, dec_out);
       z.update_gd(temp_ip);
       // now fprop through decoder /////////////////////////////////
       decoder.fprop(z, dec_out);
       z_cost.fprop(z, z_energy);
       enc_cost.fprop(enc_out, z, enc_energy);
-      dec_cost.fprop(dec_out, y, dec_energy);
+      dec_cost.fprop(dec_out, in2, dec_energy);
       // add up energy terms ///////////////////////////////////////
       idx_dotcacc(enc_energy.x, weight_energy_enc, energy.x);
       idx_dotcacc(dec_energy.x, weight_energy_dec, energy.x);
@@ -199,21 +192,20 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // codec_lone
 
-  codec_lone::codec_lone(module_1_1<state_idx, state_idx> *encoder_,
-			 module_1_1<state_idx, state_idx> *decoder_,
+  codec_lone::codec_lone(module_1_1<state_idx, state_idx> &encoder_,
+			 module_1_1<state_idx, state_idx> &decoder_,
 			 double weight_energy_enc_,
 			 double weight_energy_z_,
 			 double	weight_energy_dec_,
-			 double thres)
-    : codec(encoder_, new distance_l2(), weight_energy_enc_,
-	    new penalty_l1(thres), weight_energy_z_,
-	    decoder_, new distance_l2(), weight_energy_dec_) {
+			 double thres,
+			 gd_param &infp_)
+    : codec(encoder_, enc_cost_l2, weight_energy_enc_,
+	    z_cost_l1, weight_energy_z_,
+	    decoder_, dec_cost_l2, weight_energy_dec_, infp),
+      z_cost_l1(thres) {
   }
 
   codec_lone::~codec_lone() {
-    if (enc_cost) delete enc_cost;
-    if (z_cost) delete z_cost;
-    if (dec_cost) delete dec_cost;
   }
 
 } // end namespace ebl

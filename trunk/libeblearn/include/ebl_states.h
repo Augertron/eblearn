@@ -39,6 +39,7 @@ namespace ebl {
   class infer_param {
   };
 
+  ////////////////////////////////////////////////////////////////
   //! class that contains all the parameters
   //! for a stochastic gradient descent update,
   //! including step sizes, regularizer coefficients...
@@ -67,11 +68,9 @@ namespace ebl {
 
     gd_param(double leta, double ln, double l1, double l2, int dtime,
 	     double iner, double a_v, double a_t, double g_t);
-
   };
 
   ////////////////////////////////////////////////////////////////
-
   //! abstract class for randomization parameters
   class forget_param {
   };
@@ -90,28 +89,29 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-
   //! abstract class that stores a state.
   //! it must support the following methods
   //! clear (clear values), clear_dx (clear gradients),
   //! clear_ddx (clear hessian), and update_gd(arg) (update
   //! with gradient descent.
   class state {
-
   public:
-
+    //! constructor
+    state();
+    //! destructor
+    virtual ~state();
+    //! clear x
     virtual void clear();
+    //! clear dx
     virtual void clear_dx();
+    //! clear ddx
     virtual void clear_ddx();
     virtual void update_gd(gd_param &arg);
-
-    state();
-
-    virtual ~state();
   };
 
   class parameter;
-
+  
+  ////////////////////////////////////////////////////////////////
   //! class that stores a vector/tensor state
   class state_idx: public state {
   public:
@@ -231,7 +231,6 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-
   //! parameter: the main class for a trainable
   //! parameter vector.
   class parameter: public state_idx {
@@ -286,10 +285,14 @@ namespace ebl {
     void next();
   };
 
+  ////////////////////////////////////////////////////////////////
+  //! loop macro on 1 state_idx
 #define state_idx_eloop1(dst0,src0)			\
   state_idxlooper dst0(src0, (src0).x.order() - 1);	\
   for ( ; dst0.notdone(); dst0.next())
 
+  ////////////////////////////////////////////////////////////////
+  //! loop macro on 2 state_idx
 #define state_idx_eloop2(dst0,src0,dst1,src1)				\
   if ((src0).x.dim((src0).x.order() - 1) != (src1).x.dim((src1).x.order() - 1))\
     eblerror("incompatible state_idx for eloop\n");			\
@@ -297,6 +300,8 @@ namespace ebl {
   state_idxlooper dst1(src1,(src1).x.order()-1);			\
   for ( ; dst0.notdone(); dst0.next(), dst1.next())
 
+  ////////////////////////////////////////////////////////////////
+  //! loop macro on 3 state_idx
 #define state_idx_eloop3(dst0,src0,dst1,src1,dst2,src2)			\
   if (((src0).x.dim((src0).x.order() - 1)				\
        != (src1).x.dim((src1).x.order() - 1))				\

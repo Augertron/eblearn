@@ -36,6 +36,7 @@
 #include "libidx.h"
 #include "ebl_arch.h"
 #include "ebl_states.h"
+#include "ebl_cost.h"
 
 namespace ebl {
 
@@ -44,34 +45,34 @@ namespace ebl {
   class codec: public ebm_2<state_idx, state_idx> {
   public:
     // encoder
-    module_1_1<state_idx, state_idx>	*encoder;
+    module_1_1<state_idx, state_idx>	&encoder;
     state_idx				 enc_out;
-    ebm_2<state_idx, state_idx>		*enc_cost;
+    ebm_2<state_idx, state_idx>		&enc_cost;
     double				 weight_energy_enc;
     state_idx				 enc_energy;
     // z
     state_idx				 z;
-    ebm_2<state_idx, state_idx>		*z_cost;
+    ebm_1<state_idx>		        &z_cost;
     double				 weight_energy_z;
     state_idx				 z_energy;
     // decoder
-    module_1_1<state_idx, state_idx>	*decoder;
+    module_1_1<state_idx, state_idx>	&decoder;
     state_idx				 dec_out;
-    ebm_2<state_idx, state_idx>		*dec_cost;
+    ebm_2<state_idx, state_idx>		&dec_cost;
     double				 weight_energy_dec;
     state_idx				 dec_energy;
-    bool				 owns_modules;
+    gd_param                            &infp;
 
     //! Constructor.
-    codec(module_1_1<state_idx, state_idx>	*encoder_,
-	  ebm_2<state_idx, state_idx>		*enc_cost_,
+    codec(module_1_1<state_idx, state_idx>	&encoder_,
+	  ebm_2<state_idx, state_idx>		&enc_cost_,
 	  double				 weight_energy_enc_,
-	  ebm_2<state_idx, state_idx>		*z_cost_,
+	  ebm_1<state_idx>		       &z_cost_,
 	  double				 weight_energy_z_,
-	  module_1_1<state_idx, state_idx>	*decoder_,
-	  ebm_2<state_idx, state_idx>		*dec_cost_,
+	  module_1_1<state_idx, state_idx>	&decoder_,
+	  ebm_2<state_idx, state_idx>		&dec_cost_,
 	  double				 weight_energy_dec_,
-	  bool					 owns_modules = false);
+	  gd_param                              &infp_);
     //! destructor.
     virtual ~codec();
     //! forward propagation of in1 and in2
@@ -101,13 +102,18 @@ namespace ebl {
   //! a single layer encoder/decoder architecture with an L1 penalty
   class codec_lone: codec {
   public:
+    distance_l2 enc_cost_l2;
+    penalty_l1	z_cost_l1;
+    distance_l2 dec_cost_l2;
+    
     //! constructor.
-    codec_lone(module_1_1<state_idx, state_idx>		*encoder_,
-	       module_1_1<state_idx, state_idx>	        *decoder_,
-	       double					 weight_energy_enc_,
-	       double					 weight_energy_z_,
-	       double					 weight_energy_dec_,
-	       double					 thres);
+    codec_lone(module_1_1<state_idx, state_idx>	&encoder_,
+	       module_1_1<state_idx, state_idx>	&decoder_,
+	       double				 weight_energy_enc_,
+	       double				 weight_energy_z_,
+	       double				 weight_energy_dec_,
+	       double				 thres,
+	       gd_param                         &infp_);
     //! destructor.
     virtual ~codec_lone();
   };
