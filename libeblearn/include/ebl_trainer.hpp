@@ -32,6 +32,112 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  // stochastic_gd_trainer
+
+  template <class Tin1, class Tin2>  
+  stochastic_gd_trainer<Tin1, Tin2>::
+  stochastic_gd_trainer(fc_ebm2<Tin1, Tin2, state_idx> &m, parameter &p)
+    : iteration(-1), iteration_ptr(NULL),
+      machine(m), param(p), energy(), age(0),
+      in1(NULL), // allocated when input is passed, based in its order/dims
+      in2(NULL) // allocated when input is passed, based in its order/dims
+  {
+    energy.dx.set(1.0);
+    energy.ddx.set(0.0);
+  }
+
+  template <class Tin1, class Tin2>
+  stochastic_gd_trainer<Tin1, Tin2>::~stochastic_gd_trainer() {
+    if (in1) delete in1;
+    if (in2) delete in2;
+  }
+
+  // train: train on all samples
+  template <class Tin1, class Tin2>  
+  void stochastic_gd_trainer<Tin1, Tin2>::
+  train(datasource<Tin1, Tin2> &ds, classifier_meter &log, 
+	gd_param &args, int niter,
+	bool compute_hessian, int hessian_interval,
+	int niter_hessian, double mu_hessian) {
+    // initialize
+    ds.seek_begin();
+    log.clear();
+    resize_input(ds);
+    // if not computing hessian, fill the epsilons with 1
+    if (!compute_hessian)
+      param.set_epsilons(1.0);
+    // loop over samples for niter iterations
+    for (int i = 0; i < niter; ++i) { // niter iterations
+      for (unsigned int j = 0; j < ds.size(); ++j) { // training on entire set
+	// compute hessian after hessian_interval iterations
+	if (compute_hessian && (age % hessian_interval == 0))
+	  compute_diaghessian(ds, niter_hessian, mu_hessian);
+	// do one step of training
+	train_sample(ds, args);
+	// advance data and age by one
+	ds.next();
+	age++;
+      }
+    }
+  }
+
+  // train_sample: train on one sample
+  template <class Tin1, class Tin2>
+  void stochastic_gd_trainer<Tin1, Tin2>::
+  train_sample(datasource<Tin1, Tin2> &ds, gd_param &args) {
+    // fprop input
+    ds.fprop(*in1, *in2);
+    // fprop machine
+    machine.fprop(*in1, *in2, energy);
+    // bprop machine
+    param.clear_dx();
+    machine.bprop(*in1, *in2, energy);
+    // update parameters
+    param.update(args);
+    // update machine
+    machine.normalize();
+    // return total energy
+    return energy.x.get();
+  }
+
+  // compute_diaghessian
+  template <class Tin1, class Tin2>  
+  void stochastic_gd_trainer<Tin1, Tin2>::
+  compute_diaghessian(datasource<Tin1, Tin2> &ds, intg niter, 
+		      double mu) {
+    resize_input(ds);
+    param.clear_ddeltax();
+    for (int i = 0; i < niter; ++i) {
+      ds.fprop(*in1, *in2);
+      machine.fprop(*in1, *in2, energy);
+      param.clear_dx();
+      machine.bprop(*in1, *in2, energy);
+      param.clear_ddx();
+      machine.bbprop(*in1, *in2, energy);
+      param.update_ddeltax((1 / (double) niter), 1.0);
+      ds.next();
+    }
+    param.compute_epsilons(mu);
+    cout << "diaghessian inf: " << idx_min(param.epsilons);
+    cout << " sup: " << idx_max(param.epsilons) << endl;
+  }
+
+  // resize_input
+  template <class Tin1, class Tin2>  
+  void stochastic_gd_trainer<Tin1, Tin2>::
+  resize_input(datasource<Tin1, Tin2> &ds) {
+    idxdim d = ds.sample_dims();
+    if (!in1)
+      in1 = new state_idx(d);
+    else
+      in1->resize(d);
+    if (!in2)
+      in2 = new state_idx(d);
+    else
+      in2->resize(d);
+  }
+
+  ////////////////////////////////////////////////////////////////
   // supervised_trainer
 
   template <class Tdata, class Tlabel>  

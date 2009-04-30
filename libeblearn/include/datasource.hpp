@@ -40,12 +40,141 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  // datasource
+
+  template<typename Tin1, typename Tin2>
+  datasource<Tin1,Tin2>::datasource()
+    : bias(0.0), coeff(0.0), data(1), labels(1), dataIter(data, 0), 
+      labelsIter(labels, 0), height(0), width(0) {
+  }
+
+  template<typename Tin1, typename Tin2>
+  datasource<Tin1,Tin2>::datasource(idx<Tin1> &data_, 
+				    idx<Tin2> &labels_,
+				    double b, double c,
+				    const char *name_)
+    : bias(b), coeff(c), data(data_), labels(labels_), dataIter(data, 0), 
+      labelsIter(labels, 0), height(data.dim(1)), width(data.dim(2)) {
+    init(data_, labels_, b, c, name_);
+  }
+
+  template<class Tin1, class Tin2>
+  void datasource<Tin1, Tin2>::init(idx<Tin1> &data_, 
+				    idx<Tin2> &labels_,
+				    double b, double c,
+				    const char *name_) {
+    this->data = data_;
+    this->labels = labels_;
+    this->height = data.dim(1);
+    this->width = data.dim(2);
+    this->bias = b;
+    this->coeff = c;
+    this->name = (name_ ? name_ : "Unknown Dataset");
+    typename idx<Tin1>::dimension_iterator	 dIter(this->data, 0);
+    typename idx<Tin2>::dimension_iterator	 lIter(this->labels, 0);
+    this->dataIter = dIter;
+    this->labelsIter = lIter;
+  }
+
+  template<typename Tin1, typename Tin2>
+  datasource<Tin1,Tin2>::~datasource() {
+  }
+
+  template<typename Tin1, typename Tin2>
+  unsigned int datasource<Tin1,Tin2>::size() {
+    return data.dim(0);
+  }
+
+  template<typename Tin1, typename Tin2>
+  idxdim datasource<Tin1,Tin2>::sample_dims() {
+    idxdim d(data.select(0, 0));
+    idxdim d2(data);
+    d2.setdim(0, 1);
+    if (data.order() == 3)
+      return d2;
+    else 
+      return d;
+  }
+
+  template<typename Tin1, typename Tin2>
+  void datasource<Tin1,Tin2>::shuffle() {
+    // create a target idx with the same dimensions
+    idxdim dataDim = data.getidxdim(dataDim);
+    idx<Tin1> shuffledData(dataDim);
+    idxdim labelsDim = labels.getidxdim(labelsDim);
+    idx<Tin2> shuffledLabels(labelsDim);
+    // get the nb of classes
+    intg nbOfClasses = 1+idx_max(labels);
+    intg nbOfSamples = data.dim(0);
+    intg nbOfSamplesPerClass = nbOfSamples / nbOfClasses;
+    // create new dataset...
+    intg iterator=0;
+    for(int i = 0; i<nbOfSamples; i++){
+      idx<Tin1> oneSample = data[iterator];
+      idx<Tin1> destSample = shuffledData[i];
+      idx_copy(oneSample, destSample);
+
+      idx<Tin2> oneLabel = labels[iterator];
+      idx<Tin2> destLabel = shuffledLabels[i];
+      idx_copy(oneLabel, destLabel);
+
+      iterator += nbOfSamplesPerClass;
+      if (iterator >= nbOfSamples)
+	iterator = (iterator % nbOfSamples) + 1;
+    }
+    // replace the original dataset, and labels
+    data = shuffledData;
+    labels = shuffledLabels;
+  }
+
+  template<typename Tin1, typename Tin2>
+  void datasource<Tin1,Tin2>::fprop(state_idx &out, 
+					      idx<Tin2> &label) {
+    out.resize(sample_dims());
+    idx_fill(out.x, bias * coeff);
+    idx_copy(*(this->dataIter), out.x);
+    idx_addc(out.x, bias, out.x);
+    idx_dotc(out.x, coeff, out.x);
+    idx_copy(*labelsIter, label);
+  }
+
+  template<typename Tin1, typename Tin2>
+  void datasource<Tin1,Tin2>::next() {
+    ++dataIter;
+    ++labelsIter;
+
+    if(!dataIter.notdone()) {
+      dataIter = data.dim_begin(0);
+      labelsIter = labels.dim_begin(0);
+    }
+  }
+
+  template<typename Tin1, typename Tin2>
+  void datasource<Tin1,Tin2>::seek_begin() {
+    dataIter = data.dim_begin(0);
+    labelsIter = labels.dim_begin(0);
+  }
+
+  template<typename Tin1, typename Tin2>
+  datasource<Tin1,Tin2>* datasource<Tin1,Tin2>::copy() {
+    cout << "datasource::copy."<<endl;
+    // copy data
+    idxdim cdatadim(data);
+    idx<Tin1> cdata(cdatadim);
+    idx_copy(data, cdata);
+    // copy labels
+    idxdim clabelsdim(labels);
+    idx<Tin2> clabels(clabelsdim);
+    idx_copy(labels, clabels);
+    return new datasource<Tin1,Tin2>(cdata, clabels, bias, coeff);
+  }
+
+  ////////////////////////////////////////////////////////////////
   // labeled_datasource
 
   template<typename Tdata, typename Tlabel>
   labeled_datasource<Tdata,Tlabel>::labeled_datasource()
-    : bias(0.0), coeff(0.0), data(1), labels(1), dataIter(data, 0), 
-      labelsIter(labels, 0), height(0), width(0), lblstr(NULL) {
+    : lblstr(NULL) {
   }
 
   template<typename Tdata, typename Tlabel>
@@ -54,33 +183,21 @@ namespace ebl {
 						     double b, double c,
 						     const char *name_,
 						     vector<string*> *lblstr_) 
-    : bias(b), coeff(c), data(data_), labels(labels_), dataIter(data, 0), 
-      labelsIter(labels, 0), height(data.dim(1)), width(data.dim(2)) {
+  {
     init(data_, labels_, b, c, name_, lblstr_);
   }
 
   template<class Tdata, class Tlabel>
-  void labeled_datasource<Tdata, Tlabel>::init(idx<Tdata> &data_, 
-					      idx<Tlabel> &labels_,
-					      double b, double c,
-					      const char *name_,
-					      vector<string*> *lblstr_) {
-    this->data = data_;
-    this->labels = labels_;
-    this->height = data.dim(1);
-    this->width = data.dim(2);
-    this->lblstr = lblstr_;
-    this->bias = b;
-    this->coeff = c;
-    this->name = (name_ ? name_ : "Unknown Dataset");
-    typename idx<Tdata>::dimension_iterator	 dIter(this->data, 0);
-    typename idx<Tlabel>::dimension_iterator	 lIter(this->labels, 0);
-    this->dataIter = dIter;
-    this->labelsIter = lIter;
+  void labeled_datasource<Tdata, Tlabel>::init(idx<Tdata> &inp,
+					       idx<Tlabel> &lbl,
+					       double b, double c, 
+					       const char *name,
+					       vector<string*> *lblstr_) {
+    datasource<Tdata, Tlabel>::init(inp, lbl, b, c, name);
     if (!this->lblstr) { // no names are given, use indexes as names
       this->lblstr = new vector<string*>;
       ostringstream o;
-      int imax = idx_max(labels_);
+      int imax = idx_max(this->labels);
       for (int i = 0; i <= imax; ++i) {
 	o << i;
 	this->lblstr->push_back(new string(o.str()));
@@ -101,104 +218,18 @@ namespace ebl {
   }
 
   template<typename Tdata, typename Tlabel>
-  unsigned int labeled_datasource<Tdata,Tlabel>::size() {
-    return data.dim(0);
-  }
-
-  template<typename Tdata, typename Tlabel>
-  idxdim labeled_datasource<Tdata,Tlabel>::sample_dims() {
-    idxdim d(data.select(0, 0));
-    idxdim d2(data);
-    d2.setdim(0, 1);
-    if (data.order() == 3)
-      return d2;
-    else 
-      return d;
-  }
-
-//   template<typename Tdata, typename Tlabel>
-//   void labeled_datasource<Tdata,Tlabel>::fprop(state_idx &state, 
-// 					      idx<Tlabel> &label) {
-//     idxdim d(data.spec);
-//     d.setdim(0, 1);
-//     state.resize(d);
-//     //label.resize();
-//     idx_copy(*dataIter, state.x);
-//     idx_copy(*labelsIter, label);
-//   }
-
-
-  template<typename Tdata, typename Tlabel>
-  void labeled_datasource<Tdata,Tlabel>::shuffle() {
-    // create a target idx with the same dimensions
-    idxdim dataDim = data.getidxdim(dataDim);
-    idx<Tdata> shuffledData(dataDim);
-    idxdim labelsDim = labels.getidxdim(labelsDim);
-    idx<Tlabel> shuffledLabels(labelsDim);
-    // get the nb of classes
-    intg nbOfClasses = 1+idx_max(labels);
-    intg nbOfSamples = data.dim(0);
-    intg nbOfSamplesPerClass = nbOfSamples / nbOfClasses;
-    // create new dataset...
-    intg iterator=0;
-    for(int i = 0; i<nbOfSamples; i++){
-      idx<Tdata> oneSample = data[iterator];
-      idx<Tdata> destSample = shuffledData[i];
-      idx_copy(oneSample, destSample);
-
-      idx<Tlabel> oneLabel = labels[iterator];
-      idx<Tlabel> destLabel = shuffledLabels[i];
-      idx_copy(oneLabel, destLabel);
-
-      iterator += nbOfSamplesPerClass;
-      if (iterator >= nbOfSamples)
-	iterator = (iterator % nbOfSamples) + 1;
-    }
-    // replace the original dataset, and labels
-    data = shuffledData;
-    labels = shuffledLabels;
-  }
-
-  template<typename Tdata, typename Tlabel>
-  void labeled_datasource<Tdata,Tlabel>::fprop(state_idx &out, 
-					      idx<Tlabel> &label) {
-    out.resize(sample_dims());
-    idx_fill(out.x, bias * coeff);
-    idx_copy(*(this->dataIter), out.x);
-    idx_addc(out.x, bias, out.x);
-    idx_dotc(out.x, coeff, out.x);
-    idx_copy(*labelsIter, label);
-  }
-
-  template<typename Tdata, typename Tlabel>
-  void labeled_datasource<Tdata,Tlabel>::next() {
-    ++dataIter;
-    ++labelsIter;
-
-    if(!dataIter.notdone()) {
-      dataIter = data.dim_begin(0);
-      labelsIter = labels.dim_begin(0);
-    }
-  }
-
-  template<typename Tdata, typename Tlabel>
-  void labeled_datasource<Tdata,Tlabel>::seek_begin() {
-    dataIter = data.dim_begin(0);
-    labelsIter = labels.dim_begin(0);
-  }
-
-  template<typename Tdata, typename Tlabel>
   labeled_datasource<Tdata,Tlabel>* labeled_datasource<Tdata,Tlabel>::copy() {
-    cout << "datasource::copy."<<endl;
+    cout << "labeled_datasource::copy."<<endl;
     // copy data
-    idxdim cdatadim(data);
+    idxdim cdatadim(this->data);
     idx<Tdata> cdata(cdatadim);
-    idx_copy(data, cdata);
+    idx_copy(this->data, cdata);
     // copy labels
-    idxdim clabelsdim(labels);
+    idxdim clabelsdim(this->labels);
     idx<Tlabel> clabels(clabelsdim);
-    idx_copy(labels, clabels);
-    return new labeled_datasource<Tdata,Tlabel>(cdata, clabels, bias, coeff);
+    idx_copy(this->labels, clabels);
+    return new labeled_datasource<Tdata,Tlabel>(cdata, clabels,
+						this->bias, this->coeff);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -289,8 +320,10 @@ namespace ebl {
     test_data = test_data.narrow(0, test_size, 5000 - (0.5 * test_size)); 
     test_labels = test_labels.narrow(0, test_size, 5000 - (0.5 * test_size));
 
-    idx<Tdata> test_data2(test_data.dim(0), test_data.dim(1), test_data.dim(2), 3);
-    idx<Tdata> train_data2(test_data.dim(0), test_data.dim(1), test_data.dim(2), 3);
+    idx<Tdata> test_data2(test_data.dim(0), test_data.dim(1),
+			  test_data.dim(2), 3);
+    idx<Tdata> train_data2(test_data.dim(0), test_data.dim(1),
+			   test_data.dim(2), 3);
     test_ds.init(test_data, test_labels, 0.0, 0.01, "MNIST TESTING set");
     train_ds.init(train_data, train_labels, 0.0, 0.01, "MNIST TRAINING set");
     return true;

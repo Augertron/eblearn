@@ -44,25 +44,34 @@ namespace ebl {
   class codec: public ebm_2<state_idx, state_idx> {
   public:
     // encoder
-    module_1_1<state_idx, state_idx>	encoder;
-    state_idx				enc_out;
-    ebm_2<state_idx, state_idx>		enc_cost;
-    double				weight_energy_enc;
-    state_idx				enc_energy;
+    module_1_1<state_idx, state_idx>	*encoder;
+    state_idx				 enc_out;
+    ebm_2<state_idx, state_idx>		*enc_cost;
+    double				 weight_energy_enc;
+    state_idx				 enc_energy;
     // z
-    state_idx				z;
-    ebm_2<state_idx, state_idx>		z_cost;
-    double				weight_energy_z;
-    state_idx				z_energy;
+    state_idx				 z;
+    ebm_2<state_idx, state_idx>		*z_cost;
+    double				 weight_energy_z;
+    state_idx				 z_energy;
     // decoder
-    module_1_1<state_idx, state_idx>	decoder;
-    state_idx				dec_out;
-    ebm_2<state_idx, state_idx>		dec_cost;
-    double				weight_energy_dec;
-    state_idx				dec_energy;
+    module_1_1<state_idx, state_idx>	*decoder;
+    state_idx				 dec_out;
+    ebm_2<state_idx, state_idx>		*dec_cost;
+    double				 weight_energy_dec;
+    state_idx				 dec_energy;
+    bool				 owns_modules;
 
     //! Constructor.
-    codec();
+    codec(module_1_1<state_idx, state_idx>	*encoder_,
+	  ebm_2<state_idx, state_idx>		*enc_cost_,
+	  double				 weight_energy_enc_,
+	  ebm_2<state_idx, state_idx>		*z_cost_,
+	  double				 weight_energy_z_,
+	  module_1_1<state_idx, state_idx>	*decoder_,
+	  ebm_2<state_idx, state_idx>		*dec_cost_,
+	  double				 weight_energy_dec_,
+	  bool					 owns_modules = false);
     //! destructor.
     virtual ~codec();
     //! forward propagation of in1 and in2
@@ -80,11 +89,29 @@ namespace ebl {
     //! forward propagation of in1 and in2, a simple one pass propagation
     virtual void fprop_one_pass(state_idx &in1, state_idx &in2, 
 				state_idx &energy);
+    //! simple one-pass backward propagation
+    virtual void bprop_one_pass(state_idx &in1, state_idx &in2, 
+				state_idx &energy);
     //! multiple-pass bprop on the decoder only to find the optimal code z
     virtual void bprop_optimal_code(state_idx &in1, state_idx &in2, 
 				    state_idx &energy, gd_param &infp);
   };
 
+  ////////////////////////////////////////////////////////////////
+  //! a single layer encoder/decoder architecture with an L1 penalty
+  class codec_lone: codec {
+  public:
+    //! constructor.
+    codec_lone(module_1_1<state_idx, state_idx>		*encoder_,
+	       module_1_1<state_idx, state_idx>	        *decoder_,
+	       double					 weight_energy_enc_,
+	       double					 weight_energy_z_,
+	       double					 weight_energy_dec_,
+	       double					 thres);
+    //! destructor.
+    virtual ~codec_lone();
+  };
+  
 } // namespace ebl {
 
 #endif /* EBL_CODEC_H_ */
