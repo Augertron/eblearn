@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "gui_thread.moc"
+#include "moc_gui_thread.cxx"
 
 using namespace std;
 

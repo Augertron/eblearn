@@ -96,6 +96,10 @@ namespace ebl {
     //! multiple-pass bprop on the decoder only to find the optimal code z
     virtual void bprop_optimal_code(state_idx &in1, state_idx &in2, 
 				    state_idx &energy, gd_param &infp);
+
+    //! returns true if the l2-norm of the gradient of z (z.dx) is above
+    //! the infp.gradient_threshold
+    virtual bool check_code_threshold(state_idx &z, gd_param &infp);
   };
 
   ////////////////////////////////////////////////////////////////

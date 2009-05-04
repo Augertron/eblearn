@@ -151,8 +151,7 @@ namespace ebl {
     bprop(in1, in2, energy); // bprop once to initialize energy
     gd_param temp_ip(infp.eta, 0, 0, 0, 0, 0, 0, 0, 0); 
     double old_energy = energy.x.get() + 1;
-    double cnt = 0;
-    int nrvar = z.size();
+    int cnt = 0;
     while ((cnt < infp.n)
 	   && check_code_threshold(z, infp)
 	   && (old_energy > energy.x.get())) {
@@ -178,7 +177,7 @@ namespace ebl {
       idx_dotcacc(dec_energy.x, weight_energy_dec, energy.x);
       idx_dotcacc(z_energy.x, weight_energy_z, energy.x);
       cnt++;
-      if ((cnt % infp.anneal_time) == 0)
+      if ((cnt % (int) infp.anneal_time) == 0)
 	temp_ip.eta *= infp.anneal_value;
     }
     /* TODO: for logging
@@ -187,6 +186,10 @@ namespace ebl {
        (if (>= cnt :ip:n) 1 (if (< old-energy (:energy:x)) 3 2)))
        (==> logger log-optimal this z)
     */
+  }
+
+  bool codec::check_code_threshold(state_idx &z, gd_param &infp) {
+    return idx_l2norm(z.dx) > infp.gradient_threshold;
   }
 
   ////////////////////////////////////////////////////////////////

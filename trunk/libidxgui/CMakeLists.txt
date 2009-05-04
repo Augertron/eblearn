@@ -22,23 +22,19 @@ IF (QT_FOUND) #-----------------------------------------------------------------
 
   # QT specific: produce moc files from headers
   ##############################################################################
-#  IF (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/gui_thread.moc")
-    EXEC_PROGRAM("moc" ARGS "${CMAKE_CURRENT_SOURCE_DIR}/include/gui_thread.h > ${CMAKE_CURRENT_SOURCE_DIR}/include/gui_thread.moc" OUTPUT_VARIABLE MOCOK)
-#   ENDIF (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/gui_thread.moc")
-#   ADD_CUSTOM_COMMAND(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/include/gui_thread.moc" COMMAND "moc" "${CMAKE_CURRENT_SOURCE_DIR}/include/gui_thread.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/gui_thread.moc" DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/gui_thread.h")
+  include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-#   IF (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/idxgui.moc")
-    EXEC_PROGRAM("moc" ARGS "${CMAKE_CURRENT_SOURCE_DIR}/include/idxgui.h > ${CMAKE_CURRENT_SOURCE_DIR}/include/idxgui.moc" OUTPUT_VARIABLE MOCOK)
-#   ENDIF (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/idxgui.moc")
-#   ADD_CUSTOM_COMMAND(
-#     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/idxgui.h
-#     COMMAND "moc" ${CMAKE_CURRENT_SOURCE_DIR}/include/idxgui.h ${CMAKE_CURRENT_SOURCE_DIR}/include/idxgui.moc 
-#     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/idxgui.moc)
+  SET_SOURCE_FILES_PROPERTIES(src/gui_thread.cpp PROPERTIES 
+    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/moc_gui_thread.cxx)
+  SET_SOURCE_FILES_PROPERTIES(src/idxgui.cpp PROPERTIES 
+    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/moc_idxgui.cxx)
+  SET_SOURCE_FILES_PROPERTIES(src/window.cpp PROPERTIES 
+    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/moc_window.cxx)
 
-#   IF (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/window.moc")
-    EXEC_PROGRAM("moc" ARGS "${CMAKE_CURRENT_SOURCE_DIR}/include/window.h > ${CMAKE_CURRENT_SOURCE_DIR}/include/window.moc" OUTPUT_VARIABLE MOCOK)
-#   ENDIF (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/window.moc")
-#   ADD_CUSTOM_COMMAND(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/include/window.moc" COMMAND "moc" "${CMAKE_CURRENT_SOURCE_DIR}/include/window.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/window.moc" DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/window.h")
+  QT_WRAP_CPP(idxgui IDXGUI_SRC_MOC
+    include/gui_thread.h
+    include/idxgui.h
+    include/window.h)
 
   # compile library
   ##############################################################################
@@ -49,7 +45,7 @@ IF (QT_FOUND) #-----------------------------------------------------------------
     src/gui.cpp
     src/scroll_box0.cpp
     src/scroll_box.cpp
-    )
+   )
   
   # link executable with external libraries
   ##############################################################################

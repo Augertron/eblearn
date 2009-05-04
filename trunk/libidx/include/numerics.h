@@ -32,7 +32,7 @@
 #ifndef Numerics_H
 #define Numerics_H
 
-#include <math.h>
+#include <cmath>
 
 namespace ebl {
 

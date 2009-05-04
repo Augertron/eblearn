@@ -105,7 +105,7 @@ void BlasTest::test_idx_exp() {
 	  idx_exp(m2);
 	  CPPUNIT_ASSERT(m2.get(0,0) == 1);
 	  CPPUNIT_ASSERT(m2.get(0,1) == exp(1));
-	  CPPUNIT_ASSERT(m2.get(1,0) == 1/exp(1));
+	  CPPUNIT_ASSERT(m2.get(1,0) == 1/exp(1.0));
 	  CPPUNIT_ASSERT(m2.get(1,1) == 2);
 }
 

@@ -109,6 +109,7 @@ namespace ebl {
     //! if label is given, fill the corresponding energy.
     virtual double infer2(Tin1 &i1, Tin2 &i2, infer_param &ip,
 			  int *label = NULL, state_idx *energy = NULL);
+    virtual void infer2_copy(Tin1 &i1, Tin2 &i2, state_idx &energy);
   };
 
   ////////////////////////////////////////////////////////////////

@@ -157,6 +157,9 @@ namespace ebl {
 				  int *label, state_idx *energy) { 
     err_not_implemented(); }
 
+  template<class Tin1, class Tin2>
+  void ebm_2<Tin1,Tin2>::infer2_copy(Tin1 &i1, Tin2 &i2, state_idx &energy) { 
+    err_not_implemented(); }
 
   ////////////////////////////////////////////////////////////////
   // two layer module

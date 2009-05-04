@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "window.moc"
+#include "moc_window.cxx"
 #include <qstyle.h>
 #include <math.h>
 

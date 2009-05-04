@@ -114,14 +114,18 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! distance_l2
   class distance_l2 : public ebm_2<state_idx, state_idx> {
+  private:
+    idx<double> tmp;
+    
   public:
     distance_l2();
     virtual ~distance_l2();
 
-    virtual void fprop(state_idx &in1, int &label, state_idx &energy);
-    virtual void bprop(state_idx &in1, int &label, state_idx &energy);
-    virtual void bbprop(state_idx &in1, int &label, state_idx &energy);
+    virtual void fprop(state_idx &in1, state_idx &in2, state_idx &energy);
+    virtual void bprop(state_idx &in1, state_idx &in2, state_idx &energy);
+    virtual void bbprop(state_idx &in1, state_idx &in2, state_idx &energy);
     virtual void forget(forget_param_linear &fp);
+    virtual void infer2_copy(state_idx &i1, state_idx &i2, state_idx &energy);
   };
 
   ////////////////////////////////////////////////////////////////
