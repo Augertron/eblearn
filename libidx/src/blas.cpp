@@ -94,7 +94,7 @@ namespace ebl {
     double z = 0;
     if (inp.order() == 0) {
       z = inp.get();
-      /* TODO-0: bug: test cblas sum
+      /* TODO-0: bug: test cblas sum, asum takes the ABSOLUTE values
       //  } else if (inp.order() == 1) {
       //    z = cblas_dasum(inp.dim(0), inp.idx_ptr(), inp.mod(0));
       //  } else if (inp.contiguousp()) {

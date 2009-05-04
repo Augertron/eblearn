@@ -32,9 +32,8 @@
 #ifndef Blas_H
 #define Blas_H
 
-#include <math.h>
+#include <cmath>
 #include "idxblas.h"
-
 #include "numerics.h"
 #include "idx.h"
 
@@ -199,18 +198,35 @@ namespace ebl {
   //! absolute value
   template<class T> void idx_abs(idx<T>& inp, idx<T>& out);
 
+  //! accumulates -c in <out> if <in> is less than <th>, c if more than <th>,
+  //! 0 otherwise (this is used as bprop for sumabs).
+  template<class T> void idx_thresdotc_acc(idx<T>& in, T c, T th, idx<T>& out);
+  
   ////////////////////////////////////////////////////////////////
-  //! sum of all the terms
+  // sums
+
+  //! returns the sum of all the terms, and optionally puts the result
+  //! in out if passed.
   template<class T> T idx_sum(idx<T> &inp, T *out = NULL);
   template<> double idx_sum(idx<double> &inp, double *out);
   template<> float idx_sum(idx<float> &inp, float *out);
 
+  //! sum of all absolute values of the terms, and optionally puts the result
+  //! in out if passed.
+  template<class T> T idx_sumabs(idx<T> &inp, T *out = NULL);
+  
   //! sum of all the terms, accumulated in idx0 acc
   template<class T> T idx_sumacc(idx<T> &inp, idx<T> &acc);
 
-  ////////////////////////////////////////////////////////////////
+  //! sum of all absolute values of the terms, accumulated in idx0 acc
+  template<class T> T idx_sumabs(idx<T> &inp, idx<T> &acc);
+
   //! sum of square of all the terms
-  template<class T> T idx_sumsqr(idx<T> &inp);
+  template<class T> T idx_sumsqr(idx<T> &in);
+
+  //! l2 norm of an idx, seen as a vector.
+  //! equivalent to the square root of idx_sumsqr
+  template<class T> T idx_l2norm(idx<T> &in);
 
   ////////////////////////////////////////////////////////////////
   // dot products

@@ -9,3 +9,4 @@
 (global-set-key [f12] 'compile)
 (print "*** Debugging eblearn_tester with emacs and gdb.***")
 (print "type \"r -nocolor\" to start debugging eblearn_tester")
+(setq initial-frame-alist (append '((tool-bar-lines . 1)) initial-frame-alist))

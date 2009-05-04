@@ -130,20 +130,41 @@ namespace ebl {
 
   template<class T> void idx_dstdsigmoid(idx<T> &inp, idx<T> &out) {
     idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(dstdsigmoid((double)*pinp)); }
+    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(dstdsigmoid((double)*pinp));}
   }
 
   template<class T> void idx_abs(idx<T>& inp, idx<T>& out) {
     idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(fabs((double)*pinp)); }
+    //    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(fabs((double)*pinp)); }
+    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(abs(*pinp)); }
   }
 
+  template<class T> void idx_thresdotc_acc(idx<T>& in, T c, T th, idx<T>& out) {
+    idxiter<T> pin; idxiter<T> pout;
+    idx_aloop2_on(pin,in,pout,out) {
+      *pout += (*pin < -th)? -c : (*pin > th) ? c : 0;
+    }
+  }
+  
   // there is a much faster and parallel way
   // of doing this using a tree.
   template<class T> T idx_sum(idx<T> &inp, T *out) {
     T z = 0;
     idxiter<T> pinp;
     idx_aloop1_on(pinp,inp) { z += *pinp; }
+    if (out != NULL) {
+      *out += z;
+      return *out;
+    }
+    return z;
+  }
+
+  // there is a much faster and parallel way
+  // of doing this using a tree.
+  template<class T> T idx_sumabs(idx<T> &inp, T *out) {
+    T z = 0;
+    idxiter<T> pinp;
+    idx_aloop1_on(pinp,inp) { z += abs(*pinp); }
     if (out != NULL) {
       *out += z;
       return *out;
@@ -257,19 +278,41 @@ namespace ebl {
 
   template<class T> void idx_dstdsigmoid(idx<T> &inp, idx<T> &out) {
     ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(dstdsigmoid((double)*pinp)); }
+    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(dstdsigmoid((double)*pinp));}
   }
 
   template<class T> void idx_abs(idx<T>& inp, idx<T>& out) {
     ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(fabs((double)*pinp)); }
+    //    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(fabs((double)*pinp)); }
+    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(abs(*pinp)); }
   }
+
+  template<class T> void idx_thresdotc_acc(idx<T>& in, T c, T th, idx<T>& out) {
+    ScalarIter<T> pin(in); ScalarIter<T> pout(out);
+    idx_aloop2_on(pin,in,pout,out) {
+      *pout += (*pin < -th)? -c : (*pin > th) ? c : 0;
+    }
+  }
+  
   // there is a much faster and parallel way
   // of doing this using a tree.
   template<class T> T idx_sum(idx<T> &inp, T *out) {
     T z = 0;
     ScalarIter<T> pinp(inp);
     idx_aloop1_on(pinp,inp) { z += *pinp; }
+    if (out != NULL) {
+      *out += z;
+      return *out;
+    }
+    return z;
+  }
+
+  // there is a much faster and parallel way
+  // of doing this using a tree.
+  template<class T> T idx_sumabs(idx<T> &inp, T *out) {
+    T z = 0;
+    ScalarIter<T> pinp(inp);
+    idx_aloop1_on(pinp,inp) { z += abs(*pinp); }
     if (out != NULL) {
       *out += z;
       return *out;
@@ -341,6 +384,17 @@ namespace ebl {
     return idx_sum(inp, acc.ptr());
   }
 
+  template<class T> T idx_sumabs(idx<T> &inp, idx<T> &acc) {
+    // acc must be of order 0.
+    if (acc.order() != 0)
+      eblerror("expecting an idx0 as output");
+    return idx_sumabs(inp, acc.ptr());
+  }
+
+  template<class T> T idx_l2norm(idx<T> &in) {
+    return sqrt(idx_sumsqr(in));
+  }
+  
   template<class T> void rev_idx2 (idx<T> &m) {
     if (m.order() != 2)
       eblerror("Expecting idx of order 2");

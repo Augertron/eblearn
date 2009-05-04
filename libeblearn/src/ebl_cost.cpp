@@ -175,24 +175,46 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   // distance_l2
+  
   distance_l2::distance_l2() { 
   }
   
   distance_l2::~distance_l2() { 
   }
   
-  void distance_l2::fprop(state_idx &in1, int &label, state_idx &energy) { 
-    err_not_implemented(); }
+  void distance_l2::fprop(state_idx &in1, state_idx &in2, state_idx &energy) { 
+    // squared distance between in1 and target
+    idx_sqrdist(in1.x, in2.x, energy.x);
+    idx_dotc(energy.x, 0.5, energy.x); // multiply by .5
+  }
   
-  void distance_l2::bprop(state_idx &in1, int &label, state_idx &energy) { 
-    err_not_implemented(); }
+  void distance_l2::bprop(state_idx &in1, state_idx &in2, state_idx &energy) {
+    idx_checkorder1(energy.x, 0); // energy.x must have an order of 0
+    idxdim d(in1.x);
+    if (!tmp.same_dim(d)) { // keep tmp buffer around to avoid allocations
+      idx<double> tmp2(d);
+      tmp = tmp2;
+    }
+    idx_sub(in1.x, in2.x, tmp);
+    idx_dotc(tmp, energy.dx.get(), tmp); // multiply by energy derivative
+    idx_add(in1.dx, tmp, in1.dx); // derivative with respect to in1
+    idx_sub(in2.dx, tmp, in2.dx); // derivative with respect to in2
+  }
   
-  void distance_l2::bbprop(state_idx &in1, int &label, state_idx &energy) { 
-    err_not_implemented(); }
+  void distance_l2::bbprop(state_idx &in1, state_idx &in2, state_idx &energy) { 
+    idx_addc(in1.ddx, energy.dx.get(), in1.ddx);
+    idx_addc(in2.ddx, energy.dx.get(), in2.ddx);
+  }
   
   void distance_l2::forget(forget_param_linear &fp) { 
     err_not_implemented(); }
 
+  void distance_l2::infer2_copy(state_idx &in1, state_idx &in2,
+				state_idx &energy) {
+    idx_copy(in1.x, in2.x);
+    idx_clear(energy.x);
+  }
+    
   ////////////////////////////////////////////////////////////////
   // penalty_l1
 
@@ -204,13 +226,16 @@ namespace ebl {
   }
 
   void penalty_l1::fprop(state_idx &in, state_idx &energy) { 
-    err_not_implemented(); }
+    idx_sumabs(in.x, energy.x);
+  }
   
   void penalty_l1::bprop(state_idx &in, state_idx &energy) { 
-    err_not_implemented(); }
+    idx_thresdotc_acc(in.x, energy.dx.get(), threshold, in.dx);
+  }
   
   void penalty_l1::bbprop(state_idx &in, state_idx &energy) { 
-    err_not_implemented(); }
+    idx_addc(in.ddx, energy.dx.get(), in.ddx);
+  }
   
   void penalty_l1::forget(forget_param_linear &fp) { 
     err_not_implemented(); }
