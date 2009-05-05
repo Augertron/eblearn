@@ -173,7 +173,7 @@ namespace ebl {
   }
 
   template <class Tdata, class Tlabel>  
-  idx<double> supervised_trainer<Tdata, Tlabel>::
+  double supervised_trainer<Tdata, Tlabel>::
   learn_sample(state_idx &input, int label, gd_param &args) {
     machine.fprop(input, label, energy);
     param.clear_dx();

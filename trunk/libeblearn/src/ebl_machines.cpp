@@ -63,14 +63,20 @@ namespace ebl {
 			       idx<intg> &tbl1, intg si1, intg sj1, 
 			       intg ki2, intg kj2, idx<intg> &tbl2, 
 			       intg outthick) {
-
+    // here we compute the thickness of the feature maps based on the
+    // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
     intg thick0 = 1 + idx_max(tblmax);
     tblmax = tbl1.select(1, 1);
     intg thick1 = 1 + idx_max(tblmax);
     tblmax = tbl2.select(1, 1);
     intg thick2 = 1 + idx_max(tblmax);
-
+    // layers_n was initialized with true so it owns the modules we give it,
+    // we can add modules with "new".
+    // we add convolutions (c), subsamplings (s), and full layers (f)
+    // to form a c-s-c-s-c-f network. and we add state_idx in between
+    // which serve as temporary buffer to hold the output of a module
+    // and feed the input of the following module.
     add_module(new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0),
 	       new state_idx(1, 1, 1)); // these will be automatically resized
     add_module(new nn_layer_subsampling(prm, si0, sj0, si0, sj0, thick0),
