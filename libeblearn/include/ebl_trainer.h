@@ -128,7 +128,7 @@ namespace ebl {
     //! a matrix where  the i-th row is the desired output
     //! for the i-th category, and <update-args> is a list of arguments
     //! for the parameter update method (e.g. learning rate and weight decay).
-    idx<double> learn_sample(state_idx &input, int label, gd_param &arg);
+    double learn_sample(state_idx &input, int label, gd_param &arg);
 
     //! Measure the average energy and classification error rate
     //! on a dataset.
