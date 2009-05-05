@@ -166,7 +166,8 @@ namespace ebl {
     idxdim clabelsdim(labels);
     idx<Tin2> clabels(clabelsdim);
     idx_copy(labels, clabels);
-    return new datasource<Tin1,Tin2>(cdata, clabels, bias, coeff);
+    return (labeled_datasource<Tin1,Tin2>*)
+      new labeled_datasource<Tin1,Tin2>(cdata, clabels, bias, coeff);
   }
 
   ////////////////////////////////////////////////////////////////
