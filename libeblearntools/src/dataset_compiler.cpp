@@ -39,11 +39,14 @@
 using namespace std;
 using namespace ebl;
 
-string images_root;
+string images_root = ".";
+string image_pattern = ".*[.]ppm";
 int channels = 0;
 bool stereo = false;
 string stereo_lpattern = "_L";
 string stereo_rpattern = "_R";
+string outdir = ".";
+string dataset_name = "dataset";
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -53,6 +56,12 @@ bool parse_args(int argc, char **argv) {
     return false;
   }
   images_root = argv[1];
+  outdir = images_root;
+  // if requesting help, print usage
+  if ((strcmp(argv[1], "-help") == 0) ||
+      (strcmp(argv[1], "-h") == 0))
+    return false;
+  // loop over arguments
   for (int i = 2; i < argc; ++i) {
     if (strcmp(argv[i], "-channels") == 0) {
       i++;
@@ -68,6 +77,17 @@ bool parse_args(int argc, char **argv) {
 	channels = 2;
       else if (strcmp(argv[i], "Y") == 0)
 	channels = 3;
+      else {
+	cerr << "input error: unknown channel mode: " << argv[i] << endl;
+	return false;
+      }
+    } else if (strcmp(argv[i], "-image_pattern") == 0) {
+      ++i;
+      if (i >= argc) {
+	cerr << "input error: expecting string after -image_pattern." << endl;
+	return false;
+      }
+      image_pattern = argv[i];
     } else if (strcmp(argv[i], "-stereo") == 0) {
       stereo = true;
     } else if (strcmp(argv[i], "-stereo_lpattern") == 0) {
@@ -76,14 +96,34 @@ bool parse_args(int argc, char **argv) {
 	cerr << "input error: expecting string after -stereo_lpattern." << endl;
 	return false;
       }
-      stereo_lpattern = argv[++i];
+      stereo_lpattern = argv[i];
     } else if (strcmp(argv[i], "-stereo_rpattern") == 0) {
       ++i;
       if (i >= argc) {
 	cerr << "input error: expecting string after -stereo_rpattern." << endl;
 	return false;
       }
-      stereo_rpattern = argv[++i];
+      stereo_rpattern = argv[i];
+    } else if (strcmp(argv[i], "-output_dir") == 0) {
+      ++i;
+      if (i >= argc) {
+	cerr << "input error: expecting string after -output_dir." << endl;
+	return false;
+      }
+      outdir = argv[++i];
+    } else if (strcmp(argv[i], "-name") == 0) {
+      ++i;
+      if (i >= argc) {
+	cerr << "input error: expecting string after -name." << endl;
+	return false;
+      }
+      dataset_name = argv[++i];
+    } else if ((strcmp(argv[i], "-help") == 0) ||
+	       (strcmp(argv[i], "-h") == 0)) {
+      return false;
+    } else {
+      cerr << "input error: unknown parameter: " << argv[i] << endl;
+      return false;
     }
   }
   return true;
@@ -93,15 +133,19 @@ bool parse_args(int argc, char **argv) {
 void print_usage() {
   cout << "Usage: ./dataset_compiler <images_root> [OPTIONS]" << endl;
   cout << "Options are:" << endl;
+  cout << "  -image_pattern <pattern>" << endl;
+  cout << "   e.g.: \".*[.]ppm\"" << endl;
   cout << "  -channels <channel>" << endl;
   cout << "    channels are:" << endl;
   cout << "      - RGB" << endl;
   cout << "      - YUV" << endl;
   cout << "      - HSV" << endl;
-  cout << "      - Y" << endl;
+  cout << "      - Y (Y only in YUV)" << endl;
   cout << "  -stereo" << endl;
   cout << "  -stereo_lpattern <pattern>" << endl;
   cout << "  -stereo_rpattern <pattern>" << endl;
+  cout << "  -output_dir <directory>" << endl;
+  cout << "  -name <dataset_name>" << endl;
 }
 
 #ifdef __GUI__
@@ -115,19 +159,27 @@ int main(int argc, char **argv) {
     print_usage();
     return -1;
   }
-  cout << "images root: " << images_root << endl;
-  cout << "channels mode: " << channels << " (";
+  cout << "input parameters:" << endl;
+  cout << "  images root: " << images_root << endl;
+  cout << "  images pattern: " << image_pattern << endl;
+  cout << "  channels mode: " << channels << " (";
   switch (channels) {
   case 0: cout << "RGB"; break;
   case 1: cout << "YUV"; break;
   case 2: cout << "HSV"; break;
   case 3: cout << "Y"; break;
+  default: cerr << "input error: unknown channel mode." << endl;
+    print_usage(); return -1;
   } cout << ")" << endl;
-  cout << "stereo: " << (stereo ? "yes" : "no") << endl;
+  cout << "  stereo: " << (stereo ? "yes" : "no") << endl;
   if (stereo) {
-    cout << "stereo left pattern: " << stereo_lpattern << endl;
-    cout << "stereo right pattern: " << stereo_rpattern << endl;
+    cout << "    stereo left pattern: " << stereo_lpattern << endl;
+    cout << "    stereo right pattern: " << stereo_rpattern << endl;
   }
+  cout << "outputs:" << endl;
+  cout << "  " << outdir << "/" << dataset_name << "_images.mat" << endl;
+  cout << "  " << outdir << "/" << dataset_name << "_labels.mat" << endl;
+  cout << "  " << outdir << "/" << dataset_name << "_classes.mat" << endl;
   cout << "***********************************************************" << endl;
 
     
