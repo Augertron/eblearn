@@ -160,7 +160,9 @@ int main(int argc, char **argv) {
     return -1;
   }
   cout << "input parameters:" << endl;
-  cout << "  images root: " << images_root << endl;
+  cout << "  dataset name: " << dataset_name << endl;
+  cout << "  images root directory: " << images_root << endl;
+  cout << "  output directory: " << outdir << endl;
   cout << "  images pattern: " << image_pattern << endl;
   cout << "  channels mode: " << channels << " (";
   switch (channels) {
