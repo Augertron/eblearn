@@ -33,9 +33,9 @@ string *gl_mnist_errmsg = NULL;
 string *gl_data_errmsg = NULL;
 bool    color_print = true;
 
+// Read arguments from ../run.init file in working directory
+// (easiest way to configure the run within eclipse and without it).
 void parse_args(int argc, char **argv) {
-  // Read arguments from run.init file in working directory
-  // (easiest way to configure the run within eclipse and without it).
   gl_mnist_dir = NULL;
   gl_data_dir = NULL;
   gl_mnist_errmsg =
@@ -87,9 +87,7 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 int main(int argc, char **argv) {
 #endif
   //  gui.set_silent();
-  cout << endl;
   cout << "***** Unit tester for libeblearn and libidx libraries *****" << endl;
-  cout << "***********************************************************" << endl;
   // parse arguments
   parse_args(argc, argv);
   cout << "***********************************************************" << endl;
