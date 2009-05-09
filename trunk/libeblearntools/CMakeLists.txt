@@ -12,7 +12,9 @@
 ################################################################################
 include_directories (include)
 include_directories (${LIBIDX_INCLUDE_DIR})
+include_directories (${LIBIDXGUI_INCLUDE_DIR})
 include_directories (${LIBEBLEARN_INCLUDE_DIR})
+include_directories (${LIBEBLEARNGUI_INCLUDE_DIR})
 SET(EBLEARN_TOOLS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 
 # find boost
@@ -54,7 +56,6 @@ add_library (eblearntools SHARED
   )
 
 # link executable with external libraries
-################################################################################
 target_link_libraries (eblearntools eblearn idx)
 IF (${Boost_MINOR_VERSION} GREATER 34)
   TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
@@ -67,9 +68,21 @@ IF (NOT Boost_FOUND)
   MESSAGE(STATUS "___WARNING___: libeblearntools is compiled but missing capabilities because of missing Boost libraries.")
 ENDIF (NOT Boost_FOUND) #-------------------------------------------------------
 
-IF (OpenCV_FOUND) #-------------------------------------------------------------
-# # compile library
-# ################################################################################
+# compile executable: dataset_compiler
+################################################################################
+add_executable (dataset_compiler
+  src/dataset_compiler.cpp
+  )
+
+# link executable with external libraries
+target_link_libraries (dataset_compiler eblearn idx)
+IF (QT_FOUND)
+  target_link_libraries (dataset_compiler idxgui eblearngui)
+ENDIF (QT_FOUND)
+
+# compile executable: videoffinder
+################################################################################
+# IF (OpenCV_FOUND) #-------------------------------------------------------------
 # add_executable (videoffinder
 #   src/video_features_finder.cpp
 #   src/similar_patches.cpp
@@ -87,4 +100,4 @@ IF (OpenCV_FOUND) #-------------------------------------------------------------
 
 # ELSE (OpenCV_FOUND)
 #   MESSAGE(STATUS "___WARNING___: videoffinder won't be compiled because of missing OpenCV libraries.")
-ENDIF (OpenCV_FOUND) #----------------------------------------------------------
+# ENDIF (OpenCV_FOUND) #----------------------------------------------------------

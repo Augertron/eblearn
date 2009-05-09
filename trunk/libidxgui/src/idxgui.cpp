@@ -42,9 +42,10 @@ namespace ebl {
     thread_init = false;
   }
 
-  void idxgui::init(int argc_, char **argv_) {
+  void idxgui::init(int argc_, char **argv_, const unsigned int *nwindows_) {
     argc = argc_;
     argv = argv_;
+    nwindows = nwindows_;
     nwid = 0;
     str("");
     set_cout_and_gui();
@@ -117,6 +118,8 @@ namespace ebl {
   void idxgui::run() {
     run_main(argc, argv);
     main_done = true;
+    if (*nwindows == 0)
+      quit();
   }
 
   void idxgui::draw_text(std::string *s) {

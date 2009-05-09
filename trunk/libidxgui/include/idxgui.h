@@ -53,6 +53,7 @@ namespace ebl {
     int			  argc;
     char		**argv;
     int	                  nwid;
+    const unsigned int   *nwindows; // owned by gui_thread
   public:
   public:
     bool		  thread_init;
@@ -63,7 +64,7 @@ namespace ebl {
 
   public:
     idxgui();
-    void init(int argc_, char **argv_);
+    void init(int argc_, char **argv_, const unsigned int *nwindows);
     virtual ~idxgui();
 
     //! creates a new window.
@@ -233,8 +234,8 @@ namespace ebl {
   idxgui& fwhite_on_transparent(idxgui& r);
   ManipInfra<int, int> white_on_transparent();
 
-  //! set the text color to rgba on a rgba background where each value ranges from
-  //! 0 to 255.
+  //! set the text color to rgba on a rgba background where each value ranges
+  //! from 0 to 255.
   //! usage: gui << set_colors(255, 255, 255, 255, 0, 0, 0, 127);
   //! this sets the text color to fully opaque white on a semi-transparent black
   //! background.
