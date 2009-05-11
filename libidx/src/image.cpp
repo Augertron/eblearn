@@ -224,10 +224,10 @@ namespace ebl {
       cerr << "failed to find \"convert\", please install ImageMagick" << endl;
       return false;
     }
-    char mycommand[100];
+    char *mycommand = new char[myconvert.size() + strlen(fname) + 50];
     sprintf(mycommand, "%s %s PPM:-", myconvert.c_str(), fname);
     FILE* fp = popen(mycommand, "r");
-
+    delete mycommand;
 
     if (!fp) {
       cerr << "failed to open " << fname << endl;

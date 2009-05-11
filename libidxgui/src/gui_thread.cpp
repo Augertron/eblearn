@@ -143,8 +143,8 @@ namespace ebl {
 
   void gui_thread::updatePixmap(idx<ubyte> *img, unsigned int h0, 
 			       unsigned int w0) {
-    //    if (nwindows == 0)
-    //  new_window();
+    if (nwindows == 0)
+      new_window();
     if ((wcur >= 0) && (windows[wcur])) {
       windows[wcur]->update_pixmap(img, h0, w0);
     }

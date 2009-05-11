@@ -42,7 +42,10 @@ namespace ebl {
   extern idx<double> rgb_yuv;
   extern idx<double> yuv_rgb;
   
-  //! Convert all pixels of rgb idx to yuv pixels.
+  //! Convert all pixels of rgb idx to yuv pixels (normalized, i.e. the range
+  //! is the same for each component: 0 .. 255).
+  //! WARNING: we assume the values are 0..255.
+  //! TODO: make this more generic.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
   template<class T> void rgb_to_yuv(idx<T> &rgb, idx<T> &yuv);

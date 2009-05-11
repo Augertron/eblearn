@@ -48,9 +48,11 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
 
 void DataSourceTest::test_imageDirToIdx() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
+  string dir = *gl_data_dir;
+  dir += "/pnm/";
 #ifdef __BOOST__
-  CPPUNIT_ASSERT(imagedir_to_idx(gl_data_dir->c_str(), 48, ".*[.]ppm", 
-			       NULL, "/tmp") == true);
+  CPPUNIT_ASSERT(imagedir_to_idx(dir.c_str(), 48, 0, ".*[.]ppm", 
+				 NULL, "/tmp") == true);
 #else
   CPPUNIT_ASSERT_MESSAGE("Not tested because of missing Boost libraries", 
 			 false);

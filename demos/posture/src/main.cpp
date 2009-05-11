@@ -354,12 +354,12 @@ void generate_idx_data_set(string pathToData) {
   string pathToIdx = pathToData+"/idx";
   
   cout << "Converting images to idx object" << endl;
-  imagedir_to_idx(pathTrainingSet.c_str(), 46, ".*[.]ppm", 
+  imagedir_to_idx(pathTrainingSet.c_str(), 46, 0, ".*[.]ppm", 
 		NULL, pathToIdx.c_str(), NULL, true,
-		"_train", false);
-  imagedir_to_idx(pathTestingSet.c_str(), 46, ".*[.]ppm", 
+		"_train");
+  imagedir_to_idx(pathTestingSet.c_str(), 46, 0, ".*[.]ppm", 
 		NULL, pathToIdx.c_str(), NULL, true,
-		"_test", false);
+		"_test");
 }
 
 //! return the path of the database, based on run.init
