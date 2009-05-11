@@ -249,24 +249,6 @@ namespace ebl {
   template<class T>
     bool image_read_rgbx(const char *fname, idx<T> &out);
 
-
-
-  ////////////////////////////////////////////////////////////////
-  // Utilities
-
-  //! Convert all pixels of rgb idx to yuv pixels.
-  //! If the input idx has order of 1, it converts only 1 pixel.
-  //! If the order is 3, it converts all pixels.
-  template<class T> void RGBtoYUV(idx<T> &rgb, idx<T> &yuv);
-
-  //! Convert all pixels of yuv idx to rgb pixels.
-  //! If the input idx has order of 1, it converts only 1 pixel.
-  //! If the order is 3, it converts all pixels.
-  template<class T> void YUVtoRGB(idx<T> &yuv, idx<T> &rgb);
-
-  //! Normalize a YUV image (wxhx3), centered between on [-2.5 .. 2.5]
-  void YUVGlobalNormalization(idx<float> &yuv);
-
 } // end namespace ebl
 
 #include "image.hpp"

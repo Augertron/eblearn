@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
- *   All rights reserved.
+ *   Copyright (C) 2009 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,18 +27,71 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef libidx_H
-#define libidx_H
+#ifndef COLOR_SPACES_HPP_
+#define COLOR_SPACES_HPP_
 
-#include "defines.h"
-#include "numerics.h"
-#include "srg.h"
-#include "idx.h"
-#include "blas.h"
-#include "idxIO.h"
-#include "color_spaces.h"
-#include "image.h"
+#include <algorithm>
+#include <math.h>
 
-#endif
+using namespace std;
+
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // YUV
+
+  template<class T> void rgb_to_yuv(idx<T> &rgb, idx<T> &yuv) {
+    idx_checknelems2_all(rgb, yuv);
+    switch (rgb.order()) {
+    case 1: // process 1 pixel
+      idx_m2dotm1(rgb_yuv, rgb, yuv);
+      return ;
+    case 3: // process 2D image
+      { idx_bloop2(rg, rgb, T, yu, yuv, T) {
+	  { idx_bloop2(r, rg, T, y, yu, T) {
+	      idx_m2dotm1(rgb_yuv, r, y);
+	    }}
+	}}
+      return ;
+    default:
+      eblerror("rgb_to_yuv dimension not implemented");
+    }
+  }
+
+  template<class T> idx<T> rgb_to_yuv(idx<T> &rgb) {
+    idxdim d(rgb);
+    idx<T> yuv(d);
+    rgb_to_yuv(rgb, yuv);
+    return yuv;
+  }
+  
+  template<class T> void yuv_to_rgb(idx<T> &yuv, idx<T> &rgb) {
+    idx_checknelems2_all(rgb, yuv);
+    switch (yuv.order()) {
+    case 1: // process 1 pixel
+      idx_m2dotm1(yuv_rgb, yuv, rgb);
+      return ;
+    case 3: // process 2D image
+      { idx_bloop2(rg, rgb, T, yu, yuv, T) {
+	  { idx_bloop2(r, rg, T, y, yu, T) {
+	      idx_m2dotm1(yuv_rgb, y, r);
+	    }}
+	}}
+      return ;
+    default:
+      eblerror("yuv_to_rgb dimension not implemented");
+    }
+  }
+
+  template<class T> idx<T> yuv_to_rgb(idx<T> &yuv) {
+    idxdim d(yuv);
+    idx<T> rgb(d);
+    yuv_to_rgb(yuv, rgb);
+    return rgb;
+  }
+  
+} // end namespace ebl
+
+#endif /* COLOR_SPACES_HPP_ */
