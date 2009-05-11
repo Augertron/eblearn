@@ -105,7 +105,7 @@ namespace ebl {
 		tmp = tmp.narrow(2, rimg.dim(2), rimg.dim(2));
 		// finally copy right images to idx
 		if (toYUV) {
-		  RGBtoYUV(rimg, tmp);
+		  rgb_to_yuv(rimg, tmp);
 		  YUVGlobalNormalization(tmp);
 		}
 		else
@@ -131,7 +131,7 @@ namespace ebl {
 	    tmp = tmp.narrow(2, limg.dim(2), 0);
 	    // finally copy right images to idx
 	    if (toYUV) {
-	      RGBtoYUV(limg, tmp);
+	      rgb_to_yuv(limg, tmp);
 	      YUVGlobalNormalization(tmp);
 	    }
 	    else

@@ -351,21 +351,6 @@ namespace ebl {
     }
   }
 
-  ////////////////////////////////////////////////////////////////
-
-  void YUVGlobalNormalization(idx<float> &yuv) {
-    idx_checkorder1(yuv, 3);
-    idx<float> tmp = yuv.select(2, 0);
-    idx_addc(tmp, (float) -131.35, tmp);
-    idx_dotc(tmp, (float)    0.01, tmp);
-    tmp = yuv.select(2, 1);
-    idx_addc(tmp, (float) -116.16, tmp);
-    idx_dotc(tmp, (float)    0.01, tmp);
-    tmp = yuv.select(2, 2);
-    idx_addc(tmp, (float) -109.11, tmp);
-    idx_dotc(tmp, (float)    0.01, tmp);
-  }
-
   /////////////////////////////////////////////////////////////////
 
   void image_rotscale_rect(int w, int h, double cx, double cy,

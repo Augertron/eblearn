@@ -360,8 +360,24 @@ namespace ebl {
     // (even without default operator below).
     // default operator below outputs an error that this is forbidden.
     virtual idx<T>& operator=(T other){
-      eblerror("Forbidden idx assignment. idx can only be assigned another idx");
+      eblerror("Forbidden idx assignment: it can only be assigned another idx");
       return *this;
+    }
+
+/*     virtual idx<T>& operator=(const T mat[]) { */
+/*       std::cout << "operator=" << std::endl; */
+/*       memcpy(this->idx_ptr(), mat, this->nelements() * sizeof (T)); */
+/*       this->printElems(); */
+/*       return *this; */
+/*     } */
+
+  idx(const T *mat, intg s0, intg s1) : spec(0, s0, s1) {
+      storage = new Srg<T>();
+      growstorage();
+      storage->lock();
+      std::cout << "constructor []" << std::endl;
+      memcpy(idx_ptr(), mat, nelements() * sizeof (T));
+      printElems();
     }
 
     virtual idx<T>& operator=(const idx<T>& other) {

@@ -331,7 +331,9 @@ namespace ebl {
   }
 
   template<class T> void image_interpolate_bilin(T* background, T *pin,
-						 int indimi, int indimj, int inmodi, int inmodj, int ppi, int ppj,
+						 int indimi, int indimj,
+						 int inmodi, int inmodj,
+						 int ppi, int ppj,
 						 T* out, int outsize) {
     int li0, lj0;
     register int li1, lj1;
@@ -420,7 +422,7 @@ namespace ebl {
       v11 = background;
       v10 = background;
     }
-    // TODO: this does not work for ubyte (cf ubyte implementation in image.cpp),
+    // TODO: this does not work for ubyte (cf ubyte implementation in image.cpp)
     // make it generic to avoid code redondancy.
     double dd = 1.0 / 65536.0;
     T d = (T) dd;
@@ -445,9 +447,12 @@ namespace ebl {
     }
   }
 
-  template<class T> void compute_bilin_transform(idx<int> &dispi, idx<int> &dispj,
-						 float x1, float y1, float x2, float y2, float x3, float y3,
-						 float x4, float y4, float p1, float q1, float p3, float q3) {
+  template<class T> void compute_bilin_transform(idx<int> &dispi,
+						 idx<int> &dispj,
+						 float x1, float y1, float x2,
+						 float y2, float x3, float y3,
+						 float x4, float y4, float p1,
+						 float q1, float p3, float q3) {
     // compute transformation matrix from coordinates
     // in target (rectangular) space to coordinates
     // in original (irregular quadrilateral) image
@@ -484,8 +489,9 @@ namespace ebl {
   }
 
   template<class T> void image_rotscale(idx<T> &src, idx<T> &out,
-					double sx, double sy, double dx, double dy,
-					double angle, double coeff, idx<ubyte> &bg){
+					double sx, double sy, double dx,
+					double dy, double angle, double coeff,
+					idx<ubyte> &bg){
     double q = 1000;
     double coeff_inv = 1/coeff;
     double sa = q*sin(angle * 0.017453292);
@@ -536,66 +542,6 @@ namespace ebl {
     out.resize(tmp.dim(0), tmp.dim(1), tmp.dim(2));
     idx_copy(tmp, out);
     return ret;
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // Utilities
-
-  template<class T> void RGBtoYUV1D(idx<T> &rgb, idx<T> &yuv) {
-    if (rgb.idx_ptr() == yuv.idx_ptr()) {
-      eblerror("RGBtoYUV: dst must be different than src");
-      return ;
-    }
-    yuv.set(0.257 * rgb.get(0) + 0.504 * rgb.get(1) + 0.098 * rgb.get(2) + 16, 0);
-    yuv.set(0.439 * rgb.get(0) - (0.368 * rgb.get(1)) - (0.071 * rgb.get(2)) + 128, 1);
-    yuv.set(-(0.148 * rgb.get(0)) - (0.291 * rgb.get(1)) + 0.439 * rgb.get(2) + 128, 2);
-  }
-
-  template<class T> void RGBtoYUV(idx<T> &rgb, idx<T> &yuv) {
-    idx_checknelems2_all(rgb, yuv);
-    switch (rgb.order()) {
-    case 1: // process 1 pixel
-      RGBtoYUV1D(rgb, yuv);
-      return ;
-    case 3: // process 2D image
-      { idx_bloop2(rg, rgb, T, yu, yuv, T) {
-	  { idx_bloop2(r, rg, T, y, yu, T) {
-	      RGBtoYUV1D(r, y);
-	    }}
-	}}
-      return ;
-    default:
-      eblerror("RGBtoYUV dimension not implemented");
-    }
-  }
-
-  template<class T> void YUVtoRGB1D(idx<T> &yuv, idx<T> &rgb) {
-    if (rgb.idx_ptr() == yuv.idx_ptr()) {
-      eblerror("YUVtoRGB: dst must be different than src");
-      return ;
-    }
-    rgb.set(1.164 * (yuv.get(0) - 16) + 2.018 * (yuv.get(1) - 128), 0);
-    rgb.set(1.164 * (yuv.get(0) - 16) - 0.813 * (yuv.get(2) - 128)
-	    - 0.391 * (yuv.get(1) - 128), 1);
-    rgb.set(1.164 * (yuv.get(0) - 16) + 1.596 * (yuv.get(2) - 128), 2);
-  }
-
-  template<class T> void YUVtoRGB(idx<T> &yuv, idx<T> &rgb) {
-    idx_checknelems2_all(rgb, yuv);
-    switch (yuv.order()) {
-    case 1: // process 1 pixel
-      YUVtoRGB1D(yuv, rgb);
-      return ;
-    case 3: // process 2D image
-      { idx_bloop2(rg, rgb, T, yu, yuv, T) {
-	  { idx_bloop2(r, rg, T, y, yu, T) {
-	      YUVtoRGB1D(y, r);
-	    }}
-	}}
-      return ;
-    default:
-      eblerror("YUVtoRGB dimension not implemented");
-    }
   }
 
 } // end namespace ebl
