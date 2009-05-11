@@ -364,22 +364,6 @@ namespace ebl {
       return *this;
     }
 
-/*     virtual idx<T>& operator=(const T mat[]) { */
-/*       std::cout << "operator=" << std::endl; */
-/*       memcpy(this->idx_ptr(), mat, this->nelements() * sizeof (T)); */
-/*       this->printElems(); */
-/*       return *this; */
-/*     } */
-
-  idx(const T *mat, intg s0, intg s1) : spec(0, s0, s1) {
-      storage = new Srg<T>();
-      growstorage();
-      storage->lock();
-      std::cout << "constructor []" << std::endl;
-      memcpy(idx_ptr(), mat, nelements() * sizeof (T));
-      printElems();
-    }
-
     virtual idx<T>& operator=(const idx<T>& other) {
       Srg<T> *tmp = NULL;
       if (this->storage != NULL)
@@ -411,6 +395,13 @@ namespace ebl {
 	{
 	  storage->lock();
 	}
+
+    ////////////////////////////////////////////////////////////////
+    //! constructors initialized with an array
+
+    //! creates an idx2 of size (s0, s1) and fills it with mat, expected
+    //! to be of size (s0, s1).
+    idx(const T *mat, intg s0, intg s1);
 
     ////////////////////////////////////////////////////////////////
     //! specific constructors for each number of dimensions

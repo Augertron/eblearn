@@ -46,7 +46,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
     src/IdxIOTest.cpp
     src/IdxIteratorsTest.cpp
     src/IdxTest.cpp
-    src/ImageTest.cpp
+    src/image_test.cpp
     src/NetTest.cpp
     src/main.cpp
     src/MyBriefTestProgressListener.cpp

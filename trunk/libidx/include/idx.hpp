@@ -503,6 +503,17 @@ namespace ebl {
   // }
 
   ////////////////////////////////////////////////////////////////
+  //! constructors initialized with an array
+  
+  template <class T> idx<T>::idx(const T *mat, intg s0, intg s1)
+    : spec(0, s0, s1) {
+    storage = new Srg<T>();
+    growstorage();
+    storage->lock();
+    memcpy(idx_ptr(), mat, nelements() * sizeof (T));
+  }
+
+  ////////////////////////////////////////////////////////////////
   // specific constructors for each number of dimensions
 
   template <class T> idx<T>::idx() : spec(0) {

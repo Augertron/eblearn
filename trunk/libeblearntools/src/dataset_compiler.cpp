@@ -184,6 +184,9 @@ int main(int argc, char **argv) {
   cout << "  " << outdir << "/" << dataset_name << "_classes.mat" << endl;
   cout << "***********************************************************" << endl;
 
+  imagedir_to_idx(images_root.c_str(), 300, channels, image_pattern.c_str(),
+		  NULL,
+		  outdir.c_str(), NULL, true);
     
   return 0;
 }

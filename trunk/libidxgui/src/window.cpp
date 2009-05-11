@@ -75,6 +75,9 @@ namespace ebl {
     if (wname) {
       QString q(wname);
       setWindowTitle(q);
+    } else {
+      QString q("EBLearn Graphics");
+      setWindowTitle(q);
     }
     pixmap = new QPixmap(1, 1);
     buffer = NULL;

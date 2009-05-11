@@ -17,7 +17,7 @@
 #include "IdxIteratorsTest.h"
 #include "Classifier2DTest.h"
 #include "ClusterTest.h"
-#include "ImageTest.h"
+#include "image_test.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
   runner.addTest(BlasTest::suite());
   runner.addTest(EblBasicTest::suite());
   runner.addTest(IdxIOTest::suite());
-  runner.addTest(ImageTest::suite());
+  runner.addTest(image_test::suite());
   runner.addTest(DataSourceTest::suite());
   runner.addTest(Classifier2DTest::suite());
   runner.addTest(NetTest::suite());

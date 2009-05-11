@@ -39,6 +39,11 @@ using namespace boost::filesystem;
 using namespace boost;
 #endif
 
+#ifdef __GUI__
+#include "libidxgui.h"
+#include "libeblearngui.h"
+#endif
+
 using namespace std;
 
 namespace ebl {
@@ -48,16 +53,32 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // Utility functions to prepare a dataset from raw images.
 
+  void convert_image(idx<float> src, idx<float> dst, const int channels_mode) {
+    switch (channels_mode) {
+    case 0: // RGB
+      idx_copy(src, dst);
+      break ;
+    case 1: // YUV
+      rgb_to_yuv(src, dst);
+      YUVGlobalNormalization(dst);
+      break ;
+    default:
+      cerr << "unknown channel mode: " << channels_mode << endl;
+      eblerror("unknown channel mode");
+    }
+  }
+  
   //! Recursively goes through dir, looking for files matching extension ext.
   void process_dir(const char *dir, const char *ext, const char* leftp, 
 		  const char *rightp, unsigned int width, idx<float> &images,
-		  idx<int> &labels, int label, bool verbose, bool *binocular, 
-		  bool toYUV) {
+		  idx<int> &labels, int label, bool display, bool *binocular, 
+		  const int channels_mode) {
     regex eExt(ext);
     string el(".*");
     idx<float> limg(1, 1, 1);
     idx<float> rimg(1, 1, 1);
     idx<float> tmp;
+    idx<float> tmp2;
     if (leftp) {
       el += leftp;
       el += ".*";
@@ -71,7 +92,7 @@ namespace ebl {
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
       if (is_directory(itr->status())) {
 	process_dir(itr->path().string().c_str(), ext, leftp, rightp, width, 
-		   images, labels, label, verbose, binocular, toYUV);
+		   images, labels, label, display, binocular, channels_mode);
       } else if (regex_match(itr->leaf().c_str(), what, eExt)) {
 	if (regex_match(itr->leaf().c_str(), what, eLeft)) {
 	  // found left image
@@ -92,51 +113,72 @@ namespace ebl {
 	    if (exists(r)) {
 	      // found right image
 	      *binocular = true;
-	      if (pnm_fread_into_rgbx(r.string().c_str(), rimg)) {
+	      if (image_read_rgbx(r.string().c_str(), rimg)) {
 		// resize stereo dimension to 2
 		if ((limg.dim(1) == 1))
 		  images.resize(images.dim(0), images.dim(1), 
 				images.dim(2), rimg.dim(2) * 2);
 		// take the right most square of the image
-		rimg = rimg.narrow(1, rimg.dim(0), rimg.dim(1) - rimg.dim(0));
+		if (rimg.dim(0) <= rimg.dim(1))
+		  rimg = rimg.narrow(1, rimg.dim(0), rimg.dim(1) - rimg.dim(0));
+		else
+		  rimg = rimg.narrow(0, rimg.dim(1), rimg.dim(0) - rimg.dim(1));
 		// resize image to target width
 		rimg = image_resize(rimg, width, width, 1);
 		tmp = images.select(0, images.dim(0) -1);
 		tmp = tmp.narrow(2, rimg.dim(2), rimg.dim(2));
 		// finally copy right images to idx
-		if (toYUV) {
-		  rgb_to_yuv(rimg, tmp);
-		  YUVGlobalNormalization(tmp);
-		}
-		else
-		  idx_copy(rimg, tmp);
+		convert_image(rimg, tmp, channels_mode);
 	      }
-	      if (verbose)
+	      if (display)
 		cout << "Processing right img: " << sfull << endl;
 	    }
 	  }
-	  if (verbose)
+	  if (display)
 	    cout << "Processing left img: " << itr->path().string().c_str() 
 		 << endl;
 	  // process left image
-	  if (pnm_fread_into_rgbx(itr->path().string().c_str(), limg)) {
+	  if (image_read_rgbx(itr->path().string().c_str(), limg)) {
 	    // resize images to rgb if 3 channels found
 	    if ((limg.dim(2) == 3) && (images.dim(3) < 3))
 	      images.resize(images.dim(0), images.dim(1), images.dim(2), 3); 
 	    // take the left most square of the image
-	    limg = limg.narrow(1, limg.dim(0), 0);
+	    if (limg.dim(0) <= limg.dim(1))
+	      limg = limg.narrow(1, limg.dim(0), 0);
+	    else
+	      limg = limg.narrow(0, limg.dim(1), 0);
 	    // resize image to target width
 	    limg = image_resize(limg, width, width, 1);
 	    tmp = images.select(0, images.dim(0) -1);
 	    tmp = tmp.narrow(2, limg.dim(2), 0);
 	    // finally copy right images to idx
-	    if (toYUV) {
-	      rgb_to_yuv(limg, tmp);
-	      YUVGlobalNormalization(tmp);
-	    }
-	    else
-	      idx_copy(limg, tmp);
-	  }  	    
+	    convert_image(limg, tmp, channels_mode);
+	  }
+	  // display current image conversion
+	  if (display && (labels.dim(0) % 25 == 1)) {
+	    cout << "displaying" << endl;
+	    unsigned int h = 0, w = 0;
+	    // input (RGB)
+	    tmp2 = limg.select(2, 0);
+	    draw_matrix(tmp2, "R", h, w);
+	    w += tmp2.dim(1) + 5;
+	    tmp2 = limg.select(2, 1);
+	    draw_matrix(tmp2, "G", h, w);
+	    w += tmp2.dim(1) + 5;
+	    tmp2 = limg.select(2, 2);
+	    draw_matrix(tmp2, "B", h, w);
+	    w = 0;
+	    h += tmp2.dim(1) + 5;
+	    // output
+	    tmp2 = tmp.select(2, 0);
+	    draw_matrix(tmp2, "Y", h, w);
+	    w += tmp2.dim(1) + 5;
+	    tmp2 = tmp.select(2, 1);
+	    draw_matrix(tmp2, "U", h, w);
+	    w += tmp2.dim(1) + 5;
+	    tmp2 = tmp.select(2, 2);
+	    draw_matrix(tmp2, "V", h, w);
+	  }
 	}
       }
     }
@@ -173,9 +215,10 @@ namespace ebl {
   //! outDir/dset_labels.mat: 	(int)   N
   //! outDir/dset_classes.mat:  (ubyte) Nclasses x 128
   bool imagedir_to_idx(const char *imgDir, unsigned int width,
+		       const int channels_mode,
 		       const char *imgExtension, const char *imgPatternLeft, 
 		       const char *outDir, const char *imgPatternRight, 
-		       bool verbose, const char *prefix, bool toYUV) {
+		       bool display, const char *prefix) {
 #ifdef __BOOST__
     path imgp(imgDir);
     bool binocular = false;
@@ -199,7 +242,7 @@ namespace ebl {
       eblerror("ImageDirToidx: no classes found");
       return false;
     }
-    if (verbose) {
+    if (display) {
       cout << nclasses << " classes found. Now collecting images..." << endl;
     }
 
@@ -221,12 +264,12 @@ namespace ebl {
 	       min((size_t) 128, itr->leaf().length() + 1) * sizeof (ubyte));
 	// process subdirs to extract images into the single image idx
 	process_dir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
-		   imgPatternRight, width, images, labels, i, verbose, 
-		   &binocular, toYUV);
+		   imgPatternRight, width, images, labels, i, display, 
+		   &binocular, channels_mode);
 	++i; // increment only for directories
       }
     }
-    if (verbose) {
+    if (display) {
       cout << "Collected " << images.dim(0) << " examples of classes (";
       int i = 0;
       idx_bloop1(classe, classes, ubyte) { 

@@ -46,6 +46,10 @@ namespace ebl {
   //! level found, crops to square and resizes all images to width*width size.
   //! If imgPatternRight is not null, two images are stored for each example, 
   //! bringing the stereo dimension sdim from 1 to 2.
+  //! The different channels modes are:
+  //!   0: RGB
+  //!   1: YUV
+  //!   2: HSV
   //! Finally outputs all N examples found in a single matrix files as follow:
   //! outDir/dset_images.mat: 
   //!   (ubyte) N x 6 (G or GG, RGB or RGBRGB) x width x width
@@ -53,14 +57,14 @@ namespace ebl {
   //! outDir/dset_classes.mat:  (ubyte) Nclasses x 128
   bool imagedir_to_idx(const char *imgDir, 
 		       unsigned int width,
+		       const int channels_mode = 0, // RGB, YUV, HSV...
 		       //eg: ".*[.]ppm"
 		       const char *imgExtension = defaultExtensionPattern,
 		       const char *imgPatternLeft = NULL, // eg: "_L"
 		       const char *outDir = NULL, 
 		       const char *imgPatternRight = NULL,  // eg: "_R"
-		       bool verbose = false,
-		       const char *prefix = NULL, // eg: "_train" or "test_"
-		       bool toYUV = false);  // convert images to YUV if true
+		       bool display = false,
+		       const char *prefix = NULL); // eg: "_train" or "test_"
 
 } // end namespace ebl
 

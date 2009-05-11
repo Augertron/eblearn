@@ -75,7 +75,7 @@ add_executable (dataset_compiler
   )
 
 # link executable with external libraries
-target_link_libraries (dataset_compiler eblearn idx)
+target_link_libraries (dataset_compiler eblearn idx eblearntools)
 IF (QT_FOUND)
   target_link_libraries (dataset_compiler idxgui eblearngui)
 ENDIF (QT_FOUND)
