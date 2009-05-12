@@ -54,6 +54,8 @@ namespace ebl {
   // Utility functions to prepare a dataset from raw images.
 
   void convert_image(idx<float> src, idx<float> dst, const int channels_mode) {
+    idx<float> in, out;
+    idxdim d;
     switch (channels_mode) {
     case 0: // RGB
       idx_copy(src, dst);
@@ -63,6 +65,11 @@ namespace ebl {
       break ;
     case 4: // YH3
       rgb_to_yh3(src, dst);
+      in = dst.select(2, 0);
+      d = idxdim(in);
+      out = idx<float>(d);      
+      image_mexican_filter(in, out, 2, 5, 11);
+      idx_copy(out, in);
       break ;
     default:
       cerr << "unknown channel mode: " << channels_mode << endl;
@@ -242,6 +249,7 @@ namespace ebl {
 
 #endif 
 
+  ////////////////////////////////////////////////////////////////
   //! Finds all images corresponding to the imgPatternLeft pattern in directory 
   //! imgDir, assigns for each a class name corresponding to the first directory
   //! level found, crops to square and resizes all images to width*width size.

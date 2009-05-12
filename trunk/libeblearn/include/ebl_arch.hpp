@@ -346,7 +346,7 @@ hidden states in layers_n");
   template<class T>
   idxdim layers_n<T>::fprop_size(idxdim &i_size) {
     vector<module_1_1<state_idx, state_idx>*>::iterator iter;
-    idxdim o_size(i_size.dim[0], i_size.dim[1]);
+    idxdim o_size(i_size.dim(0), i_size.dim(1));
     //! Loop through all the layers of the module, and update output
     //! size accordingly.
     for (iter = modules->begin(); iter != modules->end(); iter++) {
@@ -362,7 +362,7 @@ hidden states in layers_n");
   template<class T>
   idxdim layers_n<T>::bprop_size(const idxdim &o_size) {
     vector<module_1_1<state_idx, state_idx>*>::reverse_iterator iter;
-    idxdim i_size(o_size.dim[0], o_size.dim[1]);
+    idxdim i_size(o_size.dim(0), o_size.dim(1));
     //! Loop through all the layers of the module, from the end to the beg.
     for (iter = modules->rbegin(); iter != modules->rend(); iter++) {
       i_size = (*iter)->bprop_size(i_size);

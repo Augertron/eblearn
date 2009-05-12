@@ -679,7 +679,7 @@ namespace ebl {
     if (spec.ndim != d.ndim) 
       return false; 
     for (int i=0; i < spec.ndim; ++i)
-      if (spec.dim[i] != d.dim[i]) 
+      if (spec.dim[i] != d.dim(i)) 
 	return false;
     return true;
   }

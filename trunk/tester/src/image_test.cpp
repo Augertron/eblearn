@@ -129,14 +129,17 @@ void image_test::test_colorspaces() {
   idxdim d(im_rgb);
   idx<float> fim_rgb(d);
   idx_copy(im_rgb, fim_rgb);
-  idx<ubyte> im_yuv(d);
-  rgb_to_yuv(im_rgb, im_yuv);
+  idx<float> fim_yuv(d);
+  rgb_to_yuv(fim_rgb, fim_yuv);
   idx<float> im_hsv(d);
   rgb_to_hsv(fim_rgb, im_hsv);
   idx<float> im_hsv3(d);
   rgb_to_hsv3(fim_rgb, im_hsv3, .10, .15);
+  
   idx<float> ftmp(d);
   idx<float> ftmp1(d);
+  idx<float> ftmp3(1, 1);
+  idx<float> ftmp5(1, 1);
 
   // TODO: wrong values, fixme
 //   CPPUNIT_ASSERT(imb.get(0, 0, 0) == 81);
@@ -186,21 +189,24 @@ void image_test::test_colorspaces() {
   h += tmp2.dim(0) + 5;
   
   // yuv
-  draw_matrix(im_yuv, "YUV", h, w);
-  w += im_yuv.dim(1) + 5;
-  tmp2 = im_yuv.select(2, 0);
-  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
-  draw_matrix(tmp2, "Y", h, w);
+  draw_matrix(fim_yuv, "YUV", h, w);
+  w += fim_yuv.dim(1) + 5;
+  ftmp2 = fim_yuv.select(2, 0);
+  idx<float> hat = create_mexican_hat<float>(2, 7);
+  image_mexican_filter(ftmp2, ftmp5, 0, 0, 11, &hat, &ftmp3); 
+  cout << "Y inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  cout << "Y hat inf: " << (int) idx_min(ftmp5) << " sup:" << (int) idx_max(ftmp5) << endl;
+  draw_matrix(ftmp5, "Y (mexican hat)", h, w);
   w += tmp2.dim(1) + 5;
-  tmp2 = im_yuv.select(2, 1);
-  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
-  draw_matrix(tmp2, "U", h, w);
-  w += tmp2.dim(1) + 5;
-  tmp2 = im_yuv.select(2, 2);
-  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
-  draw_matrix(tmp2, "V", h, w);
+  ftmp2 = fim_yuv.select(2, 1);
+  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  draw_matrix(ftmp2, "U", h, w);
+  w += ftmp2.dim(1) + 5;
+  ftmp2 = fim_yuv.select(2, 2);
+  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  draw_matrix(ftmp2, "V", h, w);
   w = 0;
-  h += tmp2.dim(0) + 5;
+  h += ftmp2.dim(0) + 5;
   
   // hsv
   draw_matrix(im_hsv, "HSV", h, w);
@@ -238,7 +244,7 @@ void image_test::test_colorspaces() {
   ftmp2 = im_hsv3.select(2, 0);
   cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
   cout << "inf tmp1: " << (int) idx_min(ftmp1) << " sup:" << (int) idx_max(ftmp1) << endl;
-  draw_matrix(ftmp1, "H", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
+  draw_matrix(ftmp1, "H3", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
   w += ftmp2.dim(1) + 5;
   ftmp2 = im_hsv3.select(2, 1);
   cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
@@ -251,7 +257,7 @@ void image_test::test_colorspaces() {
   w = 0;
   h += ftmp2.dim(0) + 5;
   idx<float> spectrum(50, 420, 3);
-  idx<float> ftmp3(50, 420, 3);
+  idx<float> ftmp4(50, 420, 3);
   for (int i = 0; i < 420; ++i) {
     ftmp2 = spectrum.select(1, i);
     idx_fill(ftmp2, (float) i);
@@ -260,9 +266,9 @@ void image_test::test_colorspaces() {
   idx_fill(ftmp2, (float).5);
   ftmp2 = spectrum.select(2, 2);
   idx_fill(ftmp2, (float).5);
-  hsv3_to_rgb(spectrum, ftmp3);
-  draw_matrix(ftmp3, "H3 0 - 420", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
+  hsv3_to_rgb(spectrum, ftmp4);
+  draw_matrix(ftmp4, "H3 0 - 420", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
   
-  //  sleep(5000);
+  sleep(5000);
 #endif
 }

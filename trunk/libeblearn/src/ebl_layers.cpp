@@ -132,8 +132,8 @@ namespace ebl {
     //! Select a kernel
     idxdim kernel_size = convol.kernel.x[0].getidxdim(kernel_size);
     //! Extract its dimensions, update output size
-    idxdim o_size(i_size.dim[0] - kernel_size.dim[0] + 1,
-		  i_size.dim[1] - kernel_size.dim[1] + 1);
+    idxdim o_size(i_size.dim(0) - kernel_size.dim(0) + 1,
+		  i_size.dim(1) - kernel_size.dim(1) + 1);
     //! Recompute the input size to be compliant with the output
     i_size = bprop_size(o_size);
     return o_size;
@@ -143,8 +143,8 @@ namespace ebl {
     //! Select a kernel
     idxdim kernel_size = convol.kernel.x[0].getidxdim(kernel_size);
     //! Extract its dimensions, update output size
-    idxdim i_size(o_size.dim[0] + kernel_size.dim[0] - 1,
-		  o_size.dim[1] + kernel_size.dim[1] - 1);
+    idxdim i_size(o_size.dim(0) + kernel_size.dim(0) - 1,
+		  o_size.dim(1) + kernel_size.dim(1) - 1);
     return i_size;
   }
 
@@ -197,8 +197,8 @@ namespace ebl {
 
   idxdim nn_layer_subsampling::fprop_size(idxdim &i_size) {
     //! Update input size
-    idxdim o_size(i_size.dim[0] / subsampler.stridei,
-		  i_size.dim[1] / subsampler.stridej);
+    idxdim o_size(i_size.dim(0) / subsampler.stridei,
+		  i_size.dim(1) / subsampler.stridej);
     //! Recompute the input size to be compliant with the output
     i_size = bprop_size(o_size);
     return o_size;
@@ -206,8 +206,8 @@ namespace ebl {
 
   idxdim nn_layer_subsampling::bprop_size(const idxdim &o_size) {
     //! Update input size
-    idxdim i_size(o_size.dim[0] * subsampler.stridei,
-		  o_size.dim[1] * subsampler.stridej);
+    idxdim i_size(o_size.dim(0) * subsampler.stridei,
+		  o_size.dim(1) * subsampler.stridej);
     return i_size;
   }
 

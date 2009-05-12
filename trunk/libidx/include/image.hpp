@@ -535,6 +535,9 @@ namespace ebl {
     }
   }
 
+  ////////////////////////////////////////////////////////////////
+  // I/O
+
   template<class T> bool pnm_fread_into_rgbx(const char *fname, idx<T> &out) {
     idx<ubyte> tmp(1,1,1);
     bool ret = pnm_fread_into_rgbx(fname, tmp);
@@ -543,7 +546,8 @@ namespace ebl {
     return ret;
   }
 
-  template<class T> bool image_read_rgbx(const char *fname, idx<T> &out) {
+  template<class T>
+  bool image_read_rgbx(const char *fname, idx<T> &out) {
     idx<ubyte> tmp(1,1,1);
     bool ret = image_read_rgbx(fname, tmp);
     out.resize(tmp.dim(0), tmp.dim(1), tmp.dim(2));
@@ -551,6 +555,95 @@ namespace ebl {
     return ret;
   }
 
+  ////////////////////////////////////////////////////////////////
+  // Filters
+
+  template<class T>
+  idx<T> create_mexican_hat(double s, int n){
+    idx<T> m(n, n);
+    T vinv = 1/(s*s);
+    T total = 0;
+    int cx = n/2;
+    int cy = n/2;
+    for(int x = 0; x < n; x++){
+      for(int y = 0; y < n; y++){
+	int dx = x - cx;
+	int dy = y - cy;
+	m.set(-exp(-sqrt(vinv*(dx*dx + dy*dy))), x, y);
+	total += m.get(x, y);
+      }
+    }
+    //! set center valus so it's zero sum
+    m.set(m.get(cx, cy) - total, cx, cy);
+    //! normalize so that energy is 1
+    T energy = sqrt(idx_sumsqr(m));
+    idx_dotc(m, 1/energy, m);
+    return m;
+  }
+
+  template<class T>
+  void image_mexican_filter(idx<T> &in, idx<T> &out, double s, int n,
+			    int lnorm_size,
+			    idx<T> *filter_, idx<T> *tmp_) {
+    idx<T> filter = filter_ ? *filter_ : create_mexican_hat<T>(s, n);
+    idxdim d(in);
+    idx<T> tmp = tmp_ ? *tmp_ : idx<T>(d);
+    idx_checkorder3(in, 2, filter, 2, out, 2);
+    image_apply_filter(in, out, filter, &tmp);
+    image_local_normalization(out, out, lnorm_size); 
+  }
+
+  // TODO: handle empty sides
+  // TODO: check for tmp size incompatibilities
+  template<class T>
+  void image_local_normalization(idx<T> &in, idx<T> &out, int n) {
+    T mean;
+    T coeff;
+    idx<T> tmp(in.dim(0) + 2 * floor(n / 2),
+	       in.dim(1) + 2 * floor(n / 2));
+    idx<T> tmp2 = tmp.narrow(0, in.dim(0), floor(n / 2));
+    tmp2 = tmp2.narrow(1, in.dim(1), floor(n / 2));
+    idx_copy(in, tmp2);
+    tmp = tmp.unfold(0, n, 1);
+    tmp = tmp.unfold(1, n, 1);
+    idx<T> tmp3(n, n);
+    
+    idx_bloop3(tm, tmp, T, ou, out, T, iin, in, T) {
+      idx_bloop3(t, tm, T, o, ou, T, iiin, iin, T) {
+	idx_copy(t, tmp3);
+	mean = idx_mean(tmp3);
+	idx_addc(tmp3, -mean, tmp3);
+	coeff = 1 / sqrt(idx_sumsqr(tmp3) / (n * n));
+	o.set((iiin.get() - mean) * coeff);
+      }
+    }
+  }
+
+  template<class T>
+  void image_apply_filter(idx<T> &in, idx<T> &out, idx<T> &filter,
+			  idx<T> *tmp_) {
+    idxdim d(in);
+    if ((out.dim(0) != d.dim(0)) || (out.dim(1) != d.dim(1)))
+      out.resize(d);
+    // compute sizes of the temporary buffer
+    d.setdim(0, in.dim(0) + 2 * floor(filter.dim(0) / 2));
+    d.setdim(1, in.dim(1) + 2 * floor(filter.dim(1) / 2));
+    idx<T> tmp;
+    if (tmp_) {
+      tmp = *tmp_;
+      if ((tmp.dim(0) != d.dim(0)) || (tmp.dim(1) != d.dim(1))) {
+	tmp.resize(d);
+	*tmp_ = tmp;
+      }
+    } else
+      tmp = idx<T>(d);
+    // copy input into temporary buffer
+    idx<T> tmp2 = tmp.narrow(0, in.dim(0), floor(filter.dim(0)/2));
+    tmp2 = tmp2.narrow(1, in.dim(1), floor(filter.dim(1)/2));
+    idx_copy(in, tmp2);
+    idx_2dconvol(tmp, filter, out);
+  }
+  
 } // end namespace ebl
 
 #endif /* IMAGE_HPP_ */
