@@ -219,9 +219,9 @@ int main(int argc, char **argv) {
   //! Make sure that the output is 1x1 for the images in your training set
   idxdim data_dims(trainingSet[0]);
   idxdim convNetOutput = myConvNet.fprop_size(data_dims);
-  if (convNetOutput.dim[0] != 1 or convNetOutput.dim[1] != 1
-      or trainingSet.dim(1) != data_dims.dim[0]
-      or trainingSet.dim(2) != data_dims.dim[1]) {
+  if (convNetOutput.dim(0) != 1 or convNetOutput.dim(1) != 1
+      or trainingSet.dim(1) != data_dims.dim(0)
+      or trainingSet.dim(2) != data_dims.dim(1)) {
     convNetOutput.setdim(0,1); convNetOutput.setdim(1,1);
     data_dims = myConvNet.bprop_size(convNetOutput);
     cout << "Dataset not adapted for module." << endl;

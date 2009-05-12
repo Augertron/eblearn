@@ -36,6 +36,7 @@
 
 namespace ebl {
 
+  ////////////////////////////////////////////////////////////////
   //! crop rectangle (<x>,<y>,<w>,<h>) from image <in>
   //! and return the result (a copy).
   template<class T> idx<T> image_crop(idx<T> &in, int x, int y, int w, int h);
@@ -229,6 +230,9 @@ namespace ebl {
   double common_area(int x1, int y1, int w1, int h1,
 		     int x2, int y2, int w2, int h2);
 
+  ////////////////////////////////////////////////////////////////
+  // I/O
+
   //! read an image from a PBM/PGM/PPM file into
   //! an idx3 of ubytes (RGB or RGBA). <f> must
   //! be a valid file descriptor (C pointer).
@@ -249,6 +253,37 @@ namespace ebl {
   bool image_read_rgbx(const char *fname, idx<ubyte> &out);
   template<class T>
     bool image_read_rgbx(const char *fname, idx<T> &out);
+
+  ////////////////////////////////////////////////////////////////
+  // Filters
+
+  template<class T>
+    idx<T> create_mexican_hat(double s, int n);
+
+  //! applies a mexican filter <filter> with paramters (s, n)
+  //! on <in> and puts the results in <out>.
+  //! if tmp is not NULL, use that buffer as temporary copy of the input
+  //! taking into account the margins of the filter, this buffer can be kept
+  //! around to decrease time wasted on memory allocation if this function
+  //! is called a lot.
+  //! similarly, if filter is not NULL, reuse that filter instead of creating
+  //! a new one.
+  template<class T>
+    void image_mexican_filter(idx<T> &in, idx<T> &out, double s, int n,
+			      int lnorm_size,
+			      idx<T> *filter = NULL, idx<T> *tmp = NULL);
+
+  template<class T>
+    void image_local_normalization(idx<T> &in, idx<T> &out, int n);
+  
+  //! applies the filter <filter> on <in> and puts the results in <out>.
+  //! if tmp is not NULL, use that buffer as temporary copy of the input
+  //! taking into account the margins of the filter, this buffer can be kept
+  //! around to decrease time wasted on memory allocation if this function
+  //! is called a lot.
+  template<class T>
+    void image_apply_filter(idx<T> &in, idx<T> &out, idx<T> &filter,
+			    idx<T> *tmp = NULL);
 
 } // end namespace ebl
 

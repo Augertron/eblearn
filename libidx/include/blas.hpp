@@ -395,6 +395,14 @@ namespace ebl {
     return sqrt(idx_sumsqr(in));
   }
   
+  template<class T> T idx_mean(idx<T> &in, T *out) {
+    if (out != NULL) {
+      *out += idx_sum(in) / in.nelements();
+      return *out;
+    }
+    return idx_sum(in) / in.nelements();
+  }
+  
   template<class T> void rev_idx2 (idx<T> &m) {
     if (m.order() != 2)
       eblerror("Expecting idx of order 2");

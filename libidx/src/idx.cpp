@@ -166,9 +166,14 @@ namespace ebl {
 	eblerror("Resizing non-contiguous idx is not allowed"); 
       }
       else {
-	fprintf(stderr,
-		"ndim=%d, sizes: %ld, %ld, %ld, %ld, %ld, %ld, %ld, %ld\n",
-		ndim,s0,s1,s2,s3,s4,s5,s6,s6);
+	cerr << "error while trying to resize from (";
+	if (ndim > 0)
+	  cerr << dim[0];
+	for (int i = 1; i < ndim; ++i)
+	  cerr << " x " << dim[i];
+	cerr << ") to (";
+	cerr << s0 << " x " << s1 << " x " << s2 << " x " << s3 << " x " << s4;
+	cerr << " x " << s5 << " x " << s6 << " x " << s7 << ")." << endl;
 	eblerror("idxspec::resize: dimensions are incompatible"); 
       }
     }
@@ -176,8 +181,8 @@ namespace ebl {
   }
 
   intg idxspec::resize(const idxdim &d) {
-    return resize(d.dim[0], d.dim[1], d.dim[2], d.dim[3], 
-		  d.dim[4], d.dim[5], d.dim[6], d.dim[7]); 
+    return resize(d.dim(0), d.dim(1), d.dim(2), d.dim(3), 
+		  d.dim(4), d.dim(5), d.dim(6), d.dim(7)); 
   }
 
   // resize one dimension <dimn> with size <size>.
@@ -358,8 +363,8 @@ namespace ebl {
   }
 
   idxspec::idxspec(intg o, const idxdim &d) {
-    init_spec(o, d.dim[0], d.dim[1], d.dim[2], d.dim[3], d.dim[4], d.dim[5], 
-	      d.dim[6], d.dim[7]);
+    init_spec(o, d.dim(0), d.dim(1), d.dim(2), d.dim(3), d.dim(4), d.dim(5), 
+	      d.dim(6), d.dim(7));
   }
 
   // generic constructor for any dimension.
@@ -659,34 +664,43 @@ namespace ebl {
 
   idxdim::idxdim(intg s0, intg s1, intg s2, intg s3,
 		 intg s4, intg s5, intg s6, intg s7) {
-    dim[0] = s0; dim[1] = s1; dim[2] = s2; dim[3] = s3;
-    dim[4] = s4; dim[5] = s5; dim[6] = s6; dim[7] = s7;
+    dims[0] = s0; dims[1] = s1; dims[2] = s2; dims[3] = s3;
+    dims[4] = s4; dims[5] = s5; dims[6] = s6; dims[7] = s7;
     ndim = 0;
     for (int i=0; i<8; i++)
-      if (dim[i] >= 0) ndim++;
+      if (dims[i] >= 0) ndim++;
       else break;
   }
   
   void idxdim::read(const idxspec &s) {
     ndim = s.ndim;
-    memcpy(dim, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
+    memcpy(dims, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
     // set remaining to -1
-    memset(dim + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg)); 
+    memset(dims + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg)); 
   }
   
   void idxdim::setdim(intg dimn, intg size) {
     if (dimn >= ndim)
       eblerror("cannot change the order of idxdim");
-    dim[dimn] = size; 
+    dims[dimn] = size; 
+  }
+
+  intg idxdim::dim(intg dimn) const {
+    if (dimn >= MAXDIMS) {
+      cerr << "trying to access size of dimension " << dimn;
+      cerr << " but idxdim's maximum dimensions is " << MAXDIMS << "." << endl;
+      eblerror("dimension error");
+    }
+    return dims[dimn]; 
   }
 
   std::ostream& operator<<(std::ostream& out, idxdim& d) {
     if (d.ndim <= 0)
       out << "<empty>";
     else {
-      out << d.dim[0];
+      out << d.dim(0);
       for (int i = 1; i < d.ndim; ++i) {
-	out << "x" << d.dim[i];
+	out << "x" << d.dim(i);
       }
     }
     return out;

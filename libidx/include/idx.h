@@ -807,9 +807,9 @@ namespace ebl {
   //! but one can modify the size of a particular dimension via the setdim 
   //! method.
   class idxdim {
+  private:
+    intg dims[MAXDIMS];
   public:
-    // slots
-    intg dim[MAXDIMS];
     intg ndim;
 
     //! Empty constructor.
@@ -824,6 +824,9 @@ namespace ebl {
 
     //! Change the dimensions dimn to size size.
     void setdim(intg dimn, intg size);
+
+    //! Returns the size of dimensions dimn.
+    intg dim(intg dimn) const;
 
     //! Destructor.
     virtual ~idxdim();

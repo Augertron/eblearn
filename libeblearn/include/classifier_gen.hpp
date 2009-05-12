@@ -68,13 +68,13 @@ namespace ebl {
 	// Adapt the size to the network structure:
 	idxdim out_dims = thenet.fprop_size(scaled_dims);
 	in.set((void*) new state_idx(1, 
-				     scaled_dims.dim[0],
-				     scaled_dims.dim[1]));
+				     scaled_dims.dim(0),
+				     scaled_dims.dim(1)));
 	out.set((void*) new state_idx(labels.nelements()+1, 
-				      out_dims.dim[0], 
-				      out_dims.dim[1]));
-	r.set((void*) new idx<double>(out_dims.dim[0],
-				      out_dims.dim[1],
+				      out_dims.dim(0), 
+				      out_dims.dim(1)));
+	r.set((void*) new idx<double>(out_dims.dim(0),
+				      out_dims.dim(1),
 				      2)); // (class,score)
       }}
     cout << endl << "Classifier initialized" << endl;

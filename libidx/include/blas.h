@@ -228,6 +228,10 @@ namespace ebl {
   //! equivalent to the square root of idx_sumsqr
   template<class T> T idx_l2norm(idx<T> &in);
 
+  //! returns the mean of all the terms, and optionally puts the result
+  //! in out if passed.
+  template<class T> T idx_mean(idx<T> &inp, T *out = NULL);
+
   ////////////////////////////////////////////////////////////////
   // dot products
 
