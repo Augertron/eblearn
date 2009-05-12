@@ -60,7 +60,9 @@ namespace ebl {
       break ;
     case 1: // YUV
       rgb_to_yuv(src, dst);
-      YUVGlobalNormalization(dst);
+      break ;
+    case 4: // YH3
+      rgb_to_yh3(src, dst);
       break ;
     default:
       cerr << "unknown channel mode: " << channels_mode << endl;
@@ -159,25 +161,37 @@ namespace ebl {
 	    cout << "displaying" << endl;
 	    unsigned int h = 0, w = 0;
 	    // input (RGB)
-	    tmp2 = limg.select(2, 0);
-	    draw_matrix(tmp2, "R", h, w);
-	    w += tmp2.dim(1) + 5;
-	    tmp2 = limg.select(2, 1);
-	    draw_matrix(tmp2, "G", h, w);
-	    w += tmp2.dim(1) + 5;
-	    tmp2 = limg.select(2, 2);
-	    draw_matrix(tmp2, "B", h, w);
+	    draw_matrix(limg, "RGB", h, w);
 	    w = 0;
-	    h += tmp2.dim(1) + 5;
+	    h += limg.dim(1) + 5;
 	    // output
-	    tmp2 = tmp.select(2, 0);
-	    draw_matrix(tmp2, "Y", h, w);
-	    w += tmp2.dim(1) + 5;
-	    tmp2 = tmp.select(2, 1);
-	    draw_matrix(tmp2, "U", h, w);
-	    w += tmp2.dim(1) + 5;
-	    tmp2 = tmp.select(2, 2);
-	    draw_matrix(tmp2, "V", h, w);
+	    switch (channels_mode) {
+	    case 1:
+	      tmp2 = tmp.select(2, 0);
+	      draw_matrix(tmp2, "Y", h, w);
+	      w += tmp2.dim(1) + 5;
+	      tmp2 = tmp.select(2, 1);
+	      draw_matrix(tmp2, "U", h, w);
+	      w += tmp2.dim(1) + 5;
+	      tmp2 = tmp.select(2, 2);
+	      draw_matrix(tmp2, "V", h, w);
+	      break ;
+	    case 4:
+	      tmp2 = tmp.select(2, 0);
+	      draw_matrix(tmp2, "Y", h, w);
+	      w += tmp2.dim(1) + 5;
+	      tmp2 = tmp.select(2, 1);
+	      idx_dotc(tmp2, (float)420.0, tmp2);
+	      draw_matrix(tmp2, "H3", h, w, 1.0, 1.0, (float)0, (float)420);
+	      cout << "h3 inf: " << idx_min(tmp2) << " max: ";
+	      cout << idx_max(tmp2) << endl;
+	      w += tmp2.dim(1) + 5;
+	      idxdim d(limg);
+	      idx<float> rgb(d);
+	      h3_to_rgb(tmp2, rgb);
+	      draw_matrix(rgb, "H3", h, w);
+	      break ;
+	    }	      
 	  }
 	}
       }
