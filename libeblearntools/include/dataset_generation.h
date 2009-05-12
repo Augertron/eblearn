@@ -63,8 +63,10 @@ namespace ebl {
 		       const char *imgPatternLeft = NULL, // eg: "_L"
 		       const char *outDir = NULL, 
 		       const char *imgPatternRight = NULL,  // eg: "_R"
+		       bool silent = false,
 		       bool display = false,
-		       const char *prefix = NULL); // eg: "_train" or "test_"
+		       const char *prefix = NULL, // eg: "_train" or "test_"
+		       const char *name = NULL); // eg: "caltech101"
 
 } // end namespace ebl
 
