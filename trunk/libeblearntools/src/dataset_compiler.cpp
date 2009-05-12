@@ -42,6 +42,9 @@ using namespace ebl;
 string images_root = ".";
 string image_pattern = ".*[.]ppm";
 int channels = 0;
+bool display = false;
+bool training = false;
+bool testing = false;
 bool stereo = false;
 string stereo_lpattern = "_L";
 string stereo_rpattern = "_R";
@@ -64,7 +67,7 @@ bool parse_args(int argc, char **argv) {
   // loop over arguments
   for (int i = 2; i < argc; ++i) {
     if (strcmp(argv[i], "-channels") == 0) {
-      i++;
+      ++i;
       if (i >= argc) {
 	cerr << "input error: expecting string after -channels." << endl;
 	return false;
@@ -90,6 +93,12 @@ bool parse_args(int argc, char **argv) {
 	return false;
       }
       image_pattern = argv[i];
+    } else if (strcmp(argv[i], "-dset_display") == 0) {
+      display = true;
+    } else if (strcmp(argv[i], "-training") == 0) {
+      training = true;
+    } else if (strcmp(argv[i], "-testing") == 0) {
+      testing = true;
     } else if (strcmp(argv[i], "-stereo") == 0) {
       stereo = true;
     } else if (strcmp(argv[i], "-stereo_lpattern") == 0) {
@@ -112,14 +121,14 @@ bool parse_args(int argc, char **argv) {
 	cerr << "input error: expecting string after -output_dir." << endl;
 	return false;
       }
-      outdir = argv[++i];
-    } else if (strcmp(argv[i], "-name") == 0) {
+      outdir = argv[i];
+    } else if (strcmp(argv[i], "-dset_name") == 0) {
       ++i;
       if (i >= argc) {
-	cerr << "input error: expecting string after -name." << endl;
+	cerr << "input error: expecting string after -dname." << endl;
 	return false;
       }
-      dataset_name = argv[++i];
+      dataset_name = argv[i];
     } else if ((strcmp(argv[i], "-help") == 0) ||
 	       (strcmp(argv[i], "-h") == 0)) {
       return false;
@@ -144,11 +153,14 @@ void print_usage() {
   cout << "      - HSV" << endl;
   cout << "      - Y (Y only in YUV)" << endl;
   cout << "      - YH3" << endl;
+  cout << "  -dset_display" << endl;
+  cout << "  -training" << endl;
+  cout << "  -testing" << endl;
   cout << "  -stereo" << endl;
   cout << "  -stereo_lpattern <pattern>" << endl;
   cout << "  -stereo_rpattern <pattern>" << endl;
   cout << "  -output_dir <directory>" << endl;
-  cout << "  -name <dataset_name>" << endl;
+  cout << "  -dset_name <dataset_name>" << endl;
 }
 
 #ifdef __GUI__
@@ -156,7 +168,9 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 #else
 int main(int argc, char **argv) {
 #endif
-  cout << "********* Dataset compiler for libeblearn library *********" << endl;
+  //for (int i = 0 ; i < argc ; i++)cout<<"argv["<<i<<"]: "<<argv[i]<<endl;
+  cout << "******************* Dataset compiler for libeblearn library ";
+  cout << "*******************" << endl;
   // parse arguments
   if (!parse_args(argc, argv)) {
     print_usage();
@@ -177,6 +191,9 @@ int main(int argc, char **argv) {
   default: cerr << "input error: unknown channel mode." << endl;
     print_usage(); return -1;
   } cout << ")" << endl;
+  cout << "  display: " << (display ? "yes" : "no") << endl;
+  cout << "  training: " << (training ? "yes" : "no") << endl;
+  cout << "  testing: " << (testing ? "yes" : "no") << endl;
   cout << "  stereo: " << (stereo ? "yes" : "no") << endl;
   if (stereo) {
     cout << "    stereo left pattern: " << stereo_lpattern << endl;
@@ -186,11 +203,14 @@ int main(int argc, char **argv) {
   cout << "  " << outdir << "/" << dataset_name << "_images.mat" << endl;
   cout << "  " << outdir << "/" << dataset_name << "_labels.mat" << endl;
   cout << "  " << outdir << "/" << dataset_name << "_classes.mat" << endl;
-  cout << "***********************************************************" << endl;
+  cout << "****************************************";
+  cout << "***************************************" << endl;
 
-  imagedir_to_idx(images_root.c_str(), 300, channels, image_pattern.c_str(),
+  imagedir_to_idx(images_root.c_str(), 143, channels, image_pattern.c_str(),
 		  NULL,
-		  outdir.c_str(), NULL, true);
+		  outdir.c_str(), NULL, false, display,
+		  training? "_train" : "_test",
+		  dataset_name.c_str());
     
   return 0;
 }

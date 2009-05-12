@@ -52,7 +52,7 @@ void DataSourceTest::test_imageDirToIdx() {
   dir += "/pnm/";
 #ifdef __BOOST__
   CPPUNIT_ASSERT(imagedir_to_idx(dir.c_str(), 48, 0, ".*[.]ppm", 
-				 NULL, "/tmp") == true);
+				 NULL, "/tmp", NULL, true) == true);
 #else
   CPPUNIT_ASSERT_MESSAGE("Not tested because of missing Boost libraries", 
 			 false);
