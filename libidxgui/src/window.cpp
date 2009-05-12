@@ -253,11 +253,11 @@ namespace ebl {
 	&& ((h != 0) && (w != 0))) {
       resize(w, h);
       if (!buffer) {
-	buffer = new idx<ubyte>(h, w);
+	buffer = new idx<ubyte>(h, w, 3);
 	idx_fill(*buffer, (ubyte) 255);
       }
       else {
-	idx<ubyte> *inew = new idx<ubyte>(h, w);
+	idx<ubyte> *inew = new idx<ubyte>(h, w, 3);
 	idx_fill(*inew, (ubyte) 255);
 	idx<ubyte> tmpnew = inew->narrow(0, MIN(h, buffer->dim(0)), 0);
 	tmpnew = tmpnew.narrow(1, MIN(w, buffer->dim(1)), 0);
@@ -271,8 +271,9 @@ namespace ebl {
 	delete qimage;
       qimage = new QImage((unsigned char*) buffer->idx_ptr(), 
 			  buffer->dim(1), buffer->dim(0), 
-			  buffer->dim(1) * sizeof (unsigned char),
-			  QImage::Format_Indexed8);
+ 			  buffer->dim(1) * buffer->dim(2) *
+ 			  sizeof (unsigned char),
+			  QImage::Format_RGB888);
       qimage->setColorTable(colorTable);
     }
   }
@@ -299,7 +300,21 @@ namespace ebl {
 	buffer_resize(h, w);
       idx<ubyte> tmpbuf = buffer->narrow(0, img.dim(0), h0);
       tmpbuf = tmpbuf.narrow(1, img.dim(1), w0);
-      idx_copy(img, tmpbuf);
+      if ((img.order() == 3) && (img.dim(2) == 3)) // RGB
+	idx_copy(img, tmpbuf);
+      else if ((img.order() == 2) ||
+	       ((img.order() == 3) && (img.dim(2) == 1))) { // greyscale
+	idx<ubyte> tmpbufl = tmpbuf.select(2, 0);
+	idx_copy(img, tmpbufl);
+	tmpbufl = tmpbuf.select(2, 1);
+	idx_copy(img, tmpbufl);
+	tmpbufl = tmpbuf.select(2, 2);
+	idx_copy(img, tmpbufl);
+      }
+      else {
+	cerr << "unknown image dimensions: " << img << endl;
+	eblerror("expected a grayscale or rgb image");
+      }      
       // copy buffer to pixmap
       *pixmap = QPixmap::fromImage(*qimage);
       update_window();

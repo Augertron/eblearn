@@ -49,7 +49,8 @@ using namespace std;
 
 namespace ebl {
 
-  template<class T> idx<T> image_crop(idx<T> &in, int x, int y, int w, int h){
+  template<class T>
+  idx<T> image_crop(idx<T> &in, int x, int y, int w, int h) {
     idx<T> bla = in.narrow(0, h, y).narrow(1, w, x);
     idx<T> bla3(bla.dim(0), bla.dim(1), bla.order() < 3 ? -1 : bla.dim(2));
     idx_copy(bla, bla3);
@@ -122,41 +123,47 @@ namespace ebl {
   }
 
   template<class T> 
-  idx<ubyte> grey_image_to_ubyte(idx<T> &im, double zoomh, double zoomw,
-				 T minv, T maxv) {
+  idx<ubyte> image_to_ubyte(idx<T> &im, double zoomh, double zoomw,
+			    T minv, T maxv) {
+    // check the order and dimensions
     if ((im.order() < 2) || (im.order() > 3) || 
-	((im.order() == 3) && (im.dim(2) != 1))) 
-      eblerror("expecting a 2D idx or a 3D idx with 1 channel only");
-    idx<T> im1(im.dim(0), im.dim(1));
-    if ((im.order() == 3) && (im.dim(2) == 1)) {
-      idx<T> tmp = im.select(2, 0);
-      idx_copy(tmp, im1); // copy data to make it contiguous
-    }
-    else
-      idx_copy(im, im1); // copy data to make it contiguous
+	((im.order() == 3) && (im.dim(2) != 1) && (im.dim(2) != 3))) 
+      eblerror("expecting a 2D idx or a 3D idx with 1 or 3 channels only");
+    // create a copy
+    idxdim d(im);
+    idx<T> im1(d);
+    idx_copy(im, im1);
+    // check zoom factor
     if ((zoomw <= 0.0) || (zoomh <= 0.0))
       eblerror("cannot zoom by a factor <= 0.0");
+    // check minv maxv
     if (minv > maxv) {
       T tmp = minv;
       minv = maxv;
       maxv = tmp;
     }
+    // if minv and maxv are defaults, take actual min and max of the image
     if (minv == maxv) {
       minv = idx_min(im1);
       maxv = idx_max(im1);
     }
+    // create target image
     int newh = im1.dim(0) * zoomh;
     int neww = im1.dim(1) * zoomw;
     idx<T> im2 = ((newh == im1.dim(0)) && (neww == im1.dim(1))) ?
       im1 : image_resize(im1, neww, newh);
-    idx<ubyte> image(newh, neww);
+    d.setdim(0, newh);
+    d.setdim(1, neww);
+    idx<ubyte> image(d);
+    // map values between minv and maxv to 0 .. 255
     idx_subc_bounded(im2, minv, im2);
     idx_dotc_bounded(im2, (T) (255.0 / (double) (maxv - minv)), im2);
     idx_copy_clip(im2, image);
     return image;
   }
 
-  template<class T> idx<T> image_subsample_grayscale(idx<T> &in, int nlin, int ncol) {
+  template<class T>
+  idx<T> image_subsample_grayscale(idx<T> &in, int nlin, int ncol) {
     intg h = in.dim(0);
     intg w = in.dim(1);
     intg nh = h / nlin;

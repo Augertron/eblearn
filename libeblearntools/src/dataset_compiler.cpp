@@ -77,6 +77,8 @@ bool parse_args(int argc, char **argv) {
 	channels = 2;
       else if (strcmp(argv[i], "Y") == 0)
 	channels = 3;
+      else if (strcmp(argv[i], "YH3") == 0)
+	channels = 4;
       else {
 	cerr << "input error: unknown channel mode: " << argv[i] << endl;
 	return false;
@@ -141,6 +143,7 @@ void print_usage() {
   cout << "      - YUV" << endl;
   cout << "      - HSV" << endl;
   cout << "      - Y (Y only in YUV)" << endl;
+  cout << "      - YH3" << endl;
   cout << "  -stereo" << endl;
   cout << "  -stereo_lpattern <pattern>" << endl;
   cout << "  -stereo_rpattern <pattern>" << endl;
@@ -170,6 +173,7 @@ int main(int argc, char **argv) {
   case 1: cout << "YUV"; break;
   case 2: cout << "HSV"; break;
   case 3: cout << "Y"; break;
+  case 4: cout << "YH3"; break;
   default: cerr << "input error: unknown channel mode." << endl;
     print_usage(); return -1;
   } cout << ")" << endl;

@@ -65,4 +65,89 @@ namespace ebl {
     idx_dotc(tmp, (float)    0.01, tmp);
   }
 
+  // ######################################################################
+  // T. Nathan Mundhenk
+  // mundhenk@usc.edu
+  // C/C++ Macro HSV to RGB
+  void PIX_HSV3_TO_RGB_COMMON(double H, double S, double V,
+			      double &R, double &G, double &B) {
+    if( V == 0 )								
+      { R = 0; G = 0; B = 0; }                                            
+    else if( S == 0 )							
+      {                                                                   
+	R = V;                                                            
+	G = V;                                                            
+	B = V;                                                            
+      }                                                                   
+    else									
+      {                                                                   
+	const double hf = H / 60.0;                                       
+	const int    i  = (int) floor( hf );                              
+	const double f  = hf - i;                                         
+	const double pv  = V * ( 1 - S );                                 
+	const double qv  = V * ( 1 - S * f );                             
+	const double tv  = V * ( 1 - S * ( 1 - f ) );
+	const double bw  = .25 + .25 * ((H - 360) / 60);
+	switch( i )                                                       
+	  {                                                               
+	  case 1:                                                         
+	    R = V;                                                        
+	    G = tv;                                                       
+	    B = pv;                                                       
+	    break;                                                        
+	  case 2:                                                         
+	    R = qv;                                                       
+	    G = V;                                                        
+	    B = pv;                                                       
+	    break;                                                        
+	  case 3:                                                         
+	    R = pv;                                                       
+	    G = V;                                                        
+	    B = tv;                                                       
+	    break;                                                        
+	  case 4:                                                         
+	    R = pv;                                                       
+	    G = qv;                                                       
+	    B = V;                                                        
+	    break;                                                        
+	  case 5:                                                         
+	    R = tv;                                                       
+	    G = pv;                                                       
+	    B = V;                                                        
+	    break;                                                        
+	  case 0:                                                         
+	    R = V;                                                        
+	    G = pv;                                                       
+	    B = qv;                                                       
+	    break;                                                        
+	  case 6:                                                         
+// 	    R = V;                                                        
+// 	    G = tv;                                                       
+// 	    B = pv;                                                       
+// 	    break;                                                        
+	  case 7:                                                         
+	    R = bw;                                                        
+	    G = bw;							
+	    B = bw;							
+	    break;                                                        
+	  case -1:                                                        
+	    R = V;                                                        
+	    G = pv;                                                       
+	    B = qv;                                                       
+	    break;                                                        
+	  default:                                                        
+	    cerr << "i Value error in Pixel conversion, Value is " <<i << endl; 
+	    eblerror("hsv to rgb2 error");				
+	    break;                                                        
+	  }                                                               
+  }                                                                   
+    R *= 255.0F;								
+    G *= 255.0F;								
+    B *= 255.0F;
+//     if ((R > 127) || (G > 127) || (B > 127)) {
+//       cout << "H: " << H << " S: " << S << " V: " << V << endl;
+//       cout << "R: " << R << " G: " << G << " B: " << B << endl;
+//     }
+  }
+
 } // end namespace ebl

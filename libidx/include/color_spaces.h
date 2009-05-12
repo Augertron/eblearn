@@ -83,6 +83,52 @@ namespace ebl {
   //! image and returns it.
   template<class T> idx<T> hsv_to_rgb(idx<T> &hsv);
 
+  ////////////////////////////////////////////////////////////////
+  // HSV3
+
+  void PIX_HSV3_TO_RGB_COMMON(double H, double S, double V,
+			      double &R, double &G, double &B);
+  //! Convert all pixels of rgb idx to hsv3 pixels.
+  //! If the input idx has order of 1, it converts only 1 pixel.
+  //! If the order is 3, it converts all pixels.
+  template<class T> void rgb_to_hsv3(idx<T> &rgb, idx<T> &hsv3,
+				     double threshold1, double threshold2);
+  //! Same as hsv3_to_rgb with 2 arguments except that it allocates a target
+  //! image and returns it.
+  template<class T> idx<T> rgb_to_hsv3(idx<T> &rgb, double threshold1,
+				       double threshold2);
+
+  //! Convert all pixels of hsv3 idx to rgb pixels.
+  //! If the input idx has order of 1, it converts only 1 pixel.
+  //! If the order is 3, it converts all pixels.
+  template<class T> void hsv3_to_rgb(idx<T> &hsv3, idx<T> &rgb);
+  //! Same as hsv3_to_rgb with 2 arguments except that it allocates a target
+  //! image and returns it.
+  template<class T> idx<T> hsv3_to_rgb(idx<T> &hsv3);
+
+  ////////////////////////////////////////////////////////////////
+  // YH3
+
+  //! Convert all pixels of rgb idx to yh3 pixels.
+  //! If the input idx has order of 1, it converts only 1 pixel.
+  //! If the order is 3, it converts all pixels.
+  template<class T> void rgb_to_yh3(idx<T> &rgb, idx<T> &yh3,
+				    double threshold1 = .10,
+				    double threshold2 = .15);
+  //! Same as yh3_to_rgb with 2 arguments except that it allocates a target
+  //! image and returns it.
+  template<class T> idx<T> rgb_to_yh3(idx<T> &rgb,
+				      double threshold1 = .10,
+				      double threshold2 = .15);
+  
+  //! Convert all pixels of h3 idx to rgb pixels.
+  //! If the input idx has order of 1, it converts only 1 pixel.
+  //! If the order is 3, it converts all pixels.
+  template<class T> void h3_to_rgb(idx<T> &h3, idx<T> &rgb);
+  //! Same as h3_to_rgb with 2 arguments except that it allocates a target
+  //! image and returns it.
+  template<class T> idx<T> h3_to_rgb(idx<T> &h3);
+
 } // end namespace ebl
 
 #include "color_spaces.hpp"

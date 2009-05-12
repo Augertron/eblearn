@@ -144,10 +144,12 @@ namespace ebl {
 	  else      min = R;				\
 	  const double delta = V - min;			\
 	  if(delta != 0)				\
-	    { S = (delta/V); H = 4 + (R - G) / delta; }	\
+	    { S = (delta/V); H = 5 + (R - G) / delta; }	\
 	  else						\
-	    { S = 0;         H = 4 + (R - G); }		\
-	  H *=   60; if(H < 0) H += 360;		\
+	    { S = 0;         H = 5 + (R - G); }		\
+	  H *=   60;					\
+	  if (H >= 360) H -= 360;			\
+	  if(H < 0) H += 360;				\
 	  if(!NORM) V =  (V/255);			\
 	  else      S *= (100);				\
 	}						\
@@ -164,10 +166,12 @@ namespace ebl {
 	  else      min = R;				\
 	  const double delta = V - min;			\
 	  if(delta != 0)				\
-	    { S = (delta/V); H = 2 + (B - R) / delta; }	\
+	    { S = (delta/V); H = 3 + (B - R) / delta; }	\
 	  else						\
-	    { S = 0;         H = 2 + (B - R); }		\
-	  H *=   60; if(H < 0) H += 360;		\
+	    { S = 0;         H = 3 + (B - R); }		\
+	  H *=   60;					\
+	  if (H >= 360) H -= 360;			\
+	  if(H < 0) H += 360;				\
 	  if(!NORM) V =  (V/255);			\
 	  else      S *= (100);				\
 	}						\
@@ -184,16 +188,92 @@ namespace ebl {
 	  else      min = G;				\
 	  const double delta = V - min;			\
 	  if(delta != 0)				\
-	    { S = (delta/V); H = (G - B) / delta; }	\
+	    { S = (delta/V); H = 1 + (G - B) / delta; }	\
 	  else						\
-	    { S = 0;         H = (G - B); }		\
-	  H *=   60; if(H < 0) H += 360;		\
+	    { S = 0;         H = 1 + (G - B); }	\
+	  H *=   60;					\
+	  if (H >= 360) H -= 360;			\
+	  if(H < 0) H += 360;				\
 	  if(!NORM) V =  (V/255);			\
 	  else      S *= (100);				\
 	}						\
       else						\
 	{ S = 0; H = 0;}				\
     }
+
+  // ######################################################################
+  // T. Nathan Mundhenk
+  // mundhenk@usc.edu
+  // C/C++ Macro HSV to RGB
+#define PIX_HSV_TO_RGB_COMMON(H,S,V,R,G,B)				\
+  if( V == 0 )								\
+    { R = 0; G = 0; B = 0; }                                            \
+  else if( S == 0 )							\
+    {                                                                   \
+      R = V;                                                            \
+      G = V;                                                            \
+      B = V;                                                            \
+    }                                                                   \
+  else									\
+    {                                                                   \
+      const double hf = H / 60.0;                                       \
+      const int    i  = (int) floor( hf );                              \
+      const double f  = hf - i;                                         \
+      const double pv  = V * ( 1 - S );                                 \
+      const double qv  = V * ( 1 - S * f );                             \
+      const double tv  = V * ( 1 - S * ( 1 - f ) );                     \
+      switch( i )                                                       \
+	{                                                               \
+	case 1:                                                         \
+	  R = V;                                                        \
+	  G = tv;                                                       \
+	  B = pv;                                                       \
+	  break;                                                        \
+	case 2:                                                         \
+	  R = qv;                                                       \
+	  G = V;                                                        \
+	  B = pv;                                                       \
+	  break;                                                        \
+	case 3:                                                         \
+	  R = pv;                                                       \
+	  G = V;                                                        \
+	  B = tv;                                                       \
+	  break;                                                        \
+	case 4:                                                         \
+	  R = pv;                                                       \
+	  G = qv;                                                       \
+	  B = V;                                                        \
+	  break;                                                        \
+	case 5:                                                         \
+	  R = tv;                                                       \
+	  G = pv;                                                       \
+	  B = V;                                                        \
+	  break;                                                        \
+	case 0:                                                         \
+	  R = V;                                                        \
+	  G = pv;                                                       \
+	  B = qv;                                                       \
+	  break;                                                        \
+	case 6:                                                         \
+	  R = V;                                                        \
+	  G = tv;                                                       \
+	  B = pv;                                                       \
+	  break;                                                        \
+	case -1:                                                        \
+	  R = V;                                                        \
+	  G = pv;                                                       \
+	  B = qv;                                                       \
+	  break;                                                        \
+	default:                                                        \
+	  cerr << "i Value error in Pixel conversion, Value is " << i << endl; \
+	  eblerror("hsv to rgb error");					\
+	  break;                                                        \
+	}                                                               \
+    }                                                                   \
+  R *= 255.0F;								\
+  G *= 255.0F;								\
+  B *= 255.0F;
+
 
   // TODO: find a cleaner way with matrix multiplication that can handle
   // different output type than hsv matrix.
@@ -207,7 +287,7 @@ namespace ebl {
     g = rgb.get(1);
     b = rgb.get(2);
     static double h, s, v;
-    PIX_RGB_TO_HSV_COMMON(r, g, b, h, s, v, true);
+    PIX_RGB_TO_HSV_COMMON(r, g, b, h, s, v, false);
     hsv.set(h, 0);
     hsv.set(s, 1);
     hsv.set(v, 2);
@@ -245,7 +325,15 @@ namespace ebl {
       eblerror("hsv_to_rgb: dst must be different than src");
       return ;
     }
-    eblerror("not implemented");
+    static double h, s, v;
+    h = hsv.get(0);
+    s = hsv.get(1);
+    v = hsv.get(2);
+    static double r, g, b;
+    PIX_HSV_TO_RGB_COMMON(h, s, v, r, g, b);
+    rgb.set(r, 0);
+    rgb.set(g, 1);
+    rgb.set(b, 2);
   }
 
   template<class T> void hsv_to_rgb(idx<T> &hsv, idx<T> &rgb) {
@@ -274,6 +362,189 @@ namespace ebl {
     hsv_to_rgb(hsv, rgb);
     return rgb;
   }
+
+  ////////////////////////////////////////////////////////////////
+  // HSV3
+
+  // TODO: find a cleaner way with matrix multiplication that can handle
+  // different output type than hsv3 matrix.
+  template<class T> void rgb_to_hsv3_1D(idx<T> &rgb, idx<T> &hsv3,
+					double threshold1, double threshold2) {
+    if (rgb.idx_ptr() == hsv3.idx_ptr()) {
+      eblerror("rgb_to_hsv3: dst must be different than src");
+      return ;
+    }
+    static double r, g, b;
+    r = rgb.get(0);
+    g = rgb.get(1);
+    b = rgb.get(2);
+    static double h, s, v;
+    PIX_RGB_TO_HSV_COMMON(r, g, b, h, s, v, false);
+    if ((s < threshold1) || (v < threshold2)) {
+      h = 360 + 60 * v;
+    }
+    hsv3.set(h, 0);
+    hsv3.set(s, 1);
+    hsv3.set(v, 2);
+  }
+
+  template<class T> void rgb_to_hsv3(idx<T> &rgb, idx<T> &hsv3,
+				     double threshold1, double threshold2) {
+    idx_checknelems2_all(rgb, hsv3);
+    switch (rgb.order()) {
+    case 1: // process 1 pixel
+      rgb_to_hsv3_1D(rgb, hsv3, threshold1, threshold2);
+      //      idx_m2dotm1(rgb_hsv3, rgb, hsv3);
+      return ;
+    case 3: // process 2D image
+      { idx_bloop2(rg, rgb, T, yu, hsv3, T) {
+	  { idx_bloop2(r, rg, T, y, yu, T) {
+	      rgb_to_hsv3_1D(r, y, threshold1, threshold2);
+	      //	      idx_m2dotm1(rgb_hsv3, r, y);
+	    }}
+	}}
+      return ;
+    default:
+      eblerror("rgb_to_hsv3 dimension not implemented");
+    }
+  }
+
+  template<class T> idx<T> rgb_to_hsv3(idx<T> &rgb, double threshold1,
+				       double threshold2) {
+    idxdim d(rgb);
+    idx<T> hsv3(d);
+    rgb_to_hsv3(rgb, hsv3, threshold1, threshold2);
+    return hsv3;
+  }
+  
+  template<class T> void hsv3_to_rgb_1D(idx<T> &hsv3, idx<T> &rgb) {
+    if (rgb.idx_ptr() == hsv3.idx_ptr()) {
+      eblerror("hsv3_to_rgb: dst must be different than src");
+      return ;
+    }
+    static double h, s, v;
+    h = hsv3.get(0);
+    s = hsv3.get(1);
+    v = hsv3.get(2);
+    static double r, g, b;
+    PIX_HSV3_TO_RGB_COMMON(h, s, v, r, g, b);
+    rgb.set(r, 0);
+    rgb.set(g, 1);
+    rgb.set(b, 2);
+  }
+
+  template<class T> void hsv3_to_rgb(idx<T> &hsv3, idx<T> &rgb) {
+    idx_checknelems2_all(rgb, hsv3);
+    switch (hsv3.order()) {
+    case 1: // process 1 pixel
+      hsv3_to_rgb_1D(hsv3, rgb);
+      //idx_m2dotm1(hsv3_rgb, hsv3, rgb);
+      return ;
+    case 3: // process 2D image
+      { idx_bloop2(rg, rgb, T, yu, hsv3, T) {
+	  { idx_bloop2(r, rg, T, y, yu, T) {
+	      hsv3_to_rgb_1D(y, r);
+	      //idx_m2dotm1(hsv3_rgb, y, r);
+	    }}
+	}}
+      return ;
+    default:
+      eblerror("hsv3_to_rgb dimension not implemented");
+    }
+  }
+
+  template<class T> idx<T> hsv3_to_rgb(idx<T> &hsv3) {
+    idxdim d(hsv3);
+    idx<T> rgb(d);
+    hsv3_to_rgb(hsv3, rgb);
+    return rgb;
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // YH3
+
+  // TODO: find a cleaner way with matrix multiplication that can handle
+  // different output type than yh3 matrix.
+  template<class T> void rgb_to_yh3_1D(idx<T> &rgb, idx<T> &yh3,
+					double threshold1, double threshold2) {
+    if (rgb.idx_ptr() == yh3.idx_ptr()) {
+      eblerror("rgb_to_yh3: dst must be different than src");
+      return ;
+    }
+    static idx<T> hsv3(3);
+    rgb_to_hsv3_1D(rgb, hsv3, threshold1, threshold2);
+    yh3.set((0.299 * rgb.get(0) + 0.587 * rgb.get(1) + 0.114 * rgb.get(2))
+	    /255.0, 0);
+    yh3.set(  hsv3.get(0) / 420.0, 1);
+  }
+
+  template<class T> void rgb_to_yh3(idx<T> &rgb, idx<T> &yh3,
+				     double threshold1, double threshold2) {
+    //    idx_checknelems2_all(rgb, yh3);
+    switch (rgb.order()) {
+    case 1: // process 1 pixel
+      rgb_to_yh3_1D(rgb, yh3, threshold1, threshold2);
+      //      idx_m2dotm1(rgb_yh3, rgb, yh3);
+      return ;
+    case 3: // process 2D image
+      { idx_bloop2(rg, rgb, T, yu, yh3, T) {
+	  { idx_bloop2(r, rg, T, y, yu, T) {
+	      rgb_to_yh3_1D(r, y, threshold1, threshold2);
+	      //	      idx_m2dotm1(rgb_yh3, r, y);
+	    }}
+	}}
+      return ;
+    default:
+      eblerror("rgb_to_yh3 dimension not implemented");
+    }
+  }
+
+  template<class T> idx<T> rgb_to_yh3(idx<T> &rgb, double threshold1,
+				       double threshold2) {
+    idxdim d(rgb);
+    idx<T> yh3(d);
+    rgb_to_yh3(rgb, yh3, threshold1, threshold2);
+    return yh3;
+  }
+
+  template<class T> void h3_to_rgb_1D(idx<T> &h3, idx<T> &rgb) {
+    if (rgb.idx_ptr() == h3.idx_ptr()) {
+      eblerror("h3_to_rgb: dst must be different than src");
+      return ;
+    }
+    static double r, g, b;
+    PIX_HSV3_TO_RGB_COMMON(h3.get(), .5, .5, r, g, b);
+    rgb.set(r, 0);
+    rgb.set(g, 1);
+    rgb.set(b, 2);
+  }
+
+  template<class T> void h3_to_rgb(idx<T> &h3, idx<T> &rgb) {
+    //    idx_checknelems2_all(rgb, h3);
+    switch (h3.order()) {
+    case 2: // process 1 pixel
+//       h3_to_rgb_1D(h3, rgb);
+//       //idx_m2dotm1(h3_rgb, h3, rgb);
+//       return ;
+    case 3: // process 2D image
+      { idx_bloop2(rg, rgb, T, yu, h3, T) {
+	  { idx_bloop2(r, rg, T, y, yu, T) {
+	      h3_to_rgb_1D(y, r);
+	      //idx_m2dotm1(h3_rgb, y, r);
+	    }}
+	}}
+      return ;
+    default:
+      eblerror("h3_to_rgb dimension not implemented");
+    }
+  }
+
+  template<class T> idx<T> h3_to_rgb(idx<T> &h3) {
+    idxdim d(h3);
+    idx<T> rgb(d);
+    h3_to_rgb(h3, rgb);
+    return rgb;
+  }  
   
 } // end namespace ebl
 

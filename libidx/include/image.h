@@ -64,12 +64,13 @@ namespace ebl {
   template<class T> 
     idx<T> image_resize(idx<T> &im, double w, double h, int mode = 1);
 
-  //! This function takes 2D images (only)  as input of type T and converts
+  //! This function takes 2D or 3D images (greyscale or RGB)
+  //! as input of type T and converts
   //! it to a ubyte image, by mapping the range [minv, maxv] to [0,255]
   //! and applying zoom factors zoomx and zoomy along each axis.
   template<class T> 
-    idx<ubyte> grey_image_to_ubyte(idx<T> &im, double zoomh, double zoomw,
-				   T minv, T maxv);
+    idx<ubyte> image_to_ubyte(idx<T> &im, double zoomh, double zoomw,
+			      T minv, T maxv);
 
   //! subsamples image <in> with integer ratios <nlin> (vertical) <ncol>
   //! (horizontal). the subsampled image is returned.

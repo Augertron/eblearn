@@ -125,12 +125,18 @@ void image_test::test_colorspaces() {
   string imgfile = *gl_data_dir;
   imgfile += "/barn.png";
   image_read_rgbx(imgfile.c_str(), im_rgb);
-  im_rgb = image_resize(im_rgb, 320, 240);
+  im_rgb = image_resize(im_rgb, 252, 189);
   idxdim d(im_rgb);
+  idx<float> fim_rgb(d);
+  idx_copy(im_rgb, fim_rgb);
   idx<ubyte> im_yuv(d);
   rgb_to_yuv(im_rgb, im_yuv);
-  idx<ubyte> im_hsv(d);
-  rgb_to_hsv(im_rgb, im_hsv);
+  idx<float> im_hsv(d);
+  rgb_to_hsv(fim_rgb, im_hsv);
+  idx<float> im_hsv3(d);
+  rgb_to_hsv3(fim_rgb, im_hsv3, .10, .15);
+  idx<float> ftmp(d);
+  idx<float> ftmp1(d);
 
   // TODO: wrong values, fixme
 //   CPPUNIT_ASSERT(imb.get(0, 0, 0) == 81);
@@ -160,8 +166,11 @@ void image_test::test_colorspaces() {
 #ifdef __GUI__
   new_window("Testing color spaces");
   idx<ubyte> tmp2;
+  idx<float> ftmp2;
   unsigned int h = 0, w = 0;
   // input (RGB)
+  draw_matrix(im_rgb, "RGB", h, w);
+  w += im_rgb.dim(1) + 5;
   tmp2 = im_rgb.select(2, 0);
   cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
   draw_matrix(tmp2, "R", h, w);
@@ -175,7 +184,10 @@ void image_test::test_colorspaces() {
   draw_matrix(tmp2, "B", h, w);
   w = 0;
   h += tmp2.dim(0) + 5;
+  
   // yuv
+  draw_matrix(im_yuv, "YUV", h, w);
+  w += im_yuv.dim(1) + 5;
   tmp2 = im_yuv.select(2, 0);
   cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
   draw_matrix(tmp2, "Y", h, w);
@@ -189,18 +201,68 @@ void image_test::test_colorspaces() {
   draw_matrix(tmp2, "V", h, w);
   w = 0;
   h += tmp2.dim(0) + 5;
+  
   // hsv
-  tmp2 = im_hsv.select(2, 0);
-  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
-  draw_matrix(tmp2, "H", h, w);
-  w += tmp2.dim(1) + 5;
-  tmp2 = im_hsv.select(2, 1);
-  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
-  draw_matrix(tmp2, "S", h, w);
-  w += tmp2.dim(1) + 5;
-  tmp2 = im_hsv.select(2, 2);
-  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
-  draw_matrix(tmp2, "V", h, w);
-  sleep(500);
+  draw_matrix(im_hsv, "HSV", h, w);
+  w += im_hsv.dim(1) + 5;
+  idx_copy(im_hsv, ftmp);
+  ftmp2 = ftmp.select(2, 1); // s
+  idx_fill(ftmp2, (float).5);
+  ftmp2 = ftmp.select(2, 2); // v
+  idx_fill(ftmp2, (float).5);
+  hsv_to_rgb(ftmp, ftmp1);
+  ftmp2 = im_hsv.select(2, 0);
+  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  cout << "inf tmp1: " << (int) idx_min(ftmp1) << " sup:" << (int) idx_max(ftmp1) << endl;
+  draw_matrix(ftmp1, "H", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
+  w += ftmp2.dim(1) + 5;
+  ftmp2 = im_hsv.select(2, 1);
+  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  draw_matrix(ftmp2, "S", h, w);
+  w += ftmp2.dim(1) + 5;
+  ftmp2 = im_hsv.select(2, 2);
+  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  draw_matrix(ftmp2, "V", h, w);
+  w = 0;
+  h += ftmp2.dim(0) + 5;
+
+    // hsv3
+  draw_matrix(im_hsv3, "HSV3", h, w);
+  w += im_hsv3.dim(1) + 5;
+  idx_copy(im_hsv3, ftmp);
+  ftmp2 = ftmp.select(2, 1); // s
+  idx_fill(ftmp2, (float).5);
+  ftmp2 = ftmp.select(2, 2); // v
+  idx_fill(ftmp2, (float).5);
+  hsv3_to_rgb(ftmp, ftmp1);
+  ftmp2 = im_hsv3.select(2, 0);
+  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  cout << "inf tmp1: " << (int) idx_min(ftmp1) << " sup:" << (int) idx_max(ftmp1) << endl;
+  draw_matrix(ftmp1, "H", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
+  w += ftmp2.dim(1) + 5;
+  ftmp2 = im_hsv3.select(2, 1);
+  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  draw_matrix(ftmp2, "S", h, w);
+  w += ftmp2.dim(1) + 5;
+  ftmp2 = im_hsv3.select(2, 2);
+  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  draw_matrix(ftmp2, "V", h, w);
+
+  w = 0;
+  h += ftmp2.dim(0) + 5;
+  idx<float> spectrum(50, 420, 3);
+  idx<float> ftmp3(50, 420, 3);
+  for (int i = 0; i < 420; ++i) {
+    ftmp2 = spectrum.select(1, i);
+    idx_fill(ftmp2, (float) i);
+  }
+  ftmp2 = spectrum.select(2, 1);
+  idx_fill(ftmp2, (float).5);
+  ftmp2 = spectrum.select(2, 2);
+  idx_fill(ftmp2, (float).5);
+  hsv3_to_rgb(spectrum, ftmp3);
+  draw_matrix(ftmp3, "H3 0 - 420", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
+  
+  //  sleep(5000);
 #endif
 }

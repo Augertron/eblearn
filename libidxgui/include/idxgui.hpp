@@ -39,8 +39,8 @@ namespace ebl {
   template<class T>
   void idxgui::draw_matrix(idx<T> &im, unsigned int h0, unsigned int w0, 
 			   double zoomh, double zoomw, T minv, T maxv) {
-    idx<ubyte> *uim = new idx<ubyte>(grey_image_to_ubyte<T>(im, zoomh, zoomw,
-							    minv, maxv));
+    idx<ubyte> *uim = new idx<ubyte>(image_to_ubyte<T>(im, zoomh, zoomw,
+						       minv, maxv));
     // send image to main gui thread
     emit gui_drawImage(uim, h0, w0);
   }
@@ -59,7 +59,7 @@ namespace ebl {
 				 unsigned int h0, unsigned int w0, 
 				 double zoomh, double zoomw,
 				 T minv, T maxv) {
-    idx<ubyte> uim = grey_image_to_ubyte<T>(im, zoomh, zoomw, minv, maxv);
+    idx<ubyte> uim = image_to_ubyte<T>(im, zoomh, zoomw, minv, maxv);
     idx<ubyte> tmp(uim.dim(0) + 2, uim.dim(1) + 2);
     idx<ubyte> *fim = new idx<ubyte>(tmp);
     idx<ubyte> tmp2 = tmp.narrow(0, uim.dim(0), 1);
