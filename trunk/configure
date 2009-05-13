@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# 1: build makefiles
+sh scripts/configure_build.sh unix
+
+# 2: configure IPP, MNIST & CO
+
 USE_IPP=IPPOFF
 IPP_DIR=
 LIBS=""
@@ -53,4 +58,4 @@ echo -n "\t"
 mkdir bin 2> /dev/null
 echo "\n-mnist $MNIST" >> run.init
 
-echo "Configuration done."
+echo "Configuration done. Now run make or make debug"
