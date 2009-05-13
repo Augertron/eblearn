@@ -198,7 +198,7 @@ void image_test::test_colorspaces() {
   
   cout << "Y inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
   cout << "Y hat inf: " << (int) idx_min(ftmp5) << " sup:" << (int) idx_max(ftmp5) << endl;
-  draw_matrix(ftmp5, "Y (mexican hat)", h, w);
+  draw_matrix(ftmp5, "Y (mexican hat)", h, w, 1, 1, (float)-1.0, (float)1.0);
   w += tmp2.dim(1) + 5;
   ftmp2 = fim_yuv.select(2, 1);
   cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
@@ -271,6 +271,6 @@ void image_test::test_colorspaces() {
   hsv3_to_rgb(spectrum, ftmp4);
   draw_matrix(ftmp4, "H3 0 - 420", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
   
-  sleep(5000);
+  //  sleep(5000);
 #endif
 }
