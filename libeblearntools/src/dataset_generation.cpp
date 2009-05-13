@@ -82,13 +82,15 @@ namespace ebl {
 		   const char *rightp, unsigned int width, idx<float> &images,
 		   idx<int> &labels, int label, bool display, bool *binocular, 
 		   const int channels_mode, const int channels_size,
-		   idx<ubyte> &classes, unsigned int &counter) {
+		   idx<ubyte> &classes, unsigned int &counter,
+		   idx<unsigned int> &counters_used, idx<int> &ds_assignment) {
     regex eExt(ext);
     string el(".*");
     idx<float> limg(1, 1, 1);
     idx<float> rimg(1, 1, 1);
     idx<float> tmp;
     idx<float> tmp2;
+    int current_ds;
     if (leftp) {
       el += leftp;
       el += ".*";
@@ -103,110 +105,122 @@ namespace ebl {
       if (is_directory(itr->status())) {
 	process_dir(itr->path().string().c_str(), ext, leftp, rightp, width, 
 		    images, labels, label, display, binocular, channels_mode,
-		    channels_size, classes, counter);
+		    channels_size, classes, counter, counters_used,
+		    ds_assignment);
       } else if (regex_match(itr->leaf().c_str(), what, eExt)) {
 	if (regex_match(itr->leaf().c_str(), what, eLeft)) {
-	  // found left image
-	  // increase example number
-	  labels.set(label, counter);
-	  // check for right image
-	  if (rightp != NULL) {
-	    regex reg(leftp);
-	    string rp(rightp);
-	    string s = regex_replace(itr->leaf(), reg, rp);
-	    string sfull = itr->path().branch_path().string();
-	    sfull += "/";
-	    sfull += s;
-	    path r(sfull);
-	    if (exists(r)) {
-	      // found right image
-	      *binocular = true;
-	      if (image_read_rgbx(r.string().c_str(), rimg)) {
-		// resize stereo dimension to twice the channels_size
-		if (images.dim(3) == channels_size)
-		  images.resize(images.dim(0), images.dim(1), 
-				images.dim(2), images.dim(3) * 2);
-		// take the right most square of the image
-		if (rimg.dim(0) <= rimg.dim(1))
-		  rimg = rimg.narrow(1, rimg.dim(0), rimg.dim(1) - rimg.dim(0));
-		else
-		  rimg = rimg.narrow(0, rimg.dim(1), rimg.dim(0) - rimg.dim(1));
-		// resize image to target width
-		rimg = image_resize(rimg, width, width, 1);
-		tmp = images.select(0, counter);
-		tmp = tmp.narrow(2, channels_size, channels_size);
-		// finally copy right images to idx
-		convert_image(rimg, tmp, channels_mode);
+	  current_ds = ds_assignment.get(counter);
+	  if (current_ds != -1) {
+	    // found left image
+	    // increase example number
+	    labels.set(label, current_ds, counters_used.get(current_ds));
+	    // check for right image
+	    if (rightp != NULL) {
+	      regex reg(leftp);
+	      string rp(rightp);
+	      string s = regex_replace(itr->leaf(), reg, rp);
+	      string sfull = itr->path().branch_path().string();
+	      sfull += "/";
+	      sfull += s;
+	      path r(sfull);
+	      if (exists(r)) {
+		// found right image
+		*binocular = true;
+		if (image_read_rgbx(r.string().c_str(), rimg)) {
+		  // resize stereo dimension to twice the channels_size
+		  if (images.dim(3) == channels_size)
+		    images.resize(images.dim(0), images.dim(1), 
+				  images.dim(2), images.dim(3) * 2);
+		  // take the right most square of the image
+		  if (rimg.dim(0) <= rimg.dim(1))
+		    rimg = rimg.narrow(1, rimg.dim(0),
+				       rimg.dim(1) - rimg.dim(0));
+		  else
+		    rimg = rimg.narrow(0, rimg.dim(1),
+				       rimg.dim(0) - rimg.dim(1));
+		  // resize image to target width
+		  rimg = image_resize(rimg, width, width, 1);
+		  tmp = images[current_ds];
+		  tmp = tmp[counters_used.get(current_ds)];
+		  tmp = tmp.narrow(2, channels_size, channels_size);
+		  // finally copy right images to idx
+		  convert_image(rimg, tmp, channels_mode);
+		}
+		if (display)
+		  cout << "Processing (right): " << sfull << endl;
 	      }
-	      if (display)
-		cout << "Processing (right): " << sfull << endl;
 	    }
-	  }
-	  if (display) {
-	    cout << counter << "/" << images.dim(0) << ": ";
-	    cout << itr->path().string().c_str() << endl;
-	  }
-	  // process left image
-	  if (image_read_rgbx(itr->path().string().c_str(), limg)) {
-	    // take the left most square of the image
-	    if (limg.dim(0) <= limg.dim(1))
-	      limg = limg.narrow(1, limg.dim(0), 0);
-	    else
-	      limg = limg.narrow(0, limg.dim(1), 0);
-	    // resize image to target width
-	    limg = image_resize(limg, width, width, 1);
-	    tmp = images.select(0, counter);
-	    tmp = tmp.narrow(2, channels_size, 0);
-	    // finally copy right images to idx
-	    convert_image(limg, tmp, channels_mode);
+	    if (display) {
+	      cout << counter << "/" << ds_assignment.dim(0) << ": ";
+	      cout << itr->path().string().c_str() << endl;
+	    }
+	    // process left image
+	    if (image_read_rgbx(itr->path().string().c_str(), limg)) {
+	      // take the left most square of the image
+	      if (limg.dim(0) <= limg.dim(1))
+		limg = limg.narrow(1, limg.dim(0), 0);
+	      else
+		limg = limg.narrow(0, limg.dim(1), 0);
+	      // resize image to target width
+	      limg = image_resize(limg, width, width, 1);
+	      tmp = images[current_ds];
+	      tmp = tmp.select(0, counters_used.get(current_ds));
+	      tmp = tmp.narrow(2, channels_size, 0);
+	      // finally copy right images to idx
+	      convert_image(limg, tmp, channels_mode);
 
-	    // display current image conversion
+	      // display current image conversion
 #ifdef __GUI__
-	    if (display && (counter % 15 == 0)) {
-	      disable_window_updates();
-	      clear_window();
-	      unsigned int h = 0, w = 0;
-	      // input (RGB)
-	      static string s;
-	      s = "RGB";
-	      s += " - ";
-	      s += (char *) classes[label].idx_ptr();
-	      draw_matrix(limg, s.c_str(), h, w);
-	      w = 0;
-	      h += tmp.dim(1) + 5;
-	      // output
-	      switch (channels_mode) {
-	      case 1:
-		tmp2 = tmp.select(2, 0);
-		draw_matrix(tmp2, "Y", h, w);
-		w += tmp2.dim(1) + 5;
-		tmp2 = tmp.select(2, 1);
-		draw_matrix(tmp2, "U", h, w);
-		w += tmp2.dim(1) + 5;
-		tmp2 = tmp.select(2, 2);
-		draw_matrix(tmp2, "V", h, w);
-		break ;
-	      case 4:
-		tmp2 = tmp.select(2, 0);
-		draw_matrix(tmp2, "Y", h, w, 1.0, 1.0, (float)-1.0, (float)1.0);
-		w += tmp2.dim(1) + 5;
-		tmp2 = tmp.select(2, 1);
-		draw_matrix(tmp2, "H3", h, w, 1.0, 1.0, (float)-1.0,(float)1.0);
-		idx_addc(tmp2, (float)1.0, tmp2);
-		idx_dotc(tmp2, (float)210.0, tmp2);
-		w += tmp2.dim(1) + 5;
-		idxdim d(limg);
-		static idx<float> rgb(images.dim(1),
-				      images.dim(2), 3);
-		h3_to_rgb(tmp2, rgb);
-		draw_matrix(rgb, "H3", h, w);
-		break ;
+	      if (display && (counter % 15 == 0)) {
+		disable_window_updates();
+		clear_window();
+		unsigned int h = 0, w = 0;
+		// input (RGB)
+		static string s;
+		s = "RGB";
+		s += " - ";
+		s += (char *) classes[label].idx_ptr();
+		draw_matrix(limg, s.c_str(), h, w);
+		w = 0;
+		h += tmp.dim(1) + 5;
+		// output
+		switch (channels_mode) {
+		case 1:
+		  tmp2 = tmp.select(2, 0);
+		  draw_matrix(tmp2, "Y", h, w);
+		  w += tmp2.dim(1) + 5;
+		  tmp2 = tmp.select(2, 1);
+		  draw_matrix(tmp2, "U", h, w);
+		  w += tmp2.dim(1) + 5;
+		  tmp2 = tmp.select(2, 2);
+		  draw_matrix(tmp2, "V", h, w);
+		  break ;
+		case 4:
+		  tmp2 = tmp.select(2, 0);
+		  draw_matrix(tmp2, "Y", h, w, 1.0, 1.0,
+			      (float)-1.0, (float)1.0);
+		  w += tmp2.dim(1) + 5;
+		  tmp2 = tmp.select(2, 1);
+		  draw_matrix(tmp2, "H3", h, w, 1.0, 1.0,
+			      (float)-1.0,(float)1.0);
+		  idx_addc(tmp2, (float)1.0, tmp2);
+		  idx_dotc(tmp2, (float)210.0, tmp2);
+		  w += tmp2.dim(1) + 5;
+		  idxdim d(limg);
+		  static idx<float> rgb(images.dim(2),
+					images.dim(3), 3);
+		  h3_to_rgb(tmp2, rgb);
+		  draw_matrix(rgb, "H3", h, w);
+		  break ;
+		}
+		enable_window_updates();
 	      }
-	      enable_window_updates();
-	    }
 #endif
-	    counter++;
+	    }
+	    // increment counter for dataset current_ds
+	    counters_used.set(counters_used.get(current_ds) + 1, current_ds);
 	  }
+	  counter++;
 	}
       }
     }
@@ -265,10 +279,13 @@ namespace ebl {
 		       const char *imgExtension, const char *imgPatternLeft, 
 		       const char *outDir, const char *imgPatternRight, 
 		       bool silent, bool display, const char *prefix,
-		       const char *name_) {
+		       const char *name_, int max_per_class) {
     // local variables
+    int                 ndatasets = 2;
     unsigned int	nimages;
+    unsigned int        nimages_used;
     unsigned int	counter;
+    idx<unsigned int>	counters_used(ndatasets);
     int			nclasses;
     int			channels_size;
     idx<ubyte>		classes;
@@ -277,6 +294,8 @@ namespace ebl {
     idx<ubyte>		tmp;
     int                 i;
     string              name = (name_ == NULL) ? "dataset" : name_;
+    idx<int>            class_ranges;
+    idx<int>            ds_assignment;
     if (silent) display = false;
 #ifdef __GUI__
     if (display) new_window("Dataset Compiler");
@@ -331,45 +350,79 @@ namespace ebl {
 	++i;
       }
     }
-    if (!silent) {
-      cout << nclasses << " classes found (";
-      i = 0;
-      idx_bloop1(classe, classes, ubyte) { 
-	cout << classe.idx_ptr(); 
-	if (i != classes.dim(0) - 1)
-	  cout << ", "; 
-	i++; 
-      }
-      cout << ")." << endl;
-    }
     
     // find number of images
     if (!silent) cout << "Counting images... ";
     nimages = 0;
+    class_ranges = idx<int>(nclasses, 2);
+    i = 0;
     for (directory_iterator itr(imgp); itr != end_itr; itr++) {
       if (is_directory(itr->status())
 	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
+	class_ranges.set(nimages, i, 0);
 	// recursively search each directory
 	count_matches(itr->path().string().c_str(), imgExtension, nimages);
+	class_ranges.set(nimages - 1, i, 1);
+	if ((max_per_class > 0) &&
+	    (class_ranges.get(i, 1) + 1 - class_ranges.get(i, 0) <
+	     max_per_class)) {
+	  cout << "warning in dataset_generation: class ";
+	  cout << classes[i].idx_ptr() << " has ";
+	  cout << class_ranges.get(i, 1) + 1 - class_ranges.get(i, 0);
+	  cout << " elements but max_per_class = " << max_per_class << endl;
+	}
+	++i;
       }
     }
-    if (!silent) cout << nimages << " images found." << endl;
+    if (!silent) {
+      cout << nimages << " images found." << endl;
+      cout << nclasses << " classes found:" << endl;
+      i = 0;
+      idx_bloop2(classe, classes, ubyte, range, class_ranges, int) { 
+	cout << "  " << classe.idx_ptr() << " (";
+	cout << range.get(1) - range.get(0) + 1 << ")" << endl;
+	i++; 
+      }
+    }
 
     // allocate memory
+    nimages_used = (max_per_class == -1) ? nimages : nclasses * max_per_class;
     if (!silent) {
-      cout << "Allocating memory for " << nimages << "x" << channels_size;
+      cout << "Allocating memory for " << ndatasets << "x";
+      cout << nimages_used << "x" << channels_size;
       cout << "x" << width << "x" << width << " image buffer (";
-      cout << (nimages * width * width * channels_size * sizeof (float))
-	/(1024*1024);
+      cout << (ndatasets * nimages_used * width * width
+	       * channels_size * sizeof (float)) / (1024*1024);
       cout << " Mb)..." << endl;
     }
       // N x w x w x channels_size
-    images = idx<float>(nimages, width, width, channels_size);
-    labels = idx<int>(nimages); // N
+    images = idx<float>(ndatasets, nimages_used, width, width, channels_size);
+    labels = idx<int>(ndatasets, nimages_used); // N
+    ds_assignment = idx<int>(nimages);
+
+    // for each class, assign images to training or testing set
+    if (max_per_class == -1)
+      idx_fill(ds_assignment, 0); // put all images in dataset 0
+    else {
+      idx_fill(ds_assignment, -1); // -1 means no assignment
+      idx_bloop1(range, class_ranges, int) {
+	int j = range.get(0);
+	int k;
+	for (k = 0; (k < max_per_class) && (j < range.get(1)); ++j, ++k) {
+	  ds_assignment.set(0, j); // assign to dataset 0
+	}
+	for (k = 0; (k < max_per_class) && (j < range.get(1)); ++j, ++k) {
+	  ds_assignment.set(1, j); // assign to dataset 1
+	}
+      }
+    }
 
      // collect images
     if (!silent) cout << "Collecting images..." << endl;
     counter = 0;
+    idx_bloop1(cused, counters_used, unsigned int) {
+      cused.set(0);
+    }
     i = 0;
     for (directory_iterator itr(imgp); itr != end_itr; itr++) {
       if (is_directory(itr->status())
@@ -377,13 +430,19 @@ namespace ebl {
 	// process subdirs to extract images into the single image idx
 	process_dir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
 		    imgPatternRight, width, images, labels, i, display, 
-		    &binocular, channels_mode, channels_size, classes, counter);
+		    &binocular, channels_mode, channels_size, classes, counter,
+		    counters_used, ds_assignment);
 	++i; // increment only for directories
       }
     }
 
     if (!silent) {
-      cout << "Collected " << images.dim(0) << " images." << endl;
+      cout << "Collected " << idx_sum(counters_used) << " images:" << endl;
+      i = 0;
+      idx_bloop1(cused, counters_used, unsigned int) {
+	cout << "  collected " << cused.get() << " images for dataset ";
+	cout << i++ << endl;
+      }
       cout << "Saving images, labels, classes and pairs in ";
       cout << (outDir != NULL ? outDir: imgDir) << ":" << endl;
     }

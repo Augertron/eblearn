@@ -66,7 +66,8 @@ namespace ebl {
 		       bool silent = false,
 		       bool display = false,
 		       const char *prefix = NULL, // eg: "_train" or "test_"
-		       const char *name = NULL); // eg: "caltech101"
+		       const char *name = NULL, // eg: "caltech101"
+		       int max_per_class = -1); // -1 equals no limit
 
 } // end namespace ebl
 
