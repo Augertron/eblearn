@@ -44,6 +44,7 @@ using namespace ebl;
 string images_root = ".";
 string image_pattern = ".*[.]ppm";
 int channels = 0;
+string channels_mode = "RGB";
 bool display = false;
 bool training = false;
 bool testing = false;
@@ -53,6 +54,7 @@ string stereo_rpattern = "_R";
 string outdir = ".";
 string dataset_name = "dataset";
 int max_per_class = -1; // -1 means no limitation
+unsigned int mexican_hat_size = 0;
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -77,18 +79,27 @@ bool parse_args(int argc, char **argv) {
       }
       if (strcmp(argv[i], "RGB") == 0)
 	channels = 0;
-      else if (strcmp(argv[i], "YUV") == 0)
+      else if (strcmp(argv[i], "YpUV") == 0) {
 	channels = 1;
+	if (mexican_hat_size == 0) mexican_hat_size = 9;
+      }
       else if (strcmp(argv[i], "HSV") == 0)
 	channels = 2;
       else if (strcmp(argv[i], "Y") == 0)
 	channels = 3;
-      else if (strcmp(argv[i], "YH3") == 0)
+      else if (strcmp(argv[i], "YpH3") == 0) {
 	channels = 4;
+	if (mexican_hat_size == 0) mexican_hat_size = 9;
+      }
+      else if (strcmp(argv[i], "VpH2SV") == 0) {
+	channels = 5;
+	if (mexican_hat_size == 0) mexican_hat_size = 9;
+      }
       else {
 	cerr << "input error: unknown channel mode: " << argv[i] << endl;
 	return false;
       }
+      channels_mode = argv[i];
     } else if (strcmp(argv[i], "-image_pattern") == 0) {
       ++i;
       if (i >= argc) {
@@ -139,6 +150,13 @@ bool parse_args(int argc, char **argv) {
 	return false;
       }
       max_per_class = atoi(argv[i]);
+    } else if (strcmp(argv[i], "-mexican_hat_size") == 0) {
+      ++i;
+      if (i >= argc) {
+	cerr << "input error: expecting string after -mexican_hat_size."<< endl;
+	return false;
+      }
+      mexican_hat_size = atoi(argv[i]);
     } else if ((strcmp(argv[i], "-help") == 0) ||
 	       (strcmp(argv[i], "-h") == 0)) {
       return false;
@@ -159,10 +177,11 @@ void print_usage() {
   cout << "  -channels <channel>" << endl;
   cout << "    channels are:" << endl;
   cout << "      - RGB" << endl;
-  cout << "      - YUV" << endl;
+  cout << "      - YpUV" << endl;
   cout << "      - HSV" << endl;
   cout << "      - Y (Y only in YUV)" << endl;
-  cout << "      - YH3" << endl;
+  cout << "      - YpH3" << endl;
+  cout << "      - VpH2SV" << endl;
   cout << "  -dset_display" << endl;
   cout << "  -training" << endl;
   cout << "  -testing" << endl;
@@ -172,6 +191,7 @@ void print_usage() {
   cout << "  -output_dir <directory>" << endl;
   cout << "  -dset_name <dataset_name>" << endl;
   cout << "  -max_per_class <integer>" << endl;
+  cout << "  -mexican_hat_size <integer>" << endl;
 }
 
 #ifdef __GUI__
@@ -192,16 +212,8 @@ int main(int argc, char **argv) {
   cout << "  images root directory: " << images_root << endl;
   cout << "  output directory: " << outdir << endl;
   cout << "  images pattern: " << image_pattern << endl;
-  cout << "  channels mode: " << channels << " (";
-  switch (channels) {
-  case 0: cout << "RGB"; break;
-  case 1: cout << "YUV"; break;
-  case 2: cout << "HSV"; break;
-  case 3: cout << "Y"; break;
-  case 4: cout << "YH3"; break;
-  default: cerr << "input error: unknown channel mode." << endl;
-    print_usage(); return -1;
-  } cout << ")" << endl;
+  cout << "  channels mode: " << channels << " (" << channels_mode.c_str();
+  cout << ")" << endl;
   cout << "  display: " << (display ? "yes" : "no") << endl;
   cout << "  training: " << (training ? "yes" : "no") << endl;
   cout << "  testing: " << (testing ? "yes" : "no") << endl;
@@ -213,6 +225,7 @@ int main(int argc, char **argv) {
   cout << "  max per class: ";
   if (max_per_class == -1) cout << "no limit" << endl;
   else cout<<max_per_class << endl;
+  cout << "  mexican_hat_size: " << mexican_hat_size << endl;
   cout << "outputs:" << endl;
   cout << "  " << outdir << "/" << dataset_name << "_images.mat" << endl;
   cout << "  " << outdir << "/" << dataset_name << "_labels.mat" << endl;
@@ -231,7 +244,8 @@ int main(int argc, char **argv) {
   imagedir_to_idx(images_root.c_str(), 143, channels, image_pattern.c_str(),
 		  NULL,
 		  outdir.c_str(), NULL, false, display,
-		  NULL,
-		  dataset_name.c_str(), max_per_class, &datasets_names);
+		  channels_mode.c_str(),
+		  dataset_name.c_str(), max_per_class, &datasets_names,
+		  mexican_hat_size);
   return 0;
 }

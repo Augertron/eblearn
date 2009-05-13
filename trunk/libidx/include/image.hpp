@@ -583,21 +583,32 @@ namespace ebl {
 
   template<class T>
   void image_mexican_filter(idx<T> &in, idx<T> &out, double s, int n,
-			    int lnorm_size,
 			    idx<T> *filter_, idx<T> *tmp_) {
     idx<T> filter = filter_ ? *filter_ : create_mexican_hat<T>(s, n);
     idxdim d(in);
     idx<T> tmp = tmp_ ? *tmp_ : idx<T>(d);
     idx_checkorder3(in, 2, filter, 2, out, 2);
     image_apply_filter(in, out, filter, &tmp);
-    image_local_normalization(out, out, lnorm_size); 
   }
 
   // TODO: handle empty sides
   // TODO: check for tmp size incompatibilities
+  // TODO: THIS ASSUMES DATA IS IN LAST DIMENSION. MAKE IT GENERIC 
   template<class T>
-  void image_local_normalization(idx<T> &in, idx<T> &out, int n) {
-    idx_std_normalize(in); // zero-mean and divide by standard deviation
+  void image_local_normalization(idx<T> &in) {
+    switch (in.order()) {
+    case 2:
+      idx_std_normalize(in); // zero-mean and divide by standard deviation
+      break ;
+    case 3:
+      // normalize layer by layer
+      { idx_eloop1(i, in, T) {
+	idx_std_normalize(i); // zero-mean and divide by standard deviation
+	}}
+      break ;
+    default:
+      eblerror("image_local_normalization: dimension not implemented");
+    }
     //    idx_copy(in, out);
   }
 

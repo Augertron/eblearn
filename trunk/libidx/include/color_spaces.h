@@ -135,6 +135,23 @@ namespace ebl {
   //! image and returns it.
   template<class T> idx<T> h3_to_rgb(idx<T> &h3);
 
+  ////////////////////////////////////////////////////////////////
+  // H2sv
+
+  void PIX_HSV_TO_H2SV1_COMMON(double H, double &H1, double &H2);
+  
+  template<class T>
+    void rgb_to_h2sv_1D(idx<T> &rgb, idx<T> &h2sv);
+  
+  template<class T>
+    void rgb_to_h2sv(idx<T> &rgb, idx<T> &h2sv);
+
+  ////////////////////////////////////////////////////////////////
+  // VpH2SV
+
+  template<class T>
+    void rgb_to_vph2sv(idx<T> &rgb, idx<T> &vph2sv, double s, int n);
+  
 } // end namespace ebl
 
 #include "color_spaces.hpp"

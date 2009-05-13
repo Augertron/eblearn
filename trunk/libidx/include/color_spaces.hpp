@@ -400,6 +400,68 @@ namespace ebl {
     return rgb;
   }  
   
+  ////////////////////////////////////////////////////////////////
+  // H2sv
+
+  // TODO: find a cleaner way with matrix multiplication that can handle
+  // different output type than h2sv matrix.
+  template<class T> void rgb_to_h2sv_1D(idx<T> &rgb, idx<T> &h2sv) {
+    if (rgb.idx_ptr() == h2sv.idx_ptr()) {
+      eblerror("rgb_to_h2sv: dst must be different than src");
+      return ;
+    }
+    static double r, g, b;
+    r = rgb.get(0);
+    g = rgb.get(1);
+    b = rgb.get(2);
+    static double h, s, v, h1, h2;
+    PIX_RGB_TO_HSV_COMMON(r, g, b, h, s, v, false);
+    PIX_HSV_TO_H2SV1_COMMON(h, h1, h2);
+    h2sv.set(h1, 0);
+    h2sv.set(h2, 1);
+    h2sv.set(s, 2);
+    h2sv.set(v, 3);
+  }
+
+  template<class T> void rgb_to_h2sv(idx<T> &rgb, idx<T> &h2sv) {
+    //    idx_checknelems2_all(rgb, h2sv);
+    switch (rgb.order()) {
+    case 1: // process 1 pixel
+      rgb_to_h2sv_1D(rgb, h2sv);
+      //      idx_m2dotm1(rgb_h2sv, rgb, h2sv);
+      return ;
+    case 3: // process 2D image
+      { idx_bloop2(rg, rgb, T, yu, h2sv, T) {
+	  { idx_bloop2(r, rg, T, y, yu, T) {
+	      rgb_to_h2sv_1D(r, y);
+	      //	      idx_m2dotm1(rgb_h2sv, r, y);
+	    }}
+	}}
+      return ;
+    default:
+      eblerror("rgb_to_h2sv dimension not implemented");
+    }
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // VpH2SV
+
+  template<class T> void rgb_to_vph2sv(idx<T> &rgb, idx<T> &vph2sv,
+				       double s, int n) {
+    // TODO: check dimensions, dimension where channels are
+    idx<T> h2sv = vph2sv.narrow(2, vph2sv.dim(2) - 1, 1);
+    idx<T> vp = vph2sv.select(2, 0);
+    idx<T> v = vph2sv.select(2, 4);
+    idxdim d(vp);
+    idx<T> tmp(d);
+    rgb_to_h2sv(rgb, h2sv);
+    idx_copy(v, tmp);
+    image_mexican_filter(tmp, vp, s, n);
+    image_local_normalization(vph2sv);
+    vph2sv = vph2sv.narrow(0, vph2sv.dim(0) - n + 1, floor(n / 2));
+    vph2sv = vph2sv.narrow(1, vph2sv.dim(1) - n + 1, floor(n / 2));
+  }
+
 } // end namespace ebl
 
 #endif /* COLOR_SPACES_HPP_ */
