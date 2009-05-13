@@ -189,24 +189,41 @@ void image_test::test_colorspaces() {
   h += tmp2.dim(0) + 5;
   
   // yuv
-  draw_matrix(fim_yuv, "YUV", h, w);
-  w += fim_yuv.dim(1) + 5;
+//   draw_matrix(fim_yuv, "YUV", h, w);
+//   w += fim_yuv.dim(1) + 5;
   ftmp2 = fim_yuv.select(2, 0);
 //   idx<float> hat = create_mexican_hat<float>(2, 5);
 //   image_mexican_filter(ftmp2, ftmp5, 0, 0, 7, &hat, &ftmp3);
-  image_mexican_filter(ftmp2, ftmp5, 2, 5, 7);
-  
-  cout << "Y inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
-  cout << "Y hat inf: " << (int) idx_min(ftmp5) << " sup:" << (int) idx_max(ftmp5) << endl;
-  draw_matrix(ftmp5, "Y (mexican hat)", h, w, 1, 1, (float)-1.0, (float)1.0);
+  image_mexican_filter(ftmp2, ftmp5, 5, 9);
+  image_local_normalization(ftmp5);
+//   cout << "Y inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+//   cout << "Y hat inf: " << (int) idx_min(ftmp5) << " sup:" << (int) idx_max(ftmp5) << endl;
+  draw_matrix(ftmp5, "Y (mexican hat = 3)", h, w, 1, 1, (float)-1.0, (float)1.0);
   w += tmp2.dim(1) + 5;
-  ftmp2 = fim_yuv.select(2, 1);
-  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
-  draw_matrix(ftmp2, "U", h, w);
-  w += ftmp2.dim(1) + 5;
-  ftmp2 = fim_yuv.select(2, 2);
-  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
-  draw_matrix(ftmp2, "V", h, w);
+
+  image_mexican_filter(ftmp2, ftmp5, 6, 9);
+  image_local_normalization(ftmp5);
+  draw_matrix(ftmp5, "Y (mexican hat = 5)", h, w, 1, 1, (float)-1.0, (float)1.0);
+  w += tmp2.dim(1) + 5;
+
+  image_mexican_filter(ftmp2, ftmp5, 7, 9);
+  image_local_normalization(ftmp5);
+  draw_matrix(ftmp5, "Y (mexican hat = 7)", h, w, 1, 1, (float)-1.0, (float)1.0);
+  w += tmp2.dim(1) + 5;
+
+  image_mexican_filter(ftmp2, ftmp5, 8, 9);
+  image_local_normalization(ftmp5);
+  draw_matrix(ftmp5, "Y (mexican hat = 9)", h, w, 1, 1, (float)-1.0, (float)1.0);
+  w += tmp2.dim(1) + 5;
+
+//   ftmp2 = fim_yuv.select(2, 1);
+//   cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+//   draw_matrix(ftmp2, "U", h, w);
+//   w += ftmp2.dim(1) + 5;
+//   ftmp2 = fim_yuv.select(2, 2);
+//   cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+//   draw_matrix(ftmp2, "V", h, w);
+
   w = 0;
   h += ftmp2.dim(0) + 5;
   

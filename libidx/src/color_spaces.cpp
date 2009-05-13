@@ -299,4 +299,24 @@ namespace ebl {
     //     }
   }
 
+
+  // ######################################################################
+  // T. Nathan Mundhenk
+  // mundhenk@usc.edu
+  // C/C++ Macro HSV to H2SV
+  void PIX_HSV_TO_H2SV1_COMMON(double H, double &H1, double &H2) {
+    if(H > 180)                                                
+      {                                                          
+	H2 = ((H - 180)/180);                                    
+	if(H > 270) H1 = ((H - 270)/180);                        
+	else        H1 = (1 - (H - 90)/180);                     
+      }                                                          
+    else                                                       
+      {                                                          
+	H2 = (1 - H/180);                                        
+	if(H > 90) H1 = (1 - (H - 90)/180);                      
+	else       H1 = (0.5 + H/180);                           
+      }
+  }
+  
 } // end namespace ebl

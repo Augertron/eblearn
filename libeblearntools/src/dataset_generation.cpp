@@ -53,23 +53,56 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // Utility functions to prepare a dataset from raw images.
 
-  void convert_image(idx<float> src, idx<float> dst, const int channels_mode) {
-    idx<float> in, out;
-    idxdim d;
+  void convert_image(idx<float> src, idx<float> dst, const int channels_mode,
+		     unsigned int fkernel_size) {
+    idxdim d = idxdim(src), d2 = idxdim(src);
+    d2.setdim(2, dst.dim(2));
+    idx<float> in, out, src2(d), tmp(d2), tmp2;
+    if (fkernel_size > 0) {
+      src2 = src.narrow(0, src.dim(0) - fkernel_size + 1,
+			floor(fkernel_size / 2));
+      src2 = src2.narrow(1, src.dim(1) - fkernel_size + 1,
+			 floor(fkernel_size / 2));
+      tmp2 = tmp.narrow(0, tmp.dim(0) - fkernel_size + 1,
+			floor(fkernel_size / 2));
+      tmp2 = tmp2.narrow(1, tmp.dim(1) - fkernel_size + 1,
+			 floor(fkernel_size / 2));
+    }
+    idx_clear(dst);
+    // narrow dst to fit src if smaller
+    if (src2.dim(0) < dst.dim(0))
+      dst = dst.narrow(0, src2.dim(0), floor((dst.dim(0) - src2.dim(0)) / 2));
+    if (src2.dim(1) < dst.dim(1))
+      dst = dst.narrow(1, src2.dim(1), floor((dst.dim(1) - src2.dim(1)) / 2));
+    // converting
     switch (channels_mode) {
     case 0: // RGB
-      idx_copy(src, dst);
+      idx_copy(src2, dst);
+      image_local_normalization(dst);
       break ;
     case 1: // YUV
-      rgb_to_yuv(src, dst);
-      break ;
-    case 4: // YH3
-      rgb_to_yh3(src, dst);
-      in = dst.select(2, 0);
+      rgb_to_yuv(src, tmp);
+      in = tmp.select(2, 0);
       d = idxdim(in);
       out = idx<float>(d);      
-      image_mexican_filter(in, out, 2, 5, 7);
+      image_mexican_filter(in, out, 6, fkernel_size);
       idx_copy(out, in);
+      idx_copy(tmp2, dst);
+      image_local_normalization(dst);
+      break ;
+    case 4: // YH3
+      rgb_to_yh3(src, tmp);
+      in = tmp.select(2, 0);
+      d = idxdim(in);
+      out = idx<float>(d);      
+      image_mexican_filter(in, out, 6, fkernel_size);
+      image_local_normalization(out);
+      idx_copy(out, in);
+      idx_copy(tmp2, dst);
+      break ;
+    case 5: // VpH2SV
+      rgb_to_vph2sv(src, tmp, 6, fkernel_size);
+      idx_copy(tmp, dst);
       break ;
     default:
       cerr << "unknown channel mode: " << channels_mode << endl;
@@ -79,11 +112,13 @@ namespace ebl {
   
   //! Recursively goes through dir, looking for files matching extension ext.
   void process_dir(const char *dir, const char *ext, const char* leftp, 
-		   const char *rightp, unsigned int width, idx<float> &images,
+		   const char *rightp, unsigned int width,
+		   unsigned int fwidth, idx<float> &images,
 		   idx<int> &labels, int label, bool display, bool *binocular, 
 		   const int channels_mode, const int channels_size,
 		   idx<ubyte> &classes, unsigned int &counter,
-		   idx<unsigned int> &counters_used, idx<int> &ds_assignment) {
+		   idx<unsigned int> &counters_used, idx<int> &ds_assignment,
+		   unsigned int fkernel_size) {
     regex eExt(ext);
     string el(".*");
     idx<float> limg(1, 1, 1);
@@ -103,10 +138,11 @@ namespace ebl {
     directory_iterator end_itr; // default construction yields past-the-end
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
       if (is_directory(itr->status())) {
-	process_dir(itr->path().string().c_str(), ext, leftp, rightp, width, 
+	process_dir(itr->path().string().c_str(), ext, leftp, rightp, width,
+		    fwidth,
 		    images, labels, label, display, binocular, channels_mode,
 		    channels_size, classes, counter, counters_used,
-		    ds_assignment);
+		    ds_assignment, fkernel_size);
       } else if (regex_match(itr->leaf().c_str(), what, eExt)) {
 	if (regex_match(itr->leaf().c_str(), what, eLeft)) {
 	  current_ds = ds_assignment.get(counter);
@@ -144,7 +180,7 @@ namespace ebl {
 		  tmp = tmp[counters_used.get(current_ds)];
 		  tmp = tmp.narrow(2, channels_size, channels_size);
 		  // finally copy right images to idx
-		  convert_image(rimg, tmp, channels_mode);
+		  convert_image(rimg, tmp, channels_mode, fkernel_size);
 		}
 		if (display)
 		  cout << "Processing (right): " << sfull << endl;
@@ -157,21 +193,25 @@ namespace ebl {
 	    // process left image
 	    if (image_read_rgbx(itr->path().string().c_str(), limg)) {
 	      // take the left most square of the image
-	      if (limg.dim(0) <= limg.dim(1))
-		limg = limg.narrow(1, limg.dim(0), 0);
-	      else
-		limg = limg.narrow(0, limg.dim(1), 0);
+	      int h = limg.dim(0), w = limg.dim(1), newh, neww;
+	      if (h > w) {
+		newh = width;
+		neww = (newh / (float) h) * w;
+	      } else {
+		neww = width;
+		newh = (neww / (float) w) * h;
+	      }
 	      // resize image to target width
-	      limg = image_resize(limg, width, width, 1);
+	      limg = image_resize(limg, neww, newh, 1);
 	      tmp = images[current_ds];
 	      tmp = tmp.select(0, counters_used.get(current_ds));
 	      tmp = tmp.narrow(2, channels_size, 0);
 	      // finally copy right images to idx
-	      convert_image(limg, tmp, channels_mode);
+	      convert_image(limg, tmp, channels_mode, fkernel_size);
 
 	      // display current image conversion
 #ifdef __GUI__
-	      if (display && (counter % 15 == 0)) {
+	      if ((display) && (counter % 15 == 0)) {
 		disable_window_updates();
 		clear_window();
 		unsigned int h = 0, w = 0;
@@ -187,15 +227,18 @@ namespace ebl {
 		switch (channels_mode) {
 		case 1:
 		  tmp2 = tmp.select(2, 0);
-		  draw_matrix(tmp2, "Y", h, w);
+		  draw_matrix(tmp2, "Y", h, w, 1.0, 1.0,
+			      (float)-1.0, (float)1.0);
 		  w += tmp2.dim(1) + 5;
 		  tmp2 = tmp.select(2, 1);
-		  draw_matrix(tmp2, "U", h, w);
+		  draw_matrix(tmp2, "U", h, w, 1.0, 1.0,
+			      (float)-1.0, (float)1.0);
 		  w += tmp2.dim(1) + 5;
 		  tmp2 = tmp.select(2, 2);
-		  draw_matrix(tmp2, "V", h, w);
+		  draw_matrix(tmp2, "V", h, w, 1.0, 1.0,
+			      (float)-1.0, (float)1.0);
 		  break ;
-		case 4:
+		case 4: {
 		  tmp2 = tmp.select(2, 0);
 		  draw_matrix(tmp2, "Y", h, w, 1.0, 1.0,
 			      (float)-1.0, (float)1.0);
@@ -211,9 +254,33 @@ namespace ebl {
 					images.dim(3), 3);
 		  h3_to_rgb(tmp2, rgb);
 		  draw_matrix(rgb, "H3", h, w);
+		}
+		  break ;
+		case 5:
+		  tmp2 = tmp.select(2, 0);
+		  draw_matrix(tmp2, "Vp", h, w, 1.0, 1.0,
+			      (float)-1.0, (float)1.0);
+		  w += tmp.dim(1) + 5;
+		  tmp2 = tmp.select(2, 1);
+		  draw_matrix(tmp2, "H1", h, w, 1.0, 1.0,
+			      (float)-1.0, (float)1.0);
+		  w += tmp.dim(1) + 5;
+		  tmp2 = tmp.select(2, 2);
+		  draw_matrix(tmp2, "H2", h, w, 1.0, 1.0,
+			      (float)-1.0, (float)1.0);
+		  w += tmp.dim(1) + 5;
+		  tmp2 = tmp.select(2, 3);
+		  draw_matrix(tmp2, "S", h, w, 1.0, 1.0,
+			      (float)-1.0, (float)1.0);
+		  w += tmp.dim(1) + 5;
+		  tmp2 = tmp.select(2, 4);
+		  draw_matrix(tmp2, "V", h, w, 1.0, 1.0,
+			      (float)-1.0, (float)1.0);
+		  w += tmp.dim(1) + 5;
 		  break ;
 		}
 		enable_window_updates();
+		//		sleep(1);
 	      }
 #endif
 	    }
@@ -280,7 +347,8 @@ namespace ebl {
 		       const char *outDir, const char *imgPatternRight, 
 		       bool silent, bool display, const char *prefix,
 		       const char *name_, int max_per_class,
-		       idx<ubyte> *datasets_names_) {
+		       idx<ubyte> *datasets_names_,
+		       unsigned int fkernel_size) {
     // local variables
     idx<ubyte>          datasets_names = datasets_names_ ? *datasets_names_
       : idx<ubyte>(1, 1);      
@@ -299,6 +367,10 @@ namespace ebl {
     string              name = (name_ == NULL) ? "dataset" : name_;
     idx<int>            class_ranges;
     idx<int>            ds_assignment;
+    if (fkernel_size > 0) width += fkernel_size - 1;
+    unsigned int        fwidth = fkernel_size == 0 ? width :
+      width - fkernel_size + 1;
+    cout << "width : " << width << endl;
     if (silent) display = false;
 #ifdef __GUI__
     if (display) new_window("Dataset Compiler");
@@ -319,6 +391,7 @@ namespace ebl {
     case 0: case 1: case 2: channels_size = 3; break;
     case 3: channels_size = 1; break;      
     case 4: channels_size = 2; break;
+    case 5: channels_size = 5; break;
     default: cerr << "unknown channels mode " << channels_mode << endl;
       eblerror("unknown channels mode");
     }
@@ -393,13 +466,13 @@ namespace ebl {
     if (!silent) {
       cout << "Allocating memory for " << ndatasets << "x";
       cout << nimages_used << "x" << channels_size;
-      cout << "x" << width << "x" << width << " image buffer (";
-      cout << (ndatasets * nimages_used * width * width
+      cout << "x" << fwidth << "x" << fwidth << " image buffer (";
+      cout << (ndatasets * nimages_used * fwidth * fwidth
 	       * channels_size * sizeof (float)) / (1024*1024);
       cout << " Mb)..." << endl;
     }
       // N x w x w x channels_size
-    images = idx<float>(ndatasets, nimages_used, width, width, channels_size);
+    images = idx<float>(ndatasets, nimages_used, fwidth, fwidth, channels_size);
     labels = idx<int>(ndatasets, nimages_used); // N
     ds_assignment = idx<int>(nimages);
 
@@ -427,17 +500,17 @@ namespace ebl {
       cused.set(0);
     }
     i = 0;
-//     for (directory_iterator itr(imgp); itr != end_itr; itr++) {
-//       if (is_directory(itr->status())
-// 	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
-// 	// process subdirs to extract images into the single image idx
-// 	process_dir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
-// 		    imgPatternRight, width, images, labels, i, display, 
-// 		    &binocular, channels_mode, channels_size, classes, counter,
-// 		    counters_used, ds_assignment);
-// 	++i; // increment only for directories
-//       }
-//     }
+    for (directory_iterator itr(imgp); itr != end_itr; itr++) {
+      if (is_directory(itr->status())
+	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
+	// process subdirs to extract images into the single image idx
+	process_dir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
+		    imgPatternRight, width, fwidth, images, labels, i, display, 
+		    &binocular, channels_mode, channels_size, classes, counter,
+		    counters_used, ds_assignment, fkernel_size);
+	++i; // increment only for directories
+      }
+    }
 
     if (!silent) {
       cout << "Collected " << idx_sum(counters_used) << " images:" << endl;
@@ -455,40 +528,48 @@ namespace ebl {
     images = images.transpose(tr);
 
     // save each dataset
-    idx_bloop3(dsname, datasets_names, ubyte,
+    idx_bloop4(dsname, datasets_names, ubyte,
 	       dsimages, images, float,
-	       dslabels, labels, int) {
+	       dslabels, labels, int,
+	       cntused, counters_used, unsigned int) {
       // filenames
       string cular(binocular? "_bino" : "");
       string dsetimages(outDir != NULL ? outDir: imgDir);
       dsetimages += "/"; dsetimages += name;
-      dsetimages += cular; if (prefix) dsetimages += prefix;
+      dsetimages += cular;
+      if (prefix) { dsetimages += "_"; dsetimages += prefix; }
       dsetimages += "_"; dsetimages += (const char *) dsname.idx_ptr();
       dsetimages += "_images.mat";
       string dsetlabels(outDir != NULL ? outDir: imgDir);
       dsetlabels += "/"; dsetlabels += name;
-      dsetlabels += cular; if (prefix) dsetlabels += prefix;
+      dsetlabels += cular;
+      if (prefix) { dsetlabels += "_"; dsetlabels += prefix; }
       dsetlabels += "_"; dsetlabels += (const char *) dsname.idx_ptr();
       dsetlabels += "_labels.mat";
       string dsetclasses(outDir != NULL ? outDir: imgDir);
       dsetclasses += "/"; dsetclasses += name;
-      dsetclasses += cular; if (prefix) dsetclasses += prefix;
+      dsetclasses += cular;
+      if (prefix) { dsetclasses += "_"; dsetclasses += prefix; }
       dsetclasses += "_"; dsetclasses += (const char *) dsname.idx_ptr();
       dsetclasses += "_classes.mat";
       string dsetpairs(outDir != NULL ? outDir: imgDir);
       dsetpairs += "/"; dsetpairs += name;
-      dsetpairs += cular; if (prefix) dsetpairs += prefix;
+      dsetpairs += cular;
+      if (prefix) { dsetpairs += "_"; dsetpairs += prefix; }
       dsetpairs += "_"; dsetpairs += (const char *) dsname.idx_ptr();
       dsetpairs += "_pairs.mat";
       idx<int> pairs = make_pairs(dslabels); // FIXME
 
       // saving files
+      if (pairs.dim(0) > 0) pairs = pairs.narrow(0, cntused.get(), 0);
+      idx<float> dsimages_used = dsimages.narrow(0, cntused.get(), 0);
+      idx<int> dslabels_used = dslabels.narrow(0, cntused.get(), 0);
       if (!silent) cout << "Saving " << dsetpairs << endl;
       save_matrix(pairs, dsetpairs.c_str());
       if (!silent) cout << "Saving " << dsetimages << endl;
-      save_matrix(dsimages, dsetimages.c_str());
+      save_matrix(dsimages_used, dsetimages.c_str());
       if (!silent) cout << "Saving " << dsetlabels << endl;
-      save_matrix(dslabels, dsetlabels.c_str());
+      save_matrix(dslabels_used, dsetlabels.c_str());
       if (!silent) cout << "Saving " << dsetclasses << endl;
       save_matrix(classes, dsetclasses.c_str());
     }
