@@ -232,6 +232,10 @@ namespace ebl {
   //! in out if passed.
   template<class T> T idx_mean(idx<T> &inp, T *out = NULL);
 
+  //! removes the mean of <in> and divide by the standard deviation.
+  //! reuse <mean> if not null, otherwise recompute it.
+  template<class T> void idx_std_normalize(idx<T> &in, T *mean = NULL);
+  
   ////////////////////////////////////////////////////////////////
   // dot products
 

@@ -597,27 +597,35 @@ namespace ebl {
   // TODO: check for tmp size incompatibilities
   template<class T>
   void image_local_normalization(idx<T> &in, idx<T> &out, int n) {
-    T mean;
-    T coeff;
-    idx<T> tmp(in.dim(0) + 2 * floor(n / 2),
-	       in.dim(1) + 2 * floor(n / 2));
-    idx<T> tmp2 = tmp.narrow(0, in.dim(0), floor(n / 2));
-    tmp2 = tmp2.narrow(1, in.dim(1), floor(n / 2));
-    idx_copy(in, tmp2);
-    tmp = tmp.unfold(0, n, 1);
-    tmp = tmp.unfold(1, n, 1);
-    idx<T> tmp3(n, n);
-    
-    idx_bloop3(tm, tmp, T, ou, out, T, iin, in, T) {
-      idx_bloop3(t, tm, T, o, ou, T, iiin, iin, T) {
-	idx_copy(t, tmp3);
-	mean = idx_mean(tmp3);
-	idx_addc(tmp3, -mean, tmp3);
-	coeff = 1 / sqrt(idx_sumsqr(tmp3) / (n * n));
-	o.set((iiin.get() - mean) * coeff);
-      }
-    }
+    idx_std_normalize(in); // zero-mean and divide by standard deviation
+    //    idx_copy(in, out);
   }
+
+//     // TODO: handle empty sides
+//   // TODO: check for tmp size incompatibilities
+//   template<class T>
+//   void image_local_normalization(idx<T> &in, idx<T> &out, int n) {
+//     T mean;
+//     T coeff;
+//     idx<T> tmp(in.dim(0) + 2 * floor(n / 2),
+// 	       in.dim(1) + 2 * floor(n / 2));
+//     idx<T> tmp2 = tmp.narrow(0, in.dim(0), floor(n / 2));
+//     tmp2 = tmp2.narrow(1, in.dim(1), floor(n / 2));
+//     idx_copy(in, tmp2);
+//     tmp = tmp.unfold(0, n, 1);
+//     tmp = tmp.unfold(1, n, 1);
+//     idx<T> tmp3(n, n);
+    
+//     idx_bloop3(tm, tmp, T, ou, out, T, iin, in, T) {
+//       idx_bloop3(t, tm, T, o, ou, T, iiin, iin, T) {
+// 	idx_copy(t, tmp3);
+// 	mean = idx_mean(tmp3);
+// 	idx_addc(tmp3, -mean, tmp3);
+// 	coeff = 1 / sqrt(idx_sumsqr(tmp3) / (n * n));
+// 	o.set((iiin.get() - mean) * coeff);
+//       }
+//     }
+//   }
 
   template<class T>
   void image_apply_filter(idx<T> &in, idx<T> &out, idx<T> &filter,
@@ -638,6 +646,7 @@ namespace ebl {
     } else
       tmp = idx<T>(d);
     // copy input into temporary buffer
+    idx_clear(tmp);
     idx<T> tmp2 = tmp.narrow(0, in.dim(0), floor(filter.dim(0)/2));
     tmp2 = tmp2.narrow(1, in.dim(1), floor(filter.dim(1)/2));
     idx_copy(in, tmp2);

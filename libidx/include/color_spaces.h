@@ -67,6 +67,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // HSV
 
+  void PIX_RGB_TO_HSV_COMMON(double H, double S, double V,
+			     double &R, double &G, double &B, bool NORM);
+  
+  void PIX_HSV_TO_RGB_COMMON(double H, double S, double V,
+			      double &R, double &G, double &B);
+
   //! Convert all pixels of rgb idx to hsv pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.

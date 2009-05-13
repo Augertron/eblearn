@@ -192,8 +192,10 @@ void image_test::test_colorspaces() {
   draw_matrix(fim_yuv, "YUV", h, w);
   w += fim_yuv.dim(1) + 5;
   ftmp2 = fim_yuv.select(2, 0);
-  idx<float> hat = create_mexican_hat<float>(2, 7);
-  image_mexican_filter(ftmp2, ftmp5, 0, 0, 11, &hat, &ftmp3); 
+//   idx<float> hat = create_mexican_hat<float>(2, 5);
+//   image_mexican_filter(ftmp2, ftmp5, 0, 0, 7, &hat, &ftmp3);
+  image_mexican_filter(ftmp2, ftmp5, 2, 5, 7);
+  
   cout << "Y inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
   cout << "Y hat inf: " << (int) idx_min(ftmp5) << " sup:" << (int) idx_max(ftmp5) << endl;
   draw_matrix(ftmp5, "Y (mexican hat)", h, w);
