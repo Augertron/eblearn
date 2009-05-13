@@ -279,9 +279,12 @@ namespace ebl {
 		       const char *imgExtension, const char *imgPatternLeft, 
 		       const char *outDir, const char *imgPatternRight, 
 		       bool silent, bool display, const char *prefix,
-		       const char *name_, int max_per_class) {
+		       const char *name_, int max_per_class,
+		       idx<ubyte> *datasets_names_) {
     // local variables
-    int                 ndatasets = 2;
+    idx<ubyte>          datasets_names = datasets_names_ ? *datasets_names_
+      : idx<ubyte>(1, 1);      
+    int                 ndatasets = datasets_names.dim(0);
     unsigned int	nimages;
     unsigned int        nimages_used;
     unsigned int	counter;
@@ -424,60 +427,71 @@ namespace ebl {
       cused.set(0);
     }
     i = 0;
-    for (directory_iterator itr(imgp); itr != end_itr; itr++) {
-      if (is_directory(itr->status())
-	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
-	// process subdirs to extract images into the single image idx
-	process_dir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
-		    imgPatternRight, width, images, labels, i, display, 
-		    &binocular, channels_mode, channels_size, classes, counter,
-		    counters_used, ds_assignment);
-	++i; // increment only for directories
-      }
-    }
+//     for (directory_iterator itr(imgp); itr != end_itr; itr++) {
+//       if (is_directory(itr->status())
+// 	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
+// 	// process subdirs to extract images into the single image idx
+// 	process_dir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
+// 		    imgPatternRight, width, images, labels, i, display, 
+// 		    &binocular, channels_mode, channels_size, classes, counter,
+// 		    counters_used, ds_assignment);
+// 	++i; // increment only for directories
+//       }
+//     }
 
     if (!silent) {
       cout << "Collected " << idx_sum(counters_used) << " images:" << endl;
-      i = 0;
-      idx_bloop1(cused, counters_used, unsigned int) {
-	cout << "  collected " << cused.get() << " images for dataset ";
-	cout << i++ << endl;
+      idx_bloop2(cused, counters_used, unsigned int,
+		 dsname, datasets_names, ubyte) {
+	cout << "  collected " << cused.get() << " images for ";
+	cout << dsname.idx_ptr() << " dataset." << endl;
       }
       cout << "Saving images, labels, classes and pairs in ";
       cout << (outDir != NULL ? outDir: imgDir) << ":" << endl;
     }
 
-    // filenames
-    string cular(binocular? "_bino" : "");
-    string dsetimages(outDir != NULL ? outDir: imgDir);
-    dsetimages += "/"; dsetimages += name;
-    dsetimages += cular; if (prefix) dsetimages += prefix;
-    dsetimages += "_images.mat";
-    string dsetlabels(outDir != NULL ? outDir: imgDir);
-    dsetlabels += "/"; dsetlabels += name;
-    dsetlabels += cular; if (prefix) dsetlabels += prefix;
-    dsetlabels += "_labels.mat";
-    string dsetclasses(outDir != NULL ? outDir: imgDir);
-    dsetclasses += "/"; dsetclasses += name;
-    dsetclasses += cular; if (prefix) dsetclasses += prefix;
-    dsetclasses += "_classes.mat";
-    string dsetpairs(outDir != NULL ? outDir: imgDir);
-    dsetpairs += "/"; dsetpairs += name;
-    dsetpairs += cular; if (prefix) dsetpairs += prefix;
-    dsetpairs += "_pairs.mat";
-    idx<int> pairs = make_pairs(labels);
-
-    // saving files
-    if (!silent) cout << "Saving " << dsetpairs << endl;
-    save_matrix(pairs, dsetpairs.c_str());
-    int tr[4] = { 0, 3, 1, 2 };
-    if (!silent) cout << "Saving " << dsetimages << endl;
+    // put layers dimension first, easier for neural nets
+    int tr[5] = { 0, 1, 4, 2, 3 };
     images = images.transpose(tr);
-    save_matrix(images, dsetimages.c_str());
-    if (!silent) cout << "Saving " << dsetlabels << endl;
-    save_matrix(labels, dsetlabels.c_str());
-    if (!silent) cout << "Saving " << dsetclasses << endl;
-    save_matrix(classes, dsetclasses.c_str());
+
+    // save each dataset
+    idx_bloop3(dsname, datasets_names, ubyte,
+	       dsimages, images, float,
+	       dslabels, labels, int) {
+      // filenames
+      string cular(binocular? "_bino" : "");
+      string dsetimages(outDir != NULL ? outDir: imgDir);
+      dsetimages += "/"; dsetimages += name;
+      dsetimages += cular; if (prefix) dsetimages += prefix;
+      dsetimages += "_"; dsetimages += (const char *) dsname.idx_ptr();
+      dsetimages += "_images.mat";
+      string dsetlabels(outDir != NULL ? outDir: imgDir);
+      dsetlabels += "/"; dsetlabels += name;
+      dsetlabels += cular; if (prefix) dsetlabels += prefix;
+      dsetlabels += "_"; dsetlabels += (const char *) dsname.idx_ptr();
+      dsetlabels += "_labels.mat";
+      string dsetclasses(outDir != NULL ? outDir: imgDir);
+      dsetclasses += "/"; dsetclasses += name;
+      dsetclasses += cular; if (prefix) dsetclasses += prefix;
+      dsetclasses += "_"; dsetclasses += (const char *) dsname.idx_ptr();
+      dsetclasses += "_classes.mat";
+      string dsetpairs(outDir != NULL ? outDir: imgDir);
+      dsetpairs += "/"; dsetpairs += name;
+      dsetpairs += cular; if (prefix) dsetpairs += prefix;
+      dsetpairs += "_"; dsetpairs += (const char *) dsname.idx_ptr();
+      dsetpairs += "_pairs.mat";
+      idx<int> pairs = make_pairs(dslabels); // FIXME
+
+      // saving files
+      if (!silent) cout << "Saving " << dsetpairs << endl;
+      save_matrix(pairs, dsetpairs.c_str());
+      if (!silent) cout << "Saving " << dsetimages << endl;
+      save_matrix(dsimages, dsetimages.c_str());
+      if (!silent) cout << "Saving " << dsetlabels << endl;
+      save_matrix(dslabels, dsetlabels.c_str());
+      if (!silent) cout << "Saving " << dsetclasses << endl;
+      save_matrix(classes, dsetclasses.c_str());
+    }
 #endif /* __BOOST__ */
 #ifdef __GUI__
     if (display) quit_gui();
