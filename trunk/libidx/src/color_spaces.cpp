@@ -68,6 +68,155 @@ namespace ebl {
   // ######################################################################
   // T. Nathan Mundhenk
   // mundhenk@usc.edu
+  // C/C++ Macro RGB to HSV
+  void PIX_RGB_TO_HSV_COMMON(double R, double G, double B,
+			     double &H, double &S, double &V, bool NORM) {
+    if((B > G) && (B > R))				
+      {							
+	V = B;						
+	if(V != 0)					
+	  {						
+	    double min;					
+	    if(R > G) min = G;				
+	    else      min = R;				
+	    const double delta = V - min;			
+	    if(delta != 0)				
+	      { S = (delta/V); H = 5 + (R - G) / delta; }	
+	    else						
+	      { S = 0;         H = 5 + (R - G); }		
+	    H *=   60;					
+	    if (H >= 360) H -= 360;			
+	    if(H < 0) H += 360;				
+	    if(!NORM) V =  (V/255);			
+	    else      S *= (100);				
+	  }						
+	else						
+	  { S = 0; H = 0;}				
+      }							
+    else if(G > R)					
+      {							
+	V = G;						
+	if(V != 0)					
+	  {						
+	    double min;					
+	    if(R > B) min = B;				
+	    else      min = R;				
+	    const double delta = V - min;			
+	    if(delta != 0)				
+	      { S = (delta/V); H = 3 + (B - R) / delta; }	
+	    else						
+	      { S = 0;         H = 3 + (B - R); }		
+	    H *=   60;					
+	    if (H >= 360) H -= 360;			
+	    if(H < 0) H += 360;				
+	    if(!NORM) V =  (V/255);			
+	    else      S *= (100);				
+	  }						
+	else						
+	  { S = 0; H = 0;}				
+      }							
+    else							
+      {							
+	V = R;						
+	if(V != 0)					
+	  {						
+	    double min;					
+	    if(G > B) min = B;				
+	    else      min = G;				
+	    const double delta = V - min;			
+	    if(delta != 0)				
+	      { S = (delta/V); H = 1 + (G - B) / delta; }	
+	    else						
+	      { S = 0;         H = 1 + (G - B); }	
+	    H *=   60;					
+	    if (H >= 360) H -= 360;			
+	    if(H < 0) H += 360;				
+	    if(!NORM) V =  (V/255);			
+	    else      S *= (100);				
+	  }						
+	else						
+	  { S = 0; H = 0;}				
+      }
+  }
+
+  // ######################################################################
+  // T. Nathan Mundhenk
+  // mundhenk@usc.edu
+  // C/C++ Macro HSV to RGB
+  void PIX_HSV_TO_RGB_COMMON(double H, double S, double V,
+			     double &R, double &G, double &B) {
+    if( V == 0 )								
+      { R = 0; G = 0; B = 0; }                                            
+    else if( S == 0 )							
+      {                                                                   
+	R = V;                                                            
+	G = V;                                                            
+	B = V;                                                            
+      }                                                                   
+    else									
+      {                                                                   
+	const double hf = H / 60.0;                                       
+	const int    i  = (int) floor( hf );                              
+	const double f  = hf - i;                                         
+	const double pv  = V * ( 1 - S );                                 
+	const double qv  = V * ( 1 - S * f );                             
+	const double tv  = V * ( 1 - S * ( 1 - f ) );                     
+	switch( i )                                                       
+	  {                                                               
+	  case 1:                                                         
+	    R = V;                                                        
+	    G = tv;                                                       
+	    B = pv;                                                       
+	    break;                                                        
+	  case 2:                                                         
+	    R = qv;                                                       
+	    G = V;                                                        
+	    B = pv;                                                       
+	    break;                                                        
+	  case 3:                                                         
+	    R = pv;                                                       
+	    G = V;                                                        
+	    B = tv;                                                       
+	    break;                                                        
+	  case 4:                                                         
+	    R = pv;                                                       
+	    G = qv;                                                       
+	    B = V;                                                        
+	    break;                                                        
+	  case 5:                                                         
+	    R = tv;                                                       
+	    G = pv;                                                       
+	    B = V;                                                        
+	    break;                                                        
+	  case 0:                                                         
+	    R = V;                                                        
+	    G = pv;                                                       
+	    B = qv;                                                       
+	    break;                                                        
+	  case 6:                                                         
+	    R = V;                                                        
+	    G = tv;                                                       
+	    B = pv;                                                       
+	    break;                                                        
+	  case -1:                                                        
+	    R = V;                                                        
+	    G = pv;                                                       
+	    B = qv;                                                       
+	    break;                                                        
+	  default:                                                        
+	    cerr << "i Value error in Pixel conversion, Value is " << i << endl; 
+	    eblerror("hsv to rgb error");					
+	    break;                                                        
+	  }                                                               
+      }                                                                   
+    R *= 255.0F;								
+    G *= 255.0F;								
+    B *= 255.0F;
+  }
+  
+  // ######################################################################
+  // T. Nathan Mundhenk
+  // mundhenk@usc.edu
   // C/C++ Macro HSV to RGB
   void PIX_HSV3_TO_RGB_COMMON(double H, double S, double V,
 			      double &R, double &G, double &B) {
@@ -121,10 +270,10 @@ namespace ebl {
 	    B = qv;                                                       
 	    break;                                                        
 	  case 6:                                                         
-// 	    R = V;                                                        
-// 	    G = tv;                                                       
-// 	    B = pv;                                                       
-// 	    break;                                                        
+	    // 	    R = V;                                                        
+	    // 	    G = tv;                                                       
+	    // 	    B = pv;                                                       
+	    // 	    break;                                                        
 	  case 7:                                                         
 	    R = bw;                                                        
 	    G = bw;							
@@ -140,14 +289,14 @@ namespace ebl {
 	    eblerror("hsv to rgb2 error");				
 	    break;                                                        
 	  }                                                               
-  }                                                                   
+      }                                                                   
     R *= 255.0F;								
     G *= 255.0F;								
     B *= 255.0F;
-//     if ((R > 127) || (G > 127) || (B > 127)) {
-//       cout << "H: " << H << " S: " << S << " V: " << V << endl;
-//       cout << "R: " << R << " G: " << G << " B: " << B << endl;
-//     }
+    //     if ((R > 127) || (G > 127) || (B > 127)) {
+    //       cout << "H: " << H << " S: " << S << " V: " << V << endl;
+    //       cout << "R: " << R << " G: " << G << " B: " << B << endl;
+    //     }
   }
 
 } // end namespace ebl

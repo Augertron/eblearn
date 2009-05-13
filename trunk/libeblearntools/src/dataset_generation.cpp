@@ -68,7 +68,7 @@ namespace ebl {
       in = dst.select(2, 0);
       d = idxdim(in);
       out = idx<float>(d);      
-      image_mexican_filter(in, out, 2, 5, 11);
+      image_mexican_filter(in, out, 2, 5, 7);
       idx_copy(out, in);
       break ;
     default:
@@ -159,54 +159,54 @@ namespace ebl {
 	    tmp = tmp.narrow(2, channels_size, 0);
 	    // finally copy right images to idx
 	    convert_image(limg, tmp, channels_mode);
-	  }
-	  // display current image conversion
+
+	    // display current image conversion
 #ifdef __GUI__
-	  if (display && (counter % 15 == 0)) {
-	    disable_window_updates();
-	    clear_window();
-	    unsigned int h = 0, w = 0;
-	    // input (RGB)
-	    static string s;
-	    s = "RGB";
-	    s += " - ";
-	    s += (char *) classes[label].idx_ptr();
-	    draw_matrix(limg, s.c_str(), h, w);
-	    w = 0;
-	    h += tmp.dim(1) + 5;
-	    // output
-	    switch (channels_mode) {
-	    case 1:
-	      tmp2 = tmp.select(2, 0);
-	      draw_matrix(tmp2, "Y", h, w);
-	      w += tmp2.dim(1) + 5;
-	      tmp2 = tmp.select(2, 1);
-	      draw_matrix(tmp2, "U", h, w);
-	      w += tmp2.dim(1) + 5;
-	      tmp2 = tmp.select(2, 2);
-	      draw_matrix(tmp2, "V", h, w);
-	      break ;
-	    case 4:
-	      tmp2 = tmp.select(2, 0);
-	      draw_matrix(tmp2, "Y", h, w);
-	      w += tmp2.dim(1) + 5;
-	      tmp2 = tmp.select(2, 1);
-	      idx_dotc(tmp2, (float)420.0, tmp2);
-	      draw_matrix(tmp2, "H3", h, w, 1.0, 1.0, (float)0, (float)420);
-	      //	      cout << "h3 inf: " << idx_min(tmp2) << " max: ";
-	      //cout << idx_max(tmp2) << endl;
-	      w += tmp2.dim(1) + 5;
-	      idxdim d(limg);
-	      static idx<float> rgb(images.dim(1),
-				    images.dim(2), 3);
-	      h3_to_rgb(tmp2, rgb);
-	      draw_matrix(rgb, "H3", h, w);
-	      break ;
+	    if (display && (counter % 15 == 0)) {
+	      disable_window_updates();
+	      clear_window();
+	      unsigned int h = 0, w = 0;
+	      // input (RGB)
+	      static string s;
+	      s = "RGB";
+	      s += " - ";
+	      s += (char *) classes[label].idx_ptr();
+	      draw_matrix(limg, s.c_str(), h, w);
+	      w = 0;
+	      h += tmp.dim(1) + 5;
+	      // output
+	      switch (channels_mode) {
+	      case 1:
+		tmp2 = tmp.select(2, 0);
+		draw_matrix(tmp2, "Y", h, w);
+		w += tmp2.dim(1) + 5;
+		tmp2 = tmp.select(2, 1);
+		draw_matrix(tmp2, "U", h, w);
+		w += tmp2.dim(1) + 5;
+		tmp2 = tmp.select(2, 2);
+		draw_matrix(tmp2, "V", h, w);
+		break ;
+	      case 4:
+		tmp2 = tmp.select(2, 0);
+		draw_matrix(tmp2, "Y", h, w, 1.0, 1.0, (float)-1.0, (float)1.0);
+		w += tmp2.dim(1) + 5;
+		tmp2 = tmp.select(2, 1);
+		draw_matrix(tmp2, "H3", h, w, 1.0, 1.0, (float)-1.0,(float)1.0);
+		idx_addc(tmp2, (float)1.0, tmp2);
+		idx_dotc(tmp2, (float)210.0, tmp2);
+		w += tmp2.dim(1) + 5;
+		idxdim d(limg);
+		static idx<float> rgb(images.dim(1),
+				      images.dim(2), 3);
+		h3_to_rgb(tmp2, rgb);
+		draw_matrix(rgb, "H3", h, w);
+		break ;
+	      }
+	      enable_window_updates();
 	    }
-	    enable_window_updates();
-	  }
 #endif
-	  counter++;
+	    counter++;
+	  }
 	}
       }
     }

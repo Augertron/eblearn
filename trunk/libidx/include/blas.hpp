@@ -402,7 +402,14 @@ namespace ebl {
     }
     return idx_sum(in) / in.nelements();
   }
-  
+
+  template<class T> void idx_std_normalize(idx<T> &in, T *mean_) {
+    T mean = mean_ ? *mean_ : idx_mean(in);
+    idx_addc(in, -mean, in); // remove mean
+    T coeff = sqrt(idx_sumsqr(in) / in.nelements()); // std deviation
+    idx_dotc(in, 1 / coeff, in);
+  }
+
   template<class T> void rev_idx2 (idx<T> &m) {
     if (m.order() != 2)
       eblerror("Expecting idx of order 2");
