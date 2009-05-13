@@ -220,10 +220,18 @@ int main(int argc, char **argv) {
   cout << "****************************************";
   cout << "***************************************" << endl;
 
+  // TODO: write a strings_to_uidx() function for libidx
+  idx<ubyte> datasets_names(2, 128);
+  idx_clear(datasets_names);
+  const char *train = "train";
+  const char *test = "test";
+  memcpy(datasets_names[0].idx_ptr(), train, strlen(train) * sizeof (char));
+  memcpy(datasets_names[1].idx_ptr(), test, strlen(test) * sizeof (char));
+  
   imagedir_to_idx(images_root.c_str(), 143, channels, image_pattern.c_str(),
 		  NULL,
 		  outdir.c_str(), NULL, false, display,
-		  training? "_train" : "_test",
-		  dataset_name.c_str(), max_per_class);
+		  NULL,
+		  dataset_name.c_str(), max_per_class, &datasets_names);
   return 0;
 }
