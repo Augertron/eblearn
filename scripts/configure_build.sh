@@ -10,10 +10,10 @@ fi
 
 if [ "$ans" = "unix" ]
 then 
-	mkdir build 2> /dev/null
-	mkdir build/Debug 2> /dev/null
-	mkdir build/Release 2> /dev/null
-    cp Makefile.unix Makefile
+    mkdir build 2> /dev/null
+    mkdir build/Debug 2> /dev/null
+    mkdir build/Release 2> /dev/null
+    cp scripts/Makefile.unix Makefile
     exit 0
 fi
 if [ "$ans" = "eclipse" ]
