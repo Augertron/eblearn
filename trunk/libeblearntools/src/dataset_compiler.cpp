@@ -29,6 +29,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#include <cstdlib>
+
 #ifdef __GUI__
 #include "libidxgui.h"
 #include "libeblearngui.h"
@@ -50,6 +52,7 @@ string stereo_lpattern = "_L";
 string stereo_rpattern = "_R";
 string outdir = ".";
 string dataset_name = "dataset";
+int max_per_class = -1; // -1 means no limitation
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -129,6 +132,13 @@ bool parse_args(int argc, char **argv) {
 	return false;
       }
       dataset_name = argv[i];
+    } else if (strcmp(argv[i], "-max_per_class") == 0) {
+      ++i;
+      if (i >= argc) {
+	cerr << "input error: expecting string after -max_per_class." << endl;
+	return false;
+      }
+      max_per_class = atoi(argv[i]);
     } else if ((strcmp(argv[i], "-help") == 0) ||
 	       (strcmp(argv[i], "-h") == 0)) {
       return false;
@@ -161,6 +171,7 @@ void print_usage() {
   cout << "  -stereo_rpattern <pattern>" << endl;
   cout << "  -output_dir <directory>" << endl;
   cout << "  -dset_name <dataset_name>" << endl;
+  cout << "  -max_per_class <integer>" << endl;
 }
 
 #ifdef __GUI__
@@ -199,6 +210,9 @@ int main(int argc, char **argv) {
     cout << "    stereo left pattern: " << stereo_lpattern << endl;
     cout << "    stereo right pattern: " << stereo_rpattern << endl;
   }
+  cout << "  max per class: ";
+  if (max_per_class == -1) cout << "no limit" << endl;
+  else cout<<max_per_class << endl;
   cout << "outputs:" << endl;
   cout << "  " << outdir << "/" << dataset_name << "_images.mat" << endl;
   cout << "  " << outdir << "/" << dataset_name << "_labels.mat" << endl;
@@ -210,7 +224,6 @@ int main(int argc, char **argv) {
 		  NULL,
 		  outdir.c_str(), NULL, false, display,
 		  training? "_train" : "_test",
-		  dataset_name.c_str());
-    
+		  dataset_name.c_str(), max_per_class);
   return 0;
 }
