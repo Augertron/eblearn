@@ -140,6 +140,7 @@ void image_test::test_colorspaces() {
   idx<float> ftmp1(d);
   idx<float> ftmp3(1, 1);
   idx<float> ftmp5(1, 1);
+  idx<float> ftmp6(d.dim(0), d.dim(1));
 
   // TODO: wrong values, fixme
 //   CPPUNIT_ASSERT(imb.get(0, 0, 0) == 81);
@@ -195,24 +196,26 @@ void image_test::test_colorspaces() {
 //   idx<float> hat = create_mexican_hat<float>(2, 5);
 //   image_mexican_filter(ftmp2, ftmp5, 0, 0, 7, &hat, &ftmp3);
   image_mexican_filter(ftmp2, ftmp5, 5, 9);
-  image_local_normalization(ftmp5);
+  image_global_normalization(ftmp5);
 //   cout << "Y inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
 //   cout << "Y hat inf: " << (int) idx_min(ftmp5) << " sup:" << (int) idx_max(ftmp5) << endl;
-  draw_matrix(ftmp5, "Y (mexican hat = 3)", h, w, 1, 1, (float)-1.0, (float)1.0);
+  draw_matrix(ftmp5, "Y (mexican hat = 5, 9x9)", h, w, 1, 1, (float)-1.0, (float)1.0);
   w += tmp2.dim(1) + 5;
 
-  image_mexican_filter(ftmp2, ftmp5, 6, 9);
-  image_local_normalization(ftmp5);
-  draw_matrix(ftmp5, "Y (mexican hat = 5)", h, w, 1, 1, (float)-1.0, (float)1.0);
+  idx_copy(ftmp2, ftmp5);
+  image_global_normalization(ftmp5);
+  image_local_normalization(ftmp5, ftmp6, 9);
+  draw_matrix(ftmp6, "Y (global + local norm 9x9)", h, w, 1, 1, (float)-1.0, (float)1.0);
   w += tmp2.dim(1) + 5;
 
-  image_mexican_filter(ftmp2, ftmp5, 7, 9);
-  image_local_normalization(ftmp5);
-  draw_matrix(ftmp5, "Y (mexican hat = 7)", h, w, 1, 1, (float)-1.0, (float)1.0);
+  image_mexican_filter(ftmp2, ftmp5, 5, 9);
+  image_global_normalization(ftmp5);
+  image_local_normalization(ftmp5, ftmp6, 9);
+  draw_matrix(ftmp6, "Y (mex glob loc 5,9x9)", h, w, 1, 1, (float)-1.0, (float)1.0);
   w += tmp2.dim(1) + 5;
 
   image_mexican_filter(ftmp2, ftmp5, 8, 9);
-  image_local_normalization(ftmp5);
+  image_global_normalization(ftmp5);
   draw_matrix(ftmp5, "Y (mexican hat = 9)", h, w, 1, 1, (float)-1.0, (float)1.0);
   w += tmp2.dim(1) + 5;
 
@@ -288,6 +291,6 @@ void image_test::test_colorspaces() {
   hsv3_to_rgb(spectrum, ftmp4);
   draw_matrix(ftmp4, "H3 0 - 420", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
   
-  //  sleep(5000);
+  sleep(5000);
 #endif
 }

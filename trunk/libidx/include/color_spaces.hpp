@@ -456,10 +456,11 @@ namespace ebl {
     idx<T> tmp(d);
     rgb_to_h2sv(rgb, h2sv);
     idx_copy(v, tmp);
-    image_mexican_filter(tmp, vp, s, n);
-    image_local_normalization(vph2sv);
-    vph2sv = vph2sv.narrow(0, vph2sv.dim(0) - n + 1, floor(n / 2));
-    vph2sv = vph2sv.narrow(1, vph2sv.dim(1) - n + 1, floor(n / 2));
+    //    image_mexican_filter(tmp, vp, s, n);
+    image_global_normalization(tmp);
+    image_local_normalization(tmp, vp, n);
+    //    vph2sv = vph2sv.narrow(0, vph2sv.dim(0) - n + 1, floor(n / 2));
+    //    vph2sv = vph2sv.narrow(1, vph2sv.dim(1) - n + 1, floor(n / 2));
   }
 
 } // end namespace ebl

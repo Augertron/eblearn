@@ -558,8 +558,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // Filters
 
+  // TODO: cleanup
   template<class T>
-  idx<T> create_mexican_hat(double s, int n){
+  idx<T> create_mexican_hat(double s, int n) {
     idx<T> m(n, n);
     T vinv = 1/(s*s);
     T total = 0;
@@ -581,6 +582,31 @@ namespace ebl {
     return m;
   }
 
+  // TODO: cleanup
+  template<class T>
+  idx<T> create_gaussian_kernel(int n) {
+    idx<T> m(n, n);
+    double s = n/4;
+    T vinv = 1/(s*s);
+    T total = 0;
+    int cx = n/2;
+    int cy = n/2;
+    for(int x = 0; x < n; x++){
+      for(int y = 0; y < n; y++){
+	int dx = x - cx;
+	int dy = y - cy;
+	m.set(-exp(-(vinv*(dx*dx + dy*dy))), x, y);
+	total += m.get(x, y);
+      }
+    }
+    //! set center valus so it's zero sum
+    //    m.set(m.get(cx, cy) - total, cx, cy);
+    //! normalize so that energy is 1
+    //    T energy = sqrt(idx_sumsqr(m));
+    idx_dotc(m, 1/total, m);
+    return m;
+  }
+
   template<class T>
   void image_mexican_filter(idx<T> &in, idx<T> &out, double s, int n,
 			    idx<T> *filter_, idx<T> *tmp_) {
@@ -595,7 +621,7 @@ namespace ebl {
   // TODO: check for tmp size incompatibilities
   // TODO: THIS ASSUMES DATA IS IN LAST DIMENSION. MAKE IT GENERIC 
   template<class T>
-  void image_local_normalization(idx<T> &in) {
+  void image_global_normalization(idx<T> &in) {
     switch (in.order()) {
     case 2:
       idx_std_normalize(in); // zero-mean and divide by standard deviation
@@ -609,34 +635,38 @@ namespace ebl {
     default:
       eblerror("image_local_normalization: dimension not implemented");
     }
-    //    idx_copy(in, out);
   }
 
-//     // TODO: handle empty sides
-//   // TODO: check for tmp size incompatibilities
-//   template<class T>
-//   void image_local_normalization(idx<T> &in, idx<T> &out, int n) {
-//     T mean;
-//     T coeff;
-//     idx<T> tmp(in.dim(0) + 2 * floor(n / 2),
-// 	       in.dim(1) + 2 * floor(n / 2));
-//     idx<T> tmp2 = tmp.narrow(0, in.dim(0), floor(n / 2));
-//     tmp2 = tmp2.narrow(1, in.dim(1), floor(n / 2));
-//     idx_copy(in, tmp2);
-//     tmp = tmp.unfold(0, n, 1);
-//     tmp = tmp.unfold(1, n, 1);
-//     idx<T> tmp3(n, n);
-    
-//     idx_bloop3(tm, tmp, T, ou, out, T, iin, in, T) {
-//       idx_bloop3(t, tm, T, o, ou, T, iiin, iin, T) {
-// 	idx_copy(t, tmp3);
-// 	mean = idx_mean(tmp3);
-// 	idx_addc(tmp3, -mean, tmp3);
-// 	coeff = 1 / sqrt(idx_sumsqr(tmp3) / (n * n));
-// 	o.set((iiin.get() - mean) * coeff);
-//       }
-//     }
-//   }
+  // TODO: handle empty sides
+  // TODO: check for tmp size incompatibilities
+  // TODO: cleanup
+  template<class T>
+  void image_local_normalization(idx<T> &in, idx<T> &out, int n) {
+    // 1. create normalized gaussian kernel (kernel / sum(kernel))
+    idx<T> kernel = create_gaussian_kernel<T>(n);
+    idx<T> tmp(in.dim(0) + n - 1, in.dim(1) + n - 1);
+    idx<T> tmp2 = tmp.narrow(0, in.dim(0), floor(n / 2));
+    tmp2 = tmp2.narrow(1, in.dim(1), floor(n / 2));
+    idx<T> tmp3(n, n);
+    idxdim d(in);
+    idx<T> tmp4(d);
+    idx<T> tmp5(d);
+
+    // sum_j (w_j * in_j)
+    image_apply_filter(in, tmp5, kernel, &tmp);
+    // in - mean
+    idx_sub(in, tmp5, tmp5);
+    // (in - mean)^2
+    idx_mul(tmp5, tmp5, tmp4);
+    // sum_j (w_j * (in - mean)^2)
+    image_apply_filter(tmp4, out, kernel, &tmp);
+    // std(std < 1) = 1
+    idx_threshold(out, (T)1.0, out);
+    // 1/std
+    idx_inv(out, out);
+    // out = (in - mean) / std
+    idx_mul(tmp5, out, out);
+  }
 
   template<class T>
   void image_apply_filter(idx<T> &in, idx<T> &out, idx<T> &filter,
@@ -645,8 +675,8 @@ namespace ebl {
     if ((out.dim(0) != d.dim(0)) || (out.dim(1) != d.dim(1)))
       out.resize(d);
     // compute sizes of the temporary buffer
-    d.setdim(0, in.dim(0) + 2 * floor(filter.dim(0) / 2));
-    d.setdim(1, in.dim(1) + 2 * floor(filter.dim(1) / 2));
+    d.setdim(0, in.dim(0) + filter.dim(0) - 1);
+    d.setdim(1, in.dim(1) + filter.dim(1) - 1);
     idx<T> tmp;
     if (tmp_) {
       tmp = *tmp_;
