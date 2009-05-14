@@ -139,7 +139,7 @@ void image_test::test_colorspaces() {
   idx<float> ftmp(d);
   idx<float> ftmp1(d);
   idx<float> ftmp3(1, 1);
-  idx<float> ftmp5(1, 1);
+  idx<float> ftmp5(d.dim(0), d.dim(1));
   idx<float> ftmp6(d.dim(0), d.dim(1));
 
   // TODO: wrong values, fixme
@@ -193,7 +193,37 @@ void image_test::test_colorspaces() {
 //   draw_matrix(fim_yuv, "YUV", h, w);
 //   w += fim_yuv.dim(1) + 5;
   ftmp2 = fim_yuv.select(2, 0);
-//   idx<float> hat = create_mexican_hat<float>(2, 5);
+
+  idx_copy(ftmp2, ftmp5);
+  image_global_normalization(ftmp5);
+  image_local_normalization(ftmp5, ftmp6, 9);
+  idx<float> background(1);
+  // the 0.5 thingies are necessary because warp-bilin interprets
+  // integer coordinates as being at the center of each pixel.
+//   float x1 = -50.5, y1 = 0.5;
+//   float x2 = ftmp5.dim(0) - 0.5, y2 = 0.5;
+//   float x3 = ftmp5.dim(0) - 0.5, y3 = ftmp5.dim(1) - 0.5;
+//   float x4 =  0.5, y4 = ftmp5.dim(1) - 0.5;
+//   float p1 = 0.5 + 20, q1 = 0.5 + 40;
+//   float p3 = ftmp5.dim(0) - 100 - 0.5, q3 = ftmp5.dim(1) - 30 - 0.5;
+//     image_warp_quad(ftmp6, ftmp5, background, 1,
+// 		    -.5, -50.5, // x1 y1
+// 		    ftmp5.dim(1) -.5, -.5, // x2 y2
+// 		    ftmp5.dim(1) -.5, ftmp5.dim(0) -.5, // x3 y3
+// 		    -.5, ftmp.dim(0) - .5, // x4 y4
+// 		    -.5, -.5, ftmp5.dim(1) - .5, ftmp5.dim(0) - .5);
+    init_drand(time(NULL));
+    image_deformation_ranperspective(ftmp6, ftmp5, 50, 0, (float) 0.0);
+    idxdim d3(ftmp5);
+    idx<float> ftmp7(d3);
+    idx_copy(ftmp5, ftmp7);
+  //  idx_copy(ftmp5, ftmp6);
+  //  idx<float> ftmp7 = image_resize(ftmp6, p3, q3);
+  draw_matrix(ftmp7, "warped Y", h, w, 1, 1, (float)-1.0, (float)1.0);
+  w += tmp2.dim(1) + 5;
+
+
+  //   idx<float> hat = create_mexican_hat<float>(2, 5);
 //   image_mexican_filter(ftmp2, ftmp5, 0, 0, 7, &hat, &ftmp3);
   image_mexican_filter(ftmp2, ftmp5, 5, 9);
   image_global_normalization(ftmp5);
@@ -212,19 +242,6 @@ void image_test::test_colorspaces() {
   image_global_normalization(ftmp5);
   image_local_normalization(ftmp5, ftmp6, 9);
   draw_matrix(ftmp6, "Y (mex glob loc 5,9x9)", h, w, 1, 1, (float)-1.0, (float)1.0);
-  w += tmp2.dim(1) + 5;
-
-  idx_copy(ftmp2, ftmp5);
-//   image_global_normalization(ftmp5);
-//   image_local_normalization(ftmp5, ftmp6, 9);
-  idx<float> background(1);
-  image_warp_quad(ftmp5, ftmp6, background, 1,
-		  (float) 0, (float) 0,
-		  (float) ftmp6.dim(0), (float) 0,
-		  (float) ftmp6.dim(0), (float) ftmp6.dim(1),
-		  (float) 0, (float) ftmp6.dim(1),
-		  10.0, 20.0, ftmp6.dim(0) - 50.0, ftmp6.dim(1) - 30.0);
-  draw_matrix(ftmp6, "warped Y (global + local norm 9x9)", h, w, 1, 1, (float)-1.0, (float)1.0);
   w += tmp2.dim(1) + 5;
 
 //   ftmp2 = fim_yuv.select(2, 1);

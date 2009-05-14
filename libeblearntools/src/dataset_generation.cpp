@@ -88,7 +88,20 @@ namespace ebl {
       image_mexican_filter(in, out, 6, fkernel_size);
       idx_copy(out, in);
       idx_copy(tmp2, dst);
-      image_global_normalization(dst);
+      image_global_normalization(dst);      
+      break ;
+    case 3: { // Y only 
+      rgb_to_y(src, tmp);
+      in = tmp.select(2, 0);
+      d = idxdim(in);
+      out = idx<float>(d);      
+      image_global_normalization(in);
+      image_local_normalization(in, out, fkernel_size);      
+      idx_copy(out, in);
+      image_deformation_ranperspective(tmp2, dst, in.dim(0) / 4,
+				       in.dim(1) / 4, (float) 0.0);      
+      //      idx_copy(tmp2, dst);
+    }
       break ;
     case 4: // YH3
       rgb_to_yh3(src, tmp);
@@ -102,7 +115,9 @@ namespace ebl {
       break ;
     case 5: // VpH2SV
       rgb_to_vph2sv(src, tmp, 6, fkernel_size);
-      idx_copy(tmp2, dst);
+      image_deformation_ranperspective(tmp2, dst, dst.dim(0) / 4,
+				       dst.dim(1) / 4, (float) 0.0);      
+      //      idx_copy(tmp2, dst);
       break ;
     default:
       cerr << "unknown channel mode: " << channels_mode << endl;
@@ -236,6 +251,11 @@ namespace ebl {
 		  w += tmp2.dim(1) + 5;
 		  tmp2 = tmp.select(2, 2);
 		  draw_matrix(tmp2, "V", h, w, 1.0, 1.0,
+			      (float)-1.0, (float)1.0);
+		  break ;
+		case 3:
+		  tmp2 = tmp.select(2, 0);
+		  draw_matrix(tmp2, "Y", h, w, 1.0, 1.0,
 			      (float)-1.0, (float)1.0);
 		  break ;
 		case 4: {
@@ -388,7 +408,9 @@ namespace ebl {
     // select channels size
     channels_size = 0;
     switch (channels_mode) {
-    case 0: case 1: case 2: channels_size = 3; break;
+    case 0: channels_size = 3; break;
+    case 1: channels_size = 3; break;
+    case 2: channels_size = 3; break;
     case 3: channels_size = 1; break;      
     case 4: channels_size = 2; break;
     case 5: channels_size = 5; break;
