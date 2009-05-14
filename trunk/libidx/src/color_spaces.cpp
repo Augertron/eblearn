@@ -304,6 +304,7 @@ namespace ebl {
   // T. Nathan Mundhenk
   // mundhenk@usc.edu
   // C/C++ Macro HSV to H2SV
+  // TODO: use sin and cos to get exact cartesian coordinates
   void PIX_HSV_TO_H2SV1_COMMON(double H, double &H1, double &H2) {
     if(H > 180)                                                
       {                                                          

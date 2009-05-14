@@ -283,9 +283,9 @@ namespace ebl {
 		//		sleep(1);
 	      }
 #endif
-	    }
 	    // increment counter for dataset current_ds
 	    counters_used.set(counters_used.get(current_ds) + 1, current_ds);
+	    }
 	  }
 	  counter++;
 	}
