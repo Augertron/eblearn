@@ -78,7 +78,7 @@ namespace ebl {
     switch (channels_mode) {
     case 0: // RGB
       idx_copy(src2, dst);
-      image_local_normalization(dst);
+      image_global_normalization(dst);
       break ;
     case 1: // YUV
       rgb_to_yuv(src, tmp);
@@ -88,7 +88,7 @@ namespace ebl {
       image_mexican_filter(in, out, 6, fkernel_size);
       idx_copy(out, in);
       idx_copy(tmp2, dst);
-      image_local_normalization(dst);
+      image_global_normalization(dst);
       break ;
     case 4: // YH3
       rgb_to_yh3(src, tmp);
@@ -96,13 +96,13 @@ namespace ebl {
       d = idxdim(in);
       out = idx<float>(d);      
       image_mexican_filter(in, out, 6, fkernel_size);
-      image_local_normalization(out);
+      image_global_normalization(out);
       idx_copy(out, in);
       idx_copy(tmp2, dst);
       break ;
     case 5: // VpH2SV
       rgb_to_vph2sv(src, tmp, 6, fkernel_size);
-      idx_copy(tmp, dst);
+      idx_copy(tmp2, dst);
       break ;
     default:
       cerr << "unknown channel mode: " << channels_mode << endl;

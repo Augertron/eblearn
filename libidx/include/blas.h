@@ -202,6 +202,9 @@ namespace ebl {
   //! 0 otherwise (this is used as bprop for sumabs).
   template<class T> void idx_thresdotc_acc(idx<T>& in, T c, T th, idx<T>& out);
   
+  //! if input is less than th, assign th.
+  template<class T> void idx_threshold(idx<T>& in, T th, idx<T>& out);
+  
   ////////////////////////////////////////////////////////////////
   // sums
 

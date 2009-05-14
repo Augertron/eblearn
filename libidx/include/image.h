@@ -272,9 +272,16 @@ namespace ebl {
     void image_mexican_filter(idx<T> &in, idx<T> &out, double s, int n,
 			      idx<T> *filter = NULL, idx<T> *tmp = NULL);
 
+  template<class T>
+    idx<T> create_gaussian_kernel(int n);
+
   //! in-place normalization: zero-mean and divided by standard deviation.
   template<class T>
-    void image_local_normalization(idx<T> &in);
+    void image_global_normalization(idx<T> &in);
+  
+  //! in-place normalization: zero-mean and divided by standard deviation.
+  template<class T>
+    void image_local_normalization(idx<T> &in, idx<T> &out, int n);
   
   //! applies the filter <filter> on <in> and puts the results in <out>.
   //! if tmp is not NULL, use that buffer as temporary copy of the input
