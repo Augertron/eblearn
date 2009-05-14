@@ -134,7 +134,7 @@ namespace ebl {
     idx_checkorder1(out, 3);
 
     int type, ncol, nlin, ncolo, nlino, ncmpo, vmax;
-    unsigned int size;
+    unsigned int expected_size, read_size;
     if (!pnm_header(fp, &type, &ncol, &nlin, &vmax))
       return false;
     // TODO: allow PNM > 255 when idx out is int
@@ -148,7 +148,7 @@ namespace ebl {
     nlino = out.dim(0);
     ncolo = out.dim(1);
     ncmpo = out.dim(2);
-    size = ncol * nlin;
+    expected_size = ncol * nlin;
     if ((ncol != ncolo) || (nlin != nlino) || (ncmpo < 3))
       out.resize(nlin, ncol, max(ncmpo, 3));
     switch (type) {
@@ -162,8 +162,11 @@ namespace ebl {
       break ;
     case 6: // PPM binary
       if ((3 == out.dim(2)) && out.contiguousp()) {
-	if (size != fread(out.idx_ptr(), 3, size, fp)) {
-	  cerr << "not enough items read. Expected " << size << "." << endl;
+	read_size = fread(out.idx_ptr(), 3, expected_size, fp);
+	if (expected_size != read_size) {
+	  cerr << "image read: not enough items read. expected ";
+	  cerr << expected_size;
+	  cerr << " but found " << read_size << endl;
 	  return false;
 	}
       } else {

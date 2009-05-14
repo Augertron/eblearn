@@ -476,19 +476,56 @@ namespace ebl {
     labels = idx<int>(ndatasets, nimages_used); // N
     ds_assignment = idx<int>(nimages);
 
+    if (!silent) { cout << "Shuffling image collection..." << endl; }
+    init_drand(time(NULL)); // initialize random seed
     // for each class, assign images to training or testing set
     if (max_per_class == -1)
       idx_fill(ds_assignment, 0); // put all images in dataset 0
     else {
       idx_fill(ds_assignment, -1); // -1 means no assignment
-      idx_bloop1(range, class_ranges, int) {
-	int j = range.get(0);
+      idx_bloop2(range, class_ranges, int, classe, classes, ubyte) {
+	int j;
 	int k;
-	for (k = 0; (k < max_per_class) && (j < range.get(1)); ++j, ++k) {
-	  ds_assignment.set(0, j); // assign to dataset 0
+	int pos;
+	for (k = 0; k < max_per_class; ++k) {
+	  pos = (int) drand(range.get(0), range.get(1));
+	  // if conflict, assign next available slot
+	  if (ds_assignment.get(pos) != -1) {
+	    for (j = pos + 1; j != pos; j++) {
+	      if (j == range.get(1) + 1) // reach end, go to beginning
+		j = range.get(0);
+	      if (ds_assignment.get(j) == -1) {
+		pos = j;
+		break ;
+	      }
+	    }
+	    if (ds_assignment.get(pos) != -1) { // did not find an image
+	      cout << "warning: only " << k << " available images for class ";
+	      cout << classe.idx_ptr() << " in dataset 0." << endl;
+	      break ;
+	    }
+	  }
+	  ds_assignment.set(0, pos); // assign to dataset 0
 	}
 	for (k = 0; (k < max_per_class) && (j < range.get(1)); ++j, ++k) {
-	  ds_assignment.set(1, j); // assign to dataset 1
+	  pos = (int) drand(range.get(0), range.get(1));
+	  // if conflict, assign next available image
+	  if (ds_assignment.get(pos) != -1) {
+	    for (j = pos + 1; j != pos; j++) {
+	      if (j == range.get(1) + 1) // reach end, go to beginning
+		j = range.get(0);
+	      if (ds_assignment.get(j) == -1) {
+		pos = j;
+		break ;
+	      }
+	    }
+	    if (ds_assignment.get(pos) != -1) { // did not find an image
+	      cout << "warning: only " << k << " available images for class ";
+	      cout << classe.idx_ptr() << " in dataset 1." << endl;
+	      break ;
+	    }
+	  }
+	  ds_assignment.set(1, pos); // assign to dataset 1
 	}
       }
     }
