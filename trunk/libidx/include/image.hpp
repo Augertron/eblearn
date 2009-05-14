@@ -497,6 +497,52 @@ namespace ebl {
       }}
   }
 
+
+//   template<class T> void compute_bilin_transform2(idx<int> &dispi,
+// 						  idx<int> &dispj,
+// 						  float x1, float y1,
+// 						  float x2, float y2,
+// 						  float x3, float y3,
+// 						  float x4, float y4,
+// 						  float p1, float q1,
+// 						  float p2, float q2,
+// 						  float p3, float q3,
+// 						  float p4, float q4) {
+//     // compute transformation matrix from coordinates
+//     // in target (rectangular) space to coordinates
+//     // in original (irregular quadrilateral) image
+//     // transformation matrix is in 16.16 fixed point format.
+//     float k = 65536 / ((p3 - p1) * (q3 - q1));
+//     float x41 = x4 - x1;
+//     float x21 = x2 - x1;
+//     float x43 = x4 - x3;
+//     float x23 = x2 - x3;
+//     int mx0 = (int) (k * ((q3 * x21) + (q1 * x43)));
+//     int mx1 = (int) (k * ((p3 * x41) + (p1 * x23)));
+//     int mx2 = (int) ((-k) * (x41 + x23));
+//     int mx3 = (int) (k * (((p3 * q3 * x1) + (p1 * q1 * x3)) -
+// 			  ((p1 * q3 * x2) + (p3 * q1 * x4))));
+//     float y41 = y4 - y1;
+//     float y21 = y2 - y1;
+//     float y43 = y4 - y3;
+//     float y23 = y2 - y3;
+//     int my0 = (int) (k * ((q3 * y21) + (q1 * y43)));
+//     int my1 = (int) (k * ((p3 * y41) + (p1 * y23)));
+//     int my2 = (int) ((-k) * (y41 + y23));
+//     int my3 = (int) (k * (((p3 * q3 * y1) + (p1 * q1 * y3)) -
+// 			  ((p1 * q3 * y2) + (p3 * q1 * y4))));
+//     int q = 0, p = 0;
+//     { idx_bloop2(ispi, dispi, int, ispj, dispj, int) {
+// 	p = 0;
+// 	{ idx_bloop2(di, ispi, int, dj, ispj, int) {
+// 	    di.set(my0 * p + my1 * q + my2 * p * q + my3);
+// 	    dj.set(mx0 * p + mx1 * q + mx2 * p * q + mx3);
+// 	    p++;
+// 	  }}
+// 	q++;
+//       }}
+//   }
+
   template<class T> void image_rotscale(idx<T> &src, idx<T> &out,
 					double sx, double sy, double dx,
 					double dy, double angle, double coeff,
@@ -696,6 +742,27 @@ namespace ebl {
     idx_2dconvol(tmp, filter, out);
   }
   
+  ////////////////////////////////////////////////////////////////
+  // Deformations
+
+  template<class T>
+  void image_deformation_ranperspective(idx<T> &in, idx<T> &out,
+					int hrange, int wrange, T background) {
+    idx<float> bg(1);
+    bg.set(background, 0);
+    float x1diff = (float) drand(0.0, -wrange);
+    float y1diff = (float) drand(0.0, -hrange);
+    float x2diff = (float) drand(0.0,  wrange);
+    float y2diff = (float) drand(0.0, -hrange);
+    image_warp_quad(in, out, bg, 1,
+		    -.5 + x1diff, -.5 + y1diff, // x1 y1
+		    in.dim(1) -.5 + x2diff, -.5 + y2diff, // x2 y2
+		    in.dim(1) -.5, in.dim(0) -.5, // x3 y3
+		    -.5, in.dim(0) - .5, // x4 y4
+		    -.5, -.5, in.dim(1) - .5, in.dim(0) - .5);
+  }
+  
+
 } // end namespace ebl
 
 #endif /* IMAGE_HPP_ */

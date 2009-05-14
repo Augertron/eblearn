@@ -292,6 +292,13 @@ namespace ebl {
     void image_apply_filter(idx<T> &in, idx<T> &out, idx<T> &filter,
 			    idx<T> *tmp = NULL);
 
+  ////////////////////////////////////////////////////////////////
+  // Deformations
+  
+  template<class T>
+  void image_deformation_ranperspective(idx<T> &in, idx<T> &out,
+					int hrange, int wrange, T background);
+  
 } // end namespace ebl
 
 #include "image.hpp"

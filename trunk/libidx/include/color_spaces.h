@@ -53,6 +53,8 @@ namespace ebl {
   //! image and returns it.
   template<class T> idx<T> rgb_to_yuv(idx<T> &rgb);
 
+  template<class T> void rgb_to_y(idx<T> &rgb, idx<T> &y);
+  
   //! Convert all pixels of yuv idx to rgb pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.

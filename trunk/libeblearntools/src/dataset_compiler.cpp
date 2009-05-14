@@ -85,8 +85,10 @@ bool parse_args(int argc, char **argv) {
       }
       else if (strcmp(argv[i], "HSV") == 0)
 	channels = 2;
-      else if (strcmp(argv[i], "Y") == 0)
+      else if (strcmp(argv[i], "Y") == 0) {
 	channels = 3;
+	if (mexican_hat_size == 0) mexican_hat_size = 9;
+      }
       else if (strcmp(argv[i], "YpH3") == 0) {
 	channels = 4;
 	if (mexican_hat_size == 0) mexican_hat_size = 9;

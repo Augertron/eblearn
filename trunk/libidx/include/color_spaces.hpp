@@ -78,6 +78,39 @@ namespace ebl {
     }
   }
 
+  // TODO: find a cleaner way with matrix multiplication that can handle
+  // different output type than y matrix.
+  template<class T> void rgb_to_y_1D(idx<T> &rgb, idx<T> &y) {
+    if (rgb.idx_ptr() == y.idx_ptr()) {
+      eblerror("rgb_to_y: dst must be different than src");
+      return ;
+    }
+    static double r, g, b;
+    r = rgb.get(0);
+    g = rgb.get(1);
+    b = rgb.get(2);
+    y.set(  0.299 * r + 0.587 * g + 0.114 * b, 0);
+  }
+
+  template<class T> void rgb_to_y(idx<T> &rgb, idx<T> &y) {
+    switch (rgb.order()) {
+    case 1: // process 1 pixel
+      rgb_to_y_1D(rgb, y);
+      //      idx_m2dotm1(rgb_yuv, rgb, yuv);
+      return ;
+    case 3: // process 2D image
+      { idx_bloop2(rg, rgb, T, yy, y, T) {
+	  { idx_bloop2(r, rg, T, yyy, yy, T) {
+	      rgb_to_y_1D(r, yyy);
+	      //	      idx_m2dotm1(rgb_yuv, r, y);
+	    }}
+	}}
+      return ;
+    default:
+      eblerror("rgb_to_y dimension not implemented");
+    }
+  }
+  
   template<class T> idx<T> rgb_to_yuv(idx<T> &rgb) {
     idxdim d(rgb);
     idx<T> yuv(d);
