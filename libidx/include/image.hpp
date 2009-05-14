@@ -262,10 +262,12 @@ namespace ebl {
     }
   }
 
-  template<class T> void image_warp_quad(idx<T> &in, idx<T> &out,
-					 idx<T> &background, int mode,
-					 float x1, float y1, float x2, float y2, float x3, float y3,
-					 float x4, float y4, float p1, float q1, float p3, float q3) {
+  template<class T>
+  void image_warp_quad(idx<T> &in, idx<T> &out,
+		       idx<T> &background, int mode,
+		       float x1, float y1, float x2, float y2,
+		       float x3, float y3, float x4, float y4,
+		       float p1, float q1, float p3, float q3) {
     intg outi = out.dim(0);
     intg outj = out.dim(1);
     idx<int> dispi(outi, outj);
