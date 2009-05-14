@@ -214,9 +214,17 @@ void image_test::test_colorspaces() {
   draw_matrix(ftmp6, "Y (mex glob loc 5,9x9)", h, w, 1, 1, (float)-1.0, (float)1.0);
   w += tmp2.dim(1) + 5;
 
-  image_mexican_filter(ftmp2, ftmp5, 8, 9);
-  image_global_normalization(ftmp5);
-  draw_matrix(ftmp5, "Y (mexican hat = 9)", h, w, 1, 1, (float)-1.0, (float)1.0);
+  idx_copy(ftmp2, ftmp5);
+//   image_global_normalization(ftmp5);
+//   image_local_normalization(ftmp5, ftmp6, 9);
+  idx<float> background(1);
+  image_warp_quad(ftmp5, ftmp6, background, 1,
+		  (float) 0, (float) 0,
+		  (float) ftmp6.dim(0), (float) 0,
+		  (float) ftmp6.dim(0), (float) ftmp6.dim(1),
+		  (float) 0, (float) ftmp6.dim(1),
+		  10.0, 20.0, ftmp6.dim(0) - 50.0, ftmp6.dim(1) - 30.0);
+  draw_matrix(ftmp6, "warped Y (global + local norm 9x9)", h, w, 1, 1, (float)-1.0, (float)1.0);
   w += tmp2.dim(1) + 5;
 
 //   ftmp2 = fim_yuv.select(2, 1);

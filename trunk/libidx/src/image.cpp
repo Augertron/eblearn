@@ -163,7 +163,9 @@ namespace ebl {
     case 6: // PPM binary
       if ((3 == out.dim(2)) && out.contiguousp()) {
 	read_size = fread(out.idx_ptr(), 3, expected_size, fp);
-	if (expected_size != read_size) {
+	if ((expected_size != read_size) &&
+	    // TODO: fixme, adding temporarly +1 to fix reading failures bug
+	    (expected_size != read_size + 1)) {
 	  cerr << "image read: not enough items read. expected ";
 	  cerr << expected_size;
 	  cerr << " but found " << read_size << endl;
