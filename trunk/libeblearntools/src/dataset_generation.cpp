@@ -129,7 +129,8 @@ namespace ebl {
   void process_dir(const char *dir, const char *ext, const char* leftp, 
 		   const char *rightp, unsigned int width,
 		   unsigned int fwidth, idx<float> &images,
-		   idx<int> &labels, int label, bool display, bool *binocular, 
+		   idx<int> &labels, int label, bool silent, bool display,
+		   bool *binocular, 
 		   const int channels_mode, const int channels_size,
 		   idx<ubyte> &classes, unsigned int &counter,
 		   idx<unsigned int> &counters_used, idx<int> &ds_assignment,
@@ -155,7 +156,8 @@ namespace ebl {
       if (is_directory(itr->status())) {
 	process_dir(itr->path().string().c_str(), ext, leftp, rightp, width,
 		    fwidth,
-		    images, labels, label, display, binocular, channels_mode,
+		    images, labels, label, silent, display, binocular,
+		    channels_mode,
 		    channels_size, classes, counter, counters_used,
 		    ds_assignment, fkernel_size);
       } else if (regex_match(itr->leaf().c_str(), what, eExt)) {
@@ -197,11 +199,11 @@ namespace ebl {
 		  // finally copy right images to idx
 		  convert_image(rimg, tmp, channels_mode, fkernel_size);
 		}
-		if (display)
+		if (!silent)
 		  cout << "Processing (right): " << sfull << endl;
 	      }
 	    }
-	    if (display) {
+	    if (!silent) {
 	      cout << counter << "/" << ds_assignment.dim(0) << ": ";
 	      cout << itr->path().string().c_str() << endl;
 	    }
@@ -368,7 +370,7 @@ namespace ebl {
 		       bool silent, bool display, const char *prefix,
 		       const char *name_, int max_per_class,
 		       idx<ubyte> *datasets_names_,
-		       unsigned int fkernel_size) {
+		       unsigned int fkernel_size, int deformations) {
     // local variables
     idx<ubyte>          datasets_names = datasets_names_ ? *datasets_names_
       : idx<ubyte>(1, 1);      
@@ -391,7 +393,7 @@ namespace ebl {
     unsigned int        fwidth = fkernel_size == 0 ? width :
       width - fkernel_size + 1;
     cout << "width : " << width << endl;
-    if (silent) display = false;
+    //    if (silent) display = false;
 #ifdef __GUI__
     if (display) new_window("Dataset Compiler");
 #endif
@@ -504,6 +506,7 @@ namespace ebl {
     if (max_per_class == -1)
       idx_fill(ds_assignment, 0); // put all images in dataset 0
     else {
+      int total_missing = 0;
       idx_fill(ds_assignment, -1); // -1 means no assignment
       idx_bloop2(range, class_ranges, int, classe, classes, ubyte) {
 	int j;
@@ -514,41 +517,57 @@ namespace ebl {
 	  // if conflict, assign next available slot
 	  if (ds_assignment.get(pos) != -1) {
 	    for (j = pos + 1; j != pos; j++) {
-	      if (j == range.get(1) + 1) // reach end, go to beginning
+	      if (j >= range.get(1) + 1) // reach end, go to beginning
 		j = range.get(0);
+	      if (j == pos)
+		break ;
 	      if (ds_assignment.get(j) == -1) {
 		pos = j;
 		break ;
 	      }
 	    }
 	    if (ds_assignment.get(pos) != -1) { // did not find an image
-	      cout << "warning: only " << k << " available images for class ";
-	      cout << classe.idx_ptr() << " in dataset 0." << endl;
+	      if (!silent) {
+		cout << "warning: only " << k << "/" << max_per_class;
+		cout << " available images for class ";
+		cout << classe.idx_ptr() << " in dataset 0." << endl;
+	      }
+	      total_missing += max_per_class - k;
 	      break ;
 	    }
 	  }
 	  ds_assignment.set(0, pos); // assign to dataset 0
 	}
-	for (k = 0; (k < max_per_class) && (j < range.get(1)); ++j, ++k) {
+	for (k = 0; k < max_per_class; ++k) {
 	  pos = (int) drand(range.get(0), range.get(1));
 	  // if conflict, assign next available image
 	  if (ds_assignment.get(pos) != -1) {
 	    for (j = pos + 1; j != pos; j++) {
-	      if (j == range.get(1) + 1) // reach end, go to beginning
+	      if (j >= range.get(1) + 1) // reach end, go to beginning
 		j = range.get(0);
+	      if (j == pos)
+		break ;
 	      if (ds_assignment.get(j) == -1) {
 		pos = j;
 		break ;
 	      }
 	    }
 	    if (ds_assignment.get(pos) != -1) { // did not find an image
-	      cout << "warning: only " << k << " available images for class ";
-	      cout << classe.idx_ptr() << " in dataset 1." << endl;
+	      if (!silent) {
+		cout << "warning: only " << k << "/" << max_per_class;
+		cout << " available images for class ";
+		cout << classe.idx_ptr() << " in dataset 1." << endl;
+	      }
+	      total_missing += max_per_class - k;
 	      break ;
 	    }
 	  }
 	  ds_assignment.set(1, pos); // assign to dataset 1
 	}
+      }
+      if (!silent) {
+	cout << "Total missing images for all datasets: ";
+	cout << total_missing << endl;
       }
     }
 
@@ -564,7 +583,8 @@ namespace ebl {
 	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
 	// process subdirs to extract images into the single image idx
 	process_dir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
-		    imgPatternRight, width, fwidth, images, labels, i, display, 
+		    imgPatternRight, width, fwidth, images, labels, i, silent,
+		    display, 
 		    &binocular, channels_mode, channels_size, classes, counter,
 		    counters_used, ds_assignment, fkernel_size);
 	++i; // increment only for directories
