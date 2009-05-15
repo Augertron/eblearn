@@ -154,6 +154,13 @@ namespace ebl {
     }
   }
   
+  template<class T> void idx_sqrt(idx<T>& in, idx<T>& out) {
+    idxiter<T> pin; idxiter<T> pout;
+    idx_aloop2_on(pin,in,pout,out) {
+      *pout = sqrt(*pin);
+    }
+  }
+  
   // there is a much faster and parallel way
   // of doing this using a tree.
   template<class T> T idx_sum(idx<T> &inp, T *out) {
@@ -302,7 +309,7 @@ namespace ebl {
     }
   }
 
-  template<class T> void idx_thresdotc_acc(idx<T>& in, T th, idx<T>& out) {
+  template<class T> void idx_threshold(idx<T>& in, T th, idx<T>& out) {
     ScalarIter<T> pin(in); ScalarIter<T> pout(out);
     idx_aloop2_on(pin,in,pout,out) {
       if (*pin < th)
@@ -310,6 +317,12 @@ namespace ebl {
     }
   }
 
+  template<class T> void idx_sqrt(idx<T>& in, idx<T>& out) {
+    ScalarIter<T> pin(in); ScalarIter<T> pout(out);
+    idx_aloop2_on(pin,in,pout,out) {
+      *pout = sqrt(*pin);
+    }
+  }
 
   // there is a much faster and parallel way
   // of doing this using a tree.
