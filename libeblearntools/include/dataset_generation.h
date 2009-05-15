@@ -41,6 +41,7 @@ namespace ebl {
   // Utility functions to prepare a dataset from raw images.
 
   const char defaultExtensionPattern[] =  ".*[.]ppm";
+  
   //! Finds all images corresponding to the imgPatternLeft pattern in directory 
   //! imgDir, assigns for each a class name corresponding to the first directory
   //! level found, crops to square and resizes all images to width*width size.
@@ -55,6 +56,10 @@ namespace ebl {
   //!   (ubyte) N x 6 (G or GG, RGB or RGBRGB) x width x width
   //! outDir/dset_labels.mat: 	(int)   N
   //! outDir/dset_classes.mat:  (ubyte) Nclasses x 128
+  //! \param deformations is the number of deformations to be applied
+  //! to the dataset 0 (usually the training one, the remaining are testing
+  //! and validation which don't need deformations). the default value
+  //! is -1 which means that no deformations are added.
   bool imagedir_to_idx(const char *imgDir, 
 		       unsigned int width,
 		       const int channels_mode = 0, // RGB, YUV, HSV...

@@ -53,7 +53,28 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // Utility functions to prepare a dataset from raw images.
 
-  void convert_image(idx<float> src, idx<float> dst, const int channels_mode,
+  // take the first slot of letf_images as input image, and append
+  // <deformations> deformed copies of it and set corresponding labels
+  // to <label>.
+  void add_deformations(idx<float> &left_images, idx<int> &current_labels,
+			int label, int deformations) {
+    idx<float> original = left_images[0];
+    idx<float> dst;
+    idx<int> lab;
+    // add <deformations> deformations
+    for (int i = 1; i <= deformations; ++i) {
+      // set label
+      lab = current_labels[i];
+      lab.set(label);
+      // perturbe image
+      dst = left_images[i];
+      image_deformation_ranperspective(original, dst, original.dim(0) / 4,
+				       original.dim(1) / 4, (float) 0.0);
+    }
+  }
+
+  // convert the input image <src> into the <channels_mode> format.
+  void convert_image(idx<float> &src, idx<float> &dst, const int channels_mode,
 		     unsigned int fkernel_size) {
     idxdim d = idxdim(src), d2 = idxdim(src);
     d2.setdim(2, dst.dim(2));
@@ -98,9 +119,7 @@ namespace ebl {
       image_global_normalization(in);
       image_local_normalization(in, out, fkernel_size);      
       idx_copy(out, in);
-      image_deformation_ranperspective(tmp2, dst, in.dim(0) / 4,
-				       in.dim(1) / 4, (float) 0.0);      
-      //      idx_copy(tmp2, dst);
+      idx_copy(tmp2, dst);
     }
       break ;
     case 4: // YH3
@@ -115,14 +134,82 @@ namespace ebl {
       break ;
     case 5: // VpH2SV
       rgb_to_vph2sv(src, tmp, 6, fkernel_size);
-      image_deformation_ranperspective(tmp2, dst, dst.dim(0) / 4,
-				       dst.dim(1) / 4, (float) 0.0);      
-      //      idx_copy(tmp2, dst);
+      idx_copy(tmp2, dst);
       break ;
     default:
       cerr << "unknown channel mode: " << channels_mode << endl;
       eblerror("unknown channel mode");
     }
+  }
+
+  unsigned int draw_layer(idx<float> &img, int dimn, int layern, const char *s,
+			  unsigned int h, unsigned int w) {
+#ifdef __GUI__
+    idx<float> layer = img.select(dimn, layern);
+    draw_matrix(layer, s, h, w, 1.0, 1.0, (float)-1.0, (float)1.0);
+#endif
+    return img.dim(1) + 3;
+  }
+  
+  // display original and new images.
+  void display_images(idx<ubyte> &classes, int label, idx<float> &original,
+		      idx<float> &new_images, const int channels_mode,
+		      idx<ubyte> &ds_names, int current_ds) {
+#ifdef __GUI__
+    unsigned int h = 0, w = 0;
+    static unsigned int cnt = 0;
+    idx<float> layer;
+
+    // only display every 15 images
+    if (cnt++ % 15 != 0) return ;
+    
+    // reset window and do a batch display
+    disable_window_updates();
+    clear_window();
+    
+    // original image (RGB)
+    static string s;
+    s = "RGB"; s += " - "; s += (char *) classes[label].idx_ptr();
+    draw_matrix(original, s.c_str(), h, w);
+    w = 0; h += new_images.dim(1) + 5;
+    gui << at(h, w) << black_on_white();
+    gui << ds_names[current_ds].idx_ptr() << " dataset:";
+    h += 15;
+    
+    // new images
+    idx_bloop1(image, new_images, float) {
+      switch (channels_mode) {
+      case 1: // YpUV
+	w += draw_layer(image, 2, 0, "Yp", h, w);
+	w += draw_layer(image, 2, 1, "U", h, w);
+	w += draw_layer(image, 2, 2, "V", h, w);
+	break ;
+      case 3: // Yp
+	w += draw_layer(image, 2, 0, "Yp", h, w);
+	break ;
+      case 4: { // YpH3
+	w += draw_layer(image, 2, 0, "Yp", h, w);
+	w += draw_layer(image, 2, 1, "H3", h, w);
+	idx_addc(layer, (float)1.0, layer);
+	idx_dotc(layer, (float)210.0, layer);
+	w += layer.dim(1) + 5;
+	static idx<float> rgb(layer.dim(0), layer.dim(1), 3);
+	h3_to_rgb(layer, rgb);
+	draw_matrix(rgb, "H3 (colored)", h, w);
+	break ;
+      }
+      case 5: // VpH2SV
+	w += draw_layer(image, 2, 0, "Vp", h, w);
+	w += draw_layer(image, 2, 1, "H1", h, w);
+	w += draw_layer(image, 2, 2, "H2", h, w);
+	w += draw_layer(image, 2, 3, "S", h, w);
+	w += draw_layer(image, 2, 4, "V", h, w);
+	w = 0; h += image.dim(1) + 5;
+	break ;
+      }
+    }
+    enable_window_updates();
+#endif
   }
   
   //! Recursively goes through dir, looking for files matching extension ext.
@@ -134,14 +221,17 @@ namespace ebl {
 		   const int channels_mode, const int channels_size,
 		   idx<ubyte> &classes, unsigned int &counter,
 		   idx<unsigned int> &counters_used, idx<int> &ds_assignment,
-		   unsigned int fkernel_size) {
+		   unsigned int fkernel_size, int deformations,
+		   idx<ubyte> &ds_names) {
     regex eExt(ext);
     string el(".*");
     idx<float> limg(1, 1, 1);
     idx<float> rimg(1, 1, 1);
-    idx<float> tmp;
+    idx<float> tmp, left_images;
+    idx<int> current_labels;
     idx<float> tmp2;
     int current_ds;
+    unsigned int current_used;
     if (leftp) {
       el += leftp;
       el += ".*";
@@ -155,15 +245,15 @@ namespace ebl {
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
       if (is_directory(itr->status())) {
 	process_dir(itr->path().string().c_str(), ext, leftp, rightp, width,
-		    fwidth,
-		    images, labels, label, silent, display, binocular,
-		    channels_mode,
-		    channels_size, classes, counter, counters_used,
-		    ds_assignment, fkernel_size);
+		    fwidth, images, labels, label, silent, display, binocular,
+		    channels_mode, channels_size, classes, counter,
+		    counters_used, ds_assignment, fkernel_size, deformations,
+		    ds_names);
       } else if (regex_match(itr->leaf().c_str(), what, eExt)) {
 	if (regex_match(itr->leaf().c_str(), what, eLeft)) {
 	  current_ds = ds_assignment.get(counter);
 	  if (current_ds != -1) {
+	    current_used = counters_used.get(current_ds);
 	    // found left image
 	    // increase example number
 	    labels.set(label, current_ds, counters_used.get(current_ds));
@@ -220,91 +310,28 @@ namespace ebl {
 	      }
 	      // resize image to target width
 	      limg = image_resize(limg, neww, newh, 1);
-	      tmp = images[current_ds];
-	      tmp = tmp.select(0, counters_used.get(current_ds));
-	      tmp = tmp.narrow(2, channels_size, 0);
-	      // finally copy right images to idx
+	      left_images = images[current_ds];
+	      left_images = left_images.narrow(3, channels_size, 0);
+	      left_images = left_images.narrow(0, 1 + (deformations<=0?0:
+						       deformations),
+					       current_used);
+	      current_labels = labels[current_ds];
+	      current_labels = current_labels.narrow(0, current_labels.dim(0) -
+						     current_used,current_used);
+	      tmp = left_images[0];
+	      // convert and copy image into images buffer
 	      convert_image(limg, tmp, channels_mode, fkernel_size);
-
-	      // display current image conversion
-#ifdef __GUI__
-	      if ((display) && (counter % 15 == 0)) {
-		disable_window_updates();
-		clear_window();
-		unsigned int h = 0, w = 0;
-		// input (RGB)
-		static string s;
-		s = "RGB";
-		s += " - ";
-		s += (char *) classes[label].idx_ptr();
-		draw_matrix(limg, s.c_str(), h, w);
-		w = 0;
-		h += tmp.dim(1) + 5;
-		// output
-		switch (channels_mode) {
-		case 1:
-		  tmp2 = tmp.select(2, 0);
-		  draw_matrix(tmp2, "Y", h, w, 1.0, 1.0,
-			      (float)-1.0, (float)1.0);
-		  w += tmp2.dim(1) + 5;
-		  tmp2 = tmp.select(2, 1);
-		  draw_matrix(tmp2, "U", h, w, 1.0, 1.0,
-			      (float)-1.0, (float)1.0);
-		  w += tmp2.dim(1) + 5;
-		  tmp2 = tmp.select(2, 2);
-		  draw_matrix(tmp2, "V", h, w, 1.0, 1.0,
-			      (float)-1.0, (float)1.0);
-		  break ;
-		case 3:
-		  tmp2 = tmp.select(2, 0);
-		  draw_matrix(tmp2, "Y", h, w, 1.0, 1.0,
-			      (float)-1.0, (float)1.0);
-		  break ;
-		case 4: {
-		  tmp2 = tmp.select(2, 0);
-		  draw_matrix(tmp2, "Y", h, w, 1.0, 1.0,
-			      (float)-1.0, (float)1.0);
-		  w += tmp2.dim(1) + 5;
-		  tmp2 = tmp.select(2, 1);
-		  draw_matrix(tmp2, "H3", h, w, 1.0, 1.0,
-			      (float)-1.0,(float)1.0);
-		  idx_addc(tmp2, (float)1.0, tmp2);
-		  idx_dotc(tmp2, (float)210.0, tmp2);
-		  w += tmp2.dim(1) + 5;
-		  idxdim d(limg);
-		  static idx<float> rgb(images.dim(2),
-					images.dim(3), 3);
-		  h3_to_rgb(tmp2, rgb);
-		  draw_matrix(rgb, "H3", h, w);
-		}
-		  break ;
-		case 5:
-		  tmp2 = tmp.select(2, 0);
-		  draw_matrix(tmp2, "Vp", h, w, 1.0, 1.0,
-			      (float)-1.0, (float)1.0);
-		  w += tmp.dim(1) + 5;
-		  tmp2 = tmp.select(2, 1);
-		  draw_matrix(tmp2, "H1", h, w, 1.0, 1.0,
-			      (float)-1.0, (float)1.0);
-		  w += tmp.dim(1) + 5;
-		  tmp2 = tmp.select(2, 2);
-		  draw_matrix(tmp2, "H2", h, w, 1.0, 1.0,
-			      (float)-1.0, (float)1.0);
-		  w += tmp.dim(1) + 5;
-		  tmp2 = tmp.select(2, 3);
-		  draw_matrix(tmp2, "S", h, w, 1.0, 1.0,
-			      (float)-1.0, (float)1.0);
-		  w += tmp.dim(1) + 5;
-		  tmp2 = tmp.select(2, 4);
-		  draw_matrix(tmp2, "V", h, w, 1.0, 1.0,
-			      (float)-1.0, (float)1.0);
-		  w += tmp.dim(1) + 5;
-		  break ;
-		}
-		enable_window_updates();
-		//		sleep(1);
-	      }
-#endif
+	      // if adding to dataset 0, add deformations if deformations > 0
+	      if ((current_ds == 0) && (deformations > 0)) {
+		add_deformations(left_images, current_labels, label,
+				 deformations);
+		counters_used.set(counters_used.get(current_ds) + deformations,
+				  current_ds);
+	      } else // no deformations
+		left_images = left_images.narrow(0, 1, 0);
+	      // display
+	      if (display) display_images(classes, label, limg, left_images,
+					  channels_mode, ds_names, current_ds);
 	    // increment counter for dataset current_ds
 	    counters_used.set(counters_used.get(current_ds) + 1, current_ds);
 	    }
@@ -353,16 +380,7 @@ namespace ebl {
 #endif 
 
   ////////////////////////////////////////////////////////////////
-  //! Finds all images corresponding to the imgPatternLeft pattern in directory 
-  //! imgDir, assigns for each a class name corresponding to the first directory
-  //! level found, crops to square and resizes all images to width*width size.
-  //! If imgPatternRight is not null, two images are stored for each example, 
-  //! bringing the stereo dimension sdim from 1 to 2.
-  //! Finally outputs all N examples found in a single matrix files as follow:
-  //! outDir/dset_images.mat: 
-  //!   (ubyte) N x 6 (G or GG, RGB or RGBRGB) x width x width
-  //! outDir/dset_labels.mat: 	(int)   N
-  //! outDir/dset_classes.mat:  (ubyte) Nclasses x 128
+
   bool imagedir_to_idx(const char *imgDir, unsigned int width,
 		       const int channels_mode,
 		       const char *imgExtension, const char *imgPatternLeft, 
@@ -375,15 +393,15 @@ namespace ebl {
     idx<ubyte>          datasets_names = datasets_names_ ? *datasets_names_
       : idx<ubyte>(1, 1);      
     int                 ndatasets = datasets_names.dim(0);
-    unsigned int	nimages;
-    unsigned int        nimages_used;
-    unsigned int	counter;
-    idx<unsigned int>	counters_used(ndatasets);
-    int			nclasses;
-    int			channels_size;
-    idx<ubyte>		classes;
-    idx<float>		images;
-    idx<int>		labels;
+    unsigned int	nimages;	// number of available images
+    unsigned int        nimages_used;	// final number of images per dataset
+    unsigned int	counter;	// counter of available images
+    idx<unsigned int>	counters_used(ndatasets);// counters for used images
+    int			nclasses;       // number of classes
+    int			channels_size;  // number of channels
+    idx<ubyte>		classes;        // strings of classes
+    idx<float>		images;         // full image buffer
+    idx<int>		labels;         // full labels buffer
     idx<ubyte>		tmp;
     int                 i;
     string              name = (name_ == NULL) ? "dataset" : name_;
@@ -392,7 +410,7 @@ namespace ebl {
     if (fkernel_size > 0) width += fkernel_size - 1;
     unsigned int        fwidth = fkernel_size == 0 ? width :
       width - fkernel_size + 1;
-    cout << "width : " << width << endl;
+    if (!silent) cout << "Target image width: " << fwidth << endl;
     //    if (silent) display = false;
 #ifdef __GUI__
     if (display) new_window("Dataset Compiler");
@@ -486,7 +504,8 @@ namespace ebl {
     }
 
     // allocate memory
-    nimages_used = (max_per_class == -1) ? nimages : nclasses * max_per_class;
+    nimages_used = (max_per_class <= 0) ? nimages : nclasses * max_per_class;
+    nimages_used += (deformations <= 0) ? 0 : nimages_used * deformations;
     if (!silent) {
       cout << "Allocating memory for " << ndatasets << "x";
       cout << nimages_used << "x" << channels_size;
@@ -495,7 +514,7 @@ namespace ebl {
 	       * channels_size * sizeof (float)) / (1024*1024);
       cout << " Mb)..." << endl;
     }
-      // N x w x w x channels_size
+    // N x w x w x channels_size
     images = idx<float>(ndatasets, nimages_used, fwidth, fwidth, channels_size);
     labels = idx<int>(ndatasets, nimages_used); // N
     ds_assignment = idx<int>(nimages);
@@ -530,7 +549,9 @@ namespace ebl {
 	      if (!silent) {
 		cout << "warning: only " << k << "/" << max_per_class;
 		cout << " available images for class ";
-		cout << classe.idx_ptr() << " in dataset 0." << endl;
+		cout << classe.idx_ptr() << " in ";
+		cout << datasets_names[0].idx_ptr();
+		cout << " dataset." << endl;
 	      }
 	      total_missing += max_per_class - k;
 	      break ;
@@ -556,7 +577,9 @@ namespace ebl {
 	      if (!silent) {
 		cout << "warning: only " << k << "/" << max_per_class;
 		cout << " available images for class ";
-		cout << classe.idx_ptr() << " in dataset 1." << endl;
+		cout << classe.idx_ptr() << " in ";
+		cout << datasets_names[1].idx_ptr();
+		cout << " dataset." << endl;
 	      }
 	      total_missing += max_per_class - k;
 	      break ;
@@ -584,9 +607,9 @@ namespace ebl {
 	// process subdirs to extract images into the single image idx
 	process_dir(itr->path().string().c_str(), imgExtension, imgPatternLeft,
 		    imgPatternRight, width, fwidth, images, labels, i, silent,
-		    display, 
-		    &binocular, channels_mode, channels_size, classes, counter,
-		    counters_used, ds_assignment, fkernel_size);
+		    display, &binocular, channels_mode, channels_size, classes,
+		    counter, counters_used, ds_assignment, fkernel_size,
+		    deformations, datasets_names);
 	++i; // increment only for directories
       }
     }
