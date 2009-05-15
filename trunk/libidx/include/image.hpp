@@ -708,6 +708,8 @@ namespace ebl {
     idx_mul(tmp5, tmp5, tmp4);
     // sum_j (w_j * (in - mean)^2)
     image_apply_filter(tmp4, out, kernel, &tmp);
+    // sqrt(sum_j (w_j (in - mean)^2))
+    idx_sqrt(out, out);    
     // std(std < 1) = 1
     idx_threshold(out, (T)1.0, out);
     // 1/std
