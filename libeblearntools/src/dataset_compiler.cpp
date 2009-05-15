@@ -55,6 +55,7 @@ string outdir = ".";
 string dataset_name = "dataset";
 int max_per_class = -1; // -1 means no limitation
 unsigned int mexican_hat_size = 0;
+int deformations = -1; // <= means no deformations
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -85,7 +86,7 @@ bool parse_args(int argc, char **argv) {
       }
       else if (strcmp(argv[i], "HSV") == 0)
 	channels = 2;
-      else if (strcmp(argv[i], "Y") == 0) {
+      else if (strcmp(argv[i], "Yp") == 0) {
 	channels = 3;
 	if (mexican_hat_size == 0) mexican_hat_size = 9;
       }
@@ -155,10 +156,17 @@ bool parse_args(int argc, char **argv) {
     } else if (strcmp(argv[i], "-mexican_hat_size") == 0) {
       ++i;
       if (i >= argc) {
-	cerr << "input error: expecting string after -mexican_hat_size."<< endl;
+	cerr << "input error: expecting integer after -mexican_hat_size."<<endl;
 	return false;
       }
       mexican_hat_size = atoi(argv[i]);
+    } else if (strcmp(argv[i], "-deformations") == 0) {
+      ++i;
+      if (i >= argc) {
+	cerr << "input error: expecting integer after -deformations."<< endl;
+	return false;
+      }
+      deformations = atoi(argv[i]);
     } else if ((strcmp(argv[i], "-help") == 0) ||
 	       (strcmp(argv[i], "-h") == 0)) {
       return false;
@@ -181,7 +189,7 @@ void print_usage() {
   cout << "      - RGB" << endl;
   cout << "      - YpUV" << endl;
   cout << "      - HSV" << endl;
-  cout << "      - Y (Y only in YUV)" << endl;
+  cout << "      - Yp (Yp only in YpUV)" << endl;
   cout << "      - YpH3" << endl;
   cout << "      - VpH2SV" << endl;
   cout << "  -dset_display" << endl;
@@ -194,6 +202,7 @@ void print_usage() {
   cout << "  -dset_name <dataset_name>" << endl;
   cout << "  -max_per_class <integer>" << endl;
   cout << "  -mexican_hat_size <integer>" << endl;
+  cout << "  -deformations <integer>" << endl;
 }
 
 #ifdef __GUI__
@@ -228,6 +237,7 @@ int main(int argc, char **argv) {
   if (max_per_class == -1) cout << "no limit" << endl;
   else cout<<max_per_class << endl;
   cout << "  mexican_hat_size: " << mexican_hat_size << endl;
+  cout << "  deformations: " << deformations << endl;
   cout << "outputs:" << endl;
   cout << "  " << outdir << "/" << dataset_name << "_images.mat" << endl;
   cout << "  " << outdir << "/" << dataset_name << "_labels.mat" << endl;
@@ -248,6 +258,6 @@ int main(int argc, char **argv) {
 		  outdir.c_str(), NULL, false, display,
 		  channels_mode.c_str(),
 		  dataset_name.c_str(), max_per_class, &datasets_names,
-		  mexican_hat_size);
+		  mexican_hat_size, deformations);
   return 0;
 }

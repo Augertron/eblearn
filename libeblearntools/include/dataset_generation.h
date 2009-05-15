@@ -70,7 +70,8 @@ namespace ebl {
 		       int max_per_class = -1, // -1 equals no limit
 		       // "train", "test", "valid"
 		       idx<ubyte> *datasets_names = NULL,
-		       unsigned int filter_kernel_size = 0);
+		       unsigned int filter_kernel_size = 0,
+		       int deformations = -1);
 
 } // end namespace ebl
 
