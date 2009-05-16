@@ -80,6 +80,18 @@ IF (QT_FOUND)
   target_link_libraries (dataset_compiler idxgui eblearngui)
 ENDIF (QT_FOUND)
 
+# compile executable: dataset_display
+################################################################################
+add_executable (dataset_display
+  src/dataset_display.cpp
+  )
+
+# link executable with external libraries
+target_link_libraries (dataset_display eblearn idx)
+IF (QT_FOUND)
+  target_link_libraries (dataset_display idxgui eblearngui)
+ENDIF (QT_FOUND)
+
 # compile executable: videoffinder
 ################################################################################
 # IF (OpenCV_FOUND) #-------------------------------------------------------------

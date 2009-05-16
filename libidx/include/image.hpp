@@ -763,7 +763,6 @@ namespace ebl {
 		    -.5, in.dim(0) - .5, // x4 y4
 		    -.5, -.5, in.dim(1) - .5, in.dim(0) - .5);
   }
-  
 
 } // end namespace ebl
 

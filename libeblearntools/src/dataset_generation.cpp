@@ -46,9 +46,9 @@ using namespace boost;
 
 using namespace std;
 
-namespace ebl {
-
 #ifdef __BOOST__
+
+namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // Utility functions to prepare a dataset from raw images.
@@ -662,10 +662,13 @@ namespace ebl {
       dsetpairs += "_pairs.mat";
       idx<int> pairs = make_pairs(dslabels); // FIXME
 
-      // saving files
+      // shuffle datasets
       if (pairs.dim(0) > 0) pairs = pairs.narrow(0, cntused.get(), 0);
       idx<float> dsimages_used = dsimages.narrow(0, cntused.get(), 0);
       idx<int> dslabels_used = dslabels.narrow(0, cntused.get(), 0);
+      idx_shuffle_together(dsimages_used, dslabels_used, 0);
+          
+      // saving files
       if (!silent) cout << "Saving " << dsetpairs << endl;
       save_matrix(pairs, dsetpairs.c_str());
       if (!silent) cout << "Saving " << dsetimages << endl;
@@ -683,4 +686,3 @@ namespace ebl {
   }
 
 } // end namespace ebl
-

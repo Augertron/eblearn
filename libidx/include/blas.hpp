@@ -11,6 +11,106 @@ namespace ebl {
     idx_aloop1_on(pinp,inp) { *pinp = 0; }
   }
 
+  // TODO: can n random swaps be as random? (it would be more efficient)
+  template<class T> void idx_shuffle(idx<T> &in_, intg d, idx<T> *out_) {
+    // if out exists, use it for output, otherwise create a temporary buffer
+    // and put output back into in.
+    idx<T> in, out;
+    if (out_) { // use in_ as input and out_ as output
+      idx_checknelems2_all(in_, *out_);
+      in = in_;
+      out = *out_;
+    } else { // otherwise, use in_ as output and a copy of _in as input
+      idxdim indims(in_);
+      in = idx<T>(indims);
+      idx_copy(in_, in);
+      out = in_;
+    }
+    // for each element of in, put it randomly in out.
+    // if there is a collision, loop until the next available slot
+    idx<T> tmpi, tmpo;
+    idx<bool> assigned(in.dim(d));
+    idx_fill(assigned, false);
+    intg pos;
+    for (intg i = 0; i < in.dim(d); ++i) {
+      pos = (intg) drand(0, in.dim(d) - 1);
+      if (assigned.get(pos)) { // if already assigned, loop until free slot
+	for (intg j = pos + 1; j != pos; ++j) {
+	  if (j >= in.dim(d)) j = 0;
+	  if (j == pos) eblerror("idx_shuffle: no available slot");
+	  if (!assigned.get(j)) {
+	    pos = j;
+	    break ;
+	  }
+	}
+      }
+      // copy ith element of in into pos^th element of out
+      tmpi = in.select(d, i);
+      tmpo = out.select(d, pos);
+      idx_copy(tmpi, tmpo);
+      assigned.set(true, pos);
+    }
+  }
+
+    // TODO: can n random swaps be as random? (it would be more efficient)
+  template<class T1, class T2>
+  void idx_shuffle_together(idx<T1> &in1_, idx<T2> &in2_, intg d,
+			    idx<T1> *out1_, idx<T2> *out2_) {
+    idx_checkdim2_all(in1_, in2_, d); // size of dim d must match of in1 and in2
+    // if out exists, use it for output, otherwise create a temporary buffer
+    // and put output back into in.
+    idx<T1> in1, out1;
+    idx<T2> in2, out2;
+    if (out1_) { // use in_ as input and out_ as output
+      idx_checknelems2_all(in1_, *out1_);
+      in1 = in1_;
+      out1 = *out1_;
+    } else { // otherwise, use in_ as output and a copy of _in as input
+      idxdim indims(in1_);
+      in1 = idx<T1>(indims);
+      idx_copy(in1_, in1);
+      out1 = in1_;
+    }
+    if (out2_) { // use in_ as input and out_ as output
+      idx_checknelems2_all(in2_, *out2_);
+      in2 = in2_;
+      out2 = *out2_;
+    } else { // otherwise, use in_ as output and a copy of _in as input
+      idxdim indims(in2_);
+      in2 = idx<T2>(indims);
+      idx_copy(in2_, in2);
+      out2 = in2_;
+    }
+    // for each element of in, put it randomly in out.
+    // if there is a collision, loop until the next available slot
+    idx<T1> tmpi1, tmpo1;
+    idx<T2> tmpi2, tmpo2;
+    idx<bool> assigned(in1.dim(d));
+    idx_fill(assigned, false);
+    intg pos;
+    for (intg i = 0; i < in1.dim(d); ++i) {
+      pos = (intg) drand(0, in1.dim(d) - 1);
+      if (assigned.get(pos)) { // if already assigned, loop until free slot
+	for (intg j = pos + 1; j != pos; ++j) {
+	  if (j >= in1.dim(d)) j = 0;
+	  if (j == pos) eblerror("no available slot");
+	  if (!assigned.get(j)) {
+	    pos = j;
+	    break ;
+	  }
+	}
+      }
+      // copy ith element of in into pos^th element of out
+      tmpi1 = in1.select(d, i);
+      tmpo1 = out1.select(d, pos);
+      idx_copy(tmpi1, tmpo1);
+      tmpi2 = in2.select(d, i);
+      tmpo2 = out2.select(d, pos);
+      idx_copy(tmpi2, tmpo2);
+      assigned.set(true, pos);
+    }
+  }
+
   template<class T> void idx_fill(idx<T> &inp, T v) {
     idxiter<T> pinp;
     idx_aloop1_on(pinp,inp) { *pinp = v; }
