@@ -68,8 +68,8 @@ namespace ebl {
       lab.set(label);
       // perturbe image
       dst = left_images[i];
-      image_deformation_ranperspective(original, dst, original.dim(0) / 4,
-				       original.dim(1) / 4, (float) 0.0);
+      image_deformation_ranperspective(original, dst, original.dim(0) / 2,
+				       original.dim(1) / 2, (float) 0.0);
     }
   }
 
