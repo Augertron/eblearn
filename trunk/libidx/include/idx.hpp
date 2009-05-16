@@ -56,7 +56,8 @@ namespace ebl {
   if ((src0).nelements() != (src1).nelements())				\
     eblerror("incompatible idx sizes\n");
 
-  //! Calls eblerror if src0 and src1 and src2 have different number of elements.
+  //! Calls eblerror if src0 and src1 and src2 have different number of
+  //! elements.
 #define idx_checknelems3_all(src0, src1, src2)		\
   if (((src0).nelements() != (src1).nelements()) ||	\
       ((src0).nelements() != (src2).nelements()))	\

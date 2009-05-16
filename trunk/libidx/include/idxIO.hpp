@@ -116,6 +116,7 @@ namespace ebl {
 
   // TODO: use c++ IO to catch IO exceptions more easily
   // TODO: if types differ, print warning and cast to expected type
+  // TODO: allow not knowing order in advance (just assign new idx to m)
   template<typename T> bool load_matrix(idx<T>& m, const char *filename) {
     // open file
     FILE *fp = fopen(filename, "rb");
