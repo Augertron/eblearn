@@ -42,20 +42,24 @@
 using namespace std;
 using namespace ebl;
 
-string dsfilename;
-string labfilename;
-string classesfilename;
+string ds_fname;
+string lab_fname;
+string classes_fname;
+string classpairs_fname;
+string deformpairs_fname;
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
   // Read arguments from shell input
-  if (argc < 4) {
+  if (argc < 6) {
     cerr << "input error: expecting arguments." << endl;
     return false;
   }
-  dsfilename = argv[1];
-  labfilename = argv[2];
-  classesfilename = argv[3];
+  ds_fname = argv[1];
+  lab_fname = argv[2];
+  classes_fname = argv[3];
+  classpairs_fname = argv[4];
+  deformpairs_fname = argv[5];
   return true;
 }
 
@@ -85,37 +89,28 @@ int main(int argc, char **argv) {
     print_usage();
     return -1;
   }
-  cout << "displaying " << dsfilename << endl;
+  cout << "displaying " << ds_fname << endl;
 
-  idx<float> images(1, 1, 1, 1);
-  load_matrix(images, dsfilename.c_str());
-  idx<int> labels(1);
-  load_matrix(labels, labfilename.c_str());
-  idx<ubyte> classes(1, 1);
-  load_matrix(classes, classesfilename.c_str());
-  cout << "images: " << images << endl;
-  cout << "labels: " << labels << endl;
-  cout << "classes: " << classes << endl;
+  labeled_pair_datasource<float, int> train_ds(ds_fname.c_str(),
+					       lab_fname.c_str(),
+					       classes_fname.c_str(),
+					       classpairs_fname.c_str(),
+					       deformpairs_fname.c_str(),
+					       0, 1,
+					       "Pairs training dataset");
+//   labeled_datasource<float, int> train_ds(ds_fname.c_str(),
+// 					  lab_fname.c_str(),
+// 					  classes_fname.c_str(), 0, 1,
+// 					  "Training dataset");
   
+  cout << "images: " << train_ds.data << endl;
+  cout << "labels: " << train_ds.labels << endl;
   cout << "****************************************";
   cout << "***************************************" << endl;
   
 #ifdef __GUI__
-  new_window("Dataset display");
-
-  // display all images
-  idx_bloop2(image, images, float, label, labels, int) {
-    unsigned int h = 0, w = 0;
-    disable_window_updates();
-    clear_window();
-    gui << at(h, w) << classes[label.get()].idx_ptr();
-    idx_bloop1(layer, image, float) {
-      w += draw_layer(layer, "", h, w);
-    }
-    enable_window_updates();
-    sleep(1);
-  }
-
+  labeled_pair_datasource_gui<float, int> dsgui(true);
+  dsgui.display(train_ds, 4, 8, 0, 0, 1, -1, NULL, false, -1.0, 1.0);
 #endif 
   return 0;
 }

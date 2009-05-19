@@ -44,6 +44,9 @@ namespace ebl {
   int new_window(const char *wname = NULL, unsigned int h = 0,
 		 unsigned int w = 0);
 
+  //! creates a new window.
+  int new_window(const string &wname, unsigned int h = 0, unsigned int w = 0);
+
   //! selects window wid.
   void select_window(int wid);
 

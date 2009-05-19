@@ -49,6 +49,13 @@ namespace ebl {
   }
 
   template<typename Tin1, typename Tin2>
+  datasource<Tin1,Tin2>::datasource(const datasource<Tin1, Tin2> &ds)
+    : bias(ds.bias), coeff(ds.coeff), data(ds.data), labels(ds.labels),
+      dataIter(data, 0), labelsIter(labels, 0),
+      height(ds.height), width(ds.width), name(ds.name) {
+  }
+
+  template<typename Tin1, typename Tin2>
   datasource<Tin1,Tin2>::datasource(idx<Tin1> &data_, 
 				    idx<Tin2> &labels_,
 				    double b, double c,
@@ -155,21 +162,6 @@ namespace ebl {
     labelsIter = labels.dim_begin(0);
   }
 
-  template<typename Tin1, typename Tin2>
-  datasource<Tin1,Tin2>* datasource<Tin1,Tin2>::copy() {
-    cout << "datasource::copy."<<endl;
-    // copy data
-    idxdim cdatadim(data);
-    idx<Tin1> cdata(cdatadim);
-    idx_copy(data, cdata);
-    // copy labels
-    idxdim clabelsdim(labels);
-    idx<Tin2> clabels(clabelsdim);
-    idx_copy(labels, clabels);
-    return (labeled_datasource<Tin1,Tin2>*)
-      new labeled_datasource<Tin1,Tin2>(cdata, clabels, bias, coeff);
-  }
-
   ////////////////////////////////////////////////////////////////
   // labeled_datasource
 
@@ -188,6 +180,36 @@ namespace ebl {
     init(data_, labels_, b, c, name_, lblstr_);
   }
 
+  template<typename Tdata, typename Tlabel>
+  labeled_datasource<Tdata,Tlabel>::
+  labeled_datasource(const char *data_fname, const char *labels_fname,
+		     const char *classes_fname, double b, double c,
+		     const char *name_) {
+    idx<Tdata> dat(1, 1, 1, 1);
+    idx<Tlabel> lab(1);
+    idx<ubyte> classes(1, 1);
+    
+    if (!load_matrix<Tdata>(dat, data_fname)) {
+      std::cerr << "Failed to load dataset file " << data_fname << endl;
+      eblerror("Failed to load dataset file");
+    }
+    if (!load_matrix<Tlabel>(lab, labels_fname)) {
+      std::cerr << "Failed to load dataset file " << labels_fname << endl;
+      eblerror("Failed to load dataset file");
+    }
+    if (!load_matrix<ubyte>(classes, classes_fname)) {
+      std::cerr << "Failed to load dataset file " << classes_fname << endl;
+      eblerror("Failed to load dataset file");
+    }
+
+    datasource<Tdata, Tlabel>::init(dat, lab, b, c, name_);
+      
+    this->lblstr = new vector<string*>;
+    idx_bloop1(classe, classes, ubyte) {
+      this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
+    }
+  }
+  
   template<class Tdata, class Tlabel>
   void labeled_datasource<Tdata, Tlabel>::init(idx<Tdata> &inp,
 					       idx<Tlabel> &lbl,
@@ -195,6 +217,7 @@ namespace ebl {
 					       const char *name,
 					       vector<string*> *lblstr_) {
     datasource<Tdata, Tlabel>::init(inp, lbl, b, c, name);
+
     if (!this->lblstr) { // no names are given, use indexes as names
       this->lblstr = new vector<string*>;
       ostringstream o;
@@ -207,6 +230,23 @@ namespace ebl {
     }
   }
 
+  // copy constructor.
+  // deep copy of lblstr.
+  template<typename Tdata, typename Tlabel>
+  labeled_datasource<Tdata,Tlabel>::
+  labeled_datasource(const labeled_datasource<Tdata,Tlabel> &ds)
+    : datasource<Tdata, Tlabel>((const datasource<Tdata, Tlabel>&) ds),
+      lblstr(NULL) {
+    cout << "labeled_datasource::copy constructor."<<endl;
+    if (ds.lblstr) {
+      this->lblstr = new vector<string*>;
+      for (unsigned int i = 0; i < ds.lblstr->size(); ++i) {
+	this->lblstr->push_back(new string(*ds.lblstr->at(i)));
+      }
+    }
+  }
+
+  // destructor
   template<typename Tdata, typename Tlabel>
   labeled_datasource<Tdata,Tlabel>::~labeled_datasource() {
     if (lblstr) { // this class owns lblstr and its content
@@ -218,21 +258,69 @@ namespace ebl {
     }
   }
 
+  ////////////////////////////////////////////////////////////////
+  // labeled_pair_datasource
+
+  // constructor
   template<typename Tdata, typename Tlabel>
-  labeled_datasource<Tdata,Tlabel>* labeled_datasource<Tdata,Tlabel>::copy() {
-    cout << "labeled_datasource::copy."<<endl;
-    // copy data
-    idxdim cdatadim(this->data);
-    idx<Tdata> cdata(cdatadim);
-    idx_copy(this->data, cdata);
-    // copy labels
-    idxdim clabelsdim(this->labels);
-    idx<Tlabel> clabels(clabelsdim);
-    idx_copy(this->labels, clabels);
-    return new labeled_datasource<Tdata,Tlabel>(cdata, clabels,
-						this->bias, this->coeff);
+  labeled_pair_datasource<Tdata,Tlabel>::
+  labeled_pair_datasource(const char *data_fname,
+			  const char *labels_fname,
+			  const char *classes_fname,
+			  const char *classpairs_fname,
+			  const char *deformpairs_fname,
+			  double b, double c,
+			  const char *name_)
+    : labeled_datasource<Tdata, Tlabel>(data_fname, labels_fname,
+					classes_fname, b, c, name_),
+      classpairs(1, 1), deformpairs(1, 1) {
+    // init current class
+    if (!load_matrix<Tlabel>(classpairs, classpairs_fname)) {
+      std::cerr << "Failed to load dataset file " << classpairs_fname << endl;
+      eblerror("Failed to load dataset file");
+    }
+    if (!load_matrix<Tlabel>(deformpairs, deformpairs_fname)) {
+      std::cerr << "Failed to load dataset file " << deformpairs_fname << endl;
+      eblerror("Failed to load dataset file");
+    }
+  }
+  
+  // destructor
+  template<typename Tdata, typename Tlabel>
+  labeled_pair_datasource<Tdata,Tlabel>::~labeled_pair_datasource() {
   }
 
+  // fprop pair
+  template<typename Tdata, typename Tlabel>
+  void labeled_pair_datasource<Tdata,Tlabel>::fprop_pair(state_idx &out, 
+					      idx<Tlabel> &label) {
+//     out.resize(sample_dims());
+//     idx_fill(out.x, bias * coeff);
+//     idx_copy(*(this->dataIter), out.x);
+//     idx_addc(out.x, bias, out.x);
+//     idx_dotc(out.x, coeff, out.x);
+//     idx_copy(*labelsIter, label);
+  }
+
+  // next pair
+  template<typename Tdata, typename Tlabel>
+  void labeled_pair_datasource<Tdata,Tlabel>::next_pair() {
+//     ++dataIter;
+//     ++labelsIter;
+
+//     if(!dataIter.notdone()) {
+//       dataIter = data.dim_begin(0);
+//       labelsIter = labels.dim_begin(0);
+//     }
+  }
+
+  // begin pair
+  template<typename Tdata, typename Tlabel>
+  void labeled_pair_datasource<Tdata,Tlabel>::seek_begin_pair() {
+//     dataIter = data.dim_begin(0);
+//     labelsIter = labels.dim_begin(0);
+  }
+  
   ////////////////////////////////////////////////////////////////
   // mnist_datasource
 

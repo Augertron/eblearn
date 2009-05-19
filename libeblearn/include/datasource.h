@@ -53,7 +53,7 @@ namespace ebl {
     typename idx<Tin2>::dimension_iterator	 labelsIter;
     unsigned int				 height;
     unsigned int				 width;
-    const char					*name;
+    string					 name;
 
     //! CAUTION: This empty constructor requires a subsequent call to init().
     datasource();
@@ -64,6 +64,9 @@ namespace ebl {
     datasource(idx<Tin1> &inputs, idx<Tin2> &labels, 
 	       double b = 0.0, double c = 0.01,
 	       const char *name = NULL);
+
+    //! copy constructor
+    datasource(const datasource<Tin1, Tin2> &ds);
 
     virtual ~datasource();
 
@@ -90,9 +93,6 @@ namespace ebl {
 
     //! Move to the beginning of the data.
     virtual void seek_begin();
-
-    //! returns a pointer to a copy on this datasource
-    virtual datasource<Tin1, Tin2>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
@@ -119,11 +119,46 @@ namespace ebl {
 		      const char *name = NULL,
 		      vector<string*> *lblstr = NULL);
 
-    virtual ~labeled_datasource();
+    //! Constructor from dataset file names.
+    labeled_datasource(const char *data_fname, const char *labels_fname,
+		       const char *classes_fname, double b, double c,
+		       const char *name_);
 
-    //! returns a pointer to a copy on this datasource
-    virtual labeled_datasource<Tdata, Tlabel>* copy();
-};
+    //! copy constructor
+    labeled_datasource(const labeled_datasource<Tdata, Tlabel> &ds);
+
+    virtual ~labeled_datasource();
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! labeled_pair_datasource
+  template<typename Tdata, typename Tlabel>
+    class labeled_pair_datasource : public labeled_datasource<Tdata, Tlabel> {
+  public:
+    idx<Tlabel> classpairs;
+    idx<Tlabel> deformpairs;
+
+    //! Constructor from dataset file names.
+    labeled_pair_datasource(const char *data_fname,
+			    const char *labels_fname,
+			    const char *classes_fname,
+			    const char *classpairs_fname,
+			    const char *deformpairs_fname = NULL,
+			    double b = 0, double c = 1,
+			    const char *name_ = NULL);
+
+    //! Copies the current datum to a state and label.
+    virtual void fprop_pair(state_idx &datum, idx<Tlabel> &label);
+
+    //! Move to the next datum.
+    virtual void next_pair();
+
+    //! Move to the beginning of the data.
+    virtual void seek_begin_pair();
+
+    //! destructor.
+    virtual ~labeled_pair_datasource();
+  };
 
   ////////////////////////////////////////////////////////////////
   //! mnist_datasource
