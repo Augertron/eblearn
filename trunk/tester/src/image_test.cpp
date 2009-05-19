@@ -316,6 +316,6 @@ void image_test::test_colorspaces() {
   hsv3_to_rgb(spectrum, ftmp4);
   draw_matrix(ftmp4, "H3 0 - 420", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
   
-  sleep(5000);
+  //  sleep(5000);
 #endif
 }

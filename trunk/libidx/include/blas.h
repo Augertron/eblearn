@@ -133,6 +133,21 @@ namespace ebl {
     void idx_shuffle_together(idx<T1> &in1, idx<T2> &in2, intg d,
 			      idx<T1> *out1 = NULL, idx<T2> *out2 = NULL);
 
+  //! shuffle elements order of dimension d simultaneously of <in1>, <in2> and
+  //! <in3>.
+  //! the shuffled order will be the same for <in1>, <in2> and <in3> which means
+  //! of course that they must have the same number of elements in dimension d.
+  //! if <out> is not null, then the shuffled version of <in> is put directly
+  //! into <out> (faster), otherwise a temporary copy of <in> is used
+  //! and copied back into in (slower).
+  //! Warning: this function assumes that drand is already initialized
+  //! (with init_drand(time(NULL)))
+  template<class T1, class T2, class T3>
+    void idx_shuffle_together(idx<T1> &in1, idx<T2> &in2, idx<T3> &in3,
+			      intg d,
+			      idx<T1> *out1 = NULL, idx<T2> *out2 = NULL,
+			      idx<T3> *out3 = NULL);
+
   //! fill with a value
   template<class T> void idx_fill(idx<T> &inp, T v);
 

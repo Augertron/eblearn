@@ -67,7 +67,7 @@ namespace ebl {
     if (scroll && !scrolling && (_last_ds != &ds)) {
       if (_ds)
 	delete _ds;
-      _ds = ds.copy();
+      _ds = new labeled_datasource<Tdata, Tlabel>(ds);
       dsgui->_ds = _ds;
     }
     _last_ds = &ds;

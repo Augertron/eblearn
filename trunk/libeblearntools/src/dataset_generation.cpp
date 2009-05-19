@@ -57,15 +57,21 @@ namespace ebl {
   // <deformations> deformed copies of it and set corresponding labels
   // to <label>.
   void add_deformations(idx<float> &left_images, idx<int> &current_labels,
-			int label, int deformations) {
+			int label, int deformations,
+			idx<int> &current_deformid, int &ndefid) {
     idx<float> original = left_images[0];
     idx<float> dst;
     idx<int> lab;
+    idx<int> defid = current_deformid[0];
+    defid.set(++ndefid); // increment and set deformation id for this set
     // add <deformations> deformations
     for (int i = 1; i <= deformations; ++i) {
       // set label
       lab = current_labels[i];
       lab.set(label);
+      // set deformation id
+      defid = current_deformid[i];
+      defid.set(ndefid);
       // perturbe image
       dst = left_images[i];
       image_deformation_ranperspective(original, dst, original.dim(0) / 2,
@@ -222,6 +228,7 @@ namespace ebl {
 		   idx<ubyte> &classes, unsigned int &counter,
 		   idx<unsigned int> &counters_used, idx<int> &ds_assignment,
 		   unsigned int fkernel_size, int deformations,
+		   idx<int> &deformid, int &ndefid,
 		   idx<ubyte> &ds_names) {
     regex eExt(ext);
     string el(".*");
@@ -229,6 +236,7 @@ namespace ebl {
     idx<float> rimg(1, 1, 1);
     idx<float> tmp, left_images;
     idx<int> current_labels;
+    idx<int> current_deformid;
     idx<float> tmp2;
     int current_ds;
     unsigned int current_used;
@@ -248,7 +256,7 @@ namespace ebl {
 		    fwidth, images, labels, label, silent, display, binocular,
 		    channels_mode, channels_size, classes, counter,
 		    counters_used, ds_assignment, fkernel_size, deformations,
-		    ds_names);
+		    deformid, ndefid, ds_names);
       } else if (regex_match(itr->leaf().c_str(), what, eExt)) {
 	if (regex_match(itr->leaf().c_str(), what, eLeft)) {
 	  current_ds = ds_assignment.get(counter);
@@ -318,13 +326,16 @@ namespace ebl {
 	      current_labels = labels[current_ds];
 	      current_labels = current_labels.narrow(0, current_labels.dim(0) -
 						     current_used,current_used);
+	      current_deformid = deformid[current_ds];
+	      current_deformid = current_deformid.
+		narrow(0, current_deformid.dim(0) - current_used, current_used);
 	      tmp = left_images[0];
 	      // convert and copy image into images buffer
 	      convert_image(limg, tmp, channels_mode, fkernel_size);
 	      // if adding to dataset 0, add deformations if deformations > 0
 	      if ((current_ds == 0) && (deformations > 0)) {
 		add_deformations(left_images, current_labels, label,
-				 deformations);
+				 deformations, current_deformid, ndefid);
 		counters_used.set(counters_used.get(current_ds) + deformations,
 				  current_ds);
 	      } else // no deformations
@@ -361,19 +372,20 @@ namespace ebl {
 
   //! Return an idx of dimensions Nx2 containing all possible N similar pairs.
   idx<int> make_pairs(idx<int> &labels) {
-    idx<int> pairs(1, 2);
-    pairs.resize(0, pairs.dim(1));
-    int n = 1;
-    for (int i = 0; i < labels.dim(0); ++i) {
+    // allocate maximum number of pairs
+    idx<int> pairs((labels.dim(0) * (labels.dim(0) - 1)) / 2, 2);
+    int n = 0;
+    // for each label, loop over all following labels to find pairs
+    for (int i = 0; i < labels.dim(0) - 1; ++i) {
       for (int j = i + 1; j < labels.dim(0); ++j) {
 	if (labels.get(i) == labels.get(j)) {
-	  pairs.resize(n, pairs.dim(1));
-	  pairs.set(i, n - 1, 0);
-	  pairs.set(j, n - 1, 1);
+	  pairs.set(i, n, 0);
+	  pairs.set(j, n, 1);
 	  n++;
 	}
       }
     }
+    pairs.resize(n, pairs.dim(1));
     return pairs;
   }
 
@@ -402,6 +414,8 @@ namespace ebl {
     idx<ubyte>		classes;        // strings of classes
     idx<float>		images;         // full image buffer
     idx<int>		labels;         // full labels buffer
+    idx<int>		deformid;       // index of original for deformations
+    int                 ndefid = -1;         // id for each deformed set
     idx<ubyte>		tmp;
     int                 i;
     string              name = (name_ == NULL) ? "dataset" : name_;
@@ -517,6 +531,7 @@ namespace ebl {
     // N x w x w x channels_size
     images = idx<float>(ndatasets, nimages_used, fwidth, fwidth, channels_size);
     labels = idx<int>(ndatasets, nimages_used); // N
+    deformid = idx<int>(ndatasets, nimages_used); // N
     ds_assignment = idx<int>(nimages);
 
     if (!silent) { cout << "Shuffling image collection..." << endl; }
@@ -609,7 +624,7 @@ namespace ebl {
 		    imgPatternRight, width, fwidth, images, labels, i, silent,
 		    display, &binocular, channels_mode, channels_size, classes,
 		    counter, counters_used, ds_assignment, fkernel_size,
-		    deformations, datasets_names);
+		    deformations, deformid, ndefid, datasets_names);
 	++i; // increment only for directories
       }
     }
@@ -630,9 +645,11 @@ namespace ebl {
     images = images.transpose(tr);
 
     // save each dataset
-    idx_bloop4(dsname, datasets_names, ubyte,
+    i = 0;
+    idx_bloop5(dsname, datasets_names, ubyte,
 	       dsimages, images, float,
 	       dslabels, labels, int,
+	       dsdefid, deformid, int,
 	       cntused, counters_used, unsigned int) {
       // filenames
       string cular(binocular? "_bino" : "");
@@ -654,29 +671,56 @@ namespace ebl {
       if (prefix) { dsetclasses += "_"; dsetclasses += prefix; }
       dsetclasses += "_"; dsetclasses += (const char *) dsname.idx_ptr();
       dsetclasses += "_classes.mat";
-      string dsetpairs(outDir != NULL ? outDir: imgDir);
-      dsetpairs += "/"; dsetpairs += name;
-      dsetpairs += cular;
-      if (prefix) { dsetpairs += "_"; dsetpairs += prefix; }
-      dsetpairs += "_"; dsetpairs += (const char *) dsname.idx_ptr();
-      dsetpairs += "_pairs.mat";
-      idx<int> pairs = make_pairs(dslabels); // FIXME
+      string dsetclasspairs(outDir != NULL ? outDir: imgDir);
+      dsetclasspairs += "/"; dsetclasspairs += name;
+      dsetclasspairs += cular;
+      if (prefix) { dsetclasspairs += "_"; dsetclasspairs += prefix; }
+      dsetclasspairs += "_"; dsetclasspairs += (const char *) dsname.idx_ptr();
+      dsetclasspairs += "_classpairs.mat";
+      string dsetdefpairs(outDir != NULL ? outDir: imgDir);
+      dsetdefpairs += "/"; dsetdefpairs += name;
+      dsetdefpairs += cular;
+      if (prefix) { dsetdefpairs += "_"; dsetdefpairs += prefix; }
+      dsetdefpairs += "_"; dsetdefpairs += (const char *) dsname.idx_ptr();
+      dsetdefpairs += "_defpairs.mat";
 
-      // shuffle datasets
-      if (pairs.dim(0) > 0) pairs = pairs.narrow(0, cntused.get(), 0);
+      // narrow datasets to actual number of collected images
       idx<float> dsimages_used = dsimages.narrow(0, cntused.get(), 0);
       idx<int> dslabels_used = dslabels.narrow(0, cntused.get(), 0);
-      idx_shuffle_together(dsimages_used, dslabels_used, 0);
-          
+      idx<int> dsdefid_used = dsdefid.narrow(0, cntused.get(), 0);
+      
+      // shuffle datasets
+      idx_shuffle_together(dsimages_used, dslabels_used, dsdefid_used, 0);
+
+      // make pairs (only after shuffling)
+      idx<int> classpairs, defpairs;
+      if (i == 0) {
+	if (!silent) cout << "Computing class and deformation pairs..." << endl;
+	classpairs = make_pairs(dslabels_used);
+	if (deformations > 0) defpairs = make_pairs(dsdefid_used);
+	if (!silent) {
+	  cout << "  Found " << classpairs.dim(0) << " class pairs." << endl;
+	  cout << "  Found " << ((deformations > 0) ? defpairs.dim(0) : 0);
+	  cout << " deformation pairs." << endl;
+	}
+      }
+
       // saving files
-      if (!silent) cout << "Saving " << dsetpairs << endl;
-      save_matrix(pairs, dsetpairs.c_str());
       if (!silent) cout << "Saving " << dsetimages << endl;
       save_matrix(dsimages_used, dsetimages.c_str());
       if (!silent) cout << "Saving " << dsetlabels << endl;
       save_matrix(dslabels_used, dsetlabels.c_str());
       if (!silent) cout << "Saving " << dsetclasses << endl;
       save_matrix(classes, dsetclasses.c_str());
+      if (i == 0) { // pairs exist only for training set
+	if (!silent) cout << "Saving " << dsetclasspairs << endl;
+	save_matrix(classpairs, dsetclasspairs.c_str());
+	if (deformations > 0) {
+	  if (!silent) cout << "Saving " << dsetdefpairs << endl;
+	  save_matrix(defpairs, dsetdefpairs.c_str());
+	}
+      }
+      i++;
     }
 #endif /* __BOOST__ */
 #ifdef __GUI__

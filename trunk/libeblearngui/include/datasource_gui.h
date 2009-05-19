@@ -41,11 +41,10 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // labeled_datasource_gui
-
+  //! labeled_datasource_gui
   template<class Tdata, class Tlabel>
     class labeled_datasource_gui : public scroll_box {
-  private:
+  protected:
     bool				 scroll;
     bool				 scroll_added;
     unsigned int                         pos;
@@ -54,6 +53,9 @@ namespace ebl {
     unsigned int			 _nh;
     unsigned int			 _nw;
     double				 _zoom;
+    double                               _rmin;
+    double                               _rmax;
+    
   public:
     labeled_datasource<Tdata, Tlabel>	*_ds;
 
@@ -69,7 +71,8 @@ namespace ebl {
 		 unsigned int nh, unsigned int nw, 
 		 unsigned int h0 = 0, unsigned int w0 = 0, 
 		 double zoom = 1.0, int wid = -1, 
-		 const char *wname = NULL, bool scrolling = false);
+		 const char *wname = NULL, bool scrolling = false,
+		 Tdata rangemin = 0, Tdata rangemax = 0);
 
     ////////////////////////////////////////////////////////////////
     // inherited methods to implement for scrolling capabilities
@@ -82,6 +85,28 @@ namespace ebl {
     virtual unsigned int max_pages ();
     //    virtual scroll_box0* copy();
     virtual labeled_datasource_gui* copy();
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! labeled_datasource_gui
+  template<class Tdata, class Tlabel>
+    class labeled_pair_datasource_gui
+    : public labeled_datasource_gui<Tdata, Tlabel> {
+  public:
+    //! if scroll is true, then controls to display more pages appear.
+    labeled_pair_datasource_gui(bool scroll = false);
+    virtual ~labeled_pair_datasource_gui();
+
+    //! display the first nh * nw samples of dataset ds at coordinates (h0, w0),
+    //! with zoom <zoom>. If a window id <wid> is specified, use that window,
+    //! otherwise create a new window and reuse it.
+    //! <wname> is an optional window title.
+    void display(labeled_pair_datasource<Tdata, Tlabel> &ds,
+		 unsigned int nh, unsigned int nw, 
+		 unsigned int h0 = 0, unsigned int w0 = 0, 
+		 double zoom = 1.0, int wid = -1, 
+		 const char *wname = NULL, bool scrolling = false,
+		 Tdata rangemin = 0, Tdata rangemax = 0);
   };
 
 } // end namespace ebl

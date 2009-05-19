@@ -109,6 +109,15 @@ namespace ebl {
       ((src0).dim(d) != (src3).dim(d)))			\
     eblerror("idx have incompatible dimensions");
 
+  //! Calls eblerror if src0.dim(d) and src1.dim(d) and src2.dim(d)
+  //! and src3.dim(d) and src4.dim(d) don't match
+#define idx_checkdim5_all(src0, src1, src2, src3, src4, d)	\
+  if (((src0).dim(d) != (src1).dim(d)) ||			\
+      ((src0).dim(d) != (src2).dim(d)) ||			\
+      ((src0).dim(d) != (src3).dim(d)) ||			\
+      ((src0).dim(d) != (src4).dim(d)))				\
+    eblerror("idx have incompatible dimensions");
+
   ////////////////////////////////////////////////////////////////
   // TODO: these macros are untested (YLC)
 
@@ -256,6 +265,16 @@ namespace ebl {
   DimIter<type3> dst3(src3,0);						\
   for ( ; dst0.notdone(); ++dst0, ++dst1, ++dst2, ++dst3)
 
+#define idx_bloop5(dst0,src0,type0,dst1,src1,type1,dst2,src2,type2,	\
+		   dst3,src3,type3,dst4,src4,type4)			\
+  idx_checkdim5_all(src0, src1, src2, src3, src4, 0);			\
+  DimIter<type0> dst0(src0,0);						\
+  DimIter<type1> dst1(src1,0);						\
+  DimIter<type2> dst2(src2,0);						\
+  DimIter<type3> dst3(src3,0);						\
+  DimIter<type4> dst4(src4,0);						\
+  for ( ; dst0.notdone(); ++dst0, ++dst1, ++dst2, ++dst3, ++dst4)
+
   // eloop macros
 
 #define idx_eloop1(dst0,src0,type0)		\
@@ -365,6 +384,17 @@ namespace ebl {
   idxlooper<type2> dst2(src2,0);					\
   idxlooper<type3> dst3(src3,0);					\
   for ( ; dst0.notdone(); dst0.next(), dst1.next(), dst2.next(), dst3.next())
+
+#define idx_bloop5(dst0,src0,type0,dst1,src1,type1,dst2,src2,type2,	\
+		   dst3,src3,type3,dst4,src4,type4)			\
+  idx_checkdim5_all(src0, src1, src2, src3, src4, 0);			\
+  idxlooper<type0> dst0(src0,0);					\
+  idxlooper<type1> dst1(src1,0);					\
+  idxlooper<type2> dst2(src2,0);					\
+  idxlooper<type3> dst3(src3,0);					\
+  idxlooper<type4> dst4(src4,0);					\
+  for ( ; dst0.notdone();						\
+	dst0.next(), dst1.next(), dst2.next(), dst3.next(), dst4.next())
 
   // eloop macros
 
