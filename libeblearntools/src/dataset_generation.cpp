@@ -74,8 +74,8 @@ namespace ebl {
       defid.set(ndefid);
       // perturbe image
       dst = left_images[i];
-      image_deformation_ranperspective(original, dst, original.dim(0) / 2,
-				       original.dim(1) / 2, (float) 0.0);
+      image_deformation_ranperspective(original, dst, original.dim(0) / 4,
+				       original.dim(1) / 4, (float) 0.0);
     }
   }
 
@@ -690,6 +690,7 @@ namespace ebl {
       idx<int> dsdefid_used = dsdefid.narrow(0, cntused.get(), 0);
       
       // shuffle datasets
+      if (!silent) cout << "Shuffling dataset..." << endl;
       idx_shuffle_together(dsimages_used, dslabels_used, dsdefid_used, 0);
 
       // make pairs (only after shuffling)
@@ -702,7 +703,12 @@ namespace ebl {
 	  cout << "  Found " << classpairs.dim(0) << " class pairs." << endl;
 	  cout << "  Found " << ((deformations > 0) ? defpairs.dim(0) : 0);
 	  cout << " deformation pairs." << endl;
+	  cout << "  Shuffling pairs..." << endl;
 	}
+	// shuffle
+	idx_shuffle(classpairs, 0);
+	if (deformations > 0)
+	  idx_shuffle(defpairs, 0);
       }
 
       // saving files

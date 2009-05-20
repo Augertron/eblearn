@@ -273,7 +273,7 @@ namespace ebl {
 
   template<typename Tdata, typename Tlabel>
   unsigned int labeled_pair_datasource_gui<Tdata, Tlabel>::max_pages() {
-    return (unsigned int) (_ds->size() / (this->_nh * this->_nw));
+    return (unsigned int) (_ds->size() / (this->_nh * (this->_nw / 2)));
   }
  
   // TODO replace with copy constructor

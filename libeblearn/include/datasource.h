@@ -159,6 +159,9 @@ namespace ebl {
 			    double b, double c,
 			    const char *name_);
     
+    //! destructor.
+    virtual ~labeled_pair_datasource();
+
     //! Copies the current datum to a state and label.
     virtual void fprop(state_idx &d1, state_idx &d2, idx<Tlabel> &label);
 
@@ -168,8 +171,8 @@ namespace ebl {
     //! Move to the beginning of the data.
     virtual void seek_begin();
 
-    //! destructor.
-    virtual ~labeled_pair_datasource();
+    //! Returns the number of pairs contained in this data source.
+    virtual unsigned int size();
   };
 
   ////////////////////////////////////////////////////////////////

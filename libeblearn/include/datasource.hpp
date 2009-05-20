@@ -347,6 +347,11 @@ namespace ebl {
     pairsIter = pairs.dim_begin(0);
   }
   
+  template<typename Tdata, typename Tlabel>
+  unsigned int labeled_pair_datasource<Tdata,Tlabel>::size() {
+    return pairs.dim(0);
+  }
+
   ////////////////////////////////////////////////////////////////
   // mnist_datasource
 
