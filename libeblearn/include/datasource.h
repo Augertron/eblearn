@@ -119,6 +119,11 @@ namespace ebl {
 		      const char *name = NULL,
 		      vector<string*> *lblstr = NULL);
 
+    labeled_datasource(idx<Tdata> &inputs, idx<Tlabel> &labels,
+		       idx<ubyte> &classes,
+		       double b = 0.0, double c = 0.01,
+		       const char *name = NULL);
+
     //! Constructor from dataset file names.
     labeled_datasource(const char *data_fname, const char *labels_fname,
 		       const char *classes_fname, double b, double c,
@@ -135,26 +140,33 @@ namespace ebl {
   template<typename Tdata, typename Tlabel>
     class labeled_pair_datasource : public labeled_datasource<Tdata, Tlabel> {
   public:
-    idx<Tlabel> classpairs;
-    idx<Tlabel> deformpairs;
+    idx<Tlabel>					pairs;
+    typename idx<Tlabel>::dimension_iterator	pairsIter;
 
     //! Constructor from dataset file names.
     labeled_pair_datasource(const char *data_fname,
 			    const char *labels_fname,
 			    const char *classes_fname,
-			    const char *classpairs_fname,
-			    const char *deformpairs_fname = NULL,
+			    const char *pairs_fname,
 			    double b = 0, double c = 1,
 			    const char *name_ = NULL);
 
+    //! Constructor from dataset matrices.
+    labeled_pair_datasource(idx<Tdata> &data_,
+			    idx<Tlabel> &labels_,
+			    idx<ubyte> &classes_,
+			    idx<Tlabel> &pairs_,
+			    double b, double c,
+			    const char *name_);
+    
     //! Copies the current datum to a state and label.
-    virtual void fprop_pair(state_idx &datum, idx<Tlabel> &label);
+    virtual void fprop(state_idx &d1, state_idx &d2, idx<Tlabel> &label);
 
     //! Move to the next datum.
-    virtual void next_pair();
+    virtual void next();
 
     //! Move to the beginning of the data.
-    virtual void seek_begin_pair();
+    virtual void seek_begin();
 
     //! destructor.
     virtual ~labeled_pair_datasource();

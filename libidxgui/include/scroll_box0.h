@@ -63,8 +63,8 @@ namespace ebl {
     virtual unsigned int max_pages () = 0;
     virtual void display_controls() = 0;
     virtual scroll_box0* copy() = 0;
-    bool next_page();
-    bool previous_page();
+    virtual bool next_page();
+    virtual bool previous_page();
   };
 
 } // namespace ebl {
