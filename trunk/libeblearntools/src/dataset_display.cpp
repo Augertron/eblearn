@@ -51,15 +51,20 @@ string deformpairs_fname;
 // parse command line input
 bool parse_args(int argc, char **argv) {
   // Read arguments from shell input
-  if (argc < 6) {
+  if (argc < 2) {
     cerr << "input error: expecting arguments." << endl;
     return false;
   }
   ds_fname = argv[1];
-  lab_fname = argv[2];
-  classes_fname = argv[3];
-  classpairs_fname = argv[4];
-  deformpairs_fname = argv[5];
+  ds_fname += "images.mat";
+  lab_fname = argv[1];
+  lab_fname += "labels.mat";
+  classes_fname = argv[1];
+  classes_fname += "classes.mat";
+  classpairs_fname = argv[1];
+  classpairs_fname += "classpairs.mat";
+  deformpairs_fname = argv[1];
+  deformpairs_fname += "defpairs.mat";
   return true;
 }
 
@@ -91,17 +96,43 @@ int main(int argc, char **argv) {
   }
   cout << "displaying " << ds_fname << endl;
 
-  labeled_pair_datasource<float, int> train_ds(ds_fname.c_str(),
-					       lab_fname.c_str(),
-					       classes_fname.c_str(),
-					       classpairs_fname.c_str(),
-					       deformpairs_fname.c_str(),
-					       0, 1,
-					       "Pairs training dataset");
-//   labeled_datasource<float, int> train_ds(ds_fname.c_str(),
-// 					  lab_fname.c_str(),
-// 					  classes_fname.c_str(), 0, 1,
-// 					  "Training dataset");
+  idx<float> data(1, 1, 1, 1);
+  idx<int> labels(1);
+  idx<ubyte> classes(1, 1);
+  idx<int> classpairs(1, 1);
+  idx<int> defpairs(1, 1);
+  
+  if (!load_matrix<float>(data, ds_fname.c_str())) {
+    std::cerr << "Failed to load dataset file " << ds_fname << endl;
+    eblerror("Failed to load dataset file");
+  }
+  if (!load_matrix<int>(labels, lab_fname.c_str())) {
+    std::cerr << "Failed to load dataset file " << lab_fname << endl;
+    eblerror("Failed to load dataset file");
+  }
+  if (!load_matrix<ubyte>(classes, classes_fname.c_str())) {
+    std::cerr << "Failed to load dataset file " << classes_fname << endl;
+    eblerror("Failed to load dataset file");
+  }
+  if (!load_matrix<int>(classpairs, classpairs_fname.c_str())) {
+    std::cerr << "Failed to load dataset file " << classpairs_fname << endl;
+    eblerror("Failed to load dataset file");
+  }
+  if (!load_matrix<int>(defpairs, deformpairs_fname.c_str())) {
+    std::cerr << "Failed to load dataset file " << deformpairs_fname << endl;
+    eblerror("Failed to load dataset file");
+  }
+
+  labeled_pair_datasource<float, int> train_cp_ds(data, labels, classes,
+						  classpairs,
+						  0, 1,
+						  "Class pairs (training)");
+  labeled_pair_datasource<float, int> train_dp_ds(data, labels, classes,
+						  defpairs,
+						  0, 1,
+					  "Deformation pairs (training)");
+  labeled_datasource<float, int> train_ds(data, labels, classes, 0, 1,
+ 					  "Training dataset");
   
   cout << "images: " << train_ds.data << endl;
   cout << "labels: " << train_ds.labels << endl;
@@ -109,8 +140,13 @@ int main(int argc, char **argv) {
   cout << "***************************************" << endl;
   
 #ifdef __GUI__
-  labeled_pair_datasource_gui<float, int> dsgui(true);
+  labeled_pair_datasource_gui<float, int> dsgui_cp(true);
+  labeled_pair_datasource_gui<float, int> dsgui_dp(true);
+  labeled_datasource_gui<float, int> dsgui(true);
+  dsgui_cp.display(train_cp_ds, 4, 8, 0, 0, 1, -1, NULL, false, -1.0, 1.0);
+  dsgui_dp.display(train_dp_ds, 4, 8, 0, 0, 1, -1, NULL, false, -1.0, 1.0);
   dsgui.display(train_ds, 4, 8, 0, 0, 1, -1, NULL, false, -1.0, 1.0);
+  sleep(5);
 #endif 
   return 0;
 }
