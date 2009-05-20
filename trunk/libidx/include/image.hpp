@@ -752,15 +752,19 @@ namespace ebl {
 					int hrange, int wrange, T background) {
     idx<float> bg(1);
     bg.set(background, 0);
-    float x1diff = (float) drand(0.0, -wrange);
-    float y1diff = (float) drand(0.0, -hrange);
-    float x2diff = (float) drand(0.0,  wrange);
-    float y2diff = (float) drand(0.0, -hrange);
+    float x1diff = (float) drand( wrange/2, -wrange/2);
+    float y1diff = (float) drand( hrange/2, -hrange/2);
+    float x2diff = (float) drand(-wrange/2,  wrange/2);
+    float y2diff = (float) drand( hrange/2, -hrange/2);
+    float x3diff = (float) drand(-wrange/2,  wrange/2);
+    float y3diff = (float) drand(-hrange/2,  hrange/2);
+    float x4diff = (float) drand( wrange/2, -wrange/2);
+    float y4diff = (float) drand(-hrange/2,  hrange/2);
     image_warp_quad(in, out, bg, 1,
 		    -.5 + x1diff, -.5 + y1diff, // x1 y1
 		    in.dim(1) -.5 + x2diff, -.5 + y2diff, // x2 y2
-		    in.dim(1) -.5, in.dim(0) -.5, // x3 y3
-		    -.5, in.dim(0) - .5, // x4 y4
+		    in.dim(1) -.5 + x3diff, in.dim(0) -.5 + y3diff, // x3 y3
+		    -.5 + x4diff, in.dim(0) - .5 + y4diff, // x4 y4
 		    -.5, -.5, in.dim(1) - .5, in.dim(0) - .5);
   }
 

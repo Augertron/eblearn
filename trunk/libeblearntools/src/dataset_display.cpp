@@ -48,6 +48,9 @@ string classes_fname;
 string classpairs_fname;
 string deformpairs_fname;
 
+bool bdefpairs = true;
+bool bclasspairs = true;
+
 // parse command line input
 bool parse_args(int argc, char **argv) {
   // Read arguments from shell input
@@ -116,21 +119,13 @@ int main(int argc, char **argv) {
   }
   if (!load_matrix<int>(classpairs, classpairs_fname.c_str())) {
     std::cerr << "Failed to load dataset file " << classpairs_fname << endl;
-    eblerror("Failed to load dataset file");
+    bclasspairs = false;
   }
   if (!load_matrix<int>(defpairs, deformpairs_fname.c_str())) {
     std::cerr << "Failed to load dataset file " << deformpairs_fname << endl;
-    eblerror("Failed to load dataset file");
+    bdefpairs = false;
   }
 
-  labeled_pair_datasource<float, int> train_cp_ds(data, labels, classes,
-						  classpairs,
-						  0, 1,
-						  "Class pairs (training)");
-  labeled_pair_datasource<float, int> train_dp_ds(data, labels, classes,
-						  defpairs,
-						  0, 1,
-					  "Deformation pairs (training)");
   labeled_datasource<float, int> train_ds(data, labels, classes, 0, 1,
  					  "Training dataset");
   
@@ -140,13 +135,29 @@ int main(int argc, char **argv) {
   cout << "***************************************" << endl;
   
 #ifdef __GUI__
-  labeled_pair_datasource_gui<float, int> dsgui_cp(true);
-  labeled_pair_datasource_gui<float, int> dsgui_dp(true);
+  if (bclasspairs) {
+    labeled_pair_datasource<float, int> train_cp_ds(data, labels, classes,
+						    classpairs,
+						    0, 1,
+						    "Class pairs (training)");
+    labeled_pair_datasource_gui<float, int> dsgui_cp(true);
+    dsgui_cp.display(train_cp_ds, 4, 8, 0, 0, 1, -1, NULL, false, -1.0, 1.0);
+    sleep(1);
+  }
+
+  if (bdefpairs) {
+    labeled_pair_datasource<float, int> train_dp_ds(data, labels, classes,
+						    defpairs,
+						    0, 1,
+					       "Deformation pairs (training)");
+    labeled_pair_datasource_gui<float, int> dsgui_dp(true);
+    dsgui_dp.display(train_dp_ds, 4, 8, 0, 0, 1, -1, NULL, false, -1.0, 1.0);
+    sleep(1);
+  }
+  
   labeled_datasource_gui<float, int> dsgui(true);
-  dsgui_cp.display(train_cp_ds, 4, 8, 0, 0, 1, -1, NULL, false, -1.0, 1.0);
-  dsgui_dp.display(train_dp_ds, 4, 8, 0, 0, 1, -1, NULL, false, -1.0, 1.0);
   dsgui.display(train_ds, 4, 8, 0, 0, 1, -1, NULL, false, -1.0, 1.0);
-  sleep(5);
+  sleep(1);
 #endif 
   return 0;
 }
