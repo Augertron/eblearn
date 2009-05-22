@@ -1,7 +1,19 @@
+ifndef (prj)
+prj := all
+endif
+
 release:
-	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make all && cd ../..
+	@echo @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	@echo Compiling ${prj} project in release mode...
+	@echo Use make prj=idxgui to compile a specific project.
+	@echo @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make ${prj} && cd ../..
 debug:
-	cd build/Debug && cmake -DCMAKE_BUILD_TYPE=Debug ../.. && make all && cd ../..
+	@echo @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	@echo Compiling ${prj} project in debug mode...
+	@echo Use make debug prj=idxgui to compile a specific project.
+	@echo @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	cd build/Debug && cmake -DCMAKE_BUILD_TYPE=Debug ../.. && make ${prj} && cd ../..
 clean:
 	rm -rf build/Debug/*
 	rm -rf build/Release/*
