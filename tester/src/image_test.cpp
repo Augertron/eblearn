@@ -176,15 +176,15 @@ void image_test::test_colorspaces() {
   draw_matrix(im_rgb, "RGB", h, w);
   w += im_rgb.dim(1) + 5;
   tmp2 = im_rgb.select(2, 0);
-  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
+  //  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
   draw_matrix(tmp2, "R", h, w);
   w += tmp2.dim(1) + 5;
   tmp2 = im_rgb.select(2, 1);
-  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
+  //  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
   draw_matrix(tmp2, "G", h, w);
   w += tmp2.dim(1) + 5;
   tmp2 = im_rgb.select(2, 2);
-  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
+  //  cout << "inf: " << (int) idx_min(tmp2) << " sup:" << (int) idx_max(tmp2) << endl;
   draw_matrix(tmp2, "B", h, w);
   w = 0;
   h += tmp2.dim(0) + 5;
@@ -212,15 +212,18 @@ void image_test::test_colorspaces() {
 // 		    ftmp5.dim(1) -.5, ftmp5.dim(0) -.5, // x3 y3
 // 		    -.5, ftmp.dim(0) - .5, // x4 y4
 // 		    -.5, -.5, ftmp5.dim(1) - .5, ftmp5.dim(0) - .5);
-    init_drand(time(NULL));
-    image_deformation_ranperspective(ftmp6, ftmp5, 50, 0, (float) 0.0);
-    idxdim d3(ftmp5);
-    idx<float> ftmp7(d3);
-    idx_copy(ftmp5, ftmp7);
+
+  // TODO: find out why following code (warp) sometimes crashes
+//     init_drand(time(NULL));
+//     image_deformation_ranperspective(ftmp6, ftmp5, 50, 0, (float) 0.0);
+//     idxdim d3(ftmp5);
+//     idx<float> ftmp7(d3);
+//     idx_copy(ftmp5, ftmp7);
+
   //  idx_copy(ftmp5, ftmp6);
   //  idx<float> ftmp7 = image_resize(ftmp6, p3, q3);
-  draw_matrix(ftmp7, "warped Y", h, w, 1, 1, (float)-1.0, (float)1.0);
-  w += tmp2.dim(1) + 5;
+//   draw_matrix(ftmp7, "warped Y", h, w, 1, 1, (float)-1.0, (float)1.0);
+//   w += tmp2.dim(1) + 5;
 
 
   //   idx<float> hat = create_mexican_hat<float>(2, 5);
@@ -265,16 +268,16 @@ void image_test::test_colorspaces() {
   idx_fill(ftmp2, (float).5);
   hsv_to_rgb(ftmp, ftmp1);
   ftmp2 = im_hsv.select(2, 0);
-  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
-  cout << "inf tmp1: " << (int) idx_min(ftmp1) << " sup:" << (int) idx_max(ftmp1) << endl;
+  //  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  //  cout << "inf tmp1: " << (int) idx_min(ftmp1) << " sup:" << (int) idx_max(ftmp1) << endl;
   draw_matrix(ftmp1, "H", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
   w += ftmp2.dim(1) + 5;
   ftmp2 = im_hsv.select(2, 1);
-  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  //  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
   draw_matrix(ftmp2, "S", h, w);
   w += ftmp2.dim(1) + 5;
   ftmp2 = im_hsv.select(2, 2);
-  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  //  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
   draw_matrix(ftmp2, "V", h, w);
   w = 0;
   h += ftmp2.dim(0) + 5;
@@ -289,16 +292,16 @@ void image_test::test_colorspaces() {
   idx_fill(ftmp2, (float).5);
   hsv3_to_rgb(ftmp, ftmp1);
   ftmp2 = im_hsv3.select(2, 0);
-  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
-  cout << "inf tmp1: " << (int) idx_min(ftmp1) << " sup:" << (int) idx_max(ftmp1) << endl;
+  //  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  //  cout << "inf tmp1: " << (int) idx_min(ftmp1) << " sup:" << (int) idx_max(ftmp1) << endl;
   draw_matrix(ftmp1, "H3", h, w, 1.0, 1.0, (float)63.0, (float)127.0);
   w += ftmp2.dim(1) + 5;
   ftmp2 = im_hsv3.select(2, 1);
-  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  //  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
   draw_matrix(ftmp2, "S", h, w);
   w += ftmp2.dim(1) + 5;
   ftmp2 = im_hsv3.select(2, 2);
-  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
+  //  cout << "inf: " << (int) idx_min(ftmp2) << " sup:" << (int) idx_max(ftmp2) << endl;
   draw_matrix(ftmp2, "V", h, w);
 
   w = 0;

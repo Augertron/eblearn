@@ -403,7 +403,8 @@ namespace ebl {
 		       unsigned int fkernel_size, int deformations) {
     // local variables
     idx<ubyte>          datasets_names = datasets_names_ ? *datasets_names_
-      : idx<ubyte>(1, 1);      
+      : idx<ubyte>(1, 1);
+    if (!datasets_names_) datasets_names.set('\0', 0, 0);
     int                 ndatasets = datasets_names.dim(0);
     unsigned int	nimages;	// number of available images
     unsigned int        nimages_used;	// final number of images per dataset
