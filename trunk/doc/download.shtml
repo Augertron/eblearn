@@ -50,7 +50,9 @@ version of the library. Still, you are welcome to visit the <a href="https://sou
 	 </code>
        <h4>Compilation</h4>
        <code>$ ./configure<br>
-	 $ make   (or make debug to compile with debug information for gdb)
+	 $ make<br>
+	 (or 'make debug' to compile with debug information for gdb)<br>
+	 (or 'make prj=idxgui' if you just want to compile the library libidxgui and its dependencies or 'make debug prj=tester' to compile the tester only in debug mode)
 	 </code>
 
        <h4>Execution</h4>
