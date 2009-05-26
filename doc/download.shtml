@@ -32,7 +32,7 @@ version of the library. Still, you are welcome to visit the <a href="https://sou
        <h5>all packages: libeblearn, libidx, tool libraries, tester and demos
        </h5>
        <code>$ 
-	   	     sudo apt-get install cmake g++
+	   	     sudo apt-get install subversion cmake g++
          	     	  	  	  libatlas-base-dev
 	       	 	  		  libboost-filesystem-dev
 					  libboost-regex-dev
@@ -49,16 +49,15 @@ version of the library. Still, you are welcome to visit the <a href="https://sou
        	    	     sudo apt-get install valgrind electric-fence
 	 </code>
        <h4>Compilation</h4>
-       <code>$ 
-	 ./build.sh
+       <code>$ ./configure<br>
+	 $ make   (or make debug to compile with debug information for gdb)
 	 </code>
 
        <h4>Execution</h4>
        <code>
-	 $ ./configure.sh<br>
 	 $ cd bin<br>
-	 $ ./eblearn_tester<br>
-	 $./mnist "your-mnist-directory"
+	 $ ./tester<br>
+	 $ ./mnist "your-mnist-directory"
 	 </code>
     </p>
 
