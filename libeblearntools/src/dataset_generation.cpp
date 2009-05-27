@@ -374,13 +374,14 @@ namespace ebl {
   idx<int> make_pairs(idx<int> &labels) {
     // allocate maximum number of pairs
     idx<int> pairs((labels.dim(0) * (labels.dim(0) - 1)) / 2, 2);
-    int n = 0;
+    int n = 0, r = 0;
     // for each label, loop over all following labels to find pairs
     for (int i = 0; i < labels.dim(0) - 1; ++i) {
       for (int j = i + 1; j < labels.dim(0); ++j) {
 	if (labels.get(i) == labels.get(j)) {
-	  pairs.set(i, n, 0);
-	  pairs.set(j, n, 1);
+	  r = drand(0.0, 1.0); // randomize distribution as 1st or 2nd element
+	  pairs.set(i, n, (r > 0.5) ? 0 : 1);
+	  pairs.set(j, n, (r > 0.5) ? 1 : 0);
 	  n++;
 	}
       }
