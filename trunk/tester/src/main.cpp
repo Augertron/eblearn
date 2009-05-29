@@ -46,8 +46,8 @@ void parse_args(int argc, char **argv) {
   string s;
   ifstream in("../run.init");
   if (!in) {
-    cout << "Warning: failed to open ../run.init, please run configure.sh";
-    cout << endl;
+    cerr << "Warning: failed to open ../run.init, please run configure.sh";
+    cerr << endl;
   }
   else {
     while (!in.eof()) {

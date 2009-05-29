@@ -92,6 +92,21 @@ IF (QT_FOUND)
   target_link_libraries (dataset_display idxgui eblearngui)
 ENDIF (QT_FOUND)
 
+# compile executable: meta_trainer
+################################################################################
+add_executable (meta_trainer
+  src/meta_trainer.cpp
+  )
+
+# link executable with external libraries
+IF (${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(meta_trainer ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+ELSE(${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(meta_trainer ${Boost_FILESYSTEM_LIBRARY} 
+    ${Boost_REGEX_LIBRARY})
+ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+
+
 # compile executable: videoffinder
 ################################################################################
 # IF (OpenCV_FOUND) #-------------------------------------------------------------
