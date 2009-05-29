@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Pierre Sermanet *
+ *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -210,7 +210,6 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 #else
 int main(int argc, char **argv) {
 #endif
-  //for (int i = 0 ; i < argc ; i++)cout<<"argv["<<i<<"]: "<<argv[i]<<endl;
   cout << "******************* Dataset compiler for libeblearn library ";
   cout << "*******************" << endl;
   // parse arguments
