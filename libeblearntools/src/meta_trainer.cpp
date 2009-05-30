@@ -105,7 +105,6 @@ bool append_plotter(const string &name, const string &vname, int col) {
   fname += ".p";
   ifstream in(fname.c_str());
   ofstream out(fname.c_str(), ios::app);
-  cout << "append plotter " << name << " " << vname << endl;
   if (!out) { 
     cerr << "warning: failed to open " << fname << endl;
     return false;
@@ -127,17 +126,19 @@ plot ";
   return true;
 }
 
-int count_numbers(const string &sentence) {
+int count_words(const string &sentence) {
   istringstream iss(sentence, istringstream::in);
-  int c = 0;
+  int w = 0;
+  string word;
+
   while (!iss.eof()) {
-    float f = numeric_limits<float>::max();
-    iss >> f;
-    if (f != numeric_limits<float>::max()) {
-    c++;
-    }
+    try {
+      iss >> word;
+      if (word.size() != 0)
+	w++;
+    } catch(std::istringstream::failure& e) { return w; }
   }
-  return c;
+  return w;
 }
 
 bool append_plot(const string &vname, int line, float value, int &colpos) {
@@ -164,10 +165,10 @@ bool append_plot(const string &vname, int line, float value, int &colpos) {
     while (!in.eof()) {
       getline(in, s);
       if (colpos < 0)
-	colpos = count_numbers(s);
+	colpos = count_words(s);
       out << s;
       if (line == i) {
-	for (int j = count_numbers(s); j < colpos; ++j) {
+	for (int j = count_words(s); j < colpos; ++j) {
 	  if (j == 0)
 	    out << i << separator;
 	  else 
@@ -181,8 +182,9 @@ bool append_plot(const string &vname, int line, float value, int &colpos) {
     }
     for ( ; i <= line; ++i) {
       out << i << separator;
-      for (int j = 1; j < colpos; ++j)
+      for (int j = 1; j < colpos; ++j) { 
 	out << gnuplot_empty_separator << separator;
+      }
       if (i == line) out << value << separator;
       out << endl;
     }
@@ -218,12 +220,10 @@ bool parse_output_log(const string &fname, const string &name) {
 	vname = s.substr(stok + 1, itok - stok - 1);
 	s = s.substr(itok + 1);
 	iss.str(s);
-	f = -42.0;
+	f = numeric_limits<float>::max();
 	iss >> f;
 	itok = s.find(separator);
- 	if (f == -42.0) 
- 	  line--;
- 	else {
+ 	if (f != numeric_limits<float>::max()) {
 	  append_plot(vname, line, f, colpos);
 	  if (first)
 	    append_plotter(name, vname, colpos);
@@ -231,7 +231,6 @@ bool parse_output_log(const string &fname, const string &name) {
 	    first = false;
 	}
       }
-      line++;
     } catch(std::istringstream::failure& e) {}
   }
   return true;
