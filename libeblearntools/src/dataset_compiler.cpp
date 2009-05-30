@@ -53,7 +53,7 @@ string stereo_lpattern = "_L";
 string stereo_rpattern = "_R";
 string outdir = ".";
 string dataset_name = "dataset";
-int max_per_class = -1; // -1 means no limitation
+idx<int> max_per_class; // -1 means no limitation
 unsigned int mexican_hat_size = 0;
 int deformations = -1; // <= means no deformations
 
@@ -152,7 +152,21 @@ bool parse_args(int argc, char **argv) {
 	cerr << "input error: expecting string after -max_per_class." << endl;
 	return false;
       }
-      max_per_class = atoi(argv[i]);
+      idx_fill(max_per_class, atoi(argv[i]));
+    } else if (strcmp(argv[i], "-max_per_class_training") == 0) {
+      ++i;
+      if (i >= argc) {
+	cerr << "input error: expecting string after -max_per_class_training." << endl;
+	return false;
+      }
+      max_per_class.set(atoi(argv[i]), 0);
+    } else if (strcmp(argv[i], "-max_per_class_testing") == 0) {
+      ++i;
+      if (i >= argc) {
+	cerr << "input error: expecting string after -max_per_class_testing." << endl;
+	return false;
+      }
+      max_per_class.set(atoi(argv[i]), 1);
     } else if (strcmp(argv[i], "-mexican_hat_size") == 0) {
       ++i;
       if (i >= argc) {
@@ -210,6 +224,18 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 #else
 int main(int argc, char **argv) {
 #endif
+
+  // TODO: write a strings_to_uidx() function for libidx
+  idx<ubyte> datasets_names(2, 128);
+  idx_clear(datasets_names);
+  const char *train = "train";
+  const char *test = "test";
+  memcpy(datasets_names[0].idx_ptr(), train, strlen(train) * sizeof (char));
+  memcpy(datasets_names[1].idx_ptr(), test, strlen(test) * sizeof (char));
+  // max
+  max_per_class = idx<int>(2);
+  idx_fill(max_per_class, -1);
+  
   cout << "******************* Dataset compiler for libeblearn library ";
   cout << "*******************" << endl;
   // parse arguments
@@ -232,9 +258,7 @@ int main(int argc, char **argv) {
     cout << "    stereo left pattern: " << stereo_lpattern << endl;
     cout << "    stereo right pattern: " << stereo_rpattern << endl;
   }
-  cout << "  max per class: ";
-  if (max_per_class == -1) cout << "no limit" << endl;
-  else cout<<max_per_class << endl;
+  cout << "  max per class: "; max_per_class.printElems();
   cout << "  mexican_hat_size: " << mexican_hat_size << endl;
   cout << "  deformations: " << deformations << endl;
   cout << "outputs:" << endl;
@@ -244,19 +268,11 @@ int main(int argc, char **argv) {
   cout << "****************************************";
   cout << "***************************************" << endl;
 
-  // TODO: write a strings_to_uidx() function for libidx
-  idx<ubyte> datasets_names(2, 128);
-  idx_clear(datasets_names);
-  const char *train = "train";
-  const char *test = "test";
-  memcpy(datasets_names[0].idx_ptr(), train, strlen(train) * sizeof (char));
-  memcpy(datasets_names[1].idx_ptr(), test, strlen(test) * sizeof (char));
-  
   imagedir_to_idx(images_root.c_str(), 143, channels, image_pattern.c_str(),
 		  NULL,
 		  outdir.c_str(), NULL, false, display,
 		  channels_mode.c_str(),
-		  dataset_name.c_str(), max_per_class, &datasets_names,
+		  dataset_name.c_str(), &max_per_class, &datasets_names,
 		  mexican_hat_size, deformations);
   return 0;
 }
