@@ -114,12 +114,10 @@ bool append_plotter(const string &name, const string &vname, int col) {
     in.close();
     out << "clear ; \
 set terminal png small size 1024,768 ; \n	\
-set output \"plot.png\" ;			\
+set output \"" << vname << ".png\" ;		\
 set multiplot ;					\
-xrmin = 0.0 ;					\
-xrmax = 50.0 ;					\
-set size 1, 0.33 ;				\
-set origin 0.0,0.64 ;				\
+set size 1, 1 ;					\
+set origin 0.0,0.0 ;				\
 plot ";
   } else
     out << ", ";
@@ -148,6 +146,7 @@ bool append_plot(const string &vname, int line, float value, int &colpos) {
   string fname2 = fname;
   fname2 += ".tmp";
   string separator = "\t";
+  string gnuplot_empty_separator = "_";
   ifstream in(fname.c_str());
   ofstream out(fname2.c_str());
   int i;
@@ -172,7 +171,7 @@ bool append_plot(const string &vname, int line, float value, int &colpos) {
 	  if (j == 0)
 	    out << i << separator;
 	  else 
-	    out << 0 << separator;
+	    out << gnuplot_empty_separator << separator;
 	}
 	out << value << separator;
       }
@@ -183,7 +182,7 @@ bool append_plot(const string &vname, int line, float value, int &colpos) {
     for ( ; i <= line; ++i) {
       out << i << separator;
       for (int j = 1; j < colpos; ++j)
-	out << 0 << separator;
+	out << gnuplot_empty_separator << separator;
       if (i == line) out << value << separator;
       out << endl;
     }
