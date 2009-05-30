@@ -219,13 +219,18 @@ bool parse_output_log(const string &fname, const string &name) {
 	vname = s.substr(stok + 1, itok - stok - 1);
 	s = s.substr(itok + 1);
 	iss.str(s);
+	f = -42.0;
 	iss >> f;
 	itok = s.find(separator);
-	append_plot(vname, line, f, colpos);
-	if (first)
-	  append_plotter(name, vname, colpos);
-	if (itok == string::npos)
-	  first = false;
+ 	if (f == -42.0) 
+ 	  line--;
+ 	else {
+	  append_plot(vname, line, f, colpos);
+	  if (first)
+	    append_plotter(name, vname, colpos);
+	  if (itok == string::npos)
+	    first = false;
+	}
       }
       line++;
     } catch(std::istringstream::failure& e) {}
@@ -242,7 +247,7 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  string root = "/home/pierre/logstmp";
+  string root = argv[1];
   
 #ifdef __BOOST__
     // check root directory
@@ -255,7 +260,7 @@ int main(int argc, char **argv) {
     // explore root
     cmatch what;
     regex hidden_dir(".svn");
-    regex output_log("output.log");
+    regex output_log(".*[.]log");
     directory_iterator end_itr; // default construction yields past-the-end
     for (directory_iterator itr(rd); itr != end_itr; itr++) {
       if (is_directory(itr->status())
