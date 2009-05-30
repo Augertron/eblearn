@@ -72,7 +72,7 @@ namespace ebl {
 		       bool display = false,
 		       const char *prefix = NULL, // eg: "_train" or "test_"
 		       const char *name = NULL, // eg: "caltech101"
-		       int max_per_class = -1, // -1 equals no limit
+		       idx<int> *max_per_class = NULL, // -1 equals no limit
 		       // "train", "test", "valid"
 		       idx<ubyte> *datasets_names = NULL,
 		       unsigned int filter_kernel_size = 0,

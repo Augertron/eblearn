@@ -399,7 +399,7 @@ namespace ebl {
 		       const char *imgExtension, const char *imgPatternLeft, 
 		       const char *outDir, const char *imgPatternRight, 
 		       bool silent, bool display, const char *prefix,
-		       const char *name_, int max_per_class,
+		       const char *name_, idx<int> *max_per_class_,
 		       idx<ubyte> *datasets_names_,
 		       unsigned int fkernel_size, int deformations) {
     // local variables
@@ -426,6 +426,12 @@ namespace ebl {
     if (fkernel_size > 0) width += fkernel_size - 1;
     unsigned int        fwidth = fkernel_size == 0 ? width :
       width - fkernel_size + 1;
+    idx<int> max_per_class(datasets_names.dim(0));
+    if (max_per_class_)
+      idx_copy(*max_per_class_, max_per_class);
+    else
+      idx_fill(max_per_class, -1);
+    int max_max_per_class = idx_max(max_per_class);
     if (!silent) cout << "Target image width: " << fwidth << endl;
     //    if (silent) display = false;
 #ifdef __GUI__
@@ -497,13 +503,13 @@ namespace ebl {
 	// recursively search each directory
 	count_matches(itr->path().string().c_str(), imgExtension, nimages);
 	class_ranges.set(nimages - 1, i, 1);
-	if ((max_per_class > 0) &&
+	if ((max_max_per_class > 0) &&
 	    (class_ranges.get(i, 1) + 1 - class_ranges.get(i, 0) <
-	     max_per_class)) {
+	     max_max_per_class)) {
 	  cout << "warning in dataset_generation: class ";
 	  cout << classes[i].idx_ptr() << " has ";
 	  cout << class_ranges.get(i, 1) + 1 - class_ranges.get(i, 0);
-	  cout << " elements but max_per_class = " << max_per_class << endl;
+	  cout << " elements but max_per_class = " << max_max_per_class << endl;
 	}
 	++i;
       }
@@ -520,7 +526,8 @@ namespace ebl {
     }
 
     // allocate memory
-    nimages_used = (max_per_class <= 0) ? nimages : nclasses * max_per_class;
+    nimages_used = (max_max_per_class <= 0) ?
+      nimages : nclasses * max_max_per_class;
     nimages_used += (deformations <= 0) ? 0 : nimages_used * deformations;
     if (!silent) {
       cout << "Allocating memory for " << ndatasets << "x";
@@ -539,70 +546,46 @@ namespace ebl {
     if (!silent) { cout << "Shuffling image collection..." << endl; }
     init_drand(time(NULL)); // initialize random seed
     // for each class, assign images to training or testing set
-    if (max_per_class == -1)
+    if (max_max_per_class == -1)
       idx_fill(ds_assignment, 0); // put all images in dataset 0
     else {
       int total_missing = 0;
       idx_fill(ds_assignment, -1); // -1 means no assignment
       idx_bloop2(range, class_ranges, int, classe, classes, ubyte) {
-	int j;
-	int k;
-	int pos;
-	for (k = 0; k < max_per_class; ++k) {
-	  pos = (int) drand(range.get(0), range.get(1));
-	  // if conflict, assign next available slot
-	  if (ds_assignment.get(pos) != -1) {
-	    for (j = pos + 1; j != pos; j++) {
-	      if (j >= range.get(1) + 1) // reach end, go to beginning
-		j = range.get(0);
-	      if (j == pos)
-		break ;
-	      if (ds_assignment.get(j) == -1) {
-		pos = j;
+	int id = 0;
+	idx_bloop2(dsname, datasets_names, ubyte, mpc, max_per_class, int) {
+	  int j;
+	  int k;
+	  int pos;
+	  for (k = 0; k < mpc.get(); ++k) {
+	    pos = (int) drand(range.get(0), range.get(1));
+	    // if conflict, assign next available slot
+	    if (ds_assignment.get(pos) != -1) {
+	      for (j = pos + 1; j != pos; j++) {
+		if (j >= range.get(1) + 1) // reach end, go to beginning
+		  j = range.get(0);
+		if (j == pos)
+		  break ;
+		if (ds_assignment.get(j) == -1) {
+		  pos = j;
+		  break ;
+		}
+	      }
+	      if (ds_assignment.get(pos) != -1) { // did not find an image
+		if (!silent) {
+		  cout << "warning: only " << k << "/" << mpc.get();
+		  cout << " available images for class ";
+		  cout << classe.idx_ptr() << " in ";
+		  cout << dsname.idx_ptr();
+		  cout << " dataset." << endl;
+		}
+		total_missing += mpc.get() - k;
 		break ;
 	      }
 	    }
-	    if (ds_assignment.get(pos) != -1) { // did not find an image
-	      if (!silent) {
-		cout << "warning: only " << k << "/" << max_per_class;
-		cout << " available images for class ";
-		cout << classe.idx_ptr() << " in ";
-		cout << datasets_names[0].idx_ptr();
-		cout << " dataset." << endl;
-	      }
-	      total_missing += max_per_class - k;
-	      break ;
-	    }
+	    ds_assignment.set(id, pos); // assign to dataset 0
 	  }
-	  ds_assignment.set(0, pos); // assign to dataset 0
-	}
-	for (k = 0; k < max_per_class; ++k) {
-	  pos = (int) drand(range.get(0), range.get(1));
-	  // if conflict, assign next available image
-	  if (ds_assignment.get(pos) != -1) {
-	    for (j = pos + 1; j != pos; j++) {
-	      if (j >= range.get(1) + 1) // reach end, go to beginning
-		j = range.get(0);
-	      if (j == pos)
-		break ;
-	      if (ds_assignment.get(j) == -1) {
-		pos = j;
-		break ;
-	      }
-	    }
-	    if (ds_assignment.get(pos) != -1) { // did not find an image
-	      if (!silent) {
-		cout << "warning: only " << k << "/" << max_per_class;
-		cout << " available images for class ";
-		cout << classe.idx_ptr() << " in ";
-		cout << datasets_names[1].idx_ptr();
-		cout << " dataset." << endl;
-	      }
-	      total_missing += max_per_class - k;
-	      break ;
-	    }
-	  }
-	  ds_assignment.set(1, pos); // assign to dataset 1
+	  id++;
 	}
       }
       if (!silent) {
