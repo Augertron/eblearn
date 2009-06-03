@@ -188,11 +188,11 @@ plot ";
 	map<string, vector<string>, less<string> >::iterator iruns =
 	  runs.begin();
 	size_t max_nvalues = 0;
-	for (int r = 1; iruns != runs.end(); ++iruns, ++r) {
+	for (int r = 2; iruns != runs.end(); ++iruns, ++r) {
 	  // find maximum number of values
 	  max_nvalues = MAX(max_nvalues, iruns->second.size());
 	  // add instruction to plot this run in the .p file
-	  if (r > 1)
+	  if (r > 2)
 	    outp << ", ";
 	  outp << "\"" << plot_fname << "\" using 1:" << r << " title \"";
 	  outp << iruns->first << "\" with lines";
