@@ -35,6 +35,7 @@ version of the library. Still, you are welcome to visit the <a href="https://sou
 	   	     sudo apt-get install subversion cmake g++
          	     	  	  	  libatlas-base-dev
 	       	 	  		  libboost-filesystem-dev
+	                                  imagemagick
 					  libboost-regex-dev
 	       	     	  		  libqt4-core libqt4-dev libqt4-gui
                	     	  		  libcppunit-dev
@@ -42,7 +43,7 @@ version of the library. Still, you are welcome to visit the <a href="https://sou
        <h5>libeblearn and libidx only (tools, testers and some demos will not compile)</h5>
        <code>$ 
 	   	     sudo apt-get install cmake g++
-         	     	  	  	  libatlas-base-dev
+         	     	  	  	  libatlas-base-dev imagemagick
 	 </code>
        <h5>for developers only (tools for bug-free development)</h5>
        <code>$ 
