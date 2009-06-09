@@ -16,7 +16,7 @@ then
     for p in $plots
       do
       echo "plotting $p..."
-      cat $p | gnuplot 2> /dev/null > /dev/null
+      cat $p | gnuplot
       allpdf="$allpdf -a ${p}df"
     done
     echo "________________________________________________________________________________"
