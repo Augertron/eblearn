@@ -79,29 +79,7 @@ bool parse_args(int argc, char **argv) {
 
 // print command line usage
 void print_usage() {
-  cout << "Usage: ./dataset_compiler <images_root> [OPTIONS]" << endl;
-  cout << "Options are:" << endl;
-  cout << "  -image_pattern <pattern>" << endl;
-  cout << "   e.g.: \".*[.]ppm\"" << endl;
-  cout << "  -channels <channel>" << endl;
-  cout << "    channels are:" << endl;
-  cout << "      - RGB" << endl;
-  cout << "      - YpUV" << endl;
-  cout << "      - HSV" << endl;
-  cout << "      - Yp (Yp only in YpUV)" << endl;
-  cout << "      - YpH3" << endl;
-  cout << "      - VpH2SV" << endl;
-  cout << "  -dset_display" << endl;
-  cout << "  -training" << endl;
-  cout << "  -testing" << endl;
-  cout << "  -stereo" << endl;
-  cout << "  -stereo_lpattern <pattern>" << endl;
-  cout << "  -stereo_rpattern <pattern>" << endl;
-  cout << "  -output_dir <directory>" << endl;
-  cout << "  -dset_name <dataset_name>" << endl;
-  cout << "  -max_per_class <integer>" << endl;
-  cout << "  -mexican_hat_size <integer>" << endl;
-  cout << "  -deformations <integer>" << endl;
+  cout << "Usage: ./meta_trainer <logs_root> [OPTIONS]" << endl;
 }
 
 void add_to_plots(plots_t &plots, const string &name, const string &vname,
@@ -118,7 +96,7 @@ void add_to_plots(plots_t &plots, const string &name, const string &vname,
 }
 
 bool parse_output_log(const string &fname, const string &name, plots_t &plots) {
-  cout << "parsing " << fname << endl;
+  cout << "parsing log file " << fname << endl;
   ifstream in(fname.c_str());
   string s, vname;
   char separator = '=';
@@ -155,12 +133,9 @@ bool parse_output_log(const string &fname, const string &name, plots_t &plots) {
 bool write_plots(plots_t &plots) {
   string gnuplot_column_separator = "\t";
     string gnuplot_config1 = "clear ; \
-set terminal png small size 1024,768 ; \n	\
-set output \"";
-    string gnuplot_config2 = ".png\" ;	\
-set multiplot ;					\
-set size 1, 1 ;					\
-set origin 0.0,0.0 ;				\
+set terminal postscript color solid ; \n	\
+set output \"| ps2pdf - ";
+    string gnuplot_config2 = ".pdf\" ;	\
 plot ";	    
   
   // loop on each plot
@@ -219,6 +194,28 @@ plot ";
   return true;
 }
 
+// recursively explore all subdirectories of root and add plots when .log are found.
+bool find_logs(const path &root, plots_t &plots) {
+  // explore root
+  cmatch what;
+  regex hidden_dir(".svn");
+  regex output_log(".*[.]log");
+  directory_iterator end_itr; // default construction yields past-the-end
+  for (directory_iterator itr(root); itr != end_itr; itr++) {
+    if (!regex_match(itr->leaf().c_str(), what, hidden_dir)) {      
+      // recursively loop into subdirectories
+      if (is_directory(itr->status()))
+	find_logs(itr->path(), plots);
+      else {
+	// look for output.log
+	if (regex_match(itr->leaf().c_str(), what, output_log))
+	  parse_output_log(itr->path().string(), root.leaf(), plots);
+      }
+    }
+  }
+  return true;
+}
+
 int main(int argc, char **argv) {
   cout << "________________________________Meta Trainer";
   cout << "________________________________" << endl;
@@ -239,26 +236,9 @@ int main(int argc, char **argv) {
     if (!exists(rd)) {
       cerr << "cannot find path: " << rd.string() << endl;
       eblerror("path does not exist");
-      return false;
+      return -1;
     }
-    // explore root
-    cmatch what;
-    regex hidden_dir(".svn");
-    regex output_log(".*[.]log");
-    directory_iterator end_itr; // default construction yields past-the-end
-    for (directory_iterator itr(rd); itr != end_itr; itr++) {
-      if (is_directory(itr->status())
-	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
-	// look for output.log in current directory
-	for (directory_iterator itr2(itr->path()); itr2 != end_itr; itr2++) {
-	  if (!is_directory(itr2->status())
-	      && regex_match(itr2->leaf().c_str(), what, output_log)) {
-	    // parse output.log
-	    parse_output_log(itr2->path().string(), itr->leaf(), plots);
-	  }
-	}
-      }
-    }
+    find_logs(rd, plots);
     write_plots(plots);
 #endif 
   return 0;
