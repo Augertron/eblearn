@@ -508,6 +508,8 @@ namespace ebl {
   template <class T> idx<T>::~idx() {
     DEBUG("idx::destructor %ld\n",long(this));
     storage->unlock();
+    if (pidxdim)
+      delete pidxdim;
   }
 
   // fake constructor called by idxlooper constructor
@@ -515,6 +517,7 @@ namespace ebl {
     spec.dim = NULL;
     spec.mod = NULL;
     storage = NULL;
+    pidxdim = NULL;
   }
 
   //template <typename T>
@@ -537,7 +540,7 @@ namespace ebl {
   //! constructors initialized with an array
   
   template <class T> idx<T>::idx(const T *mat, intg s0, intg s1)
-    : spec(0, s0, s1) {
+    : pidxdim(NULL), spec(0, s0, s1) {
     storage = new Srg<T>();
     growstorage();
     storage->lock();
@@ -547,26 +550,27 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // specific constructors for each number of dimensions
 
-  template <class T> idx<T>::idx() : spec(0) {
+  template <class T> idx<T>::idx() : pidxdim(NULL), spec(0) {
     storage = new Srg<T>();
     growstorage();
     storage->lock();
   }
 
-  template <class T> idx<T>::idx(intg size0) : spec(0,size0) {
+  template <class T> idx<T>::idx(intg size0) : pidxdim(NULL), spec(0,size0) {
     storage = new Srg<T>();
     growstorage();
     storage->lock();
   }
 
-  template <class T> idx<T>::idx(intg size0, intg size1) : spec(0,size0,size1) {
+  template <class T> idx<T>::idx(intg size0, intg size1)
+    : pidxdim(NULL), spec(0,size0,size1) {
     storage = new Srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> idx<T>::idx(intg size0, intg size1, intg size2)
-    : spec(0,size0,size1,size2) {
+    : pidxdim(NULL), spec(0,size0,size1,size2) {
     storage = new Srg<T>();
     growstorage();
     storage->lock();
@@ -574,13 +578,15 @@ namespace ebl {
 
   template <class T> 
   idx<T>::idx(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
-	      intg s6, intg s7) : spec(0,s0,s1,s2,s3,s4,s5,s6,s7) {
+	      intg s6, intg s7)
+    : pidxdim(NULL), spec(0,s0,s1,s2,s3,s4,s5,s6,s7) {
     storage = new Srg<T>();
     growstorage();
     storage->lock();
   }
 
-  template <class T> idx<T>::idx(const idxdim &d) : spec(0, d) {
+  template <class T> idx<T>::idx(const idxdim &d)
+    : pidxdim(NULL), spec(0, d) {
     storage = new Srg<T>();
     growstorage();
     storage->lock();
@@ -590,7 +596,7 @@ namespace ebl {
   // constructors from existing Srg and offset
 
   template <class T> 
-  idx<T>::idx(Srg<T> *srg, idxspec &s) {
+  idx<T>::idx(Srg<T> *srg, idxspec &s) : pidxdim(NULL) {
     spec = s;
     storage = srg;
     growstorage();
@@ -599,14 +605,14 @@ namespace ebl {
 
   template <class T>
   idx<T>::idx(Srg<T> *srg, intg o, intg n, intg *dims, intg *mods) 
-    : spec(o, n, dims, mods) {
+    : pidxdim(NULL), spec(o, n, dims, mods) {
     storage = srg;
     growstorage();
     storage->lock();
   }
 
   template <class T> 
-  idx<T>::idx(Srg<T> *srg, intg o) : spec(o) {
+  idx<T>::idx(Srg<T> *srg, intg o) : pidxdim(NULL), spec(o) {
     storage = srg;
     growstorage();
     storage->lock();
@@ -614,7 +620,7 @@ namespace ebl {
 
   template <class T> 
   idx<T>::idx(Srg<T> *srg, intg o, intg size0)
-    : spec(o,size0) {
+    : pidxdim(NULL), spec(o,size0) {
     storage = srg;
     growstorage();
     storage->lock();
@@ -622,7 +628,7 @@ namespace ebl {
 
   template <class T> 
   idx<T>::idx(Srg<T> *srg, intg o, intg size0, intg size1)
-    : spec(o,size0,size1) {
+    : pidxdim(NULL), spec(o,size0,size1) {
     storage = srg;
     growstorage();
     storage->lock();
@@ -630,7 +636,7 @@ namespace ebl {
 
   template <class T> 
   idx<T>::idx(Srg<T> *srg, intg o, intg size0, intg size1, intg size2)
-    : spec(o,size0,size1,size2) {
+    : pidxdim(NULL), spec(o,size0,size1,size2) {
     storage = srg;
     growstorage();
     storage->lock();
@@ -639,7 +645,7 @@ namespace ebl {
   template <class T> 
   idx<T>::idx(Srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3,
 	      intg s4, intg s5, intg s6, intg s7)
-    : spec(o,s0,s1,s2,s3,s4,s5,s6,s7) {
+    : pidxdim(NULL), spec(o,s0,s1,s2,s3,s4,s5,s6,s7) {
     storage = srg;
     growstorage();
     storage->lock();
@@ -647,7 +653,7 @@ namespace ebl {
 
   template <class T> 
   idx<T>::idx(Srg<T> *srg, intg o, const idxdim &d) 
-    : spec(o, d) {
+    : pidxdim(NULL), spec(o, d) {
     storage = srg;
     growstorage();
     storage->lock();
@@ -739,9 +745,11 @@ namespace ebl {
     return true;
   }
 
-  template <class T> idxdim& idx<T>::getidxdim(idxdim& d) {
-    d.read(spec);
-    return d;
+  template <class T> idxdim& idx<T>::get_idxdim() {
+    if (!pidxdim)
+      pidxdim = new idxdim();
+    pidxdim->read(spec);
+    return *pidxdim;
   }
 
   ////////////////////////////////////////////////////////////////
