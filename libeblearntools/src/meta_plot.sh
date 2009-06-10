@@ -18,6 +18,7 @@ then
       echo "plotting $p..."
       cat $p | gnuplot
       allpdf="$allpdf -a ${p}df"
+      sleep .3
     done
     echo "________________________________________________________________________________"
     echo "Taring plot data:"
