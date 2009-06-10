@@ -20,6 +20,8 @@ void IdxTest::test_Idx_get() {
   idx<double> t6(2,2,2,2,2,2);
   idx<double> t7(2,2,2,2,2,2,2);
   idx<double> t8(2,2,2,2,2,2,2,2);
+  idxdim d = t7.get_idxdim();
+  cout << "__________________ d: " << d << endl;
   t0.set(1);
   t1.set(1, 0);
   t2.set(1, 0, 1);

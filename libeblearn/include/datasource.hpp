@@ -106,10 +106,8 @@ namespace ebl {
   template<typename Tin1, typename Tin2>
   void datasource<Tin1,Tin2>::shuffle() {
     // create a target idx with the same dimensions
-    idxdim dataDim = data.getidxdim(dataDim);
-    idx<Tin1> shuffledData(dataDim);
-    idxdim labelsDim = labels.getidxdim(labelsDim);
-    idx<Tin2> shuffledLabels(labelsDim);
+    idx<Tin1> shuffledData(data.get_idxdim());
+    idx<Tin2> shuffledLabels(labels.get_idxdim());
     // get the nb of classes
     intg nbOfClasses = 1+idx_max(labels);
     intg nbOfSamples = data.dim(0);

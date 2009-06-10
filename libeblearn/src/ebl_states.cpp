@@ -145,13 +145,6 @@ namespace ebl {
     clear_ddx();
   }
 
-  state_idx::state_idx(idx<double> m) :
-    x(m.getidxdim(dims)), dx(m.getidxdim(dims)), ddx(m.getidxdim(dims)) {
-    clear();
-    clear_dx();
-    clear_ddx();
-  }
-
   ////////////////////////////////////////////////////////////////
   // constructors from specific dimensions using a parameter
 

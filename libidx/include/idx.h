@@ -333,6 +333,11 @@ namespace ebl {
     //! pointer to the Srg structure that contains the data.
     Srg<T> *storage;
 
+    //! a pointer to a dimensions descriptor.
+    //! this is allocated when get_idxdim() method is called and destroyed by
+    //! destructor.
+    idxdim *pidxdim;
+
     //! increase size of storage to fit the current dimension
     void growstorage();
 
@@ -389,12 +394,10 @@ namespace ebl {
     //! the storage and set offset to zero.
     idx(int n, intg *dims, intg *mods);
         
-  idx( const idx<T>& other )
-    :storage(other.storage),
-      spec(other.spec)
-	{
-	  storage->lock();
-	}
+  idx(const idx<T>& other)
+    : storage(other.storage), pidxdim(NULL), spec(other.spec) {
+      storage->lock();
+    }
 
     ////////////////////////////////////////////////////////////////
     //! constructors initialized with an array
@@ -632,8 +635,9 @@ namespace ebl {
     virtual bool same_dim(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
 			  intg s6, intg s7);
 
-    //! copies order and dimensions of this idx into the passed idxdim d.
-    virtual idxdim& getidxdim(idxdim& d);
+    //! returns a reference to an idxdim object (owned by this idx)
+    //! containing the order and dimensions of this idx.
+    virtual idxdim& get_idxdim();
 
    ////////////////////////////////////////////////////////////////
     //! data access methods

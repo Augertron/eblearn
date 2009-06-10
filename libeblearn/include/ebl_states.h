@@ -147,11 +147,6 @@ namespace ebl {
 	      intg s6 = -1, intg s7 = -1);
     //! Constructor. Use the order and dimensions contained in passed idxdim d.
     state_idx(const idxdim &d);
-    //! Constructor. Use the order and dimensions contained in passed idx idx.
-    //! Beware that the idx is passed by copy, to allow special cases like
-    //! passing an idx resulting from a select() operation for example.
-    //! Use this constructor only where it is ok (time-wise) to do a copy.
-    state_idx(idx<double> m);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from specific dimensions using a parameter
@@ -172,6 +167,8 @@ namespace ebl {
     //! constructors from other state_idx
 
     //! Constructs a state_idx from a state_idx's 3 internal idx
+    //! Note: the data pointed to by idxs is not copied, we only create new idx
+    //!   pointing to the same data.
     state_idx(const idx<double> &x, const idx<double> &dx, 
 	      const idx<double> &ddx);
 

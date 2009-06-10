@@ -130,7 +130,7 @@ namespace ebl {
 
   idxdim nn_layer_convolution::fprop_size(idxdim &i_size) {
     //! Select a kernel
-    idxdim kernel_size = convol.kernel.x[0].getidxdim(kernel_size);
+    idxdim kernel_size = convol.kernel.x[0].get_idxdim();
     //! Extract its dimensions, update output size
     idxdim o_size(i_size.dim(0) - kernel_size.dim(0) + 1,
 		  i_size.dim(1) - kernel_size.dim(1) + 1);
@@ -141,7 +141,7 @@ namespace ebl {
 
   idxdim nn_layer_convolution::bprop_size(const idxdim &o_size) {
     //! Select a kernel
-    idxdim kernel_size = convol.kernel.x[0].getidxdim(kernel_size);
+    idxdim kernel_size = convol.kernel.x[0].get_idxdim();
     //! Extract its dimensions, update output size
     idxdim i_size(o_size.dim(0) + kernel_size.dim(0) - 1,
 		  o_size.dim(1) + kernel_size.dim(1) - 1);
