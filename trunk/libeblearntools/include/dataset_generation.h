@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Matt Grimes and Pierre Sermanet   *
- *   mkg@cs.nyu.edu, pierre.sermanet@gmail.com   *
+ *   Copyright (C) 2009 by Pierre Sermanet   *
+ *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

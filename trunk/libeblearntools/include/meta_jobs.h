@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source
- *       Initiative (http://www.opensource.org) must display the
+ *     * Redistribution under a license not approved by the Open Source 
+ *       Initiative (http://www.opensource.org) must display the 
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -30,49 +30,37 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef SIMILAR_PATCHES_H_
-#define SIMILAR_PATCHES_H_
+#ifndef META_JOBS_H_
+#define META_JOBS_H_
 
-#include "libidx.h"
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif
-
-#include <vector>
+#include "configuration.h"
 
 using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // similar_patches
-
-  class similar_patches {
+  class job {
   private:
-    unsigned int			max_similar_patches;
-    unsigned int			pheight;
-    unsigned int			pwidth;
-    unsigned int			iheight;
-    unsigned int			iwidth;
-    unsigned int                        wdisplay;
-    unsigned int                        display_index;
-    vector< vector< idx<ubyte>* > *>	dataset;
-    vector< vector< idx<ubyte>* > *>	current_patches;
-  public:
-    unsigned int			max_current_patches;
-    vector< pair<int, int> >		current_patches_xy;
+    configuration conf;
 
-    similar_patches(unsigned int maxcurrent, unsigned int maxsimilar,
-		    unsigned int ph, unsigned int pw,
-		    unsigned int ih, unsigned int iw);
-    virtual ~similar_patches();
-    bool add_similar_patch(idx<ubyte> &im, int h, 
-			   int w, unsigned int index);
-    bool current_patch_empty(unsigned int index);
-    void display_dataset(unsigned int maxh, unsigned int maxw);
-    bool save_dataset(const char *directory);
+  public:
+    job(configuration &conf);
+    virtual ~job();
+    
   };
 
-} // namespace ebl {
+  class job_manager {
+  private:
+    meta_configuration mconf;
+    vector<job> jobs;
 
-#endif /* SIMILAR_PATCHES_H_ */
+  public:
+    job_manager();
+    virtual ~job_manager();
+
+    bool read_metaconf(const char *fname);
+  };
+
+} // end namespace ebl
+
+#endif /* META_JOBS_H_ */

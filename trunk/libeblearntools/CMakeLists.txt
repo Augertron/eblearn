@@ -95,6 +95,8 @@ ENDIF (QT_FOUND)
 ################################################################################
 add_executable (meta_trainer
   src/meta_trainer.cpp
+  src/configuration.cpp
+  src/meta_jobs.cpp
   )
 
 # link executable with external libraries
@@ -105,14 +107,22 @@ ELSE(${Boost_MINOR_VERSION} GREATER 34)
     ${Boost_REGEX_LIBRARY})
 ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 
+# compile executable: meta_plot
+################################################################################
+add_executable (meta_plot
+  src/meta_plot.cpp
+  )
+
+# link executable with external libraries
+IF (${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(meta_plot ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+ELSE(${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(meta_plot ${Boost_FILESYSTEM_LIBRARY} 
+    ${Boost_REGEX_LIBRARY})
+ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+
 EXEC_PROGRAM("cp" ARGS "${CMAKE_CURRENT_SOURCE_DIR}/src/meta_plot.sh"
 		  "${LIBRARY_OUTPUT_PATH}")
-
-# compile executable: meta_trainer
-################################################################################
-add_executable (confread
-  src/config_read.cpp
-  )
 
 # compile executable: videoffinder
 ################################################################################
