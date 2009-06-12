@@ -5,7 +5,7 @@ echo "Recursively analyzing *.log files in ${TGTDIR}..."
 DATE=`/bin/date '+%Y.%m.%d.%H.%M.%S'`
 DIRNAME="plots.$DATE"
 rm -Rf $DIRNAME && mkdir $DIRNAME > /dev/null && cd $DIRNAME
-meta_trainer $TGTDIR
+meta_plot $TGTDIR
 if [ $? -eq 0 ]
 then
     plots=`ls *.p`

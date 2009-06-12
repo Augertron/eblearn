@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source
- *       Initiative (http://www.opensource.org) must display the
+ *     * Redistribution under a license not approved by the Open Source 
+ *       Initiative (http://www.opensource.org) must display the 
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -30,49 +30,62 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef SIMILAR_PATCHES_H_
-#define SIMILAR_PATCHES_H_
+#ifndef CONFIGURATION_H_
+#define CONFIGURATION_H_
 
-#include "libidx.h"
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif
-
+#include <map>
 #include <vector>
 
 using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // similar_patches
+  typedef map<string, string, less<string> > string_map_t;
+  typedef map<string, vector<string>, less<string> > string_list_map_t;
 
-  class similar_patches {
-  private:
-    unsigned int			max_similar_patches;
-    unsigned int			pheight;
-    unsigned int			pwidth;
-    unsigned int			iheight;
-    unsigned int			iwidth;
-    unsigned int                        wdisplay;
-    unsigned int                        display_index;
-    vector< vector< idx<ubyte>* > *>	dataset;
-    vector< vector< idx<ubyte>* > *>	current_patches;
+  // utility functions
+  string timestamp();
+  
+  class configuration {
+  protected:
+    string_map_t	smap;
+    string name;
+    string output_dir;
+    
   public:
-    unsigned int			max_current_patches;
-    vector< pair<int, int> >		current_patches_xy;
+    configuration() {}
+    configuration(string_map_t &smap, string &name, string &output_dir);
+    virtual ~configuration();
 
-    similar_patches(unsigned int maxcurrent, unsigned int maxsimilar,
-		    unsigned int ph, unsigned int pw,
-		    unsigned int ih, unsigned int iw);
-    virtual ~similar_patches();
-    bool add_similar_patch(idx<ubyte> &im, int h, 
-			   int w, unsigned int index);
-    bool current_patch_empty(unsigned int index);
-    void display_dataset(unsigned int maxh, unsigned int maxw);
-    bool save_dataset(const char *directory);
+    bool read(const char *fname);
+    bool write(const char *fname);
+
+    // accessors
+
+    const string &get_name();
+    const string &get_output_dir();
   };
 
-} // namespace ebl {
+  class meta_configuration : public configuration {
+  private:
+    string_map_t	meta_smap;
+    string_list_map_t	lmap;
+    vector<size_t>	conf_indices;
+    int			conf_combinations;
+    vector<configuration> confs;
+    
+  public:
+    meta_configuration();
+    virtual ~meta_configuration();
 
-#endif /* SIMILAR_PATCHES_H_ */
+    bool read(const char *fname);
+
+    // accessors
+
+    // return all possible configurations
+    vector<configuration>& configurations();
+  };
+
+} // end namespace ebl
+
+#endif /* CONFIGURATION_H_ */

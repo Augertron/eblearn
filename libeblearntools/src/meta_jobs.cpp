@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet   *
- *   pierre.sermanet@gmail.com   *
- *   All rights reserved.
+ *   Copyright (C) 2009 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,49 +29,60 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef SIMILAR_PATCHES_H_
-#define SIMILAR_PATCHES_H_
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <stdio.h>
+#include <map>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#include "libidx.h"
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif
-
-#include <vector>
+#include "meta_jobs.h"
 
 using namespace std;
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // similar_patches
+  // job
 
-  class similar_patches {
-  private:
-    unsigned int			max_similar_patches;
-    unsigned int			pheight;
-    unsigned int			pwidth;
-    unsigned int			iheight;
-    unsigned int			iwidth;
-    unsigned int                        wdisplay;
-    unsigned int                        display_index;
-    vector< vector< idx<ubyte>* > *>	dataset;
-    vector< vector< idx<ubyte>* > *>	current_patches;
-  public:
-    unsigned int			max_current_patches;
-    vector< pair<int, int> >		current_patches_xy;
+  job::job(configuration &conf_) : conf(conf_) {
+    // create directories 
+    mkdir(conf.get_output_dir().c_str(), 0700); // create output_dir
+    string job_dir = conf.get_output_dir();
+    job_dir += "/";
+    job_dir += conf.get_name();
+    mkdir(job_dir.c_str(), 0700); // create job_dir
+    // create configuration file
+    string conf_dir = job_dir;
+    conf_dir += "/";
+    conf_dir += "config";
+    conf.write(conf_dir.c_str());
+  }
 
-    similar_patches(unsigned int maxcurrent, unsigned int maxsimilar,
-		    unsigned int ph, unsigned int pw,
-		    unsigned int ih, unsigned int iw);
-    virtual ~similar_patches();
-    bool add_similar_patch(idx<ubyte> &im, int h, 
-			   int w, unsigned int index);
-    bool current_patch_empty(unsigned int index);
-    void display_dataset(unsigned int maxh, unsigned int maxw);
-    bool save_dataset(const char *directory);
-  };
+  job::~job() {
+  }
 
-} // namespace ebl {
+  ////////////////////////////////////////////////////////////////
+  // job manager
 
-#endif /* SIMILAR_PATCHES_H_ */
+  job_manager::job_manager() {
+  }
+  
+  job_manager::~job_manager() {
+  }
+
+  bool job_manager::read_metaconf(const char *fname) {
+    // read meta configuration
+    if (!mconf.read(fname))
+      return false;
+    // create job list from all possible configurations
+    vector<configuration> &confs = mconf.configurations();
+    vector<configuration>::iterator iconf = confs.begin();
+    for ( ; iconf != confs.end(); ++iconf) {
+      jobs.push_back(*iconf);
+    }
+    return true;
+  }
+
+} // namespace ebl
