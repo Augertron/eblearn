@@ -78,6 +78,7 @@ int main(int argc, char **argv) { // regular main without gui
     thetrainer.train(train_ds, trainmeter, gdp, 1);	         // train
     thetrainer.test(train_ds, trainmeter, infp);	         // test
     thetrainer.test(test_ds, testmeter, infp);	                 // test
+    theparam.save_x("mnist_trained_network.mat"); // save trained network
 #ifdef __GUI__
     stgui.display_datasource(thetrainer, test_ds, infp, 10, 10); // display
     stgui.display_internals(thetrainer, test_ds, infp, 2);       // display

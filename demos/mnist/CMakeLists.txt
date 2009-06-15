@@ -25,15 +25,29 @@ ENDIF (QT_FOUND) #--------------------------------------------------------------
 
 # compile executable
 ################################################################################
-add_executable (mnist
-  src/main.cpp
+add_executable (mnist_train
+  src/train.cpp
   )
   
 # link executable with external libraries
 ################################################################################
-target_link_libraries (mnist eblearn idx)
+target_link_libraries (mnist_train eblearn idx)
 IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (mnist idxgui)
-  target_link_libraries (mnist eblearngui)
+  target_link_libraries (mnist_train idxgui)
+  target_link_libraries (mnist_train eblearngui)
+ENDIF (QT_FOUND) #------------------------------------------------------------
+  
+# compile executable
+################################################################################
+add_executable (mnist_reco
+  src/reco.cpp
+  )
+  
+# link executable with external libraries
+################################################################################
+target_link_libraries (mnist_reco eblearn idx)
+IF (QT_FOUND) #---------------------------------------------------------------
+  target_link_libraries (mnist_reco idxgui)
+  target_link_libraries (mnist_reco eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
   
