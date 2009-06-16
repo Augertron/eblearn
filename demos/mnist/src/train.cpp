@@ -21,8 +21,8 @@ int main(int argc, char **argv) { // regular main without gui
   }
   init_drand(time(NULL)); // initialize random seed
 
-  intg trsize = 2000; // maximum training set size: 60000
-  intg tesize = 1000; // maximum testing set size:  10000
+  intg trsize = 60000; // maximum training set size: 60000
+  intg tesize = 10000; // maximum testing set size:  10000
   
   //! load MNIST datasets: trize for training set and tesize for testing set
   mnist_datasource<ubyte,ubyte> train_ds, test_ds;
