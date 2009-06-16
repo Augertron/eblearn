@@ -330,6 +330,14 @@ namespace ebl {
     }
   }
   
+  template<class T> void idx_threshold(idx<T>& in, T th, T value, idx<T>& out) {
+    idxiter<T> pin; idxiter<T> pout;
+    idx_aloop2_on(pin,in,pout,out) {
+      if (*pin < th)
+	*pout = value;
+    }
+  }
+  
   template<class T> void idx_sqrt(idx<T>& in, idx<T>& out) {
     idxiter<T> pin; idxiter<T> pout;
     idx_aloop2_on(pin,in,pout,out) {
@@ -490,6 +498,14 @@ namespace ebl {
     idx_aloop2_on(pin,in,pout,out) {
       if (*pin < th)
 	*pout = th;
+    }
+  }
+
+  template<class T> void idx_threshold(idx<T>& in, T th, T value, idx<T>& out) {
+    ScalarIter<T> pin(in); ScalarIter<T> pout(out);
+    idx_aloop2_on(pin,in,pout,out) {
+      if (*pin < th)
+	*pout = value;
     }
   }
 

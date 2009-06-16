@@ -35,7 +35,7 @@ int main(int argc, char **argv) { // regular main without gui
     eblerror("expected trained parameter filename and image filename");
   }
   string paramfname = "mnist_trained_network.mat";
-  string imagefname = "../data/mnist/2_34x34.pnm";
+  string imagefname = "../data/mnist/2_grid_64x64.pnm";
   if (argc > 1) paramfname = argv[1];
   if (argc > 2) imagefname = argv[2];
   cout << "Looking for digits in image " << imagefname;
@@ -67,7 +67,10 @@ int main(int argc, char **argv) { // regular main without gui
 
   // display internals of the fprop
   module_1_1_gui l5gui;
+  cout << "min " << idx_min(stout.x) << " max " << idx_max(stout.x) << endl;
+  idx_threshold(stout.x, .93, -1.0, stout.x);
   l5gui.display_fprop(l5, stin, stout);
   sleep(1);
+  
   return 0;
 }
