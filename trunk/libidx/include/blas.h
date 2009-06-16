@@ -241,6 +241,9 @@ namespace ebl {
   //! if input is less than th, assign th.
   template<class T> void idx_threshold(idx<T>& in, T th, idx<T>& out);
   
+  //! if input is less than th, assign value.
+  template<class T> void idx_threshold(idx<T>& in, T th, T value, idx<T>& out);
+  
   //! takes the square root of in and puts it in out.
   template<class T> void idx_sqrt(idx<T>& in, idx<T>& out);
   
