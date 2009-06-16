@@ -62,13 +62,20 @@ int main(int argc, char **argv) { // regular main without gui
 
   // fprop input throught the network
   l5.fprop(stin, stout);
-  int answer = idx_indexmax(stout.x); // infer answer from maximum score
-  cout << "answer is " << answer << endl;
+
+  // infer answers
+  cout << "min " << idx_min(stout.x) << " max " << idx_max(stout.x) << endl;
+  double threshold = .93;
+  idx_eloop1(outx, stout.x, double) {
+    idx_eloop1(out, outx, double) {
+      if (idx_max(out) >= threshold)
+	cout << "the image contains a " << idx_indexmax(out) << endl;
+    }
+  }
 
   // display internals of the fprop
   module_1_1_gui l5gui;
-  cout << "min " << idx_min(stout.x) << " max " << idx_max(stout.x) << endl;
-  idx_threshold(stout.x, .93, -1.0, stout.x);
+  idx_threshold(stout.x, threshold, -1.0, stout.x);
   l5gui.display_fprop(l5, stin, stout);
   sleep(1);
   
