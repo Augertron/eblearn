@@ -581,6 +581,8 @@ namespace ebl {
     //!   are added.
     //! if n > 1 and n < current order, this is undefined, an error is raised.
     //! if n == current order, an identical idx is returned.
+    // TODO: forbid this function as it conflicts with the forbidden
+    // order-change law? unfold also conflicts with this law?
     idx<T> view_as_order(int n);
 
     ////////////////////////////////////////////////////////////////
