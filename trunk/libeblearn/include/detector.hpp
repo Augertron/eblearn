@@ -29,10 +29,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef classifier2D_HPP
-#define classifier2D_HPP
+#ifndef DETECTOR_HPP
+#define DETECTOR_HPP
 
-#include "classifier2D.h"
+#include "detector.h"
 #include <algorithm>
 
 using namespace std;
@@ -41,7 +41,7 @@ using namespace std;
 namespace ebl {
 
 //   template <class Tdata>
-//   classifier2D<Tdata>::classifier2D(module_1_1<state_idx,state_idx> &thenet_, 
+//   detector<Tdata>::detector(module_1_1<state_idx,state_idx> &thenet_, 
 // 				    idx<int> &sz, 
 // 				    idx<const char*> &lbls,
 // 				    double b, double c, int h, int w,
@@ -76,7 +76,7 @@ namespace ebl {
 
 
   template <class Tdata>
-  classifier2D<Tdata>::classifier2D(module_1_1<state_idx, state_idx> &thenet_,
+  detector<Tdata>::detector(module_1_1<state_idx, state_idx> &thenet_,
 				      idx<float> &sizes_, 
 				      idx<const char*> &labels_,
 				      double bias_, double coef_) 
@@ -85,7 +85,7 @@ namespace ebl {
   }
 
   template <class Tdata>
-  void classifier2D<Tdata>::init(idx<Tdata> &sample) {
+  void detector<Tdata>::init(idx<Tdata> &sample) {
     // compute closest size of input compatible with the network size
     idxdim indim(sample.dim(0), sample.dim(1));
     idxdim outdim = thenet.fprop_size(indim);
@@ -141,11 +141,11 @@ namespace ebl {
   
 
 //   template <class Tdata>
-//   classifier2D<Tdata>::classifier2D(module_1_1<state_idx, state_idx> &thenet)
+//   detector<Tdata>::detector(module_1_1<state_idx, state_idx> &thenet)
 //     : thenet(thenet) {}
 
   template <class Tdata>
-  classifier2D<Tdata>::~classifier2D() {
+  detector<Tdata>::~detector() {
     { idx_bloop3(in, inputs, void*, out, outputs, void*, r, results, void*) {
 	delete((state_idx*) in.get());
 	delete((state_idx*) out.get());
@@ -155,7 +155,7 @@ namespace ebl {
 
 
     template <class Tdata> 
-  void classifier2D<Tdata>::mark_maxima(double threshold) {
+  void detector<Tdata>::mark_maxima(double threshold) {
     
     { idx_bloop2(out_map, outputs, void*, 
 		 res_map, results, void*) {
@@ -212,7 +212,7 @@ namespace ebl {
   }
 
   template <class Tdata> 
-  vector<bbox> classifier2D<Tdata>::map_to_list(double threshold) {
+  vector<bbox> detector<Tdata>::map_to_list(double threshold) {
     // make a list that contains the results
     //    idx<double> rlist(1, 10);
     vector<bbox> vb;
@@ -268,7 +268,7 @@ namespace ebl {
 
   
 //   template <class Tdata>
-//   void classifier2D<Tdata>::mark_maxima(idx<double> &in, idx<double> &inc, 
+//   void detector<Tdata>::mark_maxima(idx<double> &in, idx<double> &inc, 
 // 				 idx<double> &res, double threshold) {
 //     idx_clear(res);
 //     int tr[] = { 1, 2, 0 };
@@ -299,7 +299,7 @@ namespace ebl {
 
 //   // produce a score between 0 and 1 for each class at each location
 //   template <class Tdata>
-//   idx<double> classifier2D<Tdata>::postprocess_output(double threshold, int objsize) {
+//   idx<double> detector<Tdata>::postprocess_output(double threshold, int objsize) {
 //     // find candidates at each scale
 //     { idx_bloop2(out, outputs, void*, resu, results, void*) {
 // 	idx<double> outx = ((state_idx*) out.get())->x;
@@ -357,7 +357,7 @@ namespace ebl {
 //   }
 
 //   template <class Tdata>
-//   idx<Tdata> classifier2D<Tdata>::multi_res_prep(idx<Tdata> &img, float zoom) {
+//   idx<Tdata> detector<Tdata>::multi_res_prep(idx<Tdata> &img, float zoom) {
 //     // copy input images locally
 //     idx_copy(img, grabbed);
 //     // prepare multi resolutions input
@@ -392,7 +392,7 @@ namespace ebl {
 //   }
 
 // //   template <class Tdata>
-// //   idx<double> classifier2D<Tdata>::multi_res_fprop(double threshold, int objsize) {
+// //   idx<double> detector<Tdata>::multi_res_fprop(double threshold, int objsize) {
 // //     // fprop network on different resolutions
 // //     { idx_bloop2(in, inputs, void*, out, outputs, void*) {
 // // 	state_idx *ii = ((state_idx*) in.get());
@@ -412,7 +412,7 @@ namespace ebl {
 // //   }
 
 //   template <class Tdata>
-//   idx<double> classifier2D<Tdata>::prune(idx<double> &res) {
+//   idx<double> detector<Tdata>::prune(idx<double> &res) {
 //     // prune a list of detections.
 //     // only keep the largest scoring within an area
 //     idx<double> rlist(1, res.dim(1));
@@ -448,7 +448,7 @@ namespace ebl {
 //   }
 
   template<class Tdata>
-  void classifier2D<Tdata>::pretty_bboxes(vector<bbox> &vb) {
+  void detector<Tdata>::pretty_bboxes(vector<bbox> &vb) {
     cout << endl << "detector: ";
     if (vb.size() == 0)
       cout << "no object found." << endl;
@@ -473,7 +473,7 @@ namespace ebl {
   }
   
   template <class Tdata>
-  vector<bbox> classifier2D<Tdata>::fprop(idx<Tdata> &img, double threshold) {
+  vector<bbox> detector<Tdata>::fprop(idx<Tdata> &img, double threshold) {
     init(img);
     grabbed = img;
     // do a fprop for each scaled input sample
@@ -509,7 +509,7 @@ namespace ebl {
   }
 
   template <class Tdata> 
-  void classifier2D<Tdata>::multi_res_fprop(idx<Tdata> &sample) {
+  void detector<Tdata>::multi_res_fprop(idx<Tdata> &sample) {
 
     { idx_bloop2(in, inputs, void*,
 		 out, outputs, void*) {
@@ -536,20 +536,20 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
 //   template <class Tdata>
-//   classifier2D_binocular<Tdata>::
-//   classifier2D_binocular(module_1_1<state_idx, state_idx> &thenet,
+//   detector_binocular<Tdata>::
+//   detector_binocular(module_1_1<state_idx, state_idx> &thenet,
 // 			 idx<int> &sz, idx<const char*> &lbls,
 // 			 double b, double c, int h, int w)
-//     : classifier2D<Tdata>(thenet, sz, lbls, b, c, h, w) {
+//     : detector<Tdata>(thenet, sz, lbls, b, c, h, w) {
 //     grabbed2 = idx<Tdata>(height, width);
 //   }
 
 //   template <class Tdata>
-//   classifier2D_binocular<Tdata>::~classifier2D_binocular() {
+//   detector_binocular<Tdata>::~detector_binocular() {
 //   }
 
 //   template <class Tdata>
-//   void classifier2D_binocular<Tdata>::multi_res_prep(Tdata *left, Tdata *right, 
+//   void detector_binocular<Tdata>::multi_res_prep(Tdata *left, Tdata *right, 
 // 					 int dx, int dy, float zoom) {
 //     // display
 //     idx<Tdata> display(height, width), display2(height, width);
@@ -606,7 +606,7 @@ namespace ebl {
 //   }
 
 //   template <class Tdata>
-//   idx<double> classifier2D_binocular<Tdata>::fprop(Tdata *left, Tdata *right, 
+//   idx<double> detector_binocular<Tdata>::fprop(Tdata *left, Tdata *right, 
 // 						   float zoom, int dx, int dy, 
 // 						   double threshold, 
 // 						   int objsize) {

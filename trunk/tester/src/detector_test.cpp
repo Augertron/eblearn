@@ -1,4 +1,4 @@
-#include "classifier2D_test.h"
+#include "detector_test.h"
 
 #ifdef __GUI__
 #include "libeblearngui.h"
@@ -10,13 +10,13 @@ extern string *gl_data_dir;
 extern string *gl_data_errmsg;
 
 
-void classifier2D_test::setUp() {
+void detector_test::setUp() {
 }
 
-void classifier2D_test::tearDown() {
+void detector_test::tearDown() {
 }
 
-void classifier2D_test::test_norb() {
+void detector_test::test_norb() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
   string mono_net = *gl_data_dir;
   mono_net += "/norb/20040618-1628-031617-lenet7-jitt-bg-mono-demo-4082400.prm";
@@ -52,24 +52,24 @@ void classifier2D_test::test_norb() {
   //  int tr[3] = { 2, 1, 0 };
   //left = left.transpose(tr);
   left = left.select(2, 0);
-  classifier2D<ubyte> cb(thenet, sz, lbl, 0.0, 0.01);
+  detector<ubyte> cb(thenet, sz, lbl, 0.0, 0.01);
 
 
   // find category of image
   //  cb.fprop(left, .5);
 
 #ifdef __GUI__
-  classifier2D_gui cgui;
+  detector_gui cgui;
   cgui.display_all(cb, left, 1, .97, 60);
 #endif
 
   //  idx<double> res = cb.fprop(left, 1, 1.8, 60);
   //  CPPUNIT_ASSERT(res.dim(0) == 1); // only 1 object
   //  CPPUNIT_ASSERT(res.get(0, 0) == 2); // plane
-  sleep(1000);
+  sleep(5);
 }
 
-void classifier2D_test::test_norb_binoc() {
+void detector_test::test_norb_binoc() {
   CPPUNIT_ASSERT(false);
 //   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
 //   string binoc_net = *gl_data_dir;
@@ -96,7 +96,7 @@ void classifier2D_test::test_norb_binoc() {
 //   // input to the network will be 96x96 and there are 5 outputs
 //   lenet7_binocular thenet(theparam, 96, 96, 5);
 //   theparam.load_x(binoc_net.c_str());
-//   classifier2D_binocular<ubyte> cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
+//   detector_binocular<ubyte> cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
 
 //   // find category of image
 //   left = image_resize(left, 320, 240, 1);

@@ -30,35 +30,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef CLASSIFIER2D_GUI_H_
-#define CLASSIFIER2D_GUI_H_
+#ifndef DETECTOR_GUI_H_
+#define DETECTOR_GUI_H_
 
 #include "libidxgui.h"
-#include "classifier2D.h"
+#include "detector.h"
 
 using namespace std;
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // classifier2D_gui
+  // detector_gui
 
-  class classifier2D_gui {
+  class detector_gui {
   private:
     unsigned int	 display_wid;
     unsigned int	 display_wid_fprop;
 
   public:
-    classifier2D_gui() {};
-    virtual ~classifier2D_gui() {};
+    detector_gui() {};
+    virtual ~detector_gui() {};
 
     //! displays only the output of the classifier after a a call to 
-    //! classifier2D::fprop(img, zoom, threshold, objsize) at coordinates 
+    //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
     //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <class Tdata>
-    void display(classifier2D<Tdata> &cl, idx<Tdata> &img, 
+    void display(detector<Tdata> &cl, idx<Tdata> &img, 
 		 float zoom, double threshold,
 		 int objsize,
 		 unsigned int h0 = 0, unsigned int w0 = 0, 
@@ -67,12 +67,12 @@ namespace ebl {
 
     //! display the regular input/output display but also the inputs and outputs
     //! corresponding to each scale, corresponding to a call to 
-    //! classifier2D::fprop(img, zoom, threshold, objsize) at coordinates 
+    //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
     //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <class Tdata>
-    void display_inputs_outputs(classifier2D<Tdata> &cl, 
+    void display_inputs_outputs(detector<Tdata> &cl, 
 				idx<Tdata> &img, float zoom, 
 				double threshold, int objsize,
 				unsigned int h0 = 0, unsigned int w0 = 0, 
@@ -81,12 +81,12 @@ namespace ebl {
     
     //! display all, display_inputs_outputs and the internal states of the fprop
     //! on the first scale, corresponding to a call to 
-    //! classifier2D::fprop(img, zoom, threshold, objsize) at coordinates 
+    //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
     //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <class Tdata>
-    void display_all(classifier2D<Tdata> &cl, idx<Tdata> &img, 
+    void display_all(detector<Tdata> &cl, idx<Tdata> &img, 
 		     float zoom, double threshold, int objsize,
 		     unsigned int h0 = 0, unsigned int w0 = 0, 
 		     double dzoom = 1.0, int wid = -1, 
@@ -97,7 +97,7 @@ namespace ebl {
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <class Tdata>
-    void display_current(classifier2D<Tdata> &cl, 
+    void display_current(detector<Tdata> &cl, 
 			 idx<Tdata> &sample,
 			 int wid = -1, 
 			 const char *wname = NULL);
@@ -106,6 +106,6 @@ namespace ebl {
 
 } // end namespace ebl
 
-#include "classifier2D_gui.hpp"
+#include "detector_gui.hpp"
 
-#endif /* CLASSIFIER2D_GUI_H_ */
+#endif /* DETECTOR_GUI_H_ */

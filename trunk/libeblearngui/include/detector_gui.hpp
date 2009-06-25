@@ -30,26 +30,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef CLASSIFIER2D_GUI_HPP_
-#define CLASSIFIER2D_GUI_HPP_
+#ifndef DETECTOR_GUI_HPP_
+#define DETECTOR_GUI_HPP_
 
-//#include "classifier2D_gui.h"
+//#include "detector_gui.h"
 
 using namespace std;
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // classifier2D_gui
+  // detector_gui
 
   template <class Tdata>
-  void classifier2D_gui::display(classifier2D<Tdata> &cl, 
+  void detector_gui::display(detector<Tdata> &cl, 
 				 idx<Tdata> &img, float zoom, 
 				 double threshold, int objsize,
 				 unsigned int h0, unsigned int w0,
 				 double dzoom, int wid, const char *wname){
     display_wid = (wid >= 0) ? wid : 
-      gui.new_window((wname ? wname : "classifier2D: output"));
+      gui.new_window((wname ? wname : "detector: output"));
     gui.select_window(display_wid);
     gui.disable_updates();
 
@@ -82,7 +82,7 @@ namespace ebl {
   }
 
   template <class Tdata>
-  void classifier2D_gui::display_inputs_outputs(classifier2D<Tdata> &cl, 
+  void detector_gui::display_inputs_outputs(detector<Tdata> &cl, 
 						idx<Tdata> &img, 
 						float zoom, 
 						double threshold, int objsize,
@@ -92,7 +92,7 @@ namespace ebl {
 						const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       gui.new_window((wname ? wname : 
-		      "classifier2D: inputs, outputs & internals"));
+		      "detector: inputs, outputs & internals"));
     gui.select_window(display_wid_fprop);
     gui.disable_updates();
 
@@ -161,7 +161,7 @@ namespace ebl {
   }
 
   template <class Tdata>
-  void classifier2D_gui::display_all(classifier2D<Tdata> &cl, 
+  void detector_gui::display_all(detector<Tdata> &cl, 
 				     idx<Tdata> &img, 
 				     float zoom, 
 				     double threshold, int objsize,
@@ -169,7 +169,7 @@ namespace ebl {
 				     double dzoom, int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       gui.new_window((wname ?
-		      wname : "classifier2D: inputs, outputs & internals"));
+		      wname : "detector: inputs, outputs & internals"));
     gui.select_window(display_wid_fprop);
     gui.disable_updates();
 
@@ -187,12 +187,12 @@ namespace ebl {
   }
 
   template <class Tdata>
-  void classifier2D_gui::display_current(classifier2D<Tdata> &cl, 
+  void detector_gui::display_current(detector<Tdata> &cl, 
 					 idx<Tdata> &sample,
 					 int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       gui.new_window((wname ?
-		      wname : "classifier2D: inputs, outputs & internals"));
+		      wname : "detector: inputs, outputs & internals"));
     gui.select_window(display_wid_fprop);
     gui.disable_updates();
 
