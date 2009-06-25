@@ -15,7 +15,7 @@
 #include "NetTest.h"
 #include "IdxTest.h"
 #include "IdxIteratorsTest.h"
-#include "Classifier2DTest.h"
+#include "classifier2D_test.h"
 #include "ClusterTest.h"
 #include "image_test.h"
 
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
   runner.addTest(IdxIOTest::suite());
   runner.addTest(image_test::suite());
   runner.addTest(DataSourceTest::suite());
-  runner.addTest(Classifier2DTest::suite());
+  runner.addTest(classifier2D_test::suite());
   runner.addTest(NetTest::suite());
 
   // run all tests

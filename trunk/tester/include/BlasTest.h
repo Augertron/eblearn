@@ -2,7 +2,7 @@
 #define BLASTEST_H_
 
 #include <cppunit/extensions/HelperMacros.h>
-#include "libeblearn.h"
+#include "blas.h"
 
 //! Test class for Blas class
 class BlasTest : public CppUnit::TestFixture  {
@@ -15,6 +15,7 @@ class BlasTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST(test_idx_m2oversample);
   CPPUNIT_TEST(test_idx_m2squdotm1);
   CPPUNIT_TEST(test_idx_m2extm2acc);
+  CPPUNIT_TEST(test_idx_m2dotm1);
   CPPUNIT_TEST(test_idx_copy);
   CPPUNIT_TEST(test_idx_copy2);
   CPPUNIT_TEST(test_idx_abs);
@@ -39,6 +40,7 @@ public:
   void test_idx_m2oversample();
   void test_idx_m2squdotm1();
   void test_idx_m2extm2acc();
+  void test_idx_m2dotm1();
   void test_idx_copy();
   void test_idx_copy2();
   void test_idx_abs();

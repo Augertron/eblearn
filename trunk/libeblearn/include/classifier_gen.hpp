@@ -48,7 +48,8 @@ namespace ebl {
     : classifier2D<Tdata>(thenet_), coef(coef_), bias(bias_),
       sizes(sizes_), labels(labels_), sample(sample_) {
     
-    // size of the sample to process 
+    // size of the sample to process
+    int thickness = 2; // sample.dim(0); // TODO FIXME
     height = sample.dim(0);    
     width = sample.dim(1);
     grabbed = idx<Tdata>(height, width);
@@ -58,6 +59,11 @@ namespace ebl {
     outputs = idx<void*>(sizes.nelements());
     results = idx<void*>(sizes.nelements());
 
+    idxdim minodim(1, 1, 1);
+    idxdim minidim = thenet.bprop_size(minodim);
+    cout << "input size: " << sample << endl;
+    cout << "min input size: " << minidim << endl;
+    
     { idx_bloop4(size, sizes, double, 
 		 in, inputs, void*, 
 		 out, outputs, void*,
@@ -65,9 +71,11 @@ namespace ebl {
 	// Compute the input sizes for each scale
 	idxdim scaled_dims( (intg)(height / size.get()),
 			    (intg)(width / size.get()) );
+	cout << "scaled input dim: " << scaled_dims << " original/";
+	cout << size.get() << endl;
 	// Adapt the size to the network structure:
 	idxdim out_dims = thenet.fprop_size(scaled_dims);
-	in.set((void*) new state_idx(1, 
+	in.set((void*) new state_idx(thickness,
 				     scaled_dims.dim(0),
 				     scaled_dims.dim(1)));
 	out.set((void*) new state_idx(labels.nelements()+1, 
@@ -132,8 +140,11 @@ namespace ebl {
 	// generate multi-resolution input
   	idx<double> inx = ((state_idx*) in.get())->x;
   	idx<Tdata> imres = image_resize(sample, inx.dim(2), inx.dim(1), 1);
+	// TODO: temporary, use channels_dim
   	idx<double> inx0 = inx.select(0, 0);
+  	idx<double> inx1 = inx.select(0, 1);
   	idx_copy(imres, inx0);
+  	idx_copy(imres, inx1);
   	idx_addc(inx, bias, inx);
   	idx_dotc(inx, coef, inx);
 

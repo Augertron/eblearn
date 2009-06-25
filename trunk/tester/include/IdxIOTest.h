@@ -2,7 +2,7 @@
 #define IDXIOTEST_H_
 
 #include <cppunit/extensions/HelperMacros.h>
-#include "libeblearn.h"
+#include "idxIO.h"
 
 //! Test class for IdxIO class
 class IdxIOTest : public CppUnit::TestFixture  {

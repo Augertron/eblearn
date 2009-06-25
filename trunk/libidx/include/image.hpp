@@ -603,6 +603,18 @@ namespace ebl {
     return ret;
   }
 
+  template<class T>
+  bool load_image(const char *fname, idx<T> &out) {
+    return image_read_rgbx(fname, out);
+  }
+
+  template<class T>
+  idx<T> load_image(const char *fname) {
+    idx<T> out(1,1,1);
+    image_read_rgbx(fname, out);
+    return out;
+  }
+
   ////////////////////////////////////////////////////////////////
   // Filters
 

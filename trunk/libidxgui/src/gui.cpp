@@ -70,6 +70,11 @@ namespace ebl {
     gui.draw_arrow(h1, w1, h2, w2);
   }
 
+  void draw_box(int h0, int w0, int h, int w,
+		unsigned char r, unsigned char g, unsigned char b, string *s) {
+    gui.draw_box(h0, w0, h, w, r, g, b, s);
+  }
+
   void set_gui_silent() {
     gui.set_silent();
   }

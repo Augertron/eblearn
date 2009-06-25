@@ -352,6 +352,18 @@ void BlasTest::test_idx_abs() {
   }
 }
 
+void BlasTest::test_idx_m2dotm1() {
+  idx<double> d2(2, 5);
+  idx<double> d1(5);
+  idx<double> out(2);
+  
+  idx_fill(d2, 2.0);
+  idx_fill(d1, 1.0);
+  idx_m2dotm1(d2, d1, out);
+  idx_bloop1(o, out, double)
+    CPPUNIT_ASSERT_EQUAL(10.0, o.get());
+}
+
 void BlasTest::test_huge_vec() {
 
   // this would not run on many systems

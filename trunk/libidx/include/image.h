@@ -254,6 +254,10 @@ namespace ebl {
   template<class T>
     bool image_read_rgbx(const char *fname, idx<T> &out);
 
+  // TODO: comments
+  template<class T> bool load_image(const char *fname, idx<T> &out);
+  template<class T> idx<T> load_image(const char *fname);
+
   ////////////////////////////////////////////////////////////////
   // Filters
 

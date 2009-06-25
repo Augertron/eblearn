@@ -59,6 +59,12 @@ namespace ebl {
 	    this, SLOT(add_text(const std::string*)));
     connect(&thread, SIGNAL(gui_add_arrow(int, int, int, int)), 
 	    this, SLOT(add_arrow(int, int, int, int)));
+    connect(&thread, SIGNAL(gui_add_box(int, int, int, int, unsigned char,
+					unsigned char, unsigned char,
+					string *)), 
+	    this, SLOT(add_box(int, int, int, int, unsigned char,
+			       unsigned char, unsigned char,
+			       string *)));
     connect(&thread, SIGNAL(gui_set_text_origin(unsigned int, unsigned int)), 
 	    this, SLOT(set_text_origin(unsigned int, unsigned int)));
     connect(&thread, SIGNAL(gui_set_text_colors(unsigned char, unsigned char, 
@@ -103,6 +109,13 @@ namespace ebl {
   void gui_thread::add_arrow(int x1, int y1, int x2, int y2) {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->add_arrow(x1, y1, x2, y2);
+  }
+
+  void gui_thread::add_box(int h0, int w0, int h, int w,
+			   unsigned char r, unsigned char g,
+			   unsigned char b, string *s) {
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->add_box(h0, w0, h, w, r, g, b, s);
   }
 
   void gui_thread::set_text_origin(unsigned int h0, unsigned int w0) {

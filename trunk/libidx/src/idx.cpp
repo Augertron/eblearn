@@ -680,8 +680,12 @@ namespace ebl {
   }
   
   void idxdim::setdim(intg dimn, intg size) {
-    if (dimn >= ndim)
+    if (dimn >= ndim) {
+      cerr << "error: trying to set dimension " << dimn << " to size ";
+      cerr << size << " but idxidm has only " << ndim;
+      cerr << " dimension(s)." << endl;
       eblerror("cannot change the order of idxdim");
+    }
     dims[dimn] = size; 
   }
 

@@ -53,31 +53,44 @@ namespace ebl {
 
   //! Calls eblerror if src0 and src1 have different number of elements.
 #define idx_checknelems2_all(src0, src1)				\
-  if ((src0).nelements() != (src1).nelements())				\
-    eblerror("incompatible idx sizes\n");
+  if ((src0).nelements() != (src1).nelements()) {			\
+    cerr << "error: " << src0 << " and " << src1;			\
+    cerr << " should have the same number of elements." << endl;	\
+    eblerror("incompatible idx sizes\n"); }
 
   //! Calls eblerror if src0 and src1 and src2 have different number of
   //! elements.
-#define idx_checknelems3_all(src0, src1, src2)		\
-  if (((src0).nelements() != (src1).nelements()) ||	\
-      ((src0).nelements() != (src2).nelements()))	\
-    eblerror("incompatible idx sizes\n");
-
+#define idx_checknelems3_all(src0, src1, src2)				\
+  if (((src0).nelements() != (src1).nelements()) ||			\
+      ((src0).nelements() != (src2).nelements())) {			\
+    cerr << "error: " << src0 << ", " << src1 << " and " << src2;	\
+    cerr << " should have the same number of elements." << endl;	\
+    eblerror("incompatible idx sizes\n"); }
+  
   //! Calls eblerror if src0 and o0 do not match.
 #define idx_checkorder1(src0, o0)		\
   if ((src0).order() != o0)			\
     eblerror("idx has wrong order");
 
   //! Calls eblerror if src0,src1 and o0,o1 do not match.
-#define idx_checkorder2(src0, o0, src1, o1)		\
-  if (((src0).order() != o0) || ((src1).order() != o1)) \
-    eblerror("idx have incompatible orders");
+#define idx_checkorder2(src0, o0, src1, o1)				\
+  if (((src0).order() != o0) || ((src1).order() != o1)) {		\
+    cerr << "error: ";							\
+    if ((src0).order() != o0) cerr << src0 << " should have order " << o0; \
+    if ((src1).order() != o1) cerr << src1 << " should have order " << o1; \
+    cerr << endl;							\
+    eblerror("idx have incompatible orders"); }
 
   //! Calls eblerror if src0,src1,src2 and o0,o1,o2 do not match.
 #define idx_checkorder3(src0, o0, src1, o1, src2, o2)			\
   if (((src0).order() != o0) || ((src1).order() != o1)			\
-      || ((src2).order() != o2))					\
-    eblerror("idx have incompatible orders");
+      || ((src2).order() != o2)) {					\
+    cerr << "error: ";							\
+    if ((src0).order() != o0) cerr << src0 << " should have order " << o0; \
+    if ((src1).order() != o1) cerr << src1 << " should have order " << o1; \
+    if ((src2).order() != o2) cerr << src2 << " should have order " << o2; \
+    cerr << endl;							\
+    eblerror("idx have incompatible orders"); }
 
   //! Calls eblerror if src0.order(), src1.order() and src2.order() differ
 #define idx_checkorder3_all(src0, src1, src2)				\

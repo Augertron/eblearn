@@ -1,4 +1,3 @@
-#include "libidx.h"
 #include "IdxIteratorsTest.h"
 #include <iostream>
 #include <ctime>

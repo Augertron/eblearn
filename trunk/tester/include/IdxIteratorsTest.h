@@ -2,7 +2,8 @@
 #define IDXITERATORSTEST_H_
 
 #include <cppunit/extensions/HelperMacros.h>
-#include "libeblearn.h"
+#include "idx.h"
+#include "idx_iterators.h"
 
 //! Test class for IdxIterators class
 class IdxIteratorsTest : public CppUnit::TestFixture  {

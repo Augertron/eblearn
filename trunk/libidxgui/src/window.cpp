@@ -58,6 +58,14 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // box
+
+  box::box(int h0_, int w0_, int h_, int w_, unsigned char r_, unsigned char g_,
+	   unsigned char b_)
+    : h0(h0_), w0(w0_), h(h_), w(w_), r(r_), g(g_), b(b_) {
+  }
+
+  ////////////////////////////////////////////////////////////////
   // image
 
   image::image(idx<ubyte> &img_, unsigned int h0_, unsigned int w0_)
@@ -105,6 +113,7 @@ namespace ebl {
       delete qimage;
     clear_text();
     clear_arrows();
+    clear_boxes();
     clear_images();
   }
 
@@ -118,6 +127,7 @@ namespace ebl {
       pixmap->fill(Qt::white);
     clear_text();
     clear_arrows();
+    clear_boxes();
     clear_images();
     update_window();
   }
@@ -137,6 +147,13 @@ namespace ebl {
       if (*i)
 	delete (*i);
     arrows.clear();
+  }
+
+  void Window::clear_boxes() {
+    for (vector<box*>::iterator i = boxes.begin(); i != boxes.end(); ++i)
+      if (*i)
+	delete (*i);
+    boxes.clear();
   }
 
   void Window::clear_images() {
@@ -198,6 +215,16 @@ namespace ebl {
   
   void Window::add_arrow(int h1, int w1, int h2, int w2) {
     arrows.push_back(new arrow(h1, w1, h2, w2));
+    update_window();
+  }
+  
+  void Window::add_box(int h0, int w0, int h, int w, unsigned char r,
+		       unsigned char g, unsigned char b, string *s) {
+    // add box
+    boxes.push_back(new box(h0, w0, h, w, r, g, b));
+    // add caption
+    set_text_origin(h0 + 1, w0 + 1);
+    add_text(s);
     update_window();
   }
   
@@ -355,9 +382,10 @@ namespace ebl {
     QRectF exposed = 
       painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
     painter.drawPixmap(exposed, *pixmap, exposed);
+    draw_boxes(painter);
     draw_text(painter);
-    painter.restore();
     draw_arrows(painter);
+    painter.restore();
     if (!silent) {
       QString txt = tr("Use mouse wheel to zoom, left click to drag.");
       QFontMetrics metrics = painter.fontMetrics();
@@ -405,6 +433,26 @@ namespace ebl {
 	ax1 = (int) (ax2 + 9 * cos(angle - M_PI / 4));
 	ay1 = (int) (ay2 + 9 * sin(angle - M_PI / 4));
 	painter.drawLine(ax1, ay1, ax2, ay2);
+      }
+    }
+    painter.setPen(Qt::black);
+  }
+
+  void Window::draw_boxes(QPainter &painter) {
+    painter.setBrush(QColor(255, 255, 255, 127));
+    for (vector<box*>::iterator i = boxes.begin(); i != boxes.end(); ++i) {
+      if (*i) {
+	// set color
+	painter.setPen(QColor((*i)->r, (*i)->g, (*i)->b));
+	// draw box lines
+	painter.drawLine((*i)->w0,               (*i)->h0,
+			 (*i)->w0,               (*i)->h0 + (*i)->h - 1);
+	painter.drawLine((*i)->w0,               (*i)->h0 + (*i)->h - 1,
+			 (*i)->w0 + (*i)->w - 1, (*i)->h0 + (*i)->h - 1);
+	painter.drawLine((*i)->w0,               (*i)->h0,
+			 (*i)->w0 + (*i)->w - 1, (*i)->h0);
+	painter.drawLine((*i)->w0 + (*i)->w - 1, (*i)->h0,
+			 (*i)->w0 + (*i)->w - 1, (*i)->h0 + (*i)->h - 1);
       }
     }
     painter.setPen(Qt::black);
