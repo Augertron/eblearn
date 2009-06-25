@@ -29,8 +29,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef CLASSIFIER2D_H_
-#define CLASSIFIER2D_H_
+#ifndef DETECTOR_H_
+#define DETECTOR_H_
 
 #include "libeblearn.h"
 
@@ -73,7 +73,7 @@ namespace ebl {
     unsigned int ow;
   };
   
-  template <class Tdata> class classifier2D {
+  template <class Tdata> class detector {
   public:
     module_1_1<state_idx,state_idx>	&thenet;
     int					 height;
@@ -95,11 +95,11 @@ namespace ebl {
     
   public:	
     //! Constructor.
-    classifier2D(module_1_1<state_idx, state_idx> &thenet, 
+    detector(module_1_1<state_idx, state_idx> &thenet, 
 		 idx<float> &sz, 
 		 idx<const char*> &lbls, double b, double c);
-    //    classifier2D(module_1_1<state_idx, state_idx> &thenet);
-    virtual ~classifier2D();
+    //    detector(module_1_1<state_idx, state_idx> &thenet);
+    virtual ~detector();
 
     vector<bbox> fprop(idx<Tdata> &img, double threshold = 1.8);
 
@@ -134,21 +134,21 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
 /*   template <class Tdata> */
-/*   class classifier2D_binocular : public classifier2D<Tdata> { */
+/*   class detector_binocular : public detector<Tdata> { */
 /*   public: */
-/*     using classifier2D<Tdata>::grabbed; */
-/*     using classifier2D<Tdata>::grabbed2; */
-/*     using classifier2D<Tdata>::height; */
-/*     using classifier2D<Tdata>::width; */
-/*     using classifier2D<Tdata>::coeff; */
-/*     using classifier2D<Tdata>::bias; */
-/*     using classifier2D<Tdata>::inputs; */
-/*     using classifier2D<Tdata>::outputs; */
+/*     using detector<Tdata>::grabbed; */
+/*     using detector<Tdata>::grabbed2; */
+/*     using detector<Tdata>::height; */
+/*     using detector<Tdata>::width; */
+/*     using detector<Tdata>::coeff; */
+/*     using detector<Tdata>::bias; */
+/*     using detector<Tdata>::inputs; */
+/*     using detector<Tdata>::outputs; */
 
-/*     classifier2D_binocular(module_1_1<state_idx, state_idx> &thenet, */
+/*     detector_binocular(module_1_1<state_idx, state_idx> &thenet, */
 /* 		      idx<int> &sz, idx<const char*> &lbls, */
 /* 		      double b, double c, int h, int w); */
-/*     virtual ~classifier2D_binocular(); */
+/*     virtual ~detector_binocular(); */
   
 /*     //! Compute multi-resolution inputs and fprop through each. */
 /*     idx<double> fprop(Tdata *left, Tdata *right,  */
@@ -162,47 +162,46 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  template <class Tdata>
-  class classifierNMS : public classifier2D<Tdata> {
-  public:
-    double		       coef;
-    double		       bias;
-    idx<double>		       sizes;
-    idx<const char*>	       labels;
-    idx<Tdata>                 sample;
-    using classifier2D<Tdata>::width;
-    using classifier2D<Tdata>::height;
-    using classifier2D<Tdata>::thenet;
-    using classifier2D<Tdata>::inputs;
-    using classifier2D<Tdata>::outputs;
-    using classifier2D<Tdata>::results;
-    using classifier2D<Tdata>::grabbed;
+/*   template <class Tdata> */
+/*   class classifierNMS : public detector<Tdata> { */
+/*   public: */
+/*     double		       coef; */
+/*     double		       bias; */
+/*     idx<double>		       sizes; */
+/*     idx<const char*>	       labels; */
+/*     idx<Tdata>                 sample; */
+/*     using detector<Tdata>::width; */
+/*     using detector<Tdata>::height; */
+/*     using detector<Tdata>::thenet; */
+/*     using detector<Tdata>::inputs; */
+/*     using detector<Tdata>::outputs; */
+/*     using detector<Tdata>::results; */
+/*     using detector<Tdata>::grabbed; */
 	
-    //! Constructor.
-    classifierNMS(module_1_1<state_idx, state_idx> &thenet_,
-		  idx<double> &sizes_, 
-		  idx<const char*> &labels_,
-		  idx<Tdata> &sample_,
-		  double bias_, double coef_);
-    ~classifierNMS();
+/*     //! Constructor. */
+/*     classifierNMS(module_1_1<state_idx, state_idx> &thenet_, */
+/* 		  idx<double> &sizes_,  */
+/* 		  idx<const char*> &labels_, */
+/* 		  idx<Tdata> &sample_, */
+/* 		  double bias_, double coef_); */
+/*     ~classifierNMS(); */
 
-    //! do a fprop on thenet with multiple rescaled inputs
-    void multi_res_fprop();
+/*     //! do a fprop on thenet with multiple rescaled inputs */
+/*     void multi_res_fprop(); */
 
-    //! call multi_res_fprop(), and analyze the output map
-    idx<double> classify(double threshold);
+/*     //! call multi_res_fprop(), and analyze the output map */
+/*     idx<double> classify(double threshold); */
     
-    //! find maximas in output layer
-    void mark_maxima(double threshold);
+/*     //! find maximas in output layer */
+/*     void mark_maxima(double threshold); */
 
-    //! prune btwn scales
-    idx<double> map_to_list(double threshold);
+/*     //! prune btwn scales */
+/*     idx<double> map_to_list(double threshold); */
 
-  };
+/*   }; */
 
 } // end namespace ebl
 
-#include "classifier_gen.hpp"
-#include "classifier2D.hpp"
+#include "detector.hpp"
 
-#endif /* CLASSIFIER2D_H_ */
+#endif /* DETECTOR_H_ */

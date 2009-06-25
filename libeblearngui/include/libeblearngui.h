@@ -5,6 +5,6 @@
 #include "ebl_arch_gui.h"
 #include "ebl_layers_gui.h"
 #include "ebl_trainer_gui.h"
-#include "classifier2D_gui.h"
+#include "detector_gui.h"
 
 #endif /* LIBEBLEARNGUI_H_ */

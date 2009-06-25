@@ -46,6 +46,6 @@
 #include "ebl_logger.h"
 #include "ebl_trainer.h"
 #include "datasource.h"
-#include "classifier2D.h"
+#include "detector.h"
 
 #endif

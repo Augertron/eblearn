@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet   *
- *   pierre.sermanet@gmail.com   *
- *   All rights reserved.
+ *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,8 +29,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-//#include "classifier2D_gui.h"
+#include "detector.h"
 
 namespace ebl {
 
 } // end namespace ebl
+

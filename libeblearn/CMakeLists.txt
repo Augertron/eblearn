@@ -29,7 +29,7 @@ ADD_LIBRARY (eblearn SHARED
 		     src/ipp.cpp  
 		     src/sdnn_modules.cpp
 		     src/net_cscscfe.cpp
-		     src/classifier2D.cpp  
+		     src/detector.cpp  
 		     src/datasource.cpp
 		     )
 
