@@ -137,6 +137,13 @@ namespace ebl {
     emit gui_add_arrow(h1, w1, h2, w2);
   }
 
+  void idxgui::draw_box(int h0, int w0, int h, int w,
+			unsigned char r, unsigned char g,
+			unsigned char b, string *s) {
+    check_init();
+    emit gui_add_box(h0, w0, h, w, r, g, b, s);
+  }
+  
   void idxgui::set_text_origin(unsigned int h0, unsigned int w0) {
     check_init();
     emit gui_set_text_origin(h0, w0);    

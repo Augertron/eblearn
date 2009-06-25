@@ -33,7 +33,7 @@
 #define EBL_TRAINER_GUI_H_
 
 #include "libidxgui.h"
-#include "libeblearn.h"
+#include "ebl_trainer.h"
 #include "datasource_gui.h"
 #include "ebl_arch_gui.h"
 

@@ -34,8 +34,45 @@
 
 #include "libeblearn.h"
 
+using namespace std;
+
 namespace ebl {
 
+  //! bounding box class.
+  class bbox {
+  public:
+    //! object class
+    int class_id;
+    //! detection confidence, 1 is the best.
+    double confidence;
+    //! scale factor at which object was detected
+    double scaleh;
+    //! scale factor at which object was detected
+    double scalew;
+    //! scale index at which object was detected
+    int scale_index;
+    //! scaled input image height
+    unsigned int iheight;
+    //! scaled input image width
+    unsigned int iwidth;
+    //! height top left pixel origin in original image
+    unsigned int h0;
+    //! width top left pixel origin in original image
+    unsigned int w0;
+    //! height of bounding box in original image
+    unsigned int height;
+    //! width of bounding box in original image
+    unsigned int width;
+    //! output height
+    unsigned int oheight;
+    //! output width
+    unsigned int owidth;
+    //! output pixel height
+    unsigned int oh;
+    //! output pixel width
+    unsigned int ow;
+  };
+  
   template <class Tdata> class classifier2D {
   public:
     module_1_1<state_idx,state_idx>	&thenet;
@@ -45,68 +82,83 @@ namespace ebl {
     idx<Tdata>				 grabbed2;
     double				 contrast;
     double				 brightness;
-    double				 coeff;
+    double				 coef;
     double				 bias;
-    idx<int>				 sizes;
+    idx<float>				 sizes;
     idx<void*>				 inputs;	//! state_idx*
     idx<void*>				 outputs;	//! state_idx*
     idx<void*>				 results;	//! idx<double>*
     idx<double>				 smoothing_kernel;
     idx<const char*>			 labels;
-    int					 nn_h;
-    int					 nn_w;
-	
+  private:
+    idxdim in_mindim;
+    
+  public:	
     //! Constructor.
     classifier2D(module_1_1<state_idx, state_idx> &thenet, 
-		 idx<int> &sz, 
-		 idx<const char*> &lbls, double b, double c, int h, int w, 
-		 int nn_h = 96, int nn_w = 96);
-    classifier2D(module_1_1<state_idx, state_idx> &thenet);
+		 idx<float> &sz, 
+		 idx<const char*> &lbls, double b, double c);
+    //    classifier2D(module_1_1<state_idx, state_idx> &thenet);
     virtual ~classifier2D();
 
-    idx<double> fprop(idx<Tdata> &img, float zoom, double threshold = 1.8, 
-		      int objsize = 60);
-  
+    vector<bbox> fprop(idx<Tdata> &img, double threshold = 1.8);
+
+  private:
+    void init(idx<Tdata> &input);
     // Sub functions
-    idx<Tdata> multi_res_prep(idx<Tdata> &img, float zoom);
-    idx<double> multi_res_fprop(double threshold, int objsize);
-    idx<double> postprocess_output(double threshold, int objsize);
-    //! mark local maxima (in space and feature) of in r.
-    //! Put winning class in (r i j 0) and score (normalized
-    //! to 0 1) in (r i j 1).
-    void mark_maxima(idx<double> &in, idx<double> &inc, 
-		     idx<double> &r, double threshold);
-    idx<double> prune(idx<double> &res);
+    //    idx<Tdata> multi_res_prep(idx<Tdata> &img, float zoom);
+
+    //! do a fprop on thenet with multiple rescaled inputs
+    void multi_res_fprop(idx<Tdata> &sample);   
+    //    idx<double> multi_res_fprop(double threshold, int objsize);
+    
+    //    idx<double> postprocess_output(double threshold, int objsize);
+    
+
+    //! find maximas in output layer
+    void mark_maxima(double threshold);
+
+/*     //! mark local maxima (in space and feature) of in r. */
+/*     //! Put winning class in (r i j 0) and score (normalized */
+/*     //! to 0 1) in (r i j 1). */
+/*     void mark_maxima(idx<double> &in, idx<double> &inc,  */
+/* 		     idx<double> &r, double threshold); */
+    
+//    idx<double> prune(idx<double> &res);
+
+    //! prune btwn scales
+    vector<bbox> map_to_list(double threshold);
+    void pretty_bboxes(vector<bbox> &vb);
   };
 
   ////////////////////////////////////////////////////////////////
 
-  template <class Tdata>
-  class classifier2D_binocular : public classifier2D<Tdata> {
-  public:
-    using classifier2D<Tdata>::grabbed;
-    using classifier2D<Tdata>::grabbed2;
-    using classifier2D<Tdata>::height;
-    using classifier2D<Tdata>::width;
-    using classifier2D<Tdata>::coeff;
-    using classifier2D<Tdata>::bias;
-    using classifier2D<Tdata>::inputs;
-    using classifier2D<Tdata>::outputs;
+/*   template <class Tdata> */
+/*   class classifier2D_binocular : public classifier2D<Tdata> { */
+/*   public: */
+/*     using classifier2D<Tdata>::grabbed; */
+/*     using classifier2D<Tdata>::grabbed2; */
+/*     using classifier2D<Tdata>::height; */
+/*     using classifier2D<Tdata>::width; */
+/*     using classifier2D<Tdata>::coeff; */
+/*     using classifier2D<Tdata>::bias; */
+/*     using classifier2D<Tdata>::inputs; */
+/*     using classifier2D<Tdata>::outputs; */
 
-    classifier2D_binocular(module_1_1<state_idx, state_idx> &thenet,
-		      idx<int> &sz, idx<const char*> &lbls,
-		      double b, double c, int h, int w);
-    virtual ~classifier2D_binocular();
+/*     classifier2D_binocular(module_1_1<state_idx, state_idx> &thenet, */
+/* 		      idx<int> &sz, idx<const char*> &lbls, */
+/* 		      double b, double c, int h, int w); */
+/*     virtual ~classifier2D_binocular(); */
   
-    //! Compute multi-resolution inputs and fprop through each.
-    idx<double> fprop(Tdata *left, Tdata *right, 
-		      float zoom, int dx, int dy, double threshold = 1.8, 
-		      int objsize = 60);
+/*     //! Compute multi-resolution inputs and fprop through each. */
+/*     idx<double> fprop(Tdata *left, Tdata *right,  */
+/* 		      float zoom, int dx, int dy, double threshold = 1.8,  */
+/* 		      int objsize = 60); */
   
-    // Sub functions
-    void multi_res_prep(Tdata *left, Tdata *right, 
-			int dx, int dy, float zoom);
-  };
+/*     // Sub functions */
+/*     void multi_res_prep(Tdata *left, Tdata *right,  */
+/* 			int dx, int dy, float zoom); */
+/*   }; */
 
   ////////////////////////////////////////////////////////////////
 

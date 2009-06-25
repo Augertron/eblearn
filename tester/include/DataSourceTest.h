@@ -2,7 +2,9 @@
 #define DATASOURCETEST_H_
 
 #include <cppunit/extensions/HelperMacros.h>
-#include "libeblearn.h"
+#include "datasource.h"
+#include "datasource_gui.h"
+#include "dataset_generation.h"
 
 //! Test class for IdxIO class
 class DataSourceTest : public CppUnit::TestFixture  {

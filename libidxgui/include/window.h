@@ -46,11 +46,14 @@ using namespace std;
 
 namespace ebl {
 
+  // TODO: derive all objects from a common drawable_object and hold
+  // all of them in a same vector, to retain the drawing order.
+  
   class text : public string {
   public:
-    unsigned int	 h0, w0;
-    bool                 pos_reset;
-    unsigned char        fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
+    unsigned int	h0, w0;
+    bool                pos_reset;
+    unsigned char       fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
     text(unsigned int h0, unsigned int w0, bool pos_reset = false,
 	 unsigned char fg_r = 255, unsigned char fg_g = 255, 
 	 unsigned char fg_b = 255, unsigned char fg_a = 255,
@@ -64,6 +67,15 @@ namespace ebl {
     int	                 h1, w1, h2, w2;
     arrow(int h1, int w1, int h2, int w2);
     ~arrow() {};
+  };
+
+  class box {
+  public:
+    int			 h0, w0, h, w;
+    unsigned char	 r, g, b;
+    box(int h0, int w0, int h, int w, unsigned char r,
+	unsigned char g, unsigned char b);
+    ~box() {};
   };
 
   class image {
@@ -91,6 +103,7 @@ namespace ebl {
     vector<text*>        texts;
     text*		 txt;
     vector<arrow*>       arrows;
+    vector<box*>         boxes;
     vector<image*>       images;
     bool		 silent;
     unsigned int	 id;
@@ -114,6 +127,8 @@ namespace ebl {
     void set_silent(const std::string *filename);
     void add_text(const std::string *s);
     void add_arrow(int h1, int w1, int h2, int w2);
+    void add_box(int h0, int w0, int h, int w, unsigned char r, unsigned char g,
+		 unsigned char b, string *s);
     void add_image(idx<ubyte> &img, unsigned int h0, unsigned int w0);
     //! add img to the window and delete img.
     void update_pixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
@@ -133,6 +148,7 @@ namespace ebl {
     // clear methods
     void clear_text();
     void clear_arrows();
+    void clear_boxes();
     void clear_images();
 
     // event methods
@@ -150,6 +166,7 @@ namespace ebl {
     // painting/drawing methods
     void draw_text(QPainter &painter);
     void draw_arrows(QPainter &painter);
+    void draw_boxes(QPainter &painter);
     void draw_images();
 
   private slots:

@@ -39,7 +39,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
   ##############################################################################
   add_executable (tester
     src/BlasTest.cpp
-    src/Classifier2DTest.cpp
+    src/classifier2D_test.cpp
     src/ClusterTest.cpp
     src/DataSourceTest.cpp
     src/EblBasicTest.cpp

@@ -33,7 +33,7 @@
 #define EBL_LAYERS_GUI_H_
 
 #include "libidxgui.h"
-#include "libeblearn.h"
+#include "ebl_layers.h"
 
 namespace ebl {
 

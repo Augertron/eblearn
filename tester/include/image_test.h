@@ -10,7 +10,7 @@ class image_test : public CppUnit::TestFixture  {
   CPPUNIT_TEST(test_resize);
   CPPUNIT_TEST(test_pnm_P3);
   CPPUNIT_TEST(test_pnm_P6);
-  CPPUNIT_TEST(test_colorspaces);
+  //  CPPUNIT_TEST(test_colorspaces);
   CPPUNIT_TEST_SUITE_END();
 
 private:

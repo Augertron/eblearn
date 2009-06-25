@@ -81,6 +81,13 @@ namespace ebl {
     //! draws an arrow from (h1, w1) to (h2, w2).
     void draw_arrow(int h1, int w1, int h2, int w2);
 
+    //! draws a bounding box with top left corner (h0, w0) and size (h, w).
+    //! the (r,g,b) color of the box can optionally be specified as well as
+    //! a caption string.
+    void draw_box(int h0, int w0, int h, int w,
+		  unsigned char r = 255, unsigned char g = 255,
+		  unsigned char b = 255, string *s = NULL);
+
     //! do not show windows, instead save them in png files in current dir.
     void set_silent();
     //! do not show windows, instead save them in png files in current dir.
@@ -188,6 +195,8 @@ namespace ebl {
     void gui_select_window(int wid);
     void gui_add_text(const std::string *s);
     void gui_add_arrow(int h1, int w1, int h2, int w2);
+    void gui_add_box(int h0, int w0, int h, int w, unsigned char r,
+		     unsigned char g, unsigned char b, string *s);
     void gui_set_text_origin(unsigned int h0, unsigned int w0);
     void gui_set_text_colors(unsigned char fg_r, unsigned char fg_g, 
 			     unsigned char fg_b, unsigned char fg_a,

@@ -34,7 +34,7 @@
 #define DATASOURCE_GUI_H_
 
 #include "libidxgui.h"
-#include "libeblearn.h"
+#include "datasource.h"
 
 using namespace std;
 

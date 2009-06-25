@@ -34,7 +34,7 @@
 #define CLASSIFIER2D_GUI_H_
 
 #include "libidxgui.h"
-#include "libeblearn.h"
+#include "classifier2D.h"
 
 using namespace std;
 

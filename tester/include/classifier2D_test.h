@@ -1,12 +1,12 @@
-#ifndef CLASSIFIER2DTEST_H_
-#define CLASSIFIER2DTEST_H_
+#ifndef CLASSIFIER2D_TEST_H_
+#define CLASSIFIER2D_TEST_H_
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "libeblearn.h"
 
 //! Test class for Classifier2D class
-class Classifier2DTest : public CppUnit::TestFixture  {
-  CPPUNIT_TEST_SUITE(Classifier2DTest);
+class classifier2D_test : public CppUnit::TestFixture  {
+  CPPUNIT_TEST_SUITE(classifier2D_test);
   CPPUNIT_TEST(test_norb);
   //CPPUNIT_TEST(test_norb_binoc);
   CPPUNIT_TEST_SUITE_END();
@@ -25,4 +25,4 @@ public:
   void test_norb_binoc();
 };
 
-#endif /* CLASSIFIER2DTEST_H_ */
+#endif /* CLASSIFIER2D_TEST_H_ */

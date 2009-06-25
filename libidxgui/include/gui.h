@@ -97,6 +97,13 @@ namespace ebl {
   //! draws an arrow from (h1, w1) to (h2, w2).
   void draw_arrow(int h1, int w1, int h2, int w2);
 
+  //! draws a bounding box with top left corner (h0, w0) and size (h, w).
+  //! the (r,g,b) color of the box can optionally be specified as well as
+  //! a caption string.
+  void draw_box(int h0, int w0, int h, int w,
+		unsigned char r = 255, unsigned char g = 255,
+		unsigned char b = 255, string *s = NULL);
+
   //! do not show windows, instead save them in png files in current dir.
   void set_gui_silent();
   //! do not show windows, instead save them in png files in current dir.
@@ -107,12 +114,12 @@ namespace ebl {
   //! draws text on the current window.
   //! you can also use the << operator instead of this function to add text 
   //! to the gui. for example: gui << "text" << endl;
-  void draw_text(std::string *s);
+  void draw_text(string *s);
   
   //! draws text on the current window at origin (h0, w0).
   //! you can also use the << operator instead of this function to add text 
   //! to the gui. for example: gui << at(h0, w0) << "text" << endl;
-  void draw_text(std::string *s, unsigned int h0, unsigned int w0);
+  void draw_text(string *s, unsigned int h0, unsigned int w0);
 
   //! sets the origin of further calls to draw_text or gui << "text".
   //! you can also use the at() function instead of this one.

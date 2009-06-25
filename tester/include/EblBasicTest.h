@@ -2,7 +2,9 @@
 #define EBLBASICTEST_H_
 
 #include <cppunit/extensions/HelperMacros.h>
-#include "libeblearn.h"
+#include "ebl_basic.h"
+#include "ebl_layers.h"
+#include "ebl_tester.h"
 
 //! Test class for Ebm class
 class EblBasicTest : public CppUnit::TestFixture  {

@@ -33,7 +33,7 @@
 #define EBL_ARCH_GUI_H_
 
 #include "libidxgui.h"
-#include "libeblearn.h"
+#include "ebl_arch.h"
 
 namespace ebl {
 
