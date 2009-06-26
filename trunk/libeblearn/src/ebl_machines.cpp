@@ -114,6 +114,9 @@ namespace ebl {
 		 intg ki1, intg kj1, intg si1, intg sj1,
 		 intg hid, intg output_size) {
     idx<intg> table0 = full_table(1, 6);
+    // TODO: add idx constructor taking pointer to data with dimensions
+    // and copies it.
+    // or if possible operator= taking the array in brackets?
     idx<intg> table1(60, 2);
     intg tbl[60][2] =
       {{0, 0},  {1, 0},  {2, 0},
