@@ -814,31 +814,59 @@ namespace ebl {
   //! method.
   class idxdim {
   private:
-    intg dims[MAXDIMS];
+    intg	dims[MAXDIMS];	// size of each dimensions
+    intg	ndim;		// order
+    
   public:
-    intg ndim;
 
-    //! Empty constructor.
+    ////////////////////////////////////////////////////////////////
+    // constructors
+    
+    //! Empty constructor, creates an empty idxdim.
     idxdim();
+    
     //! Create an idxdim based on the information found in an idxspec.
     idxdim(const idxspec &s);
+    
     //! Create an idxdim based on the information found in an idx<T>.
     template <class T> idxdim(const idx<T> &i);
+    
     //! Generic constructor.
     idxdim(intg s0, intg s1=-1, intg s2=-1, intg s3=-1,
 	   intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
 
-    //! Change the dimensions dimn to size size.
-    void setdim(intg dimn, intg size);
-
-    //! Returns the size of dimensions dimn.
-    intg dim(intg dimn) const;
-
     //! Destructor.
     virtual ~idxdim();
 
+    ////////////////////////////////////////////////////////////////
+    // set dimensions
+    
+    //! Change the dimensions dimn to size size.
+    void setdim(intg dimn, intg size);
+
+    //! Extract dimensions information from an idx
+    template <class T>
+      void setdims(const idx<T> &i);
+    
+    //! Extract dimensions information from an idxdim
+    void setdims(const idxdim &s);
+    
     //! Extract dimensions information from an idxspec
-    void read(const idxspec &s);
+    void setdims(const idxspec &s);
+    
+    ////////////////////////////////////////////////////////////////
+    // get dimensions
+
+    //! Returns the order.
+    intg order() const;
+    
+    //! Returns the size of dimensions dimn.
+    intg dim(intg dimn) const;
+
+    //! Return true if dimensions and order are equal.
+    bool operator==(const idxdim& other);
+
+    ////////////////////////////////////////////////////////////////
     
     // friends
     friend class idxspec;

@@ -52,7 +52,7 @@ void detector_test::test_norb() {
   //  int tr[3] = { 2, 1, 0 };
   //left = left.transpose(tr);
   left = left.select(2, 0);
-  detector<ubyte> cb(thenet, sz, lbl, 0.0, 0.01);
+  detector<ubyte> cb(thenet, 4, lbl, 0.0, 0.01);
 
 
   // find category of image
@@ -60,7 +60,7 @@ void detector_test::test_norb() {
 
 #ifdef __GUI__
   detector_gui cgui;
-  cgui.display_all(cb, left, 1, .97, 60);
+  cgui.display_all(cb, left, .97);
 #endif
 
   //  idx<double> res = cb.fprop(left, 1, 1.8, 60);

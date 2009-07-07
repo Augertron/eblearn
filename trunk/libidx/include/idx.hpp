@@ -699,7 +699,7 @@ namespace ebl {
 
   template <class T> 
   void idx<T>::resize(const idxdim &d) {
-    if (d.ndim > spec.ndim) eblerror("cannot change order of idx in resize");
+    if (d.order() > spec.ndim) eblerror("cannot change order of idx in resize");
     if (!same_dim(d)) { // save some time if dims are same
       spec.resize(d);
       growstorage();
@@ -726,7 +726,7 @@ namespace ebl {
   // i.e. if all their dimensions are equal (regardless of strides).
   template <class T> 
   bool idx<T>::same_dim(const idxdim &d) {
-    if (spec.ndim != d.ndim) 
+    if (spec.ndim != d.order()) 
       return false; 
     for (int i=0; i < spec.ndim; ++i)
       if (spec.dim[i] != d.dim(i)) 
@@ -761,7 +761,7 @@ namespace ebl {
   template <class T> idxdim& idx<T>::get_idxdim() {
     if (!pidxdim)
       pidxdim = new idxdim();
-    pidxdim->read(spec);
+    pidxdim->setdims(spec);
     return *pidxdim;
   }
 
@@ -1234,7 +1234,12 @@ namespace ebl {
   
   template <class T>
   idxdim::idxdim(const idx<T> &i) {
-    read(i.spec);
+    setdims(i.spec);
+  }
+  
+  template <class T>
+  void idxdim::setdims(const idx<T> &i) {
+    setdims(i.spec);
   }
   
 } // namespace ebl

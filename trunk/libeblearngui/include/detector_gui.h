@@ -58,9 +58,7 @@ namespace ebl {
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <class Tdata>
-    void display(detector<Tdata> &cl, idx<Tdata> &img, 
-		 float zoom, double threshold,
-		 int objsize,
+    void display(detector<Tdata> &cl, idx<Tdata> &img, double threshold,
 		 unsigned int h0 = 0, unsigned int w0 = 0, 
 		 double dzoom = 1.0, int wid = -1, 
 		 const char *wname = NULL);
@@ -73,8 +71,7 @@ namespace ebl {
     //! <wname> is an optional window title.
     template <class Tdata>
     void display_inputs_outputs(detector<Tdata> &cl, 
-				idx<Tdata> &img, float zoom, 
-				double threshold, int objsize,
+				idx<Tdata> &img, double threshold,
 				unsigned int h0 = 0, unsigned int w0 = 0, 
 				double dzoom = 1.0, int wid = -1, 
 				const char *wname = NULL);
@@ -87,10 +84,8 @@ namespace ebl {
     //! <wname> is an optional window title.
     template <class Tdata>
     void display_all(detector<Tdata> &cl, idx<Tdata> &img, 
-		     float zoom, double threshold, int objsize,
-		     unsigned int h0 = 0, unsigned int w0 = 0, 
-		     double dzoom = 1.0, int wid = -1, 
-		     const char *wname = NULL);
+		     double threshold,unsigned int h0 = 0, unsigned int w0 = 0, 
+		     double dzoom = 1.0, int wid = -1,const char *wname = NULL);
 
     //! displays all the current state of the classifier. 
     //! If a window id <wid> is specified, 
