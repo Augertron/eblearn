@@ -77,66 +77,142 @@ namespace ebl {
 
   template <class Tdata>
   detector<Tdata>::detector(module_1_1<state_idx, state_idx> &thenet_,
-				      idx<float> &sizes_, 
+				      idx<unsigned int> &resolutions_, 
 				      idx<const char*> &labels_,
 				      double bias_, double coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
-      sizes(sizes_), labels(labels_) {
+      labels(labels_),
+      nresolutions(resolutions_.dim(0)), resolutions(resolutions_),
+      manual_resolutions(true) {
+    if (nresolutions < 1)
+      eblerror("the number of resolutions is expected to be more than 0");
   }
 
   template <class Tdata>
-  void detector<Tdata>::init(idx<Tdata> &sample) {
-    // compute closest size of input compatible with the network size
-    idxdim indim(sample.dim(0), sample.dim(1));
-    idxdim outdim = thenet.fprop_size(indim);
-    cout << "closest input size: " << indim << endl;
-    // resize input to closest compatible size
-    sample = image_resize(sample, indim.dim(1), indim.dim(0));
-    // compute minimum input size compatible with network size
-    idxdim minodim(1, 1, 1);
-    in_mindim = thenet.bprop_size(minodim);
-    cout << "input size: " << sample << endl;
-    cout << "min input size: " << in_mindim << endl;
+  detector<Tdata>::detector(module_1_1<state_idx, state_idx> &thenet_,
+				      unsigned int nresolutions_, 
+				      idx<const char*> &labels_,
+				      double bias_, double coef_) 
+    : thenet(thenet_), coef(coef_), bias(bias_),
+      labels(labels_),
+      nresolutions(nresolutions_), resolutions(1, 2),
+      manual_resolutions(false) {
+  }
 
+  template <class Tdata>
+  void detector<Tdata>::compute_minmax_resolutions(idxdim &input_dims) {
+    // compute maximum closest size of input compatible with the network size
+    idxdim indim(input_dims.dim(0), input_dims.dim(1));
+    thenet.fprop_size(indim); // set a valid input dimensions set
+    in_maxdim.setdims(indim); // copy valid dims to in_maxdim
+
+    // compute minimum input size compatible with network size
+    idxdim minodim(1, 1, 1); // min output dims
+    in_mindim = thenet.bprop_size(minodim); // compute min input dims
+  }
+
+  template <class Tdata>
+  void detector<Tdata>::compute_resolutions(idxdim &input_dims,
+					    unsigned int nresolutions) { 
+    // first compute minimum and maximum resolutions for this input dims.
+    compute_minmax_resolutions(input_dims);
+
+    // nresolutions must be >= 1
+    if (nresolutions == 0) {
+      cerr << "warning: the number of resolutions is expected to be more ";
+      cerr << "than 0, setting it to 1.";
+      nresolutions = 1;
+    }
+    // nresolutions must be less than the minimum pixel distance between min
+    // and max
+    unsigned int max_res = MIN(in_maxdim.dim(0) - in_mindim.dim(0),
+			       in_maxdim.dim(1) - in_mindim.dim(1));
+    if (nresolutions > max_res) {
+      cerr << "warning: the number of resolutions requested (";
+      cerr << nresolutions << ") is more than";
+      cerr << " the minimum distance between minimum and maximum possible";
+      cerr << " resolutions. (min: " << in_mindim << " max: " << in_maxdim;
+      cerr << ") setting it to " << max_res << endl;
+      nresolutions = max_res;
+    }
+    
+    // only 1 scale if min == max or if only 1 scale requested.
+    if ((in_mindim == in_maxdim) || (nresolutions == 1)) {
+      resolutions.resize1(0, 1);
+      resolutions.set(in_maxdim.dim(0), 0, 0);
+      resolutions.set(in_maxdim.dim(1), 0, 1);
+    } else if (nresolutions == 2) { // 2 resolutions: min and max
+      resolutions.resize1(0, 2);
+      resolutions.set(in_maxdim.dim(0), 0, 0); // max
+      resolutions.set(in_maxdim.dim(1), 0, 1); // max
+      resolutions.set(in_mindim.dim(0), 1, 0); // min
+      resolutions.set(in_mindim.dim(1), 1, 1); // min
+    } else { // multiple resolutions: interpolate between min and max
+      resolutions.resize1(0, nresolutions);
+      int n = nresolutions - 2;
+      int h = (int) ((float)(in_maxdim.dim(0) - in_mindim.dim(0)) / (n + 1));
+      int w = (int) ((float)(in_maxdim.dim(1) - in_mindim.dim(1)) / (n + 1));
+      for (int i = 1; i <= n; ++i) {
+	resolutions.set(in_maxdim.dim(0) - h * i, i, 0);
+	resolutions.set(in_maxdim.dim(1) - w * i, i, 1);
+      }
+      resolutions.set(in_maxdim.dim(0), 0, 0); // max
+      resolutions.set(in_maxdim.dim(1), 0, 1); // max
+      resolutions.set(in_mindim.dim(0), nresolutions - 1, 0); // min
+      resolutions.set(in_mindim.dim(1), nresolutions - 1, 1); // min
+    }
+  }
+
+  template <class Tdata>
+  void detector<Tdata>::print_resolutions() {
+    cout << resolutions.dim(0) << " resolutions: ";
+    cout << resolutions.get(0, 0) << "x" << resolutions.get(0, 1);
+    for (int i = 1; i < resolutions.dim(0); ++i)
+      cout << ", " << resolutions.get(i, 0) << "x" << resolutions.get(i, 1);
+    cout << endl;
+  }
+  
+  template <class Tdata>
+  void detector<Tdata>::init(idx<Tdata> &sample) {
+    idxdim d(sample);
+    if (!manual_resolutions)
+      compute_resolutions(d, nresolutions);
+    cout << "multi-resolution detection initialized to ";
+    print_resolutions();
+    
     // size of the sample to process
     int thickness = 2; // sample.dim(0); // TODO FIXME
     height = sample.dim(0);    
     width = sample.dim(1);
-    grabbed = idx<Tdata>(height, width);
-   
+    grabbed = idx<Tdata>(height, width);    
+    
+    // resize input to closest compatible size
+    //    sample = image_resize(sample, indim.dim(1), indim.dim(0));
+    
     // initialize input and output states and result matrices for each size
     // TODO: if allocated, deallocate first
-    inputs = idx<void*>(sizes.nelements());
-    outputs = idx<void*>(sizes.nelements());
-    results = idx<void*>(sizes.nelements());
+    inputs  = idx<void*>(nresolutions);
+    outputs = idx<void*>(nresolutions);
+    results = idx<void*>(nresolutions);
 
-    sizes.set(sample.dim(0) / (float) in_mindim.dim(0), 3);
+    //sizes.set(sample.dim(0) / (float) in_mindim.dim(0), 3);
 
-    { idx_bloop4(size, sizes, float, 
+    { idx_bloop4(resolution, resolutions, unsigned int, 
 		 in, inputs, void*, 
 		 out, outputs, void*,
 		 r, results, void*) {
 	// Compute the input sizes for each scale
-	idxdim scaled_dims( (intg)(height / size.get()),
-			    (intg)(width / size.get()) );
+	idxdim scaled_dims(resolution.get(0), resolution.get(1));
 	// Adapt the size to the network structure:
 	idxdim out_dims = thenet.fprop_size(scaled_dims);
-
-	cout << "scaled input dim: " << scaled_dims << " original/";
-	cout << size.get() << " out: " << out_dims << endl;
-	
-	
+	// set buffers
 	in.set((void*) new state_idx(thickness,
-				     scaled_dims.dim(0),
-				     scaled_dims.dim(1)));
-	out.set((void*) new state_idx(labels.nelements()+1, 
-				      out_dims.dim(0), 
-				      out_dims.dim(1)));
-	r.set((void*) new idx<double>(out_dims.dim(0),
-				      out_dims.dim(1),
+				     scaled_dims.dim(0), scaled_dims.dim(1)));
+	out.set((void*) new state_idx(labels.nelements() + 1, 
+				      out_dims.dim(0), out_dims.dim(1)));
+	r.set((void*) new idx<double>(out_dims.dim(0), out_dims.dim(1),
 				      2)); // (class,score)
       }}
-    cout << endl << "Classifier initialized" << endl;
   }
   
 
@@ -223,7 +299,7 @@ namespace ebl {
     intg offset_h = 0, offset_w = 0;
     int scale_index = 0;
     { idx_bloop4(input, inputs, void*, output, outputs, void*,
-		 r, results, void*, size, sizes, float) {    	 
+		 r, results, void*, resolution, resolutions, unsigned int) {
 	double in_h = (double)(((state_idx*) input.get())->x.dim(1));
 	double in_w = (double)(((state_idx*) input.get())->x.dim(2));
 	double out_h = (double)(((state_idx*) output.get())->x.dim(1));
@@ -357,61 +433,6 @@ namespace ebl {
 //   }
 
 //   template <class Tdata>
-//   idx<Tdata> detector<Tdata>::multi_res_prep(idx<Tdata> &img, float zoom) {
-//     // copy input images locally
-//     idx_copy(img, grabbed);
-//     // prepare multi resolutions input
-//     idx<double> inx;
-//     int ni = ((state_idx*) inputs.get(0))->x.dim(1);
-//     int nj = ((state_idx*) inputs.get(0))->x.dim(2);
-//     int zi = max(ni, (int) (zoom * grabbed.dim(0)));
-//     int zj = max(nj, (int) (zoom * grabbed.dim(1)));
-//     int oi = (zi - ni) / 2;
-//     int oj = (zj - nj) / 2;
-//     idx<Tdata> im = image_resize(grabbed, zj, zi, 1);
-//     im = im.narrow(0, ni, oi);
-//     im = im.narrow(1, nj, oj);
-//     // for display
-//     idx_clear(grabbed);
-//     idx<Tdata> display(grabbed.narrow(0, im.dim(0), 0));
-//     display = display.narrow(1, im.dim(1), 0);
-//     idx_copy(im, display);
-//     { idx_bloop1(in, inputs, void*) {
-//   	inx = ((state_idx*) in.get())->x;
-//   	ni = inx.dim(1);
-//   	nj = inx.dim(2);
-//   	idx<Tdata> imres = image_resize(im, nj, ni, 1);
-//   	idx<double> inx0 = inx.select(0, 0);
-//   	idx<double> inx1 = inx.select(0, 1);
-//   	idx_copy(imres, inx0);
-//   	idx_copy(imres, inx1);
-//   	idx_addc(inx, bias, inx);
-//   	idx_dotc(inx, coeff, inx);
-//       }}
-//     return display;
-//   }
-
-// //   template <class Tdata>
-// //   idx<double> detector<Tdata>::multi_res_fprop(double threshold, int objsize) {
-// //     // fprop network on different resolutions
-// //     { idx_bloop2(in, inputs, void*, out, outputs, void*) {
-// // 	state_idx *ii = ((state_idx*) in.get());
-// // 	state_idx *oo = ((state_idx*) out.get());
-// // 	thenet.fprop(*ii, *oo); 
-// //       }}
-// //     // post process outputs
-// //     idx<double> res = postprocess_output(threshold, objsize);
-// //     res = prune(res);
-// //     cout << " results: ";
-// //     { idx_bloop1(re, res, double) {
-// // 	re.printElems();
-// // 	cout << " " << labels.get((int)re.get(0));
-// //       }}
-// //     if (res.dim(0) == 0) cout << "no object found.";
-// //     return res;
-// //   }
-
-//   template <class Tdata>
 //   idx<double> detector<Tdata>::prune(idx<double> &res) {
 //     // prune a list of detections.
 //     // only keep the largest scoring within an area
@@ -477,12 +498,7 @@ namespace ebl {
     init(img);
     grabbed = img;
     // do a fprop for each scaled input sample
-    cout << "Running multiscale fprop on module" << endl;
     multi_res_fprop(img);
-    
-    // parse result
-    // parse output feature map to extract positions of detections
-    cout << "Parsing output" << endl;
     
     // find points that are local maxima spatial and class-wise
     // write result in m. rescale result to [0 1]
@@ -492,20 +508,6 @@ namespace ebl {
     vector<bbox> rlist = map_to_list(threshold);
     pretty_bboxes(rlist);
     return rlist;
-
-//     //idx_copy(img, grabbed);
-//     idx<Tdata> display = this->multi_res_prep(img, 0.5);
-//     idx<double> res = this->multi_res_fprop(threshold, objsize);
-//     { idx_bloop1(re, res, double) {
-// 	unsigned int h = zoom * (re.get(2) - (0.5 * re.get(4)));
-// 	unsigned int w = zoom * (display.dim(1) - re.get(3) 
-// 				 - (0.5 * re.get(5)));
-// 	unsigned int height = zoom * re.get(4);
-// 	unsigned int width = zoom * re.get(5);
-// 	image_draw_box(display, (Tdata)255, h, w, height, width);
-//       }}
-//     //memcpy(img, grabbed.idx_ptr(), height * width * sizeof (Tdata));
-//     return res;
   }
 
   template <class Tdata> 

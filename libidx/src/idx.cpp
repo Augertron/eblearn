@@ -659,7 +659,7 @@ namespace ebl {
   }
   
   idxdim::idxdim(const idxspec &s) {
-    read(s);
+    setdims(s);
   }
 
   idxdim::idxdim(intg s0, intg s1, intg s2, intg s3,
@@ -671,12 +671,24 @@ namespace ebl {
       if (dims[i] >= 0) ndim++;
       else break;
   }
+
+  intg idxdim::order() const {
+    return ndim;
+  }
   
-  void idxdim::read(const idxspec &s) {
+  void idxdim::setdims(const idxspec &s) {
     ndim = s.ndim;
     memcpy(dims, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
     // set remaining to -1
     memset(dims + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg)); 
+  }
+  
+  void idxdim::setdims(const idxdim &s) {
+    ndim = s.order();
+    for (int i = 0; i < s.order(); ++i)
+      dims[i] = s.dim(i);
+    // set remaining to -1
+    memset(dims + s.order(), -1, (MAXDIMS - s.order()) * sizeof (intg)); 
   }
   
   void idxdim::setdim(intg dimn, intg size) {
@@ -698,14 +710,22 @@ namespace ebl {
     return dims[dimn]; 
   }
 
+  bool idxdim::operator==(const idxdim& other) {
+    if (other.ndim != ndim)
+      return false;
+    for (int i = 0; i < ndim; ++i)
+      if (other.dim(i) != dim(i))
+	return false;
+    return true;
+  }
+  
   std::ostream& operator<<(std::ostream& out, idxdim& d) {
-    if (d.ndim <= 0)
+    if (d.order() <= 0)
       out << "<empty>";
     else {
       out << d.dim(0);
-      for (int i = 1; i < d.ndim; ++i) {
+      for (int i = 1; i < d.order(); ++i)
 	out << "x" << d.dim(i);
-      }
     }
     return out;
   }

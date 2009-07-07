@@ -38,6 +38,9 @@ using namespace std;
 
 namespace ebl {
 
+  ////////////////////////////////////////////////////////////////
+  // bbox
+  
   //! bounding box class.
   class bbox {
   public:
@@ -73,6 +76,9 @@ namespace ebl {
     unsigned int ow;
   };
   
+  ////////////////////////////////////////////////////////////////
+  // detector
+  
   template <class Tdata> class detector {
   public:
     module_1_1<state_idx,state_idx>	&thenet;
@@ -83,28 +89,61 @@ namespace ebl {
     double				 contrast;
     double				 brightness;
     double				 coef;
-    double				 bias;
+    double				 bias;    
     idx<float>				 sizes;
     idx<void*>				 inputs;	//! state_idx*
     idx<void*>				 outputs;	//! state_idx*
     idx<void*>				 results;	//! idx<double>*
     idx<double>				 smoothing_kernel;
     idx<const char*>			 labels;
+    ////////////////////////////////////////////////////////////////
   private:
-    idxdim in_mindim;
+    // dimensions
+    idxdim				 in_mindim;
+    idxdim				 in_maxdim;
+    unsigned int			 nresolutions;
+    idx<unsigned int>			 resolutions;
+    bool				 manual_resolutions;
     
-  public:	
+  public:
+    
+    ////////////////////////////////////////////////////////////////
+    // constructors
+    
     //! Constructor.
     detector(module_1_1<state_idx, state_idx> &thenet, 
-		 idx<float> &sz, 
+		 unsigned int nresolutions, 
+		 idx<const char*> &lbls, double b, double c);
+    
+    //! Constructor.
+    detector(module_1_1<state_idx, state_idx> &thenet, 
+		 idx<unsigned int> &resolutions, 
 		 idx<const char*> &lbls, double b, double c);
     //    detector(module_1_1<state_idx, state_idx> &thenet);
     virtual ~detector();
 
+    ////////////////////////////////////////////////////////////////
+    
     vector<bbox> fprop(idx<Tdata> &img, double threshold = 1.8);
 
   private:
+    //! initialize dimensions and multi-resolution buffers.
     void init(idx<Tdata> &input);
+
+    //! compute sizes of each resolutions based on input size <input_dims>.
+    void compute_minmax_resolutions(idxdim &input_dims);
+    
+    //! compute sizes of each resolutions based on input size <input_dims>.
+    void compute_resolutions(idxdim &input_dims, unsigned int nresolutions);
+
+    //! print all resolutions.
+    void print_resolutions();
+
+    //! checks that resolutions match the network size, if not adjust them.
+    //! this method assumes nresolutions and resolutions members have already
+    //! been initialized.
+    void validate_resolutions();
+    
     // Sub functions
     //    idx<Tdata> multi_res_prep(idx<Tdata> &img, float zoom);
 

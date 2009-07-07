@@ -324,20 +324,24 @@ int main(int argc, char **argv) {
   objectLabels.set("swinghand", 5);
 
   //! a classifier needs a trained module, a list of scales, and the classes
-  classifierNMS<float> myClassifier(myConvNet, //! The trained ConvNet
-				    scales,  //! sizes of objects
-				    objectLabels, //! Labels of classes
-				    testSample, //! Sample to classify
-				    0.0, //! Bias to be added to inputs
-				    0.01 //! Coef to scale inputs
-				    );
+  detector<float> myClassifier(myConvNet, //! The trained ConvNet
+			       //! number of scales, from min to max scale
+			       // 1 means max scale
+			       // 2 means min and max scales
+			       // 3 means min, max, and min+(max-min/2) scale
+			       // ...
+			       2,  
+			       objectLabels, //! Labels of classes
+			       0.0, //! Bias to be added to inputs
+			       0.01 //! Coef to scale inputs
+			       );
 
   //! do a pass, classify
-  myClassifier.classify(0.9);
+  myClassifier.fprop(testSample, 0.9);
 
   //! display results
   #ifdef __GUI__
-  classifier2D_gui displayer;
+  detector_gui displayer;
   displayer.display_current(myClassifier, testSample);
   #endif
 

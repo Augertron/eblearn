@@ -4,8 +4,8 @@ endif
 
 release:
 	@echo @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	@echo Compiling ${prj} project in release mode...
-	@echo Use make prj=idxgui to compile a specific project.
+	@echo Compiling ${prj} project(s) in release mode...
+	@echo Use 'make prj=idxgui' for example to compile a specific project.
 	@echo @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make ${prj} && cd ../..
 debug:
