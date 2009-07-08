@@ -48,6 +48,8 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GUI__")
 ENDIF (QT_FOUND) #--------------------------------------------------------------
 
+MESSAGE("libeblearntools compilation flags: ${CMAKE_CXX_FLAGS}")
+
 # compile library
 ################################################################################
 add_library (eblearntools SHARED
@@ -62,6 +64,9 @@ ELSE(${Boost_MINOR_VERSION} GREATER 34)
   TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
     ${Boost_REGEX_LIBRARY})
 ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+IF (QT_FOUND)
+  target_link_libraries (eblearntools idxgui eblearngui)
+ENDIF (QT_FOUND)
 
 IF (NOT Boost_FOUND)
   MESSAGE(STATUS "___WARNING___: libeblearntools is compiled but missing capabilities because of missing Boost libraries.")
