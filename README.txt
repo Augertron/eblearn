@@ -15,18 +15,18 @@ Installation and compilation:
     1. Required external packages:
 
        *all packages* 
-	   	     sudo apt-get install cmake g++ \
+	   	     sudo apt-get install subversion cmake g++ \
          	     	  	  	  libatlas-base-dev \
 	       	 	  		  libboost-filesystem-dev \
 					  libboost-regex-dev \
 	       	     	  		  libqt4-core libqt4-dev libqt4-gui \
-               	     	  		  libcppunit-dev
+               	     	  		  libcppunit-dev imagemagick
        *for developers only*
        	    	     sudo apt-get install valgrind electric-fence
        *details*
 
-       compilation:  sudo apt-get install cmake g++
-         libeblearn: sudo apt-get install libatlas-base-dev 
+       compilation:  sudo apt-get install cmake g++ subversion
+         libeblearn: sudo apt-get install libatlas-base-dev imagemagick
    libeblearn-tools: sudo apt-get install libboost-filesystem-dev \
   		     	  	  	  libboost-regex-dev
      libeblearn-gui: sudo apt-get install libqt4-core libqt4-dev libqt4-gui \
@@ -34,11 +34,17 @@ Installation and compilation:
           debugging: sudo apt-get install valgrind electric-fence
 					      
     2. Compilation
-       ./build.sh
+       ./configure
+       make
+       (or 'make debug' to compile with debug information for gdb)
+       (or 'make prj=idxgui' if you just want to compile the library
+       libidxgui and its dependencies or 'make debug prj=tester' to
+       compile the tester only in debug mode)  
 
     3. Execution
-       ./configure.sh
-       cd bin && ./eblearn_tester
+       cd bin
+       ./tester
+       ./mnist "your_mnist_directory"
 
 *** MAC OS X *** 
 --------------------------------------------------------------------------------
@@ -113,10 +119,9 @@ Instructions
           ">>./clean.sh" (just in case you did a previous build with
           this src tree.)
 
-          o Then type ">> ./build.sh".
           o Then type ">>./configure.sh". You'll need the full path to
           your local mnist data dir. 
 
     * Run unit tester
-          o cd into "bin" and type "./eblearn_tester".
+          o cd into "bin" and type "./tester".
           o all the implemented unit tests should pass 
