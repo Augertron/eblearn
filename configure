@@ -34,6 +34,8 @@ echo "libeblearn configuration."
 #     *) echo "\tNot using IPP libraries."
 #   esac
 
+mkdir bin 2> /dev/null
+
 echo "Use MNIST handwritten digit database? (y/N)"
 echo "   (download at http://yann.lecun.com/exdb/mnist/)"
 echo -n "\t"
@@ -50,12 +52,11 @@ echo -n "\t"
       fi
     echo -n "\tOk, using MNIST from directory: "
     echo $MNIST
+    echo "\n-mnist $MNIST" >> run.init
     ;;
     *) echo "\tNot using MNIST."
   esac
 
 #ouputing arguments to main() for runtime
-mkdir bin 2> /dev/null
-echo "\n-mnist $MNIST" >> run.init
 
 echo "Configuration done. Now run make or make debug"
