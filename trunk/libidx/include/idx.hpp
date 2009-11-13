@@ -39,6 +39,29 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  //! idx error macros
+
+  //! Print incompatible idx1 and idx2 and call eblerror with errmsg.
+#define idx_compatibility_error2(idx1, idx2, errmsg) {			\
+    cerr <<"error: "<<idx1 << " and " << idx2 << " are incompatible." << endl; \
+    eblerror(errmsg); }
+  
+  //! Print incompatible idx1, idx2, idx3 and call eblerror with errmsg.
+#define idx_compatibility_error3(idx1, idx2, idx3, errmsg) {		\
+    cerr << "error: " << idx1 << ", " << idx2 << " and " << idx3	\
+	 << " are incompatible." << endl; eblerror(errmsg); }
+  
+  //! Print incompatible idx1, idx2, idx3 and call eblerror with errmsg.
+#define idx_compatibility_error4(idx1, idx2, idx3, idx4, errmsg) {	\
+    cerr << "error: " << idx1 << ", " << idx2 << ", " << idx3 << " and " \
+	 << idx4 << " are incompatible." << endl; eblerror(errmsg); }
+  
+  //! Print incompatible idx1, idx2, idx3 and call eblerror with errmsg.
+#define idx_compatibility_error5(idx1, idx2, idx3, idx4, idx5, errmsg) { \
+    cerr << "error: " << idx1 << ", " << idx2 << ", " << idx3 << ", " << idx4 \
+	 << " and " << idx5 << " are incompatible." << endl; eblerror(errmsg); }
+  
+  ////////////////////////////////////////////////////////////////
   //! idx elements and dimensions error checking macros
 
   //! Calls eblerror if src0 is not contiguous.
@@ -76,8 +99,8 @@ namespace ebl {
 #define idx_checkorder2(src0, o0, src1, o1)				\
   if (((src0).order() != o0) || ((src1).order() != o1)) {		\
     cerr << "error: ";							\
-    if ((src0).order() != o0) cerr << src0 << " should have order " << o0; \
-    if ((src1).order() != o1) cerr << src1 << " should have order " << o1; \
+    if ((src0).order() != o0) cerr << src0 <<" should have order "<< o0<<". "; \
+    if ((src1).order() != o1) cerr << src1 <<" should have order "<< o1<<". "; \
     cerr << endl;							\
     eblerror("idx have incompatible orders"); }
 
@@ -86,9 +109,9 @@ namespace ebl {
   if (((src0).order() != o0) || ((src1).order() != o1)			\
       || ((src2).order() != o2)) {					\
     cerr << "error: ";							\
-    if ((src0).order() != o0) cerr << src0 << " should have order " << o0; \
-    if ((src1).order() != o1) cerr << src1 << " should have order " << o1; \
-    if ((src2).order() != o2) cerr << src2 << " should have order " << o2; \
+    if ((src0).order() != o0) cerr << src0 <<" should have order "<< o0<<". "; \
+    if ((src1).order() != o1) cerr << src1 <<" should have order "<< o1<<". "; \
+    if ((src2).order() != o2) cerr << src2 <<" should have order "<< o2<<". "; \
     cerr << endl;							\
     eblerror("idx have incompatible orders"); }
 
@@ -96,23 +119,23 @@ namespace ebl {
 #define idx_checkorder3_all(src0, src1, src2)				\
   if (((src0).order() != (src1).order())				\
       || ((src0).order() != (src2).order()))				\
-    eblerror("idx have incompatible orders");
+    idx_compatibility_error3(src0, src1, src2, "idx have incompatible orders");
 
   //! Calls eblerror if src0.dim(0) and src1.dim(d1) don't match e0,e1
 #define idx_checkdim2(src0, d0, e0, src1, d1, e1)	\
   if (((src0).dim(d0) != e0) || ((src1).dim(d1) != e1))	\
-    eblerror("idx have incompatible dimensions");
+    idx_compatibility_error2(src0, src1, "idx have incompatible dimensions");
 
   //! Calls eblerror if src0.dim(d) and src1.dim(d) don't match
 #define idx_checkdim2_all(src0, src1, d)		\
   if ((src0).dim(d) != (src1).dim(d))			\
-    eblerror("idx have incompatible dimensions");
+    idx_compatibility_error2(src0, src1, "idx have incompatible dimensions");
 
   //! Calls eblerror if src0.dim(d) and src1.dim(d) and src2.dim(d) don't match
 #define idx_checkdim3_all(src0, src1, src2, d)		\
   if (((src0).dim(d) != (src1).dim(d)) ||		\
       ((src0).dim(d) != (src2).dim(d)))			\
-    eblerror("idx have incompatible dimensions");
+    idx_compatibility_error3(src0,src1,src2,"idx have incompatible dimensions");
 
   //! Calls eblerror if src0.dim(d) and src1.dim(d) and src2.dim(d)
   //! and src3.dim(d) don't match
@@ -120,7 +143,8 @@ namespace ebl {
   if (((src0).dim(d) != (src1).dim(d)) ||		\
       ((src0).dim(d) != (src2).dim(d)) ||		\
       ((src0).dim(d) != (src3).dim(d)))			\
-    eblerror("idx have incompatible dimensions");
+    idx_compatibility_error4(src0,src1,src2,src3,	\
+			     "idx have incompatible dimensions");
 
   //! Calls eblerror if src0.dim(d) and src1.dim(d) and src2.dim(d)
   //! and src3.dim(d) and src4.dim(d) don't match
@@ -129,7 +153,8 @@ namespace ebl {
       ((src0).dim(d) != (src2).dim(d)) ||			\
       ((src0).dim(d) != (src3).dim(d)) ||			\
       ((src0).dim(d) != (src4).dim(d)))				\
-    eblerror("idx have incompatible dimensions");
+    idx_compatibility_error5(src0,src1,src2,src3,src4,			\
+			     "idx have incompatible dimensions");
 
   ////////////////////////////////////////////////////////////////
   // TODO: these macros are untested (YLC)
@@ -838,6 +863,35 @@ namespace ebl {
     }
   }
 
+  template <class T> void idx<T>::set_chandim(int d) {
+    spec.set_chandim(d);
+  }
+
+  template <class T> int idx<T>::get_chandim() {
+    return spec.get_chandim();
+  }
+  
+  template <class T> idx<T> idx<T>::shift_dim(int d, int pos) {
+    int tr[MAXDIMS];
+    for (int i = 0, j = 0; i < spec.ndim; ++i) {
+      if (i == pos)
+	tr[i] = d;
+      else {
+	if (j == d)
+	  j++;
+	tr[i] = j++;
+      }
+    }
+    return transpose(tr);
+  }
+    
+  template <class T> idx<T> idx<T>::shift_chan(int pos) {
+    if (spec.chandim == -1) { // no channel dim defined, return identity
+      return *this;
+    }
+    return shift_dim(spec.chandim, pos);
+  }
+    
   ////////////////////////////////////////////////////////////////
   // pointer access methods
 
@@ -1103,11 +1157,7 @@ namespace ebl {
 
   template <class T> 
   std::ostream& operator<<(std::ostream& out, idx<T>& m) {
-    out << "idx:";
-    out << m.dim(0);
-    for (int i = 1; i < m.order(); ++i) {
-      out << "x" << m.dim(i);
-    }
+    out << m.spec;
     return out;
   }
 

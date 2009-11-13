@@ -4,7 +4,6 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "datasource.h"
 #include "datasource_gui.h"
-#include "dataset_generation.h"
 
 //! Test class for IdxIO class
 class DataSourceTest : public CppUnit::TestFixture  {

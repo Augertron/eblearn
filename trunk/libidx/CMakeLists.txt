@@ -19,7 +19,8 @@ add_library (idx SHARED
 		     src/idx.cpp
 		     src/color_spaces.cpp
 		     src/image.cpp  
-		     src/numerics.cpp  
+		     src/numerics.cpp
+		     src/idxIO.cpp
 		     )
 
 # check for external libraries

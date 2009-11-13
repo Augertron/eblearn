@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
- *   All rights reserved.
+ *   Copyright (C) 2009 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,60 +29,28 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef LIBIDX_DEFINES_H_
-#define LIBIDX_DEFINES_H_
+#ifndef XML_UTILS_H_
+#define XML_UTILS_H_
 
-#include <stdio.h>
-#include <execinfo.h>
-#include <stdlib.h>
+#ifdef __XML__
+
+#include <libxml++/libxml++.h>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 
-#ifndef NULL
-#define NULL (void*)0
-#endif
+using namespace xmlpp;
+using namespace std;
 
-#define MATRIX_EXTENSION ".mat"
+////////////////////////////////////////////////////////////////
+// extract xml values
 
-// #define DEBUG_ON
+//! return unsigned int value from text content
+unsigned int	get_uint(Node *element);
 
-#ifdef DEBUG_ON
-#define DEBUG(s,d) fprintf(stderr,s,d)
-#else
-#define DEBUG(s,d)
-#endif
+//! set string s from text content
+void		get_string(Node *element, string &s);
 
-#define eblerror(s) {						\
-    std::cerr << "\033[1;31mException:\033[0m " << s;		\
-    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
-    std::cerr << ":" << __LINE__ << std::endl;			\
-    std::cerr << "\033[1;31mStack:\033[0m" << std::endl;	\
-    void *array[10];						\
-    size_t size;						\
-    size = backtrace(array, 10);				\
-    backtrace_symbols_fd(array, size, 2);			\
-    abort();							\
-  }
+#endif /* __XML__ */
 
-#define ylerror(s) eblerror(s)
-
-// not used right now
-#define ITER(x) x##__iter
-
-#ifndef MAX
-# define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef MIN
-# define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#endif
-
-namespace ebl {
-
-  // intg is used for array indexing, hence should be
-  // defined as long if you want very large arrays
-  // on 64 bit machines.
-  typedef long intg;
-  typedef unsigned char ubyte;
-
-} // end namespace ebl
-
-#endif /* LIBIDX_DEFINES_H_ */
+#endif /* XML_UTILS_H_ */

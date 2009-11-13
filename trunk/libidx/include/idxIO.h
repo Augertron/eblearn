@@ -68,14 +68,19 @@ namespace ebl {
 
   //! Loads a matrix from file filename and returns it.
   //! Returns true if successful, false otherwise.
+  template<typename T> bool load_matrix(idx<T>& m, const string &filename);
   template<typename T> bool load_matrix(idx<T>& m, const char *filename);
   template<typename T> bool load_matrix(idx<T>& m, istream &stream);
 
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
+  template<typename T> bool save_matrix(idx<T>& m, const string &filename);
   template<typename T> bool save_matrix(idx<T>& m, const char *filename);
   template<typename T> bool save_matrix(idx<T>& m, ostream &stream);
 
+  //! Set string type to a string describing the matrix type found in filename.
+  bool get_matrix_type(const char *filename, string &type);
+  
 } // end namespace ebl
 
 #include "idxIO.hpp"

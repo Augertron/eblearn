@@ -50,6 +50,7 @@ namespace ebl {
 
   // specialization for doubles: can use blas versions.
   void idx_copy(idx<double> &src, idx<double> &dst) {
+    // loop and copy
     idxop_ii(src, dst,
 	     // idx0 version
 	     { *(dst.idx_ptr()) = *(src.idx_ptr()); },
@@ -70,6 +71,7 @@ namespace ebl {
 
   // specialization for floats: can use blas versions.
   void idx_copy(idx<float> &src, idx<float> &dst) {
+    // loop and copy
     idxop_ii(src, dst,
 	     // idx0 version
 	     { *(dst.idx_ptr()) = *(src.idx_ptr()); },

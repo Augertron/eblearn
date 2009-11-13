@@ -88,13 +88,13 @@ namespace ebl {
   //! Fills type, ncol and nlin if valid PNM file.
   //! type = 6 if P6, 5 if P5, 4 if P4, -1 otherwise.
   //! This function returns false upon errors in the header.
-  bool pnm_header(FILE * fp, int *type, int *ncol, int *nlin, int *vmax) {
-    if (!fp) return false;
+  void pnm_header(FILE * fp, int *type, int *ncol, int *nlin, int *vmax) {
+    if (!fp) throw "invalid file pointer";
     rewind(fp);
     char buf[128];
     memset(buf, 0, sizeof (buf));
-    if (fscanf(fp, "%s\n", buf) == 0) {
-      cerr << "invalid PNM file." << endl; return false; }
+    if (fscanf(fp, "%s\n", buf) == 0)
+      throw "invalid PNM file";
     *type = -1;
     if ((strcmp("P1", buf) == 0) ||
 	(strcmp("P2", buf) == 0) ||
@@ -103,74 +103,67 @@ namespace ebl {
 	(strcmp("P5", buf) == 0) ||
 	(strcmp("P6", buf) == 0))
       *type = (int) buf[1] - '0';
-    else {
-      cerr << "invalid binary PNM file." << endl;
-      return false;
-    }
-    fp = skip_comments(35, fp);
-    if (fscanf(fp, "%d", ncol) == 0) {
-      cerr << "invalid PNM file." << endl; return false; }
-    fp = skip_comments(35, fp);
-    if (fscanf(fp, "%d", nlin) == 0) {
-      cerr << "invalid PNM file." << endl; return false; }
-    fp = skip_comments(35, fp);
-    if (fscanf(fp, "%d\n", vmax) == 0) {
-      cerr << "invalid PNM file." << endl; return false; }
-    return true;
+    else throw "invalid binary PNM file (unknown format)";
+    fp = skip_comments(35, fp); // skip comments
+    if (fscanf(fp, "%d", ncol) == 0) // read number of columns
+      throw "invalid PNM file: 0 columns";
+    fp = skip_comments(35, fp); // skip comments
+    if (fscanf(fp, "%d", nlin) == 0) // read number of lines
+      throw "invalid PNM file: 0 lines";
+    fp = skip_comments(35, fp); // skip comments
+    if (fscanf(fp, "%d\n", vmax) == 0) // read maximum value
+      throw "invalid PNM file: can't read value";
   }
 
-  bool pnm_fread_into_rgbx(const char* fname, idx<ubyte> &out){
+  void pnm_fread_into_rgbx(const char* fname, idx<ubyte> &out){
     FILE *fp = fopen(fname, "r");
-    if (!fp) {
-      cerr << "failed to open " << fname << endl;
-      return false;
-    }
-    bool bla =  pnm_fread_into_rgbx(fp, out);
-    fclose(fp);
-    return bla;
+    if (!fp) throw "opening failed";
+    pnm_fread_into_rgbx(fp, out);
+    if (fp) fclose(fp);
   }
 
-  bool pnm_fread_into_rgbx(FILE *fp, idx<ubyte> &out) {
-    idx_checkorder1(out, 3);
-
+  void pnm_fread_into_rgbx(FILE *fp, idx<ubyte> &out) {
+    idx_checkorder1(out, 3); // allow only 3D buffers
     int type, ncol, nlin, ncolo, nlino, ncmpo, vmax;
     unsigned int expected_size, read_size;
-    if (!pnm_header(fp, &type, &ncol, &nlin, &vmax))
-      return false;
-    // TODO: allow PNM > 255 when idx out is int
-    if (vmax > 255) {
-      cerr << "values range from 0 to " << vmax;
-      cerr << ". Only ubyte are supported (0 .. 255)." << endl;
-      return false;
-    }
-    if (vmax != 255)
+    pnm_header(fp, &type, &ncol, &nlin, &vmax);
+    if (vmax < 255)
       cout << "Warning: PNM values range lower than 255: " << vmax << endl;
+    size_t sz = (vmax == 65535) ? 2 : 1;
     nlino = out.dim(0);
     ncolo = out.dim(1);
     ncmpo = out.dim(2);
-    expected_size = ncol * nlin;
-    if ((ncol != ncolo) || (nlin != nlino) || (ncmpo < 3))
-      out.resize(nlin, ncol, max(ncmpo, 3));
+    out.set_chandim(2); // tell idx where the channels are
+    expected_size = ncol * nlin * 3;
+    if ((ncol != ncolo) || (nlin != nlino) || (ncmpo != 3))
+      out.resize(nlin, ncol, 3);
     switch (type) {
     case 3: // PPM ASCII
       int res;
       unsigned int val;
       { idx_aloop1(o, out, ubyte) {
   	  res = fscanf(fp, "%u", &val);
+	  // downcasting automatically scales values if vmax > 255
 	  *o = (unsigned char) val;
 	}}
       break ;
     case 6: // PPM binary
-      if ((3 == out.dim(2)) && out.contiguousp()) {
-	read_size = fread(out.idx_ptr(), 3, expected_size, fp);
-	if ((expected_size != read_size) &&
-	    // TODO: fixme, adding temporarly +1 to fix reading failures bug
-	    (expected_size != read_size + 1)) {
-	  cerr << "image read: not enough items read. expected ";
-	  cerr << expected_size;
-	  cerr << " but found " << read_size << endl;
-	  return false;
-	}
+      if (out.contiguousp()) {
+	if (sz == 2) { // 16 bits per pixel
+	  idxdim d(out);
+	  idx<short> out2(d);
+	  read_size = fread(out2.idx_ptr(), sz, expected_size, fp);
+	  idx_copy(out2, out);
+	} else // 8 bits per pixel
+	  read_size = fread(out.idx_ptr(), sz, expected_size, fp);
+	if (expected_size != read_size)
+	  // TODO: fixme, adding temporarly +1 to fix reading failures bug
+	  //	    && (expected_size != read_size + 1))
+	  {
+	    cerr << "WARNING: image read: not enough items read. expected ";
+	    cerr << expected_size;
+	    cerr << " but found " << read_size << endl;
+	  }
       } else {
 	{ idx_aloop1(o, out, ubyte) {
 	    *o = getc(fp);
@@ -211,7 +204,6 @@ namespace ebl {
     default:
       cerr << "Format P" << type << " not implemented." << endl;
     }
-    return true;
   }
 
 
@@ -230,18 +222,21 @@ namespace ebl {
       return false;
     }
     char *mycommand = new char[myconvert.size() + strlen(fname) + 50];
-    sprintf(mycommand, "%s %s PPM:-", myconvert.c_str(), fname);
+    sprintf(mycommand, "%s \"%s\" PPM:-", myconvert.c_str(), fname);
     FILE* fp = popen(mycommand, "r");
     delete mycommand;
 
-    if (!fp) {
-      cerr << "failed to open " << fname << endl;
+    try {
+      if (!fp) throw "opening failed";
+      pnm_fread_into_rgbx(fp, out);
+    } catch(const char *err) {
+      cerr << "error: failed to load " << fname << ", " << err << endl;
+      if (fp) fclose(fp);
       return false;
     }
-    bool ret =  pnm_fread_into_rgbx(fp, out);
     pclose(fp);
     fp = (FILE*)NULL;
-    return ret;
+    return true;
 
   }
   ////////////////////////////////////////////////////////////////

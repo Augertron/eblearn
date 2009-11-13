@@ -35,7 +35,7 @@
 #include "libidx.h"
 
 namespace ebl {
-
+  
   ////////////////////////////////////////////////////////////////
   //! crop rectangle (<x>,<y>,<w>,<h>) from image <in>
   //! and return the result (a copy).
@@ -64,6 +64,30 @@ namespace ebl {
   //! smaller than the computed sizes, or to 1, whichever is largest.
   template<class T> 
     idx<T> image_resize(idx<T> &im, double w, double h, int mode = 1);
+
+  //! resizes an image (a region of im) into a square of width outwidth,
+  //! using gaussian pyramids. returns result.
+  //! the resizing of im is tolerated to end up within outwidth and 
+  //! percentage below (outwidth - outwidth * margin).
+  //! The output will still be a square of width outwidth centered on the
+  //! region.
+  //! out_region is set by the function and represent the resized version of
+  //! region.
+  template<class T> 
+    idx<T> image_gaussian_square_resize(idx<T> &im, const rect &region,
+					uint outwidth, rect &out_region,
+					float margin = 0.0);
+
+  //! returns the biggest square image including image region r.
+  template<class T> 
+    idx<T> image_region_to_square(idx<T> &im, const rect &r);
+
+  //! returns the square image of width sqwidth centered on region r.
+  //! cropped is set by the function to the region in the output image
+  //! that comes from the input image. the rest contains no image, only 0.
+  template<class T> 
+    idx<T> image_region_to_square(idx<T> &im, const rect &r, uint sqwidth,
+				  rect &cropped);
 
   //! This function takes 2D or 3D images (greyscale or RGB)
   //! as input of type T and converts
@@ -241,10 +265,10 @@ namespace ebl {
   //! at least 3. Appropriate conversion is performed.
   //! extra color components (beyond the first 3) are left
   //! untouched.
-  bool pnm_fread_into_rgbx(FILE *fp, idx<ubyte> &out);
-  bool pnm_fread_into_rgbx(const char *fname, idx<ubyte> &out);
+  void pnm_fread_into_rgbx(FILE *fp, idx<ubyte> &out);
+  void pnm_fread_into_rgbx(const char *fname, idx<ubyte> &out);
   template<class T>
-    bool pnm_fread_into_rgbx(const char *fname, idx<T> &out);
+    void pnm_fread_into_rgbx(const char *fname, idx<T> &out);
 
 
   //! read any kind of image that can be converted to a PPM by ImageMagick
@@ -257,7 +281,16 @@ namespace ebl {
   // TODO: comments
   template<class T> bool load_image(const char *fname, idx<T> &out);
   template<class T> idx<T> load_image(const char *fname);
+  template<class T> idx<T> load_image(const string &fname);
 
+  // saving functions
+  
+  // format is the desired image format. e.g.: "JPG", "PNG", etc.
+  template<class T> bool save_image(const string &fname, idx<T> &in,
+				    const char *format);
+  template<class T> bool save_image_ppm(const string &fname, idx<T> &in);
+  template<class T> bool save_image_jpg(const string &fname, idx<T> &in);
+  
   ////////////////////////////////////////////////////////////////
   // Filters
 
@@ -295,6 +328,8 @@ namespace ebl {
   template<class T>
     void image_apply_filter(idx<T> &in, idx<T> &out, idx<T> &filter,
 			    idx<T> *tmp = NULL);
+  template<class T>
+    idx<T> image_filter(idx<T> &in, idx<T> &filter);
 
   ////////////////////////////////////////////////////////////////
   // Deformations

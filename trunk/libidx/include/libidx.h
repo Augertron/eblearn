@@ -40,6 +40,7 @@
 #include "blas.h"
 #include "idxIO.h"
 #include "color_spaces.h"
+#include "gaussian_pyramid.h"
 #include "image.h"
 
 #endif

@@ -10,6 +10,7 @@ class image_test : public CppUnit::TestFixture  {
   CPPUNIT_TEST(test_resize);
   CPPUNIT_TEST(test_pnm_P3);
   CPPUNIT_TEST(test_pnm_P6);
+  CPPUNIT_TEST(test_gaussian_pyramid);
   //  CPPUNIT_TEST(test_colorspaces);
   CPPUNIT_TEST_SUITE_END();
 
@@ -26,6 +27,7 @@ public:
   void test_resize();
   void test_pnm_P3();
   void test_pnm_P6();
+  void test_gaussian_pyramid();
   void test_colorspaces();
 };
 #endif /*IMAGE_TEST_H_*/

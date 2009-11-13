@@ -34,7 +34,7 @@ add_executable (posture
   
 # link executable with external libraries
 ################################################################################
-target_link_libraries (posture eblearn idx eblearntools)
+target_link_libraries (posture eblearn idx)
   
   IF (QT_FOUND) #---------------------------------------------------------------
     target_link_libraries (posture idxgui)

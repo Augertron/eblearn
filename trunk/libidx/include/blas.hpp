@@ -570,10 +570,12 @@ namespace ebl {
   //}
 
   template<class T1, class T2> void idx_copy(idx<T1> &src, idx<T2> &dst){
+    // loop and copy
     idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }
   }
 
   template<class T1, class T2> void idx_copy_clip(idx<T1> &src, idx<T2> &dst){
+    // loop and copy
     idx_aloop2(isrc, src, T1, idst, dst, T2) { 
       *idst = (T2) MAX(std::numeric_limits<T2>::min(), 
 		       MIN(std::numeric_limits<T2>::max(), *isrc));
@@ -582,6 +584,7 @@ namespace ebl {
 
   // generic copy for the same type.
   template<class T> void idx_copy(idx<T> &src, idx<T> &dst) {
+    // loop and copy
     intg N1=src.nelements();
     intg N2 =dst.nelements();
     if (N1 != N2) { eblerror("idx_op: idxs have different number of elements\n"); }
@@ -634,7 +637,7 @@ namespace ebl {
 
   template<class T> void rev_idx2 (idx<T> &m) {
     if (m.order() != 2)
-      eblerror("Expecting idx of order 2");
+      idx_compatibility_error1(m, "expecting idx of order 2");
     T tmp, *p = m.ptr();
     intg size = m.dim(0) * m.dim(1);
     intg i;
@@ -648,7 +651,7 @@ namespace ebl {
 
   template<class T> void rev_idx2_tr (idx<T> &m, idx<T> &n) {
     if ((m.order() != 2) || (n.order() != 2))
-      eblerror("Expecting idx of order 2");
+      idx_compatibility_error2(m, n, "expecting idx of order 2");
     T *p = m.ptr();
     T *q = n.ptr();
     intg size = m.dim(0) * m.dim(1);
@@ -664,7 +667,7 @@ namespace ebl {
     idx_checkorder3(i1, 4, i2, 2, o1, 2); // check for compatible orders
     if ((i1.dim(0) != o1.dim(0)) || (i1.dim(1) != o1.dim(1)) 
 	|| (i1.dim(2) != i2.dim(0)) || (i1.dim(3) != i2.dim(1)))
-      eblerror("incompatible dimensions");
+      idx_compatibility_error3(i1, i2, o1, "incompatible dimensions");
     T *c1, *c1_2;
     T *c2, *c2_0;
     T *c1_0, *c1_1;
@@ -711,7 +714,7 @@ namespace ebl {
     idx_checkorder3(i1, 4, i2, 2, o1, 2); // check for compatible orders
     if ((i1.dim(0) != o1.dim(0)) || (i1.dim(1) != o1.dim(1)) 
 	|| (i1.dim(2) != i2.dim(0)) || (i1.dim(3) != i2.dim(1)))
-      eblerror("incompatible dimensions");
+      idx_compatibility_error3(i1, i2, o1, "incompatible dimensions");
     T *c1, *c1_2;
     T *c2, *c2_0;
     T *c1_0, *c1_1;
