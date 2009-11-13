@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
+ *   Copyright (C) 2009 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,60 +30,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef LIBIDX_DEFINES_H_
-#define LIBIDX_DEFINES_H_
-
 #include <stdio.h>
-#include <execinfo.h>
-#include <stdlib.h>
-#include <iostream>
+#include "idxIO.h"
 
-#ifndef NULL
-#define NULL (void*)0
-#endif
-
-#define MATRIX_EXTENSION ".mat"
-
-// #define DEBUG_ON
-
-#ifdef DEBUG_ON
-#define DEBUG(s,d) fprintf(stderr,s,d)
-#else
-#define DEBUG(s,d)
-#endif
-
-#define eblerror(s) {						\
-    std::cerr << "\033[1;31mException:\033[0m " << s;		\
-    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
-    std::cerr << ":" << __LINE__ << std::endl;			\
-    std::cerr << "\033[1;31mStack:\033[0m" << std::endl;	\
-    void *array[10];						\
-    size_t size;						\
-    size = backtrace(array, 10);				\
-    backtrace_symbols_fd(array, size, 2);			\
-    abort();							\
-  }
-
-#define ylerror(s) eblerror(s)
-
-// not used right now
-#define ITER(x) x##__iter
-
-#ifndef MAX
-# define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef MIN
-# define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#endif
+using namespace std;
 
 namespace ebl {
+  
+  // TODO: use c++ IO to catch IO exceptions more easily
+  // TODO: if types differ, print warning and cast to expected type
+  // TODO: allow not knowing order in advance (just assign new idx to m)
+  bool get_matrix_type(const char *filename, string &type) {
+    // open file
+    FILE *fp = fopen(filename, "rb");
+    if (!fp) {
+      cerr << "get_matrix_type failed to open " << filename << "." << endl;
+      return false;
+    }
 
-  // intg is used for array indexing, hence should be
-  // defined as long if you want very large arrays
-  // on 64 bit machines.
-  typedef long intg;
-  typedef unsigned char ubyte;
-
+    int magic;
+    // header: read magic number
+    if (fread(&magic, sizeof (int), 1, fp) != 1) {
+      cerr << "failed to read " << filename << "." << endl;
+      fclose(fp);
+      return false;
+    }
+    type = get_magic_str(magic);
+    return true;
+  }
+  
 } // end namespace ebl
-
-#endif /* LIBIDX_DEFINES_H_ */

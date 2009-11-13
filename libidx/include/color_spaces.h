@@ -48,20 +48,27 @@ namespace ebl {
   //! TODO: make this more generic.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
-  template<class T> void rgb_to_yuv(idx<T> &rgb, idx<T> &yuv);
+  template<class T>
+    void rgb_to_yuv(idx<T> &rgb, idx<T> &yuv);
+  
   //! Same as yuv_to_rgb with 2 arguments except that it allocates a target
   //! image and returns it.
-  template<class T> idx<T> rgb_to_yuv(idx<T> &rgb);
+  template<class T>
+    idx<T> rgb_to_yuv(idx<T> &rgb);
 
-  template<class T> void rgb_to_y(idx<T> &rgb, idx<T> &y);
+  template<class T>
+    void rgb_to_y(idx<T> &rgb, idx<T> &y);
   
   //! Convert all pixels of yuv idx to rgb pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
-  template<class T> void yuv_to_rgb(idx<T> &yuv, idx<T> &rgb);
+  template<class T>
+    void yuv_to_rgb(idx<T> &yuv, idx<T> &rgb);
+  
   //! Same as yuv_to_rgb with 2 arguments except that it allocates a target
   //! image and returns it.
-  template<class T> idx<T> yuv_to_rgb(idx<T> &yuv);
+  template<class T>
+    idx<T> yuv_to_rgb(idx<T> &yuv);
 
   //! Normalize a YUV image (wxhx3), centered between on [-2.5 .. 2.5]
   void YUVGlobalNormalization(idx<float> &yuv);
@@ -78,18 +85,24 @@ namespace ebl {
   //! Convert all pixels of rgb idx to hsv pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
-  template<class T> void rgb_to_hsv(idx<T> &rgb, idx<T> &hsv);
+  template<class T>
+    void rgb_to_hsv(idx<T> &rgb, idx<T> &hsv);
+  
   //! Same as hsv_to_rgb with 2 arguments except that it allocates a target
   //! image and returns it.
-  template<class T> idx<T> rgb_to_hsv(idx<T> &rgb);
+  template<class T>
+    idx<T> rgb_to_hsv(idx<T> &rgb);
 
   //! Convert all pixels of hsv idx to rgb pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
-  template<class T> void hsv_to_rgb(idx<T> &hsv, idx<T> &rgb);
+  template<class T>
+    void hsv_to_rgb(idx<T> &hsv, idx<T> &rgb);
+  
   //! Same as hsv_to_rgb with 2 arguments except that it allocates a target
   //! image and returns it.
-  template<class T> idx<T> hsv_to_rgb(idx<T> &hsv);
+  template<class T>
+    idx<T> hsv_to_rgb(idx<T> &hsv);
 
   ////////////////////////////////////////////////////////////////
   // HSV3
@@ -99,20 +112,25 @@ namespace ebl {
   //! Convert all pixels of rgb idx to hsv3 pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
-  template<class T> void rgb_to_hsv3(idx<T> &rgb, idx<T> &hsv3,
-				     double threshold1, double threshold2);
+  template<class T>
+    void rgb_to_hsv3(idx<T> &rgb, idx<T> &hsv3,
+		     double threshold1, double threshold2);
+  
   //! Same as hsv3_to_rgb with 2 arguments except that it allocates a target
   //! image and returns it.
-  template<class T> idx<T> rgb_to_hsv3(idx<T> &rgb, double threshold1,
-				       double threshold2);
+  template<class T>
+    idx<T> rgb_to_hsv3(idx<T> &rgb, double threshold1, double threshold2);
 
   //! Convert all pixels of hsv3 idx to rgb pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
-  template<class T> void hsv3_to_rgb(idx<T> &hsv3, idx<T> &rgb);
+  template<class T>
+    void hsv3_to_rgb(idx<T> &hsv3, idx<T> &rgb);
+  
   //! Same as hsv3_to_rgb with 2 arguments except that it allocates a target
   //! image and returns it.
-  template<class T> idx<T> hsv3_to_rgb(idx<T> &hsv3);
+  template<class T>
+    idx<T> hsv3_to_rgb(idx<T> &hsv3);
 
   ////////////////////////////////////////////////////////////////
   // YH3
@@ -120,22 +138,26 @@ namespace ebl {
   //! Convert all pixels of rgb idx to yh3 pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
-  template<class T> void rgb_to_yh3(idx<T> &rgb, idx<T> &yh3,
-				    double threshold1 = .10,
-				    double threshold2 = .15);
+  template<class T>
+    void rgb_to_yh3(idx<T> &rgb, idx<T> &yh3, double threshold1 = .10,
+		    double threshold2 = .15);
+  
   //! Same as yh3_to_rgb with 2 arguments except that it allocates a target
   //! image and returns it.
-  template<class T> idx<T> rgb_to_yh3(idx<T> &rgb,
-				      double threshold1 = .10,
-				      double threshold2 = .15);
+  template<class T>
+    idx<T> rgb_to_yh3(idx<T> &rgb, double threshold1 = .10,
+		      double threshold2 = .15);
   
   //! Convert all pixels of h3 idx to rgb pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
-  template<class T> void h3_to_rgb(idx<T> &h3, idx<T> &rgb);
+  template<class T>
+    void h3_to_rgb(idx<T> &h3, idx<T> &rgb);
+  
   //! Same as h3_to_rgb with 2 arguments except that it allocates a target
   //! image and returns it.
-  template<class T> idx<T> h3_to_rgb(idx<T> &h3);
+  template<class T>
+    idx<T> h3_to_rgb(idx<T> &h3);
 
   ////////////////////////////////////////////////////////////////
   // H2sv

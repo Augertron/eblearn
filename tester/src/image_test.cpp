@@ -119,6 +119,95 @@ void image_test::test_pnm_P6() {
   pnm_fread_into_rgbx(imgfile.c_str(), im);
 }
 
+typedef double t_gdata;
+void image_test::test_gaussian_pyramid() {
+  // TODO: fix test
+//   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
+//   string imgfile = *gl_data_dir;
+//   imgfile += "/lena.png";
+//   idx<ubyte> im_rgb(1, 1, 3);
+//   image_read_rgbx(imgfile.c_str(), im_rgb);
+//   //  im_rgb = im_rgb.narrow(1, im_rgb.dim(1) / 2, im_rgb.dim(1) / 4);
+
+//   rect r(im_rgb.dim(0) / 10, 0,
+// 	 im_rgb.dim(0) / 5, im_rgb.dim(1));
+// //   rect r(im_rgb.dim(0) / 10, im_rgb.dim(1) / 4,
+// // 	 im_rgb.dim(0) / 5, im_rgb.dim(1) / 2);
+//   //im_rgb = image_region_to_square(im_rgb, r);
+//     im_rgb = im_rgb.shift_chan(0); // put channel dimension first
+//   idx<t_gdata> im(im_rgb.get_idxdim());
+//   idx_copy(im_rgb, im);
+//   gaussian_pyramid<t_gdata> gp;
+
+//   idx<t_gdata> in = im;
+//   idx<t_gdata> tin;
+//   idx<t_gdata> reduced;
+// #ifdef __GUI__
+//   uint h = 0, w = 0;
+//   new_window("Testing gaussian pyramid scaling");
+  
+//   //  for (int i = 0; i < 5; ++i) {
+//     // input
+//     draw_matrix(in, "in", h, w, 1.0, 1.0, 0.0, 255.0);
+//     h += in.dim(1) + 5;
+//     // reduced
+//     reduced = gp.reduce(in, 3);
+//     // reduced/expanded
+//     idx<t_gdata> re = gp.expand(reduced);
+//     draw_matrix(re, "R-Expanded", h, w, 1.0, 1.0, 0.0, 255.0);
+//     save_matrix(re, "re.mat");
+//     h += re.dim(1) + 5;
+//     // laplacian
+//     idx<t_gdata> laplacian(re.get_idxdim());
+//     cout << "in " << in << endl;
+//     tin = gp.cut_pad(gp.red_tin, 2);
+//     idx_sub(tin, re, laplacian);
+//     draw_matrix(laplacian, "Laplacian", h, w);
+//     h = 0;
+//     w += laplacian.dim(2) + 5;
+//     in = reduced;
+//     //  }
+  
+//   h = 0, w = 0;
+//   ostringstream oss;
+//   new_window("Gaussian square resize");
+//   // draw original image
+//   oss << "original " << im;
+//   draw_matrix(im, oss.str().c_str(), h);
+//   h += im.dim(1);
+//   // draw region cropped image
+//   idx<t_gdata> cropped = im.narrow(1, r.height, r.h0);
+//   cropped = cropped.narrow(2, r.width, r.w0);
+//   oss.str("");
+//   oss << "bbox cropped original " << cropped << " h0xw0xhxw:";
+//   oss << r.h0 << "x" << r.w0 << "x" << r.height << "x" << r.width;
+//   draw_matrix(cropped, oss.str().c_str(), h);
+//   h += cropped.dim(1);
+//   // draw gaussian resized
+//   in = image_gaussian_square_resize(im, r, 96);
+//   oss.str("");
+//   oss << in;
+//   draw_matrix(in, oss.str().c_str(), h, w);
+//   w += in.dim(2) + 10;
+//   // draw gaussian resized
+//   in = image_gaussian_square_resize(im, r, 45);
+//   oss.str("");
+//   oss << in;
+//   draw_matrix(in, oss.str().c_str(), h, w);
+//   w += in.dim(2) + 10;
+//   // draw gaussian resized
+//   uint reductions = MAX(0, (int)
+// 			gp.count_reductions(MAX(r.height, r.width), 96) - 1);
+//   rect rrr = gp.reduce_rect(r, reductions);
+//   rect rr(0, 0, in.dim(1), in.dim(2));
+//   in = image_gaussian_square_resize(in, rr, 96);
+//   oss.str("");
+//   oss << in;
+//   draw_matrix(in, oss.str().c_str(), h, w);
+//   w += in.dim(2) + 10;
+//#endif  
+}
+
 void image_test::test_colorspaces() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
   idx<ubyte> im_rgb(1, 1, 3);

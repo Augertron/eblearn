@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <math.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -70,37 +71,40 @@ namespace ebl {
     }
     intg imw = contim.dim(1);
     intg imh = contim.dim(0);
-    if ((imw == 0) || (imh == 0))
-      eblerror("cannot have dimensions of size 0");
     int rw = 0;
     int rh = 0;
-    // determine actual size of output image
-    if ((0 == w) || (0 == h)) {
-      if (0 == w) {
-	if (0 == h) {
-	  eblerror("desired width and height cannot be both zero");
-	} else {
-	  w = max(1, (int) (imw * (h / imh)));
-	}
-      } else h = max(1, (int) (imh * (w / imw)));
+    try {
+      if ((imw == 0) || (imh == 0))
+	throw "cannot have dimensions of size 0";
+      // determine actual size of output image
+      if ((0 == w) || (0 == h)) {
+	if (0 == w) {
+	  if (0 == h) throw "desired width and height cannot be both zero";
+	  else	w = max(1, (int) (imw * (h / imh)));
+	} else	h = max(1, (int) (imh * (w / imw)));
+      }
+      if (mode == 0) {
+	double r = min(w / imw, h / imh);
+	w = max(1, (int) (r * imw));
+	h = max(1, (int) (r * imh));
+      }
+      else if (mode == 1) {
+	w = max(1, (int) w);
+	h = max(1, (int) h);
+      }
+      else if (mode == 2) {
+	w = max(1, (int) (w * imw));
+	h = max(1, (int) (h * imh));
+      }
+      else throw "illegal mode or desired dimensions";
+    } catch (const char *err) {
+      cerr << "error: trying to resize image " << image;
+      cerr << " to " << h << "x" << w << " with mode " << mode << endl;
+      eblerror(err);
     }
-    else if (mode == 0) {
-      double r = min(w / imw, h / imh);
-      w = max(1, (int) (r * imw));
-      h = max(1, (int) (r * imh));
-    }
-    else if (mode == 1) {
-      w = max(1, (int) w);
-      h = max(1, (int) h);
-    }
-    else if (mode == 2) {
-      w = max(1, (int) (w * imw));
-      h = max(1, (int) (h * imh));
-    }
-    else eblerror("image_resize: illegal mode or desired dimensions");
     // compute closest integer subsampling ratio
-    rw = (int) (imw / w);
-    rh = (int) (imh / h);
+    rw = MAX(1, (int) (imw / w));
+    rh = MAX(1, (int) (imh / h));
     // subsample by integer ratio if necessary
     if ((rh > 1) || (rw > 1)) {
       contim = image_subsample(contim, rh, rw);
@@ -109,6 +113,7 @@ namespace ebl {
     }
     // resample from subsampled image with bilinear interpolation
     idx<T> rez((intg) h, (intg) w, (contim.order() == 3) ? contim.dim(2) : 1);
+    rez.set_chandim(contim.get_chandim());
     idx<T> bg(4);
     idx_clear(bg);
     // the 0.5 thingies are necessary because warp-bilin interprets
@@ -122,13 +127,165 @@ namespace ebl {
     return rez;
   }
 
+  template<class T>
+  idx<T> image_gaussian_square_resize(idx<T> &im_, const rect &region,
+				      uint outwidth, rect &out_region,
+				      float margin) {
+    idx<T> im = im_.shift_chan(0);
+    // only accept 2D images or 3D with channel dim to 0.
+    if ((im.order() != 2) && ((im.order() == 3) && im.get_chandim() != 0)) {
+      cerr << "error: gaussian_pyramid only accepts 2D images ";
+      cerr << "or 3D images with channel dimension (chandim) set to 0. ";
+      cerr << "input image is " << im << " with chandim = " << im.get_chandim();
+      cerr << endl;
+      eblerror("unexpected image format");
+    }
+    // if region's max edge is already within the margin below outwidth,
+    // then just return the square centered on the region
+    uint outwidth0 = MAX(0, (int) outwidth - outwidth * margin);
+    uint max = MAX(region.height, region.width);
+    if ((max <= outwidth) && (max >= outwidth0)) {
+      out_region = region;
+      return im_;
+      //return image_region_to_square(im, region, outwidth, cropped);
+    }
+    // else down/up-sample with gaussians
+    gaussian_pyramid<T> gp;
+    idx<T> rim;
+    rect rr;
+    // compute how many gaussian reduction/expansions necessary to reach target
+    if (max > outwidth) { // reduce
+      // compute a regular resize of 1/sqrt(2) of the original size
+      // to add more scales than just by a factor of 2.
+      idx<T> im_sqrt2 = im.shift_chan(2); // image_resize expect chan in 2
+      im_sqrt2 = image_resize(im_sqrt2, 1/sqrt(2), 1/sqrt(2), 2);
+      im_sqrt2 = im_sqrt2.shift_chan(0);
+      rect r_sqrt2(region.h0 * 1/sqrt(2), region.w0 * 1/sqrt(2),
+		   region.height * 1/sqrt(2), region.width * 1/sqrt(2));
+      uint max_sqrt2 = MAX(r_sqrt2.height, r_sqrt2.width);
+      uint dist, dist_sqrt2;
+      uint reductions = MAX(0, (int) gp.count_reductions(max, outwidth, dist));
+      uint reductions_sqrt2 =
+	MAX(0, (int) gp.count_reductions(max_sqrt2, outwidth, dist_sqrt2));
+      // switch between original and sqrt2 based on distance to outwidth
+      if (dist > dist_sqrt2) { // sqrt2 scale is closer to target
+	rim = gp.reduce(im_sqrt2, reductions_sqrt2);
+	rr = gp.reduce_rect(r_sqrt2, reductions_sqrt2);
+      } else { // original scale is closer to target
+	// reduce image reductions time
+	rim = gp.reduce(im, reductions);
+	rr = gp.reduce_rect(region, reductions);
+      }
+    } else { // expand
+      // compute a regular resize of 1/sqrt(2) of the original size
+      // to add more scales than just by a factor of 2.
+      idx<T> im_sqrt2 = im.shift_chan(2); // image_resize expect chan in 2
+      im_sqrt2 = image_resize(im_sqrt2, sqrt(2), sqrt(2), 2);
+      im_sqrt2 = im_sqrt2.shift_chan(0);
+      rect r_sqrt2(region.h0 * sqrt(2), region.w0 * sqrt(2),
+		   region.height * sqrt(2), region.width * sqrt(2));
+      uint max_sqrt2 = MAX(r_sqrt2.height, r_sqrt2.width);
+      uint dist = 0, dist_sqrt2 = 0;
+      // number of expansions to stay below outwidth
+	uint expansions =
+	  MAX(0, (int) gp.count_expansions(max, outwidth, dist));
+      uint expansions_sqrt2 =
+	MAX(0, (int) gp.count_expansions(max_sqrt2, outwidth, dist_sqrt2));
+      // switch between original and sqrt2 based on distance to outwidth
+      if (dist > dist_sqrt2) { // sqrt2 scale is closer to target
+	rim = gp.expand(im_sqrt2, expansions_sqrt2);
+	rr = gp.expand_rect(r_sqrt2, expansions_sqrt2);
+      } else { // original scale is closer to target
+	// expand
+	rim = gp.expand(im, expansions);
+	rr = gp.expand_rect(region, expansions);
+      }
+    }
+    // get a square piece of rim with width outwidth including reduced region rr
+    // as much as possible
+    out_region = rr;
+    rim = rim.shift_chan(2);
+    return rim;
+  }
+
+  template<class T> 
+  idx<T> image_region_to_square(idx<T> &im, const rect &r, uint sqwidth,
+				rect &cropped) {
+    // TODO: check expecting 2D or 3D
+    // TODO: check that rectangle is within image
+    idxdim d(im);
+    uint dh = (d.get_chandim() == 0) ? 1 : 0; // handle channels position
+    uint dw = (d.get_chandim() == 0) ? 2 : 1; // handle channels position
+    d.setdim(dh, sqwidth);
+    d.setdim(dw, sqwidth);
+    idx<T> res(d);
+
+    int hcenter = r.h0 + r.height / 2;
+    int wcenter = r.w0 + r.width / 2;
+    // limit centers to half the width/height away from borders
+    // to handle incorrect regions
+    hcenter = MIN((int)im.dim(dh)-1 - (int)r.height/2,
+		  MAX((int)r.height/2, hcenter));
+    wcenter = MIN((int)im.dim(dw)-1 - (int)r.width/2,
+		  MAX((int)r.width/2, wcenter));
+    int h0 = hcenter - sqwidth / 2;
+    int w0 = wcenter - sqwidth / 2;
+    int h1 = hcenter + sqwidth / 2;
+    int w1 = wcenter + sqwidth / 2;
+    int gh0 = MAX(0, MIN((int) im.dim(dh)-1, (int) h0));
+    int gw0 = MAX(0, MIN((int) im.dim(dw)-1, (int) w0));
+    int gh1 = MAX(0, MIN((int) im.dim(dh)-1, (int) h1));
+    int gw1 = MAX(0, MIN((int) im.dim(dw)-1, (int) w1));
+    int h = gh1 - gh0;
+    int w = gw1 - gw0;
+    int fh0 = gh0 - h0;
+    int fw0 = gw0 - w0;
+
+    idx<T> tmpres = res.narrow(dh, h, fh0);
+    tmpres = tmpres.narrow(dw, w, fw0);
+    idx<T> tmpim = im.narrow(dh, h, gh0);
+    tmpim = tmpim.narrow(dw, w, gw0);
+    idx_clear(res);
+    idx_copy(tmpim, tmpres);
+    // set cropped rectangle to region in the output image containing input
+    cropped.h0 = fh0;
+    cropped.w0 = fw0;
+    cropped.height = h;
+    cropped.width = w;
+    return res;
+  }
+  
+  template<class T> 
+  idx<T> image_region_to_square(idx<T> &im, const rect &r) {
+    // TODO: check expecting 2D or 3D
+    // TODO: check that rectangle is within image
+    uint sz = MAX(r.height, r.width);
+    idxdim d(im);
+    uint dh = (d.get_chandim() == 0) ? 1 : 0; // handle channels position
+    uint dw = (d.get_chandim() == 0) ? 2 : 1; // handle channels position
+    d.setdim(dh, sz);
+    d.setdim(dw, sz);
+    idx<T> res(d);
+    uint tmp_h = MIN(sz, r.height);
+    uint tmp_w = MIN(sz, r.width);
+    idx<T> tmpres = res.narrow(dh, tmp_h, res.dim(dh) / 2 - tmp_h / 2);
+    tmpres = tmpres.narrow(dw, tmp_w, res.dim(dw) / 2 - tmp_w / 2);
+    idx<T> tmpim = im.narrow(dh, tmp_h, r.h0);
+    tmpim = tmpim.narrow(dw, tmp_w, r.w0);
+    idx_clear(res);
+    idx_copy(tmpim, tmpres);
+    return res;
+  }
+  
   template<class T> 
   idx<ubyte> image_to_ubyte(idx<T> &im, double zoomh, double zoomw,
 			    T minv, T maxv) {
     // check the order and dimensions
     if ((im.order() < 2) || (im.order() > 3) || 
-	((im.order() == 3) && (im.dim(2) != 1) && (im.dim(2) != 3))) 
+	((im.order() == 3) && (im.dim(2) != 1) && (im.dim(2) != 3))) {
+      cerr << "converting image_to_ubyte with dims " << im << " failed." <<endl;
       eblerror("expecting a 2D idx or a 3D idx with 1 or 3 channels only");
+    }
     // create a copy
     idxdim d(im);
     idx<T> im1(d);
@@ -220,6 +377,7 @@ namespace ebl {
     intg nh = h / nlin;
     intg nw = w / ncol;
     idx<T> out(nh, nw, in.dim(2));
+    out.set_chandim(in.get_chandim()); // preserve channels dimension info
     if ((nlin == 1) && (ncol == 1)) {
       idx_copy(in, out);
       return out;
@@ -586,12 +744,11 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // I/O
 
-  template<class T> bool pnm_fread_into_rgbx(const char *fname, idx<T> &out) {
+  template<class T> void pnm_fread_into_rgbx(const char *fname, idx<T> &out) {
     idx<ubyte> tmp(1,1,1);
-    bool ret = pnm_fread_into_rgbx(fname, tmp);
+    pnm_fread_into_rgbx(fname, tmp);
     out.resize(tmp.dim(0), tmp.dim(1), tmp.dim(2));
     idx_copy(tmp, out);
-    return ret;
   }
 
   template<class T>
@@ -611,8 +768,72 @@ namespace ebl {
   template<class T>
   idx<T> load_image(const char *fname) {
     idx<T> out(1,1,1);
-    image_read_rgbx(fname, out);
+    if (!image_read_rgbx(fname, out))
+      throw "load_image failed";
     return out;
+  }
+
+  template<class T>
+  idx<T> load_image(const string &fname) {
+    idx<T> out(1,1,1);
+    if (!image_read_rgbx(fname.c_str(), out))
+      throw "load_image failed";
+    return out;
+  }
+
+  template<class T>
+  bool save_image_ppm(const string &fname, idx<T> &in) {
+    // check order
+    // TODO: support grayscale
+    if (in.order() != 3) {
+      cerr << "error: image order (" << in.order() << " not supported." << endl;
+      return false;
+    }
+    // save as ppm
+    FILE *fp = fopen(fname.c_str(), "wb");
+    if (!fp) {
+      cerr << "error: failed to open file " << fname << endl;
+      return false;
+    }
+    fprintf(fp,"P6 %d %d 255\n", (int) in.dim(1), (int) in.dim(0));
+    idx_bloop1(inn, in, ubyte) {
+      idx_bloop1(innn, inn, ubyte) {
+	fputc(innn.get(0), fp);
+	fputc(innn.get(1), fp);
+	fputc(innn.get(2), fp);
+      }
+    }
+    fclose(fp);
+    return true;
+  }
+
+  template<class T>
+  bool save_image_jpg(const string &fname, idx<T> &in) {
+    return save_image(fname, in, "JPG");
+  }
+
+  template<class T>
+  bool save_image(const string &fname, idx<T> &in, const char *format) {
+    // save as ppm
+    string fname2 = fname;
+    fname2 += ".ppm";
+    if (!save_image_ppm(fname2, in))
+      return false;
+    // convert ppm to jpg
+    string cmd = "convert PPM:";
+    cmd += fname2;
+    cmd += " ";
+    cmd += format;
+    cmd += ":";
+    cmd += fname;
+    int n = ::system(cmd.c_str());
+    if (n != 0) {
+      cerr << "error (" << n << "): failed to save image " << fname;
+      cerr << " to format " << format << endl;
+      return false;
+    }
+    remove(fname2.c_str());
+    return true;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -688,9 +909,15 @@ namespace ebl {
       break ;
     case 3:
       // normalize layer by layer
-      { idx_eloop1(i, in, T) {
-	idx_std_normalize(i); // zero-mean and divide by standard deviation
-	}}
+      if (in.get_chandim() == 0) { // data in 1st dimension
+	idx_bloop1(i, in, T) {
+	  idx_std_normalize(i); // zero-mean and divide by standard deviation
+	}
+      } else {
+	idx_eloop1(i, in, T) {
+	  idx_std_normalize(i); // zero-mean and divide by standard deviation
+	}
+      }
       break ;
     default:
       eblerror("image_local_normalization: dimension not implemented");
@@ -713,47 +940,92 @@ namespace ebl {
     idx<T> tmp5(d);
 
     // sum_j (w_j * in_j)
-    image_apply_filter(in, tmp5, kernel, &tmp);
+    idx<T> out1 = image_filter(in, kernel);
+    idx<T> in2 = in.narrow(0, out1.dim(0), floor(kernel.dim(0)/2));
+    in2 = in2.narrow(1, out1.dim(1), floor(kernel.dim(1)/2));
+    idxdim outd(out1);
+    idx<T> out2(outd);
     // in - mean
-    idx_sub(in, tmp5, tmp5);
+    idx_sub(in2, out1, out1);
     // (in - mean)^2
-    idx_mul(tmp5, tmp5, tmp4);
+    idx_mul(out1, out1, out2);
     // sum_j (w_j * (in - mean)^2)
-    image_apply_filter(tmp4, out, kernel, &tmp);
+    idx<T> out3 = image_filter(out2, kernel);
     // sqrt(sum_j (w_j (in - mean)^2))
-    idx_sqrt(out, out);    
+    idx_sqrt(out3, out3);    
     // std(std < 1) = 1
-    idx_threshold(out, (T)1.0, out);
+    idx_threshold(out3, (T)1.0, out3);
     // 1/std
-    idx_inv(out, out);
+    idx_inv(out3, out3);
     // out = (in - mean) / std
-    idx_mul(tmp5, out, out);
+    idx<T> out4 = out1.narrow(0, out3.dim(0), floor(kernel.dim(0)/2));
+    out4 = out4.narrow(1, out3.dim(1), floor(kernel.dim(1)/2));
+    idx_mul(out4, out3, out3);
+    // finally copy result centered on an image the same size as in
+    idx<T> out5 = out.narrow(0, out3.dim(0), (out.dim(0) - out3.dim(0)) / 2);
+    out5 = out5.narrow(1, out3.dim(1), (out.dim(1) - out3.dim(1)) / 2);
+    idx_clear(out);
+    idx_copy(out3, out5);
+    
+//     // in - mean
+//     idx_sub(in, tmp5, tmp5);
+//     // (in - mean)^2
+//     idx_mul(tmp5, tmp5, tmp4);
+//     // sum_j (w_j * (in - mean)^2)
+//     image_apply_filter(tmp4, out, kernel, &tmp);
+//     // sqrt(sum_j (w_j (in - mean)^2))
+//     idx_sqrt(out, out);    
+//     // std(std < 1) = 1
+//     idx_threshold(out, (T)1.0, out);
+//     // 1/std
+//     idx_inv(out, out);
+//     // out = (in - mean) / std
+//     idx_mul(tmp5, out, out);
   }
 
+  // TODO: get rid of this function
   template<class T>
   void image_apply_filter(idx<T> &in, idx<T> &out, idx<T> &filter,
 			  idx<T> *tmp_) {
     idxdim d(in);
     if ((out.dim(0) != d.dim(0)) || (out.dim(1) != d.dim(1)))
       out.resize(d);
-    // compute sizes of the temporary buffer
-    d.setdim(0, in.dim(0) + filter.dim(0) - 1);
-    d.setdim(1, in.dim(1) + filter.dim(1) - 1);
-    idx<T> tmp;
-    if (tmp_) {
-      tmp = *tmp_;
-      if ((tmp.dim(0) != d.dim(0)) || (tmp.dim(1) != d.dim(1))) {
-	tmp.resize(d);
-	*tmp_ = tmp;
-      }
-    } else
-      tmp = idx<T>(d);
-    // copy input into temporary buffer
-    idx_clear(tmp);
-    idx<T> tmp2 = tmp.narrow(0, in.dim(0), floor(filter.dim(0)/2));
-    tmp2 = tmp2.narrow(1, in.dim(1), floor(filter.dim(1)/2));
-    idx_copy(in, tmp2);
-    idx_2dconvol(tmp, filter, out);
+    idx_clear(out);
+    idx<T> tmp = out.narrow(0, in.dim(0) - filter.dim(0) + 1,
+			    floor(filter.dim(0)/2));
+    tmp = tmp.narrow(1, in.dim(1) - filter.dim(1) + 1,
+		     floor(filter.dim(1)/2));
+    idx_2dconvol(in, filter, tmp);   
+    
+//     // compute sizes of the temporary buffer
+//     d.setdim(0, in.dim(0) + filter.dim(0) - 1);
+//     d.setdim(1, in.dim(1) + filter.dim(1) - 1);
+//     idx<T> tmp;
+//     if (tmp_) {
+//       tmp = *tmp_;
+//       if ((tmp.dim(0) != d.dim(0)) || (tmp.dim(1) != d.dim(1))) {
+// 	tmp.resize(d);
+// 	*tmp_ = tmp;
+//       }
+//     } else
+//       tmp = idx<T>(d);
+//     // copy input into temporary buffer
+//     idx_clear(tmp);
+//     idx<T> tmp2 = tmp.narrow(0, in.dim(0), floor(filter.dim(0)/2));
+//     tmp2 = tmp2.narrow(1, in.dim(1), floor(filter.dim(1)/2));
+//     idx_copy(in, tmp2);
+//     idx_2dconvol(tmp, filter, out);
+  }
+  
+  template<class T>
+  idx<T> image_filter(idx<T> &in, idx<T> &filter) {
+    idxdim d(in);
+    d.setdim(0, in.dim(0) - filter.dim(0) + 1);
+    d.setdim(1, in.dim(1) - filter.dim(1) + 1);
+    idx<T> out(d);
+    idx_clear(out);
+    idx_2dconvol(in, filter, out);
+    return out;
   }
   
   ////////////////////////////////////////////////////////////////

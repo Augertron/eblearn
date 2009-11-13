@@ -114,6 +114,10 @@ namespace ebl {
     return v;
   }
 
+  template<typename T> bool load_matrix(idx<T>& m, const string &filename) {
+    return load_matrix(m, filename.c_str());
+  }
+
   // TODO: use c++ IO to catch IO exceptions more easily
   // TODO: if types differ, print warning and cast to expected type
   // TODO: allow not knowing order in advance (just assign new idx to m)
@@ -280,6 +284,10 @@ namespace ebl {
     { idx_aloop1(i, m, T) stream.read((char*)&(*i), sizeof (T)); }
     free(dims);
     return true;
+  }
+
+  template<typename T> bool save_matrix(idx<T>& m, const string &filename) {
+    return save_matrix(m, filename.c_str());
   }
 
   // TODO: intg support

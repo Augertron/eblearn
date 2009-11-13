@@ -45,6 +45,8 @@ void parse_args(int argc, char **argv) {
     new string("Data directory is unknown, some tests will be ignored");
   string s;
   ifstream in("../run.init");
+  if (!in)
+    in.open("run.init");
   if (!in) {
     cerr << "Warning: failed to open ../run.init, please run configure.sh";
     cerr << endl;

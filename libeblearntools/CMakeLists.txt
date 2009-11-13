@@ -37,6 +37,14 @@ IF (OpenCV_FOUND)
   LINK_DIRECTORIES(${OpenCV_LIBRARY_DIRS})
 ENDIF(OpenCV_FOUND)
   
+# find XML++
+##############################################################################
+FIND_PACKAGE(Xml++)
+IF (XML_FOUND) #----------------------------------------------------------------
+  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__XML__")
+  INCLUDE_DIRECTORIES(${XML_INCLUDE_DIRS})
+ENDIF (XML_FOUND) #-------------------------------------------------------------
+
 # find QT
 ##############################################################################
 FIND_PACKAGE(Qt4)
@@ -50,51 +58,91 @@ ENDIF (QT_FOUND) #--------------------------------------------------------------
 
 MESSAGE("libeblearntools compilation flags: ${CMAKE_CXX_FLAGS}")
 
-# compile library
+# # compile library
+# ################################################################################
+# add_library (eblearntools SHARED
+#   src/dataset_generation.cpp
+#   )
+
+# # link executable with external libraries
+# target_link_libraries (eblearntools eblearn idx)
+# IF (${Boost_MINOR_VERSION} GREATER 34)
+#   TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+# ELSE(${Boost_MINOR_VERSION} GREATER 34)
+#   TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
+#     ${Boost_REGEX_LIBRARY})
+# ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+# IF (QT_FOUND)
+#   target_link_libraries (eblearntools idxgui eblearngui)
+# ENDIF (QT_FOUND)
+
+# IF (NOT Boost_FOUND)
+#   MESSAGE(STATUS "___WARNING___: libeblearntools is compiled but missing capabilities because of missing Boost libraries.")
+# ENDIF (NOT Boost_FOUND) #-------------------------------------------------------
+
+# compile executable: dscompiler
 ################################################################################
-add_library (eblearntools SHARED
-  src/dataset_generation.cpp
+add_executable (dscompiler
+  src/dscompiler.cpp
+  src/dataset.cpp
+  src/xml_utils.cpp
   )
 
 # link executable with external libraries
-target_link_libraries (eblearntools eblearn idx)
+target_link_libraries (dscompiler idx)
+IF (QT_FOUND)
+  target_link_libraries (dscompiler idxgui)
+ENDIF (QT_FOUND)
+IF (XML_FOUND)
+  target_link_libraries (dscompiler ${XML_LIBRARY_FLAGS})
+ENDIF (XML_FOUND)
 IF (${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+  TARGET_LINK_LIBRARIES(dscompiler ${Boost_SYSTEM_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
 ELSE(${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
+  TARGET_LINK_LIBRARIES(dscompiler ${Boost_FILESYSTEM_LIBRARY} 
     ${Boost_REGEX_LIBRARY})
 ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-IF (QT_FOUND)
-  target_link_libraries (eblearntools idxgui eblearngui)
-ENDIF (QT_FOUND)
 
-IF (NOT Boost_FOUND)
-  MESSAGE(STATUS "___WARNING___: libeblearntools is compiled but missing capabilities because of missing Boost libraries.")
-ENDIF (NOT Boost_FOUND) #-------------------------------------------------------
-
-# compile executable: dataset_compiler
+# compile executable: dssplit
 ################################################################################
-add_executable (dataset_compiler
-  src/dataset_compiler.cpp
+add_executable (dssplit
+  src/dssplit.cpp
+  src/dataset.cpp
   )
 
 # link executable with external libraries
-target_link_libraries (dataset_compiler eblearn idx eblearntools)
+target_link_libraries (dssplit eblearn idx)
 IF (QT_FOUND)
-  target_link_libraries (dataset_compiler idxgui eblearngui)
+  target_link_libraries (dssplit idxgui eblearngui)
 ENDIF (QT_FOUND)
+IF (${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(dssplit ${Boost_SYSTEM_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+ELSE(${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(dssplit ${Boost_FILESYSTEM_LIBRARY} 
+    ${Boost_REGEX_LIBRARY})
+ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 
-# compile executable: dataset_display
+# compile executable: dsdisplay
 ################################################################################
-add_executable (dataset_display
-  src/dataset_display.cpp
+add_executable (dsdisplay
+  src/dsdisplay.cpp
+  src/dataset.cpp
   )
 
 # link executable with external libraries
-target_link_libraries (dataset_display eblearn idx)
+target_link_libraries (dsdisplay eblearn idx)
 IF (QT_FOUND)
-  target_link_libraries (dataset_display idxgui eblearngui)
+  target_link_libraries (dsdisplay idxgui eblearngui)
 ENDIF (QT_FOUND)
+IF (${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(dsdisplay ${Boost_SYSTEM_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+ELSE(${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(dsdisplay ${Boost_FILESYSTEM_LIBRARY} 
+    ${Boost_REGEX_LIBRARY})
+ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 
 # compile executable: meta_trainer
 ################################################################################

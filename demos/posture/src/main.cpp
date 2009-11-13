@@ -41,14 +41,16 @@
 #ifdef __GUI__
 #include "libeblearngui.h"
 #endif
-#include "libeblearntools.h"
+//#include "libeblearntools.h"
 
 #include <cstring>
 #include <iostream>
 #include <fstream>
 
-//using namespace boost::filesystem;
 #ifdef __BOOST__
+#include "boost/filesystem.hpp"
+#include "boost/regex.hpp"
+using namespace boost::filesystem;
 using namespace boost;
 #endif
 
@@ -358,12 +360,12 @@ void generate_idx_data_set(string pathToData) {
   string pathToIdx = pathToData+"/idx";
   
   cout << "Converting images to idx object" << endl;
-  imagedir_to_idx(pathTrainingSet.c_str(), 46, 0, ".*[.]ppm", 
-		NULL, pathToIdx.c_str(), NULL, true,
-		"_train");
-  imagedir_to_idx(pathTestingSet.c_str(), 46, 0, ".*[.]ppm", 
-		NULL, pathToIdx.c_str(), NULL, true,
-		"_test");
+//   imagedir_to_idx(pathTrainingSet.c_str(), 46, 0, ".*[.]ppm", 
+// 		NULL, pathToIdx.c_str(), NULL, true,
+// 		"_train");
+//   imagedir_to_idx(pathTestingSet.c_str(), 46, 0, ".*[.]ppm", 
+// 		NULL, pathToIdx.c_str(), NULL, true,
+// 		"_test");
 }
 
 //! return the path of the database, based on run.init

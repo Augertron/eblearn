@@ -2,4 +2,6 @@
 
 doxygen Doxyfile.libeblearn
 doxygen Doxyfile.libidx
-doxygen Doxyfile.eblearn
+doxygen Doxyfile.libeblearntools
+doxygen Doxyfile.libeblearngui
+doxygen Doxyfile.libidxgui

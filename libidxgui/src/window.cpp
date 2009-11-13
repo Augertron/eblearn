@@ -224,7 +224,8 @@ namespace ebl {
     boxes.push_back(new box(h0, w0, h, w, r, g, b));
     // add caption
     set_text_origin(h0 + 1, w0 + 1);
-    add_text(s);
+    if (s)
+      add_text(s);
     update_window();
   }
   
@@ -275,8 +276,16 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // update methods
 
-  void Window::buffer_resize(int h, int w) {
-    if ((!buffer || (buffer->dim(0) < h) || (buffer->dim(1) < w))
+  void Window::buffer_resize(uint h, uint w) {
+    // arbitrary bounding of h and w to prevent gigantic erroneous values.
+    uint bound = 10000;
+    if (MAX(h, w) > bound) {
+      cerr << "error: trying to resize display buffer to " << h << "x" << w;
+      cerr << ", one of those dimensions is greater than " << bound;
+      cerr << " and probably erroneous." << endl;
+      eblerror("too big values for resizing");
+    }
+    if ((!buffer || (((uint)buffer->dim(0))< h) || (((uint)buffer->dim(1)) < w))
 	&& ((h != 0) && (w != 0))) {
       resize(w, h);
       if (!buffer) {
@@ -286,10 +295,10 @@ namespace ebl {
       else {
 	idx<ubyte> *inew = new idx<ubyte>(h, w, 3);
 	idx_fill(*inew, (ubyte) 255);
-	idx<ubyte> tmpnew = inew->narrow(0, MIN(h, buffer->dim(0)), 0);
-	tmpnew = tmpnew.narrow(1, MIN(w, buffer->dim(1)), 0);
-	idx<ubyte> tmpbuf = buffer->narrow(0, MIN(h, buffer->dim(0)), 0);
-	tmpbuf = tmpbuf.narrow(1, MIN(w, buffer->dim(1)), 0);
+	idx<ubyte> tmpnew = inew->narrow(0, MIN(h, (uint)buffer->dim(0)), 0);
+	tmpnew = tmpnew.narrow(1, MIN(w, (uint)buffer->dim(1)), 0);
+	idx<ubyte> tmpbuf = buffer->narrow(0, MIN(h, (uint)buffer->dim(0)), 0);
+	tmpbuf = tmpbuf.narrow(1, MIN(w, (uint)buffer->dim(1)), 0);
 	idx_copy(tmpbuf, tmpnew);
 	delete buffer;
 	buffer = inew;

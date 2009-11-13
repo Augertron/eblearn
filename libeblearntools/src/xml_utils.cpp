@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
- *   All rights reserved.
+ *   Copyright (C) 2009 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,60 +29,32 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef LIBIDX_DEFINES_H_
-#define LIBIDX_DEFINES_H_
+#ifdef __XML__
 
-#include <stdio.h>
-#include <execinfo.h>
-#include <stdlib.h>
-#include <iostream>
+#include "xml_utils.h"
+#include <libxml++/libxml++.h>
 
-#ifndef NULL
-#define NULL (void*)0
-#endif
+using namespace xmlpp;
 
-#define MATRIX_EXTENSION ".mat"
+////////////////////////////////////////////////////////////////
+// extract xml values
 
-// #define DEBUG_ON
+unsigned int get_uint(Node *element) {
+  unsigned int u = 0;
+  
+  const Element* e = dynamic_cast<const Element*>(element);
+  const TextNode* txt = dynamic_cast<const TextNode*>
+    (e->get_child_text());
+  istringstream iss(txt->get_content(), istringstream::in);
+  iss >> u;
+  return u;
+}
 
-#ifdef DEBUG_ON
-#define DEBUG(s,d) fprintf(stderr,s,d)
-#else
-#define DEBUG(s,d)
-#endif
+void get_string(Node *element, string &s) {
+  const Element* e = dynamic_cast<const Element*>(element);
+  const TextNode* txt = dynamic_cast<const TextNode*>
+    (e->get_child_text());
+  s = txt->get_content();
+}
 
-#define eblerror(s) {						\
-    std::cerr << "\033[1;31mException:\033[0m " << s;		\
-    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
-    std::cerr << ":" << __LINE__ << std::endl;			\
-    std::cerr << "\033[1;31mStack:\033[0m" << std::endl;	\
-    void *array[10];						\
-    size_t size;						\
-    size = backtrace(array, 10);				\
-    backtrace_symbols_fd(array, size, 2);			\
-    abort();							\
-  }
-
-#define ylerror(s) eblerror(s)
-
-// not used right now
-#define ITER(x) x##__iter
-
-#ifndef MAX
-# define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-#ifndef MIN
-# define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#endif
-
-namespace ebl {
-
-  // intg is used for array indexing, hence should be
-  // defined as long if you want very large arrays
-  // on 64 bit machines.
-  typedef long intg;
-  typedef unsigned char ubyte;
-
-} // end namespace ebl
-
-#endif /* LIBIDX_DEFINES_H_ */
+#endif /* __XML__ */

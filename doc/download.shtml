@@ -38,7 +38,7 @@ version of the library. Still, you are welcome to visit the <a href="https://sou
 	                                  imagemagick
 					  libboost-regex-dev
 	       	     	  		  libqt4-core libqt4-dev libqt4-gui
-               	     	  		  libcppunit-dev
+               	     	  		  libcppunit-dev libxml++2.6-dev doxygen
 	 </code>
        <h5>libeblearn and libidx only (tools, testers and some demos will not compile)</h5>
        <code>$ 

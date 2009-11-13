@@ -160,7 +160,7 @@ namespace ebl {
     void keyPressEvent(QKeyEvent *event);
 
     // update methods
-    void buffer_resize(int h, int w);
+    void buffer_resize(uint h, uint w);
     void update_window(bool activate = false);
 
     // painting/drawing methods
