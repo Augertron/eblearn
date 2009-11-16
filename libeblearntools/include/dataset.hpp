@@ -210,9 +210,11 @@ namespace ebl {
   
   template <class Tdata>
   void dataset<Tdata>::set_display(bool display_) {
+#ifdef __GUI__
     cout << "Enabling display." << endl;
     new_window("Dataset compiler");
     display_extraction = display_;
+#endif /* __GUI__ */
   }
     
   template <class Tdata>
