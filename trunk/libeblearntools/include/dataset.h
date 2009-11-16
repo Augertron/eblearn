@@ -232,6 +232,7 @@ namespace ebl {
     // data helpers ////////////////////////////////////////////////
     bool		allocated;	//!< data matrices allocated or not
     idxdim		outdims;	//!< dimensions of sample out dimensions
+    idxdim		datadims;	//!< dimensions of data out dimensions
     intg		data_cnt;	//!< number of samples added so far
     intg		max_data;	//!< user can limit samples# with this
     bool		max_data_set;	//!< max_data been set by user or not
@@ -262,6 +263,7 @@ namespace ebl {
     string		ppconv_type;	//!< name of image conversion
     bool		ppconv_set;	//!< ppconv_type has been set or not
     bool		do_preprocessing;	//!< activate or deactivate pp
+    bool                shift_planar; //!< shift from interleaved to planar
   };
   
   ////////////////////////////////////////////////////////////////

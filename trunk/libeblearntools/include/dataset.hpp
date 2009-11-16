@@ -83,6 +83,7 @@ namespace ebl {
     sleep_display = false;
     sleep_delay = 0.0;
     do_preprocessing = true;
+    shift_planar = true;
   }
 
   template <class Tdata>
@@ -373,9 +374,13 @@ namespace ebl {
     cout << "Allocating dataset \"" << name << "\" with " << n;
     cout << " samples of size " << d << " ..." << endl;
     // allocate data buffer
-    idxdim datadims(outdims.dim(2), outdims.dim(0), outdims.dim(1));
-    datadims.insert_dim(n, 0);
-    data = idx<Tdata>(datadims);
+    if (shift_planar)
+      datadims = idxdim(outdims.dim(2), outdims.dim(0), outdims.dim(1));
+    else
+      datadims = idxdim(outdims.dim(0), outdims.dim(1), outdims.dim(2));
+    idxdim ddims(datadims);
+    ddims.insert_dim(n, 0);
+    data = idx<Tdata>(ddims);
     // allocate labels buffer
     labels = idx<t_label>(n);
     allocated = true;
@@ -433,14 +438,15 @@ namespace ebl {
     // do preprocessing
     if (do_preprocessing)
       sample = preprocess_data(sample, class_name, filename, r);
+    // put sample's channels dimensions first
+    if (shift_planar)
+      sample = sample.shift_dim(2, 0);
     // check for dimensions
-    if (!sample.same_dim(outdims)) {
-      cerr << "error: expected data with dimensions " << outdims;
+    if (!sample.same_dim(datadims)) {
+      cerr << "error: expected data with dimensions " << datadims;
       cerr << " but found " << sample.get_idxdim() << endl;
       return false;
     }
-    // put sample's channels dimensions first, if defined.
-    sample = sample.shift_dim(2, 0);
     // copy sample
     idx<Tdata> tgt = data.select(0, data_cnt);
     idx_copy(sample, tgt);
@@ -517,8 +523,13 @@ namespace ebl {
   
   template <class Tdata>
   void dataset<Tdata>::split(dataset<Tdata> &ds1, dataset<Tdata> &ds2) {
+    // data already preprocessed
     ds1.do_preprocessing = false;
     ds2.do_preprocessing = false;
+    // data already in planar, no shift required
+    ds1.shift_planar = false;
+    ds2.shift_planar = false;
+    // shuffle samples
     shuffle();
     // alloc each dataset
     ds1.alloc_from_max_per_class(data.dim(0));
