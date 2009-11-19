@@ -84,6 +84,9 @@ namespace ebl {
     sleep_delay = 0.0;
     do_preprocessing = true;
     shift_planar = true;
+#ifndef __BOOST__
+    eblerror("Boost libraries not available, install libboost-filesystem-dev libboost-regex-dev and recompile");
+#endif
   }
 
   template <class Tdata>
@@ -121,6 +124,7 @@ namespace ebl {
 
   template <class Tdata>
   bool dataset<Tdata>::extract() {
+#ifdef __BOOST__
     cmatch what;
     regex hidden_dir(".svn");    
     directory_iterator end_itr; // default construction yields past-the-end
@@ -130,6 +134,7 @@ namespace ebl {
 	// process subdirs to extract images into the single image idx
 	process_dir(itr->path().string(), extension, itr->leaf());
       }}
+#endif /* __BOOST__ */
     return true;
   }
   
@@ -501,6 +506,7 @@ namespace ebl {
   
   template <class Tdata>
   bool dataset<Tdata>::count_samples() {
+#ifdef __BOOST__
     total_samples = 0;
     regex hidden_dir(".svn");    
     cmatch what;
@@ -520,6 +526,7 @@ namespace ebl {
 	total_samples += count_matches(itr->path().string(), extension);
       }
     }
+#endif /* __BOOST__ */
     return true;
   }
   
@@ -745,6 +752,7 @@ namespace ebl {
   template <class Tdata>
   uint dataset<Tdata>::count_matches(const string &dir, const string &pattern) {
     uint total = 0;
+#ifdef __BOOST__
     regex eExt(pattern);
     cmatch what;
     path p(dir);
@@ -757,12 +765,14 @@ namespace ebl {
       else if (regex_match(itr->leaf().c_str(), what, eExt))
 	total++;
     }
+#endif /* __BOOST__ */
     return total;
   }
    
   template <class Tdata>
   void dataset<Tdata>::process_dir(const string &dir, const string &ext,
 				   const string &class_name) {
+#ifdef __BOOST__
     cmatch what;
     regex r(ext);
     path p(dir);
@@ -783,6 +793,7 @@ namespace ebl {
 	  cerr << ": "<< err << endl;
 	}
       }}
+#endif /* __BOOST__ */
   }
   
 } // end namespace ebl
