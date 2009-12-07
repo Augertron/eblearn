@@ -94,6 +94,10 @@ namespace ebl {
   //! clears the window.
   void clear_window();
 
+  //! save current window into filename image.
+  //! wid is optional, if given save window with id wid.
+  void save_window(const char *filename, int wid = -1);
+
   //! draws an arrow from (h1, w1) to (h2, w2).
   void draw_arrow(int h1, int w1, int h2, int w2);
 

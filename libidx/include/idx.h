@@ -949,6 +949,7 @@ namespace ebl {
     rect() {}
     //  rect(const rect &r) : h0(r.h0), w0(r.w0), height(r.height), width(r.width) {}
     virtual ~rect() {}
+    bool overlap(const rect &r);
     uint h0, w0, height, width;
 
     // friends

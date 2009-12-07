@@ -228,8 +228,11 @@ namespace ebl {
     }
     // check sizes
     if (((sini - (ki - stridei)) % stridei != 0) || 
-	((sinj - (kj - stridej)) % stridej != 0))
+	((sinj - (kj - stridej)) % stridej != 0)) {
+      cerr << "input: " << in.x << " kernel: " << kernel.x << " stride: ";
+      cerr << stridei << "x" << stridej << endl;
       eblerror("inconsistent input size, kernel size, and subsampling ratio.");
+    }
     if ((stridei != 1) || (stridej != 1))
       eblerror("stride > 1 not implemented yet.");
     // unfolding input for a faster convolution operation
@@ -312,10 +315,13 @@ namespace ebl {
     intg si = sin_i / stridei;
     intg sj = sin_j / stridej;
     // check sizes
-    if ((sin_i % stridei) != 0 || (sin_j % stridej) != 0)
+    if ((sin_i % stridei) != 0 || (sin_j % stridej) != 0) {
+      cerr << "input: " << in.x << " stride: ";
+      cerr << stridei << "x" << stridej << endl;
       eblerror("inconsistent input size and subsampling ratio");
+    }
     // resize output and sub based in input dimensions
-    idxdim d(in.x.spec); // use same dimensions as in
+    idxdim d(in.x); // use same dimensions as in
     d.setdim(1, si); // new size after subsampling
     d.setdim(2, sj); // new size after subsampling
     out.resize(d);
@@ -334,11 +340,10 @@ namespace ebl {
 
   void addc_module::fprop(state_idx& in, state_idx& out) {
     if (&in != &out) { // resize only when input and output are different
-      idxdim d(in.x.spec); // use same dimensions as in
+      idxdim d(in.x); // use same dimensions as in
       d.setdim(0, bias.x.dim(0)); // except for the first one
       out.resize(d);
     }
-
     // add each bias to entire slices cut from the first dimension
     idx_bloop3(inx, in.x, double, biasx, bias.x, double, outx, out.x, double)
       {
@@ -374,9 +379,303 @@ namespace ebl {
     idx_clear(bias.x);
   }
 
-  void addc_module::normalize() {
+  ////////////////////////////////////////////////////////////////
+  // power_module
+
+  power_module::power_module(double p_) : p(p_) {
   }
 
+  power_module::~power_module() {
+  }
+    
+  void power_module::fprop(state_idx &in, state_idx &out) {
+    if (&in != &out) { // resize only when input and output are different
+      idxdim d(in.x); // use same dimensions as in
+      out.resize(d);
+    }
+    idx_power(in.x, p, out.x);
+  }
+  
+  void power_module::bprop(state_idx &in, state_idx &out) {
+    if ((&in != &out) && (in.dx.nelements() != out.dx.nelements()))
+      eblerror("output has wrong size");
+    if (!tt.same_dim(in.x.get_idxdim())) { // resize temp buffer
+      idxdim d(in.x);
+      tt = idx<double>(d);
+    }
+    // compute derivative
+    idx_div(out.x, in.x, tt); //! tt = x^(p-1)
+    idx_mul(out.dx, tt, tt); //! tt = outdx*x^(p-1)
+    idx_dotcacc(tt, p, in.dx);
+  }
+
+  void power_module::bbprop(state_idx &in, state_idx &out) {
+    if ((&in != &out) && (in.dx.nelements() != out.dx.nelements()))
+      eblerror("output has wrong size");
+    if (!tt.same_dim(in.x.get_idxdim())) { // resize temp buffer
+      idxdim d(in.x);
+      tt = idx<double>(d);
+    }
+    // compute 2nd derivative
+    idx_div(out.x, in.x, tt); //! tt = x^(p-1)
+    idx_mul(tt, tt, tt); //! tt = (x^(p-1))^2
+    idx_mul(out.ddx, tt, tt); //! tt = outddx*(x^(p-1))^2
+    idx_dotcacc(tt, p * p, in.ddx);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // diff_module
+
+  diff_module::diff_module() {
+  }
+  
+  diff_module::~diff_module() {
+  }
+
+  void diff_module::fprop(state_idx &in1, state_idx &in2, state_idx &out) {
+    if (&in1 != &out) { // resize only when input and output are different
+      idxdim d(in1.x); // use same dimensions as in
+      out.resize(d);
+    }
+    idx_sub(in1.x, in2.x, out.x);
+  }
+
+  void diff_module::bprop(state_idx &in1, state_idx &in2, state_idx &out) {
+    idx_add(in1.dx, out.dx, in1.dx); // derivative wrt in1
+    idx_add(in2.dx, out.dx, in2.dx); // derivative wrt in2
+  }
+
+  void diff_module::bbprop(state_idx &in1, state_idx &in2, state_idx &out) {
+    idx_add(in1.ddx, out.ddx, in1.ddx); // derivative wrt in1
+    idx_add(in2.ddx, out.ddx, in2.ddx); // derivative wrt in2
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // mul_module
+
+  mul_module::mul_module() {
+  }
+  
+  mul_module::~mul_module() {
+  }
+
+  //! {<code>
+  //!    y = x1 .* x2
+  //! </code>}
+  void mul_module::fprop(state_idx &in1, state_idx &in2, state_idx &out) {
+    if (&in1 != &out) { // resize only when input and output are different
+      idxdim d(in1.x); // use same dimensions as in
+      out.resize(d);
+    }
+    idx_mul(in1.x, in2.x, out.x);
+  }
+  
+  //! {<code>
+  //!    dy\dx1 = x2
+  //!    dy\dx2 = x1
+  //! </code>}
+  void mul_module::bprop(state_idx &in1, state_idx &in2, state_idx &out) {
+    if (!tmp.same_dim(in1.x.get_idxdim())) { // resize temp buffer
+      idxdim d(in1.x);
+      tmp = idx<double>(d);
+    }
+    idx_mul(out.dx, in2.x, tmp);
+    idx_add(in1.dx, tmp, in1.dx);
+    idx_mul(out.dx, in1.x, tmp);
+    idx_add(in2.dx, tmp, in2.dx);
+  }
+   
+  //! {<code>
+  //!    d^2y\dx1^2 = (x2).^2
+  //!    d^2y\dx2^2 = (x1).^2
+  //! </code>}
+  void mul_module::bbprop(state_idx &in1, state_idx &in2, state_idx &out) {
+    if (!tmp.same_dim(in1.x.get_idxdim())) { // resize temp buffer
+      idxdim d(in1.x);
+      tmp = idx<double>(d);
+    }
+    idx_mul(in2.x, in2.x, tmp);
+    idx_mul(out.ddx, tmp, tmp);
+    idx_add(in1.ddx, tmp, in1.ddx);
+    idx_mul(in1.x, in1.x, tmp);
+    idx_mul(out.ddx, tmp, tmp);
+    idx_add(in2.ddx, tmp, in2.ddx);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // thres_module
+
+  thres_module::thres_module(double thres_, double val_)
+    : thres(thres_), val(val_) {
+  }
+
+  thres_module::~thres_module() {
+  }
+
+  void thres_module::fprop(state_idx &in, state_idx &out) {
+    if (&in != &out) { // resize only when input and output are different
+      idxdim d(in.x); // use same dimensions as in
+      out.resize(d);
+    }
+    idx_aloop2(inx, in.x, double, outx, out.x, double) {
+      if (*inx > thres)
+	*outx = *inx;
+      else
+	*outx = val;
+    }
+  }
+
+  void thres_module::bprop(state_idx &in, state_idx &out) {
+    idx_aloop3(inx, in.x, double, indx, in.dx, double, outdx, out.dx, double) {
+      if (*inx > thres)
+	*indx += *outdx;
+    }
+  }
+
+  void thres_module::bbprop(state_idx &in, state_idx &out) {
+    idx_add(in.ddx, out.ddx, in.ddx);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // cutborder_module
+
+  cutborder_module::cutborder_module(int nr_, int nc_)
+    : nrow(nr_), ncol(nc_) {
+  }
+
+  cutborder_module::~cutborder_module() {
+  }
+
+  void cutborder_module::fprop(state_idx &in, state_idx &out) {
+    intg inr = in.x.dim(1);
+    intg inc = in.x.dim(2);
+    intg outr = inr - 2 * nrow;
+    intg outc = inc - 2 * ncol;
+    idxdim d(in.x.dim(0), outr, outc);
+    if (!out.x.same_dim(d)) // resize only when necessary
+      out.resize(d);
+    out.clear();
+    idx<double> tmp = in.x.narrow(1, outr, nrow);
+    tmp = tmp.narrow(2, outc, ncol);
+    idx_copy(tmp, out.x);
+  }
+
+  void cutborder_module::bprop(state_idx &in, state_idx &out) {
+    intg inr = out.x.dim(1);
+    intg inc = out.x.dim(2);
+    idx<double> tmp = in.dx.narrow(1, inr, nrow);
+    tmp = tmp.narrow(2, inc, ncol);
+    idx_add(out.dx, tmp, tmp);
+  }
+
+  void cutborder_module::bbprop(state_idx &in, state_idx &out) {
+    intg inr = out.x.dim(1);
+    intg inc = out.x.dim(2);
+    idx<double> tmp = in.ddx.narrow(1, inr, nrow);
+    tmp = tmp.narrow(2, inc, ncol);
+    idx_add(out.ddx, tmp, tmp);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // zpad_module
+
+  zpad_module::zpad_module(int nr, int nc)
+    : nrow(nr), ncol(nc) {
+  }
+
+  zpad_module::~zpad_module() {
+  }
+
+  void zpad_module::fprop(state_idx &in, state_idx &out) {
+    intg inr = in.x.dim(1);
+    intg inc = in.x.dim(2);
+    idxdim d(in.x.dim(0), inr + 2 * nrow, inc + 2 * ncol);
+    if (!out.x.same_dim(d)) // resize only when necessary
+      out.resize(d);
+    out.clear();
+    idx<double> tmp = out.x.narrow(1, inr, nrow);
+    tmp = tmp.narrow(2, inc, ncol);
+    idx_copy(tmp, in.x);
+  }
+
+  void zpad_module::bprop(state_idx &in, state_idx &out) {
+    intg inr = in.x.dim(1);
+    intg inc = in.x.dim(2);
+    idx<double> tmp = out.dx.narrow(1, inr, nrow);
+    tmp = tmp.narrow(2, inc, ncol);
+    idx_add(tmp, in.dx, in.dx);
+  }
+
+  void zpad_module::bbprop(state_idx &in, state_idx &out) {
+    intg inr = in.x.dim(1);
+    intg inc = in.x.dim(2);
+    idx<double> tmp = out.ddx.narrow(1, inr, nrow);
+    tmp = tmp.narrow(2, inc, ncol);
+    idx_add(tmp, in.ddx, in.ddx);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // fsum_module
+
+  fsum_module::fsum_module() {
+  }
+
+  fsum_module::~fsum_module() {
+  }
+  
+  void fsum_module::fprop(state_idx &in, state_idx &out) { 
+    if (&in != &out) { // resize only when input and output are different
+      idxdim d(in.x); // use same dimensions as in
+      out.resize(d);
+    }
+    idx_eloop2(inx2, in.x, double, outx2, out.x, double) {
+      idx_eloop2(inx1, inx2, double, outx1, outx2, double) {
+	idx_fill(outx1, idx_sum(inx1));
+      }
+    }
+  }
+
+  void fsum_module::bprop(state_idx &in, state_idx &out) {
+    idx_eloop2(indx2, in.dx, double, outdx2, out.dx, double) {
+      idx_eloop2(indx1, indx2, double, outdx1, outdx2, double) {
+	idx_addc(indx1, idx_sum(outdx1), indx1);
+      }
+    }
+  }
+
+  void fsum_module::bbprop(state_idx &in, state_idx &out) {
+    idx_eloop2(inddx2, in.ddx, double, outddx2, out.ddx, double) {
+      idx_eloop2(inddx1, inddx2, double, outddx1, outddx2, double) {
+	idx_addc(inddx1, idx_sum(outddx1), inddx1);
+      }
+    }
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // helper function
+  
+  idx<intg> full_table(intg a, intg b) {
+    idx<intg> m(a * b, 2);
+    intg p = 0;
+    for (intg j = 0; j < b; ++j) {
+      for (intg i = 0; i < a; ++i) {
+	m.set(i, p, 0);
+	m.set(j, p, 1);
+	p++;
+      }
+    }
+    return m;
+  }
+
+  idx<intg> one2one_table(intg n) {
+    idx<intg> m(n, 2);
+    for (intg i = 0; i < n; ++i) {
+      m.set(i, i, 0);
+      m.set(i, i, 1);
+    }
+    return m;
+  }
+  
   ////////////////////////////////////////////////////////////////
 
 #ifdef USE_IPP

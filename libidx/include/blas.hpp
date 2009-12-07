@@ -217,6 +217,11 @@ namespace ebl {
     idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = (*pi1) * (*pi2); }
   }
 
+  template<class T> void idx_div(idx<T> &i1, idx<T> &i2, idx<T> &out) {
+    idxiter<T> pi1, pi2; idxiter<T> pout;
+    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = (*pi1) / (*pi2); }
+  }
+
   template<class T> void idx_addc(idx<T> &inp, T c, idx<T> &out) {
     idxiter<T> pinp; idxiter<T> pout;
     idx_aloop2_on(pinp,inp,pout,out) { *pout = *pinp + c; }
@@ -344,6 +349,13 @@ namespace ebl {
       *pout = sqrt(*pin);
     }
   }
+
+  template<class T> void idx_power(idx<T>& in, double p, idx<T>& out) {
+    idxiter<T> pin; idxiter<T> pout;
+    idx_aloop2_on(pin,in,pout,out) {
+      *pout = pow(*pin, p);
+    }
+  }
   
   // there is a much faster and parallel way
   // of doing this using a tree.
@@ -416,6 +428,11 @@ namespace ebl {
   template<class T> void idx_mul(idx<T> &i1, idx<T> &i2, idx<T> &out) {
     ScalarIter<T> pi1(i1), pi2(i2); ScalarIter<T> pout(out);
     idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = (*pi1) * (*pi2); }
+  }
+
+  template<class T> void idx_div(idx<T> &i1, idx<T> &i2, idx<T> &out) {
+    ScalarIter<T> pi1(i1), pi2(i2); ScalarIter<T> pout(out);
+    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = (*pi1) / (*pi2); }
   }
 
   template<class T> void idx_addc(idx<T> &inp, T c, idx<T> &out) {

@@ -33,7 +33,7 @@
 #ifndef DATASOURCE_H_
 #define DATASOURCE_H_
 
-#include "defines.h"
+#include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_states.h"
 
@@ -45,15 +45,19 @@ namespace ebl {
   //! datasource
   template<typename Tin1, typename Tin2> class datasource {
   public:
-    double					 bias;
-    double					 coeff;
-    idx<Tin1>					 data;
-    idx<Tin2>					 labels;
-    typename idx<Tin1>::dimension_iterator	 dataIter;
-    typename idx<Tin2>::dimension_iterator	 labelsIter;
-    unsigned int				 height;
-    unsigned int				 width;
-    string					 name;
+    double					bias;
+    double					coeff;
+    idx<Tin1>					data;
+    idx<Tin2>					labels;
+    typename idx<Tin1>::dimension_iterator	dataIter;
+    typename idx<Tin2>::dimension_iterator	labelsIter;
+    unsigned int				height;
+    unsigned int				width;
+    string					name;
+    bool					balance;
+    vector<vector<intg> >                       label_indexes;
+    vector<uint>                                indexes_itr;
+    uint                                        iitr;
 
     //! CAUTION: This empty constructor requires a subsequent call to init().
     datasource();
@@ -93,6 +97,11 @@ namespace ebl {
 
     //! Move to the beginning of the data.
     virtual void seek_begin();
+
+    //! Make the next() method call sequentially one sample of each class
+    //! instead of following the dataset's distribution.
+    //! This is useful and important when the dataset is unbalanced.
+    virtual void set_balanced();
   };
 
   ////////////////////////////////////////////////////////////////
@@ -115,13 +124,13 @@ namespace ebl {
     //! this class takes ownership of the data and will destroy the vector and
     //! its content in the destructor.
     labeled_datasource(idx<Tdata> &inputs, idx<Tlabel> &labels, 
-		      double b = 0.0, double c = 0.01,
+		      double b = 0.0, double c = 1.0,
 		      const char *name = NULL,
 		      vector<string*> *lblstr = NULL);
 
     labeled_datasource(idx<Tdata> &inputs, idx<Tlabel> &labels,
 		       idx<ubyte> &classes,
-		       double b = 0.0, double c = 0.01,
+		       double b = 0.0, double c = 1.0,
 		       const char *name = NULL);
 
     //! Constructor from dataset file names.

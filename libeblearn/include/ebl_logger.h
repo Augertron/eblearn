@@ -32,7 +32,7 @@
 #ifndef EBL_LOGGER_H_
 #define EBL_LOGGER_H_
 
-#include "defines.h"
+#include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_states.h"
 
@@ -82,6 +82,7 @@ namespace ebl {
   //! classifiers. This is a simple version that does not
   //! record anything but simply computes performance measures.
   // TODO: allow definition of different comparison functions.
+  // TODO: templatize based on label type
   class classifier_meter {
   public:
     double energy;
@@ -92,6 +93,8 @@ namespace ebl {
     intg total_error;
     intg total_punt;
     double total_energy;
+    vector<uint> class_errors;
+    vector<uint> class_totals;
 
     //! Create a new <classifier-meter> using <comparison-function>
     //! to compare actual and desired answers. By default
@@ -102,8 +105,7 @@ namespace ebl {
     // TODO: allow passing of comparison function
     classifier_meter();
     ~classifier_meter() {
-    }
-    ;
+    };
 
     //! return 0 if <actual> equals -1, otherwise, return 1 if <actual>
     //! and <desired> are equal, -1 otherwise.
@@ -119,8 +121,11 @@ namespace ebl {
     //! <actual> (a <class-state>) the actual output of the machine,
     //! <desired> (an idx0 of int) the desired category,
     //! and <energy> (an idx0-state) the energy.
-    char update(intg a, class_state *co, ubyte cd, state_idx *en);
-    void update(intg age_, bool correct, state_idx &en);
+    // TODO: clean up design
+    // TODO: add confusion matrix computation
+    char update(intg age, class_state *co, ubyte cd, state_idx *en);
+    void update(intg age, bool correct, state_idx &en);
+    void update(intg age, uint desired, uint infered, state_idx &energy);
 
     void test(class_state *co, ubyte cd, state_idx *en);
 
@@ -139,7 +144,7 @@ namespace ebl {
     //! the average energy, the percentage of correctly
     //! recognize samples, the percentage of erroneously
     //! recognized samples, and the percentage of rejected samples.
-    void display();
+    void display(vector<string*> *lblstr = NULL);
     bool save();
     bool load();
   };

@@ -40,6 +40,7 @@
 #include <vector>
 #include <stdio.h>
 #include <time.h>
+#include <limits>
 
 #include "configuration.h"
 
@@ -224,7 +225,6 @@ namespace ebl {
   }
 
   void print_string_map(string_map_t &smap) {
-    cout << "___________________________________________________________" << endl;
     string_map_t::iterator smi = smap.begin();
     for ( ; smi != smap.end(); ++smi)
       cout << smi->first << " : " << smi->second << endl;
@@ -255,6 +255,13 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // configuration
 
+  configuration::configuration() {
+  }
+
+  configuration::configuration(const char *filename) {
+    read(filename);
+  }
+
   configuration::configuration(string_map_t &smap_, string &name_,
 			       string &output_dir_)
     : smap(smap_), name(name_), output_dir(output_dir_) {
@@ -265,8 +272,11 @@ namespace ebl {
   
   bool configuration::read(const char *fname) {
     // read file and extract all variables and values
+    cout << "loading configuration file: " << fname << endl;
     if (!extract_variables(fname, smap))
       return false;
+    cout << "loaded: " << endl;
+    pretty();
     return true;
   }
 
@@ -290,6 +300,50 @@ namespace ebl {
   const string &configuration::get_output_dir() {
     return output_dir;
   }
+
+  const string &configuration::get_string(const char *varname) {
+    if (smap.find(varname) == smap.end()) {
+      cerr << "error: unknown variable: " << varname << endl;
+      throw "unknown variable";
+    }
+    return smap[varname];
+  }
+
+  double configuration::get_double(const char *varname) {
+    if (smap.find(varname) == smap.end()) {
+      cerr << "error: unknown variable: " << varname << endl;
+      throw "unknown variable";
+    }
+    istringstream iss(smap[varname], istringstream::in);
+    // TODO: check double conversion validity with exceptions instead
+    double d;
+    d = numeric_limits<double>::max();
+    iss >> d;
+    if (d == numeric_limits<double>::max())
+      throw "invalid conversion to double";
+    return d;
+  }
+
+  uint configuration::get_uint(const char *varname) {
+    if (smap.find(varname) == smap.end()) {
+      cerr << "error: unknown variable: " << varname << endl;
+      throw "unknown variable";
+    }
+    istringstream iss(smap[varname], istringstream::in);
+    // TODO: check double conversion validity with exceptions instead
+    uint d;
+    d = numeric_limits<double>::max();
+    iss >> d;
+    if (d == numeric_limits<double>::max())
+      throw "invalid conversion to double";
+    return d;
+  }
+
+  void configuration::pretty() {
+    cout << "_____________________ Configuration _____________________" << endl;
+    print_string_map(smap);
+    cout << "_________________________________________________________" << endl;
+  }
   
   ////////////////////////////////////////////////////////////////
   // meta_configuration
@@ -303,23 +357,25 @@ namespace ebl {
   bool meta_configuration::read(const char *fname) {
     cout << "Reading meta configuration file: " << fname << endl;
     // read file and extract all variables and values
-    if (!extract_variables(fname, smap, &meta_smap))
+    if (!extract_variables(fname, tmpsmap, &smap))
       return false;
+    cout << "loaded: " << endl;
+    pretty();
     // transpose values into list of values (a variable can be assigned a list
     // of values
-    variables_to_variables_list(smap, lmap);
+    variables_to_variables_list(tmpsmap, lmap);
     // count number of possible configurations
     conf_combinations = config_combinations(lmap);
 
     // name of entire experiment
     name = timestamp();
     name += ".";
-    if (meta_smap.find("meta_name") != meta_smap.end())
-      name += meta_smap["meta_name"];
+    if (smap.find("meta_name") != smap.end())
+      name += smap["meta_name"];
     // name of output directory
     output_dir = "output"; // default name (other name optional)
-    if (meta_smap.find("meta_output_dir") != meta_smap.end())
-      output_dir = meta_smap["meta_output_dir"];
+    if (smap.find("meta_output_dir") != smap.end())
+      output_dir = smap["meta_output_dir"];
     mkdir(output_dir.c_str(), 0700);
     output_dir += "/";
     output_dir += name;
@@ -345,6 +401,12 @@ namespace ebl {
 
   vector<configuration>& meta_configuration::configurations() {
     return confs;
+  }
+
+  void meta_configuration::pretty() {
+    cout << "__________________ Meta configuration ___________________" << endl;
+    print_string_map(smap);
+    cout << "_________________________________________________________" << endl;
   }
 
 } // namespace ebl

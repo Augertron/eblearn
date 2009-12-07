@@ -32,7 +32,7 @@
 #ifndef EBL_MACHINES_H_
 #define EBL_MACHINES_H_
 
-#include "defines.h"
+#include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_states.h"
 #include "ebl_basic.h"
@@ -79,12 +79,39 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-  // helper functions
+  //! Standard LeNet5-type architecture without the final e-dist RBF layer.
+  class nn_machine_cscsc : public layers_n<state_idx> {
+  public:
+    //! Empty constructor, awaiting for initialization by the user via the 
+    //! init() function.
+    nn_machine_cscsc();
+    //! Complete constructor, calls the init() function.
+    //! See the init() description for complete arguments description.
+    nn_machine_cscsc(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
+		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+		      idx<intg> &tbl2);
+    virtual ~nn_machine_cscsc();
 
-  //! Creates a table of full connections between layers.
-  //! An idx<intg> is allocated and returned. The caller is responsible
-  //! for deleting this idx.
-  idx<intg> full_table(intg a, intg b);
+    //! The init function creates the machine by stacking the modules in this
+    //! order (c-s-c-s-c-f): nn_layer_convolution, nn_layer_subsampling, 
+    //! nn_layer_convolution, nn_layer_subsampling, nn_layer_convolution, 
+    //! nn_layer_full.
+    //! <ini> <inj>: expected max size of input for preallocation of internal 
+    //! states
+    //! <ki0> <kj0>: kernel size for first convolutional layer
+    //! <tbl0>: table of connections between input anf feature maps for first 
+    //! layer
+    //! <si0> <sj0>: subsampling for first layer
+    //! <ki1> <kj1> <tbl1> <si1> <sj1>: same for next 2 layers
+    //! <ki2> <kj2> <tbl2>: same for last convolution layer
+    //! <outthick>: number of outputs.
+    //! <prm> an idx1-ddparam in which the parameters will be allocated.
+    void init(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
+	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+	      idx<intg> &tbl2);
+  };
 
   ////////////////////////////////////////////////////////////////
   //! create a new instance of net-cscscf implementing a LeNet-5 type

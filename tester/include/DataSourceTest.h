@@ -3,7 +3,6 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "datasource.h"
-#include "datasource_gui.h"
 
 //! Test class for IdxIO class
 class DataSourceTest : public CppUnit::TestFixture  {

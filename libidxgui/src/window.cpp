@@ -103,6 +103,7 @@ namespace ebl {
     pos_reset = true;
     scrollbox = NULL;
     setFocusPolicy(Qt::NoFocus);
+    update_window();
   }
 
   Window::~Window() {
@@ -181,9 +182,9 @@ namespace ebl {
     }
   }
 
-  void Window::save(const char *filename) {
+  void Window::save(const string &filename) {
     QPixmap p = QPixmap::grabWidget(this, rect());
-    if (!p.save(filename, "PNG", 90))
+    if (!p.save(filename.c_str(), "PNG", 90))
       cerr << "Warning: failed to save window to " << filename << "." << endl;
   }
   
@@ -201,7 +202,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // add methods
 
-  void Window::add_text(const std::string *s) {
+  void Window::add_text(const string *s) {
     if (!txt) {
       txt = new text(text_h0, text_w0, pos_reset, fg_r, fg_g, fg_b, fg_a,
 		     bg_r, bg_g, bg_b, bg_a);
@@ -259,16 +260,16 @@ namespace ebl {
   void Window::add_scroll_box(scroll_box0 *sb) {
     scrollbox = sb;
     scrollbox->set_parent(this);
-    cout << "adding scrollbox " << sb << endl;
+    //cout << "adding scrollbox " << sb << endl;
   }
 
   void Window::remove_scroll_box(scroll_box0 *sb) {
     scrollbox = NULL;
-    cout << "removing scroll box " << sb << endl;
+    //cout << "removing scroll box " << sb << endl;
   }
 
   void Window::replace_scroll_box_with_copy(scroll_box0 *sb) {
-    cout << "replacing scroll box " << scrollbox << " with a copy: " << endl;
+    //cout << "replacing scroll box " << scrollbox << " with a copy: " << endl;
     scrollbox = sb->copy();
     cout << scrollbox << endl;
   }
@@ -369,11 +370,12 @@ namespace ebl {
       update(); 
       // saving pixmap if silent or show it otherwise
       if (silent) 
-	save(savefname.c_str());
+	save(savefname);
       else {
 	show();
-	if (activate)
+	if (activate) {
 	  activateWindow();
+	}
       }
     }
   }

@@ -36,10 +36,13 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // GuiThread
+  // global variables
 
   // global variable
   idxgui gui;
+
+  ////////////////////////////////////////////////////////////////
+  // cons/destructors
 
   gui_thread::gui_thread(int argc, char** argv) 
     : wcur(-1), nwindows(0), silent(false), thread(gui) {
@@ -50,13 +53,15 @@ namespace ebl {
 				      unsigned int, unsigned int)));
     connect(&thread, SIGNAL(appquit()), this, SLOT(appquit()));
     connect(&thread, SIGNAL(gui_clear()), this, SLOT(clear()));
+    connect(&thread, SIGNAL(gui_save_window(const string*, int)),
+			    this, SLOT(save_window(const string*, int)));
     connect(&thread, SIGNAL(gui_new_window(const char*, unsigned int, 
 					   unsigned int)), 
 	    this, SLOT(new_window(const char*, unsigned int, unsigned int)));
     connect(&thread, SIGNAL(gui_select_window(int)), 
 	    this, SLOT(select_window(int)));
-    connect(&thread, SIGNAL(gui_add_text(const std::string*)), 
-	    this, SLOT(add_text(const std::string*)));
+    connect(&thread, SIGNAL(gui_add_text(const string*)), 
+	    this, SLOT(add_text(const string*)));
     connect(&thread, SIGNAL(gui_add_arrow(int, int, int, int)), 
 	    this, SLOT(add_arrow(int, int, int, int)));
     connect(&thread, SIGNAL(gui_add_box(int, int, int, int, unsigned char,
@@ -90,10 +95,10 @@ namespace ebl {
   }
 
   void gui_thread::window_destroyed(QObject *obj) {
-    for (vector<Window*>::iterator i = windows.begin(); i != windows.end(); ++i)
-      {
-	if (*i == obj) {
-	  *i = NULL;
+    for (uint i = 0; i < windows.size(); ++i) {
+	// decrement windows counter
+	if (windows[i] == obj) {
+	  windows[i] = NULL;
 	  nwindows--;
 	}
       }
@@ -101,7 +106,10 @@ namespace ebl {
       appquit();
   }
 
-  void gui_thread::add_text(const std::string *s) {
+  ////////////////////////////////////////////////////////////////
+  // add methods
+
+  void gui_thread::add_text(const string *s) {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->add_text(s);
   }
@@ -154,6 +162,7 @@ namespace ebl {
     exit(0);
   }
 
+  // add image
   void gui_thread::updatePixmap(idx<ubyte> *img, unsigned int h0, 
 			       unsigned int w0) {
     if (nwindows == 0)
@@ -166,6 +175,18 @@ namespace ebl {
   void gui_thread::clear() {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->clear();
+  }
+
+  void gui_thread::save_window(const string *filename, int wid) {
+    int id = wid < 0 ? wcur : wid;
+    if ((id >= 0) && (windows[id])) {
+      if (filename) {
+	windows[id]->save(*filename);
+	delete filename;
+      }
+      else
+	cerr << "warning: trying to save window with NULL filename" << endl;
+    }
   }
 
   void gui_thread::new_window(const char *wname, unsigned int h, 

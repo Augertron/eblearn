@@ -35,7 +35,10 @@
 #include "libidxgui.h"
 #endif
 
-#include "libeblearntools.h"
+#include "dataset.h"
+#include "pascal_dataset.h"
+#include "pascalbg_dataset.h"
+#include "lush_dataset.h"
 
 using namespace std;
 using namespace ebl;
@@ -46,10 +49,13 @@ using namespace ebl;
 string		images_root	 = ".";
 string		image_pattern	 = IMAGE_PATTERN;
 string		channels_mode	 = "RGB";
+bool            preprocessing    = false;
 bool		display		 = false;
 bool		stereo		 = false;
 bool		ignore_difficult = false;
 bool		shuffle		 = false;
+bool		scale_mode	 = false;
+vector<uint>    scales;
 string		stereo_lpattern	 = "_L";
 string		stereo_rpattern	 = "_R";
 string		outdir		 = ".";
@@ -58,6 +64,7 @@ intg		maxperclass	 = 0;	// 0 means no limitation
 unsigned int	mexican_hat_size = 0;
 int		deformations	 = -1;	// <= means no deformations
 string		type		 = "regular";
+string          resize           = "gaussian";
 string		precision	 = "float";
 uint		sleep_delay	 = 0;	// sleep between frames displayed in ms
 idxdim          outdims;	// dimensions of output sample
@@ -91,6 +98,7 @@ bool parse_args(int argc, char **argv) {
 	  ;
 	else throw 3;
 	channels_mode = argv[i];
+	preprocessing = true;
       } else if (strcmp(argv[i], "-image_pattern") == 0) {
 	++i; if (i >= argc) throw 0;
 	image_pattern = argv[i];
@@ -117,6 +125,9 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-precision") == 0) {
 	++i; if (i >= argc) throw 0;
 	precision = argv[i];
+      } else if (strcmp(argv[i], "-resize") == 0) {
+	++i; if (i >= argc) throw 0;
+	resize = argv[i];
       } else if (strcmp(argv[i], "-dname") == 0) {
 	++i; if (i >= argc) throw 0;
 	dataset_name = argv[i];
@@ -151,6 +162,26 @@ bool parse_args(int argc, char **argv) {
 	}
 	outdims = d;
 	outdims_set = true;
+	preprocessing = true;
+      } else if (strcmp(argv[i], "-scales") == 0) {
+	++i; if (i >= argc) throw 0;
+	string s = argv[i];
+	int k = 0;
+	while (s.size()) {
+	  uint j;
+	  for (j = 0; j < s.size(); ++j)
+	    if (s[j] == ',')
+	      break ;
+	  string s0 = s.substr(0, j);
+	  if (j >= s.size())
+	    s = "";
+	  else
+	    s = s.substr(j + 1, s.size());
+	  scales.push_back(atoi(s0.c_str()));
+	  k++;
+	}
+	scale_mode = true;
+	preprocessing = true;
       } else if ((strcmp(argv[i], "-help") == 0) ||
 		 (strcmp(argv[i], "-h") == 0)) {
 	return false;
@@ -176,9 +207,9 @@ bool parse_args(int argc, char **argv) {
 
 // print command line usage
 void print_usage() {
-  cout << "Usage: ./dataset_compiler <images_root> [OPTIONS]" << endl;
+  cout << "Usage: ./dscompiler <images_root> [OPTIONS]" << endl;
   cout << "Options are:" << endl;
-  cout << "  -type <regular(default)|pascal>" << endl;
+  cout << "  -type <regular(default)|pascal|pascalbg|lush>" << endl;
   cout << "  -precision <float(default)|double>" << endl;
   cout << "  -image_pattern <pattern>" << endl;
   cout << "   default: " << IMAGE_PATTERN << endl;
@@ -192,11 +223,13 @@ void print_usage() {
   cout << "  -stereo_lpattern <pattern>" << endl;
   cout << "  -stereo_rpattern <pattern>" << endl;
   cout << "  -outdir <directory (default=images_root)>" << endl;
-  cout << "  -dset_name <name>" << endl;
+  cout << "  -dname <name>" << endl;
   cout << "  -maxperclass <integer>" << endl;
   cout << "  -mexican_hat_size <integer>" << endl;
   cout << "  -deformations <integer>" << endl;
   cout << "  -dims <dimensions (default: 96x96x3)>" << endl;
+  cout << "  -scales <scales (e.g: 1,2,4)>" << endl;
+  cout << "  -resize <gaussian(default)|bilinear" << endl;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -208,9 +241,14 @@ void compile_ds(Tds &ds) {
     ds.set_outdims(outdims);
   ds.set_display(display);
   ds.set_sleepdisplay(sleep_delay);
-  ds.set_pp_conversion(channels_mode.c_str());
+  ds.set_resize(resize);
+  if (preprocessing)
+    ds.set_pp_conversion(channels_mode.c_str());
   ds.set_max_per_class(maxperclass);
-  ds.alloc();
+  if (scale_mode)
+    ds.set_scales(scales, outdir);
+  else 
+    ds.alloc();
   ds.extract();
   if (shuffle)
     ds.shuffle();
@@ -222,6 +260,21 @@ void compile() {
   if (!strcmp(type.c_str(), "pascal")) {
     pascal_dataset<Tdata> ds(dataset_name.c_str(),
 			     images_root.c_str(), ignore_difficult);
+    compile_ds(ds);
+  }
+  else if (!strcmp(type.c_str(), "pascalbg")) {
+    pascalbg_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
+			       outdir.c_str(), maxperclass, ignore_difficult);
+    if (outdims_set)
+      ds.set_outdims(outdims);
+    ds.set_display(display);
+    ds.set_sleepdisplay(sleep_delay);
+    if (preprocessing)
+      ds.set_pp_conversion(channels_mode.c_str());
+    ds.extract();
+  }
+  else if (!strcmp(type.c_str(), "lush")) {
+    lush_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str());
     compile_ds(ds);
   }
   else if (!strcmp(type.c_str(), "regular")) {
@@ -270,6 +323,7 @@ int main(int argc, char **argv) {
   if (maxperclass > 0) cout << maxperclass; else cout << "none"; cout << endl;
   cout << "  mexican_hat_size: " << mexican_hat_size << endl;
   cout << "  deformations: " << deformations << endl;
+  cout << "  resizing method: " << resize << endl;
   cout << "___________________________________________________________________";
   cout << endl;
 

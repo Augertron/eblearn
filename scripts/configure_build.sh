@@ -13,6 +13,7 @@ then
     mkdir build 2> /dev/null
     mkdir build/Debug 2> /dev/null
     mkdir build/Release 2> /dev/null
+    mkdir build/Demos 2> /dev/null
     cp scripts/Makefile.unix Makefile
     exit 0
 fi

@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef PASCAL_DATASET_HPP_
-#define PASCAL_DATASET_HPP_
+#ifndef PASCALBG_DATASET_HPP_
+#define PASCALBG_DATASET_HPP_
 
 #include <algorithm>
 
@@ -52,33 +52,28 @@ namespace ebl {
   // constructors & initializations
 
   template <class Tdata>
-  pascal_dataset<Tdata>::pascal_dataset(const char *name_, const char *inroot_,
-					bool ignore_diff)
-    : dataset<Tdata>(name_, inroot_) {
-    // initialize pascal-specific members
-    if (inroot_) {
-      annroot = inroot;
-      annroot += "/Annotations/"; // look for xml files in annotations
-      imgroot = inroot;
-      imgroot += "JPEGImages/"; // image directory
-    }
-    ignore_difficult = ignore_diff;
-#ifndef __XML__ // return error if xml not enabled
-    eblerror("XML libraries not available, install libxml++ and recompile");
-#endif /* __XML__ */
-    extension = ".*[.]xml";
-    cout << "Image search extension pattern: " << extension << endl;
+  pascalbg_dataset<Tdata>::pascalbg_dataset(const char *name_,
+					    const char *inroot_,
+					    const char *outdir_,
+					    uint max_folders_,
+					    bool ignore_diff)
+    : pascal_dataset<Tdata>(name_, inroot_, ignore_diff) {
+    outdir = outdir_;
+    max_folders = max_folders_;
+    data_cnt = 0;
   }
 
   template <class Tdata>
-  pascal_dataset<Tdata>::~pascal_dataset() {
+  pascalbg_dataset<Tdata>::~pascalbg_dataset() {
   }
+
+#ifdef __XML__ // disable some derived methods if XML not available
 
   ////////////////////////////////////////////////////////////////
   // data extraction
 
   template <class Tdata>
-  bool pascal_dataset<Tdata>::extract() {
+  bool pascalbg_dataset<Tdata>::extract() {
 #ifdef __XML__    
     cout << "Extracting samples from files into dataset..." << endl;
     // adding data to dataset using all xml files in annroot
@@ -94,86 +89,11 @@ namespace ebl {
       if (!is_directory(itr->status()) &&
 	  regex_match(itr->leaf().c_str(), what, eExt)) {
 	process_xml(itr->path().string());
-	if (full())
-	  break;
       }
     }
-    cout << "Extracted " << data_cnt << " elements into dataset." << endl;
-    print_stats();
+    cout << "Extracted and saved " << data_cnt;
+    cout << " background patches from dataset." << endl;
 #endif /* __XML__ */
-    return true;
-  }
-
-#ifdef __XML__ // disable some derived methods if XML not available
-
-  ////////////////////////////////////////////////////////////////
-  // data
-
-  template <class Tdata>
-  bool pascal_dataset<Tdata>::count_samples() {
-    total_difficult = 0;
-    total_samples = 0;
-    uint difficult;
-    string obj_classname;
-    regex eExt(".*[.]xml");
-    cmatch what;
-    string xmlpath;
-    path p(annroot);
-    if (!exists(p)) {
-      cerr << "path " << annroot << " does not exist." << endl;
-      return false;
-    }
-    // read all xml files in annroot
-    directory_iterator end_itr; // default construction yields past-the-end
-    for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if (!is_directory(itr->status()) &&
-	  regex_match(itr->leaf().c_str(), what, eExt)) {
-	xmlpath = itr->path().string();
-	// parse xml
-	try {
-	  DomParser parser;
-	  parser.parse_file(xmlpath);
-	  if (parser) {
-	    // initialize root node and list
-	    const Node* pNode = parser.get_document()->get_root_node();
-	    Node::NodeList list = pNode->get_children();
-	    // parse all objects in image
-	    for(Node::NodeList::iterator iter = list.begin();
-		iter != list.end(); ++iter) {
-	      if (!strcmp((*iter)->get_name().c_str(), "object")) {
-		// check for difficult flag in object node
-		difficult = 0;
-		Node::NodeList olist = (*iter)->get_children();
-		for(Node::NodeList::iterator oiter = olist.begin();
-		    oiter != olist.end(); ++oiter) {
-		  if (!strcmp((*oiter)->get_name().c_str(), "difficult"))
-		    difficult = get_uint(*oiter);
-		  else if (!strcmp((*oiter)->get_name().c_str(), "name")) {
-		    get_string(*oiter, obj_classname);
-		  }
-		}
-		// add class to dataset
-		if (!(ignore_difficult && difficult))
-		  this->add_class(obj_classname);
-		// increment samples numbers
-		total_samples++;
-		if (difficult)
-		  total_difficult++;
-	      }
-	    }
-	  }
-	} catch (const std::exception& ex) {
-	  cerr << "Xml exception caught: " << ex.what() << endl;
-	  return false;
-	}
-      }
-    }
-    cout << "Found: " << total_samples << " samples, including ";
-    cout << total_difficult << " difficult ones." << endl;
-    ignore_difficult ? cout << "Ignoring" : cout << "Using";
-    cout << " difficult samples." << endl;
-    if (ignore_difficult)
-      total_samples = total_samples - total_difficult;
     return true;
   }
 
@@ -181,11 +101,10 @@ namespace ebl {
   // process xml
 
   template <class Tdata>
-  bool pascal_dataset<Tdata>::process_xml(const string &xmlfile) {
+  bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
     string image_filename;
     string image_fullname;
-    unsigned int h0 = 0, w0 = 0;
-    unsigned int obj_number = 0;
+    vector<rect> bboxes;
 
     // parse xml file
     try {
@@ -206,19 +125,11 @@ namespace ebl {
 	}
 	image_fullname = imgroot;
 	image_fullname += image_filename;
-	// load image 
-	idx<ubyte> img = load_image<ubyte>(image_fullname);
-#ifdef __GUI__
-	if (display_extraction) {
-	  //	  clear_window();
-	  //	  h0 = img.dim(1) + 5;
-	}
-#endif
 	// parse all objects in image
 	for(Node::NodeList::iterator iter = list.begin();
 	    iter != list.end(); ++iter) {
 	  if (!strcmp((*iter)->get_name().c_str(), "object"))
-	    process_object(*iter, img, h0, w0, obj_number++, image_filename);
+	    bboxes.push_back(get_object(*iter));
 	}
       }
     } catch (const std::exception& ex) {
@@ -228,6 +139,10 @@ namespace ebl {
       cerr << "error: " << err << endl;
       return false;
     }
+    // load image 
+    idx<ubyte> img = load_image<ubyte>(image_fullname);
+    // extract patches given image and bounding boxes
+    process_image(img, bboxes, image_filename);
     return true;
   }
   
@@ -235,14 +150,9 @@ namespace ebl {
   // process 1 object of an xml file
 
   template <class Tdata>
-  void pascal_dataset<Tdata>::process_object(Node* onode, idx<ubyte> &img,
-					     uint &h0, uint &w0,uint obj_number,
-					     const string &image_filename) {
-    unsigned int xmin, ymin, xmax, ymax;
-    unsigned int sizex, sizey;
-    string obj_class;
-    unsigned int difficult;
-  
+  rect pascalbg_dataset<Tdata>::get_object(Node* onode) {
+    unsigned int xmin = 0, ymin = 0, xmax = 0, ymax = 0;
+    
     // parse object node
     Node::NodeList list = onode->get_children();
     for(Node::NodeList::iterator iter = list.begin();
@@ -263,40 +173,122 @@ namespace ebl {
 	    ymax = get_uint(*biter);
 	}
       } // else get object class name
-      else if (!strcmp((*iter)->get_name().c_str(), "name")) {
-	get_string(*iter, obj_class);
-      }
-      else if (!strcmp((*iter)->get_name().c_str(), "difficult")) {
-	difficult = get_uint(*iter);
-      }
     }
-    // compute size of bbox
-    sizex = xmax - xmin;
-    sizey = ymax - ymin;
-    // decide on normal or difficult directory if difficult should be separated
-    //   string outdir = (difficult && separate_difficult) ?
-    //  output_images_diff : output_images;
-    // process image  
-    if (!(ignore_difficult && difficult))
-      process_image(img, h0, w0, xmin, ymin, xmax, ymax, sizex, sizey,
-		    obj_class, obj_number, difficult, image_filename);
+    rect r(ymin, xmin, ymax - ymin, xmax - xmin);
+    return r;
   }
   
   ////////////////////////////////////////////////////////////////
   // process object's image
 
   template <class Tdata>
-  void pascal_dataset<Tdata>::
-  process_image(idx<ubyte> &img, uint &h0, uint &w0,
-		uint xmin, uint ymin, uint xmax,
-		uint ymax, uint sizex, uint sizey, string &obj_class,
-		uint obj_number, uint difficult, const string &image_filename) {
-    rect r(ymin, xmin, sizey, sizex);
-    add_data(img, obj_class, image_filename.c_str(), &r);
+  void pascalbg_dataset<Tdata>::
+  process_image(idx<ubyte> &img, vector<rect>& bboxes,
+		const string &image_filename) {
+#ifdef __GUI__
+    uint h = 0, w = 0;
+    if (display_extraction)
+      clear_window();
+#endif
+    idxdim d(img);
+    idx<Tdata> im(d);
+    idx_copy(img, im);
+    // preprocess image
+    rect r(0, 0, im.dim(0), im.dim(1));
+    im = this->convert_image_to(im, ppconv_type, r);
+    // extract all non overlapping patches with dimensions outdims that
+    // do not overlap with bounding boxes
+    vector<idx<Tdata> > patches;
+    vector<rect>::iterator ibb;
+    bool overlap;
+    rect patch(0, 0, outdims.dim(0), outdims.dim(1));
+    for (patch.h0 = 0; patch.h0 + patch.height < (uint) im.dim(0);
+	 patch.h0 += patch.height) {
+      for (patch.w0 = 0; patch.w0 + patch.width < (uint) im.dim(1);
+	   patch.w0 += patch.width) {
+	// test if patch overlaps with any bounding box
+	overlap = false;
+	for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb) {
+	  if (patch.overlap(*ibb)) {
+	    overlap = true;
+	    break ;
+	  }
+	}
+	if (!overlap) {
+	  // not overlapping, add patch
+	  idx<Tdata> p = im.narrow(0, patch.height, patch.h0);
+	  p = p.narrow(1, patch.width, patch.w0);
+	  patches.push_back(p);
+#ifdef __GUI__
+	  if (display_extraction)
+	    draw_matrix(p, patch.h0, patch.w0, 1.0, 1.0, (Tdata) -1, (Tdata) 1);
+#endif
+	}
+      }
+    }
+#ifdef __GUI__
+    if (display_extraction) {
+      disable_window_updates();
+      // draw bboxes
+      for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb)
+	draw_box(h + ibb->h0, w + ibb->w0, ibb->height, ibb->width, 255, 0, 0);
+      // draw original image
+      h = im.dim(0) + 5, w = 0;
+      idx<Tdata> tmp = im.select(2, 0);
+      draw_matrix(tmp, h, w, 1.0, 1.0, (Tdata) -1, (Tdata) 1);
+      // draw bboxes on original
+      for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb)
+	draw_box(h + ibb->h0, w + ibb->w0, ibb->height, ibb->width, 255, 0, 0);
+      enable_window_updates();
+      if (sleep_display)
+	sleep(sleep_delay / 1000.0);
+    }
+#endif
+    save_patches(patches, outdir, max_folders, image_filename);
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // save patches
+
+  template <class Tdata>
+  void pascalbg_dataset<Tdata>::save_patches(vector<idx<Tdata> > &patches,
+					     const string &outdir,
+					     uint max_folders,
+					     const string &filename) {
+    ostringstream folder, fname;
+    try {
+      mkdir(outdir.c_str(), MKDIR_RIGHTS);
+      uint i;
+      for (i = 0; (i < patches.size()) && (i < max_folders); ++i) {
+	// create folder if doesn't exist
+	folder.str("");
+	folder << outdir << "/" << "bg" << i+1 << "/";
+	mkdir(folder.str().c_str(), MKDIR_RIGHTS);
+	folder << "/background/";
+	mkdir(folder.str().c_str(), MKDIR_RIGHTS);
+	// save patch in folder
+	fname.str("");
+	fname<< folder.str() << filename << ".bg" << i+1 << ".mat";
+	if (!save_matrix(patches[i], fname.str()))
+	  throw fname.str();
+	cout << data_cnt++ << ": saved " << fname.str().c_str() << endl;
+      }
+      if (i < patches.size()) // reached max_folders, fill-up last one
+	for ( ; i < patches.size(); ++i) {
+	  // save patch in folder
+	  fname.str("");
+	  fname << folder.str() << filename << ".bg" << i+1 << ".mat";
+	  if (!save_matrix(patches[i], fname.str()))
+	    throw fname.str();
+	  cout << data_cnt++ << ": saved " << fname.str().c_str() << endl;
+	}
+    } catch (const string &err) {
+      cerr << "error: failed to save patch in " << err << endl;
+    }
   }
 
 #endif /* __XML__ */
 
 } // end namespace ebl
 
-#endif /* PASCAL_DATASET_HPP_ */
+#endif /* PASCALBG_DATASET_HPP_ */

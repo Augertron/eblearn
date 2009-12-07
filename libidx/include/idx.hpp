@@ -36,6 +36,8 @@
 #include <sstream>
 #include <vector>
 
+using namespace std;
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -91,9 +93,10 @@ namespace ebl {
     eblerror("incompatible idx sizes\n"); }
   
   //! Calls eblerror if src0 and o0 do not match.
-#define idx_checkorder1(src0, o0)		\
-  if ((src0).order() != o0)			\
-    eblerror("idx has wrong order");
+#define idx_checkorder1(src0, o0)					\
+  if ((src0).order() != o0) {						\
+    cerr << "error: " << src0 << " does not have order " << o0 << endl; \
+    eblerror("idx has wrong order"); }
 
   //! Calls eblerror if src0,src1 and o0,o1 do not match.
 #define idx_checkorder2(src0, o0, src1, o1)				\
@@ -133,8 +136,8 @@ namespace ebl {
 
   //! Calls eblerror if src0.dim(d) and src1.dim(d) and src2.dim(d) don't match
 #define idx_checkdim3_all(src0, src1, src2, d)		\
-  if (((src0).dim(d) != (src1).dim(d)) ||		\
-      ((src0).dim(d) != (src2).dim(d)))			\
+  if ((src0.order() != 0) && (((src0).dim(d) != (src1).dim(d)) ||	\
+			      ((src0).dim(d) != (src2).dim(d))))	\
     idx_compatibility_error3(src0,src1,src2,"idx have incompatible dimensions");
 
   //! Calls eblerror if src0.dim(d) and src1.dim(d) and src2.dim(d)
@@ -897,14 +900,14 @@ namespace ebl {
 
   // get element of idx1
   template <class T> T *idx<T>::ptr(intg i0) {
-    if (spec.ndim != 1) eblerror("not an idx1");
+    idx_checkorder1(*this, 1);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     return storage->data + spec.offset + i0*spec.mod[0];
   }
 
   // get element of idx2
   template <class T> T *idx<T>::ptr(intg i0, intg i1) {
-    if (spec.ndim != 2) eblerror("not an idx2");
+    idx_checkorder1(*this, 2);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
     return storage->data + spec.offset + i0*spec.mod[0] + i1*spec.mod[1];
@@ -912,7 +915,7 @@ namespace ebl {
 
   // get element of idx3
   template <class T> T *idx<T>::ptr(intg i0, intg i1, intg i2) {
-    if (spec.ndim != 3) eblerror("not an idx3");
+    idx_checkorder1(*this, 3);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
     if ((i2 < 0) || (i2 >= spec.dim[2])) eblerror("index 2 out of bound");
@@ -966,20 +969,20 @@ namespace ebl {
 
   // get element of idx0
   template <class T> T idx<T>::get() {
-    if (spec.ndim != 0) eblerror("not an idx0");
+    idx_checkorder1(*this, 0);
     return (storage->data)[spec.offset];
   }
 
   // get element of idx1
   template <class T> T idx<T>::get(intg i0) {
-    if (spec.ndim != 1) eblerror("not an idx1");
+    idx_checkorder1(*this, 1);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     return (storage->data)[spec.offset + i0*spec.mod[0]];
   }
 
   // get element of idx2
   template <class T> T idx<T>::get(intg i0, intg i1) {
-    if (spec.ndim != 2) eblerror("not an idx2");
+    idx_checkorder1(*this, 2);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1]];
@@ -987,7 +990,7 @@ namespace ebl {
 
   // get element of idx3
   template <class T> T idx<T>::get(intg i0, intg i1, intg i2) {
-    if (spec.ndim != 3) eblerror("not an idx3");
+    idx_checkorder1(*this, 3);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
     if ((i2 < 0) || (i2 >= spec.dim[2])) eblerror("index 2 out of bound");
@@ -1006,20 +1009,20 @@ namespace ebl {
 
   // set the element of idx0
   template <class T> T idx<T>::set(T val) {
-    if (spec.ndim != 0) eblerror("not an idx0");
+    idx_checkorder1(*this, 0);
     return (storage->data)[spec.offset] = val;
   }
 
   // set the element of idx1
   template <class T> T idx<T>::set(T val, intg i0) {
-    if (spec.ndim != 1) eblerror("not an idx1");
+    idx_checkorder1(*this, 1);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     return (storage->data)[spec.offset + i0*spec.mod[0]] = val;
   }
 
   // set the element of idx2
   template <class T> T idx<T>::set(T val, intg i0, intg i1) {
-    if (spec.ndim != 2) eblerror("not an idx2");
+    idx_checkorder1(*this, 2);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1]] = val;
@@ -1027,7 +1030,7 @@ namespace ebl {
 
   // set the element of idx3
   template <class T> T idx<T>::set(T val, intg i0, intg i1, intg i2) {
-    if (spec.ndim != 3) eblerror("not an idx3");
+    idx_checkorder1(*this, 3);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
     if ((i2 < 0) || (i2 >= spec.dim[2])) eblerror("index 2 out of bound");
@@ -1212,6 +1215,10 @@ namespace ebl {
 
   template <class T> 
   idxlooper<T>::idxlooper(idx<T> &m, int ld) : idx<T>((dummyt*)0) {
+    if (m.order() == 0) { // TODO: allow looping once on 0-order idx
+      cerr << "cannot loop on idx with order 0. idx is: " << m << endl;
+      eblerror("cannot loop on zero-order idx");
+    }
     i = 0;
     dimd = m.spec.dim[ld];
     modd = m.spec.mod[ld];

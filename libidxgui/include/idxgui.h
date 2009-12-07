@@ -55,7 +55,6 @@ namespace ebl {
     int	                  nwid;
     const unsigned int   *nwindows; // owned by gui_thread
   public:
-  public:
     bool		  thread_init;
     bool		  cout_output;
     int                 (*run_main)(int, char**);
@@ -108,6 +107,10 @@ namespace ebl {
     
     //! clears the window.
     void clear();
+
+    //! save current window into filename image.
+    //! wid is optional, if given save window with id wid.
+    void save_window(const char *filename, int wid = -1);
 
     //! draw_matrix displays your idx2 or the first layer of your idx3 in
     //! grayscale on the whiteboard. This function does a copy of your idx and
@@ -191,9 +194,10 @@ namespace ebl {
     void gui_drawImage(idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void appquit();
     void gui_clear();
+    void gui_save_window(const string *filename, int wid);
     void gui_new_window(const char *wname, unsigned int h, unsigned int w);
     void gui_select_window(int wid);
-    void gui_add_text(const std::string *s);
+    void gui_add_text(const string *s);
     void gui_add_arrow(int h1, int w1, int h2, int w2);
     void gui_add_box(int h0, int w0, int h, int w, unsigned char r,
 		     unsigned char g, unsigned char b, string *s);

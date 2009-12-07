@@ -1,11 +1,25 @@
 EMAIL=pierre.sermanet@gmail.com
-TGTDIR=`pwd`/$1
-###########################################################################################
+TGTDIR=$1/
+MPLOTSH=`pwd`/$0
+MPLOT=`pwd`/`dirname $0`/meta_plot
+BASENAME=`basename $TGTDIR`
+SUBJECT="Plots_${BASENAME}"
+################################################################################
 echo "Recursively analyzing *.log files in ${TGTDIR}..."
 DATE=`/bin/date '+%Y.%m.%d.%H.%M.%S'`
 DIRNAME="plots.$DATE"
 rm -Rf $DIRNAME && mkdir $DIRNAME > /dev/null && cd $DIRNAME
-meta_plot $TGTDIR
+################################################################################
+# copy metaconf and log files into tarball
+METACONF=${TGTDIR}/metaconf
+LOGS=`find ${TGTDIR} -name out*.log`
+LOGS=`echo $LOGS | sed ':a;N;$!ba;s/\n/ /g'`
+ALOGS=`echo $LOGS | sed 's/ / -a /g'`
+ALOGS="-a $ALOGS"
+cp $METACONF .
+cp $LOGS .
+################################################################################
+$MPLOT $TGTDIR
 if [ $? -eq 0 ]
 then
     plots=`ls *.p`
@@ -17,8 +31,10 @@ then
       do
       echo "plotting $p..."
       cat $p | gnuplot
-      allpdf="$allpdf -a ${p}df"
       sleep .3
+      PDFNAME=${DIRNAME}_${p}df
+      mv ${p}df $PDFNAME
+      allpdf="$allpdf -a ${PDFNAME}"
     done
     echo "________________________________________________________________________________"
     echo "Taring plot data:"
@@ -26,7 +42,7 @@ then
     allpdf="$allpdf -a ../$DIRNAME.tgz"
     echo "________________________________________________________________________________"
     echo "Mailing pdf plots and tgz to ${EMAIL}:"
-    echo "mutt $EMAIL -s Plots $allpdf < /dev/null"
-    mutt $EMAIL -s Plots $allpdf < /dev/null
+    echo "cat $METACONF | mutt $EMAIL -s ${SUBJECT} $allpdf -a $METACONF $ALOGS"
+    cat $METACONF | mutt $EMAIL -s $SUBJECT $allpdf -a $METACONF $ALOGS
 fi
 cd .. && rm -Rf $DIRNAME

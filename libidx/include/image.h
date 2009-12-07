@@ -65,29 +65,29 @@ namespace ebl {
   template<class T> 
     idx<T> image_resize(idx<T> &im, double w, double h, int mode = 1);
 
-  //! resizes an image (a region of im) into a square of width outwidth,
-  //! using gaussian pyramids. returns result.
-  //! the resizing of im is tolerated to end up within outwidth and 
-  //! percentage below (outwidth - outwidth * margin).
-  //! The output will still be a square of width outwidth centered on the
-  //! region.
-  //! out_region is set by the function and represent the resized version of
-  //! region.
-  template<class T> 
-    idx<T> image_gaussian_square_resize(idx<T> &im, const rect &region,
-					uint outwidth, rect &out_region,
-					float margin = 0.0);
+  //! resizes an image (a region iregion of im if specified) into a image of
+  //! size oheightxowidth using gaussian pyramids. returns result.
+  //! the resizing of im is tolerated to end up within owidth and 
+  //! percentage below (owidth - owidth * margin). same with oheight.
+  //! The output will still be an image of size oheightxowidth centered on the
+  //! iregion (the entire image if not specified).
+  //! oregion is filled by the function if given and represents the resized
+  //! region of iregion.
+  template<class T>
+    idx<T> image_gaussian_resize(idx<T> &im_, uint oheight, uint owidth,
+				 float margin = 0.0,
+				 rect *iregion = NULL, rect *oregion = NULL);
 
   //! returns the biggest square image including image region r.
   template<class T> 
     idx<T> image_region_to_square(idx<T> &im, const rect &r);
 
-  //! returns the square image of width sqwidth centered on region r.
+  //! returns the rectangular image of size oheightxowidth centered on region r.
   //! cropped is set by the function to the region in the output image
-  //! that comes from the input image. the rest contains no image, only 0.
+  //! that comes from the input image. the rest contains no image (0).
   template<class T> 
-    idx<T> image_region_to_square(idx<T> &im, const rect &r, uint sqwidth,
-				  rect &cropped);
+    idx<T> image_region_to_rect(idx<T> &im, const rect &r, uint oheight,
+				uint owidth, rect &cropped);
 
   //! This function takes 2D or 3D images (greyscale or RGB)
   //! as input of type T and converts
@@ -309,8 +309,13 @@ namespace ebl {
     void image_mexican_filter(idx<T> &in, idx<T> &out, double s, int n,
 			      idx<T> *filter = NULL, idx<T> *tmp = NULL);
 
+  //! return a gaussian kernel of size nxn
   template<class T>
     idx<T> create_gaussian_kernel(int n);
+
+  //! return a gaussian kernel of size hxw
+  template<class T>
+    idx<T> create_gaussian_kernel(uint h, uint w);
 
   //! in-place normalization: zero-mean and divided by standard deviation.
   template<class T>

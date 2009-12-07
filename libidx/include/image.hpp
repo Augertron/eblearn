@@ -128,9 +128,8 @@ namespace ebl {
   }
 
   template<class T>
-  idx<T> image_gaussian_square_resize(idx<T> &im_, const rect &region,
-				      uint outwidth, rect &out_region,
-				      float margin) {
+  idx<T> image_gaussian_resize(idx<T> &im_, uint oheight, uint owidth,
+			       float margin, rect *iregion_, rect *oregion) {
     idx<T> im = im_.shift_chan(0);
     // only accept 2D images or 3D with channel dim to 0.
     if ((im.order() != 2) && ((im.order() == 3) && im.get_chandim() != 0)) {
@@ -140,33 +139,54 @@ namespace ebl {
       cerr << endl;
       eblerror("unexpected image format");
     }
-    // if region's max edge is already within the margin below outwidth,
-    // then just return the square centered on the region
-    uint outwidth0 = MAX(0, (int) outwidth - outwidth * margin);
-    uint max = MAX(region.height, region.width);
-    if ((max <= outwidth) && (max >= outwidth0)) {
-      out_region = region;
+    // iregion is optional, set it to entire image if not given
+    rect iregion(0, 0, im.dim(1), im.dim(2));
+    if (iregion_)
+      iregion = *iregion_;
+    // if region's height and width are already within the margin below
+    // oheight and owidth, then just return the current image
+    // and set out_region to input region
+    uint oheight0 = MAX(0, (int) oheight - oheight * margin);
+    uint owidth0 = MAX(0, (int) owidth - owidth * margin);
+    if ((iregion.height <= oheight) && (iregion.height >= oheight0) &&
+	(iregion.width <= owidth) && (iregion.width >= owidth0)) {
+      if (oregion)
+	*oregion = iregion;
       return im_;
-      //return image_region_to_square(im, region, outwidth, cropped);
     }
     // else down/up-sample with gaussians
     gaussian_pyramid<T> gp;
     idx<T> rim;
     rect rr;
+    // compute edges that need most reduction
+    uint imax, omax;
+    if ((iregion.height / (float)oheight) < (iregion.width / (float)owidth)) {
+      imax = iregion.height;
+      omax = oheight;
+    } else {
+      imax = iregion.width;
+      omax = owidth;
+    }
     // compute how many gaussian reduction/expansions necessary to reach target
-    if (max > outwidth) { // reduce
+    if ((iregion.height > oheight) || (iregion.width > owidth)) { // reduce
       // compute a regular resize of 1/sqrt(2) of the original size
       // to add more scales than just by a factor of 2.
       idx<T> im_sqrt2 = im.shift_chan(2); // image_resize expect chan in 2
       im_sqrt2 = image_resize(im_sqrt2, 1/sqrt(2), 1/sqrt(2), 2);
       im_sqrt2 = im_sqrt2.shift_chan(0);
-      rect r_sqrt2(region.h0 * 1/sqrt(2), region.w0 * 1/sqrt(2),
-		   region.height * 1/sqrt(2), region.width * 1/sqrt(2));
-      uint max_sqrt2 = MAX(r_sqrt2.height, r_sqrt2.width);
+      rect r_sqrt2(iregion.h0 * 1/sqrt(2), iregion.w0 * 1/sqrt(2),
+		   iregion.height * 1/sqrt(2), iregion.width * 1/sqrt(2));
+      // compute sqrt2 edges that need most reduction
+      uint imax_sqrt2;
+      if ((r_sqrt2.height / (float)oheight) < (r_sqrt2.width / (float)owidth)) {
+	imax_sqrt2 = r_sqrt2.height;
+      } else {
+	imax_sqrt2 = r_sqrt2.width;
+      }
       uint dist, dist_sqrt2;
-      uint reductions = MAX(0, (int) gp.count_reductions(max, outwidth, dist));
+      uint reductions = MAX(0, (int) gp.count_reductions(imax, omax, dist));
       uint reductions_sqrt2 =
-	MAX(0, (int) gp.count_reductions(max_sqrt2, outwidth, dist_sqrt2));
+	MAX(0, (int) gp.count_reductions(imax_sqrt2, omax, dist_sqrt2));
       // switch between original and sqrt2 based on distance to outwidth
       if (dist > dist_sqrt2) { // sqrt2 scale is closer to target
 	rim = gp.reduce(im_sqrt2, reductions_sqrt2);
@@ -174,7 +194,7 @@ namespace ebl {
       } else { // original scale is closer to target
 	// reduce image reductions time
 	rim = gp.reduce(im, reductions);
-	rr = gp.reduce_rect(region, reductions);
+	rr = gp.reduce_rect(iregion, reductions);
       }
     } else { // expand
       // compute a regular resize of 1/sqrt(2) of the original size
@@ -182,15 +202,21 @@ namespace ebl {
       idx<T> im_sqrt2 = im.shift_chan(2); // image_resize expect chan in 2
       im_sqrt2 = image_resize(im_sqrt2, sqrt(2), sqrt(2), 2);
       im_sqrt2 = im_sqrt2.shift_chan(0);
-      rect r_sqrt2(region.h0 * sqrt(2), region.w0 * sqrt(2),
-		   region.height * sqrt(2), region.width * sqrt(2));
-      uint max_sqrt2 = MAX(r_sqrt2.height, r_sqrt2.width);
+      rect r_sqrt2(iregion.h0 * sqrt(2), iregion.w0 * sqrt(2),
+		   iregion.height * sqrt(2), iregion.width * sqrt(2));
+      // compute sqrt2 edges that need most reduction
+      uint imax_sqrt2;
+      if ((r_sqrt2.height / (float)oheight) < (r_sqrt2.width / (float)owidth)) {
+	imax_sqrt2 = r_sqrt2.height;
+      } else {
+	imax_sqrt2 = r_sqrt2.width;
+      }
       uint dist = 0, dist_sqrt2 = 0;
       // number of expansions to stay below outwidth
-	uint expansions =
-	  MAX(0, (int) gp.count_expansions(max, outwidth, dist));
+      uint expansions =
+	MAX(0, (int) gp.count_expansions(imax, omax, dist));
       uint expansions_sqrt2 =
-	MAX(0, (int) gp.count_expansions(max_sqrt2, outwidth, dist_sqrt2));
+	MAX(0, (int) gp.count_expansions(imax_sqrt2, omax, dist_sqrt2));
       // switch between original and sqrt2 based on distance to outwidth
       if (dist > dist_sqrt2) { // sqrt2 scale is closer to target
 	rim = gp.expand(im_sqrt2, expansions_sqrt2);
@@ -198,48 +224,49 @@ namespace ebl {
       } else { // original scale is closer to target
 	// expand
 	rim = gp.expand(im, expansions);
-	rr = gp.expand_rect(region, expansions);
+	rr = gp.expand_rect(iregion, expansions);
       }
     }
-    // get a square piece of rim with width outwidth including reduced region rr
-    // as much as possible
-    out_region = rr;
+    // save resized input region into oregion, if defined
+    if (oregion)
+      *oregion = rr;
+    // put channel dim back to dimension 2
     rim = rim.shift_chan(2);
     return rim;
   }
 
   template<class T> 
-  idx<T> image_region_to_square(idx<T> &im, const rect &r, uint sqwidth,
-				rect &cropped) {
+  idx<T> image_region_to_rect(idx<T> &im, const rect &r, uint oheight,
+			      uint owidth, rect &cropped) {
     // TODO: check expecting 2D or 3D
     // TODO: check that rectangle is within image
     idxdim d(im);
     uint dh = (d.get_chandim() == 0) ? 1 : 0; // handle channels position
     uint dw = (d.get_chandim() == 0) ? 2 : 1; // handle channels position
-    d.setdim(dh, sqwidth);
-    d.setdim(dw, sqwidth);
+    d.setdim(dh, oheight);
+    d.setdim(dw, owidth);
     idx<T> res(d);
 
-    int hcenter = r.h0 + r.height / 2;
-    int wcenter = r.w0 + r.width / 2;
+    int hcenter = r.h0 + r.height / 2; // input height center
+    int wcenter = r.w0 + r.width / 2; // input width center
     // limit centers to half the width/height away from borders
     // to handle incorrect regions
     hcenter = MIN((int)im.dim(dh)-1 - (int)r.height/2,
 		  MAX((int)r.height/2, hcenter));
     wcenter = MIN((int)im.dim(dw)-1 - (int)r.width/2,
 		  MAX((int)r.width/2, wcenter));
-    int h0 = hcenter - sqwidth / 2;
-    int w0 = wcenter - sqwidth / 2;
-    int h1 = hcenter + sqwidth / 2;
-    int w1 = wcenter + sqwidth / 2;
-    int gh0 = MAX(0, MIN((int) im.dim(dh)-1, (int) h0));
-    int gw0 = MAX(0, MIN((int) im.dim(dw)-1, (int) w0));
+    int h0 = hcenter - oheight / 2; // out height offset in input
+    int w0 = wcenter - owidth / 2; // out width offset in input
+    int h1 = hcenter + oheight / 2;
+    int w1 = wcenter + owidth / 2;
+    int gh0 = MAX(0, MIN((int) im.dim(dh)-1, (int) h0)); // input h offset
+    int gw0 = MAX(0, MIN((int) im.dim(dw)-1, (int) w0)); // input w offset
     int gh1 = MAX(0, MIN((int) im.dim(dh)-1, (int) h1));
     int gw1 = MAX(0, MIN((int) im.dim(dw)-1, (int) w1));
-    int h = gh1 - gh0;
-    int w = gw1 - gw0;
-    int fh0 = gh0 - h0;
-    int fw0 = gw0 - w0;
+    int h = gh1 - gh0; // out height narrow
+    int w = gw1 - gw0; // out width narrow
+    int fh0 = MAX(0, gh0 - h0); // out height offset narrow
+    int fw0 = MAX(0, gw0 - w0); // out width offset narrow
 
     idx<T> tmpres = res.narrow(dh, h, fh0);
     tmpres = tmpres.narrow(dw, w, fw0);
@@ -888,6 +915,32 @@ namespace ebl {
     return m;
   }
 
+  // TODO: cleanup
+  template<class T>
+  idx<T> create_gaussian_kernel(uint h, uint w) {
+    idx<T> m(h, w);
+    uint min = MIN(h, w); // use smallest dim for gaussian
+    double s = min/4;
+    T vinv = 1/(s*s);
+    T total = 0;
+    int cx = min/2;
+    int cy = min/2;
+    for(uint x = 0; x < h; x++){
+      for(uint y = 0; y < w; y++){
+	int dx = x - cx;
+	int dy = y - cy;
+	m.set(-exp(-(vinv*(dx*dx + dy*dy))), x, y);
+	total += m.get(x, y);
+      }
+    }
+    //! set center valus so it's zero sum
+    //    m.set(m.get(cx, cy) - total, cx, cy);
+    //! normalize so that energy is 1
+    //    T energy = sqrt(idx_sumsqr(m));
+    idx_dotc(m, 1/total, m);
+    return m;
+  }
+
   template<class T>
   void image_mexican_filter(idx<T> &in, idx<T> &out, double s, int n,
 			    idx<T> *filter_, idx<T> *tmp_) {
@@ -920,7 +973,7 @@ namespace ebl {
       }
       break ;
     default:
-      eblerror("image_local_normalization: dimension not implemented");
+      eblerror("image_global_normalization: dimension not implemented");
     }
   }
 
@@ -1019,6 +1072,13 @@ namespace ebl {
   
   template<class T>
   idx<T> image_filter(idx<T> &in, idx<T> &filter) {
+    // check that image is bigger than filter
+    if ((in.dim(0) < filter.dim(0)) ||
+	(in.dim(1) < filter.dim(1))) {
+      cerr << "error: image " << in << " is too small to be convolved with ";
+      cerr << filter << " filter." << endl;
+      eblerror("too small image for convolution");
+    }
     idxdim d(in);
     d.setdim(0, in.dim(0) - filter.dim(0) + 1);
     d.setdim(1, in.dim(1) - filter.dim(1) + 1);

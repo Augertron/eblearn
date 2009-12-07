@@ -78,6 +78,11 @@ namespace ebl {
     emit gui_clear();
   }
 
+  void idxgui::save_window(const char *filename, int wid) {
+    check_init();
+    emit gui_save_window(new string(filename), wid);
+  }
+
   int idxgui::new_window(const char *wname, unsigned int h, 
 			 unsigned int w) {
     check_init();
@@ -110,7 +115,7 @@ namespace ebl {
   void idxgui::set_silent(const char *filename) {
     check_init();
     if (filename)
-      emit gui_set_silent(new std::string(filename));
+      emit gui_set_silent(new string(filename));
     else
       emit gui_set_silent(NULL);
   }
@@ -118,8 +123,9 @@ namespace ebl {
   void idxgui::run() {
     run_main(argc, argv);
     main_done = true;
-    if (*nwindows == 0)
+    if (*nwindows == 0) {
       quit();
+    }
   }
 
   void idxgui::draw_text(std::string *s) {

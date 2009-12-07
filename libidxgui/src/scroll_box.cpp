@@ -43,7 +43,7 @@ namespace ebl {
   }
   
   scroll_box::~scroll_box() {
-    cout << "removing scroll box " << this << " of win " << win << endl;
+    //    cout << "removing scroll box " << this << " of win " << win << endl;
   }
 
   void scroll_box::set_parent(void *win_) {

@@ -66,6 +66,10 @@ namespace ebl {
     gui.clear();
   }
 
+  void save_window(const char *filename, int wid) {
+    gui.save_window(filename, wid);
+  }
+
   void draw_arrow(int h1, int w1, int h2, int w2) {
     gui.draw_arrow(h1, w1, h2, w2);
   }

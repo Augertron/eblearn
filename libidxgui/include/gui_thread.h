@@ -51,7 +51,7 @@ namespace ebl {
   extern ebl::idxgui gui;
 
   //! Window is a simple "whiteboard" on which you can display
-  //! idxs with for example gray_draw_matrix and RGB_draw_matrix.
+  //! idxs with for example draw_matrix.
   //! Warning: do not use electric fence with QT as it is unstable.
   class gui_thread : public QWidget { 
     Q_OBJECT
@@ -70,8 +70,12 @@ namespace ebl {
 
   private slots:
     void window_destroyed(QObject *obj);
+    
+    //! used to disable or enable updating of window, for batch displaying.
+    //! this is useful to avoid flickering and speed up display.
     void set_wupdate(bool update);
-    void add_text(const std::string *s);
+    
+    void add_text(const string *s);
     void add_arrow(int x1, int y1, int x2, int y2);
     void add_box(int h0, int w0, int h, int w, unsigned char r, unsigned char g,
 		 unsigned char b, string *s);
@@ -82,7 +86,14 @@ namespace ebl {
 			 unsigned char bg_b, unsigned char bg_a);
     void updatePixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void appquit();
+
+    //! clear current window
     void clear();
+    
+    //! save window with id wid into filename image.
+    //! if wid == -1, save current window.
+    void save_window(const string *filename, int wid);
+
     void new_window(const char *wname = NULL, unsigned int h = 0, 
 		    unsigned int w = 0);
     void select_window(int wid);

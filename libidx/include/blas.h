@@ -163,8 +163,11 @@ namespace ebl {
   //! subtract two idx's
   template<class T> void idx_sub(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
-  //! multiply two idx's
+  //! multiply two idx's element-wise: out = i1 * i2
   template<class T> void idx_mul(idx<T> &i1, idx<T> &i2, idx<T> &out);
+
+  //! divide two idx's element-wise: out = i1 / i2
+  template<class T> void idx_div(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
   //! add a constant to each element:  o1 <- i1+c;
   template<class T> void idx_addc(idx<T> &inp, T c, idx<T> &out);
@@ -246,6 +249,9 @@ namespace ebl {
   
   //! takes the square root of in and puts it in out.
   template<class T> void idx_sqrt(idx<T>& in, idx<T>& out);
+  
+  //! takes in to the power p and puts it in out.
+  template<class T> void idx_power(idx<T>& in, double p, idx<T>& out);
   
   ////////////////////////////////////////////////////////////////
   // sums

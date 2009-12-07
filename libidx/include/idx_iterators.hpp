@@ -6,6 +6,8 @@
 #include <cassert>
 #include <limits>
 
+using namespace std;
+
 namespace ebl { 
 
 /*
@@ -547,6 +549,11 @@ DimIter_Base<T>::DimIter_Base(idx<T>& i, int dimInd)
 		eblerror("DimIter_Base: negative looping dimension");
 		dimInd += i.order();
 	}
+	if (i.order() == 0) { // TODO: allow looping once on 0-order idx
+	  cerr << "cannot loop on idx with order 0. idx is: " << i << endl;
+	  eblerror("cannot loop on zero-order idx");
+	} 
+	
 	//this->subtensor = idx.select(dimInd,0);
 	this->dimInd = dimInd;
 	this->dimMod = i.spec.mod[dimInd];
@@ -648,6 +655,13 @@ DimIter<T>::operator++(int){
 	DimIter<T> returnVal(*this);
 	this->incr();
 	return returnVal;
+}
+
+template<typename T>
+DimIter<T> DimIter<T>::at(intg i){
+  DimIter<T> returnVal(*this);
+  returnVal.spec.offset = i * this->dimMod;
+  return returnVal;
 }
 
 template<typename T>

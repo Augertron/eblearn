@@ -380,6 +380,9 @@ public:
 	//! Postincrement operator.
 	DimIter<T> operator++(int);
 	
+	//! Access element i directly.
+	DimIter<T> at(intg i);
+	
 	//! Predecrement operator.
 	inline DimIter<T>& operator--();
 	
