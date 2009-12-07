@@ -848,6 +848,13 @@ namespace ebl {
     return out;
   }
 
+  bool rect::overlap(const rect &r) {
+    if (((h0 <= r.h0 + r.height) && (h0 + height >= r.h0)) &&
+	((w0 <= r.w0 + r.width) && (w0 + width >= r.w0)))
+      return true;
+    return false;
+  }
+  
   std::ostream& operator<<(std::ostream& out, const rect& r) {
     out << "rect:<(" << r.h0 << "," << r.w0 << ")," << r.height;
     out << "x" << r.width << ">";

@@ -32,12 +32,13 @@
 #ifndef EBL_LAYERS_H_
 #define EBL_LAYERS_H_
 
-#include "defines.h"
+#include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_states.h"
 #include "ebl_basic.h"
 #include "ebl_arch.h"
 #include "ebl_nonlinearity.h"
+#include "ebl_transfer.h"
 
 namespace ebl {
 
@@ -63,17 +64,19 @@ namespace ebl {
     void bbprop(state_idx &in, state_idx &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
+    //! these two functions help scaling input data
+    virtual idxdim fprop_size(idxdim &i_size);
+    virtual idxdim bprop_size(const idxdim &o_size);
   };
 
   ////////////////////////////////////////////////////////////////
   //! a convolution neural net layer: convolution + tanh non-linearity.
   class nn_layer_convolution: public module_1_1<state_idx, state_idx> {
   public:
-    //!< convolution module
-    convolution_module_2D_replicable convol;
-    addc_module           adder;   //!< bias vector
-    tanh_module           sigmoid; //!< the non-linear function
-    state_idx             *sum;     //!< convolution result
+    convolution_module_2D_replicable	 convol; //!< convolution module
+    addc_module				 adder;	//!< bias vector
+    tanh_module				 sigmoid;//!< the non-linear function
+    state_idx				*sum;	//!< convolution result
 
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
@@ -89,6 +92,43 @@ namespace ebl {
     nn_layer_convolution(parameter &p, intg kerneli, intg kernelj, 
 			 intg stridei, intg stridej, idx<intg> &tbl);
     virtual ~nn_layer_convolution();
+    //! fprop from in to out
+    void fprop(state_idx &in, state_idx &out);
+    //! bprop
+    void bprop(state_idx &in, state_idx &out);
+    //! bbprop
+    void bbprop(state_idx &in, state_idx &out);
+    //! initialize the weights to random values
+    void forget(forget_param_linear &fp);
+    //! these two functions help scaling input data
+    virtual idxdim fprop_size(idxdim &i_size);
+    virtual idxdim bprop_size(const idxdim &o_size);
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! a convolution layer with absolute rectification and constrast
+  //! normalization
+  class layer_convabsnorm: public module_1_1<state_idx, state_idx> {
+  public:
+    nn_layer_convolution	 lconv;	//!< convolution layer
+    abs_module			 abs;	//!< absolute rectification
+    weighted_std_module		 norm;	//!< constrast normalization
+    state_idx			*tmp;	//!< temporary results
+
+    //! constructor. Arguments are a pointer to a parameter
+    //! in which the trainable weights will be appended,
+    //! the number of inputs, and the number of outputs.
+    //! \param p is used to store all parametric variables in a single place.
+    //! \param kerneli is the height of the convolution kernel
+    //! \param kernelj is the width of the convolution kernel
+    //! \param stridei is the stride at which convolutions are done on 
+    //!        the height axis.
+    //! \param stridej is the stride at which convolutions are done on 
+    //!        the width axis.
+    //! \param table is the convolution connection table.
+    layer_convabsnorm(parameter &p, intg kerneli, intg kernelj, 
+			 intg stridei, intg stridej, idx<intg> &tbl);
+    virtual ~layer_convabsnorm();
     //! fprop from in to out
     void fprop(state_idx &in, state_idx &out);
     //! bprop

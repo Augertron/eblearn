@@ -91,19 +91,52 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // helper function
+  // nn_machine_cscscf
+
+  // the empty constructor (must call init afterwards)
+  nn_machine_cscsc::nn_machine_cscsc()
+    : layers_n<state_idx>(true) { // owns modules, responsible for deleting it
+  }
+
+  nn_machine_cscsc::nn_machine_cscsc(parameter &prm, intg ini, intg inj,
+				     intg ki0, intg kj0, idx<intg> &tbl0, 
+				     intg si0, intg sj0,
+				     intg ki1, intg kj1, idx<intg> &tbl1, 
+				     intg si1, intg sj1,
+				     intg ki2, intg kj2, idx<intg> &tbl2)
+    : layers_n<state_idx>(true) { // owns modules, responsible for deleting it
+    init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
+	 si1, sj1, ki2, kj2, tbl2);
+  }
   
-  idx<intg> full_table(intg a, intg b) {
-    idx<intg> m(a * b, 2);
-    intg p = 0;
-    for (intg j = 0; j < b; ++j) {
-      for (intg i = 0; i < a; ++i) {
-	m.set(i, p, 0);
-	m.set(j, p, 1);
-	p++;
-      }
-    }
-    return m;
+  nn_machine_cscsc::~nn_machine_cscsc() {}
+
+  void nn_machine_cscsc::init(parameter &prm, intg ini, intg inj,
+			       intg ki0, intg kj0, idx<intg> &tbl0, 
+			       intg si0, intg sj0, intg ki1, intg kj1, 
+			       idx<intg> &tbl1, intg si1, intg sj1, 
+			      intg ki2, intg kj2, idx<intg> &tbl2) {
+    // here we compute the thickness of the feature maps based on the
+    // convolution tables.
+    idx<intg> tblmax = tbl0.select(1, 1);
+    intg thick0 = 1 + idx_max(tblmax);
+    tblmax = tbl1.select(1, 1);
+    intg thick1 = 1 + idx_max(tblmax);
+    // layers_n was initialized with true so it owns the modules we give it,
+    // we can add modules with "new".
+    // we add convolutions (c), subsamplings (s), and full layers (f)
+    // to form a c-s-c-s-c-f network. and we add state_idx in between
+    // which serve as temporary buffer to hold the output of a module
+    // and feed the input of the following module.
+    add_module(new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0),
+	       new state_idx(1, 1, 1)); // these will be automatically resized
+    add_module(new nn_layer_subsampling(prm, si0, sj0, si0, sj0, thick0),
+	       new state_idx(1, 1, 1)); // these will be automatically resized
+    add_module(new nn_layer_convolution(prm, ki1, kj1, 1, 1, tbl1),
+	       new state_idx(1, 1, 1)); // these will be automatically resized
+    add_module(new nn_layer_subsampling(prm, si1, sj1, si1, sj1, thick1),
+	       new state_idx(1, 1, 1)); // these will be automatically resized
+    add_last_module(new nn_layer_convolution(prm, ki2, kj2, 1, 1, tbl2));
   }
 
   ////////////////////////////////////////////////////////////////
@@ -267,8 +300,6 @@ namespace ebl {
 			       idx<double> &t, idxdim &dims)
     : fc_ebm2<state_idx,int,state_idx>(m, fout, (ebm_2<state_idx,int>&)fcost), 
       fcost(t), fout(dims) {
-    cout << "supervised_euclidean_machine: input samples size is ";
-    cout << dims << "." << endl; 
   }
 
   supervised_euclidean_machine::~supervised_euclidean_machine() {

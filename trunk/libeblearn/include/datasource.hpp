@@ -81,6 +81,7 @@ namespace ebl {
     typename idx<Tin2>::dimension_iterator	 lIter(this->labels, 0);
     this->dataIter = dIter;
     this->labelsIter = lIter;
+    balance = false;
   }
 
   template<typename Tin1, typename Tin2>
@@ -145,19 +146,60 @@ namespace ebl {
 
   template<typename Tin1, typename Tin2>
   void datasource<Tin1,Tin2>::next() {
-    ++dataIter;
-    ++labelsIter;
+    if (balance) {
+      intg i = label_indexes[iitr][indexes_itr[iitr]];
+      //      cout << "#" << i << "/" << iitr << " ";
+      dataIter = dataIter.at(i);
+      labelsIter = labelsIter.at(i);
+      indexes_itr[iitr] += 1;
+      if (indexes_itr[iitr] >= label_indexes[iitr].size())
+	indexes_itr[iitr] = 0;
+      iitr++;
+      if (iitr >= label_indexes.size())
+	iitr = 0;
+    } else {
+      ++dataIter;
+      ++labelsIter;
 
-    if(!dataIter.notdone()) {
+      if(!dataIter.notdone()) {
+	dataIter = data.dim_begin(0);
+	labelsIter = labels.dim_begin(0);
+      }
+    }
+  }
+
+  template<typename Tin1, typename Tin2>
+  void datasource<Tin1,Tin2>::seek_begin() {
+    if (!balance) { // do not reset when balancing
       dataIter = data.dim_begin(0);
       labelsIter = labels.dim_begin(0);
     }
   }
 
   template<typename Tin1, typename Tin2>
-  void datasource<Tin1,Tin2>::seek_begin() {
-    dataIter = data.dim_begin(0);
-    labelsIter = labels.dim_begin(0);
+  void datasource<Tin1,Tin2>::set_balanced() {
+    balance = true;
+    // compute vector of sample indexes for each class
+    label_indexes.clear();
+    indexes_itr.clear();
+    iitr = 0;
+    uint nclasses = idx_max(labels) + 1;
+    for (uint i = 0; i < nclasses; ++i) {
+      vector<intg> indexes;
+      label_indexes.push_back(indexes);
+      indexes_itr.push_back(0); // init iterators
+    }
+    // distribute sample indexes into each vector based on label
+    for (uint i = 0; i < size(); ++i)
+      label_indexes[labels.get(i)].push_back(i);
+    // display
+//     for (uint i = 0; i < label_indexes.size(); ++i) {
+//       vector<intg> &indexes = label_indexes[i];
+//       cout << "label " << i << " has " << indexes.size() << " samples: ";
+//       for (uint j = 0; j < indexes.size(); ++j)
+// 	cout << indexes[j] << " ";
+//       cout << endl;
+//     }
   }
 
   ////////////////////////////////////////////////////////////////
@@ -189,7 +231,7 @@ namespace ebl {
     idx_bloop1(classe, classes, ubyte) {
       this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
     }
-    init(data_, labels_, b, c, name_, NULL);
+    init(data_, labels_, b, c, name_, this->lblstr);
   }
 
   template<typename Tdata, typename Tlabel>
@@ -229,6 +271,7 @@ namespace ebl {
 					       const char *name,
 					       vector<string*> *lblstr_) {
     datasource<Tdata, Tlabel>::init(inp, lbl, b, c, name);
+    this->lblstr = lblstr_;
 
     if (!this->lblstr) { // no names are given, use indexes as names
       this->lblstr = new vector<string*>;
@@ -249,7 +292,6 @@ namespace ebl {
   labeled_datasource(const labeled_datasource<Tdata,Tlabel> &ds)
     : datasource<Tdata, Tlabel>((const datasource<Tdata, Tlabel>&) ds),
       lblstr(NULL) {
-    cout << "labeled_datasource::copy constructor."<<endl;
     if (ds.lblstr) {
       this->lblstr = new vector<string*>;
       for (unsigned int i = 0; i < ds.lblstr->size(); ++i) {

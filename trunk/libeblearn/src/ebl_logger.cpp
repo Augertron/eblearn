@@ -92,6 +92,32 @@ namespace ebl {
     size++;
   }
 
+  void classifier_meter::update(intg age_, uint desired, uint infered,
+				state_idx &e) {
+    age = age_;
+    energy = e.x.get();
+    confidence = 0; // TODO? co->confidence;
+    // increment energy
+    total_energy += energy;
+    // resize vectors
+    uint max = MAX(desired, infered);
+    if (max >= class_totals.size()) {
+      class_totals.resize(max + 1, 0); // resize to max and fill new with 0
+      class_errors.resize(max + 1, 0); // resize to max and fill new with 0
+    }
+    // increment class examples total
+    class_totals[desired] = class_totals[desired] + 1;
+    // increment errors
+    if (desired == infered) { // correct
+      total_correct++;
+    }
+    else { // error
+      total_error++;
+      class_errors[desired] = class_errors[desired] + 1;
+    }
+    size++;
+  }
+
   void classifier_meter::test(class_state *co, ubyte cd, state_idx *en) {
     intg crrct = this->correctp(co->output_class, cd);
     age = 0;
@@ -131,12 +157,20 @@ namespace ebl {
     err_not_implemented();
   }
 
-  void classifier_meter::display() {
+  void classifier_meter::display(vector<string*> *lblstr) {
     cout << "[" << (int) age << "]  sz=" <<  (int) size;
     cout << " energy=" << total_energy / (double) size;
     cout << "  correct=" <<  (total_correct * 100) / (double) size;
     cout << "% errors=" << (total_error * 100) / (double) size;
     cout << "% rejects=" << (total_punt * 100) / (double) size << "%";
+    cout << endl;
+    cout << "errors per class: ";
+    for (uint i = 0; i < class_errors.size(); ++i) {
+      if (lblstr) cout << *((*lblstr)[i]);
+      else cout << i;
+      cout << "(" << class_totals[i] << "): ";
+      cout << class_errors[i] * 100.0 / (float) class_totals[i] << "% ";
+    }
   }
 
   bool classifier_meter::save() {

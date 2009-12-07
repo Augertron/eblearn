@@ -66,6 +66,9 @@ namespace ebl {
   void state::clear()
   {
   }
+  void state::clear_x()
+  {
+  }
   void state::clear_dx()
   {
   }
@@ -79,8 +82,6 @@ namespace ebl {
   state::state()
   {
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state::~state()
@@ -98,51 +99,34 @@ namespace ebl {
   // constructors from specific dimensions using a parameter
 
   state_idx::state_idx() :
-    x(), dx(), ddx()
-  {
+    x(), dx(), ddx() {
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state_idx::state_idx(intg s0) :
-    x(s0), dx(s0), ddx(s0)
-  {
+    x(s0), dx(s0), ddx(s0) {
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state_idx::state_idx(intg s0, intg s1) :
-    x(s0, s1), dx(s0, s1), ddx(s0, s1)
-  {
+    x(s0, s1), dx(s0, s1), ddx(s0, s1) {
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state_idx::state_idx(intg s0, intg s1, intg s2) :
-    x(s0, s1, s2), dx(s0, s1, s2), ddx(s0, s1, s2)
-  {
+    x(s0, s1, s2), dx(s0, s1, s2), ddx(s0, s1, s2) {
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state_idx::state_idx(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
 		       intg s6, intg s7) :
     x(s0, s1, s2, s3, s4, s5, s6, s7), dx(s0, s1, s2, s3, s4, s5, s6, s7), 
-    ddx(s0, s1, s2, s3, s4, s5, s6, s7)
-  {
+    ddx(s0, s1, s2, s3, s4, s5, s6, s7) {
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state_idx::state_idx(const idxdim &d) : x(d), dx(d), ddx(d) {
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   ////////////////////////////////////////////////////////////////
@@ -151,45 +135,33 @@ namespace ebl {
   state_idx::state_idx(parameter &st) :
     x(st.x.getstorage(), st.x.footprint()), 
     dx(st.dx.getstorage(), st.dx.footprint()), 
-    ddx(st.ddx.getstorage(), st.ddx.footprint())
-  {
+    ddx(st.ddx.getstorage(), st.ddx.footprint()) {
     st.resize(st.footprint() + nelements());
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state_idx::state_idx(parameter &st, intg s0) :
     x(st.x.getstorage(), st.x.footprint(), s0), 
     dx(st.dx.getstorage(), st.dx.footprint(), s0), 
-    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0)
-  {
+    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0) {
     st.resize(st.footprint() + nelements());
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state_idx::state_idx(parameter &st, intg s0, intg s1) :
     x(st.x.getstorage(), st.x.footprint(), s0, s1), 
     dx(st.dx.getstorage(), st.dx.footprint(), s0, s1), 
-    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0, s1)
-  {
+    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0, s1) {
     st.resize(st.footprint() + nelements());
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state_idx::state_idx(parameter &st, intg s0, intg s1, intg s2) :
     x(st.x.getstorage(), st.x.footprint(), s0, s1, s2), 
     dx(st.dx.getstorage(), st.dx.footprint(), s0, s1, s2), 
-    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0, s1, s2)
-  {
+    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0, s1, s2) {
     st.resize(st.footprint() + nelements());
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state_idx::state_idx(parameter &st, intg s0, intg s1, intg s2, intg s3,
@@ -200,8 +172,6 @@ namespace ebl {
 	s0, s1, s2, s3, s4, s5, s6, s7) {
     st.resize(st.footprint() + nelements());
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   state_idx::state_idx(parameter &st, const idxdim &d) 
@@ -210,8 +180,6 @@ namespace ebl {
       ddx(st.x.getstorage(), st.x.footprint(), d) {
     st.resize(st.footprint() + nelements());
     clear();
-    clear_dx();
-    clear_ddx();
   }
 
   ////////////////////////////////////////////////////////////////
@@ -226,6 +194,12 @@ namespace ebl {
   // clear methods
 
   void state_idx::clear() {
+    idx_clear(x);
+    idx_clear(dx);
+    idx_clear(ddx);
+  }
+
+  void state_idx::clear_x() {
     idx_clear(x);
   }
 

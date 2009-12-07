@@ -53,22 +53,54 @@ namespace ebl {
     string output_dir;
     
   public:
-    configuration() {}
+
+    //! empty constructor.
+    configuration();
+
+    //! load configuration found in filename.
+    configuration(const char *filename);
+
+    //! load configuration from already loaded map of variables, name and
+    //! output directory.
     configuration(string_map_t &smap, string &name, string &output_dir);
+
+    //! destructor.
     virtual ~configuration();
 
+    //! load configuration from file fname.
     bool read(const char *fname);
+
+    //! save configuration into file fname.
     bool write(const char *fname);
 
     // accessors
 
     const string &get_name();
     const string &get_output_dir();
+
+    //! returns the string contained the variable with name varname.
+    //! if varname does not exist, this throws an exception.
+    const string &get_string(const char *varname);
+
+    //! returns a double conversion of the string contained in the variable
+    //! with name varname.
+    //! if varname does not exist or the double conversion fails,
+    //! this throws an exception.
+    double get_double(const char *varname);
+
+    //! returns a uint conversion of the string contained in the variable
+    //! with name varname.
+    //! if varname does not exist or the uint conversion fails,
+    //! this throws an exception.
+    uint get_uint(const char *varname);
+
+    //! print loaded variables
+    virtual void pretty();
   };
 
   class meta_configuration : public configuration {
   private:
-    string_map_t	meta_smap;
+    string_map_t	tmpsmap;
     string_list_map_t	lmap;
     vector<size_t>	conf_indices;
     int			conf_combinations;
@@ -82,8 +114,11 @@ namespace ebl {
 
     // accessors
 
-    // return all possible configurations
+    //! return all possible configurations
     vector<configuration>& configurations();
+
+    //! print loaded variables
+    virtual void pretty();
   };
 
 } // end namespace ebl

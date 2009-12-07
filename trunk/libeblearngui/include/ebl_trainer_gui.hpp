@@ -93,8 +93,8 @@ namespace ebl {
     if (wid == -1) // clear only if we created the window
       clear_window();
     // top left coordinates of datasets display 1 and 2
-    unsigned int w01 = nh * (m.dim(0) + 2) + 5, h01 = h0 + 35;
-    unsigned int w02 = (nh * (m.dim(0) + 2) + 5) * 2, h02 = h0 + 35;
+    unsigned int w01 = nh * (m.dim(1) + 2) + 5, h01 = h0 + 35;
+    unsigned int w02 = (nh * (m.dim(1) + 2) + 5) * 2, h02 = h0 + 35;
     // working variables
     unsigned int h1 = h01, w1 = w01, nh1 = 0;
     unsigned int h2 = h02, w2 = w02, i2 = 0;

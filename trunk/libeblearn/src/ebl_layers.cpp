@@ -80,6 +80,18 @@ namespace ebl {
     adder.forget(fp);
   }
 
+  idxdim nn_layer_full::fprop_size(idxdim &isize) {
+    //! Extract its dimensions, update output size
+    idxdim osize(linear.w.x.dim(0), isize.dim(1), isize.dim(2));
+    isize = bprop_size(osize);
+    return osize;
+  }
+
+  idxdim nn_layer_full::bprop_size(const idxdim &osize) {
+    idxdim isize(linear.w.x.dim(1), osize.dim(1), osize.dim(2));
+    return isize;
+  }
+
   ////////////////////////////////////////////////////////////////
   // nn_layer_convolution
 
@@ -132,8 +144,9 @@ namespace ebl {
     //! Select a kernel
     idxdim kernel_size = convol.kernel.x[0].get_idxdim();
     //! Extract its dimensions, update output size
-    idxdim osize(MAX(1, isize.dim(0) - kernel_size.dim(0) + 1),
-		 MAX(1, isize.dim(1) - kernel_size.dim(1) + 1));
+    idxdim osize(convol.thickness,
+		 MAX(1, isize.dim(1) - kernel_size.dim(0) + 1),
+		 MAX(1, isize.dim(2) - kernel_size.dim(1) + 1));
     isize = bprop_size(osize);
     return osize;
   }
@@ -142,9 +155,64 @@ namespace ebl {
     //! Select a kernel
     idxdim kernel_size = convol.kernel.x[0].get_idxdim();
     //! Extract its dimensions, update output size
-    idxdim isize(osize.dim(0) + kernel_size.dim(0) - 1,
-		 osize.dim(1) + kernel_size.dim(1) - 1);
+    idxdim isize(convol.tablemax + 1,
+		 osize.dim(1) + kernel_size.dim(0) - 1,
+		 osize.dim(2) + kernel_size.dim(1) - 1);
     return isize;
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // layer_convabsnorm
+
+  layer_convabsnorm::layer_convabsnorm(parameter &p, 
+				       intg kerneli, intg kernelj, 
+				       intg stridei_, intg stridej_, 
+				       idx<intg> &tbl) 
+    : lconv(p, kerneli, kernelj, stridei_, stridej_, tbl),
+      abs(), norm(kerneli, kernelj, lconv.convol.thickness) {
+    tmp = NULL;
+  }
+
+  layer_convabsnorm::~layer_convabsnorm() {
+    if (tmp) delete tmp;
+  }
+
+  void layer_convabsnorm::fprop(state_idx &in, state_idx &out) {
+    // 1. resize tmp
+    idxdim d(in.x.spec); // use same dimensions as in
+    d.setdim(0, lconv.convol.thickness); // except for the first one
+    if (!tmp) tmp = new state_idx(d);
+    else tmp->resize(d);
+    out.resize_as(*tmp); // resize output
+
+    // 2. fprop
+    lconv.fprop(in, *tmp);
+    abs.fprop(*tmp, *tmp);
+    norm.fprop(*tmp, out);
+  }
+
+  void layer_convabsnorm::bprop(state_idx &in, state_idx &out) {
+    norm.bprop(*tmp, out);
+    abs.bprop(*tmp, *tmp);
+    lconv.bprop(in, *tmp);
+  }
+
+  void layer_convabsnorm::bbprop(state_idx &in, state_idx &out) {
+    norm.bbprop(*tmp, out);
+    abs.bbprop(*tmp, *tmp);
+    lconv.bbprop(in, *tmp);
+  }
+
+  void layer_convabsnorm::forget(forget_param_linear &fp) {
+    lconv.forget(fp);
+  }
+
+  idxdim layer_convabsnorm::fprop_size(idxdim &isize) {
+    return lconv.fprop_size(isize);
+  }
+
+  idxdim layer_convabsnorm::bprop_size(const idxdim &osize) {
+    return lconv.bprop_size(osize);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -196,8 +264,9 @@ namespace ebl {
 
   idxdim nn_layer_subsampling::fprop_size(idxdim &isize) {
     //! Update input size
-    idxdim osize(MAX(1, isize.dim(0) / subsampler.stridei),
-		 MAX(1, isize.dim(1) / subsampler.stridej));
+    idxdim osize(subsampler.thickness,
+		 MAX(1, isize.dim(1) / subsampler.stridei),
+		 MAX(1, isize.dim(2) / subsampler.stridej));
     //! Recompute the input size to be compliant with the output
     isize = bprop_size(osize);
     return osize;
@@ -205,8 +274,9 @@ namespace ebl {
 
   idxdim nn_layer_subsampling::bprop_size(const idxdim &osize) {
     //! Update input size
-    idxdim isize(osize.dim(0) * subsampler.stridei,
-		  osize.dim(1) * subsampler.stridej);
+    idxdim isize(subsampler.thickness,
+		 osize.dim(1) * subsampler.stridei,
+		 osize.dim(2) * subsampler.stridej);
     return isize;
   }
 

@@ -58,13 +58,13 @@ ENDIF (QT_FOUND) #--------------------------------------------------------------
 
 MESSAGE("libeblearntools compilation flags: ${CMAKE_CXX_FLAGS}")
 
-# # compile library
-# ################################################################################
-# add_library (eblearntools SHARED
-#   src/dataset_generation.cpp
-#   )
+# compile library
+################################################################################
+add_library (eblearntools SHARED
+  src/configuration.cpp
+  )
 
-# # link executable with external libraries
+# link executable with external libraries
 # target_link_libraries (eblearntools eblearn idx)
 # IF (${Boost_MINOR_VERSION} GREATER 34)
 #   TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})

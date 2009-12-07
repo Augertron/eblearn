@@ -96,13 +96,16 @@ namespace ebl {
     if (wid == -1) // clear only if we created the window
       clear_window();
     gui << white_on_transparent() << gui_only();
+    uint k = 0;
     ds.seek_begin();
     // loop to reach pos
-    for (unsigned int p = 0; p < pos; ++p)
+    for (unsigned int p = 0; p < pos; ++p) {
       ds.next(); // FIXME add a seek(p) method to ds
+      k++;
+    }
     unsigned int h = h0, w = w0;
-    for (unsigned int ih = 0; ih < nh; ++ih) {
-      for (unsigned int iw = 0; iw < nw; ++iw) {
+    for (unsigned int ih = 0; (ih < nh) && (k < ds.size()); ++ih) {
+      for (unsigned int iw = 0; (iw < nw) && (k < ds.size()); ++iw) {
 	ds.fprop(s, lbl);
 	ds.next();
 	m = s.x.select(0, 0);
@@ -110,6 +113,7 @@ namespace ebl {
 	if ((ds.lblstr) && (ds.lblstr->at((int)lbl.get())))
 	  gui << at(h + 1, w + 1) << (ds.lblstr->at((int)lbl.get()))->c_str();
 	w += m.dim(1) + 1;
+	k++;
       }
       w = w0;
       h += m.dim(0) + 1;

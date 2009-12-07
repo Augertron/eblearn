@@ -29,11 +29,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#define VALUE_SEPARATOR '='
+
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdio.h>
 #include <map>
+#include "libidx.h"
 
 #ifdef __BOOST__
 #include "boost/filesystem.hpp"
@@ -99,7 +103,7 @@ bool parse_output_log(const string &fname, const string &name, plots_t &plots) {
   cout << "parsing log file " << fname << endl;
   ifstream in(fname.c_str());
   string s, vname;
-  char separator = '=';
+  char separator = VALUE_SEPARATOR;
   size_t line = 0;
   float f;
   string::size_type itok, stok;
@@ -133,8 +137,8 @@ bool parse_output_log(const string &fname, const string &name, plots_t &plots) {
 bool write_plots(plots_t &plots) {
   string gnuplot_column_separator = "\t";
     string gnuplot_config1 = "clear ; \
-set terminal postscript color solid ; \n	\
-set output \"| ps2pdf - ";
+set terminal pdf ; set grid ytics;set ytics 5;set mytics 5;set grid mytics; \n	\
+set output \"";
     string gnuplot_config2 = ".pdf\" ;	\
 plot ";	    
   
@@ -218,7 +222,7 @@ bool find_logs(const path &root, plots_t &plots) {
 }
 
 int main(int argc, char **argv) {
-  cout << "________________________________Meta Trainer";
+  cout << "________________________________Meta Plotter";
   cout << "________________________________" << endl;
   // parse arguments
   if (!parse_args(argc, argv)) {

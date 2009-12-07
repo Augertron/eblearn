@@ -11,7 +11,7 @@ release:
 	@echo __________________________________________________________________
 	@echo
 	@echo "Compiling ${prj} project(s) in release mode..."
-	@echo "Use 'make prj=idxgui' for example to compile a specific project."
+	@echo "Use 'make release prj=idxgui' for example to compile a specific project."
 	@echo __________________________________________________________________
 	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make ${prj} && cd ../..
 	

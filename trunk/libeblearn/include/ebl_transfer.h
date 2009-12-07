@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   Copyright (C) 2009 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBL_NONLINEARITY_H_
-#define EBL_NONLINEARITY_H_
+#ifndef EBL_TRANSFER_H_
+#define EBL_TRANSFER_H_
 
 #include "ebl_defines.h"
 #include "libidx.h"
@@ -41,70 +41,62 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  // weighted_std_module
+  //! Weighted Standard Deviation Module.
+  //! Local contrast normalization operation using a weighted expectation
+  //! over a local neighborhood. An input set of feature maps is locally
+  //! normalized to be zero mean and unit standard deviation.
+  class weighted_std_module : public module_1_1<state_idx, state_idx> {
+  private:
+    layers_n<state_idx> convmean, convvar;
+    power_module	sqrtmod;	//!< square root module
+    power_module	invmod; //!< inverse module
+    power_module	sqmod;	//!< square module
+    diff_module		difmod; //!< difference module
+    thres_module	thres;	//!< threshold module
+    mul_module		mcw;
+    state_idx		inmean, inzmean, inzmeansq, invar, instd, thstd, invstd;
+    parameter		param;
+    idx<double>         w; //!< weights
 
-  //! a slab of standard Lush sigmoids
-  class stdsigmoid_module: public module_1_1<state_idx, state_idx> {
   public:
-    //! empty constructor
-    stdsigmoid_module();
-    virtual ~stdsigmoid_module();
-    //! fprop from in to out
+    //! <weighting> is <idx2<double>> that defines the weighting around
+    //! the center component.
+    //! <nfeatures> is the number of feature maps input to this module.
+    weighted_std_module(uint kernelh, uint kernelw, int nf);
+    //! destructor
+    virtual ~weighted_std_module();    
+    //! forward propagation from in to out
     virtual void fprop(state_idx &in, state_idx &out);
-    //! bprop
+    //! backward propagation from out to in
     virtual void bprop(state_idx &in, state_idx &out);
-    //! bbprop
+    //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx &in, state_idx &out);
   };
 
   ////////////////////////////////////////////////////////////////
-
-  //! a slab of tanh
-  class tanh_module: public module_1_1<state_idx, state_idx> {
-  public:
-    //! fprop from in to out
-    void fprop(state_idx &in, state_idx &out);
-    //! bprop
-    void bprop(state_idx &in, state_idx &out);
-    //! bbprop
-    void bbprop(state_idx &in, state_idx &out);
-    void forget(forget_param_linear &fp);
-    void normalize();
-  };
-
-  ////////////////////////////////////////////////////////////////
-
-  //! softmax module
-  //! if in is idx0 -> out is idx0 and equal to 1
-  //! if in is idx1 -> it is just one pool
-  //! if in is idx2 -> it is just one pool
-  //! if in is idx3 -> the last two dimensions are pools
-  //! if in is idx4 -> the last two dimensions are pools
-  //! if in is idx5 -> the last four dimensions are pools
-  //! if in is idx6 -> the last four dimensions are pools
-
-  class softmax: public module_1_1<state_idx, state_idx> {
-
-  public:
-    double beta;
-
-    // <b> is the parameter beta in the softmax
-    // large <b> turns the softmax into a max
-    // <b> equal to 0 turns the softmax into 1/N
-
+  // abs_module
+  //! This module takes the absolute value of its input.
+  //! This module is spatially replicable 
+  //! (the input can have an order greater than 1 and the operation will apply
+  //! to all elements).
+  class abs_module: public module_1_1<state_idx, state_idx> {
   private:
-    void resize_nsame(state_idx &in, state_idx &out, int n);
-
+    double threshold;
+    
   public:
-    softmax(double b);
-    ~softmax() {
-    }
-    ;
-    void fprop(state_idx &in, state_idx &out);
-    void bprop(state_idx &in, state_idx &out);
-    void bbprop(state_idx &in, state_idx &out);
-
+    //! Constructor. threshold makes the derivative of abs flat around zero
+    //! with radius threshold.
+    abs_module(double thresh = 0.0);
+    virtual ~abs_module();
+    //! forward propagation from in to out
+    virtual void fprop(state_idx &in, state_idx &out);
+    //! backward propagation from out to in
+    virtual void bprop(state_idx &in, state_idx &out);
+    //! second-derivative backward propagation from out to in
+    virtual void bbprop(state_idx &in, state_idx &out);
   };
 
 } // namespace ebl {
 
-#endif /* EBL_NONLINEARITY_H_ */
+#endif /* EBL_TRANSFER_H_ */

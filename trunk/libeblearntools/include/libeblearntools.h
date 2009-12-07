@@ -33,8 +33,6 @@
 #ifndef LIBEBLEARNTOOLS_H_
 #define LIBEBLEARNTOOLS_H_
 
-#include "dataset.h"
-#include "pascal_dataset.h"
-#include "xml_utils.h"
+#include "configuration.h"
 
 #endif /* LIBEBLEARNTOOLS_H_ */

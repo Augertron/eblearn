@@ -91,7 +91,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! abstract class that stores a state.
   //! it must support the following methods
-  //! clear (clear values), clear_dx (clear gradients),
+  //! clear (clear all), clear_x (clear values), clear_dx (clear gradients),
   //! clear_ddx (clear hessian), and update_gd(arg) (update
   //! with gradient descent.
   class state {
@@ -100,8 +100,10 @@ namespace ebl {
     state();
     //! destructor
     virtual ~state();
-    //! clear x
+    //! clear x, dx and ddx
     virtual void clear();
+    //! clear x
+    virtual void clear_x();
     //! clear dx
     virtual void clear_dx();
     //! clear ddx
@@ -175,8 +177,11 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! clear methods
 
-    //! clear x
+    //! clear x, dx and ddx
     virtual void clear();
+
+    //! clear x
+    virtual void clear_x();
 
     //! clear gradients dx
     virtual void clear_dx();

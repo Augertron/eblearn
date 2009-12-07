@@ -42,16 +42,25 @@ namespace ebl {
   class job {
   private:
     configuration conf;
+    string exe; //!< executable full path
+    string outdir; //!< job's output directory
 
   public:
-    job(configuration &conf);
+    job(configuration &conf, const string &exe);
     virtual ~job();
+
+    //! execute job
+    void run();
+
+    //! write job's files in configuration's output directory
+    bool write();
     
   };
 
   class job_manager {
   private:
     meta_configuration mconf;
+    string mconf_fname; //!< filename of metaconf
     vector<job> jobs;
 
   public:
@@ -59,6 +68,7 @@ namespace ebl {
     virtual ~job_manager();
 
     bool read_metaconf(const char *fname);
+    void run();
   };
 
 } // end namespace ebl

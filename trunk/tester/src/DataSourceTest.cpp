@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <string>
 
+#ifdef __GUI__
+#include "datasource_gui.h"
+#endif
+
 using namespace std;
 using namespace ebl;
 

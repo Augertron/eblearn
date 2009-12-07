@@ -36,7 +36,7 @@
 #include <algorithm>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "numerics.h"
+#include <limits>
 #include <typeinfo>
 
 #ifdef __GUI__
@@ -82,7 +82,15 @@ namespace ebl {
     extension = IMAGE_PATTERN;
     sleep_display = false;
     sleep_delay = 0.0;
-    do_preprocessing = true;
+    // assuming already processed data, but the user can still require
+    // processing via the set_pp_conversion method.
+    do_preprocessing = false;
+    scale_mode = false;
+    data_cnt = 0;
+    resize_mode = "gaussian";
+    interleaved_input = true;
+    max_per_class_set = false;
+    mpc = numeric_limits<intg>::max();
     shift_planar = true;
 #ifndef __BOOST__
     eblerror("Boost libraries not available, install libboost-filesystem-dev libboost-regex-dev and recompile");
@@ -106,16 +114,18 @@ namespace ebl {
     if (!this->count_samples())
       eblerror("failed to count samples to be compiled");
     cout << "Found: " << total_samples << " total samples." << endl;
-    cout << "Found: "; print_classes(); cout << "." << endl;    
+    cout << "Found: "; print_classes(); cout << "." << endl;
+    // (re)init max per class, knowing number of classes
+    intg m = numeric_limits<intg>::max();
+    if (max_per_class_set) // mpc has already been set
+      m = mpc;
+    set_max_per_class(m);
     // allocate 
     if (!allocate(total_samples, outdims))
       eblerror("allocation failed");
     // alloc tallies
     add_tally = idx<intg>(classes.size());
     idx_clear(add_tally);
-    max_per_class = idx<intg>(classes.size());
-    max_per_class_set = false;
-    idx_fill(max_per_class, numeric_limits<intg>::max());
     return true;
   }
   
@@ -186,6 +196,7 @@ namespace ebl {
     if (strcmp(conv_type, "")) {
       ppconv_type = conv_type;
       ppconv_set = true;
+      do_preprocessing = true;
       cout << "Setting preprocessing image conversion to ";
       cout << conv_type << " format." << endl;
     }
@@ -232,8 +243,15 @@ namespace ebl {
   }
     
   template <class Tdata>
-  bool dataset<Tdata>::full() {
+  void dataset<Tdata>::set_resize(const string &resize_mode_) {
+    resize_mode = resize_mode_;
+  }
+    
+  template <class Tdata>
+  bool dataset<Tdata>::full(t_label label) {
     if ((max_data_set && (data_cnt >= max_data)) || (data_cnt >= data.dim(0)))
+      return true;
+    if (max_per_class_set && (add_tally.get(label) >= max_per_class.get(label)))
       return true;
     return false;
   }
@@ -339,7 +357,7 @@ namespace ebl {
     // save data
     string fname = root1;
     fname += data_fname;
-    cout << "Saving " << fname << endl;
+    cout << "Saving " << fname << " (" << dat << ")" << endl;
     if (!save_matrix(dat, fname)) {
       cerr << "error: failed to save " << fname << endl;
       return false;
@@ -347,7 +365,7 @@ namespace ebl {
     // save labels
     fname = root1;
     fname += labels_fname;
-    cout << "Saving " << fname << endl;
+    cout << "Saving " << fname << " (" << labs << ")"  << endl;
     if (!save_matrix(labs, fname)) {
       cerr << "error: failed to save labels into " << fname << endl;
       return false;
@@ -355,8 +373,8 @@ namespace ebl {
     // save classes
     fname = root1;
     fname += classes_fname;
-    cout << "Saving " << fname << endl;
     idx<ubyte> classes_idx = build_classes_idx();
+    cout << "Saving " << fname << " (" << classes_idx << ")"  << endl;
     if (!save_matrix(classes_idx, fname)) {
       cerr << "error: failed to save classes into " << fname << endl;
       return false;
@@ -378,6 +396,9 @@ namespace ebl {
     // if max_data has been set, max n with max_data
     if (max_data_set)
       n = MIN(n, max_data);
+    // max with max_per_class
+    if (max_per_class_set)
+      n = MAX(0, MIN(n, idx_sum(max_per_class)));
     cout << "Allocating dataset \"" << name << "\" with " << n;
     cout << " samples of size " << d << " ..." << endl;
     // allocate data buffer
@@ -391,26 +412,9 @@ namespace ebl {
     // allocate labels buffer
     labels = idx<t_label>(n);
     allocated = true;
-    return true;
-  }
-
-  template <class Tdata>
-  bool dataset<Tdata>::alloc_from_max_per_class(intg max) {
-    // count maximum number of samples from max_per_class array, which must
-    // have been set beforehand
-    // also bound by max to be safe.
-    int n;
-    if (max_per_class_set)
-      n = MAX(0, MIN(max, idx_sum(max_per_class)));
-    else
-      n = MAX(0, max);
-    // allocate 
-    if (!allocate(n, outdims))
-      eblerror("allocation failed");
     // alloc tally
     add_tally = idx<intg>(classes.size());
     idx_clear(add_tally);
-    data_cnt = 0;
     return true;
   }
 
@@ -425,15 +429,13 @@ namespace ebl {
       cerr << "error: dataset has not been allocated, cannot add data." << endl;
       return false;
     }
-    if (full()) // reached full capacity
-      return false;
     // compute label
     t_label label = get_label_from_class(class_name);
-    // return false if reached max capacity of current class
-    if (add_tally.get(label) >= max_per_class.get(label))
+    // check for capacity
+    if (full(label)) // reached full capacity
       return false;
-    else // increase counter for that class
-      add_tally.set(add_tally.get(label) + 1, label);
+    // increase counter for that class
+    add_tally.set(add_tally.get(label) + 1, label);
     // print info
     cout << data_cnt+1 << ": add ";
     cout << (filename ? filename : "sample" ) << " as " << class_name;
@@ -444,7 +446,7 @@ namespace ebl {
     idx_copy(dat, sample);
     // do preprocessing
     if (do_preprocessing)
-      sample = preprocess_data(sample, class_name, filename, r);
+      sample = preprocess_data(sample, class_name, true, filename, r);
     // put sample's channels dimensions first
     if (shift_planar)
       sample = sample.shift_dim(2, 0);
@@ -497,11 +499,27 @@ namespace ebl {
   }
 
   template <class Tdata>
+  void dataset<Tdata>::set_scales(const vector<uint> &sc, const string &od) {
+    scales = sc;
+    scale_mode = true;
+    outdir = od;
+    cout << "Enabling scaling mode. Scales: ";
+    for (vector<uint>::iterator i = scales.begin(); i != scales.end(); ++i)
+      cout << *i << " ";
+    cout << endl;
+  }
+
+  template <class Tdata>
   void dataset<Tdata>::set_max_per_class(intg max) {
     if (max < 0)
       eblerror("cannot set max_per_class to < 0");
-    idx_fill(max_per_class, max);
-    max_per_class_set = true;
+    if (max > 0) {
+      mpc = max;
+      max_per_class_set = true;
+      max_per_class = idx<intg>(classes.size());
+      idx_fill(max_per_class, mpc);
+      cout << "Max number of samples per class: " << max << endl;
+    }
   }
   
   template <class Tdata>
@@ -541,8 +559,8 @@ namespace ebl {
     // shuffle samples
     shuffle();
     // alloc each dataset
-    ds1.alloc_from_max_per_class(data.dim(0));
-    ds2.alloc_from_max_per_class(data.dim(0));
+    ds1.allocate(data.dim(0), outdims);
+    ds2.allocate(data.dim(0), outdims);
     // add samples 1st dataset, if not add to 2nd.
     // if 1st has reached max per class, it will return false upon addition
     cout << "Adding data to \"" << ds1.name << "\" and \"" << ds2.name << "\".";
@@ -558,19 +576,50 @@ namespace ebl {
     ds2.print_stats();
   }
 
+  template <class Tdata> template <class Toriginal>
+  bool dataset<Tdata>::save_scales(idx<Toriginal> &dat, const string &filename){
+    // copy data into target type
+    idxdim d(dat);
+    idx<Tdata> sample(d);
+    idx_copy(dat, sample);
+    // do preprocessing for each scale, then save image
+    ostringstream base_name, ofname;
+    base_name << outdir << "/" << filename << "_scale";
+    string class_name = "noclass";
+    for (vector<uint>::iterator i = scales.begin(); i != scales.end(); ++i) {
+      idx<Tdata> s = preprocess_data(sample, class_name, false,
+				     filename.c_str(), NULL, *i);
+      // put sample's channels dimensions first, if defined.
+      s = s.shift_dim(2, 0);
+      // save image
+      ofname.str(""); ofname << base_name.str() << *i << ".mat";
+      if (save_matrix(s, ofname.str())) {
+	cout << data_cnt++ << ": saved " << ofname.str();
+	cout << "(" << s << ")" << endl;
+      }
+    }
+    return true;
+  }
+    
   ////////////////////////////////////////////////////////////////
   // data preprocessing
 
   template <class Tdata>
   idx<Tdata> dataset<Tdata>::preprocess_data(idx<Tdata> &dat,
 					     const string &class_name,
+					     bool squared,
 					     const char *filename,
-					     const rect *r) {
+					     const rect *r,
+					     uint scale) {
     uint dh = 0, dw = 1;
     // resize image to target dims
     rect out_region;
     idxdim d(outdims);
-    idx<Tdata> resized = resize_image_to(dat, d, out_region, r);
+    idx<Tdata> resized;
+    if (scale > 0)
+      resized = gaussian_resize_image_to(dat, scale);
+    else
+      resized = resize_image_to(dat, d, out_region, r);
     rect out_entire(0, 0, resized.dim(dh), resized.dim(dw));
     // convert image to target format
     idx<Tdata> formatted = resized;
@@ -578,7 +627,9 @@ namespace ebl {
       formatted = convert_image_to(formatted, ppconv_type, out_entire);
     idx<Tdata> res = formatted;
     rect cropped;
-    res = image_region_to_square(res, out_region, outdims.dim(1), cropped);
+    if (squared)
+      res = image_region_to_rect(res, out_region, outdims.dim(0),
+				 outdims.dim(1), cropped);
     // display each step
 #ifdef __GUI__
     if (display_extraction) {
@@ -680,7 +731,7 @@ namespace ebl {
       idx<Tdata> tmp(d);
       idx_copy(yp, tmp);
       image_global_normalization(tmp);
-      image_local_normalization(tmp, yp, 9);
+      image_local_normalization(tmp, yp, 5);
       // copy cropped yuv into normal yuv image
       idxdim dimg(img);
       idx<Tdata> res(dimg);
@@ -706,14 +757,44 @@ namespace ebl {
 
   template <class Tdata>
   idx<Tdata> dataset<Tdata>::resize_image_to(idx<Tdata> &img, const idxdim &d,
-					     rect &cropped, const rect *rd) {
-    // do nothing if dims are already target.
+					     rect &cropped, const rect *r) {
+    // do nothing if dims are already the target dims.
     if (img.same_dim(d))
       return img;
-    idx<Tdata> res = image_resize(img, outdims.dim(0), outdims.dim(1));
-    cropped = rect(0, 0, outdims.dim(0), outdims.dim(1));
+    idx<Tdata> res;
+    // if r is not specified, take entire image
+    rect rr(0, 0, img.dim(0), img.dim(1));
+    if (r) rr = *r;
+    // bilinear interpolation resizing
+    if (!strcmp(resize_mode.c_str(), "bilinear")) {
+      res = image_resize(img, outdims.dim(0), outdims.dim(1));
+      cropped = rect(0, 0, outdims.dim(0), outdims.dim(1));
+      return res;
+    }
+    // gaussian pyramid resizing
+    else if (!strcmp(resize_mode.c_str(), "gaussian")) {
+      res = image_gaussian_resize(img, outdims.dim(0), outdims.dim(1), 0.0,
+				  &rr, &cropped);
+      return res;
+    } else {
+      cerr << "unknown resize mode: " << resize_mode << endl;
+      eblerror("unknown resize mode");
+    }
     return res;
   }
+
+  template <class Tdata>
+  idx<Tdata> dataset<Tdata>::gaussian_resize_image_to(idx<Tdata> &img,
+						      uint scale) {
+    gaussian_pyramid<Tdata> gp;
+    idx<Tdata> res = img.shift_dim(2, 0);
+    uint reductions = scale / (float)2.0;
+    if (reductions > 0)
+      res = gp.reduce(res, reductions);
+    //    idx<Tdata> res = image_gaussian_square_resize(img, rr, d.dim(0),
+    //					  cropped, .3);
+    return res.shift_dim(0, 2);
+  }  
 
   ////////////////////////////////////////////////////////////////
   // Helper functions
@@ -784,10 +865,16 @@ namespace ebl {
 	process_dir(itr->path().string(), ext, class_name);
       else if (regex_match(itr->leaf().c_str(), what, r)) {
 	try {
+	  // if full for this class, skip this directory
+	  if (full(get_label_from_class(class_name)))
+	    break ;
 	  // load data
-	  idx<ubyte> img = load_image<ubyte>(itr->path().string());
+	  load_data(itr->path().string());
 	  // add sample data
-	  add_data(img, class_name, itr->path().string().c_str());
+	  if (scale_mode) // saving image at different scales
+	    save_scales(load_img, itr->leaf());
+	  else // adding data to dataset
+	    add_data(load_img, class_name, itr->path().string().c_str());
 	} catch(const char *err) {
 	  cerr << "error: failed to add " << itr->path().string();
 	  cerr << ": "<< err << endl;
@@ -795,6 +882,15 @@ namespace ebl {
       }}
 #endif /* __BOOST__ */
   }
+
+  template <class Tdata>
+  void dataset<Tdata>::load_data(const string &fname) {
+    idx<ubyte> tmp = load_image<ubyte>(fname.c_str());
+    idxdim d(tmp);
+    load_img = idx<Tdata>(d);
+    idx_copy(tmp, load_img);
+  }
+  
   
 } // end namespace ebl
 

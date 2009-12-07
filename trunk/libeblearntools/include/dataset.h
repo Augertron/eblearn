@@ -113,16 +113,27 @@ namespace ebl {
     //! Make the display sleep delay milliseconds between frames
     void set_sleepdisplay(uint delay);
 
+    //! Select the method for resizing. default is set to gaussian pyramids.
+    //! options are: "gaussian" or "bilinear" for bilinear interpolation.
+    void set_resize(const string &resize_mode);
+
     //! Specify the dimensions of 1 output sample.
     //! The default is: 96x96x3
     void set_outdims(const idxdim &d);
 
+    //! Setting scale mode and scales: preprocess and save each image
+    //! in each scale in outdir directory.
+    void set_scales(const vector<uint> &sc, const string &od);
+    
     //! set all max per class to max.
     void set_max_per_class(intg max);
 
     //! Dataset has reached maximum sample capacity (this can be controlled
     //! by setting max_data variable).
-    bool full();
+    //! A label can be optionally passed to return if the dataset is full for
+    //! a particular class (this is relevant only if set_max_per_class has been
+    //! previously set.
+    bool full(t_label label = -1);
     
     ////////////////////////////////////////////////////////////////
     // I/O
@@ -155,12 +166,6 @@ namespace ebl {
     //! be used as a buffer resize method.
     bool allocate(intg n, idxdim &d);
 
-    //! Allocate dataset using the max_per_class array.
-    //! For safety, it is also bounded by max.
-    //! The buffers can be allocated only once, this is not meant to
-    //! be used as a buffer resize method.
-    bool alloc_from_max_per_class(intg max);
-    
     ////////////////////////////////////////////////////////////////
     // data manipulation
 
@@ -185,6 +190,9 @@ namespace ebl {
     //! that maximums are lower for ds1 than ds2).
     void split(dataset<Tdata> &ds1, dataset<Tdata> &ds2);
 
+    template <class Toriginal>
+      bool save_scales(idx<Toriginal> &d, const string &filename);
+
     ////////////////////////////////////////////////////////////////
     // data preprocessing
 
@@ -192,8 +200,10 @@ namespace ebl {
     //! with output dimensions outdims and return the result.
     //! The type of preprocessing can be selected using set_pp_conversion().
     idx<Tdata> preprocess_data(idx<Tdata> &d, const string &class_name,
+			       bool squared = true,
 			       const char *filename = NULL,
-			       const rect *r = NULL);
+			       const rect *r = NULL,
+			       uint scale = 0);
 
     //! Convert input image img to format of type conv_type and return the
     //! result. con_type can accept a number of strings,
@@ -204,6 +214,8 @@ namespace ebl {
     //! Resize image img to dimensions d and returns the result.
     virtual idx<Tdata> resize_image_to(idx<Tdata> &img, const idxdim &d,
 				       rect &cropped, const rect *r = NULL);
+    
+    idx<Tdata> gaussian_resize_image_to(idx<Tdata> &img, uint scale);
     
     ////////////////////////////////////////////////////////////////
     // Helper functions
@@ -222,6 +234,9 @@ namespace ebl {
     void process_dir(const string &dir, const string &ext,
 		     const string &class_name);
     
+    //! Method to load an image.
+    virtual void load_data(const string &fname);
+    
   protected:
     // data ////////////////////////////////////////////////////////
     idx<Tdata>		data;	//!< data matrix
@@ -238,7 +253,12 @@ namespace ebl {
     bool		max_data_set;	//!< max_data been set by user or not
     intg                total_samples;	//!< number of samples of dataset
     idx<intg>           max_per_class;	//!< max # samples per class
+    intg                mpc; //!< value to put in max_per_class
     bool                max_per_class_set;	//!< mpc has been set or not
+    idx<Tdata>          load_img; //!< temporary image loader
+    bool                scale_mode; //!< scales saving mode
+    vector<uint>        scales; //!< integer scales
+    bool                interleaved_input; //!< indicate if input is interleaved
     // names ///////////////////////////////////////////////////////
     string		name;	//!< dataset name
     string		data_fname;	//!< data filename
@@ -248,6 +268,7 @@ namespace ebl {
     string		deformpairs_fname;	//!< deformpairs filename
     // directories /////////////////////////////////////////////////
     string		inroot; //!< root directory of input files
+    string		outdir; //!< root directory of input files
     string              extension;	//!< extension of files to extract
     // display /////////////////////////////////////////////////////
     bool		display_extraction;	//!< display during extraction
@@ -263,7 +284,7 @@ namespace ebl {
     string		ppconv_type;	//!< name of image conversion
     bool		ppconv_set;	//!< ppconv_type has been set or not
     bool		do_preprocessing;	//!< activate or deactivate pp
-    bool                shift_planar; //!< shift from interleaved to planar
+    string              resize_mode; //!< type of resizing (bilinear, gaussian)
   };
   
   ////////////////////////////////////////////////////////////////

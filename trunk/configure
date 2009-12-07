@@ -38,11 +38,11 @@ mkdir bin 2> /dev/null
 
 echo "Use MNIST handwritten digit database? (y/N)"
 echo "   (download at http://yann.lecun.com/exdb/mnist/)"
-echo -n "\t"
+/bin/echo -en "\t"
   read ans
   case $ans in
     [yY]) echo "\tOk, what is your MNIST directory (absolute path)? (Example: /home/pierre/mnist)"
-    echo -n "\t"
+    /bin/echo -en "\t"
     read MNIST
     test -d $MNIST
     if [ $? -eq 1 ] 
@@ -50,9 +50,9 @@ echo -n "\t"
            echo $MNIST
            exit 1
       fi
-    echo -n "\tOk, using MNIST from directory: "
+    /bin/echo -en "\tOk, using MNIST from directory: "
     echo $MNIST
-    echo "\n-mnist $MNIST" >> run.init
+    /bin/echo -e "\n-mnist $MNIST" >> run.init
     ;;
     *) echo "\tNot using MNIST."
   esac

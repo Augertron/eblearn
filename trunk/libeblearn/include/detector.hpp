@@ -81,9 +81,13 @@ namespace ebl {
 				      idx<const char*> &labels_,
 				      double bias_, double coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
+      inputs(1), outputs(1), results(1),
       labels(labels_),
       nresolutions(resolutions_.dim(0)), resolutions(resolutions_),
       manual_resolutions(true) {
+    idx_clear(inputs);
+    idx_clear(outputs);
+    idx_clear(results);
     if (nresolutions < 1)
       eblerror("the number of resolutions is expected to be more than 0");
   }
@@ -94,15 +98,19 @@ namespace ebl {
 				      idx<const char*> &labels_,
 				      double bias_, double coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
+      inputs(1), outputs(1), results(1),
       labels(labels_),
       nresolutions(nresolutions_), resolutions(1, 2),
       manual_resolutions(false) {
+    idx_clear(inputs);
+    idx_clear(outputs);
+    idx_clear(results);
   }
 
   template <class Tdata>
   void detector<Tdata>::compute_minmax_resolutions(idxdim &input_dims) {
     // compute maximum closest size of input compatible with the network size
-    idxdim indim(input_dims.dim(0), input_dims.dim(1));
+    idxdim indim(1, input_dims.dim(0), input_dims.dim(1));
     thenet.fprop_size(indim); // set a valid input dimensions set
     in_maxdim.setdims(indim); // copy valid dims to in_maxdim
 
@@ -125,8 +133,8 @@ namespace ebl {
     }
     // nresolutions must be less than the minimum pixel distance between min
     // and max
-    unsigned int max_res = MIN(in_maxdim.dim(0) - in_mindim.dim(0),
-			       in_maxdim.dim(1) - in_mindim.dim(1));
+    unsigned int max_res = MIN(in_maxdim.dim(1) - in_mindim.dim(1),
+			       in_maxdim.dim(2) - in_mindim.dim(2));
     if (nresolutions > max_res) {
       cerr << "warning: the number of resolutions requested (";
       cerr << nresolutions << ") is more than";
@@ -139,27 +147,27 @@ namespace ebl {
     // only 1 scale if min == max or if only 1 scale requested.
     if ((in_mindim == in_maxdim) || (nresolutions == 1)) {
       resolutions.resize1(0, 1);
-      resolutions.set(in_maxdim.dim(0), 0, 0);
-      resolutions.set(in_maxdim.dim(1), 0, 1);
+      resolutions.set(in_maxdim.dim(1), 0, 0);
+      resolutions.set(in_maxdim.dim(2), 0, 1);
     } else if (nresolutions == 2) { // 2 resolutions: min and max
       resolutions.resize1(0, 2);
-      resolutions.set(in_maxdim.dim(0), 0, 0); // max
-      resolutions.set(in_maxdim.dim(1), 0, 1); // max
-      resolutions.set(in_mindim.dim(0), 1, 0); // min
-      resolutions.set(in_mindim.dim(1), 1, 1); // min
+      resolutions.set(in_maxdim.dim(1), 0, 0); // max
+      resolutions.set(in_maxdim.dim(2), 0, 1); // max
+      resolutions.set(in_mindim.dim(1), 1, 0); // min
+      resolutions.set(in_mindim.dim(2), 1, 1); // min
     } else { // multiple resolutions: interpolate between min and max
       resolutions.resize1(0, nresolutions);
       int n = nresolutions - 2;
-      int h = (int) ((float)(in_maxdim.dim(0) - in_mindim.dim(0)) / (n + 1));
-      int w = (int) ((float)(in_maxdim.dim(1) - in_mindim.dim(1)) / (n + 1));
+      int h = (int) ((float)(in_maxdim.dim(1) - in_mindim.dim(1)) / (n + 1));
+      int w = (int) ((float)(in_maxdim.dim(2) - in_mindim.dim(2)) / (n + 1));
       for (int i = 1; i <= n; ++i) {
-	resolutions.set(in_maxdim.dim(0) - h * i, i, 0);
-	resolutions.set(in_maxdim.dim(1) - w * i, i, 1);
+	resolutions.set(in_maxdim.dim(1) - h * i, i, 0);
+	resolutions.set(in_maxdim.dim(2) - w * i, i, 1);
       }
-      resolutions.set(in_maxdim.dim(0), 0, 0); // max
-      resolutions.set(in_maxdim.dim(1), 0, 1); // max
-      resolutions.set(in_mindim.dim(0), nresolutions - 1, 0); // min
-      resolutions.set(in_mindim.dim(1), nresolutions - 1, 1); // min
+      resolutions.set(in_maxdim.dim(1), 0, 0); // max
+      resolutions.set(in_maxdim.dim(2), 0, 1); // max
+      resolutions.set(in_mindim.dim(1), nresolutions - 1, 0); // min
+      resolutions.set(in_mindim.dim(2), nresolutions - 1, 1); // min
     }
   }
 
@@ -202,15 +210,15 @@ namespace ebl {
 		 out, outputs, void*,
 		 r, results, void*) {
 	// Compute the input sizes for each scale
-	idxdim scaled_dims(resolution.get(0), resolution.get(1));
+	idxdim scaled_dims(thickness, resolution.get(0), resolution.get(1));
 	// Adapt the size to the network structure:
 	idxdim out_dims = thenet.fprop_size(scaled_dims);
 	// set buffers
 	in.set((void*) new state_idx(thickness,
-				     scaled_dims.dim(0), scaled_dims.dim(1)));
+				     scaled_dims.dim(1), scaled_dims.dim(2)));
 	out.set((void*) new state_idx(labels.nelements() + 1, 
-				      out_dims.dim(0), out_dims.dim(1)));
-	r.set((void*) new idx<double>(out_dims.dim(0), out_dims.dim(1),
+				      out_dims.dim(1), out_dims.dim(2)));
+	r.set((void*) new idx<double>(out_dims.dim(1), out_dims.dim(2),
 				      2)); // (class,score)
       }}
   }
@@ -223,14 +231,17 @@ namespace ebl {
   template <class Tdata>
   detector<Tdata>::~detector() {
     { idx_bloop3(in, inputs, void*, out, outputs, void*, r, results, void*) {
-	delete((state_idx*) in.get());
-	delete((state_idx*) out.get());
-	delete((idx<double>*) r.get());
+	state_idx *s;
+	s = (state_idx*) in.get();
+	if (s) delete s;
+	s = (state_idx*) out.get();
+	if (s) delete s;
+	s = (state_idx*) r.get();
+	if (s) delete s;
       }}
   }
 
-
-    template <class Tdata> 
+  template <class Tdata> 
   void detector<Tdata>::mark_maxima(double threshold) {
     
     { idx_bloop2(out_map, outputs, void*, 
@@ -306,9 +317,9 @@ namespace ebl {
 	double out_w = (double)(((state_idx*) output.get())->x.dim(2));
 	double scaleh = original_h / in_h;
 	double scalew = original_w / in_w;
-	double offset_h_factor = (in_h - in_mindim.dim(0)) * scaleh
+	double offset_h_factor = (in_h - in_mindim.dim(1)) * scaleh
 	  / MAX(0, (out_h - 1));
-	double offset_w_factor = (in_w - in_mindim.dim(1)) * scalew
+	double offset_w_factor = (in_w - in_mindim.dim(2)) * scalew
 	  / MAX(0, (out_w - 1));
 	offset_h = 0;
 	{ idx_bloop1(re, *((idx<double>*) r.get()), double) {
@@ -325,8 +336,8 @@ namespace ebl {
 		  bb.scale_index = scale_index; // scale index
 		  bb.iheight = in_h; // input h
 		  bb.iwidth = in_w; // input w
-		  bb.height = ceil(in_mindim.dim(0) * scaleh); // bbox h
-		  bb.width = ceil(in_mindim.dim(1) * scalew); // bbox w
+		  bb.height = ceil(in_mindim.dim(1) * scaleh); // bbox h
+		  bb.width = ceil(in_mindim.dim(2) * scalew); // bbox w
 		  bb.oheight = out_h; // output height
 		  bb.owidth = out_w; // output width
 		  bb.oh = offset_h; // answer height in output

@@ -122,8 +122,11 @@ namespace ebl {
 	   int height = 0, int width = 0);
     virtual ~Window();
 
+    //! used to disable or enable updating of window, for batch displaying.
+    //! this is useful to avoid flickering and speed up display.
     void set_wupdate(bool ud);
-    void save(const char *filename);
+    
+    void save(const string &filename);
     void set_silent(const std::string *filename);
     void add_text(const std::string *s);
     void add_arrow(int h1, int w1, int h2, int w2);

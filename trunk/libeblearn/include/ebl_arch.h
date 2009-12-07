@@ -33,7 +33,7 @@
 #define EBL_ARCH_H_
 
 #include "libidx.h"
-#include "defines.h"
+#include "ebl_defines.h"
 #include "ebl_states.h"
 
 namespace ebl {
@@ -55,9 +55,19 @@ namespace ebl {
     //! returns the order at which the module operates.
     virtual int  replicable_order();
     virtual void resize_output(Tin &in, Tout &out);
-    //! these two functions can be implemented to help scaling input data
-    virtual idxdim fprop_size(idxdim &i_size);
-    virtual idxdim bprop_size(const idxdim &o_size);
+    //! given the input dimensions, modifies it to be compliant with module's
+    //! architecture, and returns the output dimensions corresponding to
+    //! modified input dimensions.
+    //! the implementation of this method helps automatic scaling of input data
+    //! but is optional.
+    virtual idxdim fprop_size(idxdim &isize);
+    //! given the output dimensions, returns the input dimensions.
+    //! the implementation of this method helps automatic scaling of input data
+    //! but is optional.
+    virtual idxdim bprop_size(const idxdim &osize);
+    //! prints the forward transformation of dimensions. this method calls
+    //! fprop_size to determine the output size given the input.
+    virtual void pretty(idxdim &isize);
   };
 
   //! abstract class for a module with two inputs and one output.
@@ -136,8 +146,12 @@ namespace ebl {
     std::vector<module_1_1<T, T>*>	*modules;
     std::vector<T*>			*hiddens;
 
+    //! constructor.
     layers_n();
+    //! constructor. if oc is true, then this module owns its content and
+    //! is responsible for deleting modules that are given to it.
     layers_n(bool oc);
+    //! destructor.
     virtual ~layers_n();
     void add_module(module_1_1 <T, T>* module, T* hidden);
     void add_last_module(module_1_1 <T, T>* module);
@@ -146,8 +160,9 @@ namespace ebl {
     virtual void bbprop(T &in, T &out);
     virtual void forget(forget_param_linear &fp);
     virtual void normalize();
-    virtual idxdim fprop_size(idxdim &i_size);
-    virtual idxdim bprop_size(const idxdim &o_size);
+    virtual idxdim fprop_size(idxdim &isize);
+    virtual idxdim bprop_size(const idxdim &osize);
+    virtual void pretty(idxdim &isize);
 
   private:
     bool own_contents;

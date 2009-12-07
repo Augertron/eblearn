@@ -85,6 +85,6 @@ int main(int argc, char **argv) {
   string metaconf = argv[1];
   job_manager jm;
   jm.read_metaconf(metaconf.c_str());
-  
+  jm.run();
   return 0;
 }

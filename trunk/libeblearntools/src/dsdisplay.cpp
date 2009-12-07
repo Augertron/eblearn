@@ -111,8 +111,11 @@ int main(int argc, char **argv) {
   t_data range_max = DEFAULT_DISPLAY_RANGE_MAX;
 
   //for (int i = 0 ; i < argc ; i++)cout<<"argv["<<i<<"]: "<<argv[i]<<endl;
-  cout << "******************* Dataset display for libeblearn library ";
-  cout << "*******************" << endl;
+  cout << "___________________________________________________________________";
+  cout << endl << endl;
+  cout << "             Dataset display for libeblearn library " << endl;
+  cout << "___________________________________________________________________";
+  cout << endl;
   // parse arguments
   if (!parse_args(argc, argv, ds_name)) {
     print_usage();
@@ -166,8 +169,6 @@ int main(int argc, char **argv) {
   
   cout << "images: " << train_ds.data << endl;
   cout << "labels: " << train_ds.labels << endl;
-  cout << "****************************************";
-  cout << "***************************************" << endl;
   
 #ifdef __GUI__
   if (bclasspairs) {

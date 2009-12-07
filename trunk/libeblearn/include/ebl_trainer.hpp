@@ -37,7 +37,7 @@ namespace ebl {
   template <class Tin1, class Tin2>  
   stochastic_gd_trainer<Tin1, Tin2>::
   stochastic_gd_trainer(fc_ebm2<Tin1, Tin2, state_idx> &m, parameter &p)
-    : iteration(-1), iteration_ptr(NULL),
+    : iteration(-1), iteration_ptr(NULL), prettied(false),
       machine(m), param(p), energy(), age(0),
       in1(NULL), // allocated when input is passed, based in its order/dims
       in2(NULL) // allocated when input is passed, based in its order/dims
@@ -58,7 +58,7 @@ namespace ebl {
   train(datasource<Tin1, Tin2> &ds, classifier_meter &log, 
 	gd_param &args, int niter,
 	bool compute_hessian, int hessian_interval,
-	int niter_hessian, double mu_hessian) {
+	int niter_hessian, double mu_hessian, intg max) {
     // initialize
     ds.seek_begin();
     log.clear();
@@ -135,6 +135,11 @@ namespace ebl {
       in2 = new state_idx(d);
     else
       in2->resize(d);
+    // pretty sizes of input/output for each module the first time
+    if (!prettied) {
+      machine.pretty(d);
+      prettied = true;
+    }
   }
 
   ////////////////////////////////////////////////////////////////
@@ -143,7 +148,7 @@ namespace ebl {
   template <class Tdata, class Tlabel>  
   supervised_trainer<Tdata, Tlabel>::
   supervised_trainer(fc_ebm2<state_idx,	int, state_idx> &m, parameter &p)
-    : iteration(-1), iteration_ptr(NULL),
+    : iteration(-1), iteration_ptr(NULL), prettied(false),
       machine(m), param(p), energy(), label(), age(0) {
     input = NULL; // allocated when input is passed, based in its order/dims
     energy.dx.set(1.0);
@@ -195,14 +200,14 @@ namespace ebl {
       iteration_ptr = (void *) &ds;
     if (iteration_ptr == (void *) &ds)
       ++iteration;
-    cout << ds.name << ": iter# " << iteration << " ";
+    cout << iteration << " (" << ds.name << "): ";
     for (unsigned int i = 0; i < ds.size(); ++i) {
       ds.fprop(*input, label);
       correct = test_sample(*input, label.get(), answer, infp);
-      log.update(age, correct, energy);
+      log.update(age, label.get(), answer, energy);
       ds.next();
     }
-    log.display();
+    log.display(ds.lblstr);
     cout << endl;
   }
   
@@ -253,6 +258,12 @@ namespace ebl {
     idxdim d = ds.sample_dims();
     if (!input) input = new state_idx(d);
     else input->resize(d);
+    // pretty sizes of input/output for each module the first time
+    if (!prettied) {
+      cout << "machine sizes: "; machine.fmod.pretty(d);
+      cout << "trainable parameters: " << param.x << endl;
+      prettied = true;
+    }
   }
 
 //   supervised_trainer<Tdata, Tlabel>* copy() {

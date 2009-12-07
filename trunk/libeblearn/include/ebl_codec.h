@@ -32,7 +32,7 @@
 #ifndef EBL_CODEC_H_
 #define EBL_CODEC_H_
 
-#include "defines.h"
+#include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_arch.h"
 #include "ebl_states.h"

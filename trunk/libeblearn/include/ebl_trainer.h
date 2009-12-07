@@ -47,6 +47,7 @@ namespace ebl {
   private:
     int		                        iteration;
     void	                       *iteration_ptr;
+    bool                                prettied;
 
   public:
     fc_ebm2<Tin1,Tin2,state_idx>	&machine;
@@ -72,7 +73,7 @@ namespace ebl {
     void train(datasource<Tin1, Tin2> &ds, classifier_meter &log, 
 	       gd_param &args, int niter,
 	       bool compute_hessian, int hessian_interval,
-	       int niter_hessian, double mu_hessian);
+	       int niter_hessian, double mu_hessian, intg max = 0);
 
     //! train on one sample.
     void train_sample(datasource<Tin1, Tin2> &ds, gd_param &args);
@@ -97,6 +98,7 @@ namespace ebl {
   private:
     int		                        iteration;
     void	                       *iteration_ptr;
+    bool                                prettied;
 
   public:
     fc_ebm2<state_idx,int,state_idx>	&machine;
