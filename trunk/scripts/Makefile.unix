@@ -14,7 +14,7 @@ release:
 	@echo "Use 'make release prj=idxgui' for example to compile a specific project."
 	@echo __________________________________________________________________
 	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make ${prj} && cd ../..
-	
+
 libs:
 	@echo __________________________________________________________________
 	@echo
@@ -67,4 +67,3 @@ install:
 	cp bin/libeblearn.so $(LIB_INSTALL)
 	cp bin/libidxgui.so $(LIB_INSTALL)
 	cp bin/libeblearngui.so $(LIB_INSTALL)
-	
