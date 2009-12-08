@@ -67,8 +67,6 @@ namespace ebl {
   pascalbg_dataset<Tdata>::~pascalbg_dataset() {
   }
 
-#ifdef __XML__ // disable some derived methods if XML not available
-
   ////////////////////////////////////////////////////////////////
   // data extraction
 
@@ -96,6 +94,8 @@ namespace ebl {
 #endif /* __XML__ */
     return true;
   }
+
+#ifdef __XML__ // disable some derived methods if XML not available
 
   ////////////////////////////////////////////////////////////////
   // process xml
