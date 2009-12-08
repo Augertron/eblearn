@@ -91,7 +91,6 @@ namespace ebl {
     interleaved_input = true;
     max_per_class_set = false;
     mpc = numeric_limits<intg>::max();
-    shift_planar = true;
 #ifndef __BOOST__
     eblerror("Boost libraries not available, install libboost-filesystem-dev libboost-regex-dev and recompile");
 #endif
@@ -227,9 +226,11 @@ namespace ebl {
   template <class Tdata>
   void dataset<Tdata>::set_display(bool display_) {
 #ifdef __GUI__
-    cout << "Enabling display." << endl;
-    new_window("Dataset compiler");
-    display_extraction = display_;
+    if (display_) {
+      cout << "Enabling display." << endl;
+      new_window("Dataset compiler");
+      display_extraction = display_;
+    }
 #endif /* __GUI__ */
   }
     
@@ -402,13 +403,13 @@ namespace ebl {
     cout << "Allocating dataset \"" << name << "\" with " << n;
     cout << " samples of size " << d << " ..." << endl;
     // allocate data buffer
-    if (shift_planar)
-      datadims = idxdim(outdims.dim(2), outdims.dim(0), outdims.dim(1));
-    else
-      datadims = idxdim(outdims.dim(0), outdims.dim(1), outdims.dim(2));
-    idxdim ddims(datadims);
-    ddims.insert_dim(n, 0);
-    data = idx<Tdata>(ddims);
+    uint c = 0, h = 1, w = 2;
+    if (interleaved_input) {
+      c = 2; h = 0; w = 1;
+    }
+    idxdim datadims(outdims.dim(c), outdims.dim(h), outdims.dim(w));
+    datadims.insert_dim(n, 0);
+    data = idx<Tdata>(datadims);
     // allocate labels buffer
     labels = idx<t_label>(n);
     allocated = true;
@@ -447,15 +448,15 @@ namespace ebl {
     // do preprocessing
     if (do_preprocessing)
       sample = preprocess_data(sample, class_name, true, filename, r);
-    // put sample's channels dimensions first
-    if (shift_planar)
-      sample = sample.shift_dim(2, 0);
     // check for dimensions
     if (!sample.same_dim(datadims)) {
       cerr << "error: expected data with dimensions " << datadims;
       cerr << " but found " << sample.get_idxdim() << endl;
       return false;
     }
+    // put sample's channels dimensions first, if interleaved.
+    if (interleaved_input)
+      sample = sample.shift_dim(2, 0);
     // copy sample
     idx<Tdata> tgt = data.select(0, data_cnt);
     idx_copy(sample, tgt);
@@ -553,10 +554,8 @@ namespace ebl {
     // data already preprocessed
     ds1.do_preprocessing = false;
     ds2.do_preprocessing = false;
-    // data already in planar, no shift required
-    ds1.shift_planar = false;
-    ds2.shift_planar = false;
-    // shuffle samples
+    ds1.interleaved_input = false;
+    ds2.interleaved_input = false;
     shuffle();
     // alloc each dataset
     ds1.allocate(data.dim(0), outdims);
