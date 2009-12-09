@@ -46,6 +46,16 @@ namespace ebl {
   // module_1_1_gui
 
   template<class Tin, class Tout>
+  void module_1_1_gui::display_fprop(module_1_1<Tin, Tout> &m, 
+				     Tin &in, Tout &out,
+				     unsigned int h0, unsigned int w0,
+				     double zoom, double vmin, double vmax,
+				     bool show_out, int wid,
+				     const char *wname) {
+    display_fprop2(m, in, out, h0, w0, zoom, vmin, vmax, show_out, wid, wname);
+  }
+
+  template<class Tin, class Tout>
   void module_1_1_gui::display_fprop2(module_1_1<Tin, Tout> &m, 
 				      Tin &in, Tout &out,
 				      unsigned int &h0, unsigned int &w0,
@@ -87,13 +97,13 @@ namespace ebl {
   }
 
   template<class Tin, class Tout>
-  void module_1_1_gui::display_fprop(module_1_1<Tin, Tout> &m, 
+  void module_1_1_gui::display_bprop(module_1_1<Tin, Tout> &m, 
 				     Tin &in, Tout &out,
 				     unsigned int h0, unsigned int w0,
 				     double zoom, double vmin, double vmax,
-				     bool show_out, int wid,
+				     bool show_in, int wid,
 				     const char *wname) {
-    display_fprop2(m, in, out, h0, w0, zoom, vmin, vmax, show_out, wid, wname);
+    display_bprop2(m, in, out, h0, w0, zoom, vmin, vmax, show_in, wid, wname);
   }
 
   template<class Tin, class Tout>
@@ -135,16 +145,6 @@ namespace ebl {
       cerr << "Warning: unknown display function for module_1_1 object";
       cerr << "(" << typeid(m).name() << ")." << endl;
     }
-  }
-
-  template<class Tin, class Tout>
-  void module_1_1_gui::display_bprop(module_1_1<Tin, Tout> &m, 
-				     Tin &in, Tout &out,
-				     unsigned int h0, unsigned int w0,
-				     double zoom, double vmin, double vmax,
-				     bool show_in, int wid,
-				     const char *wname) {
-    display_bprop2(m, in, out, h0, w0, zoom, vmin, vmax, show_in, wid, wname);
   }
 
   ////////////////////////////////////////////////////////////////
