@@ -77,10 +77,13 @@ namespace ebl {
     // to form a c-s-c-s-c-f network. and we add state_idx in between
     // which serve as temporary buffer to hold the output of a module
     // and feed the input of the following module.
+    
+    //    add_module(new layer_convabsnorm(prm, ki0, kj0, 1, 1, tbl0),
     add_module(new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0),
 	       new state_idx(1, 1, 1)); // these will be automatically resized
     add_module(new nn_layer_subsampling(prm, si0, sj0, si0, sj0, thick0),
 	       new state_idx(1, 1, 1)); // these will be automatically resized
+    //    add_module(new layer_convabsnorm(prm, ki1, kj1, 1, 1, tbl1),
     add_module(new nn_layer_convolution(prm, ki1, kj1, 1, 1, tbl1),
 	       new state_idx(1, 1, 1)); // these will be automatically resized
     add_module(new nn_layer_subsampling(prm, si1, sj1, si1, sj1, thick1),

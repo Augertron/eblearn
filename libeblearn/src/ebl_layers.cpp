@@ -184,11 +184,13 @@ namespace ebl {
     if (!tmp) tmp = new state_idx(d);
     else tmp->resize(d);
     out.resize_as(*tmp); // resize output
+    if (!tmp2) tmp2 = new state_idx(d);
+    else tmp2->resize(d);
 
     // 2. fprop
     lconv.fprop(in, *tmp);
-    abs.fprop(*tmp, *tmp);
-    norm.fprop(*tmp, out);
+    abs.fprop(*tmp, *tmp2);
+    norm.fprop(*tmp2, out);
   }
 
   void layer_convabsnorm::bprop(state_idx &in, state_idx &out) {

@@ -47,7 +47,18 @@ namespace ebl {
     static void display_fprop(nn_layer_full &nn,
 			      state_idx &in, state_idx &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
+			      double vmin=0.0, double vmax=0.0,
 			      bool show_out = false);
+    static void display_bprop(nn_layer_full &nn,
+			      state_idx &in, state_idx &out,
+			      unsigned int &h0, unsigned int &w0, double zoom,
+			      double vmin=0.0, double vmax=0.0,
+			      bool show_out = false);
+    static void display_bbprop(nn_layer_full &nn,
+			       state_idx &in, state_idx &out,
+			       unsigned int &h0, unsigned int &w0, double zoom,
+			       double vmin=0.0, double vmax=0.0,
+			       bool show_out = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -60,7 +71,42 @@ namespace ebl {
     static void display_fprop(nn_layer_convolution &nn,
 			      state_idx &in, state_idx &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
+			      double vmin=0.0, double vmax=0.0,
 			      bool show_out = false);
+    static void display_bprop(nn_layer_convolution &nn,
+			      state_idx &in, state_idx &out,
+			      unsigned int &h0, unsigned int &w0, double zoom,
+			      double vmin=0.0, double vmax=0.0,
+			      bool show_out = false);
+    static void display_bbprop(nn_layer_convolution &nn,
+			       state_idx &in, state_idx &out,
+			       unsigned int &h0, unsigned int &w0, double zoom,
+			       double vmin=0.0, double vmax=0.0,
+			       bool show_out = false);
+  };
+
+  ////////////////////////////////////////////////////////////////
+
+  class layer_convabsnorm_gui {
+  public:
+    layer_convabsnorm_gui();
+    virtual ~layer_convabsnorm_gui();
+
+    static void display_fprop(layer_convabsnorm &nn,
+			      state_idx &in, state_idx &out,
+			      unsigned int &h0, unsigned int &w0, double zoom,
+			      double vmin=0.0, double vmax=0.0,
+			      bool show_out = false);
+    static void display_bprop(layer_convabsnorm &nn,
+			      state_idx &in, state_idx &out,
+			      unsigned int &h0, unsigned int &w0, double zoom,
+			      double vmin=0.0, double vmax=0.0,
+			      bool show_out = false);
+    static void display_bbprop(layer_convabsnorm &nn,
+			       state_idx &in, state_idx &out,
+			       unsigned int &h0, unsigned int &w0, double zoom,
+			       double vmin=0.0, double vmax=0.0,
+			       bool show_out = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -73,7 +119,18 @@ namespace ebl {
     static void display_fprop(nn_layer_subsampling &nn,
 			      state_idx &in, state_idx &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
+			      double vmin=0.0, double vmax=0.0,
 			      bool show_out = false);
+    static void display_bprop(nn_layer_subsampling &nn,
+			      state_idx &in, state_idx &out,
+			      unsigned int &h0, unsigned int &w0, double zoom,
+			      double vmin=0.0, double vmax=0.0,
+			      bool show_out = false);
+    static void display_bbprop(nn_layer_subsampling &nn,
+			       state_idx &in, state_idx &out,
+			       unsigned int &h0, unsigned int &w0, double zoom,
+			       double vmin=0.0, double vmax=0.0,
+	bool show_out = false);
   };
 
 } // namespace ebl {

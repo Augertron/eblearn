@@ -65,7 +65,7 @@ namespace ebl {
   template<typename T> class ScalarIter;
   template<typename T> class ReverseScalarIter;
   template<typename T> class DimIter;
-  template<typename T> class ReverseDimIter;
+  //template<typename T> class ReverseDimIter;
 
   ////////////////////////////////////////////////////////////////
 
@@ -327,7 +327,7 @@ namespace ebl {
     template <class T> friend class ReverseScalarIter;
     template <class T> friend class DimIter_Base;
     template <class T> friend class DimIter;
-    template <class T> friend class ReverseDimIter;
+    //template <class T> friend class ReverseDimIter;
 
     friend bool same_dim(idxspec &s1, idxspec &s2);
     //! idxspec print operator.
@@ -472,7 +472,7 @@ namespace ebl {
     typedef ScalarIter<value_type> scalar_iterator;
     typedef ReverseScalarIter<value_type> reverse_scalar_iterator;
     typedef DimIter<value_type> dimension_iterator;
-    typedef ReverseDimIter<value_type> reverse_dimension_iterator;
+    //    typedef ReverseDimIter<value_type> reverse_dimension_iterator;
 
     /* -----  STL-style iterator creators  ----- */
 
@@ -495,10 +495,10 @@ namespace ebl {
     dimension_iterator dim_end( int dim );
 
     //! Returns an iterator for the given dimension.
-    reverse_dimension_iterator dim_rbegin( int dim );
+    //reverse_dimension_iterator dim_rbegin( int dim );
 
     //! Returns a terminated iterator for the given dimension.
-    reverse_dimension_iterator dim_rend( int dim );
+    //    reverse_dimension_iterator dim_rend( int dim );
 
     ////////////////////////////////////////////////////////////////
     //! resize methods

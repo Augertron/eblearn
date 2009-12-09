@@ -687,72 +687,71 @@ DimIter<T>::operator==( const DimIter<T>& other ){
 
 
 
-template<typename T>
-ReverseDimIter<T>::ReverseDimIter( idx<T>& idx, int dimInd, bool isBeginning )
-	:DimIter_Base<T>(idx, dimInd, isBeginning)
-{
-	T* data = this->subtensor.storage()->data;
-	this->dataEnd = data - this->dimMod; 
+// template<typename T>
+// ReverseDimIter<T>::ReverseDimIter( idx<T>& i, int dimInd, bool isBeginning)
+//   : DimIter_Base<T>(i, dimInd) {
+// 	T* data = this->subtensor.storage()->data;
+// 	this->dataEnd = data - this->dimMod; 
 
-	if( !isBeginning ){
-		this->subtensor.storage()->data = this->dataEnd;
-	}
-}
+// 	if( !isBeginning ){
+// 		this->subtensor.storage()->data = this->dataEnd;
+// 	}
+// }
 
-template<typename T>
-ReverseDimIter<T>::ReverseDimIter( const ReverseDimIter<T>& other )
-	:DimIter_Base<T>(other)
-{}
+// template<typename T>
+// ReverseDimIter<T>::ReverseDimIter( const ReverseDimIter<T>& other )
+// 	:DimIter_Base<T>(other)
+// {}
 
-template<typename T>
-ReverseDimIter<T>&
-ReverseDimIter<T>::operator=( const ReverseDimIter<T>& other ){
-	DimIter_Base<T>::operator=(other);
-	return *this;
-}
+// template<typename T>
+// ReverseDimIter<T>&
+// ReverseDimIter<T>::operator=( const ReverseDimIter<T>& other ){
+// 	DimIter_Base<T>::operator=(other);
+// 	return *this;
+// }
 
-template<typename T>
-bool ReverseDimIter<T>::operator()(){
-	//return ind == dimSize;
-	//dataInd == dimSize
-	return this->subtensor.getstorage()->data + this->subtensor.spec.offset != this->dataEnd;
-}
+// template<typename T>
+// bool ReverseDimIter<T>::operator()(){
+// 	//return ind == dimSize;
+// 	//dataInd == dimSize
+// 	return this->subtensor.getstorage()->data + this->subtensor.spec.offset != this->dataEnd;
+// }
 
-template<typename T>
-ReverseDimIter<T>&
-ReverseDimIter<T>::operator++(){
-	this->incr();
-	return *this;
-}
+// template<typename T>
+// ReverseDimIter<T>&
+// ReverseDimIter<T>::operator++(){
+// 	this->incr();
+// 	return *this;
+// }
 
-template<typename T>
-ReverseDimIter<T>
-ReverseDimIter<T>::operator++(int){
-	ReverseDimIter<T> returnVal(*this);
-	this->incr();
-	return returnVal;
-}
+// template<typename T>
+// ReverseDimIter<T>
+// ReverseDimIter<T>::operator++(int){
+// 	ReverseDimIter<T> returnVal(*this);
+// 	this->incr();
+// 	return returnVal;
+// }
 
-template<typename T>
-ReverseDimIter<T>&
-ReverseDimIter<T>::operator--(){
-	this->decr();
-	return *this;
-}
+// template<typename T>
+// ReverseDimIter<T>&
+// ReverseDimIter<T>::operator--(){
+// 	this->decr();
+// 	return *this;
+// }
 
-template<typename T>
-ReverseDimIter<T>
-ReverseDimIter<T>::operator--(int){
-	ReverseDimIter<T> returnVal(*this);
-	this->decr();
-	return returnVal;
-}
+// template<typename T>
+// ReverseDimIter<T>
+// ReverseDimIter<T>::operator--(int){
+// 	ReverseDimIter<T> returnVal(*this);
+// 	this->decr();
+// 	return returnVal;
+// }
 
-template<typename T>
-bool
-ReverseDimIter<T>::operator==( const ReverseDimIter<T>& other ){
-	return DimIter_Base<T>::operator==(other);
-}
+// template<typename T>
+// bool
+// ReverseDimIter<T>::operator==( const ReverseDimIter<T>& other ){
+// 	return DimIter_Base<T>::operator==(other);
+// }
 
 } // end namespace ebl
 

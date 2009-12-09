@@ -116,9 +116,10 @@ namespace ebl {
     cout << "Found: "; print_classes(); cout << "." << endl;
     // (re)init max per class, knowing number of classes
     intg m = numeric_limits<intg>::max();
-    if (max_per_class_set) // mpc has already been set
+    if (max_per_class_set) { // mpc has already been set
       m = mpc;
-    set_max_per_class(m);
+      set_max_per_class(m);
+    }
     // allocate 
     if (!allocate(total_samples, outdims))
       eblerror("allocation failed");
@@ -245,6 +246,7 @@ namespace ebl {
     
   template <class Tdata>
   void dataset<Tdata>::set_resize(const string &resize_mode_) {
+    cout << "Setting resize mode: " << resize_mode_ << endl;
     resize_mode = resize_mode_;
   }
     
@@ -449,8 +451,8 @@ namespace ebl {
     if (do_preprocessing)
       sample = preprocess_data(sample, class_name, true, filename, r);
     // check for dimensions
-    if (!sample.same_dim(datadims)) {
-      cerr << "error: expected data with dimensions " << datadims;
+    if (!sample.same_dim(outdims)) {
+      cerr << "error: expected data with dimensions " << outdims;
       cerr << " but found " << sample.get_idxdim() << endl;
       return false;
     }
@@ -496,6 +498,7 @@ namespace ebl {
 
   template <class Tdata>
   void dataset<Tdata>::set_outdims(const idxdim &d) {
+    cout << "Setting target dimensions to " << d << endl;
     outdims = d;
   }
 

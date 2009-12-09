@@ -398,39 +398,39 @@ public:
 	
 };
 
-template<typename T>
-class ReverseDimIter: public DimIter_Base<T>, public std::iterator<std::bidirectional_iterator_tag, T>{
+/* template<typename T> */
+/* class ReverseDimIter: public DimIter_Base<T>, public std::iterator<std::bidirectional_iterator_tag, T>{ */
 
-public:
+/* public: */
 	
-	//! Constructor.
-	ReverseDimIter<T>( idx<T>& idx, int dimInd, bool isBeginning = true );
+/* 	//! Constructor. */
+/* 	ReverseDimIter<T>( idx<T>& idx, int dimInd, bool isBeginning = true ); */
 	
-	//! Copy constructor.
-	ReverseDimIter<T>( const ReverseDimIter<T>& );
+/* 	//! Copy constructor. */
+/* 	ReverseDimIter<T>( const ReverseDimIter<T>& ); */
 	
-	//! Preincrement operator.
-	inline ReverseDimIter<T>& operator++();
+/* 	//! Preincrement operator. */
+/* 	inline ReverseDimIter<T>& operator++(); */
 	
-	//! Postincrement operator.
-	ReverseDimIter<T> operator++(int);
+/* 	//! Postincrement operator. */
+/* 	ReverseDimIter<T> operator++(int); */
 	
-	//! Predecrement operator.
-	inline ReverseDimIter<T>& operator--();
+/* 	//! Predecrement operator. */
+/* 	inline ReverseDimIter<T>& operator--(); */
 	
-	//! Postdecrement operator.
-	ReverseDimIter<T> operator--(int);
+/* 	//! Postdecrement operator. */
+/* 	ReverseDimIter<T> operator--(int); */
 
-	//! Equality operator.
-	inline bool operator==( const ReverseDimIter<T>& );
+/* 	//! Equality operator. */
+/* 	inline bool operator==( const ReverseDimIter<T>& ); */
 	
-	//! Returns whether this iterator is done iterating.
-	inline bool operator()();
+/* 	//! Returns whether this iterator is done iterating. */
+/* 	inline bool operator()(); */
 	
-	//! Assignment operator
-	ReverseDimIter<T>& operator=( const ReverseDimIter<T>& );
+/* 	//! Assignment operator */
+/* 	ReverseDimIter<T>& operator=( const ReverseDimIter<T>& ); */
 	
-};
+/* }; */
 
 //template<typename T>
 //SubtensorIterator_Base{

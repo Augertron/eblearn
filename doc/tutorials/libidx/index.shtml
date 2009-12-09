@@ -21,6 +21,33 @@
 	  <h2>matrix descriptors</h2>
 	  <h2>basic matrix operations</h2>
 	  <h2>gui</h2>
+	  <h2>debugging</h2>
+	  Using gdb, one can inspect variables and call most functions
+	  in an interative manner. For example, call ./debug.sh at the
+	  root of the eblearn directory. This will start a debugging
+	  environment in emacs and gdb. Gdb is configured not to stop
+	  all threads when a tread stops (see .gdbinit), so you need
+	  to switch to the thread that stopped, e.g.:
+	  thread 2
+	  
+	  If you want to inspect an idx 'a', you can call:
+	  p a.spec.ndim
+	  p *a.spec.dim@3
+	  
+	  If you want to display an idx, call draw_matrix, e.g.:
+	  call ebl::draw_matrix_float(a, 0, 0, 1, 1, 0, 255)
+
+	  If you need to manipulate the idx, for example if you want
+	  to display only 1 layer of the RGB image 'a', you can use
+	  global debug idx variables:
+	  set ebl::gdb_idx_float1 = a.select(2, 0)
+	  call ebl::draw_matrix_float(ebl::gdb_idx_float1, 0, 0, 1, 1, 0,
+	  255)
+
+	  Note: gdb does not accept calls to template functions, one
+	  needs to declare instantiations in the code first
+	  (e.g. draw_matrix_float instead of draw_matrix<float>).
+	  
 	  
 <div id="vc_markup"><pre>
     <a id="l_1"></a><span class="hl line">      </span><span class="hl dir">#include</span> <span class="hl dstr">&quot;libeblearn.h&quot;</span><span class="hl dir"></span>

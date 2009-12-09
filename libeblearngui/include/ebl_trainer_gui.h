@@ -54,6 +54,7 @@ namespace ebl {
     double                                      _zoom;
     int						datasource_wid;
     int						internals_wid;
+    int						internals_wid2;
     bool					scroll;
     bool					scroll_added;
     unsigned int                                pos;
@@ -80,7 +81,7 @@ namespace ebl {
     //! displays internal states of the <ninternals> first samples of ds.
     void display_internals(supervised_trainer<Tdata, Tlabel> &st,
 			   labeled_datasource<Tdata, Tlabel> &ds, 
-			   infer_param &infp,
+			   infer_param &infp, gd_param &args,
 			   unsigned int ninternals, 
 			   unsigned int h0 = 0, unsigned int w0 = 0, 
 			   double zoom = 1.0, int wid = -1,

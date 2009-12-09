@@ -427,10 +427,10 @@ namespace ebl {
   void mnist_datasource<Tdata, Tlabel>::fprop(state_idx &out, 
 					     idx<Tlabel> &label) {
     out.resize(this->sample_dims());
-    intg ni = this->data.dim(1);
-    intg nj = this->data.dim(2);
-    intg di = 0.5 * (this->height - ni);
-    intg dj = 0.5 * (this->width - nj);
+    uint ni = this->data.dim(1);
+    uint nj = this->data.dim(2);
+    uint di = 0.5 * (this->height - ni);
+    uint dj = 0.5 * (this->width - nj);
     idx_fill(out.x, bias * coeff);
     idx<double> tgt = out.x.select(0, 0);
     tgt = tgt.narrow(0, ni, di);

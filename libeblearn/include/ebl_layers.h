@@ -114,6 +114,7 @@ namespace ebl {
     abs_module			 abs;	//!< absolute rectification
     weighted_std_module		 norm;	//!< constrast normalization
     state_idx			*tmp;	//!< temporary results
+    state_idx			*tmp2;	//!< temporary results
 
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,

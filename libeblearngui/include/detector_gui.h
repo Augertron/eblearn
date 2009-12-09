@@ -45,8 +45,8 @@ namespace ebl {
 
   class detector_gui {
   private:
-    unsigned int	 display_wid;
-    unsigned int	 display_wid_fprop;
+    int	 display_wid;
+    int	 display_wid_fprop;
 
   public:
     detector_gui() {};
@@ -60,8 +60,8 @@ namespace ebl {
     template <class Tdata>
     void display(detector<Tdata> &cl, idx<Tdata> &img, double threshold,
 		 unsigned int h0 = 0, unsigned int w0 = 0, 
-		 double dzoom = 1.0, int wid = -1, 
-		 const char *wname = NULL);
+		 double dzoom = 1.0, double vmin = 0.0, double vmax = 0.0,
+		 int wid = -1, const char *wname = NULL);
 
     //! display the regular input/output display but also the inputs and outputs
     //! corresponding to each scale, corresponding to a call to 
@@ -73,7 +73,8 @@ namespace ebl {
     void display_inputs_outputs(detector<Tdata> &cl, 
 				idx<Tdata> &img, double threshold,
 				unsigned int h0 = 0, unsigned int w0 = 0, 
-				double dzoom = 1.0, int wid = -1, 
+				double dzoom = 1.0, double vmin = 0.0,
+				double vmax = 0.0, int wid = -1, 
 				const char *wname = NULL);
     
     //! display all, display_inputs_outputs and the internal states of the fprop
@@ -85,7 +86,8 @@ namespace ebl {
     template <class Tdata>
     void display_all(detector<Tdata> &cl, idx<Tdata> &img, 
 		     double threshold,unsigned int h0 = 0, unsigned int w0 = 0, 
-		     double dzoom = 1.0, int wid = -1,const char *wname = NULL);
+		     double dzoom = 1.0, double vmin = 0.0, double vmax = 0.0,
+		     int wid = -1,const char *wname = NULL);
 
     //! displays all the current state of the classifier. 
     //! If a window id <wid> is specified, 

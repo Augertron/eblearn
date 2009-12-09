@@ -72,6 +72,7 @@ namespace ebl {
     //! copy constructor
     datasource(const datasource<Tin1, Tin2> &ds);
 
+    //! destructor
     virtual ~datasource();
 
     //! Copies the current datum to a state and label.

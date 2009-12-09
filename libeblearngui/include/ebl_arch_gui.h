@@ -42,7 +42,8 @@ namespace ebl {
 
   class module_1_1_gui {
   public:
-    unsigned int	 display_wid_fprop;
+    int	 display_wid_fprop;
+    int	 display_wid_bprop;
 
     module_1_1_gui() {};
     virtual ~module_1_1_gui() {};
@@ -50,14 +51,31 @@ namespace ebl {
     template<class Tin, class Tout>
       void display_fprop(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,
 			 unsigned int h0 = 0, unsigned int w0 = 0, 
-			 double dzoom = 1.0, bool show_out = true,
+			 double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
+			 bool show_out = true,
+			 int wid = -1, const char *wname = NULL);
+    
+    template<class Tin, class Tout>
+      void display_fprop2(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,
+			  unsigned int &h0, unsigned int &w0, 
+			  double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
+			  bool show_out = true,
+			  int wid = -1, const char *wname = NULL);
+
+    template<class Tin, class Tout>
+      void display_bprop(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,
+			 unsigned int h0 = 0, unsigned int w0 = 0, 
+			 double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
+			 bool show_in = true,
 			 int wid = -1, const char *wname = NULL);
 
     template<class Tin, class Tout>
-      void display_fprop2(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,
-			 unsigned int &h0, unsigned int &w0, 
-			 double dzoom = 1.0, bool show_out = true,
-			 int wid = -1, const char *wname = NULL);
+      void display_bprop2(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,
+			  unsigned int &h0, unsigned int &w0, 
+			  double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
+			  bool show_int = true,
+			  int wid = -1, const char *wname = NULL);
+    
   };
 
   ////////////////////////////////////////////////////////////////
@@ -75,7 +93,16 @@ namespace ebl {
       void display_fprop(module_2_1<Tin1, Tin2, Tout> &m, 
 			 Tin1 &in1, Tin2 &in2, Tout &out,
 			 unsigned int &h0, unsigned int &w0, 
-			 double dzoom = 1.0, bool show_out = true,
+			 double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
+			 bool show_out = true,
+			 int wid = -1, const char *wname = NULL);
+    
+    template<class Tin1, class Tin2, class Tout>
+      void display_bprop(module_2_1<Tin1, Tin2, Tout> &m, 
+			 Tin1 &in1, Tin2 &in2, Tout &out,
+			 unsigned int &h0, unsigned int &w0, 
+			 double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
+			 bool show_out = true,
 			 int wid = -1, const char *wname = NULL);
   };
 
@@ -91,7 +118,17 @@ namespace ebl {
       static void display_fprop(module_1_1_gui &g, layers_n<T> &ln, 
 				T &in, T &out,
 				unsigned int &h0, unsigned int &w0, 
-				double dzoom = 1.0, bool show_out = false);
+				double dzoom = 1.0,
+				double vmin=0.0, double vmax=0.0,
+				bool show_out = false);
+
+    template<class T> 
+      static void display_bprop(module_1_1_gui &g, layers_n<T> &ln, 
+				T &in, T &out,
+				unsigned int &h0, unsigned int &w0, 
+				double dzoom = 1.0,
+				double vmin=0.0, double vmax=0.0,
+				bool show_out = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -107,7 +144,17 @@ namespace ebl {
 				Tin1 &i1, Tin2 &i2, 
 				state_idx &energy, 
 				unsigned int &h0, unsigned int &w0,
-				double zoom, bool show_out = true,
+				double zoom, double vmin=0.0, double vmax=0.0,
+				bool show_out = true,
+				int wid = -1, const char *wname = NULL);
+    
+    template<class Tin1, class Tin2, class Tout>
+      static void display_bprop(fc_ebm2<Tin1, Tin2, Tout> &fc,
+				Tin1 &i1, Tin2 &i2, 
+				state_idx &energy, 
+				unsigned int &h0, unsigned int &w0,
+				double zoom, double vmin=0.0, double vmax=0.0,
+				bool show_out = true,
 				int wid = -1, const char *wname = NULL);
   };
 

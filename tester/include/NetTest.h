@@ -3,6 +3,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "libeblearn.h"
+#include "libidx.h"
 
 //! Test class for Blas class
 class NetTest : public CppUnit::TestFixture  {
@@ -24,5 +25,14 @@ public:
   void test_lenet5_mnist();
   void test_full_table();
 };
+
+ namespace ebl{
+
+  template<class T>
+    void draw_matrix42(idx<T> &im, unsigned int h0 = 0, unsigned int w0 = 0,
+		     double zoomh = 1.0, double zoomw = 1.0,
+		     T minv = 0, T maxv = 0);
+}
+
 
 #endif /* NETTEST_H_ */

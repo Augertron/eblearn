@@ -58,18 +58,17 @@ int main(int argc, char **argv) { // regular main without gui
   infer_param infp;
 	
   // estimate second derivative on 100 iterations, using mu=0.02
-  cout << "Computing second derivatives on MNIST dataset: ";
   thetrainer.compute_diaghessian(train_ds, 100, 0.02);
-
-  // first show classification results without training
-  thetrainer.test(train_ds, trainmeter, infp);
-  thetrainer.test(test_ds, testmeter, infp);
 
 #ifdef __GUI__
   supervised_trainer_gui<ubyte, ubyte> stgui;
   stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
   stgui.display_internals(thetrainer, test_ds, infp, 2);
 #endif
+
+  // first show classification results without training
+  thetrainer.test(train_ds, trainmeter, infp);
+  thetrainer.test(test_ds, testmeter, infp);
 
   // now do training iterations 
   cout << "Training network on MNIST with " << train_ds.size();
