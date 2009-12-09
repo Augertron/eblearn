@@ -37,7 +37,7 @@ namespace ebl {
   template <class Tdata, class Tlabel>  
   supervised_trainer_gui<Tdata, Tlabel>::supervised_trainer_gui(bool scroll_)
     : _st(NULL), _ds(NULL), _last_ds(NULL), 
-      datasource_wid(-1), internals_wid(-1),
+      datasource_wid(-1), internals_wid(-1), internals_wid2(-1),
       scroll(scroll_), scroll_added(false), pos(0), dsgui(NULL) {
   }
 
@@ -158,6 +158,7 @@ namespace ebl {
   void supervised_trainer_gui<Tdata, Tlabel>::
   display_internals(supervised_trainer<Tdata, Tlabel> &st,
 		    labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
+		    gd_param &args,
 		    unsigned int ninternals, 
 		    unsigned int display_h0, 
 		    unsigned int display_w0, double display_zoom, 
@@ -166,28 +167,49 @@ namespace ebl {
       ((internals_wid >= 0) ? internals_wid :
        new_window((title ? 
 		       title : "Supervised Trainer: internal fprop states")));
+    internals_wid2 = (wid >= 0) ? wid : 
+      ((internals_wid2 >= 0) ? internals_wid2 :
+       new_window((title ? 
+		       title : "Supervised Trainer: internal bprop states")));
+    // freeze and clear display updates
     select_window(internals_wid);
     disable_window_updates();
     clear_window();
+    select_window(internals_wid2);
+    disable_window_updates();
+    clear_window();
+    // prepare dataset
     ds.seek_begin();
     st.resize_input(ds);
-    bool correct;
     int answer;
     unsigned int wfdisp = 0, hfdisp = 0;
+    unsigned int wfdisp2 = 0, hfdisp2 = 0;
     ds.fprop(*st.input, st.label);
     idx<double> m = st.input->x.select(0, 0);
     
+    select_window(internals_wid);
     // display first ninternals samples
     fc_ebm2_gui mg;
     for (unsigned int i = 0; (i < ds.size()) && (i < ninternals); ++i) {
+      // prepare input
       ds.fprop(*st.input, st.label);
-      correct = st.test_sample(*st.input, st.label.get(), answer, infp);
-      //      log.update(age, correct, energy);
+      // fprop and bprop
+      st.learn_sample(*st.input, st.label.get(), args);
       ds.next();
+      // display fprop
       mg.display_fprop(st.machine, *st.input, answer, st.energy, 
-		       hfdisp, wfdisp, 3.0, true, internals_wid);
+		       hfdisp, wfdisp, 3.0, -1.0, 1.0, true, internals_wid);
+      // display bprop
+      select_window(internals_wid2);
+      mg.display_bprop(st.machine, *st.input, answer, st.energy, 
+      		       hfdisp2, wfdisp2, 3.0, -1.0, 1.0, true, internals_wid2);
       hfdisp += 10;
+      hfdisp2 += 10;
     }
+    // unfreeze display updates
+    select_window(internals_wid);
+    enable_window_updates();
+    select_window(internals_wid2);
     enable_window_updates();
   }  
 

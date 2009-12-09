@@ -43,9 +43,13 @@ endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 SET(EFENCE_FLAG "")
 SET(CMAKE_CXX_FLAGS_DEBUG 
-      "${EFENCE_FLAG} -g -Wall -ggdb -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic"
+      "${EFENCE_FLAG} -g -Wall -ggdb -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic -O0"
       CACHE STRING "Debug builds CMAKE CXX flags " FORCE )
 
+# copy gdb config file into bin directory
+EXEC_PROGRAM("cp" ARGS "\"${CMAKE_SOURCE_DIR}/.gdbinit\""
+		  "\"${LIBRARY_OUTPUT_PATH}\"")
+    
 SET(LIBIDX_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libidx/include)
 SET(LIBEBLEARN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libeblearn/include)
 SET(LIBEBLEARN_TOOLS_INCLUDE_DIR

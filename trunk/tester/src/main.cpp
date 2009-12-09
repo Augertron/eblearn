@@ -8,16 +8,17 @@
 
 #include "libeblearn.h"
 #include "MyTextOutputter.h"
+
 #include "BlasTest.h"
 #include "EblBasicTest.h"
 #include "IdxIOTest.h"
 #include "DataSourceTest.h"
-#include "NetTest.h"
 #include "IdxTest.h"
 #include "IdxIteratorsTest.h"
 #include "detector_test.h"
 #include "ClusterTest.h"
 #include "image_test.h"
+#include "NetTest.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"

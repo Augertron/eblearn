@@ -1197,15 +1197,15 @@ namespace ebl {
     return dimension_iterator(*this,dd,false);
   }
 
-  template <typename T>
-  typename idx<T>::reverse_dimension_iterator idx<T>::dim_rbegin(int dd){
-    return reverse_dimension_iterator(*this,dd);
-  }
+//   template <typename T>
+//   typename idx<T>::reverse_dimension_iterator idx<T>::dim_rbegin(int dd){
+//     return reverse_dimension_iterator(*this,dd);
+//   }
 
-  template <typename T>
-  typename idx<T>::reverse_dimension_iterator idx<T>::dim_rend(int dd){
-    return reverse_dimension_iterator(*this,dd,false);
-  }
+//   template <typename T>
+//   typename idx<T>::reverse_dimension_iterator idx<T>::dim_rend(int dd){
+//     return reverse_dimension_iterator(*this,dd,false);
+//   }
 
 #if USING_STL_ITERS == 0
   ////////////////////////////////////////////////////////////////

@@ -49,7 +49,7 @@ using namespace ebl;
 string		images_root	 = ".";
 string		image_pattern	 = IMAGE_PATTERN;
 string		channels_mode	 = "RGB";
-bool            preprocessing    = false;
+bool            preprocessing    = true;
 bool		display		 = false;
 bool		stereo		 = false;
 bool		ignore_difficult = false;
@@ -104,6 +104,8 @@ bool parse_args(int argc, char **argv) {
 	image_pattern = argv[i];
       } else if (strcmp(argv[i], "-disp") == 0) {
 	display = true;
+      } else if (strcmp(argv[i], "-nopp") == 0) {
+	preprocessing = true;
       } else if (strcmp(argv[i], "-ignore_difficult") == 0) {
 	ignore_difficult = true;
       } else if (strcmp(argv[i], "-shuffle") == 0) {
@@ -217,6 +219,7 @@ void print_usage() {
   cout << "     channels are: RGB (default), YpUV, HSV, Yp (Yp only in YpUV)";
   cout << endl;
   cout << "  -disp" << endl;
+  cout << "  -nopp (no preprocessing, i.e. no resizing or conversion)" << endl;
   cout << "  -sleep <delay in ms> (sleep between frame display)" << endl;
   cout << "  -shuffle" << endl;
   cout << "  -stereo" << endl;
@@ -311,6 +314,7 @@ int main(int argc, char **argv) {
   cout << "  outputs: " << outdir << "/" << dataset_name << "_*.mat" << endl;
   cout << "  images pattern: " << image_pattern << endl;
   cout << "  channels mode: " << channels_mode.c_str() << endl;
+  cout << "  oreprocessing: " << (preprocessing ? "yes" : "no") << endl;
   cout << "  display: " << (display ? "yes" : "no") << endl;
   cout << "  display sleep: " << sleep_delay << " ms." << endl;
   cout << "  shuffling: " << (shuffle ? "yes" : "no") << endl;

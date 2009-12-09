@@ -123,5 +123,32 @@ namespace ebl {
     gui.set_gui_only();
   }
 
+  ////////////////////////////////////////////////////////////////
+  // instantiations of draw_matrix, useful for debugging under gdb
 
+  void draw_matrix_double(idx<double> &im, unsigned int h0, unsigned int w0, 
+			  double zoomh, double zoomw, double minv, double maxv){
+    draw_matrix<double>(im, h0, w0, zoomh, zoomw, minv, maxv);
+  }
+  
+  void draw_matrix_float(idx<float> &im, unsigned int h0, unsigned int w0, 
+			 double zoomh, double zoomw, float minv, float maxv) {
+    draw_matrix<float>(im, h0, w0, zoomh, zoomw, minv, maxv);
+  }
+    
+  void draw_matrix_ubyte(idx<ubyte> &im, unsigned int h0, unsigned int w0, 
+			 double zoomh, double zoomw, ubyte minv, ubyte maxv) {
+    draw_matrix<ubyte>(im, h0, w0, zoomh, zoomw, minv, maxv);
+  }
+    
+  ////////////////////////////////////////////////////////////////
+  // global idx variables, useful for debugging under gdb
+  
+  idx<double> gdb_idx_double1;
+  idx<double> gdb_idx_double2;
+  idx<float> gdb_idx_float1;
+  idx<float> gdb_idx_float2;
+  idx<ubyte> gdb_idx_ubyte1;
+  idx<ubyte> gdb_idx_ubyte2;
+  
 } // end namespace ebl

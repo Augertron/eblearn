@@ -595,7 +595,7 @@ namespace ebl {
     out.clear();
     idx<double> tmp = out.x.narrow(1, inr, nrow);
     tmp = tmp.narrow(2, inc, ncol);
-    idx_copy(tmp, in.x);
+    idx_copy(in.x, tmp);
   }
 
   void zpad_module::bprop(state_idx &in, state_idx &out) {

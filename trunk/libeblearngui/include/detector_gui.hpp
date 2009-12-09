@@ -45,14 +45,16 @@ namespace ebl {
   template <class Tdata>
   void detector_gui::display(detector<Tdata> &cl, idx<Tdata> &img,
 			     double threshold, unsigned int h0, unsigned int w0,
-			     double dzoom, int wid, const char *wname){
+			     double dzoom,  double vmin, double vmax,
+			     int wid, const char *wname){
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: output"));
     select_window(display_wid);
     disable_window_updates();
 
     // draw input
-    gui.draw_matrix(img, "input", h0, w0, dzoom, dzoom);
+    gui.draw_matrix(img, "input", h0, w0, dzoom, dzoom,
+		    (Tdata)vmin, (Tdata)vmax);
     vector<bbox> vb = cl.fprop(img, threshold);
     w0 += img.dim(1) + 5;
 
@@ -64,7 +66,7 @@ namespace ebl {
       draw_box(h0 + h, w0 + w, dzoom * i->height, dzoom * i->width, 255, 0, 0,
 	       new string(cl.labels.get(i->class_id)));
     }
-    draw_matrix(cl.grabbed, h0, w0, dzoom, dzoom);       
+    draw_matrix(cl.grabbed, h0, w0, dzoom, dzoom, (Tdata)vmin, (Tdata)vmax);   
     enable_window_updates();
   }
 
@@ -72,7 +74,8 @@ namespace ebl {
   void detector_gui::display_inputs_outputs(detector<Tdata> &cl, 
 					    idx<Tdata> &img, double threshold,
 					    unsigned int h0, unsigned int w0,
-					    double dzoom, int wid, 
+					    double dzoom, double vmin,
+					    double vmax, int wid, 
 					    const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
@@ -80,7 +83,7 @@ namespace ebl {
     disable_window_updates();
 
     // draw input and output
-    display(cl, img, threshold, h0, w0, dzoom, display_wid_fprop);
+    display(cl, img, threshold, h0, w0, dzoom, vmin, vmax, display_wid_fprop);
 
     // draw internal inputs and outputs
     int h = h0 + cl.height + 5;
@@ -89,22 +92,20 @@ namespace ebl {
     int ihmax = ((state_idx*) cl.inputs.get(0))->x.dim(1);
     bool first_time = true;
     ostringstream s;
-    double vmin = 0;
-    double vmax = 0;
     // compute min and max of all outputs, to maximize intensity display range
-    { idx_bloop1(out, cl.outputs, void*) {
-	idx<double> outx = ((state_idx*) out.get())->x;
-	if (first_time) {
-	  vmin = idx_min(outx);
-	  vmax = idx_max(outx);
-	first_time = false;
-	} else {
-	  vmin = MIN(vmin, idx_min(outx));
-	  vmax = MAX(vmax, idx_max(outx));	  
-	}
-      }}
-    cout << "outputs min: " << vmin << " max: " << vmax << endl;
-    vmin = 0;
+    if (vmin == vmax) {
+      { idx_bloop1(out, cl.outputs, void*) {
+	  idx<double> outx = ((state_idx*) out.get())->x;
+	  if (first_time) {
+	    vmin = idx_min(outx);
+	    vmax = idx_max(outx);
+	    first_time = false;
+	  } else {
+	    vmin = MIN(vmin, idx_min(outx));
+	    vmax = MAX(vmax, idx_max(outx));	  
+	  }
+	}}
+    }
     // display all outputs
     first_time = true;
     { idx_bloop2(in, cl.inputs, void*, out, cl.outputs, void*) {
@@ -115,7 +116,7 @@ namespace ebl {
 	// draw inputs
 	s.str("");
 	s << "scale #" << scale << " " << inx.dim(0) << "x" << inx.dim(1);
-	draw_matrix(inx, s.str().c_str(), h, w0, dzoom, dzoom);
+	draw_matrix(inx, s.str().c_str(), h, w0, dzoom, dzoom, vmin, vmax);
 
 	// draw outputs
 	int hcat = 0;
@@ -146,14 +147,15 @@ namespace ebl {
   void detector_gui::display_all(detector<Tdata> &cl, idx<Tdata> &img, 
 				 double threshold,
 				 unsigned int h0, unsigned int w0,
-				 double dzoom, int wid, const char *wname){
+				 double dzoom, double vmin, double vmax,
+				 int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
     disable_window_updates();
 
     // draw input and output
-    display_inputs_outputs(cl, img, threshold, h0, w0, dzoom,
+    display_inputs_outputs(cl, img, threshold, h0, w0, dzoom, vmin, vmax,
 			   display_wid_fprop);
 
     // draw internal states of first scale
@@ -162,7 +164,8 @@ namespace ebl {
     state_idx *oo = ((state_idx*) cl.outputs.get(0));
     module_1_1_gui mg;
     //    cl.thenet.fprop(*ii, *oo); 
-    mg.display_fprop(cl.thenet, *ii, *oo, h0, w0, 1.0, true, display_wid_fprop);
+    mg.display_fprop(cl.thenet, *ii, *oo, h0, w0, 1.0, vmin, vmax,
+		     true, display_wid_fprop);
   }
 
   template <class Tdata>
@@ -179,7 +182,8 @@ namespace ebl {
     state_idx *ii = ((state_idx*) cl.inputs.get(0));
     state_idx *oo = ((state_idx*) cl.outputs.get(0));
     cl.thenet.fprop(*ii, *oo); 
-    mg.display_fprop(cl.thenet, *ii, *oo, 0, 0, 1.0, true, display_wid_fprop);
+    mg.display_fprop(cl.thenet, *ii, *oo, 0, 0, 1.0, -1.0, 1.0,
+		     true, display_wid_fprop);
     enable_window_updates();
   }
 

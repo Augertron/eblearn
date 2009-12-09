@@ -38,98 +38,144 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // nn_layer_full
 
-  void nn_layer_full_gui::display_fprop(nn_layer_full &nn,
-					state_idx &in, state_idx &out,
-					unsigned int &h0, unsigned int &w0,
-					double zoom, bool show_out) {
-    unsigned int h = h0, w = w0;
-    // display input text
-    gui << gui_only() << at(h, w) << "full in:" << in.x.dim(0) << "x";
-    gui << in.x.dim(1) << "x" << in.x.dim(2);
-    w += 150;
-    zoom *= 5;
-    // display inputs
-    idx_bloop1(m, in.x, double) {
-      if (w - w0 < 500) {
-	draw_matrix(m, h, w, zoom, zoom, -1.0, 1.0);
-	w += m.dim(1) * zoom + 1;
-      }
-    }
-    h0 += MAX(10, m.dim(0) * zoom + 1);
-  }
-
+#define NN_LAYER_FULL_GUI(name, T)					\
+  void nn_layer_full_gui::name(nn_layer_full &nn,			\
+			       state_idx &in, state_idx &out,		\
+			       unsigned int &h0, unsigned int &w0,	\
+			       double zoom, double vmin, double vmax,	\
+			       bool show_out) {				\
+    unsigned int h = h0, w = w0;					\
+    /* display text */							\
+    gui << gui_only() << at(h, w) << "full in:" << in.T;		\
+    w += 150;								\
+    zoom *= 3;								\
+    /* display inputs */						\
+    idx_bloop1(m, in.T, double) {					\
+      if (w - w0 < 500) {						\
+	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+	w += m.dim(1) * zoom + 1;					\
+      }									\
+    }									\
+    h0 += MAX(10, m.dim(0) * zoom + 1);					\
+  }									
+  
+  NN_LAYER_FULL_GUI(display_fprop, x)
+  NN_LAYER_FULL_GUI(display_bprop, dx)
+  NN_LAYER_FULL_GUI(display_bbprop, ddx)
+  
   ////////////////////////////////////////////////////////////////
   // nn_layer_convolution
 
-  void nn_layer_convolution_gui::display_fprop(nn_layer_convolution &nn,
-					       state_idx &in, state_idx &out,
-					       unsigned int &h0, 
-					       unsigned int &w0,
-					       double zoom, bool show_out) {
-    unsigned int h = h0, w = w0;
-    // display input text
-    gui << gui_only() << at(h, w) << "conv. in:" << in.x.dim(0) << "x";
-    gui << in.x.dim(1) << "x" << in.x.dim(2);
-    w += 150;
-    // display inputs
-    idx_bloop1(m, in.x, double) {
-      draw_matrix(m, h, w, zoom, zoom);
-      w += m.dim(1) * zoom + 1;
-    }
-    h0 += m.dim(0) * zoom + 1;
-    w = w0;
-    h = h0;
-    // display kernels text
-    gui << gui_only()<< at(h, w) << "kernels:" ;
-    gui << nn.convol.kernel.x.dim(0) << "x";
-    gui << nn.convol.kernel.x.dim(1) << "x" << nn.convol.kernel.x.dim(2);
-    w += 150;
-    // display kernels
-    zoom *= 4;
-    idx_bloop1(mk, nn.convol.kernel.x, double) {
-      if (w - w0 < 500) {
-	draw_matrix(mk, h, w, zoom, zoom);
-	w += mk.dim(1) * zoom + 1;
-      }
-    }
-    h0 += MAX(10, mk.dim(0) * zoom + 1);
+#define NN_LAYER_CONVOLUTION_GUI(name, T)				\
+  void nn_layer_convolution_gui::name(nn_layer_convolution &nn,		\
+				      state_idx &in, state_idx &out,	\
+				      unsigned int &h0,			\
+				      unsigned int &w0,			\
+				      double zoom, double vmin, double vmax, \
+				      bool show_out) {			\
+    unsigned int h = h0, w = w0;					\
+    /* display text */							\
+    gui << gui_only() << at(h, w) << "conv. in:" << in.T;		\
+    w += 150;								\
+    /* display inputs */						\
+    idx_bloop1(m, in.T, double) {					\
+      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+      w += m.dim(1) * zoom + 1;						\
+    }									\
+    h0 += m.dim(0) * zoom + 1;						\
+    w = w0;								\
+    h = h0;								\
+    /* display kernels text */						\
+    gui << gui_only()<< at(h, w) << "kernels:" << nn.convol.kernel.T;	\
+    w += 150;								\
+    /* display kernels */						\
+    /* zoom *= 4; */	 						\
+    idx_bloop1(mk, nn.convol.kernel.T, double) {			\
+      if (w - w0 < 500) {						\
+	draw_matrix(mk, h, w, zoom, zoom, vmin, vmax);			\
+	w += mk.dim(1) * zoom + 1;					\
+      }									\
+    }									\
+    h0 += MAX(10, mk.dim(0) * zoom + 1);				\
   }
 
+  NN_LAYER_CONVOLUTION_GUI(display_fprop, x)
+  NN_LAYER_CONVOLUTION_GUI(display_bprop, dx)
+  NN_LAYER_CONVOLUTION_GUI(display_bbprop, ddx)
+  
+  ////////////////////////////////////////////////////////////////
+  // nn_layer_convolution
+  
+#define LAYER_CONVABSNORM_GUI(name, T)					\
+  void layer_convabsnorm_gui::name(layer_convabsnorm &layer,		\
+				   state_idx &in, state_idx &out,	\
+				   unsigned int &h0,			\
+				   unsigned int &w0,			\
+				   double zoom, double vmin, double vmax, \
+				   bool show_out) {			\
+    nn_layer_convolution_gui::name(layer.lconv, in, out, h0, w0,	\
+				   zoom, show_out);			\
+    unsigned int h = h0, w = w0;					\
+    /* display text */							\
+    gui << gui_only() << at(h, w) << "conv out:" << layer.tmp->T;	\
+    w += 150;								\
+    /* display output of convolution */					\
+    idx_bloop1(m, layer.tmp->T, double) {				\
+      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+      w += m.dim(1) * zoom + 1;						\
+    }									\
+    h0 += m.dim(0) * zoom + 1;						\
+    w = w0;								\
+    h = h0;								\
+    /* display text */							\
+    gui << gui_only() << at(h, w) << "abs out:" << layer.tmp2->T;	\
+    w += 150;								\
+    /* display output of abs */						\
+    idx_bloop1(m2, layer.tmp2->T, double) {				\
+      draw_matrix(m2, h, w, zoom, zoom, vmin, vmax);			\
+      w += m2.dim(1) * zoom + 1;					\
+    }									\
+    h0 += m2.dim(0) * zoom + 1;						\
+    w = w0;								\
+    h = h0;								\
+  }
+
+  LAYER_CONVABSNORM_GUI(display_fprop, x)
+  LAYER_CONVABSNORM_GUI(display_bprop, dx)
+  LAYER_CONVABSNORM_GUI(display_bbprop, ddx)
+  
   ////////////////////////////////////////////////////////////////
   // nn_layer_subsampling
 
-  void nn_layer_subsampling_gui::display_fprop(nn_layer_subsampling &nn,
-					       state_idx &in, state_idx &out,
-					       unsigned int &h0, 
-					       unsigned int &w0,
-					       double zoom, bool show_out) {
-    unsigned int h = h0, w = w0;
-    // display input text
-    gui << gui_only() << at(h, w) << "ssampl. in:" << in.x.dim(0) << "x";
-    gui << in.x.dim(1) << "x" << in.x.dim(2);
-    w += 150;
-    // display inputs
-    idx_bloop1(m, in.x, double) {
-      draw_matrix(m, h, w, zoom, zoom);
-      w += m.dim(1) * zoom + 1;
-    }
-    h0 += m.dim(0) * zoom + 1;
-    w = w0;
-    h = h0;
-    // display kernels text
-    gui << gui_only()<< at(h, w) << "kernels:" << nn.subsampler.sub.x.dim(0);
-    gui << "x" << in.x.dim(1) / nn.subsampler.sub.x.dim(1);
-    gui << "x" << in.x.dim(2) / nn.subsampler.sub.x.dim(2);
-    w += 150;
-//     // display kernels
-//     idx_bloop1(mk, nn.subsampler.sub.x, double) {
-//       if (w < 500) {
-// 	draw_matrix(mk, h, w, zoom, zoom);
-// 	w += mk.dim(1) * zoom + 1;
-//       }
-//     }
-//     h0 += mk.dim(0) * zoom + 1;
-    h0 += 10;
+#define NN_LAYER_SUBSAMPLING_GUI(name, T)				\
+  void nn_layer_subsampling_gui::name(nn_layer_subsampling &nn,		\
+				      state_idx &in, state_idx &out,	\
+				      unsigned int &h0,			\
+				      unsigned int &w0,			\
+				      double zoom, double vmin, double vmax, \
+				      bool show_out) {			\
+    unsigned int h = h0, w = w0;					\
+    /* display input text	*/					\
+    gui << gui_only() << at(h, w) << "ssampl. in:" << in.T;		\
+    w += 150;								\
+    /* display inputs */						\
+    idx_bloop1(m, in.T, double) {					\
+      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+      w += m.dim(1) * zoom + 1;						\
+    }									\
+    h0 += m.dim(0) * zoom + 1;						\
+    w = w0;								\
+    h = h0;								\
+    /* display kernels text */						\
+    gui << gui_only()<< at(h, w) << "kernels:" << nn.subsampler.sub.T.dim(0); \
+    gui << "x" << in.T.dim(1) / nn.subsampler.sub.T.dim(1);		\
+    gui << "x" << in.T.dim(2) / nn.subsampler.sub.T.dim(2);		\
+    w += 150;								\
+    h0 += 10;								\
   }
+  
+  NN_LAYER_SUBSAMPLING_GUI(display_fprop, x)
+  NN_LAYER_SUBSAMPLING_GUI(display_bprop, dx)
+  NN_LAYER_SUBSAMPLING_GUI(display_bbprop, ddx)
 
 } // end namespace ebl
