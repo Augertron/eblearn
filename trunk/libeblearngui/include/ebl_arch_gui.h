@@ -42,8 +42,8 @@ namespace ebl {
 
   class module_1_1_gui {
   public:
-    int	 display_wid_fprop;
-    int	 display_wid_bprop;
+    uint	 display_wid_fprop;
+    uint	 display_wid_bprop;
 
     module_1_1_gui() {};
     virtual ~module_1_1_gui() {};
@@ -83,7 +83,7 @@ namespace ebl {
 
   class module_2_1_gui {
   private:
-    unsigned int	 display_wid_fprop;
+    uint	 display_wid_fprop;
 
   public:
     module_2_1_gui() {};
