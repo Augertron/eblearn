@@ -63,7 +63,7 @@ int main(int argc, char **argv) { // regular main without gui
 #ifdef __GUI__
   supervised_trainer_gui<ubyte, ubyte> stgui;
   stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
-  stgui.display_internals(thetrainer, test_ds, infp, 2);
+  stgui.display_internals(thetrainer, test_ds, infp, gdp, 2);
 #endif
 
   // first show classification results without training
@@ -80,7 +80,7 @@ int main(int argc, char **argv) { // regular main without gui
     theparam.save_x("mnist_trained_network.mat"); // save trained network
 #ifdef __GUI__
     stgui.display_datasource(thetrainer, test_ds, infp, 10, 10); // display
-    stgui.display_internals(thetrainer, test_ds, infp, 2);       // display
+    stgui.display_internals(thetrainer, test_ds, infp, gdp, 2);       // display
 #endif
     thetrainer.compute_diaghessian(train_ds, 100, 0.02); // recompute 2nd der
   }
