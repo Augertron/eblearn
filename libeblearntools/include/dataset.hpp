@@ -767,8 +767,10 @@ namespace ebl {
   idx<Tdata> dataset<Tdata>::resize_image_to(idx<Tdata> &img, const idxdim &d,
 					     rect &cropped, const rect *r) {
     // do nothing if dims are already the target dims.
-    if (img.same_dim(d))
+    if (img.same_dim(d)) {
+      cropped = rect(0, 0, img.dim(0), img.dim(1));
       return img;
+    }
     idx<Tdata> res;
     // if r is not specified, take entire image
     rect rr(0, 0, img.dim(0), img.dim(1));
