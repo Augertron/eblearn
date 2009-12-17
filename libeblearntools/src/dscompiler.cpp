@@ -248,6 +248,7 @@ void compile_ds(Tds &ds) {
   if (preprocessing)
     ds.set_pp_conversion(channels_mode.c_str());
   ds.set_max_per_class(maxperclass);
+  ds.set_image_pattern(image_pattern);
   if (scale_mode)
     ds.set_scales(scales, outdir);
   else 
@@ -272,6 +273,7 @@ void compile() {
       ds.set_outdims(outdims);
     ds.set_display(display);
     ds.set_sleepdisplay(sleep_delay);
+    ds.set_image_pattern(image_pattern);
     if (preprocessing)
       ds.set_pp_conversion(channels_mode.c_str());
     ds.extract();

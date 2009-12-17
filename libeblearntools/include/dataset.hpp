@@ -527,6 +527,12 @@ namespace ebl {
   }
   
   template <class Tdata>
+  void dataset<Tdata>::set_image_pattern(const string &p) {
+    extension = p;
+    cout << "Setting image pattern to " << extension << endl;
+  }
+  
+  template <class Tdata>
   bool dataset<Tdata>::count_samples() {
 #ifdef __BOOST__
     total_samples = 0;
