@@ -128,6 +128,9 @@ namespace ebl {
     //! set all max per class to max.
     void set_max_per_class(intg max);
 
+    //! set the pattern used to find image.
+    void set_image_pattern(const string &p);
+    
     //! Dataset has reached maximum sample capacity (this can be controlled
     //! by setting max_data variable).
     //! A label can be optionally passed to return if the dataset is full for
