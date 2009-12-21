@@ -128,6 +128,9 @@ namespace ebl {
     //! set all max per class to max.
     void set_max_per_class(intg max);
 
+    //! set maximum number of samples.
+    void set_max_data(intg max);
+
     //! set the pattern used to find image.
     void set_image_pattern(const string &p);
     
