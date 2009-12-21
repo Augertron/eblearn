@@ -527,6 +527,17 @@ namespace ebl {
   }
   
   template <class Tdata>
+  void dataset<Tdata>::set_max_data(intg max) {
+    if (max < 0)
+      eblerror("cannot set max_data to < 0");
+    if (max > 0) {
+      max_data = max;
+      max_data_set = true;
+      cout << "Max number of samples: " << max << endl;
+    }
+  }
+  
+  template <class Tdata>
   void dataset<Tdata>::set_image_pattern(const string &p) {
     extension = p;
     cout << "Setting image pattern to " << extension << endl;
