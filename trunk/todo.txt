@@ -1,7 +1,8 @@
 TODO list for eblearn
+(in addition to list returned by calling ./todo.sh)
 
 ________________________________________________________________________________
-libraries:
+Libraries:
 
 - bug: possible to copy 2 idx with same number of elements but
  different dimensions
