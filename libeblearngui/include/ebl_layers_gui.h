@@ -34,6 +34,7 @@
 
 #include "libidxgui.h"
 #include "ebl_layers.h"
+#include "ebl_transfer_gui.h"
 
 namespace ebl {
 

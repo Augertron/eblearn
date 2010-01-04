@@ -44,38 +44,33 @@ namespace ebl {
   public:
     uint	 display_wid_fprop;
     uint	 display_wid_bprop;
+    uint	 display_wid_bbprop;
 
     module_1_1_gui() {};
     virtual ~module_1_1_gui() {};
 
-    template<class Tin, class Tout>
-      void display_fprop(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,
-			 unsigned int h0 = 0, unsigned int w0 = 0, 
-			 double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
-			 bool show_out = true,
-			 int wid = -1, const char *wname = NULL);
-    
-    template<class Tin, class Tout>
-      void display_fprop2(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,
-			  unsigned int &h0, unsigned int &w0, 
-			  double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
-			  bool show_out = true,
-			  int wid = -1, const char *wname = NULL);
+#define DISPLAY_PROTO_1_1(name)						\
+    template<class Tin, class Tout>					\
+      void name(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,		\
+		unsigned int h0 = 0, unsigned int w0 = 0,		\
+		double dzoom = 1.0, double vmin=0.0, double vmax=0.0,	\
+		bool show_out = true,					\
+		int wid = -1, const char *wname = NULL);
 
-    template<class Tin, class Tout>
-      void display_bprop(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,
-			 unsigned int h0 = 0, unsigned int w0 = 0, 
-			 double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
-			 bool show_in = true,
-			 int wid = -1, const char *wname = NULL);
+#define DISPLAY2_PROTO_1_1(name)					\
+    template<class Tin, class Tout>					\
+      void name(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,		\
+		unsigned int &h0, unsigned int &w0,			\
+		double dzoom = 1.0, double vmin=0.0, double vmax=0.0,	\
+		bool show_out = true,					\
+		int wid = -1, const char *wname = NULL);
 
-    template<class Tin, class Tout>
-      void display_bprop2(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,
-			  unsigned int &h0, unsigned int &w0, 
-			  double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
-			  bool show_int = true,
-			  int wid = -1, const char *wname = NULL);
-    
+    DISPLAY_PROTO_1_1(display_fprop)
+    DISPLAY2_PROTO_1_1(display_fprop2)
+    DISPLAY_PROTO_1_1(display_bprop)
+    DISPLAY2_PROTO_1_1(display_bprop2)
+    DISPLAY_PROTO_1_1(display_bbprop)
+    DISPLAY2_PROTO_1_1(display_bbprop2)    
   };
 
   ////////////////////////////////////////////////////////////////
@@ -89,21 +84,18 @@ namespace ebl {
     module_2_1_gui() {};
     virtual ~module_2_1_gui() {};
 
-    template<class Tin1, class Tin2, class Tout>
-      void display_fprop(module_2_1<Tin1, Tin2, Tout> &m, 
-			 Tin1 &in1, Tin2 &in2, Tout &out,
-			 unsigned int &h0, unsigned int &w0, 
-			 double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
-			 bool show_out = true,
-			 int wid = -1, const char *wname = NULL);
-    
-    template<class Tin1, class Tin2, class Tout>
-      void display_bprop(module_2_1<Tin1, Tin2, Tout> &m, 
-			 Tin1 &in1, Tin2 &in2, Tout &out,
-			 unsigned int &h0, unsigned int &w0, 
-			 double dzoom = 1.0, double vmin=0.0, double vmax=0.0,
-			 bool show_out = true,
-			 int wid = -1, const char *wname = NULL);
+#define DISPLAY_PROTO_2_1(name)						\
+    template<class Tin1, class Tin2, class Tout>			\
+      void name(module_2_1<Tin1, Tin2, Tout> &m,			\
+		Tin1 &in1, Tin2 &in2, Tout &out,			\
+		unsigned int &h0, unsigned int &w0,			\
+		double dzoom = 1.0, double vmin=0.0, double vmax=0.0,	\
+		bool show_out = true,					\
+		int wid = -1, const char *wname = NULL);
+
+    DISPLAY_PROTO_2_1(display_fprop)
+    DISPLAY_PROTO_2_1(display_bprop)
+    DISPLAY_PROTO_2_1(display_bbprop)
   };
 
   ////////////////////////////////////////////////////////////////
@@ -113,22 +105,19 @@ namespace ebl {
   public:
     layers_n_gui() {};
     virtual ~layers_n_gui() {};
-    
-    template<class T> 
-      static void display_fprop(module_1_1_gui &g, layers_n<T> &ln, 
-				T &in, T &out,
-				unsigned int &h0, unsigned int &w0, 
-				double dzoom = 1.0,
-				double vmin=0.0, double vmax=0.0,
-				bool show_out = false);
 
-    template<class T> 
-      static void display_bprop(module_1_1_gui &g, layers_n<T> &ln, 
-				T &in, T &out,
-				unsigned int &h0, unsigned int &w0, 
-				double dzoom = 1.0,
-				double vmin=0.0, double vmax=0.0,
-				bool show_out = false);
+#define DISPLAY_PROTO_LAYERSN(name)					\
+    template<class T>							\
+      static void name(module_1_1_gui &g, layers_n<T> &ln,		\
+		       T &in, T &out,					\
+		       unsigned int &h0, unsigned int &w0,		\
+		       double dzoom = 1.0,				\
+		       double vmin=0.0, double vmax=0.0,		\
+		       bool show_out = false);
+
+    DISPLAY_PROTO_LAYERSN(display_fprop)
+    DISPLAY_PROTO_LAYERSN(display_bprop)
+    DISPLAY_PROTO_LAYERSN(display_bbprop)
   };
 
   ////////////////////////////////////////////////////////////////
@@ -139,23 +128,19 @@ namespace ebl {
     fc_ebm2_gui() {};
     virtual ~fc_ebm2_gui() {};
     
-    template<class Tin1, class Tin2, class Tout>
-      static void display_fprop(fc_ebm2<Tin1, Tin2, Tout> &fc,
-				Tin1 &i1, Tin2 &i2, 
-				state_idx &energy, 
-				unsigned int &h0, unsigned int &w0,
-				double zoom, double vmin=0.0, double vmax=0.0,
-				bool show_out = true,
-				int wid = -1, const char *wname = NULL);
-    
-    template<class Tin1, class Tin2, class Tout>
-      static void display_bprop(fc_ebm2<Tin1, Tin2, Tout> &fc,
-				Tin1 &i1, Tin2 &i2, 
-				state_idx &energy, 
-				unsigned int &h0, unsigned int &w0,
-				double zoom, double vmin=0.0, double vmax=0.0,
-				bool show_out = true,
-				int wid = -1, const char *wname = NULL);
+#define DISPLAY_PROTO_FCEBM2(name)					\
+    template<class Tin1, class Tin2, class Tout>			\
+      static void name(fc_ebm2<Tin1, Tin2, Tout> &fc,			\
+		       Tin1 &i1, Tin2 &i2,				\
+		       state_idx &energy,				\
+		       unsigned int &h0, unsigned int &w0,		\
+		       double zoom, double vmin=0.0, double vmax=0.0,	\
+		       bool show_out = true,				\
+		       int wid = -1, const char *wname = NULL);
+
+    DISPLAY_PROTO_FCEBM2(display_fprop)
+    DISPLAY_PROTO_FCEBM2(display_bprop)
+    DISPLAY_PROTO_FCEBM2(display_bbprop)
   };
 
 } // namespace ebl {

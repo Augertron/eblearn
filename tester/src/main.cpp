@@ -1,3 +1,4 @@
+#include <fenv.h>
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
@@ -10,7 +11,7 @@
 #include "MyTextOutputter.h"
 
 #include "BlasTest.h"
-#include "EblBasicTest.h"
+#include "ebl_basic_test.h"
 #include "IdxIOTest.h"
 #include "DataSourceTest.h"
 #include "IdxTest.h"
@@ -89,6 +90,8 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 #else
 int main(int argc, char **argv) {
 #endif
+  // enable float exceptions to halt instead of propagating errors
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
   //  gui.set_silent();
   cout << "***** Unit tester for libeblearn and libidx libraries *****" << endl;
   // parse arguments
@@ -110,7 +113,7 @@ int main(int argc, char **argv) {
   runner.addTest(IdxTest::suite());
   runner.addTest(IdxIteratorsTest::suite());
   runner.addTest(BlasTest::suite());
-  runner.addTest(EblBasicTest::suite());
+  runner.addTest(ebl_basic_test::suite());
   runner.addTest(IdxIOTest::suite());
   runner.addTest(image_test::suite());
   runner.addTest(DataSourceTest::suite());

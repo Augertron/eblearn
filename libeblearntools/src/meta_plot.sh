@@ -16,6 +16,7 @@ LOGS=`find ${TGTDIR} -name out*.log`
 LOGS=`echo $LOGS | sed ':a;N;$!ba;s/\n/ /g'`
 ALOGS=`echo $LOGS | sed 's/ / -a /g'`
 ALOGS="-a $ALOGS"
+touch $METACONF
 cp $METACONF .
 cp $LOGS .
 ################################################################################

@@ -38,6 +38,7 @@ namespace ebl {
   supervised_trainer_gui<Tdata, Tlabel>::supervised_trainer_gui(bool scroll_)
     : _st(NULL), _ds(NULL), _last_ds(NULL), 
       datasource_wid(-1), internals_wid(-1), internals_wid2(-1),
+      internals_wid3(-1),
       scroll(scroll_), scroll_added(false), pos(0), dsgui(NULL) {
   }
 
@@ -171,11 +172,18 @@ namespace ebl {
       ((internals_wid2 >= 0) ? internals_wid2 :
        new_window((title ? 
 		       title : "Supervised Trainer: internal bprop states")));
+    internals_wid3 = (wid >= 0) ? wid : 
+      ((internals_wid3 >= 0) ? internals_wid3 :
+       new_window((title ? 
+		       title : "Supervised Trainer: internal bbprop states")));
     // freeze and clear display updates
     select_window(internals_wid);
     disable_window_updates();
     clear_window();
     select_window(internals_wid2);
+    disable_window_updates();
+    clear_window();
+    select_window(internals_wid3);
     disable_window_updates();
     clear_window();
     // prepare dataset
@@ -184,16 +192,17 @@ namespace ebl {
     int answer;
     unsigned int wfdisp = 0, hfdisp = 0;
     unsigned int wfdisp2 = 0, hfdisp2 = 0;
+    unsigned int wfdisp3 = 0, hfdisp3 = 0;
     ds.fprop(*st.input, st.label);
     idx<double> m = st.input->x.select(0, 0);
     
-    select_window(internals_wid);
     // display first ninternals samples
     fc_ebm2_gui mg;
     for (unsigned int i = 0; (i < ds.size()) && (i < ninternals); ++i) {
       // prepare input
       ds.fprop(*st.input, st.label);
       // fprop and bprop
+      // TODO: display is influencing learning, remove influence
       st.learn_sample(*st.input, st.label.get(), args);
       ds.next();
       // display fprop
@@ -202,14 +211,21 @@ namespace ebl {
       // display bprop
       select_window(internals_wid2);
       mg.display_bprop(st.machine, *st.input, answer, st.energy, 
-      		       hfdisp2, wfdisp2, 3.0, -1.0, 1.0, true, internals_wid2);
+      		       hfdisp2, wfdisp2, 3.0, 1.0, 1.0, true, internals_wid2);
+      // display bprop
+      select_window(internals_wid3);
+      mg.display_bbprop(st.machine, *st.input, answer, st.energy, 
+			hfdisp3, wfdisp3, 3.0, .01, .01, true, internals_wid3);
       hfdisp += 10;
       hfdisp2 += 10;
+      hfdisp3 += 10;
     }
     // unfreeze display updates
     select_window(internals_wid);
     enable_window_updates();
     select_window(internals_wid2);
+    enable_window_updates();
+    select_window(internals_wid3);
     enable_window_updates();
   }  
 

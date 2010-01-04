@@ -117,6 +117,7 @@ namespace ebl {
     else sum->resize(d);
 
     // 2. fprop
+    sum->clear();
     convol.fprop(in, *sum);
     out.resize_as(*sum); // resize output
     adder.fprop(*sum, *sum);
@@ -171,6 +172,7 @@ namespace ebl {
     : lconv(p, kerneli, kernelj, stridei_, stridej_, tbl),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness) {
     tmp = NULL;
+    tmp2 = NULL;
   }
 
   layer_convabsnorm::~layer_convabsnorm() {
@@ -188,20 +190,22 @@ namespace ebl {
     else tmp2->resize(d);
 
     // 2. fprop
+    tmp->clear();
+    tmp2->clear();
     lconv.fprop(in, *tmp);
     abs.fprop(*tmp, *tmp2);
     norm.fprop(*tmp2, out);
   }
 
   void layer_convabsnorm::bprop(state_idx &in, state_idx &out) {
-    norm.bprop(*tmp, out);
-    abs.bprop(*tmp, *tmp);
+    norm.bprop(*tmp2, out);
+    abs.bprop(*tmp, *tmp2);
     lconv.bprop(in, *tmp);
   }
 
   void layer_convabsnorm::bbprop(state_idx &in, state_idx &out) {
-    norm.bbprop(*tmp, out);
-    abs.bbprop(*tmp, *tmp);
+    norm.bbprop(*tmp2, out);
+    abs.bbprop(*tmp, *tmp2);
     lconv.bbprop(in, *tmp);
   }
 

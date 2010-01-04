@@ -82,7 +82,7 @@ namespace ebl {
     string s0, s;
     char separator = '=';
     char comment1 = '#';
-    char comment2 = ';';
+    string comment2 = ";;";
     string::size_type pos;
     string name, value;
 
@@ -275,7 +275,6 @@ namespace ebl {
     cout << "loading configuration file: " << fname << endl;
     if (!extract_variables(fname, smap))
       return false;
-    cout << "loaded: " << endl;
     pretty();
     return true;
   }
@@ -309,6 +308,14 @@ namespace ebl {
     return smap[varname];
   }
 
+  const char *configuration::get_cstring(const char *varname) {
+    if (smap.find(varname) == smap.end()) {
+      cerr << "error: unknown variable: " << varname << endl;
+      throw "unknown variable";
+    }
+    return smap[varname].c_str();
+  }
+
   double configuration::get_double(const char *varname) {
     if (smap.find(varname) == smap.end()) {
       cerr << "error: unknown variable: " << varname << endl;
@@ -330,13 +337,17 @@ namespace ebl {
       throw "unknown variable";
     }
     istringstream iss(smap[varname], istringstream::in);
-    // TODO: check double conversion validity with exceptions instead
+    // TODO: check uint conversion validity with exceptions instead
     uint d;
-    d = numeric_limits<double>::max();
+    d = numeric_limits<uint>::max();
     iss >> d;
-    if (d == numeric_limits<double>::max())
-      throw "invalid conversion to double";
+    if (d == numeric_limits<uint>::max())
+      throw "invalid conversion to uint";
     return d;
+  }
+
+  bool configuration::get_bool(const char *varname) {
+    return (bool) get_uint(varname);
   }
 
   void configuration::pretty() {

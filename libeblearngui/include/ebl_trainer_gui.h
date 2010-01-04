@@ -55,6 +55,7 @@ namespace ebl {
     int						datasource_wid;
     int						internals_wid;
     int						internals_wid2;
+    int						internals_wid3;
     bool					scroll;
     bool					scroll_added;
     unsigned int                                pos;

@@ -331,6 +331,10 @@ namespace ebl {
       minv = idx_min(im1);
       maxv = idx_max(im1);
     }
+    if (minv == maxv) { // if minv still == maxv, use 0 and 1
+      minv = 0;
+      maxv = 1;
+    }
     // create target image
     int newh = im1.dim(0) * zoomh;
     int neww = im1.dim(1) * zoomw;

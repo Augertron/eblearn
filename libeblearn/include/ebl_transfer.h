@@ -72,6 +72,9 @@ namespace ebl {
     virtual void bprop(state_idx &in, state_idx &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx &in, state_idx &out);
+
+    // friends
+    friend class weighted_std_module_gui;
   };
 
   ////////////////////////////////////////////////////////////////

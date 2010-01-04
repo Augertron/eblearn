@@ -98,7 +98,7 @@ namespace ebl {
   template<class Tin1, class Tin2> class ebm_2 {
   public:
     virtual ~ebm_2() {};
-    //! fprop: compute output from input
+    //! fprop: compute energy output from inputs i1 and i2
     virtual void fprop(Tin1 &i1, Tin2 &i2, state_idx &energy);
     //! bprop: compute gradient wrt inputs, given gradient wrt output
     virtual void bprop(Tin1 &i1, Tin2 &i2, state_idx &energy);

@@ -41,7 +41,7 @@ echo "   (download at http://yann.lecun.com/exdb/mnist/)"
 /bin/echo -en "\t"
   read ans
   case $ans in
-    [yY]) echo "\tOk, what is your MNIST directory (absolute path)? (Example: /home/pierre/mnist)"
+    [yY]) echo "\tOk, what is your MNIST directory (absolute path)? (Example: /data/mnist)"
     /bin/echo -en "\t"
     read MNIST
     test -d $MNIST

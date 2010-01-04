@@ -30,20 +30,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef PASCAL_DATASET_H_
-#define PASCAL_DATASET_H_
+#ifndef PASCALFULL_DATASET_H_
+#define PASCALFULL_DATASET_H_
 
 #include "dataset.h"
 #include "xml_utils.h"
 
 namespace ebl {
 
-  //! The pascal_dataset class allows to extract a dataset of type PASCAL
-  //! from sample files and
-  //! compile all samples into one dataset matrix, formatted for learning.
-  //! It derives from the dataset class, reimplementing only PASCAL specifics,
-  //! such as reading xml files, etc.
-  template <class Tdata> class pascal_dataset : public dataset<Tdata> {
+  //! The pascalfull_dataset class extracts full images instead of bounding
+  //! boxes and saves each image into the outdir. It does not compile the images
+  //! since they have no labels.
+  //! This is useful if one wants to use the full original images of pascal
+  //! but exclude some classes, adding those images as a background class
+  //! into another dataset and then calling the regular dataset compiler.
+  template <class Tdata> class pascalfull_dataset
+    : public pascal_dataset<Tdata> {
   public:
 
     ////////////////////////////////////////////////////////////////
@@ -53,73 +55,44 @@ namespace ebl {
     //! not allocate data matrices, user must call alloc for that effect.
     //! outdims are the target output dimensions of each sample.
     //! inroot is the root directory from which we extract data.
-    //! ignore_diff ignores difficult objects if true.
-    pascal_dataset(const char *name, const char *inroot = NULL,
-		   bool ignore_diff = true);
+    pascalfull_dataset(const char *name, const char *inroot,
+		       const char *outdir);
 
     //! Destructor.
-    virtual ~pascal_dataset();
-
-    ////////////////////////////////////////////////////////////////
-    // data
-
-    //! Extract data from files into dataset.
-    virtual bool extract();
+    virtual ~pascalfull_dataset();
 
   protected:
     
 #ifdef __XML__ // disable some derived methods if XML not available
     
     ////////////////////////////////////////////////////////////////
-    // data
-    
-    //! count how many samples are present in dataset files to be compiled.
-    bool count_samples();
-
-    ////////////////////////////////////////////////////////////////
     // internal methods
 
     //! process an xml file.
     virtual bool process_xml(const string &xmlfile);
 
-    //! process one object from an xml file.
-    void process_object(Node* onode, idx<ubyte> &img, uint &h0, uint &w0,
-			uint obj_number, const string &image_filename);
-
-    //! process image for one object.
-    void process_image(idx<ubyte> &img, uint &h0, uint &w0,
-		       uint xmin, uint ymin,
-		       uint xmax, uint ymax, uint sizex, uint sizey,
-		       string &obj_class, uint obj_number, uint difficult,
-		       const string &image_filename);
-        
 #endif /* __XML__ */
     
   protected:
-    // "difficult" samples /////////////////////////////////////////
-    bool	ignore_difficult;	//!< ignore difficult or not
-    intg	total_difficult;	//!< total number of difficult samples
-    // directories /////////////////////////////////////////////////
-    string	annroot;	//!< directory of annotation xml files
-    string	imgroot;	//!< directory of images
     // base class members to be used ///////////////////////////////
-    using dataset<Tdata>::total_samples;
+    using pascal_dataset<Tdata>::annroot;
+    using pascal_dataset<Tdata>::imgroot;
     using dataset<Tdata>::inroot;
     using dataset<Tdata>::display_extraction;
     using dataset<Tdata>::display_result;
     using dataset<Tdata>::outdims;
-    using dataset<Tdata>::full;
-    using dataset<Tdata>::add_data;
+    using dataset<Tdata>::outdir;
+    using dataset<Tdata>::sleep_display;
+    using dataset<Tdata>::sleep_delay;
     using dataset<Tdata>::print_stats;
     using dataset<Tdata>::data_cnt;
     using dataset<Tdata>::extension;
     using dataset<Tdata>::ppconv_type;
-    using dataset<Tdata>::scale_mode;
     using dataset<Tdata>::exclude;
   };
 
 } // end namespace ebl
 
-#include "pascal_dataset.hpp"
+#include "pascalfull_dataset.hpp"
 
-#endif /* PASCAL_DATASET_H_ */
+#endif /* PASCALFULL_DATASET_H_ */

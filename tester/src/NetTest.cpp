@@ -17,7 +17,9 @@ void NetTest::setUp() {
 void NetTest::tearDown() {
 }
 
-void NetTest::test_lenet5_mnist() {  
+void NetTest::test_lenet5_mnist() {
+  bool display = true;
+  uint ninternals = 1;
   cout << endl;
   // for testing purposes, we always initialize the randomization with 0 so 
   // that we know the exact results. 
@@ -42,8 +44,8 @@ void NetTest::test_lenet5_mnist() {
   supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam);
 
 #ifdef __GUI__
-  labeled_datasource_gui<ubyte, ubyte> dsgui(true);
-  dsgui.display(test_ds, 10, 10);
+//   labeled_datasource_gui<ubyte, ubyte> dsgui(true);
+//   dsgui.display(test_ds, 10, 10);
   supervised_trainer_gui<ubyte, ubyte> stgui;
 #endif
 
@@ -66,11 +68,6 @@ void NetTest::test_lenet5_mnist() {
 	       /* double a_t */ 0.0,
 	       /* double g_t*/ 	0.0);
   infer_param infp;
-	
-#ifdef __GUI__
-  stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
-  stgui.display_internals(thetrainer, test_ds, infp, gdp, 2);
-#endif
 
   // estimate second derivative on 100 iterations, using mu=0.02
   // and set individual espilons
@@ -81,6 +78,14 @@ void NetTest::test_lenet5_mnist() {
 //   CPPUNIT_ASSERT_DOUBLES_EQUAL(49.851524, 
 // 			       idx_max(thetrainer.param.epsilons), 0.000001);
 
+	
+#ifdef __GUI__
+  if (display) {
+    stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
+    stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
+  }
+#endif
+  
   // do training iterations
   cout << "training with " << train_ds.size() << " training samples and ";
   cout << test_ds.size() << " test samples" << endl;
@@ -88,20 +93,25 @@ void NetTest::test_lenet5_mnist() {
   thetrainer.test(train_ds, trainmeter, infp);
   thetrainer.test(test_ds, testmeter, infp);
 #ifdef __GUI__
-  stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
-  stgui.display_internals(thetrainer, test_ds, infp, gdp, 2);
+  if (display) {
+    stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
+    stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
+  }
 #endif
   // this goes at about 25 examples per second on a PIIIM 800MHz
   for (int i = 0; i < 5; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
     thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
+    thetrainer.compute_diaghessian(train_ds, 100, 0.02);
 #ifdef __GUI__
-    stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
-    stgui.display_internals(thetrainer, test_ds, infp, gdp, 2);
+    if (display) {
+      stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
+      stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
+    }
 #endif
   }
-  CPPUNIT_ASSERT_DOUBLES_EQUAL(97.15,
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(97.05, // 97.15 without contrast norm
 			       ((trainmeter.total_correct * 100) 
 				/ (double) trainmeter.size), 0.01);
   CPPUNIT_ASSERT_DOUBLES_EQUAL(95.80,

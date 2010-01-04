@@ -155,38 +155,6 @@ namespace ebl {
   //! for example: gui << gui_only() << "text";
   void set_window_gui_only();
 
-  ////////////////////////////////////////////////////////////////
-  // instantiations of draw_matrix, useful for debugging under gdb
-
-  //! double instantiation of draw_matrix, useful for debugging under gdb
-  void draw_matrix_double(idx<double> &im, unsigned int h0 = 0,
-			  unsigned int w0 = 0,
-			  double zoomh = 1.0, double zoomw = 1.0,
-			  double minv = 0, double maxv = 0);
-    
-  //! float instantiation of draw_matrix, useful for debugging under gdb
-  void draw_matrix_float(idx<float> &im, unsigned int h0 = 0,
-			 unsigned int w0 = 0,
-			 double zoomh = 1.0, double zoomw = 1.0,
-			 float minv = 0, float maxv = 0);
-  
-  //! ubyte instantiation of draw_matrix, useful for debugging under gdb
-  void draw_matrix_ubyte(idx<ubyte> &im, unsigned int h0 = 0,
-			 unsigned int w0 = 0,
-			 double zoomh = 1.0, double zoomw = 1.0,
-			 ubyte minv = 0, ubyte maxv = 0);
-  
-  ////////////////////////////////////////////////////////////////
-  // global idx variables, useful for debugging under gdb
-  
-  extern ebl::idx<double> gdb_idx_double1;
-  extern ebl::idx<double> gdb_idx_double2;
-  extern ebl::idx<float> gdb_idx_float1;
-  extern ebl::idx<float> gdb_idx_float2;
-  extern ebl::idx<ubyte> gdb_idx_ubyte1;
-  extern ebl::idx<ubyte> gdb_idx_ubyte2;
-  
-
 } // namespace ebl
 
 #include "gui.hpp"

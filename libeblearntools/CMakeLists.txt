@@ -62,6 +62,7 @@ MESSAGE("libeblearntools compilation flags: ${CMAKE_CXX_FLAGS}")
 ################################################################################
 add_library (eblearntools SHARED
   src/configuration.cpp
+  src/gdb.cpp
   )
 
 # link executable with external libraries

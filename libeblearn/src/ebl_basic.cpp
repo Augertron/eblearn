@@ -397,8 +397,9 @@ namespace ebl {
   }
   
   void power_module::bprop(state_idx &in, state_idx &out) {
-    if ((&in != &out) && (in.dx.nelements() != out.dx.nelements()))
-      eblerror("output has wrong size");
+    state_idx_check_different(in, out); // forbid same in and out
+    idx_checknelems2_all(in.dx, out.dx); // must have same dimensions
+
     if (!tt.same_dim(in.x.get_idxdim())) { // resize temp buffer
       idxdim d(in.x);
       tt = idx<double>(d);
@@ -410,8 +411,9 @@ namespace ebl {
   }
 
   void power_module::bbprop(state_idx &in, state_idx &out) {
-    if ((&in != &out) && (in.dx.nelements() != out.dx.nelements()))
-      eblerror("output has wrong size");
+    state_idx_check_different(in, out); // forbid same in and out
+    idx_checknelems2_all(in.ddx, out.ddx); // must have same dimensions
+
     if (!tt.same_dim(in.x.get_idxdim())) { // resize temp buffer
       idxdim d(in.x);
       tt = idx<double>(d);
@@ -441,11 +443,17 @@ namespace ebl {
   }
 
   void diff_module::bprop(state_idx &in1, state_idx &in2, state_idx &out) {
+    state_idx_check_different3(in1, in2, out); // forbid same in and out
+    idx_checknelems3_all(in1.dx, in2.dx, out.dx);// must have same dimensions
+
     idx_add(in1.dx, out.dx, in1.dx); // derivative wrt in1
     idx_add(in2.dx, out.dx, in2.dx); // derivative wrt in2
   }
 
   void diff_module::bbprop(state_idx &in1, state_idx &in2, state_idx &out) {
+    state_idx_check_different3(in1, in2, out); // forbid same in and out
+    idx_checknelems3_all(in1.ddx, in2.ddx, out.ddx);// must have same dimensions
+
     idx_add(in1.ddx, out.ddx, in1.ddx); // derivative wrt in1
     idx_add(in2.ddx, out.ddx, in2.ddx); // derivative wrt in2
   }
@@ -475,6 +483,9 @@ namespace ebl {
   //!    dy\dx2 = x1
   //! </code>}
   void mul_module::bprop(state_idx &in1, state_idx &in2, state_idx &out) {
+    state_idx_check_different3(in1, in2, out); // forbid same in and out
+    idx_checknelems3_all(in1.dx, in2.dx, out.dx);// must have same dimensions
+
     if (!tmp.same_dim(in1.x.get_idxdim())) { // resize temp buffer
       idxdim d(in1.x);
       tmp = idx<double>(d);
@@ -490,6 +501,9 @@ namespace ebl {
   //!    d^2y\dx2^2 = (x1).^2
   //! </code>}
   void mul_module::bbprop(state_idx &in1, state_idx &in2, state_idx &out) {
+    state_idx_check_different3(in1, in2, out); // forbid same in and out
+    idx_checknelems3_all(in1.ddx, in2.ddx, out.ddx);// must have same dimensions
+
     if (!tmp.same_dim(in1.x.get_idxdim())) { // resize temp buffer
       idxdim d(in1.x);
       tmp = idx<double>(d);
@@ -526,6 +540,9 @@ namespace ebl {
   }
 
   void thres_module::bprop(state_idx &in, state_idx &out) {
+    state_idx_check_different(in, out); // forbid same in and out
+    idx_checknelems2_all(in.dx, out.dx); // must have same dimensions
+
     idx_aloop3(inx, in.x, double, indx, in.dx, double, outdx, out.dx, double) {
       if (*inx > thres)
 	*indx += *outdx;
@@ -533,6 +550,9 @@ namespace ebl {
   }
 
   void thres_module::bbprop(state_idx &in, state_idx &out) {
+    state_idx_check_different(in, out); // forbid same in and out
+    idx_checknelems2_all(in.ddx, out.ddx); // must have same dimensions
+
     idx_add(in.ddx, out.ddx, in.ddx);
   }
 
@@ -561,6 +581,8 @@ namespace ebl {
   }
 
   void cutborder_module::bprop(state_idx &in, state_idx &out) {
+    state_idx_check_different(in, out); // forbid same in and out
+    
     intg inr = out.x.dim(1);
     intg inc = out.x.dim(2);
     idx<double> tmp = in.dx.narrow(1, inr, nrow);
@@ -569,6 +591,8 @@ namespace ebl {
   }
 
   void cutborder_module::bbprop(state_idx &in, state_idx &out) {
+    state_idx_check_different(in, out); // forbid same in and out
+
     intg inr = out.x.dim(1);
     intg inc = out.x.dim(2);
     idx<double> tmp = in.ddx.narrow(1, inr, nrow);
@@ -599,6 +623,8 @@ namespace ebl {
   }
 
   void zpad_module::bprop(state_idx &in, state_idx &out) {
+    state_idx_check_different(in, out); // forbid same in and out
+
     intg inr = in.x.dim(1);
     intg inc = in.x.dim(2);
     idx<double> tmp = out.dx.narrow(1, inr, nrow);
@@ -607,6 +633,8 @@ namespace ebl {
   }
 
   void zpad_module::bbprop(state_idx &in, state_idx &out) {
+    state_idx_check_different(in, out); // forbid same in and out
+
     intg inr = in.x.dim(1);
     intg inc = in.x.dim(2);
     idx<double> tmp = out.ddx.narrow(1, inr, nrow);
@@ -636,6 +664,9 @@ namespace ebl {
   }
 
   void fsum_module::bprop(state_idx &in, state_idx &out) {
+    state_idx_check_different(in, out); // forbid same in and out
+    idx_checknelems2_all(in.dx, out.dx); // must have same dimensions
+    
     idx_eloop2(indx2, in.dx, double, outdx2, out.dx, double) {
       idx_eloop2(indx1, indx2, double, outdx1, outdx2, double) {
 	idx_addc(indx1, idx_sum(outdx1), indx1);
@@ -644,6 +675,9 @@ namespace ebl {
   }
 
   void fsum_module::bbprop(state_idx &in, state_idx &out) {
+    state_idx_check_different(in, out); // forbid same in and out
+    idx_checknelems2_all(in.ddx, out.ddx); // must have same dimensions
+    
     idx_eloop2(inddx2, in.ddx, double, outddx2, out.ddx, double) {
       idx_eloop2(inddx1, inddx2, double, outddx1, outddx2, double) {
 	idx_addc(inddx1, idx_sum(outddx1), inddx1);

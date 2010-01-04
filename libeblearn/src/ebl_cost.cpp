@@ -48,7 +48,7 @@ namespace ebl {
   void euclidean_module::fprop(state_idx &in1, int &label, state_idx &energy) {
     idx<double> target = targets.select(0, label);
     idx_copy(target, in2.x);
-    // squared distance between in1 and target
+    // squared L2 distance between in1 and target
     idx_sqrdist(in1.x, in2.x, energy.x);
     idx_dotc(energy.x, 0.5, energy.x); // multiply by .5
   }

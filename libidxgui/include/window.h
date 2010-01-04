@@ -167,7 +167,7 @@ namespace ebl {
     void update_window(bool activate = false);
 
     // painting/drawing methods
-    void draw_text(QPainter &painter);
+    void draw_text(QPainter &painter, double scaleFactor = 1.0);
     void draw_arrows(QPainter &painter);
     void draw_boxes(QPainter &painter);
     void draw_images();

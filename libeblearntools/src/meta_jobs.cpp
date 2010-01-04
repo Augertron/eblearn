@@ -60,7 +60,7 @@ namespace ebl {
     cmd << "cd " << outdir << " && " << exe << " " << outdir << "/config";
     cmd << " > " << outdir << "/out_" << conf.get_name() << ".log &";
     cout << "executing: " << cmd.str() << endl;
-    if (!system(cmd.str().c_str()))
+    if (system(cmd.str().c_str()))
       cerr << "error executing: " << cmd.str() << endl;
   }
 
@@ -110,8 +110,22 @@ namespace ebl {
     // copy metaconf into jobs' root
     ostringstream cmd;
     cmd << "cp " << mconf_fname << " " << mconf.get_output_dir();
-    if (!system(cmd.str().c_str()))
+    if (system(cmd.str().c_str()))
       cerr << "warning: failed to execute: " << cmd.str() << endl;
+    // create gnuplot param file in jobs' root
+    try {
+      string params = mconf.get_string("meta_gnuplot_params");
+      ostringstream gpp;
+      gpp << mconf.get_output_dir() << "/" << "gnuplot_params.txt";
+      ofstream of(gpp.str().c_str());
+      if (!of) {
+	cerr << "warning: failed to write gnuplot parameters to ";
+	cerr << gpp.str() << endl;
+      } else {
+	of << params;
+	of.close();
+      }
+    } catch (const char *s) { cerr << s << endl; }
     // run jobs
     for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i)
       i->run();

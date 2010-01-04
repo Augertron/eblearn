@@ -399,13 +399,13 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  //! generalized Uclidean distance between <i1> and <i2>,
+  //! generalized Euclidean distance between <i1> and <i2>,
   //! i.e. the sum of squares of all the differences
   //! between corresponding terms of <i1> and <i2>.
   //! The result is returned by the function.
   template<class T> T idx_sqrdist(idx<T> &i1, idx<T> &i2);
 
-  //! generalized Uclidean distance between <i1> and <i2>,
+  //! generalized Euclidean distance between <i1> and <i2>,
   //! i.e. the sum of squares of all the differences
   //! between corresponding terms of <i1> and <i2>.
   //! The result is assigned into the idx out (of order 0).

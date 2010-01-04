@@ -9,6 +9,7 @@
 
 include_directories(include)
 include_directories(${LIBEBLEARN_INCLUDE_DIR})
+include_directories(${LIBEBLEARNTOOLS_INCLUDE_DIR})
 include_directories(${LIBIDX_INCLUDE_DIR})
 
 FIND_PACKAGE(Qt4)
@@ -31,12 +32,18 @@ add_executable (mnist_train
   
 # link executable with external libraries
 ################################################################################
-target_link_libraries (mnist_train eblearn idx)
+target_link_libraries (mnist_train eblearn idx eblearntools)
 IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (mnist_train idxgui)
   target_link_libraries (mnist_train eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
-  
+
+# copy conf and metaconf to bin
+EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/mnist_conf\""
+		  "\"${LIBRARY_OUTPUT_PATH}\"")		
+EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/mnist_metaconf\""
+		  "\"${LIBRARY_OUTPUT_PATH}\"")
+		
 # compile executable
 ################################################################################
 add_executable (mnist_reco

@@ -318,9 +318,9 @@ namespace ebl {
 	double scaleh = original_h / in_h;
 	double scalew = original_w / in_w;
 	double offset_h_factor = (in_h - in_mindim.dim(1)) * scaleh
-	  / MAX(0, (out_h - 1));
+	  / MAX(1, (out_h - 1));
 	double offset_w_factor = (in_w - in_mindim.dim(2)) * scalew
-	  / MAX(0, (out_w - 1));
+	  / MAX(1, (out_w - 1));
 	offset_h = 0;
 	{ idx_bloop1(re, *((idx<double>*) r.get()), double) {
 	    offset_w = 0;

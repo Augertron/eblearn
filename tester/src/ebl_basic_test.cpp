@@ -1,15 +1,15 @@
-#include "EblBasicTest.h"
+#include "ebl_basic_test.h"
 
 using namespace std;
 using namespace ebl;
 
-void EblBasicTest::setUp() {
+void ebl_basic_test::setUp() {
 }
 
-void EblBasicTest::tearDown() {
+void ebl_basic_test::tearDown() {
 }
 
-void EblBasicTest::test_nn_layer_convolution_fprop() {
+void ebl_basic_test::test_nn_layer_convolution_fprop() {
   intg ini = 3;
   intg inj = 3;
   intg ki = 2;
@@ -50,7 +50,7 @@ void EblBasicTest::test_nn_layer_convolution_fprop() {
   CPPUNIT_ASSERT_DOUBLES_EQUAL( 0.761594, (out.x).get(0, 1, 1), 0.000001);
 }
 
-void EblBasicTest::test_jacobian_nn_layer_convolution() {
+void ebl_basic_test::test_jacobian_nn_layer_convolution() {
   intg ini = 3;
   intg inj = 3;
   intg ki = 2;
@@ -73,7 +73,7 @@ void EblBasicTest::test_jacobian_nn_layer_convolution() {
   CPPUNIT_ASSERT(errs.get(1) < mt.get_acc_thres());
 }
 
-void EblBasicTest::test_jacobian_nn_layer_subsampling() {
+void ebl_basic_test::test_jacobian_nn_layer_subsampling() {
   parameter p(10000);
   int ki = 4, kj = 4, thick = 1, si = 2, sj =2;
   nn_layer_subsampling s(p, ki, kj, si, sj, thick);
@@ -88,7 +88,7 @@ void EblBasicTest::test_jacobian_nn_layer_subsampling() {
   CPPUNIT_ASSERT(errs.get(1) < mt.get_acc_thres());
 }
 
-void EblBasicTest::test_state_copy() {
+void ebl_basic_test::test_state_copy() {
   state_idx a(4,4);
 
   dseed(32);
@@ -116,7 +116,7 @@ void EblBasicTest::test_state_copy() {
 }
 
 
-void EblBasicTest::test_softmax(){
+void ebl_basic_test::test_softmax(){
   CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
 
   state_idx *in = new state_idx(2,2,2,2,2,2);
@@ -211,3 +211,18 @@ void EblBasicTest::test_softmax(){
   delete out;
 }
 
+void ebl_basic_test::test_power_module() {
+  state_idx in(1);
+  state_idx out(1);
+  power_module pw(.5);
+
+  in.x.set(2, 0);
+  out.dx.set(1, 0);
+  out.ddx.set(1, 0);
+  pw.fprop(in, out);
+  pw.bprop(in, out);
+  pw.bbprop(in, out);
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(1.4142, out.x.get(0), 0.0001);
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(0.3536, in.dx.get(0), 0.0001);
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(0.125, in.ddx.get(0), 0.0001);
+}

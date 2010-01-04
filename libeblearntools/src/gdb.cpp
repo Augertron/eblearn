@@ -29,98 +29,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "gui.h"
+#include "gdb.h"
 
 using namespace std;
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // gui
+  // instantiations of blas functions, useful for debugging under gdb
 
-  int new_window(const char *wname, unsigned int h, unsigned int w) {
-    return gui.new_window(wname, h, w);
-  }
-
-  int new_window(const string &wname, unsigned int h, unsigned int w) {
-    return gui.new_window(wname.c_str(), h, w);
-  }
-
-  void select_window(int wid) {
-    gui.select_window(wid);
-  }
-
-  void disable_window_updates() {
-    gui.disable_updates();
-  }
-
-  void enable_window_updates() {
-    gui.enable_updates();
-  }
-
-  void quit_gui() {
-    gui.quit();
+  double idx_max_double(idx<double> &m) {
+    return idx_max<double>(m);
   }
   
-  void clear_window() {
-    gui.clear();
+  double idx_min_double(idx<double> &m) {
+    return idx_min<double>(m);
+  }
+  
+#ifdef __GUI__
+  ////////////////////////////////////////////////////////////////
+  // instantiations of draw_matrix, useful for debugging under gdb
+
+  void draw_matrix_double(idx<double> &im, unsigned int h0, unsigned int w0, 
+			  double zoomh, double zoomw, double minv, double maxv){
+    draw_matrix<double>(im, h0, w0, zoomh, zoomw, minv, maxv);
+  }
+  
+  void draw_matrix_float(idx<float> &im, unsigned int h0, unsigned int w0, 
+			 double zoomh, double zoomw, float minv, float maxv) {
+    draw_matrix<float>(im, h0, w0, zoomh, zoomw, minv, maxv);
+  }
+    
+  void draw_matrix_ubyte(idx<ubyte> &im, unsigned int h0, unsigned int w0, 
+			 double zoomh, double zoomw, ubyte minv, ubyte maxv) {
+    draw_matrix<ubyte>(im, h0, w0, zoomh, zoomw, minv, maxv);
   }
 
-  void save_window(const char *filename, int wid) {
-    gui.save_window(filename, wid);
-  }
+#endif
+  
+  ////////////////////////////////////////////////////////////////
+  // global idx variables, useful for debugging under gdb
+  
+  idx<double> gdb_idx_double1;
+  idx<double> gdb_idx_double2;
+  idx<float> gdb_idx_float1;
+  idx<float> gdb_idx_float2;
+  idx<ubyte> gdb_idx_ubyte1;
+  idx<ubyte> gdb_idx_ubyte2;  
 
-  void draw_arrow(int h1, int w1, int h2, int w2) {
-    gui.draw_arrow(h1, w1, h2, w2);
-  }
-
-  void draw_box(int h0, int w0, int h, int w,
-		unsigned char r, unsigned char g, unsigned char b, string *s) {
-    gui.draw_box(h0, w0, h, w, r, g, b, s);
-  }
-
-  void set_gui_silent() {
-    gui.set_silent();
-  }
-
-  void set_gui_silent(const std::string *filename) {
-    gui.set_silent(filename);
-  }
-
-  void set_gui_silent(const char *filename) {
-    gui.set_silent(filename);
-  }
-
-  void draw_text(std::string *s) {
-    gui.draw_text(s);
-  }
-
-  void draw_text(std::string *s, unsigned int h0, unsigned int w0) {
-    gui.draw_text(s, h0, w0);
-  }
-
-  void set_window_text_origin(unsigned int h0, unsigned int w0) {
-    gui.set_text_origin(h0, w0);
-  }
-
-  void set_window_text_colors(unsigned char fg_r, unsigned char fg_g,
-			      unsigned char fg_b, unsigned char fg_a,
-			      unsigned char bg_r, unsigned char bg_g,
-			      unsigned char bg_b, unsigned char bg_a) {
-    gui.set_text_colors(fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a);
-  }
-
-  void set_window_text_colors(int fg_r, int fg_g, int fg_b, int fg_a,
-			      int bg_r, int bg_g, int bg_b, int bg_a) {
-    gui.set_text_colors(fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a);
-  }
-
-  void set_window_cout_and_gui() {
-    gui.set_cout_and_gui();
-  }
-
-  void set_window_gui_only() {
-    gui.set_gui_only();
-  }
-
-} // end namespace ebl
+} // namespace ebl
