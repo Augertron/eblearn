@@ -80,7 +80,7 @@ namespace ebl {
   template <class Tdata>
   bool pascal_dataset<Tdata>::extract() {
 #ifdef __XML__    
-    cout << "Extracting samples from files into dataset..." << endl;
+    cout << "Extracting samples from PASCAL files into dataset..." << endl;
     // adding data to dataset using all xml files in annroot
     regex eExt(extension);
     cmatch what;
@@ -93,7 +93,7 @@ namespace ebl {
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
       if (!is_directory(itr->status()) &&
 	  regex_match(itr->leaf().c_str(), what, eExt)) {
-	process_xml(itr->path().string());
+	this->process_xml(itr->path().string());
 	if (full())
 	  break;
       }
@@ -153,7 +153,9 @@ namespace ebl {
 		  }
 		}
 		// add class to dataset
-		if (!(ignore_difficult && difficult))
+		if (!(ignore_difficult && difficult) && // ignore difficult?
+		    (find(exclude.begin(), exclude.end(),
+			  obj_classname) == exclude.end()))
 		  this->add_class(obj_classname);
 		// increment samples numbers
 		total_samples++;

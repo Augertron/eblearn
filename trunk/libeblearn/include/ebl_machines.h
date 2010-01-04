@@ -55,7 +55,7 @@ namespace ebl {
     nn_machine_cscscf(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
 		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-		      idx<intg> &tbl2, intg outthick);
+		      idx<intg> &tbl2, intg outthick, bool norm = false);
     virtual ~nn_machine_cscscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -75,7 +75,7 @@ namespace ebl {
     void init(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-	      idx<intg> &tbl2, intg outthick);
+	      idx<intg> &tbl2, intg outthick, bool norm = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -90,7 +90,7 @@ namespace ebl {
     nn_machine_cscsc(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
 		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-		      idx<intg> &tbl2);
+		     idx<intg> &tbl2, bool norm = false);
     virtual ~nn_machine_cscsc();
 
     //! The init function creates the machine by stacking the modules in this
@@ -110,7 +110,7 @@ namespace ebl {
     void init(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-	      idx<intg> &tbl2);
+	      idx<intg> &tbl2, bool norm = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -143,7 +143,7 @@ namespace ebl {
     lenet5(parameter &prm, intg image_height, intg image_width,
 	   intg ki0, intg kj0, intg si0, intg sj0,
 	   intg ki1, intg kj1, intg si1, intg sj1,
-	   intg hid, intg output_size);
+	   intg hid, intg output_size, bool norm = false);
     virtual ~lenet5() {}
   };
 

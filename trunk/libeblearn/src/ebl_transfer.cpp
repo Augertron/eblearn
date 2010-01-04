@@ -105,10 +105,12 @@ namespace ebl {
     //! in - mean
     difmod.fprop(in, inmean, inzmean);
     //! (in - inmean)^2
+    idx_addc(inzmean.x, 1e-5, inzmean.x); // TODO: temporary
     sqmod.fprop(inzmean, inzmeansq);
     //! sum_j (w_j (in - mean)^2)
     convvar.fprop(inzmeansq, invar);
     //! sqrt(sum_j (w_j (in - mean)^2))
+    idx_addc(invar.x, 1e-5, invar.x); // TODO: temporary
     sqrtmod.fprop(invar, instd);
     //! update the threshold values in thres
     double mm = idx_sum(instd.x) / instd.size();
@@ -196,19 +198,21 @@ abs_module::abs_module(double thres) {
   }
 
   void abs_module::bprop(state_idx& in, state_idx& out) {
-    if ((&in != &out) && (in.dx.nelements() != out.dx.nelements()))
-      eblerror("output has wrong size");
+    state_idx_check_different(in, out); // forbid same in and out
+    idx_checknelems2_all(in.dx, out.dx); // must have same dimensions
+    
     idx_aloop3(inx, in.x, double, indx, in.dx, double, outdx, out.dx, double) {
       if (*inx > threshold)
 	*indx = *indx + *outdx;
       else if (*inx < -threshold)
-	*indx = *indx - *outdx;
+      	*indx = *indx - *outdx;
     }
   }
 
   void abs_module::bbprop(state_idx& in, state_idx& out) {
-    if ((&in != &out) && (in.ddx.nelements() != out.ddx.nelements()))
-      eblerror("output has wrong size");
+    state_idx_check_different(in, out); // forbid same in and out
+    idx_checknelems2_all(in.ddx, out.ddx); // must have same dimensions
+    
     idx_add(in.ddx, out.ddx, in.ddx);
   }
   

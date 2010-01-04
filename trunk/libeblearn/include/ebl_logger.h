@@ -95,6 +95,8 @@ namespace ebl {
     double total_energy;
     vector<uint> class_errors;
     vector<uint> class_totals;
+    vector<uint> class_tpr;
+    vector<uint> class_fpr;
 
     //! Create a new <classifier-meter> using <comparison-function>
     //! to compare actual and desired answers. By default
@@ -144,7 +146,13 @@ namespace ebl {
     //! the average energy, the percentage of correctly
     //! recognize samples, the percentage of erroneously
     //! recognized samples, and the percentage of rejected samples.
-    void display(vector<string*> *lblstr = NULL);
+    //! names of each class (lblstr) are optional.
+    void display(int iteration, string &dsname, vector<string*> *lblstr = NULL);
+
+    //! display ROC points for each class.
+    //! names of each class (lblstr) are optional.
+    void display_positive_rates(double threshold, vector<string*> *lblstr = NULL);
+    
     bool save();
     bool load();
   };

@@ -1,0 +1,25 @@
+################################################################################
+# META_TRAINER CONFIGURATION
+# Note: variables starting with "meta_" are reserved for meta configuration
+
+# required variables
+meta_command = /home/pierre/eblpierre/bin/mnist_train
+
+# optional variables
+meta_name = mnist
+meta_max_cpus = 8
+meta_output_dir = /data/mnist/outputs/
+meta_email = pierre.sermanet@gmail.com
+meta_email_period = 1 # send a email with plots after every n iterations
+
+################################################################################
+# LOCAL PROGRAM CONFIGURATION
+
+root = /data/mnist/
+eta = .0001
+iterations = 50
+display = 1
+ninternals = 1
+training_size = 60000
+testing_size = 10000
+absnorm = 1

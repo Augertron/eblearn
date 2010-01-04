@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <map>
 #include "libidx.h"
+#include <algorithm>
 
 #ifdef __BOOST__
 #include "boost/filesystem.hpp"
@@ -51,7 +52,9 @@ using namespace boost;
 using namespace std;
 using namespace ebl;
 
-typedef map<string, map<string, vector<string>, less<string> >, less<string> >
+// plots_t is a hierarchy of variables name, plot names, 
+// and finally abscissa value with coordinate values
+typedef map<string, map<string, map<double,string>, less<string> >, less<string> >
 plots_t;
 
 // parse command line input
@@ -86,17 +89,19 @@ void print_usage() {
   cout << "Usage: ./meta_trainer <logs_root> [OPTIONS]" << endl;
 }
 
+// 
 void add_to_plots(plots_t &plots, const string &name, const string &vname,
-		  size_t line, float value) {
+		  double abscissa, float value) {
   ostringstream oss;
-  string gnuplot_separator = "_";
-  vector<string> &values = plots[vname][name];
+  //  string gnuplot_separator = "_";
+  map<double, string> &values = plots[vname][name];
 
   oss << value;
-  if (values.size() <= line) // resize current array if necessary
-    values.resize(line + 1, gnuplot_separator);
+  // resize current array if abscissa not found in values
+//   if (find(values.begin(), values.end(), abscissa) == values.end())
+//     values.resize(values.size() + 1, gnuplot_separator);
   // add new value
-  values[line] = oss.str();
+  values[abscissa] = oss.str();
 }
 
 bool parse_output_log(const string &fname, const string &name, plots_t &plots) {
@@ -104,7 +109,7 @@ bool parse_output_log(const string &fname, const string &name, plots_t &plots) {
   ifstream in(fname.c_str());
   string s, vname;
   char separator = VALUE_SEPARATOR;
-  size_t line = 0;
+  double abscissa;
   float f;
   string::size_type itok, stok;
 
@@ -116,9 +121,9 @@ bool parse_output_log(const string &fname, const string &name, plots_t &plots) {
     getline(in, s);
     istringstream iss(s, istringstream::in);
     try {
-      iss >> line;
+      iss >> abscissa; // get abscissa value from first value
       itok = s.find(separator);
-      while (itok != string::npos) {
+      while (itok != string::npos) { // get remaining values
 	stok = s.find_last_of(' ', itok - 1); 
 	vname = s.substr(stok + 1, itok - stok - 1);
 	s = s.substr(itok + 1);
@@ -127,19 +132,20 @@ bool parse_output_log(const string &fname, const string &name, plots_t &plots) {
 	iss >> f;
 	itok = s.find(separator);
  	if (f != numeric_limits<float>::max())
-	  add_to_plots(plots, name, vname, line, f);
+	  add_to_plots(plots, name, vname, abscissa, f);
       }
     } catch(std::istringstream::failure& e) {}
   }
   return true;
 }
 
-bool write_plots(plots_t &plots) {
+// write plot files, using gpparams as additional gnuplot parameters
+bool write_plots(plots_t &plots, string &gpparams) {
   string gnuplot_column_separator = "\t";
-    string gnuplot_config1 = "clear ; \
-set terminal pdf ; set grid ytics;set ytics 5;set mytics 5;set grid mytics; \n	\
-set output \"";
-    string gnuplot_config2 = ".pdf\" ;	\
+  string gnuplot_config1 = "clear ; \
+set terminal pdf ; \n";
+  string gnuplot_config2 = " set output \"";
+  string gnuplot_config3 = ".pdf\" ;	\
 plot ";	    
   
   // loop on each plot
@@ -160,11 +166,12 @@ plot ";
 	cerr << "warning: failed to open " << fname << endl;
       else {
 	// initialize .p file
-	outp << gnuplot_config1 << iplots->first << gnuplot_config2;
+	outp << gnuplot_config1 << gpparams << gnuplot_config2;
+	outp << iplots->first << gnuplot_config3;
 	// loop on each run to find maximum number of values and create
 	// the p files describing how to plot the data
-	map<string, vector<string>, less<string> > &runs = iplots->second;
-	map<string, vector<string>, less<string> >::iterator iruns =
+	map<string, map<double,string>, less<string> > &runs = iplots->second;
+	map<string, map<double,string>, less<string> >::iterator iruns =
 	  runs.begin();
 	size_t max_nvalues = 0;
 	for (int r = 2; iruns != runs.end(); ++iruns, ++r) {
@@ -176,20 +183,24 @@ plot ";
 	  outp << "\"" << plot_fname << "\" using 1:" << r << " title \"";
 	  outp << iruns->first << "\" with lines";
 	}
-	// loop on each value (keep looping if until max_nvalues to equalize
-	// the number of values for each run
-	for (size_t i = 0; i < max_nvalues; ++i) {
-	  out << i << gnuplot_column_separator; // separate columns
-	  // loop on each run
-	  for (iruns = runs.begin(); iruns != runs.end(); ++iruns) {
-	    vector<string> &values = iruns->second;
-	    if (i < values.size())
-	      out << values[i] << gnuplot_column_separator;
-	    else
+	// loop on each run (1 run == 1 column)
+	uint pos = 0;
+	for (iruns = runs.begin(); iruns != runs.end(); ++iruns, ++pos) {
+	  map<double,string> &values = iruns->second;
+	  map<double,string>::iterator ival = values.begin();
+	  // loop on each value and add 1 line per value
+	  // with other columns with empty marker '?'
+	  for ( ; ival != values.end(); ++ival) {
+	    out << ival->first << gnuplot_column_separator;
+	    for (uint j = 0; j < pos; ++j)
 	      out << "?"  << gnuplot_column_separator;
+	    out << ival->second << gnuplot_column_separator;
+	    for (uint j = pos + 1; j < runs.size(); ++j)
+	      out << "?"  << gnuplot_column_separator;
+	    out << endl;
 	  }
-	  out << endl;
 	}
+	out << endl;
       }
       outp.close();
     }
@@ -229,11 +240,19 @@ int main(int argc, char **argv) {
     print_usage();
     return -1;
   }
-
   string root = argv[1];
+  string gpparams;
 
   // for each variable, for each logfile, the values of a plot in a vector
   plots_t plots;
+  // check for gnuplot parameters in gnuplot_params.txt
+  ostringstream p;
+  p << root << "/" << "gnuplot_params.txt";
+  ifstream in(p.str().c_str());
+  if (in) {
+    getline(in, gpparams);
+    in.close();
+  }
  
 #ifdef __BOOST__
     // check root directory
@@ -244,7 +263,7 @@ int main(int argc, char **argv) {
       return -1;
     }
     find_logs(rd, plots);
-    write_plots(plots);
+    write_plots(plots, gpparams);
 #endif 
   return 0;
 }

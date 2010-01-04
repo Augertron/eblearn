@@ -394,23 +394,23 @@ namespace ebl {
       painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
     painter.drawPixmap(exposed, *pixmap, exposed);
     draw_boxes(painter);
-    draw_text(painter);
+    draw_text(painter, scaleFactor);
     draw_arrows(painter);
     painter.restore();
-    if (!silent) {
-      QString txt = tr("Use mouse wheel to zoom, left click to drag.");
-      QFontMetrics metrics = painter.fontMetrics();
-      int textWidth = metrics.width(txt);
-      painter.setPen(Qt::NoPen);
-      painter.setBrush(QColor(0, 0, 0, 127));
-      painter.drawRect((width() - textWidth) / 2 - 5, height() - 15, 
-		       textWidth + 10,
-		       metrics.lineSpacing() + 5);
-      painter.setPen(Qt::white);
-      painter.drawText((width() - textWidth) / 2,
-		       height() - 15 + metrics.leading() + metrics.ascent(), 
-		       txt);
-    }
+//     if (!silent) {
+//       QString txt = tr("Use mouse wheel to zoom, left click to drag.");
+//       QFontMetrics metrics = painter.fontMetrics();
+//       int textWidth = metrics.width(txt);
+//       painter.setPen(Qt::NoPen);
+//       painter.setBrush(QColor(0, 0, 0, 127));
+//       painter.drawRect((width() - textWidth) / 2 - 5, height() - 15, 
+// 		       textWidth + 10,
+// 		       metrics.lineSpacing() + 5);
+//       painter.setPen(Qt::white);
+//       painter.drawText((width() - textWidth) / 2,
+// 		       height() - 15 + metrics.leading() + metrics.ascent(), 
+// 		       txt);
+//     }
   }
 
   void Window::draw_arrows(QPainter &painter) {
@@ -469,7 +469,7 @@ namespace ebl {
     painter.setPen(Qt::black);
   }
 
-  void Window::draw_text(QPainter &painter) {
+  void Window::draw_text(QPainter &painter, double scaleFactor) {
     unsigned int th = 0, tw = 0;
     for (vector<text*>::iterator i = texts.begin(); i != texts.end(); ++i) {
       if (*i) {
@@ -477,11 +477,10 @@ namespace ebl {
 	text_bg_color.setRgb((*i)->bg_r, (*i)->bg_g, (*i)->bg_b, (*i)->bg_a); 
 	QString txt((*i)->c_str());
 	QRectF bg;
-	painter.setPen(text_fg_color);
+	QFontMetrics metrics = painter.fontMetrics();
 	QRect qr = rect();
 	qr.setLeft((*i)->pos_reset ? (*i)->w0 : tw);
 	qr.setTop( (*i)->pos_reset ? (*i)->h0 - 1 : th);
-
 // 	// resize buffer if text is out?
 // 	QRect br = painter.boundingRect(qr, Qt::AlignLeft & Qt::TextWordWrap 
 // 					& Qt::AlignTop, txt);
@@ -491,15 +490,17 @@ namespace ebl {
 // 			  (*i)->w0 + br.width());
 // 	buffer_resize(buffer_maxh, buffer_maxw);
 
+//	painter.setPen(text_fg_color);
+//	painter.setPen(Qt::NoPen);
 	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
 			 txt, &bg);
 	th = bg.top();
 	tw = bg.right();
-	painter.setPen(Qt::NoPen);
-	painter.setBrush(text_bg_color);
 	bg.setTop(bg.top() + 1);
 	bg.setHeight(bg.height() - 3);
-	painter.drawRect(bg);
+	painter.setBrush(text_bg_color);
+	painter.setPen(Qt::NoPen);
+	painter.drawRect(bg.left(), bg.top(), bg.width(), bg.height());
 	painter.setPen(text_fg_color);
 	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
 			 txt, &bg);

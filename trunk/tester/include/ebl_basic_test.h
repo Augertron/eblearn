@@ -1,5 +1,5 @@
-#ifndef EBLBASICTEST_H_
-#define EBLBASICTEST_H_
+#ifndef EBL_BASIC_TEST_H_
+#define EBL_BASIC_TEST_H_
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "ebl_basic.h"
@@ -7,8 +7,8 @@
 #include "ebl_tester.h"
 
 //! Test class for Ebm class
-class EblBasicTest : public CppUnit::TestFixture  {
-  CPPUNIT_TEST_SUITE(EblBasicTest);
+class ebl_basic_test : public CppUnit::TestFixture  {
+  CPPUNIT_TEST_SUITE(ebl_basic_test);
   CPPUNIT_TEST(test_nn_layer_convolution_fprop);
 /*   CPPUNIT_TEST(test_full_table); */
 /*   CPPUNIT_TEST(test_softmax); */
@@ -19,6 +19,7 @@ class EblBasicTest : public CppUnit::TestFixture  {
   CPPUNIT_TEST(test_jacobian_nn_layer_subsampling);
   //  CPPUNIT_TEST(test_softmax); // TODO: fix test
   CPPUNIT_TEST(test_state_copy);
+  CPPUNIT_TEST(test_power_module);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -41,6 +42,7 @@ public:
   void test_jacobian_nn_layer_subsampling();
   void test_softmax();
   void test_state_copy();
+  void test_power_module();
 };
 
-#endif /* EBLBASICTEST_H_ */
+#endif /* EBL_BASIC_TEST_H_ */

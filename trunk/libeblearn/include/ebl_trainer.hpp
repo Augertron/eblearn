@@ -200,15 +200,46 @@ namespace ebl {
       iteration_ptr = (void *) &ds;
     if (iteration_ptr == (void *) &ds)
       ++iteration;
-    cout << iteration << " (" << ds.name << "): ";
     for (unsigned int i = 0; i < ds.size(); ++i) {
       ds.fprop(*input, label);
       correct = test_sample(*input, label.get(), answer, infp);
       log.update(age, label.get(), answer, energy);
       ds.next();
     }
-    log.display(ds.lblstr);
+    log.display(iteration, ds.name, ds.lblstr);
     cout << endl;
+  }
+
+  template <class Tdata, class Tlabel>  
+  void supervised_trainer<Tdata, Tlabel>::
+  test_threshold(labeled_datasource<Tdata, Tlabel> &ds, classifier_meter &log,
+		 infer_param &infp, double threshold, Tlabel defclass) {
+    // prepare to loop on samples
+    ds.seek_begin();
+    log.clear();
+    resize_input(ds);
+    Tlabel answer;
+    if (!iteration_ptr) 
+      iteration_ptr = (void *) &ds;
+    if (iteration_ptr == (void *) &ds)
+      ++iteration;
+    // loop
+    for (unsigned int i = 0; i < ds.size(); ++i) {
+      ds.fprop(*input, label); // get sample
+      int lab = label.get();
+      machine.fprop(*input, lab, energy); // fprop sample
+      idx<double> raw = machine.fout.x; // raw network outputs
+      double max = idx_max(raw);
+      if (max < threshold) // no response stronger than threshold
+	answer = defclass; // default class when no detection
+      else // stronger responses
+	answer = idx_indexmax(raw); // answer = maximum response
+      // update TPR and FPR
+      log.update(age, label.get(), answer, energy);
+      ds.next();
+    }
+    cout << "threshold: " << threshold << " default class: " << defclass << endl;
+    log.display_positive_rates(threshold, ds.lblstr);
   }
   
   template <class Tdata, class Tlabel>  

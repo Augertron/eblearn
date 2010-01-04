@@ -82,6 +82,10 @@ namespace ebl {
     //! if varname does not exist, this throws an exception.
     const string &get_string(const char *varname);
 
+    //! returns the string contained the variable with name varname.
+    //! if varname does not exist, this throws an exception.
+    const char *get_cstring(const char *varname);
+
     //! returns a double conversion of the string contained in the variable
     //! with name varname.
     //! if varname does not exist or the double conversion fails,
@@ -93,6 +97,12 @@ namespace ebl {
     //! if varname does not exist or the uint conversion fails,
     //! this throws an exception.
     uint get_uint(const char *varname);
+
+    //! returns a bool conversion of the string contained in the variable
+    //! with name varname.
+    //! if varname does not exist or the uint conversion fails,
+    //! this throws an exception.
+    bool get_bool(const char *varname);
 
     //! print loaded variables
     virtual void pretty();

@@ -41,6 +41,19 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  //! state_idx error checking macros
+
+  //! check that 2 state_idxs (references) are different, if not, call eblerror
+#define state_idx_check_different(s1, s2)			\
+  if (&s1 == &s2)						\
+    eblerror("in and out state_idx must be different");
+
+  //! check that 3 state_idxs (references) are different, if not, call eblerror
+#define state_idx_check_different3(s1, s2, s3)			\
+  if ((&s1 == &s2) || (&s1 == &s3))				\
+    eblerror("in1, in2 and out state_idx must be different");
+
+  ////////////////////////////////////////////////////////////////
   //! idx error macros
 
   //! Print incompatible idx1 and idx2 and call eblerror with errmsg.

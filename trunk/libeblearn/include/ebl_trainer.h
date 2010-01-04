@@ -134,9 +134,19 @@ namespace ebl {
 
     //! Measure the average energy and classification error rate
     //! on a dataset.
-    //! returns a list with average loss and proportion of errors
     void test(labeled_datasource<Tdata, Tlabel> &ds, classifier_meter &log,
 	      infer_param &infp);
+
+    //! Measures for each class the rates of true and false positives
+    //! (TPR and FPR) given a threshold.
+    //! The answer for each class is the default class (usually a junk class)
+    //! if the maximum response is below the threshold, otherwise it is the
+    //! class with maximum response.
+    //! TODO: use energy for detection instead of raw net outputs?(more generic)
+    void test_threshold(labeled_datasource<Tdata, Tlabel> &ds,
+			classifier_meter &log,
+			infer_param &infp, double threshold,
+			Tlabel defclass);
 
     //! train for <niter> sweeps over the training set. <samples> contains the
     //! inputs samples, and <labels> the corresponding desired categories

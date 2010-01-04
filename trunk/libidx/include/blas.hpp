@@ -219,7 +219,13 @@ namespace ebl {
 
   template<class T> void idx_div(idx<T> &i1, idx<T> &i2, idx<T> &out) {
     idxiter<T> pi1, pi2; idxiter<T> pout;
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = (*pi1) / (*pi2); }
+    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) {
+      // TODO: remove this check in optimized version
+      // inefficient check but really important for debugging
+      if (*pi2 == 0)
+	eblerror("division by zero");
+      *pout = (*pi1) / (*pi2);
+    }
   }
 
   template<class T> void idx_addc(idx<T> &inp, T c, idx<T> &out) {

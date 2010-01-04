@@ -57,6 +57,10 @@ namespace ebl {
     total_energy = 0;
     age = 0;
     size = 0;
+    class_errors.clear();
+    class_totals.clear();
+    class_tpr.clear();
+    class_fpr.clear();
   }
 
   void classifier_meter::resize (intg sz) {
@@ -104,16 +108,20 @@ namespace ebl {
     if (max >= class_totals.size()) {
       class_totals.resize(max + 1, 0); // resize to max and fill new with 0
       class_errors.resize(max + 1, 0); // resize to max and fill new with 0
+      class_tpr.resize(max + 1, 0); // resize to max and fill new with 0
+      class_fpr.resize(max + 1, 0); // resize to max and fill new with 0
     }
     // increment class examples total
     class_totals[desired] = class_totals[desired] + 1;
-    // increment errors
+    // increment errors and true/false positive rates
     if (desired == infered) { // correct
       total_correct++;
+      class_tpr[infered] = class_tpr[infered] + 1;
     }
     else { // error
       total_error++;
       class_errors[desired] = class_errors[desired] + 1;
+      class_fpr[infered] = class_fpr[infered] + 1;
     }
     size++;
   }
@@ -157,7 +165,9 @@ namespace ebl {
     err_not_implemented();
   }
 
-  void classifier_meter::display(vector<string*> *lblstr) {
+  void classifier_meter::display(int iteration, string &dsname,
+				 vector<string*> *lblstr) {
+    cout << iteration << " (" << dsname << "): ";
     cout << "[" << (int) age << "]  sz=" <<  (int) size;
     cout << " energy=" << total_energy / (double) size;
     cout << "  correct=" <<  (total_correct * 100) / (double) size;
@@ -171,6 +181,25 @@ namespace ebl {
       cout << "(" << class_totals[i] << "): ";
       cout << class_errors[i] * 100.0 / (float) class_totals[i] << "% ";
     }
+    cout << endl;
+  }
+
+  void classifier_meter::display_positive_rates(double threshold, vector<string*> *lblstr) {
+    for (uint i = 0; i < class_fpr.size(); ++i) {
+      cout << class_fpr[i] / (float) (size - class_totals[i]) << " ROC_";
+      if (lblstr) cout << *((*lblstr)[i]);
+      else cout << i;
+      cout << "=" << class_tpr[i] / (float) class_totals[i];
+      cout << " (" << class_totals[i] << " samples)" << endl;
+    }
+    cout << threshold << " (threshold): errors per class: ";
+    for (uint i = 0; i < class_errors.size(); ++i) {
+      cout << "(" << class_totals[i] << ") ";
+      if (lblstr) cout << *((*lblstr)[i]);
+      else cout << i;
+      cout << "=" << class_errors[i] * 100.0 / (float) class_totals[i] << "% ";
+    }
+    cout << endl;
   }
 
   bool classifier_meter::save() {

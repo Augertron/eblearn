@@ -38,6 +38,7 @@
 #include "dataset.h"
 #include "pascal_dataset.h"
 #include "pascalbg_dataset.h"
+#include "pascalfull_dataset.h"
 #include "lush_dataset.h"
 
 using namespace std;
@@ -61,6 +62,7 @@ string		stereo_rpattern	 = "_R";
 string		outdir		 = ".";
 string		dataset_name	 = "ds";
 intg		maxperclass	 = 0;	// 0 means no limitation
+intg            maxdata          = 0;	// 0 means no limitation
 unsigned int	mexican_hat_size = 0;
 int		deformations	 = -1;	// <= means no deformations
 string		type		 = "regular";
@@ -69,6 +71,7 @@ string		precision	 = "float";
 uint		sleep_delay	 = 0;	// sleep between frames displayed in ms
 idxdim          outdims;	// dimensions of output sample
 bool		outdims_set	 = false;
+vector<string>  exclude;
 
 ////////////////////////////////////////////////////////////////
 // command line
@@ -133,9 +136,15 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-dname") == 0) {
 	++i; if (i >= argc) throw 0;
 	dataset_name = argv[i];
+      } else if (strcmp(argv[i], "-exclude") == 0) {
+	++i; if (i >= argc) throw 0;
+	exclude.push_back(argv[i]);
       } else if (strcmp(argv[i], "-maxperclass") == 0) {
 	++i; if (i >= argc) throw 1;
 	maxperclass = atoi(argv[i]);
+      } else if (strcmp(argv[i], "-maxdata") == 0) {
+	++i; if (i >= argc) throw 1;
+	maxdata = atoi(argv[i]);
       } else if (strcmp(argv[i], "-sleep") == 0) {
 	++i; if (i >= argc) throw 1;
 	sleep_delay = atoi(argv[i]);
@@ -211,10 +220,18 @@ bool parse_args(int argc, char **argv) {
 void print_usage() {
   cout << "Usage: ./dscompiler <images_root> [OPTIONS]" << endl;
   cout << "Options are:" << endl;
-  cout << "  -type <regular(default)|pascal|pascalbg|lush>" << endl;
+  cout << "  -type <regular(default)|pascal|pascalbg|pascalfull|lush>" << endl;
+  cout << "     regular: compile images labeled by their top folder name"<<endl;
+  cout << "     pascal: compile images labeled by xml files (PASCAL challenge)";
+  cout << endl;
+  cout << "     pascalbg: compile background images of PASCAL challenge"<< endl;
+  cout << "     pascalfull: copy full original PASCAL images into outdir"<<endl;
+  cout << "       (allows to exclude some classes, then call regular compiler)";
+  cout << endl;
+  cout << "     lush: regular compilation using .mat images" << endl;
   cout << "  -precision <float(default)|double>" << endl;
   cout << "  -image_pattern <pattern>" << endl;
-  cout << "   default: " << IMAGE_PATTERN << endl;
+  cout << "     default: " << IMAGE_PATTERN << endl;
   cout << "  -channels <channel>" << endl;
   cout << "     channels are: RGB (default), YpUV, HSV, Yp (Yp only in YpUV)";
   cout << endl;
@@ -228,11 +245,14 @@ void print_usage() {
   cout << "  -outdir <directory (default=images_root)>" << endl;
   cout << "  -dname <name>" << endl;
   cout << "  -maxperclass <integer>" << endl;
+  cout << "  -maxdata <integer>" << endl;
   cout << "  -mexican_hat_size <integer>" << endl;
   cout << "  -deformations <integer>" << endl;
   cout << "  -dims <dimensions (default: 96x96x3)>" << endl;
   cout << "  -scales <scales (e.g: 1,2,4)>" << endl;
   cout << "  -resize <gaussian(default)|bilinear" << endl;
+  cout << "  -exclude <class name>" << endl;
+  cout << "     (exclude can be called multiple times)" << endl;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -240,6 +260,7 @@ void print_usage() {
 
 template <class Tds>
 void compile_ds(Tds &ds) {
+  ds.set_exclude(exclude);
   if (outdims_set)
     ds.set_outdims(outdims);
   ds.set_display(display);
@@ -247,7 +268,10 @@ void compile_ds(Tds &ds) {
   ds.set_resize(resize);
   if (preprocessing)
     ds.set_pp_conversion(channels_mode.c_str());
-  ds.set_max_per_class(maxperclass);
+  if (maxperclass > 0)
+    ds.set_max_per_class(maxperclass);
+  if (maxdata > 0)
+    ds.set_max_data(maxdata);
   ds.set_image_pattern(image_pattern);
   if (scale_mode)
     ds.set_scales(scales, outdir);
@@ -274,8 +298,20 @@ void compile() {
     ds.set_display(display);
     ds.set_sleepdisplay(sleep_delay);
     ds.set_image_pattern(image_pattern);
+    if (maxdata > 0)
+      ds.set_max_data(maxdata);
     if (preprocessing)
       ds.set_pp_conversion(channels_mode.c_str());
+    ds.extract();
+  }
+  else if (!strcmp(type.c_str(), "pascalfull")) {
+    pascalfull_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
+				 outdir.c_str());
+    ds.set_exclude(exclude);
+    ds.set_display(display);
+    ds.set_sleepdisplay(sleep_delay);
+    if (maxdata > 0)
+      ds.set_max_data(maxdata);
     ds.extract();
   }
   else if (!strcmp(type.c_str(), "lush")) {

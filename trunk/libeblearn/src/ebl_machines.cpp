@@ -49,10 +49,10 @@ namespace ebl {
 				       intg ki1, intg kj1, idx<intg> &tbl1, 
 				       intg si1, intg sj1,
 				       intg ki2, intg kj2, idx<intg> &tbl2,
-				       intg outthick)
+				       intg outthick, bool norm)
     : layers_n<state_idx>(true) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
-	 si1, sj1, ki2, kj2, tbl2, outthick);
+	 si1, sj1, ki2, kj2, tbl2, outthick, norm);
   }
   
   nn_machine_cscscf::~nn_machine_cscscf() {}
@@ -62,7 +62,7 @@ namespace ebl {
 			       intg si0, intg sj0, intg ki1, intg kj1, 
 			       idx<intg> &tbl1, intg si1, intg sj1, 
 			       intg ki2, intg kj2, idx<intg> &tbl2, 
-			       intg outthick) {
+			       intg outthick, bool norm) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -78,18 +78,30 @@ namespace ebl {
     // which serve as temporary buffer to hold the output of a module
     // and feed the input of the following module.
     
-    //    add_module(new layer_convabsnorm(prm, ki0, kj0, 1, 1, tbl0),
-    add_module(new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0),
-	       new state_idx(1, 1, 1)); // these will be automatically resized
+    // convolution
+    if (norm) // absolute rectification + contrast normalization
+      add_module(new layer_convabsnorm(prm, ki0, kj0, 1, 1, tbl0),
+		 new state_idx(1, 1, 1)); // these will be automatically resized
+    else // old fashioned way
+      add_module(new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0),
+		 new state_idx(1, 1, 1)); // these will be automatically resized
+    // subsampling
     add_module(new nn_layer_subsampling(prm, si0, sj0, si0, sj0, thick0),
 	       new state_idx(1, 1, 1)); // these will be automatically resized
-    //    add_module(new layer_convabsnorm(prm, ki1, kj1, 1, 1, tbl1),
-    add_module(new nn_layer_convolution(prm, ki1, kj1, 1, 1, tbl1),
-	       new state_idx(1, 1, 1)); // these will be automatically resized
+    // convolution
+    if (norm) // absolute rectification + contrast normalization
+      add_module(new layer_convabsnorm(prm, ki1, kj1, 1, 1, tbl1),
+		 new state_idx(1, 1, 1)); // these will be automatically resized
+    else // old fashioned way
+      add_module(new nn_layer_convolution(prm, ki1, kj1, 1, 1, tbl1),
+		 new state_idx(1, 1, 1)); // these will be automatically resized
+    // subsampling
     add_module(new nn_layer_subsampling(prm, si1, sj1, si1, sj1, thick1),
 	       new state_idx(1, 1, 1)); // these will be automatically resized
+    // convolution
     add_module(new nn_layer_convolution(prm, ki2, kj2, 1, 1, tbl2),
 	       new state_idx(1, 1, 1)); // these will be automatically resized
+    // full
     add_last_module(new nn_layer_full(prm, thick2, outthick));
   }
 
@@ -106,10 +118,10 @@ namespace ebl {
 				     intg si0, intg sj0,
 				     intg ki1, intg kj1, idx<intg> &tbl1, 
 				     intg si1, intg sj1,
-				     intg ki2, intg kj2, idx<intg> &tbl2)
+				     intg ki2, intg kj2, idx<intg> &tbl2, bool norm)
     : layers_n<state_idx>(true) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
-	 si1, sj1, ki2, kj2, tbl2);
+	 si1, sj1, ki2, kj2, tbl2, norm);
   }
   
   nn_machine_cscsc::~nn_machine_cscsc() {}
@@ -118,7 +130,7 @@ namespace ebl {
 			       intg ki0, intg kj0, idx<intg> &tbl0, 
 			       intg si0, intg sj0, intg ki1, intg kj1, 
 			       idx<intg> &tbl1, intg si1, intg sj1, 
-			      intg ki2, intg kj2, idx<intg> &tbl2) {
+			      intg ki2, intg kj2, idx<intg> &tbl2, bool norm) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -131,12 +143,22 @@ namespace ebl {
     // to form a c-s-c-s-c-f network. and we add state_idx in between
     // which serve as temporary buffer to hold the output of a module
     // and feed the input of the following module.
-    add_module(new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0),
-	       new state_idx(1, 1, 1)); // these will be automatically resized
+    // convolution
+    if (norm) // absolute rectification + contrast normalization
+      add_module(new layer_convabsnorm(prm, ki0, kj0, 1, 1, tbl0),
+		 new state_idx(1, 1, 1)); // these will be automatically resized
+    else // old fashioned way
+      add_module(new nn_layer_convolution(prm, ki0, kj0, 1, 1, tbl0),
+		 new state_idx(1, 1, 1)); // these will be automatically resized
     add_module(new nn_layer_subsampling(prm, si0, sj0, si0, sj0, thick0),
 	       new state_idx(1, 1, 1)); // these will be automatically resized
-    add_module(new nn_layer_convolution(prm, ki1, kj1, 1, 1, tbl1),
-	       new state_idx(1, 1, 1)); // these will be automatically resized
+    // convolution
+    if (norm) // absolute rectification + contrast normalization
+      add_module(new layer_convabsnorm(prm, ki1, kj1, 1, 1, tbl1),
+		 new state_idx(1, 1, 1)); // these will be automatically resized
+    else // old fashioned way
+      add_module(new nn_layer_convolution(prm, ki1, kj1, 1, 1, tbl1),
+		 new state_idx(1, 1, 1)); // these will be automatically resized
     add_module(new nn_layer_subsampling(prm, si1, sj1, si1, sj1, thick1),
 	       new state_idx(1, 1, 1)); // these will be automatically resized
     add_last_module(new nn_layer_convolution(prm, ki2, kj2, 1, 1, tbl2));
@@ -148,7 +170,7 @@ namespace ebl {
   lenet5::lenet5(parameter &prm, intg image_height, intg image_width,
 		 intg ki0, intg kj0, intg si0, intg sj0,
 		 intg ki1, intg kj1, intg si1, intg sj1,
-		 intg hid, intg output_size) {
+		 intg hid, intg output_size, bool norm) {
     idx<intg> table0 = full_table(1, 6);
     // TODO: add idx constructor taking pointer to data with dimensions
     // and copies it.
@@ -184,7 +206,7 @@ namespace ebl {
     intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
 
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
-	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size);
+	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size, norm);
   }
 
   ////////////////////////////////////////////////////////////////////////

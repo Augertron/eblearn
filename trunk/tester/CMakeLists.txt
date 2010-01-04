@@ -42,7 +42,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
     src/detector_test.cpp
     src/ClusterTest.cpp
     src/DataSourceTest.cpp
-    src/EblBasicTest.cpp
+    src/ebl_basic_test.cpp
     src/IdxIOTest.cpp
     src/IdxIteratorsTest.cpp
     src/IdxTest.cpp

@@ -42,7 +42,7 @@
 #define DEFORMPAIRS_NAME "deformpairs"
 
 #define MKDIR_RIGHTS 0755
-#define IMAGE_PATTERN ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP)"
+#define IMAGE_PATTERN ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM)"
 
 typedef int t_label;
 
@@ -133,7 +133,10 @@ namespace ebl {
 
     //! set the pattern used to find image.
     void set_image_pattern(const string &p);
-    
+
+    //! set the list of classes to exclude
+    void set_exclude(const vector<string> &ex);
+
     //! Dataset has reached maximum sample capacity (this can be controlled
     //! by setting max_data variable).
     //! A label can be optionally passed to return if the dataset is full for
@@ -265,6 +268,7 @@ namespace ebl {
     bool                scale_mode; //!< scales saving mode
     vector<uint>        scales; //!< integer scales
     bool                interleaved_input; //!< indicate if input is interleaved
+    vector<string>      exclude; //!< list of excluded classes
     // names ///////////////////////////////////////////////////////
     string		name;	//!< dataset name
     string		data_fname;	//!< data filename
@@ -274,7 +278,7 @@ namespace ebl {
     string		deformpairs_fname;	//!< deformpairs filename
     // directories /////////////////////////////////////////////////
     string		inroot; //!< root directory of input files
-    string		outdir; //!< root directory of input files
+    string		outdir; //!< root directory of output files
     string              extension;	//!< extension of files to extract
     // display /////////////////////////////////////////////////////
     bool		display_extraction;	//!< display during extraction

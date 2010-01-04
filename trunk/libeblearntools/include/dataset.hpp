@@ -216,8 +216,7 @@ namespace ebl {
     vector<string>::iterator res;
     res = find(classes.begin(), classes.end(), class_name);
     if (res == classes.end()) { // not found
-      cerr << "error: trying to get label from class " << class_name << endl;
-      eblerror("class not found");
+      return -42; // excluded class
     }
     // found
     label = res - classes.begin();
@@ -252,9 +251,13 @@ namespace ebl {
     
   template <class Tdata>
   bool dataset<Tdata>::full(t_label label) {
-    if ((max_data_set && (data_cnt >= max_data)) || (data_cnt >= data.dim(0)))
+    if (label == -42) // excluded class
       return true;
-    if (max_per_class_set && (add_tally.get(label) >= max_per_class.get(label)))
+    if ((max_data_set && (data_cnt >= max_data)) ||
+	((data.order() > 0) && (data_cnt >= data.dim(0))))
+      return true;
+    if (max_per_class_set && (label >= 0) &&
+	(add_tally.get(label) >= max_per_class.get(label)))
       return true;
     return false;
   }
@@ -284,10 +287,10 @@ namespace ebl {
     uint i;
     for (i = 0; i < classes.size() - 1; ++i) {
       cout << class_tally.get(i) << " " << classes[i];
-      class_tally.get(i) > 0 ? cout << "s, " : cout << ", ";
+      class_tally.get(i) > 1 ? cout << "s, " : cout << ", ";
     }
     cout << class_tally.get(i) << " " << classes[i];
-    class_tally.get(i) > 0 ? cout << "s." : cout << ".";
+    class_tally.get(i) > 1 ? cout << "s." : cout << ".";
     cout << endl;
   }
   
@@ -432,6 +435,9 @@ namespace ebl {
       cerr << "error: dataset has not been allocated, cannot add data." << endl;
       return false;
     }
+    // check that class exists (may not exist if excluded)
+    if (find(classes.begin(), classes.end(), class_name) == classes.end())
+      return false;
     // compute label
     t_label label = get_label_from_class(class_name);
     // check for capacity
@@ -544,6 +550,19 @@ namespace ebl {
   }
   
   template <class Tdata>
+  void dataset<Tdata>::set_exclude(const vector<string> &ex) {
+    if (ex.size()) {
+      cout << "Excluded class(es): ";
+      for (vector<string>::const_iterator i = ex.begin(); i != ex.end(); ++i) {
+	exclude.push_back(*i);
+	if (i != ex.begin()) cout << ",";
+	cout << " " << *i;
+      }
+      cout << endl;
+    }
+  }
+  
+  template <class Tdata>
   bool dataset<Tdata>::count_samples() {
 #ifdef __BOOST__
     total_samples = 0;
@@ -559,10 +578,13 @@ namespace ebl {
     for (directory_iterator itr(inroot); itr != end_itr; itr++) {
       if (is_directory(itr->status())
 	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
-	// add directory as new class
-	add_class(itr->leaf());
-	// recursively search each directory
-	total_samples += count_matches(itr->path().string(), extension);
+	// ignore excluded classes
+	if (find(exclude.begin(), exclude.end(), itr->leaf()) == exclude.end()){
+	  // add directory as new class
+	  add_class(itr->leaf());
+	  // recursively search each directory
+	  total_samples += count_matches(itr->path().string(), extension);
+	}
       }
     }
 #endif /* __BOOST__ */

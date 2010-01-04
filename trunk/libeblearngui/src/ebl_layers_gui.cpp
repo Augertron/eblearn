@@ -30,6 +30,7 @@
  ***************************************************************************/
 
 #include "ebl_layers_gui.h"
+#include "ebl_transfer_gui.h"
 
 using namespace std;
 
@@ -104,7 +105,7 @@ namespace ebl {
   NN_LAYER_CONVOLUTION_GUI(display_bbprop, ddx)
   
   ////////////////////////////////////////////////////////////////
-  // nn_layer_convolution
+  // layer_convabsnorm
   
 #define LAYER_CONVABSNORM_GUI(name, T)					\
   void layer_convabsnorm_gui::name(layer_convabsnorm &layer,		\
@@ -138,6 +139,9 @@ namespace ebl {
     h0 += m2.dim(0) * zoom + 1;						\
     w = w0;								\
     h = h0;								\
+    /* display normalization internals */				\
+    weighted_std_module_gui::name(layer.norm, in, out, h0, w0,		\
+				 zoom, show_out);			\
   }
 
   LAYER_CONVABSNORM_GUI(display_fprop, x)
