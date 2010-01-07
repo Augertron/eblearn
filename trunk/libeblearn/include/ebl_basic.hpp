@@ -401,7 +401,7 @@ namespace ebl {
   // power_module
 
   template <class T>
-  power_module<T>::power_module(double p_) : p(p_) {
+  power_module<T>::power_module(T p_) : p(p_) {
   }
 
   template <class T>

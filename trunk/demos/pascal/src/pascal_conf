@@ -3,21 +3,21 @@
 # Note: variables starting with "meta_" are reserved for meta configuration
 
 # required variables
-meta_command = /home/pierre/eblearn/bin/pascal_train
+meta_command = pascal_train
 
 # optional variables
 meta_name = pascal
 meta_max_cpus = 8
-meta_output_dir = /data/out/
+meta_output_dir = /home/sermanet/blakeydata/pascal/out/
 meta_email = pierre.sermanet@gmail.com
 meta_email_period = 1 # send a email with plots after every n iterations
 
 ################################################################################
 # LOCAL PROGRAM CONFIGURATION
 
-root = /data/pascal/VOCdevkit/voc2009
-train = ds
-test = ds
+root = /home/sermanet/blakeydata/pascal/2009
+train = all_train1
+test = all_test1
 eta = .0001
 iterations = 50
 display = 1
