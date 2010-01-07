@@ -3,23 +3,37 @@
 # Note: variables starting with "meta_" are reserved for meta configuration
 
 # required variables
-meta_command = /home/sermanet/eblpierre/bin/mnist_train
+meta_command = pascal_train
 
 # optional variables
-meta_name = mnist
+meta_name = pascal
 meta_max_cpus = 8
-meta_output_dir = /data/mnist/outputs/
+meta_output_dir = /home/sermanet/blakeydata/pascal/out
 meta_email = pierre.sermanet@gmail.com
 meta_email_period = 1 # send a email with plots after every n iterations
 
 ################################################################################
 # LOCAL PROGRAM CONFIGURATION
 
-root = /data/mnist/
-eta = .001 .0001 .00001 .000001
+root = /home/sermanet/blakeydata/pascal/2009
+train = all_train1
+test = all_test1
+eta = .0001 .00001 .000001
 iterations = 50
-display = 1
+display = 0
 ninternals = 1
-training_size = 60000
-testing_size = 10000
 absnorm = 1
+
+# network
+net_ih = 96
+net_iw = 96
+net_c1h = 5
+net_c1w = 5
+net_s1h = 2
+net_s1w = 2
+net_c2h = 5
+net_c2w = 7
+net_s2h = 4
+net_s2w = 4
+#net_full = 50 100 150
+color = 0

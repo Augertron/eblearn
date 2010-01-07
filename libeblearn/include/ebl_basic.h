@@ -232,13 +232,13 @@ namespace ebl {
   // TODO: write specialized modules square and sqrt to run faster
   template <class T> class power_module : public module_1_1<T> {
   private:
-    double p;
+    T p;
     idx<T> tt; //!< temporary buffer
     
   public:
     //! <p> is double number, every element of input is raised to
     //! its <p>th power.
-    power_module(double p);
+    power_module(T p);
     //! destructor
     virtual ~power_module();    
     //! forward propagation from in to out
