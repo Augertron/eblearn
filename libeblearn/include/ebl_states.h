@@ -111,11 +111,11 @@ namespace ebl {
     virtual void update_gd(gd_param &arg);
   };
 
-  class parameter;
+  template <class T> class parameter;
   
   ////////////////////////////////////////////////////////////////
   //! class that stores a vector/tensor state
-  class state_idx: public state {
+  template <class T> class state_idx: public state {
   public:
     virtual ~state_idx();
 
@@ -127,11 +127,11 @@ namespace ebl {
 
   public:
     //! state itself
-    idx<double> x;
+    idx<T> x;
     //! gradient of loss with respect to state
-    idx<double> dx;
+    idx<T> dx;
     //! diag hessian of loss with respect to state
-    idx<double> ddx;
+    idx<T> ddx;
 
     ////////////////////////////////////////////////////////////////
     //! constructors from specific dimensions
@@ -157,13 +157,13 @@ namespace ebl {
     //! state_idx passed as argument. This is useful for
     //! allocating multiple state_idx inside a parameter.
     //! This replaces the Lush function alloc_state_idx.
-    state_idx(parameter &st);
-    state_idx(parameter &st, intg s0);
-    state_idx(parameter &st, intg s0, intg s1);
-    state_idx(parameter &st, intg s0, intg s1, intg s2);
-    state_idx(parameter &st, intg s0, intg s1, intg s2, intg s3, intg s4 = -1,
-	      intg s5 = -1, intg s6 = -1, intg s7 = -1);
-    state_idx(parameter &st, const idxdim &d);
+    state_idx(parameter<T> &st);
+    state_idx(parameter<T> &st, intg s0);
+    state_idx(parameter<T> &st, intg s0, intg s1);
+    state_idx(parameter<T> &st, intg s0, intg s1, intg s2);
+    state_idx(parameter<T> &st, intg s0, intg s1, intg s2, intg s3,
+	      intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
+    state_idx(parameter<T> &st, const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from other state_idx
@@ -171,8 +171,8 @@ namespace ebl {
     //! Constructs a state_idx from a state_idx's 3 internal idx
     //! Note: the data pointed to by idxs is not copied, we only create new idx
     //!   pointing to the same data.
-    state_idx(const idx<double> &x, const idx<double> &dx, 
-	      const idx<double> &ddx);
+    state_idx(const idx<T> &x, const idx<T> &dx, 
+	      const idx<T> &ddx);
 
     ////////////////////////////////////////////////////////////////
     //! clear methods
@@ -224,23 +224,28 @@ namespace ebl {
 
     //! same as resize_as but leave dimension <fixed_dim> untouched.
     //! Both state_idx are required to have the same order.
-    virtual void resize_as_but1(state_idx& s, intg fixed_dim);
+    virtual void resize_as_but1(state_idx<T>& s, intg fixed_dim);
 
     virtual void resize(const intg* dimsBegin, const intg* dimsEnd);
 
     //! make a new copy of self
-    virtual state_idx make_copy();
+    virtual state_idx<T> make_copy();
   };
 
   ////////////////////////////////////////////////////////////////
   //! parameter: the main class for a trainable
   //! parameter vector.
-  class parameter: public state_idx {
+
+  template <class T> class parameter: public state_idx<T> {
   public:
-    idx<double> gradient;
-    idx<double> deltax;
-    idx<double> epsilons;
-    idx<double> ddeltax;
+    using state_idx<T>::x;
+    using state_idx<T>::dx;
+    using state_idx<T>::ddx;
+
+    idx<T> gradient;
+    idx<T> deltax;
+    idx<T> epsilons;
+    idx<T> ddeltax;
 
     //! initialize the parameter with size initial_size.
     parameter(intg initial_size = 100);
@@ -255,11 +260,11 @@ namespace ebl {
     void update_gd(gd_param &arg);
     virtual void update(gd_param &arg);
     void clear_deltax();
-    void update_deltax(double knew, double kold);
+    void update_deltax(T knew, T kold);
     void clear_ddeltax();
-    void update_ddeltax(double knew, double kold);
-    void set_epsilons(double m);
-    void compute_epsilons(double mu);
+    void update_ddeltax(T knew, T kold);
+    void set_epsilons(T m);
+    void compute_epsilons(T mu);
 
     //! load a parameter file into the x component.
     bool load_x(const char *param_filename);
@@ -270,14 +275,18 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! state_idx iterator
-  class state_idxlooper : public state_idx {
+  template <class T> class state_idxlooper : public state_idx<T> {
   public:
-    idxlooper<double> lx;
-    idxlooper<double> ldx;
-    idxlooper<double> lddx;
+    using state_idx<T>::x;
+    using state_idx<T>::dx;
+    using state_idx<T>::ddx;
+
+    idxlooper<T> lx;
+    idxlooper<T> ldx;
+    idxlooper<T> lddx;
 
     //! generic constructor loops over dimensin ld
-    state_idxlooper(state_idx &s, int ld);
+    state_idxlooper(state_idx<T> &s, int ld);
     virtual ~state_idxlooper();
 
     //! return true if loop is over
@@ -289,32 +298,35 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! loop macro on 1 state_idx
-#define state_idx_eloop1(dst0,src0)			\
-  state_idxlooper dst0(src0, (src0).x.order() - 1);	\
+#define state_idx_eloop1(dst0,src0,type0)			\
+  state_idxlooper<type0> dst0(src0, (src0).x.order() - 1);	\
   for ( ; dst0.notdone(); dst0.next())
 
   ////////////////////////////////////////////////////////////////
   //! loop macro on 2 state_idx
-#define state_idx_eloop2(dst0,src0,dst1,src1)				\
-  if ((src0).x.dim((src0).x.order() - 1) != (src1).x.dim((src1).x.order() - 1))\
-    eblerror("incompatible state_idx for eloop\n");			\
-  state_idxlooper dst0(src0,(src0).x.order()-1);			\
-  state_idxlooper dst1(src1,(src1).x.order()-1);			\
+#define state_idx_eloop2(dst0,src0,type0,dst1,src1,type1)		\
+  if ((src0).x.dim((src0).x.order() - 1)				\
+  != (src1).x.dim((src1).x.order() - 1))				\
+  eblerror("incompatible state_idx for eloop\n");			\
+  state_idxlooper<type0> dst0(src0,(src0).x.order()-1);			\
+  state_idxlooper<type1> dst1(src1,(src1).x.order()-1);			\
   for ( ; dst0.notdone(); dst0.next(), dst1.next())
 
   ////////////////////////////////////////////////////////////////
   //! loop macro on 3 state_idx
-#define state_idx_eloop3(dst0,src0,dst1,src1,dst2,src2)			\
+#define state_idx_eloop3(dst0,src0,type0,dst1,src1,type1,dst2,src2,type2) \
   if (((src0).x.dim((src0).x.order() - 1)				\
        != (src1).x.dim((src1).x.order() - 1))				\
       || ((src0).x.dim((src0).x.order() - 1)				\
 	  != (src2).x.dim((src2).x.order() - 1)))			\
     eblerror("incompatible idxs for eloop\n");				\
-  state_idxlooper dst0(src0,(src0).x.order()-1);			\
-  state_idxlooper dst1(src1,(src1).x.order()-1);			\
-  state_idxlooper dst2(src2,(src2).x.order()-1);			\
+  state_idxlooper<type0> dst0(src0,(src0).x.order()-1);			\
+  state_idxlooper<type1> dst1(src1,(src1).x.order()-1);			\
+  state_idxlooper<type2> dst2(src2,(src2).x.order()-1);			\
   for ( ; dst0.notdone(); dst0.next(), dst1.next(), dst2.next())
 
 } // namespace ebl {
+
+#include "ebl_states.hpp"
 
 #endif /* EBL_STATES_H_ */

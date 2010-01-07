@@ -32,6 +32,7 @@
 #ifndef EBL_ARCH_H_
 #define EBL_ARCH_H_
 
+#include "ebl_arch_gen.h"
 #include "libidx.h"
 #include "ebl_defines.h"
 #include "ebl_states.h"
@@ -42,177 +43,175 @@ namespace ebl {
   // templates for generic modules
 
   //! abstract class for a module with one input and one output.
-  template<class Tin, class Tout> class module_1_1 {
-  public:
-    bool bResize; // tells module to resize output or not
-    module_1_1() { bResize = true; } // by default, resize output
-    virtual ~module_1_1() {}
-    virtual void fprop(Tin &in, Tout &out);
-    virtual void bprop(Tin &in, Tout &out);
-    virtual void bbprop(Tin &in, Tout &out);
-    virtual void forget(forget_param_linear& fp);
-    virtual void normalize();
-    //! returns the order at which the module operates.
-    virtual int  replicable_order();
-    virtual void resize_output(Tin &in, Tout &out);
-    //! given the input dimensions, modifies it to be compliant with module's
-    //! architecture, and returns the output dimensions corresponding to
-    //! modified input dimensions.
-    //! the implementation of this method helps automatic scaling of input data
-    //! but is optional.
-    virtual idxdim fprop_size(idxdim &isize);
-    //! given the output dimensions, returns the input dimensions.
-    //! the implementation of this method helps automatic scaling of input data
-    //! but is optional.
-    virtual idxdim bprop_size(const idxdim &osize);
-    //! prints the forward transformation of dimensions. this method calls
-    //! fprop_size to determine the output size given the input.
-    virtual void pretty(idxdim &isize);
+  template<class T> class module_1_1
+    : public module_1_1_gen< state_idx<T>, state_idx<T> > {
+/*   public: */
+/*     module_1_1(bool bResize = true); //!< by default, resize output */
+/*     virtual ~module_1_1() {}; */
+/*     virtual void fprop(state_idx<T> &in, state_idx<T> &out); */
+/*     virtual void bprop(state_idx<T> &in, state_idx<T> &out); */
+/*     virtual void bbprop(state_idx<T> &in, state_idx<T> &out); */
+/*     virtual void forget(forget_param_linear& fp); */
+/*     virtual void normalize(); */
+/*     //! returns the order at which the module operates. */
+/*     virtual int  replicable_order(); */
+/*     virtual void resize_output(state_idx<T> &in, state_idx<T> &out); */
+/*     //! given the input dimensions, modifies it to be compliant with module's */
+/*     //! architecture, and returns the output dimensions corresponding to */
+/*     //! modified input dimensions. */
+/*     //! the implementation of this method helps automatic scaling of input data */
+/*     //! but is optional. */
+/*     virtual idxdim fprop_size(idxdim &isize); */
+/*     //! given the output dimensions, returns the input dimensions. */
+/*     //! the implementation of this method helps automatic scaling of input data */
+/*     //! but is optional. */
+/*     virtual idxdim bprop_size(const idxdim &osize); */
+/*     //! prints the forward transformation of dimensions. this method calls */
+/*     //! fprop_size to determine the output size given the input. */
+/*     virtual void pretty(idxdim &isize); */
   };
 
   //! abstract class for a module with two inputs and one output.
-  template<class Tin1, class Tin2, class Tout> class module_2_1 {
-  public:
-    virtual ~module_2_1() {};
-    virtual void fprop(Tin1 &in1, Tin2 &in2, Tout &out);
-    virtual void bprop(Tin1 &in1, Tin2 &in2, Tout &out);
-    virtual void bbprop(Tin1 &in1, Tin2 &in2, Tout &out);
-    virtual void forget(forget_param &fp);
-    virtual void normalize();
+  template<class T> class module_2_1
+    : public module_2_1_gen< state_idx<T>, state_idx<T>, state_idx<T> > {
+/*   public: */
+/*     virtual ~module_2_1() {}; */
+/*     virtual void fprop(state_idx<T> &in1, state_idx<T> &in2, state_idx<T> &out); */
+/*     virtual void bprop(state_idx<T> &in1, state_idx<T> &in2, state_idx<T> &out); */
+/*     virtual void bbprop(state_idx<T> &in1, state_idx<T> &in2,state_idx<T> &out); */
+/*     virtual void forget(forget_param &fp); */
+/*     virtual void normalize(); */
   };
 
   ////////////////////////////////////////////////////////////////
   //! abstract class for a module with one inputs and one energy output.
-  template<class Tin> class ebm_1 {
-  public:
-    virtual ~ebm_1() {};
-    virtual void fprop(Tin &in, state_idx &energy);
-    virtual void bprop(Tin &in, state_idx &energy);
-    virtual void bbprop(Tin &in, state_idx &energy);
-    virtual void forget(forget_param &fp);
-    virtual void normalize();
+  template<class T> class ebm_1 : public ebm_1_gen<state_idx<T>, T> {
+/*   public: */
+/*     virtual ~ebm_1() {}; */
+/*     virtual void fprop(state_idx<T> &in, state_idx<T> &energy); */
+/*     virtual void bprop(state_idx<T> &in, state_idx<T> &energy); */
+/*     virtual void bbprop(state_idx<T> &in, state_idx<T> &energy); */
+/*     virtual void forget(forget_param &fp); */
+/*     virtual void normalize(); */
   };
 
   ////////////////////////////////////////////////////////////////
   //! abstract class for a module with two inputs and one energy output.
-  template<class Tin1, class Tin2> class ebm_2 {
-  public:
-    virtual ~ebm_2() {};
-    //! fprop: compute energy output from inputs i1 and i2
-    virtual void fprop(Tin1 &i1, Tin2 &i2, state_idx &energy);
-    //! bprop: compute gradient wrt inputs, given gradient wrt output
-    virtual void bprop(Tin1 &i1, Tin2 &i2, state_idx &energy);
-    //! bprop: compute diaghession wrt inputs, given diaghessian wrt output
-    virtual void bbprop(Tin1 &i1, Tin2 &i2, state_idx &energy);
+  template<class T> class ebm_2
+    : public ebm_2_gen<state_idx<T>, state_idx<T>, T> {
+/*   public: */
+/*     virtual ~ebm_2() {}; */
+/*     //! fprop: compute energy output from inputs i1 and i2 */
+/*     virtual void fprop(state_idx<T> &i1, state_idx<T> &i2, */
+/* 		       state_idx<T> &energy); */
+/*     //! bprop: compute gradient wrt inputs, given gradient wrt output */
+/*     virtual void bprop(state_idx<T> &i1, state_idx<T> &i2, */
+/* 		       state_idx<T> &energy); */
+/*     //! bprop: compute diaghession wrt inputs, given diaghessian wrt output */
+/*     virtual void bbprop(state_idx<T> &i1, state_idx<T> &i2, */
+/* 			state_idx<T> &energy); */
 
-    virtual void bprop1_copy(Tin1 &i1, Tin2 &i2, state_idx &energy);
-    virtual void bprop2_copy(Tin1 &i1, Tin2 &i2, state_idx &energy);
-    virtual void bbprop1_copy(Tin1 &i1, Tin2 &i2, state_idx &energy);
-    virtual void bbprop2_copy(Tin1 &i1, Tin2 &i2, state_idx &energy);
-    virtual void forget(forget_param_linear &fp);
-    virtual void normalize();
+/*     virtual void bprop1_copy(state_idx<T> &i1, state_idx<T> &i2, */
+/* 			     state_idx<T> &energy); */
+/*     virtual void bprop2_copy(state_idx<T> &i1, state_idx<T> &i2, */
+/* 			     state_idx<T> &energy); */
+/*     virtual void bbprop1_copy(state_idx<T> &i1, state_idx<T> &i2, */
+/* 			      state_idx<T> &energy); */
+/*     virtual void bbprop2_copy(state_idx<T> &i1, state_idx<T> &i2, */
+/* 			      state_idx<T> &energy); */
+/*     virtual void forget(forget_param_linear &fp); */
+/*     virtual void normalize(); */
 
-    //! compute value of in1 that minimizes the energy, given in2
-    virtual double infer1(Tin1 &i1, Tin2 &i2, state_idx &energy,
-			  infer_param &ip);
-    //! compute value of in2 that minimizes the energy, given in1
-    //! if label is given, fill the corresponding energy.
-    virtual double infer2(Tin1 &i1, Tin2 &i2, infer_param &ip,
-			  int *label = NULL, state_idx *energy = NULL);
-    virtual void infer2_copy(Tin1 &i1, Tin2 &i2, state_idx &energy);
+/*     //! compute value of in1 that minimizes the energy, given in2 */
+/*     virtual double infer1(state_idx<T> &i1, state_idx<T> &i2, */
+/* 			  state_idx<T> &energy, */
+/* 			  infer_param &ip); */
+/*     //! compute value of in2 that minimizes the energy, given in1 */
+/*     //! if label is given, fill the corresponding energy. */
+/*     virtual double infer2(state_idx<T> &i1, state_idx<T> &i2, infer_param &ip, */
+/* 			  state_idx<T> *label = NULL, */
+/* 			  state_idx<T> *energy = NULL); */
+/*     virtual void infer2_copy(state_idx<T> &i1, state_idx<T> &i2, */
+/* 			     state_idx<T> &energy); */
   };
 
   ////////////////////////////////////////////////////////////////
   // generic architectures
 
-  template<class Tin, class Thid, class Tout> 
-    class layers_2: public module_1_1<Tin, Tout> {
-  public:
-    module_1_1<Tin, Thid>	&layer1;
-    Thid			&hidden;
-    module_1_1<Thid, Tout>	&layer2;
-
-    layers_2(module_1_1<Tin, Thid> &l1, Thid &h, module_1_1<Thid, Tout> &l2);
-    virtual ~layers_2();
-    virtual void fprop(Tin &in, Tout &out);
-    virtual void bprop(Tin &in, Tout &out);
-    virtual void bbprop(Tin &in, Tout &out);
-    virtual void forget(forget_param &fp);
-    virtual void normalize();
+  template<class T> 
+    class layers_2
+    : public layers_2_gen<state_idx<T>, state_idx<T>, state_idx<T> > {
+/*   public: */
+/*     layers_2(module_1_1<T> &l1, state_idx<T> &h, module_1_1<T> &l2); */
+/*     virtual ~layers_2(); */
+/*     virtual void fprop(state_idx<T> &in, state_idx<T> &out); */
+/*     virtual void bprop(state_idx<T> &in, state_idx<T> &out); */
+/*     virtual void bbprop(state_idx<T> &in, state_idx<T> &out); */
+/*     virtual void forget(forget_param &fp); */
+/*     virtual void normalize(); */
   };
 
-  template<class T> class layers_n: public module_1_1<T, T> {
+  template<class T> class layers_n
+    : public layers_n_gen<state_idx<T> > {
   public:
-    std::vector<module_1_1<T, T>*>	*modules;
-    std::vector<T*>			*hiddens;
-
-    //! constructor.
-    layers_n();
+/*     //! constructor. */
+/*     layers_n(); */
     //! constructor. if oc is true, then this module owns its content and
     //! is responsible for deleting modules that are given to it.
     layers_n(bool oc);
-    //! destructor.
-    virtual ~layers_n();
-    void add_module(module_1_1 <T, T>* module, T* hidden);
-    void add_last_module(module_1_1 <T, T>* module);
-    virtual void fprop(T &in, T &out);
-    virtual void bprop(T &in, T &out);
-    virtual void bbprop(T &in, T &out);
-    virtual void forget(forget_param_linear &fp);
-    virtual void normalize();
-    virtual idxdim fprop_size(idxdim &isize);
-    virtual idxdim bprop_size(const idxdim &osize);
-    virtual void pretty(idxdim &isize);
-
-  private:
-    bool own_contents;
+/*     //! destructor. */
+/*     virtual ~layers_n(); */
+/*     void add_module(module_1_1 <T>* module, state_idx<T>* hidden); */
+/*     void add_last_module(module_1_1 <T>* module); */
+/*     virtual void fprop(state_idx<T> &in, state_idx<T> &out); */
+/*     virtual void bprop(state_idx<T> &in, state_idx<T> &out); */
+/*     virtual void bbprop(state_idx<T> &in, state_idx<T> &out); */
+/*     virtual void forget(forget_param_linear &fp); */
+/*     virtual void normalize(); */
+/*     virtual idxdim fprop_size(idxdim &isize); */
+/*     virtual idxdim bprop_size(const idxdim &osize); */
+/*     virtual void pretty(idxdim &isize); */
   };
 
   ////////////////////////////////////////////////////////////////
   //! standard 1 input EBM with one module-1-1, and one ebm-1 on top.
   //! fc stands for "function+cost".
-  template<class Tin, class Thid> class fc_ebm1: public ebm_1<Tin> {
-  public:
-    module_1_1<Tin, Thid>	&fmod;
-    Thid			&fout;
-    ebm_1<Thid>			&fcost;
-
-    fc_ebm1(module_1_1<Tin, Thid> &fm, Thid &fo, ebm_1<Thid> &fc);
-    virtual ~fc_ebm1();
-
-    virtual void fprop(Tin &in, state_idx &energy);
-    virtual void bprop(Tin &in, state_idx &energy);
-    virtual void bbprop(Tin &in, state_idx &energy);
-    virtual void forget(forget_param &fp);
+  template<class T> class fc_ebm1
+    : public fc_ebm1_gen<state_idx<T>, state_idx<T>, T> {
+/*   public: */
+/*     fc_ebm1(module_1_1<T> &fm, state_idx<T> &fo, ebm_1<T> &fc); */
+/*     virtual ~fc_ebm1(); */
+/*     virtual void fprop(state_idx<T> &in, state_idx<T> &energy); */
+/*     virtual void bprop(state_idx<T> &in, state_idx<T> &energy); */
+/*     virtual void bbprop(state_idx<T> &in, state_idx<T> &energy); */
+/*     virtual void forget(forget_param &fp); */
   };
 
   ////////////////////////////////////////////////////////////////
   //! standard 2 input EBM with one module-1-1, and one ebm-2 on top.
   //! fc stands for "function+cost".
-  template<class Tin1, class Tin2, class Thid> 
-    class fc_ebm2: public ebm_2<Tin1, Tin2> {
-  public:
-    module_1_1<Tin1, Thid>	&fmod;
-    Thid			&fout;
-    ebm_2<Thid, Tin2>		&fcost;
-
-    fc_ebm2(module_1_1<Tin1, Thid> &fm, Thid &fo, ebm_2<Thid, Tin2> &fc);
-    virtual ~fc_ebm2();
-
-    virtual void fprop(Tin1 &in1, Tin2 &in2, state_idx &energy);
-    virtual void bprop(Tin1 &in1, Tin2 &in2, state_idx &energy);
-    virtual void bbprop(Tin1 &in1, Tin2 &in2, state_idx &energy);
-    virtual void forget(forget_param_linear &fp);
-    virtual double infer2(Tin1 &i1, Tin2 &i2, infer_param &ip, 
-			  int *label = NULL, state_idx *energy = NULL);
+  template<class T> class fc_ebm2
+    : public fc_ebm2_gen<state_idx<T>, state_idx<T>, T> {
+/*   public: */
+/*     fc_ebm2(module_1_1<T> &fm, state_idx<T> &fo, ebm_2<T> &fc); */
+/*     virtual ~fc_ebm2(); */
+/*     virtual void fprop(state_idx<T> &in1, state_idx<T> &in2, */
+/* 		       state_idx<T> &energy); */
+/*     virtual void bprop(state_idx<T> &in1, state_idx<T> &in2, */
+/* 		       state_idx<T> &energy); */
+/*     virtual void bbprop(state_idx<T> &in1, state_idx<T> &in2, */
+/* 			state_idx<T> &energy); */
+/*     virtual void forget(forget_param_linear &fp); */
+/*     virtual double infer2(state_idx<T> &i1, state_idx<T> &i2, infer_param &ip,  */
+/* 			  int *label = NULL, state_idx<T> *energy = NULL); */
   };
 
   ////////////////////////////////////////////////////////////////
   // helper functions
 
   //! check that m and in are compatible for replication
-  void check_replicable_orders(module_1_1<state_idx, state_idx> &m, 
-			       state_idx& in);
+  template<class T>
+  void check_replicable_orders(module_1_1<T> &m, state_idx<T>& in);
 
   ////////////////////////////////////////////////////////////////
   // generic replicable module classes
@@ -221,14 +220,14 @@ namespace ebl {
   //! functions when reaching <module>'s replicable_order.
   //! Note: Multiple inheritance could have been cleaner but would have required
   //! frequent dynamic_casts from the user.
-  template<class T> class module_1_1_replicable {
+  template<class T, class T2> class module_1_1_replicable {
   public:
     T &module;
     module_1_1_replicable(T &m);
     virtual ~module_1_1_replicable();
-    virtual void fprop(state_idx &in, state_idx &out);
-    virtual void bprop(state_idx &in, state_idx &out);
-    virtual void bbprop(state_idx &in, state_idx &out);
+    virtual void fprop(state_idx<T2> &in, state_idx<T2> &out);
+    virtual void bprop(state_idx<T2> &in, state_idx<T2> &out);
+    virtual void bbprop(state_idx<T2> &in, state_idx<T2> &out);
   };
 
   //! A macro to declare a module_1_1<state_idx,state_idx> as replicable
@@ -246,16 +245,21 @@ namespace ebl {
   //! frequent dynamic_casts from the user.
 #define DECLARE_REPLICABLE_MODULE_1_1(replicable_module, base_module,	\
 				      types_arguments, arguments)	\
-  class replicable_module : public base_module {			\
+  template <class T>							\
+    class replicable_module : public base_module {			\
   public:								\
-    module_1_1_replicable<base_module> rep;				\
+    module_1_1_replicable<base_module, T> rep;				\
     replicable_module types_arguments : base_module arguments, rep(*this) { \
-      bResize = false;							\
-      if (replicable_order() <= 0) eblerror("this module is not replicable"); } \
+      this->bResize = false;						\
+      if (this->replicable_order() <= 0)				\
+	eblerror("this module is not replicable"); }			\
     virtual ~replicable_module() {}					\
-    virtual void fprop(state_idx &in, state_idx &out) { rep.fprop(in, out); } \
-    virtual void bprop(state_idx &in, state_idx &out) { rep.bprop(in, out); } \
-    virtual void bbprop(state_idx &in, state_idx &out){ rep.bbprop(in, out); } \
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out)		\
+    { rep.fprop(in, out); }						\
+    virtual void bprop(state_idx<T> &in, state_idx<T> &out)		\
+    { rep.bprop(in, out); }						\
+    virtual void bbprop(state_idx<T> &in, state_idx<T> &out)		\
+    { rep.bbprop(in, out); }						\
   }
 
 } // namespace ebl {

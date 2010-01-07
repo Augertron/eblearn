@@ -44,24 +44,24 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! a simple fully-connected neural net layer: linear + tanh non-linearity.
-  class nn_layer_full: public module_1_1<state_idx, state_idx> {
+  template <class T> class nn_layer_full: public module_1_1<T> {
   public:
-    linear_module_replicable	 linear;  //!< linear module for weight matrix
-    addc_module			 adder;	  //!< bias vector
-    tanh_module			 sigmoid; //!< the non-linear function
-    state_idx			*sum;	  //!< weighted sum
+    linear_module_replicable<T>	 linear;  //!< linear module for weight matrix
+    addc_module<T>		 adder;	  //!< bias vector
+    tanh_module<T>		 sigmoid; //!< the non-linear function
+    state_idx<T>		*sum;	  //!< weighted sum
 
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
-    nn_layer_full(parameter &p, intg indim0, intg noutputs);
+    nn_layer_full(parameter<T> &p, intg indim0, intg noutputs);
     virtual ~nn_layer_full();
     //! fprop from in to out
-    void fprop(state_idx &in, state_idx &out);
+    void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
-    void bprop(state_idx &in, state_idx &out);
+    void bprop(state_idx<T> &in, state_idx<T> &out);
     //! bbprop
-    void bbprop(state_idx &in, state_idx &out);
+    void bbprop(state_idx<T> &in, state_idx<T> &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
     //! these two functions help scaling input data
@@ -71,13 +71,13 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! a convolution neural net layer: convolution + tanh non-linearity.
-  class nn_layer_convolution: public module_1_1<state_idx, state_idx> {
+  template <class T> class nn_layer_convolution: public module_1_1<T> {
   public:
-    convolution_module_2D_replicable	 convol; //!< convolution module
-    addc_module				 adder;	//!< bias vector
-    tanh_module				 sigmoid;//!< the non-linear function
-    state_idx				*sum;	//!< convolution result
-
+    convolution_module_2D_replicable<T>	 convol;   //!< convolution module
+    addc_module<T>			 adder;	   //!< bias vector
+    tanh_module<T>			 sigmoid;  //!< the non-linear function
+    state_idx<T>			*sum;	   //!< convolution result
+ 
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
@@ -89,15 +89,15 @@ namespace ebl {
     //! \param stridej is the stride at which convolutions are done on 
     //!        the width axis.
     //! \param table is the convolution connection table.
-    nn_layer_convolution(parameter &p, intg kerneli, intg kernelj, 
+    nn_layer_convolution(parameter<T> &p, intg kerneli, intg kernelj, 
 			 intg stridei, intg stridej, idx<intg> &tbl);
     virtual ~nn_layer_convolution();
     //! fprop from in to out
-    void fprop(state_idx &in, state_idx &out);
+    void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
-    void bprop(state_idx &in, state_idx &out);
+    void bprop(state_idx<T> &in, state_idx<T> &out);
     //! bbprop
-    void bbprop(state_idx &in, state_idx &out);
+    void bbprop(state_idx<T> &in, state_idx<T> &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
     //! these two functions help scaling input data
@@ -108,13 +108,13 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! a convolution layer with absolute rectification and constrast
   //! normalization
-  class layer_convabsnorm: public module_1_1<state_idx, state_idx> {
+  template <class T> class layer_convabsnorm: public module_1_1<T> {
   public:
-    nn_layer_convolution	 lconv;	//!< convolution layer
-    abs_module			 abs;	//!< absolute rectification
-    weighted_std_module		 norm;	//!< constrast normalization
-    state_idx			*tmp;	//!< temporary results
-    state_idx			*tmp2;	//!< temporary results
+    nn_layer_convolution<T>	 lconv;	//!< convolution layer
+    abs_module<T>		 abs;	//!< absolute rectification
+    weighted_std_module<T>	 norm;	//!< constrast normalization
+    state_idx<T>		*tmp;	//!< temporary results
+    state_idx<T>		*tmp2;	//!< temporary results
 
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
@@ -127,15 +127,15 @@ namespace ebl {
     //! \param stridej is the stride at which convolutions are done on 
     //!        the width axis.
     //! \param table is the convolution connection table.
-    layer_convabsnorm(parameter &p, intg kerneli, intg kernelj, 
+    layer_convabsnorm(parameter<T> &p, intg kerneli, intg kernelj, 
 			 intg stridei, intg stridej, idx<intg> &tbl);
     virtual ~layer_convabsnorm();
     //! fprop from in to out
-    void fprop(state_idx &in, state_idx &out);
+    void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
-    void bprop(state_idx &in, state_idx &out);
+    void bprop(state_idx<T> &in, state_idx<T> &out);
     //! bbprop
-    void bbprop(state_idx &in, state_idx &out);
+    void bbprop(state_idx<T> &in, state_idx<T> &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
     //! these two functions help scaling input data
@@ -145,26 +145,26 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! a subsampling neural net layer: subsampling + tanh non-linearity.
-  class nn_layer_subsampling: public module_1_1<state_idx, state_idx> {
+  template <class T> class nn_layer_subsampling: public module_1_1<T> {
   public:
-    subsampling_module_2D_replicable subsampler; //!< subsampling module
-    addc_module           adder;      //!< bias vector
-    tanh_module           sigmoid;    //!< the non-linear function
-    state_idx             *sum;        //!< subsampling result
+    subsampling_module_2D_replicable<T>	 subsampler;	//!< subsampling module
+    addc_module<T>			 adder;	   //!< bias vector
+    tanh_module<T>			 sigmoid;  //!< the non-linear function
+    state_idx<T>			*sum;	   //!< subsampling result
 
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
-    nn_layer_subsampling(parameter &p, intg stridei, intg stridej,
-					     intg subi, intg subj, 
-					     intg thick);
+    nn_layer_subsampling(parameter<T> &p, intg stridei, intg stridej,
+			 intg subi, intg subj, 
+			 intg thick);
     virtual ~nn_layer_subsampling();
     //! fprop from in to out
-    void fprop(state_idx &in, state_idx &out);
+    void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
-    void bprop(state_idx &in, state_idx &out);
+    void bprop(state_idx<T> &in, state_idx<T> &out);
     //! bbprop
-    void bbprop(state_idx &in, state_idx &out);
+    void bbprop(state_idx<T> &in, state_idx<T> &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
     //! these two functions help scaling input data

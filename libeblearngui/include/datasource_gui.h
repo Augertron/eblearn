@@ -42,23 +42,23 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! labeled_datasource_gui
-  template<class Tdata, class Tlabel>
+  template<class Tnet, class Tdata, class Tlabel>
     class labeled_datasource_gui : public scroll_box {
   protected:
-    bool				 scroll;
-    bool				 scroll_added;
-    unsigned int                         pos;
-    int			                 display_wid;
-    unsigned int			 _nh;
-    unsigned int			 _nw;
-    double				 _zoom;
-    double                               _rmin;
-    double                               _rmax;
-    bool                                 _replaced;
+    bool		scroll;
+    bool		scroll_added;
+    unsigned int        pos;
+    int			display_wid;
+    unsigned int	_nh;
+    unsigned int	_nw;
+    double		_zoom;
+    Tnet                _rmin;
+    Tnet                _rmax;
+    bool                _replaced;
     
   public:
-    labeled_datasource<Tdata, Tlabel>	*_last_ds;
-    labeled_datasource<Tdata, Tlabel>	*_ds;
+    labeled_datasource<Tnet, Tdata, Tlabel>	*_last_ds;
+    labeled_datasource<Tnet, Tdata, Tlabel>	*_ds;
 
     //! if scroll is true, then controls to display more pages appear.
     labeled_datasource_gui(bool scroll = false);
@@ -68,12 +68,12 @@ namespace ebl {
     //! with zoom <zoom>. If a window id <wid> is specified, use that window,
     //! otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
-    virtual void display(labeled_datasource<Tdata, Tlabel> &ds,
+    virtual void display(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
 			 unsigned int nh, unsigned int nw, 
 			 unsigned int h0 = 0, unsigned int w0 = 0, 
 			 double zoom = 1.0, int wid = -1, 
 			 const char *wname = NULL, bool scrolling = false,
-			 Tdata rangemin = 0, Tdata rangemax = 0);
+			 Tnet rangemin = 0, Tnet rangemax = 0);
 
     ////////////////////////////////////////////////////////////////
     // inherited methods to implement for scrolling capabilities
@@ -90,13 +90,13 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! labeled_datasource_gui
-  template<class Tdata, class Tlabel>
+  template<class Tnet, class Tdata, class Tlabel>
     class labeled_pair_datasource_gui
-    : public labeled_datasource_gui<Tdata, Tlabel> {
+    : public labeled_datasource_gui<Tnet, Tdata, Tlabel> {
   protected:
-    labeled_pair_datasource<Tdata, Tlabel>	*_last_ds;
+    labeled_pair_datasource<Tnet, Tdata, Tlabel>	*_last_ds;
   public:
-    labeled_pair_datasource<Tdata, Tlabel>	*_ds;
+    labeled_pair_datasource<Tnet, Tdata, Tlabel>	*_ds;
     
     //! if scroll is true, then controls to display more pages appear.
     labeled_pair_datasource_gui(bool scroll = false);
@@ -106,12 +106,12 @@ namespace ebl {
     //! with zoom <zoom>. If a window id <wid> is specified, use that window,
     //! otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
-    virtual void display(labeled_pair_datasource<Tdata, Tlabel> &ds,
+    virtual void display(labeled_pair_datasource<Tnet, Tdata, Tlabel> &ds,
 			 unsigned int nh, unsigned int nw, 
 			 unsigned int h0 = 0, unsigned int w0 = 0, 
 			 double zoom = 1.0, int wid = -1, 
 			 const char *wname = NULL, bool scrolling = false,
-			 Tdata rangemin = 0, Tdata rangemax = 0);
+			 Tnet rangemin = 0, Tnet rangemax = 0);
 
     ////////////////////////////////////////////////////////////////
     // inherited methods to implement for scrolling capabilities

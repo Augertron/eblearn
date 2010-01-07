@@ -34,24 +34,26 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // supervised_trainer_gui
 
-  template <class Tdata, class Tlabel>  
-  supervised_trainer_gui<Tdata, Tlabel>::supervised_trainer_gui(bool scroll_)
+  template <class Tnet, class Tdata, class Tlabel>  
+  supervised_trainer_gui<Tnet, Tdata, Tlabel>::
+  supervised_trainer_gui(bool scroll_)
     : _st(NULL), _ds(NULL), _last_ds(NULL), 
       datasource_wid(-1), internals_wid(-1), internals_wid2(-1),
       internals_wid3(-1),
       scroll(scroll_), scroll_added(false), pos(0), dsgui(NULL) {
   }
 
-  template <class Tdata, class Tlabel>  
-  supervised_trainer_gui<Tdata, Tlabel>::~supervised_trainer_gui() {
+  template <class Tnet, class Tdata, class Tlabel>  
+  supervised_trainer_gui<Tnet, Tdata, Tlabel>::~supervised_trainer_gui() {
     if (win)
       win->replace_scroll_box_with_copy(this);
   }
   
-  template <class Tdata, class Tlabel>  
-  void supervised_trainer_gui<Tdata, Tlabel>::
-  display_datasource(supervised_trainer<Tdata, Tlabel> &st,
-		     labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
+  template <class Tnet, class Tdata, class Tlabel>  
+  void supervised_trainer_gui<Tnet, Tdata, Tlabel>::
+  display_datasource(supervised_trainer<Tnet, Tdata, Tlabel> &st,
+		     labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+		     infer_param &infp,
 		     unsigned int nh, unsigned int nw, unsigned int h0, 
 		     unsigned int w0, double zoom, int wid, const char *title,
 		     bool scrolling) {
@@ -63,21 +65,20 @@ namespace ebl {
     _h0 = h0;
     _w0 = w0;
     if (!dsgui)
-      dsgui = new labeled_datasource_gui<Tdata, Tlabel>(false);
+      dsgui = new labeled_datasource_gui<Tnet, Tdata, Tlabel>(false);
     // do a deep copy of dataset only when necessary
     if (scroll && !scrolling && (_last_ds != &ds)) {
       if (_ds)
 	delete _ds;
-      _ds = new labeled_datasource<Tdata, Tlabel>(ds);
+      _ds = new labeled_datasource<Tnet, Tdata, Tlabel>(ds);
       dsgui->_ds = _ds;
     }
     _last_ds = &ds;
     // init datasource
-    ds.seek_begin();
-    st.resize_input(ds);
+    st.init(ds);
     // find out sample size
     ds.fprop(*st.input, st.label);
-    idx<double> m = st.input->x.select(0, 0);
+    idx<Tnet> m = st.input->x.select(0, 0);
     _h1 = h0 + nh * (m.dim(0) + 1) * 3;
     _w1 = w0 + nw * (m.dim(1) + 1) * 3;
     _zoom = zoom;
@@ -100,7 +101,7 @@ namespace ebl {
     unsigned int h1 = h01, w1 = w01, nh1 = 0;
     unsigned int h2 = h02, w2 = w02, i2 = 0;
     bool correct;
-    int answer;
+    Tlabel answer;
 
     // display top
     gui << set_colors(255, 0, 0, 255, 255, 255, 255, 127) << gui_only();
@@ -125,7 +126,7 @@ namespace ebl {
       ds.fprop(*st.input, st.label);
       correct = st.test_sample(*st.input, st.label.get(), answer, infp);
       ds.next();
-      idx<double> m = st.input->x.select(0, 0);
+      idx<Tnet> m = st.input->x.select(0, 0);
 
       // 1. display dataset with incorrect and correct answers
       if (nh1 < nh) {
@@ -155,13 +156,12 @@ namespace ebl {
     enable_window_updates();
   }
 
-  template <class Tdata, class Tlabel>  
-  void supervised_trainer_gui<Tdata, Tlabel>::
-  display_internals(supervised_trainer<Tdata, Tlabel> &st,
-		    labeled_datasource<Tdata, Tlabel> &ds, infer_param &infp,
-		    gd_param &args,
-		    unsigned int ninternals, 
-		    unsigned int display_h0, 
+  template <class Tnet, class Tdata, class Tlabel>  
+  void supervised_trainer_gui<Tnet, Tdata, Tlabel>::
+  display_internals(supervised_trainer<Tnet, Tdata, Tlabel> &st,
+		    labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+		    infer_param &infp, gd_param &args,
+		    unsigned int ninternals, unsigned int display_h0, 
 		    unsigned int display_w0, double display_zoom, 
 		    int wid, const char *title) {
     internals_wid = (wid >= 0) ? wid : 
@@ -187,14 +187,13 @@ namespace ebl {
     disable_window_updates();
     clear_window();
     // prepare dataset
-    ds.seek_begin();
-    st.resize_input(ds);
-    int answer;
+    st.init(ds);
+    Tlabel answer;
     unsigned int wfdisp = 0, hfdisp = 0;
     unsigned int wfdisp2 = 0, hfdisp2 = 0;
     unsigned int wfdisp3 = 0, hfdisp3 = 0;
     ds.fprop(*st.input, st.label);
-    idx<double> m = st.input->x.select(0, 0);
+    idx<Tnet> m = st.input->x.select(0, 0);
     
     // display first ninternals samples
     fc_ebm2_gui mg;
@@ -202,20 +201,24 @@ namespace ebl {
       // prepare input
       ds.fprop(*st.input, st.label);
       // fprop and bprop
+      st.test_sample(*st.input, st.label.get(), answer, infp);
       // TODO: display is influencing learning, remove influence
-      st.learn_sample(*st.input, st.label.get(), args);
+      //st.learn_sample(*st.input, st.label.get(), args);
       ds.next();
       // display fprop
       mg.display_fprop(st.machine, *st.input, answer, st.energy, 
-		       hfdisp, wfdisp, 3.0, -1.0, 1.0, true, internals_wid);
+		       hfdisp, wfdisp, 3.0, (Tnet) -1.0, (Tnet) 1.0, true,
+		       internals_wid);
       // display bprop
       select_window(internals_wid2);
       mg.display_bprop(st.machine, *st.input, answer, st.energy, 
-      		       hfdisp2, wfdisp2, 3.0, 1.0, 1.0, true, internals_wid2);
+      		       hfdisp2, wfdisp2, 3.0, (Tnet) 1.0, (Tnet) 1.0, true,
+		       internals_wid2);
       // display bprop
       select_window(internals_wid3);
       mg.display_bbprop(st.machine, *st.input, answer, st.energy, 
-			hfdisp3, wfdisp3, 3.0, .01, .01, true, internals_wid3);
+			hfdisp3, wfdisp3, 3.0, (Tnet) .01, (Tnet) .01, true,
+			internals_wid3);
       hfdisp += 10;
       hfdisp2 += 10;
       hfdisp3 += 10;
@@ -232,8 +235,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // inherited methods to implement for scrolling capabilities
 
-  template<typename Tdata, typename Tlabel>
-  void supervised_trainer_gui<Tdata, Tlabel>::display_next() {
+  template<class Tnet, class Tdata, class Tlabel>
+  void supervised_trainer_gui<Tnet, Tdata, Tlabel>::display_next() {
     if (next_page()) {
       pos = MIN(_ds->size(), pos + _nh * _nw);
       display_datasource(*_st, *_ds, *_infp, _nh, _nw, _h0, _w0, _zoom,
@@ -241,8 +244,8 @@ namespace ebl {
     }
   }
 
-  template<typename Tdata, typename Tlabel>
-  void supervised_trainer_gui<Tdata, Tlabel>::display_previous() {
+  template<class Tnet, class Tdata, class Tlabel>
+  void supervised_trainer_gui<Tnet, Tdata, Tlabel>::display_previous() {
     if (previous_page()) {
       pos = MAX(0, pos - _nh * _nw);
       display_datasource(*_st, *_ds, *_infp, _nh, _nw, _h0, _w0, _zoom,
@@ -250,18 +253,18 @@ namespace ebl {
     }
   }
 
-  template<typename Tdata, typename Tlabel>
-  unsigned int supervised_trainer_gui<Tdata, Tlabel>::max_pages() {
+  template<class Tnet, class Tdata, class Tlabel>
+  unsigned int supervised_trainer_gui<Tnet, Tdata, Tlabel>::max_pages() {
     return dsgui->max_pages();
   }
 
-  template<typename Tdata, typename Tlabel>
-  supervised_trainer_gui<Tdata,Tlabel>* 
-  supervised_trainer_gui<Tdata, Tlabel>::copy() {
-    //  scroll_box0* supervised_trainer_gui<Tdata, Tlabel>::copy() {
+  template<class Tnet, class Tdata, class Tlabel>
+  supervised_trainer_gui<Tnet, Tdata, Tlabel>* 
+  supervised_trainer_gui<Tnet, Tdata, Tlabel>::copy() {
+    //  scroll_box0* supervised_trainer_gui<Tnet, Tdata, Tlabel>::copy() {
     cout << "supervsed_trainer_gui::copy."<<endl;
-    supervised_trainer_gui<Tdata, Tlabel> *stcopy = 
-      new supervised_trainer_gui<Tdata, Tlabel>(*this);
+    supervised_trainer_gui<Tnet, Tdata, Tlabel> *stcopy = 
+      new supervised_trainer_gui<Tnet, Tdata, Tlabel>(*this);
     stcopy->dsgui = dsgui->copy();
     stcopy->_ds = _ds;
     stcopy->_last_ds = _last_ds;

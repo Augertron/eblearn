@@ -42,45 +42,48 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! generic coder/decoder module.
-  class codec: public ebm_2<state_idx, state_idx> {
+  template <class T> class codec: public ebm_2<T> {
   public:
     // encoder
-    module_1_1<state_idx, state_idx>	&encoder;
-    state_idx				 enc_out;
-    ebm_2<state_idx, state_idx>		&enc_cost;
-    double				 weight_energy_enc;
-    state_idx				 enc_energy;
+    module_1_1<T>	&encoder;
+    state_idx<T>	 enc_out;
+    ebm_2<T>		&enc_cost;
+    double		 weight_energy_enc;
+    state_idx<T>	 enc_energy;
     // z
-    state_idx				 z;
-    ebm_1<state_idx>		        &z_cost;
-    double				 weight_energy_z;
-    state_idx				 z_energy;
+    state_idx<T>	 z;
+    ebm_1<T>		&z_cost;
+    double		 weight_energy_z;
+    state_idx<T>	 z_energy;
     // decoder
-    module_1_1<state_idx, state_idx>	&decoder;
-    state_idx				 dec_out;
-    ebm_2<state_idx, state_idx>		&dec_cost;
-    double				 weight_energy_dec;
-    state_idx				 dec_energy;
-    gd_param                            &infp;
+    module_1_1<T>	&decoder;
+    state_idx<T>	 dec_out;
+    ebm_2<T>		&dec_cost;
+    double		 weight_energy_dec;
+    state_idx<T>	 dec_energy;
+    gd_param            &infp;
 
     //! Constructor.
-    codec(module_1_1<state_idx, state_idx>	&encoder_,
-	  ebm_2<state_idx, state_idx>		&enc_cost_,
-	  double				 weight_energy_enc_,
-	  ebm_1<state_idx>		       &z_cost_,
-	  double				 weight_energy_z_,
-	  module_1_1<state_idx, state_idx>	&decoder_,
-	  ebm_2<state_idx, state_idx>		&dec_cost_,
-	  double				 weight_energy_dec_,
-	  gd_param                              &infp_);
+    codec(module_1_1<T>	&encoder_,
+	  ebm_2<T>	&enc_cost_,
+	  double	 weight_energy_enc_,
+	  ebm_1<T>	&z_cost_,
+	  double	 weight_energy_z_,
+	  module_1_1<T>	&decoder_,
+	  ebm_2<T>	&dec_cost_,
+	  double	 weight_energy_dec_,
+	  gd_param      &infp_);
     //! destructor.
     virtual ~codec();
     //! forward propagation of in1 and in2
-    virtual void fprop(state_idx &in1, state_idx &in2, state_idx &energy);
+    virtual void fprop(state_idx<T> &in1, state_idx<T> &in2,
+		       state_idx<T> &energy);
     //! backward propagation
-    virtual void bprop(state_idx &in1, state_idx &in2, state_idx &energy);
+    virtual void bprop(state_idx<T> &in1, state_idx<T> &in2,
+		       state_idx<T> &energy);
     //! second-derivative backward propagation
-    virtual void bbprop(state_idx &in1, state_idx &in2, state_idx &energy);
+    virtual void bbprop(state_idx<T> &in1, state_idx<T> &in2,
+			state_idx<T> &energy);
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! normalize
@@ -88,40 +91,44 @@ namespace ebl {
 
   protected:
     //! forward propagation of in1 and in2, a simple one pass propagation
-    virtual void fprop_one_pass(state_idx &in1, state_idx &in2, 
-				state_idx &energy);
+    virtual void fprop_one_pass(state_idx<T> &in1, state_idx<T> &in2, 
+				state_idx<T> &energy);
     //! simple one-pass backward propagation
-    virtual void bprop_one_pass(state_idx &in1, state_idx &in2, 
-				state_idx &energy);
+    virtual void bprop_one_pass(state_idx<T> &in1, state_idx<T> &in2, 
+				state_idx<T> &energy);
     //! multiple-pass bprop on the decoder only to find the optimal code z
-    virtual void bprop_optimal_code(state_idx &in1, state_idx &in2, 
-				    state_idx &energy, gd_param &infp);
+    virtual void bprop_optimal_code(state_idx<T> &in1, state_idx<T> &in2, 
+				    state_idx<T> &energy, gd_param &infp);
 
     //! returns true if the l2-norm of the gradient of z (z.dx) is above
     //! the infp.gradient_threshold
-    virtual bool check_code_threshold(state_idx &z, gd_param &infp);
+    virtual bool check_code_threshold(state_idx<T> &z, gd_param &infp);
   };
 
   ////////////////////////////////////////////////////////////////
   //! a single layer encoder/decoder architecture with an L1 penalty
-  class codec_lone: codec {
+  template <class T> class codec_lone: codec<T> {
   public:
-    distance_l2 enc_cost_l2;
-    penalty_l1	z_cost_l1;
-    distance_l2 dec_cost_l2;
+    distance_l2<T>	enc_cost_l2;
+    penalty_l1<T>	z_cost_l1;
+    distance_l2<T>	dec_cost_l2;
     
     //! constructor.
-    codec_lone(module_1_1<state_idx, state_idx>	&encoder_,
-	       module_1_1<state_idx, state_idx>	&decoder_,
-	       double				 weight_energy_enc_,
-	       double				 weight_energy_z_,
-	       double				 weight_energy_dec_,
-	       double				 thres,
-	       gd_param                         &infp_);
+    codec_lone(module_1_1<T>	&encoder_,
+	       module_1_1<T>	&decoder_,
+	       double		 weight_energy_enc_,
+	       double		 weight_energy_z_,
+	       double		 weight_energy_dec_,
+	       double		 thres,
+	       gd_param         &infp_);
     //! destructor.
     virtual ~codec_lone();
+  protected:
+    using codec<T>::infp;
   };
   
 } // namespace ebl {
+
+#include "ebl_codec.hpp"
 
 #endif /* EBL_CODEC_H_ */

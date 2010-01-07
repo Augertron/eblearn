@@ -21,6 +21,7 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "Usage: ./mnist <config file>" << endl;
     eblerror("config file not specified");
   }
+  typedef float t_net;
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
   init_drand(0); // initialize random seed
   //  init_drand(time(NULL)); // initialize random seed
@@ -28,21 +29,22 @@ int main(int argc, char **argv) { // regular main without gui
   bool display = conf.get_bool("display"); // enable/disable display
   uint ninternals = conf.get_uint("ninternals"); // # examples' to display
 
-  //! load MNIST datasets: trize for training set and tesize for testing set
-  intg trsize = conf.get_uint("training_size"); // maximum training set size: 60000
-  intg tesize = conf.get_uint("testing_size"); // maximum testing set size:  10000  
-  mnist_datasource<ubyte,ubyte> train_ds, test_ds;
-  load_mnist_dataset(conf.get_cstring("root"), train_ds,test_ds,trsize,tesize);
+  //! load MNIST datasets
+  mnist_datasource<t_net, ubyte, ubyte>
+    train_ds(conf.get_cstring("root"), "train", conf.get_uint("training_size")),
+    test_ds(conf.get_cstring("root"), "t10k", conf.get_uint("testing_size"));
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
-  idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
+  idx<t_net> targets =
+    create_target_matrix<t_net>(1+idx_max(train_ds.labels), 1.0);
 
   //! create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  parameter theparam(60000); // create trainable parameter
-  lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0), conf.get_bool("absnorm"));
-  supervised_euclidean_machine thenet(l5, targets, dims);
-  supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam);
+  parameter<t_net> theparam(60000); // create trainable parameter
+  lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
+		   targets.dim(0), conf.get_bool("absnorm"));
+  supervised_euclidean_machine<t_net, ubyte> thenet((module_1_1<t_net>&)l5, targets, dims);
+  supervised_trainer<t_net, ubyte, ubyte> thetrainer(thenet, theparam);
 
   //! a classifier-meter measures classification errors
   classifier_meter trainmeter, testmeter;
@@ -67,7 +69,7 @@ int main(int argc, char **argv) { // regular main without gui
   thetrainer.compute_diaghessian(train_ds, 100, 0.02);
 
 #ifdef __GUI__
-  supervised_trainer_gui<ubyte, ubyte> stgui;
+  supervised_trainer_gui<t_net, ubyte, ubyte> stgui;
   if (display) {
     //stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
     stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);

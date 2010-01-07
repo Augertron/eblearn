@@ -46,57 +46,58 @@ namespace ebl {
   // module_1_1_gui
 
 #define DISPLAY_1_1(name1, name2)					\
-  template<class Tin, class Tout>					\
-  void module_1_1_gui::name1(module_1_1<Tin, Tout> &m,			\
-			     Tin &in, Tout &out,			\
+  template<class T, class Tout>						\
+  void module_1_1_gui::name1(module_1_1_gen<state_idx<T>, Tout> &m,	\
+			     state_idx<T> &in, Tout &out,		\
 			     unsigned int h0, unsigned int w0,		\
-			     double zoom, double vmin, double vmax,	\
+			     double zoom, T vmin, T vmax,		\
 			     bool show_out, int wid,			\
 			     const char *wname) {			\
     name2(m, in, out, h0, w0, zoom, vmin, vmax, show_out, wid, wname);	\
   }
 
 #define DISPLAY2_1_1(name1, name2)					\
-  template<class Tin, class Tout>					\
-  void module_1_1_gui::name2(module_1_1<Tin, Tout> &m,			\
-			     Tin &in, Tout &out,			\
+  template<class T, class Tout>						\
+  void module_1_1_gui::name2(module_1_1_gen<state_idx<T>, Tout> &m,	\
+			     state_idx<T> &in, Tout &out,		\
 			     unsigned int &h0, unsigned int &w0,	\
-			     double zoom, double vmin, double vmax,	\
+			     double zoom, T vmin, T vmax,		\
 			     bool show_out, int wid,			\
 			     const char *wname) {			\
     display_wid_fprop = (wid >= 0) ? wid :				\
       new_window((wname ? wname : "module_1_1 display"));		\
     select_window(display_wid_fprop);					\
     gui << black_on_white(255, 0) << gui_only();			\
-									\
-    if (dynamic_cast< layers_n<Tin>* >(&m)) {				\
-      /* layers_n */							\
-      layers_n_gui::name1(*this, dynamic_cast< layers_n<Tin>& >(m),	\
-				  in, out, h0, w0, zoom, vmin, vmax, show_out);\
-    } else if (dynamic_cast< nn_layer_full* >(&m)) {			\
-      /* nn_layer_full */						\
-      nn_layer_full_gui::name1(dynamic_cast< nn_layer_full& >(m), in,	\
-				       out, h0, w0, zoom, vmin, vmax,show_out);\
-    } else if (dynamic_cast< nn_layer_convolution* >(&m)) {		\
-      /* nn_layer_convolution */					\
-      nn_layer_convolution_gui::					\
-	name1(dynamic_cast< nn_layer_convolution& >(m),			\
-	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    } else if (dynamic_cast< layer_convabsnorm* >(&m)) {		\
-      /* layer_convabsnorm */						\
-      layer_convabsnorm_gui::						\
-	name1(dynamic_cast< layer_convabsnorm& >(m),			\
+    									\
+    if (dynamic_cast< layers_n_gen<state_idx<T> >* >(&m)) {		\
+    /* layers_n */							\
+    layers_n_gui::name1(*this,						\
+			dynamic_cast< layers_n_gen<state_idx<T> >& >(m), \
+      in, out, h0, w0, zoom, vmin, vmax, show_out);			\
+} else if (dynamic_cast< nn_layer_full<T>* >(&m)) {			\
+  /* nn_layer_full */							\
+  nn_layer_full_gui::name1(dynamic_cast< nn_layer_full<T>& >(m), in,	\
+      out, h0, w0, zoom, vmin, vmax,show_out);				\
+} else if (dynamic_cast< nn_layer_convolution<T>* >(&m)) {		\
+  /* nn_layer_convolution */						\
+  nn_layer_convolution_gui::						\
+    name1(dynamic_cast< nn_layer_convolution<T>& >(m),			\
+    in, out, h0, w0, zoom, vmin, vmax, show_out);			\
+} else if (dynamic_cast< layer_convabsnorm<T>* >(&m)) {			\
+  /* layer_convabsnorm */						\
+  layer_convabsnorm_gui::						\
+    name1(dynamic_cast< layer_convabsnorm<T>& >(m),			\
+    in, out, h0, w0, zoom, vmin, vmax, show_out);			\
+} else if (dynamic_cast< nn_layer_subsampling<T>* >(&m)) {		\
+  /* nn_layer_subsampling */						\
+  nn_layer_subsampling_gui::						\
+    name1(dynamic_cast< nn_layer_subsampling<T>& >(m),			\
 		      in, out, h0, w0, zoom, vmin, vmax, show_out);	\
-    } else if (dynamic_cast< nn_layer_subsampling* >(&m)) {		\
-      /* nn_layer_subsampling */					\
-      nn_layer_subsampling_gui::					\
-	name1(dynamic_cast< nn_layer_subsampling& >(m),			\
-		      in, out, h0, w0, zoom, vmin, vmax, show_out);	\
-    } else {								\
-      cerr << "Warning: unknown display function for module_1_1 object"; \
-      cerr << "(" << typeid(m).name() << ")." << endl;			\
-    }									\
-  }
+} else {								\
+    cerr << "Warning: unknown display function for module_1_1 object";	\
+    cerr << "(" << typeid(m).name() << ")." << endl;			\
+  }									\
+}
 
   DISPLAY_1_1(display_fprop, display_fprop2)
   DISPLAY2_1_1(display_fprop, display_fprop2)
@@ -109,11 +110,11 @@ namespace ebl {
   // module_2_1_gui
 
 #define DISPLAY_2_1(name1)						\
-  template<class Tin1, class Tin2, class Tout>				\
-  void module_2_1_gui::name1(module_2_1<Tin1, Tin2, Tout> &m,		\
-			     Tin1 &in1, Tin2 &in2, Tout &out,		\
+  template<class Tin1, class Tin2, class T>				\
+  void module_2_1_gui::name1(module_2_1_gen<Tin1, Tin2, state_idx<T> > &m, \
+			     Tin1 &in1, Tin2 &in2, state_idx<T> &out,	\
 			     unsigned int &h0, unsigned int &w0,	\
-			     double zoom, double vmin, double vmax,	\
+			     double zoom, T vmin, T vmax,		\
 			     bool show_out, int wid,			\
 			     const char *wname) {			\
     display_wid_fprop = (wid >= 0) ? wid :				\
@@ -121,19 +122,19 @@ namespace ebl {
     select_window(display_wid_fprop);					\
     disable_window_updates();						\
     gui << black_on_white(255, 0) << gui_only();			\
-									\
-    if (dynamic_cast< fc_ebm2<Tin1, Tin2, Tout>* >(&m)) {		\
+    									\
+    if (dynamic_cast< fc_ebm2_gen<Tin1, Tin2, T>* >(&m)) {		\
       /* fc_ebm2 */							\
       fc_ebm2_gui::							\
-	name1(*this, dynamic_cast< fc_ebm2<Tin1, Tin2, Tout>& >(m),	\
-	     in1, in2, out, h0, w0, zoom, vmin, vmax, show_out, wid);	\
-    } else {								\
-      cerr << "Warning: unknown display function for module_2_1 object"; \
-      cerr << "(" << typeid(m).name() << ")." << endl;			\
-    }									\
-    enable_window_updates();						\
-  }
-
+	name1(*this, dynamic_cast< fc_ebm2_gen<Tin1, Tin2, T>& >(m),	\
+	in1, in2, out, h0, w0, zoom, vmin, vmax, show_out, wid);	\
+  } else {								\
+    cerr << "Warning: unknown display function for module_2_1 object";	\
+    cerr << "(" << typeid(m).name() << ")." << endl;			\
+  }									\
+  enable_window_updates();						\
+}
+  
   DISPLAY_2_1(display_fprop)
   DISPLAY_2_1(display_bprop)
   DISPLAY_2_1(display_bbprop)
@@ -142,12 +143,12 @@ namespace ebl {
   // fc_ebm2_gui
 
 #define DISPLAY_FCEBM2(name1, name2)					\
-  template<class Tin1, class Tin2, class Tout>				\
-  void fc_ebm2_gui::name1(fc_ebm2<Tin1, Tin2, Tout> &fc,		\
+  template<class Tin1, class Tin2, class T>				\
+  void fc_ebm2_gui::name1(fc_ebm2_gen<Tin1, Tin2, T> &fc,	\
 			  Tin1 &i1, Tin2 &i2,				\
-			  state_idx &energy,				\
+			  state_idx<T> &energy,				\
 			  unsigned int &h0, unsigned int &w0,		\
-			  double zoom, double vmin, double vmax,	\
+			  double zoom, T vmin, T vmax,			\
 			  bool show_out,				\
 			  int wid, const char *wname) {			\
     module_1_1_gui m;							\
@@ -166,14 +167,15 @@ namespace ebl {
 #define DISPLAY_LAYERSN(name1, name2, T)				\
   template<class T>							\
   void layers_n_gui::name1(module_1_1_gui &g,				\
-			   layers_n<T> &ln, T &in, T &out,		\
+			   layers_n_gen<state_idx<T> > &ln,		\
+			   state_idx<T> &in, state_idx<T> &out,		\
 			   unsigned int &h0, unsigned int &w0,		\
-			   double zoom, double vmin, double vmax,	\
+			   double zoom, T vmin, T vmax,			\
 			   bool show_out) {				\
     if (ln.modules->empty())						\
       return ;								\
-    T* hi = &in;							\
-    T* ho = &in;							\
+    state_idx<T>* hi = &in;						\
+    state_idx<T>* ho = &in;						\
     /* last will be manual */						\
     int niter = ln.modules->size()-1;					\
     for(int i=0; i<niter; i++){						\
@@ -190,7 +192,7 @@ namespace ebl {
       gui << gui_only() << at(h, w) << "outputs:" << out.x;		\
       w += 150;								\
       /* display outputs */						\
-      idx_bloop1(m, out.T, double) {					\
+      idx_bloop1(m, out.T, T) {						\
 	draw_matrix(m, h, w, zoom * zoomf, zoom * zoomf, vmin, vmax);	\
 	w += m.dim(1) * zoom * zoomf + 1;				\
       }									\

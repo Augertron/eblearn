@@ -32,8 +32,8 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
   idx<ubyte> data(1, 1, 1), labels(1);
   CPPUNIT_ASSERT(load_matrix<ubyte>(data, datafile.c_str()) == true);
   CPPUNIT_ASSERT(load_matrix<ubyte>(labels, labelfile.c_str()) == true);
-  labeled_datasource<ubyte,ubyte> ds(data, labels, 0.0, 1.0);
-  state_idx datum(28, 28);
+  labeled_datasource<double,ubyte,ubyte> ds(data, labels, 0.0, 1.0);
+  state_idx<double> datum(28, 28);
   idx<ubyte> label;
   for (int i = 0; i < 5; i++) {
     ds.fprop(datum, label);

@@ -164,36 +164,34 @@ int main(int argc, char **argv) {
     cout << "  " << (const char *) classe.idx_ptr() << endl;
   }
   
-  labeled_datasource<t_data, int> train_ds(data, labels, classes, 0, 1,
- 					  "Training dataset");
+  labeled_datasource<t_data, t_data, int> train_ds(data, labels, classes, 0, 1,
+						   "Training dataset");
   
   cout << "images: " << train_ds.data << endl;
   cout << "labels: " << train_ds.labels << endl;
   
 #ifdef __GUI__
   if (bclasspairs) {
-    labeled_pair_datasource<t_data, t_label> train_cp_ds(data, labels, classes,
-						    classpairs,
-						    0, 1,
-						    "Class pairs (training)");
-    labeled_pair_datasource_gui<t_data, t_label> dsgui_cp(true);
+    labeled_pair_datasource<t_data, t_data, t_label>
+      train_cp_ds(data, labels, classes, classpairs, 0, 1,
+		  "Class pairs (training)");
+    labeled_pair_datasource_gui<t_data, t_data, t_label> dsgui_cp(true);
     dsgui_cp.display(train_cp_ds, 4, 8, 0, 0, 1, -1, NULL, false,
 		     range_min, range_max);
     sleep(1);
   }
 
   if (bdefpairs) {
-    labeled_pair_datasource<t_data, t_label> train_dp_ds(data, labels, classes,
-						    defpairs,
-						    0, 1,
-					       "Deformation pairs (training)");
-    labeled_pair_datasource_gui<t_data, t_label> dsgui_dp(true);
+    labeled_pair_datasource<t_data, t_data, t_label>
+      train_dp_ds(data, labels, classes, defpairs, 0, 1,
+		  "Deformation pairs (training)");
+    labeled_pair_datasource_gui<t_data, t_data, t_label> dsgui_dp(true);
     dsgui_dp.display(train_dp_ds, 4, 8, 0, 0, 1, -1, NULL, false,
 		     range_min, range_max);
     sleep(1);
   }
   
-  labeled_datasource_gui<t_data, t_label> dsgui(true);
+  labeled_datasource_gui<t_data, t_data, t_label> dsgui(true);
   dsgui.display(train_ds, 4, 8, 0, 0, 1, -1, NULL, false, range_min, range_max);
   sleep(1);
 #endif 

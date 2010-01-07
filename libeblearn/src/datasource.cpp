@@ -35,14 +35,4 @@ using namespace std;
 
 namespace ebl {
 
-  idx<double> create_target_matrix(intg nclasses, double target) {
-    // fill matrix with 1-of-n code
-    idx<double> targets(nclasses, nclasses);
-    idx_fill(targets, -target);
-    for (int i = 0; i < nclasses; ++i) { 
-      targets.set(target, i, i);
-    }
-    return targets; // return by copy
-  }
-
 } // end namespace ebl

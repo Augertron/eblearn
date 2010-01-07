@@ -193,7 +193,7 @@ namespace ebl {
   template<class T> void idx_addcacc(idx<T> &inp, T c, idx<T> &out);
 
   //! multiply all elements by a constant:  o1 <- i1*c;
-  template<class T> void idx_dotc(idx<T> &inp, T c, idx<T> &out);
+  template<class T, class T2> void idx_dotc(idx<T> &inp, T2 c, idx<T> &out);
 
   //! multiply all elements by a constant:  o1 <- i1*c;
   //! This version bounds the new values to minimum and maximum of type T,
@@ -201,11 +201,12 @@ namespace ebl {
   //! will be 0, for an overflow it will be 255. 
   //! Caution: This is slower than a regular idx_dotc.
   //! Warning: bounding not working when T=double (TODO)
-  template<class T> void idx_dotc_bounded(idx<T> &inp, T c, idx<T> &out);
+  template<class T, class T2>
+    void idx_dotc_bounded(idx<T> &inp, T2 c, idx<T> &out);
 
   //! multiply all elements by a constant and accumulate
   //! result: o1 <- o1 + i1*c;
-  template<class T> void idx_dotcacc(idx<T> &inp, T c, idx<T> &out);
+  template<class T, class T2> void idx_dotcacc(idx<T> &inp, T2 c, idx<T> &out);
 
   //! set each element of out to +c if corresponding element of inp
   //! is positive, and to -c otherwise.

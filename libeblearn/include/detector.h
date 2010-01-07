@@ -79,31 +79,31 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // detector
   
-  template <class Tdata> class detector {
+  template <class T> class detector {
   public:
-    module_1_1<state_idx,state_idx>	&thenet;
-    int					 height;
-    int					 width;
-    idx<Tdata>				 grabbed;
-    idx<Tdata>				 grabbed2;
-    double				 contrast;
-    double				 brightness;
-    double				 coef;
-    double				 bias;    
-    idx<float>				 sizes;
-    idx<void*>				 inputs;	//! state_idx*
-    idx<void*>				 outputs;	//! state_idx*
-    idx<void*>				 results;	//! idx<double>*
-    idx<double>				 smoothing_kernel;
-    idx<const char*>			 labels;
+    module_1_1<T>	&thenet;
+    int			 height;
+    int			 width;
+    idx<T>		 grabbed;
+    idx<T>		 grabbed2;
+    double		 contrast;
+    double		 brightness;
+    float		 coef;
+    T			 bias;    
+    idx<float>		 sizes;
+    idx<void*>		 inputs;	//! state_idx*
+    idx<void*>		 outputs;	//! state_idx*
+    idx<void*>		 results;	//! idx<double>*
+    idx<T>		 smoothing_kernel;
+    idx<const char*>	 labels;
     ////////////////////////////////////////////////////////////////
   private:
     // dimensions
-    idxdim				 in_mindim;
-    idxdim				 in_maxdim;
-    unsigned int			 nresolutions;
-    idx<unsigned int>			 resolutions;
-    bool				 manual_resolutions;
+    idxdim		 in_mindim;
+    idxdim		 in_maxdim;
+    unsigned int	 nresolutions;
+    idx<unsigned int>	 resolutions;
+    bool		 manual_resolutions;
     
   public:
     
@@ -111,24 +111,26 @@ namespace ebl {
     // constructors
     
     //! Constructor.
-    detector(module_1_1<state_idx, state_idx> &thenet, 
-		 unsigned int nresolutions, 
-		 idx<const char*> &lbls, double b, double c);
+    detector(module_1_1<T> &thenet, unsigned int nresolutions, 
+	     idx<const char*> &lbls, T bias = 0, float coeff = 1.0);
     
     //! Constructor.
-    detector(module_1_1<state_idx, state_idx> &thenet, 
-		 idx<unsigned int> &resolutions, 
-		 idx<const char*> &lbls, double b, double c);
+    detector(module_1_1<T> &thenet, idx<unsigned int> &resolutions, 
+	     idx<const char*> &lbls, T bias = 0, float coeff = 1.0);
     //    detector(module_1_1<state_idx, state_idx> &thenet);
     virtual ~detector();
 
     ////////////////////////////////////////////////////////////////
-    
-    vector<bbox> fprop(idx<Tdata> &img, double threshold = 1.8);
+
+    //! fprop input image throught network.
+    //! if image's and network's type differ, cast image into network's type
+    //! through an idx_copy (avoid for better performance).
+    template <class Tin>
+      vector<bbox> fprop(idx<Tin> &img, T threshold);
 
   private:
     //! initialize dimensions and multi-resolution buffers.
-    void init(idx<Tdata> &input);
+    void init(idx<T> &input);
 
     //! compute sizes of each resolutions based on input size <input_dims>.
     void compute_minmax_resolutions(idxdim &input_dims);
@@ -143,101 +145,17 @@ namespace ebl {
     //! this method assumes nresolutions and resolutions members have already
     //! been initialized.
     void validate_resolutions();
-    
-    // Sub functions
-    //    idx<Tdata> multi_res_prep(idx<Tdata> &img, float zoom);
 
     //! do a fprop on thenet with multiple rescaled inputs
-    void multi_res_fprop(idx<Tdata> &sample);   
-    //    idx<double> multi_res_fprop(double threshold, int objsize);
-    
-    //    idx<double> postprocess_output(double threshold, int objsize);
-    
+    void multi_res_fprop(idx<T> &sample);       
 
     //! find maximas in output layer
-    void mark_maxima(double threshold);
-
-/*     //! mark local maxima (in space and feature) of in r. */
-/*     //! Put winning class in (r i j 0) and score (normalized */
-/*     //! to 0 1) in (r i j 1). */
-/*     void mark_maxima(idx<double> &in, idx<double> &inc,  */
-/* 		     idx<double> &r, double threshold); */
-    
-//    idx<double> prune(idx<double> &res);
+    void mark_maxima(T threshold);
 
     //! prune btwn scales
-    vector<bbox> map_to_list(double threshold);
+    vector<bbox> map_to_list(T threshold);
     void pretty_bboxes(vector<bbox> &vb);
   };
-
-  ////////////////////////////////////////////////////////////////
-
-/*   template <class Tdata> */
-/*   class detector_binocular : public detector<Tdata> { */
-/*   public: */
-/*     using detector<Tdata>::grabbed; */
-/*     using detector<Tdata>::grabbed2; */
-/*     using detector<Tdata>::height; */
-/*     using detector<Tdata>::width; */
-/*     using detector<Tdata>::coeff; */
-/*     using detector<Tdata>::bias; */
-/*     using detector<Tdata>::inputs; */
-/*     using detector<Tdata>::outputs; */
-
-/*     detector_binocular(module_1_1<state_idx, state_idx> &thenet, */
-/* 		      idx<int> &sz, idx<const char*> &lbls, */
-/* 		      double b, double c, int h, int w); */
-/*     virtual ~detector_binocular(); */
-  
-/*     //! Compute multi-resolution inputs and fprop through each. */
-/*     idx<double> fprop(Tdata *left, Tdata *right,  */
-/* 		      float zoom, int dx, int dy, double threshold = 1.8,  */
-/* 		      int objsize = 60); */
-  
-/*     // Sub functions */
-/*     void multi_res_prep(Tdata *left, Tdata *right,  */
-/* 			int dx, int dy, float zoom); */
-/*   }; */
-
-  ////////////////////////////////////////////////////////////////
-
-/*   template <class Tdata> */
-/*   class classifierNMS : public detector<Tdata> { */
-/*   public: */
-/*     double		       coef; */
-/*     double		       bias; */
-/*     idx<double>		       sizes; */
-/*     idx<const char*>	       labels; */
-/*     idx<Tdata>                 sample; */
-/*     using detector<Tdata>::width; */
-/*     using detector<Tdata>::height; */
-/*     using detector<Tdata>::thenet; */
-/*     using detector<Tdata>::inputs; */
-/*     using detector<Tdata>::outputs; */
-/*     using detector<Tdata>::results; */
-/*     using detector<Tdata>::grabbed; */
-	
-/*     //! Constructor. */
-/*     classifierNMS(module_1_1<state_idx, state_idx> &thenet_, */
-/* 		  idx<double> &sizes_,  */
-/* 		  idx<const char*> &labels_, */
-/* 		  idx<Tdata> &sample_, */
-/* 		  double bias_, double coef_); */
-/*     ~classifierNMS(); */
-
-/*     //! do a fprop on thenet with multiple rescaled inputs */
-/*     void multi_res_fprop(); */
-
-/*     //! call multi_res_fprop(), and analyze the output map */
-/*     idx<double> classify(double threshold); */
-    
-/*     //! find maximas in output layer */
-/*     void mark_maxima(double threshold); */
-
-/*     //! prune btwn scales */
-/*     idx<double> map_to_list(double threshold); */
-
-/*   }; */
 
 } // end namespace ebl
 

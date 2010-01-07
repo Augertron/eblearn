@@ -44,23 +44,31 @@ namespace ebl {
     weighted_std_module_gui();
     virtual ~weighted_std_module_gui();
 
-    static void display_fprop(weighted_std_module &m,
-			      state_idx &in, state_idx &out,
-			      unsigned int &h0, unsigned int &w0, double zoom,
-			      double vmin=0.0, double vmax=0.0,
-			      bool show_out = false);
-    static void display_bprop(weighted_std_module &m,
-			      state_idx &in, state_idx &out,
-			      unsigned int &h0, unsigned int &w0, double zoom,
-			      double vmin=0.0, double vmax=0.0,
-			      bool show_out = false);
-    static void display_bbprop(weighted_std_module &m,
-			       state_idx &in, state_idx &out,
-			       unsigned int &h0, unsigned int &w0, double zoom,
-			       double vmin=0.0, double vmax=0.0,
-			       bool show_out = false);
+    template<class T>
+      static void display_fprop(weighted_std_module<T> &m,
+				state_idx<T> &in, state_idx<T> &out,
+				unsigned int &h0, unsigned int &w0, double zoom,
+				T vmin = 0, T vmax = 0,
+				bool show_out = false);
+
+    template<class T>
+      static void display_bprop(weighted_std_module<T> &m,
+				state_idx<T> &in, state_idx<T> &out,
+				unsigned int &h0, unsigned int &w0, double zoom,
+				T vmin = 0, T vmax = 0,
+				bool show_out = false);
+
+    template<class T>
+      static void display_bbprop(weighted_std_module<T> &m,
+				 state_idx<T> &in, state_idx<T> &out,
+				 unsigned int &h0, unsigned int &w0,
+				 double zoom,
+				 T vmin = 0, T vmax = 0,
+				 bool show_out = false);
   };
 
 } // namespace ebl {
+
+#include "ebl_transfer_gui.hpp"
 
 #endif /* EBL_TRANSFER_GUI_H_ */

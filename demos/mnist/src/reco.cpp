@@ -34,6 +34,7 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "Usage: ./mnist_reco <trained parameter> <image file>" << endl;
     eblerror("expected trained parameter filename and image filename");
   }
+  typedef float t_net;
   string paramfname = "mnist_trained_network.mat";
   string imagefname = "../data/mnist/2_grid_64x64.pnm";
   if (argc > 1) paramfname = argv[1];
@@ -42,8 +43,8 @@ int main(int argc, char **argv) { // regular main without gui
   cout << " using trained network " << paramfname << endl;
 
   // load trained network
-  parameter theparam;
-  lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10);
+  parameter<t_net> theparam;
+  lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10);
   theparam.load_x(paramfname.c_str());
 
   // load image
@@ -56,8 +57,8 @@ int main(int argc, char **argv) { // regular main without gui
   image = image.select(2, 0);
 
   // copy 1 color layer of the image into input state_idx
-  state_idx stin(1, image.dim(0), image.dim(1)), stout(1,1,1);
-  idx<double> inx = stin.x.select(0, 0); // pointer to 2D input
+  state_idx<t_net> stin(1, image.dim(0), image.dim(1)), stout(1,1,1);
+  idx<t_net> inx = stin.x.select(0, 0); // pointer to 2D input
   idx_copy(image, inx); // convert and copy ubyte 2D image to double 2D input
 
   // fprop input throught the network
@@ -65,9 +66,9 @@ int main(int argc, char **argv) { // regular main without gui
 
   // infer answers
   cout << "min " << idx_min(stout.x) << " max " << idx_max(stout.x) << endl;
-  double threshold = .93;
-  idx_eloop1(outx, stout.x, double) {
-    idx_eloop1(out, outx, double) {
+  t_net threshold = .93;
+  idx_eloop1(outx, stout.x, t_net) {
+    idx_eloop1(out, outx, t_net) {
       if (idx_max(out) >= threshold)
 	cout << "the image contains a " << idx_indexmax(out) << endl;
     }
@@ -76,7 +77,7 @@ int main(int argc, char **argv) { // regular main without gui
   // display internals of the fprop
 #ifdef __GUI__
   module_1_1_gui l5gui;
-  idx_threshold(stout.x, threshold, -1.0, stout.x);
+  idx_threshold(stout.x, threshold, (t_net) -1.0, stout.x);
   l5gui.display_fprop(l5, stin, stout);
   sleep(1);
 #endif

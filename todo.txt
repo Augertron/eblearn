@@ -1,9 +1,16 @@
 TODO list for eblearn
-(in addition to list returned by calling ./todo.sh)
+(in addition/complement to list returned by calling ./todo.sh)
 
 ________________________________________________________________________________
 Libraries:
 
+- in libeblearn, module_1_1<T> is a specialization of
+ module_1_1_gen<T1> with T1 = state_idx<T>. same with layers_n and
+ layers_n_gen. but now layers_n does not derive from module_1_1
+ anymore, rather from module_1_1_gen, which is supposed to be hidden
+ from the user. hence, one needs to cast a layers_n into module_1_1 to
+ avoid compilation error. todo: find a way to have layers_n derive
+ from module_1_1 and leave code in layers_n_gen.
 - bug: possible to copy 2 idx with same number of elements but
  different dimensions
 - getting NaN when inputs are too big (typically 0 .. 255) and not
@@ -19,8 +26,10 @@ Libraries:
 - remove view_as_order? -> user replicable macro for linear
 - rename nn_layer_conv to conv_layer, euclidean_cost to euclidean_energy
 - ajouter loss modules pour energy_loss et energy modules pour l'inference
-- Idx<T> load_matrix<T>("file")
+- implement Idx<T> load_matrix<T>("file") (using throw/catch)
 - perceptron tutorial / demo
+- write supervised_trainer as derivation of stochastic_gd_trainer (rename this
+  shorter)
  
 ________________________________________________________________________________
 Guis:

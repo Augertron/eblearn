@@ -65,5 +65,6 @@ install:
 	cp -n libeblearntools/include/* $(INCLUDE_INSTALL)
 	cp bin/libidx.so $(LIB_INSTALL)
 	cp bin/libeblearn.so $(LIB_INSTALL)
+	cp bin/libeblearntools.so $(LIB_INSTALL)
 	cp bin/libidxgui.so $(LIB_INSTALL)
 	cp bin/libeblearngui.so $(LIB_INSTALL)

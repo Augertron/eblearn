@@ -82,7 +82,6 @@ namespace ebl {
   //! classifiers. This is a simple version that does not
   //! record anything but simply computes performance measures.
   // TODO: allow definition of different comparison functions.
-  // TODO: templatize based on label type
   class classifier_meter {
   public:
     double energy;
@@ -123,13 +122,13 @@ namespace ebl {
     //! <actual> (a <class-state>) the actual output of the machine,
     //! <desired> (an idx0 of int) the desired category,
     //! and <energy> (an idx0-state) the energy.
+    char update(intg a, class_state *co, ubyte cd, double energy);
+    void update(intg age_, bool correct, double energy);
     // TODO: clean up design
     // TODO: add confusion matrix computation
-    char update(intg age, class_state *co, ubyte cd, state_idx *en);
-    void update(intg age, bool correct, state_idx &en);
-    void update(intg age, uint desired, uint infered, state_idx &energy);
+    void update(intg age, uint desired, uint infered, double energy);
 
-    void test(class_state *co, ubyte cd, state_idx *en);
+    void test(class_state *co, ubyte cd, double energy);
 
     //! return a list with the age, the number of samples
     //! (number of calls to update since the last clear),
@@ -151,7 +150,8 @@ namespace ebl {
 
     //! display ROC points for each class.
     //! names of each class (lblstr) are optional.
-    void display_positive_rates(double threshold, vector<string*> *lblstr = NULL);
+    void display_positive_rates(double threshold,
+				vector<string*> *lblstr = NULL);
     
     bool save();
     bool load();
@@ -164,7 +164,7 @@ namespace ebl {
   //! of the state) of this lowest value.
   //! It actually sorts the labels according to their score (or costs)
   //! and outputs the sorted list.
-  class max_classer { // TODO: idx3-classer
+  template <class T> class max_classer { // TODO: idx3-classer
   public:
     //! a vector that maps output unit index to a label
     idx<ubyte> *classindex2label; 
@@ -176,7 +176,7 @@ namespace ebl {
     }
     ;
 
-    void fprop(state_idx *in, class_state *out);
+    void fprop(state_idx<T> *in, class_state *out);
   };
 
 } // namespace ebl {
