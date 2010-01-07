@@ -357,7 +357,7 @@ namespace ebl {
     }
   }
 
-  template<class T> void idx_power(idx<T>& in, double p, idx<T>& out) {
+  template<class T> void idx_power(idx<T>& in, T p, idx<T>& out) {
     idxiter<T> pin; idxiter<T> pout;
     idx_aloop2_on(pin,in,pout,out) {
       *pout = pow(*pin, p);
