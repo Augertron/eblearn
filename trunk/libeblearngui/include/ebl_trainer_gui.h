@@ -42,24 +42,24 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! Supervised Trainer gui
 
-  template <class Tdata, class Tlabel>
+  template <class Tnet, class Tdata, class Tlabel>
     class supervised_trainer_gui : public scroll_box {
   private:
-    supervised_trainer<Tdata, Tlabel>          *_st;
-    labeled_datasource<Tdata, Tlabel>          *_ds;
-    labeled_datasource<Tdata, Tlabel>          *_last_ds;
-    infer_param                                *_infp;
-    unsigned int				_nh;
-    unsigned int				_nw;
-    double                                      _zoom;
-    int						datasource_wid;
-    int						internals_wid;
-    int						internals_wid2;
-    int						internals_wid3;
-    bool					scroll;
-    bool					scroll_added;
-    unsigned int                                pos;
-    labeled_datasource_gui<Tdata, Tlabel>      *dsgui;
+    supervised_trainer<Tnet, Tdata, Tlabel>	*_st;
+    labeled_datasource<Tnet, Tdata, Tlabel>	*_ds;
+    labeled_datasource<Tnet, Tdata, Tlabel>	*_last_ds;
+    infer_param					*_infp;
+    unsigned int				 _nh;
+    unsigned int				 _nw;
+    double					 _zoom;
+    int						 datasource_wid;
+    int						 internals_wid;
+    int						 internals_wid2;
+    int						 internals_wid3;
+    bool					 scroll;
+    bool					 scroll_added;
+    unsigned int				 pos;
+    labeled_datasource_gui<Tnet, Tdata, Tlabel>	*dsgui;
     
 
   public:
@@ -71,8 +71,8 @@ namespace ebl {
     //! 1- with groundtruth labels
     //! 2- with classification answers, correct and wrong
     //! 3- samples with wrong answers only
-    void display_datasource(supervised_trainer<Tdata, Tlabel> &st,
-			    labeled_datasource<Tdata, Tlabel> &ds,
+    void display_datasource(supervised_trainer<Tnet, Tdata, Tlabel> &st,
+			    labeled_datasource<Tnet, Tdata, Tlabel> &ds,
 			    infer_param &infp,
 			    unsigned int nh, unsigned int nw, 
 			    unsigned int h0 = 0, unsigned int w0 = 0, 
@@ -80,8 +80,8 @@ namespace ebl {
 			    const char *title = NULL, bool scrolling = false);
     
     //! displays internal states of the <ninternals> first samples of ds.
-    void display_internals(supervised_trainer<Tdata, Tlabel> &st,
-			   labeled_datasource<Tdata, Tlabel> &ds, 
+    void display_internals(supervised_trainer<Tnet, Tdata, Tlabel> &st,
+			   labeled_datasource<Tnet, Tdata, Tlabel> &ds, 
 			   infer_param &infp, gd_param &args,
 			   unsigned int ninternals, 
 			   unsigned int h0 = 0, unsigned int w0 = 0, 
@@ -98,7 +98,8 @@ namespace ebl {
     //! scrolling method.
     virtual unsigned int max_pages ();
     //    virtual scroll_box0* copy();
-    virtual supervised_trainer_gui<Tdata,Tlabel>* copy();
+    //! deep copy (for independent multi-threaded display).
+    virtual supervised_trainer_gui<Tnet, Tdata, Tlabel>* copy();
   };
 
 } // namespace ebl {

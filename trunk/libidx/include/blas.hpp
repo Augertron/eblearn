@@ -258,24 +258,25 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { *pout += *pinp + c; }
   }
 
-  template<class T> void idx_dotc(idx<T> &inp, T c, idx<T> &out) {
+  template<class T, class T2> void idx_dotc(idx<T> &inp, T2 c, idx<T> &out) {
     idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = *pinp * c; }
+    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(*pinp * c); }
   }
 
-  template<class T> void idx_dotc_bounded(idx<T> &inp, T c, idx<T> &out) {
+  template<class T, class T2>
+  void idx_dotc_bounded(idx<T> &inp, T2 c, idx<T> &out) {
     idxiter<T> pinp; idxiter<T> pout; double val;
     idx_aloop2_on(pinp,inp,pout,out) { 
-      val = *pinp * c;
+      val = (T)(*pinp * c);
       // prevent under and overflow
       *pout = MAX(std::numeric_limits<T>::min(), 
 		  MIN(std::numeric_limits<T>::max(), val));
     }
   }
 
-  template<class T> void idx_dotcacc(idx<T> &inp, T c, idx<T> &out) {
+  template<class T, class T2> void idx_dotcacc(idx<T> &inp, T2 c, idx<T> &out) {
     idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout += *pinp * c; }
+    idx_aloop2_on(pinp,inp,pout,out) { *pout += (T)(*pinp * c); }
   }
 
   template<class T> void idx_signdotc(idx<T> &inp, T c, idx<T> &out) {
@@ -452,14 +453,14 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { *pout += *pinp + c; }
   }
 
-  template<class T> void idx_dotc(idx<T> &inp, T c, idx<T> &out) {
+  template<class T, class T2> void idx_dotc(idx<T> &inp, T2 c, idx<T> &out) {
     ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = *pinp * c; }
+    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(*pinp * c); }
   }
 
-  template<class T> void idx_dotcacc(idx<T> &inp, T c, idx<T> &out) {
+  template<class T, class T2> void idx_dotcacc(idx<T> &inp, T2 c, idx<T> &out) {
     ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout += *pinp * c; }
+    idx_aloop2_on(pinp,inp,pout,out) { *pout += (T)(*pinp * c); }
   }
 
   template<class T> void idx_signdotc(idx<T> &inp, T c, idx<T> &out) {

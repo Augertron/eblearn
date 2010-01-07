@@ -46,18 +46,18 @@ namespace ebl {
   //! Local contrast normalization operation using a weighted expectation
   //! over a local neighborhood. An input set of feature maps is locally
   //! normalized to be zero mean and unit standard deviation.
-  class weighted_std_module : public module_1_1<state_idx, state_idx> {
+  template <class T> class weighted_std_module : public module_1_1<T> {
   private:
-    layers_n<state_idx> convmean, convvar;
-    power_module	sqrtmod;	//!< square root module
-    power_module	invmod; //!< inverse module
-    power_module	sqmod;	//!< square module
-    diff_module		difmod; //!< difference module
-    thres_module	thres;	//!< threshold module
-    mul_module		mcw;
-    state_idx		inmean, inzmean, inzmeansq, invar, instd, thstd, invstd;
-    parameter		param;
-    idx<double>         w; //!< weights
+    layers_n<T>         convmean, convvar;
+    power_module<T>	sqrtmod;	//!< square root module
+    power_module<T>	invmod; //!< inverse module
+    power_module<T>	sqmod;	//!< square module
+    diff_module<T>	difmod; //!< difference module
+    thres_module<T>	thres;	//!< threshold module
+    mul_module<T>	mcw;
+    state_idx<T>	inmean, inzmean, inzmeansq, invar, instd, thstd, invstd;
+    parameter<T>	param;
+    idx<T>              w;	//!< weights
 
   public:
     //! <weighting> is <idx2<double>> that defines the weighting around
@@ -67,11 +67,11 @@ namespace ebl {
     //! destructor
     virtual ~weighted_std_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx &in, state_idx &out);
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx &in, state_idx &out);
+    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx &in, state_idx &out);
+    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
 
     // friends
     friend class weighted_std_module_gui;
@@ -83,7 +83,7 @@ namespace ebl {
   //! This module is spatially replicable 
   //! (the input can have an order greater than 1 and the operation will apply
   //! to all elements).
-  class abs_module: public module_1_1<state_idx, state_idx> {
+  template <class T> class abs_module: public module_1_1<T> {
   private:
     double threshold;
     
@@ -93,13 +93,15 @@ namespace ebl {
     abs_module(double thresh = 0.0);
     virtual ~abs_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx &in, state_idx &out);
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx &in, state_idx &out);
+    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx &in, state_idx &out);
+    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
   };
 
 } // namespace ebl {
+
+#include "ebl_transfer.hpp"
 
 #endif /* EBL_TRANSFER_H_ */

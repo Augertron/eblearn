@@ -50,18 +50,20 @@ namespace ebl {
     virtual ~module_1_1_gui() {};
 
 #define DISPLAY_PROTO_1_1(name)						\
-    template<class Tin, class Tout>					\
-      void name(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,		\
+    template<class T, class Tout>					\
+      void name(module_1_1_gen<state_idx<T>, Tout> &m,			\
+		state_idx<T> &in, Tout &out,				\
 		unsigned int h0 = 0, unsigned int w0 = 0,		\
-		double dzoom = 1.0, double vmin=0.0, double vmax=0.0,	\
+		double dzoom = 1.0, T vmin = 0, T vmax = 0,		\
 		bool show_out = true,					\
 		int wid = -1, const char *wname = NULL);
 
 #define DISPLAY2_PROTO_1_1(name)					\
-    template<class Tin, class Tout>					\
-      void name(module_1_1<Tin, Tout> &m, Tin &in, Tout &out,		\
+    template<class T, class Tout>					\
+      void name(module_1_1_gen<state_idx<T>, Tout> &m,			\
+		state_idx<T> &in, Tout &out,				\
 		unsigned int &h0, unsigned int &w0,			\
-		double dzoom = 1.0, double vmin=0.0, double vmax=0.0,	\
+		double dzoom = 1.0, T vmin = 0, T vmax = 0,		\
 		bool show_out = true,					\
 		int wid = -1, const char *wname = NULL);
 
@@ -85,11 +87,11 @@ namespace ebl {
     virtual ~module_2_1_gui() {};
 
 #define DISPLAY_PROTO_2_1(name)						\
-    template<class Tin1, class Tin2, class Tout>			\
-      void name(module_2_1<Tin1, Tin2, Tout> &m,			\
-		Tin1 &in1, Tin2 &in2, Tout &out,			\
+    template<class Tin1, class Tin2, class T>				\
+      void name(module_2_1_gen<Tin1, Tin2, state_idx<T> > &m,		\
+		Tin1 &in1, Tin2 &in2, state_idx<T> &out,		\
 		unsigned int &h0, unsigned int &w0,			\
-		double dzoom = 1.0, double vmin=0.0, double vmax=0.0,	\
+		double dzoom = 1.0, T vmin = 0, T vmax = 0,		\
 		bool show_out = true,					\
 		int wid = -1, const char *wname = NULL);
 
@@ -108,11 +110,11 @@ namespace ebl {
 
 #define DISPLAY_PROTO_LAYERSN(name)					\
     template<class T>							\
-      static void name(module_1_1_gui &g, layers_n<T> &ln,		\
-		       T &in, T &out,					\
+      static void name(module_1_1_gui &g, layers_n_gen<state_idx<T> > &ln, \
+		       state_idx<T> &in, state_idx<T> &out,		\
 		       unsigned int &h0, unsigned int &w0,		\
 		       double dzoom = 1.0,				\
-		       double vmin=0.0, double vmax=0.0,		\
+		       T vmin = 0, T vmax = 0,				\
 		       bool show_out = false);
 
     DISPLAY_PROTO_LAYERSN(display_fprop)
@@ -129,12 +131,12 @@ namespace ebl {
     virtual ~fc_ebm2_gui() {};
     
 #define DISPLAY_PROTO_FCEBM2(name)					\
-    template<class Tin1, class Tin2, class Tout>			\
-      static void name(fc_ebm2<Tin1, Tin2, Tout> &fc,			\
+    template<class Tin1, class Tin2, class T>				\
+      static void name(fc_ebm2_gen<Tin1, Tin2, T> &fc,			\
 		       Tin1 &i1, Tin2 &i2,				\
-		       state_idx &energy,				\
+		       state_idx<T> &energy,				\
 		       unsigned int &h0, unsigned int &w0,		\
-		       double zoom, double vmin=0.0, double vmax=0.0,	\
+		       double zoom, T vmin = 0, T vmax = 0,		\
 		       bool show_out = true,				\
 		       int wid = -1, const char *wname = NULL);
 

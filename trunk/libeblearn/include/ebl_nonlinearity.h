@@ -41,38 +41,35 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-
   //! a slab of standard Lush sigmoids
-  class stdsigmoid_module: public module_1_1<state_idx, state_idx> {
+  template <class T> class stdsigmoid_module: public module_1_1<T> {
   public:
     //! empty constructor
     stdsigmoid_module();
     virtual ~stdsigmoid_module();
     //! fprop from in to out
-    virtual void fprop(state_idx &in, state_idx &out);
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
-    virtual void bprop(state_idx &in, state_idx &out);
+    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! bbprop
-    virtual void bbprop(state_idx &in, state_idx &out);
+    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
   };
 
   ////////////////////////////////////////////////////////////////
-
   //! a slab of tanh
-  class tanh_module: public module_1_1<state_idx, state_idx> {
+  template <class T> class tanh_module: public module_1_1<T> {
   public:
     //! fprop from in to out
-    void fprop(state_idx &in, state_idx &out);
+    void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
-    void bprop(state_idx &in, state_idx &out);
+    void bprop(state_idx<T> &in, state_idx<T> &out);
     //! bbprop
-    void bbprop(state_idx &in, state_idx &out);
+    void bbprop(state_idx<T> &in, state_idx<T> &out);
     void forget(forget_param_linear &fp);
     void normalize();
   };
 
   ////////////////////////////////////////////////////////////////
-
   //! softmax module
   //! if in is idx0 -> out is idx0 and equal to 1
   //! if in is idx1 -> it is just one pool
@@ -81,9 +78,7 @@ namespace ebl {
   //! if in is idx4 -> the last two dimensions are pools
   //! if in is idx5 -> the last four dimensions are pools
   //! if in is idx6 -> the last four dimensions are pools
-
-  class softmax: public module_1_1<state_idx, state_idx> {
-
+  template <class T> class softmax: public module_1_1<T> {
   public:
     double beta;
 
@@ -92,19 +87,20 @@ namespace ebl {
     // <b> equal to 0 turns the softmax into 1/N
 
   private:
-    void resize_nsame(state_idx &in, state_idx &out, int n);
+    void resize_nsame(state_idx<T> &in, state_idx<T> &out, int n);
 
   public:
     softmax(double b);
     ~softmax() {
     }
     ;
-    void fprop(state_idx &in, state_idx &out);
-    void bprop(state_idx &in, state_idx &out);
-    void bbprop(state_idx &in, state_idx &out);
-
+    void fprop(state_idx<T> &in, state_idx<T> &out);
+    void bprop(state_idx<T> &in, state_idx<T> &out);
+    void bbprop(state_idx<T> &in, state_idx<T> &out);
   };
 
 } // namespace ebl {
+
+#include "ebl_nonlinearity.hpp"
 
 #endif /* EBL_NONLINEARITY_H_ */

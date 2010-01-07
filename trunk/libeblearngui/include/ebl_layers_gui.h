@@ -45,20 +45,25 @@ namespace ebl {
     nn_layer_full_gui();
     virtual ~nn_layer_full_gui();
 
-    static void display_fprop(nn_layer_full &nn,
-			      state_idx &in, state_idx &out,
+    template <class T>
+    static void display_fprop(nn_layer_full<T> &nn,
+			      state_idx<T> &in, state_idx<T> &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
-			      double vmin=0.0, double vmax=0.0,
+			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
-    static void display_bprop(nn_layer_full &nn,
-			      state_idx &in, state_idx &out,
+
+    template <class T>
+    static void display_bprop(nn_layer_full<T> &nn,
+			      state_idx<T> &in, state_idx<T> &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
-			      double vmin=0.0, double vmax=0.0,
+			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
-    static void display_bbprop(nn_layer_full &nn,
-			       state_idx &in, state_idx &out,
+
+    template <class T>
+    static void display_bbprop(nn_layer_full<T> &nn,
+			       state_idx<T> &in, state_idx<T> &out,
 			       unsigned int &h0, unsigned int &w0, double zoom,
-			       double vmin=0.0, double vmax=0.0,
+			       T vmin = 0, T vmax = 0,
 			       bool show_out = false);
   };
 
@@ -69,20 +74,25 @@ namespace ebl {
     nn_layer_convolution_gui();
     virtual ~nn_layer_convolution_gui();
 
-    static void display_fprop(nn_layer_convolution &nn,
-			      state_idx &in, state_idx &out,
+    template <class T>
+    static void display_fprop(nn_layer_convolution<T> &nn,
+			      state_idx<T> &in, state_idx<T> &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
-			      double vmin=0.0, double vmax=0.0,
+			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
-    static void display_bprop(nn_layer_convolution &nn,
-			      state_idx &in, state_idx &out,
+
+    template <class T>
+    static void display_bprop(nn_layer_convolution<T> &nn,
+			      state_idx<T> &in, state_idx<T> &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
-			      double vmin=0.0, double vmax=0.0,
+			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
-    static void display_bbprop(nn_layer_convolution &nn,
-			       state_idx &in, state_idx &out,
+
+    template <class T>
+    static void display_bbprop(nn_layer_convolution<T> &nn,
+			       state_idx<T> &in, state_idx<T> &out,
 			       unsigned int &h0, unsigned int &w0, double zoom,
-			       double vmin=0.0, double vmax=0.0,
+			       T vmin = 0, T vmax = 0,
 			       bool show_out = false);
   };
 
@@ -93,20 +103,25 @@ namespace ebl {
     layer_convabsnorm_gui();
     virtual ~layer_convabsnorm_gui();
 
-    static void display_fprop(layer_convabsnorm &nn,
-			      state_idx &in, state_idx &out,
+    template <class T>
+    static void display_fprop(layer_convabsnorm<T> &nn,
+			      state_idx<T> &in, state_idx<T> &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
-			      double vmin=0.0, double vmax=0.0,
+			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
-    static void display_bprop(layer_convabsnorm &nn,
-			      state_idx &in, state_idx &out,
+
+    template <class T>
+    static void display_bprop(layer_convabsnorm<T> &nn,
+			      state_idx<T> &in, state_idx<T> &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
-			      double vmin=0.0, double vmax=0.0,
+			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
-    static void display_bbprop(layer_convabsnorm &nn,
-			       state_idx &in, state_idx &out,
+
+    template <class T>
+    static void display_bbprop(layer_convabsnorm<T> &nn,
+			       state_idx<T> &in, state_idx<T> &out,
 			       unsigned int &h0, unsigned int &w0, double zoom,
-			       double vmin=0.0, double vmax=0.0,
+			       T vmin = 0, T vmax = 0,
 			       bool show_out = false);
   };
 
@@ -117,23 +132,30 @@ namespace ebl {
     nn_layer_subsampling_gui();
     virtual ~nn_layer_subsampling_gui();
 
-    static void display_fprop(nn_layer_subsampling &nn,
-			      state_idx &in, state_idx &out,
+    template <class T>
+    static void display_fprop(nn_layer_subsampling<T> &nn,
+			      state_idx<T> &in, state_idx<T> &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
-			      double vmin=0.0, double vmax=0.0,
+			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
-    static void display_bprop(nn_layer_subsampling &nn,
-			      state_idx &in, state_idx &out,
+
+    template <class T>
+    static void display_bprop(nn_layer_subsampling<T> &nn,
+			      state_idx<T> &in, state_idx<T> &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
-			      double vmin=0.0, double vmax=0.0,
+			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
-    static void display_bbprop(nn_layer_subsampling &nn,
-			       state_idx &in, state_idx &out,
+
+    template <class T>
+    static void display_bbprop(nn_layer_subsampling<T> &nn,
+			       state_idx<T> &in, state_idx<T> &out,
 			       unsigned int &h0, unsigned int &w0, double zoom,
-			       double vmin=0.0, double vmax=0.0,
+			       T vmin = 0, T vmax = 0,
 	bool show_out = false);
   };
 
 } // namespace ebl {
+
+#include "ebl_layers_gui.hpp"
 
 #endif /* EBL_LAYERS_GUI_H_ */

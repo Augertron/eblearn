@@ -43,10 +43,10 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! datasource
-  template<typename Tin1, typename Tin2> class datasource {
+  template<class Tnet, class Tin1, class Tin2> class datasource {
   public:
-    double					bias;
-    double					coeff;
+    Tnet					bias;
+    float					coeff;
     idx<Tin1>					data;
     idx<Tin2>					labels;
     typename idx<Tin1>::dimension_iterator	dataIter;
@@ -62,21 +62,20 @@ namespace ebl {
     //! CAUTION: This empty constructor requires a subsequent call to init().
     datasource();
 
-    void init(idx<Tin1> &inp, idx<Tin2> &lbl, double b, double c, 
+    void init(idx<Tin1> &inp, idx<Tin2> &lbl, Tin1 bias, float coeff, 
 	      const char *name);
 
     datasource(idx<Tin1> &inputs, idx<Tin2> &labels, 
-	       double b = 0.0, double c = 0.01,
-	       const char *name = NULL);
+	       Tin1 bias = 0.0, float coeff = 0.01, const char *name = NULL);
 
     //! copy constructor
-    datasource(const datasource<Tin1, Tin2> &ds);
+    datasource(const datasource<Tnet, Tin1, Tin2> &ds);
 
     //! destructor
     virtual ~datasource();
 
     //! Copies the current datum to a state and label.
-    virtual void fprop(state_idx &datum, idx<Tin2> &label);
+    virtual void fprop(state_idx<Tnet> &datum, idx<Tin2> &label);
 
     //! shuffle dataset, based on the number of classes
     //! assume the same nb of samples in each class
@@ -107,15 +106,15 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! labeled_datasource
-  template<typename Tdata, typename Tlabel>
-    class labeled_datasource : public datasource<Tdata, Tlabel> {
+  template<class Tnet, class Tdata, class Tlabel>
+    class labeled_datasource : public datasource<Tnet, Tdata, Tlabel> {
   public:
     vector<string*>				*lblstr;
 
     //! CAUTION: This empty constructor requires a subsequent call to init().
     labeled_datasource();
 
-    void init(idx<Tdata> &inp, idx<Tlabel> &lbl, double b, double c, 
+    void init(idx<Tdata> &inp, idx<Tlabel> &lbl, Tdata bias, float coeff, 
 	      const char *name, vector<string*> *lblstr);
 
     //! Constructor takes all input data and corresponding labels.
@@ -125,30 +124,31 @@ namespace ebl {
     //! this class takes ownership of the data and will destroy the vector and
     //! its content in the destructor.
     labeled_datasource(idx<Tdata> &inputs, idx<Tlabel> &labels, 
-		      double b = 0.0, double c = 1.0,
+		      Tdata bias = 0, float coeff = 1.0,
 		      const char *name = NULL,
 		      vector<string*> *lblstr = NULL);
 
     labeled_datasource(idx<Tdata> &inputs, idx<Tlabel> &labels,
 		       idx<ubyte> &classes,
-		       double b = 0.0, double c = 1.0,
+		       Tdata bias = 0, float coeff = 1.0,
 		       const char *name = NULL);
 
     //! Constructor from dataset file names.
     labeled_datasource(const char *data_fname, const char *labels_fname,
-		       const char *classes_fname, double b, double c,
+		       const char *classes_fname, Tdata bias, float coeff,
 		       const char *name_);
 
     //! copy constructor
-    labeled_datasource(const labeled_datasource<Tdata, Tlabel> &ds);
+    labeled_datasource(const labeled_datasource<Tnet, Tdata, Tlabel> &ds);
 
     virtual ~labeled_datasource();
   };
 
   ////////////////////////////////////////////////////////////////
   //! labeled_pair_datasource
-  template<typename Tdata, typename Tlabel>
-    class labeled_pair_datasource : public labeled_datasource<Tdata, Tlabel> {
+  template<class Tnet, class Tdata, class Tlabel>
+    class labeled_pair_datasource
+    : public labeled_datasource<Tnet, Tdata, Tlabel> {
   public:
     idx<Tlabel>					pairs;
     typename idx<Tlabel>::dimension_iterator	pairsIter;
@@ -158,7 +158,7 @@ namespace ebl {
 			    const char *labels_fname,
 			    const char *classes_fname,
 			    const char *pairs_fname,
-			    double b = 0, double c = 1,
+			    Tdata bias = 0, float coeff = 1.0,
 			    const char *name_ = NULL);
 
     //! Constructor from dataset matrices.
@@ -166,14 +166,15 @@ namespace ebl {
 			    idx<Tlabel> &labels_,
 			    idx<ubyte> &classes_,
 			    idx<Tlabel> &pairs_,
-			    double b, double c,
+			    Tdata bias, float coeff,
 			    const char *name_);
     
     //! destructor.
     virtual ~labeled_pair_datasource();
 
     //! Copies the current datum to a state and label.
-    virtual void fprop(state_idx &d1, state_idx &d2, idx<Tlabel> &label);
+    virtual void fprop(state_idx<Tnet> &d1, state_idx<Tnet> &d2,
+		       idx<Tlabel> &label);
 
     //! Move to the next datum.
     virtual void next();
@@ -192,28 +193,21 @@ namespace ebl {
   //! and a label in the form of an idx0 of L.
   //! This includes most supervised learning algorithms
   //! implemented in this library.
-  template<class Tdata, class Tlabel>
-    class mnist_datasource : public labeled_datasource<Tdata, Tlabel> {
+  template<class Tnet, class Tdata, class Tlabel>
+    class mnist_datasource : public labeled_datasource<Tnet, Tdata, Tlabel> {
   public:
-    double bias;
-    double coeff;
     
-    //! Empty constructor. CAUTION: Requires subsequent call to init().
-    mnist_datasource() {};
+    //! Create an MNIST dataset using files found in root directory.
+    //! type is either "t10k" or "train".
+    //! size can go up to 10k for testing and 60k for training.
+    mnist_datasource(const char *root, const char *type, uint size);
 
-    //! create a <dsource-mnist>.
-    //! <inp> must be a ubyte-matrix of input patterns
-    //! and <lbl> a ubyte-matrix of labels.
-    //! <w> and <h> are the size of the output, in which
-    //! the actual images will be centered.
-    //! <bias> and <coeff> are used to shift and scale
-    //! the values.
-    mnist_datasource(idx<Tdata> &inp, idx<Tlabel> &lbl, double b, double c, 
-		    const char *name = NULL);
+    //! Destructor.
     virtual ~mnist_datasource () {}
 
+    //! init method.
     virtual void init(idx<Tdata> &inp, idx<Tlabel> &lbl,
-		      double b, double c, const char *name);
+		      Tdata bias, float coeff, const char *name);
 
     //! Returns an idxdim object describing the order (number of dimensions)
     //! and the size of each dimension of a single sample outputed by fprop.
@@ -222,52 +216,24 @@ namespace ebl {
     //! get the current item and copy the sample into
     //! <out> (an idx3-state) and the corresponding
     //! label into <lbl> (and idx0 of int).
-    virtual void fprop(state_idx &out, idx<Tlabel> &label);
+    virtual void fprop(state_idx<Tnet> &out, idx<Tlabel> &label);
+
+  protected:
+    using datasource<Tnet, Tdata, Tlabel>::bias;
+    using datasource<Tnet, Tdata, Tlabel>::coeff;
+    using datasource<Tnet, Tdata, Tlabel>::height;
+    using datasource<Tnet, Tdata, Tlabel>::width;
+    using datasource<Tnet, Tdata, Tlabel>::data;
   };
 
   ////////////////////////////////////////////////////////////////
   // Helper functions
   
-  //! look for mnist dataset in <directory> and load training and testing set
-  //! into train_ds and test_ds.
-  //! return true upon success.
-  template<class Tdata, class Tlabel>
-  bool load_mnist_dataset(const char *directory,
-			  mnist_datasource<Tdata,Tlabel> &train_ds, 
-			  mnist_datasource<Tdata,Tlabel> &test_ds,
-			  int train_size, int test_size);
-
   //! Fill a matrix with 1-of-n code.
   //! Return an idx<double> with <nclasses> targets in it, where the target
   //! value for the correct answer is target and -target for the rest.
-  idx<double> create_target_matrix(intg nclasses, double target);
-
-  ////////////////////////////////////////////////////////////////
-  /*
-  //! a data source constructed by taking patterns in
-  //! an existing data source whose indices are within a
-  //! given range.
-  template<class Tdata, class Tlabel>
-  class DataSourceNarrow : public labeled_datasource<Tdata, Tlabel> {
-  public:
-  labeled_datasource<Tdata, Tlabel> *base;
-  intg offset;
-  intg size;
-
-  //! make a new data source by taking <size> items
-  //! from the data source passed as argument, starting
-  //! at item <offset>.
-  DataSourceNarrow(labeled_datasource<Tdata, Tlabel> *b, intg siz, intg off);
-
-  virtual ~DataSourceNarrow () {}
-
-  //! returns size given through constructor.
-  intg size();
-
-  //! copy current item and label into <out> and <lbl>.
-  void fprop(state_idx &out, idx<Tlabel> &label);
-  };
-  */
+  template <class Tdata>
+  idx<Tdata> create_target_matrix(intg nclasses, Tdata target);
 
 } // end namespace ebl
 

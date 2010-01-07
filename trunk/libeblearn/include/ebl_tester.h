@@ -51,7 +51,7 @@ namespace ebl {
   //! This class is not meant to replace the testing framework for eblearn 
   //! developers but it should be useful for eblearn users that create new 
   //! modules using this library as a binary reference
-  class ModuleTester {
+  template <class T> class ModuleTester {
   public:
 
     //! Standard constructor
@@ -65,8 +65,8 @@ namespace ebl {
     //! rrange : range that is used to randomize the input state and parameter 
     //!          objects. if this value is very small, then the jacobians will 
     //!          always be very similar
-    ModuleTester(FILE* out, double thres, double rrange);
-    ModuleTester(double thres, double rrange);
+    ModuleTester(FILE* out, T thres, T rrange);
+    ModuleTester(T thres, T rrange);
 
     virtual ~ModuleTester();
 
@@ -74,8 +74,8 @@ namespace ebl {
     //! module : pointer to a module_1_1
     //! in     : pointer to state_idx
     //! out    : pointer to state_idx
-    idx<double> test_jacobian(module_1_1<state_idx,state_idx> &module, 
-			      state_idx &in, state_idx &out);
+    idx<T> test_jacobian(module_1_1<T> &module, 
+			      state_idx<T> &in, state_idx<T> &out);
 
     //! test the derivative of output wrt parameters of the module
     //! p      : pointer to parameter object that was used to allocate the 
@@ -84,21 +84,21 @@ namespace ebl {
     //! module : pointer to a module_1_1
     //! in     : pointer to state_idx
     //! out    : pointer to state_idx
-    void test_jacobian_param(parameter &p, 
-			     module_1_1<state_idx,state_idx>& module, 
-			     state_idx &in, state_idx &out);
+    void test_jacobian_param(parameter<T> &p, 
+			     module_1_1<T>& module, 
+			     state_idx<T> &in, state_idx<T> &out);
 
     //! get accuracy threshold
-    double get_acc_thres() const;
+    T get_acc_thres() const;
 
     //! set accuracy threshold
-    void set_acc_thres(double acc_thres);
+    void set_acc_thres(T acc_thres);
 
     //! get random range
-    double get_rrange() const;
+    T get_rrange() const;
 
     //! set random range
-    void set_rrange(double rrange);
+    void set_rrange(T rrange);
 
     //! get ostream used
     FILE* get_out() const;
@@ -108,21 +108,21 @@ namespace ebl {
 
   private:
     // accuracy threshold
-    double acc_thres;
+    T acc_thres;
     // ranfom initialization range
-    double rrange;
+    T rrange;
     // output stream
     FILE* out;
     // jacobian from fprop
-    idx<double> jac_fprop;
+    idx<T> jac_fprop;
     // jacobian from bprop;
-    idx<double> jac_bprop;
+    idx<T> jac_bprop;
     // jacobian from fprop wrt param
-    idx<double> jac_fprop_param;
+    idx<T> jac_fprop_param;
     // jacobian from bprop wrt param
-    idx<double> jac_bprop_param;
+    idx<T> jac_bprop_param;
 
-    idx<double>* kk;
+    idx<T>* kk;
 
 
     //! get jacobian using 1st order central finite differnce approximation for 
@@ -130,8 +130,9 @@ namespace ebl {
     //! module : pointer to a module_1_1
     //! in     : pointer to state_idx
     //! out    : pointer to state_idx
-    void get_jacobian_fprop(module_1_1<state_idx,state_idx> &module, 
-			    state_idx &in, state_idx &out,idx<double>& jac);
+    void get_jacobian_fprop(module_1_1<T> &module, 
+			    state_idx<T> &in, state_idx<T> &out,
+			    idx<T>& jac);
 
     //! get jacobian using 1st order central finite differnce approximation for 
     //! derivative of output wrt parameter
@@ -141,17 +142,19 @@ namespace ebl {
     //! module : pointer to a module_1_1
     //! in     : pointer to state_idx
     //! out    : pointer to state_idx
-    void get_jacobian_fprop_param(parameter &p, 
-				  module_1_1<state_idx,state_idx> &module, 
-				  state_idx &in, state_idx &out,
-				  idx<double>& jac);
+    void get_jacobian_fprop_param(parameter<T> &p, 
+				  module_1_1<T> &module, 
+				  state_idx<T> &in, state_idx<T> &out,
+				  idx<T>& jac);
 
     //! get jacobian using bprop for derivative of output wrt input
     //! module : pointer to a module_1_1
     //! in     : pointer to state_idx
     //! out    : pointer to state_idx
-    void get_jacobian_bprop(module_1_1<state_idx,state_idx> &module, 
-			    state_idx &in, state_idx &out,idx<double>& jac);
+    void get_jacobian_bprop(module_1_1<T> &module, 
+			    state_idx<T> &in, state_idx<T> &out,
+			    idx<T>& jac);
+    
     //! get jacobian using bprop for derivative of output wrt parameter
     //! p      : pointer to parameter object that was used to allocate the 
     //!          parameters of module. this parameter object should contain the 
@@ -159,28 +162,28 @@ namespace ebl {
     //! module : pointer to a module_1_1
     //! in     : pointer to state_idx
     //! out    : pointer to state_idx
-    void get_jacobian_bprop_param(parameter &p, 
-				  module_1_1<state_idx,state_idx> &module, 
-				  state_idx &in, state_idx &out,
-				  idx<double>& jac);
+    void get_jacobian_bprop_param(parameter<T> &p, 
+				  module_1_1<T> &module, 
+				  state_idx<T> &in, state_idx<T> &out,
+				  idx<T>& jac);
 
     //! a : first idx to compare
     //! b : second idx to compare
     //! c : message to use
-    void report_err(idx<double>& a, idx<double>& b, const char* msg);
+    void report_err(idx<T>& a, idx<T>& b, const char* msg);
 
     //! a : first idx to compare
     //! b : second idx to compare
-    idx<double> get_errs(idx<double>& a, idx<double>& b);
+    idx<T> get_errs(idx<T>& a, idx<T>& b);
 
     //! assigns random numbers to every element of give idx
-    void randomize_idx(idx<double>& m);
+    void randomize_idx(idx<T>& m);
   };
 
   ////////////////////////////////////////////////////////////////
   //! Generic Jacobian tester
 
-  class Jacobian_tester {
+  template <class T> class Jacobian_tester {
 
   public:
     Jacobian_tester() {
@@ -193,14 +196,14 @@ namespace ebl {
     // this function take any module_1_1 with a fprop et bprop implemented,
     // and tests if the jacobian is correct (by pertubation) 
     // (on a state_idx with 3 dimensions)
-    void test(module_1_1<state_idx, state_idx> &module);
+    void test(module_1_1<T> &module);
 
   };
 
   ////////////////////////////////////////////////////////////////
   //! Generic BBprop tester tester
 
-  class Bbprop_tester {
+  template <class T> class Bbprop_tester {
 
   public:
     Bbprop_tester() {
@@ -213,14 +216,14 @@ namespace ebl {
     // this function take any module_1_1 with a fprop et bbprop implemented, 
     // and tests if the Bbprop is correct (by pertubation) 
     // (on a state_idx with 3 dimensions)
-    void test(module_1_1<state_idx, state_idx> &module);
+    void test(module_1_1<T> &module);
 
   };
 
   ////////////////////////////////////////////////////////////////
   //! Generic Bprop tester tester
 
-  class Bprop_tester {
+  template <class T> class Bprop_tester {
 
   public:
     Bprop_tester() {
@@ -233,10 +236,12 @@ namespace ebl {
     // this function take any module_1_1 with a fprop et bprop implemented, 
     // and tests if the bprop is correct (by pertubation) 
     // (on a state_idx with 3 dimensions)
-    void test(module_1_1<state_idx, state_idx> &module);
+    void test(module_1_1<T> &module);
 
   };
 
 } // namespace ebl {
+
+#include "ebl_tester.hpp"
 
 #endif /* EBL_TESTER_H_ */

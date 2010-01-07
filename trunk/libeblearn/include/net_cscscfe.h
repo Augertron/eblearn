@@ -37,60 +37,61 @@
 
 namespace ebl {
 
-  //! full connection with Euclidean distance between replicable 
-  //! 3D layers. This is like a layer of RBF WITHOUT NON-LINEAR FUNCTIONS.
-  //! the output is the square Euclidean distance between the input
-  //! and the weight
-  //! the full connection is only across the first dimension 
-  //! of the input and output layer.
-  //! the other two dimensions are spatial dimensions accross which the 
-  //! weight matrix is shared.
-  class e_layer :
-  public module_1_1<state_idx, state_idx>
-    {
-    public:
-      //! weight matrix
-      state_idx weight;
+/*   //! full connection with Euclidean distance between replicable  */
+/*   //! 3D layers. This is like a layer of RBF WITHOUT NON-LINEAR FUNCTIONS. */
+/*   //! the output is the square Euclidean distance between the input */
+/*   //! and the weight */
+/*   //! the full connection is only across the first dimension  */
+/*   //! of the input and output layer. */
+/*   //! the other two dimensions are spatial dimensions accross which the  */
+/*   //! weight matrix is shared. */
+/*   template <class T> class e_layer : */
+/*   public module_1_1<state_idx<T>, state_idx<T> > */
+/*     { */
+/*     public: */
+/*       //! weight matrix */
+/*       state_idx<T> weight; */
 
-      virtual ~e_layer(void);
-      //! new e-layer (Eucliden distance RBF). <tin> is the
-      //! thickness of the input layer, <tout> is the thickness 
-      //! of the output layer, <prm> is the parameter.
-      e_layer(parameter &prm, intg tin, intg tout);	
-      //! fprop from in to out
-      void fprop(state_idx &in, state_idx &out);
-      //! bprop
-      void bprop(state_idx &in, state_idx &out);
-      //! bbprop
-      void bbprop(state_idx &in, state_idx &out);
-      //! initialize the weights to random values
-      void forget(forget_param_linear &fp);
-    };
+/*       virtual ~e_layer(void); */
+/*       //! new e-layer (Eucliden distance RBF). <tin> is the */
+/*       //! thickness of the input layer, <tout> is the thickness  */
+/*       //! of the output layer, <prm> is the parameter. */
+/*       e_layer(parameter &prm, intg tin, intg tout);	 */
+/*       //! fprop from in to out */
+/*       void fprop(state_idx &in, state_idx<T> &out); */
+/*       //! bprop */
+/*       void bprop(state_idx<T> &in, state_idx<T> &out); */
+/*       //! bbprop */
+/*       void bbprop(state_idx<T> &in, state_idx<T> &out); */
+/*       //! initialize the weights to random values */
+/*       void forget(forget_param_linear &fp); */
+/*     }; */
 
-  //! Standard LeNet5-type architecture with the "RBF" layer on top
-  class net_cscscfe : public module_1_1<state_idx, state_idx>
-    {
-    public:
-      nn_machine_cscscf	&net;
-      state_idx		netout;
-      e_layer		&rbf;
+/*   //! Standard LeNet5-type architecture with the "RBF" layer on top */
+/*   template <class T> */
+/*     class net_cscscfe : public module_1_1<state_idx<T>, state_idx<T> > */
+/*     { */
+/*     public: */
+/*       nn_machine_cscscf	&net; */
+/*       state_idx<T>	netout; */
+/*       e_layer		&rbf; */
 
-      //! makes a new net_cscscfe module.
-      //! <n> is a net-cscscf, <e> is an e-dist layer,
-      //! <thick> is the number of outputs.
-      //! <si>,<sj> are the initial replication factors.
-      net_cscscfe(nn_machine_cscscf &n, e_layer &e, int thick, int si, int sj);
-      virtual ~net_cscscfe();
+/*       //! makes a new net_cscscfe module. */
+/*       //! <n> is a net-cscscf, <e> is an e-dist layer, */
+/*       //! <thick> is the number of outputs. */
+/*       //! <si>,<sj> are the initial replication factors. */
+/*       net_cscscfe(nn_machine_cscscf &n, e_layer &e, int thick, int si, int sj); */
+/*       virtual ~net_cscscfe(); */
 
-      //! initialize the weights to random values
-      void forget(forget_param_linear &fp);
-      //! fprop from in to out
-      virtual void fprop(state_idx &in, state_idx &out);
-      //! bprop
-      virtual void bprop(state_idx &in, state_idx &out);
-      //! bbprop
-      virtual void bbprop(state_idx &in, state_idx &out);
-    };
+/*       //! initialize the weights to random values */
+/*       void forget(forget_param_linear &fp); */
+/*       //! fprop from in to out */
+/*       virtual void fprop(state_idx<T> &in, state_idx<T> &out); */
+/*       //! bprop */
+/*       virtual void bprop(state_idx<T> &in, state_idx<T> &out); */
+/*       //! bbprop */
+/*       virtual void bbprop(state_idx<T> &in, state_idx<T> &out); */
+/*     }; */
 
 } // end namespace ebl
 

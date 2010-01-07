@@ -68,10 +68,9 @@ namespace ebl {
   }
 
   char classifier_meter::update(intg a, class_state *co, ubyte cd, 
-				state_idx *en) {
+				double energy) {
     intg crrct = this->correctp(co->output_class, cd);
     age = a;
-    energy = en->x.get();
     confidence = co->confidence;
     total_energy += energy;
     if (crrct == 1)
@@ -84,9 +83,8 @@ namespace ebl {
     return crrct;
   }
 
-  void classifier_meter::update(intg age_, bool correct, state_idx &en) {
+  void classifier_meter::update(intg age_, bool correct, double energy) {
     age = age_;
-    energy = en.x.get();
     confidence = 0; // TODO? co->confidence;
     total_energy += energy;
     if (correct)
@@ -97,9 +95,8 @@ namespace ebl {
   }
 
   void classifier_meter::update(intg age_, uint desired, uint infered,
-				state_idx &e) {
+				double energy) {
     age = age_;
-    energy = e.x.get();
     confidence = 0; // TODO? co->confidence;
     // increment energy
     total_energy += energy;
@@ -126,10 +123,9 @@ namespace ebl {
     size++;
   }
 
-  void classifier_meter::test(class_state *co, ubyte cd, state_idx *en) {
+  void classifier_meter::test(class_state *co, ubyte cd, double energy) {
     intg crrct = this->correctp(co->output_class, cd);
     age = 0;
-    energy = en->x.get();
     confidence = co->confidence;
     total_energy = energy;
     total_correct = 0;
@@ -227,25 +223,6 @@ namespace ebl {
   void class_state::resize(ubyte n) {
     sorted_classes->resize(n);
     sorted_scores->resize(n);
-  }
-
-  ////////////////////////////////////////////////////////////////////////
-
-  max_classer::max_classer(idx<ubyte> *classes) {
-    classindex2label = classes;
-  }
-
-  void max_classer::fprop(state_idx *in, class_state *out) {
-    intg n = in->x.dim(0);
-    out->resize(n);
-    { idx_bloop2(sc, *(out->sorted_scores), float, insc, in->x, double) {
-	sc.set(idx_max(insc));
-      }
-    }
-    idx_copy(*classindex2label, *(out->sorted_classes));
-    idx_sortdown(*(out->sorted_scores), *(out->sorted_classes));
-    out->output_class = out->sorted_classes->get(0);
-    out->confidence = out->sorted_scores->get(0);
   }
 
 } // end namespace ebl

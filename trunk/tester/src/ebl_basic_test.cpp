@@ -16,13 +16,13 @@ void ebl_basic_test::test_nn_layer_convolution_fprop() {
   intg kj = 2;
   intg si = 1 + ini - ki;
   intg sj = 1 + inj - kj;
-  state_idx in(1, ini, inj);
-  state_idx out(1, si, sj);
+  state_idx<double> in(1, ini, inj);
+  state_idx<double> out(1, si, sj);
   idx<intg> table(1, 2);
   idx_clear(table);
   idx<intg> tableout = table.select(1, 1);
-  parameter prm(10000);
-  nn_layer_convolution c(prm, ki, kj, 1, 1, table);
+  parameter<double> prm(10000);
+  nn_layer_convolution<double> c(prm, ki, kj, 1, 1, table);
   double fact = 0.05;
 
   in.x.set(1, 0, 0, 0);
@@ -57,15 +57,15 @@ void ebl_basic_test::test_jacobian_nn_layer_convolution() {
   intg kj = 2;
   intg si = 1 + ini - ki;
   intg sj = 1 + inj - kj;
-  state_idx in(1, ini, inj);
-  state_idx out(1, si, sj);
+  state_idx<double> in(1, ini, inj);
+  state_idx<double> out(1, si, sj);
   idx<intg> table(1, 2);
   idx_clear(table);
   idx<intg> tableout = table.select(1, 1);
-  parameter prm(10000);
-  nn_layer_convolution c(prm, ki, kj, 1, 1, table);
+  parameter<double> prm(10000);
+  nn_layer_convolution<double> c(prm, ki, kj, 1, 1, table);
 
-  ModuleTester mt;
+  ModuleTester<double> mt;
   idx<double> errs = mt.test_jacobian(c, in, out);
 //   cout << "err0: " << errs.get(0) << " err1: " << errs.get(1);
 //   cout << " thres " << mt.get_acc_thres();
@@ -74,13 +74,13 @@ void ebl_basic_test::test_jacobian_nn_layer_convolution() {
 }
 
 void ebl_basic_test::test_jacobian_nn_layer_subsampling() {
-  parameter p(10000);
+  parameter<double> p(10000);
   int ki = 4, kj = 4, thick = 1, si = 2, sj =2;
-  nn_layer_subsampling s(p, ki, kj, si, sj, thick);
-  state_idx in(1, 8, 8);
-  state_idx out(1, 1, 1);
+  nn_layer_subsampling<double> s(p, ki, kj, si, sj, thick);
+  state_idx<double> in(1, 8, 8);
+  state_idx<double> out(1, 1, 1);
 
-  ModuleTester mt;
+  ModuleTester<double> mt;
   idx<double> errs = mt.test_jacobian(s, in, out);
 //   cout << "err0: " << errs.get(0) << " err1: " << errs.get(1);
 //   cout << " thres " << mt.get_acc_thres();
@@ -89,7 +89,7 @@ void ebl_basic_test::test_jacobian_nn_layer_subsampling() {
 }
 
 void ebl_basic_test::test_state_copy() {
-  state_idx a(4,4);
+  state_idx<double> a(4,4);
 
   dseed(32);
   idx_aloop3(xx,a.x,double,xd,a.dx,double,xdd,a.ddx,double){
@@ -98,7 +98,7 @@ void ebl_basic_test::test_state_copy() {
     *xdd = drand(2);
   }
 
-  state_idx b = a.make_copy();
+  state_idx<double> b = a.make_copy();
   //	a.x.pretty(std::cout);
   //	a.x.printElems(std::cout);
   //	b.x.pretty(std::cout);
@@ -119,10 +119,10 @@ void ebl_basic_test::test_state_copy() {
 void ebl_basic_test::test_softmax(){
   CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
 
-  state_idx *in = new state_idx(2,2,2,2,2,2);
-  state_idx *out = new state_idx(1,1,1,1,1,1);
+  state_idx<double> *in = new state_idx<double>(2,2,2,2,2,2);
+  state_idx<double> *out = new state_idx<double>(1,1,1,1,1,1);
   double beta = 1;
-  softmax *module = new softmax(beta);
+  softmax<double> *module = new softmax<double>(beta);
 
   // init
   dseed(1);
@@ -212,9 +212,9 @@ void ebl_basic_test::test_softmax(){
 }
 
 void ebl_basic_test::test_power_module() {
-  state_idx in(1);
-  state_idx out(1);
-  power_module pw(.5);
+  state_idx<double> in(1);
+  state_idx<double> out(1);
+  power_module<double> pw(.5);
 
   in.x.set(2, 0);
   out.dx.set(1, 0);

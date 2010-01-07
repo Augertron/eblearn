@@ -45,14 +45,14 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
-  class nn_machine_cscscf : public layers_n<state_idx> {
+  template <class T> class nn_machine_cscscf : public layers_n<T> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
     nn_machine_cscscf();
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    nn_machine_cscscf(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    nn_machine_cscscf(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0,
 		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 		      idx<intg> &tbl2, intg outthick, bool norm = false);
@@ -72,7 +72,7 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, intg outthick, bool norm = false);
@@ -80,14 +80,14 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
-  class nn_machine_cscsc : public layers_n<state_idx> {
+  template <class T> class nn_machine_cscsc : public layers_n<T> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
     nn_machine_cscsc();
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    nn_machine_cscsc(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    nn_machine_cscsc(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 		     idx<intg> &tbl2, bool norm = false);
@@ -107,7 +107,7 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, bool norm = false);
@@ -138,9 +138,9 @@ namespace ebl {
   //!  (setq p (new idx1-ddparam 0 0.1 0.02 0.02 80000))
   //!  (setq z (new-lenet5 32 32 5 5 2 2 5 5 2 2 120 10 p))
   //! </code>}
-  class lenet5 : public nn_machine_cscscf {
+  template <class T> class lenet5 : public nn_machine_cscscf<T> {
   public:
-    lenet5(parameter &prm, intg image_height, intg image_width,
+    lenet5(parameter<T> &prm, intg image_height, intg image_width,
 	   intg ki0, intg kj0, intg si0, intg sj0,
 	   intg ki1, intg kj1, intg si1, intg sj1,
 	   intg hid, intg output_size, bool norm = false);
@@ -150,11 +150,11 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! Lenet7, similar to lenet5 with different neural connections.
   //! This network takes a 1-layer image as input.
-  class lenet7 : public nn_machine_cscscf {
+  template <class T> class lenet7 : public nn_machine_cscscf<T> {
   public:
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
-    lenet7(parameter &prm, intg image_height, intg image_width,
+    lenet7(parameter<T> &prm, intg image_height, intg image_width,
 	   intg output_size);
     virtual ~lenet7() {}
   };
@@ -163,25 +163,25 @@ namespace ebl {
   //! Lenet7_binocular, similar to lenet5 with different neural connections.
   //! This network expects a 2-layer image containing each stereoscopic left
   //! and right images.
-  class lenet7_binocular : public nn_machine_cscscf {
+  template <class T> class lenet7_binocular : public nn_machine_cscscf<T> {
   public:
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
-    lenet7_binocular(parameter &prm, intg image_height, intg image_width,
+    lenet7_binocular(parameter<T> &prm, intg image_height, intg image_width,
 		     intg output_size);
     virtual ~lenet7_binocular() {}
   };
   
   ////////////////////////////////////////////////////////////////
   //! supevised euclidean machine
-  class supervised_euclidean_machine 
-    : public fc_ebm2<state_idx,int,state_idx> {
+  template <class Tdata, class Tlabel> class supervised_euclidean_machine 
+    : public fc_ebm2_gen<state_idx<Tdata>, Tlabel, Tdata> {
   public:
-    euclidean_module	fcost;	// euclidean cost function
-    state_idx		fout;	// hidden state between fmod and fcost
+    euclidean_module<Tdata, Tlabel>	fcost;	// euclidean cost function
+    state_idx<Tdata>			fout;	// hidden state in between
 
-    supervised_euclidean_machine(module_1_1<state_idx,state_idx> &machine_,
-				 idx<double> &targets, idxdim &dims);
+    supervised_euclidean_machine(module_1_1<Tdata> &machine_,
+				 idx<Tdata> &targets, idxdim &dims);
     virtual ~supervised_euclidean_machine();
   };
   

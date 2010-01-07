@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet *
- *   pierre.sermanet@gmail.com *
+ *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,11 +29,31 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "ebl_layers_gui.h"
-#include "ebl_transfer_gui.h"
+#include "ebl_logger.h"
 
 using namespace std;
 
 namespace ebl {
+
+  ////////////////////////////////////////////////////////////////////////
+
+  template <class T>
+  max_classer<T>::max_classer(idx<ubyte> *classes) {
+    classindex2label = classes;
+  }
+
+  template <class T>
+  void max_classer<T>::fprop(state_idx<T> *in, class_state *out) {
+    intg n = in->x.dim(0);
+    out->resize(n);
+    { idx_bloop2(sc, *(out->sorted_scores), float, insc, in->x, T) {
+	sc.set((float) idx_max(insc));
+      }
+    }
+    idx_copy(*classindex2label, *(out->sorted_classes));
+    idx_sortdown(*(out->sorted_scores), *(out->sorted_classes));
+    out->output_class = out->sorted_classes->get(0);
+    out->confidence = out->sorted_scores->get(0);
+  }
 
 } // end namespace ebl

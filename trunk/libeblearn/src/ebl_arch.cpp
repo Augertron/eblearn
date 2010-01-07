@@ -35,16 +35,4 @@ using namespace std;
 
 namespace ebl {
 
-  // check that orders of input and module are compatible
-  void check_replicable_orders(module_1_1<state_idx, state_idx> &m, 
-			       state_idx& in) {
-    if (in.x.order() < 0)
-      eblerror("module_1_1_replicable cannot replicate this module (order -1)");
-    if (in.x.order() < m.replicable_order())
-      eblerror("input order must be greater or equal to module's operating \
-order");
-    if (in.x.order() > MAXDIMS)
-      eblerror("cannot replicate using more dimensions than MAXDIMS");
-  }
-
 } // end namespace ebl

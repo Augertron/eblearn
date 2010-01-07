@@ -18,6 +18,7 @@ void NetTest::tearDown() {
 }
 
 void NetTest::test_lenet5_mnist() {
+  typedef float t_net;
   bool display = true;
   uint ninternals = 1;
   cout << endl;
@@ -26,27 +27,28 @@ void NetTest::test_lenet5_mnist() {
   // in the real world, init_drand should be called with time(NULL) as argument.
   init_drand(0); // fixed randomization
   CPPUNIT_ASSERT_MESSAGE(*gl_mnist_errmsg, gl_mnist_dir != NULL);
-  intg trsize = 2000; // maximum training set size: 60000
-  intg tesize = 1000; // maximum testing set size:  10000
   
   // load MNIST dataset
-  mnist_datasource<ubyte,ubyte> train_ds, test_ds;
-  load_mnist_dataset(gl_mnist_dir->c_str(), train_ds, test_ds, trsize, tesize);
+  mnist_datasource<t_net,ubyte,ubyte>
+    train_ds(gl_mnist_dir->c_str(), "train", 2000),
+    test_ds(gl_mnist_dir->c_str(), "t10k", 1000);
 
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
-  idx<double> targets = create_target_matrix(1+idx_max(train_ds.labels), 1.0);
+  idx<t_net> targets =
+    create_target_matrix<t_net>(1+idx_max(train_ds.labels), 1.0);
 
   // create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  parameter theparam(60000); // create trainable parameter
-  lenet5 l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, targets.dim(0));
-  supervised_euclidean_machine thenet(l5, targets, dims);
-  supervised_trainer<ubyte,ubyte> thetrainer(thenet, theparam);
+  parameter<t_net> theparam(60000); // create trainable parameter
+  lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
+		   targets.dim(0));
+  supervised_euclidean_machine<t_net, ubyte> thenet((module_1_1<t_net>&) l5, targets, dims);
+  supervised_trainer<t_net, ubyte, ubyte> thetrainer(thenet, theparam);
 
 #ifdef __GUI__
 //   labeled_datasource_gui<ubyte, ubyte> dsgui(true);
 //   dsgui.display(test_ds, 10, 10);
-  supervised_trainer_gui<ubyte, ubyte> stgui;
+  supervised_trainer_gui<t_net, ubyte, ubyte> stgui;
 #endif
 
   // a classifier-meter measures classification errors
@@ -111,10 +113,10 @@ void NetTest::test_lenet5_mnist() {
     }
 #endif
   }
-  CPPUNIT_ASSERT_DOUBLES_EQUAL(97.05, // 97.15 without contrast norm
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(97.00,
 			       ((trainmeter.total_correct * 100) 
 				/ (double) trainmeter.size), 0.01);
-  CPPUNIT_ASSERT_DOUBLES_EQUAL(95.80,
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(95.90,
 			       ((testmeter.total_correct * 100) 
 				/ (double) testmeter.size), 0.01);
 }
