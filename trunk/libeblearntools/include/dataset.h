@@ -35,12 +35,6 @@
 
 #include "libidx.h"
 
-#define DATA_NAME "data"
-#define LABELS_NAME "labels"
-#define CLASSES_NAME "classes"
-#define CLASSPAIRS_NAME "classpairs"
-#define DEFORMPAIRS_NAME "deformpairs"
-
 #define MKDIR_RIGHTS 0755
 #define IMAGE_PATTERN ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM)"
 

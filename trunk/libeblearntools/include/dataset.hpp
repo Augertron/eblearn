@@ -303,7 +303,7 @@ namespace ebl {
     string root1 = root;
     root1 += "/";
     cout << "Loading dataset " << name << " from " << root1;
-    cout << "_*.mat" << endl;
+    cout << "_*" << MATRIX_EXTENSION << endl;
     // load data
     data = idx<Tdata>(1,1,1,1); // TODO: implement generic load_matrix
     fname = root1; fname += data_fname;
@@ -340,7 +340,7 @@ namespace ebl {
     string root1 = root;
     root1 += "/";
     cout << "Saving dataset " << name << " in " << root << "/";
-    cout << name << "_*.mat" << endl;
+    cout << name << "_*" << MATRIX_EXTENSION << endl;
     // return false if no samples
     if (data_cnt <= 0) {
       cerr << "Warning: No samples were added to the dataset, nothing to save.";

@@ -44,11 +44,13 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! datasource
   template<class Tnet, class Tin1, class Tin2> class datasource {
+  protected:
+    intg                                        nclasses; // # of classes
   public:
     Tnet					bias;
     float					coeff;
-    idx<Tin1>					data;
-    idx<Tin2>					labels;
+    idx<Tin1>					data; // samples
+    idx<Tin2>					labels; // labels
     typename idx<Tin1>::dimension_iterator	dataIter;
     typename idx<Tin2>::dimension_iterator	labelsIter;
     unsigned int				height;
@@ -62,11 +64,11 @@ namespace ebl {
     //! CAUTION: This empty constructor requires a subsequent call to init().
     datasource();
 
-    void init(idx<Tin1> &inp, idx<Tin2> &lbl, Tin1 bias, float coeff, 
-	      const char *name);
+    void init(idx<Tin1> &inp, idx<Tin2> &lbl, const char *name,
+	      Tin1 bias, float coeff);
 
-    datasource(idx<Tin1> &inputs, idx<Tin2> &labels, 
-	       Tin1 bias = 0.0, float coeff = 0.01, const char *name = NULL);
+    datasource(idx<Tin1> &inputs, idx<Tin2> &labels, const char *name = NULL, 
+	       Tin1 bias = 0.0, float coeff = 0.01);
 
     //! copy constructor
     datasource(const datasource<Tnet, Tin1, Tin2> &ds);
@@ -102,6 +104,12 @@ namespace ebl {
     //! instead of following the dataset's distribution.
     //! This is useful and important when the dataset is unbalanced.
     virtual void set_balanced();
+
+    //! Return the number of classes.
+    virtual intg get_nclasses();
+
+    //! Print info about the datasource on the standard output.
+    virtual void pretty();
   };
 
   ////////////////////////////////////////////////////////////////
@@ -114,8 +122,14 @@ namespace ebl {
     //! CAUTION: This empty constructor requires a subsequent call to init().
     labeled_datasource();
 
-    void init(idx<Tdata> &inp, idx<Tlabel> &lbl, Tdata bias, float coeff, 
-	      const char *name, vector<string*> *lblstr);
+    //! initialize from matrices.
+    void init(idx<Tdata> &inp, idx<Tlabel> &lbl, const char *name,
+	      Tdata bias, float coeff, vector<string*> *lblstr);
+
+    //! intialize from matrices filenames.
+    void init(const char *data_fname, const char *labels_fname,
+	      const char *classes_fname, const char *name,
+	      Tdata bias = 0, float coeff = 1.0);
 
     //! Constructor takes all input data and corresponding labels.
     //! @param inputs: An N+1-dimensional idx of N-dimensional inputs.
@@ -124,20 +138,20 @@ namespace ebl {
     //! this class takes ownership of the data and will destroy the vector and
     //! its content in the destructor.
     labeled_datasource(idx<Tdata> &inputs, idx<Tlabel> &labels, 
-		      Tdata bias = 0, float coeff = 1.0,
 		      const char *name = NULL,
+		      Tdata bias = 0, float coeff = 1.0,
 		      vector<string*> *lblstr = NULL);
 
     labeled_datasource(idx<Tdata> &inputs, idx<Tlabel> &labels,
-		       idx<ubyte> &classes,
-		       Tdata bias = 0, float coeff = 1.0,
-		       const char *name = NULL);
+		       idx<ubyte> &classes, const char *name = NULL,
+		       Tdata bias = 0, float coeff = 1.0);
 
-    //! Constructor from dataset file names.
-    labeled_datasource(const char *data_fname, const char *labels_fname,
-		       const char *classes_fname, Tdata bias, float coeff,
-		       const char *name_);
-
+    //! Constructor from data root and general name (appending names and
+    //! extension of each subfile of a dataset created with the dscompiler).
+    labeled_datasource(const char *root, const char *dsname,
+		       const char *name = NULL,
+		       Tdata bias = 0, float coeff = 1.0);
+		       
     //! copy constructor
     labeled_datasource(const labeled_datasource<Tnet, Tdata, Tlabel> &ds);
 
@@ -154,20 +168,16 @@ namespace ebl {
     typename idx<Tlabel>::dimension_iterator	pairsIter;
 
     //! Constructor from dataset file names.
-    labeled_pair_datasource(const char *data_fname,
-			    const char *labels_fname,
-			    const char *classes_fname,
-			    const char *pairs_fname,
-			    Tdata bias = 0, float coeff = 1.0,
-			    const char *name_ = NULL);
+    labeled_pair_datasource(const char *data_fname, const char *labels_fname,
+			    const char *classes_fname, const char *pairs_fname,
+			    const char *name_ = NULL,
+			    Tdata bias = 0, float coeff = 1.0);
 
     //! Constructor from dataset matrices.
-    labeled_pair_datasource(idx<Tdata> &data_,
-			    idx<Tlabel> &labels_,
-			    idx<ubyte> &classes_,
-			    idx<Tlabel> &pairs_,
-			    Tdata bias, float coeff,
-			    const char *name_);
+    labeled_pair_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
+			    idx<ubyte> &classes_, idx<Tlabel> &pairs_,
+			    const char *name_ = NULL,
+			    Tdata bias = 0, float coeff = 1.0);
     
     //! destructor.
     virtual ~labeled_pair_datasource();
@@ -206,8 +216,8 @@ namespace ebl {
     virtual ~mnist_datasource () {}
 
     //! init method.
-    virtual void init(idx<Tdata> &inp, idx<Tlabel> &lbl,
-		      Tdata bias, float coeff, const char *name);
+    virtual void init(idx<Tdata> &inp, idx<Tlabel> &lbl, const char *name,
+		      Tdata bias, float coeff);
 
     //! Returns an idxdim object describing the order (number of dimensions)
     //! and the size of each dimension of a single sample outputed by fprop.
@@ -218,7 +228,7 @@ namespace ebl {
     //! label into <lbl> (and idx0 of int).
     virtual void fprop(state_idx<Tnet> &out, idx<Tlabel> &label);
 
-  protected:
+  public:
     using datasource<Tnet, Tdata, Tlabel>::bias;
     using datasource<Tnet, Tdata, Tlabel>::coeff;
     using datasource<Tnet, Tdata, Tlabel>::height;

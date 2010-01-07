@@ -44,6 +44,13 @@
 
 #define MATRIX_EXTENSION ".mat"
 
+// official names for dataset files
+#define DATA_NAME "data"
+#define LABELS_NAME "labels"
+#define CLASSES_NAME "classes"
+#define CLASSPAIRS_NAME "classpairs"
+#define DEFORMPAIRS_NAME "deformpairs"
+
 // #define DEBUG_ON
 
 #ifdef DEBUG_ON
