@@ -410,5 +410,14 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  
+  void idx_power(idx<float>& in, float p, idx<float>& out) {
+    idxiter<float> pin; idxiter<float> pout;
+    idx_aloop2_on(pin,in,pout,out) {
+      *pout = powf(*pin, p);
+    }
+  }
+  
+  ////////////////////////////////////////////////////////////////  
 
 } // end namespace ebl

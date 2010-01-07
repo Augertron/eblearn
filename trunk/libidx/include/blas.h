@@ -252,7 +252,8 @@ namespace ebl {
   template<class T> void idx_sqrt(idx<T>& in, idx<T>& out);
   
   //! takes in to the power p and puts it in out.
-  template<class T> void idx_power(idx<T>& in, double p, idx<T>& out);
+  template<class T> void idx_power(idx<T>& in, T p, idx<T>& out);
+  template<> void idx_power(idx<float>& in, float p, idx<float>& out);
   
   ////////////////////////////////////////////////////////////////
   // sums
