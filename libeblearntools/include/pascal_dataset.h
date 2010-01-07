@@ -36,6 +36,8 @@
 #include "dataset.h"
 #include "xml_utils.h"
 
+#define XML_PATTERN ".*[.]xml"
+
 namespace ebl {
 
   //! The pascal_dataset class allows to extract a dataset of type PASCAL

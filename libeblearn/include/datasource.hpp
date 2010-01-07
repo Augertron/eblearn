@@ -44,35 +44,37 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::datasource()
-    : bias(0), coeff(1.0), data(1), labels(1), dataIter(data, 0), 
+    : nclasses(0), bias(0), coeff(1.0), data(1), labels(1), dataIter(data, 0), 
       labelsIter(labels, 0), height(0), width(0) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::
   datasource(const datasource<Tnet, Tin1, Tin2> &ds)
-    : bias(ds.bias), coeff(ds.coeff), data(ds.data), labels(ds.labels),
-      dataIter(data, 0), labelsIter(labels, 0),
+    : nclasses(0), bias(ds.bias), coeff(ds.coeff), data(ds.data),
+      labels(ds.labels), dataIter(data, 0), labelsIter(labels, 0),
       height(ds.height), width(ds.width), name(ds.name) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::
-  datasource(idx<Tin1> &data_, idx<Tin2> &labels_, Tin1 b, float c,
-	     const char *name_)
-    : bias(b), coeff(c), data(data_), labels(labels_), dataIter(data, 0), 
+  datasource(idx<Tin1> &data_, idx<Tin2> &labels_, const char *name_,
+	     Tin1 b, float c)
+    : nclasses(0), bias(b), coeff(c), data(data_), labels(labels_),
+      dataIter(data, 0), 
       labelsIter(labels, 0), height(data.dim(1)), width(data.dim(2)) {
-    init(data_, labels_, b, c, name_);
+    init(data_, labels_, name_, b, c);
   }
 
   template<class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::
-  init(idx<Tin1> &data_, idx<Tin2> &labels_, Tin1 b, float c,
-       const char *name_){
+  init(idx<Tin1> &data_, idx<Tin2> &labels_, const char *name_,
+       Tin1 b, float c){
     data = data_;
     labels = labels_;
     height = data.dim(1);
     width = data.dim(2);
+    nclasses = (intg) idx_max(labels) + 1;
     bias = b;
     coeff = c;
     name = (name_ ? name_ : "Unknown Dataset");
@@ -81,6 +83,7 @@ namespace ebl {
     dataIter = dIter;
     labelsIter = lIter;
     balance = false;
+    this->pretty();
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -200,6 +203,20 @@ namespace ebl {
     //     }
   }
 
+  template <class Tnet, class Tin1, class Tin2>
+  intg datasource<Tnet, Tin1, Tin2>::get_nclasses() {
+    return nclasses;
+  }
+    
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::pretty() {
+    cout << "dataset \"" << name << "\" contains " << data.dim(0);
+    cout << " samples with dimension " << sample_dims();
+    cout << " and " << get_nclasses() << " classes";
+    cout << ", with bias " << bias << " and coefficient " << coeff;
+    cout << endl;
+  }
+
   ////////////////////////////////////////////////////////////////
   // labeled_datasource
 
@@ -210,30 +227,30 @@ namespace ebl {
 
   template <class Tnet, class Tdata, class Tlabel>
   labeled_datasource<Tnet, Tdata, Tlabel>::
-  labeled_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_, Tdata b, float c,
-		     const char *name_, vector<string*> *lblstr_) {
-    init(data_, labels_, b, c, name_, lblstr_);
+  labeled_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_, const char *name_,
+		     Tdata b, float c, vector<string*> *lblstr_) {
+    init(data_, labels_, name_, b, c, lblstr_);
   }
 
   template <class Tnet, class Tdata, class Tlabel>
   labeled_datasource<Tnet, Tdata, Tlabel>::
   labeled_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
-		     idx<ubyte> &classes, Tdata b, float c, const char *name_) {
+		     idx<ubyte> &classes, const char *name_, Tdata b, float c) {
     this->lblstr = new vector<string*>;
     idx_bloop1(classe, classes, ubyte) {
       this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
     }
-    init(data_, labels_, b, c, name_, this->lblstr);
+    init(data_, labels_, name_, b, c, this->lblstr);
   }
 
   template <class Tnet, class Tdata, class Tlabel>
-  labeled_datasource<Tnet, Tdata, Tlabel>::
-  labeled_datasource(const char *data_fname, const char *labels_fname,
-		     const char *classes_fname, Tdata b, float c,
-		     const char *name_) {
+  void labeled_datasource<Tnet, Tdata, Tlabel>::
+  init(const char *data_fname, const char *labels_fname,
+       const char *classes_fname, const char *name_, Tdata b, float c) {
     idx<Tdata> dat(1, 1, 1, 1);
     idx<Tlabel> lab(1);
     idx<ubyte> classes(1, 1);
+    bool classes_found = true;
     
     if (!load_matrix<Tdata>(dat, data_fname)) {
       std::cerr << "Failed to load dataset file " << data_fname << endl;
@@ -244,23 +261,40 @@ namespace ebl {
       eblerror("Failed to load dataset file");
     }
     if (!load_matrix<ubyte>(classes, classes_fname)) {
-      std::cerr << "Failed to load dataset file " << classes_fname << endl;
-      eblerror("Failed to load dataset file");
+      std::cerr << "warning: failed to load dataset file "
+		<< classes_fname << endl;
+      classes_found = false;
     }
-
-    datasource<Tnet, Tdata, Tlabel>::init(dat, lab, b, c, name_);
-      
-    this->lblstr = new vector<string*>;
-    idx_bloop1(classe, classes, ubyte) {
-      this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
+    // init
+    datasource<Tnet, Tdata, Tlabel>::init(dat, lab, name_, b, c);
+    // classes names are optional, use numbers by default if not specified
+    if (classes_found) {
+      this->lblstr = new vector<string*>;
+      idx_bloop1(classe, classes, ubyte) {
+	this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
+      }
     }
   }
   
   template <class Tnet, class Tdata, class Tlabel>
+  labeled_datasource<Tnet, Tdata, Tlabel>::
+  labeled_datasource(const char *root, const char *dsname, const char *name_,
+		     Tdata b, float c) {
+    ostringstream data_fname, labels_fname, classes_fname;
+    data_fname << root << "/" << dsname << "_" << DATA_NAME << MATRIX_EXTENSION;
+    labels_fname << root << "/" << dsname << "_" << LABELS_NAME
+		 << MATRIX_EXTENSION;
+    classes_fname << root << "/" << dsname << "_" << CLASSES_NAME
+		  << MATRIX_EXTENSION;
+    init(data_fname.str().c_str(), labels_fname.str().c_str(),
+	 classes_fname.str().c_str(), name_, b, c);
+  }
+  
+  template <class Tnet, class Tdata, class Tlabel>
   void labeled_datasource<Tnet, Tdata, Tlabel>::
-  init(idx<Tdata> &inp, idx<Tlabel> &lbl, Tdata b, float c, const char *name,
+  init(idx<Tdata> &inp, idx<Tlabel> &lbl, const char *name, Tdata b, float c,
        vector<string*> *lblstr_) {
-    datasource<Tnet, Tdata, Tlabel>::init(inp, lbl, b, c, name);
+    datasource<Tnet, Tdata, Tlabel>::init(inp, lbl, name, b, c);
     this->lblstr = lblstr_;
 
     if (!this->lblstr) { // no names are given, use indexes as names
@@ -309,14 +343,11 @@ namespace ebl {
   // constructor
   template <class Tnet, class Tdata, class Tlabel>
   labeled_pair_datasource<Tnet, Tdata, Tlabel>::
-  labeled_pair_datasource(const char *data_fname,
-			  const char *labels_fname,
-			  const char *classes_fname,
-			  const char *pairs_fname,
-			  Tdata b, float c,
-			  const char *name_)
+  labeled_pair_datasource(const char *data_fname, const char *labels_fname,
+			  const char *classes_fname, const char *pairs_fname,
+			  const char *name_, Tdata b, float c)
     : labeled_datasource<Tnet, Tdata, Tlabel>(data_fname, labels_fname,
-					      classes_fname, b, c, name_),
+					      classes_fname, name_, b, c),
       pairs(1, 1), pairsIter(pairs, 0) {
     // init current class
     if (!load_matrix<Tlabel>(pairs, pairs_fname)) {
@@ -330,14 +361,11 @@ namespace ebl {
   // constructor
   template <class Tnet, class Tdata, class Tlabel>
   labeled_pair_datasource<Tnet, Tdata, Tlabel>::
-  labeled_pair_datasource(idx<Tdata> &data_,
-			  idx<Tlabel> &labels_,
-			  idx<ubyte> &classes_,
-			  idx<Tlabel> &pairs_,
-			  Tdata b, float c,
-			  const char *name_)
-    : labeled_datasource<Tnet, Tdata, Tlabel>(data_, labels_, classes_, b, c,
-					      name_),
+  labeled_pair_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
+			  idx<ubyte> &classes_, idx<Tlabel> &pairs_,
+			  const char *name_, Tdata b, float c)
+    : labeled_datasource<Tnet, Tdata, Tlabel>(data_, labels_, classes_, name_,
+					      b, c),
       pairs(pairs_), pairsIter(pairs, 0) {
   }
   
@@ -406,17 +434,15 @@ namespace ebl {
     }
     dat = dat.narrow(0, size, strcmp("t10k", type) ? 0 : 5000 - .5 * size); 
     labs = labs.narrow(0, size, strcmp("t10k", type) ? 0 : 5000 - .5 * size); 
-    init(dat, labs, 0, 0.01, name.str().c_str());
+    init(dat, labs, name.str().c_str(), 0, 0.01);
   }
 
   template <class Tnet, class Tdata, class Tlabel>
   void mnist_datasource<Tnet, Tdata, Tlabel>::
-  init(idx<Tdata> &inp, idx<Tlabel> &lbl, Tdata b, float c, const char *name_) {
-    labeled_datasource<Tnet, Tdata, Tlabel>::init(inp, lbl, b, c, name_, NULL);
+  init(idx<Tdata> &inp, idx<Tlabel> &lbl, const char *name_, Tdata b, float c) {
+    labeled_datasource<Tnet, Tdata, Tlabel>::init(inp, lbl, name_, b, c, NULL);
     height = 32; // mnist is actually 28x28, but we add some padding
     width = 32;
-    bias = b;
-    coeff = c;
   }
 
   template <class Tnet, class Tdata, class Tlabel>

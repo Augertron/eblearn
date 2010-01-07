@@ -66,7 +66,7 @@ namespace ebl {
 #ifndef __XML__ // return error if xml not enabled
     eblerror("XML libraries not available, install libxml++ and recompile");
 #endif /* __XML__ */
-    extension = ".*[.]xml";
+    extension = XML_PATTERN;
     cout << "Image search extension pattern: " << extension << endl;
   }
 
@@ -82,7 +82,7 @@ namespace ebl {
 #ifdef __XML__    
     cout << "Extracting samples from PASCAL files into dataset..." << endl;
     // adding data to dataset using all xml files in annroot
-    regex eExt(extension);
+    regex eExt(XML_PATTERN);
     cmatch what;
     path p(annroot);
     if (!exists(p)) {
@@ -115,7 +115,7 @@ namespace ebl {
     total_samples = 0;
     uint difficult;
     string obj_classname;
-    regex eExt(".*[.]xml");
+    regex eExt(XML_PATTERN);
     cmatch what;
     string xmlpath;
     path p(annroot);
