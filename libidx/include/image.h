@@ -48,6 +48,9 @@ namespace ebl {
   //! the basis of the other dimension. When both <width> and <height>
   //! are non zero, the last parameter, <mode> determines how they are
   //! interpreted.
+  //! if iregion is provided, resize the image so that this region is resized
+  //! to wxh. if oregion is provided, it is filled and describes that same
+  //! region in the return resized image.
   //!
   //!.LI
   //! if either <width> or <height> is zero, <mode> is ignored.
@@ -63,9 +66,10 @@ namespace ebl {
   //! The sizes of the output image are rounded to nearest integers
   //! smaller than the computed sizes, or to 1, whichever is largest.
   template<class T> 
-    idx<T> image_resize(idx<T> &im, double w, double h, int mode = 1);
+    idx<T> image_resize(idx<T> &im, double w, double h, int mode = 1,
+			rect *iregion = NULL, rect *oregion = NULL);
 
-  //! resizes an image (a region iregion of im if specified) into a image of
+  //! resizes an image (a region iregion of im if specified) into an image of
   //! size oheightxowidth using gaussian pyramids. returns result.
   //! the resizing of im is tolerated to end up within owidth and 
   //! percentage below (owidth - owidth * margin). same with oheight.

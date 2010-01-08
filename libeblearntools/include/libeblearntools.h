@@ -34,5 +34,6 @@
 #define LIBEBLEARNTOOLS_H_
 
 #include "configuration.h"
+#include "gdb.h"
 
 #endif /* LIBEBLEARNTOOLS_H_ */
