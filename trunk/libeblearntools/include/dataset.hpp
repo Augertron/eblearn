@@ -654,7 +654,7 @@ namespace ebl {
 					     uint scale) {
     uint dh = 0, dw = 1;
     // resize image to target dims
-    rect out_region;
+    rect out_region, cropped;
     idxdim d(outdims);
     idx<Tdata> resized;
     if (scale > 0)
@@ -663,11 +663,18 @@ namespace ebl {
       resized = resize_image_to(dat, d, out_region, r);
     rect out_entire(0, 0, resized.dim(dh), resized.dim(dw));
     // convert image to target format
+    idx<Tdata> original;
+    if (display_extraction) {
+      original = idx<Tdata>(resized.get_idxdim());
+      idx_copy(resized, original);
+      if (squared)
+	original = image_region_to_rect(original, out_region, outdims.dim(0),
+					outdims.dim(1), cropped);
+    }
     idx<Tdata> formatted = resized;
     if (ppconv_set)
       formatted = convert_image_to(formatted, ppconv_type, out_entire);
     idx<Tdata> res = formatted;
-    rect cropped;
     if (squared)
       res = image_region_to_rect(res, out_region, outdims.dim(0),
 				 outdims.dim(1), cropped);
@@ -686,6 +693,12 @@ namespace ebl {
       h += 16;
       gui << at(h, w) << "pproc: " << ppconv_type;
       h += 16;
+      // draw original output before channel formatting in RGB
+      oss.str("");
+      oss << "RGB";
+      draw_matrix(original, oss.str().c_str(), h, w);
+      h += original.dim(dh) + 5;
+      // draw output in RGB
       oss.str("");
       oss << ppconv_type;
       draw_matrix(res, oss.str().c_str(), h, w);
@@ -810,8 +823,8 @@ namespace ebl {
     if (r) rr = *r;
     // bilinear interpolation resizing
     if (!strcmp(resize_mode.c_str(), "bilinear")) {
-      res = image_resize(img, outdims.dim(0), outdims.dim(1));
-      cropped = rect(0, 0, outdims.dim(0), outdims.dim(1));
+      res = image_resize(img, outdims.dim(1), outdims.dim(0), 1, &rr, &cropped);
+      //      cropped = rect(0, 0, outdims.dim(0), outdims.dim(1));
       return res;
     }
     // gaussian pyramid resizing

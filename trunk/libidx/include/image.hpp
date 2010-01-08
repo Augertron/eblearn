@@ -59,8 +59,16 @@ namespace ebl {
   }
 
   template<class T> idx<T> image_resize(idx<T> &image, double w, double h, 
-					int mode) {
+					int mode,
+					rect *iregion_, rect *oregion_) {
     if (image.order() < 2) eblerror("image must have at least an order of 2.");
+    // iregion is optional, set it to entire image if not given
+    rect iregion(0, 0, image.dim(1), image.dim(2));
+    if (iregion_)
+      iregion = *iregion_;
+    double ratioh = w / iregion.height;
+    double ratiow = h / iregion.width;
+    double ratiomin = min(ratiow, ratioh);
     // if data is not contiguous, copy it to a contiguous buffer
     idx<T> contim(image);
     if (!image.contiguousp()) {
@@ -69,10 +77,10 @@ namespace ebl {
       idx_copy(image, tmp);
       contim = tmp;
     }
-    intg imw = contim.dim(1);
-    intg imh = contim.dim(0);
-    int rw = 0;
-    int rh = 0;
+    int imw = (int) contim.dim(1);
+    int imh = (int) contim.dim(0);
+    int rw = 0, rh = 0;
+    double ow = 0, oh = 0;
     try {
       if ((imw == 0) || (imh == 0))
 	throw "cannot have dimensions of size 0";
@@ -83,18 +91,17 @@ namespace ebl {
 	  else	w = max(1, (int) (imw * (h / imh)));
 	} else	h = max(1, (int) (imh * (w / imw)));
       }
-      if (mode == 0) {
-	double r = min(w / imw, h / imh);
-	w = max(1, (int) (r * imw));
-	h = max(1, (int) (r * imh));
+      if (mode == 0) { // preserve aspect ratio
+	ratiow = ratiomin;
+	ratioh = ratiomin;
       }
-      else if (mode == 1) {
-	w = max(1, (int) w);
-	h = max(1, (int) h);
+      else if (mode == 1) { // possibly modify aspect ratio
+	ratiow = ratiow;
+	ratioh = ratioh;
       }
-      else if (mode == 2) {
-	w = max(1, (int) (w * imw));
-	h = max(1, (int) (h * imh));
+      else if (mode == 2) { // use w and h as scaling ratios
+	ratiow = w;
+	ratioh = h;
       }
       else throw "illegal mode or desired dimensions";
     } catch (const char *err) {
@@ -102,9 +109,16 @@ namespace ebl {
       cerr << " to " << h << "x" << w << " with mode " << mode << endl;
       eblerror(err);
     }
+    // output sizes of entire image
+    ow = max(1.0, imw * ratiow);
+    oh = max(1.0, imh * ratioh);
     // compute closest integer subsampling ratio
-    rw = MAX(1, (int) (imw / w));
-    rh = MAX(1, (int) (imh / h));
+    rw = MAX(1, (int) (1 / ratiow));
+    rh = MAX(1, (int) (1 / ratioh));
+    // compute output region
+    rect oregion(iregion.h0 * ratioh, iregion.w0 * ratiow, h, w);
+    if (oregion_)
+      *oregion_ = oregion;
     // subsample by integer ratio if necessary
     if ((rh > 1) || (rw > 1)) {
       contim = image_subsample(contim, rh, rw);
@@ -112,14 +126,14 @@ namespace ebl {
       imh = contim.dim(0);
     }
     // resample from subsampled image with bilinear interpolation
-    idx<T> rez((intg) h, (intg) w, (contim.order() == 3) ? contim.dim(2) : 1);
+    idx<T> rez((intg) oh, (intg) ow, (contim.order() == 3) ? contim.dim(2) : 1);
     rez.set_chandim(contim.get_chandim());
     idx<T> bg(4);
     idx_clear(bg);
     // the 0.5 thingies are necessary because warp-bilin interprets
     // integer coordinates as being at the center of each pixel.
     float x1 = -0.5, y1 = -0.5, x3 = imw - 0.5, y3 = imh - 0.5;
-    float p1 = -0.5, q1 = -0.5, p3 = w - 0.5, q3 = h - 0.5;
+    float p1 = -0.5, q1 = -0.5, p3 = ow - 0.5, q3 = oh - 0.5;
     image_warp_quad(contim, rez, bg, 1, x1, y1, x3, y1, x3, y3, x1, y3, 
 		    p1, q1, p3, q3);
     if (contim.order() == 2)
@@ -160,7 +174,7 @@ namespace ebl {
     rect rr;
     // compute edges that need most reduction
     uint imax, omax;
-    if ((iregion.height / (float)oheight) < (iregion.width / (float)owidth)) {
+    if ((iregion.height / (float)oheight) > (iregion.width / (float)owidth)) {
       imax = iregion.height;
       omax = oheight;
     } else {

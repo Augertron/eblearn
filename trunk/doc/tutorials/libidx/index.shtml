@@ -47,6 +47,8 @@
 	  Note: gdb does not accept calls to template functions, one
 	  needs to declare instantiations in the code first
 	  (e.g. draw_matrix_float instead of draw_matrix<float>).
+	  Some of those instantiations are available in the
+	  libeblearntools, link with this library to use them. 
 	  
 	  
 <div id="vc_markup"><pre>
