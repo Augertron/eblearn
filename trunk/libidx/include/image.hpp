@@ -116,7 +116,8 @@ namespace ebl {
     rw = MAX(1, (int) (1 / ratiow));
     rh = MAX(1, (int) (1 / ratioh));
     // compute output region
-    rect oregion(iregion.h0 * ratioh, iregion.w0 * ratiow, h, w);
+    rect oregion(iregion.h0 * ratioh, iregion.w0 * ratiow,
+		 iregion.height * ratioh, iregion.width * ratiow);
     if (oregion_)
       *oregion_ = oregion;
     // subsample by integer ratio if necessary

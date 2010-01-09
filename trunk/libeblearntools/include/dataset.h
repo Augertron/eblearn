@@ -90,7 +90,7 @@ namespace ebl {
     //! Set type of image conversion with string conv_type.
     //! con_type can accept a number of strings,
     //! including RGB, Y, YUV, HSV, etc.
-    void set_pp_conversion(const char *conv_type);
+    void set_pp_conversion(const char *conv_type, uint ppkernel_size = 9);
 
     ////////////////////////////////////////////////////////////////
     // accessors    
@@ -286,6 +286,7 @@ namespace ebl {
     idx<intg>		add_tally;	//!< counter for additions tally
     // preprocessing ///////////////////////////////////////////////
     string		ppconv_type;	//!< name of image conversion
+    uint		ppkernel_size;	//!< size of kernel for pp
     bool		ppconv_set;	//!< ppconv_type has been set or not
     bool		do_preprocessing;	//!< activate or deactivate pp
     string              resize_mode; //!< type of resizing (bilinear, gaussian)

@@ -44,10 +44,7 @@ EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/pascal_conf\""
 EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/pascal_metaconf\""
 		  "\"${LIBRARY_OUTPUT_PATH}\"")
 EXEC_PROGRAM("cp" ARGS
-  "\"${CMAKE_CURRENT_SOURCE_DIR}/src/pascal_dscompiler.sh\""
-  "\"${LIBRARY_OUTPUT_PATH}\"")
-EXEC_PROGRAM("cp" ARGS
-  "\"${CMAKE_CURRENT_SOURCE_DIR}/src/pascal_dssplit.sh\""
+  "\"${CMAKE_CURRENT_SOURCE_DIR}/src/pascal_dsprepare.sh\""
   "\"${LIBRARY_OUTPUT_PATH}\"")
 		
 # compile executable
