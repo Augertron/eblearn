@@ -6,7 +6,7 @@
 meta_command = pascal_train
 
 # optional variables
-meta_name = pascal
+meta_name = pascal_bilinear100
 meta_max_cpus = 8
 meta_output_dir = /home/sermanet/blakeydata/pascal/out
 meta_email = pierre.sermanet@gmail.com
@@ -17,7 +17,7 @@ meta_email_period = 1 # send a email with plots after every n iterations
 
 root = /home/sermanet/blakeydata/pascal/2009
 train = allbilinear_train_1001
-test = all_test_1001
+test = allbilinear_test_1001
 eta = .0005 .0001 .00005 .00001
 iterations = 50
 display = 0
