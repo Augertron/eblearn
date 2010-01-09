@@ -192,9 +192,11 @@ namespace ebl {
   // data preprocessing
 
   template <class Tdata>
-  void dataset<Tdata>::set_pp_conversion(const char *conv_type) {
+  void dataset<Tdata>::set_pp_conversion(const char *conv_type,
+					 uint ppkernel_size_) {
     if (strcmp(conv_type, "")) {
       ppconv_type = conv_type;
+      ppkernel_size = ppkernel_size_;
       ppconv_set = true;
       do_preprocessing = true;
       cout << "Setting preprocessing image conversion to ";
@@ -785,7 +787,7 @@ namespace ebl {
       idx<Tdata> tmp(d);
       idx_copy(yp, tmp);
       image_global_normalization(tmp);
-      image_local_normalization(tmp, yp, 5);
+      image_local_normalization(tmp, yp, ppkernel_size);
       // copy cropped yuv into normal yuv image
       idxdim dimg(img);
       idx<Tdata> res(dimg);
@@ -823,7 +825,7 @@ namespace ebl {
     if (r) rr = *r;
     // bilinear interpolation resizing
     if (!strcmp(resize_mode.c_str(), "bilinear")) {
-      res = image_resize(img, outdims.dim(1), outdims.dim(0), 1, &rr, &cropped);
+      res = image_resize(img, outdims.dim(1), outdims.dim(0), 0, &rr, &cropped);
       //      cropped = rect(0, 0, outdims.dim(0), outdims.dim(1));
       return res;
     }

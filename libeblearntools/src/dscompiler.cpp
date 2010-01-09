@@ -64,6 +64,7 @@ string		dataset_name	 = "ds";
 intg		maxperclass	 = 0;	// 0 means no limitation
 intg            maxdata          = 0;	// 0 means no limitation
 unsigned int	mexican_hat_size = 0;
+uint		kernelsz	 = 9; // kernel size for preprocessing
 int		deformations	 = -1;	// <= means no deformations
 string		type		 = "regular";
 string          resize           = "gaussian";
@@ -145,6 +146,9 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-maxdata") == 0) {
 	++i; if (i >= argc) throw 1;
 	maxdata = atoi(argv[i]);
+      } else if (strcmp(argv[i], "-kernelsz") == 0) {
+	++i; if (i >= argc) throw 1;
+	kernelsz = atoi(argv[i]);
       } else if (strcmp(argv[i], "-sleep") == 0) {
 	++i; if (i >= argc) throw 1;
 	sleep_delay = atoi(argv[i]);
@@ -246,6 +250,7 @@ void print_usage() {
   cout << "  -dname <name>" << endl;
   cout << "  -maxperclass <integer>" << endl;
   cout << "  -maxdata <integer>" << endl;
+  cout << "  -kernelsz <integer>" << endl;
   cout << "  -mexican_hat_size <integer>" << endl;
   cout << "  -deformations <integer>" << endl;
   cout << "  -dims <dimensions (default: 96x96x3)>" << endl;
@@ -267,7 +272,7 @@ void compile_ds(Tds &ds) {
   ds.set_sleepdisplay(sleep_delay);
   ds.set_resize(resize);
   if (preprocessing)
-    ds.set_pp_conversion(channels_mode.c_str());
+    ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
   if (maxperclass > 0)
     ds.set_max_per_class(maxperclass);
   if (maxdata > 0)
@@ -301,7 +306,7 @@ void compile() {
     if (maxdata > 0)
       ds.set_max_data(maxdata);
     if (preprocessing)
-      ds.set_pp_conversion(channels_mode.c_str());
+      ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
     ds.extract();
   }
   else if (!strcmp(type.c_str(), "pascalfull")) {
@@ -364,6 +369,7 @@ int main(int argc, char **argv) {
   cout << "  max per class limitation: ";
   if (maxperclass > 0) cout << maxperclass; else cout << "none"; cout << endl;
   cout << "  mexican_hat_size: " << mexican_hat_size << endl;
+  cout << "  preprocessing kernel size: " << kernelsz << endl;
   cout << "  deformations: " << deformations << endl;
   cout << "  resizing method: " << resize << endl;
   cout << "___________________________________________________________________";
