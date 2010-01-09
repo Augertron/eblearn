@@ -12,4 +12,4 @@ DRAWS=5
 ~/eblearn/bin/dscompiler $ROOT -type pascal -precision float -outdir ${OUT} -channels YpUV -ignore_difficult -dname ${NAME} -resize bilinear -kernelsz 9 # -disp -maxperclass 5
 
 # split dataset into training/validation
-~/eblearn/bin/dssplit $ROOT $NAME ${NAME}_val_${MAX} ${NAME}_train_${MAX} -maxperclass ${MAX} -draws $DRAWS
+~/eblearn/bin/dssplit $OUT $NAME ${NAME}_val_${MAX} ${NAME}_train_${MAX} -maxperclass ${MAX} -draws $DRAWS
