@@ -223,7 +223,7 @@ namespace ebl {
 
   template <class T>
   lenet7<T>::lenet7(parameter<T> &prm, intg image_height, intg image_width, 
-		    intg output_size) {
+		    intg output_size, bool norm) {
     intg ki0 = 5, kj0 = 5;
     intg si0 = 4, sj0 = 4;
     intg ki1 = 6, kj1 = 6;
@@ -267,7 +267,8 @@ namespace ebl {
     intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
 
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
-	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size);
+	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size,
+	       norm);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -275,7 +276,8 @@ namespace ebl {
 
   template <class T>
   lenet7_binocular<T>::lenet7_binocular(parameter<T> &prm, intg image_height, 
-					intg image_width, intg output_size) {
+					intg image_width, intg output_size,
+					bool norm) {
     intg ki0 = 5, kj0 = 5;
     intg si0 = 4, sj0 = 4;
     intg ki1 = 6, kj1 = 6;
@@ -325,7 +327,7 @@ namespace ebl {
     intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
 
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
-	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size);
+	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size, norm);
   }
 
   ////////////////////////////////////////////////////////////////
