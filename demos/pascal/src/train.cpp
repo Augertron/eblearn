@@ -50,7 +50,7 @@ int main(int argc, char **argv) { // regular main without gui
 // 		   conf.get_uint("net_full"), targets.dim(0),
 // 		   conf.get_bool("absnorm"));//, conf.get_bool("color"));
   lenet7<t_net> l7(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"),
-		   train_ds.get_nclasses());
+		   train_ds.get_nclasses(), conf.get_bool("absnorm"));
   supervised_euclidean_machine<t_net, int> thenet((module_1_1<t_net>&)l7, targets, dims);
   supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
 
