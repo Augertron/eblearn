@@ -155,7 +155,7 @@ namespace ebl {
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
     lenet7(parameter<T> &prm, intg image_height, intg image_width,
-	   intg output_size);
+	   intg output_size, bool norm = false);
     virtual ~lenet7() {}
   };
   
@@ -168,7 +168,7 @@ namespace ebl {
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
     lenet7_binocular(parameter<T> &prm, intg image_height, intg image_width,
-		     intg output_size);
+		     intg output_size, bool norm = false);
     virtual ~lenet7_binocular() {}
   };
   
