@@ -17,8 +17,8 @@ meta_email_period = 1 # send a email with plots after every n iterations
 
 root = /home/sermanet/blakeydata/pascal/2009
 train = allbilinear_train_1001
-test = allbilinear_test_1001
-eta = .0005 .0001 .00005 .00001
+test = allbilinear_val_1001
+eta = .0005 .0001 .00005 .00001 .000005
 iterations = 50
 display = 0
 ninternals = 1
