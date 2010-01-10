@@ -57,9 +57,9 @@ namespace ebl {
 
   void job::run() {
     ostringstream cmd;
-    cmd << "cd " << outdir << " && " << exe << " " << outdir << "/config";
-    cmd << "((./toto.sh 3>&1 1>&2 2>&3 | tee /dev/tty) 3>&1 1>&2 2>&3) > ";
-    cmd << " > " << outdir << "/out_" << conf.get_name() << ".log 2>&1 &";
+    cmd << "cd " << outdir << " && ((" << exe << " " << outdir << "/config";
+    cmd << " 3>&1 1>&2 2>&3 | tee /dev/tty) 3>&1 1>&2 2>&3) > ";
+    cmd << outdir << "/out_" << conf.get_name() << ".log 2>&1 &";
     cout << "executing: " << cmd.str() << endl;
     if (system(cmd.str().c_str()))
       cerr << "error executing: " << cmd.str() << endl;
