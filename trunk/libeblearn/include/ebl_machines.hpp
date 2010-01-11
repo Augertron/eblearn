@@ -193,10 +193,10 @@ namespace ebl {
 			  {1, 5},  {2, 5},  {0, 6}, {1, 6},  {2, 6},  {0, 7},
 			  {1, 7}, {2, 7}};
       memcpy(table0.idx_ptr(), tbl0, table0.nelements() * sizeof (intg));
-      table2 = idx<intg>(96, 2);
+      table1 = idx<intg>(96, 2);
       memcpy(table1.idx_ptr(), connection_table_8_24,
 	     table1.nelements() * sizeof (intg));
-      idx<intg> table2 = full_table(24, hid);
+      table2 = full_table(24, hid);
     }
       
     // WARNING: those two numbers must be changed
