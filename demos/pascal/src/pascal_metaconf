@@ -22,18 +22,18 @@ eta = .00005 .00001 .000005
 iterations = 50
 display = 0
 ninternals = 1
-absnorm = 1 0
 
 # network
 net_ih = 96
 net_iw = 96
 net_c1h = 5
 net_c1w = 5
-net_s1h = 2
-net_s1w = 2
-net_c2h = 5
-net_c2w = 7
-net_s2h = 4
-net_s2w = 4
-#net_full = 50 100 150
+net_s1h = 4
+net_s1w = 4
+net_c2h = 6
+net_c2w = 6
+net_s2h = 3
+net_s2w = 3
+net_full = 100
+absnorm = 1 0
 color = 0

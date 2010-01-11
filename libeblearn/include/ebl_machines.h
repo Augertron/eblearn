@@ -114,6 +114,21 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  //! lenet type of architecture.
+  //! absolution rectification + contrast normalization can be turned on
+  //! with the norm boolean/
+  //! color can be turned on with the color boolean, in which case
+  //! a 3-layer input is assumed and bigger tables are used.
+  template <class T> class lenet : public nn_machine_cscscf<T> {
+  public:
+    lenet(parameter<T> &prm, intg image_height, intg image_width,
+	   intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
+	   intg si1, intg sj1, intg hid, intg output_size,
+	   bool norm = false, bool color = false);
+    virtual ~lenet() {}
+  };
+
+  ////////////////////////////////////////////////////////////////
   //! create a new instance of net-cscscf implementing a LeNet-5 type
   //! convolutional neural net. This network has regular sigmoid 
   //! units on the output, not an extra RBF layer as described 
@@ -185,6 +200,58 @@ namespace ebl {
     virtual ~supervised_euclidean_machine();
   };
   
+  ////////////////////////////////////////////////////////////////
+  // some connection tables
+
+  //! connection table used in lenet5 (6 inputs, 16 outputs)
+  static intg connection_table_6_16[60][2] =
+    {{0, 0},  {1, 0},  {2, 0},
+     {1, 1},  {2, 1},  {3, 1},
+     {2, 2},  {3, 2},  {4, 2},
+     {3, 3},  {4, 3},  {5, 3},
+     {4, 4},  {5, 4},  {0, 4},
+     {5, 5},  {0, 5},  {1, 5},
+     
+     {0, 6},  {1, 6},  {2, 6},  {3, 6},
+     {1, 7},  {2, 7},  {3, 7},  {4, 7},
+     {2, 8},  {3, 8},  {4, 8},  {5, 8},
+     {3, 9},  {4, 9},  {5, 9},  {0, 9},
+     {4, 10}, {5, 10}, {0, 10}, {1, 10},
+     {5, 11}, {0, 11}, {1, 11}, {2, 11},
+     
+     {0, 12}, {1, 12}, {3, 12}, {4, 12},
+     {1, 13}, {2, 13}, {4, 13}, {5, 13},
+     {2, 14}, {3, 14}, {5, 14}, {0, 14},
+     
+     {0, 15}, {1, 15}, {2, 15}, {3, 15}, {4, 15}, {5, 15}};
+  
+  //! connection table used in lenet7 (8 inputs, 24 outputs)
+  static intg connection_table_8_24[96][2] =
+    {{0,  0}, {2,  0}, {4,  0}, {5,  0},
+     {0,  1}, {2,  1}, {4,  1}, {6,  1},
+     {0,  2}, {2,  2}, {4,  2}, {7,  2},
+     {0,  3}, {2,  3}, {5,  3}, {6,  3},
+     {0,  4}, {2,  4}, {5,  4}, {7,  4},
+     {0,  5}, {2,  5}, {6,  5}, {7,  5},
+     {1,  6}, {3,  6}, {4,  6}, {5,  6},
+     {1,  7}, {3,  7}, {4,  7}, {6,  7},
+     {1,  8}, {3,  8}, {4,  8}, {7,  8},
+     {1,  9}, {3,  9}, {5,  9}, {6,  9},
+     {1, 10}, {3, 10}, {5, 10}, {7, 10},
+     {1, 11}, {3, 11}, {6, 11}, {7, 11},
+     {1, 12}, {2, 12}, {4, 12}, {5, 12},
+     {1, 13}, {2, 13}, {4, 13}, {6, 13},
+     {1, 14}, {2, 14}, {4, 14}, {7, 14},
+     {1, 15}, {2, 15}, {5, 15}, {6, 15},
+     {1, 16}, {2, 16}, {5, 16}, {7, 16},
+     {1, 17}, {2, 17}, {6, 17}, {7, 17},
+     {0, 18}, {3, 18}, {4, 18}, {5, 18},
+     {0, 19}, {3, 19}, {4, 19}, {6, 19},
+     {0, 20}, {3, 20}, {4, 20}, {7, 20},
+     {0, 21}, {3, 21}, {5, 21}, {6, 21},
+     {0, 22}, {3, 22}, {5, 22}, {7, 22},
+     {0, 23}, {3, 23}, {6, 23}, {7, 23}};
+
 } // namespace ebl {
 
 #include "ebl_machines.hpp"

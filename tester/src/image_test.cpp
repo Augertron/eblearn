@@ -28,7 +28,7 @@ void image_test::test_resize() {
       *m0 = i++;
     }}
   //m.printElems();
-  res = image_resize(m, 4, 3, 1);
+  res = image_resize(m, 3, 4, 1);
   //res.printElems();
   CPPUNIT_ASSERT(res.get(0, 0) == 4);
   CPPUNIT_ASSERT(res.get(0, 1) == 6);
@@ -55,8 +55,7 @@ void image_test::test_resize() {
   //  im = image_resize(im, im.dim(0) + 10, im.dim(1) + 10);
   im = image_resize(im, 100, 100);
   gui.draw_matrix(im, 0, 0, 4.0, 4.0);
-  RenderThread &cout = gui;
-  cout << "Testing images operations..." << endl;
+  gui << "Testing images operations..." << endl;
   int hy = im.dim(0) * 4;
 #endif
 #endif
