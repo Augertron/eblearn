@@ -125,6 +125,26 @@ ELSE(${Boost_MINOR_VERSION} GREATER 34)
     ${Boost_REGEX_LIBRARY})
 ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 
+# compile executable: dsmerge
+################################################################################
+add_executable (dsmerge
+  src/dsmerge.cpp
+  src/dataset.cpp
+  )
+
+# link executable with external libraries
+target_link_libraries (dsmerge eblearn idx)
+IF (QT_FOUND)
+  target_link_libraries (dsmerge idxgui eblearngui)
+ENDIF (QT_FOUND)
+IF (${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(dsmerge ${Boost_SYSTEM_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+ELSE(${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(dsmerge ${Boost_FILESYSTEM_LIBRARY} 
+    ${Boost_REGEX_LIBRARY})
+ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+
 # compile executable: dsdisplay
 ################################################################################
 add_executable (dsdisplay

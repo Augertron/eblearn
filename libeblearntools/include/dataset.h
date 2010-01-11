@@ -81,6 +81,10 @@ namespace ebl {
     //! samples per class, putting anything left into ds2.
     void split_max(dataset<Tdata> &ds1, dataset<Tdata> &ds2, intg max);
 
+    //! merge datasets with names name1 and name2 found in outroot into
+    //! this dataset.
+    void merge(const char *name1, const char *name2, const string &outroot);
+
     //! Shuffle order of samples.
     void shuffle();
 
@@ -97,6 +101,9 @@ namespace ebl {
 
     //! Get sample dimensions
     const idxdim &get_sample_outdim();
+
+    //! Return the number of samples in the dataset.
+    intg size();
 
     //! Return unsigned int label corresponding to class name
     t_label get_label_from_class(const string &class_name);
@@ -226,6 +233,12 @@ namespace ebl {
     //! Returns a matrix of class names based on the classes vector
     idx<ubyte> build_classes_idx();
 
+    //! Return the class name associated with label id.
+    string& get_class_string(t_label id);
+
+    //! Return the label id associated with class name
+    t_label get_class_id(const string &name);
+    
     //! Compute statistics about the dataset
     void compute_stats();
 
@@ -301,7 +314,7 @@ namespace ebl {
   //! Recursively goes through dir, looking for files matching extension ext,
   //! and returns the number of matches.
   uint count_matches(const string &dir, const string &pattern);
-  
+
   ////////////////////////////////////////////////////////////////
   // loading errors
   
