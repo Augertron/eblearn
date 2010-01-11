@@ -43,10 +43,14 @@
 
 using namespace std;
 
+namespace ebl {
+
 ////////////////////////////////////////////////////////////////
 // interface with opencv
 
 idx<ubyte> ipl2idx(IplImage *im);
+ 
+} // end namespace ebl
 
 #endif /* __OPENCV__ */
 
