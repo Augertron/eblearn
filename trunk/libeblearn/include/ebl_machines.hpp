@@ -173,6 +173,44 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // lenet_cscsc
+
+  template <class T>
+  lenet_cscsc<T>::
+  lenet_cscsc(parameter<T> &prm, intg image_height, intg image_width,
+	      intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
+	      intg kj1, intg si1, intg sj1,
+	      intg output_size, bool norm, bool color) {
+    idx<intg> table0, table1, table2;
+    if (!color) { // use smaller tables
+      table0 = full_table(1, 6);
+      table1 = idx<intg>(60, 2);
+      memcpy(table1.idx_ptr(), connection_table_6_16,
+	     table1.nelements() * sizeof (intg));
+      table2 = full_table(16, output_size);
+    } else { // for color (assuming 3-layer input), use bigger tables
+      table0 = idx<intg>(14, 2);
+      intg tbl0[14][2] = {{0, 0},  {0, 1},  {0, 2}, {0, 3},  {1, 4},  {2, 4},
+			  {1, 5},  {2, 5},  {0, 6}, {1, 6},  {2, 6},  {0, 7},
+			  {1, 7}, {2, 7}};
+      memcpy(table0.idx_ptr(), tbl0, table0.nelements() * sizeof (intg));
+      table1 = idx<intg>(96, 2);
+      memcpy(table1.idx_ptr(), connection_table_8_24,
+	     table1.nelements() * sizeof (intg));
+      table2 = full_table(24, output_size);
+    }
+      
+    // WARNING: those two numbers must be changed
+    // when image-height/image-width change
+    // TODO: add assertion test here?
+    intg ki2 = (((image_height - ki0 + 1) / si0) - ki1 + 1) / si1;
+    intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
+    
+    this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
+	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, norm);
+  }
+  
+  ////////////////////////////////////////////////////////////////
   // lenet
 
   template <class T>
@@ -186,7 +224,7 @@ namespace ebl {
       table1 = idx<intg>(60, 2);
       memcpy(table1.idx_ptr(), connection_table_6_16,
 	     table1.nelements() * sizeof (intg));
-      table2 = full_table(16, output_size);
+      table2 = full_table(16, hid);
     } else { // for color (assuming 3-layer input), use bigger tables
       table0 = idx<intg>(14, 2);
       intg tbl0[14][2] = {{0, 0},  {0, 1},  {0, 2}, {0, 3},  {1, 4},  {2, 4},

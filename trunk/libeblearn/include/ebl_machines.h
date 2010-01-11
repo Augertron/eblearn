@@ -114,6 +114,21 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  //! lenet type of architecture without last full layer.
+  //! absolution rectification + contrast normalization can be turned on
+  //! with the norm boolean/
+  //! color can be turned on with the color boolean, in which case
+  //! a 3-layer input is assumed and bigger tables are used.
+  template <class T> class lenet_cscsc : public nn_machine_cscsc<T> {
+  public:
+    lenet_cscsc(parameter<T> &prm, intg image_height, intg image_width,
+		intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
+		intg si1, intg sj1, intg output_size,
+		bool norm = false, bool color = false);
+    virtual ~lenet_cscsc() {}
+  };
+
+  ////////////////////////////////////////////////////////////////
   //! lenet type of architecture.
   //! absolution rectification + contrast normalization can be turned on
   //! with the norm boolean/
