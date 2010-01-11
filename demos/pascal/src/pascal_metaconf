@@ -8,14 +8,15 @@ meta_command = pascal_train
 # optional variables
 meta_name = pascal_bilinear100
 meta_max_cpus = 8
-meta_output_dir = /home/sermanet/blakeydata/pascal/out
-meta_email = pierre.sermanet@gmail.com
+meta_output_dir = /home/sermanet/humairadata/pascal/out
+meta_email = me@mail.com
 meta_email_period = 1 # send a email with plots after every n iterations
+meta_gnuplot_params = set xrange [0:1]; set yrange [0:1]; set grid ytics;set ytics 5;set mytics 5;set grid mytics;
 
 ################################################################################
 # LOCAL PROGRAM CONFIGURATION
 
-root = /home/sermanet/blakeydata/pascal/2009
+root = /home/sermanet/humairadata/pascal/2009
 train = allbilinear_train_1001
 test = allbilinear_val_1001
 eta = .00001 .000005
