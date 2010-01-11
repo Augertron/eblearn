@@ -88,7 +88,6 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 #else
 int main(int argc, char **argv) {
 #endif
-
   // names of dataset and files to load
   string	ds_name;
   string	data_fname;
@@ -122,6 +121,9 @@ int main(int argc, char **argv) {
     return -1;
   }
   cout << "displaying " << ds_name << endl;
+#ifndef __GUI__ // return error if gui not enabled
+    eblerror("QT gui libraries not available, install them and recompile");
+#endif
 
   // data
   build_fname(ds_name, DATA_NAME, data_fname);
