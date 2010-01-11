@@ -48,7 +48,7 @@ int main(int argc, char **argv) { // regular main without gui
 		  conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
 		  conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
 		  conf.get_uint("net_full"), targets.dim(0),
-		  conf.get_bool("absnorm")), conf.get_bool("color"));
+		  conf.get_bool("absnorm"), conf.get_bool("color"));
   supervised_euclidean_machine<t_net, int> thenet((module_1_1<t_net>&)net, targets, dims);
   supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
 
