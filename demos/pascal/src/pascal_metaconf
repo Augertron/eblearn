@@ -19,7 +19,7 @@ root = /home/sermanet/blakeydata/pascal/2009
 train = allbilinear_train_1001
 test = allbilinear_val_1001
 eta = .00001 .000005
-iterations = 50
+iterations = 100
 display = 0
 ninternals = 1
 
