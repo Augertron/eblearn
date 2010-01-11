@@ -42,6 +42,8 @@
 using namespace xmlpp;
 using namespace std;
 
+namespace ebl {
+  
 ////////////////////////////////////////////////////////////////
 // extract xml values
 
@@ -50,6 +52,8 @@ unsigned int	get_uint(Node *element);
 
 //! set string s from text content
 void		get_string(Node *element, string &s);
+ 
+} // end namespace ebl
 
 #endif /* __XML__ */
 
