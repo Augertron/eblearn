@@ -27,7 +27,7 @@ tools:
 	@echo
 	@echo "Compiling tools in release mode..."
 	@echo __________________________________________________________________
-	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make dscompiler dsdisplay dssplit meta_trainer meta_plot && cd ../..
+	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make dscompiler dsdisplay dssplit dsmerge meta_trainer meta_plot && cd ../..
 	
 # demo:
 # 	@echo __________________________________________________________________
