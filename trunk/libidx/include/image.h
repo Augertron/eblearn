@@ -66,7 +66,7 @@ namespace ebl {
   //! The sizes of the output image are rounded to nearest integers
   //! smaller than the computed sizes, or to 1, whichever is largest.
   template<class T> 
-    idx<T> image_resize(idx<T> &im, double w, double h, int mode = 1,
+    idx<T> image_resize(idx<T> &im, double h, double w, int mode = 1,
 			rect *iregion = NULL, rect *oregion = NULL);
 
   //! resizes an image (a region iregion of im if specified) into an image of

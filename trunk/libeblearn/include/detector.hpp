@@ -162,7 +162,7 @@ namespace ebl {
     print_resolutions();
     
     // resize input to closest compatible size
-    //    sample = image_resize(sample, indim.dim(1), indim.dim(0));
+    //    sample = image_resize(sample, indim.dim(0), indim.dim(1));
     
     // initialize input and output states and result matrices for each size
     // TODO: if allocated, deallocate first
@@ -368,7 +368,7 @@ namespace ebl {
     { idx_bloop2(in, inputs, void*, out, outputs, void*) {
 	// generate multi-resolution input
   	idx<T> inx = ((state_idx<T>*) in.get())->x;
-  	idx<T> imres = image_resize(sample, inx.dim(2), inx.dim(1), 1);
+  	idx<T> imres = image_resize(sample, inx.dim(1), inx.dim(2), 1);
 	// TODO: temporary, use channels_dim
   	idx<T> inx0 = inx.select(0, 0);
   	idx<T> inx1 = inx.select(0, 1);

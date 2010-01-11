@@ -60,16 +60,16 @@ namespace ebl {
     return bla3;
   }
 
-  template<class T> idx<T> image_resize(idx<T> &image, double w, double h, 
+  template<class T> idx<T> image_resize(idx<T> &image, double h, double w, 
 					int mode,
 					rect *iregion_, rect *oregion_) {
     if (image.order() < 2) eblerror("image must have at least an order of 2.");
     // iregion is optional, set it to entire image if not given
-    rect iregion(0, 0, image.dim(1), image.dim(2));
+    rect iregion = rect(0, 0, image.dim(0), image.dim(1));
     if (iregion_)
       iregion = *iregion_;
-    double ratioh = w / iregion.height;
-    double ratiow = h / iregion.width;
+    double ratioh = h / iregion.height;
+    double ratiow = w / iregion.width;
     double ratiomin = min(ratiow, ratioh);
     // if data is not contiguous, copy it to a contiguous buffer
     idx<T> contim(image);
@@ -90,8 +90,8 @@ namespace ebl {
       if ((0 == w) || (0 == h)) {
 	if (0 == w) {
 	  if (0 == h) throw "desired width and height cannot be both zero";
-	  else	w = max(1, (int) (imw * (h / imh)));
-	} else	h = max(1, (int) (imh * (w / imw)));
+	  else	w = max(1, (int) (imw * (w / imh)));
+	} else	h = max(1, (int) (imh * (h / imw)));
       }
       if (mode == 0) { // preserve aspect ratio
 	ratiow = ratiomin;
