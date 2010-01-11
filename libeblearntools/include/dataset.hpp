@@ -81,7 +81,7 @@ namespace ebl {
     ppconv_set = false;
     extension = IMAGE_PATTERN;
     sleep_display = false;
-    sleep_delay = 0.0;
+    sleep_delay = 0;
     // assuming already processed data, but the user can still require
     // processing via the set_pp_conversion method.
     do_preprocessing = false;
@@ -906,7 +906,7 @@ namespace ebl {
 						      uint scale) {
     gaussian_pyramid<Tdata> gp;
     idx<Tdata> res = img.shift_dim(2, 0);
-    uint reductions = scale / (float)2.0;
+    uint reductions = (uint) (scale / (float)2.0);
     if (reductions > 0)
       res = gp.reduce(res, reductions);
     //    idx<Tdata> res = image_gaussian_square_resize(img, rr, d.dim(0),

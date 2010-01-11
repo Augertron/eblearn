@@ -44,7 +44,9 @@ using namespace std;
     for (k=0; k<nlin; k++) {						\
       register T *pinptr = pin+k*in_mod0;				\
       for (l=0; l<ncol; l++) {						\
-	acc0 += pinptr[0];acc1 += pinptr[1];acc2 += pinptr[2];		\
+	acc0 += (int) pinptr[0];						\
+	acc1 += (int) pinptr[1];					\
+	acc2 += (int) pinptr[2];						\
 	pinptr += in_mod1; }}						\
     pout[0] = acc0 / norm;pout[1] = acc1 / norm;pout[2] = acc2 / norm;}
 
@@ -116,8 +118,8 @@ namespace ebl {
     rw = MAX(1, (int) (1 / ratiow));
     rh = MAX(1, (int) (1 / ratioh));
     // compute output region
-    rect oregion(iregion.h0 * ratioh, iregion.w0 * ratiow,
-		 iregion.height * ratioh, iregion.width * ratiow);
+    rect oregion((uint)(iregion.h0 * ratioh), (uint)(iregion.w0 * ratiow),
+		 (uint)(iregion.height * ratioh), (uint)(iregion.width * ratiow));
     if (oregion_)
       *oregion_ = oregion;
     // subsample by integer ratio if necessary
@@ -161,8 +163,8 @@ namespace ebl {
     // if region's height and width are already within the margin below
     // oheight and owidth, then just return the current image
     // and set out_region to input region
-    uint oheight0 = MAX(0, (int) oheight - oheight * margin);
-    uint owidth0 = MAX(0, (int) owidth - owidth * margin);
+    uint oheight0 = MAX(0, (uint) (oheight - oheight * margin));
+    uint owidth0 = MAX(0, (uint) (owidth - owidth * margin));
     if ((iregion.height <= oheight) && (iregion.height >= oheight0) &&
 	(iregion.width <= owidth) && (iregion.width >= owidth0)) {
       if (oregion)
@@ -189,8 +191,8 @@ namespace ebl {
       idx<T> im_sqrt2 = im.shift_chan(2); // image_resize expect chan in 2
       im_sqrt2 = image_resize(im_sqrt2, 1/sqrt(2), 1/sqrt(2), 2);
       im_sqrt2 = im_sqrt2.shift_chan(0);
-      rect r_sqrt2(iregion.h0 * 1/sqrt(2), iregion.w0 * 1/sqrt(2),
-		   iregion.height * 1/sqrt(2), iregion.width * 1/sqrt(2));
+      rect r_sqrt2((uint)(iregion.h0 * 1/sqrt(2)), (uint)(iregion.w0 * 1/sqrt(2)),
+		   (uint)(iregion.height * 1/sqrt(2)), (uint)(iregion.width * 1/sqrt(2)));
       // compute sqrt2 edges that need most reduction
       uint imax_sqrt2;
       if ((r_sqrt2.height / (float)oheight) < (r_sqrt2.width / (float)owidth)) {
@@ -217,8 +219,8 @@ namespace ebl {
       idx<T> im_sqrt2 = im.shift_chan(2); // image_resize expect chan in 2
       im_sqrt2 = image_resize(im_sqrt2, sqrt(2), sqrt(2), 2);
       im_sqrt2 = im_sqrt2.shift_chan(0);
-      rect r_sqrt2(iregion.h0 * sqrt(2), iregion.w0 * sqrt(2),
-		   iregion.height * sqrt(2), iregion.width * sqrt(2));
+      rect r_sqrt2((uint)(iregion.h0 * sqrt(2)), (uint)(iregion.w0 * sqrt(2)),
+		   (uint)(iregion.height * sqrt(2)), (uint)(iregion.width * sqrt(2)));
       // compute sqrt2 edges that need most reduction
       uint imax_sqrt2;
       if ((r_sqrt2.height / (float)oheight) < (r_sqrt2.width / (float)owidth)) {
@@ -402,7 +404,7 @@ namespace ebl {
 	pinptr = pin;
 	for (k=0; k<nlin; k++) {
 	  for (l=0; l<ncol; l++) {
-	    acc0 += pinptr[0];
+	    acc0 += (int) pinptr[0];
 	    pinptr += _imat1_m1;
 	  }
 	  pinptr += pinptr_incr;
@@ -1004,8 +1006,8 @@ namespace ebl {
     // 1. create normalized gaussian kernel (kernel / sum(kernel))
     idx<T> kernel = create_gaussian_kernel<T>(n);
     idx<T> tmp(in.dim(0) + n - 1, in.dim(1) + n - 1);
-    idx<T> tmp2 = tmp.narrow(0, in.dim(0), floor(n / 2));
-    tmp2 = tmp2.narrow(1, in.dim(1), floor(n / 2));
+    idx<T> tmp2 = tmp.narrow(0, in.dim(0), (intg) floor(n / 2));
+    tmp2 = tmp2.narrow(1, in.dim(1), (intg) floor(n / 2));
     idx<T> tmp3(n, n);
     idxdim d(in);
     idx<T> tmp4(d);
@@ -1013,8 +1015,8 @@ namespace ebl {
 
     // sum_j (w_j * in_j)
     idx<T> out1 = image_filter(in, kernel);
-    idx<T> in2 = in.narrow(0, out1.dim(0), floor(kernel.dim(0)/2));
-    in2 = in2.narrow(1, out1.dim(1), floor(kernel.dim(1)/2));
+    idx<T> in2 = in.narrow(0, out1.dim(0), (intg) floor(kernel.dim(0)/2));
+    in2 = in2.narrow(1, out1.dim(1), (intg) floor(kernel.dim(1)/2));
     idxdim outd(out1);
     idx<T> out2(outd);
     // in - mean
@@ -1030,8 +1032,8 @@ namespace ebl {
     // 1/std
     idx_inv(out3, out3);
     // out = (in - mean) / std
-    idx<T> out4 = out1.narrow(0, out3.dim(0), floor(kernel.dim(0)/2));
-    out4 = out4.narrow(1, out3.dim(1), floor(kernel.dim(1)/2));
+    idx<T> out4 = out1.narrow(0, out3.dim(0), (intg) floor(kernel.dim(0)/2));
+    out4 = out4.narrow(1, out3.dim(1), (intg) floor(kernel.dim(1)/2));
     idx_mul(out4, out3, out3);
     // finally copy result centered on an image the same size as in
     idx<T> out5 = out.narrow(0, out3.dim(0), (out.dim(0) - out3.dim(0)) / 2);
@@ -1064,9 +1066,8 @@ namespace ebl {
       out.resize(d);
     idx_clear(out);
     idx<T> tmp = out.narrow(0, in.dim(0) - filter.dim(0) + 1,
-			    floor(filter.dim(0)/2));
-    tmp = tmp.narrow(1, in.dim(1) - filter.dim(1) + 1,
-		     floor(filter.dim(1)/2));
+			    (intg) floor(filter.dim(0)/2));
+    tmp = tmp.narrow(1, in.dim(1) - filter.dim(1) + 1, (intg) floor(filter.dim(1)/2));
     idx_2dconvol(in, filter, tmp);   
     
 //     // compute sizes of the temporary buffer
