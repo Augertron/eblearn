@@ -213,6 +213,11 @@ namespace ebl {
   }
 
   template <class Tdata>
+  intg dataset<Tdata>::size() {
+    return data_cnt;
+  }
+
+  template <class Tdata>
   t_label dataset<Tdata>::get_label_from_class(const string &class_name) {
     t_label label = 0;
     vector<string>::iterator res;
@@ -619,6 +624,61 @@ namespace ebl {
     ds2.print_stats();
   }
 
+  template <class Tdata>
+  void dataset<Tdata>::merge(const char *name1, const char *name2,
+			     const string &inroot) {
+    dataset<Tdata> ds1(name1), ds2(name2);
+    // load 2 datasets
+    ds1.load(inroot);
+    ds2.load(inroot);
+    interleaved_input = false;
+    intg newsz = ds1.size() + ds2.size();
+    idxdim d1 = ds1.get_sample_outdim(), d2 = ds2.get_sample_outdim();
+    if (!(d1 == d2)) {
+      cerr << "sample sizes for dataset 1 and 2 are different: ";
+      cerr << d1 << " and " << d2 << endl;
+      eblerror("incompatible datasets");
+    }
+    // allocate new dataset
+    allocate(newsz, d1);
+    idx<Tdata> datanew;
+    idx<t_label> labelsnew;
+    // update classes
+    idx<ubyte> classidx = ds1.build_classes_idx();
+    set_classes(classidx); // initialize with ds1's class names
+    cout << "Added all classes to new dataset from " << ds1.name << endl;
+    // for each ds2 class name, push on new class names vector if not found
+    vector<string>::iterator res, i;
+    for (i = ds2.classes.begin(); i != ds2.classes.end(); ++i){
+      res = find(classes.begin(), classes.end(), *i);
+      if (res == classes.end()) { // not found
+	classes.push_back(*i); // add new class name
+	cout << "Adding class " << *i << " from dataset " << ds2.name << endl;
+      }
+    }
+    // update each ds2 label based on new class numbering
+    idx_bloop1(lab, ds2.labels, t_label) {
+      string s = ds2.get_class_string(lab.get());
+      lab.set(get_class_id(s));
+    }
+    // copy data 1 into new dataset
+    datanew = data.narrow(0, ds1.size(), 0);
+    labelsnew = labels.narrow(0, ds1.size(), 0);
+    idx_copy(ds1.data, datanew);
+    idx_copy(ds1.labels, labelsnew);
+    // copy data 2 into new dataset
+    datanew = data.narrow(0, ds2.size(), ds1.size());
+    labelsnew = labels.narrow(0, ds2.size(), ds1.size());
+    idx_copy(ds2.data, datanew);
+    idx_copy(ds2.labels, labelsnew);
+    // update counter
+    data_cnt = newsz;
+    cout << "Copied data from " << ds1.name << " and " << ds2.name;
+    cout << " into new dataset." << endl;
+    // print info
+    print_stats();
+  }
+    
   template <class Tdata> template <class Toriginal>
   bool dataset<Tdata>::save_scales(idx<Toriginal> &dat, const string &filename){
     // copy data into target type
@@ -886,6 +946,22 @@ namespace ebl {
     }
     return classes_idx;
   }
+
+  template <class Tdata>
+  string& dataset<Tdata>::get_class_string(t_label id) {
+    if (((uint) id < 0) || ((uint) id >= classes.size()))
+      eblerror("trying to access a class with wrong id.");
+    return classes[id];
+  }
+
+  template <class Tdata>
+  t_label dataset<Tdata>::get_class_id(const string &name) {
+    vector<string>::iterator res;
+    res = find(classes.begin(), classes.end(), name);
+    if (res == classes.end()) // not found
+      eblerror("class not found");
+    return (t_label) (res - classes.begin());
+  }      
 
   // Recursively goes through dir, looking for files matching extension ext.
   template <class Tdata>
