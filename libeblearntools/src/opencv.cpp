@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
- *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,14 +27,20 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARNTOOLS_H_
-#define LIBEBLEARNTOOLS_H_
+#ifdef __OPENCV__
 
-#include "configuration.h"
-#include "gdb.h"
-#include "xml_utils.h"
 #include "opencv.h"
 
-#endif /* LIBEBLEARNTOOLS_H_ */
+////////////////////////////////////////////////////////////////
+// interface with opencv
+
+idx<ubyte> ipl2idx(IplImage *im) {
+  idx<ubyte> f(im->height, im->width, im->nChannels);
+  memcpy(f.idx_ptr(), im->imageData,
+	 im->width * im->height * im->nChannels * sizeof (ubyte));
+  return f;
+}
+
+#endif /* __OPENCV__ */
