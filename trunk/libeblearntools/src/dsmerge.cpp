@@ -78,7 +78,7 @@ template <class Tdata>
 void merge() {
   dataset<Tdata> ds0(ds0_name.c_str());
   ds0.merge(ds1_name.c_str(), ds2_name.c_str(), inroot);
-  ds0.shuffle();
+  //ds0.shuffle();
   ds0.save(inroot);
 }
 
