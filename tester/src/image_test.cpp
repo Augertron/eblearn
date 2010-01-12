@@ -213,7 +213,7 @@ void image_test::test_colorspaces() {
   string imgfile = *gl_data_dir;
   imgfile += "/barn.png";
   image_read_rgbx(imgfile.c_str(), im_rgb);
-  im_rgb = image_resize(im_rgb, 252, 189);
+  im_rgb = image_resize(im_rgb, 189, 252);
   idxdim d(im_rgb);
   idx<float> fim_rgb(d);
   idx_copy(im_rgb, fim_rgb);
