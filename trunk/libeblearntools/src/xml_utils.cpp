@@ -36,25 +36,29 @@
 
 using namespace xmlpp;
 
-////////////////////////////////////////////////////////////////
-// extract xml values
+namespace ebl {
 
-unsigned int get_uint(Node *element) {
-  unsigned int u = 0;
+  ////////////////////////////////////////////////////////////////
+  // extract xml values
+
+  unsigned int xml_get_uint(Node *element) {
+    unsigned int u = 0;
+    
+    const Element* e = dynamic_cast<const Element*>(element);
+    const TextNode* txt = dynamic_cast<const TextNode*>
+      (e->get_child_text());
+    istringstream iss(txt->get_content(), istringstream::in);
+    iss >> u;
+    return u;
+  }
   
-  const Element* e = dynamic_cast<const Element*>(element);
-  const TextNode* txt = dynamic_cast<const TextNode*>
-    (e->get_child_text());
-  istringstream iss(txt->get_content(), istringstream::in);
-  iss >> u;
-  return u;
-}
+  void xml_get_string(Node *element, string &s) {
+    const Element* e = dynamic_cast<const Element*>(element);
+    const TextNode* txt = dynamic_cast<const TextNode*>
+      (e->get_child_text());
+    s = txt->get_content();
+  }
 
-void get_string(Node *element, string &s) {
-  const Element* e = dynamic_cast<const Element*>(element);
-  const TextNode* txt = dynamic_cast<const TextNode*>
-    (e->get_child_text());
-  s = txt->get_content();
-}
+} // end namespace ebl
 
 #endif /* __XML__ */

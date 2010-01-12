@@ -29,18 +29,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifdef __OPENCV__
-
 #include "opencv.h"
 
-////////////////////////////////////////////////////////////////
-// interface with opencv
+namespace ebl {
 
-idx<ubyte> ipl2idx(IplImage *im) {
-  idx<ubyte> f(im->height, im->width, im->nChannels);
-  memcpy(f.idx_ptr(), im->imageData,
-	 im->width * im->height * im->nChannels * sizeof (ubyte));
-  return f;
-}
+#ifdef __OPENCV__
 
+  ////////////////////////////////////////////////////////////////
+  // interface with opencv
+  
+  idx<ubyte> ipl2idx(IplImage *im) {
+    idx<ubyte> f;
+    f = idx<ubyte>(im->height, im->width, im->nChannels);
+    memcpy(f.idx_ptr(), im->imageData,
+	   im->width * im->height * im->nChannels * sizeof (ubyte));
+    return f;
+  }
+  
 #endif /* __OPENCV__ */
+
+} // end namespace ebl
+

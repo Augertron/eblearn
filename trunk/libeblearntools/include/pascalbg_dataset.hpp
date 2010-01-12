@@ -119,7 +119,7 @@ namespace ebl {
 	for(Node::NodeList::iterator iter = list.begin();
 	    iter != list.end(); ++iter) {
 	  if (!strcmp((*iter)->get_name().c_str(), "filename")) {
-	    get_string(*iter, image_filename);
+	    xml_get_string(*iter, image_filename);
 	    iter = list.end(); iter--; // stop loop
 	  }
 	}
@@ -164,13 +164,13 @@ namespace ebl {
 	    biter != blist.end(); ++biter) {
 	  // save xmin, ymin, xmax and ymax
 	  if (!strcmp((*biter)->get_name().c_str(), "xmin"))
-	    xmin = get_uint(*biter);
+	    xmin = xml_get_uint(*biter);
 	  else if (!strcmp((*biter)->get_name().c_str(), "ymin"))
-	    ymin = get_uint(*biter);
+	    ymin = xml_get_uint(*biter);
 	  else if (!strcmp((*biter)->get_name().c_str(), "xmax"))
-	    xmax = get_uint(*biter);
+	    xmax = xml_get_uint(*biter);
 	  else if (!strcmp((*biter)->get_name().c_str(), "ymax"))
-	    ymax = get_uint(*biter);
+	    ymax = xml_get_uint(*biter);
 	}
       } // else get object class name
     }

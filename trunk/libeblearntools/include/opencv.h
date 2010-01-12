@@ -37,9 +37,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include <iostream>
-#include <iomanip>
-#include <sstream>
+#include "libidx.h"
 
 using namespace std;
 
