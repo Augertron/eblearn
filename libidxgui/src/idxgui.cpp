@@ -48,7 +48,7 @@ namespace ebl {
     nwindows = nwindows_;
     nwid = 0;
     str("");
-    set_cout_and_gui();
+    set_gui_only();
     main_done = false;
     thread_init = true;
   }
