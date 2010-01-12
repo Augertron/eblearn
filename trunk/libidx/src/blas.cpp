@@ -420,4 +420,19 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////  
 
+  idx<ubyte> strings_to_idx(idx<const char *> &strings) {
+    // determine max length of strings
+    uint max = 0;
+    { idx_bloop1(s, strings, const char *)
+	max = MAX(max, strlen(s.get())); }
+    // allocate output idx
+    idx<ubyte> out(strings.dim(0), max + 1);
+    // copy classes strings
+    idx_clear(out);
+    idx_bloop2(s, strings, const char *, o, out, ubyte) {
+      memcpy(o.idx_ptr(), s.get(), strlen(s.get()) * sizeof (ubyte));
+    }
+    return out;
+  }
+  
 } // end namespace ebl

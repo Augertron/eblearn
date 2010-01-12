@@ -63,7 +63,7 @@ namespace ebl {
       unsigned int h = dzoom * i->h0;
       unsigned int w = dzoom * i->w0;
       draw_box(h0 + h, w0 + w, dzoom * i->height, dzoom * i->width, 255, 0, 0,
-	       new string(cl.labels.get(i->class_id)));
+	       new string((const char *)cl.labels[i->class_id].idx_ptr()));
     }
     draw_matrix(cl.grabbed, h0, w0, dzoom, dzoom, (Tdata)vmin, (Tdata)vmax);   
     enable_window_updates();
@@ -124,7 +124,7 @@ namespace ebl {
 	{ idx_bloop1(category, outx, Tdata) {
 	    s.str("");
 	    if (first_time)
-	      s << cl.labels.get(lab) << " ";
+	      s << cl.labels[lab] << " ";
 	    s << category.dim(0) << "x" << category.dim(1);
 	    gui << at(h + ihmax + 5 + hcat, 
 		      w0 + category.dim(1) * czoom + 2);

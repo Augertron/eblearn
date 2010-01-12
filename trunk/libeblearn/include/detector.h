@@ -95,7 +95,7 @@ namespace ebl {
     idx<void*>		 outputs;	//! state_idx*
     idx<void*>		 results;	//! idx<double>*
     idx<T>		 smoothing_kernel;
-    idx<const char*>	 labels;
+    idx<ubyte>   	 labels;
     ////////////////////////////////////////////////////////////////
   private:
     // dimensions
@@ -113,6 +113,10 @@ namespace ebl {
     //! Constructor.
     detector(module_1_1<T> &thenet, unsigned int nresolutions, 
 	     idx<const char*> &lbls, T bias = 0, float coeff = 1.0);
+    
+    //! Constructor. lbls is an idx containing each class name.
+    detector(module_1_1<T> &thenet, unsigned int nresolutions, 
+	     idx<ubyte> &lbls, T bias = 0, float coeff = 1.0);
     
     //! Constructor.
     detector(module_1_1<T> &thenet, idx<unsigned int> &resolutions, 

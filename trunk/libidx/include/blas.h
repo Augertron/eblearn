@@ -420,6 +420,10 @@ namespace ebl {
   //! Copy the max of m and each element of i1 into o1
   template<class T> void idx_clip(idx<T> &i1, T m, idx<T> &o1);
 
+  //! Copy strings described by an idx of string pointers into an idx of ubyte
+  //! and return it. The width of the output idx is determined by the longest
+  //! string.
+  idx<ubyte> strings_to_idx(idx<const char *> &strings);
 
 } // end namespace ebl
 

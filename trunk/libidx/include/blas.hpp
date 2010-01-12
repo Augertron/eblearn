@@ -1151,5 +1151,5 @@ namespace ebl {
     uin = uin.unfold(1, kernel.dim(1), 1);
     idx_m4dotm2(uin, kernel, out);
   }
-
+  
 } // end namespace ebl
