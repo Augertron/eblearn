@@ -112,8 +112,13 @@ namespace ebl {
       eblerror(err);
     }
     // output sizes of entire image
-    ow = w;//max(1.0, imw * ratiow);
-    oh = h;//max(1.0, imh * ratioh);
+    if (iregion_) {
+      ow = max(1.0, imw * ratiow);
+      oh = max(1.0, imh * ratioh);
+    } else {
+      ow = w;//max(1.0, imw * ratiow);
+      oh = h;//max(1.0, imh * ratioh);
+    }
     // compute closest integer subsampling ratio
     rw = MAX(1, (int) (1 / ratiow));
     rh = MAX(1, (int) (1 / ratioh));
