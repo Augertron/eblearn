@@ -44,9 +44,9 @@ using namespace std;
     for (k=0; k<nlin; k++) {						\
       register T *pinptr = pin+k*in_mod0;				\
       for (l=0; l<ncol; l++) {						\
-	acc0 += (int) pinptr[0];						\
+	acc0 += (int) pinptr[0];					\
 	acc1 += (int) pinptr[1];					\
-	acc2 += (int) pinptr[2];						\
+	acc2 += (int) pinptr[2];					\
 	pinptr += in_mod1; }}						\
     pout[0] = acc0 / norm;pout[1] = acc1 / norm;pout[2] = acc2 / norm;}
 
@@ -112,14 +112,15 @@ namespace ebl {
       eblerror(err);
     }
     // output sizes of entire image
-    ow = max(1.0, imw * ratiow);
-    oh = max(1.0, imh * ratioh);
+    ow = w;//max(1.0, imw * ratiow);
+    oh = h;//max(1.0, imh * ratioh);
     // compute closest integer subsampling ratio
     rw = MAX(1, (int) (1 / ratiow));
     rh = MAX(1, (int) (1 / ratioh));
     // compute output region
     rect oregion((uint)(iregion.h0 * ratioh), (uint)(iregion.w0 * ratiow),
-		 (uint)(iregion.height * ratioh), (uint)(iregion.width * ratiow));
+		 (uint)(iregion.height * ratioh),
+		 (uint)(iregion.width * ratiow));
     if (oregion_)
       *oregion_ = oregion;
     // subsample by integer ratio if necessary
@@ -356,7 +357,7 @@ namespace ebl {
     int newh = im1.dim(0) * zoomh;
     int neww = im1.dim(1) * zoomw;
     idx<T> im2 = ((newh == im1.dim(0)) && (neww == im1.dim(1))) ?
-      im1 : image_resize(im1, neww, newh);
+      im1 : image_resize(im1, newh, neww);
     d.setdim(0, newh);
     d.setdim(1, neww);
     idx<ubyte> image(d);
