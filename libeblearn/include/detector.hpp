@@ -42,31 +42,43 @@ using namespace std;
 namespace ebl {
 
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, idx<unsigned int> &resolutions_,
-			idx<const char*> &labels_, T bias_, float coef_) 
-    : thenet(thenet_), coef(coef_), bias(bias_),
-      inputs(1), outputs(1), results(1),
-      labels(labels_),
-      nresolutions(resolutions_.dim(0)), resolutions(resolutions_),
-      manual_resolutions(true) {
-    idx_clear(inputs);
-    idx_clear(outputs);
-    idx_clear(results);
-    if (nresolutions < 1)
-      eblerror("the number of resolutions is expected to be more than 0");
-  }
-
-  template <class T>
   detector<T>::detector(module_1_1<T> &thenet_, unsigned int nresolutions_, 
 			idx<const char*> &labels_, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1),
-      labels(labels_),
+      nresolutions(nresolutions_), resolutions(1, 2),
+      manual_resolutions(false) {
+    labels = strings_to_idx(labels_);
+    idx_clear(inputs);
+    idx_clear(outputs);
+    idx_clear(results);
+  }
+
+  template <class T>
+  detector<T>::detector(module_1_1<T> &thenet_, unsigned int nresolutions_, 
+			idx<ubyte> &labels_, T bias_, float coef_) 
+    : thenet(thenet_), coef(coef_), bias(bias_),
+      inputs(1), outputs(1), results(1), labels(labels_),
       nresolutions(nresolutions_), resolutions(1, 2),
       manual_resolutions(false) {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
+  }
+
+  template <class T>
+  detector<T>::detector(module_1_1<T> &thenet_, idx<unsigned int> &resolutions_,
+			idx<const char*> &labels_, T bias_, float coef_) 
+    : thenet(thenet_), coef(coef_), bias(bias_),
+      inputs(1), outputs(1), results(1),
+      nresolutions(resolutions_.dim(0)), resolutions(resolutions_),
+      manual_resolutions(true) {
+    labels = strings_to_idx(labels_);
+    idx_clear(inputs);
+    idx_clear(outputs);
+    idx_clear(results);
+    if (nresolutions < 1)
+      eblerror("the number of resolutions is expected to be more than 0");
   }
 
   template <class T>
@@ -147,7 +159,7 @@ namespace ebl {
   void detector<T>::init(idx<T> &sample) {
     idxdim d(sample);
     // size of the sample to process
-    int thickness = 2; // sample.dim(0); // TODO FIXME
+    int thickness = sample.dim(2); // TODO FIXME
     height = sample.dim(0);    
     width = sample.dim(1);
     grabbed = idx<T>(height, width);    
@@ -184,7 +196,7 @@ namespace ebl {
 	in.set((void*) new state_idx<T>(thickness,
 					scaled_dims.dim(1),
 					scaled_dims.dim(2)));
-	out.set((void*) new state_idx<T>(labels.nelements() + 1, 
+	out.set((void*) new state_idx<T>(labels.dim(0) + 1, 
 					 out_dims.dim(1), out_dims.dim(2)));
 	r.set((void*) new idx<T>(out_dims.dim(1), out_dims.dim(2),
 				 2)); // (class,score)
@@ -323,7 +335,7 @@ namespace ebl {
       cout << "found " << vb.size() << " objects." << endl;
       vector<bbox>::iterator i = vb.begin();
       for ( ; i != vb.end(); ++i) {
-	cout << "- " << labels.get(i->class_id);
+	cout << "- " << labels[i->class_id].idx_ptr();
 	cout << " with confidence " << i->confidence;
 	cout << " in scale #" << i->scale_index;
 	cout << " (" << grabbed.dim(0) << "x" << grabbed.dim(1);
@@ -370,10 +382,11 @@ namespace ebl {
   	idx<T> inx = ((state_idx<T>*) in.get())->x;
   	idx<T> imres = image_resize(sample, inx.dim(1), inx.dim(2), 1);
 	// TODO: temporary, use channels_dim
-  	idx<T> inx0 = inx.select(0, 0);
-  	idx<T> inx1 = inx.select(0, 1);
-  	idx_copy(imres, inx0);
-  	idx_copy(imres, inx1);
+	idx_copy(imres, inx);
+//   	idx<T> inx0 = inx.select(0, 0);
+//   	idx<T> inx1 = inx.select(0, 1);
+//   	idx_copy(imres, inx0);
+//   	idx_copy(imres, inx1);
   	idx_addc(inx, bias, inx);
   	idx_dotc(inx, coef, inx);
 
