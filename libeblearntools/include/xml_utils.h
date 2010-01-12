@@ -48,10 +48,10 @@ namespace ebl {
 // extract xml values
 
 //! return unsigned int value from text content
-unsigned int	get_uint(Node *element);
+unsigned int	xml_get_uint(Node *element);
 
 //! set string s from text content
-void		get_string(Node *element, string &s);
+void		xml_get_string(Node *element, string &s);
  
 } // end namespace ebl
 

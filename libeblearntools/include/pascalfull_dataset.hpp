@@ -84,7 +84,7 @@ namespace ebl {
 	for(Node::NodeList::iterator iter = list.begin();
 	    iter != list.end(); ++iter) {
 	  if (!strcmp((*iter)->get_name().c_str(), "filename")) {
-	    get_string(*iter, image_filename);
+	    xml_get_string(*iter, image_filename);
 	    iter = list.end(); iter--; // stop loop
 	  }
 	}
@@ -98,7 +98,7 @@ namespace ebl {
 	    for(Node::NodeList::iterator oiter = olist.begin();
 		oiter != olist.end(); ++oiter) {
 	      if (!strcmp((*oiter)->get_name().c_str(), "name")) {
-		get_string(*oiter, obj_classname);
+		xml_get_string(*oiter, obj_classname);
 		// if object's name matches an excluded class, stop this xml
 		if (find(exclude.begin(), exclude.end(),
 			 obj_classname) != exclude.end())
