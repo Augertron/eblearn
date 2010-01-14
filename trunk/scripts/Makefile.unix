@@ -4,6 +4,7 @@ endif
 
 INCLUDE_INSTALL=/usr/include/eblearn/
 LIB_INSTALL=/usr/lib/
+BIN_INSTALL=/usr/bin
 
 all: libs
 
@@ -68,3 +69,8 @@ install:
 	cp -f bin/libeblearntools.so $(LIB_INSTALL)
 	cp -f bin/libidxgui.so $(LIB_INSTALL)
 	cp -f bin/libeblearngui.so $(LIB_INSTALL)
+	cp -f bin/matdisplay $(BIN_INSTALL)
+	cp -f bin/dsdisplay $(BIN_INSTALL)
+	cp -f bin/dscompiler $(BIN_INSTALL)
+	cp -f bin/dsmerge $(BIN_INSTALL)
+	cp -f bin/dssplit $(BIN_INSTALL)

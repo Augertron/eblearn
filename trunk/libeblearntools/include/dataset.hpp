@@ -87,7 +87,7 @@ namespace ebl {
     do_preprocessing = false;
     scale_mode = false;
     data_cnt = 0;
-    resize_mode = "gaussian";
+    resize_mode = "bilinear";
     interleaved_input = true;
     max_per_class_set = false;
     mpc = numeric_limits<intg>::max();
@@ -693,7 +693,7 @@ namespace ebl {
       idx<Tdata> s = preprocess_data(sample, class_name, false,
 				     filename.c_str(), NULL, *i);
       // put sample's channels dimensions first, if defined.
-      s = s.shift_dim(2, 0);
+      //s = s.shift_dim(2, 0);
       // save image
       ofname.str(""); ofname << base_name.str() << *i << ".mat";
       if (save_matrix(s, ofname.str())) {
@@ -719,9 +719,12 @@ namespace ebl {
     rect out_region, cropped;
     idxdim d(outdims);
     idx<Tdata> resized;
-    if (scale > 0)
-      resized = gaussian_resize_image_to(dat, scale);
-    else
+    if (scale > 0) {
+      if (!strcmp(resize_mode.c_str(), "bilinear"))
+	resized = image_resize(dat, (double)1/scale, (double)1/scale, 2);
+      else if (!strcmp(resize_mode.c_str(), "gaussian"))
+	resized = gaussian_resize_image_to(dat, scale);
+    } else
       resized = resize_image_to(dat, d, out_region, r);
     rect out_entire(0, 0, resized.dim(dh), resized.dim(dw));
     // convert image to target format
@@ -885,7 +888,7 @@ namespace ebl {
     if (r) rr = *r;
     // bilinear interpolation resizing
     if (!strcmp(resize_mode.c_str(), "bilinear")) {
-      res = image_resize(img, outdims.dim(1), outdims.dim(0), 0, &rr, &cropped);
+      res = image_resize(img, outdims.dim(0), outdims.dim(1), 0, &rr, &cropped);
       //      cropped = rect(0, 0, outdims.dim(0), outdims.dim(1));
       return res;
     }
@@ -1000,7 +1003,7 @@ namespace ebl {
       else if (regex_match(itr->leaf().c_str(), what, r)) {
 	try {
 	  // if full for this class, skip this directory
-	  if (full(get_label_from_class(class_name)))
+	  if (full(get_label_from_class(class_name)) && !scale_mode)
 	    break ;
 	  // load data
 	  load_data(itr->path().string());

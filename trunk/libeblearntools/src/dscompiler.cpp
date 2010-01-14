@@ -67,7 +67,7 @@ unsigned int	mexican_hat_size = 0;
 uint		kernelsz	 = 9; // kernel size for preprocessing
 int		deformations	 = -1;	// <= means no deformations
 string		type		 = "regular";
-string          resize           = "gaussian";
+string          resize           = "bilinear";
 string		precision	 = "float";
 uint		sleep_delay	 = 0;	// sleep between frames displayed in ms
 idxdim          outdims;	// dimensions of output sample

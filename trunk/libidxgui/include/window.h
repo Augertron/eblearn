@@ -116,6 +116,7 @@ namespace ebl {
     QColor               text_bg_color;
     unsigned char        fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
     scroll_box0         *scrollbox;
+    int                  wupdate_ndisable; // count how many disables called
 
   public:
     Window(unsigned int wid, const char *wname = NULL, 
