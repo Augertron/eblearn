@@ -78,7 +78,7 @@ namespace ebl {
 
   Window::Window(unsigned int wid, const char *wname, int height, int width) 
     : pixmapScale(1.0), curScale(1.0), scaleIncr(1), colorTable(256),
-      texts(), silent(false), id(wid), savefname("") {
+      texts(), silent(false), id(wid), savefname(""), wupdate_ndisable(0) {
     setAttribute(Qt::WA_DeleteOnClose);
     if (wname) {
       QString q(wname);
@@ -168,6 +168,25 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
+//   void Window::set_wupdate(bool ud) {
+//     if (ud) {
+//       if (wupdate_ndisable > 0) { // update only when necessary
+// 	wupdate_ndisable = MAX(0, wupdate_ndisable - 1); // decrement counter
+// 	if (wupdate_ndisable == 0) {
+// 	  setUpdatesEnabled(true);
+// 	  draw_images();
+// 	  repaint();
+// 	  update_window();
+// 	}
+//       }
+//     }
+//     else {
+//       setUpdatesEnabled(false);
+//       wupdate_ndisable++; // increment disables
+//     }
+//     wupdate = ud;
+//   }
+
   void Window::set_wupdate(bool ud) {
     if (wupdate != ud) {
       wupdate = ud;
@@ -180,7 +199,7 @@ namespace ebl {
       else
 	setUpdatesEnabled(false);
     }
-  }
+  }  
 
   void Window::save(const string &filename) {
     QPixmap p = QPixmap::grabWidget(this, rect());

@@ -104,6 +104,8 @@ namespace ebl {
     unsigned int	 nresolutions;
     idx<unsigned int>	 resolutions;
     bool		 manual_resolutions;
+    int                  bgclass;
+    idxdim               input_dim;
     
   public:
     
@@ -111,15 +113,15 @@ namespace ebl {
     // constructors
     
     //! Constructor.
-    detector(module_1_1<T> &thenet, unsigned int nresolutions, 
+    detector(module_1_1<T> &thenet, idxdim &ind, unsigned int nresolutions, 
 	     idx<const char*> &lbls, T bias = 0, float coeff = 1.0);
     
     //! Constructor. lbls is an idx containing each class name.
-    detector(module_1_1<T> &thenet, unsigned int nresolutions, 
+    detector(module_1_1<T> &thenet, idxdim &ind, unsigned int nresolutions, 
 	     idx<ubyte> &lbls, T bias = 0, float coeff = 1.0);
     
     //! Constructor.
-    detector(module_1_1<T> &thenet, idx<unsigned int> &resolutions, 
+    detector(module_1_1<T> &thenet, idxdim &ind, idx<unsigned int> &resolutions,
 	     idx<const char*> &lbls, T bias = 0, float coeff = 1.0);
     //    detector(module_1_1<state_idx, state_idx> &thenet);
     virtual ~detector();
@@ -132,9 +134,12 @@ namespace ebl {
     template <class Tin>
       vector<bbox> fprop(idx<Tin> &img, T threshold);
 
+    //! set background class (which will be ignored).
+    void set_bgclass(const char *bg);
+
   private:
     //! initialize dimensions and multi-resolution buffers.
-    void init(idx<T> &input);
+    void init(idxdim &dinput);
 
     //! compute sizes of each resolutions based on input size <input_dims>.
     void compute_minmax_resolutions(idxdim &input_dims);

@@ -112,7 +112,7 @@ namespace ebl {
       eblerror(err);
     }
     // output sizes of entire image
-    if (iregion_) {
+    if (iregion_ || (mode == 2)) {
       ow = max(1.0, imw * ratiow);
       oh = max(1.0, imh * ratioh);
     } else {

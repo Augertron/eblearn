@@ -64,9 +64,11 @@ namespace ebl {
     //! CAUTION: This empty constructor requires a subsequent call to init().
     datasource();
 
+    //! initialization, called by constructor.
     void init(idx<Tin1> &inp, idx<Tin2> &lbl, const char *name,
 	      Tin1 bias, float coeff);
 
+    //! constructor.
     datasource(idx<Tin1> &inputs, idx<Tin2> &labels, const char *name = NULL, 
 	       Tin1 bias = 0.0, float coeff = 0.01);
 
@@ -108,6 +110,15 @@ namespace ebl {
     //! Return the number of classes.
     virtual intg get_nclasses();
 
+    //! Return the lowest common size in a balanced dataset where each class
+    //! has the same number of examples.
+    //! e.g. if a dataset has 10 classes with 100 examples and 5 classes with
+    //! 50 examples, it will return 50 * 10 + 50 * 5 = 750, whereas size()
+    //! will return 1250.
+    //! This is useful to keep iterations to a meaningful size when a class
+    //! has many more examples than another.
+    virtual intg get_lowest_common_size();
+    
     //! Print info about the datasource on the standard output.
     virtual void pretty();
   };

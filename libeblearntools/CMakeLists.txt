@@ -166,6 +166,18 @@ ELSE(${Boost_MINOR_VERSION} GREATER 34)
     ${Boost_REGEX_LIBRARY})
 ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 
+# compile executable: dsdisplay
+################################################################################
+add_executable (matdisplay
+  src/matdisplay.cpp
+  )
+
+# link executable with external libraries
+target_link_libraries (matdisplay idx)
+IF (QT_FOUND)
+  target_link_libraries (matdisplay idxgui)
+ENDIF (QT_FOUND)
+
 # compile executable: meta_trainer
 ################################################################################
 add_executable (meta_trainer

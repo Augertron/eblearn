@@ -42,49 +42,65 @@ using namespace std;
 namespace ebl {
 
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, unsigned int nresolutions_, 
+  detector<T>::detector(module_1_1<T> &thenet_, idxdim &ind,
+			unsigned int nresolutions_, 
 			idx<const char*> &labels_, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1),
       nresolutions(nresolutions_), resolutions(1, 2),
-      manual_resolutions(false) {
+      manual_resolutions(false), bgclass(-1) {
     labels = strings_to_idx(labels_);
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
+    init(ind);
   }
 
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, unsigned int nresolutions_, 
+  detector<T>::detector(module_1_1<T> &thenet_, idxdim &ind,
+			unsigned int nresolutions_, 
 			idx<ubyte> &labels_, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), labels(labels_),
       nresolutions(nresolutions_), resolutions(1, 2),
-      manual_resolutions(false) {
+      manual_resolutions(false), bgclass(-1) {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
+    init(ind);
   }
 
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, idx<unsigned int> &resolutions_,
+  detector<T>::detector(module_1_1<T> &thenet_, idxdim &ind,
+			idx<unsigned int> &resolutions_,
 			idx<const char*> &labels_, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1),
       nresolutions(resolutions_.dim(0)), resolutions(resolutions_),
-      manual_resolutions(true) {
+      manual_resolutions(true), bgclass(-1) {
     labels = strings_to_idx(labels_);
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
     if (nresolutions < 1)
       eblerror("the number of resolutions is expected to be more than 0");
+    init(ind);
+  }
+
+  template <class T>
+  void detector<T>::set_bgclass(const char *bg) {
+    int i = 0;
+    idx_bloop1(lab, labels, ubyte) {
+      if (!strcmp((const char *)lab.idx_ptr(), bg))
+	bgclass = i;
+      i++;
+    }
   }
 
   template <class T>
   void detector<T>::compute_minmax_resolutions(idxdim &input_dims) {
     // compute maximum closest size of input compatible with the network size
-    idxdim indim(1, input_dims.dim(0), input_dims.dim(1));
+    idxdim indim(input_dims.dim(2), input_dims.dim(0), input_dims.dim(1));
     thenet.fprop_size(indim); // set a valid input dimensions set
     in_maxdim.setdims(indim); // copy valid dims to in_maxdim
 
@@ -156,20 +172,19 @@ namespace ebl {
   }
   
   template <class T>
-  void detector<T>::init(idx<T> &sample) {
-    idxdim d(sample);
+  void detector<T>::init(idxdim &dsample) {
     // size of the sample to process
-    int thickness = sample.dim(2); // TODO FIXME
-    height = sample.dim(0);    
-    width = sample.dim(1);
+    int thickness = (dsample.order() == 2) ? 1 : dsample.dim(2); // TODO FIXME
+    height = dsample.dim(0);    
+    width = dsample.dim(1);
     grabbed = idx<T>(height, width);    
-    
+    input_dim = idxdim(height, width, thickness);
     idxdim sd(thickness, height, width);
     cout << "machine's intermediate sizes with a " << sd << " input: " << endl;
     thenet.pretty(sd);
 
     if (!manual_resolutions)
-      compute_resolutions(d, nresolutions);
+      compute_resolutions(input_dim, nresolutions);
     cout << "multi-resolution detection initialized to ";
     print_resolutions();
     
@@ -298,7 +313,8 @@ namespace ebl {
 	{ idx_bloop1(re, *((idx<T>*) r.get()), T) {
 	    offset_w = 0;
 	    { idx_bloop1(ree, re, T) {
-		if (ree.get(1) > threshold) {
+		if ((ree.get(0) != bgclass) && 
+		    (ree.get(1) > threshold)) {
 		  bbox bb;
 		  bb.class_id = ree.get(0); // Class
 		  bb.confidence = ree.get(1); // Confidence
@@ -353,17 +369,28 @@ namespace ebl {
   
   template <class T> template <class Tin>
   vector<bbox> detector<T>::fprop(idx<Tin> &img, T threshold) {
-    idx<T> img2;
+    idx<T> img2, img3, tmp;
     if (typeid(T) == typeid(Tin)) // input same type as net, shallow copy
       img2 = (idx<T>&) img;
     else { // deep copy to cast input into net's type
       img2 = idx<T>(img.get_idxdim());
       idx_copy(img, img2);
     }
-    init(img2);
-    grabbed = img2;
+    if (img2.order() == 2) {
+      img3 = idx<T>(img2.dim(0), img2.dim(1), 1);
+      tmp = img3.select(2, 0);
+      idx_copy(img2, tmp);  // TODO: avoid copy just to augment order
+    } else
+      img3 = img2;
+    grabbed = img3;
+    if (!(input_dim == img.get_idxdim())) {
+      cerr << "warning: unexpected input size, expected " << input_dim;
+      cerr << ", got " << img.get_idxdim() << ", reinitializing detector.";
+      cerr << endl;
+      init(img.get_idxdim());
+    }
     // do a fprop for each scaled input sample
-    multi_res_fprop(img2);
+    multi_res_fprop(img3);
     
     // find points that are local maxima spatial and class-wise
     // write result in m. rescale result to [0 1]
@@ -380,8 +407,11 @@ namespace ebl {
     { idx_bloop2(in, inputs, void*, out, outputs, void*) {
 	// generate multi-resolution input
   	idx<T> inx = ((state_idx<T>*) in.get())->x;
-  	idx<T> imres = image_resize(sample, inx.dim(1), inx.dim(2), 1);
+  	idx<T> imres = sample;
+	if ((inx.dim(1) != imres.dim(0)) || (inx.dim(2) != imres.dim(1)))
+	  imres = image_resize(imres, inx.dim(1), inx.dim(2), 1);
 	// TODO: temporary, use channels_dim
+  	imres = imres.shift_dim(2, 0);
 	idx_copy(imres, inx);
 //   	idx<T> inx0 = inx.select(0, 0);
 //   	idx<T> inx1 = inx.select(0, 1);

@@ -55,7 +55,7 @@ namespace ebl {
     // draw input
     draw_matrix(img, "input", h0, w0, dzoom, dzoom, (T) vmin, (T) vmax);
     vector<bbox> vb = cl.fprop(img, threshold);
-    w0 += img.dim(1) + 5;
+    w0 += img.dim(1) * dzoom + 5;
 
     // draw output
     vector<bbox>::iterator i = vb.begin();
@@ -85,7 +85,7 @@ namespace ebl {
     display(cl, img, threshold, h0, w0, dzoom, vmin, vmax, display_wid_fprop);
 
     // draw internal inputs and outputs
-    int h = h0 + cl.height + 5;
+    int h = h0 + cl.height * dzoom + 5;
     int scale = 0;
     int ohmax = ((state_idx<Tdata>*) cl.outputs.get(0))->x.dim(1);
     int ihmax = ((state_idx<Tdata>*) cl.inputs.get(0))->x.dim(1);
@@ -109,7 +109,8 @@ namespace ebl {
     first_time = true;
     { idx_bloop2(in, cl.inputs, void*, out, cl.outputs, void*) {
 	idx<Tdata> inx = ((state_idx<Tdata>*) in.get())->x;
-	inx = inx.select(0, 0);
+	//inx = inx.select(0, 0);
+	inx = inx.shift_dim(0, 2);
 	idx<Tdata> outx = ((state_idx<Tdata>*) out.get())->x;
 
 	// draw inputs
@@ -119,24 +120,24 @@ namespace ebl {
 
 	// draw outputs
 	int hcat = 0;
-	double czoom = dzoom * 7.0;
+	double czoom = dzoom * 2.0;
 	int lab = 0;
 	{ idx_bloop1(category, outx, Tdata) {
 	    s.str("");
 	    if (first_time)
-	      s << cl.labels[lab] << " ";
+	      s << cl.labels[lab].idx_ptr() << " ";
 	    s << category.dim(0) << "x" << category.dim(1);
-	    gui << at(h + ihmax + 5 + hcat, 
+	    gui << at(h + ihmax * dzoom + 5 + hcat, 
 		      w0 + category.dim(1) * czoom + 2);
 	    gui << s.str();
-	    draw_matrix(category, h + ihmax + 5 + hcat, w0, 
+	    draw_matrix(category, h + ihmax * dzoom + 5 + hcat, w0, 
 			czoom, czoom, vmin, vmax);
 	    hcat += ohmax * czoom + 2;
 	    lab++;
 	  }}
 
 	scale++;
-	w0 += inx.dim(1) + 5;
+	w0 += inx.dim(1) * dzoom + 5;
 	first_time = false;
       }}
     enable_window_updates();
@@ -165,6 +166,7 @@ namespace ebl {
     //    cl.thenet.fprop(*ii, *oo); 
     mg.display_fprop(cl.thenet, *ii, *oo, h0, w0, 1.0, vmin, vmax,
 		     true, display_wid_fprop);
+    enable_window_updates();
   }
 
   template <class Tdata, class T>

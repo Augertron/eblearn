@@ -49,11 +49,12 @@ void detector_test::test_norb() {
   // input to the network will be 96x96 and there are 5 outputs
   lenet7_binocular<t_net> thenet(theparam, 96, 96, 5);
   theparam.load_x(mono_net.c_str());
-  //  left = left.narrow(2, 2, 0);
+  //left = left.narrow(2, 2, 0);
   //  int tr[3] = { 2, 1, 0 };
   //left = left.transpose(tr);
-  left = left.select(2, 0);
-  detector<t_net> cb((module_1_1<t_net>&)thenet, 4, lbl, 0.0, 0.01);
+  //left = left.select(2, 0);
+  detector<t_net> cb((module_1_1<t_net>&)thenet, left.get_idxdim(),
+		     4, lbl, 0.0, 0.01);
 
   // find category of image
   //  cb.fprop(left, .5);

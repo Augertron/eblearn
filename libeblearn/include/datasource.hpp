@@ -53,7 +53,7 @@ namespace ebl {
   datasource(const datasource<Tnet, Tin1, Tin2> &ds)
     : nclasses(0), bias(ds.bias), coeff(ds.coeff), data(ds.data),
       labels(ds.labels), dataIter(data, 0), labelsIter(labels, 0),
-      height(ds.height), width(ds.width), name(ds.name) {
+      height(ds.height), width(ds.width), name(ds.name), balance(ds.balance) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -207,7 +207,12 @@ namespace ebl {
   intg datasource<Tnet, Tin1, Tin2>::get_nclasses() {
     return nclasses;
   }
-    
+
+  template <class Tnet, class Tin1, class Tin2>
+  intg datasource<Tnet, Tin1, Tin2>::get_lowest_common_size() {
+    return nclasses;
+  }
+  
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::pretty() {
     cout << "dataset \"" << name << "\" contains " << data.dim(0);
