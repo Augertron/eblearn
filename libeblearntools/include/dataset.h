@@ -210,10 +210,9 @@ namespace ebl {
     //! with output dimensions outdims and return the result.
     //! The type of preprocessing can be selected using set_pp_conversion().
     idx<Tdata> preprocess_data(idx<Tdata> &d, const string &class_name,
-			       bool squared = true,
-			       const char *filename = NULL,
-			       const rect *r = NULL,
-			       uint scale = 0);
+			       bool squared = true, const char *filename = NULL,
+			       const rect *r = NULL, uint scale = 0,
+			       bool active_sleepd = true);
 
     //! Convert input image img to format of type conv_type and return the
     //! result. con_type can accept a number of strings,

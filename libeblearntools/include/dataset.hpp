@@ -86,6 +86,7 @@ namespace ebl {
     // processing via the set_pp_conversion method.
     do_preprocessing = false;
     scale_mode = false;
+    scales.push_back(1); // initialize with scale 1
     data_cnt = 0;
     resize_mode = "bilinear";
     interleaved_input = true;
@@ -708,12 +709,10 @@ namespace ebl {
   // data preprocessing
 
   template <class Tdata>
-  idx<Tdata> dataset<Tdata>::preprocess_data(idx<Tdata> &dat,
-					     const string &class_name,
-					     bool squared,
-					     const char *filename,
-					     const rect *r,
-					     uint scale) {
+  idx<Tdata> dataset<Tdata>::
+  preprocess_data(idx<Tdata> &dat, const string &class_name, bool squared,
+		  const char *filename, const rect *r, uint scale,
+		  bool active_sleepd) {
     uint dh = 0, dw = 1;
     // resize image to target dims
     rect out_region, cropped;
@@ -815,7 +814,7 @@ namespace ebl {
       }
       // paint
       enable_window_updates();
-      if (sleep_display)
+      if (sleep_display && active_sleepd)
 	sleep(sleep_delay / 1000.0);
     }
 #endif
@@ -824,9 +823,9 @@ namespace ebl {
   }
 
   template <class Tdata>
-  idx<Tdata> dataset<Tdata>::convert_image_to(idx<Tdata> &img,
-					      const string &conv_type,
-					      const rect &cropped) {
+  idx<Tdata> dataset<Tdata>::
+  convert_image_to(idx<Tdata> &img, const string &conv_type,
+		   const rect &cropped) {
     uint dh = 0, dw = 1;
     // cropped_img is the part of img that contains input
     idx<Tdata> cropped_img = img.narrow(dh, cropped.height, cropped.h0);

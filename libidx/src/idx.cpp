@@ -861,4 +861,9 @@ namespace ebl {
     return out;
   }
 
+  rect operator/(const rect& r, uint d) {
+    rect newr(r.h0 / d, r.w0 / d, r.height / d, r.width / d);
+    return newr;
+  }
+
 } // end namespace ebl
