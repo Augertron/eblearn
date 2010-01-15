@@ -74,6 +74,7 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 #else
 int main(int argc, char **argv) {
 #endif
+#ifdef __GUI__
   new_window(argv[1]);
   idx<float> imf(1, 1, 1);
   if (!load_matrix(imf, argv[1])) {
@@ -82,6 +83,7 @@ int main(int argc, char **argv) {
   }
   draw_matrix(imf);
   gui << imf;
+#endif
   sleep(1);
   return 0;
 }
