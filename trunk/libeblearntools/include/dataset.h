@@ -36,7 +36,7 @@
 #include "libidx.h"
 
 #define MKDIR_RIGHTS 0755
-#define IMAGE_PATTERN ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM)"
+#define IMAGE_PATTERN ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM|pgm|PGM)"
 
 typedef int t_label;
 
