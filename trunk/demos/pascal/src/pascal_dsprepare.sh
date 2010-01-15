@@ -47,7 +47,7 @@ mkdir $OUTBG 2> /dev/null > /dev/null
 #    -disp
 
 # compile regular dataset
-~/eblearn/bin/dscompiler $ROOT -type pascal -precision $PRECISION \
+~/eblearn/bin/dscompiler $PASCALROOT -type pascal -precision $PRECISION \
     -outdir ${OUT} -channels $PP -dname $NAME $MAXDATA $MAXPERCLASS \
     -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 # -disp -maxperclass 5
 
