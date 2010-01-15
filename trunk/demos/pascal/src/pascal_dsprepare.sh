@@ -34,17 +34,17 @@ mkdir $OUT 2> /dev/null > /dev/null
 mkdir $OUTBG 2> /dev/null > /dev/null
 
 # extract background images at different scales
-~/eblearn/bin/dscompiler $PASCALROOT -type pascalbg -precision $PRECISION \
-    -outdir $OUTBG/bg -scales $BGSCALES -dims ${H}x${W}x3 \
-    -maxperclass $NBG $MAXDATA \
-    -channels $PP -ignore_difficult -resize $RESIZE -kernelsz $KERNEL \
-#    -disp -sleep 1000
+# ~/eblearn/bin/dscompiler $PASCALROOT -type pascalbg -precision $PRECISION \
+#     -outdir $OUTBG/bg -scales $BGSCALES -dims ${H}x${W}x3 \
+#     -maxperclass $NBG $MAXDATA \
+#     -channels $PP -ignore_difficult -resize $RESIZE -kernelsz $KERNEL \
+# #    -disp -sleep 1000
 
-# compile background dataset
-~/eblearn/bin/dscompiler ${OUTBG} -type lush -precision $PRECISION \
-    -outdir ${OUT} -dname ${BGDS}_${NBG} $MAXDATA $MAXPERCLASS \
-    -dims ${H}x${W}x3
-#    -disp
+# # compile background dataset
+# ~/eblearn/bin/dscompiler ${OUTBG} -type lush -precision $PRECISION \
+#     -outdir ${OUT} -dname ${BGDS}_${NBG} $MAXDATA $MAXPERCLASS \
+#     -dims ${H}x${W}x3
+# #    -disp
 
 # compile regular dataset
 ~/eblearn/bin/dscompiler $PASCALROOT -type pascal -precision $PRECISION \
