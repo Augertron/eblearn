@@ -264,7 +264,7 @@ void print_usage() {
 // compilation
 
 template <class Tds>
-void compile_ds(Tds &ds) {
+void compile_ds(Tds &ds, bool imgpat = true) {
   ds.set_exclude(exclude);
   if (outdims_set)
     ds.set_outdims(outdims);
@@ -277,7 +277,8 @@ void compile_ds(Tds &ds) {
     ds.set_max_per_class(maxperclass);
   if (maxdata > 0)
     ds.set_max_data(maxdata);
-  ds.set_image_pattern(image_pattern);
+  if (imgpat)
+    ds.set_image_pattern(image_pattern);
   if (scale_mode)
     ds.set_scales(scales, outdir);
   else 
@@ -305,6 +306,8 @@ void compile() {
     ds.set_image_pattern(image_pattern);
     if (maxdata > 0)
       ds.set_max_data(maxdata);
+    if (scale_mode)
+      ds.set_scales(scales, outdir);
     if (preprocessing)
       ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
     ds.extract();
@@ -321,7 +324,7 @@ void compile() {
   }
   else if (!strcmp(type.c_str(), "lush")) {
     lush_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str());
-    compile_ds(ds);
+    compile_ds(ds, false);
   }
   else if (!strcmp(type.c_str(), "regular")) {
     dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str());
@@ -368,10 +371,18 @@ int main(int argc, char **argv) {
   }
   cout << "  max per class limitation: ";
   if (maxperclass > 0) cout << maxperclass; else cout << "none"; cout << endl;
+  cout << "  max data limitation: ";
+  if (maxdata > 0) cout << maxdata; else cout << "none"; cout << endl;
   cout << "  mexican_hat_size: " << mexican_hat_size << endl;
   cout << "  preprocessing kernel size: " << kernelsz << endl;
   cout << "  deformations: " << deformations << endl;
   cout << "  resizing method: " << resize << endl;
+  cout << "  output dimensions: " << outdims << endl;
+  cout << "  scales: ";
+  if (!scale_mode) cout << "none";
+  else for (vector<uint>::iterator i = scales.begin(); i != scales.end(); ++i)
+      cout << *i << " ";
+  cout << endl;
   cout << "___________________________________________________________________";
   cout << endl;
 

@@ -89,7 +89,6 @@ namespace ebl {
 #endif /* __XML__ */
     
   protected:
-    string outdir; // output directory for patches
     uint max_folders; // maximum number of patch directories
     // base class members to be used ///////////////////////////////
     using pascal_dataset<Tdata>::annroot;
@@ -98,12 +97,16 @@ namespace ebl {
     using dataset<Tdata>::display_extraction;
     using dataset<Tdata>::display_result;
     using dataset<Tdata>::outdims;
+    using dataset<Tdata>::outdir;
     using dataset<Tdata>::sleep_display;
     using dataset<Tdata>::sleep_delay;
     using dataset<Tdata>::print_stats;
     using dataset<Tdata>::data_cnt;
     using dataset<Tdata>::extension;
     using dataset<Tdata>::ppconv_type;
+    using dataset<Tdata>::scales;
+    using dataset<Tdata>::max_data;
+    using dataset<Tdata>::max_data_set;
   };
 
 } // end namespace ebl

@@ -59,6 +59,7 @@ namespace ebl {
 					    bool ignore_diff)
     : pascal_dataset<Tdata>(name_, inroot_, ignore_diff) {
     outdir = outdir_;
+    cout << "output directory: " << outdir << endl;
     max_folders = max_folders_;
     data_cnt = 0;
   }
@@ -75,7 +76,7 @@ namespace ebl {
 #ifdef __XML__    
     cout << "Extracting samples from files into dataset..." << endl;
     // adding data to dataset using all xml files in annroot
-    regex eExt(extension);
+    regex eExt(XML_PATTERN);
     cmatch what;
     path p(annroot);
     if (!exists(p)) {
@@ -87,6 +88,8 @@ namespace ebl {
       if (!is_directory(itr->status()) &&
 	  regex_match(itr->leaf().c_str(), what, eExt)) {
 	process_xml(itr->path().string());
+	if (max_data_set && (data_cnt >= max_data))
+	  break ;
       }
     }
     cout << "Extracted and saved " << data_cnt;
@@ -186,65 +189,86 @@ namespace ebl {
   process_image(idx<ubyte> &img, vector<rect>& bboxes,
 		const string &image_filename) {
 #ifdef __GUI__
-    uint h = 0, w = 0;
+    uint h = 48, w = 0;
     if (display_extraction)
       clear_window();
 #endif
+    vector<rect> scaled_bboxes;
+    vector<rect> patch_bboxes;
+    vector<rect>::iterator ibb;
     idxdim d(img);
     idx<Tdata> im(d);
-    idx_copy(img, im);
-    // preprocess image
-    rect r(0, 0, im.dim(0), im.dim(1));
-    im = this->convert_image_to(im, ppconv_type, r);
-    // extract all non overlapping patches with dimensions outdims that
-    // do not overlap with bounding boxes
+    string cname = "background";
+    ostringstream fname;
     vector<idx<Tdata> > patches;
-    vector<rect>::iterator ibb;
     bool overlap;
-    rect patch(0, 0, outdims.dim(0), outdims.dim(1));
-    for (patch.h0 = 0; patch.h0 + patch.height < (uint) im.dim(0);
-	 patch.h0 += patch.height) {
-      for (patch.w0 = 0; patch.w0 + patch.width < (uint) im.dim(1);
-	   patch.w0 += patch.width) {
-	// test if patch overlaps with any bounding box
-	overlap = false;
-	for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb) {
-	  if (patch.overlap(*ibb)) {
-	    overlap = true;
-	    break ;
+    
+    // for each scale, find patches and save them
+    for (vector<uint>::iterator i = scales.begin(); i != scales.end(); ++i) {
+      patches.clear();
+      patch_bboxes.clear();
+      scaled_bboxes.clear(); 
+      idx_copy(img, im); // initialize im to original image
+      // rescale original bboxes
+      for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb)
+	scaled_bboxes.push_back(*ibb / *i);
+      // preprocess image
+      rect r(0, 0, im.dim(0), im.dim(1));
+      idx<Tdata> im2 =
+	this->preprocess_data(im, cname, false, image_filename.c_str(),
+			      &r, *i, false);
+      // extract all non overlapping patches with dimensions outdims that
+      // do not overlap with bounding boxes
+      rect patch(0, 0, outdims.dim(0), outdims.dim(1));
+      for (patch.h0 = 0; patch.h0 + patch.height < (uint) im2.dim(0);
+	   patch.h0 += patch.height) {
+	for (patch.w0 = 0; patch.w0 + patch.width < (uint) im2.dim(1);
+	     patch.w0 += patch.width) {
+	  // test if patch overlaps with any bounding box
+	  overlap = false;
+	  for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb) {
+	    if (patch.overlap(*ibb)) {
+	      overlap = true;
+	      break ;
+	    }
+	  }
+	  if (!overlap) {
+	    // not overlapping, add patch
+	    idx<Tdata> p = im2.narrow(0, patch.height, patch.h0);
+	    p = p.narrow(1, patch.width, patch.w0);
+	    patches.push_back(p);
+	    patch_bboxes.push_back(patch);
 	  }
 	}
-	if (!overlap) {
-	  // not overlapping, add patch
-	  idx<Tdata> p = im.narrow(0, patch.height, patch.h0);
-	  p = p.narrow(1, patch.width, patch.w0);
-	  patches.push_back(p);
-#ifdef __GUI__
-	  if (display_extraction)
-	    draw_matrix(p, patch.h0, patch.w0, 1.0, 1.0, (Tdata) -1, (Tdata) 1);
-#endif
-	}
       }
-    }
 #ifdef __GUI__
-    if (display_extraction) {
-      disable_window_updates();
-      // draw bboxes
-      for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb)
-	draw_box(h + ibb->h0, w + ibb->w0, ibb->height, ibb->width, 255, 0, 0);
-      // draw original image
-      h = im.dim(0) + 5, w = 0;
-      idx<Tdata> tmp = im.select(2, 0);
-      draw_matrix(tmp, h, w, 1.0, 1.0, (Tdata) -1, (Tdata) 1);
-      // draw bboxes on original
-      for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb)
-	draw_box(h + ibb->h0, w + ibb->w0, ibb->height, ibb->width, 255, 0, 0);
-      enable_window_updates();
-      if (sleep_display)
-	sleep(sleep_delay / 1000.0);
-    }
+      if (display_extraction) {
+	disable_window_updates();
+	// draw bboxes
+	for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb)
+	  draw_box(h + ibb->h0, w + ibb->w0,
+		   ibb->height, ibb->width, 255, 0, 0);
+	// draw patches
+	for (ibb = patch_bboxes.begin(); ibb != patch_bboxes.end(); ++ibb)
+	  draw_box(h + ibb->h0, w + ibb->w0,
+		   ibb->height, ibb->width, 0, 255, 0);
+// 	// draw original image
+// 	h = im2.dim(0) + 5, w = 0;
+// 	idx<Tdata> tmp = im2.select(2, 0);
+// 	draw_matrix(tmp, h, w, 1.0, 1.0, (Tdata) -1, (Tdata) 1);
+// 	// draw bboxes on original
+// 	for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb)
+// 	  draw_box(h + ibb->h0, w + ibb->w0,
+// 		   ibb->height, ibb->width, 255, 0, 0);
+	enable_window_updates();
+	if (sleep_display)
+	  sleep(sleep_delay / 1000.0);
+      }
 #endif
-    save_patches(patches, outdir, max_folders, image_filename);
+      fname.str("");
+      fname << image_filename << "_scale" << *i;
+      save_patches(patches, outdir, max_folders, fname.str());
+    }
   }
   
   ////////////////////////////////////////////////////////////////
@@ -259,6 +283,10 @@ namespace ebl {
     try {
       mkdir(outdir.c_str(), MKDIR_RIGHTS);
       uint i;
+      // shuffle randomly vector of patches to avoid taking top left corner
+      // as first patch every time
+      random_shuffle(patches.begin(), patches.end());
+      // loop on patches
       for (i = 0; (i < patches.size()) && (i < max_folders); ++i) {
 	// create folder if doesn't exist
 	folder.str("");
@@ -268,20 +296,20 @@ namespace ebl {
 	mkdir(folder.str().c_str(), MKDIR_RIGHTS);
 	// save patch in folder
 	fname.str("");
-	fname<< folder.str() << filename << ".bg" << i+1 << ".mat";
+	fname << folder.str() << filename << ".bg" << i+1 << ".mat";
 	if (!save_matrix(patches[i], fname.str()))
 	  throw fname.str();
 	cout << data_cnt++ << ": saved " << fname.str().c_str() << endl;
       }
-      if (i < patches.size()) // reached max_folders, fill-up last one
-	for ( ; i < patches.size(); ++i) {
-	  // save patch in folder
-	  fname.str("");
-	  fname << folder.str() << filename << ".bg" << i+1 << ".mat";
-	  if (!save_matrix(patches[i], fname.str()))
-	    throw fname.str();
-	  cout << data_cnt++ << ": saved " << fname.str().c_str() << endl;
-	}
+//       if (i < patches.size()) // reached max_folders, fill-up last one
+// 	for ( ; i < patches.size(); ++i) {
+// 	  // save patch in folder
+// 	  fname.str("");
+// 	  fname << folder.str() << filename << ".bg" << i+1 << ".mat";
+// 	  if (!save_matrix(patches[i], fname.str()))
+// 	    throw fname.str();
+// 	  cout << data_cnt++ << ": saved " << fname.str().c_str() << endl;
+// 	}
     } catch (const string &err) {
       cerr << "error: failed to save patch in " << err << endl;
     }
