@@ -1,32 +1,60 @@
 #!/bin/sh
 
+################################
 # pascal dataset compilation
-ROOT=/data/pascal/VOCdevkit/voc2009/
-OUT=/data/pascal/tmp/
-#ROOT=~/blakeydata/pascal/VOC2009/
-#OUT=$ROOT
-NAME=allbilinear
-MAX=100
-DRAWS=5
-H=32
-W=32
+################################
+
+# directories
+#DATAROOT=/data
+DATAROOT=~/texieradata
+PASCALROOT=$DATAROOT/pascal/VOCdevkit/VOC2009/
+ROOT=$DATAROOT/pascal/
+OUT=$ROOT/ds/
+
+# variables
+H=96
+W=96
+NAME=allbi${H}x${W}
+NAMEBG=${NAME}bg
+MAX=50 # number of samples in validation set
+DRAWS=5 # number of train/val sets to draw
 PRECISION=float
 PP=YpUV
 KERNEL=9
 RESIZE=bilinear
+NBG=1
+BGSCALES=1,2,4
+BGDS=pascalbg${H}x${W}
+OUTBG=$OUT/$BGDS
+#MAXDATA="-maxdata 50"
+#MAXPERCLASS="-maxperclass 25"
 
-# compile dataset
-# ~/eblearn/bin/dscompiler $ROOT -type pascal -precision $PRECISION \
-#     -outdir ${OUT} -channels $PP -ignore_difficult -dname $NAME \
-#     -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 # -disp -maxperclass 5
-
-# # split dataset into training/validation
-# ~/eblearn/bin/dssplit $OUT $NAME ${NAME}_val_${MAX} ${NAME}_train_${MAX} \
-#     -maxperclass ${MAX} -draws $DRAWS
+# create directories
+mkdir $OUT 2> /dev/null > /dev/null
+mkdir $OUTBG 2> /dev/null > /dev/null
 
 # extract background images at different scales
-~/eblearn/bin/dscompiler $ROOT -type pascalbg -precision $PRECISION \
-    -outdir $OUT -scales 2,4 -dims ${H}x${W}x3 -maxperclass 10 \
+~/eblearn/bin/dscompiler $PASCALROOT -type pascalbg -precision $PRECISION \
+    -outdir $OUTBG/bg -scales $BGSCALES -dims ${H}x${W}x3 \
+    -maxperclass $NBG $MAXDATA \
     -channels $PP -ignore_difficult -resize $RESIZE -kernelsz $KERNEL \
-    -disp -sleep 1000
+#    -disp -sleep 1000
+
+# compile background dataset
+~/eblearn/bin/dscompiler ${OUTBG} -type lush -precision $PRECISION \
+    -outdir ${OUT} -dname ${BGDS}_${NBG} $MAXDATA $MAXPERCLASS \
+    -dims ${H}x${W}x3
+#    -disp
+
+# compile regular dataset
+~/eblearn/bin/dscompiler $ROOT -type pascal -precision $PRECISION \
+    -outdir ${OUT} -channels $PP -dname $NAME $MAXDATA $MAXPERCLASS \
+    -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 # -disp -maxperclass 5
+
+# merge normal dataset with background dataset
+~/eblearn/bin/dsmerge $OUT ${NAMEBG} ${BGDS}_$NBG ${NAME}
+
+# split dataset into training/validation
+~/eblearn/bin/dssplit $OUT ${NAMEBG} ${NAMEBG}_val_${MAX}_ \
+    ${NAMEBG}_train_${MAX}_ -maxperclass ${MAX} -draws $DRAWS
     
