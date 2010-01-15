@@ -49,6 +49,7 @@ mkdir $OUTBG 2> /dev/null > /dev/null
 # compile regular dataset
 ~/eblearn/bin/dscompiler $PASCALROOT -type pascal -precision $PRECISION \
     -outdir ${OUT} -channels $PP -dname $NAME $MAXDATA $MAXPERCLASS \
+     -ignore_difficult \
     -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 # -disp -maxperclass 5
 
 # merge normal dataset with background dataset
