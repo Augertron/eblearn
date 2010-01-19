@@ -42,8 +42,7 @@ using namespace std;
 namespace ebl {
 
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, idxdim &ind,
-			unsigned int nresolutions_, 
+  detector<T>::detector(module_1_1<T> &thenet_,	unsigned int nresolutions_, 
 			idx<const char*> &labels_, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1),
@@ -53,12 +52,10 @@ namespace ebl {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
-    init(ind);
   }
 
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, idxdim &ind,
-			unsigned int nresolutions_, 
+  detector<T>::detector(module_1_1<T> &thenet_, unsigned int nresolutions_, 
 			idx<ubyte> &labels_, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), labels(labels_),
@@ -67,12 +64,10 @@ namespace ebl {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
-    init(ind);
   }
 
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, idxdim &ind,
-			idx<unsigned int> &resolutions_,
+  detector<T>::detector(module_1_1<T> &thenet_, idx<unsigned int> &resolutions_,
 			idx<const char*> &labels_, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1),
@@ -84,9 +79,68 @@ namespace ebl {
     idx_clear(results);
     if (nresolutions < 1)
       eblerror("the number of resolutions is expected to be more than 0");
-    init(ind);
   }
 
+  template <class T>
+  detector<T>::~detector() {
+    { idx_bloop3(in, inputs, void*, out, outputs, void*, r, results, void*) {
+	state_idx<T> *s;
+	s = (state_idx<T>*) in.get();
+	if (s) delete s;
+	s = (state_idx<T>*) out.get();
+	if (s) delete s;
+	s = (state_idx<T>*) r.get();
+	if (s) delete s;
+      }}
+  }
+
+  template <class T>
+  void detector<T>::init(idxdim &dsample) {
+    // size of the sample to process
+    int thickness = (dsample.order() == 2) ? 1 : dsample.dim(2); // TODO FIXME
+    height = dsample.dim(0);    
+    width = dsample.dim(1);
+    grabbed = idx<T>(height, width);    
+    input_dim = idxdim(height, width, thickness);
+    idxdim sd(thickness, height, width);
+    cout << "machine's intermediate sizes with a " << sd << " input: " << endl;
+    thenet.pretty(sd);
+
+    if (!manual_resolutions)
+      compute_resolutions(input_dim, nresolutions);
+    cout << "multi-resolution detection initialized to ";
+    print_resolutions();
+    
+    // resize input to closest compatible size
+    //    sample = image_resize(sample, indim.dim(0), indim.dim(1));
+    
+    // initialize input and output states and result matrices for each size
+    // TODO: if allocated, deallocate first
+    inputs  = idx<void*>(nresolutions);
+    outputs = idx<void*>(nresolutions);
+    results = idx<void*>(nresolutions);
+
+    //sizes.set(sample.dim(0) / (float) in_mindim.dim(0), 3);
+
+    { idx_bloop4(resolution, resolutions, unsigned int, 
+		 in, inputs, void*, 
+		 out, outputs, void*,
+		 r, results, void*) {
+	// Compute the input sizes for each scale
+	idxdim scaled_dims(thickness, resolution.get(0), resolution.get(1));
+	// Adapt the size to the network structure:
+	idxdim out_dims = thenet.fprop_size(scaled_dims);
+	// set buffers
+	in.set((void*) new state_idx<T>(thickness,
+					scaled_dims.dim(1),
+					scaled_dims.dim(2)));
+	out.set((void*) new state_idx<T>(labels.dim(0) + 1, 
+					 out_dims.dim(1), out_dims.dim(2)));
+	r.set((void*) new idx<T>(out_dims.dim(1), out_dims.dim(2),
+				 2)); // (class,score)
+      }}
+  }
+    
   template <class T>
   void detector<T>::set_bgclass(const char *bg) {
     int i = 0;
@@ -171,66 +225,6 @@ namespace ebl {
     cout << endl;
   }
   
-  template <class T>
-  void detector<T>::init(idxdim &dsample) {
-    // size of the sample to process
-    int thickness = (dsample.order() == 2) ? 1 : dsample.dim(2); // TODO FIXME
-    height = dsample.dim(0);    
-    width = dsample.dim(1);
-    grabbed = idx<T>(height, width);    
-    input_dim = idxdim(height, width, thickness);
-    idxdim sd(thickness, height, width);
-    cout << "machine's intermediate sizes with a " << sd << " input: " << endl;
-    thenet.pretty(sd);
-
-    if (!manual_resolutions)
-      compute_resolutions(input_dim, nresolutions);
-    cout << "multi-resolution detection initialized to ";
-    print_resolutions();
-    
-    // resize input to closest compatible size
-    //    sample = image_resize(sample, indim.dim(0), indim.dim(1));
-    
-    // initialize input and output states and result matrices for each size
-    // TODO: if allocated, deallocate first
-    inputs  = idx<void*>(nresolutions);
-    outputs = idx<void*>(nresolutions);
-    results = idx<void*>(nresolutions);
-
-    //sizes.set(sample.dim(0) / (float) in_mindim.dim(0), 3);
-
-    { idx_bloop4(resolution, resolutions, unsigned int, 
-		 in, inputs, void*, 
-		 out, outputs, void*,
-		 r, results, void*) {
-	// Compute the input sizes for each scale
-	idxdim scaled_dims(thickness, resolution.get(0), resolution.get(1));
-	// Adapt the size to the network structure:
-	idxdim out_dims = thenet.fprop_size(scaled_dims);
-	// set buffers
-	in.set((void*) new state_idx<T>(thickness,
-					scaled_dims.dim(1),
-					scaled_dims.dim(2)));
-	out.set((void*) new state_idx<T>(labels.dim(0) + 1, 
-					 out_dims.dim(1), out_dims.dim(2)));
-	r.set((void*) new idx<T>(out_dims.dim(1), out_dims.dim(2),
-				 2)); // (class,score)
-      }}
-  }
-  
-  template <class T>
-  detector<T>::~detector() {
-    { idx_bloop3(in, inputs, void*, out, outputs, void*, r, results, void*) {
-	state_idx<T> *s;
-	s = (state_idx<T>*) in.get();
-	if (s) delete s;
-	s = (state_idx<T>*) out.get();
-	if (s) delete s;
-	s = (state_idx<T>*) r.get();
-	if (s) delete s;
-      }}
-  }
-
   template <class T>
   void detector<T>::mark_maxima(T threshold) {    
     { idx_bloop2(out_map, outputs, void*, res_map, results, void*) {
@@ -384,9 +378,9 @@ namespace ebl {
       img3 = img2;
     grabbed = img3;
     if (!(input_dim == img.get_idxdim())) {
-      cerr << "warning: unexpected input size, expected " << input_dim;
-      cerr << ", got " << img.get_idxdim() << ", reinitializing detector.";
-      cerr << endl;
+//       cerr << "warning: unexpected input size, expected " << input_dim;
+//       cerr << ", got " << img.get_idxdim() << ", reinitializing detector.";
+//       cerr << endl;
       init(img.get_idxdim());
     }
     // do a fprop for each scaled input sample
@@ -409,7 +403,7 @@ namespace ebl {
   	idx<T> inx = ((state_idx<T>*) in.get())->x;
   	idx<T> imres = sample;
 	if ((inx.dim(1) != imres.dim(0)) || (inx.dim(2) != imres.dim(1)))
-	  imres = image_resize(imres, inx.dim(1), inx.dim(2), 1);
+	  imres = image_resize(imres, inx.dim(1), inx.dim(2), 0);
 	// TODO: temporary, use channels_dim
   	imres = imres.shift_dim(2, 0);
 	idx_copy(imres, inx);

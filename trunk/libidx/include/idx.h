@@ -738,9 +738,12 @@ namespace ebl {
     //! Pretty-prints elements to a stream.
     //friend std::ostream& operator<<( std::ostream& out, idx<T>& tensor );
 
-    //! Pretty-prints IDx metadata to a file pointer.
-    virtual void pretty(FILE *);
+    //! Pretty-prints Idx metadata to std::cout.
+    virtual void pretty();
+    //! Pretty-prints Idx metadata to a stream.
     virtual void pretty(std::ostream& out);
+    //! Pretty-prints Idx metadata to a file pointer.
+    virtual void pretty(FILE *);
 
     //! Pretty-prints elements to a stream.
     virtual void printElems(); // calls printElems( std::cout );

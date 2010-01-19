@@ -33,8 +33,6 @@
 #ifndef DETECTOR_GUI_HPP_
 #define DETECTOR_GUI_HPP_
 
-//#include "detector_gui.h"
-
 using namespace std;
 
 namespace ebl {
@@ -43,10 +41,11 @@ namespace ebl {
   // detector_gui
 
   template <class Tdata, class T>
-  void detector_gui::display(detector<Tdata> &cl, idx<T> &img,
-			     double threshold, unsigned int h0, unsigned int w0,
-			     double dzoom,  Tdata vmin, Tdata vmax,
-			     int wid, const char *wname){
+  vector<bbox> detector_gui::display(detector<Tdata> &cl, idx<T> &img,
+				     double threshold, unsigned int h0,
+				     unsigned int w0,
+				     double dzoom,  Tdata vmin, Tdata vmax,
+				     int wid, const char *wname){
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: output"));
     select_window(display_wid);
@@ -66,23 +65,23 @@ namespace ebl {
 	       new string((const char *)cl.labels[i->class_id].idx_ptr()));
     }
     draw_matrix(cl.grabbed, h0, w0, dzoom, dzoom, (Tdata)vmin, (Tdata)vmax);   
-    enable_window_updates();
+    // enable_window_updates();
+    return vb;
   }
 
   template <class Tdata, class T>
-  void detector_gui::display_inputs_outputs(detector<Tdata> &cl, 
-					    idx<T> &img, double threshold,
-					    unsigned int h0, unsigned int w0,
-					    double dzoom, Tdata vmin,
-					    Tdata vmax, int wid, 
-					    const char *wname){
+  vector<bbox> detector_gui::
+  display_inputs_outputs(detector<Tdata> &cl, idx<T> &img, double threshold,
+			 unsigned int h0, unsigned int w0, double dzoom,
+			 Tdata vmin, Tdata vmax, int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
     disable_window_updates();
 
     // draw input and output
-    display(cl, img, threshold, h0, w0, dzoom, vmin, vmax, display_wid_fprop);
+    vector<bbox> bb =
+      display(cl, img, threshold, h0, w0, dzoom, vmin, vmax, display_wid_fprop);
 
     // draw internal inputs and outputs
     int h = h0 + cl.height * dzoom + 5;
@@ -129,7 +128,7 @@ namespace ebl {
 	    s << category.dim(0) << "x" << category.dim(1);
 	    gui << at(h + ihmax * dzoom + 5 + hcat, 
 		      w0 + category.dim(1) * czoom + 2);
-	    gui << s.str();
+	    gui << black_on_white() << s.str();
 	    draw_matrix(category, h + ihmax * dzoom + 5 + hcat, w0, 
 			czoom, czoom, vmin, vmax);
 	    hcat += ohmax * czoom + 2;
@@ -141,22 +140,24 @@ namespace ebl {
 	first_time = false;
       }}
     enable_window_updates();
+    return bb;
   }
 
   template <class Tdata, class T>
-  void detector_gui::display_all(detector<Tdata> &cl, idx<T> &img, 
-				 double threshold,
-				 unsigned int h0, unsigned int w0,
-				 double dzoom, Tdata vmin, Tdata vmax,
-				 int wid, const char *wname){
+  vector<bbox> detector_gui::display_all(detector<Tdata> &cl, idx<T> &img, 
+					 double threshold,
+					 unsigned int h0, unsigned int w0,
+					 double dzoom, Tdata vmin, Tdata vmax,
+					 int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
     disable_window_updates();
 
     // draw input and output
-    display_inputs_outputs(cl, img, threshold, h0, w0, dzoom, vmin, vmax,
-			   display_wid_fprop);
+    vector<bbox> bb =
+      display_inputs_outputs(cl, img, threshold, h0, w0, dzoom, vmin, vmax,
+			     display_wid_fprop);
 
     // draw internal states of first scale
     w0 = (cl.width + 5) * 2 + 5;
@@ -167,6 +168,7 @@ namespace ebl {
     mg.display_fprop(cl.thenet, *ii, *oo, h0, w0, 1.0, vmin, vmax,
 		     true, display_wid_fprop);
     enable_window_updates();
+    return bb;
   }
 
   template <class Tdata, class T>

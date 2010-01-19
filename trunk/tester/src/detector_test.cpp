@@ -53,8 +53,7 @@ void detector_test::test_norb() {
   //  int tr[3] = { 2, 1, 0 };
   //left = left.transpose(tr);
   //left = left.select(2, 0);
-  detector<t_net> cb((module_1_1<t_net>&)thenet, left.get_idxdim(),
-		     4, lbl, 0.0, 0.01);
+  detector<t_net> cb((module_1_1<t_net>&)thenet, 4, lbl, 0.0, 0.01);
 
   // find category of image
   //  cb.fprop(left, .5);

@@ -58,10 +58,10 @@ namespace ebl {
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <class Tdata, class T>
-    void display(detector<Tdata> &cl, idx<T> &img, double threshold,
-		 unsigned int h0 = 0, unsigned int w0 = 0, 
-		 double dzoom = 1.0, Tdata vmin = 0, Tdata vmax = 0,
-		 int wid = -1, const char *wname = NULL);
+      vector<bbox> display(detector<Tdata> &cl, idx<T> &img, double threshold,
+			   unsigned int h0 = 0, unsigned int w0 = 0, 
+			   double dzoom = 1.0, Tdata vmin = 0, Tdata vmax = 0,
+			   int wid = -1, const char *wname = NULL);
 
     //! display the regular input/output display but also the inputs and outputs
     //! corresponding to each scale, corresponding to a call to 
@@ -70,12 +70,12 @@ namespace ebl {
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <class Tdata, class T>
-    void display_inputs_outputs(detector<Tdata> &cl, 
-				idx<T> &img, double threshold,
-				unsigned int h0 = 0, unsigned int w0 = 0, 
-				double dzoom = 1.0, Tdata vmin = 0,
-				Tdata vmax = 0, int wid = -1, 
-				const char *wname = NULL);
+      vector<bbox> display_inputs_outputs(detector<Tdata> &cl, 
+					  idx<T> &img, double threshold,
+					  unsigned int h0 = 0, unsigned int w0 = 0, 
+					  double dzoom = 1.0, Tdata vmin = 0,
+					  Tdata vmax = 0, int wid = -1, 
+					  const char *wname = NULL);
     
     //! display all, display_inputs_outputs and the internal states of the fprop
     //! on the first scale, corresponding to a call to 
@@ -84,20 +84,20 @@ namespace ebl {
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <class Tdata, class T>
-    void display_all(detector<Tdata> &cl, idx<T> &img, 
-		     double threshold,unsigned int h0 = 0, unsigned int w0 = 0, 
-		     double dzoom = 1.0, Tdata vmin = 0, Tdata vmax = 0,
-		     int wid = -1,const char *wname = NULL);
+      vector<bbox> display_all(detector<Tdata> &cl, idx<T> &img, 
+			       double threshold,unsigned int h0 = 0, unsigned int w0 = 0, 
+			       double dzoom = 1.0, Tdata vmin = 0, Tdata vmax = 0,
+			       int wid = -1,const char *wname = NULL);
 
     //! displays all the current state of the classifier. 
     //! If a window id <wid> is specified, 
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <class Tdata, class T>
-    void display_current(detector<Tdata> &cl, 
-			 idx<T> &sample,
-			 int wid = -1, 
-			 const char *wname = NULL);
+      void display_current(detector<Tdata> &cl, 
+			   idx<T> &sample,
+			   int wid = -1, 
+			   const char *wname = NULL);
 
   };
 

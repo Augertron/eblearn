@@ -1139,6 +1139,10 @@ namespace ebl {
     spec.pretty(f);
   }
 
+  template <class T> void idx<T>::pretty(){
+    pretty(cout);
+  }
+
   template <class T> void idx<T>::pretty(std::ostream& out){
     out << "idx: at address " << (intg)this << "\n";
     out << "  storage=" <<  (intg)storage << "(size=" << storage->size();

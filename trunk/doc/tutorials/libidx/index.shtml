@@ -49,7 +49,15 @@
 	  (e.g. draw_matrix_float instead of draw_matrix<float>).
 	  Some of those instantiations are available in the
 	  libeblearntools, link with this library to use them. 
-	  
+
+	  call ebl::new_window(0, 42,42);
+
+	  Note: if this does not work, the debug symbols might not be available,
+	    try a make clean and recompile in debug mode (make debug).
+	  Note: gdb requires all parameters to be specified, even default ones.
+
+	  To get information about an idx call "toto", do:
+	  p toto.pretty()
 	  
 <div id="vc_markup"><pre>
     <a id="l_1"></a><span class="hl line">      </span><span class="hl dir">#include</span> <span class="hl dstr">&quot;libeblearn.h&quot;</span><span class="hl dir"></span>
