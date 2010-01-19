@@ -618,13 +618,15 @@ namespace ebl {
     // it requires allocation of an extra dataset.
     // instead, we use a random list of indices to assign the first random
     // samples to dataset 1 and the remaining to dataset 2.
-    list<intg> ids;
+    vector<intg> ids;
     idx<Tdata> sample;
     for (intg i = 0; i < data.dim(0); ++i) ids.push_back(i);
     random_shuffle(ids.begin(), ids.end());
-    for (list<intg>::iterator i = ids.begin(); i != ids.end(); ++i) {
-      if (!ds1.add_data(data[*i], classes[ (size_t)labels[*i] ]))
-	ds2.add_data(data[*i], classes[ (size_t)labels[*i] ]);
+    for (vector<intg>::iterator i = ids.begin(); i != ids.end(); ++i) {
+      sample = data[*i];
+      cout << "(original index " << *i << ") ";
+      if (!ds1.add_data(sample, classes[ (size_t)labels.get(*i) ]))
+	ds2.add_data(sample, classes[ (size_t)labels.get(*i) ]);
     }
     ds1.data_cnt = idx_sum(ds1.add_tally);
     ds2.data_cnt = idx_sum(ds2.add_tally);

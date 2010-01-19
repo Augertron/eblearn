@@ -34,28 +34,27 @@ mkdir $OUT 2> /dev/null > /dev/null
 mkdir $OUTBG 2> /dev/null > /dev/null
 
 # extract background images at different scales
-# ~/eblearn/bin/dscompiler $PASCALROOT -type pascalbg -precision $PRECISION \
-#     -outdir $OUTBG/bg -scales $BGSCALES -dims ${H}x${W}x3 \
-#     -maxperclass $NBG $MAXDATA \
-#     -channels $PP -ignore_difficult -resize $RESIZE -kernelsz $KERNEL \
-# #    -disp -sleep 1000
+~/eblearn/bin/dscompiler $PASCALROOT -type pascalbg -precision $PRECISION \
+    -outdir $OUTBG/bg -scales $BGSCALES -dims ${H}x${W}x3 \
+    -maxperclass $NBG $MAXDATA \
+    -channels $PP -ignore_difficult -resize $RESIZE -kernelsz $KERNEL \
+#    -disp -sleep 1000
 
-# # compile background dataset
-# ~/eblearn/bin/dscompiler ${OUTBG} -type lush -precision $PRECISION \
-#     -outdir ${OUT} -dname ${BGDS}_${NBG} $MAXDATA $MAXPERCLASS \
-#     -dims ${H}x${W}x3
-# #    -disp
+# compile background dataset
+~/eblearn/bin/dscompiler ${OUTBG} -type lush -precision $PRECISION \
+    -outdir ${OUT} -dname ${BGDS}_${NBG} $MAXDATA $MAXPERCLASS \
+    -dims ${H}x${W}x3
+#    -disp
 
 # compile regular dataset
 ~/eblearn/bin/dscompiler $PASCALROOT -type pascal -precision $PRECISION \
     -outdir ${OUT} -channels $PP -dname $NAME $MAXDATA $MAXPERCLASS \
-     -ignore_difficult \
+    -ignore_difficult \
     -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 # -disp -maxperclass 5
 
 # merge normal dataset with background dataset
-~/eblearn/bin/dsmerge $OUT ${NAMEBG} ${BGDS}_$NBG ${NAME}
+~/eblearn/bin/dsmerge $OUT ${NAMEBG} ${NAME} ${BGDS}_$NBG
 
 # split dataset into training/validation
 ~/eblearn/bin/dssplit $OUT ${NAMEBG} ${NAMEBG}_val_${MAX}_ \
     ${NAMEBG}_train_${MAX}_ -maxperclass ${MAX} -draws $DRAWS
-    
