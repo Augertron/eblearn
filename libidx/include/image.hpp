@@ -128,12 +128,13 @@ namespace ebl {
 		 (uint)(iregion.width * ratiow));
     if (oregion_)
       *oregion_ = oregion;
+    // TODO: why is this useful? for ubyte images?
     // subsample by integer ratio if necessary
-    if ((rh > 1) || (rw > 1)) {
-      contim = image_subsample(contim, rh, rw);
-      imw = contim.dim(1);
-      imh = contim.dim(0);
-    }
+//     if ((rh > 1) || (rw > 1)) {
+//       contim = image_subsample(contim, rh, rw);
+//       imw = contim.dim(1);
+//       imh = contim.dim(0);
+//     }
     // resample from subsampled image with bilinear interpolation
     idx<T> rez((intg) oh, (intg) ow, (contim.order() == 3) ? contim.dim(2) : 1);
     rez.set_chandim(contim.get_chandim());

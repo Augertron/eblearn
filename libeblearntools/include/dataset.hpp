@@ -94,7 +94,7 @@ namespace ebl {
     mpc = numeric_limits<intg>::max();
     init_drand(time(NULL)); // initialize random seed
 #ifndef __BOOST__
-    eblerror("Boost libraries not available, install libboost-filesystem-dev libboost-regex-dev and recompile");
+    eblerror(BOOST_LIB_ERROR);
 #endif
   }
 

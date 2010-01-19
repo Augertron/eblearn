@@ -48,6 +48,9 @@ namespace ebl {
   double idx_max_double(idx<double> &m);
   double idx_min_double(idx<double> &m);
 
+  float idx_max_float(idx<float> &m);
+  float idx_min_float(idx<float> &m);
+
 #ifdef __GUI__
   ////////////////////////////////////////////////////////////////
   // instantiations of draw_matrix, useful for debugging under gdb
@@ -74,12 +77,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // global idx variables, useful for debugging under gdb
   
-  extern ebl::idx<double> gdb_idx_double1;
-  extern ebl::idx<double> gdb_idx_double2;
-  extern ebl::idx<float> gdb_idx_float1;
-  extern ebl::idx<float> gdb_idx_float2;
-  extern ebl::idx<ubyte> gdb_idx_ubyte1;
-  extern ebl::idx<ubyte> gdb_idx_ubyte2;
+  extern idx<double>	gdb_idx_double1;
+  extern idx<double>	gdb_idx_double2;
+  extern idx<float>	gdb_idx_float1;
+  extern idx<float>	gdb_idx_float2;
+  extern idx<ubyte>	gdb_idx_ubyte1;
+  extern idx<ubyte>	gdb_idx_ubyte2;
   
 } // end namespace ebl
 

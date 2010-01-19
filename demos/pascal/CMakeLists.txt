@@ -12,6 +12,20 @@ include_directories(${LIBEBLEARN_INCLUDE_DIR})
 include_directories(${LIBEBLEARNTOOLS_INCLUDE_DIR})
 include_directories(${LIBIDX_INCLUDE_DIR})
 
+# find boost
+###############################################################################
+FIND_PACKAGE(Boost COMPONENTS filesystem regex)
+IF (Boost_FOUND)
+  IF (${Boost_MINOR_VERSION} GREATER 34)
+    FIND_PACKAGE(Boost COMPONENTS system filesystem regex)
+  ENDIF(${Boost_MINOR_VERSION} GREATER 34)
+  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__BOOST__")
+  INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
+  ##LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+ENDIF(Boost_FOUND)
+
+# find QT
+###############################################################################
 FIND_PACKAGE(Qt4)
 IF (QT_FOUND) #-----------------------------------------------------------------
   # add include directories
@@ -24,7 +38,7 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GUI__")
 ENDIF (QT_FOUND) #--------------------------------------------------------------
 
-# compile executable
+# compile executable: pascal_train
 ################################################################################
 add_executable (pascal_train
   src/train.cpp
@@ -47,17 +61,24 @@ EXEC_PROGRAM("cp" ARGS
   "\"${CMAKE_CURRENT_SOURCE_DIR}/src/pascal_dsprepare.sh\""
   "\"${LIBRARY_OUTPUT_PATH}\"")
 		
-# compile executable
+# compile executable: pascal_detect
 ################################################################################
-add_executable (pascal_reco
-  src/reco.cpp
+add_executable (pascal_detect
+  src/detect.cpp
   )
   
 # link executable with external libraries
 ################################################################################
-target_link_libraries (pascal_reco eblearn idx)
+target_link_libraries (pascal_detect eblearn idx eblearntools)
 IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (pascal_reco idxgui)
-  target_link_libraries (pascal_reco eblearngui)
+  target_link_libraries (pascal_detect idxgui)
+  target_link_libraries (pascal_detect eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
+IF (${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(pascal_detect ${Boost_SYSTEM_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+ELSE(${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(pascal_detect ${Boost_FILESYSTEM_LIBRARY} 
+    ${Boost_REGEX_LIBRARY})
+ENDIF (${Boost_MINOR_VERSION} GREATER 34)
   

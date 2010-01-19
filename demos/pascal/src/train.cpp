@@ -22,8 +22,7 @@ int main(int argc, char **argv) { // regular main without gui
   }
   typedef float t_net;
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
-  init_drand(0); // initialize fixed random seed
-  //  init_drand(time(NULL)); // initialize random seed
+  init_drand(time(NULL)); // initialize random seed
   configuration conf(argv[1]); // configuration file
   bool display = conf.get_bool("display"); // enable/disable display
   uint ninternals = conf.get_uint("ninternals"); // # examples' to display

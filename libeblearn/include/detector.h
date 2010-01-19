@@ -113,17 +113,21 @@ namespace ebl {
     // constructors
     
     //! Constructor.
-    detector(module_1_1<T> &thenet, idxdim &ind, unsigned int nresolutions, 
+    //! \param lbls A const char* idx containing class name strings.
+    detector(module_1_1<T> &thenet, unsigned int nresolutions, 
 	     idx<const char*> &lbls, T bias = 0, float coeff = 1.0);
     
     //! Constructor. lbls is an idx containing each class name.
-    detector(module_1_1<T> &thenet, idxdim &ind, unsigned int nresolutions, 
+    //! \param lbls A ubyte idx containing class name strings.
+    detector(module_1_1<T> &thenet, unsigned int nresolutions, 
 	     idx<ubyte> &lbls, T bias = 0, float coeff = 1.0);
     
     //! Constructor.
-    detector(module_1_1<T> &thenet, idxdim &ind, idx<unsigned int> &resolutions,
+    //! \param lbls A const char* idx containing class name strings.
+    detector(module_1_1<T> &thenet, idx<unsigned int> &resolutions,
 	     idx<const char*> &lbls, T bias = 0, float coeff = 1.0);
-    //    detector(module_1_1<state_idx, state_idx> &thenet);
+
+    //! Destructor.
     virtual ~detector();
 
     ////////////////////////////////////////////////////////////////

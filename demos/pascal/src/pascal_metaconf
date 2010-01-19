@@ -10,19 +10,11 @@ meta_name = pascal_bibg50
 meta_max_cpus = 8
 meta_output_dir = /home/sermanet/texieradata/pascal/out
 meta_email = me@mail.com
-meta_email_period = 1 # send a email with plots after every n iterations
+meta_email_period = 1 # send an email with plots after every n iterations
 meta_gnuplot_params = set grid ytics;set ytics 5;set mytics 5;set grid mytics;
 
 ################################################################################
 # LOCAL PROGRAM CONFIGURATION
-
-root = /home/sermanet/texieradata/pascal/ds
-train = allbi96x96bg_train_50_1
-test = allbi96x96bg_val_50_1
-eta = .00001 .000005
-iterations = 100
-display = 0
-ninternals = 1
 
 # network
 net_ih = 96
@@ -38,3 +30,20 @@ net_s2w = 4
 net_full = 100
 absnorm = 0 1
 color = 0 1
+
+# training variables
+root = /home/sermanet/texieradata/pascal/ds
+train = allbi96x96bg_train_50_1
+test = allbi96x96bg_val_50_1
+eta = .00001 .000005
+iterations = 100
+display = 0
+ninternals = 1
+
+# detection variables
+weights = /home/pierre/trained/20100119.104533.pascal_bibg50_conf02_absnorm_0_color_1_eta_.00001_net.mat
+classes = /home/pierre/trained/20100119.104533.pascal_bibg50_conf02_absnorm_0_color_1_eta_.00001_classes.mat
+#test_root =/home/sermanet/texieradata/pascal/VOCdevkit_test09/VOC2009/JPEGImages
+test_root = /data/pascal/VOCdevkit_test09/VOC2009/JPEGImages
+normalization_size = 9
+answer_root = /data/pascal/out/

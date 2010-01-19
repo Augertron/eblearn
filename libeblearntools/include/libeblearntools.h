@@ -37,5 +37,6 @@
 #include "gdb.h"
 #include "xml_utils.h"
 #include "opencv.h"
+#include "dataset.h"
 
 #endif /* LIBEBLEARNTOOLS_H_ */

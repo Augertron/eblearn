@@ -46,6 +46,14 @@ namespace ebl {
     return idx_min<double>(m);
   }
   
+  float idx_max_float(idx<float> &m) {
+    return idx_max<float>(m);
+  }
+  
+  float idx_min_float(idx<float> &m) {
+    return idx_min<float>(m);
+  }
+  
 #ifdef __GUI__
   ////////////////////////////////////////////////////////////////
   // instantiations of draw_matrix, useful for debugging under gdb
