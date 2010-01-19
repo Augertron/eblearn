@@ -92,6 +92,7 @@ namespace ebl {
     interleaved_input = true;
     max_per_class_set = false;
     mpc = numeric_limits<intg>::max();
+    init_drand(time(NULL)); // initialize random seed
 #ifndef __BOOST__
     eblerror("Boost libraries not available, install libboost-filesystem-dev libboost-regex-dev and recompile");
 #endif
@@ -606,7 +607,6 @@ namespace ebl {
     ds2.do_preprocessing = false;
     ds1.interleaved_input = false;
     ds2.interleaved_input = false;
-    shuffle();
     // alloc each dataset
     ds1.allocate(data.dim(0), outdims);
     ds2.allocate(data.dim(0), outdims);
@@ -614,9 +614,17 @@ namespace ebl {
     // if 1st has reached max per class, it will return false upon addition
     cout << "Adding data to \"" << ds1.name << "\" and \"" << ds2.name << "\".";
     cout << endl;
-    idx_bloop2(sample, data, Tdata, lab, labels, t_label) {
-      if (!ds1.add_data(sample, classes[(size_t)lab.get()]))
-	ds2.add_data(sample, classes[(size_t)lab.get()]);
+    // using the shuffle() method is a problem with big datasets because
+    // it requires allocation of an extra dataset.
+    // instead, we use a random list of indices to assign the first random
+    // samples to dataset 1 and the remaining to dataset 2.
+    list<intg> ids;
+    idx<Tdata> sample;
+    for (intg i = 0; i < data.dim(0); ++i) ids.push_back(i);
+    random_shuffle(ids.begin(), ids.end());
+    for (list<intg>::iterator i = ids.begin(); i != ids.end(); ++i) {
+      if (!ds1.add_data(data[*i], classes[ (size_t)labels[*i] ]))
+	ds2.add_data(data[*i], classes[ (size_t)labels[*i] ]);
     }
     ds1.data_cnt = idx_sum(ds1.add_tally);
     ds2.data_cnt = idx_sum(ds2.add_tally);
