@@ -33,10 +33,16 @@
 #ifndef LIBEBLEARNTOOLS_H_
 #define LIBEBLEARNTOOLS_H_
 
+#define MKDIR_RIGHTS 0755
+#define IMAGE_PATTERN ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM|pgm|PGM)"
+
+// link error messages
+#define BOOST_LIB_ERROR "Boost libraries not available, install \
+libboost-filesystem-dev libboost-regex-dev and recompile"
+
 #include "configuration.h"
 #include "gdb.h"
 #include "xml_utils.h"
 #include "opencv.h"
-#include "dataset.h"
 
 #endif /* LIBEBLEARNTOOLS_H_ */

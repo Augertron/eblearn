@@ -243,7 +243,8 @@ namespace ebl {
     Tlabel lab;
     init(ds, &log);
     for (int i = 0; i < niter; ++i) { // niter iterations
-      for (unsigned int j = 0; j < ds.size(); ++j) { // training on entire set
+      // training on lowest size common to all classes (times # classes)
+      for (intg j = 0; j < ds.get_lowest_common_size(); ++j) {
 	ds.fprop(*input, label);
 	lab = label.get();
 	learn_sample(*input, lab, args);
