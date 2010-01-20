@@ -83,6 +83,11 @@ namespace ebl {
     dataIter = dIter;
     labelsIter = lIter;
     balance = false;
+    // count number of samples per class
+    counts.resize(nclasses);
+    idx_bloop1(lab, labels, Tin2) {
+      counts[(size_t)lab.get()]++;
+    }
     this->pretty();
   }
 
@@ -148,15 +153,15 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next() {
     if (balance) {
-      intg i = label_indexes[iitr][indexes_itr[iitr]];
+      intg i = label_indices[iitr][indices_itr[iitr]];
       //      cout << "#" << i << "/" << iitr << " ";
       dataIter = dataIter.at(i);
       labelsIter = labelsIter.at(i);
-      indexes_itr[iitr] += 1;
-      if (indexes_itr[iitr] >= label_indexes[iitr].size())
-	indexes_itr[iitr] = 0;
+      indices_itr[iitr] += 1;
+      if (indices_itr[iitr] >= label_indices[iitr].size())
+	indices_itr[iitr] = 0;
       iitr++;
-      if (iitr >= label_indexes.size())
+      if (iitr >= label_indices.size())
 	iitr = 0;
     } else {
       ++dataIter;
@@ -180,25 +185,25 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_balanced() {
     balance = true;
-    // compute vector of sample indexes for each class
-    label_indexes.clear();
-    indexes_itr.clear();
+    // compute vector of sample indices for each class
+    label_indices.clear();
+    indices_itr.clear();
     iitr = 0;
     uint nclasses = idx_max(labels) + 1;
     for (uint i = 0; i < nclasses; ++i) {
-      vector<intg> indexes;
-      label_indexes.push_back(indexes);
-      indexes_itr.push_back(0); // init iterators
+      vector<intg> indices;
+      label_indices.push_back(indices);
+      indices_itr.push_back(0); // init iterators
     }
-    // distribute sample indexes into each vector based on label
+    // distribute sample indices into each vector based on label
     for (uint i = 0; i < size(); ++i)
-      label_indexes[labels.get(i)].push_back(i);
+      label_indices[labels.get(i)].push_back(i);
     // display
-    //     for (uint i = 0; i < label_indexes.size(); ++i) {
-    //       vector<intg> &indexes = label_indexes[i];
-    //       cout << "label " << i << " has " << indexes.size() << " samples: ";
-    //       for (uint j = 0; j < indexes.size(); ++j)
-    // 	cout << indexes[j] << " ";
+    //     for (uint i = 0; i < label_indices.size(); ++i) {
+    //       vector<intg> &indices = label_indices[i];
+    //       cout << "label " << i << " has " << indices.size() << " samples: ";
+    //       for (uint j = 0; j < indices.size(); ++j)
+    // 	cout << indices[j] << " ";
     //       cout << endl;
     //     }
   }
@@ -210,16 +215,18 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   intg datasource<Tnet, Tin1, Tin2>::get_lowest_common_size() {
-    return nclasses;
+    return *min_element(counts.begin(), counts.end()) * nclasses;
   }
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::pretty() {
-    cout << "dataset \"" << name << "\" contains " << data.dim(0);
-    cout << " samples with dimension " << sample_dims();
-    cout << " and " << get_nclasses() << " classes";
-    cout << ", with bias " << bias << " and coefficient " << coeff;
-    cout << endl;
+    cout << "Dataset \"" << name << "\" contains " << data.dim(0);
+    cout << " samples of dimension " << sample_dims();
+    cout << " with " << get_nclasses() << " classes," << endl;
+    cout << "bias is " << bias << ", coefficient is " << coeff;
+    cout << " and iteration size in samples is " << get_lowest_common_size();
+    cout << " (" << *min_element(counts.begin(), counts.end());
+    cout << " * " << nclasses << ")." << endl;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -279,6 +286,8 @@ namespace ebl {
 	this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
       }
     }
+    datasource<Tnet, Tdata, Tlabel>::pretty();
+    pretty();
   }
   
   template <class Tnet, class Tdata, class Tlabel>
@@ -302,7 +311,7 @@ namespace ebl {
     datasource<Tnet, Tdata, Tlabel>::init(inp, lbl, name, b, c);
     this->lblstr = lblstr_;
 
-    if (!this->lblstr) { // no names are given, use indexes as names
+    if (!this->lblstr) { // no names are given, use indices as names
       this->lblstr = new vector<string*>;
       ostringstream o;
       int imax = idx_max(this->labels);
@@ -312,6 +321,8 @@ namespace ebl {
 	o.str("");
       }
     }
+    datasource<Tnet, Tdata, Tlabel>::pretty();
+    pretty();
   }
 
   // copy constructor.
@@ -342,6 +353,18 @@ namespace ebl {
     }
   }
 
+  template <class Tnet, class Tdata, class Tlabel>
+  void labeled_datasource<Tnet, Tdata, Tlabel>::pretty() {
+    if (lblstr) {
+      cout << "It has: ";
+      uint i;
+      for (i = 0; i < this->counts.size() - 1; ++i)
+	cout << this->counts[i] << " \"" << *(*lblstr)[i] << "\", ";
+      cout << "and " << this->counts[i] << " \"" << *(*lblstr)[i] << "\".";
+      cout << endl;
+    }
+  }
+    
   ////////////////////////////////////////////////////////////////
   // labeled_pair_datasource
 

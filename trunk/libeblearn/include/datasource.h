@@ -46,6 +46,7 @@ namespace ebl {
   template<class Tnet, class Tin1, class Tin2> class datasource {
   protected:
     intg                                        nclasses; // # of classes
+    vector<intg>                                counts; // # of samples / class
   public:
     Tnet					bias;
     float					coeff;
@@ -57,8 +58,8 @@ namespace ebl {
     unsigned int				width;
     string					name;
     bool					balance;
-    vector<vector<intg> >                       label_indexes;
-    vector<uint>                                indexes_itr;
+    vector<vector<intg> >                       label_indices;
+    vector<uint>                                indices_itr;
     uint                                        iitr;
 
     //! CAUTION: This empty constructor requires a subsequent call to init().
@@ -166,7 +167,11 @@ namespace ebl {
     //! copy constructor
     labeled_datasource(const labeled_datasource<Tnet, Tdata, Tlabel> &ds);
 
+    //! Destructor.
     virtual ~labeled_datasource();
+
+    //! Print info about the datasource on the standard output.
+    virtual void pretty();
   };
 
   ////////////////////////////////////////////////////////////////
