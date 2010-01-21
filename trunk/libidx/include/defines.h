@@ -43,6 +43,7 @@
 #endif
 
 #define MATRIX_EXTENSION ".mat"
+#define IMAGE_PATTERN ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM|pgm|PGM)"
 
 // official names for dataset files
 #define DATA_NAME "data"
