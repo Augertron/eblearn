@@ -33,6 +33,8 @@
 #ifndef DATASET_H_
 #define DATASET_H_
 
+#define MKDIR_RIGHTS 0755
+
 #include "libidx.h"
 
 typedef int t_label;
