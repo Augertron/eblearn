@@ -67,17 +67,24 @@ int main(int argc, char **argv) { // regular main without gui
   // gui
   bool display = conf.get_bool("display"); // enable/disable display
   uint wid;
-  float zoom = .5;
+  float zoom = 1;
   if (display)
     wid = new_window("pascal detector");
 
   // detector
-  detector<t_net> detect((module_1_1<t_net>&)ppnet, 5, classes);
+  idx<uint> resolutions(3,2);
+  resolutions.set(384, 0, 0);
+  resolutions.set(384, 0, 1);
+  resolutions.set(192, 1, 0);
+  resolutions.set(192, 1, 1);
+  resolutions.set(96, 2, 0);
+  resolutions.set(96, 2, 1);
+  detector<t_net> detect((module_1_1<t_net>&)net, resolutions, classes);
   detect.set_bgclass("bg");
   detector_gui dgui;
 
   // answering variables and initializations
-  t_net threshold = .98;
+  t_net threshold = .99;
   vector<bbox> bboxes;
   vector<bbox>::iterator ibboxes;
   map<string, ofstream*> fp_cls, fp_det;
@@ -133,12 +140,10 @@ int main(int argc, char **argv) { // regular main without gui
       bboxes = detect.fprop(im, threshold);
 #else
       if (display) {
-	disable_window_updates();
 	clear_window();
-	bboxes = dgui.display(detect, im, threshold, 0, 0, zoom,
-					     (t_net)0, (t_net)255, wid);
-	enable_window_updates();
-	//	sleep(1);
+	bboxes = dgui.display_inputs_outputs(detect, im, threshold, 0, 0, zoom,
+					     (t_net)-1, (t_net)1, wid);
+	sleep(3);
       } else
 	bboxes = detect.fprop(im, threshold);
 #endif

@@ -47,11 +47,14 @@ namespace ebl {
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1),
       nresolutions(nresolutions_), resolutions(1, 2),
+      original_bboxes(nresolutions, 4),
       manual_resolutions(false), bgclass(-1) {
     labels = strings_to_idx(labels_);
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
+    if (nresolutions < 1)
+      eblerror("the number of resolutions is expected to be more than 0");
   }
 
   template <class T>
@@ -60,20 +63,22 @@ namespace ebl {
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), labels(labels_),
       nresolutions(nresolutions_), resolutions(1, 2),
+      original_bboxes(nresolutions, 4),
       manual_resolutions(false), bgclass(-1) {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
+    if (nresolutions < 1)
+      eblerror("the number of resolutions is expected to be more than 0");
   }
 
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_, idx<unsigned int> &resolutions_,
-			idx<const char*> &labels_, T bias_, float coef_) 
+			idx<ubyte> &labels_, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
-      inputs(1), outputs(1), results(1),
+      inputs(1), outputs(1), results(1), labels(labels_),
       nresolutions(resolutions_.dim(0)), resolutions(resolutions_),
-      manual_resolutions(true), bgclass(-1) {
-    labels = strings_to_idx(labels_);
+      original_bboxes(nresolutions, 4), manual_resolutions(true), bgclass(-1) {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
@@ -104,6 +109,10 @@ namespace ebl {
     input_dim = idxdim(height, width, thickness);
     idxdim sd(thickness, height, width);
 
+    // first compute minimum and maximum resolutions for this input dims.
+    compute_minmax_resolutions(input_dim);
+    cout << "resolutions: min: " << in_mindim << " max: " << in_maxdim << endl;
+    
     if (!manual_resolutions)
       compute_resolutions(input_dim, nresolutions);
     cout << "multi-resolution detection initialized to ";
@@ -136,7 +145,6 @@ namespace ebl {
 					 out_dims.dim(1), out_dims.dim(2)));
 	r.set((void*) new idx<T>(out_dims.dim(1), out_dims.dim(2),
 				 2)); // (class,score)
-	cout << scaled_dims;
 	thenet.pretty(scaled_dims);
       }}
   }
@@ -166,10 +174,6 @@ namespace ebl {
   template <class T>
   void detector<T>::compute_resolutions(idxdim &input_dims,
 					unsigned int nresolutions) { 
-    // first compute minimum and maximum resolutions for this input dims.
-    compute_minmax_resolutions(input_dims);
-    cout << "resolutions: min: " << in_mindim << " max: " << in_maxdim << endl;
-
     // nresolutions must be >= 1
     if (nresolutions == 0) {
       cerr << "warning: the number of resolutions is expected to be more ";
@@ -192,8 +196,8 @@ namespace ebl {
     // only 1 scale if min == max or if only 1 scale requested.
     if ((in_mindim == in_maxdim) || (nresolutions == 1)) {
       resolutions.resize1(0, 1);
-      resolutions.set(in_maxdim.dim(1), 0, 0);
-      resolutions.set(in_maxdim.dim(2), 0, 1);
+      resolutions.set(in_mindim.dim(1), 0, 0);
+      resolutions.set(in_mindim.dim(2), 0, 1);
     } else if (nresolutions == 2) { // 2 resolutions: min and max
       resolutions.resize1(0, 2);
       resolutions.set(in_maxdim.dim(1), 0, 0); // max
@@ -268,7 +272,7 @@ namespace ebl {
 		      if (local_max == 1) {
 			max_map_result.set(winnning_class, 0);
 			max_map_result.set(pix_val, 1);
-			cout << x << "," << y <<  "," << pix_val << endl;
+			//cout << x << "," << y <<  "," << pix_val << endl;
 		      }
 		    }
 		    x++;
@@ -291,17 +295,25 @@ namespace ebl {
     double original_w = grabbed.dim(1);
     intg offset_h = 0, offset_w = 0;
     int scale_index = 0;
-    { idx_bloop4(input, inputs, void*, output, outputs, void*,
-		 r, results, void*, resolution, resolutions, unsigned int) {
+    { idx_bloop5(input, inputs, void*, output, outputs, void*,
+		 r, results, void*, resolution, resolutions, uint,
+		 obbox, original_bboxes, uint) {
+	rect robbox(obbox.get(0), obbox.get(1), obbox.get(2), obbox.get(3));
 	double in_h = (double)(((state_idx<T>*) input.get())->x.dim(1));
 	double in_w = (double)(((state_idx<T>*) input.get())->x.dim(2));
 	double out_h = (double)(((state_idx<T>*) output.get())->x.dim(1));
 	double out_w = (double)(((state_idx<T>*) output.get())->x.dim(2));
-	double scaleh = original_h / in_h;
-	double scalew = original_w / in_w;
-	double offset_h_factor = (in_h - in_mindim.dim(1)) * scaleh
+
+	double neth = in_mindim.dim(1);
+	double netw = in_mindim.dim(2);
+	double scaleho = original_h / robbox.height * neth; // out to original
+	double scalewo = original_w / robbox.width * netw; // out to original
+	double scalehi = original_h / robbox.height; // in to original
+	double scalewi = original_w / robbox.width; // in to original
+	
+	double offset_h_factor = (in_h - neth) * scaleh
 	  / MAX(1, (out_h - 1));
-	double offset_w_factor = (in_w - in_mindim.dim(2)) * scalew
+	double offset_w_factor = (in_w - netw) * scalew
 	  / MAX(1, (out_w - 1));
 	offset_h = 0;
 	{ idx_bloop1(re, *((idx<T>*) r.get()), T) {
@@ -310,17 +322,32 @@ namespace ebl {
 		if ((ree.get(0) != bgclass) && 
 		    (ree.get(1) > threshold)) {
 		  bbox bb;
+
+		  uint oh0 = offset_h * scaleho;
+		  uint ow0 = offset_w * scalewo;
+		  uint oheight = scaleho;
+		  uint owidth = scalewo;
+		  bb.h0 = MAX(0, oh0 - robbox.h0 * scalehi);
+		  bb.w0 = MAX(0, ow0 - robbox.w0 * scalehi);
+		  bb.height = robbox.h0 * scalehi + robbox.height * scalehi
+		    - MAX(robbox.h0 * scalehi, oh0);
+		  bb.width = robbox.w0 * scalewi + robbox.width * scalewi
+		    - MAX(robbox.w0 * scalewi, ow0);
+
+		  //		  bb.height = ceil(in_h * scaleh); // bbox h
+		  //		  bb.width = ceil(in_w * scalew); // bbox w
+		  
 		  bb.class_id = ree.get(0); // Class
 		  bb.confidence = ree.get(1); // Confidence
-		  bb.scaleh = scaleh; // Scale
-		  bb.scalew = scalew; // Scale
-		  bb.h0 = offset_h * offset_h_factor; // Offset X in input
-		  bb.w0 = offset_w * offset_w_factor; // Offset Y in input 
+
+		  //		  bb.scaleh = scaleh; // Scale
+		  //		  bb.scalew = scalew; // Scale
+		  //		  bb.h0 = MAX(0, offset_h * scale_h); // Offset X in input
+		  //		  bb.w0 = MAX(0, offset_w * scale_w); // Offset Y in input 
 		  bb.scale_index = scale_index; // scale index
 		  bb.iheight = in_h; // input h
 		  bb.iwidth = in_w; // input w
-		  bb.height = ceil(in_mindim.dim(1) * scaleh); // bbox h
-		  bb.width = ceil(in_mindim.dim(2) * scalew); // bbox w
+		  
 		  bb.oheight = out_h; // output height
 		  bb.owidth = out_w; // output width
 		  bb.oh = offset_h; // answer height in output
@@ -377,10 +404,8 @@ namespace ebl {
     } else
       img3 = img2;
     grabbed = img3;
+    // if input size had changed, reinit resolutions
     if (!(input_dim == img.get_idxdim())) {
-//       cerr << "warning: unexpected input size, expected " << input_dim;
-//       cerr << ", got " << img.get_idxdim() << ", reinitializing detector.";
-//       cerr << endl;
       init(img.get_idxdim());
     }
     // do a fprop for each scaled input sample
@@ -398,26 +423,34 @@ namespace ebl {
 
   template <class T>
   void detector<T>::multi_res_fprop(idx<T> &sample) {
-    { idx_bloop2(in, inputs, void*, out, outputs, void*) {
+    { idx_bloop3(in, inputs, void*, out, outputs, void*,
+		 bbox, original_bboxes, uint) {
 	// generate multi-resolution input
   	idx<T> inx = ((state_idx<T>*) in.get())->x;
-  	idx<T> imres = sample;
-	if ((inx.dim(1) != imres.dim(0)) || (inx.dim(2) != imres.dim(1)))
-	  imres = image_resize(imres, inx.dim(1), inx.dim(2), 0);
-	// TODO: temporary, use channels_dim
-  	imres = imres.shift_dim(2, 0);
-	idx_copy(imres, inx);
-//   	idx<T> inx0 = inx.select(0, 0);
-//   	idx<T> inx1 = inx.select(0, 1);
-//   	idx_copy(imres, inx0);
-//   	idx_copy(imres, inx1);
-  	idx_addc(inx, bias, inx);
-  	idx_dotc(inx, coef, inx);
+  	idx<T> imres = sample.shift_dim(2, 0);
+	state_idx<T> input(imres.get_idxdim());
+	state_idx<T> &ii = *(state_idx<T>*)(in.get());
+	state_idx<T> &oo = *(state_idx<T>*)(out.get());
+	idx_copy(imres, input.x);
+	
+// 	if ((inx.dim(1) != imres.dim(0)) || (inx.dim(2) != imres.dim(1)))
+// 	  imres = image_resize(imres, inx.dim(1), inx.dim(2), 0);
+
+	rgb_to_yp_module<T> pp(9);
+	preproc_resize_module<T> pprs(pp, ii.x.dim(1), ii.x.dim(2));
+	pprs.fprop(input, ii);
+	rect bb = pprs.get_original_bbox();
+	bbox.set(bb.h0, 0);
+	bbox.set(bb.w0, 1);
+	bbox.set(bb.height, 2);
+	bbox.set(bb.width, 3);
+	//  	imres = imres.shift_dim(2, 0);
+	//	idx_copy(imres, inx);
+  	//idx_addc(inx, bias, inx);
+	//  	idx_dotc(inx, coef, inx);
 
 	// Run fprop for each scale
-	state_idx<T> *ii = (state_idx<T>*)(in.get());
-	state_idx<T> *oo = (state_idx<T>*)(out.get());
-	thenet.fprop(*ii, *oo);
+	thenet.fprop(ii, oo);
       }}
   }
 

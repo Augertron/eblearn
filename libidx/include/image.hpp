@@ -93,7 +93,7 @@ namespace ebl {
 	  else	w = max(1, (int) (imw * (w / imh)));
 	} else	h = max(1, (int) (imh * (h / imw)));
       }
-      if (mode == 0) { // preserve aspect ratio
+      if ((mode == 0) || (mode == 3)) { // preserve aspect ratio
 	ratiow = ratiomin;
 	ratioh = ratiomin;
       }
@@ -112,7 +112,7 @@ namespace ebl {
       eblerror(err);
     }
     // output sizes of entire image
-    if (iregion_ || (mode == 2)) {
+    if (iregion_ || (mode == 2) || (mode == 0) || (mode == 3)) {
       ow = max(1.0, imw * ratiow);
       oh = max(1.0, imh * ratioh);
     } else {
@@ -148,6 +148,15 @@ namespace ebl {
 		    p1, q1, p3, q3);
     if (contim.order() == 2)
       return rez.select(2, 0);
+    // copy preserved ratio output in the middle of the wanted out size
+    if ((mode == 3) && ((rez.dim(0) != h) || (rez.dim(1) != w))) {
+      idx<T> out(h, w, rez.dim(2));
+      idx_clear(out);
+      idx<T> tmp = out.narrow(0, rez.dim(0), (h - rez.dim(0)) / 2);
+      tmp = tmp.narrow(1, rez.dim(1), (w - rez.dim(1)) / 2);
+      idx_copy(rez, tmp);
+      rez = out;
+    }
     return rez;
   }
 
