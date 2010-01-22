@@ -934,6 +934,9 @@ namespace ebl {
     //! Return true if dimensions and order are equal.
     bool operator==(const idxdim& other);
 
+    //! Return true if dimensions and order are different.
+    bool operator!=(const idxdim& other);
+
     ////////////////////////////////////////////////////////////////
     
     // friends

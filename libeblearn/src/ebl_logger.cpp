@@ -175,7 +175,8 @@ namespace ebl {
       if (lblstr) cout << *((*lblstr)[i]);
       else cout << i;
       cout << "(" << class_totals[i] << "): ";
-      cout << class_errors[i] * 100.0 / (float) class_totals[i] << "% ";
+      cout << class_errors[i] * 100.0
+	/ (float) ((class_totals[i]==0)?1:class_totals[i]) << "% ";
     }
     cout << endl;
   }

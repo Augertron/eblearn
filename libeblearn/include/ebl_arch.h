@@ -141,8 +141,8 @@ namespace ebl {
   template<class T> 
     class layers_2
     : public layers_2_gen<state_idx<T>, state_idx<T>, state_idx<T> > {
-/*   public: */
-/*     layers_2(module_1_1<T> &l1, state_idx<T> &h, module_1_1<T> &l2); */
+  public: 
+     layers_2(module_1_1<T> &l1, state_idx<T> &h, module_1_1<T> &l2); 
 /*     virtual ~layers_2(); */
 /*     virtual void fprop(state_idx<T> &in, state_idx<T> &out); */
 /*     virtual void bprop(state_idx<T> &in, state_idx<T> &out); */

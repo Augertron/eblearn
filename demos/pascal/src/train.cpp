@@ -71,7 +71,7 @@ int main(int argc, char **argv) { // regular main without gui
   infer_param infp;
 	
   // estimate second derivative on 100 iterations, using mu=0.02
-  thetrainer.compute_diaghessian(train_ds, 100, 0.02);
+  //  thetrainer.compute_diaghessian(train_ds, 100, 0.02);
 
 #ifdef __GUI__
   supervised_trainer_gui<t_net, float, int> stgui;

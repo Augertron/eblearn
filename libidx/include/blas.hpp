@@ -652,11 +652,12 @@ namespace ebl {
     return idx_sum(in) / in.nelements();
   }
 
-  template<class T> void idx_std_normalize(idx<T> &in, T *mean_) {
+  template<class T> void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean_) {
+    idx_checknelems2_all(in, out);
     T mean = mean_ ? *mean_ : idx_mean(in);
-    idx_addc(in, -mean, in); // remove mean
-    T coeff = sqrt(idx_sumsqr(in) / in.nelements()); // std deviation
-    idx_dotc(in, 1 / coeff, in);
+    idx_addc(in, -mean, out); // remove mean
+    T coeff = sqrt(idx_sumsqr(out) / out.nelements()); // std deviation
+    idx_dotc(out, 1 / coeff, out);
   }
 
   template<class T> void rev_idx2 (idx<T> &m) {

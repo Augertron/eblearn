@@ -250,7 +250,7 @@ namespace ebl {
 	learn_sample(*input, lab, args);
 	//      log.update(age, output, label.get(), energy);
 	age++;
-	ds.next();
+	ds.balanced_next();
       }
     }
   }
@@ -272,7 +272,7 @@ namespace ebl {
       param.clear_ddx();
       machine.bbprop(*input, lab, energy);
       param.update_ddeltax((1 / (double) niter), 1.0);
-      ds.next();
+      ds.balanced_next();
     }
     param.compute_epsilons(mu);
     cout << "diaghessian inf: " << idx_min(param.epsilons);

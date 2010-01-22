@@ -48,6 +48,7 @@
 #include "ebl_tester.h"
 #include "ebl_logger.h"
 #include "ebl_trainer.h"
+#include "ebl_preprocessing.h"
 #include "datasource.h"
 #include "detector.h"
 

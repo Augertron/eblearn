@@ -70,35 +70,40 @@ namespace ebl {
     gui << black_on_white(255, 0) << gui_only();			\
     									\
     if (dynamic_cast< layers_n_gen<state_idx<T> >* >(&m)) {		\
-    /* layers_n */							\
-    layers_n_gui::name1(*this,						\
-			dynamic_cast< layers_n_gen<state_idx<T> >& >(m), \
-      in, out, h0, w0, zoom, vmin, vmax, show_out);			\
-} else if (dynamic_cast< nn_layer_full<T>* >(&m)) {			\
-  /* nn_layer_full */							\
-  nn_layer_full_gui::name1(dynamic_cast< nn_layer_full<T>& >(m), in,	\
-      out, h0, w0, zoom, vmin, vmax,show_out);				\
-} else if (dynamic_cast< nn_layer_convolution<T>* >(&m)) {		\
-  /* nn_layer_convolution */						\
-  nn_layer_convolution_gui::						\
-    name1(dynamic_cast< nn_layer_convolution<T>& >(m),			\
-    in, out, h0, w0, zoom, vmin, vmax, show_out);			\
-} else if (dynamic_cast< layer_convabsnorm<T>* >(&m)) {			\
-  /* layer_convabsnorm */						\
-  layer_convabsnorm_gui::						\
-    name1(dynamic_cast< layer_convabsnorm<T>& >(m),			\
-    in, out, h0, w0, zoom, vmin, vmax, show_out);			\
-} else if (dynamic_cast< nn_layer_subsampling<T>* >(&m)) {		\
-  /* nn_layer_subsampling */						\
-  nn_layer_subsampling_gui::						\
-    name1(dynamic_cast< nn_layer_subsampling<T>& >(m),			\
-		      in, out, h0, w0, zoom, vmin, vmax, show_out);	\
-} else {								\
-    cerr << "Warning: unknown display function for module_1_1 object";	\
-    cerr << "(" << typeid(m).name() << ")." << endl;			\
-  }									\
-}
-
+      /* layers_n */							\
+      layers_n_gui::name1(*this,					\
+			  dynamic_cast< layers_n_gen<state_idx<T> >& >(m), \
+			  in, out, h0, w0, zoom, vmin, vmax, show_out);	\
+    } else if (dynamic_cast< layers_2_gen<state_idx<T>,state_idx<T>,state_idx<T> >* >(&m)) {	\
+      /* layers_2 */							\
+      layers_2_gui::							\
+	name1(*this, dynamic_cast< layers_2_gen<state_idx<T>,state_idx<T>,state_idx<T> >& >(m), \
+	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
+    } else if (dynamic_cast< nn_layer_full<T>* >(&m)) {			\
+      /* nn_layer_full */						\
+      nn_layer_full_gui::name1(dynamic_cast< nn_layer_full<T>& >(m), in, \
+			       out, h0, w0, zoom, vmin, vmax,show_out);	\
+    } else if (dynamic_cast< nn_layer_convolution<T>* >(&m)) {		\
+      /* nn_layer_convolution */					\
+      nn_layer_convolution_gui::					\
+	name1(dynamic_cast< nn_layer_convolution<T>& >(m),		\
+	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
+    } else if (dynamic_cast< layer_convabsnorm<T>* >(&m)) {		\
+      /* layer_convabsnorm */						\
+      layer_convabsnorm_gui::						\
+	name1(dynamic_cast< layer_convabsnorm<T>& >(m),			\
+	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
+    } else if (dynamic_cast< nn_layer_subsampling<T>* >(&m)) {		\
+      /* nn_layer_subsampling */					\
+      nn_layer_subsampling_gui::					\
+	name1(dynamic_cast< nn_layer_subsampling<T>& >(m),		\
+	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
+    } else {								\
+      cerr << "Warning: unknown display function for module_1_1 object"; \
+      cerr << "(" << typeid(m).name() << ")." << endl;			\
+    }									\
+  }
+  
   DISPLAY_1_1(display_fprop, display_fprop2)
   DISPLAY2_1_1(display_fprop, display_fprop2)
   DISPLAY_1_1(display_bprop, display_bprop2)
@@ -203,6 +208,28 @@ namespace ebl {
   DISPLAY_LAYERSN(display_fprop, display_fprop2, x)
   DISPLAY_LAYERSN(display_bprop, display_bprop2, dx)
   DISPLAY_LAYERSN(display_bbprop, display_bbprop2, ddx)
+
+  ////////////////////////////////////////////////////////////////
+  // layers_n_gui
+
+#define DISPLAY_LAYERS2(name1)						\
+  template<class T>							\
+  void layers_2_gui::name1(module_1_1_gui &g,				\
+			   layers_2_gen<state_idx<T>,state_idx<T>,	\
+			   state_idx<T> > &l2,				\
+			   state_idx<T> &in, state_idx<T> &out,		\
+			   unsigned int &h0, unsigned int &w0,		\
+			   double zoom, T vmin, T vmax,			\
+			   bool show_out) {				\
+    g.name1(l2.layer1, in, l2.hidden,				\
+	    h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
+    g.name1(l2.layer2, l2.hidden, out,					\
+	    h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
+  }
+
+  DISPLAY_LAYERS2(display_fprop)
+  DISPLAY_LAYERS2(display_bprop)
+  DISPLAY_LAYERS2(display_bbprop)
 
 } // end namespace ebl
 

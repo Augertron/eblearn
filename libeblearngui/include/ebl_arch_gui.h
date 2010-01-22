@@ -123,6 +123,29 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  // layers_2_gui
+
+  class layers_2_gui {
+  public:
+    layers_2_gui() {};
+    virtual ~layers_2_gui() {};
+
+#define DISPLAY_PROTO_LAYERS2(name)					\
+    template<class T>							\
+      static void name(module_1_1_gui &g,				\
+		       layers_2_gen<state_idx<T>,state_idx<T>,state_idx<T> > &ln, \
+		       state_idx<T> &in, state_idx<T> &out,		\
+		       unsigned int &h0, unsigned int &w0,		\
+		       double dzoom = 1.0,				\
+		       T vmin = 0, T vmax = 0,				\
+		       bool show_out = false);
+
+    DISPLAY_PROTO_LAYERS2(display_fprop)
+    DISPLAY_PROTO_LAYERS2(display_bprop)
+    DISPLAY_PROTO_LAYERS2(display_bbprop)
+  };
+
+  ////////////////////////////////////////////////////////////////
   // fc_ebm2_gui
 
   class fc_ebm2_gui {

@@ -37,6 +37,12 @@ namespace ebl {
     : layers_n_gen<state_idx<T> >(oc) {
   }
 
+  template<class T>
+  layers_2<T>::layers_2(module_1_1<T> &l1_, state_idx<T> &h_,
+			module_1_1<T> &l2_)
+    : layers_2_gen<state_idx<T>,state_idx<T>,state_idx<T> >(l1_, h_, l2_) {
+  }  
+
   ////////////////////////////////////////////////////////////////
   // generic replicable modules classes
 

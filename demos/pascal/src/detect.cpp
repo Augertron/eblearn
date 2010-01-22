@@ -60,21 +60,24 @@ int main(int argc, char **argv) { // regular main without gui
 		   conf.get_uint("net_full"), targets.dim(0),
 		   conf.get_bool("absnorm"), conf.get_bool("color"));
   theparam.load_x(conf.get_cstring("weights"));
+  rgb_to_ypuv_module<t_net> pp(conf.get_uint("normalization_size"));
+  state_idx<t_net> buf(1,1,1);
+  layers_2<t_net> ppnet((module_1_1<t_net>&)pp, buf, (module_1_1<t_net>&)net);
 
   // gui
   bool display = conf.get_bool("display"); // enable/disable display
   uint wid;
-  float zoom = 1;
+  float zoom = .5;
   if (display)
     wid = new_window("pascal detector");
 
   // detector
-  detector<t_net> detect((module_1_1<t_net>&)net, 3, classes);
+  detector<t_net> detect((module_1_1<t_net>&)ppnet, 5, classes);
   detect.set_bgclass("bg");
   detector_gui dgui;
 
   // answering variables and initializations
-  t_net threshold = .1;
+  t_net threshold = .98;
   vector<bbox> bboxes;
   vector<bbox>::iterator ibboxes;
   map<string, ofstream*> fp_cls, fp_det;
@@ -108,7 +111,7 @@ int main(int argc, char **argv) { // regular main without gui
   cmatch what;
   regex r(IMAGE_PATTERN);
   path p(conf.get_string("test_root"));
-  idx<t_net> im(1, 1, 1), yuv, uv, yp, tmp;
+  idx<t_net> im(1, 1, 1);
   if (!exists(p)) eblerror("cannot open test_root directory");
   directory_iterator end_itr; // default construction yields past-the-end
   for (directory_iterator itr(p); itr != end_itr; ++itr) {
@@ -118,32 +121,26 @@ int main(int argc, char **argv) { // regular main without gui
       img_name = itr->leaf().substr(0, itr->leaf().size() - 4);
       cout << img_name << ":";
       im = load_image<t_net>(itr->path().string());
-      // TODO: write a single preprocessing module that is shared with training 
-      // preprocess image: RGB to YUV
-      yuv = rgb_to_yuv(im);
-      uv = yuv.narrow(2, 2, 1);
-      idx_addc(uv, (t_net)-128, uv);
-      idx_dotc(uv, (t_net).01, uv);
-      // convert Y to Yp
-      yp = yuv.select(2, 0);
-      tmp = idx<t_net>(yp.get_idxdim());
-      idx_copy(yp, tmp);
-      image_global_normalization(tmp);
-      image_local_normalization(tmp, yp, conf.get_uint("normalization_size"));
+      
+//       state_idx<t_net> in(im.dim(2), im.dim(0), im.dim(1));
+//       im = im.shift_dim(2, 0);
+//       idx_copy(im, in.x);
+//   pp.fprop(in, buf);
+//   idx<t_net> im2 = buf.x.shift_dim(0, 2);
 
       // run network
 #ifndef __GUI__
-      bboxes = detect.fprop(yuv, threshold);
+      bboxes = detect.fprop(im, threshold);
 #else
       if (display) {
 	disable_window_updates();
 	clear_window();
-	bboxes = dgui.display_inputs_outputs(detect, yuv, threshold, 0, 0, zoom,
-					     (t_net)-1.1, (t_net)1.1, wid);
+	bboxes = dgui.display(detect, im, threshold, 0, 0, zoom,
+					     (t_net)0, (t_net)255, wid);
 	enable_window_updates();
-	sleep(4);
+	//	sleep(1);
       } else
-	bboxes = detect.fprop(yuv, threshold);
+	bboxes = detect.fprop(im, threshold);
 #endif
       cout << endl;
       // output answers and confidences to files
