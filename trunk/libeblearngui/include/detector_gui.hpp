@@ -77,13 +77,13 @@ namespace ebl {
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
-    disable_window_updates();
 
     // draw input and output
     vector<bbox> bb =
       display(cl, img, threshold, h0, w0, dzoom, (Tdata)0, (Tdata)255,
 	      display_wid_fprop);
 
+    disable_window_updates();
     // draw internal inputs and outputs
     int h = h0 + cl.height * dzoom + 5;
     int scale = 0;
@@ -117,7 +117,7 @@ namespace ebl {
 	s.str("");
 	s << "scale #" << scale << " " << inx.dim(0) << "x" << inx.dim(1);
 	draw_matrix(inx, s.str().c_str(), h, w0, dzoom, dzoom,
-		    (Tdata)0, (Tdata)255);
+		    (Tdata)vmin, (Tdata)vmax);
 
 	// draw outputs
 	int hcat = 0;
@@ -154,17 +154,17 @@ namespace ebl {
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
-    disable_window_updates();
 
     // draw input and output
     vector<bbox> bb =
       display_inputs_outputs(cl, img, threshold, h0, w0, dzoom, vmin, vmax,
 			     display_wid_fprop);
 
+    disable_window_updates();
     // draw internal states of first scale
     w0 = (cl.width + 5) * 2 + 5;
-    state_idx<Tdata> *ii = ((state_idx<Tdata>*) cl.inputs.get(0));
-    state_idx<Tdata> *oo = ((state_idx<Tdata>*) cl.outputs.get(0));
+    state_idx<Tdata> *ii = ((state_idx<Tdata>*) cl.inputs.get(cl.inputs.dim(0) - 1));
+    state_idx<Tdata> *oo = ((state_idx<Tdata>*) cl.outputs.get(cl.inputs.dim(0) - 1));
     module_1_1_gui mg;
     //    cl.thenet.fprop(*ii, *oo); 
     mg.display_fprop(cl.thenet, *ii, *oo, h0, w0, 1.0, vmin, vmax,
@@ -186,7 +186,7 @@ namespace ebl {
     module_1_1_gui mg;
     state_idx<Tdata> *ii = ((state_idx<Tdata>*) cl.inputs.get(0));
     state_idx<Tdata> *oo = ((state_idx<Tdata>*) cl.outputs.get(0));
-    cl.thenet.fprop(*ii, *oo); 
+    //cl.thenet.fprop(*ii, *oo); 
     mg.display_fprop(cl.thenet, *ii, *oo, 0, 0, 1.0, -1.0, 1.0,
 		     true, display_wid_fprop);
     enable_window_updates();

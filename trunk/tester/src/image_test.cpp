@@ -1,6 +1,6 @@
 #include "image_test.h"
 
-//#define __SHOW__
+#define __SHOW__
 
 #ifdef __GUI__
 #include "libidxgui.h"
@@ -45,22 +45,20 @@ void image_test::test_resize() {
 	
   idx<ubyte> im(1, 1, 1);
   string imgfile = *gl_data_dir;
-  imgfile += "/pnm/hat_P6.ppm";
+  imgfile += "/barn.png";
 
-  pnm_fread_into_rgbx(imgfile.c_str(), im);
-  im = im.select(2, 0);
+  load_image(imgfile.c_str(), im);
+  //  im = im.select(2, 0);
 #ifdef __GUI__  
 #ifdef __SHOW__
-  unsigned int wid = gui.new_window("image_test");
+  new_window("image_test");
   //  im = image_resize(im, im.dim(0) + 10, im.dim(1) + 10);
-  im = image_resize(im, 100, 100);
-  gui.draw_matrix(im, 0, 0, 4.0, 4.0);
+  //im = image_resize(im, 100, 100);
+  draw_matrix(im);
   gui << "Testing images operations..." << endl;
-  int hy = im.dim(0) * 4;
+  int hy = im.dim(0);
 #endif
 #endif
-
-  im = image_resize(im, 250, 250);
 
 #ifdef __GUI__  
 #ifdef __SHOW__
@@ -70,13 +68,15 @@ void image_test::test_resize() {
 //     gui.draw_matrix(im, 0, wx);
 //     wx += im.dim(1) + 2;
 //   }
-  im = image_resize(im, 100, 100);
-  gui.select_window(wid);
-  wx = 0;
-  for (int i = 0; i < 10; ++i) {
-    gui.draw_matrix(im, hy + 2, wx);
-    wx += im.dim(1) + 2;
-  }
+  idx<ubyte> im2 = image_resize(im, 50, 200, 0);
+  idx<ubyte> im3 = image_resize(im, 50, 200, 1);
+  wx = 0; hy += 2;
+  draw_matrix(im2, hy, wx);
+  gui << at(hy, wx) << "preserve ratio";
+  wx += im2.dim(1) + 2;
+  draw_matrix(im3, hy, wx);
+  gui << at(hy, wx) << "ignore ratio";
+  wx += im3.dim(1) + 2;
 #endif
 #endif
 }

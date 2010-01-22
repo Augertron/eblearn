@@ -52,17 +52,15 @@ namespace ebl {
   //! to wxh. if oregion is provided, it is filled and describes that same
   //! region in the return resized image.
   //!
-  //!.LI
   //! if either <width> or <height> is zero, <mode> is ignored.
-  //!.LI
-  //! mode=0: fit the image into a <width> by <height> frame while preserving 
-  //! the aspect ratio
-  //!.LI
+  //! mode=0: return an image that fits into a <width> by <height> frame
+  //!         while preserving the aspect ratio.
   //! mode=1: scale the image to <width> by <height> possibly changing the 
-  //! aspect ratio
-  //!.LI
+  //!         aspect ratio.
   //! mode=2: <width> and <height> are interpreted as scaling ratios
-  //!.P
+  //! mode=3: return an image of size <width> by <height> but while preserving
+  //!         the aspect ratio. the image is placed in the center of the
+  //!         target dimensions and background is filled with zeros.
   //! The sizes of the output image are rounded to nearest integers
   //! smaller than the computed sizes, or to 1, whichever is largest.
   template<class T> 

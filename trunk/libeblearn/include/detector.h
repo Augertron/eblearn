@@ -101,8 +101,9 @@ namespace ebl {
     // dimensions
     idxdim		 in_mindim;
     idxdim		 in_maxdim;
-    unsigned int	 nresolutions;
-    idx<unsigned int>	 resolutions;
+    uint		 nresolutions;
+    idx<uint>		 resolutions;
+    idx<uint>		 original_bboxes; //!< bboxes orig image after resizing
     bool		 manual_resolutions;
     int                  bgclass;
     idxdim               input_dim;
@@ -123,9 +124,10 @@ namespace ebl {
 	     idx<ubyte> &lbls, T bias = 0, float coeff = 1.0);
     
     //! Constructor.
-    //! \param lbls A const char* idx containing class name strings.
+    //! \param lbls A ubyte idx containing class name strings.
+    //! \param resolutions A uint idx containing resolutions (of size nx2)
     detector(module_1_1<T> &thenet, idx<unsigned int> &resolutions,
-	     idx<const char*> &lbls, T bias = 0, float coeff = 1.0);
+	     idx<ubyte> &lbls, T bias = 0, float coeff = 1.0);
 
     //! Destructor.
     virtual ~detector();
