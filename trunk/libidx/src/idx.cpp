@@ -826,6 +826,10 @@ namespace ebl {
     return true;
   }
   
+  bool idxdim::operator!=(const idxdim& other) {
+    return !(*this == other);
+  }
+  
   std::ostream& operator<<(std::ostream& out, const idxdim& d) {
     if (d.order() <= 0)
       out << "<empty>";

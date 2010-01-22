@@ -72,7 +72,8 @@ namespace ebl {
     template <class Tdata, class T>
       vector<bbox> display_inputs_outputs(detector<Tdata> &cl, 
 					  idx<T> &img, double threshold,
-					  unsigned int h0 = 0, unsigned int w0 = 0, 
+					  unsigned int h0 = 0,
+					  unsigned int w0 = 0, 
 					  double dzoom = 1.0, Tdata vmin = 0,
 					  Tdata vmax = 0, int wid = -1, 
 					  const char *wname = NULL);
@@ -85,8 +86,9 @@ namespace ebl {
     //! <wname> is an optional window title.
     template <class Tdata, class T>
       vector<bbox> display_all(detector<Tdata> &cl, idx<T> &img, 
-			       double threshold,unsigned int h0 = 0, unsigned int w0 = 0, 
-			       double dzoom = 1.0, Tdata vmin = 0, Tdata vmax = 0,
+			       double threshold,unsigned int h0 = 0,
+			       unsigned int w0 = 0, double dzoom = 1.0,
+			       Tdata vmin = 0, Tdata vmax = 0,
 			       int wid = -1,const char *wname = NULL);
 
     //! displays all the current state of the classifier. 

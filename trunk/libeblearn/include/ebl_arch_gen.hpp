@@ -221,7 +221,7 @@ namespace ebl {
   }
 
   template<class Tin, class Thid, class Tout>
-  void layers_2_gen<Tin,Thid,Tout>::forget(forget_param &fp) {
+  void layers_2_gen<Tin,Thid,Tout>::forget(forget_param_linear &fp) {
     layer1.forget(fp);
     layer2.forget(fp);
   }
@@ -232,7 +232,33 @@ namespace ebl {
     layer2.normalize();
   }
 
+  template<class Tin, class Thid, class Tout>
+  idxdim layers_2_gen<Tin,Thid,Tout>::fprop_size(idxdim &isize) {
+    idxdim os(isize);
+    os = layer1.fprop_size(os);
+    os = layer2.fprop_size(os);
+    //! Recompute the input size to be compliant with the output
+    isize = bprop_size(os);
+    return os;
+  }
 
+  template<class Tin, class Thid, class Tout>
+  idxdim layers_2_gen<Tin,Thid,Tout>::bprop_size(const idxdim &osize) {
+    idxdim isize(osize);
+    isize = layer2.bprop_size(isize);
+    isize = layer1.bprop_size(isize);
+    return isize;
+  }  
+
+  template<class Tin, class Thid, class Tout>
+  void layers_2_gen<Tin,Thid,Tout>::pretty(idxdim &isize) {
+    idxdim is(isize);
+    layer1.pretty(is);
+    cout << " -> ";
+    is = layer1.fprop_size(is);
+    layer2.pretty(is);
+  }
+  
   ////////////////////////////////////////////////////////////////
   // N layer module
 

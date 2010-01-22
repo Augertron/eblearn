@@ -82,12 +82,13 @@ namespace ebl {
     typename idx<Tin2>::dimension_iterator	 lIter(labels, 0);
     dataIter = dIter;
     labelsIter = lIter;
-    balance = false;
     // count number of samples per class
     counts.resize(nclasses);
     idx_bloop1(lab, labels, Tin2) {
       counts[(size_t)lab.get()]++;
     }
+    // balance dataset for each class
+    set_balanced();
     this->pretty();
   }
 
@@ -152,26 +153,29 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next() {
-    if (balance) {
-      intg i = label_indices[iitr][indices_itr[iitr]];
-      //      cout << "#" << i << "/" << iitr << " ";
-      dataIter = dataIter.at(i);
-      labelsIter = labelsIter.at(i);
-      indices_itr[iitr] += 1;
-      if (indices_itr[iitr] >= label_indices[iitr].size())
-	indices_itr[iitr] = 0;
-      iitr++;
-      if (iitr >= label_indices.size())
-	iitr = 0;
-    } else {
-      ++dataIter;
-      ++labelsIter;
-
-      if(!dataIter.notdone()) {
-	dataIter = data.dim_begin(0);
-	labelsIter = labels.dim_begin(0);
-      }
+    ++dataIter;
+    ++labelsIter;
+    
+    if(!dataIter.notdone()) {
+      dataIter = data.dim_begin(0);
+      labelsIter = labels.dim_begin(0);
     }
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::balanced_next() {
+    while (!label_indices[iitr].size())
+      iitr++; // next class if class is empty
+    intg i = label_indices[iitr][indices_itr[iitr]];
+    //      cout << "#" << i << "/" << iitr << " ";
+    dataIter = dataIter.at(i);
+    labelsIter = labelsIter.at(i);
+    indices_itr[iitr] += 1;
+    if (indices_itr[iitr] >= label_indices[iitr].size())
+      indices_itr[iitr] = 0;
+    iitr++; // next class
+    if (iitr >= label_indices.size())
+      iitr = 0;
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -189,8 +193,7 @@ namespace ebl {
     label_indices.clear();
     indices_itr.clear();
     iitr = 0;
-    uint nclasses = idx_max(labels) + 1;
-    for (uint i = 0; i < nclasses; ++i) {
+    for (intg i = 0; i < nclasses; ++i) {
       vector<intg> indices;
       label_indices.push_back(indices);
       indices_itr.push_back(0); // init iterators

@@ -287,7 +287,8 @@ namespace ebl {
 
   //! removes the mean of <in> and divide by the standard deviation.
   //! reuse <mean> if not null, otherwise recompute it.
-  template<class T> void idx_std_normalize(idx<T> &in, T *mean = NULL);
+  template<class T>
+    void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean = NULL);
   
   ////////////////////////////////////////////////////////////////
   // dot products

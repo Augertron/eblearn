@@ -44,7 +44,8 @@ namespace ebl {
   // templates for generic modules
 
   //! abstract class for a module with one input and one output.
-  template<class Tin, class Tout> class module_1_1_gen {
+  template<class Tin, class Tout>
+    class module_1_1_gen {
   public:
     module_1_1_gen(bool bResize = true); //!< by default, resize output
     virtual ~module_1_1_gen() {}
@@ -74,7 +75,8 @@ namespace ebl {
   };
 
   //! abstract class for a module with two inputs and one output.
-  template<class Tin1, class Tin2, class Tout> class module_2_1_gen {
+  template<class Tin1, class Tin2, class Tout>
+    class module_2_1_gen {
   public:
     virtual ~module_2_1_gen() {};
     virtual void fprop(Tin1 &in1, Tin2 &in2, Tout &out);
@@ -86,7 +88,8 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! abstract class for a module with one inputs and one energy output.
-  template<class Tin, class T> class ebm_1_gen {
+  template<class Tin, class T>
+    class ebm_1_gen {
   public:
     virtual ~ebm_1_gen() {};
     virtual void fprop(Tin &in, state_idx<T> &energy);
@@ -98,7 +101,8 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! abstract class for a module with two inputs and one energy output.
-  template<class Tin1, class Tin2, class T> class ebm_2_gen {
+  template<class Tin1, class Tin2, class T>
+    class ebm_2_gen {
   public:
     virtual ~ebm_2_gen() {};
     //! fprop: compute output from input
@@ -141,8 +145,21 @@ namespace ebl {
     virtual void fprop(Tin &in, Tout &out);
     virtual void bprop(Tin &in, Tout &out);
     virtual void bbprop(Tin &in, Tout &out);
-    virtual void forget(forget_param &fp);
+    virtual void forget(forget_param_linear &fp);
     virtual void normalize();
+    //! given the input dimensions, modifies it to be compliant with module's
+    //! architecture, and returns the output dimensions corresponding to
+    //! modified input dimensions.
+    //! the implementation of this method helps automatic scaling of input data
+    //! but is optional.
+    virtual idxdim fprop_size(idxdim &i_size);
+    //! given the output dimensions, returns the input dimensions.
+    //! the implementation of this method helps automatic scaling of input data
+    //! but is optional.
+    virtual idxdim bprop_size(const idxdim &o_size);
+    //! prints the forward transformation of dimensions. this method calls
+    //! fprop_size to determine the output size given the input.
+    virtual void pretty(idxdim &isize);
   };
 
   template<class T> class layers_n_gen: public module_1_1_gen<T, T> {
@@ -159,8 +176,18 @@ namespace ebl {
     virtual void bbprop(T &in, T &out);
     virtual void forget(forget_param_linear &fp);
     virtual void normalize();
+    //! given the input dimensions, modifies it to be compliant with module's
+    //! architecture, and returns the output dimensions corresponding to
+    //! modified input dimensions.
+    //! the implementation of this method helps automatic scaling of input data
+    //! but is optional.
     virtual idxdim fprop_size(idxdim &i_size);
+    //! given the output dimensions, returns the input dimensions.
+    //! the implementation of this method helps automatic scaling of input data
+    //! but is optional.
     virtual idxdim bprop_size(const idxdim &o_size);
+    //! prints the forward transformation of dimensions. this method calls
+    //! fprop_size to determine the output size given the input.
     virtual void pretty(idxdim &isize);
 
   protected:

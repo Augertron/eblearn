@@ -100,11 +100,9 @@ namespace ebl {
     int thickness = (dsample.order() == 2) ? 1 : dsample.dim(2); // TODO FIXME
     height = dsample.dim(0);    
     width = dsample.dim(1);
-    grabbed = idx<T>(height, width);    
+    grabbed = idx<T>(height, width, thickness);    
     input_dim = idxdim(height, width, thickness);
     idxdim sd(thickness, height, width);
-    cout << "machine's intermediate sizes with a " << sd << " input: " << endl;
-    thenet.pretty(sd);
 
     if (!manual_resolutions)
       compute_resolutions(input_dim, nresolutions);
@@ -121,7 +119,7 @@ namespace ebl {
     results = idx<void*>(nresolutions);
 
     //sizes.set(sample.dim(0) / (float) in_mindim.dim(0), 3);
-
+    cout << "machine's intermediate sizes for each resolution: " << endl;
     { idx_bloop4(resolution, resolutions, unsigned int, 
 		 in, inputs, void*, 
 		 out, outputs, void*,
@@ -134,10 +132,12 @@ namespace ebl {
 	in.set((void*) new state_idx<T>(thickness,
 					scaled_dims.dim(1),
 					scaled_dims.dim(2)));
-	out.set((void*) new state_idx<T>(labels.dim(0) + 1, 
+	out.set((void*) new state_idx<T>(labels.dim(0), 
 					 out_dims.dim(1), out_dims.dim(2)));
 	r.set((void*) new idx<T>(out_dims.dim(1), out_dims.dim(2),
 				 2)); // (class,score)
+	cout << scaled_dims;
+	thenet.pretty(scaled_dims);
       }}
   }
     

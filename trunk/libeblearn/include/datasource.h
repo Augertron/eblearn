@@ -97,8 +97,16 @@ namespace ebl {
     // TODO: implement or get rid of tell?
     virtual int tell() { return -1; };
 
-    //! Move to the next datum.
+    //! Move to the next datum (in the original order of the dataset).
+    //! This should be used during testing.
     virtual void next();
+
+    //! Move to the next datum in a balanced way, i.e. showing each class
+    //! sequentially.
+    //! When all samples of a class have been shown, it loops back to the first
+    //! sample of that class.
+    //! This should be used during training.
+    virtual void balanced_next();
 
     //! Move to the beginning of the data.
     virtual void seek_begin();

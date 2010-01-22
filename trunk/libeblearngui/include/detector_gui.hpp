@@ -64,8 +64,8 @@ namespace ebl {
       draw_box(h0 + h, w0 + w, dzoom * i->height, dzoom * i->width, 255, 0, 0,
 	       new string((const char *)cl.labels[i->class_id].idx_ptr()));
     }
-    draw_matrix(cl.grabbed, h0, w0, dzoom, dzoom, (Tdata)vmin, (Tdata)vmax);   
-    // enable_window_updates();
+    draw_matrix(img, h0, w0, dzoom, dzoom, (T)vmin, (T)vmax);   
+    enable_window_updates();
     return vb;
   }
 
@@ -81,7 +81,8 @@ namespace ebl {
 
     // draw input and output
     vector<bbox> bb =
-      display(cl, img, threshold, h0, w0, dzoom, vmin, vmax, display_wid_fprop);
+      display(cl, img, threshold, h0, w0, dzoom, (Tdata)0, (Tdata)255,
+	      display_wid_fprop);
 
     // draw internal inputs and outputs
     int h = h0 + cl.height * dzoom + 5;
@@ -115,7 +116,8 @@ namespace ebl {
 	// draw inputs
 	s.str("");
 	s << "scale #" << scale << " " << inx.dim(0) << "x" << inx.dim(1);
-	draw_matrix(inx, s.str().c_str(), h, w0, dzoom, dzoom, vmin, vmax);
+	draw_matrix(inx, s.str().c_str(), h, w0, dzoom, dzoom,
+		    (Tdata)0, (Tdata)255);
 
 	// draw outputs
 	int hcat = 0;
