@@ -509,18 +509,26 @@ namespace ebl {
 
     //! resize an idx. The order (ndim) is not allowed to change.
     //! This is to prevent nasty bugs.
+    //! As in realloc(), the content will be unchanged to the minimum of the old
+    //! and new sizes.
     virtual void resize(intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,
 			intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
 
     //! resize an idx with dimensions contained in an idxdim. 
     //! The order is not allowed to change.
+    //! As in realloc(), the content will be unchanged to the minimum of the old
+    //! and new sizes.
     virtual void resize(const idxdim &d);
 
     //! resize 1 dimension of an idx. The order is not allowed to change.
+    //! As in realloc(), the content will be unchanged to the minimum of the old
+    //! and new sizes.
     virtual void resize1(intg dimn, intg size);
 
     //! same as resize, but the storage is enlarged by a step of s_chunk 
-    //! if needed
+    //! if needed.
+    //! As in realloc(), the content will be unchanged to the minimum of the old
+    //! and new sizes.
     virtual void resize_chunk(intg s_chunk, intg s0=-1, intg s1=-1, intg s2=-1,
 			      intg s3=-1, intg s4=-1, intg s5=-1, intg s6=-1, 
 			      intg s7=-1);

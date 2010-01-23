@@ -44,36 +44,28 @@ namespace ebl {
   //! bounding box class.
   class bbox {
   public:
-    //! object class
-    int class_id;
-    //! detection confidence, 1 is the best.
-    double confidence;
-    //! scale factor at which object was detected
-    double scaleh;
-    //! scale factor at which object was detected
-    double scalew;
-    //! scale index at which object was detected
-    int scale_index;
-    //! scaled input image height
-    unsigned int iheight;
-    //! scaled input image width
-    unsigned int iwidth;
-    //! height top left pixel origin in original image
-    unsigned int h0;
-    //! width top left pixel origin in original image
-    unsigned int w0;
-    //! height of bounding box in original image
-    unsigned int height;
-    //! width of bounding box in original image
-    unsigned int width;
-    //! output height
-    unsigned int oheight;
-    //! output width
-    unsigned int owidth;
-    //! output pixel height
-    unsigned int oh;
-    //! output pixel width
-    unsigned int ow;
+    int		class_id;	//<! object class
+    double	confidence;	//<! detection confidence, 1 is the best.
+    double	scaleh;		//<! scale factor at which object was detected
+    double	scalew;		//<! scale factor at which object was detected
+    int		scale_index;	//<! scale index at which object was detected
+    // original map //////////////////////////////////////////////
+    uint	h0;		//<! height of top left pixel
+    uint	w0;		//<! width of top left pixel
+    uint	height;		//<! height of bounding box in original image
+    uint	width;		//<! width of bounding box in original image
+    // input map /////////////////////////////////////////////////
+    uint	iheight;	//<! scaled input image height
+    uint	iwidth;		//<! scaled input image width
+    uint	ih0;		//<! height0 of bbox in network's input map
+    uint	iw0;		//<! width0 of bbox in network's input map
+    uint	ih;		//<! height of bbox in network's input map
+    uint	iw;		//<! width of bbox in network's input map
+    // output map ////////////////////////////////////////////////
+    uint	oheight;	//<! height of network's output map
+    uint	owidth;		//<! width of network's output map
+    uint	oh0;		//<! pixel's height in network's output map
+    uint	ow0;		//<! pixel's width in network's output map
   };
   
   ////////////////////////////////////////////////////////////////
@@ -91,9 +83,11 @@ namespace ebl {
     float		 coef;
     T			 bias;    
     idx<float>		 sizes;
-    idx<void*>		 inputs;	//! state_idx*
-    idx<void*>		 outputs;	//! state_idx*
-    idx<void*>		 results;	//! idx<double>*
+    idx<void*>		 inputs;	//!< state_idx*
+    idx<void*>		 outputs;	//!< state_idx*
+    idx<void*>		 results;	//!< idx<double>*
+    idx<void*>           resize_modules;     //!< module_1_1<T>*
+    module_1_1<T>       &pp;            //!< preprocessing module
     idx<T>		 smoothing_kernel;
     idx<ubyte>   	 labels;
     ////////////////////////////////////////////////////////////////
@@ -115,19 +109,25 @@ namespace ebl {
     
     //! Constructor.
     //! \param lbls A const char* idx containing class name strings.
+    //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     detector(module_1_1<T> &thenet, unsigned int nresolutions, 
-	     idx<const char*> &lbls, T bias = 0, float coeff = 1.0);
+	     idx<const char*> &lbls, module_1_1<T> &pp,
+	     T bias = 0, float coeff = 1.0);
     
     //! Constructor. lbls is an idx containing each class name.
     //! \param lbls A ubyte idx containing class name strings.
+    //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     detector(module_1_1<T> &thenet, unsigned int nresolutions, 
-	     idx<ubyte> &lbls, T bias = 0, float coeff = 1.0);
+	     idx<ubyte> &lbls, module_1_1<T> &pp,
+	     T bias = 0, float coeff = 1.0);
     
     //! Constructor.
     //! \param lbls A ubyte idx containing class name strings.
+    //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     //! \param resolutions A uint idx containing resolutions (of size nx2)
     detector(module_1_1<T> &thenet, idx<unsigned int> &resolutions,
-	     idx<ubyte> &lbls, T bias = 0, float coeff = 1.0);
+	     idx<ubyte> &lbls, module_1_1<T> &pp,
+	     T bias = 0, float coeff = 1.0);
 
     //! Destructor.
     virtual ~detector();

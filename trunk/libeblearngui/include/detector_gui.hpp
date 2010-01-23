@@ -118,7 +118,13 @@ namespace ebl {
 	s << "scale #" << scale << " " << inx.dim(0) << "x" << inx.dim(1);
 	draw_matrix(inx, s.str().c_str(), h, w0, dzoom, dzoom,
 		    (Tdata)vmin, (Tdata)vmax);
-
+	// draw bboxes on scaled input
+	for (vector<bbox>::iterator i = bb.begin(); i != bb.end(); ++i) {
+	  if (scale == i->scale_index)
+	    draw_box(h + dzoom * i->ih0, w0 + dzoom * i->iw0,
+		     dzoom * i->ih, dzoom * i->iw, 255, 0, 0,
+		     new string((const char*)cl.labels[i->class_id].idx_ptr()));
+	}
 	// draw outputs
 	int hcat = 0;
 	double czoom = dzoom * 2.0;

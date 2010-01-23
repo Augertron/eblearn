@@ -60,9 +60,6 @@ int main(int argc, char **argv) { // regular main without gui
 		   conf.get_uint("net_full"), targets.dim(0),
 		   conf.get_bool("absnorm"), conf.get_bool("color"));
   theparam.load_x(conf.get_cstring("weights"));
-  rgb_to_ypuv_module<t_net> pp(conf.get_uint("normalization_size"));
-  state_idx<t_net> buf(1,1,1);
-  layers_2<t_net> ppnet((module_1_1<t_net>&)pp, buf, (module_1_1<t_net>&)net);
 
   // gui
   bool display = conf.get_bool("display"); // enable/disable display
@@ -72,19 +69,23 @@ int main(int argc, char **argv) { // regular main without gui
     wid = new_window("pascal detector");
 
   // detector
-  idx<uint> resolutions(3,2);
-  resolutions.set(384, 0, 0);
-  resolutions.set(384, 0, 1);
-  resolutions.set(192, 1, 0);
-  resolutions.set(192, 1, 1);
-  resolutions.set(96, 2, 0);
-  resolutions.set(96, 2, 1);
-  detector<t_net> detect((module_1_1<t_net>&)net, resolutions, classes);
+//   idx<uint> resolutions(3,2);
+//   resolutions.set(384, 0, 0);
+//   resolutions.set(384, 0, 1);
+//   resolutions.set(192, 1, 0);
+//   resolutions.set(192, 1, 1);
+//   resolutions.set(96, 2, 0);
+//   resolutions.set(96, 2, 1);
+  rgb_to_yp_module<t_net> ppyp(conf.get_uint("normalization_size"));
+  rgb_to_ypuv_module<t_net> ppypuv(conf.get_uint("normalization_size"));
+  module_1_1<t_net> &pp = conf.get_bool("color") ?
+    (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
+  detector<t_net> detect((module_1_1<t_net>&) net, 4, classes, pp);
   detect.set_bgclass("bg");
   detector_gui dgui;
 
   // answering variables and initializations
-  t_net threshold = .99;
+  t_net threshold = .985;
   vector<bbox> bboxes;
   vector<bbox>::iterator ibboxes;
   map<string, ofstream*> fp_cls, fp_det;
