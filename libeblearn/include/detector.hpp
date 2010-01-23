@@ -311,10 +311,8 @@ namespace ebl {
 	double scalehi = original_h / robbox.height; // in to original
 	double scalewi = original_w / robbox.width; // in to original
 	
-	double offset_h_factor = (in_h - neth) * scaleh
-	  / MAX(1, (out_h - 1));
-	double offset_w_factor = (in_w - netw) * scalew
-	  / MAX(1, (out_w - 1));
+	double offset_h_factor = (in_h - neth) * scaleho / MAX(1, (out_h - 1));
+	double offset_w_factor = (in_w - netw) * scalewo / MAX(1, (out_w - 1));
 	offset_h = 0;
 	{ idx_bloop1(re, *((idx<T>*) r.get()), T) {
 	    offset_w = 0;
@@ -323,8 +321,8 @@ namespace ebl {
 		    (ree.get(1) > threshold)) {
 		  bbox bb;
 
-		  uint oh0 = offset_h * scaleho;
-		  uint ow0 = offset_w * scalewo;
+		  uint oh0 = offset_h * offset_h_factor;
+		  uint ow0 = offset_w * offset_h_factor;
 		  uint oheight = scaleho;
 		  uint owidth = scalewo;
 		  bb.h0 = MAX(0, oh0 - robbox.h0 * scalehi);
