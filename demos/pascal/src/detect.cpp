@@ -17,6 +17,7 @@ using namespace boost;
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <stdlib.h>
 
 using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
@@ -44,6 +45,7 @@ int main(int argc, char **argv) { // regular main without gui
   //! load classes names
   idx<ubyte> classes(1,1);
   load_matrix<ubyte>(classes, conf.get_cstring("classes"));
+  string background = "bg";
   
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =
@@ -81,7 +83,7 @@ int main(int argc, char **argv) { // regular main without gui
   module_1_1<t_net> &pp = conf.get_bool("color") ?
     (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
   detector<t_net> detect((module_1_1<t_net>&) net, 4, classes, pp);
-  detect.set_bgclass("bg");
+  detect.set_bgclass(background.c_str());
   detector_gui dgui;
 
   // answering variables and initializations
@@ -91,27 +93,32 @@ int main(int argc, char **argv) { // regular main without gui
   map<string, ofstream*> fp_cls, fp_det;
   map<string, ofstream*>::iterator ifp_cls, ifp_det;
   string name, img_name;
+  ostringstream fname, root, cmd;
+  // create output directory
+  root << conf.get_string("answer_root") << "/results/VOC2009/Main/";
+  cmd << "mkdir -p " << root.str();
+  int res;
+  res = std::system(cmd.str().c_str());
   // open all answer files
-  ostringstream fname;
   idx_bloop1(cname, classes, ubyte) {
     name = (const char*) cname.idx_ptr();
-    // classification task
-    fname.str("");
-    fname << conf.get_string("answer_root") << "/comp1_cls_test_";
-    fname << name << ".txt";
-    fp_cls[name] = new ofstream(fname.str().c_str());
-    if (!*fp_cls[name]) {
-      cerr << "failed to open " << fname.str() << endl;
-      eblerror("open failed");
-    }
-    // detection task
-    fname.str("");
-    fname << conf.get_string("answer_root") << "/comp1_det_test_";
-    fname << name << ".txt";
-    fp_det[name] = new ofstream(fname.str().c_str());
-    if (!*fp_det[name]) {
-      cerr << "failed to open " << fname.str() << endl;
-      eblerror("open failed");
+    if (name != background) {
+      // classification task
+      fname.str("");
+      fname << root.str() << "/comp1_cls_test_" << name << ".txt";
+      fp_cls[name] = new ofstream(fname.str().c_str());
+      if (!*fp_cls[name]) {
+	cerr << "failed to open " << fname.str() << endl;
+	eblerror("open failed");
+      }
+      // detection task
+      fname.str("");
+      fname << root.str() << "/comp1_det_test_" << name << ".txt";
+      fp_det[name] = new ofstream(fname.str().c_str());
+      if (!*fp_det[name]) {
+	cerr << "failed to open " << fname.str() << endl;
+	eblerror("open failed");
+      }
     }
   }
 
@@ -127,7 +134,7 @@ int main(int argc, char **argv) { // regular main without gui
 	(regex_match(itr->leaf().c_str(), what, r))) {
       // load image and prepare it
       img_name = itr->leaf().substr(0, itr->leaf().size() - 4);
-      cout << img_name << ":";
+      cout << img_name << ":" << flush;
       im = load_image<t_net>(itr->path().string());
       
 //       state_idx<t_net> in(im.dim(2), im.dim(0), im.dim(1));

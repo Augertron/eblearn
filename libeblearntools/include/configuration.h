@@ -35,6 +35,7 @@
 
 #include <map>
 #include <vector>
+#include "defines.h"
 
 using namespace std;
 
@@ -104,6 +105,9 @@ namespace ebl {
     //! this throws an exception.
     bool get_bool(const char *varname);
 
+    //! set variable 'varname' to value 'value'
+    void set(const char *varname, const char *value);
+    
     //! print loaded variables
     virtual void pretty();
   };

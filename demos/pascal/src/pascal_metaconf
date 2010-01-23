@@ -16,6 +16,10 @@ meta_gnuplot_params = set grid ytics;set ytics 5;set mytics 5;set grid mytics;
 ################################################################################
 # LOCAL PROGRAM CONFIGURATION
 
+name = toto
+#pascal = /home/sermanet/texieradata/pascal
+pascal = /data/pascal
+
 # network
 net_ih = 96
 net_iw = 96
@@ -32,7 +36,7 @@ absnorm = 0 1
 color = 0 1
 
 # training variables
-root = /home/sermanet/texieradata/pascal/ds
+root = ${pascal}/ds
 train = allbi96x96bg_train_50_1
 test = allbi96x96bg_val_50_1
 eta = .00001 .000005
@@ -41,9 +45,8 @@ display = 0
 ninternals = 1
 
 # detection variables
-weights = /home/pierre/trained/20100119.104533.pascal_bibg50_conf02_absnorm_0_color_1_eta_.00001_net.mat
-classes = /home/pierre/trained/20100119.104533.pascal_bibg50_conf02_absnorm_0_color_1_eta_.00001_classes.mat
-#test_root =/home/sermanet/texieradata/pascal/VOCdevkit_test09/VOC2009/JPEGImages
-test_root = /data/pascal/VOCdevkit_test09/VOC2009/JPEGImages
 normalization_size = 9
-answer_root = /data/pascal/out/
+weights = ${pascal}/out/${name}_net.mat
+classes = ${pascal}/out/${name}_classes.mat
+test_root = ${pascal}/VOCdevkit_test09/VOC2009/JPEGImages
+answer_root = ${pascal}/out/${name}
