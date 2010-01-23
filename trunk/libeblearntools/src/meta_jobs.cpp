@@ -66,17 +66,22 @@ namespace ebl {
   }
 
   bool job::write() {
+    ostringstream outdir, cmd, confname, classesname;
     // create directories 
-    mkdir(conf.get_output_dir().c_str(), 0700); // create output_dir
-    outdir = conf.get_output_dir();
-    outdir += "/";
-    outdir += conf.get_name();
-    mkdir(outdir.c_str(), 0700); // create job_dir
+    outdir << conf.get_output_dir() << "/" << conf.get_name();
+    cmd << "mkdir -p " << outdir.str();
+    int res; res = system(cmd.str().c_str());
+    // copy classes file into directory
+    classesname << conf.get_string("root") << "/" << conf.get_string("train");
+    classesname << "_" << CLASSES_NAME << MATRIX_EXTENSION;
+    cmd.str("");
+    cmd << "cp " << classesname.str() << " " << outdir.str() << "/";
+    cmd << conf.get_name() << "_" << CLASSES_NAME << MATRIX_EXTENSION;
+    res = system(cmd.str().c_str());
     // create configuration file
-    string conf_dir = outdir;
-    conf_dir += "/";
-    conf_dir += "config";
-    if (!conf.write(conf_dir.c_str()))
+    confname << outdir.str() << "/" << conf.get_name() << ".conf";
+    conf.set("name", conf.get_name().c_str()); // add config name into config
+    if (!conf.write(confname.str().c_str()))
       return false;
     return true;
   }

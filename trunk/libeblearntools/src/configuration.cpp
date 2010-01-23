@@ -74,6 +74,42 @@ namespace ebl {
     }
   }
 
+  string resolve(string_map_t &m, const string &v) {
+    string res(v);
+    size_t pos = res.find("${");
+    size_t pos2;
+    // loop until it's all resolved
+    while (pos != string::npos) {
+      pos2 = res.find("}", pos);
+      if (pos2 == string::npos) {
+	cerr << "unmatched closing bracket in: " << v << endl;
+	eblerror("error resolving variables in configuration");
+      }
+      // variable to replace
+      string var = res.substr(pos + 2, pos2 - (pos + 2));
+      if (m.find(var) == m.end()) {
+	cerr << "unknown variable: " << var << endl;
+	eblerror("variable to resolve is unknown");
+      }	
+      string val = resolve(m, m[var]);
+      res = res.replace(pos, pos2 - pos + 1, val);
+      // check if we have more variables to resolve
+      pos = res.find("${");
+    }
+    cout << "resolved: " << v << " to: " << res << endl;
+    return res;
+  }
+
+  // variables may contain references to other variables, resolve those
+  // dependencies by replacing them with their value.
+  void resolve_variables(string_map_t &m) {
+    string_map_t::iterator mi = m.begin();
+    for ( ; mi != m.end(); ++mi) {
+      string val = mi->second;
+      mi->second = resolve(m, val);
+    }
+  }
+  
   // open file fname and put variables assignments in smap.
   // e.g. " i = 42 # comment " will yield a entry in smap
   // with "i" as first value and "42" as second value.
@@ -148,6 +184,10 @@ namespace ebl {
       }
     }
     in.close();
+    // resolve variables
+    resolve_variables(smap);
+    if (meta_smap)
+      resolve_variables(*meta_smap);
     return true;
   }
 
@@ -231,7 +271,8 @@ namespace ebl {
   }
 
   void print_string_list_map(string_list_map_t &lmap) {
-    cout << "___________________________________________________________" << endl;
+    cout <<
+      "___________________________________________________________" << endl;
     string_list_map_t::iterator lmi = lmap.begin();
     for ( ; lmi != lmap.end(); ++lmi) {
       cout << lmi->first << " : ";
@@ -348,6 +389,10 @@ namespace ebl {
 
   bool configuration::get_bool(const char *varname) {
     return (bool) get_uint(varname);
+  }
+
+  void configuration::set(const char *varname, const char *value) {
+    smap[varname] = value;
   }
 
   void configuration::pretty() {

@@ -88,11 +88,14 @@ int main(int argc, char **argv) { // regular main without gui
   // now do training iterations 
   cout << "Training network on PASCAL with " << train_ds.size();
   cout << " training samples and " << test_ds.size() <<" test samples:" << endl;
+  ostringstream fname;
   for (uint i = 0; i < conf.get_uint("iterations"); ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);	         // train
     thetrainer.test(train_ds, trainmeter, infp);	         // test
     thetrainer.test(test_ds, testmeter, infp);	                 // test
-    theparam.save_x("pascal_trained_network.mat"); // save trained network
+    fname.str(""); fname << conf.get_string("name") << "_net" << setfill('0');
+    fname << setw(3) << i+1 << ".mat";
+    theparam.save_x(fname.str().c_str()); // save trained network
 #ifdef __GUI__
     if (display) {
       //stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
