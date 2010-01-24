@@ -120,7 +120,7 @@ namespace ebl {
 
   template <class T>
   resizepp_module<T>::
-  resizepp_module(module_1_1<T> &pp_, uint height_, uint width_)
+  resizepp_module(uint height_, uint width_, module_1_1<T> *pp_)
     : pp(pp_), inpp(1,1,1), outpp(1,1,1) {
     set_dimensions(height_, width_);
   }
@@ -140,22 +140,26 @@ namespace ebl {
     // resize input while preserving aspect ratio
     tmp = in.x.shift_dim(0, 2);
     idx<T> resized = image_resize(tmp, height, width, 0);
-    // call preprocessing
-    inpp.x = resized.shift_dim(2, 0);
-    pp.fprop(inpp, outpp);
+    resized = resized.shift_dim(2, 0);
     // resize out to target dimensions if necessary
     if ((out.x.dim(1) != height) || (out.x.dim(2) != width)
 	|| (out.x.dim(0) != outpp.x.dim(0)))
       out.x.resize(outpp.x.dim(0), height, width);
-    // copy pp output into output with target dimensions
     idx_clear(out.x);
-    tmp = out.x.narrow(1, outpp.x.dim(1), (height - outpp.x.dim(1)) / 2);
-    tmp = tmp.narrow(2, outpp.x.dim(2), (width - outpp.x.dim(2)) / 2);
-    idx_copy(outpp.x, tmp);
-
-    original_bbox = rect((height - outpp.x.dim(1)) / 2,
-			 (width - outpp.x.dim(2)) / 2,
-			 outpp.x.dim(1), outpp.x.dim(2));
+    tmp = out.x.narrow(1, resized.dim(1), (height - resized.dim(1)) / 2);
+    tmp = tmp.narrow(2, resized.dim(2), (width - resized.dim(2)) / 2);
+    // call preprocessing
+    if (pp) { // no preprocessing if NULL module
+      inpp.x = resized;
+      pp->fprop(inpp, outpp);
+      // copy pp output into output with target dimensions
+      idx_copy(outpp.x, tmp);
+    } else // no pp, copy directly to output
+      idx_copy(resized, tmp);
+    // remember where the original image has been placed in output
+    original_bbox = rect((height - resized.dim(1)) / 2,
+			 (width - resized.dim(2)) / 2,
+			 resized.dim(1), resized.dim(2));
   }
   
   template <class T>

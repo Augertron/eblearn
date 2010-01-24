@@ -150,10 +150,10 @@ namespace ebl {
       return rez.select(2, 0);
     // copy preserved ratio output in the middle of the wanted out size
     if ((mode == 3) && ((rez.dim(0) != h) || (rez.dim(1) != w))) {
-      idx<T> out(h, w, rez.dim(2));
+      idx<T> out((intg) h, (intg) w, rez.dim(2));
       idx_clear(out);
-      idx<T> tmp = out.narrow(0, rez.dim(0), (h - rez.dim(0)) / 2);
-      tmp = tmp.narrow(1, rez.dim(1), (w - rez.dim(1)) / 2);
+      idx<T> tmp = out.narrow(0, rez.dim(0), (intg) ((h - rez.dim(0)) / 2));
+      tmp = tmp.narrow(1, rez.dim(1), (intg) ((w - rez.dim(1)) / 2));
       idx_copy(rez, tmp);
       rez = out;
     }

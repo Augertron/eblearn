@@ -57,18 +57,20 @@ namespace ebl {
 
   void job::run() {
     ostringstream cmd;
-    cmd << "cd " << outdir << " && ((" << exe << " " << outdir << "/config";
+    cmd << "cd " << outdir_ << " && ((" << exe << " " << confname_;
     cmd << " 3>&1 1>&2 2>&3 | tee /dev/tty) 3>&1 1>&2 2>&3) > ";
-    cmd << outdir << "/out_" << conf.get_name() << ".log 2>&1 &";
+    cmd << outdir_ << "/out_" << conf.get_name() << ".log 2>&1 &";
     cout << "executing: " << cmd.str() << endl;
     if (system(cmd.str().c_str()))
       cerr << "error executing: " << cmd.str() << endl;
   }
 
   bool job::write() {
-    ostringstream outdir, cmd, confname, classesname;
+    ostringstream outdir, confname, cmd, classesname;
     // create directories 
+    outdir.str("");
     outdir << conf.get_output_dir() << "/" << conf.get_name();
+    outdir_ = outdir.str();
     cmd << "mkdir -p " << outdir.str();
     int res; res = system(cmd.str().c_str());
     // copy classes file into directory
@@ -79,8 +81,11 @@ namespace ebl {
     cmd << conf.get_name() << "_" << CLASSES_NAME << MATRIX_EXTENSION;
     res = system(cmd.str().c_str());
     // create configuration file
+    confname.str("");
     confname << outdir.str() << "/" << conf.get_name() << ".conf";
+    confname_ = confname.str();
     conf.set("name", conf.get_name().c_str()); // add config name into config
+    conf.resolve();
     if (!conf.write(confname.str().c_str()))
       return false;
     return true;

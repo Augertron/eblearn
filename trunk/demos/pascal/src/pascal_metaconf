@@ -8,7 +8,7 @@ meta_command = pascal_train
 # optional variables
 meta_name = pascal_bibg50
 meta_max_cpus = 8
-meta_output_dir = /home/sermanet/texieradata/pascal/out
+meta_output_dir = /home/sermanet/humairadata/pascal/out
 meta_email = me@mail.com
 meta_email_period = 1 # send an email with plots after every n iterations
 meta_gnuplot_params = set grid ytics;set ytics 5;set mytics 5;set grid mytics;
@@ -16,9 +16,8 @@ meta_gnuplot_params = set grid ytics;set ytics 5;set mytics 5;set grid mytics;
 ################################################################################
 # LOCAL PROGRAM CONFIGURATION
 
-name = toto
-#pascal = /home/sermanet/texieradata/pascal
-pascal = /data/pascal
+pascal = /home/sermanet/humairadata/pascal
+#pascal2 = /data/pascal
 
 # network
 net_ih = 96
@@ -39,14 +38,14 @@ color = 0 1
 root = ${pascal}/ds
 train = allbi96x96bg_train_50_1
 test = allbi96x96bg_val_50_1
-eta = .00001 .000005
+eta = .000005
 iterations = 100
 display = 0
 ninternals = 1
 
 # detection variables
 normalization_size = 9
-weights = ${pascal}/out/${name}_net.mat
-classes = ${pascal}/out/${name}_classes.mat
-test_root = ${pascal}/VOCdevkit_test09/VOC2009/JPEGImages
-answer_root = ${pascal}/out/${name}
+weights = ${pascal2}/out/${name}_net.mat
+classes = ${pascal2}/out/${name}_classes.mat
+test_root = ${pascal2}/VOCdevkit_test09/VOC2009/JPEGImages
+answer_root = ${pascal2}/out/${name}

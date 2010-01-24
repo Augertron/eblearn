@@ -67,8 +67,11 @@ int main(int argc, char **argv) { // regular main without gui
   bool display = conf.get_bool("display"); // enable/disable display
   uint wid;
   float zoom = 1;
+#ifdef __GUI__
+  detector_gui dgui;
   if (display)
     wid = new_window("pascal detector");
+#endif
 
   // detector
 //   idx<uint> resolutions(3,2);
@@ -82,9 +85,8 @@ int main(int argc, char **argv) { // regular main without gui
   rgb_to_ypuv_module<t_net> ppypuv(conf.get_uint("normalization_size"));
   module_1_1<t_net> &pp = conf.get_bool("color") ?
     (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
-  detector<t_net> detect((module_1_1<t_net>&) net, 4, classes, pp);
+  detector<t_net> detect((module_1_1<t_net>&) net, 4, classes, &pp);
   detect.set_bgclass(background.c_str());
-  detector_gui dgui;
 
   // answering variables and initializations
   t_net threshold = .985;
