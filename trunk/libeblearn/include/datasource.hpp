@@ -89,7 +89,7 @@ namespace ebl {
     }
     // balance dataset for each class
     set_balanced();
-    this->pretty();
+    datasource<Tnet, Tin1, Tin2>::pretty();
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -280,8 +280,6 @@ namespace ebl {
 		<< classes_fname << endl;
       classes_found = false;
     }
-    // init
-    datasource<Tnet, Tdata, Tlabel>::init(dat, lab, name_, b, c);
     // classes names are optional, use numbers by default if not specified
     if (classes_found) {
       this->lblstr = new vector<string*>;
@@ -289,7 +287,8 @@ namespace ebl {
 	this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
       }
     }
-    datasource<Tnet, Tdata, Tlabel>::pretty();
+    // init
+    datasource<Tnet, Tdata, Tlabel>::init(dat, lab, name_, b, c);
     pretty();
   }
   
