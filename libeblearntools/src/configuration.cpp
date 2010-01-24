@@ -87,16 +87,14 @@ namespace ebl {
       }
       // variable to replace
       string var = res.substr(pos + 2, pos2 - (pos + 2));
-      if (m.find(var) == m.end()) {
-	cerr << "unknown variable: " << var << endl;
-	eblerror("variable to resolve is unknown");
-      }	
-      string val = resolve(m, m[var]);
-      res = res.replace(pos, pos2 - pos + 1, val);
+      if (m.find(var) != m.end()) {
+	string val = resolve(m, m[var]);
+	res = res.replace(pos, pos2 - pos + 1, val);
+	pos2 = pos;
+      }
       // check if we have more variables to resolve
-      pos = res.find("${");
+      pos = res.find("${", pos2);
     }
-    cout << "resolved: " << v << " to: " << res << endl;
     return res;
   }
 
@@ -333,6 +331,10 @@ namespace ebl {
     return true;
   }
   
+  void configuration::resolve() {
+    resolve_variables(smap);
+  }
+
   const string &configuration::get_name() {
     return name;
   }

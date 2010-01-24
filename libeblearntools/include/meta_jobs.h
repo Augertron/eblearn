@@ -35,6 +35,8 @@
 
 #include "configuration.h"
 
+#include <sstream>
+
 using namespace std;
 
 namespace ebl {
@@ -43,7 +45,8 @@ namespace ebl {
   private:
     configuration conf;
     string exe; //!< executable full path
-    string outdir; //!< job's output directory
+    string outdir_; //!< job's output directory
+    string confname_; //!< job's configuration filename
 
   public:
     job(configuration &conf, const string &exe);

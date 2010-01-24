@@ -95,10 +95,12 @@ namespace ebl {
   template <class T> class resizepp_module: public module_1_1<T> {
   public:
     //! Constructor.
-    //! \param p is used to store all parametric variables in a single place.
-    //! \param in the size of the input to the linear combination.
-    //! \param out the size of the output to the linear combination.
-    resizepp_module(module_1_1<T> &pp, uint height, uint width);
+    //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
+    //!           preprocessing is performed. This module is not responsible for
+    //!           destroying the preprocessing module.
+    //! \param height target height for resizing.
+    //! \param width target width for resizing.
+    resizepp_module(uint height, uint width, module_1_1<T> *pp = NULL);
     //! destructor
     virtual ~resizepp_module();
     //! sets the desired output dimensions.
@@ -110,7 +112,7 @@ namespace ebl {
     rect get_original_bbox();
 
   private:
-    module_1_1<T>	&pp;	        //!< preprocessing module
+    module_1_1<T>	*pp;	        //!< preprocessing module
     uint		 height;	//!< target height
     uint		 width;         //!< target width
     state_idx<T>         inpp, outpp;   //!< input/output buffers for pp

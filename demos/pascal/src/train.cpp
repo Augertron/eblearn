@@ -1,6 +1,7 @@
 #include <fenv.h>
 #include "libeblearn.h"
 #include "libeblearntools.h"
+#include <iomanip>
 
 #ifdef __GUI__
 #include "libeblearngui.h"

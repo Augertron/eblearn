@@ -74,6 +74,9 @@ namespace ebl {
     //! save configuration into file fname.
     bool write(const char *fname);
 
+    //! resolve variables names in variables
+    void resolve();
+
     // accessors
 
     const string &get_name();

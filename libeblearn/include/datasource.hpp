@@ -463,8 +463,10 @@ namespace ebl {
       std::cerr << "failed to load MNIST labels: " << labelfile.str() << endl;
       eblerror("Failed to load dataset file");
     }
-    dat = dat.narrow(0, size, strcmp("t10k", type) ? 0 : 5000 - .5 * size); 
-    labs = labs.narrow(0, size, strcmp("t10k", type) ? 0 : 5000 - .5 * size); 
+    dat = dat.narrow(0, size, 
+		     strcmp("t10k", type) ? 0 : (intg) (5000 - .5 * size)); 
+    labs = labs.narrow(0, size, 
+		       strcmp("t10k", type) ? 0 : (intg) (5000 - .5 * size)); 
     init(dat, labs, name.str().c_str(), 0, 0.01);
   }
 
@@ -491,8 +493,8 @@ namespace ebl {
     out.resize(this->sample_dims());
     uint ni = data.dim(1);
     uint nj = data.dim(2);
-    uint di = 0.5 * (height - ni);
-    uint dj = 0.5 * (width - nj);
+    uint di = (uint) (0.5 * (height - ni));
+    uint dj = (uint) (0.5 * (width - nj));
     out.clear_x();
     idx<Tnet> tgt = out.x.select(0, 0);
     tgt = tgt.narrow(0, ni, di);

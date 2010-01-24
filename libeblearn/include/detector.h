@@ -87,7 +87,7 @@ namespace ebl {
     idx<void*>		 outputs;	//!< state_idx*
     idx<void*>		 results;	//!< idx<double>*
     idx<void*>           resize_modules;     //!< module_1_1<T>*
-    module_1_1<T>       &pp;            //!< preprocessing module
+    module_1_1<T>       *pp;            //!< preprocessing module
     idx<T>		 smoothing_kernel;
     idx<ubyte>   	 labels;
     ////////////////////////////////////////////////////////////////
@@ -111,14 +111,14 @@ namespace ebl {
     //! \param lbls A const char* idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     detector(module_1_1<T> &thenet, unsigned int nresolutions, 
-	     idx<const char*> &lbls, module_1_1<T> &pp,
+	     idx<const char*> &lbls, module_1_1<T> *pp = NULL,
 	     T bias = 0, float coeff = 1.0);
     
     //! Constructor. lbls is an idx containing each class name.
     //! \param lbls A ubyte idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     detector(module_1_1<T> &thenet, unsigned int nresolutions, 
-	     idx<ubyte> &lbls, module_1_1<T> &pp,
+	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL,
 	     T bias = 0, float coeff = 1.0);
     
     //! Constructor.
@@ -126,7 +126,7 @@ namespace ebl {
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     //! \param resolutions A uint idx containing resolutions (of size nx2)
     detector(module_1_1<T> &thenet, idx<unsigned int> &resolutions,
-	     idx<ubyte> &lbls, module_1_1<T> &pp,
+	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL,
 	     T bias = 0, float coeff = 1.0);
 
     //! Destructor.

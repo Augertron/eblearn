@@ -43,7 +43,7 @@ namespace ebl {
 
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_,	unsigned int nresolutions_, 
-			idx<const char*> &labels_, module_1_1<T> &pp_,
+			idx<const char*> &labels_, module_1_1<T> *pp_,
 			T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
@@ -61,7 +61,7 @@ namespace ebl {
   
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_, unsigned int nresolutions_, 
-			idx<ubyte> &labels_, module_1_1<T> &pp_,
+			idx<ubyte> &labels_, module_1_1<T> *pp_,
 			T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
@@ -79,7 +79,7 @@ namespace ebl {
 
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_, idx<unsigned int> &resolutions_,
-			idx<ubyte> &labels_, module_1_1<T> &pp_,
+			idx<ubyte> &labels_, module_1_1<T> *pp_,
 			T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
@@ -180,8 +180,8 @@ namespace ebl {
 	else
 	  res->resize(outd.dim(1), outd.dim(2), 2);
 	if (rszpp == NULL)
-	  rsz.set((void*) new resizepp_module<T>(pp, scaled.dim(1),
-						 scaled.dim(2)));
+	  rsz.set((void*) new resizepp_module<T>(scaled.dim(1),
+						 scaled.dim(2), pp));
 	else
 	  rszpp->set_dimensions(scaled.dim(1), scaled.dim(2));
 	thenet.pretty(scaled);
@@ -278,7 +278,8 @@ namespace ebl {
 	T y_max = (T)(raw_maps.dim(1));
 	T x_max = (T)(raw_maps.dim(2));
 	T x=0, y=0;
-	intg nms = (y_max >= 2*6+1) ? ((x_max >= 2*6+1) ? 6 : x_max) : y_max;
+	intg nms = (intg) ((y_max >= 2*6+1) ? 
+			   ((x_max >= 2*6+1) ? 6 : x_max) : y_max);
 
 	idx_fill(max_map, (T)-1);
 	{ idx_bloop1(raw_map, raw_maps, T) {
@@ -293,12 +294,12 @@ namespace ebl {
 			&& pix_val > threshold) {
 		      intg local_max, i,j,
 			// FIXME: temporarly fixed out of bounds with MAX and MIN
-			i_min = MAX(0, (y+nms<=y_max
+			i_min = (intg) MAX(0, (y+nms<=y_max
 					)?((y-nms>0)?y-nms:0):y_max-2*nms+1),
-			j_min = MAX(0, (x+nms<=x_max
+			j_min = (intg) MAX(0, (x+nms<=x_max
 					)?((x-nms>0)?x-nms:0):x_max-2*nms+1),
-			i_max = MIN(raw_map.dim(0), (y-nms>0)?((y+nms<=y_max)?y+nms:y_max):2*nms+1),
-			j_max = MIN(raw_map.dim(1), (x-nms>0)?((x+nms<=x_max)?x+nms:x_max):2*nms+1);
+			i_max = (intg) MIN(raw_map.dim(0), (y-nms>0)?((y+nms<=y_max)?y+nms:y_max):2*nms+1),
+			j_max = (intg) MIN(raw_map.dim(1), (x-nms>0)?((x+nms<=x_max)?x+nms:x_max):2*nms+1);
 		      local_max = 1;
 		      for (i = i_min; i < i_max; i++) {
 			for (j = j_min; j < j_max; j++) {
@@ -356,30 +357,30 @@ namespace ebl {
 		if ((ree.get(0) != bgclass) && 
 		    (ree.get(1) > threshold)) {
 		  bbox bb;
-		  bb.class_id = ree.get(0); // Class
+		  bb.class_id = (int) ree.get(0); // Class
 		  bb.confidence = ree.get(1); // Confidence
 		  bb.scale_index = scale_index; // scale index
 		  // original image
-		  uint oh0 = offset_h * offset_h_factor * scalehi;
-		  uint ow0 = offset_w * offset_h_factor * scalehi;
-		  bb.h0 = MAX(0, oh0 - robbox.h0 * scalehi);
-		  bb.w0 = MAX(0, ow0 - robbox.w0 * scalewi);
-		  bb.height = MIN(neth * scalehi + oh0,
-				  original_h + robbox.h0 * scalehi)
-		    - MAX(robbox.h0 * scalehi, oh0);
-		  bb.width = MIN(netw * scalewi + ow0,
-				 original_w + robbox.w0 * scalewi)
-		    - MAX(robbox.w0 * scalewi, ow0);
+		  uint oh0 = (uint) (offset_h * offset_h_factor * scalehi);
+		  uint ow0 = (uint) (offset_w * offset_h_factor * scalehi);
+		  bb.h0 = (uint) MAX(0, oh0 - robbox.h0 * scalehi);
+		  bb.w0 = (uint) MAX(0, ow0 - robbox.w0 * scalewi);
+		  bb.height = (uint) (MIN(neth * scalehi + oh0,
+					  original_h + robbox.h0 * scalehi)
+				      - MAX(robbox.h0 * scalehi, oh0));
+		  bb.width = (uint) (MIN(netw * scalewi + ow0,
+					 original_w + robbox.w0 * scalewi)
+				     - MAX(robbox.w0 * scalewi, ow0));
 		  // input map
-		  bb.iheight = in_h; // input h
-		  bb.iwidth = in_w; // input w
-		  bb.ih0 = offset_h * offset_h_factor;
-		  bb.iw0 = offset_w * offset_w_factor;
-		  bb.ih = neth;
-		  bb.iw = netw;
+		  bb.iheight = (uint) in_h; // input h
+		  bb.iwidth = (uint) in_w; // input w
+		  bb.ih0 = (uint) (offset_h * offset_h_factor);
+		  bb.iw0 = (uint) (offset_w * offset_w_factor);
+		  bb.ih = (uint) neth;
+		  bb.iw = (uint) netw;
 		  // output map
-		  bb.oheight = out_h; // output height
-		  bb.owidth = out_w; // output width
+		  bb.oheight = (uint) out_h; // output height
+		  bb.owidth = (uint) out_w; // output width
 		  bb.oh0 = offset_h; // answer height in output
 		  bb.ow0 = offset_w; // answer height in output
 		  vb.push_back(bb);
