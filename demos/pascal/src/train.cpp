@@ -25,8 +25,6 @@ int main(int argc, char **argv) { // regular main without gui
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
   init_drand(time(NULL)); // initialize random seed
   configuration conf(argv[1]); // configuration file
-  bool display = conf.get_bool("display"); // enable/disable display
-  uint ninternals = conf.get_uint("ninternals"); // # examples' to display
 
   //! load PASCAL datasets
   labeled_datasource<t_net, float, int>
@@ -76,6 +74,8 @@ int main(int argc, char **argv) { // regular main without gui
 
 #ifdef __GUI__
   supervised_trainer_gui<t_net, float, int> stgui;
+  bool display = conf.get_bool("display"); // enable/disable display
+  uint ninternals = conf.get_uint("ninternals"); // # examples' to display
   if (display) {
     //stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
     stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
