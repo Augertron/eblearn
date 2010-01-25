@@ -89,7 +89,7 @@ int main(int argc, char **argv) { // regular main without gui
   // now do training iterations 
   cout << "Training network on PASCAL with " << train_ds.size();
   cout << " training samples and " << test_ds.size() <<" test samples:" << endl;
-  ostringstream fname;
+  ostringstream name, fname;
   for (uint i = 0; i < conf.get_uint("iterations"); ++i) {
     // train and test
     thetrainer.train(train_ds, trainmeter, gdp, 1);	         // train
@@ -97,11 +97,11 @@ int main(int argc, char **argv) { // regular main without gui
     thetrainer.test(test_ds, testmeter, infp);	                 // test
     
     // save weights and confusion matrix for test set
-    fname.str(""); fname << conf.get_string("name") << "_net" << setfill('0');
-    fname << setw(3) << i+1 << ".mat";
+    name.str(""); name << conf.get_string("name") << "_net" << setfill('0');
+    name << setw(3) << i+1;
+    fname.str(""); fname << name.str() << ".mat";
     theparam.save_x(fname.str().c_str()); // save trained network
-    fname.str(""); fname << conf.get_string("name") << "_net" << setfill('0');
-    fname << setw(3) << i+1 << "_confusion_test.mat";
+    fname.str(""); fname << name.str() << "confusion_test.mat";
     save_matrix(testmeter.get_confusion(), fname.str().c_str());
 #ifdef __GUI__ // display
     if (display) {
