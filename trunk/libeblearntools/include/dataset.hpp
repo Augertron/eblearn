@@ -67,6 +67,7 @@ namespace ebl {
       inroot += "/";
     } else inroot = "";
     outdims = idxdim(96, 96, 3);
+    mindims = idxdim(1, 1);
     build_fname(name, DATA_NAME, data_fname);
     build_fname(name, LABELS_NAME, labels_fname);
     build_fname(name, CLASSES_NAME, classes_fname);
@@ -93,6 +94,7 @@ namespace ebl {
     max_per_class_set = false;
     mpc = numeric_limits<intg>::max();
     init_drand(time(NULL)); // initialize random seed
+    usepose = false;
 #ifndef __BOOST__
     eblerror(BOOST_LIB_ERROR);
 #endif
@@ -115,6 +117,8 @@ namespace ebl {
     if (!this->count_samples())
       eblerror("failed to count samples to be compiled");
     cout << "Found: " << total_samples << " total samples." << endl;
+    if (total_samples == 0)
+      return false;
     cout << "Found: "; print_classes(); cout << "." << endl;
     // (re)init max per class, knowing number of classes
     intg m = numeric_limits<intg>::max();
@@ -137,6 +141,8 @@ namespace ebl {
   template <class Tdata>
   bool dataset<Tdata>::extract() {
 #ifdef __BOOST__
+    if (!allocated)
+      return false;
     cmatch what;
     regex hidden_dir(".svn");    
     directory_iterator end_itr; // default construction yields past-the-end
@@ -346,6 +352,8 @@ namespace ebl {
   
   template <class Tdata>
   bool dataset<Tdata>::save(const string &root) {
+    if (!allocated)
+      return false;
     string root1 = root;
     root1 += "/";
     cout << "Saving dataset " << name << " in " << root << "/";
@@ -444,6 +452,10 @@ namespace ebl {
       cerr << "error: dataset has not been allocated, cannot add data." << endl;
       return false;
     }
+    // check that input is bigger than minimum dimensions allowed
+    if ((dat.dim(0) < mindims.dim(0)) || (r && (r->height < mindims.dim(0)))
+	|| (dat.dim(1) < mindims.dim(1)) || (r && (r->width < mindims.dim(1))))
+      return false;
     // check that class exists (may not exist if excluded)
     if (find(classes.begin(), classes.end(), class_name) == classes.end())
       return false;
@@ -518,6 +530,12 @@ namespace ebl {
   }
 
   template <class Tdata>
+  void dataset<Tdata>::set_mindims(const idxdim &d) {
+    cout << "Setting minimum input dimensions to " << d << endl;
+    mindims = d;
+  }
+
+  template <class Tdata>
   void dataset<Tdata>::set_scales(const vector<uint> &sc, const string &od) {
     scales = sc;
     scale_mode = true;
@@ -569,6 +587,12 @@ namespace ebl {
       }
       cout << endl;
     }
+  }
+  
+  template <class Tdata>
+  void dataset<Tdata>::use_pose() {
+    usepose = true;
+    cout << "Using pose to separate classes." << endl;
   }
   
   template <class Tdata>

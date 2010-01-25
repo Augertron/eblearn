@@ -30,22 +30,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef PASCAL_DATASET_H_
-#define PASCAL_DATASET_H_
+#ifndef PASCALPART_DATASET_H_
+#define PASCALPART_DATASET_H_
 
-#include "dataset.h"
-#include "xml_utils.h"
-
-#define XML_PATTERN ".*[.]xml"
+#include "pascal_dataset.h"
 
 namespace ebl {
 
-  //! The pascal_dataset class allows to extract a dataset of type PASCAL
-  //! from sample files and
-  //! compile all samples into one dataset matrix, formatted for learning.
-  //! It derives from the dataset class, reimplementing only PASCAL specifics,
-  //! such as reading xml files, etc.
-  template <class Tdata> class pascal_dataset : public dataset<Tdata> {
+  //! The pascalpart_dataset class allows to extract a dataset of type PASCAL
+  //! but extracting only the "part" images, i.e. head, hand and foot for the
+  //! person class.
+  //! It compiles all samples into one dataset matrix, formatted for learning.
+  //! It derives from the pascal_dataset class, reimplementing only specific
+  //! parts such as reading xml files, etc.
+  template <class Tdata> class pascalpart_dataset
+    : public pascal_dataset<Tdata> {
   public:
 
     ////////////////////////////////////////////////////////////////
@@ -56,17 +55,11 @@ namespace ebl {
     //! outdims are the target output dimensions of each sample.
     //! inroot is the root directory from which we extract data.
     //! ignore_diff ignores difficult objects if true.
-    pascal_dataset(const char *name, const char *inroot = NULL,
-		   bool ignore_diff = true);
+    pascalpart_dataset(const char *name, const char *inroot = NULL,
+		       bool ignore_diff = true);
 
     //! Destructor.
-    virtual ~pascal_dataset();
-
-    ////////////////////////////////////////////////////////////////
-    // data
-
-    //! Extract data from files into dataset.
-    virtual bool extract();
+    virtual ~pascalpart_dataset();
 
   protected:
     
@@ -75,43 +68,29 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     // data
     
-    //! count how many samples are present in dataset files to be compiled.
-    virtual bool count_samples();
-
     //! count sample or not given an xml node. This will update the total_sample
     //! and total_difficult counters.
-    virtual void count_sample(Node::NodeList &olist);
-    
+    void count_sample(Node::NodeList &olist);    
+
     ////////////////////////////////////////////////////////////////
     // internal methods
 
-    //! process an xml file.
-    virtual bool process_xml(const string &xmlfile);
-
     //! process one object from an xml file.
     virtual void process_object(Node* onode, idx<ubyte> &img, uint &h0,
-				uint &w0, uint obj_number,
-				const string &image_filename);
-
-    //! process image for one object.
-    virtual void process_image(idx<ubyte> &img, uint &h0, uint &w0,
-			       uint xmin, uint ymin,
-			       uint xmax, uint ymax, uint sizex, uint sizey,
-			       string &obj_class, uint obj_number,
-			       uint difficult, const string &image_filename);
-    
+				uint &w0,
+				uint obj_number, const string &image_filename);
+        
 #endif /* __XML__ */
     
   protected:
     // "difficult" samples /////////////////////////////////////////
-    bool	ignore_difficult;	//!< ignore difficult or not
-    intg	total_difficult;	//!< total number of difficult samples
+    bool pascal_dataset<Tdata>::ignore_difficult;//!< ignore difficult or not
+    intg pascal_dataset<Tdata>::total_difficult;//!< total number of difficult
     // directories /////////////////////////////////////////////////
-    string	annroot;	//!< directory of annotation xml files
-    string	imgroot;	//!< directory of images
+    string pascal_dataset<Tdata>::annroot;//!< directory of annotation xml files
+    string pascal_dataset<Tdata>::imgroot;//!< directory of images
     // base class members to be used ///////////////////////////////
     using dataset<Tdata>::usepose;
-    using dataset<Tdata>::allocated;
     using dataset<Tdata>::total_samples;
     using dataset<Tdata>::inroot;
     using dataset<Tdata>::display_extraction;
@@ -129,6 +108,6 @@ namespace ebl {
 
 } // end namespace ebl
 
-#include "pascal_dataset.hpp"
+#include "pascalpart_dataset.hpp"
 
-#endif /* PASCAL_DATASET_H_ */
+#endif /* PASCALPART_DATASET_H_ */

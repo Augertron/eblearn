@@ -121,6 +121,10 @@ namespace ebl {
     //! The default is: 96x96x3
     void set_outdims(const idxdim &d);
 
+    //! Specify the minimum dimensions of input samples.
+    //! The default is: 1x1
+    void set_mindims(const idxdim &d);
+
     //! Setting scale mode and scales: preprocess and save each image
     //! in each scale in outdir directory.
     void set_scales(const vector<uint> &sc, const string &od);
@@ -136,6 +140,11 @@ namespace ebl {
 
     //! set the list of classes to exclude
     void set_exclude(const vector<string> &ex);
+
+    //! use pose information to separate classes. e.g. if for class "person"
+    //! we have "front" and "side" pose, create 2 classes "person_front"
+    //! and "person_side" instead of 1 class "person".
+    void use_pose();
 
     //! Dataset has reached maximum sample capacity (this can be controlled
     //! by setting max_data variable).
@@ -261,6 +270,7 @@ namespace ebl {
     // data helpers ////////////////////////////////////////////////
     bool		allocated;	//!< data matrices allocated or not
     idxdim		outdims;	//!< dimensions of sample out dimensions
+    idxdim		mindims;	//!< min dims of input samples
     idxdim		datadims;	//!< dimensions of data out dimensions
     intg		data_cnt;	//!< number of samples added so far
     intg		max_data;	//!< user can limit samples# with this
@@ -274,6 +284,7 @@ namespace ebl {
     vector<uint>        scales; //!< integer scales
     bool                interleaved_input; //!< indicate if input is interleaved
     vector<string>      exclude; //!< list of excluded classes
+    bool                usepose; //!< use pose or not
     // names ///////////////////////////////////////////////////////
     string		name;	//!< dataset name
     string		data_fname;	//!< data filename

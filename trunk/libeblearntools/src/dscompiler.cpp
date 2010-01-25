@@ -39,6 +39,7 @@
 #include "pascal_dataset.h"
 #include "pascalbg_dataset.h"
 #include "pascalfull_dataset.h"
+#include "pascalpart_dataset.h"
 #include "lush_dataset.h"
 
 using namespace std;
@@ -70,9 +71,12 @@ string		type		 = "regular";
 string          resize           = "bilinear";
 string		precision	 = "float";
 uint		sleep_delay	 = 0;	// sleep between frames displayed in ms
-idxdim          outdims;	// dimensions of output sample
+idxdim          outdims;	        // dimensions of output sample
 bool		outdims_set	 = false;
+idxdim          mindims;	        // minimum dimensions in input
+bool		mindims_set	 = false;
 vector<string>  exclude;
+bool            usepose          = false; // use pose if given
 
 ////////////////////////////////////////////////////////////////
 // command line
@@ -114,6 +118,8 @@ bool parse_args(int argc, char **argv) {
 	ignore_difficult = true;
       } else if (strcmp(argv[i], "-shuffle") == 0) {
 	shuffle = true;
+      } else if (strcmp(argv[i], "-usepose") == 0) {
+	usepose = true;
       } else if (strcmp(argv[i], "-stereo") == 0) {
 	stereo = true;
       } else if (strcmp(argv[i], "-stereo_lpattern") == 0) {
@@ -178,6 +184,25 @@ bool parse_args(int argc, char **argv) {
 	outdims = d;
 	outdims_set = true;
 	preprocessing = true;
+      } else if (strcmp(argv[i], "-mindims") == 0) {
+	++i; if (i >= argc) throw 0;
+	idxdim d;
+	string s = argv[i];
+	int k = 0;
+	while (s.size()) {
+	  uint j;
+	  for (j = 0; j < s.size(); ++j)
+	    if (s[j] == 'x')
+	      break ;
+	  string s0 = s.substr(0, j);
+	  if (j >= s.size())
+	    s = "";
+	  else
+	    s = s.substr(j + 1, s.size());
+	  d.insert_dim(atoi(s0.c_str()), k++);
+	}
+	mindims = d;
+	mindims_set = true;
       } else if (strcmp(argv[i], "-scales") == 0) {
 	++i; if (i >= argc) throw 0;
 	string s = argv[i];
@@ -224,7 +249,7 @@ bool parse_args(int argc, char **argv) {
 void print_usage() {
   cout << "Usage: ./dscompiler <images_root> [OPTIONS]" << endl;
   cout << "Options are:" << endl;
-  cout << "  -type <regular(default)|pascal|pascalbg|pascalfull|lush>" << endl;
+  cout << "  -type <regular(default)|pascal|pascalbg|pascalfull|pascalpart|lush>" << endl;
   cout << "     regular: compile images labeled by their top folder name"<<endl;
   cout << "     pascal: compile images labeled by xml files (PASCAL challenge)";
   cout << endl;
@@ -232,6 +257,8 @@ void print_usage() {
   cout << "     pascalfull: copy full original PASCAL images into outdir"<<endl;
   cout << "       (allows to exclude some classes, then call regular compiler)";
   cout << endl;
+  cout << "     pascalpart: only extract object parts";
+  cout << " (e.g. person->(head,hand,foot)" << endl;
   cout << "     lush: regular compilation using .mat images" << endl;
   cout << "  -precision <float(default)|double>" << endl;
   cout << "  -image_pattern <pattern>" << endl;
@@ -243,6 +270,7 @@ void print_usage() {
   cout << "  -nopp (no preprocessing, i.e. no resizing or conversion)" << endl;
   cout << "  -sleep <delay in ms> (sleep between frame display)" << endl;
   cout << "  -shuffle" << endl;
+  cout << "  -usepose (separate classes with pose if available)" << endl;
   cout << "  -stereo" << endl;
   cout << "  -stereo_lpattern <pattern>" << endl;
   cout << "  -stereo_rpattern <pattern>" << endl;
@@ -254,6 +282,9 @@ void print_usage() {
   cout << "  -mexican_hat_size <integer>" << endl;
   cout << "  -deformations <integer>" << endl;
   cout << "  -dims <dimensions (default: 96x96x3)>" << endl;
+  cout << "  -mindims <dimensions (default: 1x1)>" << endl;
+  cout << "     (exclude inputs for which one dimension is less than specified";
+  cout << endl;
   cout << "  -scales <scales (e.g: 1,2,4)>" << endl;
   cout << "  -resize <gaussian(default)|bilinear" << endl;
   cout << "  -exclude <class name>" << endl;
@@ -265,9 +296,13 @@ void print_usage() {
 
 template <class Tds>
 void compile_ds(Tds &ds, bool imgpat = true) {
+  if (usepose)
+    ds.use_pose();
   ds.set_exclude(exclude);
   if (outdims_set)
     ds.set_outdims(outdims);
+  if (mindims_set)
+    ds.set_mindims(mindims);
   ds.set_display(display);
   ds.set_sleepdisplay(sleep_delay);
   ds.set_resize(resize);
@@ -296,12 +331,19 @@ void compile() {
 			     images_root.c_str(), ignore_difficult);
     compile_ds(ds);
   }
+  else if (!strcmp(type.c_str(), "pascalpart")) {
+    pascalpart_dataset<Tdata> ds(dataset_name.c_str(),
+				 images_root.c_str(), ignore_difficult);
+    compile_ds(ds);
+  }
   else if (!strcmp(type.c_str(), "pascalbg")) {
     pascalbg_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
-			       outdir.c_str(), maxperclass, ignore_difficult);
+			       outdir.c_str(), maxperclass, ignore_difficult); 
     if (outdims_set)
       ds.set_outdims(outdims);
-    ds.set_display(display);
+    if (mindims_set)
+      ds.set_mindims(mindims);
+   ds.set_display(display);
     ds.set_sleepdisplay(sleep_delay);
     ds.set_image_pattern(image_pattern);
     if (maxdata > 0)
@@ -364,6 +406,7 @@ int main(int argc, char **argv) {
   cout << "  display: " << (display ? "yes" : "no") << endl;
   cout << "  display sleep: " << sleep_delay << " ms." << endl;
   cout << "  shuffling: " << (shuffle ? "yes" : "no") << endl;
+  cout << "  usepose: " << (usepose ? "yes" : "no") << endl;
   cout << "  stereo: " << (stereo ? "yes" : "no") << endl;
   if (stereo) {
     cout << "    stereo left pattern: " << stereo_lpattern << endl;
@@ -378,6 +421,7 @@ int main(int argc, char **argv) {
   cout << "  deformations: " << deformations << endl;
   cout << "  resizing method: " << resize << endl;
   cout << "  output dimensions: " << outdims << endl;
+  cout << "  minimum input dimensions: " << mindims << endl;
   cout << "  scales: ";
   if (!scale_mode) cout << "none";
   else for (vector<uint>::iterator i = scales.begin(); i != scales.end(); ++i)
