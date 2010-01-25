@@ -140,14 +140,14 @@ namespace ebl {
   double classifier_meter::average_error() {
     double err = 0;
     uint i = 0;
-    idx_bloop1(infered, confusion, uint) {
-      double sum = idx_sum(infered); // all answers
-      double positive = infered.get(i); // true answers
-      err += (sum - positive) / sum; // error for class i
+    idx_eloop1(desired, confusion, uint) {
+      double sum = idx_sum(desired); // all answers
+      double positive = desired.get(i); // true answers
+      err += (sum - positive) / MAX(1, sum); // error for class i
       i++;
     }
-    err /= confusion.dim(0) * 100; // average error percentage;
-    return err;
+    err /= confusion.dim(0); // average error
+    return err * 100; // average error percentage
   }
 
   double classifier_meter::average_success() {

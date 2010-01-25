@@ -52,10 +52,11 @@ namespace ebl {
   template<> inline int get_magic<float>()        {return MAGIC_FLOAT_MATRIX; }
   template<> inline int get_magic<double>()       {return MAGIC_DOUBLE_MATRIX; }
   template<> inline int get_magic<long>()         {return MAGIC_LONG_MATRIX; }
+  template<> inline int get_magic<uint>()         {return MAGIC_UINT_MATRIX; }
 
   // Pascal Vincent type
   template<class T> inline int get_magic_vincent() 
-  { eblerror("matrix type not implemented."); return 0; }
+  { eblerror("matrix type not implemented"); return 0; }
   template<> inline int get_magic_vincent<ubyte>(){return MAGIC_UBYTE_VINCENT;}
   template<> inline int get_magic_vincent<int>()  {return MAGIC_INT_VINCENT;}
   template<> inline int get_magic_vincent<float>(){return MAGIC_FLOAT_VINCENT;}
@@ -72,6 +73,8 @@ namespace ebl {
     case MAGIC_FLOAT_MATRIX: 	return "float";
     case MAGIC_DOUBLE_MATRIX: 	return "double";
     case MAGIC_LONG_MATRIX:	return "long";
+      // non standard
+    case MAGIC_UINT_MATRIX: 	return "uint";
       // pascal vincent format
     case MAGIC_UBYTE_VINCENT: 	return "ubyte (pascal vincent)";
     case MAGIC_INT_VINCENT: 	return "int (pascal vincent)";

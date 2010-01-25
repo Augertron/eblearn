@@ -53,6 +53,9 @@ using namespace std;
 #define MAGIC_LONG_MATRIX	0x1e3d4c58
 #define MAGIC_ASCII_MATRIX	0x2e4d4154	/* '.MAT' */
 
+// non-standard magic numbers
+#define MAGIC_UINT_MATRIX	0x1e3d4c59
+
 // pascal vincent's magic numbers
 #define MAGIC_UBYTE_VINCENT	0x0800
 #define MAGIC_BYTE_VINCENT	0x0900
