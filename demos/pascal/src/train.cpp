@@ -91,19 +91,27 @@ int main(int argc, char **argv) { // regular main without gui
   cout << " training samples and " << test_ds.size() <<" test samples:" << endl;
   ostringstream fname;
   for (uint i = 0; i < conf.get_uint("iterations"); ++i) {
+    // train and test
     thetrainer.train(train_ds, trainmeter, gdp, 1);	         // train
     thetrainer.test(train_ds, trainmeter, infp);	         // test
     thetrainer.test(test_ds, testmeter, infp);	                 // test
+    
+    // save weights and confusion matrix for test set
     fname.str(""); fname << conf.get_string("name") << "_net" << setfill('0');
     fname << setw(3) << i+1 << ".mat";
     theparam.save_x(fname.str().c_str()); // save trained network
-#ifdef __GUI__
+    fname.str(""); fname << conf.get_string("name") << "_net" << setfill('0');
+    fname << setw(3) << i+1 << "_confusion_test.mat";
+    save_matrix(testmeter.get_confusion(), fname.str().c_str());
+#ifdef __GUI__ // display
     if (display) {
       //stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
       stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
     }
 #endif
-    thetrainer.compute_diaghessian(train_ds, 100, 0.02); // recompute 2nd der
+    
+    // recompute 2nd derivatives
+    thetrainer.compute_diaghessian(train_ds, 100, 0.02);
   }
   return 0;
 }
