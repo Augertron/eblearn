@@ -84,19 +84,23 @@ namespace ebl {
   // TODO: allow definition of different comparison functions.
   class classifier_meter {
   public:
-    double energy;
-    float confidence;
-    intg size;
-    intg age;
-    intg total_correct;
-    intg total_error;
-    intg total_punt;
-    double total_energy;
-    vector<uint> class_errors;
-    vector<uint> class_totals;
-    vector<uint> class_tpr;
-    vector<uint> class_fpr;
+    double		energy;
+    float		confidence;
+    intg		size;
+    intg		age;
+    intg		total_correct;
+    intg		total_error;
+    intg		total_punt;
+    double		total_energy;
+    vector<uint>	class_errors;
+    vector<uint>	class_totals;
+    vector<uint>	class_tpr;
+    vector<uint>	class_fpr;
+  private:
+    idx<uint>		confusion;	//!< confusion matrix
+    uint                nclasses;       //!< number of classes
 
+  public:
     //! Create a new <classifier-meter> using <comparison-function>
     //! to compare actual and desired answers. By default
     //! the <same-class?> function is used for that purpose.
@@ -105,9 +109,14 @@ namespace ebl {
     //! the first argument is -1 (which means reject).
     // TODO: allow passing of comparison function
     classifier_meter();
-    ~classifier_meter() {
-    };
 
+    //! Destructor.
+    ~classifier_meter();
+
+    //! Initialize the meter.
+    //! \param nclasses The number of classes.
+    void init(uint nclasses);
+    
     //! return 0 if <actual> equals -1, otherwise, return 1 if <actual>
     //! and <desired> are equal, -1 otherwise.
     int correctp(ubyte co, ubyte cd);
@@ -129,6 +138,16 @@ namespace ebl {
     void update(intg age, uint desired, uint infered, double energy);
 
     void test(class_state *co, ubyte cd, double energy);
+
+    //! Returns the average error percentage computed from the confusion matrix.
+    double average_error();
+
+    //! Returns the average success percentage computed
+    //! from the confusion matrix.
+    double average_success();
+
+    //! Returns the confusion matrix;
+    idx<uint>& get_confusion();
 
     //! return a list with the age, the number of samples
     //! (number of calls to update since the last clear),

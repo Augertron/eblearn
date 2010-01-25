@@ -292,8 +292,8 @@ namespace ebl {
       input->resize(ds.sample_dims());
     // reinit ds
     ds.seek_begin();
-    if (log)
-      log->clear();
+    if (log) // reinit logger
+      log->init(ds.get_nclasses());
     // new iteration
     if (new_iteration) {
       if (!iteration_ptr) 

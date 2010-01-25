@@ -38,6 +38,17 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////////////
 
   classifier_meter::classifier_meter() {
+    init(1);
+  }
+
+  classifier_meter::~classifier_meter() {
+  }
+
+  void classifier_meter::init(uint nclasses_) {
+    if (nclasses != nclasses_) {
+      nclasses = nclasses_;
+      confusion = idx<uint>(nclasses, nclasses);
+    }
     this->clear();
   }
 
@@ -61,6 +72,7 @@ namespace ebl {
     class_totals.clear();
     class_tpr.clear();
     class_fpr.clear();
+    idx_clear(confusion);
   }
 
   void classifier_meter::resize (intg sz) {
@@ -121,8 +133,31 @@ namespace ebl {
       class_fpr[infered] = class_fpr[infered] + 1;
     }
     size++;
+    // update confusion matrix
+    confusion.set(confusion.get(infered, desired) + 1, infered, desired);
   }
 
+  double classifier_meter::average_error() {
+    double err = 0;
+    uint i = 0;
+    idx_bloop1(infered, confusion, uint) {
+      double sum = idx_sum(infered); // all answers
+      double positive = infered.get(i); // true answers
+      err += (sum - positive) / sum; // error for class i
+      i++;
+    }
+    err /= confusion.dim(0) * 100; // average error percentage;
+    return err;
+  }
+
+  double classifier_meter::average_success() {
+    return 100 - average_error();
+  }
+
+  idx<uint>& classifier_meter::get_confusion() {
+    return confusion;
+  }
+  
   void classifier_meter::test(class_state *co, ubyte cd, double energy) {
     intg crrct = this->correctp(co->output_class, cd);
     age = 0;
@@ -166,8 +201,8 @@ namespace ebl {
     cout << iteration << " (" << dsname << "): ";
     cout << "[" << (int) age << "]  sz=" <<  (int) size;
     cout << " energy=" << total_energy / (double) size;
-    cout << "  correct=" <<  (total_correct * 100) / (double) size;
-    cout << "% errors=" << (total_error * 100) / (double) size;
+    cout << "  correct=" <<  average_success();
+    cout << "% errors=" << average_error();
     cout << "% rejects=" << (total_punt * 100) / (double) size << "%";
     cout << endl;
     cout << "errors per class: ";
