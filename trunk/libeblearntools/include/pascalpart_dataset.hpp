@@ -86,7 +86,7 @@ namespace ebl {
 	  if (!strcmp((*piter)->get_name().c_str(), "name")) {
 	    xml_get_string(*piter, part_classname);
 	    // found a part and its name, add it
-	    if (!(ignore_difficult && difficult) && // ignore difficult?
+	    if (!(this->ignore_difficult && difficult) && // ignore difficult?
 		(find(exclude.begin(), exclude.end(),
 		      part_classname) == exclude.end())) {
 	      if (usepose && pose_found) { // append pose to class name
@@ -96,9 +96,9 @@ namespace ebl {
 	      this->add_class(part_classname);
 	    }
 	    // increment samples numbers
-	    total_samples++;
+	    this->total_samples++;
 	    if (difficult)
-	      total_difficult++;
+	      this->total_difficult++;
 	  }
 	}
       }
@@ -167,7 +167,7 @@ namespace ebl {
 	sizex = xmax - xmin;
 	sizey = ymax - ymin;
 	// process image  
-	if (!(ignore_difficult && difficult))
+	if (!(this->ignore_difficult && difficult))
 	  this->process_image(img, h0, w0, xmin, ymin, xmax, ymax, sizex, sizey,
 			      part_class, obj_number, difficult,
 			      image_filename);

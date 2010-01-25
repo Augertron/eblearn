@@ -82,13 +82,6 @@ namespace ebl {
         
 #endif /* __XML__ */
     
-  protected:
-    // "difficult" samples /////////////////////////////////////////
-    bool pascal_dataset<Tdata>::ignore_difficult;//!< ignore difficult or not
-    intg pascal_dataset<Tdata>::total_difficult;//!< total number of difficult
-    // directories /////////////////////////////////////////////////
-    string pascal_dataset<Tdata>::annroot;//!< directory of annotation xml files
-    string pascal_dataset<Tdata>::imgroot;//!< directory of images
     // base class members to be used ///////////////////////////////
     using dataset<Tdata>::usepose;
     using dataset<Tdata>::total_samples;
