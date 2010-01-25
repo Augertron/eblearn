@@ -80,6 +80,8 @@ namespace ebl {
   template <class Tdata>
   bool pascal_dataset<Tdata>::extract() {
 #ifdef __XML__    
+    if (!allocated)
+      return false;
     cout << "Extracting samples from PASCAL files into dataset..." << endl;
     // adding data to dataset using all xml files in annroot
     regex eExt(XML_PATTERN);
@@ -113,8 +115,6 @@ namespace ebl {
   bool pascal_dataset<Tdata>::count_samples() {
     total_difficult = 0;
     total_samples = 0;
-    uint difficult;
-    string obj_classname;
     regex eExt(XML_PATTERN);
     cmatch what;
     string xmlpath;
@@ -142,25 +142,8 @@ namespace ebl {
 		iter != list.end(); ++iter) {
 	      if (!strcmp((*iter)->get_name().c_str(), "object")) {
 		// check for difficult flag in object node
-		difficult = 0;
 		Node::NodeList olist = (*iter)->get_children();
-		for(Node::NodeList::iterator oiter = olist.begin();
-		    oiter != olist.end(); ++oiter) {
-		  if (!strcmp((*oiter)->get_name().c_str(), "difficult"))
-		    difficult = xml_get_uint(*oiter);
-		  else if (!strcmp((*oiter)->get_name().c_str(), "name")) {
-		    xml_get_string(*oiter, obj_classname);
-		  }
-		}
-		// add class to dataset
-		if (!(ignore_difficult && difficult) && // ignore difficult?
-		    (find(exclude.begin(), exclude.end(),
-			  obj_classname) == exclude.end()))
-		  this->add_class(obj_classname);
-		// increment samples numbers
-		total_samples++;
-		if (difficult)
-		  total_difficult++;
+		count_sample(olist);
 	      }
 	    }
 	  }
@@ -179,6 +162,38 @@ namespace ebl {
     return true;
   }
 
+  template <class Tdata>
+  void pascal_dataset<Tdata>::count_sample(Node::NodeList &olist) {
+    uint difficult = 0;
+    string obj_classname, pose;
+    bool pose_found = false;
+    for(Node::NodeList::iterator oiter = olist.begin();
+	oiter != olist.end(); ++oiter) {
+      if (!strcmp((*oiter)->get_name().c_str(), "difficult"))
+	difficult = xml_get_uint(*oiter);
+      else if (!strcmp((*oiter)->get_name().c_str(), "name"))
+	xml_get_string(*oiter, obj_classname);
+      else if (!strcmp((*oiter)->get_name().c_str(), "pose")) {
+	xml_get_string(*oiter, pose);
+	pose_found = true;
+      }
+    }
+    // add class to dataset
+    if (!(ignore_difficult && difficult) && // ignore difficult?
+	(find(exclude.begin(), exclude.end(),
+	      obj_classname) == exclude.end())) {
+      if (usepose && pose_found) { // append pose to class name
+	obj_classname += "_";
+	obj_classname += pose;
+      }
+      this->add_class(obj_classname);
+    }
+    // increment samples numbers
+    total_samples++;
+    if (difficult)
+      total_difficult++;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // process xml
 
@@ -210,12 +225,6 @@ namespace ebl {
 	image_fullname += image_filename;
 	// load image 
 	idx<ubyte> img = load_image<ubyte>(image_fullname);
-#ifdef __GUI__
-	if (display_extraction) {
-	  //	  clear_window();
-	  //	  h0 = img.dim(1) + 5;
-	}
-#endif
 	// parse all objects in image
 	for(Node::NodeList::iterator iter = list.begin();
 	    iter != list.end(); ++iter) {
