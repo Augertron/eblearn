@@ -93,12 +93,15 @@ namespace ebl {
 		part_classname += "_";
 		part_classname += pose;
 	      }
-	      this->add_class(part_classname);
+	      if (find(exclude.begin(), exclude.end(),
+		       part_classname) == exclude.end()) {
+		this->add_class(part_classname);
+		// increment samples numbers
+		this->total_samples++;
+		if (difficult)
+		  this->total_difficult++;
+	      }
 	    }
-	    // increment samples numbers
-	    this->total_samples++;
-	    if (difficult)
-	      this->total_difficult++;
 	  }
 	}
       }

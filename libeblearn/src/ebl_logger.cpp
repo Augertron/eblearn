@@ -47,7 +47,7 @@ namespace ebl {
   void classifier_meter::init(uint nclasses_) {
     if (nclasses != nclasses_) {
       nclasses = nclasses_;
-      confusion = idx<uint>(nclasses, nclasses);
+      confusion = idx<int>(nclasses, nclasses);
     }
     this->clear();
   }
@@ -140,7 +140,7 @@ namespace ebl {
   double classifier_meter::average_error() {
     double err = 0;
     uint i = 0;
-    idx_eloop1(desired, confusion, uint) {
+    idx_eloop1(desired, confusion, int) {
       double sum = idx_sum(desired); // all answers
       double positive = desired.get(i); // true answers
       err += (sum - positive) / MAX(1, sum); // error for class i
@@ -154,7 +154,7 @@ namespace ebl {
     return 100 - average_error();
   }
 
-  idx<uint>& classifier_meter::get_confusion() {
+  idx<int>& classifier_meter::get_confusion() {
     return confusion;
   }
   
