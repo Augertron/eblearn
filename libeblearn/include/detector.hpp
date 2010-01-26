@@ -135,19 +135,19 @@ namespace ebl {
     // initialize input and output states and result matrices for each size
     // TODO: delete objects before clear (although unlikely to contain objects
     // because nresolutions should be set only once)
-    if (inputs.dim(0) != nresolutions) {
+    if ((uint)inputs.dim(0) != nresolutions) {
       inputs  = idx<void*>(nresolutions);
       idx_clear(inputs);
     }
-    if (outputs.dim(0) != nresolutions) {
+    if ((uint)outputs.dim(0) != nresolutions) {
       outputs = idx<void*>(nresolutions);
       idx_clear(outputs);
     }
-    if (results.dim(0) != nresolutions) {
+    if ((uint)results.dim(0) != nresolutions) {
       results = idx<void*>(nresolutions);
       idx_clear(results);
     }
-    if (resize_modules.dim(0) != nresolutions) {
+    if ((uint)resize_modules.dim(0) != nresolutions) {
       resize_modules = idx<void*>(nresolutions);
       idx_clear(resize_modules);
     }
@@ -211,8 +211,7 @@ namespace ebl {
   }
 
   template <class T>
-  void detector<T>::compute_resolutions(idxdim &input_dims,
-					unsigned int nresolutions) { 
+  void detector<T>::compute_resolutions(idxdim &input_dims, uint nresolutions) {
     // nresolutions must be >= 1
     if (nresolutions == 0) {
       cerr << "warning: the number of resolutions is expected to be more ";

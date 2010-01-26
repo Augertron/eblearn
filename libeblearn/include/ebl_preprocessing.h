@@ -100,11 +100,11 @@ namespace ebl {
     //!           destroying the preprocessing module.
     //! \param height target height for resizing.
     //! \param width target width for resizing.
-    resizepp_module(uint height, uint width, module_1_1<T> *pp = NULL);
+    resizepp_module(intg height, intg width, module_1_1<T> *pp = NULL);
     //! destructor
     virtual ~resizepp_module();
     //! sets the desired output dimensions.
-    void set_dimensions(uint height_, uint width_);
+    void set_dimensions(intg height_, intg width_);
     //! forward propagation from in to out
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
     //! return the bounding box of the original input in the output coordinate
@@ -113,8 +113,8 @@ namespace ebl {
 
   private:
     module_1_1<T>	*pp;	        //!< preprocessing module
-    uint		 height;	//!< target height
-    uint		 width;         //!< target width
+    intg		 height;	//!< target height
+    intg		 width;         //!< target width
     state_idx<T>         inpp, outpp;   //!< input/output buffers for pp
     idx<T>               tmp;           //!< temporary buffer
     rect                 original_bbox; //!< bbox of original input in output

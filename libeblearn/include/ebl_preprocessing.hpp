@@ -108,11 +108,10 @@ namespace ebl {
     // resize output based on input dimensions
     idxdim d(in.x);
     d.setdim(0, 1);
-    if (d != out.x.get_idxdim()) {
+    if (d != out.x.get_idxdim())
       out.x.resize(d); // resize only x, as bprop and bbprop are not defined
-      // resize temporary y buffer
+    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2))) // resize temporary y buffer
       tmp.resize(d.dim(1), d.dim(2));
-    }
   }
   
   ////////////////////////////////////////////////////////////////
@@ -120,7 +119,7 @@ namespace ebl {
 
   template <class T>
   resizepp_module<T>::
-  resizepp_module(uint height_, uint width_, module_1_1<T> *pp_)
+  resizepp_module(intg height_, intg width_, module_1_1<T> *pp_)
     : pp(pp_), inpp(1,1,1), outpp(1,1,1) {
     set_dimensions(height_, width_);
   }
@@ -130,7 +129,7 @@ namespace ebl {
   }
   
   template <class T>
-  void resizepp_module<T>::set_dimensions(uint height_, uint width_) {
+  void resizepp_module<T>::set_dimensions(intg height_, intg width_) {
     height = height_;
     width = width_;
   }
