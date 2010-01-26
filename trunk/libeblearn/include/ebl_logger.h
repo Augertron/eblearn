@@ -97,7 +97,7 @@ namespace ebl {
     vector<uint>	class_tpr;
     vector<uint>	class_fpr;
   private:
-    idx<uint>		confusion;	//!< confusion matrix
+    idx<int>		confusion;	//!< confusion matrix
     uint                nclasses;       //!< number of classes
 
   public:
@@ -147,7 +147,7 @@ namespace ebl {
     double average_success();
 
     //! Returns the confusion matrix;
-    idx<uint>& get_confusion();
+    idx<int>& get_confusion();
 
     //! return a list with the age, the number of samples
     //! (number of calls to update since the last clear),
