@@ -84,6 +84,7 @@ namespace ebl {
     labelsIter = lIter;
     // count number of samples per class
     counts.resize(nclasses);
+    fill(counts.begin(), counts.end(), 0);
     idx_bloop1(lab, labels, Tin2) {
       counts[(size_t)lab.get()]++;
     }
@@ -218,7 +219,12 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   intg datasource<Tnet, Tin1, Tin2>::get_lowest_common_size() {
-    return *min_element(counts.begin(), counts.end()) * nclasses;
+    intg min_nonzero = std::numeric_limits<intg>::max();
+    for (vector<intg>::iterator i = counts.begin(); i != counts.end(); ++i) {
+      if ((*i < min_nonzero) && (*i != 0))
+	min_nonzero = *i;
+    }
+    return min_nonzero * nclasses;
   }
   
   template <class Tnet, class Tin1, class Tin2>
@@ -228,8 +234,7 @@ namespace ebl {
     cout << " with " << get_nclasses() << " classes," << endl;
     cout << "bias is " << bias << ", coefficient is " << coeff;
     cout << " and iteration size in samples is " << get_lowest_common_size();
-    cout << " (" << *min_element(counts.begin(), counts.end());
-    cout << " * " << nclasses << ")." << endl;
+    cout << "." << endl;
   }
 
   ////////////////////////////////////////////////////////////////
