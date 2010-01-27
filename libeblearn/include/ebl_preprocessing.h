@@ -139,12 +139,16 @@ namespace ebl {
   template <class T> class resizepp_module: public module_1_1<T> {
   public:
     //! Constructor.
+    //! \param height target height for resizing.
+    //! \param width target width for resizing.
     //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
     //!           preprocessing is performed. This module is not responsible for
     //!           destroying the preprocessing module.
-    //! \param height target height for resizing.
-    //! \param width target width for resizing.
-    resizepp_module(intg height, intg width, module_1_1<T> *pp = NULL);
+    //! \param kernelsz The kernel size used by the preprocessing module.
+    //!           This is used to take kernel's (if any) border effect into
+    //!           account during resizing. The default value (0) has no effect.
+    resizepp_module(intg height, intg width, module_1_1<T> *pp = NULL,
+		    uint kernelsz = 0);
     //! destructor
     virtual ~resizepp_module();
     //! sets the desired output dimensions.
@@ -157,10 +161,12 @@ namespace ebl {
 
   private:
     module_1_1<T>	*pp;	        //!< preprocessing module
+    uint                 kernelsz;      //!< size of pp's kernel
     intg		 height;	//!< target height
     intg		 width;         //!< target width
     state_idx<T>         inpp, outpp;   //!< input/output buffers for pp
     idx<T>               tmp;           //!< temporary buffer
+    idx<T>               tmp2;           //!< temporary buffer
     rect                 original_bbox; //!< bbox of original input in output
   };
 

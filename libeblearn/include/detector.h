@@ -88,6 +88,7 @@ namespace ebl {
     idx<void*>		 results;	//!< idx<double>*
     idx<void*>           resize_modules;     //!< module_1_1<T>*
     module_1_1<T>       *pp;            //!< preprocessing module
+    uint                 ppkersz;       //!< size of pp kernel (if any)
     idx<T>		 smoothing_kernel;
     idx<ubyte>   	 labels;
     ////////////////////////////////////////////////////////////////
@@ -102,6 +103,7 @@ namespace ebl {
     int                  bgclass;
     idxdim               input_dim;
     const double        *scales;
+    bool                 silent; //!< print results on std output if not silent
     
   public:
     
@@ -121,40 +123,55 @@ namespace ebl {
     //!               size, so 192x100 will be changed to closest
     //!               network-compatible size, i.e. 192x96 in that case
     //!               (still preserving the aspect ratio).
+    //! \param ppkersz The size of the preprocessing kernel (if any), to take
+    //!               border effects into account during resizing.
+    //!               Default value 0 has no effect.
     detector(module_1_1<T> &thenet, uint nresolutions, const double *scales,
-	     idx<const char*> &lbls, module_1_1<T> *pp = NULL,
+	     idx<const char*> &lbls, module_1_1<T> *pp = NULL, uint ppkersz = 0,
 	     T bias = 0, float coeff = 1.0);
     
     //! Constructor.
     //! \param lbls A const char* idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     //! \param nresolutions The number of resolutions to use.
-    detector(module_1_1<T> &thenet, uint nresolutions, 
-	     idx<const char*> &lbls, module_1_1<T> *pp = NULL,
+    //! \param ppkersz The size of the preprocessing kernel (if any), to take
+    //!               border effects into account during resizing.
+    //!               Default value 0 has no effect.
+    detector(module_1_1<T> &thenet, uint nresolutions,
+	     idx<const char*> &lbls, module_1_1<T> *pp = NULL, uint ppkersz = 0,
 	     T bias = 0, float coeff = 1.0);
     
     //! Constructor. lbls is an idx containing each class name.
     //! \param lbls A ubyte idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     //! \param nresolutions The number of resolutions to use.
-    detector(module_1_1<T> &thenet, uint nresolutions, 
-	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL,
+    //! \param ppkersz The size of the preprocessing kernel (if any), to take
+    //!               border effects into account during resizing.
+    //!               Default value 0 has no effect.
+    detector(module_1_1<T> &thenet, uint nresolutions,
+	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL, uint ppkersz = 0,
 	     T bias = 0, float coeff = 1.0);
     
     //! Constructor. lbls is an idx containing each class name.
     //! \param lbls A ubyte idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     //! \param nresolutions The number of resolutions to use.
+    //! \param ppkersz The size of the preprocessing kernel (if any), to take
+    //!               border effects into account during resizing.
+    //!               Default value 0 has no effect.
     detector(module_1_1<T> &thenet, uint nresolutions, const double *scales,
-	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL,
+	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL, uint ppkersz = 0,
 	     T bias = 0, float coeff = 1.0);
     
     //! Constructor.
     //! \param lbls A ubyte idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     //! \param resolutions A uint idx containing resolutions (of size nx2)
+    //! \param ppkersz The size of the preprocessing kernel (if any), to take
+    //!               border effects into account during resizing.
+    //!               Default value 0 has no effect.
     detector(module_1_1<T> &thenet, idx<uint> &resolutions,
-	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL,
+	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL, uint ppkersz = 0,
 	     T bias = 0, float coeff = 1.0);
 
     //! Destructor.
@@ -170,6 +187,9 @@ namespace ebl {
 
     //! set background class (which will be ignored).
     void set_bgclass(const char *bg);
+
+    //! set detector to silent: do not print results on std output
+    void set_silent();
 
   private:
     //! initialize dimensions and multi-resolution buffers.
