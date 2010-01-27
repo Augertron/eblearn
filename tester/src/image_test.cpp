@@ -54,8 +54,7 @@ void image_test::test_resize() {
   new_window("image_test");
   //  im = image_resize(im, im.dim(0) + 10, im.dim(1) + 10);
   //im = image_resize(im, 100, 100);
-  draw_matrix(im);
-  gui << "Testing images operations..." << endl;
+  draw_matrix(im, "Testing images operations...");
   int hy = im.dim(0);
 #endif
 #endif
@@ -72,11 +71,35 @@ void image_test::test_resize() {
   idx<ubyte> im3 = image_resize(im, 50, 200, 1);
   wx = 0; hy += 2;
   draw_matrix(im2, hy, wx);
-  gui << at(hy, wx) << "preserve ratio";
+  gui << at(hy, wx) << im2;
   wx += im2.dim(1) + 2;
   draw_matrix(im3, hy, wx);
-  gui << at(hy, wx) << "ignore ratio";
+  gui << at(hy, wx) << "ignore ratio " << im3;
   wx += im3.dim(1) + 2;
+#endif
+#endif
+
+  // gaussian resize
+  idx<float> im4(im.get_idxdim());
+  idx_copy(im, im4);
+  idx<float> im5 = image_gaussian_resize2(im4, 96, 96, 0);
+  idx<float> im6 = image_resize(im4, 96, 96, 0);
+  idx<float> im7 = image_gaussian_resize2(im4, 32, 32, 0);
+  idx<float> im8 = image_resize(im4, 32, 32, 0);
+#ifdef __GUI__  
+#ifdef __SHOW__
+  draw_matrix(im5, hy, wx);
+  gui << at(hy, wx) << "gauss " << im5;
+  wx += im5.dim(1) + 2;
+  draw_matrix(im6, hy, wx);
+  gui << at(hy, wx) << "bil " << im6;
+  wx += im6.dim(1) + 2;
+  draw_matrix(im7, hy, wx);
+  gui << at(hy + 26, wx) << "g " << im7;
+  wx += im7.dim(1) + 2;
+  draw_matrix(im8, hy, wx);
+  gui << at(hy + 26 + 15, wx) << "b " << im8;
+  wx += im8.dim(1) + 2;
 #endif
 #endif
 }

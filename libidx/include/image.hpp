@@ -268,6 +268,128 @@ namespace ebl {
     return rim;
   }
 
+  template<class T>
+  idx<T> image_gaussian_resize2(idx<T> &im, uint oheight, uint owidth,
+				uint mode, rect *iregion_, rect *oregion) {
+    // only accept 2D or 3D images
+    if ((im.order() != 2) && (im.order() != 3)) {
+      cerr << "illegal order: " << im << endl;
+      eblerror("unexpected image format");
+    }
+    // iregion is optional, set it to entire image if not given
+    rect iregion(0, 0, im.dim(0), im.dim(1));
+    if (iregion_)
+      iregion = *iregion_;
+    // if region's height and width already have the correct size, return
+    if ((iregion.height == oheight) && (iregion.width <= owidth)) {
+      if (oregion)
+	*oregion = iregion;
+      return im;
+    }
+    // gaussian resize
+    gaussian_pyramid<T> gp;
+    double r;
+    rect outr;
+    rect exact_inr;
+    uint reductions;
+    switch (mode) {
+    case 0: // keep aspect ratio
+      // compute biggest down/up-sizing factor
+      r = MIN(oheight / (double) iregion.height,
+	      owidth / (double) iregion.width);
+      outr = rect(0, 0, iregion.height * r, iregion.width * r);
+      reductions = gp.count_reductions_exact(iregion, outr, exact_inr);
+      // find closest 
+      break ;
+    default:
+      eblerror("unsupported mode");
+    }
+    // bilinear resize at closest resolution to current resolution
+    idx<T> rim = image_resize(im, exact_inr.height, exact_inr.width, 1);
+    rim = rim.shift_dim(2, 0);
+    rim = gp.reduce(rim, reductions);
+    rim = rim.shift_dim(0, 2);
+    return rim;
+    // else down/up-sample with gaussians
+//     idx<T> rim;
+//     rect rr;
+//     // compute edges that need most reduction
+//     uint imax, omax;
+//     if ((iregion.height / (float)oheight) > (iregion.width / (float)owidth)) {
+//       imax = iregion.height;
+//       omax = oheight;
+//     } else {
+//       imax = iregion.width;
+//       omax = owidth;
+//     }
+//     // compute how many gaussian reduction/expansions necessary to reach target
+//     if ((iregion.height > oheight) || (iregion.width > owidth)) { // reduce
+//       // compute a regular resize of 1/sqrt(2) of the original size
+//       // to add more scales than just by a factor of 2.
+//       idx<T> im_sqrt2 = im.shift_chan(2); // image_resize expect chan in 2
+//       im_sqrt2 = image_resize(im_sqrt2, 1/sqrt(2), 1/sqrt(2), 2);
+//       im_sqrt2 = im_sqrt2.shift_chan(0);
+//       rect r_sqrt2((uint)(iregion.h0 * 1/sqrt(2)), (uint)(iregion.w0 * 1/sqrt(2)),
+// 		   (uint)(iregion.height * 1/sqrt(2)), (uint)(iregion.width * 1/sqrt(2)));
+//       // compute sqrt2 edges that need most reduction
+//       uint imax_sqrt2;
+//       if ((r_sqrt2.height / (float)oheight) < (r_sqrt2.width / (float)owidth)) {
+// 	imax_sqrt2 = r_sqrt2.height;
+//       } else {
+// 	imax_sqrt2 = r_sqrt2.width;
+//       }
+//       uint dist, dist_sqrt2;
+//       uint reductions = MAX(0, (int) gp.count_reductions(imax, omax, dist));
+//       uint reductions_sqrt2 =
+// 	MAX(0, (int) gp.count_reductions(imax_sqrt2, omax, dist_sqrt2));
+//       // switch between original and sqrt2 based on distance to outwidth
+//       if (dist > dist_sqrt2) { // sqrt2 scale is closer to target
+// 	rim = gp.reduce(im_sqrt2, reductions_sqrt2);
+// 	rr = gp.reduce_rect(r_sqrt2, reductions_sqrt2);
+//       } else { // original scale is closer to target
+// 	// reduce image reductions time
+// 	rim = gp.reduce(im, reductions);
+// 	rr = gp.reduce_rect(iregion, reductions);
+//       }
+//     } else { // expand
+//       // compute a regular resize of 1/sqrt(2) of the original size
+//       // to add more scales than just by a factor of 2.
+//       idx<T> im_sqrt2 = im.shift_chan(2); // image_resize expect chan in 2
+//       im_sqrt2 = image_resize(im_sqrt2, sqrt(2), sqrt(2), 2);
+//       im_sqrt2 = im_sqrt2.shift_chan(0);
+//       rect r_sqrt2((uint)(iregion.h0 * sqrt(2)), (uint)(iregion.w0 * sqrt(2)),
+// 		   (uint)(iregion.height * sqrt(2)), (uint)(iregion.width * sqrt(2)));
+//       // compute sqrt2 edges that need most reduction
+//       uint imax_sqrt2;
+//       if ((r_sqrt2.height / (float)oheight) < (r_sqrt2.width / (float)owidth)) {
+// 	imax_sqrt2 = r_sqrt2.height;
+//       } else {
+// 	imax_sqrt2 = r_sqrt2.width;
+//       }
+//       uint dist = 0, dist_sqrt2 = 0;
+//       // number of expansions to stay below outwidth
+//       uint expansions =
+// 	MAX(0, (int) gp.count_expansions(imax, omax, dist));
+//       uint expansions_sqrt2 =
+// 	MAX(0, (int) gp.count_expansions(imax_sqrt2, omax, dist_sqrt2));
+//       // switch between original and sqrt2 based on distance to outwidth
+//       if (dist > dist_sqrt2) { // sqrt2 scale is closer to target
+// 	rim = gp.expand(im_sqrt2, expansions_sqrt2);
+// 	rr = gp.expand_rect(r_sqrt2, expansions_sqrt2);
+//       } else { // original scale is closer to target
+// 	// expand
+// 	rim = gp.expand(im, expansions);
+// 	rr = gp.expand_rect(iregion, expansions);
+//       }
+//     }
+//     // save resized input region into oregion, if defined
+//     if (oregion)
+//       *oregion = rr;
+//     // put channel dim back to dimension 2
+//     rim = rim.shift_chan(2);
+//     return rim;
+  }
+
   template<class T> 
   idx<T> image_region_to_rect(idx<T> &im, const rect &r, uint oheight,
 			      uint owidth, rect &cropped) {
