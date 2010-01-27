@@ -310,7 +310,7 @@ namespace ebl {
     for (i = 0; i < nresolutions; ++i)
       if (scales[i] > maxscale)
 	maxscale = scales[i];
-    uint max_res = MAX(in_mindim.dim(1), in_mindim.dim(2)) * maxscale;
+    intg max_res = MAX(in_mindim.dim(1), in_mindim.dim(2)) * maxscale;
     if (max_res > MAX(input_dims.dim(0), input_dims.dim(1)))
       cerr << "warning: maxscale (" << maxscale << ") produces a resolution "
 	   << "bigger than original input (" << input_dims << ")." << endl;
