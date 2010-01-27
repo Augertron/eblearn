@@ -85,7 +85,8 @@ int main(int argc, char **argv) { // regular main without gui
   rgb_to_ypuv_module<t_net> ppypuv(conf.get_uint("normalization_size"));
   module_1_1<t_net> &pp = conf.get_bool("color") ?
     (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
-  detector<t_net> detect((module_1_1<t_net>&) net, 4, classes, &pp);
+  double scales[] = { 3, 2, 1 };
+  detector<t_net> detect((module_1_1<t_net>&) net, (uint)3, (const double*)scales, classes, &pp);
   detect.set_bgclass(background.c_str());
 
   // answering variables and initializations

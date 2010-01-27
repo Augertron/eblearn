@@ -34,14 +34,7 @@ void detector_test::test_norb() {
   for (int i = 0; i < lbl.nelements(); ++i)
     lbl.set(labels[i], i);
 
-  float sizes[] = { 1, 1.3, 1.6, 2 };	
   idx<ubyte> left = load_image<ubyte>(imgfile.c_str());
-//   idx<ubyte> left(1,1,1);
-//   load_image(imgfile.c_str(), left);
-  left = image_resize(left, MAX(left.dim(0), left.dim(1)),
-		      MAX(left.dim(0), left.dim(1)), 1);
-  idx<float> sz(sizeof (sizes) / sizeof (float));
-  memcpy(sz.idx_ptr(), sizes, sizeof (sizes));
 
   // parameter, network and classifier
   // load the previously saved weights of a trained network
@@ -53,7 +46,8 @@ void detector_test::test_norb() {
   //  int tr[3] = { 2, 1, 0 };
   //left = left.transpose(tr);
   //left = left.select(2, 0);
-  detector<t_net> cb((module_1_1<t_net>&)thenet, 4, lbl, NULL, 0.0, 0.01);
+  double scales [] = { 3, 2, 1};
+  detector<t_net> cb((module_1_1<t_net>&)thenet, 3, scales, lbl, NULL, 0, 0.01);
 
   // find category of image
   //  cb.fprop(left, .5);

@@ -16,7 +16,8 @@ meta_gnuplot_params = set grid ytics;set ytics 5;set mytics 5;set grid mytics;
 ################################################################################
 # LOCAL PROGRAM CONFIGURATION
 
-pascal = /home/sermanet/humairadata/pascal
+#pascal = /home/sermanet/humairadata/pascal
+pascal = /data/pascal
 #pascal2 = /data/pascal
 
 # network

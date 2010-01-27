@@ -42,14 +42,14 @@ using namespace std;
 namespace ebl {
 
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_,	unsigned int nresolutions_, 
-			idx<const char*> &labels_, module_1_1<T> *pp_,
-			T bias_, float coef_) 
+  detector<T>::detector(module_1_1<T> &thenet_,	uint nresolutions_,
+			const double *scales_, idx<const char*> &labels_,
+			module_1_1<T> *pp_, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
       nresolutions(nresolutions_), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1) {
+      manual_resolutions(false), bgclass(-1), scales(scales_) {
     labels = strings_to_idx(labels_);
     idx_clear(inputs);
     idx_clear(outputs);
@@ -60,7 +60,25 @@ namespace ebl {
   }
   
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, unsigned int nresolutions_, 
+  detector<T>::detector(module_1_1<T> &thenet_,	uint nresolutions_, 
+			idx<const char*> &labels_, module_1_1<T> *pp_,
+			T bias_, float coef_) 
+    : thenet(thenet_), coef(coef_), bias(bias_),
+      inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
+      nresolutions(nresolutions_), resolutions(1, 2),
+      original_bboxes(nresolutions, 4),
+      manual_resolutions(false), bgclass(-1), scales(NULL) {
+    labels = strings_to_idx(labels_);
+    idx_clear(inputs);
+    idx_clear(outputs);
+    idx_clear(results);
+    idx_clear(resize_modules);
+    if (nresolutions < 1)
+      eblerror("the number of resolutions is expected to be more than 0");
+  }
+  
+  template <class T>
+  detector<T>::detector(module_1_1<T> &thenet_, uint nresolutions_, 
 			idx<ubyte> &labels_, module_1_1<T> *pp_,
 			T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
@@ -68,7 +86,7 @@ namespace ebl {
       labels(labels_),
       nresolutions(nresolutions_), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1) {
+      manual_resolutions(false), bgclass(-1), scales(NULL) {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
@@ -78,14 +96,34 @@ namespace ebl {
   }
 
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, idx<unsigned int> &resolutions_,
+  detector<T>::detector(module_1_1<T> &thenet_, uint nresolutions_,
+			const double *scales_, 
+			idx<ubyte> &labels_, module_1_1<T> *pp_,
+			T bias_, float coef_) 
+    : thenet(thenet_), coef(coef_), bias(bias_),
+      inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
+      labels(labels_),
+      nresolutions(nresolutions_), resolutions(1, 2),
+      original_bboxes(nresolutions, 4),
+      manual_resolutions(false), bgclass(-1), scales(scales_) {
+    idx_clear(inputs);
+    idx_clear(outputs);
+    idx_clear(results);
+    idx_clear(resize_modules);
+    if (nresolutions < 1)
+      eblerror("the number of resolutions is expected to be more than 0");
+  }
+
+  template <class T>
+  detector<T>::detector(module_1_1<T> &thenet_, idx<uint> &resolutions_,
 			idx<ubyte> &labels_, module_1_1<T> *pp_,
 			T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
       labels(labels_),
       nresolutions(resolutions_.dim(0)), resolutions(resolutions_),
-      original_bboxes(nresolutions, 4), manual_resolutions(true), bgclass(-1) {
+      original_bboxes(nresolutions, 4), manual_resolutions(true), bgclass(-1),
+      scales(NULL) {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
@@ -124,8 +162,12 @@ namespace ebl {
     compute_minmax_resolutions(input_dim);
     cout << "resolutions: min: " << in_mindim << " max: " << in_maxdim << endl;
     
-    if (!manual_resolutions)
-      compute_resolutions(input_dim, nresolutions);
+    if (!manual_resolutions) {
+      if (scales) // use scales
+	compute_resolutions(input_dim, nresolutions, scales);
+      else // scale between min and max resolutions
+	compute_resolutions(input_dim, nresolutions);
+    }
     cout << "multi-resolution detection initialized to ";
     print_resolutions();
     
@@ -213,11 +255,8 @@ namespace ebl {
   template <class T>
   void detector<T>::compute_resolutions(idxdim &input_dims, uint nresolutions) {
     // nresolutions must be >= 1
-    if (nresolutions == 0) {
-      cerr << "warning: the number of resolutions is expected to be more ";
-      cerr << "than 0, setting it to 1.";
-      nresolutions = 1;
-    }
+    if (nresolutions == 0)
+      eblerror("expected more resolutions than 0");
     // nresolutions must be less than the minimum pixel distance between min
     // and max
     unsigned int max_res = MIN(in_maxdim.dim(1) - in_mindim.dim(1),
@@ -255,6 +294,34 @@ namespace ebl {
       resolutions.set(in_maxdim.dim(2), 0, 1); // max
       resolutions.set(in_mindim.dim(1), nresolutions - 1, 0); // min
       resolutions.set(in_mindim.dim(2), nresolutions - 1, 1); // min
+    }
+  }
+
+  // use scales
+  template <class T>
+  void detector<T>::compute_resolutions(idxdim &input_dims, uint nresolutions,
+					const double *scales) {
+    uint i;
+    // nresolutions must be >= 1
+    if (nresolutions == 0)
+      eblerror("expected more resolutions than 0");
+    // check that scales do not oversample
+    double maxscale = scales[0];
+    for (i = 0; i < nresolutions; ++i)
+      if (scales[i] > maxscale)
+	maxscale = scales[i];
+    uint max_res = MAX(in_mindim.dim(1), in_mindim.dim(2)) * maxscale;
+    if (max_res > MAX(input_dims.dim(0), input_dims.dim(1)))
+      cerr << "warning: maxscale (" << maxscale << ") produces a resolution "
+	   << "bigger than original input (" << input_dims << ")." << endl;
+    // compute minimum resolution scale
+    double mscale = MIN(in_mindim.dim(1) / (double) input_dims.dim(0),
+			in_mindim.dim(2) / (double) input_dims.dim(1));
+    // compute scales
+    resolutions.resize1(0, nresolutions);
+    for (i = 0; i < nresolutions; ++i) {
+      resolutions.set(mscale * scales[i] * input_dims.dim(0), i, 0);
+      resolutions.set(mscale * scales[i] * input_dims.dim(1), i, 1);
     }
   }
 
@@ -471,6 +538,11 @@ namespace ebl {
 	bbox.set(bb.w0, 1);
 	bbox.set(bb.height, 2);
 	bbox.set(bb.width, 3);
+	// add bias and multiply by coeff if necessary
+	if (bias != 0)
+	  idx_addc(ii.x, bias, ii.x);
+	if (coef != 1)
+	  idx_dotc(ii.x, coef, ii.x);
 	// run fprop for this scale
 	thenet.fprop(ii, oo);
       }}

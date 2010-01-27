@@ -119,10 +119,10 @@ namespace ebl {
     //! Return the number of classes.
     virtual intg get_nclasses();
 
-    //! Return the lowest common size in a balanced dataset where each class
-    //! has the same number of examples.
+    //! Return the lowest (non-zero) size per class, multiplied by the number
+    //! of classes.
     //! e.g. if a dataset has 10 classes with 100 examples and 5 classes with
-    //! 50 examples, it will return 50 * 10 + 50 * 5 = 750, whereas size()
+    //! 50 examples, it will return 50 * (10 + 5) = 750, whereas size()
     //! will return 1250.
     //! This is useful to keep iterations to a meaningful size when a class
     //! has many more examples than another.

@@ -71,7 +71,8 @@ namespace ebl {
     idxdim d(in.x);
     if (d != out.x.get_idxdim())
       out.x.resize(d); // resize only x, as bprop and bbprop are not defined
-    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2))) // resize temporary y buffer
+    // resize temporary y buffer
+    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2)))
       tmp.resize(d.dim(1), d.dim(2));
   }
   
@@ -110,7 +111,93 @@ namespace ebl {
     d.setdim(0, 1);
     if (d != out.x.get_idxdim())
       out.x.resize(d); // resize only x, as bprop and bbprop are not defined
-    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2))) // resize temporary y buffer
+    // resize temporary y buffer
+    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2)))
+      tmp.resize(d.dim(1), d.dim(2));
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // bgr_to_ypuv_module
+
+  template <class T>
+  bgr_to_ypuv_module<T>::bgr_to_ypuv_module(uint normalization_size_)
+    : normalization_size(normalization_size_), tmp(1,1) {
+  }
+
+  template <class T>
+  bgr_to_ypuv_module<T>::~bgr_to_ypuv_module() {
+  }
+
+  template <class T>
+  void bgr_to_ypuv_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+    if (this->bResize) resize_output(in, out); // resize (iff necessary)
+    idx<T> uv, yp, yuv;
+
+    // BGR to YUV
+    idx_eloop2(inx, in.x, T, outx, out.x, T) {
+      idx_eloop2(inxx, inx, T, outxx, outx, T) {
+	bgr_to_yuv_1D(inxx, outxx);
+      }
+    }
+    // bring UV between -1 and 1
+    uv = out.x.narrow(0, 2, 1);
+    idx_addc(uv, (T)-128, uv);
+    idx_dotc(uv, (T).01, uv);
+    // convert Y to Yp
+    yp = out.x.select(0, 0);
+    idx_std_normalize(yp, tmp);
+    image_local_normalization(tmp, yp, normalization_size);
+  }
+  
+  template <class T>
+  void bgr_to_ypuv_module<T>::resize_output(state_idx<T> &in,
+					    state_idx<T> &out) {
+    // resize output based on input dimensions
+    idxdim d(in.x);
+    if (d != out.x.get_idxdim())
+      out.x.resize(d); // resize only x, as bprop and bbprop are not defined
+    // resize temporary y buffer
+    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2)))
+      tmp.resize(d.dim(1), d.dim(2));
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // bgr_to_yp_module
+
+  template <class T>
+  bgr_to_yp_module<T>::bgr_to_yp_module(uint normalization_size_)
+    : normalization_size(normalization_size_), tmp(1,1) {
+  }
+
+  template <class T>
+  bgr_to_yp_module<T>::~bgr_to_yp_module() {
+  }
+
+  template <class T>
+  void bgr_to_yp_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+    if (this->bResize) resize_output(in, out); // resize (iff necessary)
+    // BGR to YUV
+    idx_eloop2(inx, in.x, T, outx, out.x, T) {
+      idx_eloop2(inxx, inx, T, outxx, outx, T) {
+	bgr_to_y_1D(inxx, outxx);
+      }
+    }
+    // convert Y to Yp
+    idx<T> yp = out.x.select(0, 0);
+    idx_std_normalize(yp, tmp);
+    image_local_normalization(tmp, yp, normalization_size);
+  }
+  
+  template <class T>
+  void bgr_to_yp_module<T>::resize_output(state_idx<T> &in,
+					    state_idx<T> &out) {
+    // resize output based on input dimensions
+    idxdim d(in.x);
+    d.setdim(0, 1);
+    if (d != out.x.get_idxdim())
+      out.x.resize(d); // resize only x, as bprop and bbprop are not defined
+    // resize temporary y buffer
+    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2)))
       tmp.resize(d.dim(1), d.dim(2));
   }
   
@@ -141,8 +228,9 @@ namespace ebl {
     idx<T> resized = image_resize(tmp, height, width, 0);
     resized = resized.shift_dim(2, 0);
     // resize out to target dimensions if necessary
-    if ((out.x.dim(1) != height) || (out.x.dim(2) != width)
-	|| (out.x.dim(0) != outpp.x.dim(0)))
+    if (((out.x.dim(1) != height) || (out.x.dim(2) != width)) && !pp)
+      out.x.resize(in.x.dim(0), height, width);
+    else if (((out.x.dim(1) != height) || (out.x.dim(2) != width)) && pp)
       out.x.resize(outpp.x.dim(0), height, width);
     idx_clear(out.x);
     tmp = out.x.narrow(1, resized.dim(1), (height - resized.dim(1)) / 2);

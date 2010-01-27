@@ -224,6 +224,8 @@ namespace ebl {
       if ((*i < min_nonzero) && (*i != 0))
 	min_nonzero = *i;
     }
+    if (min_nonzero == std::numeric_limits<intg>::max())
+      eblerror("empty dataset");
     return min_nonzero * nclasses;
   }
   

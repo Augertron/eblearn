@@ -101,6 +101,7 @@ namespace ebl {
     bool		 manual_resolutions;
     int                  bgclass;
     idxdim               input_dim;
+    const double        *scales;
     
   public:
     
@@ -110,14 +111,41 @@ namespace ebl {
     //! Constructor.
     //! \param lbls A const char* idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
-    detector(module_1_1<T> &thenet, unsigned int nresolutions, 
+    //! \param nresolutions The number of resolutions to use.
+    //! \param scales This is an array of size nresolutions describing
+    //!               the scales to use, taking the minimum resolution as scale
+    //!               1. e.g. if our input image is 500x960, and our network
+    //!               size is 96x96, the minimum resolution that fits inside
+    //!               96x96 is 96x50. So this is scale 1, scale 2 will then be
+    //!               192x100. Resolutions are automatically fit to the network
+    //!               size, so 192x100 will be changed to closest
+    //!               network-compatible size, i.e. 192x96 in that case
+    //!               (still preserving the aspect ratio).
+    detector(module_1_1<T> &thenet, uint nresolutions, const double *scales,
+	     idx<const char*> &lbls, module_1_1<T> *pp = NULL,
+	     T bias = 0, float coeff = 1.0);
+    
+    //! Constructor.
+    //! \param lbls A const char* idx containing class name strings.
+    //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
+    //! \param nresolutions The number of resolutions to use.
+    detector(module_1_1<T> &thenet, uint nresolutions, 
 	     idx<const char*> &lbls, module_1_1<T> *pp = NULL,
 	     T bias = 0, float coeff = 1.0);
     
     //! Constructor. lbls is an idx containing each class name.
     //! \param lbls A ubyte idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
-    detector(module_1_1<T> &thenet, unsigned int nresolutions, 
+    //! \param nresolutions The number of resolutions to use.
+    detector(module_1_1<T> &thenet, uint nresolutions, 
+	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL,
+	     T bias = 0, float coeff = 1.0);
+    
+    //! Constructor. lbls is an idx containing each class name.
+    //! \param lbls A ubyte idx containing class name strings.
+    //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
+    //! \param nresolutions The number of resolutions to use.
+    detector(module_1_1<T> &thenet, uint nresolutions, const double *scales,
 	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL,
 	     T bias = 0, float coeff = 1.0);
     
@@ -125,7 +153,7 @@ namespace ebl {
     //! \param lbls A ubyte idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     //! \param resolutions A uint idx containing resolutions (of size nx2)
-    detector(module_1_1<T> &thenet, idx<unsigned int> &resolutions,
+    detector(module_1_1<T> &thenet, idx<uint> &resolutions,
 	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL,
 	     T bias = 0, float coeff = 1.0);
 
@@ -147,11 +175,18 @@ namespace ebl {
     //! initialize dimensions and multi-resolution buffers.
     void init(idxdim &dinput);
 
-    //! compute sizes of each resolutions based on input size <input_dims>.
+    //! compute and set minimum and maximum resolutions
+    //! based on input size <input_dims>.
     void compute_minmax_resolutions(idxdim &input_dims);
     
-    //! compute sizes of each resolutions based on input size <input_dims>.
-    void compute_resolutions(idxdim &input_dims, unsigned int nresolutions);
+    //! compute sizes of each resolutions based on input size <input_dims>,
+    //! choosing nresolutions going from the minimum to the maximum resolutions.
+    void compute_resolutions(idxdim &input_dims, uint nresolutions);
+
+    //! compute sizes of each resolutions based on input size <input_dims>,
+    //! using scales, taking the minimum resolution as scale 1.
+    void compute_resolutions(idxdim &input_dims, uint nresolutions,
+			     const double *scales);
 
     //! print all resolutions.
     void print_resolutions();

@@ -611,7 +611,9 @@ namespace ebl {
     // loop and copy
     intg N1=src.nelements();
     intg N2 =dst.nelements();
-    if (N1 != N2) { eblerror("idx_op: idxs have different number of elements\n"); }
+    if (N1 != N2) {
+      cerr << "incompatible idxs: " << src << " and " << dst << endl;
+      eblerror("idx_op: idxs have different number of elements\n"); }
     if ( (src.order() == 0) && (dst.order() == 0) ) {
       *(dst.idx_ptr()) = *(src.idx_ptr());
     } else if ( src.contiguousp() && dst.contiguousp() ) {

@@ -36,29 +36,59 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // YUV
-
   extern idx<double> rgb_yuv;
   extern idx<double> yuv_rgb;
   
+  ////////////////////////////////////////////////////////////////
+  // RGB -> YUV
+
   //! Convert all pixels of rgb idx to yuv pixels (normalized, i.e. the range
   //! is the same for each component: 0 .. 255).
   //! WARNING: we assume the values are 0..255.
   //! TODO: make this more generic.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.
+  //! The output y is expected to be allocated with the correct size.
   template<class T>
     void rgb_to_yuv(idx<T> &rgb, idx<T> &yuv);
+  
+  //! RGB to YUV, on a 1-dimensional idx rgb.
+  //! The output y is expected to be allocated with the correct size.
+  template<class T>
+    void rgb_to_yuv_1D(idx<T> &rgb, idx<T> &yuv);
   
   //! Same as yuv_to_rgb with 2 arguments except that it allocates a target
   //! image and returns it.
   template<class T>
     idx<T> rgb_to_yuv(idx<T> &rgb);
 
+  //! RGB to Y, looping on the 3rd dimension if present, calling rgb_to_y_1D
+  //! otherwise.
+  //! The output y is expected to be allocated with the correct size.
   template<class T>
     void rgb_to_y(idx<T> &rgb, idx<T> &y);
   
+  //! RGB to Y, on a 1-dimensional idx rgb.
+  //! The output y is expected to be allocated with the correct size.
+  template<class T>
+    void rgb_to_y_1D(idx<T> &rgb, idx<T> &y);
+  
+  ////////////////////////////////////////////////////////////////
+  // BGR -> YUV
+
+  //! BGR to YUV, on a 1-dimensional idx bgr.
+  //! The output y is expected to be allocated with the correct size.
+  template<class T>
+    void bgr_to_yuv_1D(idx<T> &bgr, idx<T> &yuv);
+  
+  //! BGR to Y, on a 1-dimensional idx bgr.
+  //! The output y is expected to be allocated with the correct size.
+  template<class T>
+    void bgr_to_y_1D(idx<T> &bgr, idx<T> &y);
+  
+  ////////////////////////////////////////////////////////////////
+  // YUV -> RGB
+
   //! Convert all pixels of yuv idx to rgb pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.

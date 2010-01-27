@@ -45,8 +45,9 @@ namespace ebl {
 #define idxop_ii(i1,i2,op_idx0, op_idx1, op_contig, op_recursive, op_any) { \
     intg N1=(i1).nelements();						\
     intg N2 =(i2).nelements();						\
-    if (N1 != N2)							\
-      { eblerror("idx_op: idxs have different number of elements\n"); }	\
+    if (N1 != N2) {							\
+      cerr << "incompatible idxs: " << i1 << " and " << i2 << endl;	\
+      eblerror("idx_op: idxs have different number of elements\n"); }	\
     if ( ((i1).order() == 0) && ((i2).order() == 0) ) {			\
       /* they are 1D vectors of the same size, use the stride version */ \
       op_idx0;								\
@@ -69,8 +70,9 @@ namespace ebl {
 			op_recursive, op_any) {				\
     intg N1=(i1).nelements();						\
     intg N2 =(i2).nelements();						\
-    if (N1 != N2)							\
-      { eblerror("idx_op: idxs have different number of elements\n"); }	\
+    if (N1 != N2) {							\
+      cerr << "incompatible idxs: " << i1 << " and " << i2 << endl;	\
+      eblerror("idx_op: idxs have different number of elements\n"); }	\
     if ( ((i1).order() == 0) && ((i2).order() == 0) ) {			\
       /* they are 1D vectors of the same size, use the stride version */ \
       op_idx0;								\
