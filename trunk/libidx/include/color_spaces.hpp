@@ -40,7 +40,7 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // YUV
+  // RGB -> YUV
 
   // TODO: find a cleaner way with matrix multiplication that can handle
   // different output type than yuv matrix.
@@ -117,6 +117,42 @@ namespace ebl {
     rgb_to_yuv(rgb, yuv);
     return yuv;
   }
+
+  ////////////////////////////////////////////////////////////////
+  // BGR -> YUV
+
+  // TODO: find a cleaner way with matrix multiplication that can handle
+  // different output type than yuv matrix.
+  template<class T> void bgr_to_yuv_1D(idx<T> &bgr, idx<T> &yuv) {
+    if (bgr.idx_ptr() == yuv.idx_ptr()) {
+      eblerror("bgr_to_yuv: dst must be different than src");
+      return ;
+    }
+    static double r, g, b;
+    b = bgr.get(0);
+    g = bgr.get(1);
+    r = bgr.get(2);
+    yuv.set(  0.299 * r + 0.587 * g + 0.114 * b, 0);
+    yuv.set((-0.147 * r - 0.289 * g + 0.437 * b + 111) * 1.14678, 1);
+    yuv.set(( 0.615 * r - 0.515 * g - 0.100 * b + 157) * 0.81300, 2);
+  }
+  
+  // TODO: find a cleaner way with matrix multiplication that can handle
+  // different output type than y matrix.
+  template<class T> void bgr_to_y_1D(idx<T> &bgr, idx<T> &y) {
+    if (bgr.idx_ptr() == y.idx_ptr()) {
+      eblerror("bgr_to_y: dst must be different than src");
+      return ;
+    }
+    static double r, g, b;
+    b = bgr.get(0);
+    g = bgr.get(1);
+    r = bgr.get(2);
+    y.set(  0.299 * r + 0.587 * g + 0.114 * b, 0);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // YUV -> RGB
   
   template<class T> void yuv_to_rgb_1D(idx<T> &yuv, idx<T> &rgb) {
     if (rgb.idx_ptr() == yuv.idx_ptr()) {

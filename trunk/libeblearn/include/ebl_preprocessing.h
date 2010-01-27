@@ -84,6 +84,50 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  // bgr_to_ypuv_module
+  //! convert an BGR input into a YpUV output, Yp being a Y channel
+  //! with a local normaliztion.
+  template <class T> class bgr_to_ypuv_module: public module_1_1<T> {
+  public:
+    //! Constructor.
+    //! \param normalization_size is the size of the kernel used for Yp's
+    //!        local normalization.
+    bgr_to_ypuv_module(uint normalization_size);
+    //! destructor
+    virtual ~bgr_to_ypuv_module();
+    //! forward propagation from in to out
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    //! resize the output based on input dimensions
+    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+
+  private:
+    uint	normalization_size;	//!< normalization kernel size
+    idx<T>	tmp;		        //!< temporary buffer
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // bgr_to_yp_module
+  //! convert an BGR input into a Yp output, Yp being a Y channel
+  //! with a local normaliztion.
+  template <class T> class bgr_to_yp_module: public module_1_1<T> {
+  public:
+    //! Constructor.
+    //! \param normalization_size is the size of the kernel used for Yp's
+    //!        local normalization.
+    bgr_to_yp_module(uint normalization_size);
+    //! destructor
+    virtual ~bgr_to_yp_module();
+    //! forward propagation from in to out
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    //! resize the output based on input dimensions
+    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+
+  private:
+    uint	normalization_size;	//!< normalization kernel size
+    idx<T>	tmp;		        //!< temporary buffer
+  };
+
+  ////////////////////////////////////////////////////////////////
   // resizepp_module
   //! Resize the input to the desired output (while preserving aspect ratio)
   //! and apply a preprocessing module.
