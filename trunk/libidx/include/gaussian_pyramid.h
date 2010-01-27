@@ -83,6 +83,10 @@ namespace ebl {
     //! return number of reductions necessary for size insz to be <= outsz
     uint count_reductions(uint insz, uint outsz, uint &dist);
     
+    //! return number of reductions and set size of the input (closest to
+    //! current one) to exactly downsample to outr (aspect ratio unchanged).
+    uint count_reductions_exact(rect &inr, rect &outr, rect &inr_exact);
+    
     //! The expand method for obtaining an upsampled version of a given
     //! image from gaussian pyramid.
     //! Optionally specify with n how many expansions to perform.

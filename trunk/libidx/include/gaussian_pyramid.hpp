@@ -110,9 +110,9 @@ namespace ebl {
       return r;
     uint h = 1+ ((1 + 2 * ((int) (r.height - 1) / 2)) - 5) / 2;
     uint w = 1+((1 + 2 * ((int) (r.width - 1) / 2)) - 5) / 2;  
-    uint h0 = 1+((1 + 2 * ((int) (r.h0 - 1) / 2)) - 5) / 2;
-    uint w0 = 1+((1 + 2 * ((int) (r.w0 - 1) / 2)) - 5) / 2;
-    rect rr(h0, w0, h, w);
+    //    uint h0 = 1+((1 + 2 * ((int) (r.h0 - 1) / 2)) - 5) / 2;
+    //    uint w0 = 1+((1 + 2 * ((int) (r.w0 - 1) / 2)) - 5) / 2;
+    rect rr(r.h0, r.w0, h, w);
     return reduce_rect(rr, n - 1);
   }
 
@@ -129,6 +129,23 @@ namespace ebl {
   }
 
   template <class Tdata>
+  uint gaussian_pyramid<Tdata>::
+  count_reductions_exact(rect &inr, rect &outr, rect &inr_exact) {
+    // upsample from exact target size beyond current input size
+    uint distup;
+    uint expansions = count_expansions(outr.height, inr.height, distup);
+    rect uprect = expand_rect(outr, expansions);
+    rect downrect = expand_rect(outr, expansions - 1);
+    if (uprect.height - inr.height < inr.height - downrect.height) {
+      inr_exact = uprect;
+      return expansions;
+    } else {
+      inr_exact = downrect;
+      return expansions - 1;
+    }
+  }
+
+  template <class Tdata>
   idx<Tdata> gaussian_pyramid<Tdata>::expand(idx<Tdata> &in, uint n) {
     if (n == 0) // no more expansions
       return in; 
@@ -142,7 +159,7 @@ namespace ebl {
     }
     int d0 = in.get_chandim() + 1;
     int d1 = d0 + 1;
-    intg ii = in.dim(d0);
+     intg ii = in.dim(d0);
     intg ij = in.dim(d1);
     intg oi = (ii - 1) * 2 + 5;
     intg oj = (ij - 1) * 2 + 5;
@@ -181,9 +198,9 @@ namespace ebl {
       return r;
     uint h = (r.height - 1) * 2 + 5;
     uint w = (r.width - 1) * 2 + 5;
-    uint h0 = (r.h0 - 1) * 2 + 5;
-    uint w0 = (r.w0 - 1) * 2 + 5;
-    rect rr(h0, w0, h, w);
+    //    uint h0 = (r.h0 - 1) * 2 + 5;
+    //    uint w0 = (r.w0 - 1) * 2 + 5;
+    rect rr(r.h0, r.w0, h, w);
     return expand_rect(rr, n - 1);
   }
   
@@ -191,7 +208,7 @@ namespace ebl {
   uint gaussian_pyramid<Tdata>::count_expansions(uint insz, uint outsz,
 						 uint &dist) {
     if (insz > outsz) {
-      return -1;
+      return 0;
     }
     dist = (uint) abs((float)outsz - insz);
     uint newsz = (insz - 1) * 2 + 5;
