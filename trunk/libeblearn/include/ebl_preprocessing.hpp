@@ -206,8 +206,8 @@ namespace ebl {
 
   template <class T>
   resizepp_module<T>::
-  resizepp_module(intg height_, intg width_, module_1_1<T> *pp_)
-    : pp(pp_), inpp(1,1,1), outpp(1,1,1) {
+  resizepp_module(intg height_, intg width_, module_1_1<T> *pp_, uint kernelsz_)
+    : pp(pp_), kernelsz(kernelsz_), inpp(1,1,1), outpp(1,1,1) {
     set_dimensions(height_, width_);
   }
   
@@ -225,8 +225,12 @@ namespace ebl {
   void resizepp_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
     // resize input while preserving aspect ratio
     tmp = in.x.shift_dim(0, 2);
-    idx<T> resized = image_resize(tmp, height, width, 0);
+    idx<T> resized = image_resize(tmp, height + MAX(0, (int) kernelsz - 1),
+				  width + MAX(0, (int) kernelsz - 1), 0);
     resized = resized.shift_dim(2, 0);
+    // dimensions of ratio-kept resized without border compensations
+    idxdim resized0(resized.dim(0), resized.dim(1) - MAX(0, (int) kernelsz - 1),
+		    resized.dim(2) - MAX(0, (int) kernelsz - 1));
     // resize out to target dimensions if necessary
     if (((out.x.dim(1) != height) || (out.x.dim(2) != width)) && !pp)
       out.x.resize(in.x.dim(0), height, width);
@@ -234,20 +238,25 @@ namespace ebl {
 	      || (out.x.dim(0) != outpp.x.dim(0))) && pp)
       out.x.resize(outpp.x.dim(0), height, width);
     idx_clear(out.x);
-    tmp = out.x.narrow(1, resized.dim(1), (height - resized.dim(1)) / 2);
-    tmp = tmp.narrow(2, resized.dim(2), (width - resized.dim(2)) / 2);
+    tmp = out.x.narrow(1, resized0.dim(1), (height - resized0.dim(1)) / 2);
+    tmp = tmp.narrow(2, resized0.dim(2), (width - resized0.dim(2)) / 2);
     // call preprocessing
     if (pp) { // no preprocessing if NULL module
       inpp.x = resized;
       pp->fprop(inpp, outpp);
       // copy pp output into output with target dimensions
-      idx_copy(outpp.x, tmp);
+      if (kernelsz > 0) { // remove borders if using kernel
+	tmp2 = outpp.x.narrow(1, resized0.dim(1), kernelsz / 2);
+	tmp2 = tmp2.narrow(2, resized0.dim(2), kernelsz / 2);
+	idx_copy(tmp2, tmp);
+      } else // simple copy
+	idx_copy(outpp.x, tmp);
     } else // no pp, copy directly to output
       idx_copy(resized, tmp);
     // remember where the original image has been placed in output
-    original_bbox = rect((height - resized.dim(1)) / 2,
-			 (width - resized.dim(2)) / 2,
-			 resized.dim(1), resized.dim(2));
+    original_bbox = rect((height - resized0.dim(1)) / 2,
+			 (width - resized0.dim(2)) / 2,
+			 resized0.dim(1), resized0.dim(2));
   }
   
   template <class T>

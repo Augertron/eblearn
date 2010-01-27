@@ -44,12 +44,12 @@ namespace ebl {
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_,	uint nresolutions_,
 			const double *scales_, idx<const char*> &labels_,
-			module_1_1<T> *pp_, T bias_, float coef_) 
+			module_1_1<T> *pp_, uint ppkersz_,T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
-      nresolutions(nresolutions_), resolutions(1, 2),
+      ppkersz(ppkersz_), nresolutions(nresolutions_), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1), scales(scales_) {
+      manual_resolutions(false), bgclass(-1), scales(scales_), silent(false) {
     labels = strings_to_idx(labels_);
     idx_clear(inputs);
     idx_clear(outputs);
@@ -62,12 +62,12 @@ namespace ebl {
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_,	uint nresolutions_, 
 			idx<const char*> &labels_, module_1_1<T> *pp_,
-			T bias_, float coef_) 
+			uint ppkersz_, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
-      nresolutions(nresolutions_), resolutions(1, 2),
+      ppkersz(ppkersz_), nresolutions(nresolutions_), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1), scales(NULL) {
+      manual_resolutions(false), bgclass(-1), scales(NULL), silent(false) {
     labels = strings_to_idx(labels_);
     idx_clear(inputs);
     idx_clear(outputs);
@@ -79,14 +79,14 @@ namespace ebl {
   
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_, uint nresolutions_, 
-			idx<ubyte> &labels_, module_1_1<T> *pp_,
+			idx<ubyte> &labels_, module_1_1<T> *pp_, uint ppkersz_,
 			T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
-      labels(labels_),
+      ppkersz(ppkersz_), labels(labels_),
       nresolutions(nresolutions_), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1), scales(NULL) {
+      manual_resolutions(false), bgclass(-1), scales(NULL), silent(false) {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
@@ -98,14 +98,14 @@ namespace ebl {
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_, uint nresolutions_,
 			const double *scales_, 
-			idx<ubyte> &labels_, module_1_1<T> *pp_,
+			idx<ubyte> &labels_, module_1_1<T> *pp_, uint ppkersz_,
 			T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
-      labels(labels_),
+      ppkersz(ppkersz_), labels(labels_),
       nresolutions(nresolutions_), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1), scales(scales_) {
+      manual_resolutions(false), bgclass(-1), scales(scales_), silent(false) {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
@@ -116,14 +116,14 @@ namespace ebl {
 
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_, idx<uint> &resolutions_,
-			idx<ubyte> &labels_, module_1_1<T> *pp_,
+			idx<ubyte> &labels_, module_1_1<T> *pp_, uint ppkersz_,
 			T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
-      labels(labels_),
+      ppkersz(ppkersz_), labels(labels_),
       nresolutions(resolutions_.dim(0)), resolutions(resolutions_),
       original_bboxes(nresolutions, 4), manual_resolutions(true), bgclass(-1),
-      scales(NULL) {
+      scales(NULL), silent(false) {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
@@ -223,7 +223,7 @@ namespace ebl {
 	  res->resize(outd.dim(1), outd.dim(2), 2);
 	if (rszpp == NULL)
 	  rsz.set((void*) new resizepp_module<T>(scaled.dim(1),
-						 scaled.dim(2), pp));
+						 scaled.dim(2), pp, ppkersz));
 	else
 	  rszpp->set_dimensions(scaled.dim(1), scaled.dim(2));
 	thenet.pretty(scaled);
@@ -240,6 +240,11 @@ namespace ebl {
     }
   }
 
+  template <class T>
+  void detector<T>::set_silent() {
+    silent = true;
+  }
+    
   template <class T>
   void detector<T>::compute_minmax_resolutions(idxdim &input_dims) {
     // compute maximum closest size of input compatible with the network size
@@ -428,7 +433,7 @@ namespace ebl {
 		  bb.scale_index = scale_index; // scale index
 		  // original image
 		  uint oh0 = (uint) (offset_h * offset_h_factor * scalehi);
-		  uint ow0 = (uint) (offset_w * offset_h_factor * scalehi);
+		  uint ow0 = (uint) (offset_w * offset_w_factor * scalewi);
 		  bb.h0 = (uint) MAX(0, oh0 - robbox.h0 * scalehi);
 		  bb.w0 = (uint) MAX(0, ow0 - robbox.w0 * scalewi);
 		  bb.height = (uint) (MIN(neth * scalehi + oh0,
@@ -514,7 +519,8 @@ namespace ebl {
 
     // prune results btwn scales
     vector<bbox> rlist = map_to_list(threshold);
-    pretty_bboxes(rlist);
+    if (!silent)
+      pretty_bboxes(rlist);
     return rlist;
   }
 

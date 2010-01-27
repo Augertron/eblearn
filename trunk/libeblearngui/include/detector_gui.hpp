@@ -47,15 +47,12 @@ namespace ebl {
 				     double dzoom,  Tdata vmin, Tdata vmax,
 				     int wid, const char *wname){
     display_wid = (wid >= 0) ? wid :
-      new_window((wname ? wname : "detector: output"));
+      new_window((wname ? wname : "detector"));
     select_window(display_wid);
     disable_window_updates();
 
-    // draw input
-    draw_matrix(img, "input", h0, w0, dzoom, dzoom, (T) vmin, (T) vmax);
+    // run network
     vector<bbox> vb = cl.fprop(img, threshold);
-    w0 += img.dim(1) * dzoom + 5;
-
     // draw output
     vector<bbox>::iterator i = vb.begin();
     for ( ; i != vb.end(); ++i) {
@@ -70,6 +67,25 @@ namespace ebl {
   }
 
   template <class Tdata, class T>
+  vector<bbox> detector_gui::display_input(detector<Tdata> &cl, idx<T> &img,
+					   double threshold, unsigned int h0,
+					   unsigned int w0,
+					   double dzoom,  Tdata vmin,
+					   Tdata vmax,
+					   int wid, const char *wname){
+    display_wid = (wid >= 0) ? wid :
+      new_window((wname ? wname : "detector: output"));
+    select_window(display_wid);
+    disable_window_updates();
+
+    // draw input
+    draw_matrix(img, "input", h0, w0, dzoom, dzoom, (T) vmin, (T) vmax);
+    w0 += img.dim(1) * dzoom + 5;
+
+    return display(cl, img, threshold, h0, w0, dzoom, vmin, vmax, wid, wname);
+  }
+
+  template <class Tdata, class T>
   vector<bbox> detector_gui::
   display_inputs_outputs(detector<Tdata> &cl, idx<T> &img, double threshold,
 			 unsigned int h0, unsigned int w0, double dzoom,
@@ -80,12 +96,12 @@ namespace ebl {
 
     // draw input and output
     vector<bbox> bb =
-      display(cl, img, threshold, h0, w0, dzoom, (Tdata)0, (Tdata)255,
-	      display_wid_fprop);
+      display_input(cl, img, threshold, h0, w0, dzoom, (Tdata)0, (Tdata)255,
+		    display_wid_fprop);
 
     disable_window_updates();
     // draw internal inputs and outputs
-    int h = h0 + cl.height * dzoom + 5;
+    int h = h0 + cl.height * dzoom + 5 + 15;
     int scale = 0;
     int ohmax = ((state_idx<Tdata>*) cl.outputs.get(0))->x.dim(1);
     int ihmax = ((state_idx<Tdata>*) cl.inputs.get(0))->x.dim(1);
@@ -114,10 +130,9 @@ namespace ebl {
 	idx<Tdata> outx = ((state_idx<Tdata>*) out.get())->x;
 
 	// draw inputs
-	s.str("");
-	s << "scale #" << scale << " " << inx.dim(0) << "x" << inx.dim(1);
-	draw_matrix(inx, s.str().c_str(), h, w0, dzoom, dzoom,
-		    (Tdata)vmin, (Tdata)vmax);
+	gui << black_on_white() << at(h - 15, w0) << "scale #" << scale
+	    << " " << inx.dim(0) << "x" << inx.dim(1);
+	draw_matrix(inx, h, w0, dzoom, dzoom, (Tdata)vmin, (Tdata)vmax);
 	// draw bboxes on scaled input
 	for (vector<bbox>::iterator i = bb.begin(); i != bb.end(); ++i) {
 	  if (scale == i->scale_index)

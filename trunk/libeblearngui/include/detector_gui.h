@@ -63,6 +63,19 @@ namespace ebl {
 			   double dzoom = 1.0, Tdata vmin = 0, Tdata vmax = 0,
 			   int wid = -1, const char *wname = NULL);
 
+    //! displays only the output of the classifier after a a call to 
+    //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
+    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
+    //! use that window, otherwise create a new window and reuse it.
+    //! <wname> is an optional window title.
+    template <class Tdata, class T>
+      vector<bbox> display_input(detector<Tdata> &cl, idx<T> &img,
+				 double threshold,
+				 unsigned int h0 = 0, unsigned int w0 = 0, 
+				 double dzoom = 1.0, Tdata vmin = 0,
+				 Tdata vmax = 0,
+				 int wid = -1, const char *wname = NULL);
+
     //! display the regular input/output display but also the inputs and outputs
     //! corresponding to each scale, corresponding to a call to 
     //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
