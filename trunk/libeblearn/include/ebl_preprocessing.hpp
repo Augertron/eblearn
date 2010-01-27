@@ -230,7 +230,8 @@ namespace ebl {
     // resize out to target dimensions if necessary
     if (((out.x.dim(1) != height) || (out.x.dim(2) != width)) && !pp)
       out.x.resize(in.x.dim(0), height, width);
-    else if (((out.x.dim(1) != height) || (out.x.dim(2) != width)) && pp)
+    else if (((out.x.dim(1) != height) || (out.x.dim(2) != width)
+	      || (out.x.dim(0) != outpp.x.dim(0))) && pp)
       out.x.resize(outpp.x.dim(0), height, width);
     idx_clear(out.x);
     tmp = out.x.narrow(1, resized.dim(1), (height - resized.dim(1)) / 2);
