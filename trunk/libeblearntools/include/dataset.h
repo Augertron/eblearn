@@ -184,6 +184,9 @@ namespace ebl {
     //! be used as a buffer resize method.
     bool allocate(intg n, idxdim &d);
 
+    //! Allocate preprocessing and resizing modules.
+    void init_preprocessing();
+
     ////////////////////////////////////////////////////////////////
     // data manipulation
 
@@ -268,6 +271,8 @@ namespace ebl {
     idx<t_label>        classpairs;	//!< sample pairs class-wise
     idx<t_label>        deformpairs;	//!< sample pairs deformation-wise
     // data helpers ////////////////////////////////////////////////
+    uint                height;         //!< height of output
+    uint                width;          //!< width of output
     bool		allocated;	//!< data matrices allocated or not
     idxdim		outdims;	//!< dimensions of sample out dimensions
     idxdim		mindims;	//!< min dims of input samples
@@ -311,7 +316,9 @@ namespace ebl {
     uint		ppkernel_size;	//!< size of kernel for pp
     bool		ppconv_set;	//!< ppconv_type has been set or not
     bool		do_preprocessing;	//!< activate or deactivate pp
-    string              resize_mode; //!< type of resizing (bilinear, gaussian)
+    string              resize_mode;    //!< type of resizing (bilin, gaussian)
+    module_1_1<Tdata>  *ppmodule;       //!< pp module 
+    module_1_1<Tdata>  *resizepp;       //!< pp resizing module 
   };
   
   ////////////////////////////////////////////////////////////////

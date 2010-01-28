@@ -269,7 +269,7 @@ namespace ebl {
   }
 
   template<class T>
-  idx<T> image_gaussian_resize2(idx<T> &im, uint oheight, uint owidth,
+  idx<T> image_gaussian_resize2(idx<T> &im, double oheight, double owidth,
 				uint mode, rect *iregion_, rect *oregion) {
     // only accept 2D or 3D images
     if ((im.order() != 2) && (im.order() != 3)) {
@@ -301,7 +301,8 @@ namespace ebl {
       // compute biggest down/up-sizing factor
       r = MIN(oheight / (double) iregion.height,
 	      owidth / (double) iregion.width);
-      outr = rect(0, 0, iregion.height * r, iregion.width * r);
+      outr = rect(iregion.h0 * r, iregion.w0 * r,
+		  iregion.height * r, iregion.width * r);
       reductions = gp.count_reductions_exact(iregion, outr, exact_inr);
       // find closest 
       break ;
@@ -309,9 +310,16 @@ namespace ebl {
       eblerror("unsupported mode");
     }
     // bilinear resize at closest resolution to current resolution
-    idx<T> rim = image_resize(im, exact_inr.height, exact_inr.width, 1);
+    double exact_imh = (exact_inr.height / (double) iregion.height)
+      * (double) im.dim(0);
+    double exact_imw = (exact_inr.width / (double) iregion.width)
+      * (double) im.dim(1);
+    idx<T> rim = image_resize(im, exact_imh, exact_imw, 1);
     rim = rim.shift_dim(2, 0);
     rim = gp.reduce(rim, reductions);
+    rect rrect = gp.reduce_rect(exact_inr);
+    if (oregion)
+      *oregion = rrect;
     rim = rim.shift_dim(0, 2);
     return rim;
     // else down/up-sample with gaussians

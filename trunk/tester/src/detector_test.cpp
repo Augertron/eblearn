@@ -46,7 +46,7 @@ void detector_test::test_norb() {
   //  int tr[3] = { 2, 1, 0 };
   //left = left.transpose(tr);
   //left = left.select(2, 0);
-  double scales [] = { 3, 2, 1};
+  double scales [] = { 2, 1.5, 1};
   detector<t_net> cb((module_1_1<t_net>&)thenet, 3, scales, lbl, NULL, 0, 0.01);
 
   // find category of image

@@ -166,8 +166,9 @@ namespace ebl {
     intg		 width;         //!< target width
     state_idx<T>         inpp, outpp;   //!< input/output buffers for pp
     idx<T>               tmp;           //!< temporary buffer
-    idx<T>               tmp2;           //!< temporary buffer
+    idx<T>               tmp2;          //!< temporary buffer
     rect                 original_bbox; //!< bbox of original input in output
+    bool                 gaussian;      //!< use gaussian if true, bilin otherw.
   };
 
 } // namespace ebl {
