@@ -225,7 +225,7 @@ namespace ebl {
   void resizepp_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
     // resize input while preserving aspect ratio
     tmp = in.x.shift_dim(0, 2);
-    idx<T> resized = image_resize(tmp, height + MAX(0, (int) kernelsz - 1),
+    idx<T> resized = image_gaussian_resize2(tmp, height + MAX(0, (int) kernelsz - 1),
 				  width + MAX(0, (int) kernelsz - 1), 0);
     resized = resized.shift_dim(2, 0);
     // dimensions of ratio-kept resized without border compensations
