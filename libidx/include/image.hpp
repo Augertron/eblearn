@@ -286,6 +286,10 @@ namespace ebl {
 	*oregion = iregion;
       return im;
     }
+    // tmp: no upresize
+    if ((iregion.width + iregion.w0 < owidth) ||
+	(iregion.height + iregion.h0 < oheight))
+      eblerror("no upsampling");
     // gaussian resize
     gaussian_pyramid<T> gp;
     double r;

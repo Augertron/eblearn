@@ -64,14 +64,9 @@ namespace ebl {
     if (n == 0) // no reductions anymore
       return in;
     // only accept 2D images or 3D with channel dim to 0.
-    if ((in.order() != 2) && ((in.order() == 3) && in.get_chandim() != 0)) {
-      cerr << "error: gaussian_pyramid only accepts 2D images ";
-      cerr << "or 3D images with channel dimension (chandim) set to 0. ";
-      cerr << "input image is " << in << " with chandim = " << in.get_chandim();
-      cerr << endl;
+    if ((in.order() != 2) && (in.order() != 3))
       eblerror("unexpected image format");
-    }
-    int d0 = in.get_chandim() + 1;
+    int d0 =  1;
     int d1 = d0 + 1;
     intg ii = 1 + 2 * ((int) ((in.dim(d0) - 1) / 2));
     intg ij = 1 + 2 * ((int) ((in.dim(d1) - 1) / 2));
