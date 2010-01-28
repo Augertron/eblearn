@@ -81,7 +81,7 @@ namespace ebl {
 				 rect *iregion = NULL, rect *oregion = NULL);
 
   template<class T>
-    idx<T> image_gaussian_resize2(idx<T> &im_, uint oheight, uint owidth,
+    idx<T> image_gaussian_resize2(idx<T> &im_, double oheight, double owidth,
 				  uint mode = 0,
 				  rect *iregion = NULL, rect *oregion = NULL);
 

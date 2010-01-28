@@ -67,6 +67,8 @@ namespace ebl {
       inroot += "/";
     } else inroot = "";
     outdims = idxdim(96, 96, 3);
+    height = outdims.dim(0);
+    width = outdims.dim(1);
     mindims = idxdim(1, 1);
     build_fname(name, DATA_NAME, data_fname);
     build_fname(name, LABELS_NAME, labels_fname);
@@ -78,8 +80,11 @@ namespace ebl {
     total_samples = 0;
     display_extraction = false;
     display_result = false;
+    // preprocessing
     ppconv_type = "";
     ppconv_set = false;
+    ppmodule = NULL;
+    resizepp = NULL;
     extension = IMAGE_PATTERN;
     sleep_display = false;
     sleep_delay = 0;
@@ -102,6 +107,10 @@ namespace ebl {
 
   template <class Tdata>
   dataset<Tdata>::~dataset() {
+    if (ppmodule)
+      delete ppmodule;
+    if (resizepp)
+      delete resizepp;
   }
 
   template <class Tdata>
@@ -140,6 +149,7 @@ namespace ebl {
 
   template <class Tdata>
   bool dataset<Tdata>::extract() {
+    // extract
 #ifdef __BOOST__
     if (!allocated)
       return false;
@@ -440,7 +450,36 @@ namespace ebl {
     idx_clear(add_tally);
     return true;
   }
-
+  
+  template <class Tdata> template <class Toriginal>
+  void dataset<Tdata>::init_preprocessing() {
+    // initialize preprocessing module
+    if (ppmodule) delete ppmodule;
+    if (!strcmp(conv_type.c_str(), "YpUV")) {
+      ppmodule = new rgb_to_ypuv_module<Tdata>(ppkernel_size);
+      // set min/max val for display
+      minval = -1;
+      maxval = 1;
+    } else if (!strcmp(conv_type.c_str(), "YUV"))
+      eblerror("YUV pp module not implemented");
+    else if (!strcmp(conv_type.c_str(), "HSV"))
+      eblerror("HSV pp module not implemented");
+    else if (!strcmp(conv_type.c_str(), "RGB")) {
+      // no preprocessing module, just set min/max val for display
+      minval = 0;
+      maxval = 255;
+    } else eblerror("undefined preprocessing method");
+    // initialize resizing module
+    if (resizepp) delete resizepp;
+    if (!strcmp(resize_mode.c_str(), "bilinear"))
+      resizepp =
+	new resizepp_module<Tdata>(height, width, false, pp, ppkernel_size);
+    else if (!strcmp(resize_mode.c_str(), "gaussian"))
+      resizepp =
+	new resizepp_module<Tdata>(height, width, true, pp, ppkernel_size);
+    else eblerror("undefined resizing method");
+  }    
+  
   ////////////////////////////////////////////////////////////////
   // data
     
@@ -527,6 +566,13 @@ namespace ebl {
   void dataset<Tdata>::set_outdims(const idxdim &d) {
     cout << "Setting target dimensions to " << d << endl;
     outdims = d;
+    if (interleaved || (outdims.order() == 2)) {
+      height = outdims.dim(0);
+      width = outdims.dim(1);
+    } else {
+      height = outdims.dim(1);
+      width = outdims.dim(2);
+    }
   }
 
   template <class Tdata>
