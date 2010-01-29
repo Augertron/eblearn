@@ -79,6 +79,7 @@ namespace ebl {
 
   template <class Tdata>
   bool pascal_dataset<Tdata>::extract() {
+    this->init_preprocessing();
 #ifdef __XML__    
     if (!allocated)
       return false;

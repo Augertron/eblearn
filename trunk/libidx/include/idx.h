@@ -958,11 +958,10 @@ namespace ebl {
   // TODO: templatize
   class rect {
   public:
-  rect(uint h0_, uint w0_, uint height_, uint width_)
-    : h0(h0_), w0(w0_), height(height_), width(width_) {}
-    rect() {}
-    //  rect(const rect &r) : h0(r.h0), w0(r.w0), height(r.height), width(r.width) {}
-    virtual ~rect() {}
+    rect(uint h0_, uint w0_, uint height_, uint width_);
+    rect();
+    rect(const rect &r);
+    virtual ~rect();
     bool overlap(const rect &r);
     uint h0, w0, height, width;
 

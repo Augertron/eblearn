@@ -149,6 +149,7 @@ namespace ebl {
 
   template <class Tdata>
   bool dataset<Tdata>::extract() {
+    init_preprocessing();
     // extract
 #ifdef __BOOST__
     if (!allocated)
@@ -451,20 +452,20 @@ namespace ebl {
     return true;
   }
   
-  template <class Tdata> template <class Toriginal>
+  template <class Tdata>
   void dataset<Tdata>::init_preprocessing() {
     // initialize preprocessing module
     if (ppmodule) delete ppmodule;
-    if (!strcmp(conv_type.c_str(), "YpUV")) {
+    if (!strcmp(ppconv_type.c_str(), "YpUV")) {
       ppmodule = new rgb_to_ypuv_module<Tdata>(ppkernel_size);
       // set min/max val for display
       minval = -1;
       maxval = 1;
-    } else if (!strcmp(conv_type.c_str(), "YUV"))
+    } else if (!strcmp(ppconv_type.c_str(), "YUV")) {
       eblerror("YUV pp module not implemented");
-    else if (!strcmp(conv_type.c_str(), "HSV"))
+    } else if (!strcmp(ppconv_type.c_str(), "HSV")) {
       eblerror("HSV pp module not implemented");
-    else if (!strcmp(conv_type.c_str(), "RGB")) {
+    } else if (!strcmp(ppconv_type.c_str(), "RGB")) {
       // no preprocessing module, just set min/max val for display
       minval = 0;
       maxval = 255;
@@ -472,11 +473,11 @@ namespace ebl {
     // initialize resizing module
     if (resizepp) delete resizepp;
     if (!strcmp(resize_mode.c_str(), "bilinear"))
-      resizepp =
-	new resizepp_module<Tdata>(height, width, false, pp, ppkernel_size);
+      resizepp = new resizepp_module<Tdata>(height, width, false, ppmodule,
+					    ppkernel_size);
     else if (!strcmp(resize_mode.c_str(), "gaussian"))
-      resizepp =
-	new resizepp_module<Tdata>(height, width, true, pp, ppkernel_size);
+      resizepp = new resizepp_module<Tdata>(height, width, true, ppmodule,
+					    ppkernel_size);
     else eblerror("undefined resizing method");
   }    
   
@@ -566,7 +567,7 @@ namespace ebl {
   void dataset<Tdata>::set_outdims(const idxdim &d) {
     cout << "Setting target dimensions to " << d << endl;
     outdims = d;
-    if (interleaved || (outdims.order() == 2)) {
+    if (interleaved_input || (outdims.order() == 2)) {
       height = outdims.dim(0);
       width = outdims.dim(1);
     } else {
@@ -798,30 +799,36 @@ namespace ebl {
     rect out_region, cropped;
     idxdim d(outdims);
     idx<Tdata> resized;
-    if (scale > 0) {
-      if (!strcmp(resize_mode.c_str(), "bilinear"))
-	resized = image_resize(dat, (double)1/scale, (double)1/scale, 2);
-      else if (!strcmp(resize_mode.c_str(), "gaussian"))
-	resized = gaussian_resize_image_to(dat, scale);
-    } else
-      resized = resize_image_to(dat, d, out_region, r);
-    rect out_entire(0, 0, resized.dim(dh), resized.dim(dw));
-    // convert image to target format
-    idx<Tdata> original;
-    if (display_extraction) {
-      original = idx<Tdata>(resized.get_idxdim());
-      idx_copy(resized, original);
-      if (squared)
-	original = image_region_to_rect(original, out_region, outdims.dim(0),
-					outdims.dim(1), cropped);
-    }
-    idx<Tdata> formatted = resized;
-    if (ppconv_set)
-      formatted = convert_image_to(formatted, ppconv_type, out_entire);
-    idx<Tdata> res = formatted;
-    if (squared)
-      res = image_region_to_rect(res, out_region, outdims.dim(0),
-				 outdims.dim(1), cropped);
+//     if (scale > 0) {
+//       if (!strcmp(resize_mode.c_str(), "bilinear"))
+// 	resized = image_resize(dat, (double)1/scale, (double)1/scale, 2);
+//       else if (!strcmp(resize_mode.c_str(), "gaussian"))
+// 	resized = gaussian_resize_image_to(dat, scale);
+//     } else
+//       resized = resize_image_to(dat, d, out_region, r);
+//     rect out_entire(0, 0, resized.dim(dh), resized.dim(dw));
+//     // convert image to target format
+//     idx<Tdata> original;
+//     if (display_extraction) {
+//       original = idx<Tdata>(resized.get_idxdim());
+//       idx_copy(resized, original);
+//       if (squared)
+// 	original = image_region_to_rect(original, out_region, outdims.dim(0),
+// 					outdims.dim(1), cropped);
+//     }
+//     idx<Tdata> formatted = resized;
+//     if (ppconv_set)
+//       formatted = convert_image_to(formatted, ppconv_type, out_entire);
+//     idx<Tdata> res = formatted;
+//     if (squared)
+//       res = image_region_to_rect(res, out_region, outdims.dim(0),
+// 				 outdims.dim(1), cropped);
+    resizepp->set_input_region(*r);
+    idx<Tdata> tmp = dat.shift_dim(2, 0);
+    state_idx<Tdata> in(tmp.get_idxdim()), out(1,1,1);
+    idx_copy(tmp, in.x);
+    resizepp->fprop(in, out);
+    idx<Tdata> res = out.x.shift_dim(0, 2);
     // display each step
 #ifdef __GUI__
     if (display_extraction) {
@@ -837,11 +844,11 @@ namespace ebl {
       h += 16;
       gui << at(h, w) << "pproc: " << ppconv_type;
       h += 16;
-      // draw original output before channel formatting in RGB
-      oss.str("");
-      oss << "RGB";
-      draw_matrix(original, oss.str().c_str(), h, w);
-      h += original.dim(dh) + 5;
+//       // draw original output before channel formatting in RGB
+//       oss.str("");
+//       oss << "RGB";
+//       draw_matrix(original, oss.str().c_str(), h, w);
+//       h += original.dim(dh) + 5;
       // draw output in RGB
       oss.str("");
       oss << ppconv_type;
