@@ -694,6 +694,82 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // mirrorpad_module
+
+  template <class T>
+  mirrorpad_module<T>::mirrorpad_module(int nr, int nc)
+    : nrow(nr), ncol(nc) {
+  }
+
+  template <class T>
+  mirrorpad_module<T>::~mirrorpad_module() {
+  }
+
+  template <class T>
+  void mirrorpad_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+    intg inr = in.x.dim(1);
+    intg inc = in.x.dim(2);
+    idxdim d(in.x.dim(0), inr + 2 * nrow, inc + 2 * ncol);
+    if (!out.x.same_dim(d)) // resize only when necessary
+      out.resize(d);
+    idx<T> tmp, tmp2;
+    int i;
+    tmp = out.x.narrow(1, inr, nrow);
+    tmp = tmp.narrow(2, inc, ncol);
+    idx_copy(in.x, tmp);
+    // mirror border left
+    for (i = 0; i < ncol; ++i) {
+      tmp2 = in.x.narrow(1, 1, ncol - i - 1);
+      tmp = out.x.narrow(1, 1, i);
+      tmp = tmp.narrow(2, in.x.dim(2), ncol);
+      idx_copy(tmp2, tmp);
+    }
+    // mirror border right
+    for (i = 0; i < ncol; ++i) {
+      tmp2 = in.x.narrow(1, 1, in.x.dim(1) - ncol - 1 + i);
+      tmp = out.x.narrow(1, 1, out.x.dim(1) - 1 - i);
+      tmp = tmp.narrow(2, in.x.dim(2), ncol);
+      idx_copy(tmp2, tmp);
+    }
+    // mirror border top using out as input
+    for (i = 0; i < nrow; ++i) {
+      tmp2 = out.x.narrow(2, 1, nrow + nrow - i - 1);
+      tmp = out.x.narrow(2, 1, i);
+      idx_copy(tmp2, tmp);
+    }
+    // mirror border bottom using out as input
+    for (i = 0; i < nrow; ++i) {
+      tmp2 = out.x.narrow(2, 1, out.x.dim(2) - nrow * 2 - 1 + i);
+      tmp = out.x.narrow(2, 1, out.x.dim(2) - 1 - i);
+      idx_copy(tmp2, tmp);
+    }
+  }
+
+  template <class T>
+  void mirrorpad_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+    eblerror("not implemented");
+//     state_idx_check_different(in, out); // forbid same in and out
+
+//     intg inr = in.x.dim(1);
+//     intg inc = in.x.dim(2);
+//     idx<T> tmp = out.dx.narrow(1, inr, nrow);
+//     tmp = tmp.narrow(2, inc, ncol);
+//     idx_add(tmp, in.dx, in.dx);
+  }
+
+  template <class T>
+  void mirrorpad_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+    eblerror("not implemented");
+//     state_idx_check_different(in, out); // forbid same in and out
+
+//     intg inr = in.x.dim(1);
+//     intg inc = in.x.dim(2);
+//     idx<T> tmp = out.ddx.narrow(1, inr, nrow);
+//     tmp = tmp.narrow(2, inc, ncol);
+//     idx_add(tmp, in.ddx, in.ddx);
+  }
+
+  ////////////////////////////////////////////////////////////////
   // fsum_module
 
   template <class T>

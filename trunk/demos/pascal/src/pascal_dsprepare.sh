@@ -36,18 +36,23 @@ DDISPLAY="-disp -sleep 1000"
 mkdir $OUT 2> /dev/null > /dev/null
 mkdir $OUTBG 2> /dev/null > /dev/null
 
-# # extract background images at different scales
-# ~/eblearn/bin/dscompiler $PASCALROOT -type pascalbg -precision $PRECISION \
-#     -outdir $OUTBG/bg -scales $BGSCALES -dims ${H}x${W}x3 \
-#     -maxperclass $NBG \
-#     -channels $PP -ignore_difficult -resize $RESIZE -kernelsz $KERNEL \
-#     $MAXDATA $DDISPLAY # debug
+# get pascal dataset
+#wget http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar $R3D
+#tar xvf "${PASCALROOT0}/VOCtrainval_11-May-2009.tar" -C $PASCALROOT0/
+#mv $PASCALROOT0/VOCdevkit $PASCALROOT0/VOCdevkit_trainval09
 
-# # compile background dataset
-# ~/eblearn/bin/dscompiler ${OUTBG} -type lush -precision $PRECISION \
-#     -outdir ${OUT} -dname ${BGDS}_${NBG} $MAXDATA $MAXPERCLASS \
-#     -dims ${H}x${W}x3 \
-#     $MAXDATA $MAXPERCLASS $DDISPLAY # debug
+# extract background images at different scales
+~/eblearn/bin/dscompiler $PASCALROOT -type pascalbg -precision $PRECISION \
+    -outdir $OUTBG/bg -scales $BGSCALES -dims ${H}x${W}x3 \
+    -maxperclass $NBG \
+    -channels $PP -ignore_difficult -resize $RESIZE -kernelsz $KERNEL \
+    $MAXDATA $DDISPLAY # debug
+
+# compile background dataset
+~/eblearn/bin/dscompiler ${OUTBG} -type lush -precision $PRECISION \
+    -outdir ${OUT} -dname ${BGDS}_${NBG} $MAXDATA $MAXPERCLASS \
+    -dims ${H}x${W}x3 \
+    $MAXDATA $MAXPERCLASS $DDISPLAY # debug
 
 # compile regular dataset
 ~/eblearn/bin/dscompiler $PASCALROOT -type pascal -precision $PRECISION \

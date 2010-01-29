@@ -493,8 +493,10 @@ namespace ebl {
       return false;
     }
     // check that input is bigger than minimum dimensions allowed
-    if ((dat.dim(0) < mindims.dim(0)) || (r && (r->height < mindims.dim(0)))
-	|| (dat.dim(1) < mindims.dim(1)) || (r && (r->width < mindims.dim(1))))
+    if ((dat.dim(0) < mindims.dim(0))
+	|| (r && (r->height < (uint) mindims.dim(0)))
+	|| (dat.dim(1) < mindims.dim(1))
+	|| (r && (r->width < (uint) mindims.dim(1))))
       return false;
     // check that class exists (may not exist if excluded)
     if (find(classes.begin(), classes.end(), class_name) == classes.end())
@@ -823,7 +825,8 @@ namespace ebl {
 //     if (squared)
 //       res = image_region_to_rect(res, out_region, outdims.dim(0),
 // 				 outdims.dim(1), cropped);
-    resizepp->set_input_region(*r);
+    if (r)
+      resizepp->set_input_region(*r);
     idx<Tdata> tmp = dat.shift_dim(2, 0);
     state_idx<Tdata> in(tmp.get_idxdim()), out(1,1,1);
     idx_copy(tmp, in.x);
@@ -850,9 +853,8 @@ namespace ebl {
 //       draw_matrix(original, oss.str().c_str(), h, w);
 //       h += original.dim(dh) + 5;
       // draw output in RGB
-      oss.str("");
-      oss << ppconv_type;
-      draw_matrix(res, oss.str().c_str(), h, w);
+      gui << at(h, w) << ppconv_type; h += 15;
+      draw_matrix(res, h, w);
       // draw crossing arrows at center
       draw_box(h + res.dim(dh)/2, w + res.dim(dw)/2,
 	       res.dim(dh)/2, res.dim(dw)/2, 0,0,0);
@@ -860,9 +862,8 @@ namespace ebl {
       // display all channels
       int i = 0;
       idx_eloop1(chan, res, Tdata) {
-	oss.str("");
-	oss << "chan " << i++ ;
-	draw_matrix(chan, oss.str().c_str(), h, w, 1, 1, minval, maxval);
+	gui << at(h, w) << "chan " << i++; h += 15;
+	draw_matrix(chan, h, w, 1, 1, minval, maxval);
 	h += chan.dim(dh) + 5;
       }
       w += chan.dim(dw) + 5;

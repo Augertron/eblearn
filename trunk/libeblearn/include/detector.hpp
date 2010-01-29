@@ -222,8 +222,8 @@ namespace ebl {
 	else
 	  res->resize(outd.dim(1), outd.dim(2), 2);
 	if (rszpp == NULL)
-	  rsz.set((void*) new resizepp_module<T>(scaled.dim(1),
-						 scaled.dim(2), pp, ppkersz));
+	  rsz.set((void*) new resizepp_module<T>(scaled.dim(1), scaled.dim(2),
+						 true, pp, ppkersz));
 	else
 	  rszpp->set_dimensions(scaled.dim(1), scaled.dim(2));
 	thenet.pretty(scaled);

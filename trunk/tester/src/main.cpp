@@ -12,6 +12,7 @@
 
 #include "BlasTest.h"
 #include "ebl_basic_test.h"
+#include "ebl_preprocessing_test.h"
 #include "IdxIOTest.h"
 #include "DataSourceTest.h"
 #include "IdxTest.h"
@@ -114,6 +115,7 @@ int main(int argc, char **argv) {
   runner.addTest(IdxIteratorsTest::suite());
   runner.addTest(BlasTest::suite());
   runner.addTest(ebl_basic_test::suite());
+  runner.addTest(ebl_preprocessing_test::suite());
   runner.addTest(IdxIOTest::suite());
   runner.addTest(image_test::suite());
   runner.addTest(DataSourceTest::suite());

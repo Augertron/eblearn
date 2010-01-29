@@ -38,7 +38,7 @@ namespace ebl {
 
   template <class T>
   weighted_std_module<T>::weighted_std_module(uint kernelh, uint kernelw,
-					      int nf)
+					      int nf, bool mirror)
     : convmean(true),
       convvar(true),
       sqrtmod(.5), // square root module
@@ -76,16 +76,24 @@ namespace ebl {
     idx_dotc(conv1->kernel.x, 1/idx_sum(conv1->kernel.x), conv1->kernel.x);
     idx_copy(conv1->kernel.x, conv2->kernel.x);
     // create modules
-    convmean.add_module(new zpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2),
-			new state_idx<T>(1, 1, 1));
+    module_1_1<T> *padding1;
+    if (mirror) // switch between zero and mirror padding
+      padding1 = new mirrorpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2);
+    else
+      padding1 = new zpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2);
+    convmean.add_module(padding1, new state_idx<T>(1, 1, 1));
     convmean.add_module(conv1, new state_idx<T>(1, 1, 1));
     //! feature sum module to sum along features 
     //! this might be implemented by making the table in above conv module
     //! all to all connection, but that would be very inefficient
     convmean.add_last_module(new fsum_module<T>);
     // convvar
-    convvar.add_module(new zpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2),
-		       new state_idx<T>(1, 1, 1));
+    module_1_1<T> *padding2;
+    if (mirror) // switch between zero and mirror padding
+      padding2 = new mirrorpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2);
+    else
+      padding2 = new zpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2);
+    convvar.add_module(padding2, new state_idx<T>(1, 1, 1));
     convvar.add_module(conv2, new state_idx<T>(1, 1, 1));
     //! feature sum module to sum along features 
     //! this might be implemented by making the table in above conv module

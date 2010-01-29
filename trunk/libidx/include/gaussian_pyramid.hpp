@@ -105,9 +105,9 @@ namespace ebl {
       return r;
     uint h = 1+ ((1 + 2 * ((int) (r.height - 1) / 2)) - 5) / 2;
     uint w = 1+((1 + 2 * ((int) (r.width - 1) / 2)) - 5) / 2;  
-    //    uint h0 = 1+((1 + 2 * ((int) (r.h0 - 1) / 2)) - 5) / 2;
-    //    uint w0 = 1+((1 + 2 * ((int) (r.w0 - 1) / 2)) - 5) / 2;
-    rect rr(r.h0, r.w0, h, w);
+    uint h0 = r.h0 / 2;
+    uint w0 = r.w0 / 2;
+    rect rr(h0, w0, h, w);
     return reduce_rect(rr, n - 1);
   }
 
@@ -193,9 +193,9 @@ namespace ebl {
       return r;
     uint h = (r.height - 1) * 2 + 5;
     uint w = (r.width - 1) * 2 + 5;
-    //    uint h0 = (r.h0 - 1) * 2 + 5;
-    //    uint w0 = (r.w0 - 1) * 2 + 5;
-    rect rr(r.h0, r.w0, h, w);
+    uint h0 = r.h0 * 2;
+    uint w0 = r.w0 * 2;
+    rect rr(h0, w0, h, w);
     return expand_rect(rr, n - 1);
   }
   

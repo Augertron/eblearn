@@ -40,8 +40,8 @@
 	  If you need to manipulate the idx, for example if you want
 	  to display only 1 layer of the RGB image 'a', you can use
 	  global debug idx variables:
-	  set ebl::gdb_idx_float1 = a.select(2, 0)
-	  call ebl::draw_matrix_float(ebl::gdb_idx_float1, 0, 0, 1, 1, 0,
+	  set gdb_idx_float1 = a.select(2, 0)
+	  p draw_matrix_float(gdb_idx_float1, 0, 0, 1, 1, 0,
 	  255)
 
 	  Note: gdb does not accept calls to template functions, one
@@ -50,7 +50,8 @@
 	  Some of those instantiations are available in the
 	  libeblearntools, link with this library to use them. 
 
-	  call ebl::new_window(0, 42,42);
+	  p new_window(0, 42,42);
+	  p clear_window()
 
 	  Note: if this does not work, the debug symbols might not be available,
 	    try a make clean and recompile in debug mode (make debug).
