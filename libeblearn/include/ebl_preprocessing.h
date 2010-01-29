@@ -36,6 +36,7 @@
 #include "libidx.h"
 #include "ebl_arch.h"
 #include "ebl_states.h"
+#include "ebl_transfer.h"
 
 namespace ebl {
 
@@ -57,8 +58,9 @@ namespace ebl {
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
 
   private:
-    uint	normalization_size;	//!< normalization kernel size
-    idx<T>	tmp;		        //!< temporary buffer
+    uint			normalization_size;	//!< norm kernel size
+    state_idx<T>		tmp;	//!< temporary buffer
+    weighted_std_module<T>	norm;	//!< contrast normalization module
   };
 
   ////////////////////////////////////////////////////////////////
@@ -79,8 +81,9 @@ namespace ebl {
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
 
   private:
-    uint	normalization_size;	//!< normalization kernel size
-    idx<T>	tmp;		        //!< temporary buffer
+    uint	                normalization_size;	//!< norm kernel size
+    state_idx<T>	        tmp;	//!< temporary buffer
+    weighted_std_module<T>	norm;	//!< contrast normalization module
   };
 
   ////////////////////////////////////////////////////////////////
@@ -101,8 +104,9 @@ namespace ebl {
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
 
   private:
-    uint	normalization_size;	//!< normalization kernel size
-    idx<T>	tmp;		        //!< temporary buffer
+    uint			normalization_size;	//!< norm kernel size
+    state_idx<T>		tmp;	//!< temporary buffer
+    weighted_std_module<T>	norm;	//!< contrast normalization module
   };
 
   ////////////////////////////////////////////////////////////////
@@ -123,8 +127,9 @@ namespace ebl {
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
 
   private:
-    uint	normalization_size;	//!< normalization kernel size
-    idx<T>	tmp;		        //!< temporary buffer
+    uint			normalization_size;	//!< norm kernel size
+    state_idx<T>		tmp;	//!< temporary buffer
+    weighted_std_module<T>	norm;	//!< contrast normalization module
   };
 
   ////////////////////////////////////////////////////////////////

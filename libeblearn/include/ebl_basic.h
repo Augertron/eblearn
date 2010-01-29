@@ -366,6 +366,30 @@ namespace ebl {
   };
   
   ////////////////////////////////////////////////////////////////
+  // mirrorpad_module
+  //! a simple zero padding module that is mostly usefull for doing
+  //! same size output convolutions.
+  template <class T> class mirrorpad_module : public module_1_1<T> {
+  private:
+    int nrow, ncol;
+
+  public:
+    //! <nrow> is the number of rows in zero added border
+    //! <ncol> is the number of cols in zero added border
+    //! the output size is enlarged by 2*nrow in rows and 2*ncols in cols
+    //! for each feature map.
+    mirrorpad_module(int nr, int nc);
+    //! destructor
+    virtual ~mirrorpad_module();    
+    //! forward propagation from in to out
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    //! backward propagation from out to in
+    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    //! second-derivative backward propagation from out to in
+    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+  };
+  
+  ////////////////////////////////////////////////////////////////
   // fsum_module
   template <class T> class fsum_module : public module_1_1<T> {
   public:

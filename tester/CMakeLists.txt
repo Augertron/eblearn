@@ -43,6 +43,7 @@ IF (CPPUNIT_FOUND) #------------------------------------------------------------
     src/ClusterTest.cpp
     src/DataSourceTest.cpp
     src/ebl_basic_test.cpp
+    src/ebl_preprocessing_test.cpp
     src/IdxIOTest.cpp
     src/IdxIteratorsTest.cpp
     src/IdxTest.cpp

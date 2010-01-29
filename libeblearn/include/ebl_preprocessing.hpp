@@ -36,7 +36,8 @@ namespace ebl {
 
   template <class T>
   rgb_to_ypuv_module<T>::rgb_to_ypuv_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1) {
+    : normalization_size(normalization_size_), tmp(1,1,1),
+      norm(normalization_size, normalization_size, 1, true) {
   }
 
   template <class T>
@@ -46,7 +47,7 @@ namespace ebl {
   template <class T>
   void rgb_to_ypuv_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
-    idx<T> uv, yp, yuv;
+    idx<T> uv, yuv;
 
     // RGB to YUV
     idx_eloop2(inx, in.x, T, outx, out.x, T) {
@@ -59,9 +60,8 @@ namespace ebl {
     idx_addc(uv, (T)-128, uv);
     idx_dotc(uv, (T).01, uv);
     // convert Y to Yp
-    yp = out.x.select(0, 0);
-    idx_std_normalize(yp, tmp);
-    image_local_normalization(tmp, yp, normalization_size);
+    tmp.x = out.x.narrow(0, 1, 0);
+    norm.fprop(tmp, tmp);
   }
   
   template <class T>
@@ -72,8 +72,8 @@ namespace ebl {
     if (d != out.x.get_idxdim())
       out.x.resize(d); // resize only x, as bprop and bbprop are not defined
     // resize temporary y buffer
-    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2)))
-      tmp.resize(d.dim(1), d.dim(2));
+    if (d != tmp.x.get_idxdim())
+      tmp.x.resize(d);
   }
   
   ////////////////////////////////////////////////////////////////
@@ -81,7 +81,8 @@ namespace ebl {
 
   template <class T>
   rgb_to_yp_module<T>::rgb_to_yp_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1) {
+    : normalization_size(normalization_size_), tmp(1,1,1),
+      norm(normalization_size, normalization_size, 1, true) {
   }
 
   template <class T>
@@ -92,15 +93,13 @@ namespace ebl {
   void rgb_to_yp_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     // RGB to YUV
-    idx_eloop2(inx, in.x, T, outx, out.x, T) {
-      idx_eloop2(inxx, inx, T, outxx, outx, T) {
-	rgb_to_y_1D(inxx, outxx);
+    idx_eloop2(inx, in.x, T, tmpx, tmp.x, T) {
+      idx_eloop2(inxx, inx, T, tmpxx, tmpx, T) {
+	rgb_to_y_1D(inxx, tmpxx);
       }
     }
     // convert Y to Yp
-    idx<T> yp = out.x.select(0, 0);
-    idx_std_normalize(yp, tmp);
-    image_local_normalization(tmp, yp, normalization_size);
+    norm.fprop(tmp, out);
   }
   
   template <class T>
@@ -112,8 +111,8 @@ namespace ebl {
     if (d != out.x.get_idxdim())
       out.x.resize(d); // resize only x, as bprop and bbprop are not defined
     // resize temporary y buffer
-    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2)))
-      tmp.resize(d.dim(1), d.dim(2));
+    if (d != tmp.x.get_idxdim())
+      tmp.x.resize(d);
   }
   
   ////////////////////////////////////////////////////////////////
@@ -121,7 +120,7 @@ namespace ebl {
 
   template <class T>
   bgr_to_ypuv_module<T>::bgr_to_ypuv_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1) {
+    : normalization_size(normalization_size_), tmp(1,1,1) {
   }
 
   template <class T>
@@ -144,9 +143,8 @@ namespace ebl {
     idx_addc(uv, (T)-128, uv);
     idx_dotc(uv, (T).01, uv);
     // convert Y to Yp
-    yp = out.x.select(0, 0);
-    idx_std_normalize(yp, tmp);
-    image_local_normalization(tmp, yp, normalization_size);
+    tmp.x = out.x.narrow(0, 1, 0);
+    norm.fprop(tmp, tmp);
   }
   
   template <class T>
@@ -157,8 +155,8 @@ namespace ebl {
     if (d != out.x.get_idxdim())
       out.x.resize(d); // resize only x, as bprop and bbprop are not defined
     // resize temporary y buffer
-    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2)))
-      tmp.resize(d.dim(1), d.dim(2));
+    if (d != tmp.x.get_idxdim())
+      tmp.x.resize(d);
   }
   
   ////////////////////////////////////////////////////////////////
@@ -166,7 +164,8 @@ namespace ebl {
 
   template <class T>
   bgr_to_yp_module<T>::bgr_to_yp_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1) {
+    : normalization_size(normalization_size_), tmp(1,1,1),
+      norm(normalization_size, normalization_size, 1, true) {
   }
 
   template <class T>
@@ -183,9 +182,7 @@ namespace ebl {
       }
     }
     // convert Y to Yp
-    idx<T> yp = out.x.select(0, 0);
-    idx_std_normalize(yp, tmp);
-    image_local_normalization(tmp, yp, normalization_size);
+    norm.fprop(tmp, out);
   }
   
   template <class T>
@@ -197,8 +194,8 @@ namespace ebl {
     if (d != out.x.get_idxdim())
       out.x.resize(d); // resize only x, as bprop and bbprop are not defined
     // resize temporary y buffer
-    if ((tmp.dim(0) != d.dim(1)) || (tmp.dim(1) != d.dim(2)))
-      tmp.resize(d.dim(1), d.dim(2));
+    if (d != tmp.x.get_idxdim())
+      tmp.x.resize(d);
   }
   
   ////////////////////////////////////////////////////////////////
@@ -238,17 +235,10 @@ namespace ebl {
     tmp = in.x.shift_dim(0, 2);
     idx<T> resized;
     if (gaussian)
-      resized =	image_gaussian_resize2(tmp, height + MAX(0, (int) kernelsz - 1),
-				       width + MAX(0, (int) kernelsz - 1), 0,
-				       &inrect, &outrect);
+      resized =	image_gaussian_resize2(tmp, height,width, 0, &inrect, &outrect);
     else
-      resized =	image_resize(tmp, height + MAX(0, (int) kernelsz - 1),
-			     width + MAX(0, (int) kernelsz - 1), 0,
-			     &inrect, &outrect);
+      resized =	image_resize(tmp, height, width, 0, &inrect, &outrect);
     resized = resized.shift_dim(2, 0); 
-    // dimensions of ratio-kept resized without border compensations
-    idxdim resized0(resized.dim(0), outrect.height - MAX(0, (int) kernelsz - 1),
-		    outrect.width - MAX(0, (int) kernelsz - 1));
     // call preprocessing
     if (pp) { // no preprocessing if NULL module
       inpp.x = resized;
@@ -262,15 +252,14 @@ namespace ebl {
 	      || (out.x.dim(0) != outpp.x.dim(0))) && pp)
       out.x.resize(outpp.x.dim(0), height, width);
     idx_clear(out.x);
-    tmp = out.x.narrow(1, resized0.dim(1), (height - resized0.dim(1)) / 2);
-    tmp = tmp.narrow(2, resized0.dim(2), (width - resized0.dim(2)) / 2);
     // copy out region to output
     resized = resized.shift_dim(0, 2);
-    tmp2 = image_region_to_rect(resized, outrect, resized0.dim(1),
-				resized0.dim(2), original_bbox);
+    tmp2 = image_region_to_rect(resized, outrect, out.x.dim(1),
+				out.x.dim(2), original_bbox);
     tmp2 = tmp2.shift_dim(2, 0);
-    idx_copy(tmp2, tmp);
-    
+    //idx_copy(tmp2, tmp);
+    idx_copy(tmp2, out.x);
+    original_bbox = outrect;
 //     // copy pp output into output with target dimensions, removing ker borders
 //     tmp2 = resized.narrow(1, outrect.height, outrect.h0 + kernelsz / 2);
 //     tmp2 = tmp2.narrow(2, outrect.width, outrect.w0 + kernelsz / 2);
