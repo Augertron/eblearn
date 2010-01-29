@@ -852,6 +852,23 @@ namespace ebl {
     return out;
   }
 
+  ////////////////////////////////////////////////////////////////
+  // rect
+
+  rect::rect(uint h0_, uint w0_, uint height_, uint width_)
+    : h0(h0_), w0(w0_), height(height_), width(width_) {
+  }
+  
+  rect::rect() {
+  }
+  
+  rect::rect(const rect &r)
+  : h0(r.h0), w0(r.w0), height(r.height), width(r.width) {
+  }
+
+  rect::~rect() {
+  }
+
   bool rect::overlap(const rect &r) {
     if (((h0 <= r.h0 + r.height) && (h0 + height >= r.h0)) &&
 	((w0 <= r.w0 + r.width) && (w0 + width >= r.w0)))

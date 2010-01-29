@@ -147,18 +147,21 @@ namespace ebl {
     //! \param kernelsz The kernel size used by the preprocessing module.
     //!           This is used to take kernel's (if any) border effect into
     //!           account during resizing. The default value (0) has no effect.
-    resizepp_module(intg height, intg width, module_1_1<T> *pp = NULL,
-		    uint kernelsz = 0);
+    resizepp_module(intg height, intg width, bool gaussian = true,
+		    module_1_1<T> *pp = NULL, uint kernelsz = 0);
     //! destructor
     virtual ~resizepp_module();
     //! sets the desired output dimensions.
     void set_dimensions(intg height_, intg width_);
+    //! set the region to use in the input image.
+    //! by default, the input region is the entire image.
+    void set_input_region(const rect &inr);
     //! forward propagation from in to out
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
     //! return the bounding box of the original input in the output coordinate
     //! system.
     rect get_original_bbox();
-
+    
   private:
     module_1_1<T>	*pp;	        //!< preprocessing module
     uint                 kernelsz;      //!< size of pp's kernel
@@ -169,6 +172,9 @@ namespace ebl {
     idx<T>               tmp2;          //!< temporary buffer
     rect                 original_bbox; //!< bbox of original input in output
     bool                 gaussian;      //!< use gaussian if true, bilin otherw.
+    rect                 inrect;        //!< input region of image
+    rect                 outrect;       //!< input region in output image
+    bool                 inrect_set;    //!< use input region or not.
   };
 
 } // namespace ebl {

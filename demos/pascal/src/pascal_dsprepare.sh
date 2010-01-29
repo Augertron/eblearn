@@ -13,21 +13,24 @@ OUT=$ROOT/ds/
 
 # variables
 H=96
-W=96
-NAME=allbi${H}x${W}
+W=${H}
+NAME=all${RESIZE}${H}x${W}_ker${KERNEL}
 NAMEBG=${NAME}bg
 MAX=50 # number of samples in validation set
 DRAWS=5 # number of train/val sets to draw
 PRECISION=float
 PP=YpUV
 KERNEL=9
-RESIZE=bilinear
+RESIZE=gaussian #bilinear
 NBG=1
 BGSCALES=1,2,4
-BGDS=pascalbg${H}x${W}
+BGDS=pascalbg${RESIZE}${H}x${W}_ker${KERNEL}
 OUTBG=$OUT/$BGDS
-#MAXDATA="-maxdata 50"
-#MAXPERCLASS="-maxperclass 25"
+
+# debug variables
+MAXDATA="-maxdata 50"
+MAXPERCLASS="-maxperclass 25"
+DDISPLAY="-disp -sleep 1000"
 
 # create directories
 mkdir $OUT 2> /dev/null > /dev/null
@@ -36,33 +39,32 @@ mkdir $OUTBG 2> /dev/null > /dev/null
 # # extract background images at different scales
 # ~/eblearn/bin/dscompiler $PASCALROOT -type pascalbg -precision $PRECISION \
 #     -outdir $OUTBG/bg -scales $BGSCALES -dims ${H}x${W}x3 \
-#     -maxperclass $NBG $MAXDATA \
+#     -maxperclass $NBG \
 #     -channels $PP -ignore_difficult -resize $RESIZE -kernelsz $KERNEL \
-# #    -disp -sleep 1000
+#     $MAXDATA $DDISPLAY # debug
 
 # # compile background dataset
 # ~/eblearn/bin/dscompiler ${OUTBG} -type lush -precision $PRECISION \
 #     -outdir ${OUT} -dname ${BGDS}_${NBG} $MAXDATA $MAXPERCLASS \
-#     -dims ${H}x${W}x3
-# #    -disp
+#     -dims ${H}x${W}x3 \
+#     $MAXDATA $MAXPERCLASS $DDISPLAY # debug
 
-# # compile regular dataset
-# ~/eblearn/bin/dscompiler $PASCALROOT -type pascal -precision $PRECISION \
-#     -outdir ${OUT} -channels $PP -dname $NAME $MAXDATA $MAXPERCLASS \
-#     -ignore_difficult \
-#     -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 # -disp -maxperclass 5
+# compile regular dataset
+~/eblearn/bin/dscompiler $PASCALROOT -type pascal -precision $PRECISION \
+    -outdir ${OUT} -channels $PP -dname $NAME -ignore_difficult \
+    -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 \
+    $MAXDATA $MAXPERCLASS $DDISPLAY # debug
 
-# # merge normal dataset with background dataset
-# ~/eblearn/bin/dsmerge $OUT ${NAMEBG} ${NAME} ${BGDS}_$NBG
+# merge normal dataset with background dataset
+~/eblearn/bin/dsmerge $OUT ${NAMEBG} ${NAME} ${BGDS}_$NBG
 
-# # split dataset into training/validation
-# ~/eblearn/bin/dssplit $OUT ${NAMEBG} ${NAMEBG}_val_${MAX}_ \
-#     ${NAMEBG}_train_${MAX}_ -maxperclass ${MAX} -draws $DRAWS
+# split dataset into training/validation
+~/eblearn/bin/dssplit $OUT ${NAMEBG} ${NAMEBG}_val_${MAX}_ \
+    ${NAMEBG}_train_${MAX}_ -maxperclass ${MAX} -draws $DRAWS
 
 # extract parts dataset
 ~/eblearn/bin/dscompiler $PASCALROOT -type pascalpart -precision $PRECISION \
-    -outdir ${OUT} -channels $PP -dname $NAME $MAXDATA $MAXPERCLASS \
-    -ignore_difficult \
+    -outdir ${OUT} -channels $PP -dname $NAME -ignore_difficult \
     -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 \
-    -disp \
-    -exclude hand -exclude foot -usepose -mindims 32x32
+    -exclude hand -exclude foot -usepose -mindims 32x32 \
+    $MAXDATA $MAXPERCLASS $DDISPLAY # debug

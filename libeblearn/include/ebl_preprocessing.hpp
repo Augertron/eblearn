@@ -206,8 +206,10 @@ namespace ebl {
 
   template <class T>
   resizepp_module<T>::
-  resizepp_module(intg height_, intg width_, module_1_1<T> *pp_, uint kernelsz_)
-    : pp(pp_), kernelsz(kernelsz_), inpp(1,1,1), outpp(1,1,1) {
+  resizepp_module(intg height_, intg width_, bool gaussian_,
+		  module_1_1<T> *pp_, uint kernelsz_)
+    : pp(pp_), kernelsz(kernelsz_), inpp(1,1,1), outpp(1,1,1),
+      gaussian(gaussian_), inrect(0, 0, 0, 0), inrect_set(false) {
     set_dimensions(height_, width_);
   }
   
@@ -222,15 +224,37 @@ namespace ebl {
   }
 
   template <class T>
+  void resizepp_module<T>::set_input_region(const rect &inr) {
+    inrect = inr;
+    inrect_set = true;
+  }
+
+  template <class T>
   void resizepp_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+    // set input region to entire image if no input region is given
+    if (!inrect_set)
+      inrect = rect(0, 0, in.x.dim(1), in.x.dim(2));
     // resize input while preserving aspect ratio
     tmp = in.x.shift_dim(0, 2);
-    idx<T> resized = image_gaussian_resize2(tmp, height + MAX(0, (int) kernelsz - 1),
-				  width + MAX(0, (int) kernelsz - 1), 0);
-    resized = resized.shift_dim(2, 0);
+    idx<T> resized;
+    if (gaussian)
+      resized =	image_gaussian_resize2(tmp, height + MAX(0, (int) kernelsz - 1),
+				       width + MAX(0, (int) kernelsz - 1), 0,
+				       &inrect, &outrect);
+    else
+      resized =	image_resize(tmp, height + MAX(0, (int) kernelsz - 1),
+			     width + MAX(0, (int) kernelsz - 1), 0,
+			     &inrect, &outrect);
+    resized = resized.shift_dim(2, 0); 
     // dimensions of ratio-kept resized without border compensations
-    idxdim resized0(resized.dim(0), resized.dim(1) - MAX(0, (int) kernelsz - 1),
-		    resized.dim(2) - MAX(0, (int) kernelsz - 1));
+    idxdim resized0(resized.dim(0), outrect.height - MAX(0, (int) kernelsz - 1),
+		    outrect.width - MAX(0, (int) kernelsz - 1));
+    // call preprocessing
+    if (pp) { // no preprocessing if NULL module
+      inpp.x = resized;
+      pp->fprop(inpp, outpp);
+      resized = outpp.x;
+    }
     // resize out to target dimensions if necessary
     if (((out.x.dim(1) != height) || (out.x.dim(2) != width)) && !pp)
       out.x.resize(in.x.dim(0), height, width);
@@ -240,23 +264,21 @@ namespace ebl {
     idx_clear(out.x);
     tmp = out.x.narrow(1, resized0.dim(1), (height - resized0.dim(1)) / 2);
     tmp = tmp.narrow(2, resized0.dim(2), (width - resized0.dim(2)) / 2);
-    // call preprocessing
-    if (pp) { // no preprocessing if NULL module
-      inpp.x = resized;
-      pp->fprop(inpp, outpp);
-      // copy pp output into output with target dimensions
-      if (kernelsz > 0) { // remove borders if using kernel
-	tmp2 = outpp.x.narrow(1, resized0.dim(1), kernelsz / 2);
-	tmp2 = tmp2.narrow(2, resized0.dim(2), kernelsz / 2);
-	idx_copy(tmp2, tmp);
-      } else // simple copy
-	idx_copy(outpp.x, tmp);
-    } else // no pp, copy directly to output
-      idx_copy(resized, tmp);
-    // remember where the original image has been placed in output
-    original_bbox = rect((height - resized0.dim(1)) / 2,
-			 (width - resized0.dim(2)) / 2,
-			 resized0.dim(1), resized0.dim(2));
+    // copy out region to output
+    resized = resized.shift_dim(0, 2);
+    tmp2 = image_region_to_rect(resized, outrect, resized0.dim(1),
+				resized0.dim(2), original_bbox);
+    tmp2 = tmp2.shift_dim(2, 0);
+    idx_copy(tmp2, tmp);
+    
+//     // copy pp output into output with target dimensions, removing ker borders
+//     tmp2 = resized.narrow(1, outrect.height, outrect.h0 + kernelsz / 2);
+//     tmp2 = tmp2.narrow(2, outrect.width, outrect.w0 + kernelsz / 2);
+//     idx_copy(tmp2, tmp);
+//     // remember where the original image has been placed in output
+//     original_bbox = rect((height - resized0.dim(1)) / 2,
+// 			 (width - resized0.dim(2)) / 2,
+// 			 resized0.dim(1), resized0.dim(2));
   }
   
   template <class T>

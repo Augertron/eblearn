@@ -287,8 +287,8 @@ namespace ebl {
       return im;
     }
     // tmp: no upresize
-    if ((iregion.width + iregion.w0 < owidth) ||
-	(iregion.height + iregion.h0 < oheight))
+    if ((iregion.width < owidth) ||
+	(iregion.height < oheight))
       eblerror("no upsampling");
     // gaussian resize
     gaussian_pyramid<T> gp;
@@ -317,9 +317,9 @@ namespace ebl {
     idx<T> rim = image_resize(im, exact_imh, exact_imw, 1);
     rim = rim.shift_dim(2, 0);
     rim = gp.reduce(rim, reductions);
-    rect rrect = gp.reduce_rect(exact_inr);
+    //    rect rrect = gp.reduce_rect(iregion);
     if (oregion)
-      *oregion = rrect;
+      *oregion = outr;//rrect;
     rim = rim.shift_dim(0, 2);
     return rim;
     // else down/up-sample with gaussians
@@ -408,8 +408,8 @@ namespace ebl {
     // TODO: check expecting 2D or 3D
     // TODO: check that rectangle is within image
     idxdim d(im);
-    uint dh = (d.get_chandim() == 0) ? 1 : 0; // handle channels position
-    uint dw = (d.get_chandim() == 0) ? 2 : 1; // handle channels position
+    uint dh = 0;
+    uint dw = 1;
     d.setdim(dh, oheight);
     d.setdim(dw, owidth);
     idx<T> res(d);

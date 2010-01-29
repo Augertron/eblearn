@@ -91,7 +91,7 @@ add_executable (dscompiler
   )
 
 # link executable with external libraries
-target_link_libraries (dscompiler idx eblearntools)
+target_link_libraries (dscompiler idx eblearn eblearntools)
 IF (QT_FOUND)
   target_link_libraries (dscompiler idxgui)
 ENDIF (QT_FOUND)

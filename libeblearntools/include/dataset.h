@@ -36,6 +36,7 @@
 #define MKDIR_RIGHTS 0755
 
 #include "libidx.h"
+#include "libeblearn.h"
 
 typedef int t_label;
 
@@ -282,30 +283,30 @@ namespace ebl {
     bool		max_data_set;	//!< max_data been set by user or not
     intg                total_samples;	//!< number of samples of dataset
     idx<intg>           max_per_class;	//!< max # samples per class
-    intg                mpc; //!< value to put in max_per_class
+    intg                mpc;            //!< value to put in max_per_class
     bool                max_per_class_set;	//!< mpc has been set or not
-    idx<Tdata>          load_img; //!< temporary image loader
-    bool                scale_mode; //!< scales saving mode
-    vector<uint>        scales; //!< integer scales
+    idx<Tdata>          load_img;       //!< temporary image loader
+    bool                scale_mode;     //!< scales saving mode
+    vector<uint>        scales;         //!< integer scales
     bool                interleaved_input; //!< indicate if input is interleaved
-    vector<string>      exclude; //!< list of excluded classes
-    bool                usepose; //!< use pose or not
+    vector<string>      exclude;        //!< list of excluded classes
+    bool                usepose;        //!< use pose or not
     // names ///////////////////////////////////////////////////////
-    string		name;	//!< dataset name
+    string		name;	        //!< dataset name
     string		data_fname;	//!< data filename
     string		labels_fname;	//!< labels filename
     string		classes_fname;	//!< classes filename
     string		classpairs_fname;	//!< classpairs filename
     string		deformpairs_fname;	//!< deformpairs filename
     // directories /////////////////////////////////////////////////
-    string		inroot; //!< root directory of input files
-    string		outdir; //!< root directory of output files
+    string		inroot;         //!< root directory of input files
+    string		outdir;         //!< root directory of output files
     string              extension;	//!< extension of files to extract
     // display /////////////////////////////////////////////////////
     bool		display_extraction;	//!< display during extraction
     bool		display_result;	//!< display extracted dataset
-    Tdata               minval; //!< minimum value to display
-    Tdata               maxval; //!< minimum value to display
+    Tdata               minval;         //!< minimum value to display
+    Tdata               maxval;         //!< minimum value to display
     bool                sleep_display;	//!< enable sleeping when displaying
     uint                sleep_delay;	//!< display sleep delay in ms
     // stats ///////////////////////////////////////////////////////
@@ -318,7 +319,7 @@ namespace ebl {
     bool		do_preprocessing;	//!< activate or deactivate pp
     string              resize_mode;    //!< type of resizing (bilin, gaussian)
     module_1_1<Tdata>  *ppmodule;       //!< pp module 
-    module_1_1<Tdata>  *resizepp;       //!< pp resizing module 
+    resizepp_module<Tdata> *resizepp;   //!< pp resizing module 
   };
   
   ////////////////////////////////////////////////////////////////
