@@ -34,6 +34,7 @@ net_s2w = 4
 net_full = 100
 absnorm = 0 1
 color = 0 1
+mirror = 0 1
 
 # training variables
 root = ${pascal}/ds

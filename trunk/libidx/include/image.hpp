@@ -1092,15 +1092,9 @@ namespace ebl {
       break ;
     case 3:
       // normalize layer by layer
-      if (in.get_chandim() == 0) { // data in 1st dimension
-	idx_bloop1(i, in, T) {
-	  idx_std_normalize(i, i); // zero-mean and divide by standard deviation
-	}
-      } else {
-	idx_eloop1(i, in, T) {
-	  idx_std_normalize(i, i); // zero-mean and divide by standard deviation
-	}
-      }
+      { idx_eloop1(i, in, T) {
+	idx_std_normalize(i, i); // zero-mean and divide by standard deviation
+	}}
       break ;
     default:
       eblerror("image_global_normalization: dimension not implemented");

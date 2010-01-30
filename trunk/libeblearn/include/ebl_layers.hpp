@@ -181,9 +181,9 @@ namespace ebl {
   layer_convabsnorm<T>::layer_convabsnorm(parameter<T> &p, 
 					  intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
-					  idx<intg> &tbl) 
+					  idx<intg> &tbl, bool mirror) 
     : lconv(p, kerneli, kernelj, stridei_, stridej_, tbl),
-      abs(), norm(kerneli, kernelj, lconv.convol.thickness) {
+      abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror) {
     tmp = NULL;
     tmp2 = NULL;
   }

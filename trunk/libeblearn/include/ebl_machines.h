@@ -55,7 +55,8 @@ namespace ebl {
     nn_machine_cscscf(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0,
 		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-		      idx<intg> &tbl2, intg outthick, bool norm = false);
+		      idx<intg> &tbl2, intg outthick, bool norm = false,
+		      bool mirror = false);
     virtual ~nn_machine_cscscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -75,7 +76,8 @@ namespace ebl {
     void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-	      idx<intg> &tbl2, intg outthick, bool norm = false);
+	      idx<intg> &tbl2, intg outthick, bool norm = false,
+	      bool mirror = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -88,9 +90,10 @@ namespace ebl {
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
     nn_machine_cscsc(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
-		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
-		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-		     idx<intg> &tbl2, bool norm = false);
+		     idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+		     idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+		     idx<intg> &tbl2, bool norm = false,
+		     bool mirror = false);
     virtual ~nn_machine_cscsc();
 
     //! The init function creates the machine by stacking the modules in this
@@ -110,7 +113,7 @@ namespace ebl {
     void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-	      idx<intg> &tbl2, bool norm = false);
+	      idx<intg> &tbl2, bool norm = false, bool mirror = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -124,7 +127,7 @@ namespace ebl {
     lenet_cscsc(parameter<T> &prm, intg image_height, intg image_width,
 		intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 		intg si1, intg sj1, intg output_size,
-		bool norm = false, bool color = false);
+		bool norm = false, bool color = false, bool mirror = false);
     virtual ~lenet_cscsc() {}
   };
 
@@ -137,9 +140,9 @@ namespace ebl {
   template <class T> class lenet : public nn_machine_cscscf<T> {
   public:
     lenet(parameter<T> &prm, intg image_height, intg image_width,
-	   intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
-	   intg si1, intg sj1, intg hid, intg output_size,
-	   bool norm = false, bool color = false);
+	  intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
+	  intg si1, intg sj1, intg hid, intg output_size,
+	  bool norm = false, bool color = false, bool mirror = false);
     virtual ~lenet() {}
   };
 
@@ -173,7 +176,7 @@ namespace ebl {
     lenet5(parameter<T> &prm, intg image_height, intg image_width,
 	   intg ki0, intg kj0, intg si0, intg sj0,
 	   intg ki1, intg kj1, intg si1, intg sj1,
-	   intg hid, intg output_size, bool norm = false);
+	   intg hid, intg output_size, bool norm = false, bool mirror = false);
     virtual ~lenet5() {}
   };
 
@@ -185,7 +188,7 @@ namespace ebl {
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
     lenet7(parameter<T> &prm, intg image_height, intg image_width,
-	   intg output_size, bool norm = false);
+	   intg output_size, bool norm = false, bool mirror = false);
     virtual ~lenet7() {}
   };
   
@@ -198,7 +201,7 @@ namespace ebl {
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
     lenet7_binocular(parameter<T> &prm, intg image_height, intg image_width,
-		     intg output_size, bool norm = false);
+		     intg output_size, bool norm = false, bool mirror = false);
     virtual ~lenet7_binocular() {}
   };
   

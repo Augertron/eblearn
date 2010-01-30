@@ -48,11 +48,11 @@ namespace ebl {
 					  intg ki1, intg kj1, idx<intg> &tbl1, 
 					  intg si1, intg sj1,
 					  intg ki2, intg kj2, idx<intg> &tbl2,
-					  intg outthick, bool norm)
+					  intg outthick, bool norm, bool mirror)
     : layers_n<T>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
-	 si1, sj1, ki2, kj2, tbl2, outthick, norm);
+	 si1, sj1, ki2, kj2, tbl2, outthick, norm, mirror);
   }
   
   template <class T>
@@ -64,7 +64,7 @@ namespace ebl {
 				  intg si0, intg sj0, intg ki1, intg kj1, 
 				  idx<intg> &tbl1, intg si1, intg sj1, 
 				  intg ki2, intg kj2, idx<intg> &tbl2, 
-				  intg outthick, bool norm) {
+				  intg outthick, bool norm, bool mirror) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -82,7 +82,7 @@ namespace ebl {
     
     // convolution
     if (norm) // absolute rectification + contrast normalization
-      add_module(new layer_convabsnorm<T>(prm, ki0, kj0, 1, 1, tbl0),
+      add_module(new layer_convabsnorm<T>(prm, ki0, kj0, 1, 1, tbl0, mirror),
 		 new state_idx<T>(1, 1, 1));
     else // old fashioned way
       add_module(new nn_layer_convolution<T>(prm, ki0, kj0, 1, 1, tbl0),
@@ -92,7 +92,7 @@ namespace ebl {
 	       new state_idx<T>(1, 1, 1));
     // convolution
     if (norm) // absolute rectification + contrast normalization
-      add_module(new layer_convabsnorm<T>(prm, ki1, kj1, 1, 1, tbl1),
+      add_module(new layer_convabsnorm<T>(prm, ki1, kj1, 1, 1, tbl1, mirror),
 		 new state_idx<T>(1, 1, 1));
     else // old fashioned way
       add_module(new nn_layer_convolution<T>(prm, ki1, kj1, 1, 1, tbl1),
@@ -123,10 +123,10 @@ namespace ebl {
 					intg ki1, intg kj1, idx<intg> &tbl1, 
 					intg si1, intg sj1,
 					intg ki2, intg kj2, idx<intg> &tbl2,
-					bool norm)
+					bool norm, bool mirror)
     : layers_n<T>(true) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
-	 si1, sj1, ki2, kj2, tbl2, norm);
+	 si1, sj1, ki2, kj2, tbl2, norm, mirror);
   }
   
   template <class T>
@@ -138,7 +138,7 @@ namespace ebl {
 				 intg si0, intg sj0, intg ki1, intg kj1, 
 				 idx<intg> &tbl1, intg si1, intg sj1, 
 				 intg ki2, intg kj2, idx<intg> &tbl2,
-				 bool norm) {
+				 bool norm, bool mirror) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -153,7 +153,7 @@ namespace ebl {
     // and feed the input of the following module.
     // convolution
     if (norm) // absolute rectification + contrast normalization
-      add_module(new layer_convabsnorm<T>(prm, ki0, kj0, 1, 1, tbl0),
+      add_module(new layer_convabsnorm<T>(prm, ki0, kj0, 1, 1, tbl0, mirror),
 		 new state_idx<T>(1, 1, 1));
     else // old fashioned way
       add_module(new nn_layer_convolution<T>(prm, ki0, kj0, 1, 1, tbl0),
@@ -180,7 +180,7 @@ namespace ebl {
   lenet_cscsc(parameter<T> &prm, intg image_height, intg image_width,
 	      intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
 	      intg kj1, intg si1, intg sj1,
-	      intg output_size, bool norm, bool color) {
+	      intg output_size, bool norm, bool color, bool mirror) {
     idx<intg> table0, table1, table2;
     if (!color) { // use smaller tables
       table0 = full_table(1, 6);
@@ -207,7 +207,7 @@ namespace ebl {
     intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
     
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
-	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, norm);
+	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, norm, mirror);
   }
   
   ////////////////////////////////////////////////////////////////
@@ -217,7 +217,7 @@ namespace ebl {
   lenet<T>::lenet(parameter<T> &prm, intg image_height, intg image_width,
 		  intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
 		  intg kj1, intg si1, intg sj1, intg hid,
-		  intg output_size, bool norm, bool color) {
+		  intg output_size, bool norm, bool color, bool mirror) {
     idx<intg> table0, table1, table2;
     if (!color) { // use smaller tables
       table0 = full_table(1, 6);
@@ -245,7 +245,7 @@ namespace ebl {
     
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
 	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size,
-	       norm);
+	       norm, mirror);
   }
   
   ////////////////////////////////////////////////////////////////
@@ -255,7 +255,7 @@ namespace ebl {
   lenet5<T>::lenet5(parameter<T> &prm, intg image_height, intg image_width,
 		    intg ki0, intg kj0, intg si0, intg sj0,
 		    intg ki1, intg kj1, intg si1, intg sj1,
-		    intg hid, intg output_size, bool norm) {
+		    intg hid, intg output_size, bool norm, bool mirror) {
     idx<intg> table0 = full_table(1, 6);
     // TODO: add idx constructor taking pointer to data with dimensions
     // and copies it.
@@ -272,7 +272,8 @@ namespace ebl {
     intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
 
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
-	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size, norm);
+	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size,
+	       norm, mirror);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -280,7 +281,7 @@ namespace ebl {
 
   template <class T>
   lenet7<T>::lenet7(parameter<T> &prm, intg image_height, intg image_width,
-		    intg output_size, bool norm) {
+		    intg output_size, bool norm, bool mirror) {
     intg ki0 = 5, kj0 = 5;
     intg si0 = 4, sj0 = 4;
     intg ki1 = 6, kj1 = 6;
@@ -301,7 +302,7 @@ namespace ebl {
 
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
 	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size,
-	       norm);
+	       norm, mirror);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -310,7 +311,7 @@ namespace ebl {
   template <class T>
   lenet7_binocular<T>::lenet7_binocular(parameter<T> &prm, intg image_height, 
 					intg image_width, intg output_size,
-					bool norm) {
+					bool norm, bool mirror) {
     intg ki0 = 5, kj0 = 5;
     intg si0 = 4, sj0 = 4;
     intg ki1 = 6, kj1 = 6;
@@ -336,7 +337,8 @@ namespace ebl {
     intg kj2 = (((image_width  - kj0 + 1) / sj0) - kj1 + 1) / sj1;
 
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
-	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size, norm);
+	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size,
+	       norm, mirror);
   }
 
   ////////////////////////////////////////////////////////////////

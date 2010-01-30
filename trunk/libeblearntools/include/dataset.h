@@ -226,18 +226,6 @@ namespace ebl {
 			       const rect *r = NULL, uint scale = 0,
 			       bool active_sleepd = true);
 
-    //! Convert input image img to format of type conv_type and return the
-    //! result. con_type can accept a number of strings,
-    //! including RGB, Y, YUV, HSV, etc.
-    idx<Tdata> convert_image_to(idx<Tdata> &img, const string &conv_type,
-				const rect &cropped);
-
-    //! Resize image img to dimensions d and returns the result.
-    virtual idx<Tdata> resize_image_to(idx<Tdata> &img, const idxdim &d,
-				       rect &cropped, const rect *r = NULL);
-    
-    idx<Tdata> gaussian_resize_image_to(idx<Tdata> &img, uint scale);
-    
     ////////////////////////////////////////////////////////////////
     // Helper functions
 

@@ -128,7 +128,8 @@ namespace ebl {
     //!        the width axis.
     //! \param table is the convolution connection table.
     layer_convabsnorm(parameter<T> &p, intg kerneli, intg kernelj, 
-			 intg stridei, intg stridej, idx<intg> &tbl);
+		      intg stridei, intg stridej, idx<intg> &tbl,
+		      bool mirror = false);
     virtual ~layer_convabsnorm();
     //! fprop from in to out
     void fprop(state_idx<T> &in, state_idx<T> &out);
