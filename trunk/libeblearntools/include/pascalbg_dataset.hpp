@@ -190,7 +190,7 @@ namespace ebl {
   process_image(idx<ubyte> &img, vector<rect>& bboxes,
 		const string &image_filename) {
 #ifdef __GUI__
-    uint h = 48, w = 0;
+    uint h = 63, w = 0;
     if (display_extraction)
       clear_window();
 #endif
