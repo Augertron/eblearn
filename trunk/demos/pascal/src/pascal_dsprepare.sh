@@ -5,8 +5,8 @@
 ################################
 
 # directories
-DATAROOT=/data
-#DATAROOT=~/texieradata
+#DATAROOT=/data
+DATAROOT=~/texieradata
 PASCALROOT=$DATAROOT/pascal/VOCdevkit_trainval09/VOC2009/
 ROOT=$DATAROOT/pascal/
 OUT=$ROOT/ds/

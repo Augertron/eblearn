@@ -302,15 +302,15 @@ namespace ebl {
 	// more precise without the variable.
 	if (oheight / (double) iregion.height <
 	    owidth  / (double) iregion.width)
-	  outr = rect(iregion.h0     * oheight / (double) iregion.height,
-		      iregion.w0     * oheight / (double) iregion.height,
-		      iregion.height * oheight / (double) iregion.height,
-		      iregion.width  * oheight / (double) iregion.height);
+	  outr = rect((uint) (iregion.h0     * oheight / (double) iregion.height),
+		      (uint) (iregion.w0     * oheight / (double) iregion.height),
+		      (uint) (iregion.height * oheight / (double) iregion.height),
+		      (uint) (iregion.width  * oheight / (double) iregion.height));
 	else
-	  outr = rect(iregion.h0     * owidth / (double) iregion.width,
-		      iregion.w0     * owidth / (double) iregion.width,
-		      iregion.height * owidth / (double) iregion.width,
-		      iregion.width  * owidth / (double) iregion.width);
+	  outr = rect((uint) (iregion.h0     * owidth / (double) iregion.width),
+		      (uint) (iregion.w0     * owidth / (double) iregion.width),
+		      (uint) (iregion.height * owidth / (double) iregion.width),
+		      (uint) (iregion.width  * owidth / (double) iregion.width));
 	reductions = gp.count_reductions_exact(iregion, outr, exact_inr);
 	break ;
       default:
@@ -334,10 +334,10 @@ namespace ebl {
       // select biggest side
       if (iregion.height > iregion.width) {
 	imax = iregion.height;
-	omax = oheight;
+	omax = (uint) oheight;
       } else {
 	imax = iregion.width;
-	omax = owidth;
+	omax = (uint) owidth;
       }
       // count how many expansions necessary
       switch (mode) {
