@@ -801,30 +801,6 @@ namespace ebl {
     rect out_region, cropped;
     idxdim d(outdims);
     idx<Tdata> resized;
-//     if (scale > 0) {
-//       if (!strcmp(resize_mode.c_str(), "bilinear"))
-// 	resized = image_resize(dat, (double)1/scale, (double)1/scale, 2);
-//       else if (!strcmp(resize_mode.c_str(), "gaussian"))
-// 	resized = gaussian_resize_image_to(dat, scale);
-//     } else
-//       resized = resize_image_to(dat, d, out_region, r);
-//     rect out_entire(0, 0, resized.dim(dh), resized.dim(dw));
-//     // convert image to target format
-//     idx<Tdata> original;
-//     if (display_extraction) {
-//       original = idx<Tdata>(resized.get_idxdim());
-//       idx_copy(resized, original);
-//       if (squared)
-// 	original = image_region_to_rect(original, out_region, outdims.dim(0),
-// 					outdims.dim(1), cropped);
-//     }
-//     idx<Tdata> formatted = resized;
-//     if (ppconv_set)
-//       formatted = convert_image_to(formatted, ppconv_type, out_entire);
-//     idx<Tdata> res = formatted;
-//     if (squared)
-//       res = image_region_to_rect(res, out_region, outdims.dim(0),
-// 				 outdims.dim(1), cropped);
     if (scale > 0) { // resize entire image at specific scale
       resizepp->set_dimensions(dat.dim(0) / scale, dat.dim(1) / scale);
       rect iregion(0, 0, dat.dim(0), dat.dim(1));
@@ -913,100 +889,6 @@ namespace ebl {
     // return preprocessed image
     return res;
   }
-
-  template <class Tdata>
-  idx<Tdata> dataset<Tdata>::
-  convert_image_to(idx<Tdata> &img, const string &conv_type,
-		   const rect &cropped) {
-    uint dh = 0, dw = 1;
-    // cropped_img is the part of img that contains input
-    idx<Tdata> cropped_img = img.narrow(dh, cropped.height, cropped.h0);
-    cropped_img = cropped_img.narrow(dw, cropped.width, cropped.w0);
-    // switch based on format
-    // YUV
-    if (!strcmp(conv_type.c_str(), "YUV"))
-      return rgb_to_yuv(img);
-    else if (!strcmp(conv_type.c_str(), "HSV"))
-      return img;
-    // YpUV (Y is preprocessed with local and global normalization)
-    else if (!strcmp(conv_type.c_str(), "YpUV")) {
-      // convert img to YUV
-      idx<Tdata> yuv = rgb_to_yuv(cropped_img);
-      idx<Tdata> uv = yuv.narrow(2, 2, 1);
-      idx_addc(uv, (Tdata)-128, uv);
-      idx_dotc(uv, (Tdata).01, uv);
-      // convert Y to Yp
-      idx<Tdata> yp = yuv.select(2, 0);
-      idxdim d(yp);
-      idx<Tdata> tmp(d);
-      idx_copy(yp, tmp);
-      image_global_normalization(tmp);
-      image_local_normalization(tmp, yp, ppkernel_size);
-      // copy cropped yuv into normal yuv image
-      idxdim dimg(img);
-      idx<Tdata> res(dimg);
-      idx_clear(res);
-      tmp = res.narrow(0, cropped.height, cropped.h0);
-      tmp = tmp.narrow(1, cropped.width, cropped.w0);
-      idx_copy(yuv, tmp);
-      // set min/max val for display
-      minval = -1;
-      maxval = 1;
-      return res;
-    }
-    // RGB
-    else if (!strcmp(conv_type.c_str(), "RGB")) {
-      minval = 0;
-      maxval = 255;
-      return img;
-    }
-    cerr << "error: trying to convert image to unknown preprocessing";
-    cerr << " conversion format: " << conv_type << endl;
-    eblerror("unknown preprocessing conversion format");
-  }
-
-  template <class Tdata>
-  idx<Tdata> dataset<Tdata>::resize_image_to(idx<Tdata> &img, const idxdim &d,
-					     rect &cropped, const rect *r) {
-    // do nothing if dims are already the target dims.
-    if (img.same_dim(d)) {
-      cropped = rect(0, 0, img.dim(0), img.dim(1));
-      return img;
-    }
-    idx<Tdata> res;
-    // if r is not specified, take entire image
-    rect rr(0, 0, img.dim(0), img.dim(1));
-    if (r) rr = *r;
-    // bilinear interpolation resizing
-    if (!strcmp(resize_mode.c_str(), "bilinear")) {
-      res = image_resize(img, outdims.dim(0), outdims.dim(1), 0, &rr, &cropped);
-      //      cropped = rect(0, 0, outdims.dim(0), outdims.dim(1));
-      return res;
-    }
-    // gaussian pyramid resizing
-    else if (!strcmp(resize_mode.c_str(), "gaussian")) {
-      res = image_gaussian_resize(img, outdims.dim(0), outdims.dim(1), 0.0,
-				  &rr, &cropped);
-      return res;
-    } else {
-      cerr << "unknown resize mode: " << resize_mode << endl;
-      eblerror("unknown resize mode");
-    }
-    return res;
-  }
-
-  template <class Tdata>
-  idx<Tdata> dataset<Tdata>::gaussian_resize_image_to(idx<Tdata> &img,
-						      uint scale) {
-    gaussian_pyramid<Tdata> gp;
-    idx<Tdata> res = img.shift_dim(2, 0);
-    uint reductions = (uint) (scale / (float)2.0);
-    if (reductions > 0)
-      res = gp.reduce(res, reductions);
-    //    idx<Tdata> res = image_gaussian_square_resize(img, rr, d.dim(0),
-    //					  cropped, .3);
-    return res.shift_dim(0, 2);
-  }  
 
   ////////////////////////////////////////////////////////////////
   // Helper functions

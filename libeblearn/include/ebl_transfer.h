@@ -58,6 +58,7 @@ namespace ebl {
     state_idx<T>	inmean, inzmean, inzmeansq, invar, instd, thstd, invstd;
     parameter<T>	param;
     idx<T>              w;	//!< weights
+    bool                threshold;
 
   public:
     //! <weighting> is <idx2<double>> that defines the weighting around
@@ -66,7 +67,7 @@ namespace ebl {
     //! \param mirror Use mirroring of the input to pad border if true,
     //!               or use zero-padding otherwise (default).
     weighted_std_module(uint kernelh, uint kernelw, int nf,
-			bool mirror = false);
+			bool mirror = false, bool threshold = true);
     //! destructor
     virtual ~weighted_std_module();    
     //! forward propagation from in to out

@@ -37,7 +37,7 @@ namespace ebl {
   template <class T>
   rgb_to_ypuv_module<T>::rgb_to_ypuv_module(uint normalization_size_)
     : normalization_size(normalization_size_), tmp(1,1,1),
-      norm(normalization_size, normalization_size, 1, true) {
+      norm(normalization_size, normalization_size, 1, true, false) {
   }
 
   template <class T>
@@ -61,7 +61,8 @@ namespace ebl {
     idx_dotc(uv, (T).01, uv);
     // convert Y to Yp
     tmp.x = out.x.narrow(0, 1, 0);
-    norm.fprop(tmp, tmp);
+    idx_std_normalize(tmp.x, tmp.x); // global
+    norm.fprop(tmp, tmp); // local
   }
   
   template <class T>
@@ -82,7 +83,7 @@ namespace ebl {
   template <class T>
   rgb_to_yp_module<T>::rgb_to_yp_module(uint normalization_size_)
     : normalization_size(normalization_size_), tmp(1,1,1),
-      norm(normalization_size, normalization_size, 1, true) {
+      norm(normalization_size, normalization_size, 1, true, false) {
   }
 
   template <class T>
@@ -99,7 +100,10 @@ namespace ebl {
       }
     }
     // convert Y to Yp
-    norm.fprop(tmp, out);
+    idx<T> tmp2 = out.x.select(0, 0);
+    idx<T> tmp3 = tmp.x.select(0, 0);
+    idx_std_normalize(tmp.x, tmp.x); // global
+    norm.fprop(tmp, out); // local
   }
   
   template <class T>
@@ -120,7 +124,8 @@ namespace ebl {
 
   template <class T>
   bgr_to_ypuv_module<T>::bgr_to_ypuv_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1,1) {
+    : normalization_size(normalization_size_), tmp(1,1,1),
+      norm(normalization_size, normalization_size, 1, true, false) {
   }
 
   template <class T>
@@ -144,7 +149,8 @@ namespace ebl {
     idx_dotc(uv, (T).01, uv);
     // convert Y to Yp
     tmp.x = out.x.narrow(0, 1, 0);
-    norm.fprop(tmp, tmp);
+    idx_std_normalize(tmp.x, tmp.x); // global
+    norm.fprop(tmp, tmp); // local
   }
   
   template <class T>
@@ -165,7 +171,7 @@ namespace ebl {
   template <class T>
   bgr_to_yp_module<T>::bgr_to_yp_module(uint normalization_size_)
     : normalization_size(normalization_size_), tmp(1,1,1),
-      norm(normalization_size, normalization_size, 1, true) {
+      norm(normalization_size, normalization_size, 1, true, false) {
   }
 
   template <class T>
@@ -182,7 +188,8 @@ namespace ebl {
       }
     }
     // convert Y to Yp
-    norm.fprop(tmp, out);
+    idx_std_normalize(tmp.x, tmp.x); // global
+    norm.fprop(tmp, out); // local
   }
   
   template <class T>

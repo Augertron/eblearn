@@ -38,7 +38,8 @@ namespace ebl {
 
   template <class T>
   weighted_std_module<T>::weighted_std_module(uint kernelh, uint kernelw,
-					      int nf, bool mirror)
+					      int nf, bool mirror,
+					      bool threshold_)
     : convmean(true),
       convvar(true),
       sqrtmod(.5), // square root module
@@ -46,7 +47,7 @@ namespace ebl {
       sqmod(2), // square module
       // by default, pass 0 for threshold and values
       // but every fprop updates these values
-      thres(0.0, 0.0), // threshold module
+      thres(1.0, 1.0), // threshold module
       // create internal states, explanations are in fprop
       inmean(1, 1, 1),
       inzmean(1, 1, 1),
@@ -54,7 +55,8 @@ namespace ebl {
       invar(1, 1, 1),
       instd(1, 1, 1),
       thstd(1, 1, 1),
-      invstd(1, 1, 1)
+      invstd(1, 1, 1),
+      threshold(threshold_)
   {
     //! create little objects to do math
     //! zero pad borders
@@ -125,10 +127,12 @@ namespace ebl {
     //! sqrt(sum_j (w_j (in - mean)^2))
     idx_addc(invar.x, a, invar.x); // TODO: temporary
     sqrtmod.fprop(invar, instd);
-    //! update the threshold values in thres
-    T mm = idx_sum(instd.x) / instd.size();
-    thres.thres = mm;
-    thres.val = mm;
+    if (threshold) { // don't update threshold for inputs
+      //! update the threshold values in thres
+      T mm = idx_sum(instd.x) / instd.size();
+      thres.thres = mm;
+      thres.val = mm;
+    }
     //! std(std<mean(std)) = mean(std)
     thres.fprop(instd, thstd);
     //! 1/std
