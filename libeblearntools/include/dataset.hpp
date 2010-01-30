@@ -825,7 +825,11 @@ namespace ebl {
 //     if (squared)
 //       res = image_region_to_rect(res, out_region, outdims.dim(0),
 // 				 outdims.dim(1), cropped);
-    if (r)
+    if (scale > 0) { // resize entire image at specific scale
+      resizepp->set_dimensions(dat.dim(0) / scale, dat.dim(1) / scale);
+      rect iregion(0, 0, dat.dim(0), dat.dim(1));
+      resizepp->set_input_region(iregion);
+    } else if (r) // resize using object's window
       resizepp->set_input_region(*r);
     idx<Tdata> tmp = dat.shift_dim(2, 0);
     state_idx<Tdata> in(tmp.get_idxdim()), out(1,1,1);
