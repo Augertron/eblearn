@@ -73,6 +73,7 @@ namespace ebl {
 
   template <class Tdata>
   bool pascalbg_dataset<Tdata>::extract() {
+    this->init_preprocessing();
 #ifdef __XML__    
     cout << "Extracting samples from files into dataset..." << endl;
     // adding data to dataset using all xml files in annroot
