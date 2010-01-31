@@ -1012,7 +1012,7 @@ namespace ebl {
       else if (regex_match(itr->leaf().c_str(), what, r)) {
 	try {
 	  // if full for this class, skip this directory
-	  if ((full(get_label_from_class(class_name)) || included(class_name))
+	  if ((full(get_label_from_class(class_name)) || !included(class_name))
 	      && !scale_mode)
 	    break ;
 	  // load data
