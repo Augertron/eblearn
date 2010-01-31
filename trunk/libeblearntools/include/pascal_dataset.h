@@ -111,6 +111,8 @@ namespace ebl {
     string	imgroot;	//!< directory of images
     // base class members to be used ///////////////////////////////
     using dataset<Tdata>::usepose;
+    using dataset<Tdata>::useparts;
+    using dataset<Tdata>::usepartsonly;
     using dataset<Tdata>::allocated;
     using dataset<Tdata>::total_samples;
     using dataset<Tdata>::inroot;
@@ -125,6 +127,7 @@ namespace ebl {
     using dataset<Tdata>::ppconv_type;
     using dataset<Tdata>::scale_mode;
     using dataset<Tdata>::exclude;
+    using dataset<Tdata>::include;
   };
 
 } // end namespace ebl

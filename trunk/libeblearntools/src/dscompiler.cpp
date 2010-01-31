@@ -39,7 +39,6 @@
 #include "pascal_dataset.h"
 #include "pascalbg_dataset.h"
 #include "pascalfull_dataset.h"
-#include "pascalpart_dataset.h"
 #include "lush_dataset.h"
 
 using namespace std;
@@ -57,7 +56,7 @@ bool		stereo		 = false;
 bool		ignore_difficult = false;
 bool		shuffle		 = false;
 bool		scale_mode	 = false;
-vector<uint>    scales;
+vector<double>  scales;
 string		stereo_lpattern	 = "_L";
 string		stereo_rpattern	 = "_R";
 string		outdir		 = ".";
@@ -76,7 +75,10 @@ bool		outdims_set	 = false;
 idxdim          mindims;	        // minimum dimensions in input
 bool		mindims_set	 = false;
 vector<string>  exclude;
+vector<string>  include;
 bool            usepose          = false; // use pose if given
+bool            useparts          = false; // use parts if given
+bool            partsonly         = false; // use parts only if given
 
 ////////////////////////////////////////////////////////////////
 // command line
@@ -120,6 +122,10 @@ bool parse_args(int argc, char **argv) {
 	shuffle = true;
       } else if (strcmp(argv[i], "-usepose") == 0) {
 	usepose = true;
+      } else if (strcmp(argv[i], "-useparts") == 0) {
+	useparts = true;
+      } else if (strcmp(argv[i], "-partsonly") == 0) {
+	partsonly = true;
       } else if (strcmp(argv[i], "-stereo") == 0) {
 	stereo = true;
       } else if (strcmp(argv[i], "-stereo_lpattern") == 0) {
@@ -146,6 +152,9 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-exclude") == 0) {
 	++i; if (i >= argc) throw 0;
 	exclude.push_back(argv[i]);
+      } else if (strcmp(argv[i], "-include") == 0) {
+	++i; if (i >= argc) throw 0;
+	include.push_back(argv[i]);
       } else if (strcmp(argv[i], "-maxperclass") == 0) {
 	++i; if (i >= argc) throw 1;
 	maxperclass = atoi(argv[i]);
@@ -217,7 +226,7 @@ bool parse_args(int argc, char **argv) {
 	    s = "";
 	  else
 	    s = s.substr(j + 1, s.size());
-	  scales.push_back(atoi(s0.c_str()));
+	  scales.push_back(atof(s0.c_str()));
 	  k++;
 	}
 	scale_mode = true;
@@ -249,7 +258,7 @@ bool parse_args(int argc, char **argv) {
 void print_usage() {
   cout << "Usage: ./dscompiler <images_root> [OPTIONS]" << endl;
   cout << "Options are:" << endl;
-  cout << "  -type <regular(default)|pascal|pascalbg|pascalfull|pascalpart|lush>" << endl;
+  cout << "  -type <regular(default)|pascal|pascalbg|pascalfull|lush>" << endl;
   cout << "     regular: compile images labeled by their top folder name"<<endl;
   cout << "     pascal: compile images labeled by xml files (PASCAL challenge)";
   cout << endl;
@@ -257,8 +266,6 @@ void print_usage() {
   cout << "     pascalfull: copy full original PASCAL images into outdir"<<endl;
   cout << "       (allows to exclude some classes, then call regular compiler)";
   cout << endl;
-  cout << "     pascalpart: only extract object parts";
-  cout << " (e.g. person->(head,hand,foot)" << endl;
   cout << "     lush: regular compilation using .mat images" << endl;
   cout << "  -precision <float(default)|double>" << endl;
   cout << "  -image_pattern <pattern>" << endl;
@@ -285,10 +292,18 @@ void print_usage() {
   cout << "  -mindims <dimensions (default: 1x1)>" << endl;
   cout << "     (exclude inputs for which one dimension is less than specified";
   cout << endl;
-  cout << "  -scales <scales (e.g: 1,2,4)>" << endl;
-  cout << "  -resize <gaussian(default)|bilinear" << endl;
-  cout << "  -exclude <class name>" << endl;
-  cout << "     (exclude can be called multiple times)" << endl;
+  cout << "  -scales <scales (e.g: 1.5,2,4)>" << endl;
+  cout << "  -resize <gaussian(default)|bilinear" << endl; 
+  cout << "  -exclude <class name> (include all but excluded classes,";
+  cout << "                         exclude can be called multiple times)";
+  cout << endl;
+  cout << "  -include <class name> (exclude all but included classes,";
+  cout << "                         include can be called multiple times)";
+  cout << endl;
+  cout << "  -useparts  (also extract object parts, ";
+  cout << "e.g. person->(head,hand,foot)" << endl;
+  cout << "  -partsonly  (only extract object parts, ";
+  cout << "e.g. person->(head,hand,foot)" << endl;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -296,31 +311,24 @@ void print_usage() {
 
 template <class Tds>
 void compile_ds(Tds &ds, bool imgpat = true) {
-  if (usepose)
-    ds.use_pose();
+  if (usepose) ds.use_pose();
+  if (useparts) ds.use_parts();
+  if (partsonly) ds.use_parts_only();
   ds.set_exclude(exclude);
-  if (outdims_set)
-    ds.set_outdims(outdims);
-  if (mindims_set)
-    ds.set_mindims(mindims);
+  ds.set_include(include);
+  if (outdims_set) ds.set_outdims(outdims);
+  if (mindims_set) ds.set_mindims(mindims);
   ds.set_display(display);
   ds.set_sleepdisplay(sleep_delay);
   ds.set_resize(resize);
-  if (preprocessing)
-    ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
-  if (maxperclass > 0)
-    ds.set_max_per_class(maxperclass);
-  if (maxdata > 0)
-    ds.set_max_data(maxdata);
-  if (imgpat)
-    ds.set_image_pattern(image_pattern);
-  if (scale_mode)
-    ds.set_scales(scales, outdir);
-  else 
-    ds.alloc();
+  if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
+  if (maxperclass > 0) ds.set_max_per_class(maxperclass);
+  if (maxdata > 0) ds.set_max_data(maxdata);
+  if (imgpat) ds.set_image_pattern(image_pattern);
+  if (scale_mode) ds.set_scales(scales, outdir);
+  else ds.alloc();
   ds.extract();
-  if (shuffle)
-    ds.shuffle();
+  if (shuffle) ds.shuffle();
   ds.save(outdir);
 }
 
@@ -331,33 +339,28 @@ void compile() {
 			     images_root.c_str(), ignore_difficult);
     compile_ds(ds);
   }
-  else if (!strcmp(type.c_str(), "pascalpart")) {
-    pascalpart_dataset<Tdata> ds(dataset_name.c_str(),
-				 images_root.c_str(), ignore_difficult);
-    compile_ds(ds);
-  }
   else if (!strcmp(type.c_str(), "pascalbg")) {
     pascalbg_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
 			       outdir.c_str(), maxperclass, ignore_difficult); 
-    if (outdims_set)
-      ds.set_outdims(outdims);
-    if (mindims_set)
-      ds.set_mindims(mindims);
-   ds.set_display(display);
+    if (useparts) ds.use_parts();
+    if (partsonly) ds.use_parts_only();
+    ds.set_exclude(exclude);
+    ds.set_include(include);
+    if (outdims_set) ds.set_outdims(outdims);
+    if (mindims_set) ds.set_mindims(mindims);
+    ds.set_display(display);
     ds.set_sleepdisplay(sleep_delay);
     ds.set_image_pattern(image_pattern);
-    if (maxdata > 0)
-      ds.set_max_data(maxdata);
-    if (scale_mode)
-      ds.set_scales(scales, outdir);
-    if (preprocessing)
-      ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
+    if (maxdata > 0) ds.set_max_data(maxdata);
+    if (scale_mode) ds.set_scales(scales, outdir);
+    if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
     ds.extract();
   }
   else if (!strcmp(type.c_str(), "pascalfull")) {
     pascalfull_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
 				 outdir.c_str());
     ds.set_exclude(exclude);
+    ds.set_include(include);
     ds.set_display(display);
     ds.set_sleepdisplay(sleep_delay);
     if (maxdata > 0)
@@ -407,6 +410,8 @@ int main(int argc, char **argv) {
   cout << "  display sleep: " << sleep_delay << " ms." << endl;
   cout << "  shuffling: " << (shuffle ? "yes" : "no") << endl;
   cout << "  usepose: " << (usepose ? "yes" : "no") << endl;
+  cout << "  useparts: " << (useparts ? "yes" : "no") << endl;
+  cout << "  partsonly: " << (partsonly ? "yes" : "no") << endl;
   cout << "  stereo: " << (stereo ? "yes" : "no") << endl;
   if (stereo) {
     cout << "    stereo left pattern: " << stereo_lpattern << endl;
@@ -424,7 +429,7 @@ int main(int argc, char **argv) {
   cout << "  minimum input dimensions: " << mindims << endl;
   cout << "  scales: ";
   if (!scale_mode) cout << "none";
-  else for (vector<uint>::iterator i = scales.begin(); i != scales.end(); ++i)
+  else for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i)
       cout << *i << " ";
   cout << endl;
   cout << "___________________________________________________________________";

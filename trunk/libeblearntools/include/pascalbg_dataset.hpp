@@ -89,7 +89,7 @@ namespace ebl {
       if (!is_directory(itr->status()) &&
 	  regex_match(itr->leaf().c_str(), what, eExt)) {
 	process_xml(itr->path().string());
-	if (max_data_set && (data_cnt >= max_data))
+	if (this->full()) //max_data_set && (data_cnt >= max_data))
 	  break ;
       }
     }
@@ -106,10 +106,13 @@ namespace ebl {
 
   template <class Tdata>
   bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
-    string image_filename;
-    string image_fullname;
+    string image_filename, image_fullname;
     vector<rect> bboxes;
-
+    uint difficult = 0;
+    string obj_classname, pose;
+    bool pose_found = false;
+    Node::NodeList::iterator oiter;
+      
     // parse xml file
     try {
       DomParser parser;
@@ -132,8 +135,61 @@ namespace ebl {
 	// parse all objects in image
 	for(Node::NodeList::iterator iter = list.begin();
 	    iter != list.end(); ++iter) {
-	  if (!strcmp((*iter)->get_name().c_str(), "object"))
-	    bboxes.push_back(get_object(*iter));
+	  if (!strcmp((*iter)->get_name().c_str(), "object")) {
+	    // get object's properties
+	    Node::NodeList olist = (*iter)->get_children();
+	    for(oiter = olist.begin(); oiter != olist.end(); ++oiter) {
+	      if (!strcmp((*oiter)->get_name().c_str(), "difficult"))
+		difficult = xml_get_uint(*oiter);
+	      else if (!strcmp((*oiter)->get_name().c_str(), "name"))
+		xml_get_string(*oiter, obj_classname);
+	      else if (!strcmp((*oiter)->get_name().c_str(), "pose")) {
+		xml_get_string(*oiter, pose);
+		pose_found = true;
+	      }
+	    }
+	    // add object's bbox
+	    if (!usepartsonly) {
+	      // add object's class to dataset
+	      if (!(ignore_difficult && difficult)) {
+		if (usepose && pose_found) { // append pose to class name
+		  obj_classname += "_";
+		  obj_classname += pose;
+		}
+		if (this->included(obj_classname))
+		  bboxes.push_back(get_object(*iter));
+	      }
+	    }
+	    ////////////////////////////////////////////////////////////////
+	    // parts
+	    if (useparts || usepartsonly) {
+	      string part_classname;
+      
+	      // add part's class to dataset
+	      for(oiter = olist.begin();oiter != olist.end(); ++oiter) {
+		if (!strcmp((*oiter)->get_name().c_str(), "part")) {
+		  // get part's name
+		  Node::NodeList plist = (*oiter)->get_children();
+		  for(Node::NodeList::iterator piter = plist.begin();
+		      piter != plist.end(); ++piter) {
+		    if (!strcmp((*piter)->get_name().c_str(), "name")) {
+		      xml_get_string(*piter, part_classname);
+		      // found a part and its name, add it
+		      if (!(ignore_difficult && difficult)) {
+			if (usepose && pose_found) {
+			  part_classname += "_";
+			  part_classname += pose;
+			}
+			if (this->included(part_classname)) {
+			  bboxes.push_back(get_object(*oiter));
+			}
+		      }
+		    }
+		  }
+		}
+	      }
+	    }
+	  }
 	}
       }
     } catch (const std::exception& ex) {
@@ -205,14 +261,22 @@ namespace ebl {
     bool overlap;
     
     // for each scale, find patches and save them
-    for (vector<uint>::iterator i = scales.begin(); i != scales.end(); ++i) {
+    for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
       patches.clear();
       patch_bboxes.clear();
       scaled_bboxes.clear(); 
       idx_copy(img, im); // initialize im to original image
       // rescale original bboxes
-      for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb)
-	scaled_bboxes.push_back(*ibb / *i);
+      double ratio = MAX(im.dim(0) / (double) outdims.dim(0),
+			 im.dim(1) / (double) outdims.dim(1)) / *i;
+      for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb) {
+	rect rs = *ibb / ratio;
+	if (im.dim(0) < im.dim(1))
+	  rs.h0 += ((outdims.dim(0) * *i) - (im.dim(0) / ratio)) / 2;
+	else 
+	  rs.w0 += ((outdims.dim(1) * *i) - (im.dim(1) / ratio)) / 2;
+	scaled_bboxes.push_back(rs);
+      }
       // preprocess image
       rect r(0, 0, im.dim(0), im.dim(1));
       idx<Tdata> im2 =
@@ -221,9 +285,9 @@ namespace ebl {
       // extract all non overlapping patches with dimensions outdims that
       // do not overlap with bounding boxes
       rect patch(0, 0, outdims.dim(0), outdims.dim(1));
-      for (patch.h0 = 0; patch.h0 + patch.height < (uint) im2.dim(0);
+      for (patch.h0 = 0; patch.h0 + patch.height <= (uint) im2.dim(0);
 	   patch.h0 += patch.height) {
-	for (patch.w0 = 0; patch.w0 + patch.width < (uint) im2.dim(1);
+	for (patch.w0 = 0; patch.w0 + patch.width <= (uint) im2.dim(1);
 	     patch.w0 += patch.width) {
 	  // test if patch overlaps with any bounding box
 	  overlap = false;

@@ -107,6 +107,12 @@ namespace ebl {
     using dataset<Tdata>::scales;
     using dataset<Tdata>::max_data;
     using dataset<Tdata>::max_data_set;
+    using dataset<Tdata>::useparts;
+    using dataset<Tdata>::usepartsonly;
+    using dataset<Tdata>::exclude;
+    using dataset<Tdata>::include;
+    using dataset<Tdata>::usepose;
+    using pascal_dataset<Tdata>::ignore_difficult;
   };
 
 } // end namespace ebl

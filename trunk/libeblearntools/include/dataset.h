@@ -128,7 +128,7 @@ namespace ebl {
 
     //! Setting scale mode and scales: preprocess and save each image
     //! in each scale in outdir directory.
-    void set_scales(const vector<uint> &sc, const string &od);
+    void set_scales(const vector<double> &sc, const string &od);
     
     //! set all max per class to max.
     void set_max_per_class(intg max);
@@ -139,13 +139,26 @@ namespace ebl {
     //! set the pattern used to find image.
     void set_image_pattern(const string &p);
 
-    //! set the list of classes to exclude
+    //! set the list of classes to exclude (including everything else).
     void set_exclude(const vector<string> &ex);
+
+    //! set the list of classes to include (excluding everything else).
+    void set_include(const vector<string> &inc);
 
     //! use pose information to separate classes. e.g. if for class "person"
     //! we have "front" and "side" pose, create 2 classes "person_front"
     //! and "person_side" instead of 1 class "person".
     void use_pose();
+
+    //! also extract parts of objects if available.
+    //! e.g. in pascal if for class "person", parts "face", "hand" and "foot"
+    //! are available.
+    void use_parts();
+
+    //! only extract parts of objects if available.
+    //! e.g. in pascal if for class "person", parts "face", "hand" and "foot"
+    //! are available.
+    void use_parts_only();
 
     //! Dataset has reached maximum sample capacity (this can be controlled
     //! by setting max_data variable).
@@ -215,6 +228,10 @@ namespace ebl {
     template <class Toriginal>
       bool save_scales(idx<Toriginal> &d, const string &filename);
 
+    //! return true if class_name is authorized (based on excluded and included
+    //! variables).
+    bool included(const string &class_name);
+
     ////////////////////////////////////////////////////////////////
     // data preprocessing
 
@@ -223,7 +240,7 @@ namespace ebl {
     //! The type of preprocessing can be selected using set_pp_conversion().
     idx<Tdata> preprocess_data(idx<Tdata> &d, const string &class_name,
 			       bool squared = true, const char *filename = NULL,
-			       const rect *r = NULL, uint scale = 0,
+			       const rect *r = NULL, double scale = 0,
 			       bool active_sleepd = true);
 
     ////////////////////////////////////////////////////////////////
@@ -275,10 +292,13 @@ namespace ebl {
     bool                max_per_class_set;	//!< mpc has been set or not
     idx<Tdata>          load_img;       //!< temporary image loader
     bool                scale_mode;     //!< scales saving mode
-    vector<uint>        scales;         //!< integer scales
+    vector<double>      scales;         //!< integer scales
     bool                interleaved_input; //!< indicate if input is interleaved
     vector<string>      exclude;        //!< list of excluded classes
+    vector<string>      include;        //!< list of included classes
     bool                usepose;        //!< use pose or not
+    bool                useparts;        //!< use parts or not
+    bool                usepartsonly;        //!< use parts only or not
     // names ///////////////////////////////////////////////////////
     string		name;	        //!< dataset name
     string		data_fname;	//!< data filename
