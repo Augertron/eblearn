@@ -272,9 +272,9 @@ namespace ebl {
       for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb) {
 	rect rs = *ibb / ratio;
 	if (im.dim(0) < im.dim(1))
-	  rs.h0 += ((outdims.dim(0) * *i) - (im.dim(0) / ratio)) / 2;
+	  rs.h0 += (uint) (((outdims.dim(0) * *i) - (im.dim(0) / ratio)) / 2);
 	else 
-	  rs.w0 += ((outdims.dim(1) * *i) - (im.dim(1) / ratio)) / 2;
+	  rs.w0 += (uint) (((outdims.dim(1) * *i) - (im.dim(1) / ratio)) / 2);
 	scaled_bboxes.push_back(rs);
       }
       // preprocess image
