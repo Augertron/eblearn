@@ -168,8 +168,9 @@ namespace ebl {
     uint difficult = 0;
     string obj_classname, pose;
     bool pose_found = false;
-    for(Node::NodeList::iterator oiter = olist.begin();
-	oiter != olist.end(); ++oiter) {
+    Node::NodeList::iterator oiter;
+      
+    for(oiter = olist.begin(); oiter != olist.end(); ++oiter) {
       if (!strcmp((*oiter)->get_name().c_str(), "difficult"))
 	difficult = xml_get_uint(*oiter);
       else if (!strcmp((*oiter)->get_name().c_str(), "name"))
@@ -179,20 +180,58 @@ namespace ebl {
 	pose_found = true;
       }
     }
-    // add class to dataset
-    if (!(ignore_difficult && difficult) && // ignore difficult?
-	(find(exclude.begin(), exclude.end(),
-	      obj_classname) == exclude.end())) {
-      if (usepose && pose_found) { // append pose to class name
-	obj_classname += "_";
-	obj_classname += pose;
+    
+    ////////////////////////////////////////////////////////////////
+    // object
+    if (!usepartsonly) {
+      // add object's class to dataset
+      if (!(ignore_difficult && difficult)) { // ignore difficult?
+	if (usepose && pose_found) { // append pose to class name
+	  obj_classname += "_";
+	  obj_classname += pose;
+	}
+	if (this->included(obj_classname))
+	  this->add_class(obj_classname);
       }
-      this->add_class(obj_classname);
     }
     // increment samples numbers
     total_samples++;
     if (difficult)
       total_difficult++;
+    
+    ////////////////////////////////////////////////////////////////
+    // parts
+    if (useparts || usepartsonly) {
+      string part_classname;
+      
+      // add part's class to dataset
+      for(oiter = olist.begin();oiter != olist.end(); ++oiter) {
+	if (!strcmp((*oiter)->get_name().c_str(), "part")) {
+	  // get part's name
+	  Node::NodeList plist = (*oiter)->get_children();
+	  for(Node::NodeList::iterator piter = plist.begin();
+	      piter != plist.end(); ++piter) {
+	    if (!strcmp((*piter)->get_name().c_str(), "name")) {
+	      xml_get_string(*piter, part_classname);
+	      // found a part and its name, add it
+	      if (!(ignore_difficult && difficult)) { // ignore difficult?
+		if (usepose && pose_found) { // append pose to class name
+		  part_classname += "_";
+		  part_classname += pose;
+		}
+		if (this->included(part_classname)) {
+		  this->add_class(part_classname);
+		  // increment samples numbers
+		  this->total_samples++;
+		  if (difficult)
+		    this->total_difficult++;
+		}
+	      }
+	    }
+	  }
+	}
+      }
+    }
   }
   
   ////////////////////////////////////////////////////////////////
@@ -252,46 +291,104 @@ namespace ebl {
 					     const string &image_filename) {
     unsigned int xmin, ymin, xmax, ymax;
     unsigned int sizex, sizey;
-    string obj_class;
+    string obj_class, pose;
     unsigned int difficult;
+    bool pose_found = false;
   
-    // parse object node
+    ////////////////////////////////////////////////////////////////
+    // object
     Node::NodeList list = onode->get_children();
-    for(Node::NodeList::iterator iter = list.begin();
-	iter != list.end(); ++iter) {
-      // parse bounding box
-      if (!strcmp((*iter)->get_name().c_str(), "bndbox")) {
-	Node::NodeList blist = (*iter)->get_children();
-	for(Node::NodeList::iterator biter = blist.begin();
-	    biter != blist.end(); ++biter) {
-	  // save xmin, ymin, xmax and ymax
-	  if (!strcmp((*biter)->get_name().c_str(), "xmin"))
-	    xmin = xml_get_uint(*biter);
-	  else if (!strcmp((*biter)->get_name().c_str(), "ymin"))
-	    ymin = xml_get_uint(*biter);
-	  else if (!strcmp((*biter)->get_name().c_str(), "xmax"))
-	    xmax = xml_get_uint(*biter);
-	  else if (!strcmp((*biter)->get_name().c_str(), "ymax"))
-	    ymax = xml_get_uint(*biter);
+    if (!usepartsonly) {
+      // parse object node
+      for(Node::NodeList::iterator iter = list.begin();
+	  iter != list.end(); ++iter) {
+	// parse bounding box
+	if (!strcmp((*iter)->get_name().c_str(), "bndbox")) {
+	  Node::NodeList blist = (*iter)->get_children();
+	  for(Node::NodeList::iterator biter = blist.begin();
+	      biter != blist.end(); ++biter) {
+	    // save xmin, ymin, xmax and ymax
+	    if (!strcmp((*biter)->get_name().c_str(), "xmin"))
+	      xmin = xml_get_uint(*biter);
+	    else if (!strcmp((*biter)->get_name().c_str(), "ymin"))
+	      ymin = xml_get_uint(*biter);
+	    else if (!strcmp((*biter)->get_name().c_str(), "xmax"))
+	      xmax = xml_get_uint(*biter);
+	    else if (!strcmp((*biter)->get_name().c_str(), "ymax"))
+	      ymax = xml_get_uint(*biter);
+	  }
+	} // else get object class name
+	else if (!strcmp((*iter)->get_name().c_str(), "name"))
+	  xml_get_string(*iter, obj_class);
+	else if (!strcmp((*iter)->get_name().c_str(), "difficult"))
+	  difficult = xml_get_uint(*iter);
+	else if (!strcmp((*iter)->get_name().c_str(), "pose")) {
+	  xml_get_string(*iter, pose);
+	  pose_found = true;
 	}
-      } // else get object class name
-      else if (!strcmp((*iter)->get_name().c_str(), "name")) {
-	xml_get_string(*iter, obj_class);
       }
-      else if (!strcmp((*iter)->get_name().c_str(), "difficult")) {
-	difficult = xml_get_uint(*iter);
+      if (usepose && pose_found) { // append pose to class name
+	obj_class += "_";
+	obj_class += pose;
+      }
+      // compute size of bbox
+      sizex = xmax - xmin;
+      sizey = ymax - ymin;
+      // process image  
+      if ((!(ignore_difficult && difficult)) && this->included(obj_class))
+	process_image(img, h0, w0, xmin, ymin, xmax, ymax, sizex, sizey,
+		      obj_class, obj_number, difficult, image_filename);
+    }
+    
+    ////////////////////////////////////////////////////////////////
+    // parts
+    if (useparts || usepartsonly) {
+      string part_class;
+
+      // parse object node to get parts
+      for(Node::NodeList::iterator iter = list.begin();
+	  iter != list.end(); ++iter) {
+	// parse parts
+	if (!strcmp((*iter)->get_name().c_str(), "part")) {
+	  Node::NodeList plist = (*iter)->get_children();
+	  for(Node::NodeList::iterator piter = plist.begin();
+	      piter != plist.end(); ++piter) {
+	    // parse bounding box
+	    if (!strcmp((*piter)->get_name().c_str(), "bndbox")) {
+	      Node::NodeList blist = (*piter)->get_children();
+	      for(Node::NodeList::iterator biter = blist.begin();
+		  biter != blist.end(); ++biter) {
+		// save xmin, ymin, xmax and ymax
+		if (!strcmp((*biter)->get_name().c_str(), "xmin"))
+		  xmin = xml_get_uint(*biter);
+		else if (!strcmp((*biter)->get_name().c_str(), "ymin"))
+		  ymin = xml_get_uint(*biter);
+		else if (!strcmp((*biter)->get_name().c_str(), "xmax"))
+		  xmax = xml_get_uint(*biter);
+		else if (!strcmp((*biter)->get_name().c_str(), "ymax"))
+		  ymax = xml_get_uint(*biter);
+	      }
+	    } // else get object class name
+	    else if (!strcmp((*piter)->get_name().c_str(), "name")) {
+	      xml_get_string(*piter, part_class);
+	    }
+	  }
+	  if (usepose && pose_found) { // append pose to class name
+	    part_class += "_";
+	    part_class += pose;
+	  }
+	  // compute size of bbox
+	  sizex = xmax - xmin;
+	  sizey = ymax - ymin;
+	  // process image  
+	  if (!(this->ignore_difficult && difficult)
+	      && this->included(part_class))
+	    this->process_image(img, h0, w0, xmin, ymin, xmax, ymax, sizex,
+				sizey, part_class, obj_number, difficult,
+				image_filename);
+	}
       }
     }
-    // compute size of bbox
-    sizex = xmax - xmin;
-    sizey = ymax - ymin;
-    // decide on normal or difficult directory if difficult should be separated
-    //   string outdir = (difficult && separate_difficult) ?
-    //  output_images_diff : output_images;
-    // process image  
-    if (!(ignore_difficult && difficult))
-      process_image(img, h0, w0, xmin, ymin, xmax, ymax, sizex, sizey,
-		    obj_class, obj_number, difficult, image_filename);
   }
   
   ////////////////////////////////////////////////////////////////

@@ -967,7 +967,8 @@ namespace ebl {
 
     // friends
     friend std::ostream& operator<<(std::ostream& out, const rect& r);
-    friend rect operator/(const rect &r, uint d);
+    friend rect operator/(const rect &r, double d);
+    friend rect operator*(const rect &r, double d);
   };
 
 } // end namespace ebl

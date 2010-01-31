@@ -585,12 +585,12 @@ namespace ebl {
   }
 
   template <class Tdata>
-  void dataset<Tdata>::set_scales(const vector<uint> &sc, const string &od) {
+  void dataset<Tdata>::set_scales(const vector<double> &sc, const string &od) {
     scales = sc;
     scale_mode = true;
     outdir = od;
     cout << "Enabling scaling mode. Scales: ";
-    for (vector<uint>::iterator i = scales.begin(); i != scales.end(); ++i)
+    for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i)
       cout << *i << " ";
     cout << endl;
   }
@@ -639,9 +639,34 @@ namespace ebl {
   }
   
   template <class Tdata>
+  void dataset<Tdata>::set_include(const vector<string> &inc) {
+    if (inc.size()) {
+      cout << "Included class(es): ";
+      for (vector<string>::const_iterator i = inc.begin(); i != inc.end(); ++i){
+	include.push_back(*i);
+	if (i != inc.begin()) cout << ",";
+	cout << " " << *i;
+      }
+      cout << endl;
+    }
+  }
+  
+  template <class Tdata>
   void dataset<Tdata>::use_pose() {
     usepose = true;
     cout << "Using pose to separate classes." << endl;
+  }
+  
+  template <class Tdata>
+  void dataset<Tdata>::use_parts() {
+    useparts = true;
+    cout << "Extracting parts." << endl;
+  }
+  
+  template <class Tdata>
+  void dataset<Tdata>::use_parts_only() {
+    usepartsonly = true;
+    cout << "Extracting parts only." << endl;
   }
   
   template <class Tdata>
@@ -660,8 +685,8 @@ namespace ebl {
     for (directory_iterator itr(inroot); itr != end_itr; itr++) {
       if (is_directory(itr->status())
 	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
-	// ignore excluded classes
-	if (find(exclude.begin(), exclude.end(), itr->leaf()) == exclude.end()){
+	// ignore excluded classes and use included if defined
+	if (included(itr->leaf())) {
 	  // add directory as new class
 	  add_class(itr->leaf());
 	  // recursively search each directory
@@ -773,7 +798,7 @@ namespace ebl {
     ostringstream base_name, ofname;
     base_name << outdir << "/" << filename << "_scale";
     string class_name = "noclass";
-    for (vector<uint>::iterator i = scales.begin(); i != scales.end(); ++i) {
+    for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
       idx<Tdata> s = preprocess_data(sample, class_name, false,
 				     filename.c_str(), NULL, *i);
       // put sample's channels dimensions first, if defined.
@@ -788,13 +813,23 @@ namespace ebl {
     return true;
   }
     
+  template <class Tdata>
+  bool dataset<Tdata>::included(const string &class_name) {
+    return // is not excluded
+      find(exclude.begin(), exclude.end(), class_name) == exclude.end()
+      // and is included
+      && ((find(include.begin(), include.end(), class_name) != include.end())
+	  // or everything is included
+	  || (include.size() == 0));
+  }
+  
   ////////////////////////////////////////////////////////////////
   // data preprocessing
 
   template <class Tdata>
   idx<Tdata> dataset<Tdata>::
   preprocess_data(idx<Tdata> &dat, const string &class_name, bool squared,
-		  const char *filename, const rect *r, uint scale,
+		  const char *filename, const rect *r, double scale,
 		  bool active_sleepd) {
     uint dh = 0, dw = 1;
     // resize image to target dims
@@ -802,7 +837,7 @@ namespace ebl {
     idxdim d(outdims);
     idx<Tdata> resized;
     if (scale > 0) { // resize entire image at specific scale
-      resizepp->set_dimensions(dat.dim(0) / scale, dat.dim(1) / scale);
+      resizepp->set_dimensions(outdims.dim(0) * scale, outdims.dim(1) * scale);
       rect iregion(0, 0, dat.dim(0), dat.dim(1));
       resizepp->set_input_region(iregion);
     } else if (r) // resize using object's window
@@ -976,7 +1011,8 @@ namespace ebl {
       else if (regex_match(itr->leaf().c_str(), what, r)) {
 	try {
 	  // if full for this class, skip this directory
-	  if (full(get_label_from_class(class_name)) && !scale_mode)
+	  if ((full(get_label_from_class(class_name)) || included(class_name))
+	      && !scale_mode)
 	    break ;
 	  // load data
 	  load_data(itr->path().string());

@@ -882,8 +882,15 @@ namespace ebl {
     return out;
   }
 
-  rect operator/(const rect& r, uint d) {
-    rect newr(r.h0 / d, r.w0 / d, r.height / d, r.width / d);
+  rect operator/(const rect& r, double d) {
+    rect newr((uint) (r.h0 / d), (uint) (r.w0 / d),
+	      (uint) (r.height / d), (uint) (r.width / d));
+    return newr;
+  }
+
+  rect operator*(const rect& r, double d) {
+    rect newr((uint) (r.h0 * d), (uint) (r.w0 * d),
+	      (uint) (r.height * d), (uint) (r.width * d));
     return newr;
   }
 
