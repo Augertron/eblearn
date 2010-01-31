@@ -837,7 +837,8 @@ namespace ebl {
     idxdim d(outdims);
     idx<Tdata> resized;
     if (scale > 0) { // resize entire image at specific scale
-      resizepp->set_dimensions(outdims.dim(0) * scale, outdims.dim(1) * scale);
+      resizepp->set_dimensions((uint) (outdims.dim(0) * scale), 
+			       (uint) (outdims.dim(1) * scale));
       rect iregion(0, 0, dat.dim(0), dat.dim(1));
       resizepp->set_input_region(iregion);
     } else if (r) // resize using object's window
