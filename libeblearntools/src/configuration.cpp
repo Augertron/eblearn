@@ -48,6 +48,47 @@ using namespace std;
 
 namespace ebl {
 
+  ////////////////////////////////////////////////////////////////                       
+  // textlist class
+
+  textlist::textlist() {
+  }
+
+  textlist::textlist(const textlist &txt) {
+    // deep copy
+    for (list<pair<string,string> >::const_iterator i = txt.begin(); i != txt.end(); ++i) {
+      push_back(pair<string,string>(i->first, i->second));
+    }
+  }
+
+  textlist::~textlist() {
+  }
+
+  void textlist::update(const string &varname, const string &value) {
+    bool found = false;
+    ostringstream s;
+    s << varname << "=" << value;
+    for (list< pair<string,string> >::iterator i = this->begin(); i != this->end(); ++i) {
+      if (i->second == varname) {
+	i->first = s.str();
+	found = true;
+      }
+    }
+    if (!found) {
+      s << " # variable added by meta_trainer";
+      push_back(pair<string,string>(s.str(), varname));
+    }
+  }
+
+  void textlist::print(ostream &out) {
+    for (list< pair<string,string> >::iterator i = this->begin(); i != this->end(); ++i) {
+      out << i->first << endl;
+    }
+  }
+
+  ////////////////////////////////////////////////////////////////                       
+  // utility functions
+
   string timestamp() {
     time_t rawtime;
     struct tm * timeinfo;
@@ -111,8 +152,8 @@ namespace ebl {
   // open file fname and put variables assignments in smap.
   // e.g. " i = 42 # comment " will yield a entry in smap
   // with "i" as first value and "42" as second value.
-  bool extract_variables(const char *fname, string_map_t &smap,
-			 string_map_t *meta_smap = NULL) {
+  bool extract_variables(const char *fname, string_map_t &smap, textlist &txt,
+			 string_map_t *meta_smap = NULL, bool bresolve = true) {
     string s0, s;
     char separator = '=';
     char comment1 = '#';
@@ -180,12 +221,16 @@ namespace ebl {
 	  }
 	}
       }
+      // add original line and variable name (if any) to txt
+      txt.push_back(pair<string,string>(s0, name));
     }
     in.close();
     // resolve variables
-    resolve_variables(smap);
-    if (meta_smap)
-      resolve_variables(*meta_smap);
+    if (bresolve) {
+      resolve_variables(smap);
+      if (meta_smap)
+	resolve_variables(*meta_smap);
+    }
     return true;
   }
 
@@ -301,18 +346,23 @@ namespace ebl {
     read(filename);
   }
 
-  configuration::configuration(string_map_t &smap_, string &name_,
+  configuration::configuration(const configuration &other) 
+    : smap(other.smap), otxt(other.otxt), name(other.name), 
+      output_dir(other.output_dir) {
+  }
+
+  configuration::configuration(string_map_t &smap_, textlist &txt, string &name_,
 			       string &output_dir_)
-    : smap(smap_), name(name_), output_dir(output_dir_) {
+    : smap(smap_), otxt(txt), name(name_), output_dir(output_dir_) {
   }
 
   configuration::~configuration() {
   }
   
-  bool configuration::read(const char *fname) {
+  bool configuration::read(const char *fname, bool bresolve) {
     // read file and extract all variables and values
     cout << "loading configuration file: " << fname << endl;
-    if (!extract_variables(fname, smap))
+    if (!extract_variables(fname, smap, otxt, NULL, bresolve))
       return false;
     pretty();
     return true;
@@ -324,9 +374,12 @@ namespace ebl {
       cerr << "error: failed to open " << fname << endl;
       return false;
     }
+    // update all values in original text
     string_map_t::iterator smi = smap.begin();
     for ( ; smi != smap.end(); ++smi)
-      of << smi->first << " = " << smi->second << endl;
+      otxt.update(smi->first, smi->second);
+    // write updated text
+    otxt.print(of);
     of.close();
     return true;
   }
@@ -397,6 +450,12 @@ namespace ebl {
     smap[varname] = value;
   }
 
+  bool configuration::exists(const char *varname) {
+    if (smap.find(varname) == smap.end())
+      return false;
+    return true;
+  }
+
   void configuration::pretty() {
     cout << "_____________________ Configuration _____________________" << endl;
     print_string_map(smap);
@@ -412,10 +471,10 @@ namespace ebl {
   meta_configuration::~meta_configuration() {
   }
   
-  bool meta_configuration::read(const char *fname) {
+  bool meta_configuration::read(const char *fname, bool bresolve) {
     cout << "Reading meta configuration file: " << fname << endl;
     // read file and extract all variables and values
-    if (!extract_variables(fname, tmpsmap, &smap))
+    if (!extract_variables(fname, tmpsmap, otxt, &smap, bresolve))
       return false;
     cout << "loaded: " << endl;
     pretty();
@@ -449,7 +508,7 @@ namespace ebl {
       conf_name += get_conf_name(conf_indices, lmap, i);
       string_map_t new_smap;
       assign_current_smap(new_smap, conf_indices, lmap);
-      configuration conf(new_smap, conf_name, output_dir);
+      configuration conf(new_smap, otxt, conf_name, output_dir);
       confs.push_back(conf);
       cout << "Creating " << conf_name << endl;
       config_indices_incr(conf_indices, lmap); // incr conf
