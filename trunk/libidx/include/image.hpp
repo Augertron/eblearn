@@ -953,11 +953,11 @@ namespace ebl {
       return false;
     }
     fprintf(fp,"P6 %d %d 255\n", (int) in.dim(1), (int) in.dim(0));
-    idx_bloop1(inn, in, ubyte) {
-      idx_bloop1(innn, inn, ubyte) {
-	fputc(innn.get(0), fp);
-	fputc(innn.get(1), fp);
-	fputc(innn.get(2), fp);
+    idx_bloop1(inn, in, T) {
+      idx_bloop1(innn, inn, T) {
+	fputc((ubyte) innn.get(0), fp);
+	fputc((ubyte) innn.get(1), fp);
+	fputc((ubyte) innn.get(2), fp);
       }
     }
     fclose(fp);

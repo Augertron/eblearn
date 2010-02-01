@@ -35,6 +35,8 @@
 
 #define MKDIR_RIGHTS 0755
 
+#define DATASET_SAVE "dataset"
+
 #include "libidx.h"
 #include "libeblearn.h"
 
@@ -144,6 +146,10 @@ namespace ebl {
 
     //! set the list of classes to include (excluding everything else).
     void set_include(const vector<string> &inc);
+
+    //! set saving mode, default is "dataset", saving everything in single
+    //! lush matrix format. other values can be "ppm", "jpg", etc.
+    void set_save(const string &save);
 
     //! use pose information to separate classes. e.g. if for class "person"
     //! we have "front" and "side" pose, create 2 classes "person_front"
@@ -297,8 +303,9 @@ namespace ebl {
     vector<string>      exclude;        //!< list of excluded classes
     vector<string>      include;        //!< list of included classes
     bool                usepose;        //!< use pose or not
-    bool                useparts;        //!< use parts or not
-    bool                usepartsonly;        //!< use parts only or not
+    bool                useparts;       //!< use parts or not
+    bool                usepartsonly;   //!< use parts only or not
+    string              save_mode;      //!< saving mode (dataset, ppm, png..)
     // names ///////////////////////////////////////////////////////
     string		name;	        //!< dataset name
     string		data_fname;	//!< data filename

@@ -77,8 +77,9 @@ bool		mindims_set	 = false;
 vector<string>  exclude;
 vector<string>  include;
 bool            usepose          = false; // use pose if given
-bool            useparts          = false; // use parts if given
-bool            partsonly         = false; // use parts only if given
+bool            useparts         = false; // use parts if given
+bool            partsonly        = false; // use parts only if given
+string          save             = DATASET_SAVE;// save into lush dataset format
 
 ////////////////////////////////////////////////////////////////
 // command line
@@ -137,6 +138,9 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-outdir") == 0) {
 	++i; if (i >= argc) throw 0;
 	outdir = argv[i];
+      } else if (strcmp(argv[i], "-save") == 0) {
+	++i; if (i >= argc) throw 0;
+	save = argv[i];
       } else if (strcmp(argv[i], "-type") == 0) {
 	++i; if (i >= argc) throw 0;
 	type = argv[i];
@@ -282,6 +286,7 @@ void print_usage() {
   cout << "  -stereo_lpattern <pattern>" << endl;
   cout << "  -stereo_rpattern <pattern>" << endl;
   cout << "  -outdir <directory (default=images_root)>" << endl;
+  cout << "  -save <dataset(default)|ppm>" << endl;
   cout << "  -dname <name>" << endl;
   cout << "  -maxperclass <integer>" << endl;
   cout << "  -maxdata <integer>" << endl;
@@ -321,6 +326,7 @@ void compile_ds(Tds &ds, bool imgpat = true) {
   ds.set_display(display);
   ds.set_sleepdisplay(sleep_delay);
   ds.set_resize(resize);
+  ds.set_save(save);
   if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
   if (maxperclass > 0) ds.set_max_per_class(maxperclass);
   if (maxdata > 0) ds.set_max_data(maxdata);
@@ -354,6 +360,7 @@ void compile() {
     if (maxdata > 0) ds.set_max_data(maxdata);
     if (scale_mode) ds.set_scales(scales, outdir);
     if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
+    ds.set_save(save);
     ds.extract();
   }
   else if (!strcmp(type.c_str(), "pascalfull")) {

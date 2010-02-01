@@ -100,6 +100,7 @@ namespace ebl {
     mpc = numeric_limits<intg>::max();
     init_drand(time(NULL)); // initialize random seed
     usepose = false;
+    save_mode = DATASET_SAVE;
 #ifndef __BOOST__
     eblerror(BOOST_LIB_ERROR);
 #endif
@@ -367,8 +368,7 @@ namespace ebl {
       return false;
     string root1 = root;
     root1 += "/";
-    cout << "Saving dataset " << name << " in " << root << "/";
-    cout << name << "_*" << MATRIX_EXTENSION << endl;
+    cout << "Saving " << name << " in " << save_mode << " mode." << endl;
     // return false if no samples
     if (data_cnt <= 0) {
       cerr << "Warning: No samples were added to the dataset, nothing to save.";
@@ -388,32 +388,60 @@ namespace ebl {
       dat = dat.narrow(0, data_cnt, 0);
       labs = labs.narrow(0, data_cnt, 0);
     }
-    // save data
-    string fname = root1;
-    fname += data_fname;
-    cout << "Saving " << fname << " (" << dat << ")" << endl;
-    if (!save_matrix(dat, fname)) {
-      cerr << "error: failed to save " << fname << endl;
-      return false;
-    } else cout << "Saved " << fname << endl;
-    // save labels
-    fname = root1;
-    fname += labels_fname;
-    cout << "Saving " << fname << " (" << labs << ")"  << endl;
-    if (!save_matrix(labs, fname)) {
-      cerr << "error: failed to save labels into " << fname << endl;
-      return false;
-    } else cout << "Saved " << fname << endl;
-    // save classes
-    fname = root1;
-    fname += classes_fname;
-    idx<ubyte> classes_idx = build_classes_idx();
-    cout << "Saving " << fname << " (" << classes_idx << ")"  << endl;
-    if (!save_matrix(classes_idx, fname)) {
-      cerr << "error: failed to save classes into " << fname << endl;
-      return false;
-    } else cout << "Saved " << fname << endl;
-    return true;
+    // switch between saving modes
+    if (!strcmp(save_mode.c_str(), DATASET_SAVE)) { // dataset mode
+      cout << "Saving dataset " << name << " in " << root << "/";
+      cout << name << "_*" << MATRIX_EXTENSION << endl;
+      // save data
+      string fname = root1;
+      fname += data_fname;
+      cout << "Saving " << fname << " (" << dat << ")" << endl;
+      if (!save_matrix(dat, fname)) {
+	cerr << "error: failed to save " << fname << endl;
+	return false;
+      } else cout << "Saved " << fname << endl;
+      // save labels
+      fname = root1;
+      fname += labels_fname;
+      cout << "Saving " << fname << " (" << labs << ")"  << endl;
+      if (!save_matrix(labs, fname)) {
+	cerr << "error: failed to save labels into " << fname << endl;
+	return false;
+      } else cout << "Saved " << fname << endl;
+      // save classes
+      fname = root1;
+      fname += classes_fname;
+      idx<ubyte> classes_idx = build_classes_idx();
+      cout << "Saving " << fname << " (" << classes_idx << ")"  << endl;
+      if (!save_matrix(classes_idx, fname)) {
+	cerr << "error: failed to save classes into " << fname << endl;
+	return false;
+      } else cout << "Saved " << fname << endl;
+      return true;
+    } else { // single file mode, use save as image extensions
+      root1 += name; root1 += "/";
+      mkdir(root1.c_str(), MKDIR_RIGHTS);
+      // save all images
+      ostringstream fname;
+      intg id = 0;
+      idx<Tdata> tmp;
+      idx_bloop2(dat, data, Tdata, lab, labs, t_label) {
+	// make class directory if necessary
+	fname.str("");
+	fname << root1 << "/" << get_class_string(lab.get()) << "/";
+	mkdir(fname.str().c_str(), MKDIR_RIGHTS);
+	// save image
+	fname << get_class_string(lab.get()) << "_" << id++ << "." << save_mode;
+	tmp = dat.shift_dim(0, 2); // shift from planar to interleaved
+	// scale image to 0 255 if preprocessed
+	if (strcmp(ppconv_type.c_str(), "RGB")) {
+	  idx_addc(tmp, (Tdata) 1.0, tmp);
+	  idx_dotc(tmp, (Tdata) 127.5, tmp);
+	}
+	save_image(fname.str(), tmp, save_mode.c_str());
+	cout << id << ": saved " << fname.str() << endl;
+      }
+    }
   }
 
   ////////////////////////////////////////////////////////////////
@@ -651,6 +679,12 @@ namespace ebl {
     }
   }
   
+  template <class Tdata>
+  void dataset<Tdata>::set_save(const string &s) {
+    save_mode = s;
+    cout << "Setting saving mode to: " << save_mode << endl;
+  }
+    
   template <class Tdata>
   void dataset<Tdata>::use_pose() {
     usepose = true;
