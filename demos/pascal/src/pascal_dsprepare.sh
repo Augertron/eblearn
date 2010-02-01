@@ -1,80 +1,86 @@
 #!/bin/sh
 
-################################
+################################################################################
+# meta commands
+################################################################################
+meta_command="sh pascal_dsprepare.sh"
+meta_name=pascalds
+
+################################################################################
 # pascal dataset compilation
-################################
+################################################################################
 
 # directories
-DATAROOT=/data
-#DATAROOT=~/texieradata
-PASCALROOT=$DATAROOT/pascal/VOCdevkit_trainval09/VOC2009/
-ROOT=$DATAROOT/pascal/
-OUT=$ROOT/ds/
+#dataroot=/data
+dataroot=~/texieradata
+pascalroot=$dataroot/pascal/VOCdevkit_trainval09/VOC2009/
+root=$dataroot/pascal/
+out=$root/ds/
 
 # variables
-H=96
-W=${H}
-MAX=50 # number of samples in validation set
-DRAWS=5 # number of train/val sets to draw
-PRECISION=float
-PP=YpUV
-KERNEL=9
-RESIZE=gaussian #bilinear
-NBG=2
-BGSCALES=8,6,4,2,1
+h=96
+w=${h}
+max=50 # number of samples in validation set
+draws=5 # number of train/val sets to draw
+precision=float
+pp=YpUV
+kernel=9 7
+resize=gaussian bilinear
+nbg=2
+bgscales=8,6,4,2,1
 
 # names
-ID=${RESIZE}${H}x${W}_ker${KERNEL}
-NAME=all_$ID
-NAMEBG=${NAME}_bg
-BGDS=pascalbg_$ID
-OUTBG=$OUT/$BGDS
-PARTSNAME=parts${NAME}
+id=${resize}${h}x${w}_ker${kernel}
+name=all_$id
+namebg=${name}_bg
+bgds=pascalbg_$id
+outbg=$out/$bgds
+partsname=parts${name}
 
 # debug variables
-MAXDATA="-maxdata 50"
-MAXPERCLASS="-maxperclass 25"
-DDISPLAY="-disp -sleep 1000"
+# maxdata="-maxdata 50"
+# maxperclass="-maxperclass 25"
+# ddisplay="-disp -sleep 1000"
 
 # create directories
-mkdir $OUT 2> /dev/null > /dev/null
-mkdir $OUTBG 2> /dev/null > /dev/null
+mkdir $out 2> /dev/null > /dev/null
+mkdir $outbg 2> /dev/null > /dev/null
 
 # get pascal dataset
-#wget http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar $R3D
-#tar xvf "${PASCALROOT0}/VOCtrainval_11-May-2009.tar" -C $PASCALROOT0/
-#mv $PASCALROOT0/VOCdevkit $PASCALROOT0/VOCdevkit_trainval09
+#wget http://pascallin.ecs.soton.ac.uk/challenges/voc/voc2009/voctrainval_11-may-2009.tar $r3d
+#tar xvf "${pascalroot0}/voctrainval_11-may-2009.tar" -c $pascalroot0/
+#mv $pascalroot0/vocdevkit $pascalroot0/vocdevkit_trainval09
 
-# # extract background images at different scales
-# ~/eblearn/bin/dscompiler $PASCALROOT -type pascalbg -precision $PRECISION \
-#     -outdir $OUTBG/bg -scales $BGSCALES -dims ${H}x${W}x3 \
-#     -maxperclass $NBG \
-#     -channels $PP -ignore_difficult -resize $RESIZE -kernelsz $KERNEL \
-#     $MAXDATA $DDISPLAY # debug
+# extract background images at different scales
+~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
+    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+    -maxperclass $nbg \
+    -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
+    $maxdata $ddisplay # debug
 
-# # compile background dataset
-# ~/eblearn/bin/dscompiler ${OUTBG} -type lush -precision $PRECISION \
-#     -outdir ${OUT} -dname ${BGDS}_${NBG} $MAXDATA $MAXPERCLASS \
-#     -dims ${H}x${W}x3 \
-#     $MAXDATA $MAXPERCLASS $DDISPLAY # debug
+# compile background dataset
+~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
+    -outdir ${out} -dname ${bgds}_${nbg} $maxdata $maxperclass \
+    -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
-~/eblearn/bin/dscompiler $PASCALROOT -type pascal -precision $PRECISION \
-    -outdir ${OUT} -channels $PP -dname $NAME -ignore_difficult \
-    -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 -save "ppm" \
-    $MAXDATA $MAXPERCLASS $DDISPLAY # debug
+~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
+    -outdir ${out} -channels $pp -dname $name -ignore_difficult \
+    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 -save "ppm" \
+    $maxdata $maxperclass $ddisplay # debug
 
 # merge normal dataset with background dataset
-~/eblearn/bin/dsmerge $OUT ${NAMEBG} ${NAME} ${BGDS}_$NBG
+~/eblearn/bin/dsmerge $out ${namebg} ${name} ${bgds}_$nbg
 
 # split dataset into training/validation
-~/eblearn/bin/dssplit $OUT ${NAMEBG} ${NAMEBG}_val_${MAX}_ \
-    ${NAMEBG}_train_${MAX}_ -maxperclass ${MAX} -draws $DRAWS
+~/eblearn/bin/dssplit $out ${namebg} ${namebg}_val_${max}_ \
+    ${namebg}_train_${max}_ -maxperclass ${max} -draws $draws
 
 # extract parts dataset
-~/eblearn/bin/dscompiler $PASCALROOT -type pascal -precision $PRECISION \
-    -outdir ${OUT} -channels $PP -dname $PARTSNAME -ignore_difficult \
-    -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 \
+~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
+    -outdir ${out} -channels $pp -dname $partsname -ignore_difficult \
+    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     -useparts -partsonly \
-    $MAXDATA $MAXPERCLASS $DDISPLAY # debug
+    $maxdata $maxperclass $ddisplay # debug
  #-usepose -mindims 16x16 
