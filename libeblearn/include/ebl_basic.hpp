@@ -747,26 +747,24 @@ namespace ebl {
 
   template <class T>
   void mirrorpad_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
-    eblerror("not implemented");
-//     state_idx_check_different(in, out); // forbid same in and out
+    state_idx_check_different(in, out); // forbid same in and out
 
-//     intg inr = in.x.dim(1);
-//     intg inc = in.x.dim(2);
-//     idx<T> tmp = out.dx.narrow(1, inr, nrow);
-//     tmp = tmp.narrow(2, inc, ncol);
-//     idx_add(tmp, in.dx, in.dx);
+    intg inr = in.x.dim(1);
+    intg inc = in.x.dim(2);
+    idx<T> tmp = out.dx.narrow(1, inr, nrow);
+    tmp = tmp.narrow(2, inc, ncol);
+    idx_add(tmp, in.dx, in.dx);
   }
 
   template <class T>
   void mirrorpad_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
-    eblerror("not implemented");
-//     state_idx_check_different(in, out); // forbid same in and out
+    state_idx_check_different(in, out); // forbid same in and out
 
-//     intg inr = in.x.dim(1);
-//     intg inc = in.x.dim(2);
-//     idx<T> tmp = out.ddx.narrow(1, inr, nrow);
-//     tmp = tmp.narrow(2, inc, ncol);
-//     idx_add(tmp, in.ddx, in.ddx);
+    intg inr = in.x.dim(1);
+    intg inc = in.x.dim(2);
+    idx<T> tmp = out.ddx.narrow(1, inr, nrow);
+    tmp = tmp.narrow(2, inc, ncol);
+    idx_add(tmp, in.ddx, in.ddx);
   }
 
   ////////////////////////////////////////////////////////////////
