@@ -129,6 +129,8 @@ namespace ebl {
     cout << "Found: " << total_samples << " total samples." << endl;
     if (total_samples == 0)
       return false;
+    if (classes.size() == 0)
+      eblerror("found 0 class");
     cout << "Found: "; print_classes(); cout << "." << endl;
     // (re)init max per class, knowing number of classes
     intg m = numeric_limits<intg>::max();
