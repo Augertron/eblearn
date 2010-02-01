@@ -419,7 +419,6 @@ namespace ebl {
 	cerr << "error: failed to save classes into " << fname << endl;
 	return false;
       } else cout << "Saved " << fname << endl;
-      return true;
     } else { // single file mode, use save as image extensions
       root1 += name; root1 += "/";
       mkdir(root1.c_str(), MKDIR_RIGHTS);
@@ -444,6 +443,7 @@ namespace ebl {
 	cout << id << ": saved " << fname.str() << endl;
       }
     }
+    return true;
   }
 
   ////////////////////////////////////////////////////////////////

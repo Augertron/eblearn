@@ -104,11 +104,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // process xml
 
+  // Note: the difficult flag is ignored, so that we don't take
+  // background patches even in difficult bounding boxes.
   template <class Tdata>
   bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
     string image_filename, image_fullname;
     vector<rect> bboxes;
-    uint difficult = 0;
     string obj_classname, pose;
     bool pose_found = false;
     Node::NodeList::iterator oiter;
@@ -139,9 +140,7 @@ namespace ebl {
 	    // get object's properties
 	    Node::NodeList olist = (*iter)->get_children();
 	    for(oiter = olist.begin(); oiter != olist.end(); ++oiter) {
-	      if (!strcmp((*oiter)->get_name().c_str(), "difficult"))
-		difficult = xml_get_uint(*oiter);
-	      else if (!strcmp((*oiter)->get_name().c_str(), "name"))
+	      if (!strcmp((*oiter)->get_name().c_str(), "name"))
 		xml_get_string(*oiter, obj_classname);
 	      else if (!strcmp((*oiter)->get_name().c_str(), "pose")) {
 		xml_get_string(*oiter, pose);
@@ -151,14 +150,12 @@ namespace ebl {
 	    // add object's bbox
 	    if (!usepartsonly) {
 	      // add object's class to dataset
-	      if (!(ignore_difficult && difficult)) {
-		if (usepose && pose_found) { // append pose to class name
-		  obj_classname += "_";
-		  obj_classname += pose;
-		}
-		if (this->included(obj_classname))
-		  bboxes.push_back(get_object(*iter));
+	      if (usepose && pose_found) { // append pose to class name
+		obj_classname += "_";
+		obj_classname += pose;
 	      }
+	      if (this->included(obj_classname))
+		bboxes.push_back(get_object(*iter));
 	    }
 	    ////////////////////////////////////////////////////////////////
 	    // parts
@@ -175,14 +172,12 @@ namespace ebl {
 		    if (!strcmp((*piter)->get_name().c_str(), "name")) {
 		      xml_get_string(*piter, part_classname);
 		      // found a part and its name, add it
-		      if (!(ignore_difficult && difficult)) {
-			if (usepose && pose_found) {
-			  part_classname += "_";
-			  part_classname += pose;
-			}
-			if (this->included(part_classname)) {
-			  bboxes.push_back(get_object(*oiter));
-			}
+		      if (usepose && pose_found) {
+			part_classname += "_";
+			part_classname += pose;
+		      }
+		      if (this->included(part_classname)) {
+			bboxes.push_back(get_object(*oiter));
 		      }
 		    }
 		  }
@@ -245,11 +240,6 @@ namespace ebl {
   void pascalbg_dataset<Tdata>::
   process_image(idx<ubyte> &img, vector<rect>& bboxes,
 		const string &image_filename) {
-#ifdef __GUI__
-    uint h = 63, w = 0;
-    if (display_extraction)
-      clear_window();
-#endif
     vector<rect> scaled_bboxes;
     vector<rect> patch_bboxes;
     vector<rect>::iterator ibb;
@@ -308,6 +298,7 @@ namespace ebl {
       }
 #ifdef __GUI__
       if (display_extraction) {
+	uint h = 63, w = 0;
 	disable_window_updates();
 	// draw bboxes
 	for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb)
