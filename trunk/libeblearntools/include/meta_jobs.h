@@ -47,9 +47,10 @@ namespace ebl {
     string exe; //!< executable full path
     string outdir_; //!< job's output directory
     string confname_; //!< job's configuration filename
+    string oconffname_; //!< job's original configuration filename
 
   public:
-    job(configuration &conf, const string &exe);
+    job(configuration &conf, const string &exe, const string &oconffname);
     virtual ~job();
 
     //! execute job
@@ -57,7 +58,6 @@ namespace ebl {
 
     //! write job's files in configuration's output directory
     bool write();
-    
   };
 
   class job_manager {

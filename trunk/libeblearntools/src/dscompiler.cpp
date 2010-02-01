@@ -294,10 +294,10 @@ void print_usage() {
   cout << endl;
   cout << "  -scales <scales (e.g: 1.5,2,4)>" << endl;
   cout << "  -resize <gaussian(default)|bilinear" << endl; 
-  cout << "  -exclude <class name> (include all but excluded classes,";
+  cout << "  -exclude <class name> (include all but excluded classes," << endl;
   cout << "                         exclude can be called multiple times)";
   cout << endl;
-  cout << "  -include <class name> (exclude all but included classes,";
+  cout << "  -include <class name> (exclude all but included classes," << endl;
   cout << "                         include can be called multiple times)";
   cout << endl;
   cout << "  -useparts  (also extract object parts, ";

@@ -75,5 +75,6 @@ mkdir $OUTBG 2> /dev/null > /dev/null
 ~/eblearn/bin/dscompiler $PASCALROOT -type pascal -precision $PRECISION \
     -outdir ${OUT} -channels $PP -dname $PARTSNAME -ignore_difficult \
     -resize $RESIZE -kernelsz $KERNEL -dims ${H}x${W}x3 \
-    -useparts -partsonly \ #-usepose -mindims 16x16 \
+    -useparts -partsonly \
     $MAXDATA $MAXPERCLASS $DDISPLAY # debug
+ #-usepose -mindims 16x16 

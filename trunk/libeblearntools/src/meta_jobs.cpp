@@ -49,7 +49,11 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // job
 
-  job::job(configuration &conf_, const string &exe_) : conf(conf_), exe(exe_) {
+  job::job(configuration &conf_, const string &exe_, const string &oconffname) 
+    : conf(conf_), exe(exe_), oconffname_(oconffname) {
+    // remove quotes around executable command if present
+    if ((exe[0] == '"') && (exe[exe.size() - 1] == '"'))
+      exe = exe.substr(1, exe.size() - 2);
   }
 
   job::~job() {
@@ -59,7 +63,8 @@ namespace ebl {
     ostringstream cmd;
     cmd << "cd " << outdir_ << " && ((" << exe << " " << confname_;
     cmd << " 3>&1 1>&2 2>&3 | tee /dev/tty) 3>&1 1>&2 2>&3) > ";
-    cmd << outdir_ << "/out_" << conf.get_name() << ".log 2>&1 &";
+    //    cmd << outdir_ << "/";
+    cmd << "out_" << conf.get_name() << ".log 2>&1 &";
     cout << "executing: " << cmd.str() << endl;
     if (system(cmd.str().c_str()))
       cerr << "error executing: " << cmd.str() << endl;
@@ -74,18 +79,23 @@ namespace ebl {
     cmd << "mkdir -p " << outdir.str();
     int res; res = system(cmd.str().c_str());
     // copy classes file into directory
-    classesname << conf.get_string("root") << "/" << conf.get_string("train");
-    classesname << "_" << CLASSES_NAME << MATRIX_EXTENSION;
-    cmd.str("");
-    cmd << "cp " << classesname.str() << " " << outdir.str() << "/";
-    cmd << conf.get_name() << "_" << CLASSES_NAME << MATRIX_EXTENSION;
-    res = system(cmd.str().c_str());
+    if (conf.exists("train") && conf.exists("root")) {
+      classesname << conf.get_string("root") << "/" << conf.get_string("train");
+      classesname << "_" << CLASSES_NAME << MATRIX_EXTENSION;
+      cmd.str("");
+      cmd << "cp " << classesname.str() << " " << outdir.str() << "/";
+      cmd << conf.get_name() << "_" << CLASSES_NAME << MATRIX_EXTENSION;
+      res = system(cmd.str().c_str());
+    }
     // create configuration file
-    confname.str("");
-    confname << outdir.str() << "/" << conf.get_name() << ".conf";
-    confname_ = confname.str();
-    conf.set("name", conf.get_name().c_str()); // add config name into config
+    conf.set("job_name", conf.get_name().c_str()); // add config name into config
     conf.resolve();
+    confname.str(""); confname << outdir.str() << "/" << conf.get_name() << ".conf";
+    confname_ = confname.str();
+    if (!conf.write(confname.str().c_str()))
+      return false;
+    // write conf in original metaconf filename
+    confname.str(""); confname << outdir.str() << "/" << oconffname_;
     if (!conf.write(confname.str().c_str()))
       return false;
     return true;
@@ -101,40 +111,47 @@ namespace ebl {
   }
 
   bool job_manager::read_metaconf(const char *fname) {
-    // read meta configuration
     mconf_fname = fname;
-    if (!mconf.read(fname))
+    size_t pos = mconf_fname.find_last_of('/');
+    string name = mconf_fname.substr(pos == string::npos ? 0 : pos);
+    // read meta configuration
+    if (!mconf.read(fname, false))
       return false;
     // create job list from all possible configurations
     vector<configuration> &confs = mconf.configurations();
     vector<configuration>::iterator iconf = confs.begin();
     for ( ; iconf != confs.end(); ++iconf) {
-      jobs.push_back(job(*iconf, mconf.get_string("meta_command")));
+      iconf->resolve();
+      jobs.push_back(job(*iconf, mconf.get_string("meta_command"), name));
     }
     return true;
   }
 
   void job_manager::run() {
-    // write job directories and files
-    for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i)
-      i->write();
-    // copy metaconf into jobs' root
     ostringstream cmd;
-    cmd << "cp " << mconf_fname << " " << mconf.get_output_dir();
+    // write job directories and files
+    for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
+      // write conf
+      i->write();
+    }
+    // copy metaconf into jobs' root
+    cmd.str(""); cmd << "cp " << mconf_fname << " " << mconf.get_output_dir();
     if (system(cmd.str().c_str()))
       cerr << "warning: failed to execute: " << cmd.str() << endl;
     // create gnuplot param file in jobs' root
     try {
-      string params = mconf.get_string("meta_gnuplot_params");
-      ostringstream gpp;
-      gpp << mconf.get_output_dir() << "/" << "gnuplot_params.txt";
-      ofstream of(gpp.str().c_str());
-      if (!of) {
-	cerr << "warning: failed to write gnuplot parameters to ";
-	cerr << gpp.str() << endl;
-      } else {
-	of << params;
-	of.close();
+      if (mconf.exists("meta_gnuplot_params")) {
+	string params = mconf.get_string("meta_gnuplot_params");
+	ostringstream gpp;
+	gpp << mconf.get_output_dir() << "/" << "gnuplot_params.txt";
+	ofstream of(gpp.str().c_str());
+	if (!of) {
+	  cerr << "warning: failed to write gnuplot parameters to ";
+	  cerr << gpp.str() << endl;
+	} else {
+	  of << params;
+	  of.close();
+	}
       }
     } catch (const char *s) { cerr << s << endl; }
     // run jobs

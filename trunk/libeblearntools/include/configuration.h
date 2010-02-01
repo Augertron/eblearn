@@ -36,40 +36,74 @@
 #include <map>
 #include <vector>
 #include "defines.h"
+#include <list>
 
 using namespace std;
 
 namespace ebl {
 
+  ////////////////////////////////////////////////////////////////
+
   typedef map<string, string, less<string> > string_map_t;
   typedef map<string, vector<string>, less<string> > string_list_map_t;
+  
+  ////////////////////////////////////////////////////////////////
+  //! a class containing the original text of the configuration file in a list form.
+  //! once variables have been updated, they can be inserted back to this list to
+  //! recreate the original file with the new values.
+  class textlist : public list< pair<string,string> > {
+  public:
+    //! constructor.
+    textlist();
 
+    //! deep copy constructor.
+    textlist(const textlist &txt);
+
+    //! destructor.
+    virtual ~textlist();
+
+    //! replace original line with variable assignment to value, everywhere that
+    //! is indicated by a second element equal to varname.
+    //! if variable is not found, push it at the end of the list.
+    void update(const string &varname, const string &value);
+
+    //! write entire text to out (using new variables if updated).
+    void print(ostream &out);
+  };
+
+  ////////////////////////////////////////////////////////////////
   // utility functions
+
   string timestamp();
   
+  ////////////////////////////////////////////////////////////////
+  //! configuration class. handle files containing variable definitions.
   class configuration {
   protected:
-    string_map_t	smap;
-    string name;
-    string output_dir;
+    string_map_t	smap; 	//!< map between variables and values
+    string 		name; 	//!< name of configuration
+    string 		output_dir;	//!< output directory
+    textlist 		otxt; 	//!< original text
     
   public:
-
     //! empty constructor.
     configuration();
+
+    //! copy constructor.
+    configuration(const configuration &other);
 
     //! load configuration found in filename.
     configuration(const char *filename);
 
     //! load configuration from already loaded map of variables, name and
     //! output directory.
-    configuration(string_map_t &smap, string &name, string &output_dir);
+    configuration(string_map_t &smap, textlist &txt, string &name, string &output_dir);
 
     //! destructor.
     virtual ~configuration();
 
     //! load configuration from file fname.
-    bool read(const char *fname);
+    bool read(const char *fname, bool bresolve = true);
 
     //! save configuration into file fname.
     bool write(const char *fname);
@@ -79,7 +113,10 @@ namespace ebl {
 
     // accessors
 
+    //! return the name of the configuration
     const string &get_name();
+
+    //! return output directory.
     const string &get_output_dir();
 
     //! returns the string contained the variable with name varname.
@@ -110,11 +147,16 @@ namespace ebl {
 
     //! set variable 'varname' to value 'value'
     void set(const char *varname, const char *value);
+
+    //! returns true if the variable exists, false otherwise.
+    bool exists(const char *varname);
     
     //! print loaded variables
     virtual void pretty();
   };
 
+  ////////////////////////////////////////////////////////////////
+  //! meta configuration. derive from configuration, to handle meta variables.
   class meta_configuration : public configuration {
   private:
     string_map_t	tmpsmap;
@@ -127,7 +169,7 @@ namespace ebl {
     meta_configuration();
     virtual ~meta_configuration();
 
-    bool read(const char *fname);
+    bool read(const char *fname, bool bresolve = true);
 
     // accessors
 
