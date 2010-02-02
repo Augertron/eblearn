@@ -181,7 +181,7 @@ plot ";
 	  if (r > 2)
 	    outp << ", ";
 	  outp << "\"" << plot_fname << "\" using 1:" << r << " title \"";
-	  outp << iruns->first << "\" with lines";
+	  outp << iruns->first << "\" with linespoints";
 	}
 	// loop on each run (1 run == 1 column)
 	uint pos = 0;
