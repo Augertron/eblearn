@@ -112,6 +112,7 @@ namespace ebl {
     using dataset<Tdata>::exclude;
     using dataset<Tdata>::include;
     using dataset<Tdata>::usepose;
+    using dataset<Tdata>::save_mode;
     using pascal_dataset<Tdata>::ignore_difficult;
   };
 

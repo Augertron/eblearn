@@ -62,6 +62,7 @@ namespace ebl {
     cout << "output directory: " << outdir << endl;
     max_folders = max_folders_;
     data_cnt = 0;
+    save_mode = "mat";
   }
 
   template <class Tdata>
@@ -154,8 +155,9 @@ namespace ebl {
 		obj_classname += "_";
 		obj_classname += pose;
 	      }
-	      if (this->included(obj_classname))
+	      if (this->included(obj_classname)) {
 		bboxes.push_back(get_object(*iter));
+	      }
 	    }
 	    ////////////////////////////////////////////////////////////////
 	    // parts
@@ -351,10 +353,23 @@ namespace ebl {
 	folder << "/background/";
 	mkdir(folder.str().c_str(), MKDIR_RIGHTS);
 	// save patch in folder
+	// switch saving behavior
 	fname.str("");
-	fname << folder.str() << filename << ".bg" << i+1 << ".mat";
-	if (!save_matrix(patches[i], fname.str()))
-	  throw fname.str();
+	fname << folder.str() << filename << ".bg" << i+1;
+	if (!strcmp(save_mode.c_str(), "mat")) { // lush matrix mode
+	  fname << MATRIX_EXTENSION;
+	  if (!save_matrix(patches[i], fname.str()))
+	    throw fname.str();
+	} else { // image file mode
+	  fname << "." << save_mode;
+	  idx<Tdata> tmp = patches[i];
+	  // scale image to 0 255 if preprocessed
+	  if (strcmp(ppconv_type.c_str(), "RGB")) {
+	    idx_addc(tmp, (Tdata) 1.0, tmp);
+	    idx_dotc(tmp, (Tdata) 127.5, tmp);
+	  }
+	  save_image(fname.str(), tmp, save_mode.c_str());
+	}
 	cout << data_cnt++ << ": saved " << fname.str().c_str() << endl;
       }
 //       if (i < patches.size()) // reached max_folders, fill-up last one
