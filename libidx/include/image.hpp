@@ -373,22 +373,22 @@ namespace ebl {
     d.setdim(dw, owidth);
     idx<T> res(d);
 
-    int hcenter = r.h0 + r.height / 2; // input height center
-    int wcenter = r.w0 + r.width / 2; // input width center
+    float hcenter = r.h0 + (float) r.height / 2; // input height center
+    float wcenter = r.w0 + (float) r.width / 2; // input width center
     // limit centers to half the width/height away from borders
     // to handle incorrect regions
-    hcenter = MIN((int)im.dim(dh)-1 - (int)r.height/2,
-		  MAX((int)r.height/2, hcenter));
-    wcenter = MIN((int)im.dim(dw)-1 - (int)r.width/2,
-		  MAX((int)r.width/2, wcenter));
-    int h0 = hcenter - oheight / 2; // out height offset in input
-    int w0 = wcenter - owidth / 2; // out width offset in input
-    int h1 = hcenter + oheight / 2;
-    int w1 = wcenter + owidth / 2;
-    int gh0 = MAX(0, MIN((int) im.dim(dh)-1, (int) h0)); // input h offset
-    int gw0 = MAX(0, MIN((int) im.dim(dw)-1, (int) w0)); // input w offset
-    int gh1 = MAX(0, MIN((int) im.dim(dh)-1, (int) h1));
-    int gw1 = MAX(0, MIN((int) im.dim(dw)-1, (int) w1));
+    hcenter = MIN((float)im.dim(dh) - (float)r.height/2,
+		  MAX((float)r.height/2, hcenter));
+    wcenter = MIN((float)im.dim(dw) - (float)r.width/2,
+		  MAX((float)r.width/2, wcenter));
+    float h0 = hcenter - (float) oheight / 2; // out height offset in input
+    float w0 = wcenter - (float) owidth / 2; // out width offset in input
+    float h1 = hcenter + (float) oheight / 2;
+    float w1 = wcenter + (float) owidth / 2;
+    float gh0 = MAX(0, MIN((float) im.dim(dh)-1, (float) h0)); // input h offset
+    float gw0 = MAX(0, MIN((float) im.dim(dw)-1, (float) w0)); // input w offset
+    float gh1 = MAX(0, MIN((float) im.dim(dh)-1, (float) h1));
+    float gw1 = MAX(0, MIN((float) im.dim(dw)-1, (float) w1));
     int h = gh1 - gh0; // out height narrow
     int w = gw1 - gw0; // out width narrow
     int fh0 = MAX(0, gh0 - h0); // out height offset narrow

@@ -334,7 +334,8 @@ namespace ebl {
     bool		do_preprocessing;	//!< activate or deactivate pp
     string              resize_mode;    //!< type of resizing (bilin, gaussian)
     module_1_1<Tdata>  *ppmodule;       //!< pp module 
-    resizepp_module<Tdata> *resizepp;   //!< pp resizing module 
+    resizepp_module<Tdata> *resizepp;   //!< pp resizing module
+    rect                original_bbox;  //!< bbox of image in resized image
   };
   
   ////////////////////////////////////////////////////////////////

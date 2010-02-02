@@ -48,7 +48,7 @@ mkdir $out 2> /dev/null > /dev/null
 mkdir $outbg 2> /dev/null > /dev/null
 
 # get pascal dataset
-#wget http://pascallin.ecs.soton.ac.uk/challenges/voc/voc2009/voctrainval_11-may-2009.tar $r3d
+#wget http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar $r3d
 #tar xvf "${pascalroot0}/voctrainval_11-may-2009.tar" -c $pascalroot0/
 #mv $pascalroot0/vocdevkit $pascalroot0/vocdevkit_trainval09
 

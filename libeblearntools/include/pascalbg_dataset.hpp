@@ -281,10 +281,10 @@ namespace ebl {
 	   patch.h0 += patch.height) {
 	for (patch.w0 = 0; patch.w0 + patch.width <= (uint) im2.dim(1);
 	     patch.w0 += patch.width) {
-	  // test if patch overlaps with any bounding box
+	  // test if patch overlaps with any bounding box or is outside of image
 	  overlap = false;
 	  for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb) {
-	    if (patch.overlap(*ibb)) {
+	    if (patch.overlap(*ibb) || !patch.is_within(original_bbox)) {
 	      overlap = true;
 	      break ;
 	    }
@@ -310,6 +310,9 @@ namespace ebl {
 	for (ibb = patch_bboxes.begin(); ibb != patch_bboxes.end(); ++ibb)
 	  draw_box(h + ibb->h0, w + ibb->w0,
 		   ibb->height, ibb->width, 0, 255, 0);
+	// draw original bbox
+	draw_box(h + original_bbox.h0, w + original_bbox.w0,
+		 original_bbox.height, original_bbox.width, 0, 0, 255);
 // 	// draw original image
 // 	h = im2.dim(0) + 5, w = 0;
 // 	idx<Tdata> tmp = im2.select(2, 0);
