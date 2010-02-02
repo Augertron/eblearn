@@ -385,14 +385,14 @@ namespace ebl {
     float w0 = wcenter - (float) owidth / 2; // out width offset in input
     float h1 = hcenter + (float) oheight / 2;
     float w1 = wcenter + (float) owidth / 2;
-    float gh0 = MAX(0, MIN((float) im.dim(dh)-1, (float) h0)); // input h offset
-    float gw0 = MAX(0, MIN((float) im.dim(dw)-1, (float) w0)); // input w offset
-    float gh1 = MAX(0, MIN((float) im.dim(dh)-1, (float) h1));
-    float gw1 = MAX(0, MIN((float) im.dim(dw)-1, (float) w1));
+    int gh0 = (int) MAX(0, MIN(im.dim(dh)-1, h0)); // input h offset
+    int gw0 = (int) MAX(0, MIN(im.dim(dw)-1, w0)); // input w offset
+    int gh1 = (int) MAX(0, MIN(im.dim(dh)-1, h1));
+    int gw1 = (int) MAX(0, MIN(im.dim(dw)-1, w1));
     int h = gh1 - gh0; // out height narrow
     int w = gw1 - gw0; // out width narrow
-    int fh0 = MAX(0, gh0 - h0); // out height offset narrow
-    int fw0 = MAX(0, gw0 - w0); // out width offset narrow
+    int fh0 = (int) MAX(0, gh0 - h0); // out height offset narrow
+    int fw0 = (int) MAX(0, gw0 - w0); // out width offset narrow
 
     idx<T> tmpres = res.narrow(dh, h, fh0);
     tmpres = tmpres.narrow(dw, w, fw0);
