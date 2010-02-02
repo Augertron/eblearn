@@ -12,7 +12,8 @@ meta_name=pascalds
 
 # directories
 #dataroot=/data
-dataroot=~/texieradata
+#dataroot=~/texieradata
+dataroot=~/humairadata
 pascalroot=$dataroot/pascal/VOCdevkit_trainval09/VOC2009/
 root=$dataroot/pascal/
 out=$root/ds/
@@ -24,7 +25,7 @@ max=50 # number of samples in validation set
 draws=5 # number of train/val sets to draw
 precision=float
 pp=YpUV
-kernel=9 7
+kernel=7 9
 resize=gaussian bilinear
 nbg=2
 bgscales=8,6,4,2,1
@@ -51,18 +52,18 @@ mkdir $outbg 2> /dev/null > /dev/null
 #tar xvf "${pascalroot0}/voctrainval_11-may-2009.tar" -c $pascalroot0/
 #mv $pascalroot0/vocdevkit $pascalroot0/vocdevkit_trainval09
 
-# # extract background images at different scales
-# ~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
-#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
-#     -maxperclass $nbg \
-#     -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
-#     $maxdata $ddisplay # debug
+# extract background images at different scales
+~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
+    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+    -maxperclass $nbg \
+    -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
+    $maxdata $ddisplay # debug
 
-# # compile background dataset
-# ~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
-#     -outdir ${out} -dname ${bgds}_${nbg} $maxdata $maxperclass \
-#     -dims ${h}x${w}x3 \
-#     $maxdata $maxperclass $ddisplay # debug
+# compile background dataset
+~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
+    -outdir ${out} -dname ${bgds}_${nbg} $maxdata $maxperclass \
+    -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
 ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
