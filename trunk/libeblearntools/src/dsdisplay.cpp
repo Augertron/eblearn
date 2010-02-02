@@ -30,6 +30,7 @@
  ***************************************************************************/
 
 #include <cstdlib>
+#include <vector>
 
 #include "libidx.h"
 #include "libeblearn.h"
@@ -47,6 +48,11 @@ using namespace ebl;
 // TODO: temporary, need cleaner solution
 typedef float t_data;
 
+// global variables: parameters
+idxdim		dims = idxdim(4, 8);	//!< number of samples to display (hxw)
+bool		info = false;	//!< only print information and quit
+vector<double>	range;		//!< display range of values
+
 ////////////////////////////////////////////////////////////////
 // definitions
 
@@ -60,8 +66,9 @@ typedef float t_data;
 
 // print command line usage
 void print_usage() {
-  cout << "Usage: ./dataset_display <root/name>" << endl;
+  cout << "Usage: ./dataset_display <root/name> [OPTIONS]" << endl;
   cout << "  example: ./dataset_display /datasets/pascal" << endl;
+  cout << "Options are:" << endl;
 }
 
 // parse command line input
@@ -72,6 +79,68 @@ bool parse_args(int argc, char **argv, string &ds_name) {
     return false;
   }
   ds_name = argv[1];
+  // if requesting help, print usage
+  if ((strcmp(argv[1], "-help") == 0) ||
+      (strcmp(argv[1], "-h") == 0))
+    return false;
+  // default arguments
+  range.push_back(-1.0);
+  range.push_back(1.0);
+  // loop over arguments
+  for (int i = 2; i < argc; ++i) {
+    try {
+      if (strcmp(argv[i], "-info") == 0) {
+	info = true;
+      } else if (strcmp(argv[i], "-dims") == 0) {
+	++i; if (i >= argc) throw 0;
+	idxdim d;
+	string s = argv[i];
+	int k = 0;
+	while (s.size()) {
+	  uint j;
+	  for (j = 0; j < s.size(); ++j)
+	    if (s[j] == 'x')
+	      break ;
+	  string s0 = s.substr(0, j);
+	  if (j >= s.size())
+	    s = "";
+	  else
+	    s = s.substr(j + 1, s.size());
+	  d.insert_dim(atoi(s0.c_str()), k++);
+	}
+	dims = d;
+      } else if (strcmp(argv[i], "-range") == 0) {
+	range.clear();
+	++i; if (i >= argc) throw 0;
+	string s = argv[i];
+	int k = 0;
+	while (s.size()) {
+	  uint j;
+	  for (j = 0; j < s.size(); ++j)
+	    if (s[j] == ',')
+	      break ;
+	  string s0 = s.substr(0, j);
+	  if (j >= s.size())
+	    s = "";
+	  else
+	    s = s.substr(j + 1, s.size());
+	  range.push_back(atof(s0.c_str()));
+	  k++;
+	}
+      }
+    } catch (int err) {
+      cerr << "input error: ";
+      switch (err) {
+      case 0: cerr << "expecting string after " << argv[i-1]; break;
+      case 1: cerr << "expecting integer after " << argv[i-1]; break;
+      case 2: cerr << "unknown parameter " << argv[i-1]; break;
+      case 3: cerr << "unknown channel mode " << argv[i-1]; break;
+      default: cerr << "undefined error";
+      }
+      cerr << endl << endl;
+      return false;
+    }
+  }
   return true;
 }
 
@@ -120,7 +189,18 @@ int main(int argc, char **argv) {
     print_usage();
     return -1;
   }
-  cout << "displaying " << ds_name << endl;
+  // print info
+  cout << "input parameters:" << endl;
+  cout << "  dataset name: " << ds_name << endl;
+  cout << "  info only: " << (info ? "yes" : "no") << endl;
+  cout << "  values range: ";
+  for (vector<double>::iterator i = range.begin(); i != range.end(); ++i)
+    cout << *i << " ";
+  cout << endl;
+  cout << "  display dimensions: " << dims << endl;  
+  cout << "___________________________________________________________________";
+  cout << endl;
+  
 #ifndef __GUI__ // return error if gui not enabled
     eblerror("QT gui libraries not available, install them and recompile");
 #endif
@@ -171,30 +251,36 @@ int main(int argc, char **argv) {
   
   cout << "images: " << train_ds.data << endl;
   cout << "labels: " << train_ds.labels << endl;
-  
-#ifdef __GUI__
-  if (bclasspairs) {
-    labeled_pair_datasource<t_data, t_data, t_label>
-      train_cp_ds(data, labels, classes, classpairs, "Class pairs (training)");
-    labeled_pair_datasource_gui<t_data, t_data, t_label> dsgui_cp(true);
-    dsgui_cp.display(train_cp_ds, 4, 8, 0, 0, 1, -1, NULL, false,
-		     range_min, range_max);
-    sleep(1);
-  }
 
-  if (bdefpairs) {
-    labeled_pair_datasource<t_data, t_data, t_label>
-      train_dp_ds(data, labels, classes, defpairs,
-		  "Deformation pairs (training)");
-    labeled_pair_datasource_gui<t_data, t_data, t_label> dsgui_dp(true);
-    dsgui_dp.display(train_dp_ds, 4, 8, 0, 0, 1, -1, NULL, false,
-		     range_min, range_max);
+#ifdef __GUI__
+  if (!info) { // only display if info is false
+    if (bclasspairs) {
+      labeled_pair_datasource<t_data, t_data, t_label>
+	train_cp_ds(data, labels, classes, classpairs,
+		    "Class pairs (training)");
+      labeled_pair_datasource_gui<t_data, t_data, t_label> dsgui_cp(true);
+      dsgui_cp.display(train_cp_ds, dims.dim(0), dims.dim(1),
+		       0, 0, 1, -1, NULL, false,
+		       (t_data) range[0], (t_data) range[1]);
+      sleep(1);
+    }
+    
+    if (bdefpairs) {
+      labeled_pair_datasource<t_data, t_data, t_label>
+	train_dp_ds(data, labels, classes, defpairs,
+		    "Deformation pairs (training)");
+      labeled_pair_datasource_gui<t_data, t_data, t_label> dsgui_dp(true);
+      dsgui_dp.display(train_dp_ds, dims.dim(0), dims.dim(1),
+		       0, 0, 1, -1, NULL, false,
+		       (t_data) range[0], (t_data) range[1]);
+      sleep(1);
+    }
+  
+    labeled_datasource_gui<t_data, t_data, t_label> dsgui(true);
+    dsgui.display(train_ds, dims.dim(0), dims.dim(1), 0, 0, 1, -1, NULL, false,
+		  (t_data) range[0], (t_data) range[1]);
     sleep(1);
   }
-  
-  labeled_datasource_gui<t_data, t_data, t_label> dsgui(true);
-  dsgui.display(train_ds, 4, 8, 0, 0, 1, -1, NULL, false, range_min, range_max);
-  sleep(1);
 #endif 
   return 0;
 }

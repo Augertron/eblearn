@@ -403,6 +403,7 @@ int main(int argc, char **argv) {
     print_usage();
     return -1;
   }
+  // print info
   cout << "input parameters:" << endl;
   cout << "  dataset name: " << dataset_name << endl;
   cout << "  dataset type: " << type << endl;
