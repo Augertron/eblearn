@@ -347,13 +347,13 @@ namespace ebl {
   }
 
   configuration::configuration(const configuration &other) 
-    : smap(other.smap), otxt(other.otxt), name(other.name), 
-      output_dir(other.output_dir) {
+    : smap(other.smap), name(other.name), 
+      output_dir(other.output_dir), otxt(other.otxt) {
   }
 
   configuration::configuration(string_map_t &smap_, textlist &txt, string &name_,
 			       string &output_dir_)
-    : smap(smap_), otxt(txt), name(name_), output_dir(output_dir_) {
+    : smap(smap_), name(name_), output_dir(output_dir_), otxt(txt) {
   }
 
   configuration::~configuration() {

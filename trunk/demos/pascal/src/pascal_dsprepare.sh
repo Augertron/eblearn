@@ -51,23 +51,23 @@ mkdir $outbg 2> /dev/null > /dev/null
 #tar xvf "${pascalroot0}/voctrainval_11-may-2009.tar" -c $pascalroot0/
 #mv $pascalroot0/vocdevkit $pascalroot0/vocdevkit_trainval09
 
-# extract background images at different scales
-~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
-    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
-    -maxperclass $nbg \
-    -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
-    $maxdata $ddisplay # debug
+# # extract background images at different scales
+# ~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
+#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+#     -maxperclass $nbg \
+#     -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
+#     $maxdata $ddisplay # debug
 
-# compile background dataset
-~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
-    -outdir ${out} -dname ${bgds}_${nbg} $maxdata $maxperclass \
-    -dims ${h}x${w}x3 \
-    $maxdata $maxperclass $ddisplay # debug
+# # compile background dataset
+# ~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
+#     -outdir ${out} -dname ${bgds}_${nbg} $maxdata $maxperclass \
+#     -dims ${h}x${w}x3 \
+#     $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
 ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
     -outdir ${out} -channels $pp -dname $name -ignore_difficult \
-    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 -save "ppm" \
+    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3  \
     $maxdata $maxperclass $ddisplay # debug
 
 # merge normal dataset with background dataset
@@ -84,3 +84,4 @@ mkdir $outbg 2> /dev/null > /dev/null
     -useparts -partsonly \
     $maxdata $maxperclass $ddisplay # debug
  #-usepose -mindims 16x16 
+
