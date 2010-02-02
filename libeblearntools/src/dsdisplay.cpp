@@ -202,7 +202,7 @@ int main(int argc, char **argv) {
   cout << endl;
   
 #ifndef __GUI__ // return error if gui not enabled
-    eblerror("QT gui libraries not available, install them and recompile");
+  cerr << "warning: QT gui libraries not available, install them and recompile" << endl;
 #endif
 
   // data
