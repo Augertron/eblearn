@@ -113,6 +113,7 @@ namespace ebl {
     using dataset<Tdata>::include;
     using dataset<Tdata>::usepose;
     using dataset<Tdata>::save_mode;
+    using dataset<Tdata>::original_bbox;
     using pascal_dataset<Tdata>::ignore_difficult;
   };
 

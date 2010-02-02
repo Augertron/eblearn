@@ -884,6 +884,8 @@ namespace ebl {
     state_idx<Tdata> in(tmp.get_idxdim()), out(1,1,1);
     idx_copy(tmp, in.x);
     resizepp->fprop(in, out);
+    // remember bbox of original image in resized image
+    original_bbox = resizepp->get_original_bbox(); 
     idx<Tdata> res = out.x.shift_dim(0, 2);
     // display each step
 #ifdef __GUI__

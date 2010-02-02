@@ -876,6 +876,13 @@ namespace ebl {
     return false;
   }
   
+  bool rect::is_within(const rect &r) {
+    if (((h0 >= r.h0) && (h0 + height <= r.h0 + r.height)) &&
+	((w0 >= r.w0) && (w0 + width <= r.w0 + r.width)))
+      return true;
+    return false;
+  }
+  
   std::ostream& operator<<(std::ostream& out, const rect& r) {
     out << "rect:<(" << r.h0 << "," << r.w0 << ")," << r.height;
     out << "x" << r.width << ">";

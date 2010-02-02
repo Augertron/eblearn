@@ -260,13 +260,13 @@ namespace ebl {
       out.x.resize(outpp.x.dim(0), height, width);
     idx_clear(out.x);
     // copy out region to output
+    original_bbox = outrect;
     resized = resized.shift_dim(0, 2);
     tmp2 = image_region_to_rect(resized, outrect, out.x.dim(1),
 				out.x.dim(2), original_bbox);
     tmp2 = tmp2.shift_dim(2, 0);
     //idx_copy(tmp2, tmp);
     idx_copy(tmp2, out.x);
-    original_bbox = outrect;
 //     // copy pp output into output with target dimensions, removing ker borders
 //     tmp2 = resized.narrow(1, outrect.height, outrect.h0 + kernelsz / 2);
 //     tmp2 = tmp2.narrow(2, outrect.width, outrect.w0 + kernelsz / 2);

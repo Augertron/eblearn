@@ -962,7 +962,10 @@ namespace ebl {
     rect();
     rect(const rect &r);
     virtual ~rect();
+    //! return true if current rectangle overlaps with r.
     bool overlap(const rect &r);
+    //! return true current rectangle is entirely contained in r.
+    bool is_within(const rect &r);
     uint h0, w0, height, width;
 
     // friends
