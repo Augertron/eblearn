@@ -100,6 +100,8 @@ namespace ebl {
     mpc = numeric_limits<intg>::max();
     init_drand(time(NULL)); // initialize random seed
     usepose = false;
+    useparts = false;
+    usepartsonly = false;
     save_mode = DATASET_SAVE;
 #ifndef __BOOST__
     eblerror(BOOST_LIB_ERROR);

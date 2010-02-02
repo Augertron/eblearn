@@ -325,8 +325,8 @@ namespace ebl {
     // compute scales
     resolutions.resize1(0, nresolutions);
     for (i = 0; i < nresolutions; ++i) {
-      resolutions.set(mscale * scales[i] * input_dims.dim(0), i, 0);
-      resolutions.set(mscale * scales[i] * input_dims.dim(1), i, 1);
+      resolutions.set((uint) (mscale * scales[i] * input_dims.dim(0)), i, 0);
+      resolutions.set((uint) (mscale * scales[i] * input_dims.dim(1)), i, 1);
     }
   }
 
