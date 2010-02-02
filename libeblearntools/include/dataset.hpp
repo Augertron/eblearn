@@ -867,7 +867,6 @@ namespace ebl {
   preprocess_data(idx<Tdata> &dat, const string &class_name, bool squared,
 		  const char *filename, const rect *r, double scale,
 		  bool active_sleepd) {
-    uint dh = 0, dw = 1;
     // resize image to target dims
     rect out_region, cropped;
     idxdim d(outdims);
@@ -890,6 +889,7 @@ namespace ebl {
       disable_window_updates();
       clear_window();
       uint h = 0, w = 0;
+      uint dh = 0, dw = 1;
       ostringstream oss;
       // display resized
       oss.str("");

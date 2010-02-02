@@ -86,6 +86,7 @@ namespace ebl {
       cmd << "cp " << classesname.str() << " " << outdir.str() << "/";
       cmd << conf.get_name() << "_" << CLASSES_NAME << MATRIX_EXTENSION;
       res = system(cmd.str().c_str());
+      cout << "copying class names file: " << cmd.str() << endl;
     }
     // create configuration file
     conf.set("job_name", conf.get_name().c_str()); // add config name into config

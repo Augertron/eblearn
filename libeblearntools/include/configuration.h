@@ -97,7 +97,8 @@ namespace ebl {
 
     //! load configuration from already loaded map of variables, name and
     //! output directory.
-    configuration(string_map_t &smap, textlist &txt, string &name, string &output_dir);
+    configuration(string_map_t &smap, textlist &txt, string &name, 
+		  string &output_dir);
 
     //! destructor.
     virtual ~configuration();
