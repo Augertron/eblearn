@@ -87,5 +87,5 @@ mkdir $outbg 2> /dev/null > /dev/null
  #-usepose -mindims 16x16 
 
 # print out information about extracted datasets to check that their are ok
-~/eblearn/bin/dsdisplay ${namebg} -info
-~/eblearn/bin/dsdisplay ${partsname} -info
+~/eblearn/bin/dsdisplay ${out}/${namebg} -info
+~/eblearn/bin/dsdisplay ${out}/${partsname} -info
