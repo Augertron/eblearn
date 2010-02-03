@@ -100,8 +100,6 @@ namespace ebl {
       }
     }
     // convert Y to Yp
-    idx<T> tmp2 = out.x.select(0, 0);
-    idx<T> tmp3 = tmp.x.select(0, 0);
     idx_std_normalize(tmp.x, tmp.x); // global
     norm.fprop(tmp, out); // local
   }
@@ -182,9 +180,9 @@ namespace ebl {
   void bgr_to_yp_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     // BGR to YUV
-    idx_eloop2(inx, in.x, T, outx, out.x, T) {
-      idx_eloop2(inxx, inx, T, outxx, outx, T) {
-	bgr_to_y_1D(inxx, outxx);
+    idx_eloop2(inx, in.x, T, tmpx, tmp.x, T) {
+      idx_eloop2(inxx, inx, T, tmpxx, tmpx, T) {
+	bgr_to_y_1D(inxx, tmpxx);
       }
     }
     // convert Y to Yp
