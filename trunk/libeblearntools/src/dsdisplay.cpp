@@ -54,14 +54,6 @@ bool		info = false;	//!< only print information and quit
 vector<double>	range;		//!< display range of values
 
 ////////////////////////////////////////////////////////////////
-// definitions
-
-// the images will be displayed between range_min and range_max, which
-// are initialized with those values. (0,0) meaning automatic range.
-#define DEFAULT_DISPLAY_RANGE_MIN 0 // (0,0) -> automatic range
-#define DEFAULT_DISPLAY_RANGE_MAX 0 // (0,0) -> automatic range
-
-////////////////////////////////////////////////////////////////
 // interface
 
 // print command line usage
@@ -174,9 +166,6 @@ int main(int argc, char **argv) {
   idx<ubyte>	classes(1, 1);
   idx<int>	classpairs(1, 1);
   idx<int>	defpairs(1, 1);
-  // range of values to use for displaying images (automatic by default)
-  t_data range_min = DEFAULT_DISPLAY_RANGE_MIN;
-  t_data range_max = DEFAULT_DISPLAY_RANGE_MAX;
 
   //for (int i = 0 ; i < argc ; i++)cout<<"argv["<<i<<"]: "<<argv[i]<<endl;
   cout << "___________________________________________________________________";
