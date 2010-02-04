@@ -151,6 +151,23 @@ namespace ebl {
     y.set(  0.299 * r + 0.587 * g + 0.114 * b, 0);
   }
 
+  template<class T> void bgr_to_y(idx<T> &bgr, idx<T> &y) {
+    switch (bgr.order()) {
+    case 1: // process 1 pixel
+      bgr_to_y_1D(bgr, y);
+      return ;
+    case 3: // process 2D image
+      { idx_bloop2(bg, bgr, T, yy, y, T) {
+	  { idx_bloop2(b, bg, T, yyy, yy, T) {
+	      rgb_to_y_1D(b, yyy);
+	    }}
+	}}
+      return ;
+    default:
+      eblerror("bgr_to_y dimension not implemented");
+    }
+  }
+  
   ////////////////////////////////////////////////////////////////
   // YUV -> RGB
   
