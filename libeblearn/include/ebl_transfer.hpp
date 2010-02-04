@@ -39,7 +39,8 @@ namespace ebl {
   template <class T>
   weighted_std_module<T>::weighted_std_module(uint kernelh, uint kernelw,
 					      int nf, bool mirror,
-					      bool threshold_)
+					      bool threshold_,
+					      bool global_norm_)
     : convmean(true),
       convvar(true),
       sqrtmod(.5), // square root module
@@ -56,7 +57,8 @@ namespace ebl {
       instd(1, 1, 1),
       thstd(1, 1, 1),
       invstd(1, 1, 1),
-      threshold(threshold_)
+      threshold(threshold_),
+      global_norm(global_norm_)
   {
     //! create little objects to do math
     //! zero pad borders
@@ -114,6 +116,8 @@ namespace ebl {
   //! </code>}
   template <class T>
   void weighted_std_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+    if (global_norm) // global normalization
+      idx_std_normalize(in.x, in.x);
     T a = 1e-5; // avoid divisions by zero
     //! sum_j (w_j * in_j)
     convmean.fprop(in, inmean);

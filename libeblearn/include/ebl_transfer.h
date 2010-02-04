@@ -59,6 +59,7 @@ namespace ebl {
     parameter<T>	param;
     idx<T>              w;	//!< weights
     bool                threshold;
+    bool                global_norm; //!< perform global normalization first
 
   public:
     //! <weighting> is <idx2<double>> that defines the weighting around
@@ -67,7 +68,8 @@ namespace ebl {
     //! \param mirror Use mirroring of the input to pad border if true,
     //!               or use zero-padding otherwise (default).
     weighted_std_module(uint kernelh, uint kernelw, int nf,
-			bool mirror = false, bool threshold = true);
+			bool mirror = false, bool threshold = true,
+			bool global_norm = false);
     //! destructor
     virtual ~weighted_std_module();    
     //! forward propagation from in to out

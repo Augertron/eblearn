@@ -38,14 +38,6 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // interface with opencv
   
-  idx<ubyte> ipl2idx(IplImage *im) {
-    idx<ubyte> f;
-    f = idx<ubyte>(im->height, im->width, im->nChannels);
-    memcpy(f.idx_ptr(), im->imageData,
-	   im->width * im->height * im->nChannels * sizeof (ubyte));
-    return f;
-  }
-  
 #endif /* __OPENCV__ */
 
 } // end namespace ebl

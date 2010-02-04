@@ -76,6 +76,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // BGR -> YUV
 
+  //! BGR to Y, looping on the 3rd dimension if present, calling bgr_to_y_1D
+  //! otherwise.
+  //! The output y is expected to be allocated with the correct size.
+  template<class T>
+    void bgr_to_y(idx<T> &bgr, idx<T> &y);
+
   //! BGR to YUV, on a 1-dimensional idx bgr.
   //! The output y is expected to be allocated with the correct size.
   template<class T>
