@@ -118,37 +118,35 @@ void image_test::test_resize() {
 #endif
 
   // mean resize
-  idx<float> im4(im.get_idxdim());
-  idx_copy(im, im4);
-  idx<float> im5 = image_mean_resize(im4, 96, 96, 0);
-  idx<float> im6 = image_resize(im4, 96, 96, 0);
-  idx<float> im7 = image_mean_resize(im4, 32, 32, 0);
-  idx<float> im8 = image_resize(im4, 32, 32, 0);
-  rect iregion(50, 50, 50, 150);
-  rect oregion;
-  idx<float> im9 = image_mean_resize(im4, 64, 64, 0, &iregion, &oregion);
+  idx<float> im10(im.get_idxdim());
+  idx_copy(im, im10);
+  idx<float> im11 = image_mean_resize(im10, 96, 96, 0);
+  idx<float> im12 = image_resize(im10, 96, 96, 0);
+  idx<float> im13 = image_mean_resize(im10, 32, 32, 0);
+  idx<float> im14 = image_resize(im10, 32, 32, 0);
+  idx<float> im15 = image_mean_resize(im10, 64, 64, 0, &iregion, &oregion);
 #ifdef __GUI__  
 #ifdef __SHOW__
-  draw_matrix(im5, hy, wx);
-  gui << at(hy, wx) << "mean " << im5;
-  wx += im5.dim(1) + 2;
-  draw_matrix(im6, hy, wx);
-  gui << at(hy, wx) << "bil " << im6;
-  wx += im6.dim(1) + 2;
-  draw_matrix(im7, hy, wx);
-  gui << at(hy + 26, wx) << "g " << im7;
-  wx += im7.dim(1) + 2;
-  draw_matrix(im8, hy, wx);
-  gui << at(hy + 26 + 15, wx) << "b " << im8;
-  wx += im8.dim(1) + 2;
-  hy += im5.dim(0);
+  draw_matrix(im11, hy, wx);
+  gui << at(hy, wx) << "mean " << im11;
+  wx += im11.dim(1) + 2;
+  draw_matrix(im12, hy, wx);
+  gui << at(hy, wx) << "bil " << im12;
+  wx += im12.dim(1) + 2;
+  draw_matrix(im13, hy, wx);
+  gui << at(hy + 26, wx) << "g " << im13;
+  wx += im13.dim(1) + 2;
+  draw_matrix(im14, hy, wx);
+  gui << at(hy + 26 + 15, wx) << "b " << im14;
+  wx += im14.dim(1) + 2;
+  hy += im11.dim(0);
   wx = 0;
-  draw_matrix(im9, hy, wx);
+  draw_matrix(im15, hy, wx);
   draw_box(hy + oregion.h0, wx + oregion.w0, oregion.height, oregion.width);
-  wx += im9.dim(1) + 2;
+  wx += im15.dim(1) + 2;
   draw_box(iregion.h0, iregion.w0, iregion.height, iregion.width);
   gui << at(hy, wx) << "oregion: " << oregion;
-  gui << at(hy + 15, wx) << "oimage: " << im9;
+  gui << at(hy + 15, wx) << "oimage: " << im15;
 #endif
 #endif
 }
