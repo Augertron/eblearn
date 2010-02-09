@@ -263,6 +263,10 @@ namespace ebl {
       // rescale original bboxes
       double ratio = MAX(im.dim(0) / (double) outdims.dim(0),
 			 im.dim(1) / (double) outdims.dim(1)) / *i;
+      // do not upsample to avoid creating artefacts
+      if (ratio < 1)
+	continue ; // do nothing for this scale
+      // rescale original bboxes
       for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb) {
 	rect rs = *ibb / ratio;
 	if (im.dim(0) < im.dim(1))

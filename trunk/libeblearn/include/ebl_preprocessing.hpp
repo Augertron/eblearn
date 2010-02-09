@@ -198,10 +198,10 @@ namespace ebl {
 
   template <class T>
   resizepp_module<T>::
-  resizepp_module(intg height_, intg width_, bool gaussian_,
+  resizepp_module(intg height_, intg width_, uint mode_,
 		  module_1_1<T> *pp_, uint kernelsz_)
     : pp(pp_), kernelsz(kernelsz_), inpp(1,1,1), outpp(1,1,1),
-      gaussian(gaussian_), inrect(0, 0, 0, 0), inrect_set(false) {
+      mode(mode_), inrect(0, 0, 0, 0), inrect_set(false) {
     set_dimensions(height_, width_);
   }
   
@@ -229,10 +229,19 @@ namespace ebl {
     // resize input while preserving aspect ratio
     tmp = in.x.shift_dim(0, 2);
     idx<T> resized;
-    if (gaussian)
+    switch (mode) {
+    case MEAN_RESIZE:
+      resized =	image_mean_resize(tmp, height,width, 0, &inrect, &outrect);
+      break ;
+    case GAUSSIAN_RESIZE:
       resized =	image_gaussian_resize(tmp, height,width, 0, &inrect, &outrect);
-    else
+      break ;
+    case BILINEAR_RESIZE:
       resized =	image_resize(tmp, height, width, 0, &inrect, &outrect);
+      break ;
+    default:
+      eblerror("unknown resizing mode");
+    }
     resized = resized.shift_dim(2, 0); 
     // call preprocessing
     if (pp) { // no preprocessing if NULL module

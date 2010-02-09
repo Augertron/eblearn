@@ -69,7 +69,7 @@ unsigned int	mexican_hat_size = 0;
 uint		kernelsz	 = 9; // kernel size for preprocessing
 int		deformations	 = -1;	// <= means no deformations
 string		type		 = "regular";
-string          resize           = "bilinear";
+string          resize           = "mean";
 string		precision	 = "float";
 uint		sleep_delay	 = 0;	// sleep between frames displayed in ms
 idxdim          outdims;	        // dimensions of output sample
@@ -306,7 +306,7 @@ void print_usage() {
   cout << "     (exclude inputs for which one dimension is less than specified";
   cout << endl;
   cout << "  -scales <scales (e.g: 1.5,2,4)>" << endl;
-  cout << "  -resize <gaussian(default)|bilinear" << endl; 
+  cout << "  -resize <mean(default)|gaussian|bilinear" << endl; 
   cout << "  -exclude <class name> (include all but excluded classes," << endl;
   cout << "                         exclude can be called multiple times)";
   cout << endl;
@@ -362,6 +362,7 @@ void compile() {
     if (partsonly) ds.use_parts_only();
     ds.set_exclude(exclude);
     ds.set_include(include);
+    ds.set_resize(resize);
     if (outdims_set) ds.set_outdims(outdims);
     if (mindims_set) ds.set_mindims(mindims);
     ds.set_display(display);
@@ -379,6 +380,7 @@ void compile() {
     ds.set_exclude(exclude);
     ds.set_include(include);
     ds.set_display(display);
+    ds.set_resize(resize);
     ds.set_sleepdisplay(sleep_delay);
     if (maxdata > 0)
       ds.set_max_data(maxdata);

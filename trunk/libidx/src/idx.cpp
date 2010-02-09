@@ -227,7 +227,6 @@ namespace ebl {
     // we do not initialize ndim before setndim here because it may already 
     // be initialized.
     setndim(src.ndim);
-    chandim = src.chandim;
     if (ndim > 0) {
       memcpy(dim, src.dim, ndim * sizeof(intg));
       memcpy(mod, src.mod, ndim * sizeof(intg));
@@ -244,7 +243,6 @@ namespace ebl {
     ndim = 0;
     offset = 0;
     dim = NULL; mod = NULL;
-    chandim = -1;
   }
 
   //idxspec::idxspec( const idxspec& other )
@@ -267,7 +265,6 @@ namespace ebl {
     ndim = 0;
     offset = o;
     dim = NULL; mod = NULL;
-    chandim = -1;
   }
 
   // constructor for idx1
@@ -280,7 +277,6 @@ namespace ebl {
     setndim(1);
     dim[0] = size0;
     mod[0] = 1;
-    chandim = -1;
   }
 
   // constructor for idx2
@@ -295,7 +291,6 @@ namespace ebl {
     mod[0] = size1;
     dim[1] = size1;
     mod[1] = 1;
-    chandim = -1;
   }
 
   // constructor for idx3
@@ -312,7 +307,6 @@ namespace ebl {
     mod[1] = size2;
     dim[2] = size2;
     mod[2] = 1;
-    chandim = -1;
   }
 
   // generic constructor for any dimension.
@@ -365,14 +359,15 @@ namespace ebl {
       } else { if (ndimset) { throw(-1); } }
       if (!ndimset) { setndim(0); }
     }
-    catch(int v) { eblerror("idxspec: bad dimensions in constructor"); }
-    chandim = -1;
+    catch(int v) {
+      cerr << "bad dimensions: " << s0 << "x" << s1 << "x" << s2 << "x" << s3;
+      cerr << "x" << s4 << "x" << s5 << "x" << s6 << "x" << s7 << endl;
+      eblerror("idxspec: bad dimensions in constructor"); }
   }
 
   idxspec::idxspec(intg o, const idxdim &d) {
     init_spec(o, d.dim(0), d.dim(1), d.dim(2), d.dim(3), d.dim(4), d.dim(5), 
 	      d.dim(6), d.dim(7));
-    chandim = d.chandim;
   }
 
   // generic constructor for any dimension.
@@ -387,7 +382,6 @@ namespace ebl {
       if (ldim[i] < 0) eblerror("negative dimension");
       dim[i] = ldim[i]; mod[i] = lmod[i]; 
     }
-    chandim = -1;
   }
 
   intg idxspec::footprint()  {
@@ -432,7 +426,6 @@ namespace ebl {
     }
     fprintf(f,"    footprint= %ld\n",footprint());
     fprintf(f,"    contiguous= %s\n",(contiguousp())?"yes":"no");
-    fprintf(f,"    chandim= %d\n",chandim);
   }
 
   void idxspec::pretty(std::ostream& out) {
@@ -452,7 +445,6 @@ namespace ebl {
     }
     out << "    footprint= " << footprint() << "\n";
     out << "    contiguous= " << ((contiguousp())? "yes":"no") << "\n";
-    out << "    chandim= " << chandim << endl;
   }
   ////////////////////////////////////////////////////////////////
   // select, narrow, unfold, etc
@@ -482,15 +474,6 @@ namespace ebl {
 	dst->dim[j] = dim[j+1];
 	dst->mod[j] = mod[j+1];
       }
-    }
-    // update chandim
-    if (chandim != -1) {
-      if (chandim == d)
-	dst->chandim = -1; // chandim is selected, hence removed
-      else if (chandim < d)
-	dst->chandim = chandim; // chandim before, not changed
-      else if (chandim > d)
-	dst->chandim = chandim - 1; // chandim after, decremented
     }
     return n;
   }
@@ -528,7 +511,6 @@ namespace ebl {
       dst->mod[j] = mod[j];
     }
     dst->dim[d] = s;
-    dst->chandim = chandim;
     return s;
   }
 
@@ -565,30 +547,20 @@ namespace ebl {
     // we do this in case dst = this
     tmp=dim[d1]; dst->dim[d1]=dim[d2]; dst->dim[d2]=tmp;
     tmp=mod[d1]; dst->mod[d1]=mod[d2]; dst->mod[d2]=tmp;
-    // transpose chandim
-    if (chandim != -1) {
-      if (chandim == d1) dst->chandim = d2;
-      else if (chandim == d2) dst->chandim = d1;
-    }
     return ndim;
   }
 
   // tranpose all dims with a permutation vector
   int idxspec::transpose_into(idxspec *dst, int *p) {
-    int new_chandim = -1;
     try {
       for (int i=0; i<ndim; i++) {
 	if ((p[i] < 0) || (p[i] >= ndim)) 
 	  throw("tranpose: illegal dimension index");
-	if ((chandim != -1) && (p[i] == chandim))
-	  new_chandim = i;
       }
     }
     catch(const char *s) { eblerror(s); return -1;}
     dst->setndim(ndim);
     dst->offset = offset;
-    if (new_chandim != -1)
-      dst->chandim = new_chandim;
     if (dst == this) {
       // we need temp storage if done in place
       intg tmpdim[MAXDIMS], tmpmod[MAXDIMS];
@@ -675,28 +647,6 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // chandim
-
-  void idxspec::set_chandim(int d) {
-    try {
-      if ((d >= ndim) || (d < -1)) throw "dimension does not exist";
-      if ((chandim != -1) && (d != chandim))
-	throw "channel dimension is already set, cannot change it.";
-      // set dimension
-      chandim = d;
-    }
-    catch(const char *err) {
-      cerr << "error: trying to set channels dimension to " << d;
-      cerr << " in " << *this << ", " << err << endl;
-      eblerror("failed to set channels dimensions");
-    }
-  }
-  
-  int idxspec::get_chandim() {
-    return chandim;
-  }
-  
-  ////////////////////////////////////////////////////////////////
 
   // return true if two idxspec have the same dimensions,
   // i.e. if all their dimensions are equal (regardless of strides).
@@ -714,7 +664,6 @@ namespace ebl {
 
   idxdim::idxdim() {
     ndim = -1;
-    chandim = -1;
   }
   
   idxdim::idxdim(const idxspec &s) {
@@ -733,7 +682,6 @@ namespace ebl {
     for (int i=0; i<8; i++)
       if (dims[i] >= 0) ndim++;
       else break;
-    chandim = -1;
   }
 
   intg idxdim::order() const {
@@ -748,7 +696,6 @@ namespace ebl {
     memcpy(dims, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
     // set remaining to -1
     memset(dims + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg));
-    chandim = s.chandim;
   } 
   
   void idxdim::setdims(const idxdim &s) {
@@ -757,7 +704,6 @@ namespace ebl {
       dims[i] = s.dim(i);
     // set remaining to -1
     memset(dims + s.order(), -1, (MAXDIMS - s.order()) * sizeof (intg)); 
-    chandim = s.chandim;
   }
   
   bool idxdim::insert_dim(intg dim_size, uint pos) {
@@ -776,8 +722,6 @@ namespace ebl {
     for (uint i = ndim - 1; i > pos && i >= 1; i--)
       dims[i] = dims[i - 1];
     dims[pos] = dim_size;
-    if ((chandim != -1) && (pos <= (uint) chandim))
-      chandim++;
     return true;
   }
  
@@ -789,23 +733,6 @@ namespace ebl {
       eblerror("cannot change the order of idxdim");
     }
     dims[dimn] = size; 
-  }
-
-  void idxdim::set_chandim(int d) {
-    try {
-      if ((d >= ndim) || (d < 0)) throw "dimension does not exist";
-      // set dimension
-      chandim = d;
-    }
-    catch(const char *err) {
-      cerr << "trying to set channels dimension to " << d << " in " << this;
-      cerr << endl << err << endl;
-      eblerror("failed to set channels dimensions");
-    }
-  }
-
-  int idxdim::get_chandim() {
-    return chandim;
   }
 
   intg idxdim::dim(intg dimn) const {

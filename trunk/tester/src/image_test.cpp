@@ -48,104 +48,103 @@ void image_test::test_resize() {
   imgfile += "/barn.png";
 
   load_image(imgfile.c_str(), im);
-  //  im = im.select(2, 0);
 #ifdef __GUI__  
 #ifdef __SHOW__
   new_window("image_test");
-  //  im = image_resize(im, im.dim(0) + 10, im.dim(1) + 10);
-  //im = image_resize(im, 100, 100);
   draw_matrix(im, "Testing images operations...");
   gui << at(15, 0) << im;
-  int hy = 0;
-  int wx = im.dim(1) + 2;
+  int h = 0, w = im.dim(1) + 2;
 #endif
 #endif
 
 #ifdef __GUI__  
 #ifdef __SHOW__
-//   gui.new_window("image_test2");
-//   for (int i = 0; i < 10; ++i) {
-//     gui.draw_matrix(im, 0, wx);
-//     wx += im.dim(1) + 2;
-//   }
   idx<ubyte> im2 = image_resize(im, 50, 200, 0);
   idx<ubyte> im3 = image_resize(im, 50, 200, 1);
-  draw_matrix(im2, hy, wx);
-  gui << at(hy, wx) << im2;
-  wx += im2.dim(1) + 2;
-  draw_matrix(im3, hy, wx);
-  gui << at(hy, wx) << "ignore ratio " << im3;
-  wx += im3.dim(1) + 2;
+  draw_matrix(im2, h, w);
+  gui << at(h, w) << im2;
+  w += im2.dim(1) + 2;
+  draw_matrix(im3, h, w);
+  gui << at(h, w) << "ignore ratio " << im3;
+  w += im3.dim(1) + 2;
+  h = im.dim(0) + 2;
 #endif
 #endif
-
-  // gaussian resize
+  // float version
   idx<float> im4(im.get_idxdim());
   idx_copy(im, im4);
-  idx<float> im5 = image_gaussian_resize(im4, 96, 96, 0);
-  idx<float> im6 = image_resize(im4, 96, 96, 0);
-  idx<float> im7 = image_gaussian_resize(im4, 32, 32, 0);
-  idx<float> im8 = image_resize(im4, 32, 32, 0);
+  // test downsizing
+  idx<float> im5 = image_resize(im4, 96, 96, 0);
+  idx<float> im6 = image_gaussian_resize(im4, 96, 96, 0);
+  idx<float> im7 = image_mean_resize(im4, 96, 96, 0);
+  idx<float> im8 = image_resize(im4, 64, 64, 0);
+  idx<float> im9 = image_gaussian_resize(im4, 64, 64, 0);
+  idx<float> im10 = image_mean_resize(im4, 64, 64, 0);
+  idx<float> im11 = image_resize(im4, 32, 32, 0);
+  idx<float> im12 = image_gaussian_resize(im4, 32, 32, 0);
+  idx<float> im13 = image_mean_resize(im4, 32, 32, 0);
+  // test upsizing starting from mean downsampled image
+  idx<float> im14 = image_resize(im13, 96, 96, 0);
+  idx<float> im15 = image_gaussian_resize(im13, 96, 96, 0);
+  idx<float> im16 = image_mean_resize(im13, 96, 96, 0);
+  idx<float> im17 = image_resize(im10, 96, 96, 0);
+  idx<float> im18 = image_gaussian_resize(im10, 96, 96, 0);
+  idx<float> im19 = image_mean_resize(im10, 96, 96, 0);
+  // test resizing of region of the original image
   rect iregion(50, 50, 50, 150);
-  rect oregion;
-  idx<float> im9 = image_gaussian_resize(im4, 64, 64, 0, &iregion, &oregion);
+  rect oregion1, oregion2, oregion3;
+  idx<float> im20 = image_resize(im4, 64, 64, 0, &iregion, &oregion1);
+  idx<float> im21 = image_gaussian_resize(im4, 64, 64, 0, &iregion, &oregion2);
+  idx<float> im22 = image_mean_resize(im4, 64, 64, 0, &iregion, &oregion3);
 #ifdef __GUI__  
 #ifdef __SHOW__
-  draw_matrix(im5, hy, wx);
-  gui << at(hy, wx) << "gauss " << im5;
-  wx += im5.dim(1) + 2;
-  draw_matrix(im6, hy, wx);
-  gui << at(hy, wx) << "bil " << im6;
-  wx += im6.dim(1) + 2;
-  draw_matrix(im7, hy, wx);
-  gui << at(hy + 26, wx) << "g " << im7;
-  wx += im7.dim(1) + 2;
-  draw_matrix(im8, hy, wx);
-  gui << at(hy + 26 + 15, wx) << "b " << im8;
-  wx += im8.dim(1) + 2;
-  hy += 100;
-  wx = im.dim(1) + 2;
-  draw_matrix(im9, hy, wx);
-  draw_box(hy + oregion.h0, wx + oregion.w0, oregion.height, oregion.width);
-  wx += im9.dim(1) + 2;
-  draw_box(iregion.h0, iregion.w0, iregion.height, iregion.width);
-  gui << at(hy, wx) << "oregion: " << oregion;
-  gui << at(hy + 15, wx) << "oimage: " << im9;
-  hy = im.dim(0) + 2;
-  wx = 0;
-#endif
-#endif
-
-  // mean resize
-  idx<float> im10(im.get_idxdim());
-  idx_copy(im, im10);
-  idx<float> im11 = image_mean_resize(im10, 96, 96, 0);
-  idx<float> im12 = image_resize(im10, 96, 96, 0);
-  idx<float> im13 = image_mean_resize(im10, 32, 32, 0);
-  idx<float> im14 = image_resize(im10, 32, 32, 0);
-  idx<float> im15 = image_mean_resize(im10, 64, 64, 0, &iregion, &oregion);
-#ifdef __GUI__  
-#ifdef __SHOW__
-  draw_matrix(im11, hy, wx);
-  gui << at(hy, wx) << "mean " << im11;
-  wx += im11.dim(1) + 2;
-  draw_matrix(im12, hy, wx);
-  gui << at(hy, wx) << "bil " << im12;
-  wx += im12.dim(1) + 2;
-  draw_matrix(im13, hy, wx);
-  gui << at(hy + 26, wx) << "g " << im13;
-  wx += im13.dim(1) + 2;
-  draw_matrix(im14, hy, wx);
-  gui << at(hy + 26 + 15, wx) << "b " << im14;
-  wx += im14.dim(1) + 2;
-  hy += im11.dim(0);
-  wx = 0;
-  draw_matrix(im15, hy, wx);
-  draw_box(hy + oregion.h0, wx + oregion.w0, oregion.height, oregion.width);
-  wx += im15.dim(1) + 2;
-  draw_box(iregion.h0, iregion.w0, iregion.height, iregion.width);
-  gui << at(hy, wx) << "oregion: " << oregion;
-  gui << at(hy + 15, wx) << "oimage: " << im15;
+  w = 0;
+  gui << black_on_white();
+  gui << at(h, w) << "downsizing tests:";
+  h += 15;
+  gui << at(h, w)<< "bilinear, gaussian and mean from ";
+  gui << im4 << " to " << im5 << ", " << im8 << " and " << im11;
+  h += 30;
+  draw_matrix(im5, h, w); gui << at(h - 15, w) << im5; w += im5.dim(1) + 2;
+  draw_matrix(im6, h, w); gui << at(h - 15, w) << im6; w += im6.dim(1) + 2;
+  draw_matrix(im7, h, w); gui << at(h - 15, w) << im7; w += im7.dim(1) + 2;
+  draw_matrix(im8, h, w); gui << at(h - 15, w) << im8; w += im8.dim(1) + 2;
+  draw_matrix(im9, h, w); gui << at(h - 15, w) << im9; w += im9.dim(1) + 2;
+  draw_matrix(im10, h, w); gui << at(h - 15, w) << im10; w += im10.dim(1) + 2;
+  draw_matrix(im11, h, w); gui << at(h - 15, w) << im11; w += im11.dim(1) + 2;
+  draw_matrix(im12, h, w); gui << at(h - 15, w) << im12; w += im12.dim(1) + 2;
+  draw_matrix(im13, h, w); gui << at(h - 15, w) << im13; w += im13.dim(1) + 2;
+  w = 0; h += im6.dim(0) + 2;
+  gui << at(h, w) << "upsizing tests:";
+  h += 15;
+  gui << at(h, w)<< "bilinear, gaussian and mean from ";
+  gui << im13 << " and " << im10 << " (mean downsampled) to " << im14;
+  h += 30;
+  draw_matrix(im14, h, w); gui << at(h - 15, w) << im14; w += im14.dim(1) + 2;
+  draw_matrix(im15, h, w); gui << at(h - 15, w) << im15; w += im15.dim(1) + 2;
+  draw_matrix(im16, h, w); gui << at(h - 15, w) << im16; w += im16.dim(1) + 2;
+  draw_matrix(im17, h, w); gui << at(h - 15, w) << im17; w += im17.dim(1) + 2;
+  draw_matrix(im18, h, w); gui << at(h - 15, w) << im18; w += im18.dim(1) + 2;
+  draw_matrix(im19, h, w); gui << at(h - 15, w) << im19; w += im19.dim(1) + 2;
+  w = 0; h += im14.dim(0) + 2;
+  gui << at(h, w) << "region resizing tests:";
+  h += 15;
+  gui << at(h, w)<< "bilinear, gaussian and mean from ";
+  gui << im << " and region " << iregion << " to 64x64";
+  h += 45;
+  draw_box(iregion.h0, iregion.w0, iregion.height, iregion.width); // original
+  draw_box(h + oregion1.h0, w + oregion1.w0, oregion1.height, oregion1.width);
+  draw_matrix(im20, h, w);
+  gui << at(h - 30, w) << im20 << at(h - 15, w) << oregion1;
+  w += im20.dim(1) + 2;
+  draw_box(h + oregion2.h0, w + oregion2.w0, oregion2.height, oregion2.width);
+  draw_matrix(im21, h, w);
+  gui << at(h - 30, w) << im21 << at(h - 15, w) << oregion2;
+  w += im21.dim(1) + 2;
+  draw_box(h + oregion3.h0, w + oregion3.w0, oregion3.height, oregion3.width);
+  draw_matrix(im22, h, w);
+  gui << at(h - 30, w) << im22 << at(h - 15, w) << oregion3;
+  w += im22.dim(1) + 2;
 #endif
 #endif
 }
