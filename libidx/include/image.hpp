@@ -303,25 +303,36 @@ namespace ebl {
       uint fact = 1;
       uint mindist = numeric_limits<uint>::max();
       uint area = iregion.height * iregion.width;
-      uint dist = abs(outr.height * outr.width * fact * fact - area);
+      uint dist = abs((int)(outr.height * outr.width * fact * fact) -(int)area);
       while (dist <= mindist) {
-	minstdist = dist;
+	mindist = dist;
 	fact++;
-	dist = abs(outr.height * outr.width * fact * fact - area);
+	dist = abs((int)(outr.height * outr.width * fact * fact) - (int)area);
       }
       cout << "in: " << iregion << " fact: " << fact << " outr: " << outr<<endl;
       // bilinear resize at closest resolution to current resolution
-      rim = image_resize(im, outr.height * fact, outr.width * fact, 1);
+      rect ooutr;
+      rim = image_resize(im, outr.height * fact, outr.width * fact, 1,
+			 &outr, &ooutr);
+      // add extra padding around original image if it's not a multiple of fact
+      rect rrim(0, 0, rim.dim(0), rim.dim(1));
+      rect cropped;
+      uint hmod = rim.dim(0) % fact;
+      if (!hmod) hmod = fact - hmod;
+      uint wmod = rim.dim(1) % fact;
+      if (!wmod) wmod = fact - wmod;
+      idx<T> rimf = image_region_to_rect(rim, rrim, rim.dim(0) + hmod,
+					 rim.dim(1) + wmod, &cropped);
       // allocate output
       idxdim d(im);
       d.setdim(0, outr.height);
       d.setdim(0, outr.width);
       rim = idx<T>(outr);
       // now mean resize to exact target size
-      for (uint i = 0; i < outr.height
-      rim = rim.shift_dim(2, 0);
-      rim = gp.reduce(rim, reductions);
-      rim = rim.shift_dim(0, 2);
+      //      for (uint i = 0; i < outr.height
+      // rim = rim.shift_dim(2, 0);
+      // rim = gp.reduce(rim, reductions);
+      // rim = rim.shift_dim(0, 2);
     ////////////////////////////////////////////////////////////////
     } else { // expand
       ;
