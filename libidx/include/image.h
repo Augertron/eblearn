@@ -68,22 +68,30 @@ namespace ebl {
 			rect *iregion = NULL, rect *oregion = NULL);
 
   //! resizes an image (a region iregion of im if specified) into an image of
-  //! size oheightxowidth using gaussian pyramids. returns result.
-  //! the resizing of im is tolerated to end up within owidth and 
-  //! percentage below (owidth - owidth * margin). same with oheight.
+  //! size oheightxowidth using gaussian pyramids. Bilinear resizing is first
+  //! used to resize to the closest gaussian-compatible size, then subsample by
+  //! with gaussians to reach target size.
   //! The output will still be an image of size oheightxowidth centered on the
   //! iregion (the entire image if not specified).
   //! oregion is filled by the function if given and represents the resized
   //! region of iregion.
   template<class T>
-    idx<T> image_gaussian_resize(idx<T> &im_, uint oheight, uint owidth,
-				 float margin = 0.0,
-				 rect *iregion = NULL, rect *oregion = NULL);
-
-  template<class T>
-    idx<T> image_gaussian_resize2(idx<T> &im_, double oheight, double owidth,
+    idx<T> image_gaussian_resize(idx<T> &im_, double oheight, double owidth,
 				  uint mode = 0,
 				  rect *iregion = NULL, rect *oregion = NULL);
+
+  //! resizes an image (a region iregion of im if specified) into an image of
+  //! size oheightxowidth using mean. Bilinear resizing is first used to
+  //! resize to the closest power of 2 size, then subsample by taking mean of
+  //! power of 2 regions to reach target size.
+  //! The output will still be an image of size oheightxowidth centered on the
+  //! iregion (the entire image if not specified).
+  //! oregion is filled by the function if given and represents the resized
+  //! region of iregion.
+  template<class T>
+    idx<T> image_mean_resize(idx<T> &im_, double oheight, double owidth,
+			     uint mode = 0,
+			     rect *iregion = NULL, rect *oregion = NULL);
 
   //! returns the biggest square image including image region r.
   template<class T> 

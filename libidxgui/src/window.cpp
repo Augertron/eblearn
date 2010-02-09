@@ -290,7 +290,7 @@ namespace ebl {
   void Window::replace_scroll_box_with_copy(scroll_box0 *sb) {
     //cout << "replacing scroll box " << scrollbox << " with a copy: " << endl;
     scrollbox = sb->copy();
-    cout << scrollbox << endl;
+    //cout << scrollbox << endl;
   }
 
   ////////////////////////////////////////////////////////////////

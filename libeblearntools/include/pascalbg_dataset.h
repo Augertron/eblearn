@@ -52,7 +52,8 @@ namespace ebl {
     //! inroot is the root directory from which we extract data.
     //! ignore_diff ignores difficult objects if true.
     pascalbg_dataset(const char *name, const char *inroot, const char *outdir, 
-		     uint max_folders = 1, bool ignore_diff = true);
+		     uint max_folders = 1, bool ignore_diff = true,
+		     bool ignore_trunc = false, bool ignore_occl = false);
 
     //! Destructor.
     virtual ~pascalbg_dataset();
@@ -115,6 +116,8 @@ namespace ebl {
     using dataset<Tdata>::save_mode;
     using dataset<Tdata>::original_bbox;
     using pascal_dataset<Tdata>::ignore_difficult;
+    using pascal_dataset<Tdata>::ignore_truncated;
+    using pascal_dataset<Tdata>::ignore_occluded;
   };
 
 } // end namespace ebl

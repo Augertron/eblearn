@@ -161,115 +161,7 @@ namespace ebl {
   }
 
   template<class T>
-  idx<T> image_gaussian_resize(idx<T> &im_, uint oheight, uint owidth,
-			       float margin, rect *iregion_, rect *oregion) {
-    idx<T> im = im_.shift_chan(0);
-    // only accept 2D images or 3D with channel dim to 0.
-    if ((im.order() != 2) && ((im.order() == 3) && im.get_chandim() != 0)) {
-      cerr << "error: gaussian_pyramid only accepts 2D images ";
-      cerr << "or 3D images with channel dimension (chandim) set to 0. ";
-      cerr << "input image is " << im << " with chandim = " << im.get_chandim();
-      cerr << endl;
-      eblerror("unexpected image format");
-    }
-    // iregion is optional, set it to entire image if not given
-    rect iregion(0, 0, im.dim(1), im.dim(2));
-    if (iregion_)
-      iregion = *iregion_;
-    // if region's height and width are already within the margin below
-    // oheight and owidth, then just return the current image
-    // and set out_region to input region
-    uint oheight0 = MAX(0, (uint) (oheight - oheight * margin));
-    uint owidth0 = MAX(0, (uint) (owidth - owidth * margin));
-    if ((iregion.height <= oheight) && (iregion.height >= oheight0) &&
-	(iregion.width <= owidth) && (iregion.width >= owidth0)) {
-      if (oregion)
-	*oregion = iregion;
-      return im_;
-    }
-    // else down/up-sample with gaussians
-    gaussian_pyramid<T> gp;
-    idx<T> rim;
-    rect rr;
-    // compute edges that need most reduction
-    uint imax, omax;
-    if ((iregion.height / (float)oheight) > (iregion.width / (float)owidth)) {
-      imax = iregion.height;
-      omax = oheight;
-    } else {
-      imax = iregion.width;
-      omax = owidth;
-    }
-    // compute how many gaussian reduction/expansions necessary to reach target
-    if ((iregion.height > oheight) || (iregion.width > owidth)) { // reduce
-      // compute a regular resize of 1/sqrt(2) of the original size
-      // to add more scales than just by a factor of 2.
-      idx<T> im_sqrt2 = im.shift_chan(2); // image_resize expect chan in 2
-      im_sqrt2 = image_resize(im_sqrt2, 1/sqrt(2), 1/sqrt(2), 2);
-      im_sqrt2 = im_sqrt2.shift_chan(0);
-      rect r_sqrt2((uint)(iregion.h0 * 1/sqrt(2)), (uint)(iregion.w0 * 1/sqrt(2)),
-		   (uint)(iregion.height * 1/sqrt(2)), (uint)(iregion.width * 1/sqrt(2)));
-      // compute sqrt2 edges that need most reduction
-      uint imax_sqrt2;
-      if ((r_sqrt2.height / (float)oheight) < (r_sqrt2.width / (float)owidth)) {
-	imax_sqrt2 = r_sqrt2.height;
-      } else {
-	imax_sqrt2 = r_sqrt2.width;
-      }
-      uint dist, dist_sqrt2;
-      uint reductions = MAX(0, (int) gp.count_reductions(imax, omax, dist));
-      uint reductions_sqrt2 =
-	MAX(0, (int) gp.count_reductions(imax_sqrt2, omax, dist_sqrt2));
-      // switch between original and sqrt2 based on distance to outwidth
-      if (dist > dist_sqrt2) { // sqrt2 scale is closer to target
-	rim = gp.reduce(im_sqrt2, reductions_sqrt2);
-	rr = gp.reduce_rect(r_sqrt2, reductions_sqrt2);
-      } else { // original scale is closer to target
-	// reduce image reductions time
-	rim = gp.reduce(im, reductions);
-	rr = gp.reduce_rect(iregion, reductions);
-      }
-    } else { // expand
-      // compute a regular resize of 1/sqrt(2) of the original size
-      // to add more scales than just by a factor of 2.
-      idx<T> im_sqrt2 = im.shift_chan(2); // image_resize expect chan in 2
-      im_sqrt2 = image_resize(im_sqrt2, sqrt(2), sqrt(2), 2);
-      im_sqrt2 = im_sqrt2.shift_chan(0);
-      rect r_sqrt2((uint)(iregion.h0 * sqrt(2)), (uint)(iregion.w0 * sqrt(2)),
-		   (uint)(iregion.height * sqrt(2)), (uint)(iregion.width * sqrt(2)));
-      // compute sqrt2 edges that need most reduction
-      uint imax_sqrt2;
-      if ((r_sqrt2.height / (float)oheight) < (r_sqrt2.width / (float)owidth)) {
-	imax_sqrt2 = r_sqrt2.height;
-      } else {
-	imax_sqrt2 = r_sqrt2.width;
-      }
-      uint dist = 0, dist_sqrt2 = 0;
-      // number of expansions to stay below outwidth
-      uint expansions =
-	MAX(0, (int) gp.count_expansions(imax, omax, dist));
-      uint expansions_sqrt2 =
-	MAX(0, (int) gp.count_expansions(imax_sqrt2, omax, dist_sqrt2));
-      // switch between original and sqrt2 based on distance to outwidth
-      if (dist > dist_sqrt2) { // sqrt2 scale is closer to target
-	rim = gp.expand(im_sqrt2, expansions_sqrt2);
-	rr = gp.expand_rect(r_sqrt2, expansions_sqrt2);
-      } else { // original scale is closer to target
-	// expand
-	rim = gp.expand(im, expansions);
-	rr = gp.expand_rect(iregion, expansions);
-      }
-    }
-    // save resized input region into oregion, if defined
-    if (oregion)
-      *oregion = rr;
-    // put channel dim back to dimension 2
-    rim = rim.shift_chan(2);
-    return rim;
-  }
-
-  template<class T>
-  idx<T> image_gaussian_resize2(idx<T> &im, double oheight, double owidth,
+  idx<T> image_gaussian_resize(idx<T> &im, double oheight, double owidth,
 				uint mode, rect *iregion_, rect *oregion) {
     // only accept 2D or 3D images
     if ((im.order() != 2) && (im.order() != 3)) {
@@ -302,15 +194,15 @@ namespace ebl {
 	// more precise without the variable.
 	if (oheight / (double) iregion.height <
 	    owidth  / (double) iregion.width)
-	  outr = rect((uint) (iregion.h0     * oheight / (double) iregion.height),
-		      (uint) (iregion.w0     * oheight / (double) iregion.height),
-		      (uint) (iregion.height * oheight / (double) iregion.height),
-		      (uint) (iregion.width  * oheight / (double) iregion.height));
+	  outr = rect((uint)(iregion.h0 * oheight / (double)iregion.height),
+		      (uint)(iregion.w0 * oheight / (double)iregion.height),
+		      (uint)(iregion.height * oheight / (double)iregion.height),
+		      (uint)(iregion.width * oheight / (double)iregion.height));
 	else
-	  outr = rect((uint) (iregion.h0     * owidth / (double) iregion.width),
-		      (uint) (iregion.w0     * owidth / (double) iregion.width),
-		      (uint) (iregion.height * owidth / (double) iregion.width),
-		      (uint) (iregion.width  * owidth / (double) iregion.width));
+	  outr = rect((uint) (iregion.h0     * owidth / (double)iregion.width),
+		      (uint) (iregion.w0     * owidth / (double)iregion.width),
+		      (uint) (iregion.height * owidth / (double)iregion.width),
+		      (uint) (iregion.width  * owidth / (double)iregion.width));
 	reductions = gp.count_reductions_exact(iregion, outr, exact_inr);
 	break ;
       default:
@@ -354,6 +246,111 @@ namespace ebl {
       // bilinear resize to target resolution
       rim = rim.shift_dim(0, 2);
       rim = image_resize(rim, oheight, owidth, mode, &outr2, &outr);
+    }
+    ////////////////////////////////////////////////////////////////
+    if (oregion)
+      *oregion = outr;
+    return rim;
+  }
+
+  template<class T>
+  idx<T> image_mean_resize(idx<T> &im, double oheight, double owidth,
+				uint mode, rect *iregion_, rect *oregion) {
+    // only accept 2D or 3D images
+    if ((im.order() != 2) && (im.order() != 3)) {
+      cerr << "illegal order: " << im << endl;
+      eblerror("unexpected image format");
+    }
+    // iregion is optional, set it to entire image if not given
+    rect iregion(0, 0, im.dim(0), im.dim(1));
+    if (iregion_)
+      iregion = *iregion_;
+    // if region's height and width already have the correct size, return
+    if ((iregion.height == oheight) && (iregion.width <= owidth)) {
+      if (oregion)
+	*oregion = iregion;
+      return im;
+    }
+    // mean resize
+    rect outr;
+    idx<T> rim;
+    ////////////////////////////////////////////////////////////////
+    if ((iregion.width > owidth) && (iregion.height > oheight)) { // reduce
+      rect exact_inr;
+      uint reductions;
+  
+      switch (mode) {
+      case 0: // keep aspect ratio
+	// compute biggest down/up-sizing factor. do not use a double variable
+	// to compute ratio, compute it directly. somehow the results are
+	// more precise without the variable.
+	if (oheight / (double) iregion.height <
+	    owidth  / (double) iregion.width)
+	  outr = rect((uint)(iregion.h0 * oheight / (double) iregion.height),
+		      (uint)(iregion.w0 * oheight / (double) iregion.height),
+		      (uint)(iregion.height * oheight / (double)iregion.height),
+		      (uint)(iregion.width * oheight / (double)iregion.height));
+	else
+	  outr = rect((uint) (iregion.h0     * owidth / (double)iregion.width),
+		      (uint) (iregion.w0     * owidth / (double)iregion.width),
+		      (uint) (iregion.height * owidth / (double)iregion.width),
+		      (uint) (iregion.width  * owidth / (double)iregion.width));
+	break ;
+      default:
+	eblerror("unsupported mode");
+      }
+      // find closest multiple of target dimension
+      uint fact = 1;
+      uint mindist = numeric_limits<uint>::max();
+      uint area = iregion.height * iregion.width;
+      uint dist = abs(outr.height * outr.width * fact * fact - area);
+      while (dist <= mindist) {
+	minstdist = dist;
+	fact++;
+	dist = abs(outr.height * outr.width * fact * fact - area);
+      }
+      cout << "in: " << iregion << " fact: " << fact << " outr: " << outr<<endl;
+      // bilinear resize at closest resolution to current resolution
+      rim = image_resize(im, outr.height * fact, outr.width * fact, 1);
+      // allocate output
+      idxdim d(im);
+      d.setdim(0, outr.height);
+      d.setdim(0, outr.width);
+      rim = idx<T>(outr);
+      // now mean resize to exact target size
+      for (uint i = 0; i < outr.height
+      rim = rim.shift_dim(2, 0);
+      rim = gp.reduce(rim, reductions);
+      rim = rim.shift_dim(0, 2);
+    ////////////////////////////////////////////////////////////////
+    } else { // expand
+      ;
+      // uint expansions;
+      // uint imax, omax, dist;
+      // rect outr2;
+      // // select biggest side
+      // if (iregion.height > iregion.width) {
+      // 	imax = iregion.height;
+      // 	omax = (uint) oheight;
+      // } else {
+      // 	imax = iregion.width;
+      // 	omax = (uint) owidth;
+      // }
+      // // count how many expansions necessary
+      // switch (mode) {
+      // case 0: // keep aspect ratio
+      // 	expansions = gp.count_expansions(imax, omax, dist);
+      // 	break ;
+      // default:
+      // 	eblerror("unsupported mode");
+      // }
+      // // now mean resize to exact target size
+      // rim = im.shift_dim(2, 0);
+      // rim = gp.expand(rim, expansions);
+      // outr2 = gp.expand_rect(iregion, expansions);
+      // // bilinear resize to target resolution
+      // rim = rim.shift_dim(0, 2);
+      // rim = image_resize(rim, oheight, owidth, mode, &outr2, &outr);
     }
     ////////////////////////////////////////////////////////////////
     if (oregion)

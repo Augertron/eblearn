@@ -57,7 +57,8 @@ namespace ebl {
     //! inroot is the root directory from which we extract data.
     //! ignore_diff ignores difficult objects if true.
     pascal_dataset(const char *name, const char *inroot = NULL,
-		   bool ignore_diff = true);
+		   bool ignore_diff = true, bool ignore_trunc = false,
+		   bool ignore_occluded = false);
 
     //! Destructor.
     virtual ~pascal_dataset();
@@ -69,6 +70,11 @@ namespace ebl {
     virtual bool extract();
 
   protected:
+
+    //! return true if class_name is authorized (based on excluded and included
+    //! variables, and difficult, truncated, occluded flags).
+    virtual bool included(const string &class_name, uint difficult,
+			  uint truncated, uint occluded);
     
 #ifdef __XML__ // disable some derived methods if XML not available
     
@@ -106,6 +112,11 @@ namespace ebl {
     // "difficult" samples /////////////////////////////////////////
     bool	ignore_difficult;	//!< ignore difficult or not
     intg	total_difficult;	//!< total number of difficult samples
+    bool	ignore_truncated;	//!< ignore truncated or not
+    intg	total_truncated;	//!< total number of truncated samples
+    bool	ignore_occluded;	//!< ignore occluded or not
+    intg	total_occluded;	        //!< total number of occluded samples
+    intg        total_ignored;          //!< total ignore any catergory
     // directories /////////////////////////////////////////////////
     string	annroot;	//!< directory of annotation xml files
     string	imgroot;	//!< directory of images

@@ -56,8 +56,10 @@ namespace ebl {
 					    const char *inroot_,
 					    const char *outdir_,
 					    uint max_folders_,
-					    bool ignore_diff)
-    : pascal_dataset<Tdata>(name_, inroot_, ignore_diff) {
+					    bool ignore_diff, bool ignore_trunc,
+					    bool ignore_occl)
+    : pascal_dataset<Tdata>(name_, inroot_, ignore_diff, ignore_trunc,
+			    ignore_occl) {
     outdir = outdir_;
     cout << "output directory: " << outdir << endl;
     max_folders = max_folders_;
@@ -155,7 +157,7 @@ namespace ebl {
 		obj_classname += "_";
 		obj_classname += pose;
 	      }
-	      if (this->included(obj_classname)) {
+	      if (dataset<Tdata>::included(obj_classname)) {
 		bboxes.push_back(get_object(*iter));
 	      }
 	    }
@@ -178,7 +180,7 @@ namespace ebl {
 			part_classname += "_";
 			part_classname += pose;
 		      }
-		      if (this->included(part_classname)) {
+		      if (dataset<Tdata>::included(part_classname)) {
 			bboxes.push_back(get_object(*oiter));
 		      }
 		    }

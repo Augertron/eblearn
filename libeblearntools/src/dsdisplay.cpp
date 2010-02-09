@@ -61,6 +61,11 @@ void print_usage() {
   cout << "Usage: ./dataset_display <root/name> [OPTIONS]" << endl;
   cout << "  example: ./dataset_display /datasets/pascal" << endl;
   cout << "Options are:" << endl;
+  cout << "  -info, do not display dataset, just statistics on stdout."<< endl;
+  cout << "  -dims <dimensions, default: 4x8>, the number of columns and ";
+  cout << " rows to display." << endl;
+  cout << "  -range <range, e.g.: -1,1>: range to map to 0..255 for display.";
+  cout << endl;
 }
 
 // parse command line input
@@ -215,31 +220,8 @@ int main(int argc, char **argv) {
 		       deformpairs_fname))
     bdefpairs = false;
   
-  // TODO: move this inside datasource class
-  if (!bclasses) {
-    ubyte nclass = idx_max(labels) + 1;
-    classes.resize(nclass, 128);
-    idx_fill(classes, (ubyte) '\0');
-    int i = 0;
-    idx_bloop1(classe, classes, ubyte) {
-      ostringstream oss;
-      oss << i;
-      const char *s = oss.str().c_str();
-      cout << "len: " << strlen(s) << " : " << s << endl;
-      memcpy(classe.idx_ptr(), s, MIN(127, strlen(s) * sizeof(ubyte)));
-      ++i;
-    }
-  }
-  cout << classes.dim(0) << " classes found:" << endl;
-  idx_bloop1(classe, classes, ubyte) {
-    cout << "  " << (const char *) classe.idx_ptr() << endl;
-  }
-  
   labeled_datasource<t_data, t_data, int>
-    train_ds(data, labels, classes, "Training dataset");
-  
-  cout << "images: " << train_ds.data << endl;
-  cout << "labels: " << train_ds.labels << endl;
+    train_ds(data, labels, classes, "Dataset");
 
 #ifdef __GUI__
   if (!info) { // only display if info is false
