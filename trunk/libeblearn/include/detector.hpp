@@ -538,7 +538,7 @@ namespace ebl {
 
     struct timeval start, end;
 
-    long mtime, seconds, useconds;    
+    long seconds, useconds;    
     uint ms = 0;
 
 
