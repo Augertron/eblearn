@@ -46,12 +46,12 @@ namespace ebl {
 ////////////////////////////////////////////////////////////////
 // interface with opencv
 
-  template <typename T> idx<T> ipl2idx(IplImage *im);
-  template <typename T> void ipl2idx(IplImage *im, idx<T> &out);
+  /* template <typename T> idx<T> ipl2idx(IplImage *im); */
+  /* template <typename T> void ipl2idx(IplImage *im, idx<T> &out); */
  
 } // end namespace ebl
 
-#include "opencv.hpp"
+//#include "opencv.hpp"
 
 #endif /* __OPENCV__ */
 

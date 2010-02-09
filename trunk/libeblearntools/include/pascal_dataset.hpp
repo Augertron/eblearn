@@ -53,7 +53,8 @@ namespace ebl {
 
   template <class Tdata>
   pascal_dataset<Tdata>::pascal_dataset(const char *name_, const char *inroot_,
-					bool ignore_diff)
+					bool ignore_diff, bool ignore_trunc,
+					bool ignore_occl)
     : dataset<Tdata>(name_, inroot_) {
     // initialize pascal-specific members
     if (inroot_) {
@@ -63,6 +64,8 @@ namespace ebl {
       imgroot += "JPEGImages/"; // image directory
     }
     ignore_difficult = ignore_diff;
+    ignore_truncated = ignore_trunc;
+    ignore_occluded = ignore_occl;
 #ifndef __XML__ // return error if xml not enabled
     eblerror("XML libraries not available, install libxml++ and recompile");
 #endif /* __XML__ */
@@ -113,8 +116,21 @@ namespace ebl {
   // data
 
   template <class Tdata>
+  bool pascal_dataset<Tdata>::included(const string &class_name,
+				       uint difficult, uint truncated,
+				       uint occluded) {
+    return dataset<Tdata>::included(class_name)
+      && !(ignore_difficult && difficult)
+      && !(ignore_truncated && truncated) 
+      && !(ignore_occluded && occluded);
+  }
+
+  template <class Tdata>
   bool pascal_dataset<Tdata>::count_samples() {
     total_difficult = 0;
+    total_truncated = 0;
+    total_occluded = 0;
+    total_ignored = 0;
     total_samples = 0;
     regex eExt(XML_PATTERN);
     cmatch what;
@@ -155,17 +171,21 @@ namespace ebl {
       }
     }
     cout << "Found: " << total_samples << " samples, including ";
-    cout << total_difficult << " difficult ones." << endl;
+    cout << total_difficult << " difficult, " << total_truncated;
+    cout << " truncated and " << total_occluded << " occluded." << endl;
     ignore_difficult ? cout << "Ignoring" : cout << "Using";
     cout << " difficult samples." << endl;
-    if (ignore_difficult)
-      total_samples = total_samples - total_difficult;
+    ignore_truncated ? cout << "Ignoring" : cout << "Using";
+    cout << " truncated samples." << endl;
+    ignore_occluded ? cout << "Ignoring" : cout << "Using";
+    cout << " occluded samples." << endl;
+    total_samples = total_samples - total_ignored;
     return true;
   }
 
   template <class Tdata>
   void pascal_dataset<Tdata>::count_sample(Node::NodeList &olist) {
-    uint difficult = 0;
+    uint difficult = 0, truncated = 0, occluded = 0;
     string obj_classname, pose;
     bool pose_found = false;
     Node::NodeList::iterator oiter;
@@ -173,6 +193,10 @@ namespace ebl {
     for(oiter = olist.begin(); oiter != olist.end(); ++oiter) {
       if (!strcmp((*oiter)->get_name().c_str(), "difficult"))
 	difficult = xml_get_uint(*oiter);
+      else if (!strcmp((*oiter)->get_name().c_str(), "truncated"))
+	truncated = xml_get_uint(*oiter);
+      else if (!strcmp((*oiter)->get_name().c_str(), "occluded"))
+	occluded = xml_get_uint(*oiter);
       else if (!strcmp((*oiter)->get_name().c_str(), "name"))
 	xml_get_string(*oiter, obj_classname);
       else if (!strcmp((*oiter)->get_name().c_str(), "pose")) {
@@ -185,19 +209,21 @@ namespace ebl {
     // object
     if (!usepartsonly) {
       // add object's class to dataset
-      if (!(ignore_difficult && difficult)) { // ignore difficult?
+      if (included(obj_classname, difficult, truncated, occluded)) {
 	if (usepose && pose_found) { // append pose to class name
 	  obj_classname += "_";
 	  obj_classname += pose;
 	}
-	if (this->included(obj_classname))
+	if (included(obj_classname, difficult, truncated, occluded))
 	  this->add_class(obj_classname);
       }
     }
     // increment samples numbers
     total_samples++;
-    if (difficult)
-      total_difficult++;
+    if (difficult) total_difficult++;
+    if (truncated) total_truncated++;
+    if (occluded) total_occluded++;
+    if (difficult || truncated || occluded) total_ignored++;
     
     ////////////////////////////////////////////////////////////////
     // parts
@@ -214,17 +240,19 @@ namespace ebl {
 	    if (!strcmp((*piter)->get_name().c_str(), "name")) {
 	      xml_get_string(*piter, part_classname);
 	      // found a part and its name, add it
-	      if (!(ignore_difficult && difficult)) { // ignore difficult?
+	      if (included(part_classname, difficult, truncated, occluded)) {
 		if (usepose && pose_found) { // append pose to class name
 		  part_classname += "_";
 		  part_classname += pose;
 		}
-		if (this->included(part_classname)) {
+		if (dataset<Tdata>::included(part_classname)) {
 		  this->add_class(part_classname);
 		  // increment samples numbers
 		  this->total_samples++;
-		  if (difficult)
-		    this->total_difficult++;
+		  if (difficult) total_difficult++;
+		  if (truncated) total_truncated++;
+		  if (occluded) total_occluded++;
+		  if (difficult || truncated || occluded) total_ignored++;
 		}
 	      }
 	    }
@@ -292,7 +320,7 @@ namespace ebl {
     unsigned int xmin, ymin, xmax, ymax;
     unsigned int sizex, sizey;
     string obj_class, pose;
-    unsigned int difficult;
+    unsigned int difficult, truncated, occluded;
     bool pose_found = false;
   
     ////////////////////////////////////////////////////////////////
@@ -322,6 +350,10 @@ namespace ebl {
 	  xml_get_string(*iter, obj_class);
 	else if (!strcmp((*iter)->get_name().c_str(), "difficult"))
 	  difficult = xml_get_uint(*iter);
+	else if (!strcmp((*iter)->get_name().c_str(), "truncated"))
+	  truncated = xml_get_uint(*iter);
+	else if (!strcmp((*iter)->get_name().c_str(), "occluded"))
+	  occluded = xml_get_uint(*iter);
 	else if (!strcmp((*iter)->get_name().c_str(), "pose")) {
 	  xml_get_string(*iter, pose);
 	  pose_found = true;
@@ -335,7 +367,7 @@ namespace ebl {
       sizex = xmax - xmin;
       sizey = ymax - ymin;
       // process image  
-      if ((!(ignore_difficult && difficult)) && this->included(obj_class))
+      if (included(obj_class, difficult, truncated, occluded))
 	process_image(img, h0, w0, xmin, ymin, xmax, ymax, sizex, sizey,
 		      obj_class, obj_number, difficult, image_filename);
     }
@@ -380,9 +412,8 @@ namespace ebl {
 	  // compute size of bbox
 	  sizex = xmax - xmin;
 	  sizey = ymax - ymin;
-	  // process image  
-	  if (!(this->ignore_difficult && difficult)
-	      && this->included(part_class))
+	  // process image
+	  if (included(part_class, difficult, truncated, occluded))
 	    this->process_image(img, h0, w0, xmin, ymin, xmax, ymax, sizex,
 				sizey, part_class, obj_number, difficult,
 				image_filename);

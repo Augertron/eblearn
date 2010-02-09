@@ -109,7 +109,8 @@ namespace ebl {
       for (unsigned int iw = 0; (iw < nw) && (k < ds.size()); ++iw) {
 	ds.fprop(s, lbl);
 	ds.next();
-	m = s.x.select(0, 0);
+	//m = s.x.select(0, 0);
+	m = s.x.shift_dim(0, 2);
 	draw_matrix(m, h, w, _zoom, _zoom, _rmin, _rmax);
 	if ((ds.lblstr) && (ds.lblstr->at((int)lbl.get())))
 	  gui << at(h + 1, w + 1) << (ds.lblstr->at((int)lbl.get()))->c_str();

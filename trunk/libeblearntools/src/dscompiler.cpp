@@ -54,6 +54,8 @@ bool            preprocessing    = true;
 bool		display		 = false;
 bool		stereo		 = false;
 bool		ignore_difficult = false;
+bool		ignore_truncated = false;
+bool		ignore_occluded = false;
 bool		shuffle		 = false;
 bool		scale_mode	 = false;
 vector<double>  scales;
@@ -120,6 +122,10 @@ bool parse_args(int argc, char **argv) {
 	preprocessing = true;
       } else if (strcmp(argv[i], "-ignore_difficult") == 0) {
 	ignore_difficult = true;
+      } else if (strcmp(argv[i], "-ignore_truncated") == 0) {
+	ignore_truncated = true;
+      } else if (strcmp(argv[i], "-ignore_occluded") == 0) {
+	ignore_occluded = true;
       } else if (strcmp(argv[i], "-shuffle") == 0) {
 	shuffle = true;
       } else if (strcmp(argv[i], "-usepose") == 0) {
@@ -343,13 +349,15 @@ void compile_ds(Tds &ds, bool imgpat = true) {
 template <class Tdata>
 void compile() {
   if (!strcmp(type.c_str(), "pascal")) {
-    pascal_dataset<Tdata> ds(dataset_name.c_str(),
-			     images_root.c_str(), ignore_difficult);
+    pascal_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
+			     ignore_difficult, ignore_truncated,
+			     ignore_occluded);
     compile_ds(ds);
   }
   else if (!strcmp(type.c_str(), "pascalbg")) {
     pascalbg_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
-			       outdir.c_str(), maxperclass, ignore_difficult); 
+			       outdir.c_str(), maxperclass, ignore_difficult,
+			       ignore_truncated, ignore_occluded); 
     if (useparts) ds.use_parts();
     if (partsonly) ds.use_parts_only();
     ds.set_exclude(exclude);

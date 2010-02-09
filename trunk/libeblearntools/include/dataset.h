@@ -236,7 +236,7 @@ namespace ebl {
 
     //! return true if class_name is authorized (based on excluded and included
     //! variables).
-    bool included(const string &class_name);
+    virtual bool included(const string &class_name);
 
     ////////////////////////////////////////////////////////////////
     // data preprocessing

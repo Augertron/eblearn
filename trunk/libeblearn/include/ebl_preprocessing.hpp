@@ -60,6 +60,7 @@ namespace ebl {
     idx_addc(uv, (T)-128, uv);
     idx_dotc(uv, (T).01, uv);
     // convert Y to Yp
+    tmp.x = out.x.narrow(0, 1, 0);
     norm.fprop(tmp, tmp); // local
   }
   
@@ -70,9 +71,6 @@ namespace ebl {
     idxdim d(in.x);
     if (d != out.x.get_idxdim())
       out.x.resize(d); // resize only x, as bprop and bbprop are not defined
-    // resize temporary y buffer
-    if (d != tmp.x.get_idxdim())
-      tmp.x.resize(d);
   }
   
   ////////////////////////////////////////////////////////////////
@@ -143,6 +141,7 @@ namespace ebl {
     idx_addc(uv, (T)-128, uv);
     idx_dotc(uv, (T).01, uv);
     // convert Y to Yp
+    tmp.x = out.x.narrow(0, 1, 0);
     norm.fprop(tmp, tmp); // local
   }
   
@@ -153,9 +152,6 @@ namespace ebl {
     idxdim d(in.x);
     if (d != out.x.get_idxdim())
       out.x.resize(d); // resize only x, as bprop and bbprop are not defined
-    // resize temporary y buffer
-    if (d != tmp.x.get_idxdim())
-      tmp.x.resize(d);
   }
   
   ////////////////////////////////////////////////////////////////
@@ -234,7 +230,7 @@ namespace ebl {
     tmp = in.x.shift_dim(0, 2);
     idx<T> resized;
     if (gaussian)
-      resized =	image_gaussian_resize2(tmp, height,width, 0, &inrect, &outrect);
+      resized =	image_gaussian_resize(tmp, height,width, 0, &inrect, &outrect);
     else
       resized =	image_resize(tmp, height, width, 0, &inrect, &outrect);
     resized = resized.shift_dim(2, 0); 
