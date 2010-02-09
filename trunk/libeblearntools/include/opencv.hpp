@@ -29,30 +29,34 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef OPENCV_H_
-#define OPENCV_H_
+namespace ebl {
 
 #ifdef __OPENCV__
-
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-
-#include "libidx.h"
-
-using namespace std;
-
-namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // interface with opencv
 
-  template <typename T> idx<T> ipl2idx(IplImage *im);
-  template <typename T> void ipl2idx(IplImage *im, idx<T> &out);
- 
-} // end namespace ebl
-
-//#include "opencv.hpp"
-
+  template <typename T> idx<T> ipl2idx(IplImage *im) {
+    idx<T> f(im->height, im->width, im->nChannels);
+    uint sz = im->width * im->height * im->nChannels;
+    ubyte *in = (ubyte*) im->imageData;
+    T *out = f.idx_ptr();
+    // cast and copy data
+    for (uint i = 0; i < sz; ++i, ++out, ++in)
+      *out = (T) *in;
+    return f;
+  }
+  
+  template <typename T> void ipl2idx(IplImage *im, idx<T> &out) {
+    uint sz = im->width * im->height * im->nChannels;
+    ubyte *in = (ubyte*) im->imageData;
+    T *pout = out.idx_ptr();
+    // cast and copy data
+    for (uint i = 0; i < sz; ++i, ++pout, ++in)
+      *pout = (T) *in;
+  }
+  
 #endif /* __OPENCV__ */
 
-#endif /* OPENCV_H_ */
+} // end namespace ebl
+
