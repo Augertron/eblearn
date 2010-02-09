@@ -133,7 +133,6 @@ namespace ebl {
     nlino = out.dim(0);
     ncolo = out.dim(1);
     ncmpo = out.dim(2);
-    out.set_chandim(2); // tell idx where the channels are
     expected_size = ncol * nlin * 3;
     if ((ncol != ncolo) || (nlin != nlino) || (ncmpo != 3))
       out.resize(nlin, ncol, 3);

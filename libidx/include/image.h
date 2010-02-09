@@ -36,6 +36,10 @@
 
 namespace ebl {
   
+#define BILINEAR_RESIZE 0
+#define GAUSSIAN_RESIZE 1
+#define MEAN_RESIZE 2
+  
   ////////////////////////////////////////////////////////////////
   //! crop rectangle (<x>,<y>,<w>,<h>) from image <in>
   //! and return the result (a copy).

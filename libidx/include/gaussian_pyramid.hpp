@@ -145,15 +145,14 @@ namespace ebl {
     if (n == 0) // no more expansions
       return in; 
     // only accept 2D images or 3D with channel dim to 0.
-    if ((in.order() != 2) && ((in.order() == 3) && in.get_chandim() != 0)) {
+    if ((in.order() != 2) && (in.order() != 3)) {
       cerr << "error: gaussian_pyramid only accepts 2D images ";
-      cerr << "or 3D images with channel dimension (chandim) set to 0. ";
-      cerr << "input image is " << in << " with chandim = " << in.get_chandim();
-      cerr << endl;
+      cerr << "or 3D. ";
+      cerr << "input image is " << in << endl;
       eblerror("unexpected image format");
     }
-    int d0 = in.get_chandim() + 1;
-    int d1 = d0 + 1;
+    int d0 = 1;
+    int d1 = 2;
      intg ii = in.dim(d0);
     intg ij = in.dim(d1);
     intg oi = (ii - 1) * 2 + 5;
@@ -216,7 +215,7 @@ namespace ebl {
   template <class Tdata>
   idx<Tdata> gaussian_pyramid<Tdata>::paste_center(idx<Tdata> &in,
 						   idx<Tdata> &out) {
-    int d0 = in.get_chandim() + 1;
+    int d0 = 1;
     int d1 = d0 + 1;
     intg ci = in.dim(d0) - out.dim(d0);
     intg cj = in.dim(d1) - out.dim(d1);
@@ -231,7 +230,7 @@ namespace ebl {
   template <class Tdata>
   idx<Tdata> gaussian_pyramid<Tdata>::cut_pad(idx<Tdata> &in, int nz) {
     idxdim dout(in);
-    int d0 = in.get_chandim() + 1;
+    int d0 = 1;
     int d1 = d0 + 1;
     dout.setdim(d0, in.dim(d0) - 2 * nz);
     dout.setdim(d1, in.dim(d1) - 2 * nz);

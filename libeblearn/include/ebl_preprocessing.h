@@ -152,7 +152,9 @@ namespace ebl {
     //! \param kernelsz The kernel size used by the preprocessing module.
     //!           This is used to take kernel's (if any) border effect into
     //!           account during resizing. The default value (0) has no effect.
-    resizepp_module(intg height, intg width, bool gaussian = true,
+    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
+    //!             GAUSSIAN_RESIZE).
+    resizepp_module(intg height, intg width, uint mode = MEAN_RESIZE,
 		    module_1_1<T> *pp = NULL, uint kernelsz = 0);
     //! destructor
     virtual ~resizepp_module();
@@ -176,7 +178,7 @@ namespace ebl {
     idx<T>               tmp;           //!< temporary buffer
     idx<T>               tmp2;          //!< temporary buffer
     rect                 original_bbox; //!< bbox of original input in output
-    bool                 gaussian;      //!< use gaussian if true, bilin otherw.
+    uint                 mode;          //!< resizing mode.
     rect                 inrect;        //!< input region of image
     rect                 outrect;       //!< input region in output image
     bool                 inrect_set;    //!< use input region or not.

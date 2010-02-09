@@ -137,7 +137,6 @@ namespace ebl {
 //     }
     // resample from subsampled image with bilinear interpolation
     idx<T> rez((intg) oh, (intg) ow, (contim.order() == 3) ? contim.dim(2) : 1);
-    rez.set_chandim(contim.get_chandim());
     idx<T> bg(4);
     idx_clear(bg);
     // the 0.5 thingies are necessary because warp-bilin interprets
@@ -183,7 +182,7 @@ namespace ebl {
     rect outr;
     idx<T> rim;
     ////////////////////////////////////////////////////////////////
-    if ((iregion.width > owidth) && (iregion.height > oheight)) { // reduce
+    if ((iregion.width > owidth) || (iregion.height > oheight)) { // reduce
       rect exact_inr;
       uint reductions;
   
@@ -272,26 +271,31 @@ namespace ebl {
       return im;
     }
     // mean resize
-    rect outr;
+    rect outr, inr;
     idx<T> rim, out;
     ////////////////////////////////////////////////////////////////
-    if ((iregion.width > owidth) && (iregion.height > oheight)) { // reduce
+    if ((iregion.width > owidth) || (iregion.height > oheight)) { // reduce
       switch (mode) {
       case 0: // keep aspect ratio
 	// compute biggest down/up-sizing factor. do not use a double variable
 	// to compute ratio, compute it directly. somehow the results are
 	// more precise without the variable.
 	if (oheight / (double) iregion.height <
-	    owidth  / (double) iregion.width)
+	    owidth  / (double) iregion.width) {
 	  outr = rect((uint)(iregion.h0 * oheight / (double) iregion.height),
 		      (uint)(iregion.w0 * oheight / (double) iregion.height),
 		      (uint)(iregion.height * oheight / (double)iregion.height),
 		      (uint)(iregion.width * oheight / (double)iregion.height));
-	else
+	  inr = rect(0, 0, (uint) (im.dim(0) * oheight /(double)iregion.height),
+		     (uint) (im.dim(1) * oheight / (double)iregion.height));
+	} else {
 	  outr = rect((uint) (iregion.h0     * owidth / (double)iregion.width),
 		      (uint) (iregion.w0     * owidth / (double)iregion.width),
 		      (uint) (iregion.height * owidth / (double)iregion.width),
 		      (uint) (iregion.width  * owidth / (double)iregion.width));
+	  inr = rect(0, 0, (uint) (im.dim(0) * owidth / (double)iregion.width),
+		     (uint) (im.dim(1) * owidth / (double)iregion.width));
+	}
 	break ;
       default:
 	eblerror("unsupported mode");
@@ -306,26 +310,25 @@ namespace ebl {
 	fact++;
 	dist = abs((int)(outr.height * outr.width * fact * fact) - (int)area);
       }
-      cout << "in: " << iregion << " fact: " << fact << " outr: " << outr<<endl;
       // bilinear resize at closest resolution to current resolution
-      rim = image_resize(im, outr.height * fact, outr.width * fact, 1);
-      // add extra padding around original image if it's not a multiple of fact
-      rect rrim(0, 0, rim.dim(0), rim.dim(1));
-      rect cropped;
-      uint hmod = rim.dim(0) % fact; 
-      if (hmod) hmod = fact - hmod;
-      uint wmod = rim.dim(1) % fact;
-      if (wmod) wmod = fact - wmod;
-      idx<T> rimf = image_region_to_rect(rim, rrim, rim.dim(0) + hmod,
-					 rim.dim(1) + wmod, cropped);
+      rim = image_resize(im, inr.height * fact, inr.width * fact, 1);
+      //  add extra padding around original image if it's not a multiple of fact
+      // rect rrim(0, 0, rim.dim(0), rim.dim(1));
+      // rect cropped;
+      // uint hmod = rim.dim(0) % fact; 
+      // if (hmod) hmod = fact - hmod;
+      // uint wmod = rim.dim(1) % fact;
+      // if (wmod) wmod = fact - wmod;
+      // idx<T> rimf = image_region_to_rect(rim, rrim, rim.dim(0) + hmod,
+      // 					 rim.dim(1) + wmod, cropped);
       // allocate output
-      out = idx<T>(rimf.dim(0) / fact, rimf.dim(1) / fact, rimf.dim(2));
+      out = idx<T>(rim.dim(0) / fact, rim.dim(1) / fact, rim.dim(2));
       idx<T> tmp, tmpout;
       uint i = 0, j = 0;
       // now mean resize to exact target size
       idx_bloop1(ou, out, T) { // loop on output rows
 	idx_bloop1(o, ou, T) { // loop on output cols
-	  tmp = rimf.narrow(0, fact, i * fact);
+	  tmp = rim.narrow(0, fact, i * fact);
 	  tmp = tmp.narrow(1, fact, j * fact);
 	  idx_eloop2(layer, tmp, T, olayer, o, T) { // loop on each layer
 	    olayer.set(idx_mean(layer));
@@ -336,35 +339,8 @@ namespace ebl {
 	j = 0;
       }
     ////////////////////////////////////////////////////////////////
-    } else { // expand
-      cout << "warning: expansion not supported" << endl;
-      return im;
-      // uint expansions;
-      // uint imax, omax, dist;
-      // rect outr2;
-      // // select biggest side
-      // if (iregion.height > iregion.width) {
-      // 	imax = iregion.height;
-      // 	omax = (uint) oheight;
-      // } else {
-      // 	imax = iregion.width;
-      // 	omax = (uint) owidth;
-      // }
-      // // count how many expansions necessary
-      // switch (mode) {
-      // case 0: // keep aspect ratio
-      // 	expansions = gp.count_expansions(imax, omax, dist);
-      // 	break ;
-      // default:
-      // 	eblerror("unsupported mode");
-      // }
-      // // now mean resize to exact target size
-      // rim = im.shift_dim(2, 0);
-      // rim = gp.expand(rim, expansions);
-      // outr2 = gp.expand_rect(iregion, expansions);
-      // // bilinear resize to target resolution
-      // rim = rim.shift_dim(0, 2);
-      // rim = image_resize(rim, oheight, owidth, mode, &outr2, &outr);
+    } else { // expansion: return bilinear resizing
+      return image_resize(im, oheight, owidth, mode, iregion_, oregion);
     }
     ////////////////////////////////////////////////////////////////
     if (oregion)
@@ -396,10 +372,10 @@ namespace ebl {
     float w0 = wcenter - (float) owidth / 2; // out width offset in input
     float h1 = hcenter + (float) oheight / 2;
     float w1 = wcenter + (float) owidth / 2;
-    int gh0 = (int) MAX(0, MIN(im.dim(dh)-1, h0)); // input h offset
-    int gw0 = (int) MAX(0, MIN(im.dim(dw)-1, w0)); // input w offset
-    int gh1 = (int) MAX(0, MIN(im.dim(dh)-1, h1));
-    int gw1 = (int) MAX(0, MIN(im.dim(dw)-1, w1));
+    int gh0 = (int) MAX(0, MIN(im.dim(dh), h0)); // input h offset
+    int gw0 = (int) MAX(0, MIN(im.dim(dw), w0)); // input w offset
+    int gh1 = (int) MAX(0, MIN(im.dim(dh), h1));
+    int gw1 = (int) MAX(0, MIN(im.dim(dw), w1));
     int h = gh1 - gh0; // out height narrow
     int w = gw1 - gw0; // out width narrow
     int fh0 = (int) MAX(0, gh0 - h0); // out height offset narrow
@@ -425,8 +401,8 @@ namespace ebl {
     // TODO: check that rectangle is within image
     uint sz = MAX(r.height, r.width);
     idxdim d(im);
-    uint dh = (d.get_chandim() == 0) ? 1 : 0; // handle channels position
-    uint dw = (d.get_chandim() == 0) ? 2 : 1; // handle channels position
+    uint dh = 0;
+    uint dw = 1;
     d.setdim(dh, sz);
     d.setdim(dw, sz);
     idx<T> res(d);
@@ -545,7 +521,6 @@ namespace ebl {
     intg nh = h / nlin;
     intg nw = w / ncol;
     idx<T> out(nh, nw, in.dim(2));
-    out.set_chandim(in.get_chandim()); // preserve channels dimension info
     if ((nlin == 1) && (ncol == 1)) {
       idx_copy(in, out);
       return out;

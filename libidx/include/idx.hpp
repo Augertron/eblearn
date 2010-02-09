@@ -879,14 +879,6 @@ namespace ebl {
     }
   }
 
-  template <class T> void idx<T>::set_chandim(int d) {
-    spec.set_chandim(d);
-  }
-
-  template <class T> int idx<T>::get_chandim() {
-    return spec.get_chandim();
-  }
-  
   template <class T> idx<T> idx<T>::shift_dim(int d, int pos) {
     int tr[MAXDIMS];
     for (int i = 0, j = 0; i < spec.ndim; ++i) {
@@ -899,13 +891,6 @@ namespace ebl {
       }
     }
     return transpose(tr);
-  }
-    
-  template <class T> idx<T> idx<T>::shift_chan(int pos) {
-    if (spec.chandim == -1) { // no channel dim defined, return identity
-      return *this;
-    }
-    return shift_dim(spec.chandim, pos);
   }
     
   ////////////////////////////////////////////////////////////////

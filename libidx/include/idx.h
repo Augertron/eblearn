@@ -100,12 +100,6 @@ namespace ebl {
     intg *dim;
     //! array of strides in each dimension
     intg *mod;
-    //! dimension in which reside the "channels" of the data, e.g. (R,G,B) for
-    //! an image. This is useful because it may be at different dimensions
-    //! based on the context, usually 3rd dim for images, but 1st for networks.
-    //! if equal to -1, no channels are present or have been initialized.
-    //! this can be set using set_chandim() method.
-    int chandim;
 
     //! resize the spec and return the new footprint.
     //! this is private because only idx can call this
@@ -301,17 +295,6 @@ namespace ebl {
     //! unfold_into: same as unfold, but modifies the
     //! current idxspec.
     intg unfold_inplace(int d, intg k, intg s);
-
-    //! set dimension in which reside the "channels" of the data,
-    //! e.g. (R,G,B) for
-    //! an image. This is useful because it may be at different dimensions
-    //! based on the context, usually 3rd dim for images, but 1st for networks.
-    //! by default equal to -1, i.e. no channels are present or have been
-    //! initialized.
-    void set_chandim(int d);
-    
-    //! return dimension in which channels are (or -1 if not set).
-    int get_chandim();
 
     ////////////////////////////////////////////////////////////////
     //! friends
@@ -612,19 +595,6 @@ namespace ebl {
     // order-change law? unfold also conflicts with this law?
     idx<T> view_as_order(int n);
 
-    //! set dimension in which reside the "channels" of the data,
-    //! e.g. (R,G,B) for
-    //! an image. This is useful because it may be at different dimensions
-    //! based on the context, usually 3rd dim for images, but 1st for networks.
-    //! by default equal to -1, i.e. no channels are present or have been
-    //! initialized.
-    //! Warning: this is hasn't the effect of shifting an existing channel
-    //! dimension into a new place, for that purpose use shift_chan();
-    void set_chandim(int d);
-
-    //! return dimension in which channels are (or -1 if not set).
-    int get_chandim();
-
     //! Return an new idx in which dimension d is shifted to position pos,
     //! keeping the ordering of other dimensions.
     //! For example, if m is an idx of size (2,4,6),
@@ -632,14 +602,6 @@ namespace ebl {
     //! moved around, this merely manipulates the idx structure itself.
     idx<T> shift_dim(int d, int pos);
 
-    //! Return an new idx in which channels dimension (if defined) is shifted
-    //! to position pos, keeping the ordering of other dimensions.
-    //! For example, if m is an idx of size (2,4,6) with chandim 2,
-    //! m.shift_chan(0); returns an idx of size (6,2,4). No data is actually
-    //! moved around, this merely manipulates the idx structure itself.
-    //! Warning: current idx won't be modified, only the returned idx will be.
-    idx<T> shift_chan(int pos);
-    
     ////////////////////////////////////////////////////////////////
     //! field access methods
 
@@ -874,7 +836,6 @@ namespace ebl {
   private:
     intg	dims[MAXDIMS];	// size of each dimensions
     intg	ndim;		// order
-    int         chandim;        // dimension with channels (-1 by default)
     
   public:
 
@@ -919,17 +880,6 @@ namespace ebl {
     //! Insert a dimension of size dim_size at position pos.
     bool insert_dim(intg dim_size, uint pos);    
     
-    //! set dimension in which reside the "channels" of the data,
-    //! e.g. (R,G,B) for
-    //! an image. This is useful because it may be at different dimensions
-    //! based on the context, usually 3rd dim for images, but 1st for networks.
-    //! by default equal to -1, i.e. no channels are present or have been
-    //! initialized.
-    void set_chandim(int d);
-    
-    //! return dimension in which channels are (or -1 if not set).
-    int get_chandim();
-
     ////////////////////////////////////////////////////////////////
     // get dimensions
 

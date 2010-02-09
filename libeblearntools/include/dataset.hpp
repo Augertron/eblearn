@@ -505,10 +505,13 @@ namespace ebl {
     // initialize resizing module
     if (resizepp) delete resizepp;
     if (!strcmp(resize_mode.c_str(), "bilinear"))
-      resizepp = new resizepp_module<Tdata>(height, width, false, ppmodule,
+      resizepp = new resizepp_module<Tdata>(height, width, BILINEAR_RESIZE, ppmodule,
 					    ppkernel_size);
     else if (!strcmp(resize_mode.c_str(), "gaussian"))
-      resizepp = new resizepp_module<Tdata>(height, width, true, ppmodule,
+      resizepp = new resizepp_module<Tdata>(height, width, GAUSSIAN_RESIZE, ppmodule,
+					    ppkernel_size);
+    else if (!strcmp(resize_mode.c_str(), "mean"))
+      resizepp = new resizepp_module<Tdata>(height, width, MEAN_RESIZE, ppmodule,
 					    ppkernel_size);
     else eblerror("undefined resizing method");
   }    
