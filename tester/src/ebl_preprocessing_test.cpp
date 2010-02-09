@@ -49,6 +49,4 @@ void ebl_preprocessing_test::test_rgb_to_yp() {
   h += im3.dim(0);  
 #endif
 #endif
-  
-  sleep(10);
 }

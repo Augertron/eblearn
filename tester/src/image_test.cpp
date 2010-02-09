@@ -56,13 +56,13 @@ void image_test::test_resize() {
   //im = image_resize(im, 100, 100);
   draw_matrix(im, "Testing images operations...");
   gui << at(15, 0) << im;
-  int hy = im.dim(0);
+  int hy = 0;
+  int wx = im.dim(1) + 2;
 #endif
 #endif
 
 #ifdef __GUI__  
 #ifdef __SHOW__
-  int wx = 0;
 //   gui.new_window("image_test2");
 //   for (int i = 0; i < 10; ++i) {
 //     gui.draw_matrix(im, 0, wx);
@@ -70,7 +70,6 @@ void image_test::test_resize() {
 //   }
   idx<ubyte> im2 = image_resize(im, 50, 200, 0);
   idx<ubyte> im3 = image_resize(im, 50, 200, 1);
-  wx = 0; hy += 2;
   draw_matrix(im2, hy, wx);
   gui << at(hy, wx) << im2;
   wx += im2.dim(1) + 2;
@@ -104,15 +103,15 @@ void image_test::test_resize() {
   draw_matrix(im8, hy, wx);
   gui << at(hy + 26 + 15, wx) << "b " << im8;
   wx += im8.dim(1) + 2;
-  hy += im5.dim(0);
-  wx = 0;
+  hy += 100;
+  wx = im.dim(1) + 2;
   draw_matrix(im9, hy, wx);
   draw_box(hy + oregion.h0, wx + oregion.w0, oregion.height, oregion.width);
   wx += im9.dim(1) + 2;
   draw_box(iregion.h0, iregion.w0, iregion.height, iregion.width);
   gui << at(hy, wx) << "oregion: " << oregion;
   gui << at(hy + 15, wx) << "oimage: " << im9;
-  hy += im9.dim(0) + 2;
+  hy = im.dim(0) + 2;
   wx = 0;
 #endif
 #endif

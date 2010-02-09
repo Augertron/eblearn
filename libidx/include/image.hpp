@@ -273,12 +273,9 @@ namespace ebl {
     }
     // mean resize
     rect outr;
-    idx<T> rim;
+    idx<T> rim, out;
     ////////////////////////////////////////////////////////////////
     if ((iregion.width > owidth) && (iregion.height > oheight)) { // reduce
-      rect exact_inr;
-      uint reductions;
-  
       switch (mode) {
       case 0: // keep aspect ratio
 	// compute biggest down/up-sizing factor. do not use a double variable
@@ -309,33 +306,39 @@ namespace ebl {
 	fact++;
 	dist = abs((int)(outr.height * outr.width * fact * fact) - (int)area);
       }
-      // cout << "in: " << iregion << " fact: " << fact << " outr: " << outr<<endl;
-      // // bilinear resize at closest resolution to current resolution
-      // rect ooutr;
-      // rim = image_resize(im, outr.height * fact, outr.width * fact, 1,
-      // 			 &outr, &ooutr);
-      // // add extra padding around original image if it's not a multiple of fact
-      // rect rrim(0, 0, rim.dim(0), rim.dim(1));
-      // rect cropped;
-      // uint hmod = rim.dim(0) % fact;
-      // if (!hmod) hmod = fact - hmod;
-      // uint wmod = rim.dim(1) % fact;
-      // if (!wmod) wmod = fact - wmod;
-      // idx<T> rimf = image_region_to_rect(rim, rrim, rim.dim(0) + hmod,
-      // 					 rim.dim(1) + wmod, &cropped);
-      // // allocate output
-      // idxdim d(im);
-      // d.setdim(0, outr.height);
-      // d.setdim(0, outr.width);
-      // rim = idx<T>(outr);
+      cout << "in: " << iregion << " fact: " << fact << " outr: " << outr<<endl;
+      // bilinear resize at closest resolution to current resolution
+      rim = image_resize(im, outr.height * fact, outr.width * fact, 1);
+      // add extra padding around original image if it's not a multiple of fact
+      rect rrim(0, 0, rim.dim(0), rim.dim(1));
+      rect cropped;
+      uint hmod = rim.dim(0) % fact; 
+      if (hmod) hmod = fact - hmod;
+      uint wmod = rim.dim(1) % fact;
+      if (wmod) wmod = fact - wmod;
+      idx<T> rimf = image_region_to_rect(rim, rrim, rim.dim(0) + hmod,
+					 rim.dim(1) + wmod, cropped);
+      // allocate output
+      out = idx<T>(rimf.dim(0) / fact, rimf.dim(1) / fact, rimf.dim(2));
+      idx<T> tmp, tmpout;
+      uint i = 0, j = 0;
       // now mean resize to exact target size
-      //      for (uint i = 0; i < outr.height
-      // rim = rim.shift_dim(2, 0);
-      // rim = gp.reduce(rim, reductions);
-      // rim = rim.shift_dim(0, 2);
+      idx_bloop1(ou, out, T) { // loop on output rows
+	idx_bloop1(o, ou, T) { // loop on output cols
+	  tmp = rimf.narrow(0, fact, i * fact);
+	  tmp = tmp.narrow(1, fact, j * fact);
+	  idx_eloop2(layer, tmp, T, olayer, o, T) { // loop on each layer
+	    olayer.set(idx_mean(layer));
+	  }
+	  j++;
+	}
+	i++;
+	j = 0;
+      }
     ////////////////////////////////////////////////////////////////
     } else { // expand
-      ;
+      cout << "warning: expansion not supported" << endl;
+      return im;
       // uint expansions;
       // uint imax, omax, dist;
       // rect outr2;
@@ -366,7 +369,7 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     if (oregion)
       *oregion = outr;
-    return rim;
+    return out;
   }
 
   template<class T> 
