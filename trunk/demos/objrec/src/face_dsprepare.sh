@@ -13,15 +13,16 @@ meta_email=pierre.sermanet@gmail.com
 
 # directories
 #dataroot=/data
-#dataroot=~/texieradata
+dataroot=~/texieradata
 #dataroot=~/humairadata
-dataroot=~/blakeyadata
-pascalroot=$dataroot/pascal/VOCdevkit_trainval09/VOC2009/
+#dataroot=~/blakeyadata
+pascal=$dataroot/pascal
+pascalroot=$pascal/VOCdevkit_trainval09/VOC2009/
 root=$dataroot/face/data
 out=$dataroot/face/ds/
 
 # variables
-h=32 #48 64
+h=32 48 64
 w=${h}
 max=10 # number of samples in validation set
 maxtest=500 # number of samples in the test set
@@ -29,7 +30,7 @@ draws=5 # number of train/val sets to draw
 precision=float
 pp=YpUV
 kernel=7 #9
-resize=mean #bilinear
+resize=mean bilinear
 nbg=2
 bgscales=8,4,2,1
 
@@ -72,80 +73,81 @@ mkdir -p $outbg
 #     done
 # done
 
-# get LFW faces (umass)
-# http://vis-www.cs.umass.edu/lfw/
-faces_root=$root/${faces}/lfw/
-mkdir -p $faces_root
-cd $faces_root
-wget http://vis-www.cs.umass.edu/lfw/lfw.tgz
-tar xzvf lfw.tgz
-mv -f `find . -name "*.jpg"` . 2> /dev/null
-# crop pictures to center well on the face
-for fname in `find . -name "*.jpg"`
-do
-    echo "cropping $fname"
-    convert -crop 126x126+62+62 $fname $fname
-done
+# # get LFW faces (umass)
+# # http://vis-www.cs.umass.edu/lfw/
+# faces_root=$root/${faces}/lfw/
+# mkdir -p $faces_root
+# cd $faces_root
+# wget http://vis-www.cs.umass.edu/lfw/lfw.tgz
+# tar xzvf lfw.tgz
+# mv -f `find . -name "*.jpg"` . 2> /dev/null
+# # crop pictures to center well on the face
+# for fname in `find . -name "*.jpg"`
+# do
+#     echo "cropping $fname"
+#     convert -crop 126x126+62+62 $fname $fname
+# done
 
-# get pascal dataset
-wget http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar
-tar xvf "${pascalroot}/voctrainval_11-may-2009.tar" -c $pascalroot/
-mv -f $pascalroot/VOCdevkit $pascalroot/VOCdevkit_trainval09
+# # get pascal dataset
+# cd $pascal
+# wget http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar
+# tar xvf "${pascal}/VOCtrainval_11-May-2009.tar"
+# mv -f $pascal/VOCdevkit $pascal/VOCdevkit_trainval09
 
 ###############################################################################
 # dataset compilations
 ###############################################################################
 
-# # extract background images at different scales from all images parts that
-# # don't contain persons
-# ~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
-#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
-#     -maxperclass $nbg $maxdata -include "person" \
-#     -channels $pp -resize $resize -kernelsz $kernel \
-#     $maxdata $ddisplay # debug
+# extract background images at different scales from all images parts that
+# don't contain persons
+~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
+    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+    -maxperclass $nbg $maxdata -include "person" \
+    -channels $pp -resize $resize -kernelsz $kernel \
+    $maxdata $ddisplay # debug
 
-# # # extract faces from pascal
-# # ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
-# #     -outdir $out -dims ${h}x${w}x3 \
-# #     -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
-# #     -mindims 24x24 -include "head_Frontal" \
-# #     -useparts -dname ${namepheads_temp} -usepose \
-# #     $maxdata $maxperclass $ddisplay # debug
-
-# # compile background dataset
-# ~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
-#     -outdir ${out} -dname ${bgds}_${nbg} \
-#     -dims ${h}x${w}x3 \
+# # extract faces from pascal
+# ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
+#     -outdir $out -dims ${h}x${w}x3 \
+#     -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
+#     -mindims 24x24 -include "head_Frontal" \
+#     -useparts -dname ${namepheads_temp} -usepose \
 #     $maxdata $maxperclass $ddisplay # debug
 
-# # compile regular dataset
-# ~/eblearn/bin/dscompiler $root -precision $precision \
-#     -outdir ${out} -channels $pp -dname $name \
-#     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
-#     $maxdata $maxperclass $ddisplay # debug
+# compile background dataset
+~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
+    -outdir ${out} -dname ${bgds}_${nbg} \
+    -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
 
-# # merge normal dataset with background dataset
-# ~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
+# compile regular dataset
+~/eblearn/bin/dscompiler $root -precision $precision \
+    -outdir ${out} -channels $pp -dname $name \
+    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
 
-# # # merge pascal faces with regular dataset
-# # ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
+# merge normal dataset with background dataset
+~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
 
-# # split dataset into training and {validation/test}
-# ~/eblearn/bin/dssplit $out ${namebgpheads} \
-#     ${namebgpheads}_testval_${maxtest}_ \
-#     ${namebgpheads}_train_${maxtest}_ -maxperclass ${max} -draws $draws
+# # merge pascal faces with regular dataset
+# ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
 
-# # split validation and test
-# for i in `seq 1 ${draws}`
-# do
-# ~/eblearn/bin/dssplit $out ${namebgpheads}_testval_${maxtest}_$i \
-#     ${namebgpheads}_test_${maxtest}_$i \
-#     ${namebgpheads}_val_${maxtest}_$i -maxperclass ${maxtest} -draws 1
-# done
+# split dataset into training and {validation/test}
+~/eblearn/bin/dssplit $out ${namebgpheads} \
+    ${namebgpheads}_testval_${maxtest}_ \
+    ${namebgpheads}_train_${maxtest}_ -maxperclass ${max} -draws $draws
 
-# # print out information about extracted datasets to check that their are ok
-# ~/eblearn/bin/dsdisplay $out/${namebg} -info
+# split validation and test
+for i in `seq 1 ${draws}`
+do
+~/eblearn/bin/dssplit $out ${namebgpheads}_testval_${maxtest}_$i \
+    ${namebgpheads}_test_${maxtest}_$i \
+    ${namebgpheads}_val_${maxtest}_$i -maxperclass ${maxtest} -draws 1
+done
 
-# # email yourself the results
-# tar czvf logs_${job_name}.tgz out*.log
-# cat $0 | mutt $meta_email -s "face dsprepare" -a logs_${job_name}.log
+# print out information about extracted datasets to check that their are ok
+~/eblearn/bin/dsdisplay $out/${namebg} -info
+
+# email yourself the results
+tar czvf logs_${job_name}.tgz out*.log
+cat $0 | mutt $meta_email -s "face dsprepare" -a logs_${job_name}.log

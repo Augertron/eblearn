@@ -31,8 +31,14 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 
 typedef float t_net; // network precision
 
-MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
-
+#ifdef __GUI__
+MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui                                                                                                                                  
+#else
+int main(int argc, char **argv) { // regular main without gui                                                                                                                                                  
+#endif
+#ifndef __OPENCV__
+  eblerror("opencv not found, install and recompile");
+#else
   // camera
   CvCapture* capture = cvCaptureFromCAM(1);
   if( !capture ) {
@@ -172,5 +178,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 
   // release camera
   cvReleaseCapture(&capture);
+#endif /* __OPENCV__ */
   return 0;
 }
