@@ -103,6 +103,7 @@ namespace ebl {
     useparts = false;
     usepartsonly = false;
     save_mode = DATASET_SAVE;
+    bboxfact = 1.0;
 #ifndef __BOOST__
     eblerror(BOOST_LIB_ERROR);
 #endif
@@ -505,14 +506,14 @@ namespace ebl {
     // initialize resizing module
     if (resizepp) delete resizepp;
     if (!strcmp(resize_mode.c_str(), "bilinear"))
-      resizepp = new resizepp_module<Tdata>(height, width, BILINEAR_RESIZE, ppmodule,
-					    ppkernel_size);
+      resizepp = new resizepp_module<Tdata>
+	(height, width, BILINEAR_RESIZE, ppmodule, ppkernel_size);
     else if (!strcmp(resize_mode.c_str(), "gaussian"))
-      resizepp = new resizepp_module<Tdata>(height, width, GAUSSIAN_RESIZE, ppmodule,
-					    ppkernel_size);
+      resizepp = new resizepp_module<Tdata>
+	(height, width, GAUSSIAN_RESIZE, ppmodule, ppkernel_size);
     else if (!strcmp(resize_mode.c_str(), "mean"))
-      resizepp = new resizepp_module<Tdata>(height, width, MEAN_RESIZE, ppmodule,
-					    ppkernel_size);
+      resizepp = new resizepp_module<Tdata>
+	(height, width, MEAN_RESIZE, ppmodule, ppkernel_size);
     else eblerror("undefined resizing method");
   }    
   
@@ -690,6 +691,12 @@ namespace ebl {
   void dataset<Tdata>::set_save(const string &s) {
     save_mode = s;
     cout << "Setting saving mode to: " << save_mode << endl;
+  }
+    
+  template <class Tdata>
+  void dataset<Tdata>::set_bboxfact(float factor) {
+    bboxfact = factor;
+    cout << "Setting bounding box factor to " << bboxfact << endl;
   }
     
   template <class Tdata>
@@ -872,6 +879,21 @@ namespace ebl {
   preprocess_data(idx<Tdata> &dat, const string &class_name, bool squared,
 		  const char *filename, const rect *r, double scale,
 		  bool active_sleepd) {
+    // input region
+    rect inr(0, 0, dat.dim(0), dat.dim(1));
+    if (r) inr = *r;
+    // multiply input region by factor
+    if (bboxfact != 1.0) {
+      int add = (int) (MAX(inr.height, inr.width) * (bboxfact - 1.0));
+      inr.h0 = MAX(0, MIN(dat.dim(0) - 1, ((int) inr.h0) - add / 2));
+      inr.w0 = MAX(0, MIN(dat.dim(1) - 1, ((int) inr.w0) - add / 2));
+      inr.height += add;
+      inr.width += add;
+      if (inr.h0 + inr.height > dat.dim(0))
+	inr.height -= inr.h0 + inr.height - dat.dim(0);
+      if (inr.w0 + inr.width > dat.dim(1))
+	inr.width -= inr.w0 + inr.width - dat.dim(1);
+    }
     // resize image to target dims
     rect out_region, cropped;
     idxdim d(outdims);
@@ -879,10 +901,9 @@ namespace ebl {
     if (scale > 0) { // resize entire image at specific scale
       resizepp->set_dimensions((uint) (outdims.dim(0) * scale), 
 			       (uint) (outdims.dim(1) * scale));
-      rect iregion(0, 0, dat.dim(0), dat.dim(1));
-      resizepp->set_input_region(iregion);
+      resizepp->set_input_region(inr);
     } else if (r) // resize using object's window
-      resizepp->set_input_region(*r);
+      resizepp->set_input_region(inr);
     idx<Tdata> tmp = dat.shift_dim(2, 0);
     state_idx<Tdata> in(tmp.get_idxdim()), out(1,1,1);
     idx_copy(tmp, in.x);
@@ -927,7 +948,6 @@ namespace ebl {
       }
       w += chan.dim(dw) + 5;
       h = 0;
-      
       // display original
       gui << gui_only() << black_on_white();
       oss.str("");
@@ -944,21 +964,25 @@ namespace ebl {
       oss.str("");
       oss << class_name;
       draw_matrix(dat, oss.str().c_str(), h, w);
+      // draw object's original box
+      if (r)
+	draw_box(h + r->h0, w + r->w0, r->height, r->width, 255, 0, 0);
+      // draw object's factored box if factor != 1.0
+      if (bboxfact != 1.0)
+	draw_box(h + inr.h0, w + inr.w0, inr.height, inr.width, 0, 255, 0);
       h += dat.dim(dh) + 5;
       oss.str("");
       // display object
-      if (r) {
-	idx<Tdata> obj = dat;
-	obj = obj.narrow(dh, r->height, r->h0);
-	obj = obj.narrow(dw, r->width, r->w0);
-	// display object
-	oss << class_name << " " << obj;
-	draw_matrix(obj, h, w);
-	// draw crossing arrows at center
-	draw_box(h + r->height/2, w + r->width/2, r->height/2,
-		 r->width/2, 0,0,0);
-	gui << black_on_white() << at(h + r->height, w) << oss.str();
-      }
+      idx<Tdata> obj = dat;
+      obj = obj.narrow(dh, inr.height, inr.h0);
+      obj = obj.narrow(dw, inr.width, inr.w0);
+      // display object
+      oss << class_name << " " << obj;
+      draw_matrix(obj, h, w);
+      // draw crossing arrows at center
+      draw_box(h + inr.height/2, w + inr.width/2, inr.height/2,
+	       inr.width/2, 0,0,0);
+      gui << black_on_white() << at(h + inr.height, w) << oss.str();
       // paint
       enable_window_updates();
       if (sleep_display && active_sleepd)

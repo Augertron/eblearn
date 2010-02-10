@@ -83,6 +83,8 @@ bool            useparts         = false; // use parts if given
 bool            partsonly        = false; // use parts only if given
 string          save             = DATASET_SAVE;// save into lush dataset format
 bool            save_set         = false;
+float           bboxfact         = 1.0;
+bool            bboxfact_set     = false;
 
 ////////////////////////////////////////////////////////////////
 // command line
@@ -243,6 +245,10 @@ bool parse_args(int argc, char **argv) {
 	}
 	scale_mode = true;
 	preprocessing = true;
+      } else if (strcmp(argv[i], "-bboxfact") == 0) {
+	++i; if (i >= argc) throw 0;
+	bboxfact = (float) atof(argv[i]);
+	bboxfact_set = true;
       } else if ((strcmp(argv[i], "-help") == 0) ||
 		 (strcmp(argv[i], "-h") == 0)) {
 	return false;
@@ -306,6 +312,8 @@ void print_usage() {
   cout << "     (exclude inputs for which one dimension is less than specified";
   cout << endl;
   cout << "  -scales <scales (e.g: 1.5,2,4)>" << endl;
+  cout << "  -bboxfact <float factor> (multiply bounding boxes by a factor)";
+  cout << endl;
   cout << "  -resize <mean(default)|gaussian|bilinear" << endl; 
   cout << "  -exclude <class name> (include all but excluded classes," << endl;
   cout << "                         exclude can be called multiple times)";
@@ -317,6 +325,12 @@ void print_usage() {
   cout << "e.g. person->(head,hand,foot)" << endl;
   cout << "  -partsonly  (only extract object parts, ";
   cout << "e.g. person->(head,hand,foot)" << endl;
+  cout << "  -ignore_difficult (ignore sample if \"difficult\" flag is on)";
+  cout << endl;
+  cout << "  -ignore_truncated (ignore sample if \"truncated\" flag is on)";
+  cout << endl;
+  cout << "  -ignore_occluded (ignore sample if \"occluded\" flag is on)";
+  cout << endl;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -324,6 +338,7 @@ void print_usage() {
 
 template <class Tds>
 void compile_ds(Tds &ds, bool imgpat = true) {
+  if (bboxfact_set) ds.set_bboxfact(bboxfact);
   if (usepose) ds.use_pose();
   if (useparts) ds.use_parts();
   if (partsonly) ds.use_parts_only();
