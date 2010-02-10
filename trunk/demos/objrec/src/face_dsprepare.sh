@@ -14,7 +14,8 @@ meta_email=pierre.sermanet@gmail.com
 # directories
 #dataroot=/data
 #dataroot=~/texieradata
-dataroot=~/humairadata
+#dataroot=~/humairadata
+dataroot=~/blakeyadata
 pascalroot=$dataroot/pascal/VOCdevkit_trainval09/VOC2009/
 root=$dataroot/face/
 out=$root/ds/
@@ -85,10 +86,10 @@ do
     convert -crop 126x126+62+62 $fname $fname
 done
 
-# # get pascal dataset
-# wget http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar
-# tar xvf "${pascalroot}/voctrainval_11-may-2009.tar" -c $pascalroot/
-# mv -f $pascalroot/VOCdevkit $pascalroot/VOCdevkit_trainval09
+# get pascal dataset
+wget http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar
+tar xvf "${pascalroot}/voctrainval_11-may-2009.tar" -c $pascalroot/
+mv -f $pascalroot/VOCdevkit $pascalroot/VOCdevkit_trainval09
 
 ###############################################################################
 # dataset compilations
