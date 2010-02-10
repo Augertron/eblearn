@@ -646,12 +646,12 @@ For example to display a image stored in file to window:
 	  to switch to the thread that stopped, e.g.:
 	  thread 2
 	  
-	  If you want to inspect an idx 'a', you can call:
-	  p a.spec.ndim
-	  p *a.spec.dim@3
+	  To get information about an idx 'a' (order, dimensions, etc),
+	  you can call:
+	  p a.pretty()
 	  
 	  If you want to display an idx, call draw_matrix, e.g.:
-	  call ebl::draw_matrix_float(a, 0, 0, 1, 1, 0, 255)
+	  p draw_matrix_float(a, 0, 0, 1, 1, 0, 255)
 
 	  If you need to manipulate the idx, for example if you want
 	  to display only 1 layer of the RGB image 'a', you can use
@@ -671,10 +671,12 @@ For example to display a image stored in file to window:
 
 	  Note: if this does not work, the debug symbols might not be available,
 	    try a make clean and recompile in debug mode (make debug).
+	  Note: if you are outside of the ebl scope, add "ebl::" in front of
+	    your function calls.
 	  Note: gdb requires all parameters to be specified, even default ones.
+	  Note: draw_matrix_float and gdb_idx_float1 are located in the
+	    libeblearntools library, you need to link with this library
+	    to gain access to those.
 
-	  To get information about an idx call "toto", do:
-	  p toto.pretty()
-		  
 </div></td></tr></tbody></table></body></html>
 

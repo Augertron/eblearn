@@ -305,10 +305,14 @@ namespace ebl {
       uint mindist = numeric_limits<uint>::max();
       uint area = iregion.height * iregion.width;
       uint dist = abs((int)(outr.height * outr.width * fact * fact) -(int)area);
-      while (dist <= mindist) {
+      while ((dist <= mindist)
+	     && (outr.height * fact <= iregion.height) // avoid upsampling
+	     && (outr.width * fact <= iregion.width)) {
 	mindist = dist;
-	fact++;
-	dist = abs((int)(outr.height * outr.width * fact * fact) - (int)area);
+	dist = abs((int)(outr.height * outr.width * (fact+1) * (fact+1))
+		   - (int)area);
+	if (dist <= mindist)
+	  fact++;
       }
       // bilinear resize at closest resolution to current resolution
       rim = image_resize(im, inr.height * fact, inr.width * fact, 1);

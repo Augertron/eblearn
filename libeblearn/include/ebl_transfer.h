@@ -47,20 +47,6 @@ namespace ebl {
   //! over a local neighborhood. An input set of feature maps is locally
   //! normalized to be zero mean and unit standard deviation.
   template <class T> class weighted_std_module : public module_1_1<T> {
-  private:
-    layers_n<T>         convmean, convvar;
-    power_module<T>	sqrtmod;	//!< square root module
-    power_module<T>	invmod; //!< inverse module
-    power_module<T>	sqmod;	//!< square module
-    diff_module<T>	difmod; //!< difference module
-    thres_module<T>	thres;	//!< threshold module
-    mul_module<T>	mcw;
-    state_idx<T>	inmean, inzmean, inzmeansq, invar, instd, thstd, invstd;
-    parameter<T>	param;
-    idx<T>              w;	//!< weights
-    bool                threshold;
-    bool                global_norm; //!< perform global normalization first
-
   public:
     //! <weighting> is <idx2<double>> that defines the weighting around
     //! the center component.
@@ -81,6 +67,20 @@ namespace ebl {
 
     // friends
     friend class weighted_std_module_gui;
+
+  private:
+    layers_n<T>         convmean, convvar;
+    power_module<T>	sqrtmod;	//!< square root module
+    power_module<T>	invmod; //!< inverse module
+    power_module<T>	sqmod;	//!< square module
+    diff_module<T>	difmod; //!< difference module
+    thres_module<T>	thres;	//!< threshold module
+    mul_module<T>	mcw;
+    state_idx<T>	inmean, inzmean, inzmeansq, invar, instd, thstd, invstd;
+    parameter<T>	param;
+    idx<T>              w;	//!< weights
+    bool                threshold;
+    bool                global_norm; //!< perform global normalization first
   };
 
   ////////////////////////////////////////////////////////////////

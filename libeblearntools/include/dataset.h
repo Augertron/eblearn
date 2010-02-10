@@ -132,24 +132,29 @@ namespace ebl {
     //! in each scale in outdir directory.
     void set_scales(const vector<double> &sc, const string &od);
     
-    //! set all max per class to max.
+    //! Set all max per class to max.
     void set_max_per_class(intg max);
 
-    //! set maximum number of samples.
+    //! Set maximum number of samples.
     void set_max_data(intg max);
 
-    //! set the pattern used to find image.
+    //! Set the pattern used to find image.
     void set_image_pattern(const string &p);
 
-    //! set the list of classes to exclude (including everything else).
+    //! Set the list of classes to exclude (including everything else).
     void set_exclude(const vector<string> &ex);
 
-    //! set the list of classes to include (excluding everything else).
+    //! Set the list of classes to include (excluding everything else).
     void set_include(const vector<string> &inc);
 
-    //! set saving mode, default is "dataset", saving everything in single
+    //! Set saving mode, default is "dataset", saving everything in single
     //! lush matrix format. other values can be "ppm", "jpg", etc.
     void set_save(const string &save);
+
+    //! Multiply bounding boxes by factor. This is useful to move object's
+    //! boundaries away from borders when bounding boxes are too tight around
+    //! objects.
+    void set_bboxfact(float factor);
 
     //! use pose information to separate classes. e.g. if for class "person"
     //! we have "front" and "side" pose, create 2 classes "person_front"
@@ -306,6 +311,7 @@ namespace ebl {
     bool                useparts;       //!< use parts or not
     bool                usepartsonly;   //!< use parts only or not
     string              save_mode;      //!< saving mode (dataset, ppm, png..)
+    float               bboxfact;       //!< bounding boxes factor
     // names ///////////////////////////////////////////////////////
     string		name;	        //!< dataset name
     string		data_fname;	//!< data filename

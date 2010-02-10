@@ -26,12 +26,16 @@ draws=5 # number of train/val sets to draw
 precision=float
 pp=YpUV
 kernel=7 #9
-resize=bilinear # gaussian # bilinear
+resize=mean # gaussian # bilinear
 nbg=2
 bgscales=8,6,4,2,1
+bboxfact=1.2
+occluded=0
+truncated=0
+difficult=0
 
 # names
-id=${resize}${h}x${w}_ker${kernel}
+id=${resize}${h}x${w}_ker${kernel}_diff${difficult}trunc${truncated}occl${occluded}
 name=all_$id
 namebg=${name}_bg
 bgds=pascalbg_$id
@@ -47,6 +51,20 @@ ddisplay="-disp -sleep 1000"
 mkdir $out 2> /dev/null > /dev/null
 mkdir $outbg 2> /dev/null > /dev/null
 
+# ignore flags
+if [ $difficult -eq 0 ]
+then
+    diff_cmd="-ignore_difficult"
+fi
+if [ $occluded -eq 0 ]
+then
+    occl_cmd="-ignore_occluded"
+fi
+if [ $truncated -eq 0 ]
+then
+    trunc_cmd="-ignore_truncated"
+fi
+
 # get pascal dataset
 #wget http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar $r3d
 #tar xvf "${pascalroot0}/voctrainval_11-may-2009.tar" -c $pascalroot0/
@@ -56,7 +74,7 @@ mkdir $outbg 2> /dev/null > /dev/null
 ~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
     -maxperclass $nbg \
-    -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
+    -channels $pp -resize $resize -kernelsz $kernel \
     $maxdata $ddisplay # debug
 
 # compile background dataset
@@ -67,8 +85,8 @@ mkdir $outbg 2> /dev/null > /dev/null
 
 # compile regular dataset
 ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
-    -outdir ${out} -channels $pp -dname $name -ignore_difficult \
-    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3  \
+    -outdir ${out} -channels $pp -dname $name $diff_cmd $occl_cmd $trunc_cmd \
+    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 -bboxfact $bboxfact \
     $maxdata $maxperclass $ddisplay # debug
 
 # merge normal dataset with background dataset
@@ -80,7 +98,8 @@ mkdir $outbg 2> /dev/null > /dev/null
 
 # extract parts dataset
 ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
-    -outdir ${out} -channels $pp -dname $partsname -ignore_difficult \
+    -outdir ${out} -channels $pp -dname $partsname \
+    $diff_cmd $occl_cmd $trunc_cmd \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     -useparts -partsonly \
     $maxdata $maxperclass $ddisplay # debug

@@ -593,6 +593,18 @@ namespace ebl {
   //  {idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }}
   //}
 
+  template<class T1, class T2> idx<T1> idx_copy(idx<T2> &src){
+    idx<T1> dst(src.get_idxdim());
+    idx_copy(src, dst);
+    return dst;
+  }
+
+  template<class T> idx<T> idx_copy(idx<T> &src){
+    idx<T> dst(src.get_idxdim());
+    idx_copy(src, dst);
+    return dst;
+  }
+
   template<class T1, class T2> void idx_copy(idx<T1> &src, idx<T2> &dst){
     // loop and copy
     idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }
