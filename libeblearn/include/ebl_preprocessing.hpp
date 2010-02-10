@@ -194,6 +194,45 @@ namespace ebl {
   }
   
   ////////////////////////////////////////////////////////////////
+  // rgb_to_hp_module
+
+  template <class T>
+  rgb_to_hp_module<T>::rgb_to_hp_module(uint normalization_size_)
+    : normalization_size(normalization_size_), tmp(1,1,1),
+      norm(normalization_size, normalization_size, 1, true, false, true) {
+  }
+
+  template <class T>
+  rgb_to_hp_module<T>::~rgb_to_hp_module() {
+  }
+
+  template <class T>
+  void rgb_to_hp_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+    if (this->bResize) resize_output(in, out); // resize (iff necessary)
+    // RGB to YUV
+    idx_eloop2(inx, in.x, T, tmpx, tmp.x, T) {
+      idx_eloop2(inxx, inx, T, tmpxx, tmpx, T) {
+	rgb_to_h_1D(inxx, tmpxx);
+      }
+    }
+    // convert H to Hp
+    norm.fprop(tmp, out); // local
+  }
+  
+  template <class T>
+  void rgb_to_hp_module<T>::resize_output(state_idx<T> &in,
+					  state_idx<T> &out) {
+    // resize output based on input dimensions
+    idxdim d(in.x);
+    d.setdim(0, 1);
+    if (d != out.x.get_idxdim())
+      out.x.resize(d); // resize only x, as bprop and bbprop are not defined
+    // resize temporary y buffer
+    if (d != tmp.x.get_idxdim())
+      tmp.x.resize(d);
+  }
+    
+  ////////////////////////////////////////////////////////////////
   // resizepp_module
 
   template <class T>

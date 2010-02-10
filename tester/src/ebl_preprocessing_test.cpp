@@ -28,9 +28,13 @@ void ebl_preprocessing_test::test_rgb_to_yp() {
   idx<float> imbird = load_image<float>(path.str());
   rgb_to_yp_module<float> pp(9);
   rgb_to_ypuv_module<float> ppuv(9);
+  rgb_to_hp_module<float> pph(9);
   resizepp_module<float> mean_rspp(100, 300, MEAN_RESIZE, &pp, 9);
   resizepp_module<float> bil_rspp(100, 300, BILINEAR_RESIZE, &pp, 9);
   resizepp_module<float> gaus_rspp(100, 300, GAUSSIAN_RESIZE, &pp, 9);
+  resizepp_module<float> mean(100, 300, MEAN_RESIZE, NULL, 9);
+  resizepp_module<float> bil(100, 300, BILINEAR_RESIZE, NULL, 9);
+  resizepp_module<float> gaus(100, 300, GAUSSIAN_RESIZE, NULL, 9);
   // barn
   im = im.shift_dim(2, 0);
   state_idx<float> in(im.get_idxdim()), out(1, 1, 1);
@@ -71,6 +75,18 @@ void ebl_preprocessing_test::test_rgb_to_yp() {
   mean_rspp.fprop(inb, out);
   idx<float> im11 = out.x.shift_dim(0, 2);
   im11 = idx_copy(im11);
+  pph.fprop(inb, out);
+  idx<float> im12 = out.x.shift_dim(0, 2);
+  im12 = idx_copy(im12);
+  bil.fprop(inb, out);
+  idx<float> im13 = out.x.shift_dim(0, 2);
+  im13 = idx_copy(im13);
+  gaus.fprop(inb, out);
+  idx<float> im14 = out.x.shift_dim(0, 2);
+  im14 = idx_copy(im14);
+  mean.fprop(inb, out);
+  idx<float> im15 = out.x.shift_dim(0, 2);
+  im15 = idx_copy(im15);
 #ifdef __GUI__  
 #ifdef __SHOW__
   uint h = 0, w = 0;
@@ -106,7 +122,10 @@ void ebl_preprocessing_test::test_rgb_to_yp() {
   w += im7.dim(1) + 152;  
   gui << at(h - 15, w) << "YpUV " << im8;
   draw_matrix(im8, h, w, 1, 1, (float)-1, (float)1);
-  h += im8.dim(0) + 2;
+  w += im8.dim(1) + 152;  
+  gui << at(h - 15, w) << "Hp " << im12;
+  draw_matrix(im12, h, w, 1, 1, (float)-1, (float)1);
+  h += im12.dim(0) + 2;
   w = 0;
   s.str(""); s << "bilinear " << im9;
   draw_matrix(im9, s.str().c_str(), h, w, 1, 1, (float)-1, (float)1);
@@ -118,6 +137,15 @@ void ebl_preprocessing_test::test_rgb_to_yp() {
   draw_matrix(im11, s.str().c_str(), h, w, 1, 1, (float)-1, (float)1);
   h += im11.dim(0) + 2;
   w = 0;
+  s.str(""); s << "bilinear " << im13;
+  draw_matrix(im13, s.str().c_str(), h, w, 1, 1, (float)0, (float)255);
+  w += im13.dim(1) + 2;
+  s.str(""); s << "gaussian " << im14;
+  draw_matrix(im14, s.str().c_str(), h, w, 1, 1, (float)0, (float)255);
+  w += im14.dim(1) + 2;
+  s.str(""); s << "mean " << im15;
+  draw_matrix(im15, s.str().c_str(), h, w, 1, 1, (float)0, (float)255);
+  h += im15.dim(0) + 2;
   
 #endif
 #endif
