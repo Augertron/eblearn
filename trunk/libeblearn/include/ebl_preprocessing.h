@@ -133,6 +133,29 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  // rgb_to_hp_module
+  //! convert an RGB input into a Hp output, Hp being a H channel (from HSV)
+  //! with a local normaliztion.
+  template <class T> class rgb_to_hp_module: public module_1_1<T> {
+  public:
+    //! Constructor.
+    //! \param normalization_size is the size of the kernel used for Hp's
+    //!        local normalization.
+    rgb_to_hp_module(uint normalization_size);
+    //! destructor
+    virtual ~rgb_to_hp_module();
+    //! forward propagation from in to out
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    //! resize the output based on input dimensions
+    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+
+  private:
+    uint	                normalization_size;	//!< norm kernel size
+    state_idx<T>	        tmp;	//!< temporary buffer
+    weighted_std_module<T>	norm;	//!< contrast normalization module
+  };
+
+  ////////////////////////////////////////////////////////////////
   // resizepp_module
   //! Resize the input to the desired output (while preserving aspect ratio)
   //! and apply a preprocessing module.

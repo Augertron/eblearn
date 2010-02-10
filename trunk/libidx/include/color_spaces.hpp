@@ -233,6 +233,20 @@ namespace ebl {
     hsv.set(v, 2);
   }
 
+  template<class T> void rgb_to_h_1D(idx<T> &rgb, idx<T> &h) {
+    if (rgb.idx_ptr() == h.idx_ptr()) {
+      eblerror("rgb_to_h: dst must be different than src");
+      return ;
+    }
+    static double r, g, b;
+    r = rgb.get(0);
+    g = rgb.get(1);
+    b = rgb.get(2);
+    static double h_, s_, v_;
+    PIX_RGB_TO_HSV_COMMON(r, g, b, h_, s_, v_, false);
+    h.set(h_, 0);
+  }
+
   template<class T> void rgb_to_hsv(idx<T> &rgb, idx<T> &hsv) {
     idx_checknelems2_all(rgb, hsv);
     switch (rgb.order()) {
