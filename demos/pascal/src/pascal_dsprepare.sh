@@ -5,15 +5,16 @@
 ################################################################################
 meta_command="sh pascal_dsprepare.sh"
 meta_name=pascalds
+meta_email=pierre.sermanet@gmail.com
 
 ################################################################################
 # pascal dataset compilation
 ################################################################################
 
 # directories
-dataroot=/data
+#dataroot=/data
 #dataroot=~/texieradata
-#dataroot=~/humairadata
+dataroot=~/humairadata
 pascalroot=$dataroot/pascal/VOCdevkit_trainval09/VOC2009/
 root=$dataroot/pascal/
 out=$root/ds/
@@ -21,18 +22,19 @@ out=$root/ds/
 # variables
 h=96
 w=${h}
-max=50 # number of samples in validation set
+max=10 # number of samples in validation set
 draws=5 # number of train/val sets to draw
 precision=float
 pp=YpUV
-kernel=7 #9
-resize=mean # gaussian # bilinear
+kernel=7 9
+resize=mean bilinear
 nbg=2
 bgscales=8,6,4,2,1
 bboxfact=1.2
-occluded=0
-truncated=0
-difficult=0
+easy=0 1
+occluded=$easy
+truncated=$easy
+difficult=$easy
 
 # names
 id=${resize}${h}x${w}_ker${kernel}_diff${difficult}trunc${truncated}occl${occluded}
@@ -45,7 +47,7 @@ partsname=parts${name}
 # debug variables
 # maxdata="-maxdata 50"
 # maxperclass="-maxperclass 25"
-ddisplay="-disp -sleep 1000"
+# ddisplay="-disp -sleep 1000"
 
 # create directories
 mkdir $out 2> /dev/null > /dev/null
@@ -83,6 +85,9 @@ fi
     -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug
 
+# delete temporary images
+rm -Rf $outbg
+
 # compile regular dataset
 ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
     -outdir ${out} -channels $pp -dname $name $diff_cmd $occl_cmd $trunc_cmd \
@@ -108,3 +113,7 @@ fi
 # print out information about extracted datasets to check that their are ok
 ~/eblearn/bin/dsdisplay ${out}/${namebg} -info
 ~/eblearn/bin/dsdisplay ${out}/${partsname} -info
+
+# email yourself the results
+tar czvf logs.tgz out*.log
+cat $0 | mutt $meta_email -s "pascal dsprepare" -a logs.tgz
