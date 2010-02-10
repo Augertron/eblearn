@@ -29,7 +29,7 @@ pp=YpUV
 kernel=7 9
 resize=mean bilinear
 nbg=2
-bgscales=8,6,4,2,1
+bgscales=6,4,2,1
 bboxfact=1.2
 easy=0 1
 occluded=${easy}
@@ -38,10 +38,10 @@ difficult=${easy}
 
 # names
 id=${resize}${h}x${w}_ker${kernel}_diff${difficult}trunc${truncated}occl${occluded}
-name=all_$id
+name=all_${id}
 namebg=${name}_bg
-bgds=pascalbg_$id
-outbg=$out/$bgds
+bgds=pascalbg_${id}
+outbg=${out}/${bgds}
 partsname=parts${name}
 
 # debug variables
@@ -95,6 +95,7 @@ rm -Rf $outbg
     $maxdata $maxperclass $ddisplay # debug
 
 # merge normal dataset with background dataset
+echo "~/eblearn/bin/dsmerge $out ${namebg} ${name} ${bgds}_$nbg"
 ~/eblearn/bin/dsmerge $out ${namebg} ${name} ${bgds}_$nbg
 
 # split dataset into training/validation

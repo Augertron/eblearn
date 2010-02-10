@@ -223,7 +223,10 @@ namespace ebl {
     if (difficult) total_difficult++;
     if (truncated) total_truncated++;
     if (occluded) total_occluded++;
-    if (difficult || truncated || occluded) total_ignored++;
+    if ((difficult && ignore_difficult)
+	|| (truncated && ignore_truncated)
+	|| (occluded && ignore occluded))
+      total_ignored++;
     
     ////////////////////////////////////////////////////////////////
     // parts
@@ -252,7 +255,10 @@ namespace ebl {
 		  if (difficult) total_difficult++;
 		  if (truncated) total_truncated++;
 		  if (occluded) total_occluded++;
-		  if (difficult || truncated || occluded) total_ignored++;
+		  if ((difficult && ignore_difficult)
+		      || (truncated && ignore_truncated)
+		      || (occluded && ignore occluded))
+		    total_ignored++;
 		}
 	      }
 	    }
