@@ -17,8 +17,8 @@ meta_email=pierre.sermanet@gmail.com
 #dataroot=~/humairadata
 dataroot=~/blakeyadata
 pascalroot=$dataroot/pascal/VOCdevkit_trainval09/VOC2009/
-root=$dataroot/face/
-out=$root/ds/
+root=$dataroot/face/data
+out=$dataroot/face/ds/
 
 # variables
 h=32 #48 64
@@ -49,6 +49,7 @@ faces=face
 
 # create directories
 mkdir -p $pascalroot
+mkdir -p $root
 mkdir -p $out
 mkdir -p $outbg
 
