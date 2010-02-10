@@ -32,9 +32,9 @@ nbg=2
 bgscales=8,6,4,2,1
 bboxfact=1.2
 easy=0 1
-occluded=$easy
-truncated=$easy
-difficult=$easy
+occluded=${easy}
+truncated=${easy}
+difficult=${easy}
 
 # names
 id=${resize}${h}x${w}_ker${kernel}_diff${difficult}trunc${truncated}occl${occluded}
