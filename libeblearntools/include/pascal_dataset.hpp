@@ -225,7 +225,7 @@ namespace ebl {
     if (occluded) total_occluded++;
     if ((difficult && ignore_difficult)
 	|| (truncated && ignore_truncated)
-	|| (occluded && ignore occluded))
+	|| (occluded && ignore_occluded))
       total_ignored++;
     
     ////////////////////////////////////////////////////////////////
@@ -257,7 +257,7 @@ namespace ebl {
 		  if (occluded) total_occluded++;
 		  if ((difficult && ignore_difficult)
 		      || (truncated && ignore_truncated)
-		      || (occluded && ignore occluded))
+		      || (occluded && ignore_occluded))
 		    total_ignored++;
 		}
 	      }
