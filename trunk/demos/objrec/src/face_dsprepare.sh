@@ -24,7 +24,7 @@ out=$dataroot/face/ds/
 # variables
 h=32 48 64
 w=${h}
-max=500 # number of samples in validation set
+max=1000 # number of samples in test AND validation set
 maxtest=500 # number of samples in the test set
 draws=5 # number of train/val sets to draw
 precision=float
