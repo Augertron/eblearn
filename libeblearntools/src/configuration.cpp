@@ -130,7 +130,7 @@ namespace ebl {
       }
       // resolve both sides of quoted section
       string s0 = v.substr(0, MAX(0, qpos -1));
-      string s1 = v.substr(qpos, qpos2);
+      string s1 = v.substr(qpos, qpos2 + 1);
       string s2 = v.substr(qpos2 + 1);
       res = "";
       if (qpos != 0) {
@@ -138,8 +138,10 @@ namespace ebl {
 	res += s0;
       }
       res += s1;
-      s2 = resolve(m, s2);
-      res += s2;
+      if (qpos2 < v.size()) {
+	s2 = resolve(m, s2);
+	res += s2;
+      }
       // concatenate resolved and quoted sections
       return res;
     } else { // 2. no quotes are present, simply resolve string
