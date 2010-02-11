@@ -31,10 +31,10 @@ resize=mean bilinear
 nbg=2
 bgscales=6,4,2,1
 bboxfact=1.2
-easy=0 1
+easy=1
 occluded=${easy}
 truncated=${easy}
-difficult=${easy}
+difficult=0
 
 # names
 id=${resize}${h}x${w}_ker${kernel}_diff${difficult}trunc${truncated}occl${occluded}
@@ -72,18 +72,18 @@ fi
 #tar xvf "${pascalroot0}/voctrainval_11-may-2009.tar" -c $pascalroot0/
 #mv $pascalroot0/vocdevkit $pascalroot0/vocdevkit_trainval09
 
-# extract background images at different scales
-~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
-    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
-    -maxperclass $nbg \
-    -channels $pp -resize $resize -kernelsz $kernel \
-    $maxdata $ddisplay # debug
+# # extract background images at different scales
+# ~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
+#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+#     -maxperclass $nbg \
+#     -channels $pp -resize $resize -kernelsz $kernel \
+#     $maxdata $ddisplay # debug
 
-# compile background dataset
-~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
-    -outdir ${out} -dname ${bgds}_${nbg} $maxdata $maxperclass \
-    -dims ${h}x${w}x3 \
-    $maxdata $maxperclass $ddisplay # debug
+# # compile background dataset
+# ~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
+#     -outdir ${out} -dname ${bgds}_${nbg} $maxdata $maxperclass \
+#     -dims ${h}x${w}x3 \
+#     $maxdata $maxperclass $ddisplay # debug
 
 # delete temporary images
 rm -Rf $outbg
@@ -116,5 +116,9 @@ echo "~/eblearn/bin/dsmerge $out ${namebg} ${name} ${bgds}_$nbg"
 ~/eblearn/bin/dsdisplay ${out}/${partsname} -info
 
 # email yourself the results
-tar czvf logs.tgz out*.log
-cat $0 | mutt $meta_email -s "pascal dsprepare" -a logs.tgz
+here=`pwd`
+base="`basename ${here}`"
+tgz_name="logs_${base}.tgz"
+tar czvf ${tgz_name} out*.log
+cat $0 | mutt $meta_email -s "pascal dsprepare" -a ${tgz_name}
+
