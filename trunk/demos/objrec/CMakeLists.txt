@@ -62,10 +62,10 @@ IF (QT_FOUND) #---------------------------------------------------------------
 ENDIF (QT_FOUND) #------------------------------------------------------------
 
 # copy conf and metaconf to bin
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/face_metaconf\""
+EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/face/face_metaconf\""
 		  "\"${LIBRARY_OUTPUT_PATH}\"")
 EXEC_PROGRAM("cp" ARGS
-  "\"${CMAKE_CURRENT_SOURCE_DIR}/src/face_dsprepare.sh\""
+  "\"${CMAKE_CURRENT_SOURCE_DIR}/face/face_dsprepare.sh\""
   "\"${LIBRARY_OUTPUT_PATH}\"")
 		
 # compile executable: objrec_detect
