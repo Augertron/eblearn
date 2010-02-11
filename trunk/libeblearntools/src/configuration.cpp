@@ -117,6 +117,8 @@ namespace ebl {
 
   string resolve(string_map_t &m, const string &v) {
     string res(v);
+    if (v.size() == 0)
+      return res;
     // 1. if we find quotes, resolve each unquoted string and concatenate res
     size_t qpos = res.find("\"");
     if (qpos != string::npos) { // quote found

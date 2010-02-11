@@ -24,7 +24,7 @@ out=$dataroot/face/ds/
 # variables
 h=32 48 64
 w=${h}
-max=10 # number of samples in validation set
+max=500 # number of samples in validation set
 maxtest=500 # number of samples in the test set
 draws=5 # number of train/val sets to draw
 precision=float
@@ -98,56 +98,59 @@ mkdir -p $outbg
 # dataset compilations
 ###############################################################################
 
-# extract background images at different scales from all images parts that
-# don't contain persons
-~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
-    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
-    -maxperclass $nbg $maxdata -include "person" \
-    -channels $pp -resize $resize -kernelsz $kernel \
-    $maxdata $ddisplay # debug
+# # extract background images at different scales from all images parts that
+# # don't contain persons
+# ~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
+#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+#     -maxperclass $nbg $maxdata -include "person" \
+#     -channels $pp -resize $resize -kernelsz $kernel \
+#     $maxdata $ddisplay # debug
 
-# # extract faces from pascal
-# ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
-#     -outdir $out -dims ${h}x${w}x3 \
-#     -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
-#     -mindims 24x24 -include "head_Frontal" \
-#     -useparts -dname ${namepheads_temp} -usepose \
+# # # extract faces from pascal
+# # ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
+# #     -outdir $out -dims ${h}x${w}x3 \
+# #     -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
+# #     -mindims 24x24 -include "head_Frontal" \
+# #     -useparts -dname ${namepheads_temp} -usepose \
+# #     $maxdata $maxperclass $ddisplay # debug
+
+# # compile background dataset
+# ~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
+#     -outdir ${out} -dname ${bgds}_${nbg} \
+#     -dims ${h}x${w}x3 \
 #     $maxdata $maxperclass $ddisplay # debug
 
-# compile background dataset
-~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
-    -outdir ${out} -dname ${bgds}_${nbg} \
-    -dims ${h}x${w}x3 \
-    $maxdata $maxperclass $ddisplay # debug
+# # compile regular dataset
+# ~/eblearn/bin/dscompiler $root -precision $precision \
+#     -outdir ${out} -channels $pp -dname $name \
+#     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
+#     $maxdata $maxperclass $ddisplay # debug
 
-# compile regular dataset
-~/eblearn/bin/dscompiler $root -precision $precision \
-    -outdir ${out} -channels $pp -dname $name \
-    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
-    $maxdata $maxperclass $ddisplay # debug
+# # merge normal dataset with background dataset
+# ~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
 
-# merge normal dataset with background dataset
-~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
-
-# # merge pascal faces with regular dataset
-# ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
+# # # merge pascal faces with regular dataset
+# # ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
 
 # split dataset into training and {validation/test}
-~/eblearn/bin/dssplit $out ${namebgpheads} \
-    ${namebgpheads}_testval_${maxtest}_ \
-    ${namebgpheads}_train_${maxtest}_ -maxperclass ${max} -draws $draws
+~/eblearn/bin/dssplit $out ${namebg} \
+    ${namebg}_testval_${maxtest}_ \
+    ${namebg}_train_${maxtest}_ -maxperclass ${max} -draws $draws
 
 # split validation and test
 for i in `seq 1 ${draws}`
 do
-~/eblearn/bin/dssplit $out ${namebgpheads}_testval_${maxtest}_$i \
-    ${namebgpheads}_test_${maxtest}_$i \
-    ${namebgpheads}_val_${maxtest}_$i -maxperclass ${maxtest} -draws 1
+~/eblearn/bin/dssplit $out ${namebg}_testval_${maxtest}_$i \
+    ${namebg}_test_${maxtest}_$i \
+    ${namebg}_val_${maxtest}_$i -maxperclass ${maxtest} -draws 1
 done
 
 # print out information about extracted datasets to check that their are ok
 ~/eblearn/bin/dsdisplay $out/${namebg} -info
 
 # email yourself the results
-tar czvf logs_${job_name}.tgz out*.log
-cat $0 | mutt $meta_email -s "face dsprepare" -a logs_${job_name}.log
+here=`pwd`
+base="`basename ${here}`"
+tgz_name="logs_${base}.tgz"
+tar czvf ${tgz_name} out*.log
+cat $0 | mutt $meta_email -s "face dsprepare" -a ${tgz_name}
