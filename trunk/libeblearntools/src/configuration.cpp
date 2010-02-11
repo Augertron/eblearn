@@ -120,18 +120,18 @@ namespace ebl {
     if (v.size() == 0)
       return res;
     // 1. if we find quotes, resolve each unquoted string and concatenate res
-    size_t qpos = res.find("\"");
+    size_t qpos = v.find("\"");
     if (qpos != string::npos) { // quote found
       // find matching quote
-      size_t qpos2 = res.find("\"", qpos);
+      size_t qpos2 = v.find("\"", qpos + 1);
       if (qpos2 == string::npos) {
 	cerr << "unmatched quote in: " << v << endl;
 	eblerror("unmatched quote");
       }
       // resolve both sides of quoted section
-      string s0 = res.substr(0, qpos);
-      string s1 = res.substr(qpos, qpos2);
-      string s2 = res.substr(qpos2);
+      string s0 = v.substr(0, MAX(0, qpos -1));
+      string s1 = v.substr(qpos, qpos2);
+      string s2 = v.substr(qpos2 + 1);
       s0 = resolve(m, s0);
       s2 = resolve(m, s2);
       // concatenate resolved and quoted sections
@@ -258,9 +258,10 @@ namespace ebl {
     return true;
   }
 
+  // transform each value containing whitespaces into a list of values
   void variables_to_variables_list(string_map_t &smap,
 				   string_list_map_t &lmap) {
-    string::size_type pos;
+    string::size_type pos, qpos, qpos2;
     string s, stmp;
     string_map_t::iterator smi = smap.begin();
     for ( ; smi != smap.end(); ++smi) {
@@ -268,7 +269,19 @@ namespace ebl {
       vector<string> &vs = lmap[smi->first];
       // loop over list of elements
       pos = s.find_first_of(' ');
-      while (pos != string::npos) {
+      while ((pos != string::npos) && (pos < s.size())) {
+	// check for quotes
+	qpos = s.find("\"");
+	if ((qpos != string::npos) && (qpos < pos)) { // quote before space
+	  // look for matching quote
+	  qpos2 = s.find("\"", qpos + 1);
+	  if (qpos2 == string::npos) {
+	    cerr << "unmatched quote in: " << s << endl;
+	    eblerror("unmatched quote");
+	  }
+	  pos = qpos2 + 1; // update pos to skip quoted section
+	  continue ; // try again with updated pos
+	}
 	stmp = s.substr(0, pos);
 	vs.push_back(stmp);
 	s = s.substr(pos);
