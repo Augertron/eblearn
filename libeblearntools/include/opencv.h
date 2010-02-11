@@ -51,7 +51,7 @@ namespace ebl {
  
 } // end namespace ebl
 
-//#include "opencv.hpp"
+#include "opencv.hpp"
 
 #endif /* __OPENCV__ */
 

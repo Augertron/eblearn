@@ -1,46 +1,7 @@
-#include <fenv.h>
-#include "libeblearn.h"
-#include "libeblearntools.h"
 #include <iomanip>
-
-#ifdef __GUI__
-#include "libeblearngui.h"
-#endif
-
-using namespace std;
-using namespace ebl; // all eblearn objects are under the ebl namespace
+#include "objrec.h"
 
 typedef double t_net; // precision at which network is trained (ideally double)
-
-// select network based on configuration
-module_1_1<t_net>* init_network(parameter<t_net> &theparam,
-				configuration &conf, idx<t_net> &targets) {
-  string net_type = conf.get_string("net_type");
-  if (!strcmp(net_type.c_str(), "cscscf")) {
-    return (module_1_1<t_net>*) new lenet<t_net>
-      (theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
-       conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
-       conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
-       conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
-       conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
-       conf.get_uint("net_full"), targets.dim(0),
-       conf.get_bool("absnorm"), conf.get_bool("color"),
-       conf.get_bool("mirror"));
-  } else if (!strcmp(net_type.c_str(), "cscsc")) {
-    return (module_1_1<t_net>*) new lenet_cscsc<t_net>
-      (theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
-       conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
-       conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
-       conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
-       conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
-       targets.dim(0), conf.get_bool("absnorm"), conf.get_bool("color"),
-       conf.get_bool("mirror"));
-  } else {
-    cerr << "network type: " << net_type << endl;
-    eblerror("unknown network type");
-  }
-  return NULL;
-}
 
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
@@ -69,7 +30,7 @@ int main(int argc, char **argv) { // regular main without gui
   //! create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
   parameter<t_net> theparam(60000); // create trainable parameter
-  module_1_1<t_net> *net = init_network(theparam, conf, targets);
+  module_1_1<t_net> *net = init_network(theparam, conf, targets.dim(0));
   supervised_euclidean_machine<t_net, int> thenet(*net, targets, dims);
   supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
 

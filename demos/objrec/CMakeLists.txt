@@ -38,6 +38,15 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GUI__")
 ENDIF (QT_FOUND) #--------------------------------------------------------------
 
+# find opencv
+###############################################################################
+FIND_PACKAGE(OpenCV)
+IF (OpenCV_FOUND)
+  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__OPENCV__")
+  INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
+  LINK_DIRECTORIES(${OpenCV_LIBRARY_DIRS})
+ENDIF(OpenCV_FOUND)
+  
 # compile executable: objrec_train
 ################################################################################
 add_executable (objrec_train
