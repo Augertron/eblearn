@@ -132,12 +132,15 @@ namespace ebl {
       string s0 = v.substr(0, MAX(0, qpos -1));
       string s1 = v.substr(qpos, qpos2);
       string s2 = v.substr(qpos2 + 1);
-      s0 = resolve(m, s0);
-      s2 = resolve(m, s2);
-      // concatenate resolved and quoted sections
-      res = s0;
+      res = "";
+      if (qpos != 0) {
+	s0 = resolve(m, s0);
+	res += s0;
+      }
       res += s1;
+      s2 = resolve(m, s2);
       res += s2;
+      // concatenate resolved and quoted sections
       return res;
     } else { // 2. no quotes are present, simply resolve string
       size_t pos = res.find("${");
