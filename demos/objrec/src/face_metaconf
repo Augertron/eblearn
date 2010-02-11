@@ -8,8 +8,8 @@ meta_command = objrec_train
 # optional variables
 meta_name = face
 meta_max_cpus = 8
-meta_output_dir = /home/sermanet/texieradata/face/out
-#meta_output_dir = /home/sermanet/humairadata/face/out
+#meta_output_dir = /home/sermanet/texieradata/face/out
+meta_output_dir = /home/sermanet/humairadata/face/out
 meta_email = me@mail.com
 meta_email_period = 1 # send an email with plots after every n iterations
 meta_gnuplot_params = set grid ytics;set ytics 5;set mytics 5;set grid mytics;
@@ -18,8 +18,8 @@ meta_gnuplot_params = set grid ytics;set ytics 5;set mytics 5;set grid mytics;
 # LOCAL PROGRAM CONFIGURATION
 
 # directories
-#root = /home/sermanet/humairadata/face/ds
-root = /home/sermanet/texieradata/face/ds
+root = /home/sermanet/humairadata/face/ds
+#root = /home/sermanet/texieradata/face/ds
 #root = /data/face/ds
 #root2 = /data/face
 
