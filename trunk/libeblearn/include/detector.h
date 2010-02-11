@@ -72,41 +72,7 @@ namespace ebl {
   // detector
   
   template <class T> class detector {
-  public:
-    module_1_1<T>	&thenet;
-    int			 height;
-    int			 width;
-    idx<T>		 grabbed;
-    idx<T>		 grabbed2;
-    double		 contrast;
-    double		 brightness;
-    float		 coef;
-    T			 bias;    
-    idx<float>		 sizes;
-    idx<void*>		 inputs;	//!< state_idx*
-    idx<void*>		 outputs;	//!< state_idx*
-    idx<void*>		 results;	//!< idx<double>*
-    idx<void*>           resize_modules;     //!< module_1_1<T>*
-    module_1_1<T>       *pp;            //!< preprocessing module
-    uint                 ppkersz;       //!< size of pp kernel (if any)
-    idx<T>		 smoothing_kernel;
-    idx<ubyte>   	 labels;
-    ////////////////////////////////////////////////////////////////
-  private:
-    // dimensions
-    idxdim		 in_mindim;
-    idxdim		 in_maxdim;
-    uint		 nresolutions;
-    idx<uint>		 resolutions;
-    idx<uint>		 original_bboxes; //!< bboxes orig image after resizing
-    bool		 manual_resolutions;
-    int                  bgclass;
-    idxdim               input_dim;
-    const double        *scales;
-    bool                 silent; //!< print results on std output if not silent
-    
-  public:
-    
+  public:    
     ////////////////////////////////////////////////////////////////
     // constructors
     
@@ -225,6 +191,41 @@ namespace ebl {
     //! prune btwn scales
     vector<bbox> map_to_list(T threshold);
     void pretty_bboxes(vector<bbox> &vb);
+
+    ////////////////////////////////////////////////////////////////
+    // members
+  public:
+    module_1_1<T>	&thenet;
+    int			 height;
+    int			 width;
+    idx<T>		 grabbed;
+    idx<T>		 grabbed2;
+    double		 contrast;
+    double		 brightness;
+    float		 coef;
+    T			 bias;    
+    idx<float>		 sizes;
+    idx<void*>		 inputs;	//!< state_idx*
+    idx<void*>		 outputs;	//!< state_idx*
+    idx<void*>		 results;	//!< idx<double>*
+    idx<void*>           resize_modules;     //!< module_1_1<T>*
+    module_1_1<T>       *pp;            //!< preprocessing module
+    uint                 ppkersz;       //!< size of pp kernel (if any)
+    idx<T>		 smoothing_kernel;
+    idx<ubyte>   	 labels;
+    ////////////////////////////////////////////////////////////////
+  private:
+    // dimensions
+    idxdim		 in_mindim;
+    idxdim		 in_maxdim;
+    uint		 nresolutions;
+    idx<uint>		 resolutions;
+    idx<uint>		 original_bboxes; //!< bboxes orig image after resizing
+    bool		 manual_resolutions;
+    int                  bgclass;
+    idxdim               input_dim;
+    const double        *scales;
+    bool                 silent; //!< print results on std output if not silent
   };
 
 } // end namespace ebl

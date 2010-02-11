@@ -66,6 +66,9 @@ add_library (eblearntools SHARED
   src/opencv.cpp
   )
 
+IF (OpenCV_FOUND)
+  target_link_libraries (eblearntools cv highgui cxcore)
+ENDIF (OpenCV_FOUND)
 # link executable with external libraries
 # target_link_libraries (eblearntools eblearn idx)
 # IF (${Boost_MINOR_VERSION} GREATER 34)
