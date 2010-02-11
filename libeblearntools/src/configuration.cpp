@@ -48,7 +48,7 @@ using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////                       
+  ////////////////////////////////////////////////////////////////
   // textlist class
 
   textlist::textlist() {
@@ -86,7 +86,7 @@ namespace ebl {
     }
   }
 
-  ////////////////////////////////////////////////////////////////                       
+  ////////////////////////////////////////////////////////////////
   // utility functions
 
   string timestamp() {
@@ -117,26 +117,48 @@ namespace ebl {
 
   string resolve(string_map_t &m, const string &v) {
     string res(v);
-    size_t pos = res.find("${");
-    size_t pos2;
-    // loop until it's all resolved
-    while (pos != string::npos) {
-      pos2 = res.find("}", pos);
-      if (pos2 == string::npos) {
-	cerr << "unmatched closing bracket in: " << v << endl;
-	eblerror("error resolving variables in configuration");
+    // 1. if we find quotes, resolve each unquoted string and concatenate res
+    size_t qpos = res.find("\"");
+    if (qpos != string::npos) { // quote found
+      // find matching quote
+      size_t qpos2 = res.find("\"", qpos);
+      if (qpos2 == string::npos) {
+	cerr << "unmatched quote in: " << v << endl;
+	eblerror("unmatched quote");
       }
-      // variable to replace
-      string var = res.substr(pos + 2, pos2 - (pos + 2));
-      if (m.find(var) != m.end()) {
-	string val = resolve(m, m[var]);
-	res = res.replace(pos, pos2 - pos + 1, val);
-	pos2 = pos;
+      // resolve both sides of quoted section
+      string s0 = res.substr(0, qpos);
+      string s1 = res.substr(qpos, qpos2);
+      string s2 = res.substr(qpos2);
+      s0 = resolve(m, s0);
+      s2 = resolve(m, s2);
+      // concatenate resolved and quoted sections
+      res = s0;
+      res += s1;
+      res += s2;
+      return res;
+    } else { // 2. no quotes are present, simply resolve string
+      size_t pos = res.find("${");
+      size_t pos2;
+      // loop until it's all resolved
+      while (pos != string::npos) {
+	pos2 = res.find("}", pos);
+	if (pos2 == string::npos) {
+	  cerr << "unmatched closing bracket in: " << v << endl;
+	  eblerror("error resolving variables in configuration");
+	}
+	// variable to replace
+	string var = res.substr(pos + 2, pos2 - (pos + 2));
+	if (m.find(var) != m.end()) {
+	  string val = resolve(m, m[var]);
+	  res = res.replace(pos, pos2 - pos + 1, val);
+	  pos2 = pos;
+	}
+	// check if we have more variables to resolve
+	pos = res.find("${", pos2);
       }
-      // check if we have more variables to resolve
-      pos = res.find("${", pos2);
+      return res;
     }
-    return res;
   }
 
   // variables may contain references to other variables, resolve those
