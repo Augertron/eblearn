@@ -103,7 +103,8 @@ int main(int argc, char **argv) { // regular main without gui
   //  double scales[] = { 8, 4, 2};
   double scales[] = { 4.5, 2.5, 1.4};
   //double scales[] = { 1 };
-  detector<t_net> detect(*net, 3, scales, classes, &pp, norm_size, 0, 1);
+  detector<t_net> detect(*net, 3, scales, classes, &pp, norm_size, 0,
+			 conf.get_double("gain"));
   detect.set_bgclass("bg");
   detect.set_silent();
   detector_gui dgui;
