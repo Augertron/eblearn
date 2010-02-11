@@ -59,7 +59,7 @@ int main(int argc, char **argv) { // regular main without gui
   //! load datasets
   labeled_datasource<t_net, float, int>
     train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"objrec train"),
-    test_ds(conf.get_cstring("root"), conf.get_cstring("test"), "objrec test");
+    test_ds(conf.get_cstring("root"), conf.get_cstring("val"), "objrec val");
   train_ds.set_balanced();
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
@@ -108,7 +108,7 @@ int main(int argc, char **argv) { // regular main without gui
 
   // now do training iterations 
   cout << "Training network with " << train_ds.size();
-  cout << " training samples and " << test_ds.size() <<" test samples:" << endl;
+  cout << " training samples and " << test_ds.size() <<" val samples:" << endl;
   ostringstream name, fname;
 
   // estimate second derivative on 100 iterations, using mu=0.02
@@ -121,8 +121,10 @@ int main(int argc, char **argv) { // regular main without gui
     thetrainer.test(test_ds, testmeter, infp);	                 // test
     
     // save weights and confusion matrix for test set
-    name.str(""); name << conf.get_string("name") << "_net" << setfill('0');
-    name << setw(3) << i;
+    name.str("");
+    if (conf.exists("job_name"))
+      name << conf.get_string("job_name");
+    name << "_net" << setfill('0') << setw(3) << i;
     fname.str(""); fname << name.str() << ".mat";
     theparam.save_x(fname.str().c_str()); // save trained network
     cout << "saved " << fname.str() << endl;
