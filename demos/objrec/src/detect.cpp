@@ -40,23 +40,20 @@ int main(int argc, char **argv) { // regular main without gui
 #ifndef __OPENCV__
   eblerror("opencv not found, install and recompile");
 #else
-  // camera
-  CvCapture* capture = cvCaptureFromCAM(1);
-  if( !capture ) {
-    fprintf( stderr, "ERROR: capture is NULL \n" );
-    getchar();
+  // check input parameters
+  if ((argc != 2) && (argc != 3)) {
+    cerr << "wrong number of parameters." << endl;
+    cerr << "usage: obj_detect <config file> [input path]" << endl;
+    cerr << "  if input path is present, recursively classify images found ";
+    cerr << "  in path, otherwise use camera as input." << endl;
     return -1;
   }
-  // get 1st frame
-  IplImage* frame = cvQueryFrame(capture);
-  if (!frame) { cerr << "failed to grab frame." << endl; return -1; }
-  idx<t_net> image = ipl2idx<t_net>(frame);
-
   // load configuration
   configuration conf(argv[1]);
   bool	color	  = conf.get_bool("color");
   uint	norm_size = conf.get_uint("normalization_size");
   t_net threshold = (t_net) conf.get_double("threshold");
+
   // load network and weights
   parameter<t_net> theparam;
   idx<ubyte> classes(1,1);
@@ -72,10 +69,27 @@ int main(int argc, char **argv) { // regular main without gui
       bgid = i;
   if (bgid == -1) eblerror("no background class");
 
+  // initialize camera if used, otherwise list images in directory
+  bool use_cam = (argc == 3) ? false : true;
+  string ipath = (argc == 3) ? argv[2] : "";
+  idx<t_net> image;
+  camera<t_net> *cam = NULL;
+  files_list *fl = NULL;
+  string fdir, fname;
+  ostringstream oss;
+  if (use_cam)
+    cam = new camera<t_net>(1);
+  else { // otherwise initialize the list of images to process
+    cout << "Processing all images in directory " << ipath << endl;
+    fl = find_images(ipath);
+    if (!fl) { cerr << "error wrong directory: " << ipath << endl; return -1; }
+    cout << "Found " << fl->size() << " images." << endl;
+  }
+  
   // gui
   module_1_1_gui netgui;
   bool	display = conf.get_bool("display");
-  uint	wid	= display ? new_window("iris") : 0;
+  uint	wid	= display ? new_window("eblearn object recognition") : 0;
   float zoom	= 1;
   
   // initialize some buffers
@@ -101,9 +115,10 @@ int main(int argc, char **argv) { // regular main without gui
   //  double scales[] = { 2.6, 2.0, 1.4};
   //  double scales[] = { 4.6, 2.8, 1.4};
   //  double scales[] = { 8, 4, 2};
-  double scales[] = { 4.5, 2.5, 1.4};
+  //  double scales[] = { 4.5, 2.5, 1.4};
+  double scales[] = { 16, 12, 8, 6, 4, 2, 1 };
   //  double scales[] = { 3 };
-  detector<t_net> detect(*net, 3, scales, classes, &pp, norm_size, 0,
+  detector<t_net> detect(*net, 7, scales, classes, &pp, norm_size, 0,
 			 conf.get_double("gain"));
   detect.set_bgclass("bg");
   detect.set_silent();
@@ -117,66 +132,41 @@ int main(int argc, char **argv) { // regular main without gui
   time(&t0);
   uint fps = 0, cnt = 0, iframe = 0;
 
-  // answering variables
-
-  // loop
   while(1) {
     // get a new frame
-    frame = cvQueryFrame(capture);
-    if (!frame) {
-      cerr << "failed to grab frame." << endl;
-      continue ;
-    }
     t2.start();
-    // convert ipl to idx image
-    ipl2idx(frame, image);
-    resized = image_mean_resize(image, d.dim(0), d.dim(1), 0);
-    
+    if (use_cam) { // get frame from camera
+      image = cam->grab();
+      cout << "fps: " << cam->fps() << endl;
+    } else { // get image from input directory
+      if (fl->size() == 0)
+	break ; // stop when list is empty
+      fdir = fl->front().first; // directory
+      fname = fl->front().second; // file name
+      fl->pop_front(); // remove first element
+      cout << "dir: " << fdir << " fname: " << fname << endl;
+      oss.str(""); oss << fdir << "/" << fname;
+      image = load_image<t_net>(oss.str());
+    }
     // run detector
     if (!display) { // fprop without display
-      detect.fprop(resized, threshold);
+      detect.fprop(image, threshold);
     } else { // fprop and display
       disable_window_updates();
       clear_window();
-      dgui.display_inputs_outputs(detect, resized, threshold, 0, 0, zoom,
+      dgui.display_inputs_outputs(detect, image, threshold, 0, 0, zoom,
 				  (t_net)-1.1, (t_net)1.1, wid); 
       gui << at(image.dim(0) * zoom, 0) << "fps: " << fps;
       enable_window_updates();
     }
     tpp = t2.elapsed(); // stop processing timer
-// //     // video
-// //     //    ostringstream oss;
-// //     //    oss << "video/frame_" << setfill('0') << setw(5) << iframe << ".png";
-// //     //    cout << "saving " << oss.str() << endl;
-// //     //    save_window(oss.str().c_str());
-// //     //    usleep(200000);
-
-// //     // use average answer
-// //     answers.push_back(answer);
-// //     if (answers.size() > 3)
-// //       answers.pop_front();
-// //     fill(votes.begin(), votes.end(), 0);
-// //     for (ianswers = answers.begin(); ianswers != answers.end(); ++ianswers)
-// //       votes[*ianswers] += 1;
-// //     avg_answer = max_element(votes.begin(), votes.end()) - votes.begin();
     cout << "processing: " << tpp << " ms." << endl;
-    // counters
-    cnt++;
-    iframe++;
-    time(&t1);
-    diff = difftime(t1, t0);
-    if (diff >= 1) {
-      fps = cnt;
-      cnt = 0;
-      time(&t0);
-      cout << "fps: " << fps << endl;
-    }
+    sleep(2);
   }
-
-  // release camera
-  cvReleaseCapture(&capture);
   // free variables
   if (net) delete net;
+  if (cam) delete cam;
+  if (fl) delete fl;
 #endif /* __OPENCV__ */
   return 0;
 }

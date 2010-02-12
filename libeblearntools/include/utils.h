@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet *
- *   pierre.sermanet@gmail.com *
+ *   Copyright (C) 2010 by Pierre Sermanet   *
+ *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source
- *       Initiative (http://www.opensource.org) must display the
+ *     * Redistribution under a license not approved by the Open Source 
+ *       Initiative (http://www.opensource.org) must display the 
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -28,20 +28,35 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARNTOOLS_H_
-#define LIBEBLEARNTOOLS_H_
+#ifndef UTILS_H_
+#define UTILS_H_
 
-// link error messages
-#define BOOST_LIB_ERROR "Boost libraries not available, install \
-libboost-filesystem-dev libboost-regex-dev and recompile"
+#include <list>
+#include <string>
 
-#include "configuration.h"
-#include "gdb.h"
-#include "xml_utils.h"
-#include "opencv.h"
-#include "camera.h"
-#include "utils.h"
+#include "defines.h"
 
-#endif /* LIBEBLEARNTOOLS_H_ */
+using namespace std;
+
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // directory utilities
+
+  typedef list<pair<string, string> > files_list;
+
+  //! Returns a list of pairs of root directory and filename of all images
+  //! found recursively in directory 'dir'. The images are found using
+  //! the IMAGE_PATTERN regular expression by default.
+  //! If the directory does not exists, it returns NULL.
+  //! \param fl A file list where new found files will be apprended if not null.
+  //!           If null, a new list is allocated. This is used by the recursion.
+  files_list *find_images(const string &dir,
+			  const char *pattern = IMAGE_PATTERN,
+			  files_list *fl = NULL);
+  
+} // end namespace ebl
+
+#endif /* UTILS_ */
