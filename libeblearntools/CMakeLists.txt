@@ -72,12 +72,12 @@ IF (OpenCV_FOUND)
 ENDIF (OpenCV_FOUND)
 # link executable with external libraries
 # target_link_libraries (eblearntools eblearn idx)
-# IF (${Boost_MINOR_VERSION} GREATER 34)
-#   TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-# ELSE(${Boost_MINOR_VERSION} GREATER 34)
-#   TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
-#     ${Boost_REGEX_LIBRARY})
-# ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+IF (${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+ELSE(${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
+    ${Boost_REGEX_LIBRARY})
+ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 # IF (QT_FOUND)
 #   target_link_libraries (eblearntools idxgui eblearngui)
 # ENDIF (QT_FOUND)
