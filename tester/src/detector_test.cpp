@@ -33,6 +33,7 @@ void detector_test::test_norb() {
   idx<const char*> lbl(5);
   for (int i = 0; i < lbl.nelements(); ++i)
     lbl.set(labels[i], i);
+  idx<ubyte> labs = strings_to_idx(lbl);
 
   idx<ubyte> left = load_image<ubyte>(imgfile.c_str());
 
@@ -47,7 +48,8 @@ void detector_test::test_norb() {
   //left = left.transpose(tr);
   //left = left.select(2, 0);
   double scales [] = { 2, 1.5, 1};
-  detector<t_net> cb((module_1_1<t_net>&)thenet, 3, scales, lbl, NULL, 0, 0.01);
+  detector<t_net> cb((module_1_1<t_net>&)thenet, labs, NULL, 0, 0.01);
+  cb.set_resolutions(3, scales);
 
   // find category of image
   //  cb.fprop(left, .5);
