@@ -41,6 +41,9 @@ namespace ebl {
   template <typename Tdata>
   camera<Tdata>::camera(int id, int height_, int width_)
     : height(height_), width(width_), resize(false) {
+#ifndef __OPENCV__
+  eblerror("opencv not found, install and recompile");
+#else
     cout << "Initializing camera..." << endl;
     capture = cvCaptureFromCAM(id);
     if (!capture) {
@@ -56,12 +59,15 @@ namespace ebl {
     // decide if we resize input or not
     if ((height != -1) && (width != -1))
       resize = true;
+#endif /* __OPENCV__ */
   }
   
   template <typename Tdata>
   camera<Tdata>::~camera() {
+#ifdef __OPENCV__
     // release camera
     cvReleaseCapture(&capture);
+#endif /* __OPENCV__ */
   }
   
   ////////////////////////////////////////////////////////////////
@@ -69,11 +75,13 @@ namespace ebl {
 
   template <typename Tdata>
   idx<Tdata> camera<Tdata>::grab() {
+#ifdef __OPENCV__
     ipl_frame = cvQueryFrame(capture);
     if (!ipl_frame)
       eblerror("failed to grab frame");
     // convert ipl to idx image
     ipl2idx(ipl_frame, frame);
+#endif /* __OPENCV__ */
     if (!resize)
       return frame; // return original frame
     else // or return a resized frame

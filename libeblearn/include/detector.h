@@ -76,9 +76,23 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     // constructors
     
-    //! Constructor.
+    //! Constructor. Default resolutions are 1, 2 and 4 times the network's 
+    //! size. Resolutions can be set using set_resolutions().
     //! \param lbls A const char* idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
+    //! \param ppkersz The size of the preprocessing kernel (if any), to take
+    //!               border effects into account during resizing.
+    //!               Default value 0 has no effect.
+    detector(module_1_1<T> &thenet, idx<ubyte> &lbls,
+	     module_1_1<T> *pp = NULL, uint ppkersz = 0,
+	     T bias = 0, float coeff = 1.0);
+
+    //! Destructor.
+    virtual ~detector();
+
+    ////////////////////////////////////////////////////////////////
+    // configuration
+
     //! \param nresolutions The number of resolutions to use.
     //! \param scales This is an array of size nresolutions describing
     //!               the scales to use, taking the minimum resolution as scale
@@ -89,73 +103,37 @@ namespace ebl {
     //!               size, so 192x100 will be changed to closest
     //!               network-compatible size, i.e. 192x96 in that case
     //!               (still preserving the aspect ratio).
-    //! \param ppkersz The size of the preprocessing kernel (if any), to take
-    //!               border effects into account during resizing.
-    //!               Default value 0 has no effect.
-    detector(module_1_1<T> &thenet, uint nresolutions, const double *scales,
-	     idx<const char*> &lbls, module_1_1<T> *pp = NULL, uint ppkersz = 0,
-	     T bias = 0, float coeff = 1.0);
-    
-    //! Constructor.
-    //! \param lbls A const char* idx containing class name strings.
-    //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
+    void set_resolutions(uint nresolutions, const double *scales);
+
+    //! Use nresolutions resolutions between the maximum resolution and the
+    //! minimum resolution.
     //! \param nresolutions The number of resolutions to use.
-    //! \param ppkersz The size of the preprocessing kernel (if any), to take
-    //!               border effects into account during resizing.
-    //!               Default value 0 has no effect.
-    detector(module_1_1<T> &thenet, uint nresolutions,
-	     idx<const char*> &lbls, module_1_1<T> *pp = NULL, uint ppkersz = 0,
-	     T bias = 0, float coeff = 1.0);
-    
-    //! Constructor. lbls is an idx containing each class name.
-    //! \param lbls A ubyte idx containing class name strings.
-    //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
-    //! \param nresolutions The number of resolutions to use.
-    //! \param ppkersz The size of the preprocessing kernel (if any), to take
-    //!               border effects into account during resizing.
-    //!               Default value 0 has no effect.
-    detector(module_1_1<T> &thenet, uint nresolutions,
-	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL, uint ppkersz = 0,
-	     T bias = 0, float coeff = 1.0);
-    
-    //! Constructor. lbls is an idx containing each class name.
-    //! \param lbls A ubyte idx containing class name strings.
-    //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
-    //! \param nresolutions The number of resolutions to use.
-    //! \param ppkersz The size of the preprocessing kernel (if any), to take
-    //!               border effects into account during resizing.
-    //!               Default value 0 has no effect.
-    detector(module_1_1<T> &thenet, uint nresolutions, const double *scales,
-	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL, uint ppkersz = 0,
-	     T bias = 0, float coeff = 1.0);
-    
-    //! Constructor.
-    //! \param lbls A ubyte idx containing class name strings.
-    //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
+    void set_resolutions(uint resolutions);
+
+    //! Specify resolutions by hand in an nx2 idx (heightxwidth),
+    //! e.g. 240x320, 120x160.
     //! \param resolutions A uint idx containing resolutions (of size nx2)
-    //! \param ppkersz The size of the preprocessing kernel (if any), to take
-    //!               border effects into account during resizing.
-    //!               Default value 0 has no effect.
-    detector(module_1_1<T> &thenet, idx<uint> &resolutions,
-	     idx<ubyte> &lbls, module_1_1<T> *pp = NULL, uint ppkersz = 0,
-	     T bias = 0, float coeff = 1.0);
+    void set_resolutions(idx<uint> &resolutions);
 
-    //! Destructor.
-    virtual ~detector();
-
-    ////////////////////////////////////////////////////////////////
-
-    //! fprop input image throught network.
-    //! if image's and network's type differ, cast image into network's type
-    //! through an idx_copy (avoid for better performance).
-    template <class Tin>
-      vector<bbox> fprop(idx<Tin> &img, T threshold);
+    //! Specify resolutions by the factor step, starting from factor 1
+    //! (network's size), adding factor_steps until reaching the original
+    //! resolution.
+    void set_resolutions(float factor_steps);
 
     //! set background class (which will be ignored).
     void set_bgclass(const char *bg);
 
     //! set detector to silent: do not print results on std output
     void set_silent();
+
+    ////////////////////////////////////////////////////////////////
+    // execution
+    
+    //! fprop input image throught network.
+    //! if image's and network's type differ, cast image into network's type
+    //! through an idx_copy (avoid for better performance).
+    template <class Tin>
+      vector<bbox> fprop(idx<Tin> &img, T threshold);
 
   private:
     //! initialize dimensions and multi-resolution buffers.

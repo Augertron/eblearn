@@ -44,8 +44,6 @@ using namespace std;
 
 namespace ebl {
 
-#ifdef __OPENCV__
-
   //! The camera class interfaces with the opencv camera and images.
   //! It allows to grab images from camera in the idx format, and also
   //! to save gui outputs into video files.
@@ -98,18 +96,19 @@ namespace ebl {
     
     // members ////////////////////////////////////////////////////////
   protected:
-    idx<Tdata>	 frame;		//!< frame buffer
-    CvCapture	*capture;	//!< opencv capture object
-    IplImage	*ipl_frame;	//!< opencv image
+    idx<Tdata>	 frame;		//!< frame buffer 
     int          height;        //!< resize input
     int          width;         //!< resize input
     bool         resize;        //!< resize or not
+#ifdef __OPENCV__
+    CvCapture	*capture;	//!< opencv capture object
+    IplImage	*ipl_frame;	//!< opencv image 
+#endif /* __OPENCV__ */
   };
 
 } // end namespace ebl
 
 #include "camera.hpp"
 
-#endif /* __OPENCV__ */
 
 #endif /* CAMERA_H_ */
