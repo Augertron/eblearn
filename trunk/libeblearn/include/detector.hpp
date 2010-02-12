@@ -42,96 +42,56 @@ using namespace std;
 namespace ebl {
 
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_,	uint nresolutions_,
-			const double *scales_, idx<const char*> &labels_,
+  detector<T>::detector(module_1_1<T> &thenet_,	idx<ubyte> &labels_,
 			module_1_1<T> *pp_, uint ppkersz_,T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
-      ppkersz(ppkersz_), nresolutions(nresolutions_), resolutions(1, 2),
+      ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1), scales(scales_), silent(false) {
-    labels = strings_to_idx(labels_);
+      manual_resolutions(false), bgclass(-1), silent(false) {
+    // default resolutions
+    double sc[] = { 4, 2, 1 };
+    set_resolutions(3, sc);
+    // labels
+    //labels = strings_to_idx(labels_);
+    labels = labels_;
+    // clear buffers
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
     idx_clear(resize_modules);
+  }
+  
+  template <class T>
+  void detector<T>::set_resolutions(uint nresolutions_, const double *scales_) {
+    nresolutions = nresolutions_;
+    manual_resolutions = false;
+    scales = scales_;
+    original_bboxes = idx<uint>(nresolutions, 4);
     if (nresolutions < 1)
       eblerror("the number of resolutions is expected to be more than 0");
   }
   
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_,	uint nresolutions_, 
-			idx<const char*> &labels_, module_1_1<T> *pp_,
-			uint ppkersz_, T bias_, float coef_) 
-    : thenet(thenet_), coef(coef_), bias(bias_),
-      inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
-      ppkersz(ppkersz_), nresolutions(nresolutions_), resolutions(1, 2),
-      original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1), scales(NULL), silent(false) {
-    labels = strings_to_idx(labels_);
-    idx_clear(inputs);
-    idx_clear(outputs);
-    idx_clear(results);
-    idx_clear(resize_modules);
+  void detector<T>::set_resolutions(uint nresolutions_) {
+    nresolutions = nresolutions_;
+    manual_resolutions = false;
+    scales = NULL;
+    original_bboxes = idx<uint>(nresolutions, 4);
     if (nresolutions < 1)
       eblerror("the number of resolutions is expected to be more than 0");
   }
   
   template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, uint nresolutions_, 
-			idx<ubyte> &labels_, module_1_1<T> *pp_, uint ppkersz_,
-			T bias_, float coef_) 
-    : thenet(thenet_), coef(coef_), bias(bias_),
-      inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
-      ppkersz(ppkersz_), labels(labels_),
-      nresolutions(nresolutions_), resolutions(1, 2),
-      original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1), scales(NULL), silent(false) {
-    idx_clear(inputs);
-    idx_clear(outputs);
-    idx_clear(results);
-    idx_clear(resize_modules);
-    if (nresolutions < 1)
-      eblerror("the number of resolutions is expected to be more than 0");
+  void detector<T>::set_resolutions(float factor_step) {
+    // nresolutions = nresolutions_;
+    // manual_resolutions = false;
+    // scales = scales_;
+    // original_bboxes = idx<uint>(nresolutions, 4);
+    // if (nresolutions < 1)
+    //   eblerror("the number of resolutions is expected to be more than 0");
   }
-
-  template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, uint nresolutions_,
-			const double *scales_, 
-			idx<ubyte> &labels_, module_1_1<T> *pp_, uint ppkersz_,
-			T bias_, float coef_) 
-    : thenet(thenet_), coef(coef_), bias(bias_),
-      inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
-      ppkersz(ppkersz_), labels(labels_),
-      nresolutions(nresolutions_), resolutions(1, 2),
-      original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1), scales(scales_), silent(false) {
-    idx_clear(inputs);
-    idx_clear(outputs);
-    idx_clear(results);
-    idx_clear(resize_modules);
-    if (nresolutions < 1)
-      eblerror("the number of resolutions is expected to be more than 0");
-  }
-
-  template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_, idx<uint> &resolutions_,
-			idx<ubyte> &labels_, module_1_1<T> *pp_, uint ppkersz_,
-			T bias_, float coef_) 
-    : thenet(thenet_), coef(coef_), bias(bias_),
-      inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
-      ppkersz(ppkersz_), labels(labels_),
-      nresolutions(resolutions_.dim(0)), resolutions(resolutions_),
-      original_bboxes(nresolutions, 4), manual_resolutions(true), bgclass(-1),
-      scales(NULL), silent(false) {
-    idx_clear(inputs);
-    idx_clear(outputs);
-    idx_clear(results);
-    idx_clear(resize_modules);
-    if (nresolutions < 1)
-      eblerror("the number of resolutions is expected to be more than 0");
-  }
-
+  
   template <class T>
   detector<T>::~detector() {
     { idx_bloop4(in, inputs, void*, out, outputs, void*, r, results, void*,

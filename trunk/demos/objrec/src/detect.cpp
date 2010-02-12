@@ -37,9 +37,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #else
 int main(int argc, char **argv) { // regular main without gui
 #endif
-#ifndef __OPENCV__
-  eblerror("opencv not found, install and recompile");
-#else
   // check input parameters
   if ((argc != 2) && (argc != 3)) {
     cerr << "wrong number of parameters." << endl;
@@ -78,7 +75,7 @@ int main(int argc, char **argv) { // regular main without gui
   string fdir, fname;
   ostringstream oss;
   if (use_cam)
-    cam = new camera<t_net>(1);
+    cam = new camera<t_net>(-1, 240, 320);
   else { // otherwise initialize the list of images to process
     cout << "Processing all images in directory " << ipath << endl;
     fl = find_images(ipath);
@@ -92,49 +89,30 @@ int main(int argc, char **argv) { // regular main without gui
   uint	wid	= display ? new_window("eblearn object recognition") : 0;
   float zoom	= 1;
   
-  // initialize some buffers
-  //  idxdim d(conf.get_uint("net_ih"), conf.get_uint("net_iw"), 3);
-  idxdim d(240, 320, 1);
-  idxdim d2(240, 320, 3);
-  //  idxdim d(192, 256, 1);
-  //  idxdim d2(192, 256, 3);
-//   idxdim d(480, 640, 1);
-//   idxdim d2(480, 640, 3);
-  idx<t_net> im(d2), tmp(d.dim(0), d.dim(1));
-  idx<t_net> resized;
-  idx<t_net> y(d.dim(0), d.dim(1), color ? 3 : 1);
-  //  state_idx<t_net> stin(d.dim(2), d.dim(0), d.dim(1)), stout(1,1,1);
-
   // select preprocessing  
   bgr_to_yp_module<t_net> ppyp(norm_size);
   bgr_to_ypuv_module<t_net> ppypuv(norm_size);
   module_1_1<t_net> &pp = color ?
     (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
   // detector
-  //double scales[] = { 2.7, 1.75};
-  //  double scales[] = { 2.6, 2.0, 1.4};
-  //  double scales[] = { 4.6, 2.8, 1.4};
   //  double scales[] = { 8, 4, 2};
-  //  double scales[] = { 4.5, 2.5, 1.4};
-  double scales[] = { 16, 12, 8, 6, 4, 2, 1 };
+  double scales[] = { 4.5, 2.5, 1.4};
+  //  double scales[] = { 16, 12, 8, 6, 4, 2, 1 };
   //  double scales[] = { 3 };
-  detector<t_net> detect(*net, 7, scales, classes, &pp, norm_size, 0,
+  detector<t_net> detect(*net, classes, &pp, norm_size, 0,
 			 conf.get_double("gain"));
+  detect.set_resolutions(3, scales);
   detect.set_bgclass("bg");
   detect.set_silent();
   detector_gui dgui;
 
   // timing variables
-  QTime t2;
+  QTime t0;
   int tpp;
-  time_t t0, t1;
-  double diff;
-  time(&t0);
-  uint fps = 0, cnt = 0, iframe = 0;
 
   while(1) {
     // get a new frame
-    t2.start();
+    t0.start();
     if (use_cam) { // get frame from camera
       image = cam->grab();
       cout << "fps: " << cam->fps() << endl;
@@ -156,17 +134,14 @@ int main(int argc, char **argv) { // regular main without gui
       clear_window();
       dgui.display_inputs_outputs(detect, image, threshold, 0, 0, zoom,
 				  (t_net)-1.1, (t_net)1.1, wid); 
-      gui << at(image.dim(0) * zoom, 0) << "fps: " << fps;
       enable_window_updates();
     }
-    tpp = t2.elapsed(); // stop processing timer
+    tpp = t0.elapsed(); // stop processing timer
     cout << "processing: " << tpp << " ms." << endl;
-    sleep(2);
   }
   // free variables
   if (net) delete net;
   if (cam) delete cam;
   if (fl) delete fl;
-#endif /* __OPENCV__ */
   return 0;
 }
