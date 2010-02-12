@@ -63,6 +63,7 @@ MESSAGE("libeblearntools compilation flags: ${CMAKE_CXX_FLAGS}")
 add_library (eblearntools SHARED
   src/configuration.cpp
   src/gdb.cpp
+  src/utils.cpp
   src/opencv.cpp
   )
 
