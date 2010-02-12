@@ -86,7 +86,8 @@ int main(int argc, char **argv) { // regular main without gui
   module_1_1<t_net> &pp = conf.get_bool("color") ?
     (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
   double scales[] = { 3, 2, 1 };
-  detector<t_net> detect((module_1_1<t_net>&) net, 3, scales, classes, &pp);
+  detector<t_net> detect((module_1_1<t_net>&) net, classes, &pp);
+  detect.set_resolutions(3, scales);
   detect.set_bgclass(background.c_str());
 
   // answering variables and initializations
