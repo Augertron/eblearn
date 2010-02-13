@@ -100,14 +100,17 @@ namespace ebl {
 // //     //    cout << "saving " << oss.str() << endl;
 // //     //    save_window(oss.str().c_str());
 // //     //    usleep(200000);
+    return true;
   }
 
   template <typename Tdata>
   bool camera<Tdata>::record_frame() {
+    return true;
   }
     
   template <typename Tdata>
   bool camera<Tdata>::stop_recording(uint fps) {
+    return true;
   }
 
   ////////////////////////////////////////////////////////////////
