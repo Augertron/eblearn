@@ -48,7 +48,8 @@ namespace ebl {
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
       ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
-      manual_resolutions(false), bgclass(-1), silent(false) {
+      bgclass(-1), scales(NULL), scales_step(0),
+      silent(false), restype(SCALES) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -65,31 +66,20 @@ namespace ebl {
   template <class T>
   void detector<T>::set_resolutions(uint nresolutions_, const double *scales_) {
     nresolutions = nresolutions_;
-    manual_resolutions = false;
+    restype = SCALES;
     scales = scales_;
-    original_bboxes = idx<uint>(nresolutions, 4);
-    if (nresolutions < 1)
-      eblerror("the number of resolutions is expected to be more than 0");
   }
   
   template <class T>
-  void detector<T>::set_resolutions(uint nresolutions_) {
-    nresolutions = nresolutions_;
-    manual_resolutions = false;
-    scales = NULL;
-    original_bboxes = idx<uint>(nresolutions, 4);
-    if (nresolutions < 1)
-      eblerror("the number of resolutions is expected to be more than 0");
+  void detector<T>::set_resolutions(int nresolutions_) {
+    nresolutions = (uint) nresolutions_;
+    restype = NSCALES;
   }
   
   template <class T>
-  void detector<T>::set_resolutions(float factor_step) {
-    // nresolutions = nresolutions_;
-    // manual_resolutions = false;
-    // scales = scales_;
-    // original_bboxes = idx<uint>(nresolutions, 4);
-    // if (nresolutions < 1)
-    //   eblerror("the number of resolutions is expected to be more than 0");
+  void detector<T>::set_resolutions(double scales_step_) {
+    restype = SCALES_STEP;
+    scales_step = scales_step_;
   }
   
   template <class T>
@@ -121,13 +111,23 @@ namespace ebl {
     // first compute minimum and maximum resolutions for this input dims.
     compute_minmax_resolutions(input_dim);
     cout << "resolutions: min: " << in_mindim << " max: " << in_maxdim << endl;
-    
-    if (!manual_resolutions) {
-      if (scales) // use scales
+
+    switch (restype) {
+    case MANUAL:
+      break ;
+    case SCALES:
 	compute_resolutions(input_dim, nresolutions, scales);
-      else // scale between min and max resolutions
+	break ;
+    case NSCALES: // n scale between min and max resolutions
 	compute_resolutions(input_dim, nresolutions);
+	break ;
+    case SCALES_STEP: // step fixed amount between scale from min to max
+	compute_resolutions(input_dim, scales_step);
+      break ;
+    default: eblerror("unknown scaling mode");
     }
+    original_bboxes = idx<uint>(nresolutions, 4);
+    
     cout << "multi-resolution detection initialized to ";
     print_resolutions();
     
@@ -249,11 +249,15 @@ namespace ebl {
     } else { // multiple resolutions: interpolate between min and max
       resolutions.resize1(0, nresolutions);
       int n = nresolutions - 2;
-      int h = (int) ((float)(in_maxdim.dim(1) - in_mindim.dim(1)) / (n + 1));
-      int w = (int) ((float)(in_maxdim.dim(2) - in_mindim.dim(2)) / (n + 1));
-      for (int i = 1; i <= n; ++i) {
-	resolutions.set(in_maxdim.dim(1) - h * i, i, 0);
-	resolutions.set(in_maxdim.dim(2) - w * i, i, 1);
+      // compute the step factor: x = e^(log(max/min)/(nres-1))
+      double fact = MIN(in_maxdim.dim(1) / (double) in_mindim.dim(1),
+			in_maxdim.dim(2) / (double) in_mindim.dim(2));
+      double step = exp(log(fact)/(nresolutions - 1));
+      double f;
+      int i;
+      for (f = step, i = 1; i <= n; ++i, f *= step) {
+	resolutions.set(in_maxdim.dim(1) / f, i, 0);
+	resolutions.set(in_maxdim.dim(2) / f, i, 1);
       }
       resolutions.set(in_maxdim.dim(1), 0, 0); // max
       resolutions.set(in_maxdim.dim(2), 0, 1); // max
@@ -288,6 +292,18 @@ namespace ebl {
       resolutions.set((uint) (mscale * scales[i] * input_dims.dim(0)), i, 0);
       resolutions.set((uint) (mscale * scales[i] * input_dims.dim(1)), i, 1);
     }
+  }
+
+
+  template <class T>
+  void detector<T>::compute_resolutions(idxdim &input_dims, double scales_step){
+    // figure out how many resolutions can be used between min and max
+    // with a step of scales_step:
+    // nres = (log (max/min) / log step) + 1
+    double fact = MIN(in_maxdim.dim(1) / (double) in_mindim.dim(1),
+		      in_maxdim.dim(2) / (double) in_mindim.dim(2));
+    nresolutions = (uint) (log(fact) / log(scales_step)) + 1;
+    compute_resolutions(input_dims, nresolutions);
   }
 
   template <class T>

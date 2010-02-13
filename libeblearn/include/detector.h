@@ -70,6 +70,14 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   // detector
+
+  //! different types of resolutions
+  //! MANUAL: resolutions are specified manually by height and width
+  //! SCALES: a series of scaling factors, 1 being the network's size
+  //! NSCALES: n scales are computed by evenely interpolating between network's
+  //!          size and maximum resolution.
+  //! SCALES_STEP: scales range from 1 to maximum resolution, with a step size
+  enum t_resolution { MANUAL, SCALES, NSCALES, SCALES_STEP };
   
   template <class T> class detector {
   public:    
@@ -108,7 +116,7 @@ namespace ebl {
     //! Use nresolutions resolutions between the maximum resolution and the
     //! minimum resolution.
     //! \param nresolutions The number of resolutions to use.
-    void set_resolutions(uint resolutions);
+    void set_resolutions(int resolutions);
 
     //! Specify resolutions by hand in an nx2 idx (heightxwidth),
     //! e.g. 240x320, 120x160.
@@ -118,7 +126,7 @@ namespace ebl {
     //! Specify resolutions by the factor step, starting from factor 1
     //! (network's size), adding factor_steps until reaching the original
     //! resolution.
-    void set_resolutions(float factor_steps);
+    void set_resolutions(double scales_steps);
 
     //! set background class (which will be ignored).
     void set_bgclass(const char *bg);
@@ -151,6 +159,11 @@ namespace ebl {
     //! using scales, taking the minimum resolution as scale 1.
     void compute_resolutions(idxdim &input_dims, uint nresolutions,
 			     const double *scales);
+
+    //! compute sizes of each resolutions based on input size <input_dims>,
+    //! using scales with a fixed step between each of them, from min to max
+    //! resolutions.
+    void compute_resolutions(idxdim &input_dims, double scales_step);
 
     //! print all resolutions.
     void print_resolutions();
@@ -199,11 +212,12 @@ namespace ebl {
     uint		 nresolutions;
     idx<uint>		 resolutions;
     idx<uint>		 original_bboxes; //!< bboxes orig image after resizing
-    bool		 manual_resolutions;
     int                  bgclass;
     idxdim               input_dim;
     const double        *scales;
+    double               scales_step;
     bool                 silent; //!< print results on std output if not silent
+    t_resolution         restype; //!< resolution type
   };
 
 } // end namespace ebl

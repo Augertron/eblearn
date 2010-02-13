@@ -101,7 +101,9 @@ int main(int argc, char **argv) { // regular main without gui
   //  double scales[] = { 3 };
   detector<t_net> detect(*net, classes, &pp, norm_size, 0,
 			 conf.get_double("gain"));
-  detect.set_resolutions(3, scales);
+  detect.set_resolutions(1.4);
+  //  detect.set_resolutions(9);
+  //  detect.set_resolutions(3, scales);
   detect.set_bgclass("bg");
   detect.set_silent();
   detector_gui dgui;
@@ -138,6 +140,7 @@ int main(int argc, char **argv) { // regular main without gui
     }
     tpp = t0.elapsed(); // stop processing timer
     cout << "processing: " << tpp << " ms." << endl;
+    sleep(1);
   }
   // free variables
   if (net) delete net;
