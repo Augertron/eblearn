@@ -362,11 +362,10 @@ void compile_ds(Tds &ds, bool imgpat = true) {
   if (maxperclass > 0) ds.set_max_per_class(maxperclass);
   if (maxdata > 0) ds.set_max_data(maxdata);
   if (imgpat) ds.set_image_pattern(image_pattern);
-  //
+  // switch between load and normal mode
   if (load_set) { // in load mode, do nothing but loading dataset
-    ostringstream s;
-    s << images_root << "/" << load;
-    ds.load(s.str());
+    ds.set_name(load); // dataset to load
+    ds.load(images_root); // directory in which dataset is
   } else { // normal mode, do extraction
     if (scale_mode) ds.set_scales(scales, outdir);
     else ds.alloc();
