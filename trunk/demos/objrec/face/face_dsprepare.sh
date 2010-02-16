@@ -13,8 +13,8 @@ meta_email=pierre.sermanet@gmail.com
 
 # directories
 #dataroot=/data
-dataroot=~/texieradata
-#dataroot=~/humairadata
+#dataroot=~/texieradata
+dataroot=~/humairadata
 #dataroot=~/blakeyadata
 pascal=$dataroot/pascal
 pascalroot=$pascal/VOCdevkit_trainval09/VOC2009/
@@ -98,39 +98,39 @@ mkdir -p $outbg
 # dataset compilations
 ###############################################################################
 
-# # extract background images at different scales from all images parts that
-# # don't contain persons
-# ~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
-#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
-#     -maxperclass $nbg $maxdata -include "person" \
-#     -channels $pp -resize $resize -kernelsz $kernel \
-#     $maxdata $ddisplay # debug
+# extract background images at different scales from all images parts that
+# don't contain persons
+~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
+    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+    -maxperclass $nbg $maxdata -include "person" \
+    -channels $pp -resize $resize -kernelsz $kernel \
+    $maxdata $ddisplay # debug
 
-# # # extract faces from pascal
-# # ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
-# #     -outdir $out -dims ${h}x${w}x3 \
-# #     -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
-# #     -mindims 24x24 -include "head_Frontal" \
-# #     -useparts -dname ${namepheads_temp} -usepose \
-# #     $maxdata $maxperclass $ddisplay # debug
-
-# # compile background dataset
-# ~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
-#     -outdir ${out} -dname ${bgds}_${nbg} \
-#     -dims ${h}x${w}x3 \
+# # extract faces from pascal
+# ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
+#     -outdir $out -dims ${h}x${w}x3 \
+#     -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
+#     -mindims 24x24 -include "head_Frontal" \
+#     -useparts -dname ${namepheads_temp} -usepose \
 #     $maxdata $maxperclass $ddisplay # debug
 
-# # compile regular dataset
-# ~/eblearn/bin/dscompiler $root -precision $precision \
-#     -outdir ${out} -channels $pp -dname $name \
-#     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
-#     $maxdata $maxperclass $ddisplay # debug
+# compile background dataset
+~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
+    -outdir ${out} -dname ${bgds}_${nbg} \
+    -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
 
-# # merge normal dataset with background dataset
-# ~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
+# compile regular dataset
+~/eblearn/bin/dscompiler $root -precision $precision \
+    -outdir ${out} -channels $pp -dname $name \
+    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
 
-# # # merge pascal faces with regular dataset
-# # ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
+# merge normal dataset with background dataset
+~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
+
+# # merge pascal faces with regular dataset
+# ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
 
 # split dataset into training and {validation/test}
 ~/eblearn/bin/dssplit $out ${namebg} \

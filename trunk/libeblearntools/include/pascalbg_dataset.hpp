@@ -290,11 +290,13 @@ namespace ebl {
 	  // test if patch overlaps with any bounding box or is outside of image
 	  overlap = false;
 	  for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb) {
-	    if (patch.overlap(*ibb) || !patch.is_within(original_bbox)) {
+	    if (patch.overlap(*ibb)) {
 	      overlap = true;
 	      break ;
 	    }
 	  }
+	  if (!patch.is_within(original_bbox))
+	    overlap = true;
 	  if (!overlap) {
 	    // not overlapping, add patch
 	    idx<Tdata> p = im2.narrow(0, patch.height, patch.h0);
