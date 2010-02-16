@@ -61,7 +61,7 @@ namespace ebl {
   dataset<Tdata>::dataset(const char *name_, const char *inroot_) {
     // initialize members
     allocated = false;
-    name = name_;
+    set_name(name_);
     if (inroot_) {
       inroot = inroot_;
       inroot += "/";
@@ -70,11 +70,6 @@ namespace ebl {
     height = outdims.dim(0);
     width = outdims.dim(1);
     mindims = idxdim(1, 1);
-    build_fname(name, DATA_NAME, data_fname);
-    build_fname(name, LABELS_NAME, labels_fname);
-    build_fname(name, CLASSES_NAME, classes_fname);
-    build_fname(name, CLASSPAIRS_NAME, classpairs_fname);
-    build_fname(name, DEFORMPAIRS_NAME, deformpairs_fname);
     max_data = 0;
     max_data_set = false;
     total_samples = 0;
@@ -696,6 +691,11 @@ namespace ebl {
   template <class Tdata>
   void dataset<Tdata>::set_name(const string &s) {
     name = s;
+    build_fname(name, DATA_NAME, data_fname);
+    build_fname(name, LABELS_NAME, labels_fname);
+    build_fname(name, CLASSES_NAME, classes_fname);
+    build_fname(name, CLASSPAIRS_NAME, classpairs_fname);
+    build_fname(name, DEFORMPAIRS_NAME, deformpairs_fname);
     cout << "Setting dataset name to: " << name << endl;
   }
     
