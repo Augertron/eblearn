@@ -83,6 +83,8 @@ bool            useparts         = false; // use parts if given
 bool            partsonly        = false; // use parts only if given
 string          save             = DATASET_SAVE;// save into lush dataset format
 bool            save_set         = false;
+string          load             = ""; // dataset to load
+bool            load_set         = false;
 float           bboxfact         = 1.0;
 bool            bboxfact_set     = false;
 
@@ -151,6 +153,10 @@ bool parse_args(int argc, char **argv) {
 	++i; if (i >= argc) throw 0;
 	save = argv[i];
 	save_set = true;
+      } else if (strcmp(argv[i], "-load") == 0) {
+	++i; if (i >= argc) throw 0;
+	load = argv[i];
+	load_set = true;
       } else if (strcmp(argv[i], "-type") == 0) {
 	++i; if (i >= argc) throw 0;
 	type = argv[i];
@@ -300,6 +306,8 @@ void print_usage() {
   cout << "  -stereo_lpattern <pattern>" << endl;
   cout << "  -stereo_rpattern <pattern>" << endl;
   cout << "  -outdir <directory (default=images_root)>" << endl;
+  cout << "  -load <dataset name> (this loads the dataset instead of compiling";
+  cout << "     it from images found in root." << endl;
   cout << "  -save <dataset(default)|mat|ppm|png|jpg|...>" << endl;
   cout << "  -dname <name>" << endl;
   cout << "  -maxperclass <integer>" << endl;
@@ -354,9 +362,16 @@ void compile_ds(Tds &ds, bool imgpat = true) {
   if (maxperclass > 0) ds.set_max_per_class(maxperclass);
   if (maxdata > 0) ds.set_max_data(maxdata);
   if (imgpat) ds.set_image_pattern(image_pattern);
-  if (scale_mode) ds.set_scales(scales, outdir);
-  else ds.alloc();
-  ds.extract();
+  //
+  if (load_set) { // in load mode, do nothing but loading dataset
+    ostringstream s;
+    s << images_root << "/" << load;
+    ds.load(s.str());
+  } else { // normal mode, do extraction
+    if (scale_mode) ds.set_scales(scales, outdir);
+    else ds.alloc();
+    ds.extract();
+  }
   if (shuffle) ds.shuffle();
   ds.save(outdir);
 }
