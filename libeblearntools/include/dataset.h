@@ -151,6 +151,11 @@ namespace ebl {
     //! lush matrix format. other values can be "ppm", "jpg", etc.
     void set_save(const string &save);
 
+    //! Set name of dataset. This name will be used by load and save methods.
+    //! It is usually set in the constructor, but one can also use this method
+    //! instead.
+    void set_name(const string &name);
+
     //! Multiply bounding boxes by factor. This is useful to move object's
     //! boundaries away from borders when bounding boxes are too tight around
     //! objects.

@@ -694,6 +694,12 @@ namespace ebl {
   }
     
   template <class Tdata>
+  void dataset<Tdata>::set_name(const string &s) {
+    name = s;
+    cout << "Setting dataset name to: " << name << endl;
+  }
+    
+  template <class Tdata>
   void dataset<Tdata>::set_bboxfact(float factor) {
     bboxfact = factor;
     cout << "Setting bounding box factor to " << bboxfact << endl;
