@@ -134,6 +134,11 @@ namespace ebl {
     //! set detector to silent: do not print results on std output
     void set_silent();
 
+    //! Enable saving of each (preprocessed) window inducing a positive
+    //! detection into directory. All detections except for the background
+    //! class are dumped into a directory corresponding to the class' name.
+    void set_save(const string directory);
+
     ////////////////////////////////////////////////////////////////
     // execution
     
@@ -183,6 +188,10 @@ namespace ebl {
     vector<bbox> map_to_list(T threshold);
     void pretty_bboxes(vector<bbox> &vb);
 
+    //! save all bounding boxes of original (in original resolution) and
+    //! preprocessed (resized and filtered) input into directory dir.
+    void save_bboxes(vector<bbox> &bboxes, const string &dir);
+
     ////////////////////////////////////////////////////////////////
     // members
   public:
@@ -218,6 +227,9 @@ namespace ebl {
     double               scales_step;
     bool                 silent; //!< print results on std output if not silent
     t_resolution         restype; //!< resolution type
+    bool                 save_mode; //!< save detected windows or not
+    string               save_dir; //!< directory where to save detections
+    vector<uint>         save_counts; //!< file counter for each class
   };
 
 } // end namespace ebl
