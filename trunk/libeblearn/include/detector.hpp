@@ -35,6 +35,9 @@
 #include "detector.h"
 #include <algorithm>
 #include <typeinfo>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 using namespace std;
 
@@ -49,7 +52,8 @@ namespace ebl {
       ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
       bgclass(-1), scales(NULL), scales_step(0),
-      silent(false), restype(SCALES) {
+      silent(false), restype(SCALES),
+      save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -104,7 +108,6 @@ namespace ebl {
     int thick = (dsample.order() == 2) ? 1 : dsample.dim(2); // TODO FIXME
     height = dsample.dim(0);    
     width = dsample.dim(1);
-    grabbed = idx<T>(height, width, thick);    
     input_dim = idxdim(height, width, thick);
     idxdim sd(thick, height, width);
 
@@ -203,6 +206,12 @@ namespace ebl {
   template <class T>
   void detector<T>::set_silent() {
     silent = true;
+  }
+
+  template <class T>
+  void detector<T>::set_save(const string directory) {
+    save_mode = true;
+    save_dir = directory;
   }
     
   template <class T>
@@ -497,9 +506,75 @@ namespace ebl {
     vector<bbox> rlist = map_to_list(threshold);
     if (!silent)
       pretty_bboxes(rlist);
+    // save positive response input windows in save mode
+    if (save_mode)
+      save_bboxes(rlist, save_dir);
+    // return bounding boxes
     return rlist;
   }
 
+  template <class T>
+  void detector<T>::save_bboxes(vector<bbox> &bboxes, const string &dir) {
+    string classname;
+    ostringstream fname, cmd;
+    state_idx<T> *input = NULL;
+    idx<T> inpp, inorig;
+    vector<bbox>::iterator bbox;
+    vector<bool> dir_exists(labels.dim(0), false);
+    string root = dir;
+    root += "/";
+    vector<string> dir_pp(labels.dim(0), root.c_str());
+    vector<string> dir_orig(labels.dim(0), root.c_str());
+
+    // initialize directory names
+    for (int i = 0; i < labels.dim(0); ++i) {
+      classname = (const char *) labels[i].idx_ptr();
+      dir_pp[i] += "preprocessed/";
+      dir_pp[i] += classname;
+      dir_pp[i] += "/";
+      dir_orig[i] += "original/";
+      dir_orig[i] += classname;
+      dir_orig[i] += "/";
+    }
+    // loop on bounding boxes
+    for (bbox = bboxes.begin(); bbox != bboxes.end(); ++bbox) {
+      // exclude background class
+      if (bbox->class_id == bgclass)
+	continue ;
+      // get class name
+      classname = (const char *) labels[bbox->class_id].idx_ptr();
+      // check if directory exists for this class, otherwise create it
+      if (!dir_exists[bbox->class_id]) {
+	cmd.str(""); cmd << "mkdir -p " << dir_pp[bbox->class_id];
+	system(cmd.str().c_str());
+	cmd.str(""); cmd << "mkdir -p " << dir_orig[bbox->class_id];
+	system(cmd.str().c_str());
+	dir_exists[bbox->class_id] = true;
+      }
+      // get bbox of preprocessed input at bbox's scale
+      input = (state_idx<T>*) inputs.get(bbox->scale_index);
+      inpp = input->x.narrow(1, bbox->ih, bbox->ih0);
+      inpp = inpp.narrow(2, bbox->iw, bbox->iw0);
+      //inpp = inpp.shift_dim(0, 2); // put channels back to 3rd position
+      // get bbox of original input
+      inorig = grabbed.narrow(0, bbox->height, bbox->h0);
+      inorig = inorig.narrow(1, bbox->width, bbox->w0);
+      // save preprocessed image as lush mat
+      fname.str(""); fname << dir_pp[bbox->class_id] << classname;
+      fname << setw(6) << setfill('0') << save_counts[bbox->class_id];
+      fname << MATRIX_EXTENSION;
+      save_matrix(inpp, fname.str());
+      cout << "saved " << fname.str() << endl;
+      // save original image as png
+      fname.str(""); fname << dir_orig[bbox->class_id] << classname;
+      fname << setw(6) << setfill('0') << save_counts[bbox->class_id] << ".png";
+      save_image(fname.str(), inorig, "png");
+      cout << "saved " << fname.str() << endl;
+      // increment file counter
+      save_counts[bbox->class_id]++;
+    }
+  }
+  
 #include <sys/time.h>
 #include <stdio.h>
 #include <unistd.h>

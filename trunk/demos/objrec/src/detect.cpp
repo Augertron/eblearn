@@ -47,9 +47,10 @@ int main(int argc, char **argv) { // regular main without gui
   }
   // load configuration
   configuration conf(argv[1]);
-  bool	color	  = conf.get_bool("color");
-  uint	norm_size = conf.get_uint("normalization_size");
-  t_net threshold = (t_net) conf.get_double("threshold");
+  bool		color		= conf.get_bool("color");
+  uint		norm_size	= conf.get_uint("normalization_size");
+  t_net		threshold	= (t_net) conf.get_double("threshold");
+  bool		save_detections = conf.get_bool("save_detections");
 
   // load network and weights
   parameter<t_net> theparam;
@@ -106,6 +107,8 @@ int main(int argc, char **argv) { // regular main without gui
   //  detect.set_resolutions(3, scales);
   detect.set_bgclass("bg");
   detect.set_silent();
+  if (save_detections)
+    detect.set_save("detections");
   detector_gui dgui;
 
   // timing variables
@@ -140,7 +143,7 @@ int main(int argc, char **argv) { // regular main without gui
     }
     tpp = t0.elapsed(); // stop processing timer
     cout << "processing: " << tpp << " ms." << endl;
-    sleep(1);
+    //    sleep(1);
   }
   // free variables
   if (net) delete net;
