@@ -113,7 +113,7 @@ namespace ebl {
 
     // first compute minimum and maximum resolutions for this input dims.
     compute_minmax_resolutions(input_dim);
-    cout << "resolutions: min: " << in_mindim << " max: " << in_maxdim << endl;
+    cout << "resolutions: input: " << input_dim << " min: " << in_mindim << " max: " << in_maxdim << endl;
 
     switch (restype) {
     case MANUAL:
@@ -227,7 +227,7 @@ namespace ebl {
   }
 
   template <class T>
-  void detector<T>::compute_resolutions(idxdim &input_dims, uint nresolutions) {
+  void detector<T>::compute_resolutions(idxdim &input_dims, uint &nresolutions) {
     // nresolutions must be >= 1
     if (nresolutions == 0)
       eblerror("expected more resolutions than 0");
@@ -240,8 +240,11 @@ namespace ebl {
       cerr << nresolutions << ") is more than";
       cerr << " the minimum distance between minimum and maximum possible";
       cerr << " resolutions. (min: " << in_mindim << " max: " << in_maxdim;
-      cerr << ") setting it to " << max_res << endl;
-      nresolutions = max_res;
+      if (in_mindim == in_maxdim)
+	nresolutions = 1;
+      else
+	nresolutions = 2;
+      cerr << ") setting it to " << nresolutions << endl;
     }
     
     // only 1 scale if min == max or if only 1 scale requested.
@@ -265,8 +268,8 @@ namespace ebl {
       double f;
       int i;
       for (f = step, i = 1; i <= n; ++i, f *= step) {
-	resolutions.set(in_maxdim.dim(1) / f, i, 0);
-	resolutions.set(in_maxdim.dim(2) / f, i, 1);
+	resolutions.set((uint)(in_maxdim.dim(1) / f), i, 0);
+	resolutions.set((uint)(in_maxdim.dim(2) / f), i, 1);
       }
       resolutions.set(in_maxdim.dim(1), 0, 0); // max
       resolutions.set(in_maxdim.dim(2), 0, 1); // max
@@ -623,7 +626,7 @@ namespace ebl {
     seconds  = end.tv_sec  - start.tv_sec;
     useconds = end.tv_usec - start.tv_usec;
 
-    ms += ((seconds) * 1000 + useconds/1000.0) + 0.5;
+    ms += (uint)(((seconds) * 1000 + useconds/1000.0) + 0.5);
       }}
     cout << "net: " << ms << " ms. ";
   }
