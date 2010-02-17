@@ -51,6 +51,7 @@ int main(int argc, char **argv) { // regular main without gui
   uint		norm_size	= conf.get_uint("normalization_size");
   t_net		threshold	= (t_net) conf.get_double("threshold");
   bool		save_detections = conf.get_bool("save_detections");
+  bool		display 	= false;
 
   // load network and weights
   parameter<t_net> theparam;
@@ -85,11 +86,16 @@ int main(int argc, char **argv) { // regular main without gui
   }
   
   // gui
+#ifdef __GUI__
+  display 	= conf.get_bool("display");
   module_1_1_gui netgui;
-  bool	display = conf.get_bool("display");
   uint	wid	= display ? new_window("eblearn object recognition") : 0;
   float zoom	= 1;
-  
+  detector_gui dgui;
+  // timing variables
+  QTime t0;
+  int tpp;
+#endif  
   // select preprocessing  
   bgr_to_yp_module<t_net> ppyp(norm_size);
   bgr_to_ypuv_module<t_net> ppypuv(norm_size);
@@ -109,15 +115,12 @@ int main(int argc, char **argv) { // regular main without gui
   detect.set_silent();
   if (save_detections)
     detect.set_save("detections");
-  detector_gui dgui;
-
-  // timing variables
-  QTime t0;
-  int tpp;
 
   while(1) {
     // get a new frame
+#ifdef __GUI__
     t0.start();
+#endif
     if (use_cam) { // get frame from camera
       image = cam->grab();
       cout << "fps: " << cam->fps() << endl;
@@ -134,7 +137,9 @@ int main(int argc, char **argv) { // regular main without gui
     // run detector
     if (!display) { // fprop without display
       detect.fprop(image, threshold);
-    } else { // fprop and display
+    } 
+#ifdef __GUI__
+    else { // fprop and display
       disable_window_updates();
       clear_window();
       dgui.display_inputs_outputs(detect, image, threshold, 0, 0, zoom,
@@ -143,6 +148,7 @@ int main(int argc, char **argv) { // regular main without gui
     }
     tpp = t0.elapsed(); // stop processing timer
     cout << "processing: " << tpp << " ms." << endl;
+#endif
     //    sleep(1);
   }
   // free variables

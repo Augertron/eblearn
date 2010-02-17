@@ -158,7 +158,7 @@ namespace ebl {
     
     //! compute sizes of each resolutions based on input size <input_dims>,
     //! choosing nresolutions going from the minimum to the maximum resolutions.
-    void compute_resolutions(idxdim &input_dims, uint nresolutions);
+    void compute_resolutions(idxdim &input_dims, uint &nresolutions);
 
     //! compute sizes of each resolutions based on input size <input_dims>,
     //! using scales, taking the minimum resolution as scale 1.
