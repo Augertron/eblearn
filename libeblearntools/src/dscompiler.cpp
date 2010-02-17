@@ -406,11 +406,14 @@ void compile() {
   else if (!strcmp(type.c_str(), "pascalfull")) {
     pascalfull_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
 				 outdir.c_str());
+    if (useparts) ds.use_parts();
+    if (partsonly) ds.use_parts_only();
     ds.set_exclude(exclude);
     ds.set_include(include);
     ds.set_display(display);
     ds.set_resize(resize);
     ds.set_sleepdisplay(sleep_delay);
+    if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
     if (maxdata > 0)
       ds.set_max_data(maxdata);
     ds.extract();

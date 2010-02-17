@@ -12,15 +12,16 @@ meta_email=pierre.sermanet@gmail.com
 ################################################################################
 
 # directories
-#dataroot=/data
+dataroot=/data
 #dataroot=~/texieradata
-dataroot=~/humairadata
+#dataroot=~/humairadata
 #dataroot=~/blakeyadata
 pascal=$dataroot/pascal
 pascalroot=$pascal/VOCdevkit_trainval09/VOC2009/
 root=$dataroot/face/data
 out=$dataroot/face/ds/
 nopersons_root=$out/nopersons/
+nopersons_root_pascal=$nopersons_root/pascal/
 detector_name=20100211.025504.face_conf00_color_0_eta_.00001_resize_mean
 false_positive_root=$dataroot/face/false_positives/$detector_name/
 
@@ -56,7 +57,8 @@ mkdir -p $pascalroot
 mkdir -p $root
 mkdir -p $out
 mkdir -p $outbg
-mkdir -p $noperson_root
+mkdir -p $nopersons_root
+mkdir -p $nopersons_root_pascal
 
 ###############################################################################
 # fetch datasets
@@ -158,7 +160,7 @@ mkdir -p $noperson_root
 
 # extract all pascal full images that do not contain faces
 ~/eblearn/bin/dscompiler $pascalroot -type pascalfull -precision $precision \
-    -outdir $nopersons_root/pascal -exclude "person" \
+    -outdir $nopersons_root_pascal -exclude "person" \
     $maxdata $ddisplay # debug
 
 # # compile false positive dataset

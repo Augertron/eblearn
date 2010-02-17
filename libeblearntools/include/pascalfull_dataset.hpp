@@ -54,7 +54,8 @@ namespace ebl {
     : pascal_dataset<Tdata>(name_, inroot_, false) {
     outdir = outdir_;
     data_cnt = 0;
-  }
+    this->allocated = true; // fool extract method
+ }
 
   template <class Tdata>
   pascalfull_dataset<Tdata>::~pascalfull_dataset() {
