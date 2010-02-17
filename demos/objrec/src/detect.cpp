@@ -76,6 +76,7 @@ int main(int argc, char **argv) { // regular main without gui
   files_list *fl = NULL;
   string fdir, fname;
   ostringstream oss;
+  uint frame_id = 0;
   if (use_cam)
     cam = new camera<t_net>(-1, 240, 320);
   else { // otherwise initialize the list of images to process
@@ -130,7 +131,7 @@ int main(int argc, char **argv) { // regular main without gui
       fdir = fl->front().first; // directory
       fname = fl->front().second; // file name
       fl->pop_front(); // remove first element
-      cout << "dir: " << fdir << " fname: " << fname << endl;
+      cout << frame_id << "/" << fl->size() << ": processing " << fdir << "/" << fname << endl;
       oss.str(""); oss << fdir << "/" << fname;
       image = load_image<t_net>(oss.str());
     }
@@ -149,6 +150,7 @@ int main(int argc, char **argv) { // regular main without gui
     tpp = t0.elapsed(); // stop processing timer
     cout << "processing: " << tpp << " ms." << endl;
 #endif
+    frame_id++;
     //    sleep(1);
   }
   // free variables

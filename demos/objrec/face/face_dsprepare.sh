@@ -12,9 +12,9 @@ meta_email=pierre.sermanet@gmail.com
 ################################################################################
 
 # directories
-dataroot=/data
+#dataroot=/data
 #dataroot=~/texieradata
-#dataroot=~/humairadata
+dataroot=~/humairadata
 #dataroot=~/blakeyadata
 pascal=$dataroot/pascal
 pascalroot=$pascal/VOCdevkit_trainval09/VOC2009/
