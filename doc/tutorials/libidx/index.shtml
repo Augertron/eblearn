@@ -1,18 +1,15 @@
 <html><head>
     
     <title>EBLearn: libidx tutorial</title>
-    <link rel="stylesheet" href="index_files/main.css" type="text/css" media="screen">
-    <link rel="stylesheet" href="index_files/index_004.css" type="text/css" media="screen">
-    <link rel="stylesheet" href="index_files/styles.css" type="text/css" media="all">
-    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></head><body>
-    
-    
-    
-    <link rel="stylesheet" href="index_files/main.css" type="text/css" media="screen">
-    <link rel="stylesheet" href="index_files/index_004.css" type="text/css" media="screen">
-    <link rel="stylesheet" type="text/css" href="index_files/styles.css" media="all">
-
-    <link rel="shortcut icon" href="http://eblearn.sourceforge.net/web/logo2.ico">
+    <link rel="stylesheet" href="../../web/main.css" type="text/css" 
+	  media="screen">
+    <link rel="stylesheet" href="../../web/index_004.css" type="text/css" 
+	  media="screen">
+    <link rel="stylesheet" href="../../web/styles.css" type="text/css" 
+	  media="all">
+  </head>
+  <body>
+    <!--#include virtual="../../nav.html" --> 
     
     <table cellpadding="12" cellspacing="0">
       <tbody><tr>
@@ -27,7 +24,7 @@
 	      <a href="https://sourceforge.net/projects/eblearn/" target="_blank">
 		Sourceforge Page</a><br>
 	      <h2>Code</h2>
-	      <a href="http://eblearn.sourceforge.net/download.shtml">
+	      <a href="http://eblearn.sourceforge.net/install.shtml">
 		Download &amp; Installation</a><br>
 
 	      <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/trunk/" target="_blank">Browse (SVN)</a><br>

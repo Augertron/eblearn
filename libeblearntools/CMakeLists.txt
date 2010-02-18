@@ -71,13 +71,15 @@ IF (OpenCV_FOUND)
   target_link_libraries (eblearntools cv highgui cxcore)
 ENDIF (OpenCV_FOUND)
 # link executable with external libraries
-# target_link_libraries (eblearntools eblearn idx)
-IF (${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-ELSE(${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
-    ${Boost_REGEX_LIBRARY})
-ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+target_link_libraries (eblearntools eblearn idx)
+IF (Boost_FOUND)
+  IF (${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+  ELSE(${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
+      ${Boost_REGEX_LIBRARY})
+  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+ENDIF (Boost_FOUND)
 # IF (QT_FOUND)
 #   target_link_libraries (eblearntools idxgui eblearngui)
 # ENDIF (QT_FOUND)
@@ -102,13 +104,15 @@ ENDIF (QT_FOUND)
 IF (XML_FOUND)
   target_link_libraries (dscompiler ${XML_LIBRARY_FLAGS})
 ENDIF (XML_FOUND)
-IF (${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(dscompiler ${Boost_SYSTEM_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-ELSE(${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(dscompiler ${Boost_FILESYSTEM_LIBRARY} 
-    ${Boost_REGEX_LIBRARY})
-ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+IF (Boost_FOUND)
+  IF (${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(dscompiler ${Boost_SYSTEM_LIBRARY}
+      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+  ELSE(${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(dscompiler ${Boost_FILESYSTEM_LIBRARY} 
+      ${Boost_REGEX_LIBRARY})
+  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+ENDIF (Boost_FOUND)
 
 # compile executable: dssplit
 ################################################################################
@@ -122,13 +126,15 @@ target_link_libraries (dssplit eblearn idx)
 IF (QT_FOUND)
   target_link_libraries (dssplit idxgui eblearngui)
 ENDIF (QT_FOUND)
-IF (${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(dssplit ${Boost_SYSTEM_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-ELSE(${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(dssplit ${Boost_FILESYSTEM_LIBRARY} 
-    ${Boost_REGEX_LIBRARY})
-ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+IF (Boost_FOUND)
+  IF (${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(dssplit ${Boost_SYSTEM_LIBRARY}
+      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+  ELSE(${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(dssplit ${Boost_FILESYSTEM_LIBRARY} 
+      ${Boost_REGEX_LIBRARY})
+  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+ENDIF (Boost_FOUND)
 
 # compile executable: dsmerge
 ################################################################################
@@ -142,13 +148,15 @@ target_link_libraries (dsmerge eblearn idx)
 IF (QT_FOUND)
   target_link_libraries (dsmerge idxgui eblearngui)
 ENDIF (QT_FOUND)
-IF (${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(dsmerge ${Boost_SYSTEM_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-ELSE(${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(dsmerge ${Boost_FILESYSTEM_LIBRARY} 
-    ${Boost_REGEX_LIBRARY})
-ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+IF (Boost_FOUND)
+  IF (${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(dsmerge ${Boost_SYSTEM_LIBRARY}
+      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+  ELSE(${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(dsmerge ${Boost_FILESYSTEM_LIBRARY} 
+      ${Boost_REGEX_LIBRARY})
+  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+ENDIF (Boost_FOUND)
 
 # compile executable: dsdisplay
 ################################################################################
@@ -162,13 +170,15 @@ target_link_libraries (dsdisplay eblearn idx)
 IF (QT_FOUND)
   target_link_libraries (dsdisplay idxgui eblearngui)
 ENDIF (QT_FOUND)
-IF (${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(dsdisplay ${Boost_SYSTEM_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-ELSE(${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(dsdisplay ${Boost_FILESYSTEM_LIBRARY} 
-    ${Boost_REGEX_LIBRARY})
-ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+IF (Boost_FOUND)
+  IF (${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(dsdisplay ${Boost_SYSTEM_LIBRARY}
+      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+  ELSE(${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(dsdisplay ${Boost_FILESYSTEM_LIBRARY} 
+      ${Boost_REGEX_LIBRARY})
+  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+ENDIF (Boost_FOUND)
 
 # compile executable: dsdisplay
 ################################################################################
@@ -191,12 +201,14 @@ add_executable (meta_trainer
   )
 
 # link executable with external libraries
-IF (${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(meta_trainer ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-ELSE(${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(meta_trainer ${Boost_FILESYSTEM_LIBRARY} 
-    ${Boost_REGEX_LIBRARY})
-ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+IF (Boost_FOUND)
+  IF (${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(meta_trainer ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+  ELSE(${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(meta_trainer ${Boost_FILESYSTEM_LIBRARY} 
+      ${Boost_REGEX_LIBRARY})
+  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+ENDIF (Boost_FOUND)
 
 # compile executable: meta_plot
 ################################################################################
@@ -205,12 +217,14 @@ add_executable (meta_plot
   )
 
 # link executable with external libraries
-IF (${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(meta_plot ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-ELSE(${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(meta_plot ${Boost_FILESYSTEM_LIBRARY} 
-    ${Boost_REGEX_LIBRARY})
-ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+IF (Boost_FOUND)
+  IF (${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(meta_plot ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+  ELSE(${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(meta_plot ${Boost_FILESYSTEM_LIBRARY} 
+      ${Boost_REGEX_LIBRARY})
+  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+ENDIF (Boost_FOUND)
 
 EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/meta_plot.sh\""
 		  "\"${LIBRARY_OUTPUT_PATH}\"")
