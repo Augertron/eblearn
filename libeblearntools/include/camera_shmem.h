@@ -30,95 +30,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef CAMERA_H_
-#define CAMERA_H_
+#ifndef CAMERA_SHMEM_H_
+#define CAMERA_SHMEM_H_
 
-#include "libidx.h"
-
-#ifdef __GUI__
-#include "libidxgui.h"
-#endif
+#include "camera.h"
 
 using namespace std;
 
 namespace ebl {
 
-  //! The camera class is an abstract class that serves as an interface
-  //! to different camera implementation, such as camera_opencv, etc.
-  //! It allows to grab images from camera in the idx format, and also
+  //! The camera_shmem class interfaces with camera images that come
+  //! from a shared buffer in memory.
+  //! It allows to grab images from a shared buffer in the idx format, and also
   //! to save gui outputs into video files.
-  template <typename Tdata> class camera {
+  template <typename Tdata> class camera_shmem : public camera<Tdata> {
   public:
 
     ////////////////////////////////////////////////////////////////
     // constructors/allocation
 
-    //! Initialize a camera.
+    //! Initialize shmem camera using a shared memory descriptor.
     //! height and width are optional parameters that resize the input image
     //! to those dimensions if given (different than -1). One may want to
     //! decrease the input resolution first to speed up operations, for example
     //! when computing multiple resolutions.
+    //! \param id The ID of the camera. -1 chooses the first available camera.
     //! \param height Resize input frame to this height if different than -1.
     //! \param width Resize input frame to this width if different than -1.
-    camera(int height = -1, int width = -1);
+    camera_shmem(int id, int height = -1, int width = -1);
 
-    //! Initializations.
-    virtual void init();
-    
     //! Destructor.
-    virtual ~camera();
+    virtual ~camera_shmem();
 
     ////////////////////////////////////////////////////////////////
     // frame grabbing
 
     //! Return a new frame.
-    virtual idx<Tdata> grab() = 0;
+    virtual idx<Tdata> grab();
 
-    //! Return true if no frames available, false otherwise.
-    virtual bool empty();
-
-    ////////////////////////////////////////////////////////////////
-    // video recording
-    
-    //! Start recording of frames from window window_id into path.
-    //! This creates a directory name in path.
-    //! No frames are actually recorded,
-    virtual bool start_recording(uint window_id, const string &path,
-				 const string &name);
-
-    //! Dump all frames declared to be recorded by start_recording().
-    virtual bool record_frame();
-    
-    //! Create all videos started with start_recording() using frames dumped
-    //! with record_frame(), using fps frames per second.
-    virtual bool stop_recording(uint fps);
-
-    ////////////////////////////////////////////////////////////////
-    // info
-
-    //! Return the number of frames per second obtained via grab().
-    virtual float fps();
-
-    ////////////////////////////////////////////////////////////////
-    // internal methods
-  protected:
-
-    //! Return post processed frame after grabbing it, e.g. resize frame to
-    //! target height and width (if specified).
-    //! This also increments frame counter.
-    virtual idx<Tdata> postprocess();
-    
     // members ////////////////////////////////////////////////////////
   protected:
-    idx<Tdata>	 frame;		//!< frame buffer 
-    int          height;        //!< resize input
-    int          width;         //!< resize input
-    bool         bresize;       //!< resize or not
-    uint         frame_id;      //!< frame counter
+    using camera<Tdata>::frame;		//!< frame buffer 
   };
 
 } // end namespace ebl
 
-#include "camera.hpp"
+#include "camera_shmem.hpp"
 
-#endif /* CAMERA_H_ */
+
+#endif /* CAMERA_SHMEM_H_ */
