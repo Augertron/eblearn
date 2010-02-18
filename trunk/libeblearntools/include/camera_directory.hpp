@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef CAMERA_HPP_
-#define CAMERA_HPP_
+#ifndef CAMERA_DIRECTORY_HPP_
+#define CAMERA_DIRECTORY_HPP_
 
 namespace ebl {
 
@@ -39,87 +39,53 @@ namespace ebl {
   // constructors & initializations
 
   template <typename Tdata>
-  camera<Tdata>::camera(int height_, int width_)
-    : height(height_), width(width_), bresize(false), frame_id(0) {
-    // decide if we resize input or not
-    if ((height != -1) && (width != -1))
-      bresize = true;
-  }
-
-  template <typename Tdata>
-  void camera<Tdata>::init() {
-    // get 1st frame to initialize image buffer
-    frame = grab();
-  }
-  
-  template <typename Tdata>
-  camera<Tdata>::~camera() {
+  camera_directory<Tdata>::camera_directory(const char *dir,
+					    int height_, int width_)
+    : camera<Tdata>(height_, width_) {
+    cout << "Initializing directory camera from: " << dir << endl;
+    string directory = dir;
+    fl = find_images(directory);
+    if (!fl) {
+      cerr << "invalid directory: " << dir << endl;
+      eblerror("invalid directory");
+    }
+    cout << "Found " << fl->size() << " images." << endl;
+    flsize = fl->size();
+    this->init();
   }
   
-  ////////////////////////////////////////////////////////////////
-  // grabbin
-  
   template <typename Tdata>
-  bool camera<Tdata>::empty() {
-    return false; // never empty by default
+  camera_directory<Tdata>::~camera_directory() {
   }
   
   ////////////////////////////////////////////////////////////////
-  // video recording
-    
-  template <typename Tdata>
-  bool camera<Tdata>::start_recording(uint window_id, const string &path,
-				      const string &name) {
-// //     // video
-// //     //    ostringstream oss;
-// //     //    oss << "video/frame_" << setfill('0') << setw(5) << iframe << ".png";
-// //     //    cout << "saving " << oss.str() << endl;
-// //     //    save_window(oss.str().c_str());
-// //     //    usleep(200000);
-    return true;
-  }
+  // frame grabbing
 
   template <typename Tdata>
-  bool camera<Tdata>::record_frame() {
-    return true;
+  idx<Tdata> camera_directory<Tdata>::grab() {
+    if (empty())
+      eblerror("cannot grab images on empty list");
+    fdir = fl->front().first; // directory
+    fname = fl->front().second; // file name
+    fl->pop_front(); // remove first element
+    cout << frame_id << "/" << flsize << ": processing ";
+    cout << fdir << "/" << fname << endl;
+    oss.str(""); oss << fdir << "/" << fname;
+    try {
+      frame = load_image<Tdata>(oss.str());
+    } catch (const char *err) {
+      cerr << "failed to load image " << oss.str();
+      cerr << ". Trying next image..." << endl;
+      return grab();
+    }
+    return this->postprocess();
   }
     
   template <typename Tdata>
-  bool camera<Tdata>::stop_recording(uint fps) {
-    return true;
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // info
-  
-  template <typename Tdata>
-  float camera<Tdata>::fps() {
-    // counters
-    // cnt++;
-    // iframe++;
-    // time(&t1);
-    // diff = difftime(t1, t0);
-    // if (diff >= 1) {
-    //   fps = cnt;
-    //   cnt = 0;
-    //   time(&t0);
-    //   cout << "fps: " << fps << endl;
-    // }
-    return 0;
+  bool camera_directory<Tdata>::empty() {
+    return (fl->size() == 0);
   }
     
-  ////////////////////////////////////////////////////////////////
-  // internal methods
-  
-  template <typename Tdata>
-  idx<Tdata> camera<Tdata>::postprocess() {
-    frame_id++;
-    if (!bresize)
-      return frame; // return original frame
-    else // or return a resized frame
-      return image_mean_resize(frame, height, width, 0);
-  }
-  
 } // end namespace ebl
 
-#endif /* CAMERA_HPP_ */
+#endif /* CAMERA_DIRECTORY_HPP_ */

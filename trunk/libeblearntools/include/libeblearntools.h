@@ -42,6 +42,9 @@ libboost-filesystem-dev libboost-regex-dev and recompile"
 #include "xml_utils.h"
 #include "opencv.h"
 #include "camera.h"
+#include "camera_opencv.h"
+#include "camera_shmem.h"
+#include "camera_directory.h"
 #include "utils.h"
 
 #endif /* LIBEBLEARNTOOLS_H_ */

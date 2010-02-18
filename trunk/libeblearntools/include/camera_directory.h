@@ -30,95 +30,68 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef CAMERA_H_
-#define CAMERA_H_
+#ifndef CAMERA_DIRECTORY_H_
+#define CAMERA_DIRECTORY_H_
 
-#include "libidx.h"
+#include "camera.h"
+#include "utils.h"
 
-#ifdef __GUI__
-#include "libidxgui.h"
+#ifdef __BOOST__
+#include "boost/filesystem.hpp"
+#include "boost/regex.hpp"
+using namespace boost::filesystem;
+using namespace boost;
 #endif
 
 using namespace std;
 
 namespace ebl {
 
-  //! The camera class is an abstract class that serves as an interface
-  //! to different camera implementation, such as camera_opencv, etc.
-  //! It allows to grab images from camera in the idx format, and also
+  //! The camera_directory class interfaces with images found (recursively)
+  //! in a directory, grabbing all images into idx format, and also
   //! to save gui outputs into video files.
-  template <typename Tdata> class camera {
+  template <typename Tdata> class camera_directory : public camera<Tdata> {
   public:
 
     ////////////////////////////////////////////////////////////////
     // constructors/allocation
 
-    //! Initialize a camera.
+    //! Initialize a directory camera using a shared memory descriptor.
     //! height and width are optional parameters that resize the input image
     //! to those dimensions if given (different than -1). One may want to
     //! decrease the input resolution first to speed up operations, for example
     //! when computing multiple resolutions.
+    //! \param directory The root directory to recursively search.
     //! \param height Resize input frame to this height if different than -1.
     //! \param width Resize input frame to this width if different than -1.
-    camera(int height = -1, int width = -1);
+    camera_directory(const char *directory, int height_ = -1, int width_ = -1);
 
-    //! Initializations.
-    virtual void init();
-    
     //! Destructor.
-    virtual ~camera();
+    virtual ~camera_directory();
 
     ////////////////////////////////////////////////////////////////
     // frame grabbing
 
     //! Return a new frame.
-    virtual idx<Tdata> grab() = 0;
+    virtual idx<Tdata> grab();
 
-    //! Return true if no frames available, false otherwise.
+    //! Return true until all images have been processed.
     virtual bool empty();
 
-    ////////////////////////////////////////////////////////////////
-    // video recording
-    
-    //! Start recording of frames from window window_id into path.
-    //! This creates a directory name in path.
-    //! No frames are actually recorded,
-    virtual bool start_recording(uint window_id, const string &path,
-				 const string &name);
-
-    //! Dump all frames declared to be recorded by start_recording().
-    virtual bool record_frame();
-    
-    //! Create all videos started with start_recording() using frames dumped
-    //! with record_frame(), using fps frames per second.
-    virtual bool stop_recording(uint fps);
-
-    ////////////////////////////////////////////////////////////////
-    // info
-
-    //! Return the number of frames per second obtained via grab().
-    virtual float fps();
-
-    ////////////////////////////////////////////////////////////////
-    // internal methods
-  protected:
-
-    //! Return post processed frame after grabbing it, e.g. resize frame to
-    //! target height and width (if specified).
-    //! This also increments frame counter.
-    virtual idx<Tdata> postprocess();
-    
     // members ////////////////////////////////////////////////////////
   protected:
-    idx<Tdata>	 frame;		//!< frame buffer 
-    int          height;        //!< resize input
-    int          width;         //!< resize input
-    bool         bresize;       //!< resize or not
-    uint         frame_id;      //!< frame counter
+    using camera<Tdata>::frame;	//!< frame buffer 
+    using camera<Tdata>::frame_id;	//!< frame counter
+    files_list		*fl;	//!< list of images
+    string		 fdir;	//!< directory name
+    string		 fname;	//!< file name
+    ostringstream	 oss;	//!< temporary string
+    uint                 flsize; //!< original size of list
   };
 
 } // end namespace ebl
 
-#include "camera.hpp"
+#include "camera_directory.hpp"
 
-#endif /* CAMERA_H_ */
+
+#endif /* CAMERA_DIRECTORY_H_ */
