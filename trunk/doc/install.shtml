@@ -1,0 +1,141 @@
+<html>
+  <head>
+    <title>EBLearn: Download & Installation</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <link rel="stylesheet" href="web/main.css" type="text/css" 
+	  media="screen">
+    <link rel="stylesheet" href="web/index_004.css" type="text/css" 
+	  media="screen">
+    <link rel="stylesheet" type="text/css" href="web/styles.css" 
+	  media="all">
+    <link rel="shortcut icon" href="web/logo2.ico">
+  </head>
+  <body>
+    <!--#include virtual="nav.html" --> 
+    <div id="globalWrapper">
+     <h2>Download</h2>
+     <p>
+       The project is still on pre-release version, so there is no pre-packed
+       version of the library. Still, you are welcome to visit the
+       <a href="https://sourceforge.net/projects/eblearn/"
+	  target="new_page">sourceforge page</a> and browse the
+       <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/"
+	  target="new_page">SVN repository</a>,
+       where the project is regularly updated.</p>
+     <p>
+       Get trunk sources via SVN: <br>
+       <code><b>
+	   svn co https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk
+	   eblearn
+       </b></code>
+       <br>
+     </p>
+     
+     <h2>Quick install</h2>
+     <p>
+       <h3>Linux (tested on Ubuntu)</h3>
+       <code>$ sudo apt-get install subversion cmake g++
+	 libatlas-base-dev libboost-filesystem-dev imagemagick
+	 libboost-regex-dev libqt4-core libqt4-dev libqt4-gui
+	 libcppunit-dev libxml++2.6-dev doxygen<br>
+	 $ ./configure<br>
+	 $ make release<br>
+	 $ sudo make install
+       </code>
+       <h3>MAC OS X</h3>
+       <code>$ sudo port install subversion cmake imagemagick boost qt4-mac
+	 cppunit doxygen<br>
+	 $ ./configure<br>
+	 $ make release<br>
+	 $ sudo make install
+       </code>
+     </p>
+     <h2>Detailed installation</h2>
+     <p>
+       <h3>Detailed external (non-proprietary) dependencies</h3>
+       <h4>Linux:</h4>
+       For core libraries libeblearn and libidx only (tools, testers and
+       some demos may not compile):<br>
+       <code>$ sudo apt-get install cmake g++ libatlas-base-dev imagemagick
+       </code><br>
+       For tools, demos and tester:<br>
+       <code>$ sudo apt-get install libboost-filesystem-dev
+	 libboost-regex-dev libqt4-core libqt4-dev libqt4-gui libcppunit-dev
+	 libxml++2.6-dev 
+       </code><br>
+       For developers only (tools for bug-free development):<br>
+       <code>$ sudo apt-get install valgrind electric-fence doxygen
+       </code>
+
+       <h4>MAC OS X:</h4>
+       For core libraries libeblearn and libidx only (tools, testers and
+       some demos may not compile):<br>
+       <code>$ sudo port install cmake imagemagick
+       </code><br>
+       For tools, demos and tester:<br>
+       <code>$ sudo port install boost cppunit qt4-mac
+       </code><br>
+       For developers only (tools for bug-free development):<br>
+       <code>$ sudo port install valgrind doxygen
+       </code>
+
+       <h3>Compilation</h3>
+       Configure will first generate the Makefile and setup some directories,
+       call it once:<br>
+       <code>$ ./configure</code><br>
+       To compile libraries only (libeblearn, libidx, libidxgui, libeblearngui
+       and libeblearntools):<br>
+       <code>$ make</code><br>
+       To compile all projects release mode:<br>
+       <code>$ make release</code><br>
+       To compile all projects debug mode (slower execution):<br>
+       <code>$ make debug</code><br>
+       To compile a specific project in release mode, e.g. libidx:<br>
+       <code>$ make release prj=idx</code><br>
+       To compile a specific project in debug mode, e.g. objrec_detect:<br>
+       <code>$ make debug prj=objrec_detect</code><br>
+
+       <h3>Installation</h3>
+       To install libraries and headers on your system:<br>
+       <code>$ make install</code><br>
+
+       <h3>Execution</h3>
+       To unit-test basic functionalities of the libraries, run the tester:<br>
+       <code>$ ./bin/tester</code><br>
+       To test face detection demo, call:<br>
+       <code>$ ./bin/objrec_detect 	 demos/objrec/face/trained/20100211.025504.face_conf00_color_0_eta_.00001_resize_mean.conf</code><br>
+
+
+       <h3>Database installation</h3>
+       The MNIST handwritten digit database is used by the tester to unit-test
+       the learning algorithms.<br>
+       You can download MNIST from the following website
+       and specify its path to the tester via the configure script:<br>
+       <a href="http://yann.lecun.com/exdb/mnist/">
+	 http://yann.lecun.com/exdb/mnist/</a>
+     </p>
+
+     <h2>Manual external dependencies installation</h2>
+     <p>
+       If packages are not available through apt-get or port, one can manually
+       download and install sources. Here is a guide for some of the required
+       packages.
+
+       <h4>MAC OS X</h4>
+       <h5>cmake</h5>
+       Get sources (e.g. cmake-2.6.2.tar.gz) from
+       http://www.cmake.org/cmake/resources/software.html.<br>
+       Consult the README.txt in the top level directory and note
+       that the steps to compile and install are "./bootstrap;
+       make; sudo make install".
+       <h5>libatlas</h5>
+       Get sources (e.g. Atlas-C++-0.6.1.tar.gz) from
+       http://sourceforge.net/projects/worldforge/<br>
+       The standard "configure/make/sudo make install" will do. 
+       <h5>cppunit</h5>
+       Get sources (e.g. cppunit-1.12.1.tar.gz) from
+       http://apps.sourceforge.net/mediawiki/cppunit/<br>
+       The standard "configure/make/sudo make install" will do. 
+     </p>
+   </div>
+   </body></html>

@@ -215,7 +215,7 @@ namespace ebl {
        pclose(bla);
        *(myconvert+16) = 0;
        */
-    string myconvert = "/usr/bin/convert";
+    string myconvert = "convert";
     if(strstr(myconvert.c_str(), "convert") == NULL){
       cerr << "failed to find \"convert\", please install ImageMagick" << endl;
       return false;

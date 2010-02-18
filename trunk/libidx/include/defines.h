@@ -84,6 +84,8 @@
 # define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
+typedef unsigned int uint; // not defined on MAC
+
 namespace ebl {
 
   // intg is used for array indexing, hence should be
