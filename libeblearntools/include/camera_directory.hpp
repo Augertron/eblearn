@@ -51,7 +51,6 @@ namespace ebl {
     }
     cout << "Found " << fl->size() << " images." << endl;
     flsize = fl->size();
-    this->init();
   }
   
   template <typename Tdata>
