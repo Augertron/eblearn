@@ -46,7 +46,8 @@ namespace ebl {
 
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_,	idx<ubyte> &labels_,
-			module_1_1<T> *pp_, uint ppkersz_,T bias_, float coef_) 
+			module_1_1<T> *pp_, uint ppkersz_,
+			const char *background, T bias_, float coef_) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
       ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
@@ -65,6 +66,7 @@ namespace ebl {
     idx_clear(outputs);
     idx_clear(results);
     idx_clear(resize_modules);
+    set_bgclass(background);
   }
   
   template <class T>
@@ -196,11 +198,25 @@ namespace ebl {
   template <class T>
   void detector<T>::set_bgclass(const char *bg) {
     int i = 0;
+    string name;
+    bool found = false;
+    
+    if (bg)
+      name = bg;
+    else
+      name = "bg"; // default name
     idx_bloop1(lab, labels, ubyte) {
-      if (!strcmp((const char *)lab.idx_ptr(), bg))
+      if (!strcmp((const char *)lab.idx_ptr(), name.c_str())) {
 	bgclass = i;
+	found = true;
+      }
       i++;
     }
+    if (found) {
+      cout << "Background class is \"" << name << "\" with id " << bgclass;
+      cout << "." << endl;
+    } else if (bg)
+      cerr << "warning: background class \"" << bg << "\" not found." << endl;
   }
 
   template <class T>

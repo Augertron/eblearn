@@ -51,7 +51,6 @@ namespace ebl {
       getchar();
       eblerror("failed to initialize camera_opencv");
     }
-    this->init();
 #endif /* __OPENCV__ */
   }
   
@@ -73,7 +72,10 @@ namespace ebl {
     if (!ipl_frame)
       eblerror("failed to grab frame");
     // convert ipl to idx image
-    ipl2idx(ipl_frame, frame);
+    if (grabbed)
+      ipl2idx(ipl_frame, frame);
+    else // first time, allocate frame
+      frame = ipl2idx<Tdata>(ipl_frame);
 #endif /* __OPENCV__ */
     return this->postprocess();
   }

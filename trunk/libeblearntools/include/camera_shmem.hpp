@@ -33,24 +33,48 @@
 #ifndef CAMERA_SHMEM_HPP_
 #define CAMERA_SHMEM_HPP_
 
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // constructors & initializations
 
   template <typename Tdata>
-  camera_shmem<Tdata>::camera_shmem(int id, int height_, int width_)
-    : camera<Tdata>(height_, width_) {
+  camera_shmem<Tdata>::camera_shmem(const char *shmem_path,
+				    int height_, int width_)
+    : camera<Tdata>(height_, width_), buffer(NULL) {
     cout << "Initializing shared buffer camera..." << endl;
-    // if (!capture) {
-    //   fprintf( stderr, "ERROR: capture is NULL \n" );
-    //   eblerror("failed to initialize camera_shmem");
-    // }
-    this->init();
+    // connect to shared memory segment
+   if ((shmem_key = ftok(shmem_path, 'A')) == -1) {
+     cerr << "ftok couldnt get the shared mem descriptor from ";
+     cerr << shmem_path << endl;
+     eblerror("could not connect to shared memory");
+   }
+   // get segment
+   if ((shmem_id = shmget(shmem_key, 16, 0644 | IPC_CREAT)) == -1) {
+     eblerror("shmget couldnt sync the shared mem segment");
+   }
+   // link data to the segment
+   buffer = (struct video_buffer *)shmat(shmem_id, (void *)0, 0);
+   cout << "shared frame size: " << buffer->height << "x" << buffer->width;
+   cout << "x" << buffer->bytes_per_pixel << endl;
+   // get segment according to frame size
+   if ((shmem_id = shmget(shmem_key, 16 + buffer->height * buffer->width *
+			  buffer->bytes_per_pixel, 0644 | IPC_CREAT)) == -1) {
+     eblerror("shmget couldnt sync the shared mem segment");
+   }
+   // link data to the segment
+   buffer = (struct video_buffer *)shmat(shmem_id, (void *)0, 0);
   }
   
   template <typename Tdata>
   camera_shmem<Tdata>::~camera_shmem() {
+    // detach from shared memory
+    if (buffer)
+      shmdt((const void*)buffer);
   }
   
   ////////////////////////////////////////////////////////////////
@@ -58,9 +82,28 @@ namespace ebl {
 
   template <typename Tdata>
   idx<Tdata> camera_shmem<Tdata>::grab() {
+    // make a frame request
+    buffer->dump_to_file = 0;
+    buffer->request_frame = 1;
+    while (buffer->request_frame); // request received
+    while (!buffer->frame_ready) sleep(0.01); // wait for frame to be ready
+    // check that shared segment is compatible
+    if (buffer->bytes_per_pixel != 4)
+      eblerror("shared segment doesnt contain an RGBA image\n");
+    // allocate if necessary
+    if (!grabbed) // first time, allocate frame
+      frame = idx<Tdata>(buffer->height, buffer->width,
+			 buffer->bytes_per_pixel);
+    // cast and copy data
+    ubyte *in = (ubyte*) buffer->data;
+    Tdata *out = frame.idx_ptr();
+    uint sz = frame.nelements();
+    // cast and copy data
+    for (uint i = 0; i < sz; ++i, ++out, ++in)
+      *out = (Tdata) *in;
     return this->postprocess();
   }
-    
+  
 } // end namespace ebl
 
 #endif /* CAMERA_SHMEM_HPP_ */

@@ -40,18 +40,13 @@ namespace ebl {
 
   template <typename Tdata>
   camera<Tdata>::camera(int height_, int width_)
-    : height(height_), width(width_), bresize(false), frame_id(0) {
+    : height(height_), width(width_), bresize(false), frame_id(0),
+      grabbed(false) {
     // decide if we resize input or not
     if ((height != -1) && (width != -1))
       bresize = true;
   }
 
-  template <typename Tdata>
-  void camera<Tdata>::init() {
-    // get 1st frame to initialize image buffer
-    frame = grab();
-  }
-  
   template <typename Tdata>
   camera<Tdata>::~camera() {
   }

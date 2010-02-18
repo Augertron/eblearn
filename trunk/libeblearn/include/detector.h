@@ -86,14 +86,19 @@ namespace ebl {
     
     //! Constructor. Default resolutions are 1, 2 and 4 times the network's 
     //! size. Resolutions can be set using set_resolutions().
+    //! Background class name default "bg" will be searched in the list
+    //! of class names. To specify another background class, pass a non NULL
+    //! background parameter.
     //! \param lbls A const char* idx containing class name strings.
     //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
     //! \param ppkersz The size of the preprocessing kernel (if any), to take
     //!               border effects into account during resizing.
     //!               Default value 0 has no effect.
+    //! \param background The name of the background class. Default is "bg".
+    //!          If given, positive answers for this class are ignored.
     detector(module_1_1<T> &thenet, idx<ubyte> &lbls,
 	     module_1_1<T> *pp = NULL, uint ppkersz = 0,
-	     T bias = 0, float coeff = 1.0);
+	     const char *background = NULL, T bias = 0, float coeff = 1.0);
 
     //! Destructor.
     virtual ~detector();

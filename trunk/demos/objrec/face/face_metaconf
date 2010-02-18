@@ -61,3 +61,4 @@ classes = ${root2}/${job_name}_classes.mat
 threshold = .99
 gain = 1.5
 save_detections = 1
+camera = opencv

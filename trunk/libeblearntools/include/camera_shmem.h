@@ -39,6 +39,17 @@ using namespace std;
 
 namespace ebl {
 
+  //! Data structure representing a frame in shared memory
+  typedef struct video_buffer {
+    char request_frame;
+    char frame_ready;
+    char bytes_per_pixel;
+    char dump_to_file;
+    int width;
+    int height;
+    unsigned char data[];
+  } t_video_buffer;
+
   //! The camera_shmem class interfaces with camera images that come
   //! from a shared buffer in memory.
   //! It allows to grab images from a shared buffer in the idx format, and also
@@ -54,10 +65,10 @@ namespace ebl {
     //! to those dimensions if given (different than -1). One may want to
     //! decrease the input resolution first to speed up operations, for example
     //! when computing multiple resolutions.
-    //! \param id The ID of the camera. -1 chooses the first available camera.
+    //! \param shmem_path The path id of the shared memory.
     //! \param height Resize input frame to this height if different than -1.
     //! \param width Resize input frame to this width if different than -1.
-    camera_shmem(int id, int height = -1, int width = -1);
+    camera_shmem(const char *shmem_path, int height = -1, int width = -1);
 
     //! Destructor.
     virtual ~camera_shmem();
@@ -70,7 +81,11 @@ namespace ebl {
 
     // members ////////////////////////////////////////////////////////
   protected:
-    using camera<Tdata>::frame;		//!< frame buffer 
+    using camera<Tdata>::frame;	//!< frame buffer 
+    using camera<Tdata>::grabbed;	//!< frame buffer grabbed yet or not 
+    t_video_buffer	*buffer;
+    key_t		 shmem_key;
+    int			 shmem_id;
   };
 
 } // end namespace ebl

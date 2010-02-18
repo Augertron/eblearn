@@ -71,6 +71,7 @@ namespace ebl {
     // members ////////////////////////////////////////////////////////
   protected:
     using camera<Tdata>::frame;		//!< frame buffer 
+    using camera<Tdata>::grabbed;	//!< frame buffer grabbed yet or not 
 #ifdef __OPENCV__
     CvCapture	*capture;	//!< opencv capture object
     IplImage	*ipl_frame;	//!< opencv image 

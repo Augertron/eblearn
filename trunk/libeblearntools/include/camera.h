@@ -62,9 +62,6 @@ namespace ebl {
     //! \param width Resize input frame to this width if different than -1.
     camera(int height = -1, int width = -1);
 
-    //! Initializations.
-    virtual void init();
-    
     //! Destructor.
     virtual ~camera();
 
@@ -115,6 +112,7 @@ namespace ebl {
     int          width;         //!< resize input
     bool         bresize;       //!< resize or not
     uint         frame_id;      //!< frame counter
+    bool         grabbed;       //!< false if no frame grabbed yet
   };
 
 } // end namespace ebl
