@@ -76,7 +76,7 @@ int main(int argc, char **argv) { // regular main without gui
   files_list *fl = NULL;
   string fdir, fname;
   ostringstream oss;
-  uint frame_id = 0;
+  uint frame_id = 0, flsize = 0;
   if (use_cam)
     cam = new camera<t_net>(-1, 240, 320);
   else { // otherwise initialize the list of images to process
@@ -84,6 +84,7 @@ int main(int argc, char **argv) { // regular main without gui
     fl = find_images(ipath);
     if (!fl) { cerr << "error wrong directory: " << ipath << endl; return -1; }
     cout << "Found " << fl->size() << " images." << endl;
+    flsize = fl->size();
   }
   
   // gui
@@ -131,7 +132,7 @@ int main(int argc, char **argv) { // regular main without gui
       fdir = fl->front().first; // directory
       fname = fl->front().second; // file name
       fl->pop_front(); // remove first element
-      cout << frame_id << "/" << fl->size() << ": processing " << fdir << "/" << fname << endl;
+      cout << frame_id << "/" << flsize << ": processing " << fdir << "/" << fname << endl;
       oss.str(""); oss << fdir << "/" << fname;
       try {
 	image = load_image<t_net>(oss.str());
