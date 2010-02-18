@@ -133,7 +133,12 @@ int main(int argc, char **argv) { // regular main without gui
       fl->pop_front(); // remove first element
       cout << frame_id << "/" << fl->size() << ": processing " << fdir << "/" << fname << endl;
       oss.str(""); oss << fdir << "/" << fname;
-      image = load_image<t_net>(oss.str());
+      try {
+	image = load_image<t_net>(oss.str());
+      } catch (const char *err) {
+	cerr << "failed to load image " << oss.str() << ". Continuing..." << endl;
+	continue ;
+      }
     }
     // run detector
     if (!display) { // fprop without display
