@@ -12,9 +12,9 @@ meta_email=pierre.sermanet@gmail.com
 ################################################################################
 
 # directories
-dataroot=/data
+#dataroot=/data
 #dataroot=~/texieradata
-#dataroot=~/humairadata
+dataroot=~/humairadata
 #dataroot=~/blakeyadata
 pascal=$dataroot/pascal
 pascalroot=$pascal/VOCdevkit_trainval09/VOC2009/
@@ -50,7 +50,7 @@ faces=face
 # debug variables
 # maxdata="-maxdata 50"
 # maxperclass="-maxperclass 25"
- ddisplay="-disp -sleep 1000"
+# ddisplay="-disp -sleep 1000"
 
 # create directories
 mkdir -p $pascalroot
@@ -64,14 +64,14 @@ mkdir -p $nopersons_root_pascal
 # fetch datasets
 ###############################################################################
 
-# crop hands
-cd $root
-# crop pictures to center well on the face
-for fname in `find . -name "*.JPG"`
-do
-    echo "cropping $fname"
-    convert -crop 1200x1200+434+0 $fname $fname
-done
+# # crop hands
+# cd $root
+# # crop pictures to center well on the face
+# for fname in `find . -name "*.JPG"`
+# do
+#     echo "cropping $fname"
+#     convert -crop 1200x1200+434+0 $fname $fname
+# done
 
 ###############################################################################
 # dataset compilations
@@ -99,30 +99,30 @@ done
 #     -dims ${h}x${w}x3 \
 #     $maxdata $maxperclass $ddisplay # debug
 
-# compile regular dataset
-~/eblearn/bin/dscompiler $root -precision $precision \
-    -outdir ${out} -channels $pp -dname $name \
-    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
-    $maxdata $maxperclass $ddisplay # debug
+# # compile regular dataset
+# ~/eblearn/bin/dscompiler $root -precision $precision \
+#     -outdir ${out} -channels $pp -dname $name \
+#     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
+#     $maxdata $maxperclass $ddisplay # debug
 
-# merge normal dataset with background dataset
-~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
+# # merge normal dataset with background dataset
+# ~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
 
-# # # merge pascal faces with regular dataset
-# # ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
+# # # # merge pascal faces with regular dataset
+# # # ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
 
-# split dataset into training and {validation/test}
-~/eblearn/bin/dssplit $out ${namebg} \
-    ${namebg}_testval_${maxtest}_ \
-    ${namebg}_train_${maxtest}_ -maxperclass ${max} -draws $draws
+# # split dataset into training and {validation/test}
+# ~/eblearn/bin/dssplit $out ${namebg} \
+#     ${namebg}_testval_${maxtest}_ \
+#     ${namebg}_train_${maxtest}_ -maxperclass ${max} -draws $draws
 
-# # split validation and test
-# for i in `seq 1 ${draws}`
-# do
-# ~/eblearn/bin/dssplit $out ${namebg}_testval_${maxtest}_$i \
-#     ${namebg}_test_${maxtest}_$i \
-#     ${namebg}_val_${maxtest}_$i -maxperclass ${maxtest} -draws 1
-# done
+# split validation and test
+for i in `seq 1 ${draws}`
+do
+~/eblearn/bin/dssplit $out ${namebg}_testval_${maxtest}_$i \
+    ${namebg}_val_${maxtest}_$i \
+    ${namebg}_test_${maxtest}_$i -maxperclass ${maxtest} -draws 1
+done
 
 # # print out information about extracted datasets to check that their are ok
 # ~/eblearn/bin/dsdisplay $out/${namebg} -info
