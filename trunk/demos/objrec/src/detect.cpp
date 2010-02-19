@@ -62,7 +62,7 @@ int main(int argc, char **argv) { // regular main without gui
     if (!strcmp(cam_type.c_str(), "opencv"))
       cam = new camera_opencv<t_net>(-1, 240, 320);
     else if (!strcmp(cam_type.c_str(), "shmem"))
-      cam = new camera_shmem<t_net>("toto", 240, 320);
+      cam = new camera_shmem<t_net>("shared-mem", 240, 320);
     else
       eblerror("unknown camera type");
   }
@@ -74,6 +74,7 @@ int main(int argc, char **argv) { // regular main without gui
   uint	wid	= display ? new_window("eblearn object recognition") : 0;
   float zoom	= 1;
   detector_gui dgui;
+  night_mode();
   // timing variables
   QTime t0;
   int tpp;
@@ -89,7 +90,7 @@ int main(int argc, char **argv) { // regular main without gui
   //  double scales[] = { 16, 12, 8, 6, 4, 2, 1 };
   //  double scales[] = { 3 };
   detector<t_net> detect(*net, classes, &pp, norm_size, NULL, 0,
-			 conf.get_double("gain"));
+			 conf.get_double("gain"), 50);
   detect.set_resolutions(1.4);
   //  detect.set_resolutions(9);
   //  detect.set_resolutions(3, scales);

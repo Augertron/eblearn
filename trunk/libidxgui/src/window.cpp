@@ -78,7 +78,8 @@ namespace ebl {
 
   Window::Window(unsigned int wid, const char *wname, int height, int width) 
     : pixmapScale(1.0), curScale(1.0), scaleIncr(1), colorTable(256),
-      texts(), silent(false), id(wid), savefname(""), wupdate_ndisable(0) {
+      texts(), silent(false), id(wid), savefname(""), wupdate_ndisable(0),
+      frozen_style(false) {
     setAttribute(Qt::WA_DeleteOnClose);
     if (wname) {
       QString q(wname);
@@ -97,7 +98,8 @@ namespace ebl {
     if ((height != 0) && (width != 0))
       buffer_resize(height, width);
     wupdate = true; // always update display
-    set_text_colors(255, 255, 255, 255, 0, 0, 0, 127);
+    set_text_colors(255, 255, 255, 255, 0, 0, 0, 127); // default text color
+    set_bg_colors(255, 255, 255); // default background color is white
     buffer_maxh = height;
     buffer_maxw = width;
     pos_reset = true;
@@ -122,10 +124,9 @@ namespace ebl {
   // clear methods
 
   void Window::clear() {
-    if (buffer)
-      idx_fill(*buffer, (ubyte) 255);
+    buffer_fill(buffer);
     if (pixmap) 
-      pixmap->fill(Qt::white);
+      pixmap->fill(bg_color);
     clear_text();
     clear_arrows();
     clear_boxes();
@@ -258,6 +259,9 @@ namespace ebl {
 			       unsigned char fg_b_, unsigned char fg_a_,
 			       unsigned char bg_r_, unsigned char bg_g_, 
 			       unsigned char bg_b_, unsigned char bg_a_) {
+    txt = NULL;
+    if (frozen_style)
+      return ;
     fg_r = fg_r_;
     fg_g = fg_g_;
     fg_b = fg_b_;
@@ -266,7 +270,19 @@ namespace ebl {
     bg_g = bg_g_;
     bg_b = bg_b_;
     bg_a = bg_a_;
-    txt = NULL;
+  }
+  
+  void Window::set_bg_colors(unsigned char r, unsigned char g, 
+			     unsigned char b) {
+    if (frozen_style)
+      return ;
+    bg_color.setRed(r);
+    bg_color.setGreen(g);
+    bg_color.setBlue(b);
+  }
+
+  void Window::freeze_style(bool freeze) {
+    frozen_style = freeze;
   }
   
   void Window::set_text_origin(unsigned int h0, unsigned int w0) {
@@ -310,11 +326,11 @@ namespace ebl {
       resize(w, h);
       if (!buffer) {
 	buffer = new idx<ubyte>(h, w, 3);
-	idx_fill(*buffer, (ubyte) 255);
+	buffer_fill(buffer);
       }
       else {
 	idx<ubyte> *inew = new idx<ubyte>(h, w, 3);
-	idx_fill(*inew, (ubyte) 255);
+	buffer_fill(inew);
 	idx<ubyte> tmpnew = inew->narrow(0, MIN(h, (uint)buffer->dim(0)), 0);
 	tmpnew = tmpnew.narrow(1, MIN(w, (uint)buffer->dim(1)), 0);
 	idx<ubyte> tmpbuf = buffer->narrow(0, MIN(h, (uint)buffer->dim(0)), 0);
@@ -332,6 +348,17 @@ namespace ebl {
 			  QImage::Format_RGB888);
       qimage->setColorTable(colorTable);
     }
+  }
+
+  void Window::buffer_fill(idx<ubyte> *buf) {
+    if (buf) {
+      idx<ubyte> tmp = buf->select(2, 0);
+      idx_fill(tmp, (ubyte) bg_color.red());
+      tmp = buf->select(2, 1);
+      idx_fill(tmp, (ubyte) bg_color.green());
+      tmp = buf->select(2, 2);
+      idx_fill(tmp, (ubyte) bg_color.blue());
+    }    
   }
 
   void Window::update_pixmap(idx<ubyte> *img, unsigned int h0, 
@@ -404,7 +431,7 @@ namespace ebl {
 
   void Window::paintEvent(QPaintEvent * /* event */) {
     QStylePainter painter(this);
-    painter.fillRect(rect(), Qt::white);
+    painter.fillRect(rect(), bg_color);
     double scaleFactor = pixmapScale / curScale;
     painter.save();
     painter.translate(pixmapOffset);

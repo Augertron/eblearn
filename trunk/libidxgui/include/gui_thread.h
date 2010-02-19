@@ -84,6 +84,8 @@ namespace ebl {
 			 unsigned char fg_b, unsigned char fg_a,
 			 unsigned char bg_r, unsigned char bg_g, 
 			 unsigned char bg_b, unsigned char bg_a);
+    void set_bg_colors(unsigned char r, unsigned char g, 
+		       unsigned char b);
     void updatePixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
     void appquit();
 
@@ -99,6 +101,10 @@ namespace ebl {
     void select_window(int wid);
     void set_silent(const std::string *filename = NULL);
     void add_scroll_box(scroll_box0 *sb);
+
+    //! Freeze or unfreeze style, no modification of colors are allowed when
+    //! frozen.
+    void freeze_style(bool freeze);
   };
 
   //! This macro is intended to replace your int main(int argc, char **argv)

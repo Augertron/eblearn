@@ -35,6 +35,8 @@
 
 using namespace std;
 
+#include <deque>
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -58,7 +60,7 @@ namespace ebl {
     for ( ; i != vb.end(); ++i) {
       unsigned int h = dzoom * i->h0;
       unsigned int w = dzoom * i->w0;
-      draw_box(h0 + h, w0 + w, dzoom * i->height, dzoom * i->width, 255, 0, 0,
+      draw_box(h0 + h, w0 + w, dzoom * i->height, dzoom * i->width, 0,0,255,
 	       new string((const char *)cl.labels[i->class_id].idx_ptr()));
     }
     draw_matrix(img, h0, w0, dzoom, dzoom, (T)vmin, (T)vmax);   
@@ -137,7 +139,7 @@ namespace ebl {
 	for (vector<bbox>::iterator i = bb.begin(); i != bb.end(); ++i) {
 	  if (scale == i->scale_index)
 	    draw_box(h + dzoom * i->ih0, w0 + dzoom * i->iw0,
-		     dzoom * i->ih, dzoom * i->iw, 255, 0, 0,
+		     dzoom * i->ih, dzoom * i->iw, 0, 0, 255,
 		     new string((const char*)cl.labels[i->class_id].idx_ptr()));
 	}
 	// draw outputs
@@ -162,6 +164,24 @@ namespace ebl {
 	w0 += inx.dim(1) * dzoom + 5;
 	first_time = false;
       }}
+    // display queue of detections
+    uint w = 0, wn = 0, wmax = sqrt(cl.last_detections.size());
+    intg hmax = 0;
+    h = h0;
+    for (typename deque<idx<Tdata> >::iterator i = cl.last_detections.begin();
+	 i != cl.last_detections.end(); ++i) {
+      draw_matrix(*i, h, w0 + w, dzoom, dzoom, (Tdata)0, (Tdata)255);
+      w += i->dim(1) + 2;
+      wn++;
+      hmax = MAX(hmax, i->dim(0));
+      if (wn >= wmax) {
+	wn = 0;
+	w = 0;
+	h += hmax + 2;
+	hmax = 0;
+      }
+    }
+    
     enable_window_updates();
     return bb;
   }

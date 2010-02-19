@@ -165,6 +165,7 @@ namespace ebl {
 		    (unsigned char) bg_r, (unsigned char) bg_g, 
 		    (unsigned char) bg_b, (unsigned char) bg_a);
   }
+  
   void idxgui::set_text_colors(unsigned char fg_r, unsigned char fg_g, 
 			       unsigned char fg_b, unsigned char fg_a,
 			       unsigned char bg_r, unsigned char bg_g, 
@@ -172,6 +173,12 @@ namespace ebl {
     check_init();
     emit gui_set_text_colors(fg_r, fg_g, fg_b, fg_a, 
 			    bg_r, bg_g, bg_b, bg_a);
+  }
+
+  void idxgui::set_bg_colors(unsigned char r, unsigned char g, 
+			     unsigned char b) {
+    check_init();
+    emit gui_set_bg_colors(r, g, b);
   }
 
   void idxgui::enable_updates() {
@@ -182,6 +189,11 @@ namespace ebl {
   void idxgui::disable_updates() {
     check_init();
     emit gui_set_wupdate(false);    
+  }
+
+  void idxgui::freeze_style(bool freeze) {
+    check_init();
+    emit gui_freeze_style(freeze);    
   }
 
   idxgui& att(idxgui& r, unsigned int h0, unsigned int w0) {

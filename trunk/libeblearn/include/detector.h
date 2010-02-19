@@ -33,6 +33,7 @@
 #define DETECTOR_H_
 
 #include "libeblearn.h"
+#include <deque>
 
 using namespace std;
 
@@ -96,9 +97,12 @@ namespace ebl {
     //!               Default value 0 has no effect.
     //! \param background The name of the background class. Default is "bg".
     //!          If given, positive answers for this class are ignored.
+    //! \param detection_queue_size If different than 0 (default),
+    //!          a queue of the last detected object images will be kept.
     detector(module_1_1<T> &thenet, idx<ubyte> &lbls,
 	     module_1_1<T> *pp = NULL, uint ppkersz = 0,
-	     const char *background = NULL, T bias = 0, float coeff = 1.0);
+	     const char *background = NULL, T bias = 0, float coeff = 1.0,
+	     uint detection_queue_size = 0);
 
     //! Destructor.
     virtual ~detector();
@@ -235,6 +239,12 @@ namespace ebl {
     bool                 save_mode; //!< save detected windows or not
     string               save_dir; //!< directory where to save detections
     vector<uint>         save_counts; //!< file counter for each class
+    deque<idx<T> >       last_detections; //!< a queue of last objects detected
+    uint                 max_queue_size; //!< max size of detection queue
+
+    ////////////////////////////////////////////////////////////////
+    // friends
+    friend class detector_gui;
   };
 
 } // end namespace ebl
