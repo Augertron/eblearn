@@ -85,10 +85,10 @@ namespace ebl {
     // make a frame request
     buffer->dump_to_file = 0;
     buffer->request_frame = 1;
-    while (buffer->request_frame); // request received
-    while (!buffer->frame_ready) sleep(0.01); // wait for frame to be ready
+    while (buffer->request_frame) sleep(0.001); // request received
+    while (!buffer->frame_ready) sleep(0.001); // wait for frame to be ready
     // check that shared segment is compatible
-    if (buffer->bytes_per_pixel != 4)
+    if (buffer->bytes_per_pixel != 3)
       eblerror("shared segment doesnt contain an RGBA image\n");
     // allocate if necessary
     if (!grabbed) // first time, allocate frame

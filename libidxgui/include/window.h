@@ -51,10 +51,10 @@ namespace ebl {
   
   class text : public string {
   public:
-    unsigned int	h0, w0;
+    uint	h0, w0;
     bool                pos_reset;
     unsigned char       fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
-    text(unsigned int h0, unsigned int w0, bool pos_reset = false,
+    text(uint h0, uint w0, bool pos_reset = false,
 	 unsigned char fg_r = 255, unsigned char fg_g = 255, 
 	 unsigned char fg_b = 255, unsigned char fg_a = 255,
 	 unsigned char bg_r = 0, unsigned char bg_g = 0, 
@@ -80,46 +80,17 @@ namespace ebl {
 
   class image {
   public:
-    unsigned int         h0, w0;
+    uint         h0, w0;
     idx<ubyte>           img;
-    image(idx<ubyte> &img, unsigned int h0, unsigned int w0);
+    image(idx<ubyte> &img, uint h0, uint w0);
     ~image() {};
   };
 
   class Window : public QWidget { 
     Q_OBJECT
-  private:
-    QPixmap		*pixmap;
-    QPoint		 pixmapOffset;
-    QPoint		 lastDragPos;
-    double		 pixmapScale;
-    double		 curScale;
-    float		 scaleIncr;
-    idx<ubyte>		*buffer;
-    unsigned int         buffer_maxh;
-    unsigned int         buffer_maxw;
-    QVector<QRgb>	 colorTable;
-    QImage		*qimage;
-    vector<text*>        texts;
-    text*		 txt;
-    vector<arrow*>       arrows;
-    vector<box*>         boxes;
-    vector<image*>       images;
-    bool		 silent;
-    unsigned int	 id;
-    string		 savefname;
-    unsigned int	 text_h0;
-    unsigned int	 text_w0;
-    bool                 pos_reset; // text position was reset or not
-    bool                 wupdate;
-    QColor               text_fg_color;
-    QColor               text_bg_color;
-    unsigned char        fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
-    scroll_box0         *scrollbox;
-    int                  wupdate_ndisable; // count how many disables called
-
+      
   public:
-    Window(unsigned int wid, const char *wname = NULL, 
+    Window(uint wid, const char *wname = NULL, 
 	   int height = 0, int width = 0);
     virtual ~Window();
 
@@ -133,28 +104,39 @@ namespace ebl {
     void add_arrow(int h1, int w1, int h2, int w2);
     void add_box(int h0, int w0, int h, int w, unsigned char r, unsigned char g,
 		 unsigned char b, string *s);
-    void add_image(idx<ubyte> &img, unsigned int h0, unsigned int w0);
+    void add_image(idx<ubyte> &img, uint h0, uint w0);
     //! add img to the window and delete img.
-    void update_pixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
+    void update_pixmap(idx<ubyte> *img, uint h0, uint w0);
     //! add img to the window.
-    void update_pixmap(idx<ubyte> &img, unsigned int h0, unsigned int w0);
+    void update_pixmap(idx<ubyte> &img, uint h0, uint w0);
     void clear();
-    void set_text_origin(unsigned int h0, unsigned int w0);
+    void set_text_origin(uint h0, uint w0);
+    ////////////////////////////////////////////////////////////////
+    // Style methods
+    
     void set_text_colors(unsigned char fg_r, unsigned char fg_g, 
 			 unsigned char fg_b, unsigned char fg_a,
 			 unsigned char bg_r, unsigned char bg_g, 
 			 unsigned char bg_b, unsigned char bg_a);
+    //! Set color of background.
+    void set_bg_colors(unsigned char r, unsigned char g, unsigned char b);
+    //! Freeze or unfreeze style. No modification of colors are allowed
+    //! in frozen mode.
+    void freeze_style(bool freeze);
+    
     void add_scroll_box(scroll_box0 *sb);
     void remove_scroll_box(scroll_box0 *sb);
     void replace_scroll_box_with_copy(scroll_box0 *sb);
 
   protected:
+    ////////////////////////////////////////////////////////////////
     // clear methods
     void clear_text();
     void clear_arrows();
     void clear_boxes();
     void clear_images();
 
+    ////////////////////////////////////////////////////////////////
     // event methods
     void paintEvent(QPaintEvent *event);
     void wheelEvent(QWheelEvent *event);
@@ -163,10 +145,16 @@ namespace ebl {
     void mouseReleaseEvent(QMouseEvent *event);
     void keyPressEvent(QKeyEvent *event);
 
+    ////////////////////////////////////////////////////////////////
     // update methods
+    
+    //! Resize current buffer to given height and width.
     void buffer_resize(uint h, uint w);
+    //! Fill given buffer with background color.
+    void buffer_fill(idx<ubyte> *buf);
     void update_window(bool activate = false);
 
+    ////////////////////////////////////////////////////////////////
     // painting/drawing methods
     void draw_text(QPainter &painter, double scaleFactor = 1.0);
     void draw_arrows(QPainter &painter);
@@ -176,6 +164,38 @@ namespace ebl {
   private slots:
     void scroll_previous();
     void scroll_next();
+
+  private:
+    QPixmap		*pixmap;
+    QPoint		 pixmapOffset;
+    QPoint		 lastDragPos;
+    double		 pixmapScale;
+    double		 curScale;
+    float		 scaleIncr;
+    idx<ubyte>		*buffer;
+    uint		 buffer_maxh;
+    uint		 buffer_maxw;
+    QVector<QRgb>	 colorTable;
+    QImage		*qimage;
+    vector<text*>        texts;
+    text*		 txt;
+    vector<arrow*>       arrows;
+    vector<box*>         boxes;
+    vector<image*>       images;
+    bool		 silent;
+    uint		 id;
+    string		 savefname;
+    uint		 text_h0;
+    uint		 text_w0;
+    bool                 pos_reset;	// text position was reset or not
+    bool                 wupdate;
+    QColor               text_fg_color;
+    QColor               text_bg_color;
+    QColor               bg_color;
+    unsigned char        fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
+    scroll_box0         *scrollbox;
+    int                  wupdate_ndisable;// count how many disables called
+    bool                 frozen_style; //!< style is frozen or not
   };
 
 } // namespace ebl {

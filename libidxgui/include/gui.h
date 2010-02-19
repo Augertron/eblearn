@@ -144,6 +144,9 @@ namespace ebl {
   void set_text_colors(int fg_r, int fg_g, int fg_b, int fg_a,
 		       int bg_r, int bg_g, int bg_b, int bg_a);
 
+  //! Set the color of the background.
+  void set_bg_colors(int r, int g, int b);
+
   //! set the << operator to output text on both std::cout and the current
   //! window.
   //! you can also use the cout_and_gui() function.
@@ -155,6 +158,9 @@ namespace ebl {
   //! for example: gui << gui_only() << "text";
   void set_window_gui_only();
 
+  //! Override all colors into night mode: blue on black background.
+  void night_mode();
+  
 } // namespace ebl
 
 #include "gui.hpp"

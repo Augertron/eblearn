@@ -47,14 +47,16 @@ namespace ebl {
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_,	idx<ubyte> &labels_,
 			module_1_1<T> *pp_, uint ppkersz_,
-			const char *background, T bias_, float coef_) 
+			const char *background, T bias_, float coef_,
+			uint queue_size) 
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
       ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
       bgclass(-1), scales(NULL), scales_step(0),
       silent(false), restype(SCALES),
-      save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0) {
+      save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
+      max_queue_size(queue_size) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -226,6 +228,8 @@ namespace ebl {
 
   template <class T>
   void detector<T>::set_save(const string directory) {
+    cout << "Enabling saving of detected regions into: ";
+    cout << directory << endl;
     save_mode = true;
     save_dir = directory;
   }
@@ -243,7 +247,8 @@ namespace ebl {
   }
 
   template <class T>
-  void detector<T>::compute_resolutions(idxdim &input_dims, uint &nresolutions) {
+  void detector<T>::compute_resolutions(idxdim &input_dims,
+					uint &nresolutions) {
     // nresolutions must be >= 1
     if (nresolutions == 0)
       eblerror("expected more resolutions than 0");
@@ -591,6 +596,14 @@ namespace ebl {
       cout << "saved " << fname.str() << endl;
       // increment file counter
       save_counts[bbox->class_id]++;
+
+      // enqueue original bboxes if queue is requested
+      // TODO: this depends on saving images, make it independent?
+      if (max_queue_size > 0) {
+	if (last_detections.size() >= max_queue_size)
+	  last_detections.pop_front();
+	last_detections.push_back(inorig);
+      }
     }
   }
   

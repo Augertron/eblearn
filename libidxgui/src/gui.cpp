@@ -115,12 +115,22 @@ namespace ebl {
     gui.set_text_colors(fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a);
   }
 
+  void set_window_bg_colors(int r, int g, int b) {
+    gui.set_bg_colors(r, g, b);
+  }
+
   void set_window_cout_and_gui() {
     gui.set_cout_and_gui();
   }
 
   void set_window_gui_only() {
     gui.set_gui_only();
+  }
+
+  void night_mode() {
+    gui.set_bg_colors(0, 0, 0);
+    gui.set_text_colors(255, 255, 255, 255, 0, 0, 0, 127);
+    gui.freeze_style(true);
   }
 
 } // end namespace ebl

@@ -173,6 +173,9 @@ namespace ebl {
 			 int bg_r, int bg_g, 
 			 int bg_b, int bg_a);
 
+    //! Set color of background.
+    void set_bg_colors(unsigned char r, unsigned char g, unsigned char b);
+
     //! set the << operator to output text on both std::cout and the current
     //! window.
     //! you can also use the cout_and_gui() function.
@@ -185,6 +188,10 @@ namespace ebl {
     void set_gui_only();
 
     void add_scroll_box(scroll_box0* sb);
+
+    //! Freeze or unfreeze style, no modification of colors are allowed when
+    //! frozen.
+    void freeze_style(bool freeze);
 
   private:
     // check that user used MAIN_QTHREAD instead of regular main
@@ -206,8 +213,11 @@ namespace ebl {
 			     unsigned char fg_b, unsigned char fg_a,
 			     unsigned char bg_r, unsigned char bg_g, 
 			     unsigned char bg_b, unsigned char bg_a);
+    void gui_set_bg_colors(unsigned char r, unsigned char g, 
+			   unsigned char b);
     void gui_set_silent(const std::string *filename);
     void gui_set_wupdate(bool update);
+    void gui_freeze_style(bool freeze);
     void gui_add_scroll_box(scroll_box0 *sb);
     
   protected:

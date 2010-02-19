@@ -80,10 +80,16 @@ namespace ebl {
 				       unsigned char, unsigned char,
 				       unsigned char, unsigned char, 
 				       unsigned char, unsigned char)));
+    connect(&thread, SIGNAL(gui_set_bg_colors(unsigned char, 
+					      unsigned char, unsigned char)), 
+	    this, SLOT(set_bg_colors(unsigned char,
+				     unsigned char, unsigned char)));
     connect(&thread, SIGNAL(gui_set_silent(const std::string *)), 
 	    this, SLOT(set_silent(const std::string *)));
     connect(&thread, SIGNAL(gui_set_wupdate(bool)), 
 	    this, SLOT(set_wupdate(bool)));
+    connect(&thread, SIGNAL(gui_freeze_style(bool)), 
+	    this, SLOT(freeze_style(bool)));
     connect(&thread, SIGNAL(gui_add_scroll_box(scroll_box0*)),
 	    this, SLOT(add_scroll_box(scroll_box0*)));
   }
@@ -140,9 +146,20 @@ namespace ebl {
 				     bg_r, bg_g, bg_b, bg_a);
   }
 
+  void gui_thread::set_bg_colors(unsigned char r, unsigned char g, 
+				 unsigned char b) {
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->set_bg_colors(r, g, b);
+  }
+
   void gui_thread::set_wupdate(bool update) {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->set_wupdate(update);
+  }
+
+  void gui_thread::freeze_style(bool freeze) {
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->freeze_style(freeze);
   }
 
   void gui_thread::set_silent(const std::string *filename) {
