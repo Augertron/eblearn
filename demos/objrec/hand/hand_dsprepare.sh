@@ -26,11 +26,11 @@ detector_name=20100211.025504.face_conf00_color_0_eta_.00001_resize_mean
 false_positive_root=$dataroot/face/false_positives/$detector_name/
 
 # variables
-h=32 #48 64
+h=48 64
 w=${h}
 max=10 # number of samples in test AND validation set
 maxtest=0 # number of samples in the test set
-draws=5 # number of train/val sets to draw
+draws=2 # number of train/val sets to draw
 precision=float
 pp=YpUV
 kernel=7 #9
@@ -99,22 +99,22 @@ mkdir -p $nopersons_root_pascal
 #     -dims ${h}x${w}x3 \
 #     $maxdata $maxperclass $ddisplay # debug
 
-# # compile regular dataset
-# ~/eblearn/bin/dscompiler $root -precision $precision \
-#     -outdir ${out} -channels $pp -dname $name \
-#     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
-#     $maxdata $maxperclass $ddisplay # debug
+# compile regular dataset
+~/eblearn/bin/dscompiler $root -precision $precision \
+    -outdir ${out} -channels $pp -dname $name \
+    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
 
-# # merge normal dataset with background dataset
-# ~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
+# merge normal dataset with background dataset
+~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
 
-# # # # merge pascal faces with regular dataset
-# # # ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
+# # # merge pascal faces with regular dataset
+# # ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
 
-# # split dataset into training and {validation/test}
-# ~/eblearn/bin/dssplit $out ${namebg} \
-#     ${namebg}_testval_${maxtest}_ \
-#     ${namebg}_train_${maxtest}_ -maxperclass ${max} -draws $draws
+# split dataset into training and {validation/test}
+~/eblearn/bin/dssplit $out ${namebg} \
+    ${namebg}_testval_${maxtest}_ \
+    ${namebg}_train_${maxtest}_ -maxperclass ${max} -draws $draws
 
 # split validation and test
 for i in `seq 1 ${draws}`
