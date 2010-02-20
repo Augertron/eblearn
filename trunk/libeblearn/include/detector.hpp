@@ -63,6 +63,11 @@ namespace ebl {
     // labels
     //labels = strings_to_idx(labels_);
     labels = labels_;
+    cout << "Classes names:";
+    idx_bloop1(name, labels, ubyte) {
+      cout << " " << name.idx_ptr();
+    }
+    cout << endl;
     // clear buffers
     idx_clear(inputs);
     idx_clear(outputs);
