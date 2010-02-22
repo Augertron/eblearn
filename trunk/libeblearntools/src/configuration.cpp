@@ -503,6 +503,21 @@ namespace ebl {
     return d;
   }
 
+  int configuration::get_int(const char *varname) {
+    if (smap.find(varname) == smap.end()) {
+      cerr << "error: unknown variable: " << varname << endl;
+      throw "unknown variable";
+    }
+    istringstream iss(smap[varname], istringstream::in);
+    // TODO: check int conversion validity with exceptions instead
+    int d;
+    d = numeric_limits<int>::max();
+    iss >> d;
+    if (d == numeric_limits<int>::max())
+      throw "invalid conversion to int";
+    return d;
+  }
+
   bool configuration::get_bool(const char *varname) {
     return (bool) get_uint(varname);
   }

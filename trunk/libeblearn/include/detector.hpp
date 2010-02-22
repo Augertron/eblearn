@@ -354,67 +354,99 @@ namespace ebl {
   }
   
   template <class T>
-  void detector<T>::mark_maxima(T threshold) {    
-    { idx_bloop2(out_map, outputs, void*, res_map, results, void*) {
-	intg winnning_class = 0;
-	idx<T> raw_maps = ((state_idx<T>*) out_map.get())->x;
-	idx<T> max_map = *((idx<T>*) res_map.get());
+  void detector<T>::mark_maxima(T threshold) {
+    // loop on scales
+    idx_bloop2(out_map, outputs, void*, res_map, results, void*) {
+      intg winnning_class = 0;
+      idx<T> raw_maps = ((state_idx<T>*) out_map.get())->x;
+      idx<T> max_map = *((idx<T>*) res_map.get());
+      int y_max = (int) raw_maps.dim(1);
+      int x_max = (int) raw_maps.dim(2);
+      int x = 0, y = 0;
+      // size of window to search for local maximum
+      int nms = y_max >= 2*6+1 ? ((x_max >= 2*6+1) ? 6 : x_max) : y_max;
 
-	T y_max = (T)(raw_maps.dim(1));
-	T x_max = (T)(raw_maps.dim(2));
-	T x=0, y=0;
-	intg nms = (intg) ((y_max >= 2*6+1) ? 
-			   ((x_max >= 2*6+1) ? 6 : x_max) : y_max);
-
-	idx_fill(max_map, (T)-1);
-	{ idx_bloop1(raw_map, raw_maps, T) {
-	    y = 0;
-	    { idx_bloop2(max_map_row, max_map, T,
-			 raw_map_row, raw_map, T) {
-		x = 0;
-		{ idx_bloop2(max_map_result, max_map_row, T,
-			     raw_map_pix, raw_map_row, T)  {
-		    T pix_val = raw_map_pix.get();
-		    if (pix_val > max_map_result.get(1)
-			&& pix_val > threshold) {
-		      intg local_max, i,j,
-			// FIXME: temporarly fixed out of bounds with MAX and MIN
-			i_min = (intg) MAX(0, (y+nms<=y_max
-					)?((y-nms>0)?y-nms:0):y_max-2*nms+1),
-			j_min = (intg) MAX(0, (x+nms<=x_max
-					)?((x-nms>0)?x-nms:0):x_max-2*nms+1),
-			i_max = (intg) MIN(raw_map.dim(0), (y-nms>0)?((y+nms<=y_max)?y+nms:y_max):2*nms+1),
-			j_max = (intg) MIN(raw_map.dim(1), (x-nms>0)?((x+nms<=x_max)?x+nms:x_max):2*nms+1);
-		      local_max = 1;
-		      for (i = i_min; i < i_max; i++) {
-			for (j = j_min; j < j_max; j++) {
-			  if (pix_val <= raw_map.get(i,j)
-			      && (i!=y || j!=x)) {
-			    local_max = 0;
-			  }
-			}
-		      }
-		      if (local_max == 1) {
-			max_map_result.set(winnning_class, 0);
-			max_map_result.set(pix_val, 1);
-			//cout << x << "," << y <<  "," << pix_val << endl;
-		      }
-		    }
-		    x++;
-		  }}
-		y++;
-	      }}
-	    winnning_class++;
-	  }}
-      }}
+      idx_fill(max_map, (T)-1);
+      // loop on each class
+      idx_bloop1(raw_map, raw_maps, T) {
+	y = 0;
+	// loop on rows
+	idx_bloop2(max_map_row, max_map, T,
+		   raw_map_row, raw_map, T) {
+	  x = 0;
+	  // loop on cols
+	  idx_bloop2(max_map_result, max_map_row, T,
+		     raw_map_pix, raw_map_row, T)  {
+	    T pix_val = raw_map_pix.get();
+	    if (pix_val > max_map_result.get(1)
+		&& pix_val > threshold) {
+	      int local_max, i,j, i_min, j_min, i_max, j_max;
+	      i_min = MAX(0, (y+nms<=y_max)?
+			  ((y-nms>0)?y-nms:0):y_max-2*nms+1);
+	      j_min = MAX(0, (x+nms<=x_max)?
+			  ((x-nms>0)?x-nms:0):x_max-2*nms+1);
+	      i_max = MIN(raw_map.dim(0),
+			  (y-nms>0)?((y+nms<=y_max)?y+nms:y_max):2*nms+1);
+	      j_max = MIN(raw_map.dim(1),
+			  (x-nms>0)?((x+nms<=x_max)?x+nms:x_max):2*nms+1);
+	      local_max = 1;
+	      for (i = i_min; i < i_max; i++) {
+		for (j = j_min; j < j_max; j++) {
+		  if (pix_val <= raw_map.get(i,j) && (i!=y || j!=x)) {
+		    local_max = 0;
+		  }
+		}
+	      }
+	      // current pixel is the maximum within the window
+	      if (local_max == 1) {
+		max_map_result.set(winnning_class, 0);
+		max_map_result.set(pix_val, 1);
+	      }
+	    }
+	    x++;
+	  }
+	  y++;
+	}
+	winnning_class++;
+      }
+    }
   }
 
+  // prune a list of detections.
+  // only keep the largest scoring within an area
   template <class T>
-  vector<bbox> detector<T>::map_to_list(T threshold) {
+  void detector<T>::prune(vector<bbox> &raw_bboxes,
+			  vector<bbox*> &pruned_bboxes) {
+    // for each bbox, check that center of current box is not within
+    // another box, and only keep ones with highest score when overlapping
+    vector<bbox>::iterator i, j;
+    for (i = raw_bboxes.begin(); i != raw_bboxes.end(); ++i) {
+      // center of the box
+      rect this_bbox(i->h0 + i->height / 2, i->w0 + i->width / 2, 1, 1);
+      bool add = true;
+      // check each other bbox
+      for (j = raw_bboxes.begin(); (j != raw_bboxes.end()) && add; ++j) {
+	if (i != j) {
+	  rect other_bbox(j->h0, j->w0, j->height, j->width);
+	  if ((this_bbox.overlap(other_bbox)) &&
+	      (i->confidence < j->confidence))
+	    add = false;
+	}
+      }
+      // if bbox survived, add it
+      if (add)
+	pruned_bboxes.push_back(&(*i));
+    }
+  }
+	
+  template <class T>
+  void detector<T>::smooth_outputs() {
+    cout << "smoothing not implemented" << endl;
+  }
+    
+  template <class T>
+  void detector<T>::map_to_list(T threshold, vector<bbox> &raw_bboxes) {
     // make a list that contains the results
-    //    idx<double> rlist(1, 10);
-    vector<bbox> vb;
-    //    rlist.resize(0, rlist.dim(1));
     idx<T> in0x(((state_idx<T>*) inputs.get(0))->x);
     double original_h = grabbed.dim(0);
     double original_w = grabbed.dim(1);
@@ -468,7 +500,7 @@ namespace ebl {
 		  bb.owidth = (uint) out_w; // output width
 		  bb.oh0 = offset_h; // answer height in output
 		  bb.ow0 = offset_w; // answer height in output
-		  vb.push_back(bb);
+		  raw_bboxes.push_back(bb);
 		}
 		offset_w++;
 	      }}
@@ -476,36 +508,35 @@ namespace ebl {
 	  }}
 	scale_index++;
       }}
-    return vb;
   }
   
   template<class T>
-  void detector<T>::pretty_bboxes(vector<bbox> &vb) {
+  void detector<T>::pretty_bboxes(const vector<bbox*> &bboxes) {
     cout << endl << "detector: ";
-    if (vb.size() == 0)
+    if (bboxes.size() == 0)
       cout << "no object found." << endl;
     else {
-      cout << "found " << vb.size() << " objects." << endl;
-      vector<bbox>::iterator i = vb.begin();
-      for ( ; i != vb.end(); ++i) {
-	cout << "- " << labels[i->class_id].idx_ptr();
-	cout << " with confidence " << i->confidence;
-	cout << " in scale #" << i->scale_index;
+      cout << "found " << bboxes.size() << " objects." << endl;
+      vector<bbox*>::const_iterator i = bboxes.begin();
+      for ( ; i != bboxes.end(); ++i) {
+	cout << "- " << labels[(*i)->class_id].idx_ptr();
+	cout << " with confidence " << (*i)->confidence;
+	cout << " in scale #" << (*i)->scale_index;
 	cout << " (" << grabbed.dim(0) << "x" << grabbed.dim(1);
-	cout << " / " << i->scaleh << "x" << i->scalew;
-	cout << " = " << i->iheight << "x" << i->iwidth << ")";
+	cout << " / " << (*i)->scaleh << "x" << (*i)->scalew;
+	cout << " = " << (*i)->iheight << "x" << (*i)->iwidth << ")";
 	cout << endl;
-	cout << "  bounding box: top left " << i->h0 << "x" << i->w0;
-	cout << " and size " << i->height << "x" << i->width;
-	cout << " out position: " << i->oh0 << "x" << i->ow0;
-	cout << " in " << i->oheight << "x" << i->owidth;
+	cout << "  bounding box: top left " << (*i)->h0 << "x" << (*i)->w0;
+	cout << " and size " << (*i)->height << "x" << (*i)->width;
+	cout << " out position: " << (*i)->oh0 << "x" << (*i)->ow0;
+	cout << " in " << (*i)->oheight << "x" << (*i)->owidth;
 	cout << endl;
       }
     }
   }
   
   template <class T> template <class Tin>
-  vector<bbox> detector<T>::fprop(idx<Tin> &img, T threshold) {
+  vector<bbox*>& detector<T>::fprop(idx<Tin> &img, T threshold) {
     idx<T> img2, img3, tmp;
     if (typeid(T) == typeid(Tin)) // input same type as net, shallow copy
       img2 = (idx<T>&) img;
@@ -526,29 +557,35 @@ namespace ebl {
     }
     // do a fprop for each scaled input sample
     multi_res_fprop(img3);
-    
+    // smooth outputs
+    smooth_outputs();
     // find points that are local maxima spatial and class-wise
     // write result in m. rescale result to [0 1]
+    // TODO: use connected components instead of fixed-size window local maxima?
     mark_maxima(threshold);
-
-    // prune results btwn scales
-    vector<bbox> rlist = map_to_list(threshold);
+    // get bounding boxes
+    raw_bboxes.clear();
+    map_to_list(threshold, raw_bboxes);
+    // prune bounding boxes btwn scales
+    pruned_bboxes.clear();
+    prune(raw_bboxes, pruned_bboxes);
+    // print results
     if (!silent)
-      pretty_bboxes(rlist);
+      pretty_bboxes(pruned_bboxes);
     // save positive response input windows in save mode
     if (save_mode)
-      save_bboxes(rlist, save_dir);
+      save_bboxes(pruned_bboxes, save_dir);
     // return bounding boxes
-    return rlist;
+    return pruned_bboxes;
   }
 
   template <class T>
-  void detector<T>::save_bboxes(vector<bbox> &bboxes, const string &dir) {
+  void detector<T>::save_bboxes(const vector<bbox*> &bboxes, const string &dir){
     string classname;
     ostringstream fname, cmd;
     state_idx<T> *input = NULL;
     idx<T> inpp, inorig;
-    vector<bbox>::iterator bbox;
+    vector<bbox*>::const_iterator bbox;
     vector<bool> dir_exists(labels.dim(0), false);
     string root = dir;
     root += "/";
@@ -568,37 +605,38 @@ namespace ebl {
     // loop on bounding boxes
     for (bbox = bboxes.begin(); bbox != bboxes.end(); ++bbox) {
       // exclude background class
-      if (bbox->class_id == bgclass)
+      if ((*bbox)->class_id == bgclass)
 	continue ;
       // get class name
-      classname = (const char *) labels[bbox->class_id].idx_ptr();
+      classname = (const char *) labels[(*bbox)->class_id].idx_ptr();
       // check if directory exists for this class, otherwise create it
-      if (!dir_exists[bbox->class_id]) {
-	mkdir_full(dir_pp[bbox->class_id]);
-	mkdir_full(dir_orig[bbox->class_id]);
-	dir_exists[bbox->class_id] = true;
+      if (!dir_exists[(*bbox)->class_id]) {
+	mkdir_full(dir_pp[(*bbox)->class_id]);
+	mkdir_full(dir_orig[(*bbox)->class_id]);
+	dir_exists[(*bbox)->class_id] = true;
       }
       // get bbox of preprocessed input at bbox's scale
-      input = (state_idx<T>*) inputs.get(bbox->scale_index);
-      inpp = input->x.narrow(1, bbox->ih, bbox->ih0);
-      inpp = inpp.narrow(2, bbox->iw, bbox->iw0);
+      input = (state_idx<T>*) inputs.get((*bbox)->scale_index);
+      inpp = input->x.narrow(1, (*bbox)->ih, (*bbox)->ih0);
+      inpp = inpp.narrow(2, (*bbox)->iw, (*bbox)->iw0);
       //inpp = inpp.shift_dim(0, 2); // put channels back to 3rd position
       // get bbox of original input
-      inorig = grabbed.narrow(0, bbox->height, bbox->h0);
-      inorig = inorig.narrow(1, bbox->width, bbox->w0);
+      inorig = grabbed.narrow(0, (*bbox)->height, (*bbox)->h0);
+      inorig = inorig.narrow(1, (*bbox)->width, (*bbox)->w0);
       // save preprocessed image as lush mat
-      fname.str(""); fname << dir_pp[bbox->class_id] << classname;
-      fname << setw(6) << setfill('0') << save_counts[bbox->class_id];
+      fname.str(""); fname << dir_pp[(*bbox)->class_id] << classname;
+      fname << setw(6) << setfill('0') << save_counts[(*bbox)->class_id];
       fname << MATRIX_EXTENSION;
       save_matrix(inpp, fname.str());
       cout << "saved " << fname.str() << endl;
       // save original image as png
-      fname.str(""); fname << dir_orig[bbox->class_id] << classname;
-      fname << setw(6) << setfill('0') << save_counts[bbox->class_id] << ".png";
+      fname.str(""); fname << dir_orig[(*bbox)->class_id] << classname;
+      fname << setw(6) << setfill('0');
+      fname << save_counts[(*bbox)->class_id] << ".png";
       save_image(fname.str(), inorig, "png");
       cout << "saved " << fname.str() << endl;
       // increment file counter
-      save_counts[bbox->class_id]++;
+      save_counts[(*bbox)->class_id]++;
 
       // enqueue original bboxes if queue is requested
       // TODO: this depends on saving images, make it independent?
