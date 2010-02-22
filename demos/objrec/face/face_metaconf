@@ -61,8 +61,14 @@ gain = 1.5
 save_detections = 1
 save_video = 0
 save_video_fps = 5
-camera = opencv # shmem video
-videofile = toto.flv
+camera = opencv # options: opencv shmem video directory
 display = 0
 minimal_display = 1
+display_sleep = 0.0
 ninternals = 1
+input_height = -1 # use -1 to use original size
+input_width = -1 # use -1 to use original size
+# limit of input video duration in seconds, 0 means no limit
+input_video_max_duration = 0
+# step between input frames in seconds, 0 means no step
+input_video_sstep = 0

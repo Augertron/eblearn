@@ -43,25 +43,26 @@ namespace ebl {
   // detector_gui
 
   template <class Tdata, class T>
-  vector<bbox> detector_gui::display(detector<Tdata> &cl, idx<T> &img,
-				     double threshold, unsigned int h0,
-				     unsigned int w0,
-				     double dzoom,  Tdata vmin, Tdata vmax,
-				     int wid, const char *wname){
+  vector<bbox*>& detector_gui::display(detector<Tdata> &cl, idx<T> &img,
+				       double threshold, unsigned int h0,
+				       unsigned int w0,
+				       double dzoom,  Tdata vmin, Tdata vmax,
+				       int wid, const char *wname){
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector"));
     select_window(display_wid);
     disable_window_updates();
 
     // run network
-    vector<bbox> vb = cl.fprop(img, threshold);
+    vector<bbox*>& vb = cl.fprop(img, threshold);
     // draw output
-    vector<bbox>::iterator i = vb.begin();
+    vector<bbox*>::iterator i = vb.begin();
     for ( ; i != vb.end(); ++i) {
-      unsigned int h = dzoom * i->h0;
-      unsigned int w = dzoom * i->w0;
-      draw_box(h0 + h, w0 + w, dzoom * i->height, dzoom * i->width, 0,0,255,
-	       new string((const char *)cl.labels[i->class_id].idx_ptr()));
+      unsigned int h = dzoom * (*i)->h0;
+      unsigned int w = dzoom * (*i)->w0;
+      draw_box(h0 + h, w0 + w, dzoom * (*i)->height, dzoom * (*i)->width,
+	       0, 0, 255,
+	       new string((const char *)cl.labels[(*i)->class_id].idx_ptr()));
     }
     draw_matrix(img, h0, w0, dzoom, dzoom, (T)vmin, (T)vmax);   
     enable_window_updates();
@@ -69,12 +70,12 @@ namespace ebl {
   }
 
   template <class Tdata, class T>
-  vector<bbox> detector_gui::display_input(detector<Tdata> &cl, idx<T> &img,
-					   double threshold, unsigned int h0,
-					   unsigned int w0,
-					   double dzoom,  Tdata vmin,
-					   Tdata vmax,
-					   int wid, const char *wname){
+  vector<bbox*>& detector_gui::display_input(detector<Tdata> &cl, idx<T> &img,
+					     double threshold, unsigned int h0,
+					     unsigned int w0,
+					     double dzoom,  Tdata vmin,
+					     Tdata vmax,
+					     int wid, const char *wname){
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: output"));
     select_window(display_wid);
@@ -88,7 +89,7 @@ namespace ebl {
   }
 
   template <class Tdata, class T>
-  vector<bbox> detector_gui::
+  vector<bbox*>& detector_gui::
   display_inputs_outputs(detector<Tdata> &cl, idx<T> &img, double threshold,
 			 unsigned int h0, unsigned int w0, double dzoom,
 			 Tdata vmin, Tdata vmax, int wid, const char *wname){
@@ -97,7 +98,7 @@ namespace ebl {
     select_window(display_wid_fprop);
 
     // draw input and output
-    vector<bbox> bb =
+    vector<bbox*>& bb =
       display_input(cl, img, threshold, h0, w0, dzoom, (Tdata)0, (Tdata)255,
 		    display_wid_fprop);
 
@@ -136,11 +137,12 @@ namespace ebl {
 	    << " " << inx.dim(0) << "x" << inx.dim(1);
 	draw_matrix(inx, h, w0, dzoom, dzoom, (Tdata)vmin, (Tdata)vmax);
 	// draw bboxes on scaled input
-	for (vector<bbox>::iterator i = bb.begin(); i != bb.end(); ++i) {
-	  if (scale == i->scale_index)
-	    draw_box(h + dzoom * i->ih0, w0 + dzoom * i->iw0,
-		     dzoom * i->ih, dzoom * i->iw, 0, 0, 255,
-		     new string((const char*)cl.labels[i->class_id].idx_ptr()));
+	for (vector<bbox*>::iterator i = bb.begin(); i != bb.end(); ++i) {
+	  if (scale == (*i)->scale_index)
+	    draw_box(h + dzoom * (*i)->ih0, w0 + dzoom * (*i)->iw0,
+		     dzoom * (*i)->ih, dzoom * (*i)->iw, 0, 0, 255,
+		     new string((const char*)
+				cl.labels[(*i)->class_id].idx_ptr()));
 	}
 	// draw outputs
 	int hcat = 0;
@@ -187,25 +189,27 @@ namespace ebl {
   }
 
   template <class Tdata, class T>
-  vector<bbox> detector_gui::display_all(detector<Tdata> &cl, idx<T> &img, 
-					 double threshold,
-					 unsigned int h0, unsigned int w0,
-					 double dzoom, Tdata vmin, Tdata vmax,
-					 int wid, const char *wname){
+  vector<bbox*>& detector_gui::display_all(detector<Tdata> &cl, idx<T> &img, 
+					   double threshold,
+					   unsigned int h0, unsigned int w0,
+					   double dzoom, Tdata vmin, Tdata vmax,
+					   int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
 
     // draw input and output
-    vector<bbox> bb =
+    vector<bbox*>& bb =
       display_inputs_outputs(cl, img, threshold, h0, w0, dzoom, vmin, vmax,
 			     display_wid_fprop);
 
     disable_window_updates();
     // draw internal states of first scale
     w0 = (cl.width + 5) * 2 + 5;
-    state_idx<Tdata> *ii = ((state_idx<Tdata>*) cl.inputs.get(cl.inputs.dim(0) - 1));
-    state_idx<Tdata> *oo = ((state_idx<Tdata>*) cl.outputs.get(cl.inputs.dim(0) - 1));
+    state_idx<Tdata> *ii =
+      ((state_idx<Tdata>*) cl.inputs.get(cl.inputs.dim(0) - 1));
+    state_idx<Tdata> *oo =
+      ((state_idx<Tdata>*) cl.outputs.get(cl.inputs.dim(0) - 1));
     module_1_1_gui mg;
     //    cl.thenet.fprop(*ii, *oo); 
     mg.display_fprop(cl.thenet, *ii, *oo, h0, w0, 1.0, vmin, vmax,
@@ -236,4 +240,3 @@ namespace ebl {
 } // end namespace ebl
 
 #endif
-

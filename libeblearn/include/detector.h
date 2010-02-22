@@ -155,7 +155,7 @@ namespace ebl {
     //! if image's and network's type differ, cast image into network's type
     //! through an idx_copy (avoid for better performance).
     template <class Tin>
-      vector<bbox> fprop(idx<Tin> &img, T threshold);
+      vector<bbox*>& fprop(idx<Tin> &img, T threshold);
 
   private:
     //! initialize dimensions and multi-resolution buffers.
@@ -193,13 +193,21 @@ namespace ebl {
     //! find maximas in output layer
     void mark_maxima(T threshold);
 
-    //! prune btwn scales
-    vector<bbox> map_to_list(T threshold);
-    void pretty_bboxes(vector<bbox> &vb);
+    //! Prune bounding boxes between scales into prune_bboxes.
+    void prune(vector<bbox> &raw_bboxes, vector<bbox*> &prune_bboxes);
+
+    //! Smooth outputs.
+    void smooth_outputs();
+
+    //! Extract bounding boxes from outputs into raw_bboxes.
+    void map_to_list(T threshold, vector<bbox> &raw_bboxes);
+
+    //! Print bounding boxes on standard output.
+    void pretty_bboxes(const vector<bbox*> &bboxes);
 
     //! save all bounding boxes of original (in original resolution) and
     //! preprocessed (resized and filtered) input into directory dir.
-    void save_bboxes(vector<bbox> &bboxes, const string &dir);
+    void save_bboxes(const vector<bbox*> &bboxes, const string &dir);
 
     ////////////////////////////////////////////////////////////////
     // members
@@ -241,6 +249,8 @@ namespace ebl {
     vector<uint>         save_counts; //!< file counter for each class
     deque<idx<T> >       last_detections; //!< a queue of last objects detected
     uint                 max_queue_size; //!< max size of detection queue
+    vector<bbox>         raw_bboxes; //!< raw bboxes extracted from outputs
+    vector<bbox*>        pruned_bboxes; //!< scale-pruned bboxes
 
     ////////////////////////////////////////////////////////////////
     // friends

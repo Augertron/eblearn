@@ -32,9 +32,7 @@ int main(int argc, char **argv) { // regular main without gui
   // check input parameters
   if ((argc != 2) && (argc != 3)) {
     cerr << "wrong number of parameters." << endl;
-    cerr << "usage: obj_detect <config file> [input path]" << endl;
-    cerr << "  if input path is present, recursively classify images found ";
-    cerr << "  in path, otherwise use camera as input." << endl;
+    cerr << "usage: obj_detect <config file> [directory or file]" << endl;
     return -1;
   }
   // load configuration
@@ -44,8 +42,11 @@ int main(int argc, char **argv) { // regular main without gui
   t_net		threshold	= (t_net) conf.get_double("threshold");
   bool		display 	= false;
   bool		mindisplay 	= false;
+  float         display_sleep   = 0.0;
   bool		save_video 	= false;
   string        cam_type        = conf.get_string("camera");
+  int           height          = conf.get_int("input_height");
+  int           width           = conf.get_int("input_width");
 
   // load network and weights
   parameter<t_net> theparam;
@@ -55,27 +56,29 @@ int main(int argc, char **argv) { // regular main without gui
   module_1_1<t_net> *net = init_network(theparam, conf, classes.dim(0));
   theparam.load_x(conf.get_cstring("weights"));
 
-  // initialize camera (opencv, directory or shmem)
+  // initialize camera (opencv, directory, shmem or video)
   idx<t_net> frame;
   camera<t_net> *cam = NULL;
-  if (argc == 3) // use directory camera
-    cam = new camera_directory<t_net>(argv[2], 240, 320);
-  else { // use camera variable to determine camera type
-    if (!strcmp(cam_type.c_str(), "opencv"))
-      cam = new camera_opencv<t_net>(-1, 240, 320);
-    else if (!strcmp(cam_type.c_str(), "shmem"))
-      cam = new camera_shmem<t_net>("shared-mem", 240, 320);
-    else if (!strcmp(cam_type.c_str(), "video"))
-      cam = new camera_video<t_net>(conf.get_cstring("videofile"), 120, 160,
-				    0, 0);
-    else
-      eblerror("unknown camera type");
-  }
+  if (!strcmp(cam_type.c_str(), "directory")) {
+    if (argc == 3) cam = new camera_directory<t_net>(argv[2], height, width);
+    else eblerror("expected 2nd argument");
+  } else if (!strcmp(cam_type.c_str(), "opencv"))
+    cam = new camera_opencv<t_net>(-1, height, width);
+  else if (!strcmp(cam_type.c_str(), "shmem"))
+    cam = new camera_shmem<t_net>("shared-mem", height, width);
+  else if (!strcmp(cam_type.c_str(), "video")) {
+    if (argc == 3)
+      cam = new camera_video<t_net>
+	(argv[2], height, width, conf.get_uint("input_video_sstep"),
+	 conf.get_uint("input_video_max_duration"));
+    else eblerror("expected 2nd argument");
+  } else eblerror("unknown camera type");
   
   // gui
 #ifdef __GUI__
   display 	= conf.get_bool("display");
   mindisplay 	= conf.get_bool("minimal_display");
+  display_sleep	= conf.get_float("display_sleep");
   save_video    = conf.get_bool("save_video");
   module_1_1_gui netgui;
   uint	wid	= display ? new_window("eblearn object recognition") : 0;
@@ -136,7 +139,10 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "processing: " << tpp << " ms." << endl;
     cout << "fps: " << cam->fps() << endl;
 #endif
-    //    sleep(1);
+    if (display_sleep > 0.0) {
+      cout << "sleeping for " << display_sleep << "s." << endl;
+      sleep(display_sleep);
+    }
   }
   if (save_video)
     cam->stop_recording(cam->fps());
