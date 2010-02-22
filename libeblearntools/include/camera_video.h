@@ -30,33 +30,63 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef UTILS_H_
-#define UTILS_H_
+#ifndef CAMERA_VIDEO_H_
+#define CAMERA_VIDEO_H_
 
-#include <list>
-#include <string>
+#include "camera.h"
+#include "camera_directory.h"
 
-#include "defines.h"
+#ifdef __BOOST__
+#include "boost/filesystem.hpp"
+#include "boost/regex.hpp"
+using namespace boost::filesystem;
+using namespace boost;
+#endif
 
 using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // directory utilities
+  //! The camera_video class interfaces with images extracted from 
+  //! a video file, grabbing all images into idx format, and also allowing
+  //! to save gui outputs into video files.
+  template <typename Tdata> class camera_video
+    : public camera_directory<Tdata> {
+  public:
 
-  typedef list<pair<string, string> > files_list;
+    ////////////////////////////////////////////////////////////////
+    // constructors/allocation
 
-  //! Returns a list of pairs of root directory and filename of all images
-  //! found recursively in directory 'dir'. The images are found using
-  //! the IMAGE_PATTERN regular expression by default.
-  //! If the directory does not exists, it returns NULL.
-  //! \param fl A file list where new found files will be apprended if not null.
-  //!           If null, a new list is allocated. This is used by the recursion.
-  files_list *find_images(const string &dir,
-			  const char *pattern = IMAGE_PATTERN,
-			  files_list *fl = NULL);
-  
+    //! Initialize a video camera from a video file.
+    //! height and width are optional parameters that resize the input image
+    //! to those dimensions if given (different than -1). One may want to
+    //! decrease the input resolution first to speed up operations, for example
+    //! when computing multiple resolutions.
+    //! \param video The video (full) filename.
+    //! \param height Resize input frame to this height if different than -1.
+    //! \param width Resize input frame to this width if different than -1.
+    //! \param sstep Steps in seconds to skip when reading video.
+    //! \param endpos Maximum duration in second of read input.
+    camera_video(const char *video_file, int height_ = -1, int width_ = -1,
+		 uint sstep = 0, uint endpos = 0);
+
+    //! Destructor.
+    virtual ~camera_video();
+
+    ////////////////////////////////////////////////////////////////
+    // info
+
+    //! Return the number of frames per second of the original video.
+    virtual float fps();
+
+    // members ////////////////////////////////////////////////////////
+  protected:
+    float        fps_video;           //!< frames per second of video   
+  };
+
 } // end namespace ebl
 
-#endif /* UTILS_ */
+#include "camera_video.hpp"
+
+
+#endif /* CAMERA_VIDEO_H_ */

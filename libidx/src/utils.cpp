@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
+ *   Copyright (C) 2010 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,20 +28,31 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef libidx_H
-#define libidx_H
-
-#include "defines.h"
-#include "numerics.h"
-#include "srg.h"
-#include "idx.h"
-#include "blas.h"
-#include "idxIO.h"
-#include "color_spaces.h"
-#include "gaussian_pyramid.h"
-#include "image.h"
 #include "utils.h"
+#include <stdlib.h>
+#include <iostream>
 
-#endif
+using namespace std;
+
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // directory utilities
+
+  bool mkdir_full(string &dir) {
+    return mkdir_full(dir.c_str());
+  }
+  
+  bool mkdir_full(const char *dir) {
+    string cmd = "mkdir -p ";
+    cmd += dir;
+    if (system(cmd.c_str()) < 0) {
+      cerr << "warning: failed to create directory " << dir;
+      return false;
+    }
+    return true;
+  }
+
+} // namespace ebl

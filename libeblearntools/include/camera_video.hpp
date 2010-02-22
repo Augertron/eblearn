@@ -30,8 +30,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef CAMERA_DIRECTORY_HPP_
-#define CAMERA_DIRECTORY_HPP_
+#ifndef CAMERA_VIDEO_HPP_
+#define CAMERA_VIDEO_HPP_
+
+#include <ostream>
+#include <stdlib.h>
+#include "configuration.h"
 
 namespace ebl {
 
@@ -39,66 +43,67 @@ namespace ebl {
   // constructors & initializations
 
   template <typename Tdata>
-  camera_directory<Tdata>::camera_directory(const char *dir,
-					    int height_, int width_)
-    : camera<Tdata>(height_, width_) {
-    cout << "Initializing directory camera from: " << dir << endl;
-    read_directory(dir);
-  }
-
-  template <typename Tdata>
-  camera_directory<Tdata>::camera_directory(int height_, int width_)
-    : camera<Tdata>(height_, width_) {
-  }
-
-  template <typename Tdata>
-  bool camera_directory<Tdata>::read_directory(const char *dir) {
-    string directory = dir;
-    fl = find_images(directory);
-    if (!fl) {
-      cerr << "invalid directory: " << dir << endl;
-      eblerror("invalid directory");
-      return false;
-    }
-    cout << "Found " << fl->size() << " images." << endl;
-    flsize = fl->size();
-    return true;
+  camera_video<Tdata>::camera_video(const char *filename,
+				    int height_, int width_,
+				    uint sstep, uint endpos)
+    : camera_directory<Tdata>(height_, width_) {
+    cout << "Initializing camera from video file: " << filename << endl;
+    string dir = filename;
+    dir += "_images";
+    // create temporary directory for images
+    mkdir_full(dir);
+    // get video fps
+    cout << "Getting video information..." << endl;
+    ostringstream cmd;
+    ostringstream videoconf;
+    int ret;
+    videoconf << filename << ".conf";
+    cmd << "mplayer -identify " << filename;
+    cmd << " -ao null -vo null -frames 0 2>/dev/null | grep ID_ ";
+    cmd << " > " << videoconf.str();
+    ret = std::system(cmd.str().c_str());
+    configuration conf(videoconf.str());
+    fps_video = conf.get_float("ID_VIDEO_FPS");
+    cout << "Video FPS is: " << fps_video << endl;
+    // extract all images from video
+    cout << "Extracting video frames..." << endl;
+    cmd.str("");
+    cmd << "mplayer " << filename << " -ao null -vo png:z=0:outdir=" << dir;
+    if (endpos > 0)
+      cmd << " -endpos " << endpos;
+    if (sstep > 0)
+      cmd << " -sstep " << sstep;
+    ret = std::system(cmd.str().c_str());
+    if (ret < 0)
+      eblerror("video images extraction failed");
+    // extract audio
+    this->audio_filename = dir;
+    this->audio_filename += "/audio.wav";
+    cout << "Extracting audio into " << this->audio_filename << endl;
+    cmd.str("");
+    cmd << "mplayer -vo null -hardframedrop -ao pcm:file=";
+    cmd << this->audio_filename << " " << filename;
+    if (endpos > 0)
+      cmd << " -endpos " << endpos;
+    if (sstep > 0)
+      cmd << " -sstep " << sstep;
+    ret = std::system(cmd.str().c_str());
+    // find all images
+    this->read_directory(dir.c_str());
   }
   
   template <typename Tdata>
-  camera_directory<Tdata>::~camera_directory() {
+  camera_video<Tdata>::~camera_video() {
   }
   
   ////////////////////////////////////////////////////////////////
-  // frame grabbing
+  // info
+  
+  template <typename Tdata>
+  float camera_video<Tdata>::fps() {
+    return fps_video;
+  }    
 
-  template <typename Tdata>
-  idx<Tdata> camera_directory<Tdata>::grab() {
-    if (empty())
-      eblerror("cannot grab images on empty list");
-    fdir = fl->front().first; // directory
-    fname = fl->front().second; // file name
-    fl->pop_front(); // remove first element
-    cout << frame_id << "/" << flsize << ": processing ";
-    cout << fdir << "/" << fname << endl;
-    oss.str(""); oss << fdir << "/" << fname;
-    try {
-      frame = load_image<Tdata>(oss.str());
-    } catch (const char *err) {
-      cerr << "failed to load image " << oss.str();
-      cerr << ". Trying next image..." << endl;
-      return grab();
-    }
-    return this->postprocess();
-  }
-    
-  template <typename Tdata>
-  bool camera_directory<Tdata>::empty() {
-    if (!fl)
-      eblerror("directory not initialized");
-    return (fl->size() == 0);
-  }
-    
 } // end namespace ebl
 
-#endif /* CAMERA_DIRECTORY_HPP_ */
+#endif /* CAMERA_VIDEO_HPP_ */

@@ -41,7 +41,7 @@ namespace ebl {
   template <typename Tdata>
   camera<Tdata>::camera(int height_, int width_)
     : height(height_), width(width_), bresize(false), frame_id(0),
-      grabbed(false) {
+      grabbed(false), wid(0), fps_grab(0.0), audio_filename("") {
     // decide if we resize input or not
     if ((height != -1) && (width != -1))
       bresize = true;
@@ -63,24 +63,60 @@ namespace ebl {
   // video recording
     
   template <typename Tdata>
-  bool camera<Tdata>::start_recording(uint window_id, const string &path,
-				      const string &name) {
-// //     // video
-// //     //    ostringstream oss;
-// //     //    oss << "video/frame_" << setfill('0') << setw(5) << iframe << ".png";
-// //     //    cout << "saving " << oss.str() << endl;
-// //     //    save_window(oss.str().c_str());
-// //     //    usleep(200000);
+  bool camera<Tdata>::start_recording(uint window_id, const char *name) {
+    wid = window_id;
+    record_cnt = 0;
+    if (!name)
+      recording_name = "toto";
+    else
+      recording_name = name;
+    mkdir_full(recording_name);
     return true;
   }
 
   template <typename Tdata>
   bool camera<Tdata>::record_frame() {
+    ostringstream oss;
+    oss << recording_name << "/frame_";
+    oss << setfill('0') << setw(6) << record_cnt << ".png";
+    save_window(oss.str().c_str());
+    cout << "saved " << oss.str() << endl;
+    record_cnt++;
     return true;
   }
     
   template <typename Tdata>
-  bool camera<Tdata>::stop_recording(uint fps) {
+  bool camera<Tdata>::stop_recording(float fps) {
+    ostringstream oss;
+    uint optimal_bitrate = 50 * 25 * frame.dim(0) * frame.dim(1) / 256;
+    ostringstream options;
+    options << "vbitrate=" << optimal_bitrate << ":mbd=2:keyint=132:";
+    options << "vqblur=1.0:cmp=2:subcmp=2:dia=2:mv0:last_pred=3";
+    // pass 1
+    oss << "mencoder \"mf://" << recording_name;
+    oss << "/*.png\" -mf type=png:fps=" << fps;
+    oss << " -ovc lavc";
+    oss << " -lavcopts vcodec=msmpeg4v2:vpass=1:" << options.str();
+    oss << " -o /dev/null ";
+    int ret = system(oss.str().c_str());
+    if (ret < 0)
+      return false;
+    // pass 2
+    oss.str("");
+    oss << "mencoder \"mf://" << recording_name;
+    oss << "/*.png\" -mf type=png:fps=" << fps;
+    oss << " -ovc lavc";
+    oss << " -lavcopts vcodec=msmpeg4v2:vpass=2:" << options.str();
+    if (audio_filename != "") {
+      oss << " -audiofile " << audio_filename;
+      oss << " -oac mp3lame -lameopts cbr:br=32 ";
+    }
+    oss << " -o " << recording_name << ".avi ";
+    ret = system(oss.str().c_str());
+    if (ret < 0)
+      return false;
+    cout << "Saved " << recording_name << ".avi";
+    cout << " at " << fps << " fps." << endl;
     return true;
   }
 
@@ -100,7 +136,7 @@ namespace ebl {
     //   time(&t0);
     //   cout << "fps: " << fps << endl;
     // }
-    return 0;
+    return fps_grab;
   }
     
   ////////////////////////////////////////////////////////////////

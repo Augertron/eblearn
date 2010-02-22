@@ -80,15 +80,14 @@ namespace ebl {
     //! Start recording of frames from window window_id into path.
     //! This creates a directory name in path.
     //! No frames are actually recorded,
-    virtual bool start_recording(uint window_id, const string &path,
-				 const string &name);
+    virtual bool start_recording(uint window_id = 0, const char *name = NULL);
 
     //! Dump all frames declared to be recorded by start_recording().
     virtual bool record_frame();
     
     //! Create all videos started with start_recording() using frames dumped
     //! with record_frame(), using fps frames per second.
-    virtual bool stop_recording(uint fps);
+    virtual bool stop_recording(float fps);
 
     ////////////////////////////////////////////////////////////////
     // info
@@ -113,6 +112,11 @@ namespace ebl {
     bool         bresize;       //!< resize or not
     uint         frame_id;      //!< frame counter
     bool         grabbed;       //!< false if no frame grabbed yet
+    uint         wid;           //!< window to record from
+    string       recording_name;//!< name of video
+    uint         record_cnt;    //!< frame counter for recording
+    float        fps_grab;      //!< frames per second of grabbing
+    string       audio_filename;//!< filename of audio file
   };
 
 } // end namespace ebl

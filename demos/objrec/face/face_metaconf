@@ -48,8 +48,6 @@ train = ${dsname}_train_${val_size}_${ds}
 val = ${dsname}_val_${val_size}_${ds}
 eta = .00001 .000001
 iterations = 50
-display = 0
-ninternals = 1
 
 # preprocessing
 resize = mean bilinear
@@ -61,4 +59,10 @@ classes = ${root2}/${job_name}_classes.mat
 threshold = .99
 gain = 1.5
 save_detections = 1
-camera = opencv
+save_video = 0
+save_video_fps = 5
+camera = opencv # shmem video
+videofile = toto.flv
+display = 0
+minimal_display = 1
+ninternals = 1
