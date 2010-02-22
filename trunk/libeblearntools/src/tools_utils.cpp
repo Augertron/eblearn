@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
+ *   Copyright (C) 2010 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,20 +28,51 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef libidx_H
-#define libidx_H
+#include "tools_utils.h"
 
-#include "defines.h"
-#include "numerics.h"
-#include "srg.h"
-#include "idx.h"
-#include "blas.h"
-#include "idxIO.h"
-#include "color_spaces.h"
-#include "gaussian_pyramid.h"
-#include "image.h"
-#include "utils.h"
-
+#ifdef __BOOST__
+#include "boost/filesystem.hpp"
+#include "boost/regex.hpp"
+using namespace boost::filesystem;
+using namespace boost;
 #endif
+
+using namespace std;
+
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // directory utilities
+
+  files_list *find_images(const string &dir, const char *pattern,
+			  files_list *fl_) {
+    files_list *fl = fl_;
+#ifndef __BOOST__
+    eblerror("boost not installed, install and recompile");
+#else
+    cmatch what;
+    regex r(pattern);
+    path p(dir);
+    if (!exists(p))
+      return NULL; // return if invalid directory
+    // allocate fl if null
+    if (!fl)
+      fl = new files_list();
+    directory_iterator end_itr; // default construction yields past-the-end
+    for (directory_iterator itr(p); itr != end_itr; ++itr) {
+      if (is_directory(itr->status()))
+	find_images(itr->path().string(), pattern, fl);
+      else if (regex_match(itr->leaf().c_str(), what, r)) {
+	// found an image, add it to the list
+	fl->push_back(pair<string,string>(itr->path().branch_path().string(),
+					  itr->leaf()));
+      }
+    }
+#endif
+    return fl;
+  }
+
+
+} // namespace ebl

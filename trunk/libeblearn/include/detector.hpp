@@ -574,10 +574,8 @@ namespace ebl {
       classname = (const char *) labels[bbox->class_id].idx_ptr();
       // check if directory exists for this class, otherwise create it
       if (!dir_exists[bbox->class_id]) {
-	cmd.str(""); cmd << "mkdir -p " << dir_pp[bbox->class_id];
-	system(cmd.str().c_str());
-	cmd.str(""); cmd << "mkdir -p " << dir_orig[bbox->class_id];
-	system(cmd.str().c_str());
+	mkdir_full(dir_pp[bbox->class_id]);
+	mkdir_full(dir_orig[bbox->class_id]);
 	dir_exists[bbox->class_id] = true;
       }
       // get bbox of preprocessed input at bbox's scale

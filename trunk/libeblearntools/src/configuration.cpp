@@ -388,6 +388,10 @@ namespace ebl {
     read(filename);
   }
 
+  configuration::configuration(const string &filename) {
+    read(filename.c_str());
+  }
+
   configuration::configuration(const configuration &other) 
     : smap(other.smap), name(other.name), 
       output_dir(other.output_dir), otxt(other.otxt) {
@@ -466,6 +470,21 @@ namespace ebl {
     iss >> d;
     if (d == numeric_limits<double>::max())
       throw "invalid conversion to double";
+    return d;
+  }
+
+  float configuration::get_float(const char *varname) {
+    if (smap.find(varname) == smap.end()) {
+      cerr << "error: unknown variable: " << varname << endl;
+      throw "unknown variable";
+    }
+    istringstream iss(smap[varname], istringstream::in);
+    // TODO: check float conversion validity with exceptions instead
+    float d;
+    d = numeric_limits<float>::max();
+    iss >> d;
+    if (d == numeric_limits<float>::max())
+      throw "invalid conversion to float";
     return d;
   }
 

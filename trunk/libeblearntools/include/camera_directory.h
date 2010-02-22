@@ -34,7 +34,7 @@
 #define CAMERA_DIRECTORY_H_
 
 #include "camera.h"
-#include "utils.h"
+#include "tools_utils.h"
 
 #ifdef __BOOST__
 #include "boost/filesystem.hpp"
@@ -56,7 +56,7 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     // constructors/allocation
 
-    //! Initialize a directory camera using a shared memory descriptor.
+    //! Initialize a directory camera from a root directory.
     //! height and width are optional parameters that resize the input image
     //! to those dimensions if given (different than -1). One may want to
     //! decrease the input resolution first to speed up operations, for example
@@ -66,6 +66,19 @@ namespace ebl {
     //! \param width Resize input frame to this width if different than -1.
     camera_directory(const char *directory, int height_ = -1, int width_ = -1);
 
+    //! Initialize a directory camera without a root directory. This constructor
+    //! requires a subsequent call to read_directory to initialize images.
+    //! height and width are optional parameters that resize the input image
+    //! to those dimensions if given (different than -1). One may want to
+    //! decrease the input resolution first to speed up operations, for example
+    //! when computing multiple resolutions.
+    //! \param height Resize input frame to this height if different than -1.
+    //! \param width Resize input frame to this width if different than -1.
+    camera_directory(int height_ = -1, int width_ = -1);
+
+    //! Find all images recursively from this directory.
+    bool read_directory(const char *directory);
+    
     //! Destructor.
     virtual ~camera_directory();
 

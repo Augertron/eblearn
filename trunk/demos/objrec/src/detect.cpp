@@ -43,6 +43,8 @@ int main(int argc, char **argv) { // regular main without gui
   uint		norm_size	= conf.get_uint("normalization_size");
   t_net		threshold	= (t_net) conf.get_double("threshold");
   bool		display 	= false;
+  bool		mindisplay 	= false;
+  bool		save_video 	= false;
   string        cam_type        = conf.get_string("camera");
 
   // load network and weights
@@ -63,6 +65,9 @@ int main(int argc, char **argv) { // regular main without gui
       cam = new camera_opencv<t_net>(-1, 240, 320);
     else if (!strcmp(cam_type.c_str(), "shmem"))
       cam = new camera_shmem<t_net>("shared-mem", 240, 320);
+    else if (!strcmp(cam_type.c_str(), "video"))
+      cam = new camera_video<t_net>(conf.get_cstring("videofile"), 120, 160,
+				    0, 0);
     else
       eblerror("unknown camera type");
   }
@@ -70,11 +75,15 @@ int main(int argc, char **argv) { // regular main without gui
   // gui
 #ifdef __GUI__
   display 	= conf.get_bool("display");
+  mindisplay 	= conf.get_bool("minimal_display");
+  save_video    = conf.get_bool("save_video");
   module_1_1_gui netgui;
   uint	wid	= display ? new_window("eblearn object recognition") : 0;
   float zoom	= 1;
   detector_gui dgui;
   night_mode();
+  if (save_video)
+    cam->start_recording();
   // timing variables
   QTime t0;
   int tpp;
@@ -86,7 +95,7 @@ int main(int argc, char **argv) { // regular main without gui
     (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
   // detector
   //  double scales[] = { 8, 4, 2};
-  double scales[] = { 4.5, 2.5, 1.4};
+  //double scales[] = { 4.5, 2.5, 1.4};
   //  double scales[] = { 16, 12, 8, 6, 4, 2, 1 };
   //  double scales[] = { 3 };
   detector<t_net> detect(*net, classes, &pp, norm_size, NULL, 0,
@@ -113,9 +122,15 @@ int main(int argc, char **argv) { // regular main without gui
     else { // fprop and display
       disable_window_updates();
       clear_window();
-      dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
-				  (t_net)-1.1, (t_net)1.1, wid); 
+      if (mindisplay)
+	  dgui.display(detect, frame, threshold, 0, 0, zoom,
+		       (t_net)0, (t_net)255, wid);
+      else
+	dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
+				    (t_net)-1.1, (t_net)1.1, wid); 
       enable_window_updates();
+      if (save_video)
+	cam->record_frame();
     }
     tpp = t0.elapsed(); // stop processing timer
     cout << "processing: " << tpp << " ms." << endl;
@@ -123,6 +138,8 @@ int main(int argc, char **argv) { // regular main without gui
 #endif
     //    sleep(1);
   }
+  if (save_video)
+    cam->stop_recording(cam->fps());
   // free variables
   if (net) delete net;
   if (cam) delete cam;

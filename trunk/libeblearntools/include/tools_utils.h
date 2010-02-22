@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Pierre Sermanet *
- *   pierre.sermanet@gmail.com *
+ *   Copyright (C) 2010 by Pierre Sermanet   *
+ *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source
- *       Initiative (http://www.opensource.org) must display the
+ *     * Redistribution under a license not approved by the Open Source 
+ *       Initiative (http://www.opensource.org) must display the 
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -30,14 +30,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "utils.h"
+#ifndef TOOLS_UTILS_H_
+#define TOOLS_UTILS_H_
 
-#ifdef __BOOST__
-#include "boost/filesystem.hpp"
-#include "boost/regex.hpp"
-using namespace boost::filesystem;
-using namespace boost;
-#endif
+#include <list>
+#include <string>
+
+#include "defines.h"
 
 using namespace std;
 
@@ -46,33 +45,18 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // directory utilities
 
-  files_list *find_images(const string &dir, const char *pattern,
-			  files_list *fl_) {
-    files_list *fl = fl_;
-#ifndef __BOOST__
-    eblerror("boost not installed, install and recompile");
-#else
-    cmatch what;
-    regex r(pattern);
-    path p(dir);
-    if (!exists(p))
-      return NULL; // return if invalid directory
-    // allocate fl if null
-    if (!fl)
-      fl = new files_list();
-    directory_iterator end_itr; // default construction yields past-the-end
-    for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if (is_directory(itr->status()))
-	find_images(itr->path().string(), pattern, fl);
-      else if (regex_match(itr->leaf().c_str(), what, r)) {
-	// found an image, add it to the list
-	fl->push_back(pair<string,string>(itr->path().branch_path().string(),
-					  itr->leaf()));
-      }
-    }
-#endif
-    return fl;
-  }
+  typedef list<pair<string, string> > files_list;
 
+  //! Returns a list of pairs of root directory and filename of all images
+  //! found recursively in directory 'dir'. The images are found using
+  //! the IMAGE_PATTERN regular expression by default.
+  //! If the directory does not exists, it returns NULL.
+  //! \param fl A file list where new found files will be apprended if not null.
+  //!           If null, a new list is allocated. This is used by the recursion.
+  files_list *find_images(const string &dir,
+			  const char *pattern = IMAGE_PATTERN,
+			  files_list *fl = NULL);
+  
+} // end namespace ebl
 
-} // namespace ebl
+#endif /* TOOLS_UTILS_ */

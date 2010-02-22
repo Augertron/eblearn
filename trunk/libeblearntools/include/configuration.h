@@ -95,6 +95,9 @@ namespace ebl {
     //! load configuration found in filename.
     configuration(const char *filename);
 
+    //! load configuration found in filename.
+    configuration(const string &filename);
+
     //! load configuration from already loaded map of variables, name and
     //! output directory.
     configuration(string_map_t &smap, textlist &txt, string &name, 
@@ -133,6 +136,12 @@ namespace ebl {
     //! if varname does not exist or the double conversion fails,
     //! this throws an exception.
     double get_double(const char *varname);
+
+    //! returns a float conversion of the string contained in the variable
+    //! with name varname.
+    //! if varname does not exist or the float conversion fails,
+    //! this throws an exception.
+    float get_float(const char *varname);
 
     //! returns a uint conversion of the string contained in the variable
     //! with name varname.

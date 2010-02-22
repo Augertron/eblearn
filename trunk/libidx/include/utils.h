@@ -30,75 +30,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef CAMERA_DIRECTORY_HPP_
-#define CAMERA_DIRECTORY_HPP_
+#ifndef UTILS_H_
+#define UTILS_H_
+
+#include <string>
+
+using namespace std;
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // constructors & initializations
+  // directory utilities
 
-  template <typename Tdata>
-  camera_directory<Tdata>::camera_directory(const char *dir,
-					    int height_, int width_)
-    : camera<Tdata>(height_, width_) {
-    cout << "Initializing directory camera from: " << dir << endl;
-    read_directory(dir);
-  }
-
-  template <typename Tdata>
-  camera_directory<Tdata>::camera_directory(int height_, int width_)
-    : camera<Tdata>(height_, width_) {
-  }
-
-  template <typename Tdata>
-  bool camera_directory<Tdata>::read_directory(const char *dir) {
-    string directory = dir;
-    fl = find_images(directory);
-    if (!fl) {
-      cerr << "invalid directory: " << dir << endl;
-      eblerror("invalid directory");
-      return false;
-    }
-    cout << "Found " << fl->size() << " images." << endl;
-    flsize = fl->size();
-    return true;
-  }
+  //! Create specified directory and all its parents if they do not exists.
+  //! Return false upon failure.
+  bool mkdir_full(const char *dir);
   
-  template <typename Tdata>
-  camera_directory<Tdata>::~camera_directory() {
-  }
+  //! Create specified directory and all its parents if they do not exists.
+  //! Return false upon failure.
+  bool mkdir_full(string &dir);
   
-  ////////////////////////////////////////////////////////////////
-  // frame grabbing
-
-  template <typename Tdata>
-  idx<Tdata> camera_directory<Tdata>::grab() {
-    if (empty())
-      eblerror("cannot grab images on empty list");
-    fdir = fl->front().first; // directory
-    fname = fl->front().second; // file name
-    fl->pop_front(); // remove first element
-    cout << frame_id << "/" << flsize << ": processing ";
-    cout << fdir << "/" << fname << endl;
-    oss.str(""); oss << fdir << "/" << fname;
-    try {
-      frame = load_image<Tdata>(oss.str());
-    } catch (const char *err) {
-      cerr << "failed to load image " << oss.str();
-      cerr << ". Trying next image..." << endl;
-      return grab();
-    }
-    return this->postprocess();
-  }
-    
-  template <typename Tdata>
-  bool camera_directory<Tdata>::empty() {
-    if (!fl)
-      eblerror("directory not initialized");
-    return (fl->size() == 0);
-  }
-    
 } // end namespace ebl
 
-#endif /* CAMERA_DIRECTORY_HPP_ */
+#endif /* UTILS_ */

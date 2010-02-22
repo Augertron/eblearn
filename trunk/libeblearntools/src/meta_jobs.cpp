@@ -76,8 +76,7 @@ namespace ebl {
     outdir.str("");
     outdir << conf.get_output_dir() << "/" << conf.get_name();
     outdir_ = outdir.str();
-    cmd << "mkdir -p " << outdir.str();
-    int res; res = system(cmd.str().c_str());
+    mkdir_full(outdir.str().c_str());
     // copy classes file into directory
     if (conf.exists("train") && conf.exists("root")) {
       classesname << conf.get_string("root") << "/" << conf.get_string("train");
