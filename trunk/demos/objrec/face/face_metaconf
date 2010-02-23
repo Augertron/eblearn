@@ -21,6 +21,7 @@ meta_gnuplot_params = set grid ytics;set ytics 5;set mytics 5;set grid mytics;
 root = /home/sermanet/humairadata/face/ds
 #root = /home/sermanet/texieradata/face/ds
 #root = /data/face/ds
+root1 = /home/sermanet/eblearn/demos/objrec/face/trained/
 #root2 = /data/face
 
 # network
@@ -54,7 +55,7 @@ retrain = 1
 retrain_weights = ${root1}/${trained_name}_net024.mat
 
 # preprocessing
-resize = mean bilinear
+resize = mean # bilinear
 normalization_size = 7 # 9
 
 # detection variables
