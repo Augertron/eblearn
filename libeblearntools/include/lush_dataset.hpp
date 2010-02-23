@@ -73,6 +73,8 @@ namespace ebl {
       load_img = idx<Tdata>(1,1,1);
       load_matrix(load_img, fname.c_str());
     }
+    if (load_img.dim(0) <= 3) // let's assume this means data is in 1st dim
+      load_img = load_img.shift_dim(0, 2);
   }
 
 } // end namespace ebl

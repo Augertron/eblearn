@@ -201,6 +201,7 @@ add_executable (meta_trainer
   )
 
 # link executable with external libraries
+target_link_libraries (meta_trainer idx)
 IF (Boost_FOUND)
   IF (${Boost_MINOR_VERSION} GREATER 34)
     TARGET_LINK_LIBRARIES(meta_trainer ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})

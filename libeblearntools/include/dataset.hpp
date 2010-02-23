@@ -554,7 +554,7 @@ namespace ebl {
     if (!sample.same_dim(outdims)) {
       idxdim d2(sample);
       d2.setdim(2, outdims.dim(2)); // try with same # of channels
-      if (sample.same_dim(d2)) {
+      if (d2 == outdims) {
 	// same size except for the channel dimension, replicate it
 	cout << "warning: duplicating image channel (" << sample;
 	cout << ") to fit target (" << outdims << ")." << endl;
@@ -562,12 +562,13 @@ namespace ebl {
 	idx_bloop2(samp2, sample2, Tdata, samp, sample, Tdata) {
 	  idx_bloop2(s2, samp2, Tdata, s, samp, Tdata) {
 	    for (uint i = 0, j = 0; i < sample2.dim(2); ++i, ++j) {
-	      s2.set(s.get(j), i);
 	      if (j >= sample.dim(2))
 		j = 0;
+	      s2.set(s.get(j), i);
 	    }
 	  }
 	}
+	sample = sample2;
       } else {
 	cerr << "error: expected data with dimensions " << outdims;
 	cerr << " but found " << sample.get_idxdim() << endl;
