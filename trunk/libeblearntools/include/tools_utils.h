@@ -45,8 +45,11 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // directory utilities
 
-  typedef list<pair<string, string> > files_list;
+  typedef pair<string, string> stringpair;
+  typedef list<stringpair> files_list;
 
+  inline bool less_than(const stringpair& b1, const stringpair& b2);
+  
   //! Returns a list of pairs of root directory and filename of all images
   //! found recursively in directory 'dir'. The images are found using
   //! the IMAGE_PATTERN regular expression by default.
