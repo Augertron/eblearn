@@ -67,7 +67,7 @@ namespace ebl {
     wid = window_id;
     record_cnt = 0;
     if (!name)
-      recording_name = "toto";
+      recording_name = "toto2";
     else
       recording_name = name;
     mkdir_full(recording_name);
@@ -90,13 +90,14 @@ namespace ebl {
     ostringstream oss;
     uint optimal_bitrate = 50 * 25 * frame.dim(0) * frame.dim(1) / 256;
     ostringstream options;
+    string codec = "msmpeg4v2";
     options << "vbitrate=" << optimal_bitrate << ":mbd=2:keyint=132:";
     options << "vqblur=1.0:cmp=2:subcmp=2:dia=2:mv0:last_pred=3";
     // pass 1
     oss << "mencoder \"mf://" << recording_name;
     oss << "/*.png\" -mf type=png:fps=" << fps;
     oss << " -ovc lavc";
-    oss << " -lavcopts vcodec=msmpeg4v2:vpass=1:" << options.str();
+    oss << " -lavcopts vcodec=" << codec << ":vpass=1:" << options.str();
     oss << " -o /dev/null ";
     int ret = system(oss.str().c_str());
     if (ret < 0)
@@ -106,7 +107,7 @@ namespace ebl {
     oss << "mencoder \"mf://" << recording_name;
     oss << "/*.png\" -mf type=png:fps=" << fps;
     oss << " -ovc lavc";
-    oss << " -lavcopts vcodec=msmpeg4v2:vpass=2:" << options.str();
+    oss << " -lavcopts vcodec=" << codec << ":vpass=2:" << options.str();
     if (audio_filename != "") {
       oss << " -audiofile " << audio_filename;
       oss << " -oac mp3lame -lameopts cbr:br=32 ";

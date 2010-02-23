@@ -31,6 +31,7 @@
  ***************************************************************************/
 
 #include "tools_utils.h"
+#include <algorithm>
 
 #ifdef __BOOST__
 #include "boost/filesystem.hpp"
@@ -45,6 +46,13 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // directory utilities
+
+  inline bool less_than(const stringpair& b1, const stringpair& b2) {
+    if ((b1.first < b2.first) ||
+	((b1.first == b2.first) && (b1.second < b2.second)))
+      return true;
+    return false;
+  }
 
   files_list *find_images(const string &dir, const char *pattern,
 			  files_list *fl_) {
@@ -69,6 +77,8 @@ namespace ebl {
 	fl->push_back(pair<string,string>(itr->path().branch_path().string(),
 					  itr->leaf()));
       }
+      // sort list
+      fl->sort(less_than);
     }
 #endif
     return fl;

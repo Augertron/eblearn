@@ -37,7 +37,7 @@
        <code>$ sudo apt-get install subversion cmake g++
 	 libatlas-base-dev libboost-filesystem-dev imagemagick
 	 libboost-regex-dev libqt4-core libqt4-dev libqt4-gui
-	 libcppunit-dev libxml++2.6-dev doxygen<br>
+	 libcppunit-dev libxml++2.6-dev doxygen mplayer mencoder<br>
 	 $ ./configure<br>
 	 $ make release<br>
 	 $ sudo make install
@@ -61,7 +61,7 @@
        For tools, demos and tester:<br>
        <code>$ sudo apt-get install libboost-filesystem-dev
 	 libboost-regex-dev libqt4-core libqt4-dev libqt4-gui libcppunit-dev
-	 libxml++2.6-dev 
+	 libxml++2.6-dev mplayer mencoder
        </code><br>
        For developers only (tools for bug-free development):<br>
        <code>$ sudo apt-get install valgrind electric-fence doxygen
