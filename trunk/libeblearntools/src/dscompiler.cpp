@@ -55,7 +55,7 @@ bool		display		 = false;
 bool		stereo		 = false;
 bool		ignore_difficult = false;
 bool		ignore_truncated = false;
-bool		ignore_occluded = false;
+bool		ignore_occluded  = false;
 bool		shuffle		 = false;
 bool		scale_mode	 = false;
 vector<double>  scales;
@@ -71,6 +71,7 @@ int		deformations	 = -1;	// <= means no deformations
 string		type		 = "regular";
 string          resize           = "mean";
 string		precision	 = "float";
+string		input_precision  = precision;
 uint		sleep_delay	 = 0;	// sleep between frames displayed in ms
 idxdim          outdims;	        // dimensions of output sample
 bool		outdims_set	 = false;
@@ -163,6 +164,9 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-precision") == 0) {
 	++i; if (i >= argc) throw 0;
 	precision = argv[i];
+      } else if (strcmp(argv[i], "-input_precision") == 0) {
+	++i; if (i >= argc) throw 0;
+	input_precision = argv[i];
       } else if (strcmp(argv[i], "-resize") == 0) {
 	++i; if (i >= argc) throw 0;
 	resize = argv[i];
@@ -292,6 +296,9 @@ void print_usage() {
   cout << endl;
   cout << "     lush: regular compilation using .mat images" << endl;
   cout << "  -precision <float(default)|double>" << endl;
+  cout << "  -input_precision <float(default)|double>" << endl;
+  cout << "     when reading lush files, this specifies the expected input ";
+  cout << "     precision." << endl;
   cout << "  -image_pattern <pattern>" << endl;
   cout << "     default: " << IMAGE_PATTERN << endl;
   cout << "  -channels <channel>" << endl;
@@ -357,6 +364,7 @@ void compile_ds(Tds &ds, bool imgpat = true) {
   ds.set_display(display);
   ds.set_sleepdisplay(sleep_delay);
   ds.set_resize(resize);
+  ds.set_precisions(precision, input_precision);
   if (save_set) ds.set_save(save);
   if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
   if (maxperclass > 0) ds.set_max_per_class(maxperclass);
@@ -452,6 +460,7 @@ int main(int argc, char **argv) {
   cout << "  dataset name: " << dataset_name << endl;
   cout << "  dataset type: " << type << endl;
   cout << "  dataset precision: " << precision << endl;
+  cout << "  input precision: " << input_precision << endl;
   cout << "  images root directory: " << images_root << endl;
   cout << "  output directory: " << outdir << endl;
   cout << "  outputs: " << outdir << "/" << dataset_name << "_*.mat" << endl;
