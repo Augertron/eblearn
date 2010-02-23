@@ -46,6 +46,8 @@ bgds=pascalbg_${id}
 outbg=${out}/${bgds}
 partsname=parts${name}
 faces=face
+fp_name=false_positives_${detector_name}
+all_fp=${namebg}_${detector_name}
 
 # debug variables
 # maxdata="-maxdata 50"
@@ -158,17 +160,36 @@ mkdir -p $nopersons_root_pascal
 # false positive dataset compilations
 ###############################################################################
 
-# extract all pascal full images that do not contain faces
-~/eblearn/bin/dscompiler $pascalroot -type pascalfull -precision $precision \
-    -outdir $nopersons_root_pascal -exclude "person" \
-    $maxdata $ddisplay # debug
+# # extract all pascal full images that do not contain faces
+# ~/eblearn/bin/dscompiler $pascalroot -type pascalfull -precision $precision \
+#     -outdir $nopersons_root_pascal -exclude "person" \
+#     $maxdata $ddisplay # debug
 
-# # compile false positive dataset
-# ~/eblearn/bin/dscompiler ${false_positive_root} -type lush \
-#     -precision $precision -outdir ${out} \
-#     -dname false_positives_${detector_namebgds} \
-#     -dims ${h}x${w}x3 \
-#     $maxdata $maxperclass $ddisplay # debug
+# compile false positive dataset
+~/eblearn/bin/dscompiler ${false_positive_root} -type lush \
+    -precision ${precision} -input_precision double -outdir ${out} \
+    -dname ${fp_name} \
+    -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
+
+# merge normal dataset with background dataset
+~/eblearn/bin/dsmerge $out ${all_fp} ${fp_name} ${namebg}
+
+# split dataset into training and {validation/test}
+~/eblearn/bin/dssplit $out ${all_fp} \
+    ${all_fp}_testval_${maxtest}_ \
+    ${all_fp}_train_${maxtest}_ -maxperclass ${max} -draws $draws
+
+# split validation and test
+for i in `seq 1 ${draws}`
+do
+~/eblearn/bin/dssplit $out ${all_fp}_testval_${maxtest}_$i \
+    ${all_fp}_test_${maxtest}_$i \
+    ${all_fp}_val_${maxtest}_$i -maxperclass ${maxtest} -draws 1
+done
+
+# print out information about extracted datasets to check that their are ok
+~/eblearn/bin/dsdisplay $out/${allfp} -info
 
 # ###############################################################################
 # # reporting

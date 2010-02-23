@@ -76,12 +76,14 @@ namespace ebl {
 
   template <typename Tdata>
   bool camera<Tdata>::record_frame() {
+#ifdef __GUI__
     ostringstream oss;
     oss << recording_name << "/frame_";
     oss << setfill('0') << setw(6) << record_cnt << ".png";
     save_window(oss.str().c_str());
     cout << "saved " << oss.str() << endl;
     record_cnt++;
+#endif
     return true;
   }
     
@@ -99,7 +101,7 @@ namespace ebl {
     oss << " -ovc lavc";
     oss << " -lavcopts vcodec=" << codec << ":vpass=1:" << options.str();
     oss << " -o /dev/null ";
-    int ret = system(oss.str().c_str());
+    int ret = std::system(oss.str().c_str());
     if (ret < 0)
       return false;
     // pass 2
@@ -113,7 +115,7 @@ namespace ebl {
       oss << " -oac mp3lame -lameopts cbr:br=32 ";
     }
     oss << " -o " << recording_name << ".avi ";
-    ret = system(oss.str().c_str());
+    ret = std::system(oss.str().c_str());
     if (ret < 0)
       return false;
     cout << "Saved " << recording_name << ".avi";

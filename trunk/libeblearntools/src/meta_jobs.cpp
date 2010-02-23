@@ -41,6 +41,7 @@
 #include <signal.h>
 
 #include "meta_jobs.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -84,8 +85,11 @@ namespace ebl {
       cmd.str("");
       cmd << "cp " << classesname.str() << " " << outdir.str() << "/";
       cmd << conf.get_name() << "_" << CLASSES_NAME << MATRIX_EXTENSION;
-      res = system(cmd.str().c_str());
-      cout << "copying class names file: " << cmd.str() << endl;
+      int res = std::system(cmd.str().c_str());
+      if (res < 0)
+	cerr << "warning: command failed: " << cmd.str() << endl;
+      else
+	cout << "copied class names file: " << cmd.str() << endl;
     }
     // create configuration file
     conf.set("job_name", conf.get_name().c_str()); // add config name into config
