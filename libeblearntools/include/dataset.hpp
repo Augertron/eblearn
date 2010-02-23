@@ -552,9 +552,27 @@ namespace ebl {
       sample = preprocess_data(sample, class_name, true, filename, r);
     // check for dimensions
     if (!sample.same_dim(outdims)) {
-      cerr << "error: expected data with dimensions " << outdims;
-      cerr << " but found " << sample.get_idxdim() << endl;
-      return false;
+      idxdim d2(sample);
+      d2.setdim(2, outdims.dim(2)); // try with same # of channels
+      if (sample.same_dim(d2)) {
+	// same size except for the channel dimension, replicate it
+	cout << "warning: duplicating image channel (" << sample;
+	cout << ") to fit target (" << outdims << ")." << endl;
+	idx<Tdata> sample2(d2);
+	idx_bloop2(samp2, sample2, Tdata, samp, sample, Tdata) {
+	  idx_bloop2(s2, samp2, Tdata, s, samp, Tdata) {
+	    for (uint i = 0, j = 0; i < sample2.dim(2); ++i, ++j) {
+	      s2.set(s.get(j), i);
+	      if (j >= sample.dim(2))
+		j = 0;
+	    }
+	  }
+	}
+      } else {
+	cerr << "error: expected data with dimensions " << outdims;
+	cerr << " but found " << sample.get_idxdim() << endl;
+	return false;
+      }
     }
     // put sample's channels dimensions first, if interleaved.
     if (interleaved_input)
@@ -702,6 +720,14 @@ namespace ebl {
   template <class Tdata>
   void dataset<Tdata>::set_bboxfact(float factor) {
     bboxfact = factor;
+    cout << "Setting bounding box factor to " << bboxfact << endl;
+  }
+    
+  template <class Tdata>
+  void dataset<Tdata>::set_precisions(const string &dataset_precision_,
+				      const string &input_precision_) {
+    input_precision = input_precision_;
+    dataset_precision = dataset_precision_;
     cout << "Setting bounding box factor to " << bboxfact << endl;
   }
     

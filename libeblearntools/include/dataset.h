@@ -161,6 +161,15 @@ namespace ebl {
     //! objects.
     void set_bboxfact(float factor);
 
+    //! Set the precision of the dataset to produce and of the input to read.
+    //! The input precision does not apply in case of regular
+    //! images, rather it is used when loading matrix files, which can
+    //! have different precisions.
+    //! The dataset_precision is only used to figure out if it is different
+    //! than the input precision and cast if so.
+    void set_precisions(const string &dataset_precision,
+			const string &input_precision);
+
     //! use pose information to separate classes. e.g. if for class "person"
     //! we have "front" and "side" pose, create 2 classes "person_front"
     //! and "person_side" instead of 1 class "person".
@@ -317,6 +326,8 @@ namespace ebl {
     bool                usepartsonly;   //!< use parts only or not
     string              save_mode;      //!< saving mode (dataset, ppm, png..)
     float               bboxfact;       //!< bounding boxes factor
+    string              dataset_precision;//!< precision of outputted dataset
+    string              input_precision;//!< precision of input data
     // names ///////////////////////////////////////////////////////
     string		name;	        //!< dataset name
     string		data_fname;	//!< data filename

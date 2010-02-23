@@ -56,8 +56,23 @@ namespace ebl {
   
   template <class Tdata>
   void lush_dataset<Tdata>::load_data(const string &fname) {
-    load_img = idx<Tdata>(1,1,1);
-    load_matrix(load_img, fname.c_str());
+    if (dataset_precision != input_precision) {
+      if (!strcmp(input_precision.c_str(), "float")) {
+	idx<float> tmp = idx<float>(1,1,1);
+	load_matrix(tmp, fname.c_str());
+	load_img = idx<Tdata>(tmp.get_idxdim());
+	idx_copy(tmp, load_img);
+      } else if (!strcmp(input_precision.c_str(), "double")) {
+	idx<double> tmp = idx<double>(1,1,1);
+	load_matrix(tmp, fname.c_str());
+	load_img = idx<Tdata>(tmp.get_idxdim());
+	idx_copy(tmp, load_img);
+      } else
+	eblerror("not implemented type");
+    } else {
+      load_img = idx<Tdata>(1,1,1);
+      load_matrix(load_img, fname.c_str());
+    }
   }
 
 } // end namespace ebl

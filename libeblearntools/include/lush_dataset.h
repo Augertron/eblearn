@@ -62,6 +62,8 @@ namespace ebl {
     // base class members to be used ///////////////////////////////
     using dataset<Tdata>::extension;
     using dataset<Tdata>::load_img;
+    using dataset<Tdata>::dataset_precision;
+    using dataset<Tdata>::input_precision;
   };
 
 } // end namespace ebl
