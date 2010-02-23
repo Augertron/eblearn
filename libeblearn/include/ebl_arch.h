@@ -171,6 +171,9 @@ namespace ebl {
 /*     virtual idxdim fprop_size(idxdim &isize); */
 /*     virtual idxdim bprop_size(const idxdim &osize); */
 /*     virtual void pretty(idxdim &isize); */
+    
+    //! Returns a deep copy of current module.
+    virtual layers_n<T>* copy();
   };
 
   ////////////////////////////////////////////////////////////////

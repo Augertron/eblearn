@@ -47,8 +47,6 @@ namespace ebl {
   //! use the replicable version of this module: linear_module_replicable.
   template <class T> class linear_module: public module_1_1<T> {
   public:
-    state_idx<T> w;
-
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //! \param in the size of the input to the linear combination.
@@ -70,6 +68,9 @@ namespace ebl {
     virtual void normalize();
     //! resize the output based on input dimensions
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+  public:
+    // members ////////////////////////////////////////////////////////
+    state_idx<T> w;
   };
 
   //! The replicable version of linear_module.
@@ -93,16 +94,7 @@ namespace ebl {
   //! use the replicable version of this module:
   //! convolution_module_2D_replicable.
   template <class T> class convolution_module_2D: public module_1_1<T> {
-  private:
-    bool		warnings_shown;
-  public:
-    intg		tablemax;
-    state_idx<T>	kernel;
-    intg		thickness;
-    intg		stridei;
-    intg		stridej;
-    idx<intg>		table;	//!< table of connections btw input and output
-    
+  public:    
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //! \param kerneli is the height of the convolution kernel
@@ -129,6 +121,16 @@ namespace ebl {
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+    // members ////////////////////////////////////////////////////////
+  public:
+    intg		tablemax;
+    state_idx<T>	kernel;
+    intg		thickness;
+    intg		stridei;
+    intg		stridej;
+    idx<intg>		table;	//!< table of connections btw input and output
+  private:
+    bool		warnings_shown;
   };
 
   //! The replicable version of convolution_module_2D.
@@ -154,12 +156,6 @@ namespace ebl {
   //! subsampling_module_2D_replicable.
   template <class T> class subsampling_module_2D: public module_1_1<T> {
   public:
-    state_idx<T>	coeff;
-    state_idx<T>	sub;
-    intg		thickness;
-    intg		stridei;
-    intg		stridej;
-    
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     subsampling_module_2D(parameter<T> &p, intg stridei_, intg stridej_,
@@ -178,6 +174,13 @@ namespace ebl {
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+  public:
+    // members ////////////////////////////////////////////////////////
+    state_idx<T>	coeff;
+    state_idx<T>	sub;
+    intg		thickness;
+    intg		stridei;
+    intg		stridej;    
   };
 
   //! The replicable version of subsampling_module_2D.
@@ -202,8 +205,6 @@ namespace ebl {
   //! to all elements).
   template <class T> class addc_module: public module_1_1<T> {
   public:
-    state_idx<T>  bias; //!< the biases
-
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //! \param size is the number of biases, or the size of dimensions 0 of 
@@ -219,6 +220,9 @@ namespace ebl {
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
+    // members ////////////////////////////////////////////////////////
+  public:
+    state_idx<T>  bias; //!< the biases
   };
 
   ////////////////////////////////////////////////////////////////

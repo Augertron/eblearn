@@ -38,10 +38,11 @@ namespace ebl {
 
   template <class T>
   weighted_std_module<T>::weighted_std_module(uint kernelh, uint kernelw,
-					      int nf, bool mirror,
+					      int nf, bool mirror_,
 					      bool threshold_,
 					      bool global_norm_)
-    : convmean(true),
+    : mirror(mirror_),
+      convmean(true),
       convvar(true),
       sqrtmod(.5), // square root module
       invmod(-1), // inverse module

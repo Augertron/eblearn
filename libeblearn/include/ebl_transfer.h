@@ -68,6 +68,9 @@ namespace ebl {
     // friends
     friend class weighted_std_module_gui;
 
+    // members ////////////////////////////////////////////////////////
+  public:
+    bool                mirror; //!< mirror input or not in borders
   private:
     layers_n<T>         convmean, convvar;
     power_module<T>	sqrtmod;	//!< square root module

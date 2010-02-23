@@ -225,7 +225,8 @@ namespace ebl {
     idx<void*>		 inputs;	//!< state_idx*
     idx<void*>		 outputs;	//!< state_idx*
     idx<void*>		 results;	//!< idx<double>*
-    idx<void*>           resize_modules;     //!< module_1_1<T>*
+    idx<void*>           resize_modules;//!< module_1_1<T>*
+    idx<void*>           nets;          //!< module_1_1<T>*
     module_1_1<T>       *pp;            //!< preprocessing module
     uint                 ppkersz;       //!< size of pp kernel (if any)
     idx<T>		 smoothing_kernel;
