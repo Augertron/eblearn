@@ -122,7 +122,8 @@ namespace ebl {
 
     // first compute minimum and maximum resolutions for this input dims.
     compute_minmax_resolutions(input_dim);
-    cout << "resolutions: input: " << input_dim << " min: " << in_mindim << " max: " << in_maxdim << endl;
+    cout << "resolutions: input: " << input_dim << " min: " << in_mindim;
+    cout << " max: " << in_maxdim << endl;
 
     switch (restype) {
     case MANUAL:
@@ -147,21 +148,35 @@ namespace ebl {
     //    sample = image_resize(sample, indim.dim(0), indim.dim(1));
     
     // initialize input and output states and result matrices for each size
-    // TODO: delete objects before clear (although unlikely to contain objects
-    // because nresolutions should be set only once)
     if ((uint)inputs.dim(0) != nresolutions) {
+      idx_bloop1(input, inputs, void*) {
+	state_idx<T> *tmp = ((state_idx<T>*) input.get());
+	if (tmp) delete tmp;
+      }
       inputs  = idx<void*>(nresolutions);
       idx_clear(inputs);
     }
     if ((uint)outputs.dim(0) != nresolutions) {
+      idx_bloop1(output, outputs, void*) {
+	state_idx<T> *tmp = ((state_idx<T>*) output.get());
+	if (tmp) delete tmp;
+      }
       outputs = idx<void*>(nresolutions);
       idx_clear(outputs);
     }
     if ((uint)results.dim(0) != nresolutions) {
+      idx_bloop1(result, results, void*) {
+	idx<T> *tmp = ((idx<T>*) result.get());
+	if (tmp) delete tmp;
+      }
       results = idx<void*>(nresolutions);
       idx_clear(results);
     }
     if ((uint)resize_modules.dim(0) != nresolutions) {
+      idx_bloop1(rs, resize_modules, void*) {
+	resizepp_module<T> *tmp = ((resizepp_module<T>*) rs.get());
+	if (tmp) delete tmp;
+      }
       resize_modules = idx<void*>(nresolutions);
       idx_clear(resize_modules);
     }
