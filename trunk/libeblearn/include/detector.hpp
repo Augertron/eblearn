@@ -50,7 +50,7 @@ namespace ebl {
 			const char *background, T bias_, float coef_,
 			uint queue_size) 
     : thenet(thenet_), coef(coef_), bias(bias_),
-      inputs(1), outputs(1), results(1), resize_modules(1), pp(pp_),
+      inputs(1), outputs(1), results(1), resize_modules(1), nets(1), pp(pp_),
       ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
       bgclass(-1), scales(NULL), scales_step(0),
@@ -73,6 +73,7 @@ namespace ebl {
     idx_clear(outputs);
     idx_clear(results);
     idx_clear(resize_modules);
+    idx_clear(nets);
     set_bgclass(background);
   }
   
@@ -97,8 +98,8 @@ namespace ebl {
   
   template <class T>
   detector<T>::~detector() {
-    { idx_bloop4(in, inputs, void*, out, outputs, void*, r, results, void*,
-		 rsz, resize_modules, void*) {
+    { idx_bloop5(in, inputs, void*, out, outputs, void*, r, results, void*,
+		 rsz, resize_modules, void*, net, nets, void*) {
 	state_idx<T> *s;
 	s = (state_idx<T>*) in.get();
 	if (s) delete s;
@@ -108,6 +109,8 @@ namespace ebl {
 	if (s2) delete s2;
 	module_1_1<T> *s3 = (module_1_1<T>*) rsz.get();
 	if (s3) delete s3;
+	module_1_1<T> *s4 = (module_1_1<T>*) net.get();
+	if (s4) delete s4;
       }}
   }
 
@@ -147,54 +150,58 @@ namespace ebl {
     // resize input to closest compatible size
     //    sample = image_resize(sample, indim.dim(0), indim.dim(1));
     
-    // initialize input and output states and result matrices for each size
-    if ((uint)inputs.dim(0) != nresolutions) {
-      idx_bloop1(input, inputs, void*) {
-	state_idx<T> *tmp = ((state_idx<T>*) input.get());
-	if (tmp) delete tmp;
-      }
+    // (re)initialize input and output states and result matrices for each scale
+    if ((uint)inputs.dim(0) != nresolutions) { 
+      // delete arrays content
+      { idx_bloop5(in, inputs, void*,
+		   out, outputs, void*, r, results, void*,
+		   rsz, resize_modules, void*, net, nets, void*) {
+  	state_idx<T> *sin = (state_idx<T>*) in.get();
+	state_idx<T> *sout = (state_idx<T>*) out.get();
+	idx<T> *res = (idx<T>*) r.get();
+	resizepp_module<T> *rszpp = (resizepp_module<T>*) rsz.get();
+	module_1_1<T> *network = (module_1_1<T>*) net.get();
+
+	if (sin) delete sin;
+	if (sout) delete sout;
+	if (res) delete res;
+	if (rszpp) delete rszpp;
+	if (network) delete network;
+	}}
+      // reallocate arrays
       inputs  = idx<void*>(nresolutions);
       idx_clear(inputs);
-    }
-    if ((uint)outputs.dim(0) != nresolutions) {
-      idx_bloop1(output, outputs, void*) {
-	state_idx<T> *tmp = ((state_idx<T>*) output.get());
-	if (tmp) delete tmp;
-      }
       outputs = idx<void*>(nresolutions);
       idx_clear(outputs);
-    }
-    if ((uint)results.dim(0) != nresolutions) {
-      idx_bloop1(result, results, void*) {
-	idx<T> *tmp = ((idx<T>*) result.get());
-	if (tmp) delete tmp;
-      }
       results = idx<void*>(nresolutions);
       idx_clear(results);
-    }
-    if ((uint)resize_modules.dim(0) != nresolutions) {
-      idx_bloop1(rs, resize_modules, void*) {
-	resizepp_module<T> *tmp = ((resizepp_module<T>*) rs.get());
-	if (tmp) delete tmp;
-      }
       resize_modules = idx<void*>(nresolutions);
       idx_clear(resize_modules);
+      nets = idx<void*>(nresolutions);
+      idx_clear(nets);
     }
 
     //sizes.set(sample.dim(0) / (float) in_mindim.dim(0), 3);
     cout << "machine's intermediate sizes for each resolution: " << endl;
-    { idx_bloop5(resolution, resolutions, unsigned int, in, inputs, void*,
+    { idx_bloop6(resolution, resolutions, unsigned int, in, inputs, void*,
 		 out, outputs, void*, r, results, void*,
-		 rsz, resize_modules, void*) {
-	// Compute the input sizes for each scale
-	idxdim scaled(thick, resolution.get(0), resolution.get(1));
-	// Adapt the size to the network structure:
-	idxdim outd = thenet.fprop_size(scaled);
-	// set or resize buffers
-	state_idx<T> *sin = (state_idx<T>*) in.get();
+		 rsz, resize_modules, void*, net, nets, void*) {
+	// cast pointers
+  	state_idx<T> *sin = (state_idx<T>*) in.get();
 	state_idx<T> *sout = (state_idx<T>*) out.get();
 	idx<T> *res = (idx<T>*) r.get();
 	resizepp_module<T> *rszpp = (resizepp_module<T>*) rsz.get();
+	module_1_1<T> *network = (module_1_1<T>*) net.get();
+	// Compute the input sizes for each scale
+	idxdim scaled(thick, resolution.get(0), resolution.get(1));
+	// network resizes automatically, only allocate if not allocated
+	if (network == NULL) {
+	  net.set((void*) thenet.copy());
+	  network = (module_1_1<T>*) net.get();
+	}
+	// Adapt the size to the network structure:
+	idxdim outd = network->fprop_size(scaled);
+	// set or resize buffers
 	if (sin == NULL)
 	  in.set((void*) new state_idx<T>(thick, scaled.dim(1), scaled.dim(2)));
 	else
@@ -213,7 +220,8 @@ namespace ebl {
 						 MEAN_RESIZE, pp, ppkersz));
 	else
 	  rszpp->set_dimensions(scaled.dim(1), scaled.dim(2));
-	thenet.pretty(scaled);
+	// print info about network sizes
+	network->pretty(scaled);
       }}
   }
     
@@ -682,11 +690,13 @@ namespace ebl {
 
 
     // resize original input and fprop for each resolution
-    { idx_bloop4(in, inputs, void*, out, outputs, void*,
-		 bbox, original_bboxes, uint, rsz, resize_modules, void*) {
+    { idx_bloop5(in, inputs, void*, out, outputs, void*,
+		 bbox, original_bboxes, uint, rsz, resize_modules, void*,
+		 net, nets, void*) {
 	state_idx<T> &ii = *(state_idx<T>*)(in.get()); // input
 	state_idx<T> &oo = *(state_idx<T>*)(out.get()); // output
 	resizepp_module<T> &rszpp = *(resizepp_module<T>*)(rsz.get());
+	module_1_1<T> &network = *(module_1_1<T>*)(net.get());
 	// resize and preprocess input
 	rszpp.fprop(input, ii);
 	// memorize original input's bbox in resized input
@@ -704,7 +714,8 @@ namespace ebl {
 
     gettimeofday(&start, NULL);
     
-	thenet.fprop(ii, oo);
+        thenet.fprop(ii, oo);
+    //network.fprop(ii, oo);
 
     gettimeofday(&end, NULL);
 

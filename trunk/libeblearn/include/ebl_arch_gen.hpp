@@ -84,6 +84,10 @@ namespace ebl {
     cout << " -> " << fprop_size(isize);
   }
   
+  template<class Tin, class Tout>
+  module_1_1_gen<Tin, Tout>* module_1_1_gen<Tin,Tout>::copy() {
+  }
+  
   ////////////////////////////////////////////////////////////////
   // module_2_1_gen
 
@@ -312,7 +316,7 @@ hidden states in layers_n_gen");
 
     // last will be manual
     int niter = modules->size()-1;
-    for(int i=0; i<niter; i++){
+    for(int i = 0; i < niter; i++){
       ho = (*hiddens)[i];
       (*modules)[i]->fprop(*hi,*ho);
       hi = ho;
@@ -430,6 +434,11 @@ hidden states in layers_n_gen");
     cout << endl;
   }
 
+  template<class T>
+  layers_n_gen<T>* layers_n_gen<T>::copy() {
+    eblerror("not implemented");
+  }
+  
   ////////////////////////////////////////////////////////////////
 
   template<class Tin, class Thid, class T>

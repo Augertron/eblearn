@@ -56,6 +56,22 @@ int main(int argc, char **argv) { // regular main without gui
   module_1_1<t_net> *net = init_network(theparam, conf, classes.dim(0));
   theparam.load_x(conf.get_cstring("weights"));
 
+  // select preprocessing  
+  bgr_to_yp_module<t_net> ppyp(norm_size);
+  bgr_to_ypuv_module<t_net> ppypuv(norm_size);
+  module_1_1<t_net> &pp = color ?
+    (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
+  // detector
+  detector<t_net> detect(*net, classes, &pp, norm_size, NULL, 0,
+			 conf.get_double("gain"), 50);
+  detect.set_resolutions(1.4);
+  //  detect.set_resolutions(9);
+  //  double scales[] = { 4.5, 2.5, 1.4};
+  //  detect.set_resolutions(3, scales);
+  detect.set_silent();
+  if (conf.get_bool("save_detections"))
+    detect.set_save("detections");
+
   // initialize camera (opencv, directory, shmem or video)
   idx<t_net> frame;
   camera<t_net> *cam = NULL;
@@ -91,24 +107,6 @@ int main(int argc, char **argv) { // regular main without gui
   QTime t0;
   int tpp;
 #endif  
-  // select preprocessing  
-  bgr_to_yp_module<t_net> ppyp(norm_size);
-  bgr_to_ypuv_module<t_net> ppypuv(norm_size);
-  module_1_1<t_net> &pp = color ?
-    (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
-  // detector
-  //  double scales[] = { 8, 4, 2};
-  //double scales[] = { 4.5, 2.5, 1.4};
-  //  double scales[] = { 16, 12, 8, 6, 4, 2, 1 };
-  //  double scales[] = { 3 };
-  detector<t_net> detect(*net, classes, &pp, norm_size, NULL, 0,
-			 conf.get_double("gain"), 50);
-  detect.set_resolutions(1.4);
-  //  detect.set_resolutions(9);
-  //  detect.set_resolutions(3, scales);
-  detect.set_silent();
-  if (conf.get_bool("save_detections"))
-    detect.set_save("detections");
   
   // loop
   while(!cam->empty()) {

@@ -70,6 +70,9 @@ namespace ebl {
     //! prints the forward transformation of dimensions. this method calls
     //! fprop_size to determine the output size given the input.
     virtual void pretty(idxdim &isize);
+    //! Returns a deep copy of current module.
+    virtual module_1_1_gen<Tin, Tout>* copy();
+    
   protected:
     bool bResize; //!< tells module to resize output or not
   };
@@ -189,6 +192,8 @@ namespace ebl {
     //! prints the forward transformation of dimensions. this method calls
     //! fprop_size to determine the output size given the input.
     virtual void pretty(idxdim &isize);
+    //! Returns a deep copy of current module.
+    virtual layers_n_gen<T>* copy();
 
   protected:
     bool own_contents;

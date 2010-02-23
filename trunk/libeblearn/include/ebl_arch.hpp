@@ -37,6 +37,19 @@ namespace ebl {
     : layers_n_gen<state_idx<T> >(oc) {
   }
 
+  template <class T> layers_n<T>* layers_n<T>::copy() {
+    layers_n<T> *l2 = new layers_n<T>(true);
+    //! Loop through all the modules and copy them
+    int niter = this->modules->size()-1;
+    for(int i = 0; i < niter; i++)
+      l2->add_module((*this->modules)[i]->copy(),
+		     new state_idx<T>((*this->hiddens)[i]->x.get_idxdim()));
+    l2->add_last_module((*this->modules)[niter]->copy());
+    return l2;
+  }
+
+  ////////////////////////////////////////////////////////////////
+
   template<class T>
   layers_2<T>::layers_2(module_1_1<T> &l1_, state_idx<T> &h_,
 			module_1_1<T> &l2_)
