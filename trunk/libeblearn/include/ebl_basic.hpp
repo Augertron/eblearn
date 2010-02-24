@@ -95,7 +95,11 @@ namespace ebl {
     // resize output based on input dimensions
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, w.x.dim(0)); // except for the first one
-    out.resize(d);
+    if (out.x.get_idxdim() != d) { // resize only if necessary
+      cout << "linear: resizing output from " << out.x.get_idxdim();
+      cout << " to " << d << endl;
+      out.resize(d);
+    }
   }
 
   ////////////////////////////////////////////////////////////////
@@ -106,8 +110,8 @@ namespace ebl {
 						  intg kerneli, intg kernelj, 
 						  intg stridei_, intg stridej_, 
 						  idx<intg> &tbl)
-    : warnings_shown(false), kernel(p, tbl.dim(0), kerneli, kernelj), 
-      stridei(stridei_), stridej(stridej_), table(tbl) {
+    : kernel(p, tbl.dim(0), kerneli, kernelj), 
+      stridei(stridei_), stridej(stridej_), table(tbl), warnings_shown(false) {
     // check sanity of connection table
     if (table.dim(1) != 2) { // check table order
       cerr << "error: expecting a table with dim 1 equal to 2 but found: ";
@@ -252,7 +256,11 @@ namespace ebl {
     d.setdim(0, thickness); // except for the first one
     d.setdim(1, uuin.dim(1)); // convolution trims dimensions a bit
     d.setdim(2, uuin.dim(2)); // convolution trims dimensions a bit
-    out.resize(d);
+    if (out.x.get_idxdim() != d) { // resize only if necessary
+      cout << "convolution: resizing output from " << out.x.get_idxdim();
+      cout << " to " << d << endl;
+      out.resize(d);
+    }
   }
 
   ////////////////////////////////////////////////////////////////
@@ -335,8 +343,12 @@ namespace ebl {
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(1, si); // new size after subsampling
     d.setdim(2, sj); // new size after subsampling
-    out.resize(d);
-    sub.resize(d);
+    if (out.x.get_idxdim() != d) { // resize only if necessary
+      cout << "subsampling: resizing output from " << out.x.get_idxdim();
+      cout << " to " << d << endl;
+      out.resize(d);
+      sub.resize(d);
+    }
   }
 
   ////////////////////////////////////////////////////////////////
