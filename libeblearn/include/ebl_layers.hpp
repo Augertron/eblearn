@@ -36,7 +36,16 @@ namespace ebl {
 
   template <class T>
   nn_layer_full<T>::nn_layer_full(parameter<T> &p, intg indim0, intg noutputs)
-    : linear(p, indim0, noutputs), adder(p, noutputs), sigmoid(), pcopy(NULL) {
+    : linear(p, indim0, noutputs), adder(p, noutputs), sigmoid() {
+    // the order of sum is not yet known and this is just an internal buffer
+    // that does not need to be save in the parameter, so we allocate it later
+    sum = NULL; 
+  }
+
+  template <class T>
+  nn_layer_full<T>::nn_layer_full(intg indim0, intg noutputs)
+    : param(1), linear(param, indim0, noutputs), adder(param, noutputs),
+      sigmoid() {
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
     sum = NULL; 
@@ -45,7 +54,6 @@ namespace ebl {
   template <class T>
   nn_layer_full<T>::~nn_layer_full() {
     if (sum) delete sum;
-    if (pcopy) delete pcopy;
   }
 
   template <class T>
@@ -98,9 +106,8 @@ namespace ebl {
   template <class T>
   nn_layer_full<T>* nn_layer_full<T>::copy() {
     // allocate
-    pcopy = new parameter<T>(1);
-    nn_layer_full<T>* l2 = new nn_layer_full<T>(*pcopy, linear.w.x.dim(0),
-						linear.w.x.dim(1));
+    nn_layer_full<T>* l2 =
+      new nn_layer_full<T>(linear.w.x.dim(0), linear.w.x.dim(1));
     // copy data
     idx_copy(linear.w.x, l2->linear.w.x);
     idx_copy(adder.bias.x, l2->adder.bias.x);
@@ -116,14 +123,22 @@ namespace ebl {
 						intg stridei_, intg stridej_, 
 						idx<intg> &tbl) 
     : convol(p, kerneli, kernelj, stridei_, stridej_, tbl), 
-      adder(p, convol.thickness), sigmoid(), pcopy(NULL) {
+      adder(p, convol.thickness), sigmoid() {
+    sum = NULL;
+  }
+
+  template <class T>
+  nn_layer_convolution<T>::nn_layer_convolution(intg kerneli, intg kernelj, 
+						intg stridei_, intg stridej_, 
+						idx<intg> &tbl) 
+    : param(1), convol(param, kerneli, kernelj, stridei_, stridej_, tbl), 
+      adder(param, convol.thickness), sigmoid() {
     sum = NULL;
   }
 
   template <class T>
   nn_layer_convolution<T>::~nn_layer_convolution() {
     if (sum) delete sum;
-    if (pcopy) delete pcopy;
   }
 
   template <class T>
@@ -186,9 +201,8 @@ namespace ebl {
   template <class T>
   nn_layer_convolution<T>* nn_layer_convolution<T>::copy() {
     // allocate
-    pcopy = new parameter<T>(1);
     nn_layer_convolution<T> *l2 = new nn_layer_convolution<T>
-      (*pcopy, convol.kernel.x.dim(1), convol.kernel.x.dim(2), convol.stridei,
+      (convol.kernel.x.dim(1), convol.kernel.x.dim(2), convol.stridei,
        convol.stridej, convol.table);
     // copy data
     idx_copy(convol.kernel.x, l2->convol.kernel.x);
@@ -206,14 +220,22 @@ namespace ebl {
 					  idx<intg> &tbl, bool mirror) 
     : lconv(p, kerneli, kernelj, stridei_, stridej_, tbl),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
-      tmp(NULL), tmp2(NULL), pcopy(NULL) {
+      tmp(NULL), tmp2(NULL) {
+  }
+
+  template <class T>
+  layer_convabsnorm<T>::layer_convabsnorm(intg kerneli, intg kernelj, 
+					  intg stridei_, intg stridej_, 
+					  idx<intg> &tbl, bool mirror) 
+    : param(1), lconv(param, kerneli, kernelj, stridei_, stridej_, tbl),
+      abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
+      tmp(NULL), tmp2(NULL) {
   }
 
   template <class T>
   layer_convabsnorm<T>::~layer_convabsnorm() {
     if (tmp) delete tmp;
     if (tmp2) delete tmp2;
-    if (pcopy) delete pcopy;
   }
 
   template <class T>
@@ -264,9 +286,8 @@ namespace ebl {
   template <class T>
   layer_convabsnorm<T>* layer_convabsnorm<T>::copy() {
     // allocate
-    pcopy = new parameter<T>(1);
     layer_convabsnorm<T> *l2 = new layer_convabsnorm<T>
-      (*pcopy, lconv.convol.kernel.x.dim(1), lconv.convol.kernel.x.dim(2),
+      (lconv.convol.kernel.x.dim(1), lconv.convol.kernel.x.dim(2),
        lconv.convol.stridei, lconv.convol.stridej, lconv.convol.table,
        norm.mirror);
     // copy data
@@ -284,14 +305,22 @@ namespace ebl {
 						intg subi, intg subj, 
 						intg thick)
     : subsampler(p, stridei, stridej, subi, subj, thick), adder(p, thick),
-      sigmoid(), pcopy(NULL) {
+      sigmoid() {
+    sum = NULL;
+  }
+
+  template <class T>
+  nn_layer_subsampling<T>::nn_layer_subsampling(intg stridei, intg stridej,
+						intg subi, intg subj, 
+						intg thick)
+    : param(1), subsampler(param, stridei, stridej, subi, subj, thick),
+      adder(param, thick), sigmoid() {
     sum = NULL;
   }
 
   template <class T>
   nn_layer_subsampling<T>::~nn_layer_subsampling() {
     if (sum) delete sum;
-    if (pcopy) delete pcopy;
   }
 
   template <class T>
@@ -351,9 +380,8 @@ namespace ebl {
   template <class T>
   nn_layer_subsampling<T>* nn_layer_subsampling<T>::copy() {
     // allocate
-    pcopy = new parameter<T>(1);
     nn_layer_subsampling<T> *l2 = new nn_layer_subsampling<T>
-      (*pcopy, subsampler.stridei, subsampler.stridej, subsampler.sub.x.dim(1),
+      (subsampler.stridei, subsampler.stridej, subsampler.sub.x.dim(1),
        subsampler.sub.x.dim(2), subsampler.thickness);
     // copy data
     idx_copy(subsampler.coeff.x, l2->subsampler.coeff.x);

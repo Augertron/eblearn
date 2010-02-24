@@ -45,11 +45,17 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! a simple fully-connected neural net layer: linear + tanh non-linearity.
   template <class T> class nn_layer_full: public module_1_1<T> {
-  public:
-    //! constructor. Arguments are a pointer to a parameter
+  public: 
+    //! Constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
+    //! \param indim0 The number of inputs
+    //! \param noutputs The number of outputs.
     nn_layer_full(parameter<T> &p, intg indim0, intg noutputs);
+    //! Constructor without parameter, used only for deep copies.
+    //! \param indim0 The number of inputs
+    //! \param noutputs The number of outputs.
+    nn_layer_full(intg indim0, intg noutputs);
     //! Destructor.
     virtual ~nn_layer_full();
     //! fprop from in to out
@@ -70,13 +76,13 @@ namespace ebl {
     virtual nn_layer_full<T>* copy();
 
     // members ////////////////////////////////////////////////////////
+  private:
+    parameter<T>                 param;   //!< just used for deep copies
   public:
     linear_module_replicable<T>	 linear;  //!< linear module for weight matrix
     addc_module<T>		 adder;	  //!< bias vector
     tanh_module<T>		 sigmoid; //!< the non-linear function
     state_idx<T>		*sum;	  //!< weighted sum
-  private:
-    parameter<T>                *pcopy;   //!< just used for deep copies
   };
 
   ////////////////////////////////////////////////////////////////
@@ -95,6 +101,9 @@ namespace ebl {
     //!        the width axis.
     //! \param table is the convolution connection table.
     nn_layer_convolution(parameter<T> &p, intg kerneli, intg kernelj, 
+			 intg stridei, intg stridej, idx<intg> &tbl);
+    //! This constructor should only be used by deep copy method.
+    nn_layer_convolution(intg kerneli, intg kernelj, 
 			 intg stridei, intg stridej, idx<intg> &tbl);
     virtual ~nn_layer_convolution();
     //! fprop from in to out
@@ -115,13 +124,13 @@ namespace ebl {
     virtual nn_layer_convolution<T>* copy();
 
     // members ////////////////////////////////////////////////////////
+  private:
+    parameter<T>                         param;   //!< just used for deep copies
   public:
     convolution_module_2D_replicable<T>	 convol;   //!< convolution module
     addc_module<T>			 adder;	   //!< bias vector
     tanh_module<T>			 sigmoid;  //!< the non-linear function
     state_idx<T>			*sum;	   //!< convolution result
-  private:
-    parameter<T>                        *pcopy;   //!< just used for deep copies
   };
 
   ////////////////////////////////////////////////////////////////
@@ -143,6 +152,11 @@ namespace ebl {
     layer_convabsnorm(parameter<T> &p, intg kerneli, intg kernelj, 
 		      intg stridei, intg stridej, idx<intg> &tbl,
 		      bool mirror = false);
+    //! This constructor should only be used by deep copy method.
+    layer_convabsnorm(intg kerneli, intg kernelj, 
+		      intg stridei, intg stridej, idx<intg> &tbl,
+		      bool mirror = false);
+    //! Destructor.
     virtual ~layer_convabsnorm();
     //! fprop from in to out
     void fprop(state_idx<T> &in, state_idx<T> &out);
@@ -162,14 +176,14 @@ namespace ebl {
     virtual layer_convabsnorm<T>* copy();
 
     // members ////////////////////////////////////////////////////////
+  private:
+    parameter<T>                 param;	//!< just used for deep copies
   public:
     nn_layer_convolution<T>	 lconv;	//!< convolution layer
     abs_module<T>		 abs;	//!< absolute rectification
     weighted_std_module<T>	 norm;	//!< constrast normalization
     state_idx<T>		*tmp;	//!< temporary results
     state_idx<T>		*tmp2;	//!< temporary results
-  private:
-    parameter<T>                *pcopy;	//!< just used for deep copies
   };
 
   ////////////////////////////////////////////////////////////////
@@ -182,6 +196,11 @@ namespace ebl {
     nn_layer_subsampling(parameter<T> &p, intg stridei, intg stridej,
 			 intg subi, intg subj, 
 			 intg thick);
+    //! This constructor should only be used by deep copy method.
+    nn_layer_subsampling(intg stridei, intg stridej,
+			 intg subi, intg subj, 
+			 intg thick);
+    //! Destructor.
     virtual ~nn_layer_subsampling();
     //! fprop from in to out
     void fprop(state_idx<T> &in, state_idx<T> &out);
@@ -201,13 +220,13 @@ namespace ebl {
     virtual nn_layer_subsampling<T>* copy();
 
     // members ////////////////////////////////////////////////////////
+  private:
+    parameter<T>                         param;   //!< just used for deep copies
   public:
     subsampling_module_2D_replicable<T>	 subsampler;	//!< subsampling module
     addc_module<T>			 adder;	   //!< bias vector
     tanh_module<T>			 sigmoid;  //!< the non-linear function
     state_idx<T>			*sum;	   //!< subsampling result
-  private:
-    parameter<T>                        *pcopy;   //!< just used for deep copies
   };
 
 } // namespace ebl {
