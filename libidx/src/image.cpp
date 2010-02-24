@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <stdio.h>
 #include <inttypes.h>
+#include <ostream>
 
 #include "image.h"
 #include "blas.h"
@@ -220,11 +221,9 @@ namespace ebl {
       cerr << "failed to find \"convert\", please install ImageMagick" << endl;
       return false;
     }
-    char *mycommand = new char[myconvert.size() + strlen(fname) + 50];
-    sprintf(mycommand, "%s \"%s\" PPM:-", myconvert.c_str(), fname);
-    FILE* fp = popen(mycommand, "r");
-    delete mycommand;
-
+    ostringstream cmd;
+    cmd << myconvert.c_str() << " \"" << fname << "\" PPM:-";
+    FILE* fp = popen(cmd.str().c_str(), "r");
     try {
       if (!fp) throw "opening failed";
       pnm_fread_into_rgbx(fp, out);

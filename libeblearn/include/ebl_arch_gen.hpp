@@ -86,6 +86,8 @@ namespace ebl {
   
   template<class Tin, class Tout>
   module_1_1_gen<Tin, Tout>* module_1_1_gen<Tin,Tout>::copy() {
+    eblerror("not implemented");
+    return NULL;
   }
   
   ////////////////////////////////////////////////////////////////

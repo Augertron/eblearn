@@ -41,10 +41,38 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  // channorm_module
+  //! Abstract class for normalization of image channels.
+  template <class T> class channorm_module: public module_1_1<T> {
+  public:
+    //! Constructor.
+    //! \param normalization_size is the size of the kernel used for Yp's
+    //!        local normalization.
+    channorm_module(uint normalization_size);
+    //! Destructor
+    virtual ~channorm_module();
+    //! Forward propagation from in to out (abstract).
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out) = 0;
+    //! Returns a deep copy of this module (abstract).
+    virtual channorm_module<T>* copy() = 0;
+  protected:
+    //! Resize the output based on input dimensions
+    //! \param dim0 An optional size for the first dimension. Set it to 1
+    //!             when converting from color to greyscale.
+    virtual void resize_output(state_idx<T> &in, state_idx<T> &out,
+			       int dim0 = -1);
+
+  protected:
+    uint			normalization_size;	//!< norm kernel size
+    state_idx<T>		tmp;	//!< temporary buffer
+    weighted_std_module<T>	norm;	//!< contrast normalization module
+  };
+
+  ////////////////////////////////////////////////////////////////
   // rgb_to_ypuv_module
   //! convert an RGB input into a YpUV output, Yp being a Y channel
   //! with a local normaliztion.
-  template <class T> class rgb_to_ypuv_module: public module_1_1<T> {
+  template <class T> class rgb_to_ypuv_module: public channorm_module<T> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
@@ -54,20 +82,15 @@ namespace ebl {
     virtual ~rgb_to_ypuv_module();
     //! forward propagation from in to out
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
-    //! resize the output based on input dimensions
-    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
-
-  private:
-    uint			normalization_size;	//!< norm kernel size
-    state_idx<T>		tmp;	//!< temporary buffer
-    weighted_std_module<T>	norm;	//!< contrast normalization module
+    //! Returns a deep copy of this module (abstract).
+    virtual rgb_to_ypuv_module<T>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
   // rgb_to_yp_module
   //! convert an RGB input into a Yp output, Yp being a Y channel
   //! with a local normaliztion.
-  template <class T> class rgb_to_yp_module: public module_1_1<T> {
+  template <class T> class rgb_to_yp_module: public channorm_module<T> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
@@ -77,20 +100,15 @@ namespace ebl {
     virtual ~rgb_to_yp_module();
     //! forward propagation from in to out
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
-    //! resize the output based on input dimensions
-    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
-
-  private:
-    uint	                normalization_size;	//!< norm kernel size
-    state_idx<T>	        tmp;	//!< temporary buffer
-    weighted_std_module<T>	norm;	//!< contrast normalization module
+    //! Returns a deep copy of this module (abstract).
+    virtual rgb_to_yp_module<T>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
   // bgr_to_ypuv_module
   //! convert an BGR input into a YpUV output, Yp being a Y channel
   //! with a local normaliztion.
-  template <class T> class bgr_to_ypuv_module: public module_1_1<T> {
+  template <class T> class bgr_to_ypuv_module: public channorm_module<T> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
@@ -100,20 +118,15 @@ namespace ebl {
     virtual ~bgr_to_ypuv_module();
     //! forward propagation from in to out
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
-    //! resize the output based on input dimensions
-    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
-
-  private:
-    uint			normalization_size;	//!< norm kernel size
-    state_idx<T>		tmp;	//!< temporary buffer
-    weighted_std_module<T>	norm;	//!< contrast normalization module
+    //! Returns a deep copy of this module (abstract).
+    virtual bgr_to_ypuv_module<T>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
   // bgr_to_yp_module
   //! convert an BGR input into a Yp output, Yp being a Y channel
   //! with a local normaliztion.
-  template <class T> class bgr_to_yp_module: public module_1_1<T> {
+  template <class T> class bgr_to_yp_module: public channorm_module<T> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
@@ -123,20 +136,15 @@ namespace ebl {
     virtual ~bgr_to_yp_module();
     //! forward propagation from in to out
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
-    //! resize the output based on input dimensions
-    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
-
-  private:
-    uint			normalization_size;	//!< norm kernel size
-    state_idx<T>		tmp;	//!< temporary buffer
-    weighted_std_module<T>	norm;	//!< contrast normalization module
+    //! Returns a deep copy of this module (abstract).
+    virtual bgr_to_yp_module<T>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
   // rgb_to_hp_module
   //! convert an RGB input into a Hp output, Hp being a H channel (from HSV)
   //! with a local normaliztion.
-  template <class T> class rgb_to_hp_module: public module_1_1<T> {
+  template <class T> class rgb_to_hp_module: public channorm_module<T> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Hp's
@@ -146,13 +154,8 @@ namespace ebl {
     virtual ~rgb_to_hp_module();
     //! forward propagation from in to out
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
-    //! resize the output based on input dimensions
-    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
-
-  private:
-    uint	                normalization_size;	//!< norm kernel size
-    state_idx<T>	        tmp;	//!< temporary buffer
-    weighted_std_module<T>	norm;	//!< contrast normalization module
+    //! Returns a deep copy of this module (abstract).
+    virtual rgb_to_hp_module<T>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
@@ -166,11 +169,11 @@ namespace ebl {
   //! copying it to avoid edge detection between the empty parts of the image.
   template <class T> class resizepp_module: public module_1_1<T> {
   public:
-    //! Constructor.
+    //! Constructor. Preprocessing module pp will be deleted upon destruction.
     //! \param height target height for resizing.
     //! \param width target width for resizing.
     //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
-    //!           preprocessing is performed. This module is not responsible for
+    //!           preprocessing is performed. This module is responsible for
     //!           destroying the preprocessing module.
     //! \param kernelsz The kernel size used by the preprocessing module.
     //!           This is used to take kernel's (if any) border effect into
@@ -191,7 +194,10 @@ namespace ebl {
     //! return the bounding box of the original input in the output coordinate
     //! system.
     rect get_original_bbox();
+    //! Returns a deep copy of this module.
+    virtual resizepp_module<T>* copy();
     
+    // members ////////////////////////////////////////////////////////
   private:
     module_1_1<T>	*pp;	        //!< preprocessing module
     uint                 kernelsz;      //!< size of pp's kernel

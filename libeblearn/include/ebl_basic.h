@@ -68,8 +68,9 @@ namespace ebl {
     virtual void normalize();
     //! resize the output based on input dimensions
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
-  public:
+
     // members ////////////////////////////////////////////////////////
+  public:
     state_idx<T> w;
   };
 
@@ -121,6 +122,7 @@ namespace ebl {
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+
     // members ////////////////////////////////////////////////////////
   public:
     intg		tablemax;
@@ -174,8 +176,9 @@ namespace ebl {
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
-  public:
+
     // members ////////////////////////////////////////////////////////
+  public:
     state_idx<T>	coeff;
     state_idx<T>	sub;
     intg		thickness;
@@ -220,6 +223,7 @@ namespace ebl {
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
+
     // members ////////////////////////////////////////////////////////
   public:
     state_idx<T>  bias; //!< the biases
@@ -235,10 +239,6 @@ namespace ebl {
   //! the :input:x and :output:x is not modified until bprop
   // TODO: write specialized modules square and sqrt to run faster
   template <class T> class power_module : public module_1_1<T> {
-  private:
-    T p;
-    idx<T> tt; //!< temporary buffer
-    
   public:
     //! <p> is double number, every element of input is raised to
     //! its <p>th power.
@@ -251,6 +251,11 @@ namespace ebl {
     virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+
+    // members ////////////////////////////////////////////////////////
+  private:
+    T p;
+    idx<T> tt; //!< temporary buffer
   };
 
   ////////////////////////////////////////////////////////////////

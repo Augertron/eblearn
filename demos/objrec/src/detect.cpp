@@ -22,6 +22,12 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 ////////////////////////////////////////////////////////////////
 // network
 
+template <class T> intg Srg<T>::nopened = 0;
+// intg Srg<float>::nopened = 0;
+// intg Srg<int>::nopened = 0;
+// intg Srg<ubyte>::nopened = 0;
+// intg Srg<uint>::nopened = 0;
+
 typedef double t_net; // network precision
 
 #ifdef __GUI__
@@ -57,12 +63,11 @@ int main(int argc, char **argv) { // regular main without gui
   theparam.load_x(conf.get_cstring("weights"));
 
   // select preprocessing  
-  bgr_to_yp_module<t_net> ppyp(norm_size);
-  bgr_to_ypuv_module<t_net> ppypuv(norm_size);
-  module_1_1<t_net> &pp = color ?
-    (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
+  module_1_1<t_net>* pp = color ?
+    (module_1_1<t_net>*) new rgb_to_ypuv_module<t_net>(norm_size) :
+    (module_1_1<t_net>*) new rgb_to_yp_module<t_net>(norm_size);
   // detector
-  detector<t_net> detect(*net, classes, &pp, norm_size, NULL, 0,
+  detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
 			 conf.get_double("gain"), 50);
   detect.set_resolutions(1.4);
   //  detect.set_resolutions(9);
@@ -110,6 +115,9 @@ int main(int argc, char **argv) { // regular main without gui
   
   // loop
   while(!cam->empty()) {
+    cout << "nopend: " << Srg<double>::nopened;
+    cout << " nopend: " << Srg<short>::nopened;
+    cout << " nopend: " << Srg<char const *>::nopened << endl;
     // get a new frame
 #ifdef __GUI__
     t0.start();

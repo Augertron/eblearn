@@ -216,8 +216,9 @@ namespace ebl {
 	else
 	  res->resize(outd.dim(1), outd.dim(2), 2);
 	if (rszpp == NULL)
-	  rsz.set((void*) new resizepp_module<T>(scaled.dim(1), scaled.dim(2),
-						 MEAN_RESIZE, pp, ppkersz));
+	  rsz.set((void*) new resizepp_module<T>
+		  (scaled.dim(1), scaled.dim(2), MEAN_RESIZE,
+		   (module_1_1<T>*)pp->copy(), ppkersz));
 	else
 	  rszpp->set_dimensions(scaled.dim(1), scaled.dim(2));
 	// print info about network sizes
@@ -689,6 +690,7 @@ namespace ebl {
     uint ms = 0;
 
 
+    module_1_1<T> *network = NULL;
     // resize original input and fprop for each resolution
     { idx_bloop5(in, inputs, void*, out, outputs, void*,
 		 bbox, original_bboxes, uint, rsz, resize_modules, void*,
@@ -696,7 +698,8 @@ namespace ebl {
 	state_idx<T> &ii = *(state_idx<T>*)(in.get()); // input
 	state_idx<T> &oo = *(state_idx<T>*)(out.get()); // output
 	resizepp_module<T> &rszpp = *(resizepp_module<T>*)(rsz.get());
-	module_1_1<T> &network = *(module_1_1<T>*)(net.get());
+
+	network = (module_1_1<T>*)(net.get());
 	// resize and preprocess input
 	rszpp.fprop(input, ii);
 	// memorize original input's bbox in resized input
@@ -714,8 +717,8 @@ namespace ebl {
 
     gettimeofday(&start, NULL);
     
-        thenet.fprop(ii, oo);
-    //network.fprop(ii, oo);
+    //            thenet.fprop(ii, oo);
+    network->fprop(ii, oo);
 
     gettimeofday(&end, NULL);
 

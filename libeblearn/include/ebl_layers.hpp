@@ -53,9 +53,7 @@ namespace ebl {
     // resize output and sum
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, adder.bias.x.dim(0)); // except for the first one
-    out.resize(d);
     if (!sum) sum = new state_idx<T>(d); // we now know the order of sum
-    else sum->resize(d);
 
     // fprop
     linear.fprop(in, *sum);
@@ -130,11 +128,9 @@ namespace ebl {
 
   template <class T>
   void nn_layer_convolution<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
-    // 1. resize sum
+    // 1. allocate sum
     idxdim d(in.x.spec); // use same dimensions as in
-    d.setdim(0, convol.thickness); // except for the first one
     if (!sum) sum = new state_idx<T>(d);
-    else sum->resize(d);
 
     // 2. fprop
     sum->clear();
@@ -216,6 +212,7 @@ namespace ebl {
   template <class T>
   layer_convabsnorm<T>::~layer_convabsnorm() {
     if (tmp) delete tmp;
+    if (tmp2) delete tmp2;
     if (pcopy) delete pcopy;
   }
 
@@ -225,10 +222,7 @@ namespace ebl {
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, lconv.convol.thickness); // except for the first one
     if (!tmp) tmp = new state_idx<T>(d);
-    else tmp->resize(d);
-    out.resize_as(*tmp); // resize output
     if (!tmp2) tmp2 = new state_idx<T>(d);
-    else tmp2->resize(d);
 
     // 2. fprop
     tmp->clear();
@@ -306,7 +300,6 @@ namespace ebl {
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, subsampler.thickness); // except for the first one
     if (!sum) sum = new state_idx<T>(d);
-    else sum->resize(d);
 
     // 2. fprop
     subsampler.fprop(in, *sum);

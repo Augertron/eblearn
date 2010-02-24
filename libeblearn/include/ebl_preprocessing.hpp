@@ -32,12 +32,41 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  // channorm_module
+
+  template <class T>
+  channorm_module<T>::channorm_module(uint normalization_size_)
+    : normalization_size(normalization_size_), tmp(1,1,1),
+      norm(normalization_size, normalization_size, 1, true, false, true) {
+  }
+
+  template <class T>
+  channorm_module<T>::~channorm_module() {
+  }
+
+  template <class T>
+  void channorm_module<T>::resize_output(state_idx<T> &in, state_idx<T> &out,
+					 int dim0) {
+    // resize output based on input dimensions
+    idxdim d(in.x);
+    if (dim0 > 0)
+      d.setdim(0, dim0);
+    if (d != out.x.get_idxdim()) {
+      cout << "channorm_module: resizing output from " << out.x.get_idxdim();
+      cout << " to " << d << endl;
+      out.x.resize(d); // resize only x, as bprop and bbprop are not defined
+    }
+    // resize temporary buffer
+    if (d != tmp.x.get_idxdim())
+      tmp.x.resize(d);
+  }
+  
+  ////////////////////////////////////////////////////////////////
   // rgb_to_ypuv_module
 
   template <class T>
-  rgb_to_ypuv_module<T>::rgb_to_ypuv_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1,1),
-      norm(normalization_size, normalization_size, 1, true, false, true) {
+  rgb_to_ypuv_module<T>::rgb_to_ypuv_module(uint normalization_size)
+    : channorm_module<T>(normalization_size) {
   }
 
   template <class T>
@@ -60,26 +89,21 @@ namespace ebl {
     idx_addc(uv, (T)-128, uv);
     idx_dotc(uv, (T).01, uv);
     // convert Y to Yp
-    tmp.x = out.x.narrow(0, 1, 0);
-    norm.fprop(tmp, tmp); // local
+    this->tmp.x = out.x.narrow(0, 1, 0);
+    this->norm.fprop(this->tmp, this->tmp); // local
   }
-  
+
   template <class T>
-  void rgb_to_ypuv_module<T>::resize_output(state_idx<T> &in,
-					    state_idx<T> &out) {
-    // resize output based on input dimensions
-    idxdim d(in.x);
-    if (d != out.x.get_idxdim())
-      out.x.resize(d); // resize only x, as bprop and bbprop are not defined
+  rgb_to_ypuv_module<T>* rgb_to_ypuv_module<T>::copy() {
+    return new rgb_to_ypuv_module<T>(this->normalization_size);
   }
   
   ////////////////////////////////////////////////////////////////
   // rgb_to_yp_module
 
   template <class T>
-  rgb_to_yp_module<T>::rgb_to_yp_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1,1),
-      norm(normalization_size, normalization_size, 1, true, false, true) {
+  rgb_to_yp_module<T>::rgb_to_yp_module(uint normalization_size)
+    : channorm_module<T>(normalization_size) {
   }
 
   template <class T>
@@ -88,37 +112,28 @@ namespace ebl {
 
   template <class T>
   void rgb_to_yp_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
-    if (this->bResize) resize_output(in, out); // resize (iff necessary)
+    if (this->bResize) resize_output(in, out, 1); // resize (iff necessary)
     // RGB to YUV
-    idx_eloop2(inx, in.x, T, tmpx, tmp.x, T) {
+    idx_eloop2(inx, in.x, T, tmpx, this->tmp.x, T) {
       idx_eloop2(inxx, inx, T, tmpxx, tmpx, T) {
 	rgb_to_y_1D(inxx, tmpxx);
       }
     }
     // convert Y to Yp
-    norm.fprop(tmp, out); // local
+    this->norm.fprop(this->tmp, out); // local
   }
-  
+
   template <class T>
-  void rgb_to_yp_module<T>::resize_output(state_idx<T> &in,
-					    state_idx<T> &out) {
-    // resize output based on input dimensions
-    idxdim d(in.x);
-    d.setdim(0, 1);
-    if (d != out.x.get_idxdim())
-      out.x.resize(d); // resize only x, as bprop and bbprop are not defined
-    // resize temporary y buffer
-    if (d != tmp.x.get_idxdim())
-      tmp.x.resize(d);
+  rgb_to_yp_module<T>* rgb_to_yp_module<T>::copy() {
+    return new rgb_to_yp_module<T>(this->normalization_size);
   }
     
   ////////////////////////////////////////////////////////////////
   // bgr_to_ypuv_module
 
   template <class T>
-  bgr_to_ypuv_module<T>::bgr_to_ypuv_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1,1),
-      norm(normalization_size, normalization_size, 1, true, false, true) {
+   bgr_to_ypuv_module<T>::bgr_to_ypuv_module(uint normalization_size)
+    : channorm_module<T>(normalization_size) {
   }
 
   template <class T>
@@ -141,26 +156,21 @@ namespace ebl {
     idx_addc(uv, (T)-128, uv);
     idx_dotc(uv, (T).01, uv);
     // convert Y to Yp
-    tmp.x = out.x.narrow(0, 1, 0);
-    norm.fprop(tmp, tmp); // local
+    this->tmp.x = out.x.narrow(0, 1, 0);
+    this->norm.fprop(this->tmp, this->tmp); // local
   }
-  
+
   template <class T>
-  void bgr_to_ypuv_module<T>::resize_output(state_idx<T> &in,
-					    state_idx<T> &out) {
-    // resize output based on input dimensions
-    idxdim d(in.x);
-    if (d != out.x.get_idxdim())
-      out.x.resize(d); // resize only x, as bprop and bbprop are not defined
+  bgr_to_ypuv_module<T>* bgr_to_ypuv_module<T>::copy() {
+    return new bgr_to_ypuv_module<T>(this->normalization_size);
   }
   
   ////////////////////////////////////////////////////////////////
   // bgr_to_yp_module
 
   template <class T>
-  bgr_to_yp_module<T>::bgr_to_yp_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1,1),
-      norm(normalization_size, normalization_size, 1, true, false, true) {
+  bgr_to_yp_module<T>::bgr_to_yp_module(uint normalization_size)
+    : channorm_module<T>(normalization_size) {
   }
 
   template <class T>
@@ -169,37 +179,28 @@ namespace ebl {
 
   template <class T>
   void bgr_to_yp_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
-    if (this->bResize) resize_output(in, out); // resize (iff necessary)
+    if (this->bResize) resize_output(in, out, 1); // resize (iff necessary)
     // BGR to YUV
-    idx_eloop2(inx, in.x, T, tmpx, tmp.x, T) {
+    idx_eloop2(inx, in.x, T, tmpx, this->tmp.x, T) {
       idx_eloop2(inxx, inx, T, tmpxx, tmpx, T) {
 	bgr_to_y_1D(inxx, tmpxx);
       }
     }
     // convert Y to Yp
-    norm.fprop(tmp, out); // local
+    this->norm.fprop(this->tmp, out); // local
   }
-  
+
   template <class T>
-  void bgr_to_yp_module<T>::resize_output(state_idx<T> &in,
-					    state_idx<T> &out) {
-    // resize output based on input dimensions
-    idxdim d(in.x);
-    d.setdim(0, 1);
-    if (d != out.x.get_idxdim())
-      out.x.resize(d); // resize only x, as bprop and bbprop are not defined
-    // resize temporary y buffer
-    if (d != tmp.x.get_idxdim())
-      tmp.x.resize(d);
+  bgr_to_yp_module<T>* bgr_to_yp_module<T>::copy() {
+    return new bgr_to_yp_module<T>(this->normalization_size);
   }
-  
+       
   ////////////////////////////////////////////////////////////////
   // rgb_to_hp_module
 
   template <class T>
-  rgb_to_hp_module<T>::rgb_to_hp_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1,1),
-      norm(normalization_size, normalization_size, 1, true, false, true) {
+  rgb_to_hp_module<T>::rgb_to_hp_module(uint normalization_size)
+    : channorm_module<T>(normalization_size) {
   }
 
   template <class T>
@@ -208,30 +209,22 @@ namespace ebl {
 
   template <class T>
   void rgb_to_hp_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
-    if (this->bResize) resize_output(in, out); // resize (iff necessary)
+    if (this->bResize) resize_output(in, out, 1); // resize (iff necessary)
     // RGB to YUV
-    idx_eloop2(inx, in.x, T, tmpx, tmp.x, T) {
+    idx_eloop2(inx, in.x, T, tmpx, this->tmp.x, T) {
       idx_eloop2(inxx, inx, T, tmpxx, tmpx, T) {
 	rgb_to_h_1D(inxx, tmpxx);
       }
     }
     // convert H to Hp
-    norm.fprop(tmp, out); // local
+    this->norm.fprop(this->tmp, out); // local
   }
-  
+ 
   template <class T>
-  void rgb_to_hp_module<T>::resize_output(state_idx<T> &in,
-					  state_idx<T> &out) {
-    // resize output based on input dimensions
-    idxdim d(in.x);
-    d.setdim(0, 1);
-    if (d != out.x.get_idxdim())
-      out.x.resize(d); // resize only x, as bprop and bbprop are not defined
-    // resize temporary y buffer
-    if (d != tmp.x.get_idxdim())
-      tmp.x.resize(d);
+  rgb_to_hp_module<T>* rgb_to_hp_module<T>::copy() {
+    return new rgb_to_hp_module<T>(this->normalization_size);
   }
-    
+     
   ////////////////////////////////////////////////////////////////
   // resizepp_module
 
@@ -246,6 +239,8 @@ namespace ebl {
   
   template <class T>
   resizepp_module<T>::~resizepp_module() {
+    if (pp)
+      delete pp;
   }
   
   template <class T>
@@ -316,6 +311,14 @@ namespace ebl {
   template <class T>
   rect resizepp_module<T>::get_original_bbox() {
     return original_bbox;
+  }
+  
+  template <class T>
+  resizepp_module<T>* resizepp_module<T>::copy() {
+    module_1_1<T> *newpp = NULL;
+    if (pp)
+      newpp = (module_1_1<T>*) pp->copy();
+    return new resizepp_module(height, width, mode, newpp, kernelsz);
   }
   
 } // end namespace ebl
