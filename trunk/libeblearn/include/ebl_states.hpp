@@ -313,7 +313,7 @@ namespace ebl {
     return true;
   }
 
-  template <class T>
+  template <class T> template <class T2>
   bool parameter<T>::load_x(const char *s) {
     /*	idx<double> m(1, 1), tmp(1);
 	if (!load_matrix(m, s))
@@ -328,7 +328,7 @@ namespace ebl {
 	tmp = m.select(0, 6); idx_copy(tmp, ddeltax);
 	return true;
     */
-    idx<T> m(1);
+    idx<T2> m(1);
     if (!load_matrix(m, s))
       return false;
     this->resize(m.dim(0));

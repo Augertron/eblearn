@@ -20,9 +20,9 @@ pascal=$dataroot/pascal
 pascalroot=$pascal/VOCdevkit_trainval09/VOC2009/
 root=$dataroot/face/data
 out=$dataroot/face/ds/
-nopersons_root=$out/nopersons/
+nopersons_root=$dataroot/nopersons/
 nopersons_root_pascal=$nopersons_root/pascal/
-detector_name=20100211.025504.face_conf00_color_0_eta_.00001_resize_mean
+detector_name=20100223.002945.face_conf00_eta_.00001
 false_positive_root=$dataroot/face/false_positives/$detector_name/
 
 # variables
@@ -165,6 +165,12 @@ mkdir -p $nopersons_root_pascal
 #     -outdir $nopersons_root_pascal -exclude "person" \
 #     $maxdata $ddisplay # debug
 
+# generate false positives
+cd ${false_positive_root} && \
+~/eblearn/bin/objrec_detect \
+    ~/eblearn/demos/objrec/face/trained/${detector_name}.conf \
+    ${nopersons_root}
+
 # compile false positive dataset
 ~/eblearn/bin/dscompiler ${false_positive_root} -type lush \
     -precision ${precision} -input_precision double -outdir ${out} \
@@ -191,14 +197,14 @@ done
 # print out information about extracted datasets to check that their are ok
 ~/eblearn/bin/dsdisplay $out/${allfp} -info
 
-# ###############################################################################
-# # reporting
-# ###############################################################################
+###############################################################################
+# reporting
+###############################################################################
 
-# # email yourself the results
-# here=`pwd`
-# base="`basename ${here}`"
-# tgz_name="logs_${base}.tgz"
-# tar czvf ${tgz_name} out*.log
-# cat $0 | mutt $meta_email -s "face dsprepare" -a ${tgz_name}
+# email yourself the results
+here=`pwd`
+base="`basename ${here}`"
+tgz_name="logs_${base}.tgz"
+tar czvf ${tgz_name} out*.log
+cat $0 | mutt $meta_email -s "face dsprepare" -a ${tgz_name}
 

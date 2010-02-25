@@ -28,7 +28,7 @@ template <class T> intg Srg<T>::nopened = 0;
 // intg Srg<ubyte>::nopened = 0;
 // intg Srg<uint>::nopened = 0;
 
-typedef double t_net; // network precision
+typedef float t_net; // network precision
 
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
@@ -60,7 +60,7 @@ int main(int argc, char **argv) { // regular main without gui
   load_matrix<ubyte>(classes, conf.get_cstring("classes"));
   cout << "loading weights from " << conf.get_cstring("weights") << endl;
   module_1_1<t_net> *net = init_network(theparam, conf, classes.dim(0));
-  theparam.load_x(conf.get_cstring("weights"));
+  theparam.load_x<double>(conf.get_cstring("weights"));
 
   // select preprocessing  
   module_1_1<t_net>* pp = color ?
@@ -70,6 +70,7 @@ int main(int argc, char **argv) { // regular main without gui
   detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
 			 conf.get_double("gain"), 50);
   detect.set_resolutions(1.4);
+  detect.set_max_resolution(600); // limit size of inputs
   //  detect.set_resolutions(9);
   //  double scales[] = { 4.5, 2.5, 1.4};
   //  detect.set_resolutions(3, scales);
