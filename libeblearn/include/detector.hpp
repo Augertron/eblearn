@@ -56,7 +56,7 @@ namespace ebl {
       bgclass(-1), scales(NULL), scales_step(0),
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
-      max_queue_size(queue_size) {
+      max_queue_size(queue_size), max_size(0) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -262,11 +262,23 @@ namespace ebl {
     save_mode = true;
     save_dir = directory;
   }
-    
+
+  template <class T>
+  void detector<T>::set_max_resolution(uint max_size_) {
+    cout << "Setting maximum input size to " << max_size_ << "x"
+	 << max_size_ << "." << endl;
+    max_size = max_size_;
+  }
+  
   template <class T>
   void detector<T>::compute_minmax_resolutions(idxdim &input_dims) {
     // compute maximum closest size of input compatible with the network size
     idxdim indim(input_dims.dim(2), input_dims.dim(0), input_dims.dim(1));
+    if (max_size > 0) { // cap on maximum input size
+      for (int i = 0; i < indim.order(); ++i) {
+	indim.setdim(i, MIN(max_size, indim.dim(i)));
+      }
+    }
     thenet.fprop_size(indim); // set a valid input dimensions set
     in_maxdim.setdims(indim); // copy valid dims to in_maxdim
 

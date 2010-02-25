@@ -148,6 +148,12 @@ namespace ebl {
     //! class are dumped into a directory corresponding to the class' name.
     void set_save(const string directory);
 
+    //! Set the maximum size of each side of an input to use as input
+    //! to the network. I.e. a input to the network will be at most
+    //! max_size * max_size big.
+    //! \param max_size The maximum width or height in pixels.
+    void set_max_resolution(uint max_size);
+
     ////////////////////////////////////////////////////////////////
     // execution
     
@@ -252,6 +258,7 @@ namespace ebl {
     uint                 max_queue_size; //!< max size of detection queue
     vector<bbox>         raw_bboxes; //!< raw bboxes extracted from outputs
     vector<bbox*>        pruned_bboxes; //!< scale-pruned bboxes
+    uint                 max_size; //!< maximum input size to network
 
     ////////////////////////////////////////////////////////////////
     // friends
