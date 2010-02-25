@@ -60,7 +60,8 @@ int main(int argc, char **argv) { // regular main without gui
   load_matrix<ubyte>(classes, conf.get_cstring("classes"));
   cout << "loading weights from " << conf.get_cstring("weights") << endl;
   module_1_1<t_net> *net = init_network(theparam, conf, classes.dim(0));
-  theparam.load_x<double>(conf.get_cstring("weights"));
+  if (!theparam.load_x<double>(conf.get_cstring("weights")))
+    eblerror("failed to load weights");
 
   // select preprocessing  
   module_1_1<t_net>* pp = color ?
