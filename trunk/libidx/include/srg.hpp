@@ -114,7 +114,7 @@ template<class T> intg Srg<T>::growsize_chunk(intg s, intg s_chunk){
 // decrement refcount and free if it reaches zero
 template <class T> int Srg<T>::unlock() {
   refcount--;
-  if (refcount == 0) this->nopened--;
+  //if (refcount == 0) this->nopened--;
   DEBUG("Srg::unlock: refcount=%d\n",refcount);
   if (refcount<0) { eblerror("Srg has negative refcount"); return refcount; }
   else {
@@ -124,7 +124,7 @@ template <class T> int Srg<T>::unlock() {
 
 // increment refcount
 template <class T> int Srg<T>::lock() {
-  if (refcount == 0) this->nopened++;
+  //  if (refcount == 0) this->nopened++;
   DEBUG("Srg::lock: refcount=%d\n",refcount+1);
   return ++refcount;
 }

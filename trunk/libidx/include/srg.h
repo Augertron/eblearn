@@ -76,7 +76,7 @@ namespace ebl {
 
   public:
 
-    static intg nopened;
+    //    static intg nopened;
 
     //! pointer to data segment
     T *data;

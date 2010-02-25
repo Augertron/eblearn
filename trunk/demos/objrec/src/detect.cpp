@@ -22,7 +22,7 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 ////////////////////////////////////////////////////////////////
 // network
 
-template <class T> intg Srg<T>::nopened = 0;
+//template <class T> intg Srg<T>::nopened = 0;
 // intg Srg<float>::nopened = 0;
 // intg Srg<int>::nopened = 0;
 // intg Srg<ubyte>::nopened = 0;
@@ -48,7 +48,7 @@ int main(int argc, char **argv) { // regular main without gui
   t_net		threshold	= (t_net) conf.get_double("threshold");
   bool		display 	= false;
   bool		mindisplay 	= false;
-  float         display_sleep   = 0.0;
+  uint          display_sleep   = 0;
   bool		save_video 	= false;
   string        cam_type        = conf.get_string("camera");
   int           height          = conf.get_int("input_height");
@@ -100,7 +100,7 @@ int main(int argc, char **argv) { // regular main without gui
 #ifdef __GUI__
   display 	= conf.get_bool("display");
   mindisplay 	= conf.get_bool("minimal_display");
-  display_sleep	= conf.get_float("display_sleep");
+  display_sleep	= conf.get_uint("display_sleep");
   save_video    = conf.get_bool("save_video");
   module_1_1_gui netgui;
   uint	wid	= display ? new_window("eblearn object recognition") : 0;
@@ -116,9 +116,9 @@ int main(int argc, char **argv) { // regular main without gui
   
   // loop
   while(!cam->empty()) {
-    cout << "nopend: " << Srg<double>::nopened;
-    cout << " nopend: " << Srg<short>::nopened;
-    cout << " nopend: " << Srg<char const *>::nopened << endl;
+    // cout << "nopend: " << Srg<double>::nopened;
+    // cout << " nopend: " << Srg<short>::nopened;
+    // cout << " nopend: " << Srg<char const *>::nopened << endl;
     // get a new frame
 #ifdef __GUI__
     t0.start();
@@ -146,9 +146,9 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "processing: " << tpp << " ms." << endl;
     cout << "fps: " << cam->fps() << endl;
 #endif
-    if (display_sleep > 0.0) {
-      cout << "sleeping for " << display_sleep << "s." << endl;
-      sleep(display_sleep);
+    if (display_sleep > 0) {
+      cout << "sleeping for " << display_sleep << "ms." << endl;
+      usleep(display_sleep);
     }
   }
   if (save_video)
