@@ -61,6 +61,7 @@ mkdir -p $out
 mkdir -p $outbg
 mkdir -p $nopersons_root
 mkdir -p $nopersons_root_pascal
+mkdir -p $false_positive_root
 
 ###############################################################################
 # fetch datasets
