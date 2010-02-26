@@ -20,6 +20,7 @@ class ebl_basic_test : public CppUnit::TestFixture  {
   //  CPPUNIT_TEST(test_softmax); // TODO: fix test
   CPPUNIT_TEST(test_state_copy);
   CPPUNIT_TEST(test_power_module);
+  CPPUNIT_TEST(test_convolution_timing);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -43,6 +44,7 @@ public:
   void test_softmax();
   void test_state_copy();
   void test_power_module();
+  void test_convolution_timing();
 };
 
 #endif /* EBL_BASIC_TEST_H_ */

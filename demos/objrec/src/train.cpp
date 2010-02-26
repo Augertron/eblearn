@@ -32,7 +32,7 @@ int main(int argc, char **argv) { // regular main without gui
   parameter<t_net> theparam(60000); // create trainable parameter
   module_1_1<t_net> *net = init_network(theparam, conf, targets.dim(0));
   if (conf.get_bool("retrain"))
-    theparam.load_x(conf.get_cstring("retrain_weights"));
+    theparam.load_x<t_net>(conf.get_cstring("retrain_weights"));
   supervised_euclidean_machine<t_net, int> thenet(*net, targets, dims);
   supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
 

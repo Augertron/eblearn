@@ -42,13 +42,13 @@ void detector_test::test_norb() {
   parameter<t_net> theparam(1);
   // input to the network will be 96x96 and there are 5 outputs
   lenet7_binocular<t_net> thenet(theparam, 96, 96, 5);
-  theparam.load_x(mono_net.c_str());
+  theparam.load_x<double>(mono_net.c_str());
   //left = left.narrow(2, 2, 0);
   //  int tr[3] = { 2, 1, 0 };
   //left = left.transpose(tr);
   //left = left.select(2, 0);
   double scales [] = { 2, 1.5, 1};
-  detector<t_net> cb((module_1_1<t_net>&)thenet, labs, NULL, 0, 0.01);
+  detector<t_net> cb((module_1_1<t_net>&)thenet, labs, NULL, 0, NULL, 0, 0.01);
   cb.set_resolutions(3, scales);
 
   // find category of image
@@ -91,7 +91,7 @@ void detector_test::test_norb_binoc() {
 //   parameter theparam(1);
 //   // input to the network will be 96x96 and there are 5 outputs
 //   lenet7_binocular thenet(theparam, 96, 96, 5);
-//   theparam.load_x(binoc_net.c_str());
+//   theparam.load_x<double>(binoc_net.c_str());
 //   detector_binocular<ubyte> cb(thenet, sz, lbl, 0.0, 0.01, 240, 320);
 
 //   // find category of image

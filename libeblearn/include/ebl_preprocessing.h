@@ -181,7 +181,8 @@ namespace ebl {
     //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
     //!             GAUSSIAN_RESIZE).
     resizepp_module(intg height, intg width, uint mode = MEAN_RESIZE,
-		    module_1_1<T> *pp = NULL, uint kernelsz = 0);
+		    module_1_1<T> *pp = NULL, uint kernelsz = 0,
+		    bool own_pp = false);
     //! destructor
     virtual ~resizepp_module();
     //! sets the desired output dimensions.
@@ -200,6 +201,7 @@ namespace ebl {
     // members ////////////////////////////////////////////////////////
   private:
     module_1_1<T>	*pp;	        //!< preprocessing module
+    bool                 own_pp;        //!< responsible for pp's deletion
     uint                 kernelsz;      //!< size of pp's kernel
     intg		 height;	//!< target height
     intg		 width;         //!< target width

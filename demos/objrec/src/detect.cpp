@@ -41,6 +41,7 @@ int main(int argc, char **argv) { // regular main without gui
     cerr << "usage: obj_detect <config file> [directory or file]" << endl;
     return -1;
   }
+  feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
   // load configuration
   configuration conf(argv[1]);
   bool		color		= conf.get_bool("color");
@@ -157,5 +158,6 @@ int main(int argc, char **argv) { // regular main without gui
   // free variables
   if (net) delete net;
   if (cam) delete cam;
+  if (pp) delete pp;
   return 0;
 }

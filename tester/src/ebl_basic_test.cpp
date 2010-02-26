@@ -1,5 +1,9 @@
 #include "ebl_basic_test.h"
 
+#include <sys/time.h>
+#include <stdio.h>
+#include <unistd.h>
+
 using namespace std;
 using namespace ebl;
 
@@ -225,4 +229,28 @@ void ebl_basic_test::test_power_module() {
   CPPUNIT_ASSERT_DOUBLES_EQUAL(1.4142, out.x.get(0), 0.0001);
   CPPUNIT_ASSERT_DOUBLES_EQUAL(0.3536, in.dx.get(0), 0.0001);
   CPPUNIT_ASSERT_DOUBLES_EQUAL(0.125, in.ddx.get(0), 0.0001);
+}
+
+void ebl_basic_test::test_convolution_timing() {
+  layers_n<float> l(true);
+  parameter<float> p(1);
+  idx<intg> tbl = full_table(1, 8);
+  idx<intg> tbl2 = full_table(8, 16);
+  l.add_module(new convolution_module_2D<float>(p, 9, 9, 1, 1, tbl),
+	       new state_idx<float>(1,1,1));  
+  l.add_module(new convolution_module_2D<float>(p, 9, 9, 1, 1, tbl2),
+	       new state_idx<float>(1,1,1));
+  l.add_last_module(new tanh_module<float>());
+  state_idx<float> in(1, 512, 512), out(16, 496, 496);
+  struct timeval start, end;
+  long seconds, useconds;
+  gettimeofday(&start, NULL);
+  for (uint i = 0; i < 1; ++i) {
+    l.fprop(in, out);
+  }
+  gettimeofday(&end, NULL);
+  seconds = end.tv_sec - start.tv_sec;
+  useconds = end.tv_usec - start.tv_usec;
+  cout << "big convolution time: "
+       << (uint)(((seconds) * 1000 + useconds/1000.0)+0.5) << endl;
 }
