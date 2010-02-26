@@ -6,6 +6,17 @@ INCLUDE_INSTALL=/usr/include/eblearn/
 LIB_INSTALL=/usr/lib/
 BIN_INSTALL=/usr/bin
 
+# detect MAC OS
+OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+OSLOWER = $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
+# 'linux' is output for Linux system, 'darwin' for OS X
+DARWIN = $(strip $(findstring DARWIN, $(OSUPPER)))
+ifneq ($(DARWIN),)
+	LIB_EXT=dylib
+else
+	LIB_EXT=so
+endif
+
 all: libs
 
 release:
@@ -17,6 +28,8 @@ release:
 	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make ${prj} && cd ../..
 
 libs:
+	@echo ${LIB_EXT}
+	@echo ${ARCH2}
 	@echo __________________________________________________________________
 	@echo
 	@echo "Compiling libraries in release mode..."
@@ -64,11 +77,11 @@ install:
 	cp -f libidxgui/include/* $(INCLUDE_INSTALL)
 	cp -f libeblearngui/include/* $(INCLUDE_INSTALL)
 	cp -f libeblearntools/include/* $(INCLUDE_INSTALL)
-	cp -f bin/libidx.so $(LIB_INSTALL)
-	cp -f bin/libeblearn.so $(LIB_INSTALL)
-	cp -f bin/libeblearntools.so $(LIB_INSTALL)
-	cp -f bin/libidxgui.so $(LIB_INSTALL)
-	cp -f bin/libeblearngui.so $(LIB_INSTALL)
+	cp -f bin/libidx.$(LIB_EXT) $(LIB_INSTALL)
+	cp -f bin/libeblearn.$(LIB_EXT) $(LIB_INSTALL)
+	cp -f bin/libeblearntools.$(LIB_EXT) $(LIB_INSTALL)
+	cp -f bin/libidxgui.$(LIB_EXT) $(LIB_INSTALL)
+	cp -f bin/libeblearngui.$(LIB_EXT) $(LIB_INSTALL)
 	cp -f bin/matdisplay $(BIN_INSTALL)
 	cp -f bin/dsdisplay $(BIN_INSTALL)
 	cp -f bin/dscompiler $(BIN_INSTALL)
