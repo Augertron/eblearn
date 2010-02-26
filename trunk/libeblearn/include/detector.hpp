@@ -218,11 +218,12 @@ namespace ebl {
 	if (rszpp == NULL)
 	  rsz.set((void*) new resizepp_module<T>
 		  (scaled.dim(1), scaled.dim(2), MEAN_RESIZE,
-		   (module_1_1<T>*)pp->copy(), ppkersz));
+		   pp?(module_1_1<T>*)pp->copy():NULL, ppkersz, true));
 	else
 	  rszpp->set_dimensions(scaled.dim(1), scaled.dim(2));
 	// print info about network sizes
 	network->pretty(scaled);
+	//	thenet.pretty(scaled);
       }}
   }
     

@@ -909,8 +909,8 @@ namespace ebl {
 	  lmod[i] = 1;
 	}
 	idx<T> r(getstorage(), spec.getoffset(), n, ldim, lmod);
-	delete ldim;
-	delete lmod;
+	if (ldim) delete ldim;
+	if (lmod) delete lmod;
 	return r;
       }
       else {

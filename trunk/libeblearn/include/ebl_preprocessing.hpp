@@ -231,15 +231,15 @@ namespace ebl {
   template <class T>
   resizepp_module<T>::
   resizepp_module(intg height_, intg width_, uint mode_,
-		  module_1_1<T> *pp_, uint kernelsz_)
-    : pp(pp_), kernelsz(kernelsz_), inpp(1,1,1), outpp(1,1,1),
+		  module_1_1<T> *pp_, uint kernelsz_, bool own_pp_)
+    : pp(pp_), own_pp(own_pp_), kernelsz(kernelsz_), inpp(1,1,1), outpp(1,1,1),
       mode(mode_), inrect(0, 0, 0, 0), inrect_set(false) {
     set_dimensions(height_, width_);
   }
   
   template <class T>
   resizepp_module<T>::~resizepp_module() {
-    if (pp)
+    if (pp && own_pp)
       delete pp;
   }
   

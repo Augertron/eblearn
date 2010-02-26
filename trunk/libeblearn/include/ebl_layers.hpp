@@ -107,7 +107,7 @@ namespace ebl {
   nn_layer_full<T>* nn_layer_full<T>::copy() {
     // allocate
     nn_layer_full<T>* l2 =
-      new nn_layer_full<T>(linear.w.x.dim(0), linear.w.x.dim(1));
+      new nn_layer_full<T>(linear.w.x.dim(1), linear.w.x.dim(0));
     // copy data
     idx_copy(linear.w.x, l2->linear.w.x);
     idx_copy(adder.bias.x, l2->adder.bias.x);

@@ -61,7 +61,7 @@ int main(int argc, char **argv) { // regular main without gui
 		   conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
 		   conf.get_uint("net_full"), targets.dim(0),
 		   conf.get_bool("absnorm"), conf.get_bool("color"));
-  theparam.load_x(conf.get_cstring("weights"));
+  theparam.load_x<t_net>(conf.get_cstring("weights"));
 
   // gui
   bool display = conf.get_bool("display"); // enable/disable display
@@ -92,8 +92,8 @@ int main(int argc, char **argv) { // regular main without gui
 
   // answering variables and initializations
   t_net threshold = .985;
-  vector<bbox> bboxes;
-  vector<bbox>::iterator ibboxes;
+  vector<bbox*> bboxes;
+  vector<bbox*>::iterator ibboxes;
   map<string, ofstream*> fp_cls, fp_det;
   map<string, ofstream*>::iterator ifp_cls, ifp_det;
   string name, img_name;
@@ -162,12 +162,12 @@ int main(int argc, char **argv) { // regular main without gui
       cout << endl;
       // output answers and confidences to files
       for (ibboxes = bboxes.begin(); ibboxes != bboxes.end(); ++ibboxes) {
-	name = (const char *) classes[ibboxes->class_id].idx_ptr();
-	*fp_cls[name] << img_name << " " << ibboxes->confidence << endl;
-	*fp_det[name] << img_name << " " << ibboxes->confidence << " ";
-	*fp_det[name] << ibboxes->w0 << " " << ibboxes->h0 << " ";
-	*fp_det[name] << ibboxes->w0 + ibboxes->width << " ";
-	*fp_det[name] << ibboxes->h0 + ibboxes->height << endl;
+	name = (const char *) classes[(*ibboxes)->class_id].idx_ptr();
+	*fp_cls[name] << img_name << " " << (*ibboxes)->confidence << endl;
+	*fp_det[name] << img_name << " " << (*ibboxes)->confidence << " ";
+	*fp_det[name] << (*ibboxes)->w0 << " " << (*ibboxes)->h0 << " ";
+	*fp_det[name] << (*ibboxes)->w0 + (*ibboxes)->width << " ";
+	*fp_det[name] << (*ibboxes)->h0 + (*ibboxes)->height << endl;
       }
     }
   }
