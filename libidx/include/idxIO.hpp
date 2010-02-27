@@ -34,6 +34,7 @@
 #define IDXIO_HPP_
 
 #include <stdio.h>
+#include <sstream>
 
 // endianess test
 static int endiantest = 1;
@@ -128,7 +129,9 @@ namespace ebl {
     // open file
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-      cerr << "load_matrix failed to open " << filename << "." << endl;
+      ostringstream oss;
+      oss << "load_matrix failed to open " << filename;
+      throw oss.str();
       return false;
     }
 
@@ -138,8 +141,10 @@ namespace ebl {
 
     // header: read magic number
     if (fread(&magic, sizeof (int), 1, fp) != 1) {
-      cerr << "failed to read " << filename << "." << endl;
       fclose(fp);
+      ostringstream oss;
+      oss << "failed to read magic number in " << filename;
+      throw oss.str();
       return false;
     }
     int magic_vincent = endian(magic);
@@ -147,24 +152,31 @@ namespace ebl {
     magic_vincent &= ~0xF;
     if ((magic != get_magic<T>()) && 
 	(magic_vincent != get_magic_vincent<T>())) {
-      cerr << "load_matrix failed (" << filename << "): ";
-      cerr << get_magic_str(get_magic<T>()) << " expected, ";
-      cerr << get_magic_str(magic) << " found." << endl;
+      fclose(fp);
+      ostringstream oss;
+      oss << "failed to read matrix (" << filename << "): ";
+      oss << get_magic_str(get_magic<T>()) << " expected, ";
+      oss << get_magic_str(magic) << " found.";
+      throw oss.str();
       return false;
     }
     // standard header
     if (magic == get_magic<T>()) {
       // read number of dimensions
       if (fread(&ndim, sizeof (int), 1, fp) != 1) {
-	cerr << "failed to read " << filename << "." << endl;
 	fclose(fp);
+	ostringstream oss;
+	oss << "failed to read data in " << filename;
+	throw oss.str();
 	return false;
       }
       if (ndim > MAXDIMS) {
-	cerr << "load_matrix failed (" << filename << "): ";
-	cerr << " too many dimensions: " << ndim << " (MAXDIMS = ";
-	cerr << MAXDIMS << ")." << endl;
 	fclose(fp);
+	ostringstream oss;
+	oss << "failed to load matrix " << filename << ": ";
+	oss << " too many dimensions: " << ndim << " (MAXDIMS = ";
+	oss << MAXDIMS << ")." << endl;
+	throw oss.str();
 	return false;
       }
     }
@@ -172,10 +184,12 @@ namespace ebl {
       ndim_min = ndim;
     }
     if (ndim != m.order()) {
-      cerr << "load_matrix failed (" << filename << "): ";
-      cerr << "expected order of " << m.order() << " but found ";
-      cerr << ndim << " in file." << endl;
       fclose(fp);
+      ostringstream oss;
+      oss << "failed to load matrix " << filename << ": ";
+      oss << "expected order of " << m.order() << " but found ";
+      oss << ndim << " in file." << endl;
+      throw oss.str();
       return false;
     }
 
@@ -183,8 +197,10 @@ namespace ebl {
     // header: read each dimension
     for (int i = 0; (i < ndim) || (i < ndim_min); ++i) {
       if (fread(&v, sizeof (int), 1, fp) != 1) {
-	cerr << "failed to read " << filename << "." << endl;
 	fclose(fp);
+	ostringstream oss;
+	oss << "failed to read matrix dimensions in " << filename;
+	throw oss.str();
 	return false;
       }
       if (magic_vincent == get_magic_vincent<T>())
@@ -192,10 +208,12 @@ namespace ebl {
       if (i < ndim) {
 	dims[i] = v;
 	if (v <= 0) {
-	  cerr << "load_matrix failed (" << filename << "): ";
-	  cerr << " dimension is negative or 0." << endl;
 	  free(dims);
 	  fclose(fp);
+	  ostringstream oss;
+	  oss << "failed to read matrix dimensions in " << filename << ": ";
+	  oss << " dimension is negative or 0." << endl;
+	  throw oss.str();
 	  return false;
 	}
       }

@@ -51,9 +51,10 @@ eta = .00001 .000005 .000001 .0000005
 iterations = 50
 
 # retraining ###################################################################
-retrain = 1
-fp_name = _${job_name}
-retrain_weights = ${root1}/${job_name}_net000.mat
+retrain = 0 1
+job_name_retraining = 20100223.002945.face_conf00_eta_.00001
+fp_name = _${job_name_retraining}
+retrain_weights = ${root1}/${job_name_retraining}_net040.mat
 
 # preprocessing ################################################################
 resize = mean # bilinear
