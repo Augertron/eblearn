@@ -375,11 +375,13 @@ namespace ebl {
   
   //! required datasets, throw error if bool is false, otherwise print success.
   //! return success.
-  bool loading_error(bool success, string &fname);
+  template <typename T>
+    bool loading_error(idx<T> &mat, string &fname);
 
   //! optional datasets, issue warning if bool is false, otherwise print
   //! success. return succcess.
-  bool loading_warning(bool success, string &fname);
+  template <typename T>
+    bool loading_warning(idx<T> &mat, string &fname);
 
 } // end namespace ebl
 

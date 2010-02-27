@@ -334,25 +334,25 @@ namespace ebl {
     // load data
     data = idx<Tdata>(1,1,1,1); // TODO: implement generic load_matrix
     fname = root1; fname += data_fname;
-    loading_error(load_matrix(data, fname), fname);
+    loading_error(data, fname);
     // load labels
     labels = idx<t_label>(1); // TODO: implement generic load_matrix
     fname = root1; fname += labels_fname;
-    loading_error(load_matrix(labels, fname), fname);
+    loading_error(labels, fname);
     // load classes
     idx<ubyte> classidx;
     classidx = idx<ubyte>(1,1); // TODO: implement generic load_matrix
     fname = root1; fname += classes_fname;
-    loading_warning(load_matrix(classidx, fname), fname);
+    loading_warning(classidx, fname);
     set_classes(classidx);
     // load classpairs
     classpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
     fname = root1; fname += classpairs_fname;
-    loading_warning(load_matrix(classpairs, fname), fname);
+    loading_warning(classpairs, fname);
     // load deformation pairs
     deformpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
     fname = root1; fname += deformpairs_fname;
-    loading_warning(load_matrix(deformpairs, fname), fname);
+    loading_warning(deformpairs, fname);
     // initialize some members
     data_cnt = data.dim(0);
     allocated = true;
@@ -1124,7 +1124,10 @@ namespace ebl {
 	    add_data(load_img, class_name, itr->path().string().c_str());
 	} catch(const char *err) {
 	  cerr << "error: failed to add " << itr->path().string();
-	  cerr << ": "<< err << endl;
+	  cerr << ": " << endl << err << endl;
+	} catch(const string err) {
+	  cerr << "error: failed to add " << itr->path().string();
+	  cerr << ": " << endl << err << endl;
 	}
       }}
 #endif /* __BOOST__ */
@@ -1136,8 +1139,37 @@ namespace ebl {
     idxdim d(tmp);
     load_img = idx<Tdata>(d);
     idx_copy(tmp, load_img);
-  }
+  }  
   
+  ////////////////////////////////////////////////////////////////
+  // loading errors
+
+  //! required datasets, throw error.
+  template <typename T>
+  bool loading_error(idx<T> &mat, string &fname) {
+    try {
+      load_matrix(mat, fname);
+    } catch (const string &err) {
+      cerr << "error: failed to load dataset file " << fname << endl;
+      eblerror("failed to load dataset file");
+      return false;
+    }
+    cout << "Loaded " << fname << endl;
+    return true;
+  }
+
+  //! optional datasets, issue warning.
+  template <typename T>
+  bool loading_warning(idx<T> &mat, string &fname) {
+    try {
+      load_matrix(mat, fname);
+    } catch (const string &err) {
+      cerr << "warning: failed to load dataset file " << fname << endl;
+      return false;
+    }
+    cout << "Loaded " << fname << endl;
+    return true;
+  }
   
 } // end namespace ebl
 

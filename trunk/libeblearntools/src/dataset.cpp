@@ -35,7 +35,6 @@ using namespace std;
 
 namespace ebl {
 
-
   ////////////////////////////////////////////////////////////////
   // Helper functions
     
@@ -44,30 +43,6 @@ namespace ebl {
     fullname += "_";
     fullname += fname;
     fullname += MATRIX_EXTENSION;
-  }
-  
-  ////////////////////////////////////////////////////////////////
-  // loading errors
-
-  //! required datasets, throw error.
-  bool loading_error(bool success, string &fname) {
-    if (success)
-      cout << "Loaded " << fname << endl;
-    else {
-      cerr << "Error: failed to load dataset file " << fname << endl;
-      eblerror("Failed to load dataset file");
-    }
-    return success;
-  }
-
-  //! optional datasets, issue warning.
-  bool loading_warning(bool success, string &fname) {
-    if (success)
-      cout << "Loaded " << fname << endl;
-    else {
-      cerr << "Warning: failed to load dataset file " << fname << endl;
-    }
-    return success;
   }
 
 } // end namespace ebl

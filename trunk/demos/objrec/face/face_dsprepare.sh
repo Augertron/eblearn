@@ -62,6 +62,7 @@ mkdir -p $outbg
 mkdir -p $nopersons_root
 mkdir -p $nopersons_root_pascal
 mkdir -p $false_positive_root
+mkdir -p "$false_positive_root/bg/"
 
 ###############################################################################
 # fetch datasets
@@ -166,18 +167,19 @@ mkdir -p $false_positive_root
 #     -outdir $nopersons_root_pascal -exclude "person" \
 #     $maxdata $ddisplay # debug
 
-# generate false positives
-cd ${false_positive_root} && \
-~/eblearn/bin/objrec_detect \
-    ~/eblearn/demos/objrec/face/trained/${detector_name}.conf \
-    ${nopersons_root}
+# # generate false positives
+# cd "${false_positive_root}/bg/" && \
+# ~/eblearn/bin/objrec_detect \
+#     ~/eblearn/demos/objrec/face/trained/${detector_name}.conf \
+#     ${nopersons_root} \
+# && cd -
 
-# compile false positive dataset
-~/eblearn/bin/dscompiler ${false_positive_root} -type lush \
-    -precision ${precision} -input_precision double -outdir ${out} \
-    -dname ${fp_name} \
-    -dims ${h}x${w}x3 \
-    $maxdata $maxperclass $ddisplay # debug
+# # compile false positive dataset
+# ~/eblearn/bin/dscompiler ${false_positive_root} -type lush \
+#     -precision ${precision} -input_precision ${precision} -outdir ${out} \
+#     -dname ${fp_name} \
+#     -dims ${h}x${w}x3 \
+#     $maxdata $maxperclass $ddisplay # debug
 
 # merge normal dataset with background dataset
 ~/eblearn/bin/dsmerge $out ${all_fp} ${fp_name} ${namebg}
@@ -196,7 +198,7 @@ do
 done
 
 # print out information about extracted datasets to check that their are ok
-~/eblearn/bin/dsdisplay $out/${allfp} -info
+~/eblearn/bin/dsdisplay $out/${all_fp} -info
 
 ###############################################################################
 # reporting

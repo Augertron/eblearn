@@ -201,24 +201,19 @@ int main(int argc, char **argv) {
 
   // data
   build_fname(ds_name, DATA_NAME, data_fname);
-  loading_error(load_matrix(data, data_fname), data_fname);
+  loading_error(data, data_fname);
   // labels
   build_fname(ds_name, LABELS_NAME, labels_fname);
-  loading_error(load_matrix(labels, labels_fname), labels_fname);
+  loading_error(labels, labels_fname);
   // classes
   build_fname(ds_name, CLASSES_NAME, classes_fname);
-  if (!loading_warning(load_matrix(classes, classes_fname), classes_fname))
-    bclasses = false;
+  bclasses = loading_warning(classes, classes_fname);
   // classpairs
   build_fname(ds_name, CLASSPAIRS_NAME, classpairs_fname);
-  if (!loading_warning(load_matrix(classpairs, classpairs_fname),
-		       classpairs_fname))
-    bclasspairs = false;
+  bclasspairs = loading_warning(classpairs, classpairs_fname);
   // defpairs
   build_fname(ds_name, DEFORMPAIRS_NAME, deformpairs_fname);
-  if (!loading_warning(load_matrix(defpairs, deformpairs_fname),
-		       deformpairs_fname))
-    bdefpairs = false;
+  bdefpairs = loading_warning(defpairs, deformpairs_fname);
   
   labeled_datasource<t_data, t_data, int>
     train_ds(data, labels, classes, "Dataset");
