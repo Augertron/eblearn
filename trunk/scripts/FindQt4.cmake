@@ -1,5 +1,5 @@
 # also look for package on other systems
-FIND_PACKAGE(Qt4Fedora)
+#FIND_PACKAGE(Qt4Fedora)
 
 # - Find QT 4
 # This module can be used to find Qt4.
