@@ -46,7 +46,7 @@ namespace ebl {
   camera_video<Tdata>::camera_video(const char *filename,
 				    int height_, int width_,
 				    uint sstep, uint endpos)
-    : camera_directory<Tdata>(height_, width_) {
+    : camera_directory<Tdata>(height_, width_), fps_video(1) {
     cout << "Initializing camera from video file: " << filename << endl;
     string dir = filename;
     dir += "_images";
@@ -63,7 +63,8 @@ namespace ebl {
     cmd << " > " << videoconf.str();
     ret = std::system(cmd.str().c_str());
     configuration conf(videoconf.str());
-    fps_video = conf.get_float("ID_VIDEO_FPS");
+    if (conf.exists("ID_VIDEO_FPS"))
+      fps_video = conf.get_float("ID_VIDEO_FPS");
     cout << "Video FPS is: " << fps_video << endl;
     // extract all images from video
     cout << "Extracting video frames..." << endl;
