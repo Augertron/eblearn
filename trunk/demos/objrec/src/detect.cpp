@@ -72,7 +72,8 @@ int main(int argc, char **argv) { // regular main without gui
   detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
 			 conf.get_double("gain"), 50);
   detect.set_resolutions(1.4);
-  detect.set_max_resolution(600); // limit size of inputs
+  if (conf.exists("input_max"))
+    detect.set_max_resolution(conf.get_uint("input_max")); // limit inputs size
   //  detect.set_resolutions(9);
   //  double scales[] = { 4.5, 2.5, 1.4};
   //  detect.set_resolutions(3, scales);
@@ -154,7 +155,8 @@ int main(int argc, char **argv) { // regular main without gui
     }
   }
   if (save_video)
-    cam->stop_recording(cam->fps());
+    cam->stop_recording(conf.get_bool("use_original_fps") ?
+			cam->fps() : conf.get_uint("save_video_fps"));
   // free variables
   if (net) delete net;
   if (cam) delete cam;
