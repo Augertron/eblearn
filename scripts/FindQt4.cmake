@@ -175,17 +175,18 @@ SET(QT_USE_FILE ${CMAKE_ROOT}/Modules/UseQt4.cmake)
 
 SET( QT_DEFINITIONS "")
 
-#SET(QT_LIB_ROOT "/usr/lib64/qt4")
+#SET(QT_ROOT "/usr/lib64/qt4")
+SET(QT_ROOT "/usr/share/qt4")
 
 # check for qmake
-SET (QMAKE_TMP "${QT_LIB_ROOT}/bin/qmake")
+SET (QMAKE_TMP "${QT_ROOT}/bin/qmake")
 IF (EXISTS ${QMAKE_TMP})
   SET (QT_QMAKE_EXECUTABLE "${QMAKE_TMP}")
 ELSE (EXISTS ${QMAKE_TMP})
   FIND_PROGRAM(QT_QMAKE_EXECUTABLE NAMES qmake qmake-qt4 PATHS
     "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\4.0.0;InstallDir]/bin"
     "[HKEY_CURRENT_USER\\Software\\Trolltech\\Versions\\4.0.0;InstallDir]/bin"
-    "${QT_LIB_ROOT}/bin/"
+    "${QT_ROOT}/bin/"
     $ENV{QTDIR}/bin
     )
 ENDIF (EXISTS ${QMAKE_TMP})
@@ -268,7 +269,6 @@ IF (QT_QMAKE_EXECUTABLE)
 ENDIF (QT_QMAKE_EXECUTABLE)
 
 IF (QT4_QMAKE_FOUND)
-
   # ask qmake for the library dir
   # Set QT_LIBRARY_DIR
     EXEC_PROGRAM( ${QT_QMAKE_EXECUTABLE}
@@ -357,14 +357,14 @@ IF (QT4_QMAKE_FOUND)
   ENDIF($QT_QTCORE_INCLUDE_DIR AND NOT $QT_INCLUDE_DIR)
 
   IF (NOT $QT_INCLUDE_DIR)
-    SET(QT_INCLUDE_DIR "${QT_LIB_ROOT}/include")
+    SET(QT_INCLUDE_DIR "${QT_ROOT}/include")
   ENDIF (NOT $QT_INCLUDE_DIR)
   
-  IF( NOT QT_INCLUDE_DIR)
+  IF( NOT $QT_INCLUDE_DIR)
     IF( NOT Qt4_FIND_QUIETLY AND Qt4_FIND_REQUIRED)
       MESSAGE( FATAL_ERROR "Could NOT find QtGlobal header")
     ENDIF( NOT Qt4_FIND_QUIETLY AND Qt4_FIND_REQUIRED)
-  ENDIF( NOT QT_INCLUDE_DIR)
+  ENDIF( NOT $QT_INCLUDE_DIR)
 
   #############################################
   #
