@@ -16,48 +16,6 @@ include_directories (${LIBEBLEARN_INCLUDE_DIR})
 include_directories (${LIBEBLEARNGUI_INCLUDE_DIR})
 SET(EBLEARN_TOOLS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 
-# find boost
-###############################################################################
-FIND_PACKAGE(Boost COMPONENTS filesystem regex)
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    FIND_PACKAGE(Boost COMPONENTS system filesystem regex)
-  ENDIF(${Boost_MINOR_VERSION} GREATER 34)
-  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__BOOST__")
-  INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-  ##LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
-ENDIF(Boost_FOUND)
-  
-# find opencv
-###############################################################################
-FIND_PACKAGE(OpenCV)
-IF (OpenCV_FOUND)
-  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__OPENCV__")
-  INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
-  LINK_DIRECTORIES(${OpenCV_LIBRARY_DIRS})
-ENDIF(OpenCV_FOUND)
-  
-# find XML++
-##############################################################################
-FIND_PACKAGE(Xml++)
-IF (XML_FOUND) #----------------------------------------------------------------
-  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__XML__")
-  INCLUDE_DIRECTORIES(${XML_INCLUDE_DIRS})
-ENDIF (XML_FOUND) #-------------------------------------------------------------
-
-# find QT
-##############################################################################
-FIND_PACKAGE(Qt4)
-IF (QT_FOUND) #-----------------------------------------------------------------
-  include_directories(${LIBIDXGUI_INCLUDE_DIR})
-  include_directories(${QT_INCLUDE_DIR})
-  include_directories(${QT_QTGUI_INCLUDE_DIR})
-  include_directories(${QT_QTCORE_INCLUDE_DIR})
-  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GUI__")
-ENDIF (QT_FOUND) #--------------------------------------------------------------
-
-MESSAGE("libeblearntools compilation flags: ${CMAKE_CXX_FLAGS}")
-
 # compile library
 ################################################################################
 add_library (eblearntools SHARED

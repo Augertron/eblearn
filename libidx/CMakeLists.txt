@@ -7,6 +7,7 @@
 #
 ################################################################################
 
+
 # set include directories
 ################################################################################
 include_directories (include)
@@ -24,13 +25,9 @@ add_library (idx SHARED
   src/utils.cpp
   )
 
-# check for external libraries
+# link
 ################################################################################
-# CBLAS
-################################################################################
-FIND_PACKAGE(CBLAS)
 IF(CBLAS_FOUND)
-  INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
   TARGET_LINK_LIBRARIES(idx ${CBLAS_LIBRARIES})
   CONFIGURE_FILE("include/idxblas.h.in" 
     "${CMAKE_CURRENT_SOURCE_DIR}/include/idxblas.h")
@@ -38,4 +35,3 @@ ELSE(CBLAS_FOUND)
   MESSAGE(FATAL_ERROR 
     "CBLAS library not found. Please specify library  location")
 ENDIF(CBLAS_FOUND)
-
