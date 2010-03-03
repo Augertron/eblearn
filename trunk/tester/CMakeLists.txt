@@ -14,26 +14,7 @@ include_directories(${LIBEBLEARN_INCLUDE_DIR})
 include_directories(${LIBIDX_INCLUDE_DIR})
 include_directories(${LIBEBLEARN_TOOLS_INCLUDE_DIR})
 
-FIND_PACKAGE(Qt4)
-IF (QT_FOUND) #-----------------------------------------------------------------
-  # add include directories
-  ##############################################################################
-  include_directories(${LIBIDXGUI_INCLUDE_DIR})
-  include_directories(${LIBEBLEARNGUI_INCLUDE_DIR})
-  include_directories(${QT_INCLUDE_DIR})
-  include_directories(${QT_QTGUI_INCLUDE_DIR})
-  include_directories(${QT_QTCORE_INCLUDE_DIR})
-  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GUI__")
-ENDIF (QT_FOUND) #--------------------------------------------------------------
-
-# check for external libraries
-################################################################################
-# CPPUnit
-################################################################################
-FIND_PACKAGE(CPPUNIT)
-
-IF (CPPUNIT_FOUND) #------------------------------------------------------------
-  include_directories(${CPPUNIT_INCLUDE_DIR})
+IF (CPPUNIT_FOUND) # compile only if cppunit is present
   
   # compile executable
   ##############################################################################

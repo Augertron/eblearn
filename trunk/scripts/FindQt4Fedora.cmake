@@ -174,9 +174,10 @@ SET(QT_USE_FILE ${CMAKE_ROOT}/Modules/UseQt4.cmake)
 SET( QT_DEFINITIONS "")
 
 # check for qmake
+SET(QT_LIB_ROOT "/usr/lib64/qt4/")
 
-SET (QMAKE_TMP "/usr/lib/qt4/bin/qmake")
-#SET (QT_QMAKE_EXECUTABLE "/usr/lib/qt4/bin/qmake")
+SET (QMAKE_TMP "${QT_LIB_ROOT}/bin/qmake")
+#SET (QT_QMAKE_EXECUTABLE "${QT_LIB_ROOT}/bin/qmake")
 SET (QT_QMAKE_EXECUTABLE "")
 IF (EXISTS "${QMAKE_TMP}")
   SET (QT_QMAKE_EXECUTABLE "${QMAKE_TMP}")
@@ -185,7 +186,7 @@ ELSE (EXISTS "${QMAKE_TMP}")
 FIND_PROGRAM(QT_QMAKE_EXECUTABLE NAMES qmake PATHS
   "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\4.0.0;InstallDir]/bin"
   "[HKEY_CURRENT_USER\\Software\\Trolltech\\Versions\\4.0.0;InstallDir]/bin"
-  "/usr/lib/qt4/bin/"
+  "${QT_LIB_ROOT}/bin/"
   $ENV{QTDIR}/bin
   )
 ENDIF (EXISTS "${QMAKE_TMP}")
@@ -205,7 +206,6 @@ MACRO(QT_QUERY_QMAKE outvar invar)
     "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmpQmake")
   STRING(REGEX REPLACE ".*CMAKE_MESSAGE<([^>]*).*" "\\1" ${outvar} "${_qmake_query_output}")
 ENDMACRO(QT_QUERY_QMAKE)
-
 
 IF (QT_QMAKE_EXECUTABLE)
 
@@ -272,18 +272,22 @@ IF (QT4_QMAKE_FOUND)
 
   # ask qmake for the library dir
   # Set QT_LIBRARY_DIR
-  IF (NOT QT_LIBRARY_DIR)
     EXEC_PROGRAM( ${QT_QMAKE_EXECUTABLE}
       ARGS "-query QT_INSTALL_LIBS"
       OUTPUT_VARIABLE QT_LIBRARY_DIR_TMP )
+
     IF(EXISTS "${QT_LIBRARY_DIR_TMP}")
-      SET(QT_LIBRARY_DIR ${QT_LIBRARY_DIR_TMP} CACHE PATH "Qt library dir")
+
+      SET(QT_LIBRARY_DIR ${QT_LIBRARY_DIR_TMP}) # CACHE PATH "Qt library dir")
+
     ELSE(EXISTS "${QT_LIBRARY_DIR_TMP}")
       MESSAGE("Warning: QT_QMAKE_EXECUTABLE reported QT_INSTALL_LIBS as ${QT_LIBRARY_DIR_TMP}")
        MESSAGE("Warning: ${QT_LIBRARY_DIR_TMP} does NOT exist, Qt must NOT be installed correctly.")
     ENDIF(EXISTS "${QT_LIBRARY_DIR_TMP}")
-  ENDIF(NOT QT_LIBRARY_DIR)
-  
+
+
+
+
   IF (APPLE)
     IF (EXISTS ${QT_LIBRARY_DIR}/QtCore.framework)
       SET(QT_USE_FRAMEWORKS ON
@@ -306,13 +310,12 @@ IF (QT4_QMAKE_FOUND)
   ENDIF (NOT QT_BINARY_DIR)
 
   # ask qmake for the include dir
-  IF (NOT QT_HEADERS_DIR)
+  IF (NOT ${QT_HEADERS_DIR})
       EXEC_PROGRAM( ${QT_QMAKE_EXECUTABLE}
         ARGS "-query QT_INSTALL_HEADERS" 
         OUTPUT_VARIABLE qt_headers )
-      SET(QT_HEADERS_DIR ${qt_headers} CACHE INTERNAL "")
-  ENDIF(NOT QT_HEADERS_DIR)
-
+      SET(QT_HEADERS_DIR ${qt_headers}) # CACHE INTERNAL "")
+  ENDIF(NOT ${QT_HEADERS_DIR})
 
   # ask qmake for the documentation directory
   IF (NOT QT_DOC_DIR)
@@ -349,18 +352,18 @@ IF (QT4_QMAKE_FOUND)
     NO_DEFAULT_PATH
    )
   # Set QT_INCLUDE_DIR by removine "/QtCore" in the string ${QT_QTCORE_INCLUDE_DIR}
-  IF( QT_QTCORE_INCLUDE_DIR AND NOT QT_INCLUDE_DIR)
+  IF($QT_QTCORE_INCLUDE_DIR AND NOT $QT_INCLUDE_DIR)
     IF (QT_USE_FRAMEWORKS)
       SET(QT_INCLUDE_DIR ${QT_HEADERS_DIR})
     ELSE (QT_USE_FRAMEWORKS)
       STRING( REGEX REPLACE "/QtCore$" "" qt4_include_dir ${QT_QTCORE_INCLUDE_DIR})
       SET( QT_INCLUDE_DIR ${qt4_include_dir} CACHE PATH "")
     ENDIF (QT_USE_FRAMEWORKS)
-  ENDIF( QT_QTCORE_INCLUDE_DIR AND NOT QT_INCLUDE_DIR)
+  ENDIF( $QT_QTCORE_INCLUDE_DIR AND NOT $QT_INCLUDE_DIR)
 
-  IF (NOT QT_INCLUDE_DIR)
-    SET(QT_INCLUDE_DIR "/usr/lib/qt4/include")
-  ENDIF (NOT QT_INCLUDE_DIR)
+  IF (NOT $QT_INCLUDE_DIR)
+    SET(QT_INCLUDE_DIR "${QT_LIB_ROOT}/include")
+  ENDIF (NOT $QT_INCLUDE_DIR)
   
   SET(QT_QTCORE_INCLUDE_DIR "${QT_INCLUDE_DIR}/QtCore")
 

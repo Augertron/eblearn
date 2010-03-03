@@ -1,5 +1,4 @@
 # also look for package on other systems
-#FIND_PACKAGE(Qt4Fedora)
 
 # - Find QT 4
 # This module can be used to find Qt4.
@@ -176,12 +175,20 @@ SET(QT_USE_FILE ${CMAKE_ROOT}/Modules/UseQt4.cmake)
 
 SET( QT_DEFINITIONS "")
 
+#SET(QT_LIB_ROOT "/usr/lib64/qt4")
+
 # check for qmake
-FIND_PROGRAM(QT_QMAKE_EXECUTABLE NAMES qmake qmake-qt4 PATHS
-  "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\4.0.0;InstallDir]/bin"
-  "[HKEY_CURRENT_USER\\Software\\Trolltech\\Versions\\4.0.0;InstallDir]/bin"
-  $ENV{QTDIR}/bin
-  )
+SET (QMAKE_TMP "${QT_LIB_ROOT}/bin/qmake")
+IF (EXISTS ${QMAKE_TMP})
+  SET (QT_QMAKE_EXECUTABLE "${QMAKE_TMP}")
+ELSE (EXISTS ${QMAKE_TMP})
+  FIND_PROGRAM(QT_QMAKE_EXECUTABLE NAMES qmake qmake-qt4 PATHS
+    "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\4.0.0;InstallDir]/bin"
+    "[HKEY_CURRENT_USER\\Software\\Trolltech\\Versions\\4.0.0;InstallDir]/bin"
+    "${QT_LIB_ROOT}/bin/"
+    $ENV{QTDIR}/bin
+    )
+ENDIF (EXISTS ${QMAKE_TMP})
 
 SET(QT4_INSTALLED_VERSION_TOO_OLD FALSE)
 
@@ -199,7 +206,6 @@ MACRO(QT_QUERY_QMAKE outvar invar)
   STRING(REGEX REPLACE ".*CMAKE_MESSAGE<([^>]*).*" "\\1" ${outvar} "${_qmake_query_output}")
 ENDMACRO(QT_QUERY_QMAKE)
 
-
 IF (QT_QMAKE_EXECUTABLE)
 
    SET(QT4_QMAKE_FOUND FALSE)
@@ -213,7 +219,7 @@ IF (QT_QMAKE_EXECUTABLE)
       "[HKEY_CURRENT_USER\\Software\\Trolltech\\Versions\\4.0.0;InstallDir]/bin"
       $ENV{QTDIR}/bin
       )
-    IF(QT_QMAKE_EXECUTABLE)
+    IF($QT_QMAKE_EXECUTABLE)
       EXEC_PROGRAM(${QT_QMAKE_EXECUTABLE} 
         ARGS "-query QT_VERSION" OUTPUT_VARIABLE QTVERSION)
     ENDIF(QT_QMAKE_EXECUTABLE)
@@ -265,17 +271,15 @@ IF (QT4_QMAKE_FOUND)
 
   # ask qmake for the library dir
   # Set QT_LIBRARY_DIR
-  IF (NOT QT_LIBRARY_DIR)
     EXEC_PROGRAM( ${QT_QMAKE_EXECUTABLE}
       ARGS "-query QT_INSTALL_LIBS"
       OUTPUT_VARIABLE QT_LIBRARY_DIR_TMP )
-    IF(EXISTS "${QT_LIBRARY_DIR_TMP}")
-      SET(QT_LIBRARY_DIR ${QT_LIBRARY_DIR_TMP} CACHE PATH "Qt library dir")
-    ELSE(EXISTS "${QT_LIBRARY_DIR_TMP}")
+    IF(EXISTS ${QT_LIBRARY_DIR_TMP})
+      SET(QT_LIBRARY_DIR ${QT_LIBRARY_DIR_TMP})
+    ELSE(EXISTS ${QT_LIBRARY_DIR_TMP})
       MESSAGE("Warning: QT_QMAKE_EXECUTABLE reported QT_INSTALL_LIBS as ${QT_LIBRARY_DIR_TMP}")
        MESSAGE("Warning: ${QT_LIBRARY_DIR_TMP} does NOT exist, Qt must NOT be installed correctly.")
-    ENDIF(EXISTS "${QT_LIBRARY_DIR_TMP}")
-  ENDIF(NOT QT_LIBRARY_DIR)
+    ENDIF(EXISTS ${QT_LIBRARY_DIR_TMP})
   
   IF (APPLE)
     IF (EXISTS ${QT_LIBRARY_DIR}/QtCore.framework)
@@ -290,6 +294,7 @@ IF (QT4_QMAKE_FOUND)
   ENDIF (APPLE)
   
   # ask qmake for the binary dir
+  SET(QT_BINARY_DIR "")
   IF (NOT QT_BINARY_DIR)
      EXEC_PROGRAM(${QT_QMAKE_EXECUTABLE}
         ARGS "-query QT_INSTALL_BINS"
@@ -298,12 +303,12 @@ IF (QT4_QMAKE_FOUND)
   ENDIF (NOT QT_BINARY_DIR)
 
   # ask qmake for the include dir
-  IF (NOT QT_HEADERS_DIR)
+  IF (NOT $QT_HEADERS_DIR)
       EXEC_PROGRAM( ${QT_QMAKE_EXECUTABLE}
         ARGS "-query QT_INSTALL_HEADERS" 
         OUTPUT_VARIABLE qt_headers )
-      SET(QT_HEADERS_DIR ${qt_headers} CACHE INTERNAL "")
-  ENDIF(NOT QT_HEADERS_DIR)
+      SET(QT_HEADERS_DIR ${qt_headers})
+  ENDIF(NOT $QT_HEADERS_DIR)
 
 
   # ask qmake for the documentation directory
@@ -342,18 +347,18 @@ IF (QT4_QMAKE_FOUND)
    )
 
   # Set QT_INCLUDE_DIR by removine "/QtCore" in the string ${QT_QTCORE_INCLUDE_DIR}
-  IF( QT_QTCORE_INCLUDE_DIR AND NOT QT_INCLUDE_DIR)
+  IF($QT_QTCORE_INCLUDE_DIR AND NOT $QT_INCLUDE_DIR)
     IF (QT_USE_FRAMEWORKS)
       SET(QT_INCLUDE_DIR ${QT_HEADERS_DIR})
     ELSE (QT_USE_FRAMEWORKS)
       STRING( REGEX REPLACE "/QtCore$" "" qt4_include_dir ${QT_QTCORE_INCLUDE_DIR})
       SET( QT_INCLUDE_DIR ${qt4_include_dir} CACHE PATH "")
     ENDIF (QT_USE_FRAMEWORKS)
-  ENDIF( QT_QTCORE_INCLUDE_DIR AND NOT QT_INCLUDE_DIR)
+  ENDIF($QT_QTCORE_INCLUDE_DIR AND NOT $QT_INCLUDE_DIR)
 
-  IF (NOT QT_INCLUDE_DIR)
-    SET(QT_INCLUDE_DIR "/usr/lib/qt4/include")
-  ENDIF (NOT QT_INCLUDE_DIR)
+  IF (NOT $QT_INCLUDE_DIR)
+    SET(QT_INCLUDE_DIR "${QT_LIB_ROOT}/include")
+  ENDIF (NOT $QT_INCLUDE_DIR)
   
   IF( NOT QT_INCLUDE_DIR)
     IF( NOT Qt4_FIND_QUIETLY AND Qt4_FIND_REQUIRED)

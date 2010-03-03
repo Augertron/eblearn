@@ -231,8 +231,6 @@ SET(OPENCV_FOUND       ${OpenCV_FOUND})
 
 IF (OpenCV_FOUND)
   MESSAGE(STATUS "Found OpenCV: ${OpenCV_LIBRARIES}")
-ELSE (OpenCV_FOUND)
-  MESSAGE("Warning:   Could not find OpenCV librares.")
 ENDIF (OpenCV_FOUND)
 
 # display help message
@@ -244,7 +242,7 @@ IF(NOT OpenCV_FOUND)
         "OpenCV required but some headers or libs not found. Please specify it's location with OpenCV_ROOT_DIR env. variable.")
     ELSE(OpenCV_FIND_REQUIRED)
       MESSAGE(STATUS 
-        "WARNING: OpenCV was not found.")
+        "Warning: OpenCV was not found.")
     ENDIF(OpenCV_FIND_REQUIRED)
   ENDIF(NOT OpenCV_FIND_QUIETLY)
 ENDIF(NOT OpenCV_FOUND)

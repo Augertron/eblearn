@@ -13,14 +13,7 @@ include_directories(${LIBIDX_INCLUDE_DIR})
 include_directories(${LIBIDXGUI_INCLUDE_DIR})
 SET(LIBEBLEARNGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 
-FIND_PACKAGE(Qt4)
 IF (QT_FOUND) #-----------------------------------------------------------------
-
-  # add include directories
-  ##############################################################################
-  include_directories (${QT_INCLUDE_DIR})
-  include_directories (${QT_QTGUI_INCLUDE_DIR})
-  include_directories (${QT_QTCORE_INCLUDE_DIR})
 
   # compile library
   ##############################################################################
