@@ -11,6 +11,10 @@ include_directories(include)
 include_directories(${LIBEBLEARN_INCLUDE_DIR})
 include_directories(${LIBEBLEARNTOOLS_INCLUDE_DIR})
 include_directories(${LIBIDX_INCLUDE_DIR})
+IF (QT_FOUND)
+  include_directories(${LIBIDXGUI_INCLUDE_DIR})
+  include_directories(${LIBEBLEARNGUI_INCLUDE_DIR})
+ENDIF (QT_FOUND)
 
 # compile executable
 ################################################################################
