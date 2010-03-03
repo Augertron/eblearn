@@ -345,7 +345,7 @@ namespace ebl {
 			  buffer->dim(1), buffer->dim(0), 
 			  buffer->dim(1) * buffer->dim(2) *
 			  sizeof (unsigned char),
-			  QImage::Format_RGB88);
+			  QImage::Format_RGB888);
 //       qimage = new QImage((unsigned char*) buffer->idx_ptr(), 
 // 			  buffer->dim(1), buffer->dim(0), 
 // 			  QImage::Format_RGB32);
