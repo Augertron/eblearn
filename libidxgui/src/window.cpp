@@ -343,9 +343,12 @@ namespace ebl {
 	delete qimage;
       qimage = new QImage((unsigned char*) buffer->idx_ptr(), 
 			  buffer->dim(1), buffer->dim(0), 
- 			  buffer->dim(1) * buffer->dim(2) *
- 			  sizeof (unsigned char),
-			  QImage::Format_RGB888);
+			  buffer->dim(1) * buffer->dim(2) *
+			  sizeof (unsigned char),
+			  QImage::Format_RGB88);
+//       qimage = new QImage((unsigned char*) buffer->idx_ptr(), 
+// 			  buffer->dim(1), buffer->dim(0), 
+// 			  QImage::Format_RGB32);
       qimage->setColorTable(colorTable);
     }
   }
@@ -546,7 +549,7 @@ namespace ebl {
 	bg.setHeight(bg.height() - 3);
 	painter.setBrush(text_bg_color);
 	painter.setPen(Qt::NoPen);
-	painter.drawRect(bg.left(), bg.top(), bg.width(), bg.height());
+	painter.drawRect((int) bg.left(), (int) bg.top(), (int) bg.width(), (int) bg.height());
 	painter.setPen(text_fg_color);
 	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
 			 txt, &bg);
