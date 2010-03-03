@@ -39,16 +39,6 @@ IF (CPPUNIT_FOUND) # compile only if cppunit is present
     src/MyTextOutputter.cpp
     )
 
-  # compilation flags
-  ##############################################################################
-  FIND_PACKAGE(Boost COMPONENTS filesystem regex)
-  IF (Boost_FOUND)
-     IF (${Boost_MINOR_VERSION} GREATER 34)
-        FIND_PACKAGE(Boost COMPONENTS system filesystem regex)
-     ENDIF(${Boost_MINOR_VERSION} GREATER 34)
-     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__BOOST__")
-  ENDIF (Boost_FOUND)
-  
   # link executable with external libraries
   ##############################################################################
   target_link_libraries (tester eblearn idx)
