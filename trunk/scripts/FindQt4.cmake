@@ -175,8 +175,8 @@ SET(QT_USE_FILE ${CMAKE_ROOT}/Modules/UseQt4.cmake)
 
 SET( QT_DEFINITIONS "")
 
-SET(QT_ROOT "/usr/lib64/qt4")
-#SET(QT_ROOT "/usr/share/qt4")
+#SET(QT_ROOT "/usr/lib64/qt4")
+SET(QT_ROOT "/usr/share/qt4")
 
 # check for qmake
 SET (QMAKE_TMP "${QT_ROOT}/bin/qmake")
