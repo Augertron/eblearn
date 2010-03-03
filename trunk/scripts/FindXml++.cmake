@@ -1,11 +1,15 @@
 EXECUTE_PROCESS(COMMAND pkg-config libxml++-2.6 --libs
   OUTPUT_VARIABLE xml_lib_output
   RESULT_VARIABLE xml_lib_result
-  ERROR_VARIABLE xml_lib_output )
+  ERROR_VARIABLE xml_lib_output2)
+
+# strip trailing whitespaces and newline
+STRING(REGEX REPLACE "[ ]+\n" "" xml_lib_output "${xml_lib_output}")
+
 EXECUTE_PROCESS(COMMAND pkg-config libxml++-2.6 --cflags
   OUTPUT_VARIABLE xml_output
   RESULT_VARIABLE xml_result
-  ERROR_VARIABLE xml_output )
+  ERROR_VARIABLE xml_output2)
 
 IF(xml_result MATCHES 0)
   # remove -I and separate arguments (required for include_directories)
