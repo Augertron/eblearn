@@ -468,8 +468,10 @@ namespace ebl {
     double d;
     d = numeric_limits<double>::max();
     iss >> d;
-    if (d == numeric_limits<double>::max())
+    if (d == numeric_limits<double>::max()) {
+      cerr << varname << " is not a double." << endl;
       throw "invalid conversion to double";
+    }
     return d;
   }
 
@@ -483,8 +485,10 @@ namespace ebl {
     float d;
     d = numeric_limits<float>::max();
     iss >> d;
-    if (d == numeric_limits<float>::max())
+    if (d == numeric_limits<float>::max()) {
+      cerr << varname << " is not a float." << endl;
       throw "invalid conversion to float";
+    }
     return d;
   }
 
@@ -498,8 +502,10 @@ namespace ebl {
     uint d;
     d = numeric_limits<uint>::max();
     iss >> d;
-    if (d == numeric_limits<uint>::max())
+    if (d == numeric_limits<uint>::max()) {
+      cerr << varname << " is not an unsigned int." << endl;
       throw "invalid conversion to uint";
+    }
     return d;
   }
 
@@ -513,8 +519,10 @@ namespace ebl {
     int d;
     d = numeric_limits<int>::max();
     iss >> d;
-    if (d == numeric_limits<int>::max())
+    if (d == numeric_limits<int>::max()) {
+      cerr << varname << " is not an int." << endl;
       throw "invalid conversion to int";
+    }
     return d;
   }
 
