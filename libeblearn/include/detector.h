@@ -68,7 +68,7 @@ namespace ebl {
     uint	oh0;		//<! pixel's height in network's output map
     uint	ow0;		//<! pixel's width in network's output map
   };
-  
+
   ////////////////////////////////////////////////////////////////
   // detector
 
@@ -162,6 +162,14 @@ namespace ebl {
     //! through an idx_copy (avoid for better performance).
     template <class Tin>
       vector<bbox*>& fprop(idx<Tin> &img, T threshold);
+
+    //! Return a reference to a vector of windows in the original image that
+    //! yielded a detection.
+    vector<idx<T> >& get_originals();
+
+    //! Return a reference to a vector of windows in the preprocessed/scaled
+    //! image that yielded a detection.
+    vector<idx<T> >& get_preprocessed();
 
   private:
     //! initialize dimensions and multi-resolution buffers.
@@ -259,9 +267,14 @@ namespace ebl {
     vector<bbox>         raw_bboxes; //!< raw bboxes extracted from outputs
     vector<bbox*>        pruned_bboxes; //!< scale-pruned bboxes
     uint                 max_size; //!< maximum input size to network
+    vector<idx<T> >      odetections; //!< original windows yielding detection
+    vector<idx<T> >      ppdetections; //!< preprocessed wins yielding detection
+    bool                 bodetections; //!< odetections is up-to-date or not
+    bool                 bppdetections; //!< ppdetections is up-to-date or not
 
     ////////////////////////////////////////////////////////////////
     // friends
+    template <typename T2>
     friend class detector_gui;
   };
 

@@ -81,6 +81,18 @@ minimal_display = 1
 # sleep in milliseconds after displaying
 display_sleep = 0
 ninternals = 1
+# demo display variables
+queue1 = 1
+qstep1 = 5
+qheight1 = 5
+qwidth1 = 5
+queue2 = 1
+qstep2 = 5
+qheight2 = 5
+qwidth2 = 5
+# pre-camera variables (used before regular camera)
+precamera = directory
+precamdir = ${root2}/
 
 # camera options: opencv shmem video directory
 camera = directory

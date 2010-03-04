@@ -161,6 +161,9 @@ namespace ebl {
     //! this throws an exception.
     bool get_bool(const char *varname);
 
+    //! Returns true if variable exists and its value is true, false otherwise.
+    bool exists_bool(const char *varname);
+
     //! set variable 'varname' to value 'value'
     void set(const char *varname, const char *value);
 
