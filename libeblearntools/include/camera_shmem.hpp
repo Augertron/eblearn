@@ -95,7 +95,7 @@ namespace ebl {
       frame = idx<Tdata>(buffer->height, buffer->width,
 			 buffer->bytes_per_pixel);
     // cast and copy data
-    ubyte *in = (ubyte*) buffer->data;
+    ubyte *in = (ubyte*) &(buffer->data);
     Tdata *out = frame.idx_ptr();
     uint sz = frame.nelements();
     // cast and copy data
