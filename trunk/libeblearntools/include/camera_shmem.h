@@ -47,7 +47,7 @@ namespace ebl {
     char dump_to_file;
     int width;
     int height;
-    unsigned char *data;
+    unsigned char data;
   } t_video_buffer;
 
   //! The camera_shmem class interfaces with camera images that come
