@@ -33,6 +33,12 @@
 #include "utils.h"
 #include <stdlib.h>
 #include <iostream>
+#include <sys/time.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -53,6 +59,20 @@ namespace ebl {
       return false;
     }
     return true;
+  }
+
+  string tstamp() {
+    ostringstream ts;
+    static time_t t = time(NULL);
+    static struct tm *lt = localtime(&t);
+    ts << setw(2) << setfill('0') << lt->tm_year + 1900
+       << setw(2) << setfill('0') << lt->tm_mon
+       << setw(2) << setfill('0') << lt->tm_mday
+       << "."
+       << setw(2) << setfill('0') << lt->tm_hour
+       << setw(2) << setfill('0') << lt->tm_min
+       << setw(2) << setfill('0') << lt->tm_sec;
+    return ts.str();
   }
 
 } // namespace ebl

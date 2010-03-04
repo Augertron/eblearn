@@ -67,9 +67,13 @@ namespace ebl {
     wid = window_id;
     record_cnt = 0;
     if (!name)
-      recording_name = "toto2";
+      recording_name = "video";
     else
       recording_name = name;
+    // add timestamp to name
+    recording_name += "_";
+    recording_name += tstamp();
+    // create directory
     mkdir_full(recording_name);
     return true;
   }

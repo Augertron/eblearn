@@ -47,8 +47,7 @@ namespace ebl {
   template <class T>
   detector<T>::detector(module_1_1<T> &thenet_,	idx<ubyte> &labels_,
 			module_1_1<T> *pp_, uint ppkersz_,
-			const char *background, T bias_, float coef_,
-			uint queue_size) 
+			const char *background, T bias_, float coef_)
     : thenet(thenet_), coef(coef_), bias(bias_),
       inputs(1), outputs(1), results(1), resize_modules(1), nets(1), pp(pp_),
       ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
@@ -56,7 +55,7 @@ namespace ebl {
       bgclass(-1), scales(NULL), scales_step(0),
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
-      max_queue_size(queue_size), max_size(0), bodetections(false),
+      max_size(0), bodetections(false),
       bppdetections(false) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
@@ -679,14 +678,6 @@ namespace ebl {
       cout << "saved " << fname.str() << endl;
       // increment file counter
       save_counts[(*bbox)->class_id]++;
-
-      // enqueue original bboxes if queue is requested
-      // TODO: this depends on saving images, make it independent?
-      if (max_queue_size > 0) {
-	if (last_detections.size() >= max_queue_size)
-	  last_detections.pop_front();
-	last_detections.push_back(inorig);
-      }
     }
   }
   

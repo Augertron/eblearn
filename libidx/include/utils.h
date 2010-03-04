@@ -49,6 +49,10 @@ namespace ebl {
   //! Create specified directory and all its parents if they do not exists.
   //! Return false upon failure.
   bool mkdir_full(string &dir);
+
+  //! Return a string containing a timestamp of localtime in the following
+  //! format: "<year><month><day>.<hour><minutes><seconds>".
+  string tstamp();
   
 } // end namespace ebl
 

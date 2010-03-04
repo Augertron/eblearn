@@ -55,7 +55,7 @@ void detector_test::test_norb() {
   //  cb.fprop(left, .5);
 
 #ifdef __GUI__
-  detector_gui cgui;
+  detector_gui<t_net> cgui;
   cgui.display_all(cb, left, .97);
 #endif
 
