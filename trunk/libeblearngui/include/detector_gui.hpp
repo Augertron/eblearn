@@ -42,8 +42,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // detector_gui
 
-  template <typename T>
-  detector_gui<T>::detector_gui(bool show_detqueue_, uint step_, uint qheight_,
+  template <typename Tnet>
+  detector_gui<Tnet>::detector_gui(bool show_detqueue_, uint step_, uint qheight_,
 				uint qwidth_, bool show_detqueue2_, uint step2_,
 				uint qheight2_, uint qwidth2_)
     : show_detqueue(show_detqueue_), step(step_), qheight(qheight_),
@@ -51,16 +51,16 @@ namespace ebl {
       qheight2(qheight2_), qwidth2(qwidth2_), detcnt(0) {
   }
 
-  template <typename T>
-  detector_gui<T>::~detector_gui() {
+  template <typename Tnet>
+  detector_gui<Tnet>::~detector_gui() {
   }
   
-  template <typename T> template <typename Tdata>
-  vector<bbox*>& detector_gui<T>::display(detector<Tdata> &cl, idx<T> &img,
-				       double threshold, unsigned int h0,
-				       unsigned int w0,
-				       double dzoom,  Tdata vmin, Tdata vmax,
-				       int wid, const char *wname) {
+  template <typename Tnet> template <typename Tin>
+  vector<bbox*>& detector_gui<Tnet>::display(detector<Tnet> &cl, idx<Tin> &img,
+					  double threshold, unsigned int h0,
+					  unsigned int w0,
+					  double dzoom,  Tnet vmin, Tnet vmax,
+					  int wid, const char *wname) {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector"));
     select_window(display_wid);
@@ -77,54 +77,54 @@ namespace ebl {
 	       0, 0, 255,
 	       new string((const char *)cl.labels[(*i)->class_id].idx_ptr()));
     }
-    draw_matrix(img, h0, w0, dzoom, dzoom, (T)vmin, (T)vmax);   
+    draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
     enable_window_updates();
     return vb;
   }
 
-  template <typename T> template <typename Tdata> 
-  vector<bbox*>& detector_gui<T>::
-  display_input(detector<Tdata> &cl, idx<T> &img, double threshold,
-		unsigned int h0, unsigned int w0, double dzoom, Tdata vmin,
-		Tdata vmax, int wid, const char *wname) {
+  template <typename Tnet> template <typename Tin> 
+  vector<bbox*>& detector_gui<Tnet>::
+  display_input(detector<Tnet> &cl, idx<Tin> &img, double threshold,
+		unsigned int h0, unsigned int w0, double dzoom, Tnet vmin,
+		Tnet vmax, int wid, const char *wname) {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: output"));
     select_window(display_wid);
     disable_window_updates();
 
     // draw input
-    draw_matrix(img, "input", h0, w0, dzoom, dzoom, (T) vmin, (T) vmax);
+    draw_matrix(img, "input", h0, w0, dzoom, dzoom, (Tin) vmin, (Tin) vmax);
     w0 += img.dim(1) * dzoom + 5;
 
     return display(cl, img, threshold, h0, w0, dzoom, vmin, vmax, wid, wname);
   }
 
-  template <typename T> template <typename Tdata>
-  vector<bbox*>& detector_gui<T>::
-  display_inputs_outputs(detector<Tdata> &cl, idx<T> &img, double threshold,
+  template <typename Tnet> template <typename Tin>
+  vector<bbox*>& detector_gui<Tnet>::
+  display_inputs_outputs(detector<Tnet> &cl, idx<Tin> &img, double threshold,
 			 unsigned int h0, unsigned int w0, double dzoom,
-			 Tdata vmin, Tdata vmax, int wid, const char *wname){
+			 Tnet vmin, Tnet vmax, int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
 
     // draw input and output
     vector<bbox*>& bb =
-      display_input(cl, img, threshold, h0, w0, dzoom, (Tdata)0, (Tdata)255,
+      display_input(cl, img, threshold, h0, w0, dzoom, (Tnet)0, (Tnet)255,
 		    display_wid_fprop);
 
     disable_window_updates();
     // draw internal inputs and outputs
     int h = h0 + cl.height * dzoom + 5 + 15;
     int scale = 0;
-    int ohmax = ((state_idx<Tdata>*) cl.outputs.get(0))->x.dim(1);
-    int ihmax = ((state_idx<Tdata>*) cl.inputs.get(0))->x.dim(1);
+    int ohmax = ((state_idx<Tnet>*) cl.outputs.get(0))->x.dim(1);
+    int ihmax = ((state_idx<Tnet>*) cl.inputs.get(0))->x.dim(1);
     bool first_time = true;
     ostringstream s;
     // compute min and max of all outputs, to maximize intensity display range
     if (vmin == vmax) {
       { idx_bloop1(out, cl.outputs, void*) {
-	  idx<Tdata> outx = ((state_idx<Tdata>*) out.get())->x;
+	  idx<Tnet> outx = ((state_idx<Tnet>*) out.get())->x;
 	  if (first_time) {
 	    vmin = idx_min(outx);
 	    vmax = idx_max(outx);
@@ -138,15 +138,15 @@ namespace ebl {
     // display all outputs
     first_time = true;
     { idx_bloop2(in, cl.inputs, void*, out, cl.outputs, void*) {
-	idx<Tdata> inx = ((state_idx<Tdata>*) in.get())->x;
+	idx<Tnet> inx = ((state_idx<Tnet>*) in.get())->x;
 	//inx = inx.select(0, 0);
 	inx = inx.shift_dim(0, 2);
-	idx<Tdata> outx = ((state_idx<Tdata>*) out.get())->x;
+	idx<Tnet> outx = ((state_idx<Tnet>*) out.get())->x;
 
 	// draw inputs
 	gui << black_on_white() << at(h - 15, w0) << "scale #" << scale
 	    << " " << inx.dim(0) << "x" << inx.dim(1);
-	draw_matrix(inx, h, w0, dzoom, dzoom, (Tdata)vmin, (Tdata)vmax);
+	draw_matrix(inx, h, w0, dzoom, dzoom, (Tnet)vmin, (Tnet)vmax);
 	// draw bboxes on scaled input
 	for (vector<bbox*>::iterator i = bb.begin(); i != bb.end(); ++i) {
 	  if (scale == (*i)->scale_index)
@@ -159,7 +159,7 @@ namespace ebl {
 	int hcat = 0;
 	double czoom = dzoom * 2.0;
 	int lab = 0;
-	{ idx_bloop1(category, outx, Tdata) {
+	{ idx_bloop1(category, outx, Tnet) {
 	    s.str("");
 	    if (first_time)
 	      s << cl.labels[lab].idx_ptr() << " ";
@@ -179,7 +179,7 @@ namespace ebl {
       }}
     // display queues of detections
     uint hh0 = h0;
-    vector<idx<T> > &new_detections = cl.get_originals();
+    vector<idx<Tnet> > &new_detections = cl.get_originals();
     update_and_display_queue(detqueue, step, qheight, qwidth, new_detections,
 			     detcnt, hh0, w0, dzoom);
     update_and_display_queue(detqueue2, step2, qheight2, qwidth2,
@@ -190,14 +190,14 @@ namespace ebl {
     return bb;
   }
 
-  template <typename T> void detector_gui<T>::
-  update_and_display_queue(deque<idx<T> > &queue, uint step, uint qheight,
-			   uint qwidth, vector<idx<T> > &new_detections,
+  template <typename Tnet> void detector_gui<Tnet>::
+  update_and_display_queue(deque<idx<Tnet> > &queue, uint step, uint qheight,
+			   uint qwidth, vector<idx<Tnet> > &new_detections,
 			   uint detcnt, uint &h0, uint &w0, double dzoom) {
     // update queue
     uint queuesz = qheight * qwidth;
     // loop over all new detections and add new ones based on the step
-    for (typename vector<idx<T> >::iterator i = new_detections.begin();
+    for (typename vector<idx<Tnet> >::iterator i = new_detections.begin();
 	 i != new_detections.end(); ++i, detcnt++) {
       if (!(detcnt % step)) { // add when multiple of step
 	if (queue.size() >= queuesz)
@@ -209,9 +209,9 @@ namespace ebl {
     uint w = 0, wn = 0, h = 0;
     intg hmax = 0, wmax = 0;
     h = h0;
-    for (typename deque<idx<T> >::iterator i = queue.begin();
+    for (typename deque<idx<Tnet> >::iterator i = queue.begin();
 	 i != queue.end(); ++i) {
-      draw_matrix(*i, h, w0 + w, dzoom, dzoom, (T)0, (T)255);
+      draw_matrix(*i, h, w0 + w, dzoom, dzoom, (Tnet)0, (Tnet)255);
       w += i->dim(1) + 2;
       wn++;
       hmax = MAX(hmax, i->dim(0));
@@ -228,11 +228,11 @@ namespace ebl {
     w0 += wmax;
   }
 
-  template <class T> template <typename Tdata>
-  vector<bbox*>& detector_gui<T>::
-  display_all(detector<Tdata> &cl, idx<T> &img, double threshold,
-	      unsigned int h0, unsigned int w0, double dzoom, Tdata vmin,
-	      Tdata vmax, int wid, const char *wname) {
+  template <typename Tnet> template <typename Tin>
+  vector<bbox*>& detector_gui<Tnet>::
+  display_all(detector<Tnet> &cl, idx<Tin> &img, double threshold,
+	      unsigned int h0, unsigned int w0, double dzoom, Tnet vmin,
+	      Tnet vmax, int wid, const char *wname) {
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
@@ -245,10 +245,10 @@ namespace ebl {
     disable_window_updates();
     // draw internal states of first scale
     w0 = (cl.width + 5) * 2 + 5;
-    state_idx<Tdata> *ii =
-      ((state_idx<Tdata>*) cl.inputs.get(cl.inputs.dim(0) - 1));
-    state_idx<Tdata> *oo =
-      ((state_idx<Tdata>*) cl.outputs.get(cl.inputs.dim(0) - 1));
+    state_idx<Tnet> *ii =
+      ((state_idx<Tnet>*) cl.inputs.get(cl.inputs.dim(0) - 1));
+    state_idx<Tnet> *oo =
+      ((state_idx<Tnet>*) cl.outputs.get(cl.inputs.dim(0) - 1));
     module_1_1_gui mg;
     //    cl.thenet.fprop(*ii, *oo); 
     mg.display_fprop(cl.thenet, *ii, *oo, h0, w0, 1.0, vmin, vmax,
@@ -257,9 +257,9 @@ namespace ebl {
     return bb;
   }
 
-  template <class T>template <typename Tdata>
-  void detector_gui<T>::display_current(detector<Tdata> &cl, 
-					idx<T> &sample,
+  template <typename Tnet> template <typename Tin>
+  void detector_gui<Tnet>::display_current(detector<Tnet> &cl, 
+					idx<Tin> &sample,
 					int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
@@ -268,8 +268,8 @@ namespace ebl {
 
     // draw internal states of first scale
     module_1_1_gui mg;
-    state_idx<Tdata> *ii = ((state_idx<Tdata>*) cl.inputs.get(0));
-    state_idx<Tdata> *oo = ((state_idx<Tdata>*) cl.outputs.get(0));
+    state_idx<Tnet> *ii = ((state_idx<Tnet>*) cl.inputs.get(0));
+    state_idx<Tnet> *oo = ((state_idx<Tnet>*) cl.outputs.get(0));
     //cl.thenet.fprop(*ii, *oo); 
     mg.display_fprop(cl.thenet, *ii, *oo, 0, 0, 1.0, -1.0, 1.0,
 		     true, display_wid_fprop);

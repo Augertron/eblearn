@@ -69,13 +69,10 @@ int main(int argc, char **argv) { // regular main without gui
     (module_1_1<t_net>*) new rgb_to_yp_module<t_net>(norm_size);
   // detector
   detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
-			 conf.get_double("gain"), 50);
+			 conf.get_double("gain"));
   detect.set_resolutions(1.4);
   if (conf.exists("input_max"))
     detect.set_max_resolution(conf.get_uint("input_max")); // limit inputs size
-  //  detect.set_resolutions(9);
-  //  double scales[] = { 4.5, 2.5, 1.4};
-  //  detect.set_resolutions(3, scales);
   detect.set_silent();
   if (conf.get_bool("save_detections"))
     detect.set_save("detections");

@@ -68,7 +68,7 @@ int main(int argc, char **argv) { // regular main without gui
   uint wid;
   float zoom = 1;
 #ifdef __GUI__
-  detector_gui dgui;
+  detector_gui<t_net> dgui;
   if (display)
     wid = new_window("pascal detector");
 #endif
