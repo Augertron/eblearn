@@ -1,12 +1,3 @@
-#include <fenv.h>
-#include "libeblearn.h"
-#include "libeblearntools.h"
-#include "objrec.h"
-
-#ifdef __GUI__
-#include "libeblearngui.h"
-#endif
-
 #include <map>
 #include <string>
 #include <iostream>
@@ -15,6 +6,14 @@
 #include <sstream>
 #include <iomanip>
 #include <time.h>
+#include <fenv.h>
+#include "libeblearn.h"
+#include "libeblearntools.h"
+#include "objrec.h"
+
+#ifdef __GUI__
+#include "libeblearngui.h"
+#endif
 
 using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
@@ -83,7 +82,7 @@ int main(int argc, char **argv) { // regular main without gui
 
   // initialize camera (opencv, directory, shmem or video)
   idx<t_net> frame;
-  camera<t_net> *cam = NULL;
+  camera<t_net> *cam = NULL, *cam2 = NULL;
   if (!strcmp(cam_type.c_str(), "directory")) {
     if (argc == 3) cam = new camera_directory<t_net>(argv[2], height, width);
     else eblerror("expected 2nd argument");
@@ -98,6 +97,10 @@ int main(int argc, char **argv) { // regular main without gui
 	 conf.get_uint("input_video_max_duration"));
     else eblerror("expected 2nd argument");
   } else eblerror("unknown camera type");
+  // a camera directory may be used first, then switching to regular camera
+  if (conf.exists_bool("precamera"))
+    cam2 = new camera_directory<t_net>(conf.get_cstring("precam_dir"),
+				       height, width);
   
   // gui
 #ifdef __GUI__
@@ -108,7 +111,10 @@ int main(int argc, char **argv) { // regular main without gui
   module_1_1_gui netgui;
   uint	wid	= display ? new_window("eblearn object recognition") : 0;
   float zoom	= 1;
-  detector_gui dgui;
+  detector_gui<t_net> dgui(conf.get_bool("queue1"), conf.get_uint("qstep1"),
+			   conf.get_uint("qheight1"), conf.get_uint("qwidth1"),
+			   conf.get_bool("queue2"), conf.get_uint("qstep2"),
+			   conf.get_uint("qheight2"), conf.get_uint("qwidth2"));
   night_mode();
   if (save_video)
     cam->start_recording();
@@ -126,7 +132,11 @@ int main(int argc, char **argv) { // regular main without gui
 #ifdef __GUI__
     t0.start();
 #endif
-    frame = cam->grab();
+    // if the pre-camera is defined use it until empty
+    if (cam2 && !cam2->empty())
+      frame = cam2->grab();
+    else // empty pre-camera, use regular camera
+      frame = cam->grab();
     // run detector
     if (!display) { // fprop without display
       detect.fprop(frame, threshold);

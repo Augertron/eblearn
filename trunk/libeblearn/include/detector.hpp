@@ -56,7 +56,8 @@ namespace ebl {
       bgclass(-1), scales(NULL), scales_step(0),
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
-      max_queue_size(queue_size), max_size(0) {
+      max_queue_size(queue_size), max_size(0), bodetections(false),
+      bppdetections(false) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -574,6 +575,10 @@ namespace ebl {
   
   template <class T> template <class Tin>
   vector<bbox*>& detector<T>::fprop(idx<Tin> &img, T threshold) {
+    // tell detections vectors they are not up-to-date anymore
+    bodetections = false;
+    bppdetections = false;
+    // cast input if necessary
     idx<T> img2, img3, tmp;
     if (typeid(T) == typeid(Tin)) // input same type as net, shallow copy
       img2 = (idx<T>&) img;
@@ -683,6 +688,54 @@ namespace ebl {
 	last_detections.push_back(inorig);
       }
     }
+  }
+  
+  template <class T>
+  vector<idx<T> >& detector<T>::get_originals() {
+    if (bodetections) // recompute only if not up-to-date
+      return odetections;
+    idx<T> input;
+    vector<bbox*>::const_iterator bbox;
+
+    // clear vector
+    odetections.clear();
+    // loop on bounding boxes
+    for (bbox = pruned_bboxes.begin(); bbox != pruned_bboxes.end(); ++bbox) {
+      // exclude background class
+      if ((*bbox)->class_id == bgclass)
+	continue ;
+      // get bbox of input
+      input = grabbed.narrow(0, (*bbox)->height, (*bbox)->h0);
+      input = input.narrow(1, (*bbox)->width, (*bbox)->w0);
+      odetections.push_back(input);
+    }
+    bodetections = true;
+    return odetections;
+  }
+  
+  template <class T>
+  vector<idx<T> >& detector<T>::get_preprocessed() {
+    if (bppdetections) // recompute only if not up-to-date
+      return ppdetections;
+    idx<T> input;
+    state_idx<T> *sinput = NULL;
+    vector<bbox*>::const_iterator bbox;
+
+    // clear vector
+    ppdetections.clear();
+    // loop on bounding boxes
+    for (bbox = pruned_bboxes.begin(); bbox != pruned_bboxes.end(); ++bbox) {
+      // exclude background class
+      if ((*bbox)->class_id == bgclass)
+	continue ;
+      // get bbox of input
+      sinput = (state_idx<T>*) inputs.get((*bbox)->scale_index);
+      input = sinput->x.narrow(1, (*bbox)->ih, (*bbox)->ih0);
+      input = input.narrow(2, (*bbox)->iw, (*bbox)->iw0);
+      ppdetections.push_back(input);
+    }
+    bppdetections = true;
+    return ppdetections;
   }
   
 #include <sys/time.h>

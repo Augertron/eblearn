@@ -42,12 +42,25 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // detector_gui
 
-  template <class Tdata, class T>
-  vector<bbox*>& detector_gui::display(detector<Tdata> &cl, idx<T> &img,
+  template <typename T>
+  detector_gui<T>::detector_gui(bool show_detqueue_, uint step_, uint qheight_,
+				uint qwidth_, bool show_detqueue2_, uint step2_,
+				uint qheight2_, uint qwidth2_)
+    : show_detqueue(show_detqueue_), step(step_), qheight(qheight_),
+      qwidth(qwidth_), show_detqueue2(show_detqueue2_), step2(step2_),
+      qheight2(qheight2_), qwidth2(qwidth2_), detcnt(0) {
+  }
+
+  template <typename T>
+  detector_gui<T>::~detector_gui() {
+  }
+  
+  template <typename T> template <typename Tdata>
+  vector<bbox*>& detector_gui<T>::display(detector<Tdata> &cl, idx<T> &img,
 				       double threshold, unsigned int h0,
 				       unsigned int w0,
 				       double dzoom,  Tdata vmin, Tdata vmax,
-				       int wid, const char *wname){
+				       int wid, const char *wname) {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector"));
     select_window(display_wid);
@@ -69,13 +82,11 @@ namespace ebl {
     return vb;
   }
 
-  template <class Tdata, class T>
-  vector<bbox*>& detector_gui::display_input(detector<Tdata> &cl, idx<T> &img,
-					     double threshold, unsigned int h0,
-					     unsigned int w0,
-					     double dzoom,  Tdata vmin,
-					     Tdata vmax,
-					     int wid, const char *wname){
+  template <typename T> template <typename Tdata> 
+  vector<bbox*>& detector_gui<T>::
+  display_input(detector<Tdata> &cl, idx<T> &img, double threshold,
+		unsigned int h0, unsigned int w0, double dzoom, Tdata vmin,
+		Tdata vmax, int wid, const char *wname) {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: output"));
     select_window(display_wid);
@@ -88,8 +99,8 @@ namespace ebl {
     return display(cl, img, threshold, h0, w0, dzoom, vmin, vmax, wid, wname);
   }
 
-  template <class Tdata, class T>
-  vector<bbox*>& detector_gui::
+  template <typename T> template <typename Tdata>
+  vector<bbox*>& detector_gui<T>::
   display_inputs_outputs(detector<Tdata> &cl, idx<T> &img, double threshold,
 			 unsigned int h0, unsigned int w0, double dzoom,
 			 Tdata vmin, Tdata vmax, int wid, const char *wname){
@@ -166,34 +177,62 @@ namespace ebl {
 	w0 += inx.dim(1) * dzoom + 5;
 	first_time = false;
       }}
-    // display queue of detections
-    uint w = 0, wn = 0, wmax = sqrt(cl.last_detections.size());
-    intg hmax = 0;
+    // display queues of detections
+    uint hh0 = h0;
+    vector<idx<T> > &new_detections = cl.get_originals();
+    update_and_display_queue(detqueue, step, qheight, qwidth, new_detections,
+			     detcnt, hh0, w0, dzoom);
+    update_and_display_queue(detqueue2, step2, qheight2, qwidth2,
+			     new_detections, detcnt, hh0, w0, dzoom);
+    detcnt += new_detections.size();
+    // reactive window drawing
+    enable_window_updates();
+    return bb;
+  }
+
+  template <typename T> void detector_gui<T>::
+  update_and_display_queue(deque<idx<T> > &queue, uint step, uint qheight,
+			   uint qwidth, vector<idx<T> > &new_detections,
+			   uint detcnt, uint &h0, uint &w0, double dzoom) {
+    // update queue
+    uint queuesz = qheight * qwidth;
+    // loop over all new detections and add new ones based on the step
+    for (typename vector<idx<T> >::iterator i = new_detections.begin();
+	 i != new_detections.end(); ++i, detcnt++) {
+      if (!(detcnt % step)) { // add when multiple of step
+	if (queue.size() >= queuesz)
+	  queue.pop_front();
+	queue.push_back(*i);
+      }
+    }
+    // display queue
+    uint w = 0, wn = 0, h = 0;
+    intg hmax = 0, wmax = 0;
     h = h0;
-    for (typename deque<idx<Tdata> >::iterator i = cl.last_detections.begin();
-	 i != cl.last_detections.end(); ++i) {
-      draw_matrix(*i, h, w0 + w, dzoom, dzoom, (Tdata)0, (Tdata)255);
+    for (typename deque<idx<T> >::iterator i = queue.begin();
+	 i != queue.end(); ++i) {
+      draw_matrix(*i, h, w0 + w, dzoom, dzoom, (T)0, (T)255);
       w += i->dim(1) + 2;
       wn++;
       hmax = MAX(hmax, i->dim(0));
-      if (wn >= wmax) {
+      wmax = MAX(wmax, w);
+      if (wn >= qwidth) {
 	wn = 0;
 	w = 0;
 	h += hmax + 2;
 	hmax = 0;
       }
     }
-    
-    enable_window_updates();
-    return bb;
+    // update h0 and w0
+    h0 += hmax;
+    w0 += wmax;
   }
 
-  template <class Tdata, class T>
-  vector<bbox*>& detector_gui::display_all(detector<Tdata> &cl, idx<T> &img, 
-					   double threshold,
-					   unsigned int h0, unsigned int w0,
-					   double dzoom, Tdata vmin, Tdata vmax,
-					   int wid, const char *wname){
+  template <class T> template <typename Tdata>
+  vector<bbox*>& detector_gui<T>::
+  display_all(detector<Tdata> &cl, idx<T> &img, double threshold,
+	      unsigned int h0, unsigned int w0, double dzoom, Tdata vmin,
+	      Tdata vmax, int wid, const char *wname) {
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
@@ -218,10 +257,10 @@ namespace ebl {
     return bb;
   }
 
-  template <class Tdata, class T>
-  void detector_gui::display_current(detector<Tdata> &cl, 
-				     idx<T> &sample,
-				     int wid, const char *wname){
+  template <class T>template <typename Tdata>
+  void detector_gui<T>::display_current(detector<Tdata> &cl, 
+					idx<T> &sample,
+					int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);

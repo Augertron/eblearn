@@ -522,6 +522,12 @@ namespace ebl {
     return (bool) get_uint(varname);
   }
 
+  bool configuration::exists_bool(const char *varname) {
+    if (!exists(varname))
+      return false;
+    return (bool) get_uint(varname);
+  }
+
   void configuration::set(const char *varname, const char *value) {
     smap[varname] = value;
   }
