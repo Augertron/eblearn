@@ -36,42 +36,59 @@
 #include "configuration.h"
 
 #include <sstream>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <stdio.h>
 
 using namespace std;
 
 namespace ebl {
 
+  ////////////////////////////////////////////////////////////////
+  // job
+  
+  //! Jobs to be executed.
   class job {
-  private:
-    configuration conf;
-    string exe; //!< executable full path
-    string outdir_; //!< job's output directory
-    string confname_; //!< job's configuration filename
-    string oconffname_; //!< job's original configuration filename
-
   public:
     job(configuration &conf, const string &exe, const string &oconffname);
     virtual ~job();
 
-    //! execute job
+    //! Execute job
     void run();
 
-    //! write job's files in configuration's output directory
+    //! Write job's files in configuration's output directory.
     bool write();
+
+    ////////////////////////////////////////////////////////////////
+    // members
+  private:
+    configuration	conf;
+    string		exe;	//!< executable full path
+    string		outdir_;	//!< job's output directory
+    string		confname_;	//!< job's configuration filename
+    string		oconffname_;	//!< job's original conf filename
+    pid_t		pid;	//!< pid of this job
   };
 
-  class job_manager {
-  private:
-    meta_configuration mconf;
-    string mconf_fname; //!< filename of metaconf
-    vector<job> jobs;
+  ////////////////////////////////////////////////////////////////
+  // job manager
 
+  //! A class to manage jobs.
+  class job_manager {
   public:
     job_manager();
     virtual ~job_manager();
 
     bool read_metaconf(const char *fname);
     void run();
+
+    ////////////////////////////////////////////////////////////////
+    // members
+  private:
+    meta_configuration	mconf;
+    string		mconf_fname;	//!< filename of metaconf
+    vector<job>		jobs;
   };
 
 } // end namespace ebl

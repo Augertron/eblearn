@@ -96,7 +96,7 @@ int main(int argc, char **argv) { // regular main without gui
   } else eblerror("unknown camera type");
   // a camera directory may be used first, then switching to regular camera
   if (conf.exists_bool("precamera"))
-    cam2 = new camera_directory<t_net>(conf.get_cstring("precam_dir"),
+    cam2 = new camera_directory<t_net>(conf.get_cstring("precamdir"),
 				       height, width);
   
   // gui

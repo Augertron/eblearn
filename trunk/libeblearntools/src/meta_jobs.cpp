@@ -39,6 +39,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "meta_jobs.h"
 #include "utils.h"
@@ -61,14 +62,21 @@ namespace ebl {
   }
 
   void job::run() {
+    // prepare command
     ostringstream cmd;
     cmd << "cd " << outdir_ << " && ((" << exe << " " << confname_;
     cmd << " 3>&1 1>&2 2>&3 | tee /dev/tty) 3>&1 1>&2 2>&3) > ";
-    //    cmd << outdir_ << "/";
     cmd << "out_" << conf.get_name() << ".log 2>&1 &";
-    cout << "executing: " << cmd.str() << endl;
-    if (system(cmd.str().c_str()))
-      cerr << "error executing: " << cmd.str() << endl;
+    // fork job
+    pid = fork();
+    if (pid == -1)
+      eblerror("fork failed");
+    if (pid == 0) { // child code
+      cout << "executing: " << cmd.str() << endl;
+      execl("/bin/sh", "sh", "-c", cmd.str().c_str(), (char*)NULL);
+      cout << "exiting child" << endl;
+      exit(0); // when child is finished, exist
+    }
   }
 
   bool job::write() {
@@ -92,9 +100,10 @@ namespace ebl {
 	cout << "copied class names file: " << cmd.str() << endl;
     }
     // create configuration file
-    conf.set("job_name", conf.get_name().c_str()); // add config name into config
+    conf.set("job_name", conf.get_name().c_str());// add config name into config
     conf.resolve();
-    confname.str(""); confname << outdir.str() << "/" << conf.get_name() << ".conf";
+    confname.str("");
+    confname << outdir.str() << "/" << conf.get_name() << ".conf";
     confname_ = confname.str();
     if (!conf.write(confname.str().c_str()))
       return false;
@@ -158,7 +167,7 @@ namespace ebl {
 	}
       }
     } catch (const char *s) { cerr << s << endl; }
-    // run jobs
+    // run jobs and get their pid by forking
     for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i)
       i->run();
   }
