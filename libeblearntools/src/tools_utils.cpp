@@ -54,8 +54,8 @@ namespace ebl {
     return false;
   }
 
-  files_list *find_images(const string &dir, const char *pattern,
-			  files_list *fl_) {
+  files_list *find_files(const string &dir, const char *pattern,
+			 files_list *fl_) {
     files_list *fl = fl_;
 #ifndef __BOOST__
     eblerror("boost not installed, install and recompile");
@@ -71,7 +71,7 @@ namespace ebl {
     directory_iterator end_itr; // default construction yields past-the-end
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
       if (is_directory(itr->status()))
-	find_images(itr->path().string(), pattern, fl);
+	find_files(itr->path().string(), pattern, fl);
       else if (regex_match(itr->leaf().c_str(), what, r)) {
 	// found an image, add it to the list
 	fl->push_back(pair<string,string>(itr->path().branch_path().string(),
@@ -82,6 +82,29 @@ namespace ebl {
     }
 #endif
     return fl;
+  }
+
+  uint count_files(const string &dir, const char *pattern) {
+    uint total = 0;
+#ifndef __BOOST__
+    eblerror("boost not installed, install and recompile");
+#else
+    cmatch what;
+    regex r(pattern);
+    path p(dir);
+    if (!exists(p))
+      return 0; // return if invalid directory
+    directory_iterator end_itr; // default construction yields past-the-end
+    for (directory_iterator itr(p); itr != end_itr; ++itr) {
+      if (is_directory(itr->status()))
+	total += count_files(itr->path().string(), pattern);
+      else if (regex_match(itr->leaf().c_str(), what, r)) {
+	// found file matching pattern, increment counter
+	total++;
+      }
+    }
+#endif
+    return total;
   }
 
 

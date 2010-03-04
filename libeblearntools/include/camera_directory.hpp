@@ -54,7 +54,12 @@ namespace ebl {
   template <typename Tdata>
   bool camera_directory<Tdata>::read_directory(const char *dir) {
     string directory = dir;
-    fl = find_images(directory);
+    // first count number of images, to allocate list and speed up
+    uint n = count_files(directory, IMAGE_PATTERN);
+    if (fl) delete fl;
+    fl = new files_list(n);
+    // get all file names
+    fl = find_files(directory, IMAGE_PATTERN, fl);
     if (!fl) {
       cerr << "invalid directory: " << dir << endl;
       eblerror("invalid directory");
@@ -67,6 +72,8 @@ namespace ebl {
   
   template <typename Tdata>
   camera_directory<Tdata>::~camera_directory() {
+    if (fl)
+      delete fl;
   }
   
   ////////////////////////////////////////////////////////////////

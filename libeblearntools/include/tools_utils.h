@@ -50,15 +50,24 @@ namespace ebl {
 
   inline bool less_than(const stringpair& b1, const stringpair& b2);
   
-  //! Returns a list of pairs of root directory and filename of all images
-  //! found recursively in directory 'dir'. The images are found using
+  //! Returns a list of pairs of root directory and filename of all files
+  //! found recursively in directory 'dir'. The files are found using
   //! the IMAGE_PATTERN regular expression by default.
   //! If the directory does not exists, it returns NULL.
+  //! The user is responsible for deleting the returned list.
   //! \param fl A file list where new found files will be apprended if not null.
   //!           If null, a new list is allocated. This is used by the recursion.
-  files_list *find_images(const string &dir,
+  //! \param pattern The regular expression describing the file name pattern.
+  //!           The default pattern matches images extensions.
+  files_list *find_files(const string &dir,
 			  const char *pattern = IMAGE_PATTERN,
 			  files_list *fl = NULL);
+  
+  //! Counts recursively the number of files matching the pattern (default is
+  //! an image extension pattern) in directory 'dir'.
+  //! \param pattern The regular expression describing the file name pattern.
+  //!           The default pattern matches images extensions.
+  uint count_files(const string &dir, const char *pattern = IMAGE_PATTERN);
   
 } // end namespace ebl
 
