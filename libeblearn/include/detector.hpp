@@ -258,10 +258,12 @@ namespace ebl {
 
   template <class T>
   void detector<T>::set_save(const string directory) {
-    cout << "Enabling saving of detected regions into: ";
-    cout << directory << endl;
     save_mode = true;
     save_dir = directory;
+    save_dir += "_";
+    save_dir += tstamp();
+    cout << "Enabling saving of detected regions into: ";
+    cout << save_dir << endl;
   }
 
   template <class T>
