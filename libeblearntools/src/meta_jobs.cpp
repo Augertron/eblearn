@@ -66,16 +66,15 @@ namespace ebl {
     ostringstream cmd;
     cmd << "cd " << outdir_ << " && ((" << exe << " " << confname_;
     cmd << " 3>&1 1>&2 2>&3 | tee /dev/tty) 3>&1 1>&2 2>&3) > ";
-    cmd << "out_" << conf.get_name() << ".log 2>&1 &";
+    cmd << "out_" << conf.get_name() << ".log 2>&1 && exit 0";
     // fork job
     pid = fork();
     if (pid == -1)
       eblerror("fork failed");
     if (pid == 0) { // child code
       cout << "executing: " << cmd.str() << endl;
+      // execl takes over this process (and its pid)
       execl("/bin/sh", "sh", "-c", cmd.str().c_str(), (char*)NULL);
-      cout << "exiting child" << endl;
-      exit(0); // when child is finished, exist
     }
   }
 
@@ -114,6 +113,11 @@ namespace ebl {
     return true;
   }
 
+  bool job::alive() {
+    // if job is alive, it will receive this harmless signal
+    return (kill(pid, SIGCHLD) == 0); 
+  }
+  
   ////////////////////////////////////////////////////////////////
   // job manager
 
@@ -170,6 +174,46 @@ namespace ebl {
     // run jobs and get their pid by forking
     for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i)
       i->run();
+    // loop until all jobs are finished
+    uint swait = 30; // default wait is 30 seconds
+    if (mconf.exists("meta_watch_interval"))
+      swait = mconf.get_uint("meta_watch_interval");
+    uint nrunning = 1;
+    while (nrunning) {
+      sleep(swait);
+      // check if each pid responds to a harmless signal
+      nrunning = 0;
+      for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i)
+	if (i->alive())
+	  nrunning++;
+      int status = 0;
+      waitpid(-1, &status, WNOHANG); // check children status
+      cout << "There are " << nrunning << " processes alive" << endl;
+
+      // analyze outputs if requested
+      if (mconf.exists("meta_analyze")) {
+	uint iteration = 0;
+	if (mconf.exists_bool("meta_send_email")) {
+	  // send reports at certain iterations
+	  if (mconf.exists("meta_email_iters")) {
+	    // loop over set of iterations
+	    
+	  } else if (mconf.exists("meta_email_period") &&
+		     (iteration % mconf.get_uint("meta_email_period") == 0)) {
+	      // send report
+	    }
+	  }
+
+      }
+      
+      
+    }
+    cout << "all processes are finished." << endl;
+    // email last results before exiting
+    if (mconf.exists_bool("meta_send_email")) {
+      cout << "sending results email to " << mconf.get_string("meta_email")
+	   << " before exiting." << endl;
+    }
   }
 
 } // namespace ebl

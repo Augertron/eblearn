@@ -564,13 +564,13 @@ namespace ebl {
   bool meta_configuration::read(const char *fname, bool bresolve) {
     cout << "Reading meta configuration file: " << fname << endl;
     // read file and extract all variables and values
-    if (!extract_variables(fname, tmpsmap, otxt, &smap, bresolve))
+    if (!extract_variables(fname, smap, otxt, NULL, bresolve))
       return false;
     cout << "loaded: " << endl;
     pretty();
     // transpose values into list of values (a variable can be assigned a list
     // of values
-    variables_to_variables_list(tmpsmap, lmap);
+    variables_to_variables_list(smap, lmap);
     // count number of possible configurations
     conf_combinations = config_combinations(lmap);
 
