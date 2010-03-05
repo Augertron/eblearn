@@ -543,8 +543,8 @@ namespace ebl {
 //	painter.setPen(Qt::NoPen);
 	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
 			 txt, &bg);
-	th = bg.top();
-	tw = bg.right();
+	th = (uint) bg.top();
+	tw = (uint) bg.right();
 	bg.setTop(bg.top() + 1);
 	bg.setHeight(bg.height() - 3);
 	painter.setBrush(text_bg_color);
