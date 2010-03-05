@@ -43,7 +43,7 @@ int main(int argc, char **argv) { // regular main without gui
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
   // load configuration
   configuration conf(argv[1]);
-  bool		color		= conf.get_bool("color");
+  bool		color		= conf.exists_bool("color");
   uint		norm_size	= conf.get_uint("normalization_size");
   t_net		threshold	= (t_net) conf.get_double("threshold");
   bool		display 	= false;
@@ -74,7 +74,7 @@ int main(int argc, char **argv) { // regular main without gui
   if (conf.exists("input_max"))
     detect.set_max_resolution(conf.get_uint("input_max")); // limit inputs size
   detect.set_silent();
-  if (conf.get_bool("save_detections"))
+  if (conf.exists_bool("save_detections"))
     detect.set_save("detections");
 
   // initialize camera (opencv, directory, shmem or video)
@@ -101,17 +101,22 @@ int main(int argc, char **argv) { // regular main without gui
   
   // gui
 #ifdef __GUI__
-  display 	= conf.get_bool("display");
-  mindisplay 	= conf.get_bool("minimal_display");
+  display 	= conf.exists_bool("display");
+  mindisplay 	= conf.exists_bool("minimal_display");
   display_sleep	= conf.get_uint("display_sleep");
-  save_video    = conf.get_bool("save_video");
+  save_video    = conf.exists_bool("save_video");
+  uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
+    qheight2 = 0, qwidth2 = 0, qstep2 = 0;
+  if (conf.exists_bool("queue1")) { qstep1 = conf.get_uint("qstep1");
+    qheight1 = conf.get_uint("qheight1"); qwidth1 = conf.get_uint("qwidth1"); }
+  if (conf.exists_bool("queue2")) { qstep2 = conf.get_uint("qstep2");
+    qheight2 = conf.get_uint("qheight2"); qwidth2 = conf.get_uint("qwidth2"); }
   module_1_1_gui netgui;
   uint	wid	= display ? new_window("eblearn object recognition") : 0;
   float zoom	= 1;
-  detector_gui<t_net> dgui(conf.get_bool("queue1"), conf.get_uint("qstep1"),
-			   conf.get_uint("qheight1"), conf.get_uint("qwidth1"),
-			   conf.get_bool("queue2"), conf.get_uint("qstep2"),
-			   conf.get_uint("qheight2"), conf.get_uint("qwidth2"));
+  detector_gui<t_net> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
+			   qwidth1, conf.exists_bool("queue2"), qstep2,
+			   qheight2, qwidth2);
   night_mode();
   if (save_video)
     cam->start_recording();
@@ -162,7 +167,7 @@ int main(int argc, char **argv) { // regular main without gui
     }
   }
   if (save_video)
-    cam->stop_recording(conf.get_bool("use_original_fps") ?
+    cam->stop_recording(conf.exists_bool("use_original_fps") ?
 			cam->fps() : conf.get_uint("save_video_fps"));
   // free variables
   if (net) delete net;
