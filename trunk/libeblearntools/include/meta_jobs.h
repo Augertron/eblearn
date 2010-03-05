@@ -60,6 +60,9 @@ namespace ebl {
     //! Write job's files in configuration's output directory.
     bool write();
 
+    //! Return true if the process is alive.
+    bool alive();
+
     ////////////////////////////////////////////////////////////////
     // members
   private:
