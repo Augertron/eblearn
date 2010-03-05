@@ -3,9 +3,20 @@
 ################################################################################
 # meta commands
 ################################################################################
+# the command to run
 meta_command="sh pascal_dsprepare.sh"
+# name of this meta job
 meta_name=pascalds
+# maximum number of cpus to use at the same time
+meta_max_cpus=8
+# directory where to write outputs of all processes
+meta_output_dir=${root}/out/
+# emailing results or not
+meta_send_email=1
+# email to use
 meta_email=pierre.sermanet@gmail.com
+# interval in seconds to analyze processes output, and to check who is alive.
+meta_watch_interval=5
 
 ################################################################################
 # pascal dataset compilation
@@ -31,7 +42,7 @@ resize=mean bilinear
 nbg=2
 bgscales=6,4,2,1
 bboxfact=1.2
-easy=1
+easy=0 1
 occluded=${easy}
 truncated=${easy}
 difficult=0
@@ -85,17 +96,16 @@ fi
 #     -dims ${h}x${w}x3 \
 #     $maxdata $maxperclass $ddisplay # debug
 
-# delete temporary images
-rm -Rf $outbg
+# # delete temporary images
+# rm -Rf $outbg
 
-# compile regular dataset
-~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
-    -outdir ${out} -channels $pp -dname $name $diff_cmd $occl_cmd $trunc_cmd \
-    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 -bboxfact $bboxfact \
-    $maxdata $maxperclass $ddisplay # debug
+# # compile regular dataset
+# ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
+#     -outdir ${out} -channels $pp -dname $name $diff_cmd $occl_cmd $trunc_cmd \
+#     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 -bboxfact $bboxfact \
+#     $maxdata $maxperclass $ddisplay # debug
 
 # merge normal dataset with background dataset
-echo "~/eblearn/bin/dsmerge $out ${namebg} ${name} ${bgds}_$nbg"
 ~/eblearn/bin/dsmerge $out ${namebg} ${name} ${bgds}_$nbg
 
 # split dataset into training/validation
@@ -107,7 +117,7 @@ echo "~/eblearn/bin/dsmerge $out ${namebg} ${name} ${bgds}_$nbg"
     -outdir ${out} -channels $pp -dname $partsname \
     $diff_cmd $occl_cmd $trunc_cmd \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
-    -useparts -partsonly \
+    -useparts -partsonly -bboxfact $bboxfact \
     $maxdata $maxperclass $ddisplay # debug
  #-usepose -mindims 16x16 
 
