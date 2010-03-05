@@ -453,8 +453,8 @@ namespace ebl {
       maxv = 1;
     }
     // create target image
-    int newh = im1.dim(0) * zoomh;
-    int neww = im1.dim(1) * zoomw;
+    int newh = (int) (im1.dim(0) * zoomh);
+    int neww = (int) (im1.dim(1) * zoomw);
     idx<T> im2 = ((newh == im1.dim(0)) && (neww == im1.dim(1))) ?
       im1 : image_resize(im1, newh, neww);
     d.setdim(0, newh);
