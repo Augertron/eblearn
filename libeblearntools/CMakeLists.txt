@@ -188,6 +188,22 @@ ENDIF (Boost_FOUND)
 EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/meta_plot.sh\""
 		  "\"${LIBRARY_OUTPUT_PATH}\"")
 
+# compile executable: metaparse
+################################################################################
+add_executable (metaparse
+  src/metaparser.cpp
+  )
+
+# link executable with external libraries
+IF (Boost_FOUND)
+  IF (${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(metaparse ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+  ELSE(${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(metaparse ${Boost_FILESYSTEM_LIBRARY} 
+      ${Boost_REGEX_LIBRARY})
+  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+ENDIF (Boost_FOUND)
+
 # compile executable: videoffinder
 ################################################################################
 # IF (OpenCV_FOUND) #-------------------------------------------------------------
