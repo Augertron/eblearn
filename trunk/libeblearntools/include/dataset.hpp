@@ -1019,7 +1019,7 @@ namespace ebl {
       // paint
       enable_window_updates();
       if (sleep_display && active_sleepd)
-	sleep(sleep_delay / 1000.0);
+	usleep((uint) (sleep_delay * 1000.0));
     }
 #endif
     // return preprocessed image

@@ -91,5 +91,6 @@ int main(int argc, char **argv) {
     // parser
     metaparser m;
     m.parse_logs(root);
+    m.pretty();
     return 0;
   }

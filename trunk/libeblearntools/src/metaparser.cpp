@@ -58,13 +58,19 @@ namespace ebl {
   pairtree::~pairtree() {
   }
 
-  map<string,string> pairtree::add(list<string> &subvar,
-				   map<string,string> &ivars) {
+  map<string,string> pairtree::add(list<string> &subvar_, map<string,string> &ivars) {
+    list<string> subvar = subvar_;
     // the path leading to the current node 
     map<string,string> path;
-    // use first string as subvariable
-    if (subvar.size() > 0)
+    // use first string that is in vars as subvariable
+    if (subvar.size() > 0) {
       subvariable = subvar.front();
+      subvar.pop_front();
+      while ((subvar.size() > 0) && (ivars.find(subvariable) == ivars.end())) {
+	subvariable = subvar.front();
+	subvar.pop_front();
+      }
+    }
     if (ivars.size() > 0) {
       // check if subvariable is in vars, if yes, this is a node, leaf otherwise
       if (ivars.find(subvariable) == ivars.end()) { // leaf
@@ -75,19 +81,14 @@ namespace ebl {
 	map<string,string> tmp(ivars);
 	tmp.erase(subvariable);
 	// subvariable list without current subvariable
-	list<string> tmp2;
-	if (subvar.size() > 0) {
-	  tmp2 = subvar;
-	  tmp2.pop_front();
-	}
 	// get existing node
 	if (subtree.find(ivars[subvariable]) == subtree.end()) {
 	  // no node, add new one
 	  pairtree t(subvariable, ivars[subvariable]);
-	  path = t.add(tmp2, tmp);
+	  path = t.add(subvar, tmp);
 	  subtree[ivars[subvariable]] = t;
 	} else {
-	  path = subtree[ivars[subvariable]].add(tmp2, tmp);
+	  path = subtree[ivars[subvariable]].add(subvar, tmp);
 	}
 	// add current node pair to path
 	path[subvariable] = ivars[subvariable];
@@ -129,10 +130,10 @@ namespace ebl {
   natural_varmap pairtree::best(const string &key, uint n, bool display) {
     natural_varmap flat = flatten(key);
     natural_varmap::iterator i = flat.begin();
-    for (uint j = 0; j < n; j++, i++);
+    for (uint j = 0; j < n && i != flat.end(); j++, i++) ;
     flat.erase(i, flat.end());
-    if (display) {
-      cout << "best results for \"" << key << "\":" << endl;
+    if (display && flat.size() > 0) {
+      cout << "Best " << n << " results for \"" << key << "\":" << endl;
       pretty_flat(key, &flat);
     }
     return flat;
@@ -200,6 +201,21 @@ namespace ebl {
     return max;
   }
   
+  bool pairtree::exists(const string &var) {
+    for (map<string,string>::iterator i = vars.begin(); i != vars.end(); ++i) {
+      if (i->first == var)
+	return true;
+    }
+    for (map<string,pairtree>::iterator i = subtree.begin();
+	 i != subtree.end(); ++i) {
+      if (subvariable == var)
+	return true;
+      if (i->second.exists(var))
+	return true;
+    }
+    return false;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // metaparser
 
@@ -256,12 +272,18 @@ namespace ebl {
     return true;
   }
 
-  uint metaparser::get_max_iter() {
-    return tree.get_max_uint("i");
+  int metaparser::get_max_iter() {
+    if (!tree.exists("i"))
+      return -1;
+    return (int) tree.get_max_uint("i");
   }
   
   natural_varmap metaparser::best(const string &key, uint n, bool display) {
     return tree.best(key, n, display);
+  }
+
+  void metaparser::pretty() {
+    tree.pretty();
   }
   
   // write plot files, using gpparams as additional gnuplot parameters
@@ -341,7 +363,6 @@ namespace ebl {
 	parse_log(*i);
       }
       delete fl;
-      tree.pretty_flat("errors");
     }
   }
   

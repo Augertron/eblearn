@@ -19,8 +19,8 @@ int main(int argc, char **argv) { // regular main without gui
 
   //! load datasets
   labeled_datasource<t_net, float, int>
-    train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"objrec train"),
-    test_ds(conf.get_cstring("root"), conf.get_cstring("val"), "objrec val");
+    train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"train"),
+    test_ds(conf.get_cstring("root"), conf.get_cstring("val"), "val");
   train_ds.set_balanced();
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
@@ -31,7 +31,7 @@ int main(int argc, char **argv) { // regular main without gui
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
   parameter<t_net> theparam(60000); // create trainable parameter
   module_1_1<t_net> *net = init_network(theparam, conf, targets.dim(0));
-  if (conf.get_bool("retrain"))
+  if (conf.exists_bool("retrain"))
     theparam.load_x<t_net>(conf.get_cstring("retrain_weights"));
   supervised_euclidean_machine<t_net, int> thenet(*net, targets, dims);
   supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
@@ -41,7 +41,7 @@ int main(int argc, char **argv) { // regular main without gui
 
   //! initialize the network weights
   forget_param_linear fgp(1, 0.5);
-  if (!conf.get_bool("retrain"))
+  if (!conf.exists_bool("retrain"))
     thenet.forget(fgp);
 
   // learning parameters
@@ -58,7 +58,7 @@ int main(int argc, char **argv) { // regular main without gui
 	
 #ifdef __GUI__
   supervised_trainer_gui<t_net, float, int> stgui;
-  bool display = conf.get_bool("display"); // enable/disable display
+  bool display = conf.exists_bool("train_display"); // enable/disable display
   uint ninternals = conf.get_uint("ninternals"); // # examples' to display
   if (display) {
     //stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
@@ -91,7 +91,7 @@ int main(int argc, char **argv) { // regular main without gui
     name << "_net" << setfill('0') << setw(3) << i;
     fname.str(""); fname << name.str() << ".mat";
     theparam.save_x(fname.str().c_str()); // save trained network
-    cout << "saved " << fname.str() << endl;
+    cout << "saved=" << fname.str() << endl;
     fname.str(""); fname << name.str() << "_confusion_test.mat";
     save_matrix(testmeter.get_confusion(), fname.str().c_str());
 #ifdef __GUI__ // display

@@ -130,18 +130,18 @@ namespace ebl {
   }
 
   bool job_manager::read_metaconf(const char *fname) {
-    mconf_fname = fname;
-    size_t pos = mconf_fname.find_last_of('/');
-    string name = mconf_fname.substr(pos == string::npos ? 0 : pos);
+    mconf_fullfname = fname;
+    size_t pos = mconf_fullfname.find_last_of('/');
+    mconf_fname = mconf_fullfname.substr(pos == string::npos ? 0 : pos);
     // read meta configuration
-    if (!mconf.read(fname, false))
+    if (!mconf.read(mconf_fullfname.c_str(), false))
       return false;
     // create job list from all possible configurations
     vector<configuration> &confs = mconf.configurations();
     vector<configuration>::iterator iconf = confs.begin();
     for ( ; iconf != confs.end(); ++iconf) {
       iconf->resolve();
-      jobs.push_back(job(*iconf, mconf.get_string("meta_command"), name));
+      jobs.push_back(job(*iconf, mconf.get_string("meta_command"), mconf_fname));
     }
     return true;
   }
@@ -150,13 +150,15 @@ namespace ebl {
     metaparser p; // output parser
     natural_varmap best; // best results
     ostringstream cmd;
+    int maxiter = -1;
+
     // write job directories and files
     for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
       // write conf
       i->write();
     }
     // copy metaconf into jobs' root
-    cmd.str(""); cmd << "cp " << mconf_fname << " " << mconf.get_output_dir();
+    cmd.str(""); cmd << "cp " << mconf_fullfname << " " << mconf.get_output_dir();
     if (system(cmd.str().c_str()))
       cerr << "warning: failed to execute: " << cmd.str() << endl;
     // create gnuplot param file in jobs' root
@@ -199,27 +201,30 @@ namespace ebl {
 	// parse output and get best results
 	p.parse_logs(mconf.get_output_dir());
 	best = p.best(mconf.get_string("meta_minimize"),
-		      MAX(1, mconf.get_uint("meta_send_best")), true);
-	uint maxiter = p.get_max_iter();
-	if (mconf.exists_bool("meta_send_email")) {
-	  // send reports at certain iterations
-	  if (mconf.exists("meta_email_iters")) {
-	    // loop over set of iterations
-	    list<uint> l =
-	      string_to_uintlist(mconf.get_string("meta_email_iters"));
-	    for (list<uint>::iterator i = l.begin(); i != l.end(); ++i) {
-	      if (*i == maxiter) {
-		// send report
-		send_report(best);
+		      MAX(1, mconf.get_uint("meta_send_best")));
+	int maxiter_tmp = p.get_max_iter();
+	if (maxiter_tmp != maxiter) { // iteration number has changed
+	  maxiter = maxiter_tmp;
+	  if (mconf.exists_bool("meta_send_email")) {
+	    // send reports at certain iterations
+	    if (mconf.exists("meta_email_iters")) {
+	      // loop over set of iterations
+	      list<uint> l =
+		string_to_uintlist(mconf.get_string("meta_email_iters"));
+	      for (list<uint>::iterator i = l.begin(); i != l.end(); ++i) {
+		if (*i == maxiter) {
+		  cout << "iter " << *i << endl;
+		  // send report
+		  send_report(best);
+		}
 	      }
-	    }
-	  } else if (mconf.exists("meta_email_period") &&
-		     (maxiter % mconf.get_uint("meta_email_period") == 0)) {
+	    } else if (mconf.exists("meta_email_period") &&
+		       (maxiter % mconf.get_uint("meta_email_period") == 0)) {
 	      // send report
-	    send_report(best);
+	      send_report(best);
 	    }
 	  }
-
+	}
       }
     }
     cout << "all processes are finished." << endl;
@@ -237,6 +242,8 @@ namespace ebl {
   void job_manager::send_report(natural_varmap &best) {
     ostringstream cmd;
     string tmpfile = "report.tmp";
+    int res;
+
     if (mconf.exists_bool("meta_send_email")) {
       if (!mconf.exists("meta_email")) {
 	cerr << "undefined email address, not sending report." << endl;
@@ -247,24 +254,33 @@ namespace ebl {
       // create plots
 
       // write body of email
+      cmd.str("");
+      cmd << "rm -f " << tmpfile; // remove tmp file first
+      res = system(cmd.str().c_str());
       if (best.size() > 0) {
-	cmd << "echo Best " << best.size() << " results:" << endl;
-	cmd << pairtree::flat_to_string("", &best) << endl;
-	cmd << " > " << tmpfile << endl;
+	cmd.str("");
+	cmd << "echo \"Best " << best.size() << " results:" << endl;
+	cmd << pairtree::flat_to_string("", &best) << "\"";
+	cmd << " >> " << tmpfile;
+	cout << "cmd: " << cmd.str() << endl;
+	res = system(cmd.str().c_str());
       }
+      cmd.str("");
       cmd << "cat " << mconf.get_output_dir() << "/" << mconf_fname;
-      cmd << " > " << tmpfile << endl;
+      cmd << " >> " << tmpfile;
+	cout << "cmd: " << cmd.str() << endl;
+      res = system(cmd.str().c_str());
       // create command
       cmd.str("");
       cmd << "cat " << tmpfile << " | mutt " << mconf.get_string("meta_email");
       // subject of email
-      cmd << " -s \"Metarun Report " << mconf.get_name() << "\"";
+      cmd << " -s \"MetaRun Report " << mconf.get_name() << "\"";
       // attach files
       
-      cout << "sending email report to " << mconf.get_string("meta_email")
+      cout << "Sending email report to " << mconf.get_string("meta_email")
 	   << ":" << endl;
-      cout << cmd << endl;
-      int res = system(cmd.str().c_str());
+      cout << cmd.str() << endl;
+      res = system(cmd.str().c_str());
     }
   }
 

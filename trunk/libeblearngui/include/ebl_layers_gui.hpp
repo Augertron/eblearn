@@ -56,10 +56,10 @@ namespace ebl {
     idx_bloop1(m, in.T, T) {						\
       if (w - w0 < 500) {						\
 	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-	w += m.dim(1) * zoom + 1;					\
+	w += (uint) (m.dim(1) * zoom + 1);				\
       }									\
     }									\
-    h0 += MAX(10, m.dim(0) * zoom + 1);					\
+    h0 += (uint) (MAX(10, m.dim(0) * zoom + 1));			\
   }									
   
   NN_LAYER_FULL_GUI(display_fprop, x)
@@ -84,9 +84,9 @@ namespace ebl {
     /* display inputs */						\
     idx_bloop1(m, in.T, T) {						\
       draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += m.dim(1) * zoom + 1;						\
+      w += (uint) (m.dim(1) * zoom + 1);				\
     }									\
-    h0 += m.dim(0) * zoom + 1;						\
+    h0 += (uint) (m.dim(0) * zoom + 1);					\
     w = w0;								\
     h = h0;								\
     /* display kernels text */						\
@@ -97,10 +97,10 @@ namespace ebl {
     idx_bloop1(mk, nn.convol.kernel.T, T) {				\
       if (w - w0 < 500) {						\
 	draw_matrix(mk, h, w, zoom, zoom, vmin, vmax);			\
-	w += mk.dim(1) * zoom + 1;					\
+	w += (uint) (mk.dim(1) * zoom + 1);				\
       }									\
     }									\
-    h0 += MAX(10, mk.dim(0) * zoom + 1);				\
+    h0 += (uint) (MAX(10, mk.dim(0) * zoom + 1));			\
   }
 
   NN_LAYER_CONVOLUTION_GUI(display_fprop, x)
@@ -127,9 +127,9 @@ namespace ebl {
     /* display output of convolution */					\
     idx_bloop1(m, layer.tmp->T, T) {					\
       draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += m.dim(1) * zoom + 1;						\
+      w += (uint) (m.dim(1) * zoom + 1);				\
     }									\
-    h0 += m.dim(0) * zoom + 1;						\
+    h0 += (uint) (m.dim(0) * zoom + 1);					\
     w = w0;								\
     h = h0;								\
     /* display text */							\
@@ -138,9 +138,9 @@ namespace ebl {
     /* display output of abs */						\
     idx_bloop1(m2, layer.tmp2->T, T) {					\
       draw_matrix(m2, h, w, zoom, zoom, vmin, vmax);			\
-      w += m2.dim(1) * zoom + 1;					\
+      w += (uint) (m2.dim(1) * zoom + 1);				\
     }									\
-    h0 += m2.dim(0) * zoom + 1;						\
+    h0 += (uint) (m2.dim(0) * zoom + 1);				\
     w = w0;								\
     h = h0;								\
     /* display normalization internals */				\
@@ -170,9 +170,9 @@ namespace ebl {
     /* display inputs */						\
     idx_bloop1(m, in.T, T) {						\
       draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += m.dim(1) * zoom + 1;						\
+      w += (uint) (m.dim(1) * zoom + 1);				\
     }									\
-    h0 += m.dim(0) * zoom + 1;						\
+    h0 += (uint) (m.dim(0) * zoom + 1);					\
     w = w0;								\
     h = h0;								\
     /* display kernels text */						\

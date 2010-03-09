@@ -145,6 +145,7 @@ namespace ebl {
     iss >> d;
     if (d == numeric_limits<uint>::max()) {
       cerr << "\"" << s << "\" is not an unsigned int." << endl;
+      eblerror("invalid conversion to uint");
       throw "invalid conversion to uint";
     }
     return d;

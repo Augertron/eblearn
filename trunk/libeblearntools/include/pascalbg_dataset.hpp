@@ -331,7 +331,7 @@ namespace ebl {
 // 		   ibb->height, ibb->width, 255, 0, 0);
 	enable_window_updates();
 	if (sleep_display)
-	  sleep(sleep_delay / 1000.0);
+	  usleep((uint) (sleep_delay * 1000.0));
       }
 #endif
       fname.str("");

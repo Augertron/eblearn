@@ -216,8 +216,7 @@ namespace ebl {
 	pos = s.find(separator);
 	if (pos != string::npos) {
 	  if (pos >= s.size() - 1) {
-	    cerr << "warning: variable value cannot be empty,";
-	    cerr << " ignoring this line: " << s0 << endl;
+	    // empty variable
 	    continue ;
 	  }
 	  // separate in 2
@@ -233,12 +232,12 @@ namespace ebl {
 	    cerr << " ignoring this line: " << s0 << endl;
 	    continue ;
 	  }
-	  // forbid empty values
-	  if (value.size() == 0) {
-	    cerr << "warning: variable value cannot be empty,";
-	    cerr << " ignoring this line: " << s0 << endl;
-	    continue ;
-	  }
+// 	  // forbid empty values
+// 	  if (value.size() == 0) {
+// 	    cerr << "warning: variable value cannot be empty,";
+// 	    cerr << " ignoring this line: " << s0 << endl;
+// 	    continue ;
+// 	  }
 	  // forbid duplicates
 	  if (smap.find(name) != smap.end()) {
 	    cerr << "warning: duplicate variable name \"" << name;
@@ -447,34 +446,22 @@ namespace ebl {
   }
 
   const string &configuration::get_string(const char *varname) {
-    if (smap.find(varname) == smap.end()) {
-      cerr << "error: unknown variable: " << varname << endl;
-      throw "unknown variable";
-    }
+    exists_throw(varname);
     return smap[varname];
   }
 
   const char *configuration::get_cstring(const char *varname) {
-    if (smap.find(varname) == smap.end()) {
-      cerr << "error: unknown variable: " << varname << endl;
-      throw "unknown variable";
-    }
+    exists_throw(varname);
     return smap[varname].c_str();
   }
 
   double configuration::get_double(const char *varname) {
-    if (smap.find(varname) == smap.end()) {
-      cerr << "error: unknown variable: " << varname << endl;
-      throw "unknown variable";
-    }
+    exists_throw(varname);
     return string_to_double(smap[varname]);
   }
 
   float configuration::get_float(const char *varname) {
-    if (smap.find(varname) == smap.end()) {
-      cerr << "error: unknown variable: " << varname << endl;
-      throw "unknown variable";
-    }
+    exists_throw(varname);
     istringstream iss(smap[varname], istringstream::in);
     // TODO: check float conversion validity with exceptions instead
     float d;
@@ -488,18 +475,12 @@ namespace ebl {
   }
 
   uint configuration::get_uint(const char *varname) {
-    if (smap.find(varname) == smap.end()) {
-      cerr << "error: unknown variable: " << varname << endl;
-      throw "unknown variable";
-    }
+    exists_throw(varname);
     return string_to_uint(smap[varname]);
   }
 
   int configuration::get_int(const char *varname) {
-    if (smap.find(varname) == smap.end()) {
-      cerr << "error: unknown variable: " << varname << endl;
-      throw "unknown variable";
-    }
+    exists_throw(varname);
     istringstream iss(smap[varname], istringstream::in);
     // TODO: check int conversion validity with exceptions instead
     int d;
@@ -513,6 +494,7 @@ namespace ebl {
   }
 
   bool configuration::get_bool(const char *varname) {
+    exists_throw(varname);
     return (bool) get_uint(varname);
   }
 
@@ -530,6 +512,13 @@ namespace ebl {
     if (smap.find(varname) == smap.end())
       return false;
     return true;
+  }
+
+  void configuration::exists_throw(const char *varname) {
+    if (smap.find(varname) == smap.end()) {
+      cerr << "error: unknown variable: " << varname << endl;
+      throw "unknown variable";
+    }
   }
 
   void configuration::pretty() {
@@ -559,6 +548,8 @@ namespace ebl {
     variables_to_variables_list(smap, lmap);
     // count number of possible configurations
     conf_combinations = config_combinations(lmap);
+    // resolve
+    resolve();
 
     // name of entire experiment
     name = timestamp();
