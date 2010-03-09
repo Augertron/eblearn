@@ -30,10 +30,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef META_JOBS_H_
-#define META_JOBS_H_
+#ifndef METAJOBS_H_
+#define METAJOBS_H_
 
 #include "configuration.h"
+#include "metaparser.h"
 
 #include <sstream>
 #include <stdlib.h>
@@ -86,6 +87,9 @@ namespace ebl {
     bool read_metaconf(const char *fname);
     void run();
 
+    //! Send an email reporting the status of the runs.
+    void send_report(natural_varmap &best);
+
     ////////////////////////////////////////////////////////////////
     // members
   private:
@@ -96,4 +100,4 @@ namespace ebl {
 
 } // end namespace ebl
 
-#endif /* META_JOBS_H_ */
+#endif /* METAJOBS_H_ */

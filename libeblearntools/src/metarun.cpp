@@ -36,7 +36,7 @@
 #include <map>
 #include <string.h>
 
-#include "meta_jobs.h"
+#include "metajobs.h"
 
 using namespace std;
 using namespace ebl;
@@ -74,7 +74,7 @@ void print_usage() {
 }
 
 int main(int argc, char **argv) {
-  cout << "________________________________Meta Trainer";
+  cout << "________________________________Meta Run";
   cout << "________________________________" << endl;
   // parse arguments
   if (!parse_args(argc, argv)) {

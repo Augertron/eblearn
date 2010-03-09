@@ -96,11 +96,9 @@ namespace ebl {
     return path;
   }
 
-  map<string,map<string,string>,natural_less>
-  pairtree::flatten(const string &key,
-		    map<string,map<string,string>,natural_less> *flat,
-		    map<string,string> *path) {
-    map<string,map<string,string>,natural_less> flat2;
+  natural_varmap pairtree::flatten(const string &key, natural_varmap *flat,
+				   map<string,string> *path) {
+    natural_varmap flat2;
     map<string,string> path2;
     if (!flat)
       flat = &flat2;
@@ -126,17 +124,20 @@ namespace ebl {
       (*flat)[kval] = all;
     }
     return *flat;
-  }
+  } 
 
-  map<string,map<string,string>,natural_less>
-  pairtree::best(const string &key, uint n) {
-    map<string,map<string,string>,natural_less> flat = flatten(key);
-    map<string,map<string,string>,natural_less>::iterator i = flat.begin();
+  natural_varmap pairtree::best(const string &key, uint n, bool display) {
+    natural_varmap flat = flatten(key);
+    natural_varmap::iterator i = flat.begin();
     for (uint j = 0; j < n; j++, i++);
     flat.erase(i, flat.end());
+    if (display) {
+      cout << "best results for \"" << key << "\":" << endl;
+      pretty_flat(key, &flat);
+    }
     return flat;
   }
-  
+ 
   string& pairtree::get_variable() {
     return variable;
   }
@@ -161,19 +162,44 @@ namespace ebl {
     }
   }
   
-  void pairtree::pretty_flat(const string key) {
-    map<string,map<string,string>,natural_less> flat = flatten(key);
-    
-    for (map<string,map<string,string> >::iterator i = flat.begin();
-	 i != flat.end(); ++i) {
-      cout << i->first << ": ";
+  string pairtree::flat_to_string(const string key, natural_varmap *flat) {
+    ostringstream s;
+    if (!flat)
+      return s.str();
+    for (natural_varmap::iterator i = flat->begin(); i != flat->end(); ++i) {
+      s << i->first << ": ";
       for (map<string,string>::iterator j = i->second.begin();
 	   j != i->second.end(); ++j)
-	cout << " (" << j->first << ", " << j->second << ") ";
-      cout << endl;
+	s << " (" << j->first << ", " << j->second << ") ";
+      s << endl;
     }
+    return s.str();
   }
 
+  void pairtree::pretty_flat(const string key, natural_varmap *flat) {
+    natural_varmap flat2;
+    if (!flat) {
+      flat2 = flatten(key);
+      flat = &flat2;
+    }
+    cout << flat_to_string(key, flat);
+  }
+
+  uint pairtree::get_max_uint(const string &var) {
+    uint max = 0;
+    for (map<string,string>::iterator i = vars.begin(); i != vars.end(); ++i) {
+      if (i->first == var)
+	max = MAX(max, string_to_uint(i->second));
+    }
+    for (map<string,pairtree>::iterator i = subtree.begin();
+	 i != subtree.end(); ++i) {
+      if (subvariable == var)
+	max = MAX(max, string_to_uint(i->first));
+      max = MAX(max, i->second.get_max_uint(var));
+    }
+    return max;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // metaparser
 
@@ -230,6 +256,14 @@ namespace ebl {
     return true;
   }
 
+  uint metaparser::get_max_iter() {
+    return tree.get_max_uint("i");
+  }
+  
+  natural_varmap metaparser::best(const string &key, uint n, bool display) {
+    return tree.best(key, n, display);
+  }
+  
   // write plot files, using gpparams as additional gnuplot parameters
   bool metaparser::write_plots(string &gpparams) {
 //     string gnuplot_column_separator = "\t";
