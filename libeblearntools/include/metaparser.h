@@ -41,6 +41,8 @@
 #include <map>
 #include <list>
 
+#include "sort.h"
+
 #define VALUE_SEPARATOR '='
 
 using namespace std;
@@ -69,6 +71,20 @@ namespace ebl {
     virtual ~pairtree();
 
     map<string,string> add(list<string> &subvar, map<string,string> &ivars);
+
+    //! Return a flat representation of the tree, using the variable name
+    //! key as key to represent each group of variables.
+    //! E.g. if we have a tree with nodes "name" and "i", and leaves
+    //! contain "error", "success" and we choose "error" as our key,
+    //! this will return a map with all error values paired with
+    //! all var/val pairs of "name", "i" and "success".
+    map<string,map<string,string>,natural_less>
+      flatten(const string &key,
+	      map<string,map<string,string>,natural_less> *flat = NULL,
+	      map<string,string> *path = NULL);
+
+    //! Return the n best values (minimized) of key.
+    map<string,map<string,string>,natural_less> best(const string &key, uint n);
     
     //! Returns the variable name associated with this pair.
     string& get_variable();
@@ -79,13 +95,16 @@ namespace ebl {
     //! Pretty this tree, with a string offset beforehand.
     void pretty(string offset = "");
 
+    //! Pretty this tree, flattened using key.
+    void pretty_flat(const string key);
+
     ////////////////////////////////////////////////////////////////
     // members
   private:
     string			variable;	//!< The variable.
     string			value;	//!< The value.
     string			subvariable;	//!< variable name of subtree.
-    map<string, pairtree>	subtree;	//!< Subtree of the subvariable.
+    map<string, pairtree, natural_less>	subtree;//!< Subtree of the subvariable.
     map<string, string>		vars;//!< Map of leaf variables and their value.
   };
   

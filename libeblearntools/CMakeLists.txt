@@ -24,6 +24,7 @@ add_library (eblearntools SHARED
   src/tools_utils.cpp
   src/opencv.cpp
   src/metaparser.cpp
+  src/sort.cpp
   )
 
 IF (OpenCV_FOUND)

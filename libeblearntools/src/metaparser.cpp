@@ -95,6 +95,47 @@ namespace ebl {
     }
     return path;
   }
+
+  map<string,map<string,string>,natural_less>
+  pairtree::flatten(const string &key,
+		    map<string,map<string,string>,natural_less> *flat,
+		    map<string,string> *path) {
+    map<string,map<string,string>,natural_less> flat2;
+    map<string,string> path2;
+    if (!flat)
+      flat = &flat2;
+    if (!path)
+      path = &path2;
+
+    for (map<string,pairtree>::iterator i = subtree.begin();
+	 i != subtree.end(); ++i) {
+      (*path)[subvariable] = i->first;
+      i->second.flatten(key, flat, path);
+    }
+    if (subtree.size() == 0) { // leaf
+      // merge path and vars
+      map<string,string> all = vars;
+      all.insert(path->begin(), path->end());
+      // look for key
+      map<string,string>::iterator k = all.find(key);
+      if (k == all.end())
+	return *flat;
+      // key is found, extract key
+      string kval = k->second;
+      all.erase(k);
+      (*flat)[kval] = all;
+    }
+    return *flat;
+  }
+
+  map<string,map<string,string>,natural_less>
+  pairtree::best(const string &key, uint n) {
+    map<string,map<string,string>,natural_less> flat = flatten(key);
+    map<string,map<string,string>,natural_less>::iterator i = flat.begin();
+    for (uint j = 0; j < n; j++, i++);
+    flat.erase(i, flat.end());
+    return flat;
+  }
   
   string& pairtree::get_variable() {
     return variable;
@@ -119,12 +160,26 @@ namespace ebl {
       i->second.pretty(off);
     }
   }
+  
+  void pairtree::pretty_flat(const string key) {
+    map<string,map<string,string>,natural_less> flat = flatten(key);
+    
+    for (map<string,map<string,string> >::iterator i = flat.begin();
+	 i != flat.end(); ++i) {
+      cout << i->first << ": ";
+      for (map<string,string>::iterator j = i->second.begin();
+	   j != i->second.end(); ++j)
+	cout << " (" << j->first << ", " << j->second << ") ";
+      cout << endl;
+    }
+  }
 
   ////////////////////////////////////////////////////////////////
   // metaparser
 
   metaparser::metaparser() : separator(VALUE_SEPARATOR) {
     hierarchy.push_back("name");
+    hierarchy.push_back("job");
     hierarchy.push_back("i");
   }
 
@@ -136,7 +191,7 @@ namespace ebl {
     string s, var, val;
     char separator = VALUE_SEPARATOR;
     string::size_type itok, stok;
-    map<string,string> vars, path;
+    map<string,string> vars, keys;
 
     if (!in) {
       cerr << "warning: failed to open " << fname << endl;
@@ -148,10 +203,11 @@ namespace ebl {
       istringstream iss(s, istringstream::in);
       // extract all variables for this line
       vars.clear();
-      // initialize with last path of the leaf, in case we have more variables
+      // initialize with keys of the hierarchy that have been seen before,
+      // in case we have more variables
       // to add coming from a different line, this will be overriden
       // if new lines contains the hierarchy variables
-      vars.insert(path.begin(), path.end());
+      vars.insert(keys.begin(), keys.end());
       // loop over variable/value pairs
       itok = s.find(separator);
       while (itok != string::npos) { // get remaining values
@@ -159,14 +215,17 @@ namespace ebl {
 	var = s.substr(stok + 1, itok - stok - 1);
 	stok = s.find_first_of(" \n\t\0", itok + 1);
 	if (stok == string::npos)
-	  stok = s.size() - 1;
+	  stok = s.size();
 	val = s.substr(itok + 1, stok - itok - 1);
-	s = s.substr(stok + 1);
+	s = s.substr(stok);
 	vars[var] = val;
 	itok = s.find(separator);
+	// if key, remember it for later
+	if (find(hierarchy.begin(), hierarchy.end(), var) != hierarchy.end())
+	  keys[var] = val;
       }
       // add variables to tree, and remember the path to the leaf
-      path = tree.add(hierarchy, vars);
+      tree.add(hierarchy, vars);
     }
     return true;
   }
@@ -248,7 +307,7 @@ namespace ebl {
 	parse_log(*i);
       }
       delete fl;
-      tree.pretty();
+      tree.pretty_flat("errors");
     }
   }
   
