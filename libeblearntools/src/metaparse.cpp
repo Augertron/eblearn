@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
- *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,25 +27,69 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARNTOOLS_H_
-#define LIBEBLEARNTOOLS_H_
+#define VALUE_SEPARATOR '='
 
-// link error messages
-#define BOOST_LIB_ERROR "Boost libraries not available, install \
-libboost-filesystem-dev libboost-regex-dev and recompile"
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <stdio.h>
+#include <map>
 
-#include "configuration.h"
-#include "gdb.h"
-#include "xml_utils.h"
-#include "tools_utils.h"
-#include "opencv.h"
-#include "camera.h"
-#include "camera_opencv.h"
-#include "camera_shmem.h"
-#include "camera_directory.h"
-#include "camera_video.h"
+#include "libeblearntools.h"
 #include "metaparser.h"
 
-#endif /* LIBEBLEARNTOOLS_H_ */
+using namespace std;
+using namespace ebl;
+
+using namespace ebl;
+
+// parse command line input
+bool parse_args(int argc, char **argv) {
+  // Read arguments from shell input
+  if (argc < 2) {
+    cerr << "input error: expecting arguments." << endl;
+    return false;
+  }
+  // if requesting help, print usage
+  if ((strcmp(argv[1], "-help") == 0) ||
+      (strcmp(argv[1], "-h") == 0))
+    return false;
+  // loop over arguments
+  for (int i = 2; i < argc; ++i) {
+    ;
+  }
+  return true;
+}
+
+// print command line usage
+void print_usage() {
+  cout << "Usage: ./metaparse <logs_root>" << endl;
+}
+
+int main(int argc, char **argv) {
+    cout << "________________________________Meta Parser";
+    cout << "________________________________" << endl;
+    // parse arguments
+    if (!parse_args(argc, argv)) {
+      print_usage();
+      return -1;
+    }
+    string root = argv[1];
+    string gpparams;
+
+    // check for gnuplot parameters in gnuplot_params.txt
+    ostringstream p;
+    p << root << "/" << "gnuplot_params.txt";
+    ifstream in(p.str().c_str());
+    if (in) {
+      getline(in, gpparams);
+      in.close();
+    }
+    // parser
+    metaparser m;
+    m.parse_logs(root);
+    return 0;
+  }

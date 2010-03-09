@@ -63,6 +63,19 @@ namespace ebl {
 			  const char *pattern = IMAGE_PATTERN,
 			  files_list *fl = NULL);
   
+  //! Returns a list of string of full paths to files recursively found in
+  //! direcotry dir and matching the pattern. The files are found using
+  //! the IMAGE_PATTERN regular expression by default.
+  //! If the directory does not exists, it returns NULL.
+  //! The user is responsible for deleting the returned list.
+  //! \param fl A file list where new found files will be apprended if not null.
+  //!           If null, a new list is allocated. This is used by the recursion.
+  //! \param pattern The regular expression describing the file name pattern.
+  //!           The default pattern matches images extensions.
+  list<string> *find_fullfiles(const string &dir,
+			       const char *pattern = IMAGE_PATTERN,
+			       list<string> *fl = NULL);
+  
   //! Counts recursively the number of files matching the pattern (default is
   //! an image extension pattern) in directory 'dir'.
   //! \param pattern The regular expression describing the file name pattern.

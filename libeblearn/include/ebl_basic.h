@@ -376,7 +376,7 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   // mirrorpad_module
-  //! a simple zero padding module that is mostly usefull for doing
+  //! A simple zero padding module that is mostly usefull for doing
   //! same size output convolutions.
   template <class T> class mirrorpad_module : public module_1_1<T> {
   private:
@@ -400,6 +400,8 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   // fsum_module
+  //! This modules iterates of the last two dimenions and takes
+  //! the sum of the remaining dimensions.
   template <class T> class fsum_module : public module_1_1<T> {
   public:
     //! constructor.

@@ -62,12 +62,13 @@ namespace ebl {
     //! \param val A string containing a value.
     pairtree(string &var, string &val);
 
+    //! Empty constructor, should be used for the unique root only.
     pairtree();
       
     //! Destructor.
     virtual ~pairtree();
 
-    void add(list<string> &subvar, map<string,string> &ivars);
+    map<string,string> add(list<string> &subvar, map<string,string> &ivars);
     
     //! Returns the variable name associated with this pair.
     string& get_variable();
@@ -88,38 +89,42 @@ namespace ebl {
     map<string, string>		vars;//!< Map of leaf variables and their value.
   };
   
-  /* //////////////////////////////////////////////////////////////// */
-  /* // metaparser */
+  ////////////////////////////////////////////////////////////////
+  // metaparser
   
-  /* //! A parser that can analyze the output of multiple jobs (usually used in */
-  /* //! conjunction with metarun). */
-  /* class metaparser { */
-  /* public: */
-  /*   metaparser(); */
-  /*   virtual ~metaparser(); */
+  //! A parser that can analyze the output of multiple jobs (usually used in
+  //! conjunction with metarun).
+  class metaparser {
+  public:
+    //! Constructor, initialize the hierarchy. This hierarchy defines
+    //! groups of variables, e.g. we want to have a first level of variables
+    //! for each value of variable "name", then a sub level for each value
+    //! of variable "i".
+    metaparser();
 
-  /*   //! Parse */
-  /*   void run(); */
+    //! Destructor.
+    virtual ~metaparser();
 
-  /*   //! Add a new iteration to our list and return a pointer to it. */
-  /*   //! \param iter The iteration number. */
-  /*   iteration* new_iteration(double iter); */
+    //! Parse all files in root matching the .log extension.
+    void parse_logs(const string &root);
 
-  /*   //! Write text files parsable by plotting tools such as gnuplot, */
-  /*   //! using iteration */
-  /*   bool write_plots(); */
+    //! Write text files parsable by plotting tools such as gnuplot,
+    //! using iteration
+    bool write_plots(string &gpparams);
 
-  /*   //////////////////////////////////////////////////////////////// */
-  /*   // internal methods */
-  /* private: */
-  /*   bool parse_log(const string &fname); */
+    ////////////////////////////////////////////////////////////////
+    // internal methods
+  private:
+    bool parse_log(const string &fname);
     
-  /*   //////////////////////////////////////////////////////////////// */
-  /*   // members */
-  /* private: */
-  /*   list<iteration> iterations; //!< a list of all iterations */
-  /*   static char separator = VALUE_SEPARATOR; //! token to separate var/val */
-  /* }; */
+    ////////////////////////////////////////////////////////////////
+    // members
+  private:
+    pairtree		tree;	        //!< A tree of var/val pairs.
+    char		separator;      //!< token separating var/val
+    map<string,string>	curpath;	//!< Current path to pairtree leaf.
+    list<string>	hierarchy;	//!< List of vars forming the hierarchy.
+  };
 
 } // end namespace ebl
 
