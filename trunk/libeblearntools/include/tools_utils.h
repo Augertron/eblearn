@@ -35,6 +35,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 #include "defines.h"
 
@@ -81,7 +82,23 @@ namespace ebl {
   //! \param pattern The regular expression describing the file name pattern.
   //!           The default pattern matches images extensions.
   uint count_files(const string &dir, const char *pattern = IMAGE_PATTERN);
-  
+
+  //! Convert a string to an unsigned int. Throws a const char * exception
+  //! upon failure.
+  uint string_to_uint(const string &s);
+
+  //! Convert a string to an double. Throws a const char * exception
+  //! upon failure.
+  double string_to_double(const string &s);
+
+  //! Convert a string containing a list of uint separated by commas, e.g.
+  //! "1,2,3,4" into a list of uints.
+  list<uint> string_to_uintlist(const string &s);
+
+  //! Convert a string containing a list of double separated by commas, e.g.
+  //! "1,2,3.0,4.0" into a vector of doubles.
+  vector<double> string_to_doublevector(const string &s);
+
 } // end namespace ebl
 
 #endif /* TOOLS_UTILS_ */

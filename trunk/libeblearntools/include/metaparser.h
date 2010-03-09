@@ -52,6 +52,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // iteration
 
+  typedef map<string,map<string,string>,natural_less> natural_varmap;
+  
   //! A class representing a tree hierarchy of variable/value pairs.
   //! A pair tree is defined by a variable/value pair, and a subtree
   //! corresponding to 1 subvariable only (could be extended to multiple
@@ -78,13 +80,14 @@ namespace ebl {
     //! contain "error", "success" and we choose "error" as our key,
     //! this will return a map with all error values paired with
     //! all var/val pairs of "name", "i" and "success".
-    map<string,map<string,string>,natural_less>
+    natural_varmap
       flatten(const string &key,
-	      map<string,map<string,string>,natural_less> *flat = NULL,
+	      natural_varmap *flat = NULL,
 	      map<string,string> *path = NULL);
 
     //! Return the n best values (minimized) of key.
-    map<string,map<string,string>,natural_less> best(const string &key, uint n);
+    //! \param display If true, pretty best answers.
+    natural_varmap best(const string &key, uint n, bool display = false);
     
     //! Returns the variable name associated with this pair.
     string& get_variable();
@@ -95,8 +98,18 @@ namespace ebl {
     //! Pretty this tree, with a string offset beforehand.
     void pretty(string offset = "");
 
+    //! Returns a string representation of this tree flattened using key.
+    //! If flat is not NULL, pretty this flat, otherwise generate
+    //! a flat representation of the current tree.
+    static string flat_to_string(const string key, natural_varmap *flat =NULL);
+
     //! Pretty this tree, flattened using key.
-    void pretty_flat(const string key);
+    //! If flat is not NULL, pretty this flat, otherwise generate
+    //! a flat representation of the current tree.
+    void pretty_flat(const string key, natural_varmap *flat = NULL);
+
+    //! Return the maximum uint value of variable var.
+    uint get_max_uint(const string &var);
 
     ////////////////////////////////////////////////////////////////
     // members
@@ -131,6 +144,13 @@ namespace ebl {
     //! using iteration
     bool write_plots(string &gpparams);
 
+    //! Return the n best values (minimized) of key.
+    natural_varmap best(const string &key, uint n, bool display = false);
+
+    //! Return the maximum iteration number, i.e. the maximum value found
+    //! for variable "i".
+    uint get_max_iter();
+    
     ////////////////////////////////////////////////////////////////
     // internal methods
   private:

@@ -239,20 +239,7 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-scales") == 0) {
 	++i; if (i >= argc) throw 0;
 	string s = argv[i];
-	int k = 0;
-	while (s.size()) {
-	  uint j;
-	  for (j = 0; j < s.size(); ++j)
-	    if (s[j] == ',')
-	      break ;
-	  string s0 = s.substr(0, j);
-	  if (j >= s.size())
-	    s = "";
-	  else
-	    s = s.substr(j + 1, s.size());
-	  scales.push_back(atof(s0.c_str()));
-	  k++;
-	}
+	scales = string_to_doublevector(s);
 	scale_mode = true;
 	preprocessing = true;
       } else if (strcmp(argv[i], "-bboxfact") == 0) {

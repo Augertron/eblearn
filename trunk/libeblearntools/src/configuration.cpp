@@ -42,6 +42,7 @@
 #include <time.h>
 #include <limits>
 
+#include "tools_utils.h"
 #include "configuration.h"
 
 using namespace std;
@@ -56,7 +57,8 @@ namespace ebl {
 
   textlist::textlist(const textlist &txt) {
     // deep copy
-    for (list<pair<string,string> >::const_iterator i = txt.begin(); i != txt.end(); ++i) {
+    for (list<pair<string,string> >::const_iterator i = txt.begin();
+	 i != txt.end(); ++i) {
       push_back(pair<string,string>(i->first, i->second));
     }
   }
@@ -68,7 +70,8 @@ namespace ebl {
     bool found = false;
     ostringstream s;
     s << varname << "=" << value;
-    for (list< pair<string,string> >::iterator i = this->begin(); i != this->end(); ++i) {
+    for (list< pair<string,string> >::iterator i = this->begin();
+	 i != this->end(); ++i) {
       if (i->second == varname) {
 	i->first = s.str();
 	found = true;
@@ -81,7 +84,8 @@ namespace ebl {
   }
 
   void textlist::print(ostream &out) {
-    for (list< pair<string,string> >::iterator i = this->begin(); i != this->end(); ++i) {
+    for (list< pair<string,string> >::iterator i = this->begin();
+	 i != this->end(); ++i) {
       out << i->first << endl;
     }
   }
@@ -397,8 +401,8 @@ namespace ebl {
       output_dir(other.output_dir), otxt(other.otxt) {
   }
 
-  configuration::configuration(string_map_t &smap_, textlist &txt, string &name_,
-			       string &output_dir_)
+  configuration::configuration(string_map_t &smap_, textlist &txt,
+			       string &name_, string &output_dir_)
     : smap(smap_), name(name_), output_dir(output_dir_), otxt(txt) {
   }
 
@@ -463,16 +467,7 @@ namespace ebl {
       cerr << "error: unknown variable: " << varname << endl;
       throw "unknown variable";
     }
-    istringstream iss(smap[varname], istringstream::in);
-    // TODO: check double conversion validity with exceptions instead
-    double d;
-    d = numeric_limits<double>::max();
-    iss >> d;
-    if (d == numeric_limits<double>::max()) {
-      cerr << varname << " is not a double." << endl;
-      throw "invalid conversion to double";
-    }
-    return d;
+    return string_to_double(smap[varname]);
   }
 
   float configuration::get_float(const char *varname) {
@@ -497,16 +492,7 @@ namespace ebl {
       cerr << "error: unknown variable: " << varname << endl;
       throw "unknown variable";
     }
-    istringstream iss(smap[varname], istringstream::in);
-    // TODO: check uint conversion validity with exceptions instead
-    uint d;
-    d = numeric_limits<uint>::max();
-    iss >> d;
-    if (d == numeric_limits<uint>::max()) {
-      cerr << varname << " is not an unsigned int." << endl;
-      throw "invalid conversion to uint";
-    }
-    return d;
+    return string_to_uint(smap[varname]);
   }
 
   int configuration::get_int(const char *varname) {

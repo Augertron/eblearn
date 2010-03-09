@@ -32,6 +32,8 @@
 
 #include "tools_utils.h"
 #include <algorithm>
+#include <sstream>
+#include <iostream>
 
 #ifdef __BOOST__
 #include "boost/filesystem.hpp"
@@ -136,5 +138,68 @@ namespace ebl {
     return total;
   }
 
+  uint string_to_uint(const string &s) {
+    istringstream iss(s, istringstream::in);
+    uint d;
+    d = numeric_limits<uint>::max();
+    iss >> d;
+    if (d == numeric_limits<uint>::max()) {
+      cerr << "\"" << s << "\" is not an unsigned int." << endl;
+      throw "invalid conversion to uint";
+    }
+    return d;
+  }
+
+  double string_to_double(const string &s) {
+    istringstream iss(s, istringstream::in);
+    double d;
+    d = numeric_limits<double>::max();
+    iss >> d;
+    if (d == numeric_limits<double>::max()) {
+      cerr << "\"" << s << "\" is not a double." << endl;
+      throw "invalid conversion to double";
+    }
+    return d;
+  }
+
+  list<uint> string_to_uintlist(const string &s_) {
+    list<uint> l;
+    string s = s_;
+    int k = 0;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == ',')
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      l.push_back(string_to_uint(s0));
+      k++;
+    }
+    return l;
+  }
+
+  vector<double> string_to_doublevector(const string &s_) {
+    vector<double> l;
+    string s = s_;
+    int k = 0;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == ',')
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      l.push_back(string_to_double(s0));
+      k++;
+    }
+    return l;
+  }
 
 } // namespace ebl

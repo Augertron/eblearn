@@ -41,8 +41,10 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "meta_jobs.h"
+#include "metajobs.h"
 #include "utils.h"
+#include "tools_utils.h"
+#include "metaparser.h"
 
 using namespace std;
 
@@ -145,6 +147,8 @@ namespace ebl {
   }
 
   void job_manager::run() {
+    metaparser p; // output parser
+    natural_varmap best; // best results
     ostringstream cmd;
     // write job directories and files
     for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
@@ -191,28 +195,76 @@ namespace ebl {
       cout << "There are " << nrunning << " processes alive" << endl;
 
       // analyze outputs if requested
-      if (mconf.exists("meta_analyze")) {
-	uint iteration = 0;
+      if (mconf.exists_bool("meta_analyze")) {
+	// parse output and get best results
+	p.parse_logs(mconf.get_output_dir());
+	best = p.best(mconf.get_string("meta_minimize"),
+		      MAX(1, mconf.get_uint("meta_send_best")), true);
+	uint maxiter = p.get_max_iter();
 	if (mconf.exists_bool("meta_send_email")) {
 	  // send reports at certain iterations
 	  if (mconf.exists("meta_email_iters")) {
 	    // loop over set of iterations
-	    
+	    list<uint> l =
+	      string_to_uintlist(mconf.get_string("meta_email_iters"));
+	    for (list<uint>::iterator i = l.begin(); i != l.end(); ++i) {
+	      if (*i == maxiter) {
+		// send report
+		send_report(best);
+	      }
+	    }
 	  } else if (mconf.exists("meta_email_period") &&
-		     (iteration % mconf.get_uint("meta_email_period") == 0)) {
+		     (maxiter % mconf.get_uint("meta_email_period") == 0)) {
 	      // send report
+	    send_report(best);
 	    }
 	  }
 
       }
-      
-      
     }
     cout << "all processes are finished." << endl;
     // email last results before exiting
+    if (mconf.exists_bool("meta_analyze")) {
+      // parse output and get best results
+      p.parse_logs(mconf.get_output_dir());
+      best = p.best(mconf.get_string("meta_minimize"),
+		    MAX(1, mconf.get_uint("meta_send_best")), true);
+    }
+    // send report
+    send_report(best);
+  }
+
+  void job_manager::send_report(natural_varmap &best) {
+    ostringstream cmd;
+    string tmpfile = "report.tmp";
     if (mconf.exists_bool("meta_send_email")) {
-      cout << "sending results email to " << mconf.get_string("meta_email")
-	   << " before exiting." << endl;
+      if (!mconf.exists("meta_email")) {
+	cerr << "undefined email address, not sending report." << endl;
+	return ;
+      }
+      // package best results
+
+      // create plots
+
+      // write body of email
+      if (best.size() > 0) {
+	cmd << "echo Best " << best.size() << " results:" << endl;
+	cmd << pairtree::flat_to_string("", &best) << endl;
+	cmd << " > " << tmpfile << endl;
+      }
+      cmd << "cat " << mconf.get_output_dir() << "/" << mconf_fname;
+      cmd << " > " << tmpfile << endl;
+      // create command
+      cmd.str("");
+      cmd << "cat " << tmpfile << " | mutt " << mconf.get_string("meta_email");
+      // subject of email
+      cmd << " -s \"Metarun Report " << mconf.get_name() << "\"";
+      // attach files
+      
+      cout << "sending email report to " << mconf.get_string("meta_email")
+	   << ":" << endl;
+      cout << cmd << endl;
+      int res = system(cmd.str().c_str());
     }
   }
 
