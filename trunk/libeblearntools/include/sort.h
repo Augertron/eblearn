@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet *
- *   pierre.sermanet@gmail.com *
+ *   Copyright (C) 2009 by Pierre Sermanet   *
+ *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source
- *       Initiative (http://www.opensource.org) must display the
+ *     * Redistribution under a license not approved by the Open Source 
+ *       Initiative (http://www.opensource.org) must display the 
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -28,26 +28,62 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARNTOOLS_H_
-#define LIBEBLEARNTOOLS_H_
+#ifndef SORT_H_
+#define SORT_H_
 
-// link error messages
-#define BOOST_LIB_ERROR "Boost libraries not available, install \
-libboost-filesystem-dev libboost-regex-dev and recompile"
+#include <algorithm>
+#include <cstdlib>
+#include <functional>
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <string>
+#include <vector>
 
-#include "configuration.h"
-#include "gdb.h"
-#include "xml_utils.h"
-#include "tools_utils.h"
-#include "opencv.h"
-#include "camera.h"
-#include "camera_opencv.h"
-#include "camera_shmem.h"
-#include "camera_directory.h"
-#include "camera_video.h"
-#include "metaparser.h"
-#include "sort.h"
+using namespace std;
 
-#endif /* LIBEBLEARNTOOLS_H_ */
+namespace ebl {
+
+  class int_span {
+    int _ws;
+    int _zeros;
+    const char *_value;
+    const char *_end;
+
+  public:
+    int_span(const char *src)
+      {
+	const char *start = src;
+
+	// Save and skip leading whitespace
+	while (std::isspace(*(unsigned char*)src)) ++src;
+	_ws = src - start;
+
+	// Save and skip leading zeros
+	start = src;
+	while (*src == '0') ++src;
+	_zeros = src - start;
+
+	// Save the edges of the value
+	_value = src;
+	while (std::isdigit(*(unsigned char*)src)) ++src;
+	_end = src;
+      }
+
+    bool is_int() const { return _value != _end; }
+    const char *value() const { return _value; }
+    int whitespace() const { return _ws; }
+    int zeros() const { return _zeros; }
+    int digits() const { return _end - _value; }
+    int non_value() const { return whitespace() + zeros(); }
+  };
+
+  //! Credits to http://www.daniweb.com/forums/thread259447.html#
+  struct natural_less: binary_function<string, string, bool> {
+    bool operator()(const string& a, const string& b); };
+  
+} // end namespace ebl
+
+#endif /* METAPLOT_H_ */
