@@ -43,16 +43,16 @@ namespace ebl {
 				     unsigned int &w0,			\
 				     double zoom, T vmin, T vmax, \
 				     bool show_out) {			\
-    unsigned int h = h0, w = w0;					\
+    uint h = h0, w = w0;						\
     /* display text */							\
     gui << gui_only() << at(h, w) << "inmean out:" << wsm.inmean.T;	\
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.inmean.T, T) {					\
       draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += m.dim(1) * zoom + 1;						\
+      w += (uint) (m.dim(1) * zoom + 1);				\
       }									\
-      h0 += m.dim(0) * zoom + 1;					\
+      h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
     w = w0;								\
     h = h0;								\
@@ -62,9 +62,9 @@ namespace ebl {
     /* display image */							\
     {idx_bloop1(m, wsm.inzmeansq.T, T) {				\
       draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += m.dim(1) * zoom + 1;						\
+      w += (uint) (m.dim(1) * zoom + 1);				\
       }									\
-      h0 += m.dim(0) * zoom + 1;					\
+      h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
     w = w0;								\
     h = h0;								\
@@ -74,9 +74,9 @@ namespace ebl {
     /* display image */							\
     {idx_bloop1(m, wsm.invar.T, T) {					\
       draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += m.dim(1) * zoom + 1;						\
+      w += (uint) (m.dim(1) * zoom + 1);				\
       }									\
-      h0 += m.dim(0) * zoom + 1;					\
+      h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
     w = w0;								\
     h = h0;								\
@@ -86,9 +86,9 @@ namespace ebl {
     /* display image */							\
     {idx_bloop1(m, wsm.instd.T, T) {					\
       draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += m.dim(1) * zoom + 1;						\
+      w += (uint) (m.dim(1) * zoom + 1);				\
       }									\
-      h0 += m.dim(0) * zoom + 1;					\
+      h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
     w = w0;								\
     h = h0;								\
@@ -98,9 +98,9 @@ namespace ebl {
     /* display image */							\
     {idx_bloop1(m, wsm.thstd.T, T) {					\
       draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += m.dim(1) * zoom + 1;						\
+      w += (uint) (m.dim(1) * zoom + 1);				\
       }									\
-      h0 += m.dim(0) * zoom + 1;					\
+      h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
     w = w0;								\
     h = h0;								\
@@ -110,9 +110,9 @@ namespace ebl {
     /* display image */							\
     {idx_bloop1(m, wsm.invstd.T, T) {					\
       draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += m.dim(1) * zoom + 1;						\
+      w += (uint) (m.dim(1) * zoom + 1);				\
       }									\
-      h0 += m.dim(0) * zoom + 1;					\
+      h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
     w = w0;								\
     h = h0;								\

@@ -40,6 +40,7 @@
 #include "pascalbg_dataset.h"
 #include "pascalfull_dataset.h"
 #include "lush_dataset.h"
+#include "tools_utils.h"
 
 using namespace std;
 using namespace ebl;

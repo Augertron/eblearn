@@ -94,6 +94,7 @@ namespace ebl {
     // members
   private:
     meta_configuration	mconf;
+    string		mconf_fullfname;	//!< full filename of metaconf
     string		mconf_fname;	//!< filename of metaconf
     vector<job>		jobs;
   };

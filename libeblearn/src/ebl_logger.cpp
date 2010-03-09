@@ -198,7 +198,7 @@ namespace ebl {
 
   void classifier_meter::display(int iteration, string &dsname,
 				 vector<string*> *lblstr) {
-    cout << iteration << " (" << dsname << "): ";
+    cout << "i=" << iteration << " name=" << dsname << " ";
     cout << "[" << (int) age << "]  sz=" <<  (int) size;
     cout << " energy=" << total_energy / (double) size;
     cout << "  correct=" <<  average_success();

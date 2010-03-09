@@ -199,9 +199,9 @@ namespace ebl {
       /* display outputs */						\
       idx_bloop1(m, out.T, T) {						\
 	draw_matrix(m, h, w, zoom * zoomf, zoom * zoomf, vmin, vmax);	\
-	w += m.dim(1) * zoom * zoomf + 1;				\
+	w += (uint) (m.dim(1) * zoom * zoomf + 1);			\
       }									\
-      h0 += m.dim(0) * zoom * zoomf + 1;				\
+      h0 += (uint) (m.dim(0) * zoom * zoomf + 1);			\
     }									\
   }
 

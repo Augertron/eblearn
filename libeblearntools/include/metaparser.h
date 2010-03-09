@@ -111,6 +111,9 @@ namespace ebl {
     //! Return the maximum uint value of variable var.
     uint get_max_uint(const string &var);
 
+    //! Return true if variable var exists in the tree.
+    bool exists(const string &var);
+
     ////////////////////////////////////////////////////////////////
     // members
   private:
@@ -148,9 +151,12 @@ namespace ebl {
     natural_varmap best(const string &key, uint n, bool display = false);
 
     //! Return the maximum iteration number, i.e. the maximum value found
-    //! for variable "i".
-    uint get_max_iter();
+    //! for variable "i", -1 if nothing is found.
+    int get_max_iter();
     
+    //! Pretty the parsed tree.
+    void pretty();
+
     ////////////////////////////////////////////////////////////////
     // internal methods
   private:
