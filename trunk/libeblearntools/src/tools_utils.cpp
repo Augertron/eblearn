@@ -84,6 +84,35 @@ namespace ebl {
     return fl;
   }
 
+  list<string> *find_fullfiles(const string &dir, const char *pattern,
+			       list<string> *fl_) {
+    list<string> *fl = fl_;
+#ifndef __BOOST__
+    eblerror("boost not installed, install and recompile");
+#else
+    cmatch what;
+    regex r(pattern);
+    path p(dir);
+    if (!exists(p))
+      return NULL; // return if invalid directory
+    // allocate fl if null
+    if (!fl)
+      fl = new list<string>();
+    directory_iterator end_itr; // default construction yields past-the-end
+    for (directory_iterator itr(p); itr != end_itr; ++itr) {
+      if (is_directory(itr->status()))
+	find_fullfiles(itr->path().string(), pattern, fl);
+      else if (regex_match(itr->leaf().c_str(), what, r)) {
+	// found an match, add it to the list
+	fl->push_back(itr->path().string());
+      }
+      // sort list
+      fl->sort();
+    }
+#endif
+    return fl;
+  }
+
   uint count_files(const string &dir, const char *pattern) {
     uint total = 0;
 #ifndef __BOOST__
