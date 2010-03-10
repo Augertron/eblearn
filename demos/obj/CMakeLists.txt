@@ -16,18 +16,18 @@ IF (QT_FOUND)
   include_directories(${LIBEBLEARNGUI_INCLUDE_DIR})
 ENDIF (QT_FOUND)
 
-# compile executable: objrec_train
+# compile executable: objtrain
 ################################################################################
-add_executable (objrec_train
+add_executable (objtrain
   src/train.cpp
   )
   
 # link executable with external libraries
 ################################################################################
-target_link_libraries (objrec_train eblearn idx eblearntools)
+target_link_libraries (objtrain eblearn idx eblearntools)
 IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (objrec_train idxgui)
-  target_link_libraries (objrec_train eblearngui)
+  target_link_libraries (objtrain idxgui)
+  target_link_libraries (objtrain eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
 
 # copy conf and metaconf to bin
@@ -37,23 +37,23 @@ EXEC_PROGRAM("cp" ARGS
   "\"${CMAKE_CURRENT_SOURCE_DIR}/face/face_dsprepare.sh\""
   "\"${LIBRARY_OUTPUT_PATH}\"")
 		
-# compile executable: objrec_detect
+# compile executable: objdetect
 ################################################################################
-add_executable (objrec_detect
+add_executable (objdetect
   src/detect.cpp
   )
   
 # link executable with external libraries
 ################################################################################
-target_link_libraries (objrec_detect eblearn idx eblearntools)
+target_link_libraries (objdetect eblearn idx eblearntools)
 IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (objrec_detect idxgui)
-  target_link_libraries (objrec_detect eblearngui)
+  target_link_libraries (objdetect idxgui)
+  target_link_libraries (objdetect eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
 IF (${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(objrec_detect ${Boost_SYSTEM_LIBRARY}
+  TARGET_LINK_LIBRARIES(objdetect ${Boost_SYSTEM_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
 ELSE(${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(objrec_detect ${Boost_FILESYSTEM_LIBRARY} 
+  TARGET_LINK_LIBRARIES(objdetect ${Boost_FILESYSTEM_LIBRARY} 
     ${Boost_REGEX_LIBRARY})
 ENDIF (${Boost_MINOR_VERSION} GREATER 34)
