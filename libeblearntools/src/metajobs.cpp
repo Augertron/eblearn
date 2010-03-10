@@ -64,11 +64,14 @@ namespace ebl {
   }
 
   void job::run() {
-    // prepare command
     ostringstream cmd;
-    cmd << "cd " << outdir_ << " && ((" << exe << " " << confname_;
-    cmd << " 3>&1 1>&2 2>&3 | tee /dev/tty) 3>&1 1>&2 2>&3) > ";
-    cmd << "out_" << conf.get_name() << ".log 2>&1 && exit 0";
+    ostringstream log;
+    log << "out_" << conf.get_name() << ".log";
+    // prepare command
+    cmd << "cd " << outdir_ << " && echo \"job=" << conf.get_name() << "\" > "
+	<< log.str() << " && ((" << exe << " " << confname_
+	<< " 3>&1 1>&2 2>&3 | tee /dev/tty) 3>&1 1>&2 2>&3) >> "
+	<< log.str() << " 2>&1 && exit 0";
     // fork job
     pid = fork();
     if (pid == -1)
@@ -213,7 +216,7 @@ namespace ebl {
 		string_to_uintlist(mconf.get_string("meta_email_iters"));
 	      for (list<uint>::iterator i = l.begin(); i != l.end(); ++i) {
 		if (*i == maxiter) {
-		  cout << "iter " << *i << endl;
+		  cout << "Reached iteration " << *i << endl;
 		  // send report
 		  send_report(best);
 		}
@@ -262,13 +265,11 @@ namespace ebl {
 	cmd << "echo \"Best " << best.size() << " results:" << endl;
 	cmd << pairtree::flat_to_string("", &best) << "\"";
 	cmd << " >> " << tmpfile;
-	cout << "cmd: " << cmd.str() << endl;
 	res = system(cmd.str().c_str());
       }
       cmd.str("");
       cmd << "cat " << mconf.get_output_dir() << "/" << mconf_fname;
       cmd << " >> " << tmpfile;
-	cout << "cmd: " << cmd.str() << endl;
       res = system(cmd.str().c_str());
       // create command
       cmd.str("");
