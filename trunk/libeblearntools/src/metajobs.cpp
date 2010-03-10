@@ -264,7 +264,8 @@ namespace ebl {
     mkdir_full(dirbest.str().c_str());
     uint j = 1;
     for (natural_varmap::iterator i = best.begin(); i != best.end(); ++i, ++j) {
-      dir.str(""); dir << dirbest.str() << "/" << setfill('0') << setw(2) << j << "/";
+      dir.str("");
+      dir << dirbest.str() << "/" << setfill('0') << setw(2) << j << "/";
       mkdir_full(dir.str().c_str());
       // look for conf filename to save
       if (i->second.find("config") != i->second.end()) { // found config
