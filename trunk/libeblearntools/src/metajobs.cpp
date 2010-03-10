@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#include <iomanip>
 
 #include "metajobs.h"
 #include "utils.h"
@@ -54,7 +55,7 @@ namespace ebl {
   // job
 
   job::job(configuration &conf_, const string &exe_, const string &oconffname) 
-    : conf(conf_), exe(exe_), oconffname_(oconffname) {
+    : conf(conf_), exe(exe_), oconffname_(oconffname), classesname_("") {
     // remove quotes around executable command if present
     if ((exe[0] == '"') && (exe[exe.size() - 1] == '"'))
       exe = exe.substr(1, exe.size() - 2);
@@ -68,7 +69,9 @@ namespace ebl {
     ostringstream log;
     log << "out_" << conf.get_name() << ".log";
     // prepare command
-    cmd << "cd " << outdir_ << " && echo \"job=" << conf.get_name() << "\" > "
+    cmd << "cd " << outdir_ << " && echo \"job=" << conf.get_name()
+	<< " classes=" << classesname_ << " config="
+	<< confname_ << "\" > "
 	<< log.str() << " && ((" << exe << " " << confname_
 	<< " 3>&1 1>&2 2>&3 | tee /dev/tty) 3>&1 1>&2 2>&3) >> "
 	<< log.str() << " 2>&1 && exit 0";
@@ -94,6 +97,7 @@ namespace ebl {
     if (conf.exists("train") && conf.exists("root")) {
       classesname << conf.get_string("root") << "/" << conf.get_string("train");
       classesname << "_" << CLASSES_NAME << MATRIX_EXTENSION;
+      classesname_ = classesname.str();
       cmd.str("");
       cmd << "cp " << classesname.str() << " " << outdir.str() << "/";
       cmd << conf.get_name() << "_" << CLASSES_NAME << MATRIX_EXTENSION;
@@ -150,10 +154,9 @@ namespace ebl {
   }
 
   void job_manager::run() {
-    metaparser p; // output parser
     natural_varmap best; // best results
     ostringstream cmd;
-    int maxiter = -1;
+    int maxiter = -1, maxiter_tmp;
 
     // write job directories and files
     for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
@@ -161,7 +164,8 @@ namespace ebl {
       i->write();
     }
     // copy metaconf into jobs' root
-    cmd.str(""); cmd << "cp " << mconf_fullfname << " " << mconf.get_output_dir();
+    cmd.str("");
+    cmd << "cp " << mconf_fullfname << " " << mconf.get_output_dir();
     if (system(cmd.str().c_str()))
       cerr << "warning: failed to execute: " << cmd.str() << endl;
     // create gnuplot param file in jobs' root
@@ -201,11 +205,7 @@ namespace ebl {
 
       // analyze outputs if requested
       if (mconf.exists_bool("meta_analyze")) {
-	// parse output and get best results
-	p.parse_logs(mconf.get_output_dir());
-	best = p.best(mconf.get_string("meta_minimize"),
-		      MAX(1, mconf.get_uint("meta_send_best")));
-	int maxiter_tmp = p.get_max_iter();
+	best = analyze(maxiter_tmp); // parse output and get best results
 	if (maxiter_tmp != maxiter) { // iteration number has changed
 	  maxiter = maxiter_tmp;
 	  if (mconf.exists_bool("meta_send_email")) {
@@ -230,18 +230,63 @@ namespace ebl {
 	}
       }
     }
-    cout << "all processes are finished." << endl;
+    cout << "All processes are finished. Exiting." << endl;
     // email last results before exiting
-    if (mconf.exists_bool("meta_analyze")) {
-      // parse output and get best results
-      p.parse_logs(mconf.get_output_dir());
-      best = p.best(mconf.get_string("meta_minimize"),
-		    MAX(1, mconf.get_uint("meta_send_best")), true);
-    }
+    if (mconf.exists_bool("meta_analyze"))
+      best = analyze(maxiter_tmp);  // parse output and get best results
     // send report
     send_report(best);
   }
 
+  natural_varmap job_manager::analyze(int &maxiter) {
+    metaparser p; // output parser
+
+    p.parse_logs(mconf.get_output_dir());
+    maxiter = p.get_max_iter();
+    natural_varmap best = p.best(mconf.get_string("meta_minimize"),
+				 MAX(1, mconf.get_uint("meta_send_best")));
+    ostringstream dir, cmd;
+    string job;
+    int ret;
+    
+    // save best weights
+    cmd << "rm -Rf best"; // remove previous best
+    ret = std::system(cmd.str().c_str());
+    mkdir_full("best");
+    uint j = 1;
+    for (natural_varmap::iterator i = best.begin(); i != best.end(); ++i, ++j) {
+      dir.str(""); dir << "best/" << setfill('0') << setw(2) << j << "/";
+      mkdir_full(dir.str().c_str());
+      // find job name
+      if (i->second.find("job") == i->second.end()) // not found, continue
+	continue ; // can't do anything without job name
+      else
+	job = i->second.find("job")->second;
+      // look for weights filename to save
+      if (i->second.find("saved") != i->second.end()) { // found weights
+	cmd.str("");
+	cmd << "cp " << job << "/" << i->second.find("saved")->second
+	    << " " << dir.str();
+	ret = std::system(cmd.str().c_str());
+      }
+      // look for classes filename to save
+      if (i->second.find("classes") != i->second.end()) { // found weights
+	cmd.str("");
+	cmd << "cp " << job << "/" << i->second.find("classes")->second
+	    << " " << dir.str();
+	ret = std::system(cmd.str().c_str());
+      }
+      // look for conf filename to save
+      if (i->second.find("config") != i->second.end()) { // found weights
+	cmd.str("");
+	cmd << "cp " << job << "/" << i->second.find("config")->second
+	    << " " << dir.str();
+	ret = std::system(cmd.str().c_str());
+      }
+    }
+    return best;
+  }
+  
   void job_manager::send_report(natural_varmap &best) {
     ostringstream cmd;
     string tmpfile = "report.tmp";

@@ -73,6 +73,7 @@ namespace ebl {
     string		confname_;	//!< job's configuration filename
     string		oconffname_;	//!< job's original conf filename
     pid_t		pid;	//!< pid of this job
+    string              classesname_; //!< filename of classes matrix
   };
 
   ////////////////////////////////////////////////////////////////
@@ -81,22 +82,32 @@ namespace ebl {
   //! A class to manage jobs.
   class job_manager {
   public:
+    //! Constructor.
     job_manager();
+
+    //! Destructor.
     virtual ~job_manager();
 
+    //! Read meta configuration.
     bool read_metaconf(const char *fname);
+
+    //! Run all jobs.
     void run();
 
+    //! Analyze log files and return the best set of variables.
+    //! \param maxiter Set this to the maximum iteration number found.
+    natural_varmap analyze(int &maxiter);
+    
     //! Send an email reporting the status of the runs.
     void send_report(natural_varmap &best);
 
     ////////////////////////////////////////////////////////////////
     // members
   private:
-    meta_configuration	mconf;
-    string		mconf_fullfname;	//!< full filename of metaconf
-    string		mconf_fname;	//!< filename of metaconf
-    vector<job>		jobs;
+    meta_configuration	mconf; //!< Meta configuration
+    string		mconf_fullfname;	//!< Full filename of metaconf
+    string		mconf_fname;	//!< Filename of metaconf
+    vector<job>		jobs; //!< A vector of jobs to run
   };
 
 } // end namespace ebl
