@@ -98,6 +98,10 @@ namespace ebl {
   //! Convert a string containing a list of double separated by commas, e.g.
   //! "1,2,3.0,4.0" into a vector of doubles.
   vector<double> string_to_doublevector(const string &s);
+  
+  //! Tar directory dir into a .tgz archive, using directory's rightmost name,
+  //! into target directory tgtdir.
+  void tar(const string &dir, const string &tgtdir);
 
 } // end namespace ebl
 
