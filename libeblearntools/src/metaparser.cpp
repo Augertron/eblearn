@@ -244,12 +244,12 @@ namespace ebl {
       getline(in, s);
       istringstream iss(s, istringstream::in);
       // extract all variables for this line
-      vars.clear();
+      //      vars.clear();
       // initialize with keys of the hierarchy that have been seen before,
       // in case we have more variables
       // to add coming from a different line, this will be overriden
       // if new lines contains the hierarchy variables
-      vars.insert(keys.begin(), keys.end());
+      //vars.insert(keys.begin(), keys.end());
       // loop over variable/value pairs
       itok = s.find(separator);
       while (itok != string::npos) { // get remaining values

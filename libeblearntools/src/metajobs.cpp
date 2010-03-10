@@ -257,6 +257,19 @@ namespace ebl {
     for (natural_varmap::iterator i = best.begin(); i != best.end(); ++i, ++j) {
       dir.str(""); dir << "best/" << setfill('0') << setw(2) << j << "/";
       mkdir_full(dir.str().c_str());
+      // look for classes filename to save
+      if (i->second.find("classes") != i->second.end()) { // found classes
+	cmd.str("");
+	cmd << "cp " << i->second.find("classes")->second
+	    << " " << dir.str();
+	ret = std::system(cmd.str().c_str());
+      }
+      // look for conf filename to save
+      if (i->second.find("config") != i->second.end()) { // found config
+	cmd.str("");
+	cmd << "cp " << i->second.find("config")->second << " " << dir.str();
+	ret = std::system(cmd.str().c_str());
+      }
       // find job name
       if (i->second.find("job") == i->second.end()) // not found, continue
 	continue ; // can't do anything without job name
@@ -265,22 +278,7 @@ namespace ebl {
       // look for weights filename to save
       if (i->second.find("saved") != i->second.end()) { // found weights
 	cmd.str("");
-	cmd << "cp " << job << "/" << i->second.find("saved")->second
-	    << " " << dir.str();
-	ret = std::system(cmd.str().c_str());
-      }
-      // look for classes filename to save
-      if (i->second.find("classes") != i->second.end()) { // found weights
-	cmd.str("");
-	cmd << "cp " << job << "/" << i->second.find("classes")->second
-	    << " " << dir.str();
-	ret = std::system(cmd.str().c_str());
-      }
-      // look for conf filename to save
-      if (i->second.find("config") != i->second.end()) { // found weights
-	cmd.str("");
-	cmd << "cp " << job << "/" << i->second.find("config")->second
-	    << " " << dir.str();
+	cmd << "cp " << job << "/" << i->second.find("saved")->second << " " << dir.str();
 	ret = std::system(cmd.str().c_str());
       }
     }
