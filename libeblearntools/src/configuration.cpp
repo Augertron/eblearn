@@ -78,7 +78,7 @@ namespace ebl {
       }
     }
     if (!found) {
-      s << " # variable added by meta_trainer";
+      s << " # variable added by metarun";
       push_back(pair<string,string>(s.str(), varname));
     }
   }

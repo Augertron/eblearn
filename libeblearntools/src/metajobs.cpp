@@ -42,6 +42,13 @@
 #include <unistd.h>
 #include <iomanip>
 
+#ifdef __BOOST__
+#include "boost/filesystem.hpp"
+#include "boost/regex.hpp"
+using namespace boost::filesystem;
+using namespace boost;
+#endif
+
 #include "metajobs.h"
 #include "utils.h"
 #include "tools_utils.h"
@@ -87,7 +94,7 @@ namespace ebl {
   }
 
   bool job::write() {
-    ostringstream outdir, confname, cmd, classesname;
+    ostringstream outdir, confname, cmd, classesname, tmp;
     // create directories 
     outdir.str("");
     outdir << conf.get_output_dir() << "/" << conf.get_name();
@@ -97,10 +104,11 @@ namespace ebl {
     if (conf.exists("train") && conf.exists("root")) {
       classesname << conf.get_string("root") << "/" << conf.get_string("train");
       classesname << "_" << CLASSES_NAME << MATRIX_EXTENSION;
-      classesname_ = classesname.str();
       cmd.str("");
       cmd << "cp " << classesname.str() << " " << outdir.str() << "/";
-      cmd << conf.get_name() << "_" << CLASSES_NAME << MATRIX_EXTENSION;
+      tmp << conf.get_name() << "_" << CLASSES_NAME << MATRIX_EXTENSION;
+      classesname_ = tmp.str();
+      cmd << classesname_;
       int res = std::system(cmd.str().c_str());
       if (res < 0)
 	cerr << "warning: command failed: " << cmd.str() << endl;
@@ -166,7 +174,7 @@ namespace ebl {
     // copy metaconf into jobs' root
     cmd.str("");
     cmd << "cp " << mconf_fullfname << " " << mconf.get_output_dir();
-    if (system(cmd.str().c_str()))
+    if (std::system(cmd.str().c_str()))
       cerr << "warning: failed to execute: " << cmd.str() << endl;
     // create gnuplot param file in jobs' root
     try {
@@ -245,25 +253,19 @@ namespace ebl {
     maxiter = p.get_max_iter();
     natural_varmap best = p.best(mconf.get_string("meta_minimize"),
 				 MAX(1, mconf.get_uint("meta_send_best")));
-    ostringstream dir, cmd;
+    ostringstream dirbest, dir, cmd;
     string job;
     int ret;
     
     // save best weights
-    cmd << "rm -Rf best"; // remove previous best
+    dirbest << mconf.get_output_dir() << "/best";
+    cmd << "rm -Rf " << dirbest.str(); // remove previous best
     ret = std::system(cmd.str().c_str());
-    mkdir_full("best");
+    mkdir_full(dirbest.str().c_str());
     uint j = 1;
     for (natural_varmap::iterator i = best.begin(); i != best.end(); ++i, ++j) {
-      dir.str(""); dir << "best/" << setfill('0') << setw(2) << j << "/";
+      dir.str(""); dir << dirbest.str() << "/" << setfill('0') << setw(2) << j << "/";
       mkdir_full(dir.str().c_str());
-      // look for classes filename to save
-      if (i->second.find("classes") != i->second.end()) { // found classes
-	cmd.str("");
-	cmd << "cp " << i->second.find("classes")->second
-	    << " " << dir.str();
-	ret = std::system(cmd.str().c_str());
-      }
       // look for conf filename to save
       if (i->second.find("config") != i->second.end()) { // found config
 	cmd.str("");
@@ -275,13 +277,32 @@ namespace ebl {
 	continue ; // can't do anything without job name
       else
 	job = i->second.find("job")->second;
+      // look for classes filename to save
+      if (i->second.find("classes") != i->second.end()) { // found classes
+	cmd.str("");
+	cmd << "cp " << mconf.get_output_dir() << "/" << job << "/"
+	    << i->second.find("classes")->second << " " << dir.str();
+	ret = std::system(cmd.str().c_str());
+      }
       // look for weights filename to save
       if (i->second.find("saved") != i->second.end()) { // found weights
 	cmd.str("");
-	cmd << "cp " << job << "/" << i->second.find("saved")->second << " " << dir.str();
+	cmd << "cp " << mconf.get_output_dir() << "/" << job << "/"
+	    << i->second.find("saved")->second << " " << dir.str();
 	ret = std::system(cmd.str().c_str());
+	// add weights filename into configuration
+#ifdef __BOOST__
+	path p(i->second.find("config")->second);
+	cmd.str("");
+	cmd << "echo \"weights_file=" << i->second.find("saved")->second 
+	    << " # variable added by metarun\n\" >> "
+	    << dir.str() << "/" << p.leaf();
+	ret = std::system(cmd.str().c_str());
+#endif
       }
     }
+    // tar all best files
+    tar(dirbest.str(), mconf.get_output_dir());
     return best;
   }
   
@@ -295,36 +316,34 @@ namespace ebl {
 	cerr << "undefined email address, not sending report." << endl;
 	return ;
       }
-      // package best results
-
       // create plots
 
       // write body of email
       cmd.str("");
       cmd << "rm -f " << tmpfile; // remove tmp file first
-      res = system(cmd.str().c_str());
+      res = std::system(cmd.str().c_str());
       if (best.size() > 0) {
 	cmd.str("");
 	cmd << "echo \"Best " << best.size() << " results:" << endl;
 	cmd << pairtree::flat_to_string("", &best) << "\"";
 	cmd << " >> " << tmpfile;
-	res = system(cmd.str().c_str());
+	res = std::system(cmd.str().c_str());
       }
       cmd.str("");
       cmd << "cat " << mconf.get_output_dir() << "/" << mconf_fname;
       cmd << " >> " << tmpfile;
-      res = system(cmd.str().c_str());
+      res = std::system(cmd.str().c_str());
       // create command
       cmd.str("");
       cmd << "cat " << tmpfile << " | mutt " << mconf.get_string("meta_email");
       // subject of email
       cmd << " -s \"MetaRun Report " << mconf.get_name() << "\"";
       // attach files
-      
+      cmd << " -a " << mconf.get_output_dir() << "/best.tgz";
       cout << "Sending email report to " << mconf.get_string("meta_email")
 	   << ":" << endl;
       cout << cmd.str() << endl;
-      res = system(cmd.str().c_str());
+      res = std::system(cmd.str().c_str());
     }
   }
 

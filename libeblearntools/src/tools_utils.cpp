@@ -203,4 +203,16 @@ namespace ebl {
     return l;
   }
 
+  void tar(const string &dir, const string &tgtdir) {
+#ifdef __BOOST__
+    ostringstream cmd;
+    path p(dir);
+    cmd << "tar cz -C " << dir << "/../ -f " << tgtdir << "/" << p.leaf() << ".tgz " 
+	<< p.leaf();// << " 2> /dev/null";
+    int ret = std::system(cmd.str().c_str());
+    if (ret < 0)
+      cerr << "tar failed." << endl;
+#endif
+  }
+
 } // namespace ebl
