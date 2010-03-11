@@ -22,6 +22,8 @@ int main(int argc, char **argv) { // regular main without gui
     train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"train"),
     test_ds(conf.get_cstring("root"), conf.get_cstring("val"), "val");
   train_ds.set_balanced();
+  train_ds.set_weigh_samples(conf.exists_bool("weigh_samples"));
+  train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =

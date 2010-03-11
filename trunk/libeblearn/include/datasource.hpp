@@ -34,6 +34,7 @@
 #define DATASOURCE_HPP_
 
 #include <ostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -45,7 +46,7 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::datasource()
     : nclasses(0), bias(0), coeff(1.0), data(1), labels(1), dataIter(data, 0), 
-      labelsIter(labels, 0), height(0), width(0) {
+      labelsIter(labels, 0), probasIter(probas, 0), height(0), width(0) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -53,7 +54,8 @@ namespace ebl {
   datasource(const datasource<Tnet, Tin1, Tin2> &ds)
     : nclasses(0), bias(ds.bias), coeff(ds.coeff), data(ds.data),
       labels(ds.labels), dataIter(data, 0), labelsIter(labels, 0),
-      height(ds.height), width(ds.width), name(ds.name), balance(ds.balance) {
+      probasIter(probas, 0), height(ds.height), width(ds.width), name(ds.name),
+      balance(ds.balance) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -61,8 +63,8 @@ namespace ebl {
   datasource(idx<Tin1> &data_, idx<Tin2> &labels_, const char *name_,
 	     Tin1 b, float c)
     : nclasses(0), bias(b), coeff(c), data(data_), labels(labels_),
-      dataIter(data, 0), 
-      labelsIter(labels, 0), height(data.dim(1)), width(data.dim(2)) {
+      dataIter(data, 0), labelsIter(labels, 0), probasIter(probas, 0),
+      height(data.dim(1)), width(data.dim(2)) {
     init(data_, labels_, name_, b, c);
   }
 
@@ -72,6 +74,10 @@ namespace ebl {
        Tin1 b, float c){
     data = data_;
     labels = labels_;
+    probas = idx<double>(data.dim(0));
+    init_drand(time(NULL)); // initialize random seed
+    // default probability for a sample of being used is 1
+    idx_fill(probas, 1.0); 
     height = data.dim(1);
     width = data.dim(2);
     nclasses = (intg) idx_max(labels) + 1;
@@ -80,8 +86,10 @@ namespace ebl {
     name = (name_ ? name_ : "Unknown Dataset");
     typename idx<Tin1>::dimension_iterator	 dIter(data, 0);
     typename idx<Tin2>::dimension_iterator	 lIter(labels, 0);
+    typename idx<double>::dimension_iterator	 pIter(probas, 0);
     dataIter = dIter;
     labelsIter = lIter;
+    probasIter = pIter;
     // count number of samples per class
     counts.resize(nclasses);
     fill(counts.begin(), counts.end(), 0);
@@ -90,6 +98,8 @@ namespace ebl {
     }
     // balance dataset for each class
     set_balanced();
+    set_shuffle_passes(true);
+    set_weigh_samples(true);
     datasource<Tnet, Tin1, Tin2>::pretty();
   }
 
@@ -118,6 +128,7 @@ namespace ebl {
     // create a target idx with the same dimensions
     idx<Tin1> shuffledData(data.get_idxdim());
     idx<Tin2> shuffledLabels(labels.get_idxdim());
+    idx<double> shuffledProbas(probas.get_idxdim());
     // get the nb of classes
     intg nbOfClasses = 1+idx_max(labels);
     intg nbOfSamples = data.dim(0);
@@ -133,6 +144,10 @@ namespace ebl {
       idx<Tin2> destLabel = shuffledLabels[i];
       idx_copy(oneLabel, destLabel);
 
+      idx<double> oneProba = probas[iterator];
+      idx<double> destProba = shuffledProbas[i];
+      idx_copy(oneProba, destProba);
+
       iterator += nbOfSamplesPerClass;
       if (iterator >= nbOfSamples)
 	iterator = (iterator % nbOfSamples) + 1;
@@ -140,6 +155,7 @@ namespace ebl {
     // replace the original dataset, and labels
     data = shuffledData;
     labels = shuffledLabels;
+    probas = shuffledProbas;
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -153,14 +169,30 @@ namespace ebl {
   }
 
   template <class Tnet, class Tin1, class Tin2>
+  bool datasource<Tnet, Tin1, Tin2>::pick_current() {
+    // draw random number between 0 and 1 and return true if higher
+    // than sample's probability.
+    double r = drand(); // [0..1]
+    if (r >= probasIter->get())
+      return true;
+    return false;
+  }
+
+    template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next() {
+    // draw random number between
     ++dataIter;
     ++labelsIter;
+    ++probasIter;
     
     if(!dataIter.notdone()) {
       dataIter = data.dim_begin(0);
       labelsIter = labels.dim_begin(0);
+      probasIter = probas.dim_begin(0);
     }
+    // recursively loop until we find a sample that is picked
+    if (!pick_current())
+      next();
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -171,12 +203,30 @@ namespace ebl {
     //      cout << "#" << i << "/" << iitr << " ";
     dataIter = dataIter.at(i);
     labelsIter = labelsIter.at(i);
+    probasIter = probasIter.at(i);
     indices_itr[iitr] += 1;
-    if (indices_itr[iitr] >= label_indices[iitr].size())
+    if (indices_itr[iitr] >= label_indices[iitr].size()) {
+      // returning to begining of list for this class
       indices_itr[iitr] = 0;
-    iitr++; // next class
-    if (iitr >= label_indices.size())
-      iitr = 0;
+      // shuffling list for this class
+      vector<intg> &clist = label_indices[iitr];
+      random_shuffle(clist.begin(), clist.end());
+    }
+    // recursively loop until we find a sample that is picked for this class
+    if (!pick_current())
+      balanced_next();
+    else { // if we picked a sample, jump to next class
+      iitr++; // next class
+      if (iitr >= label_indices.size())
+	iitr = 0; // reseting to first class in class list
+    }
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_answer_distance(double dist) {
+    if (weigh_samples) { // if false, keep default probability 1 for all samples
+      probasIter->set(MIN(1.0, fabs(dist)));
+    }
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -184,12 +234,15 @@ namespace ebl {
     if (!balance) { // do not reset when balancing
       dataIter = data.dim_begin(0);
       labelsIter = labels.dim_begin(0);
+      probasIter = probas.dim_begin(0);
     }
   }
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_balanced() {
     balance = true;
+    cout << "Class-balancing is "
+	 << (balance ? "activated" : "deactivated") << "." << endl;
     // compute vector of sample indices for each class
     label_indices.clear();
     indices_itr.clear();
@@ -212,6 +265,20 @@ namespace ebl {
     //     }
   }
 
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_shuffle_passes(bool activate) {
+    shuffle_passes = activate;
+    cout << "Shuffling of samples after each pass is "
+	 << (shuffle_passes ? "activated" : "deactivated") << "." << endl;
+  }
+  
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_weigh_samples(bool activate) {
+    weigh_samples = activate;
+    cout << "Weighing of samples based on classification is "
+	 << (weigh_samples ? "activated" : "deactivated") << "." << endl;
+  }
+  
   template <class Tnet, class Tin1, class Tin2>
   intg datasource<Tnet, Tin1, Tin2>::get_nclasses() {
     return nclasses;
