@@ -44,24 +44,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! datasource
   template<class Tnet, class Tin1, class Tin2> class datasource {
-  protected:
-    intg                                        nclasses; // # of classes
-    vector<intg>                                counts; // # of samples / class
   public:
-    Tnet					bias;
-    float					coeff;
-    idx<Tin1>					data; // samples
-    idx<Tin2>					labels; // labels
-    typename idx<Tin1>::dimension_iterator	dataIter;
-    typename idx<Tin2>::dimension_iterator	labelsIter;
-    unsigned int				height;
-    unsigned int				width;
-    string					name;
-    bool					balance;
-    vector<vector<intg> >                       label_indices;
-    vector<uint>                                indices_itr;
-    uint                                        iitr;
-
     //! CAUTION: This empty constructor requires a subsequent call to init().
     datasource();
 
@@ -97,6 +80,10 @@ namespace ebl {
     // TODO: implement or get rid of tell?
     virtual int tell() { return -1; };
 
+    //! Draw a random number between 0 and 1 and return true if higher
+    //! than current sample's probability.
+    virtual bool pick_current();
+    
     //! Move to the next datum (in the original order of the dataset).
     //! This should be used during testing.
     virtual void next();
@@ -108,6 +95,19 @@ namespace ebl {
     //! This should be used during training.
     virtual void balanced_next();
 
+    //! Set the distance between the answer of the model to train and the
+    //! true answer. This is used to give more or less probability for a
+    //! sample to be used for training. At the beginning of training, all
+    //! samples start with a probability of 1, thus all samples are used,
+    //! but as training goes, easy samples are given lower probability while
+    //! harder samples are given higher probability.
+    //! The absolute distance is directly mapped into a probability, i.e.
+    //! a distance of 0 will give probability 0 to be used, and distance of
+    //! 1 and higher give probability 1 to be used. Therefore distance
+    //! should be normalized so that a distance of 1 represents an offending
+    //! answer.
+    virtual void set_answer_distance(double dist);
+
     //! Move to the beginning of the data.
     virtual void seek_begin();
 
@@ -115,6 +115,18 @@ namespace ebl {
     //! instead of following the dataset's distribution.
     //! This is useful and important when the dataset is unbalanced.
     virtual void set_balanced();
+
+    //! Activate or deactivate shuffling of list of samples for each class
+    //! after reaching the end of the sample list. This has an effect only
+    //! when set_balanced() is set.
+    //! This is activated by default.
+    virtual void set_shuffle_passes(bool activate);
+
+    //! Activate or deactivate weighing of samples based on classification
+    //! results. Wrong answers give a higher probability for a sample
+    //! to be used for training, correct answers a lower probability.
+    //! This is activated by default.
+    virtual void set_weigh_samples(bool activate);
 
     //! Return the number of classes.
     virtual intg get_nclasses();
@@ -130,6 +142,31 @@ namespace ebl {
     
     //! Print info about the datasource on the standard output.
     virtual void pretty();
+
+    ////////////////////////////////////////////////////////////////
+    // members
+  protected:
+    intg                                        nclasses; // # of classes
+    vector<intg>                                counts; // # of samples / class
+  public:
+    Tnet					bias;
+    float					coeff;
+    idx<Tin1>					data; // samples
+    idx<Tin2>					labels; // labels
+    idx<double>					probas;//!< sample probabilities
+    typename idx<Tin1>::dimension_iterator	dataIter;
+    typename idx<Tin2>::dimension_iterator	labelsIter;
+    typename idx<double>::dimension_iterator	probasIter;
+    unsigned int				height;
+    unsigned int				width;
+    string					name;
+    bool					balance;
+    vector<vector<intg> >                       label_indices;
+    vector<uint>                                indices_itr;
+    uint                                        iitr;
+    // switches to activate or deactivate features
+    bool                                        shuffle_passes;
+    bool                                        weigh_samples;
   };
 
   ////////////////////////////////////////////////////////////////
