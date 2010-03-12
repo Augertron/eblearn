@@ -202,10 +202,10 @@ namespace ebl {
     cout << "[" << (int) age << "]  sz=" <<  (int) size << " ";
     cout << (ds_is_test ? "test_":"") << "energy="
 	 << total_energy / (double) size << " ";
-    cout << (ds_is_test ? "test_":"") << "correct=" << average_success() << "%";
-    cout << (ds_is_test ? "test_":"") << "errors=" << average_error() << "%";
+    cout << (ds_is_test ? "test_":"") << "correct=" << average_success() << "% ";
+    cout << (ds_is_test ? "test_":"") << "errors=" << average_error() << "% ";
     cout << (ds_is_test ? "test_":"") << "rejects="
-	 << (total_punt * 100) / (double) size << "%";
+	 << (total_punt * 100) / (double) size << "% ";
     cout << endl;
     cout << "errors per class: ";
     for (uint i = 0; i < class_errors.size(); ++i) {

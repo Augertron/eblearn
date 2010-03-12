@@ -253,7 +253,7 @@ namespace ebl {
 
     p.parse_logs(mconf.get_output_dir());
     maxiter = p.get_max_iter();
-    list<string> keys = string_to_stringlist(mconf.get_string("meta_minimize"));
+    keys = string_to_stringlist(mconf.get_string("meta_minimize"));
     varmaplist best = p.best(keys, MAX(1, mconf.get_uint("meta_send_best")));
     ostringstream dirbest, dir, cmd;
     string job;
@@ -333,7 +333,7 @@ namespace ebl {
       if (best.size() > 0) {
 	cmd.str("");
 	cmd << "echo \"Best " << best.size() << " results:" << endl;
-	cmd << pairtree::flat_to_string(&best) << "\"";
+	cmd << pairtree::flat_to_string(&best, &keys) << "\"";
 	cmd << " >> " << tmpfile;
 	res = std::system(cmd.str().c_str());
       }

@@ -108,6 +108,7 @@ namespace ebl {
     string		mconf_fullfname;	//!< Full filename of metaconf
     string		mconf_fname;	//!< Filename of metaconf
     vector<job>		jobs; //!< A vector of jobs to run
+    list<string>        keys; //!< Keys used for reporting and comparing.
   };
 
 } // end namespace ebl
