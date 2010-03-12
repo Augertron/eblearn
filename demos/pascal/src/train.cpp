@@ -21,7 +21,7 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "Usage: ./pascal <config file>" << endl;
     eblerror("config file not specified");
   }
-  typedef float t_net;
+  typedef double t_net;
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
   init_drand(time(NULL)); // initialize random seed
   configuration conf(argv[1]); // configuration file
