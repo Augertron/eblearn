@@ -197,26 +197,33 @@ namespace ebl {
   }
 
   void classifier_meter::display(int iteration, string &dsname,
-				 vector<string*> *lblstr) {
+				 vector<string*> *lblstr, bool ds_is_test) {
     cout << "i=" << iteration << " name=" << dsname << " ";
-    cout << "[" << (int) age << "]  sz=" <<  (int) size;
-    cout << " energy=" << total_energy / (double) size;
-    cout << "  correct=" <<  average_success();
-    cout << "% errors=" << average_error();
-    cout << "% rejects=" << (total_punt * 100) / (double) size << "%";
+    cout << "[" << (int) age << "]  sz=" <<  (int) size << " ";
+    cout << (ds_is_test ? "test_":"") << "energy="
+	 << total_energy / (double) size << " ";
+    cout << (ds_is_test ? "test_":"") << "correct=" << average_success() << "%";
+    cout << (ds_is_test ? "test_":"") << "errors=" << average_error() << "%";
+    cout << (ds_is_test ? "test_":"") << "rejects="
+	 << (total_punt * 100) / (double) size << "%";
     cout << endl;
     cout << "errors per class: ";
     for (uint i = 0; i < class_errors.size(); ++i) {
-      if (lblstr) cout << *((*lblstr)[i]);
-      else cout << i;
-      cout << "(" << class_totals[i] << "): ";
-      cout << class_errors[i] * 100.0
+      // number of samples for this class
+      cout << (ds_is_test ? "test_" : "");
+      if (lblstr) cout << *((*lblstr)[i]); else cout << i;
+      cout << "_samples=" << class_totals[i] << " ";
+      // percentage of error for this class
+      cout << (ds_is_test ? "test_" : "");
+      if (lblstr) cout << *((*lblstr)[i]); else cout << i;
+      cout << "_errors=" << class_errors[i] * 100.0
 	/ (float) ((class_totals[i]==0)?1:class_totals[i]) << "% ";
     }
     cout << endl;
   }
 
-  void classifier_meter::display_positive_rates(double threshold, vector<string*> *lblstr) {
+  void classifier_meter::display_positive_rates(double threshold,
+						vector<string*> *lblstr) {
     for (uint i = 0; i < class_fpr.size(); ++i) {
       cout << class_fpr[i] / (float) (size - class_totals[i]) << " ROC_";
       if (lblstr) cout << *((*lblstr)[i]);

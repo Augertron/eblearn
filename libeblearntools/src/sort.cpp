@@ -108,4 +108,31 @@ namespace ebl {
     return natural_compare(a, b) < 0;
   }
 
+  map_natural_less::map_natural_less(list<string> &k) {
+    keys = k;
+  }
+  
+  bool map_natural_less::operator()(const map<string,string>& m1,
+				    const map<string,string>& m2) {
+    natural_less nl;
+    // loop over comparison keys
+    for (list<string>::iterator i = keys.begin(); i != keys.end(); ++i) {
+      // check that key exists in both maps
+      map<string,string>::const_iterator k1 = m1.find(*i);
+      map<string,string>::const_iterator k2 = m2.find(*i);
+      if ((k1 == m1.end()) && (k2 == m2.end()))
+      	continue ; // unknown key for both, try another one.
+      if (k1 == m1.end())
+	return false; // m1 doesn't contain the key but m2 does, m1 > m2
+      if (k2 == m2.end())
+	return true;  // m2 doesn't contain the key but m1 does, m1 < m2
+      if (nl(k1->second, k2->second))
+	return true; // m1 < m2
+      if (k1->second != k2->second)
+	return false; // m1 > m2
+    }
+    // we reached this point, m1 == m2
+    return true; // or false, they are equal.
+  }
+  
 } // end namespace ebl

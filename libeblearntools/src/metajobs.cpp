@@ -163,7 +163,7 @@ namespace ebl {
   }
 
   void job_manager::run() {
-    natural_varmap best; // best results
+    varmaplist best; // best results
     ostringstream cmd;
     int maxiter = -1, maxiter_tmp;
 
@@ -248,13 +248,13 @@ namespace ebl {
     send_report(best);
   }
 
-  natural_varmap job_manager::analyze(int &maxiter) {
+  varmaplist job_manager::analyze(int &maxiter) {
     metaparser p; // output parser
 
     p.parse_logs(mconf.get_output_dir());
     maxiter = p.get_max_iter();
-    natural_varmap best = p.best(mconf.get_string("meta_minimize"),
-				 MAX(1, mconf.get_uint("meta_send_best")));
+    list<string> keys = string_to_stringlist(mconf.get_string("meta_minimize"));
+    varmaplist best = p.best(keys, MAX(1, mconf.get_uint("meta_send_best")));
     ostringstream dirbest, dir, cmd;
     string job;
     int ret;
@@ -265,26 +265,26 @@ namespace ebl {
     ret = std::system(cmd.str().c_str());
     mkdir_full(dirbest.str().c_str());
     uint j = 1;
-    for (natural_varmap::iterator i = best.begin(); i != best.end(); ++i, ++j) {
+    for (varmaplist::iterator i = best.begin(); i != best.end(); ++i, ++j) {
       dir.str("");
       dir << dirbest.str() << "/" << setfill('0') << setw(2) << j << "/";
       mkdir_full(dir.str().c_str());
       // look for conf filename to save
-      if (i->second.find("config") != i->second.end()) { // found config
+      if (i->find("config") != i->end()) { // found config
 	cmd.str("");
-	cmd << "cp " << i->second.find("config")->second << " " << dir.str();
+	cmd << "cp " << i->find("config")->second << " " << dir.str();
 	ret = std::system(cmd.str().c_str());
       }
       // find job name
-      if (i->second.find("job") == i->second.end()) // not found, continue
+      if (i->find("job") == i->end()) // not found, continue
 	continue ; // can't do anything without job name
       else
-	job = i->second.find("job")->second;
+	job = i->find("job")->second;
       // look for classes filename to save
-      if (i->second.find("classes") != i->second.end()) { // found classes
+      if (i->find("classes") != i->end()) { // found classes
 	cmd.str("");
 	cmd << "cp " << mconf.get_output_dir() << "/" << job << "/"
-	    << i->second.find("classes")->second << " " << dir.str();
+	    << i->find("classes")->second << " " << dir.str();
 	ret = std::system(cmd.str().c_str());
       }
       // save out log
@@ -293,16 +293,16 @@ namespace ebl {
 	  << "out_" << job << ".log " << dir.str();
       ret = std::system(cmd.str().c_str());
       // look for weights filename to save
-      if (i->second.find("saved") != i->second.end()) { // found weights
+      if (i->find("saved") != i->end()) { // found weights
 	cmd.str("");
 	cmd << "cp " << mconf.get_output_dir() << "/" << job << "/"
-	    << i->second.find("saved")->second << " " << dir.str();
+	    << i->find("saved")->second << " " << dir.str();
 	ret = std::system(cmd.str().c_str());
 	// add weights filename into configuration
 #ifdef __BOOST__
-	path p(i->second.find("config")->second);
+	path p(i->find("config")->second);
 	cmd.str("");
-	cmd << "echo \"weights_file=" << i->second.find("saved")->second 
+	cmd << "echo \"weights_file=" << i->find("saved")->second 
 	    << " # variable added by metarun\n\" >> "
 	    << dir.str() << "/" << p.leaf();
 	ret = std::system(cmd.str().c_str());
@@ -314,7 +314,7 @@ namespace ebl {
     return best;
   }
   
-  void job_manager::send_report(natural_varmap &best) {
+  void job_manager::send_report(varmaplist &best) {
     ostringstream cmd;
     string tmpfile = "report.tmp";
     int res;
@@ -333,7 +333,7 @@ namespace ebl {
       if (best.size() > 0) {
 	cmd.str("");
 	cmd << "echo \"Best " << best.size() << " results:" << endl;
-	cmd << pairtree::flat_to_string("", &best) << "\"";
+	cmd << pairtree::flat_to_string(&best) << "\"";
 	cmd << " >> " << tmpfile;
 	res = std::system(cmd.str().c_str());
       }

@@ -21,6 +21,7 @@ int main(int argc, char **argv) { // regular main without gui
   labeled_datasource<t_net, float, int>
     train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"train"),
     test_ds(conf.get_cstring("root"), conf.get_cstring("val"), "val");
+  test_ds.set_test(); // test is the test set, used for reporting
   train_ds.set_weigh_samples(conf.exists_bool("wsamples"));
   train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));
   train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
@@ -82,9 +83,9 @@ int main(int argc, char **argv) { // regular main without gui
 
   for (uint i = 1; i <= conf.get_uint("iterations"); ++i) {
     // train and test
-    thetrainer.train(train_ds, trainmeter, gdp, 1);	         // train
-    thetrainer.test(train_ds, trainmeter, infp);	         // test
-    thetrainer.test(test_ds, testmeter, infp);	                 // test
+    thetrainer.train(train_ds, trainmeter, gdp, 1);	// train
+    thetrainer.test(train_ds, trainmeter, infp);	// test
+    thetrainer.test(test_ds, testmeter, infp);	// test
     
     // save weights and confusion matrix for test set
     name.str("");
