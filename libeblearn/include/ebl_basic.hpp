@@ -368,7 +368,11 @@ namespace ebl {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x.spec); // use same dimensions as in
       d.setdim(0, bias.x.dim(0)); // except for the first one
-      out.resize(d);
+      if (out.x.get_idxdim() != d) { // resize only if necessary
+	cout << "addc: resizing output from " << out.x.get_idxdim();
+	cout << " to " << d << endl;
+	out.resize(d);
+      }
     }
 
     // add each bias to entire slices cut from the first dimension

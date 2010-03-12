@@ -156,7 +156,8 @@ namespace ebl {
     vector<configuration>::iterator iconf = confs.begin();
     for ( ; iconf != confs.end(); ++iconf) {
       iconf->resolve();
-      jobs.push_back(job(*iconf, mconf.get_string("meta_command"), mconf_fname));
+      jobs.push_back(job(*iconf, mconf.get_string("meta_command"),
+			 mconf_fname));
     }
     return true;
   }
@@ -204,9 +205,10 @@ namespace ebl {
       sleep(swait);
       // check if each pid responds to a harmless signal
       nrunning = 0;
-      for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i)
+      for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
 	if (i->alive())
 	  nrunning++;
+      }
       int status = 0;
       waitpid(-1, &status, WNOHANG); // check children status
       cout << "There are " << nrunning << " processes alive" << endl;
@@ -340,7 +342,8 @@ namespace ebl {
       // subject of email
       cmd << " -s \"MetaRun Report " << mconf.get_name() << "\"";
       // attach files
-      cmd << " -a " << mconf.get_output_dir() << "/best.tgz";
+      if (best.size() > 0)
+	cmd << " -a " << mconf.get_output_dir() << "/best.tgz";
       cout << "Sending email report to " << mconf.get_string("meta_email")
 	   << ":" << endl;
       cout << cmd.str() << endl;

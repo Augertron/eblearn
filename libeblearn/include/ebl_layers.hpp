@@ -150,7 +150,6 @@ namespace ebl {
     // 2. fprop
     sum->clear();
     convol.fprop(in, *sum);
-    out.resize_as(*sum); // resize output
     adder.fprop(*sum, *sum);
     sigmoid.fprop(*sum, out);
   }
@@ -332,7 +331,6 @@ namespace ebl {
 
     // 2. fprop
     subsampler.fprop(in, *sum);
-    out.resize_as(*sum); // resize output
     adder.fprop(*sum, *sum);
     sigmoid.fprop(*sum, out);
   }
