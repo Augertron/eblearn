@@ -95,6 +95,10 @@ namespace ebl {
   //! "1,2,3,4" into a list of uints.
   list<uint> string_to_uintlist(const string &s);
 
+  //! Convert a string containing a list of strings separated by commas, e.g.
+  //! "errors,2,toto,4" into a list of strings.
+  list<string> string_to_stringlist(const string &s);
+
   //! Convert a string containing a list of double separated by commas, e.g.
   //! "1,2,3.0,4.0" into a vector of doubles.
   vector<double> string_to_doublevector(const string &s);

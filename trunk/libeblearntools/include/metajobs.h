@@ -96,10 +96,10 @@ namespace ebl {
 
     //! Analyze log files and return the best set of variables.
     //! \param maxiter Set this to the maximum iteration number found.
-    natural_varmap analyze(int &maxiter);
+    varmaplist analyze(int &maxiter);
     
     //! Send an email reporting the status of the runs.
-    void send_report(natural_varmap &best);
+    void send_report(varmaplist &best);
 
     ////////////////////////////////////////////////////////////////
     // members

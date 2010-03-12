@@ -41,6 +41,8 @@
 #include <iterator>
 #include <string>
 #include <vector>
+#include <list>
+#include <map>
 
 using namespace std;
 
@@ -82,7 +84,18 @@ namespace ebl {
 
   //! Credits to http://www.daniweb.com/forums/thread259447.html#
   struct natural_less: binary_function<string, string, bool> {
-    bool operator()(const string& a, const string& b); };
+    bool operator()(const string& a, const string& b);
+  };
+
+  //! Compare two maps of var/val strings using the comparison keys list
+  //! and using the natural comparison of numbers ("2" is less than "10").
+  struct map_natural_less
+    : binary_function<map<string,string>, map<string,string>, bool> {
+    map_natural_less(list<string> &keys);
+    bool operator()(const map<string,string>& m1, const map<string,string>& m2);
+    // members
+    list<string> keys;
+  };
   
 } // end namespace ebl
 

@@ -166,6 +166,14 @@ namespace ebl {
     //! Print info about the datasource on the standard output.
     virtual void pretty();
 
+    //! Set this datasource to be a test datasource. This is optional but
+    //! useful for reporting and to verify that no training only methods are
+    //! called on this datasrouces (e.g. next_train()).
+    void set_test();
+
+    //! Returns true if this datasource is a test datasource only.
+    bool is_test();
+    
     ////////////////////////////////////////////////////////////////
     // members
   protected:
@@ -183,6 +191,7 @@ namespace ebl {
     unsigned int				height;
     unsigned int				width;
     string					name;
+  protected:
     bool					balance;
     vector<vector<intg> >                       label_indices;
     vector<uint>                                indices_itr;
@@ -191,6 +200,7 @@ namespace ebl {
     bool                                        shuffle_passes;
     bool                                        weigh_samples;
     bool                                        perclass_norm;
+    bool                                        test_set; //!< Is a test set.
   };
 
   ////////////////////////////////////////////////////////////////

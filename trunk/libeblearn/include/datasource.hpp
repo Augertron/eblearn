@@ -102,6 +102,7 @@ namespace ebl {
     set_shuffle_passes(true); // for next_train only
     set_weigh_samples(true); // for next_train only
     set_weigh_normalization(true); // per class by default
+    test_set = false;
     datasource<Tnet, Tin1, Tin2>::pretty();
   }
 
@@ -172,6 +173,8 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   bool datasource<Tnet, Tin1, Tin2>::pick_current() {
+    if (test_set) // check that this datasource is allowed to call this method
+      eblerror("forbidden call of pick_current() on testing sets");
     if (!weigh_samples) // always pick sample when not using probabilities
       return true;
     // draw random number between 0 and 1 and return true if lower
@@ -199,6 +202,8 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next_train() {
+    if (test_set) // check that this datasource is allowed to call this method
+      eblerror("forbidden call of next_train() on testing sets");
     while (!label_indices[iitr].size())
       iitr++; // next class if class is empty
     intg i = label_indices[iitr][indices_itr[iitr]];
@@ -323,6 +328,17 @@ namespace ebl {
     cout << "." << endl;
   }
 
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_test() {
+    test_set = true;
+    cout << "This is a testing set only." << endl;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  bool datasource<Tnet, Tin1, Tin2>::is_test() {
+    return test_set;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // labeled_datasource
 

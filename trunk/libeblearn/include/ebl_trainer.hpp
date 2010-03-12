@@ -203,7 +203,7 @@ namespace ebl {
 		 (double) energy.x.get());
       ds.next();
     }
-    log.display(iteration, ds.name, ds.lblstr);
+    log.display(iteration, ds.name, ds.lblstr, ds.is_test());
     cout << endl;
   }
 

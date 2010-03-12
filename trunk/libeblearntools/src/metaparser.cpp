@@ -58,7 +58,8 @@ namespace ebl {
   pairtree::~pairtree() {
   }
 
-  map<string,string> pairtree::add(list<string> &subvar_, map<string,string> &ivars) {
+  map<string,string> pairtree::add(list<string> &subvar_,
+				   map<string,string> &ivars) {
     list<string> subvar = subvar_;
     // the path leading to the current node 
     map<string,string> path;
@@ -127,14 +128,57 @@ namespace ebl {
     return *flat;
   } 
 
+  varmaplist pairtree::flatten(varmaplist *flat, map<string,string> *path) {
+    varmaplist flat2;
+    map<string,string> path2;
+    if (!flat)
+      flat = &flat2;
+    if (!path)
+      path = &path2;
+
+    for (map<string,pairtree>::iterator i = subtree.begin();
+	 i != subtree.end(); ++i) {
+      (*path)[subvariable] = i->first;
+      i->second.flatten(flat, path);
+    }
+    if (subtree.size() == 0) { // leaf
+      // merge path and vars
+      map<string,string> all = vars;
+      all.insert(path->begin(), path->end());
+      // push this map of variables onto the list of maps
+      flat->push_back(all);
+    }
+    return *flat;
+  } 
+
   natural_varmap pairtree::best(const string &key, uint n, bool display) {
     natural_varmap flat = flatten(key);
+    // keep only first n entries
     natural_varmap::iterator i = flat.begin();
     for (uint j = 0; j < n && i != flat.end(); j++, i++) ;
     flat.erase(i, flat.end());
+    // display
     if (display && flat.size() > 0) {
       cout << "Best " << n << " results for \"" << key << "\":" << endl;
       pretty_flat(key, &flat);
+    }
+    return flat;
+  }
+
+  varmaplist pairtree::best(list<string> &keys, uint n, bool display) {
+    varmaplist flat = flatten();
+    flat.sort(map_natural_less(keys));
+    // keep only first n entries
+    varmaplist::iterator i = flat.begin();
+    for (uint j = 0; j < n && i != flat.end(); j++, i++) ;
+    flat.erase(i, flat.end());
+    // display
+    if (display && flat.size() > 0) {
+      cout << "Best " << n << " results for keys";
+      for (list<string>::iterator i = keys.begin(); i != keys.end(); ++i)
+	cout << " \"" << *i << "\"";
+      cout << ":" << endl;
+      pretty_flat(&flat, &keys);
     }
     return flat;
   }
@@ -177,6 +221,34 @@ namespace ebl {
     return s.str();
   }
 
+  string pairtree::flat_to_string(varmaplist *flat_, list<string> *keys) {
+    ostringstream s;
+    if (!flat_)
+      return s.str();
+    varmaplist flat = *flat_; // make a copy
+    uint j = 1;
+    for (varmaplist::iterator i = flat.begin(); i != flat.end(); ++i, ++j) {
+      s << j << ":";
+      // first display keys in order
+      if (keys) {
+	for (list<string>::iterator k = keys->begin(); k != keys->end(); ++k) {
+	  map<string,string>::iterator key = i->find(*k);
+	  if (key != i->end()) {
+	    // display key
+	    s << " " << key->first << ": " << key->second;
+	    // remove key
+	    i->erase(key);
+	  }
+	}
+      }
+      for (map<string,string>::iterator j = i->begin();
+	   j != i->end(); ++j)
+	s << " " << j->first << ": " << j->second;
+      s << endl;
+    }
+    return s.str();
+  }
+
   void pairtree::pretty_flat(const string key, natural_varmap *flat) {
     natural_varmap flat2;
     if (!flat) {
@@ -184,6 +256,15 @@ namespace ebl {
       flat = &flat2;
     }
     cout << flat_to_string(key, flat);
+  }
+
+  void pairtree::pretty_flat(varmaplist *flat, list<string> *keys) {
+    varmaplist flat2;
+    if (!flat) {
+      flat2 = flatten();
+      flat = &flat2;
+    }
+    cout << flat_to_string(flat, keys);
   }
 
   uint pairtree::get_max_uint(const string &var) {
@@ -220,7 +301,6 @@ namespace ebl {
   // metaparser
 
   metaparser::metaparser() : separator(VALUE_SEPARATOR) {
-    hierarchy.push_back("name");
     hierarchy.push_back("job");
     hierarchy.push_back("i");
   }
@@ -282,8 +362,19 @@ namespace ebl {
     return tree.best(key, n, display);
   }
 
+  varmaplist metaparser::best(list<string> &keys, uint n, bool display) {
+    return tree.best(keys, n, display);
+  }
+
   void metaparser::pretty() {
-    tree.pretty();
+    list<string> keys;
+    keys.push_back("test_errors");
+    keys.push_back("errors");
+    keys.push_back("test_energy");
+    keys.push_back("energy");
+    tree.best(keys, 15, true); 
+
+    //    tree.pretty();
   }
   
   // write plot files, using gpparams as additional gnuplot parameters

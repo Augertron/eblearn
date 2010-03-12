@@ -183,6 +183,26 @@ namespace ebl {
     return l;
   }
 
+  list<string> string_to_stringlist(const string &s_) {
+    list<string> l;
+    string s = s_;
+    int k = 0;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == ',')
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      l.push_back(s0);
+      k++;
+    }
+    return l;
+  }
+
   vector<double> string_to_doublevector(const string &s_) {
     vector<double> l;
     string s = s_;

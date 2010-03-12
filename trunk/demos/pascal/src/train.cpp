@@ -28,8 +28,9 @@ int main(int argc, char **argv) { // regular main without gui
 
   //! load PASCAL datasets
   labeled_datasource<t_net, float, int>
-    train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"pascal train"),
-    test_ds(conf.get_cstring("root"), conf.get_cstring("test"), "pascal test");
+    train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"pascal_train"),
+    test_ds(conf.get_cstring("root"), conf.get_cstring("test"), "pascal_test");
+  test_ds.set_test();
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =

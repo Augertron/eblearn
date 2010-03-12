@@ -53,6 +53,7 @@ namespace ebl {
   // iteration
 
   typedef map<string,map<string,string>,natural_less> natural_varmap;
+  typedef list<map<string,string> > varmaplist;
   
   //! A class representing a tree hierarchy of variable/value pairs.
   //! A pair tree is defined by a variable/value pair, and a subtree
@@ -80,15 +81,23 @@ namespace ebl {
     //! contain "error", "success" and we choose "error" as our key,
     //! this will return a map with all error values paired with
     //! all var/val pairs of "name", "i" and "success".
-    natural_varmap
-      flatten(const string &key,
-	      natural_varmap *flat = NULL,
-	      map<string,string> *path = NULL);
+    natural_varmap flatten(const string &key, natural_varmap *flat = NULL,
+			   map<string,string> *path = NULL);
+
+    //! Return a flat representation of the tree, as a list of all possible
+    //! branches (each branch is a map of var/val pairs).
+    varmaplist flatten(varmaplist *flat = NULL,
+		       map<string,string> *path = NULL);
 
     //! Return the n best values (minimized) of key.
     //! \param display If true, pretty best answers.
     natural_varmap best(const string &key, uint n, bool display = false);
     
+    //! Return the n best sets of variables that minimize the key in the order
+    //! of their list.
+    //! \param display If true, pretty best answers.
+    varmaplist best(list<string> &keys, uint n, bool display = false);
+
     //! Returns the variable name associated with this pair.
     string& get_variable();
 
@@ -103,10 +112,23 @@ namespace ebl {
     //! a flat representation of the current tree.
     static string flat_to_string(const string key, natural_varmap *flat =NULL);
 
+    //! Returns a string representation of this tree flattened using key.
+    //! If flat is not NULL, pretty this flat, otherwise generate
+    //! a flat representation of the current tree.
+    //! \param keys If not null, display keys first.
+    static string flat_to_string(varmaplist *flat =NULL,
+				 list<string> *keys = NULL);
+
     //! Pretty this tree, flattened using key.
     //! If flat is not NULL, pretty this flat, otherwise generate
     //! a flat representation of the current tree.
     void pretty_flat(const string key, natural_varmap *flat = NULL);
+
+    //! Pretty this tree, flattened.
+    //! If flat is not NULL, pretty this flat, otherwise generate
+    //! a flat representation of the current tree.
+    //! \param keys If not null, display keys first.
+    void pretty_flat(varmaplist *flat = NULL, list<string> *keys = NULL);
 
     //! Return the maximum uint value of variable var.
     uint get_max_uint(const string &var);
@@ -149,6 +171,9 @@ namespace ebl {
 
     //! Return the n best values (minimized) of key.
     natural_varmap best(const string &key, uint n, bool display = false);
+
+    //! Return the n best values (minimized) of key.
+    varmaplist best(list<string> &keys, uint n, bool display = false);
 
     //! Return the maximum iteration number, i.e. the maximum value found
     //! for variable "i", -1 if nothing is found.

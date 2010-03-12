@@ -165,7 +165,9 @@ namespace ebl {
     //! recognize samples, the percentage of erroneously
     //! recognized samples, and the percentage of rejected samples.
     //! names of each class (lblstr) are optional.
-    void display(int iteration, string &dsname, vector<string*> *lblstr = NULL);
+    //! \param ds_is_test If true, prepend "test_" in front of varialbes.
+    void display(int iteration, string &dsname, vector<string*> *lblstr = NULL,
+		 bool ds_is_test = false);
 
     //! display ROC points for each class.
     //! names of each class (lblstr) are optional.
