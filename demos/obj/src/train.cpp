@@ -21,7 +21,6 @@ int main(int argc, char **argv) { // regular main without gui
   labeled_datasource<t_net, float, int>
     train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"train"),
     test_ds(conf.get_cstring("root"), conf.get_cstring("val"), "val");
-  train_ds.set_balanced();
   train_ds.set_weigh_samples(conf.exists_bool("wsamples"));
   train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));
   train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));

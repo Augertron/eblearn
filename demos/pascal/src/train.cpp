@@ -30,7 +30,6 @@ int main(int argc, char **argv) { // regular main without gui
   labeled_datasource<t_net, float, int>
     train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"pascal train"),
     test_ds(conf.get_cstring("root"), conf.get_cstring("test"), "pascal test");
-  train_ds.set_balanced();
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =

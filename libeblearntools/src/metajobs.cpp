@@ -287,6 +287,11 @@ namespace ebl {
 	    << i->second.find("classes")->second << " " << dir.str();
 	ret = std::system(cmd.str().c_str());
       }
+      // save out log
+      cmd.str("");
+      cmd << "cp " << mconf.get_output_dir() << "/" << job << "/"
+	  << "out_" << job << ".log " << dir.str();
+      ret = std::system(cmd.str().c_str());
       // look for weights filename to save
       if (i->second.find("saved") != i->second.end()) { // found weights
 	cmd.str("");

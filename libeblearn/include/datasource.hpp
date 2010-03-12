@@ -56,8 +56,7 @@ namespace ebl {
     : nclasses(0), bias(ds.bias), coeff(ds.coeff), data(ds.data),
       labels(ds.labels), probas(ds.probas),
       dataIter(data, 0), labelsIter(labels, 0),
-      probasIter(probas, 0), height(ds.height), width(ds.width), name(ds.name),
-      balance(ds.balance) {
+      probasIter(probas, 0), height(ds.height), width(ds.width), name(ds.name) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -99,10 +98,9 @@ namespace ebl {
     idx_bloop1(lab, labels, Tin2) {
       counts[(size_t)lab.get()]++;
     }
-    // balance dataset for each class
-    set_balanced();
-    set_shuffle_passes(true);
-    set_weigh_samples(true);
+    set_balanced(); // balance dataset for each class in next_train
+    set_shuffle_passes(true); // for next_train only
+    set_weigh_samples(true); // for next_train only
     set_weigh_normalization(true); // per class by default
     datasource<Tnet, Tin1, Tin2>::pretty();
   }
@@ -174,6 +172,8 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   bool datasource<Tnet, Tin1, Tin2>::pick_current() {
+    if (!weigh_samples) // always pick sample when not using probabilities
+      return true;
     // draw random number between 0 and 1 and return true if lower
     // than sample's probability.
     double r = drand(); // [0..1]
@@ -184,9 +184,6 @@ namespace ebl {
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next() {
-    // call balanced code if activated
-    if (balance)
-      return balanced_next();
     // draw random number between
     ++dataIter;
     ++labelsIter;
@@ -197,34 +194,11 @@ namespace ebl {
       dataIter = data.dim_begin(0);
       labelsIter = labels.dim_begin(0);
       probasIter = probas.dim_begin(0);
-      if (perclass_norm) {
-	// normalize probabilities for each class, mapping [0..max] to [0..1]
-	for (Tin2 i = 0; i < get_nclasses(); ++i) {
-	  double maxproba = 0;
-	  // get max for class i
-	  { idx_bloop1(lab, labels, Tin2) {
-	      if (lab.get() == i)
-		maxproba = MAX(lab.get(), maxproba);
-	    }}
-	  // set normalized proba
-	  { idx_bloop2(lab, labels, Tin2, proba, probas, double) {
-	      if (lab.get() == i)
-		proba.set((maxproba == 0) ? 1.0 : proba.get() / maxproba);
-	    }}
-	}
-      } else {
-	// normalize probabilities for all classes, mapping [0..max] to [0..1]
-	double maxproba = idx_max(probas);
-	idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
-      }
     }
-    // recursively loop until we find a sample that is picked
-    if (!pick_current())
-      next();
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::balanced_next() {
+  void datasource<Tnet, Tin1, Tin2>::next_train() {
     while (!label_indices[iitr].size())
       iitr++; // next class if class is empty
     intg i = label_indices[iitr][indices_itr[iitr]];
@@ -237,29 +211,33 @@ namespace ebl {
       // returning to begining of list for this class
       indices_itr[iitr] = 0;
       // shuffling list for this class
-      vector<intg> &clist = label_indices[iitr];
-      random_shuffle(clist.begin(), clist.end());
-      if (perclass_norm) {
-	// normalize probabilities for this class, mapping [0..max] to [0..1]
-	double maxproba = 0;
-	// get max
-	for (vector<intg>::iterator j = label_indices[iitr].begin();
-	     j != label_indices[iitr].end(); ++j)
-	  maxproba = MAX(probasIter.at(*j)->get(), maxproba);
-	// set normalized proba
-	for (vector<intg>::iterator j = label_indices[iitr].begin();
-	     j != label_indices[iitr].end(); ++j)
-	  probasIter.at(*j)->set((maxproba == 0) ? 1.0 :
-				 probasIter.at(*j)->get() / maxproba);
-      } else {
-	// normalize probabilities for all classes, mapping [0..max] to [0..1]
-	double maxproba = idx_max(probas);
-	idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
+      if (shuffle_passes) {
+	vector<intg> &clist = label_indices[iitr];
+	random_shuffle(clist.begin(), clist.end());
+      }
+      if (weigh_samples) {
+	if (perclass_norm) {
+	  // normalize probabilities for this class, mapping [0..max] to [0..1]
+	  double maxproba = 0;
+	  // get max
+	  for (vector<intg>::iterator j = label_indices[iitr].begin();
+	       j != label_indices[iitr].end(); ++j)
+	    maxproba = MAX(probasIter.at(*j)->get(), maxproba);
+	  // set normalized proba
+	  for (vector<intg>::iterator j = label_indices[iitr].begin();
+	       j != label_indices[iitr].end(); ++j)
+	    probasIter.at(*j)->set((maxproba == 0) ? 1.0 :
+				   probasIter.at(*j)->get() / maxproba);
+	} else {
+	  // normalize probabilities for all classes, mapping [0..max] to [0..1]
+	  double maxproba = idx_max(probas);
+	  idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
+	}
       }
     }
     // recursively loop until we find a sample that is picked for this class
     if (!pick_current())
-      balanced_next();
+      next_train();
     else { // if we picked a sample, jump to next class
       iitr++; // next class
       if (iitr >= label_indices.size())
@@ -276,18 +254,13 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::seek_begin() {
-    if (!balance) { // do not reset when balancing
-      dataIter = data.dim_begin(0);
-      labelsIter = labels.dim_begin(0);
-      probasIter = probas.dim_begin(0);
-    }
+    dataIter = data.dim_begin(0);
+    labelsIter = labels.dim_begin(0);
+    probasIter = probas.dim_begin(0);
   }
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_balanced() {
-    balance = true;
-    cout << "Class-balancing is "
-	 << (balance ? "activated" : "deactivated") << "." << endl;
     // compute vector of sample indices for each class
     label_indices.clear();
     indices_itr.clear();
@@ -300,34 +273,26 @@ namespace ebl {
     // distribute sample indices into each vector based on label
     for (uint i = 0; i < size(); ++i)
       label_indices[labels.get(i)].push_back(i);
-    // display
-    //     for (uint i = 0; i < label_indices.size(); ++i) {
-    //       vector<intg> &indices = label_indices[i];
-    //       cout << "label " << i << " has " << indices.size() << " samples: ";
-    //       for (uint j = 0; j < indices.size(); ++j)
-    // 	cout << indices[j] << " ";
-    //       cout << endl;
-    //     }
   }
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_shuffle_passes(bool activate) {
     shuffle_passes = activate;
-    cout << "Shuffling of samples after each pass is "
+    cout << "Shuffling of samples (training only) after each pass is "
 	 << (shuffle_passes ? "activated" : "deactivated") << "." << endl;
   }
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_weigh_samples(bool activate) {
     weigh_samples = activate;
-    cout << "Weighing of samples based on classification is "
+    cout << "Weighing of samples (training only) based on classification is "
 	 << (weigh_samples ? "activated" : "deactivated") << "." << endl;
   }
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_weigh_normalization(bool perclass) {
     perclass_norm = perclass;
-    cout << "Weighing normalization is "
+    cout << "Weighing normalization (training only) is "
 	 << (perclass_norm ? "per class" : "global") << "." << endl;
   }
   

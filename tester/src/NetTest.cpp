@@ -18,20 +18,24 @@ void NetTest::tearDown() {
 }
 
 void NetTest::test_lenet5_mnist() {
-  typedef float t_net;
+  typedef double t_net;
   bool display = true;
   uint ninternals = 1;
   cout << endl;
   // for testing purposes, we always initialize the randomization with 0 so 
   // that we know the exact results. 
   // in the real world, init_drand should be called with time(NULL) as argument.
-  init_drand(0); // fixed randomization
   CPPUNIT_ASSERT_MESSAGE(*gl_mnist_errmsg, gl_mnist_dir != NULL);
   
   // load MNIST dataset
   mnist_datasource<t_net,ubyte,ubyte>
     train_ds(gl_mnist_dir->c_str(), "train", 2000),
     test_ds(gl_mnist_dir->c_str(), "t10k", 1000);
+  //  train_ds.set_balanced(false);
+  // train_ds.set_shuffle_passes(false);
+  // train_ds.set_weigh_samples(false);
+  // train_ds.set_weigh_normalization(false);
+  init_drand(0); // fixed randomization
 
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =

@@ -86,14 +86,19 @@ namespace ebl {
     
     //! Move to the next datum (in the original order of the dataset).
     //! This should be used during testing.
+    //! It will always return the data in the same order with the same
+    //! probability of 1. See next_train() for data returned with
+    //! variable probability, balance, etc. (used for training only).
     virtual void next();
 
-    //! Move to the next datum in a balanced way, i.e. showing each class
-    //! sequentially.
+    //! Move to the next datum, in a way suited for training (_not_ for testing,
+    //! for testing see next()): depending on the configuration, this will
+    //! return samples in a class-balanced way, i.e. showing each class
+    //! sequentially, with different probabilities based on sample's difficulty,
+    //! or/and in a random order after each pass.
     //! When all samples of a class have been shown, it loops back to the first
-    //! sample of that class.
-    //! This should be used during training.
-    virtual void balanced_next();
+    //! sample of that class. This should be used during training only.
+    virtual void next_train();
 
     //! Set the distance between the answer of the model to train and the
     //! true answer. This is used to give more or less probability for a
@@ -106,26 +111,31 @@ namespace ebl {
     //! 1 and higher give probability 1 to be used. Therefore distance
     //! should be normalized so that a distance of 1 represents an offending
     //! answer.
+    //! This is used only by next_train(), not by next().
     virtual void set_answer_distance(double dist);
 
     //! Move to the beginning of the data.
     virtual void seek_begin();
 
-    //! Make the next() method call sequentially one sample of each class
+    //! Make the next_train() method call sequentially one sample of each class
     //! instead of following the dataset's distribution.
-    //! This is useful and important when the dataset is unbalanced.
+    //! This is important to use when the dataset is unbalanced.
+    //! This is set to true by default.
+    //! This is used only by next_train(), not by next().
     virtual void set_balanced();
 
     //! Activate or deactivate shuffling of list of samples for each class
     //! after reaching the end of the sample list. This has an effect only
     //! when set_balanced() is set.
     //! This is activated by default.
+    //! This is used only by next_train(), not by next().
     virtual void set_shuffle_passes(bool activate);
 
     //! Activate or deactivate weighing of samples based on classification
     //! results. Wrong answers give a higher probability for a sample
     //! to be used for training, correct answers a lower probability.
     //! This is activated by default.
+    //! This is used only by next_train(), not by next().
     virtual void set_weigh_samples(bool activate);
 
     //! Set the normalization of the sample probabilities to be per class or
@@ -138,6 +148,7 @@ namespace ebl {
     //! labels.
     //! This normalization avoids looping on samples rarely picking any if
     //! all probabilities tend to zero for example.
+    //! This is used only by next_train(), not by next().
     virtual void set_weigh_normalization(bool perclass);
     
     //! Return the number of classes.
