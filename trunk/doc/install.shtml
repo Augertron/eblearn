@@ -40,14 +40,16 @@
 	 libcppunit-dev libxml++2.6-dev doxygen mplayer mencoder<br>
 	 $ ./configure<br>
 	 $ make release<br>
-	 $ sudo make install
+	 $ sudo make install<br>
+	 $ make test<br>
        </code>
        <h3>MAC OS X</h3>
        <code>$ sudo port install subversion cmake imagemagick boost qt4-mac
 	 cppunit doxygen<br>
 	 $ ./configure<br>
 	 $ make release<br>
-	 $ sudo make install
+	 $ sudo make install<br>
+	 $ make test<br>
        </code>
      </p>
      <h2>Detailed installation</h2>
@@ -92,8 +94,10 @@
        <code>$ make debug</code><br>
        To compile a specific project in release mode, e.g. libidx:<br>
        <code>$ make release prj=idx</code><br>
-       To compile a specific project in debug mode, e.g. objrec_detect:<br>
-       <code>$ make debug prj=objrec_detect</code><br>
+       To compile a specific project in debug mode, e.g. objdetect:<br>
+       <code>$ make debug prj=objdetect</code><br>
+       To compile the tester and run it:<br>
+       <code>$ make test</code><br>
 
        <h3>Installation</h3>
        To install libraries and headers on your system:<br>
@@ -101,9 +105,9 @@
 
        <h3>Execution</h3>
        To unit-test basic functionalities of the libraries, run the tester:<br>
-       <code>$ ./bin/tester</code><br>
+       <code>$ ./bin/tester</code> (Or <code>$ make test</code>)<br>
        To test face detection demo, call:<br>
-       <code>$ ./bin/objrec_detect 	 demos/objrec/face/trained/20100211.025504.face_conf00_color_0_eta_.00001_resize_mean.conf</code><br>
+       <code>$ ./bin/objdetect demos/obj/face/trained/20100211.025504.face_conf00_color_0_eta_.00001_resize_mean.conf</code><br>
 
 
        <h3>Database installation</h3>

@@ -44,6 +44,15 @@ namespace ebl {
   // standard sigmoid module
   template <class T>
   void stdsigmoid_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+    if (&in != &out) { // resize only when input and output are different
+      idxdim d(in.x.spec); // use same dimensions as in
+      if (out.x.get_idxdim() != d) { // resize only if necessary
+	cout << "stdsigmoid: resizing output from " << out.x.get_idxdim();
+	cout << " to " << d << endl;
+	out.resize(d);
+      }
+    }
+    
     idx_stdsigmoid(in.x, out.x);
   }
 
@@ -65,6 +74,15 @@ namespace ebl {
   // tanh module
   template <class T>
   void tanh_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+    if (&in != &out) { // resize only when input and output are different
+      idxdim d(in.x.spec); // use same dimensions as in
+      if (out.x.get_idxdim() != d) { // resize only if necessary
+	cout << "tanh: resizing output from " << out.x.get_idxdim();
+	cout << " to " << d << endl;
+	out.resize(d);
+      }
+    }
+    
     idx_tanh(in.x, out.x);
   }
 

@@ -128,6 +128,18 @@ namespace ebl {
     //! This is activated by default.
     virtual void set_weigh_samples(bool activate);
 
+    //! Set the normalization of the sample probabilities to be per class or
+    //! global. This matters only if sample weighing is actived
+    //! (see set_weigh_samples()).
+    //! If perclass is true, the probabilities for
+    //! each sample of a same class are normalized from [0..max_class] to [0..1]
+    //! otherwise from [0..max_global]. Perclass can be used (or not) for
+    //! discrete classification problems, but should be global for continuous
+    //! labels.
+    //! This normalization avoids looping on samples rarely picking any if
+    //! all probabilities tend to zero for example.
+    virtual void set_weigh_normalization(bool perclass);
+    
     //! Return the number of classes.
     virtual intg get_nclasses();
 
@@ -167,6 +179,7 @@ namespace ebl {
     // switches to activate or deactivate features
     bool                                        shuffle_passes;
     bool                                        weigh_samples;
+    bool                                        perclass_norm;
   };
 
   ////////////////////////////////////////////////////////////////

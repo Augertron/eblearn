@@ -50,12 +50,12 @@ tools:
 # 	@echo __________________________________________________________________
 # 	cd build/Demos && cmake -DCMAKE_BUILD_TYPE=Release ../../demos/ && make && cd ../..
 
-# test:
-# 	@echo __________________________________________________________________
-# 	@echo
-# 	@echo "Compiling tester in release mode..."
-# 	@echo __________________________________________________________________
-# 	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make tester && cd ../..
+test:
+	@echo __________________________________________________________________
+	@echo
+	@echo "Compiling tester in release mode and running it..."
+	@echo __________________________________________________________________
+	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make tester && cd ../.. && ./bin/tester
 
 debug:
 	@echo __________________________________________________________________

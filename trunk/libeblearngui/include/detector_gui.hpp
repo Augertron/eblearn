@@ -43,11 +43,12 @@ namespace ebl {
   // detector_gui
 
   template <typename Tnet>
-  detector_gui<Tnet>::detector_gui(bool show_detqueue_, uint step_, uint qheight_,
-				uint qwidth_, bool show_detqueue2_, uint step2_,
-				uint qheight2_, uint qwidth2_)
-    : show_detqueue(show_detqueue_), step(step_), qheight(qheight_),
-      qwidth(qwidth_), show_detqueue2(show_detqueue2_), step2(step2_),
+  detector_gui<Tnet>::
+  detector_gui(bool show_detqueue_, uint step_, uint qheight_,
+	       uint qwidth_, bool show_detqueue2_, uint step2_,
+	       uint qheight2_, uint qwidth2_)
+    : show_detqueue(show_detqueue_), show_detqueue2(show_detqueue2_),
+      step(step_), step2(step2_), qheight(qheight_), qwidth(qwidth_), 
       qheight2(qheight2_), qwidth2(qwidth2_), detcnt(0) {
   }
 

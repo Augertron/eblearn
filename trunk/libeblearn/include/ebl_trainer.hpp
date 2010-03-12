@@ -248,9 +248,11 @@ namespace ebl {
 	ds.fprop(*input, label);
 	lab = label.get();
 	learn_sample(*input, lab, args);
+	// use energy as distance for samples probabilities to be used
+	ds.set_answer_distance(energy.x.get());
 	//      log.update(age, output, label.get(), energy);
 	age++;
-	ds.balanced_next();
+	ds.next();
       }
     }
   }
@@ -272,7 +274,7 @@ namespace ebl {
       param.clear_ddx();
       machine.bbprop(*input, lab, energy);
       param.update_ddeltax((1 / (double) niter), 1.0);
-      ds.balanced_next();
+      ds.next();
     }
     param.compute_epsilons(mu);
     cout << "diaghessian inf: " << idx_min(param.epsilons);
