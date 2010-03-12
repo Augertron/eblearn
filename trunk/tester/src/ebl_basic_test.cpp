@@ -238,6 +238,8 @@ void ebl_basic_test::test_convolution_timing() {
   idx<intg> tbl2 = full_table(8, 16);
   l.add_module(new convolution_module_2D<float>(p, 9, 9, 1, 1, tbl),
 	       new state_idx<float>(1,1,1));  
+  l.add_module(new tanh_module<float>(),
+	       new state_idx<float>(1,1,1));
   l.add_module(new convolution_module_2D<float>(p, 9, 9, 1, 1, tbl2),
 	       new state_idx<float>(1,1,1));
   l.add_last_module(new tanh_module<float>());
