@@ -71,7 +71,7 @@ int main(int argc, char **argv) { // regular main without gui
   detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
 			 conf.get_double("gain"));
   detect.set_resolutions(1.4);
-  if (conf.exists("input_max") && !conf.exists_bool("retrain"))
+  if (conf.exists("input_max"))
     detect.set_max_resolution(conf.get_uint("input_max")); // limit inputs size
   detect.set_silent();
   if (conf.exists_bool("save_detections"))
