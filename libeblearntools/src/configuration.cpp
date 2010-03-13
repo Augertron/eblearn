@@ -241,8 +241,7 @@ namespace ebl {
 	  // forbid duplicates
 	  if (smap.find(name) != smap.end()) {
 	    cerr << "warning: duplicate variable name \"" << name;
-	    cerr << "\", ignoring new assignment: " << s0 << endl;
-	    continue ;
+	    cerr << "\", using latest assignment: " << s0 << endl;
 	  }
 	  // if variable name starts with "meta_" put it in the meta conf list
 	  if (meta_smap && (name.compare(0, 5, "meta_") == 0))

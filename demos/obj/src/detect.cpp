@@ -35,7 +35,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 int main(int argc, char **argv) { // regular main without gui
 #endif
   // check input parameters
-  if ((argc != 2) && (argc != 3)) {
+  if ((argc != 2) && (argc != 3) ) {
     cerr << "wrong number of parameters." << endl;
     cerr << "usage: obj_detect <config file> [directory or file]" << endl;
     return -1;
@@ -71,7 +71,7 @@ int main(int argc, char **argv) { // regular main without gui
   detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
 			 conf.get_double("gain"));
   detect.set_resolutions(1.4);
-  if (conf.exists("input_max"))
+  if (conf.exists("input_max") && !conf.exists_bool("retrain"))
     detect.set_max_resolution(conf.get_uint("input_max")); // limit inputs size
   detect.set_silent();
   if (conf.exists_bool("save_detections"))
@@ -80,25 +80,29 @@ int main(int argc, char **argv) { // regular main without gui
   // initialize camera (opencv, directory, shmem or video)
   idx<t_net> frame;
   camera<t_net> *cam = NULL, *cam2 = NULL;
-  if (!strcmp(cam_type.c_str(), "directory")) {
-    if (argc == 3) cam = new camera_directory<t_net>(argv[2], height, width);
-    else eblerror("expected 2nd argument");
-  } else if (!strcmp(cam_type.c_str(), "opencv"))
-    cam = new camera_opencv<t_net>(-1, height, width);
-  else if (!strcmp(cam_type.c_str(), "shmem"))
-    cam = new camera_shmem<t_net>("shared-mem", height, width);
-  else if (!strcmp(cam_type.c_str(), "video")) {
-    if (argc == 3)
-      cam = new camera_video<t_net>
-	(argv[2], height, width, conf.get_uint("input_video_sstep"),
-	 conf.get_uint("input_video_max_duration"));
-    else eblerror("expected 2nd argument");
-  } else eblerror("unknown camera type");
-  // a camera directory may be used first, then switching to regular camera
-  if (conf.exists_bool("precamera"))
-    cam2 = new camera_directory<t_net>(conf.get_cstring("precamdir"),
-				       height, width);
-  
+  if (conf.exists_bool("retrain")) { // extract false positives
+    cam = new camera_directory<t_net>(conf.get_cstring("retrain_dir"));
+  } else { // regular execution
+    if (!strcmp(cam_type.c_str(), "directory")) {
+      if (argc == 3) cam = new camera_directory<t_net>(argv[2], height, width);
+      else eblerror("expected 2nd argument");
+    } else if (!strcmp(cam_type.c_str(), "opencv"))
+      cam = new camera_opencv<t_net>(-1, height, width);
+    else if (!strcmp(cam_type.c_str(), "shmem"))
+      cam = new camera_shmem<t_net>("shared-mem", height, width);
+    else if (!strcmp(cam_type.c_str(), "video")) {
+      if (argc == 3)
+	cam = new camera_video<t_net>
+	  (argv[2], height, width, conf.get_uint("input_video_sstep"),
+	   conf.get_uint("input_video_max_duration"));
+      else eblerror("expected 2nd argument");
+    } else eblerror("unknown camera type");
+    // a camera directory may be used first, then switching to regular camera
+    if (conf.exists_bool("precamera"))
+      cam2 = new camera_directory<t_net>(conf.get_cstring("precamdir"),
+					 height, width);
+  }
+    
   // gui
 #ifdef __GUI__
   display 	= conf.exists_bool("display");
