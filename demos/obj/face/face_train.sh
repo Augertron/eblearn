@@ -91,7 +91,7 @@ for iter in `seq 1 ${maxiteration}`
 # add directory where to find trained files
   echo "root2 = ${bestout}" >> $bestconf
 # add subdirectories of retraining dir
-  echo "retrain_dir = ${nopersons_root}/${retrain_dir_id}" >> $bestconf
+  echo "retrain_dir = ${nopersons_root}/\${retrain_dir_id}/" >> $bestconf
   echo -n "retrain_dir_id = " >> $bestconf
   for idir in `seq 1 8`
     do
@@ -99,7 +99,7 @@ for iter in `seq 1 ${maxiteration}`
   done
 # override train command by detect command
   echo >> $bestconf
-  echo "meta_command = objdetect" >> $bestconf
+  echo "meta_command = ${eblearnbin}/objdetect" >> $bestconf
 # start parallelized extraction
   ${eblearnbin}/metarun $bestconf
   
