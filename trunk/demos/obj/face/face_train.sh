@@ -90,6 +90,10 @@ for iter in `seq 1 ${maxiteration}`
   echo "save_video = 0" >> $bestconf
 # add directory where to find trained files
   echo "root2 = ${bestout}" >> $bestconf
+# limit input size 
+  echo "input_max = 900" >> $bestconf
+# set very low threshold
+  echo "threshold = -.95" >> $bestconf
 # add subdirectories of retraining dir
   echo "retrain_dir = ${nopersons_root}/\${retrain_dir_id}/" >> $bestconf
   echo -n "retrain_dir_id = " >> $bestconf
