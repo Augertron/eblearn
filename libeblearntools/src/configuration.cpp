@@ -461,16 +461,7 @@ namespace ebl {
 
   float configuration::get_float(const char *varname) {
     exists_throw(varname);
-    istringstream iss(smap[varname], istringstream::in);
-    // TODO: check float conversion validity with exceptions instead
-    float d;
-    d = numeric_limits<float>::max();
-    iss >> d;
-    if (d == numeric_limits<float>::max()) {
-      cerr << varname << " is not a float." << endl;
-      throw "invalid conversion to float";
-    }
-    return d;
+    return string_to_float(smap[varname]);
   }
 
   uint configuration::get_uint(const char *varname) {
@@ -480,16 +471,7 @@ namespace ebl {
 
   int configuration::get_int(const char *varname) {
     exists_throw(varname);
-    istringstream iss(smap[varname], istringstream::in);
-    // TODO: check int conversion validity with exceptions instead
-    int d;
-    d = numeric_limits<int>::max();
-    iss >> d;
-    if (d == numeric_limits<int>::max()) {
-      cerr << varname << " is not an int." << endl;
-      throw "invalid conversion to int";
-    }
-    return d;
+    return string_to_int(smap[varname]);
   }
 
   bool configuration::get_bool(const char *varname) {

@@ -201,11 +201,22 @@ namespace ebl {
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::next_train() {
-    if (test_set) // check that this datasource is allowed to call this method
-      eblerror("forbidden call of next_train() on testing sets");
+  void datasource<Tnet, Tin1, Tin2>::next_train(intg *callcnt) {
+    // get pointer to first non empty class
     while (!label_indices[iitr].size())
       iitr++; // next class if class is empty
+    // recursion failsafe
+    if (callcnt && *callcnt > (intg) label_indices[iitr].size()) {
+      // we called recursion on this method more than number of class samples
+      return ;
+    }
+    intg callcnt2 = 0;
+    if (!callcnt)
+      callcnt = &callcnt2;
+    (*callcnt)++;
+    // check that this datasource is allowed to call this method
+    if (test_set)
+      eblerror("forbidden call of next_train() on testing sets");
     intg i = label_indices[iitr][indices_itr[iitr]];
     //      cout << "#" << i << "/" << iitr << " ";
     dataIter = dataIter.at(i);
@@ -242,7 +253,7 @@ namespace ebl {
     }
     // recursively loop until we find a sample that is picked for this class
     if (!pick_current())
-      next_train();
+      next_train(callcnt);
     else { // if we picked a sample, jump to next class
       iitr++; // next class
       if (iitr >= label_indices.size())

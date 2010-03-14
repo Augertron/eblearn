@@ -561,7 +561,7 @@ namespace ebl {
 	idx<Tdata> sample2(d2);
 	idx_bloop2(samp2, sample2, Tdata, samp, sample, Tdata) {
 	  idx_bloop2(s2, samp2, Tdata, s, samp, Tdata) {
-	    for (uint i = 0, j = 0; i < sample2.dim(2); ++i, ++j) {
+	    for (intg i = 0, j = 0; i < sample2.dim(2); ++i, ++j) {
 	      if (j >= sample.dim(2))
 		j = 0;
 	      s2.set(s.get(j), i);
@@ -922,9 +922,9 @@ namespace ebl {
       inr.w0 = MAX(0, MIN(dat.dim(1) - 1, ((int) inr.w0) - add / 2));
       inr.height += add;
       inr.width += add;
-      if (inr.h0 + inr.height > dat.dim(0))
+      if (inr.h0 + inr.height > (uint) dat.dim(0))
 	inr.height -= inr.h0 + inr.height - dat.dim(0);
-      if (inr.w0 + inr.width > dat.dim(1))
+      if (inr.w0 + inr.width > (uint) dat.dim(1))
 	inr.width -= inr.w0 + inr.width - dat.dim(1);
     }
     // resize image to target dims

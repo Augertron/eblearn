@@ -297,6 +297,10 @@ namespace ebl {
     return false;
   }
   
+  map<string,pairtree,natural_less>& pairtree::get_subtree() {
+    return subtree;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // metaparser
 
@@ -372,79 +376,92 @@ namespace ebl {
     keys.push_back("errors");
     keys.push_back("test_energy");
     keys.push_back("energy");
-    tree.best(keys, 15, true); 
-
+    //    tree.best(keys, 15, true);
+    string gppparams = "set grid ytics;set ytics 5;set mytics 5;set grid mytics;set logscale y";
+    write_plots(gppparams);
     //    tree.pretty();
   }
   
   // write plot files, using gpparams as additional gnuplot parameters
-  bool metaparser::write_plots(string &gpparams) {
-//     string gnuplot_column_separator = "\t";
-//     string gnuplot_config1 = "clear ; \
-// set terminal pdf ; \n";
-//     string gnuplot_config2 = " set output \"";
-//     string gnuplot_config3 = ".pdf\" ;	\
-// plot ";	    
-  
-//     // loop on each plot
-//     plots_t::iterator iplots = plots.begin();
-//     for ( ; iplots != plots.end(); ++iplots) {
-//       // open plot file
-//       string plot_fname = iplots->first;
-//       plot_fname += ".plot";
-//       ofstream out(plot_fname.c_str());
-//       if (!out)
-// 	cerr << "warning: failed to open " << plot_fname << endl;
-//       else {
-// 	// open gnuplot p file
-// 	string fname = iplots->first;
-// 	fname += ".p";
-// 	ofstream outp(fname.c_str());
-// 	if (!outp)
-// 	  cerr << "warning: failed to open " << fname << endl;
-// 	else {
-// 	  // initialize .p file
-// 	  outp << gnuplot_config1 << gpparams << gnuplot_config2;
-// 	  outp << iplots->first << gnuplot_config3;
-// 	  // loop on each run to find maximum number of values and create
-// 	  // the p files describing how to plot the data
-// 	  map<string, map<double,string>, less<string> > &runs = iplots->second;
-// 	  map<string, map<double,string>, less<string> >::iterator iruns =
-// 	    runs.begin();
-// 	  size_t max_nvalues = 0;
-// 	  for (int r = 2; iruns != runs.end(); ++iruns, ++r) {
-// 	    // find maximum number of values
-// 	    max_nvalues = MAX(max_nvalues, iruns->second.size());
-// 	    // add instruction to plot this run in the .p file
-// 	    if (r > 2)
-// 	      outp << ", ";
-// 	    outp << "\"" << plot_fname << "\" using 1:" << r << " title \"";
-// 	    outp << iruns->first << "\" with linespoints";
-// 	  }
-// 	  // loop on each run (1 run == 1 column)
-// 	  uint pos = 0;
-// 	  for (iruns = runs.begin(); iruns != runs.end(); ++iruns, ++pos) {
-// 	    map<double,string> &values = iruns->second;
-// 	    map<double,string>::iterator ival = values.begin();
-// 	    // loop on each value and add 1 line per value
-// 	    // with other columns with empty marker '?'
-// 	    for ( ; ival != values.end(); ++ival) {
-// 	      out << ival->first << gnuplot_column_separator;
-// 	      for (uint j = 0; j < pos; ++j)
-// 		out << "?"  << gnuplot_column_separator;
-// 	      out << ival->second << gnuplot_column_separator;
-// 	      for (uint j = pos + 1; j < runs.size(); ++j)
-// 		out << "?"  << gnuplot_column_separator;
-// 	      out << endl;
-// 	    }
-// 	  }
-// 	  out << endl;
-// 	}
-// 	outp.close();
-//       }
-//       out.close();
-//     }
-    return true;
+  void metaparser::write_plots(string &gpparams) {
+    string colsep = "\t";
+    string gnuplot_config1 = "clear ; set terminal pdf ; \n";
+    string gnuplot_config2 = " set output \"";
+    string gnuplot_config3 = ".pdf\" ;	plot ";
+    // a map of file pointers for .plot and .p files
+    map<string,ofstream*> plotfiles, pfiles; 
+
+    // we assume that the tree has been extracted using those keys in that
+    // order: job, i
+    // loop on each job
+    uint ijob = 0;
+    for (map<string,pairtree>::iterator i = tree.get_subtree().begin();
+	 i != tree.get_subtree().end(); ++i, ++ijob) {
+      string job = i->first;
+      // flatten remaining tree based on key "i"
+      string ikey = "i";
+      natural_varmap flat = i->second.flatten(ikey);
+      // loop on all i
+      for (natural_varmap::iterator j = flat.begin(); j != flat.end(); ++j) {
+	// convert i to double
+	double ival = string_to_double(j->first);
+	// loop on all variables
+	for (map<string,string>::iterator k = j->second.begin();
+	     k != j->second.begin(); ++k) {
+	  // check that p file is open
+	  if (pfiles.find(k->first) == pfiles.end()) {
+	    // not open, add file
+	    ostringstream fname;
+	    fname << k->first << ".p";
+	    pfiles[k->first] = new ofstream(fname.str().c_str());
+	    if (!pfiles[k->first]) {
+	      cerr << "warning: failed to open " << fname.str() << endl;
+	      continue ; // keep going
+	    }
+	  }
+	  // check that plot file is open
+	  if (plotfiles.find(k->first) == plotfiles.end()) {
+	    // not open, add file
+	    ostringstream fname;
+	    fname << k->first << ".plot";
+	    cout << "opening " << fname.str() << endl;
+	    plotfiles[k->first] = new ofstream(fname.str().c_str());
+	    if (!plotfiles[k->first]) {
+	      cerr << "warning: failed to open " << fname.str() << endl;
+	      continue ; // keep going
+	    }
+	  }
+	  // for the first i only, add job plot description in p file
+	  if (j == flat.begin()) {
+	    *pfiles[k->first] << "\"" << k->first << ".plot\" using 1:"
+			      << ijob + 2 << " title \""
+			      << job << "\" with linespoints";
+	  }
+	  // add this value into plot file
+	  ofstream &outp = *plotfiles[k->first];
+	  // first add abscissa value i
+	  outp << ival << colsep;
+	  // then fill with empty values until reaching job's column
+	  for (uint c = 0; c < ijob; ++c)
+	    outp << "?" << colsep;
+	  // finally add job's value
+	  outp << k->second << endl;
+	}
+      }
+    }
+    // close and delete all file pointers
+    for (map<string,ofstream*>::iterator i = pfiles.begin();
+	 i != pfiles.end(); ++i)
+      if (*i->second) {
+	(*i->second).close();
+	delete i->second;
+      }
+    for (map<string,ofstream*>::iterator i = plotfiles.begin();
+	 i != plotfiles.end(); ++i)
+      if (*i->second) {
+	(*i->second).close();
+	delete i->second;
+      }
   }
 
   void metaparser::parse_logs(const string &root) {

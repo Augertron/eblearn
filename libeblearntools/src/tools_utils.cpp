@@ -139,11 +139,10 @@ namespace ebl {
   }
 
   uint string_to_uint(const string &s) {
-    istringstream iss(s, istringstream::in);
+    istringstream iss(s);
     uint d;
-    d = numeric_limits<uint>::max();
     iss >> d;
-    if (d == numeric_limits<uint>::max()) {
+    if (iss.fail()) {
       cerr << "\"" << s << "\" is not an unsigned int." << endl;
       eblerror("invalid conversion to uint");
       throw "invalid conversion to uint";
@@ -151,12 +150,34 @@ namespace ebl {
     return d;
   }
 
-  double string_to_double(const string &s) {
-    istringstream iss(s, istringstream::in);
-    double d;
-    d = numeric_limits<double>::max();
+  int string_to_int(const string &s) {
+    istringstream iss(s);
+    int d;
     iss >> d;
-    if (d == numeric_limits<double>::max()) {
+    if (iss.fail()) {
+      cerr << "\"" << s << "\" is not an unsigned int." << endl;
+      eblerror("invalid conversion to int");
+      throw "invalid conversion to int";
+    }
+    return d;
+  }
+
+  float string_to_float(const string &s) {
+    istringstream iss(s);
+    float d;
+    iss >> d;
+    if (iss.fail()) {
+      cerr << "\"" << s << "\" is not a float." << endl;
+      throw "invalid conversion to float";
+    }
+    return d;
+  }
+
+  double string_to_double(const string &s) {
+    istringstream iss(s);
+    double d;
+    iss >> d;
+    if (iss.fail()) {
       cerr << "\"" << s << "\" is not a double." << endl;
       throw "invalid conversion to double";
     }
