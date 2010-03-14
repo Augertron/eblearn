@@ -98,7 +98,9 @@ namespace ebl {
     //! or/and in a random order after each pass.
     //! When all samples of a class have been shown, it loops back to the first
     //! sample of that class. This should be used during training only.
-    virtual void next_train();
+    //! \param callcnt A counter of the number of recursive calls, used
+    //!   to stop recursion if called more than the # of samples for cur class.
+    virtual void next_train(intg *callcnt = NULL);
 
     //! Set the distance between the answer of the model to train and the
     //! true answer. This is used to give more or less probability for a

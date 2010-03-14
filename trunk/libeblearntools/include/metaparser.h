@@ -136,6 +136,9 @@ namespace ebl {
     //! Return true if variable var exists in the tree.
     bool exists(const string &var);
 
+    //! Return sub tree.
+    map<string,pairtree,natural_less>& get_subtree();
+
     ////////////////////////////////////////////////////////////////
     // members
   private:
@@ -167,7 +170,7 @@ namespace ebl {
 
     //! Write text files parsable by plotting tools such as gnuplot,
     //! using iteration
-    bool write_plots(string &gpparams);
+    void write_plots(string &gpparams);
 
     //! Return the n best values (minimized) of key.
     natural_varmap best(const string &key, uint n, bool display = false);

@@ -48,6 +48,7 @@ using namespace std;
 
 namespace ebl {
 
+  //! Credits to http://www.daniweb.com/forums/thread259447.html#
   class int_span {
     int _ws;
     int _zeros;
@@ -82,7 +83,8 @@ namespace ebl {
     int non_value() const { return whitespace() + zeros(); }
   };
 
-  //! Credits to http://www.daniweb.com/forums/thread259447.html#
+  //! Compare two strings using the natural comparison of numbers
+  //! ("2" is less than "10").
   struct natural_less: binary_function<string, string, bool> {
     bool operator()(const string& a, const string& b);
   };

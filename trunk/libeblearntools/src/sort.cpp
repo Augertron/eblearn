@@ -32,13 +32,14 @@
 
 #include "sort.h"
 
+#include <cctype>
+#include <iostream>
+#include <sstream>
+
 using namespace std;
 
 namespace ebl {
-
-#include <cctype>
-
-
+  
   inline int safe_compare(int a, int b) {
     return a < b ? -1 : a > b;
   }
@@ -103,9 +104,19 @@ namespace ebl {
   int natural_compare(const std::string& a, const std::string& b) {
     return natural_compare(a.c_str(), b.c_str());
   }
-  
+
+  // bool natural_less::operator()(const std::string& a, const std::string& b) {
+  //   return natural_compare(a, b) < 0;
+  // }
+
   bool natural_less::operator()(const std::string& a, const std::string& b) {
-    return natural_compare(a, b) < 0;
+    istringstream ia(a), ib(b);
+    double da, db;
+    ia >> da;
+    ib >> db;
+    if (ia.fail() || ib.fail())
+      return a < b;
+    return da < db;
   }
 
   map_natural_less::map_natural_less(list<string> &k) {
