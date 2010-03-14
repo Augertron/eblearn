@@ -64,6 +64,12 @@ namespace ebl {
     //! Return true if the process is alive.
     bool alive();
 
+    //! Return pid of this job.
+    pid_t getpid();
+
+    //! Return the name of this job (its configuration filename).
+    string &name();
+
     ////////////////////////////////////////////////////////////////
     // members
   private:
@@ -99,7 +105,7 @@ namespace ebl {
     varmaplist analyze(int &maxiter);
     
     //! Send an email reporting the status of the runs.
-    void send_report(varmaplist &best);
+    void send_report(varmaplist &best, int iteration, uint nrunning);
 
     ////////////////////////////////////////////////////////////////
     // members
