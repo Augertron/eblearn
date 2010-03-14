@@ -62,7 +62,7 @@ namespace ebl {
   // job
 
   job::job(configuration &conf_, const string &exe_, const string &oconffname) 
-    : conf(conf_), exe(exe_), oconffname_(oconffname), classesname_("") {
+    : conf(conf_), exe(exe_), oconffname_(oconffname), classesname_(""), pid(-1) {
     // remove quotes around executable command if present
     if ((exe[0] == '"') && (exe[exe.size() - 1] == '"'))
       exe = exe.substr(1, exe.size() - 2);
@@ -133,6 +133,14 @@ namespace ebl {
   bool job::alive() {
     // if job is alive, it will receive this harmless signal
     return (kill(pid, SIGCHLD) == 0); 
+  }
+
+  pid_t job::getpid() {
+    return pid;
+  }
+
+  string& job::name() {
+    return confname_;
   }
   
   ////////////////////////////////////////////////////////////////
@@ -228,13 +236,13 @@ namespace ebl {
 		if (*i == maxiter) {
 		  cout << "Reached iteration " << *i << endl;
 		  // send report
-		  send_report(best);
+		  send_report(best, maxiter, nrunning);
 		}
 	      }
 	    } else if (mconf.exists("meta_email_period") &&
 		       (maxiter % mconf.get_uint("meta_email_period") == 0)) {
 	      // send report
-	      send_report(best);
+	      send_report(best, maxiter, nrunning);
 	    }
 	  }
 	}
@@ -245,7 +253,7 @@ namespace ebl {
     if (mconf.exists_bool("meta_analyze"))
       best = analyze(maxiter_tmp);  // parse output and get best results
     // send report
-    send_report(best);
+    send_report(best, maxiter, nrunning);
   }
 
   varmaplist job_manager::analyze(int &maxiter) {
@@ -314,7 +322,7 @@ namespace ebl {
     return best;
   }
   
-  void job_manager::send_report(varmaplist &best) {
+  void job_manager::send_report(varmaplist &best, int maxiter, uint nrunning) {
     ostringstream cmd;
     string tmpfile = "report.tmp";
     int res;
@@ -330,13 +338,27 @@ namespace ebl {
       cmd.str("");
       cmd << "rm -f " << tmpfile; // remove tmp file first
       res = std::system(cmd.str().c_str());
+      // print jobs infos
+      cmd.str("");
+      cmd << "echo \"Iteration: " << maxiter << endl;
+      cmd << "Jobs running: " << nrunning << endl;
+      uint j = 1;
+      for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i, ++j) {
+	cmd << j << ". pid: " << i->getpid() << ", name: " << i->name()
+	    << ", status: " << (i->alive() ? "alive" : "dead") << endl;
+      }
+      cmd << "\" >> " << tmpfile;
+      res = std::system(cmd.str().c_str());
+      // print best results
       if (best.size() > 0) {
 	cmd.str("");
-	cmd << "echo \"Best " << best.size() << " results:" << endl;
+	cmd << "echo \"Best " << best.size() << " results at iteration " 
+	    << maxiter << ":" << endl;
 	cmd << pairtree::flat_to_string(&best, &keys) << "\"";
 	cmd << " >> " << tmpfile;
 	res = std::system(cmd.str().c_str());
       }
+      // print metaconf
       cmd.str("");
       cmd << "cat " << mconf.get_output_dir() << "/" << mconf_fname;
       cmd << " >> " << tmpfile;
