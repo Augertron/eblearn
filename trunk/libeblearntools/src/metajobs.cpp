@@ -220,7 +220,7 @@ namespace ebl {
       }
       int status = 0;
       waitpid(-1, &status, WNOHANG); // check children status
-      cout << "Jobs alive: " << running << " Iteration: " << maxiter << endl;
+      cout << "Jobs alive: " << nrunning << " Iteration: " << maxiter << endl;
       // get jobs info for reporting
       jobs_info.str("");
       uint j = 1;

@@ -12,7 +12,7 @@ meta_command="sh face_train.sh"
 # directory where to write outputs of all processes
 meta_output_dir=${out}
 # name of this meta job
-meta_name=faceds
+meta_name=facetrain
 # emailing results or not
 meta_send_email=1
 # email to use
