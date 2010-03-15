@@ -51,6 +51,7 @@ typedef float t_data;
 // global variables: parameters
 idxdim		dims = idxdim(4, 8);	//!< number of samples to display (hxw)
 bool		info = false;	//!< only print information and quit
+bool		size = false;	//!< only print size info and quit
 vector<double>	range;		//!< display range of values
 
 ////////////////////////////////////////////////////////////////
@@ -62,6 +63,8 @@ void print_usage() {
   cout << "  example: ./dataset_display /datasets/pascal" << endl;
   cout << "Options are:" << endl;
   cout << "  -info, do not display dataset, just statistics on stdout."<< endl;
+  cout << "  -size, do not display dataset, just print the size and exit."
+       << endl;
   cout << "  -dims <dimensions, default: 4x8>, the number of columns and ";
   cout << " rows to display." << endl;
   cout << "  -range <range, e.g.: -1,1>: range to map to 0..255 for display.";
@@ -88,6 +91,8 @@ bool parse_args(int argc, char **argv, string &ds_name) {
     try {
       if (strcmp(argv[i], "-info") == 0) {
 	info = true;
+      } else if (strcmp(argv[i], "-size") == 0) {
+	size = true;
       } else if (strcmp(argv[i], "-dims") == 0) {
 	++i; if (i >= argc) throw 0;
 	idxdim d;
@@ -171,36 +176,49 @@ int main(int argc, char **argv) {
   idx<ubyte>	classes(1, 1);
   idx<int>	classpairs(1, 1);
   idx<int>	defpairs(1, 1);
-
-  //for (int i = 0 ; i < argc ; i++)cout<<"argv["<<i<<"]: "<<argv[i]<<endl;
-  cout << "___________________________________________________________________";
-  cout << endl << endl;
-  cout << "             Dataset display for libeblearn library " << endl;
-  cout << "___________________________________________________________________";
-  cout << endl;
+ 
   // parse arguments
   if (!parse_args(argc, argv, ds_name)) {
     print_usage();
     return -1;
   }
-  // print info
-  cout << "input parameters:" << endl;
-  cout << "  dataset name: " << ds_name << endl;
-  cout << "  info only: " << (info ? "yes" : "no") << endl;
-  cout << "  values range: ";
-  for (vector<double>::iterator i = range.begin(); i != range.end(); ++i)
-    cout << *i << " ";
-  cout << endl;
-  cout << "  display dimensions: " << dims << endl;  
-  cout << "___________________________________________________________________";
-  cout << endl;
   
+  if (!size) {
+    cout <<
+      "___________________________________________________________________";
+    cout << endl << endl;
+    cout << "             Dataset display for libeblearn library " << endl;
+    cout <<
+      "___________________________________________________________________";
+    cout << endl;
+    // print info
+    cout << "input parameters:" << endl;
+    cout << "  dataset name: " << ds_name << endl;
+    cout << "  info only: " << (info ? "yes" : "no") << endl;
+    cout << "  size only: " << (size ? "yes" : "no") << endl;
+    cout << "  values range: ";
+    for (vector<double>::iterator i = range.begin(); i != range.end(); ++i)
+      cout << *i << " ";
+    cout << endl;
+    cout << "  display dimensions: " << dims << endl;  
+    cout <<
+      "___________________________________________________________________";
+    cout << endl;
+
 #ifndef __GUI__ // return error if gui not enabled
   cerr << "warning: QT gui libraries not available, install them and recompile" << endl;
 #endif
+  }
 
   // data
   build_fname(ds_name, DATA_NAME, data_fname);
+
+  if (size) {
+    load_matrix(data, data_fname);
+    cout << data.dim(0) << endl;
+    return 0;
+  }
+  
   loading_error(data, data_fname);
   // labels
   build_fname(ds_name, LABELS_NAME, labels_fname);
@@ -214,7 +232,7 @@ int main(int argc, char **argv) {
   // defpairs
   build_fname(ds_name, DEFORMPAIRS_NAME, deformpairs_fname);
   bdefpairs = loading_warning(defpairs, deformpairs_fname);
-  
+
   labeled_datasource<t_data, t_data, int>
     train_ds(data, labels, classes, "Dataset");
 

@@ -187,13 +187,16 @@ namespace ebl {
     //! Return the minimum iteration number of maximums for each job.
     int get_max_common_iter();
     
+    //! Return the common maximum iteration number among all jobs.
+    int get_max_common_iter(const string &dir);
+    
     //! Parse, analyze and report.
     void process(const string &dir);
 
     //! Analyze log files and return the best set of variables.
     //! \param maxiter Set this to the maximum iteration number found.
     varmaplist analyze(configuration &conf, const string &dir, int &maxiter);
-    
+
     //! Send an email reporting the status of the runs.
     void send_report(configuration &conf, const string dir,
 		     varmaplist &best, int iteration, string conf_fullfname,
