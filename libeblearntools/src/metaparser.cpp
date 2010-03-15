@@ -369,6 +369,16 @@ namespace ebl {
     return (int) tree.get_max_uint("i");
   }
   
+  int metaparser::get_min_iter() {
+    if (!tree.exists("i"))
+      return -1;
+    natural_varmap flat = tree.flatten("i");
+    int min = numeric_limits<int>::max();
+    for (natural_varmap::iterator i = flat.begin(); i != flat.end(); ++i)
+      min = MIN(min, string_to_int(i->first));
+    return min;
+  }
+  
   natural_varmap metaparser::best(const string &key, uint n, bool display) {
     return tree.best(key, n, display);
   }
@@ -518,7 +528,7 @@ namespace ebl {
     parse_logs(dir);
     write_plots(dir.c_str(),
 		conf.get_cstring("meta_gnuplot_params"));
-    maxiter = get_max_iter();
+    maxiter = get_min_iter();
     list<string> keys = string_to_stringlist(conf.get_string("meta_minimize"));
     varmaplist best = tree.best(keys, MAX(1, conf.get_uint("meta_send_best")));
     ostringstream dirbest, tmpdir, cmd;

@@ -223,11 +223,10 @@ namespace ebl {
       cout << "There are " << nrunning << " processes alive" << endl;
       // get jobs info for reporting
       jobs_info.str("");
-      jobs_info << "echo \"Iteration: " << maxiter << endl;
       uint j = 1;
       for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i, ++j) {
       	jobs_info << j << ". pid: " << i->getpid() << ", name: " << i->name()
-      	    << ", status: " << (i->alive() ? "alive" : "dead") << endl;
+		  << ", status: " << (i->alive() ? "alive" : "dead") << endl;
       }
       // analyze outputs if requested
       if (mconf.exists_bool("meta_analyze")) {

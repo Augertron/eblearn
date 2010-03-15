@@ -184,6 +184,10 @@ namespace ebl {
     //! for variable "i", -1 if nothing is found.
     int get_max_iter();
     
+    //! Return the minimum iteration number, i.e. the minimum value found
+    //! for variable "i", -1 if nothing is found.
+    int get_min_iter();
+    
     //! Parse, analyze and report.
     void process(const string &dir);
 
