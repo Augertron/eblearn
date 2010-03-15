@@ -192,9 +192,9 @@ namespace ebl {
     varmaplist analyze(configuration &conf, const string &dir, int &maxiter);
     
     //! Send an email reporting the status of the runs.
-    void send_report(configuration &conf, const string &dir,
-		     varmaplist &best, int iteration,
-		     string &conf_fullfname, uint nrunning = 0);
+    void send_report(configuration &conf, const string dir,
+		     varmaplist &best, int iteration, string conf_fullfname,
+		     string jobs_info, uint nrunning = 0);
 
     ////////////////////////////////////////////////////////////////
     // internal methods

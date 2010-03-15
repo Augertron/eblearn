@@ -172,8 +172,9 @@ namespace ebl {
 
   void job_manager::run() {
     varmaplist best; // best results
-    ostringstream cmd;
+    ostringstream cmd, jobs_info;
     int maxiter = -1, maxiter_tmp;
+    metaparser p;
 
     // write job directories and files
     for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
@@ -220,10 +221,18 @@ namespace ebl {
       int status = 0;
       waitpid(-1, &status, WNOHANG); // check children status
       cout << "There are " << nrunning << " processes alive" << endl;
-
+      // get jobs info for reporting
+      jobs_info.str("");
+      jobs_info << "echo \"Iteration: " << maxiter << endl;
+      uint j = 1;
+      for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i, ++j) {
+      	jobs_info << j << ". pid: " << i->getpid() << ", name: " << i->name()
+      	    << ", status: " << (i->alive() ? "alive" : "dead") << endl;
+      }
       // analyze outputs if requested
       if (mconf.exists_bool("meta_analyze")) {
-	best = analyze(maxiter_tmp); // parse output and get best results
+	best = p.analyze(mconf, mconf.get_output_dir(),
+			 maxiter_tmp); // parse output and get best results
 	if (maxiter_tmp != maxiter) { // iteration number has changed
 	  maxiter = maxiter_tmp;
 	  if (mconf.exists_bool("meta_send_email")) {
@@ -236,13 +245,15 @@ namespace ebl {
 		if (*i == maxiter) {
 		  cout << "Reached iteration " << *i << endl;
 		  // send report
-		  send_report(best, maxiter, nrunning);
+		  p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
+				mconf_fullfname, jobs_info.str(), nrunning);
 		}
 	      }
 	    } else if (mconf.exists("meta_email_period") &&
 		       (maxiter % mconf.get_uint("meta_email_period") == 0)) {
 	      // send report
-	      send_report(best, maxiter, nrunning);
+	      p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
+			    mconf_fullfname, jobs_info.str(), nrunning);
 	    }
 	  }
 	}
@@ -251,9 +262,11 @@ namespace ebl {
     cout << "All processes are finished. Exiting." << endl;
     // email last results before exiting
     if (mconf.exists_bool("meta_analyze"))
-      best = analyze(maxiter_tmp);  // parse output and get best results
+      best = p.analyze(mconf, mconf.get_output_dir(),
+		       maxiter_tmp); // parse output and get best results
     // send report
-    send_report(best, maxiter, nrunning);
+    p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
+		  mconf_fullfname, jobs_info.str(), nrunning);
   }
 
 } // namespace ebl
