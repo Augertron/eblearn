@@ -378,7 +378,7 @@ namespace ebl {
   }
 
   void metaparser::process(const string &dir) {
-    string confname;
+    string confname, jobs_info;
     list<string> *confs = find_fullfiles(dir, ".*[.]conf");
     if (confs) {
       confname = confs->front();
@@ -387,7 +387,7 @@ namespace ebl {
     int iter = 0;
     configuration conf(confname);
     varmaplist best = analyze(conf, dir, iter);
-    send_report(conf, dir, best, iter, confname);
+    send_report(conf, dir, best, iter, confname, jobs_info);
   }
   
   // write plot files, using gpparams as additional gnuplot parameters
@@ -580,9 +580,10 @@ namespace ebl {
     return best;
   }
   
-  void metaparser::send_report(configuration &conf, const string &dir,
+  void metaparser::send_report(configuration &conf, const string dir,
 			       varmaplist &best, int maxiter,
-			       string &conf_fullfname, uint nrunning) {
+			       string conf_fullfname, string jobs_info,
+			       uint nrunning) {
     ostringstream cmd;
     string tmpfile = "report.tmp";
     int res;
@@ -598,16 +599,13 @@ namespace ebl {
       cmd << "rm -f " << tmpfile; // remove tmp file first
       res = std::system(cmd.str().c_str());
       // print jobs infos
-      // cmd.str("");
-      // cmd << "echo \"Iteration: " << maxiter << endl;
-      // cmd << "Jobs running: " << nrunning << endl;
-      // uint j = 1;
-      // for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i, ++j) {
-      // 	cmd << j << ". pid: " << i->getpid() << ", name: " << i->name()
-      // 	    << ", status: " << (i->alive() ? "alive" : "dead") << endl;
-      // }
-      // cmd << "\" >> " << tmpfile;
-      // res = std::system(cmd.str().c_str());
+      cmd.str("");
+      cmd << "echo \"Iteration: " << maxiter << endl;
+      cmd << "Jobs running: " << nrunning << endl;
+      cmd << jobs_info << endl;
+      cout << cmd.str();
+      cmd << "\" >> " << tmpfile;
+      res = std::system(cmd.str().c_str());
       // print best results
       if (best.size() > 0) {
 	cmd.str("");
