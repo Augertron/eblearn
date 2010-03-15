@@ -17,6 +17,16 @@ meta_name=faceds
 meta_send_email=1
 # email to use
 meta_email=pierre.sermanet@gmail.com
+# send email with this frequency (if email_iters not defined)
+meta_email_period=1
+
+# interval in seconds to analyze processes output, and to check who is alive.
+meta_watch_interval=30
+# variables to minimize, process and iteration with lowest value will
+# be used to report best weights, or start consequent training
+meta_minimize=iter
+# send n best answers that minimize meta_minimize's value
+meta_send_best=15
 
 ################################################################################
 # variables
@@ -30,22 +40,29 @@ dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
 eblearnbin=${out}/bin/
-nopersons_root=$root2/nopersons/
+nopersons_root=$root2/nopersons_lite/
 false_positive_root=$root2/false_positives/$xpname/
 
 # variables
 
 metaconf0=${eblearnbin}/face_meta.conf
 metaconf=/tmp/face_meta.conf
+
 # maximum number of retraining iterations
 maxiteration=10
-# stop if reached that error rate
-# target_error_rate=0.0001
+
+# network input size and precision
 h=32
 w=${h}
 precision=float
-# split percentage between train and validation
-ds_split_percent=10
+
+# split ratio of validation over training
+ds_split_ratio=.1
+draws=5
+
+# name of datasets
+traindsname=all_mean32x32_ker7_bg_train_500
+valdsname=all_mean32x32_ker7_bg_val_500
 
 # create directories
 mkdir -p $out
@@ -66,8 +83,8 @@ echo "meta_output_dir = ${out}" >> $metaconf
 ###############################################################################
 
 # initial training
-#${eblearnbin}/metarun $metaconf
-echo "toto"
+${eblearnbin}/metarun $metaconf
+
 # looping on retraining on false positives
 for iter in `seq 1 ${maxiteration}`
   do
@@ -80,6 +97,7 @@ for iter in `seq 1 ${maxiteration}`
 
   echo "___________Retraining iteration: ${iter}___________"
   echo "Using best conf of previous training: ${bestconf}"
+  echo "iter=`expr ${maxiteration} - ${iter}`"
 
 # extract false positives: first add new variables to best conf
 # activate retraining
@@ -93,7 +111,7 @@ for iter in `seq 1 ${maxiteration}`
 # limit input size 
   echo "input_max = 900" >> $bestconf
 # set very low threshold
-  echo "threshold = -.95" >> $bestconf
+  echo "threshold = -.99" >> $bestconf
 # add subdirectories of retraining dir
   echo "retrain_dir = ${nopersons_root}/\${retrain_dir_id}/" >> $bestconf
   echo -n "retrain_dir_id = " >> $bestconf
@@ -110,37 +128,41 @@ for iter in `seq 1 ${maxiteration}`
 # find path to latest metarun output: get directory with latest date
   lastout=`ls -dt1 ${out}/*/ | head -1`
 
-# # recompile data from last output directory which should contain 
-# # all false positives
-#   ${eblearnbin}/dscompiler ${lastout} -type lush \
-#       -precision ${precision} -input_precision ${precision} -outdir ${lastout} \
-#       -dname allfp -dims ${h}x${w}x3
+# recompile data from last output directory which should contain 
+# all false positives
+  ${eblearnbin}/dscompiler ${lastout} -type lush \
+      -precision ${precision} -input_precision ${precision} -outdir ${lastout} \
+      -dname allfp -dims ${h}x${w}x3
 
-# # get dataset size
-#   dssize=`${eblearnbin}/dsdisplay -size -info`
-#   valsize=$dssize percentage
+# get dataset size
+  dssize=`${eblearnbin}/dsdisplay ${lastout}/allfp -size`
+  echo "false_positives=${dssize}"
+  valsize=`echo \"$dssize * $ds_split_ratio\" | bc`
+  
+# print out information about extracted dataset to check it is ok
+  ${eblearnbin}/dsdisplay $lastout/allfp -info
+    
+# split dataset into training and validation
+  ${eblearnbin}/dssplit ${lastout} allfp \
+      allfp_val_${valsize}_ \
+      allfp_train_${valsize}_ -maxperclass ${valsize} -draws $draws
 
-# # split dataset into training and {validation/test}
-#   ${eblearnbin}/dssplit $out ${all_fp} \
-#       ${all_fp}_testval_${maxtest}_ \
-#       ${all_fp}_train_${maxtest}_ -maxperclass ${max} -draws $draws
+# merge new datasets into previous datasets: training
+  for i in `seq 1 $draws`
+  do
+      ${eblearnbin}/dsmerge ${dataroot} ${traindsname}_${i} \
+	  ${lastout}/allfp_train_${valsize}_${i} ${traindsname}_${i}
+  done
 
-# # split validation and test
-#     for i in `seq 1 ${draws}`
-#     do
-# 	${eblearnbin}/dssplit $out ${all_fp}_testval_${maxtest}_$i \
-# 	    ${all_fp}_test_${maxtest}_$i \
-# 	    ${all_fp}_val_${maxtest}_$i -maxperclass ${maxtest} -draws 1
-#     done
-
-# # merge previous datasets with new datasets
-#     ${eblearnbin}/dsmerge ${lastout}/allfp  ${all_fp} ${fp_name} ${namebg}
-
-# # print out information about extracted datasets to check that their are ok
-#     ${eblearnbin}/dsdisplay $out/${all_fp} -info
+# merge new datasets into previous datasets: validation
+  for i in `seq 1 $draws`
+  do
+      ${eblearnbin}/dsmerge ${dataroot} ${valdsname}_${i} \
+	  ${lastout}/allfp_train_${valsize}_${i} ${valdsname}_${i}
+  done
 
 # retrain on old + new data
-
-# check if we reached the target error rate
+  echo "Retraining from best previous configuration: ${bestconf}"
+  ${eblearnbin}/metarun $bestconf
     
 done

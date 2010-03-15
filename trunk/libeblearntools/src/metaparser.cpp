@@ -531,6 +531,11 @@ namespace ebl {
     }
   }
 
+  int metaparser::get_max_common_iter(const string &dir) {
+    parse_logs(dir);
+    return = get_max_common_iter();
+  }
+  
   varmaplist metaparser::analyze(configuration &conf, const string &dir,
 				int &maxiter) {
     parse_logs(dir);
