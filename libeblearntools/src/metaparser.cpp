@@ -37,6 +37,13 @@
 #include <map>
 #include <algorithm>
 
+#ifdef __BOOST__
+#include "boost/filesystem.hpp"
+#include "boost/regex.hpp"
+using namespace boost::filesystem;
+using namespace boost;
+#endif
+
 #include "metaparser.h"
 #include "libeblearntools.h"
 
@@ -61,6 +68,7 @@ namespace ebl {
   map<string,string> pairtree::add(list<string> &subvar_,
 				   map<string,string> &ivars) {
     list<string> subvar = subvar_;
+    string subval;
     // the path leading to the current node 
     map<string,string> path;
     // use first string that is in vars as subvariable
@@ -78,21 +86,22 @@ namespace ebl {
 	// add all variables found in vars
 	vars.insert(ivars.begin(), ivars.end());
       } else { // node
+	subval = ivars[subvariable];
 	// the var list without subvariable
 	map<string,string> tmp(ivars);
 	tmp.erase(subvariable);
 	// subvariable list without current subvariable
 	// get existing node
-	if (subtree.find(ivars[subvariable]) == subtree.end()) {
+	if (subtree.find(subval) == subtree.end()) {
 	  // no node, add new one
 	  pairtree t(subvariable, ivars[subvariable]);
 	  path = t.add(subvar, tmp);
-	  subtree[ivars[subvariable]] = t;
+	  subtree[subval] = t;
 	} else {
-	  path = subtree[ivars[subvariable]].add(subvar, tmp);
+	  path = subtree[subval].add(subvar, tmp);
 	}
 	// add current node pair to path
-	path[subvariable] = ivars[subvariable];
+	path[subvariable] = subval;
       }
     }
     return path;
@@ -213,9 +222,7 @@ namespace ebl {
       return s.str();
     for (natural_varmap::iterator i = flat->begin(); i != flat->end(); ++i) {
       s << i->first << ": ";
-      for (map<string,string>::iterator j = i->second.begin();
-	   j != i->second.end(); ++j)
-	s << " (" << j->first << ", " << j->second << ") ";
+      s << map_to_string(i->second);
       s << endl;
     }
     return s.str();
@@ -370,26 +377,28 @@ namespace ebl {
     return tree.best(keys, n, display);
   }
 
-  void metaparser::pretty() {
-    list<string> keys;
-    keys.push_back("test_errors");
-    keys.push_back("errors");
-    keys.push_back("test_energy");
-    keys.push_back("energy");
-    //    tree.best(keys, 15, true);
-    string gppparams = "set grid ytics;set ytics 5;set mytics 5;set grid mytics;set logscale y";
-    write_plots(gppparams);
-    //    tree.pretty();
+  void metaparser::process(const string &dir) {
+    string confname;
+    list<string> *confs = find_fullfiles(dir, ".*[.]conf");
+    if (confs) {
+      confname = confs->front();
+      delete confs;
+    }
+    int iter = 0;
+    configuration conf(confname);
+    varmaplist best = analyze(conf, dir, iter);
+    send_report(conf, dir, best, iter, confname);
   }
   
   // write plot files, using gpparams as additional gnuplot parameters
-  void metaparser::write_plots(string &gpparams) {
+  void metaparser::write_plots(const char *dir, const char *gpparams) {
     string colsep = "\t";
     string gnuplot_config1 = "clear ; set terminal pdf ; \n";
     string gnuplot_config2 = " set output \"";
     string gnuplot_config3 = ".pdf\" ;	plot ";
     // a map of file pointers for .plot and .p files
-    map<string,ofstream*> plotfiles, pfiles; 
+    map<string,ofstream*> plotfiles, pfiles;
+    list<string> plist; // list p file names
 
     // we assume that the tree has been extracted using those keys in that
     // order: job, i
@@ -407,24 +416,42 @@ namespace ebl {
 	double ival = string_to_double(j->first);
 	// loop on all variables
 	for (map<string,string>::iterator k = j->second.begin();
-	     k != j->second.begin(); ++k) {
+	     k != j->second.end(); ++k) {
+	  // try to convert value to double
+	  istringstream iss(k->second);
+	  double val;
+	  iss >> val;
+	  if (iss.fail())
+	    continue ; // not a number, do not plot
 	  // check that p file is open
 	  if (pfiles.find(k->first) == pfiles.end()) {
 	    // not open, add file
 	    ostringstream fname;
+	    if (dir)
+	      fname << dir << "/";
 	    fname << k->first << ".p";
-	    pfiles[k->first] = new ofstream(fname.str().c_str());
-	    if (!pfiles[k->first]) {
+	    ofstream *outp = new ofstream(fname.str().c_str());
+	    if (!outp) {
 	      cerr << "warning: failed to open " << fname.str() << endl;
 	      continue ; // keep going
 	    }
+	    pfiles[k->first] = outp;
+	    fname.str("");
+	    fname << k->first << ".p";
+	    plist.push_back(fname.str());
+	    *outp << gnuplot_config1;
+	    if (gpparams)
+	      *outp << gpparams;
+	    *outp << ";" << gnuplot_config2;
+	    *outp << k->first << gnuplot_config3;
 	  }
 	  // check that plot file is open
 	  if (plotfiles.find(k->first) == plotfiles.end()) {
 	    // not open, add file
 	    ostringstream fname;
+	    if (dir)
+	      fname << dir << "/";
 	    fname << k->first << ".plot";
-	    cout << "opening " << fname.str() << endl;
 	    plotfiles[k->first] = new ofstream(fname.str().c_str());
 	    if (!plotfiles[k->first]) {
 	      cerr << "warning: failed to open " << fname.str() << endl;
@@ -433,9 +460,11 @@ namespace ebl {
 	  }
 	  // for the first i only, add job plot description in p file
 	  if (j == flat.begin()) {
-	    *pfiles[k->first] << "\"" << k->first << ".plot\" using 1:"
-			      << ijob + 2 << " title \""
-			      << job << "\" with linespoints";
+	    ofstream &outp = *pfiles[k->first];
+	    if (ijob > 0)
+	      outp << ", ";
+	    outp << "\"" << k->first << ".plot\" using 1:"
+		 << ijob + 2 << " title \"" << job << "\" with linespoints";
 	  }
 	  // add this value into plot file
 	  ofstream &outp = *plotfiles[k->first];
@@ -445,7 +474,7 @@ namespace ebl {
 	  for (uint c = 0; c < ijob; ++c)
 	    outp << "?" << colsep;
 	  // finally add job's value
-	  outp << k->second << endl;
+	  outp << val << endl;
 	}
       }
     }
@@ -462,6 +491,16 @@ namespace ebl {
 	(*i->second).close();
 	delete i->second;
       }
+    // convert all plots to pdf using gnuplot
+    ostringstream cmd;
+    for (list<string>::iterator i = plist.begin(); i != plist.end(); ++i) {
+      cout << "Creating plot from " << *i << endl;
+      cmd.str("");
+      cmd << "cd " << dir << " && cat " << *i << " | gnuplot && sleep .1";
+      int ret = std::system(cmd.str().c_str());
+      if (ret < 0)
+	cerr << "warning: command failed" << endl;
+    }
   }
 
   void metaparser::parse_logs(const string &root) {
@@ -471,6 +510,138 @@ namespace ebl {
 	parse_log(*i);
       }
       delete fl;
+    }
+  }
+
+  varmaplist metaparser::analyze(configuration &conf, const string &dir,
+				int &maxiter) {
+    parse_logs(dir);
+    write_plots(dir.c_str(),
+		conf.get_cstring("meta_gnuplot_params"));
+    maxiter = get_max_iter();
+    list<string> keys = string_to_stringlist(conf.get_string("meta_minimize"));
+    varmaplist best = tree.best(keys, MAX(1, conf.get_uint("meta_send_best")));
+    ostringstream dirbest, tmpdir, cmd;
+    string job;
+    int ret;
+    
+    // save best weights
+    dirbest << dir << "/best";
+    cmd << "rm -Rf " << dirbest.str(); // remove previous best
+    ret = std::system(cmd.str().c_str());
+    mkdir_full(dirbest.str().c_str());
+    uint j = 1;
+    for (varmaplist::iterator i = best.begin(); i != best.end(); ++i, ++j) {
+      tmpdir.str("");
+      tmpdir << dirbest.str() << "/" << setfill('0') << setw(2) << j << "/";
+      mkdir_full(tmpdir.str().c_str());
+      // look for conf filename to save
+      if (i->find("config") != i->end()) { // found config
+	cmd.str("");
+	cmd << "cp " << i->find("config")->second << " " << tmpdir.str();
+	ret = std::system(cmd.str().c_str());
+      }
+      // find job name
+      if (i->find("job") == i->end()) // not found, continue
+	continue ; // can't do anything without job name
+      else
+	job = i->find("job")->second;
+      // look for classes filename to save
+      if (i->find("classes") != i->end()) { // found classes
+	cmd.str("");
+	cmd << "cp " << dir << "/" << job << "/"
+	    << i->find("classes")->second << " " << tmpdir.str();
+	ret = std::system(cmd.str().c_str());
+      }
+      // save out log
+      cmd.str("");
+      cmd << "cp " << dir << "/" << job << "/"
+	  << "out_" << job << ".log " << tmpdir.str();
+      ret = std::system(cmd.str().c_str());
+      // look for weights filename to save
+      if (i->find("saved") != i->end()) { // found weights
+	cmd.str("");
+	cmd << "cp " << dir << "/" << job << "/"
+	    << i->find("saved")->second << " " << tmpdir.str();
+	ret = std::system(cmd.str().c_str());
+	// add weights filename into configuration
+#ifdef __BOOST__
+	path p(i->find("config")->second);
+	cmd.str("");
+	cmd << "echo \"weights_file=" << i->find("saved")->second 
+	    << " # variable added by metarun\n\" >> "
+	    << tmpdir.str() << "/" << p.leaf();
+	ret = std::system(cmd.str().c_str());
+#endif
+      }
+    }
+    // tar all best files
+    tar(dirbest.str(), dir);
+    return best;
+  }
+  
+  void metaparser::send_report(configuration &conf, const string &dir,
+			       varmaplist &best, int maxiter,
+			       string &conf_fullfname, uint nrunning) {
+    ostringstream cmd;
+    string tmpfile = "report.tmp";
+    int res;
+ 
+    list<string> keys = string_to_stringlist(conf.get_string("meta_minimize"));
+    if (conf.exists_bool("meta_send_email")) {
+      if (!conf.exists("meta_email")) {
+	cerr << "undefined email address, not sending report." << endl;
+	return ;
+      }
+      // write body of email
+      cmd.str("");
+      cmd << "rm -f " << tmpfile; // remove tmp file first
+      res = std::system(cmd.str().c_str());
+      // print jobs infos
+      // cmd.str("");
+      // cmd << "echo \"Iteration: " << maxiter << endl;
+      // cmd << "Jobs running: " << nrunning << endl;
+      // uint j = 1;
+      // for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i, ++j) {
+      // 	cmd << j << ". pid: " << i->getpid() << ", name: " << i->name()
+      // 	    << ", status: " << (i->alive() ? "alive" : "dead") << endl;
+      // }
+      // cmd << "\" >> " << tmpfile;
+      // res = std::system(cmd.str().c_str());
+      // print best results
+      if (best.size() > 0) {
+	cmd.str("");
+	cmd << "echo \"Best " << best.size() << " results at iteration " 
+	    << maxiter << ":" << endl;
+	cmd << pairtree::flat_to_string(&best, &keys) << "\"";
+	res = std::system(cmd.str().c_str()); // print on screen
+	cmd << " >> " << tmpfile;
+	res = std::system(cmd.str().c_str());
+      }
+      // print metaconf
+      cmd.str("");
+      cmd << "cat " << conf_fullfname << " >> " << tmpfile;
+      res = std::system(cmd.str().c_str());
+      // create command
+      cmd.str("");
+      cmd << "cat " << tmpfile << " | mutt " << conf.get_string("meta_email");
+      // subject of email
+      cmd << " -s \"MetaRun Report " << conf.get_name() << "\"";
+      // attach files
+      if (best.size() > 0)
+	cmd << " -a " << dir << "/best.tgz"; 
+      // attach plots
+      list<string> *plots = find_fullfiles(dir, ".*[.]pdf");
+      if (plots) {
+	for (list<string>::iterator i = plots->begin(); i != plots->end(); ++i)
+	  cmd << " -a " << *i;
+	delete plots;
+      }
+      // send email
+      cout << "Sending email report to " << conf.get_string("meta_email")
+	   << ":" << endl;
+      cout << cmd.str() << endl;
+      res = std::system(cmd.str().c_str());
     }
   }
   

@@ -164,7 +164,8 @@ namespace ebl {
     //! Returns true if variable exists and its value is true, false otherwise.
     bool exists_bool(const char *varname);
 
-    //! Checks that variable varname exists in the map, if not throw an exception.
+    //! Checks that variable varname exists in the map,
+    //! if not throw an exception.
     void exists_throw(const char *varname);
 
     //! set variable 'varname' to value 'value'

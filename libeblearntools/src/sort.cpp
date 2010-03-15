@@ -101,7 +101,7 @@ namespace ebl {
     return cmp == 0 ? safe_compare(*a, *b) : cmp;
   }
 
-  int natural_compare(const std::string& a, const std::string& b) {
+  int natural_compare(const string& a, const string& b) {
     return natural_compare(a.c_str(), b.c_str());
   }
 
@@ -109,14 +109,24 @@ namespace ebl {
   //   return natural_compare(a, b) < 0;
   // }
 
-  bool natural_less::operator()(const std::string& a, const std::string& b) {
+  bool natural_less::operator()(const string& a, const string& b) {
     istringstream ia(a), ib(b);
-    double da, db;
+    double da = 0, db = 0;
+
     ia >> da;
     ib >> db;
-    if (ia.fail() || ib.fail())
-      return a < b;
-    return da < db;
+    if (ia.fail() || ib.fail() ||
+  	(ia.rdbuf()->in_avail() == 0) || (ib.rdbuf()->in_avail() == 0)) {
+      if (da == db)
+	return a < b;
+      return da < db;
+    }
+    if (da < db)
+      return da < db;
+    // else read the remaining
+    string ra = a.substr(a.size() - ia.rdbuf()->in_avail());
+    string rb = b.substr(b.size() - ib.rdbuf()->in_avail());
+    return operator()(ra, rb);
   }
 
   map_natural_less::map_natural_less(list<string> &k) {

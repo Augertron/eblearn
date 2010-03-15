@@ -36,6 +36,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "defines.h"
 
@@ -110,11 +111,16 @@ namespace ebl {
   //! Convert a string containing a list of double separated by commas, e.g.
   //! "1,2,3.0,4.0" into a vector of doubles.
   vector<double> string_to_doublevector(const string &s);
+
+  //! Convert a map to a string representation.
+  template <typename T1, typename T2> string map_to_string(map<T1,T2> &m);
   
   //! Tar directory dir into a .tgz archive, using directory's rightmost name,
   //! into target directory tgtdir.
   void tar(const string &dir, const string &tgtdir);
 
 } // end namespace ebl
+
+#include "tools_utils.hpp"
 
 #endif /* TOOLS_UTILS_ */
