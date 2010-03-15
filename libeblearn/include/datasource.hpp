@@ -203,11 +203,18 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next_train(intg *callcnt) {
     // get pointer to first non empty class
-    while (!label_indices[iitr].size())
+    while (!label_indices[iitr].size()) {
       iitr++; // next class if class is empty
-    // recursion failsafe
-    if (callcnt && *callcnt > (intg) label_indices[iitr].size()) {
+      if (iitr >= label_indices.size())
+	iitr = 0;
+    }
+    // recursion failsafe, allow 1000 max recursions
+    if (callcnt && *callcnt > MIN(1000, (intg) label_indices[iitr].size())) {
       // we called recursion on this method more than number of class samples
+      // give up and go to next class
+      iitr++; // next class
+      if (iitr >= label_indices.size())
+	iitr = 0; // reseting to first class in class list
       return ;
     }
     intg callcnt2 = 0;
@@ -239,11 +246,16 @@ namespace ebl {
 	  for (vector<intg>::iterator j = label_indices[iitr].begin();
 	       j != label_indices[iitr].end(); ++j)
 	    maxproba = MAX(probasIter.at(*j)->get(), maxproba);
+	  cout << "normalizing with maxproba for class " << iitr << ": " << maxproba << endl;
 	  // set normalized proba
+	  double avg = 0;
 	  for (vector<intg>::iterator j = label_indices[iitr].begin();
-	       j != label_indices[iitr].end(); ++j)
+	       j != label_indices[iitr].end(); ++j) {
 	    probasIter.at(*j)->set((maxproba == 0) ? 1.0 :
 				   probasIter.at(*j)->get() / maxproba);
+	    avg = probasIter.at(*j)->get();
+	  }
+	  cout << "avg proba = " << avg / maxproba << endl;
 	} else {
 	  // normalize probabilities for all classes, mapping [0..max] to [0..1]
 	  double maxproba = idx_max(probas);
