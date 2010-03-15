@@ -230,8 +230,6 @@ namespace ebl {
       }
       // analyze outputs if requested
       if (mconf.exists_bool("meta_analyze")) {
-	best = p.analyze(mconf, mconf.get_output_dir(),
-			 maxiter_tmp); // parse output and get best results
 	if (maxiter_tmp != maxiter) { // iteration number has changed
 	  maxiter = maxiter_tmp;
 	  if (mconf.exists_bool("meta_send_email")) {
@@ -243,6 +241,9 @@ namespace ebl {
 	      for (list<uint>::iterator i = l.begin(); i != l.end(); ++i) {
 		if (*i == maxiter) {
 		  cout << "Reached iteration " << *i << endl;
+		  // analyze 
+		  best = p.analyze(mconf, mconf.get_output_dir(),
+				   maxiter_tmp); // parse output and get best results
 		  // send report
 		  p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
 				mconf_fullfname, jobs_info.str(), nrunning);
@@ -250,6 +251,9 @@ namespace ebl {
 	      }
 	    } else if (mconf.exists("meta_email_period") &&
 		       (maxiter % mconf.get_uint("meta_email_period") == 0)) {
+	      // analyze 
+	      best = p.analyze(mconf, mconf.get_output_dir(),
+			       maxiter_tmp); // parse output and get best results
 	      // send report
 	      p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
 			    mconf_fullfname, jobs_info.str(), nrunning);
