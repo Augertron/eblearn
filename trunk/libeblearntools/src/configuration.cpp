@@ -446,12 +446,16 @@ namespace ebl {
 
   const string &configuration::get_string(const char *varname) {
     exists_throw(varname);
+    // remove quotes if present
+    string s = smap[varname];
+    if ((s[0] == '\"') && (s[s.size() - 1] == '\"'))
+      s = s.substr(1, s.size() - 2);
+    smap[varname] = s;
     return smap[varname];
   }
 
   const char *configuration::get_cstring(const char *varname) {
-    exists_throw(varname);
-    return smap[varname].c_str();
+    return get_string(varname).c_str();
   }
 
   double configuration::get_double(const char *varname) {

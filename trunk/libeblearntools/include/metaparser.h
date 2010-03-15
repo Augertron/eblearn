@@ -41,6 +41,7 @@
 #include <map>
 #include <list>
 
+#include "configuration.h"
 #include "sort.h"
 
 #define VALUE_SEPARATOR '='
@@ -169,8 +170,9 @@ namespace ebl {
     void parse_logs(const string &root);
 
     //! Write text files parsable by plotting tools such as gnuplot,
-    //! using iteration
-    void write_plots(string &gpparams);
+    //! and generate pdf plots with gnuplot into directory dir.
+    //! \param gpparams Extra plot configurations parameters.
+    void write_plots(const char *dir = NULL, const char *gpparams = NULL);
 
     //! Return the n best values (minimized) of key.
     natural_varmap best(const string &key, uint n, bool display = false);
@@ -182,8 +184,17 @@ namespace ebl {
     //! for variable "i", -1 if nothing is found.
     int get_max_iter();
     
-    //! Pretty the parsed tree.
-    void pretty();
+    //! Parse, analyze and report.
+    void process(const string &dir);
+
+    //! Analyze log files and return the best set of variables.
+    //! \param maxiter Set this to the maximum iteration number found.
+    varmaplist analyze(configuration &conf, const string &dir, int &maxiter);
+    
+    //! Send an email reporting the status of the runs.
+    void send_report(configuration &conf, const string &dir,
+		     varmaplist &best, int iteration,
+		     string &conf_fullfname, uint nrunning = 0);
 
     ////////////////////////////////////////////////////////////////
     // internal methods

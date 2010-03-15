@@ -90,7 +90,6 @@ int main(int argc, char **argv) {
     }
     // parser
     metaparser m;
-    m.parse_logs(root);
-    m.pretty();
+    m.process(root);
     return 0;
   }

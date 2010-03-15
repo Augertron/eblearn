@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet   *
+ *   Copyright (C) 2010 by Pierre Sermanet   *
  *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
@@ -30,85 +30,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef METAJOBS_H_
-#define METAJOBS_H_
+#ifndef TOOLS_UTILS_HPP_
+#define TOOLS_UTILS_HPP_
 
-#include "configuration.h"
-#include "metaparser.h"
-
+#include <map>
+#include <string>
 #include <sstream>
-#include <stdlib.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <stdio.h>
 
 using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // job
-  
-  //! Jobs to be executed.
-  class job {
-  public:
-    job(configuration &conf, const string &exe, const string &oconffname);
-    virtual ~job();
-
-    //! Execute job
-    void run();
-
-    //! Write job's files in configuration's output directory.
-    bool write();
-
-    //! Return true if the process is alive.
-    bool alive();
-
-    //! Return pid of this job.
-    pid_t getpid();
-
-    //! Return the name of this job (its configuration filename).
-    string &name();
-
-    ////////////////////////////////////////////////////////////////
-    // members
-  private:
-    configuration	conf;
-    string		exe;	//!< executable full path
-    string		outdir_;	//!< job's output directory
-    string		confname_;	//!< job's configuration filename
-    string		oconffname_;	//!< job's original conf filename
-    pid_t		pid;	//!< pid of this job
-    string              classesname_; //!< filename of classes matrix
-  };
-
-  ////////////////////////////////////////////////////////////////
-  // job manager
-
-  //! A class to manage jobs.
-  class job_manager {
-  public:
-    //! Constructor.
-    job_manager();
-
-    //! Destructor.
-    virtual ~job_manager();
-
-    //! Read meta configuration.
-    bool read_metaconf(const char *fname);
-
-    //! Run all jobs.
-    void run();
-
-    ////////////////////////////////////////////////////////////////
-    // members
-  private:
-    meta_configuration	mconf; //!< Meta configuration
-    string		mconf_fullfname;	//!< Full filename of metaconf
-    string		mconf_fname;	//!< Filename of metaconf
-    vector<job>		jobs; //!< A vector of jobs to run
-  };
+  template <typename T1, typename T2>
+  string map_to_string(map<T1,T2> &m) {
+    ostringstream s;
+    typename map<T1,T2>::iterator j;
+    for (j = m.begin(); j != m.end(); ++j)
+      s << "(" << j->first << ", " << j->second << ") ";
+    return s.str();
+  }
 
 } // end namespace ebl
 
-#endif /* METAJOBS_H_ */
+#endif /* TOOLS_UTILS_HPP_ */
+
