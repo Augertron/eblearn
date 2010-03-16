@@ -34,13 +34,13 @@ meta_send_best=15
 
 # directories
 xpname=face_train_`date +"%Y%m%d.%H%M%S"`
-root=~/budadata/face/
-root2=~/budcdata/face/
+root=~/texierbdata/face/
+root2=~/texierbdata/face/
 dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
 eblearnbin=${out}/bin/
-nopersons_root=$root2/nopersons_lite/
+nopersons_root=$root2/nopersons/
 false_positive_root=$root2/false_positives/$xpname/
 
 # variables
@@ -49,7 +49,7 @@ metaconf0=${eblearnbin}/face_meta.conf
 metaconf=${out}/face_meta.conf
 
 # maximum number of retraining iterations
-maxiteration=10
+maxiteration=20
 
 # network input size and precision
 h=32
@@ -113,7 +113,7 @@ for iter in `seq 1 ${maxiteration}`
 # limit input size 
   echo "input_max = 900" >> $bestconf
 # set very low threshold
-  echo "threshold = .1" >> $bestconf
+  echo "threshold = -.99" >> $bestconf
 # set weights to retrain: same as this conf
   echo "retrain_weights = \${weights}" >> $bestconf
 # add subdirectories of retraining dir
@@ -141,7 +141,7 @@ for iter in `seq 1 ${maxiteration}`
 
 # get dataset size
   dssize=`${eblearnbin}/dsdisplay ${dataroot}/allfp -size`
-  echo "false_positives=${dssize}"
+  echo "false_positives = ${dssize}"
   valsize=`echo "(${dssize} * ${ds_split_ratio})/1" | bc`
   echo "valsize = ${valsize}"
   
@@ -150,21 +150,20 @@ for iter in `seq 1 ${maxiteration}`
     
 # split dataset into training and validation
   ${eblearnbin}/dssplit ${dataroot} allfp \
-      allfp_val_${valsize}_ \
-      allfp_train_${valsize}_ -maxperclass ${valsize} -draws $draws
+      allfp_val_ allfp_train_ -maxperclass ${valsize} -draws $draws
 
 # merge new datasets into previous datasets: training
   for i in `seq 1 $draws`
   do
       ${eblearnbin}/dsmerge ${dataroot} ${traindsname}_${i} \
-	  allfp_train_${valsize}_${i} ${traindsname}_${i}
+	  allfp_train_${i} ${traindsname}_${i}
   done
 
 # merge new datasets into previous datasets: validation
   for i in `seq 1 $draws`
   do
       ${eblearnbin}/dsmerge ${dataroot} ${valdsname}_${i} \
-	  allfp_train_${valsize}_${i} ${valdsname}_${i}
+	  allfp_train_${i} ${valdsname}_${i}
   done
 
 # retrain on old + new data
