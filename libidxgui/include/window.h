@@ -128,6 +128,10 @@ namespace ebl {
     void remove_scroll_box(scroll_box0 *sb);
     void replace_scroll_box_with_copy(scroll_box0 *sb);
 
+    //! Return first key pressed of the key-pressed even list for
+    //! current window and pop it out of the list, or return -1 if no key.
+    int pop_key_pressed();
+
   protected:
     ////////////////////////////////////////////////////////////////
     // clear methods
@@ -196,6 +200,7 @@ namespace ebl {
     scroll_box0         *scrollbox;
     int                  wupdate_ndisable;// count how many disables called
     bool                 frozen_style; //!< style is frozen or not
+    list<int>            keyspressed; //!< a list of key pressed events
   };
 
 } // namespace ebl {

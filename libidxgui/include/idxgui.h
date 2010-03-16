@@ -39,11 +39,13 @@
 #include <ostream>
 #include "libidx.h"
 #include "scroll_box0.h"
+#include "gui_thread.h"
 
 using namespace std;
 
 namespace ebl {
-  
+
+  class gui_thread;
   template<class T1, class T2> class ManipInfra;
 
   class idxgui : public QThread, public ostringstream {
@@ -54,6 +56,7 @@ namespace ebl {
     char		**argv;
     int	                  nwid;
     const unsigned int   *nwindows; // owned by gui_thread
+    gui_thread *gt;
   public:
     bool		  thread_init;
     bool		  cout_output;
@@ -63,7 +66,8 @@ namespace ebl {
 
   public:
     idxgui();
-    void init(int argc_, char **argv_, const unsigned int *nwindows);
+    void init(int argc_, char **argv_, const unsigned int *nwindows,
+	      gui_thread *gt_);
     virtual ~idxgui();
 
     //! creates a new window.
@@ -193,6 +197,10 @@ namespace ebl {
     //! frozen.
     void freeze_style(bool freeze);
 
+    //! Return the first key pressed in the queue of key events and remove it
+    //! from the queue.
+    int pop_key_pressed();
+    
   private:
     // check that user used MAIN_QTHREAD instead of regular main
     void check_init(); 
@@ -219,7 +227,7 @@ namespace ebl {
     void gui_set_wupdate(bool update);
     void gui_freeze_style(bool freeze);
     void gui_add_scroll_box(scroll_box0 *sb);
-    
+
   protected:
     virtual void run();
   };

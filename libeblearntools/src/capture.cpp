@@ -31,6 +31,8 @@
 
 #include <cstdlib>
 #include <vector>
+#include <sstream>
+#include <iomanip>
 
 #include "libidx.h"
 #include "libeblearn.h"
@@ -170,9 +172,16 @@ int main(int argc, char **argv) {
        << endl;
 #else
   idx<t_data> frame;
-  camera_opencv<t_data> cam(-1, 192, 256);
+  ostringstream dir, fname;
+  int capcnt = 0;
+  dir << "captured_" << tstamp();
+  camera_opencv<t_data> cam(-1);
+  //  camera_opencv<t_data> cam(-1, 192, 256);
   while (!cam.empty()) {
     frame = cam.grab();
+    // crop frame
+     frame = frame.narrow(0, 394, 0);
+    frame = frame.narrow(1, 256, 0);
     // display
     disable_window_updates();
     clear_window();
@@ -186,6 +195,15 @@ int main(int argc, char **argv) {
     for (uint h0 = 0; h0 <= frame.dim(0) - sz; h0 += sz)
       for (uint w0 = 0; w0 <= frame.dim(1) - sz; w0 += sz)
 	draw_box(h0, w0, sz, sz, 0, 0, 255);
+    // saving
+    if (gui.pop_key_pressed() == Qt::Key_Space) {
+      mkdir_full(dir.str().c_str());
+      fname.str("");
+      fname << dir.str() << "/" << "frame_" << setw(5) << setfill('0')
+	    << capcnt++ << ".mat";
+      save_matrix(frame, fname.str());
+      cout << "saved " << fname.str() << endl;
+    }
     enable_window_updates();
   }
 #endif 

@@ -625,6 +625,9 @@ namespace ebl {
   }
 
   void Window::keyPressEvent(QKeyEvent *event) {
+    // push key on the list
+    keyspressed.push_back(event->key());
+    // handle key events
     if (event->key() == Qt::Key_Escape)
       close();
     else if (event->key() == Qt::Key_Left) {
@@ -641,6 +644,14 @@ namespace ebl {
 	scrollbox->display_next();
       }
     }
+  }
+
+  int Window::pop_key_pressed() {
+    if (keyspressed.size() == 0)
+      return -1;
+    int key = keyspressed.front();
+    keyspressed.pop_front();
+    return key;
   }
 
   void Window::scroll_previous() {

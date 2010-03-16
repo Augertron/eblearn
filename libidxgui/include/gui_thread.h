@@ -46,6 +46,7 @@
 
 namespace ebl {
 
+  class idxgui;
   //! Global pointer to gui, allows to call for example 
   //! gui.draw_matrix() from anywhere in the code.
   extern ebl::idxgui gui;
@@ -67,6 +68,10 @@ namespace ebl {
   public:
     gui_thread(int argc, char **argv);
     virtual ~gui_thread();
+
+    //! Return first key pressed of the key pressed even list for
+    //! current window and pop it out of the list, or return -1 if no key.
+    int pop_key_pressed();
 
   private slots:
     void window_destroyed(QObject *obj);
