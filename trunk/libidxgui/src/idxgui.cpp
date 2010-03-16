@@ -42,7 +42,9 @@ namespace ebl {
     thread_init = false;
   }
 
-  void idxgui::init(int argc_, char **argv_, const unsigned int *nwindows_) {
+  void idxgui::init(int argc_, char **argv_, const unsigned int *nwindows_,
+		    gui_thread *gt_) {
+    gt = gt_;
     argc = argc_;
     argv = argv_;
     nwindows = nwindows_;
@@ -274,6 +276,10 @@ namespace ebl {
 
   void idxgui::add_scroll_box(scroll_box0 *sb) {
     emit gui_add_scroll_box(sb);
+  }
+
+  int idxgui::pop_key_pressed() {
+    gt->pop_key_pressed();
   }
 
 } // end namespace ebl

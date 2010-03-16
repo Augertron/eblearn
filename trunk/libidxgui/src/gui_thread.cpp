@@ -46,7 +46,7 @@ namespace ebl {
 
   gui_thread::gui_thread(int argc, char** argv) 
     : wcur(-1), nwindows(0), silent(false), thread(gui) {
-    thread.init(argc, argv, &nwindows);
+    thread.init(argc, argv, &nwindows, this);
     connect(&thread, SIGNAL(gui_drawImage(idx<ubyte> *, 
 					  unsigned int, unsigned int)),
 	    this,   SLOT(updatePixmap(idx<ubyte> *, 
@@ -243,6 +243,12 @@ namespace ebl {
   void gui_thread::add_scroll_box(scroll_box0 *sb) {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->add_scroll_box(sb);    
+  }
+
+  int gui_thread::pop_key_pressed() {
+    if ((wcur >= 0) && (windows[wcur]))
+      return windows[wcur]->pop_key_pressed();
+    return -1;
   }
 
 } // end namespace ebl
