@@ -99,6 +99,7 @@ namespace ebl {
     usepartsonly = false;
     save_mode = DATASET_SAVE;
     bboxfact = 1.0;
+    force_label = "";
 #ifndef __BOOST__
     eblerror(BOOST_LIB_ERROR);
 #endif
@@ -345,14 +346,14 @@ namespace ebl {
     fname = root1; fname += classes_fname;
     loading_warning(classidx, fname);
     set_classes(classidx);
-    // load classpairs
-    classpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
-    fname = root1; fname += classpairs_fname;
-    loading_warning(classpairs, fname);
-    // load deformation pairs
-    deformpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
-    fname = root1; fname += deformpairs_fname;
-    loading_warning(deformpairs, fname);
+//     // load classpairs
+//     classpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
+//     fname = root1; fname += classpairs_fname;
+//     loading_warning(classpairs, fname);
+//     // load deformation pairs
+//     deformpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
+//     fname = root1; fname += deformpairs_fname;
+//     loading_warning(deformpairs, fname);
     // initialize some members
     data_cnt = data.dim(0);
     allocated = true;
@@ -516,11 +517,12 @@ namespace ebl {
   // data
     
   template <class Tdata> template <class Toriginal>
-  bool dataset<Tdata>::add_data(idx<Toriginal> &dat, const string &class_name,
+  bool dataset<Tdata>::add_data(idx<Toriginal> &dat, const string &class_name_,
 				const char *filename, const rect *r) { 
+    string class_name = class_name_;
     // check for errors
     if (!allocated) {
-      cerr << "error: dataset has not been allocated, cannot add data." << endl;
+      cerr << "error: dataset has not been allocated, cannot add data." <<endl;
       return false;
     }
     // check that input is bigger than minimum dimensions allowed
@@ -529,6 +531,9 @@ namespace ebl {
 	|| (dat.dim(1) < mindims.dim(1))
 	|| (r && (r->width < (uint) mindims.dim(1))))
       return false;
+    // if force label is on, replace label by force_label
+    if (strcmp(force_label.c_str(), ""))
+      class_name = force_label;
     // check that class exists (may not exist if excluded)
     if (find(classes.begin(), classes.end(), class_name) == classes.end())
       return false;
@@ -718,6 +723,13 @@ namespace ebl {
     cout << "Setting dataset name to: " << name << endl;
   }
     
+  template <class Tdata>
+  void dataset<Tdata>::set_label(const string &s) {
+    force_label = s;
+    add_class(force_label);
+    cout << "Forcing label for all samples to: " << s << endl;
+  }
+
   template <class Tdata>
   void dataset<Tdata>::set_bboxfact(float factor) {
     bboxfact = factor;

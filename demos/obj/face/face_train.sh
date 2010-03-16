@@ -24,7 +24,7 @@ meta_email_period=1
 meta_watch_interval=30
 # variables to minimize, process and iteration with lowest value will
 # be used to report best weights, or start consequent training
-meta_minimize=iter
+meta_minimize=i
 # send n best answers that minimize meta_minimize's value
 meta_send_best=15
 
@@ -33,7 +33,7 @@ meta_send_best=15
 ################################################################################
 
 # directories
-xpname=face_train_20100312.194954 # face_train_`date +"%Y%m%d.%H%M%S"`
+xpname=face_train_`date +"%Y%m%d.%H%M%S"`
 root=~/budadata/face/
 root2=~/budcdata/face/
 dataroot=$root/ds
@@ -46,7 +46,7 @@ false_positive_root=$root2/false_positives/$xpname/
 # variables
 
 metaconf0=${eblearnbin}/face_meta.conf
-metaconf=/tmp/face_meta.conf
+metaconf=${out}/face_meta.conf
 
 # maximum number of retraining iterations
 maxiteration=10
@@ -57,7 +57,7 @@ w=${h}
 precision=float
 
 # split ratio of validation over training
-ds_split_ratio=.1
+ds_split_ratio=".1"
 draws=5
 
 # name of datasets
@@ -94,10 +94,12 @@ for iter in `seq 1 ${maxiteration}`
   bestout=${lastout}/best/01/
 # find path to best conf (there should be only 1 conf per folder)
   bestconf=`ls ${bestout}/*.conf`
+# find path to best weights (there should be only 1 weights per folder)
+  bestweights=`ls ${bestout}/*_net*.mat`
 
   echo "___________Retraining iteration: ${iter}___________"
   echo "Using best conf of previous training: ${bestconf}"
-  echo "iter=`expr ${maxiteration} - ${iter}`"
+  echo "i=`expr ${maxiteration} - ${iter}`"
 
 # extract false positives: first add new variables to best conf
 # activate retraining
@@ -111,11 +113,13 @@ for iter in `seq 1 ${maxiteration}`
 # limit input size 
   echo "input_max = 900" >> $bestconf
 # set very low threshold
-  echo "threshold = -.99" >> $bestconf
+  echo "threshold = .1" >> $bestconf
+# set weights to retrain: same as this conf
+  echo "retrain_weights = \${weights}" >> $bestconf
 # add subdirectories of retraining dir
   echo "retrain_dir = ${nopersons_root}/\${retrain_dir_id}/" >> $bestconf
   echo -n "retrain_dir_id = " >> $bestconf
-  for idir in `seq 1 8`
+  for idir in `seq 1 2`
     do
     echo -n "${idir} " >> $bestconf
   done
@@ -131,19 +135,21 @@ for iter in `seq 1 ${maxiteration}`
 # recompile data from last output directory which should contain 
 # all false positives
   ${eblearnbin}/dscompiler ${lastout} -type lush \
-      -precision ${precision} -input_precision ${precision} -outdir ${lastout} \
+      -precision ${precision} -input_precision ${precision} \
+      -outdir ${dataroot} -forcelabel bg \
       -dname allfp -dims ${h}x${w}x3
 
 # get dataset size
-  dssize=`${eblearnbin}/dsdisplay ${lastout}/allfp -size`
+  dssize=`${eblearnbin}/dsdisplay ${dataroot}/allfp -size`
   echo "false_positives=${dssize}"
-  valsize=`echo \"$dssize * $ds_split_ratio\" | bc`
+  valsize=`echo "(${dssize} * ${ds_split_ratio})/1" | bc`
+  echo "valsize = ${valsize}"
   
 # print out information about extracted dataset to check it is ok
-  ${eblearnbin}/dsdisplay $lastout/allfp -info
+  ${eblearnbin}/dsdisplay $dataroot/allfp -info
     
 # split dataset into training and validation
-  ${eblearnbin}/dssplit ${lastout} allfp \
+  ${eblearnbin}/dssplit ${dataroot} allfp \
       allfp_val_${valsize}_ \
       allfp_train_${valsize}_ -maxperclass ${valsize} -draws $draws
 
@@ -151,18 +157,21 @@ for iter in `seq 1 ${maxiteration}`
   for i in `seq 1 $draws`
   do
       ${eblearnbin}/dsmerge ${dataroot} ${traindsname}_${i} \
-	  ${lastout}/allfp_train_${valsize}_${i} ${traindsname}_${i}
+	  allfp_train_${valsize}_${i} ${traindsname}_${i}
   done
 
 # merge new datasets into previous datasets: validation
   for i in `seq 1 $draws`
   do
       ${eblearnbin}/dsmerge ${dataroot} ${valdsname}_${i} \
-	  ${lastout}/allfp_train_${valsize}_${i} ${valdsname}_${i}
+	  allfp_train_${valsize}_${i} ${valdsname}_${i}
   done
 
 # retrain on old + new data
-  echo "Retraining from best previous configuration: ${bestconf}"
-  ${eblearnbin}/metarun $bestconf
+  echo "Retraining from best previous weights: ${bestweights}"
+# add last weights and activate retraining from those
+  echo "retraining = 1" >> $metaconf
+  echo "retrain_weights = ${bestweights}" >> $metaconf
+  ${eblearnbin}/metarun $metaconf
     
 done

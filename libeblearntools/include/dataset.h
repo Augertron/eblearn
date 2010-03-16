@@ -156,6 +156,10 @@ namespace ebl {
     //! instead.
     void set_name(const string &name);
 
+    //! If called, this method will force the dataset to assign this one
+    //! label to all collected images.
+    void set_label(const string &label);
+
     //! Multiply bounding boxes by factor. This is useful to move object's
     //! boundaries away from borders when bounding boxes are too tight around
     //! objects.
@@ -305,7 +309,7 @@ namespace ebl {
     uint                height;         //!< height of output
     uint                width;          //!< width of output
     bool		allocated;	//!< data matrices allocated or not
-    idxdim		outdims;	//!< dimensions of sample out dimensions
+    idxdim		outdims;	//!< dims of sample out dimensions
     idxdim		mindims;	//!< min dims of input samples
     idxdim		datadims;	//!< dimensions of data out dimensions
     intg		data_cnt;	//!< number of samples added so far
@@ -318,7 +322,7 @@ namespace ebl {
     idx<Tdata>          load_img;       //!< temporary image loader
     bool                scale_mode;     //!< scales saving mode
     vector<double>      scales;         //!< integer scales
-    bool                interleaved_input; //!< indicate if input is interleaved
+    bool                interleaved_input; //!< indicate input is interleaved
     vector<string>      exclude;        //!< list of excluded classes
     vector<string>      include;        //!< list of included classes
     bool                usepose;        //!< use pose or not
@@ -328,6 +332,7 @@ namespace ebl {
     float               bboxfact;       //!< bounding boxes factor
     string              dataset_precision;//!< precision of outputted dataset
     string              input_precision;//!< precision of input data
+    string              force_label;    //!< force all labels to this one
     // names ///////////////////////////////////////////////////////
     string		name;	        //!< dataset name
     string		data_fname;	//!< data filename

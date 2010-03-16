@@ -89,6 +89,8 @@ string          load             = ""; // dataset to load
 bool            load_set         = false;
 float           bboxfact         = 1.0;
 bool            bboxfact_set     = false;
+bool            force_label      = false;
+string          label            = ""; 
 
 ////////////////////////////////////////////////////////////////
 // command line
@@ -243,6 +245,10 @@ bool parse_args(int argc, char **argv) {
 	scales = string_to_doublevector(s);
 	scale_mode = true;
 	preprocessing = true;
+      } else if (strcmp(argv[i], "-forcelabel") == 0) {
+	++i; if (i >= argc) throw 0;
+	label = argv[i];
+	force_label = true;
       } else if (strcmp(argv[i], "-bboxfact") == 0) {
 	++i; if (i >= argc) throw 0;
 	bboxfact = (float) atof(argv[i]);
@@ -358,6 +364,7 @@ void compile_ds(Tds &ds, bool imgpat = true) {
   if (maxperclass > 0) ds.set_max_per_class(maxperclass);
   if (maxdata > 0) ds.set_max_data(maxdata);
   if (imgpat) ds.set_image_pattern(image_pattern);
+  if (force_label) ds.set_label(label);
   // switch between load and normal mode
   if (load_set) { // in load mode, do nothing but loading dataset
     ds.set_name(load); // dataset to load
