@@ -34,8 +34,8 @@ meta_send_best=15
 
 # directories
 xpname=face_train_`date +"%Y%m%d.%H%M%S"`
-root=~/texierbdata/face/
-root2=~/texierbdata/face/
+root=~/texieradata/face/
+root2=~/texieradata/face/
 dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
@@ -83,9 +83,13 @@ echo "meta_output_dir = ${out}" >> $metaconf
 ###############################################################################
 
 # initial training
+echo "________________________________________________________________________"
+echo "initial training from metaconf: ${metaconf}"
 ${eblearnbin}/metarun $metaconf
 
 # looping on retraining on false positives
+echo "________________________________________________________________________"
+echo "retraining loop"
 for iter in `seq 1 ${maxiteration}`
   do
   
@@ -169,6 +173,7 @@ for iter in `seq 1 ${maxiteration}`
 # retrain on old + new data
   echo "Retraining from best previous weights: ${bestweights}"
 # add last weights and activate retraining from those
+  echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
   echo "retraining = 1" >> $metaconf
   echo "retrain_weights = ${bestweights}" >> $metaconf
   ${eblearnbin}/metarun $metaconf

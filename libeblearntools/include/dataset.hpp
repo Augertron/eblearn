@@ -346,14 +346,14 @@ namespace ebl {
     fname = root1; fname += classes_fname;
     loading_warning(classidx, fname);
     set_classes(classidx);
-//     // load classpairs
-//     classpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
-//     fname = root1; fname += classpairs_fname;
-//     loading_warning(classpairs, fname);
-//     // load deformation pairs
-//     deformpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
-//     fname = root1; fname += deformpairs_fname;
-//     loading_warning(deformpairs, fname);
+    // load classpairs
+    classpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
+    fname = root1; fname += classpairs_fname;
+    loading_warning(classpairs, fname);
+    // load deformation pairs
+    deformpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
+    fname = root1; fname += deformpairs_fname;
+    loading_warning(deformpairs, fname);
     // initialize some members
     data_cnt = data.dim(0);
     allocated = true;
