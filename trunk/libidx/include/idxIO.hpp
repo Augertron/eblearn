@@ -132,7 +132,7 @@ namespace ebl {
       ostringstream oss;
       oss << "load_matrix failed to open " << filename;
       cerr << oss.str() << endl;
-      throw oss.str().c_str();
+      throw oss.str();
       return false;
     }
 
