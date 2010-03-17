@@ -328,12 +328,16 @@ namespace ebl {
 	tmp = m.select(0, 6); idx_copy(tmp, ddeltax);
 	return true;
     */
-    idx<T2> m(1);
-    if (!load_matrix(m, s))
-      return false;
-    this->resize(m.dim(0));
-    idx_copy(m, x);
-    return true;
+    try {
+      idx<T2> m = load_matrix<T2>(s);
+      this->resize(m.dim(0));
+      idx_copy(m, x);
+      return true;
+    } catch(string &err) {
+      cout << err << endl;
+      eblerror("failed to load weights");
+    }
+    return false;
   }
 
   template <class T>

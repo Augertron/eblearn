@@ -360,6 +360,7 @@ namespace ebl {
       // add variables to tree, and remember the path to the leaf
       tree.add(hierarchy, vars);
     }
+    in.close();
     return true;
   }
 

@@ -77,7 +77,7 @@ namespace ebl {
     data = data_;
     labels = labels_;
     probas = idx<double>(data.dim(0));
-    init_drand(time(NULL)); // initialize random seed
+    //    init_drand(time(NULL)); // initialize random seed
     // default probability for a sample of being used is 1
     idx_fill(probas, 1.0); 
     height = data.dim(1);
@@ -246,7 +246,8 @@ namespace ebl {
 	  for (vector<intg>::iterator j = label_indices[iitr].begin();
 	       j != label_indices[iitr].end(); ++j)
 	    maxproba = MAX(probasIter.at(*j)->get(), maxproba);
-	  cout << "normalizing with maxproba for class " << iitr << ": " << maxproba << endl;
+	  // cout << "normalizing with maxproba for class "
+	  //      << iitr << ": " << maxproba << endl;
 	  // set normalized proba
 	  double avg = 0;
 	  for (vector<intg>::iterator j = label_indices[iitr].begin();
@@ -255,7 +256,7 @@ namespace ebl {
 				   probasIter.at(*j)->get() / maxproba);
 	    avg = probasIter.at(*j)->get();
 	  }
-	  cout << "avg proba = " << avg / maxproba << endl;
+	  //	  cout << "avg proba = " << avg / maxproba << endl;
 	} else {
 	  // normalize probabilities for all classes, mapping [0..max] to [0..1]
 	  double maxproba = idx_max(probas);
@@ -392,22 +393,22 @@ namespace ebl {
   void labeled_datasource<Tnet, Tdata, Tlabel>::
   init(const char *data_fname, const char *labels_fname,
        const char *classes_fname, const char *name_, Tdata b, float c) {
-    idx<Tdata> dat(1, 1, 1, 1);
-    idx<Tlabel> lab(1);
-    idx<ubyte> classes(1, 1);
+    idx<Tdata> dat;
+    idx<Tlabel> lab;
+    idx<ubyte> classes;
     bool classes_found = true;
-    
-    if (!load_matrix<Tdata>(dat, data_fname)) {
-      std::cerr << "Failed to load dataset file " << data_fname << endl;
+
+    try {
+      dat = load_matrix<Tdata>(data_fname);
+      lab = load_matrix<Tlabel>(labels_fname);
+    } catch (string &err) {
+      cerr << err << endl;
       eblerror("Failed to load dataset file");
     }
-    if (!load_matrix<Tlabel>(lab, labels_fname)) {
-      std::cerr << "Failed to load dataset file " << labels_fname << endl;
-      eblerror("Failed to load dataset file");
-    }
-    if (!load_matrix<ubyte>(classes, classes_fname)) {
-      std::cerr << "warning: failed to load dataset file "
-		<< classes_fname << endl;
+    try {
+      classes = load_matrix<ubyte>(classes_fname);
+    } catch (string &err) {
+      cerr << "warning: " << err << endl;
       classes_found = false;
     }
     // classes names are optional, use numbers by default if not specified
@@ -577,26 +578,23 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>
   mnist_datasource<Tnet, Tdata, Tlabel>::
   mnist_datasource(const char *root, const char *type, uint size) {
-    // load dataset
-    ostringstream datafile, labelfile, name;
-    idx<Tdata> dat(1, 1, 1);
-    idx<Tlabel> labs(1);
-    name << "MNIST " << type;
-    datafile << root << "/" << type << "-images-idx3-ubyte";
-    labelfile << root << "/" << type << "-labels-idx1-ubyte";
-    if (!load_matrix<Tdata>(dat, datafile.str())) {
-      std::cerr << "failed to load MNIST data: " << datafile.str() << endl;
-      eblerror("Failed to load dataset file");
-    }
-    if (!load_matrix<Tlabel>(labs, labelfile.str())) {
-      std::cerr << "failed to load MNIST labels: " << labelfile.str() << endl;
-      eblerror("Failed to load dataset file");
-    }
-    dat = dat.narrow(0, size, 
-		     strcmp("t10k", type) ? 0 : (intg) (5000 - .5 * size)); 
-    labs = labs.narrow(0, size, 
+    try {
+      // load dataset
+      ostringstream datafile, labelfile, name;
+      name << "MNIST " << type;
+      datafile << root << "/" << type << "-images-idx3-ubyte";
+      labelfile << root << "/" << type << "-labels-idx1-ubyte";
+      idx<Tdata> dat = load_matrix<Tdata>(datafile.str());
+      idx<Tlabel> labs = load_matrix<Tlabel>(labelfile.str());
+      dat = dat.narrow(0, size, 
 		       strcmp("t10k", type) ? 0 : (intg) (5000 - .5 * size)); 
-    init(dat, labs, name.str().c_str(), 0, 0.01);
+      labs = labs.narrow(0, size, 
+			 strcmp("t10k", type) ? 0 : (intg) (5000 - .5 * size)); 
+      init(dat, labs, name.str().c_str(), 0, 0.01);
+    } catch(string &err) {
+      cerr << err << endl;
+      eblerror("failed to load mnist dataset");
+    }
   }
 
   template <class Tnet, class Tdata, class Tlabel>

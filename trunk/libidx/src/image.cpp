@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,7 +36,7 @@
 #include <ostream>
 
 #include "image.h"
-#include "blas.h"
+#include "idxops.h"
 #include "idx.h"
 
 using namespace std;
@@ -67,176 +68,6 @@ namespace ebl {
 
   }
 
-  ////////////////////////////////////////////////////////////////
-
-  //! skip comments lines starting with <start>
-  FILE* skip_comments(ubyte start, FILE *fp) {
-    if (!fp) {
-      cerr << "file is not opened" << endl;
-      return NULL;
-    }
-    int c;
-    for (	;;) {
-      c = getc(fp);
-      while (c==' ' || c=='\n' || c=='\t' || c=='\r') c = getc(fp);
-      if (c != start) break;
-      while (c != '\n')  c = getc(fp);
-    }
-    ungetc(c, fp);
-    return fp;
-  }
-
-  //! Fills type, ncol and nlin if valid PNM file.
-  //! type = 6 if P6, 5 if P5, 4 if P4, -1 otherwise.
-  //! This function returns false upon errors in the header.
-  void pnm_header(FILE * fp, int *type, int *ncol, int *nlin, int *vmax) {
-    if (!fp) throw "invalid file pointer";
-    rewind(fp);
-    char buf[128];
-    memset(buf, 0, sizeof (buf));
-    if (fscanf(fp, "%s\n", buf) == 0)
-      throw "invalid PNM file";
-    *type = -1;
-    if ((strcmp("P1", buf) == 0) ||
-	(strcmp("P2", buf) == 0) ||
-	(strcmp("P3", buf) == 0) ||
-	(strcmp("P4", buf) == 0) ||
-	(strcmp("P5", buf) == 0) ||
-	(strcmp("P6", buf) == 0))
-      *type = (int) buf[1] - '0';
-    else throw "invalid binary PNM file (unknown format)";
-    fp = skip_comments(35, fp); // skip comments
-    if (fscanf(fp, "%d", ncol) == 0) // read number of columns
-      throw "invalid PNM file: 0 columns";
-    fp = skip_comments(35, fp); // skip comments
-    if (fscanf(fp, "%d", nlin) == 0) // read number of lines
-      throw "invalid PNM file: 0 lines";
-    fp = skip_comments(35, fp); // skip comments
-    if (fscanf(fp, "%d\n", vmax) == 0) // read maximum value
-      throw "invalid PNM file: can't read value";
-  }
-
-  void pnm_fread_into_rgbx(const char* fname, idx<ubyte> &out){
-    FILE *fp = fopen(fname, "r");
-    if (!fp) throw "opening failed";
-    pnm_fread_into_rgbx(fp, out);
-    if (fp) fclose(fp);
-  }
-
-  void pnm_fread_into_rgbx(FILE *fp, idx<ubyte> &out) {
-    idx_checkorder1(out, 3); // allow only 3D buffers
-    int type, ncol, nlin, ncolo, nlino, ncmpo, vmax;
-    unsigned int expected_size, read_size;
-    pnm_header(fp, &type, &ncol, &nlin, &vmax);
-    if (vmax < 255)
-      cout << "Warning: PNM values range lower than 255: " << vmax << endl;
-    size_t sz = (vmax == 65535) ? 2 : 1;
-    nlino = out.dim(0);
-    ncolo = out.dim(1);
-    ncmpo = out.dim(2);
-    expected_size = ncol * nlin * 3;
-    if ((ncol != ncolo) || (nlin != nlino) || (ncmpo != 3))
-      out.resize(nlin, ncol, 3);
-    switch (type) {
-    case 3: // PPM ASCII
-      int res;
-      unsigned int val;
-      { idx_aloop1(o, out, ubyte) {
-  	  res = fscanf(fp, "%u", &val);
-	  // downcasting automatically scales values if vmax > 255
-	  *o = (unsigned char) val;
-	}}
-      break ;
-    case 6: // PPM binary
-      if (out.contiguousp()) {
-	if (sz == 2) { // 16 bits per pixel
-	  idxdim d(out);
-	  idx<short> out2(d);
-	  read_size = fread(out2.idx_ptr(), sz, expected_size, fp);
-	  idx_copy(out2, out);
-	} else // 8 bits per pixel
-	  read_size = fread(out.idx_ptr(), sz, expected_size, fp);
-	if (expected_size != read_size)
-	  // TODO: fixme, adding temporarly +1 to fix reading failures bug
-	  //	    && (expected_size != read_size + 1))
-	  {
-	    cerr << "WARNING: image read: not enough items read. expected ";
-	    cerr << expected_size;
-	    cerr << " but found " << read_size << endl;
-	  }
-      } else {
-	{ idx_aloop1(o, out, ubyte) {
-	    *o = getc(fp);
-	  }}
-      }
-      break ;
-      // TODO: implement pnm formats
-      /*  case 4: // PBM image
-	  ((= head "P4")
-	  (let* ((ncol (fscan-int f))
-	  (nlin (fscan-int f))
-	  (n 0) (c 0))
-	  ((-int-) ncol nlin n c)
-	  (when (or (<> ncol ncolo) (<> nlin nlino) (< ncmpo 3))
-	  (idx-u3resize out nlin ncol (max ncmpo 3)))
-	  (getc f)
-	  (cinline-idx2loop out "unsigned char" "p" "i" "j"
-	  #{{ unsigned char v;
-	  if ((j == 0) || ($n == 0)) { $c = getc((FILE *)$f); $n=0; }
-	  v = ($c & 128) ? 0 : 255 ;
-	  p[0]= p[1]= p[2]= v ;
-	  $n = ($n == 7) ? 0 : $n+1 ;
-	  $c = $c << 1;
-	  } #} )))
-	  // PGM image
-	  ((= head "P5")
-	  (let* ((ncol (fscan-int f))
-	  (nlin (fscan-int f)))
-	  ((-int-) ncol nlin)
-	  (when (or (<> ncol ncolo) (<> nlin nlino) (< ncmpo 3))
-	  (idx-u3resize out nlin ncol (max ncmpo 3)))
-	  (fscan-int f)
-	  (getc f)
-	  (cinline-idx2loop out "unsigned char" "p" "i" "j"
-	  #{ p[0]=p[1]=p[2]=getc((FILE *)$f) #}
-	  )))
-      */
-    default:
-      cerr << "Format P" << type << " not implemented." << endl;
-    }
-  }
-
-
-  bool image_read_rgbx(const char *fname, idx<ubyte> &out){
-
-    /* TODO : add a line in the config to detect "convert" path
-       char myconvert[100];
-       FILE* bla = popen("which convert", "r");
-       fgets(myconvert, 100, bla);
-       pclose(bla);
-       *(myconvert+16) = 0;
-       */
-    string myconvert = "convert";
-    if(strstr(myconvert.c_str(), "convert") == NULL){
-      cerr << "failed to find \"convert\", please install ImageMagick" << endl;
-      return false;
-    }
-    ostringstream cmd;
-    cmd << myconvert.c_str() << " \"" << fname << "\" PPM:-";
-    FILE* fp = popen(cmd.str().c_str(), "r");
-    try {
-      if (!fp) throw "opening failed";
-      pnm_fread_into_rgbx(fp, out);
-    } catch(const char *err) {
-      cerr << "error: failed to load " << fname << ", " << err << endl;
-      if (fp) fclose(fp);
-      return false;
-    }
-    pclose(fp);
-    fp = (FILE*)NULL;
-    return true;
-
-  }
   ////////////////////////////////////////////////////////////////
 
   void image_interpolate_bilin(ubyte* background, ubyte *pin,

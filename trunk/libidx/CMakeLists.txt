@@ -16,12 +16,13 @@ SET(LIBIDX_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 # compile library
 ################################################################################
 add_library (idx SHARED
-  src/blas.cpp  
+  src/idxops.cpp  
   src/idx.cpp
+  src/idxIO.cpp
   src/color_spaces.cpp
   src/image.cpp  
+  src/imageIO.cpp  
   src/numerics.cpp
-  src/idxIO.cpp
   src/utils.cpp
   )
 

@@ -1,12 +1,12 @@
-#ifndef BLASTEST_H_
-#define BLASTEST_H_
+#ifndef IDXOPSTEST_H_
+#define IDXOPSTEST_H_
 
 #include <cppunit/extensions/HelperMacros.h>
-#include "blas.h"
+#include "idxops.h"
 
 //! Test class for Blas class
-class BlasTest : public CppUnit::TestFixture  {
-  CPPUNIT_TEST_SUITE(BlasTest);
+class idxops_test : public CppUnit::TestFixture  {
+  CPPUNIT_TEST_SUITE(idxops_test);
   CPPUNIT_TEST(test_idx_min_max);
   CPPUNIT_TEST(test_idx_sums);
   CPPUNIT_TEST(test_idx_sortdown);
@@ -47,4 +47,4 @@ public:
   void test_huge_vec();
 };
 
-#endif /* BLASTEST_H_ */
+#endif /* IDXOPSTEST_H_ */

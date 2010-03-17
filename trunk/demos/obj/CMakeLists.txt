@@ -30,13 +30,22 @@ IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (objtrain eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
 
-# copy conf and metaconf to bin
+# copy face conf and metaconf to bin
 EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/face/face_meta.conf\""
 		  "\"${LIBRARY_OUTPUT_PATH}\"")
 EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/face/face_train.sh\""
 		  "\"${LIBRARY_OUTPUT_PATH}\"")
 EXEC_PROGRAM("cp" ARGS
   "\"${CMAKE_CURRENT_SOURCE_DIR}/face/face_dsprepare.sh\""
+  "\"${LIBRARY_OUTPUT_PATH}\"")
+		
+# copy text conf and metaconf to bin
+EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_meta.conf\""
+		  "\"${LIBRARY_OUTPUT_PATH}\"")
+# EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_train.sh\""
+# 		  "\"${LIBRARY_OUTPUT_PATH}\"")
+EXEC_PROGRAM("cp" ARGS
+  "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_dsprepare.sh\""
   "\"${LIBRARY_OUTPUT_PATH}\"")
 		
 # compile executable: objdetect

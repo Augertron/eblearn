@@ -51,7 +51,7 @@ using namespace std;
 #define MAGIC_SHORT_MATRIX	0x1e3d4c56
 #define MAGIC_SHORT8_MATRIX	0x1e3d4c57
 #define MAGIC_LONG_MATRIX	0x1e3d4c58
-#define MAGIC_ASCII_MATRIX	0x2e4d4154	/* '.MAT' */
+#define MAGIC_ASCII_MATRIX	0x2e4d4154
 
 // non-standard magic numbers
 #define MAGIC_UINT_MATRIX	0x1e3d4c59
@@ -69,21 +69,67 @@ namespace ebl {
   // TODO: implement all types.
   // TODO: is check for endianess required?
 
-  //! Loads a matrix from file filename and returns it.
-  //! Returns true if successful, false otherwise.
-  template<typename T> bool load_matrix(idx<T>& m, const string &filename);
-  template<typename T> bool load_matrix(idx<T>& m, const char *filename);
-  template<typename T> bool load_matrix(idx<T>& m, istream &stream);
+  ////////////////////////////////////////////////////////////////
+  // loading
+  
+  //! Returns matrix from file filename. If original matrix type is different
+  //! than requested type, it is casted (copied) into the new type.
+  //! This throws string exceptions upon errors.
+  template<typename T>
+    idx<T> load_matrix(const char *filename);
 
+  //! Returns matrix from file filename. If original matrix type is different
+  //! than requested type, it is casted (copied) into the new type.
+  //! This throws string exceptions upon errors.
+  template<typename T>
+    idx<T> load_matrix(const string &filename);
+  
+  //! Loads a matrix from file filename into given matrix m.
+  //! m if resized if necessary. Data is cast into m's type if different.
+  //! This throws string exceptions upon errors.
+  template<typename T>
+    void load_matrix(idx<T>& m, const char *filename);
+
+  //! Loads a matrix from file filename into given matrix m.
+  //! m if resized if necessary. Data is cast into m's type if different.
+  //! This throws string exceptions upon errors.
+  template<typename T>
+    void load_matrix(idx<T>& m, const string &filename);
+  
+  //! Loads a matrix from stream 'stream' into given matrix out if given,
+  //! allocates a new one otherwise. This returns either *out or the newly
+  //! allocated idx.
+  //! If out is not null, it is resized if necessary.
+  //! In all cases, data is cast into T if different.
+  //! This throws string exceptions upon errors.
+  template<typename T>
+    idx<T> load_matrix(istream &stream, idx<T> *out = NULL);
+
+  ////////////////////////////////////////////////////////////////
+  // saving
+  
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
   template<typename T> bool save_matrix(idx<T>& m, const string &filename);
   template<typename T> bool save_matrix(idx<T>& m, const char *filename);
   template<typename T> bool save_matrix(idx<T>& m, ostream &stream);
 
+  ////////////////////////////////////////////////////////////////
+  // helper functions
+  
   //! Set string type to a string describing the matrix type found in filename.
   bool get_matrix_type(const char *filename, string &type);
-  
+
+  //! Return true if this magic number is a vincent magic number.
+  bool is_magic_vincent(int magic);
+
+  //! Return true if this magic number is a regular magic number.
+  bool is_magic(int magic);
+
+  //! Return the dimensions found in the header and set 'magic' to the magic
+  //! number found (either vincent or regular type).
+  idxdim read_matrix_header(istream &stream, int &magic);
+
 } // end namespace ebl
 
 #include "idxIO.hpp"

@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -886,101 +887,6 @@ namespace ebl {
       img.set(val, x, j);
       img.set(val, x + dx, j);
     }
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // I/O
-
-  template<class T> void pnm_fread_into_rgbx(const char *fname, idx<T> &out) {
-    idx<ubyte> tmp(1,1,1);
-    pnm_fread_into_rgbx(fname, tmp);
-    out.resize(tmp.dim(0), tmp.dim(1), tmp.dim(2));
-    idx_copy(tmp, out);
-  }
-
-  template<class T>
-  bool image_read_rgbx(const char *fname, idx<T> &out) {
-    idx<ubyte> tmp(1,1,1);
-    bool ret = image_read_rgbx(fname, tmp);
-    out.resize(tmp.dim(0), tmp.dim(1), tmp.dim(2));
-    idx_copy(tmp, out);
-    return ret;
-  }
-
-  template<class T>
-  bool load_image(const char *fname, idx<T> &out) {
-    return image_read_rgbx(fname, out);
-  }
-
-  template<class T>
-  idx<T> load_image(const char *fname) {
-    idx<T> out(1,1,1);
-    if (!image_read_rgbx(fname, out))
-      throw "load_image failed";
-    return out;
-  }
-
-  template<class T>
-  idx<T> load_image(const string &fname) {
-    idx<T> out(1,1,1);
-    if (!image_read_rgbx(fname.c_str(), out))
-      throw "load_image failed";
-    return out;
-  }
-
-  template<class T>
-  bool save_image_ppm(const string &fname, idx<T> &in) {
-    // check order
-    // TODO: support grayscale
-    if (in.order() != 3) {
-      cerr << "error: image order (" << in.order() << " not supported." << endl;
-      return false;
-    }
-    // save as ppm
-    FILE *fp = fopen(fname.c_str(), "wb");
-    if (!fp) {
-      cerr << "error: failed to open file " << fname << endl;
-      return false;
-    }
-    fprintf(fp,"P6 %d %d 255\n", (int) in.dim(1), (int) in.dim(0));
-    idx_bloop1(inn, in, T) {
-      idx_bloop1(innn, inn, T) {
-	fputc((ubyte) innn.get(0), fp);
-	fputc((ubyte) innn.get(1), fp);
-	fputc((ubyte) innn.get(2), fp);
-      }
-    }
-    fclose(fp);
-    return true;
-  }
-
-  template<class T>
-  bool save_image_jpg(const string &fname, idx<T> &in) {
-    return save_image(fname, in, "JPG");
-  }
-
-  template<class T>
-  bool save_image(const string &fname, idx<T> &in, const char *format) {
-    // save as ppm
-    string fname2 = fname;
-    fname2 += ".ppm";
-    if (!save_image_ppm(fname2, in))
-      return false;
-    // convert ppm to jpg
-    string cmd = "convert PPM:";
-    cmd += fname2;
-    cmd += " ";
-    cmd += format;
-    cmd += ":";
-    cmd += fname;
-    int n = ::system(cmd.c_str());
-    if (n != 0) {
-      cerr << "error (" << n << "): failed to save image " << fname;
-      cerr << " to format " << format << endl;
-      return false;
-    }
-    remove(fname2.c_str());
-    return true;
   }
 
   ////////////////////////////////////////////////////////////////

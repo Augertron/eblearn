@@ -117,10 +117,10 @@ void NetTest::test_lenet5_mnist() {
     }
 #endif
   }
-  CPPUNIT_ASSERT_DOUBLES_EQUAL(97.00,
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(99.2734, // old: 97.00
 			       ((trainmeter.total_correct * 100) 
 				/ (double) trainmeter.size), 0.01);
-  CPPUNIT_ASSERT_DOUBLES_EQUAL(95.90,
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(96.4630, // old: 95.90
 			       ((testmeter.total_correct * 100) 
 				/ (double) testmeter.size), 0.01);
 }

@@ -1,6 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
+ *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef Blas_H
-#define Blas_H
+#ifndef IDXOPS_H
+#define IDXOPS_H
 
 #include <cmath>
 #include "idxblas.h"
@@ -432,6 +433,6 @@ namespace ebl {
 
 } // end namespace ebl
 
-#include "blas.hpp"
+#include "idxops.hpp"
 
 #endif

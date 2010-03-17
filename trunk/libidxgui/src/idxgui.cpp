@@ -279,7 +279,7 @@ namespace ebl {
   }
 
   int idxgui::pop_key_pressed() {
-    gt->pop_key_pressed();
+    return gt->pop_key_pressed();
   }
 
 } // end namespace ebl

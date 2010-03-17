@@ -5,8 +5,8 @@
 #include "idxIO.h"
 
 //! Test class for IdxIO class
-class IdxIOTest : public CppUnit::TestFixture  {
-  CPPUNIT_TEST_SUITE(IdxIOTest);
+class idxIO_test : public CppUnit::TestFixture  {
+  CPPUNIT_TEST_SUITE(idxIO_test);
   CPPUNIT_TEST(test_save_load_matrix_ubyte);
   CPPUNIT_TEST(test_save_load_matrix_int);
   CPPUNIT_TEST(test_save_load_matrix_float);

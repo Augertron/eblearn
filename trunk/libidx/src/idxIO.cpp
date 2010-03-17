@@ -37,6 +37,9 @@ using namespace std;
 
 namespace ebl {
   
+  ////////////////////////////////////////////////////////////////
+  // helper functions
+  
   // TODO: use c++ IO to catch IO exceptions more easily
   // TODO: if types differ, print warning and cast to expected type
   // TODO: allow not knowing order in advance (just assign new idx to m)
@@ -57,6 +60,81 @@ namespace ebl {
     }
     type = get_magic_str(magic);
     return true;
+  }
+
+  bool is_magic_vincent(int magic) {
+    if (magic == MAGIC_UBYTE_VINCENT
+	|| magic == MAGIC_BYTE_VINCENT
+	|| magic == MAGIC_SHORT_VINCENT
+	|| magic == MAGIC_INT_VINCENT
+	|| magic == MAGIC_FLOAT_VINCENT
+	|| magic == MAGIC_DOUBLE_VINCENT)
+      return true;
+    return false;
+  }
+
+  bool is_magic(int magic) {
+    if (magic == MAGIC_FLOAT_MATRIX
+	|| magic == MAGIC_PACKED_MATRIX
+	|| magic == MAGIC_DOUBLE_MATRIX
+	|| magic == MAGIC_INTEGER_MATRIX
+	|| magic == MAGIC_BYTE_MATRIX
+	|| magic == MAGIC_SHORT_MATRIX
+	|| magic == MAGIC_SHORT8_MATRIX
+	|| magic == MAGIC_LONG_MATRIX
+	|| magic == MAGIC_ASCII_MATRIX
+	|| magic == MAGIC_UINT_MATRIX)
+      return true;
+    return false;
+  }
+
+  idxdim read_matrix_header(istream &stream, int &magic) {
+    ostringstream err;
+    int ndim, v, magic_vincent;
+    int ndim_min = 3; // std header requires at least 3 dims even empty ones.
+    idxdim dims;
+
+    // read magic number
+    stream.read((char*)&magic, sizeof (int));
+    magic_vincent = endian(magic);
+    magic_vincent &= ~0xF; // magic contained in higher bits
+    
+    // read number of dimensions
+    if (is_magic(magic)) { // regular magic number, read next number
+      stream.read((char*)&ndim, sizeof (int));
+      // check number is valid
+      if (ndim > MAXDIMS) {
+	err << "too many dimensions: " << ndim << " (MAXDIMS = "
+	    << MAXDIMS << ").";
+	stream.seekg(0); // reset stream to beginning
+	throw err.str();
+      }
+    } else if (is_magic_vincent(magic_vincent)) { // vincent magic number
+      // ndim is contained in lower bits of the magic number
+      ndim = endian(magic) & 0xF;
+      ndim_min = ndim;
+      magic = magic_vincent;
+    } else { // unkown magic
+      err << "unknown magic number";
+      stream.seekg(0); // reset stream to beginning
+      throw err.str();
+    }
+    // read each dimension
+    for (int i = 0; (i < ndim) || (i < ndim_min); ++i) {
+      stream.read((char*) &v, sizeof (int));
+      // if vincent, convert to endian first
+      if (is_magic_vincent(magic_vincent))
+	v = endian(v);
+      if (i < ndim) { // ndim may be less than ndim_min
+	if (v <= 0) { // check that dimension is valid
+	  err << "dimension is negative or zero";
+	  stream.seekg(0); // reset stream to beginning
+	  throw err.str();
+	}
+	dims.insert_dim(v, i); // insert dimension
+      }
+    }
+    return dims;
   }
   
 } // end namespace ebl
