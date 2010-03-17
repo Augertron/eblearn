@@ -43,11 +43,9 @@ void image_test::test_resize() {
   CPPUNIT_ASSERT(res.get(2, 2) == 40);
   CPPUNIT_ASSERT(res.get(2, 3) == 42);
 	
-  idx<ubyte> im(1, 1, 1);
   string imgfile = *gl_data_dir;
   imgfile += "/barn.png";
-
-  load_image(imgfile.c_str(), im);
+  idx<ubyte> im = load_image<ubyte>(imgfile);
 #ifdef __GUI__  
 #ifdef __SHOW__
   new_window("image_test");
@@ -151,10 +149,9 @@ void image_test::test_resize() {
 
 void image_test::test_pnm_P3() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-  idx<ubyte> im(1, 1, 3);
   string imgfile = *gl_data_dir;
   imgfile += "/pnm/rgb_P3.ppm";
-  pnm_fread_into_rgbx(imgfile.c_str(), im);
+  idx<ubyte> im = load_image<ubyte>(imgfile);
 
   CPPUNIT_ASSERT(im.get(0, 0, 0) == 255);
   CPPUNIT_ASSERT(im.get(0, 0, 1) == 0);
@@ -169,10 +166,10 @@ void image_test::test_pnm_P3() {
 
 void image_test::test_pnm_P6() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-  idx<ubyte> im(1, 1, 3);
   string imgfile = *gl_data_dir;
   imgfile += "/pnm/rgb_P6.ppm";
-  pnm_fread_into_rgbx(imgfile.c_str(), im);
+  idx<ubyte> im = load_image<ubyte>(imgfile);
+
   CPPUNIT_ASSERT(im.get(0, 0, 0) == 255);
   CPPUNIT_ASSERT(im.get(0, 0, 1) == 0);
   CPPUNIT_ASSERT(im.get(0, 0, 2) == 0);
@@ -183,7 +180,7 @@ void image_test::test_pnm_P6() {
   CPPUNIT_ASSERT(im.get(0, 2, 1) == 0);
   CPPUNIT_ASSERT(im.get(0, 2, 2) == 255);
 
-  pnm_fread_into_rgbx(imgfile.c_str(), im);
+  load_image(imgfile, im);
 }
 
 typedef double t_gdata;
@@ -277,10 +274,10 @@ void image_test::test_gaussian_pyramid() {
 
 void image_test::test_colorspaces() {
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-  idx<ubyte> im_rgb(1, 1, 3);
   string imgfile = *gl_data_dir;
   imgfile += "/barn.png";
-  image_read_rgbx(imgfile.c_str(), im_rgb);
+  idx<ubyte> im_rgb = load_image<ubyte>(imgfile);
+
   im_rgb = image_resize(im_rgb, 189, 252);
   idxdim d(im_rgb);
   idx<float> fim_rgb(d);

@@ -10,10 +10,10 @@
 #include "libeblearn.h"
 #include "MyTextOutputter.h"
 
-#include "BlasTest.h"
+#include "idxops_test.h"
 #include "ebl_basic_test.h"
 #include "ebl_preprocessing_test.h"
-#include "IdxIOTest.h"
+#include "idxIO_test.h"
 #include "DataSourceTest.h"
 #include "IdxTest.h"
 #include "IdxIteratorsTest.h"
@@ -113,10 +113,10 @@ int main(int argc, char **argv) {
   runner.addTest(ClusterTest::suite());
   runner.addTest(IdxTest::suite());
   runner.addTest(IdxIteratorsTest::suite());
-  runner.addTest(BlasTest::suite());
+  runner.addTest(idxops_test::suite());
   runner.addTest(ebl_basic_test::suite());
   runner.addTest(ebl_preprocessing_test::suite());
-  runner.addTest(IdxIOTest::suite());
+  runner.addTest(idxIO_test::suite());
   runner.addTest(image_test::suite());
   runner.addTest(DataSourceTest::suite());
   runner.addTest(detector_test::suite());

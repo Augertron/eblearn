@@ -664,6 +664,7 @@ namespace ebl {
 
   idxdim::idxdim() {
     ndim = -1;
+    memset(dims, -1, MAXDIMS * sizeof (intg));
   }
   
   idxdim::idxdim(const idxspec &s) {
@@ -714,6 +715,16 @@ namespace ebl {
       eblerror("maximum order reached.");
       return false;
     }
+    // check that dim_size is valid
+    if (dim_size <= 0)
+      eblerror("cannot set negative or zero dimension");
+    // check that all dimensions up to pos (excluded) are > 0.
+    for (uint i = 0; i < pos; ++i)
+      if (dims[i] <= 0) {
+	cerr << "error: cannot insert dimension " << pos
+	     << " after empty dimensions: " << *this << endl;
+	eblerror("empty dimensions before new dimension to insert");
+      }
     // add order of 1
     ndim++;
     if (ndim == 0) // one more if it was empty
@@ -777,6 +788,13 @@ namespace ebl {
 	out << "x" << d.dim[i];
     }
     return out;
+  }
+
+  intg idxdim::nelements() {
+    intg total = 1;
+    for (int i = 0; i < ndim; ++i)
+      total *= dim(i);
+    return total;
   }
 
   ////////////////////////////////////////////////////////////////

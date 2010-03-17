@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <sstream>
+#include "idxops.h"
 
 // endianess test
 static int endiantest = 1;
@@ -43,27 +44,30 @@ static int endiantest = 1;
 using namespace std;
 
 namespace ebl {
-  
+
+  ////////////////////////////////////////////////////////////////
+  // helper functions
+
   // template functions returning the magic number associated with a 
   // particular type
-  template<class T> inline int get_magic() 
-  { eblerror("matrix type not implemented."); return 0; }
-  template<> inline int get_magic<ubyte>()        {return MAGIC_BYTE_MATRIX; }
-  template<> inline int get_magic<int>()          {return MAGIC_INTEGER_MATRIX;}
-  template<> inline int get_magic<float>()        {return MAGIC_FLOAT_MATRIX; }
-  template<> inline int get_magic<double>()       {return MAGIC_DOUBLE_MATRIX; }
-  template<> inline int get_magic<long>()         {return MAGIC_LONG_MATRIX; }
-  template<> inline int get_magic<uint>()         {return MAGIC_UINT_MATRIX; }
+  template <class T> inline int get_magic() {
+    eblerror("matrix type not implemented."); return 0; }
+  template <> inline int get_magic<ubyte>()       {return MAGIC_BYTE_MATRIX; }
+  template <> inline int get_magic<int>()         {return MAGIC_INTEGER_MATRIX;}
+  template <> inline int get_magic<float>()       {return MAGIC_FLOAT_MATRIX; }
+  template <> inline int get_magic<double>()      {return MAGIC_DOUBLE_MATRIX; }
+  template <> inline int get_magic<long>()        {return MAGIC_LONG_MATRIX; }
+  template <> inline int get_magic<uint>()        {return MAGIC_UINT_MATRIX; }
 
   // Pascal Vincent type
-  template<class T> inline int get_magic_vincent() 
-  { eblerror("matrix type not implemented"); return 0; }
-  template<> inline int get_magic_vincent<ubyte>(){return MAGIC_UBYTE_VINCENT;}
-  template<> inline int get_magic_vincent<int>()  {return MAGIC_INT_VINCENT;}
-  template<> inline int get_magic_vincent<float>(){return MAGIC_FLOAT_VINCENT;}
-  template<> inline int get_magic_vincent<double>()
-  {return MAGIC_DOUBLE_VINCENT; }
-  template<> inline int get_magic_vincent<long>() {return 0x0000; }
+  template <class T> inline int get_magic_vincent() {
+    eblerror("matrix type not implemented"); return 0; }
+  template <> inline int get_magic_vincent<ubyte>(){return MAGIC_UBYTE_VINCENT;}
+  template <> inline int get_magic_vincent<int>()  {return MAGIC_INT_VINCENT;}
+  template <> inline int get_magic_vincent<float>(){return MAGIC_FLOAT_VINCENT;}
+  template <> inline int get_magic_vincent<double>() {
+    return MAGIC_DOUBLE_VINCENT; }
+  template <> inline int get_magic_vincent<long>() {return 0x0000; }
 
   // type to string function for debug message.
   inline string get_magic_str(int magic) {
@@ -94,7 +98,7 @@ namespace ebl {
 
     ptr: pointer to the block of memory that must be reversed.
     n: number of elements to reverse. */
-  template<class T> inline void reverse_n(T *ptr, int n) {
+  template <class T> inline void reverse_n(T *ptr, int n) {
     char *mptr = (char *) ptr;
     while(n--)
       {
@@ -112,209 +116,135 @@ namespace ebl {
       }
   }
 
-  template<class T> inline T endian(T ptr) {
+  template <class T> inline T endian(T ptr) {
     T v = ptr;
     if (LITTLE_ENDIAN_P) reverse_n(&v, 1);
     return v;
   }
 
-  template<typename T> bool load_matrix(idx<T>& m, const string &filename) {
-    return load_matrix(m, filename.c_str());
+  template <typename T, typename T2>
+  void read_cast_matrix(istream &stream, idx<T2> &out) {
+    idx<T> m(out.get_idxdim());
+    read_matrix_body(stream, m);
+    idx_copy(m, out);
   }
 
-  // TODO: use c++ IO to catch IO exceptions more easily
-  // TODO: if types differ, print warning and cast to expected type
-  // TODO: allow not knowing order in advance (just assign new idx to m)
-  template<typename T> bool load_matrix(idx<T>& m, const char *filename) {
-    // open file
-    FILE *fp = fopen(filename, "rb");
-    if (!fp) {
-      ostringstream oss;
-      oss << "load_matrix failed to open " << filename;
-      cerr << oss.str() << endl;
-      throw oss.str();
-      return false;
+  template <typename T>
+  void read_matrix_body(istream &stream, idx<T> &m) {
+    idx_aloop1(i, m, T) {
+      stream.read((char*)&(*i), sizeof (T));
     }
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // loading
 
-    int magic, ndim, v;
-    int ndim_min = 3; // std header requires at least 3 dims even empty ones.
-    intg *dims = NULL;
+  template <typename T> idx<T> load_matrix(const string &filename) {
+    return load_matrix<T>(filename.c_str());
+  }
 
-    // header: read magic number
-    if (fread(&magic, sizeof (int), 1, fp) != 1) {
-      fclose(fp);
-      ostringstream oss;
-      oss << "failed to read magic number in " << filename;
-      throw oss.str();
-      return false;
+  template <typename T> idx<T> load_matrix(const char *filename) {
+    ifstream in(filename);
+    ostringstream err;
+    
+    if (!in) {
+      err << "warning: failed to open " << filename;
+      throw err.str();
     }
-    int magic_vincent = endian(magic);
-    ndim = endian(magic) & 0xF;
-    magic_vincent &= ~0xF;
-    if ((magic != get_magic<T>()) && 
-	(magic_vincent != get_magic_vincent<T>())) {
-      fclose(fp);
-      ostringstream oss;
-      oss << "failed to read matrix (" << filename << "): ";
-      oss << get_magic_str(get_magic<T>()) << " expected, ";
-      oss << get_magic_str(magic) << " found.";
-      throw oss.str();
-      return false;
-    }
-    // standard header
-    if (magic == get_magic<T>()) {
-      // read number of dimensions
-      if (fread(&ndim, sizeof (int), 1, fp) != 1) {
-	fclose(fp);
-	ostringstream oss;
-	oss << "failed to read data in " << filename;
-	throw oss.str();
-	return false;
-      }
-      if (ndim > MAXDIMS) {
-	fclose(fp);
-	ostringstream oss;
-	oss << "failed to load matrix " << filename << ": ";
-	oss << " too many dimensions: " << ndim << " (MAXDIMS = ";
-	oss << MAXDIMS << ")." << endl;
-	throw oss.str();
-	return false;
-      }
-    }
-    else if (magic_vincent == get_magic_vincent<T>()) {
-      ndim_min = ndim;
-    }
-    if (ndim != m.order()) {
-      fclose(fp);
-      ostringstream oss;
-      oss << "failed to load matrix " << filename << ": ";
-      oss << "expected order of " << m.order() << " but found ";
-      oss << ndim << " in file." << endl;
-      throw oss.str();
-      return false;
-    }
+    idx<T> m = load_matrix<T>(in);
+    in.close();
+    return m;
+  }
 
-    dims = (intg *) malloc(ndim * sizeof (intg));
-    // header: read each dimension
-    for (int i = 0; (i < ndim) || (i < ndim_min); ++i) {
-      if (fread(&v, sizeof (int), 1, fp) != 1) {
-	fclose(fp);
-	ostringstream oss;
-	oss << "failed to read matrix dimensions in " << filename;
-	throw oss.str();
-	return false;
-      }
-      if (magic_vincent == get_magic_vincent<T>())
-	v = endian(v);
-      if (i < ndim) {
-	dims[i] = v;
-	if (v <= 0) {
-	  free(dims);
-	  fclose(fp);
-	  ostringstream oss;
-	  oss << "failed to read matrix dimensions in " << filename << ": ";
-	  oss << " dimension is negative or 0." << endl;
-	  throw oss.str();
-	  return false;
+  template <typename T> void load_matrix(idx<T>& m, const string &filename) {
+    load_matrix(m, filename.c_str());
+  }
+
+  template <typename T> void load_matrix(idx<T>& m, const char *filename) {
+    ifstream in(filename);
+    ostringstream err;
+    
+    if (!in) {
+      err << "warning: failed to open " << filename;
+      throw err.str();
+    }
+    load_matrix(in, &m);
+    in.close();
+  }
+
+  template <typename T>
+  idx<T> load_matrix(istream &stream, idx<T> *out_) {
+    int magic;
+    idxdim dims = read_matrix_header(stream, magic);
+    idx<T> out;
+    if (!out_) // if no input matrix, allocate new one
+      out = idx<T>(dims);
+    else // otherwise use given one
+      out = *out_;
+
+    //! if out matrix is same type as current, read directly
+    if ((magic == get_magic<T>()) || (magic == get_magic_vincent<T>())) {
+      // resize out if necessary
+      if (out.get_idxdim() != dims) { // different order/dimensions
+	// if order is different, it's from the input matrix, error
+	if (out.order() != dims.order()) {
+	  cerr << "error: different orders: " << out << " " << dims << endl;
+	  eblerror("idx have different orders");
 	}
+	// resize output idx
+	out.resize(dims);
+      }
+      // read
+      read_matrix_body(stream, out);
+    } else { // different type, read original type, then copy/cast into out
+      switch (magic) {
+      case MAGIC_BYTE_MATRIX:
+	read_cast_matrix<ubyte>(stream, out);
+	break ;
+      case MAGIC_INTEGER_MATRIX:
+	read_cast_matrix<int>(stream, out);
+	break ;
+      case MAGIC_FLOAT_MATRIX:
+	read_cast_matrix<float>(stream, out);
+	break ;
+      case MAGIC_DOUBLE_MATRIX:
+	read_cast_matrix<double>(stream, out);
+	break ;
+      case MAGIC_LONG_MATRIX:
+	read_cast_matrix<long>(stream, out);
+	break ;
+      case MAGIC_UINT_MATRIX:
+	read_cast_matrix<uint>(stream, out);
+	break ;
+      case MAGIC_UBYTE_VINCENT:
+	read_cast_matrix<ubyte>(stream, out);
+	break ;
+      case MAGIC_INT_VINCENT:
+	read_cast_matrix<int>(stream, out);
+	break ;
+      case MAGIC_FLOAT_VINCENT:
+	read_cast_matrix<float>(stream, out);
+	break ;
+      case MAGIC_DOUBLE_VINCENT:
+	read_cast_matrix<double>(stream, out);
+	break ;
+      default:
+	eblerror("unknown magic number");
       }
     }
-    // TODO: implement idx constructor accepting array of dimensions 
-    // and modify code below.
-    m.resize(0 < ndim ? dims[0] : -1,
-	     1 < ndim ? dims[1] : -1,
-	     2 < ndim ? dims[2] : -1,
-	     3 < ndim ? dims[3] : -1,
-	     4 < ndim ? dims[4] : -1,
-	     5 < ndim ? dims[5] : -1,
-	     6 < ndim ? dims[6] : -1,
-	     7 < ndim ? dims[7] : -1);
-    // body
-    int res;
-    { idx_aloop1(i, m, T) 
-	res = fread(&(*i), sizeof (T), 1, fp); }
-    fclose(fp);
-    free(dims);
-    return true;
+    return out;
   }
 
-  template<typename T> bool load_matrix(idx<T>& m, istream &stream) {
-    int magic, ndim, v;
-    int ndim_min = 3; // std header requires at least 3 dims even empty ones.
-    intg *dims = NULL;
-
-    // header: read magic number
-    stream.read((char*)&magic, sizeof (int));
-    int magic_vincent = endian(magic);
-    ndim = endian(magic) & 0xF;
-    magic_vincent &= ~0xF;
-    if ((magic != get_magic<T>()) 
-	&& (magic_vincent != get_magic_vincent<T>())) {
-      cerr << "load_matrix failed : ";
-      cerr << get_magic_str(get_magic<T>()) << " expected, ";
-      cerr << get_magic_str(magic) << " found." << endl;
-      return false;
-    }
-    // standard header
-    if (magic == get_magic<T>()) {
-      // read number of dimensions
-      stream.read((char*)&ndim, sizeof (int));
-      if (ndim > MAXDIMS) {
-	cerr << "load_matrix failed : ";
-	cerr << " too many dimensions: " << ndim << " (MAXDIMS = ";
-	cerr << MAXDIMS << ")." << endl;
-	return false;
-      }
-    }
-    else if (magic_vincent == get_magic_vincent<T>()) {
-      ndim_min = ndim;
-    }
-    if (ndim != m.order()) {
-      cerr << "load_matrix failed : ";
-      cerr << "expected order of " << m.order() << " but found ";
-      cerr << ndim << " in file." << endl;
-      return false;
-    }
-
-    dims = (intg *) malloc(ndim * sizeof (intg));
-    // header: read each dimension
-    for (int i = 0; (i < ndim) || (i < ndim_min); ++i) {
-      stream.read((char*)&v, sizeof (int));
-      if (magic_vincent == get_magic_vincent<T>())
-	v = endian(v);
-      if (i < ndim) {
-	dims[i] = v;
-	if (v <= 0) {
-	  cerr << "load_matrix failed : ";
-	  cerr << " dimension is negative or 0." << endl;
-	  free(dims);
-	  return false;
-	}
-      }
-    }
-    // TODO: implement idx constructor accepting array of dimensions 
-    // and modify code below.
-    m.resize(0 < ndim ? dims[0] : -1,
-	     1 < ndim ? dims[1] : -1,
-	     2 < ndim ? dims[2] : -1,
-	     3 < ndim ? dims[3] : -1,
-	     4 < ndim ? dims[4] : -1,
-	     5 < ndim ? dims[5] : -1,
-	     6 < ndim ? dims[6] : -1,
-	     7 < ndim ? dims[7] : -1);
-    // body
-    { idx_aloop1(i, m, T) stream.read((char*)&(*i), sizeof (T)); }
-    free(dims);
-    return true;
-  }
-
-  template<typename T> bool save_matrix(idx<T>& m, const string &filename) {
+  ////////////////////////////////////////////////////////////////
+  // saving
+  
+  template <typename T> bool save_matrix(idx<T>& m, const string &filename) {
     return save_matrix(m, filename.c_str());
   }
 
   // TODO: intg support
   // TODO: use c++ IO to catch IO exceptions more easily
-  template<typename T> bool save_matrix(idx<T>& m, const char *filename) {
+  template <typename T> bool save_matrix(idx<T>& m, const char *filename) {
     int v, i;
     FILE *fp = fopen(filename, "wb");
 
@@ -354,7 +284,7 @@ namespace ebl {
     return true;
   }
 
-  template<typename T> bool save_matrix(idx<T>& m, ostream &stream) {
+  template <typename T> bool save_matrix(idx<T>& m, ostream &stream) {
     int v, i;
 
     // header

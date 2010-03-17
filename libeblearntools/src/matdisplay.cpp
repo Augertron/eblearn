@@ -1,6 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Pierre Sermanet *
+ *   Copyright (C) 2010 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -38,9 +39,6 @@
 using namespace std;
 using namespace ebl;
 
-// TODO: temporary, need cleaner solution
-typedef float t_data;
-
 ////////////////////////////////////////////////////////////////
 // definitions
 
@@ -72,13 +70,12 @@ bool parse_args(int argc, char **argv, string &ds_name) {
 template <typename T> void display(const string &fname, idx<T> &mat) {
 #ifdef __GUI__
   new_window(fname);
-  if ((mat.dim(0) == 1) || (mat.dim(0) == 3) // channels are likely in dim 0
+  if (((mat.dim(0) == 1) || (mat.dim(0) == 3)) // channels are likely in dim 0
       && (mat.order() == 3))
     mat = mat.shift_dim(0, 2);
   draw_matrix(mat);
   gui << mat;
 #endif
-  sleep(1);
 }
 
 #ifdef __GUI__
@@ -86,24 +83,14 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 #else
 int main(int argc, char **argv) {
 #endif
-  string fname = argv[1];
-  idx<float> imf(1, 1, 1);
-  idx<double> imd(1, 1, 1);
-  if (load_matrix(imf, fname)) // float with order 3
-    display(fname, imf);
-  else {
-    imf = idx<float>(1,1);
-    if (load_matrix(imf, fname)) // float with order 2
-      display(fname, imf);
-    else {
-      if (load_matrix(imd, fname)) // double with order 3
-	display(fname, imd);
-      else {
-	imd = idx<double>(1,1);
-	if (load_matrix(imd, fname)) // double with order 2
-	  display(fname, imd);
-      }
+  try {
+    for (int i = 1; i < argc; ++i) {
+      string fname = argv[i];
+      idx<float> img = load_image<float>(fname);
+      display(fname, img);
     }
+  } catch(string &err) {
+    cerr << err << endl;
   }
   return 0;
 }

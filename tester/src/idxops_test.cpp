@@ -1,14 +1,14 @@
-#include "BlasTest.h"
+#include "idxops_test.h"
 
 using namespace ebl;
 
-void BlasTest::setUp() {
+void idxops_test::setUp() {
 }
 
-void BlasTest::tearDown() {
+void idxops_test::tearDown() {
 }
 
-void BlasTest::test_idx_min_max() {
+void idxops_test::test_idx_min_max() {
   idx<double> m2(2, 2);
   idx_clear(m2);
   m2.set(0.0, 0, 0);
@@ -19,7 +19,7 @@ void BlasTest::test_idx_min_max() {
   CPPUNIT_ASSERT(idx_min(m2) == -42.0);
 }
 
-void BlasTest::test_idx_sums() {
+void idxops_test::test_idx_sums() {
 		idx<double> m(3, 4);
 		idx<double> m0;
 		idx<unsigned char> mc(3, 4);
@@ -51,7 +51,7 @@ void BlasTest::test_idx_sums() {
 		// TODO: add tests for non contiguous idx and order of 1
 }
 
-void BlasTest::test_idx_sortdown() {
+void idxops_test::test_idx_sortdown() {
 	idx<double> m(5);
 	idx<unsigned char> mc(5);
 	double i;
@@ -78,7 +78,7 @@ void BlasTest::test_idx_sortdown() {
 	CPPUNIT_ASSERT_EQUAL((unsigned char) 4, mc.get(4));
 }
 
-void BlasTest::test_idx_sqrdist() {
+void idxops_test::test_idx_sqrdist() {
 	idx<double> m(5);
 	idx<double> mc(5);
 	double i;
@@ -95,7 +95,7 @@ void BlasTest::test_idx_sqrdist() {
 	CPPUNIT_ASSERT_EQUAL((double) 45, i);
 }
 
-void BlasTest::test_idx_exp() {
+void idxops_test::test_idx_exp() {
 	  idx<double> m2(2, 2);
 	  idx_clear(m2);
 	  m2.set(0.0, 0, 0);
@@ -109,7 +109,7 @@ void BlasTest::test_idx_exp() {
 	  CPPUNIT_ASSERT(m2.get(1,1) == 2);
 }
 
-void BlasTest::test_idx_m2oversample() {
+void idxops_test::test_idx_m2oversample() {
 	idx<double> m(2, 2);
 	idx<double> o(4, 4);
 	m.set(1.0, 0, 0);
@@ -137,7 +137,7 @@ void BlasTest::test_idx_m2oversample() {
 	CPPUNIT_ASSERT_EQUAL(4.0, o.get(3, 3));
 }
 
-void BlasTest::test_idx_m2squdotm1() {
+void idxops_test::test_idx_m2squdotm1() {
 	idx<double> m1(2, 2);
 	idx<double> m2(2);
 	idx<double> m3(2);
@@ -156,7 +156,7 @@ void BlasTest::test_idx_m2squdotm1() {
 	CPPUNIT_ASSERT_EQUAL(27.0, m3.get(1));
 }
 
-void BlasTest::test_idx_m2extm2acc() {
+void idxops_test::test_idx_m2extm2acc() {
 	idx<double> m1(2, 2);
 	idx<double> m2(2, 2);
 	idx<double> m3(2, 2, 2, 2);
@@ -192,7 +192,7 @@ void BlasTest::test_idx_m2extm2acc() {
 	CPPUNIT_ASSERT_EQUAL(9.0, m3.get(1, 1, 1, 1));
 }
 
-void BlasTest::test_idx_copy(){
+void idxops_test::test_idx_copy(){
 	idx<double> m1(3, 5, 4);
 	idx<double> m2(3, 5, 4);
 	idx<float> m3(3, 5, 4);
@@ -275,7 +275,7 @@ void BlasTest::test_idx_copy(){
 	delete static_cast<idx<double>*>(m6);
 }
 
-void BlasTest::test_idx_copy2(){
+void idxops_test::test_idx_copy2(){
   idx<double> m1(5, 3, 4);
 
   dseed(2);
@@ -302,7 +302,7 @@ void BlasTest::test_idx_copy2(){
 
 }
 
-void BlasTest::test_idx_abs() {
+void idxops_test::test_idx_abs() {
   {
     idx<double> m2(20, 20);
     idx<double> m2a(20, 20);
@@ -352,7 +352,7 @@ void BlasTest::test_idx_abs() {
   }
 }
 
-void BlasTest::test_idx_m2dotm1() {
+void idxops_test::test_idx_m2dotm1() {
   idx<double> d2(2, 5);
   idx<double> d1(5);
   idx<double> out(2);
@@ -364,7 +364,7 @@ void BlasTest::test_idx_m2dotm1() {
     CPPUNIT_ASSERT_EQUAL(10.0, o.get());
 }
 
-void BlasTest::test_huge_vec() {
+void idxops_test::test_huge_vec() {
 
   // this would not run on many systems
   // disable until a cmake trick is implemented

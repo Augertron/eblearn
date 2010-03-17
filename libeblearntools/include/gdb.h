@@ -33,7 +33,7 @@
 #ifndef GDB_H_
 #define GDB_H_
 
-#include "blas.h"
+#include "idxops.h"
 #ifdef __GUI__
 #include "libidxgui.h"
 #endif

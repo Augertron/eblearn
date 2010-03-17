@@ -23,13 +23,13 @@ IF (CPPUNIT_FOUND) # compile only if cppunit is present
   # compile executable
   ##############################################################################
   add_executable (tester
-    src/BlasTest.cpp
+    src/idxops_test.cpp
     src/detector_test.cpp
     src/ClusterTest.cpp
     src/DataSourceTest.cpp
     src/ebl_basic_test.cpp
     src/ebl_preprocessing_test.cpp
-    src/IdxIOTest.cpp
+    src/idxIO_test.cpp
     src/IdxIteratorsTest.cpp
     src/IdxTest.cpp
     src/image_test.cpp

@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -273,43 +274,6 @@ namespace ebl {
   double common_area(int x1, int y1, int w1, int h1,
 		     int x2, int y2, int w2, int h2);
 
-  ////////////////////////////////////////////////////////////////
-  // I/O
-
-  //! read an image from a PBM/PGM/PPM file into
-  //! an idx3 of ubytes (RGB or RGBA). <f> must
-  //! be a valid file descriptor (C pointer).
-  //! <out> is appropriately resized if required.
-  //! The last dimension is left unchanged but must be
-  //! at least 3. Appropriate conversion is performed.
-  //! extra color components (beyond the first 3) are left
-  //! untouched.
-  void pnm_fread_into_rgbx(FILE *fp, idx<ubyte> &out);
-  void pnm_fread_into_rgbx(const char *fname, idx<ubyte> &out);
-  template<class T>
-    void pnm_fread_into_rgbx(const char *fname, idx<T> &out);
-
-
-  //! read any kind of image that can be converted to a PPM by ImageMagick
-  //! See above for description, as it is the same function used,
-  //! after a conversion to PPM
-  bool image_read_rgbx(const char *fname, idx<ubyte> &out);
-  template<class T>
-    bool image_read_rgbx(const char *fname, idx<T> &out);
-
-  // TODO: comments
-  template<class T> bool load_image(const char *fname, idx<T> &out);
-  template<class T> idx<T> load_image(const char *fname);
-  template<class T> idx<T> load_image(const string &fname);
-
-  // saving functions
-  
-  // format is the desired image format. e.g.: "JPG", "PNG", etc.
-  template<class T> bool save_image(const string &fname, idx<T> &in,
-				    const char *format);
-  template<class T> bool save_image_ppm(const string &fname, idx<T> &in);
-  template<class T> bool save_image_jpg(const string &fname, idx<T> &in);
-  
   ////////////////////////////////////////////////////////////////
   // Filters
 

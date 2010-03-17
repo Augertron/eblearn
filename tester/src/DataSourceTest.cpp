@@ -29,24 +29,27 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
   string labelfile = *gl_mnist_dir;
   datafile += "/t10k-images-idx3-ubyte";
   labelfile += "/t10k-labels-idx1-ubyte";
-  idx<ubyte> data(1, 1, 1), labels(1);
-  CPPUNIT_ASSERT(load_matrix<ubyte>(data, datafile.c_str()) == true);
-  CPPUNIT_ASSERT(load_matrix<ubyte>(labels, labelfile.c_str()) == true);
-  labeled_datasource<double,ubyte,ubyte> ds(data, labels);
-  state_idx<double> datum(28, 28);
-  idx<ubyte> label;
-  for (int i = 0; i < 5; i++) {
-    ds.fprop(datum, label);
-    /* cout<<"Datum:"<<endl;
-       datum.x.printElems();
-       cout<<"Label: ";
-       label.printElems();
-       cout<<endl; */
-    ds.next();
-  }
+  try {
+    idx<ubyte> data = load_matrix<ubyte>(datafile);
+    idx<ubyte> labels = load_matrix<ubyte>(labelfile);
+    labeled_datasource<double,ubyte,ubyte> ds(data, labels);
+    state_idx<double> datum(28, 28);
+    idx<ubyte> label;
+    for (int i = 0; i < 5; i++) {
+      ds.fprop(datum, label);
+      /* cout<<"Datum:"<<endl;
+	 datum.x.printElems();
+	 cout<<"Label: ";
+	 label.printElems();
+	 cout<<endl; */
+      ds.next();
+    }
   // briefly test some values of the 5th element of mnist
-  CPPUNIT_ASSERT_EQUAL((unsigned int) 4, (unsigned int) label.get());
-  CPPUNIT_ASSERT_EQUAL((unsigned int) 236, (unsigned int) datum.x.get(9, 9));
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 4, (unsigned int) label.get());
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 236, (unsigned int) datum.x.get(9, 9));
+  } catch(string &err) {
+    CPPUNIT_ASSERT(false); // error
+  }
 }
 
 void DataSourceTest::test_imageDirToIdx() {

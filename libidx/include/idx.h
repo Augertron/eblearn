@@ -864,7 +864,8 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     // set dimensions
     
-    //! Change the dimensions dimn to size size.
+    //! Change the dimensions dimn to size size. One cannot change the
+    //! order of an idxdim, only existing dimensions can be changed.
     void setdim(intg dimn, intg size);
 
     //! Extract dimensions information from an idx
@@ -877,7 +878,9 @@ namespace ebl {
     //! Extract dimensions information from an idxspec
     void setdims(const idxspec &s);
 
-    //! Insert a dimension of size dim_size at position pos.
+    //! Insert a dimension of size dim_size at position pos, shifting
+    //! all dimensions after pos and incrementing order by 1.
+    //! This is valid only if all dimensions up to pos (excluded) are > 0.
     bool insert_dim(intg dim_size, uint pos);    
     
     ////////////////////////////////////////////////////////////////
@@ -896,6 +899,9 @@ namespace ebl {
     bool operator!=(const idxdim& other);
 
     ////////////////////////////////////////////////////////////////
+
+    //! Return total number of elements.
+    intg nelements();
     
     // friends
     friend class idxspec;
