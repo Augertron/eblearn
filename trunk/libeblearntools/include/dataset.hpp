@@ -596,12 +596,16 @@ namespace ebl {
   template <class Tdata>
   bool dataset<Tdata>::add_class(const string &class_name) {
     vector<string>::iterator res;
-    res = find(classes.begin(), classes.end(), class_name);
+    string name = class_name;
+    // if force label is on, only add force label
+    if (strcmp(force_label.c_str(), ""))
+      name = force_label;
+    res = find(classes.begin(), classes.end(), name);
     if (res == classes.end()) // not found
-      classes.push_back(class_name);
+      classes.push_back(name);
     else { // found
       //t_label i = res - classes.begin();
-      //      cout << "found class " << class_name << " at index " << i << endl;
+      //      cout << "found class " << name << " at index " << i << endl;
     }
     return true;
   }
