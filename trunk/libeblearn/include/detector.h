@@ -167,6 +167,9 @@ namespace ebl {
     //! image that yielded a detection.
     vector<idx<T> >& get_preprocessed();
 
+    //! Returns the number of bboxes saved so far.
+    uint get_total_saved();
+
   private:
     //! initialize dimensions and multi-resolution buffers.
     void init(idxdim &dinput);
