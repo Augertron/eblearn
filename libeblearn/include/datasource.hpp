@@ -77,7 +77,7 @@ namespace ebl {
     data = data_;
     labels = labels_;
     probas = idx<double>(data.dim(0));
-    //    init_drand(time(NULL)); // initialize random seed
+    init_drand(time(NULL)); // initialize random seed
     // default probability for a sample of being used is 1
     idx_fill(probas, 1.0); 
     height = data.dim(1);
