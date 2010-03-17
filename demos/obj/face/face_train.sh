@@ -141,10 +141,8 @@ for iter in `seq 1 ${maxiteration}`
 
 # recompile data from last output directory which should contain 
 # all false positives
-  ${eblearnbin}/dscompiler ${lastout} -type lush \
-      -precision ${precision} -input_precision ${precision} \
-      -outdir ${dataroot} -forcelabel bg \
-      -dname allfp -dims ${h}x${w}x3
+  ${eblearnbin}/dscompiler ${lastout} -precision ${precision} \
+      -outdir ${dataroot} -forcelabel bg -dname allfp -dims ${h}x${w}x3
 
 # get dataset size
   dssize=`${eblearnbin}/dsdisplay ${dataroot}/allfp -size`
@@ -170,7 +168,7 @@ for iter in `seq 1 ${maxiteration}`
   for i in `seq 1 $draws`
   do
       ${eblearnbin}/dsmerge ${dataroot} ${valdsname}_${i} \
-	  allfp_train_${i} ${valdsname}_${i}
+	  allfp_val_${i} ${valdsname}_${i}
   done
 
 # retrain on old + new data
