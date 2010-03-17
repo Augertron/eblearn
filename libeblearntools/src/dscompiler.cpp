@@ -39,7 +39,6 @@
 #include "pascal_dataset.h"
 #include "pascalbg_dataset.h"
 #include "pascalfull_dataset.h"
-#include "lush_dataset.h"
 #include "tools_utils.h"
 
 using namespace std;
@@ -49,7 +48,7 @@ using namespace ebl;
 // global variables
 
 string		images_root	 = ".";
-string		image_pattern	 = IMAGE_PATTERN;
+string		image_pattern	 = IMAGE_PATTERN_MAT;
 string		channels_mode	 = "RGB";
 bool            preprocessing    = true;
 bool		display		 = false;
@@ -72,7 +71,6 @@ int		deformations	 = -1;	// <= means no deformations
 string		type		 = "regular";
 string          resize           = "mean";
 string		precision	 = "float";
-string		input_precision  = precision;
 uint		sleep_delay	 = 0;	// sleep between frames displayed in ms
 idxdim          outdims;	        // dimensions of output sample
 bool		outdims_set	 = false;
@@ -167,9 +165,6 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-precision") == 0) {
 	++i; if (i >= argc) throw 0;
 	precision = argv[i];
-      } else if (strcmp(argv[i], "-input_precision") == 0) {
-	++i; if (i >= argc) throw 0;
-	input_precision = argv[i];
       } else if (strcmp(argv[i], "-resize") == 0) {
 	++i; if (i >= argc) throw 0;
 	resize = argv[i];
@@ -280,7 +275,7 @@ bool parse_args(int argc, char **argv) {
 void print_usage() {
   cout << "Usage: ./dscompiler <images_root> [OPTIONS]" << endl;
   cout << "Options are:" << endl;
-  cout << "  -type <regular(default)|pascal|pascalbg|pascalfull|lush>" << endl;
+  cout << "  -type <regular(default)|pascal|pascalbg|pascalfull>" << endl;
   cout << "     regular: compile images labeled by their top folder name"<<endl;
   cout << "     pascal: compile images labeled by xml files (PASCAL challenge)";
   cout << endl;
@@ -288,13 +283,9 @@ void print_usage() {
   cout << "     pascalfull: copy full original PASCAL images into outdir"<<endl;
   cout << "       (allows to exclude some classes, then call regular compiler)";
   cout << endl;
-  cout << "     lush: regular compilation using .mat images" << endl;
   cout << "  -precision <float(default)|double>" << endl;
-  cout << "  -input_precision <float(default)|double>" << endl;
-  cout << "     when reading lush files, this specifies the expected input ";
-  cout << "     precision." << endl;
   cout << "  -image_pattern <pattern>" << endl;
-  cout << "     default: " << IMAGE_PATTERN << endl;
+  cout << "     default: " << IMAGE_PATTERN_MAT << endl;
   cout << "  -channels <channel>" << endl;
   cout << "     channels are: RGB (default), YpUV, HSV, Yp (Yp only in YpUV)";
   cout << endl;
@@ -358,7 +349,6 @@ void compile_ds(Tds &ds, bool imgpat = true) {
   ds.set_display(display);
   ds.set_sleepdisplay(sleep_delay);
   ds.set_resize(resize);
-  ds.set_precisions(precision, input_precision);
   if (save_set) ds.set_save(save);
   if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
   if (maxperclass > 0) ds.set_max_per_class(maxperclass);
@@ -421,10 +411,6 @@ void compile() {
       ds.set_max_data(maxdata);
     ds.extract();
   }
-  else if (!strcmp(type.c_str(), "lush")) {
-    lush_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str());
-    compile_ds(ds, false);
-  }
   else if (!strcmp(type.c_str(), "regular")) {
     dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str());
     compile_ds(ds);
@@ -455,7 +441,6 @@ int main(int argc, char **argv) {
   cout << "  dataset name: " << dataset_name << endl;
   cout << "  dataset type: " << type << endl;
   cout << "  dataset precision: " << precision << endl;
-  cout << "  input precision: " << input_precision << endl;
   cout << "  images root directory: " << images_root << endl;
   cout << "  output directory: " << outdir << endl;
   cout << "  outputs: " << outdir << "/" << dataset_name << "_*.mat" << endl;
