@@ -169,6 +169,9 @@ int main(int argc, char **argv) { // regular main without gui
       cout << "sleeping for " << display_sleep << "ms." << endl;
       usleep(display_sleep);
     }
+    if (conf.exists("save_max") && 
+	detect.get_total_saved() > conf.get_uint("save_max"))
+      break ; // limit number of detection saves
   }
   if (save_video)
     cam->stop_recording(conf.exists_bool("use_original_fps") ?

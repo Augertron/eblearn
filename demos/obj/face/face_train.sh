@@ -33,7 +33,8 @@ meta_send_best=15
 ################################################################################
 
 # directories
-xpname=face_train_`date +"%Y%m%d.%H%M%S"`
+xpname=face_train_20100316.035610
+#xpname=face_train_`date +"%Y%m%d.%H%M%S"`
 root=~/texieradata/face/
 root2=~/texieradata/face/
 dataroot=$root/ds
@@ -78,6 +79,8 @@ cp $eblearnbin0/* $eblearnbin/
 cp $metaconf0 $metaconf
 echo "meta_output_dir = ${out}" >> $metaconf
 
+touch /home/sermanet/texieradata/face/out/face_train_20100316.035610/20100316.035612.face
+
 ###############################################################################
 # training
 ###############################################################################
@@ -85,7 +88,7 @@ echo "meta_output_dir = ${out}" >> $metaconf
 # initial training
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
-${eblearnbin}/metarun $metaconf
+#${eblearnbin}/metarun $metaconf
 
 # looping on retraining on false positives
 echo "________________________________________________________________________"

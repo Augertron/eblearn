@@ -684,6 +684,15 @@ namespace ebl {
   }
   
   template <class T>
+  uint detector<T>::get_total_saved() {
+    uint total = 0;
+    for (vector<uint>::iterator i = save_counts.begin();
+	 i != save_counts.end(); ++i)
+      total += *i;
+    return total;
+  }
+
+  template <class T>
   vector<idx<T> >& detector<T>::get_originals() {
     if (bodetections) // recompute only if not up-to-date
       return odetections;
