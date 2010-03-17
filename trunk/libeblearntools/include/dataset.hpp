@@ -80,7 +80,7 @@ namespace ebl {
     ppconv_set = false;
     ppmodule = NULL;
     resizepp = NULL;
-    extension = IMAGE_PATTERN;
+    extension = IMAGE_PATTERN_MAT;
     sleep_display = false;
     sleep_delay = 0;
     // assuming already processed data, but the user can still require
@@ -733,14 +733,6 @@ namespace ebl {
   template <class Tdata>
   void dataset<Tdata>::set_bboxfact(float factor) {
     bboxfact = factor;
-    cout << "Setting bounding box factor to " << bboxfact << endl;
-  }
-    
-  template <class Tdata>
-  void dataset<Tdata>::set_precisions(const string &dataset_precision_,
-				      const string &input_precision_) {
-    input_precision = input_precision_;
-    dataset_precision = dataset_precision_;
     cout << "Setting bounding box factor to " << bboxfact << endl;
   }
     

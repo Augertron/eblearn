@@ -89,7 +89,7 @@ mkdir -p "$false_positive_root/bg/"
 #     $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
-~/eblearn/bin/dscompiler $root -precision $precision -type lush \
+~/eblearn/bin/dscompiler $root -precision $precision \
     -outdir ${out} -channels $pp -dname $name \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug

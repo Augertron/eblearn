@@ -102,6 +102,8 @@ namespace ebl {
   void load_image(const char *fname, idx<T> &out) {
     // first try if the image is a mat file
     try {
+      if (out.order() > 3 || out.order() < 2)
+	eblerror("image has to be 2D or 3D");
       load_matrix<T>(out, fname);
       return ;
     } catch(string &err) {
@@ -120,6 +122,8 @@ namespace ebl {
     // first try if the image is a mat file
     try {
       idx<T> m = load_matrix<T>(fname);
+      if (m.order() > 3 || m.order() < 2)
+	eblerror("image has to be 2D or 3D");
       return m;
     } catch(string &err) {
       ; // not a mat file, try regular image
