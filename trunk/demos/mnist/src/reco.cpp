@@ -48,11 +48,7 @@ int main(int argc, char **argv) { // regular main without gui
   theparam.load_x<t_net>(paramfname.c_str());
 
   // load image
-  idx<ubyte> image(1,1,1);  
-  if (!image_read_rgbx(imagefname.c_str(), image)) {
-    eblerror("failed to read image");
-    return -1;
-  }
+  idx<ubyte> image = load_image<ubyte>(imagefname);
   // only keep 1 color channel since we trained with greyscale images
   image = image.select(2, 0);
 
