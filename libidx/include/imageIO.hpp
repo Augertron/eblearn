@@ -105,6 +105,9 @@ namespace ebl {
       if (out.order() > 3 || out.order() < 2)
 	eblerror("image has to be 2D or 3D");
       load_matrix<T>(out, fname);
+      // channels are likely in dim 0 if size 1 or 3
+      if (((out.dim(0) == 1) || (out.dim(0) == 3)) && (out.order() == 3))
+	out = out.shift_dim(0, 2);
       return ;
     } catch(string &err) {
       // not a mat file, try regular image
@@ -124,6 +127,9 @@ namespace ebl {
       idx<T> m = load_matrix<T>(fname);
       if (m.order() > 3 || m.order() < 2)
 	eblerror("image has to be 2D or 3D");
+      // channels are likely in dim 0 if size 1 or 3
+      if (((m.dim(0) == 1) || (m.dim(0) == 3)) && (m.order() == 3))
+	m = m.shift_dim(0, 2);
       return m;
     } catch(string &err) {
       ; // not a mat file, try regular image

@@ -70,11 +70,9 @@ bool parse_args(int argc, char **argv, string &ds_name) {
 template <typename T> void display(const string &fname, idx<T> &mat) {
 #ifdef __GUI__
   new_window(fname);
-  if (((mat.dim(0) == 1) || (mat.dim(0) == 3)) // channels are likely in dim 0
-      && (mat.order() == 3))
-    mat = mat.shift_dim(0, 2);
   draw_matrix(mat);
   gui << mat;
+  sleep(1);
 #endif
 }
 
