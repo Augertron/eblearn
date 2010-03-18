@@ -140,10 +140,6 @@ if [ $iter != 1 ]; then
 # find path to latest metarun output: get directory with latest date
   lastout=`ls -dt1 ${out}/*/ | head -1`
 
-else
-    lastout="/home/sermanet/texieradata/face/out/face_train_20100316.035610/20100316.225407.face"
-fi  
-
 # recompile data from last output directory which should contain 
 # all false positives
   ${eblearnbin}/dscompiler ${lastout} -precision ${precision} \
@@ -177,11 +173,13 @@ fi
 	  allfp_val_${i} ${valdsname}_${i}
   done
 
+fi  
+
 # retrain on old + new data
   echo "Retraining from best previous weights: ${bestweights}"
 # add last weights and activate retraining from those
   echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
-  echo "retraining = 1" >> $metaconf
+  echo "retrain = 1" >> $metaconf
   echo "retrain_weights = ${bestweights}" >> $metaconf
   ${eblearnbin}/metarun $metaconf
     
