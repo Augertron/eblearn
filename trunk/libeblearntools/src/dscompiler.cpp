@@ -89,7 +89,8 @@ bool            load_set         = false;
 float           bboxfact         = 1.0;
 bool            bboxfact_set     = false;
 bool            force_label      = false;
-string          label            = ""; 
+string          label            = "";
+idxdim          gridsz;
 
 ////////////////////////////////////////////////////////////////
 // command line
@@ -235,6 +236,24 @@ bool parse_args(int argc, char **argv) {
 	}
 	mindims = d;
 	mindims_set = true;
+      } else if (strcmp(argv[i], "-gridsz") == 0) {
+	++i; if (i >= argc) throw 0;
+	idxdim d;
+	string s = argv[i];
+	int k = 0;
+	while (s.size()) {
+	  uint j;
+	  for (j = 0; j < s.size(); ++j)
+	    if (s[j] == 'x')
+	      break ;
+	  string s0 = s.substr(0, j);
+	  if (j >= s.size())
+	    s = "";
+	  else
+	    s = s.substr(j + 1, s.size());
+	  d.insert_dim(atoi(s0.c_str()), k++);
+	}
+	gridsz = d;
       } else if (strcmp(argv[i], "-scales") == 0) {
 	++i; if (i >= argc) throw 0;
 	string s = argv[i];
@@ -276,7 +295,7 @@ bool parse_args(int argc, char **argv) {
 void print_usage() {
   cout << "Usage: ./dscompiler <images_root> [OPTIONS]" << endl;
   cout << "Options are:" << endl;
-  cout << "  -type <regular(default)|pascal|pascalbg|pascalfull>" << endl;
+  cout << "  -type <regular(default)|pascal|pascalbg|pascalfull|grid>" << endl;
   cout << "     regular: compile images labeled by their top folder name"<<endl;
   cout << "     pascal: compile images labeled by xml files (PASCAL challenge)";
   cout << endl;
@@ -284,6 +303,8 @@ void print_usage() {
   cout << "     pascalfull: copy full original PASCAL images into outdir"<<endl;
   cout << "       (allows to exclude some classes, then call regular compiler)";
   cout << endl;
+  cout << "     grid: extract non-overlapping cells from each image."
+       << "       cell sizes are determined by -gridsz option"<<endl;
   cout << "  -precision <float(default)|double>" << endl;
   cout << "  -image_pattern <pattern>" << endl;
   cout << "     default: " << IMAGE_PATTERN_MAT << endl;
@@ -371,12 +392,12 @@ void compile_ds(Tds &ds, bool imgpat = true) {
 
 template <class Tdata>
 void compile() {
-  grid_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(), 64,64);
-  compile_ds(ds);
-  return ;
-  
-  
-  if (!strcmp(type.c_str(), "pascal")) {
+  if (!strcmp(type.c_str(), "grid")) {
+    grid_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
+			   gridsz.dim(0), gridsz.dim(1));
+    compile_ds(ds);
+  }
+  else if (!strcmp(type.c_str(), "pascal")) {
     pascal_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
 			     ignore_difficult, ignore_truncated,
 			     ignore_occluded);
