@@ -51,6 +51,8 @@ metaconf=${out}/face_meta.conf
 
 # maximum number of retraining iterations
 maxiteration=20
+# threshold will be decremented at each iter until -.95
+threshold=.9
 
 # network input size and precision
 h=32
@@ -109,6 +111,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "i=`expr ${maxiteration} - ${iter}`"
 
 if [ $iter != 1 ]; then  
+
 # extract false positives: first add new variables to best conf
 # activate retraining
   echo "retrain = 1" >> $bestconf
@@ -116,12 +119,15 @@ if [ $iter != 1 ]; then
   echo "save_detections = 1" >> $bestconf
 # do not save video
   echo "save_video = 0" >> $bestconf
+  echo "save_max = 25000" >> $bestconf
+  echo "save_max_per_frame = 10" >> $bestconf
 # add directory where to find trained files
   echo "root2 = ${bestout}" >> $bestconf
 # limit input size 
   echo "input_max = 900" >> $bestconf
-# set very low threshold
-  echo "threshold = -.99" >> $bestconf
+# decrement threshold, capping at -.95
+  threshold=`echo "thr=${threshold} - .2; if (thr < -.95){ thr = -.95;}; print thr" | bc`
+  echo "threshold = ${threshold}" >> $bestconf
 # set weights to retrain: same as this conf
   echo "retrain_weights = \${weights}" >> $bestconf
 # add subdirectories of retraining dir

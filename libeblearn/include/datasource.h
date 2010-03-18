@@ -120,6 +120,10 @@ namespace ebl {
     //! i.e. only next() is affected, next_train() is unaffected.
     virtual void seek_begin();
 
+    //! Move to the beginning of the data, for the train iterators only,
+    //! i.e. only next_train() is affected, next() is unaffected.
+    virtual void seek_begin_train();
+
     //! Make the next_train() method call sequentially one sample of each class
     //! instead of following the dataset's distribution.
     //! This is important to use when the dataset is unbalanced.

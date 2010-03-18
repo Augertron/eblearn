@@ -124,6 +124,8 @@ namespace ebl {
     set_weigh_normalization(true); // per class by default
     test_set = false;
     datasource<Tnet, Tin1, Tin2>::pretty();
+    seek_begin();
+    seek_begin_train();
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -307,6 +309,16 @@ namespace ebl {
     // set regular iters used by fprop
     dataIter = dataIter_test;
     labelsIter = labelsIter_test;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::seek_begin_train() {
+    dataIter_train = data.dim_begin(0);
+    labelsIter_train = labels.dim_begin(0);
+    probasIter_train = probas.dim_begin(0);
+    // set regular iters used by fprop
+    dataIter = dataIter_train;
+    labelsIter = labelsIter_train;
   }
 
   template <class Tnet, class Tin1, class Tin2>
