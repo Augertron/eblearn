@@ -120,14 +120,15 @@ namespace ebl {
     uint expected_size, read_size;
     idxdim dims = read_pnm_header(in, type, vmax);
     idx<ubyte> out;
+    idx<ubyte> *pout = &out;
     if (!out_) // allocate buffer if out is empty
       out = idx<ubyte>(dims);
     else
-      out = *out_;
-    idx_checkorder1(out, 3); // allow only 3D buffers
+      pout = out_;
+    idx_checkorder1(*pout, 3); // allow only 3D buffers
     // resize out if necessary
-    if (out.get_idxdim() != dims)
-      out.resize(dims);
+    if (pout->get_idxdim() != dims)
+      pout->resize(dims);
     // sizes
     size_t sz = (vmax == 65535) ? 2 : 1;
     expected_size = dims.nelements();
@@ -135,20 +136,20 @@ namespace ebl {
     switch (type) {
     case 3: // PPM ASCII
       uint val;
-      { idx_aloop1(o, out, ubyte) {
+      { idx_aloop1(o, *pout, ubyte) {
 	in >> val;
 	// downcasting automatically scales values if vmax > 255
 	*o = (unsigned char) val;
 	}}
       break ;
     case 6: // PPM binary
-      if (out.contiguousp()) {
+      if (pout->contiguousp()) {
 	if (sz == 2) { // 16 bits per pixel
 	  idx<short> out2(dims);
 	  in.read((char *) out2.idx_ptr(), sz * expected_size);
-	  idx_copy(out2, out);
+	  idx_copy(out2, *pout);
 	} else // 8 bits per pixel
-	  in.read((char *) out.idx_ptr(), sz * expected_size);
+	  in.read((char *) pout->idx_ptr(), sz * expected_size);
 	read_size = in.gcount() / sz;
 	if (expected_size != read_size)
 	  // TODO: fixme, adding temporarly +1 to fix reading failures bug
@@ -159,7 +160,7 @@ namespace ebl {
 	    cerr << " but found " << read_size << endl;
 	  }
       } else {
-	{ idx_aloop1(o, out, ubyte) {
+	{ idx_aloop1(o, *pout, ubyte) {
 	    in.get((char&)*o);
 	  }}
       }
@@ -198,7 +199,7 @@ namespace ebl {
     default:
       cerr << "Format P" << type << " not implemented." << endl;
     }
-    return out;
+    return *pout;
   }
 
 } // end namespace ebl

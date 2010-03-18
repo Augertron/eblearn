@@ -80,10 +80,6 @@ namespace ebl {
     // TODO: implement or get rid of tell?
     virtual int tell() { return -1; };
 
-    //! Draw a random number between 0 and 1 and return true if higher
-    //! than current sample's probability.
-    virtual bool pick_current();
-    
     //! Move to the next datum (in the original order of the dataset).
     //! This should be used during testing.
     //! It will always return the data in the same order with the same
@@ -91,6 +87,10 @@ namespace ebl {
     //! variable probability, balance, etc. (used for training only).
     virtual void next();
 
+    //! Draw a random number between 0 and 1 and return true if higher
+    //! than current sample's probability.
+    virtual bool pick_current();
+    
     //! Move to the next datum, in a way suited for training (_not_ for testing,
     //! for testing see next()): depending on the configuration, this will
     //! return samples in a class-balanced way, i.e. showing each class
@@ -116,7 +116,8 @@ namespace ebl {
     //! This is used only by next_train(), not by next().
     virtual void set_answer_distance(double dist);
 
-    //! Move to the beginning of the data.
+    //! Move to the beginning of the data, for the test iterators only,
+    //! i.e. only next() is affected, next_train() is unaffected.
     virtual void seek_begin();
 
     //! Make the next_train() method call sequentially one sample of each class
@@ -187,9 +188,16 @@ namespace ebl {
     idx<Tin1>					data; // samples
     idx<Tin2>					labels; // labels
     idx<double>					probas;//!< sample probabilities
+    // regular iterators
     typename idx<Tin1>::dimension_iterator	dataIter;
     typename idx<Tin2>::dimension_iterator	labelsIter;
-    typename idx<double>::dimension_iterator	probasIter;
+    // test iterators
+    typename idx<Tin1>::dimension_iterator	dataIter_test;
+    typename idx<Tin2>::dimension_iterator	labelsIter_test;
+    // training only iterators
+    typename idx<Tin1>::dimension_iterator	dataIter_train;
+    typename idx<Tin2>::dimension_iterator	labelsIter_train;
+    typename idx<double>::dimension_iterator	probasIter_train;
     unsigned int				height;
     unsigned int				width;
     string					name;
@@ -286,7 +294,8 @@ namespace ebl {
     //! Move to the next datum.
     virtual void next();
 
-    //! Move to the beginning of the data.
+    //! Move to the beginning of the data, for the test iterators only,
+    //! i.e. only next() is affected, next_train() is unaffected.
     virtual void seek_begin();
 
     //! Returns the number of pairs contained in this data source.

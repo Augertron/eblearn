@@ -82,17 +82,18 @@ namespace ebl {
     pclose(fp);
     idxdim dims(tmp);
     idx<T> out;
+    idx<T> *pout = &out;
     // allocate if not allocated
     if (!out_)
       out = idx<T>(dims);
     else
-      out = *out_;
+      pout = out_;
     // resize if necessary
-    if (out.get_idxdim() != dims)
-      out.resize(dims);
+    if (pout->get_idxdim() != dims)
+      pout->resize(dims);
     // copy/cast
-    idx_copy(tmp, out);
-    return out;
+    idx_copy(tmp, *pout);
+    return *pout;
   }
 
   ////////////////////////////////////////////////////////////////
