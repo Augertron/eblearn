@@ -699,7 +699,7 @@ namespace ebl {
   }
 
   template <class T>
-  uint detector<T>::set_save_max_per_frame(uint max) {
+  void detector<T>::set_save_max_per_frame(uint max) {
     save_max_per_frame = max;
   }
 
