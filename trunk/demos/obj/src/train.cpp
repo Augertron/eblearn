@@ -86,14 +86,10 @@ int main(int argc, char **argv) { // regular main without gui
   thetrainer.compute_diaghessian(train_ds, 100, 0.02);
 
   for (uint i = 1; i <= conf.get_uint("iterations"); ++i) {
-    cout << "beginning of loop " << i << endl;
     // train and test
     thetrainer.train(train_ds, trainmeter, gdp, 1);	// train
-    cout << "after train " << endl;
     thetrainer.test(train_ds, trainmeter, infp);	// test
-    cout << "after test train " << endl;
     thetrainer.test(test_ds, testmeter, infp);	// test
-    cout << "after test test " << endl;
     
     // save weights and confusion matrix for test set
     name.str("");
@@ -107,7 +103,6 @@ int main(int argc, char **argv) { // regular main without gui
     fname.str(""); fname << name.str() << "_confusion_test.mat";
     cout << "saving confusion to " << fname.str() << endl;
     save_matrix(testmeter.get_confusion(), fname.str().c_str());
-    cout << "after save " << endl;
 #ifdef __GUI__ // display
     if (display) {
       //stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
@@ -116,12 +111,9 @@ int main(int argc, char **argv) { // regular main without gui
 #endif
     
     // recompute 2nd derivatives on 100 iterations with mu=0.02
-    cout << "before diaghessian " << endl;
     thetrainer.compute_diaghessian(train_ds, 100, 0.02);
-    cout << "end of loop " << i << endl;
   }
   // free variables
   if (net) delete net;
-  cout << "exiting" << endl;
   return 0;
 }
