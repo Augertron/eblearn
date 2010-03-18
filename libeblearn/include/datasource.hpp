@@ -46,7 +46,10 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::datasource()
     : nclasses(0), bias(0), coeff(1.0), data(1), labels(1), probas(1),
-      dataIter(data, 0), labelsIter(labels, 0), probasIter(probas, 0),
+      dataIter(data, 0), labelsIter(labels, 0), 
+      dataIter_test(data, 0), labelsIter_test(labels, 0), 
+      dataIter_train(data, 0), labelsIter_train(labels, 0), 
+      probasIter_train(probas, 0),
       height(0), width(0) {
   }
 
@@ -56,7 +59,10 @@ namespace ebl {
     : nclasses(0), bias(ds.bias), coeff(ds.coeff), data(ds.data),
       labels(ds.labels), probas(ds.probas),
       dataIter(data, 0), labelsIter(labels, 0),
-      probasIter(probas, 0), height(ds.height), width(ds.width), name(ds.name) {
+      dataIter_test(data, 0), labelsIter_test(labels, 0),
+      dataIter_train(data, 0), labelsIter_train(labels, 0), 
+      probasIter_train(probas, 0), 
+      height(ds.height), width(ds.width), name(ds.name) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -65,7 +71,10 @@ namespace ebl {
 	     Tin1 b, float c)
     : nclasses(0), bias(b), coeff(c), data(data_), labels(labels_),
       probas(data_.dim(0)),
-      dataIter(data, 0), labelsIter(labels, 0), probasIter(probas, 0),
+      dataIter(data, 0), labelsIter(labels, 0),
+      dataIter_test(data, 0), labelsIter_test(labels, 0),
+      dataIter_train(data, 0), labelsIter_train(labels, 0), 
+      probasIter_train(probas, 0),
       height(data.dim(1)), width(data.dim(2)) {
     init(data_, labels_, name_, b, c);
   }
@@ -86,12 +95,23 @@ namespace ebl {
     bias = b;
     coeff = c;
     name = (name_ ? name_ : "Unknown Dataset");
+    // regular iterators
     typename idx<Tin1>::dimension_iterator	 dIter(data, 0);
     typename idx<Tin2>::dimension_iterator	 lIter(labels, 0);
-    typename idx<double>::dimension_iterator	 pIter(probas, 0);
     dataIter = dIter;
     labelsIter = lIter;
-    probasIter = pIter;
+    // testing iterators
+    typename idx<Tin1>::dimension_iterator	 dIter_test(data, 0);
+    typename idx<Tin2>::dimension_iterator	 lIter_test(labels, 0);
+    dataIter_test = dIter_test;
+    labelsIter_test = lIter_test;
+    // training only iterators
+    typename idx<Tin1>::dimension_iterator	 dIter_train(data, 0);
+    typename idx<Tin2>::dimension_iterator	 lIter_train(labels, 0);
+    typename idx<double>::dimension_iterator	 pIter_train(probas, 0);
+    dataIter_train = dIter_train;
+    labelsIter_train = lIter_train;
+    probasIter_train = pIter_train;
     // count number of samples per class
     counts.resize(nclasses);
     fill(counts.begin(), counts.end(), 0);
@@ -131,7 +151,6 @@ namespace ebl {
     // create a target idx with the same dimensions
     idx<Tin1> shuffledData(data.get_idxdim());
     idx<Tin2> shuffledLabels(labels.get_idxdim());
-    idx<double> shuffledProbas(probas.get_idxdim());
     // get the nb of classes
     intg nbOfClasses = 1+idx_max(labels);
     intg nbOfSamples = data.dim(0);
@@ -147,10 +166,6 @@ namespace ebl {
       idx<Tin2> destLabel = shuffledLabels[i];
       idx_copy(oneLabel, destLabel);
 
-      idx<double> oneProba = probas[iterator];
-      idx<double> destProba = shuffledProbas[i];
-      idx_copy(oneProba, destProba);
-
       iterator += nbOfSamplesPerClass;
       if (iterator >= nbOfSamples)
 	iterator = (iterator % nbOfSamples) + 1;
@@ -158,7 +173,6 @@ namespace ebl {
     // replace the original dataset, and labels
     data = shuffledData;
     labels = shuffledLabels;
-    probas = shuffledProbas;
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -172,6 +186,22 @@ namespace ebl {
   }
 
   template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::next() {
+    // draw random number between
+    ++dataIter_test;
+    ++labelsIter_test;
+    
+    if(!dataIter_test.notdone()) {
+      // come back to begining
+      dataIter_test = data.dim_begin(0);
+      labelsIter_test = labels.dim_begin(0);
+    }
+    // set regular iters used by fprop
+    dataIter = dataIter_test;
+    labelsIter = labelsIter_test;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
   bool datasource<Tnet, Tin1, Tin2>::pick_current() {
     if (test_set) // check that this datasource is allowed to call this method
       eblerror("forbidden call of pick_current() on testing sets");
@@ -180,26 +210,11 @@ namespace ebl {
     // draw random number between 0 and 1 and return true if lower
     // than sample's probability.
     double r = drand(); // [0..1]
-    if (r <= probasIter->get())
+    if (r <= probasIter_train->get())
       return true;
     return false;
   }
   
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::next() {
-    // draw random number between
-    ++dataIter;
-    ++labelsIter;
-    ++probasIter;
-    
-    if(!dataIter.notdone()) {
-      // come back to begining
-      dataIter = data.dim_begin(0);
-      labelsIter = labels.dim_begin(0);
-      probasIter = probas.dim_begin(0);
-    }
-  }
-
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next_train(intg *callcnt) {
     // get pointer to first non empty class
@@ -226,9 +241,9 @@ namespace ebl {
       eblerror("forbidden call of next_train() on testing sets");
     intg i = label_indices[iitr][indices_itr[iitr]];
     //      cout << "#" << i << "/" << iitr << " ";
-    dataIter = dataIter.at(i);
-    labelsIter = labelsIter.at(i);
-    probasIter = probasIter.at(i);
+    dataIter_train = dataIter_train.at(i);
+    labelsIter_train = labelsIter_train.at(i);
+    probasIter_train = probasIter_train.at(i);
     indices_itr[iitr] += 1;
     if (indices_itr[iitr] >= label_indices[iitr].size()) {
       // returning to begining of list for this class
@@ -245,16 +260,17 @@ namespace ebl {
 	  // get max
 	  for (vector<intg>::iterator j = label_indices[iitr].begin();
 	       j != label_indices[iitr].end(); ++j)
-	    maxproba = MAX(probasIter.at(*j)->get(), maxproba);
+	    maxproba = MAX(probasIter_train.at(*j)->get(), maxproba);
 	  // cout << "normalizing with maxproba for class "
 	  //      << iitr << ": " << maxproba << endl;
 	  // set normalized proba
 	  double avg = 0;
 	  for (vector<intg>::iterator j = label_indices[iitr].begin();
 	       j != label_indices[iitr].end(); ++j) {
-	    probasIter.at(*j)->set((maxproba == 0) ? 1.0 :
-				   probasIter.at(*j)->get() / maxproba);
-	    avg = probasIter.at(*j)->get();
+	    probasIter_train.at(*j)->set((maxproba == 0) ? 1.0 :
+					 probasIter_train.at(*j)->get() 
+					 / maxproba);
+	    avg = probasIter_train.at(*j)->get();
 	  }
 	  //	  cout << "avg proba = " << avg / maxproba << endl;
 	} else {
@@ -272,20 +288,25 @@ namespace ebl {
       if (iitr >= label_indices.size())
 	iitr = 0; // reseting to first class in class list
     }
+    // set regular iters used by fprop
+    dataIter = dataIter_train;
+    labelsIter = labelsIter_train;
   }
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_answer_distance(double dist) {
     if (weigh_samples) { // if false, keep default probability 1 for all samples
-      probasIter->set(MIN(1.0, fabs(dist)));
+      probasIter_train->set(MIN(1.0, fabs(dist)));
     }
   }
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::seek_begin() {
-    dataIter = data.dim_begin(0);
-    labelsIter = labels.dim_begin(0);
-    probasIter = probas.dim_begin(0);
+    dataIter_test = data.dim_begin(0);
+    labelsIter_test = labels.dim_begin(0);
+    // set regular iters used by fprop
+    dataIter = dataIter_test;
+    labelsIter = labelsIter_test;
   }
 
   template <class Tnet, class Tin1, class Tin2>

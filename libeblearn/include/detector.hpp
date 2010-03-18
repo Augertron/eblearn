@@ -75,6 +75,8 @@ namespace ebl {
     idx_clear(resize_modules);
     idx_clear(nets);
     set_bgclass(background);
+    // initilizations
+    save_max_per_frame = numeric_limits<uint>::max();
   }
   
   template <class T>
@@ -646,7 +648,8 @@ namespace ebl {
       dir_orig[i] += "/";
     }
     // loop on bounding boxes
-    for (bbox = bboxes.begin(); bbox != bboxes.end(); ++bbox) {
+    uint i = 0;
+    for (bbox = bboxes.begin(); bbox != bboxes.end(); ++bbox, ++i) {
       // exclude background class
       if ((*bbox)->class_id == bgclass)
 	continue ;
@@ -680,6 +683,9 @@ namespace ebl {
       cout << "saved " << fname.str() << endl;
       // increment file counter
       save_counts[(*bbox)->class_id]++;
+      // stop if reached max save per frame
+      if (i >= save_max_per_frame)
+	break ;
     }
   }
   
@@ -690,6 +696,11 @@ namespace ebl {
 	 i != save_counts.end(); ++i)
       total += *i;
     return total;
+  }
+
+  template <class T>
+  uint detector<T>::set_save_max_per_frame(uint max) {
+    save_max_per_frame = max;
   }
 
   template <class T>

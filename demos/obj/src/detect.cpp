@@ -74,8 +74,11 @@ int main(int argc, char **argv) { // regular main without gui
   if (conf.exists("input_max"))
     detect.set_max_resolution(conf.get_uint("input_max")); // limit inputs size
   detect.set_silent();
-  if (conf.exists_bool("save_detections"))
+  if (conf.exists_bool("save_detections")) {
     detect.set_save("detections");
+    if (conf.exists("save_max_per_frame"))
+      detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
+  }
 
   // initialize camera (opencv, directory, shmem or video)
   idx<t_net> frame;

@@ -95,7 +95,7 @@ echo "________________________________________________________________________"
 echo "retraining loop"
 for iter in `seq 1 ${maxiteration}`
   do
-  
+
 # find path to latest metarun output: get directory with latest date
   lastout=`ls -dt1 ${out}/*/ | head -1`
   bestout=${lastout}/best/01/
@@ -108,6 +108,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "Using best conf of previous training: ${bestconf}"
   echo "i=`expr ${maxiteration} - ${iter}`"
 
+if [ $iter != 1 ]; then  
 # extract false positives: first add new variables to best conf
 # activate retraining
   echo "retrain = 1" >> $bestconf
@@ -135,14 +136,19 @@ for iter in `seq 1 ${maxiteration}`
   echo "meta_command = ${eblearnbin}/objdetect" >> $bestconf
 # start parallelized extraction
   ${eblearnbin}/metarun $bestconf
-  
+
 # find path to latest metarun output: get directory with latest date
   lastout=`ls -dt1 ${out}/*/ | head -1`
+
+else
+    lastout="/home/sermanet/texieradata/face/out/face_train_20100316.035610/20100316.225407.face"
+fi  
 
 # recompile data from last output directory which should contain 
 # all false positives
   ${eblearnbin}/dscompiler ${lastout} -precision ${precision} \
-      -outdir ${dataroot} -forcelabel bg -dname allfp -dims ${h}x${w}x3
+      -outdir ${dataroot} -forcelabel bg -dname allfp -dims ${h}x${w}x3 \
+      -image_pattern ".*[.]mat" -mindims ${h}x${w}x3 
 
 # get dataset size
   dssize=`${eblearnbin}/dsdisplay ${dataroot}/allfp -size`

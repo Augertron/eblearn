@@ -864,13 +864,23 @@ namespace ebl {
 
   template <class T> idx<T> idx<T>::transpose(int d1, int d2) {
     idx<T> r(storage,spec.getoffset());
-    spec.transpose_into(&r.spec, d1, d2);
-    return r;
+    try {
+      spec.transpose_into(&r.spec, d1, d2); 
+    } catch(const string &err) {
+      cerr << "error in idx " << *this << endl;
+      eblerror(err.c_str());
+    }
+   return r;
   }
 
   template <class T> idx<T> idx<T>::transpose(int *p) {
     idx<T> r(storage,spec.getoffset());
-    spec.transpose_into(&r.spec, p);
+    try {
+      spec.transpose_into(&r.spec, p);
+    } catch(const string &err) {
+      cerr << "error in idx " << *this << endl;
+      eblerror(err.c_str());
+    }
     return r;
   }
 

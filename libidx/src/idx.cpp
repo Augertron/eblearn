@@ -530,12 +530,12 @@ namespace ebl {
 
   // tranpose two dimensions into pre-existing idxspec
   int idxspec::transpose_into(idxspec *dst, int d1, int d2) {
-    try {
-      if ((d1 < 0) || (d1 >= ndim) || 
-	  (d2 < 0) || (d2 >= ndim)) 
-	throw("tranpose: illegal dimension index");
+    if ((d1 < 0) || (d1 >= ndim) || (d2 < 0) || (d2 >= ndim)) {
+      ostringstream err;
+      err << "illegal transpose of dimension " << d1
+	  << " to dimension " << d2;
+      throw err.str();
     }
-    catch(const char *s) { eblerror(s); return -1;}
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim);
     dst->offset = offset;
@@ -552,13 +552,13 @@ namespace ebl {
 
   // tranpose all dims with a permutation vector
   int idxspec::transpose_into(idxspec *dst, int *p) {
-    try {
-      for (int i=0; i<ndim; i++) {
-	if ((p[i] < 0) || (p[i] >= ndim)) 
-	  throw("tranpose: illegal dimension index");
+    for (int i=0; i<ndim; i++) {
+      if ((p[i] < 0) || (p[i] >= ndim)) {
+	ostringstream err;
+	err << "illegal transpose of dimensions";
+	throw err.str();
       }
     }
-    catch(const char *s) { eblerror(s); return -1;}
     dst->setndim(ndim);
     dst->offset = offset;
     if (dst == this) {

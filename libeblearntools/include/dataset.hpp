@@ -517,9 +517,8 @@ namespace ebl {
   // data
     
   template <class Tdata> template <class Toriginal>
-  bool dataset<Tdata>::add_data(idx<Toriginal> &dat, const string &class_name_,
+  bool dataset<Tdata>::add_data(idx<Toriginal> &dat, const string &class_name,
 				const char *filename, const rect *r) { 
-    string class_name = class_name_;
     // check for errors
     if (!allocated) {
       cerr << "error: dataset has not been allocated, cannot add data." <<endl;
@@ -531,9 +530,6 @@ namespace ebl {
 	|| (dat.dim(1) < mindims.dim(1))
 	|| (r && (r->width < (uint) mindims.dim(1))))
       return false;
-    // if force label is on, replace label by force_label
-    if (strcmp(force_label.c_str(), ""))
-      class_name = force_label;
     // check that class exists (may not exist if excluded)
     if (find(classes.begin(), classes.end(), class_name) == classes.end())
       return false;
@@ -1106,8 +1102,12 @@ namespace ebl {
    
   template <class Tdata>
   void dataset<Tdata>::process_dir(const string &dir, const string &ext,
-				   const string &class_name) {
+				   const string &class_name_) {
 #ifdef __BOOST__
+    string class_name = class_name_;
+    // if force label is on, replace label by force_label
+    if (strcmp(force_label.c_str(), ""))
+      class_name = force_label;
     cmatch what;
     regex r(ext);
     path p(dir);
@@ -1133,7 +1133,7 @@ namespace ebl {
 	} catch(const char *err) {
 	  cerr << "error: failed to add " << itr->path().string();
 	  cerr << ": " << endl << err << endl;
-	} catch(const string err) {
+	} catch(string &err) {
 	  cerr << "error: failed to add " << itr->path().string();
 	  cerr << ": " << endl << err << endl;
 	}

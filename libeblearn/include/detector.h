@@ -170,6 +170,9 @@ namespace ebl {
     //! Returns the number of bboxes saved so far.
     uint get_total_saved();
 
+    //! Limit the number of regions saved per frame.
+    uint set_save_max_per_frame(uint max);
+
   private:
     //! initialize dimensions and multi-resolution buffers.
     void init(idxdim &dinput);
@@ -268,6 +271,7 @@ namespace ebl {
     vector<idx<T> >      ppdetections; //!< preprocessed wins yielding detection
     bool                 bodetections; //!< odetections is up-to-date or not
     bool                 bppdetections; //!< ppdetections is up-to-date or not
+    uint                 save_max_per_frame; //!< max number of region saved
 
     ////////////////////////////////////////////////////////////////
     // friends

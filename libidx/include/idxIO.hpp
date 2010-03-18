@@ -177,62 +177,63 @@ namespace ebl {
     int magic;
     idxdim dims = read_matrix_header(stream, magic);
     idx<T> out;
+    idx<T> *pout = &out;
     if (!out_) // if no input matrix, allocate new one
       out = idx<T>(dims);
     else // otherwise use given one
-      out = *out_;
+      pout = out_;
 
     //! if out matrix is same type as current, read directly
     if ((magic == get_magic<T>()) || (magic == get_magic_vincent<T>())) {
       // resize out if necessary
-      if (out.get_idxdim() != dims) { // different order/dimensions
+      if (pout->get_idxdim() != dims) { // different order/dimensions
 	// if order is different, it's from the input matrix, error
-	if (out.order() != dims.order()) {
-	  cerr << "error: different orders: " << out << " " << dims << endl;
+	if (pout->order() != dims.order()) {
+	  cerr << "error: different orders: " << *pout << " " << dims << endl;
 	  eblerror("idx have different orders");
 	}
 	// resize output idx
-	out.resize(dims);
+	pout->resize(dims);
       }
       // read
-      read_matrix_body(stream, out);
+      read_matrix_body(stream, *pout);
     } else { // different type, read original type, then copy/cast into out
       switch (magic) {
       case MAGIC_BYTE_MATRIX:
-	read_cast_matrix<ubyte>(stream, out);
+	read_cast_matrix<ubyte>(stream, *pout);
 	break ;
       case MAGIC_INTEGER_MATRIX:
-	read_cast_matrix<int>(stream, out);
+	read_cast_matrix<int>(stream, *pout);
 	break ;
       case MAGIC_FLOAT_MATRIX:
-	read_cast_matrix<float>(stream, out);
+	read_cast_matrix<float>(stream, *pout);
 	break ;
       case MAGIC_DOUBLE_MATRIX:
-	read_cast_matrix<double>(stream, out);
+	read_cast_matrix<double>(stream, *pout);
 	break ;
       case MAGIC_LONG_MATRIX:
-	read_cast_matrix<long>(stream, out);
+	read_cast_matrix<long>(stream, *pout);
 	break ;
       case MAGIC_UINT_MATRIX:
-	read_cast_matrix<uint>(stream, out);
+	read_cast_matrix<uint>(stream, *pout);
 	break ;
       case MAGIC_UBYTE_VINCENT:
-	read_cast_matrix<ubyte>(stream, out);
+	read_cast_matrix<ubyte>(stream, *pout);
 	break ;
       case MAGIC_INT_VINCENT:
-	read_cast_matrix<int>(stream, out);
+	read_cast_matrix<int>(stream, *pout);
 	break ;
       case MAGIC_FLOAT_VINCENT:
-	read_cast_matrix<float>(stream, out);
+	read_cast_matrix<float>(stream, *pout);
 	break ;
       case MAGIC_DOUBLE_VINCENT:
-	read_cast_matrix<double>(stream, out);
+	read_cast_matrix<double>(stream, *pout);
 	break ;
       default:
 	eblerror("unknown magic number");
       }
     }
-    return out;
+    return *pout;
   }
 
   ////////////////////////////////////////////////////////////////

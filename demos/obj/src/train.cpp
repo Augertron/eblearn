@@ -34,8 +34,11 @@ int main(int argc, char **argv) { // regular main without gui
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
   parameter<t_net> theparam(60000); // create trainable parameter
   module_1_1<t_net> *net = init_network(theparam, conf, targets.dim(0));
-  if (conf.exists_bool("retrain"))
+  cout << "Initializing weights from ";
+  if (conf.exists_bool("retrain")) {
+    cout << conf.get_cstring("retrain_weights") << endl;
     theparam.load_x<t_net>(conf.get_cstring("retrain_weights"));
+  } else cout << "random" << endl;
   supervised_euclidean_machine<t_net, int> thenet(*net, targets, dims);
   supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
 
