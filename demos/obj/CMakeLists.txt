@@ -42,8 +42,8 @@ EXEC_PROGRAM("cp" ARGS
 # copy text conf and metaconf to bin
 EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_meta.conf\""
 		  "\"${LIBRARY_OUTPUT_PATH}\"")
-# EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_train.sh\""
-# 		  "\"${LIBRARY_OUTPUT_PATH}\"")
+EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_train.sh\""
+ 		  "\"${LIBRARY_OUTPUT_PATH}\"")
 EXEC_PROGRAM("cp" ARGS
   "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_dsprepare.sh\""
   "\"${LIBRARY_OUTPUT_PATH}\"")

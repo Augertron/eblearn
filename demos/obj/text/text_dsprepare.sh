@@ -12,8 +12,8 @@ meta_email=pierre.sermanet@gmail.com
 ################################################################################
 
 # directories
-#dataroot=/data
-dataroot=~/budadata
+dataroot=/data
+#dataroot=~/budadata
 #dataroot=~/texieradata
 #dataroot=~/humairadata
 #dataroot=~/blakeyadata
@@ -90,8 +90,8 @@ mkdir -p "$false_positive_root/bg/"
 #     $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
-~/eblearn/bin/dscompiler $root -precision $precision \
-    -outdir ${out} -channels $pp -dname $name \
+~/eblearn/bin/dscompiler $root -precision $precision -type grid\
+    -outdir ${out} -channels $pp -dname $name -gridsz 64x64 \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug
 
