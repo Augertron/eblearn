@@ -171,7 +171,7 @@ namespace ebl {
     uint get_total_saved();
 
     //! Limit the number of regions saved per frame.
-    uint set_save_max_per_frame(uint max);
+    void set_save_max_per_frame(uint max);
 
   private:
     //! initialize dimensions and multi-resolution buffers.

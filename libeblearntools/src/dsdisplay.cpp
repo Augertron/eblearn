@@ -204,10 +204,6 @@ int main(int argc, char **argv) {
     cout <<
       "___________________________________________________________________";
     cout << endl;
-
-#ifndef __GUI__ // return error if gui not enabled
-  cerr << "warning: QT gui libraries not available, install them and recompile" << endl;
-#endif
   }
 
   // data
@@ -265,6 +261,9 @@ int main(int argc, char **argv) {
 		  (t_data) range[0], (t_data) range[1]);
     sleep(1);
   }
-#endif 
+#else
+  cerr << "warning: QT gui libraries not available, install them and recompile"
+       << endl;
+#endif
   return 0;
 }

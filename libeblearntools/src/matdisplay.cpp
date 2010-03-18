@@ -72,7 +72,7 @@ template <typename T> void display(const string &fname, idx<T> &mat) {
   new_window(fname);
   draw_matrix(mat);
   gui << mat;
-  sleep(1);
+  sleep(1); // TODO: this lets time for window to open, fix this issue
 #endif
 }
 
