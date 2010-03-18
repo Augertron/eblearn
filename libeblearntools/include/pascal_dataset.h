@@ -95,12 +95,12 @@ namespace ebl {
     virtual bool process_xml(const string &xmlfile);
 
     //! process one object from an xml file.
-    virtual void process_object(Node* onode, idx<ubyte> &img, uint &h0,
+    virtual void process_object(Node* onode, idx<Tdata> &img, uint &h0,
 				uint &w0, uint obj_number,
 				const string &image_filename);
 
     //! process image for one object.
-    virtual void process_image(idx<ubyte> &img, uint &h0, uint &w0,
+    virtual void process_image(idx<Tdata> &img, uint &h0, uint &w0,
 			       uint xmin, uint ymin,
 			       uint xmax, uint ymax, uint sizex, uint sizey,
 			       string &obj_class, uint obj_number,

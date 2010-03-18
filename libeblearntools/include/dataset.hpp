@@ -516,8 +516,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // data
     
-  template <class Tdata> template <class Toriginal>
-  bool dataset<Tdata>::add_data(idx<Toriginal> &dat, const string &class_name,
+  template <class Tdata>
+  bool dataset<Tdata>::add_data(idx<Tdata> &dat, const string &class_name,
 				const char *filename, const rect *r) { 
     // check for errors
     if (!allocated) {
@@ -1143,10 +1143,7 @@ namespace ebl {
 
   template <class Tdata>
   void dataset<Tdata>::load_data(const string &fname) {
-    idx<ubyte> tmp = load_image<ubyte>(fname.c_str());
-    idxdim d(tmp);
-    load_img = idx<Tdata>(d);
-    idx_copy(tmp, load_img);
+    load_img = load_image<Tdata>(fname.c_str());
   }  
   
   ////////////////////////////////////////////////////////////////

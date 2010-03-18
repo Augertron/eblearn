@@ -227,9 +227,8 @@ namespace ebl {
     //! add sample d to the data with label class_name
     //! (and converting from Toriginal to Tdata type).
     //! r is an optional region of interest rectangle in the image d.
-    template <class Toriginal>
-      bool add_data(idx<Toriginal> &d, const string &class_name,
-		    const char *filename = NULL, const rect *r = NULL);
+    virtual bool add_data(idx<Tdata> &d, const string &class_name,
+			  const char *filename = NULL, const rect *r = NULL);
 
     //! add a class name
     bool add_class(const string &class_name);
