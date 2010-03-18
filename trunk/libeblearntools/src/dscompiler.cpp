@@ -39,6 +39,7 @@
 #include "pascal_dataset.h"
 #include "pascalbg_dataset.h"
 #include "pascalfull_dataset.h"
+#include "grid_dataset.h"
 #include "tools_utils.h"
 
 using namespace std;
@@ -370,6 +371,11 @@ void compile_ds(Tds &ds, bool imgpat = true) {
 
 template <class Tdata>
 void compile() {
+  grid_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(), 64,64);
+  compile_ds(ds);
+  return ;
+  
+  
   if (!strcmp(type.c_str(), "pascal")) {
     pascal_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
 			     ignore_difficult, ignore_truncated,

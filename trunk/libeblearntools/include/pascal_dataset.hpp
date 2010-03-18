@@ -298,7 +298,7 @@ namespace ebl {
 	image_fullname = imgroot;
 	image_fullname += image_filename;
 	// load image 
-	idx<ubyte> img = load_image<ubyte>(image_fullname);
+	idx<Tdata> img = load_image<Tdata>(image_fullname);
 	// parse all objects in image
 	for(Node::NodeList::iterator iter = list.begin();
 	    iter != list.end(); ++iter) {
@@ -320,7 +320,7 @@ namespace ebl {
   // process 1 object of an xml file
 
   template <class Tdata>
-  void pascal_dataset<Tdata>::process_object(Node* onode, idx<ubyte> &img,
+  void pascal_dataset<Tdata>::process_object(Node* onode, idx<Tdata> &img,
 					     uint &h0, uint &w0,uint obj_number,
 					     const string &image_filename) {
     unsigned int xmin, ymin, xmax, ymax;
@@ -433,7 +433,7 @@ namespace ebl {
 
   template <class Tdata>
   void pascal_dataset<Tdata>::
-  process_image(idx<ubyte> &img, uint &h0, uint &w0,
+  process_image(idx<Tdata> &img, uint &h0, uint &w0,
 		uint xmin, uint ymin, uint xmax,
 		uint ymax, uint sizex, uint sizey, string &obj_class,
 		uint obj_number, uint difficult, const string &image_filename) {

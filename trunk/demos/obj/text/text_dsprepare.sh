@@ -46,9 +46,9 @@ fp_name=false_positives_${detector_name}
 all_fp=${namebg}_${detector_name}
 
 # debug variables
-maxdata="-maxdata 50"
-maxperclass="-maxperclass 25"
-ddisplay="-disp -sleep 1000"
+#maxdata="-maxdata 50"
+#maxperclass="-maxperclass 25"
+ddisplay="-disp -sleep 50"
 
 # create directories
 mkdir -p $root
