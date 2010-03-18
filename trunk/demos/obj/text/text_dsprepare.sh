@@ -12,7 +12,8 @@ meta_email=pierre.sermanet@gmail.com
 ################################################################################
 
 # directories
-dataroot=/data
+#dataroot=/data
+dataroot=~/budadata
 #dataroot=~/texieradata
 #dataroot=~/humairadata
 #dataroot=~/blakeyadata
@@ -24,8 +25,7 @@ false_positive_root=$dataroot/text/false_positives/
 # variables
 h=32 #48 64
 w=${h}
-max=300 # number of samples in test AND validation set
-maxtest=0 # number of samples in the test set
+max=300 # number of samples in the val set
 draws=5 # number of train/val sets to draw
 precision=float
 pp=YpUV
@@ -38,7 +38,8 @@ bgscales=8,4,2,1
 id=${resize}${h}x${w}_ker${kernel}
 name=text_${id}
 namebg=${name}_bg
-bgds=pascalbg_${id}
+#bgds=pascalbg_${id}
+bgds=all_mean32x32_ker7_bg
 outbg=${out}/${bgds}
 partsname=parts${name}
 texts=text
@@ -48,7 +49,7 @@ all_fp=${namebg}_${detector_name}
 # debug variables
 #maxdata="-maxdata 50"
 #maxperclass="-maxperclass 25"
-ddisplay="-disp -sleep 50"
+#ddisplay="-disp -sleep 50"
 
 # create directories
 mkdir -p $root
@@ -94,27 +95,19 @@ mkdir -p "$false_positive_root/bg/"
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug
 
-# # merge normal dataset with background dataset
-# ~/eblearn/bin/dsmerge $out ${namebg} ${bgds}_$nbg ${name}
+# merge normal dataset with background dataset
+~/eblearn/bin/dsmerge $out ${namebg} ${bgds} ${name}
 
 # # # merge pascal texts with regular dataset
 # # ~/eblearn/bin/dsmerge $out ${namebgpheads} ${namebg} ${namepheads_temp}
 
-# # split dataset into training and {validation/test}
-# ~/eblearn/bin/dssplit $out ${namebg} \
-#     ${namebg}_testval_${maxtest}_ \
-#     ${namebg}_train_${maxtest}_ -maxperclass ${max} -draws $draws
+# split dataset into training and validation
+~/eblearn/bin/dssplit $out ${namebg} \
+    ${namebg}_val_ \
+    ${namebg}_train_ -maxperclass ${max} -draws $draws
 
-# # split validation and test
-# for i in `seq 1 ${draws}`
-# do
-# ~/eblearn/bin/dssplit $out ${namebg}_testval_${maxtest}_$i \
-#     ${namebg}_test_${maxtest}_$i \
-#     ${namebg}_val_${maxtest}_$i -maxperclass ${maxtest} -draws 1
-# done
-
-# # print out information about extracted datasets to check that their are ok
-# ~/eblearn/bin/dsdisplay $out/${namebg} -info
+# print out information about extracted datasets to check that their are ok
+~/eblearn/bin/dsdisplay $out/${namebg} -info
 
 ###############################################################################
 # false positive dataset compilations
