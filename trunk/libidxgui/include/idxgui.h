@@ -128,24 +128,31 @@ namespace ebl {
     //! be 255
     //! @param zoomw and @param zoomh are the zoom factors in width and height
     template<class T>
-      void draw_matrix(idx<T> &im, unsigned int h0 = 0, unsigned int w0 = 0, 
+      void draw_matrix(idx<T> &im, uint h0 = 0, uint w0 = 0, 
 		       double zoomh = 1.0, double zoomw = 1.0,
 		       T minv = 0, T maxv = 0);
     
     //! same as draw_matrix but draws a frame of color (r,g,b) around it.
     template<class T>
       void draw_matrix_frame(idx<T> &im, ubyte r, ubyte g, ubyte b,
-			     unsigned int h0 = 0, unsigned int w0 = 0, 
+			     uint h0 = 0, uint w0 = 0, 
 			     double zoomh = 1.0, double zoomw = 1.0,
 			     T minv = 0, T maxv = 0);
 
     //! same a draw_matrix but overlays the string <str> in the top left corner.
     template<class T>
       void draw_matrix(idx<T> &im, const char *str, 
-		       unsigned int h0 = 0, unsigned int w0 = 0, 
+		       uint h0 = 0, uint w0 = 0, 
 		       double zoomh = 1.0, double zoomw = 1.0,
 		       T minv = 0, T maxv = 0);
 
+    //! Draws a mask from image.
+    template<class T>
+      void draw_mask(idx<T> &im, uint h0 = 0, uint w0 = 0, 
+		     double zoomh = 1.0, double zoomw = 1.0,
+		     ubyte r = 255, ubyte g = 0, ubyte b = 0, ubyte a = 127,
+		     T threshold = 0.0);
+    
     //! draws text on the current window.
     //! you can also use the << operator instead of this function to add text 
     //! to the gui. for example: gui << "text" << endl;
@@ -206,7 +213,9 @@ namespace ebl {
     void check_init(); 
 
   signals:
-    void gui_drawImage(idx<ubyte> *img, unsigned int h0, unsigned int w0);
+    void gui_drawImage(idx<ubyte> *img, uint h0, uint w0);
+    void gui_draw_mask(idx<ubyte> *img, uint h0, uint w0,
+		       ubyte r, ubyte g, ubyte b, ubyte a);
     void appquit();
     void gui_clear();
     void gui_save_window(const string *filename, int wid);

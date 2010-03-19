@@ -49,6 +49,9 @@ namespace ebl {
   // TODO: derive all objects from a common drawable_object and hold
   // all of them in a same vector, to retain the drawing order.
   
+  ////////////////////////////////////////////////////////////////
+  // string
+
   class text : public string {
   public:
     uint	h0, w0;
@@ -62,12 +65,18 @@ namespace ebl {
     ~text() {};
   };
 
+  ////////////////////////////////////////////////////////////////
+  // arrow
+
   class arrow {
   public:
     int	                 h1, w1, h2, w2;
     arrow(int h1, int w1, int h2, int w2);
     ~arrow() {};
   };
+
+  ////////////////////////////////////////////////////////////////
+  // box
 
   class box {
   public:
@@ -78,6 +87,9 @@ namespace ebl {
     ~box() {};
   };
 
+  ////////////////////////////////////////////////////////////////
+  // image
+
   class image {
   public:
     uint         h0, w0;
@@ -86,6 +98,24 @@ namespace ebl {
     ~image() {};
   };
 
+  ////////////////////////////////////////////////////////////////
+  // mask
+
+  class imask {
+  public:
+    //! Constructor
+    imask(idx<ubyte> *img, uint h0, uint w0,
+	 ubyte r, ubyte g, ubyte b, ubyte a);
+    ~imask() {};
+    
+    // members
+    uint        h0, w0;
+    QPixmap     map;
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // window
+  
   class Window : public QWidget { 
     Q_OBJECT
       
@@ -105,10 +135,14 @@ namespace ebl {
     void add_box(int h0, int w0, int h, int w, unsigned char r, unsigned char g,
 		 unsigned char b, string *s);
     void add_image(idx<ubyte> &img, uint h0, uint w0);
+
+    void add_mask(idx<ubyte> *img, uint h0, uint w0,
+		  ubyte r, ubyte g, ubyte b, ubyte a);
+    
     //! add img to the window and delete img.
-    void update_pixmap(idx<ubyte> *img, uint h0, uint w0);
+    void update_pixmap(idx<ubyte> *img, uint h0, uint w0, bool updatepix =true);
     //! add img to the window.
-    void update_pixmap(idx<ubyte> &img, uint h0, uint w0);
+    void update_pixmap(idx<ubyte> &img, uint h0, uint w0, bool updatepix =true);
     void clear();
     void set_text_origin(uint h0, uint w0);
     ////////////////////////////////////////////////////////////////
@@ -139,6 +173,7 @@ namespace ebl {
     void clear_arrows();
     void clear_boxes();
     void clear_images();
+    void clear_masks();
 
     ////////////////////////////////////////////////////////////////
     // event methods
@@ -163,6 +198,7 @@ namespace ebl {
     void draw_text(QPainter &painter, double scaleFactor = 1.0);
     void draw_arrows(QPainter &painter);
     void draw_boxes(QPainter &painter);
+    void draw_masks(QPainter &painter);
     void draw_images();
 
   private slots:
@@ -186,6 +222,7 @@ namespace ebl {
     vector<arrow*>       arrows;
     vector<box*>         boxes;
     vector<image*>       images;
+    vector<imask*>        masks;
     bool		 silent;
     uint		 id;
     string		 savefname;

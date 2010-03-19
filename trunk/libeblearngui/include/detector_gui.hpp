@@ -178,6 +178,11 @@ namespace ebl {
 	w0 += inx.dim(1) * dzoom + 5;
 	first_time = false;
       }}
+
+     // idx<Tnet> x = ((state_idx<Tnet>*) cl.outputs.get(0))->x;
+     //  x = x.select(0, 2);
+     //  gui.draw_mask(x, 450);
+
     // display queues of detections
     uint hh0 = h0;
     vector<idx<Tnet> > &new_detections = cl.get_originals();
@@ -200,8 +205,8 @@ namespace ebl {
     // loop over all new detections and add new ones based on the step
     for (typename vector<idx<Tnet> >::iterator i = new_detections.begin();
 	 i != new_detections.end(); ++i, detcnt++) {
-      if (!(detcnt % step)) { // add when multiple of step
-	if (queue.size() >= queuesz)
+      if (!(detcnt % MAX(1, step))) { // add when multiple of step
+	if ((queue.size() >= queuesz) && (queue.size() > 0))
 	  queue.pop_front();
 	queue.push_back(*i);
       }

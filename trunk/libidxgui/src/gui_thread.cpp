@@ -47,10 +47,14 @@ namespace ebl {
   gui_thread::gui_thread(int argc, char** argv) 
     : wcur(-1), nwindows(0), silent(false), thread(gui) {
     thread.init(argc, argv, &nwindows, this);
-    connect(&thread, SIGNAL(gui_drawImage(idx<ubyte> *, 
-					  unsigned int, unsigned int)),
-	    this,   SLOT(updatePixmap(idx<ubyte> *, 
-				      unsigned int, unsigned int)));
+    // register exotic types
+    qRegisterMetaType<ubyte>("ubyte");
+    // connect methods to incoming signals
+    connect(&thread, SIGNAL(gui_drawImage(idx<ubyte> *, uint, uint)),
+	    this, SLOT(updatePixmap(idx<ubyte> *, uint, uint)));
+    connect(&thread, SIGNAL(gui_draw_mask(idx<ubyte>*, uint, uint, ubyte,
+					  ubyte, ubyte, ubyte)), this,
+	    SLOT(add_mask(idx<ubyte>*, uint,uint, ubyte, ubyte, ubyte, ubyte)));
     connect(&thread, SIGNAL(appquit()), this, SLOT(appquit()));
     connect(&thread, SIGNAL(gui_clear()), this, SLOT(clear()));
     connect(&thread, SIGNAL(gui_save_window(const string*, int)),
@@ -180,12 +184,21 @@ namespace ebl {
   }
 
   // add image
-  void gui_thread::updatePixmap(idx<ubyte> *img, unsigned int h0, 
-			       unsigned int w0) {
+  void gui_thread::updatePixmap(idx<ubyte> *img, uint h0, uint w0) {
     if (nwindows == 0)
       new_window();
     if ((wcur >= 0) && (windows[wcur])) {
       windows[wcur]->update_pixmap(img, h0, w0);
+    }
+  }
+
+  // add mask
+  void gui_thread::add_mask(idx<ubyte> *img, uint h0, uint w0, ubyte r,
+			    ubyte g, ubyte b, ubyte a) {
+    if (nwindows == 0)
+      new_window();
+    if ((wcur >= 0) && (windows[wcur])) {
+      windows[wcur]->add_mask(img, h0, w0, r, g, b, a);
     }
   }
 
