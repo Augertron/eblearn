@@ -74,6 +74,21 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // imask
+
+  imask::imask(idx<ubyte> *img, unsigned int h0_, unsigned int w0_,
+	       ubyte r, ubyte g, ubyte b, ubyte a)
+    : h0(h0_), w0(w0_), map(img->dim(1), img->dim(0)) {
+    // fill the pixmap with desired color
+    map.fill(QColor(r, g, b, a));
+    // set mask
+    QImage qim((unsigned char*) img->idx_ptr(), img->dim(1), img->dim(0), 
+	       img->dim(1) * img->dim(2) * sizeof (unsigned char),
+	       QImage::Format_RGB888);
+    map.setMask(QBitmap::fromImage(qim));
+  }
+
+  ////////////////////////////////////////////////////////////////
   // Window
 
   Window::Window(unsigned int wid, const char *wname, int height, int width) 
@@ -118,6 +133,7 @@ namespace ebl {
     clear_arrows();
     clear_boxes();
     clear_images();
+    clear_masks();
   }
 
   ////////////////////////////////////////////////////////////////
@@ -131,6 +147,7 @@ namespace ebl {
     clear_arrows();
     clear_boxes();
     clear_images();
+    clear_masks();
     update_window();
   }
 
@@ -163,6 +180,15 @@ namespace ebl {
       if (*i)
 	delete (*i);
     images.clear();
+    buffer_maxh = 0;
+    buffer_maxw = 0;
+  }
+
+  void Window::clear_masks() {
+    for (vector<imask*>::iterator i = masks.begin(); i != masks.end(); ++i)
+      if (*i)
+	delete (*i);
+    masks.clear();
     buffer_maxh = 0;
     buffer_maxw = 0;
   }
@@ -252,6 +278,19 @@ namespace ebl {
   
   void Window::add_image(idx<ubyte> &img, unsigned int h0, unsigned int w0) {
     images.push_back(new image(img, h0, w0));
+    update_window();
+  }
+
+  void Window::add_mask(idx<ubyte> *img, unsigned int h0, unsigned int w0,
+			ubyte r, ubyte g, ubyte b, ubyte a) {
+    masks.push_back(new imask(img, h0, w0, r, g, b, a));
+    // update maximum buffer size
+    buffer_maxh = MAX(buffer_maxh, MAX(buffer?(unsigned int)buffer->dim(0):0, 
+				       h0 + img->dim(0)));
+    buffer_maxw = MAX(buffer_maxw, MAX(buffer?(unsigned int)buffer->dim(1):0, 
+				       w0 + img->dim(1)));
+    // we are responsible for deleting img
+    delete img;
     update_window();
   }
 
@@ -365,15 +404,15 @@ namespace ebl {
   }
 
   void Window::update_pixmap(idx<ubyte> *img, unsigned int h0, 
-			     unsigned int w0) {
+			     unsigned int w0, bool updatepix) {
     if (img) {
-      update_pixmap(*img, h0, w0);
+      update_pixmap(*img, h0, w0, updatepix);
       delete img;
     }
   }
 
   void Window::update_pixmap(idx<ubyte> &img, unsigned int h0, 
-			     unsigned int w0) {
+			     unsigned int w0, bool updatepix) {
     unsigned int h = MAX(buffer?(unsigned int)buffer->dim(0):0, 
 			 h0 + img.dim(0));
     unsigned int w = MAX(buffer?(unsigned int)buffer->dim(1):0, 
@@ -386,10 +425,12 @@ namespace ebl {
 	buffer_resize(h, w);
       idx<ubyte> tmpbuf = buffer->narrow(0, img.dim(0), h0);
       tmpbuf = tmpbuf.narrow(1, img.dim(1), w0);
-      if ((img.order() == 3) && (img.dim(2) == 3)) // RGB
+      // RGB input, simple copy
+      if ((img.order() == 3) && (img.dim(2) == 3))
 	idx_copy(img, tmpbuf);
+      // Grayscale input, replicate over RGB channels
       else if ((img.order() == 2) ||
-	       ((img.order() == 3) && (img.dim(2) == 1))) { // greyscale
+	       ((img.order() == 3) && (img.dim(2) == 1))) {
 	idx<ubyte> tmpbufl = tmpbuf.select(2, 0);
 	idx_copy(img, tmpbufl);
 	tmpbufl = tmpbuf.select(2, 1);
@@ -400,17 +441,20 @@ namespace ebl {
       else {
 	cerr << "unknown image dimensions: " << img << endl;
 	eblerror("expected a grayscale or rgb image");
-      }      
+      }
+      // and ready to be displayed
       // copy buffer to pixmap
-      *pixmap = QPixmap::fromImage(*qimage);
-      update_window();
+      if (updatepix) {
+	*pixmap = QPixmap::fromImage(*qimage);
+	update_window();
+      }
     }
     else { // don't add the image if wupdate is false
       // instead keep it in a list of images to be displayed later
       add_image(img, h0, w0);
       // and remember the maximum size of the display buffer
-      buffer_maxh = h;
-      buffer_maxw = w;
+      buffer_maxh = MAX(buffer_maxh, h);
+      buffer_maxw = MAX(buffer_maxw, w);
     }
   }
 
@@ -442,6 +486,7 @@ namespace ebl {
     QRectF exposed = 
       painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
     painter.drawPixmap(exposed, *pixmap, exposed);
+    draw_masks(painter);
     draw_boxes(painter);
     draw_text(painter, scaleFactor);
     draw_arrows(painter);
@@ -482,7 +527,8 @@ namespace ebl {
 	ax2 = (*i)->h2;
 	ay2 = (*i)->w2;
 	double angle = atan2( (double) ay1 - ay2, (double) ax1 - ax2);
-	double hypotenuse = sqrt( pow((float)ay1 - ay2, 2) + pow((float)ax1 - ax2, 2));
+	double hypotenuse = sqrt( pow((float)ay1 - ay2, 2)
+				  + pow((float)ax1 - ax2, 2));
 	/* Here we lengthen the arrow by a factor of three. */
 	ax2 = (int) (ax1 - len_factor * hypotenuse * cos(angle));
 	ay2 = (int) (ay1 - len_factor * hypotenuse * sin(angle));
@@ -549,7 +595,8 @@ namespace ebl {
 	bg.setHeight(bg.height() - 3);
 	painter.setBrush(text_bg_color);
 	painter.setPen(Qt::NoPen);
-	painter.drawRect((int) bg.left(), (int) bg.top(), (int) bg.width(), (int) bg.height());
+	painter.drawRect((int) bg.left(), (int) bg.top(),
+			 (int) bg.width(), (int) bg.height());
 	painter.setPen(text_fg_color);
 	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
 			 txt, &bg);
@@ -562,10 +609,23 @@ namespace ebl {
     // then display all images not displayed
     for (vector<image*>::iterator i = images.begin(); i != images.end(); ++i)
       if (*i) {
-	update_pixmap((*i)->img, (*i)->h0, (*i)->w0);
+	update_pixmap((*i)->img, (*i)->h0, (*i)->w0, false);
 	delete (*i);
       }
+    // now update pixmap
+    *pixmap = QPixmap::fromImage(*qimage);
+    update_window();
+    // clear images
     images.clear();
+  }
+
+  void Window::draw_masks(QPainter &painter) {
+    buffer_resize(buffer_maxh, buffer_maxw); // resize to maximum size first
+    // then display all images not displayed
+    for (vector<imask*>::iterator i = masks.begin(); i != masks.end(); ++i)
+      if (*i) {
+	painter.drawPixmap((*i)->w0, (*i)->h0, (*i)->map);
+      }
   }
 
   ////////////////////////////////////////////////////////////////

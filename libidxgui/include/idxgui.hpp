@@ -73,6 +73,31 @@ namespace ebl {
     emit gui_drawImage(fim, h0, w0);
   }
 
+  template<class T>
+  void idxgui::draw_mask(idx<T> &im, uint h0, uint w0, 
+			 double zoomh, double zoomw,
+			 ubyte r, ubyte g, ubyte b, ubyte a, T threshold) {
+    idx<float> inverted(im.get_idxdim());
+    idx_addc(im, -(float)threshold, inverted);
+    idx_signdotc(inverted, (float)-1.0, inverted);
+    idx<ubyte> *uim = new idx<ubyte>
+      (image_to_ubyte<float>(inverted, zoomh, zoomw, -1.0, 1.0));
+    // QT mask works with rgb input, TODO: find how to use 2D also
+    if (uim->order() == 2) { // replicate 2D into 3D rgb
+      idx<ubyte> *rgb = new idx<ubyte>(uim->dim(0), uim->dim(1), 3);
+      idx<ubyte> tmp = rgb->select(2, 0);
+      idx_copy(*uim, tmp);
+      tmp = rgb->select(2, 1);
+      idx_copy(*uim, tmp);
+      tmp = rgb->select(2, 2);
+      idx_copy(*uim, tmp);
+      delete uim;
+      uim = rgb;
+    }
+    // send image to main gui thread
+    emit gui_draw_mask(uim, h0, w0, r, g, b, a);
+  }
+
   template<class T1, class T2>
   class ManipInfra {
   public:

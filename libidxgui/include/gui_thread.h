@@ -91,7 +91,9 @@ namespace ebl {
 			 unsigned char bg_b, unsigned char bg_a);
     void set_bg_colors(unsigned char r, unsigned char g, 
 		       unsigned char b);
-    void updatePixmap(idx<ubyte> *img, unsigned int h0, unsigned int w0);
+    void updatePixmap(idx<ubyte> *img, uint h0, uint w0);
+    void add_mask(idx<ubyte> *img, uint h0, uint w0,
+		  ubyte r, ubyte g, ubyte b, ubyte a);
     void appquit();
 
     //! clear current window

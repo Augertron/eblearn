@@ -88,6 +88,13 @@ namespace ebl {
 		     double zoomh = 1.0, double zoomw = 1.0,
 		     T minv = 0, T maxv = 0);
 
+  //! Draws a mask from image.
+  template<class T>
+    void draw_mask(idx<T> &im, uint h0 = 0, uint w0 = 0, 
+		   double zoomh = 1.0, double zoomw = 1.0,
+		   ubyte r = 255, ubyte g = 0, ubyte b = 0, ubyte a = 127,
+		   T threshold = 0.0);
+    
   //! closes all windows.
   void quit_gui();
   
