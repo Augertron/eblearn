@@ -200,9 +200,6 @@ IF (Boost_FOUND)
   ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 ENDIF (Boost_FOUND)
 
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/meta_plot.sh\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"")
-
 # compile executable: videoffinder
 ################################################################################
 # IF (OpenCV_FOUND) #-------------------------------------------------------------

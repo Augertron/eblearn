@@ -91,9 +91,8 @@ namespace ebl {
     oss.str(""); oss << fdir << "/" << fname;
     try {
       frame = load_image<Tdata>(oss.str());
-    } catch (const char *err) {
-      cerr << "failed to load image " << oss.str();
-      cerr << ". Trying next image..." << endl;
+    } catch (const string &err) {
+      cerr << err << ". Trying next image..." << endl;
       return grab();
     }
     return this->postprocess();
