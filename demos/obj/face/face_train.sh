@@ -33,10 +33,9 @@ meta_send_best=15
 ################################################################################
 
 # directories
-xpname=face_train_20100316.035610
-#xpname=face_train_`date +"%Y%m%d.%H%M%S"`
-root=~/texieradata/face/
-root2=~/texieradata/face/
+xpname=face_train_`date +"%Y%m%d.%H%M%S"`
+root=~/blakeyadata/face/
+root2=~/blakeyadata/face/
 dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
@@ -81,8 +80,6 @@ cp $eblearnbin0/* $eblearnbin/
 cp $metaconf0 $metaconf
 echo "meta_output_dir = ${out}" >> $metaconf
 
-touch /home/sermanet/texieradata/face/out/face_train_20100316.035610/20100316.035612.face
-
 ###############################################################################
 # training
 ###############################################################################
@@ -90,7 +87,7 @@ touch /home/sermanet/texieradata/face/out/face_train_20100316.035610/20100316.03
 # initial training
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
-#${eblearnbin}/metarun $metaconf
+${eblearnbin}/metarun $metaconf
 
 # looping on retraining on false positives
 echo "________________________________________________________________________"
@@ -110,7 +107,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "Using best conf of previous training: ${bestconf}"
   echo "i=`expr ${maxiteration} - ${iter}`"
 
-if [ $iter != 1 ]; then  
+#if [ $iter != 1 ]; then  
 
 # extract false positives: first add new variables to best conf
 # activate retraining
@@ -179,7 +176,7 @@ if [ $iter != 1 ]; then
 	  allfp_val_${i} ${valdsname}_${i}
   done
 
-fi  
+#fi  
 
 # retrain on old + new data
   echo "Retraining from best previous weights: ${bestweights}"
