@@ -785,8 +785,18 @@ namespace ebl {
       return mask;
     }
     // merge all outputs of class 'id' into mask
-    idx_bloop1(output, outputs, void*) {
+    idx_bloop3(input, inputs, void*, output, outputs, void*,
+	       obbox, original_bboxes, uint) {
+      idx<T> in = ((state_idx<T>*) input.get())->x.select(0, 0);
       idx<T> out = ((state_idx<T>*) output.get())->x.select(0, id);
+      double ratioh = out.dim(0) / (double) in.dim(0);
+      double ratiow = out.dim(1) / (double) in.dim(1);
+      rect o(obbox.get(0), obbox.get(1),
+	     obbox.get(2), obbox.get(3));
+      // resizing to inputs, then to original input, to avoid precision loss
+      out = image_resize(out, in.dim(0), in.dim(1), 1);
+      out = out.narrow(0, obbox.get(2), obbox.get(0));
+      out = out.narrow(1, obbox.get(3), obbox.get(1));
       out = image_resize(out, mask.dim(0), mask.dim(1), 1);
       if (i++ == 0)
 	idx_copy(out, mask);
