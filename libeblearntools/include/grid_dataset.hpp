@@ -62,7 +62,7 @@ namespace ebl {
     // TODO: implement finding biggest sample size and divide by number of cells
     // and return the maximum possible number of samples
     dataset<Tdata>::count_samples();
-    this->total_samples *= 24;
+    this->total_samples *= 100;
     return true;
   }
   
