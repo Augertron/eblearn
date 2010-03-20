@@ -175,13 +175,13 @@ int main(int argc, char **argv) {
   ostringstream dir, fname;
   int capcnt = 0;
   dir << "captured_" << tstamp();
-  camera_opencv<t_data> cam(-1);
-  //  camera_opencv<t_data> cam(-1, 192, 256);
+  //camera_opencv<t_data> cam(-1);
+  camera_opencv<t_data> cam(-1, 192, 256);
   while (!cam.empty()) {
     frame = cam.grab();
     // crop frame
-     frame = frame.narrow(0, 394, 0);
-    frame = frame.narrow(1, 256, 0);
+    frame = frame.narrow(0, 128, 0);
+    frame = frame.narrow(1, 196, 0);
     // display
     disable_window_updates();
     clear_window();

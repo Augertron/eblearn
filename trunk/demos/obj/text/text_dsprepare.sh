@@ -49,7 +49,7 @@ all_fp=${namebg}_${detector_name}
 # debug variables
 #maxdata="-maxdata 50"
 #maxperclass="-maxperclass 25"
-#ddisplay="-disp -sleep 50"
+#ddisplay="-disp" # -sleep 50"
 
 # create directories
 mkdir -p $root
@@ -91,9 +91,27 @@ mkdir -p "$false_positive_root/bg/"
 
 # compile regular dataset
 ~/eblearn/bin/dscompiler $root -precision $precision -type grid\
+    -outdir ${out} -channels $pp -dname ${name}_128 -gridsz 128x128 \
+    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
+
+# compile regular dataset
+~/eblearn/bin/dscompiler $root -precision $precision -type grid\
+    -outdir ${out} -channels $pp -dname ${name}_32 -gridsz 32x32 \
+    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
+
+# compile regular dataset
+~/eblearn/bin/dscompiler $root -precision $precision -type grid\
     -outdir ${out} -channels $pp -dname $name -gridsz 64x64 \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug
+
+# merge 128 into 64
+~/eblearn/bin/dsmerge $out ${name} ${name}_128 ${name}
+
+# merge 32 into 64
+~/eblearn/bin/dsmerge $out ${name} ${name}_64 ${name}
 
 # merge normal dataset with background dataset
 ~/eblearn/bin/dsmerge $out ${namebg} ${bgds} ${name}
