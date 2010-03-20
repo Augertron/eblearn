@@ -34,8 +34,8 @@ meta_send_best=15
 
 # directories
 xpname=text_train_`date +"%Y%m%d.%H%M%S"`
-root=~/budadata/text/
-root2=~/budcdata/face/
+root=~/dizzbdata/sermanet/text/
+root2=~/dizzbdata/sermanet/
 dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
