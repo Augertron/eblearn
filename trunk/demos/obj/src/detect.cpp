@@ -57,11 +57,14 @@ int main(int argc, char **argv) { // regular main without gui
   // load network and weights
   parameter<t_net> theparam;
   idx<ubyte> classes(1,1);
-  load_matrix<ubyte>(classes, conf.get_cstring("classes"));
+  try {
+    load_matrix<ubyte>(classes, conf.get_cstring("classes"));
+  } catch(string &err) { cerr << "warning: " << err << endl; }
   cout << "loading weights from " << conf.get_cstring("weights") << endl;
   module_1_1<t_net> *net = init_network(theparam, conf, classes.dim(0));
-  if (!theparam.load_x<double>(conf.get_cstring("weights")))
-    eblerror("failed to load weights");
+  try {
+    theparam.load_x<double>(conf.get_cstring("weights"));
+  } catch(string &err) { eblerror(err.c_str()); }
 
   // select preprocessing  
   module_1_1<t_net>* pp = color ?
@@ -71,6 +74,8 @@ int main(int argc, char **argv) { // regular main without gui
   detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
 			 conf.get_double("gain"));
   detect.set_resolutions(1.4);
+  if (conf.exists("mask_class"))
+    detect.set_mask_class(conf.get_cstring("mask_class"));
   if (conf.exists("input_max"))
     detect.set_max_resolution(conf.get_uint("input_max")); // limit inputs size
   detect.set_silent();
@@ -124,6 +129,9 @@ int main(int argc, char **argv) { // regular main without gui
   detector_gui<t_net> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
 			   qwidth1, conf.exists_bool("queue2"), qstep2,
 			   qheight2, qwidth2);
+  if (conf.exists("mask_class"))
+    dgui.set_mask_class(conf.get_cstring("mask_class"),
+			(t_net) conf.get_double("mask_threshold"));
   night_mode();
   if (save_video)
     cam->start_recording();

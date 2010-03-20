@@ -77,11 +77,10 @@ namespace ebl {
   void idxgui::draw_mask(idx<T> &im, uint h0, uint w0, 
 			 double zoomh, double zoomw,
 			 ubyte r, ubyte g, ubyte b, ubyte a, T threshold) {
-    idx<float> inverted(im.get_idxdim());
-    idx_addc(im, -(float)threshold, inverted);
-    idx_signdotc(inverted, (float)-1.0, inverted);
+    idx<float> binary(im.get_idxdim());
+    idx_threshold(im, (T) threshold, (float) 1.0, (float) 0.0, binary);
     idx<ubyte> *uim = new idx<ubyte>
-      (image_to_ubyte<float>(inverted, zoomh, zoomw, -1.0, 1.0));
+      (image_to_ubyte<float>(binary, zoomh, zoomw, (float) 0.5, (float) .6));
     // QT mask works with rgb input, TODO: find how to use 2D also
     if (uim->order() == 2) { // replicate 2D into 3D rgb
       idx<ubyte> *rgb = new idx<ubyte>(uim->dim(0), uim->dim(1), 3);
