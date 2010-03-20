@@ -179,6 +179,12 @@ namespace ebl {
 	first_time = false;
       }}
 
+    // draw masks class
+    if (!mask_class.empty()) {
+      idx<Tnet> mask = cl.get_mask(mask_class);
+      draw_mask(mask, h0, 0 + mask.dim(1) * dzoom + 5, dzoom, dzoom,
+		255, 0, 0, 127, mask_threshold);
+    }
      // idx<Tnet> x = ((state_idx<Tnet>*) cl.outputs.get(0))->x;
      //  x = x.select(0, 2);
      //  gui.draw_mask(x, 450);
@@ -282,6 +288,14 @@ namespace ebl {
     enable_window_updates();
   }
 
+  template <typename Tnet>
+  void detector_gui<Tnet>::set_mask_class(const char *name, Tnet threshold) {
+    if (name) {
+      mask_class = name;
+      mask_threshold = threshold;
+    }
+  }
+  
 } // end namespace ebl
 
 #endif

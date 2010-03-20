@@ -133,8 +133,17 @@ namespace ebl {
     //! resolution.
     void set_resolutions(double scales_steps);
 
+    //! Return the id of the class 'name' or -1 if not found.
+    int get_class_id(const string &name);
+
     //! set background class (which will be ignored).
     void set_bgclass(const char *bg);
+
+    //! Set the mask class, which is ignored by bounding box detection.
+    //! Instead, call get_mask() to retrieve a mask map of values above
+    //! a given threshold. This is useful for continuous classes rather
+    //! than discrete classes.
+    void set_mask_class(const char *mask);
 
     //! set detector to silent: do not print results on std output
     void set_silent();
@@ -166,6 +175,10 @@ namespace ebl {
     //! Return a reference to a vector of windows in the preprocessed/scaled
     //! image that yielded a detection.
     vector<idx<T> >& get_preprocessed();
+
+    //! Return a mask of output maps with the same size as the input.
+    //! The mask is a max of all output resolution.
+    idx<T> get_mask(string &classname);
 
     //! Returns the number of bboxes saved so far.
     uint get_total_saved();
@@ -256,6 +269,8 @@ namespace ebl {
     idx<uint>		 resolutions;
     idx<uint>		 original_bboxes; //!< bboxes orig image after resizing
     int                  bgclass;
+    int                  mask_class;
+    idx<T>               mask;
     idxdim               input_dim;
     const double        *scales;
     double               scales_step;

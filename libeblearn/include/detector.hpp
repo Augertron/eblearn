@@ -52,7 +52,7 @@ namespace ebl {
       inputs(1), outputs(1), results(1), resize_modules(1), nets(1), pp(pp_),
       ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
-      bgclass(-1), scales(NULL), scales_step(0),
+      bgclass(-1), mask_class(-1), scales(NULL), scales_step(0),
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       max_size(0), bodetections(false),
@@ -230,27 +230,46 @@ namespace ebl {
   }
     
   template <class T>
-  void detector<T>::set_bgclass(const char *bg) {
+  int detector<T>::get_class_id(const string &name) {
     int i = 0;
+    
+    idx_bloop1(lab, labels, ubyte) {
+      if (!strcmp((const char *)lab.idx_ptr(), name.c_str()))
+	return i;
+      i++;
+    }
+    return -1;
+  }
+  
+  template <class T>
+  void detector<T>::set_bgclass(const char *bg) {
     string name;
-    bool found = false;
     
     if (bg)
       name = bg;
     else
       name = "bg"; // default name
-    idx_bloop1(lab, labels, ubyte) {
-      if (!strcmp((const char *)lab.idx_ptr(), name.c_str())) {
-	bgclass = i;
-	found = true;
-      }
-      i++;
-    }
-    if (found) {
+    bgclass = get_class_id(name);
+    if (bgclass != -1) {
       cout << "Background class is \"" << name << "\" with id " << bgclass;
       cout << "." << endl;
     } else if (bg)
       cerr << "warning: background class \"" << bg << "\" not found." << endl;
+  }
+
+  // TODO: handle more than 1 class
+  template <class T>
+  void detector<T>::set_mask_class(const char *mask) {
+    string name;
+    
+    if (mask)
+      name = mask;
+    mask_class = get_class_id(name);
+    if (mask_class != -1) {
+      cout << "Mask class is \"" << name << "\" with id " << mask_class;
+      cout << "." << endl;
+    } else if (mask)
+      cerr << "warning: mask class \"" << mask << "\" not found." << endl;
   }
 
   template <class T>
@@ -398,7 +417,7 @@ namespace ebl {
   void detector<T>::mark_maxima(T threshold) {
     // loop on scales
     idx_bloop2(out_map, outputs, void*, res_map, results, void*) {
-      intg winnning_class = 0;
+      intg winning_class = 0;
       idx<T> raw_maps = ((state_idx<T>*) out_map.get())->x;
       idx<T> max_map = *((idx<T>*) res_map.get());
       int y_max = (int) raw_maps.dim(1);
@@ -411,44 +430,47 @@ namespace ebl {
       // loop on each class
       idx_bloop1(raw_map, raw_maps, T) {
 	y = 0;
-	// loop on rows
-	idx_bloop2(max_map_row, max_map, T,
-		   raw_map_row, raw_map, T) {
-	  x = 0;
-	  // loop on cols
-	  idx_bloop2(max_map_result, max_map_row, T,
-		     raw_map_pix, raw_map_row, T)  {
-	    T pix_val = raw_map_pix.get();
-	    if (pix_val > max_map_result.get(1)
-		&& pix_val > threshold) {
-	      int local_max, i,j, i_min, j_min, i_max, j_max;
-	      i_min = MAX(0, (y+nms<=y_max)?
-			  ((y-nms>0)?y-nms:0):y_max-2*nms+1);
-	      j_min = MAX(0, (x+nms<=x_max)?
-			  ((x-nms>0)?x-nms:0):x_max-2*nms+1);
-	      i_max = MIN(raw_map.dim(0),
-			  (y-nms>0)?((y+nms<=y_max)?y+nms:y_max):2*nms+1);
-	      j_max = MIN(raw_map.dim(1),
-			  (x-nms>0)?((x+nms<=x_max)?x+nms:x_max):2*nms+1);
-	      local_max = 1;
-	      for (i = i_min; i < i_max; i++) {
-		for (j = j_min; j < j_max; j++) {
-		  if (pix_val <= raw_map.get(i,j) && (i!=y || j!=x)) {
-		    local_max = 0;
+	// only process if we want to classify this class
+	if ((winning_class != bgclass) && (winning_class != mask_class)) {
+	  // loop on rows
+	  idx_bloop2(max_map_row, max_map, T,
+		     raw_map_row, raw_map, T) {
+	    x = 0;
+	    // loop on cols
+	    idx_bloop2(max_map_result, max_map_row, T,
+		       raw_map_pix, raw_map_row, T)  {
+	      T pix_val = raw_map_pix.get();
+	      if (pix_val > max_map_result.get(1)
+		  && pix_val > threshold) {
+		int local_max, i,j, i_min, j_min, i_max, j_max;
+		i_min = MAX(0, (y+nms<=y_max)?
+			    ((y-nms>0)?y-nms:0):y_max-2*nms+1);
+		j_min = MAX(0, (x+nms<=x_max)?
+			    ((x-nms>0)?x-nms:0):x_max-2*nms+1);
+		i_max = MIN(raw_map.dim(0),
+			    (y-nms>0)?((y+nms<=y_max)?y+nms:y_max):2*nms+1);
+		j_max = MIN(raw_map.dim(1),
+			    (x-nms>0)?((x+nms<=x_max)?x+nms:x_max):2*nms+1);
+		local_max = 1;
+		for (i = i_min; i < i_max; i++) {
+		  for (j = j_min; j < j_max; j++) {
+		    if (pix_val <= raw_map.get(i,j) && (i!=y || j!=x)) {
+		      local_max = 0;
+		    }
 		  }
 		}
+		// current pixel is the maximum within the window
+		if (local_max == 1) {
+		  max_map_result.set(winning_class, 0);
+		  max_map_result.set(pix_val, 1);
+		}
 	      }
-	      // current pixel is the maximum within the window
-	      if (local_max == 1) {
-		max_map_result.set(winnning_class, 0);
-		max_map_result.set(pix_val, 1);
-	      }
+	      x++;
 	    }
-	    x++;
+	    y++;
 	  }
-	  y++;
 	}
-	winnning_class++;
+	winning_class++;
       }
     }
   }
@@ -512,7 +534,7 @@ namespace ebl {
 	{ idx_bloop1(re, *((idx<T>*) r.get()), T) {
 	    offset_w = 0;
 	    { idx_bloop1(ree, re, T) {
-		if ((ree.get(0) != bgclass) && 
+		if ((ree.get(0) != bgclass) && (ree.get(0) != mask_class) && 
 		    (ree.get(1) > threshold)) {
 		  bbox bb;
 		  bb.class_id = (int) ree.get(0); // Class
@@ -651,7 +673,7 @@ namespace ebl {
     uint i = 0;
     for (bbox = bboxes.begin(); bbox != bboxes.end(); ++bbox, ++i) {
       // exclude background class
-      if ((*bbox)->class_id == bgclass)
+      if (((*bbox)->class_id == bgclass) || ((*bbox)->class_id == mask_class))
 	continue ;
       // get class name
       classname = (const char *) labels[(*bbox)->class_id].idx_ptr();
@@ -715,7 +737,7 @@ namespace ebl {
     // loop on bounding boxes
     for (bbox = pruned_bboxes.begin(); bbox != pruned_bboxes.end(); ++bbox) {
       // exclude background class
-      if ((*bbox)->class_id == bgclass)
+      if (((*bbox)->class_id == bgclass) || ((*bbox)->class_id == mask_class))
 	continue ;
       // get bbox of input
       input = grabbed.narrow(0, (*bbox)->height, (*bbox)->h0);
@@ -739,7 +761,7 @@ namespace ebl {
     // loop on bounding boxes
     for (bbox = pruned_bboxes.begin(); bbox != pruned_bboxes.end(); ++bbox) {
       // exclude background class
-      if ((*bbox)->class_id == bgclass)
+      if (((*bbox)->class_id == bgclass) || ((*bbox)->class_id == mask_class))
 	continue ;
       // get bbox of input
       sinput = (state_idx<T>*) inputs.get((*bbox)->scale_index);
@@ -749,6 +771,29 @@ namespace ebl {
     }
     bppdetections = true;
     return ppdetections;
+  }
+  
+  template <class T>
+  idx<T> detector<T>::get_mask(string &classname) {
+    int id = get_class_id(classname), i = 0;
+    idxdim d(grabbed.dim(0), grabbed.dim(1));
+    if (mask.get_idxdim() != d)
+      mask = idx<T>(d);
+    if (id == -1) { // class not found
+      cerr << "warning: unknown class " << classname << endl;
+      idx_clear(mask);
+      return mask;
+    }
+    // merge all outputs of class 'id' into mask
+    idx_bloop1(output, outputs, void*) {
+      idx<T> out = ((state_idx<T>*) output.get())->x.select(0, id);
+      out = image_resize(out, mask.dim(0), mask.dim(1), 1);
+      if (i++ == 0)
+	idx_copy(out, mask);
+      else
+	idx_max(mask, out, mask);
+    }
+    return mask;
   }
   
 #include <sys/time.h>

@@ -131,6 +131,8 @@ namespace ebl {
 			   int wid = -1, 
 			   const char *wname = NULL);
 
+    void set_mask_class(const char *name, Tnet threshold);
+
     ////////////////////////////////////////////////////////////////
     // private methods
   private:
@@ -157,6 +159,8 @@ namespace ebl {
     deque<idx<Tnet> > detqueue;	//!< queue of last detections
     deque<idx<Tnet> > detqueue2;	//!< queue of last detections
     uint        detcnt;         //!< counter of all detections
+    string      mask_class;
+    Tnet        mask_threshold;
   };
 
 } // end namespace ebl

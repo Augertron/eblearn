@@ -385,6 +385,17 @@ namespace ebl {
     }
   }
   
+  template<class T, class T2>
+  void idx_threshold(idx<T>& in, T th, T2 below, T2 above, idx<T2>& out) {
+    idxiter<T> pin; idxiter<T2> pout;
+    idx_aloop2_on(pin,in,pout,out) {
+      if (*pin < th)
+	*pout = below;
+      else
+	*pout = above;
+    }
+  }
+  
   template<class T> void idx_sqrt(idx<T>& in, idx<T>& out) {
     idxiter<T> pin; idxiter<T> pout;
     idx_aloop2_on(pin,in,pout,out) {
@@ -565,6 +576,17 @@ namespace ebl {
     idx_aloop2_on(pin,in,pout,out) {
       if (*pin < th)
 	*pout = value;
+    }
+  }
+
+  template<class T, class T2>
+  void idx_threshold(idx<T>& in, T th, T2 below, T2 above, idx<T2>& out) {
+    ScalarIter<T> pin(in); ScalarIter<T2> pout(out);
+    idx_aloop2_on(pin,in,pout,out) {
+      if (*pin < th)
+	*pout = below;
+      else
+	*pout = above;
     }
   }
 
@@ -1025,7 +1047,8 @@ namespace ebl {
   }
 
   // Fu Jie Huang, May 20, 2008
-  template<typename T> void idx_m2squdotm2acc(idx<T>& i1, idx<T>& i2, idx<T>& o) {
+  template<typename T>
+  void idx_m2squdotm2acc(idx<T>& i1, idx<T>& i2, idx<T>& o) {
     idx_checkorder3(i1, 2, i2, 2, o, 0);
     idx_checkdim2(i1, 0, i2.dim(0), i1, 1, i2.dim(1));
     intg imax = i1.dim(0), jmax = i2.dim(1);
@@ -1071,6 +1094,12 @@ namespace ebl {
 	if (*i > v) v = *i;
       }}
     return v;
+  }
+
+  template <class T> void idx_max(idx<T> &in1, idx<T> &in2, idx<T> &out) {
+    { idx_aloop3(i1, in1, T, i2, in2, T, o, out, T) {
+	*o = MAX(*i1, *i2);
+      }}
   }
 
   template <class T> T idx_min(idx<T> &m) {

@@ -253,6 +253,10 @@ namespace ebl {
   //! if input is less than th, assign value.
   template<class T> void idx_threshold(idx<T>& in, T th, T value, idx<T>& out);
   
+  //! if input is less than th, assign 'below', else assign 'above'.
+  template<class T, class T2>
+    void idx_threshold(idx<T>& in, T th, T2 below, T2 above, idx<T2>& out);
+  
   //! takes the square root of in and puts it in out.
   template<class T> void idx_sqrt(idx<T>& in, idx<T>& out);
   
@@ -387,6 +391,9 @@ namespace ebl {
 
   //! returns largest element in m
   template<class T> T idx_max(idx<T> &m);
+
+  //! Copy maximum between each element of in1 and in2 into out.
+  template<class T> void idx_max(idx<T> &in1, idx<T> &in2, idx<T> &out);
 
   //! returns smallest element in m
   template<class T> T idx_min(idx<T> &m);
