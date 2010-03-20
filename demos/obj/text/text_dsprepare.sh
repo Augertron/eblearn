@@ -12,8 +12,8 @@ meta_email=pierre.sermanet@gmail.com
 ################################################################################
 
 # directories
-dataroot=/data
-#dataroot=~/budadata
+#dataroot=/data
+dataroot=~/dizzbdata/sermanet/
 #dataroot=~/texieradata
 #dataroot=~/humairadata
 #dataroot=~/blakeyadata
@@ -111,7 +111,7 @@ mkdir -p "$false_positive_root/bg/"
 ~/eblearn/bin/dsmerge $out ${name} ${name}_128 ${name}
 
 # merge 32 into 64
-~/eblearn/bin/dsmerge $out ${name} ${name}_64 ${name}
+~/eblearn/bin/dsmerge $out ${name} ${name}_32 ${name}
 
 # merge normal dataset with background dataset
 ~/eblearn/bin/dsmerge $out ${namebg} ${bgds} ${name}
