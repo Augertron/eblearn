@@ -48,6 +48,11 @@
       </ul>
       <h2>SVN</h2>
       <ul>
+	<li>Creating a new branch:<br>
+	  svn copy https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk https://eblearn.svn.sourceforge.net/svnroot/eblearn/branches/george
+	</li>
+	<li>Merging a branch into trunk:</li>
+	<li>Merging a trunk into branch:</li>
 	<li>Never commit a broken code in the main trunk (allowed in
 	branches).</li>
 	<li>Run the tester before a commit to make sure nothing is broken.</li>
