@@ -167,7 +167,8 @@ namespace ebl {
     virtual ~metaparser();
 
     //! Parse all files in root matching the .log extension.
-    void parse_logs(const string &root);
+    //! If 'sticky' is not null, keep those variables between iterations.
+    void parse_logs(const string &root, list<string> *sticky = NULL);
 
     //! Write text files parsable by plotting tools such as gnuplot,
     //! and generate pdf plots with gnuplot into directory dir.
@@ -205,7 +206,8 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     // internal methods
   private:
-    bool parse_log(const string &fname);
+    //! If 'sticky' is not null, keep those variables between iterations.
+    bool parse_log(const string &fname, list<string> *sticky = NULL);
     
     ////////////////////////////////////////////////////////////////
     // members

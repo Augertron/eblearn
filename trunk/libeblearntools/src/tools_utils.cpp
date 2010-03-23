@@ -57,7 +57,7 @@ namespace ebl {
   }
 
   files_list *find_files(const string &dir, const char *pattern,
-			 files_list *fl_) {
+			 files_list *fl_, bool sorted) {
     files_list *fl = fl_;
 #ifndef __BOOST__
     eblerror("boost not installed, install and recompile");
@@ -71,23 +71,29 @@ namespace ebl {
     if (!fl)
       fl = new files_list();
     directory_iterator end_itr; // default construction yields past-the-end
+    // first process all elements of current directory
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if (is_directory(itr->status()))
-	find_files(itr->path().string(), pattern, fl);
-      else if (regex_match(itr->leaf().c_str(), what, r)) {
-	// found an image, add it to the list
+      if (!is_directory(itr->status()) && 
+	  regex_match(itr->leaf().c_str(), what, r)) {
+	// found an match, add it to the list
 	fl->push_back(pair<string,string>(itr->path().branch_path().string(),
 					  itr->leaf()));
       }
-      // sort list
-      fl->sort(less_than);
     }
+    // then explore subdirectories
+    for (directory_iterator itr(p); itr != end_itr; ++itr) {
+      if (is_directory(itr->status()))
+	find_files(itr->path().string(), pattern, fl, sorted);
+    }
+    // sort list
+    if (sorted)
+      fl->sort(less_than);
 #endif
     return fl;
   }
 
   list<string> *find_fullfiles(const string &dir, const char *pattern,
-			       list<string> *fl_) {
+			       list<string> *fl_, bool sorted) {
     list<string> *fl = fl_;
 #ifndef __BOOST__
     eblerror("boost not installed, install and recompile");
@@ -101,16 +107,22 @@ namespace ebl {
     if (!fl)
       fl = new list<string>();
     directory_iterator end_itr; // default construction yields past-the-end
+    // first process all elements of current directory
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if (is_directory(itr->status()))
-	find_fullfiles(itr->path().string(), pattern, fl);
-      else if (regex_match(itr->leaf().c_str(), what, r)) {
+      if (!is_directory(itr->status()) && 
+	  regex_match(itr->leaf().c_str(), what, r)) {
 	// found an match, add it to the list
 	fl->push_back(itr->path().string());
       }
-      // sort list
-      fl->sort();
     }
+    // then explore subdirectories
+    for (directory_iterator itr(p); itr != end_itr; ++itr) {
+      if (is_directory(itr->status()))
+	find_fullfiles(itr->path().string(), pattern, fl, sorted);
+    }
+    // sort list
+    if (sorted)
+      fl->sort();
 #endif
     return fl;
   }
@@ -254,6 +266,14 @@ namespace ebl {
     if (ret < 0)
       cerr << "tar failed." << endl;
 #endif
+  }
+
+  string stringlist_to_string(list<string> &l) {
+    ostringstream s;
+    list<string>::iterator j;
+    for (j = l.begin(); j != l.end(); ++j)
+      s << *j << " ";
+    return s.str();
   }
 
 } // namespace ebl
