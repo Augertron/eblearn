@@ -50,6 +50,15 @@ namespace ebl {
     return s.str();
   }
 
+  template <typename T1, typename T2>
+  string map_to_string2(map<T1,T2> &m) {
+    ostringstream s;
+    typename map<T1,T2>::iterator j;
+    for (j = m.begin(); j != m.end(); ++j)
+      s << j->first << ": " << j->second << endl;
+    return s.str();
+  }
+
 } // end namespace ebl
 
 #endif /* TOOLS_UTILS_HPP_ */

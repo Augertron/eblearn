@@ -33,7 +33,7 @@ meta_send_best=15
 ################################################################################
 
 # directories
-xpname=text_train_`date +"%Y%m%d.%H%M%S"`
+xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
 root=~/dizzbdata/sermanet/text/
 root2=~/dizzbdata/sermanet/
 dataroot=$root/ds
@@ -137,6 +137,7 @@ for iter in `seq 1 ${maxiteration}`
 # override train command by detect command
   echo >> $bestconf
   echo "meta_command = ${eblearnbin}/objdetect" >> $bestconf
+  echo "meta_name = ${meta_name}_false_positives" >> $bestconf
 # start parallelized extraction
   ${eblearnbin}/metarun $bestconf
 
@@ -184,6 +185,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
   echo "retrain = 1" >> $metaconf
   echo "retrain_weights = ${bestweights}" >> $metaconf
+  echo "meta_name = ${meta_name}_retrain_${iter}" >> $metaconf
   ${eblearnbin}/metarun $metaconf
     
 done

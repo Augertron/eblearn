@@ -222,8 +222,9 @@ namespace ebl {
       return s.str();
     for (natural_varmap::iterator i = flat->begin(); i != flat->end(); ++i) {
       s << i->first << ": ";
-      s << map_to_string(i->second);
+      s << map_to_string2(i->second);
       s << endl;
+      s << "________________________________________________________" << endl;
     }
     return s.str();
   }
@@ -248,10 +249,11 @@ namespace ebl {
 	  }
 	}
       }
+      s << endl;
       for (map<string,string>::iterator j = i->begin();
 	   j != i->end(); ++j)
-	s << " " << j->first << ": " << j->second;
-      s << endl;
+	s << j->first << ": " << j->second << endl;
+      s << "________________________________________________________" << endl;
     }
     return s.str();
   }
@@ -319,12 +321,12 @@ namespace ebl {
   metaparser::~metaparser() {
   }
 
-  bool metaparser::parse_log(const string &fname) {
+  bool metaparser::parse_log(const string &fname, list<string> *sticky) {
     ifstream in(fname.c_str());
     string s, var, val;
     char separator = VALUE_SEPARATOR;
     string::size_type itok, stok;
-    map<string,string> vars, keys;
+    map<string,string> vars, stick;
 
     if (!in) {
       cerr << "warning: failed to open " << fname << endl;
@@ -332,15 +334,14 @@ namespace ebl {
     }
     // parse all lines
     while (!in.eof()) {
+      // extract all variables for this line
       getline(in, s);
       istringstream iss(s, istringstream::in);
-      // extract all variables for this line
-      //      vars.clear();
-      // initialize with keys of the hierarchy that have been seen before,
-      // in case we have more variables
-      // to add coming from a different line, this will be overriden
-      // if new lines contains the hierarchy variables
-      //vars.insert(keys.begin(), keys.end());
+      vars.clear(); // clear previous variables
+      // keep sticky variables from previous lines in this new line
+      // hierarchy keys are sticky by default, and additional sticky
+      // variables are defined by 'sticky' list.
+      vars.insert(stick.begin(), stick.end());
       // loop over variable/value pairs
       itok = s.find(separator);
       while (itok != string::npos) { // get remaining values
@@ -353,9 +354,12 @@ namespace ebl {
 	s = s.substr(stok);
 	vars[var] = val;
 	itok = s.find(separator);
-	// if key, remember it for later
+	// if a key, make it sticky
 	if (find(hierarchy.begin(), hierarchy.end(), var) != hierarchy.end())
-	  keys[var] = val;
+	  stick[var] = val;
+	// if sticky, remember value
+	if (sticky && find(sticky->begin(), sticky->end(), var) != sticky->end())
+	  stick[var] = val;
       }
       // add variables to tree, and remember the path to the leaf
       tree.add(hierarchy, vars);
@@ -398,7 +402,9 @@ namespace ebl {
 
   void metaparser::process(const string &dir) {
     string confname, jobs_info;
-    list<string> *confs = find_fullfiles(dir, ".*[.]conf");
+    // find all configurations in non-sorted order, the meta conf
+    // should be the first element.
+    list<string> *confs = find_fullfiles(dir, ".*[.]conf", NULL, false);
     if (confs) {
       confname = confs->front();
       delete confs;
@@ -522,11 +528,12 @@ namespace ebl {
     }
   }
 
-  void metaparser::parse_logs(const string &root) {
+  void metaparser::parse_logs(const string &root, list<string> *sticky) {
     list<string> *fl = find_fullfiles(root, ".*[.]log");
     if (fl) {
       for (list<string>::iterator i = fl->begin(); i != fl->end(); ++i) {
-	parse_log(*i);
+	cout << "Parsing " << *i << endl;
+	parse_log(*i, sticky);
       }
       delete fl;
     }
@@ -539,7 +546,12 @@ namespace ebl {
   
   varmaplist metaparser::analyze(configuration &conf, const string &dir,
 				int &maxiter) {
-    parse_logs(dir);
+    list<string> sticky;
+    if (conf.exists("meta_sticky_vars")) {
+      sticky = string_to_stringlist(conf.get_string("meta_sticky_vars"));
+      cout << "Sticky variables: " << stringlist_to_string(sticky) << endl;
+    }
+    parse_logs(dir, &sticky);
     write_plots(dir.c_str(),
 		conf.get_cstring("meta_gnuplot_params"));
     maxiter = get_max_common_iter();
@@ -590,12 +602,15 @@ namespace ebl {
 	ret = std::system(cmd.str().c_str());
 	// add weights filename into configuration
 #ifdef __BOOST__
-	path p(i->find("config")->second);
-	cmd.str("");
-	cmd << "echo \"weights_file=" << i->find("saved")->second 
-	    << " # variable added by metarun\n\" >> "
-	    << tmpdir.str() << "/" << p.leaf();
-	ret = std::system(cmd.str().c_str());
+	if ((i->find("config") != i->end()) &&
+	    (i->find("saved") != i->end())) {
+	  path p(i->find("config")->second);
+	  cmd.str("");
+	  cmd << "echo \"weights_file=" << i->find("saved")->second 
+	      << " # variable added by metarun\n\" >> "
+	      << tmpdir.str() << "/" << p.leaf();
+	  ret = std::system(cmd.str().c_str());
+	}
 #endif
       }
     }

@@ -62,8 +62,8 @@ namespace ebl {
   //! \param pattern The regular expression describing the file name pattern.
   //!           The default pattern matches images extensions.
   files_list *find_files(const string &dir,
-			  const char *pattern = IMAGE_PATTERN,
-			  files_list *fl = NULL);
+			 const char *pattern = IMAGE_PATTERN,
+			 files_list *fl = NULL, bool sorted = true);
   
   //! Returns a list of string of full paths to files recursively found in
   //! direcotry dir and matching the pattern. The files are found using
@@ -76,7 +76,7 @@ namespace ebl {
   //!           The default pattern matches images extensions.
   list<string> *find_fullfiles(const string &dir,
 			       const char *pattern = IMAGE_PATTERN,
-			       list<string> *fl = NULL);
+			       list<string> *fl = NULL, bool sorted = true);
   
   //! Counts recursively the number of files matching the pattern (default is
   //! an image extension pattern) in directory 'dir'.
@@ -114,6 +114,13 @@ namespace ebl {
 
   //! Convert a map to a string representation.
   template <typename T1, typename T2> string map_to_string(map<T1,T2> &m);
+  
+  //! Convert a map to a string representation, printing a new line between
+  //! each variables/value pair.
+  template <typename T1, typename T2> string map_to_string2(map<T1,T2> &m);
+  
+  //! Convert a string list to a string representation.
+  string stringlist_to_string(list<string> &l);
   
   //! Tar directory dir into a .tgz archive, using directory's rightmost name,
   //! into target directory tgtdir.
