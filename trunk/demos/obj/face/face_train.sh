@@ -75,6 +75,8 @@ mkdir -p "$false_positive_root/bg/"
 
 # copy binaries
 cp $eblearnbin0/* $eblearnbin/
+# set path to libraries locally
+export LD_LIBRARY_PATH=${eblearnbin}
 
 # make a copy of meta conf and override its output dir
 cp $metaconf0 $metaconf
@@ -87,6 +89,7 @@ echo "meta_output_dir = ${out}" >> $metaconf
 # initial training
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
+echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
 ${eblearnbin}/metarun $metaconf
 
 # looping on retraining on false positives
