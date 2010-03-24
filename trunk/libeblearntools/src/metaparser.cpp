@@ -663,7 +663,7 @@ namespace ebl {
       cmd.str("");
       cmd << "cat " << tmpfile << " | mutt " << conf.get_string("meta_email");
       // subject of email
-      cmd << " -s \"MetaRun Report " << conf.get_name() << "\"";
+      cmd << " -s \"MetaRun " << conf.get_name() << "\"";
       // attach files
       if (best.size() > 0)
 	cmd << " -a " << dir << "/best.tgz"; 
