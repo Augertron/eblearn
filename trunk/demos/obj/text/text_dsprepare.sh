@@ -13,7 +13,7 @@ meta_email=pierre.sermanet@gmail.com
 
 # directories
 #dataroot=/data
-dataroot=~/texieradata/
+dataroot=~/budadata/
 #dataroot=~/texieradata
 #dataroot=~/humairadata
 #dataroot=~/blakeyadata
@@ -95,11 +95,11 @@ mkdir -p "$false_positive_root/bg/"
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug
 
-# compile regular dataset
-~/eblearn/bin/dscompiler $root -precision $precision -type grid\
-    -outdir ${out} -channels $pp -dname ${name}_32 -gridsz 32x32 \
-    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
-    $maxdata $maxperclass $ddisplay # debug
+# # compile regular dataset
+# ~/eblearn/bin/dscompiler $root -precision $precision -type grid\
+#     -outdir ${out} -channels $pp -dname ${name}_32 -gridsz 32x32 \
+#     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
+#     $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
 ~/eblearn/bin/dscompiler $root -precision $precision -type grid\
@@ -110,8 +110,8 @@ mkdir -p "$false_positive_root/bg/"
 # merge 128 into 64
 ~/eblearn/bin/dsmerge $out ${name} ${name}_128 ${name}
 
-# merge 32 into 64
-~/eblearn/bin/dsmerge $out ${name} ${name}_32 ${name}
+# # merge 32 into 64
+# ~/eblearn/bin/dsmerge $out ${name} ${name}_32 ${name}
 
 # merge normal dataset with background dataset
 ~/eblearn/bin/dsmerge $out ${namebg} ${bgds} ${name}
