@@ -48,6 +48,15 @@ EXEC_PROGRAM("cp" ARGS
   "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_dsprepare.sh\""
   "\"${LIBRARY_OUTPUT_PATH}\"")
 		
+# copy hand conf and metaconf to bin
+EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/hand/hand_meta.conf\""
+		  "\"${LIBRARY_OUTPUT_PATH}\"")
+EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/hand/hand_train.sh\""
+ 		  "\"${LIBRARY_OUTPUT_PATH}\"")
+EXEC_PROGRAM("cp" ARGS
+  "\"${CMAKE_CURRENT_SOURCE_DIR}/hand/hand_dsprepare.sh\""
+  "\"${LIBRARY_OUTPUT_PATH}\"")
+		
 # compile executable: objdetect
 ################################################################################
 add_executable (objdetect

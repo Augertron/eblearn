@@ -1124,6 +1124,7 @@ namespace ebl {
 	      && !scale_mode)
 	    break ;
 	  // load data
+	  //	  cout << "loading: " << itr->path().string() << endl;
 	  load_data(itr->path().string());
 	  // add sample data
 	  if (scale_mode) // saving image at different scales
