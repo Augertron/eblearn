@@ -1,5 +1,7 @@
 #!/bin/sh
 
+machine=bud
+
 ################################################################################
 # meta commands
 ################################################################################
@@ -12,7 +14,7 @@ meta_command="sh text_train.sh"
 # directory where to write outputs of all processes
 meta_output_dir=${out}
 # name of this meta job
-meta_name=text_train_texier
+meta_name=text_train_${machine}
 # emailing results or not
 meta_send_email=1
 # email to use
@@ -34,8 +36,8 @@ meta_send_best=15
 
 # directories
 xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
-root=~/texieradata/text/
-root2=~/texieradata/
+root=~/${machine}adata/text/
+root2=~/${machine}adata/
 dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
