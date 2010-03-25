@@ -17,7 +17,7 @@ else
 	LIB_EXT=so
 endif
 
-all: libs
+all: release
 
 release:
 	@echo __________________________________________________________________
@@ -34,7 +34,7 @@ libs:
 	@echo
 	@echo "Compiling libraries in release mode..."
 	@echo __________________________________________________________________
-	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make idx eblearn idxgui eblearngui eblearntools && cd ../..
+	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make idx eblearn eblearntools && cd ../..
 	
 tools:
 	@echo __________________________________________________________________
