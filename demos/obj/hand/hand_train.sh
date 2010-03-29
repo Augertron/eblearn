@@ -65,7 +65,7 @@ ds_split_ratio=".1"
 draws=5
 
 # name of datasets
-traindsnamea=hand_mean32x32_ker7_bg_train
+traindsname=hand_mean32x32_ker7_bg_train
 valdsname=hand_mean32x32_ker7_bg_val
 
 # create directories
@@ -83,6 +83,8 @@ export LD_LIBRARY_PATH=${eblearnbin}
 # make a copy of meta conf and override its output dir
 cp $metaconf0 $metaconf
 echo "meta_output_dir = ${out}" >> $metaconf
+
+#touch /home/sermanet/dizzbdata/hand/out/hand_train_dizz_20100325.030722/20100325.030723.hand_dizz
 
 ###############################################################################
 # training
@@ -145,10 +147,16 @@ for iter in `seq 1 ${maxiteration}`
   echo "meta_name = ${meta_name}_false_positives" >> $bestconf
 # start parallelized extraction
   ${eblearnbin}/metarun $bestconf
+#fi
+
+#if [ $iter == 1 ]; then  
+#touch /home/sermanet/dizzbdata/hand/out/hand_train_dizz_20100325.030722/20100327.145455.hand_train_dizz_false_positives
+#fi
 
 # find path to latest metarun output: get directory with latest date
   lastout=`ls -dt1 ${out}/*/ | head -1`
 
+if [ $iter != 1 ]; then  
 # recompile data from last output directory which should contain 
 # all false positives
   ${eblearnbin}/dscompiler ${lastout} -precision ${precision} \
@@ -167,13 +175,14 @@ for iter in `seq 1 ${maxiteration}`
 # split dataset into training and validation
   ${eblearnbin}/dssplit ${dataroot} allfp \
       allfp_val_ allfp_train_ -maxperclass ${valsize} -draws $draws
-
+#fi
 # merge new datasets into previous datasets: training
   for i in `seq 1 $draws`
   do
       ${eblearnbin}/dsmerge ${dataroot} ${traindsname}_${i} \
 	  allfp_train_${i} ${traindsname}_${i}
   done
+#if [ $iter != 1 ]; then  
 
 # merge new datasets into previous datasets: validation
   for i in `seq 1 $draws`

@@ -35,7 +35,8 @@ meta_send_best=15
 ################################################################################
 
 # directories
-xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
+#xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
+xpname=${meta_name}_20100324.203230
 root=~/${machine}adata/text/
 root2=~/${machine}cdata/
 dataroot=$root/ds
@@ -65,7 +66,7 @@ ds_split_ratio=".1"
 draws=5
 
 # name of datasets
-traindsnamea=text_mean32x32_ker7_bg_train
+traindsname=text_mean32x32_ker7_bg_train
 valdsname=text_mean32x32_ker7_bg_val
 
 # create directories
@@ -84,6 +85,9 @@ export LD_LIBRARY_PATH=${eblearnbin}
 cp $metaconf0 $metaconf
 echo "meta_output_dir = ${out}" >> $metaconf
 
+touch /home/sermanet/budadata/text/out/text_train_bud_20100324.203230/20100324.203230.text_bud
+echo "touching /home/sermanet/budadata/text/out/text_train_bud_20100324.203230/20100324.203230.text_bud"
+
 ###############################################################################
 # training
 ###############################################################################
@@ -92,7 +96,7 @@ echo "meta_output_dir = ${out}" >> $metaconf
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
 echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
-${eblearnbin}/metarun $metaconf
+#${eblearnbin}/metarun $metaconf
 
 # looping on retraining on false positives
 echo "________________________________________________________________________"
@@ -112,7 +116,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "Using best conf of previous training: ${bestconf}"
   echo "i=`expr ${maxiteration} - ${iter}`"
 
-#if [ $iter != 1 ]; then  
+if [ $iter != 1 ]; then  
 
 # extract false positives: first add new variables to best conf
 # activate retraining
@@ -146,15 +150,22 @@ for iter in `seq 1 ${maxiteration}`
 # start parallelized extraction
   ${eblearnbin}/metarun $bestconf
 
+fi
+
+if [ $iter == 1 ]; then  
+touch /home/sermanet/budadata/text/out/text_train_bud_20100324.203230/20100325.235205.text_train_bud_false_positives
+fi
+
 # find path to latest metarun output: get directory with latest date
   lastout=`ls -dt1 ${out}/*/ | head -1`
 
+if [ $iter != 1 ]; then  
 # recompile data from last output directory which should contain 
 # all false positives
   ${eblearnbin}/dscompiler ${lastout} -precision ${precision} \
       -outdir ${dataroot} -forcelabel bg -dname allfp -dims ${h}x${w}x3 \
       -image_pattern ".*[.]mat" -mindims ${h}x${w}x3 
-
+fi
 # get dataset size
   dssize=`${eblearnbin}/dsdisplay ${dataroot}/allfp -size`
   echo "false_positives = ${dssize}"
@@ -164,16 +175,18 @@ for iter in `seq 1 ${maxiteration}`
 # print out information about extracted dataset to check it is ok
   ${eblearnbin}/dsdisplay $dataroot/allfp -info
     
+if [ $iter != 1 ]; then  
 # split dataset into training and validation
   ${eblearnbin}/dssplit ${dataroot} allfp \
       allfp_val_ allfp_train_ -maxperclass ${valsize} -draws $draws
-
+fi
 # merge new datasets into previous datasets: training
   for i in `seq 1 $draws`
   do
       ${eblearnbin}/dsmerge ${dataroot} ${traindsname}_${i} \
 	  allfp_train_${i} ${traindsname}_${i}
   done
+if [ $iter != 1 ]; then  
 
 # merge new datasets into previous datasets: validation
   for i in `seq 1 $draws`
@@ -182,7 +195,7 @@ for iter in `seq 1 ${maxiteration}`
 	  allfp_val_${i} ${valdsname}_${i}
   done
 
-#fi  
+fi  
 
 # retrain on old + new data
   echo "Retraining from best previous weights: ${bestweights}"
