@@ -29,7 +29,23 @@ ENDIF (XML_FOUND)
 
 # find QT
 ##############################################################################
-FIND_PACKAGE(Qt4)
+SET(DESIRED_QT_VERSION 4.3)
+INCLUDE(FindQt)
+IF (QT4_INSTALLED)
+  SET(QT_QMAKE_EXECUTABLE "/usr/local/pkg/qt/4.6.2/bin/qmake")
+  IF (NOT EXISTS ${QT_QMAKE_EXECUTABLE})
+    SET(QT_QMAKE_EXECUTABLE "/usr/lib64/qt4/bin/qmake")
+    IF (NOT EXISTS ${QT_QMAKE_EXECUTABLE})
+      SET(QT_QMAKE_EXECUTABLE "/usr/share/qt4/bin/qmake")
+    ENDIF (NOT EXISTS ${QT_QMAKE_EXECUTABLE})
+  ENDIF (NOT EXISTS ${QT_QMAKE_EXECUTABLE})
+
+  INCLUDE(FindQt4)
+  SET(QT_FOUND TRUE)
+  exec_program(${QT_QMAKE_EXECUTABLE} ARGS "-query QT_INSTALL_HEADERS"
+        OUTPUT_VARIABLE QT_INCLUDE_DIR)
+ENDIF (QT4_INSTALLED)
+
 IF (QT_FOUND)
   include_directories(${QT_INCLUDE_DIR})
   include_directories(${QT_QTGUI_INCLUDE_DIR})
