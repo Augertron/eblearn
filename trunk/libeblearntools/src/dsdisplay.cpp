@@ -53,6 +53,7 @@ idxdim		dims = idxdim(4, 8);	//!< number of samples to display (hxw)
 bool		info = false;	//!< only print information and quit
 bool		size = false;	//!< only print size info and quit
 vector<double>	range;		//!< display range of values
+int             channel = -1;   //!< display only this channel if >= 0
 
 ////////////////////////////////////////////////////////////////
 // interface
@@ -68,6 +69,7 @@ void print_usage() {
   cout << "  -dims <dimensions, default: 4x8>, the number of columns and ";
   cout << " rows to display." << endl;
   cout << "  -range <range, e.g.: -1,1>: range to map to 0..255 for display.";
+  cout << "  -channel <channel id, e.g.: 0>: only display a specific channel.";
   cout << endl;
 }
 
@@ -93,6 +95,9 @@ bool parse_args(int argc, char **argv, string &ds_name) {
 	info = true;
       } else if (strcmp(argv[i], "-size") == 0) {
 	size = true;
+      } else if (strcmp(argv[i], "-channel") == 0) {
+	++i; if (i >= argc) throw 1;
+	channel = atoi(argv[i]);
       } else if (strcmp(argv[i], "-dims") == 0) {
 	++i; if (i >= argc) throw 0;
 	idxdim d;
@@ -228,6 +233,16 @@ int main(int argc, char **argv) {
   // defpairs
   build_fname(ds_name, DEFORMPAIRS_NAME, deformpairs_fname);
   bdefpairs = loading_warning(defpairs, deformpairs_fname);
+
+  if (channel >= 0) {
+    if (channel >= data.dim(1)) {
+      cerr << "trying to select channel " << channel
+	   << " but channel dimension is of size " << data.dim(0)
+	   << " (in " << data << ")." << endl;
+      eblerror("trying to select unknown channel dimension");
+    }
+    data = data.select(1, channel);
+  }
 
   labeled_datasource<t_data, t_data, int>
     train_ds(data, labels, classes, "Dataset");
