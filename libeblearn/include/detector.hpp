@@ -259,17 +259,20 @@ namespace ebl {
 
   // TODO: handle more than 1 class
   template <class T>
-  void detector<T>::set_mask_class(const char *mask) {
+  bool detector<T>::set_mask_class(const char *mask) {
     string name;
     
-    if (mask)
-      name = mask;
+    if (!mask)
+      return false;
+    name = mask;
     mask_class = get_class_id(name);
     if (mask_class != -1) {
       cout << "Mask class is \"" << name << "\" with id " << mask_class;
       cout << "." << endl;
-    } else if (mask)
-      cerr << "warning: mask class \"" << mask << "\" not found." << endl;
+      return true;
+    }
+    cerr << "warning: mask class \"" << mask << "\" not found." << endl;
+    return false;
   }
 
   template <class T>
