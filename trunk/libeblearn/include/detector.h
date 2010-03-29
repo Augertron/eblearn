@@ -143,7 +143,7 @@ namespace ebl {
     //! Instead, call get_mask() to retrieve a mask map of values above
     //! a given threshold. This is useful for continuous classes rather
     //! than discrete classes.
-    void set_mask_class(const char *mask);
+    bool set_mask_class(const char *mask);
 
     //! set detector to silent: do not print results on std output
     void set_silent();
