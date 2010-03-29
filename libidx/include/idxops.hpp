@@ -283,8 +283,8 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { 
       val = *pinp - c;
       // prevent under and overflow
-      *pout = MAX(std::numeric_limits<T>::min(), 
-		  MIN(std::numeric_limits<T>::max(), val));
+      *pout = (T) (MAX(std::numeric_limits<T>::min(), 
+		       MIN(std::numeric_limits<T>::max(), val)));
     }
   }
 
@@ -304,8 +304,8 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { 
       val = (T)(*pinp * c);
       // prevent under and overflow
-      *pout = MAX(std::numeric_limits<T>::min(), 
-		  MIN(std::numeric_limits<T>::max(), val));
+      *pout = (T) (MAX(std::numeric_limits<T>::min(), 
+		       MIN(std::numeric_limits<T>::max(), val)));
     }
   }
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-machine=blakey
+machine=ceres
 
 ################################################################################
 # meta commands
@@ -37,7 +37,7 @@ meta_send_best=15
 # directories
 xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
 root=~/${machine}adata/face/
-root2=~/${machine}adata/face/
+root2=~/${machine}adata/
 dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/

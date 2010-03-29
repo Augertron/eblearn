@@ -72,10 +72,10 @@ namespace ebl {
     // draw output
     vector<bbox*>::iterator i = vb.begin();
     for ( ; i != vb.end(); ++i) {
-      unsigned int h = dzoom * (*i)->h0;
-      unsigned int w = dzoom * (*i)->w0;
-      draw_box(h0 + h, w0 + w, dzoom * (*i)->height, dzoom * (*i)->width,
-	       0, 0, 255,
+      uint h = (uint) (dzoom * (*i)->h0);
+      uint w = (uint) (dzoom * (*i)->w0);
+      draw_box(h0 + h, w0 + w, (uint) (dzoom * (*i)->height), 
+	       (uint) (dzoom * (*i)->width), 0, 0, 255,
 	       new string((const char *)cl.labels[(*i)->class_id].idx_ptr()));
     }
     draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
@@ -95,7 +95,7 @@ namespace ebl {
 
     // draw input
     draw_matrix(img, "input", h0, w0, dzoom, dzoom, (Tin) vmin, (Tin) vmax);
-    w0 += img.dim(1) * dzoom + 5;
+    w0 += (uint) (img.dim(1) * dzoom + 5);
 
     return display(cl, img, threshold, h0, w0, dzoom, vmin, vmax, wid, wname);
   }
@@ -116,7 +116,7 @@ namespace ebl {
 
     disable_window_updates();
     // draw internal inputs and outputs
-    int h = h0 + cl.height * dzoom + 5 + 15;
+    int h = (int) (h0 + cl.height * dzoom + 5 + 15);
     int scale = 0;
     int ohmax = ((state_idx<Tnet>*) cl.outputs.get(0))->x.dim(1);
     int ihmax = ((state_idx<Tnet>*) cl.inputs.get(0))->x.dim(1);
@@ -151,8 +151,10 @@ namespace ebl {
 	// draw bboxes on scaled input
 	for (vector<bbox*>::iterator i = bb.begin(); i != bb.end(); ++i) {
 	  if (scale == (*i)->scale_index)
-	    draw_box(h + dzoom * (*i)->ih0, w0 + dzoom * (*i)->iw0,
-		     dzoom * (*i)->ih, dzoom * (*i)->iw, 0, 0, 255,
+	    draw_box((uint) (h + dzoom * (*i)->ih0), 
+		     (uint) (w0 + dzoom * (*i)->iw0),
+		     (uint) (dzoom * (*i)->ih), 
+		     (uint) (dzoom * (*i)->iw), 0, 0, 255,
 		     new string((const char*)
 				cl.labels[(*i)->class_id].idx_ptr()));
 	}
@@ -165,24 +167,24 @@ namespace ebl {
 	    if (first_time)
 	      s << cl.labels[lab].idx_ptr() << " ";
 	    s << category.dim(0) << "x" << category.dim(1);
-	    gui << at(h + ihmax * dzoom + 5 + hcat, 
-		      w0 + category.dim(1) * czoom + 2);
+	    gui << at((uint) (h + ihmax * dzoom + 5 + hcat), 
+		      (uint) (w0 + category.dim(1) * czoom + 2));
 	    gui << black_on_white() << s.str();
-	    draw_matrix(category, h + ihmax * dzoom + 5 + hcat, w0, 
+	    draw_matrix(category, (uint) (h + ihmax * dzoom + 5 + hcat), w0, 
 			czoom, czoom, vmin, vmax);
-	    hcat += ohmax * czoom + 2;
+	    hcat += (int) (ohmax * czoom + 2);
 	    lab++;
 	  }}
 
 	scale++;
-	w0 += inx.dim(1) * dzoom + 5;
+	w0 += (uint) (inx.dim(1) * dzoom + 5);
 	first_time = false;
       }}
 
     // draw masks class
     if (!mask_class.empty()) {
       idx<Tnet> mask = cl.get_mask(mask_class);
-      draw_mask(mask, h0, 0 + mask.dim(1) * dzoom + 5, dzoom, dzoom,
+      draw_mask(mask, h0, (uint) (0 + mask.dim(1) * dzoom + 5), dzoom, dzoom,
 		255, 0, 0, 127, mask_threshold);
     }
      // idx<Tnet> x = ((state_idx<Tnet>*) cl.outputs.get(0))->x;
