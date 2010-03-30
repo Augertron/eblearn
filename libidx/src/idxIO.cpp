@@ -31,6 +31,7 @@
  ***************************************************************************/
 
 #include <stdio.h>
+#include <iomanip>
 #include "idxIO.h"
 
 using namespace std;
@@ -115,7 +116,8 @@ namespace ebl {
       ndim_min = ndim;
       magic = magic_vincent;
     } else { // unkown magic
-      err << "unknown magic number";
+      err << "unknown magic number: 0x" << std::hex << magic
+	  << " or " << magic << " vincent: " << magic_vincent;
       stream.seekg(0); // reset stream to beginning
       throw err.str();
     }

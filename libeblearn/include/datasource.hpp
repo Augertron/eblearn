@@ -415,9 +415,11 @@ namespace ebl {
   labeled_datasource<Tnet, Tdata, Tlabel>::
   labeled_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
 		     idx<ubyte> &classes, const char *name_, Tdata b, float c) {
-    this->lblstr = new vector<string*>;
-    idx_bloop1(classe, classes, ubyte) {
-      this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
+    if (classes.order() == 2) {
+      this->lblstr = new vector<string*>;
+      idx_bloop1(classe, classes, ubyte) {
+	this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
+      }
     }
     init(data_, labels_, name_, b, c, this->lblstr);
   }
