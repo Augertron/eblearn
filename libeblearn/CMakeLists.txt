@@ -27,7 +27,6 @@ ADD_LIBRARY (eblearn SHARED
 #		     src/ebl_layers.cpp  
 		     src/ebl_logger.cpp  
 #		     src/ebl_machines.cpp  
-		     src/ipp.cpp  
 #		     src/sdnn_modules.cpp
 #		     src/net_cscscfe.cpp
 #		     src/detector.cpp  

@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet   *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com   *
+ *   Copyright (C) 2010 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,22 +28,18 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBIDX_H
-#define LIBIDX_H
+#ifndef IPP_HPP
+#define IPP_HPP
 
-#include "defines.h"
-#include "numerics.h"
-#include "srg.h"
-#include "idx.h"
-#include "idxIO.h"
-#include "idxops.h"
-#include "ipp.h"
-#include "color_spaces.h"
-#include "gaussian_pyramid.h"
-#include "image.h"
-#include "imageIO.h"
-#include "utils.h"
+namespace ebl {
 
-#endif /* LIBIDX_H_ */
+  template<typename T>
+  void ipp_convolution(idx<T> &in, idx<T> &ker, idx<T> &out) {
+    eblerror("type not implemented for IPP");
+  }
+
+}
+
+#endif /* IPP_HPP */

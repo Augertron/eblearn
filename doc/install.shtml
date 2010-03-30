@@ -125,7 +125,39 @@
        download and install sources. Here is a guide for some of the required
        packages.
 
-       <h4>MAC OS X</h4>
+       <h3>CMake customization</h3>
+       <ul>
+	 <li>When installing an external dependency manually, it may be detected
+	   automatically by the existing CMake "find" scripts or not.<br>
+	   If not,
+	   one can edit the <strong>scripts/FindCustom.cmake</strong>
+	   script which is called by
+	   FindAll.cmake. This script is called after every other script, thus
+	   can override other dependencies if other non-desired versions were
+	   detected.<br>
+	   To add a new dependency in the custom script, one usually only needs to
+	   specify the include and library paths and set the "found" variable.
+	   For example, setting the Intel IPP variables:
+	   <code><br>
+	     SET(IPP_FOUND TRUE)<br>
+	     INCLUDE_DIRECTORIES("/opt/intel/ipp/current/em64t/include")<br>
+	     LINK_DIRECTORIES("/opt/intel/ipp/current/em64t/lib")<br>
+	     MESSAGE(STATUS "Found Intel IPP")<br>
+	   </code>
+	   The CMake makefiles of your projects will then use the found variable
+	   (by convention "[name]_FOUND") to compile with or without this
+	   library.
+	   </li>
+	 <li>To pass a symbol to your code, you can use the following command,
+	   for example the "__IPP__" symbol to let the code know it should use
+	   the IPP related code if given:
+	   <code><br>
+	     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IPP__")
+	   </code>
+	   </li>
+	 </ul>
+       
+       <h3>MAC OS X Packages</h3>
        <h5>cmake</h5>
        Get sources (e.g. cmake-2.6.2.tar.gz) from
        http://www.cmake.org/cmake/resources/software.html.<br>

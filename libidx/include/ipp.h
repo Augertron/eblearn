@@ -31,12 +31,12 @@
 
 namespace ebl {
 
-#ifdef USE_IPP
+#ifdef __IPP__
 
-#ifndef Ipp_H
-#define Ipp_H
+#ifndef IPP_H_
+#define IPP_H_
 
-#include "libidx.h"
+#include "idx.h"
 #include <ipp.h>
 
   ////////////////////////////////////////////////////////////////
@@ -46,7 +46,14 @@ namespace ebl {
   //! and write result into <out>
   //! <ker> is actually in reverse order, so you might
   //! want to reverse it first.
-  int ipp_convolution_float(idx<float> &in, idx<float> &ker, idx<float> &out);
+  template <typename T>
+    int ipp_convolution(idx<T> &in, idx<T> &ker, idx<T> &out);
+
+  //! compute a 2D convolution of <in> with kernel <ker>
+  //! and write result into <out>
+  //! <ker> is actually in reverse order, so you might
+  //! want to reverse it first.
+  int ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out);
 
   //! this calls ippiAdd_32f_C1IR
   //! This does component-wise addition of 2 matrices of floats. The result is 
@@ -59,6 +66,8 @@ namespace ebl {
 
 #endif
 
+#include "ipp.hpp"
+  
 #endif
 
 } // end namespace ebl
