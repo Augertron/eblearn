@@ -120,6 +120,10 @@ namespace ebl {
   //! Set string type to a string describing the matrix type found in filename.
   bool get_matrix_type(const char *filename, string &type);
 
+  //! Return the magic number associated with the matrix's type found in 
+  //! 'filename'.
+  int get_matrix_type(const char *filename);
+
   //! Return true if this magic number is a vincent magic number.
   bool is_magic_vincent(int magic);
 

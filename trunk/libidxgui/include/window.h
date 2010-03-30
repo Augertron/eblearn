@@ -145,6 +145,7 @@ namespace ebl {
     void update_pixmap(idx<ubyte> &img, uint h0, uint w0, bool updatepix =true);
     void clear();
     void set_text_origin(uint h0, uint w0);
+
     ////////////////////////////////////////////////////////////////
     // Style methods
     
@@ -154,6 +155,10 @@ namespace ebl {
 			 unsigned char bg_b, unsigned char bg_a);
     //! Set color of background.
     void set_bg_colors(unsigned char r, unsigned char g, unsigned char b);
+
+    //! Set font to this size.
+    void set_font_size(int sz);
+
     //! Freeze or unfreeze style. No modification of colors are allowed
     //! in frozen mode.
     void freeze_style(bool freeze);
@@ -162,6 +167,9 @@ namespace ebl {
     void remove_scroll_box(scroll_box0 *sb);
     void replace_scroll_box_with_copy(scroll_box0 *sb);
 
+    ////////////////////////////////////////////////////////////////
+    // Events methods
+    
     //! Return first key pressed of the key-pressed even list for
     //! current window and pop it out of the list, or return -1 if no key.
     int pop_key_pressed();
@@ -238,6 +246,7 @@ namespace ebl {
     int                  wupdate_ndisable;// count how many disables called
     bool                 frozen_style; //!< style is frozen or not
     list<int>            keyspressed; //!< a list of key pressed events
+    int                  font_size; //!< The size of the font.
   };
 
 } // namespace ebl {

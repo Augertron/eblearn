@@ -94,7 +94,7 @@ namespace ebl {
   Window::Window(unsigned int wid, const char *wname, int height, int width) 
     : pixmapScale(1.0), curScale(1.0), scaleIncr(1), colorTable(256),
       texts(), silent(false), id(wid), savefname(""), wupdate_ndisable(0),
-      frozen_style(false) {
+      frozen_style(false), font_size(-1) {
     setAttribute(Qt::WA_DeleteOnClose);
     if (wname) {
       QString q(wname);
@@ -320,6 +320,10 @@ namespace ebl {
     bg_color.setBlue(b);
   }
 
+  void Window::set_font_size(int sz) {
+    font_size = sz;
+  }
+
   void Window::freeze_style(bool freeze) {
     frozen_style = freeze;
   }
@@ -478,6 +482,11 @@ namespace ebl {
 
   void Window::paintEvent(QPaintEvent * /* event */) {
     QStylePainter painter(this);
+    if (font_size > 0) {
+      const QFont &font0 = painter.font();
+      QFont font(font0.defaultFamily(), font_size);
+      painter.setFont(font);
+    }
     painter.fillRect(rect(), bg_color);
     double scaleFactor = pixmapScale / curScale;
     painter.save();
@@ -572,7 +581,7 @@ namespace ebl {
 	text_bg_color.setRgb((*i)->bg_r, (*i)->bg_g, (*i)->bg_b, (*i)->bg_a); 
 	QString txt((*i)->c_str());
 	QRectF bg;
-	QFontMetrics metrics = painter.fontMetrics();
+	//	QFontMetrics metrics = painter.fontMetrics();
 	QRect qr = rect();
 	qr.setLeft((*i)->pos_reset ? (*i)->w0 : tw);
 	qr.setTop( (*i)->pos_reset ? (*i)->h0 - 1 : th);

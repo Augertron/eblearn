@@ -88,6 +88,8 @@ namespace ebl {
 					      unsigned char, unsigned char)), 
 	    this, SLOT(set_bg_colors(unsigned char,
 				     unsigned char, unsigned char)));
+    connect(&thread, SIGNAL(gui_set_font_size(int)),
+	    this, SLOT(set_font_size(int)));
     connect(&thread, SIGNAL(gui_set_silent(const std::string *)), 
 	    this, SLOT(set_silent(const std::string *)));
     connect(&thread, SIGNAL(gui_set_wupdate(bool)), 
@@ -154,6 +156,11 @@ namespace ebl {
 				 unsigned char b) {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->set_bg_colors(r, g, b);
+  }
+
+  void gui_thread::set_font_size(int sz) {
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->set_font_size(sz);
   }
 
   void gui_thread::set_wupdate(bool update) {

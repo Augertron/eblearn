@@ -215,6 +215,7 @@ namespace ebl {
     bool                                        weigh_samples;
     bool                                        perclass_norm;
     bool                                        test_set; //!< Is a test set.
+    bool                                        discrete_labels;
   };
 
   ////////////////////////////////////////////////////////////////
@@ -265,6 +266,11 @@ namespace ebl {
 
     //! Print info about the datasource on the standard output.
     virtual void pretty();
+
+    ////////////////////////////////////////////////////////////////
+    // friends
+    template <typename T1, typename T2, typename T3>
+    friend class labeled_datasource_gui;
   };
 
   ////////////////////////////////////////////////////////////////
@@ -273,8 +279,8 @@ namespace ebl {
     class labeled_pair_datasource
     : public labeled_datasource<Tnet, Tdata, Tlabel> {
   public:
-    idx<Tlabel>					pairs;
-    typename idx<Tlabel>::dimension_iterator	pairsIter;
+    idx<intg>					pairs;
+    typename idx<intg>::dimension_iterator	pairsIter;
 
     //! Constructor from dataset file names.
     labeled_pair_datasource(const char *data_fname, const char *labels_fname,
@@ -284,7 +290,7 @@ namespace ebl {
 
     //! Constructor from dataset matrices.
     labeled_pair_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
-			    idx<ubyte> &classes_, idx<Tlabel> &pairs_,
+			    idx<ubyte> &classes_, idx<intg> &pairs_,
 			    const char *name_ = NULL,
 			    Tdata bias = 0, float coeff = 1.0);
     

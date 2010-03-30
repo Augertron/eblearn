@@ -187,6 +187,9 @@ namespace ebl {
     //! Set color of background.
     void set_bg_colors(unsigned char r, unsigned char g, unsigned char b);
 
+    //! Set size of font.
+    void set_font_size(int sz);
+
     //! set the << operator to output text on both std::cout and the current
     //! window.
     //! you can also use the cout_and_gui() function.
@@ -232,6 +235,7 @@ namespace ebl {
 			     unsigned char bg_b, unsigned char bg_a);
     void gui_set_bg_colors(unsigned char r, unsigned char g, 
 			   unsigned char b);
+    void gui_set_font_size(int);
     void gui_set_silent(const std::string *filename);
     void gui_set_wupdate(bool update);
     void gui_freeze_style(bool freeze);

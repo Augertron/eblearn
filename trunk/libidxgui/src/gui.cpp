@@ -119,6 +119,10 @@ namespace ebl {
     gui.set_bg_colors(r, g, b);
   }
 
+  void set_font_size(int sz) {
+    gui.set_font_size(sz);
+  }
+
   void set_window_cout_and_gui() {
     gui.set_cout_and_gui();
   }
