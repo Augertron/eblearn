@@ -1154,8 +1154,9 @@ namespace ebl {
   template <typename T>
   bool loading_error(idx<T> &mat, string &fname) {
     try {
-      load_matrix(mat, fname);
+      mat = load_matrix<T>(fname);
     } catch (const string &err) {
+      cerr << "error: " << err << endl;
       cerr << "error: failed to load dataset file " << fname << endl;
       eblerror("failed to load dataset file");
       return false;
@@ -1168,7 +1169,7 @@ namespace ebl {
   template <typename T>
   bool loading_warning(idx<T> &mat, string &fname) {
     try {
-      load_matrix(mat, fname);
+      mat = load_matrix<T>(fname);
     } catch (const string &err) {
       cerr << "warning: failed to load dataset file " << fname << endl;
       return false;

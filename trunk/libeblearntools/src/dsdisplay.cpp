@@ -176,11 +176,11 @@ int main(int argc, char **argv) {
   bool		bdefpairs   = true;
   bool		bclasspairs = true;
   // data files
-  idx<t_data>	data(1, 1, 1, 1);
-  idx<t_label>	labels(1);
-  idx<ubyte>	classes(1, 1);
-  idx<int>	classpairs(1, 1);
-  idx<int>	defpairs(1, 1);
+  idx<t_data>	data;
+  idx<t_label>	labels;
+  idx<ubyte>	classes;
+  idx<int>	classpairs;
+  idx<int>	defpairs;
  
   // parse arguments
   if (!parse_args(argc, argv, ds_name)) {
@@ -213,14 +213,12 @@ int main(int argc, char **argv) {
 
   // data
   build_fname(ds_name, DATA_NAME, data_fname);
-
+  loading_error(data, data_fname);
   if (size) {
     load_matrix(data, data_fname);
     cout << data.dim(0) << endl;
     return 0;
   }
-  
-  loading_error(data, data_fname);
   // labels
   build_fname(ds_name, LABELS_NAME, labels_fname);
   loading_error(labels, labels_fname);
@@ -244,7 +242,7 @@ int main(int argc, char **argv) {
     data = data.select(1, channel);
   }
 
-  labeled_datasource<t_data, t_data, int>
+  labeled_datasource<t_data, t_data, t_label>
     train_ds(data, labels, classes, "Dataset");
 
 #ifdef __GUI__
