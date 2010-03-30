@@ -376,7 +376,7 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   intg datasource<Tnet, Tin1, Tin2>::get_lowest_common_size() {
-    if (discrete_labels) {
+    if (!discrete_labels) {
       cerr << "warning: get_lowest_common_size() should not be called "
 	   << "with continous labels." << endl;
       return 0;
