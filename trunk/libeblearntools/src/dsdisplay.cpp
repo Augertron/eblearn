@@ -68,7 +68,7 @@ void print_usage() {
   cout << " rows to display." << endl;
   cout << "  -range <range, e.g.: -1,1>: range to map to 0..255 for display.";
   cout << "  -channel <channel id, e.g.: 0>: only display a specific channel.";
-  cout << "  -font <size, e.g.: 4>: set text font size.";
+  cout << "  -fontsize <size, e.g.: 4>: set text font size.";
   cout << endl;
 }
 
