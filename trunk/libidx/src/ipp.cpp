@@ -31,12 +31,12 @@
 
 namespace ebl {
 
-#ifdef USE_IPP
+#ifdef __IPP__
 
 #include "ipp.h"
 
   // TODO: handle non contiguous?
-  int ipp_convolution_float(idx<float> &in, idx<float> &ker, idx<float> &out) {
+  int ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out) {
     if ((in.dim(0) > INT_MAX) || (in.dim(1) > INT_MAX) ||
 	(ker.dim(0) > INT_MAX) || (ker.dim(1) > INT_MAX) ||
 	(in.mod(0) > INT_MAX) || (ker.mod(0) > INT_MAX) ||

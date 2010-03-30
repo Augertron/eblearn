@@ -79,6 +79,12 @@ namespace ebl {
 	       new string((const char *)cl.labels[(*i)->class_id].idx_ptr()));
     }
     draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
+    // draw masks class
+    if (!mask_class.empty()) {
+      idx<Tnet> mask = cl.get_mask(mask_class);
+      draw_mask(mask, h0, w0, dzoom, dzoom,
+		255, 0, 0, 127, mask_threshold);
+    }
     enable_window_updates();
     return vb;
   }
@@ -180,16 +186,6 @@ namespace ebl {
 	w0 += (uint) (inx.dim(1) * dzoom + 5);
 	first_time = false;
       }}
-
-    // draw masks class
-    if (!mask_class.empty()) {
-      idx<Tnet> mask = cl.get_mask(mask_class);
-      draw_mask(mask, h0, (uint) (0 + mask.dim(1) * dzoom + 5), dzoom, dzoom,
-		255, 0, 0, 127, mask_threshold);
-    }
-     // idx<Tnet> x = ((state_idx<Tnet>*) cl.outputs.get(0))->x;
-     //  x = x.select(0, 2);
-     //  gui.draw_mask(x, 450);
 
     // display queues of detections
     uint hh0 = h0;

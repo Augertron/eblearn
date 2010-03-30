@@ -140,7 +140,7 @@ namespace ebl {
   }
 
   template <class T>
-  void convolution_module_2D<T>::fprop(state_idx<T> &in, state_idx<T> &out){
+  void convolution_module_2D<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     // unfolding input for a faster convolution operation
     idx<T> uuin(in.x.unfold(1, kernel.x.dim(1), stridei));
@@ -150,8 +150,11 @@ namespace ebl {
     { idx_bloop2(lk, kernel.x, T, lt, table, intg) {
 	idx<T> suin(uuin.select(0, lt.get(0)));
 	idx<T> sout((out.x).select(0, lt.get(1)));
-
+#ifdef __IPP__
+	ipp_convolution(suin, lk, sout);
+#else
 	idx_m4dotm2acc(suin, lk, sout); // 2D convolution
+#endif
       }}
   }
   

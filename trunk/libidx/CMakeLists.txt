@@ -19,6 +19,7 @@ add_library (idx SHARED
   src/idxops.cpp  
   src/idx.cpp
   src/idxIO.cpp
+  src/ipp.cpp
   src/color_spaces.cpp
   src/image.cpp  
   src/imageIO.cpp  
@@ -36,3 +37,7 @@ ELSE(CBLAS_FOUND)
   MESSAGE(FATAL_ERROR 
     "CBLAS library not found. Please specify library  location")
 ENDIF(CBLAS_FOUND)
+
+IF(IPP_FOUND)
+  TARGET_LINK_LIBRARIES(idx ippcoreem64t)
+ENDIF(IPP_FOUND)

@@ -74,3 +74,10 @@ IF (CPPUNIT_FOUND)
   include_directories(${CPPUNIT_INCLUDE_DIR})
 ENDIF (CPPUNIT_FOUND)
 
+################################################################################
+# LAST CALL: custom dependencies with possible override
+################################################################################
+# Call custom dependencies, will override previous dependencies if overlap
+################################################################################
+FIND_PACKAGE(Custom)
+
