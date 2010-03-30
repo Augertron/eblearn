@@ -91,6 +91,8 @@ namespace ebl {
 			 unsigned char bg_b, unsigned char bg_a);
     void set_bg_colors(unsigned char r, unsigned char g, 
 		       unsigned char b);
+    //! Set size of font.
+    void set_font_size(int sz);
     void updatePixmap(idx<ubyte> *img, uint h0, uint w0);
     void add_mask(idx<ubyte> *img, uint h0, uint w0,
 		  ubyte r, ubyte g, ubyte b, ubyte a);

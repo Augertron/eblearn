@@ -200,15 +200,19 @@ namespace ebl {
     } else { // different type, read original type, then copy/cast into out
       switch (magic) {
       case MAGIC_BYTE_MATRIX:
+      case MAGIC_UBYTE_VINCENT:
 	read_cast_matrix<ubyte>(stream, *pout);
 	break ;
       case MAGIC_INTEGER_MATRIX:
+      case MAGIC_INT_VINCENT:
 	read_cast_matrix<int>(stream, *pout);
 	break ;
       case MAGIC_FLOAT_MATRIX:
+      case MAGIC_FLOAT_VINCENT:
 	read_cast_matrix<float>(stream, *pout);
 	break ;
       case MAGIC_DOUBLE_MATRIX:
+      case MAGIC_DOUBLE_VINCENT:
 	read_cast_matrix<double>(stream, *pout);
 	break ;
       case MAGIC_LONG_MATRIX:
@@ -216,18 +220,6 @@ namespace ebl {
 	break ;
       case MAGIC_UINT_MATRIX:
 	read_cast_matrix<uint>(stream, *pout);
-	break ;
-      case MAGIC_UBYTE_VINCENT:
-	read_cast_matrix<ubyte>(stream, *pout);
-	break ;
-      case MAGIC_INT_VINCENT:
-	read_cast_matrix<int>(stream, *pout);
-	break ;
-      case MAGIC_FLOAT_VINCENT:
-	read_cast_matrix<float>(stream, *pout);
-	break ;
-      case MAGIC_DOUBLE_VINCENT:
-	read_cast_matrix<double>(stream, *pout);
 	break ;
       default:
 	eblerror("unknown magic number");

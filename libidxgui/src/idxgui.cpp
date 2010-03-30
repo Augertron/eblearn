@@ -183,6 +183,11 @@ namespace ebl {
     emit gui_set_bg_colors(r, g, b);
   }
 
+  void idxgui::set_font_size(int sz) {
+    check_init();
+    emit gui_set_font_size(sz);
+  }
+
   void idxgui::enable_updates() {
     check_init();
     emit gui_set_wupdate(true);    

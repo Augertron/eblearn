@@ -82,7 +82,13 @@ namespace ebl {
   template<class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::
   init(idx<Tin1> &data_, idx<Tin2> &labels_, const char *name_,
-       Tin1 b, float c){
+       Tin1 b, float c) {
+    idx<double> *cont1 = dynamic_cast<idx<double>*>(&labels_);
+    idx<float> *cont2 = dynamic_cast<idx<float>*>(&labels_);
+    if (cont1 || cont2)
+      discrete_labels = false; // continous labels
+    else // discrete, we can use labels as classes
+      discrete_labels = true; 
     data = data_;
     labels = labels_;
     probas = idx<double>(data.dim(0));
@@ -112,13 +118,15 @@ namespace ebl {
     dataIter_train = dIter_train;
     labelsIter_train = lIter_train;
     probasIter_train = pIter_train;
-    // count number of samples per class
-    counts.resize(nclasses);
-    fill(counts.begin(), counts.end(), 0);
-    idx_bloop1(lab, labels, Tin2) {
-      counts[(size_t)lab.get()]++;
+    // count number of samples per class if discrete
+    if (discrete_labels) {
+      counts.resize(nclasses);
+      fill(counts.begin(), counts.end(), 0);
+      idx_bloop1(lab, labels, Tin2) {
+	counts[(size_t)lab.get()]++;
+      }
+      set_balanced(); // balance dataset for each class in next_train
     }
-    set_balanced(); // balance dataset for each class in next_train
     set_shuffle_passes(true); // for next_train only
     set_weigh_samples(true); // for next_train only
     set_weigh_normalization(true); // per class by default
@@ -154,7 +162,7 @@ namespace ebl {
     idx<Tin1> shuffledData(data.get_idxdim());
     idx<Tin2> shuffledLabels(labels.get_idxdim());
     // get the nb of classes
-    intg nbOfClasses = 1+idx_max(labels);
+    intg nbOfClasses = (intg) (1 + idx_max(labels));
     intg nbOfSamples = data.dim(0);
     intg nbOfSamplesPerClass = nbOfSamples / nbOfClasses;
     // create new dataset...
@@ -323,18 +331,21 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_balanced() {
-    // compute vector of sample indices for each class
-    label_indices.clear();
-    indices_itr.clear();
-    iitr = 0;
-    for (intg i = 0; i < nclasses; ++i) {
-      vector<intg> indices;
-      label_indices.push_back(indices);
-      indices_itr.push_back(0); // init iterators
-    }
-    // distribute sample indices into each vector based on label
-    for (uint i = 0; i < size(); ++i)
-      label_indices[labels.get(i)].push_back(i);
+    if (discrete_labels) {
+      // compute vector of sample indices for each class
+      label_indices.clear();
+      indices_itr.clear();
+      iitr = 0;
+      for (intg i = 0; i < nclasses; ++i) {
+	vector<intg> indices;
+	label_indices.push_back(indices);
+	indices_itr.push_back(0); // init iterators
+      }
+      // distribute sample indices into each vector based on label
+      for (uint i = 0; i < size(); ++i)
+	label_indices[(intg) (labels.get(i))].push_back(i);
+    } else
+      cerr << "warning: cannot use balanced() with continuous labels" << endl;
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -365,6 +376,11 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   intg datasource<Tnet, Tin1, Tin2>::get_lowest_common_size() {
+    if (discrete_labels) {
+      cerr << "warning: get_lowest_common_size() should not be called "
+	   << "with continous labels." << endl;
+      return 0;
+    }
     intg min_nonzero = std::numeric_limits<intg>::max();
     for (vector<intg>::iterator i = counts.begin(); i != counts.end(); ++i) {
       if ((*i < min_nonzero) && (*i != 0))
@@ -379,9 +395,13 @@ namespace ebl {
   void datasource<Tnet, Tin1, Tin2>::pretty() {
     cout << "Dataset \"" << name << "\" contains " << data.dim(0);
     cout << " samples of dimension " << sample_dims();
-    cout << " with " << get_nclasses() << " classes," << endl;
+    if (discrete_labels)
+      cout << " with " << get_nclasses() << " classes," << endl;
+    else
+      cout << " with continous labels," << endl;
     cout << "bias is " << bias << ", coefficient is " << coeff;
-    cout << " and iteration size in samples is " << get_lowest_common_size();
+    if (discrete_labels)
+      cout << " and iteration size in samples is " << get_lowest_common_size();
     cout << "." << endl;
   }
 
@@ -415,7 +435,11 @@ namespace ebl {
   labeled_datasource<Tnet, Tdata, Tlabel>::
   labeled_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
 		     idx<ubyte> &classes, const char *name_, Tdata b, float c) {
-    if (classes.order() == 2) {
+    this->lblstr = NULL;
+    idx<double> *cont1 = dynamic_cast<idx<double>*>(&labels_);
+    idx<float> *cont2 = dynamic_cast<idx<float>*>(&labels_);
+    if ((classes.order() == 2) && // assign labels only if non continuous
+	!cont1 && !cont2) {
       this->lblstr = new vector<string*>;
       idx_bloop1(classe, classes, ubyte) {
 	this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
@@ -478,11 +502,11 @@ namespace ebl {
        vector<string*> *lblstr_) {
     datasource<Tnet, Tdata, Tlabel>::init(inp, lbl, name, b, c);
     this->lblstr = lblstr_;
-
-    if (!this->lblstr) { // no names are given, use indices as names
+    // if no names are given and discrete, use indices as names
+    if (!this->lblstr && this->discrete_labels) { 
       this->lblstr = new vector<string*>;
       ostringstream o;
-      int imax = idx_max(this->labels);
+      int imax = (int) idx_max(this->labels);
       for (int i = 0; i <= imax; ++i) {
 	o << i;
 	this->lblstr->push_back(new string(o.str()));
@@ -546,11 +570,14 @@ namespace ebl {
 					      classes_fname, name_, b, c),
       pairs(1, 1), pairsIter(pairs, 0) {
     // init current class
-    if (!load_matrix<Tlabel>(pairs, pairs_fname)) {
-      std::cerr << "Failed to load dataset file " << pairs_fname << endl;
+    try {
+      pairs = load_matrix<intg>(pairs_fname);
+    } catch(string &err) {
+      cerr << "error: " << err << endl;
+      cerr << "failed to load dataset file " << pairs_fname << endl;
       eblerror("Failed to load dataset file");
     }
-    typename idx<Tlabel>::dimension_iterator	 diter(pairs, 0);
+    typename idx<intg>::dimension_iterator	 diter(pairs, 0);
     pairsIter = diter;
   }
   
@@ -558,7 +585,7 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>
   labeled_pair_datasource<Tnet, Tdata, Tlabel>::
   labeled_pair_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
-			  idx<ubyte> &classes_, idx<Tlabel> &pairs_,
+			  idx<ubyte> &classes_, idx<intg> &pairs_,
 			  const char *name_, Tdata b, float c)
     : labeled_datasource<Tnet, Tdata, Tlabel>(data_, labels_, classes_, name_,
 					      b, c),
@@ -576,7 +603,7 @@ namespace ebl {
   fprop(state_idx<Tnet> &in1, state_idx<Tnet> &in2, idx<Tlabel> &label) {
     in1.resize(this->sample_dims());
     in2.resize(this->sample_dims());
-    Tlabel id1 = pairsIter.get(0), id2 = pairsIter.get(1);
+    intg id1 = pairsIter.get(0), id2 = pairsIter.get(1);
     Tlabel lab = this->labels.get(id1);
     label.set(lab);
     idx<Tdata> im1 = this->data[id1], im2 = this->data[id2];

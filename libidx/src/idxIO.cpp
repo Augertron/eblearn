@@ -63,6 +63,26 @@ namespace ebl {
     return true;
   }
 
+  int get_matrix_type(const char *filename) {
+    // open file
+    FILE *fp = fopen(filename, "rb");
+    if (!fp) {
+      ostringstream err;
+      err << "get_matrix_type failed to open " << filename;
+      throw err.str();
+    }
+
+    int magic;
+    // header: read magic number
+    if (fread(&magic, sizeof (int), 1, fp) != 1) {
+      ostringstream err;
+      err << "failed to read magic number in " << filename;
+      fclose(fp);
+      throw err.str();
+    }
+    return magic;
+  }
+
   bool is_magic_vincent(int magic) {
     if (magic == MAGIC_UBYTE_VINCENT
 	|| magic == MAGIC_BYTE_VINCENT

@@ -34,6 +34,7 @@
 #define DATASOURCE_GUI_HPP_
 
 #include <ostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -97,6 +98,9 @@ namespace ebl {
     if (wid == -1) // clear only if we created the window
       clear_window();
     gui << white_on_transparent() << gui_only();
+    // single continuous labels, set smaller font
+    if (ds.labels.order() == 1 && !ds.discrete_labels)
+      set_font_size(4);
     uint k = 0;
     ds.seek_begin();
     // loop to reach pos
@@ -112,8 +116,11 @@ namespace ebl {
 	//m = s.x.select(0, 0);
 	m = s.x.shift_dim(0, 2);
 	draw_matrix(m, h, w, _zoom, _zoom, _rmin, _rmax);
+	// draw label if present
 	if ((ds.lblstr) && (ds.lblstr->at((int)lbl.get())))
 	  gui << at(h + 1, w + 1) << (ds.lblstr->at((int)lbl.get()))->c_str();
+	else if (ds.labels.order() == 1) // single continuous labels
+	  gui << at(h + 1, w + 1) << setprecision(1) << lbl.get();
 	w += m.dim(1) + 1;
 	k++;
       }
