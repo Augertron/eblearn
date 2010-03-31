@@ -36,8 +36,9 @@
 namespace ebl {
 
   template <typename T>
-  void ipp_convolution(idx<T> &in, idx<T> &ker, idx<T> &out) {
+  int ipp_convolution(idx<T> &in, idx<T> &ker, idx<T> &out) {
     eblerror("type not implemented for IPP");
+    return -1;
   }
 
 }

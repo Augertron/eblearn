@@ -133,6 +133,7 @@ namespace ebl {
     idx<intg>		table;	//!< table of connections btw input and output
   private:
     bool		warnings_shown;
+    bool                float_precision; //!< used for IPP
   };
 
   //! The replicable version of convolution_module_2D.

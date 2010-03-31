@@ -111,7 +111,8 @@ namespace ebl {
 						  intg stridei_, intg stridej_, 
 						  idx<intg> &tbl)
     : kernel(p, tbl.dim(0), kerneli, kernelj), 
-      stridei(stridei_), stridej(stridej_), table(tbl), warnings_shown(false) {
+      stridei(stridei_), stridej(stridej_), table(tbl), warnings_shown(false),
+      float_precision(false) {
     // check sanity of connection table
     if (table.dim(1) != 2) { // check table order
       cerr << "error: expecting a table with dim 1 equal to 2 but found: ";
@@ -133,6 +134,10 @@ namespace ebl {
 	cerr << " not used by connection table in convolution module." << endl;
       }
     }
+    // check precision to decide if we use IPP or not
+    state_idx<float> *cont = dynamic_cast<state_idx<float>*>(&kernel);
+    if (cont)
+      float_precision = true;
   }
 
   template <class T>
@@ -151,7 +156,10 @@ namespace ebl {
 	idx<T> suin(uuin.select(0, lt.get(0)));
 	idx<T> sout((out.x).select(0, lt.get(1)));
 #ifdef __IPP__
-	ipp_convolution(suin, lk, sout);
+	if (float_precision)
+	  ipp_convolution(suin, lk, sout);
+	else 
+	  idx_m4dotm2acc(suin, lk, sout); // 2D convolution
 #else
 	idx_m4dotm2acc(suin, lk, sout); // 2D convolution
 #endif
