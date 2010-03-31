@@ -47,14 +47,14 @@ namespace ebl {
   //! <ker> is actually in reverse order, so you might
   //! want to reverse it first.
   template <typename T>
-    void ipp_convolution(idx<T> &in, idx<T> &ker, idx<T> &out);
+    int ipp_convolution(idx<T> &in, idx<T> &ker, idx<T> &out);
 
   //! compute a 2D convolution of <in> with kernel <ker>
   //! and write result into <out>
   //! <ker> is actually in reverse order, so you might
   //! want to reverse it first.
   template <>
-    void ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out);
+    int ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out);
 
   //! this calls ippiAdd_32f_C1IR
   //! This does component-wise addition of 2 matrices of floats. The result is 

@@ -39,7 +39,7 @@ namespace ebl {
 
   // TODO: handle non contiguous?
   template <>
-  void ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out) {
+  int ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out) {
     if ((in.dim(0) > INT_MAX) || (in.dim(1) > INT_MAX) ||
 	(ker.dim(0) > INT_MAX) || (ker.dim(1) > INT_MAX) ||
 	(in.mod(0) > INT_MAX) || (ker.mod(0) > INT_MAX) ||
@@ -55,9 +55,9 @@ namespace ebl {
     insize.width = in.dim(1);
     kersize.height = ker.dim(0);
     kersize.width = ker.dim(1);
-    ippiConvValid_32f_C1R(in.idx_ptr(),instep,insize,
-			  ker.idx_ptr(),kerstep,kersize,
-			  out.idx_ptr(),outstep);
+    return ippiConvValid_32f_C1R(in.idx_ptr(),instep,insize,
+				 ker.idx_ptr(),kerstep,kersize,
+				 out.idx_ptr(),outstep);
   }
 
   int ipp_add_float(idx<float> &in1, idx<float> &in2) {
