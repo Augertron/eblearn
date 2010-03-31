@@ -71,12 +71,12 @@ namespace ebl {
 
   protected:
 
+#ifdef __XML__ // disable some derived methods if XML not available
+    
     //! return true if class_name is authorized (based on excluded and included
     //! variables, and difficult, truncated, occluded flags).
     virtual bool included(const string &class_name, uint difficult,
 			  uint truncated, uint occluded);
-    
-#ifdef __XML__ // disable some derived methods if XML not available
     
     ////////////////////////////////////////////////////////////////
     // data
