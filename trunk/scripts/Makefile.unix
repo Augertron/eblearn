@@ -65,10 +65,20 @@ debug:
 	@echo __________________________________________________________________
 	cd build/Debug && cmake -DCMAKE_BUILD_TYPE=Debug ../.. && make ${prj} && cd ../..
 
+.PHONY: doc	
+
+doc:
+	cd doc/documentation && ./generate.sh
+	
 clean:
 	rm -rf build/Debug/*
 	rm -rf build/Release/*
 	rm -rf bin/*
+	rm -rf doc/documentation/libeblearn_html
+	rm -rf doc/documentation/libeblearngui_html
+	rm -rf doc/documentation/libeblearntools_html
+	rm -rf doc/documentation/libidx_html
+	rm -rf doc/documentation/libidxgui_html
 
 install:
 	mkdir -p $(INCLUDE_INSTALL)
