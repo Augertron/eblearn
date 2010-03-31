@@ -42,7 +42,7 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
   SET(_libraries_work TRUE)
   SET(${LIBRARIES})
   SET(_combined_name)
-  SET(_paths)
+  SET(_paths /usr/local/include /usr/include /usr/local/atlas/include ENV)
   FOREACH(_library ${_list})
     SET(_combined_name ${_combined_name}_${_library})
 
@@ -52,16 +52,17 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
       IF(APPLE) 
         FIND_LIBRARY(${_prefix}_${_library}_LIBRARY
           NAMES ${_library}
-          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64 ENV 
+          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64 /usr/local/atlas/lib ENV 
           DYLD_LIBRARY_PATH 
           )
       ELSE(APPLE)
         FIND_LIBRARY(${_prefix}_${_library}_LIBRARY
           NAMES ${_library}
-          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64 /usr/local/lib/atlas /usr/lib/atlas /usr/local/lib64/atlas /usr/lib64/atlas ENV 
+          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64 /usr/local/lib/atlas  /usr/local/atlas/lib /usr/lib/atlas /usr/local/lib64/atlas /usr/lib64/atlas ENV 
           LD_LIBRARY_PATH 
           )
       ENDIF(APPLE)
+
       MARK_AS_ADVANCED(${_prefix}_${_library}_LIBRARY)
       IF(${_prefix}_${_library}_LIBRARY)
         GET_FILENAME_COMPONENT(_path ${${_prefix}_${_library}_LIBRARY} PATH)
@@ -81,7 +82,7 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
     FIND_PATH(${_prefix}${_combined_name}_INCLUDE ${_include} ${_paths})
     MARK_AS_ADVANCED(${_prefix}${_combined_name}_INCLUDE)
     IF(${_prefix}${_combined_name}_INCLUDE)
-      MESSAGE(STATUS "Checking for [${__list}] -- includes found")
+      MESSAGE(STATUS "Checking for [${__list}] -- includes found: ${${_prefix}${_combined_name}_INCLUDE}")
       SET(${_prefix}_INCLUDE_DIR ${${_prefix}${_combined_name}_INCLUDE})
       SET(${_prefix}_INCLUDE_FILE ${_include})
     ELSE(${_prefix}${_combined_name}_INCLUDE)
@@ -103,7 +104,7 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
       SET(_libraries_work ${${_prefix}${_combined_name}_WORKS})
     ENDIF(_check_function)
     IF(_libraries_work)
-      MESSAGE(STATUS "Checking for [${__list}] -- libraries found")
+      MESSAGE(STATUS "Checking for [${__list}] -- libraries found: ${CBLAS_LIBRARIES}")
     ENDIF(_libraries_work)
 
   ENDIF(_libraries_work)
@@ -235,7 +236,7 @@ ENDIF(NOT CBLAS_FOUND AND CBLAS_FIND_REQUIRED)
 
 IF(NOT CBLAS_FIND_QUIETLY)
   IF(CBLAS_FOUND)
-    MESSAGE(STATUS "CBLAS library found")
+    MESSAGE(STATUS "Found CBlas library")
   ELSE(CBLAS_FOUND)
     MESSAGE(FATAL_ERROR "CBLAS library not found. Please install cblas or atlas libraries as explained in README.txt")
   ENDIF(CBLAS_FOUND)
