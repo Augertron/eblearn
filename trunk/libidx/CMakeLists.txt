@@ -19,7 +19,7 @@ add_library (idx SHARED
   src/idxops.cpp  
   src/idx.cpp
   src/idxIO.cpp
-  src/ipp.cpp
+  src/idxipp.cpp
   src/color_spaces.cpp
   src/image.cpp  
   src/imageIO.cpp  
@@ -39,5 +39,5 @@ ELSE(CBLAS_FOUND)
 ENDIF(CBLAS_FOUND)
 
 IF(IPP_FOUND)
-  TARGET_LINK_LIBRARIES(idx ippcoreem64t)
+  TARGET_LINK_LIBRARIES(idx ippcoreem64t guide ippiem64t ippcvem64t ippsem64t ippccem64t pthread)
 ENDIF(IPP_FOUND)
