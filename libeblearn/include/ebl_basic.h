@@ -134,6 +134,10 @@ namespace ebl {
   private:
     bool		warnings_shown;
     bool                float_precision; //!< used for IPP
+#ifdef __IPP__
+    idx<T>              revkernel; //!< a reversed kernel for IPP
+    idx<T>              outtmp; //!< a tmp buffer for IPP conv output
+#endif
   };
 
   //! The replicable version of convolution_module_2D.

@@ -50,6 +50,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   // specialization for doubles: can use blas versions.
+  template <>
   void idx_copy(idx<double> &src, idx<double> &dst) {
     // loop and copy
     idxop_ii(src, dst,
@@ -71,7 +72,14 @@ namespace ebl {
   }
 
   // specialization for floats: can use blas versions.
+  template <>
   void idx_copy(idx<float> &src, idx<float> &dst) {
+#ifdef __IPP__
+    if (src.contiguousp() && dst.contiguousp()) {
+      ipp_copy(src, dst);
+      return ;
+    }
+#endif
     // loop and copy
     idxop_ii(src, dst,
 	     // idx0 version
@@ -133,6 +141,30 @@ namespace ebl {
       return *out;
     }
     return z;
+  }
+
+  ////////////////////////////////////////////////////////////////
+
+  template<> void idx_add(idx<float> &in, idx<float> &out) {
+#ifdef __IPP__
+    if (in.contiguousp() && out.contiguousp()) {
+      ipp_add(in, out);
+      return ;
+    }
+#endif
+    idxiter<float> pin, pout;
+    idx_aloop2_on(pin, in, pout, out) { *pout = *pout + *pin; }
+  }
+
+  template<> void idx_addc(idx<float> &in, float c, idx<float> &out) {
+#ifdef __IPP__
+    if (in.contiguousp() && out.contiguousp()) {
+      ipp_addc(in, c, out);
+      return ;
+    }
+#endif
+    idxiter<float> pin, pout;
+    idx_aloop2_on(pin, in, pout, out) { *pout = *pin + c; }
   }
 
   ////////////////////////////////////////////////////////////////

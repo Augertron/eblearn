@@ -37,6 +37,7 @@
 #include "idxblas.h"
 #include "numerics.h"
 #include "idx.h"
+#include "ippops.h"
 
 namespace ebl {
 
@@ -101,11 +102,11 @@ namespace ebl {
 
   //! generic copy
   // TODO-0: using slow idx_copy version, others are bugged, debug
-  void idx_copy(idx<double> &src, idx<double> &dst);
-  void idx_copy(idx<float> &src, idx<float> &dst);
   template <class T1, class T2> void idx_copy(idx<T1> &src, idx<T2> &dst);
   template <class T1, class T2> idx<T1> idx_copy(idx<T2> &src);
   template <class T> idx<T> idx_copy(idx<T> &src);
+  template <> void idx_copy(idx<double> &src, idx<double> &dst);
+  template <> void idx_copy(idx<float> &src, idx<float> &dst);
   //template<class T> void idx_copy(idx<T> &src, idx<T> &dst);
 
   //! copy src into dst but prevent under and overflow if values in src
@@ -165,6 +166,12 @@ namespace ebl {
   //! add two idx's
   template<class T> void idx_add(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
+  //! Add two idx's as follow: out = out + in
+  template<class T> void idx_add(idx<T> &in, idx<T> &out);
+
+  //! Add two idx's as follow: out = out + in
+  template<> void idx_add(idx<float> &in, idx<float> &out);
+
   //! subtract two idx's
   template<class T> void idx_sub(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
@@ -176,6 +183,9 @@ namespace ebl {
 
   //! add a constant to each element:  o1 <- i1+c;
   template<class T> void idx_addc(idx<T> &inp, T c, idx<T> &out);
+
+  //! add a constant to each element:  o1 <- i1+c;
+  template<> void idx_addc(idx<float> &inp, float c, idx<float> &out);
 
   //! add a constant to each element:  o1 <- i1+c;
   //! This version bounds the new values to minimum and maximum of type T,

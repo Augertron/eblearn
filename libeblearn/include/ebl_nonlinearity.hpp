@@ -47,8 +47,10 @@ namespace ebl {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x.spec); // use same dimensions as in
       if (out.x.get_idxdim() != d) { // resize only if necessary
+#ifdef __DEBUG__
 	cout << "stdsigmoid: resizing output from " << out.x.get_idxdim();
 	cout << " to " << d << endl;
+#endif
 	out.resize(d);
       }
     }
@@ -77,8 +79,10 @@ namespace ebl {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x.spec); // use same dimensions as in
       if (out.x.get_idxdim() != d) { // resize only if necessary
+#ifdef __DEBUG__
 	cout << "tanh: resizing output from " << out.x.get_idxdim();
 	cout << " to " << d << endl;
+#endif
 	out.resize(d);
       }
     }

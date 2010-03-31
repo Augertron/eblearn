@@ -96,8 +96,10 @@ namespace ebl {
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, w.x.dim(0)); // except for the first one
     if (out.x.get_idxdim() != d) { // resize only if necessary
+#ifdef __DEBUG__
       cout << "linear: resizing output from " << out.x.get_idxdim();
       cout << " to " << d << endl;
+#endif
       out.resize(d);
     }
   }
@@ -134,10 +136,15 @@ namespace ebl {
 	cerr << " not used by connection table in convolution module." << endl;
       }
     }
+#ifdef __IPP__
     // check precision to decide if we use IPP or not
     state_idx<float> *cont = dynamic_cast<state_idx<float>*>(&kernel);
-    if (cont)
+    if (cont) {
       float_precision = true;
+      revkernel = idx<T>(kerneli, kernelj); // allocate reversed kernel
+      outtmp = idx<T>(1, 1);
+    }
+#endif
   }
 
   template <class T>
@@ -156,9 +163,13 @@ namespace ebl {
 	idx<T> suin(uuin.select(0, lt.get(0)));
 	idx<T> sout((out.x).select(0, lt.get(1)));
 #ifdef __IPP__
-	if (float_precision)
-	  ipp_convolution(suin, lk, sout);
-	else 
+	if (float_precision) {
+	  rev_idx2_tr(lk, revkernel);
+	  idx_clear(outtmp);
+	  ipp_convolution(suin, revkernel, outtmp);
+	  ipp_add(outtmp, sout);
+	}
+	else // not using IPP
 	  idx_m4dotm2acc(suin, lk, sout); // 2D convolution
 #else
 	idx_m4dotm2acc(suin, lk, sout); // 2D convolution
@@ -268,8 +279,15 @@ namespace ebl {
     d.setdim(1, uuin.dim(1)); // convolution trims dimensions a bit
     d.setdim(2, uuin.dim(2)); // convolution trims dimensions a bit
     if (out.x.get_idxdim() != d) { // resize only if necessary
+#ifdef __DEBUG__
       cout << "convolution: resizing output from " << out.x.get_idxdim();
       cout << " to " << d << endl;
+#endif
+#ifdef __IPP__
+      if (float_precision) {
+	outtmp.resize(d.dim(1), d.dim(2));
+      }
+#endif
       out.resize(d);
     }
   }
@@ -300,7 +318,7 @@ namespace ebl {
 	uuin = uuin.unfold(0, stridei, stridei);
 	idx_eloop1(z1, uuin, T) {
 	  idx_eloop1(z2, z1, T) {
-	    idx_add(z2, lsx, lsx); // average
+	    idx_add(z2, lsx); // average
 	  }
 	}
 	idx_dotc(lsx, lcx.get(), ltx); // coeff
@@ -355,8 +373,10 @@ namespace ebl {
     d.setdim(1, si); // new size after subsampling
     d.setdim(2, sj); // new size after subsampling
     if (out.x.get_idxdim() != d) { // resize only if necessary
+#ifdef __DEBUG__
       cout << "subsampling: resizing output from " << out.x.get_idxdim();
       cout << " to " << d << endl;
+#endif
       out.resize(d);
       sub.resize(d);
     }
@@ -380,8 +400,10 @@ namespace ebl {
       idxdim d(in.x.spec); // use same dimensions as in
       d.setdim(0, bias.x.dim(0)); // except for the first one
       if (out.x.get_idxdim() != d) { // resize only if necessary
+#ifdef __DEBUG__
 	cout << "addc: resizing output from " << out.x.get_idxdim();
 	cout << " to " << d << endl;
+#endif
 	out.resize(d);
       }
     }
@@ -500,8 +522,8 @@ namespace ebl {
     state_idx_check_different3(in1, in2, out); // forbid same in and out
     idx_checknelems3_all(in1.dx, in2.dx, out.dx);// must have same dimensions
 
-    idx_add(in1.dx, out.dx, in1.dx); // derivative wrt in1
-    idx_add(in2.dx, out.dx, in2.dx); // derivative wrt in2
+    idx_add(out.dx, in1.dx); // derivative wrt in1
+    idx_add(out.dx, in2.dx); // derivative wrt in2
   }
 
   template <class T>
@@ -509,8 +531,8 @@ namespace ebl {
     state_idx_check_different3(in1, in2, out); // forbid same in and out
     idx_checknelems3_all(in1.ddx, in2.ddx, out.ddx);// must have same dimensions
 
-    idx_add(in1.ddx, out.ddx, in1.ddx); // derivative wrt in1
-    idx_add(in2.ddx, out.ddx, in2.ddx); // derivative wrt in2
+    idx_add(out.ddx, in1.ddx); // derivative wrt in1
+    idx_add(out.ddx, in2.ddx); // derivative wrt in2
   }
 
   ////////////////////////////////////////////////////////////////
@@ -552,9 +574,9 @@ namespace ebl {
       tmp = idx<T>(d);
     }
     idx_mul(out.dx, in2.x, tmp);
-    idx_add(in1.dx, tmp, in1.dx);
+    idx_add(tmp, in1.dx);
     idx_mul(out.dx, in1.x, tmp);
-    idx_add(in2.dx, tmp, in2.dx);
+    idx_add(tmp, in2.dx);
   }
    
   //! {<code>
@@ -573,10 +595,10 @@ namespace ebl {
     }
     idx_mul(in2.x, in2.x, tmp);
     idx_mul(out.ddx, tmp, tmp);
-    idx_add(in1.ddx, tmp, in1.ddx);
+    idx_add(tmp, in1.ddx);
     idx_mul(in1.x, in1.x, tmp);
     idx_mul(out.ddx, tmp, tmp);
-    idx_add(in2.ddx, tmp, in2.ddx);
+    idx_add(tmp, in2.ddx);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -621,7 +643,7 @@ namespace ebl {
     state_idx_check_different(in, out); // forbid same in and out
     idx_checknelems2_all(in.ddx, out.ddx); // must have same dimensions
 
-    idx_add(in.ddx, out.ddx, in.ddx);
+    idx_add(out.ddx, in.ddx);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -659,7 +681,7 @@ namespace ebl {
     intg inc = out.x.dim(2);
     idx<T> tmp = in.dx.narrow(1, inr, nrow);
     tmp = tmp.narrow(2, inc, ncol);
-    idx_add(out.dx, tmp, tmp);
+    idx_add(out.dx, tmp);
   }
 
   template <class T>
@@ -670,7 +692,7 @@ namespace ebl {
     intg inc = out.x.dim(2);
     idx<T> tmp = in.ddx.narrow(1, inr, nrow);
     tmp = tmp.narrow(2, inc, ncol);
-    idx_add(out.ddx, tmp, tmp);
+    idx_add(out.ddx, tmp);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -706,7 +728,7 @@ namespace ebl {
     intg inc = in.x.dim(2);
     idx<T> tmp = out.dx.narrow(1, inr, nrow);
     tmp = tmp.narrow(2, inc, ncol);
-    idx_add(tmp, in.dx, in.dx);
+    idx_add(tmp, in.dx);
   }
 
   template <class T>
@@ -717,7 +739,7 @@ namespace ebl {
     intg inc = in.x.dim(2);
     idx<T> tmp = out.ddx.narrow(1, inr, nrow);
     tmp = tmp.narrow(2, inc, ncol);
-    idx_add(tmp, in.ddx, in.ddx);
+    idx_add(tmp, in.ddx);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -780,7 +802,7 @@ namespace ebl {
     intg inc = in.x.dim(2);
     idx<T> tmp = out.dx.narrow(1, inr, nrow);
     tmp = tmp.narrow(2, inc, ncol);
-    idx_add(tmp, in.dx, in.dx);
+    idx_add(tmp, in.dx);
   }
 
   template <class T>
@@ -791,7 +813,7 @@ namespace ebl {
     intg inc = in.x.dim(2);
     idx<T> tmp = out.ddx.narrow(1, inr, nrow);
     tmp = tmp.narrow(2, inc, ncol);
-    idx_add(tmp, in.ddx, in.ddx);
+    idx_add(tmp, in.ddx);
   }
 
   ////////////////////////////////////////////////////////////////

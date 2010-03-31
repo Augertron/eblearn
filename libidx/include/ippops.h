@@ -31,66 +31,66 @@
 
 #ifdef __IPP__
 
-#include "idxipp.h"
+#ifndef IPPOPS_H_
+#define IPPOPS_H_
 
-using namespace std;
+#include <ipp.h>
+#include "idx.h"
 
 namespace ebl {
 
-  // TODO: handle non contiguous?
+  ////////////////////////////////////////////////////////////////
+  // idx to IPP wrapper functions
+
+  //! compute a 2D convolution of <in> with kernel <ker>
+  //! and write result into <out>
+  //! <ker> is actually in reverse order, so you might
+  //! want to reverse it first.
+  template <typename T>
+    int ipp_convolution(idx<T> &in, idx<T> &ker, idx<T> &out);
+
+  //! compute a 2D convolution of <in> with kernel <ker>
+  //! and write result into <out>
+  //! <ker> is actually in reverse order, so you might
+  //! want to reverse it first.
   template <>
-  int ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out) {
-    if ((in.dim(0) > INT_MAX) || (in.dim(1) > INT_MAX) ||
-	(ker.dim(0) > INT_MAX) || (ker.dim(1) > INT_MAX) ||
-	(in.mod(0) > INT_MAX) || (ker.mod(0) > INT_MAX) ||
-	(out.mod(0) > INT_MAX))
-      eblerror("TODO: Cannot use long with IPP.");
-  
-    int instep	= sizeof (float) * (int) in.mod(0);
-    int kerstep	= sizeof (float) * (int) ker.mod(0);
-    int outstep	= sizeof (float) * (int) out.mod(0);
-    IppiSize insize, kersize;
-  
-    insize.height = in.dim(0);
-    insize.width = in.dim(1);
-    kersize.height = ker.dim(0);
-    kersize.width = ker.dim(1);
-    return ippiConvValid_32f_C1R(in.idx_ptr(),instep,insize,
-				 ker.idx_ptr(),kerstep,kersize,
-				 out.idx_ptr(),outstep);
-  }
+    int ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out);
 
-  int ipp_add_float(idx<float> &in1, idx<float> &in2) {
-    IppiSize	insize;
-    int		instep;
+  //! this calls ippiAdd_32f_C1IR
+  //! This does component-wise addition of 2 matrices of floats. The result is 
+  //! saved in the second idx
+  template <typename T>
+  int ipp_add(idx<T> &in1, idx<T> &in2);
 
-    if ((in1.dim(0) > INT_MAX) || (in1.dim(1) > INT_MAX) ||
-	(in1.mod(0) > INT_MAX))
-      eblerror("TODO: Cannot use long with IPP.");
-  
-    insize.height = in1.dim(0);
-    insize.width = in1.dim(1); 
-    instep = sizeof (float) * in1.mod(0);
-    return ippiAdd_32f_C1IR(in1.ptr(), instep, in2.ptr(), instep, insize);
-  }
+  //! this calls ippiAdd_32f_C1IR
+  //! This does component-wise addition of 2 matrices of floats. The result is 
+  //! saved in the second idx
+  template <>
+  int ipp_add(idx<float> &in1, idx<float> &in2);
 
-  int ipp_addc_nip_float(idx<float> &in, float constant, idx<float> &out) {
-    IppiSize	insize;
-    int		instep, outstep;
+  //! this calls ippiAddC_32f_C1R
+  //! This adds a constant to each component of an idx of floats. NOT In place
+  template <typename T>
+  int ipp_addc(idx<T> &in, T c, idx<T> &out);
 
-    if ((in.dim(0) > INT_MAX) || (in.dim(1) > INT_MAX) ||
-	(in.mod(0) > INT_MAX) || (out.mod(0) > INT_MAX))
-      eblerror("TODO: Cannot use long with IPP.");
+  //! this calls ippiAddC_32f_C1R
+  //! This adds a constant to each component of an idx of floats. NOT In place
+  template <>
+  int ipp_addc(idx<float> &in, float c, idx<float> &out);
 
-    insize.height = in.dim(0);
-    insize.width = in.dim(1); 
-    instep = sizeof (float) * in.mod(0);
-    outstep = sizeof (float) * out.mod(0);
-    return ippiAddC_32f_C1R(in.ptr(), instep, constant, out.ptr(), outstep, 
-			    insize);
-  }
+  //! Copy in to out.
+  template <typename T>
+  int ipp_copy(idx<T> &in, idx<T> &out);
+
+  //! Copy in to out.
+  template <>
+  int ipp_copy(idx<float> &in, idx<float> &out);
 
 } // end namespace ebl
 
+#include "ippops.hpp"
+
+#endif /* IPPOPS_H_ */
+  
 #endif
 
