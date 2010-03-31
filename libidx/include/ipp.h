@@ -29,15 +29,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-namespace ebl {
-
 #ifdef __IPP__
 
-#ifndef IPP_H_
-#define IPP_H_
+#ifndef IDXIPP_H_
+#define IDXIPP_H_
 
-#include "idx.h"
 #include <ipp.h>
+#include "idx.h"
+
+namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // idx to IPP wrapper functions
@@ -47,13 +47,14 @@ namespace ebl {
   //! <ker> is actually in reverse order, so you might
   //! want to reverse it first.
   template <typename T>
-    int ipp_convolution(idx<T> &in, idx<T> &ker, idx<T> &out);
+    void ipp_convolution(idx<T> &in, idx<T> &ker, idx<T> &out);
 
   //! compute a 2D convolution of <in> with kernel <ker>
   //! and write result into <out>
   //! <ker> is actually in reverse order, so you might
   //! want to reverse it first.
-  int ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out);
+  template <>
+    void ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out);
 
   //! this calls ippiAdd_32f_C1IR
   //! This does component-wise addition of 2 matrices of floats. The result is 
@@ -64,10 +65,12 @@ namespace ebl {
   //! This adds a constant to each component of an idx of floats. NOT In place
   int ipp_addc_nip_float(idx<float> &in, float constant, idx<float> &out);
 
-#endif
 
-#include "ipp.hpp"
+} // end namespace ebl
+
+#include "idxipp.hpp"
+
+#endif /* IDXIPP_H_ */
   
 #endif
 
-} // end namespace ebl

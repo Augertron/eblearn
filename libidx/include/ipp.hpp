@@ -30,16 +30,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef IPP_HPP
-#define IPP_HPP
+#ifndef IDXIPP_HPP_
+#define IDXIPP_HPP_
 
 namespace ebl {
 
-  template<typename T>
+  template <typename T>
   void ipp_convolution(idx<T> &in, idx<T> &ker, idx<T> &out) {
     eblerror("type not implemented for IPP");
   }
 
 }
 
-#endif /* IPP_HPP */
+#endif /* IDXIPP_HPP_ */
