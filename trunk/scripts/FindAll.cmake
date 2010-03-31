@@ -1,3 +1,9 @@
+# determine machine architecture
+###############################################################################
+EXEC_PROGRAM("uname -m" OUTPUT_VARIABLE ARCH_NAME)
+MESSAGE(STATUS "Target architecture is ${ARCH_NAME}")
+STRING(COMPARE EQUAL ${ARCH_NAME} "x86_64" 64BIT)
+
 # find boost
 ###############################################################################
 FIND_PACKAGE(Boost COMPONENTS filesystem regex)
@@ -73,6 +79,23 @@ FIND_PACKAGE(CPPUNIT)
 IF (CPPUNIT_FOUND)
   include_directories(${CPPUNIT_INCLUDE_DIR})
 ENDIF (CPPUNIT_FOUND)
+
+# find IPP
+################################################################################
+FIND_PACKAGE(IPP)
+IF (IPP_FOUND)
+  include_directories(${IPP_INCLUDE_DIR})
+  LINK_DIRECTORIES(${IPP_LIBRARIES_DIR})
+  IF (64BIT) # 64 bit libraries
+    SET(IPP_LIBRARIES
+      ippcoreem64t guide ippiem64t ippcvem64t ippsem64t ippccem64t pthread)
+    MESSAGE(STATUS "Found 64bit Intel IPP")
+  ELSE (64BIT) # 32 bit libraries
+    SET(IPP_LIBRARIES ippcore guide ippi ippcv ipps ippcc pthread)
+    MESSAGE(STATUS "Found 32bit Intel IPP")
+  ENDIF (64BIT)
+  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IPP__")  
+ENDIF (IPP_FOUND)
 
 ################################################################################
 # LAST CALL: custom dependencies with possible override
