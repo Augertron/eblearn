@@ -39,7 +39,7 @@
 #include "idx.h"
 #include "idxIO.h"
 #include "idxops.h"
-#include "idxipp.h"
+#include "ippops.h"
 #include "color_spaces.h"
 #include "gaussian_pyramid.h"
 #include "image.h"

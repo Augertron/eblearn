@@ -242,8 +242,13 @@ namespace ebl {
     idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = *pi1 - *pi2; }
   }
 
+  template<class T> void idx_add(idx<T> &in, idx<T> &out) {
+    idxiter<T> pin, pout;
+    idx_aloop2_on(pin,in,pout,out) { *pout = *pout + *pin; }
+  }
+
   template<class T> void idx_add(idx<T> &i1, idx<T> &i2, idx<T> &out) {
-    idxiter<T> pi1, pi2; idxiter<T> pout;
+    idxiter<T> pi1, pi2, pout;
     idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = *pi1 + *pi2; }
   }
 
@@ -732,9 +737,10 @@ namespace ebl {
   }
 
   template<class T> void rev_idx2 (idx<T> &m) {
+    idx_check_contiguous1(m);
     if (m.order() != 2)
       idx_compatibility_error1(m, "expecting idx of order 2");
-    T tmp, *p = m.ptr();
+    T tmp, *p = m.idx_ptr();
     intg size = m.dim(0) * m.dim(1);
     intg i;
 
@@ -746,15 +752,14 @@ namespace ebl {
   }
 
   template<class T> void rev_idx2_tr (idx<T> &m, idx<T> &n) {
+    idx_check_contiguous2(m, n);
     if ((m.order() != 2) || (n.order() != 2))
       idx_compatibility_error2(m, n, "expecting idx of order 2");
-    T *p = m.ptr();
-    T *q = n.ptr();
     intg size = m.dim(0) * m.dim(1);
-    intg i;
-
-    for (i=0; i < size; i++) {
-      q[i] = p[size-i-1];
+    T *p = m.idx_ptr() + size - 1;
+    T *q = n.idx_ptr();
+    for (int i = 0; i < size; i++) {
+      *(q++) = *(p--);
     }
   }
 

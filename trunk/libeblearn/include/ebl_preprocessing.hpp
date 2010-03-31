@@ -52,8 +52,10 @@ namespace ebl {
     if (dim0 > 0)
       d.setdim(0, dim0);
     if (d != out.x.get_idxdim()) {
+#ifdef __DEBUG__
       cout << "channorm_module: resizing output from " << out.x.get_idxdim();
       cout << " to " << d << endl;
+#endif
       out.x.resize(d); // resize only x, as bprop and bbprop are not defined
     }
     // resize temporary buffer

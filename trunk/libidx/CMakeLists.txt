@@ -19,7 +19,7 @@ add_library (idx SHARED
   src/idxops.cpp  
   src/idx.cpp
   src/idxIO.cpp
-  src/idxipp.cpp
+  src/ippops.cpp
   src/color_spaces.cpp
   src/image.cpp  
   src/imageIO.cpp  

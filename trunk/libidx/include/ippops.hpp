@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef IDXIPP_HPP_
-#define IDXIPP_HPP_
+#ifndef IPPOPS_HPP_
+#define IPPOPS_HPP_
 
 namespace ebl {
 
@@ -41,6 +41,24 @@ namespace ebl {
     return -1;
   }
 
+  template <typename T>
+  int ipp_add(idx<T> &in, idx<T> &out) {
+    eblerror("type not implemented for IPP");
+    return -1;
+  }
+
+  template <typename T>
+  int ipp_addc(idx<T> &in, T c, idx<T> &out) {
+    eblerror("type not implemented for IPP");
+    return -1;
+  }
+
+  template <typename T>
+  int ipp_copy(idx<T> &in, idx<T> &out) {
+    eblerror("type not implemented for IPP");
+    return -1;
+  }
+
 }
 
-#endif /* IDXIPP_HPP_ */
+#endif /* IPPOPS_HPP_ */

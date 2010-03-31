@@ -50,7 +50,7 @@ IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
 # Debug compilation flags
 SET(EFENCE_FLAG "")
 SET(CMAKE_CXX_FLAGS_DEBUG 
-  "${EFENCE_FLAG} -g -Wall -ggdb -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic -O0 -fsignaling-nans -fexceptions"
+  "${EFENCE_FLAG} -D__DEBUG__ -g -Wall -ggdb -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic -O0 -fsignaling-nans -fexceptions"
   CACHE STRING "Debug builds CMAKE CXX flags " FORCE )
 
 # display debug flags
