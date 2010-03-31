@@ -32,6 +32,7 @@
 #ifdef __IPP__
 
 #include "ippops.h"
+#include <limits.h>
 
 using namespace std;
 

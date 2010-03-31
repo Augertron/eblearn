@@ -39,5 +39,5 @@ ELSE(CBLAS_FOUND)
 ENDIF(CBLAS_FOUND)
 
 IF(IPP_FOUND)
-  TARGET_LINK_LIBRARIES(idx ippcoreem64t guide ippiem64t ippcvem64t ippsem64t ippccem64t pthread)
+  TARGET_LINK_LIBRARIES(idx ${IPP_LIBRARIES})
 ENDIF(IPP_FOUND)
