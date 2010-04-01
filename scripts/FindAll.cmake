@@ -13,7 +13,9 @@ IF (Boost_FOUND)
   ENDIF(${Boost_MINOR_VERSION} GREATER 34)
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__BOOST__")
   INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-  ##LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+  LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+  MESSAGE(STATUS "Boost include directory: ${Boost_INCLUDE_DIRS}")
+  MESSAGE(STATUS "Boost libraries directory: ${Boost_LIBRARY_DIRS}")
 ENDIF(Boost_FOUND)
   
 # find opencv
