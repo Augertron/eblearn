@@ -16,6 +16,20 @@ IF (QT_FOUND)
   include_directories(${LIBEBLEARNGUI_INCLUDE_DIR})
 ENDIF (QT_FOUND)
 
+# copy scripts to bin
+################################################################################
+SET(FILE_TO_BIN 
+  src/pascal_conf
+  src/pascal_metaconf
+  src/pascal_dsprepare.sh
+)
+
+FOREACH(NAME ${FILE_TO_BIN})
+  EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/${NAME}\""
+		  "\"${LIBRARY_OUTPUT_PATH}\"" OUTPUT_VARIABLE OUT)
+  MESSAGE(STATUS "Copied demos/pascal/${NAME} to bin directory.")
+ENDFOREACH(NAME)
+
 # compile executable: pascal_train
 ################################################################################
 add_executable (pascal_train
@@ -30,14 +44,6 @@ IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (pascal_train eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
 
-# copy conf and metaconf to bin
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/pascal_conf\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"")		
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/pascal_metaconf\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"")
-EXEC_PROGRAM("cp" ARGS
-  "\"${CMAKE_CURRENT_SOURCE_DIR}/src/pascal_dsprepare.sh\""
-  "\"${LIBRARY_OUTPUT_PATH}\"")
 		
 # compile executable: pascal_detect
 ################################################################################

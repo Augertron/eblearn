@@ -33,5 +33,5 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   target_link_libraries (eblearngui ${QT_QTGUI_LIBRARY})
   
 ELSE (QT_FOUND) #---------------------------------------------------------------
-  MESSAGE(STATUS "___WARNING___: libeblearngui won't be compiled because of missing QT libraries.")
+  MESSAGE(WARNING "____ libeblearngui won't be compiled because of missing QT libraries.")
 ENDIF (QT_FOUND) #--------------------------------------------------------------

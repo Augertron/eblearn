@@ -63,7 +63,7 @@ MESSAGE(STATUS "Compilation flags: ${CMAKE_CXX_FLAGS}")
 
 # copy gdb config file into bin directory
 EXEC_PROGRAM("cp" ARGS "\"${CMAKE_SOURCE_DIR}/.gdbinit\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"")
+		  "\"${LIBRARY_OUTPUT_PATH}\"" OUTPUT_VARIABLE OUT)
     
 SET(LIBIDX_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libidx/include)
 SET(LIBEBLEARN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libeblearn/include)
