@@ -16,6 +16,19 @@ IF (QT_FOUND)
   include_directories(${LIBEBLEARNGUI_INCLUDE_DIR})
 ENDIF (QT_FOUND)
 
+# copy scripts to bin
+################################################################################
+SET(FILE_TO_BIN 
+  src/mnist_conf
+  src/mnist_metaconf
+)
+
+FOREACH(NAME ${FILE_TO_BIN})
+  EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/${NAME}\""
+		  "\"${LIBRARY_OUTPUT_PATH}\"" OUTPUT_VARIABLE OUT)
+  MESSAGE(STATUS "Copied demos/mnist/${NAME} to bin directory.")
+ENDFOREACH(NAME)
+
 # compile executable
 ################################################################################
 add_executable (mnist_train
@@ -29,12 +42,6 @@ IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (mnist_train idxgui)
   target_link_libraries (mnist_train eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
-
-# copy conf and metaconf to bin
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/mnist_conf\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"")		
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/src/mnist_metaconf\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"")
 		
 # compile executable
 ################################################################################

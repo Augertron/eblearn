@@ -16,6 +16,26 @@ IF (QT_FOUND)
   include_directories(${LIBEBLEARNGUI_INCLUDE_DIR})
 ENDIF (QT_FOUND)
 
+# copy scripts to bin
+################################################################################
+SET(FILE_TO_BIN 
+  face/face_meta.conf 
+  face/face_dsprepare.sh 
+  face/face_train.sh
+  text/text_meta.conf
+  text/text_train.sh
+  text/text_dsprepare.sh	
+  hand/hand_meta.conf
+  hand/hand_train.sh
+  hand/hand_dsprepare.sh
+)
+
+FOREACH(NAME ${FILE_TO_BIN})
+  EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/${NAME}\""
+		  "\"${LIBRARY_OUTPUT_PATH}\"" OUTPUT_VARIABLE OUT)
+  MESSAGE(STATUS "Copied demos/obj/${NAME} to bin directory.")
+ENDFOREACH(NAME)
+
 # compile executable: objtrain
 ################################################################################
 add_executable (objtrain
@@ -29,33 +49,6 @@ IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (objtrain idxgui)
   target_link_libraries (objtrain eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
-
-# copy face conf and metaconf to bin
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/face/face_meta.conf\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"")
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/face/face_train.sh\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"")
-EXEC_PROGRAM("cp" ARGS
-  "\"${CMAKE_CURRENT_SOURCE_DIR}/face/face_dsprepare.sh\""
-  "\"${LIBRARY_OUTPUT_PATH}\"")
-		
-# copy text conf and metaconf to bin
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_meta.conf\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"")
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_train.sh\""
- 		  "\"${LIBRARY_OUTPUT_PATH}\"")
-EXEC_PROGRAM("cp" ARGS
-  "\"${CMAKE_CURRENT_SOURCE_DIR}/text/text_dsprepare.sh\""
-  "\"${LIBRARY_OUTPUT_PATH}\"")
-		
-# copy hand conf and metaconf to bin
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/hand/hand_meta.conf\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"")
-EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/hand/hand_train.sh\""
- 		  "\"${LIBRARY_OUTPUT_PATH}\"")
-EXEC_PROGRAM("cp" ARGS
-  "\"${CMAKE_CURRENT_SOURCE_DIR}/hand/hand_dsprepare.sh\""
-  "\"${LIBRARY_OUTPUT_PATH}\"")
 		
 # compile executable: objdetect
 ################################################################################
