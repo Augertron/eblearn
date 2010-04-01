@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <map>
 #include <algorithm>
+#include <iomanip>
 
 #ifdef __BOOST__
 #include "boost/filesystem.hpp"
