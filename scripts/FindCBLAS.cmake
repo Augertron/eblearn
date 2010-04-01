@@ -45,7 +45,7 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
   SET(_paths /usr/local/include /usr/include /usr/local/atlas/include ENV)
   FOREACH(_library ${_list})
     SET(_combined_name ${_combined_name}_${_library})
-
+MESSAGE("searching lib: ${_library}")
     # did we find all the libraries in the _list until now?
     # (we stop at the first unfound one)
     IF(_libraries_work)      
@@ -209,7 +209,7 @@ IF(NOT CBLAS_LIBRARIES)
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
-
+SET(MODULES cblas atlas lapack f77blas)
 IF(NOT CBLAS_LIBRARIES)
   # CBLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
   CHECK_ALL_LIBRARIES(
@@ -217,7 +217,7 @@ IF(NOT CBLAS_LIBRARIES)
     CBLAS
     cblas_dgemm
     ""
-    "cblas"
+    "${MODULES}"
     "cblas.h"
     TRUE
     TRUE
