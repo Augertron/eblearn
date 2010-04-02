@@ -19,8 +19,7 @@ ENDIF (QT_FOUND)
 # copy scripts to bin
 ################################################################################
 SET(FILE_TO_BIN 
-  src/mnist_conf
-  src/mnist_metaconf
+  src/mnist_meta.conf
 )
 
 FOREACH(NAME ${FILE_TO_BIN})

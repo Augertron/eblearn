@@ -21,10 +21,9 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "Usage: ./mnist <config file>" << endl;
     eblerror("config file not specified");
   }
-  typedef float t_net;
+  typedef double t_net;
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
-  init_drand(0); // initialize random seed
-  //  init_drand(time(NULL)); // initialize random seed
+  init_drand(time(NULL)); // initialize random seed
   configuration conf(argv[1]); // configuration file
   bool display = conf.get_bool("display"); // enable/disable display
   uint ninternals = conf.get_uint("ninternals"); // # examples' to display
@@ -33,6 +32,11 @@ int main(int argc, char **argv) { // regular main without gui
   mnist_datasource<t_net, ubyte, ubyte>
     train_ds(conf.get_cstring("root"), "train", conf.get_uint("training_size")),
     test_ds(conf.get_cstring("root"), "t10k", conf.get_uint("testing_size"));
+  test_ds.set_test(); // test is the test set, used for reporting
+  train_ds.set_weigh_samples(conf.exists_bool("wsamples"));
+  train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));
+  train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
+  train_ds.set_min_proba(conf.get_double("min_sample_weight"));
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =

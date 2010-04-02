@@ -253,6 +253,6 @@ void ebl_basic_test::test_convolution_timing() {
   gettimeofday(&end, NULL);
   seconds = end.tv_sec - start.tv_sec;
   useconds = end.tv_usec - start.tv_usec;
-  cout << "big convolution time: "
-       << (uint)(((seconds) * 1000 + useconds/1000.0)+0.5) << endl;
+  cout << " big convolution time: "
+       << (uint)(((seconds) * 1000 + useconds/1000.0)+0.5) << "ms";
 }
