@@ -49,6 +49,54 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
+  // specialization for floats: can use blas versions.
+  template <>
+  void idx_clear(idx<float> &in) {
+    // loop and copy
+    idxop_i(in,
+	     // idx0 version
+	     { in.set(0); },
+	     // idx1 version
+	     { idx_aloop1(i, in, float) { *i = 0; }},
+	     // contiguous version
+	     {
+#ifdef __IPP__
+	       ipp_set(in, (float) 0);
+#else
+	       bzero(in.idx_ptr(), in.nelements() * sizeof (float));
+		 // TODO: cblas version?
+		 //cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
+#endif
+	     },
+	     // recursive version
+	     { idx_bloop1(i, in, float) { idx_clear(i); }});
+  }
+
+  // specialization for floats: can use blas versions.
+  template <>
+  void idx_fill(idx<float> &in, float v) {
+    // loop and copy
+    idxop_i(in,
+	     // idx0 version
+	     { in.set(v); },
+	     // idx1 version
+	     { idx_aloop1(i, in, float) { *i = v; }},
+	     // contiguous version
+	     {
+#ifdef __IPP__
+	       ipp_set(in, v);
+#else
+	       idx_bloop1(i, in, float) { idx_fill(i, v); }
+		 // TODO: cblas version?
+		 //cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
+#endif
+	     },
+	     // recursive version
+	     { idx_bloop1(i, in, float) { idx_fill(i, v); }});
+  }
+
+  ////////////////////////////////////////////////////////////////
+
   // specialization for doubles: can use blas versions.
   template <>
   void idx_copy(idx<double> &src, idx<double> &dst) {
@@ -74,12 +122,6 @@ namespace ebl {
   // specialization for floats: can use blas versions.
   template <>
   void idx_copy(idx<float> &src, idx<float> &dst) {
-#ifdef __IPP__
-    if (src.contiguousp() && dst.contiguousp()) {
-      ipp_copy(src, dst);
-      return ;
-    }
-#endif
     // loop and copy
     idxop_ii(src, dst,
 	     // idx0 version
@@ -88,7 +130,13 @@ namespace ebl {
 	     { cblas_scopy(N1, src.idx_ptr(), src.mod(0), dst.idx_ptr(), 
 			   dst.mod(0)); },
 	     // contiguous version
-	     { cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1); },
+	     {
+#ifdef __IPP__
+	       ipp_copy(src, dst);
+#else
+	       cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
+#endif
+	     },
 	     // recursive version
 	     { idx_bloop2(lsrc, src, float, ldst, dst, float) { 
 		 idx_copy(lsrc, ldst); } },
@@ -145,15 +193,30 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  template<> void idx_add(idx<float> &in, idx<float> &out) {
+  template<> void idx_add(idx<float> &src, idx<float> &dst) {
+    // loop and copy
+    idxop_ii(src, dst,
+	     // idx0 version
+	     { *(dst.idx_ptr()) = *(src.idx_ptr()) +  *(dst.idx_ptr()); },
+	     // idx1 version
+	     { idxiter<float> psrc; idxiter<float> pdst;
+	     idx_aloop2_on(psrc, src, pdst, dst) { *pdst = *pdst + *psrc; }},
+	     // contiguous version
+	     { 
 #ifdef __IPP__
-    if (in.contiguousp() && out.contiguousp()) {
-      ipp_add(in, out);
-      return ;
-    }
+ 	       ipp_add(src, dst);
+#else
+	       idxiter<float> psrc; idxiter<float> pdst;
+	       idx_aloop2_on(psrc, src, pdst, dst) { *pdst = *pdst + *psrc; }
 #endif
-    idxiter<float> pin, pout;
-    idx_aloop2_on(pin, in, pout, out) { *pout = *pout + *pin; }
+	     },
+	     // recursive version
+	     { idx_bloop2(psrc, src, float, pdst, dst, float) {
+		 idx_add(psrc, pdst); }},
+	     // any version
+	     { idxiter<float> psrc; idxiter<float> pdst;
+	       idx_aloop2_on(psrc, src, pdst, dst) { *pdst = *pdst + *psrc; }}
+	     );
   }
 
   template<> void idx_addc(idx<float> &in, float c, idx<float> &out) {

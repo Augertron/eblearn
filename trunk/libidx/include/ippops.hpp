@@ -59,6 +59,12 @@ namespace ebl {
     return -1;
   }
 
+  template <typename T>
+  int ipp_set(idx<T> &in, T v) {
+    eblerror("type not implemented for IPP");
+    return -1;
+  }
+
 }
 
 #endif /* IPPOPS_HPP_ */

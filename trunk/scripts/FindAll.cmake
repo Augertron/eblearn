@@ -85,19 +85,26 @@ ENDIF (CPPUNIT_FOUND)
 # find IPP
 ################################################################################
 FIND_PACKAGE(IPP)
-IF (IPP_FOUND)
-  include_directories(${IPP_INCLUDE_DIR})
-  LINK_DIRECTORIES(${IPP_LIBRARIES_DIR})
-  IF (64BIT) # 64 bit libraries
-    SET(IPP_LIBRARIES
-      ippcoreem64t guide ippiem64t ippcvem64t ippsem64t ippccem64t pthread)
-    MESSAGE(STATUS "Found 64bit Intel IPP")
-  ELSE (64BIT) # 32 bit libraries
-    SET(IPP_LIBRARIES ippcore guide ippi ippcv ipps ippcc pthread)
-    MESSAGE(STATUS "Found 32bit Intel IPP")
-  ENDIF (64BIT)
-  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IPP__")  
-ENDIF (IPP_FOUND)
+IF ($ENV{NOIPP})
+  MESSAGE(STATUS "IPP DISABLED by env variable $NOIPP=1.")
+ELSE ($ENV{NOIPP})
+  IF (IPP_FOUND)
+    include_directories(${IPP_INCLUDE_DIR})
+    LINK_DIRECTORIES(${IPP_LIBRARIES_DIR})
+    IF (64BIT) # 64 bit libraries
+      SET(IPP_LIBRARIES
+	ippcoreem64t guide ippiem64t ippcvem64t ippsem64t ippccem64t pthread)
+      MESSAGE(STATUS "Found 64bit Intel IPP")
+    ELSE (64BIT) # 32 bit libraries
+      SET(IPP_LIBRARIES ippcore guide ippi ippcv ipps ippcc pthread)
+      MESSAGE(STATUS "Found 32bit Intel IPP")
+    ENDIF (64BIT)
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IPP__")  
+  ELSE (IPP_FOUND)
+    MESSAGE(WARNING "____ Intel IPP not found, install to speed up.")
+  ENDIF (IPP_FOUND)
+ENDIF ($ENV{NOIPP})
+
 
 ################################################################################
 # LAST CALL: custom dependencies with possible override

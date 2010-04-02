@@ -18,6 +18,11 @@
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckIncludeFile)
 
+SET(EXTRA_LIB_DIR /opt/intel/mkl/*/lib_serial/32/)
+IF(64BIT)
+  SET(EXTRA_LIB_DIR /opt/intel/mkl/*/lib_serial/emt64/)
+ENDIF(64BIT)
+
 MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_include _check_function)
   # This macro checks for the existence of the combination of fortran libraries
   # given by _list.  If the combination is found, this macro checks (using the 
@@ -51,13 +56,20 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
       IF(APPLE) 
         FIND_LIBRARY(${_prefix}_${_library}_LIBRARY
           NAMES ${_library}
-          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64 /usr/local/atlas/lib ENV 
+          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64
+	  /usr/local/atlas/lib
+	  ${EXTRA_LIB_DIR}
+	  ENV
           DYLD_LIBRARY_PATH 
           )
       ELSE(APPLE)
         FIND_LIBRARY(${_prefix}_${_library}_LIBRARY
           NAMES ${_library}
-          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64 /usr/local/lib/atlas  /usr/local/atlas/lib /usr/lib/atlas /usr/local/lib64/atlas /usr/lib64/atlas ENV 
+          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64
+	  /usr/local/lib/atlas  /usr/local/atlas/lib /usr/lib/atlas
+	  /usr/local/lib64/atlas /usr/lib64/atlas
+	  ${EXTRA_LIB_DIR}
+	  ENV 
           LD_LIBRARY_PATH 
           )
       ENDIF(APPLE)
@@ -118,6 +130,10 @@ ENDMACRO(CHECK_ALL_LIBRARIES)
 SET(CBLAS_LINKER_FLAGS)
 SET(CBLAS_LIBRARIES)
 
+IF($ENV{NOMKL}) # disable mkl
+  MESSAGE(STATUS "MKL DISABLED by env variable $NOMKL=1.")
+ELSE($ENV{NOMKL})
+
 # CBLAS in intel mkl library? (shared)
 IF(NOT CBLAS_LIBRARIES)
   CHECK_ALL_LIBRARIES(
@@ -159,6 +175,8 @@ IF(NOT CBLAS_LIBRARIES)
     TRUE
     )
 ENDIF(NOT CBLAS_LIBRARIES)
+
+ENDIF($ENV{NOMKL})
 
 IF(APPLE)
   SET(APPLE_FRAMEWORK_FOUND)
@@ -208,7 +226,7 @@ IF(NOT CBLAS_LIBRARIES)
     )
 ENDIF(NOT CBLAS_LIBRARIES)
 
-SET(MODULES cblas atlas lapack f77blas)
+SET(MODULES cblas)# atlas lapack f77blas)
 IF(NOT CBLAS_LIBRARIES)
   # CBLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
   CHECK_ALL_LIBRARIES(

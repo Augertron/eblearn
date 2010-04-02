@@ -29,12 +29,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifdef __IPP__
 
 #ifndef IPPOPS_H_
 #define IPPOPS_H_
 
+#ifdef __IPP__
 #include <ipp.h>
+#endif
+
 #include "idx.h"
 
 namespace ebl {
@@ -42,6 +44,11 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // idx to IPP wrapper functions
 
+  //! Initialize ipp to ncores, or without core limit by default,
+  //! then print how many cores are enabled. If not compiled with IPP,
+  //! this will print a message.
+  void ipp_init(int ncores = -1);
+  
   //! compute a 2D convolution of <in> with kernel <ker>
   //! and write result into <out>
   //! <ker> is actually in reverse order, so you might
@@ -86,11 +93,17 @@ namespace ebl {
   template <>
   int ipp_copy(idx<float> &in, idx<float> &out);
 
+  //! Set all idx elements to v.
+  template <typename T>
+    int ipp_set(idx<T> &in, T v);
+
+  //! Set all idx elements to v.
+  template <>
+    int ipp_set(idx<float> &in, float v);
+
 } // end namespace ebl
 
 #include "ippops.hpp"
 
 #endif /* IPPOPS_H_ */
-  
-#endif
 
