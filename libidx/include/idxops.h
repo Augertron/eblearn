@@ -68,6 +68,21 @@ namespace ebl {
     }									\
   }
 
+#define idxop_i(i,op_idx0, op_idx1, op_contig, op_recursive) {		\
+    if ((i).order() == 0) {						\
+      /* they are 1D vectors of the same size, use the stride version */ \
+      op_idx0;								\
+    } else if ((i).contiguousp()) {					\
+      /* they are both contiguous: call the stride 1 routine */		\
+      op_contig;							\
+    } else if ((i).order() == 1) {					\
+      /* they are 1D vectors of the same size, use the stride version */ \
+      op_idx1;								\
+    } else { \
+      op_recursive;							\
+    }									\
+  }
+
 #define idxop_simple_ii(i1,i2,op_idx0, op_idx1, op_contig,		\
 			op_recursive, op_any) {				\
     intg N1=(i1).nelements();						\
@@ -116,8 +131,15 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  //! fill with zero
+  //! Fill this idx with zeros.
   template<class T> void idx_clear(idx<T> &inp);
+  //! Fill this idx with zeros, specialized float version.  
+  template<> void idx_clear(idx<float> &inp);
+
+  //! Fill this idx with v.
+  template<class T> void idx_fill(idx<T> &inp, T v);
+  //! Fill this idx with v, specialized float version.  
+  template<> void idx_fill(idx<float> &inp, float v);
 
   //! shuffle elements order of dimension d.
   //! if <out> is not null, then the shuffled version of <in> is put directly
@@ -153,9 +175,6 @@ namespace ebl {
 			      intg d,
 			      idx<T1> *out1 = NULL, idx<T2> *out2 = NULL,
 			      idx<T3> *out3 = NULL);
-
-  //! fill with a value
-  template<class T> void idx_fill(idx<T> &inp, T v);
 
   //! negate all elements
   template<class T> void idx_minus(idx<T> &inp, idx<T> &out);

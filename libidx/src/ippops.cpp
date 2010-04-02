@@ -29,7 +29,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifdef __IPP__
 
 #include "ippops.h"
 #include <limits.h>
@@ -38,6 +37,19 @@ using namespace std;
 
 namespace ebl {
 
+  void ipp_init(int ncores) {
+#ifdef __IPP__
+    if (ncores > 0)
+      ippSetNumThreads(ncores);
+    ippGetNumThreads(&ncores);
+    cout << "using IPP with " << ncores << " core(s)." << endl;
+#else
+    cout << "Ipp is disabled." << endl;
+#endif
+  }
+  
+#ifdef __IPP__
+  
   // TODO: handle non contiguous?
   template <>
   int ipp_convolution(idx<float> &in, idx<float> &ker, idx<float> &out) {
@@ -72,7 +84,8 @@ namespace ebl {
     insize.height = in1.nelements();
     insize.width = 1; 
     instep = sizeof (float);
-    int ret = ippiAdd_32f_C1IR(in1.idx_ptr(), instep, in2.idx_ptr(), instep, insize);
+    int ret = ippiAdd_32f_C1IR(in1.idx_ptr(), instep, in2.idx_ptr(),
+			       instep, insize);
     if (ret != ippStsNoErr) {
       cerr << "IPP error: " << endl;
       eblerror("IPP error");
@@ -108,7 +121,16 @@ namespace ebl {
 			    sizeof (float), insize);
   }
 
-} // end namespace ebl
+  template <>
+  int ipp_set(idx<float> &in, float v) {
+    idx_check_contiguous1(in);
+    IppiSize insize;
+    insize.height = in.nelements();
+    insize.width = 1;
+    return ippiSet_32f_C1R(v, in.idx_ptr(), sizeof (float), insize);
+  }
 
-#endif
+#endif /* __IPP__ */
+  
+} // end namespace ebl
 

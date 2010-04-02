@@ -34,6 +34,7 @@
 #define IDXOPS_HPP
 
 #include <algorithm>
+#include <strings.h>
 
 using namespace std;
 
@@ -42,8 +43,17 @@ namespace ebl {
 #if USING_STL_ITERS == 0
 
   template<class T> void idx_clear(idx<T> &inp) {
+    if (inp.contiguousp()) // contiguous version
+      bzero(inp.idx_ptr(), inp.nelements() * sizeof (T));
+    else { // non contiguous version
+      idxiter<T> pinp;
+      idx_aloop1_on(pinp,inp) { *pinp = 0; }
+    }
+  }
+
+  template<class T> void idx_fill(idx<T> &inp, T v) {
     idxiter<T> pinp;
-    idx_aloop1_on(pinp,inp) { *pinp = 0; }
+    idx_aloop1_on(pinp,inp) { *pinp = v; }
   }
 
   // TODO: can n random swaps be as random? (it would be more efficient)
@@ -220,11 +230,6 @@ namespace ebl {
       idx_copy(tmpi3, tmpo3);
       assigned.set(true, pos);
     }
-  }
-
-  template<class T> void idx_fill(idx<T> &inp, T v) {
-    idxiter<T> pinp;
-    idx_aloop1_on(pinp,inp) { *pinp = v; }
   }
 
   template<class T> void idx_minus(idx<T> &inp, idx<T> &out) {

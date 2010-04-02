@@ -2,10 +2,6 @@ ifndef (prj)
 prj := all
 endif
 
-INCLUDE_INSTALL=/usr/include/eblearn/
-LIB_INSTALL=/usr/lib/
-BIN_INSTALL=/usr/bin
-
 # detect MAC OS
 OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 OSLOWER = $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
@@ -17,6 +13,21 @@ else
 	LIB_EXT=so
 endif
 
+# installation parameters
+ifeq ($(DIR),)
+  INSTALL_DIR=/usr
+else
+  INSTALL_DIR=$(DIR)
+endif
+
+INCLUDE_INSTALL=$(INSTALL_DIR)/include/eblearn/
+LIB_INSTALL=$(INSTALL_DIR)/lib/
+BIN_INSTALL=$(INSTALL_DIR)/bin
+
+LIBS=libidx.${LIB_EXT} libidxgui.${LIB_EXT} libeblearn.${LIB_EXT} \
+		       libeblearngui.${LIB_EXT} libeblearntools.${LIB_EXT}
+BINS=dscompiler dssplit dsmerge matdisplay dsdisplay metarun metaparse capture
+
 all: release
 
 release:
@@ -25,7 +36,8 @@ release:
 	@echo "Compiling ${prj} project(s) in release mode..."
 	@echo "Use 'make release prj=idxgui' for example to compile a specific project."
 	@echo __________________________________________________________________
-	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make ${prj} && cd ../..
+	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
+	&& make ${prj} && cd ../..
 
 libs:
 	@echo ${LIB_EXT}
@@ -34,36 +46,42 @@ libs:
 	@echo
 	@echo "Compiling libraries in release mode..."
 	@echo __________________________________________________________________
-	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make idx eblearn eblearntools && cd ../..
+	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
+	&& make idx eblearn eblearntools && cd ../..
 	
 tools:
 	@echo __________________________________________________________________
 	@echo
 	@echo "Compiling tools in release mode..."
 	@echo __________________________________________________________________
-	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make dscompiler dsdisplay matdisplay dssplit dsmerge metarun metaparse capture && cd ../..
+	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
+	&& make ${BINS} && cd ../..
 	
 # demo:
 # 	@echo __________________________________________________________________
 # 	@echo
 # 	@echo "Compiling demos in release mode..."
 # 	@echo __________________________________________________________________
-# 	cd build/Demos && cmake -DCMAKE_BUILD_TYPE=Release ../../demos/ && make && cd ../..
+# 	cd build/Demos &&  cmake -DCMAKE_BUILD_TYPE=Release ../../demos/ \
+#       && make && cd ../..
 
 test:
 	@echo __________________________________________________________________
 	@echo
 	@echo "Compiling tester in release mode and running it..."
 	@echo __________________________________________________________________
-	cd build/Release && cmake -DCMAKE_BUILD_TYPE=Release ../.. && make tester && cd ../.. && ./bin/tester
+	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
+	&& make tester && cd ../.. && ./bin/tester
 
 debug:
 	@echo __________________________________________________________________
 	@echo
 	@echo "Compiling ${prj} project(s) in debug mode..."
-	@echo "Use 'make debug prj=idxgui' for example to compile a specific project."
+	@echo "Use 'make debug prj=idxgui' for example to compile a \
+	specific project."
 	@echo __________________________________________________________________
-	cd build/Debug && cmake -DCMAKE_BUILD_TYPE=Debug ../.. && make ${prj} && cd ../..
+	cd build/Debug &&  cmake -DCMAKE_BUILD_TYPE=Debug ../.. \
+	&& make ${prj} && cd ../..
 
 .PHONY: doc	
 
@@ -81,19 +99,18 @@ clean:
 	rm -rf doc/documentation/libidxgui_html
 
 install:
-	mkdir -p $(INCLUDE_INSTALL)
+	echo $(DIR)
+	mkdir -p $(INCLUDE_INSTALL) $(LIB_INSTALL) $(BIN_INSTALL)
 	cp -f libidx/include/* $(INCLUDE_INSTALL)
 	cp -f libeblearn/include/* $(INCLUDE_INSTALL)
 	cp -f libidxgui/include/* $(INCLUDE_INSTALL)
 	cp -f libeblearngui/include/* $(INCLUDE_INSTALL)
 	cp -f libeblearntools/include/* $(INCLUDE_INSTALL)
-	cp -f bin/libidx.$(LIB_EXT) $(LIB_INSTALL)
-	cp -f bin/libeblearn.$(LIB_EXT) $(LIB_INSTALL)
-	cp -f bin/libeblearntools.$(LIB_EXT) $(LIB_INSTALL)
-	cp -f bin/libidxgui.$(LIB_EXT) $(LIB_INSTALL)
-	cp -f bin/libeblearngui.$(LIB_EXT) $(LIB_INSTALL)
-	cp -f bin/matdisplay $(BIN_INSTALL)
-	cp -f bin/dsdisplay $(BIN_INSTALL)
-	cp -f bin/dscompiler $(BIN_INSTALL)
-	cp -f bin/dsmerge $(BIN_INSTALL)
-	cp -f bin/dssplit $(BIN_INSTALL)
+	cd bin && cp -f ${LIBS} $(LIB_INSTALL)
+	cd bin && cp -f ${BINS} $(BIN_INSTALL)
+
+uninstall:
+	rm -Rf $(INCLUDE_INSTALL)
+	cd $(LIB_INSTALL) && rm -Rf ${LIBS}
+	cd $(BIN_INSTALL) && rm -Rf ${BINS}
+

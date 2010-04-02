@@ -165,7 +165,7 @@ namespace ebl {
 #ifdef __IPP__
 	if (float_precision) {
 	  rev_idx2_tr(lk, revkernel);
-	  idx_clear(outtmp);
+	  //	  idx_clear(outtmp);
 	  ipp_convolution(suin, revkernel, outtmp);
 	  ipp_add(outtmp, sout);
 	}
