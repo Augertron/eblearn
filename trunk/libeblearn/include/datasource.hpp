@@ -50,7 +50,7 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0), 
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(0), width(0) {
+      height(0), width(0), sample_min_proba(0.0) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -62,7 +62,7 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0), 
-      height(ds.height), width(ds.width), name(ds.name) {
+      height(ds.height), width(ds.width), name(ds.name), sample_min_proba(0.0) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -75,7 +75,7 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(data.dim(1)), width(data.dim(2)) {
+      height(data.dim(1)), width(data.dim(2)), sample_min_proba(0.0) {
     init(data_, labels_, name_, b, c);
   }
 
@@ -306,8 +306,14 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_answer_distance(double dist) {
     if (weigh_samples) { // if false, keep default probability 1 for all samples
-      probasIter_train->set(MIN(1.0, fabs(dist)));
+      probasIter_train->set(MAX(sample_min_proba, MIN(1.0, fabs(dist))));
     }
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_min_proba(double min_proba) {
+    sample_min_proba = MIN(1.0, min_proba);
+    cout << "Setting minimum probability to " << sample_min_proba << endl;
   }
 
   template <class Tnet, class Tin1, class Tin2>

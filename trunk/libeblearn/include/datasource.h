@@ -116,6 +116,10 @@ namespace ebl {
     //! This is used only by next_train(), not by next().
     virtual void set_answer_distance(double dist);
 
+    //! Set the minimum probaility of a sample to be picked by next_train().
+    //! By default, this is zero. Acceptable range is [0 .. 1].
+    virtual void set_min_proba(double proba);
+
     //! Move to the beginning of the data, for the test iterators only,
     //! i.e. only next() is affected, next_train() is unaffected.
     virtual void seek_begin();
@@ -216,6 +220,7 @@ namespace ebl {
     bool                                        perclass_norm;
     bool                                        test_set; //!< Is a test set.
     bool                                        discrete_labels;
+    double                                      sample_min_proba;
   };
 
   ////////////////////////////////////////////////////////////////
