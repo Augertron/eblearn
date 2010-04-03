@@ -73,7 +73,7 @@ int main(int argc, char **argv) { // regular main without gui
   // detector
   detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
 			 conf.get_double("gain"));
-  detect.set_resolutions(1.4);
+  detect.set_resolutions(conf.get_double("scaling"));
   bool bmask_class = false;
   if (conf.exists("mask_class"))
     bmask_class = detect.set_mask_class(conf.get_cstring("mask_class"));
@@ -89,7 +89,8 @@ int main(int argc, char **argv) { // regular main without gui
   // initialize camera (opencv, directory, shmem or video)
   idx<t_net> frame;
   camera<t_net> *cam = NULL, *cam2 = NULL;
-  if (conf.exists_bool("retrain")) { // extract false positives
+  if (conf.exists_bool("retrain") && conf.exists("retrain_dir")) {
+    // extract false positives
     cam = new camera_directory<t_net>(conf.get_cstring("retrain_dir"));
   } else { // regular execution
     if (!strcmp(cam_type.c_str(), "directory")) {
