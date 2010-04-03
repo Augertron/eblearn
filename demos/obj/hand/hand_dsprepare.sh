@@ -13,7 +13,7 @@ meta_email=pierre.sermanet@gmail.com
 
 # directories
 #dataroot=/data
-dataroot=~/texieradata/
+dataroot=~/djangoadata/
 root=$dataroot/hand/data
 out=$dataroot/hand/ds/
 nopersons_root=$dataroot/nopersons/
@@ -35,7 +35,8 @@ bgscales=8,4,2,1
 id=${resize}${h}x${w}_ker${kernel}
 name=hand_${id}
 namebg=${name}_bg
-bgds=all_mean32x32_ker7_bg
+#bgds=all_mean32x32_ker7_bg
+bgds=pascalbg_mean32x32_ker7_2
 outbg=${out}/${bgds}
 fp_name=false_positives_${detector_name}
 all_fp=${namebg}_${detector_name}
