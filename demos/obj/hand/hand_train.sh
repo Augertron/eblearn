@@ -1,6 +1,6 @@
 #!/bin/sh
 
-machine=dizz
+machine=texier
 
 ################################################################################
 # meta commands
@@ -23,12 +23,12 @@ meta_email=pierre.sermanet@gmail.com
 meta_email_period=1
 
 # interval in seconds to analyze processes output, and to check who is alive.
-meta_watch_interval=30
+meta_watch_interval=120
 # variables to minimize, process and iteration with lowest value will
 # be used to report best weights, or start consequent training
 meta_minimize=i
 # send n best answers that minimize meta_minimize's value
-meta_send_best=15
+meta_send_best=10
 
 ################################################################################
 # variables
@@ -36,8 +36,8 @@ meta_send_best=15
 
 # directories
 xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
-root=~/${machine}bdata/hand/
-root2=~/${machine}bdata/
+root=~/${machine}adata/hand/
+root2=~/${machine}adata/
 dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
