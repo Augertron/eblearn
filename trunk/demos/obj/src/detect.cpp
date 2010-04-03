@@ -41,6 +41,7 @@ int main(int argc, char **argv) { // regular main without gui
     return -1;
   }
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
+  ipp_init(1); // limit IPP (if available) to 1 core
   // load configuration
   configuration conf(argv[1]);
   bool		color		= conf.exists_bool("color");

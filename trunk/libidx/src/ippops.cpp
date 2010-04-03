@@ -42,9 +42,9 @@ namespace ebl {
     if (ncores > 0)
       ippSetNumThreads(ncores);
     ippGetNumThreads(&ncores);
-    cout << "using IPP with " << ncores << " core(s)." << endl;
+    cout << "Using Intel IPP with " << ncores << " core(s)." << endl;
 #else
-    cout << "Ipp is disabled." << endl;
+    cout << "Not using Intel IPP." << endl;
 #endif
   }
   
@@ -68,9 +68,9 @@ namespace ebl {
     insize.width = in.dim(1);
     kersize.height = ker.dim(0);
     kersize.width = ker.dim(1);
-    return ippiConvValid_32f_C1R(in.idx_ptr(),instep,insize,
-				 ker.idx_ptr(),kerstep,kersize,
-				 out.idx_ptr(),outstep);
+    return ippiConvValid_32f_C1R(in.idx_ptr(), instep, insize,
+				 ker.idx_ptr(), kerstep, kersize,
+				 out.idx_ptr(), outstep);
   }
 
   template <>
