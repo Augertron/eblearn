@@ -93,6 +93,7 @@ int main(int argc, char **argv) {
 #endif
   // enable float exceptions to halt instead of propagating errors
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
+  ipp_init(1); // limit IPP (if available) to 1 core
   //  gui.set_silent();
   cout << "***** Unit tester for libeblearn and libidx libraries *****" << endl;
   // parse arguments
