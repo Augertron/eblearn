@@ -13,7 +13,7 @@ meta_email=pierre.sermanet@gmail.com
 
 # directories
 #dataroot=/data
-dataroot=~/dizzbdata/
+dataroot=~/texieradata/
 root=$dataroot/hand/data
 out=$dataroot/hand/ds/
 nopersons_root=$dataroot/nopersons/
