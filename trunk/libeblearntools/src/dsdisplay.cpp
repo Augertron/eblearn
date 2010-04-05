@@ -66,8 +66,10 @@ void print_usage() {
        << endl;
   cout << "  -dims <dimensions, default: 4x8>, the number of columns and ";
   cout << " rows to display." << endl;
-  cout << "  -range <range, e.g.: -1,1>: range to map to 0..255 for display.";
-  cout << "  -channel <channel id, e.g.: 0>: only display a specific channel.";
+  cout << "  -range <range, e.g.: -1,1>: range to map to 0..255 for display."
+       << endl;
+  cout << "  -channel <channel id, e.g.: 0>: only display a specific channel."
+       << endl;
   cout << "  -fontsize <size, e.g.: 4>: set text font size.";
   cout << endl;
 }
