@@ -153,6 +153,12 @@ namespace ebl {
     //! class are dumped into a directory corresponding to the class' name.
     void set_save(const string directory);
 
+    //! Set the minimum size of each side of an input to use as input
+    //! to the network. I.e. a input to the network will be at least
+    //! min_size * min_size big.
+    //! \param min_size The minimum width or height in pixels.
+    void set_min_resolution(uint min_size);
+
     //! Set the maximum size of each side of an input to use as input
     //! to the network. I.e. a input to the network will be at most
     //! max_size * max_size big.
@@ -281,6 +287,7 @@ namespace ebl {
     vector<uint>         save_counts; //!< file counter for each class
     vector<bbox>         raw_bboxes; //!< raw bboxes extracted from outputs
     vector<bbox*>        pruned_bboxes; //!< scale-pruned bboxes
+    uint                 min_size; //!< minimum input size to network
     uint                 max_size; //!< maximum input size to network
     vector<idx<T> >      odetections; //!< original windows yielding detection
     vector<idx<T> >      ppdetections; //!< preprocessed wins yielding detection

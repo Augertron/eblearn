@@ -78,6 +78,8 @@ int main(int argc, char **argv) { // regular main without gui
   bool bmask_class = false;
   if (conf.exists("mask_class"))
     bmask_class = detect.set_mask_class(conf.get_cstring("mask_class"));
+  if (conf.exists("input_min"))
+    detect.set_min_resolution(conf.get_uint("input_min")); // limit inputs size
   if (conf.exists("input_max"))
     detect.set_max_resolution(conf.get_uint("input_max")); // limit inputs size
   detect.set_silent();
