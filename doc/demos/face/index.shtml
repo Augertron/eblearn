@@ -13,7 +13,7 @@
   <body>
     <!--#include virtual="../../nav.html" --> 
     <div id="globalWrapper">
-      <h1 id="firstHeading" class="firstHeading">Face detection demo:
+      <h1 id="firstHeading" class="firstHeading">Face detection demo
       </h1> 
       <h3 id="siteSub">By <a href="http://sermanet.free.fr" target="_blank">
 	  Pierre Sermanet</a></h3><br><br> 
@@ -59,6 +59,7 @@
 	      using opencv to connect to the webcam (requires opencv).</li>
 	    <li><b>shmem</b>: Grab video frames in a shared memory.</li>
 	  </li>
+	</ul>
 	<li><b>threshold</b>=[double d, from -1.0 to 1.0]<br>
 	  Outputs lower than this threshold are ignored.</li>
 	<li><b>scaling</b>=[double d, > 1.0]<br>
@@ -66,7 +67,6 @@
 	  A lower scaling ratio will prevent more false negatives, but will
 	  be more computationally expensive.
 	  </li>
-	</ul>
       </ul>
       <h3>Other tweakable parameters</h3>
       <ul>
@@ -100,13 +100,24 @@
       <br>
       <code>make release prj=objtrain</code>
       </p>
-      <h2>Train</h2>
+      <p>Also compile the meta trainer which generates multiple jobs based on
+	the multiple-value variables in face_meta.conf and reports results by
+	email. Call:
+      <br>
+      <code>make release prj=metarun</code>
+      </p>
+      <h3>Train</h3>
       <p>Modify training parameters in bin/face_meta.conf as necessary.
 	Variables can accept multiple values, the meta trainer will produce
 	multiple configurations and email you the must successful combination.
 	<br>
 	Now start training:<br>
 	<code>./bin/metarun bin/face_meta.conf</code>
+	</p>
+      <h3>Train on false positives</h3>
+      <p>It is important to train on false positives to get rid of false
+	detections. Call the script 'bin/face_train.sh' to automatically
+	run multiple passes of false positives training.
 	</p>
       
       
