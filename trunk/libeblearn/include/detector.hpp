@@ -55,7 +55,7 @@ namespace ebl {
       bgclass(-1), mask_class(-1), scales(NULL), scales_step(0),
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
-      max_size(0), bodetections(false),
+      min_size(0), max_size(0), bodetections(false),
       bppdetections(false) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
@@ -298,6 +298,13 @@ namespace ebl {
   }
   
   template <class T>
+  void detector<T>::set_min_resolution(uint min_size_) {
+    cout << "Setting minimum input size to " << min_size_ << "x"
+	 << min_size_ << "." << endl;
+    min_size = min_size_;
+  }
+  
+  template <class T>
   void detector<T>::compute_minmax_resolutions(idxdim &input_dims) {
     // compute maximum closest size of input compatible with the network size
     idxdim indim(input_dims.dim(2), input_dims.dim(0), input_dims.dim(1));
@@ -312,6 +319,12 @@ namespace ebl {
     // compute minimum input size compatible with network size
     idxdim minodim(1, 1, 1); // min output dims
     in_mindim = thenet.bprop_size(minodim); // compute min input dims
+    // TODO: this seems to screw things up
+    // if (min_size > 0) { // cap on maximum input size
+    //   idxdim indim2(input_dims.dim(2), min_size, min_size);
+    //   thenet.fprop_size(indim2);
+    //   in_mindim.setdims(indim2);
+    // }
   }
 
   template <class T>
