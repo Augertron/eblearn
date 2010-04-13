@@ -146,7 +146,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // job manager
 
-  job_manager::job_manager() {
+  job_manager::job_manager() : copy_path("") {
   }
   
   job_manager::~job_manager() {
@@ -170,6 +170,13 @@ namespace ebl {
     return true;
   }
 
+  void job_manager::set_copy(const string &path) {
+    if (!strcmp(path.c_str(), "")) {
+      copy_path = path;
+      cout << "Enabling copy into jobs folders of: " << path << endl;
+    }
+  }
+
   void job_manager::run() {
     varmaplist best; // best results
     ostringstream cmd, jobs_info;
@@ -186,6 +193,13 @@ namespace ebl {
     cmd << "cp " << mconf_fullfname << " " << mconf.get_output_dir();
     if (std::system(cmd.str().c_str()))
       cerr << "warning: failed to execute: " << cmd.str() << endl;
+    // copy bins into jobs' root 
+    if (!strcmp(copy_path.c_str(), "")) {
+      cmd.str("");
+      cmd << "cp -R " << copy_path << " " << mconf.get_output_dir();
+      if (std::system(cmd.str().c_str()))
+	cerr << "warning: failed to execute: " << cmd.str() << endl;      
+    }
     // create gnuplot param file in jobs' root
     try {
       if (mconf.exists("meta_gnuplot_params")) {

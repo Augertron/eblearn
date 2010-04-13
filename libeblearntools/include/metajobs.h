@@ -97,6 +97,9 @@ namespace ebl {
     //! Read meta configuration.
     bool read_metaconf(const char *fname);
 
+    //! Enable recursive copy of this path into jobs folders.
+    void set_copy(const string &path);
+    
     //! Run all jobs.
     void run();
 
@@ -107,6 +110,7 @@ namespace ebl {
     string		mconf_fullfname;	//!< Full filename of metaconf
     string		mconf_fname;	//!< Filename of metaconf
     vector<job>		jobs; //!< A vector of jobs to run
+    string              copy_path; //!< Copy path to jobs folders.
   };
 
 } // end namespace ebl
