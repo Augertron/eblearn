@@ -41,6 +41,11 @@
 using namespace std;
 using namespace ebl;
 
+////////////////////////////////////////////////////////////////
+// global variables
+
+string copy_path = ""; // path to copy to target folder
+
 // parse command line input
 bool parse_args(int argc, char **argv) {
   // Read arguments from shell input
@@ -54,12 +59,13 @@ bool parse_args(int argc, char **argv) {
     return false;
   // loop over arguments
   for (int i = 2; i < argc; ++i) {
-    if (strcmp(argv[i], "-channels") == 0) {
+    if (strcmp(argv[i], "-copy") == 0) {
       ++i;
       if (i >= argc) {
-	cerr << "input error: expecting string after -channels." << endl;
+	cerr << "input error: expecting string after -copy." << endl;
 	return false;
       }
+      copy_path = argv[i];
     } else {
       cerr << "input error: unknown parameter: " << argv[i] << endl;
       return false;
@@ -71,6 +77,10 @@ bool parse_args(int argc, char **argv) {
 // print command line usage
 void print_usage() {
   cout << "Usage: ./meta_trainer <logs_root> [OPTIONS]" << endl;
+  cout << "Options are:" << endl;
+  cout << "  -copy <path>" << endl;
+  cout << "      Copy the specified path recursively to each job's directory."
+       << endl;
 }
 
 int main(int argc, char **argv) {
@@ -85,6 +95,7 @@ int main(int argc, char **argv) {
   string metaconf = argv[1];
   job_manager jm;
   jm.read_metaconf(metaconf.c_str());
+  jm.set_copy(copy_path);
   jm.run();
   return 0;
 }
