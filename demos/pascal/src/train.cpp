@@ -22,7 +22,9 @@ int main(int argc, char **argv) { // regular main without gui
     eblerror("config file not specified");
   }
   typedef double t_net;
+#ifndef __MAC__
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
+#endif
   init_drand(time(NULL)); // initialize random seed
   configuration conf(argv[1]); // configuration file
 

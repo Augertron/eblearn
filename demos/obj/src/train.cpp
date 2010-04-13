@@ -13,7 +13,9 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "Usage: ./objrec_train <config file>" << endl;
     eblerror("config file not specified");
   }
+#ifndef __MAC__
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
+#endif
   ipp_init(1); // limit IPP (if available) to 1 core
   init_drand(time(NULL)); // initialize random seed
   configuration conf(argv[1]); // configuration file
