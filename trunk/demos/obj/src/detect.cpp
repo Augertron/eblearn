@@ -40,7 +40,9 @@ int main(int argc, char **argv) { // regular main without gui
     cerr << "usage: obj_detect <config file> [directory or file]" << endl;
     return -1;
   }
+#ifndef __MAC__
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
+#endif
   ipp_init(1); // limit IPP (if available) to 1 core
   // load configuration
   configuration conf(argv[1]);
