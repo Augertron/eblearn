@@ -143,6 +143,13 @@ namespace ebl {
     return confname_;
   }
   
+  string job::get_root() {
+    string root = conf.get_output_dir();
+    root += "/";
+    root +=  conf.get_name();
+    return root;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // job manager
 
@@ -171,7 +178,7 @@ namespace ebl {
   }
 
   void job_manager::set_copy(const string &path) {
-    if (!strcmp(path.c_str(), "")) {
+    if (path.size()) {
       copy_path = path;
       cout << "Enabling copy into jobs folders of: " << path << endl;
     }
@@ -187,19 +194,20 @@ namespace ebl {
     for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
       // write conf
       i->write();
+      // copy bins into jobs' root 
+      if (copy_path.size()) {
+	cout << "Copying " << copy_path << " to " << i->get_root() << endl;
+	cmd.str("");
+	cmd << "cp -R " << copy_path << " " << i->get_root();
+	if (std::system(cmd.str().c_str()))
+	  cerr << "warning: failed to execute: " << cmd.str() << endl;      
+      }
     }
     // copy metaconf into jobs' root
     cmd.str("");
     cmd << "cp " << mconf_fullfname << " " << mconf.get_output_dir();
     if (std::system(cmd.str().c_str()))
       cerr << "warning: failed to execute: " << cmd.str() << endl;
-    // copy bins into jobs' root 
-    if (!strcmp(copy_path.c_str(), "")) {
-      cmd.str("");
-      cmd << "cp -R " << copy_path << " " << mconf.get_output_dir();
-      if (std::system(cmd.str().c_str()))
-	cerr << "warning: failed to execute: " << cmd.str() << endl;      
-    }
     // create gnuplot param file in jobs' root
     try {
       if (mconf.exists("meta_gnuplot_params")) {

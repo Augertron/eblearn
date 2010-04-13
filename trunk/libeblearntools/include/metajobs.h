@@ -70,6 +70,9 @@ namespace ebl {
     //! Return the name of this job (its configuration filename).
     string &name();
 
+    //! Return root directory of this job.
+    string get_root();
+
     ////////////////////////////////////////////////////////////////
     // members
   private:
