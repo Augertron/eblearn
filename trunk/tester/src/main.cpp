@@ -92,8 +92,10 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 #else
 int main(int argc, char **argv) {
 #endif
+#ifndef __MAC__
   // enable float exceptions to halt instead of propagating errors
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
+#endif
   ebl::ipp_init(1); // limit IPP (if available) to 1 core
   //  gui.set_silent();
   cout << "***** Unit tester for libeblearn and libidx libraries *****" << endl;
