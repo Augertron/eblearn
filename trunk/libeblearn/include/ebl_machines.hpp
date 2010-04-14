@@ -108,7 +108,72 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // nn_machine_cscscf
+  // nn_machine_cscf
+
+  // the empty constructor (must call init afterwards)
+  template <class T>
+  nn_machine_cscf<T>::nn_machine_cscf()
+    : layers_n<T>(true) {
+    // owns modules, responsible for deleting it
+  }
+
+  template <class T>
+  nn_machine_cscf<T>::nn_machine_cscf(parameter<T> &prm, intg ini, intg inj,
+					  intg ki0, intg kj0, idx<intg> &tbl0, 
+					  intg si0, intg sj0,
+					  intg ki1, intg kj1, idx<intg> &tbl1, 
+					  intg outthick, bool norm, bool mirror)
+    : layers_n<T>(true) {
+    // owns modules, responsible for deleting it
+    init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
+	 outthick, norm, mirror);
+  }
+  
+  template <class T>
+  nn_machine_cscf<T>::~nn_machine_cscf() {}
+
+  template <class T>
+  void nn_machine_cscf<T>::init(parameter<T> &prm, intg ini, intg inj,
+				  intg ki0, intg kj0, idx<intg> &tbl0, 
+				  intg si0, intg sj0, intg ki1, intg kj1, 
+				  idx<intg> &tbl1, 
+				  intg outthick, bool norm, bool mirror) {
+    // here we compute the thickness of the feature maps based on the
+    // convolution tables.
+    idx<intg> tblmax = tbl0.select(1, 1);
+    intg thick0 = 1 + idx_max(tblmax);
+    tblmax = tbl1.select(1, 1);
+    intg thick1 = 1 + idx_max(tblmax);
+    // layers_n was initialized with true so it owns the modules we give it,
+    // we can add modules with "new".
+    // we add convolutions (c), subsamplings (s), and full layers (f)
+    // to form a c-s-c-s-c-f network. and we add state_idx in between
+    // which serve as temporary buffer to hold the output of a module
+    // and feed the input of the following module.
+    
+    // convolution
+    if (norm) // absolute rectification + contrast normalization
+      add_module(new layer_convabsnorm<T>(prm, ki0, kj0, 1, 1, tbl0, mirror),
+		 new state_idx<T>(1, 1, 1));
+    else // old fashioned way
+      add_module(new nn_layer_convolution<T>(prm, ki0, kj0, 1, 1, tbl0),
+		 new state_idx<T>(1, 1, 1));
+    // subsampling
+    add_module(new nn_layer_subsampling<T>(prm, si0, sj0, si0, sj0, thick0),
+	       new state_idx<T>(1, 1, 1));
+    // convolution
+    if (norm) // absolute rectification + contrast normalization
+      add_module(new layer_convabsnorm<T>(prm, ki1, kj1, 1, 1, tbl1, mirror),
+		 new state_idx<T>(1, 1, 1));
+    else // old fashioned way
+      add_module(new nn_layer_convolution<T>(prm, ki1, kj1, 1, 1, tbl1),
+		 new state_idx<T>(1, 1, 1));
+    // full
+    add_last_module(new nn_layer_full<T>(prm, thick1, outthick));
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // nn_machine_cscsc
 
   // the empty constructor (must call init afterwards)
   template <class T>
@@ -246,6 +311,41 @@ namespace ebl {
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
 	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, output_size,
 	       norm, mirror);
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // lenet
+
+  template <class T>
+  lenet_cscf<T>::lenet_cscf(parameter<T> &prm,
+			    intg image_height, intg image_width,
+			    intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
+			    intg kj1, intg output_size, bool norm, bool color,
+			    bool mirror, idx<intg> *table0_,
+			    idx<intg> *table1_) {
+    idx<intg> table0, table1;
+    if (!color) { // use smaller tables
+      table0 = full_table(1, 6);
+      table1 = idx<intg>(60, 2);
+      memcpy(table1.idx_ptr(), connection_table_6_16,
+	     table1.nelements() * sizeof (intg));
+    } else { // for color (assuming 3-layer input), use bigger tables
+      table0 = idx<intg>(14, 2);
+      intg tbl0[14][2] = {{0, 0},  {0, 1},  {0, 2}, {0, 3},  {1, 4},  {2, 4},
+			  {1, 5},  {2, 5},  {0, 6}, {1, 6},  {2, 6},  {0, 7},
+			  {1, 7}, {2, 7}};
+      memcpy(table0.idx_ptr(), tbl0, table0.nelements() * sizeof (intg));
+      table1 = idx<intg>(96, 2);
+      memcpy(table1.idx_ptr(), connection_table_8_24,
+	     table1.nelements() * sizeof (intg));
+    }
+    if (table0_)
+      table0 = *table0_;
+    if (table1_)
+      table1 = *table1_;
+    
+    this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
+	       ki1, kj1, table1, output_size, norm, mirror);
   }
   
   ////////////////////////////////////////////////////////////////

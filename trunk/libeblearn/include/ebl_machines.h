@@ -82,6 +82,41 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
+  template <class T> class nn_machine_cscf : public layers_n<T> {
+  public:
+    //! Empty constructor, awaiting for initialization by the user via the 
+    //! init() function.
+    nn_machine_cscf();
+    //! Complete constructor, calls the init() function.
+    //! See the init() description for complete arguments description.
+    nn_machine_cscf(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0,
+		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+		      idx<intg> &tbl1, intg outthick, bool norm = false,
+		      bool mirror = false);
+    virtual ~nn_machine_cscf();
+
+    //! The init function creates the machine by stacking the modules in this
+    //! order (c-s-c-s-c-f): nn_layer_convolution, nn_layer_subsampling, 
+    //! nn_layer_convolution, nn_layer_subsampling, nn_layer_convolution, 
+    //! nn_layer_full.
+    //! <ini> <inj>: expected max size of input for preallocation of internal 
+    //! states
+    //! <ki0> <kj0>: kernel size for first convolutional layer
+    //! <tbl0>: table of connections between input anf feature maps for first 
+    //! layer
+    //! <si0> <sj0>: subsampling for first layer
+    //! <ki1> <kj1> <tbl1> <si1> <sj1>: same for next 2 layers
+    //! <ki2> <kj2> <tbl2>: same for last convolution layer
+    //! <outthick>: number of outputs.
+    //! <prm> an idx1-ddparam in which the parameters will be allocated.
+    void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+	      idx<intg> &tbl1, intg outthick, bool norm = false,
+	      bool mirror = false);
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! Standard LeNet5-type architecture without the final e-dist RBF layer.
   template <class T> class nn_machine_cscsc : public layers_n<T> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
@@ -144,6 +179,22 @@ namespace ebl {
 	  intg si1, intg sj1, intg hid, intg output_size,
 	  bool norm = false, bool color = false, bool mirror = false);
     virtual ~lenet() {}
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! lenet type of architecture.
+  //! absolution rectification + contrast normalization can be turned on
+  //! with the norm boolean/
+  //! color can be turned on with the color boolean, in which case
+  //! a 3-layer input is assumed and bigger tables are used.
+  template <class T> class lenet_cscf : public nn_machine_cscf<T> {
+  public:
+    lenet_cscf(parameter<T> &prm, intg image_height, intg image_width,
+	  intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
+	  intg output_size,
+	  bool norm = false, bool color = false, bool mirror = false,
+	  idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL);
+    virtual ~lenet_cscf() {}
   };
 
   ////////////////////////////////////////////////////////////////
