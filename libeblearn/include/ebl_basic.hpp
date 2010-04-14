@@ -366,8 +366,11 @@ namespace ebl {
     intg si = sin_i / stridei;
     intg sj = sin_j / stridej;
     // check sizes
-    if ((sin_i % stridei) != 0 || (sin_j % stridej) != 0)
+    if ((sin_i % stridei) != 0 || (sin_j % stridej) != 0) {
+      cerr << "subsampling " << sin_i << "x" << sin_j << " with stride "
+	   << stridei << "x" << stridej << endl;
       eblerror("inconsistent input size and subsampling ratio");
+    }
     // resize output and sub based in input dimensions
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(1, si); // new size after subsampling
