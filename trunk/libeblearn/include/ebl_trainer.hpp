@@ -201,6 +201,8 @@ namespace ebl {
       correct = test_sample(*input, label.get(), answer, infp);
       log.update(age, (uint) label.get(), (uint) answer,
 		 (double) energy.x.get());
+      // use energy as distance for samples probabilities to be used
+      ds.set_answer_distance(energy.x.get());
       ds.next();
     }
     log.display(iteration, ds.name, ds.lblstr, ds.is_test());
