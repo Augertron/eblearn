@@ -85,7 +85,7 @@ namespace ebl {
     if (mirror) // switch between zero and mirror padding
       padding1 = new mirrorpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2);
     else
-      padding1 = new zpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2);
+      padding1 = new zpad_module<T>(w);
     convmean.add_module(padding1, new state_idx<T>(1, 1, 1));
     convmean.add_module(conv1, new state_idx<T>(1, 1, 1));
     //! feature sum module to sum along features 
@@ -97,7 +97,7 @@ namespace ebl {
     if (mirror) // switch between zero and mirror padding
       padding2 = new mirrorpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2);
     else
-      padding2 = new zpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2);
+      padding2 = new zpad_module<T>(w);
     convvar.add_module(padding2, new state_idx<T>(1, 1, 1));
     convvar.add_module(conv2, new state_idx<T>(1, 1, 1));
     //! feature sum module to sum along features 

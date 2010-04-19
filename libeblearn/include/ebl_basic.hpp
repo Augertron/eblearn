@@ -703,7 +703,19 @@ namespace ebl {
 
   template <class T>
   zpad_module<T>::zpad_module(int nr, int nc)
-    : nrow(nr), ncol(nc) {
+    : nrow(nr), ncol(nc), nrow2(nr), ncol2(nc) {
+  }
+
+  template <class T>
+  zpad_module<T>::zpad_module(idxdim kerdims)
+    : nrow(floor(kerdims.dim(0) / (float) 2.0)),
+      ncol(floor(kerdims.dim(1) / (float) 2.0)),
+      nrow2(nrow), ncol2(ncol) {
+      // remove 1 pixel on right and bottom borders if even.
+      if (kerdims.dim(0) % 2 == 0)
+	nrow2 -= 1;
+      if (kerdims.dim(1) % 2 == 0)
+	ncol2 -= 1;
   }
 
   template <class T>
@@ -714,7 +726,7 @@ namespace ebl {
   void zpad_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
     intg inr = in.x.dim(1);
     intg inc = in.x.dim(2);
-    idxdim d(in.x.dim(0), inr + 2 * nrow, inc + 2 * ncol);
+    idxdim d(in.x.dim(0), inr + nrow + nrow2, inc + ncol + ncol2);
     if (!out.x.same_dim(d)) // resize only when necessary
       out.resize(d);
     out.clear();
