@@ -360,15 +360,18 @@ namespace ebl {
   //! a simple zero padding module that is mostly usefull for doing
   //! same size output convolutions.
   template <class T> class zpad_module : public module_1_1<T> {
-  private:
-    int nrow, ncol;
-
   public:
-    //! <nrow> is the number of rows in zero added border
-    //! <ncol> is the number of cols in zero added border
+    //! Constructor. Adding same size borders on each side.
+    //! \param nr The number of rows added on each side.
+    //! \param nc The number of cols added on each side.
     //! the output size is enlarged by 2*nrow in rows and 2*ncols in cols
     //! for each feature map.
     zpad_module(int nr, int nc);
+    //! Constructor adding zero borders with same size on each size if the
+    //! kernel had odd size, otherwise adding 1 pixel less on the right
+    //! and bottom borders.
+    //! \param kernel_size The sizes of the kernel for which to pad.
+    zpad_module(idxdim kernel_size);
     //! destructor
     virtual ~zpad_module();    
     //! forward propagation from in to out
@@ -377,6 +380,9 @@ namespace ebl {
     virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+  private:
+    int nrow, ncol; //!< padding on left and top
+    int nrow2, ncol2; //!< padding on botton and right
   };
   
   ////////////////////////////////////////////////////////////////
