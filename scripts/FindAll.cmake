@@ -92,7 +92,7 @@ ENDIF (CPPUNIT_FOUND)
 
 # find IPP
 ################################################################################
-FIND_PACKAGE(IPP)
+#FIND_PACKAGE(IPP)
 IF ($ENV{NOIPP})
   MESSAGE(STATUS "IPP DISABLED by env variable $NOIPP=1.")
 ELSE ($ENV{NOIPP})

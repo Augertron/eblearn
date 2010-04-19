@@ -708,8 +708,8 @@ namespace ebl {
 
   template <class T>
   zpad_module<T>::zpad_module(idxdim kerdims)
-    : nrow(floor(kerdims.dim(0) / (float) 2.0)),
-      ncol(floor(kerdims.dim(1) / (float) 2.0)),
+    : nrow((int) (floor(kerdims.dim(0) / (float) 2.0))),
+      ncol((int) (floor(kerdims.dim(1) / (float) 2.0))),
       nrow2(nrow), ncol2(ncol) {
       // remove 1 pixel on right and bottom borders if even.
       if (kerdims.dim(0) % 2 == 0)
