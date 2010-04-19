@@ -318,7 +318,7 @@ namespace ebl {
       if (max_distance == 0.0) // failsafe
 	max_distance = .0000001;
       probasIter_train->set(MAX(sample_min_proba,
-				MIN(1.0, fabs(dist / maxdistance))));
+				MIN(1.0, fabs(dist / max_distance))));
     }
   }
 
