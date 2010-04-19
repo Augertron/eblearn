@@ -94,7 +94,8 @@ namespace ebl {
     probas = idx<double>(data.dim(0));
     init_drand(time(NULL)); // initialize random seed
     // default probability for a sample of being used is 1
-    idx_fill(probas, 1.0); 
+    idx_fill(probas, 1.0);
+    max_distance = 0.0; // initial maximum distance
     height = data.dim(1);
     width = data.dim(2);
     nclasses = (intg) idx_max(labels) + 1;
@@ -265,28 +266,35 @@ namespace ebl {
       }
       if (weigh_samples) {
 	if (perclass_norm) {
-	  // normalize probabilities for this class, mapping [0..max] to [0..1]
-	  double maxproba = 0;
-	  // get max
-	  for (vector<intg>::iterator j = label_indices[iitr].begin();
-	       j != label_indices[iitr].end(); ++j)
-	    maxproba = MAX(probasIter_train.at(*j)->get(), maxproba);
-	  // cout << "normalizing with maxproba for class "
-	  //      << iitr << ": " << maxproba << endl;
-	  // set normalized proba
-	  double avg = 0;
-	  for (vector<intg>::iterator j = label_indices[iitr].begin();
-	       j != label_indices[iitr].end(); ++j) {
-	    probasIter_train.at(*j)->set((maxproba == 0) ? 1.0 :
-					 probasIter_train.at(*j)->get() 
-					 / maxproba);
-	    avg = probasIter_train.at(*j)->get();
-	  }
+	  // // normalize probabilities for this class, mapping [0..max] to [0..1]
+	  // double maxproba = 0;
+	  // // get max
+	  // for (vector<intg>::iterator j = label_indices[iitr].begin();
+	  //      j != label_indices[iitr].end(); ++j)
+	  //   maxproba = MAX(probasIter_train.at(*j)->get(), maxproba);
+	  // // cout << "normalizing with maxproba for class "
+	  // //      << iitr << ": " << maxproba << endl;
+	  // // set normalized proba
+	  // double avg = 0;
+	  // for (vector<intg>::iterator j = label_indices[iitr].begin();
+	  //      j != label_indices[iitr].end(); ++j) {
+	  //   probasIter_train.at(*j)->set((maxproba == 0) ? 1.0 :
+	  // 				 probasIter_train.at(*j)->get() 
+	  // 				 / maxproba);
+	  //   avg = probasIter_train.at(*j)->get();
+	  // }
+	  // reset max distance
+	  max_distance = 0;
 	  //	  cout << "avg proba = " << avg / maxproba << endl;
 	} else {
+	  // reset max distance
+	  max_distance = 0;
+	  
 	  // normalize probabilities for all classes, mapping [0..max] to [0..1]
-	  double maxproba = idx_max(probas);
-	  idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
+	  //maxdistance = idx_max(probas);
+	  //if (maxdistance == 0)
+	  //maxdistance = 1.0;
+	  //idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
 	}
       }
     }
@@ -306,7 +314,11 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_answer_distance(double dist) {
     if (weigh_samples) { // if false, keep default probability 1 for all samples
-      probasIter_train->set(MAX(sample_min_proba, MIN(1.0, fabs(dist))));
+      max_distance = MAX(max_distance, dist);
+      if (max_distance == 0.0) // failsafe
+	max_distance = .0000001;
+      probasIter_train->set(MAX(sample_min_proba,
+				MIN(1.0, fabs(dist / maxdistance))));
     }
   }
 
