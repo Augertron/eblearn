@@ -28,14 +28,6 @@ int main(int argc, char **argv) { // regular main without gui
 #ifndef __MAC__
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
-  if (conf.exists_bool("fixed_randomization")) {
-    cout << "Random seed is fixed (0)." << endl;
-    init_drand(0); // fixed random seed
-  } else {
-    init_drand(time(NULL)); // initialize random seed
-    cout << "Random seed is variable." << endl;
-  }
-
   //! load MNIST datasets
   mnist_datasource<t_net, ubyte, ubyte>
     train_ds(conf.get_cstring("root"), "train", conf.get_uint("training_size")),
@@ -45,6 +37,14 @@ int main(int argc, char **argv) { // regular main without gui
   train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));
   train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
   train_ds.set_min_proba(conf.get_double("min_sample_weight"));
+  //! randomization
+  if (conf.exists_bool("fixed_randomization")) {
+    cout << "Random seed is fixed (0)." << endl;
+    init_drand(0); // fixed random seed
+  } else {
+    init_drand(time(NULL)); // initialize random seed
+    cout << "Random seed is variable." << endl;
+  }
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =
