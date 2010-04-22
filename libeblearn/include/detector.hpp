@@ -320,11 +320,11 @@ namespace ebl {
     idxdim minodim(1, 1, 1); // min output dims
     in_mindim = thenet.bprop_size(minodim); // compute min input dims
     // TODO: this seems to screw things up
-    // if (min_size > 0) { // cap on maximum input size
-    //   idxdim indim2(input_dims.dim(2), min_size, min_size);
-    //   thenet.fprop_size(indim2);
-    //   in_mindim.setdims(indim2);
-    // }
+    if (min_size > 0) { // cap on maximum input size
+      idxdim indim2(input_dims.dim(2), min_size, min_size);
+      thenet.fprop_size(indim2);
+      in_mindim.setdims(indim2);
+    }
   }
 
   template <class T>
