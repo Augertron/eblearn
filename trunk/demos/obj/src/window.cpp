@@ -57,10 +57,21 @@ int main(int argc, char **argv) { // regular main without gui
   int           height          = conf.get_int("input_height");
   int           width           = conf.get_int("input_width");
 
-  intg winsz = 1000;
-  idx<ubyte> bg = load_image<ubyte>("/d/Wallpaper/NATURE-FakaravaCoconutTree_1920x1200.jpg");
-  idx<ubyte> bgwin = bg.narrow(0, winsz, bg.dim(0) / 2 - winsz/2);
-  bgwin = bgwin.narrow(1, winsz, bg.dim(1) / 2 - winsz/2);
+  intg winszh = conf.get_int("winszh");
+  intg winszw = conf.get_int("winszw");
+  // TODO: read PAM format for alpha channel
+  // idx<ubyte> window = load_image<ubyte>("/home/sermanet/eblearn/pvc_window.png");
+  // cout << "window: " << window << endl;
+  list<string> *bgs = find_fullfiles(conf.get_string("bgdir"));
+  if (!bgs) eblerror("background files not found");
+  list<string>::iterator bgi = bgs->begin();
+  for ( ; bgi != bgs->end(); ++bgi)
+    cout << "found " << *bgi << endl;
+  bgi = bgs->begin();
+  idx<ubyte> bg = load_image<ubyte>(*bgi);
+  idx<ubyte> bgwin;
+  // = bg.narrow(0, winszh, bg.dim(0) / 2 - winszh/2);
+  // bgwin = bgwin.narrow(1, winszw, bg.dim(1) / 2 - winszw/2);
   
   // load network and weights
   parameter<t_net> theparam;
@@ -148,8 +159,11 @@ int main(int argc, char **argv) { // regular main without gui
   if (save_video)
     cam->start_recording();
   // timing variables
-  QTime t0;
+  QTime t0, tbg;
   int tpp;
+  bbox *b = NULL;
+  tbg.start();
+  int bgtime = conf.get_uint("bgtime") * 1000;
 #endif  
   
   // loop
@@ -166,29 +180,12 @@ int main(int argc, char **argv) { // regular main without gui
       frame = cam2->grab();
     else // empty pre-camera, use regular camera
       frame = cam->grab();
+    b = NULL;
     // run detector
     if (!display) { // fprop without display
       vector<bbox*> &bboxes = detect.fprop(frame, threshold);
-      if (bboxes.size() > 0) {
-	bbox *b = bboxes[0];
-	if (b) {
-	  float h = (b->h0 + b->height / 2 - 100) * 2;
-	  float w = (b->w0 + b->width / 2 - 100) * 2;
-	  cout << "h: " << h << " w: " << w << endl;
-	  bgwin = bg.narrow(0, winsz,
-			    MIN(bg.dim(0) - 1 - winsz, MAX(0,
-						   bg.dim(0) / 2 - winsz/2 + h)));
-	  bgwin = bgwin.narrow(1, winsz, MIN(bg.dim(1) - 1 - winsz,
-					     MAX(0, bg.dim(1) / 2 - winsz/2 + w)));
-	}
-      }
-      disable_window_updates();
-      clear_window();
-      draw_matrix(bgwin);
-      idx<t_net> in = (((state_idx<t_net>*)detect.inputs.get(0))->x);
-      in = in.shift_dim(0, 2);
-      draw_matrix(in);
-      enable_window_updates();      
+      if (bboxes.size() > 0)
+	b = bboxes[0];
     } 
 #ifdef __GUI__
     else { // fprop and display
@@ -198,33 +195,54 @@ int main(int argc, char **argv) { // regular main without gui
 	vector<bbox*> &bboxes =
 	  dgui.display(detect, frame, threshold, 0, 0, zoom,
 		       (t_net)0, (t_net)255, wid);
-
-      if (bboxes.size() > 0) {
-	bbox *b = bboxes[0];
-	if (b) {
-	  float h = b->h0 + b->height / 2 - 300;
-	  float w = b->w0 + b->width / 2 - 300;
-	  cout << "h: " << h << " w: " << w << endl;
-	  bgwin = bg.narrow(0, winsz, bg.dim(0) / 2 - winsz + h);
-	  bgwin = bgwin.narrow(1, winsz, bg.dim(1) / 2 - winsz + w);
-
-	}
-      }
-
-
+	if (bboxes.size() > 0)
+	  b = bboxes[0];
       }
       else
 	dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
 				    (t_net)-1.1, (t_net)1.1, wid); 
-
-
       enable_window_updates();
       if (save_video)
 	cam->record_frame();
     }
+
+    if (b) {
+      cout << "h0 " << b->h0 << " w0 " << b->w0 << " h " << b->height
+	   << " w " << b->width;
+      float h = (((b->h0 + b->height / 2.0) / frame.dim(0)) - .3) * 3;
+      float w = (((b->w0 + b->width / 2.0) / frame.dim(1)) - .15) * 1.4;
+      cout << " h: " << h << " w: " << w << endl;
+      bgwin = bg.narrow(0, winszh,
+			MIN(bg.dim(0) - 1 - winszh, MAX(0,
+							(1 - h) * (bg.dim(0) - winszh))));
+      bgwin = bgwin.narrow(1, winszw, MIN(bg.dim(1) - 1 - winszw,
+					  MAX(0, w * (bg.dim(1) - winszw))));
+    }
+    disable_window_updates();
+    clear_window();
+    draw_matrix(bgwin);
+    idx<t_net> in = (((state_idx<t_net>*)detect.inputs.get(0))->x);
+    in = in.shift_dim(0, 2);
+    if (b) {
+    draw_box((int)(MIN(in.dim(0) - 1, MAX(0, (b->h0 / (float) frame.dim(0))
+					     * in.dim(0)))),
+	     (int)(MIN(in.dim(1) - 1, MAX(0, (b->w0 / (float) frame.dim(1))
+					     * in.dim(1)))),
+	     (int)(MIN(in.dim(0) - 1, MAX(0, (b->height / (float) frame.dim(0))
+					     * in.dim(0)))),
+	     (int)(MIN(in.dim(1) - 1, MAX(0, (b->width / (float) frame.dim(1))
+					     * in.dim(1)))));
+    }
+    draw_matrix(in);
+    // draw_mask(window), uint h0 = 0, uint w0 = 0, 
+    // 		   double zoomh = 1.0, double zoomw = 1.0,
+    // 		   ubyte r = 255, ubyte g = 0, ubyte b = 0, ubyte a = 127,
+    // 		   T threshold = 0.0)
+    enable_window_updates();      
+      
     tpp = t0.elapsed(); // stop processing timer
-    cout << "processing: " << tpp << " ms." << endl;
-    cout << "fps: " << cam->fps() << endl;
+    cout << "processing: " << tpp << " ms.";
+    cout << " fps: " << cam->fps() << endl;
 #endif
     if (display_sleep > 0) {
       cout << "sleeping for " << display_sleep << "ms." << endl;
@@ -233,6 +251,13 @@ int main(int argc, char **argv) { // regular main without gui
     if (conf.exists("save_max") && 
 	detect.get_total_saved() > conf.get_uint("save_max"))
       break ; // limit number of detection saves
+    if (tbg.elapsed() > bgtime) {
+      tbg.restart();
+      bg = load_image<ubyte>(*bgi);
+      bgi++;
+      if (bgi == bgs->end())
+	bgi = bgs->begin();
+    }
   }
   if (save_video)
     cam->stop_recording(conf.exists_bool("use_original_fps") ?
