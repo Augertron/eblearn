@@ -30,8 +30,10 @@ int main(int argc, char **argv) { // regular main without gui
 #endif
   //! load MNIST datasets
   mnist_datasource<t_net, ubyte, ubyte>
-    train_ds(conf.get_cstring("root"), "train", conf.get_uint("training_size")),
-    test_ds(conf.get_cstring("root"), "t10k", conf.get_uint("testing_size"));
+    train_ds(conf.get_cstring("root"), conf.get_cstring("train_name"), 
+	     conf.get_uint("training_size")),
+    test_ds(conf.get_cstring("root"), conf.get_cstring("val_name"),
+	    conf.get_uint("testing_size"));
   test_ds.set_test(); // test is the test set, used for reporting
   train_ds.set_weigh_samples(conf.exists_bool("wsamples"));
   train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));

@@ -657,20 +657,18 @@ namespace ebl {
 
   template <class Tnet, class Tdata, class Tlabel>
   mnist_datasource<Tnet, Tdata, Tlabel>::
-  mnist_datasource(const char *root, const char *type, uint size) {
+  mnist_datasource(const char *root, const char *name, uint size) {
     try {
       // load dataset
-      ostringstream datafile, labelfile, name;
-      name << "MNIST " << type;
-      datafile << root << "/" << type << "-images-idx3-ubyte";
-      labelfile << root << "/" << type << "-labels-idx1-ubyte";
+      ostringstream datafile, labelfile;
+      datafile << root << "/" << name << "_" << DATA_NAME << MATRIX_EXTENSION;
+      labelfile << root << "/" << name 
+		<< "_" << LABELS_NAME << MATRIX_EXTENSION;
       idx<Tdata> dat = load_matrix<Tdata>(datafile.str());
       idx<Tlabel> labs = load_matrix<Tlabel>(labelfile.str());
-      dat = dat.narrow(0, size, 
-		       strcmp("t10k", type) ? 0 : (intg) (5000 - .5 * size)); 
-      labs = labs.narrow(0, size, 
-			 strcmp("t10k", type) ? 0 : (intg) (5000 - .5 * size)); 
-      init(dat, labs, name.str().c_str(), 0, 0.01);
+      dat = dat.narrow(0, MIN(dat.dim(0), size), 0);
+      labs = labs.narrow(0, MIN(labs.dim(0), size), 0);
+      init(dat, labs, name, 0, 0.01);
     } catch(string &err) {
       cerr << err << endl;
       eblerror("failed to load mnist dataset");
