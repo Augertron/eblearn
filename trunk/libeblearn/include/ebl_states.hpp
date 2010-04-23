@@ -350,7 +350,7 @@ namespace ebl {
       idx_mul(dx, epsilons, dx);
       idx_dotcacc(dx, -arg.eta, x);
     } else {
-	update_deltax( 1-arg.inertia, arg.inertia);
+      update_deltax((T) (1 - arg.inertia), (T) arg.inertia);
 	idx_mul(deltax, epsilons, deltax);
 	idx_dotcacc(deltax, -arg.eta, x);
     }

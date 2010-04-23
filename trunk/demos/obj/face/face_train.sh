@@ -51,7 +51,7 @@ metaconf0=${eblearnbin}/face_meta.conf
 metaconf=${out}/face_meta.conf
 
 # maximum number of retraining iterations
-maxiteration=20
+maxiteration=10
 # threshold will be decremented at each iter until -.95
 threshold=.9
 
@@ -121,7 +121,8 @@ for iter in `seq 1 ${maxiteration}`
   echo "save_detections = 1" >> $bestconf
 # do not save video
   echo "save_video = 0" >> $bestconf
-  echo "save_max = 25000" >> $bestconf
+#  echo "save_max = 25000" >> $bestconf
+  echo "save_max = 1" >> $bestconf
   echo "save_max_per_frame = 10" >> $bestconf
 # add directory where to find trained files
   echo "root2 = ${bestout}" >> $bestconf

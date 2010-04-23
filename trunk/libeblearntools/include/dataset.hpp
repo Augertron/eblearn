@@ -100,6 +100,7 @@ namespace ebl {
     save_mode = DATASET_SAVE;
     bboxfact = 1.0;
     force_label = "";
+    nclasses = 0;
 #ifndef __BOOST__
     eblerror(BOOST_LIB_ERROR);
 #endif
@@ -193,9 +194,14 @@ namespace ebl {
     cout << ds1.name << "\" to " << max << " samples per class, the rest ";
     cout << "going to \"" << ds2.name << "\"." << endl;
 
-    idx<ubyte> classidx = build_classes_idx();
-    ds1.set_classes(classidx);
-    ds2.set_classes(classidx);
+    // copy classes strings
+    if (classes.size() > 0) {
+      idx<ubyte> classidx = build_classes_idx();
+      ds1.set_classes(classidx);
+      ds2.set_classes(classidx);
+    }
+    ds1.nclasses = nclasses;
+    ds2.nclasses = nclasses;
     // set max samples per class for dataset 1 (ds2 takes whatever is left)
     ds1.set_max_per_class(max);
     // split
@@ -295,13 +301,15 @@ namespace ebl {
   
   template <class Tdata>
   void dataset<Tdata>::print_classes() {
-    cout << classes.size() << " classe";
-    if (classes.size() > 1) cout << "s";
-    cout << " (";
-    uint i;
-    for (i = 0; i < classes.size() - 1; ++i)
-      cout << classes[i] << ", ";
-    cout << classes[i] << ")";
+    cout << nclasses << " classe";
+    if (nclasses > 1) cout << "s";
+    if (classes.size() > 0) {
+      cout << " (";
+      uint i;
+      for (i = 0; i < classes.size() - 1; ++i)
+	cout << classes[i] << ", ";
+      cout << classes[i] << ")";
+    }
   }
 
   template <class Tdata>
@@ -311,14 +319,16 @@ namespace ebl {
     cout << "Dataset \"" << name << "\" contains " << data_cnt;
     cout << " samples (of dimensions " << outdims << " and ";
     cout << typeid(Tdata).name() << " precision)";
-    cout << ", distributed in " << classes.size() << " classes: ";
-    uint i;
-    for (i = 0; i < classes.size() - 1; ++i) {
+    cout << ", distributed in " << nclasses << " classes";
+    if (classes.size() > 0) {
+      uint i;
+      for (i = 0; i < classes.size() - 1; ++i) {
+	cout << class_tally.get(i) << " " << classes[i];
+	class_tally.get(i) > 1 ? cout << "s, " : cout << ", ";
+      }
       cout << class_tally.get(i) << " " << classes[i];
-      class_tally.get(i) > 1 ? cout << "s, " : cout << ", ";
+      class_tally.get(i) > 1 ? cout << "s." : cout << ".";
     }
-    cout << class_tally.get(i) << " " << classes[i];
-    class_tally.get(i) > 1 ? cout << "s." : cout << ".";
     cout << endl;
   }
   
@@ -331,7 +341,7 @@ namespace ebl {
     string root1 = root;
     root1 += "/";
     cout << "Loading dataset " << name << " from " << root1;
-    cout << "_*" << MATRIX_EXTENSION << endl;
+    cout << name << "_*" << MATRIX_EXTENSION << endl;
     // load data
     data = idx<Tdata>(1,1,1,1); // TODO: implement generic load_matrix
     fname = root1; fname += data_fname;
@@ -344,8 +354,10 @@ namespace ebl {
     idx<ubyte> classidx;
     classidx = idx<ubyte>(1,1); // TODO: implement generic load_matrix
     fname = root1; fname += classes_fname;
-    loading_warning(classidx, fname);
-    set_classes(classidx);
+    if (loading_warning(classidx, fname))
+      set_classes(classidx);
+    else
+      nclasses = idx_max(labels) + 1;
     // load classpairs
     classpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
     fname = root1; fname += classpairs_fname;
@@ -410,14 +422,16 @@ namespace ebl {
 	return false;
       } else cout << "Saved " << fname << endl;
       // save classes
-      fname = root1;
-      fname += classes_fname;
-      idx<ubyte> classes_idx = build_classes_idx();
-      cout << "Saving " << fname << " (" << classes_idx << ")"  << endl;
-      if (!save_matrix(classes_idx, fname)) {
-	cerr << "error: failed to save classes into " << fname << endl;
-	return false;
-      } else cout << "Saved " << fname << endl;
+      if (classes.size() > 0) {
+	fname = root1;
+	fname += classes_fname;
+	idx<ubyte> classes_idx = build_classes_idx();
+	cout << "Saving " << fname << " (" << classes_idx << ")"  << endl;
+	if (!save_matrix(classes_idx, fname)) {
+	  cerr << "error: failed to save classes into " << fname << endl;
+	  return false;
+	} else cout << "Saved " << fname << endl;
+      }
     } else { // single file mode, use save as image extensions
       root1 += name; root1 += "/";
       mkdir(root1.c_str(), MKDIR_RIGHTS);
@@ -464,6 +478,10 @@ namespace ebl {
       n = MAX(0, MIN(n, idx_sum(max_per_class)));
     cout << "Allocating dataset \"" << name << "\" with " << n;
     cout << " samples of size " << d << " ..." << endl;
+    if (n <= 0) {
+      cerr << "Cannot allocate " << n << " samples." << endl;
+      return false;
+    }
     // allocate data buffer
     uint c = 0, h = 1, w = 2;
     if (interleaved_input) {
@@ -476,8 +494,10 @@ namespace ebl {
     labels = idx<t_label>(n);
     allocated = true;
     // alloc tally
-    add_tally = idx<intg>(classes.size());
-    idx_clear(add_tally);
+    if (nclasses > 0) {
+      add_tally = idx<intg>(nclasses);
+      idx_clear(add_tally);
+    }
     return true;
   }
   
@@ -488,16 +508,16 @@ namespace ebl {
     if (!strcmp(ppconv_type.c_str(), "YpUV")) {
       ppmodule = new rgb_to_ypuv_module<Tdata>(ppkernel_size);
       // set min/max val for display
-      minval = -1;
-      maxval = 1;
+      minval = (Tdata) -1;
+      maxval = (Tdata) 1;
     } else if (!strcmp(ppconv_type.c_str(), "YUV")) {
       eblerror("YUV pp module not implemented");
     } else if (!strcmp(ppconv_type.c_str(), "HSV")) {
       eblerror("HSV pp module not implemented");
     } else if (!strcmp(ppconv_type.c_str(), "RGB")) {
       // no preprocessing module, just set min/max val for display
-      minval = 0;
-      maxval = 255;
+      minval = (Tdata) 0;
+      maxval = (Tdata) 255;
     } else eblerror("undefined preprocessing method");
     // initialize resizing module
     if (resizepp) delete resizepp;
@@ -517,7 +537,8 @@ namespace ebl {
   // data
     
   template <class Tdata>
-  bool dataset<Tdata>::add_data(idx<Tdata> &dat, const string &class_name,
+  bool dataset<Tdata>::add_data(idx<Tdata> &dat, const t_label label,
+				const string *class_name,
 				const char *filename, const rect *r) { 
     // check for errors
     if (!allocated) {
@@ -531,10 +552,9 @@ namespace ebl {
 	|| (r && (r->width < (uint) mindims.dim(1))))
       return false;
     // check that class exists (may not exist if excluded)
-    if (find(classes.begin(), classes.end(), class_name) == classes.end())
+    if (classes.size() > 0 && 
+	find(classes.begin(), classes.end(), *class_name) == classes.end())
       return false;
-    // compute label
-    t_label label = get_label_from_class(class_name);
     // check for capacity
     if (full(label)) // reached full capacity
       return false;
@@ -542,7 +562,9 @@ namespace ebl {
     add_tally.set(add_tally.get(label) + 1, label);
     // print info
     cout << data_cnt+1 << ": add ";
-    cout << (filename ? filename : "sample" ) << " as " << class_name;
+    cout << (filename ? filename : "sample" );
+    if (class_name)
+      cout << " as " << *class_name;
     cout << " (" << label << ")" << endl;
     // copy data into target type
     idxdim d(dat);
@@ -597,9 +619,10 @@ namespace ebl {
     if (strcmp(force_label.c_str(), ""))
       name = force_label;
     res = find(classes.begin(), classes.end(), name);
-    if (res == classes.end()) // not found
+    if (res == classes.end()) {// not found
       classes.push_back(name);
-    else { // found
+      nclasses++;
+    } else { // found
       //t_label i = res - classes.begin();
       //      cout << "found class " << name << " at index " << i << endl;
     }
@@ -657,7 +680,7 @@ namespace ebl {
     if (max > 0) {
       mpc = max;
       max_per_class_set = true;
-      max_per_class = idx<intg>(classes.size());
+      max_per_class = idx<intg>(nclasses);
       idx_fill(max_per_class, mpc);
       cout << "Max number of samples per class: " << max << endl;
     }
@@ -790,9 +813,11 @@ namespace ebl {
     ds2.do_preprocessing = false;
     ds1.interleaved_input = false;
     ds2.interleaved_input = false;
+    cout << "Input data samples: " << data << endl;
     // alloc each dataset
-    ds1.allocate(data.dim(0), outdims);
-    ds2.allocate(data.dim(0), outdims);
+    if (!ds1.allocate(data.dim(0), outdims) ||
+	!ds2.allocate(data.dim(0), outdims))
+      eblerror("Failed to allocate new datasets");
     // add samples 1st dataset, if not add to 2nd.
     // if 1st has reached max per class, it will return false upon addition
     cout << "Adding data to \"" << ds1.name << "\" and \"" << ds2.name << "\".";
@@ -808,8 +833,10 @@ namespace ebl {
     for (vector<intg>::iterator i = ids.begin(); i != ids.end(); ++i) {
       sample = data[*i];
       cout << "(original index " << *i << ") ";
-      if (!ds1.add_data(sample, classes[ (size_t)labels.get(*i) ]))
-	ds2.add_data(sample, classes[ (size_t)labels.get(*i) ]);
+      if (!ds1.add_data(sample, labels.get(*i), 
+			classes.size() ? &(classes[(size_t)labels.get(*i)]):NULL))
+	ds2.add_data(sample, labels.get(*i), 
+		     classes.size() ? &(classes[(size_t)labels.get(*i)]):NULL);
     }
     ds1.data_cnt = idx_sum(ds1.add_tally);
     ds2.data_cnt = idx_sum(ds2.add_tally);
@@ -884,7 +911,7 @@ namespace ebl {
     base_name << outdir << "/" << filename << "_scale";
     string class_name = "noclass";
     for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
-      idx<Tdata> s = preprocess_data(sample, class_name, false,
+      idx<Tdata> s = preprocess_data(sample, &class_name, false,
 				     filename.c_str(), NULL, *i);
       // put sample's channels dimensions first, if defined.
       //s = s.shift_dim(2, 0);
@@ -913,7 +940,7 @@ namespace ebl {
 
   template <class Tdata>
   idx<Tdata> dataset<Tdata>::
-  preprocess_data(idx<Tdata> &dat, const string &class_name, bool squared,
+  preprocess_data(idx<Tdata> &dat, const string *class_name, bool squared,
 		  const char *filename, const rect *r, double scale,
 		  bool active_sleepd) {
     // input region
@@ -999,7 +1026,8 @@ namespace ebl {
       gui << at(h, w) << oss.str(); h += 16;
       gui << at(h, w) << "input: " << dat; h += 16;
       oss.str("");
-      oss << class_name;
+      if (class_name)
+	oss << *class_name;
       draw_matrix(dat, oss.str().c_str(), h, w);
       // draw object's original box
       if (r)
@@ -1014,7 +1042,9 @@ namespace ebl {
       obj = obj.narrow(dh, inr.height, inr.h0);
       obj = obj.narrow(dw, inr.width, inr.w0);
       // display object
-      oss << class_name << " " << obj;
+      if (class_name)
+	oss << *class_name << " ";
+      oss << obj;
       draw_matrix(obj, h, w);
       // draw crossing arrows at center
       draw_box(h + inr.height/2, w + inr.width/2, inr.height/2,
@@ -1036,11 +1066,13 @@ namespace ebl {
   template <class Tdata>
   void dataset<Tdata>::compute_stats() {
     // collect stats
-    class_tally = idx<intg>(classes.size());
-    idx_clear(class_tally);
-    for (intg i = 0; i < data_cnt; ++i) {
-      class_tally.set(class_tally.get(labels.get(i)) + 1,
-		      (intg) labels.get(i));
+    if (nclasses > 0) {
+      class_tally = idx<intg>(nclasses);
+      idx_clear(class_tally);
+      for (intg i = 0; i < data_cnt; ++i) {
+	class_tally.set(class_tally.get(labels.get(i)) + 1,
+			(intg) labels.get(i));
+      }
     }
   }
 
@@ -1105,6 +1137,7 @@ namespace ebl {
 				   const string &class_name_) {
 #ifdef __BOOST__
     string class_name = class_name_;
+    t_label label = get_label_from_class(class_name);
     // if force label is on, replace label by force_label
     if (strcmp(force_label.c_str(), ""))
       class_name = force_label;
@@ -1130,7 +1163,7 @@ namespace ebl {
 	  if (scale_mode) // saving image at different scales
 	    save_scales(load_img, itr->leaf());
 	  else // adding data to dataset
-	    add_data(load_img, class_name, itr->path().string().c_str());
+	    add_data(load_img, label, &class_name, itr->path().string().c_str());
 	} catch(const char *err) {
 	  cerr << "error: failed to add " << itr->path().string();
 	  cerr << ": " << endl << err << endl;
@@ -1161,7 +1194,7 @@ namespace ebl {
       eblerror("failed to load dataset file");
       return false;
     }
-    cout << "Loaded " << fname << endl;
+    cout << "Loaded " << fname << " (" << mat << ")" << endl;
     return true;
   }
 

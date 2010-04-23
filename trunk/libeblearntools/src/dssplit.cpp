@@ -145,12 +145,15 @@ int main(int argc, char **argv) {
   cout << endl;
 
   // compile with specificed precision
+  string precision;
   string ds_fname = inroot;
   ds_fname += "/";
   ds_fname += ds0_name;
   string data_fname;
   build_fname(ds_fname, DATA_NAME, data_fname);
   try { // get matrix type
+    get_matrix_type(data_fname.c_str(), precision);
+    cout << "Data matrix type: " << precision << endl;
     int t = get_matrix_type(data_fname.c_str());
     switch (t) {
     case MAGIC_FLOAT_MATRIX:

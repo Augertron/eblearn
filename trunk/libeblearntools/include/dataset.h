@@ -227,7 +227,8 @@ namespace ebl {
     //! add sample d to the data with label class_name
     //! (and converting from Toriginal to Tdata type).
     //! r is an optional region of interest rectangle in the image d.
-    virtual bool add_data(idx<Tdata> &d, const string &class_name,
+    virtual bool add_data(idx<Tdata> &d, const t_label label,
+			  const string *class_name,
 			  const char *filename = NULL, const rect *r = NULL);
 
     //! add a class name
@@ -257,7 +258,7 @@ namespace ebl {
     //! Preprocess data d of type Toriginal into an idx of type Tdata
     //! with output dimensions outdims and return the result.
     //! The type of preprocessing can be selected using set_pp_conversion().
-    idx<Tdata> preprocess_data(idx<Tdata> &d, const string &class_name,
+    idx<Tdata> preprocess_data(idx<Tdata> &d, const string *class_name,
 			       bool squared = true, const char *filename = NULL,
 			       const rect *r = NULL, double scale = 0,
 			       bool active_sleepd = true);
@@ -340,6 +341,7 @@ namespace ebl {
     bool                sleep_display;	//!< enable sleeping when displaying
     uint                sleep_delay;	//!< display sleep delay in ms
     // stats ///////////////////////////////////////////////////////
+    uint                nclasses;       //!< Number of classes.
     idx<intg>           class_tally;	//!< counter for class tally
     idx<intg>		add_tally;	//!< counter for additions tally
     // preprocessing ///////////////////////////////////////////////

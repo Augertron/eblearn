@@ -737,7 +737,7 @@ namespace ebl {
     idx_checknelems2_all(in, out);
     T mean = mean_ ? *mean_ : idx_mean(in);
     idx_addc(in, (T)-mean, out); // remove mean
-    T coeff = sqrt(idx_sumsqr(out) / out.nelements()); // std deviation
+    T coeff = (T) sqrt(idx_sumsqr(out) / out.nelements()); // std deviation
     idx_dotc(out, 1 / coeff, out);
   }
 

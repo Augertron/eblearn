@@ -44,12 +44,12 @@ namespace ebl {
     : mirror(mirror_),
       convmean(true),
       convvar(true),
-      sqrtmod(.5), // square root module
+      sqrtmod((T) .5), // square root module
       invmod(-1), // inverse module
       sqmod(2), // square module
       // by default, pass 0 for threshold and values
       // but every fprop updates these values
-      thres(1.0, 1.0), // threshold module
+      thres((T) 1.0, (T) 1.0), // threshold module
       // create internal states, explanations are in fprop
       inmean(1, 1, 1),
       inzmean(1, 1, 1),
@@ -119,7 +119,7 @@ namespace ebl {
   void weighted_std_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
     if (global_norm) // global normalization
       idx_std_normalize(in.x, in.x);
-    T a = 1e-5; // avoid divisions by zero
+    T a = (T) 1e-5; // avoid divisions by zero
     //! sum_j (w_j * in_j)
     convmean.fprop(in, inmean);
     //! in - mean

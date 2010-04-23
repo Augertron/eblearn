@@ -947,7 +947,7 @@ namespace ebl {
     idx<T> m(h, w);
     uint min = MIN(h, w); // use smallest dim for gaussian
     double s = min/4;
-    T vinv = 1/(s*s);
+    T vinv = (T) (1 / (s*s));
     T total = 0;
     int cx = min/2;
     int cy = min/2;
@@ -955,7 +955,7 @@ namespace ebl {
       for(uint y = 0; y < w; y++){
 	int dx = x - cx;
 	int dy = y - cy;
-	m.set(-exp(-(vinv*(dx*dx + dy*dy))), x, y);
+	m.set((T) (-exp(-(vinv*(dx*dx + dy*dy)))), x, y);
 	total += m.get(x, y);
       }
     }
