@@ -44,9 +44,9 @@ namespace ebl {
     idx<Tdata> filter1(5);
     filter = idx<Tdata>(5, 5);
       
-    filter1.set(.25 - a / 2.0, 0);
-    filter1.set(.25, 1);
-    filter1.set(a, 2);
+    filter1.set((Tdata) (.25 - a / 2.0), 0);
+    filter1.set((Tdata) (.25), 1);
+    filter1.set((Tdata) (a), 2);
     filter1.set(filter1.get(1), 3);
     filter1.set(filter1.get(0), 4);
     idx_m1extm1(filter1, filter1, filter);

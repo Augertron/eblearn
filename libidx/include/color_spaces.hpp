@@ -53,9 +53,9 @@ namespace ebl {
     r = rgb.get(0);
     g = rgb.get(1);
     b = rgb.get(2);
-    yuv.set(  0.299 * r + 0.587 * g + 0.114 * b, 0);
-    yuv.set((-0.147 * r - 0.289 * g + 0.437 * b + 111) * 1.14678, 1);
-    yuv.set(( 0.615 * r - 0.515 * g - 0.100 * b + 157) * 0.81300, 2);
+    yuv.set((T) (  0.299 * r + 0.587 * g + 0.114 * b), 0);
+    yuv.set((T) ((-0.147 * r - 0.289 * g + 0.437 * b + 111) * 1.14678), 1);
+    yuv.set((T) (( 0.615 * r - 0.515 * g - 0.100 * b + 157) * 0.81300), 2);
   }
 
   template<class T> void rgb_to_yuv(idx<T> &rgb, idx<T> &yuv) {
