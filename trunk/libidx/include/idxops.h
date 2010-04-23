@@ -379,6 +379,10 @@ namespace ebl {
   void idx_m1extm1(idx<double> &a, idx<double> &x, idx<double> &y);
   void idx_m1extm1(idx<float> &a, idx<float> &x, idx<float> &y);
 
+  //! Dummy template to avoid compilation error.
+  template <typename T>
+  void idx_m1extm1(idx<T> &a, idx<T> &x, idx<T> &y);
+  
   //! vector-vector outer product a <- a + x.y'
   void idx_m1extm1acc(idx<double> &a, idx<double> &x, idx<double> &y);
   void idx_m1extm1acc(idx<float> &a, idx<float> &x, idx<float> &y);

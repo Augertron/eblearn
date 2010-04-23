@@ -122,11 +122,7 @@ void split() {
   }
 }
 
-#ifdef __GUI__
-MAIN_QTHREAD(int, argc, char**, argv) { 
-#else
 int main(int argc, char **argv) {
-#endif
   cout << "___________________________________________________________________";
   cout << endl << endl;
   cout << "             Dataset splitter for libeblearn library " << endl;
@@ -149,22 +145,45 @@ int main(int argc, char **argv) {
   cout << endl;
 
   // compile with specificed precision
-  string precision;
   string ds_fname = inroot;
   ds_fname += "/";
   ds_fname += ds0_name;
   string data_fname;
   build_fname(ds_fname, DATA_NAME, data_fname);
-  if (!get_matrix_type(data_fname.c_str(), precision))
-    eblerror("failed to open matrix");
-  if (!strcmp(precision.c_str(), "float"))
-    split<float>();
-  else if (!strcmp(precision.c_str(), "double"))
-    split<double>();
-  else {
-    cerr << "error: trying to load dataset with precision \"" << precision;
-    cerr << "\"" << endl;
-    eblerror("unsupported precision for dataset loading");
+  try { // get matrix type
+    int t = get_matrix_type(data_fname.c_str());
+    switch (t) {
+    case MAGIC_FLOAT_MATRIX:
+    case MAGIC_FLOAT_VINCENT:
+      split<float>();
+      break ;
+    case MAGIC_DOUBLE_MATRIX:
+    case MAGIC_DOUBLE_VINCENT:
+      split<double>();
+      break ;
+    case MAGIC_INTEGER_MATRIX:
+    case MAGIC_INT_VINCENT:
+      split<int>();
+      break ;
+    case MAGIC_BYTE_VINCENT:
+      split<char>();
+      break ;
+    case MAGIC_BYTE_MATRIX:
+    case MAGIC_UBYTE_VINCENT:
+      split<ubyte>();
+      break ;
+    case MAGIC_SHORT_MATRIX:
+    case MAGIC_SHORT_VINCENT:
+      split<short>();
+      break ;
+    case MAGIC_LONG_MATRIX:
+      split<long int>();
+      break ;
+    default:
+      eblerror("unsupported precision for dataset loading");
+    }
+  } catch (string &err) {
+    cerr << err << endl;
   }
   return 0;
 }

@@ -118,6 +118,9 @@ namespace ebl {
   // helper functions
   
   //! Set string type to a string describing the matrix type found in filename.
+  //! Possible strings are: ubyte, int, float, double, long, uint,
+  //! ubyte (pascal vincent), int (pascal vincent), float (pascal vincent),
+  //! double (pascal vincent).
   bool get_matrix_type(const char *filename, string &type);
 
   //! Return the magic number associated with the matrix's type found in 
