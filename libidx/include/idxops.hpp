@@ -736,7 +736,7 @@ namespace ebl {
   template<class T> void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean_) {
     idx_checknelems2_all(in, out);
     T mean = mean_ ? *mean_ : idx_mean(in);
-    idx_addc(in, -mean, out); // remove mean
+    idx_addc(in, (T)-mean, out); // remove mean
     T coeff = sqrt(idx_sumsqr(out) / out.nelements()); // std deviation
     idx_dotc(out, 1 / coeff, out);
   }
@@ -1240,6 +1240,15 @@ namespace ebl {
     uin = uin.unfold(1, kernel.dim(1), 1);
     idx_m4dotm2(uin, kernel, out);
   }
+
+  ////////////////////////////////////////////////////////////////
+  // Dummy templates
+
+  template <typename T>
+  void idx_m1extm1(idx<T> &a, idx<T> &x, idx<T> &y) {
+    eblerror("Not implemented.");
+  }
+  
   
 } // end namespace ebl
 

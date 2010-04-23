@@ -81,11 +81,7 @@ void merge() {
   ds0.save(inroot);
 }
 
-#ifdef __GUI__
-MAIN_QTHREAD(int, argc, char**, argv) { 
-#else
 int main(int argc, char **argv) {
-#endif
   cout << "___________________________________________________________________";
   cout << endl << endl;
   cout << "             Dataset merger for libeblearn library " << endl;
@@ -105,22 +101,45 @@ int main(int argc, char **argv) {
   cout << endl;
 
   // compile with specificed precision
-  string precision;
   string ds_fname = inroot;
   ds_fname += "/";
   ds_fname += ds1_name;
   string data_fname;
   build_fname(ds_fname, DATA_NAME, data_fname);
-  if (!get_matrix_type(data_fname.c_str(), precision))
-    eblerror("failed to open matrix");
-  if (!strcmp(precision.c_str(), "float"))
-    merge<float>();
-  else if (!strcmp(precision.c_str(), "double"))
-    merge<double>();
-  else {
-    cerr << "error: trying to load dataset with precision \"" << precision;
-    cerr << "\"" << endl;
-    eblerror("unsupported precision for dataset loading");
+  try { // get matrix type
+    int t = get_matrix_type(data_fname.c_str());
+    switch (t) {
+    case MAGIC_FLOAT_MATRIX:
+    case MAGIC_FLOAT_VINCENT:
+      merge<float>();
+      break ;
+    case MAGIC_DOUBLE_MATRIX:
+    case MAGIC_DOUBLE_VINCENT:
+      merge<double>();
+      break ;
+    case MAGIC_INTEGER_MATRIX:
+    case MAGIC_INT_VINCENT:
+      merge<int>();
+      break ;
+    case MAGIC_BYTE_VINCENT:
+      merge<char>();
+      break ;
+    case MAGIC_BYTE_MATRIX:
+    case MAGIC_UBYTE_VINCENT:
+      merge<ubyte>();
+      break ;
+    case MAGIC_SHORT_MATRIX:
+    case MAGIC_SHORT_VINCENT:
+      merge<short>();
+      break ;
+    case MAGIC_LONG_MATRIX:
+      merge<long int>();
+      break ;
+    default:
+      eblerror("unsupported precision for dataset loading");
+    }
+  } catch (string &err) {
+    cerr << err << endl;
   }
   return 0;
 }
