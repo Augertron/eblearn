@@ -243,6 +243,13 @@ int main(int argc, char **argv) { // regular main without gui
     tpp = t0.elapsed(); // stop processing timer
     cout << "processing: " << tpp << " ms.";
     cout << " fps: " << cam->fps() << endl;
+    if (tbg.elapsed() > bgtime) {
+      tbg.restart();
+      bg = load_image<ubyte>(*bgi);
+      bgi++;
+      if (bgi == bgs->end())
+	bgi = bgs->begin();
+    }
 #endif
     if (display_sleep > 0) {
       cout << "sleeping for " << display_sleep << "ms." << endl;
@@ -251,13 +258,6 @@ int main(int argc, char **argv) { // regular main without gui
     if (conf.exists("save_max") && 
 	detect.get_total_saved() > conf.get_uint("save_max"))
       break ; // limit number of detection saves
-    if (tbg.elapsed() > bgtime) {
-      tbg.restart();
-      bg = load_image<ubyte>(*bgi);
-      bgi++;
-      if (bgi == bgs->end())
-	bgi = bgs->begin();
-    }
   }
   if (save_video)
     cam->stop_recording(conf.exists_bool("use_original_fps") ?
