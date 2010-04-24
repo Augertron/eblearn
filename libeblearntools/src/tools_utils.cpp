@@ -256,16 +256,46 @@ namespace ebl {
     return l;
   }    
 
-  void tar(const string &dir, const string &tgtdir) {
+  bool tar(const string &dir, const string &tgtdir) {
 #ifdef __BOOST__
     ostringstream cmd;
     path p(dir);
     cmd << "tar cz -C " << dir << "/../ -f " << tgtdir << "/" << p.leaf() << ".tgz " 
 	<< p.leaf();// << " 2> /dev/null";
     int ret = std::system(cmd.str().c_str());
-    if (ret < 0)
+    if (ret < 0) {
       cerr << "tar failed." << endl;
+      return false;
+    }
 #endif
+    return true;
+  }
+
+  bool tar_pattern(const string &dir, const string &tgtdir,
+		   const string &tgtfilename, const char *pattern) {
+#ifdef __BOOST__
+    // find all files matching pattern
+    list<string> *files = find_fullfiles(dir, pattern);
+    if (!files) {
+      cerr << "No files matching pattern \"" << pattern
+	   << "\" were found." << endl;
+      return false;
+    }
+    // tar them
+    ostringstream cmd;
+    path p(dir);
+    cmd << "tar czf " << tgtdir << "/" << tgtfilename << " ";
+    for (list<string>::iterator i = files->begin();
+	 i != files->end(); ++i) {
+      cmd << *i << " ";
+    }
+    int ret = std::system(cmd.str().c_str());
+    if (ret < 0) {
+      cerr << "tar failed." << endl;
+      return false;
+    }
+#endif
+    return true;
   }
 
   string stringlist_to_string(list<string> &l) {

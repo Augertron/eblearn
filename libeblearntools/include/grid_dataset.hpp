@@ -76,7 +76,8 @@ namespace ebl {
       for (uint j = 0; j <= d.dim(1) - cell_width; j += cell_width) {
 	rect roi(i, j, cell_height, cell_width);
 	cout << "roi: " << roi << endl;
-	ret = dataset<Tdata>::add_data(d, class_name, filename, &roi);
+	t_label label = this->get_label_from_class(class_name);
+	ret = dataset<Tdata>::add_data(d, label, &class_name, filename, &roi);
       }
     }
     return true;

@@ -25,6 +25,14 @@ module_1_1<T>* init_network(parameter<T> &theparam,
        conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
        noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
        conf.get_bool("mirror"));
+  } else if (!strcmp(net_type.c_str(), "cscf")) {
+    return (module_1_1<T>*) new lenet_cscf<T>
+      (theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
+       conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
+       conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
+       conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
+       noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
+       conf.get_bool("mirror"));
   } else {
     cerr << "network type: " << net_type << endl;
     eblerror("unknown network type");

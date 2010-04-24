@@ -49,13 +49,21 @@ namespace ebl {
   void skip_comments(ubyte start, istream &stream) {
     char c;
     for (;;) {
+      if (!stream.good())
+	break ;
       stream.get(c);
-      while (c == ' ' || c == '\n' || c == '\t' || c == '\r')
+      while (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
+	if (!stream.good())
+	  break ;
 	stream.get(c);
+      }
       if (c != start)
 	break;
-      while (c != '\n')
+      while (c != '\n') {
+	if (!stream.good())
+	  break ;
 	stream.get(c);
+      }
     }
     stream.unget();
   }
@@ -155,9 +163,11 @@ namespace ebl {
 	  // TODO: fixme, adding temporarly +1 to fix reading failures bug
 	  //	    && (expected_size != read_size + 1))
 	  {
-	    cerr << "WARNING: image read: not enough items read. expected ";
-	    cerr << expected_size;
-	    cerr << " but found " << read_size << endl;
+	    ostringstream err;
+	    err << "image read: not enough items read. expected ";
+	    err << expected_size;
+	    err << " but found " << read_size;
+	    throw err.str();
 	  }
       } else {
 	{ idx_aloop1(o, *pout, ubyte) {

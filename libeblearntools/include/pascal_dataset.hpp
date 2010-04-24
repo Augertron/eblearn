@@ -438,7 +438,8 @@ namespace ebl {
 		uint ymax, uint sizex, uint sizey, string &obj_class,
 		uint obj_number, uint difficult, const string &image_filename) {
     rect r(ymin, xmin, sizey, sizex);
-    add_data(img, obj_class, image_filename.c_str(), &r);
+    t_label label = this->get_label_from_class(obj_class);
+    add_data(img, label, &obj_class, image_filename.c_str(), &r);
   }
 
 #endif /* __XML__ */

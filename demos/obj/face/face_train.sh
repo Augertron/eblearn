@@ -1,6 +1,8 @@
 #!/bin/sh
 
-machine=ceres
+dset=_mitcbcl
+machine=humair
+metaconf=face${dset}_meta.conf
 
 ################################################################################
 # meta commands
@@ -14,7 +16,7 @@ meta_command="sh face_train.sh"
 # directory where to write outputs of all processes
 meta_output_dir=${out}
 # name of this meta job
-meta_name=facetrain_${machine}
+meta_name=facetrain${dset}_${machine}
 # emailing results or not
 meta_send_email=1
 # email to use
@@ -47,8 +49,8 @@ false_positive_root=$root2/false_positives/$xpname/
 
 # variables
 
-metaconf0=${eblearnbin}/face_meta.conf
-metaconf=${out}/face_meta.conf
+metaconf0=${eblearnbin}/${metaconf_name}
+metaconf=${out}/${metaconf_name}
 
 # maximum number of retraining iterations
 maxiteration=10

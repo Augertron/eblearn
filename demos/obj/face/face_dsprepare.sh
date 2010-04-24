@@ -5,7 +5,10 @@
 ################################################################################
 meta_command="sh face_dsprepare.sh"
 meta_name=faceds
-meta_email=pierre.sermanet@gmail.com
+# emailing results or not
+meta_send_email = 1
+# email to use
+meta_email = pierre.sermanet@gmail.com
 
 ################################################################################
 # face dataset compilation

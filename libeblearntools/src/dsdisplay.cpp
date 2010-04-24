@@ -186,7 +186,7 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
 
   // if size is defined, only load data and print dimensions
   if (size) {
-    load_matrix(data, data_fname);
+    data = load_matrix<Tdata>(data_fname);
     cout << data.dim(0) << endl;
     return ;
   }

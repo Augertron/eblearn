@@ -278,7 +278,7 @@ namespace ebl {
       // preprocess image
       rect r(0, 0, im.dim(0), im.dim(1));
       idx<Tdata> im2 =
-	this->preprocess_data(im, cname, false, image_filename.c_str(),
+	this->preprocess_data(im, &cname, false, image_filename.c_str(),
 			      &r, *i, false);
       // extract all non overlapping patches with dimensions outdims that
       // do not overlap with bounding boxes

@@ -28,6 +28,8 @@ int main(int argc, char **argv) { // regular main without gui
   train_ds.set_weigh_samples(conf.exists_bool("wsamples"));
   train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));
   train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
+  if (conf.exists("epoch_size"))
+    train_ds.set_epoch_size(conf.get_int("epoch_size"));
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =
@@ -118,5 +120,6 @@ int main(int argc, char **argv) { // regular main without gui
   }
   // free variables
   if (net) delete net;
+  quit_gui(); // close all windows
   return 0;
 }
