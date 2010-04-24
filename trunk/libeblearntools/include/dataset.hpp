@@ -101,6 +101,7 @@ namespace ebl {
     bboxfact = 1.0;
     force_label = "";
     nclasses = 0;
+    add_errors = 0;
 #ifndef __BOOST__
     eblerror(BOOST_LIB_ERROR);
 #endif
@@ -166,6 +167,7 @@ namespace ebl {
 	// process subdirs to extract images into the single image idx
 	process_dir(itr->path().string(), extension, itr->leaf());
       }}
+    cerr << "Samples adding failures: " << add_errors << endl;
 #endif /* __BOOST__ */
     return true;
   }
@@ -322,6 +324,7 @@ namespace ebl {
     cout << ", distributed in " << nclasses << " classes";
     if (classes.size() > 0) {
       uint i;
+      cout << ": ";
       for (i = 0; i < classes.size() - 1; ++i) {
 	cout << class_tally.get(i) << " " << classes[i];
 	class_tally.get(i) > 1 ? cout << "s, " : cout << ", ";
@@ -874,6 +877,7 @@ namespace ebl {
       res = find(classes.begin(), classes.end(), *i);
       if (res == classes.end()) { // not found
 	classes.push_back(*i); // add new class name
+	nclasses++;
 	cout << "Adding class " << *i << " from dataset " << ds2.name << endl;
       }
     }
@@ -1167,9 +1171,11 @@ namespace ebl {
 	} catch(const char *err) {
 	  cerr << "error: failed to add " << itr->path().string();
 	  cerr << ": " << endl << err << endl;
+	  add_errors++;
 	} catch(string &err) {
 	  cerr << "error: failed to add " << itr->path().string();
 	  cerr << ": " << endl << err << endl;
+	  add_errors++;
 	}
       }}
 #endif /* __BOOST__ */

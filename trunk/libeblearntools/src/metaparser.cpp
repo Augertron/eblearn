@@ -628,7 +628,6 @@ namespace ebl {
     string tmpfile = "report.tmp";
     int res;
  
-    list<string> keys = string_to_stringlist(conf.get_string("meta_minimize"));
     if (conf.exists_bool("meta_send_email")) {
       if (!conf.exists("meta_email")) {
 	cerr << "undefined email address, not sending report." << endl;
@@ -648,6 +647,7 @@ namespace ebl {
       res = std::system(cmd.str().c_str());
       // print best results
       if (best.size() > 0) {
+	list<string> keys = string_to_stringlist(conf.get_string("meta_minimize"));
 	cmd.str("");
 	cmd << "echo \"Best " << best.size() << " results at iteration " 
 	    << maxiter << ":" << endl;
@@ -656,7 +656,29 @@ namespace ebl {
 	cmd << " >> " << tmpfile;
 	res = std::system(cmd.str().c_str());
       }
+      // print err logs
+      list<string> *errlogs = find_fullfiles(dir, ".*[.]errlog");
+      if (errlogs) {
+	cmd.str("");
+	cmd << "echo \"Errors:\"";
+	cmd << " >> " << tmpfile;
+	res = std::system(cmd.str().c_str());
+	for (list<string>::iterator ierr = errlogs->begin();
+	     ierr != errlogs->end(); ++ierr) {
+	  cmd.str("");
+	  cmd << "echo \"\n" << *ierr << ":\"";
+	  cmd << " >> " << tmpfile;
+	  res = std::system(cmd.str().c_str());
+	  cmd.str("");
+	  cmd << "cat " << *ierr << " >> " << tmpfile;
+	  res = std::system(cmd.str().c_str());
+	}
+      }
       // print metaconf
+      cmd.str("");
+      cmd << "echo \"\nMeta Configuration:\"";
+      cmd << " >> " << tmpfile;
+      res = std::system(cmd.str().c_str());
       cmd.str("");
       cmd << "cat " << conf_fullfname << " >> " << tmpfile;
       res = std::system(cmd.str().c_str());
@@ -668,6 +690,9 @@ namespace ebl {
       // attach files
       if (best.size() > 0)
 	cmd << " -a " << dir << "/best.tgz"; 
+      // attach logs
+      if (tar_pattern(dir, dir, "logs.tgz", ".*[.]log"))
+	cmd << " -a " << dir << "/logs.tgz";
       // attach plots
       list<string> *plots = find_fullfiles(dir, ".*[.]pdf");
       if (plots) {

@@ -124,8 +124,15 @@ namespace ebl {
   
   //! Tar directory dir into a .tgz archive, using directory's rightmost name,
   //! into target directory tgtdir.
-  void tar(const string &dir, const string &tgtdir);
+  //! Return false upon failure, true otherwise.
+  bool tar(const string &dir, const string &tgtdir);
 
+  //! Tar all files found recursively in directory dir into a compressed tar 
+  //! archive "tgtdir/tgtfilename", using matching pattern 'pattern'.
+  //! Return false upon failure, true otherwise.
+  bool tar_pattern(const string &dir, const string &tgtdir,
+		   const string &tgtfilename, const char *pattern);
+  
 } // end namespace ebl
 
 #include "tools_utils.hpp"

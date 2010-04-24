@@ -246,7 +246,7 @@ namespace ebl {
     init(ds, &log);
     for (int i = 0; i < niter; ++i) { // niter iterations
       // training on lowest size common to all classes (times # classes)
-      for (intg j = 0; j < ds.get_lowest_common_size(); ++j) {
+      for (intg j = 0; j < ds.get_epoch_size(); ++j) {
 	ds.fprop(*input, label);
 	lab = label.get();
 	learn_sample(*input, lab, args);

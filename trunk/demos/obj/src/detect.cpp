@@ -198,5 +198,6 @@ int main(int argc, char **argv) { // regular main without gui
   if (net) delete net;
   if (cam) delete cam;
   if (pp) delete pp;
+  quit_gui(); // close all windows
   return 0;
 }

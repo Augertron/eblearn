@@ -165,15 +165,6 @@ namespace ebl {
     //! Return the number of classes.
     virtual intg get_nclasses();
 
-    //! Return the lowest (non-zero) size per class, multiplied by the number
-    //! of classes.
-    //! e.g. if a dataset has 10 classes with 100 examples and 5 classes with
-    //! 50 examples, it will return 50 * (10 + 5) = 750, whereas size()
-    //! will return 1250.
-    //! This is useful to keep iterations to a meaningful size when a class
-    //! has many more examples than another.
-    virtual intg get_lowest_common_size();
-    
     //! Print info about the datasource on the standard output.
     virtual void pretty();
 
@@ -184,6 +175,29 @@ namespace ebl {
 
     //! Returns true if this datasource is a test datasource only.
     bool is_test();
+
+    //! Returns the number of samples to train on for one epoch.
+    //! By default, it returns the size of the smallest class times
+    //! the number of classes (see get_lowest_common_size()).
+    //! Default behavior can be overriden with set_epoch_size().
+    virtual intg get_epoch_size();
+
+    //! Set the number of samples to train on for one epoch.
+    //! If not called, default number used is the one returned
+    //! by get_lowest_common_size().
+    virtual void set_epoch_size(intg sz);
+    
+    ////////////////////////////////////////////////////////////////
+  protected:    
+
+    //! Return the lowest (non-zero) size per class, multiplied by the number
+    //! of classes.
+    //! e.g. if a dataset has 10 classes with 100 examples and 5 classes with
+    //! 50 examples, it will return 50 * (10 + 5) = 750, whereas size()
+    //! will return 1250.
+    //! This is useful to keep iterations to a meaningful size when a class
+    //! has many more examples than another.
+    virtual intg get_lowest_common_size();
     
     ////////////////////////////////////////////////////////////////
     // members
@@ -222,6 +236,7 @@ namespace ebl {
     bool                                        discrete_labels;
     double                                      sample_min_proba;
     double                                      max_distance;
+    intg                                        epoch_sz;
   };
 
   ////////////////////////////////////////////////////////////////

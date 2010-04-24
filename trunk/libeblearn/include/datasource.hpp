@@ -50,7 +50,7 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0), 
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(0), width(0), sample_min_proba(0.0) {
+      height(0), width(0), sample_min_proba(0.0), epoch_sz(0) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -62,7 +62,8 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0), 
-      height(ds.height), width(ds.width), name(ds.name), sample_min_proba(0.0) {
+      height(ds.height), width(ds.width), name(ds.name), sample_min_proba(0.0),
+      epoch_sz(0) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -75,7 +76,8 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(data.dim(1)), width(data.dim(2)), sample_min_proba(0.0) {
+      height(data.dim(1)), width(data.dim(2)), sample_min_proba(0.0),
+      epoch_sz(0) {
     init(data_, labels_, name_, b, c);
   }
 
@@ -135,6 +137,7 @@ namespace ebl {
     datasource<Tnet, Tin1, Tin2>::pretty();
     seek_begin();
     seek_begin_train();
+    epoch_sz = get_lowest_common_size();
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -390,6 +393,17 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   intg datasource<Tnet, Tin1, Tin2>::get_nclasses() {
     return nclasses;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  intg datasource<Tnet, Tin1, Tin2>::get_epoch_size() {
+    return epoch_sz;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_epoch_size(intg sz) {
+    cout << "Setting epoch size to " << sz << endl;
+    epoch_sz = sz;
   }
 
   template <class Tnet, class Tin1, class Tin2>

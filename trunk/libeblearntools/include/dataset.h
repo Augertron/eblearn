@@ -344,6 +344,7 @@ namespace ebl {
     uint                nclasses;       //!< Number of classes.
     idx<intg>           class_tally;	//!< counter for class tally
     idx<intg>		add_tally;	//!< counter for additions tally
+    uint                add_errors;     //!< Number of adding failures.
     // preprocessing ///////////////////////////////////////////////
     string		ppconv_type;	//!< name of image conversion
     uint		ppkernel_size;	//!< size of kernel for pp

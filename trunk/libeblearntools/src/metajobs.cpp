@@ -72,16 +72,16 @@ namespace ebl {
   }
 
   void job::run() {
-    ostringstream cmd;
-    ostringstream log;
+    ostringstream cmd, log, errlog;
     log << "out_" << conf.get_name() << ".log";
+    errlog << "out_" << conf.get_name() << ".errlog";
     // prepare command
     cmd << "cd " << outdir_ << " && echo \"job=" << conf.get_name()
 	<< " classes=" << classesname_ << " config="
 	<< confname_ << "\" > "
 	<< log.str() << " && ((" << exe << " " << confname_
-	<< " 3>&1 1>&2 2>&3 | tee /dev/tty) 3>&1 1>&2 2>&3) >> "
-	<< log.str() << " 2>&1 && exit 0";
+	<< " 3>&1 1>&2 2>&3 | tee /dev/tty | tee " << errlog.str()
+	<< ") 3>&1 1>&2 2>&3) >> " << log.str() << " 2>&1 && exit 0";
     // fork job
     pid = fork();
     if (pid == -1)
