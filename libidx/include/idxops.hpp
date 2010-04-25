@@ -738,7 +738,8 @@ namespace ebl {
     T mean = mean_ ? *mean_ : idx_mean(in);
     idx_addc(in, (T)-mean, out); // remove mean
     T coeff = (T) sqrt(idx_sumsqr(out) / out.nelements()); // std deviation
-    idx_dotc(out, 1 / coeff, out);
+    if (coeff != 0)
+      idx_dotc(out, 1 / coeff, out);
   }
 
   template<class T> void rev_idx2 (idx<T> &m) {

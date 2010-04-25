@@ -1,8 +1,19 @@
 #!/bin/sh
 
 dset=_mitcbcl
+traindsname=mitcbcl_mean19x19_ker7_train
+valdsname=mitcbcl_mean19x19_ker7_val
+h=19
+w=${h}
+
+# dset=
+# traindsname=all_mean32x32_ker7_bg_train_500
+# valdsname=all_mean32x32_ker7_bg_val_500
+# h=32
+# w=${h}
+
 machine=humair
-metaconf=face${dset}_meta.conf
+metaconf_name=face${dset}_meta.conf
 
 ################################################################################
 # meta commands
@@ -52,23 +63,16 @@ false_positive_root=$root2/false_positives/$xpname/
 metaconf0=${eblearnbin}/${metaconf_name}
 metaconf=${out}/${metaconf_name}
 
+precision=float
+
 # maximum number of retraining iterations
 maxiteration=10
 # threshold will be decremented at each iter until -.95
 threshold=.9
 
-# network input size and precision
-h=32
-w=${h}
-precision=float
-
 # split ratio of validation over training
 ds_split_ratio=".1"
 draws=5
-
-# name of datasets
-traindsname=all_mean32x32_ker7_bg_train_500
-valdsname=all_mean32x32_ker7_bg_val_500
 
 # create directories
 mkdir -p $out

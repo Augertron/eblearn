@@ -27,6 +27,7 @@ BIN_INSTALL=$(INSTALL_DIR)/bin
 LIBS=libidx.${LIB_EXT} libidxgui.${LIB_EXT} libeblearn.${LIB_EXT} \
 		       libeblearngui.${LIB_EXT} libeblearntools.${LIB_EXT}
 BINS=dscompiler dssplit dsmerge matdisplay dsdisplay metarun metaparse capture
+DEMOS=objtrain objdetect mnist_train mnist_reco
 
 all: release
 
@@ -57,14 +58,14 @@ tools:
 	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
 	&& make ${BINS} && cd ../..
 	
-# demo:
-# 	@echo __________________________________________________________________
-# 	@echo
-# 	@echo "Compiling demos in release mode..."
-# 	@echo __________________________________________________________________
-# 	cd build/Demos &&  cmake -DCMAKE_BUILD_TYPE=Release ../../demos/ \
-#       && make && cd ../..
-
+demo:
+	@echo __________________________________________________________________
+	@echo
+	@echo "Compiling Demos in release mode..."
+	@echo __________________________________________________________________
+	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
+	&& make ${DEMOS} && cd ../..
+	
 test:
 	@echo __________________________________________________________________
 	@echo
