@@ -21,6 +21,8 @@ ENDIF (QT_FOUND)
 SET(FILE_TO_BIN 
   face/face_meta.conf 
   face/face_dsprepare.sh 
+  face/face_mitcbcl_meta.conf 
+  face/face_mitcbcl_dsprepare.sh 
   face/face_train.sh
   text/text_meta.conf
   text/text_train.sh
