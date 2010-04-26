@@ -14,6 +14,7 @@ w=${h}
 
 machine=humair
 metaconf_name=face${dset}_meta.conf
+save_max=25000
 
 ################################################################################
 # meta commands
@@ -127,8 +128,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "save_detections = 1" >> $bestconf
 # do not save video
   echo "save_video = 0" >> $bestconf
-#  echo "save_max = 25000" >> $bestconf
-  echo "save_max = 1" >> $bestconf
+  echo "save_max = ${save_max}" >> $bestconf
   echo "save_max_per_frame = 10" >> $bestconf
 # add directory where to find trained files
   echo "root2 = ${bestout}" >> $bestconf
