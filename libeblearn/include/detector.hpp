@@ -828,17 +828,15 @@ namespace ebl {
   
   template <class T>
   void detector<T>::multi_res_fprop(idx<T> &sample) {
+    struct timeval start, end;
+    long seconds, useconds;    
+    uint ms = 0;
+    gettimeofday(&start, NULL);
+    
     // copy original input into a state_idx
     idx<T> imres = sample.shift_dim(2, 0);
     state_idx<T> input(imres.get_idxdim());
     idx_copy(imres, input.x);
-
-
-    struct timeval start, end;
-
-    long seconds, useconds;    
-    uint ms = 0;
-
 
     module_1_1<T> *network = NULL;
     // resize original input and fprop for each resolution
@@ -865,18 +863,14 @@ namespace ebl {
 	  idx_dotc(ii.x, coef, ii.x);
 	// run fprop for this scale
 
-    gettimeofday(&start, NULL);
     
     //            thenet.fprop(ii, oo);
     network->fprop(ii, oo);
-
+      }}
     gettimeofday(&end, NULL);
-
     seconds  = end.tv_sec  - start.tv_sec;
     useconds = end.tv_usec - start.tv_usec;
-
     ms += (uint)(((seconds) * 1000 + useconds/1000.0) + 0.5);
-      }}
     cout << "net: " << ms << " ms. ";
   }
 

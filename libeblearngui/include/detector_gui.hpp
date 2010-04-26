@@ -65,7 +65,7 @@ namespace ebl {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector"));
     select_window(display_wid);
-    disable_window_updates();
+    // disable_window_updates();
 
     // run network
     vector<bbox*>& vb = cl.fprop(img, threshold);
@@ -85,7 +85,7 @@ namespace ebl {
       draw_mask(mask, h0, w0, dzoom, dzoom,
 		255, 0, 0, 127, mask_threshold);
     }
-    enable_window_updates();
+    // enable_window_updates();
     return vb;
   }
 
@@ -120,7 +120,7 @@ namespace ebl {
       display_input(cl, img, threshold, h0, w0, dzoom, (Tnet)0, (Tnet)255,
 		    display_wid_fprop);
 
-    disable_window_updates();
+    // disable_window_updates();
     // draw internal inputs and outputs
     int h = (int) (h0 + cl.height * dzoom + 5 + 15);
     int scale = 0;
@@ -188,15 +188,19 @@ namespace ebl {
       }}
 
     // display queues of detections
-    uint hh0 = h0;
-    vector<idx<Tnet> > &new_detections = cl.get_originals();
-    update_and_display_queue(detqueue, step, qheight, qwidth, new_detections,
-			     detcnt, hh0, w0, dzoom);
-    update_and_display_queue(detqueue2, step2, qheight2, qwidth2,
-			     new_detections, detcnt, hh0, w0, dzoom);
-    detcnt += new_detections.size();
+    if (show_detqueue || show_detqueue2) {
+      uint hh0 = h0;
+      vector<idx<Tnet> > &new_detections = cl.get_originals();
+      if (show_detqueue)
+	update_and_display_queue(detqueue, step, qheight, qwidth,
+				 new_detections, detcnt, hh0, w0, dzoom);
+      if (show_detqueue2)
+	update_and_display_queue(detqueue2, step2, qheight2, qwidth2,
+				 new_detections, detcnt, hh0, w0, dzoom);
+      detcnt += new_detections.size();
+    }
     // reactive window drawing
-    enable_window_updates();
+    // enable_window_updates();
     return bb;
   }
 
@@ -252,7 +256,7 @@ namespace ebl {
       display_inputs_outputs(cl, img, threshold, h0, w0, dzoom, vmin, vmax,
 			     display_wid_fprop);
 
-    disable_window_updates();
+    // disable_window_updates();
     // draw internal states of first scale
     w0 = (cl.width + 5) * 2 + 5;
     state_idx<Tnet> *ii =
@@ -283,7 +287,7 @@ namespace ebl {
     //cl.thenet.fprop(*ii, *oo); 
     mg.display_fprop(cl.thenet, *ii, *oo, 0, 0, 1.0, -1.0, 1.0,
 		     true, display_wid_fprop);
-    enable_window_updates();
+    // enable_window_updates();
   }
 
   template <typename Tnet>

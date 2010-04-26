@@ -69,9 +69,12 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "found " << *bgi << endl;
   bgi = bgs->begin();
   idx<ubyte> bg = load_image<ubyte>(*bgi);
+  bg = image_resize(bg, conf.get_uint("winszhmax"),
+		    conf.get_uint("winszhmax") * 5, 0);
+  cout << "loaded " << *bgi << ": " << bg << endl;
   idx<ubyte> bgwin;
-  // = bg.narrow(0, winszh, bg.dim(0) / 2 - winszh/2);
-  // bgwin = bgwin.narrow(1, winszw, bg.dim(1) / 2 - winszw/2);
+  bgwin = bg.narrow(0, winszh, bg.dim(0) / 2 - winszh/2);
+  bgwin = bgwin.narrow(1, winszw, bg.dim(1) / 2 - winszw/2);
   
   // load network and weights
   parameter<t_net> theparam;
@@ -172,8 +175,11 @@ int main(int argc, char **argv) { // regular main without gui
     // cout << " nopend: " << Srg<short>::nopened;
     // cout << " nopend: " << Srg<char const *>::nopened << endl;
     // get a new frame
+    b = NULL;
 #ifdef __GUI__
     t0.start();
+    disable_window_updates();
+    clear_window();
 #endif
     // if the pre-camera is defined use it until empty
     if (cam2 && !cam2->empty())
@@ -189,8 +195,6 @@ int main(int argc, char **argv) { // regular main without gui
     } 
 #ifdef __GUI__
     else { // fprop and display
-      disable_window_updates();
-      clear_window();
       if (mindisplay) {
 	vector<bbox*> &bboxes =
 	  dgui.display(detect, frame, threshold, 0, 0, zoom,
@@ -201,7 +205,6 @@ int main(int argc, char **argv) { // regular main without gui
       else
 	dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
 				    (t_net)-1.1, (t_net)1.1, wid); 
-      enable_window_updates();
       if (save_video)
 	cam->record_frame();
     }
@@ -209,17 +212,19 @@ int main(int argc, char **argv) { // regular main without gui
     if (b) {
       cout << "h0 " << b->h0 << " w0 " << b->w0 << " h " << b->height
 	   << " w " << b->width;
-      float h = (((b->h0 + b->height / 2.0) / frame.dim(0)) - .3) * 3;
-      float w = (((b->w0 + b->width / 2.0) / frame.dim(1)) - .15) * 1.4;
+      float h = (((b->h0 + b->height / 2.0) / frame.dim(0))
+		 - conf.get_float("hoffset")) * conf.get_float("hfactor");
+      float w = (((b->w0 + b->width / 2.0) / frame.dim(1))
+		 - conf.get_float("woffset")) * conf.get_float("wfactor");
       cout << " h: " << h << " w: " << w << endl;
       bgwin = bg.narrow(0, winszh,
-			MIN(bg.dim(0) - 1 - winszh, MAX(0,
-							(1 - h) * (bg.dim(0) - winszh))));
+			MIN(bg.dim(0) - 1 - winszh,
+			    MAX(0, (1 - h) * (bg.dim(0) - winszh))));
       bgwin = bgwin.narrow(1, winszw, MIN(bg.dim(1) - 1 - winszw,
 					  MAX(0, w * (bg.dim(1) - winszw))));
     }
-    disable_window_updates();
-    clear_window();
+    // disable_window_updates();
+    // clear_window();
     draw_matrix(bgwin);
     idx<t_net> in = (((state_idx<t_net>*)detect.inputs.get(0))->x);
     in = in.shift_dim(0, 2);
@@ -246,6 +251,9 @@ int main(int argc, char **argv) { // regular main without gui
     if (tbg.elapsed() > bgtime) {
       tbg.restart();
       bg = load_image<ubyte>(*bgi);
+      bg = image_resize(bg, conf.get_uint("winszhmax"),
+			conf.get_uint("winszhmax") * 3, 0);
+      cout << "loaded " << *bgi << ": " << bg << endl;
       bgi++;
       if (bgi == bgs->end())
 	bgi = bgs->begin();
