@@ -168,7 +168,7 @@ int main(int argc, char **argv) { // regular main without gui
   int bgtime = conf.get_uint("bgtime") * 1000;
 #endif  
   bbox *b = NULL;
-  
+  float h, w;
   // loop
   while(!cam->empty()) {
     // cout << "nopend: " << Srg<double>::nopened;
@@ -212,15 +212,15 @@ int main(int argc, char **argv) { // regular main without gui
     if (b) {
       cout << "h0 " << b->h0 << " w0 " << b->w0 << " h " << b->height
 	   << " w " << b->width;
-      float h = (((b->h0 + b->height / 2.0) / frame.dim(0))
+      h = (((b->h0 + b->height / 2.0) / frame.dim(0))
 		 - conf.get_float("hoffset")) * conf.get_float("hfactor");
-      float w = (((b->w0 + b->width / 2.0) / frame.dim(1))
+      w = (((b->w0 + b->width / 2.0) / frame.dim(1))
 		 - conf.get_float("woffset")) * conf.get_float("wfactor");
       cout << " h: " << h << " w: " << w << endl;
-      bgwin = bg.narrow(0, winszh,
+      bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
 			MIN(bg.dim(0) - 1 - winszh,
 			    MAX(0, (1 - h) * (bg.dim(0) - winszh))));
-      bgwin = bgwin.narrow(1, winszw, MIN(bg.dim(1) - 1 - winszw,
+      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw), MIN(bg.dim(1) - 1 - winszw,
 					  MAX(0, w * (bg.dim(1) - winszw))));
     }
     // disable_window_updates();
@@ -250,13 +250,18 @@ int main(int argc, char **argv) { // regular main without gui
     cout << " fps: " << cam->fps() << endl;
     if (tbg.elapsed() > bgtime) {
       tbg.restart();
+      bgi++;
+      if (bgi == bgs->end())
+	bgi = bgs->begin();
       bg = load_image<ubyte>(*bgi);
       bg = image_resize(bg, conf.get_uint("winszhmax"),
 			conf.get_uint("winszhmax") * 3, 0);
       cout << "loaded " << *bgi << ": " << bg << endl;
-      bgi++;
-      if (bgi == bgs->end())
-	bgi = bgs->begin();
+      bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
+			MIN(bg.dim(0) - 1 - winszh,
+			    MAX(0, (1 - h) * (bg.dim(0) - winszh))));
+      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw), MIN(bg.dim(1) - 1 - winszw,
+					  MAX(0, w * (bg.dim(1) - winszw))));
     }
 #endif
     if (display_sleep > 0) {
