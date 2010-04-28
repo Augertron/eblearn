@@ -200,6 +200,8 @@ int main(int argc, char **argv) { // regular main without gui
   if (net) delete net;
   if (cam) delete cam;
   if (pp) delete pp;
+#ifdef __GUI__
   quit_gui(); // close all windows
+#endif
   return 0;
 }
