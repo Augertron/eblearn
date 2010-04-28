@@ -120,6 +120,8 @@ int main(int argc, char **argv) { // regular main without gui
   }
   // free variables
   if (net) delete net;
+#ifdef __GUI__
   quit_gui(); // close all windows
+#endif
   return 0;
 }

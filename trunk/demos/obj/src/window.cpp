@@ -164,10 +164,10 @@ int main(int argc, char **argv) { // regular main without gui
   // timing variables
   QTime t0, tbg;
   int tpp;
-  bbox *b = NULL;
   tbg.start();
   int bgtime = conf.get_uint("bgtime") * 1000;
 #endif  
+  bbox *b = NULL;
   
   // loop
   while(!cam->empty()) {
