@@ -190,8 +190,16 @@ int main(int argc, char **argv) { // regular main without gui
     // run detector
     if (!display) { // fprop without display
       vector<bbox*> &bboxes = detect.fprop(frame, threshold);
-      if (bboxes.size() > 0)
-	b = bboxes[0];
+      if (bboxes.size() > 0) {
+	double maxconf = -5.0;
+	uint maxi = 0;
+	for (uint i = 0; i < bboxes.size(); ++i)
+	  if (bboxes[i]->confidence > maxconf) {
+	    maxconf = bboxes[i]->confidence;
+	    maxi = i;
+	  }
+	b = bboxes[maxi];
+      }
     } 
 #ifdef __GUI__
     else { // fprop and display
@@ -199,8 +207,16 @@ int main(int argc, char **argv) { // regular main without gui
 	vector<bbox*> &bboxes =
 	  dgui.display(detect, frame, threshold, 0, 0, zoom,
 		       (t_net)0, (t_net)255, wid);
-	if (bboxes.size() > 0)
-	  b = bboxes[0];
+	if (bboxes.size() > 0) {
+	  double maxconf = -5.0;
+	  uint maxi = 0;
+	  for (uint i = 0; i < bboxes.size(); ++i)
+	    if (bboxes[i]->confidence > maxconf) {
+	      maxconf = bboxes[i]->confidence;
+	      maxi = i;
+	    }
+	b = bboxes[maxi];
+	}
       }
       else
 	dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
@@ -218,9 +234,9 @@ int main(int argc, char **argv) { // regular main without gui
 		 - conf.get_float("woffset")) * conf.get_float("wfactor");
       cout << " h: " << h << " w: " << w << endl;
       bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
-			MIN(bg.dim(0) - 1 - winszh,
+			MIN(MAX(0, bg.dim(0) - 1 - winszh),
 			    MAX(0, (1 - h) * (bg.dim(0) - winszh))));
-      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw), MIN(bg.dim(1) - 1 - winszw,
+      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw), MIN(MAX(0, bg.dim(1) - 1 - winszw),
 					  MAX(0, w * (bg.dim(1) - winszw))));
     }
     // disable_window_updates();
@@ -228,17 +244,20 @@ int main(int argc, char **argv) { // regular main without gui
     draw_matrix(bgwin);
     idx<t_net> in = (((state_idx<t_net>*)detect.inputs.get(0))->x);
     in = in.shift_dim(0, 2);
+    uint hface = winszh - in.dim(0) - 50, wface = winszw / 2 - in.dim(1) / 2;
+    gui << at(hface - 30, wface - 100) << "Like a window, move your head down to see the sky,";
+    gui << at(hface - 15, wface - 100) << "up to see the ground, left to see right and right to see left.";
     if (b) {
-    draw_box((int)(MIN(in.dim(0) - 1, MAX(0, (b->h0 / (float) frame.dim(0))
+    draw_box(hface + (int)(MIN(in.dim(0) - 1, MAX(0, (b->h0 / (float) frame.dim(0))
 					     * in.dim(0)))),
-	     (int)(MIN(in.dim(1) - 1, MAX(0, (b->w0 / (float) frame.dim(1))
+	     wface + (int)(MIN(in.dim(1) - 1, MAX(0, (b->w0 / (float) frame.dim(1))
 					     * in.dim(1)))),
 	     (int)(MIN(in.dim(0) - 1, MAX(0, (b->height / (float) frame.dim(0))
 					     * in.dim(0)))),
 	     (int)(MIN(in.dim(1) - 1, MAX(0, (b->width / (float) frame.dim(1))
 					     * in.dim(1)))));
     }
-    draw_matrix(in);
+    draw_matrix(in, hface, wface);
     // draw_mask(window), uint h0 = 0, uint w0 = 0, 
     // 		   double zoomh = 1.0, double zoomw = 1.0,
     // 		   ubyte r = 255, ubyte g = 0, ubyte b = 0, ubyte a = 127,
@@ -258,9 +277,9 @@ int main(int argc, char **argv) { // regular main without gui
 			conf.get_uint("winszhmax") * 3, 0);
       cout << "loaded " << *bgi << ": " << bg << endl;
       bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
-			MIN(bg.dim(0) - 1 - winszh,
+			MIN(MAX(0, bg.dim(0) - 1 - winszh),
 			    MAX(0, (1 - h) * (bg.dim(0) - winszh))));
-      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw), MIN(bg.dim(1) - 1 - winszw,
+      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw), MIN(MAX(0, bg.dim(1) - 1 - winszw),
 					  MAX(0, w * (bg.dim(1) - winszw))));
     }
 #endif
