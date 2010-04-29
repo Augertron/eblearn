@@ -73,8 +73,10 @@ int main(int argc, char **argv) { // regular main without gui
 		    conf.get_uint("winszhmax") * 5, 0);
   cout << "loaded " << *bgi << ": " << bg << endl;
   idx<ubyte> bgwin;
-  bgwin = bg.narrow(0, winszh, bg.dim(0) / 2 - winszh/2);
-  bgwin = bgwin.narrow(1, winszw, bg.dim(1) / 2 - winszw/2);
+  bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
+		    MAX(0, bg.dim(0) / 2 - winszh/2));
+  bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
+		       MAX(0, bg.dim(1) / 2 - winszw/2));
   
   // load network and weights
   parameter<t_net> theparam;
@@ -89,9 +91,15 @@ int main(int argc, char **argv) { // regular main without gui
   } catch(string &err) { eblerror(err.c_str()); }
 
   // select preprocessing  
-  module_1_1<t_net>* pp = color ?
-    (module_1_1<t_net>*) new rgb_to_ypuv_module<t_net>(norm_size) :
-    (module_1_1<t_net>*) new rgb_to_yp_module<t_net>(norm_size);
+  module_1_1<t_net>* pp = NULL;
+  if (!strcmp(cam_type.c_str(), "v4l2")) // Y -> Yp
+    pp = new weighted_std_module<t_net>(norm_size, norm_size, 1, true,
+					false, true);
+  else if (color) // RGB -> YpUV
+    pp = (module_1_1<t_net>*) new rgb_to_ypuv_module<t_net>(norm_size);
+  else // RGB -> Yp
+    pp = (module_1_1<t_net>*) new rgb_to_yp_module<t_net>(norm_size);
+    
   // detector
   detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
 			 conf.get_double("gain"));
@@ -122,6 +130,8 @@ int main(int argc, char **argv) { // regular main without gui
       else eblerror("expected 2nd argument");
     } else if (!strcmp(cam_type.c_str(), "opencv"))
       cam = new camera_opencv<t_net>(-1, height, width);
+    else if (!strcmp(cam_type.c_str(), "v4l2"))
+      cam = new camera_v4l2<t_net>(conf.get_cstring("device"), height, width);
     else if (!strcmp(cam_type.c_str(), "shmem"))
       cam = new camera_shmem<t_net>("shared-mem", height, width);
     else if (!strcmp(cam_type.c_str(), "video")) {

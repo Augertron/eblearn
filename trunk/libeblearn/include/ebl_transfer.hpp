@@ -41,7 +41,8 @@ namespace ebl {
 					      int nf, bool mirror_,
 					      bool threshold_,
 					      bool global_norm_)
-    : mirror(mirror_),
+    : nfeatures(nf),
+      mirror(mirror_),
       convmean(true),
       convvar(true),
       sqrtmod((T) .5), // square root module
@@ -70,7 +71,7 @@ namespace ebl {
     // create weighting kernel
     w = create_gaussian_kernel<T>(kernelh, kernelw);
     // prepare convolutions and their kernels
-    idx<intg> table = one2one_table(nf);
+    idx<intg> table = one2one_table(nfeatures);
     convolution_module_2D<T> *conv1 =
       new convolution_module_2D<T>(param, w.dim(0), w.dim(1), 1, 1, table);
     convolution_module_2D<T> *conv2 =
@@ -203,6 +204,13 @@ namespace ebl {
     convmean.bbprop(in, inmean);
   }
 
+  template <class T>
+  weighted_std_module<T>* weighted_std_module<T>::copy() {
+    return new weighted_std_module<T>(w.dim(0), w.dim(1), nfeatures, mirror,
+				      threshold, global_norm);
+  }
+
+  
   ////////////////////////////////////////////////////////////////
   // abs_module
 

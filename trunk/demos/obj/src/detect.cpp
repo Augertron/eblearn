@@ -70,9 +70,15 @@ int main(int argc, char **argv) { // regular main without gui
   } catch(string &err) { eblerror(err.c_str()); }
 
   // select preprocessing  
-  module_1_1<t_net>* pp = color ?
-    (module_1_1<t_net>*) new rgb_to_ypuv_module<t_net>(norm_size) :
-    (module_1_1<t_net>*) new rgb_to_yp_module<t_net>(norm_size);
+  module_1_1<t_net>* pp = NULL;
+  if (!strcmp(cam_type.c_str(), "v4l2")) // Y -> Yp
+    pp = new weighted_std_module<t_net>(norm_size, norm_size, 1, true,
+					false, true);
+  else if (color) // RGB -> YpUV
+    pp = (module_1_1<t_net>*) new rgb_to_ypuv_module<t_net>(norm_size);
+  else // RGB -> Yp
+    pp = (module_1_1<t_net>*) new rgb_to_yp_module<t_net>(norm_size);
+  
   // detector
   detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
 			 conf.get_double("gain"));
@@ -103,6 +109,8 @@ int main(int argc, char **argv) { // regular main without gui
       else eblerror("expected 2nd argument");
     } else if (!strcmp(cam_type.c_str(), "opencv"))
       cam = new camera_opencv<t_net>(-1, height, width);
+    else if (!strcmp(cam_type.c_str(), "v4l2"))
+      cam = new camera_v4l2<t_net>(conf.get_cstring("device"), height, width);
     else if (!strcmp(cam_type.c_str(), "shmem"))
       cam = new camera_shmem<t_net>("shared-mem", height, width);
     else if (!strcmp(cam_type.c_str(), "video")) {
@@ -170,15 +178,16 @@ int main(int argc, char **argv) { // regular main without gui
       disable_window_updates();
       clear_window();
       if (mindisplay)
-	  dgui.display(detect, frame, threshold, 0, 0, zoom,
-		       (t_net)0, (t_net)255, wid);
+    	  dgui.display(detect, frame, threshold, 0, 0, zoom,
+    		       (t_net)0, (t_net)255, wid);
       else
-	dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
-				    (t_net)-1.1, (t_net)1.1, wid); 
+    	dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
+    				    (t_net)-1.1, (t_net)1.1, wid); 
       enable_window_updates();
       if (save_video)
-	cam->record_frame();
+    	cam->record_frame();
     }
+	    
     tpp = t0.elapsed(); // stop processing timer
     cout << "processing: " << tpp << " ms." << endl;
     cout << "fps: " << cam->fps() << endl;
@@ -188,7 +197,7 @@ int main(int argc, char **argv) { // regular main without gui
       usleep(display_sleep);
     }
     if (conf.exists("save_max") && 
-	detect.get_total_saved() > conf.get_uint("save_max")) {
+    	detect.get_total_saved() > conf.get_uint("save_max")) {
       cout << "Reached max number of detections, exiting." << endl;
       break ; // limit number of detection saves
     }

@@ -55,6 +55,7 @@ namespace ebl {
     virtual void fprop(state_idx<T> &in, state_idx<T> &out) = 0;
     //! Returns a deep copy of this module (abstract).
     virtual channorm_module<T>* copy() = 0;
+    
   protected:
     //! Resize the output based on input dimensions
     //! \param dim0 An optional size for the first dimension. Set it to 1
