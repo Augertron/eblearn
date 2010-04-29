@@ -152,7 +152,7 @@ namespace ebl {
     print_controls();
     set_boolean_control(V4L2_CID_AUTOGAIN, false);
     set_boolean_control(V4L2_CID_AUTO_WHITE_BALANCE, false);
-    set_integer_control(V4L2_CID_BACKLIGHT_COMPENSATION, 0);
+    //    set_integer_control(V4L2_CID_BACKLIGHT_COMPENSATION, 0);
     print_controls();
   }
   
