@@ -175,6 +175,7 @@ int main(int argc, char **argv) { // regular main without gui
     // cout << " nopend: " << Srg<short>::nopened;
     // cout << " nopend: " << Srg<char const *>::nopened << endl;
     // get a new frame
+    try{
     b = NULL;
 #ifdef __GUI__
     t0.start();
@@ -290,6 +291,7 @@ int main(int argc, char **argv) { // regular main without gui
     if (conf.exists("save_max") && 
 	detect.get_total_saved() > conf.get_uint("save_max"))
       break ; // limit number of detection saves
+    } catch (string &err) { cerr << err << endl; }
   }
   if (save_video)
     cam->stop_recording(conf.exists_bool("use_original_fps") ?
