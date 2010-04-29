@@ -64,6 +64,8 @@ namespace ebl {
     virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    //! Returns a deep copy of this module (abstract).
+    virtual weighted_std_module<T>* copy();
 
     // friends
     friend class weighted_std_module_gui;
@@ -84,6 +86,7 @@ namespace ebl {
     idx<T>              w;	//!< weights
     bool                threshold;
     bool                global_norm; //!< perform global normalization first
+    int                 nfeatures;
   };
 
   ////////////////////////////////////////////////////////////////

@@ -30,59 +30,67 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef CAMERA_OPENCV_HPP_
-#define CAMERA_OPENCV_HPP_
+#ifndef CAMERA_V4L2_H_
+#define CAMERA_V4L2_H_
+
+#include "camera.h"
+
+using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // constructors & initializations
+  //! The camera_v4l2 class interfaces with the v4l2 camera and images.
+  //! It allows to grab images from v4l2 in the idx format, and also
+  //! to save gui outputs into video files.
+  template <typename Tdata> class camera_v4l2 : public camera<Tdata> {
+  public:
 
-  template <typename Tdata>
-  camera_opencv<Tdata>::camera_opencv(int id, int height_, int width_)
-    : camera<Tdata>(height_, width_) {
-#ifndef __OPENCV__
-  eblerror("opencv not found, install and recompile");
-#else
-    cout << "Initializing OpenCV camera..." << endl;
-    capture = cvCaptureFromCAM(id);
-    if (!capture) {
-      fprintf( stderr, "ERROR: capture is NULL \n" );
-      getchar();
-      eblerror("failed to initialize camera_opencv");
-    }
-    cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, width_);
-    cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, height_);
-    cvSetCaptureProperty(capture, CV_CAP_PROP_FPS, 30);
-#endif /* __OPENCV__ */
-  }
-  
-  template <typename Tdata>
-  camera_opencv<Tdata>::~camera_opencv() {
-#ifdef __OPENCV__
-    // release camera_opencv
-    cvReleaseCapture(&capture);
-#endif /* __OPENCV__ */
-  }
-  
-  ////////////////////////////////////////////////////////////////
-  // frame grabbing
+    ////////////////////////////////////////////////////////////////
+    // constructors/allocation
 
-  template <typename Tdata>
-  idx<Tdata> camera_opencv<Tdata>::grab() {
-#ifdef __OPENCV__
-    ipl_frame = cvQueryFrame(capture);
-    if (!ipl_frame)
-      eblerror("failed to grab frame");
-    // convert ipl to idx image
-    if (grabbed)
-      ipl2idx(ipl_frame, frame);
-    else // first time, allocate frame
-      frame = ipl2idx<Tdata>(ipl_frame);
-#endif /* __OPENCV__ */
-    return this->postprocess();
-  }
+    //! Initialize v4l2 camera using device to choose which camera_v4l2 to use.
+    //! height and width are optional parameters that resize the input image
+    //! to those dimensions if given (different than -1). One may want to
+    //! decrease the input resolution first to speed up operations, for example
+    //! when computing multiple resolutions.
+    //! \param device The device string, e.g. "/dev/video".
+    //! \param height Resize input frame to this height if different than -1.
+    //! \param width Resize input frame to this width if different than -1.
+    camera_v4l2(const char *device, int height = -1, int width = -1);
+
+    //! Destructor.
+    virtual ~camera_v4l2();
+
+    ////////////////////////////////////////////////////////////////
+    // frame grabbing
+
+    //! Return a new frame.
+    virtual idx<Tdata> grab();
+
+  private:
+    void print_controls();
+    int get_control(int id);
+    void set_integer_control(int id, int val);
+    void set_boolean_control(int id, bool val);
+    void start();
     
+
+    // members ////////////////////////////////////////////////////////
+  protected:
+    using camera<Tdata>::frame;		//!< frame buffer 
+    using camera<Tdata>::grabbed;	//!< frame buffer grabbed yet or not
+    using camera<Tdata>::height;	//!< height
+    using camera<Tdata>::width;	        //!< width
+    int nbuffers;
+    void* *buffers;
+    int *sizes;
+    bool started;
+    int fd;
+  };
+
 } // end namespace ebl
 
-#endif /* CAMERA_OPENCV_HPP_ */
+#include "camera_v4l2.hpp"
+
+
+#endif /* CAMERA_V4L2_H_ */
