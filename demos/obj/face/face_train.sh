@@ -14,7 +14,7 @@ w=${h}
 
 machine=humair
 metaconf_name=face${dset}_meta.conf
-save_max=25000
+save_max=10000
 
 ################################################################################
 # meta commands
@@ -52,7 +52,7 @@ meta_send_best=15
 xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
 root=~/${machine}adata/face/
 root2=~/${machine}adata/
-dataroot=$root/ds
+dataroot=$root/ds${dset}
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
 eblearnbin=${out}/bin/
