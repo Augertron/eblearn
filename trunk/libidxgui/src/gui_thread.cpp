@@ -45,7 +45,7 @@ namespace ebl {
   // cons/destructors
 
   gui_thread::gui_thread(int argc, char** argv) 
-    : wcur(-1), nwindows(0), silent(false), thread(gui) {
+    : thread(gui), wcur(-1), nwindows(0), silent(false), busy(false) {
     thread.init(argc, argv, &nwindows, this);
     // register exotic types
     qRegisterMetaType<ubyte>("ubyte");
@@ -164,8 +164,12 @@ namespace ebl {
   }
 
   void gui_thread::set_wupdate(bool update) {
-    if ((wcur >= 0) && (windows[wcur]))
+    if ((wcur >= 0) && (windows[wcur])) {
+      // when drawing, turn busy flag on
+      busy = true;
       windows[wcur]->set_wupdate(update);
+      busy = false;
+    }
   }
 
   void gui_thread::freeze_style(bool freeze) {
@@ -269,6 +273,10 @@ namespace ebl {
     if ((wcur >= 0) && (windows[wcur]))
       return windows[wcur]->pop_key_pressed();
     return -1;
+  }
+
+  bool gui_thread::busy_drawing() {
+    return busy;
   }
 
 } // end namespace ebl

@@ -56,15 +56,6 @@ namespace ebl {
   //! Warning: do not use electric fence with QT as it is unstable.
   class gui_thread : public QWidget { 
     Q_OBJECT
-  private:
-    int				 wcur;
-    unsigned int		 nwindows;
-    std::vector<Window*>	 windows;
-    bool			 silent;
-    std::string			 savefname;
-  public:
-    idxgui		        &thread;
-
   public:
     gui_thread(int argc, char **argv);
     virtual ~gui_thread();
@@ -73,6 +64,10 @@ namespace ebl {
     //! current window and pop it out of the list, or return -1 if no key.
     int pop_key_pressed();
 
+    //! Returns true if busy drawing, false otherwise.
+    bool busy_drawing();
+
+    ////////////////////////////////////////////////////////////////
   private slots:
     void window_destroyed(QObject *obj);
     
@@ -114,6 +109,18 @@ namespace ebl {
     //! Freeze or unfreeze style, no modification of colors are allowed when
     //! frozen.
     void freeze_style(bool freeze);
+
+    ////////////////////////////////////////////////////////////////
+    // class members
+  public:
+    idxgui		        &thread;
+  private:
+    int				 wcur;
+    unsigned int		 nwindows;
+    std::vector<Window*>	 windows;
+    bool			 silent;
+    std::string			 savefname;
+    bool                         busy; // flag when busy drawing
   };
 
   //! This macro is intended to replace your int main(int argc, char **argv)

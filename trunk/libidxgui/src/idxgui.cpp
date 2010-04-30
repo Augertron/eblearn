@@ -59,12 +59,19 @@ namespace ebl {
     wait();
   }
 
-  //  template<>
   void idxgui::draw_matrix(idx<ubyte> &im, unsigned int h0, unsigned int w0, 
 			   double zoomh, double zoomw, ubyte minv, ubyte maxv) {
-    cout << "fast draw" << endl;
     idx<ubyte> *uim = new idx<ubyte>(im.get_idxdim());
     idx_copy(im, *uim);
+    // send image to main gui thread
+    emit gui_drawImage(uim, h0, w0);
+  }
+  
+  void idxgui::draw_matrix_unsafe(idx<ubyte> &im, unsigned int h0,
+				  unsigned int w0, 
+				  double zoomh, double zoomw,
+				  ubyte minv, ubyte maxv) {
+    idx<ubyte> *uim = new idx<ubyte>(im);
     // send image to main gui thread
     emit gui_drawImage(uim, h0, w0);
   }
@@ -295,6 +302,10 @@ namespace ebl {
 
   int idxgui::pop_key_pressed() {
     return gt->pop_key_pressed();
+  }
+
+  bool idxgui::busy_drawing() {
+    return gt->busy_drawing();
   }
 
 } // end namespace ebl
