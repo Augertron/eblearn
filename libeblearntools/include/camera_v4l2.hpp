@@ -58,6 +58,9 @@ namespace ebl {
       nbuffers(1), buffers(new void*[nbuffers]), sizes(new int[nbuffers]) {
     cout << "Initializing V4l2 camera from device " << device << " ..." << endl;
     int fps = 30;
+    int height1 = -1; // height returned by camera
+    int width1 = -1; // width returned by camera 
+    
     fd = open(device, O_RDWR);
     if (fd == -1)
       eblerror("could not open v4l2 device");
@@ -99,6 +102,16 @@ namespace ebl {
       // (==> this cleanup)
       eblerror("unable to set v4l2 format");
     }
+    height1 = fmt.fmt.pix.height;
+    width1 = fmt.fmt.pix.width;
+    if (height != height1 || width != width1) {
+      cout << "Warning: requested resolution " << height << "x" << width
+	   << " but camera changed it to " << height1 << "x" << width1 << endl;
+      // enabling resizing as postprocessing
+      bresize = true;
+    } else // already resized to our target, disable resizing
+      bresize = false;
+
     // set framerate
     struct v4l2_streamparm setfps;  
     memset((void*) &setfps, 0, sizeof(struct v4l2_streamparm));
@@ -125,7 +138,7 @@ namespace ebl {
       buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
       buf.memory = V4L2_MEMORY_MMAP;
       r = ioctl(fd, VIDIOC_QUERYBUF, &buf);
-       printf("i=%u, length: %u, offset: %u, r=%d\n", i, buf.length, buf.m.offset, r); 
+      //       printf("i=%u, length: %u, offset: %u, r=%d\n", i, buf.length, buf.m.offset, r); 
       if (r < 0)
 	ret = -(i+1);
       if (ret == 0) {
@@ -148,7 +161,7 @@ namespace ebl {
     	eblerror("could not map v4l2 buffer");
       }
     }
-    frame = idx<Tdata>(height_, width_, nbuffers);
+    frame = idx<Tdata>(height1, width1, nbuffers);
     print_controls();
     set_boolean_control(V4L2_CID_AUTOGAIN, false);
     set_boolean_control(V4L2_CID_AUTO_WHITE_BALANCE, false);
@@ -366,20 +379,9 @@ enumerate_menu (int fd, struct v4l2_queryctrl &queryctrl, struct v4l2_querymenu 
     ret += ioctl(fd, VIDIOC_QBUF, &buf);
     // todo: resize in postprocessing if different size than expected
     //        e.g.: illegal ratio
-    //return this->postprocess();
-    return frame;
+    return this->postprocess();
   }
 
-  // template <typename Tdata>
-  // idx<Tdata> camera_v4l2<Tdata>::postprocess() {
-  //   frame_id++;
-  //   cout << "v4
-  //   // if (!bresize)
-  //     return frame; // return original frame
-  //   // else // or return a resized frame
-  //   //   return image_mean_resize(frame, height, width, 0);
-  // }
-  
 } // end namespace ebl
 
 #endif /* CAMERA_V4L2_HPP_ */

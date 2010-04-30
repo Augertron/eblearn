@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet *
+ *   Copyright (C) 2010 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
- *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,28 +27,34 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARNTOOLS_H_
-#define LIBEBLEARNTOOLS_H_
+#ifndef THREAD_H_
+#define THREAD_H_
 
-// link error messages
-#define BOOST_LIB_ERROR "Boost libraries not available, install \
-libboost-filesystem-dev libboost-regex-dev and recompile"
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "configuration.h"
-#include "gdb.h"
-#include "xml_utils.h"
-#include "tools_utils.h"
-#include "opencv.h"
-#include "camera.h"
-#include "camera_opencv.h"
-#include "camera_v4l2.h"
-#include "camera_shmem.h"
-#include "camera_directory.h"
-#include "camera_video.h"
-#include "metaparser.h"
-#include "sort.h"
-#include "thread.h"
+using namespace std;
 
-#endif /* LIBEBLEARNTOOLS_H_ */
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // A thread class
+
+  class thread {
+  public:
+    thread();
+    ~thread();
+    int start();
+  protected:
+    void run();
+    static void * entrypoint(void *pthis);
+    virtual void execute() = 0;
+  private:
+    pthread_t threadptr;
+  };
+
+} // end namespace ebl
+
+#endif /* THREAD_H_ */

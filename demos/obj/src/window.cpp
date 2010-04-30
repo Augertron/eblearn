@@ -10,6 +10,7 @@
 #include "libeblearn.h"
 #include "libeblearntools.h"
 #include "objrec.h"
+#include "thread.h"
 
 #ifdef __GUI__
 #include "libeblearngui.h"
@@ -19,33 +20,103 @@ using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
 
 ////////////////////////////////////////////////////////////////
-// network
-
-//template <class T> intg Srg<T>::nopened = 0;
-// intg Srg<float>::nopened = 0;
-// intg Srg<int>::nopened = 0;
-// intg Srg<ubyte>::nopened = 0;
-// intg Srg<uint>::nopened = 0;
+// vision thread
 
 typedef float t_net; // network precision
 
-#ifdef __GUI__
-MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
-#else
-int main(int argc, char **argv) { // regular main without gui
-#endif
-  // check input parameters
-  if ((argc != 2) && (argc != 3) ) {
-    cerr << "wrong number of parameters." << endl;
-    cerr << "usage: obj_detect <config file> [directory or file]" << endl;
-    return -1;
+class vision_thread : public thread {
+public:
+  vision_thread(configuration &conf, const char *arg2);
+  ~vision_thread();
+
+  virtual void execute();
+  //! Return true if new data was copied, false otherwise.
+  virtual bool get_data(idx<t_net> &frame, vector<bbox*> &bboxes);
+
+private:
+  //! Copy passed bounding boxes into bboxes class member
+  //! (allocating new 'bbox' objects).
+  void copy_bboxes(vector<bbox*> &bb);
+  //! Turn 'updated' flag on, so that other threads know we just added new data.
+  void set_updated();
+
+  ////////////////////////////////////////////////////////////////
+  // private members
+private:
+  configuration &conf;
+  const char *arg2;
+  pthread_mutex_t mutex1;
+  idx<t_net> frame;
+  vector<bbox*> bboxes;
+  vector<bbox*>::iterator ibox;
+  bool updated;
+};
+
+vision_thread::vision_thread(configuration &conf_, const char *arg2_)
+  : conf(conf_), arg2(arg2_), mutex1(PTHREAD_MUTEX_INITIALIZER),
+    updated(false) {
+}
+
+vision_thread::~vision_thread() {
+}
+
+void vision_thread::copy_bboxes(vector<bbox*> &bb) {
+  // lock data
+  pthread_mutex_lock(&mutex1);
+  // clear bboxes
+  bboxes.clear();
+  // copy bboxes
+  for (ibox = bb.begin(); ibox != bb.end(); ++ibox) {
+    bboxes.push_back(new bbox(**ibox));
   }
-#ifndef __MAC__
-  feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
-#endif
-  ipp_init(1); // limit IPP (if available) to 1 core
-  // load configuration
-  configuration conf(argv[1]);
+  // unlock data
+  pthread_mutex_unlock(&mutex1);
+}
+
+void vision_thread::set_updated() {
+  // lock data
+  pthread_mutex_lock(&mutex1);
+  // set flag
+  updated = true;
+  // unlock data
+  pthread_mutex_unlock(&mutex1);
+}
+
+bool vision_thread::get_data(idx<t_net> &frame2, vector<bbox*> &bboxes2) {
+  // lock data
+  pthread_mutex_lock(&mutex1);
+  // only read data if it has been updated
+  if (!updated) {
+    // unlock data
+    pthread_mutex_unlock(&mutex1);
+    return false;
+  }
+  // check frame is correctly allocated, if not, allocate.
+  if (frame2.order() != frame.order()) 
+    frame2 = idx<t_net>(frame.get_idxdim());
+  else if (frame2.get_idxdim() != frame.get_idxdim())
+    frame2.resize(frame.get_idxdim());
+  // copy frame
+  idx_copy(frame, frame2);
+  // clear bboxes
+  for (ibox = bboxes2.begin(); ibox != bboxes2.end(); ++ibox) {
+    if (*ibox)
+      delete *ibox;
+  }
+  bboxes2.clear();
+  // copy bboxes pointers (now responsible for deleting them).
+  for (ibox = bboxes.begin(); ibox != bboxes.end(); ++ibox) {
+    bboxes2.push_back(*ibox);
+  }
+  // reset updated flag
+  updated = false; 
+  // unlock data
+  pthread_mutex_unlock(&mutex1);
+  // confirm that we copied data.
+  return true;
+}
+
+void vision_thread::execute() {
   bool		color		= conf.exists_bool("color");
   uint		norm_size	= conf.get_uint("normalization_size");
   t_net		threshold	= (t_net) conf.get_double("threshold");
@@ -57,27 +128,6 @@ int main(int argc, char **argv) { // regular main without gui
   int           height          = conf.get_int("input_height");
   int           width           = conf.get_int("input_width");
 
-  intg winszh = conf.get_int("winszh");
-  intg winszw = conf.get_int("winszw");
-  // TODO: read PAM format for alpha channel
-  // idx<ubyte> window = load_image<ubyte>("/home/sermanet/eblearn/pvc_window.png");
-  // cout << "window: " << window << endl;
-  list<string> *bgs = find_fullfiles(conf.get_string("bgdir"));
-  if (!bgs) eblerror("background files not found");
-  list<string>::iterator bgi = bgs->begin();
-  for ( ; bgi != bgs->end(); ++bgi)
-    cout << "found " << *bgi << endl;
-  bgi = bgs->begin();
-  idx<ubyte> bg = load_image<ubyte>(*bgi);
-  bg = image_resize(bg, conf.get_uint("winszhmax"),
-		    conf.get_uint("winszhmax") * 5, 0);
-  cout << "loaded " << *bgi << ": " << bg << endl;
-  idx<ubyte> bgwin;
-  bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
-		    MAX(0, bg.dim(0) / 2 - winszh/2));
-  bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
-		       MAX(0, bg.dim(1) / 2 - winszw/2));
-  
   // load network and weights
   parameter<t_net> theparam;
   idx<ubyte> classes(1,1);
@@ -119,14 +169,13 @@ int main(int argc, char **argv) { // regular main without gui
   }
 
   // initialize camera (opencv, directory, shmem or video)
-  idx<t_net> frame;
   camera<t_net> *cam = NULL, *cam2 = NULL;
   if (conf.exists_bool("retrain") && conf.exists("retrain_dir")) {
     // extract false positives
     cam = new camera_directory<t_net>(conf.get_cstring("retrain_dir"));
   } else { // regular execution
     if (!strcmp(cam_type.c_str(), "directory")) {
-      if (argc == 3) cam = new camera_directory<t_net>(argv[2], height, width);
+      if (arg2) cam = new camera_directory<t_net>(arg2, height, width);
       else eblerror("expected 2nd argument");
     } else if (!strcmp(cam_type.c_str(), "opencv"))
       cam = new camera_opencv<t_net>(-1, height, width);
@@ -135,9 +184,9 @@ int main(int argc, char **argv) { // regular main without gui
     else if (!strcmp(cam_type.c_str(), "shmem"))
       cam = new camera_shmem<t_net>("shared-mem", height, width);
     else if (!strcmp(cam_type.c_str(), "video")) {
-      if (argc == 3)
+      if (arg2)
 	cam = new camera_video<t_net>
-	  (argv[2], height, width, conf.get_uint("input_video_sstep"),
+	  (arg2, height, width, conf.get_uint("input_video_sstep"),
 	   conf.get_uint("input_video_max_duration"));
       else eblerror("expected 2nd argument");
     } else eblerror("unknown camera type");
@@ -172,62 +221,33 @@ int main(int argc, char **argv) { // regular main without gui
   if (save_video)
     cam->start_recording();
   // timing variables
-  QTime t0, tbg;
+  QTime t0;
   int tpp;
-  tbg.start();
-  int bgtime = conf.get_uint("bgtime") * 1000;
 #endif  
-  bbox *b = NULL;
-  float h, w;
   // loop
   while(!cam->empty()) {
-    // cout << "nopend: " << Srg<double>::nopened;
-    // cout << " nopend: " << Srg<short>::nopened;
-    // cout << " nopend: " << Srg<char const *>::nopened << endl;
-    // get a new frame
     try{
-    b = NULL;
 #ifdef __GUI__
     t0.start();
-    disable_window_updates();
-    clear_window();
+    // disable_window_updates();
+    // clear_window();
 #endif
     // if the pre-camera is defined use it until empty
     if (cam2 && !cam2->empty())
       frame = cam2->grab();
     else // empty pre-camera, use regular camera
       frame = cam->grab();
-    b = NULL;
     // run detector
     if (!display) { // fprop without display
-      vector<bbox*> &bboxes = detect.fprop(frame, threshold);
-      if (bboxes.size() > 0) {
-	double maxconf = -5.0;
-	uint maxi = 0;
-	for (uint i = 0; i < bboxes.size(); ++i)
-	  if (bboxes[i]->confidence > maxconf) {
-	    maxconf = bboxes[i]->confidence;
-	    maxi = i;
-	  }
-	b = bboxes[maxi];
-      }
+      vector<bbox*> &bb = detect.fprop(frame, threshold);
+      copy_bboxes(bb); // make a copy of bounding boxes
     } 
 #ifdef __GUI__
     else { // fprop and display
       if (mindisplay) {
-	vector<bbox*> &bboxes =
-	  dgui.display(detect, frame, threshold, 0, 0, zoom,
-		       (t_net)0, (t_net)255, wid);
-	if (bboxes.size() > 0) {
-	  double maxconf = -5.0;
-	  uint maxi = 0;
-	  for (uint i = 0; i < bboxes.size(); ++i)
-	    if (bboxes[i]->confidence > maxconf) {
-	      maxconf = bboxes[i]->confidence;
-	      maxi = i;
-	    }
-	b = bboxes[maxi];
-	}
+	vector<bbox*> &bb = dgui.display(detect, frame, threshold, 0, 0, zoom,
+					 (t_net)0, (t_net)255, wid);
+	copy_bboxes(bb); // make a copy of bounding boxes
       }
       else
 	dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
@@ -235,64 +255,11 @@ int main(int argc, char **argv) { // regular main without gui
       if (save_video)
 	cam->record_frame();
     }
-
-    if (b) {
-      cout << "h0 " << b->h0 << " w0 " << b->w0 << " h " << b->height
-	   << " w " << b->width;
-      h = (((b->h0 + b->height / 2.0) / frame.dim(0))
-		 - conf.get_float("hoffset")) * conf.get_float("hfactor");
-      w = (((b->w0 + b->width / 2.0) / frame.dim(1))
-		 - conf.get_float("woffset")) * conf.get_float("wfactor");
-      cout << " h: " << h << " w: " << w << endl;
-      bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
-			MIN(MAX(0, bg.dim(0) - 1 - winszh),
-			    MAX(0, (1 - h) * (bg.dim(0) - winszh))));
-      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw), MIN(MAX(0, bg.dim(1) - 1 - winszw),
-					  MAX(0, w * (bg.dim(1) - winszw))));
-    }
-    // disable_window_updates();
-    // clear_window();
-    draw_matrix(bgwin);
-    idx<t_net> in = (((state_idx<t_net>*)detect.inputs.get(0))->x);
-    in = in.shift_dim(0, 2);
-    uint hface = winszh - in.dim(0) - 50, wface = winszw / 2 - in.dim(1) / 2;
-    gui << at(hface - 30, wface - 100) << "Like a window, move your head down to see the sky,";
-    gui << at(hface - 15, wface - 100) << "up to see the ground, left to see right and right to see left.";
-    if (b) {
-    draw_box(hface + (int)(MIN(in.dim(0) - 1, MAX(0, (b->h0 / (float) frame.dim(0))
-					     * in.dim(0)))),
-	     wface + (int)(MIN(in.dim(1) - 1, MAX(0, (b->w0 / (float) frame.dim(1))
-					     * in.dim(1)))),
-	     (int)(MIN(in.dim(0) - 1, MAX(0, (b->height / (float) frame.dim(0))
-					     * in.dim(0)))),
-	     (int)(MIN(in.dim(1) - 1, MAX(0, (b->width / (float) frame.dim(1))
-					     * in.dim(1)))));
-    }
-    draw_matrix(in, hface, wface);
-    // draw_mask(window), uint h0 = 0, uint w0 = 0, 
-    // 		   double zoomh = 1.0, double zoomw = 1.0,
-    // 		   ubyte r = 255, ubyte g = 0, ubyte b = 0, ubyte a = 127,
-    // 		   T threshold = 0.0)
-    enable_window_updates();      
-      
+    // switch 'updated' flag on to warn we just added new data
+    set_updated();
     tpp = t0.elapsed(); // stop processing timer
     cout << "processing: " << tpp << " ms.";
     cout << " fps: " << cam->fps() << endl;
-    if (tbg.elapsed() > bgtime) {
-      tbg.restart();
-      bgi++;
-      if (bgi == bgs->end())
-	bgi = bgs->begin();
-      bg = load_image<ubyte>(*bgi);
-      bg = image_resize(bg, conf.get_uint("winszhmax"),
-			conf.get_uint("winszhmax") * 3, 0);
-      cout << "loaded " << *bgi << ": " << bg << endl;
-      bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
-			MIN(MAX(0, bg.dim(0) - 1 - winszh),
-			    MAX(0, (1 - h) * (bg.dim(0) - winszh))));
-      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw), MIN(MAX(0, bg.dim(1) - 1 - winszw),
-					  MAX(0, w * (bg.dim(1) - winszw))));
-    }
 #endif
     if (display_sleep > 0) {
       cout << "sleeping for " << display_sleep << "ms." << endl;
@@ -310,5 +277,163 @@ int main(int argc, char **argv) { // regular main without gui
   if (net) delete net;
   if (cam) delete cam;
   if (pp) delete pp;
-  return 0;
+}
+
+
+////////////////////////////////////////////////////////////////
+// main thread
+
+#ifdef __GUI__
+MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
+#else
+int main(int argc, char **argv) { // regular main without gui
+#endif
+  // check input parameters
+  if ((argc != 2) && (argc != 3) ) {
+    cerr << "wrong number of parameters." << endl;
+    cerr << "usage: obj_detect <config file> [directory or file]" << endl;
+    return -1;
+  }
+#ifndef __MAC__
+  feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
+#endif
+  ipp_init(1); // limit IPP (if available) to 1 core
+  // load configuration
+  configuration conf(argv[1]);
+
+  intg winszh = conf.get_int("winszh");
+  intg winszw = conf.get_int("winszw");
+  // TODO: read PAM format for alpha channel
+  // idx<ubyte> window = load_image<ubyte>("/home/sermanet/eblearn/pvc_window.png");
+  // cout << "window: " << window << endl;
+  list<string> *bgs = find_fullfiles(conf.get_string("bgdir"));
+  if (!bgs) eblerror("background files not found");
+  list<string>::iterator bgi = bgs->begin();
+  for ( ; bgi != bgs->end(); ++bgi)
+    cout << "found " << *bgi << endl;
+  bgi = bgs->begin();
+  idx<ubyte> bg = load_image<ubyte>(*bgi);
+  bg = image_resize(bg, conf.get_uint("winszhmax"),
+		    conf.get_uint("winszhmax") * 5, 0);
+  cout << "loaded " << *bgi << ": " << bg << endl;
+  idx<ubyte> bgwin;
+  bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
+		    MAX(0, bg.dim(0) / 2 - winszh/2));
+  bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
+		       MAX(0, bg.dim(1) / 2 - winszw/2));
+
+  vision_thread vt(conf, argc == 3 ? argv[2] : NULL);
+  vt.start();
+  idx<t_net> frame(1,1,1);
+  vector<bbox*> bboxes;
+  rect pos(0, 0, 10, 10), tgtpos(0, 0, 10, 10);
+  bbox *b = NULL;
+  float h = 0, w = 0;
+  // timing variables
+  QTime t0, tbg;
+  int tpp;
+  tbg.start();
+  int bgtime = conf.get_uint("bgtime") * 1000;
+
+  // interpolation
+  float ipfact = .25;
+  bool updated = false;
+  bool first_time = true;
+  
+  while (1) {
+    // check if new data is avaiable
+    updated = vt.get_data(frame, bboxes);
+    // reset timers and gui
+#ifdef __GUI__
+    disable_window_updates();
+    clear_window();
+    // update target position
+    if (updated) {
+      // find bbox with max confidence
+      if (bboxes.size() > 0) {
+	double maxconf = -5.0;
+	uint maxi = 0;
+	for (uint i = 0; i < bboxes.size(); ++i)
+	  if (bboxes[i]->confidence > maxconf) {
+	    maxconf = bboxes[i]->confidence;
+	    maxi = i;
+	  }
+	b = bboxes[maxi];
+	if (b) {
+	  tgtpos.h0 = b->h0;
+	  tgtpos.w0 = b->w0;
+	  tgtpos.height = b->height;
+	  tgtpos.width = b->width;
+	}
+	if (first_time) {
+	  pos = tgtpos;
+	  first_time = false;
+	}
+      }
+    }
+    // update current position
+    pos.h0 = (uint) MAX(0, pos.h0 + (tgtpos.h0 - (float) pos.h0) * ipfact);
+    pos.w0 = (uint) MAX(0, pos.w0 + (tgtpos.w0 - (float) pos.w0) * ipfact);
+    pos.height = (uint) MAX(0, pos.height +
+			    (tgtpos.height - (float) pos.height) * ipfact);
+    pos.width = (uint) MAX(0, pos.width +
+			   (tgtpos.width - (float) pos.width) * ipfact);
+    // transform position into screen position
+    cout << "cur pos: " << pos << " target: " << tgtpos << endl;
+    h = (((pos.h0 + pos.height / 2.0) / frame.dim(0))
+	 - conf.get_float("hoffset")) * conf.get_float("hfactor");
+    w = (((pos.w0 + pos.width / 2.0) / frame.dim(1))
+	 - conf.get_float("woffset")) * conf.get_float("wfactor");
+    cout << " h: " << h << " w: " << w << endl;
+    // narrow original image into window
+    bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
+		      MIN(MAX(0, bg.dim(0) - 1 - winszh),
+			  MAX(0, (1 - h) * (bg.dim(0) - winszh))));
+    bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
+			 MIN(MAX(0, bg.dim(1) - 1 - winszw),
+			     MAX(0, w * (bg.dim(1) - winszw))));
+    // draw window 
+    t0.start(); 
+    draw_matrix(bgwin);
+    uint hface = 0, wface = 0;
+    // uint hface = winszh - in.dim(0) - 50, wface = winszw / 2 - in.dim(1) / 2;
+    // gui << at(hface - 30, wface - 100) << "Like a window, move your head down to see the sky,";
+    // gui << at(hface - 15, wface - 100) << "up to see the ground, left to see right and right to see left.";
+    if (b) {
+      draw_box(hface + pos.h0, wface + pos.w0, pos.width, pos.height);
+      // draw_box(hface + (int)(MIN(in.dim(0) - 1, MAX(0, (b->h0 / (float) frame.dim(0))
+      // 						    * in.dim(0)))),
+      // 	       wface + (int)(MIN(in.dim(1) - 1, MAX(0, (b->w0 / (float) frame.dim(1))
+	// 						    * in.dim(1)))),
+	// 	       (int)(MIN(in.dim(0) - 1, MAX(0, (b->height / (float) frame.dim(0))
+	// 					    * in.dim(0)))),
+	// 	       (int)(MIN(in.dim(1) - 1, MAX(0, (b->width / (float) frame.dim(1))
+	// 					    * in.dim(1)))));
+    }
+    //    draw_matrix(frame, hface, wface);
+    // // draw_mask(window), uint h0 = 0, uint w0 = 0, 
+    // // 		   double zoomh = 1.0, double zoomw = 1.0,
+    // // 		   ubyte r = 255, ubyte g = 0, ubyte b = 0, ubyte a = 127,
+    // // 		   T threshold = 0.0)
+    tpp = t0.elapsed(); // stop processing timer
+    enable_window_updates();      
+    usleep(70000);
+    cout << "main processing: " << tpp << " ms." << endl;
+    if (tbg.elapsed() > bgtime) {
+      tbg.restart();
+      bgi++;
+      if (bgi == bgs->end())
+	bgi = bgs->begin();
+      bg = load_image<ubyte>(*bgi);
+      bg = image_resize(bg, conf.get_uint("winszhmax"),
+			conf.get_uint("winszhmax") * 3, 0);
+      cout << "loaded " << *bgi << ": " << bg << endl;
+      bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
+			MIN(MAX(0, bg.dim(0) - 1 - winszh),
+			    MAX(0, (1 - h) * (bg.dim(0) - winszh))));
+      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw), MIN(MAX(0, bg.dim(1) - 1 - winszw),
+							  MAX(0, w * (bg.dim(1) - winszw))));
+    }
+#endif
+  }
 }

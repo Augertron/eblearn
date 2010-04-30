@@ -81,6 +81,7 @@ namespace ebl {
     using camera<Tdata>::grabbed;	//!< frame buffer grabbed yet or not
     using camera<Tdata>::height;	//!< height
     using camera<Tdata>::width;	        //!< width
+    using camera<Tdata>::bresize;       //!< resize or not during postproc.
     int nbuffers;
     void* *buffers;
     int *sizes;

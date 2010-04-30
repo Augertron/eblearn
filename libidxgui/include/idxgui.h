@@ -132,6 +132,10 @@ namespace ebl {
 		       double zoomh = 1.0, double zoomw = 1.0,
 		       T minv = 0, T maxv = 0);
     
+      void draw_matrix(idx<ubyte> &im, uint h0 = 0, uint w0 = 0, 
+		       double zoomh = 1.0, double zoomw = 1.0,
+		       ubyte minv = 0, ubyte maxv = 0);
+    
     //! same as draw_matrix but draws a frame of color (r,g,b) around it.
     template<class T>
       void draw_matrix_frame(idx<T> &im, ubyte r, ubyte g, ubyte b,
