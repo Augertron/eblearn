@@ -23,11 +23,11 @@ SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts
   ${CMAKE_BINARY_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 # All modes compilation flags
-SET(CMAKE_CXX_FLAGS "")
+SET(CMAKE_CXX_FLAGS "-pthread")
 
 # Release compilation flags
 IF (CMAKE_BUILD_TYPE STREQUAL "Release")
-  SET(CMAKE_CXX_FLAGS ""
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} "
     CACHE STRING "Release builds CMAKE CXX flags " FORCE )
 ENDIF (CMAKE_BUILD_TYPE STREQUAL "Release")
 

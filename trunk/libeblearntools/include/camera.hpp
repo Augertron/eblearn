@@ -152,7 +152,7 @@ namespace ebl {
   // internal methods
   
   template <typename Tdata>
-  idx<Tdata> camera<Tdata>::postprocess() {
+  inline idx<Tdata> camera<Tdata>::postprocess() {
     frame_id++;
     if (!bresize)
       return frame; // return original frame
