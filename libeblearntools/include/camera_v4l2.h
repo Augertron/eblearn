@@ -68,12 +68,14 @@ namespace ebl {
     virtual idx<Tdata> grab();
 
   private:
+
+#ifdef __LINUX__
     void print_controls();
     int get_control(int id);
     void set_integer_control(int id, int val);
     void set_boolean_control(int id, bool val);
     void start();
-    
+#endif    
 
     // members ////////////////////////////////////////////////////////
   protected:

@@ -57,6 +57,9 @@ namespace ebl {
     : camera<Tdata>(height_, width_), started(false),
       nbuffers(1), buffers(new void*[nbuffers]), sizes(new int[nbuffers]) {
     cout << "Initializing V4l2 camera from device " << device << " ..." << endl;
+#ifndef __LINUX__
+    eblerror("V4l2 is for linux only");
+#else
     int fps = 30;
     int height1 = -1; // height returned by camera
     int width1 = -1; // width returned by camera 
@@ -167,6 +170,7 @@ namespace ebl {
     set_boolean_control(V4L2_CID_AUTO_WHITE_BALANCE, false);
     //    set_integer_control(V4L2_CID_BACKLIGHT_COMPENSATION, 0);
     print_controls();
+#endif
   }
   
   template <typename Tdata>
@@ -177,6 +181,8 @@ namespace ebl {
       delete sizes;
   }
 
+#ifdef __LINUX__
+  
 static void
 enumerate_menu (int fd, struct v4l2_queryctrl &queryctrl, struct v4l2_querymenu &querymenu)
 {
@@ -317,7 +323,7 @@ enumerate_menu (int fd, struct v4l2_queryctrl &queryctrl, struct v4l2_querymenu 
     /* Errors ignored */
     ioctl (fd, VIDIOC_S_CTRL, &control);
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // frame grabbing
 
@@ -344,8 +350,11 @@ enumerate_menu (int fd, struct v4l2_queryctrl &queryctrl, struct v4l2_querymenu 
       started = true;
   }
   
+#endif
+  
   template <typename Tdata>
   idx<Tdata> camera_v4l2<Tdata>::grab() {
+#ifdef __LINUX__
     if (!started)
       this->start();
     int ret = 0;
@@ -379,6 +388,7 @@ enumerate_menu (int fd, struct v4l2_queryctrl &queryctrl, struct v4l2_querymenu 
     ret += ioctl(fd, VIDIOC_QBUF, &buf);
     // todo: resize in postprocessing if different size than expected
     //        e.g.: illegal ratio
+#endif
     return this->postprocess();
   }
 
