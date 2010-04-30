@@ -39,7 +39,6 @@ namespace ebl {
   template<class T>
   void idxgui::draw_matrix(idx<T> &im, unsigned int h0, unsigned int w0, 
 			   double zoomh, double zoomw, T minv, T maxv) {
-    cout << "slow draw" << endl;
     idx<ubyte> *uim = new idx<ubyte>(image_to_ubyte<T>(im, zoomh, zoomw,
 						       minv, maxv));
     // send image to main gui thread

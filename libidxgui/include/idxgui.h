@@ -131,10 +131,22 @@ namespace ebl {
       void draw_matrix(idx<T> &im, uint h0 = 0, uint w0 = 0, 
 		       double zoomh = 1.0, double zoomw = 1.0,
 		       T minv = 0, T maxv = 0);
+
+    //! Specialisation of the draw_matrix template to ubytes, faster
+    //! because does not involve conversion to ubyte.
+    void draw_matrix(idx<ubyte> &im, uint h0 = 0, uint w0 = 0, 
+		     double zoomh = 1.0, double zoomw = 1.0,
+		     ubyte minv = 0, ubyte maxv = 0);
     
-      void draw_matrix(idx<ubyte> &im, uint h0 = 0, uint w0 = 0, 
-		       double zoomh = 1.0, double zoomw = 1.0,
-		       ubyte minv = 0, ubyte maxv = 0);
+    //! Draw a ubyte matrix without making a copy of the data for the
+    //! display thread. This sends to the display thread an idx pointing
+    //! to data handled by current thread. Therefore if current thread
+    //! delete an idx pointing to the same data, it is possible that
+    //! a race condition occurs when decrementing the data counter and freeing
+    //! it. So use with caution.
+    void draw_matrix_unsafe(idx<ubyte> &im, uint h0 = 0, uint w0 = 0, 
+			    double zoomh = 1.0, double zoomw = 1.0,
+			    ubyte minv = 0, ubyte maxv = 0);
     
     //! same as draw_matrix but draws a frame of color (r,g,b) around it.
     template<class T>
@@ -214,6 +226,9 @@ namespace ebl {
     //! Return the first key pressed in the queue of key events and remove it
     //! from the queue.
     int pop_key_pressed();
+    
+    //! Return true if the gui is busy drawing, false otherwise.
+    bool busy_drawing();
     
   private:
     // check that user used MAIN_QTHREAD instead of regular main

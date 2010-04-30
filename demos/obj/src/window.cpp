@@ -283,6 +283,66 @@ void vision_thread::execute() {
 ////////////////////////////////////////////////////////////////
 // main thread
 
+void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame) {
+  usleep(20000);
+  disable_window_updates();
+  clear_window();
+  gui.draw_matrix_unsafe(bgwin);
+  uint hface = bgwin.dim(0) - frame.dim(0) - 50;
+  uint wface = bgwin.dim(1) / 2 - frame.dim(1) / 2;
+  gui << at(hface - 45, wface - 75)
+      << "Imagine this is a window on to outside world.";
+  gui << at(hface - 30, wface - 100) <<
+    "Move your head down to see the sky, up to see the ground,";
+  gui << at(hface - 15, wface - 75) <<
+    "left to see right and right to see left.";
+  if (b) {
+    draw_box(hface + pos.h0, wface + pos.w0, pos.width, pos.height, 0, 0, 255);
+  }
+  draw_matrix(frame, hface, wface);
+  enable_window_updates();
+}
+
+#ifdef __GUI__
+
+void estimate_position(rect &pos, rect &tgtpos, idx<t_net> &frame,
+		       float &h, float &w, configuration &conf,
+		       float tgt_time_distance) {
+    // update current position
+    pos.h0 = (uint) MAX(0, pos.h0 + (tgtpos.h0 - (float) pos.h0)
+			* tgt_time_distance);
+    pos.w0 = (uint) MAX(0, pos.w0 + (tgtpos.w0 - (float) pos.w0)
+			* tgt_time_distance);
+    pos.height = (uint) MAX(0, pos.height +
+			    (tgtpos.height - (float) pos.height)
+			    * tgt_time_distance);
+    pos.width = (uint) MAX(0, pos.width +
+			   (tgtpos.width - (float) pos.width)
+			   * tgt_time_distance);
+    // transform position into screen position
+    //    cout << "cur pos: " << pos << " target: " << tgtpos << endl;
+    h = (((pos.h0 + pos.height / 2.0) / frame.dim(0))
+	 - conf.get_float("hoffset")) * conf.get_float("hfactor");
+    w = (((pos.w0 + pos.width / 2.0) / frame.dim(1))
+	 - conf.get_float("woffset")) * conf.get_float("wfactor");
+    //    cout << " h: " << h << " w: " << w << endl;
+}
+
+void change_background(list<string>::iterator &bgi, list<string> *bgs,
+		       idx<ubyte> &bg, configuration &conf) {
+  bgi++;
+  if (!bgs)
+    return ;
+  if (bgi == bgs->end())
+    bgi = bgs->begin();
+  bg = load_image<ubyte>(*bgi);
+  bg = image_resize(bg, conf.get_uint("winszhmax"),
+		    conf.get_uint("winszhmax") * 3, 0);
+  cout << "Changed background to " << *bgi << " (" << bg << ")." << endl;
+}
+
+#endif
+
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #else
@@ -299,6 +359,7 @@ int main(int argc, char **argv) { // regular main without gui
 #endif
   ipp_init(1); // limit IPP (if available) to 1 core
   // load configuration
+#ifdef __GUI__
   configuration conf(argv[1]);
 
   intg winszh = conf.get_int("winszh");
@@ -330,24 +391,22 @@ int main(int argc, char **argv) { // regular main without gui
   bbox *b = NULL;
   float h = 0, w = 0;
   // timing variables
-  QTime t0, tbg;
-  int tpp;
-  tbg.start();
+  QTime main_timer, bg_timer, vt_timer, gui_timer;
+  int main_time, vt_time, gui_time; // time in milliseconds
+  main_timer.start();
+  bg_timer.start();
+  vt_timer.start();
+  gui_timer.start();
   int bgtime = conf.get_uint("bgtime") * 1000;
 
   // interpolation
-  float ipfact = .25;
   bool updated = false;
   bool first_time = true;
   
   while (1) {
     // check if new data is avaiable
     updated = vt.get_data(frame, bboxes);
-    // reset timers and gui
-#ifdef __GUI__
-    disable_window_updates();
-    clear_window();
-    // update target position
+    // update target position if vision thread ready
     if (updated) {
       // find bbox with max confidence
       if (bboxes.size() > 0) {
@@ -370,70 +429,42 @@ int main(int argc, char **argv) { // regular main without gui
 	  first_time = false;
 	}
       }
+      // update vt time
+      vt_time = vt_timer.elapsed();
+      vt_timer.restart();
+      // print timing info
+      cout << "main: " << main_time << " ms "
+	   << "gui: " << gui_time << " ms "
+	   << "vision: " << vt_time << " ms " << endl;
     }
-    // update current position
-    pos.h0 = (uint) MAX(0, pos.h0 + (tgtpos.h0 - (float) pos.h0) * ipfact);
-    pos.w0 = (uint) MAX(0, pos.w0 + (tgtpos.w0 - (float) pos.w0) * ipfact);
-    pos.height = (uint) MAX(0, pos.height +
-			    (tgtpos.height - (float) pos.height) * ipfact);
-    pos.width = (uint) MAX(0, pos.width +
-			   (tgtpos.width - (float) pos.width) * ipfact);
-    // transform position into screen position
-    cout << "cur pos: " << pos << " target: " << tgtpos << endl;
-    h = (((pos.h0 + pos.height / 2.0) / frame.dim(0))
-	 - conf.get_float("hoffset")) * conf.get_float("hfactor");
-    w = (((pos.w0 + pos.width / 2.0) / frame.dim(1))
-	 - conf.get_float("woffset")) * conf.get_float("wfactor");
-    cout << " h: " << h << " w: " << w << endl;
-    // narrow original image into window
-    bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
-		      MIN(MAX(0, bg.dim(0) - 1 - winszh),
-			  MAX(0, (1 - h) * (bg.dim(0) - winszh))));
-    bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
-			 MIN(MAX(0, bg.dim(1) - 1 - winszw),
-			     MAX(0, w * (bg.dim(1) - winszw))));
-    // draw window 
-    t0.start(); 
-    draw_matrix(bgwin);
-    uint hface = 0, wface = 0;
-    // uint hface = winszh - in.dim(0) - 50, wface = winszw / 2 - in.dim(1) / 2;
-    // gui << at(hface - 30, wface - 100) << "Like a window, move your head down to see the sky,";
-    // gui << at(hface - 15, wface - 100) << "up to see the ground, left to see right and right to see left.";
-    if (b) {
-      draw_box(hface + pos.h0, wface + pos.w0, pos.width, pos.height);
-      // draw_box(hface + (int)(MIN(in.dim(0) - 1, MAX(0, (b->h0 / (float) frame.dim(0))
-      // 						    * in.dim(0)))),
-      // 	       wface + (int)(MIN(in.dim(1) - 1, MAX(0, (b->w0 / (float) frame.dim(1))
-	// 						    * in.dim(1)))),
-	// 	       (int)(MIN(in.dim(0) - 1, MAX(0, (b->height / (float) frame.dim(0))
-	// 					    * in.dim(0)))),
-	// 	       (int)(MIN(in.dim(1) - 1, MAX(0, (b->width / (float) frame.dim(1))
-	// 					    * in.dim(1)))));
-    }
-    //    draw_matrix(frame, hface, wface);
-    // // draw_mask(window), uint h0 = 0, uint w0 = 0, 
-    // // 		   double zoomh = 1.0, double zoomw = 1.0,
-    // // 		   ubyte r = 255, ubyte g = 0, ubyte b = 0, ubyte a = 127,
-    // // 		   T threshold = 0.0)
-    tpp = t0.elapsed(); // stop processing timer
-    enable_window_updates();      
-    usleep(70000);
-    cout << "main processing: " << tpp << " ms." << endl;
-    if (tbg.elapsed() > bgtime) {
-      tbg.restart();
-      bgi++;
-      if (bgi == bgs->end())
-	bgi = bgs->begin();
-      bg = load_image<ubyte>(*bgi);
-      bg = image_resize(bg, conf.get_uint("winszhmax"),
-			conf.get_uint("winszhmax") * 3, 0);
-      cout << "loaded " << *bgi << ": " << bg << endl;
+    // update position and draw if gui thread ready
+    if (!gui.busy_drawing()) {
+      // recompute position
+      estimate_position(pos, tgtpos, frame, h, w, conf,
+			1 - vt_timer.elapsed() / (float) vt_time);
+      // narrow original image into window
       bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
 			MIN(MAX(0, bg.dim(0) - 1 - winszh),
 			    MAX(0, (1 - h) * (bg.dim(0) - winszh))));
-      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw), MIN(MAX(0, bg.dim(1) - 1 - winszw),
-							  MAX(0, w * (bg.dim(1) - winszw))));
+      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
+			   MIN(MAX(0, bg.dim(1) - 1 - winszw),
+			       MAX(0, w * (bg.dim(1) - winszw))));
+      // draw
+      draw(b, pos, bgwin, frame);
+      // update gui time
+      gui_time = gui_timer.elapsed();
+      gui_timer.restart();
     }
-#endif
+    // sleep for a little bit
+    usleep(conf.get_uint("mainsleep") * 1000);
+    // main timing
+    main_time = main_timer.elapsed();
+    main_timer.restart(); 
+    // change background every bgtime
+    if (bg_timer.elapsed() > bgtime) {
+      bg_timer.restart();
+      change_background(bgi, bgs, bg, conf);
+    }
   }
+#endif
 }
