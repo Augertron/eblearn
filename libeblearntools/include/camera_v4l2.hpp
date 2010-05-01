@@ -33,6 +33,8 @@
 #ifndef CAMERA_V4L2_HPP_
 #define CAMERA_V4L2_HPP_
 
+#ifdef __LINUX__
+
 #include <fcntl.h>              /* low-level i/o */
 #include <unistd.h>
 #include <errno.h>
@@ -42,10 +44,10 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
-
 #include <asm/types.h>          /* for videodev2.h */
-
 #include <linux/videodev2.h>
+
+#endif
 
 namespace ebl {
 
