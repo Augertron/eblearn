@@ -291,7 +291,7 @@ void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame) {
   uint hface = bgwin.dim(0) - frame.dim(0) - 50;
   uint wface = bgwin.dim(1) / 2 - frame.dim(1) / 2;
   gui << at(hface - 45, wface - 75)
-      << "Imagine this is a window on to outside world.";
+      << "Imagine this is a window to outside world.";
   gui << at(hface - 30, wface - 100) <<
     "Move your head down to see the sky, up to see the ground,";
   gui << at(hface - 15, wface - 75) <<
@@ -305,27 +305,29 @@ void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame) {
 
 #ifdef __GUI__
 
-void estimate_position(rect &pos, rect &tgtpos, idx<t_net> &frame,
+void estimate_position(rect &srcpos, rect &pos, rect &tgtpos, idx<t_net> &frame,
 		       float &h, float &w, configuration &conf,
 		       float tgt_time_distance) {
-    // update current position
-    pos.h0 = (uint) MAX(0, pos.h0 + (tgtpos.h0 - (float) pos.h0)
-			* tgt_time_distance);
-    pos.w0 = (uint) MAX(0, pos.w0 + (tgtpos.w0 - (float) pos.w0)
-			* tgt_time_distance);
-    pos.height = (uint) MAX(0, pos.height +
-			    (tgtpos.height - (float) pos.height)
-			    * tgt_time_distance);
-    pos.width = (uint) MAX(0, pos.width +
-			   (tgtpos.width - (float) pos.width)
-			   * tgt_time_distance);
-    // transform position into screen position
-    //    cout << "cur pos: " << pos << " target: " << tgtpos << endl;
-    h = (((pos.h0 + pos.height / 2.0) / frame.dim(0))
-	 - conf.get_float("hoffset")) * conf.get_float("hfactor");
-    w = (((pos.w0 + pos.width / 2.0) / frame.dim(1))
-	 - conf.get_float("woffset")) * conf.get_float("wfactor");
-    //    cout << " h: " << h << " w: " << w << endl;
+  tgt_time_distance = tgt_time_distance * conf.get_float("smooth_factor");
+  // update current position
+  pos.h0 = (uint) MAX(0, srcpos.h0 + (tgtpos.h0 - (float) srcpos.h0)
+		      * MIN(1.0, tgt_time_distance));
+  pos.w0 = (uint) MAX(0, srcpos.w0 + (tgtpos.w0 - (float) srcpos.w0)
+		      * MIN(1.0, tgt_time_distance));
+  pos.height = (uint) MAX(0, srcpos.height +
+			  (tgtpos.height - (float) srcpos.height)
+			  * MIN(1.0, tgt_time_distance));
+  pos.width = (uint) MAX(0, srcpos.width +
+			 (tgtpos.width - (float) srcpos.width)
+			 * MIN(1.0, tgt_time_distance));
+  // transform position into screen position
+  // cout << "cur pos: " << pos << " src: " << srcpos
+  //      << " target: " << tgtpos << endl;
+  h = (((pos.h0 + pos.height / 2.0) / frame.dim(0))
+       - conf.get_float("hoffset")) * conf.get_float("hfactor");
+  w = (((pos.w0 + pos.width / 2.0) / frame.dim(1))
+       - conf.get_float("woffset")) * conf.get_float("wfactor");
+  //    cout << " h: " << h << " w: " << w << endl;
 }
 
 void change_background(list<string>::iterator &bgi, list<string> *bgs,
@@ -387,16 +389,17 @@ int main(int argc, char **argv) { // regular main without gui
   vt.start();
   idx<t_net> frame(1,1,1);
   vector<bbox*> bboxes;
-  rect pos(0, 0, 10, 10), tgtpos(0, 0, 10, 10);
+  rect pos(0, 0, 10, 10), srcpos(0, 0, 10, 10), tgtpos(0, 0, 10, 10);
   bbox *b = NULL;
   float h = 0, w = 0;
   // timing variables
-  QTime main_timer, bg_timer, vt_timer, gui_timer;
-  int main_time, vt_time, gui_time; // time in milliseconds
+  QTime main_timer, bg_timer, vt_timer, gui_timer, detection_timer;
+  int main_time, vt_time, gui_time, detection_time; // time in milliseconds
   main_timer.start();
   bg_timer.start();
   vt_timer.start();
   gui_timer.start();
+  detection_timer.start();
   int bgtime = conf.get_uint("bgtime") * 1000;
 
   // interpolation
@@ -423,9 +426,12 @@ int main(int argc, char **argv) { // regular main without gui
 	  tgtpos.w0 = b->w0;
 	  tgtpos.height = b->height;
 	  tgtpos.width = b->width;
+	  srcpos = pos;
+	  detection_timer.restart();
 	}
 	if (first_time) {
 	  pos = tgtpos;
+	  srcpos = pos;
 	  first_time = false;
 	}
       }
@@ -440,8 +446,8 @@ int main(int argc, char **argv) { // regular main without gui
     // update position and draw if gui thread ready
     if (!gui.busy_drawing()) {
       // recompute position
-      estimate_position(pos, tgtpos, frame, h, w, conf,
-			1 - vt_timer.elapsed() / (float) vt_time);
+      estimate_position(srcpos, pos, tgtpos, frame, h, w, conf,
+			detection_timer.elapsed() / (float) vt_time);
       // narrow original image into window
       bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
 			MIN(MAX(0, bg.dim(0) - 1 - winszh),
