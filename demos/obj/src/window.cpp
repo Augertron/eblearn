@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <vector>
 #include <stdlib.h>
 #include <sstream>
 #include <iomanip>
@@ -329,13 +330,13 @@ void estimate_position(rect &srcpos, rect &pos, rect &tgtpos, idx<t_net> &frame,
   //    cout << " h: " << h << " w: " << w << endl;
 }
 
-void change_background(list<string>::iterator &bgi, list<string> *bgs,
+void change_background(vector<string>::iterator &bgi, vector<string> &bgs,
 		       idx<ubyte> &bg, configuration &conf) {
   bgi++;
-  if (!bgs)
-    return ;
-  if (bgi == bgs->end())
-    bgi = bgs->begin();
+  if (bgi == bgs.end()) {
+    random_shuffle(bgs.begin(), bgs.end());
+    bgi = bgs.begin();
+  }
   bg = load_image<ubyte>(*bgi);
   bg = image_resize(bg, conf.get_uint("winszhmax"),
 		    conf.get_uint("winszhmax") * 3, 0);
@@ -368,12 +369,15 @@ int main(int argc, char **argv) { // regular main without gui
   // TODO: read PAM format for alpha channel
   // idx<ubyte> window = load_image<ubyte>("/home/sermanet/eblearn/pvc_window.png");
   // cout << "window: " << window << endl;
-  list<string> *bgs = find_fullfiles(conf.get_string("bgdir"));
-  if (!bgs) eblerror("background files not found");
-  list<string>::iterator bgi = bgs->begin();
-  for ( ; bgi != bgs->end(); ++bgi)
+  list<string> *lbgs = find_fullfiles(conf.get_string("bgdir"));
+  if (!lbgs) eblerror("background files not found");
+  vector<string> bgs;
+  list_to_vector(*lbgs, bgs);
+  vector<string>::iterator bgi = bgs.begin();
+  for ( ; bgi != bgs.end(); ++bgi)
     cout << "found " << *bgi << endl;
-  bgi = bgs->begin();
+  random_shuffle(bgs.begin(), bgs.end());
+  bgi = bgs.begin();
   idx<ubyte> bg = load_image<ubyte>(*bgi);
   bg = image_resize(bg, conf.get_uint("winszhmax"),
 		    conf.get_uint("winszhmax") * 5, 0);

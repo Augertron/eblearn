@@ -59,6 +59,16 @@ namespace ebl {
     return s.str();
   }
 
+  template <typename T>
+  void list_to_vector(list<T> &l, vector<T> &v) {
+    v.resize(l.size());
+    typename vector<T>::iterator iv = v.begin();
+    typename list<T>::iterator il = l.begin();
+    for ( ; il != l.end(); ++iv, ++il) {
+      *iv = *il;
+    }
+  }
+
 } // end namespace ebl
 
 #endif /* TOOLS_UTILS_HPP_ */

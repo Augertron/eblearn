@@ -132,7 +132,11 @@ namespace ebl {
   //! Return false upon failure, true otherwise.
   bool tar_pattern(const string &dir, const string &tgtdir,
 		   const string &tgtfilename, const char *pattern);
-  
+
+  //! Resize and fill vector v with values in l.
+  template <typename T>
+    void list_to_vector(list<T> &l, vector<T> &v);
+    
 } // end namespace ebl
 
 #include "tools_utils.hpp"
