@@ -138,7 +138,11 @@ namespace ebl {
 
     //! ubyte specialised draw_matrix (faster, does not involve type
     //! conversion) without zooming and range options (also faster).
-    void draw_matrix(idx<ubyte> &im, uint h0 = 0, uint w0 = 0); 
+    //! Warning: use with caution. This is not thread safe (but faster),
+    //! i.e. there might be a race condition on the deletion of the idx data.
+    //! To avoid race condition, only manipulate/delete the idx when
+    //! the gui's data mutex is unlocked (see (un)lock_data_mutex()).
+    void draw_matrix_unsafe(idx<ubyte> &im, uint h0 = 0, uint w0 = 0); 
     
     //! same as draw_matrix but draws a frame of color (r,g,b) around it.
     template<class T>

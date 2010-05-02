@@ -59,7 +59,8 @@ namespace ebl {
     wait();
   }
 
-  void idxgui::draw_matrix(idx<ubyte> &im, unsigned int h0, unsigned int w0) {
+  void idxgui::draw_matrix_unsafe(idx<ubyte> &im, unsigned int h0,
+				  unsigned int w0) {
     idx<ubyte> *uim = new idx<ubyte>(im);
     // send image to main gui thread
     emit gui_drawImage(uim, h0, w0);
