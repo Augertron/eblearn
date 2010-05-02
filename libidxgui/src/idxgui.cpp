@@ -59,23 +59,12 @@ namespace ebl {
     wait();
   }
 
-  void idxgui::draw_matrix(idx<ubyte> &im, unsigned int h0, unsigned int w0, 
-			   double zoomh, double zoomw, ubyte minv, ubyte maxv) {
-    idx<ubyte> *uim = new idx<ubyte>(im.get_idxdim());
-    idx_copy(im, *uim);
-    // send image to main gui thread
-    emit gui_drawImage(uim, h0, w0);
-  }
-  
-  void idxgui::draw_matrix_unsafe(idx<ubyte> &im, unsigned int h0,
-				  unsigned int w0, 
-				  double zoomh, double zoomw,
-				  ubyte minv, ubyte maxv) {
+  void idxgui::draw_matrix(idx<ubyte> &im, unsigned int h0, unsigned int w0) {
     idx<ubyte> *uim = new idx<ubyte>(im);
     // send image to main gui thread
     emit gui_drawImage(uim, h0, w0);
   }
-  
+    
   void idxgui::check_init() {
     if (!thread_init) {
       cerr << "warning: trying to use gui function but gui wasn't initialized.";

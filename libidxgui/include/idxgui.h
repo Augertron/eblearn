@@ -128,25 +128,17 @@ namespace ebl {
     //! be 255
     //! @param zoomw and @param zoomh are the zoom factors in width and height
     template<class T>
-      void draw_matrix(idx<T> &im, uint h0 = 0, uint w0 = 0, 
-		       double zoomh = 1.0, double zoomw = 1.0,
-		       T minv = 0, T maxv = 0);
+      void draw_matrix(idx<T> &im, uint h0, uint w0, 
+		       double zoomh, double zoomw, T minv = 0, T maxv = 0);
 
-    //! Specialisation of the draw_matrix template to ubytes, faster
-    //! because does not involve conversion to ubyte.
-    void draw_matrix(idx<ubyte> &im, uint h0 = 0, uint w0 = 0, 
-		     double zoomh = 1.0, double zoomw = 1.0,
-		     ubyte minv = 0, ubyte maxv = 0);
-    
-    //! Draw a ubyte matrix without making a copy of the data for the
-    //! display thread. This sends to the display thread an idx pointing
-    //! to data handled by current thread. Therefore if current thread
-    //! delete an idx pointing to the same data, it is possible that
-    //! a race condition occurs when decrementing the data counter and freeing
-    //! it. So use with caution.
-    void draw_matrix_unsafe(idx<ubyte> &im, uint h0 = 0, uint w0 = 0, 
-			    double zoomh = 1.0, double zoomw = 1.0,
-			    ubyte minv = 0, ubyte maxv = 0);
+    //! Like draw_matrix template but without zooming and range options
+    //! (faster).
+    template<class T>
+      void draw_matrix(idx<T> &im, uint h0 = 0, uint w0 = 0);
+
+    //! ubyte specialised draw_matrix (faster, does not involve type
+    //! conversion) without zooming and range options (also faster).
+    void draw_matrix(idx<ubyte> &im, uint h0 = 0, uint w0 = 0); 
     
     //! same as draw_matrix but draws a frame of color (r,g,b) around it.
     template<class T>

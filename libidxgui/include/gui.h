@@ -70,10 +70,18 @@ namespace ebl {
   //! be 255
   //! @param zoomw and @param zoomh are the zoom factors in width and height
   template<class T>
-    void draw_matrix(idx<T> &im, unsigned int h0 = 0, unsigned int w0 = 0,
-		     double zoomh = 1.0, double zoomw = 1.0,
-		     T minv = 0, T maxv = 0);
+    void draw_matrix(idx<T> &im, unsigned int h0, unsigned int w0,
+		     double zoomh, double zoomw, T minv = 0, T maxv = 0);
     
+  //! Like draw_matrix template but without zooming and range options
+  //! (faster).
+  template<class T>
+    void draw_matrix(idx<T> &im, uint h0 = 0, uint w0 = 0);
+  
+  //! ubyte specialised draw_matrix (faster, does not involve type
+  //! conversion) without zooming and range options (also faster).
+  void draw_matrix(idx<ubyte> &im, uint h0 = 0, uint w0 = 0); 
+  
   //! same as draw_matrix but draws a frame of color (r,g,b) around it.
   template<class T>
     void draw_matrix_frame(idx<T> &im, ubyte r, ubyte g, ubyte b,

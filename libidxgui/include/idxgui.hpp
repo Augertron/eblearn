@@ -46,6 +46,15 @@ namespace ebl {
   }
 
   template<class T>
+  void idxgui::draw_matrix(idx<T> &im, unsigned int h0, unsigned int w0) {
+    idx<ubyte> *uim = new idx<ubyte>(im.get_idxdim());
+    // cast data
+    idx_copy(im, *uim);
+    // send image to main gui thread
+    emit gui_drawImage(uim, h0, w0);
+  }
+
+  template<class T>
   void idxgui::draw_matrix(idx<T> &im, const char *str,
 			   unsigned int h0, unsigned int w0, 
 			   double zoomh, double zoomw, T minv, T maxv) {
