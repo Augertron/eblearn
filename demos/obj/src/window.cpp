@@ -283,18 +283,22 @@ void vision_thread::execute() {
 ////////////////////////////////////////////////////////////////
 // main thread
 
-void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame) {
-  usleep(20000);
+void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame,
+	  configuration &conf) {
+  uint control_offset = conf.get_uint("control_offset");
+  uint text_offset = conf.get_uint("text_offset");
+  uint text_height = conf.get_uint("text_height");
   disable_window_updates();
   clear_window();
+  set_font_size(conf.get_int("font_size"));
   gui.draw_matrix(bgwin);
-  uint hface = bgwin.dim(0) - frame.dim(0) - 50;
+  uint hface = bgwin.dim(0) - frame.dim(0) - control_offset;
   uint wface = bgwin.dim(1) / 2 - frame.dim(1) / 2;
-  gui << at(hface - 45, wface - 75)
+  gui << at(hface - text_height * 3, wface - text_offset)
       << "Imagine this is a window to outside world.";
-  gui << at(hface - 30, wface - 100) <<
+  gui << at(hface - text_height * 2, wface - text_offset) <<
     "Move your head down to see the sky, up to see the ground,";
-  gui << at(hface - 15, wface - 75) <<
+  gui << at(hface - text_height, wface - text_offset) <<
     "left to see right and right to see left.";
   if (b) {
     draw_box(hface + pos.h0, wface + pos.w0, pos.width, pos.height, 0, 0, 255);
@@ -363,7 +367,6 @@ int main(int argc, char **argv) { // regular main without gui
   // load configuration
 #ifdef __GUI__
   configuration conf(argv[1]);
-
   intg winszh = conf.get_int("winszh");
   intg winszw = conf.get_int("winszw");
   // TODO: read PAM format for alpha channel
@@ -373,10 +376,11 @@ int main(int argc, char **argv) { // regular main without gui
   if (!lbgs) eblerror("background files not found");
   vector<string> bgs;
   list_to_vector(*lbgs, bgs);
+  srand(time(NULL));
+  random_shuffle(bgs.begin(), bgs.end());
   vector<string>::iterator bgi = bgs.begin();
   for ( ; bgi != bgs.end(); ++bgi)
     cout << "found " << *bgi << endl;
-  random_shuffle(bgs.begin(), bgs.end());
   bgi = bgs.begin();
   idx<ubyte> bg = load_image<ubyte>(*bgi);
   bg = image_resize(bg, conf.get_uint("winszhmax"),
@@ -460,7 +464,7 @@ int main(int argc, char **argv) { // regular main without gui
 			     MIN(MAX(0, bg.dim(1) - 1 - winszw),
 				 MAX(0, w * (bg.dim(1) - winszw))));
 	// draw
-	draw(b, pos, bgwin, frame);
+	draw(b, pos, bgwin, frame, conf);
 	// update gui time
 	gui_time = gui_timer.elapsed();
 	gui_timer.restart();

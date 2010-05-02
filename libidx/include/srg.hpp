@@ -116,9 +116,18 @@ template <class T> int Srg<T>::unlock() {
   refcount--;
   //if (refcount == 0) this->nopened--;
   DEBUG("Srg::unlock: refcount=%d\n",refcount);
-  if (refcount<0) { eblerror("Srg has negative refcount"); return refcount; }
+  if (refcount<0) {
+    std::cerr << "srg negative reference counter: " << refcount << std:: endl;
+    eblerror("srg has negative refcount");
+    return refcount;
+  }
   else {
-    if (refcount == 0) { delete this; return 0; } else { return refcount; }
+    if (refcount == 0) {
+      delete this;
+      return 0;
+    } else {
+      return refcount;
+    }
   }
 }
 
