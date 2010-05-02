@@ -286,7 +286,8 @@ void vision_thread::execute() {
 void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame,
 	  configuration &conf) {
   uint control_offset = conf.get_uint("control_offset");
-  uint text_offset = conf.get_uint("text_offset");
+  uint text_hoffset = bgwin.dim(0) - conf.get_uint("text_hoffset");
+  uint text_woffset = bgwin.dim(1) / 2 - conf.get_uint("text_woffset");
   uint text_height = conf.get_uint("text_height");
   disable_window_updates();
   clear_window();
@@ -294,11 +295,13 @@ void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame,
   gui.draw_matrix(bgwin);
   uint hface = bgwin.dim(0) - frame.dim(0) - control_offset;
   uint wface = bgwin.dim(1) / 2 - frame.dim(1) / 2;
-  gui << at(hface - text_height * 3, wface - text_offset)
+  gui << at(text_hoffset - text_height * 4, text_woffset)
       << "Imagine this is a window to outside world.";
-  gui << at(hface - text_height * 2, wface - text_offset) <<
-    "Move your head down to see the sky, up to see the ground,";
-  gui << at(hface - text_height, wface - text_offset) <<
+  gui << at(text_hoffset - text_height * 3, text_woffset) <<
+    "Move your head down to see the sky,";
+  gui << at(text_hoffset - text_height * 2, text_woffset) <<
+    "up to see the ground,";
+  gui << at(text_hoffset - text_height, text_woffset) <<
     "left to see right and right to see left.";
   if (b) {
     draw_box(hface + pos.h0, wface + pos.w0, pos.width, pos.height, 0, 0, 255);
