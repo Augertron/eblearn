@@ -669,6 +669,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // mnist_datasource
 
+  // TODO: add constructor without name
   template <class Tnet, class Tdata, class Tlabel>
   mnist_datasource<Tnet, Tdata, Tlabel>::
   mnist_datasource(const char *root, const char *name, uint size) {

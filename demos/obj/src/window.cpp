@@ -292,7 +292,7 @@ void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame,
   disable_window_updates();
   clear_window();
   set_font_size(conf.get_int("font_size"));
-  gui.draw_matrix(bgwin);
+  gui.draw_matrix_unsafe(bgwin);
   uint hface = bgwin.dim(0) - frame.dim(0) - control_offset;
   uint wface = bgwin.dim(1) / 2 - frame.dim(1) / 2;
   gui << at(text_hoffset - text_height * 4, text_woffset)
