@@ -43,6 +43,11 @@ namespace ebl {
   }
 
   template<class T>
+  void draw_matrix(idx<T> &im, unsigned int h0, unsigned int w0) {
+    gui.draw_matrix(im, h0, w0);
+  }
+
+  template<class T>
   void draw_matrix(idx<T> &im, const char *str,
 		   unsigned int h0, unsigned int w0, 
 		   double zoomh, double zoomw, T minv, T maxv) {

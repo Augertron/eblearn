@@ -58,6 +58,10 @@ namespace ebl {
     gui.enable_updates();
   }
 
+  void draw_matrix(idx<ubyte> &im, uint h0, uint w0) {
+    gui.draw_matrix(im, h0, w0);
+  }
+
   void quit_gui() {
     gui.quit();
   }

@@ -53,8 +53,7 @@ private:
 };
 
 vision_thread::vision_thread(configuration &conf_, const char *arg2_)
-  : conf(conf_), arg2(arg2_), mutex1(PTHREAD_MUTEX_INITIALIZER),
-    updated(false) {
+  : conf(conf_), arg2(arg2_), mutex1(), updated(false) {
 }
 
 vision_thread::~vision_thread() {
@@ -287,7 +286,7 @@ void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame) {
   usleep(20000);
   disable_window_updates();
   clear_window();
-  gui.draw_matrix_unsafe(bgwin);
+  gui.draw_matrix(bgwin);
   uint hface = bgwin.dim(0) - frame.dim(0) - 50;
   uint wface = bgwin.dim(1) / 2 - frame.dim(1) / 2;
   gui << at(hface - 45, wface - 75)
@@ -407,70 +406,74 @@ int main(int argc, char **argv) { // regular main without gui
   bool first_time = true;
   
   while (1) {
-    // check if new data is avaiable
-    updated = vt.get_data(frame, bboxes);
-    // update target position if vision thread ready
-    if (updated) {
-      // find bbox with max confidence
-      if (bboxes.size() > 0) {
-	double maxconf = -5.0;
-	uint maxi = 0;
-	for (uint i = 0; i < bboxes.size(); ++i)
-	  if (bboxes[i]->confidence > maxconf) {
-	    maxconf = bboxes[i]->confidence;
-	    maxi = i;
+    try {
+      // check if new data is avaiable
+      updated = vt.get_data(frame, bboxes);
+      // update target position if vision thread ready
+      if (updated) {
+	// find bbox with max confidence
+	if (bboxes.size() > 0) {
+	  double maxconf = -5.0;
+	  uint maxi = 0;
+	  for (uint i = 0; i < bboxes.size(); ++i)
+	    if (bboxes[i]->confidence > maxconf) {
+	      maxconf = bboxes[i]->confidence;
+	      maxi = i;
+	    }
+	  b = bboxes[maxi];
+	  if (b) {
+	    tgtpos.h0 = b->h0;
+	    tgtpos.w0 = b->w0;
+	    tgtpos.height = b->height;
+	    tgtpos.width = b->width;
+	    srcpos = pos;
+	    detection_timer.restart();
 	  }
-	b = bboxes[maxi];
-	if (b) {
-	  tgtpos.h0 = b->h0;
-	  tgtpos.w0 = b->w0;
-	  tgtpos.height = b->height;
-	  tgtpos.width = b->width;
-	  srcpos = pos;
-	  detection_timer.restart();
+	  if (first_time) {
+	    pos = tgtpos;
+	    srcpos = pos;
+	    first_time = false;
+	  }
 	}
-	if (first_time) {
-	  pos = tgtpos;
-	  srcpos = pos;
-	  first_time = false;
-	}
+	// update vt time
+	vt_time = vt_timer.elapsed();
+	vt_timer.restart();
+	// print timing info
+	cout << "main: " << main_time << " ms "
+	     << "gui: " << gui_time << " ms "
+	     << "vision: " << vt_time << " ms " << endl;
       }
-      // update vt time
-      vt_time = vt_timer.elapsed();
-      vt_timer.restart();
-      // print timing info
-      cout << "main: " << main_time << " ms "
-	   << "gui: " << gui_time << " ms "
-	   << "vision: " << vt_time << " ms " << endl;
+      // update position and draw if gui thread ready
+      if (!gui.busy_drawing()) {
+	// recompute position
+	estimate_position(srcpos, pos, tgtpos, frame, h, w, conf,
+			  detection_timer.elapsed() / (float) vt_time);
+	// narrow original image into window
+	bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
+			  MIN(MAX(0, bg.dim(0) - 1 - winszh),
+			      MAX(0, (1 - h) * (bg.dim(0) - winszh))));
+	bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
+			     MIN(MAX(0, bg.dim(1) - 1 - winszw),
+				 MAX(0, w * (bg.dim(1) - winszw))));
+	// draw
+	draw(b, pos, bgwin, frame);
+	// update gui time
+	gui_time = gui_timer.elapsed();
+	gui_timer.restart();
+      }
+      // sleep for a little bit
+      usleep(conf.get_uint("mainsleep") * 1000);
+      // main timing
+      main_time = main_timer.elapsed();
+      main_timer.restart(); 
+      // change background every bgtime
+      if (bg_timer.elapsed() > bgtime) {
+	bg_timer.restart();
+	change_background(bgi, bgs, bg, conf);
+      }
+    } catch (string &err) {
+      cerr << err << endl;
     }
-    // update position and draw if gui thread ready
-    if (!gui.busy_drawing()) {
-      // recompute position
-      estimate_position(srcpos, pos, tgtpos, frame, h, w, conf,
-			detection_timer.elapsed() / (float) vt_time);
-      // narrow original image into window
-      bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
-			MIN(MAX(0, bg.dim(0) - 1 - winszh),
-			    MAX(0, (1 - h) * (bg.dim(0) - winszh))));
-      bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
-			   MIN(MAX(0, bg.dim(1) - 1 - winszw),
-			       MAX(0, w * (bg.dim(1) - winszw))));
-      // draw
-      draw(b, pos, bgwin, frame);
-      // update gui time
-      gui_time = gui_timer.elapsed();
-      gui_timer.restart();
-    }
-    // sleep for a little bit
-    usleep(conf.get_uint("mainsleep") * 1000);
-    // main timing
-    main_time = main_timer.elapsed();
-    main_timer.restart(); 
-    // change background every bgtime
-    if (bg_timer.elapsed() > bgtime) {
-      bg_timer.restart();
-      change_background(bgi, bgs, bg, conf);
-    }
-  }
+   }
 #endif
 }
