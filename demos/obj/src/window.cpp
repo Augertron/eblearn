@@ -489,10 +489,10 @@ int main(int argc, char **argv) { // regular main without gui
 #ifdef __OPENCV__
       uframe = idx<ubyte>(frame.get_idxdim());
       idx_copy(frame, uframe);
-      IplImage* iplframe = idx_to_ubyte_ipl(uframe);
-      IplImage* ipltpl = idx_to_ubyte_ipl(tpl);
-      // IplImage* iplframe = ipl_pointer_to_idx(uframe);
-      // IplImage* ipltpl = ipl_pointer_to_idx(tpl);
+      // IplImage* iplframe = idx_to_ubyte_ipl(uframe);
+      // IplImage* ipltpl = idx_to_ubyte_ipl(tpl);
+      IplImage* iplframe = ipl_pointer_to_idx(uframe);
+      IplImage* ipltpl = ipl_pointer_to_idx(tpl);
       CvPoint minloc, maxloc;
        double minval, maxval;
       // vector<CvPoint> found;
@@ -512,8 +512,8 @@ int main(int argc, char **argv) { // regular main without gui
       cvMatchTemplate(iplframe, ipltpl, tm, CV_TM_SQDIFF_NORMED);
       cvMinMaxLoc(tm, &minval, &maxval, &minloc, &maxloc, 0);
       gui << at(minloc.y, minloc.x) << "M";
-      cvReleaseImage(&iplframe);
-      cvReleaseImage(&ipltpl);
+      // cvReleaseImage(&iplframe);
+      // cvReleaseImage(&ipltpl);
 #endif
       // update position and draw if gui thread ready
       if (!gui.busy_drawing()) {
