@@ -17,6 +17,11 @@
 #include "libeblearngui.h"
 #endif
 
+#ifdef __OPENCV__
+#include <opencv/cv.h>
+//#include "FastMatchTemplate.h"
+#endif
+
 using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
 
@@ -30,31 +35,38 @@ public:
   vision_thread(configuration &conf, const char *arg2);
   ~vision_thread();
 
+  //! Execute the vision thread.
   virtual void execute();
-  //! Return true if new data was copied, false otherwise.
-  virtual bool get_data(idx<t_net> &frame, vector<bbox*> &bboxes);
+  //! Return true if new data was copied to the thread, false otherwise.
+  virtual bool set_data(idx<t_net> &frame);
+  //! Return true if new data was copied from the thread, false otherwise.
+  virtual bool get_data(vector<bbox*> &bboxes);
 
 private:
   //! Copy passed bounding boxes into bboxes class member
   //! (allocating new 'bbox' objects).
   void copy_bboxes(vector<bbox*> &bb);
-  //! Turn 'updated' flag on, so that other threads know we just added new data.
-  void set_updated();
+  //! Turn 'out_updated' flag on, so that other threads know we just outputed
+  //! new data.
+  void set_out_updated();
 
   ////////////////////////////////////////////////////////////////
   // private members
 private:
-  configuration &conf;
-  const char *arg2;
-  pthread_mutex_t mutex1;
-  idx<t_net> frame;
-  vector<bbox*> bboxes;
-  vector<bbox*>::iterator ibox;
-  bool updated;
+  configuration			&conf;
+  const char			*arg2;
+  pthread_mutex_t		 mutex_in;	// mutex for thread input
+  pthread_mutex_t		 mutex_out;	// mutex for thread output
+  idx<t_net>			 frame;
+  vector<bbox*>			 bboxes;
+  vector<bbox*>::iterator	 ibox;
+  bool				 in_updated;   // thread input is updated or not
+  bool				 out_updated; // thread output is updated or not
 };
 
 vision_thread::vision_thread(configuration &conf_, const char *arg2_)
-  : conf(conf_), arg2(arg2_), mutex1(), updated(false) {
+  : conf(conf_), arg2(arg2_), mutex_in(), mutex_out(),
+    in_updated(false), out_updated(false) {
 }
 
 vision_thread::~vision_thread() {
@@ -62,7 +74,7 @@ vision_thread::~vision_thread() {
 
 void vision_thread::copy_bboxes(vector<bbox*> &bb) {
   // lock data
-  pthread_mutex_lock(&mutex1);
+  pthread_mutex_lock(&mutex_out);
   // clear bboxes
   bboxes.clear();
   // copy bboxes
@@ -70,34 +82,27 @@ void vision_thread::copy_bboxes(vector<bbox*> &bb) {
     bboxes.push_back(new bbox(**ibox));
   }
   // unlock data
-  pthread_mutex_unlock(&mutex1);
+  pthread_mutex_unlock(&mutex_out);
 }
 
-void vision_thread::set_updated() {
+void vision_thread::set_out_updated() {
   // lock data
-  pthread_mutex_lock(&mutex1);
+  pthread_mutex_lock(&mutex_out);
   // set flag
-  updated = true;
+  out_updated = true;
   // unlock data
-  pthread_mutex_unlock(&mutex1);
+  pthread_mutex_unlock(&mutex_out);
 }
 
-bool vision_thread::get_data(idx<t_net> &frame2, vector<bbox*> &bboxes2) {
+bool vision_thread::get_data(vector<bbox*> &bboxes2) {
   // lock data
-  pthread_mutex_lock(&mutex1);
+  pthread_mutex_lock(&mutex_out);
   // only read data if it has been updated
-  if (!updated) {
+  if (!out_updated) {
     // unlock data
-    pthread_mutex_unlock(&mutex1);
+    pthread_mutex_unlock(&mutex_out);
     return false;
   }
-  // check frame is correctly allocated, if not, allocate.
-  if (frame2.order() != frame.order()) 
-    frame2 = idx<t_net>(frame.get_idxdim());
-  else if (frame2.get_idxdim() != frame.get_idxdim())
-    frame2.resize(frame.get_idxdim());
-  // copy frame
-  idx_copy(frame, frame2);
   // clear bboxes
   for (ibox = bboxes2.begin(); ibox != bboxes2.end(); ++ibox) {
     if (*ibox)
@@ -109,9 +114,28 @@ bool vision_thread::get_data(idx<t_net> &frame2, vector<bbox*> &bboxes2) {
     bboxes2.push_back(*ibox);
   }
   // reset updated flag
-  updated = false; 
+  out_updated = false; 
   // unlock data
-  pthread_mutex_unlock(&mutex1);
+  pthread_mutex_unlock(&mutex_out);
+  // confirm that we copied data.
+  return true;
+}
+
+bool vision_thread::set_data(idx<t_net> &frame2) {
+  // lock data (non blocking)
+  if (!pthread_mutex_trylock(&mutex_in))
+    return false;
+  // check frame is correctly allocated, if not, allocate.
+  if (frame2.order() != frame.order()) 
+    frame = idx<t_net>(frame2.get_idxdim());
+  else if (frame2.get_idxdim() != frame.get_idxdim())
+    frame.resize(frame2.get_idxdim());
+  // copy frame
+  idx_copy(frame2, frame);
+  // reset updated flag
+  in_updated = true; 
+  // unlock data
+  pthread_mutex_unlock(&mutex_in);
   // confirm that we copied data.
   return true;
 }
@@ -123,10 +147,6 @@ void vision_thread::execute() {
   bool		display 	= false;
   bool		mindisplay 	= false;
   uint          display_sleep   = 0;
-  bool		save_video 	= false;
-  string        cam_type        = conf.get_string("camera");
-  int           height          = conf.get_int("input_height");
-  int           width           = conf.get_int("input_width");
 
   // load network and weights
   parameter<t_net> theparam;
@@ -141,6 +161,7 @@ void vision_thread::execute() {
   } catch(string &err) { eblerror(err.c_str()); }
 
   // select preprocessing  
+  string        cam_type        = conf.get_string("camera");
   module_1_1<t_net>* pp = NULL;
   if (!strcmp(cam_type.c_str(), "v4l2")) // Y -> Yp
     pp = new weighted_std_module<t_net>(norm_size, norm_size, 1, true,
@@ -168,40 +189,11 @@ void vision_thread::execute() {
       detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
   }
 
-  // initialize camera (opencv, directory, shmem or video)
-  camera<t_net> *cam = NULL, *cam2 = NULL;
-  if (conf.exists_bool("retrain") && conf.exists("retrain_dir")) {
-    // extract false positives
-    cam = new camera_directory<t_net>(conf.get_cstring("retrain_dir"));
-  } else { // regular execution
-    if (!strcmp(cam_type.c_str(), "directory")) {
-      if (arg2) cam = new camera_directory<t_net>(arg2, height, width);
-      else eblerror("expected 2nd argument");
-    } else if (!strcmp(cam_type.c_str(), "opencv"))
-      cam = new camera_opencv<t_net>(-1, height, width);
-    else if (!strcmp(cam_type.c_str(), "v4l2"))
-      cam = new camera_v4l2<t_net>(conf.get_cstring("device"), height, width);
-    else if (!strcmp(cam_type.c_str(), "shmem"))
-      cam = new camera_shmem<t_net>("shared-mem", height, width);
-    else if (!strcmp(cam_type.c_str(), "video")) {
-      if (arg2)
-	cam = new camera_video<t_net>
-	  (arg2, height, width, conf.get_uint("input_video_sstep"),
-	   conf.get_uint("input_video_max_duration"));
-      else eblerror("expected 2nd argument");
-    } else eblerror("unknown camera type");
-    // a camera directory may be used first, then switching to regular camera
-    if (conf.exists_bool("precamera"))
-      cam2 = new camera_directory<t_net>(conf.get_cstring("precamdir"),
-					 height, width);
-  }
-    
   // gui
 #ifdef __GUI__
   display 	= conf.exists_bool("display");
   mindisplay 	= conf.exists_bool("minimal_display");
   display_sleep	= conf.get_uint("display_sleep");
-  save_video    = conf.exists_bool("save_video");
   uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
     qheight2 = 0, qwidth2 = 0, qstep2 = 0;
   if (conf.exists_bool("queue1")) { qstep1 = conf.get_uint("qstep1");
@@ -217,26 +209,21 @@ void vision_thread::execute() {
   if (bmask_class)
     dgui.set_mask_class(conf.get_cstring("mask_class"),
 			(t_net) conf.get_double("mask_threshold"));
-  night_mode();
-  if (save_video)
-    cam->start_recording();
   // timing variables
   QTime t0;
   int tpp;
 #endif  
   // loop
-  while(!cam->empty()) {
+  while(1) {
     try{
 #ifdef __GUI__
     t0.start();
-    // disable_window_updates();
-    // clear_window();
 #endif
-    // if the pre-camera is defined use it until empty
-    if (cam2 && !cam2->empty())
-      frame = cam2->grab();
-    else // empty pre-camera, use regular camera
-      frame = cam->grab();
+    // wait until a new image is made available
+    while (!in_updated)
+      usleep(500);
+    // we got a new frame, reset new frame flag
+    in_updated = false; // no need to lock mutex
     // run detector
     if (!display) { // fprop without display
       vector<bbox*> &bb = detect.fprop(frame, threshold);
@@ -252,14 +239,11 @@ void vision_thread::execute() {
       else
 	dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
 				    (t_net)-1.1, (t_net)1.1, wid); 
-      if (save_video)
-	cam->record_frame();
     }
     // switch 'updated' flag on to warn we just added new data
-    set_updated();
+    set_out_updated();
     tpp = t0.elapsed(); // stop processing timer
-    cout << "processing: " << tpp << " ms.";
-    cout << " fps: " << cam->fps() << endl;
+    cout << "processing: " << tpp << " ms." << endl;
 #endif
     if (display_sleep > 0) {
       cout << "sleeping for " << display_sleep << "ms." << endl;
@@ -270,12 +254,8 @@ void vision_thread::execute() {
       break ; // limit number of detection saves
     } catch (string &err) { cerr << err << endl; }
   }
-  if (save_video)
-    cam->stop_recording(conf.exists_bool("use_original_fps") ?
-			cam->fps() : conf.get_uint("save_video_fps"));
   // free variables
   if (net) delete net;
-  if (cam) delete cam;
   if (pp) delete pp;
 }
 
@@ -293,8 +273,8 @@ void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame,
   clear_window();
   set_font_size(conf.get_int("font_size"));
   gui.draw_matrix_unsafe(bgwin);
-  uint hface = bgwin.dim(0) - frame.dim(0) - control_offset;
-  uint wface = bgwin.dim(1) / 2 - frame.dim(1) / 2;
+  uint hface = 0;//bgwin.dim(0) - frame.dim(0) - control_offset;
+  uint wface = 0;//bgwin.dim(1) / 2 - frame.dim(1) / 2;
   gui << at(text_hoffset - text_height * 4, text_woffset)
       << "Imagine this is a window to outside world.";
   gui << at(text_hoffset - text_height * 3, text_woffset) <<
@@ -357,6 +337,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #else
 int main(int argc, char **argv) { // regular main without gui
 #endif
+  try {
   // check input parameters
   if ((argc != 2) && (argc != 3) ) {
     cerr << "wrong number of parameters." << endl;
@@ -398,6 +379,7 @@ int main(int argc, char **argv) { // regular main without gui
   vision_thread vt(conf, argc == 3 ? argv[2] : NULL);
   vt.start();
   idx<t_net> frame(1,1,1);
+  idx<ubyte> tpl(10, 10, 1), uframe; // undefined template at beginning
   vector<bbox*> bboxes;
   rect pos(0, 0, 10, 10), srcpos(0, 0, 10, 10), tgtpos(0, 0, 10, 10);
   bbox *b = NULL;
@@ -405,6 +387,7 @@ int main(int argc, char **argv) { // regular main without gui
   // timing variables
   QTime main_timer, bg_timer, vt_timer, gui_timer, detection_timer;
   int main_time, vt_time, gui_time, detection_time; // time in milliseconds
+  float tgt_time_distance = 0;
   main_timer.start();
   bg_timer.start();
   vt_timer.start();
@@ -415,11 +398,53 @@ int main(int argc, char **argv) { // regular main without gui
   // interpolation
   bool updated = false;
   bool first_time = true;
+
+  string        cam_type        = conf.get_string("camera");
+  int           height          = conf.get_int("input_height");
+  int           width           = conf.get_int("input_width");
+  bool          save_video    = conf.exists_bool("save_video");
+  // initialize camera (opencv, directory, shmem or video)
+  camera<t_net> *cam = NULL, *cam2 = NULL;
+  if (conf.exists_bool("retrain") && conf.exists("retrain_dir")) {
+    // extract false positives
+    cam = new camera_directory<t_net>(conf.get_cstring("retrain_dir"));
+  } else { // regular execution
+    if (!strcmp(cam_type.c_str(), "directory")) {
+      if (argc == 3) cam = new camera_directory<t_net>(argv[2], height, width);
+      else eblerror("expected 2nd argument");
+    } else if (!strcmp(cam_type.c_str(), "opencv"))
+      cam = new camera_opencv<t_net>(-1, height, width);
+    else if (!strcmp(cam_type.c_str(), "v4l2"))
+      cam = new camera_v4l2<t_net>(conf.get_cstring("device"), height, width);
+    else if (!strcmp(cam_type.c_str(), "shmem"))
+      cam = new camera_shmem<t_net>("shared-mem", height, width);
+    else if (!strcmp(cam_type.c_str(), "video")) {
+      if (argc == 3)
+	cam = new camera_video<t_net>
+	  (argv[2], height, width, conf.get_uint("input_video_sstep"),
+	   conf.get_uint("input_video_max_duration"));
+      else eblerror("expected 2nd argument");
+    } else eblerror("unknown camera type");
+    // a camera directory may be used first, then switching to regular camera
+    if (conf.exists_bool("precamera"))
+      cam2 = new camera_directory<t_net>(conf.get_cstring("precamdir"),
+					 height, width);
+  }
+  night_mode();
+  if (save_video)
+    cam->start_recording();
   
-  while (1) {
+#ifdef __OPENCV__
+  IplImage *iplframe = NULL;
+  IplImage *ipltemplate = NULL;
+#endif
+  
+  while(!cam->empty()) {
     try {
-      // check if new data is avaiable
-      updated = vt.get_data(frame, bboxes);
+      frame = cam->grab();
+      // send new frame to vision_thread and check if new data was output
+      vt.set_data(frame);
+      updated = vt.get_data(bboxes);
       // update target position if vision thread ready
       if (updated) {
 	// find bbox with max confidence
@@ -439,13 +464,19 @@ int main(int argc, char **argv) { // regular main without gui
 	    tgtpos.width = b->width;
 	    srcpos = pos;
 	    detection_timer.restart();
+	    // update template
+	    idx<t_net> tmptpl = frame.narrow(0, b->height, b->h0);
+	    tmptpl = tmptpl.narrow(1, b->width, b->w0);
+	    tpl = idx<ubyte>(tmptpl.get_idxdim());
+	    idx_copy(tmptpl, tpl);
 	  }
 	  if (first_time) {
 	    pos = tgtpos;
 	    srcpos = pos;
 	    first_time = false;
 	  }
-	}
+	} else
+	  b = NULL;
 	// update vt time
 	vt_time = vt_timer.elapsed();
 	vt_timer.restart();
@@ -454,11 +485,43 @@ int main(int argc, char **argv) { // regular main without gui
 	     << "gui: " << gui_time << " ms "
 	     << "vision: " << vt_time << " ms " << endl;
       }
+      // tracking
+#ifdef __OPENCV__
+      uframe = idx<ubyte>(frame.get_idxdim());
+      idx_copy(frame, uframe);
+      IplImage* iplframe = idx_to_ubyte_ipl(uframe);
+      IplImage* ipltpl = idx_to_ubyte_ipl(tpl);
+      // IplImage* iplframe = ipl_pointer_to_idx(uframe);
+      // IplImage* ipltpl = ipl_pointer_to_idx(tpl);
+      CvPoint minloc, maxloc;
+       double minval, maxval;
+      // vector<CvPoint> found;
+      // vector<double> confidences;
+      // FastMatchTemplate(*iplframe, *ipltpl, &found, &confidences, 1, false,
+      // 			5, 1, 15);
+      //      CvRect searchRoi;
+      //      cvSetImageROI( searchImage, searchRoi );
+      // vector<CvPoint>::iterator p = found.begin();
+      // vector<double>::iterator c = confidences.begin();
+      // for ( ; p != found.end() && c != confidences.end(); ++p, ++c) {
+      // 	gui << at(p->x, p->y) << *c;
+      // }
+      IplImage *tm = cvCreateImage(cvSize(uframe.dim(1)  - tpl.dim(1)  + 1,
+					  uframe.dim(0) - tpl.dim(0) + 1 ),
+				   IPL_DEPTH_32F, 1 );
+      cvMatchTemplate(iplframe, ipltpl, tm, CV_TM_SQDIFF_NORMED);
+      cvMinMaxLoc(tm, &minval, &maxval, &minloc, &maxloc, 0);
+      gui << at(minloc.y, minloc.x) << "M";
+      cvReleaseImage(&iplframe);
+      cvReleaseImage(&ipltpl);
+#endif
       // update position and draw if gui thread ready
       if (!gui.busy_drawing()) {
 	// recompute position
+	if (vt_time > 0)
+	  tgt_time_distance = detection_timer.elapsed() / (float) vt_time;
 	estimate_position(srcpos, pos, tgtpos, frame, h, w, conf,
-			  detection_timer.elapsed() / (float) vt_time);
+			  tgt_time_distance);
 	// narrow original image into window
 	bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
 			  MIN(MAX(0, bg.dim(0) - 1 - winszh),
@@ -468,6 +531,7 @@ int main(int argc, char **argv) { // regular main without gui
 				 MAX(0, w * (bg.dim(1) - winszw))));
 	// draw
 	draw(b, pos, bgwin, frame, conf);
+      draw_matrix(tpl, (uint)0, (uint)180);
 	// update gui time
 	gui_time = gui_timer.elapsed();
 	gui_timer.restart();
@@ -482,9 +546,18 @@ int main(int argc, char **argv) { // regular main without gui
 	bg_timer.restart();
 	change_background(bgi, bgs, bg, conf);
       }
+      if (save_video)
+	cam->record_frame();      
     } catch (string &err) {
       cerr << err << endl;
     }
-   }
+  }
+  if (save_video)
+    cam->stop_recording(conf.exists_bool("use_original_fps") ?
+			cam->fps() : conf.get_uint("save_video_fps"));
+  if (cam) delete cam;
 #endif
+  } catch(string &err) {
+    cerr << err << endl;
+  }
 }

@@ -38,6 +38,34 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // interface with opencv
   
+  IplImage* ipl_pointer_to_idx(idx<ubyte> &im) {
+    idx_check_contiguous1(im); // im must be contiguous
+    idx_checkorder1(im, 3); // im must have order 3
+    if (im.dim(2) != 1 && im.dim(2) != 3) {
+      cerr << "idx dimensions are: " << im << endl;
+      eblerror("expecting an image with 1 or 3 channels");
+    }
+    IplImage *ipl = new IplImage();
+    ipl->nSize = sizeof(IplImage);
+    ipl->ID = 0;
+    ipl->nChannels = im.dim(2);
+    ipl->alphaChannel = 0;
+    ipl->depth = IPL_DEPTH_8U;
+    ipl->dataOrder = 0; // 0: interleaved color
+    ipl->origin = 0; // 0: top-left origin
+    ipl->width = im.dim(1);
+    ipl->height = im.dim(0);
+    ipl->roi = NULL;
+    ipl->maskROI = NULL;
+    ipl->imageId = NULL;
+    ipl->tileInfo = NULL;
+    ipl->imageSize = im.nelements();
+    ipl->imageData = (char *) im.idx_ptr();
+    ipl->widthStep = im.dim(1) * im.dim(0);
+    ipl->imageDataOrigin = NULL;
+    return ipl;
+  }
+  
 #endif /* __OPENCV__ */
 
 } // end namespace ebl
