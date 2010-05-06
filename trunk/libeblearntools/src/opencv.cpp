@@ -51,8 +51,11 @@ namespace ebl {
     ipl->nChannels = im.dim(2);
     ipl->alphaChannel = 0;
     ipl->depth = IPL_DEPTH_8U;
+    // ipl->colorModel = "GRAY";
+    // ipl->channelSeq = "GRAY";
     ipl->dataOrder = 0; // 0: interleaved color
     ipl->origin = 0; // 0: top-left origin
+    ipl->align = 4;
     ipl->width = im.dim(1);
     ipl->height = im.dim(0);
     ipl->roi = NULL;
@@ -61,7 +64,7 @@ namespace ebl {
     ipl->tileInfo = NULL;
     ipl->imageSize = im.nelements();
     ipl->imageData = (char *) im.idx_ptr();
-    ipl->widthStep = im.dim(1) * im.dim(0);
+    ipl->widthStep = im.dim(1) * im.dim(2);
     ipl->imageDataOrigin = NULL;
     return ipl;
   }
