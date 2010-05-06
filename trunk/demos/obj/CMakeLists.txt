@@ -76,6 +76,7 @@ ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 # compile executable: window
 ################################################################################
 add_executable (window
+  src/FastMatchTemplate.cc
   src/window.cpp
   )
   
