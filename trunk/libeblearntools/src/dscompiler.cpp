@@ -41,6 +41,7 @@
 #include "pascalfull_dataset.h"
 #include "grid_dataset.h"
 #include "tools_utils.h"
+#include "patch_dataset.h"
 
 using namespace std;
 using namespace ebl;
@@ -295,8 +296,10 @@ bool parse_args(int argc, char **argv) {
 void print_usage() {
   cout << "Usage: ./dscompiler <images_root> [OPTIONS]" << endl;
   cout << "Options are:" << endl;
-  cout << "  -type <regular(default)|pascal|pascalbg|pascalfull|grid>" << endl;
+  cout << "  -type <regular(default)|patch|pascal|pascalbg|pascalfull|grid>" << endl;
   cout << "     regular: compile images labeled by their top folder name"<<endl;
+  cout << "     patch: extract random (position & scale) patches from images"
+       << endl;
   cout << "     pascal: compile images labeled by xml files (PASCAL challenge)";
   cout << endl;
   cout << "     pascalbg: compile background images of PASCAL challenge"<< endl;
@@ -440,6 +443,11 @@ void compile() {
   }
   else if (!strcmp(type.c_str(), "regular")) {
     dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str());
+    compile_ds(ds);
+  }
+  else if (!strcmp(type.c_str(), "patch")) {
+    patch_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
+			    outdir.c_str(), maxperclass);
     compile_ds(ds);
   }
   else {
