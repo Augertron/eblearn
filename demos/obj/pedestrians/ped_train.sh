@@ -1,34 +1,28 @@
 #!/bin/sh
 
-dset=_mitcbcl
-traindsname=mitcbcl_mean19x19_ker7_train
-valdsname=mitcbcl_mean19x19_ker7_val
-h=19
-w=${h}
+dset=_nicta
+traindsname=ped_mean19x19_ker7_train
+valdsname=ped_mean19x19_ker7_val
+h=80
+w=32
 
-# dset=
-# traindsname=all_mean32x32_ker7_bg_train_500
-# valdsname=all_mean32x32_ker7_bg_val_500
-# h=32
-# w=${h}
-
-machine=humair
-metaconf_name=face${dset}_meta.conf
-save_max=10000
+machine=juno
+metaconf_name=ped_meta.conf
+save_max=20000
 
 ################################################################################
 # meta commands
 ################################################################################
 
 # required variables
-meta_command="sh face_train.sh"
+meta_command="sh ped_train.sh"
 
 # optional meta variables ######################################################
 
 # directory where to write outputs of all processes
 meta_output_dir=${out}
 # name of this meta job
-meta_name=facetrain${dset}_${machine}
+meta_name=pedtrain${dset}_${machine}
 # emailing results or not
 meta_send_email=1
 # email to use
@@ -50,7 +44,7 @@ meta_send_best=15
 
 # directories
 xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
-root=~/${machine}adata/face/
+root=~/${machine}adata/pedestrians/
 root2=~/${machine}adata/
 dataroot=$root/ds${dset}
 out=$root/out/$xpname/

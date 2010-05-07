@@ -15,6 +15,7 @@ meta_email=pierre.sermanet@gmail.com
 ################################################################################
 
 machine=juno
+dset=_nicta
 # directories
 #dataroot=/data
 #dataroot=~/texieradata
@@ -39,7 +40,7 @@ bgscales=8,4,2,1
 
 # names
 id=${resize}${h}x${w}_ker${kernel}
-name=ped_${id}
+name=ped${dset}_${id}
 namebg=${name}_bg
 #bgds=pascalbg_${id}
 bgds=pascalbg_bilinear32x32_ker7_2
