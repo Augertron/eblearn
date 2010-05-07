@@ -10,8 +10,6 @@
 #include <fenv.h>
 #include "libeblearn.h"
 #include "libeblearntools.h"
-#include "objrec.h"
-#include "thread.h"
 
 #ifdef __GUI__
 #include "libeblearngui.h"
@@ -26,244 +24,9 @@ using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
 
 ////////////////////////////////////////////////////////////////
-// vision thread
-
-typedef float t_net; // network precision
-
-class vision_thread : public thread {
-public:
-  vision_thread(configuration &conf, const char *arg2);
-  ~vision_thread();
-
-  //! Execute the vision thread.
-  virtual void execute();
-  //! Return true if new data was copied to the thread, false otherwise.
-  virtual bool set_data(idx<t_net> &frame);
-  //! Return true if new data was copied from the thread, false otherwise.
-  virtual bool get_data(vector<bbox*> &bboxes);
-
-private:
-  //! Copy passed bounding boxes into bboxes class member
-  //! (allocating new 'bbox' objects).
-  void copy_bboxes(vector<bbox*> &bb);
-  //! Turn 'out_updated' flag on, so that other threads know we just outputed
-  //! new data.
-  void set_out_updated();
-
-  ////////////////////////////////////////////////////////////////
-  // private members
-private:
-  configuration			&conf;
-  const char			*arg2;
-  pthread_mutex_t		 mutex_in;	// mutex for thread input
-  pthread_mutex_t		 mutex_out;	// mutex for thread output
-  idx<t_net>			 frame;
-  vector<bbox*>			 bboxes;
-  vector<bbox*>::iterator	 ibox;
-  bool				 in_updated;   // thread input is updated or not
-  bool				 out_updated; // thread output is updated or not
-};
-
-vision_thread::vision_thread(configuration &conf_, const char *arg2_)
-  : conf(conf_), arg2(arg2_), mutex_in(), mutex_out(),
-    in_updated(false), out_updated(false) {
-}
-
-vision_thread::~vision_thread() {
-}
-
-void vision_thread::copy_bboxes(vector<bbox*> &bb) {
-  // lock data
-  pthread_mutex_lock(&mutex_out);
-  // clear bboxes
-  bboxes.clear();
-  // copy bboxes
-  for (ibox = bb.begin(); ibox != bb.end(); ++ibox) {
-    bboxes.push_back(new bbox(**ibox));
-  }
-  // unlock data
-  pthread_mutex_unlock(&mutex_out);
-}
-
-void vision_thread::set_out_updated() {
-  // lock data
-  pthread_mutex_lock(&mutex_out);
-  // set flag
-  out_updated = true;
-  // unlock data
-  pthread_mutex_unlock(&mutex_out);
-}
-
-bool vision_thread::get_data(vector<bbox*> &bboxes2) {
-  // lock data
-  pthread_mutex_lock(&mutex_out);
-  // only read data if it has been updated
-  if (!out_updated) {
-    // unlock data
-    pthread_mutex_unlock(&mutex_out);
-    return false;
-  }
-  // clear bboxes
-  for (ibox = bboxes2.begin(); ibox != bboxes2.end(); ++ibox) {
-    if (*ibox)
-      delete *ibox;
-  }
-  bboxes2.clear();
-  // copy bboxes pointers (now responsible for deleting them).
-  for (ibox = bboxes.begin(); ibox != bboxes.end(); ++ibox) {
-    bboxes2.push_back(*ibox);
-  }
-  // reset updated flag
-  out_updated = false; 
-  // unlock data
-  pthread_mutex_unlock(&mutex_out);
-  // confirm that we copied data.
-  return true;
-}
-
-bool vision_thread::set_data(idx<t_net> &frame2) {
-  // lock data (non blocking)
-  if (!pthread_mutex_trylock(&mutex_in))
-    return false;
-  // check frame is correctly allocated, if not, allocate.
-  if (frame2.order() != frame.order()) 
-    frame = idx<t_net>(frame2.get_idxdim());
-  else if (frame2.get_idxdim() != frame.get_idxdim())
-    frame.resize(frame2.get_idxdim());
-  // copy frame
-  idx_copy(frame2, frame);
-  // reset updated flag
-  in_updated = true; 
-  // unlock data
-  pthread_mutex_unlock(&mutex_in);
-  // confirm that we copied data.
-  return true;
-}
-
-void vision_thread::execute() {
-  bool		color		= conf.exists_bool("color");
-  uint		norm_size	= conf.get_uint("normalization_size");
-  t_net		threshold	= (t_net) conf.get_double("threshold");
-  bool		display 	= false;
-  bool		mindisplay 	= false;
-  uint          display_sleep   = 0;
-
-  // load network and weights
-  parameter<t_net> theparam;
-  idx<ubyte> classes(1,1);
-  try {
-    load_matrix<ubyte>(classes, conf.get_cstring("classes"));
-  } catch(string &err) { cerr << "warning: " << err << endl; }
-  cout << "loading weights from " << conf.get_cstring("weights") << endl;
-  module_1_1<t_net> *net = init_network(theparam, conf, classes.dim(0));
-  try {
-    theparam.load_x<double>(conf.get_cstring("weights"));
-  } catch(string &err) { eblerror(err.c_str()); }
-
-  // select preprocessing  
-  string        cam_type        = conf.get_string("camera");
-  module_1_1<t_net>* pp = NULL;
-  if (!strcmp(cam_type.c_str(), "v4l2")) // Y -> Yp
-    pp = new weighted_std_module<t_net>(norm_size, norm_size, 1, true,
-					false, true);
-  else if (color) // RGB -> YpUV
-    pp = (module_1_1<t_net>*) new rgb_to_ypuv_module<t_net>(norm_size);
-  else // RGB -> Yp
-    pp = (module_1_1<t_net>*) new rgb_to_yp_module<t_net>(norm_size);
-    
-  // detector
-  detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
-			 conf.get_double("gain"));
-  detect.set_resolutions(conf.get_double("scaling"));
-  bool bmask_class = false;
-  if (conf.exists("mask_class"))
-    bmask_class = detect.set_mask_class(conf.get_cstring("mask_class"));
-  if (conf.exists("input_min"))
-    detect.set_min_resolution(conf.get_uint("input_min")); // limit inputs size
-  if (conf.exists("input_max"))
-    detect.set_max_resolution(conf.get_uint("input_max")); // limit inputs size
-  detect.set_silent();
-  if (conf.exists_bool("save_detections")) {
-    detect.set_save("detections");
-    if (conf.exists("save_max_per_frame"))
-      detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
-  }
-
-  // gui
-#ifdef __GUI__
-  display 	= conf.exists_bool("display");
-  mindisplay 	= conf.exists_bool("minimal_display");
-  display_sleep	= conf.get_uint("display_sleep");
-  uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
-    qheight2 = 0, qwidth2 = 0, qstep2 = 0;
-  if (conf.exists_bool("queue1")) { qstep1 = conf.get_uint("qstep1");
-    qheight1 = conf.get_uint("qheight1"); qwidth1 = conf.get_uint("qwidth1"); }
-  if (conf.exists_bool("queue2")) { qstep2 = conf.get_uint("qstep2");
-    qheight2 = conf.get_uint("qheight2"); qwidth2 = conf.get_uint("qwidth2"); }
-  module_1_1_gui netgui;
-  uint	wid	= display ? new_window("eblearn object recognition") : 0;
-  float zoom	= 1;
-  detector_gui<t_net> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
-			   qwidth1, conf.exists_bool("queue2"), qstep2,
-			   qheight2, qwidth2);
-  if (bmask_class)
-    dgui.set_mask_class(conf.get_cstring("mask_class"),
-			(t_net) conf.get_double("mask_threshold"));
-  // timing variables
-  QTime t0;
-  int tpp;
-#endif  
-  // loop
-  while(1) {
-    try{
-#ifdef __GUI__
-    t0.start();
-#endif
-    // wait until a new image is made available
-    while (!in_updated)
-      usleep(500);
-    // we got a new frame, reset new frame flag
-    in_updated = false; // no need to lock mutex
-    // run detector
-    if (!display) { // fprop without display
-      vector<bbox*> &bb = detect.fprop(frame, threshold);
-      copy_bboxes(bb); // make a copy of bounding boxes
-    } 
-#ifdef __GUI__
-    else { // fprop and display
-      if (mindisplay) {
-	vector<bbox*> &bb = dgui.display(detect, frame, threshold, 0, 0, zoom,
-					 (t_net)0, (t_net)255, wid);
-	copy_bboxes(bb); // make a copy of bounding boxes
-      }
-      else
-	dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
-				    (t_net)-1.1, (t_net)1.1, wid); 
-    }
-    // switch 'updated' flag on to warn we just added new data
-    set_out_updated();
-    tpp = t0.elapsed(); // stop processing timer
-    cout << "processing: " << tpp << " ms." << endl;
-#endif
-    if (display_sleep > 0) {
-      cout << "sleeping for " << display_sleep << "ms." << endl;
-      usleep(display_sleep);
-    }
-    if (conf.exists("save_max") && 
-	detect.get_total_saved() > conf.get_uint("save_max"))
-      break ; // limit number of detection saves
-    } catch (string &err) { cerr << err << endl; }
-  }
-  // free variables
-  if (net) delete net;
-  if (pp) delete pp;
-}
-
-
-////////////////////////////////////////////////////////////////
 // main thread
 
-void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame,
+void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<ubyte> &frame,
 	  configuration &conf) {
   uint control_offset = conf.get_uint("control_offset");
   uint text_hoffset = bgwin.dim(0) - conf.get_uint("text_hoffset");
@@ -292,7 +55,7 @@ void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<t_net> &frame,
 
 #ifdef __GUI__
 
-void estimate_position(rect &srcpos, rect &pos, rect &tgtpos, idx<t_net> &frame,
+void estimate_position(rect &srcpos, rect &pos, rect &tgtpos, idx<ubyte> &frame,
 		       float &h, float &w, configuration &conf,
 		       float tgt_time_distance) {
   tgt_time_distance = tgt_time_distance * conf.get_float("smooth_factor");
@@ -376,21 +139,21 @@ int main(int argc, char **argv) { // regular main without gui
   bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
 		       MAX(0, bg.dim(1) / 2 - winszw/2));
 
-  vision_thread vt(conf, argc == 3 ? argv[2] : NULL);
-  vt.start();
-  idx<t_net> frame(1,1,1);
+  detection_thread<float> dt(conf, argc == 3 ? argv[2] : NULL);
+  dt.start();
+  idx<ubyte> frame(1,1,1);
   idx<ubyte> tpl(10, 10, 1), uframe; // undefined template at beginning
   vector<bbox*> bboxes;
   rect pos(0, 0, 10, 10), srcpos(0, 0, 10, 10), tgtpos(0, 0, 10, 10);
   bbox *b = NULL;
   float h = 0, w = 0;
   // timing variables
-  QTime main_timer, bg_timer, vt_timer, gui_timer, detection_timer;
-  int main_time, vt_time, gui_time, detection_time; // time in milliseconds
+  QTime main_timer, bg_timer, dt_timer, gui_timer, detection_timer;
+  int main_time, dt_time, gui_time, detection_time; // time in milliseconds
   float tgt_time_distance = 0;
   main_timer.start();
   bg_timer.start();
-  vt_timer.start();
+  dt_timer.start();
   gui_timer.start();
   detection_timer.start();
   int bgtime = conf.get_uint("bgtime") * 1000;
@@ -404,30 +167,30 @@ int main(int argc, char **argv) { // regular main without gui
   int           width           = conf.get_int("input_width");
   bool          save_video    = conf.exists_bool("save_video");
   // initialize camera (opencv, directory, shmem or video)
-  camera<t_net> *cam = NULL, *cam2 = NULL;
+  camera<ubyte> *cam = NULL, *cam2 = NULL;
   if (conf.exists_bool("retrain") && conf.exists("retrain_dir")) {
     // extract false positives
-    cam = new camera_directory<t_net>(conf.get_cstring("retrain_dir"));
+    cam = new camera_directory<ubyte>(conf.get_cstring("retrain_dir"));
   } else { // regular execution
     if (!strcmp(cam_type.c_str(), "directory")) {
-      if (argc == 3) cam = new camera_directory<t_net>(argv[2], height, width);
+      if (argc == 3) cam = new camera_directory<ubyte>(argv[2], height, width);
       else eblerror("expected 2nd argument");
     } else if (!strcmp(cam_type.c_str(), "opencv"))
-      cam = new camera_opencv<t_net>(-1, height, width);
+      cam = new camera_opencv<ubyte>(-1, height, width);
     else if (!strcmp(cam_type.c_str(), "v4l2"))
-      cam = new camera_v4l2<t_net>(conf.get_cstring("device"), height, width);
+      cam = new camera_v4l2<ubyte>(conf.get_cstring("device"), height, width);
     else if (!strcmp(cam_type.c_str(), "shmem"))
-      cam = new camera_shmem<t_net>("shared-mem", height, width);
+      cam = new camera_shmem<ubyte>("shared-mem", height, width);
     else if (!strcmp(cam_type.c_str(), "video")) {
       if (argc == 3)
-	cam = new camera_video<t_net>
+	cam = new camera_video<ubyte>
 	  (argv[2], height, width, conf.get_uint("input_video_sstep"),
 	   conf.get_uint("input_video_max_duration"));
       else eblerror("expected 2nd argument");
     } else eblerror("unknown camera type");
     // a camera directory may be used first, then switching to regular camera
     if (conf.exists_bool("precamera"))
-      cam2 = new camera_directory<t_net>(conf.get_cstring("precamdir"),
+      cam2 = new camera_directory<ubyte>(conf.get_cstring("precamdir"),
 					 height, width);
   }
   night_mode();
@@ -443,8 +206,8 @@ int main(int argc, char **argv) { // regular main without gui
     try {
       frame = cam->grab();
       // send new frame to vision_thread and check if new data was output
-      vt.set_data(frame);
-      updated = vt.get_data(bboxes);
+      dt.set_data(frame);
+      updated = dt.get_data(bboxes);
       // update target position if vision thread ready
       if (updated) {
 	// find bbox with max confidence
@@ -465,7 +228,7 @@ int main(int argc, char **argv) { // regular main without gui
 	    srcpos = pos;
 	    detection_timer.restart();
 	    // update template
-	    idx<t_net> tmptpl = frame.narrow(0, b->height, b->h0);
+	    idx<ubyte> tmptpl = frame.narrow(0, b->height, b->h0);
 	    tmptpl = tmptpl.narrow(1, b->width, b->w0);
 	    tpl = idx<ubyte>(tmptpl.get_idxdim());
 	    idx_copy(tmptpl, tpl);
@@ -477,13 +240,13 @@ int main(int argc, char **argv) { // regular main without gui
 	  }
 	} else
 	  b = NULL;
-	// update vt time
-	vt_time = vt_timer.elapsed();
-	vt_timer.restart();
+	// update dt time
+	dt_time = dt_timer.elapsed();
+	dt_timer.restart();
 	// print timing info
 	cout << "main: " << main_time << " ms "
 	     << "gui: " << gui_time << " ms "
-	     << "vision: " << vt_time << " ms " << endl;
+	     << "vision: " << dt_time << " ms " << endl;
       }
       // tracking
 #ifdef __OPENCV__
@@ -518,8 +281,8 @@ int main(int argc, char **argv) { // regular main without gui
       // update position and draw if gui thread ready
       if (!gui.busy_drawing()) {
 	// recompute position
-	if (vt_time > 0)
-	  tgt_time_distance = detection_timer.elapsed() / (float) vt_time;
+	if (dt_time > 0)
+	  tgt_time_distance = detection_timer.elapsed() / (float) dt_time;
 	estimate_position(srcpos, pos, tgtpos, frame, h, w, conf,
 			  tgt_time_distance);
 	// narrow original image into window

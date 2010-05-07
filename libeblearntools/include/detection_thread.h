@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet *
+ *   Copyright (C) 2010 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
@@ -28,30 +28,63 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARNTOOLS_H_
-#define LIBEBLEARNTOOLS_H_
+#ifndef DETECTION_THREAD_H_
+#define DETECTION_THREAD_H_
 
-// link error messages
-#define BOOST_LIB_ERROR "Boost libraries not available, install \
-libboost-filesystem-dev libboost-regex-dev and recompile"
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
 
-#include "configuration.h"
-#include "gdb.h"
-#include "xml_utils.h"
-#include "tools_utils.h"
-#include "opencv.h"
-#include "camera.h"
-#include "camera_opencv.h"
-#include "camera_v4l2.h"
-#include "camera_shmem.h"
-#include "camera_directory.h"
-#include "camera_video.h"
-#include "metaparser.h"
-#include "sort.h"
 #include "thread.h"
-#include "detection_thread.h"
 #include "netconf.h"
+#include "configuration.h"
 
-#endif /* LIBEBLEARNTOOLS_H_ */
+using namespace std;
+
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // A detection thread class
+
+  template <typename Tnet>
+  class detection_thread : public thread {
+  public:
+    detection_thread(configuration &conf, const char *arg2);
+    ~detection_thread();
+    
+    //! Execute the detection thread.
+    virtual void execute();
+    //! Return true if new data was copied to the thread, false otherwise.
+    virtual bool set_data(idx<ubyte> &frame);
+    //! Return true if new data was copied from the thread, false otherwise.
+    virtual bool get_data(vector<bbox*> &bboxes);
+    
+  private:
+    //! Copy passed bounding boxes into bboxes class member
+    //! (allocating new 'bbox' objects).
+    void copy_bboxes(vector<bbox*> &bb);
+    //! Turn 'out_updated' flag on, so that other threads know we just outputed
+    //! new data.
+    void set_out_updated();
+
+    ////////////////////////////////////////////////////////////////
+    // private members
+  private:
+    configuration		&conf;
+    const char			*arg2;
+    pthread_mutex_t		 mutex_in;	// mutex for thread input
+    pthread_mutex_t		 mutex_out;	// mutex for thread output
+    idx<Tnet>			 frame;
+    vector<bbox*>		 bboxes;
+    vector<bbox*>::iterator	 ibox;
+    bool			 in_updated;	// thread input updated
+    bool			 out_updated;	// thread output updated
+  };
+
+} // end namespace ebl
+
+#include "detection_thread.hpp"
+
+#endif /* DETECTION_THREAD_H_ */

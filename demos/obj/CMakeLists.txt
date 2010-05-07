@@ -72,25 +72,3 @@ ELSE(${Boost_MINOR_VERSION} GREATER 34)
   TARGET_LINK_LIBRARIES(objdetect ${Boost_FILESYSTEM_LIBRARY} 
     ${Boost_REGEX_LIBRARY})
 ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-
-# compile executable: window
-################################################################################
-add_executable (window
-  src/FastMatchTemplate.cc
-  src/window.cpp
-  )
-  
-# link executable with external libraries
-################################################################################
-target_link_libraries (window eblearn idx eblearntools)
-IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (window idxgui)
-  target_link_libraries (window eblearngui)
-ENDIF (QT_FOUND) #------------------------------------------------------------
-IF (${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(window ${Boost_SYSTEM_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-ELSE(${Boost_MINOR_VERSION} GREATER 34)
-  TARGET_LINK_LIBRARIES(window ${Boost_FILESYSTEM_LIBRARY} 
-    ${Boost_REGEX_LIBRARY})
-ENDIF (${Boost_MINOR_VERSION} GREATER 34)
