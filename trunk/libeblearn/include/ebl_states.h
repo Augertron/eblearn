@@ -267,7 +267,6 @@ namespace ebl {
     void compute_epsilons(T mu);
 
     //! load a parameter file into the x component.
-    template <class T2>
     bool load_x(const char *param_filename);
 
     //! save the x component to a file.

@@ -45,7 +45,7 @@ int main(int argc, char **argv) { // regular main without gui
   // load trained network
   parameter<t_net> theparam;
   lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10);
-  theparam.load_x<t_net>(paramfname.c_str());
+  theparam.load_x(paramfname.c_str());
 
   // load image
   idx<ubyte> image = load_image<ubyte>(imagefname);

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet *
+ *   Copyright (C) 2010 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
@@ -28,30 +28,28 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARNTOOLS_H_
-#define LIBEBLEARNTOOLS_H_
+#ifndef NETCONF_H_
+#define NETCONF_H_
 
-// link error messages
-#define BOOST_LIB_ERROR "Boost libraries not available, install \
-libboost-filesystem-dev libboost-regex-dev and recompile"
-
+#include "libeblearn.h"
 #include "configuration.h"
-#include "gdb.h"
-#include "xml_utils.h"
-#include "tools_utils.h"
-#include "opencv.h"
-#include "camera.h"
-#include "camera_opencv.h"
-#include "camera_v4l2.h"
-#include "camera_shmem.h"
-#include "camera_directory.h"
-#include "camera_video.h"
-#include "metaparser.h"
-#include "sort.h"
-#include "thread.h"
-#include "detection_thread.h"
-#include "netconf.h"
 
-#endif /* LIBEBLEARNTOOLS_H_ */
+namespace ebl {
+
+  //! Create a new network based on a configuration.
+  //! The configuration should at least contain these variables:
+  //! 'net_type' which can contain so far 'cscscf', 'cscsc', 'cscf', etc.
+  //! Other variables used are convolution and subsampling kernel sizes
+  //! such as 'net_c1h', 'net_c1w', 'net_s1h', etc.
+  //! See netconf.hpp for more details.
+  template <typename T>
+    module_1_1<T>* create_network(parameter<T> &theparam,
+				  configuration &conf, uint noutputs);
+
+} // end namespace ebl
+
+#include "netconf.hpp"
+
+#endif /* NETCONF_H_ */
