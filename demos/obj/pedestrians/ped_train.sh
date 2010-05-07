@@ -1,8 +1,8 @@
 #!/bin/sh
 
 dset=_nicta
-traindsname=ped_mean19x19_ker7_train
-valdsname=ped_mean19x19_ker7_val
+traindsname=ped${dset}_mean19x19_ker7_train
+valdsname=ped${dset}_mean19x19_ker7_val
 h=80
 w=32
 

@@ -30,6 +30,9 @@ SET(FILE_TO_BIN
   hand/hand_meta.conf
   hand/hand_train.sh
   hand/hand_dsprepare.sh
+  pedestrians/ped_meta.conf
+  pedestrians/ped_train.sh
+  pedestrians/ped_dsprepare.sh
 )
 
 FOREACH(NAME ${FILE_TO_BIN})

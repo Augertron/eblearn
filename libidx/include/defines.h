@@ -44,9 +44,9 @@
 
 #define MATRIX_EXTENSION ".mat"
 #define IMAGE_PATTERN \
-  ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM|pgm|PGM|gif|GIF)"
+  ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM|pnm|PNM|pgm|PGM|gif|GIF)"
 #define IMAGE_PATTERN_MAT \
-  ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM|pgm|PGM|gif|GIF|mat|MAT)"
+  ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM|pnm|PNM|pgm|PGM|gif|GIF|mat|MAT)"
 
 // official names for dataset files
 #define DATA_NAME "data"
