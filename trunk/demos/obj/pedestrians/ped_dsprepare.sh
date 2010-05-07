@@ -22,8 +22,8 @@ dset=_nicta
 dataroot=~/${machine}adata
 pascal=$dataroot/pascal
 pascalroot=$pascal/VOCdevkit_trainval09/VOC2009/
-root=$dataroot/ped/data
-out=$dataroot/ped/ds/
+root=$dataroot/pedestrians/data
+out=$dataroot/pedestrians/ds/
 nopersons_root=$dataroot/nopersons/
 
 # variables

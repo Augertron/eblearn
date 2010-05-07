@@ -1,4 +1,6 @@
 #include <iomanip>
+#include "libeblearn.h"
+#include "libeblearntools.h"
 
 typedef double t_net; // precision at which network is trained (ideally double)
 
