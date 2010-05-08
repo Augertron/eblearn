@@ -156,7 +156,7 @@ namespace ebl {
     init_preprocessing();
     // extract
 #ifdef __BOOST__
-    if (!allocated)
+    if (!allocated && !scale_mode)
       return false;
     cmatch what;
     regex hidden_dir(".svn");    
@@ -287,14 +287,16 @@ namespace ebl {
     
   template <class Tdata>
   bool dataset<Tdata>::full(t_label label) {
-    if (label == -42) // excluded class
-      return true;
     if ((max_data_set && (data_cnt >= max_data)) ||
 	((data.order() > 0) && (data_cnt >= data.dim(0))))
       return true;
-    if (max_per_class_set && (label >= 0) &&
-	(add_tally.get(label) >= max_per_class.get(label)))
-      return true;
+    if (!scale_mode) {
+      if (label == -42) // excluded class
+	return true;
+      if (max_per_class_set && (label >= 0) &&
+	  (add_tally.get(label) >= max_per_class.get(label)))
+	return true;
+    }
     return false;
   }
 
@@ -1157,17 +1159,16 @@ namespace ebl {
       else if (regex_match(itr->leaf().c_str(), what, r)) {
 	try {
 	  // if full for this class, skip this directory
-	  if ((full(get_label_from_class(class_name)) || !included(class_name))
-	      && !scale_mode)
+	  if ((full(get_label_from_class(class_name)) || !included(class_name)))
 	    break ;
 	  // load data
 	  //	  cout << "loading: " << itr->path().string() << endl;
 	  load_data(itr->path().string());
 	  // add sample data
-	  if (scale_mode) // saving image at different scales
-	    save_scales(load_img, itr->leaf());
-	  else // adding data to dataset
-	    add_data(load_img, label, &class_name, itr->path().string().c_str());
+// 	  if (scale_mode) // saving image at different scales
+// 	    save_scales(load_img, itr->leaf());
+// 	  else // adding data to dataset
+	  this->add_data(load_img, label, &class_name, itr->path().string().c_str());
 	} catch(const char *err) {
 	  cerr << "error: failed to add " << itr->path().string();
 	  cerr << ": " << endl << err << endl;
