@@ -481,7 +481,7 @@ int main(int argc, char **argv) {
   cout << "  outputs: " << outdir << "/" << dataset_name << "_*.mat" << endl;
   cout << "  images pattern: " << image_pattern << endl;
   cout << "  channels mode: " << channels_mode.c_str() << endl;
-  cout << "  oreprocessing: " << (preprocessing ? "yes" : "no") << endl;
+  cout << "  preprocessing: " << (preprocessing ? "yes" : "no") << endl;
   cout << "  display: " << (display ? "yes" : "no") << endl;
   cout << "  display sleep: " << sleep_delay << " ms." << endl;
   cout << "  shuffling: " << (shuffle ? "yes" : "no") << endl;

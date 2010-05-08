@@ -35,15 +35,16 @@ precision=float
 pp=YpUV
 kernel=7 #9
 resize=mean #bilinear
-nbg=2
+nbg=1
 bgscales=8,4,2,1
+maxbg=45000
 
 # names
 id=${resize}${h}x${w}_ker${kernel}
 name=ped${dset}_${id}
 namebg=${name}_bg
-#bgds=pascalbg_${id}
-bgds=pascalbg_bilinear32x32_ker7_2
+bgds=nopersons_${id}
+#bgds=pascalbg_bilinear32x32_ker7_2
 outbg=${out}/${bgds}
 
 # debug variables
@@ -61,19 +62,18 @@ mkdir -p $nopersons_root
 # dataset compilations
 ###############################################################################
 
-# # extract background images at different scales from all images parts that
-# # don't contain persons
-# ~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
-#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
-#     -maxperclass $nbg $maxdata -include "person" \
-#     -channels $pp -resize $resize -kernelsz $kernel \
-#     $maxdata $ddisplay # debug
+# extract background images at random scales and positions
+~/eblearn/bin/dscompiler $nopersons_root -type patch -precision $precision \
+    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+    -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
+    -maxdata $maxbg
+    # $maxdata $ddisplay # debug
 
-# # compile background dataset
-# ~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
-#     -outdir ${out} -dname ${bgds}_${nbg} \
-#     -dims ${h}x${w}x3 \
-#     $maxdata $maxperclass $ddisplay # debug
+# compile background dataset
+~/eblearn/bin/dscompiler ${outbg} -precision $precision \
+    -outdir ${out} -dname ${bgds} \
+    -dims ${h}x${w}x3 \
+    # $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
 ~/eblearn/bin/dscompiler $root -precision $precision \
@@ -87,7 +87,7 @@ mkdir -p $nopersons_root
 # split validation and training
 for i in `seq 1 ${draws}`
 do
-~/eblearn/bin/dssplit $out ${namebg}_val_$i \
+~/eblearn/bin/dssplit $out ${namebg} \
     ${namebg}_val_$i ${namebg}_train_$i -maxperclass ${maxval} -draws 1
 done
 

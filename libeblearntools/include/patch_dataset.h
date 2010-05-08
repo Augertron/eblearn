@@ -64,9 +64,10 @@ namespace ebl {
 
     ////////////////////////////////////////////////////////////////
     // data
-
+ 
     //! Extract patches from image.
-    virtual bool add_data(idx<Tdata> &d, const string &class_name,
+    virtual bool add_data(idx<Tdata> &d, const t_label label,
+			  const string *class_name,
 			  const char *filename = NULL, const rect *r = NULL);
 
   protected:
@@ -81,6 +82,7 @@ namespace ebl {
     uint max_folders; // maximum number of patch directories
     // base class members to be used ///////////////////////////////
     using dataset<Tdata>::inroot;
+    using dataset<Tdata>::allocated;
     using dataset<Tdata>::display_extraction;
     using dataset<Tdata>::display_result;
     using dataset<Tdata>::outdims;

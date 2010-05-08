@@ -56,7 +56,9 @@ namespace ebl {
 				      uint max_folders_)
     : dataset<Tdata>(name_, inroot_) {
     outdir = outdir_;
-    cout << "output directory: " << outdir << endl;
+    cout << "Output directory: " << outdir << endl;
+    cout << "Saving " << max_folders_ << " patch per image "
+	 << "for each scale at random position. " << endl;
     max_folders = max_folders_;
     data_cnt = 0;
     save_mode = "mat";
@@ -71,7 +73,8 @@ namespace ebl {
 
   template <class Tdata>
   bool patch_dataset<Tdata>::
-  add_data(idx<Tdata> &img, const string &class_name,
+  add_data(idx<Tdata> &img, const t_label label,
+	   const string *class_name,
 	   const char *filename, const rect *r) {
     vector<rect> patch_bboxes;
     vector<rect>::iterator ibb;
@@ -149,7 +152,7 @@ namespace ebl {
 					     const string &filename) {
     ostringstream folder, fname;
     try {
-      mkdir(outdir.c_str(), MKDIR_RIGHTS);
+      mkdir_full(outdir.c_str());
       uint i;
       // shuffle randomly vector of patches to avoid taking top left corner
       // as first patch every time
@@ -159,13 +162,11 @@ namespace ebl {
 	// create folder if doesn't exist
 	folder.str("");
 	folder << outdir << "/" << "bg" << i+1 << "/";
-	mkdir(folder.str().c_str(), MKDIR_RIGHTS);
-	folder << "/patches/";
-	mkdir(folder.str().c_str(), MKDIR_RIGHTS);
+	mkdir_full(folder.str().c_str());
 	// save patch in folder
 	// switch saving behavior
 	fname.str("");
-	fname << folder.str() << filename << ".bg" << i+1;
+	fname << folder.str() << "img" << data_cnt << ".bg" << i+1;
 	if (!strcmp(save_mode.c_str(), "mat")) { // lush matrix mode
 	  fname << MATRIX_EXTENSION;
 	  if (!save_matrix(patches[i], fname.str()))
