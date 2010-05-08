@@ -31,6 +31,7 @@ Libraries:
 - write supervised_trainer as derivation of stochastic_gd_trainer (rename this
   shorter)
 - port libraries to Windows libraries using mingw and win32api
+- uvc webcam with v4l2: http://staticwave.ca/source/uvccapture/
  
 ________________________________________________________________________________
 Guis:
