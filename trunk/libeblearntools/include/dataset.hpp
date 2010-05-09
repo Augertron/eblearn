@@ -102,6 +102,7 @@ namespace ebl {
     force_label = "";
     nclasses = 0;
     add_errors = 0;
+    nopadded = false;
 #ifndef __BOOST__
     eblerror(BOOST_LIB_ERROR);
 #endif
@@ -765,6 +766,14 @@ namespace ebl {
   }
     
   template <class Tdata>
+  void dataset<Tdata>::set_nopadded(bool nopadded_) {
+    nopadded = nopadded_;
+    if (nopadded)
+      cout << "Ignoring samples that have padding areas, i.e. too"
+	   << " small for target size." << endl;
+  }
+  
+  template <class Tdata>
   void dataset<Tdata>::use_pose() {
     usepose = true;
     cout << "Using pose to separate classes." << endl;
@@ -948,7 +957,7 @@ namespace ebl {
   idx<Tdata> dataset<Tdata>::
   preprocess_data(idx<Tdata> &dat, const string *class_name, bool squared,
 		  const char *filename, const rect *r, double scale,
-		  bool active_sleepd) {
+		  bool active_sleepd, rect *outr) {
     // input region
     rect inr(0, 0, dat.dim(0), dat.dim(1));
     if (r) inr = *r;
@@ -980,6 +989,8 @@ namespace ebl {
     resizepp->fprop(in, out);
     // remember bbox of original image in resized image
     original_bbox = resizepp->get_original_bbox(); 
+    if (outr)
+      *outr = original_bbox;
     idx<Tdata> res = out.x.shift_dim(0, 2);
     // display each step
 #ifdef __GUI__
@@ -1004,7 +1015,7 @@ namespace ebl {
 //       h += original.dim(dh) + 5;
       // draw output in RGB
       gui << at(h, w) << ppconv_type; h += 15;
-      draw_matrix(res, h, w);
+      draw_matrix(res, h, w, 1, 1, minval, maxval);
       // draw crossing arrows at center
       draw_box(h + res.dim(dh)/2, w + res.dim(dw)/2,
 	       res.dim(dh)/2, res.dim(dw)/2, 0,0,0);

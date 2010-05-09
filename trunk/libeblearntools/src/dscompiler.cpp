@@ -90,6 +90,7 @@ bool            load_set         = false;
 float           bboxfact         = 1.0;
 bool            bboxfact_set     = false;
 bool            force_label      = false;
+bool            nopadded         = false;
 string          label            = "";
 idxdim          gridsz;
 
@@ -265,6 +266,8 @@ bool parse_args(int argc, char **argv) {
 	++i; if (i >= argc) throw 0;
 	label = argv[i];
 	force_label = true;
+      } else if (strcmp(argv[i], "-nopadded") == 0) {
+	nopadded = true;
       } else if (strcmp(argv[i], "-bboxfact") == 0) {
 	++i; if (i >= argc) throw 0;
 	bboxfact = (float) atof(argv[i]);
@@ -356,6 +359,7 @@ void print_usage() {
   cout << endl;
   cout << "  -ignore_occluded (ignore sample if \"occluded\" flag is on)";
   cout << endl;
+  cout << "  -nopadded (ignore padded image too small for target size)" << endl;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -372,6 +376,7 @@ void compile_ds(Tds &ds, bool imgpat = true) {
   if (outdims_set) ds.set_outdims(outdims);
   if (mindims_set) ds.set_mindims(mindims);
   ds.set_display(display);
+  ds.set_nopadded(nopadded);
   ds.set_sleepdisplay(sleep_delay);
   ds.set_resize(resize);
   if (save_set) ds.set_save(save);
@@ -417,6 +422,7 @@ void compile() {
     ds.set_resize(resize);
     if (outdims_set) ds.set_outdims(outdims);
     if (mindims_set) ds.set_mindims(mindims);
+    ds.set_nopadded(nopadded);
     ds.set_display(display);
     ds.set_sleepdisplay(sleep_delay);
     ds.set_image_pattern(image_pattern);
@@ -433,6 +439,7 @@ void compile() {
     if (partsonly) ds.use_parts_only();
     ds.set_exclude(exclude);
     ds.set_include(include);
+    ds.set_nopadded(nopadded);
     ds.set_display(display);
     ds.set_resize(resize);
     ds.set_sleepdisplay(sleep_delay);
@@ -503,6 +510,7 @@ int main(int argc, char **argv) {
   cout << "  resizing method: " << resize << endl;
   cout << "  output dimensions: " << outdims << endl;
   cout << "  minimum input dimensions: " << mindims << endl;
+  cout << "  no padded: " << (nopadded ? "yes" : "no") << endl;
   cout << "  scales: ";
   if (!scale_mode) cout << "none";
   else for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i)

@@ -70,6 +70,21 @@ bool parse_args(int argc, char **argv, string &ds_name) {
 template <typename T> void display(const string &fname, idx<T> &mat) {
 #ifdef __GUI__
   new_window(fname);
+  T min, max;
+  T matmin = idx_min(mat);
+  if (matmin < 0) {
+    min = -1; 
+    max = -1;
+  }
+  draw_matrix(mat, 0, 0, 1, 1, min, max);
+  gui << mat;
+  sleep(1); // TODO: this lets time for window to open, fix this issue
+#endif
+}
+
+void display(const string &fname, idx<ubyte> &mat) {
+#ifdef __GUI__
+  new_window(fname);
   draw_matrix(mat);
   gui << mat;
   sleep(1); // TODO: this lets time for window to open, fix this issue
