@@ -75,7 +75,7 @@ namespace ebl {
     //! new data.
     void set_out_updated();
     //! Draw inputs/outputs.
-    void draw();
+    void draw(bbox *b);
 
     ////////////////////////////////////////////////////////////////
     // private members

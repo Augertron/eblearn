@@ -135,12 +135,20 @@ namespace ebl {
   }
 
   template <typename Tnet>
-  void tracking_thread<Tnet>::draw() {
+  void tracking_thread<Tnet>::draw(bbox *b) {
 #ifdef __GUI__
     disable_window_updates();
     clear_window();
     draw_matrix(frame, "in");
     draw_matrix(tpl, "tpl", 0, frame.dim(1));
+    if (b) {
+      char red = 0, green = 0, blue = 0;
+      if (b->class_id == -42)
+	green = 255;
+      else
+	blue = 255;
+      draw_box(b->h0, b->w0, b->width, b->height, red, green, blue);
+    }
     enable_window_updates();
 #endif
   }
@@ -245,7 +253,7 @@ namespace ebl {
 	  set_out_updated();
 	  // display
 	  if (display)
-	    draw();
+	    draw(b);
 	} catch (string &err) {
 	  cerr << err << endl;
 	}

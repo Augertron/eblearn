@@ -75,3 +75,24 @@ ELSE(${Boost_MINOR_VERSION} GREATER 34)
   TARGET_LINK_LIBRARIES(objdetect ${Boost_FILESYSTEM_LIBRARY} 
     ${Boost_REGEX_LIBRARY})
 ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+
+# compile executable: objdetect
+################################################################################
+add_executable (objtrack
+  src/track.cpp
+  )
+  
+# link executable with external libraries
+################################################################################
+target_link_libraries (objtrack eblearn idx eblearntools)
+IF (QT_FOUND) #---------------------------------------------------------------
+  target_link_libraries (objtrack idxgui)
+  target_link_libraries (objtrack eblearngui)
+ENDIF (QT_FOUND) #------------------------------------------------------------
+IF (${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(objtrack ${Boost_SYSTEM_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+ELSE(${Boost_MINOR_VERSION} GREATER 34)
+  TARGET_LINK_LIBRARIES(objtrack ${Boost_FILESYSTEM_LIBRARY} 
+    ${Boost_REGEX_LIBRARY})
+ENDIF (${Boost_MINOR_VERSION} GREATER 34)
