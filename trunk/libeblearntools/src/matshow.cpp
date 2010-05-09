@@ -31,6 +31,7 @@
  ***************************************************************************/
 
 #include "libidx.h"
+#include "tools_utils.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"
@@ -40,56 +41,90 @@ using namespace std;
 using namespace ebl;
 
 ////////////////////////////////////////////////////////////////
-// definitions
-
-// the images will be displayed between range_min and range_max, which
-// are initialized with those values. (0,0) meaning automatic range.
-#define DEFAULT_DISPLAY_RANGE_MIN 0 // (0,0) -> automatic range
-#define DEFAULT_DISPLAY_RANGE_MAX 0 // (0,0) -> automatic range
-
-////////////////////////////////////////////////////////////////
 // interface
 
 // print command line usage
 void print_usage() {
-  cout << "Usage: ./matdisplay <root/name>" << endl;
-  cout << "  example: ./matdisplay /datasets/pascal" << endl;
+  cout << "Usage: ./matshow *.mat" << endl;
 }
 
 // parse command line input
-bool parse_args(int argc, char **argv, string &ds_name) {
+bool parse_args(int argc, char **argv) {
   // Read arguments from shell input
   if (argc < 2) {
     cerr << "input error: expecting arguments." << endl;
     return false;
   }
-  ds_name = argv[1];
+  // if requesting help, print usage
+  if ((strcmp(argv[1], "-help") == 0) ||
+      (strcmp(argv[1], "-h") == 0))
+    return false;
   return true;
 }
 
-template <typename T> void display(const string &fname, idx<T> &mat) {
+////////////////////////////////////////////////////////////////
+// gui
+
+template <typename T>
+void display(string &fname) {
 #ifdef __GUI__
-  new_window(fname);
+  disable_window_updates();
+  clear_window();
+  idx<T> mat = load_image<T>(fname);
   T min, max;
   T matmin = idx_min(mat);
   if (matmin < 0) {
     min = -1; 
     max = -1;
   }
-  draw_matrix(mat, 0, 0, 1, 1, min, max);
+  draw_matrix(mat, 0, 0, 1.0, 1.0, min, max);
   gui << mat;
-  sleep(1); // TODO: this lets time for window to open, fix this issue
+  enable_window_updates();
 #endif
 }
 
-void display(const string &fname, idx<ubyte> &mat) {
+void display(string &fname) {
 #ifdef __GUI__
-  new_window(fname);
+  disable_window_updates();
+  clear_window();
+  idx<ubyte> mat = load_image<ubyte>(fname);
   draw_matrix(mat);
   gui << mat;
-  sleep(1); // TODO: this lets time for window to open, fix this issue
+  enable_window_updates();
 #endif
 }
+
+void load_display(string &fname) {
+  switch (get_matrix_type(fname.c_str())) {
+  case MAGIC_BYTE_MATRIX:
+  case MAGIC_UBYTE_VINCENT:
+    display<ubyte>(fname);
+    break ;
+  case MAGIC_INTEGER_MATRIX:
+  case MAGIC_INT_VINCENT:
+    display<int>(fname);
+    break ;
+  case MAGIC_FLOAT_MATRIX:
+  case MAGIC_FLOAT_VINCENT:
+    display<float>(fname);
+    break ;
+  case MAGIC_DOUBLE_MATRIX:
+  case MAGIC_DOUBLE_VINCENT:
+    display<double>(fname);
+    break ;
+  case MAGIC_LONG_MATRIX:
+    display<long>(fname);
+    break ;
+  case MAGIC_UINT_MATRIX:
+    display<uint>(fname);
+    break ;
+  default:
+    eblerror("unknown magic number");
+  }
+}
+
+////////////////////////////////////////////////////////////////
+// main
 
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char**, argv) { 
@@ -97,13 +132,46 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 int main(int argc, char **argv) {
 #endif
   try {
+    if (!parse_args(argc, argv))
+      return -1;
+    new_window("matshow");
+    // show mat images
     for (int i = 1; i < argc; ++i) {
       string fname = argv[i];
-      idx<float> img = load_image<float>(fname);
-      display(fname, img);
+      load_display(fname);
+    }
+    // list all other mat files in image directory
+    string dir = argv[1];
+    string imgname, tmpname;
+    size_t pos = dir.find_last_of('/');
+    imgname = dir.substr(pos + 1, dir.size() - pos + 1);
+    dir = dir.substr(0, pos);
+    list<string> *mats = find_fullfiles(dir, MAT_PATTERN, NULL, true, false);
+    if ((mats) && (mats->size() > 1)) {
+      // find current position in this list
+      list<string>::iterator i;
+      for (i = mats->begin(); i != mats->end(); ++i) {
+	tmpname = i->substr(pos + 1, i->size() - pos + 1);
+	if (!imgname.compare(tmpname)) {
+	  break ;
+	}
+      }
+      // loop and wait for key pressed
+      while (1) {
+	usleep(50000);
+	if (gui.pop_key_pressed() == Qt::Key_Space) {
+	  ++i;
+	  if (i == mats->end())
+	    i = mats->begin();
+	  load_display(*i);
+	}
+      }
+      // free list
+      delete mats;
     }
   } catch(string &err) {
     cerr << err << endl;
   }
+  usleep(500000); // TODO: this lets time for window to open, fix this issue
   return 0;
 }

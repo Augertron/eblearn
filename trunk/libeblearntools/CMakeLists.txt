@@ -141,16 +141,17 @@ IF (Boost_FOUND)
   ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 ENDIF (Boost_FOUND)
 
-# compile executable: matdisplay
+# compile executable: matshow
 ################################################################################
-add_executable (matdisplay
-  src/matdisplay.cpp
+add_executable (matshow
+  src/matshow.cpp
   )
 
 # link executable with external libraries
-target_link_libraries (matdisplay idx)
+target_link_libraries (matshow idx)
+target_link_libraries (matshow eblearntools)
 IF (QT_FOUND)
-  target_link_libraries (matdisplay idxgui)
+  target_link_libraries (matshow idxgui)
 ENDIF (QT_FOUND)
 
 # compile executable: capture
