@@ -131,6 +131,9 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 #else
 int main(int argc, char **argv) {
 #endif
+#ifndef __GUI__
+  eblerror("QT not found, install and recompile.");
+#else
   try {
     if (!parse_args(argc, argv))
       return -1;
@@ -173,5 +176,6 @@ int main(int argc, char **argv) {
     cerr << err << endl;
   }
   usleep(500000); // TODO: this lets time for window to open, fix this issue
+#endif
   return 0;
 }
