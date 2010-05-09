@@ -48,7 +48,7 @@ ENDIF (XML_FOUND)
 # find QT
 ##############################################################################
 SET(DESIRED_QT_VERSION 4.3)
-#INCLUDE(FindQt)
+INCLUDE(FindQt)
 SET(DESIRED_QT_VERSION 4.3)
 IF (QT4_INSTALLED)
   SET(QT_QMAKE_EXECUTABLE "/usr/local/pkg/qt/4.6.2/bin/qmake")
