@@ -77,6 +77,10 @@ template <class T> Srg<T>::~Srg() {
 // return size
 template <class T> intg Srg<T>::size() { return size_; }
 
+  // TODO: thread-safe malloc?
+  //#include <pthread.h>
+  //  extern pthread_mutex_t mutmal;
+  
 // low-level resize: can grow and shrink
 // returns -1 on failure.
 // Self should be used with care, because shrinking
@@ -88,7 +92,12 @@ template <class T> intg Srg<T>::changesize(intg s) {
     data = (T *)NULL;
     size_ = 0;
   } else {
+    // TODO: malloc/realloc not thread safe
+    // use google's tcalloc? (supposedly much faster:
+    // http://google-perftools.googlecode.com/svn/trunk/doc/tcmalloc.html    
+    //pthread_mutex_lock(&mutmal);
     data = (T *)realloc((void *)data, s*sizeof(T));
+    //pthread_mutex_unlock(&mutmal);
     if (data != NULL) {
       size_ = s;
       return size_;
