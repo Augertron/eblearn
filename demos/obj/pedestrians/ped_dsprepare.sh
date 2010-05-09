@@ -37,7 +37,7 @@ kernel=7 #9
 resize=mean #bilinear
 nbg=1
 bgscales=8,6,4
-maxbg=45000
+maxbg=1 #45000
 
 # names
 id=${resize}${h}x${w}_ker${kernel}

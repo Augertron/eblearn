@@ -26,7 +26,7 @@ BIN_INSTALL=$(INSTALL_DIR)/bin
 
 LIBS=libidx.${LIB_EXT} libidxgui.${LIB_EXT} libeblearn.${LIB_EXT} \
 		       libeblearngui.${LIB_EXT} libeblearntools.${LIB_EXT}
-BINS=dscompiler dssplit dsmerge matdisplay dsdisplay metarun metaparse capture
+BINS=dscompiler dssplit dsmerge matshow dsdisplay metarun metaparse capture
 DEMOS=objtrain objdetect mnist_train mnist_reco
 
 all: release
