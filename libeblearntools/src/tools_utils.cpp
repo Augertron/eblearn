@@ -57,7 +57,7 @@ namespace ebl {
   }
 
   files_list *find_files(const string &dir, const char *pattern,
-			 files_list *fl_, bool sorted) {
+			 files_list *fl_, bool sorted, bool recursive) {
     files_list *fl = fl_;
 #ifndef __BOOST__
     eblerror("boost not installed, install and recompile");
@@ -81,9 +81,11 @@ namespace ebl {
       }
     }
     // then explore subdirectories
-    for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if (is_directory(itr->status()))
-	find_files(itr->path().string(), pattern, fl, sorted);
+    if (recursive) {
+      for (directory_iterator itr(p); itr != end_itr; ++itr) {
+	if (is_directory(itr->status()))
+	  find_files(itr->path().string(), pattern, fl, sorted);
+      }
     }
     // sort list
     if (sorted)
@@ -93,7 +95,7 @@ namespace ebl {
   }
 
   list<string> *find_fullfiles(const string &dir, const char *pattern,
-			       list<string> *fl_, bool sorted) {
+			       list<string> *fl_, bool sorted, bool recursive) {
     list<string> *fl = fl_;
 #ifndef __BOOST__
     eblerror("boost not installed, install and recompile");
@@ -116,9 +118,11 @@ namespace ebl {
       }
     }
     // then explore subdirectories
-    for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if (is_directory(itr->status()))
-	find_fullfiles(itr->path().string(), pattern, fl, sorted);
+    if (recursive) {
+      for (directory_iterator itr(p); itr != end_itr; ++itr) {
+	if (is_directory(itr->status()))
+	  find_fullfiles(itr->path().string(), pattern, fl, sorted);
+      }
     }
     // sort list
     if (sorted)

@@ -43,6 +43,7 @@
 #endif
 
 #define MATRIX_EXTENSION ".mat"
+#define MAT_PATTERN ".*[.](mat|MAT)"
 #define IMAGE_PATTERN \
   ".*[.](png|jpg|jpeg|PNG|JPG|JPEG|bmp|BMP|ppm|PPM|pnm|PNM|pgm|PGM|gif|GIF)"
 #define IMAGE_PATTERN_MAT \

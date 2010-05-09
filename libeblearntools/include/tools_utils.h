@@ -63,7 +63,8 @@ namespace ebl {
   //!           The default pattern matches images extensions.
   files_list *find_files(const string &dir,
 			 const char *pattern = IMAGE_PATTERN,
-			 files_list *fl = NULL, bool sorted = true);
+			 files_list *fl = NULL, bool sorted = true,
+			 bool recursive = true);
   
   //! Returns a list of string of full paths to files recursively found in
   //! direcotry dir and matching the pattern. The files are found using
@@ -72,11 +73,13 @@ namespace ebl {
   //! The user is responsible for deleting the returned list.
   //! \param fl A file list where new found files will be apprended if not null.
   //!           If null, a new list is allocated. This is used by the recursion.
-  //! \param pattern The regular expression describing the file name pattern.
+  //! \param pattern The regular expression describing the file name pattern,
+  //!           e.g. ".*[.](mat|MAT)".
   //!           The default pattern matches images extensions.
   list<string> *find_fullfiles(const string &dir,
 			       const char *pattern = IMAGE_PATTERN,
-			       list<string> *fl = NULL, bool sorted = true);
+			       list<string> *fl = NULL, bool sorted = true,
+			       bool recursive = true);
   
   //! Counts recursively the number of files matching the pattern (default is
   //! an image extension pattern) in directory 'dir'.
