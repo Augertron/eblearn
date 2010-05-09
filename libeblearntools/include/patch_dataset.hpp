@@ -78,8 +78,6 @@ namespace ebl {
 	   const char *filename, const rect *r) {
     vector<rect> patch_bboxes;
     vector<rect>::iterator ibb;
-    idxdim d(img);
-    idx<Tdata> im(d);
     string cname = "patch";
     ostringstream fname;
     vector<idx<Tdata> > patches;
@@ -89,26 +87,35 @@ namespace ebl {
     for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
       patches.clear();
       patch_bboxes.clear();
-      idx_copy(img, im); // initialize im to original image
       // rescale original bboxes
-      double ratio = MAX(im.dim(0) / (double) outdims.dim(0),
-			 im.dim(1) / (double) outdims.dim(1)) / *i;
+      uint outh = (uint) (outdims.dim(0) * *i);
+      uint outw = (uint) (outdims.dim(1) * *i);
+      float ratio = MAX(img.dim(0) / (float) outh, 
+			img.dim(1) / (float) outw);
+      uint inh = (uint) (img.dim(0) / ratio);
+      uint inw = (uint) (img.dim(1) / ratio);
       // do not upsample to avoid creating artefacts
-      // if (ratio < 1)
-      // 	continue ; // do nothing for this scale
+      // and ignore sizes smaller than outdims
+      if (outh > img.dim(0) || outw > img.dim(1)
+	  || outh < outdims.dim(0) || outw < outdims.dim(1)
+	  || inh < outdims.dim(0) || inw < outdims.dim(1)) {
+      	continue ; // do nothing for this scale
+      }
       // preprocess image
-      rect r(0, 0, im.dim(0), im.dim(1));
-      idx<Tdata> im2 =
-	this->preprocess_data(im, &cname, false, filename, &r, *i, false);
+      rect r(0, 0, img.dim(0), img.dim(1));
+      rect outr;
+      idx<Tdata> im =
+	this->preprocess_data(img, &cname, false, filename, &r, *i, false, 
+			      &outr);
       // extract all non overlapping patches with dimensions outdims that
       // do not overlap with bounding boxes
       rect patch(0, 0, outdims.dim(0), outdims.dim(1));
-      for (patch.h0 = 0; patch.h0 + patch.height <= (uint) im2.dim(0);
+      for (patch.h0 = outr.h0; patch.h0 + patch.height < outr.h0 + outr.height;
 	   patch.h0 += patch.height) {
-	for (patch.w0 = 0; patch.w0 + patch.width <= (uint) im2.dim(1);
+	for (patch.w0 = outr.w0; patch.w0 + patch.width < outr.w0 + outr.width;
 	     patch.w0 += patch.width) {
 	  // add patch
-	  idx<Tdata> p = im2.narrow(0, patch.height, patch.h0);
+	  idx<Tdata> p = im.narrow(0, patch.height, patch.h0);
 	  p = p.narrow(1, patch.width, patch.w0);
 	  patches.push_back(p);
 	  patch_bboxes.push_back(patch);
@@ -118,14 +125,12 @@ namespace ebl {
       if (display_extraction) {
 	uint h = 63, w = 0;
 	disable_window_updates();
-	// draw patches
+// 	// draw original image
+// 	draw_matrix(im, h, w, 1.0, 1.0, (Tdata) -1, (Tdata) 1);
+	// draw patches boxes
 	for (ibb = patch_bboxes.begin(); ibb != patch_bboxes.end(); ++ibb)
 	  draw_box(h + ibb->h0, w + ibb->w0,
 		   ibb->height, ibb->width, 0, 255, 0);
-// 	// draw original image
-// 	h = im2.dim(0) + 5, w = 0;
-// 	idx<Tdata> tmp = im2.select(2, 0);
-// 	draw_matrix(tmp, h, w, 1.0, 1.0, (Tdata) -1, (Tdata) 1);
 // 	// draw bboxes on original
 // 	for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb)
 // 	  draw_box(h + ibb->h0, w + ibb->w0,
@@ -135,9 +140,7 @@ namespace ebl {
 	  usleep((uint) (sleep_delay * 1000.0));
       }
 #endif
-      fname.str("");
-      fname << filename << "_scale" << *i;
-      save_patches(patches, outdir, max_folders, fname.str());
+      save_patches(patches, outdir, max_folders, filename, *i);
     }
     return true;
   }
@@ -147,9 +150,10 @@ namespace ebl {
 
   template <class Tdata>
   void patch_dataset<Tdata>::save_patches(vector<idx<Tdata> > &patches,
-					     const string &outdir,
-					     uint max_folders,
-					     const string &filename) {
+					  const string &outdir,
+					  uint max_folders,
+					  const string &filename,
+					  double scale) {
     ostringstream folder, fname;
     try {
       mkdir_full(outdir.c_str());
@@ -166,7 +170,8 @@ namespace ebl {
 	// save patch in folder
 	// switch saving behavior
 	fname.str("");
-	fname << folder.str() << "img" << data_cnt << ".bg" << i+1;
+	fname << folder.str() << "img_" << setw(5) << setfill('0') << data_cnt 
+	      << "_bg" << i+1 << "_scale" << scale;
 	if (!strcmp(save_mode.c_str(), "mat")) { // lush matrix mode
 	  fname << MATRIX_EXTENSION;
 	  if (!save_matrix(patches[i], fname.str()))

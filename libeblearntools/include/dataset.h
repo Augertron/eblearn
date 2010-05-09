@@ -165,6 +165,10 @@ namespace ebl {
     //! objects.
     void set_bboxfact(float factor);
 
+    //! If true, ignore samples with padded areas, i.e. too small for target 
+    //! size.
+    void set_nopadded(bool nopadded);
+
     //! use pose information to separate classes. e.g. if for class "person"
     //! we have "front" and "side" pose, create 2 classes "person_front"
     //! and "person_side" instead of 1 class "person".
@@ -258,10 +262,12 @@ namespace ebl {
     //! Preprocess data d of type Toriginal into an idx of type Tdata
     //! with output dimensions outdims and return the result.
     //! The type of preprocessing can be selected using set_pp_conversion().
+    //! @param outr If not null, copy the rect of the input region in the
+    //!        output image.
     idx<Tdata> preprocess_data(idx<Tdata> &d, const string *class_name,
 			       bool squared = true, const char *filename = NULL,
 			       const rect *r = NULL, double scale = 0,
-			       bool active_sleepd = true);
+			       bool active_sleepd = true, rect *outr = NULL);
 
     ////////////////////////////////////////////////////////////////
     // Helper functions
@@ -322,6 +328,7 @@ namespace ebl {
     string              save_mode;      //!< saving mode (dataset, ppm, png..)
     float               bboxfact;       //!< bounding boxes factor
     string              force_label;    //!< force all labels to this one
+    bool                nopadded;       //!< ignore too small samples
     // names ///////////////////////////////////////////////////////
     string		name;	        //!< dataset name
     string		data_fname;	//!< data filename

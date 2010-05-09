@@ -76,7 +76,8 @@ namespace ebl {
     //! until reaching max_folders, then filling last folder with remaining
     //! patches, using filename as base filename for patches filenames.
     void save_patches(vector<idx<Tdata> > &patches, const string &outdir,
-		      uint max_folders, const string &filename);
+		      uint max_folders, const string &filename,
+		      double scale);
 
   protected:
     uint max_folders; // maximum number of patch directories
@@ -98,6 +99,7 @@ namespace ebl {
     using dataset<Tdata>::max_data_set;
     using dataset<Tdata>::save_mode;
     using dataset<Tdata>::original_bbox;
+    using dataset<Tdata>::nopadded;
   };
 
 } // end namespace ebl

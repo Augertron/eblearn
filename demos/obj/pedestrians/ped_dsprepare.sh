@@ -14,7 +14,7 @@ meta_email=pierre.sermanet@gmail.com
 # ped dataset compilation
 ################################################################################
 
-machine=juno
+machine=humair
 dset=_nicta
 # directories
 #dataroot=/data
@@ -24,7 +24,7 @@ pascal=$dataroot/pascal
 pascalroot=$pascal/VOCdevkit_trainval09/VOC2009/
 root=$dataroot/pedestrians/data
 out=$dataroot/pedestrians/ds/
-nopersons_root=$dataroot/nopersons/
+nopersons_root=$dataroot/nopersons_labelme/
 
 # variables
 h=80 #48 64
@@ -36,7 +36,7 @@ pp=YpUV
 kernel=7 #9
 resize=mean #bilinear
 nbg=1
-bgscales=8,4,2,1
+bgscales=8,6,4
 maxbg=45000
 
 # names
@@ -50,7 +50,7 @@ outbg=${out}/${bgds}
 # debug variables
 # maxdata="-maxdata 50"
 # maxperclass="-maxperclass 25"
-# ddisplay="-disp -sleep 1000"
+#ddisplay="-disp -sleep 1000"
 
 # create directories
 mkdir -p $root
@@ -66,8 +66,8 @@ mkdir -p $nopersons_root
 ~/eblearn/bin/dscompiler $nopersons_root -type patch -precision $precision \
     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
-    -maxdata $maxbg
-    # $maxdata $ddisplay # debug
+    -maxdata $maxbg -nopadded \
+    $ddisplay # debug
 
 # compile background dataset
 ~/eblearn/bin/dscompiler ${outbg} -precision $precision \
