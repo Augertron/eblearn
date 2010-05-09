@@ -1,12 +1,12 @@
 #!/bin/sh
 
-dset=_nicta
-traindsname=ped${dset}_mean19x19_ker7_train
-valdsname=ped${dset}_mean19x19_ker7_val
+dset=_nictat
 h=80
 w=32
+traindsname=ped${dset}_mean${h}x${w}_ker7_train
+valdsname=ped${dset}_mean${h}x${w}_ker7_val
 
-machine=juno
+machine=humair
 metaconf_name=ped_meta.conf
 save_max=20000
 

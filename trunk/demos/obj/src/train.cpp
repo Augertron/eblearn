@@ -1,6 +1,22 @@
 #include <iomanip>
+#include <string>
+#include <iostream>
+#include <algorithm>
+#include <stdlib.h>
+#include <sstream>
+#include <iomanip>
+#include <time.h>
+#include <fenv.h>
+#include "libidx.h"
 #include "libeblearn.h"
 #include "libeblearntools.h"
+
+#ifdef __GUI__
+#include "libeblearngui.h"
+#endif
+
+using namespace std;
+using namespace ebl; // all eblearn objects are under the ebl namespace
 
 typedef double t_net; // precision at which network is trained (ideally double)
 
