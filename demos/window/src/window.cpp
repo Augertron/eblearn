@@ -76,7 +76,13 @@ void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<ubyte> &frame,
   gui << at(text_hoffset - text_height, text_woffset) <<
     "left to see right and right to see left.";
   if (b) {
-    draw_box(hface + pos.h0, wface + pos.w0, pos.width, pos.height, 0, 0, 255);
+    char red = 0, green = 0, blue = 0;
+    if (b->class_id == -42)
+      green = 255;
+    else
+      blue = 255;
+    draw_box(hface + pos.h0, wface + pos.w0, pos.width, pos.height,
+	     red, green, blue);
   }
   draw_matrix(frame, hface, wface);
   draw_matrix(tpl, "template");
@@ -229,44 +235,44 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    } else
 	      b = NULL;
 	    // update dt time
-	    // dt_time = dt_timer.elapsed();
-	    // dt_timer.restart();
+	    dt_time = dt_timer.elapsed();
+	    dt_timer.restart();
 	    // print timing info
-	    // cout << "main: " << main_time << " ms "
-	    // 	 << "gui: " << gui_time << " ms "
-	    // 	 << "vision: " << dt_time << " ms " << endl;
+	    cout << "main: " << main_time << " ms "
+	    	 << "gui: " << gui_time << " ms "
+	    	 << "vision: " << dt_time << " ms " << endl;
 	  }
 	  // update position and draw if gui thread ready
-	  // if (!gui.busy_drawing()) {
-	  //   // recompute position
-	  //   if (dt_time > 0)
-	  //     tgt_time_distance = detection_timer.elapsed() / (float) dt_time;
-	  //   estimate_position(srcpos, pos, tgtpos, frame, h, w, conf,
-	  // 		      tgt_time_distance);
-	  //   // narrow original image into window
-	  //   bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
-	  // 		      MIN(MAX(0, bg.dim(0) - 1 - winszh),
-	  // 			  MAX(0, (1 - h) * (bg.dim(0) - winszh))));
-	  //   bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
-	  // 			 MIN(MAX(0, bg.dim(1) - 1 - winszw),
-	  // 			     MAX(0, w * (bg.dim(1) - winszw))));
-	  //   // draw
-	  //   if (display)
-	  //     draw(b, pos, bgwin, frame, tpl, conf);
-	  //   // update gui time
-	  //   gui_time = gui_timer.elapsed();
-	  //   gui_timer.restart();
-	  // }
+	  if (!gui.busy_drawing()) {
+	    // recompute position
+	    if (dt_time > 0)
+	      tgt_time_distance = detection_timer.elapsed() / (float) dt_time;
+	    estimate_position(srcpos, pos, tgtpos, frame, h, w, conf,
+	  		      tgt_time_distance);
+	    // narrow original image into window
+	    bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
+	  		      MIN(MAX(0, bg.dim(0) - 1 - winszh),
+	  			  MAX(0, (1 - h) * (bg.dim(0) - winszh))));
+	    bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
+	  			 MIN(MAX(0, bg.dim(1) - 1 - winszw),
+	  			     MAX(0, w * (bg.dim(1) - winszw))));
+	    // draw
+	    if (display)
+	      draw(b, pos, bgwin, frame, tpl, conf);
+	    // update gui time
+	    gui_time = gui_timer.elapsed();
+	    gui_timer.restart();
+	  }
 	  // sleep for a little bit
-	  // usleep(conf.get_uint("mainsleep") * 1000);
-	  // // main timing
-	  // main_time = main_timer.elapsed();
-	  // main_timer.restart(); 
-	  // // change background every bgtime
-	  // if (bg_timer.elapsed() > bgtime) {
-	  //   bg_timer.restart();
-	  //   change_background(bgi, bgs, bg, conf);
-	  // }
+	  usleep(conf.get_uint("mainsleep") * 1000);
+	  // main timing
+	  main_time = main_timer.elapsed();
+	  main_timer.restart(); 
+	  // change background every bgtime
+	  if (bg_timer.elapsed() > bgtime) {
+	    bg_timer.restart();
+	    change_background(bgi, bgs, bg, conf);
+	  }
 	} catch (string &err) {
 	  cerr << err << endl;
 	}
