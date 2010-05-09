@@ -243,6 +243,8 @@ namespace ebl {
        }
 #ifdef __GUI__
        else { // fprop and display
+	 disable_window_updates();
+	 clear_window();
 	 if (mindisplay) {
 	   vector<bbox*> &bb =
 	     dgui.display(detect, frame, threshold, 0, 0, zoom,
@@ -252,6 +254,7 @@ namespace ebl {
 	 else
 	   dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
 				       (Tnet)-1.1, (Tnet)1.1, wid); 
+	 enable_window_updates();
        }
        tpp = t0.elapsed(); // stop processing timer
        cout << "processing: " << tpp << " ms." << endl;
