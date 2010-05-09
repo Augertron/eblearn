@@ -37,7 +37,7 @@ namespace ebl {
   // interface with opencv
 
   template <typename T>
-  IplImage* idx_to_ubyte_ipl(idx<T> &im) {
+  IplImage* idx_to_ipl(idx<T> &im) {
     // TODO: check dimensions match
     IplImage* ipl = cvCreateImage(cvSize(im.dim(1), im.dim(0)),
 				  IPL_DEPTH_8U, im.dim(2));
@@ -51,7 +51,7 @@ namespace ebl {
   }
 
   template <typename T>
-  idx<T> ipl2idx(IplImage *im) {
+  idx<T> ipl_to_idx(IplImage *im) {
     idx<T> f(im->height, im->width, im->nChannels);
     uint sz = im->width * im->height * im->nChannels;
     ubyte *in = (ubyte*) im->imageData;
@@ -63,7 +63,7 @@ namespace ebl {
   }
     
   template <typename T>
-  void ipl2idx(IplImage *im, idx<T> &out) {
+  void ipl_to_idx(IplImage *im, idx<T> &out) {
     // TODO: check out dimensions match
     uint sz = im->width * im->height * im->nChannels;
     ubyte *in = (ubyte*) im->imageData;

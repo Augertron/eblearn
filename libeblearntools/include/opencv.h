@@ -50,21 +50,22 @@ namespace ebl {
   //! Warning: you have to make sure that the data pointed to by the idx stays
   //! alive (i.e. is still referenced by some idx) otherwise the IplImage
   //! will point to deallocated data.
-  IplImage* ipl_pointer_to_idx(idx<ubyte> &im);
+  IplImage* idx_to_iplptr(idx<ubyte> &im);
 
   //! Allocate a new Ipl image with same dimensions as im, and copy im data
   //! into ipl, return ipl.
+  //! Warning: idx data will be cast to ubyte.
   template <typename T>
-    IplImage* idx_to_ubyte_ipl(idx<T> &im);
+    IplImage* idx_to_ipl(idx<T> &im);
   
   //! Allocate an idx with dimensions of the opencv image, copy data into
   //! idx and return it.
   template <typename T>
-    idx<T> ipl2idx(IplImage *im);
+    idx<T> ipl_to_idx(IplImage *im);
 
   //! Copy data from an opencv image into the passed idx.
   template <typename T>
-    void ipl2idx(IplImage *im, idx<T> &out);
+    void ipl_to_idx(IplImage *im, idx<T> &out);
  
 } // end namespace ebl
 

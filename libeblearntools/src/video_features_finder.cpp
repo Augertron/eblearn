@@ -66,11 +66,6 @@ using namespace ebl;
   // ( http://ai.stanford.edu/~dstavens/cs223b/ ).
 
 #ifdef __OPENCV__
-  idx<ubyte> ipl2idx(IplImage *im) {
-    idx<ubyte> f(im->height, im->width);
-    memcpy(f.idx_ptr(), im->imageData, im->width * im->height * sizeof (ubyte));
-    return f;
-  }
 
   /* This is just an inline that allocates images.  I did this to reduce clutter in the
    * actual computer vision algorithmic code.  Basically it allocates the requested image
@@ -205,7 +200,7 @@ using namespace ebl;
 	allocateOnDemand( &frame1, frame_size, IPL_DEPTH_8U, 3 );
 	cvConvertImage(frame, frame1, CV_CVTIMG_FLIP);
 
-	idx<ubyte> im1 = ipl2idx(frame1_1C);
+	idx<ubyte> im1 = ipl_to_idx(frame1_1C);
 #ifdef __GUI__
 	float zoom = 1;
 	select_window(mainwin);
@@ -231,7 +226,7 @@ using namespace ebl;
 	allocateOnDemand( &frame2_1C, frame_size, IPL_DEPTH_8U, 1 );
 	cvConvertImage(frame, frame2_1C);//, CV_CVTIMG_FLIP);
 
-	idx<ubyte> im2 = ipl2idx(frame2_1C);
+	idx<ubyte> im2 = ipl_to_idx(frame2_1C);
 #ifdef __GUI__
 	draw_matrix(im2, imh0, imw0, zoom, zoom);
 	gui << at(imh0, imw0) << "frame #" << current_frame << endl;

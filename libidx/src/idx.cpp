@@ -36,6 +36,9 @@ using namespace std;
 
 namespace ebl {
 
+  // TODO: malloc mutex for thread-safe malloc?
+  pthread_mutex_t mutmal = PTHREAD_MUTEX_INITIALIZER;
+
   ////////////////////////////////////////////////////////////////
   // private methods
 

@@ -76,9 +76,9 @@ namespace ebl {
       eblerror("failed to grab frame");
     // convert ipl to idx image
     if (grabbed)
-      ipl2idx(ipl_frame, frame);
+      ipl_to_idx(ipl_frame, frame);
     else // first time, allocate frame
-      frame = ipl2idx<Tdata>(ipl_frame);
+      frame = ipl_to_idx<Tdata>(ipl_frame);
 #endif /* __OPENCV__ */
     return this->postprocess();
   }

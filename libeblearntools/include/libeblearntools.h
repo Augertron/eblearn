@@ -52,6 +52,7 @@ libboost-filesystem-dev libboost-regex-dev and recompile"
 #include "sort.h"
 #include "thread.h"
 #include "detection_thread.h"
+#include "tracking_thread.h"
 #include "netconf.h"
 
 #endif /* LIBEBLEARNTOOLS_H_ */

@@ -38,7 +38,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // interface with opencv
   
-  IplImage* ipl_pointer_to_idx(idx<ubyte> &im) {
+  IplImage* idx_to_iplptr(idx<ubyte> &im) {
     idx_check_contiguous1(im); // im must be contiguous
     idx_checkorder1(im, 3); // im must have order 3
     if (im.dim(2) != 1 && im.dim(2) != 3) {

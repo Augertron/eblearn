@@ -30,36 +30,42 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef DETECTION_THREAD_H_
-#define DETECTION_THREAD_H_
+#ifndef TRACKING_THREAD_H_
+#define TRACKING_THREAD_H_
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 
 #include "thread.h"
-#include "netconf.h"
+#include "detection_thread.h"
 #include "configuration.h"
+
+#ifdef __OPENCV__
+#include <opencv/cv.h>
+//#include "FastMatchTemplate.h"
+#endif
 
 using namespace std;
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // A detection thread class
+  // A tracking thread class
 
   template <typename Tnet>
-  class detection_thread : public thread {
+  class tracking_thread : public thread {
   public:
-    detection_thread(configuration &conf, const char *arg2);
-    ~detection_thread();
+    //! Initialize the tracking thread.
+    //! @param dt The detection thread that will provide templates to track.
+    tracking_thread(configuration &conf, const char *arg2);
+    ~tracking_thread();
     
-    //! Execute the detection thread.
+    //! Execute the tracking thread.
     virtual void execute();
-    //! Return true if new data was copied to the thread, false otherwise.
-    virtual bool set_data(idx<ubyte> &frame);
     //! Return true if new data was copied from the thread, false otherwise.
-    virtual bool get_data(vector<bbox*> &bboxes);
+    virtual bool get_data(vector<bbox*> &bboxes, idx<ubyte> &frame,
+			  idx<ubyte> &tpl);
     
   private:
     //! Copy passed bounding boxes into bboxes class member
@@ -68,24 +74,25 @@ namespace ebl {
     //! Turn 'out_updated' flag on, so that other threads know we just outputed
     //! new data.
     void set_out_updated();
+    //! Draw inputs/outputs.
+    void draw();
 
     ////////////////////////////////////////////////////////////////
     // private members
   private:
     configuration		&conf;
     const char			*arg2;
-    pthread_mutex_t		 mutex_in;	// mutex for thread input
     pthread_mutex_t		 mutex_out;	// mutex for thread output
-    idx<ubyte>			 uframe;
-    idx<Tnet>			 frame;
+    idx<ubyte>			 frame;
     vector<bbox*>		 bboxes;
     vector<bbox*>::iterator	 ibox;
-    bool			 in_updated;	// thread input updated
     bool			 out_updated;	// thread output updated
+    detection_thread<Tnet>       dt;
+    idx<ubyte>                   tpl;
   };
 
 } // end namespace ebl
 
-#include "detection_thread.hpp"
+#include "tracking_thread.hpp"
 
-#endif /* DETECTION_THREAD_H_ */
+#endif /* TRACKING_THREAD_H_ */
