@@ -185,24 +185,22 @@ namespace ebl {
 
 #ifdef __LINUX__
   
-static void
-enumerate_menu (int fd, struct v4l2_queryctrl &queryctrl, struct v4l2_querymenu &querymenu)
-{
-  printf ("  Menu items:\n");
+  static void
+  enumerate_menu(int fd, struct v4l2_queryctrl &queryctrl,
+		 struct v4l2_querymenu &querymenu) {
+    printf ("  Menu items:\n");
+    memset (&querymenu, 0, sizeof (querymenu));
+    querymenu.id = queryctrl.id;
   
-  memset (&querymenu, 0, sizeof (querymenu));
-  querymenu.id = queryctrl.id;
-  
-  for (querymenu.index = queryctrl.minimum;
-       querymenu.index <= queryctrl.maximum;
-       querymenu.index++) {
-    if (0 == ioctl (fd, VIDIOC_QUERYMENU, &querymenu)) {
-      printf ("  %s\n", querymenu.name);
-		} else {
-      eblerror ("VIDIOC_QUERYMENU");
+    for (querymenu.index = queryctrl.minimum;
+	 (int) querymenu.index <= queryctrl.maximum; querymenu.index++) {
+      if (0 == ioctl (fd, VIDIOC_QUERYMENU, &querymenu)) {
+	printf ("  %s\n", querymenu.name);
+      } else {
+	eblerror ("VIDIOC_QUERYMENU");
+      }
     }
   }
-}
 
   template <typename Tdata>
   void camera_v4l2<Tdata>::print_controls() {
@@ -210,7 +208,6 @@ enumerate_menu (int fd, struct v4l2_queryctrl &queryctrl, struct v4l2_querymenu 
 
     struct v4l2_queryctrl queryctrl;
     struct v4l2_querymenu querymenu;
-    struct v4l2_control control;
 
     memset (&queryctrl, 0, sizeof (queryctrl));
     for (queryctrl.id = V4L2_CID_BASE;
@@ -303,7 +300,6 @@ enumerate_menu (int fd, struct v4l2_queryctrl &queryctrl, struct v4l2_querymenu 
   
   template <typename Tdata>
   void camera_v4l2<Tdata>::set_boolean_control(int id, bool val) {
-    struct v4l2_queryctrl queryctrl;
     struct v4l2_control control;
 
     memset (&control, 0, sizeof (control));

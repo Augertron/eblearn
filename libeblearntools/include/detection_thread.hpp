@@ -93,7 +93,8 @@ namespace ebl {
   }
 
   template <typename Tnet>
-  bool detection_thread<Tnet>::get_data(vector<bbox*> &bboxes2) {
+  bool detection_thread<Tnet>::get_data(vector<bbox*> &bboxes2,
+					idx<ubyte> &frame2) {
     // lock data
     pthread_mutex_lock(&mutex_out);
     // only read data if it has been updated
@@ -112,6 +113,13 @@ namespace ebl {
     for (ibox = bboxes.begin(); ibox != bboxes.end(); ++ibox) {
       bboxes2.push_back(*ibox);
     }
+    // check frame is correctly allocated, if not, allocate.
+    if (frame2.order() != uframe.order()) 
+      frame2 = idx<ubyte>(uframe.get_idxdim());
+    else if (frame2.get_idxdim() != uframe.get_idxdim())
+      frame2.resize(uframe.get_idxdim());
+    // copy frame
+    idx_copy(uframe, frame2);    
     // reset updated flag
     out_updated = false; 
     // unlock data

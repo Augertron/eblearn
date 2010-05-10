@@ -142,7 +142,7 @@ namespace ebl {
     draw_matrix(frame, "in");
     draw_matrix(tpl, "tpl", 0, frame.dim(1));
     if (b) {
-      char red = 0, green = 0, blue = 0;
+      ubyte red = 0, green = 0, blue = 0;
       if (b->class_id == -42)
 	green = 255;
       else
@@ -163,7 +163,7 @@ namespace ebl {
       bool      save_video = conf.exists_bool("save_video");
       bool      display    = conf.exists_bool("tracking_display");
       // initialize camera (opencv, directory, shmem or video)
-      camera<ubyte> *cam = NULL, *cam2 = NULL;
+      camera<ubyte> *cam = NULL;
       if (!strcmp(cam_type.c_str(), "directory")) {
 	if (arg2) cam = new camera_directory<ubyte>(arg2, height,width);
 	else eblerror("expected 2nd argument");
@@ -188,7 +188,7 @@ namespace ebl {
       vector<bbox*> bb;
 #ifdef __OPENCV__
       IplImage *iplframe = NULL;
-      IplImage *ipltemplate = NULL;
+      IplImage *ipltpl = NULL;
 #endif
       // main loop
       while(!cam->empty()) {
@@ -196,7 +196,7 @@ namespace ebl {
 	  frame = cam->grab();
 	  // send new frame to vision_thread and check if new data was output
 	  dt.set_data(frame);
-	  updated = dt.get_data(bb);
+	  updated = dt.get_data(bb, detframe);
 	  // update target position if vision thread ready
 	  if (updated) {
 	    // find bbox with max confidence
@@ -212,7 +212,7 @@ namespace ebl {
 	      b = bb[maxi];
 	      if (b) {
 		// update template
-		idx<ubyte> tmptpl = frame.narrow(0, b->height, b->h0);
+		idx<ubyte> tmptpl = detframe.narrow(0, b->height, b->h0);
 		tmptpl = tmptpl.narrow(1, b->width, b->w0);
 		tpl = idx<ubyte>(tmptpl.get_idxdim());
 		idx_copy(tmptpl, tpl);
@@ -220,8 +220,8 @@ namespace ebl {
 	    }
 	  } else { // tracking (only when we didnt just receive an update)
 #ifdef __OPENCV__
-	    IplImage* iplframe = idx_to_iplptr(frame);
-	    IplImage* ipltpl = idx_to_iplptr(tpl);
+	    iplframe = idx_to_iplptr(frame);
+	    ipltpl = idx_to_iplptr(tpl);
 	    CvPoint minloc, maxloc;
 	    double minval, maxval;
 	    // vector<CvPoint> found;

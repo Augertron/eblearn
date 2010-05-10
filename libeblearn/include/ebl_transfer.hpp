@@ -41,8 +41,7 @@ namespace ebl {
 					      int nf, bool mirror_,
 					      bool threshold_,
 					      bool global_norm_)
-    : nfeatures(nf),
-      mirror(mirror_),
+    : mirror(mirror_),
       convmean(true),
       convvar(true),
       sqrtmod((T) .5), // square root module
@@ -60,7 +59,8 @@ namespace ebl {
       thstd(1, 1, 1),
       invstd(1, 1, 1),
       threshold(threshold_),
-      global_norm(global_norm_)
+      global_norm(global_norm_),
+      nfeatures(nf)
   {
     //! create little objects to do math
     //! zero pad borders

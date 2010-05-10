@@ -76,7 +76,7 @@ void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<ubyte> &frame,
   gui << at(text_hoffset - text_height, text_woffset) <<
     "left to see right and right to see left.";
   if (b) {
-    char red = 0, green = 0, blue = 0;
+    ubyte red = 0, green = 0, blue = 0;
     if (b->class_id == -42)
       green = 255;
     else
@@ -92,26 +92,28 @@ void draw(bbox *b, rect &pos, idx<ubyte> &bgwin, idx<ubyte> &frame,
 void estimate_position(rect &srcpos, rect &pos, rect &tgtpos, idx<ubyte> &frame,
 		       float &h, float &w, configuration &conf,
 		       float tgt_time_distance) {
-  tgt_time_distance = tgt_time_distance * conf.get_float("smooth_factor");
-  // update current position
-  pos.h0 = (uint) MAX(0, srcpos.h0 + (tgtpos.h0 - (float) srcpos.h0)
-		      * MIN(1.0, tgt_time_distance));
-  pos.w0 = (uint) MAX(0, srcpos.w0 + (tgtpos.w0 - (float) srcpos.w0)
-		      * MIN(1.0, tgt_time_distance));
-  pos.height = (uint) MAX(0, srcpos.height +
-			  (tgtpos.height - (float) srcpos.height)
-			  * MIN(1.0, tgt_time_distance));
-  pos.width = (uint) MAX(0, srcpos.width +
-			 (tgtpos.width - (float) srcpos.width)
-			 * MIN(1.0, tgt_time_distance));
-  // transform position into screen position
-  // cout << "cur pos: " << pos << " src: " << srcpos
-  //      << " target: " << tgtpos << endl;
-  h = (((pos.h0 + pos.height / 2.0) / frame.dim(0))
-       - conf.get_float("hoffset")) * conf.get_float("hfactor");
-  w = (((pos.w0 + pos.width / 2.0) / frame.dim(1))
-       - conf.get_float("woffset")) * conf.get_float("wfactor");
-  //    cout << " h: " << h << " w: " << w << endl;
+  pos = srcpos;
+  // // interpolate position with time
+  // tgt_time_distance = tgt_time_distance * conf.get_float("smooth_factor");
+  // // update current position
+  // pos.h0 = (uint) MAX(0, srcpos.h0 + (tgtpos.h0 - (float) srcpos.h0)
+  // 		      * MIN(1.0, tgt_time_distance));
+  // pos.w0 = (uint) MAX(0, srcpos.w0 + (tgtpos.w0 - (float) srcpos.w0)
+  // 		      * MIN(1.0, tgt_time_distance));
+  // pos.height = (uint) MAX(0, srcpos.height +
+  // 			  (tgtpos.height - (float) srcpos.height)
+  // 			  * MIN(1.0, tgt_time_distance));
+  // pos.width = (uint) MAX(0, srcpos.width +
+  // 			 (tgtpos.width - (float) srcpos.width)
+  // 			 * MIN(1.0, tgt_time_distance));
+  // // transform position into screen position
+  // // cout << "cur pos: " << pos << " src: " << srcpos
+  // //      << " target: " << tgtpos << endl;
+  // h = (((pos.h0 + pos.height / 2.0) / frame.dim(0))
+  //      - conf.get_float("hoffset")) * conf.get_float("hfactor");
+  // w = (((pos.w0 + pos.width / 2.0) / frame.dim(1))
+  //      - conf.get_float("woffset")) * conf.get_float("wfactor");
+  // //    cout << " h: " << h << " w: " << w << endl;
 }
 
 void change_background(vector<string>::iterator &bgi, vector<string> &bgs,
@@ -192,7 +194,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #ifdef __GUI__
       // timing variables
       QTime main_timer, bg_timer, dt_timer, gui_timer, detection_timer;
-      int main_time, dt_time, gui_time, detection_time; // time in milliseconds
+      int main_time, dt_time, gui_time; // time in milliseconds
       float tgt_time_distance = 0;
       main_timer.start();
       bg_timer.start();
@@ -225,7 +227,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 		tgtpos.height = b->height;
 		tgtpos.width = b->width;
 		srcpos = pos;
-		//		detection_timer.restart();
+		detection_timer.restart();
 	      }
 	      if (first_time) {
 		pos = tgtpos;

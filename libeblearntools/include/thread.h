@@ -50,7 +50,7 @@ namespace ebl {
     int start();
   protected:
     void run();
-    static void * entrypoint(void *pthis);
+    static void* entrypoint(void *pthis);
     virtual void execute() = 0;
   private:
     pthread_t threadptr;
