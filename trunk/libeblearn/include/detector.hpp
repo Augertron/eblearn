@@ -310,7 +310,7 @@ namespace ebl {
     idxdim indim(input_dims.dim(2), input_dims.dim(0), input_dims.dim(1));
     if (max_size > 0) { // cap on maximum input size
       for (int i = 0; i < indim.order(); ++i) {
-	indim.setdim(i, MIN(max_size, indim.dim(i)));
+	indim.setdim(i, MIN((intg) max_size, indim.dim(i)));
       }
     }
     thenet.fprop_size(indim); // set a valid input dimensions set
@@ -805,8 +805,6 @@ namespace ebl {
 	       obbox, original_bboxes, uint) {
       idx<T> in = ((state_idx<T>*) input.get())->x.select(0, 0);
       idx<T> out = ((state_idx<T>*) output.get())->x.select(0, id);
-      double ratioh = out.dim(0) / (double) in.dim(0);
-      double ratiow = out.dim(1) / (double) in.dim(1);
       rect o(obbox.get(0), obbox.get(1),
 	     obbox.get(2), obbox.get(3));
       // resizing to inputs, then to original input, to avoid precision loss

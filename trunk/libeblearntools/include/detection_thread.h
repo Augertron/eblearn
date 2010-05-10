@@ -59,7 +59,10 @@ namespace ebl {
     //! Return true if new data was copied to the thread, false otherwise.
     virtual bool set_data(idx<ubyte> &frame);
     //! Return true if new data was copied from the thread, false otherwise.
-    virtual bool get_data(vector<bbox*> &bboxes);
+    //! We get the frame back even though it was set via set_data,
+    //! because we do not know which frame was actually used.
+    //! (could use some kind of id, and remember frames to avoid copy).
+    virtual bool get_data(vector<bbox*> &bboxes, idx<ubyte> &frame);
     
   private:
     //! Copy passed bounding boxes into bboxes class member
@@ -74,10 +77,10 @@ namespace ebl {
   private:
     configuration		&conf;
     const char			*arg2;
-    pthread_mutex_t		 mutex_in;	// mutex for thread input
-    pthread_mutex_t		 mutex_out;	// mutex for thread output
     idx<ubyte>			 uframe;
     idx<Tnet>			 frame;
+    pthread_mutex_t		 mutex_in;	// mutex for thread input
+    pthread_mutex_t		 mutex_out;	// mutex for thread output
     vector<bbox*>		 bboxes;
     vector<bbox*>::iterator	 ibox;
     bool			 in_updated;	// thread input updated

@@ -84,10 +84,10 @@ namespace ebl {
     using camera<Tdata>::height;	//!< height
     using camera<Tdata>::width;	        //!< width
     using camera<Tdata>::bresize;       //!< resize or not during postproc.
+    bool started;
     int nbuffers;
     void* *buffers;
     int *sizes;
-    bool started;
     int fd;
   };
 

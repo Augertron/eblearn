@@ -51,9 +51,10 @@ namespace ebl {
   }
 
   /*static */
-  void * thread::entrypoint(void * pthis) {
+  void* thread::entrypoint(void * pthis) {
     thread *pt = (thread*) pthis;
     pt->run();
+    return pt;
   }
 
 } // end namespace ebl

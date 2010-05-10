@@ -229,7 +229,7 @@ namespace ebl {
       w += i->dim(1) + 2;
       wn++;
       hmax = MAX(hmax, i->dim(0));
-      wmax = MAX(wmax, w);
+      wmax = MAX(wmax, (intg) w);
       if (wn >= qwidth) {
 	wn = 0;
 	w = 0;

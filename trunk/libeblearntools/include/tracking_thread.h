@@ -82,11 +82,12 @@ namespace ebl {
   private:
     configuration		&conf;
     const char			*arg2;
-    pthread_mutex_t		 mutex_out;	// mutex for thread output
-    idx<ubyte>			 frame;
+    pthread_mutex_t		 mutex_out;	//! mutex for thread output
+    idx<ubyte>			 frame;         //! tracking frame
+    idx<ubyte>			 detframe;      //! detection frame
     vector<bbox*>		 bboxes;
     vector<bbox*>::iterator	 ibox;
-    bool			 out_updated;	// thread output updated
+    bool			 out_updated;	//! thread output updated
     detection_thread<Tnet>       dt;
     idx<ubyte>                   tpl;
   };
