@@ -700,14 +700,12 @@ namespace ebl {
     if (event->key() == Qt::Key_Escape)
       close();
     else if (event->key() == Qt::Key_Left) {
-      cout << "key left" << endl;
       if (scrollbox) {
 	cout << "display_previous" << endl;
 	scrollbox->display_previous();
       }
     }
     else if (event->key() == Qt::Key_Right) {
-      cout << "key right" << endl;
       if (scrollbox) {
 	cout << "display_next" << endl;
 	scrollbox->display_next();
