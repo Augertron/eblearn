@@ -63,7 +63,7 @@ int main(int argc, char **argv) { // regular main without gui
 		   conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
 		   conf.get_uint("net_full"), targets.dim(0),
 		   conf.get_bool("absnorm"), conf.get_bool("color"));
-  theparam.load_x<t_net>(conf.get_cstring("weights"));
+  theparam.load_x(conf.get_cstring("weights"));
 
   // gui
   bool display = conf.get_bool("display"); // enable/disable display
