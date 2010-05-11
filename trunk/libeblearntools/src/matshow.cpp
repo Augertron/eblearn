@@ -66,57 +66,56 @@ bool parse_args(int argc, char **argv) {
 // gui
 
 template <typename T>
-void display(string &fname) {
+void display(string &fname, bool signd, bool load, bool show_info) {
 #ifdef __GUI__
+  static idx<T> mat;
   disable_window_updates();
   clear_window();
-  idx<T> mat = load_image<T>(fname);
-  T min, max;
-  T matmin = idx_min(mat);
-  if (matmin < 0) {
-    min = -1; 
-    max = -1;
+  if (load)
+    mat = load_image<T>(fname);
+  if (signd) {
+    T min, max;
+    T matmin = idx_min(mat);
+    if (matmin < 0) {
+      min = -1; 
+      max = -1;
+    }
+    draw_matrix(mat, 0, 0, 1.0, 1.0, min, max);
+  } else
+    draw_matrix(mat);
+  if (show_info) {
+    gui << mat;
+    gui << at(15, 0) << fname;
   }
-  draw_matrix(mat, 0, 0, 1.0, 1.0, min, max);
-  gui << mat;
   enable_window_updates();
 #endif
 }
 
-void display(string &fname) {
-#ifdef __GUI__
-  disable_window_updates();
-  clear_window();
-  idx<ubyte> mat = load_image<ubyte>(fname);
-  draw_matrix(mat);
-  gui << mat;
-  enable_window_updates();
-#endif
-}
-
-void load_display(string &fname) {
+//! Retrieve type so that we know if we can look
+//! for negative values when estimating range.
+void load_display(string &fname, bool load, bool show_info) {
   switch (get_matrix_type(fname.c_str())) {
   case MAGIC_BYTE_MATRIX:
   case MAGIC_UBYTE_VINCENT:
-    display<ubyte>(fname);
+    display<ubyte>(fname, false, load, show_info);
     break ;
   case MAGIC_INTEGER_MATRIX:
   case MAGIC_INT_VINCENT:
-    display<int>(fname);
+    display<int>(fname, true, load, show_info);
     break ;
   case MAGIC_FLOAT_MATRIX:
   case MAGIC_FLOAT_VINCENT:
-    display<float>(fname);
+    display<float>(fname, true, load, show_info);
     break ;
   case MAGIC_DOUBLE_MATRIX:
   case MAGIC_DOUBLE_VINCENT:
-    display<double>(fname);
+    display<double>(fname, true, load, show_info);
     break ;
   case MAGIC_LONG_MATRIX:
-    display<long>(fname);
+    display<long>(fname, true, load, show_info);
     break ;
   case MAGIC_UINT_MATRIX:
-    display<uint>(fname);
+    display<uint>(fname, false, load, show_info);
     break ;
   default:
     eblerror("unknown magic number");
@@ -138,10 +137,11 @@ int main(int argc, char **argv) {
     if (!parse_args(argc, argv))
       return -1;
     new_window("matshow");
+    bool show_info = false;
     // show mat images
     for (int i = 1; i < argc; ++i) {
       string fname = argv[i];
-      load_display(fname);
+      load_display(fname, true, show_info);
     }
     // list all other mat files in image directory
     string dir = argv[1];
@@ -162,11 +162,25 @@ int main(int argc, char **argv) {
       // loop and wait for key pressed
       while (1) {
 	usleep(50000);
-	if (gui.pop_key_pressed() == Qt::Key_Space) {
+	int key = gui.pop_key_pressed();
+	if ((key == Qt::Key_Space) || (key == Qt::Key_Right)) {
+	  // show next image
 	  ++i;
 	  if (i == mats->end())
 	    i = mats->begin();
-	  load_display(*i);
+	  load_display(*i, true, show_info);
+	} else if (key == Qt::Key_Left) {
+	  // show previous image
+	  i--;
+	  if (i == mats->begin()) {
+	    i = mats->end();
+	    i--;
+	  }
+	  load_display(*i, true, show_info);
+	} else if (key == Qt::Key_I) {
+	  // show info
+	  show_info = !show_info;
+	  load_display(*i, false, show_info);
 	}
       }
       // free list
