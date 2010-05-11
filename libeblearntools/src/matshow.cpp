@@ -147,8 +147,13 @@ int main(int argc, char **argv) {
     string dir = argv[1];
     string imgname, tmpname;
     size_t pos = dir.find_last_of('/');
-    imgname = dir.substr(pos + 1, dir.size() - pos + 1);
-    dir = dir.substr(0, pos);
+    if (pos == string::npos) {
+      imgname = dir;
+      dir = "./";
+    } else { // it contains a directory
+      imgname = dir.substr(pos + 1, dir.size() - pos + 1);
+      dir = dir.substr(0, pos);
+    }
     list<string> *mats = find_fullfiles(dir, MAT_PATTERN, NULL, true, false);
     if ((mats) && (mats->size() > 1)) {
       // find current position in this list

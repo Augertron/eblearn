@@ -139,6 +139,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #else
   int main(int argc, char **argv) { // regular main without gui
 #endif
+#ifndef __GUI__
+    eblerror("QT libraries missing, install and recompile.");
+#else
     try {
       // check input parameters
       if ((argc != 2) && (argc != 3) ) {
@@ -191,7 +194,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       float h = 0, w = 0;
       bool updated = false;
       bool first_time = true;
-#ifdef __GUI__
       // timing variables
       QTime main_timer, bg_timer, dt_timer, gui_timer, detection_timer;
       int main_time, dt_time, gui_time; // time in milliseconds
@@ -202,7 +204,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       gui_timer.start();
       detection_timer.start();
       int bgtime = conf.get_uint("bgtime") * 1000;
-#endif  
       // loop
       while(1) {
 	try {
@@ -282,5 +283,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
     } catch(string &err) {
       cerr << err << endl;
     }
+#endif  
     return 0;
   }
