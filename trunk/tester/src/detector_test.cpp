@@ -42,7 +42,7 @@ void detector_test::test_norb() {
   parameter<t_net> theparam(1);
   // input to the network will be 96x96 and there are 5 outputs
   lenet7_binocular<t_net> thenet(theparam, 96, 96, 5);
-  theparam.load_x<double>(mono_net.c_str());
+  theparam.load_x(mono_net.c_str());
   //left = left.narrow(2, 2, 0);
   //  int tr[3] = { 2, 1, 0 };
   //left = left.transpose(tr);
