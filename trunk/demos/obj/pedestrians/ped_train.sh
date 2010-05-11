@@ -51,7 +51,7 @@ dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
 eblearnbin=${out}/bin/
-nopersons_root=$root2/nopersons_labelme/
+nopersons_root=$root2/nopersons_nicta/
 
 # variables
 
@@ -121,6 +121,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "save_detections = 1" >> $bestconf
 # do not save video
   echo "save_video = 0" >> $bestconf
+  echo "display = 0" >> $bestconf
   echo "save_max = ${save_max}" >> $bestconf
   echo "save_max_per_frame = 10" >> $bestconf
 # add directory where to find trained files
