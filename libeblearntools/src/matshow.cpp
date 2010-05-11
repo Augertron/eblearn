@@ -94,31 +94,35 @@ void display(string &fname, bool signd, bool load, bool show_info) {
 //! Retrieve type so that we know if we can look
 //! for negative values when estimating range.
 void load_display(string &fname, bool load, bool show_info) {
-  switch (get_matrix_type(fname.c_str())) {
-  case MAGIC_BYTE_MATRIX:
-  case MAGIC_UBYTE_VINCENT:
-    display<ubyte>(fname, false, load, show_info);
+  try {
+    switch (get_matrix_type(fname.c_str())) {
+    case MAGIC_BYTE_MATRIX:
+    case MAGIC_UBYTE_VINCENT:
+      display<ubyte>(fname, false, load, show_info);
+      break ;
+    case MAGIC_INTEGER_MATRIX:
+    case MAGIC_INT_VINCENT:
+      display<int>(fname, true, load, show_info);
     break ;
-  case MAGIC_INTEGER_MATRIX:
-  case MAGIC_INT_VINCENT:
-    display<int>(fname, true, load, show_info);
-    break ;
-  case MAGIC_FLOAT_MATRIX:
-  case MAGIC_FLOAT_VINCENT:
-    display<float>(fname, true, load, show_info);
-    break ;
-  case MAGIC_DOUBLE_MATRIX:
-  case MAGIC_DOUBLE_VINCENT:
-    display<double>(fname, true, load, show_info);
-    break ;
-  case MAGIC_LONG_MATRIX:
+    case MAGIC_FLOAT_MATRIX:
+    case MAGIC_FLOAT_VINCENT:
+      display<float>(fname, true, load, show_info);
+      break ;
+    case MAGIC_DOUBLE_MATRIX:
+    case MAGIC_DOUBLE_VINCENT:
+      display<double>(fname, true, load, show_info);
+      break ;
+    case MAGIC_LONG_MATRIX:
     display<long>(fname, true, load, show_info);
     break ;
-  case MAGIC_UINT_MATRIX:
-    display<uint>(fname, false, load, show_info);
-    break ;
-  default:
-    eblerror("unknown magic number");
+    case MAGIC_UINT_MATRIX:
+      display<uint>(fname, false, load, show_info);
+      break ;
+    default:
+      eblerror("unknown magic number");
+    }
+  } catch(string &err) {
+    cerr << err << endl;
   }
 }
 
