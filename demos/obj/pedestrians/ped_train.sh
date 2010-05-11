@@ -1,6 +1,6 @@
 #!/bin/sh
 
-dset=_nictat
+dset=_nicta
 h=80
 w=32
 traindsname=ped${dset}_mean${h}x${w}_ker7_train
@@ -43,15 +43,15 @@ meta_send_best=15
 ################################################################################
 
 # directories
-xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
+xpname=pedtrain_nictat_humair_20100509.183243
+#xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
 root=~/${machine}adata/pedestrians/
 root2=~/${machine}adata/
-dataroot=$root/ds${dset}
+dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
 eblearnbin=${out}/bin/
-nopersons_root=$root2/nopersons/
-false_positive_root=$root2/false_positives/$xpname/
+nopersons_root=$root2/nopersons_labelme/
 
 # variables
 
@@ -73,8 +73,6 @@ draws=5
 mkdir -p $out
 mkdir -p $eblearnbin
 mkdir -p $nopersons_root
-mkdir -p $false_positive_root
-mkdir -p "$false_positive_root/bg/"
 
 # copy binaries
 cp $eblearnbin0/* $eblearnbin/
@@ -93,7 +91,8 @@ echo "meta_output_dir = ${out}" >> $metaconf
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
 echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
-${eblearnbin}/metarun $metaconf
+#${eblearnbin}/metarun $metaconf
+touch /home/sermanet/humairadata/pedestrians/out/pedtrain_nictat_humair_20100509.183243/20100509.183243.ped_humair
 
 # looping on retraining on false positives
 echo "________________________________________________________________________"
