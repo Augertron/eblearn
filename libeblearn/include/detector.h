@@ -165,6 +165,9 @@ namespace ebl {
     //! \param max_size The maximum width or height in pixels.
     void set_max_resolution(uint max_size);
 
+    //! Enable or disable pruning of responses in the same area.
+    void set_pruning(bool pruning);
+
     ////////////////////////////////////////////////////////////////
     // execution
     
@@ -229,13 +232,13 @@ namespace ebl {
     void mark_maxima(T threshold);
 
     //! Prune bounding boxes between scales into prune_bboxes.
-    void prune(vector<bbox> &raw_bboxes, vector<bbox*> &prune_bboxes);
+    void prune(vector<bbox*> &raw_bboxes, vector<bbox*> &prune_bboxes);
 
     //! Smooth outputs.
     void smooth_outputs();
 
     //! Extract bounding boxes from outputs into raw_bboxes.
-    void map_to_list(T threshold, vector<bbox> &raw_bboxes);
+    void map_to_list(T threshold, vector<bbox*> &raw_bboxes);
 
     //! Print bounding boxes on standard output.
     void pretty_bboxes(const vector<bbox*> &bboxes);
@@ -285,7 +288,7 @@ namespace ebl {
     bool                 save_mode; //!< save detected windows or not
     string               save_dir; //!< directory where to save detections
     vector<uint>         save_counts; //!< file counter for each class
-    vector<bbox>         raw_bboxes; //!< raw bboxes extracted from outputs
+    vector<bbox*>        raw_bboxes; //!< raw bboxes extracted from outputs
     vector<bbox*>        pruned_bboxes; //!< scale-pruned bboxes
     uint                 min_size; //!< minimum input size to network
     uint                 max_size; //!< maximum input size to network
@@ -294,6 +297,7 @@ namespace ebl {
     bool                 bodetections; //!< odetections is up-to-date or not
     bool                 bppdetections; //!< ppdetections is up-to-date or not
     uint                 save_max_per_frame; //!< max number of region saved
+    bool                 pruning; //!< enable pruning or not
 
     ////////////////////////////////////////////////////////////////
     // friends

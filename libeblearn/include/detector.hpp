@@ -56,7 +56,7 @@ namespace ebl {
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       min_size(0), max_size(0), bodetections(false),
-      bppdetections(false) {
+      bppdetections(false), pruning(true) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -305,6 +305,13 @@ namespace ebl {
   }
   
   template <class T>
+  void detector<T>::set_pruning(bool pruning_) {
+    pruning = pruning_;
+    cout << "Pruning of neighbor answers is "
+	 << (pruning ? "enabled" : "disabled") << endl;
+  }
+  
+  template <class T>
   void detector<T>::compute_minmax_resolutions(idxdim &input_dims) {
     // compute maximum closest size of input compatible with the network size
     idxdim indim(input_dims.dim(2), input_dims.dim(0), input_dims.dim(1));
@@ -494,27 +501,28 @@ namespace ebl {
   // prune a list of detections.
   // only keep the largest scoring within an area
   template <class T>
-  void detector<T>::prune(vector<bbox> &raw_bboxes,
+  void detector<T>::prune(vector<bbox*> &raw_bboxes,
 			  vector<bbox*> &pruned_bboxes) {
     // for each bbox, check that center of current box is not within
     // another box, and only keep ones with highest score when overlapping
-    vector<bbox>::iterator i, j;
+    vector<bbox*>::iterator i, j;
     for (i = raw_bboxes.begin(); i != raw_bboxes.end(); ++i) {
       // center of the box
-      rect this_bbox(i->h0 + i->height / 2, i->w0 + i->width / 2, 1, 1);
+      rect this_bbox((*i)->h0 + (*i)->height / 2,
+		     (*i)->w0 + (*i)->width / 2, 1, 1);
       bool add = true;
       // check each other bbox
       for (j = raw_bboxes.begin(); (j != raw_bboxes.end()) && add; ++j) {
 	if (i != j) {
-	  rect other_bbox(j->h0, j->w0, j->height, j->width);
+	  rect other_bbox((*j)->h0, (*j)->w0, (*j)->height, (*j)->width);
 	  if ((this_bbox.overlap(other_bbox)) &&
-	      (i->confidence < j->confidence))
+	      ((*i)->confidence < (*j)->confidence))
 	    add = false;
 	}
       }
       // if bbox survived, add it
       if (add)
-	pruned_bboxes.push_back(&(*i));
+	pruned_bboxes.push_back(*i);
     }
   }
 	
@@ -524,7 +532,7 @@ namespace ebl {
   }
     
   template <class T>
-  void detector<T>::map_to_list(T threshold, vector<bbox> &raw_bboxes) {
+  void detector<T>::map_to_list(T threshold, vector<bbox*> &raw_bboxes) {
     // make a list that contains the results
     idx<T> in0x(((state_idx<T>*) inputs.get(0))->x);
     double original_h = grabbed.dim(0);
@@ -579,7 +587,7 @@ namespace ebl {
 		  bb.owidth = (uint) out_w; // output width
 		  bb.oh0 = offset_h; // answer height in output
 		  bb.ow0 = offset_w; // answer height in output
-		  raw_bboxes.push_back(bb);
+		  raw_bboxes.push_back(new bbox(bb));
 		}
 		offset_w++;
 	      }}
@@ -647,19 +655,27 @@ namespace ebl {
     // TODO: use connected components instead of fixed-size window local maxima?
     mark_maxima(threshold);
     // get bounding boxes
+    for (vector<bbox*>::iterator k = raw_bboxes.begin(); k != raw_bboxes.end();
+	 ++k)
+      if (*k)
+	delete *k;
     raw_bboxes.clear();
     map_to_list(threshold, raw_bboxes);
+    vector<bbox*> &bb = raw_bboxes;
     // prune bounding boxes btwn scales
-    pruned_bboxes.clear();
-    prune(raw_bboxes, pruned_bboxes);
+    if (pruning) {
+      pruned_bboxes.clear();
+      prune(raw_bboxes, pruned_bboxes);
+      bb = pruned_bboxes;
+    }
     // print results
     if (!silent)
-      pretty_bboxes(pruned_bboxes);
+      pretty_bboxes(bb);
     // save positive response input windows in save mode
     if (save_mode)
-      save_bboxes(pruned_bboxes, save_dir);
+      save_bboxes(bb, save_dir);
     // return bounding boxes
-    return pruned_bboxes;
+    return bb;
   }
 
   template <class T>
