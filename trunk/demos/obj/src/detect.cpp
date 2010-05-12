@@ -116,16 +116,18 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       bool bmask_class = false;
       if (conf.exists("mask_class"))
 	bmask_class = detect.set_mask_class(conf.get_cstring("mask_class"));
-      if (conf.exists("input_min"))
-	detect.set_min_resolution(conf.get_uint("input_min")); // limit inputs size
-      if (conf.exists("input_max"))
-	detect.set_max_resolution(conf.get_uint("input_max")); // limit inputs size
+      if (conf.exists("input_min")) // limit inputs size
+	detect.set_min_resolution(conf.get_uint("input_min")); 
+      if (conf.exists("input_max")) // limit inputs size
+	detect.set_max_resolution(conf.get_uint("input_max"));
       detect.set_silent();
       if (conf.exists_bool("save_detections")) {
 	detect.set_save("detections");
 	if (conf.exists("save_max_per_frame"))
 	  detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
       }
+      if (conf.exists_bool("pruning"))
+	detect.set_pruning(conf.get_bool("pruning"));
 
       // initialize camera (opencv, directory, shmem or video)
       idx<t_net> frame;
@@ -135,12 +137,14 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	cam = new camera_directory<t_net>(conf.get_cstring("retrain_dir"));
       } else { // regular execution
 	if (!strcmp(cam_type.c_str(), "directory")) {
-	  if (argc == 3) cam = new camera_directory<t_net>(argv[2], height, width);
+	  if (argc == 3) cam = new camera_directory<t_net>(argv[2], height,
+							   width);
 	  else eblerror("expected 2nd argument");
 	} else if (!strcmp(cam_type.c_str(), "opencv"))
 	  cam = new camera_opencv<t_net>(-1, height, width);
 	else if (!strcmp(cam_type.c_str(), "v4l2"))
-	  cam = new camera_v4l2<t_net>(conf.get_cstring("device"), height, width);
+	  cam = new camera_v4l2<t_net>(conf.get_cstring("device"),
+				       height, width);
 	else if (!strcmp(cam_type.c_str(), "shmem"))
 	  cam = new camera_shmem<t_net>("shared-mem", height, width);
 	else if (!strcmp(cam_type.c_str(), "video")) {
@@ -150,7 +154,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	       conf.get_uint("input_video_max_duration"));
 	  else eblerror("expected 2nd argument");
 	} else eblerror("unknown camera type");
-	// a camera directory may be used first, then switching to regular camera
+	// a camera directory may be used first, then switching to regular cam
 	if (conf.exists_bool("precamera"))
 	  cam2 = new camera_directory<t_net>(conf.get_cstring("precamdir"),
 					     height, width);
