@@ -107,8 +107,8 @@ install:
 	cp -f libidxgui/include/* $(INCLUDE_INSTALL)
 	cp -f libeblearngui/include/* $(INCLUDE_INSTALL)
 	cp -f libeblearntools/include/* $(INCLUDE_INSTALL)
-	cd bin && cp -f ${LIBS} $(LIB_INSTALL)
-	cd bin && cp -f ${BINS} $(BIN_INSTALL)
+	cd bin && cp -f ${LIBS} ../$(LIB_INSTALL) && cd ..
+	cd bin && cp -f ${BINS} ../$(BIN_INSTALL) && cd ..
 
 uninstall:
 	rm -Rf $(INCLUDE_INSTALL)
