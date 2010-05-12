@@ -66,26 +66,63 @@ bool parse_args(int argc, char **argv) {
 // gui
 
 template <typename T>
-void display(string &fname, bool signd, bool load, bool show_info) {
+void display(list<string>::iterator &ifname,
+	     bool signd, bool load, bool show_info,
+	     bool show_help, uint nh, uint nw, list<string> *mats) {
 #ifdef __GUI__
   static idx<T> mat;
+  uint h = 0, w = 0, rowh = 0, maxh = 0;
+  list<string>::iterator fname = ifname;
   disable_window_updates();
   clear_window();
-  if (load)
-    mat = load_image<T>(fname);
-  if (signd) {
-    T min, max;
-    T matmin = idx_min(mat);
-    if (matmin < 0) {
-      min = -1; 
-      max = -1;
+  for (uint i = 0; i < nh; ++i) {
+    rowh = maxh;
+    for (uint j = 0; j < nw; ++j) {
+      if (fname == mats->end())
+	fname = mats->begin();
+      //      if (load)
+      mat = load_image<T>(*fname);
+      maxh = MAX(maxh, rowh + mat.dim(0));
+      if (signd) {
+	T min, max;
+	T matmin = idx_min(mat);
+	if (matmin < 0) {
+	  min = -1; 
+	  max = -1;
+	}
+	draw_matrix(mat, rowh, w, 1.0, 1.0, min, max);
+      } else
+	draw_matrix(mat, rowh, w);
+      w += mat.dim(1) + 1;
+      fname++;
+      if (fname == ifname)
+	break ;
     }
-    draw_matrix(mat, 0, 0, 1.0, 1.0, min, max);
-  } else
-    draw_matrix(mat);
+    if (fname == ifname)
+      break ;
+    maxh++;
+    w = 0;
+  }
+  // info
   if (show_info) {
+    set_text_colors(0, 0, 0, 255, 255, 255, 255, 200);
     gui << mat;
-    gui << at(15, 0) << fname;
+    gui << at(15, 0) << *fname;
+  }
+  // help
+  if (show_help) {
+    h = 0;
+    w = 0;
+    uint hstep = 14;
+    set_text_colors(0, 0, 255, 255, 255, 255, 255, 200);
+    gui << at(h, w) << "Controls:"; h += hstep;
+    set_text_colors(0, 0, 0, 255, 255, 255, 255, 200);
+    gui << at(h, w) << "Spacebar/Right: next image"; h += hstep;
+    gui << at(h, w) << "Left: previous image"; h += hstep;
+    gui << at(h, w) << "i: image info"; h += hstep;
+    gui << at(h, w) << "x/z: show more/less images on width axis"; h += hstep;
+    gui << at(h, w) << "y/t: show more/less images on height axis"; h += hstep;
+    gui << at(h, w) << "h: help"; h += hstep;
   }
   enable_window_updates();
 #endif
@@ -93,30 +130,32 @@ void display(string &fname, bool signd, bool load, bool show_info) {
 
 //! Retrieve type so that we know if we can look
 //! for negative values when estimating range.
-void load_display(string &fname, bool load, bool show_info) {
+void load_display(list<string>::iterator &ifname,
+		  bool load, bool show_info, bool show_help,
+		  uint nh, uint nw, list<string> *mats) {
   try {
-    switch (get_matrix_type(fname.c_str())) {
+    switch (get_matrix_type((*ifname).c_str())) {
     case MAGIC_BYTE_MATRIX:
     case MAGIC_UBYTE_VINCENT:
-      display<ubyte>(fname, false, load, show_info);
+      display<ubyte>(ifname, false, load, show_info, show_help, nh, nw, mats);
       break ;
     case MAGIC_INTEGER_MATRIX:
     case MAGIC_INT_VINCENT:
-      display<int>(fname, true, load, show_info);
+      display<int>(ifname, true, load, show_info, show_help, nh, nw, mats);
     break ;
     case MAGIC_FLOAT_MATRIX:
     case MAGIC_FLOAT_VINCENT:
-      display<float>(fname, true, load, show_info);
+      display<float>(ifname, true, load, show_info, show_help, nh, nw, mats);
       break ;
     case MAGIC_DOUBLE_MATRIX:
     case MAGIC_DOUBLE_VINCENT:
-      display<double>(fname, true, load, show_info);
+      display<double>(ifname, true, load, show_info, show_help, nh, nw, mats);
       break ;
     case MAGIC_LONG_MATRIX:
-    display<long>(fname, true, load, show_info);
+    display<long>(ifname, true, load, show_info, show_help, nh, nw, mats);
     break ;
     case MAGIC_UINT_MATRIX:
-      display<uint>(fname, false, load, show_info);
+      display<uint>(ifname, false, load, show_info, show_help, nh, nw, mats);
       break ;
     default:
       eblerror("unknown magic number");
@@ -141,12 +180,18 @@ int main(int argc, char **argv) {
     if (!parse_args(argc, argv))
       return -1;
     new_window("matshow");
+    // variables
     bool show_info = false;
+    bool show_help = false;
+    uint nh = 1, nw = 1;
     // show mat images
+    list<string> *argmats = new list<string>();
+    list<string>::iterator i;
     for (int i = 1; i < argc; ++i) {
-      string fname = argv[i];
-      load_display(fname, true, show_info);
+      argmats->push_front(argv[i]);
     }
+    i = argmats->begin();
+    load_display(i, true, show_info, show_help, nh, nw, argmats);
     // list all other mat files in image directory
     string dir = argv[1];
     string imgname, tmpname;
@@ -161,7 +206,6 @@ int main(int argc, char **argv) {
     list<string> *mats = find_fullfiles(dir, MAT_PATTERN, NULL, true, false);
     if ((mats) && (mats->size() > 1)) {
       // find current position in this list
-      list<string>::iterator i;
       for (i = mats->begin(); i != mats->end(); ++i) {
 	tmpname = i->substr(pos + 1, i->size() - pos + 1);
 	if (!imgname.compare(tmpname)) {
@@ -172,29 +216,67 @@ int main(int argc, char **argv) {
       while (1) {
 	usleep(50000);
 	int key = gui.pop_key_pressed();
-	if ((key == Qt::Key_Space) || (key == Qt::Key_Right)) {
-	  // show next image
-	  ++i;
-	  if (i == mats->end())
-	    i = mats->begin();
-	  load_display(*i, true, show_info);
-	} else if (key == Qt::Key_Left) {
-	  // show previous image
-	  i--;
-	  if (i == mats->begin()) {
-	    i = mats->end();
-	    i--;
+	// next/previous images only if not everuything is already displayed
+	if (mats->size() > nh * nw) {
+	  if ((key == Qt::Key_Space) || (key == Qt::Key_Right)) {
+	    // show next image
+	    for (uint k = 0; k < nw * nh; ++k) {
+	      i++;
+	      if (i == mats->end()) {
+		i = mats->begin();
+	      }
+	    }
+	    load_display(i, true, show_info, show_help, nh, nw, mats);
+	  } else if (key == Qt::Key_Left) {
+	    // show previous image
+	    for (uint k = 0; k < nw * nh; ++k) {
+	      i--;
+	      if (i == mats->begin()) {
+		i = mats->end();
+		i--;
+	      }
+	    }
+	    load_display(i, true, show_info, show_help, nh, nw, mats);
 	  }
-	  load_display(*i, true, show_info);
-	} else if (key == Qt::Key_I) {
+	}
+	if (key == Qt::Key_I) {
 	  // show info
 	  show_info = !show_info;
-	  load_display(*i, false, show_info);
+	  if (show_info)
+	    show_help = false;
+	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	} else if (key == Qt::Key_H) {
+	  // show help
+	  show_help = !show_help;
+	  if (show_help)
+	    show_info = false;
+	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	} else if (key == Qt::Key_Y) {
+	  // increase number of images shown on height axis
+	  if (nh * nw < mats->size())
+	    nh++;
+	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	} else if (key == Qt::Key_T) {
+	  // decrease number of images shown on height axis
+	  nh = MAX(1, nh - 1);
+	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	} else if (key == Qt::Key_X) {
+	  // increase number of images shown on width axis
+	  if (nh * nw < mats->size())
+	    nw++;
+	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	} else if (key == Qt::Key_Z) {
+	  // decrease number of images shown on width axis
+	  nw = MAX(1, nw - 1);
+	  load_display(i, false, show_info, show_help, nh, nw, mats);
 	}
       }
-      // free list
-      delete mats;
     }
+    // free objects
+    if (mats)
+      delete mats;
+    if (argmats)
+      delete argmats;
   } catch(string &err) {
     cerr << err << endl;
   }
