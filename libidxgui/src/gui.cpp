@@ -103,23 +103,23 @@ namespace ebl {
     gui.draw_text(s, h0, w0);
   }
 
-  void set_window_text_origin(unsigned int h0, unsigned int w0) {
+  void set_text_origin(unsigned int h0, unsigned int w0) {
     gui.set_text_origin(h0, w0);
   }
 
-  void set_window_text_colors(unsigned char fg_r, unsigned char fg_g,
+  void set_text_colors(unsigned char fg_r, unsigned char fg_g,
 			      unsigned char fg_b, unsigned char fg_a,
 			      unsigned char bg_r, unsigned char bg_g,
 			      unsigned char bg_b, unsigned char bg_a) {
     gui.set_text_colors(fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a);
   }
 
-  void set_window_text_colors(int fg_r, int fg_g, int fg_b, int fg_a,
+  void set_text_colors(int fg_r, int fg_g, int fg_b, int fg_a,
 			      int bg_r, int bg_g, int bg_b, int bg_a) {
     gui.set_text_colors(fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a);
   }
 
-  void set_window_bg_colors(int r, int g, int b) {
+  void set_bg_colors(int r, int g, int b) {
     gui.set_bg_colors(r, g, b);
   }
 
