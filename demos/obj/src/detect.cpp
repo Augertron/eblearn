@@ -126,7 +126,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	if (conf.exists("save_max_per_frame"))
 	  detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
       }
-      if (conf.exists_bool("pruning"))
+      if (conf.exists("pruning"))
 	detect.set_pruning(conf.get_bool("pruning"));
 
       // initialize camera (opencv, directory, shmem or video)
