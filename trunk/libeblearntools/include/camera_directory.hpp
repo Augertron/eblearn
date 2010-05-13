@@ -105,6 +105,13 @@ namespace ebl {
     return (fl->size() == 0);
   }
     
+  template <typename Tdata>
+  string camera_directory<Tdata>::frame_name() {
+    ostringstream name;
+    name << fl->front().first << "/" << fl->front().second;
+    return name.str();
+  }
+  
 } // end namespace ebl
 
 #endif /* CAMERA_DIRECTORY_HPP_ */

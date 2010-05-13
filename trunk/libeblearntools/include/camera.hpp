@@ -147,7 +147,14 @@ namespace ebl {
     // }
     return fps_grab;
   }
-    
+
+  template <typename Tdata>
+  string camera<Tdata>::frame_name() {
+    ostringstream name;
+    name << "frame_" << frame_id;
+    return name.str();
+  }
+  
   ////////////////////////////////////////////////////////////////
   // internal methods
   
