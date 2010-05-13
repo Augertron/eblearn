@@ -77,17 +77,18 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #endif
       ipp_init(1); // limit IPP (if available) to 1 core
       // load configuration
-      configuration conf(argv[1]);
-      bool		color		= conf.exists_bool("color");
-      uint		norm_size	= conf.get_uint("normalization_size");
-      t_net		threshold	= (t_net) conf.get_double("threshold");
-      bool		display 	= false;
-      bool		mindisplay 	= false;
-      uint          display_sleep   = 0;
-      bool		save_video 	= false;
-      string        cam_type        = conf.get_string("camera");
-      int           height          = conf.get_int("input_height");
-      int           width           = conf.get_int("input_width");
+      configuration	conf(argv[1]);
+      bool		color	      = conf.exists_bool("color");
+      uint		norm_size     = conf.get_uint("normalization_size");
+      t_net		threshold     = (t_net) conf.get_double("threshold");
+      bool		display       = false;
+      bool		mindisplay    = false;
+      uint		display_sleep = 0;
+      bool		save_video    = false;
+      string		cam_type      = conf.get_string("camera");
+      int		height        = conf.get_int("input_height");
+      int		width         = conf.get_int("input_width");
+      string		detdir;
 
       // load network and weights
       parameter<t_net> theparam;
@@ -122,7 +123,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	detect.set_max_resolution(conf.get_uint("input_max"));
       detect.set_silent();
       if (conf.exists_bool("save_detections")) {
-	detect.set_save("detections");
+	detdir = detect.set_save("detections");
 	if (conf.exists("save_max_per_frame"))
 	  detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
       }
@@ -159,6 +160,20 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  cam2 = new camera_directory<t_net>(conf.get_cstring("precamdir"),
 					     height, width);
       }
+
+      // answer variables & initializations
+      vector<bbox*> bboxes;
+      vector<bbox*>::iterator ibboxes;
+      ostringstream answer_fname;
+      if (detdir.size() > 0)
+	mkdir_full(detdir);
+      answer_fname << detdir << "/" << "bbox.txt";
+      // open file      
+      ofstream fp(answer_fname.str().c_str());
+      if (!fp) {
+	cerr << "failed to open " << answer_fname.str() << endl;
+	eblerror("open failed");
+      }
     
       // gui
 #ifdef __GUI__
@@ -168,13 +183,17 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       save_video    = conf.exists_bool("save_video");
       uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
 	qheight2 = 0, qwidth2 = 0, qstep2 = 0;
-      if (conf.exists_bool("queue1")) { qstep1 = conf.get_uint("qstep1");
-	qheight1 = conf.get_uint("qheight1"); qwidth1 = conf.get_uint("qwidth1"); }
-      if (conf.exists_bool("queue2")) { qstep2 = conf.get_uint("qstep2");
-	qheight2 = conf.get_uint("qheight2"); qwidth2 = conf.get_uint("qwidth2"); }
+      if (conf.exists_bool("queue1")) {
+	qstep1 = conf.get_uint("qstep1");
+	qheight1 = conf.get_uint("qheight1");
+	qwidth1 = conf.get_uint("qwidth1"); }
+      if (conf.exists_bool("queue2")) {
+	qstep2 = conf.get_uint("qstep2");
+	qheight2 = conf.get_uint("qheight2");
+	qwidth2 = conf.get_uint("qwidth2"); }
       module_1_1_gui netgui;
-      uint	wid	= display ? new_window("eblearn object recognition") : 0;
-      float zoom	= 1;
+      uint	wid  = display ? new_window("eblearn object recognition") : 0;
+      float	zoom = 1;
       detector_gui<t_net> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
 			       qwidth1, conf.exists_bool("queue2"), qstep2,
 			       qheight2, qwidth2);
@@ -205,18 +224,19 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  frame = cam->grab();
 	// run detector
 	if (!display) { // fprop without display
-	  detect.fprop(frame, threshold);
+	  bboxes = detect.fprop(frame, threshold);
 	} 
 #ifdef __GUI__
 	else { // fprop and display
 	  disable_window_updates();
 	  clear_window();
 	  if (mindisplay)
-	    dgui.display(detect, frame, threshold, 0, 0, zoom,
-			 (t_net)0, (t_net)255, wid);
+	    bboxes = dgui.display(detect, frame, threshold, 0, 0, zoom,
+				  (t_net)0, (t_net)255, wid);
 	  else
-	    dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
-					(t_net)-1.1, (t_net)1.1, wid); 
+	    bboxes =
+	      dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
+					  (t_net)-1.1, (t_net)1.1, wid); 
 	  enable_window_updates();
 	  if (save_video)
 	    cam->record_frame();
@@ -226,6 +246,15 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	cout << "processing: " << tpp << " ms." << endl;
 	cout << "fps: " << cam->fps() << endl;
 #endif
+	// save bounding boxes
+	for (ibboxes = bboxes.begin(); ibboxes != bboxes.end(); ++ibboxes) {
+	  fp << cam->frame_name() << " " << (*ibboxes)->class_id << " "
+	     << (*ibboxes)->confidence << " ";
+	  fp << (*ibboxes)->w0 << " " << (*ibboxes)->h0 << " ";
+	  fp << (*ibboxes)->w0 + (*ibboxes)->width << " ";
+	  fp << (*ibboxes)->h0 + (*ibboxes)->height << endl;
+	}
+	// sleep display
 	if (display_sleep > 0) {
 	  cout << "sleeping for " << display_sleep << "ms." << endl;
 	  usleep(display_sleep);
@@ -243,6 +272,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       if (net) delete net;
       if (cam) delete cam;
       if (pp) delete pp;
+      // close files
+      fp.close();
 #ifdef __GUI__
       quit_gui(); // close all windows
 #endif

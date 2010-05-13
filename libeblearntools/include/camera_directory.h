@@ -91,6 +91,9 @@ namespace ebl {
     //! Return true until all images have been processed.
     virtual bool empty();
 
+    //! Return a name for current frame.
+    virtual string frame_name();
+
     // members ////////////////////////////////////////////////////////
   protected:
     using camera<Tdata>::frame;	//!< frame buffer 

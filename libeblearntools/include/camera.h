@@ -95,6 +95,9 @@ namespace ebl {
     //! Return the number of frames per second obtained via grab().
     virtual float fps();
 
+    //! Return a name for current frame.
+    virtual string frame_name();
+
     ////////////////////////////////////////////////////////////////
     // internal methods
   protected:

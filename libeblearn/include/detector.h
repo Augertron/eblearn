@@ -151,7 +151,8 @@ namespace ebl {
     //! Enable saving of each (preprocessed) window inducing a positive
     //! detection into directory. All detections except for the background
     //! class are dumped into a directory corresponding to the class' name.
-    void set_save(const string directory);
+    //! This returns the directory string used.
+    string& set_save(const string directory);
 
     //! Set the minimum size of each side of an input to use as input
     //! to the network. I.e. a input to the network will be at least
