@@ -207,6 +207,10 @@ namespace ebl {
     ++labelsIter_test;
     // reset if reached end
     if(!dataIter_test.notdone()) {
+      // if not a test dataset and shuffling is on, shuffle
+      if (!test_set && shuffle_passes)
+	idx_shuffle_together(data, labels, 0);
+      // reset iterators
       dataIter_test = data.dim_begin(0);
       labelsIter_test = labels.dim_begin(0);
     }

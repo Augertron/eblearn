@@ -61,6 +61,9 @@ namespace ebl {
     return true;
   }
 
+  ////////////////////////////////////////////////////////////////
+  // timing utilities
+
   string tstamp() {
     ostringstream ts;
     static time_t t = time(NULL);
@@ -75,4 +78,33 @@ namespace ebl {
     return ts.str();
   }
 
+  timer::timer() {
+  }
+
+  timer::~timer() {
+  }
+
+  void timer::start() {
+    gettimeofday(&t0, NULL);
+  }
+
+  void timer::restart() {
+    gettimeofday(&t0, NULL);
+  }
+
+  double timer::elapsed_minutes() {
+    gettimeofday(&t1, NULL);
+    return (t1.tv_sec - t0.tv_sec) / (double) 60;
+  }
+  
+  long timer::elapsed_seconds() {
+    gettimeofday(&t1, NULL);
+    return t1.tv_sec - t0.tv_sec;
+  }
+  
+  long timer::elapsed_milliseconds() {
+    gettimeofday(&t1, NULL);
+    return (t1.tv_sec - t0.tv_sec) * 1000 + (t1.tv_usec - t0.tv_usec) / 1000;
+  }
+  
 } // namespace ebl

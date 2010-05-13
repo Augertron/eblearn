@@ -40,7 +40,7 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-  //! class that contains all the parameters
+  //! A class that contains all the parameters
   //! for a stochastic gradient descent update,
   //! including step sizes, regularizer coefficients...
   class gd_param: public infer_param {
@@ -114,7 +114,7 @@ namespace ebl {
   template <class T> class parameter;
   
   ////////////////////////////////////////////////////////////////
-  //! class that stores a vector/tensor state
+  //! A class that stores a vector/tensor state.
   template <class T> class state_idx: public state {
   public:
     virtual ~state_idx();
