@@ -186,6 +186,11 @@ namespace ebl {
     //! If not called, default number used is the one returned
     //! by get_lowest_common_size().
     virtual void set_epoch_size(intg sz);
+
+    //! If cont is true, the samples will be returned in their original order,
+    //! regardless of their class. It will also set the epoch size
+    //! to the size of the dataset.
+    virtual void set_continuous_train(bool cont);
     
     ////////////////////////////////////////////////////////////////
   protected:    
@@ -237,6 +242,7 @@ namespace ebl {
     double                                      sample_min_proba;
     double                                      max_distance;
     intg                                        epoch_sz;
+    bool                                        continuous_train;
   };
 
   ////////////////////////////////////////////////////////////////

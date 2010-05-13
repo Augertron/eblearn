@@ -77,6 +77,7 @@ int main(int argc, char **argv) { // regular main without gui
   train_ds.set_weigh_samples(conf.exists_bool("wsamples"));
   train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));
   train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
+  train_ds.set_continuous_train(conf.exists_bool("continuous_train"));
   if (conf.exists("epoch_size"))
     train_ds.set_epoch_size(conf.get_int("epoch_size"));
 

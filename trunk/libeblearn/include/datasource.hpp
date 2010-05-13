@@ -50,7 +50,8 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0), 
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(0), width(0), sample_min_proba(0.0), epoch_sz(0) {
+      height(0), width(0), sample_min_proba(0.0), epoch_sz(0),
+      continuous_train(false) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -63,7 +64,7 @@ namespace ebl {
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0), 
       height(ds.height), width(ds.width), name(ds.name), sample_min_proba(0.0),
-      epoch_sz(0) {
+      epoch_sz(0), continuous_train(false) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -77,7 +78,7 @@ namespace ebl {
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
       height(data.dim(1)), width(data.dim(2)), sample_min_proba(0.0),
-      epoch_sz(0) {
+      epoch_sz(0), continuous_train(false) {
     init(data_, labels_, name_, b, c);
   }
 
@@ -201,12 +202,11 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next() {
-    // draw random number between
+    // increment data and labels iterators
     ++dataIter_test;
     ++labelsIter_test;
-    
+    // reset if reached end
     if(!dataIter_test.notdone()) {
-      // come back to begining
       dataIter_test = data.dim_begin(0);
       labelsIter_test = labels.dim_begin(0);
     }
@@ -231,6 +231,10 @@ namespace ebl {
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next_train(intg *callcnt) {
+    // return samples in original order, regardless of their class
+    if (continuous_train)
+      return next();
+      
     // get pointer to first non empty class
     while (!label_indices[iitr].size()) {
       iitr++; // next class if class is empty
@@ -404,6 +408,18 @@ namespace ebl {
   void datasource<Tnet, Tin1, Tin2>::set_epoch_size(intg sz) {
     cout << "Setting epoch size to " << sz << endl;
     epoch_sz = sz;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_continuous_train(bool cont) {
+    continuous_train = cont;
+    if (cont) {
+      cout << "Setting training to continuous mode (return samples in their "
+	   << "original order and set epoch size to dataset size)." << endl;
+      set_epoch_size(data.dim(0));
+    } else {
+      cout << "Disabling continuous mode." << endl;
+    }
   }
 
   template <class Tnet, class Tin1, class Tin2>
