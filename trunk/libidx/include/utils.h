@@ -34,6 +34,9 @@
 #define UTILS_H_
 
 #include <string>
+#include <sys/time.h>
+#include <stdio.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -50,10 +53,32 @@ namespace ebl {
   //! Return false upon failure.
   bool mkdir_full(string &dir);
 
+  ////////////////////////////////////////////////////////////////
+  // timing utilities
+
   //! Return a string containing a timestamp of localtime in the following
   //! format: "<year><month><day>.<hour><minutes><seconds>".
   string tstamp();
-  
+
+  //! A timer class.
+  class timer {
+  public:
+    timer();
+    virtual ~timer();
+    //! Start timer.
+    void start();
+    //! Restart timer.
+    void restart();
+    //! Return elapsed time in minutes since start() or restart().
+    double elapsed_minutes();
+    //! Return elapsed time in seconds since start() or restart().
+    long elapsed_seconds();
+    //! Return elapsed time in milliseconds since start() or restart().
+    long elapsed_milliseconds();
+  private:
+    struct timeval t0, t1;
+  };
+
 } // end namespace ebl
 
 #endif /* UTILS_ */

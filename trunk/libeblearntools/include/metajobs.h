@@ -35,6 +35,7 @@
 
 #include "configuration.h"
 #include "metaparser.h"
+#include "utils.h"
 
 #include <sstream>
 #include <stdlib.h>
@@ -73,6 +74,9 @@ namespace ebl {
     //! Return root directory of this job.
     string get_root();
 
+    //! Return job's running time in minutes.
+    double minutes();
+    
     ////////////////////////////////////////////////////////////////
     // members
   private:
@@ -83,6 +87,7 @@ namespace ebl {
     string		oconffname_;	//!< job's original conf filename
     pid_t		pid;	//!< pid of this job
     string              classesname_; //!< filename of classes matrix
+    timer               t;
   };
 
   ////////////////////////////////////////////////////////////////

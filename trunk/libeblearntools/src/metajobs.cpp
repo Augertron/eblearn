@@ -50,7 +50,6 @@ using namespace boost;
 #endif
 
 #include "metajobs.h"
-#include "utils.h"
 #include "tools_utils.h"
 #include "metaparser.h"
 
@@ -72,6 +71,8 @@ namespace ebl {
   }
 
   void job::run() {
+    // start timer
+    t.start();
     ostringstream cmd, log, errlog;
     log << "out_" << conf.get_name() << ".log";
     errlog << "out_" << conf.get_name() << ".errlog";
@@ -149,6 +150,10 @@ namespace ebl {
     root +=  conf.get_name();
     return root;
   }
+
+  double job::minutes() {
+    return t.elapsed_minutes();
+  }
   
   ////////////////////////////////////////////////////////////////
   // job manager
@@ -188,6 +193,7 @@ namespace ebl {
     varmaplist best; // best results
     ostringstream cmd, jobs_info;
     int maxiter = -1, maxiter_tmp;
+    double maxtime = 0.0;
     metaparser p;
 
     // write job directories and files
@@ -239,6 +245,7 @@ namespace ebl {
       for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
 	if (i->alive())
 	  nrunning++;
+	maxtime = MAX(i->minutes(), maxtime);
       }
       int status = 0;
       waitpid(-1, &status, WNOHANG); // check children status
@@ -248,7 +255,8 @@ namespace ebl {
       uint j = 1;
       for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i, ++j) {
       	jobs_info << j << ". pid: " << i->getpid() << ", name: " << i->name()
-		  << ", status: " << (i->alive() ? "alive" : "dead") << endl;
+		  << ", status: " << (i->alive() ? "alive" : "dead")
+		  << ", minutes: " << i->minutes() << endl;
       }
       // analyze outputs if requested
       if (mconf.exists_bool("meta_analyze")) {
@@ -269,7 +277,8 @@ namespace ebl {
 				   maxiter_tmp);
 		  // send report
 		  p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
-				mconf_fullfname, jobs_info.str(), nrunning);
+				mconf_fullfname, jobs_info.str(), nrunning,
+				maxtime);
 		}
 	      }
 	    } else if (mconf.exists("meta_email_period") &&
@@ -279,7 +288,8 @@ namespace ebl {
 			       maxiter_tmp);
 	      // send report
 	      p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
-			    mconf_fullfname, jobs_info.str(), nrunning);
+			    mconf_fullfname, jobs_info.str(), nrunning,
+			    maxtime);
 	    }
 	  }
 	}
@@ -292,7 +302,7 @@ namespace ebl {
 		       maxiter_tmp); // parse output and get best results
     // send report
     p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
-		  mconf_fullfname, jobs_info.str(), nrunning);
+		  mconf_fullfname, jobs_info.str(), nrunning, maxtime);
   }
 
 } // namespace ebl

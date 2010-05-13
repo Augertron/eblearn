@@ -243,8 +243,10 @@ namespace ebl {
   train(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log, 
 	gd_param &args, int niter) {
     Tlabel lab;
+    timer t;
     init(ds, &log);
     for (int i = 0; i < niter; ++i) { // niter iterations
+      t.start();
       // training on lowest size common to all classes (times # classes)
       for (intg j = 0; j < ds.get_epoch_size(); ++j) {
 	ds.fprop(*input, label);
@@ -256,6 +258,7 @@ namespace ebl {
 	age++;
 	ds.next_train();
       }
+      cout << " epoch_minutes=" << t.elapsed_minutes() << " ";
     }
   }
 

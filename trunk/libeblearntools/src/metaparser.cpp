@@ -623,7 +623,7 @@ namespace ebl {
   void metaparser::send_report(configuration &conf, const string dir,
 			       varmaplist &best, int maxiter,
 			       string conf_fullfname, string jobs_info,
-			       uint nrunning) {
+			       uint nrunning, double minutes) {
     ostringstream cmd;
     string tmpfile = "report.tmp";
     int res;
@@ -637,17 +637,18 @@ namespace ebl {
       cmd.str("");
       cmd << "rm -f " << tmpfile; // remove tmp file first
       res = std::system(cmd.str().c_str());
-      // print jobs infos
+      // print summary infos
       cmd.str("");
       cmd << "echo \"Iteration: " << maxiter << endl;
       cmd << "Jobs running: " << nrunning << endl;
-      cmd << jobs_info << endl;
+      cmd << "Running time: " << minutes << " minutes" << endl;
       cout << cmd.str();
       cmd << "\" >> " << tmpfile;
       res = std::system(cmd.str().c_str());
       // print best results
       if (best.size() > 0) {
-	list<string> keys = string_to_stringlist(conf.get_string("meta_minimize"));
+	list<string> keys =
+	  string_to_stringlist(conf.get_string("meta_minimize"));
 	cmd.str("");
 	cmd << "echo \"Best " << best.size() << " results at iteration " 
 	    << maxiter << ":" << endl;
@@ -656,6 +657,13 @@ namespace ebl {
 	cmd << " >> " << tmpfile;
 	res = std::system(cmd.str().c_str());
       }
+      // print summary infos
+      cmd.str("");
+      cmd << "Jobs running: " << nrunning << endl;
+      cmd << jobs_info << endl;
+      cout << cmd.str();
+      cmd << "\" >> " << tmpfile;
+      res = std::system(cmd.str().c_str());
       // print err logs
       list<string> *errlogs = find_fullfiles(dir, ".*[.]errlog");
       if (errlogs) {
