@@ -92,8 +92,10 @@
        <code>$ make release</code><br>
        To compile all projects debug mode (slower execution):<br>
        <code>$ make debug</code><br>
-       To compile a specific project in release mode, e.g. libidx:<br>
+       To compile a specific project(s) in release mode, e.g. libidx or
+       metarun and metaparse:<br>
        <code>$ make release prj=idx</code><br>
+       <code>$ make release prj="metarun metaparse"</code><br>
        To compile a specific project in debug mode, e.g. objdetect:<br>
        <code>$ make debug prj=objdetect</code><br>
        To compile the tester and run it:<br>
