@@ -51,11 +51,11 @@ namespace ebl {
     //! the number of inputs, and the number of outputs.
     //! \param indim0 The number of inputs
     //! \param noutputs The number of outputs.
-    nn_layer_full(parameter<T> &p, intg indim0, intg noutputs);
+    //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
+    nn_layer_full(parameter<T> &p, intg indim0, intg noutputs,
+		  bool tanh = true);
     //! Constructor without parameter, used only for deep copies.
-    //! \param indim0 The number of inputs
-    //! \param noutputs The number of outputs.
-    nn_layer_full(intg indim0, intg noutputs);
+    nn_layer_full(intg indim0, intg noutputs, bool tanh = true);
     //! Destructor.
     virtual ~nn_layer_full();
     //! fprop from in to out
@@ -78,10 +78,11 @@ namespace ebl {
     // members ////////////////////////////////////////////////////////
   private:
     parameter<T>                 param;   //!< just used for deep copies
+    bool                         btanh;   //!< use tanh or stdsigmoid
   public:
     linear_module_replicable<T>	 linear;  //!< linear module for weight matrix
     addc_module<T>		 adder;	  //!< bias vector
-    tanh_module<T>		 sigmoid; //!< the non-linear function
+    module_1_1<T>               *sigmoid; //!< the non-linear function
     state_idx<T>		*sum;	  //!< weighted sum
   };
 
@@ -100,11 +101,14 @@ namespace ebl {
     //! \param stridej is the stride at which convolutions are done on 
     //!        the width axis.
     //! \param table is the convolution connection table.
+    //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
     nn_layer_convolution(parameter<T> &p, intg kerneli, intg kernelj, 
-			 intg stridei, intg stridej, idx<intg> &tbl);
+			 intg stridei, intg stridej, idx<intg> &tbl,
+			 bool tanh = true);
     //! This constructor should only be used by deep copy method.
     nn_layer_convolution(intg kerneli, intg kernelj, 
-			 intg stridei, intg stridej, idx<intg> &tbl);
+			 intg stridei, intg stridej, idx<intg> &tbl,
+			 bool tanh = true);
     virtual ~nn_layer_convolution();
     //! fprop from in to out
     void fprop(state_idx<T> &in, state_idx<T> &out);
@@ -125,12 +129,13 @@ namespace ebl {
 
     // members ////////////////////////////////////////////////////////
   private:
-    parameter<T>                         param;   //!< just used for deep copies
+    parameter<T>                         param;	//!< just used for deep copies
+    bool                                 btanh;	//!< use tanh or stdsigmoid
   public:
-    convolution_module_2D_replicable<T>	 convol;   //!< convolution module
-    addc_module<T>			 adder;	   //!< bias vector
-    tanh_module<T>			 sigmoid;  //!< the non-linear function
-    state_idx<T>			*sum;	   //!< convolution result
+    convolution_module_2D_replicable<T>	 convol;//!< convolution module
+    addc_module<T>			 adder;	//!< bias vector
+    module_1_1<T>			*sigmoid;//!< the non-linear function
+    state_idx<T>			*sum;	//!< convolution result
   };
 
   ////////////////////////////////////////////////////////////////
@@ -149,13 +154,14 @@ namespace ebl {
     //! \param stridej is the stride at which convolutions are done on 
     //!        the width axis.
     //! \param table is the convolution connection table.
+    //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
     layer_convabsnorm(parameter<T> &p, intg kerneli, intg kernelj, 
 		      intg stridei, intg stridej, idx<intg> &tbl,
-		      bool mirror = false);
+		      bool mirror = false, bool tanh = true);
     //! This constructor should only be used by deep copy method.
     layer_convabsnorm(intg kerneli, intg kernelj, 
 		      intg stridei, intg stridej, idx<intg> &tbl,
-		      bool mirror = false);
+		      bool mirror = false, bool tanh = true);
     //! Destructor.
     virtual ~layer_convabsnorm();
     //! fprop from in to out
@@ -193,13 +199,14 @@ namespace ebl {
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
+    //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
     nn_layer_subsampling(parameter<T> &p, intg stridei, intg stridej,
 			 intg subi, intg subj, 
-			 intg thick);
+			 intg thick, bool tanh = true);
     //! This constructor should only be used by deep copy method.
     nn_layer_subsampling(intg stridei, intg stridej,
 			 intg subi, intg subj, 
-			 intg thick);
+			 intg thick, bool tanh = true);
     //! Destructor.
     virtual ~nn_layer_subsampling();
     //! fprop from in to out
@@ -221,12 +228,13 @@ namespace ebl {
 
     // members ////////////////////////////////////////////////////////
   private:
-    parameter<T>                         param;   //!< just used for deep copies
+    parameter<T>                         param;	//!< just used for deep copies
+    bool				 btanh;	//!< use tanh or stdsigmoid
   public:
     subsampling_module_2D_replicable<T>	 subsampler;	//!< subsampling module
-    addc_module<T>			 adder;	   //!< bias vector
-    tanh_module<T>			 sigmoid;  //!< the non-linear function
-    state_idx<T>			*sum;	   //!< subsampling result
+    addc_module<T>			 adder;	//!< bias vector
+    module_1_1<T>			*sigmoid;//!< the non-linear function
+    state_idx<T>			*sum;	//!< subsampling result
   };
 
 } // namespace ebl {

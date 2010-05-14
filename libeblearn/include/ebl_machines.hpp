@@ -48,7 +48,8 @@ namespace ebl {
 					  intg ki1, intg kj1, idx<intg> &tbl1, 
 					  intg si1, intg sj1,
 					  intg ki2, intg kj2, idx<intg> &tbl2,
-					  intg outthick, bool norm, bool mirror)
+					  intg outthick, bool norm, bool mirror,
+					  bool tanh)
     : layers_n<T>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
@@ -64,7 +65,8 @@ namespace ebl {
 				  intg si0, intg sj0, intg ki1, intg kj1, 
 				  idx<intg> &tbl1, intg si1, intg sj1, 
 				  intg ki2, intg kj2, idx<intg> &tbl2, 
-				  intg outthick, bool norm, bool mirror) {
+				  intg outthick, bool norm, bool mirror,
+				  bool tanh) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -104,7 +106,7 @@ namespace ebl {
     add_module(new nn_layer_convolution<T>(prm, ki2, kj2, 1, 1, tbl2),
 	       new state_idx<T>(1, 1, 1));
     // full
-    add_last_module(new nn_layer_full<T>(prm, thick2, outthick));
+    add_last_module(new nn_layer_full<T>(prm, thick2, outthick, tanh));
   }
 
   ////////////////////////////////////////////////////////////////
@@ -119,10 +121,11 @@ namespace ebl {
 
   template <class T>
   nn_machine_cscf<T>::nn_machine_cscf(parameter<T> &prm, intg ini, intg inj,
-					  intg ki0, intg kj0, idx<intg> &tbl0, 
-					  intg si0, intg sj0,
-					  intg ki1, intg kj1, idx<intg> &tbl1, 
-					  intg outthick, bool norm, bool mirror)
+				      intg ki0, intg kj0, idx<intg> &tbl0, 
+				      intg si0, intg sj0,
+				      intg ki1, intg kj1, idx<intg> &tbl1, 
+				      intg outthick, bool norm, bool mirror,
+				      bool tanh)
     : layers_n<T>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
@@ -134,10 +137,10 @@ namespace ebl {
 
   template <class T>
   void nn_machine_cscf<T>::init(parameter<T> &prm, intg ini, intg inj,
-				  intg ki0, intg kj0, idx<intg> &tbl0, 
-				  intg si0, intg sj0, intg ki1, intg kj1, 
-				  idx<intg> &tbl1, 
-				  intg outthick, bool norm, bool mirror) {
+				intg ki0, intg kj0, idx<intg> &tbl0, 
+				intg si0, intg sj0, intg ki1, intg kj1, 
+				idx<intg> &tbl1, intg outthick, bool norm,
+				bool mirror, bool tanh) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -153,23 +156,26 @@ namespace ebl {
     
     // convolution
     if (norm) // absolute rectification + contrast normalization
-      add_module(new layer_convabsnorm<T>(prm, ki0, kj0, 1, 1, tbl0, mirror),
+      add_module(new layer_convabsnorm<T>(prm, ki0, kj0, 1, 1, tbl0,
+					  mirror, tanh),
 		 new state_idx<T>(1, 1, 1));
     else // old fashioned way
-      add_module(new nn_layer_convolution<T>(prm, ki0, kj0, 1, 1, tbl0),
+      add_module(new nn_layer_convolution<T>(prm, ki0, kj0, 1, 1, tbl0, tanh),
 		 new state_idx<T>(1, 1, 1));
     // subsampling
-    add_module(new nn_layer_subsampling<T>(prm, si0, sj0, si0, sj0, thick0),
+    add_module(new nn_layer_subsampling<T>(prm, si0, sj0, si0, sj0, thick0,
+					   tanh),
 	       new state_idx<T>(1, 1, 1));
     // convolution
     if (norm) // absolute rectification + contrast normalization
-      add_module(new layer_convabsnorm<T>(prm, ki1, kj1, 1, 1, tbl1, mirror),
+      add_module(new layer_convabsnorm<T>(prm, ki1, kj1, 1, 1, tbl1, mirror,
+					  tanh),
 		 new state_idx<T>(1, 1, 1));
     else // old fashioned way
-      add_module(new nn_layer_convolution<T>(prm, ki1, kj1, 1, 1, tbl1),
+      add_module(new nn_layer_convolution<T>(prm, ki1, kj1, 1, 1, tbl1, tanh),
 		 new state_idx<T>(1, 1, 1));
     // full
-    add_last_module(new nn_layer_full<T>(prm, thick1, outthick));
+    add_last_module(new nn_layer_full<T>(prm, thick1, outthick, tanh));
   }
 
   ////////////////////////////////////////////////////////////////
@@ -321,7 +327,7 @@ namespace ebl {
 			    intg image_height, intg image_width,
 			    intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
 			    intg kj1, intg output_size, bool norm, bool color,
-			    bool mirror, idx<intg> *table0_,
+			    bool mirror, bool tanh, idx<intg> *table0_,
 			    idx<intg> *table1_) {
     idx<intg> table0, table1;
     if (!color) { // use smaller tables
@@ -345,7 +351,7 @@ namespace ebl {
       table1 = *table1_;
     
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
-	       ki1, kj1, table1, output_size, norm, mirror);
+	       ki1, kj1, table1, output_size, norm, mirror, tanh);
   }
   
   ////////////////////////////////////////////////////////////////

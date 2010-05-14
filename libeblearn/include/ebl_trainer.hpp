@@ -30,6 +30,7 @@
  ***************************************************************************/
 
 #include <typeinfo>
+#include "utils.h"
 
 namespace ebl {
 
@@ -181,6 +182,9 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>  
   double supervised_trainer<Tnet, Tdata, Tlabel>::
   learn_sample(state_idx<Tnet> &input, Tlabel label, gd_param &args) {
+#ifdef __DUMP_STATES__
+    save_matrix(input.x, "dump_trainer_machine_in.x.mat");
+#endif
     machine.fprop(input, label, energy);
     param.clear_dx();
     machine.bprop(input, label, energy);

@@ -412,8 +412,7 @@ namespace ebl {
     }
 
     // add each bias to entire slices cut from the first dimension
-    idx_bloop3(inx, in.x, T, biasx, bias.x, T, outx, out.x, T)
-      {
+    idx_bloop3(inx, in.x, T, biasx, bias.x, T, outx, out.x, T) {
 	idx_addc(inx, biasx.get(), outx);
       }
   }
