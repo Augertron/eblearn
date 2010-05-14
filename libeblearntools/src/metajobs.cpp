@@ -193,7 +193,7 @@ namespace ebl {
     varmaplist best; // best results
     ostringstream cmd, jobs_info;
     int maxiter = -1, maxiter_tmp;
-    double maxtime = 0.0;
+    double maxtime = 0.0, mintime = 0.0;
     metaparser p;
 
     // write job directories and files
@@ -246,6 +246,10 @@ namespace ebl {
 	if (i->alive())
 	  nrunning++;
 	maxtime = MAX(i->minutes(), maxtime);
+	if (mintime == 0)
+	  mintime = i->minutes();
+	else
+	  mintime = MIN(i->minutes(), mintime);
       }
       int status = 0;
       waitpid(-1, &status, WNOHANG); // check children status
@@ -278,7 +282,7 @@ namespace ebl {
 		  // send report
 		  p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
 				mconf_fullfname, jobs_info.str(), nrunning,
-				maxtime);
+				maxtime, mintime);
 		}
 	      }
 	    } else if (mconf.exists("meta_email_period") &&
@@ -289,7 +293,7 @@ namespace ebl {
 	      // send report
 	      p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
 			    mconf_fullfname, jobs_info.str(), nrunning,
-			    maxtime);
+			    maxtime, mintime);
 	    }
 	  }
 	}
@@ -302,7 +306,7 @@ namespace ebl {
 		       maxiter_tmp); // parse output and get best results
     // send report
     p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
-		  mconf_fullfname, jobs_info.str(), nrunning, maxtime);
+		  mconf_fullfname, jobs_info.str(), nrunning, maxtime, mintime);
   }
 
 } // namespace ebl
