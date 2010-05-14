@@ -98,6 +98,14 @@
        <code>$ make debug prj=objdetect</code><br>
        To compile the tester and run it:<br>
        <code>$ make test</code><br>
+       To exclude some components such as QT or OpenCV from being used,
+       export the following shell variables with 0 or 1: NOBOOST, NOOPENCV,
+       NOXML, NOQT, NOIPP. For example to compile without OpenCV:<br>
+       <code>$ export NOOPENCV=1 && make</code><br>
+       To add extra flags to the compilation, export the EBLFLAGS variable.
+       For example, to dump the states of each layer, add the __DUMP_STATES__
+       flag as follow:<br>
+       <code>$ export EBLFLAGS="-D__DUMP_STATES__" && make</code><br>
 
        <h3>Installation</h3>
        To install libraries and headers on your system:<br>

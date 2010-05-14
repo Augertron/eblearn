@@ -56,7 +56,7 @@ namespace ebl {
 		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 		      idx<intg> &tbl2, intg outthick, bool norm = false,
-		      bool mirror = false);
+		      bool mirror = false, bool tanh = true);
     virtual ~nn_machine_cscscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -77,7 +77,7 @@ namespace ebl {
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, intg outthick, bool norm = false,
-	      bool mirror = false);
+	      bool mirror = false, bool tanh = true);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -92,7 +92,7 @@ namespace ebl {
     nn_machine_cscf(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0,
 		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		      idx<intg> &tbl1, intg outthick, bool norm = false,
-		      bool mirror = false);
+		      bool mirror = false, bool tanh = true);
     virtual ~nn_machine_cscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -112,7 +112,7 @@ namespace ebl {
     void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg outthick, bool norm = false,
-	      bool mirror = false);
+	      bool mirror = false, bool tanh = true);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -154,7 +154,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! lenet type of architecture without last full layer.
   //! absolution rectification + contrast normalization can be turned on
-  //! with the norm boolean/
+  //! with the norm boolean.
   //! color can be turned on with the color boolean, in which case
   //! a 3-layer input is assumed and bigger tables are used.
   template <class T> class lenet_cscsc : public nn_machine_cscsc<T> {
@@ -169,7 +169,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! lenet type of architecture.
   //! absolution rectification + contrast normalization can be turned on
-  //! with the norm boolean/
+  //! with the norm boolean.
   //! color can be turned on with the color boolean, in which case
   //! a 3-layer input is assumed and bigger tables are used.
   template <class T> class lenet : public nn_machine_cscscf<T> {
@@ -184,16 +184,16 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! lenet type of architecture.
   //! absolution rectification + contrast normalization can be turned on
-  //! with the norm boolean/
+  //! with the norm boolean.
   //! color can be turned on with the color boolean, in which case
   //! a 3-layer input is assumed and bigger tables are used.
   template <class T> class lenet_cscf : public nn_machine_cscf<T> {
   public:
     lenet_cscf(parameter<T> &prm, intg image_height, intg image_width,
-	  intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
-	  intg output_size,
-	  bool norm = false, bool color = false, bool mirror = false,
-	  idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL);
+	       intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
+	       intg output_size, bool norm = false, bool color = false,
+	       bool mirror = false, bool tanh = true,
+	       idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL);
     virtual ~lenet_cscf() {}
   };
 

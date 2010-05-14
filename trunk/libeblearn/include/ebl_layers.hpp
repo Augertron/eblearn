@@ -35,17 +35,25 @@ namespace ebl {
   // nn_layer_full
 
   template <class T>
-  nn_layer_full<T>::nn_layer_full(parameter<T> &p, intg indim0, intg noutputs)
-    : linear(p, indim0, noutputs), adder(p, noutputs), sigmoid() {
+  nn_layer_full<T>::nn_layer_full(parameter<T> &p, intg indim0, intg noutputs,
+				  bool btanh_)
+    : btanh(btanh_),
+      linear(p, indim0, noutputs),
+      adder(p, noutputs),
+      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
     sum = NULL; 
   }
 
   template <class T>
-  nn_layer_full<T>::nn_layer_full(intg indim0, intg noutputs)
-    : param(1), linear(param, indim0, noutputs), adder(param, noutputs),
-      sigmoid() {
+  nn_layer_full<T>::nn_layer_full(intg indim0, intg noutputs, bool btanh_)
+    : param(1), btanh(btanh_),
+      linear(param, indim0, noutputs),
+      adder(param, noutputs),
+      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
     sum = NULL; 
@@ -54,6 +62,7 @@ namespace ebl {
   template <class T>
   nn_layer_full<T>::~nn_layer_full() {
     if (sum) delete sum;
+    if (sigmoid) delete sigmoid;
   }
 
   template <class T>
@@ -66,21 +75,30 @@ namespace ebl {
     // fprop
     linear.fprop(in, *sum);
     adder.fprop(*sum, *sum);
-    sigmoid.fprop(*sum, out);
+    sigmoid->fprop(*sum, out);
+#ifdef __DUMP_STATES__ // used to debug
+    save_matrix(out.x, "dump_full_layer_out.x.mat");
+#endif
   }
 
   template <class T>
   void nn_layer_full<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
-    sigmoid.bprop(*sum, out);
+    sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     linear.bprop(in, *sum);
+#ifdef __DUMP_STATES__ // used to debug
+    save_matrix(in.dx, "dump_full_layer_in.dx.mat");
+#endif
   }
 
   template <class T>
   void nn_layer_full<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
-    sigmoid.bbprop(*sum, out);
+    sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     linear.bbprop(in, *sum);
+#ifdef __DUMP_STATES__ // used to debug
+    save_matrix(in.ddx, "dump_full_layer_in.ddx.mat");
+#endif
   }
 
   template <class T>
@@ -107,7 +125,7 @@ namespace ebl {
   nn_layer_full<T>* nn_layer_full<T>::copy() {
     // allocate
     nn_layer_full<T>* l2 =
-      new nn_layer_full<T>(linear.w.x.dim(1), linear.w.x.dim(0));
+      new nn_layer_full<T>(linear.w.x.dim(1), linear.w.x.dim(0), btanh);
     // copy data
     idx_copy(linear.w.x, l2->linear.w.x);
     idx_copy(adder.bias.x, l2->adder.bias.x);
@@ -121,24 +139,30 @@ namespace ebl {
   nn_layer_convolution<T>::nn_layer_convolution(parameter<T> &p, 
 						intg kerneli, intg kernelj, 
 						intg stridei_, intg stridej_, 
-						idx<intg> &tbl) 
-    : convol(p, kerneli, kernelj, stridei_, stridej_, tbl), 
-      adder(p, convol.thickness), sigmoid() {
+						idx<intg> &tbl, bool btanh_) 
+    : btanh(btanh_),
+      convol(p, kerneli, kernelj, stridei_, stridej_, tbl), 
+      adder(p, convol.thickness),
+      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
   }
 
   template <class T>
   nn_layer_convolution<T>::nn_layer_convolution(intg kerneli, intg kernelj, 
 						intg stridei_, intg stridej_, 
-						idx<intg> &tbl) 
+						idx<intg> &tbl, bool btanh_) 
     : param(1), convol(param, kerneli, kernelj, stridei_, stridej_, tbl), 
-      adder(param, convol.thickness), sigmoid() {
+      adder(param, convol.thickness),
+      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
   }
 
   template <class T>
   nn_layer_convolution<T>::~nn_layer_convolution() {
     if (sum) delete sum;
+    if (sigmoid) delete sigmoid;
   }
 
   template <class T>
@@ -151,21 +175,35 @@ namespace ebl {
     sum->clear();
     convol.fprop(in, *sum);
     adder.fprop(*sum, *sum);
-    sigmoid.fprop(*sum, out);
+    sigmoid->fprop(*sum, out);
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_convolution_layer_out.x_" << out.x << ".mat";
+    save_matrix(out.x, fname.str());
+    fname.str("");
+    fname << "dump_convolution_layer_ker.x_" << convol.kernel.x << ".mat";
+    save_matrix(convol.kernel.x, fname.str());
+#endif
   }
 
   template <class T>
   void nn_layer_convolution<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
-    sigmoid.bprop(*sum, out);
+    sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     convol.bprop(in, *sum);
+#ifdef __DUMP_STATES__ // used to debug
+    save_matrix(in.dx, "dump_convolution_layer_in.dx.mat");
+#endif
   }
 
   template <class T>
   void nn_layer_convolution<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
-    sigmoid.bbprop(*sum, out);
+    sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     convol.bbprop(in, *sum);
+#ifdef __DUMP_STATES__ // used to debug
+    save_matrix(in.ddx, "dump_convolution_layer_in.ddx.mat");
+#endif
   }
 
   template <class T>
@@ -202,7 +240,7 @@ namespace ebl {
     // allocate
     nn_layer_convolution<T> *l2 = new nn_layer_convolution<T>
       (convol.kernel.x.dim(1), convol.kernel.x.dim(2), convol.stridei,
-       convol.stridej, convol.table);
+       convol.stridej, convol.table, btanh);
     // copy data
     idx_copy(convol.kernel.x, l2->convol.kernel.x);
     idx_copy(adder.bias.x, l2->adder.bias.x);
@@ -216,8 +254,9 @@ namespace ebl {
   layer_convabsnorm<T>::layer_convabsnorm(parameter<T> &p, 
 					  intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
-					  idx<intg> &tbl, bool mirror) 
-    : lconv(p, kerneli, kernelj, stridei_, stridej_, tbl),
+					  idx<intg> &tbl, bool mirror,
+					  bool btanh) 
+    : lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
       tmp(NULL), tmp2(NULL) {
   }
@@ -225,8 +264,9 @@ namespace ebl {
   template <class T>
   layer_convabsnorm<T>::layer_convabsnorm(intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
-					  idx<intg> &tbl, bool mirror) 
-    : param(1), lconv(param, kerneli, kernelj, stridei_, stridej_, tbl),
+					  idx<intg> &tbl, bool mirror,
+					  bool btanh) 
+    : param(1), lconv(param, kerneli, kernelj, stridei_, stridej_, tbl, btanh),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
       tmp(NULL), tmp2(NULL) {
   }
@@ -302,24 +342,31 @@ namespace ebl {
   nn_layer_subsampling<T>::nn_layer_subsampling(parameter<T> &p,
 						intg stridei, intg stridej,
 						intg subi, intg subj, 
-						intg thick)
-    : subsampler(p, stridei, stridej, subi, subj, thick), adder(p, thick),
-      sigmoid() {
+						intg thick, bool btanh_)
+    : btanh(btanh_),
+      subsampler(p, stridei, stridej, subi, subj, thick), adder(p, thick),
+      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
   }
 
   template <class T>
   nn_layer_subsampling<T>::nn_layer_subsampling(intg stridei, intg stridej,
 						intg subi, intg subj, 
-						intg thick)
-    : param(1), subsampler(param, stridei, stridej, subi, subj, thick),
-      adder(param, thick), sigmoid() {
+						intg thick, bool btanh_)
+    : param(1),
+      btanh(btanh_),
+      subsampler(param, stridei, stridej, subi, subj, thick),
+      adder(param, thick),
+      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
   }
 
   template <class T>
   nn_layer_subsampling<T>::~nn_layer_subsampling() {
     if (sum) delete sum;
+    if (sigmoid) delete sigmoid;
   }
 
   template <class T>
@@ -332,21 +379,30 @@ namespace ebl {
     // 2. fprop
     subsampler.fprop(in, *sum);
     adder.fprop(*sum, *sum);
-    sigmoid.fprop(*sum, out);
+    sigmoid->fprop(*sum, out);
+#ifdef __DUMP_STATES__ // used to debug
+    save_matrix(out.x, "dump_subsampling_layer_out.x.mat");
+#endif
   }
 
   template <class T>
   void nn_layer_subsampling<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
-    sigmoid.bprop(*sum, out);
+    sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     subsampler.bprop(in, *sum);
+#ifdef __DUMP_STATES__ // used to debug
+    save_matrix(in.dx, "dump_subsampling_layer_in.dx.mat");
+#endif
   }
 
   template <class T>
   void nn_layer_subsampling<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
-    sigmoid.bbprop(*sum, out);
+    sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     subsampler.bbprop(in, *sum);
+#ifdef __DUMP_STATES__ // used to debug
+    save_matrix(in.ddx, "dump_subsampling_layer_in.ddx.mat");
+#endif
   }
 
   template <class T>
