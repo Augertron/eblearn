@@ -623,7 +623,8 @@ namespace ebl {
   void metaparser::send_report(configuration &conf, const string dir,
 			       varmaplist &best, int maxiter,
 			       string conf_fullfname, string jobs_info,
-			       uint nrunning, double minutes) {
+			       uint nrunning, double maxminutes,
+			       double minminutes) {
     ostringstream cmd;
     string tmpfile = "report.tmp";
     int res;
@@ -641,7 +642,10 @@ namespace ebl {
       cmd.str("");
       cmd << "echo \"Iteration: " << maxiter << endl;
       cmd << "Jobs running: " << nrunning << endl;
-      cmd << "Running time: " << minutes << " minutes" << endl;
+      cmd << "Min running time: " << minminutes << " mins ("
+	  << minminutes / 60 << " hours)" << endl;
+      cmd << "Max running time: " << maxminutes << " mins ("
+	  << maxminutes / 60 << " hours)" << endl;
       cout << cmd.str();
       cmd << "\" >> " << tmpfile;
       res = std::system(cmd.str().c_str());
@@ -657,13 +661,6 @@ namespace ebl {
 	cmd << " >> " << tmpfile;
 	res = std::system(cmd.str().c_str());
       }
-      // print summary infos
-      cmd.str("");
-      cmd << "Jobs running: " << nrunning << endl;
-      cmd << jobs_info << endl;
-      cout << cmd.str();
-      cmd << "\" >> " << tmpfile;
-      res = std::system(cmd.str().c_str());
       // print err logs
       list<string> *errlogs = find_fullfiles(dir, ".*[.]errlog");
       if (errlogs) {
@@ -682,6 +679,13 @@ namespace ebl {
 	  res = std::system(cmd.str().c_str());
 	}
       }
+      // print jobs infos
+      cmd.str("");
+      cmd << "Jobs running: " << nrunning << endl;
+      cmd << jobs_info << endl;
+      cout << cmd.str();
+      cmd << "\" >> " << tmpfile;
+      res = std::system(cmd.str().c_str());
       // print metaconf
       cmd.str("");
       cmd << "echo \"\nMeta Configuration:\"";

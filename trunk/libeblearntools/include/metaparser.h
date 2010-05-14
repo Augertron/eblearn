@@ -201,7 +201,8 @@ namespace ebl {
     //! Send an email reporting the status of the runs.
     void send_report(configuration &conf, const string dir,
 		     varmaplist &best, int iteration, string conf_fullfname,
-		     string jobs_info, uint nrunning = 0, double minutes = 0.0);
+		     string jobs_info, uint nrunning = 0,
+		     double maxminutes = 0.0, double minminutes = 0.0);
 
     ////////////////////////////////////////////////////////////////
     // internal methods

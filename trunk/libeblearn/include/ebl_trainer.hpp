@@ -258,7 +258,7 @@ namespace ebl {
 	age++;
 	ds.next_train();
       }
-      cout << " epoch_minutes=" << t.elapsed_minutes() << " ";
+      cout << " epoch_minutes=" << t.elapsed_minutes() << endl;
     }
   }
 
