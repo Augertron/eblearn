@@ -681,7 +681,7 @@ namespace ebl {
       }
       // print jobs infos
       cmd.str("");
-      cmd << "echo \"Jobs running: " << nrunning << endl;
+      cmd << "echo \"\nJobs running: " << nrunning << endl;
       cmd << jobs_info << endl;
       cout << cmd.str();
       cmd << "\" >> " << tmpfile;
