@@ -175,6 +175,26 @@ namespace ebl {
 	idx_m4dotm2acc(suin, lk, sout); // 2D convolution
 #endif
       }}
+#ifdef __DUMP_STATES__ // used to debug
+    idx<float> m2 = load_matrix<float>("../dump_lush_conv0_convsum20.x.mat");
+    m2.printElems();
+    float s2 = idx_sum(m2);
+    cout << "m2: " << m2 << endl;
+    float s1 = idx_sum(out.x);
+    float s0 = s1 - s2;
+    cout << "s2: " << s2 << " s1: " << s1 << " s0: " << s0 <<endl;
+    //    cout << "m2 sqrdist: " << idx_sqrdist(out.x, m2) << endl;
+    
+    ostringstream fname2;
+    fname2 << "dump2_convolution_layer_in.x_" << in.x << ".mat";
+    save_matrix(in.x, fname2.str());
+    fname2.str("");
+    fname2 << "dump2_convolution_layer_ker.x_" << kernel.x << ".mat";
+    save_matrix(kernel.x, fname2.str());
+    fname2.str("");
+    fname2 << "dump2_convolution_layer_table_" << table << ".mat";
+    save_matrix(table, fname2.str());
+#endif
   }
   
   template <class T>

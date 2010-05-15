@@ -184,6 +184,7 @@ namespace ebl {
     // members ////////////////////////////////////////////////////////
   private:
     parameter<T>                 param;	//!< just used for deep copies
+    bool				 btanh;	//!< use tanh or stdsigmoid
   public:
     nn_layer_convolution<T>	 lconv;	//!< convolution layer
     abs_module<T>		 abs;	//!< absolute rectification
