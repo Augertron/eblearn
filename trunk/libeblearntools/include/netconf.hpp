@@ -49,7 +49,7 @@ namespace ebl {
 	 conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
 	 conf.get_uint("net_full"), noutputs,
 	 conf.get_bool("absnorm"), conf.get_bool("color"),
-	 conf.get_bool("mirror"));
+	 conf.get_bool("mirror"), conf.get_bool("use_tanh"));
     } else if (!strcmp(net_type.c_str(), "cscsc")) {
       return (module_1_1<T>*) new lenet_cscsc<T>
 	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
@@ -58,7 +58,7 @@ namespace ebl {
 	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
 	 conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
 	 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
-	 conf.get_bool("mirror"));
+	 conf.get_bool("mirror"), conf.get_bool("use_tanh"));
     } else if (!strcmp(net_type.c_str(), "cscf")) {
       return (module_1_1<T>*) new lenet_cscf<T>
 	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
@@ -66,7 +66,7 @@ namespace ebl {
 	 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
 	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
 	 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
-	 conf.get_bool("mirror"));
+	 conf.get_bool("mirror"), conf.get_bool("use_tanh"));
     } else {
       cerr << "network type: " << net_type << endl;
       eblerror("unknown network type");

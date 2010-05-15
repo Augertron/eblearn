@@ -172,14 +172,22 @@ namespace ebl {
     if (!sum) sum = new state_idx<T>(d);
 
     // 2. fprop
-    sum->clear();
+    //    sum->clear();
     convol.fprop(in, *sum);
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname2;
+    fname2 << "dump_convolution_layer_sum.x_" << sum->x << ".mat";
+    save_matrix(sum->x, fname2.str());
+#endif
     adder.fprop(*sum, *sum);
     sigmoid->fprop(*sum, out);
 #ifdef __DUMP_STATES__ // used to debug
     ostringstream fname;
     fname << "dump_convolution_layer_out.x_" << out.x << ".mat";
     save_matrix(out.x, fname.str());
+    fname.str("");
+    fname << "dump_convolution_layer_in.x_" << in.x << ".mat";
+    save_matrix(in.x, fname.str());
     fname.str("");
     fname << "dump_convolution_layer_ker.x_" << convol.kernel.x << ".mat";
     save_matrix(convol.kernel.x, fname.str());
@@ -255,8 +263,9 @@ namespace ebl {
 					  intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
 					  idx<intg> &tbl, bool mirror,
-					  bool btanh) 
-    : lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh),
+					  bool btanh_) 
+    : btanh(btanh_),
+      lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
       tmp(NULL), tmp2(NULL) {
   }
@@ -265,8 +274,9 @@ namespace ebl {
   layer_convabsnorm<T>::layer_convabsnorm(intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
 					  idx<intg> &tbl, bool mirror,
-					  bool btanh) 
-    : param(1), lconv(param, kerneli, kernelj, stridei_, stridej_, tbl, btanh),
+					  bool btanh_) 
+    : param(1), btanh(btanh_),
+      lconv(param, kerneli, kernelj, stridei_, stridej_, tbl, btanh),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
       tmp(NULL), tmp2(NULL) {
   }
@@ -286,7 +296,7 @@ namespace ebl {
     if (!tmp2) tmp2 = new state_idx<T>(d);
 
     // 2. fprop
-    tmp->clear();
+    //    tmp->clear();
     tmp2->clear();
     lconv.fprop(in, *tmp);
     abs.fprop(*tmp, *tmp2);
@@ -328,7 +338,7 @@ namespace ebl {
     layer_convabsnorm<T> *l2 = new layer_convabsnorm<T>
       (lconv.convol.kernel.x.dim(1), lconv.convol.kernel.x.dim(2),
        lconv.convol.stridei, lconv.convol.stridej, lconv.convol.table,
-       norm.mirror);
+       norm.mirror, btanh);
     // copy data
     idx_copy(lconv.convol.kernel.x, l2->lconv.convol.kernel.x);
     idx_copy(lconv.adder.bias.x, l2->lconv.adder.bias.x);
@@ -436,7 +446,7 @@ namespace ebl {
     // allocate
     nn_layer_subsampling<T> *l2 = new nn_layer_subsampling<T>
       (subsampler.stridei, subsampler.stridej, subsampler.sub.x.dim(1),
-       subsampler.sub.x.dim(2), subsampler.thickness);
+       subsampler.sub.x.dim(2), subsampler.thickness, btanh);
     // copy data
     idx_copy(subsampler.coeff.x, l2->subsampler.coeff.x);
     idx_copy(adder.bias.x, l2->adder.bias.x);
