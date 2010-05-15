@@ -50,6 +50,71 @@ namespace ebl {
   // stdsigmoid(x)
   // Rational polynomial for computing 1.71593428 tanh (0.66666666 x)
 
+/* 
+ * FQstdsigmoid(x)
+ * FQDstdsigmoid(x)
+ * The same formulas for computing 1.71593428 tanh (0.66666666 x)
+ */
+
+#define PR  ((float)0.66666666)
+#define PO  ((float)1.71593428)
+#define A0   ((float)(1.0))
+#define A1   ((float)(0.125*PR))
+#define A2   ((float)(0.0078125*PR*PR))
+#define A3   ((float)(0.000325520833333*PR*PR*PR))
+#define Fone	((float)1.0)
+#define Fzero 	((float)0.0)
+
+float
+stdsigmoid(float x)
+{
+  register float y;
+
+  if (x >= Fzero) 
+    if (x < (float)13) 
+      y = A0+x*(A1+x*(A2+x*(A3)));
+    else 
+      return PO;
+  else
+    if (x > -(float)13) 
+      y = A0-x*(A1-x*(A2-x*(A3)));
+    else 
+      return -PO;
+  
+  y *= y;
+  y *= y;
+  y *= y;
+  y *= y;
+  return (x > Fzero) ? PO*(y-Fone)/(y+Fone) : PO*(Fone-y)/(y+Fone);
+}
+
+
+float
+dstdsigmoid(float x)
+{
+  if (x < Fzero)
+    x = -x;
+  if (x < (float)13) 
+    {
+      register float y;
+      y = A0+x*(A1+x*(A2+x*(A3)));
+      y *= y;
+      y *= y;
+      y *= y;
+      y *= y;
+      y = (y-Fone)/(y+Fone);
+      return PR*PO - PR*PO*y*y;
+    }
+  else
+    return Fzero;
+}
+
+#undef PR
+#undef PO
+#undef A0
+#undef A1
+#undef A2
+#undef A3
 
 #define PR  ((double)0.66666666)
 #define PO  ((double)1.71593428)

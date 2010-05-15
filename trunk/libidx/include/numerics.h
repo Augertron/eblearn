@@ -41,6 +41,12 @@ namespace ebl {
 
   //! "standard" sigmoid, used in Lush.
   //! Rational polynomial for computing y = 1.71593428*tanh(0.66666666*x)
+  float stdsigmoid(float x);
+  //! derivative of standard digmoid.
+  float dstdsigmoid(float x);
+
+  //! "standard" sigmoid, used in Lush.
+  //! Rational polynomial for computing y = 1.71593428*tanh(0.66666666*x)
   double stdsigmoid(double x);
   //! derivative of standard digmoid.
   double dstdsigmoid(double x);
