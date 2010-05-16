@@ -242,6 +242,8 @@ namespace ebl {
       sleep(swait);
       // check if each pid responds to a harmless signal
       nrunning = 0;
+      mintime = 0;
+      maxtime = 0;
       for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
 	if (i->alive())
 	  nrunning++;
