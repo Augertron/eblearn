@@ -643,9 +643,11 @@ namespace ebl {
       cmd << "echo \"Iteration: " << maxiter << endl;
       cmd << "Jobs running: " << nrunning << endl;
       cmd << "Min running time: " << minminutes << " mins ("
-	  << minminutes / 60 << " hours)" << endl;
+	  << minminutes / 60 << " hours) (" << minminutes / (60 * 24)
+	  << " days)" << endl;
       cmd << "Max running time: " << maxminutes << " mins ("
-	  << maxminutes / 60 << " hours)" << endl;
+	  << maxminutes / 60 << " hours) (" << minminutes / (60 * 24)
+	  << " days)" << endl;
       cout << cmd.str();
       cmd << "\" >> " << tmpfile;
       res = std::system(cmd.str().c_str());

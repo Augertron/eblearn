@@ -262,7 +262,7 @@ namespace ebl {
 	age++;
 	ds.next_train();
       }
-      cout << " epoch_minutes=" << t.elapsed_minutes() << endl;
+      cout << "train_minutes=" << t.elapsed_minutes() << endl;
     }
   }
 
@@ -271,6 +271,8 @@ namespace ebl {
   compute_diaghessian(labeled_datasource<Tnet, Tdata, Tlabel> &ds, intg niter, 
 		      double mu) {
     Tlabel lab;
+    timer t;
+    t.start();
     init(ds, NULL);
     param.clear_ddeltax();
     // loop
@@ -287,7 +289,8 @@ namespace ebl {
     }
     param.compute_epsilons(mu);
     cout << "diaghessian inf: " << idx_min(param.epsilons);
-    cout << " sup: " << idx_max(param.epsilons) << endl;
+    cout << " sup: " << idx_max(param.epsilons);
+    cout << " diaghessian_minutes=" << t.elapsed_minutes() << endl;
   }
 
   template <class Tnet, class Tdata, class Tlabel>
