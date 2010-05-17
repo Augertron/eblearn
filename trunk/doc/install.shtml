@@ -111,7 +111,9 @@
 
        <h3>Installation</h3>
        To install libraries and headers on your system:<br>
-       <code>$ make install</code><br>
+       <code>$ sudo make install</code><br>
+       To install libraries and headers in a specific directory:<br>
+       <code>$ export DIR="your-install-dir" && make install</code><br>
 
        <h3>Execution</h3>
        To unit-test basic functionalities of the libraries, run the tester:<br>
