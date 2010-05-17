@@ -139,23 +139,21 @@ namespace ebl {
   }
 
   double classifier_meter::average_error() {
-    double err = 0.0, total_err = 0.0, n = 0.0;
+    // return average ignoring class counts (possibly biased in unbalanced
+    // datasets).
+    if (!per_class_average)
+      return (total_error / (double) size) * 100.0;
+    // else normalize the error per class
+    double err = 0.0;
     uint i = 0;
     idx_eloop1(desired, confusion, int) {
       double sum = idx_sum(desired); // all answers
       double positive = desired.get(i); // true answers
       err += (sum - positive) / MAX(1, sum); // error for class i
-      total_err += sum - positive;
-      n += sum;
       i++;
     }
     err /= confusion.dim(0); // average error
-    total_err /= MAX(1, n);
-    if (per_class_average) // return average taking class counts into account
-      return err * 100; // average error percentage
-    // return average ignoring class counts (possibly biased in unbalanced
-    // datasets).
-    return total_err * 100;
+    return err * 100; // average error percentage
   }
 
   double classifier_meter::average_success() {
