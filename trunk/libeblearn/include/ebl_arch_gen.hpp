@@ -495,6 +495,10 @@ hidden states in layers_n_gen");
 				       state_idx<T> &energy) {
     fmod.fprop(in1, fout);
     fcost.fprop(fout, in2, energy);
+#ifdef __DUMP_STATES__ // used to debug
+    save_matrix(energy.x, "dump_fc_ebm2_energy.x.mat");
+    save_matrix(in1.x, "dump_fc_ebm2_cost_in1.x.mat");
+#endif
   }
 
   template<class Tin1, class Tin2,  class T>

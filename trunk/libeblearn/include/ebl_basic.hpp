@@ -176,13 +176,12 @@ namespace ebl {
 #endif
       }}
 #ifdef __DUMP_STATES__ // used to debug
-    idx<float> m2 = load_matrix<float>("../dump_lush_conv0_convsum20.x.mat");
-    m2.printElems();
-    float s2 = idx_sum(m2);
-    cout << "m2: " << m2 << endl;
-    float s1 = idx_sum(out.x);
-    float s0 = s1 - s2;
-    cout << "s2: " << s2 << " s1: " << s1 << " s0: " << s0 <<endl;
+    // idx<float> m2 = load_matrix<float>("../dump_lush_conv0_convsum20.x.mat");
+    // float s2 = idx_sum(m2);
+    // cout << "m2: " << m2 << endl;
+    // float s1 = idx_sum(out.x);
+    // float s0 = s1 - s2;
+    // cout << "s2: " << s2 << " s1: " << s1 << " s0: " << s0 <<endl;
     //    cout << "m2 sqrdist: " << idx_sqrdist(out.x, m2) << endl;
     
     ostringstream fname2;
@@ -531,7 +530,8 @@ namespace ebl {
   }
 
   template <class T>
-  void diff_module<T>::fprop(state_idx<T> &in1, state_idx<T> &in2, state_idx<T> &out) {
+  void diff_module<T>::fprop(state_idx<T> &in1, state_idx<T> &in2,
+			     state_idx<T> &out) {
     if (&in1 != &out) { // resize only when input and output are different
       idxdim d(in1.x); // use same dimensions as in
       out.resize(d);
@@ -540,7 +540,8 @@ namespace ebl {
   }
 
   template <class T>
-  void diff_module<T>::bprop(state_idx<T> &in1, state_idx<T> &in2, state_idx<T> &out) {
+  void diff_module<T>::bprop(state_idx<T> &in1, state_idx<T> &in2,
+			     state_idx<T> &out) {
     state_idx_check_different3(in1, in2, out); // forbid same in and out
     idx_checknelems3_all(in1.dx, in2.dx, out.dx);// must have same dimensions
 
@@ -549,7 +550,8 @@ namespace ebl {
   }
 
   template <class T>
-  void diff_module<T>::bbprop(state_idx<T> &in1, state_idx<T> &in2, state_idx<T> &out) {
+  void diff_module<T>::bbprop(state_idx<T> &in1, state_idx<T> &in2,
+			      state_idx<T> &out) {
     state_idx_check_different3(in1, in2, out); // forbid same in and out
     idx_checknelems3_all(in1.ddx, in2.ddx, out.ddx);// must have same dimensions
 

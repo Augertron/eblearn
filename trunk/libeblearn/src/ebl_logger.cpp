@@ -44,11 +44,12 @@ namespace ebl {
   classifier_meter::~classifier_meter() {
   }
 
-  void classifier_meter::init(uint nclasses_) {
+  void classifier_meter::init(uint nclasses_, bool per_class_average_) {
     if (nclasses != nclasses_) {
       nclasses = nclasses_;
       confusion = idx<int>(nclasses, nclasses);
     }
+    per_class_average = per_class_average_;
     this->clear();
   }
 
@@ -138,16 +139,23 @@ namespace ebl {
   }
 
   double classifier_meter::average_error() {
-    double err = 0;
+    double err = 0.0, total_err = 0.0, n = 0.0;
     uint i = 0;
     idx_eloop1(desired, confusion, int) {
       double sum = idx_sum(desired); // all answers
       double positive = desired.get(i); // true answers
       err += (sum - positive) / MAX(1, sum); // error for class i
+      total_err = sum - positive;
+      n += sum;
       i++;
     }
     err /= confusion.dim(0); // average error
-    return err * 100; // average error percentage
+    total_err /= MAX(1, n);
+    if (per_class_average) // return average taking class counts into account
+      return err * 100; // average error percentage
+    // return average ignoring class counts (possibly biased in unbalanced
+    // datasets).
+    return total_err * 100;
   }
 
   double classifier_meter::average_success() {
@@ -202,7 +210,7 @@ namespace ebl {
     cout << "[" << (int) age << "]  sz=" <<  (int) size << " ";
     cout << (ds_is_test ? "test_":"") << "energy="
 	 << total_energy / (double) size << " ";
-    cout << (ds_is_test ? "test_":"") << "correct=" << average_success() << "% ";
+    cout << (ds_is_test ? "test_":"") << "correct=" << average_success() <<"% ";
     cout << (ds_is_test ? "test_":"") << "errors=" << average_error() << "% ";
     cout << (ds_is_test ? "test_":"") << "rejects="
 	 << (total_punt * 100) / (double) size << "% ";
