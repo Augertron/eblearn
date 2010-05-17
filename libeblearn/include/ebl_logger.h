@@ -84,23 +84,6 @@ namespace ebl {
   // TODO: allow definition of different comparison functions.
   class classifier_meter {
   public:
-    double		energy;
-    float		confidence;
-    intg		size;
-    intg		age;
-    intg		total_correct;
-    intg		total_error;
-    intg		total_punt;
-    double		total_energy;
-    vector<uint>	class_errors;
-    vector<uint>	class_totals;
-    vector<uint>	class_tpr;
-    vector<uint>	class_fpr;
-  private:
-    idx<int>		confusion;	//!< confusion matrix
-    uint                nclasses;       //!< number of classes
-
-  public:
     //! Create a new <classifier-meter> using <comparison-function>
     //! to compare actual and desired answers. By default
     //! the <same-class?> function is used for that purpose.
@@ -115,7 +98,11 @@ namespace ebl {
 
     //! Initialize the meter.
     //! \param nclasses The number of classes.
-    void init(uint nclasses);
+    //! \param per_class_average If true, report averages (error, correct) per
+    //!        class, otherwise report overall average regardless of class.
+    //!        Default is true, as it is a more realistic measure when dataset
+    //!        is unbalanced.
+    void init(uint nclasses, bool per_class_average = true);
     
     //! return 0 if <actual> equals -1, otherwise, return 1 if <actual>
     //! and <desired> are equal, -1 otherwise.
@@ -176,6 +163,24 @@ namespace ebl {
     
     bool save();
     bool load();
+    
+  public:
+    double		energy;
+    float		confidence;
+    intg		size;
+    intg		age;
+    intg		total_correct;
+    intg		total_error;
+    intg		total_punt;
+    double		total_energy;
+    vector<uint>	class_errors;
+    vector<uint>	class_totals;
+    vector<uint>	class_tpr;
+    vector<uint>	class_fpr;
+  private:
+    idx<int>		confusion;	//!< confusion matrix
+    uint                nclasses;       //!< number of classes
+    bool                per_class_average; //!< report averages per class
   };
 
   ////////////////////////////////////////////////////////////////

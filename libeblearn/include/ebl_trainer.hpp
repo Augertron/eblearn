@@ -151,9 +151,10 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>  
   supervised_trainer<Tnet, Tdata, Tlabel>::
   supervised_trainer(fc_ebm2_gen<state_idx<Tnet>, Tlabel, Tnet> &m,
-		     parameter<Tnet> &p)
+		     parameter<Tnet> &p, bool per_class_average_)
     : iteration(-1), iteration_ptr(NULL), prettied(false),
-      machine(m), param(p), input(NULL), energy(), label(), age(0) {
+      machine(m), param(p), input(NULL), energy(), label(), age(0),
+      per_class_average(per_class_average_) {
     energy.dx.set(1.0);
     energy.ddx.set(0.0);
   }
@@ -182,13 +183,14 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>  
   double supervised_trainer<Tnet, Tdata, Tlabel>::
   learn_sample(state_idx<Tnet> &input, Tlabel label, gd_param &args) {
-#ifdef __DUMP_STATES__
-    save_matrix(input.x, "dump_trainer_machine_in.x.mat");
-#endif
     machine.fprop(input, label, energy);
     param.clear_dx();
     machine.bprop(input, label, energy);
     param.update(args);
+#ifdef __DUMP_STATES__
+    save_matrix(input.x, "dump_trainer_machine_in.x.mat");
+    save_matrix(energy.x, "dump_trainer_machine_energy.x.mat");
+#endif
     return energy.x.get();
   }
 
@@ -307,7 +309,7 @@ namespace ebl {
     // reinit ds
     ds.seek_begin();
     if (log) // reinit logger
-      log->init(ds.get_nclasses());
+      log->init(ds.get_nclasses(), per_class_average);
     // new iteration
     if (new_iteration) {
       if (!iteration_ptr) 

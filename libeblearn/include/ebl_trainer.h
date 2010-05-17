@@ -99,24 +99,14 @@ namespace ebl {
   //! datasource (via a deep idx_copy).
   template<class Tnet, class Tdata, class Tlabel>
     class supervised_trainer {
-  private:
-    int		 iteration;
-    void	*iteration_ptr;
-    bool         prettied; //!< flag used to pretty info just once
-
   public:
-    fc_ebm2_gen<state_idx<Tnet>, Tlabel, Tnet>	&machine; //!< the machine
-    parameter<Tnet>				&param; //!< the learned params
-    //! net's tmp input buf. it is a pointer because the order of the input
-    //! is not known in advance, and state_idx cannot change order dynamically.
-    state_idx<Tnet>				*input;
-    state_idx<Tnet>				 energy; //!< tmp energy buf
-    idx<Tlabel>					 label;
-    intg					 age;
-
     //! constructor.
+    //! \param per_class_average If true, report averages (error, correct) per
+    //!        class, otherwise report overall average regardless of class.
+    //!        Default is true, as it is a more realistic measure when dataset
+    //!        is unbalanced.
     supervised_trainer(fc_ebm2_gen<state_idx<Tnet>, Tlabel, Tnet> &m, 
-		       parameter<Tnet> &p);
+		       parameter<Tnet> &p, bool per_class_average = true);
 
     //! destructor.
     virtual ~supervised_trainer();
@@ -185,6 +175,20 @@ namespace ebl {
 
     //! returns a pointer to a copy on this datasource
     //    supervised_trainer<Tdata, Tlabel>* copy();
+  public:
+    fc_ebm2_gen<state_idx<Tnet>, Tlabel, Tnet>	&machine; //!< the machine
+    parameter<Tnet>				&param; //!< the learned params
+    //! net's tmp input buf. it is a pointer because the order of the input
+    //! is not known in advance, and state_idx cannot change order dynamically.
+    state_idx<Tnet>				*input;
+    state_idx<Tnet>				 energy; //!< tmp energy buf
+    idx<Tlabel>					 label;
+    intg					 age;
+  private:
+    int		 iteration;
+    void	*iteration_ptr;
+    bool         prettied; //!< flag used to pretty info just once
+    bool         per_class_average;
   };
 
 } // namespace ebl {
