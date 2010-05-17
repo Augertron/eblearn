@@ -247,8 +247,8 @@ namespace ebl {
       if (iitr >= label_indices.size())
 	iitr = 0;
     }
-    // recursion failsafe, allow 1000 max recursions
-    if (callcnt && *callcnt > MIN(1000, (intg) label_indices[iitr].size())) {
+    // recursion failsafe, allow 100 max recursions
+    if (callcnt && *callcnt > MIN(100, (intg) label_indices[iitr].size())) {
       // we called recursion on this method more than number of class samples
       // give up and go to next class
       iitr++; // next class

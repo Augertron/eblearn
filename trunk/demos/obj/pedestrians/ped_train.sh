@@ -3,8 +3,8 @@
 dset=_nicta
 h=80
 w=32
-traindsname=ped${dset}_mean${h}x${w}_ker7_train
-valdsname=ped${dset}_mean${h}x${w}_ker7_val
+traindsname=ped${dset}_mean${h}x${w}_ker7_bg_train
+valdsname=ped${dset}_mean${h}x${w}_ker7_bg_val
 
 machine=humair
 metaconf_name=ped_meta.conf
@@ -112,7 +112,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "Using best conf of previous training: ${bestconf}"
   echo "i=`expr ${maxiteration} - ${iter}`"
 
-#if [ $iter != 1 ]; then  
+if [ $iter != 1 ]; then  
 
 # extract false positives: first add new variables to best conf
 # activate retraining
@@ -168,6 +168,8 @@ for iter in `seq 1 ${maxiteration}`
 # split dataset into training and validation
   ${eblearnbin}/dssplit ${dataroot} allfp \
       allfp_val_ allfp_train_ -maxperclass ${valsize} -draws $draws
+
+fi
 
 # merge new datasets into previous datasets: training
   for i in `seq 1 $draws`
