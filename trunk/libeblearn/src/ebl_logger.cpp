@@ -145,7 +145,7 @@ namespace ebl {
       double sum = idx_sum(desired); // all answers
       double positive = desired.get(i); // true answers
       err += (sum - positive) / MAX(1, sum); // error for class i
-      total_err = sum - positive;
+      total_err += sum - positive;
       n += sum;
       i++;
     }
