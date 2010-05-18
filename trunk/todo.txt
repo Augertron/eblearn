@@ -32,6 +32,7 @@ Libraries:
   shorter)
 - port libraries to Windows libraries using mingw and win32api
 - uvc webcam with v4l2: http://staticwave.ca/source/uvccapture/
+- add switch in cmake to compile in either static or shared libraries
  
 ________________________________________________________________________________
 Guis:
