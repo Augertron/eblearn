@@ -101,12 +101,8 @@ namespace ebl {
     class supervised_trainer {
   public:
     //! constructor.
-    //! \param per_class_average If true, report averages (error, correct) per
-    //!        class, otherwise report overall average regardless of class.
-    //!        Default is true, as it is a more realistic measure when dataset
-    //!        is unbalanced.
     supervised_trainer(fc_ebm2_gen<state_idx<Tnet>, Tlabel, Tnet> &m, 
-		       parameter<Tnet> &p, bool per_class_average = true);
+		       parameter<Tnet> &p);
 
     //! destructor.
     virtual ~supervised_trainer();
@@ -188,7 +184,6 @@ namespace ebl {
     int		 iteration;
     void	*iteration_ptr;
     bool         prettied; //!< flag used to pretty info just once
-    bool         per_class_average;
   };
 
 } // namespace ebl {

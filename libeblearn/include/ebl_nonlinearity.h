@@ -59,6 +59,9 @@ namespace ebl {
   //! a slab of tanh
   template <class T> class tanh_module: public module_1_1<T> {
   public:
+    //! empty constructor
+    tanh_module();
+    virtual ~tanh_module();
     //! fprop from in to out
     void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
