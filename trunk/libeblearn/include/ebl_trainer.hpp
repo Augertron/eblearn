@@ -151,10 +151,9 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>  
   supervised_trainer<Tnet, Tdata, Tlabel>::
   supervised_trainer(fc_ebm2_gen<state_idx<Tnet>, Tlabel, Tnet> &m,
-		     parameter<Tnet> &p, bool per_class_average_)
+		     parameter<Tnet> &p)
     : iteration(-1), iteration_ptr(NULL), prettied(false),
-      machine(m), param(p), input(NULL), energy(), label(), age(0),
-      per_class_average(per_class_average_) {
+      machine(m), param(p), input(NULL), energy(), label(), age(0) {
     energy.dx.set(1.0);
     energy.ddx.set(0.0);
   }
@@ -309,7 +308,7 @@ namespace ebl {
     // reinit ds
     ds.seek_begin();
     if (log) // reinit logger
-      log->init(ds.get_nclasses(), per_class_average);
+      log->init(ds.get_nclasses());
     // new iteration
     if (new_iteration) {
       if (!iteration_ptr) 

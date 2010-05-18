@@ -44,12 +44,11 @@ namespace ebl {
   classifier_meter::~classifier_meter() {
   }
 
-  void classifier_meter::init(uint nclasses_, bool per_class_average_) {
+  void classifier_meter::init(uint nclasses_) {
     if (nclasses != nclasses_) {
       nclasses = nclasses_;
       confusion = idx<int>(nclasses, nclasses);
     }
-    per_class_average = per_class_average_;
     this->clear();
   }
 
@@ -138,12 +137,8 @@ namespace ebl {
     confusion.set(confusion.get(infered, desired) + 1, infered, desired);
   }
 
-  double classifier_meter::average_error() {
-    // return average ignoring class counts (possibly biased in unbalanced
-    // datasets).
-    if (!per_class_average)
-      return (total_error / (double) size) * 100.0;
-    // else normalize the error per class
+  double classifier_meter::class_normalized_average_error() {
+    // normalize the error per class
     double err = 0.0;
     uint i = 0;
     idx_eloop1(desired, confusion, int) {
@@ -156,8 +151,14 @@ namespace ebl {
     return err * 100; // average error percentage
   }
 
-  double classifier_meter::average_success() {
-    return 100 - average_error();
+  double classifier_meter::overall_average_error() {
+    // return average ignoring class counts (possibly biased in unbalanced
+    // datasets).
+    return (total_error / (double) size) * 100.0;
+  }
+
+  double classifier_meter::class_normalized_average_success() {
+    return 100 - class_normalized_average_error();
   }
 
   idx<int>& classifier_meter::get_confusion() {
@@ -208,10 +209,11 @@ namespace ebl {
     cout << "[" << (int) age << "]  sz=" <<  (int) size << " ";
     cout << (ds_is_test ? "test_":"") << "energy="
 	 << total_energy / (double) size << " ";
-    cout << (ds_is_test ? "test_":"") << "correct=" << average_success() <<"% ";
-    cout << (ds_is_test ? "test_":"") << "errors=" << average_error() << "% ";
+    cout << (ds_is_test ? "test_":"") << "errors=" << class_normalized_average_error() << "% ";
+    cout << (ds_is_test ? "test_":"") << "overall_errors=" << overall_average_error() << "% ";
     cout << (ds_is_test ? "test_":"") << "rejects="
 	 << (total_punt * 100) / (double) size << "% ";
+    cout << (ds_is_test ? "test_":"") << "correct=" << class_normalized_average_success() <<"% ";
     cout << endl;
     cout << "errors per class: ";
     for (uint i = 0; i < class_errors.size(); ++i) {

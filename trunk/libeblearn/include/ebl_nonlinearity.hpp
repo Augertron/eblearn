@@ -35,6 +35,7 @@ namespace ebl {
 
   template <class T>
   stdsigmoid_module<T>::stdsigmoid_module() {
+    cout << "new stdsigmoid" << endl;
   }
 
   template <class T>
@@ -72,6 +73,15 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+
+  template <class T>
+  tanh_module<T>::tanh_module() {
+    cout << "new tanh" << endl;
+  }
+
+  template <class T>
+  tanh_module<T>::~tanh_module() {
+  }
 
   // tanh module
   template <class T>

@@ -239,7 +239,7 @@ namespace ebl {
 	       new state_idx<T>(1, 1, 1));
     // convolution
     if (norm) // absolute rectification + contrast normalization
-      add_module(new layer_convabsnorm<T>(prm, ki1, kj1, 1, 1, tbl1, tanh),
+      add_module(new layer_convabsnorm<T>(prm, ki1, kj1, 1, 1, tbl1, mirror, tanh),
 		 new state_idx<T>(1, 1, 1));
     else // old fashioned way
       add_module(new nn_layer_convolution<T>(prm, ki1, kj1, 1, 1, tbl1, tanh),
