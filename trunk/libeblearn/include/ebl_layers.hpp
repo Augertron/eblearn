@@ -296,7 +296,7 @@ namespace ebl {
     if (!tmp2) tmp2 = new state_idx<T>(d);
 
     // 2. fprop
-    //    tmp->clear();
+    tmp->clear();
     tmp2->clear();
     lconv.fprop(in, *tmp);
     abs.fprop(*tmp, *tmp2);
