@@ -114,6 +114,7 @@ namespace ebl {
     int          width;         //!< resize input
     bool         bresize;       //!< resize or not
     uint         frame_id;      //!< frame counter
+    string	 frame_name_;	//!< frame name
     bool         grabbed;       //!< false if no frame grabbed yet
     uint         wid;           //!< window to record from
     string       recording_name;//!< name of video
