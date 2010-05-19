@@ -33,8 +33,12 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <string>
+#ifdef __WINDOWS__
+#else // linux & mac
 #include <sys/time.h>
+#endif
+
+#include <string>
 #include <stdio.h>
 #include <unistd.h>
 
