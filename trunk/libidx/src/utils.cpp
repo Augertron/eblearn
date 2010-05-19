@@ -30,10 +30,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#ifdef __WINDOWS__
+#else // linux & mac
+#include <sys/time.h>
+#endif
+
 #include "utils.h"
 #include <stdlib.h>
 #include <iostream>
-#include <sys/time.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sstream>
@@ -85,26 +89,46 @@ namespace ebl {
   }
 
   void timer::start() {
+#ifdef __WINDOWS__
+    // TODO
+#else // linux & mac
     gettimeofday(&t0, NULL);
+#endif
   }
 
   void timer::restart() {
+#ifdef __WINDOWS__
+    // TODO
+#else // linux & mac
     gettimeofday(&t0, NULL);
+#endif
   }
 
   double timer::elapsed_minutes() {
+#ifdef __WINDOWS__
+    return 0; // TODO
+#else // linux & mac
     gettimeofday(&t1, NULL);
     return (t1.tv_sec - t0.tv_sec) / (double) 60;
+#endif
   }
   
   long timer::elapsed_seconds() {
+#ifdef __WINDOWS__
+    return 0; // TODO
+#else // linux & mac
     gettimeofday(&t1, NULL);
     return t1.tv_sec - t0.tv_sec;
+#endif
   }
   
   long timer::elapsed_milliseconds() {
+#ifdef __WINDOWS__
+    return 0; // TODO
+#else // linux & mac
     gettimeofday(&t1, NULL);
     return (t1.tv_sec - t0.tv_sec) * 1000 + (t1.tv_usec - t0.tv_usec) / 1000;
+#endif
   }
   
 } // namespace ebl

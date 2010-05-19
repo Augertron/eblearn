@@ -33,6 +33,9 @@
 #ifndef DETECTION_THREAD_H_
 #define DETECTION_THREAD_H_
 
+// Windows does not know linux/mac mutexes, TODO: implement windows mutexes
+#ifndef __WINDOWS__
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -92,3 +95,5 @@ namespace ebl {
 #include "detection_thread.hpp"
 
 #endif /* DETECTION_THREAD_H_ */
+
+#endif /* __WINDOWS__ */

@@ -56,7 +56,7 @@ namespace ebl {
 		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 		      idx<intg> &tbl2, intg outthick, bool norm = false,
-		      bool mirror = false, bool tanh = true);
+		      bool mirror = false, bool tanh = false);
     virtual ~nn_machine_cscscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -77,7 +77,7 @@ namespace ebl {
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, intg outthick, bool norm = false,
-	      bool mirror = false, bool tanh = true);
+	      bool mirror = false, bool tanh = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -92,7 +92,7 @@ namespace ebl {
     nn_machine_cscf(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0,
 		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		      idx<intg> &tbl1, intg outthick, bool norm = false,
-		      bool mirror = false, bool tanh = true);
+		      bool mirror = false, bool tanh = false);
     virtual ~nn_machine_cscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -112,7 +112,7 @@ namespace ebl {
     void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg outthick, bool norm = false,
-	      bool mirror = false, bool tanh = true);
+	      bool mirror = false, bool tanh = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -128,7 +128,7 @@ namespace ebl {
 		     idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 		     idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 		     idx<intg> &tbl2, bool norm = false,
-		     bool mirror = false, bool tanh = true);
+		     bool mirror = false, bool tanh = false);
     virtual ~nn_machine_cscsc();
 
     //! The init function creates the machine by stacking the modules in this
@@ -149,7 +149,7 @@ namespace ebl {
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, bool norm = false, bool mirror = false,
-	      bool tanh = true);
+	      bool tanh = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -164,7 +164,7 @@ namespace ebl {
 		intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 		intg si1, intg sj1, intg output_size,
 		bool norm = false, bool color = false, bool mirror = false,
-		bool tanh = true);
+		bool tanh = false);
     virtual ~lenet_cscsc() {}
   };
 
@@ -180,7 +180,7 @@ namespace ebl {
 	  intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 	  intg si1, intg sj1, intg hid, intg output_size,
 	  bool norm = false, bool color = false, bool mirror = false,
-	  bool tanh = true);
+	  bool tanh = false);
     virtual ~lenet() {}
   };
 
@@ -195,7 +195,7 @@ namespace ebl {
     lenet_cscf(parameter<T> &prm, intg image_height, intg image_width,
 	       intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 	       intg output_size, bool norm = false, bool color = false,
-	       bool mirror = false, bool tanh = true,
+	       bool mirror = false, bool tanh = false,
 	       idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL);
     virtual ~lenet_cscf() {}
   };
@@ -231,7 +231,7 @@ namespace ebl {
 	   intg ki0, intg kj0, intg si0, intg sj0,
 	   intg ki1, intg kj1, intg si1, intg sj1,
 	   intg hid, intg output_size, bool norm = false, bool mirror = false,
-	   bool tanh = true);
+	   bool tanh = false);
     virtual ~lenet5() {}
   };
 
@@ -244,7 +244,7 @@ namespace ebl {
     //!        like NORB, this would be 5.
     lenet7(parameter<T> &prm, intg image_height, intg image_width,
 	   intg output_size, bool norm = false, bool mirror = false,
-	   bool tanh = true);
+	   bool tanh = false);
     virtual ~lenet7() {}
   };
   
@@ -258,7 +258,7 @@ namespace ebl {
     //!        like NORB, this would be 5.
     lenet7_binocular(parameter<T> &prm, intg image_height, intg image_width,
 		     intg output_size, bool norm = false, bool mirror = false,
-		     bool tanh = true);
+		     bool tanh = false);
     virtual ~lenet7_binocular() {}
   };
   

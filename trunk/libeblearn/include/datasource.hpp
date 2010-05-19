@@ -50,7 +50,7 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0), 
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(0), width(0), sample_min_proba(0.0), epoch_sz(0),
+      height(0), width(0), test_set(false), sample_min_proba(0.0), epoch_sz(0),
       continuous_train(false) {
   }
 
@@ -63,8 +63,8 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0), 
-      height(ds.height), width(ds.width), name(ds.name), sample_min_proba(0.0),
-      epoch_sz(0), continuous_train(false) {
+      height(ds.height), width(ds.width), name(ds.name), test_set(false),
+      sample_min_proba(0.0), epoch_sz(0), continuous_train(false) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -77,8 +77,8 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(data.dim(1)), width(data.dim(2)), sample_min_proba(0.0),
-      epoch_sz(0), continuous_train(false) {
+      height(data.dim(1)), width(data.dim(2)), test_set(false),
+      sample_min_proba(0.0), epoch_sz(0), continuous_train(false) {
     init(data_, labels_, name_, b, c);
   }
 
@@ -134,7 +134,6 @@ namespace ebl {
     set_shuffle_passes(true); // for next_train only
     set_weigh_samples(true); // for next_train only
     set_weigh_normalization(true); // per class by default
-    test_set = false;
     datasource<Tnet, Tin1, Tin2>::pretty();
     seek_begin();
     seek_begin_train();
@@ -691,7 +690,33 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // mnist_datasource
 
-  // TODO: add constructor without name
+  template <class Tnet, class Tdata, class Tlabel>
+  mnist_datasource<Tnet, Tdata, Tlabel>::
+  mnist_datasource(const char *root, bool train_data, uint size) {
+    try {
+      // load dataset
+      ostringstream datafile, labelfile, name;
+      string setname = "MNIST";
+      if (train_data) { // training set
+	setname = "train";
+      } else { // testing set
+	this->set_test(); // remember that this is the testing set
+	setname = "t10k";
+      }
+      datafile << root << "/" << setname << "-images-idx3-ubyte";
+      labelfile << root << "/" << setname << "-labels-idx1-ubyte";
+      name << "MNIST " << setname;
+      idx<Tdata> dat = load_matrix<Tdata>(datafile.str());
+      idx<Tlabel> labs = load_matrix<Tlabel>(labelfile.str());
+      dat = dat.narrow(0, MIN(dat.dim(0), size), 0);
+      labs = labs.narrow(0, MIN(labs.dim(0), size), 0);
+      init(dat, labs, name.str().c_str(), 0, 0.01);
+    } catch(string &err) {
+      cerr << err << endl;
+      eblerror("failed to load mnist dataset");
+    }
+  }
+
   template <class Tnet, class Tdata, class Tlabel>
   mnist_datasource<Tnet, Tdata, Tlabel>::
   mnist_datasource(const char *root, const char *name, uint size) {

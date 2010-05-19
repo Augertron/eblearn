@@ -30,6 +30,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+// Windows does not know linux/mac mutexes, TODO: implement windows mutexes
+#ifndef __WINDOWS__
+
 #ifndef TRACKING_THREAD_H_
 #define TRACKING_THREAD_H_
 
@@ -97,3 +100,5 @@ namespace ebl {
 #include "tracking_thread.hpp"
 
 #endif /* TRACKING_THREAD_H_ */
+
+#endif /* __WINDOWS__ */
