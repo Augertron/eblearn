@@ -30,11 +30,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifdef __WINDOWS__
-#else // linux & mac
-#include <sys/time.h>
-#endif
-
 #include "utils.h"
 #include <stdlib.h>
 #include <iostream>
