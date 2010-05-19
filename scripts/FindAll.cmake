@@ -7,12 +7,15 @@ EXEC_PROGRAM("uname -s" OUTPUT_VARIABLE OS_NAME)
 STRING(TOLOWER "${OS_NAME}" OS_NAME)
 MESSAGE(STATUS "Target OS is ${OS_NAME}")
 STRING(COMPARE EQUAL ${ARCH_NAME} "x86_64" 64BIT)
-IF (OS_NAME MATCHES "darwin")
+IF (OS_NAME MATCHES "darwin") # MAC OS
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__MAC__")
+ELSE (OS_NAME MATCHES "darwin")
+  IF (OS_NAME MATCHES "linux") # LINUX
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__LINUX__")
+  ELSE (OS_NAME MATCHES "linux") # WINDOWS
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WINDOWS__")    
+  ENDIF (OS_NAME MATCHES "linux")
 ENDIF (OS_NAME MATCHES "darwin")
-IF (OS_NAME MATCHES "linux")
-  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__LINUX__")
-ENDIF (OS_NAME MATCHES "linux")
 
 # find boost
 ###############################################################################

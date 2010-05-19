@@ -30,6 +30,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+// Windows does not know linux/mac mutexes, TODO: implement windows mutexes
+#ifndef __WINDOWS__
+
 #include <map>
 #include <string>
 #include <iostream>
@@ -286,3 +289,5 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #endif  
     return 0;
   }
+
+#endif /* __WINDOWS__ */

@@ -350,10 +350,19 @@ namespace ebl {
     class mnist_datasource : public labeled_datasource<Tnet, Tdata, Tlabel> {
   public:
     
-    //! Create an MNIST dataset using files found in root directory.
-    //! type is either "t10k" or "train".
+    //! Create an MNIST dataset using the original MNIST filenames,
+    //! in 'root' directory.
+    //! Set 'train_data' to true to load the training data, false to load the
+    //! testing data.
     //! size can go up to 10k for testing and 60k for training.
-    mnist_datasource(const char *root, const char *type, uint size);
+    mnist_datasource(const char *root, bool train_data, uint size);
+
+    //! Create an MNIST dataset using files found in root directory.
+    //! Name can be used to differentiate between training, testing and
+    //! validataion data. The file name will be constructed as follow:
+    //! {root}/{name}_{data|labels}.mat
+    //! size can go up to 10k for testing and 60k for training.
+    mnist_datasource(const char *root, const char *name, uint size);
 
     //! Destructor.
     virtual ~mnist_datasource () {}

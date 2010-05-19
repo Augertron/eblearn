@@ -29,9 +29,8 @@ void NetTest::test_lenet5_mnist() {
   
   // load MNIST dataset
   mnist_datasource<t_net,ubyte,ubyte>
-    train_ds(gl_mnist_dir->c_str(), "train", 2000),
-    test_ds(gl_mnist_dir->c_str(), "t10k", 1000);
-  test_ds.set_test(); // test is the test set, used for reporting
+    train_ds(gl_mnist_dir->c_str(), true, 2000),
+    test_ds(gl_mnist_dir->c_str(), false, 1000);
   train_ds.set_balanced();
   train_ds.set_shuffle_passes(true);
   train_ds.set_weigh_samples(true);
@@ -106,7 +105,7 @@ void NetTest::test_lenet5_mnist() {
   }
 #endif
   // this goes at about 25 examples per second on a PIIIM 800MHz
-  for (int i = 0; i < 105; ++i) {
+  for (int i = 0; i < 5; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
     thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
@@ -120,7 +119,7 @@ void NetTest::test_lenet5_mnist() {
   }
   CPPUNIT_ASSERT_DOUBLES_EQUAL(99.2734, // old: 97.00
 			       ((trainmeter.total_correct * 100) 
-				/ (double) trainmeter.size), 0.01);
+				/ (double) trainmeter.size), 0.5);
   CPPUNIT_ASSERT_DOUBLES_EQUAL(96.4630, // old: 95.90
 			       ((testmeter.total_correct * 100) 
 				/ (double) testmeter.size), 0.01);
