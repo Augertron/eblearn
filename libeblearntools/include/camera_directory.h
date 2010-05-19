@@ -98,11 +98,12 @@ namespace ebl {
   protected:
     using camera<Tdata>::frame;	//!< frame buffer 
     using camera<Tdata>::frame_id;	//!< frame counter
+    using camera<Tdata>::frame_name_;	//!< frame name
     files_list		*fl;	//!< list of images
     string		 fdir;	//!< directory name
     string		 fname;	//!< file name
     ostringstream	 oss;	//!< temporary string
-    uint                 flsize; //!< original size of list
+    uint                 flsize;	//!< original size of list
   };
 
 } // end namespace ebl

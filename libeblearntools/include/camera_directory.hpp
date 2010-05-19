@@ -85,6 +85,9 @@ namespace ebl {
       eblerror("cannot grab images on empty list");
     fdir = fl->front().first; // directory
     fname = fl->front().second; // file name
+    frame_name_ = fl->front().first;
+    frame_name_ += "/";
+    frame_name_ += fl->front().second;
     fl->pop_front(); // remove first element
     cout << frame_id << "/" << flsize << ": processing ";
     cout << fdir << "/" << fname << endl;
@@ -107,9 +110,7 @@ namespace ebl {
     
   template <typename Tdata>
   string camera_directory<Tdata>::frame_name() {
-    ostringstream name;
-    name << fl->front().first << "/" << fl->front().second;
-    return name.str();
+    return frame_name_;
   }
   
 } // end namespace ebl
