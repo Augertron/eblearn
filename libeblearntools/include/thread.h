@@ -34,6 +34,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+// Windows does not know linux/mac mutexes, TODO: implement windows mutexes
+#ifndef __WINDOWS__
 #include <pthread.h>
 
 using namespace std;
@@ -59,3 +62,5 @@ namespace ebl {
 } // end namespace ebl
 
 #endif /* THREAD_H_ */
+
+#endif /* __WINDOWS__ */
