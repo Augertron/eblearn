@@ -96,6 +96,9 @@ namespace ebl {
     //!               Default value 0 has no effect.
     //! \param background The name of the background class. Default is "bg".
     //!          If given, positive answers for this class are ignored.
+    //! \param bias After preprocessing, add this bias to input values.
+    //! \param coeff After preprocessing and bias adding,
+    //!              scale input values by this coefficient.
     detector(module_1_1<T> &thenet, idx<ubyte> &lbls,
 	     module_1_1<T> *pp = NULL, uint ppkersz = 0,
 	     const char *background = NULL, T bias = 0, float coeff = 1.0);
