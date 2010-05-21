@@ -79,7 +79,9 @@ namespace ebl {
 				      bool show_out) {			\
     unsigned int h = h0, w = w0;					\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "conv. in:" << in.T;		\
+    gui << gui_only() << at(h, w) << "conv. in:" << in.T		\
+	<< at(h + 15, w) << "min:" << idx_min(in.T)			\
+	<< at(h + 30, w) << "max:" << idx_max(in.T);			\
     w += 150;								\
     /* display inputs */						\
     idx_bloop1(m, in.T, T) {						\
@@ -122,7 +124,9 @@ namespace ebl {
 				   zoom, vmin, vmax, show_out);		\
     unsigned int h = h0, w = w0;					\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "conv out:" << layer.tmp->T;	\
+    gui << gui_only() << at(h, w) << "conv out:" << layer.tmp->T	\
+	<< at(h + 15, w) << "min:" << idx_min(layer.tmp->T)		\
+	<< at(h + 30, w) << "max:" << idx_max(layer.tmp->T);		\
     w += 150;								\
     /* display output of convolution */					\
     idx_bloop1(m, layer.tmp->T, T) {					\
@@ -133,7 +137,9 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "abs out:" << layer.tmp2->T;	\
+    gui << gui_only() << at(h, w) << "abs out:" << layer.tmp2->T	\
+	<< at(h + 15, w) << "min:" << idx_min(layer.tmp2->T)		\
+	<< at(h + 30, w) << "max:" << idx_max(layer.tmp2->T);		\
     w += 150;								\
     /* display output of abs */						\
     idx_bloop1(m2, layer.tmp2->T, T) {					\
