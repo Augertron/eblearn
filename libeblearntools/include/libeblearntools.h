@@ -33,10 +33,6 @@
 #ifndef LIBEBLEARNTOOLS_H_
 #define LIBEBLEARNTOOLS_H_
 
-// link error messages
-#define BOOST_LIB_ERROR "Boost libraries not available, install \
-libboost-filesystem-dev libboost-regex-dev and recompile"
-
 #include "configuration.h"
 #include "gdb.h"
 #include "xml_utils.h"
