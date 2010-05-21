@@ -43,9 +43,7 @@
 #include "libidxgui.h"
 #endif
 
-// link error messages
-#define BOOST_LIB_ERROR "Boost libraries not available, install \
-libboost-filesystem-dev libboost-regex-dev and recompile"
+#include "defines_tools.h"
 
 #ifdef __BOOST__
 #include "boost/filesystem.hpp"

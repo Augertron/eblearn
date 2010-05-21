@@ -33,6 +33,7 @@
 #ifndef LIBEBLEARNTOOLS_H_
 #define LIBEBLEARNTOOLS_H_
 
+#include "defines_tools.h"
 #include "configuration.h"
 #include "gdb.h"
 #include "xml_utils.h"

@@ -30,7 +30,7 @@ int main(int argc, char **argv) { // regular main without gui
 #endif
 #ifndef __BOOST__
   eblerror(BOOST_LIB_ERROR);
-#endif
+#else
   // misc initializations
   cout << "* PASCAL object recognition demo" << endl;
   if (argc != 2) {
@@ -182,5 +182,6 @@ int main(int argc, char **argv) { // regular main without gui
     ifp_det->second->close();
     delete ifp_det->second;
   }
+#endif
   return 0;
 }

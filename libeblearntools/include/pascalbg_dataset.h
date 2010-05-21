@@ -66,6 +66,7 @@ namespace ebl {
 
   protected:
     
+#ifdef __BOOST__ // disable some derived methods if BOOST not available
 #ifdef __XML__ // disable some derived methods if XML not available
     
     ////////////////////////////////////////////////////////////////
@@ -87,6 +88,7 @@ namespace ebl {
     void save_patches(vector<idx<Tdata> > &patches, const string &outdir,
 		      uint max_folders, const string &filename);
 
+#endif /* __BOOST__ */
 #endif /* __XML__ */
     
   protected:
