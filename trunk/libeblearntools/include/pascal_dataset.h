@@ -71,6 +71,7 @@ namespace ebl {
 
   protected:
 
+#ifdef __BOOST__ // disable some derived methods if BOOST not available
 #ifdef __XML__ // disable some derived methods if XML not available
     
     //! return true if class_name is authorized (based on excluded and included
@@ -107,6 +108,7 @@ namespace ebl {
 			       uint difficult, const string &image_filename);
     
 #endif /* __XML__ */
+#endif /* __BOOST__ */
     
   protected:
     // "difficult" samples /////////////////////////////////////////

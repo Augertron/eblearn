@@ -83,6 +83,7 @@ namespace ebl {
   template <class Tdata>
   bool pascal_dataset<Tdata>::extract() {
     this->init_preprocessing();
+#ifdef __BOOST__
 #ifdef __XML__    
     if (!allocated)
       return false;
@@ -107,10 +108,12 @@ namespace ebl {
     cout << "Extracted " << data_cnt << " elements into dataset." << endl;
     print_stats();
 #endif /* __XML__ */
+#endif /* __BOOST__ */
     return true;
   }
 
 #ifdef __XML__ // disable some derived methods if XML not available
+#ifdef __BOOST__
 
   ////////////////////////////////////////////////////////////////
   // data
@@ -443,6 +446,7 @@ namespace ebl {
   }
 
 #endif /* __XML__ */
+#endif /* __BOOST__ */
 
 } // end namespace ebl
 

@@ -77,6 +77,7 @@ namespace ebl {
   template <class Tdata>
   bool pascalbg_dataset<Tdata>::extract() {
     this->init_preprocessing();
+#ifdef __BOOST__    
 #ifdef __XML__    
     cout << "Extracting samples from files into dataset..." << endl;
     // adding data to dataset using all xml files in annroot
@@ -99,9 +100,11 @@ namespace ebl {
     cout << "Extracted and saved " << data_cnt;
     cout << " background patches from dataset." << endl;
 #endif /* __XML__ */
+#endif /* __BOOSt__ */
     return true;
   }
 
+#ifdef __BOOST__ // disable some derived methods if BOOST not available
 #ifdef __XML__ // disable some derived methods if XML not available
 
   ////////////////////////////////////////////////////////////////
@@ -398,6 +401,7 @@ namespace ebl {
   }
 
 #endif /* __XML__ */
+#endif /* __BOOST__ */
 
 } // end namespace ebl
 
