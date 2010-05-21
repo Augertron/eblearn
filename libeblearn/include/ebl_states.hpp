@@ -332,6 +332,7 @@ namespace ebl {
       idx<T> m = load_matrix<T>(s);
       this->resize(m.dim(0));
       idx_copy(m, x);
+      cout << "Loaded weights from " << s << ": " << x << endl;
       return true;
     } catch(string &err) {
       cout << err << endl;
