@@ -201,9 +201,16 @@ namespace ebl {
       // prepare input
       ds.fprop(*st.input, st.label);
       // fprop and bprop
-      st.test_sample(*st.input, st.label.get(), answer, infp);
+      //st.test_sample(*st.input, st.label.get(), answer, infp);
       // TODO: display is influencing learning, remove influence
-      //st.learn_sample(*st.input, st.label.get(), args);
+      //      st.learn_sample(*st.input, st.label.get(), args);
+      ubyte lab = st.label.get();
+      st.machine.fprop(*st.input, lab, st.energy);
+      st.param.clear_dx();
+      st.machine.bprop(*st.input, lab, st.energy);
+      st.param.clear_ddx();
+      st.machine.bbprop(*st.input, lab, st.energy);
+      
       ds.next();
       // display fprop
       mg.display_fprop(st.machine, *st.input, answer, st.energy, 

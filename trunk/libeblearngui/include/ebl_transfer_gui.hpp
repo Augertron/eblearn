@@ -45,7 +45,9 @@ namespace ebl {
 				     bool show_out) {			\
     uint h = h0, w = w0;						\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "inmean out:" << wsm.inmean.T;	\
+    gui << gui_only() << at(h, w) << "inmean out:" << wsm.inmean.T	\
+	<< at(h + 15, w) << "min:" << idx_min(wsm.inmean.T)		\
+	<< at(h + 30, w) << "max:" << idx_max(wsm.inmean.T);		\
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.inmean.T, T) {					\
@@ -57,7 +59,9 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "inzmeansq out:" << wsm.inzmeansq.T; \
+    gui << gui_only() << at(h, w) << "inzmeansq out:" << wsm.inzmeansq.T \
+	<< at(h + 15, w) << "min:" << idx_min(wsm.inzmeansq.T)		\
+	<< at(h + 30, w) << "max:" << idx_max(wsm.inzmeansq.T);		\
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.inzmeansq.T, T) {				\
@@ -69,7 +73,9 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "invar out:" << wsm.invar.T;	\
+    gui << gui_only() << at(h, w) << "invar out:" << wsm.invar.T	\
+	<< at(h + 15, w) << "min:" << idx_min(wsm.invar.T)		\
+	<< at(h + 30, w) << "max:" << idx_max(wsm.invar.T);		\
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.invar.T, T) {					\
@@ -81,7 +87,9 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "instd out:" << wsm.instd.T;	\
+    gui << gui_only() << at(h, w) << "instd out:" << wsm.instd.T	\
+	<< at(h + 15, w) << "min:" << idx_min(wsm.instd.T)		\
+	<< at(h + 30, w) << "max:" << idx_max(wsm.instd.T);		\
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.instd.T, T) {					\
@@ -93,7 +101,9 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "thstd out:" << wsm.thstd.T;	\
+    gui << gui_only() << at(h, w) << "thstd out:" << wsm.thstd.T	\
+	<< at(h + 15, w) << "min:" << idx_min(wsm.thstd.T)		\
+	<< at(h + 30, w) << "max:" << idx_max(wsm.thstd.T);		\
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.thstd.T, T) {					\
@@ -105,7 +115,9 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "invstd out:" << wsm.invstd.T;	\
+    gui << gui_only() << at(h, w) << "invstd out:" << wsm.invstd.T	\
+	<< at(h + 15, w) << "min:" << idx_min(wsm.invstd.T)		\
+	<< at(h + 30, w) << "max:" << idx_max(wsm.invstd.T);		\
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.invstd.T, T) {					\
