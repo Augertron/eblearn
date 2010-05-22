@@ -35,7 +35,7 @@ void NetTest::test_lenet5_mnist() {
   train_ds.set_shuffle_passes(true);
   train_ds.set_weigh_samples(true);
   train_ds.set_weigh_normalization(false);
-  train_ds.set_min_proba(0.3);
+  train_ds.set_min_proba(0.01);
   init_drand(0); // fixed randomization
 
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
@@ -123,7 +123,7 @@ void NetTest::test_lenet5_mnist() {
 				/ (double) trainmeter.size), 0.0);
   CPPUNIT_ASSERT_DOUBLES_EQUAL(95.4262, // 96.4630, // old: 95.90
 			       ((testmeter.total_correct * 100) 
-				/ (double) testmeter.size), 0.1);
+				/ (double) testmeter.size), 0.5);
 }
 
 
