@@ -254,7 +254,7 @@ namespace ebl {
   template<class Tnet, class Tdata, class Tlabel>
   void supervised_trainer_gui<Tnet, Tdata, Tlabel>::display_previous() {
     if (previous_page()) {
-      pos = MAX(0, pos - _nh * _nw);
+      pos = std::max((uint) 0, pos - _nh * _nw);
       display_datasource(*_st, *_ds, *_infp, _nh, _nw, _h0, _w0, _zoom,
 			 -1, NULL, true);
     }

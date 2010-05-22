@@ -38,10 +38,13 @@
 #include <sstream>
 #include <iomanip>
 #include <time.h>
-#include <fenv.h>
 #include "libidx.h"
 #include "libeblearn.h"
 #include "libeblearntools.h"
+
+#ifndef __WINDOWS__
+#include <fenv.h>
+#endif
 
 #ifdef __GUI__
 #include "libeblearngui.h"
@@ -62,7 +65,7 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "Usage: ./objrec_train <config file>" << endl;
     eblerror("config file not specified");
   }
-#ifndef __MAC__
+#ifdef __LINUX__
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
   ipp_init(1); // limit IPP (if available) to 1 core

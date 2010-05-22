@@ -483,7 +483,7 @@ namespace ebl {
       n = MIN(n, max_data);
     // max with max_per_class
     if (max_per_class_set)
-      n = MAX(0, MIN(n, idx_sum(max_per_class)));
+      n = std::max((intg) 0, MIN(n, idx_sum(max_per_class)));
     cout << "Allocating dataset \"" << name << "\" with " << n;
     cout << " samples of size " << d << " ..." << endl;
     if (n <= 0) {
@@ -965,9 +965,9 @@ namespace ebl {
     if (r) inr = *r;
     // multiply input region by factor
     if (bboxfact != 1.0) {
-      int add = (int) (MAX(inr.height, inr.width) * (bboxfact - 1.0));
-      inr.h0 = MAX(0, MIN(dat.dim(0) - 1, ((int) inr.h0) - add / 2));
-      inr.w0 = MAX(0, MIN(dat.dim(1) - 1, ((int) inr.w0) - add / 2));
+      int add = (int) (std::max(inr.height, inr.width) * (bboxfact - 1.0));
+      inr.h0 = std::max((intg)0, MIN(dat.dim(0) - 1, ((int) inr.h0) - add / 2));
+      inr.w0 = std::max((intg)0, MIN(dat.dim(1) - 1, ((int) inr.w0) - add / 2));
       inr.height += add;
       inr.width += add;
       if (inr.h0 + inr.height > (uint) dat.dim(0))
@@ -1072,7 +1072,7 @@ namespace ebl {
       // paint
       enable_window_updates();
       if (sleep_display && active_sleepd)
-	usleep((uint) (sleep_delay * 1000.0));
+	millisleep((long) sleep_delay);
     }
 #endif
     // return preprocessed image
@@ -1101,7 +1101,7 @@ namespace ebl {
     uint max = 0;
     vector<string>::iterator i = classes.begin();
     for ( ; i != classes.end(); ++i)
-      max = MAX(max, i->length());
+      max = std::max((size_t) max, i->length());
     // allocate classes idx
     idx<ubyte> classes_idx(classes.size(), max + 1);
     // copy classes strings

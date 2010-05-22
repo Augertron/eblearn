@@ -37,6 +37,7 @@
 #include <execinfo.h>
 #include <stdlib.h>
 #include <iostream>
+#include <limits.h>
 
 #ifndef NULL
 #define NULL (void*)0

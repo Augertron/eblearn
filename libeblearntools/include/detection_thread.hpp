@@ -42,7 +42,7 @@
 #include <sstream>
 #include <iomanip>
 #include <time.h>
-#include <fenv.h>
+
 #include "libeblearn.h"
 #include "libeblearntools.h"
 
@@ -233,7 +233,7 @@ namespace ebl {
 #endif
        // wait until a new image is made available
        while (!in_updated) {
-	 usleep(1000);
+	 millisleep(1);
        }
        // we got a new frame, reset new frame flag
        in_updated = false; // no need to lock mutex
@@ -271,7 +271,7 @@ namespace ebl {
        set_out_updated();
        if (display_sleep > 0) {
 	 cout << "sleeping for " << display_sleep << "ms." << endl;
-	 usleep(display_sleep);
+	 millisleep(display_sleep);
        }
        if (conf.exists("save_max") && 
 	   detect.get_total_saved() > conf.get_uint("save_max"))

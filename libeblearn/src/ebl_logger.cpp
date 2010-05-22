@@ -113,7 +113,7 @@ namespace ebl {
     // increment energy
     total_energy += energy;
     // resize vectors
-    uint max = MAX(desired, infered);
+    uint max = std::max(desired, infered);
     if (max >= class_totals.size()) {
       class_totals.resize(max + 1, 0); // resize to max and fill new with 0
       class_errors.resize(max + 1, 0); // resize to max and fill new with 0
@@ -144,7 +144,7 @@ namespace ebl {
     idx_eloop1(desired, confusion, int) {
       double sum = idx_sum(desired); // all answers
       double positive = desired.get(i); // true answers
-      err += (sum - positive) / MAX(1, sum); // error for class i
+      err += (sum - positive) / std::max((double) 1, sum); // error for class i
       i++;
     }
     err /= confusion.dim(0); // average error

@@ -41,7 +41,7 @@ void detector_test::test_norb() {
   // load the previously saved weights of a trained network
   parameter<t_net> theparam(1);
   // input to the network will be 96x96 and there are 5 outputs
-  lenet7_binocular<t_net> thenet(theparam, 96, 96, 5);
+  lenet7_binocular<t_net> thenet(theparam, 96, 96, 5, false, false, true);
   theparam.load_x(mono_net.c_str());
   //left = left.narrow(2, 2, 0);
   //  int tr[3] = { 2, 1, 0 };
@@ -51,17 +51,20 @@ void detector_test::test_norb() {
   detector<t_net> cb((module_1_1<t_net>&)thenet, labs, NULL, 0, NULL, 0, 0.01);
   cb.set_resolutions(3, scales);
 
-  // find category of image
-  //  cb.fprop(left, .5);
-
 #ifdef __GUI__
   detector_gui<t_net> cgui;
-  cgui.display_all(cb, left, .97);
+  vector<bbox*> &bb = cgui.display_all(cb, left, .97);
+  CPPUNIT_ASSERT_EQUAL((size_t) 1, bb.size()); // only 1 object
+  CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 0.973895462819159,
+			       bb[0]->confidence, .0000001);
+  CPPUNIT_ASSERT_EQUAL((int) 0, bb[0]->class_id);
+#else
+  vector<bbox*> &bb = cb.fprop(left, .97);
+  CPPUNIT_ASSERT_EQUAL((size_t) 1, bb.size()); // only 1 object
+  CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 0.973895462819159,
+			       bb[0]->confidence, .0000001);
+  CPPUNIT_ASSERT_EQUAL((int) 0, bb[0]->class_id);
 #endif
-
-  //  idx<double> res = cb.fprop(left, 1, 1.8, 60);
-  //  CPPUNIT_ASSERT(res.dim(0) == 1); // only 1 object
-  //  CPPUNIT_ASSERT(res.get(0, 0) == 2); // plane
   sleep(5);
 }
 

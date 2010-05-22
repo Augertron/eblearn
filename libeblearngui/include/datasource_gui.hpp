@@ -146,7 +146,7 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>
   void labeled_datasource_gui<Tnet, Tdata, Tlabel>::display_previous() {
     if (previous_page()) {
-      pos = MAX(0, pos - _nh * _nw);
+      pos = std::max((uint) 0, pos - _nh * _nw);
       display(*_ds, _nh, _nw, _h0, _w0, _zoom, -1, NULL, true, _rmin, _rmax);
     }
   }
@@ -279,7 +279,7 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>
   void labeled_pair_datasource_gui<Tnet, Tdata, Tlabel>::display_previous() {
     if (this->previous_page()) {
-      this->pos = MAX(0, this->pos - this->_nh * this->_nw);
+      this->pos = std::max((uint) 0, this->pos - this->_nh * this->_nw);
       display(*_ds, this->_nh, this->_nw, this->_h0, this->_w0, this->_zoom,
 	      -1, NULL, true, this->_rmin, this->_rmax);
     }

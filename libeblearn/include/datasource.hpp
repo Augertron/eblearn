@@ -50,8 +50,8 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0), 
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(0), width(0), test_set(false), sample_min_proba(0.0), epoch_sz(0),
-      continuous_train(false) {
+      height(0), width(0), balance(false), test_set(false),
+      sample_min_proba(0.0), epoch_sz(0), continuous_train(false) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -63,7 +63,8 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0), 
-      height(ds.height), width(ds.width), name(ds.name), test_set(false),
+      height(ds.height), width(ds.width), name(ds.name), balance(false),
+      test_set(false),
       sample_min_proba(0.0), epoch_sz(0), continuous_train(false) {
   }
 
@@ -77,7 +78,7 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(data.dim(1)), width(data.dim(2)), test_set(false),
+      height(data.dim(1)), width(data.dim(2)), balance(false), test_set(false),
       sample_min_proba(0.0), epoch_sz(0), continuous_train(false) {
     init(data_, labels_, name_, b, c);
   }
@@ -98,7 +99,6 @@ namespace ebl {
     init_drand(time(NULL)); // initialize random seed
     // default probability for a sample of being used is 1
     idx_fill(probas, 1.0);
-    max_distance = 0.0; // initial maximum distance
     height = data.dim(1);
     width = data.dim(2);
     nclasses = (intg) idx_max(labels) + 1;
@@ -206,11 +206,6 @@ namespace ebl {
     ++labelsIter_test;
     // reset if reached end
     if(!dataIter_test.notdone()) {
-      // if not a test dataset and shuffling is on, shuffle
-      if (!test_set && shuffle_passes) {
-	cout << "Shuffling dataset " << data << endl; 
-	idx_shuffle_together(data, labels, 0);
-      }
       // reset iterators
       dataIter_test = data.dim_begin(0);
       labelsIter_test = labels.dim_begin(0);
@@ -237,6 +232,7 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next_train(intg *callcnt) {
     // return samples in original order, regardless of their class
+    // TODO: allow probability training and shuffling in continuous training
     if (continuous_train)
       return next();
       
@@ -246,8 +242,8 @@ namespace ebl {
       if (iitr >= label_indices.size())
 	iitr = 0;
     }
-    // recursion failsafe, allow 100 max recursions
-    if (callcnt && *callcnt > MIN(100, (intg) label_indices[iitr].size())) {
+    // recursion failsafe, allow 1000 max recursions
+    if (callcnt && *callcnt > MIN(1000, (intg) label_indices[iitr].size())) {
       // we called recursion on this method more than number of class samples
       // give up and go to next class
       iitr++; // next class
@@ -278,35 +274,30 @@ namespace ebl {
       }
       if (weigh_samples) {
 	if (perclass_norm) {
-	  // // normalize probabilities for this class, mapping [0..max] to [0..1]
-	  // double maxproba = 0;
-	  // // get max
-	  // for (vector<intg>::iterator j = label_indices[iitr].begin();
-	  //      j != label_indices[iitr].end(); ++j)
-	  //   maxproba = MAX(probasIter_train.at(*j)->get(), maxproba);
-	  // // cout << "normalizing with maxproba for class "
-	  // //      << iitr << ": " << maxproba << endl;
-	  // // set normalized proba
-	  // double avg = 0;
-	  // for (vector<intg>::iterator j = label_indices[iitr].begin();
-	  //      j != label_indices[iitr].end(); ++j) {
-	  //   probasIter_train.at(*j)->set((maxproba == 0) ? 1.0 :
-	  // 				 probasIter_train.at(*j)->get() 
-	  // 				 / maxproba);
-	  //   avg = probasIter_train.at(*j)->get();
-	  // }
-	  // reset max distance
-	  max_distance = 0;
+	  // normalize probabilities for this class, mapping [0..max] to [0..1]
+	  double maxproba = 0;
+	  // get max
+	  for (vector<intg>::iterator j = label_indices[iitr].begin();
+	       j != label_indices[iitr].end(); ++j)
+	    maxproba = std::max(probasIter_train.at(*j)->get(), maxproba);
+	  // cout << "normalizing with maxproba for class "
+	  //      << iitr << ": " << maxproba << endl;
+	  // set normalized proba
+	  double avg = 0;
+	  for (vector<intg>::iterator j = label_indices[iitr].begin();
+	       j != label_indices[iitr].end(); ++j) {
+	    probasIter_train.at(*j)->set((maxproba == 0) ? 1.0 :
+	  				 probasIter_train.at(*j)->get() 
+	  				 / maxproba);
+	    avg = probasIter_train.at(*j)->get();
+	  }
 	  //	  cout << "avg proba = " << avg / maxproba << endl;
 	} else {
-	  // reset max distance
-	  max_distance = 0;
-	  
 	  // normalize probabilities for all classes, mapping [0..max] to [0..1]
-	  //maxdistance = idx_max(probas);
-	  //if (maxdistance == 0)
-	  //maxdistance = 1.0;
-	  //idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
+	  double maxproba = idx_max(probas);
+	  if (maxproba == 0)
+	    maxproba = 1.0;
+	  idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
 	}
       }
     }
@@ -326,11 +317,7 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_answer_distance(double dist) {
     if (weigh_samples) { // if false, keep default probability 1 for all samples
-      max_distance = MAX(max_distance, dist);
-      if (max_distance == 0.0) // failsafe
-	max_distance = .0000001;
-      probasIter_train->set(MAX(sample_min_proba,
-				MIN(1.0, fabs(dist / max_distance))));
+       probasIter_train->set(MAX(sample_min_proba, MIN(1.0, fabs(dist))));
     }
   }
 
@@ -361,6 +348,7 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_balanced() {
+    balance = true;
     if (discrete_labels) {
       // compute vector of sample indices for each class
       label_indices.clear();

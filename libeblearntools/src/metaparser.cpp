@@ -281,13 +281,13 @@ namespace ebl {
     uint max = 0;
     for (map<string,string>::iterator i = vars.begin(); i != vars.end(); ++i) {
       if (i->first == var)
-	max = MAX(max, string_to_uint(i->second));
+	max = std::max(max, string_to_uint(i->second));
     }
     for (map<string,pairtree>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
       if (subvariable == var)
-	max = MAX(max, string_to_uint(i->first));
-      max = MAX(max, i->second.get_max_uint(var));
+	max = std::max(max, string_to_uint(i->first));
+      max = std::max(max, i->second.get_max_uint(var));
     }
     return max;
   }
@@ -359,7 +359,8 @@ namespace ebl {
 	if (find(hierarchy.begin(), hierarchy.end(), var) != hierarchy.end())
 	  stick[var] = val;
 	// if sticky, remember value
-	if (sticky && find(sticky->begin(), sticky->end(), var) != sticky->end())
+	if (sticky && find(sticky->begin(), sticky->end(), var)
+	    != sticky->end())
 	  stick[var] = val;
       }
       // add variables to tree, and remember the path to the leaf
@@ -378,7 +379,7 @@ namespace ebl {
   int metaparser::get_max_common_iter() {
     if (!tree.exists("i"))
       return -1;
-    int minmax = numeric_limits<int>::max();
+    int minmax = std::numeric_limits<int>::max();
     // assuming that "job" is first level and "i" second one:
     for (map<string,pairtree>::iterator i = tree.get_subtree().begin();
          i != tree.get_subtree().end(); ++i) {
@@ -386,7 +387,7 @@ namespace ebl {
       int max = 0;
       for (map<string,pairtree>::iterator j = i->second.get_subtree().begin();
 	   j != i->second.get_subtree().end(); ++j)
-	max = MAX(max, string_to_int(j->first));
+	max = std::max(max, string_to_int(j->first));
       // find minimum of the maximums
       minmax = MIN(minmax, max);
     }
@@ -557,7 +558,8 @@ namespace ebl {
 		conf.get_cstring("meta_gnuplot_params"));
     maxiter = get_max_common_iter();
     list<string> keys = string_to_stringlist(conf.get_string("meta_minimize"));
-    varmaplist best = tree.best(keys, MAX(1, conf.get_uint("meta_send_best")));
+    varmaplist best =
+      tree.best(keys, std::max((uint) 1, conf.get_uint("meta_send_best")));
     ostringstream dirbest, tmpdir, cmd;
     string job;
     int ret;

@@ -133,7 +133,7 @@ namespace ebl {
 	eblerror("unmatched quote");
       }
       // resolve both sides of quoted section
-      string s0 = v.substr(0, MAX(0, qpos -1));
+      string s0 = v.substr(0, std::max((size_t) 0, qpos -1));
       string s1 = v.substr(qpos, qpos2 + 1);
       string s2 = v.substr(qpos2 + 1);
       res = "";

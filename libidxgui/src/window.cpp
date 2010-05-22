@@ -198,7 +198,7 @@ namespace ebl {
 //   void Window::set_wupdate(bool ud) {
 //     if (ud) {
 //       if (wupdate_ndisable > 0) { // update only when necessary
-// 	wupdate_ndisable = MAX(0, wupdate_ndisable - 1); // decrement counter
+// 	wupdate_ndisable = std::max(0, wupdate_ndisable - 1); // decrement counter
 // 	if (wupdate_ndisable == 0) {
 // 	  setUpdatesEnabled(true);
 // 	  draw_images();
@@ -285,10 +285,10 @@ namespace ebl {
 			ubyte r, ubyte g, ubyte b, ubyte a) {
     masks.push_back(new imask(img, h0, w0, r, g, b, a));
     // update maximum buffer size
-    buffer_maxh = MAX(buffer_maxh, MAX(buffer?(unsigned int)buffer->dim(0):0, 
-				       h0 + img->dim(0)));
-    buffer_maxw = MAX(buffer_maxw, MAX(buffer?(unsigned int)buffer->dim(1):0, 
-				       w0 + img->dim(1)));
+    buffer_maxh = std::max(buffer_maxh, std::max(buffer?(uint)buffer->dim(0):0, 
+						 (uint) (h0 + img->dim(0))));
+    buffer_maxw = std::max(buffer_maxw, std::max(buffer?(uint)buffer->dim(1):0, 
+						 (uint) (w0 + img->dim(1))));
     // we are responsible for deleting img
     delete img;
     update_window();
@@ -358,7 +358,7 @@ namespace ebl {
   void Window::buffer_resize(uint h, uint w) {
     // arbitrary bounding of h and w to prevent gigantic erroneous values.
     uint bound = 10000;
-    if (MAX(h, w) > bound) {
+    if (std::max(h, w) > bound) {
       cerr << "error: trying to resize display buffer to " << h << "x" << w;
       cerr << ", one of those dimensions is greater than " << bound;
       cerr << " and probably erroneous." << endl;
@@ -417,10 +417,10 @@ namespace ebl {
 
   void Window::update_pixmap(idx<ubyte> &img, unsigned int h0, 
 			     unsigned int w0, bool updatepix) {
-    unsigned int h = MAX(buffer?(unsigned int)buffer->dim(0):0, 
-			 h0 + img.dim(0));
-    unsigned int w = MAX(buffer?(unsigned int)buffer->dim(1):0, 
-			 w0 + img.dim(1));
+    unsigned int h = std::max(buffer?(uint)buffer->dim(0):0, 
+			      (uint) (h0 + img.dim(0)));
+    unsigned int w = std::max(buffer?(uint)buffer->dim(1):0, 
+			      (uint) (w0 + img.dim(1)));
     if (wupdate) {
       if (!buffer)
 	buffer_resize(h, w);
@@ -457,8 +457,8 @@ namespace ebl {
       // instead keep it in a list of images to be displayed later
       add_image(img, h0, w0);
       // and remember the maximum size of the display buffer
-      buffer_maxh = MAX(buffer_maxh, h);
-      buffer_maxw = MAX(buffer_maxw, w);
+      buffer_maxh = std::max(buffer_maxh, h);
+      buffer_maxw = std::max(buffer_maxw, w);
     }
   }
 
@@ -588,9 +588,9 @@ namespace ebl {
 // 	// resize buffer if text is out?
 // 	QRect br = painter.boundingRect(qr, Qt::AlignLeft & Qt::TextWordWrap 
 // 					& Qt::AlignTop, txt);
-// 	buffer_maxh = MAX(buffer?(unsigned int)buffer->dim(0):0, 
+// 	buffer_maxh = std::max(buffer?(unsigned int)buffer->dim(0):0, 
 // 			  (*i)->h0 + br.height());
-// 	buffer_maxw = MAX(buffer?(unsigned int)buffer->dim(1):0, 
+// 	buffer_maxw = std::max(buffer?(unsigned int)buffer->dim(1):0, 
 // 			  (*i)->w0 + br.width());
 // 	buffer_resize(buffer_maxh, buffer_maxw);
 

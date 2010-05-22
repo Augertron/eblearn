@@ -42,9 +42,12 @@
 #include <sstream>
 #include <iomanip>
 #include <time.h>
-#include <fenv.h>
 #include "libeblearn.h"
 #include "libeblearntools.h"
+
+#ifndef __WINDOWS__
+#include <fenv.h>
+#endif
 
 #ifdef __GUI__
 #include "libeblearngui.h"
@@ -99,14 +102,14 @@ void estimate_position(rect &srcpos, rect &pos, rect &tgtpos, idx<ubyte> &frame,
   // // interpolate position with time
   // tgt_time_distance = tgt_time_distance * conf.get_float("smooth_factor");
   // // update current position
-  // pos.h0 = (uint) MAX(0, srcpos.h0 + (tgtpos.h0 - (float) srcpos.h0)
+  // pos.h0 = (uint) std::max(0, srcpos.h0 + (tgtpos.h0 - (float) srcpos.h0)
   // 		      * MIN(1.0, tgt_time_distance));
-  // pos.w0 = (uint) MAX(0, srcpos.w0 + (tgtpos.w0 - (float) srcpos.w0)
+  // pos.w0 = (uint) std::max(0, srcpos.w0 + (tgtpos.w0 - (float) srcpos.w0)
   // 		      * MIN(1.0, tgt_time_distance));
-  // pos.height = (uint) MAX(0, srcpos.height +
+  // pos.height = (uint) std::max(0, srcpos.height +
   // 			  (tgtpos.height - (float) srcpos.height)
   // 			  * MIN(1.0, tgt_time_distance));
-  // pos.width = (uint) MAX(0, srcpos.width +
+  // pos.width = (uint) std::max(0, srcpos.width +
   // 			 (tgtpos.width - (float) srcpos.width)
   // 			 * MIN(1.0, tgt_time_distance));
   // // transform position into screen position
@@ -152,7 +155,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	cerr << "usage: obj_detect <config file> [directory or file]" << endl;
 	return -1;
       }
-#ifndef __MAC__
+#ifdef __LINUX__
       feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
       ipp_init(1); // limit IPP (if available) to 1 core
@@ -183,9 +186,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       cout << "loaded " << *bgi << ": " << bg << endl;
       idx<ubyte> bgwin;
       bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
-			MAX(0, bg.dim(0) / 2 - winszh/2));
+			std::max((intg) 0, bg.dim(0) / 2 - winszh/2));
       bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
-			   MAX(0, bg.dim(1) / 2 - winszw/2));
+			   std::max((intg) 0, bg.dim(1) / 2 - winszw/2));
       // vision threads
       tracking_thread<float> tt(conf, argc == 3 ? argv[2] : NULL);
       tt.start();
@@ -257,11 +260,15 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  		      tgt_time_distance);
 	    // narrow original image into window
 	    bgwin = bg.narrow(0, MIN(bg.dim(0), winszh),
-	  		      MIN(MAX(0, bg.dim(0) - 1 - winszh),
-	  			  MAX(0, (1 - h) * (bg.dim(0) - winszh))));
+			      MIN(std::max((intg) 0, bg.dim(0) - 1 - winszh),
+				  std::max((intg) 0,
+					   (intg) ((1 - h)
+						   * (bg.dim(0) - winszh)))));
 	    bgwin = bgwin.narrow(1, MIN(bg.dim(1), winszw),
-	  			 MIN(MAX(0, bg.dim(1) - 1 - winszw),
-	  			     MAX(0, w * (bg.dim(1) - winszw))));
+	  			 MIN(std::max((intg) 0, bg.dim(1) - 1 - winszw),
+	  			     std::max((intg) 0,
+					      (intg) (w *
+						      (bg.dim(1) - winszw)))));
 	    // draw
 	    if (display)
 	      draw(b, pos, bgwin, frame, tpl, conf);
@@ -270,7 +277,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    gui_timer.restart();
 	  }
 	  // sleep for a little bit
-	  usleep(conf.get_uint("mainsleep") * 1000);
+	  millisleep(conf.get_uint("mainsleep"));
 	  // main timing
 	  main_time = main_timer.elapsed();
 	  main_timer.restart(); 

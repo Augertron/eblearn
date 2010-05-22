@@ -40,7 +40,7 @@ namespace ebl {
     : btanh(btanh_),
       linear(p, indim0, noutputs),
       adder(p, noutputs),
-      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
 	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
@@ -52,7 +52,7 @@ namespace ebl {
     : param(1), btanh(btanh_),
       linear(param, indim0, noutputs),
       adder(param, noutputs),
-      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
 	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
@@ -143,7 +143,7 @@ namespace ebl {
     : btanh(btanh_),
       convol(p, kerneli, kernelj, stridei_, stridej_, tbl), 
       adder(p, convol.thickness),
-      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
 	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
   }
@@ -154,7 +154,7 @@ namespace ebl {
 						idx<intg> &tbl, bool btanh_) 
     : param(1), convol(param, kerneli, kernelj, stridei_, stridej_, tbl), 
       adder(param, convol.thickness),
-      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
 	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
   }
@@ -226,8 +226,8 @@ namespace ebl {
     idxdim kernel_size = convol.kernel.x[0].get_idxdim();
     //! Extract its dimensions, update output size
     idxdim osize(convol.thickness,
-		 MAX(1, isize.dim(1) - kernel_size.dim(0) + 1),
-		 MAX(1, isize.dim(2) - kernel_size.dim(1) + 1));
+		 std::max((intg) 1, isize.dim(1) - kernel_size.dim(0) + 1),
+		 std::max((intg) 1, isize.dim(2) - kernel_size.dim(1) + 1));
     isize = bprop_size(osize);
     return osize;
   }
@@ -265,7 +265,7 @@ namespace ebl {
 					  idx<intg> &tbl, bool mirror,
 					  bool btanh_) 
     : btanh(btanh_),
-      lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh),
+      lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
       tmp(NULL), tmp2(NULL) {
   }
@@ -276,7 +276,7 @@ namespace ebl {
 					  idx<intg> &tbl, bool mirror,
 					  bool btanh_) 
     : param(1), btanh(btanh_),
-      lconv(param, kerneli, kernelj, stridei_, stridej_, tbl, btanh),
+      lconv(param, kerneli, kernelj, stridei_, stridej_, tbl, btanh_),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
       tmp(NULL), tmp2(NULL) {
   }
@@ -355,7 +355,7 @@ namespace ebl {
 						intg thick, bool btanh_)
     : btanh(btanh_),
       subsampler(p, stridei, stridej, subi, subj, thick), adder(p, thick),
-      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
 	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
   }
@@ -368,7 +368,7 @@ namespace ebl {
       btanh(btanh_),
       subsampler(param, stridei, stridej, subi, subj, thick),
       adder(param, thick),
-      sigmoid(btanh ? (module_1_1<T>*) new tanh_module<T>()
+      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
 	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
   }
@@ -425,8 +425,8 @@ namespace ebl {
   idxdim nn_layer_subsampling<T>::fprop_size(idxdim &isize) {
     //! Update input size
     idxdim osize(subsampler.thickness,
-		 MAX(1, isize.dim(1) / subsampler.stridei),
-		 MAX(1, isize.dim(2) / subsampler.stridej));
+		 std::max((intg) 1, isize.dim(1) / subsampler.stridei),
+		 std::max((intg) 1, isize.dim(2) / subsampler.stridej));
     //! Recompute the input size to be compliant with the output
     isize = bprop_size(osize);
     return osize;
