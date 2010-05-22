@@ -50,8 +50,8 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0), 
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(0), width(0), balance(false), test_set(false),
-      sample_min_proba(0.0), epoch_sz(0), continuous_train(false) {
+      height(0), width(0), balance(true), test_set(false),
+      sample_min_proba(0.0), epoch_sz(0) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -63,9 +63,9 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0), 
-      height(ds.height), width(ds.width), name(ds.name), balance(false),
+      height(ds.height), width(ds.width), name(ds.name), balance(true),
       test_set(false),
-      sample_min_proba(0.0), epoch_sz(0), continuous_train(false) {
+      sample_min_proba(0.0), epoch_sz(0) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -78,8 +78,8 @@ namespace ebl {
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
       probasIter_train(probas, 0),
-      height(data.dim(1)), width(data.dim(2)), balance(false), test_set(false),
-      sample_min_proba(0.0), epoch_sz(0), continuous_train(false) {
+      height(data.dim(1)), width(data.dim(2)), balance(true), test_set(false),
+      sample_min_proba(0.0), epoch_sz(0) {
     init(data_, labels_, name_, b, c);
   }
 
@@ -129,7 +129,7 @@ namespace ebl {
       idx_bloop1(lab, labels, Tin2) {
 	counts[(size_t)lab.get()]++;
       }
-      set_balanced(); // balance dataset for each class in next_train
+      set_balanced(true); // balance dataset for each class in next_train
     }
     set_shuffle_passes(true); // for next_train only
     set_weigh_samples(true); // for next_train only
@@ -231,68 +231,31 @@ namespace ebl {
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next_train(intg *callcnt) {
-    // return samples in original order, regardless of their class
-    // TODO: allow probability training and shuffling in continuous training
-    if (continuous_train)
-      return next();
-      
-    // get pointer to first non empty class
-    while (!label_indices[iitr].size()) {
-      iitr++; // next class if class is empty
-      if (iitr >= label_indices.size())
-	iitr = 0;
-    }
-    // recursion failsafe, allow 1000 max recursions
-    if (callcnt && *callcnt > MIN(1000, (intg) label_indices[iitr].size())) {
-      // we called recursion on this method more than number of class samples
-      // give up and go to next class
-      iitr++; // next class
-      if (iitr >= label_indices.size())
-	iitr = 0; // reseting to first class in class list
-      return ;
-    }
+    // check that this datasource is allowed to call this method
+    if (test_set)
+      eblerror("forbidden call of next_train() on testing sets");
+    // count how many times this recursion was called
     intg callcnt2 = 0;
     if (!callcnt)
       callcnt = &callcnt2;
     (*callcnt)++;
-    // check that this datasource is allowed to call this method
-    if (test_set)
-      eblerror("forbidden call of next_train() on testing sets");
-    intg i = label_indices[iitr][indices_itr[iitr]];
-    //      cout << "#" << i << "/" << iitr << " ";
-    dataIter_train = dataIter_train.at(i);
-    labelsIter_train = labelsIter_train.at(i);
-    probasIter_train = probasIter_train.at(i);
-    indices_itr[iitr] += 1;
-    if (indices_itr[iitr] >= label_indices[iitr].size()) {
-      // returning to begining of list for this class
-      indices_itr[iitr] = 0;
-      // shuffling list for this class
-      if (shuffle_passes) {
-	vector<intg> &clist = label_indices[iitr];
-	random_shuffle(clist.begin(), clist.end());
-      }
-      if (weigh_samples) {
-	if (perclass_norm) {
-	  // normalize probabilities for this class, mapping [0..max] to [0..1]
-	  double maxproba = 0;
-	  // get max
-	  for (vector<intg>::iterator j = label_indices[iitr].begin();
-	       j != label_indices[iitr].end(); ++j)
-	    maxproba = std::max(probasIter_train.at(*j)->get(), maxproba);
-	  // cout << "normalizing with maxproba for class "
-	  //      << iitr << ": " << maxproba << endl;
-	  // set normalized proba
-	  double avg = 0;
-	  for (vector<intg>::iterator j = label_indices[iitr].begin();
-	       j != label_indices[iitr].end(); ++j) {
-	    probasIter_train.at(*j)->set((maxproba == 0) ? 1.0 :
-	  				 probasIter_train.at(*j)->get() 
-	  				 / maxproba);
-	    avg = probasIter_train.at(*j)->get();
-	  }
-	  //	  cout << "avg proba = " << avg / maxproba << endl;
-	} else {
+    // return samples in original order, regardless of their class
+    if (!balance) {
+      // increment iterators
+      ++dataIter_train;
+      ++labelsIter_train;
+      ++probasIter_train;
+      // reset if reached end
+      if(!dataIter_train.notdone()) {
+	// shuffling list for this class
+	if (shuffle_passes) {
+	  idx_shuffle_together(data, labels, probas, 0);
+	}
+	// reset iterators
+	dataIter_train = data.dim_begin(0);
+	labelsIter_train = labels.dim_begin(0);
+	probasIter_train = probas.dim_begin(0);
+	if (weigh_samples) {
 	  // normalize probabilities for all classes, mapping [0..max] to [0..1]
 	  double maxproba = idx_max(probas);
 	  if (maxproba == 0)
@@ -300,14 +263,77 @@ namespace ebl {
 	  idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
 	}
       }
+      // recursively loop until we find a sample that is picked for this class
+      if (!pick_current())
+	return next_train(callcnt);
     }
-    // recursively loop until we find a sample that is picked for this class
-    if (!pick_current())
-      next_train(callcnt);
-    else { // if we picked a sample, jump to next class
-      iitr++; // next class
-      if (iitr >= label_indices.size())
-	iitr = 0; // reseting to first class in class list
+    else { // return samples in class-balanced order
+      // get pointer to first non empty class
+      while (!label_indices[iitr].size()) {
+	iitr++; // next class if class is empty
+	if (iitr >= label_indices.size())
+	  iitr = 0;
+      }
+      // recursion failsafe, allow 1000 max recursions
+      if (callcnt && *callcnt > MIN(1000, (intg) label_indices[iitr].size())) {
+	// we called recursion on this method more than number of class samples
+	// give up and go to next class
+	iitr++; // next class
+	if (iitr >= label_indices.size())
+	  iitr = 0; // reseting to first class in class list
+	return next_train();
+      }
+      intg i = label_indices[iitr][indices_itr[iitr]];
+      //      cout << "#" << i << "/" << iitr << " ";
+      dataIter_train = dataIter_train.at(i);
+      labelsIter_train = labelsIter_train.at(i);
+      probasIter_train = probasIter_train.at(i);
+      indices_itr[iitr] += 1;
+      if (indices_itr[iitr] >= label_indices[iitr].size()) {
+	// returning to begining of list for this class
+	indices_itr[iitr] = 0;
+	// shuffling list for this class
+	if (shuffle_passes) {
+	  vector<intg> &clist = label_indices[iitr];
+	  random_shuffle(clist.begin(), clist.end());
+	}
+	if (weigh_samples) {
+	  if (perclass_norm) {
+	    // normalize probabilities for this class, mapping [0..max] to [0..1]
+	    double maxproba = 0;
+	    // get max
+	    for (vector<intg>::iterator j = label_indices[iitr].begin();
+		 j != label_indices[iitr].end(); ++j)
+	      maxproba = std::max(probasIter_train.at(*j)->get(), maxproba);
+	    // cout << "normalizing with maxproba for class "
+	    //      << iitr << ": " << maxproba << endl;
+	    // set normalized proba
+	    double avg = 0;
+	    for (vector<intg>::iterator j = label_indices[iitr].begin();
+		 j != label_indices[iitr].end(); ++j) {
+	      probasIter_train.at(*j)->set((maxproba == 0) ? 1.0 :
+					   probasIter_train.at(*j)->get() 
+					   / maxproba);
+	      avg = probasIter_train.at(*j)->get();
+	    }
+	    //	  cout << "avg proba = " << avg / maxproba << endl;
+	  } else {
+	    // normalize probabilities for all classes, mapping [0..max] to [0..1]
+	    double maxproba = idx_max(probas);
+	    if (maxproba == 0)
+	      maxproba = 1.0;
+	    idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
+	  }
+	}
+      }
+      // recursively loop until we find a sample that is picked for this class
+      if (!pick_current())
+	return next_train(callcnt);
+      else { // if we picked a sample, jump to next class
+	iitr++; // next class
+	if (iitr >= label_indices.size())
+	  iitr = 0; // reseting to first class in class list
+      }
     }
     // set regular iters used by fprop
     dataIter = dataIter_train;
@@ -347,23 +373,30 @@ namespace ebl {
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::set_balanced() {
-    balance = true;
-    if (discrete_labels) {
-      // compute vector of sample indices for each class
-      label_indices.clear();
-      indices_itr.clear();
-      iitr = 0;
-      for (intg i = 0; i < nclasses; ++i) {
-	vector<intg> indices;
-	label_indices.push_back(indices);
-	indices_itr.push_back(0); // init iterators
-      }
-      // distribute sample indices into each vector based on label
-      for (uint i = 0; i < size(); ++i)
-	label_indices[(intg) (labels.get(i))].push_back(i);
-    } else
-      cerr << "warning: cannot use balanced() with continuous labels" << endl;
+  void datasource<Tnet, Tin1, Tin2>::set_balanced(bool bal) {
+    balance = bal;
+    if (!balance) {
+      cout << "Setting training as unbalanced (not taking class "
+	   << "distributions into account)." << endl;
+    } else {
+      cout << "Setting training as balanced (taking class "
+	   << "distributions into account)." << endl;
+      if (discrete_labels) {
+	// compute vector of sample indices for each class
+	label_indices.clear();
+	indices_itr.clear();
+	iitr = 0;
+	for (intg i = 0; i < nclasses; ++i) {
+	  vector<intg> indices;
+	  label_indices.push_back(indices);
+	  indices_itr.push_back(0); // init iterators
+	}
+	// distribute sample indices into each vector based on label
+	for (uint i = 0; i < size(); ++i)
+	  label_indices[(intg) (labels.get(i))].push_back(i);
+      } else
+	cerr << "warning: cannot use balanced() with continuous labels" << endl;
+    }
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -401,18 +434,6 @@ namespace ebl {
   void datasource<Tnet, Tin1, Tin2>::set_epoch_size(intg sz) {
     cout << "Setting epoch size to " << sz << endl;
     epoch_sz = sz;
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::set_continuous_train(bool cont) {
-    continuous_train = cont;
-    if (cont) {
-      cout << "Setting training to continuous mode (return samples in their "
-	   << "original order and set epoch size to dataset size)." << endl;
-      set_epoch_size(data.dim(0));
-    } else {
-      cout << "Disabling continuous mode." << endl;
-    }
   }
 
   template <class Tnet, class Tin1, class Tin2>

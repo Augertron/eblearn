@@ -31,7 +31,7 @@ void NetTest::test_lenet5_mnist() {
   mnist_datasource<t_net,ubyte,ubyte>
     train_ds(gl_mnist_dir->c_str(), true, 2000),
     test_ds(gl_mnist_dir->c_str(), false, 1000);
-  train_ds.set_balanced();
+  train_ds.set_balanced(true);
   train_ds.set_shuffle_passes(true);
   train_ds.set_weigh_samples(true);
   train_ds.set_weigh_normalization(false);

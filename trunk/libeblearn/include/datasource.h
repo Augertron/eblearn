@@ -128,12 +128,13 @@ namespace ebl {
     //! i.e. only next_train() is affected, next() is unaffected.
     virtual void seek_begin_train();
 
-    //! Make the next_train() method call sequentially one sample of each class
+    //! If 'bal' is true, make the next_train() method call sequentially one 
+    //! sample of each class
     //! instead of following the dataset's distribution.
     //! This is important to use when the dataset is unbalanced.
     //! This is set to true by default.
     //! This is used only by next_train(), not by next().
-    virtual void set_balanced();
+    virtual void set_balanced(bool bal = true);
 
     //! Activate or deactivate shuffling of list of samples for each class
     //! after reaching the end of the sample list. This has an effect only
@@ -187,11 +188,6 @@ namespace ebl {
     //! by get_lowest_common_size().
     virtual void set_epoch_size(intg sz);
 
-    //! If cont is true, the samples will be returned in their original order,
-    //! regardless of their class. It will also set the epoch size
-    //! to the size of the dataset.
-    virtual void set_continuous_train(bool cont);
-    
     ////////////////////////////////////////////////////////////////
   protected:    
 
@@ -241,7 +237,6 @@ namespace ebl {
     bool                                        discrete_labels;
     double                                      sample_min_proba;
     intg                                        epoch_sz;
-    bool                                        continuous_train;
   };
 
   ////////////////////////////////////////////////////////////////
