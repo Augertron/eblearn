@@ -401,8 +401,9 @@ namespace ebl {
     for (i = 0; i < nresolutions; ++i)
       if (scales[i] > maxscale)
 	maxscale = scales[i];
-    intg max_res = (intg) (MAX(in_mindim.dim(1), in_mindim.dim(2)) * maxscale);
-    if (max_res > MAX(input_dims.dim(0), input_dims.dim(1)))
+    intg max_res = (intg) (std::max(in_mindim.dim(1),
+				    in_mindim.dim(2)) * maxscale);
+    if (max_res > std::max(input_dims.dim(0), input_dims.dim(1)))
       cerr << "warning: maxscale (" << maxscale << ") produces a resolution "
 	   << "bigger than original input (" << input_dims << ")." << endl;
     // compute minimum resolution scale
@@ -467,9 +468,9 @@ namespace ebl {
 	      if (pix_val > max_map_result.get(1)
 		  && pix_val > threshold) {
 		int local_max, i,j, i_min, j_min, i_max, j_max;
-		i_min = MAX(0, (y+nms<=y_max)?
+		i_min = std::max(0, (y+nms<=y_max)?
 			    ((y-nms>0)?y-nms:0):y_max-2*nms+1);
-		j_min = MAX(0, (x+nms<=x_max)?
+		j_min = std::max(0, (x+nms<=x_max)?
 			    ((x-nms>0)?x-nms:0):x_max-2*nms+1);
 		i_max = MIN(raw_map.dim(0),
 			    (y-nms>0)?((y+nms<=y_max)?y+nms:y_max):2*nms+1);
@@ -553,8 +554,10 @@ namespace ebl {
 	double scalehi = original_h / robbox.height; // in to original
 	double scalewi = original_w / robbox.width; // in to original
 	// offset factor in input map
-	double offset_h_factor = (in_h - neth) / MAX(1, (out_h - 1));
-	double offset_w_factor = (in_w - netw) / MAX(1, (out_w - 1));
+	double offset_h_factor = (in_h - neth)
+	  / std::max((double) 1, (out_h - 1));
+	double offset_w_factor = (in_w - netw)
+	  / std::max((double) 1, (out_w - 1));
 	offset_h = 0;
 	{ idx_bloop1(re, *((idx<T>*) r.get()), T) {
 	    offset_w = 0;
@@ -568,14 +571,16 @@ namespace ebl {
 		  // original image
 		  uint oh0 = (uint) (offset_h * offset_h_factor * scalehi);
 		  uint ow0 = (uint) (offset_w * offset_w_factor * scalewi);
-		  bb.h0 = (uint) MAX(0, oh0 - robbox.h0 * scalehi);
-		  bb.w0 = (uint) MAX(0, ow0 - robbox.w0 * scalewi);
-		  bb.height = (uint) (MIN(neth * scalehi + oh0,
-					  original_h + robbox.h0 * scalehi)
-				      - MAX(robbox.h0 * scalehi, oh0));
-		  bb.width = (uint) (MIN(netw * scalewi + ow0,
-					 original_w + robbox.w0 * scalewi)
-				     - MAX(robbox.w0 * scalewi, ow0));
+		  bb.h0 = (uint) std::max(0, (int) (oh0 - robbox.h0 * scalehi));
+		  bb.w0 = (uint) std::max(0, (int) (ow0 - robbox.w0 * scalewi));
+		  bb.height =
+		    (uint) (MIN(neth * scalehi + oh0,
+				original_h + robbox.h0 * scalehi)
+			    - std::max((uint) (robbox.h0 * scalehi), oh0));
+		  bb.width =
+		    (uint) (MIN(netw * scalewi + ow0,
+				original_w + robbox.w0 * scalewi)
+			    - std::max((uint) (robbox.w0 * scalewi), ow0));
 		  // input map
 		  bb.iheight = (uint) in_h; // input h
 		  bb.iwidth = (uint) in_w; // input w

@@ -247,7 +247,7 @@ namespace ebl {
       for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
 	if (i->alive())
 	  nrunning++;
-	maxtime = MAX(i->minutes(), maxtime);
+	maxtime = std::max(i->minutes(), maxtime);
 	if (mintime == 0)
 	  mintime = i->minutes();
 	else

@@ -35,6 +35,7 @@ void NetTest::test_lenet5_mnist() {
   train_ds.set_shuffle_passes(true);
   train_ds.set_weigh_samples(true);
   train_ds.set_weigh_normalization(false);
+  train_ds.set_min_proba(0.3);
   init_drand(0); // fixed randomization
 
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
@@ -45,7 +46,7 @@ void NetTest::test_lenet5_mnist() {
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
   parameter<t_net> theparam(60000); // create trainable parameter
   lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
-		   targets.dim(0), true);
+		   targets.dim(0), true, false, true);
   supervised_euclidean_machine<t_net, ubyte> thenet((module_1_1<t_net>&) l5, targets, dims);
   supervised_trainer<t_net, ubyte, ubyte> thetrainer(thenet, theparam);
 
@@ -105,7 +106,7 @@ void NetTest::test_lenet5_mnist() {
   }
 #endif
   // this goes at about 25 examples per second on a PIIIM 800MHz
-  for (int i = 0; i < 5; ++i) {
+  for (int i = 0; i < 10; ++i) {
     thetrainer.train(train_ds, trainmeter, gdp, 1);
     thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
@@ -117,12 +118,12 @@ void NetTest::test_lenet5_mnist() {
     }
 #endif
   }
-  CPPUNIT_ASSERT_DOUBLES_EQUAL(99.2734, // old: 97.00
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, // old: 97.00
 			       ((trainmeter.total_correct * 100) 
-				/ (double) trainmeter.size), 0.5);
-  CPPUNIT_ASSERT_DOUBLES_EQUAL(96.4630, // old: 95.90
+				/ (double) trainmeter.size), 0.0);
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(95.4262, // 96.4630, // old: 95.90
 			       ((testmeter.total_correct * 100) 
-				/ (double) testmeter.size), 0.01);
+				/ (double) testmeter.size), 0.1);
 }
 
 

@@ -82,7 +82,7 @@ void display(list<string>::iterator &ifname,
 	fname = mats->begin();
       //      if (load)
       mat = load_image<T>(*fname);
-      maxh = MAX(maxh, rowh + mat.dim(0));
+      maxh = std::max(maxh, (uint) (rowh + mat.dim(0)));
       if (signd) {
 	T min, max;
 	T matmin = idx_min(mat);
@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
       }
       // loop and wait for key pressed
       while (1) {
-	usleep(50000);
+	millisleep(50);
 	int key = gui.pop_key_pressed();
 	// next/previous images only if not everuything is already displayed
 	if (mats->size() > nh * nw) {
@@ -258,7 +258,7 @@ int main(int argc, char **argv) {
 	  load_display(i, false, show_info, show_help, nh, nw, mats);
 	} else if (key == Qt::Key_T) {
 	  // decrease number of images shown on height axis
-	  nh = MAX(1, nh - 1);
+	  nh = std::max((uint) 1, nh - 1);
 	  load_display(i, false, show_info, show_help, nh, nw, mats);
 	} else if (key == Qt::Key_X) {
 	  // increase number of images shown on width axis
@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
 	  load_display(i, false, show_info, show_help, nh, nw, mats);
 	} else if (key == Qt::Key_Z) {
 	  // decrease number of images shown on width axis
-	  nw = MAX(1, nw - 1);
+	  nw = std::max((uint) 1, nw - 1);
 	  load_display(i, false, show_info, show_help, nh, nw, mats);
 	}
       }
@@ -280,7 +280,7 @@ int main(int argc, char **argv) {
   } catch(string &err) {
     cerr << err << endl;
   }
-  usleep(500000); // TODO: this lets time for window to open, fix this issue
+  millisleep(500); // TODO: this lets time for window to open, fix this issue
 #endif
   return 0;
 }

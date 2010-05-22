@@ -240,7 +240,6 @@ namespace ebl {
     bool                                        test_set; //!< Is a test set.
     bool                                        discrete_labels;
     double                                      sample_min_proba;
-    double                                      max_distance;
     intg                                        epoch_sz;
     bool                                        continuous_train;
   };

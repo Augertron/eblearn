@@ -138,7 +138,7 @@ namespace ebl {
 	    first_time = false;
 	  } else {
 	    vmin = MIN(vmin, idx_min(outx));
-	    vmax = MAX(vmax, idx_max(outx));	  
+	    vmax = std::max(vmax, idx_max(outx));	  
 	  }
 	}}
     }
@@ -213,7 +213,7 @@ namespace ebl {
     // loop over all new detections and add new ones based on the step
     for (typename vector<idx<Tnet> >::iterator i = new_detections.begin();
 	 i != new_detections.end(); ++i, detcnt++) {
-      if (!(detcnt % MAX(1, step))) { // add when multiple of step
+      if (!(detcnt % std::max((uint) 1, step))) { // add when multiple of step
 	if ((queue.size() >= queuesz) && (queue.size() > 0))
 	  queue.pop_front();
 	queue.push_back(*i);
@@ -228,8 +228,8 @@ namespace ebl {
       draw_matrix(*i, h, w0 + w, dzoom, dzoom, (Tnet)0, (Tnet)255);
       w += i->dim(1) + 2;
       wn++;
-      hmax = MAX(hmax, i->dim(0));
-      wmax = MAX(wmax, (intg) w);
+      hmax = std::max(hmax, i->dim(0));
+      wmax = std::max(wmax, (intg) w);
       if (wn >= qwidth) {
 	wn = 0;
 	w = 0;

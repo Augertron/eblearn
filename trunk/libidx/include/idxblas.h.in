@@ -1,3 +1,7 @@
+#ifdef __WINDOWS__
+#include "cblas.h"
+#else
+
 #cmakedefine APPLE_FRAMEWORK_FOUND
 
 // Apple framework calls are mode into a C++ header
@@ -13,3 +17,5 @@ extern "C" {
 #ifndef APPLE_FRAMEWORK_FOUND
 }
 #endif
+
+#endif /* __WINDOWS__ */

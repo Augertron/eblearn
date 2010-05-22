@@ -169,8 +169,10 @@ namespace ebl {
 	else eblerror("expected 2nd argument");
       } else if (!strcmp(cam_type.c_str(), "opencv"))
 	cam = new camera_opencv<ubyte>(-1, height, width);
+#ifdef __LINUX__
       else if (!strcmp(cam_type.c_str(), "v4l2"))
 	cam = new camera_v4l2<ubyte>(conf.get_cstring("device"), height, width);
+#endif
       else if (!strcmp(cam_type.c_str(), "shmem"))
 	cam = new camera_shmem<ubyte>("shared-mem", height, width);
       else if (!strcmp(cam_type.c_str(), "video")) {

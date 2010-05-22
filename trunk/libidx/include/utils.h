@@ -83,6 +83,9 @@ namespace ebl {
     struct timeval t0, t1;
   };
 
+  //! Sleep for 'millis' milliseconds.
+  void millisleep(long millis);
+  
 } // end namespace ebl
 
 #endif /* UTILS_ */

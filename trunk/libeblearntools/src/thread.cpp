@@ -29,6 +29,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#ifndef __WINDOWS__
+
 #include "thread.h"
 
 namespace ebl {
@@ -59,3 +61,4 @@ namespace ebl {
 
 } // end namespace ebl
 
+#endif /* __WINDOWS__ */

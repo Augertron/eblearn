@@ -264,8 +264,8 @@ namespace ebl {
       scaled_bboxes.clear(); 
       idx_copy(img, im); // initialize im to original image
       // rescale original bboxes
-      double ratio = MAX(im.dim(0) / (double) outdims.dim(0),
-			 im.dim(1) / (double) outdims.dim(1)) / *i;
+      double ratio = std::max(im.dim(0) / (double) outdims.dim(0),
+			      im.dim(1) / (double) outdims.dim(1)) / *i;
       // do not upsample to avoid creating artefacts
       // if (ratio < 1)
       // 	continue ; // do nothing for this scale
@@ -334,7 +334,7 @@ namespace ebl {
 // 		   ibb->height, ibb->width, 255, 0, 0);
 	enable_window_updates();
 	if (sleep_display)
-	  usleep((uint) (sleep_delay * 1000.0));
+	  millisleep((long) sleep_delay);
       }
 #endif
       fname.str("");

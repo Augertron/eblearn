@@ -90,8 +90,8 @@ namespace ebl {
       // rescale original bboxes
       uint outh = (uint) (outdims.dim(0) * *i);
       uint outw = (uint) (outdims.dim(1) * *i);
-      float ratio = MAX(img.dim(0) / (float) outh, 
-			img.dim(1) / (float) outw);
+      float ratio = std::max(img.dim(0) / (float) outh, 
+			     img.dim(1) / (float) outw);
       uint inh = (uint) (img.dim(0) / ratio);
       uint inw = (uint) (img.dim(1) / ratio);
       // do not upsample to avoid creating artefacts
@@ -137,7 +137,7 @@ namespace ebl {
 // 		   ibb->height, ibb->width, 255, 0, 0);
 	enable_window_updates();
 	if (sleep_display)
-	  usleep((uint) (sleep_delay * 1000.0));
+	  millisleep((long) sleep_delay);
       }
 #endif
       save_patches(patches, outdir, max_folders, filename, *i);

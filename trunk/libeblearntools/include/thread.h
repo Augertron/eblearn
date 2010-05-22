@@ -34,8 +34,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 
-// Windows does not know linux/mac mutexes, TODO: implement windows mutexes
 #ifndef __WINDOWS__
 #include <pthread.h>
 
@@ -45,7 +45,6 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // A thread class
-
   class thread {
   public:
     thread();

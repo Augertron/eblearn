@@ -38,9 +38,12 @@
 #include <sstream>
 #include <iomanip>
 #include <time.h>
-#include <fenv.h>
 #include "libeblearn.h"
 #include "libeblearntools.h"
+
+#ifndef __WINDOWS__
+#include <fenv.h>
+#endif
 
 #ifdef __GUI__
 #include "libeblearngui.h"
@@ -72,7 +75,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	cerr << "usage: obj_detect <config file> [directory or file]" << endl;
 	return -1;
       }
-#ifndef __MAC__
+#ifdef __LINUX__
       feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
       ipp_init(1); // limit IPP (if available) to 1 core
@@ -143,9 +146,11 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  else eblerror("expected 2nd argument");
 	} else if (!strcmp(cam_type.c_str(), "opencv"))
 	  cam = new camera_opencv<t_net>(-1, height, width);
+#ifdef __LINUX__
 	else if (!strcmp(cam_type.c_str(), "v4l2"))
 	  cam = new camera_v4l2<t_net>(conf.get_cstring("device"),
 				       height, width);
+#endif
 	else if (!strcmp(cam_type.c_str(), "shmem"))
 	  cam = new camera_shmem<t_net>("shared-mem", height, width);
 	else if (!strcmp(cam_type.c_str(), "video")) {
@@ -257,7 +262,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	// sleep display
 	if (display_sleep > 0) {
 	  cout << "sleeping for " << display_sleep << "ms." << endl;
-	  usleep(display_sleep);
+	  millisleep(display_sleep);
 	}
 	if (conf.exists("save_max") && 
 	    detect.get_total_saved() > conf.get_uint("save_max")) {

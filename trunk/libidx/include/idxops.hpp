@@ -284,7 +284,9 @@ namespace ebl {
       val = *pinp + c;
       // prevent under and overflow
       *pout = MAX(std::numeric_limits<T>::min(), 
-		  MIN(std::numeric_limits<T>::max(), val));
+		       MIN(std::numeric_limits<T>::max(), val));
+      // *pout = std::max((double) std::numeric_limits<T>::min(), 
+      // 		       MIN((double) std::numeric_limits<T>::max(), val));
     }
   }
 
@@ -293,8 +295,10 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { 
       val = *pinp - c;
       // prevent under and overflow
-      *pout = (T) (MAX(std::numeric_limits<T>::min(), 
-		       MIN(std::numeric_limits<T>::max(), val)));
+      *pout = (T) MAX(std::numeric_limits<T>::min(), 
+			    MIN(std::numeric_limits<T>::max(), val));
+      // *pout = (T) (std::max((double) std::numeric_limits<T>::min(), 
+      // 			    MIN((double) std::numeric_limits<T>::max(), val)));
     }
   }
 
@@ -314,8 +318,10 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { 
       val = (T)(*pinp * c);
       // prevent under and overflow
-      *pout = (T) (MAX(std::numeric_limits<T>::min(), 
-		       MIN(std::numeric_limits<T>::max(), val)));
+      *pout = (T) MAX(std::numeric_limits<T>::min(), 
+			    MIN(std::numeric_limits<T>::max(), val));
+      // *pout = (T) (std::max((double) std::numeric_limits<T>::min(), 
+      // 			    MIN((double) std::numeric_limits<T>::max(), val)));
     }
   }
 
@@ -681,7 +687,9 @@ namespace ebl {
     // loop and copy
     idx_aloop2(isrc, src, T1, idst, dst, T2) { 
       *idst = (T2) MAX(std::numeric_limits<T2>::min(), 
-		       MIN(std::numeric_limits<T2>::max(), *isrc));
+			    MIN(std::numeric_limits<T2>::max(), *isrc));
+      // *idst = (T2) std::max((T1) std::numeric_limits<T2>::min(), 
+      // 			    MIN((T1) std::numeric_limits<T2>::max(), *isrc));
     }
   }
 
@@ -699,7 +707,8 @@ namespace ebl {
       /* they are both contiguous: call the stride 1 routine */
       memcpy(dst.idx_ptr(), src.idx_ptr(), N1 * sizeof(T));
     } else {
-      // else, they don't have the same structure: do it "by hand". This is slower
+      // else, they don't have the same structure: do it "by hand".
+      // This is slower
       {idx_aloop2(isrc, src, T, idst, dst, T) { *idst = *isrc; }}
     }
   }
@@ -1109,7 +1118,7 @@ namespace ebl {
 
   template <class T> void idx_max(idx<T> &in1, idx<T> &in2, idx<T> &out) {
     { idx_aloop3(i1, in1, T, i2, in2, T, o, out, T) {
-	*o = MAX(*i1, *i2);
+	*o = std::max(*i1, *i2);
       }}
   }
 

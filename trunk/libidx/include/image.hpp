@@ -121,8 +121,8 @@ namespace ebl {
       oh = h;//max(1.0, imh * ratioh);
     }
     // compute closest integer subsampling ratio
-    rw = MAX(1, (int) (1 / ratiow));
-    rh = MAX(1, (int) (1 / ratioh));
+    rw = std::max(1, (int) (1 / ratiow));
+    rh = std::max(1, (int) (1 / ratioh));
     // compute output region
     rect oregion((uint)(iregion.h0 * ratioh), (uint)(iregion.w0 * ratiow),
 		 (uint)(iregion.height * ratioh),
@@ -370,21 +370,21 @@ namespace ebl {
     // limit centers to half the width/height away from borders
     // to handle incorrect regions
     hcenter = MIN((float)im.dim(dh) - (float)r.height/2,
-		  MAX((float)r.height/2, hcenter));
+		  std::max((float)r.height/2, hcenter));
     wcenter = MIN((float)im.dim(dw) - (float)r.width/2,
-		  MAX((float)r.width/2, wcenter));
+		  std::max((float)r.width/2, wcenter));
     float h0 = hcenter - (float) oheight / 2; // out height offset in input
     float w0 = wcenter - (float) owidth / 2; // out width offset in input
     float h1 = hcenter + (float) oheight / 2;
     float w1 = wcenter + (float) owidth / 2;
-    int gh0 = (int) MAX(0, MIN(im.dim(dh), h0)); // input h offset
-    int gw0 = (int) MAX(0, MIN(im.dim(dw), w0)); // input w offset
-    int gh1 = (int) MAX(0, MIN(im.dim(dh), h1));
-    int gw1 = (int) MAX(0, MIN(im.dim(dw), w1));
+    int gh0 = (int) std::max(0, (int) MIN(im.dim(dh), h0)); // input h offset
+    int gw0 = (int) std::max(0, (int) MIN(im.dim(dw), w0)); // input w offset
+    int gh1 = (int) std::max(0, (int) MIN(im.dim(dh), h1));
+    int gw1 = (int) std::max(0, (int) MIN(im.dim(dw), w1));
     int h = gh1 - gh0; // out height narrow
     int w = gw1 - gw0; // out width narrow
-    int fh0 = (int) MAX(0, gh0 - h0); // out height offset narrow
-    int fw0 = (int) MAX(0, gw0 - w0); // out width offset narrow
+    int fh0 = (int) std::max(0, (int) (gh0 - h0)); // out height offset narrow
+    int fw0 = (int) std::max(0, (int) (gw0 - w0)); // out width offset narrow
 
     idx<T> tmpres = res.narrow(dh, h, fh0);
     tmpres = tmpres.narrow(dw, w, fw0);
@@ -404,7 +404,7 @@ namespace ebl {
   idx<T> image_region_to_square(idx<T> &im, const rect &r) {
     // TODO: check expecting 2D or 3D
     // TODO: check that rectangle is within image
-    uint sz = MAX(r.height, r.width);
+    uint sz = std::max(r.height, r.width);
     idxdim d(im);
     uint dh = 0;
     uint dw = 1;

@@ -38,6 +38,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <time.h>
 
 using namespace std;
 
@@ -125,5 +126,13 @@ namespace ebl {
     return (t1.tv_sec - t0.tv_sec) * 1000 + (t1.tv_usec - t0.tv_usec) / 1000;
 #endif
   }
+
+  void millisleep(long millis) {
+#ifdef __WINDOWS__
+    Sleep(millis);
+#else
+    usleep(millis * 1000);
+#endif
+  } 
   
 } // namespace ebl

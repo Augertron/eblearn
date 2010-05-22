@@ -130,7 +130,7 @@ namespace ebl {
     uint distup;
     uint expansions = count_expansions(outr.height, inr.height, distup);
     rect uprect = expand_rect(outr, expansions);
-    rect downrect = expand_rect(outr, MAX(0, expansions - 1));
+    rect downrect = expand_rect(outr, std::max((uint) 0, expansions - 1));
     if (uprect.height - inr.height < inr.height - downrect.height) {
       inr_exact = uprect;
       return expansions;

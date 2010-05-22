@@ -260,8 +260,8 @@ void image_test::test_gaussian_pyramid() {
 //   draw_matrix(in, oss.str().c_str(), h, w);
 //   w += in.dim(2) + 10;
 //   // draw gaussian resized
-//   uint reductions = MAX(0, (int)
-// 			gp.count_reductions(MAX(r.height, r.width), 96) - 1);
+//   uint reductions = std::max(0, (int)
+// 			gp.count_reductions(std::max(r.height, r.width), 96) - 1);
 //   rect rrr = gp.reduce_rect(r, reductions);
 //   rect rr(0, 0, in.dim(1), in.dim(2));
 //   in = image_gaussian_square_resize(in, rr, 96);

@@ -59,7 +59,7 @@ namespace ebl {
 	w += (uint) (m.dim(1) * zoom + 1);				\
       }									\
     }									\
-    h0 += (uint) (MAX(10, m.dim(0) * zoom + 1));			\
+    h0 += (uint) (std::max((uint) 10, (uint) (m.dim(0) * zoom + 1)));	\
   }									
   
   NN_LAYER_FULL_GUI(display_fprop, x)
@@ -102,7 +102,7 @@ namespace ebl {
 	w += (uint) (mk.dim(1) * zoom + 1);				\
       }									\
     }									\
-    h0 += (uint) (MAX(10, mk.dim(0) * zoom + 1));			\
+    h0 += (uint) (std::max((uint) 10, (uint) (mk.dim(0) * zoom + 1)));	\
   }
 
   NN_LAYER_CONVOLUTION_GUI(display_fprop, x)
