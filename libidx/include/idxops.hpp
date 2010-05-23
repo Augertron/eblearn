@@ -1224,6 +1224,11 @@ namespace ebl {
       *i = exp(*i);
     };
   }
+  template <class T> void idx_log(idx<T> &m) {
+    idx_aloop1(i, m, T) {
+      *i = log(*i);
+    };
+  }
 
   /* TODO: implement generic version of idx_dot
      template <class T> void idx_dot(idx<T> &i1, idx<T> &i2, idx<T> &o1){
