@@ -112,6 +112,30 @@ namespace ebl {
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
   };
 
+  ////////////////////////////////////////////////////////////////
+  // smooth_shrink_module
+  //! A smoothed shrinkage module that parametrizes the steepnes
+  //! and location of the shrinkage operator. This function is 
+  //! useful for learning since there is always gradients flowing 
+  //! through it.
+  template <class T> class smooth_shrink_module: public module_1_1<T> {
+  private:
+    state_idx<T> ebb, ebx, tin;
+    abs_module<T> absmod;
+  public:
+    state_idx<T> beta, bias;
+
+    //! Constructor 
+    smooth_shrink_module(parameter<T> &p, intg nf, T bt, T bs);
+    virtual ~smooth_shrink_module();
+    //! forward
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    //! backward
+    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    //! 2nd deriv backward
+    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+  };
+
 } // namespace ebl {
 
 #include "ebl_transfer.hpp"

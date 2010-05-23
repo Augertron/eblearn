@@ -253,4 +253,172 @@ namespace ebl {
     idx_add(in.ddx, out.ddx, in.ddx);
   }
   
+
+  //////////////////////////////////////////////////////////////////
+  // smooth_shrink_module
+
+  template <class T>
+  smooth_shrink_module<T>::smooth_shrink_module(parameter<T> &p, intg nf, T bt, T bs)
+  {
+    beta = state_idx<double>(p,nf);
+    bias = state_idx<double>(p,nf);
+    idx_fill(beta.x, bt);
+    idx_fill(bias.x, bs);
+    ebb = state_idx<double>(1);
+    ebx = state_idx<double>(1,1,1);
+    tin = state_idx<double>(1,1,1);
+    absmod = abs_module<double>(0.0);
+  }
+  template <class T>
+  smooth_shrink_module<T>::~smooth_shrink_module(){
+  }
+
+  template <class T>
+  void smooth_shrink_module<T>::fprop(state_idx<T>& in, state_idx<T>& out)
+  {
+    if (&in != &out) { // resize only when input and output are different
+      idxdim d(in.x.spec); // use same dimensions as in
+      out.resize(d);
+    }
+    absmod.fprop(in,tin);
+    ebb.resize(bias.x.dim(0));
+    ebx.resize_as(in);
+    
+    idx_mul(beta.x, bias.x, ebb.x);
+    idx_exp(ebb.x);
+
+    idx_bloop5(inx, tin.x, T, outx, out.x, T, ebbx, ebb.x, T, betax, beta.x, T, biasx, bias.x, T) {
+      idx_dotc(inx,betax.get(),outx);
+      idx_exp(outx);
+      idx_addc(outx, ebbx.get()-1, outx);
+      idx_log(outx);
+      idx_dotc(outx, 1/betax.get(), outx);
+      idx_addc(outx, -biasx.get(), outx);
+    }
+    idx_aloop2(x, in.x, T, y, out.x, T) {
+      if(*x < 0.0) {
+	*y = -(*y);
+      }
+    }
+  }
+  
+  template <class T>
+  void smooth_shrink_module<T>::bprop(state_idx<T>& in, state_idx<T>& out)
+  {
+    absmod.fprop(in,tin);
+    tin.clear_dx();
+    beta.clear_dx();
+    bias.clear_dx();
+
+    // bb = exp (beta .* bias)
+    idx_mul(beta.x, bias.x, ebb.x);
+    idx_exp(ebb.x);
+    intg nf = bias.x.dim(0);
+    
+    idx<T> ttx(ebx.x[0].spec);
+    idx<T> tty(ebx.x[0].spec);
+    for (intg i=0; i< nf; i++) {
+      // ebx = exp(beta * x)
+      idx<T> ebxxi = ebx.x[i];
+      idx<T> ebxdxi = ebx.dx[i];
+      idx<T> ebxddxi = ebx.ddx[i];
+      idx<T> tinxi = tin.x[i];
+      idx<T> tindxi = tin.dx[i];
+      idx<T> outdxi = out.dx[i];
+
+      idx_dotc(tinxi,beta.x[i].get(),ebxxi);
+      idx_exp(ebxxi);
+
+      // ebdx = exp(beta*x) + exp(beta*bias) -1
+      idx_addc(ebxxi,ebb.x[i].get()-1,ebxdxi);
+      // ebddx = exp (beta*x)/ (exp(beta*x) + exp(beta*bias)-1)
+      idx_div(ebxxi,ebxdxi,ebxddxi);
+
+      // df/dx
+      idx_mul(ebxddxi,outdxi,tindxi);
+      
+      //cout << tinxi.get(0,0) << tindxi.get(0,0) << endl;
+
+      // ebddx = 1/ebdx
+      idx_inv(ebxdxi,ebxddxi);
+
+      // df/dbias
+      idx_dotc(ebxddxi,ebb.x[i].get(),ttx);
+      idx_addc(ttx,-1.0,ttx);
+      bias.dx[i].set(idx_dot(outdxi,ttx));
+      
+      // df/dbeta
+      idx_mul(tinxi,ebxxi,ttx);
+      idx_addc(ttx, bias.x[i].get() * ebb.x[i].get(),ttx);
+      idx_mul(ttx,ebxddxi,ttx);
+      idx_dotc(ttx, 1/beta.x[i].get(),ttx);
+      idx_log(ebxdxi);
+      idx_dotc(ebxdxi,-1/(beta.x[i].get()*beta.x[i].get()),tty);
+      idx_add(ttx,tty,ttx);
+      beta.dx[i].set(idx_dot(outdxi,ttx));
+    }
+    idx_add(in.dx,tin.dx,in.dx);
+  }
+  
+  template <class T>
+  void smooth_shrink_module<T>::bbprop(state_idx<T>& in, state_idx<T>& out)
+  {
+    absmod.fprop(in,tin);
+    tin.clear_ddx();
+    beta.clear_ddx();
+    bias.clear_ddx();
+
+    // bb = exp (beta .* bias)
+    idx_mul(beta.x, bias.x, ebb.x);
+    idx_exp(ebb.x);
+    intg nf = bias.x.dim(0);
+    
+    idx<T> ttx(ebx.x[0].spec);
+    idx<T> tty(ebx.x[0].spec);
+    for (intg i=0; i< nf; i++) {
+      // ebx = exp(beta * x)
+      idx<T> ebxxi = ebx.x[i];
+      idx<T> ebxdxi = ebx.dx[i];
+      idx<T> ebxddxi = ebx.ddx[i];
+      idx<T> tinxi = tin.x[i];
+      idx<T> tindxi = tin.ddx[i];
+      idx<T> outdxi = out.ddx[i];
+
+      idx_dotc(tinxi,beta.x[i].get(),ebxxi);
+      idx_exp(ebxxi);
+
+      // ebdx = exp(beta*x) + exp(beta*bias) -1
+      idx_addc(ebxxi,ebb.x[i].get()-1,ebxdxi);
+      // ebddx = exp (beta*x)/ (exp(beta*x) + exp(beta*bias)-1)
+      idx_div(ebxxi,ebxdxi,ebxddxi);
+
+      // df/dx
+      idx_mul(ebxddxi,ebxddxi,ebxddxi);
+      idx_mul(ebxddxi,outdxi,tindxi);
+      
+      //cout << tinxi.get(0,0) << tindxi.get(0,0) << endl;
+
+      // ebddx = 1/ebdx
+      idx_inv(ebxdxi,ebxddxi);
+
+      // df/dbias
+      idx_dotc(ebxddxi,ebb.x[i].get(),ttx);
+      idx_addc(ttx,-1.0,ttx);
+      idx_mul(ttx,ttx,ttx);
+      bias.ddx[i].set(idx_dot(outdxi,ttx));
+      
+      // df/dbeta
+      idx_mul(tinxi,ebxxi,ttx);
+      idx_addc(ttx, bias.x[i].get() * ebb.x[i].get(),ttx);
+      idx_mul(ttx,ebxddxi,ttx);
+      idx_dotc(ttx, 1/beta.x[i].get(),ttx);
+      idx_log(ebxdxi);
+      idx_dotc(ebxdxi,-1/(beta.x[i].get()*beta.x[i].get()),tty);
+      idx_add(ttx,tty,ttx);
+      idx_mul(ttx,ttx,ttx);
+      beta.ddx[i].set(idx_dot(outdxi,ttx));
+    }
+    idx_add(in.ddx,tin.ddx,in.ddx);
+  }
+  
 } // end namespace ebl
