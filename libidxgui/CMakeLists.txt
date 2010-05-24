@@ -47,5 +47,5 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   target_link_libraries (idxgui ${QT_QTGUI_LIBRARY})
   
 ELSE (QT_FOUND) #---------------------------------------------------------------
-  MESSAGE(WARNING "____ libidxgui won't be compiled because of missing QT libraries.")
+  MESSAGE("__ WARNING: libidxgui won't be compiled because of missing QT libraries.")
 ENDIF (QT_FOUND) #--------------------------------------------------------------
