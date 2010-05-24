@@ -155,7 +155,7 @@ ELSE ($ENV{NOIPP})
     ENDIF (64BIT)
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IPP__")  
   ELSE (IPP_FOUND)
-    MESSAGE(WARNING "____ Intel IPP not found, install to speed up.")
+    MESSAGE("__ WARNING: Intel IPP not found, install to speed up.")
   ENDIF (IPP_FOUND)
 ENDIF ($ENV{NOIPP})
 
