@@ -30,7 +30,7 @@
  ***************************************************************************/
 
 #include "moc_window.cxx"
-#include <Qt/qstyle.h>
+#include <qstyle.h>
 #include <math.h>
 
 using namespace std;

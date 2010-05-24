@@ -32,10 +32,10 @@
 #ifndef WINDOW_H_
 #define WINDOW_H_
 
-#include <QtGui/QPixmap>
-#include <QtGui/QWidget>
-#include <QtGui/QtGui>
-#include <QtGui/QResizeEvent>
+#include <QPixmap>
+#include <QWidget>
+#include <QtGui>
+#include <QResizeEvent>
 #include <math.h>
 #include <iostream>
 
