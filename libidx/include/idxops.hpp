@@ -283,10 +283,8 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { 
       val = *pinp + c;
       // prevent under and overflow
-      *pout = MAX(std::numeric_limits<T>::min(), 
-		       MIN(std::numeric_limits<T>::max(), val));
-      // *pout = std::max((double) std::numeric_limits<T>::min(), 
-      // 		       MIN((double) std::numeric_limits<T>::max(), val));
+      *pout = std::max((double) std::numeric_limits<T>::min(), 
+      		       MIN((double) std::numeric_limits<T>::max(), val));
     }
   }
 
@@ -295,10 +293,8 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { 
       val = *pinp - c;
       // prevent under and overflow
-      *pout = (T) MAX(std::numeric_limits<T>::min(), 
-			    MIN(std::numeric_limits<T>::max(), val));
-      // *pout = (T) (std::max((double) std::numeric_limits<T>::min(), 
-      // 			    MIN((double) std::numeric_limits<T>::max(), val)));
+      *pout = (T) (std::max((double) std::numeric_limits<T>::min(), 
+      			    MIN((double) std::numeric_limits<T>::max(), val)));
     }
   }
 
@@ -318,10 +314,8 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { 
       val = (T)(*pinp * c);
       // prevent under and overflow
-      *pout = (T) MAX(std::numeric_limits<T>::min(), 
-			    MIN(std::numeric_limits<T>::max(), val));
-      // *pout = (T) (std::max((double) std::numeric_limits<T>::min(), 
-      // 			    MIN((double) std::numeric_limits<T>::max(), val)));
+      *pout = (T) (std::max((double) std::numeric_limits<T>::min(), 
+      			    MIN((double) std::numeric_limits<T>::max(), val)));
     }
   }
 
@@ -686,10 +680,8 @@ namespace ebl {
   template<class T1, class T2> void idx_copy_clip(idx<T1> &src, idx<T2> &dst){
     // loop and copy
     idx_aloop2(isrc, src, T1, idst, dst, T2) { 
-      *idst = (T2) MAX(std::numeric_limits<T2>::min(), 
-			    MIN(std::numeric_limits<T2>::max(), *isrc));
-      // *idst = (T2) std::max((T1) std::numeric_limits<T2>::min(), 
-      // 			    MIN((T1) std::numeric_limits<T2>::max(), *isrc));
+      *idst = (T2) std::max((T1) std::numeric_limits<T2>::min(), 
+      			    MIN((T1) std::numeric_limits<T2>::max(), *isrc));
     }
   }
 

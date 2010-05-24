@@ -343,7 +343,7 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_answer_distance(double dist) {
     if (weigh_samples) { // if false, keep default probability 1 for all samples
-       probasIter_train->set(MAX(sample_min_proba, MIN(1.0, fabs(dist))));
+      probasIter_train->set(std::max(sample_min_proba, MIN(1.0, fabs(dist))));
     }
   }
 

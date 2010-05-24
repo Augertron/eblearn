@@ -36,7 +36,6 @@ void NetTest::test_lenet5_mnist() {
   train_ds.set_weigh_samples(true);
   train_ds.set_weigh_normalization(false);
   train_ds.set_min_proba(0.01);
-  init_drand(0); // fixed randomization
 
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =
@@ -75,6 +74,7 @@ void NetTest::test_lenet5_mnist() {
 	       /* double a_t */ 0.0,
 	       /* double g_t*/ 	0.0);
   infer_param infp;
+  init_drand(0); // fixed randomization
 
   // estimate second derivative on 100 iterations, using mu=0.02
   // and set individual espilons
