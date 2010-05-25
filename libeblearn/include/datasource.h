@@ -228,6 +228,8 @@ namespace ebl {
     bool					balance;
     vector<vector<intg> >                       label_indices;
     vector<uint>                                indices_itr;
+    vector<intg>                                ub_indices; //! unbalanced ids.
+    vector<intg>::iterator                      ub_itr; //! unbalanced itr.
     uint                                        iitr;
     // switches to activate or deactivate features
     bool                                        shuffle_passes;

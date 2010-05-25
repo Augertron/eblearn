@@ -33,7 +33,7 @@
 #ifndef CAMERA_SHMEM_HPP_
 #define CAMERA_SHMEM_HPP_
 
-#ifdef __WINDOWS__
+#ifndef __WINDOWS__
 
 #include <sys/types.h>
 #include <sys/ipc.h>

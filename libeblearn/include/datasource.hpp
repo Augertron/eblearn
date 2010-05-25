@@ -242,27 +242,25 @@ namespace ebl {
     // return samples in original order, regardless of their class
     if (!balance) {
       // increment iterators
-      ++dataIter_train;
-      ++labelsIter_train;
-      ++probasIter_train;
+      ub_itr++;
       // reset if reached end
-      if(!dataIter_train.notdone()) {
+      if(ub_itr == ub_indices.end()) {
 	// shuffling list for this class
-	if (shuffle_passes) {
-	  idx_shuffle_together(data, labels, probas, 0);
-	}
-	// reset iterators
-	dataIter_train = data.dim_begin(0);
-	labelsIter_train = labels.dim_begin(0);
-	probasIter_train = probas.dim_begin(0);
+	if (shuffle_passes)
+	  random_shuffle(ub_indices.begin(), ub_indices.end());
+	// reset iterator
+	ub_itr = ub_indices.begin();
+	// normalize probabilities for all classes, mapping [0..max] to [0..1]
 	if (weigh_samples) {
-	  // normalize probabilities for all classes, mapping [0..max] to [0..1]
 	  double maxproba = idx_max(probas);
 	  if (maxproba == 0)
 	    maxproba = 1.0;
 	  idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
 	}
       }
+      dataIter_train = dataIter_train.at(*ub_itr);
+      labelsIter_train = labelsIter_train.at(*ub_itr);
+      probasIter_train = probasIter_train.at(*ub_itr);
       // recursively loop until we find a sample that is picked for this class
       if (!pick_current())
 	return next_train(callcnt);
@@ -375,10 +373,18 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_balanced(bool bal) {
     balance = bal;
-    if (!balance) {
+    if (!balance) { // unbalanced
       cout << "Setting training as unbalanced (not taking class "
 	   << "distributions into account)." << endl;
-    } else {
+      // initialize a random list of indexes for each sample, so that
+      // we can randomize the access without moving data around.
+      ub_indices.clear();
+      for (intg i = 0; i < data.dim(0); ++i)
+	ub_indices.push_back(i);
+      random_shuffle(ub_indices.begin(), ub_indices.end());
+      // reset iterator to 0
+      ub_itr = ub_indices.begin();
+    } else { // balanced
       cout << "Setting training as balanced (taking class "
 	   << "distributions into account)." << endl;
       if (discrete_labels) {
