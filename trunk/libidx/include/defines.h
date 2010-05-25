@@ -33,8 +33,11 @@
 #ifndef LIBIDX_DEFINES_H_
 #define LIBIDX_DEFINES_H_
 
-#include <stdio.h>
+#ifndef __WINDOWS__
 #include <execinfo.h>
+#endif
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <limits.h>
@@ -65,6 +68,14 @@
 #define DEBUG(s,d)
 #endif
 
+#ifdef __WINDOWS__
+#define eblerror(s) {						\
+    std::cerr << "\033[1;31mException:\033[0m " << s;		\
+    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
+    std::cerr << ":" << __LINE__ << std::endl;			\
+    abort();							\
+  }
+#else
 #define eblerror(s) {						\
     std::cerr << "\033[1;31mException:\033[0m " << s;		\
     std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
@@ -76,6 +87,7 @@
     backtrace_symbols_fd(array, size, 2);			\
     abort();							\
   }
+#endif /* __WINDOWS__ */
 
 #define ylerror(s) eblerror(s)
 
