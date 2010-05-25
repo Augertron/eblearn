@@ -44,7 +44,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! a simple fully-connected neural net layer: linear + tanh non-linearity.
-  template <class T> class nn_layer_full: public module_1_1<T> {
+  template <class T> class full_layer: public module_1_1<T> {
   public: 
     //! Constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
@@ -52,12 +52,10 @@ namespace ebl {
     //! \param indim0 The number of inputs
     //! \param noutputs The number of outputs.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    nn_layer_full(parameter<T> &p, intg indim0, intg noutputs,
+    full_layer(parameter<T> *p, intg indim0, intg noutputs,
 		  bool tanh = true);
-    //! Constructor without parameter, used only for deep copies.
-    nn_layer_full(intg indim0, intg noutputs, bool tanh = true);
     //! Destructor.
-    virtual ~nn_layer_full();
+    virtual ~full_layer();
     //! fprop from in to out
     void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
@@ -73,11 +71,10 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual nn_layer_full<T>* copy();
+    virtual full_layer<T>* copy();
 
     // members ////////////////////////////////////////////////////////
   private:
-    parameter<T>                 param;   //!< just used for deep copies
     bool                         btanh;   //!< use tanh or stdsigmoid
   public:
     linear_module_replicable<T>	 linear;  //!< linear module for weight matrix
@@ -88,7 +85,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! a convolution neural net layer: convolution + tanh non-linearity.
-  template <class T> class nn_layer_convolution: public module_1_1<T> {
+  template <class T> class convolution_layer: public module_1_1<T> {
   public:
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
@@ -102,14 +99,10 @@ namespace ebl {
     //!        the width axis.
     //! \param table is the convolution connection table.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    nn_layer_convolution(parameter<T> &p, intg kerneli, intg kernelj, 
+    convolution_layer(parameter<T> *p, intg kerneli, intg kernelj, 
 			 intg stridei, intg stridej, idx<intg> &tbl,
 			 bool tanh = true);
-    //! This constructor should only be used by deep copy method.
-    nn_layer_convolution(intg kerneli, intg kernelj, 
-			 intg stridei, intg stridej, idx<intg> &tbl,
-			 bool tanh = true);
-    virtual ~nn_layer_convolution();
+    virtual ~convolution_layer();
     //! fprop from in to out
     void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
@@ -125,14 +118,13 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual nn_layer_convolution<T>* copy();
+    virtual convolution_layer<T>* copy();
 
     // members ////////////////////////////////////////////////////////
   private:
-    parameter<T>                         param;	//!< just used for deep copies
     bool                                 btanh;	//!< use tanh or stdsigmoid
   public:
-    convolution_module_2D_replicable<T>	 convol;//!< convolution module
+    convolution_module_replicable<T>	 convol;//!< convolution module
     addc_module<T>			 adder;	//!< bias vector
     module_1_1<T>			*sigmoid;//!< the non-linear function
     state_idx<T>			*sum;	//!< convolution result
@@ -141,7 +133,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! a convolution layer with absolute rectification and constrast
   //! normalization
-  template <class T> class layer_convabsnorm: public module_1_1<T> {
+  template <class T> class convabsnorm_layer: public module_1_1<T> {
   public:
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
@@ -155,15 +147,11 @@ namespace ebl {
     //!        the width axis.
     //! \param table is the convolution connection table.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    layer_convabsnorm(parameter<T> &p, intg kerneli, intg kernelj, 
-		      intg stridei, intg stridej, idx<intg> &tbl,
-		      bool mirror = false, bool tanh = true);
-    //! This constructor should only be used by deep copy method.
-    layer_convabsnorm(intg kerneli, intg kernelj, 
+    convabsnorm_layer(parameter<T> *p, intg kerneli, intg kernelj, 
 		      intg stridei, intg stridej, idx<intg> &tbl,
 		      bool mirror = false, bool tanh = true);
     //! Destructor.
-    virtual ~layer_convabsnorm();
+    virtual ~convabsnorm_layer();
     //! fprop from in to out
     void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
@@ -179,14 +167,13 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual layer_convabsnorm<T>* copy();
+    virtual convabsnorm_layer<T>* copy();
 
     // members ////////////////////////////////////////////////////////
   private:
-    parameter<T>                 param;	//!< just used for deep copies
     bool				 btanh;	//!< use tanh or stdsigmoid
   public:
-    nn_layer_convolution<T>	 lconv;	//!< convolution layer
+    convolution_layer<T>	 lconv;	//!< convolution layer
     abs_module<T>		 abs;	//!< absolute rectification
     weighted_std_module<T>	 norm;	//!< constrast normalization
     state_idx<T>		*tmp;	//!< temporary results
@@ -195,21 +182,17 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! a subsampling neural net layer: subsampling + tanh non-linearity.
-  template <class T> class nn_layer_subsampling: public module_1_1<T> {
+  template <class T> class subsampling_layer: public module_1_1<T> {
   public:
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    nn_layer_subsampling(parameter<T> &p, intg stridei, intg stridej,
-			 intg subi, intg subj, 
-			 intg thick, bool tanh = true);
-    //! This constructor should only be used by deep copy method.
-    nn_layer_subsampling(intg stridei, intg stridej,
+    subsampling_layer(parameter<T> *p, intg stridei, intg stridej,
 			 intg subi, intg subj, 
 			 intg thick, bool tanh = true);
     //! Destructor.
-    virtual ~nn_layer_subsampling();
+    virtual ~subsampling_layer();
     //! fprop from in to out
     void fprop(state_idx<T> &in, state_idx<T> &out);
     //! bprop
@@ -225,14 +208,13 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual nn_layer_subsampling<T>* copy();
+    virtual subsampling_layer<T>* copy();
 
     // members ////////////////////////////////////////////////////////
   private:
-    parameter<T>                         param;	//!< just used for deep copies
     bool				 btanh;	//!< use tanh or stdsigmoid
   public:
-    subsampling_module_2D_replicable<T>	 subsampler;	//!< subsampling module
+    subsampling_module_replicable<T>	 subsampler;	//!< subsampling module
     addc_module<T>			 adder;	//!< bias vector
     module_1_1<T>			*sigmoid;//!< the non-linear function
     state_idx<T>			*sum;	//!< subsampling result

@@ -53,6 +53,8 @@ namespace ebl {
     virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! bbprop
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    //! Returns a deep copy of this module.
+    virtual stdsigmoid_module<T>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
@@ -70,6 +72,8 @@ namespace ebl {
     void bbprop(state_idx<T> &in, state_idx<T> &out);
     void forget(forget_param_linear &fp);
     void normalize();
+    //! Returns a deep copy of this module.
+    virtual tanh_module<T>* copy();
   };
 
   ////////////////////////////////////////////////////////////////

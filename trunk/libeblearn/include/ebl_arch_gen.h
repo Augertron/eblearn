@@ -170,10 +170,13 @@ namespace ebl {
     vector<module_1_1_gen<T, T>*>	*modules;
     vector<T*>				*hiddens;
 
+    //! If oc is true, this class owns all its content and is responsible for
+    //! deleting modules and buffers.
     layers_n_gen(bool oc = true);
     virtual ~layers_n_gen();
-    void add_module(module_1_1_gen <T, T>* module, T* hidden);
-    void add_last_module(module_1_1_gen <T, T>* module);
+    //! Add a module to the stack of modules.
+    virtual void add_module(module_1_1_gen <T, T>* module, T* hidden);
+    virtual void add_last_module(module_1_1_gen <T, T>* module);
     virtual void fprop(T &in, T &out);
     virtual void bprop(T &in, T &out);
     virtual void bbprop(T &in, T &out);

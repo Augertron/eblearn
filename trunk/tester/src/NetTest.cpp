@@ -45,7 +45,7 @@ void NetTest::test_lenet5_mnist() {
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
   parameter<t_net> theparam(60000); // create trainable parameter
   lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
-		   targets.dim(0), true, false, true);
+		   targets.dim(0), true, false, true, false);
   supervised_euclidean_machine<t_net, ubyte> thenet((module_1_1<t_net>&) l5, targets, dims);
   supervised_trainer<t_net, ubyte, ubyte> thetrainer(thenet, theparam);
 
@@ -123,7 +123,7 @@ void NetTest::test_lenet5_mnist() {
 				/ (double) trainmeter.size), 0.0);
   CPPUNIT_ASSERT_DOUBLES_EQUAL(95.4262, // 96.4630, // old: 95.90
 			       ((testmeter.total_correct * 100) 
-				/ (double) testmeter.size), 0.5);
+				/ (double) testmeter.size), 1.5);
 }
 
 

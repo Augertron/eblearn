@@ -79,30 +79,32 @@ namespace ebl {
       layers_2_gui::							\
 	name1(*this, dynamic_cast< layers_2_gen<state_idx<T>,state_idx<T>,state_idx<T> >& >(m), \
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    } else if (dynamic_cast< nn_layer_full<T>* >(&m)) {			\
-      /* nn_layer_full */						\
-      nn_layer_full_gui::name1(dynamic_cast< nn_layer_full<T>& >(m), in, \
+    } else if (dynamic_cast< full_layer<T>* >(&m)) {			\
+      /* full_layer */						\
+      full_layer_gui::name1(dynamic_cast< full_layer<T>& >(m), in, \
 			       out, h0, w0, zoom, vmin, vmax,show_out);	\
-    } else if (dynamic_cast< nn_layer_convolution<T>* >(&m)) {		\
-      /* nn_layer_convolution */					\
-      nn_layer_convolution_gui::					\
-	name1(dynamic_cast< nn_layer_convolution<T>& >(m),		\
+    } else if (dynamic_cast< convolution_layer<T>* >(&m)) {		\
+      /* convolution_layer */					\
+      convolution_layer_gui::					\
+	name1(dynamic_cast< convolution_layer<T>& >(m),		\
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    } else if (dynamic_cast< layer_convabsnorm<T>* >(&m)) {		\
-      /* layer_convabsnorm */						\
-      layer_convabsnorm_gui::						\
-	name1(dynamic_cast< layer_convabsnorm<T>& >(m),			\
+    } else if (dynamic_cast< convabsnorm_layer<T>* >(&m)) {		\
+      /* convabsnorm_layer */						\
+      convabsnorm_layer_gui::						\
+	name1(dynamic_cast< convabsnorm_layer<T>& >(m),			\
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    } else if (dynamic_cast< nn_layer_subsampling<T>* >(&m)) {		\
-      /* nn_layer_subsampling */					\
-      nn_layer_subsampling_gui::					\
-	name1(dynamic_cast< nn_layer_subsampling<T>& >(m),		\
+    } else if (dynamic_cast< subsampling_layer<T>* >(&m)) {		\
+      /* subsampling_layer */					\
+      subsampling_layer_gui::					\
+	name1(dynamic_cast< subsampling_layer<T>& >(m),		\
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    } else {								\
-      cerr << "Warning: unknown display function for module_1_1 object"; \
-      cerr << "(" << typeid(m).name() << ")." << endl;			\
     }									\
   }
+  //   else {								\
+  //     cerr << "Warning: unknown display function for module_1_1 object"; \
+  //     cerr << "(" << typeid(m).name() << ")." << endl;			\
+  //   }									\
+  // }
   
   DISPLAY_1_1(display_fprop, display_fprop2)
   DISPLAY2_1_1(display_fprop, display_fprop2)
@@ -185,6 +187,16 @@ namespace ebl {
     int niter = ln.modules->size()-1;					\
     for(int i=0; i<niter; i++){						\
       ho = (*ln.hiddens)[i];						\
+      /* allocate hidden buffer if necessary */				\
+      if (ho == NULL) {							\
+	/* create idxdim of same order but sizes 1 */			\
+	idxdim d = hi->x.get_idxdim();					\
+	for (int k = 0; k < d.order(); ++k)				\
+	  d.setdim(k, 1);						\
+	/* assign buffer */						\
+	(*ln.hiddens)[i] = new state_idx<T>(d);				\
+	ho = (*ln.hiddens)[i];						\
+      }									\
       g.name2(*(*ln.modules)[i], *hi, *ho,				\
 	      h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
       hi = ho;								\

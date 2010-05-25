@@ -38,11 +38,11 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // nn_layer_full
+  // full_layer
 
-#define NN_LAYER_FULL_GUI(name, T)					\
+#define FULL_LAYER_GUI(name, T)					\
   template <class T>							\
-  void nn_layer_full_gui::name(nn_layer_full<T> &nn,			\
+  void full_layer_gui::name(full_layer<T> &nn,			\
 			       state_idx<T> &in, state_idx<T> &out,	\
 			       unsigned int &h0, unsigned int &w0,	\
 			       double zoom, T vmin, T vmax,		\
@@ -62,16 +62,16 @@ namespace ebl {
     h0 += (uint) (std::max((uint) 10, (uint) (m.dim(0) * zoom + 1)));	\
   }									
   
-  NN_LAYER_FULL_GUI(display_fprop, x)
-  NN_LAYER_FULL_GUI(display_bprop, dx)
-  NN_LAYER_FULL_GUI(display_bbprop, ddx)
+  FULL_LAYER_GUI(display_fprop, x)
+  FULL_LAYER_GUI(display_bprop, dx)
+  FULL_LAYER_GUI(display_bbprop, ddx)
   
   ////////////////////////////////////////////////////////////////
-  // nn_layer_convolution
+  // convolution_layer
 
-#define NN_LAYER_CONVOLUTION_GUI(name, T)				\
+#define CONVOLUTION_LAYER_GUI(name, T)				\
   template <class T>							\
-  void nn_layer_convolution_gui::name(nn_layer_convolution<T> &nn,	\
+  void convolution_layer_gui::name(convolution_layer<T> &nn,	\
 				      state_idx<T> &in, state_idx<T> &out, \
 				      unsigned int &h0,			\
 				      unsigned int &w0,			\
@@ -105,22 +105,22 @@ namespace ebl {
     h0 += (uint) (std::max((uint) 10, (uint) (mk.dim(0) * zoom + 1)));	\
   }
 
-  NN_LAYER_CONVOLUTION_GUI(display_fprop, x)
-  NN_LAYER_CONVOLUTION_GUI(display_bprop, dx)
-  NN_LAYER_CONVOLUTION_GUI(display_bbprop, ddx)
+  CONVOLUTION_LAYER_GUI(display_fprop, x)
+  CONVOLUTION_LAYER_GUI(display_bprop, dx)
+  CONVOLUTION_LAYER_GUI(display_bbprop, ddx)
   
   ////////////////////////////////////////////////////////////////
-  // layer_convabsnorm
+  // convabsnorm_layer
   
-#define LAYER_CONVABSNORM_GUI(name, T)					\
+#define CONVABSNORM_LAYER_GUI(name, T)					\
   template <class T>							\
-  void layer_convabsnorm_gui::name(layer_convabsnorm<T> &layer,		\
+  void convabsnorm_layer_gui::name(convabsnorm_layer<T> &layer,		\
 				   state_idx<T> &in, state_idx<T> &out,	\
 				   unsigned int &h0,			\
 				   unsigned int &w0,			\
 				   double zoom, T vmin, T vmax,		\
 				   bool show_out) {			\
-    nn_layer_convolution_gui::name(layer.lconv, in, out, h0, w0,	\
+    convolution_layer_gui::name(layer.lconv, in, out, h0, w0,	\
 				   zoom, vmin, vmax, show_out);		\
     unsigned int h = h0, w = w0;					\
     /* display text */							\
@@ -154,16 +154,16 @@ namespace ebl {
 				  zoom, vmin, vmax, show_out);		\
   }
 
-  LAYER_CONVABSNORM_GUI(display_fprop, x)
-  LAYER_CONVABSNORM_GUI(display_bprop, dx)
-  LAYER_CONVABSNORM_GUI(display_bbprop, ddx)
+  CONVABSNORM_LAYER_GUI(display_fprop, x)
+  CONVABSNORM_LAYER_GUI(display_bprop, dx)
+  CONVABSNORM_LAYER_GUI(display_bbprop, ddx)
   
   ////////////////////////////////////////////////////////////////
-  // nn_layer_subsampling
+  // subsampling_layer
 
-#define NN_LAYER_SUBSAMPLING_GUI(name, T)				\
+#define SUBSAMPLING_LAYER_GUI(name, T)					\
   template <class T>							\
-  void nn_layer_subsampling_gui::name(nn_layer_subsampling<T> &nn,	\
+  void subsampling_layer_gui::name(subsampling_layer<T> &nn,		\
 				      state_idx<T> &in, state_idx<T> &out, \
 				      unsigned int &h0,			\
 				      unsigned int &w0,			\
@@ -189,9 +189,9 @@ namespace ebl {
     h0 += 10;								\
   }
   
-  NN_LAYER_SUBSAMPLING_GUI(display_fprop, x)
-  NN_LAYER_SUBSAMPLING_GUI(display_bprop, dx)
-  NN_LAYER_SUBSAMPLING_GUI(display_bbprop, ddx)
+  SUBSAMPLING_LAYER_GUI(display_fprop, x)
+  SUBSAMPLING_LAYER_GUI(display_bprop, dx)
+  SUBSAMPLING_LAYER_GUI(display_bbprop, ddx)
 
 }
   
