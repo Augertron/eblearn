@@ -268,14 +268,14 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // N layer module
 
-  template<class T> layers_n_gen<T>::layers_n_gen(bool oc) {
+  template<class T> layers_gen<T>::layers_gen(bool oc) {
     modules = new std::vector< module_1_1_gen <T,T>* >();
     hiddens = new std::vector< T* >();
     this->own_contents = oc;
   }
 
   // Clean vectors. Module doesn't have ownership of sub-modules
-  template<class T> layers_n_gen<T>::~layers_n_gen() {
+  template<class T> layers_gen<T>::~layers_gen() {
     if (this->own_contents){
       for(unsigned int i=0;i<modules->size(); i++){
 	delete (*modules)[i];
@@ -289,9 +289,9 @@ namespace ebl {
   }
 
   template<class T>
-  void layers_n_gen<T>::add_module(module_1_1_gen <T, T>* module, T* hidden) {
+  void layers_gen<T>::add_module(module_1_1_gen <T, T>* module, T* hidden) {
     if (modules->size() > hiddens->size())
-      eblerror("Inconsistency in layers_n_gen, probably you have passed null \
+      eblerror("Inconsistency in layers_gen, probably you have passed null \
 hidden layer before");
 
     modules->push_back(module);
@@ -299,19 +299,19 @@ hidden layer before");
       hiddens->push_back(hidden);
 
     if (modules->size() - hiddens->size() > 1)
-      eblerror("Inconsistency in layers_n_gen, probably you did not allocate \
-enough hidden states in layers_n_gen");
+      eblerror("Inconsistency in layers_gen, probably you did not allocate \
+enough hidden states in layers_gen");
   }
 
   template<class T>
-  void layers_n_gen<T>::add_last_module(module_1_1_gen <T, T>* module) {
+  void layers_gen<T>::add_last_module(module_1_1_gen <T, T>* module) {
     add_module(module, NULL);
   }
 
   template<class T>
-  void layers_n_gen<T>::fprop(T& in, T& out){
+  void layers_gen<T>::fprop(T& in, T& out){
     if (modules->empty())
-      eblerror("trying to fprop through empty layers_n_gen");
+      eblerror("trying to fprop through empty layers_gen");
 
     T* hi = &in;
     T* ho = &in;
@@ -327,9 +327,9 @@ enough hidden states in layers_n_gen");
   }
 
   template<class T>
-  void layers_n_gen<T>::bprop(T& in, T& out){
+  void layers_gen<T>::bprop(T& in, T& out){
     if (modules->empty())
-      eblerror("trying to bprop through empty layers_n_gen");
+      eblerror("trying to bprop through empty layers_gen");
 
     // clear hidden states
     for (unsigned int i=0; i<hiddens->size(); i++){
@@ -350,9 +350,9 @@ enough hidden states in layers_n_gen");
   }
 
   template<class T>
-  void layers_n_gen<T>::bbprop(T& in, T& out){
+  void layers_gen<T>::bbprop(T& in, T& out){
     if (modules->empty())
-      eblerror("trying to bbprop through empty layers_n_gen");
+      eblerror("trying to bbprop through empty layers_gen");
 
     // clear hidden states
     for (unsigned int i=0; i<hiddens->size(); i++){
@@ -374,9 +374,9 @@ enough hidden states in layers_n_gen");
   }
 
   template<class T>
-  void layers_n_gen<T>::forget(forget_param_linear& fp){
+  void layers_gen<T>::forget(forget_param_linear& fp){
     if (modules->empty())
-      eblerror("trying to forget through empty layers_n_gen");
+      eblerror("trying to forget through empty layers_gen");
 
     for(unsigned int i=0; i<modules->size(); i++){
       module_1_1_gen<T, T> *tt = (*modules)[i];
@@ -385,9 +385,9 @@ enough hidden states in layers_n_gen");
   }
 
   template<class T>
-  void layers_n_gen<T>::normalize(){
+  void layers_gen<T>::normalize(){
     if (modules->empty())
-      eblerror("trying to normalize through empty layers_n_gen");
+      eblerror("trying to normalize through empty layers_gen");
 
     for(unsigned int i=0; i<modules->size(); i++){
       (*modules)[i]->normalize();
@@ -398,7 +398,7 @@ enough hidden states in layers_n_gen");
   //! the module. It also returns the output size corresponding to the new
   //! input...
   template<class T>
-  idxdim layers_n_gen<T>::fprop_size(idxdim &isize) {
+  idxdim layers_gen<T>::fprop_size(idxdim &isize) {
     idxdim os(isize);
     //! Loop through all the layers of the module, and update output
     //! size accordingly.
@@ -414,7 +414,7 @@ enough hidden states in layers_n_gen");
   //! This method computes the input size of the module for a given output
   //! size.
   template<class T>
-  idxdim layers_n_gen<T>::bprop_size(const idxdim &osize) {
+  idxdim layers_gen<T>::bprop_size(const idxdim &osize) {
     idxdim isize(osize);
     //! Loop through all the layers of the module, from the end to the beg.
     for (int i = (int) modules->size() - 1; i >= 0; i--) {
@@ -425,7 +425,7 @@ enough hidden states in layers_n_gen");
   }
 
   template<class T>
-  void layers_n_gen<T>::pretty(idxdim &isize) {
+  void layers_gen<T>::pretty(idxdim &isize) {
     idxdim is(isize);
     cout << is;
     //! Loop through all the layers of the module, and update output
@@ -439,7 +439,7 @@ enough hidden states in layers_n_gen");
   }
 
   template<class T>
-  layers_n_gen<T>* layers_n_gen<T>::copy() {
+  layers_gen<T>* layers_gen<T>::copy() {
     eblerror("not implemented");
   }
   

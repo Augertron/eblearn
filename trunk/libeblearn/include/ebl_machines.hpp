@@ -37,7 +37,7 @@ namespace ebl {
   // the empty constructor (must call init afterwards)
   template <class T>
   net_cscscf<T>::net_cscscf()
-    : layers_n<T>(true) {
+    : layers<T>(true) {
     // owns modules, responsible for deleting it
   }
 
@@ -50,7 +50,7 @@ namespace ebl {
 					  intg ki2, intg kj2, idx<intg> &tbl2,
 					  intg outthick, bool norm, bool mirror,
 					  bool tanh, bool shrink)
-    : layers_n<T>(true) {
+    : layers<T>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 si1, sj1, ki2, kj2, tbl2, outthick, norm, mirror, tanh, shrink);
@@ -75,7 +75,7 @@ namespace ebl {
     intg thick1 = 1 + idx_max(tblmax);
     tblmax = tbl2.select(1, 1);
     intg thick2 = 1 + idx_max(tblmax);
-    // layers_n was initialized with true so it owns the modules we give it,
+    // layers was initialized with true so it owns the modules we give it,
     // we can add modules with "new".
     // we add convolutions (c), subsamplings (s), and full layers (f)
     // to form a c-s-c-s-c-f network. and we add state_idx in between
@@ -154,7 +154,7 @@ namespace ebl {
   // the empty constructor (must call init afterwards)
   template <class T>
   net_cscf<T>::net_cscf()
-    : layers_n<T>(true) {
+    : layers<T>(true) {
     // owns modules, responsible for deleting it
   }
 
@@ -165,7 +165,7 @@ namespace ebl {
 				      intg ki1, intg kj1, idx<intg> &tbl1, 
 				      intg outthick, bool norm, bool mirror,
 				      bool tanh, bool shrink)
-    : layers_n<T>(true) {
+    : layers<T>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 outthick, norm, mirror, tanh, shrink);
@@ -186,7 +186,7 @@ namespace ebl {
     intg thick0 = 1 + idx_max(tblmax);
     tblmax = tbl1.select(1, 1);
     intg thick1 = 1 + idx_max(tblmax);
-    // layers_n was initialized with true so it owns the modules we give it,
+    // layers was initialized with true so it owns the modules we give it,
     // we can add modules with "new".
     // we add convolutions (c), subsamplings (s), and full layers (f)
     // to form a c-s-c-s-c-f network. and we add state_idx in between
@@ -252,7 +252,7 @@ namespace ebl {
   // the empty constructor (must call init afterwards)
   template <class T>
   net_cscsc<T>::net_cscsc()
-    : layers_n<T>(true) { // owns modules, responsible for deleting it
+    : layers<T>(true) { // owns modules, responsible for deleting it
   }
 
   template <class T>
@@ -264,7 +264,7 @@ namespace ebl {
 					intg ki2, intg kj2, idx<intg> &tbl2,
 					bool norm, bool mirror, bool tanh,
 					bool shrink)
-    : layers_n<T>(true) { // owns modules, responsible for deleting it
+    : layers<T>(true) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 si1, sj1, ki2, kj2, tbl2, norm, mirror, tanh, shrink);
   }
@@ -286,7 +286,7 @@ namespace ebl {
     intg thick0 = 1 + idx_max(tblmax);
     tblmax = tbl1.select(1, 1);
     intg thick1 = 1 + idx_max(tblmax);
-    // layers_n was initialized with true so it owns the modules we give it,
+    // layers was initialized with true so it owns the modules we give it,
     // we can add modules with "new".
     // we add convolutions (c), subsamplings (s), and full layers (f)
     // to form a c-s-c-s-c-f network. and we add state_idx in between

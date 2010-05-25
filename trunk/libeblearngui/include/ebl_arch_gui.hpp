@@ -69,10 +69,10 @@ namespace ebl {
     select_window(display_wid_fprop);					\
     gui << black_on_white(255, 0) << gui_only();			\
     									\
-    if (dynamic_cast< layers_n_gen<state_idx<T> >* >(&m)) {		\
-      /* layers_n */							\
-      layers_n_gui::name1(*this,					\
-			  dynamic_cast< layers_n_gen<state_idx<T> >& >(m), \
+    if (dynamic_cast< layers_gen<state_idx<T> >* >(&m)) {		\
+      /* layers */							\
+      layers_gui::name1(*this,					\
+			  dynamic_cast< layers_gen<state_idx<T> >& >(m), \
 			  in, out, h0, w0, zoom, vmin, vmax, show_out);	\
     } else if (dynamic_cast< layers_2_gen<state_idx<T>,state_idx<T>,state_idx<T> >* >(&m)) {	\
       /* layers_2 */							\
@@ -169,12 +169,12 @@ namespace ebl {
   DISPLAY_FCEBM2(display_bbprop, display_bbprop2)
 
   ////////////////////////////////////////////////////////////////
-  // layers_n_gui
+  // layers_gui
 
 #define DISPLAY_LAYERSN(name1, name2, T)				\
   template<class T>							\
-  void layers_n_gui::name1(module_1_1_gui &g,				\
-			   layers_n_gen<state_idx<T> > &ln,		\
+  void layers_gui::name1(module_1_1_gui &g,				\
+			   layers_gen<state_idx<T> > &ln,		\
 			   state_idx<T> &in, state_idx<T> &out,		\
 			   unsigned int &h0, unsigned int &w0,		\
 			   double zoom, T vmin, T vmax,			\
@@ -222,7 +222,7 @@ namespace ebl {
   DISPLAY_LAYERSN(display_bbprop, display_bbprop2, ddx)
 
   ////////////////////////////////////////////////////////////////
-  // layers_n_gui
+  // layers_gui
 
 #define DISPLAY_LAYERS2(name1)						\
   template<class T>							\

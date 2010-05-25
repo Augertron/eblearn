@@ -33,29 +33,29 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
 
-  template <class T> layers_n<T>::layers_n(bool oc)
-    : layers_n_gen<state_idx<T> >(oc) {
+  template <class T> layers<T>::layers(bool oc)
+    : layers_gen<state_idx<T> >(oc) {
   }
 
   template<class T>
-  void layers_n<T>::
+  void layers<T>::
   add_module(module_1_1<T>* module, state_idx<T>* hidden) {
     if (modules->size() > hiddens->size())
-      eblerror("Inconsistency in layers_n, probably you have passed null \
+      eblerror("Inconsistency in layers, probably you have passed null \
 hidden layer before");
 
     modules->push_back(module);
     hiddens->push_back(hidden);
 
     if (modules->size() - hiddens->size() > 1)
-      eblerror("Inconsistency in layers_n, probably you did not allocate \
-enough hidden states in layers_n");
+      eblerror("Inconsistency in layers, probably you did not allocate \
+enough hidden states in layers");
   }
 
   template<class T>
-  void layers_n<T>::fprop(state_idx<T>& in, state_idx<T>& out){
+  void layers<T>::fprop(state_idx<T>& in, state_idx<T>& out){
     if (modules->empty())
-      eblerror("trying to fprop through empty layers_n");
+      eblerror("trying to fprop through empty layers");
 
     state_idx<T>* hi = &in;
     state_idx<T>* ho = &in;
@@ -84,8 +84,8 @@ enough hidden states in layers_n");
     (*modules)[niter]->fprop(*ho,out);
   }
 
-  template <class T> layers_n<T>* layers_n<T>::copy() {
-    layers_n<T> *l2 = new layers_n<T>(true);
+  template <class T> layers<T>* layers<T>::copy() {
+    layers<T> *l2 = new layers<T>(true);
     //! Loop through all the modules and buffers and copy them
     int niter = this->modules->size();
     for(int i = 0; i < niter; i++) {

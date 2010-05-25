@@ -101,16 +101,16 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-  // layers_n_gui
+  // layers_gui
 
-  class layers_n_gui {
+  class layers_gui {
   public:
-    layers_n_gui() {};
-    virtual ~layers_n_gui() {};
+    layers_gui() {};
+    virtual ~layers_gui() {};
 
 #define DISPLAY_PROTO_LAYERSN(name)					\
     template<class T>							\
-      static void name(module_1_1_gui &g, layers_n_gen<state_idx<T> > &ln, \
+      static void name(module_1_1_gui &g, layers_gen<state_idx<T> > &ln, \
 		       state_idx<T> &in, state_idx<T> &out,		\
 		       unsigned int &h0, unsigned int &w0,		\
 		       double dzoom = 1.0,				\

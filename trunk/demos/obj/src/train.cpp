@@ -55,6 +55,37 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 
 typedef double t_net; // precision at which network is trained (ideally double)
 
+// temporary code
+void koray_temp(configuration &conf, layers<t_net> &net) {
+  ostringstream m;
+  idx<t_net> mat;
+  idx<intg> table;
+  m.str(""); m << conf.get_string("koray_dir")
+	       << conf.get_string("wkoray") << "_conv0_kernel.x.mat";
+  mat = load_matrix<t_net>(m.str());
+  idx_copy(mat, ((convolution_module<t_net>*)((*net.modules)[0]))->kernel.x);
+
+  m.str(""); m << conf.get_string("koray_dir")
+	       << conf.get_string("wkoray") << "_conv0_table.mat";
+  table = load_matrix<intg>(m.str());
+  idx_copy(mat, ((convolution_module<t_net>*)((*net.modules)[0]))->table);
+
+  m.str(""); m << conf.get_string("koray_dir")
+	       << conf.get_string("wkoray") << "_bias0_bias.x.mat";
+  mat = load_matrix<t_net>(m.str());
+  idx_copy(mat, ((addc_module<t_net>*)((*net.modules)[1]))->bias.x);
+
+  m.str(""); m << conf.get_string("koray_dir")
+	       << conf.get_string("wkoray") << "_shrink0_bias.x.mat";
+  mat = load_matrix<t_net>(m.str());
+  idx_copy(mat, ((smooth_shrink_module<t_net>*)((*net.modules)[2]))->bias.x);
+
+  m.str(""); m << conf.get_string("koray_dir")
+	       << conf.get_string("wkoray") << "_shrink0_beta.x.mat";
+  mat = load_matrix<t_net>(m.str());
+  idx_copy(mat, ((smooth_shrink_module<t_net>*)((*net.modules)[2]))->beta.x);
+}
+
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #else
@@ -93,21 +124,23 @@ int main(int argc, char **argv) { // regular main without gui
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
   parameter<t_net> theparam(60000); // create trainable parameter
   module_1_1<t_net> *net = create_network(theparam, conf, targets.dim(0));
-  cout << "Initializing weights from ";
-  if (conf.exists_bool("retrain")) {
-    cout << conf.get_cstring("retrain_weights") << endl;
-    theparam.load_x(conf.get_cstring("retrain_weights"));
-  } else cout << "random" << endl;
   supervised_euclidean_machine<t_net, int> thenet(*net, targets, dims);
   supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
+  //! initialize the network weights
+  forget_param_linear fgp(1, 0.5);
+  if (conf.exists_bool("retrain")) {
+    theparam.load_x(conf.get_cstring("retrain_weights"));
+  } else {
+    cout << "Initializing weights from random." << endl;
+    thenet.forget(fgp);
+  }
+  if (conf.exists_bool("koray")) {
+    cout << "Initializing some weights from koray." << endl;
+    koray_temp(conf, *((layers<t_net>*)net));
+  }
 
   //! a classifier-meter measures classification errors
   classifier_meter trainmeter, testmeter;
-
-  //! initialize the network weights
-  forget_param_linear fgp(1, 0.5);
-  if (!conf.exists_bool("retrain"))
-    thenet.forget(fgp);
 
   // learning parameters
   gd_param gdp(/* double leta*/ conf.get_double("eta"),

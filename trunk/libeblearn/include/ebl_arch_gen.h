@@ -165,15 +165,12 @@ namespace ebl {
     virtual void pretty(idxdim &isize);
   };
 
-  template<class T> class layers_n_gen: public module_1_1_gen<T, T> {
+  template<class T> class layers_gen: public module_1_1_gen<T, T> {
   public:
-    vector<module_1_1_gen<T, T>*>	*modules;
-    vector<T*>				*hiddens;
-
     //! If oc is true, this class owns all its content and is responsible for
     //! deleting modules and buffers.
-    layers_n_gen(bool oc = true);
-    virtual ~layers_n_gen();
+    layers_gen(bool oc = true);
+    virtual ~layers_gen();
     //! Add a module to the stack of modules.
     virtual void add_module(module_1_1_gen <T, T>* module, T* hidden);
     virtual void add_last_module(module_1_1_gen <T, T>* module);
@@ -196,8 +193,12 @@ namespace ebl {
     //! fprop_size to determine the output size given the input.
     virtual void pretty(idxdim &isize);
     //! Returns a deep copy of current module.
-    virtual layers_n_gen<T>* copy();
+    virtual layers_gen<T>* copy();
 
+    // class member variables
+  public:
+    vector<module_1_1_gen<T, T>*>	*modules;
+    vector<T*>				*hiddens;    
   protected:
     bool own_contents;
   };

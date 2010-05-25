@@ -44,7 +44,7 @@
 
 namespace ebl {
 
-  //! Tests any module that is descendant of module_1_1. (includes layers_n)
+  //! Tests any module that is descendant of module_1_1. (includes layers)
   //! bprop to input and to parameters are validated with finite difference
   //! approximations.
   //!

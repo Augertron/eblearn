@@ -234,7 +234,7 @@ void ebl_basic_test::test_power_module() {
 }
 
 void ebl_basic_test::test_convolution_timing() {
-  layers_n<float> l(true);
+  layers<float> l(true);
   idx<intg> tbl = full_table(1, 8);
   idx<intg> tbl2 = full_table(8, 16);
   l.add_module(new convolution_module<float>(NULL, 9, 9, 1, 1, tbl));

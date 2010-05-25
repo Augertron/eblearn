@@ -46,7 +46,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
-  template <class T> class net_cscscf : public layers_n<T> {
+  template <class T> class net_cscscf : public layers<T> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
@@ -84,7 +84,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
-  template <class T> class net_cscf : public layers_n<T> {
+  template <class T> class net_cscf : public layers<T> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
@@ -120,7 +120,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
-  template <class T> class net_cscsc : public layers_n<T> {
+  template <class T> class net_cscsc : public layers<T> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
