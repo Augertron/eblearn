@@ -33,9 +33,13 @@
 #ifndef CAMERA_SHMEM_HPP_
 #define CAMERA_SHMEM_HPP_
 
+#ifdef __WINDOWS__
+
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+
+#endif /* __WINDOW__ */
 
 namespace ebl {
 
@@ -46,6 +50,9 @@ namespace ebl {
   camera_shmem<Tdata>::camera_shmem(const char *shmem_path,
 				    int height_, int width_)
     : camera<Tdata>(height_, width_), buffer(NULL) {
+#ifdef __WINDOWS__
+    eblerror("missing shmem implementation for windows");
+#else
     cout << "Initializing shared buffer camera..." << endl;
     // connect to shared memory segment
    if ((shmem_key = ftok(shmem_path, 'A')) == -1) {
@@ -68,13 +75,16 @@ namespace ebl {
    }
    // link data to the segment
    buffer = (struct video_buffer *)shmat(shmem_id, (void *)0, 0);
+#endif /* __WINDOW__ */
   }
   
   template <typename Tdata>
   camera_shmem<Tdata>::~camera_shmem() {
+#ifndef __WINDOWS__
     // detach from shared memory
     if (buffer)
       shmdt((const void*)buffer);
+#endif /* __WINDOW__ */
   }
   
   ////////////////////////////////////////////////////////////////
@@ -82,6 +92,7 @@ namespace ebl {
 
   template <typename Tdata>
   idx<Tdata> camera_shmem<Tdata>::grab() {
+#ifndef __WINDOWS__
     // make a frame request
     buffer->dump_to_file = 0;
     buffer->request_frame = 1;
@@ -101,6 +112,7 @@ namespace ebl {
     // cast and copy data
     for (uint i = 0; i < sz; ++i, ++out, ++in)
       *out = (Tdata) *in;
+#endif
     return this->postprocess();
   }
   

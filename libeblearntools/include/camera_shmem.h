@@ -84,7 +84,9 @@ namespace ebl {
     using camera<Tdata>::frame;	//!< frame buffer 
     using camera<Tdata>::grabbed;	//!< frame buffer grabbed yet or not 
     t_video_buffer	*buffer;
+#ifndef __WINDOWS__
     key_t		 shmem_key;
+#endif
     int			 shmem_id;
   };
 
