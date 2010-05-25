@@ -194,27 +194,56 @@ namespace ebl {
     // and feed the input of the following module.
     
     // convolution
-    if (norm) // absolute rectification + contrast normalization
-      add_module(new convabsnorm_layer<T>(&prm, ki0, kj0, 1, 1, tbl0,
-					  mirror, tanh),
-		 new state_idx<T>(1, 1, 1));
-    else // old fashioned way
-      add_module(new convolution_layer<T>(&prm, ki0, kj0, 1, 1, tbl0, tanh),
-		 new state_idx<T>(1, 1, 1));
+    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,tbl0));
+    // bias
+    add_module(new addc_module<T>(&prm, thick0));
+    // non linearity
+    if (shrink)
+      add_module(new smooth_shrink_module<T>(&prm, thick0));
+    else if (tanh)
+      add_module(new tanh_module<T>());
+    else
+      add_module(new stdsigmoid_module<T>());
+    // absolute rectification + contrast normalization
+    if (norm) {
+      add_module(new abs_module<T>());
+      add_module(new weighted_std_module<T>(ki0, kj0, thick0, mirror));
+    }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm, si0, sj0, si0, sj0, thick0,
-					   tanh),
-	       new state_idx<T>(1, 1, 1));
+    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh));
     // convolution
-    if (norm) // absolute rectification + contrast normalization
-      add_module(new convabsnorm_layer<T>(&prm, ki1, kj1, 1, 1, tbl1, mirror,
-					  tanh),
-		 new state_idx<T>(1, 1, 1));
-    else // old fashioned way
-      add_module(new convolution_layer<T>(&prm, ki1, kj1, 1, 1, tbl1, tanh),
-		 new state_idx<T>(1, 1, 1));
+    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,tbl1));
+    // bias
+    add_module(new addc_module<T>(&prm, thick1));
+    // non linearity
+    if (shrink)
+      add_module(new smooth_shrink_module<T>(&prm, thick1));
+    else if (tanh)
+      add_module(new tanh_module<T>());
+    else
+      add_module(new stdsigmoid_module<T>());
+    // absolute rectification + contrast normalization
+    if (norm) {
+      add_module(new abs_module<T>());
+      add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
+    }
     // full
-    add_last_module(new full_layer<T>(&prm, thick1, outthick, tanh));
+    add_module(new full_layer<T>(&prm, thick1, outthick, tanh));
+
+    // // convolution
+    // if (norm) // absolute rectification + contrast normalization
+    //   add_module(new convabsnorm_layer<T>(&prm, ki0, kj0,1,1,tbl0,mirror,tanh));
+    // else // old fashioned way
+    //   add_module(new convolution_layer<T>(&prm, ki0, kj0, 1, 1, tbl0, tanh));
+    // // subsampling
+    // add_module(new subsampling_layer<T>(&prm, si0, sj0, si0, sj0,thick0,tanh));,
+    // // convolution
+    // if (norm) // absolute rectification + contrast normalization
+    //   add_module(new convabsnorm_layer<T>(&prm, ki1, kj1,1,1,tbl1,mirror,tanh));
+    // else // old fashioned way
+    //   add_module(new convolution_layer<T>(&prm, ki1, kj1, 1, 1, tbl1, tanh));
+    // // full
+    // add_last_module(new full_layer<T>(&prm, thick1, outthick, tanh));
   }
 
   ////////////////////////////////////////////////////////////////
