@@ -31,7 +31,7 @@ meta_email=pierre.sermanet@gmail.com
 meta_email_period=1
 
 # interval in seconds to analyze processes output, and to check who is alive.
-meta_watch_interval=30
+meta_watch_interval=120
 # variables to minimize, process and iteration with lowest value will
 # be used to report best weights, or start consequent training
 meta_minimize=i
@@ -43,8 +43,7 @@ meta_send_best=15
 ################################################################################
 
 # directories
-xpname=pedtrain_nictat_humair_20100509.183243
-#xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
+xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
 root=~/${machine}adata/pedestrians/
 root2=~/${machine}adata/
 dataroot=$root/ds
@@ -91,8 +90,8 @@ echo "meta_output_dir = ${out}" >> $metaconf
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
 echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
-#${eblearnbin}/metarun $metaconf
-touch /home/sermanet/humairadata/pedestrians/out/pedtrain_nictat_humair_20100509.183243/20100509.183243.ped_humair
+${eblearnbin}/metarun $metaconf
+#touch /home/sermanet/humairadata/pedestrians/out/pedtrain_nictat_humair_20100509.183243/20100509.183243.ped_humair
 
 # looping on retraining on false positives
 echo "________________________________________________________________________"
@@ -112,7 +111,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "Using best conf of previous training: ${bestconf}"
   echo "i=`expr ${maxiteration} - ${iter}`"
 
-if [ $iter != 1 ]; then  
+#if [ $iter != 1 ]; then  
 
 # extract false positives: first add new variables to best conf
 # activate retraining
@@ -169,7 +168,7 @@ if [ $iter != 1 ]; then
   ${eblearnbin}/dssplit ${dataroot} allfp \
       allfp_val_ allfp_train_ -maxperclass ${valsize} -draws $draws
 
-fi
+#fi
 
 # merge new datasets into previous datasets: training
   for i in `seq 1 $draws`

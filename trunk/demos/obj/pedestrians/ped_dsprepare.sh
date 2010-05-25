@@ -85,11 +85,8 @@ mkdir -p $nopersons_root
 ~/eblearn/bin/dsmerge $out ${namebg} ${bgds} ${name}
 
 # split validation and training
-for i in `seq 1 ${draws}`
-do
 ~/eblearn/bin/dssplit $out ${namebg} \
-    ${namebg}_val_$i ${namebg}_train_$i -maxperclass ${maxval} -draws 1
-done
+    ${namebg}_val_ ${namebg}_train_ -maxperclass ${maxval} -draws ${draws}
 
 # print out information about extracted datasets to check that their are ok
 ~/eblearn/bin/dsdisplay $out/${namebg} -info
