@@ -33,7 +33,9 @@ Libraries:
 - port libraries to Windows libraries using mingw and win32api
 - uvc webcam with v4l2: http://staticwave.ca/source/uvccapture/
 - add switch in cmake to compile in either static or shared libraries
- 
+- use intel's TBB for threads (cross-platform, open-source)
+  http://www.threadingbuildingblocks.org/
+- imageIO.hpp, popen not working with Windows.
 ________________________________________________________________________________
 Guis:
 
