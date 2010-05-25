@@ -151,16 +151,16 @@ namespace ebl {
 /*     virtual void normalize(); */
   };
 
-  template<class T> class layers_n
-    : public layers_n_gen<state_idx<T> > {
+  template<class T> class layers
+    : public layers_gen<state_idx<T> > {
   public:
 /*     //! constructor. */
-/*     layers_n(); */
+/*     layers(); */
     //! constructor. if oc is true, then this module owns its content and
     //! is responsible for deleting modules that are given to it.
-    layers_n(bool oc);
+    layers(bool oc);
 /*     //! destructor. */
-/*     virtual ~layers_n(); */
+/*     virtual ~layers(); */
     
     //! Add a module to the stack of modules. The 'hidden' buffer
     //! between modules is optional, and will be automatically allocated
@@ -178,10 +178,12 @@ namespace ebl {
 /*     virtual void pretty(idxdim &isize); */
     
     //! Returns a deep copy of current module.
-    virtual layers_n<T>* copy();
-  private:
-    using layers_n_gen<state_idx<T> >::modules;
-    using layers_n_gen<state_idx<T> >::hiddens;
+    virtual layers<T>* copy();
+
+    // class member variables
+  public:
+    using layers_gen<state_idx<T> >::modules;
+    using layers_gen<state_idx<T> >::hiddens;
   };
 
   ////////////////////////////////////////////////////////////////

@@ -74,7 +74,7 @@ namespace ebl {
   public:
     bool                mirror; //!< mirror input or not in borders
   private:
-    layers_n<T>         convmean, convvar;
+    layers<T>         convmean, convvar;
     power_module<T>	sqrtmod;	//!< square root module
     power_module<T>	invmod; //!< inverse module
     power_module<T>	sqmod;	//!< square module
