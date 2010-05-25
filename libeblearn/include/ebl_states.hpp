@@ -82,58 +82,69 @@ namespace ebl {
   // constructors from specific dimensions using a parameter
 
   template<class T>
-  state_idx<T>::state_idx(parameter<T> &st) :
-    x(st.x.getstorage(), st.x.footprint()), 
-    dx(st.dx.getstorage(), st.dx.footprint()), 
-    ddx(st.ddx.getstorage(), st.ddx.footprint()) {
-    st.resize(st.footprint() + nelements());
+  state_idx<T>::state_idx(parameter<T> *st) :
+    x(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0), 
+    dx(st ? st->dx.getstorage() : NULL, st ? st->dx.footprint() : 0), 
+    ddx(st ? st->ddx.getstorage() : NULL, st ? st->ddx.footprint() : 0) {
+    if (st)
+      st->resize(st->footprint() + nelements());
     clear();
   }
 
   template<class T>
-  state_idx<T>::state_idx(parameter<T> &st, intg s0) :
-    x(st.x.getstorage(), st.x.footprint(), s0), 
-    dx(st.dx.getstorage(), st.dx.footprint(), s0), 
-    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0) {
-    st.resize(st.footprint() + nelements());
+  state_idx<T>::state_idx(parameter<T> *st, intg s0) :
+    x(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, s0), 
+    dx(st ? st->dx.getstorage() : NULL, st ? st->dx.footprint() : 0, s0), 
+    ddx(st ? st->ddx.getstorage() : NULL, st ? st->ddx.footprint() : 0, s0) {
+    if (st)
+      st->resize(st->footprint() + nelements());
     clear();
   }
 
   template<class T>
-  state_idx<T>::state_idx(parameter<T> &st, intg s0, intg s1) :
-    x(st.x.getstorage(), st.x.footprint(), s0, s1), 
-    dx(st.dx.getstorage(), st.dx.footprint(), s0, s1), 
-    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0, s1) {
-    st.resize(st.footprint() + nelements());
+  state_idx<T>::state_idx(parameter<T> *st, intg s0, intg s1) :
+    x(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, s0, s1), 
+    dx(st ? st->dx.getstorage() : NULL, st ? st->dx.footprint() : 0, s0, s1), 
+    ddx(st ? st->ddx.getstorage() : NULL,
+	st ? st->ddx.footprint() : 0, s0, s1) {
+    if (st)
+      st->resize(st->footprint() + nelements());
     clear();
   }
 
   template<class T>
-  state_idx<T>::state_idx(parameter<T> &st, intg s0, intg s1, intg s2) :
-    x(st.x.getstorage(), st.x.footprint(), s0, s1, s2), 
-    dx(st.dx.getstorage(), st.dx.footprint(), s0, s1, s2), 
-    ddx(st.ddx.getstorage(), st.ddx.footprint(), s0, s1, s2) {
-    st.resize(st.footprint() + nelements());
+  state_idx<T>::state_idx(parameter<T> *st, intg s0, intg s1, intg s2) :
+    x(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, s0, s1, s2), 
+    dx(st ? st->dx.getstorage() : NULL,
+       st ? st->dx.footprint() : 0, s0, s1, s2), 
+    ddx(st ? st->ddx.getstorage() : NULL,
+	st ? st->ddx.footprint() : 0, s0, s1, s2) {
+    if (st)
+      st->resize(st->footprint() + nelements());
     clear();
   }
   
   template<class T>
-  state_idx<T>::state_idx(parameter<T> &st, intg s0, intg s1, intg s2, intg s3,
+  state_idx<T>::state_idx(parameter<T> *st, intg s0, intg s1, intg s2, intg s3,
 		       intg s4, intg s5, intg s6, intg s7) :
-    x(st.x.getstorage(), st.x.footprint(), s0, s1, s2, s3, s4, s5, s6, s7),
-    dx(st.dx.getstorage(), st.dx.footprint(), s0, s1, s2, s3, s4, s5, s6,s7), 
-    ddx(st.ddx.getstorage(), st.ddx.footprint(), 
+    x(st ? st->x.getstorage() : NULL,
+      st ? st->x.footprint() : 0, s0, s1, s2, s3, s4, s5, s6, s7),
+    dx(st ? st->dx.getstorage() : NULL,
+       st ? st->dx.footprint : 0, s0, s1, s2, s3, s4, s5, s6,s7), 
+    ddx(st ? st->ddx.getstorage() : NULL, st ? st->ddx.footprint() : 0, 
 	s0, s1, s2, s3, s4, s5, s6, s7) {
-    st.resize(st.footprint() + nelements());
+    if (st)
+      st->resize(st->footprint() + nelements());
     clear();
   }
 
   template<class T>
-  state_idx<T>::state_idx(parameter<T> &st, const idxdim &d) 
-    : x(st.x.getstorage(), st.x.footprint(), d), 
-      dx(st.x.getstorage(), st.x.footprint(), d),
-      ddx(st.x.getstorage(), st.x.footprint(), d) {
-    st.resize(st.footprint() + nelements());
+  state_idx<T>::state_idx(parameter<T> *st, const idxdim &d) 
+    : x(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d), 
+      dx(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d),
+      ddx(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d) {
+    if (st)
+      st->resize(st->footprint() + nelements());
     clear();
   }
 

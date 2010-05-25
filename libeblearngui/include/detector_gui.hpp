@@ -265,16 +265,17 @@ namespace ebl {
       ((state_idx<Tnet>*) cl.outputs.get(cl.inputs.dim(0) - 1));
     module_1_1_gui mg;
     //    cl.thenet.fprop(*ii, *oo); 
-    mg.display_fprop(cl.thenet, *ii, *oo, h0, w0, 1.0, vmin, vmax,
-		     true, display_wid_fprop);
+    mg.display_fprop(*((module_1_1<Tnet>*) cl.nets.get(cl.nets.dim(0) - 1)),
+		     *ii, *oo, h0, w0,
+		     1.0, vmin, vmax, true, display_wid_fprop);
     enable_window_updates();
     return bb;
   }
 
   template <typename Tnet> template <typename Tin>
   void detector_gui<Tnet>::display_current(detector<Tnet> &cl, 
-					idx<Tin> &sample,
-					int wid, const char *wname){
+					   idx<Tin> &sample,
+					   int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
@@ -285,8 +286,9 @@ namespace ebl {
     state_idx<Tnet> *ii = ((state_idx<Tnet>*) cl.inputs.get(0));
     state_idx<Tnet> *oo = ((state_idx<Tnet>*) cl.outputs.get(0));
     //cl.thenet.fprop(*ii, *oo); 
-    mg.display_fprop(cl.thenet, *ii, *oo, 0, 0, 1.0, -1.0, 1.0,
-		     true, display_wid_fprop);
+    mg.display_fprop(*(module_1_1<Tnet>*) cl.nets.get(cl.nets.dim(0) - 1),
+		     *ii, *oo, 0, 0, 1.0, -1.0, 1.0, true,
+		     display_wid_fprop);
     // enable_window_updates();
   }
 

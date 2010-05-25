@@ -61,7 +61,8 @@ namespace ebl {
   // job
 
   job::job(configuration &conf_, const string &exe_, const string &oconffname) 
-    : conf(conf_), exe(exe_), oconffname_(oconffname), classesname_(""), pid(-1) {
+    : conf(conf_), exe(exe_), oconffname_(oconffname), pid(-1),
+      classesname_("") {
     // remove quotes around executable command if present
     if ((exe[0] == '"') && (exe[exe.size() - 1] == '"'))
       exe = exe.substr(1, exe.size() - 2);
@@ -276,7 +277,7 @@ namespace ebl {
 	      list<uint> l =
 		string_to_uintlist(mconf.get_string("meta_email_iters"));
 	      for (list<uint>::iterator i = l.begin(); i != l.end(); ++i) {
-		if (*i == maxiter) {
+		if (*i == (uint) maxiter) {
 		  cout << "Reached iteration " << *i << endl;
 		  // analyze 
 		  best = p.analyze(mconf, mconf.get_output_dir(),

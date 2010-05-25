@@ -172,18 +172,19 @@ namespace ebl {
     //! returns a pointer to a copy on this datasource
     //    supervised_trainer<Tdata, Tlabel>* copy();
   public:
-    fc_ebm2_gen<state_idx<Tnet>, Tlabel, Tnet>	&machine; //!< the machine
-    parameter<Tnet>				&param; //!< the learned params
+    fc_ebm2_gen<state_idx<Tnet>,
+      Tlabel, Tnet>	&machine;	//!< the machine
+    parameter<Tnet>	&param;	//!< the learned params
     //! net's tmp input buf. it is a pointer because the order of the input
     //! is not known in advance, and state_idx cannot change order dynamically.
-    state_idx<Tnet>				*input;
-    state_idx<Tnet>				 energy; //!< tmp energy buf
-    idx<Tlabel>					 label;
-    intg					 age;
+    state_idx<Tnet>	*input;
+    state_idx<Tnet>	 energy;//!< tmp energy buf
+    idx<Tlabel>		 label;
+    intg		 age;
   private:
-    int		 iteration;
-    void	*iteration_ptr;
-    bool         prettied; //!< flag used to pretty info just once
+    int			 iteration;
+    void		*iteration_ptr;
+    bool		 prettied;//!< flag used to pretty info just once
   };
 
 } // namespace ebl {

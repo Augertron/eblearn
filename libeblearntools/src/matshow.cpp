@@ -83,8 +83,8 @@ void display(list<string>::iterator &ifname,
       //      if (load)
       mat = load_image<T>(*fname);
       maxh = std::max(maxh, (uint) (rowh + mat.dim(0)));
+      T min = 0, max = 0;
       if (signd) {
-	T min, max;
 	T matmin = idx_min(mat);
 	if (matmin < 0) {
 	  min = -1; 

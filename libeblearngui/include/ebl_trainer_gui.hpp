@@ -204,7 +204,7 @@ namespace ebl {
       //st.test_sample(*st.input, st.label.get(), answer, infp);
       // TODO: display is influencing learning, remove influence
       //      st.learn_sample(*st.input, st.label.get(), args);
-      ubyte lab = st.label.get();
+      Tlabel lab = st.label.get();
       st.machine.fprop(*st.input, lab, st.energy);
       st.param.clear_dx();
       st.machine.bprop(*st.input, lab, st.energy);

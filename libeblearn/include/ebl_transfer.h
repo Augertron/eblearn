@@ -64,7 +64,7 @@ namespace ebl {
     virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
-    //! Returns a deep copy of this module (abstract).
+    //! Returns a deep copy of this module.
     virtual weighted_std_module<T>* copy();
 
     // friends
@@ -95,14 +95,12 @@ namespace ebl {
   //! This module is spatially replicable 
   //! (the input can have an order greater than 1 and the operation will apply
   //! to all elements).
-  template <class T> class abs_module: public module_1_1<T> {
-  private:
-    double threshold;
-    
+  template <class T> class abs_module: public module_1_1<T> {    
   public:
     //! Constructor. threshold makes the derivative of abs flat around zero
     //! with radius threshold.
     abs_module(double thresh = 0.0);
+    //! Destructor.
     virtual ~abs_module();
     //! forward propagation from in to out
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
@@ -110,6 +108,10 @@ namespace ebl {
     virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    //! Returns a deep copy of this module.
+    virtual abs_module<T>* copy();
+  private:
+    double threshold;
   };
 
   ////////////////////////////////////////////////////////////////
@@ -119,14 +121,10 @@ namespace ebl {
   //! useful for learning since there is always gradients flowing 
   //! through it.
   template <class T> class smooth_shrink_module: public module_1_1<T> {
-  private:
-    state_idx<T> ebb, ebx, tin;
-    abs_module<T> absmod;
   public:
-    state_idx<T> beta, bias;
-
     //! Constructor 
-    smooth_shrink_module(parameter<T> &p, intg nf, T bt, T bs);
+    smooth_shrink_module(parameter<T> *p, intg nf, T beta = 10, T bias = .3);
+    //! Destructor.
     virtual ~smooth_shrink_module();
     //! forward
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
@@ -134,6 +132,15 @@ namespace ebl {
     virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! 2nd deriv backward
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    //! Returns a deep copy of this module.
+    virtual smooth_shrink_module<T>* copy();
+
+  public:
+    state_idx<T> beta, bias;
+  private:
+    state_idx<T> ebb, ebx, tin;
+    abs_module<T> absmod;
+    T default_beta, default_bias;
   };
 
 } // namespace ebl {

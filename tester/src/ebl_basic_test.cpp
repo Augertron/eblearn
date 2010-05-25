@@ -13,7 +13,7 @@ void ebl_basic_test::setUp() {
 void ebl_basic_test::tearDown() {
 }
 
-void ebl_basic_test::test_nn_layer_convolution_fprop() {
+void ebl_basic_test::test_convolution_layer_fprop() {
   intg ini = 3;
   intg inj = 3;
   intg ki = 2;
@@ -26,7 +26,7 @@ void ebl_basic_test::test_nn_layer_convolution_fprop() {
   idx_clear(table);
   idx<intg> tableout = table.select(1, 1);
   parameter<double> prm(10000);
-  nn_layer_convolution<double> c(prm, ki, kj, 1, 1, table);
+  convolution_layer<double> c(&prm, ki, kj, 1, 1, table);
   double fact = 0.05;
 
   in.x.set(1, 0, 0, 0);
@@ -54,7 +54,7 @@ void ebl_basic_test::test_nn_layer_convolution_fprop() {
   CPPUNIT_ASSERT_DOUBLES_EQUAL( 0.761594, (out.x).get(0, 1, 1), 0.000001);
 }
 
-void ebl_basic_test::test_jacobian_nn_layer_convolution() {
+void ebl_basic_test::test_jacobian_convolution_layer() {
   intg ini = 3;
   intg inj = 3;
   intg ki = 2;
@@ -67,7 +67,7 @@ void ebl_basic_test::test_jacobian_nn_layer_convolution() {
   idx_clear(table);
   idx<intg> tableout = table.select(1, 1);
   parameter<double> prm(10000);
-  nn_layer_convolution<double> c(prm, ki, kj, 1, 1, table);
+  convolution_layer<double> c(&prm, ki, kj, 1, 1, table);
 
   ModuleTester<double> mt;
   idx<double> errs = mt.test_jacobian(c, in, out);
@@ -77,10 +77,10 @@ void ebl_basic_test::test_jacobian_nn_layer_convolution() {
   CPPUNIT_ASSERT(errs.get(1) < mt.get_acc_thres());
 }
 
-void ebl_basic_test::test_jacobian_nn_layer_subsampling() {
+void ebl_basic_test::test_jacobian_subsampling_layer() {
   parameter<double> p(10000);
   int ki = 4, kj = 4, thick = 1, si = 2, sj =2;
-  nn_layer_subsampling<double> s(p, ki, kj, si, sj, thick);
+  subsampling_layer<double> s(&p, ki, kj, si, sj, thick);
   state_idx<double> in(1, 8, 8);
   state_idx<double> out(1, 1, 1);
 
@@ -169,8 +169,10 @@ void ebl_basic_test::test_softmax(){
     out->ddx.pretty(stdout);
     printf("\n");
   */
-  idx<double> ib3 = in->x.select(0,0).select(0,0), calc_out = out->x.select(0,0).select(0,0);
-  idx<double> ib(new Srg<double>(), ib3.spec), des_out(new Srg<double>(), ib3.spec);
+  idx<double> ib3 = in->x.select(0,0).select(0,0),
+    calc_out = out->x.select(0,0).select(0,0);
+  idx<double> ib(new Srg<double>(), ib3.spec),
+    des_out(new Srg<double>(), ib3.spec);
   idx_dotc(ib3, module->beta, ib);
   idx_exp(ib);
   double ib2 = 1/idx_sum(ib);
@@ -233,16 +235,12 @@ void ebl_basic_test::test_power_module() {
 
 void ebl_basic_test::test_convolution_timing() {
   layers_n<float> l(true);
-  parameter<float> p(1);
   idx<intg> tbl = full_table(1, 8);
   idx<intg> tbl2 = full_table(8, 16);
-  l.add_module(new convolution_module_2D<float>(p, 9, 9, 1, 1, tbl),
-	       new state_idx<float>(1,1,1));  
-  l.add_module(new tanh_module<float>(),
-	       new state_idx<float>(1,1,1));
-  l.add_module(new convolution_module_2D<float>(p, 9, 9, 1, 1, tbl2),
-	       new state_idx<float>(1,1,1));
-  l.add_last_module(new tanh_module<float>());
+  l.add_module(new convolution_module<float>(NULL, 9, 9, 1, 1, tbl));
+  l.add_module(new tanh_module<float>());
+  l.add_module(new convolution_module<float>(NULL, 9, 9, 1, 1, tbl2));
+  l.add_module(new tanh_module<float>());
   state_idx<float> in(1, 512, 512), out(16, 496, 496);
   struct timeval start, end;
   long seconds, useconds;

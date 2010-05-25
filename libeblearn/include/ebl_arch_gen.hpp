@@ -86,7 +86,7 @@ namespace ebl {
   
   template<class Tin, class Tout>
   module_1_1_gen<Tin, Tout>* module_1_1_gen<Tin,Tout>::copy() {
-    eblerror("not implemented");
+    eblerror("deep copy not implemented for this module");
     return NULL;
   }
   
@@ -299,8 +299,8 @@ hidden layer before");
       hiddens->push_back(hidden);
 
     if (modules->size() - hiddens->size() > 1)
-      eblerror("Inconsistency in layers_n_gen, probably you did not allocate enough \
-hidden states in layers_n_gen");
+      eblerror("Inconsistency in layers_n_gen, probably you did not allocate \
+enough hidden states in layers_n_gen");
   }
 
   template<class T>
@@ -333,7 +333,8 @@ hidden states in layers_n_gen");
 
     // clear hidden states
     for (unsigned int i=0; i<hiddens->size(); i++){
-      (*hiddens)[i]->clear_dx();
+      if ((*hiddens)[i])
+	(*hiddens)[i]->clear_dx();
     }
     T* hi = &out;
     T* ho = &out;
@@ -355,7 +356,8 @@ hidden states in layers_n_gen");
 
     // clear hidden states
     for (unsigned int i=0; i<hiddens->size(); i++){
-      (*hiddens)[i]->clear_ddx();
+      if ((*hiddens)[i])
+	(*hiddens)[i]->clear_ddx();
     }
 
     T* hi = &out;

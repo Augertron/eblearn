@@ -153,17 +153,38 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! constructors from specific dimensions using a parameter
 
-    //! this appends the state_idx into the same Srg as the
-    //! state_idx passed as argument. This is useful for
+    //! Constructs a state_idx of order 0, by appending the state_idx into
+    //! the same Srg as the parameter passed as argument. This is useful for
     //! allocating multiple state_idx inside a parameter.
-    //! This replaces the Lush function alloc_state_idx.
-    state_idx(parameter<T> &st);
-    state_idx(parameter<T> &st, intg s0);
-    state_idx(parameter<T> &st, intg s0, intg s1);
-    state_idx(parameter<T> &st, intg s0, intg s1, intg s2);
-    state_idx(parameter<T> &st, intg s0, intg s1, intg s2, intg s3,
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    state_idx(parameter<T> *st);
+    //! Constructs a state_idx of order 1, by appending the state_idx into
+    //! the same Srg as the parameter passed as argument. This is useful for
+    //! allocating multiple state_idx inside a parameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    state_idx(parameter<T> *st, intg s0);
+    //! Constructs a state_idx of order 2, by appending the state_idx into
+    //! the same Srg as the parameter passed as argument. This is useful for
+    //! allocating multiple state_idx inside a parameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    state_idx(parameter<T> *st, intg s0, intg s1);
+    //! Constructs a state_idx of order 3, by appending the state_idx into
+    //! the same Srg as the parameter passed as argument. This is useful for
+    //! allocating multiple state_idx inside a parameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    state_idx(parameter<T> *st, intg s0, intg s1, intg s2);
+    //! Constructs a state_idx of order up to 8, by appending the state_idx into
+    //! the same Srg as the parameter passed as argument. This is useful for
+    //! allocating multiple state_idx inside a parameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    state_idx(parameter<T> *st, intg s0, intg s1, intg s2, intg s3,
 	      intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
-    state_idx(parameter<T> &st, const idxdim &d);
+    //! Constructs a state_idx using the order and dimensions contained in
+    //! passed idxdim d, by appending the state_idx into
+    //! the same Srg as the parameter passed as argument. This is useful for
+    //! allocating multiple state_idx inside a parameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    state_idx(parameter<T> *st, const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from other state_idx

@@ -552,23 +552,23 @@ public:
 };
 
 /* * * * * * * * * * * * * * * * * * * * * * *
- * GUI for nn_layer_full (fully-connected neural net layer: linear + tanh non-linearity)
+ * GUI for full_layer (fully-connected neural net layer: linear + tanh non-linearity)
  * The GUI automatically provides:
  * 		a linear_module_GUI
  * 	 	Two state_idx_GUI for the bias and the sum state_idxs
  * 		a module_1_1_GUI for the tan_h module
  * * * * * * * * * * * * * * * * * * * * * * */
-class nn_layer_full_GUI : public module_1_1_GUI
+class full_layer_GUI : public module_1_1_GUI
 {
 	Q_OBJECT
 
 private:
-	nn_layer_full* layer;
+	full_layer* layer;
 
 public:
-	nn_layer_full_GUI(nn_layer_full* layer, state_idx *in, state_idx *out, const char* title = "nn_layer_full", QWidget *parent = 0, QMutex* mutex = NULL);
-	nn_layer_full_GUI(nn_layer_full* layer, const char* title = "nn_layer_full", QWidget *parent = 0, QMutex* mutex = NULL);
-	~nn_layer_full_GUI(){};
+	full_layer_GUI(full_layer* layer, state_idx *in, state_idx *out, const char* title = "full_layer", QWidget *parent = 0, QMutex* mutex = NULL);
+	full_layer_GUI(full_layer* layer, const char* title = "full_layer", QWidget *parent = 0, QMutex* mutex = NULL);
+	~full_layer_GUI(){};
 };
 
 /* * * * * * * * * * * * * * * * * * * * * * *

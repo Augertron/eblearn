@@ -35,7 +35,7 @@ namespace ebl {
   // linear_module
 
   template <class T>
-  linear_module<T>::linear_module(parameter<T> &p, intg in, intg out)
+  linear_module<T>::linear_module(parameter<T> *p, intg in, intg out)
     : w(p, out, in) {
   }
 
@@ -104,11 +104,34 @@ namespace ebl {
     }
   }
 
-  ////////////////////////////////////////////////////////////////
-  // convolution_module_2D
+  template <class T>
+  idxdim linear_module<T>::fprop_size(idxdim &isize) {
+    //! Update output size based on weight dimensions
+    idxdim osize(w.x.dim(0), isize.dim(1), isize.dim(2));
+    isize = bprop_size(osize);
+    return osize;
+  }
 
   template <class T>
-  convolution_module_2D<T>::convolution_module_2D(parameter<T> &p, 
+  idxdim linear_module<T>::bprop_size(const idxdim &osize) {
+    idxdim isize(w.x.dim(1), osize.dim(1), osize.dim(2));
+    return isize;
+  }
+
+  template <class T>
+  linear_module<T>* linear_module<T>::copy() {
+    // new module (with its own local parameter buffers)
+    linear_module<T> *l2 = new linear_module(NULL, w.x.dim(1), w.x.dim(0));
+    // copy data
+    idx_copy(w.x, l2->w.x);
+    return l2;
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // convolution_module
+
+  template <class T>
+  convolution_module<T>::convolution_module(parameter<T> *p, 
 						  intg kerneli, intg kernelj, 
 						  intg stridei_, intg stridej_, 
 						  idx<intg> &tbl)
@@ -148,11 +171,11 @@ namespace ebl {
   }
 
   template <class T>
-  convolution_module_2D<T>::~convolution_module_2D() {
+  convolution_module<T>::~convolution_module() {
   }
 
   template <class T>
-  void convolution_module_2D<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  void convolution_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     // unfolding input for a faster convolution operation
     idx<T> uuin(in.x.unfold(1, kernel.x.dim(1), stridei));
@@ -197,7 +220,7 @@ namespace ebl {
   }
   
   template <class T>
-  void convolution_module_2D<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  void convolution_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
     // backprop through convolution
     idx_clear(in.dx);
     idx<T> uuin(in.dx.unfold(1, (kernel.dx).dim(1), stridei));
@@ -219,7 +242,7 @@ namespace ebl {
   }
 
   template <class T>
-  void convolution_module_2D<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  void convolution_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
     // backprop through convolution
     idx_clear(in.ddx);
     idx<T> uuin(in.ddx.unfold(1, (kernel.ddx).dim(1), stridei));
@@ -241,7 +264,7 @@ namespace ebl {
   }
 
   template <class T>
-  void convolution_module_2D<T>::forget(forget_param_linear &fp) {
+  void convolution_module<T>::forget(forget_param_linear &fp) {
     idx<T> kx(kernel.x);
     intg vsize = kx.dim(1);
     intg hsize = kx.dim(2);
@@ -264,7 +287,7 @@ namespace ebl {
   }
 
   template <class T>
-  void convolution_module_2D<T>::resize_output(state_idx<T> &in,
+  void convolution_module<T>::resize_output(state_idx<T> &in,
 					       state_idx<T> &out) {
     intg ki = kernel.x.dim(1);
     intg kj = kernel.x.dim(2);
@@ -311,11 +334,45 @@ namespace ebl {
     }
   }
 
-  ////////////////////////////////////////////////////////////////
-  // subsampling_module_2D
+  template <class T>
+  idxdim convolution_module<T>::fprop_size(idxdim &isize) {
+    //! Select a kernel
+    idxdim kernel_size = kernel.x[0].get_idxdim();
+    //! Extract its dimensions, update output size
+    idxdim osize(thickness,
+		 std::max((intg) 1, isize.dim(1) - kernel_size.dim(0) + 1),
+		 std::max((intg) 1, isize.dim(2) - kernel_size.dim(1) + 1));
+    isize = bprop_size(osize);
+    return osize;
+  }
 
   template <class T>
-  subsampling_module_2D<T>::subsampling_module_2D(parameter<T> &p, 
+  idxdim convolution_module<T>::bprop_size(const idxdim &osize) {
+    //! Select a kernel
+    idxdim kernel_size = kernel.x[0].get_idxdim();
+    //! Extract its dimensions, update output size
+    idxdim isize(tablemax + 1,
+		 osize.dim(1) + kernel_size.dim(0) - 1,
+		 osize.dim(2) + kernel_size.dim(1) - 1);
+    return isize;
+  }
+
+  template <class T>
+  convolution_module<T>* convolution_module<T>::copy() {
+    // new module (with its own local parameter buffers)
+    convolution_module<T> *l2 =
+      new convolution_module(NULL, kernel.x.dim(1), kernel.x.dim(2),
+				stridei, stridej, table);
+    // copy data
+    idx_copy(kernel.x, l2->kernel.x);
+    return l2;
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // subsampling_module
+
+  template <class T>
+  subsampling_module<T>::subsampling_module(parameter<T> *p, 
 						  intg stridei_, intg stridej_,
 						  intg subi, intg subj, 
 						  intg thick)
@@ -324,11 +381,11 @@ namespace ebl {
   }
 
   template <class T>
-  subsampling_module_2D<T>::~subsampling_module_2D() {
+  subsampling_module<T>::~subsampling_module() {
   }
 
   template <class T>
-  void subsampling_module_2D<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  void subsampling_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     // subsampling ( coeff * average )
     idx_clear(sub.x);
@@ -345,7 +402,7 @@ namespace ebl {
   }
 
   template <class T>
-  void subsampling_module_2D<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  void subsampling_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
     // oversampling
     idx_bloop3(lcdx, coeff.dx, T, ltdx, out.dx, T, lsx, sub.x, T) {
       idx_dotacc(lsx, ltdx, lcdx);
@@ -358,7 +415,7 @@ namespace ebl {
   }
 
   template <class T>
-  void subsampling_module_2D<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {	
+  void subsampling_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {	
     // oversampling
     idx_bloop3(lcdx, coeff.ddx, T, ltdx, out.ddx, T, lsx, sub.x, T) {
       idx_m2squdotm2acc(lsx, ltdx, lcdx);
@@ -372,13 +429,13 @@ namespace ebl {
   }
 
   template <class T>
-  void subsampling_module_2D<T>::forget(forget_param_linear &fp) {
+  void subsampling_module<T>::forget(forget_param_linear &fp) {
     double c = fp.value / pow(stridei * stridej, fp.exponent);
     idx_fill(coeff.x, (T) c);
   }
 
   template <class T>
-  void subsampling_module_2D<T>::resize_output(state_idx<T> &in,
+  void subsampling_module<T>::resize_output(state_idx<T> &in,
 					       state_idx<T> &out) {
     intg sin_i = in.x.dim(1);
     intg sin_j = in.x.dim(2);
@@ -403,12 +460,44 @@ namespace ebl {
       sub.resize(d);
     }
   }
+ 
+  template <class T>
+  idxdim subsampling_module<T>::fprop_size(idxdim &isize) {
+    //! Update input size
+    idxdim osize(thickness,
+		 std::max((intg) 1, isize.dim(1) / stridei),
+		 std::max((intg) 1, isize.dim(2) / stridej));
+    //! Recompute the input size to be compliant with the output
+    isize = bprop_size(osize);
+    return osize;
+  }
+
+  template <class T>
+  idxdim subsampling_module<T>::bprop_size(const idxdim &osize) {
+    //! Update input size
+    idxdim isize(thickness,
+		 osize.dim(1) * stridei,
+		 osize.dim(2) * stridej);
+    return isize;
+  }
+
+  template <class T>
+  subsampling_module<T>* subsampling_module<T>::copy() {
+    // new module (with its own local parameter buffers)
+    subsampling_module<T> *l2 =
+      new subsampling_module(NULL, stridei, stridej,
+				sub.x.dim(1), sub.x.dim(2), thickness);
+    // copy data
+    idx_copy(coeff.x, l2->coeff.x);
+    idx_copy(sub.x, l2->sub.x);
+    return l2;
+  }
 
   ////////////////////////////////////////////////////////////////
   // addc_module
 
   template <class T>
-  addc_module<T>::addc_module(parameter<T> &p, intg size)
+  addc_module<T>::addc_module(parameter<T> *p, intg size)
     : bias(p, size) {
   }
 
@@ -465,6 +554,15 @@ namespace ebl {
   template <class T>
   void addc_module<T>::forget(forget_param_linear& fp) {
     idx_clear(bias.x);
+  }
+
+  template <class T>
+  addc_module<T>* addc_module<T>::copy() {
+    // new module (with its own local parameter buffers)
+    addc_module<T> *l2 = new addc_module(NULL, bias.x.dim(0));
+    // copy data
+    idx_copy(bias.x, l2->bias.x);
+    return l2;
   }
 
   ////////////////////////////////////////////////////////////////

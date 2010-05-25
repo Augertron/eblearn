@@ -37,14 +37,65 @@ namespace ebl {
     : layers_n_gen<state_idx<T> >(oc) {
   }
 
+  template<class T>
+  void layers_n<T>::
+  add_module(module_1_1<T>* module, state_idx<T>* hidden) {
+    if (modules->size() > hiddens->size())
+      eblerror("Inconsistency in layers_n, probably you have passed null \
+hidden layer before");
+
+    modules->push_back(module);
+    hiddens->push_back(hidden);
+
+    if (modules->size() - hiddens->size() > 1)
+      eblerror("Inconsistency in layers_n, probably you did not allocate \
+enough hidden states in layers_n");
+  }
+
+  template<class T>
+  void layers_n<T>::fprop(state_idx<T>& in, state_idx<T>& out){
+    if (modules->empty())
+      eblerror("trying to fprop through empty layers_n");
+
+    state_idx<T>* hi = &in;
+    state_idx<T>* ho = &in;
+
+    // last will be manual
+    int niter = modules->size() - 1;
+    for(int i = 0; i < niter; i++){
+      ho = (*hiddens)[i];
+      // allocate hidden buffer if necessary
+      if (ho == NULL) {
+#ifdef __DEBUG__
+	cout << "Allocating state_idx buffer: " << hi->x.get_idxdim() << endl;
+#endif
+	// create idxdim of same order but sizes 1
+	idxdim d = hi->x.get_idxdim();
+	for (int k = 0; k < d.order(); ++k)
+	  d.setdim(k, 1);
+	// assign buffer
+	(*hiddens)[i] = new state_idx<T>(d);
+	ho = (*hiddens)[i];
+      }
+      // run module
+      (*modules)[i]->fprop(*hi,*ho);
+      hi = ho;
+    }
+    (*modules)[niter]->fprop(*ho,out);
+  }
+
   template <class T> layers_n<T>* layers_n<T>::copy() {
     layers_n<T> *l2 = new layers_n<T>(true);
-    //! Loop through all the modules and copy them
-    int niter = this->modules->size()-1;
-    for(int i = 0; i < niter; i++)
-      l2->add_module((*this->modules)[i]->copy(),
-		     new state_idx<T>((*this->hiddens)[i]->x.get_idxdim()));
-    l2->add_last_module((*this->modules)[niter]->copy());
+    //! Loop through all the modules and buffers and copy them
+    int niter = this->modules->size();
+    for(int i = 0; i < niter; i++) {
+      l2->add_module((module_1_1<T>*)(*this->modules)[i]->copy());
+      if ((*this->hiddens)[i] != NULL) {
+	(*l2->hiddens)[i] =
+	  new state_idx<T>((*this->hiddens)[i]->x.get_idxdim());
+	idx_copy((*this->hiddens)[i]->x, (*l2->hiddens)[i]->x);
+      }
+    }
     return l2;
   }
 

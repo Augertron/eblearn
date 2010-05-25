@@ -71,6 +71,11 @@ namespace ebl {
     idx_mul(in.ddx, out.ddx, in.ddx);
   }
 
+  template <class T>
+  stdsigmoid_module<T>* stdsigmoid_module<T>::copy() {
+    return new stdsigmoid_module();
+  }
+  
   ////////////////////////////////////////////////////////////////
 
   template <class T>
@@ -119,6 +124,11 @@ namespace ebl {
   void tanh_module<T>::normalize() {
   }
 
+  template <class T>
+  tanh_module<T>* tanh_module<T>::copy() {
+    return new tanh_module();
+  }
+  
   ////////////////////////////////////////////////////////////////////////
 
   template <class T>

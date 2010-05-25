@@ -81,7 +81,6 @@ namespace ebl {
     string cname = "patch";
     ostringstream fname;
     vector<idx<Tdata> > patches;
-    bool overlap;
     
     // for each scale, find patches and save them
     for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {

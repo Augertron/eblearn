@@ -49,9 +49,10 @@ namespace ebl {
   public:
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
+    //!        If p is null, a local buffer will be used.
     //! \param in the size of the input to the linear combination.
     //! \param out the size of the output to the linear combination.
-    linear_module(parameter<T> &p, intg in, intg out);
+    linear_module(parameter<T> *p, intg in, intg out);
     //! destructor
     virtual ~linear_module();
     //! forward propagation from in to out
@@ -68,6 +69,14 @@ namespace ebl {
     virtual void normalize();
     //! resize the output based on input dimensions
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+    //! Return dimensions that are compatible with this module.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim fprop_size(idxdim &i_size);
+    //! Return dimensions compatible with this module given output dimensions.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim bprop_size(const idxdim &o_size);
+    //! Returns a deep copy of this module.
+    virtual linear_module<T>* copy();
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -84,20 +93,21 @@ namespace ebl {
   //! the output of the processing of each <42> slice.
   DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable, 
 				linear_module<T>,
-				(parameter<T> &p, intg in, intg out),
+				(parameter<T> *p, intg in, intg out),
 				(p, in, out));
 
   ////////////////////////////////////////////////////////////////
-  // convolution_module_2D
+  // convolution_module
   //! This module applies 2D convolutions on dimensions 1 and 2 
   //! (0 contains different layers of information).
   //! This module has a replicable order of 3, if the input has a bigger order,
   //! use the replicable version of this module:
-  //! convolution_module_2D_replicable.
-  template <class T> class convolution_module_2D: public module_1_1<T> {
+  //! convolution_module_replicable.
+  template <class T> class convolution_module: public module_1_1<T> {
   public:    
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
+    //!        If p is null, a local buffer will be used.
     //! \param kerneli is the height of the convolution kernel
     //! \param kernelj is the width of the convolution kernel
     //! \param stridei is the stride at which convolutions are done on 
@@ -105,11 +115,11 @@ namespace ebl {
     //! \param stridej is the stride at which convolutions are done on 
     //!        the width axis.
     //! \param table is the convolution connection table.
-    convolution_module_2D(parameter<T> &p, intg kerneli, intg kernelj, 
+    convolution_module(parameter<T> *p, intg kerneli, intg kernelj, 
 			  intg  stridei, intg stridej, 
 			  idx<intg> &table);
     //! destructor
-    virtual ~convolution_module_2D();
+    virtual ~convolution_module();
     //! forward propagation from in to out
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
     //! backward propagation from out to in
@@ -122,6 +132,14 @@ namespace ebl {
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+    //! Return dimensions that are compatible with this module.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim fprop_size(idxdim &i_size);
+    //! Return dimensions compatible with this module given output dimensions.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim bprop_size(const idxdim &o_size);
+    //! Returns a deep copy of this module.
+    virtual convolution_module<T>* copy();
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -140,35 +158,36 @@ namespace ebl {
 #endif
   };
 
-  //! The replicable version of convolution_module_2D.
+  //! The replicable version of convolution_module.
   //! If the input has a bigger order than the replicable_order() of 
-  //! convolution_module_2D, then this module loops on extra dimensions until
+  //! convolution_module, then this module loops on extra dimensions until
   //! it reaches the replicable order, and then calls the base module 
-  //! convolution_module_2D.
+  //! convolution_module.
   //! For example, if the base module works on an order of 3, an input with
   //! dimensions <2x16x16x9x9> will produce a 9x9 grid where each box contains
   //! the output of the processing of each <2x16x16> slice.
-  DECLARE_REPLICABLE_MODULE_1_1(convolution_module_2D_replicable, 
-				convolution_module_2D<T>,
-				(parameter<T> &p, intg ki, intg kj, intg si, 
+  DECLARE_REPLICABLE_MODULE_1_1(convolution_module_replicable, 
+				convolution_module<T>,
+				(parameter<T> *p, intg ki, intg kj, intg si, 
 				 intg sj, idx<intg> &table),
 				(p, ki, kj, si, sj, table));
 
   ////////////////////////////////////////////////////////////////
-  // subsampling_module_2D
+  // subsampling_module
   //! This module applies 2D subsampling on dimensions 1 and 2 
   //! (0 contains different layers of information).
   //! This module has a replicable order of 3, if the input has a bigger order,
   //! use the replicable version of this module:
-  //! subsampling_module_2D_replicable.
-  template <class T> class subsampling_module_2D: public module_1_1<T> {
+  //! subsampling_module_replicable.
+  template <class T> class subsampling_module: public module_1_1<T> {
   public:
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
-    subsampling_module_2D(parameter<T> &p, intg stridei_, intg stridej_,
+    //!        If p is null, a local buffer will be used.
+    subsampling_module(parameter<T> *p, intg stridei_, intg stridej_,
 			  intg subi, intg subj, intg thick);
     //! destructor
-    virtual ~subsampling_module_2D();
+    virtual ~subsampling_module();
     //! forward propagation from in to out
     virtual void fprop(state_idx<T> &in, state_idx<T> &out);
     //! backward propagation from out to in
@@ -181,6 +200,14 @@ namespace ebl {
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
     virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+    //! Return dimensions that are compatible with this module.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim fprop_size(idxdim &i_size);
+    //! Return dimensions compatible with this module given output dimensions.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim bprop_size(const idxdim &o_size);
+    //! Returns a deep copy of this module.
+    virtual subsampling_module<T>* copy();
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -191,17 +218,17 @@ namespace ebl {
     intg		stridej;    
   };
 
-  //! The replicable version of subsampling_module_2D.
+  //! The replicable version of subsampling_module.
   //! If the input has a bigger order than the replicable_order() of 
-  //! subsampling_module_2D, then this module loops on extra dimensions until
+  //! subsampling_module, then this module loops on extra dimensions until
   //! it reaches the replicable order, and then calls the base module 
-  //! subsampling_module_2D.
+  //! subsampling_module.
   //! For example, if the base module works on an order of 3, an input with
   //! dimensions <2x16x16x9x9> will produce a 9x9 grid where each box contains
   //! the output of the processing of each <2x16x16> slice.
-  DECLARE_REPLICABLE_MODULE_1_1(subsampling_module_2D_replicable, 
-				subsampling_module_2D<T>,
-				(parameter<T> &p, intg sti, intg stj,
+  DECLARE_REPLICABLE_MODULE_1_1(subsampling_module_replicable, 
+				subsampling_module<T>,
+				(parameter<T> *p, intg sti, intg stj,
 				 intg subi, intg subj, intg thick),
 				(p, sti, stj, subi, subj, thick));
 
@@ -215,9 +242,10 @@ namespace ebl {
   public:
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
+    //!        If p is null, a local buffer will be used.
     //! \param size is the number of biases, or the size of dimensions 0 of 
     //! inputs and outputs.
-    addc_module(parameter<T> &p, intg size);
+    addc_module(parameter<T> *p, intg size);
     //! destructor
     virtual ~addc_module();
     //! forward propagation from in to out
@@ -228,6 +256,8 @@ namespace ebl {
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
+    //! Returns a deep copy of this module.
+    virtual addc_module<T>* copy();
 
     // members ////////////////////////////////////////////////////////
   public:

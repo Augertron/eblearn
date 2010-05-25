@@ -161,9 +161,14 @@ namespace ebl {
     layers_n(bool oc);
 /*     //! destructor. */
 /*     virtual ~layers_n(); */
-/*     void add_module(module_1_1 <T>* module, state_idx<T>* hidden); */
-/*     void add_last_module(module_1_1 <T>* module); */
-/*     virtual void fprop(state_idx<T> &in, state_idx<T> &out); */
+    
+    //! Add a module to the stack of modules. The 'hidden' buffer
+    //! between modules is optional, and will be automatically allocated
+    //! if NULL.
+    virtual void add_module(module_1_1<T>* module,
+			    state_idx<T>* hidden = NULL);
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    
 /*     virtual void bprop(state_idx<T> &in, state_idx<T> &out); */
 /*     virtual void bbprop(state_idx<T> &in, state_idx<T> &out); */
 /*     virtual void forget(forget_param_linear &fp); */
@@ -174,6 +179,9 @@ namespace ebl {
     
     //! Returns a deep copy of current module.
     virtual layers_n<T>* copy();
+  private:
+    using layers_n_gen<state_idx<T> >::modules;
+    using layers_n_gen<state_idx<T> >::hiddens;
   };
 
   ////////////////////////////////////////////////////////////////

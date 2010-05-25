@@ -72,10 +72,10 @@ namespace ebl {
     w = create_gaussian_kernel<T>(kernelh, kernelw);
     // prepare convolutions and their kernels
     idx<intg> table = one2one_table(nfeatures);
-    convolution_module_2D<T> *conv1 =
-      new convolution_module_2D<T>(param, w.dim(0), w.dim(1), 1, 1, table);
-    convolution_module_2D<T> *conv2 =
-      new convolution_module_2D<T>(param, w.dim(0), w.dim(1), 1, 1, table);
+    convolution_module<T> *conv1 =
+      new convolution_module<T>(&param, w.dim(0), w.dim(1), 1, 1, table);
+    convolution_module<T> *conv2 =
+      new convolution_module<T>(&param, w.dim(0), w.dim(1), 1, 1, table);
     idx_bloop1(kx, conv1->kernel.x, T)
       idx_copy(w, kx);
     //! normalize the kernels
@@ -209,7 +209,6 @@ namespace ebl {
     return new weighted_std_module<T>(w.dim(0), w.dim(1), nfeatures, mirror,
 				      threshold, global_norm);
   }
-
   
   ////////////////////////////////////////////////////////////////
   // abs_module
@@ -253,29 +252,29 @@ namespace ebl {
     idx_add(in.ddx, out.ddx, in.ddx);
   }
   
+  template <class T>
+  abs_module<T>* abs_module<T>::copy() {
+    return new abs_module<T>();
+  }
 
   //////////////////////////////////////////////////////////////////
   // smooth_shrink_module
 
   template <class T>
-  smooth_shrink_module<T>::smooth_shrink_module(parameter<T> &p, intg nf, T bt, T bs)
-  {
-    beta = state_idx<double>(p,nf);
-    bias = state_idx<double>(p,nf);
+  smooth_shrink_module<T>::smooth_shrink_module(parameter<T> *p, intg nf,
+						T bt, T bs)
+    : beta(p,nf), bias(p,nf), ebb(1), ebx(1,1,1), tin(1,1,1), absmod(0.0),
+      default_beta(bt), default_bias(bs) {
     idx_fill(beta.x, bt);
     idx_fill(bias.x, bs);
-    ebb = state_idx<double>(1);
-    ebx = state_idx<double>(1,1,1);
-    tin = state_idx<double>(1,1,1);
-    absmod = abs_module<double>(0.0);
   }
+  
   template <class T>
   smooth_shrink_module<T>::~smooth_shrink_module(){
   }
 
   template <class T>
-  void smooth_shrink_module<T>::fprop(state_idx<T>& in, state_idx<T>& out)
-  {
+  void smooth_shrink_module<T>::fprop(state_idx<T>& in, state_idx<T>& out) {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x.spec); // use same dimensions as in
       out.resize(d);
@@ -287,7 +286,8 @@ namespace ebl {
     idx_mul(beta.x, bias.x, ebb.x);
     idx_exp(ebb.x);
 
-    idx_bloop5(inx, tin.x, T, outx, out.x, T, ebbx, ebb.x, T, betax, beta.x, T, biasx, bias.x, T) {
+    idx_bloop5(inx, tin.x, T, outx, out.x, T, ebbx, ebb.x, T,
+	       betax, beta.x, T, biasx, bias.x, T) {
       idx_dotc(inx,betax.get(),outx);
       idx_exp(outx);
       idx_addc(outx, ebbx.get()-1, outx);
@@ -303,8 +303,7 @@ namespace ebl {
   }
   
   template <class T>
-  void smooth_shrink_module<T>::bprop(state_idx<T>& in, state_idx<T>& out)
-  {
+  void smooth_shrink_module<T>::bprop(state_idx<T>& in, state_idx<T>& out) {
     absmod.fprop(in,tin);
     tin.clear_dx();
     beta.clear_dx();
@@ -344,7 +343,7 @@ namespace ebl {
 
       // df/dbias
       idx_dotc(ebxddxi,ebb.x[i].get(),ttx);
-      idx_addc(ttx,-1.0,ttx);
+      idx_addc(ttx,(T)-1.0,ttx);
       bias.dx[i].set(idx_dot(outdxi,ttx));
       
       // df/dbeta
@@ -361,8 +360,7 @@ namespace ebl {
   }
   
   template <class T>
-  void smooth_shrink_module<T>::bbprop(state_idx<T>& in, state_idx<T>& out)
-  {
+  void smooth_shrink_module<T>::bbprop(state_idx<T>& in, state_idx<T>& out) {
     absmod.fprop(in,tin);
     tin.clear_ddx();
     beta.clear_ddx();
@@ -403,7 +401,7 @@ namespace ebl {
 
       // df/dbias
       idx_dotc(ebxddxi,ebb.x[i].get(),ttx);
-      idx_addc(ttx,-1.0,ttx);
+      idx_addc(ttx,(T)-1.0,ttx);
       idx_mul(ttx,ttx,ttx);
       bias.ddx[i].set(idx_dot(outdxi,ttx));
       
@@ -421,4 +419,15 @@ namespace ebl {
     idx_add(in.ddx,tin.ddx,in.ddx);
   }
   
+  template <class T>
+  smooth_shrink_module<T>* smooth_shrink_module<T>::copy() {
+    smooth_shrink_module<T>* s2 =
+      new smooth_shrink_module<T>(NULL, beta.x.dim(0),
+				  default_beta, default_bias);
+    // copy data
+    idx_copy(beta.x, s2->beta.x);
+    idx_copy(bias.x, s2->bias.x);
+    return s2;
+  }
+
 } // end namespace ebl
