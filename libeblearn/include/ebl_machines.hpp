@@ -356,7 +356,8 @@ namespace ebl {
 	      intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
 	      intg kj1, intg si1, intg sj1,
 	      intg output_size, bool norm, bool color, bool mirror, bool tanh,
-	      bool shrink) {
+	      bool shrink, idx<intg> *table0_, idx<intg> *table1_,
+	      idx<intg> *table2_) {
     idx<intg> table0, table1, table2;
     if (!color) { // use smaller tables
       table0 = full_table(1, 6);
@@ -375,6 +376,13 @@ namespace ebl {
 	     table1.nelements() * sizeof (intg));
       table2 = full_table(24, output_size);
     }
+    // overide default tables if defined
+    if (table0_)
+      table0 = *table0_;
+    if (table1_)
+      table1 = *table1_;
+    if (table2_)
+      table2 = *table2_;
       
     // WARNING: those two numbers must be changed
     // when image-height/image-width change
@@ -395,7 +403,8 @@ namespace ebl {
 		  intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
 		  intg kj1, intg si1, intg sj1, intg hid,
 		  intg output_size, bool norm, bool color, bool mirror,
-		  bool tanh, bool shrink) {
+		  bool tanh, bool shrink, idx<intg> *table0_,
+		  idx<intg> *table1_, idx<intg> *table2_) {
     idx<intg> table0, table1, table2;
     if (!color) { // use smaller tables
       table0 = full_table(1, 6);
@@ -414,7 +423,14 @@ namespace ebl {
 	     table1.nelements() * sizeof (intg));
       table2 = full_table(24, hid);
     }
-      
+    // overide default tables if defined
+    if (table0_)
+      table0 = *table0_;
+    if (table1_)
+      table1 = *table1_;
+    if (table2_)
+      table2 = *table2_;
+    
     // WARNING: those two numbers must be changed
     // when image-height/image-width change
     // TODO: add assertion test here?
