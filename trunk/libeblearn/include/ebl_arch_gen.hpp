@@ -441,6 +441,7 @@ enough hidden states in layers_gen");
   template<class T>
   layers_gen<T>* layers_gen<T>::copy() {
     eblerror("not implemented");
+    return NULL;
   }
   
   ////////////////////////////////////////////////////////////////

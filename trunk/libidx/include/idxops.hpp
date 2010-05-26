@@ -34,7 +34,6 @@
 #define IDXOPS_HPP
 
 #include <algorithm>
-#include <strings.h>
 
 using namespace std;
 
@@ -44,7 +43,7 @@ namespace ebl {
 
   template<class T> void idx_clear(idx<T> &inp) {
     if (inp.contiguousp()) // contiguous version
-      bzero(inp.idx_ptr(), inp.nelements() * sizeof (T));
+      memset(inp.idx_ptr(), 0, inp.nelements() * sizeof (T));
     else { // non contiguous version
       idxiter<T> pinp;
       idx_aloop1_on(pinp,inp) { *pinp = 0; }

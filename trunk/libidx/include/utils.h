@@ -36,11 +36,11 @@
 #ifdef __WINDOWS__
 #else // linux & mac
 #include <sys/time.h>
+#include <unistd.h>
 #endif
 
 #include <string>
 #include <stdio.h>
-#include <unistd.h>
 
 using namespace std;
 
@@ -80,7 +80,10 @@ namespace ebl {
     //! Return elapsed time in milliseconds since start() or restart().
     long elapsed_milliseconds();
   private:
+#ifdef __WINDOWS__
+#else // linux & mac
     struct timeval t0, t1;
+#endif
   };
 
   //! Sleep for 'millis' milliseconds.
