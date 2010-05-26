@@ -13,11 +13,17 @@ else
 	LIB_EXT=so
 endif
 
-# installation parameters
+#installation parameters
 ifeq ($(DIR),)
-  INSTALL_DIR=/usr
+ INSTALL_DIR=/usr
 else
-  INSTALL_DIR=$(DIR)
+  FIRST=$(shell echo $(DIR) | cut -c1)
+  ifeq ("$(FIRST)","/")
+   INSTALL_DIR="$(DIR)"
+  else
+   HERE=$(shell pwd)
+   INSTALL_DIR="$(HERE)/$(DIR)"
+  endif
 endif
 
 INCLUDE_INSTALL=$(INSTALL_DIR)/include/eblearn/
@@ -49,7 +55,7 @@ libs:
 	@echo __________________________________________________________________
 	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
 	&& make idx eblearn eblearntools && cd ../..
-	
+
 tools:
 	@echo __________________________________________________________________
 	@echo
@@ -57,7 +63,7 @@ tools:
 	@echo __________________________________________________________________
 	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
 	&& make ${BINS} && cd ../..
-	
+
 demo:
 	@echo __________________________________________________________________
 	@echo
@@ -65,7 +71,7 @@ demo:
 	@echo __________________________________________________________________
 	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
 	&& make ${DEMOS} && cd ../..
-	
+
 test:
 	@echo __________________________________________________________________
 	@echo
@@ -88,7 +94,7 @@ debug:
 
 doc:
 	cd doc/documentation && ./generate.sh
-	
+
 clean:
 	rm -rf build/Debug/*
 	rm -rf build/Release/*
@@ -100,7 +106,7 @@ clean:
 	rm -rf doc/documentation/libidxgui_html
 
 install:
-	echo $(DIR)
+	@echo "Installation directory: $(INSTALL_DIR)"
 	mkdir -p $(INCLUDE_INSTALL) $(LIB_INSTALL) $(BIN_INSTALL)
 	cp -f libidx/include/* $(INCLUDE_INSTALL)
 	cp -f libeblearn/include/* $(INCLUDE_INSTALL)
