@@ -6,7 +6,7 @@ w=32
 traindsname=ped${dset}_mean${h}x${w}_ker7_bg_train
 valdsname=ped${dset}_mean${h}x${w}_ker7_bg_val
 
-machine=texier
+machine=dizzb
 metaconf_name=ped_meta.conf
 save_max=20000
 
@@ -44,8 +44,8 @@ meta_send_best=15
 
 # directories
 xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
-root=~/${machine}adata/pedestrians/
-root2=~/${machine}adata/
+root=~/${machine}data/pedestrians/
+root2=~/${machine}data/
 dataroot=$root/ds
 out=$root/out/$xpname/
 eblearnbin0=~/eblearn/bin/
