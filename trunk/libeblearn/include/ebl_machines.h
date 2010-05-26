@@ -168,7 +168,9 @@ namespace ebl {
 		intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 		intg si1, intg sj1, intg output_size,
 		bool norm = false, bool color = false, bool mirror = false,
-		bool tanh = false, bool shrink = false);
+		bool tanh = false, bool shrink = false,
+		idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL,
+		idx<intg> *table2_ = NULL);
     virtual ~lenet_cscsc() {}
   };
 
@@ -184,7 +186,9 @@ namespace ebl {
 	  intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 	  intg si1, intg sj1, intg hid, intg output_size,
 	  bool norm = false, bool color = false, bool mirror = false,
-	  bool tanh = false, bool shrink = false);
+	  bool tanh = false, bool shrink = false,
+	  idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL,
+	  idx<intg> *table2_ = NULL);
     virtual ~lenet() {}
   };
 

@@ -40,6 +40,24 @@ namespace ebl {
   module_1_1<T>* create_network(parameter<T> &theparam,
 				configuration &conf, uint noutputs) {
     string net_type = conf.get_string("net_type");
+    // load custom tables if defined
+    idx<intg> *table0 = NULL, *table1 = NULL, *table2 = NULL;
+    if (conf.exists("table0")) {
+      table0 = new idx<intg>(1, 1);
+      load_matrix(*table0, conf.get_string("table0"));
+      cout << "Loaded table0 from " << conf.get_string("table0") << endl;
+    }
+    if (conf.exists("table1")) {
+      table1 = new idx<intg>(1, 1);
+      load_matrix(*table1, conf.get_string("table1"));
+      cout << "Loaded table1 from " << conf.get_string("table1") << endl;
+    }
+    if (conf.exists("table2")) {
+      table2 = new idx<intg>(1, 1);
+      load_matrix(*table2, conf.get_string("table2"));
+      cout << "Loaded table2 from " << conf.get_string("table2") << endl;
+    }
+    // create networks
     if (!strcmp(net_type.c_str(), "cscscf")) {
       return (module_1_1<T>*) new lenet<T>
 	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
@@ -50,7 +68,7 @@ namespace ebl {
 	 conf.get_uint("net_full"), noutputs,
 	 conf.get_bool("absnorm"), conf.get_bool("color"),
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_bool("use_shrink"));
+	 conf.exists_bool("use_shrink"), table0, table1, table2);
     } else if (!strcmp(net_type.c_str(), "cscsc")) {
       return (module_1_1<T>*) new lenet_cscsc<T>
 	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
@@ -60,7 +78,7 @@ namespace ebl {
 	 conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
 	 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_bool("use_shrink"));
+	 conf.exists_bool("use_shrink"), table0, table1, table2);
     } else if (!strcmp(net_type.c_str(), "cscf")) {
       return (module_1_1<T>*) new lenet_cscf<T>
 	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
@@ -69,7 +87,7 @@ namespace ebl {
 	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
 	 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_bool("use_shrink"));
+	 conf.exists_bool("use_shrink"), table0, table1);
     } else {
       cerr << "network type: " << net_type << endl;
       eblerror("unknown network type");

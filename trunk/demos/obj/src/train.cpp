@@ -66,11 +66,6 @@ void koray_temp(configuration &conf, layers<t_net> &net) {
   idx_copy(mat, ((convolution_module<t_net>*)((*net.modules)[0]))->kernel.x);
 
   m.str(""); m << conf.get_string("koray_dir")
-	       << conf.get_string("wkoray") << "_conv0_table.mat";
-  table = load_matrix<intg>(m.str());
-  idx_copy(mat, ((convolution_module<t_net>*)((*net.modules)[0]))->table);
-
-  m.str(""); m << conf.get_string("koray_dir")
 	       << conf.get_string("wkoray") << "_bias0_bias.x.mat";
   mat = load_matrix<t_net>(m.str());
   idx_copy(mat, ((addc_module<t_net>*)((*net.modules)[1]))->bias.x);
