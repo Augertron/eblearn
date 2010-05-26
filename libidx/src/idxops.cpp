@@ -63,7 +63,7 @@ namespace ebl {
 #ifdef __IPP__
 	       ipp_set(in, (float) 0);
 #else
-	       bzero(in.idx_ptr(), in.nelements() * sizeof (float));
+	       memset(in.idx_ptr(), 0, in.nelements() * sizeof (float));
 		 // TODO: cblas version?
 		 //cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
 #endif

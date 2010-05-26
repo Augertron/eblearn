@@ -31,7 +31,10 @@
 
 #include <algorithm>
 #include <stdio.h>
+
+#ifndef __WINDOWS__
 #include <inttypes.h>
+#endif
 
 #include "color_spaces.h"
 

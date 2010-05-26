@@ -37,11 +37,14 @@
 #include <math.h>
 #include <stdlib.h>
 #include <fstream>
-#include <ext/stdio_filebuf.h>
 #include <cstdlib>
 #include <cstdio>
-#include <unistd.h>
 #include <iostream>
+
+#ifndef __WINDOWS__
+#include <ext/stdio_filebuf.h>
+#include <unistd.h>
+#endif
 
 #include "idxIO.h"
 

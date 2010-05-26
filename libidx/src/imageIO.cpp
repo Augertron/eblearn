@@ -32,8 +32,11 @@
 
 #include <algorithm>
 #include <stdio.h>
-#include <inttypes.h>
 #include <ostream>
+
+#ifndef __WINDOWS__
+#include <inttypes.h>
+#endif
 
 #include "imageIO.h"
 #include "idxops.h"
