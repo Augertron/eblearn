@@ -129,10 +129,17 @@ ENDIF (QT_FOUND)
 
 # find CBLAS
 ################################################################################
-FIND_PACKAGE(CBLAS)
-IF(CBLAS_FOUND)
-  INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
-ENDIF(CBLAS_FOUND)
+IF ($ENV{NOCBLAS})
+  MESSAGE(STATUS "CBLAS DISABLED by env variable $NOCBLAS=1.")
+ELSE ($ENV{NOCBLAS})
+  FIND_PACKAGE(CBLAS)
+  IF(CBLAS_FOUND)
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__CBLAS__")
+    INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
+  ELSE (CBLAS_FOUND)
+    MESSAGE("__ WARNING: cblas not found.")
+  ENDIF(CBLAS_FOUND)
+ENDIF ($ENV{NOCBLAS})
 
 # find CPPUnit
 ################################################################################

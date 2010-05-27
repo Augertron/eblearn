@@ -769,6 +769,65 @@ namespace ebl {
     }
   }
 
+  /* multiply M2 by M1, result in M1 */
+  /* matrix - vector product */
+  template<class T>
+  void idx_m2dotm1(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
+    T *c1, *c2, *c1_0, *ker; 
+    intg c1_m1 = i1.mod(1), c2_m0 = i2.mod(0); 
+    intg j, jmax = i2.dim(0); 
+    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0); 
+    T *d1, f; 
+    intg i, imax = o1.dim(0); 
+    c1_0 = i1.idx_ptr();
+    ker = i2.idx_ptr();
+    d1 = o1.idx_ptr();
+    for (i=0; i<imax; i++){ 
+      f = 0; 
+      c1 = c1_0; 
+      c2 = ker; 
+      if(c1_m1==1 && c2_m0==1) 
+	for (j=0; j<jmax; j++)  
+	  f += (*c1++)*(*c2++); 
+      else 
+	for (j=0; j<jmax; j++) { 
+	  f += (*c1)*(*c2); 
+	  c1 += c1_m1; 
+	  c2 += c2_m0; 
+	} 
+      *d1 = f; 
+      d1 += d1_m0; 
+      c1_0 += c1_m0; 
+    } 
+  }
+  
+  /* multiply M2 by M1, result in M1 */
+  template<class T>
+  void idx_m2dotm1acc(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
+    T *c1, *c2, *c1_0, *ker;
+    intg c1_m1 = i1.mod(1), c2_m0 = i2.mod(0); 
+    intg j, jmax = i2.dim(0); 
+    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0); 
+    T *d1, f; 
+    intg i, imax = o1.dim(0); 
+    c1_0 = i1.idx_ptr();
+    ker = i2.idx_ptr();
+    d1 = o1.idx_ptr();
+    for (i=0; i<imax; i++){ 
+      f = *d1; 
+      c1 = c1_0; 
+      c2 = ker; 
+      for (j=0; j<jmax; j++) { 
+	f += (*c1)*(*c2); 
+	c1 += c1_m1; 
+	c2 += c2_m0; 
+      } 
+      *d1 = f; 
+      d1 += d1_m0; 
+      c1_0 += c1_m0; 
+    } 
+  }
+  
   // TODO-0 write specialized blas version in cpp
   template<class T> void idx_m4dotm2(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
     idx_checkorder3(i1, 4, i2, 2, o1, 2); // check for compatible orders
@@ -1221,15 +1280,17 @@ namespace ebl {
     };
   }
 
-  /* TODO: implement generic version of idx_dot
-     template <class T> void idx_dot(idx<T> &i1, idx<T> &i2, idx<T> &o1){
-     if (o1.order() != 0) eblerror("Not an idx0");
-     return o1.set(idx_dot(i1, i2));
-     }
-  */
+  template <class T> T idx_dot(idx<T> &i1, idx<T> &i2) {
+    T total = 0;
+    idx_aloop2(ii1, i1, T, ii2, i2, T) {
+      total += *ii1 * *ii2;
+    }
+    return total;
+  }
 
   template<class T> void idx_dotacc(idx<T> &i1, idx<T> &i2, idx<T> &o) {
-    if (o.order() != 0) eblerror("Not an idx0");
+    if (o.order() != 0)
+      eblerror("output idx should have order 0");
     o.set(o.get() + idx_dot(i1, i2));
   }
 
@@ -1247,14 +1308,51 @@ namespace ebl {
     idx_m4dotm2(uin, kernel, out);
   }
 
-  ////////////////////////////////////////////////////////////////
-  // Dummy templates
+  template <typename T>
+  void idx_m1extm1(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
+    T *c2, *d1, *c1, *c2_0, *d1_0; 
+    intg c2_m0 = i2.mod(0), d1_m1 = o1.mod(1); 
+    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0); 
+    intg j, jmax = o1.dim(1); 
+    intg i, imax = o1.dim(0); 
+    c1 = i1.idx_ptr();
+    c2_0 = i2.idx_ptr();
+    d1_0 = o1.idx_ptr();
+    for (i=0; i<imax; i++) { 
+      d1 = d1_0; 
+      c2 = c2_0; 
+      for (j=0; j<jmax; j++) { 
+	*d1 = (*c1)*(*c2); 
+	d1 += d1_m1; 
+	c2 += c2_m0; 
+      } 
+      d1_0 += d1_m0; 
+      c1 += c1_m0; 
+    } 
+  } 
 
   template <typename T>
-  void idx_m1extm1(idx<T> &a, idx<T> &x, idx<T> &y) {
-    eblerror("Not implemented.");
-  }
-  
+  void idx_m1extm1acc(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
+    T *c2, *d1, *c1, *c2_0, *d1_0; 
+    intg c2_m0 = i2.mod(0), d1_m1 = o1.mod(1); 
+    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0); 
+    intg j, jmax = o1.dim(1); 
+    intg i, imax = o1.dim(0); 
+    c1 = i1.idx_ptr();
+    c2_0 = i2.idx_ptr();
+    d1_0 = o1.idx_ptr();
+    for (i=0; i<imax; i++) { 
+      d1 = d1_0; 
+      c2 = c2_0; 
+      for (j=0; j<jmax; j++) { 
+	*d1 += (*c1)*(*c2); 
+	d1 += d1_m1; 
+	c2 += c2_m0; 
+      } 
+      d1_0 += d1_m0; 
+      c1 += c1_m0; 
+    } 
+  } 
   
 } // end namespace ebl
 

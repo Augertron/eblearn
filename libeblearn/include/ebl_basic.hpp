@@ -87,7 +87,11 @@ namespace ebl {
 
   template <class T>
   void linear_module<T>::normalize() {
+#ifdef __CBLAS__
     norm_columns(w.x);
+#else
+    eblerror("norm_columns not implemented without cblas");
+#endif
   }
 
   template <class T>

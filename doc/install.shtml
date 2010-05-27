@@ -102,7 +102,7 @@
        <code>$ make test</code><br>
        To exclude some components such as QT or OpenCV from being used,
        export the following shell variables with 0 or 1: NOBOOST, NOOPENCV,
-       NOXML, NOQT, NOIPP. For example to compile without OpenCV:<br>
+       NOXML, NOQT, NOIPP, NOCBLAS. For example to compile without OpenCV:<br>
        <code>$ make NOOPENCV=1 NOQT=1</code><br>
        Or:&nbsp<code>$ export NOOPENCV=1 && make</code><br>
        To add extra flags to the compilation, export the EBLFLAGS variable.
