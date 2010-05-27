@@ -932,7 +932,7 @@ namespace ebl {
 	idx_check_contiguous1(*this);
 	idx<T> r(getstorage(), 0, spec.nelements());
 	return r;
-      } 
+      }
       else if (n > spec.ndim) {
 	intg *ldim = new intg[n];
 	intg *lmod = new intg[n];

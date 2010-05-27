@@ -868,15 +868,18 @@ namespace ebl {
     //! order of an idxdim, only existing dimensions can be changed.
     void setdim(intg dimn, intg size);
 
-    //! Extract dimensions information from an idx
+    //! Set sames dimensions as an idx.
     template <class T>
       void setdims(const idx<T> &i);
     
-    //! Extract dimensions information from an idxdim
+    //! Set sames dimensions as an idxdim.
     void setdims(const idxdim &s);
      
-    //! Extract dimensions information from an idxspec
+    //! Set sames dimensions as an idxspec.
     void setdims(const idxspec &s);
+
+    //! Set all existing dimensions to n.
+    void setdims(intg n);
 
     //! Insert a dimension of size dim_size at position pos, shifting
     //! all dimensions after pos and incrementing order by 1.

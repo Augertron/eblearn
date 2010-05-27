@@ -233,7 +233,7 @@ namespace ebl {
     intg ki2 = (((ini - ki0 + 1) / si0) - ki1 + 1);
     intg kj2 = (((inj  - kj0 + 1) / sj0) - kj1 + 1);
     // full
-    add_module(new full_layer<T>(&prm, thick1, outthick * ki2 * kj2, tanh));
+    add_module(new full_layer<T>(&prm, thick1 * ki2 * kj2, outthick, tanh));
 
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
