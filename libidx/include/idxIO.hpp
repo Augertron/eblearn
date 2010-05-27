@@ -168,7 +168,7 @@ namespace ebl {
       err << "warning: failed to open " << filename;
       throw err.str();
     }
-    load_matrix(in, &m);
+    m = load_matrix(in, &m);
     in.close();
   }
 
@@ -183,18 +183,18 @@ namespace ebl {
     else // otherwise use given one
       pout = out_;
 
+    // resize out if necessary
+    if (pout->get_idxdim() != dims) { // different order/dimensions
+      // if order is different, it's from the input matrix, error
+      if (pout->order() != dims.order()) {
+	cerr << "error: different orders: " << *pout << " " << dims << endl;
+	eblerror("idx have different orders");
+      }
+      // resize output idx
+      pout->resize(dims);
+    }
     //! if out matrix is same type as current, read directly
     if ((magic == get_magic<T>()) || (magic == get_magic_vincent<T>())) {
-      // resize out if necessary
-      if (pout->get_idxdim() != dims) { // different order/dimensions
-	// if order is different, it's from the input matrix, error
-	if (pout->order() != dims.order()) {
-	  cerr << "error: different orders: " << *pout << " " << dims << endl;
-	  eblerror("idx have different orders");
-	}
-	// resize output idx
-	pout->resize(dims);
-      }
       // read
       read_matrix_body(stream, *pout);
     } else { // different type, read original type, then copy/cast into out

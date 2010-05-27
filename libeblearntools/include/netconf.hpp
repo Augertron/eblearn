@@ -45,17 +45,20 @@ namespace ebl {
     if (conf.exists("table0")) {
       table0 = new idx<intg>(1, 1);
       load_matrix(*table0, conf.get_string("table0"));
-      cout << "Loaded table0 from " << conf.get_string("table0") << endl;
+      cout << "Loaded table0 (" << *table0 
+	   << ") from " << conf.get_string("table0") << endl;
     }
     if (conf.exists("table1")) {
       table1 = new idx<intg>(1, 1);
       load_matrix(*table1, conf.get_string("table1"));
-      cout << "Loaded table1 from " << conf.get_string("table1") << endl;
+      cout << "Loaded table1 (" << *table1
+	   << ") from " << conf.get_string("table1") << endl;
     }
     if (conf.exists("table2")) {
       table2 = new idx<intg>(1, 1);
       load_matrix(*table2, conf.get_string("table2"));
-      cout << "Loaded table2 from " << conf.get_string("table2") << endl;
+      cout << "Loaded table2 (" << *table2
+	   << ") from " << conf.get_string("table2") << endl;
     }
     // create networks
     if (!strcmp(net_type.c_str(), "cscscf")) {
