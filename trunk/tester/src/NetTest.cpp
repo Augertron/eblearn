@@ -120,7 +120,7 @@ void NetTest::test_lenet5_mnist() {
   }
   CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, // old: 97.00
 			       ((trainmeter.total_correct * 100) 
-				/ (double) trainmeter.size), 0.0);
+				/ (double) trainmeter.size), 0.5);
   CPPUNIT_ASSERT_DOUBLES_EQUAL(95.4262, // 96.4630, // old: 95.90
 			       ((testmeter.total_correct * 100) 
 				/ (double) testmeter.size), 1.5);
