@@ -1,6 +1,7 @@
 # Find CppUnit Library
 ################################################################
 FIND_PATH(CPPUNIT_INCLUDE_DIR cppunit/extensions/HelperMacros.h 
+  /share/apps/cppunit/1.12.1/gnu/include
   /usr/include
   /usr/local/include
   /sw/include
@@ -10,13 +11,14 @@ FIND_PATH(CPPUNIT_INCLUDE_DIR cppunit/extensions/HelperMacros.h
 
 FIND_LIBRARY(CPPUNIT_LIBRARY 
   NAMES cppunit libcppunit-1.12
-  PATH 
+  PATHS 
   /usr/lib 
   /usr/lib64/ 
   /usr/local/lib
   /sw/lib
   /sw/local/lib
   /opt/local/lib
+  /share/apps/cppunit/1.12.1/gnu/lib
   )
 
 IF (CPPUNIT_INCLUDE_DIR)
