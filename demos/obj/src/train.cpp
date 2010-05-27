@@ -168,16 +168,18 @@ int main(int argc, char **argv) { // regular main without gui
     cout << " training samples and " << test_ds.size() <<" val samples for " 
 	 << conf.get_uint("iterations") << " iterations:" << endl;
     ostringstream name, fname;
-
-    // estimate second derivative on 100 iterations, using mu=0.02
-    thetrainer.compute_diaghessian(train_ds, 100, 0.02);
-
+    timer titer, ttest;
     for (uint i = 1; i <= conf.get_uint("iterations"); ++i) {
+      titer.restart();
+      // estimate second derivative on 100 iterations, using mu=0.02
+      thetrainer.compute_diaghessian(train_ds, 100, 0.02);
       // train and test
+      ttest.restart();
       thetrainer.train(train_ds, trainmeter, gdp, 1);	// train
       thetrainer.test(train_ds, trainmeter, infp);	// test
       thetrainer.test(test_ds, testmeter, infp);	// test
-    
+      cout << "test_minutes=" << ttest.elapsed_minutes() << endl;
+
       // save weights and confusion matrix for test set
       name.str("");
       if (conf.exists("job_name"))
@@ -196,9 +198,7 @@ int main(int argc, char **argv) { // regular main without gui
 	stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
       }
 #endif
-    
-      // recompute 2nd derivatives on 100 iterations with mu=0.02
-      thetrainer.compute_diaghessian(train_ds, 100, 0.02);
+      cout << "iteration_minutes=" << titer.elapsed_minutes() << endl;
     }
     // free variables
     if (net) delete net;
