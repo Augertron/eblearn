@@ -697,7 +697,7 @@ namespace ebl {
     memcpy(dims, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
     // set remaining to -1
     memset(dims + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg));
-  } 
+  }
   
   void idxdim::setdims(const idxdim &s) {
     ndim = s.order();
@@ -705,6 +705,11 @@ namespace ebl {
       dims[i] = s.dim(i);
     // set remaining to -1
     memset(dims + s.order(), -1, (MAXDIMS - s.order()) * sizeof (intg)); 
+  }
+
+  void idxdim::setdims(intg n) {
+    for (int i = 0; i < ndim; ++i)
+      dims[i] = n;
   }
   
   bool idxdim::insert_dim(intg dim_size, uint pos) {
