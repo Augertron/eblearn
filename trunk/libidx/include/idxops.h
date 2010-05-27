@@ -33,8 +33,11 @@
 #ifndef IDXOPS_H
 #define IDXOPS_H
 
-#include <cmath>
+#ifdef __CBLAS__
 #include "idxblas.h"
+#endif
+
+#include <cmath>
 #include "numerics.h"
 #include "idx.h"
 #include "ippops.h"
@@ -120,8 +123,10 @@ namespace ebl {
   template <class T1, class T2> void idx_copy(idx<T1> &src, idx<T2> &dst);
   template <class T1, class T2> idx<T1> idx_copy(idx<T2> &src);
   template <class T> idx<T> idx_copy(idx<T> &src);
+#ifdef __CBLAS__
   template <> void idx_copy(idx<double> &src, idx<double> &dst);
   template <> void idx_copy(idx<float> &src, idx<float> &dst);
+#endif
   //template<class T> void idx_copy(idx<T> &src, idx<T> &dst);
 
   //! copy src into dst but prevent under and overflow if values in src
@@ -331,25 +336,37 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // dot products
 
+#ifdef __CBLAS__
   //! dot product of two idx. Returns sum of product of all elements.
   double idx_dot(idx<double> &i1, idx<double> &i2);
+  //! dot product of two idx. Returns sum of product of all elements.
   float idx_dot(idx<float> &i1, idx<float> &i2);
+#endif
+  //! dot product of two idx. This generic version is not efficient.
+  //! Returns sum of product of all elements.
   template <class T> T idx_dot(idx<T> &i1, idx<T> &i2);
 
   //! dot product of two idx. Accumulate result into idx0.
   template<class T> void idx_dotacc(idx<T>& i1, idx<T>& i2, idx<T>& o);
 
   //! matrix-vector multiplication y <- a.x
+  template<class T> void idx_m2dotm1(idx<T> &a, idx<T> &x, idx<T> &y);
+  //! matrix-vector multiplication y <- y + a.x
+  template<class T> void idx_m2dotm1acc(idx<T> &a, idx<T> &x, idx<T> &y);
+  
+#ifdef __CBLAS__
+  //! matrix-vector multiplication y <- a.x
   void idx_m2dotm1(idx<double> &a, idx<double> &x, idx<double> &y);
+  //! matrix-vector multiplication y <- a.x
   void idx_m2dotm1(idx<float> &a, idx<float> &x, idx<float> &y);
-
   //! matrix-vector multiplication y <- y + a.x
   void idx_m2dotm1acc(idx<double> &a, idx<double> &x, idx<double> &y);
+  //! matrix-vector multiplication y <- y + a.x
   void idx_m2dotm1acc(idx<float> &a, idx<float> &x, idx<float> &y);
-
+#endif
+  
   //! 4-tensor by 2-matrix multiplication R_ij = sum_kl M1_ijkl * M2_kl
   template<class T> void idx_m4dotm2(idx<T> &i1, idx<T> &i2, idx<T> &o1);
-
   //! 4-tensor by 2-matrix multiplication with accumulation 
   //! R_ij += sum_kl M1_ijkl * M2_kl
   template<class T> void idx_m4dotm2acc(idx<T> &i1, idx<T> &i2, idx<T> &o1);
@@ -360,7 +377,6 @@ namespace ebl {
 
   //! outer product between matrices. Gives a 4-tensor: R_ijkl = M1_ij * M2_kl
   template<class T> void idx_m2extm2(idx<T> &i1, idx<T> &i2, idx<T> &o1);
-
   //! outer product between matrices with accumulation. 
   //! Gives a 4-tensor: R_ijkl += M1_ij * M2_kl
   template<class T> void idx_m2extm2acc(idx<T> &i1, idx<T> &i2, idx<T> &o1);
@@ -376,36 +392,45 @@ namespace ebl {
     void idx_m2squdotm2acc(idx<T>& i1, idx<T>& i2, idx<T>& o);
 
   //! vector-vector outer product a <- x.y'
-  void idx_m1extm1(idx<double> &a, idx<double> &x, idx<double> &y);
-  void idx_m1extm1(idx<float> &a, idx<float> &x, idx<float> &y);
-
-  //! Dummy template to avoid compilation error.
-  template <typename T>
-  void idx_m1extm1(idx<T> &a, idx<T> &x, idx<T> &y);
+  template <typename T> void idx_m1extm1(idx<T> &a, idx<T> &x, idx<T> &y);
+  //! vector-vector outer product a <- a + x.y'
+  template <typename T> void idx_m1extm1acc(idx<T> &a, idx<T> &x, idx<T> &y);
   
+#ifdef __CBLAS__
+  //! vector-vector outer product a <- x.y'
+  void idx_m1extm1(idx<double> &a, idx<double> &x, idx<double> &y);
+  //! vector-vector outer product a <- x.y'
+  void idx_m1extm1(idx<float> &a, idx<float> &x, idx<float> &y);
   //! vector-vector outer product a <- a + x.y'
   void idx_m1extm1acc(idx<double> &a, idx<double> &x, idx<double> &y);
+  //! vector-vector outer product a <- a + x.y'
   void idx_m1extm1acc(idx<float> &a, idx<float> &x, idx<float> &y);
+#endif
 
   //! square matrix vector multiplication : Yi = sum((Aij)^2 * Xj)
   void idx_m2squdotm1(idx<double> &a, idx<double> &x, idx<double> &y);
+  //! square matrix vector multiplication : Yi = sum((Aij)^2 * Xj)
   void idx_m2squdotm1(idx<float> &a, idx<float> &x, idx<float> &y);
-
   //! square matrix vector multiplication : Yi += sum((Aij)^2 * Xj)
   void idx_m2squdotm1acc(idx<double> &a, idx<double> &x, idx<double> &y);
+  //! square matrix vector multiplication : Yi += sum((Aij)^2 * Xj)
   void idx_m2squdotm1acc(idx<float> &a, idx<float> &x, idx<float> &y);
 
   //! Aij = Xi * Yj^2
   void idx_m1squextm1(idx<double> &a, idx<double> &x, idx<double> &y);
+  //! Aij = Xi * Yj^2
   void idx_m1squextm1(idx<float> &a, idx<float> &x, idx<float> &y);
-
   //! Aij += Xi * Yj^2
   void idx_m1squextm1acc(idx<double> &a, idx<double> &x, idx<double> &y);
+  //! Aij += Xi * Yj^2
   void idx_m1squextm1acc(idx<float> &a, idx<float> &x, idx<float> &y);
 
+#ifdef __CBLAS__
   //! normalize the colums of a matrix
   void norm_columns(idx<double> &m);
+  //! normalize the colums of a matrix
   void norm_columns(idx<float> &m);
+#endif
 
   //! 2D convolution. all arguments are idx2.
   template<class T> void idx_2dconvol(idx<T> &in, idx<T> &kernel, idx<T> &out);

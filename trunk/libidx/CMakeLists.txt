@@ -30,13 +30,9 @@ add_library (idx SHARED
 # link
 ################################################################################
 IF(CBLAS_FOUND)
-  TARGET_LINK_LIBRARIES(idx ${CBLAS_LIBRARIES}
-)
+  TARGET_LINK_LIBRARIES(idx ${CBLAS_LIBRARIES})
   CONFIGURE_FILE("include/idxblas.h.in" 
     "${CMAKE_CURRENT_SOURCE_DIR}/include/idxblas.h")
-ELSE(CBLAS_FOUND)
-  MESSAGE(FATAL_ERROR 
-    "CBLAS library not found. Please specify library  location")
 ENDIF(CBLAS_FOUND)
 
 IF(IPP_FOUND)

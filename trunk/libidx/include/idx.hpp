@@ -1042,22 +1042,27 @@ namespace ebl {
 
   // get element of idx0
   template <class T> T idx<T>::get() {
+#ifdef __DEBUG__
     idx_checkorder1(*this, 0);
+#endif
     return (storage->data)[spec.offset];
   }
 
   // get element of idx1
   template <class T> T idx<T>::get(intg i0) {
+#ifdef __DEBUG__
     idx_checkorder1(*this, 1);
     if ((i0 < 0) || (i0 >= spec.dim[0])) {
       cerr << "error accessing elt " << i0 << " in " << *this << endl;
       eblerror("index out of bound");
     }
+#endif
     return (storage->data)[spec.offset + i0*spec.mod[0]];
   }
 
   // get element of idx2
   template <class T> T idx<T>::get(intg i0, intg i1) {
+#ifdef __DEBUG__
     idx_checkorder1(*this, 2);
     if (((i0 < 0) || (i0 >= spec.dim[0])) || 
 	((i1 < 0) || (i1 >= spec.dim[1]))) {
@@ -1065,11 +1070,13 @@ namespace ebl {
 	   << i1 << " in " << *this << endl;
       eblerror("index out of bound");
     }
+#endif
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1]];
   }
 
   // get element of idx3
   template <class T> T idx<T>::get(intg i0, intg i1, intg i2) {
+#ifdef __DEBUG__
     idx_checkorder1(*this, 3);
     if (((i0 < 0) || (i0 >= spec.dim[0])) || 
 	((i1 < 0) || (i1 >= spec.dim[1])) ||
@@ -1078,6 +1085,7 @@ namespace ebl {
 	   << i1 << "x" << i2 << " in " << *this << endl;
       eblerror("index out of bound");
     }
+#endif
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1] 
 			   + i2*spec.mod[2]];
   }
@@ -1093,31 +1101,39 @@ namespace ebl {
 
   // set the element of idx0
   template <class T> T idx<T>::set(T val) {
+#ifdef __DEBUG__
     idx_checkorder1(*this, 0);
+#endif
     return (storage->data)[spec.offset] = val;
   }
 
   // set the element of idx1
   template <class T> T idx<T>::set(T val, intg i0) {
+#ifdef __DEBUG__
     idx_checkorder1(*this, 1);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
+#endif
     return (storage->data)[spec.offset + i0*spec.mod[0]] = val;
   }
 
   // set the element of idx2
   template <class T> T idx<T>::set(T val, intg i0, intg i1) {
+#ifdef __DEBUG__
     idx_checkorder1(*this, 2);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
+#endif
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1]] = val;
   }
 
   // set the element of idx3
   template <class T> T idx<T>::set(T val, intg i0, intg i1, intg i2) {
+#ifdef __DEBUG__
     idx_checkorder1(*this, 3);
     if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
     if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
     if ((i2 < 0) || (i2 >= spec.dim[2])) eblerror("index 2 out of bound");
+#endif
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1] 
 			   + i2*spec.mod[2]] = val;
   }

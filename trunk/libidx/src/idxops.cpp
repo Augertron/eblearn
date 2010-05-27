@@ -95,58 +95,7 @@ namespace ebl {
 	     { idx_bloop1(i, in, float) { idx_fill(i, v); }});
   }
 
-  ////////////////////////////////////////////////////////////////
-
-  // specialization for doubles: can use blas versions.
-  template <>
-  void idx_copy(idx<double> &src, idx<double> &dst) {
-    // loop and copy
-    idxop_ii(src, dst,
-	     // idx0 version
-	     { *(dst.idx_ptr()) = *(src.idx_ptr()); },
-	     // idx1 version
-	     { cblas_dcopy(N1, src.idx_ptr(), src.mod(0), dst.idx_ptr(), 
-			   dst.mod(0)); },
-	     // contiguous version
-	     { cblas_dcopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1); },
-	     // recursive version
-	     { idx_bloop2(lsrc, src, double, ldst, dst, double) { 
-		 idx_copy(lsrc, ldst); } },
-	     // any version
-	     { idx_aloop2(isrc, src, double, idst, dst, double) { 
-		 *idst = *isrc; }
-	     }
-	     );
-  }
-
-  // specialization for floats: can use blas versions.
-  template <>
-  void idx_copy(idx<float> &src, idx<float> &dst) {
-    // loop and copy
-    idxop_ii(src, dst,
-	     // idx0 version
-	     { *(dst.idx_ptr()) = *(src.idx_ptr()); },
-	     // idx1 version
-	     { cblas_scopy(N1, src.idx_ptr(), src.mod(0), dst.idx_ptr(), 
-			   dst.mod(0)); },
-	     // contiguous version
-	     {
-#ifdef __IPP__
-	       ipp_copy(src, dst);
-#else
-	       cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
-#endif
-	     },
-	     // recursive version
-	     { idx_bloop2(lsrc, src, float, ldst, dst, float) { 
-		 idx_copy(lsrc, ldst); } },
-	     // any version
-	     { idx_aloop2(isrc, src, float, idst, dst, float) { 
-		 *idst = *isrc; }
-	     }
-	     );
-  }
-
+  
   ////////////////////////////////////////////////////////////////
 
   template<> double idx_sum(idx<double> &inp, double *out) {
@@ -228,6 +177,124 @@ namespace ebl {
 #endif
     idxiter<float> pin, pout;
     idx_aloop2_on(pin, in, pout, out) { *pout = *pin + c; }
+  }
+
+  ////////////////////////////////////////////////////////////////
+
+  // square matrix-vector multiplication: Yi = sum((Aij)^2 * Xj)
+  void idx_m2squdotm1(idx<double> &a, idx<double> &x, idx<double> &y) {
+    check_m2dotm1(a,x,y);
+    idx_bloop2(la,a,double, ly,y,double) {
+      double *pa = la.idx_ptr(); intg amod = la.mod(0);
+      double *px =  x.idx_ptr(); intg xmod = x.mod(0);
+      double *py = ly.idx_ptr();
+      // we don't use bloop for efficiency
+      *py = 0;
+      for(intg i=0; i<la.dim(0); i++) {
+	*py += (*pa)*(*pa)*(*px);
+	pa += amod; px += xmod;
+      }
+    }
+  }
+
+  // square matrix-vector multiplication: Yi = sum((Aij)^2 * Xj)
+  void idx_m2squdotm1(idx<float> &a, idx<float> &x, idx<float> &y) {
+    check_m2dotm1(a,x,y);
+    idx_bloop2(la,a,float, ly,y,float) {
+      float *pa = la.idx_ptr(); intg amod = la.mod(0);
+      float *px =  x.idx_ptr(); intg xmod = x.mod(0);
+      float *py = ly.idx_ptr();
+      // we don't use bloop for efficiency
+      *py = 0;
+      for(intg i=0; i<la.dim(0); i++) {
+	*py += (*pa)*(*pa)*(*px);
+	pa += amod; px += xmod;
+      }
+    }
+  }
+
+  // square matrix-vector multiplication: Yi += sum((Aij)^2 * Xj)
+  void idx_m2squdotm1acc(idx<double> &a, idx<double> &x, idx<double> &y) {
+    check_m2dotm1(a,x,y);
+    idx_bloop2(la,a,double, ly,y,double) {
+      double *pa = la.idx_ptr(); intg amod = la.mod(0);
+      double *px =  x.idx_ptr(); intg xmod = x.mod(0);
+      double *py = ly.idx_ptr();
+      // we don't use bloop for efficiency
+      for(intg i=0; i<la.dim(0); i++) {
+	*py += (*pa)*(*pa)*(*px);
+	pa += amod; px += xmod;
+      }
+    }
+  }
+
+  // square matrix-vector multiplication: Yi += sum((Aij)^2 * Xj)
+  void idx_m2squdotm1acc(idx<float> &a, idx<float> &x, idx<float> &y) {
+    check_m2dotm1(a,x,y);
+    idx_bloop2(la,a,float, ly,y,float) {
+      float *pa = la.idx_ptr(); intg amod = la.mod(0);
+      float *px =  x.idx_ptr(); intg xmod = x.mod(0);
+      float *py = ly.idx_ptr();
+      // we don't use bloop for efficiency
+      for(intg i=0; i<la.dim(0); i++) {
+	*py += (*pa)*(*pa)*(*px);
+	pa += amod; px += xmod;
+      }
+    }
+  }
+
+  ////////////////////////////////////////////////////////////////
+
+#ifdef __CBLAS__
+  
+  // specialization for doubles: can use blas versions.
+  template <>
+  void idx_copy(idx<double> &src, idx<double> &dst) {
+    // loop and copy
+    idxop_ii(src, dst,
+	     // idx0 version
+	     { *(dst.idx_ptr()) = *(src.idx_ptr()); },
+	     // idx1 version
+	     { cblas_dcopy(N1, src.idx_ptr(), src.mod(0), dst.idx_ptr(), 
+			   dst.mod(0)); },
+	     // contiguous version
+	     { cblas_dcopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1); },
+	     // recursive version
+	     { idx_bloop2(lsrc, src, double, ldst, dst, double) { 
+		 idx_copy(lsrc, ldst); } },
+	     // any version
+	     { idx_aloop2(isrc, src, double, idst, dst, double) { 
+		 *idst = *isrc; }
+	     }
+	     );
+  }
+
+  // specialization for floats: can use blas versions.
+  template <>
+  void idx_copy(idx<float> &src, idx<float> &dst) {
+    // loop and copy
+    idxop_ii(src, dst,
+	     // idx0 version
+	     { *(dst.idx_ptr()) = *(src.idx_ptr()); },
+	     // idx1 version
+	     { cblas_scopy(N1, src.idx_ptr(), src.mod(0), dst.idx_ptr(), 
+			   dst.mod(0)); },
+	     // contiguous version
+	     {
+#ifdef __IPP__
+	       ipp_copy(src, dst);
+#else
+	       cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
+#endif
+	     },
+	     // recursive version
+	     { idx_bloop2(lsrc, src, float, ldst, dst, float) { 
+		 idx_copy(lsrc, ldst); } },
+	     // any version
+	     { idx_aloop2(isrc, src, float, idst, dst, float) { 
+		 *idst = *isrc; }
+	     }
+	     );
   }
 
   ////////////////////////////////////////////////////////////////
@@ -337,70 +404,6 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  // square matrix-vector multiplication: Yi = sum((Aij)^2 * Xj)
-  void idx_m2squdotm1(idx<double> &a, idx<double> &x, idx<double> &y) {
-    check_m2dotm1(a,x,y);
-    idx_bloop2(la,a,double, ly,y,double) {
-      double *pa = la.idx_ptr(); intg amod = la.mod(0);
-      double *px =  x.idx_ptr(); intg xmod = x.mod(0);
-      double *py = ly.idx_ptr();
-      // we don't use bloop for efficiency
-      *py = 0;
-      for(intg i=0; i<la.dim(0); i++) {
-	*py += (*pa)*(*pa)*(*px);
-	pa += amod; px += xmod;
-      }
-    }
-  }
-
-  // square matrix-vector multiplication: Yi = sum((Aij)^2 * Xj)
-  void idx_m2squdotm1(idx<float> &a, idx<float> &x, idx<float> &y) {
-    check_m2dotm1(a,x,y);
-    idx_bloop2(la,a,float, ly,y,float) {
-      float *pa = la.idx_ptr(); intg amod = la.mod(0);
-      float *px =  x.idx_ptr(); intg xmod = x.mod(0);
-      float *py = ly.idx_ptr();
-      // we don't use bloop for efficiency
-      *py = 0;
-      for(intg i=0; i<la.dim(0); i++) {
-	*py += (*pa)*(*pa)*(*px);
-	pa += amod; px += xmod;
-      }
-    }
-  }
-
-  // square matrix-vector multiplication: Yi += sum((Aij)^2 * Xj)
-  void idx_m2squdotm1acc(idx<double> &a, idx<double> &x, idx<double> &y) {
-    check_m2dotm1(a,x,y);
-    idx_bloop2(la,a,double, ly,y,double) {
-      double *pa = la.idx_ptr(); intg amod = la.mod(0);
-      double *px =  x.idx_ptr(); intg xmod = x.mod(0);
-      double *py = ly.idx_ptr();
-      // we don't use bloop for efficiency
-      for(intg i=0; i<la.dim(0); i++) {
-	*py += (*pa)*(*pa)*(*px);
-	pa += amod; px += xmod;
-      }
-    }
-  }
-
-  // square matrix-vector multiplication: Yi += sum((Aij)^2 * Xj)
-  void idx_m2squdotm1acc(idx<float> &a, idx<float> &x, idx<float> &y) {
-    check_m2dotm1(a,x,y);
-    idx_bloop2(la,a,float, ly,y,float) {
-      float *pa = la.idx_ptr(); intg amod = la.mod(0);
-      float *px =  x.idx_ptr(); intg xmod = x.mod(0);
-      float *py = ly.idx_ptr();
-      // we don't use bloop for efficiency
-      for(intg i=0; i<la.dim(0); i++) {
-	*py += (*pa)*(*pa)*(*px);
-	pa += amod; px += xmod;
-      }
-    }
-  }
-
-  ////////////////////////////////////////////////////////////////
-
   // vector-vector outer product: a <- x.y'
   void idx_m1extm1(idx<double> &x, idx<double> &y, idx<double> &a) {
     check_m1extm1(x,y,a);
@@ -434,6 +437,53 @@ namespace ebl {
 	       1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
 	       a.idx_ptr(), a.mod(0));
   }
+
+  void norm_columns(idx<double> &m) {
+    if ( m.order() != 2) { eblerror("norm_columns: must be an idx2"); }
+    idx_eloop1(lm,m,double) {
+      double *p = lm.idx_ptr();
+      double z = cblas_dnrm2(m.dim(0),p,m.mod(0));
+      cblas_dscal(m.dim(0),1/z,p,m.mod(0));
+    }
+  }
+
+  void norm_columns(idx<float> &m) {
+    if ( m.order() != 2) { eblerror("norm_columns: must be an idx2"); }
+    idx_eloop1(lm,m,float) {
+      float *p = lm.idx_ptr();
+      float z = cblas_snrm2(m.dim(0),p,m.mod(0));
+      cblas_sscal(m.dim(0),1/z,p,m.mod(0));
+    }
+  }
+
+#endif /* __CBLAS__ */
+
+  ////////////////////////////////////////////////////////////////
+  
+  template<> void idx_power(idx<float>& in, float p, idx<float>& out) {
+    idxiter<float> pin; idxiter<float> pout;
+    idx_aloop2_on(pin,in,pout,out) {
+      *pout = powf(*pin, p);
+    }
+  }
+  
+  ////////////////////////////////////////////////////////////////  
+
+  idx<ubyte> strings_to_idx(idx<const char *> &strings) {
+    // determine max length of strings
+    size_t max = 0;
+    { idx_bloop1(s, strings, const char *)
+	max = std::max(max, strlen(s.get())); }
+    // allocate output idx
+    idx<ubyte> out(strings.dim(0), max + 1);
+    // copy classes strings
+    idx_clear(out);
+    idx_bloop2(s, strings, const char *, o, out, ubyte) {
+      memcpy(o.idx_ptr(), s.get(), strlen(s.get()) * sizeof (ubyte));
+    }
+    return out;
+  }
+  
 
   ////////////////////////////////////////////////////////////////
   // squext operations
@@ -486,49 +536,5 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-
-  void norm_columns(idx<double> &m) {
-    if ( m.order() != 2) { eblerror("norm_columns: must be an idx2"); }
-    idx_eloop1(lm,m,double) {
-      double *p = lm.idx_ptr();
-      double z = cblas_dnrm2(m.dim(0),p,m.mod(0));
-      cblas_dscal(m.dim(0),1/z,p,m.mod(0));
-    }
-  }
-
-  void norm_columns(idx<float> &m) {
-    if ( m.order() != 2) { eblerror("norm_columns: must be an idx2"); }
-    idx_eloop1(lm,m,float) {
-      float *p = lm.idx_ptr();
-      float z = cblas_snrm2(m.dim(0),p,m.mod(0));
-      cblas_sscal(m.dim(0),1/z,p,m.mod(0));
-    }
-  }
-
-  ////////////////////////////////////////////////////////////////
-  
-  template<> void idx_power(idx<float>& in, float p, idx<float>& out) {
-    idxiter<float> pin; idxiter<float> pout;
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout = powf(*pin, p);
-    }
-  }
-  
-  ////////////////////////////////////////////////////////////////  
-
-  idx<ubyte> strings_to_idx(idx<const char *> &strings) {
-    // determine max length of strings
-    size_t max = 0;
-    { idx_bloop1(s, strings, const char *)
-	max = std::max(max, strlen(s.get())); }
-    // allocate output idx
-    idx<ubyte> out(strings.dim(0), max + 1);
-    // copy classes strings
-    idx_clear(out);
-    idx_bloop2(s, strings, const char *, o, out, ubyte) {
-      memcpy(o.idx_ptr(), s.get(), strlen(s.get()) * sizeof (ubyte));
-    }
-    return out;
-  }
   
 } // end namespace ebl
