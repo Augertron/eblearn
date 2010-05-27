@@ -227,6 +227,7 @@ ELSE (_boost_IN_CACHE)
   ENDIF(WIN32)
 
   SET(_boost_INCLUDE_SEARCH_DIRS
+    /share/apps/boost/1.41.0/gnu/include
     C:/boost/include
     "C:/boost"
     "$ENV{ProgramFiles}/boost/boost_${Boost_FIND_VERSION_MAJOR}_${Boost_FIND_VERSION_MINOR}_${Boost_FIND_VERSION_PATCH}"
@@ -235,6 +236,7 @@ ELSE (_boost_IN_CACHE)
   )
 
   SET(_boost_LIBRARIES_SEARCH_DIRS
+    /share/apps/boost/1.41.0/gnu/lib
     C:/boost/lib
     "C:/boost"
     "$ENV{ProgramFiles}/boost/boost_${Boost_FIND_VERSION_MAJOR}_${Boost_FIND_VERSION_MINOR}_${Boost_FIND_VERSION_PATCH}/lib"
