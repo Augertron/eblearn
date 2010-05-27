@@ -59,7 +59,6 @@ typedef double t_net; // precision at which network is trained (ideally double)
 void koray_temp(configuration &conf, layers<t_net> &net) {
   ostringstream m;
   idx<t_net> mat;
-  idx<intg> table;
   m.str(""); m << conf.get_string("koray_dir")
 	       << conf.get_string("wkoray") << "_conv0_kernel.x.mat";
   mat = load_matrix<t_net>(m.str());
@@ -94,116 +93,120 @@ int main(int argc, char **argv) { // regular main without gui
 #ifdef __LINUX__
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
-  ipp_init(1); // limit IPP (if available) to 1 core
-  init_drand(time(NULL)); // initialize random seed
-  configuration conf(argv[1]); // configuration file
+  try {
+    ipp_init(1); // limit IPP (if available) to 1 core
+    init_drand(time(NULL)); // initialize random seed
+    configuration conf(argv[1]); // configuration file
 
-  //! load datasets
-  labeled_datasource<t_net, float, int>
-    train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"train"),
-    test_ds(conf.get_cstring("root"), conf.get_cstring("val"), "val");
-  test_ds.set_test(); // test is the test set, used for reporting
-  train_ds.set_weigh_samples(conf.exists_bool("wsamples"));
-  train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));
-  train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
-  if (conf.exists("balanced_training"))
-    train_ds.set_balanced(conf.get_bool("balanced_training"));
-  if (conf.exists("epoch_size"))
-    train_ds.set_epoch_size(conf.get_int("epoch_size"));
+    //! load datasets
+    labeled_datasource<t_net, float, int>
+      train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"train"),
+      test_ds(conf.get_cstring("root"), conf.get_cstring("val"), "val");
+    test_ds.set_test(); // test is the test set, used for reporting
+    train_ds.set_weigh_samples(conf.exists_bool("wsamples"));
+    train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));
+    train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
+    if (conf.exists("balanced_training"))
+      train_ds.set_balanced(conf.get_bool("balanced_training"));
+    if (conf.exists("epoch_size"))
+      train_ds.set_epoch_size(conf.get_int("epoch_size"));
 
-  //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
-  idx<t_net> targets =
-    create_target_matrix<t_net>(train_ds.get_nclasses(), 1.0);
+    //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
+    idx<t_net> targets =
+      create_target_matrix<t_net>(train_ds.get_nclasses(), 1.0);
 
-  //! create the network weights, network and trainer
-  idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  parameter<t_net> theparam(60000); // create trainable parameter
-  module_1_1<t_net> *net = create_network(theparam, conf, targets.dim(0));
-  supervised_euclidean_machine<t_net, int> thenet(*net, targets, dims);
-  supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
-  //! initialize the network weights
-  forget_param_linear fgp(1, 0.5);
-  if (conf.exists_bool("retrain")) {
-    theparam.load_x(conf.get_cstring("retrain_weights"));
-  } else {
-    cout << "Initializing weights from random." << endl;
-    thenet.forget(fgp);
-  }
-  if (conf.exists_bool("koray")) {
-    cout << "Initializing some weights from koray." << endl;
-    koray_temp(conf, *((layers<t_net>*)net));
-  }
+    //! create the network weights, network and trainer
+    idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
+    parameter<t_net> theparam(60000); // create trainable parameter
+    module_1_1<t_net> *net = create_network(theparam, conf, targets.dim(0));
+    supervised_euclidean_machine<t_net, int> thenet(*net, targets, dims);
+    supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
+    //! initialize the network weights
+    forget_param_linear fgp(1, 0.5);
+    if (conf.exists_bool("retrain")) {
+      theparam.load_x(conf.get_cstring("retrain_weights"));
+    } else {
+      cout << "Initializing weights from random." << endl;
+      thenet.forget(fgp);
+    }
+    if (conf.exists_bool("koray")) {
+      cout << "Initializing some weights from koray." << endl;
+      koray_temp(conf, *((layers<t_net>*)net));
+    }
 
-  //! a classifier-meter measures classification errors
-  classifier_meter trainmeter, testmeter;
+    //! a classifier-meter measures classification errors
+    classifier_meter trainmeter, testmeter;
 
-  // learning parameters
-  gd_param gdp(/* double leta*/ conf.get_double("eta"),
-	       /* double ln */ 	0.0,
-	       /* double l1 */ 	0.0,
-	       /* double l2 */ 	0.0,
-	       /* int dtime */ 	0,
-	       /* double iner */0.0, 
-	       /* double a_v */ 0.0,
-	       /* double a_t */ 0.0,
-	       /* double g_t*/ 	0.0);
-  infer_param infp;
+    // learning parameters
+    gd_param gdp(/* double leta*/ conf.get_double("eta"),
+		 /* double ln */ 	0.0,
+		 /* double l1 */ 	0.0,
+		 /* double l2 */ 	0.0,
+		 /* int dtime */ 	0,
+		 /* double iner */0.0, 
+		 /* double a_v */ 0.0,
+		 /* double a_t */ 0.0,
+		 /* double g_t*/ 	0.0);
+    infer_param infp;
 	
 #ifdef __GUI__
-  supervised_trainer_gui<t_net, float, int> stgui;
-  bool display = conf.exists_bool("train_display"); // enable/disable display
-  uint ninternals = conf.get_uint("ninternals"); // # examples' to display
-  if (display) {
-    //stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
-    stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
-  }
-#endif
-
-  // first show classification results without training
-  thetrainer.test(train_ds, trainmeter, infp);
-  thetrainer.test(test_ds, testmeter, infp);
-
-  // now do training iterations 
-  cout << "Training network with " << train_ds.size();
-  cout << " training samples and " << test_ds.size() <<" val samples for " 
-       << conf.get_uint("iterations") << " iterations:" << endl;
-  ostringstream name, fname;
-
-  // estimate second derivative on 100 iterations, using mu=0.02
-  thetrainer.compute_diaghessian(train_ds, 100, 0.02);
-
-  for (uint i = 1; i <= conf.get_uint("iterations"); ++i) {
-    // train and test
-    thetrainer.train(train_ds, trainmeter, gdp, 1);	// train
-    thetrainer.test(train_ds, trainmeter, infp);	// test
-    thetrainer.test(test_ds, testmeter, infp);	// test
-    
-    // save weights and confusion matrix for test set
-    name.str("");
-    if (conf.exists("job_name"))
-      name << conf.get_string("job_name");
-    name << "_net" << setfill('0') << setw(3) << i;
-    fname.str(""); fname << name.str() << ".mat";
-    cout << "saving net to " << fname.str() << endl;
-    theparam.save_x(fname.str().c_str()); // save trained network
-    cout << "saved=" << fname.str() << endl;
-    fname.str(""); fname << name.str() << "_confusion_test.mat";
-    cout << "saving confusion to " << fname.str() << endl;
-    save_matrix(testmeter.get_confusion(), fname.str().c_str());
-#ifdef __GUI__ // display
+    supervised_trainer_gui<t_net, float, int> stgui;
+    bool display = conf.exists_bool("train_display"); // enable/disable display
+    uint ninternals = conf.get_uint("ninternals"); // # examples' to display
     if (display) {
       //stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
       stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
     }
 #endif
-    
-    // recompute 2nd derivatives on 100 iterations with mu=0.02
+
+    // first show classification results without training
+    thetrainer.test(train_ds, trainmeter, infp);
+    thetrainer.test(test_ds, testmeter, infp);
+
+    // now do training iterations 
+    cout << "Training network with " << train_ds.size();
+    cout << " training samples and " << test_ds.size() <<" val samples for " 
+	 << conf.get_uint("iterations") << " iterations:" << endl;
+    ostringstream name, fname;
+
+    // estimate second derivative on 100 iterations, using mu=0.02
     thetrainer.compute_diaghessian(train_ds, 100, 0.02);
-  }
-  // free variables
-  if (net) delete net;
-#ifdef __GUI__
-  quit_gui(); // close all windows
+
+    for (uint i = 1; i <= conf.get_uint("iterations"); ++i) {
+      // train and test
+      thetrainer.train(train_ds, trainmeter, gdp, 1);	// train
+      thetrainer.test(train_ds, trainmeter, infp);	// test
+      thetrainer.test(test_ds, testmeter, infp);	// test
+    
+      // save weights and confusion matrix for test set
+      name.str("");
+      if (conf.exists("job_name"))
+	name << conf.get_string("job_name");
+      name << "_net" << setfill('0') << setw(3) << i;
+      fname.str(""); fname << name.str() << ".mat";
+      cout << "saving net to " << fname.str() << endl;
+      theparam.save_x(fname.str().c_str()); // save trained network
+      cout << "saved=" << fname.str() << endl;
+      fname.str(""); fname << name.str() << "_confusion_test.mat";
+      cout << "saving confusion to " << fname.str() << endl;
+      save_matrix(testmeter.get_confusion(), fname.str().c_str());
+#ifdef __GUI__ // display
+      if (display) {
+	//stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
+	stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
+      }
 #endif
+    
+      // recompute 2nd derivatives on 100 iterations with mu=0.02
+      thetrainer.compute_diaghessian(train_ds, 100, 0.02);
+    }
+    // free variables
+    if (net) delete net;
+#ifdef __GUI__
+    quit_gui(); // close all windows
+#endif
+  } catch(string &err) {
+    cerr << err << endl;
+  }
   return 0;
 }
