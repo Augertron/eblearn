@@ -7,6 +7,7 @@ FIND_PATH(CPPUNIT_INCLUDE_DIR cppunit/extensions/HelperMacros.h
   /sw/include
   /sw/local/include
   /opt/local/include
+  /home/sermanet/installed/cppunit/usr/local/include
   )
 
 FIND_LIBRARY(CPPUNIT_LIBRARY 
@@ -19,6 +20,7 @@ FIND_LIBRARY(CPPUNIT_LIBRARY
   /sw/local/lib
   /opt/local/lib
   /share/apps/cppunit/1.12.1/gnu/lib
+  /home/sermanet/installed/cppunit/usr/local/lib
   )
 
 IF (CPPUNIT_INCLUDE_DIR)
