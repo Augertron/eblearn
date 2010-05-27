@@ -114,7 +114,11 @@ prepare_install:
 	mkdir -p $(INCLUDE_INSTALL) $(LIB_INSTALL) $(BIN_INSTALL)
 
 $(LIBS):
-	@echo "cp -f bin/$@ $(LIB_INSTALL)" && cp -f bin/$@ $(LIB_INSTALL)
+	@if test -e bin/$@; \
+	then echo "cp -f bin/$@ $(LIB_INSTALL)" \
+	     && cp -f bin/$@ $(LIB_INSTALL); \
+	else echo "warning: bin/$@ not found, not installed"; \
+	fi
 
 $(INCLUDES):
 	@echo "cp -f $@ $(INCLUDE_INSTALL)" && cp -f "$@" $(INCLUDE_INSTALL)
