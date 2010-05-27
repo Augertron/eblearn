@@ -97,7 +97,9 @@ namespace ebl {
   template <class T>
   void linear_module<T>::resize_output(state_idx<T> &in, state_idx<T> &out) {
     // resize output based on input dimensions
-    idxdim d(in.x.spec); // use same dimensions as in
+    // idxdim d(in.x.spec); // use same dimensions as in
+    // d.setdim(0, w.x.dim(0)); // except for the first one
+    idxdim d(out.x.spec); // use same dimensions as in
     d.setdim(0, w.x.dim(0)); // except for the first one
     if (out.x.get_idxdim() != d) { // resize only if necessary
 #ifdef __DEBUG__
