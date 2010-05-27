@@ -137,7 +137,7 @@ ELSE ($ENV{NOCBLAS})
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__CBLAS__")
     INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
   ELSE (CBLAS_FOUND)
-    MESSAGE("__ WARNING: cblas not found.")
+    MESSAGE("__ WARNING: cblas not found, install to speed up.")
   ENDIF(CBLAS_FOUND)
 ENDIF ($ENV{NOCBLAS})
 
