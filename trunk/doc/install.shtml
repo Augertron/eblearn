@@ -171,7 +171,25 @@
 	   </li>
 	 </ul>
        
-       <h3>MAC OS X Packages</h3>
+       <h3>Linux packages manual installation</h3>
+       <h5>cppunit</h5><br>
+       <code>$ wget
+	 http://downloads.sourceforge.net/cppunit/cppunit-1.12.1.tar.gz<br>
+	 $ tar xzvf cppunit-1.12.1.tar.gz && cd cppunit-1.12.1<br>
+	 $ ./configure && make && sudo make install</code><br>
+       <br>
+       To install cppunit in another directory, do:<br>
+       <code>$ make install DESTDIR=my_cppunit_directory</code><br>
+       <br>
+       If you installed cppunit in a non-standard directory, add your path
+       in scripts/FindCustom.cmake as described earlier, e.g:<br>
+       <code>
+	 SET(CPPUNIT_FOUND TRUE)<br>
+	 INCLUDE_DIRECTORIES("my_cppunit_directory/include")<br>
+	 LINK_DIRECTORIES("my_cppunit_directory/lib")<br>
+	 MESSAGE(STATUS "Found CPPUNIT")</code>
+
+       <h3>Mac OS X packages manual installation</h3>
        <h5>cmake</h5>
        Get sources (e.g. cmake-2.6.2.tar.gz) from
        http://www.cmake.org/cmake/resources/software.html.<br>
