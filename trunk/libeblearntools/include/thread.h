@@ -48,7 +48,7 @@ namespace ebl {
   class thread {
   public:
     thread();
-    ~thread();
+    virtual ~thread();
     int start();
   protected:
     void run();

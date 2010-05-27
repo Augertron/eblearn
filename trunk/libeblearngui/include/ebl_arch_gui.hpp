@@ -100,11 +100,11 @@ namespace ebl {
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
     }									\
   }
-  //   else {								\
-  //     cerr << "Warning: unknown display function for module_1_1 object"; \
-  //     cerr << "(" << typeid(m).name() << ")." << endl;			\
-  //   }									\
-  // }
+  /*    else {								\
+      cerr << "Warning: unknown display function for module_1_1 object"; \
+      cerr << "(" << typeid(m).name() << ")." << endl;			\
+    }									\
+    }*/
   
   DISPLAY_1_1(display_fprop, display_fprop2)
   DISPLAY2_1_1(display_fprop, display_fprop2)
