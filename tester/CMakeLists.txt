@@ -41,6 +41,9 @@ IF (CPPUNIT_FOUND) # compile only if cppunit is present
 
   # link executable with external libraries
   ##############################################################################
+  IF (NOT WINDOWS)
+    target_link_libraries (tester dl)
+  ENDIF (NOT WINDOWS)
   target_link_libraries (tester eblearn idx)
   target_link_libraries (tester eblearntools)
   target_link_libraries (tester ${CPPUNIT_LIBRARY})
