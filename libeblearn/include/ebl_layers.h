@@ -77,7 +77,7 @@ namespace ebl {
   private:
     bool                         btanh;   //!< use tanh or stdsigmoid
   public:
-    linear_module<T>	         linear;  //!< linear module for weight matrix
+    linear_module_replicable<T>  linear;  //!< linear module for weight matrix
     addc_module<T>		 adder;	  //!< bias vector
     module_1_1<T>               *sigmoid; //!< the non-linear function
     state_idx<T>		*sum;	  //!< weighted sum

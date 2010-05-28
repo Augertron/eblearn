@@ -120,6 +120,42 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
+  template <class T> class net_cscc : public layers<T> {
+  public:
+    //! Empty constructor, awaiting for initialization by the user via the 
+    //! init() function.
+    net_cscc();
+    //! Complete constructor, calls the init() function.
+    //! See the init() description for complete arguments description.
+    net_cscc(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0,
+		    idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+		    idx<intg> &tbl1, intg outthick, bool norm = false,
+		    bool mirror = false, bool tanh = false,
+		    bool shrink = false);
+    virtual ~net_cscc();
+
+    //! The init function creates the machine by stacking the modules in this
+    //! order (c-s-c-s-c-f): convolution_layer, subsampling_layer, 
+    //! convolution_layer, subsampling_layer, convolution_layer, 
+    //! full_layer.
+    //! <ini> <inj>: expected max size of input for preallocation of internal 
+    //! states
+    //! <ki0> <kj0>: kernel size for first convolutional layer
+    //! <tbl0>: table of connections between input anf feature maps for first 
+    //! layer
+    //! <si0> <sj0>: subsampling for first layer
+    //! <ki1> <kj1> <tbl1> <si1> <sj1>: same for next 2 layers
+    //! <ki2> <kj2> <tbl2>: same for last convolution layer
+    //! <outthick>: number of outputs.
+    //! <prm> an idx1-ddparam in which the parameters will be allocated.
+    void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+	      idx<intg> &tbl1, intg outthick, bool norm = false,
+	      bool mirror = false, bool tanh = false, bool shrink = false);
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! Standard LeNet5-type architecture without the final e-dist RBF layer.
   template <class T> class net_cscsc : public layers<T> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 

@@ -172,15 +172,13 @@
 	 </ul>
        
        <h3>Linux packages manual installation</h3>
-       <h5>cppunit</h5><br>
+       <ul><li><strong>cppunit</strong><br>
        <code>$ wget
 	 http://downloads.sourceforge.net/cppunit/cppunit-1.12.1.tar.gz<br>
 	 $ tar xzvf cppunit-1.12.1.tar.gz && cd cppunit-1.12.1<br>
 	 $ ./configure && make && sudo make install</code><br>
-       <br>
        To install cppunit in another directory, do:<br>
        <code>$ make install DESTDIR=my_cppunit_directory</code><br>
-       <br>
        If you installed cppunit in a non-standard directory, add your path
        in scripts/FindCustom.cmake as described earlier, e.g:<br>
        <code>
@@ -188,7 +186,21 @@
 	 INCLUDE_DIRECTORIES("my_cppunit_directory/include")<br>
 	 LINK_DIRECTORIES("my_cppunit_directory/lib")<br>
 	 MESSAGE(STATUS "Found CPPUNIT")</code>
-
+       </li>
+       <li><strong>boost</strong><br>
+       <code>$ wget http://sourceforge.net/projects/boost/files/boost/1.43.0/boost_1_43_0.tar.gz/download<br>
+	 $ tar xzvf boost_1_43_0.tar.gz && cd boost_1_43_0<br>
+	 $ ./bootstrap.sh --prefix=${HOME}/installed/boost &&
+       ./bjam install --with-filesystem --with-regex</code><br>
+       If you installed boost in a non-standard directory, add your path
+       in scripts/FindCustom.cmake as described earlier, e.g:<br>
+       <code>
+	 SET(BOOST_FOUND TRUE)<br>
+	 INCLUDE_DIRECTORIES("my_boost_directory/include")<br>
+	 LINK_DIRECTORIES("my_boost_directory/lib")<br>
+	 MESSAGE(STATUS "Found BOOST")</code>
+       </li>
+       </ul>
        <h3>Mac OS X packages manual installation</h3>
        <h5>cmake</h5>
        Get sources (e.g. cmake-2.6.2.tar.gz) from
