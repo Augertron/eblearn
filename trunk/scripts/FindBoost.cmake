@@ -233,7 +233,8 @@ ELSE (_boost_IN_CACHE)
     "$ENV{ProgramFiles}/boost/boost_${Boost_FIND_VERSION_MAJOR}_${Boost_FIND_VERSION_MINOR}_${Boost_FIND_VERSION_PATCH}"
     "$ENV{ProgramFiles}/Boost"
     /sw/local/include
-  )
+    $ENV{HOME}/installed/boost/include
+   )
 
   SET(_boost_LIBRARIES_SEARCH_DIRS
     /share/apps/boost/1.41.0/gnu/lib
@@ -242,6 +243,7 @@ ELSE (_boost_IN_CACHE)
     "$ENV{ProgramFiles}/boost/boost_${Boost_FIND_VERSION_MAJOR}_${Boost_FIND_VERSION_MINOR}_${Boost_FIND_VERSION_PATCH}/lib"
     "$ENV{ProgramFiles}/Boost"
     /sw/local/lib
+    $ENV{HOME}/installed/boost/lib
   )
 
   # If BOOST_ROOT was defined in the environment, use it.
