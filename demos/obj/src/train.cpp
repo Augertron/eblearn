@@ -174,9 +174,10 @@ int main(int argc, char **argv) { // regular main without gui
       // estimate second derivative on 100 iterations, using mu=0.02
       thetrainer.compute_diaghessian(train_ds, 100, 0.02);
       // train and test
-      ttest.restart();
       thetrainer.train(train_ds, trainmeter, gdp, 1);	// train
-      thetrainer.test(train_ds, trainmeter, infp);	// test
+      ttest.restart();
+      if (!conf.exists_bool("no_training_test"))
+	thetrainer.test(train_ds, trainmeter, infp);	// test
       thetrainer.test(test_ds, testmeter, infp);	// test
       cout << "test_minutes=" << ttest.elapsed_minutes() << endl;
 
