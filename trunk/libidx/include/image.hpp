@@ -920,7 +920,7 @@ namespace ebl {
   template<class T>
   idx<T> create_gaussian_kernel(int n) {
     idx<T> m(n, n);
-    double s = n/4;
+    double s = ((double)n)/4;
     T vinv = 1/(s*s);
     T total = 0;
     int cx = n/2;
@@ -964,6 +964,7 @@ namespace ebl {
     //! normalize so that energy is 1
     //    T energy = sqrt(idx_sumsqr(m));
     idx_dotc(m, 1/total, m);
+    save_matrix(m, "gaus.mat");
     return m;
   }
 
