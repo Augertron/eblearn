@@ -163,7 +163,8 @@ int main(int argc, char **argv) { // regular main without gui
 #endif
 
     // first show classification results without training
-    thetrainer.test(train_ds, trainmeter, infp);
+    if (!conf.exists_bool("no_training_test"))
+      thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
 
     // now do training iterations 
