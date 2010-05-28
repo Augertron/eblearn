@@ -92,13 +92,14 @@ namespace ebl {
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
 	 conf.exists_bool("use_shrink"), table0, table1);
     } else if (!strcmp(net_type.c_str(), "cscc")) {
-      if (!table0 || !table1) eblerror("undefined connection tables");
+      if (!table0 || !table1 || !table2) 
+	eblerror("undefined connection tables");
       return (module_1_1<T>*) new net_cscc<T>
 	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
 	 conf.get_uint("net_c1h"), conf.get_uint("net_c1w"), *table0,
 	 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
 	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"), *table1,
-	 noutputs, conf.get_bool("absnorm"),
+	 *table2, noutputs, conf.get_bool("absnorm"),
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
 	 conf.exists_bool("use_shrink"));
     } else {
