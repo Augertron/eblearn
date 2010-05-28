@@ -66,9 +66,10 @@ bool parse_args(int argc, char **argv) {
 // gui
 
 template <typename T>
-void display(list<string>::iterator &ifname,
-	     bool signd, bool load, bool show_info,
-	     bool show_help, uint nh, uint nw, list<string> *mats) {
+int display(list<string>::iterator &ifname,
+	    bool signd, bool load, bool show_info,
+	    bool show_help, uint nh, uint nw, list<string> *mats) {
+  int loaded = 0;
 #ifdef __GUI__
   static idx<T> mat;
   uint h = 0, w = 0, rowh = 0, maxh = 0;
@@ -83,6 +84,7 @@ void display(list<string>::iterator &ifname,
       try {
 	//      if (load)
 	mat = load_image<T>(*fname);
+	loaded++;
 	maxh = std::max(maxh, (uint) (rowh + mat.dim(0)));
 	T min = 0, max = 0;
 	if (signd) {
@@ -94,8 +96,8 @@ void display(list<string>::iterator &ifname,
 	  draw_matrix(mat, rowh, w, 1.0, 1.0, min, max);
 	} else
 	  draw_matrix(mat, rowh, w);
+	w += mat.dim(1) + 1;
       } catch(string &err) { cerr << err << endl; }
-      w += mat.dim(1) + 1;
       fname++;
       if (fname == ifname)
 	break ;
@@ -128,43 +130,45 @@ void display(list<string>::iterator &ifname,
   }
   enable_window_updates();
 #endif
+  return loaded;
 }
 
 //! Retrieve type so that we know if we can look
 //! for negative values when estimating range.
-void load_display(list<string>::iterator &ifname,
-		  bool load, bool show_info, bool show_help,
-		  uint nh, uint nw, list<string> *mats) {
+int load_display(list<string>::iterator &ifname,
+		 bool load, bool show_info, bool show_help,
+		 uint nh, uint nw, list<string> *mats) {
   try {
     switch (get_matrix_type((*ifname).c_str())) {
     case MAGIC_BYTE_MATRIX:
     case MAGIC_UBYTE_VINCENT:
-      display<ubyte>(ifname, false, load, show_info, show_help, nh, nw, mats);
+      return display<ubyte>(ifname, false, load, show_info, show_help, nh, nw, mats);
       break ;
     case MAGIC_INTEGER_MATRIX:
     case MAGIC_INT_VINCENT:
-      display<int>(ifname, true, load, show_info, show_help, nh, nw, mats);
+      return display<int>(ifname, true, load, show_info, show_help, nh, nw, mats);
     break ;
     case MAGIC_FLOAT_MATRIX:
     case MAGIC_FLOAT_VINCENT:
-      display<float>(ifname, true, load, show_info, show_help, nh, nw, mats);
+      return display<float>(ifname, true, load, show_info, show_help, nh, nw, mats);
       break ;
     case MAGIC_DOUBLE_MATRIX:
     case MAGIC_DOUBLE_VINCENT:
-      display<double>(ifname, true, load, show_info, show_help, nh, nw, mats);
+      return display<double>(ifname, true, load, show_info, show_help, nh, nw, mats);
       break ;
     case MAGIC_LONG_MATRIX:
-    display<long>(ifname, true, load, show_info, show_help, nh, nw, mats);
+      return display<long>(ifname, true, load, show_info, show_help, nh, nw, mats);
     break ;
     case MAGIC_UINT_MATRIX:
-      display<uint>(ifname, false, load, show_info, show_help, nh, nw, mats);
+      return display<uint>(ifname, false, load, show_info, show_help, nh, nw, mats);
       break ;
     default: // not a matrix, try as regular float image
-      display<float>(ifname, true, load, show_info, show_help, nh, nw, mats);
+      return display<float>(ifname, true, load, show_info, show_help, nh, nw, mats);
     }
   } catch(string &err) {
     cerr << err << endl;
   }
+  return 0;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -193,7 +197,10 @@ int main(int argc, char **argv) {
       argmats->push_front(argv[i]);
     }
     i = argmats->begin();
-    load_display(i, true, show_info, show_help, nh, nw, argmats);
+    if (!load_display(i, true, show_info, show_help, nh, nw, argmats)) {
+      eblerror("failed to load image(s)");
+      return -1;
+    }
     // list all other mat files in image directory
     string dir = argv[1];
     string imgname, tmpname;

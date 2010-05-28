@@ -622,10 +622,12 @@ namespace ebl {
 	delete (*i);
       }
     // now update pixmap
-    *pixmap = QPixmap::fromImage(*qimage);
-    update_window();
-    // clear images
-    images.clear();
+    if (qimage) {
+      *pixmap = QPixmap::fromImage(*qimage);
+      update_window();
+      // clear images
+      images.clear();
+    }
   }
 
   void Window::draw_masks(QPainter &painter) {
