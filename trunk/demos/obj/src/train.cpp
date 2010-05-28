@@ -114,6 +114,9 @@ int main(int argc, char **argv) { // regular main without gui
     //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
     idx<t_net> targets =
       create_target_matrix<t_net>(train_ds.get_nclasses(), 1.0);
+    if (conf.exists("target_factor"))
+      idx_dotc(targets, conf.get_double("target_factor"), targets);
+    cout << "Targets:" << endl; targets.printElems();
 
     //! create the network weights, network and trainer
     idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
