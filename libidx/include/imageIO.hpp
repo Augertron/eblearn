@@ -71,7 +71,8 @@ namespace ebl {
     //   return false;
     // }
     ostringstream cmd;
-    cmd << myconvert.c_str() << " \"" << fname << "\" PPM:-";
+    cmd << myconvert.c_str() << " -compress lossless -depth 8 \"" 
+	<< fname << "\" PPM:-";
     FILE* fp = popen(cmd.str().c_str(), "r");
     if (!fp) {
       err << "conversion of image " << fname << " failed";
