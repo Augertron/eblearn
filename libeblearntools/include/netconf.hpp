@@ -98,7 +98,7 @@ namespace ebl {
 	 conf.get_uint("net_c1h"), conf.get_uint("net_c1w"), *table0,
 	 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
 	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"), *table1,
-	 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
+	 noutputs, conf.get_bool("absnorm"),
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
 	 conf.exists_bool("use_shrink"));
     } else {
