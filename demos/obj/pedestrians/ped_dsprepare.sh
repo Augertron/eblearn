@@ -14,12 +14,12 @@ meta_email=pierre.sermanet@gmail.com
 # ped dataset compilation
 ################################################################################
 
-machine=humair
+machine=budb
 dset=_nicta
 # directories
 #dataroot=/data
 #dataroot=~/texieradata
-dataroot=~/${machine}adata
+dataroot=~/${machine}data
 pascal=$dataroot/pascal
 pascalroot=$pascal/VOCdevkit_trainval09/VOC2009/
 root=$dataroot/pedestrians/data
@@ -62,18 +62,18 @@ mkdir -p $nopersons_root
 # dataset compilations
 ###############################################################################
 
-# extract background images at random scales and positions
-~/eblearn/bin/dscompiler $nopersons_root -type patch -precision $precision \
-    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
-    -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
-    -maxdata $maxbg -nopadded \
-    $ddisplay # debug
+# # extract background images at random scales and positions
+# ~/eblearn/bin/dscompiler $nopersons_root -type patch -precision $precision \
+#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+#     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
+#     -maxdata $maxbg -nopadded \
+#     $ddisplay # debug
 
-# compile background dataset
-~/eblearn/bin/dscompiler ${outbg} -precision $precision \
-    -outdir ${out} -dname ${bgds} \
-    -dims ${h}x${w}x3 \
-    # $maxdata $maxperclass $ddisplay # debug
+# # compile background dataset
+# ~/eblearn/bin/dscompiler ${outbg} -precision $precision \
+#     -outdir ${out} -dname ${bgds} \
+#     -dims ${h}x${w}x3 \
+#     # $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
 ~/eblearn/bin/dscompiler $root -precision $precision \

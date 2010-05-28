@@ -964,7 +964,6 @@ namespace ebl {
     //! normalize so that energy is 1
     //    T energy = sqrt(idx_sumsqr(m));
     idx_dotc(m, 1/total, m);
-    save_matrix(m, "gaus.mat");
     return m;
   }
 

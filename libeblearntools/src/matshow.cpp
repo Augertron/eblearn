@@ -157,8 +157,8 @@ void load_display(list<string>::iterator &ifname,
     case MAGIC_UINT_MATRIX:
       display<uint>(ifname, false, load, show_info, show_help, nh, nw, mats);
       break ;
-    default:
-      eblerror("unknown magic number");
+    default: // not a matrix, try as regular float image
+      display<float>(ifname, true, load, show_info, show_help, nh, nw, mats);
     }
   } catch(string &err) {
     cerr << err << endl;
