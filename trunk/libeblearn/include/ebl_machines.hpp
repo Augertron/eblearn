@@ -227,13 +227,106 @@ namespace ebl {
       add_module(new abs_module<T>());
       add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
     }
-    // WARNING: those two numbers must be changed
-    // when image-height/image-width change
-    // TODO: add assertion test here?
-    intg ki2 = (((ini - ki0 + 1) / si0) - ki1 + 1);
-    intg kj2 = (((inj  - kj0 + 1) / sj0) - kj1 + 1);
     // full
-    add_module(new full_layer<T>(&prm, thick1 * ki2 * kj2, outthick, tanh));
+    add_module(new full_layer<T>(&prm, thick1, outthick, tanh));
+
+    // // convolution
+    // if (norm) // absolute rectification + contrast normalization
+    //   add_module(new convabsnorm_layer<T>(&prm, ki0, kj0,1,1,tbl0,mirror,tanh));
+    // else // old fashioned way
+    //   add_module(new convolution_layer<T>(&prm, ki0, kj0, 1, 1, tbl0, tanh));
+    // // subsampling
+    // add_module(new subsampling_layer<T>(&prm, si0, sj0, si0, sj0,thick0,tanh));,
+    // // convolution
+    // if (norm) // absolute rectification + contrast normalization
+    //   add_module(new convabsnorm_layer<T>(&prm, ki1, kj1,1,1,tbl1,mirror,tanh));
+    // else // old fashioned way
+    //   add_module(new convolution_layer<T>(&prm, ki1, kj1, 1, 1, tbl1, tanh));
+    // // full
+    // add_last_module(new full_layer<T>(&prm, thick1, outthick, tanh));
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // net_cscc
+
+  // the empty constructor (must call init afterwards)
+  template <class T>
+  net_cscc<T>::net_cscc()
+    : layers<T>(true) {
+    // owns modules, responsible for deleting it
+  }
+
+  template <class T>
+  net_cscc<T>::net_cscc(parameter<T> &prm, intg ini, intg inj,
+				      intg ki0, intg kj0, idx<intg> &tbl0, 
+				      intg si0, intg sj0,
+				      intg ki1, intg kj1, idx<intg> &tbl1, 
+				      intg outthick, bool norm, bool mirror,
+				      bool tanh, bool shrink)
+    : layers<T>(true) {
+    // owns modules, responsible for deleting it
+    init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
+	 outthick, norm, mirror, tanh, shrink);
+  }
+  
+  template <class T>
+  net_cscc<T>::~net_cscc() {}
+
+  template <class T>
+  void net_cscc<T>::init(parameter<T> &prm, intg ini, intg inj,
+				intg ki0, intg kj0, idx<intg> &tbl0, 
+				intg si0, intg sj0, intg ki1, intg kj1, 
+				idx<intg> &tbl1, intg outthick, bool norm,
+				bool mirror, bool tanh, bool shrink) {
+    // here we compute the thickness of the feature maps based on the
+    // convolution tables.
+    idx<intg> tblmax = tbl0.select(1, 1);
+    intg thick0 = 1 + idx_max(tblmax);
+    tblmax = tbl1.select(1, 1);
+    intg thick1 = 1 + idx_max(tblmax);
+    // layers was initialized with true so it owns the modules we give it,
+    // we can add modules with "new".
+    // we add convolutions (c), subsamplings (s), and full layers (f)
+    // to form a c-s-c-s-c-f network. and we add state_idx in between
+    // which serve as temporary buffer to hold the output of a module
+    // and feed the input of the following module.
+    
+    // convolution
+    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,tbl0));
+    // bias
+    add_module(new addc_module<T>(&prm, thick0));
+    // non linearity
+    if (shrink)
+      add_module(new smooth_shrink_module<T>(&prm, thick0));
+    else if (tanh)
+      add_module(new tanh_module<T>());
+    else
+      add_module(new stdsigmoid_module<T>());
+    // absolute rectification + contrast normalization
+    if (norm) {
+      add_module(new abs_module<T>());
+      add_module(new weighted_std_module<T>(ki0, kj0, thick0, mirror));
+    }
+    // subsampling
+    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh));
+    // convolution
+    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,tbl1));
+    // bias
+    add_module(new addc_module<T>(&prm, thick1));
+    // non linearity
+    if (shrink)
+      add_module(new smooth_shrink_module<T>(&prm, thick1));
+    else if (tanh)
+      add_module(new tanh_module<T>());
+    else
+      add_module(new stdsigmoid_module<T>());
+    // absolute rectification + contrast normalization
+    if (norm) {
+      add_module(new abs_module<T>());
+      add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
+    }
+    // full
+    add_module(new full_layer<T>(&prm, thick1, outthick, tanh));
 
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
