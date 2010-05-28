@@ -6,10 +6,11 @@ w=32
 traindsname=ped${dset}_mean${h}x${w}_ker7_bg_train
 valdsname=ped${dset}_mean${h}x${w}_ker7_bg_val
 
-machine=greendot
-eblearnbin0=~/eblearn2/bin/
+machine=duncan
+eblearnbin0=~/eblearn/bin/
 metaconf_name=ped_meta.conf
-save_max=20000
+save_max=7500
+n_retrain_dirs=5
 
 ################################################################################
 # meta commands
@@ -135,7 +136,7 @@ for iter in `seq 1 ${maxiteration}`
 # add subdirectories of retraining dir
   echo "retrain_dir = ${nopersons_root}/\${retrain_dir_id}/" >> $bestconf
   echo -n "retrain_dir_id = " >> $bestconf
-  for idir in `seq 1 2`
+  for idir in `seq 1 ${n_retrain_dirs}`
     do
     echo -n "${idir} " >> $bestconf
   done
