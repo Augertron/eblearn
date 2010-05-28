@@ -227,6 +227,7 @@ ELSE (_boost_IN_CACHE)
   ENDIF(WIN32)
 
   SET(_boost_INCLUDE_SEARCH_DIRS
+    /usr/include
     /share/apps/boost/1.41.0/gnu/include
     C:/boost/include
     "C:/boost"
