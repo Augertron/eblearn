@@ -91,7 +91,11 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       string		cam_type      = conf.get_string("camera");
       int		height        = conf.get_int("input_height");
       int		width         = conf.get_int("input_width");
-      string		detdir;
+      uint              wid           = 0; // window id
+      string		outdir        = "out_";
+      outdir += tstamp();
+      outdir += "/";
+      cout << "Saving outputs to " << outdir << endl;
 
       // load network and weights
       parameter<t_net> theparam;
@@ -126,7 +130,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	detect.set_max_resolution(conf.get_uint("input_max"));
       detect.set_silent();
       if (conf.exists_bool("save_detections")) {
-	detdir = detect.set_save("detections");
+	string detdir = outdir;
+	detdir += "detections";
+	detdir = detect.set_save(detdir);
 	if (conf.exists("save_max_per_frame"))
 	  detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
       }
@@ -170,9 +176,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       vector<bbox*> bboxes;
       vector<bbox*>::iterator ibboxes;
       ostringstream answer_fname;
-      if (detdir.size() > 0)
-	mkdir_full(detdir);
-      answer_fname << detdir << "/" << "bbox.txt";
+      mkdir_full(outdir);
+      answer_fname << outdir << "bbox.txt";
       // open file      
       ofstream fp(answer_fname.str().c_str());
       if (!fp) {
@@ -197,7 +202,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	qheight2 = conf.get_uint("qheight2");
 	qwidth2 = conf.get_uint("qwidth2"); }
       module_1_1_gui netgui;
-      uint	wid  = display ? new_window("eblearn object recognition") : 0;
+      wid  = display ? new_window("eblearn object recognition") : 0;
       float	zoom = 1;
       detector_gui<t_net> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
 			       qwidth1, conf.exists_bool("queue2"), qstep2,
@@ -206,8 +211,11 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	dgui.set_mask_class(conf.get_cstring("mask_class"),
 			    (t_net) conf.get_double("mask_threshold"));
       night_mode();
-      if (save_video)
-	cam->start_recording();
+      if (save_video) {
+	string viddir = outdir;
+	viddir += "video";
+	cam->start_recording(wid, viddir.c_str());
+      }
       // timing variables
       QTime t0;
       int tpp;

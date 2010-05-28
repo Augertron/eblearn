@@ -156,20 +156,20 @@ namespace ebl {
     if ((uint)inputs.dim(0) != nresolutions) { 
       // delete arrays content
       { idx_bloop5(in, inputs, void*,
-		   out, outputs, void*, r, results, void*,
-		   rsz, resize_modules, void*, net, nets, void*) {
-  	state_idx<T> *sin = (state_idx<T>*) in.get();
-	state_idx<T> *sout = (state_idx<T>*) out.get();
-	idx<T> *res = (idx<T>*) r.get();
-	resizepp_module<T> *rszpp = (resizepp_module<T>*) rsz.get();
-	module_1_1<T> *network = (module_1_1<T>*) net.get();
+    		   out, outputs, void*, r, results, void*,
+    		   rsz, resize_modules, void*, net, nets, void*) {
+    	state_idx<T> *sin = (state_idx<T>*) in.get();
+    	state_idx<T> *sout = (state_idx<T>*) out.get();
+    	idx<T> *res = (idx<T>*) r.get();
+    	resizepp_module<T> *rszpp = (resizepp_module<T>*) rsz.get();
+    	module_1_1<T> *network = (module_1_1<T>*) net.get();
 
-	if (sin) delete sin;
-	if (sout) delete sout;
-	if (res) delete res;
-	if (rszpp) delete rszpp;
-	if (network) delete network;
-	}}
+    	if (sin) delete sin;
+    	if (sout) delete sout;
+    	if (res) delete res;
+    	if (rszpp) delete rszpp;
+    	if (network) delete network;
+    	}}
       // reallocate arrays
       inputs  = idx<void*>(nresolutions);
       idx_clear(inputs);
@@ -193,16 +193,17 @@ namespace ebl {
 	state_idx<T> *sout = (state_idx<T>*) out.get();
 	idx<T> *res = (idx<T>*) r.get();
 	resizepp_module<T> *rszpp = (resizepp_module<T>*) rsz.get();
-	module_1_1<T> *network = (module_1_1<T>*) net.get();
+	// module_1_1<T> *network = (module_1_1<T>*) net.get();
 	// Compute the input sizes for each scale
 	idxdim scaled(thick, resolution.get(0), resolution.get(1));
-	// network resizes automatically, only allocate if not allocated
-	if (network == NULL) {
-	  net.set((void*) thenet.copy());
-	  network = (module_1_1<T>*) net.get();
-	}
+	// // network resizes automatically, only allocate if not allocated
+	// if (network == NULL) {
+	//   net.set((void*) thenet.copy());
+	//   network = (module_1_1<T>*) net.get();
+	// }
 	// Adapt the size to the network structure:
-	idxdim outd = network->fprop_size(scaled);
+	idxdim outd = thenet.fprop_size(scaled);
+	// idxdim outd = network->fprop_size(scaled);
 	// set or resize buffers
 	if (sin == NULL)
 	  in.set((void*) new state_idx<T>(thick, scaled.dim(1), scaled.dim(2)));
@@ -217,15 +218,15 @@ namespace ebl {
 	  r.set((void*) new idx<T>(outd.dim(1), outd.dim(2), 2));
 	else
 	  res->resize(outd.dim(1), outd.dim(2), 2);
-	if (rszpp == NULL)
+ 	if (rszpp == NULL)
 	  rsz.set((void*) new resizepp_module<T>
 		  (scaled.dim(1), scaled.dim(2), MEAN_RESIZE,
 		   pp?(module_1_1<T>*)pp->copy():NULL, ppkersz, true));
 	else
 	  rszpp->set_dimensions(scaled.dim(1), scaled.dim(2));
 	// print info about network sizes
-	network->pretty(scaled);
-	//	thenet.pretty(scaled);
+	//	network->pretty(scaled);
+	thenet.pretty(scaled);
       }}
   }
     
@@ -852,16 +853,16 @@ namespace ebl {
     timer t;
     t.start();
 
-    module_1_1<T> *network = NULL;
+    // module_1_1<T> *network = NULL;
     // resize original input and fprop for each resolution
-    { idx_bloop5(in, inputs, void*, out, outputs, void*,
-		 bbox, original_bboxes, uint, rsz, resize_modules, void*,
-		 net, nets, void*) {
+    { idx_bloop4(in, inputs, void*, out, outputs, void*,
+		 bbox, original_bboxes, uint, rsz, resize_modules, void*) {
+		 // net, nets, void*) {
 	state_idx<T> &ii = *(state_idx<T>*)(in.get()); // input
 	state_idx<T> &oo = *(state_idx<T>*)(out.get()); // output
 	resizepp_module<T> &rszpp = *(resizepp_module<T>*)(rsz.get());
 
-	network = (module_1_1<T>*)(net.get());
+	// network = (module_1_1<T>*)(net.get());
 	// resize and preprocess input
 	rszpp.fprop(input, ii);
 	// memorize original input's bbox in resized input
@@ -877,8 +878,8 @@ namespace ebl {
 	  idx_dotc(ii.x, coef, ii.x);
 	// run fprop for this scale
     
-	//            thenet.fprop(ii, oo);
-	network->fprop(ii, oo);
+	thenet.fprop(ii, oo);
+	// network->fprop(ii, oo);
       }}
     cout << "net: " << t.elapsed_milliseconds() << " ms. ";
   }
