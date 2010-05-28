@@ -216,20 +216,19 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	viddir += "video";
 	cam->start_recording(wid, viddir.c_str());
       }
-      // timing variables
-      QTime t0;
-      int tpp;
 #endif  
+      // timing variables
+      timer tpass, toverall;
+      long ms;
   
       // loop
+      toverall.start();
       while(!cam->empty()) {
 	// cout << "nopend: " << Srg<double>::nopened;
 	// cout << " nopend: " << Srg<short>::nopened;
 	// cout << " nopend: " << Srg<char const *>::nopened << endl;
 	// get a new frame
-#ifdef __GUI__
-	t0.start();
-#endif
+	tpass.restart();
 	// if the pre-camera is defined use it until empty
 	if (cam2 && !cam2->empty())
 	  frame = cam2->grab();
@@ -253,12 +252,11 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  enable_window_updates();
 	  if (save_video)
 	    cam->record_frame();
-	}
-	    
-	tpp = t0.elapsed(); // stop processing timer
-	cout << "processing: " << tpp << " ms." << endl;
-	cout << "fps: " << cam->fps() << endl;
+	}	    
 #endif
+	ms = tpass.elapsed_milliseconds();
+	cout << "processing: " << ms << " ms." << endl;
+	cout << "fps: " << cam->fps() << endl;
 	// save bounding boxes
 	for (ibboxes = bboxes.begin(); ibboxes != bboxes.end(); ++ibboxes) {
 	  fp << cam->frame_name() << " " << (*ibboxes)->class_id << " "
@@ -278,6 +276,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  break ; // limit number of detection saves
 	}
       }
+      cout << "Execution time: " << toverall.elapsed_minutes() <<" mins" <<endl;
       if (save_video)
 	cam->stop_recording(conf.exists_bool("use_original_fps") ?
 			    cam->fps() : conf.get_uint("save_video_fps"));
