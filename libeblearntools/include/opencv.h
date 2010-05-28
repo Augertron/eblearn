@@ -34,8 +34,8 @@
 
 #ifdef __OPENCV__
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <cv.h>
+#include <highgui.h>
 
 #include "libidx.h"
 
