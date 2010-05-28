@@ -946,7 +946,7 @@ namespace ebl {
   idx<T> create_gaussian_kernel(uint h, uint w) {
     idx<T> m(h, w);
     uint min = MIN(h, w); // use smallest dim for gaussian
-    double s = min/4;
+    double s = (double)(min)/4;
     T vinv = (T) (1 / (s*s));
     T total = 0;
     int cx = min/2;
