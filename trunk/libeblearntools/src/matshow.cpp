@@ -80,19 +80,21 @@ void display(list<string>::iterator &ifname,
     for (uint j = 0; j < nw; ++j) {
       if (fname == mats->end())
 	fname = mats->begin();
-      //      if (load)
-      mat = load_image<T>(*fname);
-      maxh = std::max(maxh, (uint) (rowh + mat.dim(0)));
-      T min = 0, max = 0;
-      if (signd) {
-	T matmin = idx_min(mat);
-	if (matmin < 0) {
-	  min = -1; 
-	  max = -1;
-	}
-	draw_matrix(mat, rowh, w, 1.0, 1.0, min, max);
-      } else
-	draw_matrix(mat, rowh, w);
+      try {
+	//      if (load)
+	mat = load_image<T>(*fname);
+	maxh = std::max(maxh, (uint) (rowh + mat.dim(0)));
+	T min = 0, max = 0;
+	if (signd) {
+	  T matmin = idx_min(mat);
+	  if (matmin < 0) {
+	    min = -1; 
+	    max = -1;
+	  }
+	  draw_matrix(mat, rowh, w, 1.0, 1.0, min, max);
+	} else
+	  draw_matrix(mat, rowh, w);
+      } catch(string &err) { cerr << err << endl; }
       w += mat.dim(1) + 1;
       fname++;
       if (fname == ifname)
@@ -203,7 +205,8 @@ int main(int argc, char **argv) {
       imgname = dir.substr(pos + 1, dir.size() - pos + 1);
       dir = dir.substr(0, pos);
     }
-    list<string> *mats = find_fullfiles(dir, MAT_PATTERN, NULL, true, false);
+    list<string> *mats = find_fullfiles(dir, IMAGE_PATTERN_MAT,
+					NULL, true, false);
     if ((mats) && (mats->size() > 1)) {
       // find current position in this list
       for (i = mats->begin(); i != mats->end(); ++i) {
@@ -212,6 +215,8 @@ int main(int argc, char **argv) {
 	  break ;
 	}
       }
+      if (i == mats->end())
+	i = mats->begin();
       // loop and wait for key pressed
       while (1) {
 	millisleep(50);
