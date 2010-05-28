@@ -70,13 +70,18 @@ namespace ebl {
     // run network
     vector<bbox*>& vb = cl.fprop(img, threshold);
     // draw output
+    ostringstream label;
     vector<bbox*>::iterator i = vb.begin();
     for ( ; i != vb.end(); ++i) {
       uint h = (uint) (dzoom * (*i)->h0);
       uint w = (uint) (dzoom * (*i)->w0);
+      label.str("");
+      label.precision(2);
+      label << cl.labels[(*i)->class_id].idx_ptr() << " "
+	    << (*i)->confidence;
       draw_box(h0 + h, w0 + w, (uint) (dzoom * (*i)->height), 
 	       (uint) (dzoom * (*i)->width), 0, 0, 255,
-	       new string((const char *)cl.labels[(*i)->class_id].idx_ptr()));
+	       new string((const char *)label.str().c_str()));
     }
     draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
     // draw masks class
