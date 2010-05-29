@@ -78,11 +78,11 @@ namespace ebl {
       err << "conversion of image " << fname << " failed";
       throw err.str();
     }
-    // convert FILE to stream
-    __gnu_cxx::stdio_filebuf<char> fb(fp, ios::in) ;
-    istream in(&fb) ;    
+    // // convert FILE to stream
+    // __gnu_cxx::stdio_filebuf<char> fb(fp, ios::in) ;
+    // istream in(&fb) ;    
     // read pnm image
-    idx<ubyte> tmp = pnm_read(in);
+    idx<ubyte> tmp = pnm_read(fp);
     pclose(fp);
     idxdim dims(tmp);
     idx<T> out;
