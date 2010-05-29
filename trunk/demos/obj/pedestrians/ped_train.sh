@@ -6,7 +6,7 @@ w=32
 traindsname=ped${dset}_mean${h}x${w}_ker7_bg_train
 valdsname=ped${dset}_mean${h}x${w}_ker7_bg_val
 
-machine=duncan
+machine=duncana
 eblearnbin0=~/eblearn/bin/
 metaconf_name=ped_meta.conf
 save_max=7500
@@ -48,7 +48,7 @@ meta_send_best=15
 xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
 root=~/${machine}data/pedestrians/
 root2=~/${machine}data/
-dataroot=$root/ds
+dataroot=$root/ds2
 out=$root/out/$xpname/
 eblearnbin=${out}/bin/
 nopersons_root=$root2/nopersons_nicta/
