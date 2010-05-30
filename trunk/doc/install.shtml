@@ -195,10 +195,11 @@
        If you installed boost in a non-standard directory, add your path
        in scripts/FindCustom.cmake as described earlier, e.g:<br>
        <code>
-	 SET(BOOST_FOUND TRUE)<br>
-	 INCLUDE_DIRECTORIES("my_boost_directory/include")<br>
-	 LINK_DIRECTORIES("my_boost_directory/lib")<br>
-	 MESSAGE(STATUS "Found BOOST")</code>
+         SET(Boost_FOUND TRUE)<br>
+	 SET(Boost_INCLUDE_DIRS "$ENV{HOME}/installed/boost/include")<br>
+	 SET(Boost_LIBRARY_DIRS "$ENV{HOME}/installed/boost/lib")<br>
+	 SET(Boost_MINOR_VERSION 35)<br>
+	 </code>
        </li>
        </ul>
        <h3>Mac OS X packages manual installation</h3>

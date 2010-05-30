@@ -6,8 +6,8 @@ w=32
 traindsname=ped${dset}_mean${h}x${w}_ker7_bg_train
 valdsname=ped${dset}_mean${h}x${w}_ker7_bg_val
 
-machine=duncana
-eblearnbin0=~/eblearn/bin/
+machine=greendot
+eblearnbin0=~/eblearn2/bin/
 metaconf_name=ped_meta.conf
 save_max=7500
 n_retrain_dirs=5
