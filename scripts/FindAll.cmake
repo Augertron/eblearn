@@ -20,19 +20,31 @@ ELSE (OS_NAME MATCHES "darwin")
   ENDIF (OS_NAME MATCHES "linux")
 ENDIF (OS_NAME MATCHES "darwin")
 
+################################################################################
+# custom dependencies with override
+################################################################################
+# Call custom dependencies, will override dependencies if overlap
+################################################################################
+FIND_PACKAGE(Custom)
+
 # find boost
 ###############################################################################
 IF ($ENV{NOBOOST})
   MESSAGE(STATUS "BOOST DISABLED by env variable $NOBOOST=1.")
 ELSE ($ENV{NOBOOST})
-  FIND_PACKAGE(Boost COMPONENTS filesystem regex)
+  IF (NOT Boost_FOUND)
+    FIND_PACKAGE(Boost COMPONENTS filesystem regex) 
+    IF (Boost_FOUND)
+      IF (${Boost_MINOR_VERSION} GREATER 34)
+        FIND_PACKAGE(Boost COMPONENTS system filesystem regex)
+      ENDIF(${Boost_MINOR_VERSION} GREATER 34)
+    ENDIF (Boost_FOUND)
+  ENDIF (NOT Boost_FOUND)
   IF (Boost_FOUND)
-    IF (${Boost_MINOR_VERSION} GREATER 34)
-      FIND_PACKAGE(Boost COMPONENTS system filesystem regex)
-    ENDIF(${Boost_MINOR_VERSION} GREATER 34)
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__BOOST__")
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+    MESSAGE(STATUS "Found Boost")
     MESSAGE(STATUS "Boost include directory: ${Boost_INCLUDE_DIRS}")
     MESSAGE(STATUS "Boost libraries directory: ${Boost_LIBRARY_DIRS}")
   ELSE(Boost_FOUND)
@@ -183,12 +195,3 @@ ELSE ($ENV{NOIPP})
     MESSAGE("__ WARNING: Intel IPP not found, install to speed up.")
   ENDIF (IPP_FOUND)
 ENDIF ($ENV{NOIPP})
-
-
-################################################################################
-# LAST CALL: custom dependencies with possible override
-################################################################################
-# Call custom dependencies, will override previous dependencies if overlap
-################################################################################
-FIND_PACKAGE(Custom)
-

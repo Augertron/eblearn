@@ -10,3 +10,7 @@
 # SET(IPP_LIBRARIES_DIR "/home/pierre/ipp/sharedlib/")
 
 ################################################################################
+#SET(Boost_FOUND TRUE)
+#SET(Boost_INCLUDE_DIRS "$ENV{HOME}/installed/boost/include")
+#SET(Boost_LIBRARY_DIRS "$ENV{HOME}/installed/boost/lib")
+#SET(Boost_MINOR_VERSION 35)
