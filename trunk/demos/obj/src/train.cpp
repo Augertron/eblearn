@@ -133,7 +133,7 @@ int main(int argc, char **argv) { // regular main without gui
       cout << "Initializing weights from random." << endl;
       thenet.forget(fgp);
     }
-    if (conf.exists_bool("koray")) {
+    if ((!conf.exists_bool("retrain")) && (conf.exists_bool("koray"))) {
       cout << "Initializing some weights from koray." << endl;
       koray_temp(conf, *((layers<t_net>*)net));
     }
