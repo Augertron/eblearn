@@ -36,6 +36,7 @@
 #include "libidx.h"
 #include "ebl_arch.h"
 #include "ebl_states.h"
+#include "ebl_utils.h"
 
 namespace ebl {
 
@@ -456,17 +457,6 @@ namespace ebl {
     //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
   };
-
-  ////////////////////////////////////////////////////////////////
-  // helper functions TODO: move this to ebl_utils.*
-
-  //! Creates a table of full connections between layers.
-  //! An idx<intg> is allocated and returned.
-  idx<intg> full_table(intg a, intg b);
-
-  //! Creates a table of that connects input i to output i.
-  //! An idx<intg> is allocated and returned.
-  idx<intg> one2one_table(intg n);
 
 } // namespace ebl {
 

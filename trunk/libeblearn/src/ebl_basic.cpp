@@ -36,31 +36,6 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // helper function
-  
-  idx<intg> full_table(intg a, intg b) {
-    idx<intg> m(a * b, 2);
-    intg p = 0;
-    for (intg j = 0; j < b; ++j) {
-      for (intg i = 0; i < a; ++i) {
-	m.set(i, p, 0);
-	m.set(j, p, 1);
-	p++;
-      }
-    }
-    return m;
-  }
-
-  idx<intg> one2one_table(intg n) {
-    idx<intg> m(n, 2);
-    for (intg i = 0; i < n; ++i) {
-      m.set(i, i, 0);
-      m.set(i, i, 1);
-    }
-    return m;
-  }
-  
-  ////////////////////////////////////////////////////////////////
 
 #ifdef USE_IPP
 

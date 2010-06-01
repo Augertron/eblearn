@@ -111,7 +111,20 @@ namespace ebl {
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
   template<typename T> bool save_matrix(idx<T>& m, const string &filename);
+
+  //! Saves a matrix m in file filename. One can force the saving type to
+  //! a different type than the passed idx, e.g.
+  //! by calling save_matrix<float>(m, ..);
+  //! Returns true if successful, false otherwise.
+  template<typename T2, typename T>
+    bool save_matrix(idx<T>& m, const string &filename);
+  
+  //! Saves a matrix m in file filename.
+  //! Returns true if successful, false otherwise.
   template<typename T> bool save_matrix(idx<T>& m, const char *filename);
+
+  //! Saves a matrix m in file filename.
+  //! Returns true if successful, false otherwise.
   template<typename T> bool save_matrix(idx<T>& m, ostream &stream);
 
   ////////////////////////////////////////////////////////////////
