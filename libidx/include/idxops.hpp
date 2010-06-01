@@ -57,6 +57,9 @@ namespace ebl {
 
   // TODO: can n random swaps be as random? (it would be more efficient)
   template<class T> void idx_shuffle(idx<T> &in_, intg d, idx<T> *out_) {
+    if (!drand_ini)
+      cerr << "Warning: random not initialized, call init_drand(time(NULL))"
+	   << endl;
     // if out exists, use it for output, otherwise create a temporary buffer
     // and put output back into in.
     idx<T> in, out;
@@ -100,6 +103,9 @@ namespace ebl {
   template<class T1, class T2>
   void idx_shuffle_together(idx<T1> &in1_, idx<T2> &in2_, intg d,
 			    idx<T1> *out1_, idx<T2> *out2_) {
+    if (!drand_ini)
+      cerr << "Warning: random not initialized, call init_drand(time(NULL))"
+	   << endl;
     idx_checkdim2_all(in1_, in2_, d); // size of dim d must match of in1 and in2
     // if out exists, use it for output, otherwise create a temporary buffer
     // and put output back into in.
@@ -160,6 +166,9 @@ namespace ebl {
   void idx_shuffle_together(idx<T1> &in1_, idx<T2> &in2_, idx<T3> &in3_,
 			    intg d,
 			    idx<T1> *out1_, idx<T2> *out2_, idx<T3> *out3_) {
+    if (!drand_ini)
+      cerr << "Warning: random not initialized, call init_drand(time(NULL))"
+	   << endl;
     // size of dim d must match of in1 and in2 and in3
     idx_checkdim3_all(in1_, in2_, in3_, d);
     // if out exists, use it for output, otherwise create a temporary buffer

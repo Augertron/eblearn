@@ -1187,7 +1187,7 @@ namespace ebl {
       for( int ii = 0; ii < dim(0); ++ii ){
 	out<< printElems_impl_cast(get(ii)) <<sep;
       }
-      out<<rbrace<<"\n";
+      out<<rbrace; //<<"\n";
     }
     // printing a multidimensional tensor
     else{

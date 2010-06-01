@@ -1,7 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
- *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,29 +27,50 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef libeblearn_H
-#define libeblearn_H
+#ifndef EBL_UTILS_H_
+#define EBL_UTILS_H_
 
 #include "ebl_defines.h"
 #include "libidx.h"
-#include "ebl_arch_gen.h"
-#include "ebl_arch.h"
-#include "ebl_states.h"
-#include "ebl_basic.h"
-#include "ebl_transfer.h"
-#include "ebl_cost.h"
-#include "ebl_codec.h"
-#include "ebl_layers.h"
-#include "ebl_machines.h"
-#include "ebl_nonlinearity.h"
-#include "ebl_tester.h"
-#include "ebl_logger.h"
-#include "ebl_trainer.h"
-#include "ebl_preprocessing.h"
-#include "ebl_utils.h"
-#include "datasource.h"
-#include "detector.h"
 
-#endif
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // Table functions
+
+  //! Creates a table of full connections between indices [a0 .. a - 1]
+  //! and [b0 .. b - 1].
+  idx<intg> full_table(intg a, intg b, intg a0 = 0, intg b0 = 0);
+
+  //! Creates a table of that connects indices [0 .. n - 1] to
+  //! [0 .. n - 1] in a 1 to 1 mapping, e.g. 0 -> 0, 1 -> 1, ..., n - 1 ->
+  //! n - 1.
+  idx<intg> one2one_table(intg n);
+
+  //! Return the concatenation of two connection tables.
+  idx<intg> concat_tables(idx<intg> &t0, idx<intg> &t1);
+
+  //! Return a random table from [a0 .. a - 1] to [b0 .. b - 1] with
+  //! each output being connected to 'fanin' inputs.
+  idx<intg> random_table(intg a, intg b, intg fanin, intg a0 = 0, intg b0 = 0);
+
+  //! Create a table for a first convolution layer on yuv input,
+  //! fully and independently connecting layer y (0) to
+  //! [0 .. yend - 1], u (1) to [yend .. uend - 1] and v(2) to
+  //! [uend .. vend - 1].
+  idx<intg> yuv_table0(intg yend, intg uend, intg vend);
+
+  //! Create a table for a second convolution layer on the output
+  //! of a first convolution on yuv input, randomly connecting
+  //! [0 .. yend - 1] to [0 .. p0 - 1] with fanin of size 'fanin',
+  //! [0 .. vend - 1] to [p0 .. p1 - 1] with  fanin of size 'fanin', and
+  //! [uend .. vend - 1] to [p1 .. p2 - 1] with  fanin of size 'fanin_color',
+  idx<intg> yuv_table1(intg yend, intg uend, intg vend,
+		       intg p0, intg p1, intg p2, intg fanin,
+		       intg fanin_color);
+
+} // namespace ebl {
+
+#endif /* EBL_UTILS_H_ */

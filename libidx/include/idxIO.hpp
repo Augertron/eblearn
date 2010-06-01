@@ -235,6 +235,13 @@ namespace ebl {
     return save_matrix(m, filename.c_str());
   }
 
+  template <typename T2, typename T>
+  bool save_matrix(idx<T>& m, const string &filename) {
+    idx<T2> m2(m.get_idxdim());
+    idx_copy(m, m2);
+    return save_matrix(m2, filename.c_str());
+  }
+
   // TODO: intg support
   // TODO: use c++ IO to catch IO exceptions more easily
   template <typename T> bool save_matrix(idx<T>& m, const char *filename) {
