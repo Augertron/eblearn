@@ -280,6 +280,11 @@ namespace ebl {
       out.resize(d);
     }
     absmod.fprop(in,tin);
+    // failsafe
+    { idx_aloop1(x, in.x, T) {
+      if (*x > 20)
+	*x = 20;
+      }}
     ebb.resize(bias.x.dim(0));
     ebx.resize_as(in);
     
@@ -296,6 +301,8 @@ namespace ebl {
       idx_addc(outx, -biasx.get(), outx);
     }
     idx_aloop2(x, in.x, T, y, out.x, T) {
+      if (abs(*x) > 20)
+	*y = *x;
       if(*x < 0.0) {
 	*y = -(*y);
       }
@@ -305,6 +312,11 @@ namespace ebl {
   template <class T>
   void smooth_shrink_module<T>::bprop(state_idx<T>& in, state_idx<T>& out) {
     absmod.fprop(in,tin);
+    // failsafe
+    { idx_aloop1(x, in.x, T) {
+	if (*x > 20)
+	  *x = 20;
+      }}
     tin.clear_dx();
     beta.clear_dx();
     bias.clear_dx();
@@ -362,6 +374,11 @@ namespace ebl {
   template <class T>
   void smooth_shrink_module<T>::bbprop(state_idx<T>& in, state_idx<T>& out) {
     absmod.fprop(in,tin);
+    // failsafe
+    { idx_aloop1(x, in.x, T) {
+	if (*x > 20)
+	  *x = 20;
+      }}
     tin.clear_ddx();
     beta.clear_ddx();
     bias.clear_ddx();
