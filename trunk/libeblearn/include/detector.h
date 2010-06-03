@@ -172,6 +172,10 @@ namespace ebl {
     //! Enable or disable pruning of responses in the same area.
     void set_pruning(bool pruning);
 
+    //! Set factors to be applied on the height and width of output bounding
+    //! boxes.
+    void set_bbox_factors(float hfactor, float wfactor);
+    
     ////////////////////////////////////////////////////////////////
     // execution
     
@@ -302,6 +306,8 @@ namespace ebl {
     bool                 bppdetections; //!< ppdetections is up-to-date or not
     uint                 save_max_per_frame; //!< max number of region saved
     bool                 pruning; //!< enable pruning or not
+    float                bbhfactor; //!< height bbox factor
+    float                bbwfactor; //!< width bbox factor
 
     ////////////////////////////////////////////////////////////////
     // friends

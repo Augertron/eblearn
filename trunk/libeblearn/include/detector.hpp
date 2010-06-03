@@ -56,7 +56,7 @@ namespace ebl {
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       min_size(0), max_size(0), bodetections(false),
-      bppdetections(false), pruning(true) {
+      bppdetections(false), pruning(true), bbhfactor(1.0), bbwfactor(1.0) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -311,6 +311,14 @@ namespace ebl {
     pruning = pruning_;
     cout << "Pruning of neighbor answers is "
 	 << (pruning ? "enabled" : "disabled") << endl;
+  }
+  
+  template <class T>
+  void detector<T>::set_bbox_factors(float hfactor, float wfactor) {
+    bbhfactor = hfactor;
+    bbwfactor = wfactor;
+    cout << "Setting factors on output bounding boxes sizes, height: "
+	 << hfactor << ", width: " << wfactor << endl;
   }
   
   template <class T>
