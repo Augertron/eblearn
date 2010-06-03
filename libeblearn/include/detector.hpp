@@ -590,6 +590,11 @@ namespace ebl {
 		    (uint) (MIN(netw * scalewi + ow0,
 				original_w + robbox.w0 * scalewi)
 			    - std::max((uint) (robbox.w0 * scalewi), ow0));
+		  // apply bbox factors
+		  bb.h0 = bb.h0 + (uint) (bb.height * bbhfactor / 2);
+		  bb.w0 = bb.w0 + (uint) (bb.width * bbwfactor / 2);
+		  bb.height = (uint) (bb.height * bbhfactor);
+		  bb.width = (uint) (bb.width * bbwfactor);
 		  // input map
 		  bb.iheight = (uint) in_h; // input h
 		  bb.iwidth = (uint) in_w; // input w
