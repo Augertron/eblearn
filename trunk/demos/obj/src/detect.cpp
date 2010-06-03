@@ -147,8 +147,11 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	cam = new camera_directory<t_net>(conf.get_cstring("retrain_dir"));
       } else { // regular execution
 	if (!strcmp(cam_type.c_str(), "directory")) {
-	  if (argc == 3) cam = new camera_directory<t_net>(argv[2], height,
-							   width);
+	  if (argc == 3) 
+	    cam = new camera_directory<t_net>(argv[2], height, width);
+	  else if (conf.exists("input_dir"))
+	    cam = new camera_directory<t_net>(conf.get_cstring("input_dir"), 
+					      height, width);
 	  else eblerror("expected 2nd argument");
 	} else if (!strcmp(cam_type.c_str(), "opencv"))
 	  cam = new camera_opencv<t_net>(-1, height, width);
