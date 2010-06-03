@@ -138,6 +138,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       }
       if (conf.exists("pruning"))
 	detect.set_pruning(conf.get_bool("pruning"));
+      if (conf.exists("bbhfactor") && conf.exists("bbwfactor"))
+	detect.set_bbox_factors(conf.get_float("bbhfactor"),
+				conf.get_float("bbwfactor"));
 
       // initialize camera (opencv, directory, shmem or video)
       idx<t_net> frame;
