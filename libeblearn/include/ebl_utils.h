@@ -64,12 +64,12 @@ namespace ebl {
 
   //! Create a table for a second convolution layer on the output
   //! of a first convolution on yuv input, randomly connecting
-  //! [0 .. yend - 1] to [0 .. p0 - 1] with fanin of size 'fanin',
-  //! [0 .. vend - 1] to [p0 .. p1 - 1] with  fanin of size 'fanin', and
-  //! [uend .. vend - 1] to [p1 .. p2 - 1] with  fanin of size 'fanin_color',
+  //! [0 .. yend - 1] to [0 .. p0 - 1] with fanin of size 'fanin_y',
+  //! [0 .. vend - 1] to [p0 .. p1 - 1] with  fanin of size 'fanin_yuv', and
+  //! [uend .. vend - 1] to [p1 .. p2 - 1] with  fanin of size 'fanin_uv',
   idx<intg> yuv_table1(intg yend, intg uend, intg vend,
-		       intg p0, intg p1, intg p2, intg fanin,
-		       intg fanin_color);
+		       intg p0, intg p1, intg p2, intg fanin_y,
+		       intg fanin_yuv, intg fanin_uv);
 
 } // namespace ebl {
 

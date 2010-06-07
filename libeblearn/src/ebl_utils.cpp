@@ -125,13 +125,13 @@ namespace ebl {
   }
   
   idx<intg> yuv_table1(intg yend, intg uend, intg vend,
-		       intg p0, intg p1, intg p2, intg fanin,
-		       intg fanin_color) {
+		       intg p0, intg p1, intg p2, intg fanin_y,
+		       intg fanin_yuv, intg fanin_uv) {
     init_drand(time(NULL));
     // table 1
-    idx<intg> t3 = random_table(yend, p0, fanin);
-    idx<intg> t4 = random_table(vend, p1, fanin, 0, p0);
-    idx<intg> t5 = random_table(vend, p2, fanin_color, yend, p1);
+    idx<intg> t3 = random_table(yend, p0, fanin_y);
+    idx<intg> t4 = random_table(vend, p1, fanin_yuv, 0, p0);
+    idx<intg> t5 = random_table(vend, p2, fanin_uv, yend, p1);
     idx<intg> table1 = concat_tables(t3, t4);
     return concat_tables(table1, t5);
   }
