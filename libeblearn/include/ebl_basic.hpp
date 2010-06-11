@@ -41,6 +41,11 @@ namespace ebl {
 
   template <class T>
   linear_module<T>::~linear_module() {
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_linear_module_weights_" << w.x << ".mat";
+    save_matrix(w.x, fname.str());
+#endif
   }
 
   template <class T>
@@ -177,6 +182,11 @@ namespace ebl {
 
   template <class T>
   convolution_module<T>::~convolution_module() {
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_convolution_module_kernels_" << kernel.x << ".mat";
+    save_matrix(kernel.x, fname.str());
+#endif
   }
 
   template <class T>
@@ -387,6 +397,11 @@ namespace ebl {
 
   template <class T>
   subsampling_module<T>::~subsampling_module() {
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_sumbsampling_module_coeff_" << coeff.x << ".mat";
+    save_matrix(coeff.x, fname.str());
+#endif
   }
 
   template <class T>
@@ -508,6 +523,11 @@ namespace ebl {
 
   template <class T>
   addc_module<T>::~addc_module() {
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_addc_module_weights_" << bias.x << ".mat";
+    save_matrix(bias.x, fname.str());
+#endif
   }
 
   template <class T>
