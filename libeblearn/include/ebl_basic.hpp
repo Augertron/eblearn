@@ -223,13 +223,13 @@ namespace ebl {
     //    cout << "m2 sqrdist: " << idx_sqrdist(out.x, m2) << endl;
     
     ostringstream fname2;
-    fname2 << "dump2_convolution_layer_in.x_" << in.x << ".mat";
+    fname2 << "dump_convolution_layer_in.x_" << in.x << ".mat";
     save_matrix(in.x, fname2.str());
     fname2.str("");
-    fname2 << "dump2_convolution_layer_ker.x_" << kernel.x << ".mat";
+    fname2 << "dump_convolution_layer_ker.x_" << kernel.x << ".mat";
     save_matrix(kernel.x, fname2.str());
     fname2.str("");
-    fname2 << "dump2_convolution_layer_table_" << table << ".mat";
+    fname2 << "dump_convolution_layer_table_" << table << ".mat";
     save_matrix(table, fname2.str());
 #endif
   }
