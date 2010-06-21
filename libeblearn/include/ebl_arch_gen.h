@@ -75,6 +75,7 @@ namespace ebl {
     
   protected:
     bool bResize; //!< tells module to resize output or not
+    const char *name; //!< optional name of module.
   };
 
   //! abstract class for a module with two inputs and one output.

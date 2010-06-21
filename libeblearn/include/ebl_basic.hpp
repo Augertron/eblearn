@@ -35,15 +35,16 @@ namespace ebl {
   // linear_module
 
   template <class T>
-  linear_module<T>::linear_module(parameter<T> *p, intg in, intg out)
+  linear_module<T>::linear_module(parameter<T> *p, intg in, intg out, const char *name_)
     : w(p, out, in) {
+    this->name = name_;
   }
 
   template <class T>
   linear_module<T>::~linear_module() {
 #ifdef __DUMP_STATES__ // used to debug
     ostringstream fname;
-    fname << "dump_linear_module_weights_" << w.x << ".mat";
+    fname << "dump_" << this->name << "_linear_module_weights_" << w.x << ".mat";
     save_matrix(w.x, fname.str());
 #endif
   }
@@ -144,10 +145,11 @@ namespace ebl {
   convolution_module<T>::convolution_module(parameter<T> *p, 
 						  intg kerneli, intg kernelj, 
 						  intg stridei_, intg stridej_, 
-						  idx<intg> &tbl)
+						  idx<intg> &tbl, const char *name_)
     : kernel(p, tbl.dim(0), kerneli, kernelj), 
       stridei(stridei_), stridej(stridej_), table(tbl), warnings_shown(false),
       float_precision(false) {
+    this->name = name_;
     // check sanity of connection table
     if (table.dim(1) != 2) { // check table order
       cerr << "error: expecting a table with dim 1 equal to 2 but found: ";
@@ -184,7 +186,7 @@ namespace ebl {
   convolution_module<T>::~convolution_module() {
 #ifdef __DUMP_STATES__ // used to debug
     ostringstream fname;
-    fname << "dump_convolution_module_kernels_" << kernel.x << ".mat";
+    fname << "dump_" << this->name << "_convolution_module_kernels_" << kernel.x << ".mat";
     save_matrix(kernel.x, fname.str());
 #endif
   }
@@ -390,16 +392,17 @@ namespace ebl {
   subsampling_module<T>::subsampling_module(parameter<T> *p, 
 						  intg stridei_, intg stridej_,
 						  intg subi, intg subj, 
-						  intg thick)
+						  intg thick, const char *name_)
     : coeff(p, thick), sub(thick, subi, subj), thickness(thick), 
       stridei(stridei_), stridej(stridej_) {
+    this->name = name_;
   }
 
   template <class T>
   subsampling_module<T>::~subsampling_module() {
 #ifdef __DUMP_STATES__ // used to debug
     ostringstream fname;
-    fname << "dump_sumbsampling_module_coeff_" << coeff.x << ".mat";
+    fname << "dump_" << this->name << "_subsampling_module_coeff_" << coeff.x << ".mat";
     save_matrix(coeff.x, fname.str());
 #endif
   }
@@ -517,15 +520,16 @@ namespace ebl {
   // addc_module
 
   template <class T>
-  addc_module<T>::addc_module(parameter<T> *p, intg size)
+  addc_module<T>::addc_module(parameter<T> *p, intg size, const char *name_)
     : bias(p, size) {
+    this->name = name_;
   }
 
   template <class T>
   addc_module<T>::~addc_module() {
 #ifdef __DUMP_STATES__ // used to debug
     ostringstream fname;
-    fname << "dump_addc_module_weights_" << bias.x << ".mat";
+    fname << "dump_" << this->name << "_addc_module_weights_" << bias.x << ".mat";
     save_matrix(bias.x, fname.str());
 #endif
   }

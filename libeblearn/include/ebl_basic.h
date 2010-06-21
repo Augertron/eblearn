@@ -53,7 +53,7 @@ namespace ebl {
     //!        If p is null, a local buffer will be used.
     //! \param in the size of the input to the linear combination.
     //! \param out the size of the output to the linear combination.
-    linear_module(parameter<T> *p, intg in, intg out);
+    linear_module(parameter<T> *p, intg in, intg out, const char *name = "");
     //! destructor
     virtual ~linear_module();
     //! forward propagation from in to out
@@ -94,8 +94,9 @@ namespace ebl {
   //! the output of the processing of each <42> slice.
   DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable, 
 				linear_module<T>,
-				(parameter<T> *p, intg in, intg out),
-				(p, in, out));
+				(parameter<T> *p, intg in, intg out, 
+				 const char *name = ""),
+				(p, in, out, name));
 
   ////////////////////////////////////////////////////////////////
   // convolution_module
@@ -118,7 +119,7 @@ namespace ebl {
     //! \param table is the convolution connection table.
     convolution_module(parameter<T> *p, intg kerneli, intg kernelj, 
 			  intg  stridei, intg stridej, 
-			  idx<intg> &table);
+			  idx<intg> &table, const char *name = "");
     //! destructor
     virtual ~convolution_module();
     //! forward propagation from in to out
@@ -170,8 +171,8 @@ namespace ebl {
   DECLARE_REPLICABLE_MODULE_1_1(convolution_module_replicable, 
 				convolution_module<T>,
 				(parameter<T> *p, intg ki, intg kj, intg si, 
-				 intg sj, idx<intg> &table),
-				(p, ki, kj, si, sj, table));
+				 intg sj, idx<intg> &table, const char *name = ""),
+				(p, ki, kj, si, sj, table, name));
 
   ////////////////////////////////////////////////////////////////
   // subsampling_module
@@ -186,7 +187,7 @@ namespace ebl {
     //! \param p is used to store all parametric variables in a single place.
     //!        If p is null, a local buffer will be used.
     subsampling_module(parameter<T> *p, intg stridei_, intg stridej_,
-			  intg subi, intg subj, intg thick);
+			  intg subi, intg subj, intg thick, const char *name = "");
     //! destructor
     virtual ~subsampling_module();
     //! forward propagation from in to out
@@ -230,8 +231,8 @@ namespace ebl {
   DECLARE_REPLICABLE_MODULE_1_1(subsampling_module_replicable, 
 				subsampling_module<T>,
 				(parameter<T> *p, intg sti, intg stj,
-				 intg subi, intg subj, intg thick),
-				(p, sti, stj, subi, subj, thick));
+				 intg subi, intg subj, intg thick, const char *name = ""),
+				(p, sti, stj, subi, subj, thick, name));
 
   ////////////////////////////////////////////////////////////////
   // addc_module
@@ -246,7 +247,7 @@ namespace ebl {
     //!        If p is null, a local buffer will be used.
     //! \param size is the number of biases, or the size of dimensions 0 of 
     //! inputs and outputs.
-    addc_module(parameter<T> *p, intg size);
+    addc_module(parameter<T> *p, intg size, const char *name = "");
     //! destructor
     virtual ~addc_module();
     //! forward propagation from in to out

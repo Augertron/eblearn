@@ -53,7 +53,7 @@ namespace ebl {
     //! \param noutputs The number of outputs.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
     full_layer(parameter<T> *p, intg indim0, intg noutputs,
-		  bool tanh = true);
+	       bool tanh = true, const char *name = "");
     //! Destructor.
     virtual ~full_layer();
     //! fprop from in to out
@@ -101,7 +101,7 @@ namespace ebl {
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
     convolution_layer(parameter<T> *p, intg kerneli, intg kernelj, 
 			 intg stridei, intg stridej, idx<intg> &tbl,
-			 bool tanh = true);
+			 bool tanh = true, const char *name = "");
     virtual ~convolution_layer();
     //! fprop from in to out
     void fprop(state_idx<T> &in, state_idx<T> &out);
@@ -149,7 +149,7 @@ namespace ebl {
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
     convabsnorm_layer(parameter<T> *p, intg kerneli, intg kernelj, 
 		      intg stridei, intg stridej, idx<intg> &tbl,
-		      bool mirror = false, bool tanh = true);
+		      bool mirror = false, bool tanh = true, const char *name = "");
     //! Destructor.
     virtual ~convabsnorm_layer();
     //! fprop from in to out
@@ -190,7 +190,7 @@ namespace ebl {
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
     subsampling_layer(parameter<T> *p, intg stridei, intg stridej,
 			 intg subi, intg subj, 
-			 intg thick, bool tanh = true);
+			 intg thick, bool tanh = true, const char *name = "");
     //! Destructor.
     virtual ~subsampling_layer();
     //! fprop from in to out

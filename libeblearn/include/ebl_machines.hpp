@@ -194,9 +194,9 @@ namespace ebl {
     // and feed the input of the following module.
     
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,tbl0));
+    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,tbl0,"c0"));
     // bias
-    add_module(new addc_module<T>(&prm, thick0));
+    add_module(new addc_module<T>(&prm, thick0, "c0"));
     // non linearity
     if (shrink)
       add_module(new smooth_shrink_module<T>(&prm, thick0));
@@ -210,11 +210,11 @@ namespace ebl {
       add_module(new weighted_std_module<T>(ki0, kj0, thick0, mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh));
+    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,tbl1));
+    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,tbl1,"c1"));
     // bias
-    add_module(new addc_module<T>(&prm, thick1));
+    add_module(new addc_module<T>(&prm, thick1, "c1"));
     // non linearity
     if (shrink)
       add_module(new smooth_shrink_module<T>(&prm, thick1));
@@ -228,7 +228,7 @@ namespace ebl {
       add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
     }
     // full
-    add_module(new full_layer<T>(&prm, thick1, outthick, tanh));
+    add_module(new full_layer<T>(&prm, thick1, outthick, tanh, "f2"));
 
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
@@ -292,9 +292,9 @@ namespace ebl {
     intg ki2 = (((ini - ki0 + 1) / si0) - ki1 + 1);
     intg kj2 = (((inj  - kj0 + 1) / sj0) - kj1 + 1);
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,tbl0));
+    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,tbl0,"c0"));
     // bias
-    add_module(new addc_module<T>(&prm, thick0));
+    add_module(new addc_module<T>(&prm, thick0, "c0"));
     // non linearity
     if (shrink)
       add_module(new smooth_shrink_module<T>(&prm, thick0));
@@ -308,11 +308,11 @@ namespace ebl {
       add_module(new weighted_std_module<T>(ki0, kj0, thick0, mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh));
+    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,tbl1));
+    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,tbl1,"c1"));
     // bias
-    add_module(new addc_module<T>(&prm, thick1));
+    add_module(new addc_module<T>(&prm, thick1, "c1"));
     // non linearity
     if (shrink)
       add_module(new smooth_shrink_module<T>(&prm, thick1));
@@ -326,7 +326,7 @@ namespace ebl {
       add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
     }
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh));
+    add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh, "c2"));
   }
 
   ////////////////////////////////////////////////////////////////
