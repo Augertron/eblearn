@@ -36,15 +36,16 @@ namespace ebl {
 
   template <class T>
   full_layer<T>::full_layer(parameter<T> *p, intg indim0, intg noutputs,
-				  bool btanh_)
+			    bool btanh_, const char *name_)
     : btanh(btanh_),
-      linear(p, indim0, noutputs),
-      adder(p, noutputs),
+      linear(p, indim0, noutputs, name_),
+      adder(p, noutputs, name_),
       sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
 	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
     sum = NULL; 
+    this->name = name_;
   }
 
   template <class T>
@@ -121,15 +122,16 @@ namespace ebl {
 
   template <class T>
   convolution_layer<T>::convolution_layer(parameter<T> *p, 
-						intg kerneli, intg kernelj, 
-						intg stridei_, intg stridej_, 
-						idx<intg> &tbl, bool btanh_) 
+					  intg kerneli, intg kernelj, 
+					  intg stridei_, intg stridej_, 
+					  idx<intg> &tbl, bool btanh_, const char *name_) 
     : btanh(btanh_),
-      convol(p, kerneli, kernelj, stridei_, stridej_, tbl), 
-      adder(p, convol.thickness),
+      convol(p, kerneli, kernelj, stridei_, stridej_, tbl, name_), 
+      adder(p, convol.thickness, name_),
       sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
 	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
+    this->name = name_;
   }
 
   template <class T>
@@ -223,11 +225,12 @@ namespace ebl {
 					  intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
 					  idx<intg> &tbl, bool mirror,
-					  bool btanh_) 
+					  bool btanh_, const char *name_) 
     : btanh(btanh_),
-      lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_),
+      lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_, name_),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
       tmp(NULL), tmp2(NULL) {
+    this->name = name_;
   }
 
   template <class T>
@@ -301,12 +304,13 @@ namespace ebl {
   subsampling_layer<T>::subsampling_layer(parameter<T> *p,
 						intg stridei, intg stridej,
 						intg subi, intg subj, 
-						intg thick, bool btanh_)
+						intg thick, bool btanh_, const char *name_)
     : btanh(btanh_),
-      subsampler(p, stridei, stridej, subi, subj, thick), adder(p, thick),
+      subsampler(p, stridei, stridej, subi, subj, thick, name_), adder(p, thick, name_),
       sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
 	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
+    this->name = name_;
   }
 
   template <class T>
