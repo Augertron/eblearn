@@ -1052,10 +1052,10 @@ namespace ebl {
       out.resize(d);
     }
     idx_aloop2(inx, in.x, T, outx, out.x, T) {
-      if (inx.get() > threshold)
-	outx.set(true_value);
+      if (*inx > threshold)
+	*outx = true_value;
       else
-	outx.set(false_value);
+	*outx = false_value;
     }
   }
 
