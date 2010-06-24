@@ -95,7 +95,7 @@ namespace ebl {
 	     idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	     idx<intg> &tbl1, intg outthick, bool norm = false,
 	     bool mirror = false, bool tanh = false,
-	     bool shrink = false, bool binarize_features = false);
+	     bool shrink = false, bool binarize_features = false, T bin_thres = 0);
     virtual ~net_cscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -116,7 +116,7 @@ namespace ebl {
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg outthick, bool norm = false,
 	      bool mirror = false, bool tanh = false, bool shrink = false,
-	      bool binarize_features = false);
+	      bool binarize_features = false, T bin_thres = 0);
   };
 
   ////////////////////////////////////////////////////////////////
