@@ -232,7 +232,7 @@ namespace ebl {
       add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
     }
     if (binarize_features)
-      add_module(new binarize_module<T>(bin_thres, -1.0, 1.0);
+      add_module(new binarize_module<T>(bin_thres, -1.0, 1.0));
     // full
     add_module(new full_layer<T>(&prm, thick1, outthick, tanh, "f2"));
 

@@ -1037,7 +1037,7 @@ namespace ebl {
 
   template <class T>
   binarize_module<T>::binarize_module(T threshold_, T false_value_,
-				      T true_value)
+				      T true_value_)
     : threshold(threshold_), false_value(false_value_), true_value(true_value_){
   }
 
