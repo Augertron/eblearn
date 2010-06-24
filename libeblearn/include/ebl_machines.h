@@ -92,10 +92,10 @@ namespace ebl {
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
     net_cscf(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0,
-		    idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
-		    idx<intg> &tbl1, intg outthick, bool norm = false,
-		    bool mirror = false, bool tanh = false,
-		    bool shrink = false);
+	     idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+	     idx<intg> &tbl1, intg outthick, bool norm = false,
+	     bool mirror = false, bool tanh = false,
+	     bool shrink = false, bool binarize_features = false);
     virtual ~net_cscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -115,7 +115,8 @@ namespace ebl {
     void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg outthick, bool norm = false,
-	      bool mirror = false, bool tanh = false, bool shrink = false);
+	      bool mirror = false, bool tanh = false, bool shrink = false,
+	      bool binarize_features = false);
   };
 
   ////////////////////////////////////////////////////////////////

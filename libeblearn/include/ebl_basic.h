@@ -171,7 +171,8 @@ namespace ebl {
   DECLARE_REPLICABLE_MODULE_1_1(convolution_module_replicable, 
 				convolution_module<T>,
 				(parameter<T> *p, intg ki, intg kj, intg si, 
-				 intg sj, idx<intg> &table, const char *name = ""),
+				 intg sj, idx<intg> &table,
+				 const char *name = ""),
 				(p, ki, kj, si, sj, table, name));
 
   ////////////////////////////////////////////////////////////////
@@ -187,7 +188,8 @@ namespace ebl {
     //! \param p is used to store all parametric variables in a single place.
     //!        If p is null, a local buffer will be used.
     subsampling_module(parameter<T> *p, intg stridei_, intg stridej_,
-			  intg subi, intg subj, intg thick, const char *name = "");
+		       intg subi, intg subj, intg thick,
+		       const char *name = "");
     //! destructor
     virtual ~subsampling_module();
     //! forward propagation from in to out
@@ -231,7 +233,8 @@ namespace ebl {
   DECLARE_REPLICABLE_MODULE_1_1(subsampling_module_replicable, 
 				subsampling_module<T>,
 				(parameter<T> *p, intg sti, intg stj,
-				 intg subi, intg subj, intg thick, const char *name = ""),
+				 intg subi, intg subj, intg thick,
+				 const char *name = ""),
 				(p, sti, stj, subi, subj, thick, name));
 
   ////////////////////////////////////////////////////////////////
@@ -457,6 +460,28 @@ namespace ebl {
     virtual void bprop(state_idx<T> &in, state_idx<T> &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // binarize_module
+  //! This modules transforms its inputs to binary outputs based on a given
+  //! threshold.
+  template <class T> class binarize_module : public module_1_1<T> {
+  public:
+    //! constructor.
+    binarize_module(T threshold, T false_value, T true_value);
+    //! destructor
+    virtual ~binarize_module();    
+    //! forward propagation from in to out
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    /* //! backward propagation from out to in */
+    /* virtual void bprop(state_idx<T> &in, state_idx<T> &out); */
+    /* //! second-derivative backward propagation from out to in */
+    /* virtual void bbprop(state_idx<T> &in, state_idx<T> &out); */
+  protected:
+    T	threshold;
+    T	false_value;
+    T	true_value;
   };
 
 } // namespace ebl {
