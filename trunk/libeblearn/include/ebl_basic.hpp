@@ -35,7 +35,8 @@ namespace ebl {
   // linear_module
 
   template <class T>
-  linear_module<T>::linear_module(parameter<T> *p, intg in, intg out, const char *name_)
+  linear_module<T>::linear_module(parameter<T> *p, intg in, intg out,
+				  const char *name_)
     : w(p, out, in) {
     this->name = name_;
   }
@@ -44,7 +45,8 @@ namespace ebl {
   linear_module<T>::~linear_module() {
 #ifdef __DUMP_STATES__ // used to debug
     ostringstream fname;
-    fname << "dump_" << this->name << "_linear_module_weights_" << w.x << ".mat";
+    fname << "dump_" << this->name << "_linear_module_weights_" << w.x
+	  << ".mat";
     save_matrix(w.x, fname.str());
 #endif
   }
@@ -143,9 +145,9 @@ namespace ebl {
 
   template <class T>
   convolution_module<T>::convolution_module(parameter<T> *p, 
-						  intg kerneli, intg kernelj, 
-						  intg stridei_, intg stridej_, 
-						  idx<intg> &tbl, const char *name_)
+					    intg kerneli, intg kernelj, 
+					    intg stridei_, intg stridej_, 
+					    idx<intg> &tbl, const char *name_)
     : kernel(p, tbl.dim(0), kerneli, kernelj), 
       stridei(stridei_), stridej(stridej_), table(tbl), warnings_shown(false),
       float_precision(false) {
@@ -186,7 +188,8 @@ namespace ebl {
   convolution_module<T>::~convolution_module() {
 #ifdef __DUMP_STATES__ // used to debug
     ostringstream fname;
-    fname << "dump_" << this->name << "_convolution_module_kernels_" << kernel.x << ".mat";
+    fname << "dump_" << this->name << "_convolution_module_kernels_"
+	  << kernel.x << ".mat";
     save_matrix(kernel.x, fname.str());
 #endif
   }
@@ -305,7 +308,7 @@ namespace ebl {
 
   template <class T>
   void convolution_module<T>::resize_output(state_idx<T> &in,
-					       state_idx<T> &out) {
+					    state_idx<T> &out) {
     intg ki = kernel.x.dim(1);
     intg kj = kernel.x.dim(2);
     intg sini = in.x.dim(1);
@@ -379,7 +382,7 @@ namespace ebl {
     // new module (with its own local parameter buffers)
     convolution_module<T> *l2 =
       new convolution_module(NULL, kernel.x.dim(1), kernel.x.dim(2),
-				stridei, stridej, table);
+			     stridei, stridej, table);
     // copy data
     idx_copy(kernel.x, l2->kernel.x);
     return l2;
@@ -390,9 +393,9 @@ namespace ebl {
 
   template <class T>
   subsampling_module<T>::subsampling_module(parameter<T> *p, 
-						  intg stridei_, intg stridej_,
-						  intg subi, intg subj, 
-						  intg thick, const char *name_)
+					    intg stridei_, intg stridej_,
+					    intg subi, intg subj, 
+					    intg thick, const char *name_)
     : coeff(p, thick), sub(thick, subi, subj), thickness(thick), 
       stridei(stridei_), stridej(stridej_) {
     this->name = name_;
@@ -459,7 +462,7 @@ namespace ebl {
 
   template <class T>
   void subsampling_module<T>::resize_output(state_idx<T> &in,
-					       state_idx<T> &out) {
+					    state_idx<T> &out) {
     intg sin_i = in.x.dim(1);
     intg sin_j = in.x.dim(2);
     intg si = sin_i / stridei;
@@ -509,7 +512,7 @@ namespace ebl {
     // new module (with its own local parameter buffers)
     subsampling_module<T> *l2 =
       new subsampling_module(NULL, stridei, stridej,
-				sub.x.dim(1), sub.x.dim(2), thickness);
+			     sub.x.dim(1), sub.x.dim(2), thickness);
     // copy data
     idx_copy(coeff.x, l2->coeff.x);
     idx_copy(sub.x, l2->sub.x);
@@ -529,7 +532,8 @@ namespace ebl {
   addc_module<T>::~addc_module() {
 #ifdef __DUMP_STATES__ // used to debug
     ostringstream fname;
-    fname << "dump_" << this->name << "_addc_module_weights_" << bias.x << ".mat";
+    fname << "dump_" << this->name << "_addc_module_weights_" << bias.x
+	  << ".mat";
     save_matrix(bias.x, fname.str());
 #endif
   }
@@ -550,8 +554,8 @@ namespace ebl {
 
     // add each bias to entire slices cut from the first dimension
     idx_bloop3(inx, in.x, T, biasx, bias.x, T, outx, out.x, T) {
-	idx_addc(inx, biasx.get(), outx);
-      }
+      idx_addc(inx, biasx.get(), outx);
+    }
   }
 
   template <class T>
@@ -859,11 +863,11 @@ namespace ebl {
     : nrow((int) (floor(kerdims.dim(0) / (float) 2.0))),
       ncol((int) (floor(kerdims.dim(1) / (float) 2.0))),
       nrow2(nrow), ncol2(ncol) {
-      // remove 1 pixel on right and bottom borders if even.
-      if (kerdims.dim(0) % 2 == 0)
-	nrow2 -= 1;
-      if (kerdims.dim(1) % 2 == 0)
-	ncol2 -= 1;
+    // remove 1 pixel on right and bottom borders if even.
+    if (kerdims.dim(0) % 2 == 0)
+      nrow2 -= 1;
+    if (kerdims.dim(1) % 2 == 0)
+      ncol2 -= 1;
   }
 
   template <class T>
@@ -1028,6 +1032,33 @@ namespace ebl {
     }
   }
     
+  ////////////////////////////////////////////////////////////////
+  // binarize_module
+
+  template <class T>
+  binarize_module<T>::binarize_module(T threshold_, T false_value_,
+				      T true_value)
+    : threshold(threshold_), false_value(false_value_), true_value(true_value_){
+  }
+
+  template <class T>
+  binarize_module<T>::~binarize_module() {
+  }
+  
+  template <class T>
+  void binarize_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) { 
+    if (&in != &out) { // resize only when input and output are different
+      idxdim d(in.x); // use same dimensions as in
+      out.resize(d);
+    }
+    idx_aloop2(inx, in.x, T, outx, out.x, T) {
+      if (inx.get() > threshold)
+	outx.set(true_value);
+      else
+	outx.set(false_value);
+    }
+  }
+
   ////////////////////////////////////////////////////////////////
 
 #ifdef USE_IPP
