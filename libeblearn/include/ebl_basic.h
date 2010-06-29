@@ -476,7 +476,7 @@ namespace ebl {
     //!        (1, 0), etc.
     //!        It is assumed that ranges are non overlapping and given in
     //!        increasing order.
-    range_lut_module(idx<T> &value_range);
+    range_lut_module(idx<T> *value_range);
     //! destructor
     virtual ~range_lut_module();    
     //! forward propagation from in to out
