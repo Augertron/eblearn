@@ -1060,6 +1060,35 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // range_lut_module
+
+  template <class T>
+  range_lut_module<T>::range_lut_module(idx<T> &value_range_)
+    : value_range(value_range_.get_idxdim()) {
+      idx_copy(value_range_, value_range);
+  }
+
+  template <class T>
+  range_lut_module<T>::~range_lut_module() {
+  }
+  
+  template <class T>
+  void range_lut_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) { 
+    if (&in != &out) { // resize only when input and output are different
+      idxdim d(in.x); // use same dimensions as in
+      out.resize(d);
+    }
+    idx_aloop2(inx, in.x, T, outx, out.x, T) {
+      idx_bloop1(vr, value_range, T) {
+	if (*inx < vr.get(1)) {
+	  *outx = vr.get(0);
+	  break ;
+	}
+      }
+    }
+  }
+
+  ////////////////////////////////////////////////////////////////
 
 #ifdef USE_IPP
 

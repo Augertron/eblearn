@@ -463,6 +463,33 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  // range_lut_module
+  //! This modules transforms its inputs to discrete values corresponding to a
+  //! range of values, as described a given lookup table (lut).
+  template <class T> class range_lut_module : public module_1_1<T> {
+  public:
+    //! constructor.
+    //! @param value_range A matrix containing a series of value / range pairs.
+    //!        The matrix size is Nx2, with (n, 0) being the value, (n, 1)
+    //!        the maximum of the range. E.g. any value below (0, 1), will be
+    //!        assigned (0, 0), then anything below (1, 1), will be assigned
+    //!        (1, 0), etc.
+    //!        It is assumed that ranges are non overlapping and given in
+    //!        increasing order.
+    range_lut_module(idx<T> &value_range);
+    //! destructor
+    virtual ~range_lut_module();    
+    //! forward propagation from in to out
+    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    /* //! backward propagation from out to in */
+    /* virtual void bprop(state_idx<T> &in, state_idx<T> &out); */
+    /* //! second-derivative backward propagation from out to in */
+    /* virtual void bbprop(state_idx<T> &in, state_idx<T> &out); */
+  protected:
+    idx<T>	value_range;
+  };
+
+  ////////////////////////////////////////////////////////////////
   // binarize_module
   //! This modules transforms its inputs to binary outputs based on a given
   //! threshold.
