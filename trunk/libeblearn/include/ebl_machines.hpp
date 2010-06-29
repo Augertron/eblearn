@@ -165,7 +165,7 @@ namespace ebl {
 			intg ki1, intg kj1, idx<intg> &tbl1, 
 			intg outthick, bool norm, bool mirror,
 			bool tanh, bool shrink, bool lut_features,
-			idx<T> &lut)
+			idx<T> *lut)
     : layers<T>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
@@ -181,7 +181,7 @@ namespace ebl {
 			 intg si0, intg sj0, intg ki1, intg kj1, 
 			 idx<intg> &tbl1, intg outthick, bool norm,
 			 bool mirror, bool tanh, bool shrink,
-			 bool lut_features, idx<T> &lut) {
+			 bool lut_features, idx<T> *lut) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);

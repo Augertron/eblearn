@@ -1063,9 +1063,11 @@ namespace ebl {
   // range_lut_module
 
   template <class T>
-  range_lut_module<T>::range_lut_module(idx<T> &value_range_)
-    : value_range(value_range_.get_idxdim()) {
-      idx_copy(value_range_, value_range);
+  range_lut_module<T>::range_lut_module(idx<T> *value_range_) {
+    if (value_range_ == NULL)
+      eblerror("expected non null range matrix");
+    value_range = idx<T>(value_range_->get_idxdim());
+    idx_copy(*value_range_, value_range);
   }
 
   template <class T>
