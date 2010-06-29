@@ -164,12 +164,12 @@ namespace ebl {
 			intg si0, intg sj0,
 			intg ki1, intg kj1, idx<intg> &tbl1, 
 			intg outthick, bool norm, bool mirror,
-			bool tanh, bool shrink, bool binarize_features,
-			T bin_thres)
+			bool tanh, bool shrink, bool lut_features,
+			idx<T> &lut)
     : layers<T>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
-	 outthick, norm, mirror, tanh, shrink, binarize_features, bin_thres);
+	 outthick, norm, mirror, tanh, shrink, lut_features, lut);
   }
   
   template <class T>
@@ -181,7 +181,7 @@ namespace ebl {
 			 intg si0, intg sj0, intg ki1, intg kj1, 
 			 idx<intg> &tbl1, intg outthick, bool norm,
 			 bool mirror, bool tanh, bool shrink,
-			 bool binarize_features, T bin_thres) {
+			 bool lut_features, idx<T> &lut) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -231,8 +231,8 @@ namespace ebl {
       add_module(new abs_module<T>());
       add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
     }
-    if (binarize_features)
-      add_module(new binarize_module<T>(bin_thres, -1.0, 1.0));
+    if (lut_features)
+      add_module(new range_lut_module<T>(lut));
     // full
     add_module(new full_layer<T>(&prm, thick1, outthick, tanh, "f2"));
 
@@ -298,7 +298,8 @@ namespace ebl {
     intg ki2 = (((ini - ki0 + 1) / si0) - ki1 + 1);
     intg kj2 = (((inj  - kj0 + 1) / sj0) - kj1 + 1);
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,tbl0,"c0"));
+    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,
+						    tbl0,"c0"));
     // bias
     add_module(new addc_module<T>(&prm, thick0, "c0"));
     // non linearity
@@ -316,7 +317,8 @@ namespace ebl {
     // subsampling
     add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,tbl1,"c1"));
+    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,
+						    tbl1,"c1"));
     // bias
     add_module(new addc_module<T>(&prm, thick1, "c1"));
     // non linearity
@@ -332,7 +334,7 @@ namespace ebl {
       add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
     }
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh, "c2"));
+    add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
   }
 
   ////////////////////////////////////////////////////////////////
