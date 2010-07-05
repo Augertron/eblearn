@@ -123,16 +123,17 @@ namespace ebl {
   }
 
   template <typename T, typename T2>
-  void read_cast_matrix(istream &stream, idx<T2> &out) {
+  void read_cast_matrix(FILE *fp, idx<T2> &out) {
     idx<T> m(out.get_idxdim());
-    read_matrix_body(stream, m);
+    read_matrix_body(fp, m);
     idx_copy(m, out);
   }
 
   template <typename T>
-  void read_matrix_body(istream &stream, idx<T> &m) {
+  void read_matrix_body(FILE *fp, idx<T> &m) {
+    int res;
     idx_aloop1(i, m, T) {
-      stream.read((char*)&(*i), sizeof (T));
+      res = fread(&(*i), sizeof (T), 1, fp);
     }
   }
   
@@ -144,15 +145,17 @@ namespace ebl {
   }
 
   template <typename T> idx<T> load_matrix(const char *filename) {
-    ifstream in(filename);
-    ostringstream err;
-    
-    if (!in) {
-      err << "warning: failed to open " << filename;
-      throw err.str();
+    // open file
+    FILE *fp = fopen(filename, "rb");
+    if (!fp) {
+      ostringstream oss;
+      oss << "load_matrix failed to open " << filename;
+      cerr << oss.str() << endl;
+      throw oss.str();
     }
-    idx<T> m = load_matrix<T>(in);
-    in.close();
+    // read it
+    idx<T> m = load_matrix<T>(fp);
+    fclose(fp);
     return m;
   }
 
@@ -161,21 +164,23 @@ namespace ebl {
   }
 
   template <typename T> void load_matrix(idx<T>& m, const char *filename) {
-    ifstream in(filename);
-    ostringstream err;
-    
-    if (!in) {
-      err << "warning: failed to open " << filename;
-      throw err.str();
+    // open file
+    FILE *fp = fopen(filename, "rb");
+    if (!fp) {
+      ostringstream oss;
+      oss << "load_matrix failed to open " << filename;
+      cerr << oss.str() << endl;
+      throw oss.str();
     }
-    m = load_matrix(in, &m);
-    in.close();
+    // read it
+    m = load_matrix<T>(fp, &m);
+    fclose(fp);
   }
 
   template <typename T>
-  idx<T> load_matrix(istream &stream, idx<T> *out_) {
+  idx<T> load_matrix(FILE *fp, idx<T> *out_) {
     int magic;
-    idxdim dims = read_matrix_header(stream, magic);
+    idxdim dims = read_matrix_header(fp, magic);
     idx<T> out;
     idx<T> *pout = &out;
     if (!out_) // if no input matrix, allocate new one
@@ -196,30 +201,30 @@ namespace ebl {
     //! if out matrix is same type as current, read directly
     if ((magic == get_magic<T>()) || (magic == get_magic_vincent<T>())) {
       // read
-      read_matrix_body(stream, *pout);
+      read_matrix_body(fp, *pout);
     } else { // different type, read original type, then copy/cast into out
       switch (magic) {
       case MAGIC_BYTE_MATRIX:
       case MAGIC_UBYTE_VINCENT:
-	read_cast_matrix<ubyte>(stream, *pout);
+	read_cast_matrix<ubyte>(fp, *pout);
 	break ;
       case MAGIC_INTEGER_MATRIX:
       case MAGIC_INT_VINCENT:
-	read_cast_matrix<int>(stream, *pout);
+	read_cast_matrix<int>(fp, *pout);
 	break ;
       case MAGIC_FLOAT_MATRIX:
       case MAGIC_FLOAT_VINCENT:
-	read_cast_matrix<float>(stream, *pout);
+	read_cast_matrix<float>(fp, *pout);
 	break ;
       case MAGIC_DOUBLE_MATRIX:
       case MAGIC_DOUBLE_VINCENT:
-	read_cast_matrix<double>(stream, *pout);
+	read_cast_matrix<double>(fp, *pout);
 	break ;
       case MAGIC_LONG_MATRIX:
-	read_cast_matrix<long>(stream, *pout);
+	read_cast_matrix<long>(fp, *pout);
 	break ;
       case MAGIC_UINT_MATRIX:
-	read_cast_matrix<uint>(stream, *pout);
+	read_cast_matrix<uint>(fp, *pout);
 	break ;
       default:
 	eblerror("unknown magic number");
