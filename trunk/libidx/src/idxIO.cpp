@@ -109,25 +109,32 @@ namespace ebl {
     return false;
   }
 
-  idxdim read_matrix_header(istream &stream, int &magic) {
+  idxdim read_matrix_header(FILE *fp, int &magic) {
     ostringstream err;
     int ndim, v, magic_vincent;
     int ndim_min = 3; // std header requires at least 3 dims even empty ones.
     idxdim dims;
 
     // read magic number
-    stream.read((char*)&magic, sizeof (int));
+    if (fread(&magic, sizeof (int), 1, fp) != 1) {
+      fclose(fp);
+      err << "cannot read magic number";
+      throw err.str();
+    }
     magic_vincent = endian(magic);
     magic_vincent &= ~0xF; // magic contained in higher bits
     
     // read number of dimensions
     if (is_magic(magic)) { // regular magic number, read next number
-      stream.read((char*)&ndim, sizeof (int));
+      if (fread(&ndim, sizeof (int), 1, fp) != 1) {
+	fclose(fp);
+	err << "cannot read number of dimensions";
+	throw err.str();
+      }
       // check number is valid
       if (ndim > MAXDIMS) {
 	err << "too many dimensions: " << ndim << " (MAXDIMS = "
 	    << MAXDIMS << ").";
-	stream.seekg(0); // reset stream to beginning
 	throw err.str();
       }
     } else if (is_magic_vincent(magic_vincent)) { // vincent magic number
@@ -138,19 +145,22 @@ namespace ebl {
     } else { // unkown magic
       err << "unknown magic number: 0x" << std::hex << magic
 	  << " or " << magic << " vincent: " << magic_vincent;
-      stream.seekg(0); // reset stream to beginning
       throw err.str();
     }
     // read each dimension
     for (int i = 0; (i < ndim) || (i < ndim_min); ++i) {
-      stream.read((char*) &v, sizeof (int));
+      if (fread(&v, sizeof (int), 1, fp) != 1) {
+	fclose(fp);
+	ostringstream oss;
+	oss << "failed to read matrix dimensions";
+	throw oss.str();
+      }
       // if vincent, convert to endian first
       if (is_magic_vincent(magic_vincent))
 	v = endian(v);
       if (i < ndim) { // ndim may be less than ndim_min
 	if (v <= 0) { // check that dimension is valid
 	  err << "dimension is negative or zero";
-	  stream.seekg(0); // reset stream to beginning
 	  throw err.str();
 	}
 	dims.insert_dim(v, i); // insert dimension

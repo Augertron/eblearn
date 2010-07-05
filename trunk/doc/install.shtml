@@ -51,6 +51,17 @@
 	 $ sudo make install<br>
 	 $ make test<br>
        </code>
+       <h3>Windows</h3>
+       Install TortoiseSVN to get the latest code.<br>
+       Install CMake.<br>
+       Run Cmake and enter your source code path (e.g.: C:/Users/pierre/eblearn)
+       and the output path (e.g.: C:/Users/pierre/eblearn/bin).<br>
+       Click 'configure', select the type of project you want to generate (e.g.
+       'Visual Studio 9 2008' if you work with Visual Studio), then
+       click 'generate'.<br>
+       Then open the generated project in your output path with Visual
+       Studio.<br>
+       Right-click on the project you want to compile and select 'build'.<br>
      </p>
      <h2>Detailed installation</h2>
      <p>
@@ -80,6 +91,10 @@
        For developers only (tools for bug-free development):<br>
        <code>$ sudo port install valgrind doxygen
        </code>
+
+       <h4>Windows:</h4>
+       See the manual installation section below to learn how to install each
+       component.
 
        <h3>Compilation</h3>
        Configure will first generate the Makefile and setup some directories,
@@ -216,7 +231,33 @@
        <h5>cppunit</h5>
        Get sources (e.g. cppunit-1.12.1.tar.gz) from
        http://apps.sourceforge.net/mediawiki/cppunit/<br>
-       The standard "configure/make/sudo make install" will do. 
+       The standard "configure/make/sudo make install" will do.
+       
+       <h3>Windows packages manual installation</h3>
+       <h5>TortoiseSVN (open-source)</h5>
+       Download from http://sourceforge.net/projects/tortoisesvn/<br>
+       Install, then click 'export' with the eblearn link
+       (https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk)
+       to download the eblearn repository.<br>
+       <h5>CMake (open-source)</h5>
+       Download from http://www.cmake.org/cmake/resources/software.html<br>
+       <h5>CPPUnit (open-source)</h5>
+       Download from
+       http://sourceforge.net/projects/cppunit/files/cppunit/1.12.1/<br>
+       Extract the code to the location of your choice and
+       bBuild the library:<br>
+       * Open the src/CppUnitLibraries.dsw workspace in VC++.<br>
+       * In the 'Build' menu, select 'Batch Build...'<br>
+       * In the batch build dialog, select all projects and press the build
+       button.<br>
+       * The resulting libraries can be found in the lib/ directory.<br>
+       Finally add those lines in eblearn/scripts/FindCustom.cmake:
+       <code>
+	 SET(CPPUNIT_FOUND TRUE)
+	 SET(CPPUNIT_INCLUDE_DIR "B:/windows/cppunit-1.12.1/include")
+	 SET(CPPUNIT_LIBRARY "B:/windows/cppunit-1.12.1/lib/cppunitd.lib")
+	 MESSAGE(STATUS "Found CPPUNIT")
+       </code>
      </p>
    </div>
    </body></html>

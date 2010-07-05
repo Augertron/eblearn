@@ -96,14 +96,15 @@ namespace ebl {
   template<typename T>
     void load_matrix(idx<T>& m, const string &filename);
   
-  //! Loads a matrix from stream 'stream' into given matrix out if given,
+  //! Loads a matrix from an opened file pointer 'fp'
+  //! into given matrix out if given,
   //! allocates a new one otherwise. This returns either *out or the newly
   //! allocated idx.
   //! If out is not null, it is resized if necessary.
   //! In all cases, data is cast into T if different.
   //! This throws string exceptions upon errors.
   template<typename T>
-    idx<T> load_matrix(istream &stream, idx<T> *out = NULL);
+    idx<T> load_matrix(FILE *fp, idx<T> *out = NULL);
 
   ////////////////////////////////////////////////////////////////
   // saving
@@ -148,7 +149,7 @@ namespace ebl {
 
   //! Return the dimensions found in the header and set 'magic' to the magic
   //! number found (either vincent or regular type).
-  idxdim read_matrix_header(istream &stream, int &magic);
+  idxdim read_matrix_header(FILE *fp, int &magic);
 
 } // end namespace ebl
 
