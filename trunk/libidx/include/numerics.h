@@ -32,25 +32,25 @@
 #ifndef Numerics_H
 #define Numerics_H
 
+#include "defines.h"
 #include <cmath>
 
 namespace ebl {
 
   //! derivative of tanh
-  double dtanh(double x);
+  EXPORT double dtanh(double x);
 
   //! "standard" sigmoid, used in Lush.
   //! Rational polynomial for computing y = 1.71593428*tanh(0.66666666*x)
-  float stdsigmoid(float x);
+  EXPORT float stdsigmoid(float x);
   //! derivative of standard digmoid.
-  float dstdsigmoid(float x);
+  EXPORT float dstdsigmoid(float x);
 
   //! "standard" sigmoid, used in Lush.
   //! Rational polynomial for computing y = 1.71593428*tanh(0.66666666*x)
-  double stdsigmoid(double x);
+  EXPORT double stdsigmoid(double x);
   //! derivative of standard digmoid.
-  double dstdsigmoid(double x);
-
+  EXPORT double dstdsigmoid(double x);
 
   ////////////////////////////////////////////////////////////////
 
@@ -58,44 +58,52 @@ namespace ebl {
   //! This flag is raised only when init_rand is called, not
   //! when dseed is called.
   //! At the moment only the forget functions use this flag (see ebm)
-  extern bool drand_ini;
+  extern IMPORT bool drand_ini;
 
   //! initializes drand by calling dseed, and raises drand_ini
-  void init_drand(int x);
+  EXPORT void init_drand(int x);
+
+  //! initializes drand by calling dseed with a random seed (time(NULL), 
+  //! and raises drand_ini.
+  EXPORT void dynamic_init_drand();
+
+  //! initializes drand by calling dseed with a fixed seed (0), 
+  //! and raises drand_ini.
+  EXPORT void fixed_init_drand();
 
   //! sets the seed of the random number generator.
   //! This MUST be called at least once before
   //! the random number generator is used. Otherwise
   //! calls to drand() and dgauss() always return the
   //! same number.
-  void dseed(int x);
+  EXPORT void dseed(int x);
 
   //! random number generator. Return a random number
   //! drawn from a uniform distribution over [0,1].
-  double drand(void);
+  EXPORT double drand(void);
 
   //! random number generator. Return a random number
   //! drawn from a uniform distribution over [-v,+v].
-  double drand(double v);
+  EXPORT double drand(double v);
 
   //! random number generator. Return a random number
   //! drawn from a uniform distribution over [v0,v1].
-  double drand(double v0, double v1);
+  EXPORT double drand(double v0, double v1);
 
   //! draw a random number from a quasi-Gaussian
   //! distribution with mean 0 and variance 1.
-  double dgauss(void);
+  EXPORT double dgauss(void);
 
   //! draw a random number from a quasi-Gaussian
   //! distribution with mean 0 and variance sigma.
-  double dgauss(double sigma);
+  EXPORT double dgauss(double sigma);
 
   //! draw a random number from a quasi-Gaussian
   //! distribution with mean m and variance sigma.
-  double dgauss(double m, double sigma);
+  EXPORT double dgauss(double m, double sigma);
 
   //! n choose k (k must be <= n)
-  int choose(int n, int k);
+  EXPORT int choose(int n, int k);
 
   } // end namespace ebl
 

@@ -29,6 +29,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#ifdef __WINDOWS__
+//#include <Winsock2.h>
+//#include <windows.h>
+#include <time.h>
+#else
+#include <sys/time.h>
+//#include <unistd.h>
+#endif
+
 #include "ebl_utils.h"
 
 using namespace std;
@@ -127,7 +136,7 @@ namespace ebl {
   idx<intg> yuv_table1(intg yend, intg uend, intg vend,
 		       intg p0, intg p1, intg p2, intg fanin_y,
 		       intg fanin_yuv, intg fanin_uv) {
-    init_drand(time(NULL));
+    dynamic_init_drand();
     // table 1
     idx<intg> t3 = random_table(yend, p0, fanin_y);
     idx<intg> t4 = random_table(vend, p1, fanin_yuv, 0, p0);

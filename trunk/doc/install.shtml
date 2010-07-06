@@ -13,27 +13,28 @@
   <body>
     <!--#include virtual="nav.html" --> 
     <div id="globalWrapper">
-     <h2>Download</h2>
-     <p>
-       The project is still on pre-release version, so there is no pre-packed
-       version of the library. Still, you are welcome to visit the
-       <a href="https://sourceforge.net/projects/eblearn/"
-	  target="new_page">sourceforge page</a> and browse the
-       <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/"
-	  target="new_page">SVN repository</a>,
-       where the project is regularly updated.</p>
-     <p>
-       Get trunk sources via SVN: <br>
-       <code><b>
-	   svn co https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk
-	   eblearn
-       </b></code>
-       <br>
-     </p>
+      
+      <p>
+      Select your OS for specific download and installation instructions:<br>
+      <a href="#linux">Linux</a><br>
+      <a href="#windows">Windows</a><br>
+      <a href="#mac">MAC</a><br>
+      </p>
+
+      <a name=linux><h1>Linux</h1></a>
+      <h3>Download</h3>
+      <ul>
+	<li>Binaries: Not yet available.</li>
+	<li>Sources: Not yet available.</li>
+	<li>Sources via SVN:
+	  <code>
+	      $ svn co https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk
+	      eblearn
+	  </code>
+	</li>
+      </ul>
      
-     <h2>Quick install</h2>
-     <p>
-       <h3>Linux (tested on Ubuntu)</h3>
+     <h3>Quick install</h3>
        <code>$ sudo apt-get install subversion cmake g++
 	 libatlas-base-dev libboost-filesystem-dev imagemagick
 	 libboost-regex-dev libqt4-core libqt4-dev libqt4-gui
@@ -43,101 +44,15 @@
 	 $ sudo make install<br>
 	 $ make test<br>
        </code>
-       <h3>MAC OS X</h3>
-       <code>$ sudo port install subversion cmake imagemagick boost qt4-mac
-	 cppunit doxygen<br>
-	 $ ./configure<br>
-	 $ make release<br>
-	 $ sudo make install<br>
-	 $ make test<br>
-       </code>
-       <h3>Windows</h3>
-       Install TortoiseSVN to get the latest code.<br>
-       Install CMake.<br>
-       Run Cmake and enter your source code path (e.g.: C:/Users/pierre/eblearn)
-       and the output path (e.g.: C:/Users/pierre/eblearn/bin).<br>
-       Click 'configure', select the type of project you want to generate (e.g.
-       'Visual Studio 9 2008' if you work with Visual Studio), then
-       click 'generate'.<br>
-       Then open the generated project in your output path with Visual
-       Studio.<br>
-       Right-click on the project you want to compile and select 'build'.<br>
-     </p>
-     <h2>Detailed installation</h2>
-     <p>
-       <h3>Detailed external (non-proprietary) dependencies</h3>
-       <h4>Linux:</h4>
-       For core libraries libeblearn and libidx only (tools, testers and
-       some demos may not compile):<br>
-       <code>$ sudo apt-get install cmake g++ libatlas-base-dev imagemagick
-       </code><br>
-       For tools, demos and tester:<br>
-       <code>$ sudo apt-get install libboost-filesystem-dev
-	 libboost-regex-dev libqt4-core libqt4-dev libqt4-gui libcppunit-dev
-	 libxml++2.6-dev mplayer mencoder
-       </code><br>
-       For developers only (tools for bug-free development):<br>
-       <code>$ sudo apt-get install valgrind electric-fence doxygen
-       </code>
-
-       <h4>MAC OS X:</h4>
-       For core libraries libeblearn and libidx only (tools, testers and
-       some demos may not compile):<br>
-       <code>$ sudo port install cmake imagemagick
-       </code><br>
-       For tools, demos and tester:<br>
-       <code>$ sudo port install boost cppunit qt4-mac
-       </code><br>
-       For developers only (tools for bug-free development):<br>
-       <code>$ sudo port install valgrind doxygen
-       </code>
-
-       <h4>Windows:</h4>
-       See the manual installation section below to learn how to install each
-       component.
-
-       <h3>Compilation</h3>
-       Configure will first generate the Makefile and setup some directories,
-       call it once:<br>
-       <code>$ ./configure</code><br>
-       To compile libraries only (libeblearn, libidx, libidxgui, libeblearngui
-       and libeblearntools):<br>
-       <code>$ make</code><br>
-       To compile all projects release mode:<br>
-       <code>$ make release</code><br>
-       To compile all projects debug mode (slower execution):<br>
-       <code>$ make debug</code><br>
-       To compile a specific project(s) in release mode, e.g. libidx or
-       metarun and metaparse:<br>
-       <code>$ make release prj=idx</code><br>
-       <code>$ make release prj="metarun metaparse"</code><br>
-       To compile a specific project in debug mode, e.g. objdetect:<br>
-       <code>$ make debug prj=objdetect</code><br>
-       To compile the tester and run it:<br>
-       <code>$ make test</code><br>
-       To exclude some components such as QT or OpenCV from being used,
-       export the following shell variables with 0 or 1: NOBOOST, NOOPENCV,
-       NOXML, NOQT, NOIPP, NOCBLAS. For example to compile without OpenCV:<br>
-       <code>$ make NOOPENCV=1 NOQT=1</code><br>
-       Or:&nbsp<code>$ export NOOPENCV=1 && make</code><br>
-       To add extra flags to the compilation, export the EBLFLAGS variable.
-       For example, to dump the states of each layer, add the __DUMP_STATES__
-       flag as follow:<br>
-       <code>$ export EBLFLAGS="-D__DUMP_STATES__" && make</code><br>
-
-       <h3>Installation</h3>
-       To install libraries and headers on your system:<br>
-       <code>$ sudo make install</code><br>
-       To install libraries and headers in a specific directory:<br>
-       <code>$ make install DIR="your-install-dir"</code><br>
-       Or:&nbsp<code>$ export DIR="your-install-dir" && make install</code><br>
 
        <h3>Execution</h3>
-       To unit-test basic functionalities of the libraries, run the tester:<br>
-       <code>$ ./bin/tester</code> (Or <code>$ make test</code>)<br>
-       To test face detection demo, call:<br>
-       <code>$ ./bin/objdetect demos/obj/face/trained/20100211.025504.face_conf00_color_0_eta_.00001_resize_mean.conf</code><br>
-
+       <ul>
+	 <li>To unit-test basic functionalities of the libraries,
+	   run the tester:<br>
+	   <code>$ ./bin/tester</code> (Or <code>$ make test</code>)</li>
+	 <li>To test face detection demo, call:<br>
+	   <code>$ ./bin/objdetect demos/obj/face/trained/best.conf</code></li>
+       </ul>
 
        <h3>Database installation</h3>
        The MNIST handwritten digit database is used by the tester to unit-test
@@ -146,15 +61,66 @@
        and specify its path to the tester via the configure script:<br>
        <a href="http://yann.lecun.com/exdb/mnist/">
 	 http://yann.lecun.com/exdb/mnist/</a>
-     </p>
 
-     <h2>Manual external dependencies installation</h2>
-     <p>
-       If packages are not available through apt-get or port, one can manually
-       download and install sources. Here is a guide for some of the required
-       packages.
+       <h3>Compilation</h3>
+       <ul>
+	 <li>Configure will first generate the Makefile and setup some
+	   directories, call it once:<br>
+	   <code>$ ./configure</code></li>
+	 <li>To compile libraries only (libeblearn, libidx, libidxgui,
+	   libeblearngui and libeblearntools):<br>
+	   <code>$ make</code></li>
+	 <li>To compile all projects release mode:<br>
+	   <code>$ make release</code></li>
+	 <li>To compile all projects debug mode (slower execution):<br>
+	   <code>$ make debug</code></li>
+	 <li>To compile a specific project(s) in release mode, e.g. libidx or
+	   metarun and metaparse:<br>
+	   <code>$ make release prj=idx</code><br>
+	   <code>$ make release prj="metarun metaparse"</code></li>
+	 <li>To compile a specific project in debug mode, e.g. objdetect:<br>
+	   <code>$ make debug prj=objdetect</code></li>
+	 <li>To compile the tester and run it:<br>
+	   <code>$ make test</code></li>
+	 <li>To exclude some components such as QT or OpenCV from being used,
+	   export the following shell variables with 0 or 1: NOBOOST, NOOPENCV,
+	   NOXML, NOQT, NOIPP, NOCBLAS. For example to compile without
+	   OpenCV:<br>
+	   <code>$ make NOOPENCV=1 NOQT=1</code><br>
+	   Or:&nbsp<code>$ export NOOPENCV=1 && make</code></li>
+	 <li>To add extra flags to the compilation, export the EBLFLAGS
+	   variable. For example, to dump the states of each layer, add
+	   the __DUMP_STATES__ flag as follow:<br>
+	   <code>$ export EBLFLAGS="-D__DUMP_STATES__" && make</code></li>
+	 </ul>
 
-       <h3>CMake customization</h3>
+       <h3>Installation</h3>
+       <ul>
+	 <li>To install libraries and headers on your system:<br>
+	   <code>$ sudo make install</code></li>
+	 <li>To install libraries and headers in a specific directory:<br>
+	   <code>$ make install DIR="your-install-dir"</code><br>
+	   Or:&nbsp<code>$ export DIR="your-install-dir" && make install
+	   </code></li>
+       </ul>
+
+       <h3>Open-source third-party installation</h3>
+       <ul>
+	 <li>For core libraries libeblearn and libidx only (tools, testers and
+	   some demos may not compile):<br>
+	   <code>$ sudo apt-get install cmake g++ libatlas-base-dev imagemagick
+	   </code></li>
+	 <li>For tools, demos and tester:<br>
+	   <code>$ sudo apt-get install libboost-filesystem-dev
+	     libboost-regex-dev libqt4-core libqt4-dev libqt4-gui libcppunit-dev
+	     libxml++2.6-dev mplayer mencoder
+	   </code></li>
+	 <li>For developers only (tools for bug-free development):<br>
+	   <code>$ sudo apt-get install valgrind electric-fence doxygen
+	   </code></li>
+	 </ul>
+
+       <h3>CMake hints</h3>
        <ul>
 	 <li>When installing an external dependency manually, it may be detected
 	   automatically by the existing CMake "find" scripts or not.<br>
@@ -164,7 +130,8 @@
 	   FindAll.cmake. This script is called after every other script, thus
 	   can override other dependencies if other non-desired versions were
 	   detected.<br>
-	   To add a new dependency in the custom script, one usually only needs to
+	   To add a new dependency in the custom script, one usually only 
+	   needs to
 	   specify the include and library paths and set the "found" variable.
 	   For example, setting the Intel IPP variables:
 	   <code><br>
@@ -186,7 +153,11 @@
 	   </li>
 	 </ul>
        
-       <h3>Linux packages manual installation</h3>
+       <h3>Open-source third-party installation (manual)</h3>
+       If packages are not available through apt-get or port, one can manually
+       download and install sources. Here is a guide for some of the required
+       packages.
+
        <ul><li><strong>cppunit</strong><br>
        <code>$ wget
 	 http://downloads.sourceforge.net/cppunit/cppunit-1.12.1.tar.gz<br>
@@ -217,47 +188,282 @@
 	 </code>
        </li>
        </ul>
-       <h3>Mac OS X packages manual installation</h3>
-       <h5>cmake</h5>
-       Get sources (e.g. cmake-2.6.2.tar.gz) from
-       http://www.cmake.org/cmake/resources/software.html.<br>
-       Consult the README.txt in the top level directory and note
-       that the steps to compile and install are "./bootstrap;
-       make; sudo make install".
-       <h5>libatlas</h5>
-       Get sources (e.g. Atlas-C++-0.6.1.tar.gz) from
-       http://sourceforge.net/projects/worldforge/<br>
-       The standard "configure/make/sudo make install" will do. 
-       <h5>cppunit</h5>
-       Get sources (e.g. cppunit-1.12.1.tar.gz) from
-       http://apps.sourceforge.net/mediawiki/cppunit/<br>
-       The standard "configure/make/sudo make install" will do.
+     </p>
+
+     <a name="windows"><h1>Windows</h1></a>
+      <h3>Download</h3>
+      <ul>
+	<li>Binaries: Not yet available.</li>
+	<li>Sources: Not yet available.</li>
+	<li>Sources via SVN: Install TortoiseSVN (details below) and use this
+	  address:<br>
+	  <code>
+	      https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk
+	  </code>
+	</li>
+      </ul>
+     
+     <h3>Quick install</h3>
+     <ul>
+       <li>Install CMake (details below). Run it and
+	 enter your source code path (e.g.: C:/Users/pierre/eblearn)
+	 and the output path (e.g.: C:/Users/pierre/eblearn/bin).</li>
+       <li>(optional) Download and extract MNIST
+	 (http://yann.lecun.com/exdb/mnist/) and set variable 
+	 MNIST_PATH in CMake with 'Add Entry' to your MNIST path.</li>
+       <li>In CMake, click 'configure', select the type of project you want
+	 to generate (e.g. 'Visual Studio 9 2008' if you work with
+	 Visual Studio), then click 'generate'.</li>
+       <li>Open the generated project in your output path with Visual
+	 Studio.</li>
+       <li>Right-click on the project you want to compile and select
+	 'build'.</li>
+       <li>(optional) Install third-party libraries (see below) depending on
+	 which project you want to compile.<br>
+     </ul>
+
+     <h3>Execution</h3>
+     <ul>
+       <li>To unit-test basic functionalities of the libraries, run the tester
+	 in the command line:<br>
+	 <code>$ bin/Release/tester</code></li>
+       <li>To test face detection demo, call:<br>
+	 <code>$ bin/Release/objdetect demos/obj/face/trained/best.conf
+	 </code></li>
+     </ul>
+
+     <h3>Database installation</h3>
+     The MNIST handwritten digit database is used by the tester to unit-test
+     the learning algorithms.<br>
+     You can download MNIST from the following website
+     and specify its path to the tester via the MNIST_PATH variable in
+     CMake:<br>
+     <a href="http://yann.lecun.com/exdb/mnist/">
+       http://yann.lecun.com/exdb/mnist/</a>
+
+     <h3>Compilation</h3>
+     <ul>
+       <li>To exclude some components such as QT or OpenCV from being used,
+	 export the following environment variables with 0 or 1:
+	 NOBOOST, NOOPENCV,
+	 NOXML, NOQT, NOIPP, NOCBLAS. For example to compile without OpenCV and
+	 QT, use NOOPENCV=1 NOQT=1.</li>
+       <li>To add extra flags to the compilation, export the EBLFLAGS variable.
+	 For example, to dump the states of each layer, add the __DUMP_STATES__
+	 flag as follow: EBLFLAGS="-D__DUMP_STATES__"</li>
+     </ul>
+
+     <h3>CMake hints</h3>
+     <ul>
+       <li>When installing an external dependency manually, it may be detected
+	 automatically by the existing CMake "find" scripts or not.<br>
+	 If not,
+	 one can edit the <strong>scripts/FindCustom.cmake</strong>
+	 script which is called by
+	 FindAll.cmake. This script is called after every other script, thus
+	 can override other dependencies if other non-desired versions were
+	 detected.<br>
+	 To add a new dependency in the custom script, one usually only 
+	 needs to
+	 specify the include and library paths and set the "found" variable.
+	 For example, setting the Intel IPP variables:
+	 <code><br>
+	   SET(CPPUNIT_FOUND TRUE)<br>
+	   SET(CPPUNIT_INCLUDE_DIR "B:/windows/cppunit-1.12.1/include")<br>
+	   SET(CPPUNIT_LIBRARY "B:/windows/cppunit-1.12.1/lib/cppunitd.lib")<br>
+	   MESSAGE(STATUS "Found CPPUNIT")<br>
+	 </code>
+	 The CMake makefiles of your projects will then use the found variable
+	 (by convention "[name]_FOUND") to compile with or without this
+	 library.
+       </li>
+	 <li>To pass a symbol to your code, you can use the following command,
+	   for example the "__IPP__" symbol to let the code know it should use
+	   the IPP related code if given:
+	   <code><br>
+	     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IPP__")
+	   </code>
+	 </li>
+     </ul>
        
-       <h3>Windows packages manual installation</h3>
-       <h5>TortoiseSVN (open-source)</h5>
+     <h3>Open-source third-party installation</h3>
+     <ul>
+       <li><strong>TortoiseSVN</strong><br>
        Download from http://sourceforge.net/projects/tortoisesvn/<br>
        Install, then click 'export' with the eblearn link
        (https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk)
        to download the eblearn repository.<br>
-       <h5>CMake (open-source)</h5>
+       <li><strong>CMake</strong><br>
        Download from http://www.cmake.org/cmake/resources/software.html<br>
-       <h5>CPPUnit (open-source)</h5>
+       <li><strong>CPPUnit</strong><br>
        Download from
        http://sourceforge.net/projects/cppunit/files/cppunit/1.12.1/<br>
        Extract the code to the location of your choice and
-       bBuild the library:<br>
-       * Open the src/CppUnitLibraries.dsw workspace in VC++.<br>
-       * In the 'Build' menu, select 'Batch Build...'<br>
-       * In the batch build dialog, select all projects and press the build
-       button.<br>
-       * The resulting libraries can be found in the lib/ directory.<br>
-       Finally add those lines in eblearn/scripts/FindCustom.cmake:
+       build the library:<br>
+       <ul><li>Open the src/CppUnitLibraries.dsw workspace in VC++.</li>
+	 <li>In the 'Build' menu, select 'Batch Build...'</li>
+	 <li>In the batch build dialog, select all projects and press the build
+       button.</li>
+	 <li>The resulting libraries can be found in the lib/ directory.</li>
+       </ul>
+       Finally add those lines in eblearn/scripts/FindCustom.cmake:<br>
        <code>
-	 SET(CPPUNIT_FOUND TRUE)
-	 SET(CPPUNIT_INCLUDE_DIR "B:/windows/cppunit-1.12.1/include")
-	 SET(CPPUNIT_LIBRARY "B:/windows/cppunit-1.12.1/lib/cppunitd.lib")
-	 MESSAGE(STATUS "Found CPPUNIT")
+	 SET(CPPUNIT_FOUND TRUE)<br>
+	 SET(CPPUNIT_INCLUDE_DIR "B:/windows/cppunit-1.12.1/include")<br>
+	 SET(CPPUNIT_LIBRARY "B:/windows/cppunit-1.12.1/lib/cppunitd.lib")<br>
+	 MESSAGE(STATUS "Found CPPUNIT")<br>
        </code>
-     </p>
-   </div>
+     </ul>
+
+     <a name="mac"><h1>MAC OS</h1></a>
+      <h3>Download</h3>
+      <ul>
+	<li>Binaries: Not yet available.</li>
+	<li>Sources: Not yet available.</li>
+	<li>Sources via SVN:
+	  <code>
+	      $ svn co https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk
+	      eblearn
+	  </code>
+	</li>
+      </ul>
+     
+     <h3>Quick install</h3>
+     <code>$ sudo port install subversion cmake imagemagick boost qt4-mac
+       cppunit doxygen<br>
+       $ ./configure<br>
+       $ make release<br>
+       $ sudo make install<br>
+       $ make test<br>
+     </code>
+     
+     <h3>Execution</h3>
+       <ul>
+	 <li>To unit-test basic functionalities of the libraries,
+	   run the tester:<br>
+	   <code>$ ./bin/tester</code> (Or <code>$ make test</code>)</li>
+	 <li>To test face detection demo, call:<br>
+	   <code>$ ./bin/objdetect demos/obj/face/trained/best.conf</code></li>
+       </ul>
+       
+       <h3>Database installation</h3>
+       The MNIST handwritten digit database is used by the tester to unit-test
+       the learning algorithms.<br>
+       You can download MNIST from the following website
+       and specify its path to the tester via the configure script:<br>
+       <a href="http://yann.lecun.com/exdb/mnist/">
+	 http://yann.lecun.com/exdb/mnist/</a>
+       
+       <h3>Compilation</h3>
+       <ul>
+	 <li>Configure will first generate the Makefile and setup some
+	   directories, call it once:<br>
+	   <code>$ ./configure</code></li>
+	 <li>To compile libraries only (libeblearn, libidx, libidxgui,
+	   libeblearngui and libeblearntools):<br>
+	   <code>$ make</code></li>
+	 <li>To compile all projects release mode:<br>
+	   <code>$ make release</code></li>
+	 <li>To compile all projects debug mode (slower execution):<br>
+	   <code>$ make debug</code></li>
+	 <li>To compile a specific project(s) in release mode, e.g. libidx or
+	   metarun and metaparse:<br>
+	   <code>$ make release prj=idx</code><br>
+	   <code>$ make release prj="metarun metaparse"</code></li>
+	 <li>To compile a specific project in debug mode, e.g. objdetect:<br>
+	   <code>$ make debug prj=objdetect</code></li>
+	 <li>To compile the tester and run it:<br>
+	   <code>$ make test</code></li>
+	 <li>To exclude some components such as QT or OpenCV from being used,
+	   export the following shell variables with 0 or 1: NOBOOST, NOOPENCV,
+	   NOXML, NOQT, NOIPP, NOCBLAS. For example to compile without
+	   OpenCV:<br>
+	   <code>$ make NOOPENCV=1 NOQT=1</code><br>
+	   Or:&nbsp<code>$ export NOOPENCV=1 && make</code></li>
+	 <li>To add extra flags to the compilation, export the EBLFLAGS
+	   variable. For example, to dump the states of each layer, add
+	   the __DUMP_STATES__ flag as follow:<br>
+	   <code>$ export EBLFLAGS="-D__DUMP_STATES__" && make</code></li>
+	 </ul>
+
+       <h3>Installation</h3>
+       <ul>
+	 <li>To install libraries and headers on your system:<br>
+	   <code>$ sudo make install</code></li>
+	 <li>To install libraries and headers in a specific directory:<br>
+	   <code>$ make install DIR="your-install-dir"</code><br>
+	   Or:&nbsp<code>$ export DIR="your-install-dir" && make install
+	   </code></li>
+       </ul>
+
+       <h3>Open-source third-party installation</h3>
+       <ul><li>For core libraries libeblearn and libidx only (tools, testers and
+	   some demos may not compile):<br>
+	   <code>$ sudo port install cmake imagemagick
+	 </code></li>
+       <li>For tools, demos and tester:<br>
+	 <code>$ sudo port install boost cppunit qt4-mac
+	 </code></li>
+       <li>For developers only (tools for bug-free development):<br>
+	 <code>$ sudo port install valgrind doxygen
+	 </code></li>
+       </ul>
+
+       <h3>CMake hints</h3>
+       <ul>
+	 <li>When installing an external dependency manually, it may be detected
+	   automatically by the existing CMake "find" scripts or not.<br>
+	   If not,
+	   one can edit the <strong>scripts/FindCustom.cmake</strong>
+	   script which is called by
+	   FindAll.cmake. This script is called after every other script, thus
+	   can override other dependencies if other non-desired versions were
+	   detected.<br>
+	   To add a new dependency in the custom script, one usually only 
+	   needs to
+	   specify the include and library paths and set the "found" variable.
+	   For example, setting the Intel IPP variables:
+	   <code><br>
+	     SET(IPP_FOUND TRUE)<br>
+	     INCLUDE_DIRECTORIES("/opt/intel/ipp/current/em64t/include")<br>
+	     LINK_DIRECTORIES("/opt/intel/ipp/current/em64t/lib")<br>
+	     MESSAGE(STATUS "Found Intel IPP")<br>
+	   </code>
+	   The CMake makefiles of your projects will then use the found variable
+	   (by convention "[name]_FOUND") to compile with or without this
+	   library.
+	   </li>
+	 <li>To pass a symbol to your code, you can use the following command,
+	   for example the "__IPP__" symbol to let the code know it should use
+	   the IPP related code if given:
+	   <code><br>
+	     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IPP__")
+	   </code>
+	   </li>
+	 </ul>
+       
+       <h3>Open-source third-party installation (manual)</h3>
+       If packages are not available through apt-get or port, one can manually
+       download and install sources. Here is a guide for some of the required
+       packages.
+       <ul>
+       <li><strong>cmake</strong><br>
+	 Get sources (e.g. cmake-2.6.2.tar.gz) from
+	 http://www.cmake.org/cmake/resources/software.html.<br>
+	 Consult the README.txt in the top level directory and note
+	 that the steps to compile and install are "./bootstrap;
+	 make; sudo make install".</li>
+       <li><strong>libatlas</strong><br>
+	 Get sources (e.g. Atlas-C++-0.6.1.tar.gz) from
+	 http://sourceforge.net/projects/worldforge/<br>
+	 The standard "configure/make/sudo make install" will do.</li>
+       <li><strong>cppunit</strong><br>
+	 Get sources (e.g. cppunit-1.12.1.tar.gz) from
+	 http://apps.sourceforge.net/mediawiki/cppunit/<br>
+	 The standard "configure/make/sudo make install" will do.
+	 </li>
+       </ul>
+       
+     
+    </div>
    </body></html>

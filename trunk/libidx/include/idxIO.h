@@ -124,10 +124,6 @@ namespace ebl {
   //! Returns true if successful, false otherwise.
   template<typename T> bool save_matrix(idx<T>& m, const char *filename);
 
-  //! Saves a matrix m in file filename.
-  //! Returns true if successful, false otherwise.
-  template<typename T> bool save_matrix(idx<T>& m, ostream &stream);
-
   ////////////////////////////////////////////////////////////////
   // helper functions
   
@@ -135,21 +131,21 @@ namespace ebl {
   //! Possible strings are: ubyte, int, float, double, long, uint,
   //! ubyte (pascal vincent), int (pascal vincent), float (pascal vincent),
   //! double (pascal vincent).
-  bool get_matrix_type(const char *filename, string &type);
+  EXPORT bool get_matrix_type(const char *filename, string &type);
 
   //! Return the magic number associated with the matrix's type found in 
   //! 'filename'.
-  int get_matrix_type(const char *filename);
+  EXPORT int get_matrix_type(const char *filename);
 
   //! Return true if this magic number is a vincent magic number.
-  bool is_magic_vincent(int magic);
+  EXPORT bool is_magic_vincent(int magic);
 
   //! Return true if this magic number is a regular magic number.
-  bool is_magic(int magic);
+  EXPORT bool is_magic(int magic);
 
   //! Return the dimensions found in the header and set 'magic' to the magic
   //! number found (either vincent or regular type).
-  idxdim read_matrix_header(FILE *fp, int &magic);
+  EXPORT idxdim read_matrix_header(FILE *fp, int &magic);
 
 } // end namespace ebl
 

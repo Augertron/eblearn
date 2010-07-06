@@ -367,7 +367,7 @@ void image_test::test_colorspaces() {
 // 		    -.5, -.5, ftmp5.dim(1) - .5, ftmp5.dim(0) - .5);
 
   // TODO: find out why following code (warp) sometimes crashes
-//     init_drand(time(NULL));
+//     dynamic_init_drand();
 //     image_deformation_ranperspective(ftmp6, ftmp5, 50, 0, (float) 0.0);
 //     idxdim d3(ftmp5);
 //     idx<float> ftmp7(d3);

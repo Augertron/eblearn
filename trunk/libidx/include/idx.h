@@ -78,7 +78,7 @@ namespace ebl {
   //! having an idxspec class separate from idx allows us to write
   //! generic manipulation functions that do not depend on the
   //! type of the storage.
-  class idxspec {
+  class EXPORT idxspec {
 
   private:
 
@@ -314,7 +314,7 @@ namespace ebl {
 
     friend bool same_dim(idxspec &s1, idxspec &s2);
     //! idxspec print operator.
-    friend std::ostream& operator<<(std::ostream& out, idxspec& d);
+    friend EXPORT std::ostream& operator<<(std::ostream& out, idxspec& d);
   };
 
   //! return true if two idxspec have the same dimensions,
@@ -832,7 +832,7 @@ namespace ebl {
   //! knowning their order in advance. It does not allow to change the order
   //! but one can modify the size of a particular dimension via the setdim 
   //! method.
-  class idxdim {
+  class EXPORT idxdim {
   private:
     intg	dims[MAXDIMS];	// size of each dimensions
     intg	ndim;		// order
@@ -911,11 +911,11 @@ namespace ebl {
   };
 
   //! idxdim print operator.
-  std::ostream& operator<<(std::ostream& out, const idxdim& d);
+  EXPORT std::ostream& operator<<(std::ostream& out, const idxdim& d);
 
   // TODO: move into image.h when idx specializes into image
   // TODO: templatize
-  class rect {
+  class EXPORT rect {
   public:
     rect(uint h0_, uint w0_, uint height_, uint width_);
     rect();
@@ -928,7 +928,7 @@ namespace ebl {
     uint h0, w0, height, width;
 
     // friends
-    friend std::ostream& operator<<(std::ostream& out, const rect& r);
+    friend EXPORT std::ostream& operator<<(std::ostream& out, const rect& r);
     friend rect operator/(const rect &r, double d);
     friend rect operator*(const rect &r, double d);
   };

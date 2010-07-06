@@ -44,7 +44,7 @@ namespace ebl {
     this->jac_bprop_param = idx<T>(1,1);
 
     kk = new idx<T>(100,100);
-    init_drand(time(NULL));
+    dynamic_init_drand();
   }
 
   template <class T>

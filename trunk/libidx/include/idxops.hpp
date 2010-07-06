@@ -58,7 +58,7 @@ namespace ebl {
   // TODO: can n random swaps be as random? (it would be more efficient)
   template<class T> void idx_shuffle(idx<T> &in_, intg d, idx<T> *out_) {
     if (!drand_ini)
-      cerr << "Warning: random not initialized, call init_drand(time(NULL))"
+      cerr << "Warning: random not initialized, call dynamic_init_drand()"
 	   << endl;
     // if out exists, use it for output, otherwise create a temporary buffer
     // and put output back into in.
@@ -104,7 +104,7 @@ namespace ebl {
   void idx_shuffle_together(idx<T1> &in1_, idx<T2> &in2_, intg d,
 			    idx<T1> *out1_, idx<T2> *out2_) {
     if (!drand_ini)
-      cerr << "Warning: random not initialized, call init_drand(time(NULL))"
+      cerr << "Warning: random not initialized, call dynamic_init_drand()"
 	   << endl;
     idx_checkdim2_all(in1_, in2_, d); // size of dim d must match of in1 and in2
     // if out exists, use it for output, otherwise create a temporary buffer
@@ -167,7 +167,7 @@ namespace ebl {
 			    intg d,
 			    idx<T1> *out1_, idx<T2> *out2_, idx<T3> *out3_) {
     if (!drand_ini)
-      cerr << "Warning: random not initialized, call init_drand(time(NULL))"
+      cerr << "Warning: random not initialized, call dynamic_init_drand()"
 	   << endl;
     // size of dim d must match of in1 and in2 and in3
     idx_checkdim3_all(in1_, in2_, in3_, d);
@@ -291,7 +291,7 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { 
       val = *pinp + c;
       // prevent under and overflow
-      *pout = std::max((double) std::numeric_limits<T>::min(), 
+      *pout = (std::max)((double) std::numeric_limits<T>::min(), 
       		       MIN((double) std::numeric_limits<T>::max(), val));
     }
   }
@@ -301,7 +301,7 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { 
       val = *pinp - c;
       // prevent under and overflow
-      *pout = (T) (std::max((double) std::numeric_limits<T>::min(), 
+      *pout = (T) ((std::max)((double) std::numeric_limits<T>::min(), 
       			    MIN((double) std::numeric_limits<T>::max(), val)));
     }
   }
@@ -322,7 +322,7 @@ namespace ebl {
     idx_aloop2_on(pinp,inp,pout,out) { 
       val = (T)(*pinp * c);
       // prevent under and overflow
-      *pout = (T) (std::max((double) std::numeric_limits<T>::min(), 
+      *pout = (T) ((std::max)((double) std::numeric_limits<T>::min(), 
       			    MIN((double) std::numeric_limits<T>::max(), val)));
     }
   }
@@ -431,13 +431,20 @@ namespace ebl {
   // there is a much faster and parallel way
   // of doing this using a tree.
   template<class T> T idx_sum(idx<T> &inp, T *out) {
-    T z = 0;
-    idxiter<T> pinp;
-    idx_aloop1_on(pinp,inp) { z += *pinp; }
+    T z = idx_sum(inp);
     if (out != NULL) {
       *out += z;
       return *out;
     }
+    return z;
+  }
+
+  // there is a much faster and parallel way
+  // of doing this using a tree.
+  template<class T> T idx_sum(idx<T> &inp) {
+    T z = 0;
+    idxiter<T> pinp;
+    idx_aloop1_on(pinp,inp) { z += *pinp; }
     return z;
   }
 
@@ -688,7 +695,7 @@ namespace ebl {
   template<class T1, class T2> void idx_copy_clip(idx<T1> &src, idx<T2> &dst){
     // loop and copy
     idx_aloop2(isrc, src, T1, idst, dst, T2) { 
-      *idst = (T2) std::max((T1) std::numeric_limits<T2>::min(), 
+      *idst = (T2) (std::max)((T1) std::numeric_limits<T2>::min(), 
       			    MIN((T1) std::numeric_limits<T2>::max(), *isrc));
     }
   }
@@ -1177,7 +1184,7 @@ namespace ebl {
 
   template <class T> void idx_max(idx<T> &in1, idx<T> &in2, idx<T> &out) {
     { idx_aloop3(i1, in1, T, i2, in2, T, o, out, T) {
-	*o = std::max(*i1, *i2);
+	*o = (std::max)(*i1, *i2);
       }}
   }
 
@@ -1306,7 +1313,7 @@ namespace ebl {
   template<class T> void idx_clip(idx<T> &i1, T m, idx<T> &o1) {
     idx_checknelems2_all(i1, o1);
     { idx_aloop2(i, i1, T, o, o1, T) {
-	*o = std::max(m, *i);
+	*o = (std::max)(m, *i);
       }}
   }
 

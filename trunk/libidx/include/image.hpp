@@ -142,8 +142,10 @@ namespace ebl {
     idx_clear(bg);
     // the 0.5 thingies are necessary because warp-bilin interprets
     // integer coordinates as being at the center of each pixel.
-    float x1 = -0.5, y1 = -0.5, x3 = imw - 0.5, y3 = imh - 0.5;
-    float p1 = -0.5, q1 = -0.5, p3 = ow - 0.5, q3 = oh - 0.5;
+    float x1 = (float) -0.5, y1 = (float) -0.5;
+    float x3 = (float) imw - (float) 0.5, y3 = (float) imh - (float) 0.5;
+    float p1 = (float) -0.5, q1 = (float) -0.5;
+    float p3 = (float) ow - (float) 0.5, q3 = (float) oh - (float) 0.5;
     image_warp_quad(contim, rez, bg, 1, x1, y1, x3, y1, x3, y3, x1, y3, 
 		    p1, q1, p3, q3);
     if (contim.order() == 2)

@@ -96,7 +96,7 @@ namespace ebl {
   //! at least 3. Appropriate conversion is performed.
   //! extra color components (beyond the first 3) are left
   //! untouched.
-  idx<ubyte> pnm_read(FILE *fp, idx<ubyte> *out = NULL);
+  EXPORT idx<ubyte> pnm_read(FILE *fp, idx<ubyte> *out = NULL);
   
   //! read any kind of image that can be converted to a PPM by ImageMagick
   //! See above for description, as it is the same function used,

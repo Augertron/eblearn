@@ -73,6 +73,15 @@ namespace ebl {
     ostringstream cmd;
     cmd << myconvert.c_str() << " -compress lossless -depth 8 \"" 
 	<< fname << "\" PPM:-";
+#ifdef __WINDOWS__
+    throw "error reading image";
+    filebuf fb;
+    fb.open (cmd.str().c_str(),ios::in);
+    istream in(&fb);
+    // read pnm image
+    idx<ubyte> tmp;// = pnm_read(fp);
+    fb.close();
+#else
     FILE* fp = popen(cmd.str().c_str(), "r");
     if (!fp) {
       err << "conversion of image " << fname << " failed";
@@ -81,6 +90,7 @@ namespace ebl {
     // read pnm image
     idx<ubyte> tmp = pnm_read(fp);
     pclose(fp);
+#endif
     idxdim dims(tmp);
     idx<T> out;
     idx<T> *pout = &out;
@@ -112,6 +122,7 @@ namespace ebl {
 	out = out.shift_dim(0, 2);
       return ;
     } catch(string &err) {
+      err = err;
       // not a mat file, try regular image
     }
     image_read(fname, &out);
@@ -134,7 +145,7 @@ namespace ebl {
 	m = m.shift_dim(0, 2);
       return m;
     } catch(string &err) {
-      ; // not a mat file, try regular image
+      err = err; // not a mat file, try regular image
     }
     return image_read<T>(fname);
   }

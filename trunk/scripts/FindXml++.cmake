@@ -23,5 +23,5 @@ IF(xml_result MATCHES 0)
 
 ELSE(xml_result MATCHES 0)
   SET(XML_FOUND FALSE)
-  MESSAGE("__ WARNING: could not find libXml++ library.")
+  MESSAGE("__ WARNING: libXml++ not found.")
 ENDIF(xml_result MATCHES 0)

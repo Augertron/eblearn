@@ -135,7 +135,7 @@ namespace ebl {
     sqrtmod.fprop(invar, instd);
     if (threshold) { // don't update threshold for inputs
       //! update the threshold values in thres
-      T mm = idx_sum(instd.x) / instd.size();
+      T mm = (T) (idx_sum(instd.x) / (T) instd.size());
       thres.thres = mm;
       thres.val = mm;
     }

@@ -1,24 +1,38 @@
 # determine machine architecture
-###############################################################################I
-EXEC_PROGRAM("uname -m" OUTPUT_VARIABLE ARCH_NAME)
-MESSAGE(STATUS "Target architecture is ${ARCH_NAME}")
-STRING(COMPARE EQUAL ${ARCH_NAME} "x86_64" 64BIT)
-EXEC_PROGRAM("uname -s" OUTPUT_VARIABLE OS_NAME)
-STRING(TOLOWER "${OS_NAME}" OS_NAME)
-MESSAGE(STATUS "Target OS is ${OS_NAME}")
-STRING(COMPARE EQUAL ${ARCH_NAME} "x86_64" 64BIT)
-IF (OS_NAME MATCHES "darwin") # MAC OS
+################################################################################
+IF (APPLE) # MAC OS
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__MAC__ -pthread")
   SET (MAC true)
-ELSE (OS_NAME MATCHES "darwin")
-  IF (OS_NAME MATCHES "linux") # LINUX
+  SET (OS_NAME "Mac")
+ELSE (APPLE)
+  IF("${CMAKE_SYSTEM}" MATCHES "Linux")
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__LINUX__ -pthread")
     SET (LINUX true)
-  ELSE (OS_NAME MATCHES "linux") # WINDOWS
+    SET (OS_NAME "Linux")
+  ELSE ("${CMAKE_SYSTEM}" MATCHES "Linux")
     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WINDOWS__")    
+    # avoid security improvements warnings
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_CRT_SECURE_NO_DEPRECATE")
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_SCL_SECURE_NO_WARNINGS")
     SET (WINDOWS true)
-  ENDIF (OS_NAME MATCHES "linux")
-ENDIF (OS_NAME MATCHES "darwin")
+    SET (OS_NAME "Windows")
+  ENDIF("${CMAKE_SYSTEM}" MATCHES "Linux")
+ENDIF (APPLE)
+
+SET(BITSIZE "32")
+SET(64BIT false) # default is 32 bits
+IF (APPLE OR LINUX)
+  EXEC_PROGRAM("uname -m" OUTPUT_VARIABLE ARCH_NAME)
+  STRING(COMPARE EQUAL ${ARCH_NAME} "x86_64" 64BIT)
+ELSE (APPLE OR LINUX)
+  STRING(COMPARE EQUAL $ENV{PROCESSOR_ARCHITECTURE} "AMD64" 64BIT)
+ENDIF (APPLE OR LINUX)
+IF (64BIT)
+  SET(BITSIZE "64")
+ENDIF (64BIT)
+
+MESSAGE(STATUS "Target OS is ${OS_NAME} (${BITSIZE} bits)")
 
 ################################################################################
 # custom dependencies with override
@@ -65,6 +79,8 @@ ELSE ($ENV{NOOPENCV})
     MESSAGE(STATUS "Found OpenCV")
     MESSAGE(STATUS "OpenCV include directory: ${OpenCV_INCLUDE_DIRS}")
     MESSAGE(STATUS "OpenCV libraries: ${OpenCV_LIBRARIES}")
+  ELSE(OpenCV_FOUND)
+    MESSAGE("__ WARNING: OpenCV not found.")
   ENDIF(OpenCV_FOUND)
 ENDIF ($ENV{NOOPENCV})
   

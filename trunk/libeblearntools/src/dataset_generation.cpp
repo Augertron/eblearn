@@ -544,7 +544,7 @@ namespace ebl {
     ds_assignment = idx<int>(nimages);
 
     if (!silent) { cout << "Shuffling image collection..." << endl; }
-    init_drand(time(NULL)); // initialize random seed
+    dynamic_init_drand(); // initialize random seed
     // for each class, assign images to training or testing set
     if (max_max_per_class == -1)
       idx_fill(ds_assignment, 0); // put all images in dataset 0

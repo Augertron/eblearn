@@ -289,26 +289,6 @@ namespace ebl {
     return true;
   }
 
-  template <typename T> bool save_matrix(idx<T>& m, ostream &stream) {
-    int v, i;
-
-    // header
-    v = get_magic<T>();
-    stream.write((char*)&v, sizeof (int));
-    v = m.order();
-    stream.write((char*)&v, sizeof (int));
-    for (i = 0; (i < m.order()) || (i < 3); ++i) {
-      if (i < m.order())
-	v = m.dim(i);
-      else
-	v = 1;
-      stream.write((char*)&v, sizeof (int));
-    }
-    // body
-    { idx_aloop1(i, m, T) stream.write((char*)&(*i), sizeof (T)); }
-    return true;
-  }
-
 } // end namespace ebl
 
 #endif /* IDXIO_HPP_ */

@@ -89,7 +89,7 @@ namespace ebl {
     r = rgb.get(0);
     g = rgb.get(1);
     b = rgb.get(2);
-    y.set(  0.299 * r + 0.587 * g + 0.114 * b, 0);
+    y.set(  (T) 0.299 * (T) r + (T) 0.587 * (T) g + (T) 0.114 * (T) b, 0);
   }
 
   template<class T> void rgb_to_y(idx<T> &rgb, idx<T> &y) {
@@ -228,9 +228,9 @@ namespace ebl {
     b = rgb.get(2);
     static double h, s, v;
     PIX_RGB_TO_HSV_COMMON(r, g, b, h, s, v, false);
-    hsv.set(h, 0);
-    hsv.set(s, 1);
-    hsv.set(v, 2);
+    hsv.set((T) h, 0);
+    hsv.set((T) s, 1);
+    hsv.set((T) v, 2);
   }
 
   template<class T> void rgb_to_h_1D(idx<T> &rgb, idx<T> &h) {
@@ -244,7 +244,7 @@ namespace ebl {
     b = rgb.get(2);
     static double h_, s_, v_;
     PIX_RGB_TO_HSV_COMMON(r, g, b, h_, s_, v_, false);
-    h.set(h_, 0);
+    h.set((T) h_, 0);
   }
 
   template<class T> void rgb_to_hsv(idx<T> &rgb, idx<T> &hsv) {
@@ -337,9 +337,9 @@ namespace ebl {
     if ((s < threshold1) || (v < threshold2)) {
       h = 360 + 60 * v;
     }
-    hsv3.set(h, 0);
-    hsv3.set(s, 1);
-    hsv3.set(v, 2);
+    hsv3.set((T) h, 0);
+    hsv3.set((T) s, 1);
+    hsv3.set((T) v, 2);
   }
 
   template<class T> void rgb_to_hsv3(idx<T> &rgb, idx<T> &hsv3,

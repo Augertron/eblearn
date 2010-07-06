@@ -59,7 +59,7 @@ namespace ebl {
   //! returned string.
   char *fscan_str(FILE *fp) {
     char buffer[1024], *res = NULL;
-    int s, size;
+    int s;
     s = fscanf(fp,"%s",buffer);
     if ( s < 1)
       buffer[0]=0;

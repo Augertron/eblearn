@@ -74,7 +74,7 @@ void NetTest::test_lenet5_mnist() {
 	       /* double a_t */ 0.0,
 	       /* double g_t*/ 	0.0);
   infer_param infp;
-  init_drand(0); // fixed randomization
+  fixed_init_drand(); // fixed randomization
 
   // estimate second derivative on 100 iterations, using mu=0.02
   // and set individual espilons

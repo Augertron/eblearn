@@ -48,6 +48,7 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
     CPPUNIT_ASSERT_EQUAL((unsigned int) 4, (unsigned int) label.get());
     CPPUNIT_ASSERT_EQUAL((unsigned int) 236, (unsigned int) datum.x.get(9, 9));
   } catch(string &err) {
+    err = err;
     CPPUNIT_ASSERT(false); // error
   }
 }

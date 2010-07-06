@@ -22,6 +22,7 @@ void ebl_preprocessing_test::tearDown() {
 
 void ebl_preprocessing_test::test_rgb_to_yp() {
   ostringstream path, s;
+  CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
   path << *gl_data_dir << "/barn.png";
   idx<float> im = load_image<float>(path.str());
   path.str(""); path << *gl_data_dir << "/2008_007714.jpg";

@@ -34,6 +34,10 @@
 
 namespace ebl {
 
+#ifdef __WINDOWS__
+#include <time.h>
+#endif
+
   ////////////////////////////////////////////////////////////////
 
   // derivative of tanh
@@ -189,6 +193,14 @@ dstdsigmoid(float x)
   void init_drand(int x){
     drand_ini = true;
     dseed(x);
+  }
+
+  void dynamic_init_drand(){
+    init_drand((int) time(NULL));
+  }
+
+  void fixed_init_drand(){
+    init_drand((int) 0);
   }
 
   void dseed(int x) {

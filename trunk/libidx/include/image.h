@@ -193,9 +193,11 @@ namespace ebl {
   //! pixel values are ubytes, while coordinates are 32 bit fixed point
   //! with 16 bit integer part and 16 bit fractional part.
   //! The function does not use floating point arithmetics.
-  void image_interpolate_bilin(ubyte* background, ubyte *pin, int indimi, 
-			       int indimj, int inmodi, int inmodj, int ppi, 
-			       int ppj, ubyte* out, int outsize);
+  EXPORT void image_interpolate_bilin(ubyte* background, ubyte *pin, int indimi,
+				      int indimj, int inmodi, int inmodj, 
+				      int ppi, int ppj, ubyte* out, 
+				      int outsize);
+
   template<class T> 
     void image_interpolate_bilin(T* background, T *pin, int indimi, int indimj,
 				 int inmodi, int inmodj, int ppi, int ppj,

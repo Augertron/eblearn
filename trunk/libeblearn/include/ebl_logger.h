@@ -82,7 +82,7 @@ namespace ebl {
   //! classifiers. This is a simple version that does not
   //! record anything but simply computes performance measures.
   // TODO: allow definition of different comparison functions.
-  class classifier_meter {
+  class EXPORT classifier_meter {
   public:
     //! Create a new <classifier-meter> using <comparison-function>
     //! to compare actual and desired answers. By default

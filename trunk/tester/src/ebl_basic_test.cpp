@@ -1,9 +1,5 @@
 #include "ebl_basic_test.h"
 
-#include <sys/time.h>
-#include <stdio.h>
-#include <unistd.h>
-
 using namespace std;
 using namespace ebl;
 
@@ -131,7 +127,7 @@ void ebl_basic_test::test_softmax(){
   // init
   dseed(1);
   module->fprop(*in, *out);
-  srand(time(NULL));
+  dynamic_init_drand();
   idx_bloop2(i, in->x, double, o, out->x, double){
     idx_bloop2(ii, i, double, oo, o, double){
       idx_bloop2(iii, ii, double, ooo, oo, double){
@@ -242,15 +238,11 @@ void ebl_basic_test::test_convolution_timing() {
   l.add_module(new convolution_module<float>(NULL, 9, 9, 1, 1, tbl2));
   l.add_module(new tanh_module<float>());
   state_idx<float> in(1, 512, 512), out(16, 496, 496);
-  struct timeval start, end;
-  long seconds, useconds;
-  gettimeofday(&start, NULL);
+  timer t;
+  t.start();
   for (uint i = 0; i < 1; ++i) {
     l.fprop(in, out);
   }
-  gettimeofday(&end, NULL);
-  seconds = end.tv_sec - start.tv_sec;
-  useconds = end.tv_usec - start.tv_usec;
-  cout << " big convolution time: "
-       << (uint)(((seconds) * 1000 + useconds/1000.0)+0.5) << "ms";
+  long tim = t.elapsed_milliseconds();
+  cout << " big convolution time: " << tim << "ms";
 }
