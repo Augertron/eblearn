@@ -211,6 +211,9 @@
        <li>(optional) Download and extract MNIST
 	 (http://yann.lecun.com/exdb/mnist/) and set variable 
 	 MNIST_PATH in CMake with 'Add Entry' to your MNIST path.</li>
+       <li>(optional) Install 3rd-party software (see below), such as
+	 Qt for graphics, Boost, CPPUNIT for testing, IPP and CBlas for speed,
+	 etc.</li>
        <li>In CMake, click 'configure', select the type of project you want
 	 to generate (e.g. 'Visual Studio 9 2008' if you work with
 	 Visual Studio), then click 'generate'.</li>
