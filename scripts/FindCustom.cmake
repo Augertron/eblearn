@@ -14,3 +14,8 @@
 #SET(Boost_INCLUDE_DIRS "$ENV{HOME}/installed/boost/include")
 #SET(Boost_LIBRARY_DIRS "$ENV{HOME}/installed/boost/lib")
 #SET(Boost_MINOR_VERSION 35)
+
+ # SET(CPPUNIT_FOUND TRUE)
+ # SET(CPPUNIT_INCLUDE_DIR "B:/windows/installed/cppunit-1.12.1/include")
+ # SET(CPPUNIT_LIBRARY "B:/windows/installed/cppunit-1.12.1/lib/cppunitd.lib")
+ # MESSAGE(STATUS "Found CPPUNIT")

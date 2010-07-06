@@ -43,6 +43,7 @@
 #include <vector>
 #include <list>
 #include <map>
+#include "defines.h"
 
 using namespace std;
 
@@ -61,7 +62,7 @@ namespace ebl {
 	const char *start = src;
 
 	// Save and skip leading whitespace
-	while (std::isspace(*(unsigned char*)src)) ++src;
+	while (isspace(*(unsigned char*)src)) ++src;
 	_ws = src - start;
 
 	// Save and skip leading zeros
@@ -71,7 +72,7 @@ namespace ebl {
 
 	// Save the edges of the value
 	_value = src;
-	while (std::isdigit(*(unsigned char*)src)) ++src;
+	while (isdigit(*(unsigned char*)src)) ++src;
 	_end = src;
       }
 
@@ -85,13 +86,13 @@ namespace ebl {
 
   //! Compare two strings using the natural comparison of numbers
   //! ("2" is less than "10").
-  struct natural_less: binary_function<string, string, bool> {
+  struct EXPORT natural_less: binary_function<string, string, bool> {
     bool operator()(const string& a, const string& b);
   };
 
   //! Compare two maps of var/val strings using the comparison keys list
   //! and using the natural comparison of numbers ("2" is less than "10").
-  struct map_natural_less
+  struct EXPORT map_natural_less
     : binary_function<map<string,string>, map<string,string>, bool> {
     map_natural_less(list<string> &keys);
     bool operator()(const map<string,string>& m1, const map<string,string>& m2);

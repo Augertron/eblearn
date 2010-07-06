@@ -35,8 +35,12 @@
 
 #include <sstream>
 #include <stdlib.h>
+
+#ifndef __WINDOWS__
 #include <sys/wait.h>
 #include <unistd.h>
+#endif
+
 #include <stdio.h>
 #include <map>
 #include <list>

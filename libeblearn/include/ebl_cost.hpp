@@ -102,7 +102,7 @@ namespace ebl {
     // TODO: use logadd_layer like in gblearn2 on energies?
     if (label && energy) // if groundtruth is passed, fill in its energy
       energy->x.set(energies.get(*label)); 
-    infered_label = idx_indexmin(energies);
+    infered_label = (Tlabel) idx_indexmin(energies);
     return 0.0;
   }
 

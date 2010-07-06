@@ -60,13 +60,13 @@ namespace ebl {
 	     { idx_aloop1(i, in, float) { *i = 0; }},
 	     // contiguous version
 	     {
-#ifdef __IPP__
-	       ipp_set(in, (float) 0);
-#else
+// #ifdef __IPP__
+// 	       ipp_set(in, (float) 0);
+// #else
 	       memset(in.idx_ptr(), 0, in.nelements() * sizeof (float));
 		 // TODO: cblas version?
 		 //cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
-#endif
+// #endif
 	     },
 	     // recursive version
 	     { idx_bloop1(i, in, float) { idx_clear(i); }});
@@ -83,13 +83,13 @@ namespace ebl {
 	     { idx_aloop1(i, in, float) { *i = v; }},
 	     // contiguous version
 	     {
-#ifdef __IPP__
-	       ipp_set(in, v);
-#else
+// #ifdef __IPP__
+// 	       ipp_set(in, v);
+// #else
 	       idx_bloop1(i, in, float) { idx_fill(i, v); }
 		 // TODO: cblas version?
 		 //cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
-#endif
+// #endif
 	     },
 	     // recursive version
 	     { idx_bloop1(i, in, float) { idx_fill(i, v); }});
@@ -152,12 +152,12 @@ namespace ebl {
 	     idx_aloop2_on(psrc, src, pdst, dst) { *pdst = *pdst + *psrc; }},
 	     // contiguous version
 	     { 
-#ifdef __IPP__
- 	       ipp_add(src, dst);
-#else
+// #ifdef __IPP__
+//  	       ipp_add(src, dst);
+// #else
 	       idxiter<float> psrc; idxiter<float> pdst;
 	       idx_aloop2_on(psrc, src, pdst, dst) { *pdst = *pdst + *psrc; }
-#endif
+// #endif
 	     },
 	     // recursive version
 	     { idx_bloop2(psrc, src, float, pdst, dst, float) {
@@ -281,11 +281,11 @@ namespace ebl {
 			   dst.mod(0)); },
 	     // contiguous version
 	     {
-#ifdef __IPP__
-	       ipp_copy(src, dst);
-#else
+// #ifdef __IPP__
+// 	       ipp_copy(src, dst);
+// #else
 	       cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
-#endif
+// #endif
 	     },
 	     // recursive version
 	     { idx_bloop2(lsrc, src, float, ldst, dst, float) { 
@@ -473,7 +473,7 @@ namespace ebl {
     // determine max length of strings
     size_t max = 0;
     { idx_bloop1(s, strings, const char *)
-	max = std::max(max, strlen(s.get())); }
+	max = (std::max)(max, strlen(s.get())); }
     // allocate output idx
     idx<ubyte> out(strings.dim(0), max + 1);
     // copy classes strings

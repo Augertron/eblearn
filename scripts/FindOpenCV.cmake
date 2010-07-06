@@ -236,9 +236,6 @@ IF(NOT OpenCV_FOUND)
     IF(OpenCV_FIND_REQUIRED)
       MESSAGE(FATAL_ERROR
         "OpenCV required but some headers or libs not found. Please specify it's location with OpenCV_ROOT_DIR env. variable.")
-    ELSE(OpenCV_FIND_REQUIRED)
-      MESSAGE(STATUS 
-        "Warning: OpenCV was not found.")
     ENDIF(OpenCV_FIND_REQUIRED)
   ENDIF(NOT OpenCV_FIND_QUIETLY)
 ENDIF(NOT OpenCV_FOUND)

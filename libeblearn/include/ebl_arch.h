@@ -261,18 +261,19 @@ namespace ebl {
   template <class T>							\
     class replicable_module : public base_module {			\
   public:								\
-    module_1_1_replicable<base_module, T> rep;				\
-    replicable_module types_arguments : base_module arguments, rep(*this) { \
+    module_1_1_replicable<base_module, T> *rep;				\
+    replicable_module types_arguments : base_module arguments {		\
+      rep = new module_1_1_replicable<base_module, T>(*this);		\
       this->bResize = false;						\
       if (this->replicable_order() <= 0)				\
 	eblerror("this module is not replicable"); }			\
-    virtual ~replicable_module() {}					\
+    virtual ~replicable_module() { delete rep; }			\
     virtual void fprop(state_idx<T> &in, state_idx<T> &out)		\
-    { rep.fprop(in, out); }						\
+    { rep->fprop(in, out); }						\
     virtual void bprop(state_idx<T> &in, state_idx<T> &out)		\
-    { rep.bprop(in, out); }						\
+    { rep->bprop(in, out); }						\
     virtual void bbprop(state_idx<T> &in, state_idx<T> &out)		\
-    { rep.bbprop(in, out); }						\
+    { rep->bbprop(in, out); }						\
   }
 
 } // namespace ebl {

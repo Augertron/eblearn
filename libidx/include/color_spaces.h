@@ -32,6 +32,7 @@
 #ifndef COLOR_SPACES_H_
 #define COLOR_SPACES_H_
 
+#include "defines.h"
 #include "libidx.h"
 
 namespace ebl {
@@ -112,10 +113,10 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // HSV
 
-  void PIX_RGB_TO_HSV_COMMON(double H, double S, double V,
+  EXPORT void PIX_RGB_TO_HSV_COMMON(double H, double S, double V,
 			     double &R, double &G, double &B, bool NORM);
   
-  void PIX_HSV_TO_RGB_COMMON(double H, double S, double V,
+  EXPORT void PIX_HSV_TO_RGB_COMMON(double H, double S, double V,
 			      double &R, double &G, double &B);
 
 

@@ -48,7 +48,8 @@ void detector_test::test_norb() {
   //left = left.transpose(tr);
   //left = left.select(2, 0);
   double scales [] = { 2, 1.5, 1};
-  detector<t_net> cb((module_1_1<t_net>&)thenet, labs, NULL, 0, NULL, 0, 0.01);
+  detector<t_net> cb((module_1_1<t_net>&)thenet, labs, NULL, 0, NULL, 0, 
+		     (float)0.01);
   cb.set_resolutions(3, scales);
 
 #ifdef __GUI__
@@ -65,7 +66,7 @@ void detector_test::test_norb() {
 			       bb[0]->confidence, .0000001);
   CPPUNIT_ASSERT_EQUAL((int) 0, bb[0]->class_id);
 #endif
-  sleep(5);
+  secsleep(5);
 }
 
 void detector_test::test_norb_binoc() {

@@ -43,7 +43,7 @@ namespace ebl {
   //! A class that contains all the parameters
   //! for a stochastic gradient descent update,
   //! including step sizes, regularizer coefficients...
-  class gd_param: public infer_param {
+  class EXPORT gd_param: public infer_param {
   public:
     //! global step size
     double eta;
@@ -75,7 +75,7 @@ namespace ebl {
   class forget_param {
   };
 
-  class forget_param_linear: public forget_param {
+  class EXPORT forget_param_linear: public forget_param {
   public:
     //! each random value will be drawn uniformly
     //! from [-value/(fanin**exponent), +value/(fanin**exponent)]
@@ -94,7 +94,7 @@ namespace ebl {
   //! clear (clear all), clear_x (clear values), clear_dx (clear gradients),
   //! clear_ddx (clear hessian), and update_gd(arg) (update
   //! with gradient descent.
-  class state {
+  class EXPORT state {
   public:
     //! constructor
     state();
@@ -247,7 +247,7 @@ namespace ebl {
     //! Both state_idx are required to have the same order.
     virtual void resize_as_but1(state_idx<T>& s, intg fixed_dim);
 
-    virtual void resize(const intg* dimsBegin, const intg* dimsEnd);
+    //    virtual void resize(const intg* dimsBegin, const intg* dimsEnd);
 
     //! make a new copy of self
     virtual state_idx<T> make_copy();

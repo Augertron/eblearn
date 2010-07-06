@@ -42,34 +42,35 @@ namespace ebl {
 
   //! Creates a table of full connections between indices [a0 .. a - 1]
   //! and [b0 .. b - 1].
-  idx<intg> full_table(intg a, intg b, intg a0 = 0, intg b0 = 0);
+  EXPORT idx<intg> full_table(intg a, intg b, intg a0 = 0, intg b0 = 0);
 
   //! Creates a table of that connects indices [0 .. n - 1] to
   //! [0 .. n - 1] in a 1 to 1 mapping, e.g. 0 -> 0, 1 -> 1, ..., n - 1 ->
   //! n - 1.
-  idx<intg> one2one_table(intg n);
+  EXPORT idx<intg> one2one_table(intg n);
 
   //! Return the concatenation of two connection tables.
-  idx<intg> concat_tables(idx<intg> &t0, idx<intg> &t1);
+  EXPORT idx<intg> concat_tables(idx<intg> &t0, idx<intg> &t1);
 
   //! Return a random table from [a0 .. a - 1] to [b0 .. b - 1] with
   //! each output being connected to 'fanin' inputs.
-  idx<intg> random_table(intg a, intg b, intg fanin, intg a0 = 0, intg b0 = 0);
+  EXPORT idx<intg> random_table(intg a, intg b, intg fanin, intg a0 = 0, 
+				intg b0 = 0);
 
   //! Create a table for a first convolution layer on yuv input,
   //! fully and independently connecting layer y (0) to
   //! [0 .. yend - 1], u (1) to [yend .. uend - 1] and v(2) to
   //! [uend .. vend - 1].
-  idx<intg> yuv_table0(intg yend, intg uend, intg vend);
+  EXPORT idx<intg> yuv_table0(intg yend, intg uend, intg vend);
 
   //! Create a table for a second convolution layer on the output
   //! of a first convolution on yuv input, randomly connecting
   //! [0 .. yend - 1] to [0 .. p0 - 1] with fanin of size 'fanin_y',
   //! [0 .. vend - 1] to [p0 .. p1 - 1] with  fanin of size 'fanin_yuv', and
   //! [uend .. vend - 1] to [p1 .. p2 - 1] with  fanin of size 'fanin_uv',
-  idx<intg> yuv_table1(intg yend, intg uend, intg vend,
-		       intg p0, intg p1, intg p2, intg fanin_y,
-		       intg fanin_yuv, intg fanin_uv);
+  EXPORT idx<intg> yuv_table1(intg yend, intg uend, intg vend,
+			      intg p0, intg p1, intg p2, intg fanin_y,
+			      intg fanin_yuv, intg fanin_uv);
 
 } // namespace ebl {
 

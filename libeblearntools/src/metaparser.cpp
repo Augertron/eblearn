@@ -38,6 +38,10 @@
 #include <algorithm>
 #include <iomanip>
 
+#ifdef __WINDOWS__
+#include <limits>
+#endif
+
 #ifdef __BOOST__
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
@@ -117,7 +121,7 @@ namespace ebl {
     if (!path)
       path = &path2;
 
-    for (map<string,pairtree>::iterator i = subtree.begin();
+    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
       (*path)[subvariable] = i->first;
       i->second.flatten(key, flat, path);
@@ -146,7 +150,7 @@ namespace ebl {
     if (!path)
       path = &path2;
 
-    for (map<string,pairtree>::iterator i = subtree.begin();
+    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
       (*path)[subvariable] = i->first;
       i->second.flatten(flat, path);
@@ -209,7 +213,7 @@ namespace ebl {
     for (map<string,string>::iterator i = vars.begin(); i != vars.end(); ++i)
       cout << "(" << i->first << ", " << i->second << ") ";
     cout << endl << off << " subtree:" << endl;
-    for (map<string,pairtree>::iterator i = subtree.begin();
+    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
       cout << off << " (" << subvariable << ", " << i->first << ") ";
       cout << endl;
@@ -283,7 +287,7 @@ namespace ebl {
       if (i->first == var)
 	max = std::max(max, string_to_uint(i->second));
     }
-    for (map<string,pairtree>::iterator i = subtree.begin();
+    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
       if (subvariable == var)
 	max = std::max(max, string_to_uint(i->first));
@@ -297,7 +301,7 @@ namespace ebl {
       if (i->first == var)
 	return true;
     }
-    for (map<string,pairtree>::iterator i = subtree.begin();
+    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
       if (subvariable == var)
 	return true;
@@ -381,11 +385,13 @@ namespace ebl {
       return -1;
     int minmax = std::numeric_limits<int>::max();
     // assuming that "job" is first level and "i" second one:
-    for (map<string,pairtree>::iterator i = tree.get_subtree().begin();
+    for (map<string,pairtree,natural_less>::iterator i = 
+	   tree.get_subtree().begin();
          i != tree.get_subtree().end(); ++i) {
       // for job i, find maximum i
       int max = 0;
-      for (map<string,pairtree>::iterator j = i->second.get_subtree().begin();
+      for (map<string,pairtree,natural_less>::iterator j = 
+	     i->second.get_subtree().begin();
 	   j != i->second.get_subtree().end(); ++j)
 	max = std::max(max, string_to_int(j->first));
       // find minimum of the maximums
@@ -431,7 +437,8 @@ namespace ebl {
     // order: job, i
     // loop on each job
     uint ijob = 0;
-    for (map<string,pairtree>::iterator i = tree.get_subtree().begin();
+    for (map<string,pairtree,natural_less>::iterator i = 
+	   tree.get_subtree().begin();
 	 i != tree.get_subtree().end(); ++i, ++ijob) {
       string job = i->first;
       // flatten remaining tree based on key "i"

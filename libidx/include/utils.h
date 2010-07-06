@@ -34,6 +34,7 @@
 #define UTILS_H_
 
 #ifdef __WINDOWS__
+#include <time.h>
 #else // linux & mac
 #include <sys/time.h>
 #include <unistd.h>
@@ -41,6 +42,7 @@
 
 #include <string>
 #include <stdio.h>
+#include "defines.h"
 
 using namespace std;
 
@@ -51,21 +53,21 @@ namespace ebl {
 
   //! Create specified directory and all its parents if they do not exists.
   //! Return false upon failure.
-  bool mkdir_full(const char *dir);
+  EXPORT bool mkdir_full(const char *dir);
   
   //! Create specified directory and all its parents if they do not exists.
   //! Return false upon failure.
-  bool mkdir_full(string &dir);
+  EXPORT bool mkdir_full(string &dir);
 
   ////////////////////////////////////////////////////////////////
   // timing utilities
 
   //! Return a string containing a timestamp of localtime in the following
   //! format: "<year><month><day>.<hour><minutes><seconds>".
-  string tstamp();
+  EXPORT string tstamp();
 
   //! A timer class.
-  class timer {
+  class EXPORT timer {
   public:
     timer();
     virtual ~timer();
@@ -87,7 +89,10 @@ namespace ebl {
   };
 
   //! Sleep for 'millis' milliseconds.
-  void millisleep(long millis);
+  EXPORT void millisleep(long millis);
+  
+  //! Sleep for 'seconds' seconds.
+  EXPORT void secsleep(long seconds);
   
 } // end namespace ebl
 

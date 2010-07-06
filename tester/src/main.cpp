@@ -70,7 +70,11 @@ string *gl_mnist_dir = NULL;
 string *gl_data_dir = NULL;
 string *gl_mnist_errmsg = NULL;
 string *gl_data_errmsg = NULL;
+#ifdef __WINDOWS__
+bool    color_print = false;
+#else
 bool    color_print = true;
+#endif
 
 // Read arguments from ../run.init file in working directory
 // (easiest way to configure the run within eclipse and without it).
@@ -153,11 +157,11 @@ int main(int argc, char **argv) {
   runner.addTest(IdxTest::suite());
   runner.addTest(IdxIteratorsTest::suite());
   runner.addTest(idxops_test::suite());
-  runner.addTest(ebl_basic_test::suite());
-  runner.addTest(ebl_preprocessing_test::suite());
   runner.addTest(idxIO_test::suite());
   runner.addTest(image_test::suite());
+  runner.addTest(ebl_preprocessing_test::suite());
   runner.addTest(DataSourceTest::suite());
+  runner.addTest(ebl_basic_test::suite());
   runner.addTest(detector_test::suite());
   runner.addTest(NetTest::suite());
 

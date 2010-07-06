@@ -1,5 +1,11 @@
 #include "idxIO_test.h"
 
+#ifdef __WINDOWS__
+#define TEST_FILE "C:/Windows/Temp/eblearn_tester_matrix.mat"
+#else
+#define TEST_FILE "/tmp/eblearn_tester_matrix.mat"
+#endif
+
 using namespace std;
 using namespace ebl;
 
@@ -11,7 +17,7 @@ void idxIO_test::tearDown() {
 
 template<class T> void test_save_load_matrix() {
   idx<T> m(9, 9);
-  string fname= "/tmp/libeblearn_tester_matrix.mat";
+  string fname= TEST_FILE;
 
   // initialize values
   double v = 0.1;
@@ -65,10 +71,10 @@ void idxIO_test::test_save_load_matrix_long() {
   test.set(-2147483646, 2, 1);
   test.set(-2147483645, 2, 2);
   try {
-    save_matrix(test, "/tmp/libeblearn_tester_matrix.mat");
-    idx<long> m = load_matrix<long>("/tmp/libeblearn_tester_matrix.mat");
-    { idx_aloop2(i, test, long, j, m, long) {
-	CPPUNIT_ASSERT_EQUAL(*j, *i);
+    save_matrix(test, TEST_FILE);
+    idx<intg> m = load_matrix<intg>(TEST_FILE);
+    { idx_aloop2(i, test, intg, j, m, intg) {
+	CPPUNIT_ASSERT_EQUAL((intg) *j, (intg) *i);
       }
     }
   } catch(string &err) {

@@ -360,7 +360,8 @@ namespace ebl {
       if (!ndimset) { setndim(0); }
     }
     catch(int v) {
-      cerr << "bad dimensions: " << s0 << "x" << s1 << "x" << s2 << "x" << s3;
+      cerr << "bad dimensions (error " << v << "): " 
+	   << s0 << "x" << s1 << "x" << s2 << "x" << s3;
       cerr << "x" << s4 << "x" << s5 << "x" << s6 << "x" << s7 << endl;
       eblerror("idxspec: bad dimensions in constructor"); }
   }

@@ -180,12 +180,12 @@ namespace ebl {
   double ebm_2_gen<Tin1,Tin2,T>::infer1(Tin1 &i1, Tin2 &i2,
 					state_idx<T> &energy,
 					infer_param &ip) {
-    err_not_implemented(); }
+    err_not_implemented(); return 0; }
   
   template<class Tin1, class Tin2, class T>
   double ebm_2_gen<Tin1,Tin2,T>::infer2(Tin1 &i1, Tin2 &i2, infer_param &ip,
 				  Tin2 *label, state_idx<T> *energy) { 
-    err_not_implemented(); }
+    err_not_implemented(); return 0; }
 
   template<class Tin1, class Tin2, class T>
   void ebm_2_gen<Tin1,Tin2,T>::infer2_copy(Tin1 &i1, Tin2 &i2,

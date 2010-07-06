@@ -39,6 +39,10 @@
 #include <iomanip>
 #include <time.h>
 
+#ifdef __WINDOWS__
+#include <Windows.h>
+#endif
+
 using namespace std;
 
 namespace ebl {
@@ -131,6 +135,14 @@ namespace ebl {
     Sleep(millis);
 #else
     usleep(millis * 1000);
+#endif
+  } 
+  
+  void secsleep(long seconds) {
+#ifdef __WINDOWS__
+    Sleep(seconds * 1000);
+#else
+    usleep(seconds * 1000);
 #endif
   } 
   

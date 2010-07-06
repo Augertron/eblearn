@@ -89,6 +89,16 @@
   }
 #endif /* __WINDOWS__ */
 
+#ifdef __WINDOWS__
+#define EXPORT __declspec(dllexport)
+#define IMPORT __declspec(dllimport)
+// disable dllexport warnings
+#pragma warning(disable:4251)
+#else
+#define EXPORT
+#define IMPORT
+#endif
+
 #define ylerror(s) eblerror(s)
 
 // not used right now

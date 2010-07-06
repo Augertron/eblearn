@@ -133,7 +133,7 @@ namespace ebl {
 	eblerror("unmatched quote");
       }
       // resolve both sides of quoted section
-      string s0 = v.substr(0, std::max((size_t) 0, qpos -1));
+      string s0 = v.substr(0, (std::max)((size_t) 0, qpos -1));
       string s1 = v.substr(qpos, qpos2 + 1);
       string s2 = v.substr(qpos2 + 1);
       res = "";
@@ -480,13 +480,17 @@ namespace ebl {
 
   bool configuration::get_bool(const char *varname) {
     exists_throw(varname);
-    return (bool) get_uint(varname);
+    if (get_uint(varname) == 0)
+      return false;
+    return true;
   }
 
   bool configuration::exists_bool(const char *varname) {
     if (!exists(varname))
       return false;
-    return (bool) get_uint(varname);
+    if (get_uint(varname) == 0)
+      return false;
+    return true;
   }
 
   void configuration::set(const char *varname, const char *value) {
@@ -545,10 +549,10 @@ namespace ebl {
     output_dir = "output"; // default name (other name optional)
     if (smap.find("meta_output_dir") != smap.end())
       output_dir = smap["meta_output_dir"];
-    mkdir(output_dir.c_str(), 0700);
+    mkdir_full(output_dir);
     output_dir += "/";
     output_dir += name;
-    mkdir(output_dir.c_str(), 0700);
+    mkdir_full(output_dir);
     cout << "Creating " << conf_combinations << " different combinations in ";
     cout << output_dir << endl;
     

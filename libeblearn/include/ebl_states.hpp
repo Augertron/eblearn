@@ -238,12 +238,12 @@ namespace ebl {
     resize(d);
   }
 
-  template <class T>
-  void state_idx<T>::resize(const intg* dimsBegin, const intg* dimsEnd) {
-    x.resize(dimsBegin, dimsEnd);
-    dx.resize(dimsBegin, dimsEnd);
-    ddx.resize(dimsBegin, dimsEnd);
-  }
+  // template <class T>
+  // void state_idx<T>::resize(const intg* dimsBegin, const intg* dimsEnd) {
+  //   x.resize(dimsBegin, dimsEnd);
+  //   dx.resize(dimsBegin, dimsEnd);
+  //   ddx.resize(dimsBegin, dimsEnd);
+  // }
 
   template <class T>
   void state_idx<T>::update_gd(gd_param &arg) {

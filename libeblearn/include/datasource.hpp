@@ -96,7 +96,7 @@ namespace ebl {
     data = data_;
     labels = labels_;
     probas = idx<double>(data.dim(0));
-    init_drand(time(NULL)); // initialize random seed
+    dynamic_init_drand(); // initialize random seed
     // default probability for a sample of being used is 1
     idx_fill(probas, 1.0);
     height = data.dim(1);
@@ -302,7 +302,7 @@ namespace ebl {
 	    // get max
 	    for (vector<intg>::iterator j = label_indices[iitr].begin();
 		 j != label_indices[iitr].end(); ++j)
-	      maxproba = std::max(probasIter_train.at(*j)->get(), maxproba);
+	      maxproba = (std::max)(probasIter_train.at(*j)->get(), maxproba);
 	    // cout << "normalizing with maxproba for class "
 	    //      << iitr << ": " << maxproba << endl;
 	    // set normalized proba
@@ -341,7 +341,7 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_answer_distance(double dist) {
     if (weigh_samples) { // if false, keep default probability 1 for all samples
-      probasIter_train->set(std::max(sample_min_proba, MIN(1.0, fabs(dist))));
+      probasIter_train->set((std::max)(sample_min_proba, MIN(1.0, fabs(dist))));
     }
   }
 
@@ -723,9 +723,9 @@ namespace ebl {
       name << "MNIST " << setname;
       idx<Tdata> dat = load_matrix<Tdata>(datafile.str());
       idx<Tlabel> labs = load_matrix<Tlabel>(labelfile.str());
-      dat = dat.narrow(0, MIN(dat.dim(0), size), 0);
-      labs = labs.narrow(0, MIN(labs.dim(0), size), 0);
-      init(dat, labs, name.str().c_str(), 0, 0.01);
+      dat = dat.narrow(0, MIN(dat.dim(0), (intg) size), 0);
+      labs = labs.narrow(0, MIN(labs.dim(0), (intg) size), 0);
+      init(dat, labs, name.str().c_str(), (Tdata) 0, (float) 0.01);
     } catch(string &err) {
       cerr << err << endl;
       eblerror("failed to load mnist dataset");
@@ -745,7 +745,7 @@ namespace ebl {
       idx<Tlabel> labs = load_matrix<Tlabel>(labelfile.str());
       dat = dat.narrow(0, MIN(dat.dim(0), size), 0);
       labs = labs.narrow(0, MIN(labs.dim(0), size), 0);
-      init(dat, labs, name, 0, 0.01);
+      init(dat, labs, name, (Tdata) 0, (float) 0.01);
     } catch(string &err) {
       cerr << err << endl;
       eblerror("failed to load mnist dataset");

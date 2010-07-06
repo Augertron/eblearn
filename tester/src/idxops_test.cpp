@@ -101,11 +101,11 @@ void idxops_test::test_idx_exp() {
 	  m2.set(0.0, 0, 0);
 	  m2.set(1.0, 0, 1);
 	  m2.set(-1, 1, 0);
-	  m2.set(log(2), 1, 1);
+	  m2.set(log((double)2), 1, 1);
 	  idx_exp(m2);
 	  CPPUNIT_ASSERT(m2.get(0,0) == 1);
-	  CPPUNIT_ASSERT(m2.get(0,1) == exp(1));
-	  CPPUNIT_ASSERT(m2.get(1,0) == 1/exp(1.0));
+	  CPPUNIT_ASSERT(m2.get(0,1) == exp((double)1));
+	  CPPUNIT_ASSERT(m2.get(1,0) == 1/exp((double)1.0));
 	  CPPUNIT_ASSERT(m2.get(1,1) == 2);
 }
 
