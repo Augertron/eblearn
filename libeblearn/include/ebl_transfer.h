@@ -54,6 +54,7 @@ namespace ebl {
     //! \param mirror Use mirroring of the input to pad border if true,
     //!               or use zero-padding otherwise (default).
     weighted_std_module(uint kernelh, uint kernelw, int nf,
+			const char *name = "",
 			bool mirror = false, bool threshold = true,
 			bool global_norm = false);
     //! destructor
@@ -87,6 +88,8 @@ namespace ebl {
     bool                threshold;
     bool                global_norm; //!< perform global normalization first
     int                 nfeatures;
+    string              name_c0;
+    string              name_c1;
   };
 
   ////////////////////////////////////////////////////////////////
