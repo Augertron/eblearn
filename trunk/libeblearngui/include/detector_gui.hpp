@@ -285,16 +285,19 @@ namespace ebl {
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
     disable_window_updates();
-
+    clear_window();
     // draw internal states of first scale
     module_1_1_gui mg;
     state_idx<Tnet> *ii = ((state_idx<Tnet>*) cl.inputs.get(0));
     state_idx<Tnet> *oo = ((state_idx<Tnet>*) cl.outputs.get(0));
-    //cl.thenet.fprop(*ii, *oo); 
-    mg.display_fprop(*(module_1_1<Tnet>*) cl.nets.get(cl.nets.dim(0) - 1),
-		     *ii, *oo, 0, 0, 1.0, -1.0, 1.0, true,
-		     display_wid_fprop);
-    // enable_window_updates();
+    //    cl.thenet.fprop(*ii, *oo); 
+    mg.display_fprop(*(module_1_1<Tnet>*) &cl.thenet,
+    		     *ii, *oo, (uint) 0, (uint) 0, (double) 1.0, (Tnet) -1.0,
+    		     (Tnet) 1.0, true, display_wid_fprop);
+    // mg.display_fprop(*(module_1_1<Tnet>*) cl.nets.get(cl.nets.dim(0) - 1),
+    // 		     *ii, *oo, (uint) 0, (uint) 0, (double) 1.0, (Tnet) -1.0,
+    // 		     (Tnet) 1.0, true, display_wid_fprop);
+    enable_window_updates();
   }
 
   template <typename Tnet>
