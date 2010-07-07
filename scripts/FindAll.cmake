@@ -211,3 +211,34 @@ ELSE ($ENV{NOIPP})
     MESSAGE("__ WARNING: Intel IPP not found, install to speed up.")
   ENDIF (IPP_FOUND)
 ENDIF ($ENV{NOIPP})
+
+# find ImageMagick
+################################################################################
+# we can't use convert under Windows, so don't try
+IF (NOT WINDOWS)
+  FIND_PACKAGE(ImageMagick)
+  IF (ImageMagick_FOUND)
+    MESSAGE(STATUS "ImageMagick convert: ${IMAGEMAGICK_CONVERT_EXECUTABLE}")
+    MESSAGE(STATUS "ImageMagick Found.")
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IMAGEMAGICK__")  
+  ELSE (ImageMagick_FOUND)
+    MESSAGE("__ WARNING: ImageMagick not found.")
+  ENDIF (ImageMagick_FOUND)
+ENDIF (NOT WINDOWS)
+
+# find Magick++
+################################################################################
+FIND_PACKAGE(Magick++)
+IF (Magick++_FOUND)
+  include_directories(${Magick++_INCLUDE_DIR})
+  LINK_DIRECTORIES(${Magick++_LIBRARIES_DIR})
+  MESSAGE(STATUS "Magick++ includes: ${Magick++_INCLUDE_DIR}")
+  MESSAGE(STATUS "Magick++ library: ${Magick++_LIBRARY}")
+  MESSAGE(STATUS "Magick++ Found.")
+  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__MAGICKPP__")  
+ELSE (Magick++_FOUND)
+  # we don't care about this message under linux/mac if convert is found
+  IF(WINDOWS OR NOT ImageMagick_FOUND) 
+    MESSAGE("__ WARNING: Magick++ not found.")
+  ENDIF(WINDOWS)
+ENDIF (Magick++_FOUND)

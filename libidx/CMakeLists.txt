@@ -31,10 +31,13 @@ add_library (idx SHARED
 ################################################################################
 IF(CBLAS_FOUND)
   TARGET_LINK_LIBRARIES(idx ${CBLAS_LIBRARIES})
-  CONFIGURE_FILE("include/idxblas.h.in" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/idxblas.h")
 ENDIF(CBLAS_FOUND)
 
 IF(IPP_FOUND)
   TARGET_LINK_LIBRARIES(idx ${IPP_LIBRARIES})
 ENDIF(IPP_FOUND)
+
+# configuration
+################################################################################
+CONFIGURE_FILE("include/config.h.in" 
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/config.h")

@@ -33,10 +33,7 @@
 #ifndef IDXOPS_H
 #define IDXOPS_H
 
-#ifdef __CBLAS__
-#include "idxblas.h"
-#endif
-
+#include "config.h"
 #include <cmath>
 #include "numerics.h"
 #include "idx.h"
