@@ -85,6 +85,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       uint		norm_size     = conf.get_uint("normalization_size");
       t_net		threshold     = (t_net) conf.get_double("threshold");
       bool		display       = false;
+      bool		display_states= false;
       bool		mindisplay    = false;
       uint		display_sleep = 0;
       bool		save_video    = false;
@@ -92,6 +93,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       int		height        = conf.get_int("input_height");
       int		width         = conf.get_int("input_width");
       uint              wid           = 0; // window id
+      uint              wid_states    = 0; // window id
       string		outdir        = "out_";
       outdir += tstamp();
       outdir += "/";
@@ -193,10 +195,11 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
     
       // gui
 #ifdef __GUI__
-      display 	= conf.exists_bool("display");
-      mindisplay 	= conf.exists_bool("minimal_display");
-      display_sleep	= conf.get_uint("display_sleep");
-      save_video    = conf.exists_bool("save_video");
+      display	     = conf.exists_bool("display");
+      mindisplay     = conf.exists_bool("minimal_display");
+      display_sleep  = conf.get_uint("display_sleep");
+      display_states = conf.exists_bool("display_states");
+      save_video     = conf.exists_bool("save_video");
       uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
 	qheight2 = 0, qwidth2 = 0, qstep2 = 0;
       if (conf.exists_bool("queue1")) {
@@ -208,7 +211,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	qheight2 = conf.get_uint("qheight2");
 	qwidth2 = conf.get_uint("qwidth2"); }
       module_1_1_gui netgui;
+      wid_states  = display_states ? new_window("network states"):0;
+      night_mode();
       wid  = display ? new_window("eblearn object recognition") : 0;
+      night_mode();
       float	zoom = 1;
       detector_gui<t_net> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
 			       qwidth1, conf.exists_bool("queue2"), qstep2,
@@ -216,7 +222,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       if (bmask_class)
 	dgui.set_mask_class(conf.get_cstring("mask_class"),
 			    (t_net) conf.get_double("mask_threshold"));
-      night_mode();
       if (save_video) {
 	string viddir = outdir;
 	viddir += "video";
@@ -250,12 +255,16 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  clear_window();
 	  if (mindisplay)
 	    bboxes = dgui.display(detect, frame, threshold, 0, 0, zoom,
-				  (t_net)0, (t_net)255, wid);
+	  			  (t_net)0, (t_net)255, wid);
 	  else
 	    bboxes =
 	      dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
-					  (t_net)-1.1, (t_net)1.1, wid); 
+					  (t_net)-1.1, (t_net)1.1, wid);
 	  enable_window_updates();
+	  if (display_states) {
+	    dgui.display_current(detect, frame, wid_states);
+	    select_window(wid);
+	  }
 	  if (save_video)
 	    cam->record_frame();
 	}	    
