@@ -37,7 +37,8 @@ namespace ebl {
   template <class T>
   channorm_module<T>::channorm_module(uint normalization_size_)
     : normalization_size(normalization_size_), tmp(1,1,1),
-      norm(normalization_size, normalization_size, 1, true, false, true) {
+      norm(normalization_size, normalization_size, 1, "norm", true, false,
+	   true) {
   }
 
   template <class T>

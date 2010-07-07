@@ -217,28 +217,25 @@ namespace ebl {
 #endif
       }}
 #ifdef __DUMP_STATES__ // used to debug
-    // idx<float> m2 = load_matrix<float>("../dump_lush_conv0_convsum20.x.mat");
-    // float s2 = idx_sum(m2);
-    // cout << "m2: " << m2 << endl;
-    // float s1 = idx_sum(out.x);
-    // float s0 = s1 - s2;
-    // cout << "s2: " << s2 << " s1: " << s1 << " s0: " << s0 <<endl;
-    //    cout << "m2 sqrdist: " << idx_sqrdist(out.x, m2) << endl;
     ostringstream fname;
     fname << "dump_" << this->name << "_convolution_module_kernels_"
 	  << kernel.x << ".mat";
     save_matrix(kernel.x, fname.str());
     fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_in.x_" << in.x << ".mat";
+    fname << "dump_" << this->name << "_convolution_module_in.x_" << in.x
+	  << ".mat";
     save_matrix(in.x, fname.str());
     fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_ker.x_" << kernel.x << ".mat";
+    fname << "dump_" << this->name << "_convolution_module_ker.x_" << kernel.x
+	  << ".mat";
     save_matrix(kernel.x, fname.str());
     fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_table_" << table << ".mat";
+    fname << "dump_" << this->name << "_convolution_module_table_" << table
+	  << ".mat";
     save_matrix(table, fname.str());
     fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_out.x_" << out.x << ".mat";
+    fname << "dump_" << this->name << "_convolution_module_out.x_" << out.x
+	  << ".mat";
     save_matrix(out.x, fname.str());
 #endif
   }
@@ -407,11 +404,6 @@ namespace ebl {
 
   template <class T>
   subsampling_module<T>::~subsampling_module() {
-#ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << this->name << "_subsampling_module_coeff_" << coeff.x << ".mat";
-    save_matrix(coeff.x, fname.str());
-#endif
   }
 
   template <class T>
@@ -429,6 +421,13 @@ namespace ebl {
 	}
 	idx_dotc(lsx, lcx.get(), ltx); // coeff
       }}
+
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_" << this->name << "_subsampling_module_coeff_"
+	  << coeff.x << ".mat";
+    save_matrix(coeff.x, fname.str());
+#endif
   }
 
   template <class T>
@@ -534,12 +533,6 @@ namespace ebl {
 
   template <class T>
   addc_module<T>::~addc_module() {
-#ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << this->name << "_addc_module_weights_" << bias.x
-	  << ".mat";
-    save_matrix(bias.x, fname.str());
-#endif
   }
 
   template <class T>
@@ -555,11 +548,17 @@ namespace ebl {
 	out.resize(d);
       }
     }
-
     // add each bias to entire slices cut from the first dimension
     idx_bloop3(inx, in.x, T, biasx, bias.x, T, outx, out.x, T) {
       idx_addc(inx, biasx.get(), outx);
     }
+      
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_" << this->name << "_addc_module_weights_"
+	  << bias.x << ".mat";
+    save_matrix(bias.x, fname.str());
+#endif
   }
 
   template <class T>

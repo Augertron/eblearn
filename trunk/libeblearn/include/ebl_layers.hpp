@@ -65,9 +65,6 @@ namespace ebl {
     linear.fprop(in, *sum);
     adder.fprop(*sum, *sum);
     sigmoid->fprop(*sum, out);
-#ifdef __DUMP_STATES__ // used to debug
-    save_matrix(out.x, "dump_full_layer_out.x.mat");
-#endif
   }
 
   template <class T>
@@ -75,9 +72,6 @@ namespace ebl {
     sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     linear.bprop(in, *sum);
-#ifdef __DUMP_STATES__ // used to debug
-    save_matrix(in.dx, "dump_full_layer_in.dx.mat");
-#endif
   }
 
   template <class T>
@@ -85,9 +79,6 @@ namespace ebl {
     sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     linear.bbprop(in, *sum);
-#ifdef __DUMP_STATES__ // used to debug
-    save_matrix(in.ddx, "dump_full_layer_in.ddx.mat");
-#endif
   }
 
   template <class T>
@@ -124,7 +115,8 @@ namespace ebl {
   convolution_layer<T>::convolution_layer(parameter<T> *p, 
 					  intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
-					  idx<intg> &tbl, bool btanh_, const char *name_) 
+					  idx<intg> &tbl, bool btanh_,
+					  const char *name_) 
     : btanh(btanh_),
       convol(p, kerneli, kernelj, stridei_, stridej_, tbl, name_), 
       adder(p, convol.thickness, name_),
@@ -149,24 +141,8 @@ namespace ebl {
     // 2. fprop
     //    sum->clear();
     convol.fprop(in, *sum);
-#ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname2;
-    fname2 << "dump_convolution_layer_sum.x_" << sum->x << ".mat";
-    save_matrix(sum->x, fname2.str());
-#endif
     adder.fprop(*sum, *sum);
     sigmoid->fprop(*sum, out);
-#ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_convolution_layer_out.x_" << out.x << ".mat";
-    save_matrix(out.x, fname.str());
-    fname.str("");
-    fname << "dump_convolution_layer_in.x_" << in.x << ".mat";
-    save_matrix(in.x, fname.str());
-    fname.str("");
-    fname << "dump_convolution_layer_ker.x_" << convol.kernel.x << ".mat";
-    save_matrix(convol.kernel.x, fname.str());
-#endif
   }
 
   template <class T>
@@ -174,9 +150,6 @@ namespace ebl {
     sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     convol.bprop(in, *sum);
-#ifdef __DUMP_STATES__ // used to debug
-    save_matrix(in.dx, "dump_convolution_layer_in.dx.mat");
-#endif
   }
 
   template <class T>
@@ -184,9 +157,6 @@ namespace ebl {
     sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     convol.bbprop(in, *sum);
-#ifdef __DUMP_STATES__ // used to debug
-    save_matrix(in.ddx, "dump_convolution_layer_in.ddx.mat");
-#endif
   }
 
   template <class T>
@@ -302,11 +272,13 @@ namespace ebl {
 
   template <class T>
   subsampling_layer<T>::subsampling_layer(parameter<T> *p,
-						intg stridei, intg stridej,
-						intg subi, intg subj, 
-						intg thick, bool btanh_, const char *name_)
+					  intg stridei, intg stridej,
+					  intg subi, intg subj, 
+					  intg thick, bool btanh_,
+					  const char *name_)
     : btanh(btanh_),
-      subsampler(p, stridei, stridej, subi, subj, thick, name_), adder(p, thick, name_),
+      subsampler(p, stridei, stridej, subi, subj, thick, name_),
+      adder(p, thick, name_),
       sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
 	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
     sum = NULL;
@@ -330,9 +302,6 @@ namespace ebl {
     subsampler.fprop(in, *sum);
     adder.fprop(*sum, *sum);
     sigmoid->fprop(*sum, out);
-#ifdef __DUMP_STATES__ // used to debug
-    save_matrix(out.x, "dump_subsampling_layer_out.x.mat");
-#endif
   }
 
   template <class T>
@@ -340,9 +309,6 @@ namespace ebl {
     sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     subsampler.bprop(in, *sum);
-#ifdef __DUMP_STATES__ // used to debug
-    save_matrix(in.dx, "dump_subsampling_layer_in.dx.mat");
-#endif
   }
 
   template <class T>
@@ -350,9 +316,6 @@ namespace ebl {
     sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     subsampler.bbprop(in, *sum);
-#ifdef __DUMP_STATES__ // used to debug
-    save_matrix(in.ddx, "dump_subsampling_layer_in.ddx.mat");
-#endif
   }
 
   template <class T>

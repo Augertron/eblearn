@@ -43,13 +43,13 @@ namespace ebl {
 
   template <class T>
   net_cscscf<T>::net_cscscf(parameter<T> &prm, intg ini, intg inj,
-					  intg ki0, intg kj0, idx<intg> &tbl0, 
-					  intg si0, intg sj0,
-					  intg ki1, intg kj1, idx<intg> &tbl1, 
-					  intg si1, intg sj1,
-					  intg ki2, intg kj2, idx<intg> &tbl2,
-					  intg outthick, bool norm, bool mirror,
-					  bool tanh, bool shrink)
+			    intg ki0, intg kj0, idx<intg> &tbl0, 
+			    intg si0, intg sj0,
+			    intg ki1, intg kj1, idx<intg> &tbl1, 
+			    intg si1, intg sj1,
+			    intg ki2, intg kj2, idx<intg> &tbl2,
+			    intg outthick, bool norm, bool mirror,
+			    bool tanh, bool shrink)
     : layers<T>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
@@ -61,12 +61,12 @@ namespace ebl {
 
   template <class T>
   void net_cscscf<T>::init(parameter<T> &prm, intg ini, intg inj,
-				  intg ki0, intg kj0, idx<intg> &tbl0, 
-				  intg si0, intg sj0, intg ki1, intg kj1, 
-				  idx<intg> &tbl1, intg si1, intg sj1, 
-				  intg ki2, intg kj2, idx<intg> &tbl2, 
-				  intg outthick, bool norm, bool mirror,
-				  bool tanh, bool shrink) {
+			   intg ki0, intg kj0, idx<intg> &tbl0, 
+			   intg si0, intg sj0, intg ki1, intg kj1, 
+			   idx<intg> &tbl1, intg si1, intg sj1, 
+			   intg ki2, intg kj2, idx<intg> &tbl2, 
+			   intg outthick, bool norm, bool mirror,
+			   bool tanh, bool shrink) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -348,13 +348,13 @@ namespace ebl {
 
   template <class T>
   net_cscsc<T>::net_cscsc(parameter<T> &prm, intg ini, intg inj,
-					intg ki0, intg kj0, idx<intg> &tbl0, 
-					intg si0, intg sj0,
-					intg ki1, intg kj1, idx<intg> &tbl1, 
-					intg si1, intg sj1,
-					intg ki2, intg kj2, idx<intg> &tbl2,
-					bool norm, bool mirror, bool tanh,
-					bool shrink)
+			  intg ki0, intg kj0, idx<intg> &tbl0, 
+			  intg si0, intg sj0,
+			  intg ki1, intg kj1, idx<intg> &tbl1, 
+			  intg si1, intg sj1,
+			  intg ki2, intg kj2, idx<intg> &tbl2,
+			  bool norm, bool mirror, bool tanh,
+			  bool shrink)
     : layers<T>(true) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 si1, sj1, ki2, kj2, tbl2, norm, mirror, tanh, shrink);
@@ -365,12 +365,12 @@ namespace ebl {
 
   template <class T>
   void net_cscsc<T>::init(parameter<T> &prm, intg ini, intg inj,
-				 intg ki0, intg kj0, idx<intg> &tbl0, 
-				 intg si0, intg sj0, intg ki1, intg kj1, 
-				 idx<intg> &tbl1, intg si1, intg sj1, 
-				 intg ki2, intg kj2, idx<intg> &tbl2,
-				 bool norm, bool mirror, bool tanh,
-				 bool shrink) {
+			  intg ki0, intg kj0, idx<intg> &tbl0, 
+			  intg si0, intg sj0, intg ki1, intg kj1, 
+			  idx<intg> &tbl1, intg si1, intg sj1, 
+			  intg ki2, intg kj2, idx<intg> &tbl2,
+			  bool norm, bool mirror, bool tanh,
+			  bool shrink) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -385,9 +385,10 @@ namespace ebl {
     // and feed the input of the following module.
 
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm, ki0, kj0, 1, 1,tbl0));
+    add_module(new convolution_module_replicable<T>(&prm, ki0, kj0, 1, 1, tbl0,
+						    "c0"));
     // bias
-    add_module(new addc_module<T>(&prm, thick0));
+    add_module(new addc_module<T>(&prm, thick0, "c0"));
     // non linearity
     if (shrink)
       add_module(new smooth_shrink_module<T>(&prm, thick0));
@@ -401,11 +402,12 @@ namespace ebl {
       add_module(new weighted_std_module<T>(ki0, kj0, thick0, "w0", mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm, si0, sj0, si0, sj0, thick0,tanh));
+    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm, ki1, kj1, 1, 1,tbl1));
+    add_module(new convolution_module_replicable<T>(&prm, ki1, kj1, 1, 1,tbl1,
+						    "c1"));
     // bias
-    add_module(new addc_module<T>(&prm, thick1));
+    add_module(new addc_module<T>(&prm, thick1, "c1"));
     // non linearity
     if (shrink)
       add_module(new smooth_shrink_module<T>(&prm, thick1));
@@ -419,9 +421,9 @@ namespace ebl {
       add_module(new weighted_std_module<T>(ki1, kj1, thick1, "w1", mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm, si1, sj1, si1, sj1, thick1,tanh));
+    add_module(new subsampling_layer<T>(&prm,si1,sj1,si1,sj1,thick1,tanh,"s1"));
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh));
+    add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
 
     // if (norm) // absolute rectification + contrast normalization
     //   add_module(new convabsnorm_layer<T>(&prm, ki0, kj0,1,1,tbl0,mirror,tanh));
