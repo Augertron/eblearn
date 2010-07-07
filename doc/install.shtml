@@ -297,7 +297,13 @@
        (https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk)
        to download the eblearn repository.<br>
        <li><strong>CMake</strong><br>
-       Download from http://www.cmake.org/cmake/resources/software.html<br>
+	 Download from http://www.cmake.org/cmake/resources/software.html</li>
+       <li><strong>Magick++</strong><br>
+	 Download the 8-bit version of the ImageMagick dlls for Windows:
+	 http://www.imagemagick.org/www/binary-releases.html#windows<br>
+	 During installation, check both "Add application directory to your
+	 system path" and "Install development headers and libraries for
+	 C and C++".
        <li><strong>CPPUnit</strong><br>
        Download from
        http://sourceforge.net/projects/cppunit/files/cppunit/1.12.1/<br>
