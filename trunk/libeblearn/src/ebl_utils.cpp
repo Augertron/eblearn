@@ -93,7 +93,7 @@ namespace ebl {
     idx<intg> fi(a - a0);
     intg frcntr = 0, tocntr = b0;
     intg nfi = (a - a0) / fanin; // number of distinct fanin chunks
-    intg rfi = (a - a0) % fanin; // number of remaining a maps
+    //intg rfi = (a - a0) % fanin; // number of remaining a maps
     idx<intg> totbl = tbl.select(1, 1);
     idx<intg> frtbl = tbl.select(1, 0);
     // part of fi that covers distinct chunks
@@ -137,12 +137,38 @@ namespace ebl {
 		       intg p0, intg p1, intg p2, intg fanin_y,
 		       intg fanin_yuv, intg fanin_uv) {
     dynamic_init_drand();
+    if (fanin_y == 0 && fanin_yuv == 0 && fanin_uv == 0)
+      eblerror("at least 1 fanin variable must be non zero");
     // table 1
-    idx<intg> t3 = random_table(yend, p0, fanin_y);
-    idx<intg> t4 = random_table(vend, p1, fanin_yuv, 0, p0);
-    idx<intg> t5 = random_table(vend, p2, fanin_uv, yend, p1);
-    idx<intg> table1 = concat_tables(t3, t4);
-    return concat_tables(table1, t5);
+    idx<intg> t3, t4, t5, table1;
+    bool t1_defined = false;
+    if (fanin_y != 0)
+      t3 = random_table(yend, p0, fanin_y);
+    if (fanin_yuv != 0)
+      t4 = random_table(vend, p1, fanin_yuv, 0, p0);
+    if (fanin_uv != 0)
+      t5 = random_table(vend, p2, fanin_uv, yend, p1);
+    if (fanin_y != 0) {
+      table1 = t3;
+      t1_defined = true;
+    }
+    if (fanin_yuv != 0) {
+      if (t1_defined)
+	table1 = concat_tables(table1, t4);
+      else {
+	table1 = t4;
+	t1_defined = true;
+      }
+    }
+    if (fanin_uv != 0) {
+      if (t1_defined)
+	table1 = concat_tables(table1, t5);
+      else {
+	table1 = t5;
+	t1_defined = true;
+      }
+    }
+    return table1;
   }
   
 } // end namespace ebl

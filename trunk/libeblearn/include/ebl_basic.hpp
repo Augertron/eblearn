@@ -43,12 +43,6 @@ namespace ebl {
 
   template <class T>
   linear_module<T>::~linear_module() {
-#ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << this->name << "_linear_module_weights_" << w.x
-	  << ".mat";
-    save_matrix(w.x, fname.str());
-#endif
   }
 
   template <class T>
@@ -58,6 +52,16 @@ namespace ebl {
     idx<T> outx = out.x.view_as_order(1); // view as 1D idx
 
     idx_m2dotm1(w.x, inx, outx); // linear combination
+
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_" << this->name << "_linear_module_weights_" << w.x
+	  << ".mat";
+    save_matrix(w.x, fname.str());
+    fname.str("");
+    fname << "dump_" << this->name << "_linear_module_in.x_" << in.x << ".mat";
+    save_matrix(in.x, fname.str());
+#endif
   }
 
   template <class T>
@@ -186,12 +190,6 @@ namespace ebl {
 
   template <class T>
   convolution_module<T>::~convolution_module() {
-#ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << this->name << "_convolution_module_kernels_"
-	  << kernel.x << ".mat";
-    save_matrix(kernel.x, fname.str());
-#endif
   }
 
   template <class T>
@@ -226,16 +224,22 @@ namespace ebl {
     // float s0 = s1 - s2;
     // cout << "s2: " << s2 << " s1: " << s1 << " s0: " << s0 <<endl;
     //    cout << "m2 sqrdist: " << idx_sqrdist(out.x, m2) << endl;
-    
-    ostringstream fname2;
-    fname2 << "dump_convolution_layer_in.x_" << in.x << ".mat";
-    save_matrix(in.x, fname2.str());
-    fname2.str("");
-    fname2 << "dump_convolution_layer_ker.x_" << kernel.x << ".mat";
-    save_matrix(kernel.x, fname2.str());
-    fname2.str("");
-    fname2 << "dump_convolution_layer_table_" << table << ".mat";
-    save_matrix(table, fname2.str());
+    ostringstream fname;
+    fname << "dump_" << this->name << "_convolution_module_kernels_"
+	  << kernel.x << ".mat";
+    save_matrix(kernel.x, fname.str());
+    fname.str("");
+    fname << "dump_" << this->name << "_convolution_module_in.x_" << in.x << ".mat";
+    save_matrix(in.x, fname.str());
+    fname.str("");
+    fname << "dump_" << this->name << "_convolution_module_ker.x_" << kernel.x << ".mat";
+    save_matrix(kernel.x, fname.str());
+    fname.str("");
+    fname << "dump_" << this->name << "_convolution_module_table_" << table << ".mat";
+    save_matrix(table, fname.str());
+    fname.str("");
+    fname << "dump_" << this->name << "_convolution_module_out.x_" << out.x << ".mat";
+    save_matrix(out.x, fname.str());
 #endif
   }
   
@@ -885,6 +889,13 @@ namespace ebl {
     idx<T> tmp = out.x.narrow(1, inr, nrow);
     tmp = tmp.narrow(2, inc, ncol);
     idx_copy(in.x, tmp);
+
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_" << "" << "_zpad_module_out_" << out.x
+	  << ".mat";
+    save_matrix(out.x, fname.str());
+#endif
   }
 
   template <class T>
@@ -1081,12 +1092,14 @@ namespace ebl {
       out.resize(d);
     }
     idx_aloop2(inx, in.x, T, outx, out.x, T) {
+      //      cout << "v0: " << *inx;
       idx_bloop1(vr, value_range, T) {
 	if (*inx < vr.get(1)) {
 	  *outx = vr.get(0);
 	  break ;
 	}
       }
+      //      cout << " v1: " << *outx << endl;
     }
   }
 

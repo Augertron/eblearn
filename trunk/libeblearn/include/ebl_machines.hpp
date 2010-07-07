@@ -96,7 +96,7 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki0, kj0, thick0, mirror));
+      add_module(new weighted_std_module<T>(ki0, kj0, thick0, "w0", mirror));
     }
     // subsampling
     add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh));
@@ -114,7 +114,7 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
+      add_module(new weighted_std_module<T>(ki1, kj1, thick1, "w1", mirror));
     }
     // subsampling
     add_module(new subsampling_layer<T>(&prm,si1,sj1,si1,sj1,thick1,tanh));
@@ -210,7 +210,7 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki0, kj0, thick0, mirror));
+      add_module(new weighted_std_module<T>(ki0, kj0, thick0, "w0", mirror));
     }
     // subsampling
     add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
@@ -229,7 +229,7 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
+      add_module(new weighted_std_module<T>(ki1, kj1, thick1, "w1", mirror));
     }
     if (lut_features)
       add_module(new range_lut_module<T>(lut));
@@ -312,7 +312,7 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki0, kj0, thick0, mirror));
+      add_module(new weighted_std_module<T>(ki0, kj0, thick0, "w0", mirror));
     }
     // subsampling
     add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
@@ -331,7 +331,7 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
+      add_module(new weighted_std_module<T>(ki1, kj1, thick1, "w1", mirror));
     }
     // convolution + bias + sigmoid
     add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
@@ -398,7 +398,7 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki0, kj0, thick0, mirror));
+      add_module(new weighted_std_module<T>(ki0, kj0, thick0, "w0", mirror));
     }
     // subsampling
     add_module(new subsampling_layer<T>(&prm, si0, sj0, si0, sj0, thick0,tanh));
@@ -416,7 +416,7 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki1, kj1, thick1, mirror));
+      add_module(new weighted_std_module<T>(ki1, kj1, thick1, "w1", mirror));
     }
     // subsampling
     add_module(new subsampling_layer<T>(&prm, si1, sj1, si1, sj1, thick1,tanh));

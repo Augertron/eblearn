@@ -38,7 +38,8 @@ namespace ebl {
 
   template <class T>
   weighted_std_module<T>::weighted_std_module(uint kernelh, uint kernelw,
-					      int nf, bool mirror_,
+					      int nf, const char *name_, 
+					      bool mirror_,
 					      bool threshold_,
 					      bool global_norm_)
     : mirror(mirror_),
@@ -62,20 +63,27 @@ namespace ebl {
       global_norm(global_norm_),
       nfeatures(nf)
   {
+    this->name = name_;
+    name_c0 = name_;
+    name_c0 += "_c0";
+    name_c1 = name_;
+    name_c1 += "_c1";
     //! create little objects to do math
     //! zero pad borders
     //! convolution module to calculate the weighted sums for mean and std
     //! augment with fsum, since actually we take a cube over all features
     //! that is why I normalize the kernel using all kernel, not one by one.
-    
+
     // create weighting kernel
     w = create_gaussian_kernel<T>(kernelh, kernelw);
     // prepare convolutions and their kernels
     idx<intg> table = one2one_table(nfeatures);
     convolution_module<T> *conv1 =
-      new convolution_module<T>(&param, w.dim(0), w.dim(1), 1, 1, table);
+      new convolution_module<T>(&param, w.dim(0), w.dim(1), 1, 1, table, 
+				name_c0.c_str());
     convolution_module<T> *conv2 =
-      new convolution_module<T>(&param, w.dim(0), w.dim(1), 1, 1, table);
+      new convolution_module<T>(&param, w.dim(0), w.dim(1), 1, 1, table, 
+				name_c1.c_str());
     idx_bloop1(kx, conv1->kernel.x, T)
       idx_copy(w, kx);
     //! normalize the kernels
@@ -118,9 +126,23 @@ namespace ebl {
   //! </code>}
   template <class T>
   void weighted_std_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_" << this->name << "_w_module_in0.x_" << in.x << ".mat";
+    save_matrix(in.x, fname.str());
+#endif
+
     if (global_norm) // global normalization
       idx_std_normalize(in.x, in.x);
     T a = (T) 1e-5; // avoid divisions by zero
+
+
+#ifdef __DUMP_STATES__ // used to debug
+    fname.str("");
+    fname << "dump_" << this->name << "_w_module_in.x_" << in.x << ".mat";
+    save_matrix(in.x, fname.str());
+#endif
+
     //! sum_j (w_j * in_j)
     convmean.fprop(in, inmean);
     //! in - mean
@@ -206,8 +228,8 @@ namespace ebl {
 
   template <class T>
   weighted_std_module<T>* weighted_std_module<T>::copy() {
-    return new weighted_std_module<T>(w.dim(0), w.dim(1), nfeatures, mirror,
-				      threshold, global_norm);
+    return new weighted_std_module<T>(w.dim(0), w.dim(1), nfeatures, this->name, 
+				      mirror, threshold, global_norm);
   }
   
   ////////////////////////////////////////////////////////////////
