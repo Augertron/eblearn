@@ -46,6 +46,11 @@
 #include <unistd.h>
 #endif
 
+#ifdef __MAGICKPP__
+#include <Magick++.h>
+#endif
+
+#include "config.h"
 #include "idxIO.h"
 
 using namespace std;
@@ -58,39 +63,34 @@ namespace ebl {
   template<class T>
   idx<T> image_read(const char *fname, idx<T> *out_) {
     ostringstream err;
-    /* TODO : add a line in the config to detect "convert" path
-       char myconvert[100];
-       FILE* bla = popen("which convert", "r");
-       fgets(myconvert, 100, bla);
-       pclose(bla);
-       *(myconvert+16) = 0;
-       */
-    string myconvert = "convert";
-    // if(strstr(myconvert.c_str(), "convert") == NULL){
-    //   cerr << "failed to find \"convert\", please install ImageMagick" << endl;
-    //   return false;
-    // }
+
+#ifdef __IMAGEMAGICK__
+#ifndef __WINDOWS__
+    // we are under linux or mac and convert is available
     ostringstream cmd;
-    cmd << myconvert.c_str() << " -compress lossless -depth 8 \"" 
+    cmd << IMAGEMAGICK_CONVERT << " -compress lossless -depth 8 \"" 
 	<< fname << "\" PPM:-";
-#ifdef __WINDOWS__
-    throw "error reading image";
-    filebuf fb;
-    fb.open (cmd.str().c_str(),ios::in);
-    istream in(&fb);
-    // read pnm image
-    idx<ubyte> tmp;// = pnm_read(fp);
-    fb.close();
-#else
+
     FILE* fp = popen(cmd.str().c_str(), "r");
     if (!fp) {
       err << "conversion of image " << fname << " failed";
       throw err.str();
     }
+#endif /* __WINDOWS__ */
+#else
+#ifdef __MAGICKPP__
+    // we are under any platform, convert is not available but Magick++ is
+    eblerror("magick++ not implemented");
+#else
+    // nor Magick++ nor convert are available, error
+    eblerror("Nor ImageMagick's convert nor Magick++ are available, \
+please install");
+#endif /* __MAGICK++__ */
+#endif /* __IMAGEMAGICK__ */
+    
     // read pnm image
     idx<ubyte> tmp = pnm_read(fp);
     pclose(fp);
-#endif
     idxdim dims(tmp);
     idx<T> out;
     idx<T> *pout = &out;

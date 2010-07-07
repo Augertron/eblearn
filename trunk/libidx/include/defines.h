@@ -33,6 +33,8 @@
 #ifndef LIBIDX_DEFINES_H_
 #define LIBIDX_DEFINES_H_
 
+#include "config.h"
+
 #ifndef __WINDOWS__
 #include <execinfo.h>
 #endif
