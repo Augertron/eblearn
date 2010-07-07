@@ -110,8 +110,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // select preprocessing  
       module_1_1<t_net>* pp = NULL;
       if (!strcmp(cam_type.c_str(), "v4l2")) // Y -> Yp
-	pp = new weighted_std_module<t_net>(norm_size, norm_size, 1, true,
-					    false, true);
+	pp = new weighted_std_module<t_net>(norm_size, norm_size, 1, "norm",
+					    true, false, true);
       else if (color) // RGB -> YpUV
 	pp = (module_1_1<t_net>*) new rgb_to_ypuv_module<t_net>(norm_size);
       else // RGB -> Yp
