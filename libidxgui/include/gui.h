@@ -41,22 +41,23 @@ using namespace std;
 namespace ebl {
   
   //! creates a new window.
-  int new_window(const char *wname = NULL, unsigned int h = 0,
+  EXPORT int new_window(const char *wname = NULL, unsigned int h = 0,
 		 unsigned int w = 0);
 
   //! creates a new window.
-  int new_window(const string &wname, unsigned int h = 0, unsigned int w = 0);
+  EXPORT int new_window(const string &wname, unsigned int h = 0, 
+			unsigned int w = 0);
 
   //! selects window wid.
-  void select_window(int wid);
+  EXPORT void select_window(int wid);
 
   //! do not update display until enable_updates is called again.
   //! this should make the display faster.
-  void disable_window_updates();
+  EXPORT void disable_window_updates();
 
   //! allow display updates and display if it was previously off after a
   //! call to disable_updates().
-  void enable_window_updates();
+  EXPORT void enable_window_updates();
 
   //! draw_matrix displays your idx2 or the first layer of your idx3 in
   //! grayscale on the whiteboard. This function does a copy of your idx and
@@ -84,7 +85,7 @@ namespace ebl {
   //! i.e. there might be a race condition on the deletion of the idx data.
   //! To avoid race condition, only manipulate/delete the idx when
   //! the gui's data mutex is unlocked (see (un)lock_data_mutex()).
-  void draw_matrix_unsafe(idx<ubyte> &im, uint h0 = 0, uint w0 = 0); 
+  EXPORT void draw_matrix_unsafe(idx<ubyte> &im, uint h0 = 0, uint w0 = 0); 
   
   //! same as draw_matrix but draws a frame of color (r,g,b) around it.
   template<class T>
@@ -108,46 +109,46 @@ namespace ebl {
 		   T threshold = 0.0);
     
   //! closes all windows.
-  void quit_gui();
+  EXPORT void quit_gui();
   
   //! clears the window.
-  void clear_window();
+  EXPORT void clear_window();
 
   //! save current window into filename image.
   //! wid is optional, if given save window with id wid.
-  void save_window(const char *filename, int wid = -1);
+  EXPORT void save_window(const char *filename, int wid = -1);
 
   //! draws an arrow from (h1, w1) to (h2, w2).
-  void draw_arrow(int h1, int w1, int h2, int w2);
+  EXPORT void draw_arrow(int h1, int w1, int h2, int w2);
 
   //! draws a bounding box with top left corner (h0, w0) and size (h, w).
   //! the (r,g,b) color of the box can optionally be specified as well as
   //! a caption string.
-  void draw_box(int h0, int w0, int h, int w,
+  EXPORT void draw_box(int h0, int w0, int h, int w,
 		unsigned char r = 255, unsigned char g = 255,
 		unsigned char b = 255, string *s = NULL);
 
   //! do not show windows, instead save them in png files in current dir.
-  void set_gui_silent();
+  EXPORT void set_gui_silent();
   //! do not show windows, instead save them in png files in current dir.
-  void set_gui_silent(const std::string *filename);
+  EXPORT void set_gui_silent(const std::string *filename);
   //! do not show windows, instead save them in png files in current dir.
-  void set_gui_silent(const char *filename);
+  EXPORT void set_gui_silent(const char *filename);
   
   //! draws text on the current window.
   //! you can also use the << operator instead of this function to add text 
   //! to the gui. for example: gui << "text" << endl;
-  void draw_text(string *s);
+  EXPORT void draw_text(string *s);
   
   //! draws text on the current window at origin (h0, w0).
   //! you can also use the << operator instead of this function to add text 
   //! to the gui. for example: gui << at(h0, w0) << "text" << endl;
-  void draw_text(string *s, unsigned int h0, unsigned int w0);
+  EXPORT void draw_text(string *s, unsigned int h0, unsigned int w0);
 
   //! sets the origin of further calls to draw_text or gui << "text".
   //! you can also use the at() function instead of this one.
   //! for example: gui << at(42, 0) << "text";
-  void set_text_origin(unsigned int h0, unsigned int w0);
+  EXPORT void set_text_origin(unsigned int h0, unsigned int w0);
 
   //! sets the text color for further calls to draw_text or gui << "text".
   //! you can also use the set_colors() function to set
@@ -155,33 +156,33 @@ namespace ebl {
   //! for example: gui << set_colors(255, 255, 255, 255, 0, 0, 0, 127);
   //! this sets the text color to fully opaque white on a semi-transparent
   //! black background.
-  void set_text_colors(unsigned char fg_r, unsigned char fg_g,
+  EXPORT void set_text_colors(unsigned char fg_r, unsigned char fg_g,
 		       unsigned char fg_b, unsigned char fg_a,
 		       unsigned char bg_r, unsigned char bg_g,
 		       unsigned char bg_b, unsigned char bg_a);
   //! see unsigned char version.
-  void set_text_colors(int fg_r, int fg_g, int fg_b, int fg_a,
+  EXPORT void set_text_colors(int fg_r, int fg_g, int fg_b, int fg_a,
 		       int bg_r, int bg_g, int bg_b, int bg_a);
 
   //! Set the color of the background.
-  void set_bg_colors(int r, int g, int b);
+  EXPORT void set_bg_colors(int r, int g, int b);
 
   //! Set size of font.
-  void set_font_size(int sz);
+  EXPORT void set_font_size(int sz);
 
   //! set the << operator to output text on both std::cout and the current
   //! window.
   //! you can also use the cout_and_gui() function.
   //! for example: gui << cout_and_gui() << "text";
-  void set_window_cout_and_gui();
+  EXPORT void set_window_cout_and_gui();
 
   //! set the << operator to output text only to the current window.
   //! you can also use the gui_only() function and not to std::cout.
   //! for example: gui << gui_only() << "text";
-  void set_window_gui_only();
+  EXPORT void set_window_gui_only();
 
   //! Override all colors into night mode: blue on black background.
-  void night_mode();
+  EXPORT void night_mode();
   
 } // namespace ebl
 

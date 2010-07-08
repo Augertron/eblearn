@@ -58,7 +58,11 @@ namespace ebl {
   //! This flag is raised only when init_rand is called, not
   //! when dseed is called.
   //! At the moment only the forget functions use this flag (see ebm)
+#ifdef LIBIDX // declared from inside this library
+  extern EXPORT bool drand_ini;
+#else // declared from outside
   extern IMPORT bool drand_ini;
+#endif
 
   //! initializes drand by calling dseed, and raises drand_ini
   EXPORT void init_drand(int x);

@@ -30,6 +30,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+// tell header that we are in the libidx scope
+#define LIBIDX
+
 #include <algorithm>
 #include <stdio.h>
 #include <ostream>
@@ -63,7 +66,7 @@ namespace ebl {
     s = fscanf(fp,"%s",buffer);
     if ( s < 1)
       buffer[0]=0;
-    res = new char[strlen(buffer)];
+    res = new char[strlen(buffer) + 1];
     strcpy(res, buffer);
     return res;
   }

@@ -63,10 +63,8 @@ namespace ebl {
   }
 
   template<class T>
-  void draw_mask(idx<T> &im, uint h0 = 0, uint w0 = 0, 
-		 double zoomh = 1.0, double zoomw = 1.0,
-		 ubyte r = 255, ubyte g = 0, ubyte b = 0, ubyte a = 127,
-		 T threshold = 0.0) {
+  void draw_mask(idx<T> &im, uint h0, uint w0, double zoomh, double zoomw,
+		 ubyte r, ubyte g, ubyte b, ubyte a, T threshold) {
     gui.draw_mask(im, h0, w0, zoomh, zoomw, r, g, b, a, threshold);
   }
   

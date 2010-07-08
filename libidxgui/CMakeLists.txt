@@ -28,7 +28,7 @@ IF (QT_FOUND) #-----------------------------------------------------------------
     include/gui_thread.h
     include/idxgui.h
     include/window.h)
-
+    
   # compile library
   ##############################################################################
   add_library (idxgui SHARED
@@ -40,6 +40,9 @@ IF (QT_FOUND) #-----------------------------------------------------------------
     src/scroll_box.cpp
    )
   
+  # tell the compiled files that we are building libidxgui
+  SET_PROPERTY(TARGET idxgui PROPERTY COMPILE_DEFINITIONS LIBIDXGUI)
+
   # link executable with external libraries
   ##############################################################################
   target_link_libraries (idxgui idx)

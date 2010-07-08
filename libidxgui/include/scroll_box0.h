@@ -39,21 +39,13 @@
 #include <QtGui/QPushButton>
 #include <math.h>
 #include <iostream>
+#include "defines.h"
 
 using namespace std;
 
 namespace ebl {
 
-  class scroll_box0 {
-  protected:
-    unsigned int page_number;
-    QPushButton *button_next;
-    QPushButton *button_previous;
-    unsigned int _h0;
-    unsigned int _w0;
-    unsigned int _h1;
-    unsigned int _w1;
-
+  class EXPORT scroll_box0 {
   public:
     scroll_box0();
     virtual ~scroll_box0();
@@ -65,6 +57,15 @@ namespace ebl {
     virtual scroll_box0* copy() = 0;
     virtual bool next_page();
     virtual bool previous_page();
+
+  protected:
+    unsigned int page_number;
+    QPushButton *button_next;
+    QPushButton *button_previous;
+    unsigned int _h0;
+    unsigned int _w0;
+    unsigned int _h1;
+    unsigned int _w1;
   };
 
 } // namespace ebl {

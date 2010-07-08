@@ -62,5 +62,23 @@ extern "C" {
 // ImageMagick configuration
 
 #ifdef __IMAGEMAGICK__
+#ifdef __WINDOWS__
+//TODO: for now assume convert is declared globally and do not use path
+// because path with spaces don't work with _popen even with quotes
+#define IMAGEMAGICK_CONVERT "convert.exe"
+//#define IMAGEMAGICK_CONVERT "\"@IMAGEMAGICK_CONVERT_EXECUTABLE@\""
+#else
 #define IMAGEMAGICK_CONVERT "@IMAGEMAGICK_CONVERT_EXECUTABLE@"
+#endif
+#endif
+
+////////////////////////////////////////////////////////////////
+// pipes popen/pclose configuration
+
+#ifdef __WINDOWS__
+#define POPEN _popen
+#define PCLOSE _pclose
+#else
+#define POPEN popen
+#define PCLOSE pclose
 #endif

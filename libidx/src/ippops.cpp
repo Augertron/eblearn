@@ -29,6 +29,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+// tell header that we are in the libidx scope
+#define LIBIDX
 
 #include "ippops.h"
 #include <limits.h>
