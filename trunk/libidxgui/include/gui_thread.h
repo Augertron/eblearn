@@ -145,6 +145,42 @@ namespace ebl {
   }						\
   int run_main(targc argc, targv argv)
   
+
+#define WINMAIN_QTHREAD(targc, argc, targv, argv)			\
+  int run_main(targc argc, targv argv);				\
+  using namespace ebl;							\
+  int WINAPI WinMain(HINSTANCE d1, HINSTANCE d2, LPSTR d3, int d4) {	\
+    LPWSTR *argvw;							\
+    LPTSTR *argv;							\
+    targc argc = 0;							\
+    argvw = CommandLineToArgvW(GetCommandLineW(), &argc);		\
+    USES_CONVERSION;							\
+    argv = new LPTSTR[argc];						\
+    for (targc i = 0; i < argc; ++i) {					\
+      argv[i] = W2A(argvw[i]);						\
+    }									\
+    gui.thread_init = true;						\
+    gui.run_main = &run_main;						\
+    gui.thread_init = true;						\
+    QApplication a(argc, argv);						\
+    a.setQuitOnLastWindowClosed(false);					\
+    ebl::gui_thread gt(argc, argv);					\
+    gt.thread.start();							\
+    a.exec();								\
+    LocalFree(argv);							\
+    for (targc i = 0; i < argc; ++i) {					\
+      if (argv[i]) delete argv[i];					\
+    }									\
+    return 0;								\
+  }									\
+  int run_main(targc argc, targv argv)
+
+#ifdef __WINDOWS__
+#define NOCONSOLE_MAIN_QTHREAD WINMAIN_QTHREAD
+#else
+#define NOCONSOLE_MAIN_QTHREAD MAIN_QTHREAD
+#endif
+  
 } // namespace ebl {
 
 #endif /* GUI_THREAD_H_ */
