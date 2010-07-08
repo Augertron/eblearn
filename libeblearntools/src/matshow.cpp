@@ -35,6 +35,7 @@
 
 #ifdef __GUI__
 #include "libidxgui.h"
+#include "defines_windows.h"
 #endif
 
 using namespace std;
@@ -85,7 +86,7 @@ int display(list<string>::iterator &ifname,
 	//      if (load)
 	mat = load_image<T>(*fname);
 	loaded++;
-	maxh = std::max(maxh, (uint) (rowh + mat.dim(0)));
+	maxh = (std::max)(maxh, (uint) (rowh + mat.dim(0)));
 	T min = 0, max = 0;
 	if (signd) {
 	  T matmin = idx_min(mat);
@@ -175,7 +176,7 @@ int load_display(list<string>::iterator &ifname,
 // main
 
 #ifdef __GUI__
-MAIN_QTHREAD(int, argc, char**, argv) { 
+NOCONSOLE_MAIN_QTHREAD(int, argc, char**, argv) { 
 #else
 int main(int argc, char **argv) {
 #endif
@@ -271,7 +272,7 @@ int main(int argc, char **argv) {
 	  load_display(i, false, show_info, show_help, nh, nw, mats);
 	} else if (key == Qt::Key_T) {
 	  // decrease number of images shown on height axis
-	  nh = std::max((uint) 1, nh - 1);
+	  nh = (std::max)((uint) 1, nh - 1);
 	  load_display(i, false, show_info, show_help, nh, nw, mats);
 	} else if (key == Qt::Key_X) {
 	  // increase number of images shown on width axis
@@ -280,7 +281,7 @@ int main(int argc, char **argv) {
 	  load_display(i, false, show_info, show_help, nh, nw, mats);
 	} else if (key == Qt::Key_Z) {
 	  // decrease number of images shown on width axis
-	  nw = std::max((uint) 1, nw - 1);
+	  nw = (std::max)((uint) 1, nw - 1);
 	  load_display(i, false, show_info, show_help, nh, nw, mats);
 	}
       }

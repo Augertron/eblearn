@@ -143,7 +143,12 @@ ENDIF (Boost_FOUND)
 
 # compile executable: matshow
 ################################################################################
-add_executable (matshow
+# tell compiler to build WinMain application, not a console app
+IF (WINDOWS)
+  SET(WINTYPE WIN32)
+ENDIF (WINDOWS)
+
+add_executable (matshow ${WINTYPE}
   src/matshow.cpp
   )
 
