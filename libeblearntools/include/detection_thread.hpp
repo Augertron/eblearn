@@ -173,7 +173,7 @@ namespace ebl {
      string        cam_type        = conf.get_string("camera");
      module_1_1<Tnet>* pp = NULL;
      if (!strcmp(cam_type.c_str(), "v4l2")) // Y -> Yp
-       pp = new weighted_std_module<Tnet>(norm_size, norm_size, 1, true,
+       pp = new weighted_std_module<Tnet>(norm_size, norm_size, 1, "norm", true,
 					  false, true);
      else if (color) // RGB -> YpUV
        pp = (module_1_1<Tnet>*) new rgb_to_ypuv_module<Tnet>(norm_size);
