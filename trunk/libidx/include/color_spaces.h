@@ -148,8 +148,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // HSV3
 
-  void PIX_HSV3_TO_RGB_COMMON(double H, double S, double V,
-			      double &R, double &G, double &B);
+  EXPORT void PIX_HSV3_TO_RGB_COMMON(double H, double S, double V,
+				     double &R, double &G, double &B);
   //! Convert all pixels of rgb idx to hsv3 pixels.
   //! If the input idx has order of 1, it converts only 1 pixel.
   //! If the order is 3, it converts all pixels.

@@ -47,7 +47,7 @@ using namespace std;
 
 namespace ebl {
 
-  class scroll_box : public scroll_box0 {
+  class EXPORT scroll_box : public scroll_box0 {
   protected:
     Window *win;
 

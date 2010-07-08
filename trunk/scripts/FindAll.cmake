@@ -34,6 +34,12 @@ ENDIF (64BIT)
 
 MESSAGE(STATUS "Target OS is ${OS_NAME} (${BITSIZE} bits)")
 
+MACRO(MAKE_WINDOWS_PATH pathname)
+  # Enclose with UNESCAPED quotes.  This means we need to escape our
+  # quotes once here, i.e. with \"
+  SET(pathname "\"${pathname}\"")
+ENDMACRO(MAKE_WINDOWS_PATH)
+
 ################################################################################
 # custom dependencies with override
 ################################################################################
@@ -103,12 +109,12 @@ IF ($ENV{NOQT})
 ELSE ($ENV{NOQT})
   SET(DESIRED_QT_VERSION 4.3)
   FIND_PACKAGE(Qt4)
-  IF (NOT QT4_INSTALLED)
+  IF (NOT QT_FOUND)
     FIND_PACKAGE(Qt)
-  ENDIF (NOT QT4_INSTALLED)
+  ENDIF (NOT QT_FOUND)
 
-  SET(DESIRED_QT_VERSION 4.3)
-  IF (QT4_INSTALLED)
+#  SET(DESIRED_QT_VERSION 4.3)
+  IF (NOT QT_FOUND)
     SET(QT_QMAKE_EXECUTABLE "/usr/local/pkg/qt/4.6.2/bin/qmake")
     IF (NOT EXISTS ${QT_QMAKE_EXECUTABLE})
       SET(QT_QMAKE_EXECUTABLE "/usr/lib64/qt4/bin/qmake")
@@ -133,39 +139,48 @@ ELSE ($ENV{NOQT})
       OUTPUT_VARIABLE QT_INCLUDE_DIR)
    SET(QT_QTGUI_INCLUDE_DIR ${QT_INCLUDE_DIR})
                                SET(QT_QTGUI_LIBRARY "${QT_LIBRARY_DIR}/libQtGui.so")
-  ENDIF (QT4_INSTALLED)
+  ENDIF (NOT QT_FOUND)
 
-  IF (QT_FOUND AND QT_MOC_EXECUTABLE 
-      AND QT_QMAKE_EXECUTABLE AND QT_LIBRARY_DIR AND QT_INCLUDE_DIR)
-    IF (EXISTS "${QT_INCLUDE_DIR}")
-      include_directories(${QT_INCLUDE_DIR})
-    ENDIF (EXISTS "${QT_INCLUDE_DIR}")
-    IF (EXISTS "${QT_INCLUDE_DIR}/Qt")
-      include_directories(${QT_INCLUDE_DIR}/Qt)
-    ENDIF (EXISTS "${QT_INCLUDE_DIR}/Qt")
-    IF (EXISTS "${QT_INCLUDE_DIR}/QtGui")
-      include_directories(${QT_INCLUDE_DIR}/QtGui)
-    ENDIF (EXISTS "${QT_INCLUDE_DIR}/QtGui")
-    IF (EXISTS "${QT_INCLUDE_DIR}/QtCore")
-      include_directories(${QT_INCLUDE_DIR}/QtCore)
-    ENDIF (EXISTS "${QT_INCLUDE_DIR}/QtCore")
-    IF (EXISTS "${QT_INCLUDE_DIR}/Headers")
-      include_directories(${QT_INCLUDE_DIR}/Headers/)
-    ENDIF (EXISTS "${QT_INCLUDE_DIR}/Headers")
-    include_directories(${QT_QTGUI_INCLUDE_DIR})
-    include_directories(${QT_QTCORE_INCLUDE_DIR})
-    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GUI__")
+  IF (QT_FOUND)
     MESSAGE(STATUS "Qt qmake: ${QT_QMAKE_EXECUTABLE}") 
     MESSAGE(STATUS "Qt moc: ${QT_MOC_EXECUTABLE}") 
     MESSAGE(STATUS "Qt lib dir: ${QT_LIBRARY_DIR}")  
     MESSAGE(STATUS "Qt include dir: ${QT_INCLUDE_DIR}")  
-  ELSEIF (QT_FOUND AND QT_MOC_EXECUTABLE 
-      AND QT_QMAKE_EXECUTABLE AND QT_LIBRARY_DIR AND QT_INCLUDE_DIR)
+    IF (WINDOWS)
+      # to use DLL instead of static libraries, tell code we are using DLLs
+      #SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DQT_DLL")
+      # add dll paths
+      
+    ENDIF (WINDOWS)    
+    IF (QT_MOC_EXECUTABLE 
+        AND QT_QMAKE_EXECUTABLE AND QT_LIBRARY_DIR AND QT_INCLUDE_DIR)
+      IF (EXISTS "${QT_INCLUDE_DIR}")
+        include_directories(${QT_INCLUDE_DIR})
+      ENDIF (EXISTS "${QT_INCLUDE_DIR}")
+      IF (EXISTS "${QT_INCLUDE_DIR}/Qt")
+        include_directories(${QT_INCLUDE_DIR}/Qt)
+      ENDIF (EXISTS "${QT_INCLUDE_DIR}/Qt")
+      IF (EXISTS "${QT_INCLUDE_DIR}/QtGui")
+        include_directories(${QT_INCLUDE_DIR}/QtGui)
+      ENDIF (EXISTS "${QT_INCLUDE_DIR}/QtGui")
+      IF (EXISTS "${QT_INCLUDE_DIR}/QtCore")
+        include_directories(${QT_INCLUDE_DIR}/QtCore)
+      ENDIF (EXISTS "${QT_INCLUDE_DIR}/QtCore")
+      IF (EXISTS "${QT_INCLUDE_DIR}/Headers")
+        include_directories(${QT_INCLUDE_DIR}/Headers/)
+      ENDIF (EXISTS "${QT_INCLUDE_DIR}/Headers")
+      include_directories(${QT_QTGUI_INCLUDE_DIR})
+      include_directories(${QT_QTCORE_INCLUDE_DIR})
+      SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__GUI__")
+      MESSAGE(STATUS "Found Qt")
+    ELSEIF (QT_MOC_EXECUTABLE 
+            AND QT_QMAKE_EXECUTABLE AND QT_LIBRARY_DIR AND QT_INCLUDE_DIR)
+      MESSAGE("__ WARNING: Some Qt components are missing.") 
+    ENDIF (QT_MOC_EXECUTABLE 
+           AND QT_QMAKE_EXECUTABLE AND QT_LIBRARY_DIR AND QT_INCLUDE_DIR)
   ELSE (QT_FOUND)
     MESSAGE("__ WARNING: QT not found.")
-    SET(QT_FOUND false)
-  ENDIF (QT_FOUND AND QT_MOC_EXECUTABLE 
-      AND QT_QMAKE_EXECUTABLE AND QT_LIBRARY_DIR AND QT_INCLUDE_DIR)
+  ENDIF (QT_FOUND)
 ENDIF ($ENV{NOQT})
 
 # find CBLAS
@@ -215,16 +230,15 @@ ENDIF ($ENV{NOIPP})
 # find ImageMagick
 ################################################################################
 # we can't use convert under Windows, so don't try
-IF (NOT WINDOWS)
-  FIND_PACKAGE(ImageMagick)
-  IF (ImageMagick_FOUND)
-    MESSAGE(STATUS "ImageMagick convert: ${IMAGEMAGICK_CONVERT_EXECUTABLE}")
-    MESSAGE(STATUS "ImageMagick Found.")
-    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IMAGEMAGICK__")  
-  ELSE (ImageMagick_FOUND)
-    MESSAGE("__ WARNING: ImageMagick not found.")
-  ENDIF (ImageMagick_FOUND)
-ENDIF (NOT WINDOWS)
+FIND_PACKAGE(ImageMagick)
+IF (ImageMagick_FOUND)
+#  SET(IMAGEMAGICK_CONVERT_EXECUTABLE "\"${IMAGEMAGICK_CONVERT_EXECUTABLE}\"")
+  MESSAGE(STATUS "ImageMagick convert: ${IMAGEMAGICK_CONVERT_EXECUTABLE}")
+  MESSAGE(STATUS "ImageMagick Found.")
+  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IMAGEMAGICK__")  
+ELSE (ImageMagick_FOUND)
+  MESSAGE("__ WARNING: ImageMagick not found.")
+ENDIF (ImageMagick_FOUND)
 
 # find Magick++
 ################################################################################
@@ -240,5 +254,5 @@ ELSE (Magick++_FOUND)
   # we don't care about this message under linux/mac if convert is found
   IF(WINDOWS OR NOT ImageMagick_FOUND) 
     MESSAGE("__ WARNING: Magick++ not found.")
-  ENDIF(WINDOWS)
+  ENDIF(WINDOWS OR NOT ImageMagick_FOUND) 
 ENDIF (Magick++_FOUND)

@@ -285,9 +285,9 @@ namespace ebl {
     v = hsv.get(2);
     static double r, g, b;
     PIX_HSV_TO_RGB_COMMON(h, s, v, r, g, b);
-    rgb.set(r, 0);
-    rgb.set(g, 1);
-    rgb.set(b, 2);
+    rgb.set((T)r, 0);
+    rgb.set((T)g, 1);
+    rgb.set((T)b, 2);
   }
 
   template<class T> void hsv_to_rgb(idx<T> &hsv, idx<T> &rgb) {
@@ -382,9 +382,9 @@ namespace ebl {
     v = hsv3.get(2);
     static double r, g, b;
     PIX_HSV3_TO_RGB_COMMON(h, s, v, r, g, b);
-    rgb.set(r, 0);
-    rgb.set(g, 1);
-    rgb.set(b, 2);
+    rgb.set((T)r, 0);
+    rgb.set((T)g, 1);
+    rgb.set((T)b, 2);
   }
 
   template<class T> void hsv3_to_rgb(idx<T> &hsv3, idx<T> &rgb) {
@@ -468,9 +468,9 @@ namespace ebl {
     }
     static double r, g, b;
     PIX_HSV3_TO_RGB_COMMON(h3.get(), .5, .5, r, g, b);
-    rgb.set(r, 0);
-    rgb.set(g, 1);
-    rgb.set(b, 2);
+    rgb.set((T)r, 0);
+    rgb.set((T)g, 1);
+    rgb.set((T)b, 2);
   }
 
   template<class T> void h3_to_rgb(idx<T> &h3, idx<T> &rgb) {
@@ -517,10 +517,10 @@ namespace ebl {
     static double h, s, v, h1, h2;
     PIX_RGB_TO_HSV_COMMON(r, g, b, h, s, v, false);
     PIX_HSV_TO_H2SV1_COMMON(h, h1, h2);
-    h2sv.set(h1, 0);
-    h2sv.set(h2, 1);
-    h2sv.set(s, 2);
-    h2sv.set(v, 3);
+    h2sv.set((T)h1, 0);
+    h2sv.set((T)h2, 1);
+    h2sv.set((T)s, 2);
+    h2sv.set((T)v, 3);
   }
 
   template<class T> void rgb_to_h2sv(idx<T> &rgb, idx<T> &h2sv) {

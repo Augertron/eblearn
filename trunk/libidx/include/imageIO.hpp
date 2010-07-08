@@ -63,24 +63,25 @@ namespace ebl {
   template<class T>
   idx<T> image_read(const char *fname, idx<T> *out_) {
     ostringstream err;
-
+    idx<ubyte> tmp;
 #ifdef __IMAGEMAGICK__
-#ifndef __WINDOWS__
     // we are under linux or mac and convert is available
     ostringstream cmd;
     cmd << IMAGEMAGICK_CONVERT << " -compress lossless -depth 8 \"" 
 	<< fname << "\" PPM:-";
-
-    FILE* fp = popen(cmd.str().c_str(), "r");
+    //    cout << "cmd: " << cmd.str() << endl;
+    FILE* fp = POPEN(cmd.str().c_str(), "r");
     if (!fp) {
       err << "conversion of image " << fname << " failed";
       throw err.str();
     }
-#endif /* __WINDOWS__ */
+    // read pnm image
+    tmp = pnm_read(fp);
+    PCLOSE(fp);
 #else
 #ifdef __MAGICKPP__
     // we are under any platform, convert is not available but Magick++ is
-    eblerror("magick++ not implemented");
+    eblerror("magick++ not implemented (TODO)");
 #else
     // nor Magick++ nor convert are available, error
     eblerror("Nor ImageMagick's convert nor Magick++ are available, \
@@ -88,9 +89,6 @@ please install");
 #endif /* __MAGICK++__ */
 #endif /* __IMAGEMAGICK__ */
     
-    // read pnm image
-    idx<ubyte> tmp = pnm_read(fp);
-    pclose(fp);
     idxdim dims(tmp);
     idx<T> out;
     idx<T> *pout = &out;

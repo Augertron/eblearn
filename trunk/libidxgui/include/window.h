@@ -39,8 +39,10 @@
 #include <math.h>
 #include <iostream>
 
+#include "defines_idxgui.h"
 #include "libidx.h"
 #include "scroll_box0.h"
+#include "defines.h"
 
 using namespace std;
 
@@ -115,8 +117,8 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // window
-  
-  class Window : public QWidget { 
+
+  class IDXGUIEXPORT Window : public QWidget { 
     Q_OBJECT
       
   public:

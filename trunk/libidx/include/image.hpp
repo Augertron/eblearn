@@ -898,7 +898,7 @@ namespace ebl {
   template<class T>
   idx<T> create_mexican_hat(double s, int n) {
     idx<T> m(n, n);
-    T vinv = 1/(s*s);
+    T vinv = (T) (1/(s*s));
     T total = 0;
     int cx = n/2;
     int cy = n/2;
@@ -923,7 +923,7 @@ namespace ebl {
   idx<T> create_gaussian_kernel(int n) {
     idx<T> m(n, n);
     double s = ((double)n)/4;
-    T vinv = 1/(s*s);
+    T vinv = (T) (1/(s*s));
     T total = 0;
     int cx = n/2;
     int cy = n/2;
@@ -1007,8 +1007,8 @@ namespace ebl {
     // 1. create normalized gaussian kernel (kernel / sum(kernel))
     idx<T> kernel = create_gaussian_kernel<T>(n);
     idx<T> tmp(in.dim(0) + n - 1, in.dim(1) + n - 1);
-    idx<T> tmp2 = tmp.narrow(0, in.dim(0), (intg) floor(n / 2));
-    tmp2 = tmp2.narrow(1, in.dim(1), (intg) floor(n / 2));
+    idx<T> tmp2 = tmp.narrow(0, in.dim(0), (intg) floor((float) n / 2));
+    tmp2 = tmp2.narrow(1, in.dim(1), (intg) floor((float) n / 2));
     idx<T> tmp3(n, n);
     idxdim d(in);
     idx<T> tmp4(d);
@@ -1016,8 +1016,8 @@ namespace ebl {
 
     // sum_j (w_j * in_j)
     idx<T> out1 = image_filter(in, kernel);
-    idx<T> in2 = in.narrow(0, out1.dim(0), (intg) floor(kernel.dim(0)/2));
-    in2 = in2.narrow(1, out1.dim(1), (intg) floor(kernel.dim(1)/2));
+    idx<T> in2 = in.narrow(0, out1.dim(0), (intg)floor((float)kernel.dim(0)/2));
+    in2 = in2.narrow(1, out1.dim(1), (intg) floor((float)kernel.dim(1)/2));
     idxdim outd(out1);
     idx<T> out2(outd);
     // in - mean
@@ -1033,8 +1033,9 @@ namespace ebl {
     // 1/std
     idx_inv(out3, out3);
     // out = (in - mean) / std
-    idx<T> out4 = out1.narrow(0, out3.dim(0), (intg) floor(kernel.dim(0)/2));
-    out4 = out4.narrow(1, out3.dim(1), (intg) floor(kernel.dim(1)/2));
+    idx<T> out4 = out1.narrow(0, out3.dim(0), 
+			      (intg) floor((float)kernel.dim(0)/2));
+    out4 = out4.narrow(1, out3.dim(1), (intg) floor((float)kernel.dim(1)/2));
     idx_mul(out4, out3, out3);
     // finally copy result centered on an image the same size as in
     idx<T> out5 = out.narrow(0, out3.dim(0), (out.dim(0) - out3.dim(0)) / 2);
@@ -1067,8 +1068,9 @@ namespace ebl {
       out.resize(d);
     idx_clear(out);
     idx<T> tmp = out.narrow(0, in.dim(0) - filter.dim(0) + 1,
-			    (intg) floor(filter.dim(0)/2));
-    tmp = tmp.narrow(1, in.dim(1) - filter.dim(1) + 1, (intg) floor(filter.dim(1)/2));
+			    (intg) floor((float)filter.dim(0)/2));
+    tmp = tmp.narrow(1, in.dim(1) - filter.dim(1) + 1, 
+		     (intg) floor((float)filter.dim(1)/2));
     idx_2dconvol(in, filter, tmp);   
     
 //     // compute sizes of the temporary buffer

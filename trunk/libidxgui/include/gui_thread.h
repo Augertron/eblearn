@@ -43,18 +43,20 @@
 #include "window.h"
 #include "idxgui.h"
 #include "scroll_box0.h"
+#include "defines.h"
 
 namespace ebl {
 
   class idxgui;
   //! Global pointer to gui, allows to call for example 
   //! gui.draw_matrix() from anywhere in the code.
-  extern ebl::idxgui gui;
+  extern IDXGUIEXPORT ebl::idxgui gui;
 
   //! Window is a simple "whiteboard" on which you can display
   //! idxs with for example draw_matrix.
   //! Warning: do not use electric fence with QT as it is unstable.
-  class gui_thread : public QWidget { 
+
+  class IDXGUIEXPORT gui_thread : public QWidget { 
     Q_OBJECT
   public:
     gui_thread(int argc, char **argv);
@@ -113,7 +115,7 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     // class members
   public:
-    idxgui		        &thread;
+    idxgui	                &thread;
   private:
     int				 wcur;
     unsigned int		 nwindows;

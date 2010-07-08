@@ -30,6 +30,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+// tell header that we are in the libidx scope
+#define LIBIDX
+
 #include "utils.h"
 #include <stdlib.h>
 #include <iostream>

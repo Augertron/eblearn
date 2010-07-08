@@ -198,7 +198,7 @@ namespace ebl {
 					  bool btanh_, const char *name_) 
     : btanh(btanh_),
       lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_, name_),
-      abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
+      abs(), norm(kerneli, kernelj, lconv.convol.thickness, name_, mirror),
       tmp(NULL), tmp2(NULL) {
     this->name = name_;
   }
