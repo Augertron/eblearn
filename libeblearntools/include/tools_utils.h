@@ -61,10 +61,10 @@ namespace ebl {
   //!           If null, a new list is allocated. This is used by the recursion.
   //! \param pattern The regular expression describing the file name pattern.
   //!           The default pattern matches images extensions.
-  files_list *find_files(const string &dir,
-			 const char *pattern = IMAGE_PATTERN,
-			 files_list *fl = NULL, bool sorted = true,
-			 bool recursive = true);
+  EXPORT files_list *find_files(const string &dir,
+				const char *pattern = IMAGE_PATTERN,
+				files_list *fl = NULL, bool sorted = true,
+				bool recursive = true);
   
   //! Returns a list of string of full paths to files recursively found in
   //! direcotry dir and matching the pattern. The files are found using
@@ -76,44 +76,46 @@ namespace ebl {
   //! \param pattern The regular expression describing the file name pattern,
   //!           e.g. ".*[.](mat|MAT)".
   //!           The default pattern matches images extensions.
-  list<string> *find_fullfiles(const string &dir,
-			       const char *pattern = IMAGE_PATTERN,
-			       list<string> *fl = NULL, bool sorted = true,
-			       bool recursive = true);
+  EXPORT list<string> *find_fullfiles(const string &dir,
+				      const char *pattern = IMAGE_PATTERN,
+				      list<string> *fl = NULL, 
+				      bool sorted = true,
+				      bool recursive = true);
   
   //! Counts recursively the number of files matching the pattern (default is
   //! an image extension pattern) in directory 'dir'.
   //! \param pattern The regular expression describing the file name pattern.
   //!           The default pattern matches images extensions.
-  uint count_files(const string &dir, const char *pattern = IMAGE_PATTERN);
+  EXPORT uint count_files(const string &dir, 
+			  const char *pattern = IMAGE_PATTERN);
 
   //! Convert a string to an int. Throws a const char * exception
   //! upon failure.
-  int string_to_int(const string &s);
+  EXPORT int string_to_int(const string &s);
 
   //! Convert a string to an unsigned int. Throws a const char * exception
   //! upon failure.
-  uint string_to_uint(const string &s);
+  EXPORT uint string_to_uint(const string &s);
 
   //! Convert a string to an float. Throws a const char * exception
   //! upon failure.
-  float string_to_float(const string &s);
+  EXPORT float string_to_float(const string &s);
 
   //! Convert a string to an double. Throws a const char * exception
   //! upon failure.
-  double string_to_double(const string &s);
+  EXPORT double string_to_double(const string &s);
 
   //! Convert a string containing a list of uint separated by commas, e.g.
   //! "1,2,3,4" into a list of uints.
-  list<uint> string_to_uintlist(const string &s);
+  EXPORT list<uint> string_to_uintlist(const string &s);
 
   //! Convert a string containing a list of strings separated by commas, e.g.
   //! "errors,2,toto,4" into a list of strings.
-  list<string> string_to_stringlist(const string &s);
+  EXPORT list<string> string_to_stringlist(const string &s);
 
   //! Convert a string containing a list of double separated by commas, e.g.
   //! "1,2,3.0,4.0" into a vector of doubles.
-  vector<double> string_to_doublevector(const string &s);
+  EXPORT vector<double> string_to_doublevector(const string &s);
 
   //! Convert a map to a string representation.
   template <typename T1, typename T2> string map_to_string(map<T1,T2> &m);
@@ -123,18 +125,18 @@ namespace ebl {
   template <typename T1, typename T2> string map_to_string2(map<T1,T2> &m);
   
   //! Convert a string list to a string representation.
-  string stringlist_to_string(list<string> &l);
+  EXPORT string stringlist_to_string(list<string> &l);
   
   //! Tar directory dir into a .tgz archive, using directory's rightmost name,
   //! into target directory tgtdir.
   //! Return false upon failure, true otherwise.
-  bool tar(const string &dir, const string &tgtdir);
+  EXPORT bool tar(const string &dir, const string &tgtdir);
 
   //! Tar all files found recursively in directory dir into a compressed tar 
   //! archive "tgtdir/tgtfilename", using matching pattern 'pattern'.
   //! Return false upon failure, true otherwise.
-  bool tar_pattern(const string &dir, const string &tgtdir,
-		   const string &tgtfilename, const char *pattern);
+  EXPORT bool tar_pattern(const string &dir, const string &tgtdir,
+			  const string &tgtfilename, const char *pattern);
 
   //! Resize and fill vector v with values in l.
   template <typename T>

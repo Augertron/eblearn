@@ -109,7 +109,7 @@ namespace ebl {
   //   return natural_compare(a, b) < 0;
   // }
 
-  bool natural_less::operator()(const string& a, const string& b) {
+  bool natural_less::operator()(const string& a, const string& b) const {
     istringstream ia(a), ib(b);
     double da = 0, db = 0;
 
@@ -134,10 +134,10 @@ namespace ebl {
   }
   
   bool map_natural_less::operator()(const map<string,string>& m1,
-				    const map<string,string>& m2) {
+				    const map<string,string>& m2) const {
     natural_less nl;
     // loop over comparison keys
-    for (list<string>::iterator i = keys.begin(); i != keys.end(); ++i) {
+    for (list<string>::const_iterator i = keys.begin(); i != keys.end(); ++i) {
       // check that key exists in both maps
       map<string,string>::const_iterator k1 = m1.find(*i);
       map<string,string>::const_iterator k2 = m2.find(*i);

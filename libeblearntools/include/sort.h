@@ -87,7 +87,7 @@ namespace ebl {
   //! Compare two strings using the natural comparison of numbers
   //! ("2" is less than "10").
   struct EXPORT natural_less: binary_function<string, string, bool> {
-    bool operator()(const string& a, const string& b);
+    bool operator()(const string& a, const string& b) const;
   };
 
   //! Compare two maps of var/val strings using the comparison keys list
@@ -95,7 +95,8 @@ namespace ebl {
   struct EXPORT map_natural_less
     : binary_function<map<string,string>, map<string,string>, bool> {
     map_natural_less(list<string> &keys);
-    bool operator()(const map<string,string>& m1, const map<string,string>& m2);
+    bool operator()(const map<string,string>& m1, 
+		    const map<string,string>& m2) const;
     // members
     list<string> keys;
   };

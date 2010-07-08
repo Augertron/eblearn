@@ -201,6 +201,7 @@ int main(int argc, char **argv) {
       eblerror("failed to load image(s)");
       return -1;
     }
+#ifdef __BOOST__
     // list all other mat files in image directory
     string dir = argv[1];
     string imgname, tmpname;
@@ -287,6 +288,7 @@ int main(int argc, char **argv) {
     // free objects
     if (mats)
       delete mats;
+#endif /* __BOOST__ */
     if (argmats)
       delete argmats;
   } catch(string &err) {
