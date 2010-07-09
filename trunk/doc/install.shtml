@@ -208,6 +208,8 @@
        <li>Install CMake (details below). Run it and
 	 enter your source code path (e.g.: C:/Users/pierre/eblearn)
 	 and the output path (e.g.: C:/Users/pierre/eblearn/bin).</li>
+       <li>Install ImageMagick to be able to read images 
+	 (see procedure below).</li>
        <li>(optional) Download and extract MNIST
 	 (http://yann.lecun.com/exdb/mnist/) and set variable 
 	 MNIST_PATH in CMake with 'Add Entry' to your MNIST path.</li>
@@ -298,8 +300,8 @@
        to download the eblearn repository.<br>
        <li><strong>CMake</strong><br>
 	 Download from http://www.cmake.org/cmake/resources/software.html</li>
-       <li><strong>Magick++</strong><br>
-	 Download the 8-bit version of the ImageMagick dlls for Windows:
+       <li><strong>ImageMagick</strong><br>
+	 Download the 8-bit version of ImageMagick for Windows:
 	 http://www.imagemagick.org/www/binary-releases.html#windows<br>
 	 During installation, check both "Add application directory to your
 	 system path" and "Install development headers and libraries for
