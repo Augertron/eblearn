@@ -140,8 +140,9 @@ namespace ebl {
 	  idx<short> out2(dims);
 	  read_size = fread((char *) out2.idx_ptr(), 1, sz * expected_size, fp);
 	  idx_copy(out2, *pout);
-	} else // 8 bits per pixel
+	} else { // 8 bits per pixel
 	  read_size = fread((char *) pout->idx_ptr(), 1, sz * expected_size,fp);
+	}
 	read_size /= sz;
 	if (expected_size != read_size) {
 	    ostringstream err;

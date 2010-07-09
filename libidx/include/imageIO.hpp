@@ -42,7 +42,6 @@
 #include <iostream>
 
 #ifndef __WINDOWS__
-#include <ext/stdio_filebuf.h>
 #include <unistd.h>
 #endif
 
@@ -69,8 +68,7 @@ namespace ebl {
     ostringstream cmd;
     cmd << IMAGEMAGICK_CONVERT << " -compress lossless -depth 8 \"" 
 	<< fname << "\" PPM:-";
-    //    cout << "cmd: " << cmd.str() << endl;
-    FILE* fp = POPEN(cmd.str().c_str(), "r");
+    FILE* fp = POPEN(cmd.str().c_str(), "rb");
     if (!fp) {
       err << "conversion of image " << fname << " failed";
       throw err.str();
@@ -82,30 +80,31 @@ namespace ebl {
 #ifdef __MAGICKPP__
     // we are under any platform, convert is not available but Magick++ is
     try {
-    Magick::Image im(fname);
-    tmp = idx<ubyte>(im.rows(), im.columns(), im.depth() / 8);
-    im.write(0, 0, im.depth() / 8, im.rows(), "RGB", (Magick::StorageType)0, 
-	     tmp.idx_ptr());
+      eblerror("not implemented");
+      Magick::Image im(fname);
+      tmp = idx<ubyte>(im.rows(), im.columns(), im.depth() / 8);
+      im.write(0, 0, im.depth() / 8, im.rows(), "RGB", (Magick::StorageType)0, 
+	       tmp.idx_ptr());
     }
     catch( Magick::WarningCoder &warning )
-    {
-      // Process coder warning while loading file (e.g. TIFF warning)
-      // Maybe the user will be interested in these warnings (or not).
-      // If a warning is produced while loading an image, the image
-      // can normally still be used (but not if the warning was about
-      // something important!)
-      cerr << "Coder Warning: " << warning.what() << endl;
-    }
+      {
+	// Process coder warning while loading file (e.g. TIFF warning)
+	// Maybe the user will be interested in these warnings (or not).
+	// If a warning is produced while loading an image, the image
+	// can normally still be used (but not if the warning was about
+	// something important!)
+	cerr << "Coder Warning: " << warning.what() << endl;
+      }
     catch( Magick::Warning &warning )
-    {
-      // Handle any other Magick++ warning.
-      cerr << "Warning: " << warning.what() << endl;
-    }
+      {
+	// Handle any other Magick++ warning.
+	cerr << "Warning: " << warning.what() << endl;
+      }
     catch( Magick::ErrorBlob &error ) 
-    { 
-      // Process Magick++ file open error
-      cerr << "Error: " << error.what() << endl;
-    }
+      { 
+	// Process Magick++ file open error
+	cerr << "Error: " << error.what() << endl;
+      }
 #else
     // nor Magick++ nor convert are available, error
     eblerror("Nor ImageMagick's convert nor Magick++ are available, \
