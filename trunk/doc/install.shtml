@@ -329,6 +329,10 @@
 	 http://qt.nokia.com/downloads/windows-cpp-vs2008<br>
 	 If necessary, rerun 'configure' and 'generate' in CMake and make
 	 sure the output of CMake mentions "Qt Found".</li>
+       <li><strong>Boost</strong></br>
+	 Download the boost installer: http://www.boostpro.com/download<br>
+	 During installation, select at least "regex" and "filesystem".
+       </li>
      </ul>
 
      <a name="mac"><h1>MAC OS</h1></a>
