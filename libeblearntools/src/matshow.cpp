@@ -33,6 +33,19 @@
 #include "libidx.h"
 #include "tools_utils.h"
 
+#define NOCONSOLE
+
+#define MBOX_ERROR_TITLE "MatShow error"
+#ifdef __WINDOWS__
+#ifdef   NOCONSOLE_	
+#define  ERROR_MSG(err) MessageBox(NULL, err, MBOX_ERROR_TITLE, MB_OK)
+#else
+#define  ERROR_MSG(err) cerr << err << endl
+#endif /* NOCONSOLE */
+#else
+#define ERROR_MSG(err) cerr << err << endl
+#endif
+
 #ifdef __GUI__
 #include "libidxgui.h"
 #include "defines_windows.h"
@@ -53,7 +66,7 @@ void print_usage() {
 bool parse_args(int argc, char **argv) {
   // Read arguments from shell input
   if (argc < 2) {
-    cerr << "input error: expecting arguments." << endl;
+    ERROR_MSG("input error: expecting arguments.");
     return false;
   }
   // if requesting help, print usage
@@ -98,7 +111,9 @@ int display(list<string>::iterator &ifname,
 	} else
 	  draw_matrix(mat, rowh, w);
 	w += mat.dim(1) + 1;
-      } catch(string &err) { cerr << err << endl; }
+      } catch(string &err) { 
+	ERROR_MSG(err.c_str());
+      }
       fname++;
       if (fname == ifname)
 	break ;
@@ -167,7 +182,7 @@ int load_display(list<string>::iterator &ifname,
       return display<float>(ifname, true, load, show_info, show_help, nh, nw, mats);
     }
   } catch(string &err) {
-    cerr << err << endl;
+    ERROR_MSG(err.c_str());
   }
   return 0;
 }
@@ -176,16 +191,21 @@ int load_display(list<string>::iterator &ifname,
 // main
 
 #ifdef __GUI__
+#ifdef NOCONSOLE
 NOCONSOLE_MAIN_QTHREAD(int, argc, char**, argv) { 
+#else
+MAIN_QTHREAD(int, argc, char**, argv) { 
+#endif
 #else
 int main(int argc, char **argv) {
 #endif
 #ifndef __GUI__
-  eblerror("QT not found, install and recompile.");
+  ERROR_MSG("QT not found, install and recompile.");
 #else
   try {
     if (!parse_args(argc, argv))
       return -1;
+    Magick::InitializeMagick("C:\\Users\\pierre\\eblearn\\bin\\Debug");
     new_window("matshow");
     // variables
     bool show_info = false;
@@ -195,13 +215,15 @@ int main(int argc, char **argv) {
     list<string> *argmats = new list<string>();
     list<string>::iterator i;
     for (int i = 1; i < argc; ++i) {
+      cout << argv[i] << endl;
       argmats->push_front(argv[i]);
     }
     i = argmats->begin();
     if (!load_display(i, true, show_info, show_help, nh, nw, argmats)) {
-      eblerror("failed to load image(s)");
+      ERROR_MSG("failed to load image(s)");
       return -1;
     }
+
 #ifdef __BOOST__
     // list all other mat files in image directory
     string dir = argv[1];
@@ -293,7 +315,7 @@ int main(int argc, char **argv) {
     if (argmats)
       delete argmats;
   } catch(string &err) {
-    cerr << err << endl;
+    ERROR_MSG(err.c_str());
   }
   millisleep(500); // TODO: this lets time for window to open, fix this issue
 #endif

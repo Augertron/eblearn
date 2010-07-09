@@ -230,15 +230,19 @@ ENDIF ($ENV{NOIPP})
 # find ImageMagick
 ################################################################################
 # we can't use convert under Windows, so don't try
-FIND_PACKAGE(ImageMagick)
-IF (ImageMagick_FOUND)
-#  SET(IMAGEMAGICK_CONVERT_EXECUTABLE "\"${IMAGEMAGICK_CONVERT_EXECUTABLE}\"")
-  MESSAGE(STATUS "ImageMagick convert: ${IMAGEMAGICK_CONVERT_EXECUTABLE}")
-  MESSAGE(STATUS "ImageMagick Found.")
-  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IMAGEMAGICK__")  
-ELSE (ImageMagick_FOUND)
-  MESSAGE("__ WARNING: ImageMagick not found.")
-ENDIF (ImageMagick_FOUND)
+IF ($ENV{NOIMAGEIMAGICK})
+  MESSAGE(STATUS "ImageMagick DISABLED by env variable $NOIMAGEMAGICK=1.")
+ELSE ($ENV{NOIMAGEIMAGICK})
+  FIND_PACKAGE(ImageMagick)
+  IF (ImageMagick_FOUND)
+  #  SET(IMAGEMAGICK_CONVERT_EXECUTABLE "\"${IMAGEMAGICK_CONVERT_EXECUTABLE}\"")
+    MESSAGE(STATUS "ImageMagick convert: ${IMAGEMAGICK_CONVERT_EXECUTABLE}")
+    MESSAGE(STATUS "ImageMagick Found.")
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__IMAGEMAGICK__")  
+  ELSE (ImageMagick_FOUND)
+    MESSAGE("__ WARNING: ImageMagick not found.")
+  ENDIF (ImageMagick_FOUND)
+ENDIF ($ENV{NOIMAGEIMAGICK})
 
 # find Magick++
 ################################################################################
@@ -249,6 +253,7 @@ IF (Magick++_FOUND)
   MESSAGE(STATUS "Magick++ includes: ${Magick++_INCLUDE_DIR}")
   MESSAGE(STATUS "Magick++ library: ${Magick++_LIBRARY}")
   MESSAGE(STATUS "Magick++ Found.")
+  INCLUDE_DIRECTORIES(${Magick++_INCLUDE_DIR})
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__MAGICKPP__")  
 ELSE (Magick++_FOUND)
   # we don't care about this message under linux/mac if convert is found
