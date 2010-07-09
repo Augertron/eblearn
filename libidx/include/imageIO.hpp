@@ -68,7 +68,11 @@ namespace ebl {
     ostringstream cmd;
     cmd << IMAGEMAGICK_CONVERT << " -compress lossless -depth 8 \"" 
 	<< fname << "\" PPM:-";
+#ifdef __WINDOWS__
     FILE* fp = POPEN(cmd.str().c_str(), "rb");
+#else
+    FILE* fp = POPEN(cmd.str().c_str(), "r");
+#endif
     if (!fp) {
       err << "conversion of image " << fname << " failed";
       throw err.str();
