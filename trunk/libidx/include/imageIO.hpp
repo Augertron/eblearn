@@ -64,7 +64,7 @@ namespace ebl {
   idx<T> image_read(const char *fname, idx<T> *out_) {
     ostringstream err;
     idx<ubyte> tmp;
-#ifdef __IMAGEMAGICK__
+#if (defined(__IMAGEMAGICK__) && !defined(__NOIMAGEMAGICK__))
     // we are under linux or mac and convert is available
     ostringstream cmd;
     cmd << IMAGEMAGICK_CONVERT << " -compress lossless -depth 8 \"" 
@@ -81,7 +81,31 @@ namespace ebl {
 #else
 #ifdef __MAGICKPP__
     // we are under any platform, convert is not available but Magick++ is
-    eblerror("magick++ not implemented (TODO)");
+    try {
+    Magick::Image im(fname);
+    tmp = idx<ubyte>(im.rows(), im.columns(), im.depth() / 8);
+    im.write(0, 0, im.depth() / 8, im.rows(), "RGB", (Magick::StorageType)0, 
+	     tmp.idx_ptr());
+    }
+    catch( Magick::WarningCoder &warning )
+    {
+      // Process coder warning while loading file (e.g. TIFF warning)
+      // Maybe the user will be interested in these warnings (or not).
+      // If a warning is produced while loading an image, the image
+      // can normally still be used (but not if the warning was about
+      // something important!)
+      cerr << "Coder Warning: " << warning.what() << endl;
+    }
+    catch( Magick::Warning &warning )
+    {
+      // Handle any other Magick++ warning.
+      cerr << "Warning: " << warning.what() << endl;
+    }
+    catch( Magick::ErrorBlob &error ) 
+    { 
+      // Process Magick++ file open error
+      cerr << "Error: " << error.what() << endl;
+    }
 #else
     // nor Magick++ nor convert are available, error
     eblerror("Nor ImageMagick's convert nor Magick++ are available, \

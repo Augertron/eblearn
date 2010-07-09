@@ -37,6 +37,10 @@ IF(IPP_FOUND)
   TARGET_LINK_LIBRARIES(idx ${IPP_LIBRARIES})
 ENDIF(IPP_FOUND)
 
+IF (Magick++_FOUND)
+  TARGET_LINK_LIBRARIES(idx ${Magick++_LIBRARY})
+ENDIF (Magick++_FOUND)
+
 # configuration
 ################################################################################
 CONFIGURE_FILE("include/config.h.in" 

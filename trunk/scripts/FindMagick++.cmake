@@ -13,16 +13,20 @@ libfind_package(Magick++ ImageMagick)
 # Use pkg-config to get hints about paths
 libfind_pkg_check_modules(Magick++_PKGCONF ImageMagick++)
 
+set(SEARCH_PATHS 
+  "C:\\Program Files\\ImageMagick-6.6.3-Q8\\include"
+  "C:\\Program Files\\ImageMagick-6.6.3-Q8\\lib")
+
 # Include dir
 find_path(Magick++_INCLUDE_DIR
   NAMES Magick++.h
-  PATHS ${Magick++_PKGCONF_INCLUDE_DIRS}
+  PATHS ${Magick++_PKGCONF_INCLUDE_DIRS} ${SEARCH_PATHS}
 )
 
 # Finally the library itself
 find_library(Magick++_LIBRARY
-  NAMES Magick++
-  PATHS ${Magick++_PKGCONF_LIBRARY_DIRS}
+  NAMES Magick++ CORE_RL_Magick++_ 
+  PATHS ${Magick++_PKGCONF_LIBRARY_DIRS} ${SEARCH_PATHS}
 )
 
 # Set the include dir variables and the libraries and let libfind_process do
