@@ -738,7 +738,7 @@ namespace ebl {
   }
 
   template<class T> T idx_l2norm(idx<T> &in) {
-    return sqrt(idx_sumsqr(in));
+    return sqrt((T) idx_sumsqr(in));
   }
   
   template<class T> T idx_mean(idx<T> &in, T *out) {
@@ -753,7 +753,11 @@ namespace ebl {
     idx_checknelems2_all(in, out);
     T mean = mean_ ? *mean_ : idx_mean(in);
     idx_addc(in, (T)-mean, out); // remove mean
-    T coeff = (T) sqrt(idx_sumsqr(out) / out.nelements()); // std deviation
+#ifdef __WINDOWS__
+    T coeff = (T) sqrt((double) (idx_sumsqr(out) / out.nelements())); // std deviation
+#else
+    T coeff = (T) sqrt((T) (idx_sumsqr(out) / out.nelements())); // std deviation
+#endif
     if (coeff != 0)
       idx_dotc(out, 1 / coeff, out);
   }

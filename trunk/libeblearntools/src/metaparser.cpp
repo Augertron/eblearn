@@ -383,7 +383,7 @@ namespace ebl {
   int metaparser::get_max_common_iter() {
     if (!tree.exists("i"))
       return -1;
-    int minmax = std::numeric_limits<int>::max();
+    int minmax = (std::numeric_limits<int>::max)();
     // assuming that "job" is first level and "i" second one:
     for (map<string,pairtree,natural_less>::iterator i = 
 	   tree.get_subtree().begin();

@@ -387,11 +387,13 @@ namespace ebl {
   }
 
   configuration::configuration(const char *filename) {
-    read(filename);
+    if (!read(filename))
+      eblerror("failed to open configuration file");
   }
 
   configuration::configuration(const string &filename) {
-    read(filename.c_str());
+    if (!read(filename.c_str()))
+      eblerror("failed to open configuration file");
   }
 
   configuration::configuration(const configuration &other) 

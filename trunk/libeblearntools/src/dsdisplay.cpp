@@ -221,7 +221,7 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
       dsgui_cp.display(train_cp_ds, dims.dim(0), dims.dim(1),
 		       0, 0, 1, -1, NULL, false,
 		       (Tdata) range[0], (Tdata) range[1]);
-      sleep(1);
+      secsleep(1);
     }
     
     if (bdefpairs) {
@@ -232,7 +232,7 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
       dsgui_dp.display(train_dp_ds, dims.dim(0), dims.dim(1),
 		       0, 0, 1, -1, NULL, false,
 		       (Tdata) range[0], (Tdata) range[1]);
-      sleep(1);
+      secsleep(1);
     }
   
     labeled_datasource_gui<Tdata, Tdata, Tlabel> dsgui(true);
@@ -240,7 +240,7 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
 		  (Tdata) range[0], (Tdata) range[1]);
     if (font_size > 0)
       set_font_size(font_size);
-    sleep(1);
+    secsleep(1);
   }
 #else
   cerr << "warning: QT gui libraries not available, install them and recompile"

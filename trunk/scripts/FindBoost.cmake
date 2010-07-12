@@ -233,6 +233,7 @@ ELSE (_boost_IN_CACHE)
     "C:/boost"
     "$ENV{ProgramFiles}/boost/boost_${Boost_FIND_VERSION_MAJOR}_${Boost_FIND_VERSION_MINOR}_${Boost_FIND_VERSION_PATCH}"
     "$ENV{ProgramFiles}/Boost"
+    "$ENV{ProgramFiles}/boost/boost_1_42"
     /sw/local/include
     $ENV{HOME}/installed/boost/include
    )
@@ -244,6 +245,7 @@ ELSE (_boost_IN_CACHE)
     "$ENV{ProgramFiles}/boost/boost_${Boost_FIND_VERSION_MAJOR}_${Boost_FIND_VERSION_MINOR}_${Boost_FIND_VERSION_PATCH}/lib"
     "$ENV{ProgramFiles}/Boost"
     /sw/local/lib
+    "$ENV{ProgramFiles}/boost/boost_1_42/lib"
     $ENV{HOME}/installed/boost/lib
   )
 
