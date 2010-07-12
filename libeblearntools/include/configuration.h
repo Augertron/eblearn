@@ -79,7 +79,7 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   //! configuration class. handle files containing variable definitions.
-  class configuration {
+  class EXPORT configuration {
   protected:
     string_map_t	smap; 	//!< map between variables and values
     string 		name; 	//!< name of configuration
@@ -181,7 +181,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! meta configuration. derive from configuration, to handle meta variables.
-  class meta_configuration : public configuration {
+  class EXPORT meta_configuration : public configuration {
   private:
     string_map_t	tmpsmap;
     string_list_map_t	lmap;

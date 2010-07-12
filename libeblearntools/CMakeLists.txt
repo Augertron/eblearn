@@ -26,6 +26,7 @@ add_library (eblearntools SHARED
   src/metaparser.cpp
   src/sort.cpp
   src/thread.cpp
+#  src/VFWCapture.cpp
   )
 
 IF (OpenCV_FOUND)
@@ -33,14 +34,7 @@ IF (OpenCV_FOUND)
 ENDIF (OpenCV_FOUND)
 # link executable with external libraries
 target_link_libraries (eblearntools eblearn idx)
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(eblearntools ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(eblearntools ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
+LINK_BOOST(eblearntools)
 IF (QT_FOUND)
   target_link_libraries (eblearntools idxgui eblearngui)
 ENDIF (QT_FOUND)
@@ -65,15 +59,7 @@ ENDIF (QT_FOUND)
 IF (XML_FOUND)
   target_link_libraries (dscompiler ${XML_LIBRARY_FLAGS})
 ENDIF (XML_FOUND)
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(dscompiler ${Boost_SYSTEM_LIBRARY}
-      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(dscompiler ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
+LINK_BOOST(dscompiler)
 
 # compile executable: dssplit
 ################################################################################
@@ -87,15 +73,7 @@ target_link_libraries (dssplit eblearn idx)
 IF (QT_FOUND)
   target_link_libraries (dssplit idxgui eblearngui)
 ENDIF (QT_FOUND)
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(dssplit ${Boost_SYSTEM_LIBRARY}
-      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(dssplit ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
+LINK_BOOST(dssplit)
 
 # compile executable: dsmerge
 ################################################################################
@@ -109,15 +87,7 @@ target_link_libraries (dsmerge eblearn idx)
 IF (QT_FOUND)
   target_link_libraries (dsmerge idxgui eblearngui)
 ENDIF (QT_FOUND)
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(dsmerge ${Boost_SYSTEM_LIBRARY}
-      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(dsmerge ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
+LINK_BOOST(dsmerge)
 
 # compile executable: dsdisplay
 ################################################################################
@@ -131,15 +101,7 @@ target_link_libraries (dsdisplay eblearn idx)
 IF (QT_FOUND)
   target_link_libraries (dsdisplay idxgui eblearngui)
 ENDIF (QT_FOUND)
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(dsdisplay ${Boost_SYSTEM_LIBRARY}
-      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(dsdisplay ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
+LINK_BOOST(dsdisplay)
 
 # compile executable: matshow
 ################################################################################
@@ -180,14 +142,7 @@ add_executable (metarun
 
 # link executable with external libraries
 target_link_libraries (metarun idx eblearntools)
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(metarun ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(metarun ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
+LINK_BOOST(metarun)
 
 # compile executable: metaparse
 ################################################################################
@@ -198,14 +153,7 @@ add_executable (metaparse
 
 # link executable with external libraries
 target_link_libraries (metaparse eblearntools)
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(metaparse ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(metaparse ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
+LINK_BOOST(metaparse)
 
 # compile executable: videoffinder
 ################################################################################

@@ -76,7 +76,7 @@ namespace ebl {
     idx_clear(nets);
     set_bgclass(background);
     // initilizations
-    save_max_per_frame = numeric_limits<uint>::max();
+    save_max_per_frame = (numeric_limits<uint>::max)();
   }
   
   template <class T>
@@ -495,7 +495,7 @@ namespace ebl {
 		}
 		// current pixel is the maximum within the window
 		if (local_max == 1) {
-		  max_map_result.set(winning_class, 0);
+		  max_map_result.set((T) winning_class, 0);
 		  max_map_result.set(pix_val, 1);
 		}
 	      }

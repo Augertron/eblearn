@@ -95,9 +95,9 @@ namespace ebl {
       uint inw = (uint) (img.dim(1) / ratio);
       // do not upsample to avoid creating artefacts
       // and ignore sizes smaller than outdims
-      if (outh > img.dim(0) || outw > img.dim(1)
-	  || outh < outdims.dim(0) || outw < outdims.dim(1)
-	  || inh < outdims.dim(0) || inw < outdims.dim(1)) {
+      if (outh > (uint) img.dim(0) || outw > (uint) img.dim(1)
+	  || outh < (uint) outdims.dim(0) || outw < (uint) outdims.dim(1)
+	  || inh < (uint) outdims.dim(0) || inw < (uint) outdims.dim(1)) {
       	continue ; // do nothing for this scale
       }
       // preprocess image

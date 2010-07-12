@@ -68,15 +68,7 @@ IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (objdetect idxgui)
   target_link_libraries (objdetect eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(objdetect ${Boost_SYSTEM_LIBRARY}
-      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(objdetect ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
+LINK_BOOST(objdetect)
 
 # compile executable: objdetect
 ################################################################################
@@ -91,12 +83,4 @@ IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (objtrack idxgui)
   target_link_libraries (objtrack eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(objtrack ${Boost_SYSTEM_LIBRARY}
-      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(objtrack ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
+LINK_BOOST(objtrack)

@@ -305,7 +305,7 @@ namespace ebl {
       }
       // find closest multiple of target dimension
       uint fact = 1;
-      uint mindist = numeric_limits<uint>::max();
+      uint mindist = (numeric_limits<uint>::max)();
       uint area = iregion.height * iregion.width;
       uint dist = abs((int)(outr.height * outr.width * fact * fact) -(int)area);
       while ((dist <= mindist)
@@ -957,7 +957,11 @@ namespace ebl {
       for(uint y = 0; y < w; y++){
 	int dx = x - cx;
 	int dy = y - cy;
+#ifdef __WINDOWS__
+	m.set((T) (-exp((double)(-(vinv*(dx*dx + dy*dy))))), x, y);
+#else
 	m.set((T) (-exp(-(vinv*(dx*dx + dy*dy)))), x, y);
+#endif
 	total += m.get(x, y);
       }
     }

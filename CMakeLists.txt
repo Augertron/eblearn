@@ -72,6 +72,19 @@ SET(LIBEBLEARNTOOLS_INCLUDE_DIR
 SET(LIBIDXGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libidxgui/include)
 #SET(LIBSPIDX_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libspidx/include)
 
+# link macros
+################################################################################
+MACRO(LINK_BOOST project)
+IF (Boost_FOUND)
+#  IF (${Boost_MINOR_VERSION} GREATER 34)
+#    TARGET_LINK_LIBRARIES(${project} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+#  ELSE(${Boost_MINOR_VERSION} GREATER 34)
+    TARGET_LINK_LIBRARIES(${project} ${Boost_FILESYSTEM_LIBRARY} 
+      ${Boost_REGEX_LIBRARY})
+#  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
+ENDIF (Boost_FOUND)
+ENDMACRO(LINK_BOOST)
+
 ADD_SUBDIRECTORY(libidx)
 ADD_SUBDIRECTORY(libidxgui)
 ADD_SUBDIRECTORY(libeblearn)

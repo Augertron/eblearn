@@ -128,7 +128,7 @@ int main(int argc, char **argv) { // regular main without gui
   detect.set_bgclass(background.c_str());
 
   // answering variables and initializations
-  t_net threshold = .985;
+  t_net threshold = (t_net) .985;
   vector<bbox*> bboxes;
   vector<bbox*>::iterator ibboxes;
   map<string, ofstream*> fp_cls, fp_det;
@@ -192,7 +192,7 @@ int main(int argc, char **argv) { // regular main without gui
 	clear_window();
 	bboxes = dgui.display_inputs_outputs(detect, im, threshold, 0, 0, zoom,
 					     (t_net)-1, (t_net)1, wid);
-	sleep(3);
+	secsleep(3);
       } else
 	bboxes = detect.fprop(im, threshold);
 #endif

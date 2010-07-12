@@ -94,7 +94,7 @@ namespace ebl {
     resize_mode = "bilinear";
     interleaved_input = true;
     max_per_class_set = false;
-    mpc = numeric_limits<intg>::max();
+    mpc = (numeric_limits<intg>::max)();
     dynamic_init_drand(); // initialize random seed
     usepose = false;
     useparts = false;
@@ -137,7 +137,7 @@ namespace ebl {
       eblerror("found 0 class");
     cout << "Found: "; print_classes(); cout << "." << endl;
     // (re)init max per class, knowing number of classes
-    intg m = numeric_limits<intg>::max();
+    intg m = (numeric_limits<intg>::max)();
     if (max_per_class_set) { // mpc has already been set
       m = mpc;
       set_max_per_class(m);
@@ -397,7 +397,7 @@ namespace ebl {
       return false;
     }
     // creating directory
-    mkdir(root1.c_str(), MKDIR_RIGHTS);
+    mkdir_full(root1);
     // remove for empty slots
     idx<Tdata> dat = data;
     idx<t_label> labs = labels;
@@ -442,7 +442,7 @@ namespace ebl {
       }
     } else { // single file mode, use save as image extensions
       root1 += name; root1 += "/";
-      mkdir(root1.c_str(), MKDIR_RIGHTS);
+      mkdir_full(root1);
       // save all images
       ostringstream fname;
       intg id = 0;
@@ -451,7 +451,7 @@ namespace ebl {
 	// make class directory if necessary
 	fname.str("");
 	fname << root1 << "/" << get_class_string(lab.get()) << "/";
-	mkdir(fname.str().c_str(), MKDIR_RIGHTS);
+	mkdir_full(fname.str());
 	// save image
 	fname << get_class_string(lab.get()) << "_" << id++ << "." << save_mode;
 	tmp = dat.shift_dim(0, 2); // shift from planar to interleaved
@@ -648,7 +648,7 @@ namespace ebl {
     // init max_per_class
     max_per_class = idx<intg>(classes.size());
     max_per_class_set = false;
-    idx_fill(max_per_class, numeric_limits<intg>::max());    
+    idx_fill(max_per_class, (numeric_limits<intg>::max)());    
   }
 
   template <class Tdata>
@@ -1224,6 +1224,7 @@ namespace ebl {
     try {
       mat = load_matrix<T>(fname);
     } catch (const string &err) {
+      cerr << err << endl;
       cerr << "warning: failed to load dataset file " << fname << endl;
       return false;
     }

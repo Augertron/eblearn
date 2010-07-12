@@ -449,12 +449,12 @@ namespace ebl {
 	   << "with continous labels." << endl;
       return 0;
     }
-    intg min_nonzero = std::numeric_limits<intg>::max();
+    intg min_nonzero = (std::numeric_limits<intg>::max)();
     for (vector<intg>::iterator i = counts.begin(); i != counts.end(); ++i) {
       if ((*i < min_nonzero) && (*i != 0))
 	min_nonzero = *i;
     }
-    if (min_nonzero == std::numeric_limits<intg>::max())
+    if (min_nonzero == (std::numeric_limits<intg>::max)())
       eblerror("empty dataset");
     return min_nonzero * nclasses;
   }
@@ -743,8 +743,8 @@ namespace ebl {
 		<< "_" << LABELS_NAME << MATRIX_EXTENSION;
       idx<Tdata> dat = load_matrix<Tdata>(datafile.str());
       idx<Tlabel> labs = load_matrix<Tlabel>(labelfile.str());
-      dat = dat.narrow(0, MIN(dat.dim(0), size), 0);
-      labs = labs.narrow(0, MIN(labs.dim(0), size), 0);
+      dat = dat.narrow(0, MIN((uint) dat.dim(0), size), 0);
+      labs = labs.narrow(0, MIN((uint) labs.dim(0), size), 0);
       init(dat, labs, name, (Tdata) 0, (float) 0.01);
     } catch(string &err) {
       cerr << err << endl;

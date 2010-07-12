@@ -44,6 +44,7 @@
 
 #ifdef __WINDOWS__
 #include <Windows.h>
+#include <direct.h>
 #endif
 
 using namespace std;
@@ -58,6 +59,11 @@ namespace ebl {
   }
   
   bool mkdir_full(const char *dir) {
+#ifdef __WINDOWS__
+    if (!_mkdir(dir))
+      return true;
+    return false;
+#else
     string cmd = "mkdir -p ";
     cmd += dir;
     if (system(cmd.c_str()) < 0) {
@@ -65,6 +71,7 @@ namespace ebl {
       return false;
     }
     return true;
+#endif
   }
 
   ////////////////////////////////////////////////////////////////

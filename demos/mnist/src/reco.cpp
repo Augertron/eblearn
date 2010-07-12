@@ -62,7 +62,7 @@ int main(int argc, char **argv) { // regular main without gui
 
   // infer answers
   cout << "min " << idx_min(stout.x) << " max " << idx_max(stout.x) << endl;
-  t_net threshold = .93;
+  t_net threshold = (t_net) .93;
   idx_eloop1(outx, stout.x, t_net) {
     idx_eloop1(out, outx, t_net) {
       if (idx_max(out) >= threshold)
@@ -75,7 +75,7 @@ int main(int argc, char **argv) { // regular main without gui
   module_1_1_gui l5gui;
   idx_threshold(stout.x, threshold, (t_net) -1.0, stout.x);
   l5gui.display_fprop(l5, stin, stout);
-  sleep(1);
+  secsleep(1);
 #endif
   
   return 0;
