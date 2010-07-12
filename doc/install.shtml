@@ -234,6 +234,7 @@
 	 <code>$ bin/Release/tester</code></li>
        <li>To test face detection demo, call:<br>
 	 <code>$ bin/Release/objdetect demos/obj/face/trained/best.conf
+	   your-image-directory
 	 </code></li>
      </ul>
 
@@ -329,9 +330,20 @@
 	 http://qt.nokia.com/downloads/windows-cpp-vs2008<br>
 	 If necessary, rerun 'configure' and 'generate' in CMake and make
 	 sure the output of CMake mentions "Qt Found".</li>
+	 After installation, add to your 'PATH' environment variable your
+	 Qt bin directory (right-click 'My Computer', then Properties ->
+	 Advanced System Settings -> Environment Variables -> System Variables,
+	 then add for example ";C:\Qt\bin" at the
+	 end of the existing PATH string).
        <li><strong>Boost</strong></br>
 	 Download the boost installer: http://www.boostpro.com/download<br>
-	 During installation, select at least "regex" and "filesystem".
+	 During installation, select the "Multithread, DLL" version then
+	 select at least "regex", "filesystem" and "system".<br>
+	 After installation, add to your 'PATH' environment variable your
+	 Boost lib directory (right-click 'My Computer', then Properties ->
+	 Advanced System Settings -> Environment Variables -> System Variables,
+	 then add for example ";C:\Program Files\boost\boost_1_42\lib" at the
+	 end of the existing PATH string).
        </li>
      </ul>
 
