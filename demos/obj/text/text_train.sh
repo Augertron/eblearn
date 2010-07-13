@@ -35,8 +35,8 @@ meta_send_best=15
 ################################################################################
 
 # directories
-#xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
-xpname=${meta_name}_20100324.203230
+tstamp=`date +"%Y%m%d.%H%M%S"`
+xpname=${meta_name}_${tstamp}
 root=~/${machine}adata/text/
 root2=~/${machine}cdata/
 dataroot=$root/ds
@@ -96,7 +96,7 @@ echo "touching /home/sermanet/budadata/text/out/text_train_bud_20100324.203230/2
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
 echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
-#${eblearnbin}/metarun $metaconf
+${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
 
 # looping on retraining on false positives
 echo "________________________________________________________________________"
@@ -146,9 +146,9 @@ if [ $iter != 1 ]; then
 # override train command by detect command
   echo >> $bestconf
   echo "meta_command = ${eblearnbin}/objdetect" >> $bestconf
-  echo "meta_name = ${meta_name}_false_positives" >> $bestconf
+  echo "meta_name = ${meta_name}_falsepos_${iter}" >> $bestconf
 # start parallelized extraction
-  ${eblearnbin}/metarun $bestconf
+  ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
 
 fi
 
@@ -204,6 +204,6 @@ fi
   echo "retrain = 1" >> $metaconf
   echo "retrain_weights = ${bestweights}" >> $metaconf
   echo "meta_name = ${meta_name}_retrain_${iter}" >> $metaconf
-  ${eblearnbin}/metarun $metaconf
+  ${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
     
 done

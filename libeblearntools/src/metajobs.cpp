@@ -165,12 +165,12 @@ namespace ebl {
   job_manager::~job_manager() {
   }
 
-  bool job_manager::read_metaconf(const char *fname) {
+  bool job_manager::read_metaconf(const char *fname, const string *tstamp) {
     mconf_fullfname = fname;
     size_t pos = mconf_fullfname.find_last_of('/');
     mconf_fname = mconf_fullfname.substr(pos == string::npos ? 0 : pos);
     // read meta configuration
-    if (!mconf.read(mconf_fullfname.c_str(), false))
+    if (!mconf.read(mconf_fullfname.c_str(), false, tstamp))
       return false;
     // create job list from all possible configurations
     vector<configuration> &confs = mconf.configurations();

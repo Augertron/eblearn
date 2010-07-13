@@ -193,7 +193,8 @@ namespace ebl {
     meta_configuration();
     virtual ~meta_configuration();
 
-    bool read(const char *fname, bool bresolve = true);
+    bool read(const char *fname, bool bresolve = true,
+	      const string *tstamp = NULL);
 
     // accessors
 

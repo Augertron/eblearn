@@ -61,7 +61,8 @@ namespace ebl {
   detection_thread<Tnet>::detection_thread(configuration &conf_,
 					   const char *arg2_)
     : conf(conf_), arg2(arg2_), frame(120, 160, 1), mutex_in(), mutex_out(),
-      in_updated(false), out_updated(false) {
+      in_updated(false), out_updated(false), bavailable(false),
+      frame_name(""), outdir("") {
   }
 
   template <typename Tnet>
@@ -91,7 +92,7 @@ namespace ebl {
     // unlock data
     pthread_mutex_unlock(&mutex_out);
   }
-
+ 
   template <typename Tnet>
   bool detection_thread<Tnet>::get_data(vector<bbox*> &bboxes2,
 					idx<ubyte> &frame2) {
@@ -121,7 +122,9 @@ namespace ebl {
     // copy frame
     idx_copy(uframe, frame2);    
     // reset updated flag
-    out_updated = false; 
+    out_updated = false;
+    // declare thread as available
+    bavailable = true;
     // unlock data
     pthread_mutex_unlock(&mutex_out);
     // confirm that we copied data.
@@ -129,7 +132,7 @@ namespace ebl {
   }
 
   template <typename Tnet>
-  bool detection_thread<Tnet>::set_data(idx<ubyte> &frame2) {
+  bool detection_thread<Tnet>::set_data(idx<ubyte> &frame2, string &name) {
     // lock data (non blocking)
     if (!pthread_mutex_trylock(&mutex_in))
       return false;
@@ -140,24 +143,41 @@ namespace ebl {
       uframe.resize(frame2.get_idxdim());
     // copy frame
     idx_copy(frame2, uframe);
+    // copy name
+    frame_name = name;
     // reset updated flag
     in_updated = true;
     // unlock data
     pthread_mutex_unlock(&mutex_in);
+    // declare thread as not available
+    bavailable = false;
     // confirm that we copied data.
     return true;
   }
 
   template <typename Tnet>
+  bool detection_thread<Tnet>::available() {
+    return bavailable;
+  }
+  
+  template <typename Tnet>
+  void detection_thread<Tnet>::set_output_directory(string &out) {
+    outdir = out;
+  }
+  
+  template <typename Tnet>
   void detection_thread<Tnet>::execute() { 
    try {
      // configuration
-     bool	color	      = conf.exists_bool("color");
-     uint	norm_size     = conf.get_uint("normalization_size");
-     Tnet	threshold     = (Tnet) conf.get_double("threshold");
-     bool	display       = conf.exists_bool("net_display");
-     bool	mindisplay    = conf.exists_bool("minimal_display");
-     uint	display_sleep = conf.get_uint("display_sleep");
+     bool	color	       = conf.exists_bool("color");
+     uint	norm_size      = conf.get_uint("normalization_size");
+     Tnet	threshold      = (Tnet) conf.get_double("threshold");
+     bool	display	       = conf.exists_bool("display");
+     bool	mindisplay     = conf.exists_bool("minimal_display");
+     bool	display_states = conf.exists_bool("display_states");
+     uint	display_sleep  = conf.get_uint("display_sleep");
+     uint       wid	       = 0;	// window id
+     uint       wid_states     = 0;	// window id
 
      // load network and weights
      parameter<Tnet> theparam;
@@ -165,7 +185,6 @@ namespace ebl {
      try { // try loading classes names but do not stop upon failure
        load_matrix<ubyte>(classes, conf.get_cstring("classes"));
      } catch(string &err) { cerr << "warning: " << err << endl; }
-     cout << "loading weights from " << conf.get_cstring("weights") << endl;
      module_1_1<Tnet> *net = create_network(theparam, conf, classes.dim(0));
      theparam.load_x(conf.get_cstring("weights"));
 
@@ -193,11 +212,21 @@ namespace ebl {
        detect.set_max_resolution(conf.get_uint("input_max"));
      detect.set_silent();
      if (conf.exists_bool("save_detections")) {
-       detect.set_save("detections");
+       string detdir = outdir;
+       detdir += "detections";
+       detdir = detect.set_save(detdir);
        if (conf.exists("save_max_per_frame"))
 	 detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
      }
-
+     if (conf.exists("pruning"))
+       detect.set_pruning(conf.get_bool("pruning"));
+     if (conf.exists("bbhfactor") && conf.exists("bbwfactor"))
+       detect.set_bbox_factors(conf.get_float("bbhfactor"),
+			       conf.get_float("bbwfactor"));
+     bool save_video     = conf.exists_bool("save_video");
+     string viddir = outdir;
+     viddir += "video/";
+     mkdir_full(viddir);
      // gui
 #ifdef __GUI__
      uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
@@ -213,8 +242,10 @@ namespace ebl {
        qwidth2 = conf.get_uint("qwidth2");
      }
      module_1_1_gui	netgui;
-     uint		wid  = display ?
-       new_window("eblearn object recognition") : 0;
+     wid_states  = display_states ? new_window("network states"):0;
+     night_mode();
+     wid  = display ? new_window("eblearn object recognition") : 0;
+     night_mode();
      float		zoom = 1;
      detector_gui<Tnet> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
 			     qwidth1, conf.exists_bool("queue2"), qstep2,
@@ -222,15 +253,16 @@ namespace ebl {
      if (bmask_class)
        dgui.set_mask_class(conf.get_cstring("mask_class"),
 			   (Tnet) conf.get_double("mask_threshold"));
-     // timing variables
-     QTime t0;
-     int tpp;
 #endif  
+     // timing variables
+     timer tpass, toverall;
+     long ms;
      // loop
+     toverall.start();
+     // we're ready
+     bavailable = true;
      while(1) {
-#ifdef __GUI__
-       t0.start();
-#endif
+       tpass.restart();
        // wait until a new image is made available
        while (!in_updated) {
 	 millisleep(1);
@@ -246,7 +278,7 @@ namespace ebl {
        idx_copy(uframe, frame);
        // run detector
        if (!display) { // fprop without display
-	 vector<bbox*> &bb = detect.fprop(frame, threshold);
+	 vector<bbox*> &bb = detect.fprop(frame, threshold, frame_name.c_str());
 	 copy_bboxes(bb); // make a copy of bounding boxes
        }
 #ifdef __GUI__
@@ -255,20 +287,32 @@ namespace ebl {
 	 clear_window();
 	 if (mindisplay) {
 	   vector<bbox*> &bb =
-	     dgui.display(detect, frame, threshold, 0, 0, zoom,
-			  (Tnet)0, (Tnet)255, wid);
+	     dgui.display(detect, frame, threshold, frame_name.c_str(),
+			  0, 0, zoom, (Tnet)0, (Tnet)255, wid);
 	   copy_bboxes(bb); // make a copy of bounding boxes
 	 }
 	 else
-	   dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
+	   dgui.display_inputs_outputs(detect, frame, threshold,
+				       frame_name.c_str(), 0, 0, zoom,
 				       (Tnet)-1.1, (Tnet)1.1, wid); 
 	 enable_window_updates();
        }
-       tpp = t0.elapsed(); // stop processing timer
-       cout << "processing: " << tpp << " ms." << endl;
+       if (display_states) {
+	 dgui.display_current(detect, frame, wid_states);
+	 select_window(wid);
+       }
+       if (save_video) {
+	 string fname = viddir;
+	 fname += frame_name;
+	 save_window(fname.c_str());
+	 cout << "saved " << fname << endl;
+       }
 #endif
+       ms = tpass.elapsed_milliseconds();
+       cout << "processing: " << ms << " ms." << endl;
        // switch 'updated' flag on to warn we just added new data
        set_out_updated();
+       // display sleep
        if (display_sleep > 0) {
 	 cout << "sleeping for " << display_sleep << "ms." << endl;
 	 millisleep(display_sleep);
@@ -277,9 +321,13 @@ namespace ebl {
 	   detect.get_total_saved() > conf.get_uint("save_max"))
 	 break ; // limit number of detection saves
      }
+     cout << "Execution time: " << toverall.elapsed_minutes() <<" mins" <<endl;
      // free variables
      if (net) delete net;
      if (pp) delete pp;
+#ifdef __GUI__
+     quit_gui(); // close all windows
+#endif
    } catch(string &err) { eblerror(err.c_str()); }
   }
 

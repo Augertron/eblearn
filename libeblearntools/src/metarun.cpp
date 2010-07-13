@@ -45,6 +45,7 @@ using namespace ebl;
 // global variables
 
 string copy_path = ""; // path to copy to target folder
+string manual_tstamp = ""; // tstamp string prefix to the experiment name
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -66,6 +67,13 @@ bool parse_args(int argc, char **argv) {
 	return false;
       }
       copy_path = argv[i];
+    } else if (strcmp(argv[i], "-tstamp") == 0) {
+      ++i;
+      if (i >= argc) {
+	cerr << "input error: expecting string after -tstamp." << endl;
+	return false;
+      }
+      manual_tstamp = argv[i];
     } else {
       cerr << "input error: unknown parameter: " << argv[i] << endl;
       return false;
@@ -81,6 +89,9 @@ void print_usage() {
   cout << "  -copy <path>" << endl;
   cout << "      Copy the specified path recursively to each job's directory."
        << endl;
+  cout << "  -tstamp <timestamp>" << endl
+       << "      Manually set the timestamp prefix for the experiment's name."
+       << endl;
 }
 
 int main(int argc, char **argv) {
@@ -94,7 +105,7 @@ int main(int argc, char **argv) {
 
   string metaconf = argv[1];
   job_manager jm;
-  jm.read_metaconf(metaconf.c_str());
+  jm.read_metaconf(metaconf.c_str(), &manual_tstamp);
   jm.set_copy(copy_path);
   jm.run();
   return 0;

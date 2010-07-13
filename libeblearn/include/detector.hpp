@@ -285,8 +285,8 @@ namespace ebl {
   string& detector<T>::set_save(const string directory) {
     save_mode = true;
     save_dir = directory;
-    save_dir += "_";
-    save_dir += tstamp();
+    // save_dir += "_";
+    // save_dir += tstamp();
     cout << "Enabling saving of detected regions into: ";
     cout << save_dir << endl;
     return save_dir;
@@ -643,7 +643,8 @@ namespace ebl {
   }
   
   template <class T> template <class Tin>
-  vector<bbox*>& detector<T>::fprop(idx<Tin> &img, T threshold) {
+  vector<bbox*>& detector<T>::fprop(idx<Tin> &img, T threshold,
+				    const char *frame_name) {
     // tell detections vectors they are not up-to-date anymore
     bodetections = false;
     bppdetections = false;
@@ -693,13 +694,14 @@ namespace ebl {
       pretty_bboxes(bb);
     // save positive response input windows in save mode
     if (save_mode)
-      save_bboxes(bb, save_dir);
+      save_bboxes(bb, save_dir, frame_name);
     // return bounding boxes
     return bb;
   }
 
   template <class T>
-  void detector<T>::save_bboxes(const vector<bbox*> &bboxes, const string &dir){
+  void detector<T>::save_bboxes(const vector<bbox*> &bboxes, const string &dir,
+				const char *frame_name) {
     string classname;
     ostringstream fname, cmd;
     state_idx<T> *input = NULL;
@@ -744,15 +746,17 @@ namespace ebl {
       inorig = grabbed.narrow(0, (*bbox)->height, (*bbox)->h0);
       inorig = inorig.narrow(1, (*bbox)->width, (*bbox)->w0);
       // save preprocessed image as lush mat
-      fname.str(""); fname << dir_pp[(*bbox)->class_id] << classname;
-      fname << setw(6) << setfill('0') << save_counts[(*bbox)->class_id];
-      fname << MATRIX_EXTENSION;
+      fname.str("");
+      fname << dir_pp[(*bbox)->class_id]
+	    << frame_name << "_" << classname << setw(3) << setfill('0')
+	    << save_counts[(*bbox)->class_id] << MATRIX_EXTENSION;
       save_matrix(inpp, fname.str());
       cout << "saved " << fname.str() << endl;
       // save original image as png
-      fname.str(""); fname << dir_orig[(*bbox)->class_id] << classname;
-      fname << setw(6) << setfill('0');
-      fname << save_counts[(*bbox)->class_id] << ".png";
+      fname.str("");
+      fname << dir_orig[(*bbox)->class_id] << frame_name << "_"  << classname
+	    << setw(3) << setfill('0') << save_counts[(*bbox)->class_id]
+	    << ".png";
       save_image(fname.str(), inorig, "png");
       cout << "saved " << fname.str() << endl;
       // increment file counter

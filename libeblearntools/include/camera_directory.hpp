@@ -41,7 +41,7 @@ namespace ebl {
   template <typename Tdata>
   camera_directory<Tdata>::camera_directory(const char *dir,
 					    int height_, int width_)
-    : camera<Tdata>(height_, width_) {
+    : camera<Tdata>(height_, width_), indir(dir) {
     cout << "Initializing directory camera from: " << dir << endl;
     read_directory(dir);
   }
@@ -54,6 +54,7 @@ namespace ebl {
   template <typename Tdata>
   bool camera_directory<Tdata>::read_directory(const char *dir) {
     string directory = dir;
+    indir = dir;
     // // first count number of images, to allocate list and speed up
     // uint n = count_files(directory, IMAGE_PATTERN);
     // if (fl) delete fl;
@@ -88,6 +89,11 @@ namespace ebl {
     frame_name_ = fl->front().first;
     frame_name_ += "/";
     frame_name_ += fl->front().second;
+    size_t npos = frame_name_.length() - indir.length();
+    frame_name_ = frame_name_.substr(indir.length(), npos);
+    for (size_t i = 0; i < frame_name_.length(); ++i)
+      if (frame_name_[i] == '/')
+	frame_name_[i] = '_';
     fl->pop_front(); // remove first element
     cout << frame_id << "/" << flsize << ": processing ";
     cout << fdir << "/" << fname << endl;

@@ -245,20 +245,22 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  frame = cam2->grab();
 	else // empty pre-camera, use regular camera
 	  frame = cam->grab();
+	string frame_name = cam->frame_name();
 	// run detector
 	if (!display) { // fprop without display
-	  bboxes = detect.fprop(frame, threshold);
-	} 
+	  bboxes = detect.fprop(frame, threshold, frame_name.c_str());
+	}
 #ifdef __GUI__
 	else { // fprop and display
 	  disable_window_updates();
 	  clear_window();
 	  if (mindisplay)
-	    bboxes = dgui.display(detect, frame, threshold, 0, 0, zoom,
-	  			  (t_net)0, (t_net)255, wid);
+	    bboxes = dgui.display(detect, frame, threshold, frame_name.c_str(),
+				  0, 0, zoom, (t_net)0, (t_net)255, wid);
 	  else
 	    bboxes =
-	      dgui.display_inputs_outputs(detect, frame, threshold, 0, 0, zoom,
+	      dgui.display_inputs_outputs(detect, frame, threshold,
+					  frame_name.c_str(), 0, 0, zoom,
 					  (t_net)-1.1, (t_net)1.1, wid);
 	  enable_window_updates();
 	  if (display_states) {

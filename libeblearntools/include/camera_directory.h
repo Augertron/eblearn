@@ -100,6 +100,7 @@ namespace ebl {
     using camera<Tdata>::frame_id;	//!< frame counter
     using camera<Tdata>::frame_name_;	//!< frame name
     files_list		*fl;	//!< list of images
+    string		 indir; //!< input directory name
     string		 fdir;	//!< directory name
     string		 fname;	//!< file name
     ostringstream	 oss;	//!< temporary string
