@@ -58,6 +58,10 @@
 #include "image_test.h"
 #include "NetTest.h"
 
+#ifdef __DEBUGMEM__
+  INIT_DEBUGMEM();
+#endif
+  
 #ifdef __GUI__
 #include "libidxgui.h"
 #endif

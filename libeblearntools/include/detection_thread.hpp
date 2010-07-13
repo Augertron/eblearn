@@ -54,6 +54,10 @@ using namespace std;
 
 namespace ebl {
 
+#ifdef __DEBUGMEM__
+  INIT_DEBUGMEM();
+#endif
+  
   ////////////////////////////////////////////////////////////////
   // detection thread
 
@@ -310,6 +314,9 @@ namespace ebl {
 #endif
        ms = tpass.elapsed_milliseconds();
        cout << "processing: " << ms << " ms." << endl;
+#ifdef __DEBUGMEM__
+       pretty_memory();
+#endif
        // switch 'updated' flag on to warn we just added new data
        set_out_updated();
        // display sleep

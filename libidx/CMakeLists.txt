@@ -25,6 +25,7 @@ add_library (idx SHARED
   src/imageIO.cpp  
   src/numerics.cpp
   src/utils.cpp
+  src/srg.cpp
   )
 
 # link

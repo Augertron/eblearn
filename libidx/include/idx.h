@@ -332,8 +332,8 @@ namespace ebl {
   template <class T> class idx {
   private:
 
-    //! pointer to the Srg structure that contains the data.
-    Srg<T> *storage;
+    //! pointer to the srg structure that contains the data.
+    srg<T> *storage;
 
     //! a pointer to a dimensions descriptor.
     //! this is allocated when get_idxdim() method is called and destroyed by
@@ -360,7 +360,7 @@ namespace ebl {
     //! offset, dimensions and strides.
     idxspec spec;
 
-    //! destructor: unlocks the Srg.
+    //! destructor: unlocks the srg.
     virtual ~idx();
 
     // TODO: Find out why code such as idx<float> = 1 compiles
@@ -372,7 +372,7 @@ namespace ebl {
     }
 
     virtual idx<T>& operator=(const idx<T>& other) {
-      Srg<T> *tmp = NULL;
+      srg<T> *tmp = NULL;
       if (this->storage != NULL)
 	tmp = this->storage;
       this->storage = other.storage;
@@ -426,26 +426,26 @@ namespace ebl {
     idx(const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
-    //! constructors from existing Srg and offset
+    //! constructors from existing srg and offset
 
     //! generic constructor with idxspec.
-    idx(Srg<T> *srg, idxspec &s);
+    idx(srg<T> *srg, idxspec &s);
     //! constructor with existing storage and array pointers for dim and mod
-    idx(Srg<T> *srg, intg o, intg n, intg *dims, intg *mods);
-    //! creates an idx0 with existing Srg and offset.
-    idx(Srg<T> *srg, intg o);
-    //! creates an idx1 of size size0, with existing Srg and offset.
-    idx(Srg<T> *srg, intg o, intg size0);
+    idx(srg<T> *srg, intg o, intg n, intg *dims, intg *mods);
+    //! creates an idx0 with existing srg and offset.
+    idx(srg<T> *srg, intg o);
+    //! creates an idx1 of size size0, with existing srg and offset.
+    idx(srg<T> *srg, intg o, intg size0);
     //! creates an idx2 of size (size0,size1),
-    //! with existing Srg and offset.
-    idx(Srg<T> *srg, intg o, intg size0, intg size1);
+    //! with existing srg and offset.
+    idx(srg<T> *srg, intg o, intg size0, intg size1);
     //! creates an idx3 of size (size0,size1,size2),
-    //! with existing Srg and offset.
-    idx(Srg<T> *srg, intg o, intg size0, intg size1, intg size2);
-    //! creates an idx of any order with existing Srg and offset.
-    idx(Srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3, intg s4=-1, 
+    //! with existing srg and offset.
+    idx(srg<T> *srg, intg o, intg size0, intg size1, intg size2);
+    //! creates an idx of any order with existing srg and offset.
+    idx(srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3, intg s4=-1, 
 	intg s5=-1, intg s6=-1, intg s7=-1);
-    idx(Srg<T> *srg, intg o, const idxdim &d);
+    idx(srg<T> *srg, intg o, const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
     //! STL-like iterators 
@@ -606,7 +606,7 @@ namespace ebl {
     //! field access methods
 
     //! return pointer to storage
-    virtual Srg<T> *getstorage() { return storage; }
+    virtual srg<T> *getstorage() { return storage; }
 
     //! return size of idx in d-th dimension.
     virtual intg dim(int d) { return spec.dim[d]; }

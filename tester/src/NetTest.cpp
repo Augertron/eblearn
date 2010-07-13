@@ -76,6 +76,9 @@ void NetTest::test_lenet5_mnist() {
   infer_param infp;
   fixed_init_drand(); // fixed randomization
 
+#ifdef __DEBUGMEM__
+  pretty_memory();
+#endif
   // estimate second derivative on 100 iterations, using mu=0.02
   // and set individual espilons
   //printf("computing diagonal hessian and learning rates\n");
@@ -107,6 +110,9 @@ void NetTest::test_lenet5_mnist() {
 #endif
   // this goes at about 25 examples per second on a PIIIM 800MHz
   for (int i = 0; i < 10; ++i) {
+#ifdef __DEBUGMEM__
+  pretty_memory();
+#endif
     thetrainer.train(train_ds, trainmeter, gdp, 1);
     thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);

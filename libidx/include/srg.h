@@ -40,58 +40,40 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // Srg: storage area for idx data.
+  // srg: storage area for idx data.
 
-  //! Srg is a container for arrays of data. It contains
+  //! srg is a container for arrays of data. It contains
   //! a pointer to a dynamically allocated chunk of data,
   //! a size, and a reference counter. Access structures
-  //! such as idx, point to an Srg that contains the data.
-  //! Several idx's can share an Srg allowing access to the
+  //! such as idx, point to an srg that contains the data.
+  //! Several idx's can share an srg allowing access to the
   //! data in multiple ways. Whenever an idx is created that
-  //! that points an Srg, the reference counter of that Srg
+  //! that points an srg, the reference counter of that srg
   //! is incremented through the lock() member function.
-  //! When the reference counter is reaches 0, the Srg
-  //! is deallocated. An Srg must always be created with new,
+  //! When the reference counter is reaches 0, the srg
+  //! is deallocated. An srg must always be created with new,
   //! and never created as an automatic variable. For that
   //! reason, the destructor is private.
   //! So, if compiling your code produces an error like
-  //! "Srg<T>::~Srg() is private", you mistakenly allocated
-  //! an Srg as an automatic variable instead of new.
-  template <class T> class Srg {
-
-  private:
-    //! number of allocated items
-    intg size_;
-    //! reference counter: tells us how many idx point here
-    int refcount;
-
-    //! destructor: deallocates the data.
-    //! This is automatically called when the
-    //! reference counter reaches 0.
-    //! The destructor is made private so that the compiler
-    //! will complain if someone decide to create an
-    //! Srg on the stack (as an automatic variable).
-    //! An Srg must ALWAYS be created with new.
-    ~Srg();
-
+  //! "srg<T>::~srg() is private", you mistakenly allocated
+  //! an srg as an automatic variable instead of new.
+  template <typename T> class srg {
   public:
-
-    //    static intg nopened;
 
     //! pointer to data segment
     T *data;
 
-    //! builds an empty Srg (no data is allocated)
-    Srg();
+    //! builds an empty srg (no data is allocated)
+    srg();
 
-    //! allocate an Srg of size s
-    Srg(intg s);
+    //! allocate an srg of size s
+    srg(intg s);
 
     //! return the size (number of items)
     intg size();
 
     //! change size to s. This must be used with extreme caution,
-    //! because reducing the size of an Srg ma cause some idx
+    //! because reducing the size of an srg ma cause some idx
     //! that point to it to access non-existent data.
     intg changesize(intg s);
 
@@ -101,13 +83,13 @@ namespace ebl {
     //! increase size of data chunk by a given step s_chunk
     intg growsize_chunk(intg s, intg s_chunk);
 
-    //! decrement reference counter and deallocate Srg
+    //! decrement reference counter and deallocate srg
     //! if it reaches zero.
     int unlock();
 
     //! lock: increment reference counter.
     //! This is called wheneve a new idx is created
-    //! on the Srg.
+    //! on the srg.
     int lock();
 
     //! access method: return the i-th item.
@@ -122,7 +104,47 @@ namespace ebl {
     //! prints innards
     void pretty(FILE *f);
 
+#ifdef __DEBUGMEM__
+    static intg memsize;
+#endif
+
+  private:
+    //! number of allocated items
+    intg size_;
+    //! reference counter: tells us how many idx point here
+    int refcount;
+
+    //! destructor: deallocates the data.
+    //! This is automatically called when the
+    //! reference counter reaches 0.
+    //! The destructor is made private so that the compiler
+    //! will complain if someone decide to create an
+    //! srg on the stack (as an automatic variable).
+    //! An srg must ALWAYS be created with new.
+    ~srg();
   };
+
+  ////////////////////////////////////////////////////////////////
+  // helper
+
+#ifdef __DEBUGMEM__
+
+#define INIT_DEBUGMEM()							\
+  template <typename T> ebl::intg ebl::srg<T>::memsize = 0;		\
+  template <> EXPORT ebl::intg ebl::srg<double>::memsize = 0;		\
+  template <> EXPORT ebl::intg ebl::srg<float>::memsize = 0;		\
+  template <> EXPORT ebl::intg ebl::srg<int>::memsize = 0;		\
+  template <> EXPORT ebl::intg ebl::srg<long>::memsize = 0;		\
+  template <> EXPORT ebl::intg ebl::srg<short>::memsize = 0;		\
+  template <> EXPORT ebl::intg ebl::srg<unsigned char>::memsize = 0;	\
+  template <> EXPORT ebl::intg ebl::srg<const char*>::memsize = 0;	\
+  template <> EXPORT ebl::intg ebl::srg<void *>::memsize = 0;		\
+  template <> EXPORT ebl::intg ebl::srg<bool>::memsize = 0;		\
+  template <> EXPORT ebl::intg ebl::srg<uint>::memsize = 0;
+  
+  //! In debugmem mode, print the total usage of memory.
+  EXPORT void pretty_memory();
+#endif
 
 } // end namespace ebl
 

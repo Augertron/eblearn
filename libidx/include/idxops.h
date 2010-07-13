@@ -121,8 +121,8 @@ namespace ebl {
   template <class T1, class T2> idx<T1> idx_copy(idx<T2> &src);
   template <class T> idx<T> idx_copy(idx<T> &src);
 #ifdef __CBLAS__
-  template <> void idx_copy(idx<double> &src, idx<double> &dst);
-  template <> void idx_copy(idx<float> &src, idx<float> &dst);
+  template <> EXPORT void idx_copy(idx<double> &src, idx<double> &dst);
+  template <> EXPORT void idx_copy(idx<float> &src, idx<float> &dst);
 #endif
   //template <typename T> void idx_copy(idx<T> &src, idx<T> &dst);
 

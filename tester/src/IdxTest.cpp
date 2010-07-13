@@ -42,9 +42,9 @@ void IdxTest::test_Idx_get() {
   CPPUNIT_ASSERT_EQUAL(1.0, t8.get(0, 1, 0, 1, 0, 1, 0, 1));
 }
 
-// Testing Srg set, changsize, growsize
+// Testing srg set, changsize, growsize
 void IdxTest::test_Srg() {
-  Srg<double> *s = new Srg<double>(10);
+  srg<double> *s = new srg<double>(10);
   CPPUNIT_ASSERT_EQUAL(10, (int) s->size());
   s->set(3, 42);
   CPPUNIT_ASSERT_EQUAL(42.0, (double)s->get(3));
@@ -236,9 +236,9 @@ void IdxTest::test_Idx_operations() {
   CPPUNIT_ASSERT_EQUAL(1, (int) mu.mod(3));
 }
 
-  // testing idx constructor from Srg, idx resize
+  // testing idx constructor from srg, idx resize
 void IdxTest::test_Idx_resize() {
-  Srg<float> *srgptr = new Srg<float>(0);
+  srg<float> *srgptr = new srg<float>(0);
   idx<float> m1(srgptr, srgptr->size(), 3, 4);
 
   CPPUNIT_ASSERT_EQUAL(m1.getstorage(), srgptr);

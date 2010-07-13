@@ -636,7 +636,7 @@ namespace ebl {
   
   template <class T> idx<T>::idx(const T *mat, intg s0, intg s1)
     : pidxdim(NULL), spec(0, s0, s1) {
-    storage = new Srg<T>();
+    storage = new srg<T>();
     growstorage();
     storage->lock();
     memcpy(idx_ptr(), mat, nelements() * sizeof (T));
@@ -646,27 +646,27 @@ namespace ebl {
   // specific constructors for each number of dimensions
 
   template <class T> idx<T>::idx() : pidxdim(NULL), spec(0) {
-    storage = new Srg<T>();
+    storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> idx<T>::idx(intg size0) : pidxdim(NULL), spec(0,size0) {
-    storage = new Srg<T>();
+    storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> idx<T>::idx(intg size0, intg size1)
     : pidxdim(NULL), spec(0,size0,size1) {
-    storage = new Srg<T>();
+    storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> idx<T>::idx(intg size0, intg size1, intg size2)
     : pidxdim(NULL), spec(0,size0,size1,size2) {
-    storage = new Srg<T>();
+    storage = new srg<T>();
     growstorage();
     storage->lock();
   }
@@ -675,105 +675,105 @@ namespace ebl {
   idx<T>::idx(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
 	      intg s6, intg s7)
     : pidxdim(NULL), spec(0,s0,s1,s2,s3,s4,s5,s6,s7) {
-    storage = new Srg<T>();
+    storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> idx<T>::idx(const idxdim &d)
     : pidxdim(NULL), spec(0, d) {
-    storage = new Srg<T>();
+    storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   ////////////////////////////////////////////////////////////////
-  // constructors from existing Srg and offset
+  // constructors from existing srg and offset
 
   template <class T> 
-  idx<T>::idx(Srg<T> *srg, idxspec &s) : pidxdim(NULL) {
+  idx<T>::idx(srg<T> *sg, idxspec &s) : pidxdim(NULL) {
     spec = s;
-    if (srg) // use passed srg if not null
-      storage = srg;
+    if (sg) // use passed srg if not null
+      storage = sg;
     else // otherwise create new one
-      storage = new Srg<T>();
+      storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T>
-  idx<T>::idx(Srg<T> *srg, intg o, intg n, intg *dims, intg *mods) 
-    : pidxdim(NULL), spec(srg ? o : 0, n, dims, mods) {
-    if (srg) // use passed srg if not null
-      storage = srg;
+  idx<T>::idx(srg<T> *sg, intg o, intg n, intg *dims, intg *mods) 
+    : pidxdim(NULL), spec(sg ? o : 0, n, dims, mods) {
+    if (sg) // use passed srg if not null
+      storage = sg;
     else // otherwise create new one
-      storage = new Srg<T>();
+      storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> 
-  idx<T>::idx(Srg<T> *srg, intg o) : pidxdim(NULL), spec(srg ? o : 0) {
-    if (srg) // use passed srg if not null
-      storage = srg;
+  idx<T>::idx(srg<T> *sg, intg o) : pidxdim(NULL), spec(sg ? o : 0) {
+    if (sg) // use passed srg if not null
+      storage = sg;
     else // otherwise create new one
-      storage = new Srg<T>();
+      storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> 
-  idx<T>::idx(Srg<T> *srg, intg o, intg size0)
-    : pidxdim(NULL), spec(srg ? o : 0, size0) {
-    if (srg) // use passed srg if not null
-      storage = srg;
+  idx<T>::idx(srg<T> *sg, intg o, intg size0)
+    : pidxdim(NULL), spec(sg ? o : 0, size0) {
+    if (sg) // use passed srg if not null
+      storage = sg;
     else // otherwise create new one
-      storage = new Srg<T>();
+      storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> 
-  idx<T>::idx(Srg<T> *srg, intg o, intg size0, intg size1)
-    : pidxdim(NULL), spec(srg ? o : 0, size0, size1) {
-    if (srg) // use passed srg if not null
-      storage = srg;
+  idx<T>::idx(srg<T> *sg, intg o, intg size0, intg size1)
+    : pidxdim(NULL), spec(sg ? o : 0, size0, size1) {
+    if (sg) // use passed srg if not null
+      storage = sg;
     else // otherwise create new one
-      storage = new Srg<T>();
+      storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> 
-  idx<T>::idx(Srg<T> *srg, intg o, intg size0, intg size1, intg size2)
-    : pidxdim(NULL), spec(srg ? o : 0, size0, size1, size2) {
-    if (srg) // use passed srg if not null
-      storage = srg;
+  idx<T>::idx(srg<T> *sg, intg o, intg size0, intg size1, intg size2)
+    : pidxdim(NULL), spec(sg ? o : 0, size0, size1, size2) {
+    if (sg) // use passed srg if not null
+      storage = sg;
     else // otherwise create new one
-      storage = new Srg<T>();
+      storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> 
-  idx<T>::idx(Srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3,
+  idx<T>::idx(srg<T> *sg, intg o, intg s0, intg s1, intg s2, intg s3,
 	      intg s4, intg s5, intg s6, intg s7)
-    : pidxdim(NULL), spec(srg ? o : 0, s0, s1, s2, s3, s4, s5, s6, s7) {
-    if (srg) // use passed srg if not null
-      storage = srg;
+    : pidxdim(NULL), spec(sg ? o : 0, s0, s1, s2, s3, s4, s5, s6, s7) {
+    if (sg) // use passed sg if not null
+      storage = sg;
     else // otherwise create new one
-      storage = new Srg<T>();
+      storage = new srg<T>();
     growstorage();
     storage->lock();
   }
 
   template <class T> 
-  idx<T>::idx(Srg<T> *srg, intg o, const idxdim &d) 
-    : pidxdim(NULL), spec(srg ? o : 0, d) {
-    if (srg) // use passed srg if not null
-      storage = srg;
+  idx<T>::idx(srg<T> *sg, intg o, const idxdim &d) 
+    : pidxdim(NULL), spec(sg ? o : 0, d) {
+    if (sg) // use passed srg if not null
+      storage = sg;
     else // otherwise create new one
-      storage = new Srg<T>();
+      storage = new srg<T>();
     growstorage();
     storage->lock();
   }
