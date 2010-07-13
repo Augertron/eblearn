@@ -360,8 +360,8 @@ namespace ebl {
 	  in2.x.set(in2.x.get( d1, d2, d3) - small, d1, d2, d3);
 	  module.fprop(in1, out1);
 	  module.fprop(in2, out2);
-	  idx<T> sub(new Srg<T>(), out1.x.spec);
-	  idx<T> dot(new Srg<T>(), out1.x.spec);
+	  idx<T> sub(new srg<T>(), out1.x.spec);
+	  idx<T> dot(new srg<T>(), out1.x.spec);
 	  idx_sub(out1.x, out2.x, sub);
 	  idx_dotc(sub, 0.5/small, dot);
 	  idx<T> bla2 = jac_fprop.select(0, cnt);
@@ -429,10 +429,10 @@ namespace ebl {
 	  // calculated via
 	  // fprop(...), fprop(...+small) and fprop(...-small). the second 
 	  // derivative is then 2*a
-	  idx<T> ad(new Srg<T>(), out1.x.spec);
-	  idx<T> sub(new Srg<T>(), out1.x.spec);
-	  idx<T> dot(new Srg<T>(), out1.x.spec);
-	  idx<T> dot2(new Srg<T>(), out1.x.spec);
+	  idx<T> ad(new srg<T>(), out1.x.spec);
+	  idx<T> sub(new srg<T>(), out1.x.spec);
+	  idx<T> dot(new srg<T>(), out1.x.spec);
+	  idx<T> dot2(new srg<T>(), out1.x.spec);
 	  idx_add(out1.x, out2.x, ad);
 	  idx_dotc(out.x, 2, dot);
 	  idx_sub(ad, dot, sub);
@@ -494,8 +494,8 @@ namespace ebl {
 	  module.fprop(in1, out1);
 	  module.fprop(in2, out2);
 
-	  idx<T> sub(new Srg<T>(), out1.x.spec);
-	  idx<T> dot(new Srg<T>(), out1.x.spec);
+	  idx<T> sub(new srg<T>(), out1.x.spec);
+	  idx<T> dot(new srg<T>(), out1.x.spec);
 	  idx_sub(out1.x, out2.x, sub);
 	  idx_dotc(sub, 0.5/small, dot);
 	  bprop_p.set(dot.get( d1, d2, d3), d1, d2, d3);

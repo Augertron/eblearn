@@ -173,8 +173,8 @@ namespace ebl {
       resize_nsame(in, out, n);
       if( n > 6) {eblerror("illegal type")}
       else{
-	idx<double> pp(new Srg<double>(), in.x.spec);
-	idx<double> dot(new Srg<double>(), in.x.spec);
+	idx<double> pp(new srg<double>(), in.x.spec);
+	idx<double> dot(new srg<double>(), in.x.spec);
 	double mm = idx_max(in.x);
 	idx_addc(in.x, -mm, pp);
 	idx_dotc(pp, beta, dot);
@@ -191,8 +191,8 @@ namespace ebl {
     if( n == 0) return;
     if( n > 6 ) { eblerror("illegal type")}
     else{
-      idx<double> pp(new Srg<double>(), out.dx.spec);
-      idx<double> mul(new Srg<double>(), out.dx.spec);
+      idx<double> pp(new srg<double>(), out.dx.spec);
+      idx<double> mul(new srg<double>(), out.dx.spec);
       double dot = idx_dot(out.dx, out.x);
       idx_addc(out.dx, -dot, pp);
       idx_mul(out.x, pp, mul);
@@ -206,12 +206,12 @@ namespace ebl {
     if( n == 0) return;
     if( n > 6 ) { eblerror("illegal type")}
     else{
-      idx<double> mul(new Srg<double>(), out.x.spec);
-      idx<double> dot(new Srg<double>(), out.x.spec);
-      idx<double> pp(new Srg<double>(), out.x.spec);
-      idx<double> mul2(new Srg<double>(), out.x.spec);
-      idx<double> pp2(new Srg<double>(), out.x.spec);
-      idx<double> mul3(new Srg<double>(), out.x.spec);
+      idx<double> mul(new srg<double>(), out.x.spec);
+      idx<double> dot(new srg<double>(), out.x.spec);
+      idx<double> pp(new srg<double>(), out.x.spec);
+      idx<double> mul2(new srg<double>(), out.x.spec);
+      idx<double> pp2(new srg<double>(), out.x.spec);
+      idx<double> mul3(new srg<double>(), out.x.spec);
       idx_mul(out.x, out.x, mul);
       idx_dotc(out.x, (double)-2, dot);
       idx_addc(dot, (double)1, pp);

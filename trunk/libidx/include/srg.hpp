@@ -38,126 +38,138 @@
 
 namespace ebl {
 
-// Templates for Srg.h
-// This is placed in an hpp file so that implementation files can instanciate templates.
+  ////////////////////////////////////////////////////////////////
+  // the creation of an idx should call lock() on the srg,
+  // and its destruction should call unlock().
 
-////////////////////////////////////////////////////////////////
-// the creation of an idx should call lock() on the Srg,
-// and its destruction should call unlock().
-
-// simplest constructor builds an empty Srg
-template <class T> Srg<T>::Srg() {
-  refcount = 0;
-  data = (T *)NULL;
-  size_ = 0;
-}
-
-// return size on success, and -1 on error
-template <class T> Srg<T>::Srg(intg s) {
-  intg r;
-  refcount = 0;
-  data = (T *)NULL;
-  if ( ( r=this->changesize(s) ) > 0 ) this->clear();
-  if (r < 0) { eblerror("can't allocate Srg"); }
-}
-
-// destructor: can be called twice when the Srg
-// is not dynamically allocated. Hence this must
-// make sure the data is not deallocated twice.
-template <class T> Srg<T>::~Srg() {
-  DEBUG("Srg::destructor: refcount=%d\n",refcount);
-  if (refcount != 0) { eblerror("can't delete an Srg with non zero refcount"); }
-  if (data != NULL) {
-    free((void *)data);
-    data = NULL;
-    size_ =0;
-  }
-}
-
-// return size
-template <class T> intg Srg<T>::size() { return size_; }
-
-// low-level resize: can grow and shrink
-// returns -1 on failure.
-// Self should be used with care, because shrinking
-// an Srg that has idx pointing to it is very dangerous.
-// In most case, the grow() method should be used.
-template <class T> intg Srg<T>::changesize(intg s) {
-  if (s == 0) {
-    free((void *)data);
+  // simplest constructor builds an empty srg
+  template <typename T> srg<T>::srg() {
+    refcount = 0;
     data = (T *)NULL;
     size_ = 0;
-  } else {
-    // TODO: malloc/realloc not thread safe
-    // use google's tcalloc? (supposedly much faster:
-    // http://google-perftools.googlecode.com/svn/trunk/doc/tcmalloc.html    
-    data = (T *)realloc((void *)data, s*sizeof(T));
+  }
+
+  // return size on success, and -1 on error
+  template <typename T> srg<T>::srg(intg s) {
+    intg r;
+    refcount = 0;
+    data = (T *)NULL;
+    if ( ( r=this->changesize(s) ) > 0 ) this->clear();
+    if (r < 0) { eblerror("can't allocate srg"); }
+  }
+
+  // destructor: can be called twice when the srg
+  // is not dynamically allocated. Hence this must
+  // make sure the data is not deallocated twice.
+  template <typename T> srg<T>::~srg() {
+    DEBUG("srg::destructor: refcount=%d\n",refcount);
+    if (refcount != 0) {
+      eblerror("can't delete an srg with non zero refcount"); }
     if (data != NULL) {
-      size_ = s;
-      return size_;
-    } else {
+      free((void *)data);
+      data = NULL;
+#ifdef __DEBUGMEM__
+      this->memsize -= size_ * sizeof (T);
+#endif    
       size_ = 0;
-      return -1;
     }
   }
-  return size_;
-}
 
-// this grows the size of the srg if necessary.
-// This is called when a new idx is created on the Srg.
-// returns -1 on failure.
-template <class T> intg Srg<T>::growsize(intg s) {
-  if (s > size_) { return this->changesize(s); } else { return size_; }
-}
+  // return size
+  template <typename T> intg srg<T>::size() { return size_; }
 
-template<class T> intg Srg<T>::growsize_chunk(intg s, intg s_chunk){
-  if(s > size_) { return this->changesize(s + s_chunk); } else {return size_;}
-}
-
-// decrement refcount and free if it reaches zero
-template <class T> int Srg<T>::unlock() {
-  refcount--;
-  //if (refcount == 0) this->nopened--;
-  DEBUG("Srg::unlock: refcount=%d\n",refcount);
-  if (refcount<0) {
-    std::cerr << "srg negative reference counter: " << refcount << std:: endl;
-    eblerror("srg has negative refcount");
-    return refcount;
-  }
-  else {
-    if (refcount == 0) {
-      delete this;
-      return 0;
+  // low-level resize: can grow and shrink
+  // returns -1 on failure.
+  // Self should be used with care, because shrinking
+  // an srg that has idx pointing to it is very dangerous.
+  // In most case, the grow() method should be used.
+  template <typename T> intg srg<T>::changesize(intg s) {
+#ifdef __DEBUGMEM__
+    this->memsize -= size_ * sizeof (T);
+#endif    
+    if (s == 0) {
+      free((void *)data);
+      data = (T *)NULL;
+      size_ = 0;
     } else {
+      // TODO: malloc/realloc not thread safe
+      // use google's tcalloc? (supposedly much faster:
+      // http://google-perftools.googlecode.com/svn/trunk/doc/tcmalloc.html    
+      data = (T *)realloc((void *)data, s*sizeof(T));
+      if (data != NULL) {
+	size_ = s;
+#ifdef __DEBUGMEM__
+	this->memsize += size_ * sizeof (T);
+#endif    
+	return size_;
+      } else {
+	size_ = 0;
+	return -1;
+      }
+    }
+#ifdef __DEBUGMEM__
+    this->memsize += size_ * sizeof (T);
+#endif    
+    return size_;
+  }
+
+  // this grows the size of the srg if necessary.
+  // This is called when a new idx is created on the srg.
+  // returns -1 on failure.
+  template <typename T> intg srg<T>::growsize(intg s) {
+    if (s > size_) { return this->changesize(s); } else { return size_; }
+  }
+
+  template<typename T> intg srg<T>::growsize_chunk(intg s, intg s_chunk){
+    if(s > size_) { return this->changesize(s + s_chunk); } else {return size_;}
+  }
+
+  // decrement refcount and free if it reaches zero
+  template <typename T> int srg<T>::unlock() {
+    refcount--;
+    //if (refcount == 0) this->nopened--;
+    DEBUG("srg::unlock: refcount=%d\n",refcount);
+    if (refcount<0) {
+      std::cerr << "srg negative reference counter: " << refcount << std:: endl;
+      eblerror("srg has negative refcount");
       return refcount;
     }
+    else {
+      if (refcount == 0) {
+	delete this;
+	return 0;
+      } else {
+	return refcount;
+      }
+    }
   }
-}
 
-// increment refcount
-template <class T> int Srg<T>::lock() {
-  //  if (refcount == 0) this->nopened++;
-  DEBUG("Srg::lock: refcount=%d\n",refcount+1);
-  return ++refcount;
-}
+  // increment refcount
+  template <typename T> int srg<T>::lock() {
+    //  if (refcount == 0) this->nopened++;
+    DEBUG("srg::lock: refcount=%d\n",refcount+1);
+    return ++refcount;
+  }
 
-// get i-th item
-template <class T> T Srg<T>::get(intg i) { return data[i]; }
+  // get i-th item
+  template <typename T> T srg<T>::get(intg i) { return data[i]; }
 
-// set i-th item
-template <class T> void Srg<T>::set(intg i, T val) { data[i] = val; }
+  // set i-th item
+  template <typename T> void srg<T>::set(intg i, T val) { data[i] = val; }
 
-// fill with a ubyte value
-template <class T> void Srg<T>::clear() { memset(data, 0, size_ * sizeof(T)); }
+  // fill with a ubyte value
+  template <typename T> void srg<T>::clear() {
+    memset(data, 0, size_ * sizeof(T));
+  }
 
-// prints innards
-template <class T> void Srg<T>::pretty(FILE *f) {
-  fprintf(f,"Srg at address %ld; ",(long)this);
-  fprintf(f,"size=%ld; ",size_);
-  fprintf(f,"data=%ld; ",(long)data);
-  fprintf(f,"refcount=%d\n",refcount);
-}
-
+  // prints innards
+  template <typename T> void srg<T>::pretty(FILE *f) {
+    fprintf(f,"srg at address %ld; ",(long)this);
+    fprintf(f,"size=%ld; ",size_);
+    fprintf(f,"data=%ld; ",(long)data);
+    fprintf(f,"refcount=%d\n",refcount);
+  }
+  
 } // end namespace ebl
 
 #endif /* SRG_HPP_ */

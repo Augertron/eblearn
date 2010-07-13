@@ -167,8 +167,8 @@ void ebl_basic_test::test_softmax(){
   */
   idx<double> ib3 = in->x.select(0,0).select(0,0),
     calc_out = out->x.select(0,0).select(0,0);
-  idx<double> ib(new Srg<double>(), ib3.spec),
-    des_out(new Srg<double>(), ib3.spec);
+  idx<double> ib(new srg<double>(), ib3.spec),
+    des_out(new srg<double>(), ib3.spec);
   idx_dotc(ib3, module->beta, ib);
   idx_exp(ib);
   double ib2 = 1/idx_sum(ib);

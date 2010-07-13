@@ -55,12 +55,6 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 ////////////////////////////////////////////////////////////////
 // network
 
-//template <class T> intg Srg<T>::nopened = 0;
-// intg Srg<float>::nopened = 0;
-// intg Srg<int>::nopened = 0;
-// intg Srg<ubyte>::nopened = 0;
-// intg Srg<uint>::nopened = 0;
-
 typedef float t_net; // network precision
 
 #ifdef __GUI__
@@ -235,9 +229,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // loop
       toverall.start();
       while(!cam->empty()) {
-	// cout << "nopend: " << Srg<double>::nopened;
-	// cout << " nopend: " << Srg<short>::nopened;
-	// cout << " nopend: " << Srg<char const *>::nopened << endl;
 	// get a new frame
 	tpass.restart();
 	// if the pre-camera is defined use it until empty
