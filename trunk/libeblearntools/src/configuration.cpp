@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <limits>
+#include <string.h>
 
 #include "tools_utils.h"
 #include "configuration.h"
@@ -527,7 +528,8 @@ namespace ebl {
   meta_configuration::~meta_configuration() {
   }
   
-  bool meta_configuration::read(const char *fname, bool bresolve) {
+  bool meta_configuration::read(const char *fname, bool bresolve,
+				const string *tstamp) {
     cout << "Reading meta configuration file: " << fname << endl;
     // read file and extract all variables and values
     if (!extract_variables(fname, smap, otxt, NULL, bresolve))
@@ -543,7 +545,10 @@ namespace ebl {
     resolve();
 
     // name of entire experiment
-    name = timestamp();
+    if (tstamp && strcmp(tstamp->c_str(), ""))
+      name = *tstamp; // override timestamp manually
+    else // use current timestamp
+      name = timestamp();
     name += ".";
     if (smap.find("meta_name") != smap.end())
       name += smap["meta_name"];

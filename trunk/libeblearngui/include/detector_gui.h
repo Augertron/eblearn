@@ -75,7 +75,7 @@ namespace ebl {
     //! <wname> is an optional window title.
     template <typename Tin>
       vector<bbox*>& display(detector<Tnet> &cl, idx<Tin> &img,
-			     double threshold,
+			     double threshold, const char *frame_name = NULL,
 			     unsigned int h0 = 0, unsigned int w0 = 0, 
 			     double dzoom = 1.0, Tnet vmin = 0, Tnet vmax = 0,
 			     int wid = -1, const char *wname = NULL);
@@ -88,6 +88,7 @@ namespace ebl {
     template <typename Tin>
       vector<bbox*>& display_input(detector<Tnet> &cl, idx<Tin> &img,
 				   double threshold,
+				   const char *frame_name = NULL,
 				   unsigned int h0 = 0, unsigned int w0 = 0, 
 				   double dzoom = 1.0, Tnet vmin = 0,
 				   Tnet vmax = 0,
@@ -102,6 +103,7 @@ namespace ebl {
     template <typename Tin>
       vector<bbox*>& display_inputs_outputs(detector<Tnet> &cl, 
 					    idx<Tin> &img, double threshold,
+					    const char *frame_name = NULL,
 					    unsigned int h0 = 0,
 					    unsigned int w0 = 0, 
 					    double dzoom = 1.0, Tnet vmin = 0,
@@ -116,7 +118,9 @@ namespace ebl {
     //! <wname> is an optional window title.
     template <typename Tin>
       vector<bbox*>& display_all(detector<Tnet> &cl, idx<Tin> &img, 
-				 double threshold,unsigned int h0 = 0,
+				 double threshold,
+				 const char *frame_name = NULL,
+				 unsigned int h0 = 0,
 				 unsigned int w0 = 0, double dzoom = 1.0,
 				 Tnet vmin = 0, Tnet vmax = 0,
 				 int wid = -1,const char *wname = NULL);

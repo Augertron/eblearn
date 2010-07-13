@@ -230,7 +230,9 @@ namespace ebl {
 
   void Window::save(const string &filename) {
     QPixmap p = QPixmap::grabWidget(this, rect());
-    if (!p.save(filename.c_str(), "PNG", 90))
+    string fname = filename;
+    fname += ".png";
+    if (!p.save(fname.c_str(), "PNG", 90))
       cerr << "Warning: failed to save window to " << filename << "." << endl;
   }
   

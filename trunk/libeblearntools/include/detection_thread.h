@@ -54,18 +54,23 @@ namespace ebl {
   template <typename Tnet>
   class detection_thread : public thread {
   public:
-    detection_thread(configuration &conf, const char *arg2);
+    detection_thread(configuration &conf, const char *arg2 = NULL);
     ~detection_thread();
     
     //! Execute the detection thread.
     virtual void execute();
     //! Return true if new data was copied to the thread, false otherwise.
-    virtual bool set_data(idx<ubyte> &frame);
+    virtual bool set_data(idx<ubyte> &frame, string &frame_name);
     //! Return true if new data was copied from the thread, false otherwise.
     //! We get the frame back even though it was set via set_data,
     //! because we do not know which frame was actually used.
     //! (could use some kind of id, and remember frames to avoid copy).
     virtual bool get_data(vector<bbox*> &bboxes, idx<ubyte> &frame);
+    //! Return true if the thread is available to process a new frame, false
+    //! otherwise.
+    virtual bool available();
+    //! Set the directory where to write outputs.
+    virtual void set_output_directory(string &out);
     
   private:
     //! Copy passed bounding boxes into bboxes class member
@@ -88,6 +93,9 @@ namespace ebl {
     vector<bbox*>::iterator	 ibox;
     bool			 in_updated;	// thread input updated
     bool			 out_updated;	// thread output updated
+    bool                         bavailable;    // thread is available
+    string                       frame_name;    // name of current frame
+    string                       outdir;        // output directory
   };
 
 } // end namespace ebl

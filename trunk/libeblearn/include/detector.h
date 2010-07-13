@@ -182,8 +182,11 @@ namespace ebl {
     //! fprop input image throught network.
     //! if image's and network's type differ, cast image into network's type
     //! through an idx_copy (avoid for better performance).
+    //! @param frame_name Optional name for the frame being processed, used
+    //!          in the output files to be saved.
     template <class Tin>
-      vector<bbox*>& fprop(idx<Tin> &img, T threshold);
+      vector<bbox*>& fprop(idx<Tin> &img, T threshold,
+			   const char *frame_name = NULL);
 
     //! Return a reference to a vector of windows in the original image that
     //! yielded a detection.
@@ -253,7 +256,8 @@ namespace ebl {
 
     //! save all bounding boxes of original (in original resolution) and
     //! preprocessed (resized and filtered) input into directory dir.
-    void save_bboxes(const vector<bbox*> &bboxes, const string &dir);
+    void save_bboxes(const vector<bbox*> &bboxes, const string &dir,
+		     const char *frame_name = NULL);
 
     ////////////////////////////////////////////////////////////////
     // members

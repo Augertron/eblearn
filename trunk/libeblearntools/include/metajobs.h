@@ -103,7 +103,9 @@ namespace ebl {
     virtual ~job_manager();
 
     //! Read meta configuration.
-    bool read_metaconf(const char *fname);
+    //! @param tstamp An optional timestamp to be used for the job's name
+    //!               instead of the current timestamp.
+    bool read_metaconf(const char *fname, const string *tstamp = NULL);
 
     //! Enable recursive copy of this path into jobs folders.
     void set_copy(const string &path);

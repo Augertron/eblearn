@@ -45,7 +45,8 @@ meta_send_best=15
 ################################################################################
 
 # directories
-xpname=${meta_name}_`date +"%Y%m%d.%H%M%S"`
+tstamp=`date +"%Y%m%d.%H%M%S"`
+xpname=${meta_name}_${tstamp}
 root=~/${machine}data/pedestrians/
 root2=~/${machine}data/
 dataroot=$root/ds3
@@ -91,7 +92,8 @@ echo "meta_output_dir = ${out}" >> $metaconf
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
 echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
-${eblearnbin}/metarun $metaconf
+echo "meta_name = ${meta_name}" >> $metaconf
+${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
 #touch /home/sermanet/humairadata/pedestrians/out/pedtrain_nictat_humair_20100509.183243/20100509.183243.ped_humair
 
 # looping on retraining on false positives
@@ -143,9 +145,9 @@ for iter in `seq 1 ${maxiteration}`
 # override train command by detect command
   echo >> $bestconf
   echo "meta_command = ${eblearnbin}/objdetect" >> $bestconf
-  echo "meta_name = ${meta_name}_false_positives" >> $bestconf
+  echo "meta_name = ${meta_name}_falsepos_${iter}" >> $bestconf
 # start parallelized extraction
-  ${eblearnbin}/metarun $bestconf
+  ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
 
 # find path to latest metarun output: get directory with latest date
   lastout=`ls -dt1 ${out}/*/ | head -1`
@@ -194,6 +196,6 @@ for iter in `seq 1 ${maxiteration}`
   echo "retrain = 1" >> $metaconf
   echo "retrain_weights = ${bestweights}" >> $metaconf
   echo "meta_name = ${meta_name}_retraining_${iter}" >> $metaconf
-  ${eblearnbin}/metarun $metaconf
+  ${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
     
 done

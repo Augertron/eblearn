@@ -57,18 +57,17 @@ namespace ebl {
   }
   
   template <typename Tnet> template <typename Tin>
-  vector<bbox*>& detector_gui<Tnet>::display(detector<Tnet> &cl, idx<Tin> &img,
-					  double threshold, unsigned int h0,
-					  unsigned int w0,
-					  double dzoom,  Tnet vmin, Tnet vmax,
-					  int wid, const char *wname) {
+  vector<bbox*>& detector_gui<Tnet>::
+  display(detector<Tnet> &cl, idx<Tin> &img, double threshold,
+	  const char *frame_name, unsigned int h0, unsigned int w0,
+	  double dzoom,  Tnet vmin, Tnet vmax, int wid, const char *wname) {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector"));
     select_window(display_wid);
     // disable_window_updates();
 
     // run network
-    vector<bbox*>& vb = cl.fprop(img, threshold);
+    vector<bbox*>& vb = cl.fprop(img, threshold, frame_name);
     // draw output
     ostringstream label;
     vector<bbox*>::iterator i = vb.begin();
@@ -97,6 +96,7 @@ namespace ebl {
   template <typename Tnet> template <typename Tin> 
   vector<bbox*>& detector_gui<Tnet>::
   display_input(detector<Tnet> &cl, idx<Tin> &img, double threshold,
+		const char *frame_name, 
 		unsigned int h0, unsigned int w0, double dzoom, Tnet vmin,
 		Tnet vmax, int wid, const char *wname) {
     display_wid = (wid >= 0) ? wid :
@@ -108,12 +108,14 @@ namespace ebl {
     draw_matrix(img, "input", h0, w0, dzoom, dzoom, (Tin) vmin, (Tin) vmax);
     w0 += (uint) (img.dim(1) * dzoom + 5);
 
-    return display(cl, img, threshold, h0, w0, dzoom, vmin, vmax, wid, wname);
+    return display(cl, img, threshold, frame_name,
+		   h0, w0, dzoom, vmin, vmax, wid, wname);
   }
 
   template <typename Tnet> template <typename Tin>
   vector<bbox*>& detector_gui<Tnet>::
   display_inputs_outputs(detector<Tnet> &cl, idx<Tin> &img, double threshold,
+			 const char *frame_name, 
 			 unsigned int h0, unsigned int w0, double dzoom,
 			 Tnet vmin, Tnet vmax, int wid, const char *wname){
     display_wid_fprop = (wid >= 0) ? wid : 
@@ -122,8 +124,8 @@ namespace ebl {
 
     // draw input and output
     vector<bbox*>& bb =
-      display_input(cl, img, threshold, h0, w0, dzoom, (Tnet)0, (Tnet)255,
-		    display_wid_fprop);
+      display_input(cl, img, threshold, frame_name,
+		    h0, w0, dzoom, (Tnet)0, (Tnet)255, display_wid_fprop);
 
     // disable_window_updates();
     // draw internal inputs and outputs
@@ -250,6 +252,7 @@ namespace ebl {
   template <typename Tnet> template <typename Tin>
   vector<bbox*>& detector_gui<Tnet>::
   display_all(detector<Tnet> &cl, idx<Tin> &img, double threshold,
+	      const char *frame_name,
 	      unsigned int h0, unsigned int w0, double dzoom, Tnet vmin,
 	      Tnet vmax, int wid, const char *wname) {
     display_wid_fprop = (wid >= 0) ? wid : 
@@ -258,8 +261,8 @@ namespace ebl {
 
     // draw input and output
     vector<bbox*>& bb =
-      display_inputs_outputs(cl, img, threshold, h0, w0, dzoom, vmin, vmax,
-			     display_wid_fprop);
+      display_inputs_outputs(cl, img, threshold, frame_name,
+			     h0, w0, dzoom, vmin, vmax, display_wid_fprop);
 
     // disable_window_updates();
     // draw internal states of first scale

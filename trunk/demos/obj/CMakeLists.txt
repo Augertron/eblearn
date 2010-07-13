@@ -70,6 +70,21 @@ IF (QT_FOUND) #---------------------------------------------------------------
 ENDIF (QT_FOUND) #------------------------------------------------------------
 LINK_BOOST(objdetect)
 
+# compile executable: mtdetect
+################################################################################
+add_executable (mtdetect
+  src/mtdetect.cpp
+  )
+  
+# link executable with external libraries
+################################################################################
+target_link_libraries (mtdetect eblearn idx eblearntools)
+IF (QT_FOUND) #---------------------------------------------------------------
+  target_link_libraries (mtdetect idxgui)
+  target_link_libraries (mtdetect eblearngui)
+ENDIF (QT_FOUND) #------------------------------------------------------------
+LINK_BOOST(mtdetect)
+
 # compile executable: objdetect
 ################################################################################
 add_executable (objtrack
