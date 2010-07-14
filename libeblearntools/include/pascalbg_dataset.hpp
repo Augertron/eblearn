@@ -353,7 +353,7 @@ namespace ebl {
 					     const string &filename) {
     ostringstream folder, fname;
     try {
-      mkdir(outdir.c_str(), MKDIR_RIGHTS);
+      mkdir_full(outdir);
       uint i;
       // shuffle randomly vector of patches to avoid taking top left corner
       // as first patch every time
@@ -363,9 +363,9 @@ namespace ebl {
 	// create folder if doesn't exist
 	folder.str("");
 	folder << outdir << "/" << "bg" << i+1 << "/";
-	mkdir(folder.str().c_str(), MKDIR_RIGHTS);
+	mkdir_full(folder);
 	folder << "/background/";
-	mkdir(folder.str().c_str(), MKDIR_RIGHTS);
+	mkdir_full(folder);
 	// save patch in folder
 	// switch saving behavior
 	fname.str("");
