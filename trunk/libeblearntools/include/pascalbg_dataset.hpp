@@ -363,9 +363,9 @@ namespace ebl {
 	// create folder if doesn't exist
 	folder.str("");
 	folder << outdir << "/" << "bg" << i+1 << "/";
-	mkdir_full(folder);
+	mkdir_full(folder.str().c_str());
 	folder << "/background/";
-	mkdir_full(folder);
+	mkdir_full(folder.str().c_str());
 	// save patch in folder
 	// switch saving behavior
 	fname.str("");
