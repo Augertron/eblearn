@@ -125,48 +125,41 @@ namespace ebl {
   //!   y_ijk = v_ijk  / max(s_jk, <s>_jk)
   //! </code>}
   template <class T>
-  void weighted_std_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
-#ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << this->name << "_w_module_in0.x_" << in.x << ".mat";
-    save_matrix(in.x, fname.str());
-#endif
-
-    if (global_norm) // global normalization
-      idx_std_normalize(in.x, in.x);
-    T a = (T) 1e-5; // avoid divisions by zero
-
-
+  void weighted_std_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {  
 #ifdef __DUMP_STATES__ // used to debug
     fname.str("");
     fname << "dump_" << this->name << "_w_module_in.x_" << in.x << ".mat";
     save_matrix(in.x, fname.str());
 #endif
 
+    if (global_norm) // global normalization
+      idx_std_normalize(in.x, in.x);
+    T a = (T) 1e-5; // avoid divisions by zero
     //! sum_j (w_j * in_j)
-    convmean.fprop(in, inmean);
+    convmean.fprop(in, out);
     //! in - mean
-    difmod.fprop(in, inmean, inzmean);
+    difmod.fprop(in, out, out);
     //! (in - inmean)^2
-    idx_addc(inzmean.x, a, inzmean.x); // TODO: temporary
-    sqmod.fprop(inzmean, inzmeansq);
+    inzmean.resize_as(out);
+    idx_addc(out.x, a, inzmean.x); // TODO: temporary
+    sqmod.fprop(inzmean, in);
     //! sum_j (w_j (in - mean)^2)
-    convvar.fprop(inzmeansq, invar);
+    convvar.fprop(in, out);
     //! sqrt(sum_j (w_j (in - mean)^2))
-    idx_addc(invar.x, a, invar.x); // TODO: temporary
-    sqrtmod.fprop(invar, instd);
+    idx_addc(out.x, a, out.x); // TODO: temporary
+    sqrtmod.fprop(out, in);
     if (threshold) { // don't update threshold for inputs
       //! update the threshold values in thres
-      T mm = (T) (idx_sum(instd.x) / (T) instd.size());
+      T mm = (T) (idx_sum(in.x) / (T) in.size());
       thres.thres = mm;
       thres.val = mm;
     }
     //! std(std<mean(std)) = mean(std)
-    thres.fprop(instd, thstd);
+    thres.fprop(in, out);
     //! 1/std
-    invmod.fprop(thstd, invstd);
+    invmod.fprop(out, in);
     //! out = (in-mean)/std
-    mcw.fprop(inzmean, invstd, out);
+    mcw.fprop(inzmean, in, out);
   }
 
   template <class T>

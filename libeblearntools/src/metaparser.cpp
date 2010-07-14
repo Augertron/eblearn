@@ -410,29 +410,44 @@ namespace ebl {
 
   void metaparser::process(const string &dir) {
     string confname, jobs_info;
+    configuration conf;
     // find all configurations in non-sorted order, the meta conf
     // should be the first element.
     list<string> *confs = find_fullfiles(dir, ".*[.]conf", NULL, false);
-    if (confs) {
+    if (confs && confs->size() > 0) {
       confname = confs->front();
       delete confs;
+      conf.read(confname.c_str());
+    } else {
+      cerr << "warning: could not find a .conf file describing how to analyze "
+	   << "this directory" << endl;
     }
     int iter = 0;
-    configuration conf(confname);
     varmaplist best = analyze(conf, dir, iter);
     send_report(conf, dir, best, iter, confname, jobs_info);
   }
   
   // write plot files, using gpparams as additional gnuplot parameters
-  void metaparser::write_plots(const char *dir, const char *gpparams) {
+  void metaparser::write_plots(const char *dir, const char *gpparams,
+			       const char *gpterminal) {
     string colsep = "\t";
-    string gnuplot_config1 = "clear ; set terminal pdf ; \n";
+    string gnuplot_config1 = "clear ; set terminal ";
+    gnuplot_config1 += gpterminal;
+    gnuplot_config1 += "; \n";
     string gnuplot_config2 = " set output \"";
-    string gnuplot_config3 = ".pdf\" ;	plot ";
+    string gnuplot_config3 = ".";
+    gnuplot_config3 += gpterminal;
+    gnuplot_config3 += "\" ;	plot ";
     // a map of file pointers for .plot and .p files
     map<string,ofstream*> plotfiles, pfiles;
     list<string> plist; // list p file names
 
+    if (!tree.exists("job"))
+      cerr << "warning: expected a \"job\" variable to differentiate each "
+	   << "curve in the plots but not found." << endl;
+    if (!tree.exists("i"))
+      cerr << "warning: expected a \"i\" variable for the x-axis "
+	   << "in the plots but not found." << endl;
     // we assume that the tree has been extracted using those keys in that
     // order: job, i
     // loop on each job
@@ -535,9 +550,12 @@ namespace ebl {
       if (ret < 0)
 	cerr << "warning: command failed" << endl;
     }
+    if (plist.size() <= 0)
+      cerr << "Warning: no plots created." << endl;
   }
 
   void metaparser::parse_logs(const string &root, list<string> *sticky) {
+    cout << "Parsing all .log files recursively..." << endl;
     list<string> *fl = find_fullfiles(root, ".*[.]log");
     if (fl) {
       for (list<string>::iterator i = fl->begin(); i != fl->end(); ++i) {
@@ -556,76 +574,89 @@ namespace ebl {
   varmaplist metaparser::analyze(configuration &conf, const string &dir,
 				int &maxiter) {
     list<string> sticky;
+    varmaplist best;
+    string gpparams = "";
+    if (conf.exists("meta_gnuplot_params"))
+      gpparams = conf.get_string("meta_gnuplot_params");
     if (conf.exists("meta_sticky_vars")) {
       sticky = string_to_stringlist(conf.get_string("meta_sticky_vars"));
       cout << "Sticky variables: " << stringlist_to_string(sticky) << endl;
     }
     parse_logs(dir, &sticky);
-    write_plots(dir.c_str(),
-		conf.get_cstring("meta_gnuplot_params"));
+    if (conf.exists("meta_gnuplot_terminal"))
+      write_plots(dir.c_str(), gpparams.c_str(),
+		  conf.get_cstring("meta_gnuplot_terminal"));
+    else
+      write_plots(dir.c_str(), gpparams.c_str());
     maxiter = get_max_common_iter();
-    list<string> keys = string_to_stringlist(conf.get_string("meta_minimize"));
-    varmaplist best =
-      tree.best(keys, std::max((uint) 1, conf.get_uint("meta_send_best")));
-    ostringstream dirbest, tmpdir, cmd;
-    string job;
-    int ret;
+    if (!conf.exists("meta_minimize"))
+      cerr << "Warning: meta_minimize not defined, not attempting to determine"
+	   << " variables minimum." << endl;
+    else {
+      list<string> keys =
+	string_to_stringlist(conf.get_string("meta_minimize"));
+      best =
+	tree.best(keys, std::max((uint) 1, conf.get_uint("meta_send_best")));
+      ostringstream dirbest, tmpdir, cmd;
+      string job;
+      int ret;
     
-    // save best weights
-    dirbest << dir << "/best";
-    cmd << "rm -Rf " << dirbest.str(); // remove previous best
-    ret = std::system(cmd.str().c_str());
-    mkdir_full(dirbest.str().c_str());
-    uint j = 1;
-    for (varmaplist::iterator i = best.begin(); i != best.end(); ++i, ++j) {
-      tmpdir.str("");
-      tmpdir << dirbest.str() << "/" << setfill('0') << setw(2) << j << "/";
-      mkdir_full(tmpdir.str().c_str());
-      // look for conf filename to save
-      if (i->find("config") != i->end()) { // found config
-	cmd.str("");
-	cmd << "cp " << i->find("config")->second << " " << tmpdir.str();
-	ret = std::system(cmd.str().c_str());
-      }
-      // find job name
-      if (i->find("job") == i->end()) // not found, continue
-	continue ; // can't do anything without job name
-      else
-	job = i->find("job")->second;
-      // look for classes filename to save
-      if (i->find("classes") != i->end()) { // found classes
-	cmd.str("");
-	cmd << "cp " << dir << "/" << job << "/"
-	    << i->find("classes")->second << " " << tmpdir.str();
-	ret = std::system(cmd.str().c_str());
-      }
-      // save out log
-      cmd.str("");
-      cmd << "cp " << dir << "/" << job << "/"
-	  << "out_" << job << ".log " << tmpdir.str();
+      // save best weights
+      dirbest << dir << "/best";
+      cmd << "rm -Rf " << dirbest.str(); // remove previous best
       ret = std::system(cmd.str().c_str());
-      // look for weights filename to save
-      if (i->find("saved") != i->end()) { // found weights
-	cmd.str("");
-	cmd << "cp " << dir << "/" << job << "/"
-	    << i->find("saved")->second << " " << tmpdir.str();
-	ret = std::system(cmd.str().c_str());
-	// add weights filename into configuration
-#ifdef __BOOST__
-	if ((i->find("config") != i->end()) &&
-	    (i->find("saved") != i->end())) {
-	  path p(i->find("config")->second);
+      mkdir_full(dirbest.str().c_str());
+      uint j = 1;
+      for (varmaplist::iterator i = best.begin(); i != best.end(); ++i, ++j) {
+	tmpdir.str("");
+	tmpdir << dirbest.str() << "/" << setfill('0') << setw(2) << j << "/";
+	mkdir_full(tmpdir.str().c_str());
+	// look for conf filename to save
+	if (i->find("config") != i->end()) { // found config
 	  cmd.str("");
-	  cmd << "echo \"weights_file=" << i->find("saved")->second 
-	      << " # variable added by metarun\n\" >> "
-	      << tmpdir.str() << "/" << p.leaf();
+	  cmd << "cp " << i->find("config")->second << " " << tmpdir.str();
 	  ret = std::system(cmd.str().c_str());
 	}
+	// find job name
+	if (i->find("job") == i->end()) // not found, continue
+	  continue ; // can't do anything without job name
+	else
+	  job = i->find("job")->second;
+	// look for classes filename to save
+	if (i->find("classes") != i->end()) { // found classes
+	  cmd.str("");
+	  cmd << "cp " << dir << "/" << job << "/"
+	      << i->find("classes")->second << " " << tmpdir.str();
+	  ret = std::system(cmd.str().c_str());
+	}
+	// save out log
+	cmd.str("");
+	cmd << "cp " << dir << "/" << job << "/"
+	    << "out_" << job << ".log " << tmpdir.str();
+	ret = std::system(cmd.str().c_str());
+	// look for weights filename to save
+	if (i->find("saved") != i->end()) { // found weights
+	  cmd.str("");
+	  cmd << "cp " << dir << "/" << job << "/"
+	      << i->find("saved")->second << " " << tmpdir.str();
+	  ret = std::system(cmd.str().c_str());
+	  // add weights filename into configuration
+#ifdef __BOOST__
+	  if ((i->find("config") != i->end()) &&
+	      (i->find("saved") != i->end())) {
+	    path p(i->find("config")->second);
+	    cmd.str("");
+	    cmd << "echo \"weights_file=" << i->find("saved")->second 
+		<< " # variable added by metarun\n\" >> "
+		<< tmpdir.str() << "/" << p.leaf();
+	    ret = std::system(cmd.str().c_str());
+	  }
 #endif
+	}
       }
+      // tar all best files
+      tar(dirbest.str(), dir);
     }
-    // tar all best files
-    tar(dirbest.str(), dir);
     return best;
   }
   

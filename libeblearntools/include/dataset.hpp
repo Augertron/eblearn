@@ -451,7 +451,7 @@ namespace ebl {
 	// make class directory if necessary
 	fname.str("");
 	fname << root1 << "/" << get_class_string(lab.get()) << "/";
-	mkdir_full(fname.str());
+	mkdir_full(fname.str().c_str());
 	// save image
 	fname << get_class_string(lab.get()) << "_" << id++ << "." << save_mode;
 	tmp = dat.shift_dim(0, 2); // shift from planar to interleaved

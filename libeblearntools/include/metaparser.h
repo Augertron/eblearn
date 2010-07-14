@@ -177,7 +177,9 @@ namespace ebl {
     //! Write text files parsable by plotting tools such as gnuplot,
     //! and generate pdf plots with gnuplot into directory dir.
     //! \param gpparams Extra plot configurations parameters.
-    void write_plots(const char *dir = NULL, const char *gpparams = NULL);
+    //! \param gptermianl The gnuplot terminal to use (default is pdf).
+    void write_plots(const char *dir = NULL, const char *gpparams = NULL,
+		     const char *gpterminal = "pdf");
 
     //! Return the n best values (minimized) of key.
     natural_varmap best(const string &key, uint n, bool display = false);

@@ -313,7 +313,7 @@ namespace ebl {
        }
 #endif
        ms = tpass.elapsed_milliseconds();
-       cout << "processing: " << ms << " ms." << endl;
+       cout << "processing=" << ms << " ms." << endl;
 #ifdef __DEBUGMEM__
        pretty_memory();
 #endif
