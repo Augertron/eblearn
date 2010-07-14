@@ -173,6 +173,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // timing variables
       timer tpass, toverall;
       long ms;
+      uint cnt = 0;
+      cout << "i=" << cnt << endl;
   
       // loop
       toverall.start();
@@ -193,6 +195,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	      fp << (*ibboxes)->h0 + (*ibboxes)->height << endl;
 	    }
 	    updated = false;
+	    cnt++;
+	    cout << "i=" << cnt << endl;
 	  }
 	  // check if ready
 	  if ((*ithreads)->available()) {

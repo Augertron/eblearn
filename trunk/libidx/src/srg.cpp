@@ -53,7 +53,7 @@ namespace ebl {
     total += srg<void*>::memsize;
     total += srg<uint>::memsize;
     total += srg<bool>::memsize;
-    std::cout << "total memory usage is " << total / 1048576 << " Mb"
+    std::cout << "total_memory_usage=" << total / 1048576 << " Mb"
   	      << std::endl;
   }
   
