@@ -353,7 +353,7 @@ namespace ebl {
 					     const string &filename) {
     ostringstream folder, fname;
     try {
-      mkdir_full(outdir);
+      mkdir_full(outdir.c_str());
       uint i;
       // shuffle randomly vector of patches to avoid taking top left corner
       // as first patch every time
