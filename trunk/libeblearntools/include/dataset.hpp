@@ -518,6 +518,11 @@ namespace ebl {
       // set min/max val for display
       minval = (Tdata) -1;
       maxval = (Tdata) 1;
+    } else if (!strcmp(ppconv_type.c_str(), "Yp")) {
+      ppmodule = new rgb_to_yp_module<Tdata>(ppkernel_size);
+      // set min/max val for display
+      minval = (Tdata) -1;
+      maxval = (Tdata) 1;
     } else if (!strcmp(ppconv_type.c_str(), "YUV")) {
       eblerror("YUV pp module not implemented");
     } else if (!strcmp(ppconv_type.c_str(), "HSV")) {
