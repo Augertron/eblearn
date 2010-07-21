@@ -146,12 +146,10 @@ namespace ebl {
   // clear methods
 
   template <typename T> void fstate_idx<T>::clear() {
-    //    cout << "clearall(x): " << this << endl;
     idx_clear(x);
   }
 
   template <typename T> void fstate_idx<T>::clear_x() {
-    //    cout << "clear(x): " << this << endl;
     idx_clear(x);
   }
 
@@ -352,14 +350,11 @@ namespace ebl {
   // clear methods
 
   template <typename T> void bstate_idx<T>::clear() {
-    //    cout << "clearall(dx): " << this << endl;
     idx_clear(x);
     idx_clear(dx);
-    idx_clear(ddx);
   }
 
   template <typename T> void bstate_idx<T>::clear_dx() {
-    //    cout << "clear(dx): " << this << endl;
     idx_clear(dx);
   }
 
@@ -586,12 +581,12 @@ namespace ebl {
   // clear methods
 
   template <typename T> void bbstate_idx<T>::clear() {
-    //    cout << "clearall(ddx): " << this << endl;
+    idx_clear(x);
+    idx_clear(dx);
     idx_clear(ddx);
   }
 
   template <typename T> void bbstate_idx<T>::clear_ddx() {
-    //    cout << "clear(x, dx, ddx): " << this << endl;
     idx_clear(ddx);
   }
 
