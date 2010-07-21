@@ -1,3 +1,4 @@
+
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun, Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
@@ -209,7 +210,7 @@ namespace ebl {
 
   // Clean vectors. Module doesn't have ownership of sub-modules
   template <typename T, class Tstate>
-  layers<T,Tstate>::~layers_gen() {
+  layers<T,Tstate>::~layers() {
     if (this->own_contents){
       for(unsigned int i=0;i<modules->size(); i++){
     	delete (*modules)[i];

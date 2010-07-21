@@ -17,7 +17,7 @@ meta_email=pierre.sermanet@gmail.com
 machine=banquoa
 # directories
 dataroot=~/${machine}data/ped/daimler_detection/
-train_root=$dataroot/train/data/
+root=$dataroot/train/data/
 out=$dataroot/ds/
 nopersons_root=$dataroot/train/bg_full/
 bin=${HOME}/eblearn/bin/
@@ -25,6 +25,7 @@ bin=${HOME}/eblearn/bin/
 # target size
 h=96
 w=48
+chans=1
 # number of samples in validation set
 maxval=2000
 draws=5 # number of train/val sets to draw
@@ -52,7 +53,6 @@ outbg=${out}/${bgds}
 #ddisplay="-disp -sleep 1000"
 
 # create directories
-mkdir -p $root
 mkdir -p $out
 mkdir -p $outbg
 mkdir -p $nopersons_root
@@ -63,19 +63,19 @@ mkdir -p $nopersons_root
 
 # extract background images at random scales and positions
 $bin/dscompiler $nopersons_root -type patch -precision $precision \
-    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
     -maxdata $maxbg -nopadded \
     $ddisplay # debug
 
 # compile background dataset
 $bin/dscompiler ${outbg} -precision $precision \
-    -outdir ${out} -dname ${bgds} -dims ${h}x${w}x3 \
+    -outdir ${out} -dname ${bgds} -dims ${h}x${w}x${chans} \
     # $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
 $bin/dscompiler $root -precision $precision -outdir ${out} -channels $pp \
-    -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
+    -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
 #    $maxdata $maxperclass $ddisplay # debug
 
 # merge normal dataset with background dataset
