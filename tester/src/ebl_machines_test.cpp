@@ -1,4 +1,4 @@
-#include "NetTest.h"
+#include "ebl_machines_test.h"
 
 #ifdef __GUI__
 #include "libeblearngui.h"
@@ -11,13 +11,13 @@ extern string *gl_data_dir;
 extern string *gl_mnist_dir;
 extern string *gl_mnist_errmsg;
 
-void NetTest::setUp() {
+void ebl_machines_test::setUp() {
 }
 
-void NetTest::tearDown() {
+void ebl_machines_test::tearDown() {
 }
 
-void NetTest::test_lenet5_mnist() {
+void ebl_machines_test::test_lenet5_mnist() {
   typedef double t_net;
   bool display = true;
   uint ninternals = 1;
@@ -43,10 +43,10 @@ void NetTest::test_lenet5_mnist() {
 
   // create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  parameter<t_net> theparam(60000); // create trainable parameter
+  parameter<bbstate_idx<t_net> > theparam(60000); // create trainable parameter
   lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
 		   targets.dim(0), true, false, true, false);
-  supervised_euclidean_machine<t_net, ubyte> thenet((module_1_1<t_net>&) l5, targets, dims);
+  supervised_euclidean_machine<t_net, ubyte> thenet(l5, targets, dims);
   supervised_trainer<t_net, ubyte, ubyte> thetrainer(thenet, theparam);
 
 #ifdef __GUI__
@@ -133,7 +133,7 @@ void NetTest::test_lenet5_mnist() {
 }
 
 
-void NetTest::test_full_table() {
+void ebl_machines_test::test_full_table() {
   idx<intg> m = full_table(2, 3);
   CPPUNIT_ASSERT_EQUAL((intg) 0, m.get(0, 0));
   CPPUNIT_ASSERT_EQUAL((intg) 0, m.get(0, 1));

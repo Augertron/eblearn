@@ -35,14 +35,17 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
 
-#define WEIGHTED_STD_MODULE_GUI(name, T)				\
-  template <class T>							\
-  void weighted_std_module_gui::name(weighted_std_module<T> &wsm,	\
-				     state_idx<T> &in, state_idx<T> &out, \
+#define WEIGHTED_STD_MODULE_GUI(name, T, op)				\
+  template <typename T, class Tstate>					\
+  void weighted_std_module_gui::name(weighted_std_module<T,Tstate> &wsm, \
+				     Tstate &in, Tstate &out,		\
 				     unsigned int &h0,			\
 				     unsigned int &w0,			\
-				     double zoom, T vmin, T vmax, \
-				     bool show_out) {			\
+				     double zoom, T vmin, T vmax,	\
+				     bool show_out, bool run) {		\
+    /* run it */							\
+    if (run)								\
+      wsm.op(in, out);							\
     uint h = h0, w = w0;						\
     /* display text */							\
     gui << gui_only() << at(h, w) << "inmean out:" << wsm.inmean.T	\
@@ -130,8 +133,8 @@ namespace ebl {
     h = h0;								\
   }
 
-  WEIGHTED_STD_MODULE_GUI(display_fprop, x)
-  WEIGHTED_STD_MODULE_GUI(display_bprop, dx)
-  WEIGHTED_STD_MODULE_GUI(display_bbprop, ddx)
+  WEIGHTED_STD_MODULE_GUI(display_fprop, x, fprop)
+  WEIGHTED_STD_MODULE_GUI(display_bprop, dx, bprop)
+  WEIGHTED_STD_MODULE_GUI(display_bbprop, ddx, bbprop)
   
 } // end namespace ebl

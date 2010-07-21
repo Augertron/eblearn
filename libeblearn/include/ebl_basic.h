@@ -46,22 +46,24 @@ namespace ebl {
   //! with its internal weight matrix w and puts the result in the output.
   //! This module has a replicable order of 1, if the input has a bigger order,
   //! use the replicable version of this module: linear_module_replicable.
-  template <class T> class linear_module: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class linear_module: public module_1_1<T, Tstate> {
   public:
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //!        If p is null, a local buffer will be used.
     //! \param in the size of the input to the linear combination.
     //! \param out the size of the output to the linear combination.
-    linear_module(parameter<T> *p, intg in, intg out, const char *name = "");
+    linear_module(parameter<Tstate> *p, intg in, intg out,
+		  const char *name = "");
     //! destructor
     virtual ~linear_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
     //! order of operation
     virtual int replicable_order() { return 1; }
     //! forgetting weights by replacing with random values
@@ -69,7 +71,7 @@ namespace ebl {
     //! normalize
     virtual void normalize();
     //! resize the output based on input dimensions
-    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+    virtual void resize_output(Tstate &in, Tstate &out);
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim fprop_size(idxdim &i_size);
@@ -77,11 +79,11 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual linear_module<T>* copy();
+    virtual linear_module<T,Tstate>* copy();
 
     // members ////////////////////////////////////////////////////////
   public:
-    state_idx<T> w;
+    Tstate w;
   };
 
   //! The replicable version of linear_module.
@@ -93,8 +95,8 @@ namespace ebl {
   //! dimensions <42x9x9> will produce a 9x9 grid where each box contains
   //! the output of the processing of each <42> slice.
   DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable, 
-				linear_module<T>,
-				(parameter<T> *p, intg in, intg out, 
+				linear_module, T, Tstate,
+				(parameter<Tstate> *p, intg in, intg out, 
 				 const char *name = ""),
 				(p, in, out, name));
 
@@ -105,7 +107,8 @@ namespace ebl {
   //! This module has a replicable order of 3, if the input has a bigger order,
   //! use the replicable version of this module:
   //! convolution_module_replicable.
-  template <class T> class convolution_module: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class convolution_module : public module_1_1<T, Tstate> {
   public:    
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
@@ -117,23 +120,23 @@ namespace ebl {
     //! \param stridej is the stride at which convolutions are done on 
     //!        the width axis.
     //! \param table is the convolution connection table.
-    convolution_module(parameter<T> *p, intg kerneli, intg kernelj, 
-			  intg  stridei, intg stridej, 
-			  idx<intg> &table, const char *name = "");
+    convolution_module(parameter<Tstate> *p, intg kerneli, intg kernelj, 
+		       intg  stridei, intg stridej, 
+		       idx<intg> &table, const char *name = "");
     //! destructor
     virtual ~convolution_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! order of operation
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
-    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+    virtual void resize_output(Tstate &in, Tstate &out);
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim fprop_size(idxdim &i_size);
@@ -141,12 +144,12 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual convolution_module<T>* copy();
+    virtual convolution_module<T,Tstate>* copy();
 
     // members ////////////////////////////////////////////////////////
   public:
     intg		tablemax;
-    state_idx<T>	kernel;
+    Tstate	        kernel;
     intg		thickness;
     intg		stridei;
     intg		stridej;
@@ -169,9 +172,9 @@ namespace ebl {
   //! dimensions <2x16x16x9x9> will produce a 9x9 grid where each box contains
   //! the output of the processing of each <2x16x16> slice.
   DECLARE_REPLICABLE_MODULE_1_1(convolution_module_replicable, 
-				convolution_module<T>,
-				(parameter<T> *p, intg ki, intg kj, intg si, 
-				 intg sj, idx<intg> &table,
+				convolution_module, T, Tstate,
+				(parameter<Tstate> *p, intg ki, intg kj,
+				 intg si, intg sj, idx<intg> &table,
 				 const char *name = ""),
 				(p, ki, kj, si, sj, table, name));
 
@@ -182,28 +185,29 @@ namespace ebl {
   //! This module has a replicable order of 3, if the input has a bigger order,
   //! use the replicable version of this module:
   //! subsampling_module_replicable.
-  template <class T> class subsampling_module: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class subsampling_module: public module_1_1<T, Tstate> {
   public:
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //!        If p is null, a local buffer will be used.
-    subsampling_module(parameter<T> *p, intg stridei_, intg stridej_,
+    subsampling_module(parameter<Tstate> *p, intg stridei_, intg stridej_,
 		       intg subi, intg subj, intg thick,
 		       const char *name = "");
     //! destructor
     virtual ~subsampling_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! order of operation
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
-    virtual void resize_output(state_idx<T> &in, state_idx<T> &out);
+    virtual void resize_output(Tstate &in, Tstate &out);
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim fprop_size(idxdim &i_size);
@@ -211,12 +215,12 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual subsampling_module<T>* copy();
+    virtual subsampling_module<T,Tstate>* copy();
 
     // members ////////////////////////////////////////////////////////
   public:
-    state_idx<T>	coeff;
-    state_idx<T>	sub;
+    Tstate	        coeff;
+    Tstate	        sub;
     intg		thickness;
     intg		stridei;
     intg		stridej;    
@@ -231,8 +235,8 @@ namespace ebl {
   //! dimensions <2x16x16x9x9> will produce a 9x9 grid where each box contains
   //! the output of the processing of each <2x16x16> slice.
   DECLARE_REPLICABLE_MODULE_1_1(subsampling_module_replicable, 
-				subsampling_module<T>,
-				(parameter<T> *p, intg sti, intg stj,
+				subsampling_module, T, Tstate,
+				(parameter<Tstate> *p, intg sti, intg stj,
 				 intg subi, intg subj, intg thick,
 				 const char *name = ""),
 				(p, sti, stj, subi, subj, thick, name));
@@ -243,30 +247,31 @@ namespace ebl {
   //! and puts the results in the output. This module is spatially replicable 
   //! (the input can have an order greater than 1 and the operation will apply
   //! to all elements).
-  template <class T> class addc_module: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class addc_module: public module_1_1<T, Tstate> {
   public:
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //!        If p is null, a local buffer will be used.
     //! \param size is the number of biases, or the size of dimensions 0 of 
     //! inputs and outputs.
-    addc_module(parameter<T> *p, intg size, const char *name = "");
+    addc_module(parameter<Tstate> *p, intg size, const char *name = "");
     //! destructor
     virtual ~addc_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! Returns a deep copy of this module.
-    virtual addc_module<T>* copy();
+    virtual addc_module<T,Tstate>* copy();
 
     // members ////////////////////////////////////////////////////////
   public:
-    state_idx<T>  bias; //!< the biases
+    Tstate  bias; //!< the biases
   };
 
   ////////////////////////////////////////////////////////////////
@@ -278,7 +283,8 @@ namespace ebl {
   //! to get x^(p-1), therefore this module assumes that
   //! the :input:x and :output:x is not modified until bprop
   // TODO: write specialized modules square and sqrt to run faster
-  template <class T> class power_module : public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class power_module : public module_1_1<T,Tstate> {
   public:
     //! <p> is double number, every element of input is raised to
     //! its <p>th power.
@@ -286,11 +292,11 @@ namespace ebl {
     //! destructor
     virtual ~power_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
 
     // members ////////////////////////////////////////////////////////
   private:
@@ -302,18 +308,22 @@ namespace ebl {
   // diff_module
   //! Elementwise subtraction class.
   //! Derived from module-2-1.
-  template <class T> class diff_module : public module_2_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class diff_module : public module_2_1<T, Tstate> {
   public:
     //! constructor.
     diff_module();
     //! destructor
     virtual ~diff_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in1, state_idx<T> &in2, state_idx<T> &out);
+    virtual void fprop(Tstate &in1, Tstate &in2,
+		       Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in1, state_idx<T> &in2, state_idx<T> &out);
+    virtual void bprop(Tstate &in1, Tstate &in2,
+		       Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in1, state_idx<T> &in2,state_idx<T> &out);
+    virtual void bbprop(Tstate &in1, Tstate &in2,
+			Tstate &out);
   };
 
 
@@ -321,7 +331,8 @@ namespace ebl {
   // mul_module
   //! Elementwise multiplication class.
   //! Derived from module-2-1.
-  template <class T> class mul_module : public module_2_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class mul_module : public module_2_1<T, Tstate> {
   private:
     idx<T> tmp; //!< temporary buffer
     
@@ -331,11 +342,14 @@ namespace ebl {
     //! destructor
     virtual ~mul_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in1, state_idx<T> &in2, state_idx<T> &out);
+    virtual void fprop(Tstate &in1, Tstate &in2,
+		       Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in1, state_idx<T> &in2, state_idx<T> &out);
+    virtual void bprop(Tstate &in1, Tstate &in2,
+		       Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in1, state_idx<T> &in2,state_idx<T> &out);
+    virtual void bbprop(Tstate &in1, Tstate &in2,
+			Tstate &out);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -343,7 +357,8 @@ namespace ebl {
   //! a thresholding module that filters the input and
   //! any entry that is smaller then a given threshold is 
   //! set to a specified value.
-  template <class T> class thres_module : public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class thres_module : public module_1_1<T,Tstate> {
   public:
     T thres;
     T val;
@@ -357,11 +372,11 @@ namespace ebl {
     //! destructor
     virtual ~thres_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
   };
     
 
@@ -370,7 +385,8 @@ namespace ebl {
   //! opposite of zero padding, sometimes one needs to 
   //! cut the borders of an input to make it usable with
   //! a convolved output
-  template <class T> class cutborder_module : module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class cutborder_module : module_1_1<T,Tstate> {
   private:
     int nrow, ncol;
 
@@ -383,18 +399,19 @@ namespace ebl {
     //! destructor
     virtual ~cutborder_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
   };
     
   ////////////////////////////////////////////////////////////////
   // zpad_module
   //! a simple zero padding module that is mostly usefull for doing
   //! same size output convolutions.
-  template <class T> class zpad_module : public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class zpad_module : public module_1_1<T,Tstate> {
   public:
     //! Constructor. Adding same size borders on each side.
     //! \param nr The number of rows added on each side.
@@ -410,11 +427,11 @@ namespace ebl {
     //! destructor
     virtual ~zpad_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
   private:
     int nrow, ncol; //!< padding on left and top
     int nrow2, ncol2; //!< padding on botton and right
@@ -424,7 +441,8 @@ namespace ebl {
   // mirrorpad_module
   //! A simple zero padding module that is mostly usefull for doing
   //! same size output convolutions.
-  template <class T> class mirrorpad_module : public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class mirrorpad_module : public module_1_1<T,Tstate> {
   private:
     int nrow, ncol;
 
@@ -437,36 +455,38 @@ namespace ebl {
     //! destructor
     virtual ~mirrorpad_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
   };
   
   ////////////////////////////////////////////////////////////////
   // fsum_module
   //! This modules iterates of the last two dimenions and takes
   //! the sum of the remaining dimensions.
-  template <class T> class fsum_module : public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class fsum_module : public module_1_1<T,Tstate> {
   public:
     //! constructor.
     fsum_module();
     //! destructor
     virtual ~fsum_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
   };
 
   ////////////////////////////////////////////////////////////////
   // range_lut_module
   //! This modules transforms its inputs to discrete values corresponding to a
   //! range of values, as described a given lookup table (lut).
-  template <class T> class range_lut_module : public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class range_lut_module : public module_1_1<T,Tstate> {
   public:
     //! constructor.
     //! @param value_range A matrix containing a series of value / range pairs.
@@ -480,11 +500,11 @@ namespace ebl {
     //! destructor
     virtual ~range_lut_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     /* //! backward propagation from out to in */
-    /* virtual void bprop(state_idx<T> &in, state_idx<T> &out); */
+    /* virtual void bprop(Tstate &in, Tstate &out); */
     /* //! second-derivative backward propagation from out to in */
-    /* virtual void bbprop(state_idx<T> &in, state_idx<T> &out); */
+    /* virtual void bbprop(Tstate &in, Tstate &out); */
   protected:
     idx<T>	value_range;
   };
@@ -493,18 +513,19 @@ namespace ebl {
   // binarize_module
   //! This modules transforms its inputs to binary outputs based on a given
   //! threshold.
-  template <class T> class binarize_module : public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class binarize_module : public module_1_1<T,Tstate> {
   public:
     //! constructor.
     binarize_module(T threshold, T false_value, T true_value);
     //! destructor
     virtual ~binarize_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     /* //! backward propagation from out to in */
-    /* virtual void bprop(state_idx<T> &in, state_idx<T> &out); */
+    /* virtual void bprop(Tstate &in, Tstate &out); */
     /* //! second-derivative backward propagation from out to in */
-    /* virtual void bbprop(state_idx<T> &in, state_idx<T> &out); */
+    /* virtual void bbprop(Tstate &in, Tstate &out); */
   protected:
     T	threshold;
     T	false_value;

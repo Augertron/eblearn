@@ -46,19 +46,21 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
-  template <class T> class net_cscscf : public layers<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class net_cscscf : public layers<T,Tstate> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
-    net_cscscf();
+    net_cscscf(Tstate *in = NULL, Tstate *out = NULL);
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    net_cscscf(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0,
-		      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
-		      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-		      idx<intg> &tbl2, intg outthick, bool norm = false,
-		      bool mirror = false, bool tanh = false,
-		      bool shrink = false);
+    net_cscscf(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
+	       idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+	       idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+	       idx<intg> &tbl2, intg outthick, bool norm = false,
+	       bool mirror = false, bool tanh = false,
+	       bool shrink = false,
+	       Tstate *in = NULL, Tstate *out = NULL);
     virtual ~net_cscscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -75,7 +77,7 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, intg outthick, bool norm = false,
@@ -84,19 +86,21 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
-  template <class T> class net_cscf : public layers<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class net_cscf : public layers<T,Tstate> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
-    net_cscf();
+    net_cscf(Tstate *in = NULL, Tstate *out = NULL);
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    net_cscf(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0,
+    net_cscf(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
 	     idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	     idx<intg> &tbl1, intg outthick, bool norm = false,
 	     bool mirror = false, bool tanh = false,
 	     bool shrink = false, bool lut_features = false,
-	     idx<T> *lut = NULL);
+	     idx<T> *lut = NULL,
+	     Tstate *in = NULL, Tstate *out = NULL);
     virtual ~net_cscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -113,7 +117,7 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg outthick, bool norm = false,
 	      bool mirror = false, bool tanh = false, bool shrink = false,
@@ -122,18 +126,20 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
-  template <class T> class net_cscc : public layers<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class net_cscc : public layers<T,Tstate> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
-    net_cscc();
+    net_cscc(Tstate *in = NULL, Tstate *out = NULL);
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    net_cscc(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0,
+    net_cscc(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
 	     idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	     idx<intg> &tbl1, idx<intg> &tbl2, intg outthick, bool norm = false,
 	     bool mirror = false, bool tanh = false,
-	     bool shrink = false);
+	     bool shrink = false,
+	     Tstate *in = NULL, Tstate *out = NULL);
     virtual ~net_cscc();
 
     //! The init function creates the machine by stacking the modules in this
@@ -150,7 +156,7 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, idx<intg> &tbl2, intg outthick, 
 	      bool norm = false,
@@ -159,19 +165,21 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! Standard LeNet5-type architecture without the final e-dist RBF layer.
-  template <class T> class net_cscsc : public layers<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class net_cscsc : public layers<T,Tstate> {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
-    net_cscsc();
+    net_cscsc(Tstate *in = NULL, Tstate *out = NULL);
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    net_cscsc(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
-		     idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
-		     idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
-		     idx<intg> &tbl2, bool norm = false,
-		     bool mirror = false, bool tanh = false,
-		     bool shrink = false);
+    net_cscsc(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
+	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
+	      idx<intg> &tbl2, bool norm = false,
+	      bool mirror = false, bool tanh = false,
+	      bool shrink = false,
+	      Tstate *in = NULL, Tstate *out = NULL);
     virtual ~net_cscsc();
 
     //! The init function creates the machine by stacking the modules in this
@@ -188,7 +196,7 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter<T> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, bool norm = false, bool mirror = false,
@@ -201,15 +209,17 @@ namespace ebl {
   //! with the norm boolean.
   //! color can be turned on with the color boolean, in which case
   //! a 3-layer input is assumed and bigger tables are used.
-  template <class T> class lenet_cscsc : public net_cscsc<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class lenet_cscsc : public net_cscsc<T,Tstate> {
   public:
-    lenet_cscsc(parameter<T> &prm, intg image_height, intg image_width,
+    lenet_cscsc(parameter<Tstate> &prm, intg image_height, intg image_width,
 		intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 		intg si1, intg sj1, intg output_size,
 		bool norm = false, bool color = false, bool mirror = false,
 		bool tanh = false, bool shrink = false,
 		idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL,
-		idx<intg> *table2_ = NULL);
+		idx<intg> *table2_ = NULL,
+		Tstate *in = NULL, Tstate *out = NULL);
     virtual ~lenet_cscsc() {}
   };
 
@@ -219,15 +229,17 @@ namespace ebl {
   //! with the norm boolean.
   //! color can be turned on with the color boolean, in which case
   //! a 3-layer input is assumed and bigger tables are used.
-  template <class T> class lenet : public net_cscscf<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class lenet : public net_cscscf<T,Tstate> {
   public:
-    lenet(parameter<T> &prm, intg image_height, intg image_width,
+    lenet(parameter<Tstate> &prm, intg image_height, intg image_width,
 	  intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 	  intg si1, intg sj1, intg hid, intg output_size,
 	  bool norm = false, bool color = false, bool mirror = false,
 	  bool tanh = false, bool shrink = false,
 	  idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL,
-	  idx<intg> *table2_ = NULL);
+	  idx<intg> *table2_ = NULL,
+	  Tstate *in = NULL, Tstate *out = NULL);
     virtual ~lenet() {}
   };
 
@@ -237,13 +249,15 @@ namespace ebl {
   //! with the norm boolean.
   //! color can be turned on with the color boolean, in which case
   //! a 3-layer input is assumed and bigger tables are used.
-  template <class T> class lenet_cscf : public net_cscf<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class lenet_cscf : public net_cscf<T,Tstate> {
   public:
-    lenet_cscf(parameter<T> &prm, intg image_height, intg image_width,
+    lenet_cscf(parameter<Tstate> &prm, intg image_height, intg image_width,
 	       intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 	       intg output_size, bool norm = false, bool color = false,
 	       bool mirror = false, bool tanh = false, bool shrink = false,
-	       idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL);
+	       idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL,
+	       Tstate *in = NULL, Tstate *out = NULL);
     virtual ~lenet_cscf() {}
   };
 
@@ -272,9 +286,10 @@ namespace ebl {
   //!  (setq p (new idx1-ddparam 0 0.1 0.02 0.02 80000))
   //!  (setq z (new-lenet5 32 32 5 5 2 2 5 5 2 2 120 10 p))
   //! </code>}
-  template <class T> class lenet5 : public net_cscscf<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class lenet5 : public net_cscscf<T,Tstate> {
   public:
-    lenet5(parameter<T> &prm, intg image_height, intg image_width,
+    lenet5(parameter<Tstate> &prm, intg image_height, intg image_width,
 	   intg ki0, intg kj0, intg si0, intg sj0,
 	   intg ki1, intg kj1, intg si1, intg sj1,
 	   intg hid, intg output_size, bool norm = false, bool mirror = false,
@@ -285,11 +300,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! Lenet7, similar to lenet5 with different neural connections.
   //! This network takes a 1-layer image as input.
-  template <class T> class lenet7 : public net_cscscf<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class lenet7 : public net_cscscf<T,Tstate> {
   public:
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
-    lenet7(parameter<T> &prm, intg image_height, intg image_width,
+    lenet7(parameter<Tstate> &prm, intg image_height, intg image_width,
 	   intg output_size, bool norm = false, bool mirror = false,
 	   bool tanh = false, bool shrink = false);
     virtual ~lenet7() {}
@@ -299,11 +315,13 @@ namespace ebl {
   //! Lenet7_binocular, similar to lenet5 with different neural connections.
   //! This network expects a 2-layer image containing each stereoscopic left
   //! and right images.
-  template <class T> class lenet7_binocular : public net_cscscf<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class lenet7_binocular : public net_cscscf<T,Tstate> {
   public:
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
-    lenet7_binocular(parameter<T> &prm, intg image_height, intg image_width,
+    lenet7_binocular(parameter<Tstate> &prm, intg image_height,
+		     intg image_width,
 		     intg output_size, bool norm = false, bool mirror = false,
 		     bool tanh = false, bool shrink = false);
     virtual ~lenet7_binocular() {}
@@ -311,13 +329,14 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   //! supevised euclidean machine
-  template <class Tdata, class Tlabel> class supervised_euclidean_machine 
-    : public fc_ebm2_gen<state_idx<Tdata>, Tlabel, Tdata> {
+  template <typename Tdata, class Tlabel, class Tstate = bbstate_idx<Tdata> >
+    class supervised_euclidean_machine
+    : public fc_ebm2<Tdata, Tstate, bbstate_idx<Tlabel>, Tstate> {
   public:
     euclidean_module<Tdata, Tlabel>	fcost;	// euclidean cost function
-    state_idx<Tdata>			fout;	// hidden state in between
+    Tstate			fout;	// hidden state in between
 
-    supervised_euclidean_machine(module_1_1<Tdata> &net_,
+    supervised_euclidean_machine(module_1_1<Tdata,Tstate> &net_,
 				 idx<Tdata> &targets, idxdim &dims);
     virtual ~supervised_euclidean_machine();
   };

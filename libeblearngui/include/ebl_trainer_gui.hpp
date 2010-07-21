@@ -101,7 +101,6 @@ namespace ebl {
     unsigned int h1 = h01, w1 = w01, nh1 = 0;
     unsigned int h2 = h02, w2 = w02, i2 = 0;
     bool correct;
-    Tlabel answer;
 
     // display top
     gui << set_colors(255, 0, 0, 255, 255, 255, 255, 127) << gui_only();
@@ -124,15 +123,16 @@ namespace ebl {
     for (unsigned int i = 0; (i < ds.size()) && (i2 < nh * nw); ++i) {
       // test sample
       ds.fprop(*st.input, st.label);
-      correct = st.test_sample(*st.input, st.label.get(), answer, infp);
+      correct = st.test_sample(*st.input, st.label, infp);
       ds.next();
       idx<Tnet> m = st.input->x.select(0, 0);
 
       // 1. display dataset with incorrect and correct answers
       if (nh1 < nh) {
 	draw_matrix_frame(m, (correct?0:128), 0, 0, h1, w1, zoom, zoom);
-	if ((ds.lblstr) && (ds.lblstr->at(answer)))
-	  gui << at(h1 + 2, w1 + 2) << (ds.lblstr->at(answer))->c_str();
+	if ((ds.lblstr) && (ds.lblstr->at(st.answer.x.get())))
+	  gui << at(h1 + 2, w1 + 2)
+	      << (ds.lblstr->at(st.answer.x.get()))->c_str();
 	w1 += m.dim(1) + 2;
 	if (((i + 1) % nw == 0) && (i > 1)) {  
 	  w1 = w01;
@@ -143,8 +143,9 @@ namespace ebl {
       // 2. display first nh * nw incorrect answers
       if (!correct) {
 	draw_matrix_frame(m, (correct?0:128), 0, 0, h2, w2, zoom, zoom);
-	if ((ds.lblstr) && (ds.lblstr->at(answer)))
-	  gui << at(h2 + 2, w2 + 2) << (ds.lblstr->at(answer))->c_str();
+	if ((ds.lblstr) && (ds.lblstr->at(st.answer.x.get())))
+	  gui << at(h2 + 2, w2 + 2)
+	      << (ds.lblstr->at(st.answer.x.get()))->c_str();
 	w2 += m.dim(1) + 2;
 	if (((i2 + 1) % nw == 0) && (i2 > 1)) {  
 	  w2 = w02;
@@ -188,7 +189,6 @@ namespace ebl {
     clear_window();
     // prepare dataset
     st.init(ds);
-    Tlabel answer;
     unsigned int wfdisp = 0, hfdisp = 0;
     unsigned int wfdisp2 = 0, hfdisp2 = 0;
     unsigned int wfdisp3 = 0, hfdisp3 = 0;
@@ -201,29 +201,28 @@ namespace ebl {
       // prepare input
       ds.fprop(*st.input, st.label);
       // fprop and bprop
-      //st.test_sample(*st.input, st.label.get(), answer, infp);
+      //st.test_sample(*st.input, st.label, infp);
       // TODO: display is influencing learning, remove influence
       //      st.learn_sample(*st.input, st.label.get(), args);
-      Tlabel lab = st.label.get();
-      st.machine.fprop(*st.input, lab, st.energy);
+      st.machine.fprop(*st.input, st.label, st.energy);
       st.param.clear_dx();
-      st.machine.bprop(*st.input, lab, st.energy);
+      st.machine.bprop(*st.input, st.label, st.energy);
       st.param.clear_ddx();
-      st.machine.bbprop(*st.input, lab, st.energy);
+      st.machine.bbprop(*st.input, st.label, st.energy);
       
       ds.next();
       // display fprop
-      mg.display_fprop(st.machine, *st.input, answer, st.energy, 
+      mg.display_fprop(st.machine, *st.input, st.answer, st.energy, 
 		       hfdisp, wfdisp, 3.0, (Tnet) -1.0, (Tnet) 1.0, true,
 		       internals_wid);
       // display bprop
       select_window(internals_wid2);
-      mg.display_bprop(st.machine, *st.input, answer, st.energy, 
+      mg.display_bprop(st.machine, *st.input, st.answer, st.energy, 
       		       hfdisp2, wfdisp2, 3.0, (Tnet) 1.0, (Tnet) 1.0, true,
 		       internals_wid2);
       // display bprop
       select_window(internals_wid3);
-      mg.display_bbprop(st.machine, *st.input, answer, st.energy, 
+      mg.display_bbprop(st.machine, *st.input, st.answer, st.energy, 
 			hfdisp3, wfdisp3, 3.0, (Tnet) .01, (Tnet) .01, true,
 			internals_wid3);
       hfdisp += 10;

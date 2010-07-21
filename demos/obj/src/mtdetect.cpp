@@ -52,6 +52,10 @@
 using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
 
+#ifdef __DEBUGMEM__
+  INIT_DEBUGMEM()
+#endif
+
 typedef float t_net; // network precision
 
 #ifdef __GUI__
@@ -61,7 +65,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #endif
     try {
       // check input parameters
-      if ((argc != 2) && (argc != 3) ) {
+      if (argc < 3) {
 	cerr << "wrong number of parameters." << endl;
 	cerr << "usage: obj_detect <config file> [directory or file]" << endl;
 	return -1;
@@ -76,8 +80,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       string		cam_type      = conf.get_string("camera");
       int		height        = conf.get_int("input_height");
       int		width         = conf.get_int("input_width");
-      uint              wid           = 0; // window id
-      uint              wid_states    = 0; // window id
       string		outdir        = "out_";
       outdir += tstamp();
       outdir += "/";
@@ -107,7 +109,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	cam = new camera_directory<ubyte>(conf.get_cstring("retrain_dir"));
       } else { // regular execution
 	if (!strcmp(cam_type.c_str(), "directory")) {
-	  if (argc == 3) 
+	  if (argc >= 3) 
 	    cam = new camera_directory<ubyte>(argv[2], height, width);
 	  else if (conf.exists("input_dir"))
 	    cam = new camera_directory<ubyte>(conf.get_cstring("input_dir"), 
@@ -123,7 +125,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	else if (!strcmp(cam_type.c_str(), "shmem"))
 	  cam = new camera_shmem<ubyte>("shared-mem", height, width);
 	else if (!strcmp(cam_type.c_str(), "video")) {
-	  if (argc == 3)
+	  if (argc >= 3)
 	    cam = new camera_video<ubyte>
 	      (argv[2], height, width, conf.get_uint("input_video_sstep"),
 	       conf.get_uint("input_video_max_duration"));
@@ -168,11 +170,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // night_mode();
       // wid  = display ? new_window("eblearn object recognition") : 0;
       // night_mode();
-      float	zoom = 1;
 #endif  
       // timing variables
       timer tpass, toverall;
-      long ms;
       uint cnt = 0;
       cout << "i=" << cnt << endl;
   

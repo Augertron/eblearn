@@ -44,27 +44,27 @@ namespace ebl {
     weighted_std_module_gui();
     virtual ~weighted_std_module_gui();
 
-    template<class T>
-      static void display_fprop(weighted_std_module<T> &m,
-				state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+      static void display_fprop(weighted_std_module<T,Tstate> &m,
+				Tstate &in, Tstate &out,
 				unsigned int &h0, unsigned int &w0, double zoom,
 				T vmin = 0, T vmax = 0,
-				bool show_out = false);
+				bool show_out = false, bool run = true);
 
-    template<class T>
-      static void display_bprop(weighted_std_module<T> &m,
-				state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+      static void display_bprop(weighted_std_module<T,Tstate> &m,
+				Tstate &in, Tstate &out,
 				unsigned int &h0, unsigned int &w0, double zoom,
 				T vmin = 0, T vmax = 0,
-				bool show_out = false);
+				bool show_out = false, bool run = true);
 
-    template<class T>
-      static void display_bbprop(weighted_std_module<T> &m,
-				 state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+      static void display_bbprop(weighted_std_module<T,Tstate> &m,
+				 Tstate &in, Tstate &out,
 				 unsigned int &h0, unsigned int &w0,
 				 double zoom,
 				 T vmin = 0, T vmax = 0,
-				 bool show_out = false);
+				 bool show_out = false, bool run = true);
   };
 
 } // namespace ebl {

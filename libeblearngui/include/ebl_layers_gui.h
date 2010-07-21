@@ -45,23 +45,23 @@ namespace ebl {
     full_layer_gui();
     virtual ~full_layer_gui();
 
-    template <class T>
-    static void display_fprop(full_layer<T> &nn,
-			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_fprop(full_layer<T,Tstate> &nn,
+			      Tstate &in, Tstate &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
 			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
 
-    template <class T>
-    static void display_bprop(full_layer<T> &nn,
-			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bprop(full_layer<T,Tstate> &nn,
+			      Tstate &in, Tstate &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
 			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
 
-    template <class T>
-    static void display_bbprop(full_layer<T> &nn,
-			       state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bbprop(full_layer<T,Tstate> &nn,
+			       Tstate &in, Tstate &out,
 			       unsigned int &h0, unsigned int &w0, double zoom,
 			       T vmin = 0, T vmax = 0,
 			       bool show_out = false);
@@ -74,26 +74,26 @@ namespace ebl {
     convolution_layer_gui();
     virtual ~convolution_layer_gui();
 
-    template <class T>
-    static void display_fprop(convolution_layer<T> &nn,
-			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_fprop(convolution_layer<T,Tstate> &nn,
+			      Tstate &in, Tstate &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
 			      T vmin = 0, T vmax = 0,
-			      bool show_out = false);
+			      bool show_out = false, bool run = true);
 
-    template <class T>
-    static void display_bprop(convolution_layer<T> &nn,
-			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bprop(convolution_layer<T,Tstate> &nn,
+			      Tstate &in, Tstate &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
 			      T vmin = 0, T vmax = 0,
-			      bool show_out = false);
+			      bool show_out = false, bool run = true);
 
-    template <class T>
-    static void display_bbprop(convolution_layer<T> &nn,
-			       state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bbprop(convolution_layer<T,Tstate> &nn,
+			       Tstate &in, Tstate &out,
 			       unsigned int &h0, unsigned int &w0, double zoom,
 			       T vmin = 0, T vmax = 0,
-			       bool show_out = false);
+			       bool show_out = false, bool run = true);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -103,23 +103,23 @@ namespace ebl {
     convabsnorm_layer_gui();
     virtual ~convabsnorm_layer_gui();
 
-    template <class T>
-    static void display_fprop(convabsnorm_layer<T> &nn,
-			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_fprop(convabsnorm_layer<T,Tstate> &nn,
+			      Tstate &in, Tstate &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
 			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
 
-    template <class T>
-    static void display_bprop(convabsnorm_layer<T> &nn,
-			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bprop(convabsnorm_layer<T,Tstate> &nn,
+			      Tstate &in, Tstate &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
 			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
 
-    template <class T>
-    static void display_bbprop(convabsnorm_layer<T> &nn,
-			       state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bbprop(convabsnorm_layer<T,Tstate> &nn,
+			       Tstate &in, Tstate &out,
 			       unsigned int &h0, unsigned int &w0, double zoom,
 			       T vmin = 0, T vmax = 0,
 			       bool show_out = false);
@@ -132,23 +132,23 @@ namespace ebl {
     subsampling_layer_gui();
     virtual ~subsampling_layer_gui();
 
-    template <class T>
-    static void display_fprop(subsampling_layer<T> &nn,
-			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_fprop(subsampling_layer<T,Tstate> &nn,
+			      Tstate &in, Tstate &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
 			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
 
-    template <class T>
-    static void display_bprop(subsampling_layer<T> &nn,
-			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bprop(subsampling_layer<T,Tstate> &nn,
+			      Tstate &in, Tstate &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
 			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
 
-    template <class T>
-    static void display_bbprop(subsampling_layer<T> &nn,
-			       state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bbprop(subsampling_layer<T,Tstate> &nn,
+			       Tstate &in, Tstate &out,
 			       unsigned int &h0, unsigned int &w0, double zoom,
 			       T vmin = 0, T vmax = 0,
 	bool show_out = false);

@@ -1,4 +1,4 @@
-#include "DataSourceTest.h"
+#include "datasource_test.h"
 #include <iostream>
 #include <algorithm>
 #include <string>
@@ -15,14 +15,14 @@ extern string *gl_data_dir;
 extern string *gl_mnist_errmsg;
 extern string *gl_data_errmsg;
 
-void DataSourceTest::setUp() {
+void datasource_test::setUp() {
 }
 
-void DataSourceTest::tearDown() {
+void datasource_test::tearDown() {
 }
 
 // test function for mnist data source (requires special matrix header reading).
-void DataSourceTest::test_mnist_LabeledDataSource() {
+void datasource_test::test_mnist_LabeledDataSource() {
   CPPUNIT_ASSERT_MESSAGE("TODO: fixme", false);
   CPPUNIT_ASSERT_MESSAGE(*gl_mnist_errmsg, gl_mnist_dir != NULL);
   string datafile = *gl_mnist_dir;
@@ -33,19 +33,19 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
     idx<ubyte> data = load_matrix<ubyte>(datafile);
     idx<ubyte> labels = load_matrix<ubyte>(labelfile);
     labeled_datasource<double,ubyte,ubyte> ds(data, labels);
-    state_idx<double> datum(28, 28);
-    idx<ubyte> label;
+    fstate_idx<double> datum(28, 28);
+    fstate_idx<ubyte> label;
     for (int i = 0; i < 5; i++) {
       ds.fprop(datum, label);
       /* cout<<"Datum:"<<endl;
 	 datum.x.printElems();
 	 cout<<"Label: ";
-	 label.printElems();
+	 label.x.printElems();
 	 cout<<endl; */
       ds.next();
     }
   // briefly test some values of the 5th element of mnist
-    CPPUNIT_ASSERT_EQUAL((unsigned int) 4, (unsigned int) label.get());
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 4, (unsigned int) label.x.get());
     CPPUNIT_ASSERT_EQUAL((unsigned int) 236, (unsigned int) datum.x.get(9, 9));
   } catch(string &err) {
     err = err;
@@ -53,7 +53,7 @@ void DataSourceTest::test_mnist_LabeledDataSource() {
   }
 }
 
-void DataSourceTest::test_imageDirToIdx() {
+void datasource_test::test_imageDirToIdx() {
   // TODO: add test for dataset class
 //   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
 //   string dir = *gl_data_dir;

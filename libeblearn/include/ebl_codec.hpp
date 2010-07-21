@@ -58,15 +58,15 @@ namespace ebl {
   }
 
   template <class T>
-  void codec<T>::fprop(state_idx<T> &in1, state_idx<T> &in2,
-		       state_idx<T> &energy) {
+  void codec<T>::fprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
+		       fstate_idx<T> &energy) {
     // initialize z with a simple one-pass fprop through whole machine
     fprop_one_pass(in1, in2, energy);
   }
   
   template <class T>
-  void codec<T>::bprop(state_idx<T> &in1, state_idx<T> &in2,
-		       state_idx<T> &energy) {
+  void codec<T>::bprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
+		       fstate_idx<T> &energy) {
     // do gradient descent to find optimal code z
     bprop_optimal_code(in1, in2, energy, infp);
     // bprop through all modules
@@ -74,8 +74,8 @@ namespace ebl {
   }
 
   template <class T>
-  void codec<T>::bbprop(state_idx<T> &in1, state_idx<T> &in2,
-			state_idx<T> &energy) {
+  void codec<T>::bbprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
+			fstate_idx<T> &energy) {
     enc_out.clear_ddx();
     dec_out.clear_ddx();
     // initialize all energy 2nd derivatives with global energy derivative
@@ -109,8 +109,8 @@ namespace ebl {
 
   // simple one-pass forward propagation
   template <class T>
-  void codec<T>::fprop_one_pass(state_idx<T> &in1, state_idx<T> &in2, 
-				state_idx<T> &energy) {
+  void codec<T>::fprop_one_pass(fstate_idx<T> &in1, fstate_idx<T> &in2, 
+				fstate_idx<T> &energy) {
     encoder.fprop(in1, enc_out);
     // let the enc-cost produce its best guess
     // for what the code should be. If the cost
@@ -134,8 +134,8 @@ namespace ebl {
   
   // simple one-pass backward propagation
   template <class T>
-  void codec<T>::bprop_one_pass(state_idx<T> &in1, state_idx<T> &in2, 
-				state_idx<T> &energy) {
+  void codec<T>::bprop_one_pass(fstate_idx<T> &in1, fstate_idx<T> &in2, 
+				fstate_idx<T> &energy) {
     enc_out.clear_dx();
     dec_out.clear_dx();
     // initialize all energy derivatives with global energy derivative
@@ -154,8 +154,8 @@ namespace ebl {
   
   // multiple-pass bprop on the decoder only to find the optimal code z
   template <class T>
-  void codec<T>::bprop_optimal_code(state_idx<T> &in1, state_idx<T> &in2, 
-				    state_idx<T> &energy, gd_param &infp) {
+  void codec<T>::bprop_optimal_code(fstate_idx<T> &in1, fstate_idx<T> &in2, 
+				    fstate_idx<T> &energy, gd_param &infp) {
     z.clear_dx();
     bprop(in1, in2, energy); // bprop once to initialize energy
     gd_param temp_ip(infp.eta, 0, 0, 0, 0, 0, 0, 0, 0); 
@@ -198,7 +198,7 @@ namespace ebl {
   }
 
   template <class T>
-  bool codec<T>::check_code_threshold(state_idx<T> &z, gd_param &infp) {
+  bool codec<T>::check_code_threshold(fstate_idx<T> &z, gd_param &infp) {
     return idx_l2norm(z.dx) > infp.gradient_threshold;
   }
 

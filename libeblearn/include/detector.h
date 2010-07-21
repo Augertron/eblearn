@@ -79,7 +79,7 @@ namespace ebl {
   //! SCALES_STEP: scales range from 1 to maximum resolution, with a step size
   enum t_resolution { MANUAL, SCALES, NSCALES, SCALES_STEP };
   
-  template <class T> class detector {
+  template <typename T, class Tstate = fstate_idx<T> > class detector {
   public:    
     ////////////////////////////////////////////////////////////////
     // constructors
@@ -99,8 +99,8 @@ namespace ebl {
     //! \param bias After preprocessing, add this bias to input values.
     //! \param coeff After preprocessing and bias adding,
     //!              scale input values by this coefficient.
-    detector(module_1_1<T> &thenet, idx<ubyte> &lbls,
-	     module_1_1<T> *pp = NULL, uint ppkersz = 0,
+    detector(module_1_1<T,Tstate> &thenet, idx<ubyte> &lbls,
+	     module_1_1<T,Tstate> *pp = NULL, uint ppkersz = 0,
 	     const char *background = NULL, T bias = 0, float coeff = 1.0);
 
     //! Destructor.
@@ -175,6 +175,11 @@ namespace ebl {
     //! Set factors to be applied on the height and width of output bounding
     //! boxes.
     void set_bbox_factors(float hfactor, float wfactor);
+
+    //! Enable memory optimization by using only 2 buffers (in and out)
+    //! for entire flow. Those same buffers must have been passed to the
+    //! network's constructor.
+    void set_mem_optimization(Tstate &in, Tstate &out);
     
     ////////////////////////////////////////////////////////////////
     // execution
@@ -237,8 +242,20 @@ namespace ebl {
     void validate_resolutions();
 
     //! do a fprop on thenet with multiple rescaled inputs
-    void multi_res_fprop(idx<T> &sample);       
+    void multi_res_fprop();       
 
+    //! Prepare image and resolutions. This should be called before
+    //! preprocess_resolution().
+    template <class Tin>
+      void prepare(idx<Tin> &img);
+    
+    //! Do preprocessing (resizing and channel/edge processing) for a particular
+    //! resolution. This will set 'input' and 'output' buffers, that can then
+    //! be used to fprop the network. This uses the 'image' member prepared
+    //! by prepare() and should therefore be called after prepare().
+    //! \param res The resolution to be preprocessed.
+    void preprocess_resolution(uint res);
+    
     //! find maximas in output layer
     void mark_maxima(T threshold);
 
@@ -262,22 +279,24 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     // members
   public:
-    module_1_1<T>	&thenet;
+    module_1_1<T,Tstate>	&thenet;
+    resizepp_module<T,Tstate>   resizepp;
     int			 height;
     int			 width;
-    idx<T>		 grabbed;
-    idx<T>		 grabbed2;
+    idx<T>		 image;
     double		 contrast;
     double		 brightness;
     float		 coef;
     T			 bias;    
     idx<float>		 sizes;
-    idx<void*>		 inputs;	//!< state_idx*
-    idx<void*>		 outputs;	//!< state_idx*
+    Tstate              *input;        //!< input buffer
+    Tstate              *output;       //!< output buffer
+    Tstate              *minput;       //!< input buffer, used with mem optim.
+    Tstate              *moutput;      //!< output buffer, used with mem optim.
+    idx<void*>		 inputs;	//!< fstate_idx*
+    idx<void*>		 outputs;	//!< fstate_idx*
     idx<void*>		 results;	//!< idx<double>*
-    idx<void*>           resize_modules;//!< module_1_1<T>*
-    idx<void*>           nets;          //!< module_1_1<T>*
-    module_1_1<T>       *pp;            //!< preprocessing module
+    module_1_1<T,Tstate> *pp;            //!< preprocessing module
     uint                 ppkersz;       //!< size of pp kernel (if any)
     idx<T>		 smoothing_kernel;
     idx<ubyte>   	 labels;
@@ -312,11 +331,11 @@ namespace ebl {
     bool                 pruning; //!< enable pruning or not
     float                bbhfactor; //!< height bbox factor
     float                bbwfactor; //!< width bbox factor
+    bool                 mem_optimization; //!< optimize memory or not.
 
     ////////////////////////////////////////////////////////////////
     // friends
-    template <typename T2>
-    friend class detector_gui;
+    template <typename T2, class Tstate2> friend class detector_gui;
   };
 
 } // end namespace ebl

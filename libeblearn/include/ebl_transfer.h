@@ -46,7 +46,8 @@ namespace ebl {
   //! Local contrast normalization operation using a weighted expectation
   //! over a local neighborhood. An input set of feature maps is locally
   //! normalized to be zero mean and unit standard deviation.
-  template <class T> class weighted_std_module : public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class weighted_std_module : public module_1_1<T, Tstate> {
   public:
     //! <weighting> is <idx2<double>> that defines the weighting around
     //! the center component.
@@ -60,13 +61,13 @@ namespace ebl {
     //! destructor
     virtual ~weighted_std_module();    
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module.
-    virtual weighted_std_module<T>* copy();
+    virtual weighted_std_module<T,Tstate>* copy();
 
     // friends
     friend class weighted_std_module_gui;
@@ -75,15 +76,15 @@ namespace ebl {
   public:
     bool                mirror; //!< mirror input or not in borders
   private:
-    layers<T>         convmean, convvar;
-    power_module<T>	sqrtmod;	//!< square root module
-    power_module<T>	invmod; //!< inverse module
-    power_module<T>	sqmod;	//!< square module
-    diff_module<T>	difmod; //!< difference module
-    thres_module<T>	thres;	//!< threshold module
-    mul_module<T>	mcw;
-    state_idx<T>	inmean, inzmean, inzmeansq, invar, instd, thstd, invstd;
-    parameter<T>	param;
+    layers<T, Tstate>   convmean, convvar;
+    power_module<T,Tstate>	sqrtmod;	//!< square root module
+    power_module<T,Tstate>	invmod; //!< inverse module
+    power_module<T,Tstate>	sqmod;	//!< square module
+    diff_module<T,Tstate>	difmod; //!< difference module
+    thres_module<T,Tstate>	thres;	//!< threshold module
+    mul_module<T,Tstate>	mcw;
+    Tstate  	        inmean, inzmean, inzmeansq, invar, instd, thstd, invstd;
+    parameter<Tstate>	param;
     idx<T>              w;	//!< weights
     bool                threshold;
     bool                global_norm; //!< perform global normalization first
@@ -98,7 +99,8 @@ namespace ebl {
   //! This module is spatially replicable 
   //! (the input can have an order greater than 1 and the operation will apply
   //! to all elements).
-  template <class T> class abs_module: public module_1_1<T> {    
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class abs_module: public module_1_1<T, Tstate> {    
   public:
     //! Constructor. threshold makes the derivative of abs flat around zero
     //! with radius threshold.
@@ -106,13 +108,13 @@ namespace ebl {
     //! Destructor.
     virtual ~abs_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module.
-    virtual abs_module<T>* copy();
+    virtual abs_module<T,Tstate>* copy();
   private:
     double threshold;
   };
@@ -123,26 +125,28 @@ namespace ebl {
   //! and location of the shrinkage operator. This function is 
   //! useful for learning since there is always gradients flowing 
   //! through it.
-  template <class T> class smooth_shrink_module: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class smooth_shrink_module: public module_1_1<T, Tstate> {
   public:
     //! Constructor 
-    smooth_shrink_module(parameter<T> *p, intg nf, T beta = 10, T bias = .3);
+    smooth_shrink_module(parameter<Tstate> *p, intg nf, T beta = 10,
+			 T bias = .3);
     //! Destructor.
     virtual ~smooth_shrink_module();
     //! forward
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! backward
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! 2nd deriv backward
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module.
-    virtual smooth_shrink_module<T>* copy();
+    virtual smooth_shrink_module<T,Tstate>* copy();
 
   public:
-    state_idx<T> beta, bias;
+    Tstate beta, bias;
   private:
-    state_idx<T> ebb, ebx, tin;
-    abs_module<T> absmod;
+    Tstate ebb, ebx, tin;
+    abs_module<T,Tstate> absmod;
     T default_beta, default_bias;
   };
 

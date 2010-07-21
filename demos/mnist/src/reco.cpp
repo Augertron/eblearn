@@ -43,8 +43,8 @@ int main(int argc, char **argv) { // regular main without gui
   cout << " using trained network " << paramfname << endl;
 
   // load trained network
-  parameter<t_net> theparam;
-  lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10);
+  parameter<fstate_idx<t_net> > theparam;
+  lenet5<fs(t_net)> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10);
   theparam.load_x(paramfname.c_str());
 
   // load image
@@ -53,7 +53,7 @@ int main(int argc, char **argv) { // regular main without gui
   image = image.select(2, 0);
 
   // copy 1 color layer of the image into input state_idx
-  state_idx<t_net> stin(1, image.dim(0), image.dim(1)), stout(1,1,1);
+  fstate_idx<t_net> stin(1, image.dim(0), image.dim(1)), stout(1,1,1);
   idx<t_net> inx = stin.x.select(0, 0); // pointer to 2D input
   idx_copy(image, inx); // convert and copy ubyte 2D image to double 2D input
 

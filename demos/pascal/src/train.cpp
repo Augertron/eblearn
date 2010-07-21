@@ -75,7 +75,7 @@ int main(int argc, char **argv) { // regular main without gui
 
   //! create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  parameter<t_net> theparam(60000); // create trainable parameter
+  parameter<bbstate_idx<t_net> > theparam(60000); // create trainable parameter
   lenet<t_net> net(theparam,
 		   conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
 		   conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
@@ -85,7 +85,7 @@ int main(int argc, char **argv) { // regular main without gui
 		   conf.get_uint("net_full"), targets.dim(0),
 		   conf.get_bool("absnorm"), conf.get_bool("color"),
 		   conf.get_bool("mirror"));
-  supervised_euclidean_machine<t_net, int> thenet((module_1_1<t_net>&)net, targets, dims);
+  supervised_euclidean_machine<t_net, int> thenet(net, targets, dims);
   supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
 
   //! a classifier-meter measures classification errors

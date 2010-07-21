@@ -514,12 +514,12 @@ namespace ebl {
     // initialize preprocessing module
     if (ppmodule) delete ppmodule;
     if (!strcmp(ppconv_type.c_str(), "YpUV")) {
-      ppmodule = new rgb_to_ypuv_module<Tdata>(ppkernel_size);
+      ppmodule = new rgb_to_ypuv_module<fs(Tdata)>(ppkernel_size);
       // set min/max val for display
       minval = (Tdata) -1;
       maxval = (Tdata) 1;
     } else if (!strcmp(ppconv_type.c_str(), "Yp")) {
-      ppmodule = new rgb_to_yp_module<Tdata>(ppkernel_size);
+      ppmodule = new rgb_to_yp_module<fs(Tdata)>(ppkernel_size);
       // set min/max val for display
       minval = (Tdata) -1;
       maxval = (Tdata) 1;
@@ -535,13 +535,13 @@ namespace ebl {
     // initialize resizing module
     if (resizepp) delete resizepp;
     if (!strcmp(resize_mode.c_str(), "bilinear"))
-      resizepp = new resizepp_module<Tdata>
+      resizepp = new resizepp_module<fs(Tdata)>
 	(height, width, BILINEAR_RESIZE, ppmodule, ppkernel_size);
     else if (!strcmp(resize_mode.c_str(), "gaussian"))
-      resizepp = new resizepp_module<Tdata>
+      resizepp = new resizepp_module<fs(Tdata)>
 	(height, width, GAUSSIAN_RESIZE, ppmodule, ppkernel_size);
     else if (!strcmp(resize_mode.c_str(), "mean"))
-      resizepp = new resizepp_module<Tdata>
+      resizepp = new resizepp_module<fs(Tdata)>
 	(height, width, MEAN_RESIZE, ppmodule, ppkernel_size);
     else eblerror("undefined resizing method");
   }    
@@ -991,7 +991,7 @@ namespace ebl {
     } else if (r) // resize using object's window
       resizepp->set_input_region(inr);
     idx<Tdata> tmp = dat.shift_dim(2, 0);
-    state_idx<Tdata> in(tmp.get_idxdim()), out(1,1,1);
+    fstate_idx<Tdata> in(tmp.get_idxdim()), out(1,1,1);
     idx_copy(tmp, in.x);
     resizepp->fprop(in, out);
     // remember bbox of original image in resized image

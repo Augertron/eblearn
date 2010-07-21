@@ -41,6 +41,11 @@
 using namespace std;
 using namespace ebl;
 
+#ifdef __DEBUGMEM__
+#include "libidx.h"
+  INIT_DEBUGMEM()
+#endif
+
 ////////////////////////////////////////////////////////////////
 // global variables
 

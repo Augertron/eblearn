@@ -89,23 +89,23 @@ int main(int argc, char **argv) { // regular main without gui
     create_target_matrix<t_net>(classes.dim(0), 1.0);
 
   //! create the network weights, network and trainer
-  parameter<t_net> theparam; // trained weights
-  lenet<t_net> net(theparam,
-		   conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
-		   conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
-		   conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
-		   conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
-		   conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
-		   conf.get_uint("net_full"), targets.dim(0),
-		   conf.get_bool("absnorm"), conf.get_bool("color"));
+  parameter<fstate_idx<t_net> > theparam; // trained weights
+  lenet<fs(t_net)> net(theparam,
+		       conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
+		       conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
+		       conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
+		       conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
+		       conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
+		       conf.get_uint("net_full"), targets.dim(0),
+		       conf.get_bool("absnorm"), conf.get_bool("color"));
   theparam.load_x(conf.get_cstring("weights"));
-
+  
   // gui
   bool display = conf.get_bool("display"); // enable/disable display
   uint wid;
   float zoom = 1;
 #ifdef __GUI__
-  detector_gui<t_net> dgui;
+  detector_gui<fs(t_net)> dgui;
   if (display)
     wid = new_window("pascal detector");
 #endif
@@ -118,12 +118,12 @@ int main(int argc, char **argv) { // regular main without gui
 //   resolutions.set(192, 1, 1);
 //   resolutions.set(96, 2, 0);
 //   resolutions.set(96, 2, 1);
-  rgb_to_yp_module<t_net> ppyp(conf.get_uint("normalization_size"));
-  rgb_to_ypuv_module<t_net> ppypuv(conf.get_uint("normalization_size"));
-  module_1_1<t_net> &pp = conf.get_bool("color") ?
-    (module_1_1<t_net>&) ppypuv : (module_1_1<t_net>&) ppyp;
+  rgb_to_yp_module<fs(t_net)> ppyp(conf.get_uint("normalization_size"));
+  rgb_to_ypuv_module<fs(t_net)> ppypuv(conf.get_uint("normalization_size"));
+  module_1_1<fs(t_net)> &pp = conf.get_bool("color") ?
+    (module_1_1<fs(t_net)>&) ppypuv : (module_1_1<fs(t_net)>&) ppyp;
   double scales[] = { 3, 2, 1 };
-  detector<t_net> detect((module_1_1<t_net>&) net, classes, &pp);
+  detector<fs(t_net)> detect((module_1_1<fs(t_net)>&) net, classes, &pp);
   detect.set_resolutions(3, scales);
   detect.set_bgclass(background.c_str());
 

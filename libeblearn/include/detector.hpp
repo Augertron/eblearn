@@ -44,19 +44,22 @@ using namespace std;
 
 namespace ebl {
 
-  template <class T>
-  detector<T>::detector(module_1_1<T> &thenet_,	idx<ubyte> &labels_,
-			module_1_1<T> *pp_, uint ppkersz_,
-			const char *background, T bias_, float coef_)
-    : thenet(thenet_), coef(coef_), bias(bias_),
-      inputs(1), outputs(1), results(1), resize_modules(1), nets(1), pp(pp_),
+  template <typename T, class Tstate>
+  detector<T,Tstate>::detector(module_1_1<T,Tstate> &thenet_,
+			       idx<ubyte> &labels_,
+			       module_1_1<T,Tstate> *pp_, uint ppkersz_,
+			       const char *background, T bias_, float coef_)
+    : thenet(thenet_), resizepp(MEAN_RESIZE, pp_, ppkersz_, true),
+      coef(coef_), bias(bias_), input(NULL), output(NULL),
+      minput(NULL), moutput(NULL), inputs(1), outputs(1), results(1), pp(pp_),
       ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
       bgclass(-1), mask_class(-1), scales(NULL), scales_step(0),
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       min_size(0), max_size(0), bodetections(false),
-      bppdetections(false), pruning(true), bbhfactor(1.0), bbwfactor(1.0) {
+      bppdetections(false), pruning(true), bbhfactor(1.0), bbwfactor(1.0),
+      mem_optimization(false) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -72,52 +75,45 @@ namespace ebl {
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
-    idx_clear(resize_modules);
-    idx_clear(nets);
     set_bgclass(background);
     // initilizations
     save_max_per_frame = (numeric_limits<uint>::max)();
   }
   
-  template <class T>
-  void detector<T>::set_resolutions(uint nresolutions_, const double *scales_) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_resolutions(uint nresolutions_, const double *scales_) {
     nresolutions = nresolutions_;
     restype = SCALES;
     scales = scales_;
   }
   
-  template <class T>
-  void detector<T>::set_resolutions(int nresolutions_) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_resolutions(int nresolutions_) {
     nresolutions = (uint) nresolutions_;
     restype = NSCALES;
   }
   
-  template <class T>
-  void detector<T>::set_resolutions(double scales_step_) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_resolutions(double scales_step_) {
     restype = SCALES_STEP;
     scales_step = scales_step_;
   }
   
-  template <class T>
-  detector<T>::~detector() {
-    { idx_bloop5(in, inputs, void*, out, outputs, void*, r, results, void*,
-		 rsz, resize_modules, void*, net, nets, void*) {
-	state_idx<T> *s;
-	s = (state_idx<T>*) in.get();
+  template <typename T, class Tstate>
+  detector<T,Tstate>::~detector() {
+    { idx_bloop3(in, inputs, void*, out, outputs, void*, r, results, void*) {
+	Tstate *s;
+	s = (Tstate*) in.get();
 	if (s) delete s;
-	s = (state_idx<T>*) out.get();
+	s = (Tstate*) out.get();
 	if (s) delete s;
 	idx<T> *s2 = (idx<T>*) r.get();
 	if (s2) delete s2;
-	module_1_1<T> *s3 = (module_1_1<T>*) rsz.get();
-	if (s3) delete s3;
-	module_1_1<T> *s4 = (module_1_1<T>*) net.get();
-	if (s4) delete s4;
       }}
   }
 
-  template <class T>
-  void detector<T>::init(idxdim &dsample) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::init(idxdim &dsample) {
     // size of the sample to process
     int thick = (dsample.order() == 2) ? 1 : dsample.dim(2); // TODO FIXME
     height = dsample.dim(0);    
@@ -155,20 +151,14 @@ namespace ebl {
     // (re)initialize input and output states and result matrices for each scale
     if ((uint)inputs.dim(0) != nresolutions) { 
       // delete arrays content
-      { idx_bloop5(in, inputs, void*,
-    		   out, outputs, void*, r, results, void*,
-    		   rsz, resize_modules, void*, net, nets, void*) {
-    	state_idx<T> *sin = (state_idx<T>*) in.get();
-    	state_idx<T> *sout = (state_idx<T>*) out.get();
+      { idx_bloop3(in, inputs, void*, out, outputs, void*, r, results, void*) {
+    	Tstate *sin = (Tstate*) in.get();
+    	Tstate *sout = (Tstate*) out.get();
     	idx<T> *res = (idx<T>*) r.get();
-    	resizepp_module<T> *rszpp = (resizepp_module<T>*) rsz.get();
-    	module_1_1<T> *network = (module_1_1<T>*) net.get();
 
     	if (sin) delete sin;
     	if (sout) delete sout;
     	if (res) delete res;
-    	if (rszpp) delete rszpp;
-    	if (network) delete network;
     	}}
       // reallocate arrays
       inputs  = idx<void*>(nresolutions);
@@ -177,40 +167,31 @@ namespace ebl {
       idx_clear(outputs);
       results = idx<void*>(nresolutions);
       idx_clear(results);
-      resize_modules = idx<void*>(nresolutions);
-      idx_clear(resize_modules);
-      nets = idx<void*>(nresolutions);
-      idx_clear(nets);
     }
 
     //sizes.set(sample.dim(0) / (float) in_mindim.dim(0), 3);
     cout << "machine's intermediate sizes for each resolution: " << endl;
-    { idx_bloop6(resolution, resolutions, unsigned int, in, inputs, void*,
-		 out, outputs, void*, r, results, void*,
-		 rsz, resize_modules, void*, net, nets, void*) {
+    { idx_bloop4(resolution, resolutions, unsigned int, in, inputs, void*,
+		 out, outputs, void*, r, results, void*) {
 	// cast pointers
-  	state_idx<T> *sin = (state_idx<T>*) in.get();
-	state_idx<T> *sout = (state_idx<T>*) out.get();
+  	Tstate *sin = (Tstate*) in.get();
+	Tstate *sout = (Tstate*) out.get();
 	idx<T> *res = (idx<T>*) r.get();
-	resizepp_module<T> *rszpp = (resizepp_module<T>*) rsz.get();
-	// module_1_1<T> *network = (module_1_1<T>*) net.get();
 	// Compute the input sizes for each scale
 	idxdim scaled(thick, resolution.get(0), resolution.get(1));
-	// // network resizes automatically, only allocate if not allocated
-	// if (network == NULL) {
-	//   net.set((void*) thenet.copy());
-	//   network = (module_1_1<T>*) net.get();
-	// }
 	// Adapt the size to the network structure:
 	idxdim outd = thenet.fprop_size(scaled);
-	// idxdim outd = network->fprop_size(scaled);
+	// remember correct resolution
+	resolution.set(scaled.dim(1), 0);
+	resolution.set(scaled.dim(2), 1);
 	// set or resize buffers
 	if (sin == NULL)
-	  in.set((void*) new state_idx<T>(thick, scaled.dim(1), scaled.dim(2)));
+	  in.set((void*) new Tstate(thick, scaled.dim(1),
+					   scaled.dim(2)));
 	else
 	  sin->resize(thick, scaled.dim(1), scaled.dim(2));
 	if (sout == NULL)
-	  out.set((void*) new state_idx<T>(labels.dim(0), outd.dim(1),
+	  out.set((void*) new Tstate(labels.dim(0), outd.dim(1),
 					   outd.dim(2)));
 	else
 	  sout->resize(labels.dim(0), outd.dim(1), outd.dim(2));
@@ -218,20 +199,14 @@ namespace ebl {
 	  r.set((void*) new idx<T>(outd.dim(1), outd.dim(2), 2));
 	else
 	  res->resize(outd.dim(1), outd.dim(2), 2);
- 	if (rszpp == NULL)
-	  rsz.set((void*) new resizepp_module<T>
-		  (scaled.dim(1), scaled.dim(2), MEAN_RESIZE,
-		   pp?(module_1_1<T>*)pp->copy():NULL, ppkersz, true));
-	else
-	  rszpp->set_dimensions(scaled.dim(1), scaled.dim(2));
+	resizepp.set_dimensions(scaled.dim(1), scaled.dim(2));
 	// print info about network sizes
-	//	network->pretty(scaled);
 	thenet.pretty(scaled);
       }}
   }
     
-  template <class T>
-  int detector<T>::get_class_id(const string &name) {
+  template <typename T, class Tstate>
+  int detector<T,Tstate>::get_class_id(const string &name) {
     int i = 0;
     
     idx_bloop1(lab, labels, ubyte) {
@@ -242,8 +217,8 @@ namespace ebl {
     return -1;
   }
   
-  template <class T>
-  void detector<T>::set_bgclass(const char *bg) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_bgclass(const char *bg) {
     string name;
     
     if (bg)
@@ -259,8 +234,8 @@ namespace ebl {
   }
 
   // TODO: handle more than 1 class
-  template <class T>
-  bool detector<T>::set_mask_class(const char *mask) {
+  template <typename T, class Tstate>
+  bool detector<T,Tstate>::set_mask_class(const char *mask) {
     string name;
     
     if (!mask)
@@ -276,13 +251,13 @@ namespace ebl {
     return false;
   }
 
-  template <class T>
-  void detector<T>::set_silent() {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_silent() {
     silent = true;
   }
 
-  template <class T>
-  string& detector<T>::set_save(const string directory) {
+  template <typename T, class Tstate>
+  string& detector<T,Tstate>::set_save(const string directory) {
     save_mode = true;
     save_dir = directory;
     // save_dir += "_";
@@ -292,37 +267,46 @@ namespace ebl {
     return save_dir;
   }
 
-  template <class T>
-  void detector<T>::set_max_resolution(uint max_size_) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_max_resolution(uint max_size_) {
     cout << "Setting maximum input size to " << max_size_ << "x"
 	 << max_size_ << "." << endl;
     max_size = max_size_;
   }
   
-  template <class T>
-  void detector<T>::set_min_resolution(uint min_size_) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_min_resolution(uint min_size_) {
     cout << "Setting minimum input size to " << min_size_ << "x"
 	 << min_size_ << "." << endl;
     min_size = min_size_;
   }
   
-  template <class T>
-  void detector<T>::set_pruning(bool pruning_) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_pruning(bool pruning_) {
     pruning = pruning_;
     cout << "Pruning of neighbor answers is "
 	 << (pruning ? "enabled" : "disabled") << endl;
   }
   
-  template <class T>
-  void detector<T>::set_bbox_factors(float hfactor, float wfactor) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_bbox_factors(float hfactor, float wfactor) {
     bbhfactor = hfactor;
     bbwfactor = wfactor;
     cout << "Setting factors on output bounding boxes sizes, height: "
 	 << hfactor << ", width: " << wfactor << endl;
   }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_mem_optimization(Tstate &in, Tstate &out){
+    cout << "Optimizing memory usage by using only 2 alternating buffers."
+	 << endl;
+    mem_optimization = true;
+    minput = &in;
+    moutput = &out;
+  }
   
-  template <class T>
-  void detector<T>::compute_minmax_resolutions(idxdim &input_dims) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::compute_minmax_resolutions(idxdim &input_dims) {
     // compute maximum closest size of input compatible with the network size
     idxdim indim(input_dims.dim(2), input_dims.dim(0), input_dims.dim(1));
     if (max_size > 0) { // cap on maximum input size
@@ -344,8 +328,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void detector<T>::compute_resolutions(idxdim &input_dims,
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::compute_resolutions(idxdim &input_dims,
 					uint &nresolutions) {
     // nresolutions must be >= 1
     if (nresolutions == 0)
@@ -398,8 +382,8 @@ namespace ebl {
   }
 
   // use scales
-  template <class T>
-  void detector<T>::compute_resolutions(idxdim &input_dims, uint nresolutions,
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::compute_resolutions(idxdim &input_dims, uint nresolutions,
 					const double *scales) {
     uint i;
     // nresolutions must be >= 1
@@ -427,8 +411,8 @@ namespace ebl {
   }
 
 
-  template <class T>
-  void detector<T>::compute_resolutions(idxdim &input_dims, double scales_step){
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::compute_resolutions(idxdim &input_dims, double scales_step){
     // figure out how many resolutions can be used between min and max
     // with a step of scales_step:
     // nres = (log (max/min) / log step) + 1
@@ -438,8 +422,8 @@ namespace ebl {
     compute_resolutions(input_dims, nresolutions);
   }
 
-  template <class T>
-  void detector<T>::print_resolutions() {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::print_resolutions() {
     cout << resolutions.dim(0) << " resolutions: ";
     cout << resolutions.get(0, 0) << "x" << resolutions.get(0, 1);
     for (int i = 1; i < resolutions.dim(0); ++i)
@@ -447,12 +431,12 @@ namespace ebl {
     cout << endl;
   }
   
-  template <class T>
-  void detector<T>::mark_maxima(T threshold) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::mark_maxima(T threshold) {
     // loop on scales
     idx_bloop2(out_map, outputs, void*, res_map, results, void*) {
       intg winning_class = 0;
-      idx<T> raw_maps = ((state_idx<T>*) out_map.get())->x;
+      idx<T> raw_maps = ((Tstate*) out_map.get())->x;
       idx<T> max_map = *((idx<T>*) res_map.get());
       int y_max = (int) raw_maps.dim(1);
       int x_max = (int) raw_maps.dim(2);
@@ -464,6 +448,7 @@ namespace ebl {
       // loop on each class
       idx_bloop1(raw_map, raw_maps, T) {
 	y = 0;
+
 	// only process if we want to classify this class
 	if ((winning_class != bgclass) && (winning_class != mask_class)) {
 	  // loop on rows
@@ -511,8 +496,8 @@ namespace ebl {
 
   // prune a list of detections.
   // only keep the largest scoring within an area
-  template <class T>
-  void detector<T>::prune(vector<bbox*> &raw_bboxes,
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::prune(vector<bbox*> &raw_bboxes,
 			  vector<bbox*> &pruned_bboxes) {
     // for each bbox, check that center of current box is not within
     // another box, and only keep ones with highest score when overlapping
@@ -537,27 +522,27 @@ namespace ebl {
     }
   }
 	
-  template <class T>
-  void detector<T>::smooth_outputs() {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::smooth_outputs() {
     cout << "smoothing not implemented" << endl;
   }
     
-  template <class T>
-  void detector<T>::map_to_list(T threshold, vector<bbox*> &raw_bboxes) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::map_to_list(T threshold, vector<bbox*> &raw_bboxes) {
     // make a list that contains the results
-    idx<T> in0x(((state_idx<T>*) inputs.get(0))->x);
-    double original_h = grabbed.dim(0);
-    double original_w = grabbed.dim(1);
+    idx<T> in0x(((Tstate*) inputs.get(0))->x);
+    double original_h = image.dim(0);
+    double original_w = image.dim(1);
     intg offset_h = 0, offset_w = 0;
     int scale_index = 0;
     { idx_bloop5(input, inputs, void*, output, outputs, void*,
 		 r, results, void*, resolution, resolutions, uint,
 		 obbox, original_bboxes, uint) {
 	rect robbox(obbox.get(0), obbox.get(1), obbox.get(2), obbox.get(3));
-	double in_h = (double)(((state_idx<T>*) input.get())->x.dim(1));
-	double in_w = (double)(((state_idx<T>*) input.get())->x.dim(2));
-	double out_h = (double)(((state_idx<T>*) output.get())->x.dim(1));
-	double out_w = (double)(((state_idx<T>*) output.get())->x.dim(2));
+	double in_h = (double)(((Tstate*) input.get())->x.dim(1));
+	double in_w = (double)(((Tstate*) input.get())->x.dim(2));
+	double out_h = (double)(((Tstate*) output.get())->x.dim(1));
+	double out_w = (double)(((Tstate*) output.get())->x.dim(2));
 	double neth = in_mindim.dim(1); // network's input height
 	double netw = in_mindim.dim(2); // netowkr's input width
 	double scalehi = original_h / robbox.height; // in to original
@@ -617,8 +602,8 @@ namespace ebl {
       }}
   }
   
-  template<class T>
-  void detector<T>::pretty_bboxes(const vector<bbox*> &bboxes) {
+  template<typename T, class Tstate>
+  void detector<T,Tstate>::pretty_bboxes(const vector<bbox*> &bboxes) {
     cout << endl << "detector: ";
     if (bboxes.size() == 0)
       cout << "no object found." << endl;
@@ -629,7 +614,7 @@ namespace ebl {
 	cout << "- " << labels[(*i)->class_id].idx_ptr();
 	cout << " with confidence " << (*i)->confidence;
 	cout << " in scale #" << (*i)->scale_index;
-	cout << " (" << grabbed.dim(0) << "x" << grabbed.dim(1);
+	cout << " (" << image.dim(0) << "x" << image.dim(1);
 	cout << " / " << (*i)->scaleh << "x" << (*i)->scalew;
 	cout << " = " << (*i)->iheight << "x" << (*i)->iwidth << ")";
 	cout << endl;
@@ -642,33 +627,14 @@ namespace ebl {
     }
   }
   
-  template <class T> template <class Tin>
-  vector<bbox*>& detector<T>::fprop(idx<Tin> &img, T threshold,
+  template <typename T, class Tstate> template <class Tin>
+  vector<bbox*>& detector<T,Tstate>::fprop(idx<Tin> &img, T threshold,
 				    const char *frame_name) {
-    // tell detections vectors they are not up-to-date anymore
-    bodetections = false;
-    bppdetections = false;
-    // cast input if necessary
-    idx<T> img2, img3, tmp;
-    if (typeid(T) == typeid(Tin)) // input same type as net, shallow copy
-      img2 = (idx<T>&) img;
-    else { // deep copy to cast input into net's type
-      img2 = idx<T>(img.get_idxdim());
-      idx_copy(img, img2);
-    }
-    if (img2.order() == 2) {
-      img3 = idx<T>(img2.dim(0), img2.dim(1), 1);
-      tmp = img3.select(2, 0);
-      idx_copy(img2, tmp);  // TODO: avoid copy just to augment order
-    } else
-      img3 = img2;
-    grabbed = img3;
-    // if input size had changed, reinit resolutions
-    if (!(input_dim == img.get_idxdim())) {
-      init(img.get_idxdim());
-    }
-    // do a fprop for each scaled input sample
-    multi_res_fprop(img3);
+    // prepare image and resolutions
+    prepare(img);
+    // do a fprop for each scaled input, based on the 'image' slot prepared
+    // by prepare().
+    multi_res_fprop();
     // smooth outputs
     smooth_outputs();
     // find points that are local maxima spatial and class-wise
@@ -699,12 +665,12 @@ namespace ebl {
     return bb;
   }
 
-  template <class T>
-  void detector<T>::save_bboxes(const vector<bbox*> &bboxes, const string &dir,
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::save_bboxes(const vector<bbox*> &bboxes, const string &dir,
 				const char *frame_name) {
     string classname;
     ostringstream fname, cmd;
-    state_idx<T> *input = NULL;
+    Tstate *input = NULL;
     idx<T> inpp, inorig;
     vector<bbox*>::const_iterator bbox;
     vector<bool> dir_exists(labels.dim(0), false);
@@ -738,12 +704,12 @@ namespace ebl {
 	dir_exists[(*bbox)->class_id] = true;
       }
       // get bbox of preprocessed input at bbox's scale
-      input = (state_idx<T>*) inputs.get((*bbox)->scale_index);
+      input = (Tstate*) inputs.get((*bbox)->scale_index);
       inpp = input->x.narrow(1, (*bbox)->ih, (*bbox)->ih0);
       inpp = inpp.narrow(2, (*bbox)->iw, (*bbox)->iw0);
       //inpp = inpp.shift_dim(0, 2); // put channels back to 3rd position
       // get bbox of original input
-      inorig = grabbed.narrow(0, (*bbox)->height, (*bbox)->h0);
+      inorig = image.narrow(0, (*bbox)->height, (*bbox)->h0);
       inorig = inorig.narrow(1, (*bbox)->width, (*bbox)->w0);
       // save preprocessed image as lush mat
       fname.str("");
@@ -767,8 +733,8 @@ namespace ebl {
     }
   }
   
-  template <class T>
-  uint detector<T>::get_total_saved() {
+  template <typename T, class Tstate>
+  uint detector<T,Tstate>::get_total_saved() {
     uint total = 0;
     for (vector<uint>::iterator i = save_counts.begin();
 	 i != save_counts.end(); ++i)
@@ -776,13 +742,13 @@ namespace ebl {
     return total;
   }
 
-  template <class T>
-  void detector<T>::set_save_max_per_frame(uint max) {
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_save_max_per_frame(uint max) {
     save_max_per_frame = max;
   }
 
-  template <class T>
-  vector<idx<T> >& detector<T>::get_originals() {
+  template <typename T, class Tstate>
+  vector<idx<T> >& detector<T,Tstate>::get_originals() {
     if (bodetections) // recompute only if not up-to-date
       return odetections;
     idx<T> input;
@@ -796,7 +762,7 @@ namespace ebl {
       if (((*bbox)->class_id == bgclass) || ((*bbox)->class_id == mask_class))
 	continue ;
       // get bbox of input
-      input = grabbed.narrow(0, (*bbox)->height, (*bbox)->h0);
+      input = image.narrow(0, (*bbox)->height, (*bbox)->h0);
       input = input.narrow(1, (*bbox)->width, (*bbox)->w0);
       odetections.push_back(input);
     }
@@ -804,12 +770,12 @@ namespace ebl {
     return odetections;
   }
   
-  template <class T>
-  vector<idx<T> >& detector<T>::get_preprocessed() {
+  template <typename T, class Tstate>
+  vector<idx<T> >& detector<T,Tstate>::get_preprocessed() {
     if (bppdetections) // recompute only if not up-to-date
       return ppdetections;
     idx<T> input;
-    state_idx<T> *sinput = NULL;
+    Tstate *sinput = NULL;
     vector<bbox*>::const_iterator bbox;
 
     // clear vector
@@ -820,7 +786,7 @@ namespace ebl {
       if (((*bbox)->class_id == bgclass) || ((*bbox)->class_id == mask_class))
 	continue ;
       // get bbox of input
-      sinput = (state_idx<T>*) inputs.get((*bbox)->scale_index);
+      sinput = (Tstate*) inputs.get((*bbox)->scale_index);
       input = sinput->x.narrow(1, (*bbox)->ih, (*bbox)->ih0);
       input = input.narrow(2, (*bbox)->iw, (*bbox)->iw0);
       ppdetections.push_back(input);
@@ -829,10 +795,10 @@ namespace ebl {
     return ppdetections;
   }
   
-  template <class T>
-  idx<T> detector<T>::get_mask(string &classname) {
+  template <typename T, class Tstate>
+  idx<T> detector<T,Tstate>::get_mask(string &classname) {
     int id = get_class_id(classname), i = 0;
-    idxdim d(grabbed.dim(0), grabbed.dim(1));
+    idxdim d(image.dim(0), image.dim(1));
     if (mask.get_idxdim() != d)
       mask = idx<T>(d);
     if (id == -1) { // class not found
@@ -843,8 +809,8 @@ namespace ebl {
     // merge all outputs of class 'id' into mask
     idx_bloop3(input, inputs, void*, output, outputs, void*,
 	       obbox, original_bboxes, uint) {
-      idx<T> in = ((state_idx<T>*) input.get())->x.select(0, 0);
-      idx<T> out = ((state_idx<T>*) output.get())->x.select(0, id);
+      idx<T> in = ((Tstate*) input.get())->x.select(0, 0);
+      idx<T> out = ((Tstate*) output.get())->x.select(0, id);
       rect o(obbox.get(0), obbox.get(1),
 	     obbox.get(2), obbox.get(3));
       // resizing to inputs, then to original input, to avoid precision loss
@@ -860,45 +826,82 @@ namespace ebl {
     return mask;
   }
   
-  template <class T>
-  void detector<T>::multi_res_fprop(idx<T> &sample) {
-    
-    // copy original input into a state_idx
-    idx<T> imres = sample.shift_dim(2, 0);
-    state_idx<T> input(imres.get_idxdim());
-    idx_copy(imres, input.x);
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::multi_res_fprop() {
+    // timing
     timer t;
     t.start();
+    for (intg i = 0; i < nresolutions; ++i) {
+      preprocess_resolution(i);
+      thenet.fprop(*input, *output);
+    }
+    cout << "net_processing=" << t.elapsed_milliseconds() << " ms. ";
+  }
 
-    // module_1_1<T> *network = NULL;
-    // resize original input and fprop for each resolution
-    { idx_bloop4(in, inputs, void*, out, outputs, void*,
-		 bbox, original_bboxes, uint, rsz, resize_modules, void*) {
-		 // net, nets, void*) {
-	state_idx<T> &ii = *(state_idx<T>*)(in.get()); // input
-	state_idx<T> &oo = *(state_idx<T>*)(out.get()); // output
-	resizepp_module<T> &rszpp = *(resizepp_module<T>*)(rsz.get());
-
-	// network = (module_1_1<T>*)(net.get());
-	// resize and preprocess input
-	rszpp.fprop(input, ii);
-	// memorize original input's bbox in resized input
-	rect bb = rszpp.get_original_bbox();
-	bbox.set(bb.h0, 0);
-	bbox.set(bb.w0, 1);
-	bbox.set(bb.height, 2);
-	bbox.set(bb.width, 3);
-	// add bias and multiply by coeff if necessary
-	if (bias != 0)
-	  idx_addc(ii.x, bias, ii.x);
-	if (coef != 1)
-	  idx_dotc(ii.x, coef, ii.x);
-	// run fprop for this scale
-    
-	thenet.fprop(ii, oo);
-	// network->fprop(ii, oo);
-      }}
-    cout << "net: " << t.elapsed_milliseconds() << " ms. ";
+  template <typename T, class Tstate> template <class Tin>
+  void detector<T,Tstate>::prepare(idx<Tin> &img) {
+    // tell detections vectors they are not up-to-date anymore
+    bodetections = false;
+    bppdetections = false;
+    // cast input if necessary
+    idx<T> img2, tmp;
+    if (typeid(T) == typeid(Tin)) // input same type as net, shallow copy
+      img2 = (idx<T>&) img;
+    else { // deep copy to cast input into net's type
+      img2 = idx<T>(img.get_idxdim());
+      idx_copy(img, img2);
+    }
+    if (img2.order() == 2) {
+      image = idx<T>(img2.dim(0), img2.dim(1), 1);
+      tmp = image.select(2, 0);
+      idx_copy(img2, tmp);  // TODO: avoid copy just to augment order
+    } else
+      image = img2;
+    // if input size had changed, reinit resolutions
+    if (!(input_dim == img.get_idxdim())) {
+      init(img.get_idxdim());
+    }
+  }
+  
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::preprocess_resolution(uint res) {
+    if (res >= nresolutions) {
+      ostringstream err;
+      err << "cannot request resolution " << res << ", there are only "
+	  << nresolutions << " resolutions";
+      throw err.str();
+    }
+    // create a fstate_idx pointing to our image
+    idx<T> imres = image.shift_dim(2, 0);
+    Tstate iminput(imres);
+    idx<uint> bbox = original_bboxes.select(0, res);
+    // select input/outputs buffers
+    if (mem_optimization) { // we use only 2 buffers
+      input = minput;
+      output = moutput;
+    } else { // we use different buffers for each resolution
+      input = (Tstate*)(inputs.get(res));
+      output = (Tstate*)(outputs.get(res));
+    }
+    // resize and preprocess input
+    resizepp.set_dimensions(resolutions.get(res, 0), resolutions.get(res, 1));
+    resizepp.fprop(iminput, *input);
+    // memorize original input's bbox in resized input
+    rect bb = resizepp.get_original_bbox();
+    bbox.set(bb.h0, 0);
+    bbox.set(bb.w0, 1);
+    bbox.set(bb.height, 2);
+    bbox.set(bb.width, 3);
+    // add bias and multiply by coeff if necessary
+    if (bias != 0)
+      idx_addc(input->x, bias, input->x);
+    if (coef != 1)
+      idx_dotc(input->x, coef, input->x);
+#ifdef __DEBUG__
+    cout << "resized input (" << imres << ") to resolution " << res
+	 << " (" << resolutions.get(res, 0) << "x" << resolutions.get(res, 1)
+	 << "): " << input->x << endl;
+#endif
   }
 
 } // end namespace ebl

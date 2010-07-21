@@ -44,7 +44,8 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! a simple fully-connected neural net layer: linear + tanh non-linearity.
-  template <class T> class full_layer: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class full_layer : public module_1_1<T,Tstate> {
   public: 
     //! Constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
@@ -52,16 +53,16 @@ namespace ebl {
     //! \param indim0 The number of inputs
     //! \param noutputs The number of outputs.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    full_layer(parameter<T> *p, intg indim0, intg noutputs,
+    full_layer(parameter<Tstate> *p, intg indim0, intg noutputs,
 	       bool tanh = true, const char *name = "");
     //! Destructor.
     virtual ~full_layer();
     //! fprop from in to out
-    void fprop(state_idx<T> &in, state_idx<T> &out);
+    void fprop(Tstate &in, Tstate &out);
     //! bprop
-    void bprop(state_idx<T> &in, state_idx<T> &out);
+    void bprop(Tstate &in, Tstate &out);
     //! bbprop
-    void bbprop(state_idx<T> &in, state_idx<T> &out);
+    void bbprop(Tstate &in, Tstate &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
     //! Return dimensions that are compatible with this module.
@@ -71,21 +72,22 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual full_layer<T>* copy();
+    virtual full_layer<T,Tstate>* copy();
 
     // members ////////////////////////////////////////////////////////
   private:
-    bool                         btanh;   //!< use tanh or stdsigmoid
+    bool				 btanh;	//!< use tanh or stdsigmoid
   public:
-    linear_module_replicable<T>  linear;  //!< linear module for weight matrix
-    addc_module<T>		 adder;	  //!< bias vector
-    module_1_1<T>               *sigmoid; //!< the non-linear function
-    state_idx<T>		*sum;	  //!< weighted sum
+    linear_module_replicable<T,Tstate>	 linear;//!< linear module for weight
+    addc_module<T,Tstate>		 adder;	//!< bias vector
+    module_1_1<T,Tstate>		*sigmoid;//!< the non-linear function
+    Tstate				*sum;	//!< weighted sum
   };
 
   ////////////////////////////////////////////////////////////////
   //! a convolution neural net layer: convolution + tanh non-linearity.
-  template <class T> class convolution_layer: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class convolution_layer : public module_1_1<T,Tstate> {
   public:
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
@@ -99,16 +101,16 @@ namespace ebl {
     //!        the width axis.
     //! \param table is the convolution connection table.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    convolution_layer(parameter<T> *p, intg kerneli, intg kernelj, 
-			 intg stridei, intg stridej, idx<intg> &tbl,
-			 bool tanh = true, const char *name = "");
+    convolution_layer(parameter<Tstate> *p, intg kerneli, intg kernelj, 
+		      intg stridei, intg stridej, idx<intg> &tbl,
+		      bool tanh = true, const char *name = "");
     virtual ~convolution_layer();
     //! fprop from in to out
-    void fprop(state_idx<T> &in, state_idx<T> &out);
+    void fprop(Tstate &in, Tstate &out);
     //! bprop
-    void bprop(state_idx<T> &in, state_idx<T> &out);
+    void bprop(Tstate &in, Tstate &out);
     //! bbprop
-    void bbprop(state_idx<T> &in, state_idx<T> &out);
+    void bbprop(Tstate &in, Tstate &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
     //! Return dimensions that are compatible with this module.
@@ -118,22 +120,23 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual convolution_layer<T>* copy();
+    virtual convolution_layer<T,Tstate>* copy();
 
     // members ////////////////////////////////////////////////////////
   private:
-    bool                                 btanh;	//!< use tanh or stdsigmoid
+    bool					 btanh;	//!< tanh or stdsigmoid
   public:
-    convolution_module_replicable<T>	 convol;//!< convolution module
-    addc_module<T>			 adder;	//!< bias vector
-    module_1_1<T>			*sigmoid;//!< the non-linear function
-    state_idx<T>			*sum;	//!< convolution result
+    convolution_module_replicable<T,Tstate>	 convol;//!< convolution module
+    addc_module<T,Tstate>			 adder;	//!< bias vector
+    module_1_1<T,Tstate>			*sigmoid;//!< non-linear funct
+    Tstate					*sum;	//!< convolution result
   };
 
   ////////////////////////////////////////////////////////////////
   //! a convolution layer with absolute rectification and constrast
   //! normalization
-  template <class T> class convabsnorm_layer: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class convabsnorm_layer : public module_1_1<T,Tstate> {
   public:
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
@@ -147,17 +150,18 @@ namespace ebl {
     //!        the width axis.
     //! \param table is the convolution connection table.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    convabsnorm_layer(parameter<T> *p, intg kerneli, intg kernelj, 
+    convabsnorm_layer(parameter<Tstate> *p, intg kerneli, intg kernelj, 
 		      intg stridei, intg stridej, idx<intg> &tbl,
-		      bool mirror = false, bool tanh = true, const char *name = "");
+		      bool mirror = false, bool tanh = true,
+		      const char *name = "");
     //! Destructor.
     virtual ~convabsnorm_layer();
     //! fprop from in to out
-    void fprop(state_idx<T> &in, state_idx<T> &out);
+    void fprop(Tstate &in, Tstate &out);
     //! bprop
-    void bprop(state_idx<T> &in, state_idx<T> &out);
+    void bprop(Tstate &in, Tstate &out);
     //! bbprop
-    void bbprop(state_idx<T> &in, state_idx<T> &out);
+    void bbprop(Tstate &in, Tstate &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
     //! Return dimensions that are compatible with this module.
@@ -167,38 +171,39 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual convabsnorm_layer<T>* copy();
+    virtual convabsnorm_layer<T,Tstate>* copy();
 
     // members ////////////////////////////////////////////////////////
   private:
     bool				 btanh;	//!< use tanh or stdsigmoid
   public:
-    convolution_layer<T>	 lconv;	//!< convolution layer
-    abs_module<T>		 abs;	//!< absolute rectification
-    weighted_std_module<T>	 norm;	//!< constrast normalization
-    state_idx<T>		*tmp;	//!< temporary results
-    state_idx<T>		*tmp2;	//!< temporary results
+    convolution_layer<T,Tstate>		 lconv;	//!< convolution layer
+    abs_module<T,Tstate>		 abs;	//!< absolute rectification
+    weighted_std_module<T,Tstate>	 norm;	//!< constrast normalization
+    Tstate				*tmp;	//!< temporary results
+    Tstate				*tmp2;	//!< temporary results
   };
 
   ////////////////////////////////////////////////////////////////
   //! a subsampling neural net layer: subsampling + tanh non-linearity.
-  template <class T> class subsampling_layer: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class subsampling_layer : public module_1_1<T,Tstate> {
   public:
     //! constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    subsampling_layer(parameter<T> *p, intg stridei, intg stridej,
-			 intg subi, intg subj, 
-			 intg thick, bool tanh = true, const char *name = "");
+    subsampling_layer(parameter<Tstate> *p, intg stridei, intg stridej,
+		      intg subi, intg subj, 
+		      intg thick, bool tanh = true, const char *name = "");
     //! Destructor.
     virtual ~subsampling_layer();
     //! fprop from in to out
-    void fprop(state_idx<T> &in, state_idx<T> &out);
+    void fprop(Tstate &in, Tstate &out);
     //! bprop
-    void bprop(state_idx<T> &in, state_idx<T> &out);
+    void bprop(Tstate &in, Tstate &out);
     //! bbprop
-    void bbprop(state_idx<T> &in, state_idx<T> &out);
+    void bbprop(Tstate &in, Tstate &out);
     //! initialize the weights to random values
     void forget(forget_param_linear &fp);
     //! Return dimensions that are compatible with this module.
@@ -208,17 +213,17 @@ namespace ebl {
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual subsampling_layer<T>* copy();
+    virtual subsampling_layer<T,Tstate>* copy();
 
     // members ////////////////////////////////////////////////////////
   private:
-    bool				 btanh;	//!< use tanh or stdsigmoid
+    bool					 btanh;	//!< tanh or stdsigmoid
   public:
-    subsampling_module_replicable<T>	 subsampler;	//!< subsampling module
-    addc_module<T>			 adder;	//!< bias vector
-    module_1_1<T>			*sigmoid;//!< the non-linear function
-    state_idx<T>			*sum;	//!< subsampling result
-  };
+    subsampling_module_replicable<T,Tstate>	 subsampler;//!< subsampling
+    addc_module<T,Tstate>			 adder;	//!< bias vector
+    module_1_1<T,Tstate>			*sigmoid;//!< non-linear funct
+    Tstate					*sum;	//!< subsampling result
+   };
 
 } // namespace ebl {
 

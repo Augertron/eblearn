@@ -186,7 +186,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  //! a module that takes an state_idx, finds the lowest value
+  //! a module that takes an fstate_idx, finds the lowest value
   //! and output the label associated with the index (in the first dimension
   //! of the state) of this lowest value.
   //! It actually sorts the labels according to their score (or costs)
@@ -203,7 +203,7 @@ namespace ebl {
     }
     ;
 
-    void fprop(state_idx<T> *in, class_state *out);
+    void fprop(fstate_idx<T> *in, class_state *out);
   };
 
 } // namespace ebl {

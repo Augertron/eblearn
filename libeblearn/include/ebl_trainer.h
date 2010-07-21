@@ -52,7 +52,7 @@ namespace ebl {
 /*   public: */
 /*     fc_ebm2_gen<Tin1,Tin2,T>	&machine; */
 /*     parameter<T>		&param; */
-/*     state_idx<T>		 energy; */
+/*     fstate_idx<T>		 energy; */
 /*     intg			 age; */
 /*     Tin1			*in1; */
 /*     Tin2			*in2; */
@@ -101,8 +101,8 @@ namespace ebl {
     class supervised_trainer {
   public:
     //! constructor.
-    supervised_trainer(fc_ebm2_gen<state_idx<Tnet>, Tlabel, Tnet> &m, 
-		       parameter<Tnet> &p);
+    supervised_trainer(fc_ebm2<Tnet,bbstate_idx<Tnet>,bbstate_idx<Tlabel> > &m,
+		       parameter<bbstate_idx<Tnet> > &p);
 
     //! destructor.
     virtual ~supervised_trainer();
@@ -113,11 +113,12 @@ namespace ebl {
     //! fill up the vector <energies> with the energy produced by each
     //! possible label. The first dimension of <label-set> must be equal
     //! to the dimension of <energies>.
-    Tlabel run(state_idx<Tnet> &input, infer_param &infp, Tlabel *label = NULL);
+    void run(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label,
+	     infer_param &infp);
 
     //! Test a single sample and its label <label> (an integer).
     //! Returns true if the sample was correctly classified, false otherwise.
-    bool test_sample(state_idx<Tnet> &input, Tlabel label, Tlabel &answer, 
+    bool test_sample(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label,
 		     infer_param &infp);
 
     //! perform a learning update on one sample. <sample> is the input
@@ -125,22 +126,23 @@ namespace ebl {
     //! a matrix where  the i-th row is the desired output
     //! for the i-th category, and <update-args> is a list of arguments
     //! for the parameter update method (e.g. learning rate and weight decay).
-    double learn_sample(state_idx<Tnet> &input, Tlabel label, gd_param &arg);
+    double learn_sample(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label,
+			gd_param &arg);
 
     //! Measure the average energy and classification error rate
     //! on a dataset.
     void test(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
 	      classifier_meter &log, infer_param &infp);
 
-    //! Measures for each class the rates of true and false positives
-    //! (TPR and FPR) given a threshold.
-    //! The answer for each class is the default class (usually a junk class)
-    //! if the maximum response is below the threshold, otherwise it is the
-    //! class with maximum response.
-    //! TODO: use energy for detection instead of raw net outputs?(more generic)
-    void test_threshold(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
-			classifier_meter &log, infer_param &infp,
-			double threshold, Tlabel defclass);
+    /* //! Measures for each class the rates of true and false positives */
+    /* //! (TPR and FPR) given a threshold. */
+    /* //! The answer for each class is the default class (usually a junk class) */
+    /* //! if the maximum response is below the threshold, otherwise it is the */
+    /* //! class with maximum response. */
+    /* //! TODO: use energy for detection instead of raw net outputs?(more generic) */
+    /* void test_threshold(labeled_datasource<Tnet, Tdata, Tlabel> &ds, */
+    /* 			classifier_meter &log, infer_param &infp, */
+    /* 			double threshold, Tlabel defclass); */
 
     //! train for <niter> sweeps over the training set. <samples> contains the
     //! inputs samples, and <labels> the corresponding desired categories
@@ -172,14 +174,14 @@ namespace ebl {
     //! returns a pointer to a copy on this datasource
     //    supervised_trainer<Tdata, Tlabel>* copy();
   public:
-    fc_ebm2_gen<state_idx<Tnet>,
-      Tlabel, Tnet>	&machine;	//!< the machine
-    parameter<Tnet>	&param;	//!< the learned params
+    fc_ebm2<Tnet,bbstate_idx<Tnet>,bbstate_idx<Tlabel> > &machine;
+    parameter<bbstate_idx<Tnet> >	  &param;	//!< the learned params
     //! net's tmp input buf. it is a pointer because the order of the input
-    //! is not known in advance, and state_idx cannot change order dynamically.
-    state_idx<Tnet>	*input;
-    state_idx<Tnet>	 energy;//!< tmp energy buf
-    idx<Tlabel>		 label;
+    //! is not known in advance, and fstate_idx cannot change order dynamically.
+    bbstate_idx<Tnet>	*input;
+    bbstate_idx<Tnet>	 energy;//!< tmp energy buf
+    bbstate_idx<Tlabel>	 label;
+    bbstate_idx<Tlabel>	 answer;
     intg		 age;
   private:
     int			 iteration;

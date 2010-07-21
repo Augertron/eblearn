@@ -34,19 +34,20 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // linear_module
 
-  template <class T>
-  linear_module<T>::linear_module(parameter<T> *p, intg in, intg out,
-				  const char *name_)
+  template <typename T, class Tstate>
+  linear_module<T, Tstate>::linear_module(parameter<Tstate> *p,
+					  intg in, intg out,
+					  const char *name_)
     : w(p, out, in) {
     this->name = name_;
   }
 
-  template <class T>
-  linear_module<T>::~linear_module() {
+  template <typename T, class Tstate>
+  linear_module<T, Tstate>::~linear_module() {
   }
 
-  template <class T>
-  void linear_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void linear_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     idx<T> inx = in.x.view_as_order(1); // view as 1D idx
     idx<T> outx = out.x.view_as_order(1); // view as 1D idx
@@ -64,32 +65,35 @@ namespace ebl {
 #endif
   }
 
-  template <class T>
-  void linear_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void linear_module<T, Tstate>::bprop(Tstate &in, Tstate &out) {
     idx<T> inx = in.x.view_as_order(1); // view as 1D idx
     idx<T> indx = in.dx.view_as_order(1); // view as 1D idx
     idx<T> outdx = out.dx.view_as_order(1); // view as 1D idx
     idx<T> twx(w.x.transpose(0, 1)); // switch dimensions 0 and 1
-    if (outdx.nelements() != w.dx.dim(0)) eblerror("output has wrong size");
+    if (outdx.nelements() != w.dx.dim(0))
+      eblerror("output has wrong size");
 
     idx_m1extm1acc(outdx, inx, w.dx); // backprop to weights
     idx_m2dotm1acc(twx, outdx, indx); // backprop to input
   }
 
-  template <class T>
-  void linear_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void linear_module<T, Tstate>::bbprop(Tstate &in,
+					Tstate &out) {
     idx<T> inx = in.x.view_as_order(1); // view as 1D idx
     idx<T> inddx = in.ddx.view_as_order(1); // view as 1D idx
     idx<T> outddx = out.ddx.view_as_order(1); // view as 1D idx
     idx<T> twx = w.x.transpose(0, 1); // switch dimensions 0 and 1
-    if (outddx.nelements() != w.ddx.dim(0)) eblerror("output has wrong size");
-
+    if (outddx.nelements() != w.ddx.dim(0))
+      eblerror("output has wrong size");
+    // backprop
     idx_m1squextm1acc(outddx, inx, w.ddx); // backprop to weights
     idx_m2squdotm1acc(twx, outddx, inddx); // backprop to input
   }
 
-  template <class T>
-  void linear_module<T>::forget(forget_param_linear &fp) {
+  template <typename T, class Tstate>
+  void linear_module<T, Tstate>::forget(forget_param_linear &fp) {
     double fanin = w.x.dim(1);
     double z = fp.value / pow(fanin, fp.exponent);
     check_drand_ini(); // check that the random seed was initialized
@@ -97,8 +101,8 @@ namespace ebl {
       {	*lx = (T) drand(-z, z);}
   }
 
-  template <class T>
-  void linear_module<T>::normalize() {
+  template <typename T, class Tstate>
+  void linear_module<T, Tstate>::normalize() {
 #ifdef __CBLAS__
     norm_columns(w.x);
 #else
@@ -106,8 +110,8 @@ namespace ebl {
 #endif
   }
 
-  template <class T>
-  void linear_module<T>::resize_output(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void linear_module<T, Tstate>::resize_output(Tstate &in, Tstate &out) {
     // resize output based on input dimensions
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, w.x.dim(0)); // except for the first one
@@ -121,24 +125,25 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  idxdim linear_module<T>::fprop_size(idxdim &isize) {
+  template <typename T, class Tstate>
+  idxdim linear_module<T, Tstate>::fprop_size(idxdim &isize) {
     //! Update output size based on weight dimensions
     idxdim osize(w.x.dim(0), isize.dim(1), isize.dim(2));
     isize = bprop_size(osize);
     return osize;
   }
 
-  template <class T>
-  idxdim linear_module<T>::bprop_size(const idxdim &osize) {
+  template <typename T, class Tstate>
+  idxdim linear_module<T, Tstate>::bprop_size(const idxdim &osize) {
     idxdim isize(w.x.dim(1), osize.dim(1), osize.dim(2));
     return isize;
   }
 
-  template <class T>
-  linear_module<T>* linear_module<T>::copy() {
+  template <typename T, class Tstate>
+  linear_module<T, Tstate>* linear_module<T, Tstate>::copy() {
     // new module (with its own local parameter buffers)
-    linear_module<T> *l2 = new linear_module(NULL, w.x.dim(1), w.x.dim(0));
+    linear_module<T, Tstate> *l2 =
+      new linear_module<T, Tstate>(NULL, w.x.dim(1), w.x.dim(0));
     // copy data
     idx_copy(w.x, l2->w.x);
     return l2;
@@ -147,8 +152,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // convolution_module
 
-  template <class T>
-  convolution_module<T>::convolution_module(parameter<T> *p, 
+  template <typename T, class Tstate>
+  convolution_module<T, Tstate>::convolution_module(parameter<Tstate> *p, 
 					    intg kerneli, intg kernelj, 
 					    intg stridei_, intg stridej_, 
 					    idx<intg> &tbl, const char *name_)
@@ -179,7 +184,7 @@ namespace ebl {
     }
 #ifdef __IPP__
     // check precision to decide if we use IPP or not
-    state_idx<float> *cont = dynamic_cast<state_idx<float>*>(&kernel);
+    fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&kernel);
     if (cont) {
       float_precision = true;
       revkernel = idx<T>(kerneli, kernelj); // allocate reversed kernel
@@ -188,12 +193,13 @@ namespace ebl {
 #endif
   }
 
-  template <class T>
-  convolution_module<T>::~convolution_module() {
+  template <typename T, class Tstate>
+  convolution_module<T, Tstate>::~convolution_module() {
   }
 
-  template <class T>
-  void convolution_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void convolution_module<T, Tstate>::fprop(Tstate &in,
+					    Tstate &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     // unfolding input for a faster convolution operation
     idx<T> uuin(in.x.unfold(1, kernel.x.dim(1), stridei));
@@ -240,14 +246,14 @@ namespace ebl {
 #endif
   }
   
-  template <class T>
-  void convolution_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void convolution_module<T, Tstate>::bprop(Tstate &in, Tstate &out) {
     // backprop through convolution
     idx_clear(in.dx);
-    idx<T> uuin(in.dx.unfold(1, (kernel.dx).dim(1), stridei));
-    uuin = uuin.unfold(2, (kernel.dx).dim(2), stridej);
-    idx<T> uuinf(in.x.unfold(1, (kernel.dx).dim(1), stridei));
-    uuinf = uuinf.unfold(2, (kernel.dx).dim(2), stridej);
+    idx<T> uuin(in.dx.unfold(1, kernel.dx.dim(1), stridei));
+    uuin = uuin.unfold(2, kernel.dx.dim(2), stridej);
+    idx<T> uuinf(in.x.unfold(1, kernel.dx.dim(1), stridei));
+    uuinf = uuinf.unfold(2, kernel.dx.dim(2), stridej);
     int transp[5] = { 0, 3, 4, 1, 2 };
     idx<T> borp(uuinf.transpose(transp));
     { idx_bloop3 (lk, kernel.dx, T, lkf, kernel.x, T, 
@@ -262,14 +268,14 @@ namespace ebl {
       }}
   }
 
-  template <class T>
-  void convolution_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void convolution_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     // backprop through convolution
     idx_clear(in.ddx);
-    idx<T> uuin(in.ddx.unfold(1, (kernel.ddx).dim(1), stridei));
-    uuin = uuin.unfold(2, (kernel.ddx).dim(2), stridej);
-    idx<T> uuinf(in.x.unfold(1, (kernel.ddx).dim(1), stridei));
-    uuinf = uuinf.unfold(2, (kernel.ddx).dim(2), stridej);
+    idx<T> uuin(in.ddx.unfold(1, kernel.ddx.dim(1), stridei));
+    uuin = uuin.unfold(2, kernel.ddx.dim(2), stridej);
+    idx<T> uuinf(in.x.unfold(1, kernel.ddx.dim(1), stridei));
+    uuinf = uuinf.unfold(2, kernel.ddx.dim(2), stridej);
     int transp[5] = { 0, 3, 4, 1, 2 };
     idx<T> borp(uuinf.transpose(transp));
     { idx_bloop3 (lk, kernel.ddx, T, lkf, kernel.x, T, 
@@ -284,8 +290,8 @@ namespace ebl {
       }}
   }
 
-  template <class T>
-  void convolution_module<T>::forget(forget_param_linear &fp) {
+  template <typename T, class Tstate>
+  void convolution_module<T,Tstate>::forget(forget_param_linear &fp) {
     idx<T> kx(kernel.x);
     intg vsize = kx.dim(1);
     intg hsize = kx.dim(2);
@@ -307,9 +313,8 @@ namespace ebl {
       }}
   }
 
-  template <class T>
-  void convolution_module<T>::resize_output(state_idx<T> &in,
-					    state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void convolution_module<T,Tstate>::resize_output(Tstate &in, Tstate &out) {
     intg ki = kernel.x.dim(1);
     intg kj = kernel.x.dim(2);
     intg sini = in.x.dim(1);
@@ -355,8 +360,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  idxdim convolution_module<T>::fprop_size(idxdim &isize) {
+  template <typename T, class Tstate>
+  idxdim convolution_module<T,Tstate>::fprop_size(idxdim &isize) {
     //! Select a kernel
     idxdim kernel_size = kernel.x[0].get_idxdim();
     //! Extract its dimensions, update output size
@@ -367,8 +372,8 @@ namespace ebl {
     return osize;
   }
 
-  template <class T>
-  idxdim convolution_module<T>::bprop_size(const idxdim &osize) {
+  template <typename T, class Tstate>
+  idxdim convolution_module<T,Tstate>::bprop_size(const idxdim &osize) {
     //! Select a kernel
     idxdim kernel_size = kernel.x[0].get_idxdim();
     //! Extract its dimensions, update output size
@@ -378,12 +383,12 @@ namespace ebl {
     return isize;
   }
 
-  template <class T>
-  convolution_module<T>* convolution_module<T>::copy() {
+  template <typename T, class Tstate>
+  convolution_module<T,Tstate>* convolution_module<T,Tstate>::copy() {
     // new module (with its own local parameter buffers)
-    convolution_module<T> *l2 =
-      new convolution_module(NULL, kernel.x.dim(1), kernel.x.dim(2),
-			     stridei, stridej, table);
+    convolution_module<T,Tstate> *l2 =
+      new convolution_module<T,Tstate>(NULL, kernel.x.dim(1), kernel.x.dim(2),
+				       stridei, stridej, table);
     // copy data
     idx_copy(kernel.x, l2->kernel.x);
     return l2;
@@ -392,8 +397,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // subsampling_module
 
-  template <class T>
-  subsampling_module<T>::subsampling_module(parameter<T> *p, 
+  template <typename T, class Tstate>
+  subsampling_module<T,Tstate>::subsampling_module(parameter<Tstate> *p, 
 					    intg stridei_, intg stridej_,
 					    intg subi, intg subj, 
 					    intg thick, const char *name_)
@@ -402,12 +407,13 @@ namespace ebl {
     this->name = name_;
   }
 
-  template <class T>
-  subsampling_module<T>::~subsampling_module() {
+  template <typename T, class Tstate>
+  subsampling_module<T,Tstate>::~subsampling_module() {
   }
 
-  template <class T>
-  void subsampling_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void subsampling_module<T,Tstate>::fprop(Tstate &in,
+					   Tstate &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     // subsampling ( coeff * average )
     idx_clear(sub.x);
@@ -430,8 +436,8 @@ namespace ebl {
 #endif
   }
 
-  template <class T>
-  void subsampling_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void subsampling_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     // oversampling
     idx_bloop3(lcdx, coeff.dx, T, ltdx, out.dx, T, lsx, sub.x, T) {
       idx_dotacc(lsx, ltdx, lcdx);
@@ -443,8 +449,9 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void subsampling_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {	
+  template <typename T, class Tstate>
+  void subsampling_module<T,Tstate>::bbprop(Tstate &in,
+					    Tstate &out) {	
     // oversampling
     idx_bloop3(lcdx, coeff.ddx, T, ltdx, out.ddx, T, lsx, sub.x, T) {
       idx_m2squdotm2acc(lsx, ltdx, lcdx);
@@ -457,15 +464,14 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void subsampling_module<T>::forget(forget_param_linear &fp) {
+  template <typename T, class Tstate>
+  void subsampling_module<T,Tstate>::forget(forget_param_linear &fp) {
     double c = fp.value / pow(stridei * stridej, fp.exponent);
     idx_fill(coeff.x, (T) c);
   }
 
-  template <class T>
-  void subsampling_module<T>::resize_output(state_idx<T> &in,
-					    state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void subsampling_module<T,Tstate>::resize_output(Tstate &in, Tstate &out) {
     intg sin_i = in.x.dim(1);
     intg sin_j = in.x.dim(2);
     intg si = sin_i / stridei;
@@ -490,8 +496,8 @@ namespace ebl {
     }
   }
  
-  template <class T>
-  idxdim subsampling_module<T>::fprop_size(idxdim &isize) {
+  template <typename T, class Tstate>
+  idxdim subsampling_module<T,Tstate>::fprop_size(idxdim &isize) {
     //! Update input size
     idxdim osize(thickness,
 		 std::max((intg) 1, isize.dim(1) / stridei),
@@ -501,8 +507,8 @@ namespace ebl {
     return osize;
   }
 
-  template <class T>
-  idxdim subsampling_module<T>::bprop_size(const idxdim &osize) {
+  template <typename T, class Tstate>
+  idxdim subsampling_module<T,Tstate>::bprop_size(const idxdim &osize) {
     //! Update input size
     idxdim isize(thickness,
 		 osize.dim(1) * stridei,
@@ -510,11 +516,11 @@ namespace ebl {
     return isize;
   }
 
-  template <class T>
-  subsampling_module<T>* subsampling_module<T>::copy() {
+  template <typename T, class Tstate>
+  subsampling_module<T,Tstate>* subsampling_module<T,Tstate>::copy() {
     // new module (with its own local parameter buffers)
-    subsampling_module<T> *l2 =
-      new subsampling_module(NULL, stridei, stridej,
+    subsampling_module<T,Tstate> *l2 =
+      new subsampling_module<T, Tstate>(NULL, stridei, stridej,
 			     sub.x.dim(1), sub.x.dim(2), thickness);
     // copy data
     idx_copy(coeff.x, l2->coeff.x);
@@ -525,18 +531,19 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // addc_module
 
-  template <class T>
-  addc_module<T>::addc_module(parameter<T> *p, intg size, const char *name_)
+  template <typename T, class Tstate>
+  addc_module<T,Tstate>::addc_module(parameter<Tstate> *p, intg size,
+				     const char *name_)
     : bias(p, size) {
     this->name = name_;
   }
 
-  template <class T>
-  addc_module<T>::~addc_module() {
+  template <typename T, class Tstate>
+  addc_module<T,Tstate>::~addc_module() {
   }
 
-  template <class T>
-  void addc_module<T>::fprop(state_idx<T>& in, state_idx<T>& out) {
+  template <typename T, class Tstate>
+  void addc_module<T,Tstate>::fprop(Tstate& in, Tstate& out) {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x.spec); // use same dimensions as in
       d.setdim(0, bias.x.dim(0)); // except for the first one
@@ -561,8 +568,8 @@ namespace ebl {
 #endif
   }
 
-  template <class T>
-  void addc_module<T>::bprop(state_idx<T>& in, state_idx<T>& out) {
+  template <typename T, class Tstate>
+  void addc_module<T,Tstate>::bprop(Tstate& in, Tstate& out) {
     if ((&in != &out) && (in.dx.nelements() != out.dx.nelements()))
       eblerror("output has wrong size");
     
@@ -574,8 +581,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void addc_module<T>::bbprop(state_idx<T>& in, state_idx<T>& out) {
+  template <typename T, class Tstate>
+  void addc_module<T,Tstate>::bbprop(Tstate& in, Tstate& out) {
     if ((&in != &out) && (in.ddx.nelements() != out.ddx.nelements()))
       eblerror("output has wrong size");
     
@@ -587,15 +594,15 @@ namespace ebl {
     }
   }
   
-  template <class T>
-  void addc_module<T>::forget(forget_param_linear& fp) {
+  template <typename T, class Tstate>
+  void addc_module<T,Tstate>::forget(forget_param_linear& fp) {
     idx_clear(bias.x);
   }
 
-  template <class T>
-  addc_module<T>* addc_module<T>::copy() {
+  template <typename T, class Tstate>
+  addc_module<T,Tstate>* addc_module<T,Tstate>::copy() {
     // new module (with its own local parameter buffers)
-    addc_module<T> *l2 = new addc_module(NULL, bias.x.dim(0));
+    addc_module<T,Tstate> *l2 = new addc_module<T, Tstate>(NULL, bias.x.dim(0));
     // copy data
     idx_copy(bias.x, l2->bias.x);
     return l2;
@@ -604,16 +611,16 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // power_module
 
-  template <class T>
-  power_module<T>::power_module(T p_) : p(p_) {
+  template <typename T, class Tstate>
+  power_module<T,Tstate>::power_module(T p_) : p(p_) {
   }
 
-  template <class T>
-  power_module<T>::~power_module() {
+  template <typename T, class Tstate>
+  power_module<T,Tstate>::~power_module() {
   }
     
-  template <class T>
-  void power_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void power_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x); // use same dimensions as in
       out.resize(d);
@@ -621,8 +628,8 @@ namespace ebl {
     idx_power(in.x, p, out.x);
   }
   
-  template <class T>
-  void power_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void power_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
     idx_checknelems2_all(in.dx, out.dx); // must have same dimensions
 
@@ -636,8 +643,8 @@ namespace ebl {
     idx_dotcacc(tt, p, in.dx);
   }
 
-  template <class T>
-  void power_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void power_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
     idx_checknelems2_all(in.ddx, out.ddx); // must have same dimensions
 
@@ -655,17 +662,17 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // diff_module
 
-  template <class T>
-  diff_module<T>::diff_module() {
+  template <typename T, class Tstate>
+  diff_module<T,Tstate>::diff_module() {
   }
   
-  template <class T>
-  diff_module<T>::~diff_module() {
+  template <typename T, class Tstate>
+  diff_module<T,Tstate>::~diff_module() {
   }
 
-  template <class T>
-  void diff_module<T>::fprop(state_idx<T> &in1, state_idx<T> &in2,
-			     state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void diff_module<T,Tstate>::fprop(Tstate &in1, Tstate &in2,
+			     Tstate &out) {
     if (&in1 != &out) { // resize only when input and output are different
       idxdim d(in1.x); // use same dimensions as in
       out.resize(d);
@@ -673,9 +680,9 @@ namespace ebl {
     idx_sub(in1.x, in2.x, out.x);
   }
 
-  template <class T>
-  void diff_module<T>::bprop(state_idx<T> &in1, state_idx<T> &in2,
-			     state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void diff_module<T,Tstate>::bprop(Tstate &in1, Tstate &in2,
+			     Tstate &out) {
     state_idx_check_different3(in1, in2, out); // forbid same in and out
     idx_checknelems3_all(in1.dx, in2.dx, out.dx);// must have same dimensions
 
@@ -683,9 +690,9 @@ namespace ebl {
     idx_add(out.dx, in2.dx); // derivative wrt in2
   }
 
-  template <class T>
-  void diff_module<T>::bbprop(state_idx<T> &in1, state_idx<T> &in2,
-			      state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void diff_module<T,Tstate>::bbprop(Tstate &in1, Tstate &in2,
+			      Tstate &out) {
     state_idx_check_different3(in1, in2, out); // forbid same in and out
     idx_checknelems3_all(in1.ddx, in2.ddx, out.ddx);// must have same dimensions
 
@@ -696,20 +703,19 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // mul_module
 
-  template <class T>
-  mul_module<T>::mul_module() {
+  template <typename T, class Tstate>
+  mul_module<T,Tstate>::mul_module() {
   }
   
-  template <class T>
-  mul_module<T>::~mul_module() {
+  template <typename T, class Tstate>
+  mul_module<T,Tstate>::~mul_module() {
   }
 
   //! {<code>
   //!    y = x1 .* x2
   //! </code>}
-  template <class T>
-  void mul_module<T>::fprop(state_idx<T> &in1, state_idx<T> &in2,
-			    state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void mul_module<T,Tstate>::fprop(Tstate &in1, Tstate &in2, Tstate &out) {
     if (&in1 != &out) { // resize only when input and output are different
       idxdim d(in1.x); // use same dimensions as in
       out.resize(d);
@@ -721,9 +727,8 @@ namespace ebl {
   //!    dy\dx1 = x2
   //!    dy\dx2 = x1
   //! </code>}
-  template <class T>
-  void mul_module<T>::bprop(state_idx<T> &in1, state_idx<T> &in2,
-			    state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void mul_module<T,Tstate>::bprop(Tstate &in1, Tstate &in2, Tstate &out) {
     state_idx_check_different3(in1, in2, out); // forbid same in and out
     idx_checknelems3_all(in1.dx, in2.dx, out.dx);// must have same dimensions
 
@@ -741,9 +746,9 @@ namespace ebl {
   //!    d^2y\dx1^2 = (x2).^2
   //!    d^2y\dx2^2 = (x1).^2
   //! </code>}
-  template <class T>
-  void mul_module<T>::bbprop(state_idx<T> &in1, state_idx<T> &in2,
-			     state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void mul_module<T,Tstate>::bbprop(Tstate &in1, Tstate &in2,
+			     Tstate &out) {
     state_idx_check_different3(in1, in2, out); // forbid same in and out
     idx_checknelems3_all(in1.ddx, in2.ddx, out.ddx);// must have same dimensions
 
@@ -762,17 +767,17 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // thres_module
 
-  template <class T>
-  thres_module<T>::thres_module(T thres_, T val_)
+  template <typename T, class Tstate>
+  thres_module<T,Tstate>::thres_module(T thres_, T val_)
     : thres(thres_), val(val_) {
   }
 
-  template <class T>
-  thres_module<T>::~thres_module() {
+  template <typename T, class Tstate>
+  thres_module<T,Tstate>::~thres_module() {
   }
 
-  template <class T>
-  void thres_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void thres_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x); // use same dimensions as in
       out.resize(d);
@@ -785,8 +790,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void thres_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void thres_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
     idx_checknelems2_all(in.dx, out.dx); // must have same dimensions
 
@@ -796,8 +801,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void thres_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void thres_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
     idx_checknelems2_all(in.ddx, out.ddx); // must have same dimensions
 
@@ -807,17 +812,17 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // cutborder_module
 
-  template <class T>
-  cutborder_module<T>::cutborder_module(int nr_, int nc_)
+  template <typename T, class Tstate>
+  cutborder_module<T,Tstate>::cutborder_module(int nr_, int nc_)
     : nrow(nr_), ncol(nc_) {
   }
 
-  template <class T>
-  cutborder_module<T>::~cutborder_module() {
+  template <typename T, class Tstate>
+  cutborder_module<T,Tstate>::~cutborder_module() {
   }
 
-  template <class T>
-  void cutborder_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void cutborder_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     intg inr = in.x.dim(1);
     intg inc = in.x.dim(2);
     intg outr = inr - 2 * nrow;
@@ -831,8 +836,8 @@ namespace ebl {
     idx_copy(tmp, out.x);
   }
 
-  template <class T>
-  void cutborder_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void cutborder_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
     
     intg inr = out.x.dim(1);
@@ -842,8 +847,8 @@ namespace ebl {
     idx_add(out.dx, tmp);
   }
 
-  template <class T>
-  void cutborder_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void cutborder_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
 
     intg inr = out.x.dim(1);
@@ -856,13 +861,13 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // zpad_module
 
-  template <class T>
-  zpad_module<T>::zpad_module(int nr, int nc)
+  template <typename T, class Tstate>
+  zpad_module<T,Tstate>::zpad_module(int nr, int nc)
     : nrow(nr), ncol(nc), nrow2(nr), ncol2(nc) {
   }
 
-  template <class T>
-  zpad_module<T>::zpad_module(idxdim kerdims)
+  template <typename T, class Tstate>
+  zpad_module<T,Tstate>::zpad_module(idxdim kerdims)
     : nrow((int) (floor(kerdims.dim(0) / (float) 2.0))),
       ncol((int) (floor(kerdims.dim(1) / (float) 2.0))),
       nrow2(nrow), ncol2(ncol) {
@@ -873,12 +878,12 @@ namespace ebl {
       ncol2 -= 1;
   }
 
-  template <class T>
-  zpad_module<T>::~zpad_module() {
+  template <typename T, class Tstate>
+  zpad_module<T,Tstate>::~zpad_module() {
   }
 
-  template <class T>
-  void zpad_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void zpad_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     intg inr = in.x.dim(1);
     intg inc = in.x.dim(2);
     idxdim d(in.x.dim(0), inr + nrow + nrow2, inc + ncol + ncol2);
@@ -897,8 +902,8 @@ namespace ebl {
 #endif
   }
 
-  template <class T>
-  void zpad_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void zpad_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
 
     intg inr = in.x.dim(1);
@@ -908,8 +913,8 @@ namespace ebl {
     idx_add(tmp, in.dx);
   }
 
-  template <class T>
-  void zpad_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void zpad_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
 
     intg inr = in.x.dim(1);
@@ -922,17 +927,17 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // mirrorpad_module
 
-  template <class T>
-  mirrorpad_module<T>::mirrorpad_module(int nr, int nc)
+  template <typename T, class Tstate>
+  mirrorpad_module<T,Tstate>::mirrorpad_module(int nr, int nc)
     : nrow(nr), ncol(nc) {
   }
 
-  template <class T>
-  mirrorpad_module<T>::~mirrorpad_module() {
+  template <typename T, class Tstate>
+  mirrorpad_module<T,Tstate>::~mirrorpad_module() {
   }
 
-  template <class T>
-  void mirrorpad_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void mirrorpad_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     intg inr = in.x.dim(1);
     intg inc = in.x.dim(2);
     idxdim d(in.x.dim(0), inr + 2 * nrow, inc + 2 * ncol);
@@ -971,8 +976,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void mirrorpad_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void mirrorpad_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
 
     intg inr = in.x.dim(1);
@@ -982,8 +987,8 @@ namespace ebl {
     idx_add(tmp, in.dx);
   }
 
-  template <class T>
-  void mirrorpad_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void mirrorpad_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
 
     intg inr = in.x.dim(1);
@@ -996,16 +1001,16 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // fsum_module
 
-  template <class T>
-  fsum_module<T>::fsum_module() {
+  template <typename T, class Tstate>
+  fsum_module<T,Tstate>::fsum_module() {
   }
 
-  template <class T>
-  fsum_module<T>::~fsum_module() {
+  template <typename T, class Tstate>
+  fsum_module<T,Tstate>::~fsum_module() {
   }
   
-  template <class T>
-  void fsum_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) { 
+  template <typename T, class Tstate>
+  void fsum_module<T,Tstate>::fprop(Tstate &in, Tstate &out) { 
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x); // use same dimensions as in
       out.resize(d);
@@ -1017,8 +1022,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void fsum_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void fsum_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
     idx_checknelems2_all(in.dx, out.dx); // must have same dimensions
     
@@ -1029,9 +1034,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void fsum_module<
-    T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void fsum_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     state_idx_check_different(in, out); // forbid same in and out
     idx_checknelems2_all(in.ddx, out.ddx); // must have same dimensions
     
@@ -1045,18 +1049,18 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // binarize_module
 
-  template <class T>
-  binarize_module<T>::binarize_module(T threshold_, T false_value_,
+  template <typename T, class Tstate>
+  binarize_module<T,Tstate>::binarize_module(T threshold_, T false_value_,
 				      T true_value_)
     : threshold(threshold_), false_value(false_value_), true_value(true_value_){
   }
 
-  template <class T>
-  binarize_module<T>::~binarize_module() {
+  template <typename T, class Tstate>
+  binarize_module<T,Tstate>::~binarize_module() {
   }
   
-  template <class T>
-  void binarize_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) { 
+  template <typename T, class Tstate>
+  void binarize_module<T,Tstate>::fprop(Tstate &in, Tstate &out) { 
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x); // use same dimensions as in
       out.resize(d);
@@ -1072,20 +1076,20 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // range_lut_module
 
-  template <class T>
-  range_lut_module<T>::range_lut_module(idx<T> *value_range_) {
+  template <typename T, class Tstate>
+  range_lut_module<T,Tstate>::range_lut_module(idx<T> *value_range_) {
     if (value_range_ == NULL)
       eblerror("expected non null range matrix");
     value_range = idx<T>(value_range_->get_idxdim());
     idx_copy(*value_range_, value_range);
   }
 
-  template <class T>
-  range_lut_module<T>::~range_lut_module() {
+  template <typename T, class Tstate>
+  range_lut_module<T,Tstate>::~range_lut_module() {
   }
   
-  template <class T>
-  void range_lut_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) { 
+  template <typename T, class Tstate>
+  void range_lut_module<T,Tstate>::fprop(Tstate &in, Tstate &out) { 
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x); // use same dimensions as in
       out.resize(d);
@@ -1101,81 +1105,5 @@ namespace ebl {
       //      cout << " v1: " << *outx << endl;
     }
   }
-
-  ////////////////////////////////////////////////////////////////
-
-#ifdef USE_IPP
-
-  // TODO: enable IPP for float convolutions
-  // TODO: ipp 64 for doubles?
-
-  //   void c_layer_ipp<T>::fprop (state_idx<T> *in, state_idx<T> *out) {
-  //     intg ki = kernel->x.dim(1);
-  //     intg kj = kernel->x.dim(2);
-  //     intg sini = in->x.dim(1);
-  //     intg sinj = in->x.dim(2);
-
-  //     if (((sini - (ki - stridei) % stridei) != 0) ||
-  // 	((sinj - (kj - stridej) % stridej) != 0))
-  //       eblerror("inconsistent input size, kernel size, and subsampling ratio.");
-  //     if ((stridei != 1) || (stridej != 1))
-  //       eblerror("stride > 1 not implemented yet.");
-  //     idx<double> uuin = in->x.unfold(1, ki, stridei);
-  //     uuin = uuin.spec.unfold_inplace(2, kj, stridej);
-  //     idx<double> lki = idx<double>(kernel->x.dim(1), kernel->x.dim(2));
-  //     // resize output if necessary
-  //     sum->resize(thickness, uuin.dim(1), uuin.dim(2));
-  //     out->resize(thickness, uuin.dim(1), uuin.dim(2));
-  //     idx_clear(sum->x);
-  //     // generic convolution
-  //     idx<double> tout = idx<double>(sum->x.dim(1), sum->x.dim(2));
-  //     { idx_bloop2(lk, kernel->x, double, lt, *table, intg) {
-  // 	rev_idx2_tr(*lk, lki);
-  // 	//      ipp_convolution_float(in->x.select(0, lt.get(0)), lki, tout);
-  // 	//      ipp_add_float(tout, sum->x.select(0, lt.get(1)));
-  //       }
-  //     }
-  //     // add bias
-  //     { idx_bloop3(sumx, sum->x, double, biasx, bias->x, double,
-  // 		 outx, out->x, double) {
-  // 	//      ipp_addc_nip_float(sumx, biasx.get(), outx);
-  //       }
-  //     }
-  //     // call squashing function
-  //     squash->fprop(*sum, *out);
-  //   }
-
-  //   void c_layer_ipp<T>::bprop (state_idx<T> *in, state_idx<T> *out) {
-  //     // backprop gradient through squasher
-  //     squash->bprop(*sum, *out);
-  //     // compute gradient of bias
-  //     { idx_bloop2(lha, sum->dx, double, lb, bias->dx, double) {
-  // 	idx_sumacc(lha, lb);
-  //       }
-  //     }
-  //     // backprop through convolution
-  //     idx_clear(in->dx);
-  //     /*
-  //       (let* ((ki (idx-dim :kernel:dx 1))	 (kj (idx-dim :kernel:dx 2))
-  //       (ini (idx-dim :in:dx 1))	 (inj (idx-dim :in:dx 2))
-  //       (outi (idx-dim :out:dx 1))	 (outj (idx-dim :out:dx 2))
-  //       (sumi (idx-dim :sum:dx 1))	 (sumj (idx-dim :sum:dx 2))
-  //       (souti (gbtype-matrix sumi sumj))
-  //       (tout (gbtype-matrix ki kj)))
-  //       (idx-bloop ((lk :kernel:dx) (lkf :kernel:x) (lt table))
-  //       (let* ((islice (lt 0))
-  //       (sout  (select :sum:dx 0 (lt 1)))
-  //       )
-  //       ;; backward convolution
-  //       (ipp-convolution-full-float sout lkf (select :in:dx 0 islice))
-  //       ;; compute gradient for kernel
-  //       (rev-idx2-tr-float sout souti)
-  //       (ipp-convolution-float (select :in:x 0 islice) souti tout)
-  //       (ipp-add-float tout lk)
-  //       )))
-  //     */
-  //   }
-
-#endif
 
 } // end namespace ebl

@@ -39,32 +39,32 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  /* class full_layer_gui { */
-  /* public: */
-  /*   full_layer_gui(); */
-  /*   virtual ~full_layer_gui(); */
+  class linear_module_gui {
+  public:
+    linear_module_gui();
+    virtual ~linear_module_gui();
 
-  /*   template <class T> */
-  /*   static void display_fprop(full_layer<T> &nn, */
-  /* 			      state_idx<T> &in, state_idx<T> &out, */
-  /* 			      unsigned int &h0, unsigned int &w0, double zoom, */
-  /* 			      T vmin = 0, T vmax = 0, */
-  /* 			      bool show_out = false); */
+    template <typename T, class Tstate>
+    static void display_fprop(linear_module<T,Tstate> &nn,
+  			      Tstate &in, Tstate &out,
+  			      unsigned int &h0, unsigned int &w0, double zoom,
+  			      T vmin = 0, T vmax = 0,
+  			      bool show_out = false);
 
-  /*   template <class T> */
-  /*   static void display_bprop(full_layer<T> &nn, */
-  /* 			      state_idx<T> &in, state_idx<T> &out, */
-  /* 			      unsigned int &h0, unsigned int &w0, double zoom, */
-  /* 			      T vmin = 0, T vmax = 0, */
-  /* 			      bool show_out = false); */
+    template <typename T, class Tstate>
+    static void display_bprop(linear_module<T,Tstate> &nn,
+  			      Tstate &in, Tstate &out,
+  			      unsigned int &h0, unsigned int &w0, double zoom,
+  			      T vmin = 0, T vmax = 0,
+  			      bool show_out = false);
 
-  /*   template <class T> */
-  /*   static void display_bbprop(full_layer<T> &nn, */
-  /* 			       state_idx<T> &in, state_idx<T> &out, */
-  /* 			       unsigned int &h0, unsigned int &w0, double zoom, */
-  /* 			       T vmin = 0, T vmax = 0, */
-  /* 			       bool show_out = false); */
-  /* }; */
+    template <typename T, class Tstate>
+    static void display_bbprop(linear_module<T,Tstate> &nn,
+  			       Tstate &in, Tstate &out,
+  			       unsigned int &h0, unsigned int &w0, double zoom,
+  			       T vmin = 0, T vmax = 0,
+  			       bool show_out = false);
+  };
 
   ////////////////////////////////////////////////////////////////
 
@@ -73,23 +73,23 @@ namespace ebl {
     convolution_module_gui();
     virtual ~convolution_module_gui();
 
-    template <class T>
-    static void display_fprop(convolution_module<T> &nn,
-			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_fprop(convolution_module<T,Tstate> &nn,
+			      Tstate &in, Tstate &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
 			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
 
-    template <class T>
-    static void display_bprop(convolution_module<T> &nn,
-			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bprop(convolution_module<T,Tstate> &nn,
+			      Tstate &in, Tstate &out,
 			      unsigned int &h0, unsigned int &w0, double zoom,
 			      T vmin = 0, T vmax = 0,
 			      bool show_out = false);
 
-    template <class T>
-    static void display_bbprop(convolution_module<T> &nn,
-			       state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bbprop(convolution_module<T,Tstate> &nn,
+			       Tstate &in, Tstate &out,
 			       unsigned int &h0, unsigned int &w0, double zoom,
 			       T vmin = 0, T vmax = 0,
 			       bool show_out = false);
@@ -102,23 +102,23 @@ namespace ebl {
     subsampling_module_gui();
     virtual ~subsampling_module_gui();
 
-    template <class T>
-    static void display_fprop(subsampling_module<T> &nn,
-  			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_fprop(subsampling_module<T,Tstate> &nn,
+  			      Tstate &in, Tstate &out,
   			      unsigned int &h0, unsigned int &w0, double zoom,
   			      T vmin = 0, T vmax = 0,
   			      bool show_out = false);
 
-    template <class T>
-    static void display_bprop(subsampling_module<T> &nn,
-  			      state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bprop(subsampling_module<T,Tstate> &nn,
+  			      Tstate &in, Tstate &out,
   			      unsigned int &h0, unsigned int &w0, double zoom,
   			      T vmin = 0, T vmax = 0,
   			      bool show_out = false);
 
-    template <class T>
-    static void display_bbprop(subsampling_module<T> &nn,
-  			       state_idx<T> &in, state_idx<T> &out,
+    template <typename T, class Tstate>
+    static void display_bbprop(subsampling_module<T,Tstate> &nn,
+  			       Tstate &in, Tstate &out,
   			       unsigned int &h0, unsigned int &w0, double zoom,
   			       T vmin = 0, T vmax = 0,
   	bool show_out = false);

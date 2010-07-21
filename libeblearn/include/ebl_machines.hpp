@@ -35,38 +35,39 @@ namespace ebl {
   // net_cscscf
 
   // the empty constructor (must call init afterwards)
-  template <class T>
-  net_cscscf<T>::net_cscscf()
-    : layers<T>(true) {
+  template <typename T, class Tstate>
+  net_cscscf<T,Tstate>::net_cscscf(Tstate *in, Tstate *out)
+    : layers<T,Tstate>(true, in, out) {
     // owns modules, responsible for deleting it
   }
 
-  template <class T>
-  net_cscscf<T>::net_cscscf(parameter<T> &prm, intg ini, intg inj,
-			    intg ki0, intg kj0, idx<intg> &tbl0, 
-			    intg si0, intg sj0,
-			    intg ki1, intg kj1, idx<intg> &tbl1, 
-			    intg si1, intg sj1,
-			    intg ki2, intg kj2, idx<intg> &tbl2,
-			    intg outthick, bool norm, bool mirror,
-			    bool tanh, bool shrink)
-    : layers<T>(true) {
+  template <typename T, class Tstate>
+  net_cscscf<T,Tstate>::net_cscscf(parameter<Tstate> &prm, intg ini, intg inj,
+				   intg ki0, intg kj0, idx<intg> &tbl0, 
+				   intg si0, intg sj0,
+				   intg ki1, intg kj1, idx<intg> &tbl1, 
+				   intg si1, intg sj1,
+				   intg ki2, intg kj2, idx<intg> &tbl2,
+				   intg outthick, bool norm, bool mirror,
+				   bool tanh, bool shrink,
+				   Tstate *in, Tstate *out)
+    : layers<T,Tstate>(true, in, out) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 si1, sj1, ki2, kj2, tbl2, outthick, norm, mirror, tanh, shrink);
   }
   
-  template <class T>
-  net_cscscf<T>::~net_cscscf() {}
+  template <typename T, class Tstate>
+  net_cscscf<T,Tstate>::~net_cscscf() {}
 
-  template <class T>
-  void net_cscscf<T>::init(parameter<T> &prm, intg ini, intg inj,
-			   intg ki0, intg kj0, idx<intg> &tbl0, 
-			   intg si0, intg sj0, intg ki1, intg kj1, 
-			   idx<intg> &tbl1, intg si1, intg sj1, 
-			   intg ki2, intg kj2, idx<intg> &tbl2, 
-			   intg outthick, bool norm, bool mirror,
-			   bool tanh, bool shrink) {
+  template <typename T, class Tstate>
+  void net_cscscf<T,Tstate>::init(parameter<Tstate> &prm, intg ini, intg inj,
+				  intg ki0, intg kj0, idx<intg> &tbl0, 
+				  intg si0, intg sj0, intg ki1, intg kj1, 
+				  idx<intg> &tbl1, intg si1, intg sj1, 
+				  intg ki2, intg kj2, idx<intg> &tbl2, 
+				  intg outthick, bool norm, bool mirror,
+				  bool tanh, bool shrink) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -83,105 +84,105 @@ namespace ebl {
     // and feed the input of the following module.
     
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,tbl0));
+    add_module(new convolution_module_replicable<T,Tstate>(&prm,ki0,kj0,1,1,tbl0));
     // bias
-    add_module(new addc_module<T>(&prm, thick0));
+    add_module(new addc_module<T,Tstate>(&prm, thick0));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T>(&prm, thick0));
+      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
     else if (tanh)
-      add_module(new tanh_module<T>());
+      add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T>());
+      add_module(new stdsigmoid_module<T,Tstate>());
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki0, kj0, thick0, "w0", mirror));
+      add_module(new abs_module<T,Tstate>());
+      add_module(new weighted_std_module<T,Tstate>(ki0, kj0, thick0, "w0", mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh));
+    add_module(new subsampling_layer<T,Tstate>(&prm,si0,sj0,si0,sj0,thick0,tanh));
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,tbl1));
+    add_module(new convolution_module_replicable<T,Tstate>(&prm,ki1,kj1,1,1,tbl1));
     // bias
-    add_module(new addc_module<T>(&prm, thick1));
+    add_module(new addc_module<T,Tstate>(&prm, thick1));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T>(&prm, thick1));
+      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
     else if (tanh)
-      add_module(new tanh_module<T>());
+      add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T>());
+      add_module(new stdsigmoid_module<T,Tstate>());
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki1, kj1, thick1, "w1", mirror));
+      add_module(new abs_module<T,Tstate>());
+      add_module(new weighted_std_module<T,Tstate>(ki1, kj1, thick1, "w1", mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm,si1,sj1,si1,sj1,thick1,tanh));
+    add_module(new subsampling_layer<T,Tstate>(&prm,si1,sj1,si1,sj1,thick1,tanh));
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh));
+    add_module(new convolution_layer<T,Tstate>(&prm, ki2, kj2, 1, 1, tbl2, tanh));
     // full
-    add_module(new full_layer<T>(&prm, thick2, outthick, tanh));
+    add_module(new full_layer<T,Tstate>(&prm, thick2, outthick, tanh));
 
 
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T>(&prm, ki0, kj0, 1, 1, tbl0, mirror,
+    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki0, kj0, 1, 1, tbl0, mirror,
     // 					  tanh));
     // else // old fashioned way
-    //   add_module(new convolution_layer<T>(&prm, ki0, kj0, 1, 1, tbl0, tanh));
+    //   add_module(new convolution_layer<T,Tstate>(&prm, ki0, kj0, 1, 1, tbl0, tanh));
     // // subsampling
-    // add_module(new subsampling_layer<T>(&prm, si0, sj0, si0, sj0, thick0,
+    // add_module(new subsampling_layer<T,Tstate>(&prm, si0, sj0, si0, sj0, thick0,
     // 					   tanh));
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T>(&prm, ki1, kj1, 1, 1, tbl1, mirror,
+    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki1, kj1, 1, 1, tbl1, mirror,
     // 					  tanh));
     // else // old fashioned way
-    //   add_module(new convolution_layer<T>(&prm, ki1, kj1, 1, 1, tbl1, tanh));
+    //   add_module(new convolution_layer<T,Tstate>(&prm, ki1, kj1, 1, 1, tbl1, tanh));
     // // subsampling
-    // add_module(new subsampling_layer<T>(&prm, si1, sj1, si1, sj1, thick1,
+    // add_module(new subsampling_layer<T,Tstate>(&prm, si1, sj1, si1, sj1, thick1,
     // 					   tanh));
     // // convolution
-    // add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh));
+    // add_module(new convolution_layer<T,Tstate>(&prm, ki2, kj2, 1, 1, tbl2, tanh));
     // // full
-    // add_module(new full_layer<T>(&prm, thick2, outthick, tanh));
+    // add_module(new full_layer<T,Tstate>(&prm, thick2, outthick, tanh));
   }
 
   ////////////////////////////////////////////////////////////////
   // net_cscf
 
   // the empty constructor (must call init afterwards)
-  template <class T>
-  net_cscf<T>::net_cscf()
-    : layers<T>(true) {
+  template <typename T, class Tstate>
+  net_cscf<T,Tstate>::net_cscf(Tstate *in, Tstate *out)
+    : layers<T,Tstate>(true, in, out) {
     // owns modules, responsible for deleting it
   }
 
-  template <class T>
-  net_cscf<T>::net_cscf(parameter<T> &prm, intg ini, intg inj,
-			intg ki0, intg kj0, idx<intg> &tbl0, 
-			intg si0, intg sj0,
-			intg ki1, intg kj1, idx<intg> &tbl1, 
-			intg outthick, bool norm, bool mirror,
-			bool tanh, bool shrink, bool lut_features,
-			idx<T> *lut)
-    : layers<T>(true) {
+  template <typename T, class Tstate>
+  net_cscf<T,Tstate>::net_cscf(parameter<Tstate> &prm, intg ini, intg inj,
+			       intg ki0, intg kj0, idx<intg> &tbl0, 
+			       intg si0, intg sj0,
+			       intg ki1, intg kj1, idx<intg> &tbl1, 
+			       intg outthick, bool norm, bool mirror,
+			       bool tanh, bool shrink, bool lut_features,
+			       idx<T> *lut, Tstate *in, Tstate *out)
+    : layers<T,Tstate>(true, in, out) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 outthick, norm, mirror, tanh, shrink, lut_features, lut);
   }
   
-  template <class T>
-  net_cscf<T>::~net_cscf() {}
+  template <typename T, class Tstate>
+  net_cscf<T,Tstate>::~net_cscf() {}
 
-  template <class T>
-  void net_cscf<T>::init(parameter<T> &prm, intg ini, intg inj,
-			 intg ki0, intg kj0, idx<intg> &tbl0, 
-			 intg si0, intg sj0, intg ki1, intg kj1, 
-			 idx<intg> &tbl1, intg outthick, bool norm,
-			 bool mirror, bool tanh, bool shrink,
-			 bool lut_features, idx<T> *lut) {
+  template <typename T, class Tstate>
+  void net_cscf<T,Tstate>::init(parameter<Tstate> &prm, intg ini, intg inj,
+				intg ki0, intg kj0, idx<intg> &tbl0, 
+				intg si0, intg sj0, intg ki1, intg kj1, 
+				idx<intg> &tbl1, intg outthick, bool norm,
+				bool mirror, bool tanh, bool shrink,
+				bool lut_features, idx<T> *lut) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -196,96 +197,97 @@ namespace ebl {
     // and feed the input of the following module.
     
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,
+    add_module(new convolution_module_replicable<T,Tstate>(&prm,ki0,kj0,1,1,
 						    tbl0,"c0"));
     // bias
-    add_module(new addc_module<T>(&prm, thick0, "c0"));
+    add_module(new addc_module<T,Tstate>(&prm, thick0, "c0"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T>(&prm, thick0));
+      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
     else if (tanh)
-      add_module(new tanh_module<T>());
+      add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T>());
+      add_module(new stdsigmoid_module<T,Tstate>());
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki0, kj0, thick0, "w0", mirror));
+      add_module(new abs_module<T,Tstate>());
+      add_module(new weighted_std_module<T,Tstate>(ki0, kj0, thick0, "w0", mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
+    add_module(new subsampling_layer<T,Tstate>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,
+    add_module(new convolution_module_replicable<T,Tstate>(&prm,ki1,kj1,1,1,
 						    tbl1,"c1"));
     // bias
-    add_module(new addc_module<T>(&prm, thick1, "c1"));
+    add_module(new addc_module<T,Tstate>(&prm, thick1, "c1"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T>(&prm, thick1));
+      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
     else if (tanh)
-      add_module(new tanh_module<T>());
+      add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T>());
+      add_module(new stdsigmoid_module<T,Tstate>());
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki1, kj1, thick1, "w1", mirror));
+      add_module(new abs_module<T,Tstate>());
+      add_module(new weighted_std_module<T,Tstate>(ki1, kj1, thick1, "w1", mirror));
     }
     if (lut_features)
-      add_module(new range_lut_module<T>(lut));
+      add_module(new range_lut_module<T,Tstate>(lut));
     // full
-    add_module(new full_layer<T>(&prm, thick1, outthick, tanh, "f2"));
+    add_module(new full_layer<T,Tstate>(&prm, thick1, outthick, tanh, "f2"));
 
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T>(&prm, ki0, kj0,1,1,tbl0,mirror,tanh));
+    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki0, kj0,1,1,tbl0,mirror,tanh));
     // else // old fashioned way
-    //   add_module(new convolution_layer<T>(&prm, ki0, kj0, 1, 1, tbl0, tanh));
+    //   add_module(new convolution_layer<T,Tstate>(&prm, ki0, kj0, 1, 1, tbl0, tanh));
     // // subsampling
-    // add_module(new subsampling_layer<T>(&prm, si0, sj0, si0, sj0,thick0,tanh));,
+    // add_module(new subsampling_layer<T,Tstate>(&prm, si0, sj0, si0, sj0,thick0,tanh));,
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T>(&prm, ki1, kj1,1,1,tbl1,mirror,tanh));
+    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki1, kj1,1,1,tbl1,mirror,tanh));
     // else // old fashioned way
-    //   add_module(new convolution_layer<T>(&prm, ki1, kj1, 1, 1, tbl1, tanh));
+    //   add_module(new convolution_layer<T,Tstate>(&prm, ki1, kj1, 1, 1, tbl1, tanh));
     // // full
-    // add_last_module(new full_layer<T>(&prm, thick1, outthick, tanh));
+    // add_last_module(new full_layer<T,Tstate>(&prm, thick1, outthick, tanh));
   }
 
   ////////////////////////////////////////////////////////////////
   // net_cscc
 
   // the empty constructor (must call init afterwards)
-  template <class T>
-  net_cscc<T>::net_cscc()
-    : layers<T>(true) {
+  template <typename T, class Tstate>
+  net_cscc<T,Tstate>::net_cscc(Tstate *in, Tstate *out)
+    : layers<T,Tstate>(true, in, out) {
     // owns modules, responsible for deleting it
   }
 
-  template <class T>
-  net_cscc<T>::net_cscc(parameter<T> &prm, intg ini, intg inj,
-			intg ki0, intg kj0, idx<intg> &tbl0, 
-			intg si0, intg sj0,
-			intg ki1, intg kj1, idx<intg> &tbl1,
-			idx<intg> &tbl2,
-			intg outthick, bool norm, bool mirror,
-			bool tanh, bool shrink)
-    : layers<T>(true) {
+  template <typename T, class Tstate>
+  net_cscc<T,Tstate>::net_cscc(parameter<Tstate> &prm, intg ini, intg inj,
+			       intg ki0, intg kj0, idx<intg> &tbl0, 
+			       intg si0, intg sj0,
+			       intg ki1, intg kj1, idx<intg> &tbl1,
+			       idx<intg> &tbl2,
+			       intg outthick, bool norm, bool mirror,
+			       bool tanh, bool shrink,
+			       Tstate *in, Tstate *out)
+    : layers<T,Tstate>(true, in, out) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 tbl2, outthick, norm, mirror, tanh, shrink);
   }
   
-  template <class T>
-  net_cscc<T>::~net_cscc() {}
+  template <typename T, class Tstate>
+  net_cscc<T,Tstate>::~net_cscc() {}
 
-  template <class T>
-  void net_cscc<T>::init(parameter<T> &prm, intg ini, intg inj,
-			 intg ki0, intg kj0, idx<intg> &tbl0, 
-			 intg si0, intg sj0, intg ki1, intg kj1, 
-			 idx<intg> &tbl1, idx<intg> &tbl2,
-			 intg outthick, bool norm,
-			 bool mirror, bool tanh, bool shrink) {
+  template <typename T, class Tstate>
+  void net_cscc<T,Tstate>::init(parameter<Tstate> &prm, intg ini, intg inj,
+				intg ki0, intg kj0, idx<intg> &tbl0, 
+				intg si0, intg sj0, intg ki1, intg kj1, 
+				idx<intg> &tbl1, idx<intg> &tbl2,
+				intg outthick, bool norm,
+				bool mirror, bool tanh, bool shrink) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -298,79 +300,79 @@ namespace ebl {
     intg ki2 = (((ini - ki0 + 1) / si0) - ki1 + 1);
     intg kj2 = (((inj  - kj0 + 1) / sj0) - kj1 + 1);
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki0,kj0,1,1,
+    add_module(new convolution_module_replicable<T,Tstate>(&prm,ki0,kj0,1,1,
 						    tbl0,"c0"));
     // bias
-    add_module(new addc_module<T>(&prm, thick0, "c0"));
+    add_module(new addc_module<T,Tstate>(&prm, thick0, "c0"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T>(&prm, thick0));
+      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
     else if (tanh)
-      add_module(new tanh_module<T>());
+      add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T>());
+      add_module(new stdsigmoid_module<T,Tstate>());
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki0, kj0, thick0, "w0", mirror));
+      add_module(new abs_module<T,Tstate>());
+      add_module(new weighted_std_module<T,Tstate>(ki0, kj0, thick0, "w0", mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
+    add_module(new subsampling_layer<T,Tstate>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm,ki1,kj1,1,1,
+    add_module(new convolution_module_replicable<T,Tstate>(&prm,ki1,kj1,1,1,
 						    tbl1,"c1"));
     // bias
-    add_module(new addc_module<T>(&prm, thick1, "c1"));
+    add_module(new addc_module<T,Tstate>(&prm, thick1, "c1"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T>(&prm, thick1));
+      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
     else if (tanh)
-      add_module(new tanh_module<T>());
+      add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T>());
+      add_module(new stdsigmoid_module<T,Tstate>());
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki1, kj1, thick1, "w1", mirror));
+      add_module(new abs_module<T,Tstate>());
+      add_module(new weighted_std_module<T,Tstate>(ki1, kj1, thick1, "w1", mirror));
     }
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
+    add_module(new convolution_layer<T,Tstate>(&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
   }
 
   ////////////////////////////////////////////////////////////////
   // net_cscsc
 
   // the empty constructor (must call init afterwards)
-  template <class T>
-  net_cscsc<T>::net_cscsc()
-    : layers<T>(true) { // owns modules, responsible for deleting it
+  template <typename T, class Tstate>
+  net_cscsc<T,Tstate>::net_cscsc(Tstate *in, Tstate *out)
+    : layers<T,Tstate>(true, in, out) { // owns modules, responsible for deleting it
   }
 
-  template <class T>
-  net_cscsc<T>::net_cscsc(parameter<T> &prm, intg ini, intg inj,
-			  intg ki0, intg kj0, idx<intg> &tbl0, 
-			  intg si0, intg sj0,
-			  intg ki1, intg kj1, idx<intg> &tbl1, 
-			  intg si1, intg sj1,
-			  intg ki2, intg kj2, idx<intg> &tbl2,
-			  bool norm, bool mirror, bool tanh,
-			  bool shrink)
-    : layers<T>(true) { // owns modules, responsible for deleting it
+  template <typename T, class Tstate>
+  net_cscsc<T,Tstate>::net_cscsc(parameter<Tstate> &prm, intg ini, intg inj,
+				 intg ki0, intg kj0, idx<intg> &tbl0, 
+				 intg si0, intg sj0,
+				 intg ki1, intg kj1, idx<intg> &tbl1, 
+				 intg si1, intg sj1,
+				 intg ki2, intg kj2, idx<intg> &tbl2,
+				 bool norm, bool mirror, bool tanh,
+				 bool shrink, Tstate *in, Tstate *out)
+    : layers<T,Tstate>(true, in, out) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 si1, sj1, ki2, kj2, tbl2, norm, mirror, tanh, shrink);
   }
   
-  template <class T>
-  net_cscsc<T>::~net_cscsc() {}
+  template <typename T, class Tstate>
+  net_cscsc<T,Tstate>::~net_cscsc() {}
 
-  template <class T>
-  void net_cscsc<T>::init(parameter<T> &prm, intg ini, intg inj,
-			  intg ki0, intg kj0, idx<intg> &tbl0, 
-			  intg si0, intg sj0, intg ki1, intg kj1, 
-			  idx<intg> &tbl1, intg si1, intg sj1, 
-			  intg ki2, intg kj2, idx<intg> &tbl2,
-			  bool norm, bool mirror, bool tanh,
-			  bool shrink) {
+  template <typename T, class Tstate>
+  void net_cscsc<T,Tstate>::init(parameter<Tstate> &prm, intg ini, intg inj,
+				 intg ki0, intg kj0, idx<intg> &tbl0, 
+				 intg si0, intg sj0, intg ki1, intg kj1, 
+				 idx<intg> &tbl1, intg si1, intg sj1, 
+				 intg ki2, intg kj2, idx<intg> &tbl2,
+				 bool norm, bool mirror, bool tanh,
+				 bool shrink) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -385,71 +387,72 @@ namespace ebl {
     // and feed the input of the following module.
 
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm, ki0, kj0, 1, 1, tbl0,
+    add_module(new convolution_module_replicable<T,Tstate>(&prm, ki0, kj0, 1, 1, tbl0,
 						    "c0"));
     // bias
-    add_module(new addc_module<T>(&prm, thick0, "c0"));
+    add_module(new addc_module<T,Tstate>(&prm, thick0, "c0"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T>(&prm, thick0));
+      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
     else if (tanh)
-      add_module(new tanh_module<T>());
+      add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T>());
+      add_module(new stdsigmoid_module<T,Tstate>());
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki0, kj0, thick0, "w0", mirror));
+      add_module(new abs_module<T,Tstate>());
+      add_module(new weighted_std_module<T,Tstate>(ki0, kj0, thick0, "w0", mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
+    add_module(new subsampling_layer<T,Tstate>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
     // convolution
-    add_module(new convolution_module_replicable<T>(&prm, ki1, kj1, 1, 1,tbl1,
+    add_module(new convolution_module_replicable<T,Tstate>(&prm, ki1, kj1, 1, 1,tbl1,
 						    "c1"));
     // bias
-    add_module(new addc_module<T>(&prm, thick1, "c1"));
+    add_module(new addc_module<T,Tstate>(&prm, thick1, "c1"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T>(&prm, thick1));
+      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
     else if (tanh)
-      add_module(new tanh_module<T>());
+      add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T>());
+      add_module(new stdsigmoid_module<T,Tstate>());
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T>());
-      add_module(new weighted_std_module<T>(ki1, kj1, thick1, "w1", mirror));
+      add_module(new abs_module<T,Tstate>());
+      add_module(new weighted_std_module<T,Tstate>(ki1, kj1, thick1, "w1", mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T>(&prm,si1,sj1,si1,sj1,thick1,tanh,"s1"));
+    add_module(new subsampling_layer<T,Tstate>(&prm,si1,sj1,si1,sj1,thick1,tanh,"s1"));
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
+    add_module(new convolution_layer<T,Tstate>(&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
 
     // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T>(&prm, ki0, kj0,1,1,tbl0,mirror,tanh));
+    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki0, kj0,1,1,tbl0,mirror,tanh));
     // else // old fashioned way
-    //   add_module(new convolution_layer<T>(&prm, ki0, kj0, 1, 1, tbl0, tanh));
-    // add_module(new subsampling_layer<T>(&prm, si0, sj0, si0, sj0, thick0,tanh));
+    //   add_module(new convolution_layer<T,Tstate>(&prm, ki0, kj0, 1, 1, tbl0, tanh));
+    // add_module(new subsampling_layer<T,Tstate>(&prm, si0, sj0, si0, sj0, thick0,tanh));
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T>(&prm, ki1, kj1,1,1,tbl1,mirror,tanh));
+    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki1, kj1,1,1,tbl1,mirror,tanh));
     // else // old fashioned way
-    //   add_module(new convolution_layer<T>(&prm, ki1, kj1, 1, 1, tbl1, tanh));
-    // add_module(new subsampling_layer<T>(&prm, si1, sj1, si1, sj1, thick1,tanh));
-    // add_module(new convolution_layer<T>(&prm, ki2, kj2, 1, 1, tbl2, tanh));
+    //   add_module(new convolution_layer<T,Tstate>(&prm, ki1, kj1, 1, 1, tbl1, tanh));
+    // add_module(new subsampling_layer<T,Tstate>(&prm, si1, sj1, si1, sj1, thick1,tanh));
+    // add_module(new convolution_layer<T,Tstate>(&prm, ki2, kj2, 1, 1, tbl2, tanh));
   }
 
   ////////////////////////////////////////////////////////////////
   // lenet_cscsc
 
-  template <class T>
-  lenet_cscsc<T>::
-  lenet_cscsc(parameter<T> &prm, intg image_height, intg image_width,
+  template <typename T, class Tstate>
+  lenet_cscsc<T,Tstate>::
+  lenet_cscsc(parameter<Tstate> &prm, intg image_height, intg image_width,
 	      intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
 	      intg kj1, intg si1, intg sj1,
 	      intg output_size, bool norm, bool color, bool mirror, bool tanh,
 	      bool shrink, idx<intg> *table0_, idx<intg> *table1_,
-	      idx<intg> *table2_) {
+	      idx<intg> *table2_, Tstate *in, Tstate *out)
+    : net_cscsc<T,Tstate>(in, out) {
     idx<intg> table0, table1, table2;
     if (!color) { // use smaller tables
       table0 = full_table(1, 6);
@@ -490,13 +493,15 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // lenet
 
-  template <class T>
-  lenet<T>::lenet(parameter<T> &prm, intg image_height, intg image_width,
-		  intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
-		  intg kj1, intg si1, intg sj1, intg hid,
-		  intg output_size, bool norm, bool color, bool mirror,
-		  bool tanh, bool shrink, idx<intg> *table0_,
-		  idx<intg> *table1_, idx<intg> *table2_) {
+  template <typename T, class Tstate>
+  lenet<T,Tstate>::lenet(parameter<Tstate> &prm, intg image_height,
+			 intg image_width, intg ki0, intg kj0, intg si0,
+			 intg sj0, intg ki1, intg kj1, intg si1, intg sj1,
+			 intg hid, intg output_size, bool norm, bool color,
+			 bool mirror, bool tanh, bool shrink,
+			 idx<intg> *table0_, idx<intg> *table1_,
+			 idx<intg> *table2_, Tstate *in, Tstate *out)
+    : net_cscscf<T,Tstate>(in, out) {
     idx<intg> table0, table1, table2;
     if (!color) { // use smaller tables
       table0 = full_table(1, 6);
@@ -537,13 +542,15 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // lenet
 
-  template <class T>
-  lenet_cscf<T>::lenet_cscf(parameter<T> &prm,
-			    intg image_height, intg image_width,
-			    intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
-			    intg kj1, intg output_size, bool norm, bool color,
-			    bool mirror, bool tanh, bool shrink,
-			    idx<intg> *table0_, idx<intg> *table1_) {
+  template <typename T, class Tstate>
+  lenet_cscf<T,Tstate>::lenet_cscf(parameter<Tstate> &prm,
+				   intg image_height, intg image_width,
+				   intg ki0, intg kj0, intg si0, intg sj0,
+				   intg ki1, intg kj1, intg output_size,
+				   bool norm, bool color, bool mirror,
+				   bool tanh, bool shrink, idx<intg> *table0_,
+				   idx<intg> *table1_, Tstate *in, Tstate *out)
+    : net_cscf<T,Tstate>(in, out) {
     idx<intg> table0, table1;
     if (!color) { // use smaller tables
       table0 = full_table(1, 6);
@@ -572,12 +579,13 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // lenet5
 
-  template <class T>
-  lenet5<T>::lenet5(parameter<T> &prm, intg image_height, intg image_width,
-		    intg ki0, intg kj0, intg si0, intg sj0,
-		    intg ki1, intg kj1, intg si1, intg sj1,
-		    intg hid, intg output_size, bool norm, bool mirror,
-		    bool tanh, bool shrink) {
+  template <typename T, class Tstate>
+  lenet5<T,Tstate>::lenet5(parameter<Tstate> &prm, intg image_height,
+			   intg image_width,
+			   intg ki0, intg kj0, intg si0, intg sj0,
+			   intg ki1, intg kj1, intg si1, intg sj1,
+			   intg hid, intg output_size, bool norm, bool mirror,
+			   bool tanh, bool shrink) {
     idx<intg> table0 = full_table(1, 6);
     // TODO: add idx constructor taking pointer to data with dimensions
     // and copies it.
@@ -601,10 +609,10 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////////////
   // lenet7
 
-  template <class T>
-  lenet7<T>::lenet7(parameter<T> &prm, intg image_height, intg image_width,
-		    intg output_size, bool norm, bool mirror, bool tanh,
-		    bool shrink) {
+  template <typename T, class Tstate>
+  lenet7<T,Tstate>::lenet7(parameter<Tstate> &prm, intg image_height,
+			   intg image_width, intg output_size, bool norm,
+			   bool mirror, bool tanh, bool shrink) {
     intg ki0 = 5, kj0 = 5;
     intg si0 = 4, sj0 = 4;
     intg ki1 = 6, kj1 = 6;
@@ -631,11 +639,11 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////////////
   // lenet7_binocular
 
-  template <class T>
-  lenet7_binocular<T>::lenet7_binocular(parameter<T> &prm, intg image_height, 
-					intg image_width, intg output_size,
-					bool norm, bool mirror, bool tanh,
-					bool shrink) {
+  template <typename T, class Tstate>
+  lenet7_binocular<T,Tstate>::
+  lenet7_binocular(parameter<Tstate> &prm, intg image_height, intg image_width,
+		   intg output_size, bool norm, bool mirror, bool tanh,
+		   bool shrink) {
     intg ki0 = 5, kj0 = 5;
     intg si0 = 4, sj0 = 4;
     intg ki1 = 6, kj1 = 6;
@@ -668,17 +676,18 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // supervised euclidean machine
 
-  template <class Tdata, class Tlabel>
-  supervised_euclidean_machine<Tdata, Tlabel>::
-  supervised_euclidean_machine(module_1_1<Tdata> &m, idx<Tdata> &t,
-			       idxdim &dims)
-    : fc_ebm2_gen<state_idx<Tdata>, Tlabel, Tdata>
-      (m, fout, (ebm_2_gen<state_idx<Tdata>, Tlabel, Tdata>&) fcost), 
+  template <typename Tdata, class Tlabel, class Tstate>
+  supervised_euclidean_machine<Tdata,Tlabel,Tstate>::
+  supervised_euclidean_machine(module_1_1<Tdata,Tstate> &m,
+			       idx<Tdata> &t,idxdim &dims)
+    : fc_ebm2<Tdata,Tstate,bbstate_idx<Tlabel>,Tstate>
+      (m, fout, (ebm_2<Tstate,bbstate_idx<Tlabel>,Tstate>&)fcost),
       fcost(t), fout(dims) {
   }
 
-  template <class Tdata, class Tlabel>
-  supervised_euclidean_machine<Tdata, Tlabel>::~supervised_euclidean_machine() {
+  template <typename Tdata, class Tlabel, class Tstate>
+  supervised_euclidean_machine<Tdata,Tlabel,Tstate>::
+  ~supervised_euclidean_machine() {
   }
 
   ////////////////////////////////////////////////////////////////////////

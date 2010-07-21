@@ -191,12 +191,12 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::
-  fprop(state_idx<Tnet> &out, idx<Tin2> &label) {
+  fprop(fstate_idx<Tnet> &out, fstate_idx<Tin2> &label) {
     out.resize(sample_dims());
     idx_copy(*(this->dataIter), out.x);
     idx_addc(out.x, bias, out.x);
     idx_dotc(out.x, coeff, out.x);
-    idx_copy(*labelsIter, label);
+    idx_copy(*labelsIter, label.x);
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -668,19 +668,21 @@ namespace ebl {
   // fprop pair
   template <class Tnet, class Tdata, class Tlabel>
   void labeled_pair_datasource<Tnet, Tdata, Tlabel>::
-  fprop(state_idx<Tnet> &in1, state_idx<Tnet> &in2, idx<Tlabel> &label) {
-    in1.resize(this->sample_dims());
-    in2.resize(this->sample_dims());
-    intg id1 = pairsIter.get(0), id2 = pairsIter.get(1);
-    Tlabel lab = this->labels.get(id1);
-    label.set(lab);
-    idx<Tdata> im1 = this->data[id1], im2 = this->data[id2];
-    idx_copy(im1, in1.x);
-    idx_copy(im2, in2.x);
-    idx_addc(in1.x, this->bias, in1.x);
-    idx_dotc(in1.x, this->coeff, in1.x);
-    idx_addc(in2.x, this->bias, in2.x);
-    idx_dotc(in2.x, this->coeff, in2.x);
+  fprop(fstate_idx<Tnet> &in1, fstate_idx<Tnet> &in2,
+	fstate_idx<Tlabel> &label) {
+    eblerror("fixme");
+    // in1.resize(this->sample_dims());
+    // in2.resize(this->sample_dims());
+    // intg id1 = pairsIter.get(0), id2 = pairsIter.get(1);
+    // Tlabel lab = this->labels.get(id1);
+    // label.x.set(lab);
+    // idx<Tdata> im1 = this->data[id1], im2 = this->data[id2];
+    // idx_copy(im1, in1.x);
+    // idx_copy(im2, in2.x);
+    // idx_addc(in1.x, this->bias, in1.x);
+    // idx_dotc(in1.x, this->coeff, in1.x);
+    // idx_addc(in2.x, this->bias, in2.x);
+    // idx_dotc(in2.x, this->coeff, in2.x);
   }
 
   // next pair
@@ -771,7 +773,7 @@ namespace ebl {
 
   template <class Tnet, class Tdata, class Tlabel>
   void mnist_datasource<Tnet, Tdata, Tlabel>::
-  fprop(state_idx<Tnet> &out, idx<Tlabel> &label) {
+  fprop(fstate_idx<Tnet> &out, fstate_idx<Tlabel> &label) {
     out.resize(this->sample_dims());
     uint ni = data.dim(1);
     uint nj = data.dim(2);
@@ -784,7 +786,7 @@ namespace ebl {
     idx_copy(*(this->dataIter), tgt);
     idx_addc(out.x, bias, out.x);
     idx_dotc(out.x, coeff, out.x);
-    label.set((this->labelsIter).get());
+    label.x.set((this->labelsIter).get());
   }
 
   ////////////////////////////////////////////////////////////////

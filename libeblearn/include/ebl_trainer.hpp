@@ -150,9 +150,9 @@ namespace ebl {
 
   template <class Tnet, class Tdata, class Tlabel>  
   supervised_trainer<Tnet, Tdata, Tlabel>::
-  supervised_trainer(fc_ebm2_gen<state_idx<Tnet>, Tlabel, Tnet> &m,
-		     parameter<Tnet> &p)
-    : machine(m), param(p), input(NULL), energy(), label(), age(0),
+  supervised_trainer(fc_ebm2<Tnet,bbstate_idx<Tnet>,bbstate_idx<Tlabel> > &m,
+		     parameter<bbstate_idx<Tnet> > &p)
+    : machine(m), param(p), input(NULL), energy(), label(), answer(), age(0),
       iteration(-1), iteration_ptr(NULL), prettied(false) {
     energy.dx.set(1.0);
     energy.ddx.set(0.0);
@@ -163,25 +163,26 @@ namespace ebl {
   }
 		     
   template <class Tnet, class Tdata, class Tlabel>  
-  Tlabel supervised_trainer<Tnet, Tdata, Tlabel>::
-  run(state_idx<Tnet> &input, infer_param &infp, Tlabel *label) {
-    Tlabel answer = -1;
+  void supervised_trainer<Tnet, Tdata, Tlabel>::
+  run(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label, infer_param &infp) {
+    answer.x.set(-1); // TODO: is this necessary?
     // infer answer from energies and fill energy of correct answer
-    machine.infer2(input, answer, infp, label, &energy);
-    return answer;
+    machine.infer2(input, answer, infp, &label, &energy);
   }
   
   template <class Tnet, class Tdata, class Tlabel>  
   bool supervised_trainer<Tnet, Tdata, Tlabel>::
-  test_sample(state_idx<Tnet> &input, Tlabel label, Tlabel &answer,
+  test_sample(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label,
 	      infer_param &infp) {
-    answer = run(input, infp, &label);
-    return (label == answer); // return true if correct answer
+    run(input, label, infp);
+    // TODO: for now, simple comparison, make this more generic
+    return (label.x.get() == answer.x.get()); // return true if correct answer
   }
 
   template <class Tnet, class Tdata, class Tlabel>  
   double supervised_trainer<Tnet, Tdata, Tlabel>::
-  learn_sample(state_idx<Tnet> &input, Tlabel label, gd_param &args) {
+  learn_sample(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label,
+	       gd_param &args) {
     machine.fprop(input, label, energy);
     param.clear_dx();
     machine.bprop(input, label, energy);
@@ -198,13 +199,12 @@ namespace ebl {
   test(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log,
        infer_param &infp) {
     bool correct;
-    Tlabel answer;
     init(ds, &log, true);
     // loop
     for (unsigned int i = 0; i < ds.size(); ++i) {
       ds.fprop(*input, label);
-      correct = test_sample(*input, label.get(), answer, infp);
-      log.update(age, (uint) label.get(), (uint) answer,
+      correct = test_sample(*input, label, infp);
+      log.update(age, (uint) label.x.get(), (uint) answer.x.get(),
 		 (double) energy.x.get());
       // use energy as distance for samples probabilities to be used
       ds.set_answer_distance(energy.x.get());
@@ -214,40 +214,39 @@ namespace ebl {
     cout << endl;
   }
 
-  template <class Tnet, class Tdata, class Tlabel> 
-  void supervised_trainer<Tnet, Tdata, Tlabel>::
-  test_threshold(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
-		 classifier_meter &log, infer_param &infp, double threshold,
-		 Tlabel defclass) {
-    Tlabel answer, lab;
-    idx<Tnet> raw;
-    Tnet rawmax;
-    init(ds, &log, true);
-    // loop
-    for (unsigned int i = 0; i < ds.size(); ++i) {
-      ds.fprop(*input, label); // get sample
-      lab = label.get();
-      machine.fprop(*input, lab, energy); // fprop sample
-      raw = machine.fout.x; // raw network outputs
-      rawmax = idx_max(raw);
-      if (rawmax < threshold) // no response stronger than threshold
-	answer = defclass; // default class when no detection
-      else // stronger responses
-	answer = idx_indexmax(raw); // answer = maximum response
-      // update TPR and FPR
-      log.update(age, (uint) label.get(), (uint) answer,
-		 (double) energy.x.get());
-      ds.next();
-    }
-    cout << "threshold: " << threshold << " default class: " << defclass <<endl;
-    log.display_positive_rates(threshold, ds.lblstr);
-  }
+  // template <class Tnet, class Tdata, class Tlabel> 
+  // void supervised_trainer<Tnet, Tdata, Tlabel>::
+  // test_threshold(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+  // 		 classifier_meter &log, infer_param &infp, double threshold,
+  // 		 Tlabel defclass) {
+  //   Tlabel answer, lab;
+  //   idx<Tnet> raw;
+  //   Tnet rawmax;
+  //   init(ds, &log, true);
+  //   // loop
+  //   for (unsigned int i = 0; i < ds.size(); ++i) {
+  //     ds.fprop(*input, label); // get sample
+  //     lab = label.get();
+  //     machine.fprop(*input, lab, energy); // fprop sample
+  //     raw = machine.fout.x; // raw network outputs
+  //     rawmax = idx_max(raw);
+  //     if (rawmax < threshold) // no response stronger than threshold
+  // 	answer = defclass; // default class when no detection
+  //     else // stronger responses
+  // 	answer = idx_indexmax(raw); // answer = maximum response
+  //     // update TPR and FPR
+  //     log.update(age, (uint) label.get(), (uint) answer,
+  // 		 (double) energy.x.get());
+  //     ds.next();
+  //   }
+  //   cout << "threshold: " << threshold << " default class: " << defclass <<endl;
+  //   log.display_positive_rates(threshold, ds.lblstr);
+  // }
   
   template <class Tnet, class Tdata, class Tlabel> 
   void supervised_trainer<Tnet, Tdata, Tlabel>::
   train(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log, 
 	gd_param &args, int niter) {
-    Tlabel lab;
     timer t;
     init(ds, &log);
     for (int i = 0; i < niter; ++i) { // niter iterations
@@ -255,8 +254,7 @@ namespace ebl {
       // training on lowest size common to all classes (times # classes)
       for (intg j = 0; j < ds.get_epoch_size(); ++j) {
 	ds.fprop(*input, label);
-	lab = label.get();
-	learn_sample(*input, lab, args);
+	learn_sample(*input, label, args);
 	// use energy as distance for samples probabilities to be used
 	ds.set_answer_distance(energy.x.get());
 	//      log.update(age, output, label.get(), energy);
@@ -271,7 +269,6 @@ namespace ebl {
   void supervised_trainer<Tnet, Tdata, Tlabel>::
   compute_diaghessian(labeled_datasource<Tnet, Tdata, Tlabel> &ds, intg niter, 
 		      double mu) {
-    Tlabel lab;
     timer t;
     t.start();
     init(ds, NULL);
@@ -279,12 +276,11 @@ namespace ebl {
     // loop
     for (int i = 0; i < niter; ++i) {
       ds.fprop(*input, label);
-      lab = label.get();
-      machine.fprop(*input, lab, energy);
+      machine.fprop(*input, label, energy);
       param.clear_dx();
-      machine.bprop(*input, lab, energy);
+      machine.bprop(*input, label, energy);
       param.clear_ddx();
-      machine.bbprop(*input, lab, energy);
+      machine.bbprop(*input, label, energy);
       param.update_ddeltax((1 / (double) niter), 1.0);
       ds.next_train();
     }
@@ -300,9 +296,9 @@ namespace ebl {
        classifier_meter *log, bool new_iteration) {
     pretty(ds); // pretty info
     // if not allocated, allocate input. input is allocated dynamically
-    // based on ds dimensions because state_idx cannot change orders.
+    // based on ds dimensions because fstate_idx cannot change orders.
     if (!input)
-      input = new state_idx<Tnet>(ds.sample_dims());
+      input = new bbstate_idx<Tnet>(ds.sample_dims());
     else
       input->resize(ds.sample_dims());
     // reinit ds
@@ -332,7 +328,7 @@ namespace ebl {
   }
 
 //   supervised_trainer<Tnet, Tdata, Tlabel>* copy() {
-//     fc_ebm2_gen<state_idx,int,state_idx>	&machine;
+//     fc_ebm2_gen<fstate_idx,int,fstate_idx>	&machine;
 //     parameter				&param;
 //   }
 

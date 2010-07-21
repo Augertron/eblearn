@@ -40,13 +40,15 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // full_layer
 
-#define FULL_LAYER_GUI(name, T)						\
-  template <class T>							\
-  void full_layer_gui::name(full_layer<T> &nn,				\
-			    state_idx<T> &in, state_idx<T> &out,	\
+#define FULL_LAYER_GUI(name, T, op, state)				\
+  template <typename T, class Tstate>					\
+  void full_layer_gui::name(full_layer<T,Tstate> &nn,			\
+			    Tstate &in, Tstate &out,			\
 			    unsigned int &h0, unsigned int &w0,		\
 			    double zoom, T vmin, T vmax,		\
 			    bool show_out) {				\
+    /* run it */							\
+    nn.op(in, out);							\
     unsigned int h = h0, w = w0;					\
     /* display text */							\
     gui << gui_only() << at(h, w) << "full in:" << in.T;		\
@@ -62,21 +64,24 @@ namespace ebl {
     h0 += (uint) (std::max((uint) 10, (uint) (m.dim(0) * zoom + 1)));	\
   }									
   
-  FULL_LAYER_GUI(display_fprop, x)
-  FULL_LAYER_GUI(display_bprop, dx)
-  FULL_LAYER_GUI(display_bbprop, ddx)
+  FULL_LAYER_GUI(display_fprop, x, fprop, fstate_idx)
+  FULL_LAYER_GUI(display_bprop, dx, bprop, bstate_idx)
+  FULL_LAYER_GUI(display_bbprop, ddx, bbprop, bbstate_idx)
   
   ////////////////////////////////////////////////////////////////
   // convolution_layer
 
-#define CONVOLUTION_LAYER_GUI(name, T)					\
-  template <class T>							\
-  void convolution_layer_gui::name(convolution_layer<T> &nn,		\
-				   state_idx<T> &in, state_idx<T> &out, \
+#define CONVOLUTION_LAYER_GUI(name, T, op, state)			\
+  template <typename T, class Tstate>					\
+  void convolution_layer_gui::name(convolution_layer<T,Tstate> &nn,	\
+				   Tstate &in, Tstate &out,		\
 				   unsigned int &h0,			\
 				   unsigned int &w0,			\
 				   double zoom, T vmin, T vmax,		\
-				   bool show_out) {			\
+				   bool show_out, bool run) {		\
+    /* run it */							\
+    if (run)								\
+      nn.op(in, out);							\
     unsigned int h = h0, w = w0;					\
     /* display text */							\
     gui << gui_only() << at(h, w) << "conv. in:" << in.T		\
@@ -105,23 +110,25 @@ namespace ebl {
     h0 += (uint) (std::max((uint) 10, (uint) (mk.dim(0) * zoom + 1)));	\
   }
 
-  CONVOLUTION_LAYER_GUI(display_fprop, x)
-  CONVOLUTION_LAYER_GUI(display_bprop, dx)
-  CONVOLUTION_LAYER_GUI(display_bbprop, ddx)
+  CONVOLUTION_LAYER_GUI(display_fprop, x, fprop, fstate_idx)
+  CONVOLUTION_LAYER_GUI(display_bprop, dx, bprop, bstate_idx)
+  CONVOLUTION_LAYER_GUI(display_bbprop, ddx, bbprop, bbstate_idx)
   
   ////////////////////////////////////////////////////////////////
   // convabsnorm_layer
   
-#define CONVABSNORM_LAYER_GUI(name, T)					\
-  template <class T>							\
-  void convabsnorm_layer_gui::name(convabsnorm_layer<T> &layer,		\
-				   state_idx<T> &in, state_idx<T> &out,	\
+#define CONVABSNORM_LAYER_GUI(name, T, op, state)			\
+  template <typename T, class Tstate>					\
+  void convabsnorm_layer_gui::name(convabsnorm_layer<T,Tstate> &layer,	\
+				   Tstate &in, Tstate &out,		\
 				   unsigned int &h0,			\
 				   unsigned int &w0,			\
 				   double zoom, T vmin, T vmax,		\
 				   bool show_out) {			\
     convolution_layer_gui::name(layer.lconv, in, out, h0, w0,		\
-				zoom, vmin, vmax, show_out);		\
+				zoom, vmin, vmax, show_out, false);	\
+    /* run it */							\
+    layer.op(in, out);							\
     unsigned int h = h0, w = w0;					\
     /* display text */							\
     gui << gui_only() << at(h, w) << "conv out:" << layer.tmp->T	\
@@ -151,24 +158,26 @@ namespace ebl {
     h = h0;								\
     /* display normalization internals */				\
     weighted_std_module_gui::name(layer.norm, in, out, h0, w0,		\
-				  zoom, vmin, vmax, show_out);		\
+				  zoom, vmin, vmax, show_out, false);	\
   }
 
-  CONVABSNORM_LAYER_GUI(display_fprop, x)
-  CONVABSNORM_LAYER_GUI(display_bprop, dx)
-  CONVABSNORM_LAYER_GUI(display_bbprop, ddx)
+  CONVABSNORM_LAYER_GUI(display_fprop, x, fprop, fstate_idx)
+  CONVABSNORM_LAYER_GUI(display_bprop, dx, bprop, bstate_idx)
+  CONVABSNORM_LAYER_GUI(display_bbprop, ddx, bbprop, bbstate_idx)
   
   ////////////////////////////////////////////////////////////////
   // subsampling_layer
 
-#define SUBSAMPLING_LAYER_GUI(name, T)					\
-  template <class T>							\
-  void subsampling_layer_gui::name(subsampling_layer<T> &nn,		\
-				   state_idx<T> &in, state_idx<T> &out, \
+#define SUBSAMPLING_LAYER_GUI(name, T, op, state)			\
+  template <typename T, class Tstate>					\
+  void subsampling_layer_gui::name(subsampling_layer<T,Tstate> &nn,	\
+				   Tstate &in, Tstate &out,		\
 				   unsigned int &h0,			\
 				   unsigned int &w0,			\
 				   double zoom, T vmin, T vmax,		\
 				   bool show_out) {			\
+    /* run it */							\
+    nn.op(in, out);							\
     unsigned int h = h0, w = w0;					\
     /* display input text	*/					\
     gui << gui_only() << at(h, w) << "ssampl. in:" << in.T;		\
@@ -189,9 +198,9 @@ namespace ebl {
     h0 += 10;								\
   }
   
-  SUBSAMPLING_LAYER_GUI(display_fprop, x)
-  SUBSAMPLING_LAYER_GUI(display_bprop, dx)
-  SUBSAMPLING_LAYER_GUI(display_bbprop, ddx)
+  SUBSAMPLING_LAYER_GUI(display_fprop, x, fprop, fstate_idx)
+  SUBSAMPLING_LAYER_GUI(display_bprop, dx, bprop, bstate_idx)
+  SUBSAMPLING_LAYER_GUI(display_bbprop, ddx, bbprop, bbstate_idx)
 
 }
   

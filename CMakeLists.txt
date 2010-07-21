@@ -22,11 +22,13 @@ SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts 
   ${CMAKE_BINARY_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-# Release compilation flags
-IF (CMAKE_BUILD_TYPE STREQUAL "Release")
-  SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}"
-    CACHE STRING "Release builds CMAKE CXX flags " FORCE )
-ENDIF (CMAKE_BUILD_TYPE STREQUAL "Release")
+# Extra compilation flags
+SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}"
+  CACHE STRING "CMAKE CXX flags " FORCE )
+
+# Allow default templates in templated functions
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x"
+  CACHE STRING "CMAKE CXX flags " FORCE )
 
 # check for required and optional external packages
 FIND_PACKAGE(All)

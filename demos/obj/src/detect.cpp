@@ -64,7 +64,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #endif
     try {
       // check input parameters
-      if ((argc != 2) && (argc != 3) ) {
+      if (argc < 3) {
 	cerr << "wrong number of parameters." << endl;
 	cerr << "usage: obj_detect <config file> [directory or file]" << endl;
 	return -1;
@@ -94,27 +94,30 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       cout << "Saving outputs to " << outdir << endl;
 
       // load network and weights
-      parameter<t_net> theparam;
+      parameter<fstate_idx<t_net> > theparam;
       idx<ubyte> classes(1,1);
       try {
 	load_matrix<ubyte>(classes, conf.get_cstring("classes"));
       } catch(string &err) { cerr << "warning: " << err << endl; }
       cout << "loading weights from " << conf.get_cstring("weights") << endl;
-      module_1_1<t_net> *net = create_network(theparam, conf, classes.dim(0));
+      module_1_1<fs(t_net)> *net =
+	create_network<fs(t_net)>(theparam, conf, classes.dim(0));
       theparam.load_x(conf.get_cstring("weights"));
 
       // select preprocessing  
-      module_1_1<t_net>* pp = NULL;
+      module_1_1<fs(t_net)>* pp = NULL;
       if (!strcmp(cam_type.c_str(), "v4l2")) // Y -> Yp
-	pp = new weighted_std_module<t_net>(norm_size, norm_size, 1, "norm",
-					    true, false, true);
+	pp = new weighted_std_module<fs(t_net)>(norm_size, norm_size, 1, "norm",
+						true, false, true);
       else if (color) // RGB -> YpUV
-	pp = (module_1_1<t_net>*) new rgb_to_ypuv_module<t_net>(norm_size);
+	pp = (module_1_1<fs(t_net)>*)
+	  new rgb_to_ypuv_module<fs(t_net)>(norm_size);
       else // RGB -> Yp
-	pp = (module_1_1<t_net>*) new rgb_to_yp_module<t_net>(norm_size);
+	pp = (module_1_1<fs(t_net)>*)
+	  new rgb_to_yp_module<fs(t_net)>(norm_size);
   
       // detector
-      detector<t_net> detect(*net, classes, pp, norm_size, NULL, 0,
+      detector<fs(t_net)> detect(*net, classes, pp, norm_size, NULL, 0,
 			     conf.get_double("gain"));
       detect.set_resolutions(conf.get_double("scaling"));
       bool bmask_class = false;
@@ -146,7 +149,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	cam = new camera_directory<t_net>(conf.get_cstring("retrain_dir"));
       } else { // regular execution
 	if (!strcmp(cam_type.c_str(), "directory")) {
-	  if (argc == 3) 
+	  if (argc >= 3) 
 	    cam = new camera_directory<t_net>(argv[2], height, width);
 	  else if (conf.exists("input_dir"))
 	    cam = new camera_directory<t_net>(conf.get_cstring("input_dir"), 
@@ -162,7 +165,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	else if (!strcmp(cam_type.c_str(), "shmem"))
 	  cam = new camera_shmem<t_net>("shared-mem", height, width);
 	else if (!strcmp(cam_type.c_str(), "video")) {
-	  if (argc == 3)
+	  if (argc >= 3)
 	    cam = new camera_video<t_net>
 	      (argv[2], height, width, conf.get_uint("input_video_sstep"),
 	       conf.get_uint("input_video_max_duration"));
@@ -210,9 +213,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       wid  = display ? new_window("eblearn object recognition") : 0;
       night_mode();
       float	zoom = 1;
-      detector_gui<t_net> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
-			       qwidth1, conf.exists_bool("queue2"), qstep2,
-			       qheight2, qwidth2);
+      detector_gui<fs(t_net)> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
+				   qwidth1, conf.exists_bool("queue2"), qstep2,
+				   qheight2, qwidth2);
       if (bmask_class)
 	dgui.set_mask_class(conf.get_cstring("mask_class"),
 			    (t_net) conf.get_double("mask_threshold"));

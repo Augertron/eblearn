@@ -50,23 +50,23 @@ namespace ebl {
     virtual ~module_1_1_gui() {};
 
 #define DISPLAY_PROTO_1_1(name)						\
-    template<class T, class Tout>					\
-      void name(module_1_1_gen<state_idx<T>, Tout> &m,			\
-		state_idx<T> &in, Tout &out,				\
+    template<typename T, class Tstate>					\
+      void name(module_1_1<T,Tstate> &m,				\
+		Tstate &in, Tstate &out,				\
 		unsigned int h0 = 0, unsigned int w0 = 0,		\
 		double dzoom = 1.0, T vmin = 0, T vmax = 0,		\
 		bool show_out = true,					\
 		int wid = -1, const char *wname = NULL);
-
+    
 #define DISPLAY2_PROTO_1_1(name)					\
-    template<class T, class Tout>					\
-      void name(module_1_1_gen<state_idx<T>, Tout> &m,			\
-		state_idx<T> &in, Tout &out,				\
+    template<typename T, class Tstate>					\
+      void name(module_1_1<T,Tstate> &m,				\
+		Tstate &in, Tstate &out,				\
 		unsigned int &h0, unsigned int &w0,			\
 		double dzoom = 1.0, T vmin = 0, T vmax = 0,		\
 		bool show_out = true,					\
 		int wid = -1, const char *wname = NULL);
-
+    
     DISPLAY_PROTO_1_1(display_fprop)
     DISPLAY2_PROTO_1_1(display_fprop2)
     DISPLAY_PROTO_1_1(display_bprop)
@@ -87,9 +87,9 @@ namespace ebl {
     virtual ~module_2_1_gui() {};
 
 #define DISPLAY_PROTO_2_1(name)						\
-    template<class Tin1, class Tin2, class T>				\
-      void name(module_2_1_gen<Tin1, Tin2, state_idx<T> > &m,		\
-		Tin1 &in1, Tin2 &in2, state_idx<T> &out,		\
+    template<typename T, class Tstate, class Tin2, class Tout>		\
+      void name(module_2_1<T,Tstate,Tin2,Tout> &m,			\
+		Tstate &in1, Tin2 &in2, Tout &out,			\
 		unsigned int &h0, unsigned int &w0,			\
 		double dzoom = 1.0, T vmin = 0, T vmax = 0,		\
 		bool show_out = true,					\
@@ -108,10 +108,10 @@ namespace ebl {
     layers_gui() {};
     virtual ~layers_gui() {};
 
-#define DISPLAY_PROTO_LAYERSN(name)					\
-    template<class T>							\
-      static void name(module_1_1_gui &g, layers_gen<state_idx<T> > &ln, \
-		       state_idx<T> &in, state_idx<T> &out,		\
+#define DISPLAY_PROTO_LAYERSN(name)				\
+    template<typename T, class Tstate>					\
+      static void name(module_1_1_gui &g, layers<T,Tstate> &ln,		\
+		       Tstate &in, Tstate &out,			\
 		       unsigned int &h0, unsigned int &w0,		\
 		       double dzoom = 1.0,				\
 		       T vmin = 0, T vmax = 0,				\
@@ -125,25 +125,25 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // layers_2_gui
 
-  class layers_2_gui {
-  public:
-    layers_2_gui() {};
-    virtual ~layers_2_gui() {};
+/*   class layers_2_gui { */
+/*   public: */
+/*     layers_2_gui() {}; */
+/*     virtual ~layers_2_gui() {}; */
 
-#define DISPLAY_PROTO_LAYERS2(name)					\
-    template<class T>							\
-      static void name(module_1_1_gui &g,				\
-		       layers_2_gen<state_idx<T>,state_idx<T>,state_idx<T> > &ln, \
-		       state_idx<T> &in, state_idx<T> &out,		\
-		       unsigned int &h0, unsigned int &w0,		\
-		       double dzoom = 1.0,				\
-		       T vmin = 0, T vmax = 0,				\
-		       bool show_out = false);
+/* #define DISPLAY_PROTO_LAYERS2(name)				\ */
+/*     template<typename T, class Tstate>							\ */
+/*       static void name(module_1_1_gui &g,				\ */
+/* 		       layers_2<T,Tstate> &ln,					\ */
+/* 		       Tstate &in, Tstate &out,			\ */
+/* 		       unsigned int &h0, unsigned int &w0,		\ */
+/* 		       double dzoom = 1.0,				\ */
+/* 		       T vmin = 0, T vmax = 0,				\ */
+/* 		       bool show_out = false); */
 
-    DISPLAY_PROTO_LAYERS2(display_fprop)
-    DISPLAY_PROTO_LAYERS2(display_bprop)
-    DISPLAY_PROTO_LAYERS2(display_bbprop)
-  };
+/*     DISPLAY_PROTO_LAYERS2(display_fprop) */
+/*     DISPLAY_PROTO_LAYERS2(display_bprop) */
+/*     DISPLAY_PROTO_LAYERS2(display_bbprop) */
+/*   }; */
 
   ////////////////////////////////////////////////////////////////
   // fc_ebm2_gui
@@ -154,10 +154,10 @@ namespace ebl {
     virtual ~fc_ebm2_gui() {};
     
 #define DISPLAY_PROTO_FCEBM2(name)					\
-    template<class Tin1, class Tin2, class T>				\
-      static void name(fc_ebm2_gen<Tin1, Tin2, T> &fc,			\
+    template<typename T, class Tin1, class Tin2, class Ten>		\
+      static void name(fc_ebm2<T, Tin1, Tin2, Ten> &fc,			\
 		       Tin1 &i1, Tin2 &i2,				\
-		       state_idx<T> &energy,				\
+		       Ten &energy,					\
 		       unsigned int &h0, unsigned int &w0,		\
 		       double zoom, T vmin = 0, T vmax = 0,		\
 		       bool show_out = true,				\

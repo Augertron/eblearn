@@ -583,13 +583,19 @@ namespace ebl {
 
   template <class T> void idx<T>::growstorage() {
     if ( storage->growsize(spec.footprint()) < 0) {
-      eblerror("cannot grow storage (probably out of memory)");
+      ostringstream err;
+      err << "cannot grow storage to " << spec.footprint()
+	  << " bytes (probably out of memory)";
+      eblerror(err.str().c_str());
     }
   }
 
   template <class T> void idx<T>::growstorage_chunk(intg s_chunk){
     if( storage->growsize_chunk(spec.footprint(), s_chunk) < 0) {
-      eblerror("cannot grow storage (probably out of memory)");
+      ostringstream err;
+      err << "cannot grow storage to " << spec.footprint()
+	  << " bytes (probably out of memory)";
+      eblerror(err.str().c_str());
     }
   }
 

@@ -34,32 +34,32 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////////////
   // full_layer
 
-  template <class T>
-  full_layer<T>::full_layer(parameter<T> *p, intg indim0, intg noutputs,
+  template <typename T, class Tstate>
+  full_layer<T,Tstate>::full_layer(parameter<Tstate> *p, intg indim0, intg noutputs,
 			    bool btanh_, const char *name_)
     : btanh(btanh_),
       linear(p, indim0, noutputs, name_),
       adder(p, noutputs, name_),
-      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
-	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
+      sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
+	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
     sum = NULL; 
     this->name = name_;
   }
 
-  template <class T>
-  full_layer<T>::~full_layer() {
+  template <typename T, class Tstate>
+  full_layer<T,Tstate>::~full_layer() {
     if (sum) delete sum;
     if (sigmoid) delete sigmoid;
   }
 
-  template <class T>
-  void full_layer<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void full_layer<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     // resize output and sum
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, adder.bias.x.dim(0)); // except for the first one
-    if (!sum) sum = new state_idx<T>(d); // we now know the order of sum
+    if (!sum) sum = new Tstate(d); // we now know the order of sum
 
     // fprop
     linear.fprop(in, *sum);
@@ -67,41 +67,42 @@ namespace ebl {
     sigmoid->fprop(*sum, out);
   }
 
-  template <class T>
-  void full_layer<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void full_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     linear.bprop(in, *sum);
   }
 
-  template <class T>
-  void full_layer<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void full_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     linear.bbprop(in, *sum);
   }
 
-  template <class T>
-  void full_layer<T>::forget(forget_param_linear &fp) {
+  template <typename T, class Tstate>
+  void full_layer<T,Tstate>::forget(forget_param_linear &fp) {
     linear.forget(fp);
     adder.forget(fp);
   }
 
-  template <class T>
-  idxdim full_layer<T>::fprop_size(idxdim &isize) {
+  template <typename T, class Tstate>
+  idxdim full_layer<T,Tstate>::fprop_size(idxdim &isize) {
     return linear.fprop_size(isize);
   }
 
-  template <class T>
-  idxdim full_layer<T>::bprop_size(const idxdim &osize) {
+  template <typename T, class Tstate>
+  idxdim full_layer<T,Tstate>::bprop_size(const idxdim &osize) {
     return linear.bprop_size(osize);
   }
 
-  template <class T>
-  full_layer<T>* full_layer<T>::copy() {
+  template <typename T, class Tstate>
+  full_layer<T,Tstate>* full_layer<T,Tstate>::copy() {
     // allocate
-    full_layer<T>* l2 =
-      new full_layer<T>(NULL, linear.w.x.dim(1), linear.w.x.dim(0), btanh);
+    full_layer<T,Tstate>* l2 =
+      new full_layer<T,Tstate>(NULL, linear.w.x.dim(1), linear.w.x.dim(0),
+			       btanh);
     // copy data
     idx_copy(linear.w.x, l2->linear.w.x);
     idx_copy(adder.bias.x, l2->adder.bias.x);
@@ -111,8 +112,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // convolution_layer
 
-  template <class T>
-  convolution_layer<T>::convolution_layer(parameter<T> *p, 
+  template <typename T, class Tstate>
+  convolution_layer<T,Tstate>::convolution_layer(parameter<Tstate> *p, 
 					  intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
 					  idx<intg> &tbl, bool btanh_,
@@ -120,23 +121,23 @@ namespace ebl {
     : btanh(btanh_),
       convol(p, kerneli, kernelj, stridei_, stridej_, tbl, name_), 
       adder(p, convol.thickness, name_),
-      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
-	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
+      sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
+	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
     sum = NULL;
     this->name = name_;
   }
 
-  template <class T>
-  convolution_layer<T>::~convolution_layer() {
+  template <typename T, class Tstate>
+  convolution_layer<T,Tstate>::~convolution_layer() {
     if (sum) delete sum;
     if (sigmoid) delete sigmoid;
   }
 
-  template <class T>
-  void convolution_layer<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void convolution_layer<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     // 1. allocate sum
     idxdim d(in.x.spec); // use same dimensions as in
-    if (!sum) sum = new state_idx<T>(d);
+    if (!sum) sum = new Tstate(d);
 
     // 2. fprop
     //    sum->clear();
@@ -145,40 +146,40 @@ namespace ebl {
     sigmoid->fprop(*sum, out);
   }
 
-  template <class T>
-  void convolution_layer<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void convolution_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     convol.bprop(in, *sum);
   }
 
-  template <class T>
-  void convolution_layer<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void convolution_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     convol.bbprop(in, *sum);
   }
 
-  template <class T>
-  void convolution_layer<T>::forget(forget_param_linear &fp) {
+  template <typename T, class Tstate>
+  void convolution_layer<T,Tstate>::forget(forget_param_linear &fp) {
     convol.forget(fp);
     adder.forget(fp);
   }
 
-  template <class T>
-  idxdim convolution_layer<T>::fprop_size(idxdim &isize) {
+  template <typename T, class Tstate>
+  idxdim convolution_layer<T,Tstate>::fprop_size(idxdim &isize) {
     return convol.fprop_size(isize);
   }
 
-  template <class T>
-  idxdim convolution_layer<T>::bprop_size(const idxdim &osize) {
+  template <typename T, class Tstate>
+  idxdim convolution_layer<T,Tstate>::bprop_size(const idxdim &osize) {
     return convol.bprop_size(osize);
   }
 
-  template <class T>
-  convolution_layer<T>* convolution_layer<T>::copy() {
+  template <typename T, class Tstate>
+  convolution_layer<T,Tstate>* convolution_layer<T,Tstate>::copy() {
     // allocate
-    convolution_layer<T> *l2 = new convolution_layer<T>
+    convolution_layer<T,Tstate> *l2 = new convolution_layer<T,Tstate>
       (NULL, convol.kernel.x.dim(1), convol.kernel.x.dim(2), convol.stridei,
        convol.stridej, convol.table, btanh);
     // copy data
@@ -190,8 +191,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // convabsnorm_layer
 
-  template <class T>
-  convabsnorm_layer<T>::convabsnorm_layer(parameter<T> *p, 
+  template <typename T, class Tstate>
+  convabsnorm_layer<T,Tstate>::convabsnorm_layer(parameter<Tstate> *p, 
 					  intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
 					  idx<intg> &tbl, bool mirror,
@@ -203,19 +204,19 @@ namespace ebl {
     this->name = name_;
   }
 
-  template <class T>
-  convabsnorm_layer<T>::~convabsnorm_layer() {
+  template <typename T, class Tstate>
+  convabsnorm_layer<T,Tstate>::~convabsnorm_layer() {
     if (tmp) delete tmp;
     if (tmp2) delete tmp2;
   }
 
-  template <class T>
-  void convabsnorm_layer<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void convabsnorm_layer<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     // 1. resize tmp
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, lconv.convol.thickness); // except for the first one
-    if (!tmp) tmp = new state_idx<T>(d);
-    if (!tmp2) tmp2 = new state_idx<T>(d);
+    if (!tmp) tmp = new Tstate(d);
+    if (!tmp2) tmp2 = new Tstate(d);
 
     // 2. fprop
     // tmp->clear();
@@ -225,39 +226,39 @@ namespace ebl {
     norm.fprop(*tmp2, out);
   }
 
-  template <class T>
-  void convabsnorm_layer<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void convabsnorm_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     norm.bprop(*tmp2, out);
     abs.bprop(*tmp, *tmp2);
     lconv.bprop(in, *tmp);
   }
 
-  template <class T>
-  void convabsnorm_layer<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void convabsnorm_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     norm.bbprop(*tmp2, out);
     abs.bbprop(*tmp, *tmp2);
     lconv.bbprop(in, *tmp);
   }
 
-  template <class T>
-  void convabsnorm_layer<T>::forget(forget_param_linear &fp) {
+  template <typename T, class Tstate>
+  void convabsnorm_layer<T,Tstate>::forget(forget_param_linear &fp) {
     lconv.forget(fp);
   }
 
-  template <class T>
-  idxdim convabsnorm_layer<T>::fprop_size(idxdim &isize) {
+  template <typename T, class Tstate>
+  idxdim convabsnorm_layer<T,Tstate>::fprop_size(idxdim &isize) {
     return lconv.fprop_size(isize);
   }
 
-  template <class T>
-  idxdim convabsnorm_layer<T>::bprop_size(const idxdim &osize) {
+  template <typename T, class Tstate>
+  idxdim convabsnorm_layer<T,Tstate>::bprop_size(const idxdim &osize) {
     return lconv.bprop_size(osize);
   }
 
-  template <class T>
-  convabsnorm_layer<T>* convabsnorm_layer<T>::copy() {
+  template <typename T, class Tstate>
+  convabsnorm_layer<T,Tstate>* convabsnorm_layer<T,Tstate>::copy() {
     // allocate
-    convabsnorm_layer<T> *l2 = new convabsnorm_layer<T>
+    convabsnorm_layer<T,Tstate> *l2 = new convabsnorm_layer<T,Tstate>
       (NULL, lconv.convol.kernel.x.dim(1), lconv.convol.kernel.x.dim(2),
        lconv.convol.stridei, lconv.convol.stridej, lconv.convol.table,
        norm.mirror, btanh);
@@ -270,8 +271,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // subsampling_layer
 
-  template <class T>
-  subsampling_layer<T>::subsampling_layer(parameter<T> *p,
+  template <typename T, class Tstate>
+  subsampling_layer<T,Tstate>::subsampling_layer(parameter<Tstate> *p,
 					  intg stridei, intg stridej,
 					  intg subi, intg subj, 
 					  intg thick, bool btanh_,
@@ -279,24 +280,24 @@ namespace ebl {
     : btanh(btanh_),
       subsampler(p, stridei, stridej, subi, subj, thick, name_),
       adder(p, thick, name_),
-      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
-	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
+      sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
+	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
     sum = NULL;
     this->name = name_;
   }
 
-  template <class T>
-  subsampling_layer<T>::~subsampling_layer() {
+  template <typename T, class Tstate>
+  subsampling_layer<T,Tstate>::~subsampling_layer() {
     if (sum) delete sum;
     if (sigmoid) delete sigmoid;
   }
 
-  template <class T>
-  void subsampling_layer<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void subsampling_layer<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     // 1. resize sum
     idxdim d(in.x.spec); // use same dimensions as in
     d.setdim(0, subsampler.thickness); // except for the first one
-    if (!sum) sum = new state_idx<T>(d);
+    if (!sum) sum = new Tstate(d);
 
     // 2. fprop
     subsampler.fprop(in, *sum);
@@ -304,40 +305,40 @@ namespace ebl {
     sigmoid->fprop(*sum, out);
   }
 
-  template <class T>
-  void subsampling_layer<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void subsampling_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     subsampler.bprop(in, *sum);
   }
 
-  template <class T>
-  void subsampling_layer<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void subsampling_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     subsampler.bbprop(in, *sum);
   }
 
-  template <class T>
-  void subsampling_layer<T>::forget(forget_param_linear &fp) {
+  template <typename T, class Tstate>
+  void subsampling_layer<T,Tstate>::forget(forget_param_linear &fp) {
     subsampler.forget(fp);
     adder.forget(fp);
   }
 
-  template <class T>
-  idxdim subsampling_layer<T>::fprop_size(idxdim &isize) {
+  template <typename T, class Tstate>
+  idxdim subsampling_layer<T,Tstate>::fprop_size(idxdim &isize) {
     return subsampler.fprop_size(isize);
   }
 
-  template <class T>
-  idxdim subsampling_layer<T>::bprop_size(const idxdim &osize) {
+  template <typename T, class Tstate>
+  idxdim subsampling_layer<T,Tstate>::bprop_size(const idxdim &osize) {
     return subsampler.bprop_size(osize);
   }
 
-  template <class T>
-  subsampling_layer<T>* subsampling_layer<T>::copy() {
+  template <typename T, class Tstate>
+  subsampling_layer<T,Tstate>* subsampling_layer<T,Tstate>::copy() {
     // allocate
-    subsampling_layer<T> *l2 = new subsampling_layer<T>
+    subsampling_layer<T,Tstate> *l2 = new subsampling_layer<T,Tstate>
       (NULL, subsampler.stridei, subsampler.stridej, subsampler.sub.x.dim(1),
        subsampler.sub.x.dim(2), subsampler.thickness, btanh);
     // copy data
