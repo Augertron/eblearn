@@ -41,21 +41,21 @@ void detector_test::test_norb() {
 
     // parameter, network and classifier
     // load the previously saved weights of a trained network
-    parameter<t_net> theparam(1);
+    parameter<fstate_idx<t_net> > theparam(1);
     // input to the network will be 96x96 and there are 5 outputs
-    lenet7_binocular<t_net> thenet(theparam, 96, 96, 5, false, false, true);
+    lenet7_binocular<fs(t_net)> thenet(theparam, 96, 96, 5, false, false, true);
     theparam.load_x(mono_net.c_str());
     //left = left.narrow(2, 2, 0);
     //  int tr[3] = { 2, 1, 0 };
     //left = left.transpose(tr);
     //left = left.select(2, 0);
     double scales [] = { 2, 1.5, 1};
-    detector<t_net> cb((module_1_1<t_net>&)thenet, labs, NULL, 0, NULL, 0, 
-		       (float)0.01);
+    detector<fs(t_net)> cb((module_1_1<fs(t_net)>&)thenet, labs, NULL,
+			   0, NULL, 0, (float)0.01);
     cb.set_resolutions(3, scales);
 
 #ifdef __GUI__
-    detector_gui<t_net> cgui;
+    detector_gui<fs(t_net)> cgui;
     vector<bbox*> &bb = cgui.display_all(cb, left, .97);
     CPPUNIT_ASSERT_EQUAL((size_t) 1, bb.size()); // only 1 object
     CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 0.973895462819159,

@@ -37,30 +37,31 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  // state
+
+  state::state() {
+  }
+
+  state::~state() {
+  }
 
   void state::clear() {
   }
   
   void state::clear_x() {
+    eblerror("not implemented");
   }
   
   void state::clear_dx() {
+    eblerror("not implemented");
   }
   
   void state::clear_ddx() {
+    eblerror("not implemented");
   }
   
   void state::update_gd(gd_param &arg) {
-  }
-
-  state::state()
-  {
-    clear();
-    clear_dx();
-    clear_ddx();
-  }
-
-  state::~state() {
+    eblerror("not implemented");
   }
 
   ////////////////////////////////////////////////////////////////

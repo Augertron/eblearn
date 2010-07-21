@@ -34,42 +34,40 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // cost_module
   
-  template<class T1, class T2>  
-  cost_module<T1, T2>::cost_module(idx<T1> &targets_)
+  template<typename T1, typename T2, class Tstate1, class Tstate2>
+  cost_module<T1,T2,Tstate1,Tstate2>::cost_module(idx<T1> &targets_)
     : targets(targets_), in2(targets.select(0, 0)), energies(targets_.dim(0)) {
   }
 
-  template<class T1, class T2>  
-  cost_module<T1, T2>::~cost_module() {
+  template<typename T1, typename T2, class Tstate1, class Tstate2>  
+  cost_module<T1,T2,Tstate1,Tstate2>::~cost_module() {
   }
 
   ////////////////////////////////////////////////////////////////
   // euclidean_module
 
-  template <class Tnet, class Tlabel>
-  euclidean_module<Tnet, Tlabel>::euclidean_module(idx<Tnet> &targets_)
-    : cost_module<Tnet, Tlabel>(targets_) {
+  template <typename T1, typename T2, class Tstate1, class Tstate2>
+  euclidean_module<T1,T2,Tstate1,Tstate2>::euclidean_module(idx<T1> &targets_)
+    : cost_module<T1,T2,Tstate1,Tstate2>(targets_) {
   }
 
-  template <class Tnet, class Tlabel>
-  euclidean_module<Tnet, Tlabel>::~euclidean_module() {
+  template <typename T1, typename T2, class Tstate1, class Tstate2>
+  euclidean_module<T1,T2,Tstate1,Tstate2>::~euclidean_module() {
   }
 
-  template <class Tnet, class Tlabel>
-  void euclidean_module<Tnet, Tlabel>::fprop(state_idx<Tnet> &in1,
-					     Tlabel &label,
-					     state_idx<Tnet> &energy) {
-    idx<Tnet> target = targets.select(0, label);
+  template <typename T1, typename T2, class Tstate1, class Tstate2>
+  void euclidean_module<T1,T2,Tstate1,Tstate2>::
+  fprop(Tstate1 &in1, Tstate2 &label, Tstate1 &energy) {
+    idx<T1> target = targets.select(0, label.x.get());
     idx_copy(target, in2.x);
     // squared distance between in1 and target
     idx_sqrdist(in1.x, in2.x, energy.x);
     idx_dotc(energy.x, 0.5, energy.x); // multiply by .5
   }
   
-  template <class Tnet, class Tlabel>
-  void euclidean_module<Tnet, Tlabel>::bprop(state_idx<Tnet> &in1,
-					     Tlabel &label,
-					     state_idx<Tnet> &energy) {
+  template <typename T1, typename T2, class Tstate1, class Tstate2>
+  void euclidean_module<T1,T2,Tstate1,Tstate2>::
+  bprop(Tstate1 &in1, Tstate2 &label, Tstate1 &energy) {
     idx_checkorder1(energy.x, 0); // energy.x must have an order of 0
     idx_sub(in1.x, in2.x, in1.dx); // derivative with respect to in1
     idx_dotc(in1.dx, energy.dx.get(), in1.dx); // multiply by energy derivative
@@ -79,30 +77,27 @@ namespace ebl {
   // mse has this funny property that the bbprop method mixes up the
   // the first derivative after with the second derivative before, and
   // vice versa. Only the first combination is used here.
-  template <class Tnet, class Tlabel>
-  void euclidean_module<Tnet, Tlabel>::bbprop(state_idx<Tnet> &in1,
-					      Tlabel &label,
-					      state_idx<Tnet> &energy) {
+  template <typename T1, typename T2, class Tstate1, class Tstate2>
+  void euclidean_module<T1,T2,Tstate1,Tstate2>::
+  bbprop(Tstate1 &in1, Tstate2 &label, Tstate1 &energy) {
     idx_fill(in1.ddx, energy.dx.get());
   }
 
-  template <class Tnet, class Tlabel>
-  double euclidean_module<Tnet, Tlabel>::infer2(state_idx<Tnet> &i1,
-						Tlabel &infered_label, 
-						infer_param &ip, 
-						Tlabel *label,
-						state_idx<Tnet> *energy) {
-    infered_label = 0;
-    state_idx<Tnet> tmp;
-    idx_bloop1(e, energies, Tnet) {
+  template <typename T1, typename T2, class Tstate1, class Tstate2>
+  double euclidean_module<T1,T2,Tstate1,Tstate2>::
+  infer2(Tstate1 &i1, Tstate2 &infered_label, 
+	 infer_param &ip, Tstate2 *label, Tstate1 *energy) {
+    infered_label.x.set(0);
+    Tstate1 tmp;
+    idx_bloop1(e, energies, T1) {
       fprop(i1, infered_label, tmp);
       idx_copy(tmp.x, e);
-      infered_label++;
+      infered_label.x.set(infered_label.x.get() + 1);
     }
     // TODO: use logadd_layer like in gblearn2 on energies?
     if (label && energy) // if groundtruth is passed, fill in its energy
-      energy->x.set(energies.get(*label)); 
-    infered_label = (Tlabel) idx_indexmin(energies);
+      energy->x.set(energies.get(label->x.get())); 
+    infered_label.x.set((T2) idx_indexmin(energies));
     return 0.0;
   }
 
@@ -116,7 +111,7 @@ namespace ebl {
   }
 
   template <class T>
-  void logadd_layer<T>::fprop(state_idx<T> *in, state_idx<T> *out) {
+  void logadd_layer<T>::fprop(fstate_idx<T> *in, fstate_idx<T> *out) {
     intg thick = in->x.dim(0);
     intg si = in->x.dim(1);
     intg sj = in->x.dim(2);
@@ -166,7 +161,7 @@ namespace ebl {
   }
 
   template <class T>
-  void logadd_layer<T>::bprop(state_idx<T> *in, state_idx<T> *out) {
+  void logadd_layer<T>::bprop(fstate_idx<T> *in, fstate_idx<T> *out) {
     intg si = in->dx.dim(1);
     intg sj = in->dx.dim(2);
     if ((si * sj) == 1) {
@@ -192,7 +187,7 @@ namespace ebl {
   }
 
   template <class T>
-  void logadd_layer<T>::bbprop(state_idx<T> *in, state_idx<T> *out) {
+  void logadd_layer<T>::bbprop(fstate_idx<T> *in, fstate_idx<T> *out) {
     { idx_bloop2(o, out->ddx, T, i, in->ddx, T) {
   	idx_fill(i, o.get());
       }
@@ -211,16 +206,16 @@ namespace ebl {
   }
   
   template <class T>
-  void distance_l2<T>::fprop(state_idx<T> &in1, state_idx<T> &in2,
-			     state_idx<T> &energy) { 
+  void distance_l2<T>::fprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
+			     fstate_idx<T> &energy) { 
     // squared distance between in1 and target
     idx_sqrdist(in1.x, in2.x, energy.x);
     idx_dotc(energy.x, 0.5, energy.x); // multiply by .5
   }
   
   template <class T>
-  void distance_l2<T>::bprop(state_idx<T> &in1, state_idx<T> &in2,
-			     state_idx<T> &energy) {
+  void distance_l2<T>::bprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
+			     fstate_idx<T> &energy) {
     idx_checkorder1(energy.x, 0); // energy.x must have an order of 0
     idxdim d(in1.x);
     if (!tmp.same_dim(d)) { // keep tmp buffer around to avoid allocations
@@ -234,8 +229,8 @@ namespace ebl {
   }
   
   template <class T>
-  void distance_l2<T>::bbprop(state_idx<T> &in1, state_idx<T> &in2,
-			      state_idx<T> &energy) { 
+  void distance_l2<T>::bbprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
+			      fstate_idx<T> &energy) { 
     idx_addc(in1.ddx, energy.dx.get(), in1.ddx);
     idx_addc(in2.ddx, energy.dx.get(), in2.ddx);
   }
@@ -245,8 +240,8 @@ namespace ebl {
     err_not_implemented(); }
 
   template <class T>
-  void distance_l2<T>::infer2_copy(state_idx<T> &in1, state_idx<T> &in2,
-				   state_idx<T> &energy) {
+  void distance_l2<T>::infer2_copy(fstate_idx<T> &in1, fstate_idx<T> &in2,
+				   fstate_idx<T> &energy) {
     idx_copy(in1.x, in2.x);
     idx_clear(energy.x);
   }
@@ -264,17 +259,17 @@ namespace ebl {
   }
 
   template <class T>
-  void penalty_l1<T>::fprop(state_idx<T> &in, state_idx<T> &energy) { 
+  void penalty_l1<T>::fprop(fstate_idx<T> &in, fstate_idx<T> &energy) { 
     idx_sumabs(in.x, energy.x);
   }
   
   template <class T>
-  void penalty_l1<T>::bprop(state_idx<T> &in, state_idx<T> &energy) { 
+  void penalty_l1<T>::bprop(fstate_idx<T> &in, fstate_idx<T> &energy) { 
     idx_thresdotc_acc(in.x, energy.dx.get(), threshold, in.dx);
   }
   
   template <class T>
-  void penalty_l1<T>::bbprop(state_idx<T> &in, state_idx<T> &energy) { 
+  void penalty_l1<T>::bbprop(fstate_idx<T> &in, fstate_idx<T> &energy) { 
     idx_addc(in.ddx, energy.dx.get(), in.ddx);
   }
   

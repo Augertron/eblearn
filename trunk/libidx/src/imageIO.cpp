@@ -54,7 +54,7 @@ namespace ebl {
   //! Scan an int.
   int fscan_int(FILE *fp) {
     int res = 0;
-    int n = fscanf(fp, "%d", &res);
+    fscanf(fp, "%d", &res);
     return res;
   }
 

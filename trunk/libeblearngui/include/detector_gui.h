@@ -47,7 +47,7 @@ namespace ebl {
   // detector_gui
 
   //! The display class of class detector.
-  template <typename Tnet>
+  template <typename T, class Tstate>
     class detector_gui {
   public:
     //! Constructor.
@@ -74,10 +74,10 @@ namespace ebl {
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <typename Tin>
-      vector<bbox*>& display(detector<Tnet> &cl, idx<Tin> &img,
+      vector<bbox*>& display(detector<T,Tstate> &cl, idx<Tin> &img,
 			     double threshold, const char *frame_name = NULL,
 			     unsigned int h0 = 0, unsigned int w0 = 0, 
-			     double dzoom = 1.0, Tnet vmin = 0, Tnet vmax = 0,
+			     double dzoom = 1.0, T vmin = 0, T vmax = 0,
 			     int wid = -1, const char *wname = NULL);
 
     //! displays only the output of the classifier after a a call to 
@@ -86,12 +86,12 @@ namespace ebl {
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <typename Tin>
-      vector<bbox*>& display_input(detector<Tnet> &cl, idx<Tin> &img,
+      vector<bbox*>& display_input(detector<T,Tstate> &cl, idx<Tin> &img,
 				   double threshold,
 				   const char *frame_name = NULL,
 				   unsigned int h0 = 0, unsigned int w0 = 0, 
-				   double dzoom = 1.0, Tnet vmin = 0,
-				   Tnet vmax = 0,
+				   double dzoom = 1.0, T vmin = 0,
+				   T vmax = 0,
 				   int wid = -1, const char *wname = NULL);
 
     //! display the regular input/output display but also the inputs and outputs
@@ -101,13 +101,13 @@ namespace ebl {
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <typename Tin>
-      vector<bbox*>& display_inputs_outputs(detector<Tnet> &cl, 
+      vector<bbox*>& display_inputs_outputs(detector<T,Tstate> &cl, 
 					    idx<Tin> &img, double threshold,
 					    const char *frame_name = NULL,
 					    unsigned int h0 = 0,
 					    unsigned int w0 = 0, 
-					    double dzoom = 1.0, Tnet vmin = 0,
-					    Tnet vmax = 0, int wid = -1, 
+					    double dzoom = 1.0, T vmin = 0,
+					    T vmax = 0, int wid = -1, 
 					    const char *wname = NULL);
     
     //! display all, display_inputs_outputs and the internal states of the fprop
@@ -117,12 +117,12 @@ namespace ebl {
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <typename Tin>
-      vector<bbox*>& display_all(detector<Tnet> &cl, idx<Tin> &img, 
+      vector<bbox*>& display_all(detector<T,Tstate> &cl, idx<Tin> &img, 
 				 double threshold,
 				 const char *frame_name = NULL,
 				 unsigned int h0 = 0,
 				 unsigned int w0 = 0, double dzoom = 1.0,
-				 Tnet vmin = 0, Tnet vmax = 0,
+				 T vmin = 0, T vmax = 0,
 				 int wid = -1,const char *wname = NULL);
 
     //! displays all the current state of the classifier. 
@@ -130,20 +130,20 @@ namespace ebl {
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <typename Tin>
-      void display_current(detector<Tnet> &cl, 
+      void display_current(detector<T,Tstate> &cl, 
 			   idx<Tin> &sample,
 			   int wid = -1, 
 			   const char *wname = NULL);
 
-    void set_mask_class(const char *name, Tnet threshold);
+    void set_mask_class(const char *name, T threshold);
 
     ////////////////////////////////////////////////////////////////
     // private methods
   private:
 
-    void update_and_display_queue(deque<idx<Tnet> > &queue, uint step,
+    void update_and_display_queue(deque<idx<T> > &queue, uint step,
 				  uint qheight, uint qwidth,
-				  vector<idx<Tnet> > &new_detections,
+				  vector<idx<T> > &new_detections,
 				  uint detcnt, uint &h0, uint &w0,
 				  double dzoom);
 
@@ -160,11 +160,11 @@ namespace ebl {
     uint        qwidth;         //!< width of queue display
     uint        qheight2;	//!< height of queue2 display
     uint        qwidth2;        //!< width of queue2 display
-    deque<idx<Tnet> > detqueue;	//!< queue of last detections
-    deque<idx<Tnet> > detqueue2;	//!< queue of last detections
+    deque<idx<T> > detqueue;	//!< queue of last detections
+    deque<idx<T> > detqueue2;	//!< queue of last detections
     uint        detcnt;         //!< counter of all detections
     string      mask_class;
-    Tnet        mask_threshold;
+    T        mask_threshold;
   };
 
 } // end namespace ebl

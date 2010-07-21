@@ -43,7 +43,7 @@ namespace ebl {
   }
 
   template <class T>
-  void max_classer<T>::fprop(state_idx<T> *in, class_state *out) {
+  void max_classer<T>::fprop(fstate_idx<T> *in, class_state *out) {
     intg n = in->x.dim(0);
     out->resize(n);
     { idx_bloop2(sc, *(out->sorted_scores), float, insc, in->x, T) {

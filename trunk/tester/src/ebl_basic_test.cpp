@@ -16,13 +16,13 @@ void ebl_basic_test::test_convolution_layer_fprop() {
   intg kj = 2;
   intg si = 1 + ini - ki;
   intg sj = 1 + inj - kj;
-  state_idx<double> in(1, ini, inj);
-  state_idx<double> out(1, si, sj);
+  fstate_idx<double> in(1, ini, inj);
+  fstate_idx<double> out(1, si, sj);
   idx<intg> table(1, 2);
   idx_clear(table);
   idx<intg> tableout = table.select(1, 1);
-  parameter<double> prm(10000);
-  convolution_layer<double> c(&prm, ki, kj, 1, 1, table);
+  parameter<fstate_idx<double> > prm(10000);
+  convolution_layer<fs(double)> c(&prm, ki, kj, 1, 1, table);
   double fact = 0.05;
 
   in.x.set(1, 0, 0, 0);
@@ -57,13 +57,13 @@ void ebl_basic_test::test_jacobian_convolution_layer() {
   intg kj = 2;
   intg si = 1 + ini - ki;
   intg sj = 1 + inj - kj;
-  state_idx<double> in(1, ini, inj);
-  state_idx<double> out(1, si, sj);
+  bbstate_idx<double> in(1, ini, inj);
+  bbstate_idx<double> out(1, si, sj);
   idx<intg> table(1, 2);
   idx_clear(table);
   idx<intg> tableout = table.select(1, 1);
-  parameter<double> prm(10000);
-  convolution_layer<double> c(&prm, ki, kj, 1, 1, table);
+  parameter<bbstate_idx<double> > prm(10000);
+  convolution_layer<bbs(double)> c(&prm, ki, kj, 1, 1, table);
 
   ModuleTester<double> mt;
   idx<double> errs = mt.test_jacobian(c, in, out);
@@ -74,11 +74,11 @@ void ebl_basic_test::test_jacobian_convolution_layer() {
 }
 
 void ebl_basic_test::test_jacobian_subsampling_layer() {
-  parameter<double> p(10000);
+  parameter<bbstate_idx<double> > p(10000);
   int ki = 4, kj = 4, thick = 1, si = 2, sj =2;
-  subsampling_layer<double> s(&p, ki, kj, si, sj, thick);
-  state_idx<double> in(1, 8, 8);
-  state_idx<double> out(1, 1, 1);
+  subsampling_layer<bbs(double)> s(&p, ki, kj, si, sj, thick);
+  bbstate_idx<double> in(1, 8, 8);
+  bbstate_idx<double> out(1, 1, 1);
 
   ModuleTester<double> mt;
   idx<double> errs = mt.test_jacobian(s, in, out);
@@ -89,7 +89,7 @@ void ebl_basic_test::test_jacobian_subsampling_layer() {
 }
 
 void ebl_basic_test::test_state_copy() {
-  state_idx<double> a(4,4);
+  bbstate_idx<double> a(4,4);
 
   dseed(32);
   idx_aloop3(xx,a.x,double,xd,a.dx,double,xdd,a.ddx,double){
@@ -98,7 +98,7 @@ void ebl_basic_test::test_state_copy() {
     *xdd = drand(2);
   }
 
-  state_idx<double> b = a.make_copy();
+  bbstate_idx<double> b = a.make_copy();
   //	a.x.pretty(std::cout);
   //	a.x.printElems(std::cout);
   //	b.x.pretty(std::cout);
@@ -119,10 +119,10 @@ void ebl_basic_test::test_state_copy() {
 void ebl_basic_test::test_softmax(){
   CPPUNIT_ASSERT_MESSAGE("TODO: Implement automatic test", false);
 
-  state_idx<double> *in = new state_idx<double>(2,2,2,2,2,2);
-  state_idx<double> *out = new state_idx<double>(1,1,1,1,1,1);
+  fstate_idx<double> *in = new fstate_idx<double>(2,2,2,2,2,2);
+  fstate_idx<double> *out = new fstate_idx<double>(1,1,1,1,1,1);
   double beta = 1;
-  softmax<double> *module = new softmax<double>(beta);
+  softmax<fs(double)> *module = new softmax<fs(double)>(beta);
 
   // init
   dseed(1);
@@ -214,9 +214,9 @@ void ebl_basic_test::test_softmax(){
 }
 
 void ebl_basic_test::test_power_module() {
-  state_idx<double> in(1);
-  state_idx<double> out(1);
-  power_module<double> pw(.5);
+  bbstate_idx<double> in(1);
+  bbstate_idx<double> out(1);
+  power_module<fs(double)> pw(.5);
 
   in.x.set(2, 0);
   out.dx.set(1, 0);
@@ -230,14 +230,14 @@ void ebl_basic_test::test_power_module() {
 }
 
 void ebl_basic_test::test_convolution_timing() {
-  layers<float> l(true);
+  layers<fs(float)> l(true);
   idx<intg> tbl = full_table(1, 8);
   idx<intg> tbl2 = full_table(8, 16);
-  l.add_module(new convolution_module<float>(NULL, 9, 9, 1, 1, tbl));
-  l.add_module(new tanh_module<float>());
-  l.add_module(new convolution_module<float>(NULL, 9, 9, 1, 1, tbl2));
-  l.add_module(new tanh_module<float>());
-  state_idx<float> in(1, 512, 512), out(16, 496, 496);
+  l.add_module(new convolution_module<fs(float)>(NULL, 9, 9, 1, 1, tbl));
+  l.add_module(new tanh_module<fs(float)>());
+  l.add_module(new convolution_module<fs(float)>(NULL, 9, 9, 1, 1, tbl2));
+  l.add_module(new tanh_module<fs(float)>());
+  fstate_idx<float> in(1, 512, 512), out(16, 496, 496);
   timer t;
   t.start();
   for (uint i = 0; i < 1; ++i) {

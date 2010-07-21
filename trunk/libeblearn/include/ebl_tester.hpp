@@ -68,8 +68,8 @@ namespace ebl {
 
   template <class T>
   idx<T> ModuleTester<T>::test_jacobian(module_1_1<T> 
-					     &module, state_idx<T> &in, 
-					     state_idx<T> &out) {
+					     &module, bbstate_idx<T> &in, 
+					     bbstate_idx<T> &out) {
     forget_param_linear fp(2,0.5);
 
     // just to resize states
@@ -94,9 +94,9 @@ namespace ebl {
   }
 
   template <class T>
-  void ModuleTester<T>::test_jacobian_param(parameter<T> &p, 
+  void ModuleTester<T>::test_jacobian_param(parameter<bbstate_idx<T> > &p, 
 					    module_1_1<T> &module,
-					    state_idx<T> &in, state_idx<T> &out)
+					    bbstate_idx<T> &in, bbstate_idx<T> &out)
   {
     forget_param_linear fp(2,0);
 
@@ -125,13 +125,13 @@ namespace ebl {
 
   template <class T>
   void ModuleTester<T>::get_jacobian_fprop(module_1_1<T> &module, 
-					   state_idx<T> &in, state_idx<T> &out,
+					   bbstate_idx<T> &in, bbstate_idx<T> &out,
 					   idx<T>& jac)
   {
-    state_idx<T> sina = in.make_copy(); //x-small
-    state_idx<T> sinb = in.make_copy(); //x+small
-    state_idx<T> souta = out.make_copy(); //f(x-small)
-    state_idx<T> soutb = out.make_copy(); //f(x+small)
+    bbstate_idx<T> sina = in.make_copy(); //x-small
+    bbstate_idx<T> sinb = in.make_copy(); //x+small
+    bbstate_idx<T> souta = out.make_copy(); //f(x-small)
+    bbstate_idx<T> soutb = out.make_copy(); //f(x+small)
     double small = 1e-6;
     int cnt = 0;
     // clear out jacobian matrix
@@ -155,14 +155,14 @@ namespace ebl {
   }
 
   template <class T>
-  void ModuleTester<T>::get_jacobian_fprop_param(parameter<T> &p, 
+  void ModuleTester<T>::get_jacobian_fprop_param(parameter<bbstate_idx<T> > &p, 
 						 module_1_1<T> &module, 
-						 state_idx<T> &in, 
-						 state_idx<T> &out,
+						 bbstate_idx<T> &in, 
+						 bbstate_idx<T> &out,
 						 idx<T>& jac)
   {
-    state_idx<T> souta = out.make_copy(); //f(x-small)
-    state_idx<T> soutb = out.make_copy(); //f(x+small)
+    bbstate_idx<T> souta = out.make_copy(); //f(x-small)
+    bbstate_idx<T> soutb = out.make_copy(); //f(x+small)
     double small = 1e-6;
     int cnt = 0;
     // clear out jacobian matrix
@@ -185,7 +185,7 @@ namespace ebl {
 
   template <class T>
   void ModuleTester<T>::get_jacobian_bprop(module_1_1<T> &module, 
-					state_idx<T> &in, state_idx<T> &out,
+					bbstate_idx<T> &in, bbstate_idx<T> &out,
 					idx<T>& jac)
   {
     jac.resize(in.size(),out.size());
@@ -205,10 +205,10 @@ namespace ebl {
   }
 
   template <class T>
-  void ModuleTester<T>::get_jacobian_bprop_param(parameter<T> &p, 
+  void ModuleTester<T>::get_jacobian_bprop_param(parameter<bbstate_idx<T> > &p, 
 					      module_1_1<T> &module, 
-					      state_idx<T> &in,
-					      state_idx<T> &out,
+					      bbstate_idx<T> &in,
+					      bbstate_idx<T> &out,
 					      idx<T>& jac)
   {
   }
@@ -295,8 +295,8 @@ namespace ebl {
   void Jacobian_tester<T>::test(module_1_1<T> &module){
 
     int insize = 16;
-    state_idx<T> in(insize, 1, 1);
-    state_idx<T> out(insize, 1, 1);
+    bbstate_idx<T> in(insize, 1, 1);
+    bbstate_idx<T> out(insize, 1, 1);
 
     //init
     dseed(2);  // 2 is chosen randomly... feel free to change it
@@ -347,10 +347,10 @@ namespace ebl {
     // creation of jac_bprop
     cnt = 0;
     double small = pow(10.0, -6);
-    state_idx<T> in1(in.x.dim(0), in.x.dim(1), in.x.dim(2));
-    state_idx<T> in2(in.x.dim(0), in.x.dim(1), in.x.dim(2));
-    state_idx<T> out1(1, 1, 1);
-    state_idx<T> out2(1, 1, 1);
+    bbstate_idx<T> in1(in.x.dim(0), in.x.dim(1), in.x.dim(2));
+    bbstate_idx<T> in2(in.x.dim(0), in.x.dim(1), in.x.dim(2));
+    bbstate_idx<T> out1(1, 1, 1);
+    bbstate_idx<T> out2(1, 1, 1);
     for(int d1 = 0; d1 < in.x.dim(0); d1++){
       for(int d2 = 0; d2 < in.x.dim(1); d2++){
 	for(int d3 = 0; d3 < in.x.dim(2); d3++){
@@ -381,8 +381,8 @@ namespace ebl {
   void Bbprop_tester<T>::test(module_1_1<T> &module){
 
     int insize = 16;
-    state_idx<T> in(insize, 1, 1);
-    state_idx<T> out(insize, 1, 1);
+    bbstate_idx<T> in(insize, 1, 1);
+    bbstate_idx<T> out(insize, 1, 1);
 
     //init
     dseed(2);  // 2 is chosen randomly... feel free to change it
@@ -412,10 +412,10 @@ namespace ebl {
     // creation of bbprop_p
     int cnt = 0;
     double small = pow(10.0, -6);
-    state_idx<T> in1(in.x.dim(0), in.x.dim(1), in.x.dim(2));
-    state_idx<T> in2(in.x.dim(0), in.x.dim(1), in.x.dim(2));
-    state_idx<T> out1( 1, 1, 1);
-    state_idx<T> out2( 1, 1, 1);
+    bbstate_idx<T> in1(in.x.dim(0), in.x.dim(1), in.x.dim(2));
+    bbstate_idx<T> in2(in.x.dim(0), in.x.dim(1), in.x.dim(2));
+    bbstate_idx<T> out1( 1, 1, 1);
+    bbstate_idx<T> out2( 1, 1, 1);
     for(int d1 = 0; d1 < in.x.dim(0); d1++){
       for(int d2 = 0; d2 < in.x.dim(1); d2++){
 	for(int d3 = 0; d3 < in.x.dim(2); d3++){
@@ -453,8 +453,8 @@ namespace ebl {
   void Bprop_tester<T>::test(module_1_1<T> &module){
 
     int insize = 16;
-    state_idx<T> in(insize, 1, 1);
-    state_idx<T> out(insize, 1, 1);
+    bbstate_idx<T> in(insize, 1, 1);
+    bbstate_idx<T> out(insize, 1, 1);
 
     //init
     dseed(2);  // 2 is chosen randomly... feel free to change it
@@ -480,10 +480,10 @@ namespace ebl {
     // creation of bprop_p
     int cnt = 0;
     double small = pow(10.0, -6);
-    state_idx<T> in1(in.x.dim(0), in.x.dim(1), in.x.dim(2));
-    state_idx<T> in2(in.x.dim(0), in.x.dim(1), in.x.dim(2));
-    state_idx<T> out1(1, 1, 1);
-    state_idx<T> out2(1, 1, 1);
+    bbstate_idx<T> in1(in.x.dim(0), in.x.dim(1), in.x.dim(2));
+    bbstate_idx<T> in2(in.x.dim(0), in.x.dim(1), in.x.dim(2));
+    bbstate_idx<T> out1(1, 1, 1);
+    bbstate_idx<T> out2(1, 1, 1);
     for(int d1 = 0; d1 < in.x.dim(0); d1++){
       for(int d2 = 0; d2 < in.x.dim(1); d2++){
 	for(int d3 = 0; d3 < in.x.dim(2); d3++){

@@ -46,6 +46,10 @@ using namespace ebl;
 
 using namespace ebl;
 
+#ifdef __DEBUGMEM__
+  INIT_DEBUGMEM()
+#endif
+
 // parse command line input
 bool parse_args(int argc, char **argv) {
   // Read arguments from shell input

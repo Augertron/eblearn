@@ -42,38 +42,40 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! a slab of standard Lush sigmoids
-  template <class T> class stdsigmoid_module: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class stdsigmoid_module: public module_1_1<T,Tstate> {
   public:
     //! empty constructor
     stdsigmoid_module();
     virtual ~stdsigmoid_module();
     //! fprop from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! bprop
-    virtual void bprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bprop(Tstate &in, Tstate &out);
     //! bbprop
-    virtual void bbprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void bbprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module.
-    virtual stdsigmoid_module<T>* copy();
+    virtual stdsigmoid_module<T,Tstate>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
   //! a slab of tanh
-  template <class T> class tanh_module: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class tanh_module: public module_1_1<T,Tstate> {
   public:
     //! empty constructor
     tanh_module();
     virtual ~tanh_module();
     //! fprop from in to out
-    void fprop(state_idx<T> &in, state_idx<T> &out);
+    void fprop(Tstate &in, Tstate &out);
     //! bprop
-    void bprop(state_idx<T> &in, state_idx<T> &out);
+    void bprop(Tstate &in, Tstate &out);
     //! bbprop
-    void bbprop(state_idx<T> &in, state_idx<T> &out);
+    void bbprop(Tstate &in, Tstate &out);
     void forget(forget_param_linear &fp);
     void normalize();
     //! Returns a deep copy of this module.
-    virtual tanh_module<T>* copy();
+    virtual tanh_module<T,Tstate>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
@@ -85,7 +87,8 @@ namespace ebl {
   //! if in is idx4 -> the last two dimensions are pools
   //! if in is idx5 -> the last four dimensions are pools
   //! if in is idx6 -> the last four dimensions are pools
-  template <class T> class softmax: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class softmax: public module_1_1<T,Tstate> {
   public:
     double beta;
 
@@ -94,16 +97,14 @@ namespace ebl {
     // <b> equal to 0 turns the softmax into 1/N
 
   private:
-    void resize_nsame(state_idx<T> &in, state_idx<T> &out, int n);
+    void resize_nsame(Tstate &in, Tstate &out, int n);
 
   public:
     softmax(double b);
-    ~softmax() {
-    }
-    ;
-    void fprop(state_idx<T> &in, state_idx<T> &out);
-    void bprop(state_idx<T> &in, state_idx<T> &out);
-    void bbprop(state_idx<T> &in, state_idx<T> &out);
+    ~softmax() {};
+    void fprop(Tstate &in, Tstate &out);
+    void bprop(Tstate &in, Tstate &out);
+    void bbprop(Tstate &in, Tstate &out);
   };
 
 } // namespace ebl {

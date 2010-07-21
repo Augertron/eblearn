@@ -89,10 +89,10 @@ int main(int argc, char **argv) { // regular main without gui
 
   //! create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  parameter<t_net> theparam(60000); // create trainable parameter
+  parameter<bbstate_idx<t_net> > theparam(60000); // create trainable parameter
   lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
 		   train_ds.get_nclasses(), conf.get_bool("absnorm"));
-  supervised_euclidean_machine<t_net, ubyte> thenet((module_1_1<t_net>&)l5, targets, dims);
+  supervised_euclidean_machine<t_net, ubyte> thenet(l5, targets, dims);
   supervised_trainer<t_net, ubyte, ubyte> thetrainer(thenet, theparam);
 
   //! a classifier-meter measures classification errors

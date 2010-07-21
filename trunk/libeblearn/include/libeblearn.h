@@ -35,7 +35,6 @@
 
 #include "ebl_defines.h"
 #include "libidx.h"
-#include "ebl_arch_gen.h"
 #include "ebl_arch.h"
 #include "ebl_states.h"
 #include "ebl_basic.h"

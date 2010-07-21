@@ -33,17 +33,17 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  template <class T>
-  stdsigmoid_module<T>::stdsigmoid_module() {
+  template <typename T, class Tstate>
+  stdsigmoid_module<T,Tstate>::stdsigmoid_module() {
   }
 
-  template <class T>
-  stdsigmoid_module<T>::~stdsigmoid_module() {
+  template <typename T, class Tstate>
+  stdsigmoid_module<T,Tstate>::~stdsigmoid_module() {
   }
 
   // standard sigmoid module
-  template <class T>
-  void stdsigmoid_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void stdsigmoid_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x.spec); // use same dimensions as in
       if (out.x.get_idxdim() != d) { // resize only if necessary
@@ -58,37 +58,37 @@ namespace ebl {
     idx_stdsigmoid(in.x, out.x);
   }
 
-  template <class T>
-  void stdsigmoid_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void stdsigmoid_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     idx_dstdsigmoid(in.x, in.dx);
     idx_mul(in.dx, out.dx, in.dx);
   }
 
-  template <class T>
-  void stdsigmoid_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void stdsigmoid_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     idx_dstdsigmoid(in.x, in.ddx);
     idx_mul(in.ddx, in.ddx, in.ddx);
     idx_mul(in.ddx, out.ddx, in.ddx);
   }
 
-  template <class T>
-  stdsigmoid_module<T>* stdsigmoid_module<T>::copy() {
-    return new stdsigmoid_module();
+  template <typename T, class Tstate>
+  stdsigmoid_module<T,Tstate>* stdsigmoid_module<T,Tstate>::copy() {
+    return new stdsigmoid_module<T,Tstate>();
   }
   
   ////////////////////////////////////////////////////////////////
 
-  template <class T>
-  tanh_module<T>::tanh_module() {
+  template <typename T, class Tstate>
+  tanh_module<T,Tstate>::tanh_module() {
   }
 
-  template <class T>
-  tanh_module<T>::~tanh_module() {
+  template <typename T, class Tstate>
+  tanh_module<T,Tstate>::~tanh_module() {
   }
 
   // tanh module
-  template <class T>
-  void tanh_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void tanh_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x.spec); // use same dimensions as in
       if (out.x.get_idxdim() != d) { // resize only if necessary
@@ -103,41 +103,41 @@ namespace ebl {
     idx_tanh(in.x, out.x);
   }
 
-  template <class T>
-  void tanh_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void tanh_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     idx_dtanh(in.x, in.dx);
     idx_mul(in.dx, out.dx, in.dx);
   }
 
-  template <class T>
-  void tanh_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void tanh_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     idx_dtanh(in.x, in.ddx);
     idx_mul(in.ddx, in.ddx, in.ddx);
     idx_mul(in.ddx, out.ddx, in.ddx);
   }
 
-  template <class T>
-  void tanh_module<T>::forget(forget_param_linear& fp) {
+  template <typename T, class Tstate>
+  void tanh_module<T,Tstate>::forget(forget_param_linear& fp) {
   }
 
-  template <class T>
-  void tanh_module<T>::normalize() {
+  template <typename T, class Tstate>
+  void tanh_module<T,Tstate>::normalize() {
   }
 
-  template <class T>
-  tanh_module<T>* tanh_module<T>::copy() {
-    return new tanh_module();
+  template <typename T, class Tstate>
+  tanh_module<T,Tstate>* tanh_module<T,Tstate>::copy() {
+    return new tanh_module<T,Tstate>();
   }
   
   ////////////////////////////////////////////////////////////////////////
 
-  template <class T>
-  softmax<T>::softmax(double b){
+  template <typename T, class Tstate>
+  softmax<T,Tstate>::softmax(double b){
     beta = b;
   }
 
-  template <class T>
-  void softmax<T>::resize_nsame(state_idx<T> &in, state_idx<T> &out, int n){
+  template <typename T, class Tstate>
+  void softmax<T,Tstate>::resize_nsame(Tstate &in, Tstate &out, int n){
     int nmax = in.x.order();
     if(n==0||n>nmax) {eblerror("illegal type")}
     else{
@@ -161,8 +161,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void softmax<T>::fprop( state_idx<T> &in, state_idx<T> &out){
+  template <typename T, class Tstate>
+  void softmax<T,Tstate>::fprop(Tstate &in, Tstate &out){
     int n=in.x.order();
     if(n==0){
       idx<double> ib;
@@ -185,8 +185,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void softmax<T>::bprop( state_idx<T> &in, state_idx<T> &out){
+  template <typename T, class Tstate>
+  void softmax<T,Tstate>::bprop(Tstate &in, Tstate &out){
     int n = in.x.order();
     if( n == 0) return;
     if( n > 6 ) { eblerror("illegal type")}
@@ -200,8 +200,8 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void softmax<T>::bbprop( state_idx<T> &in, state_idx<T> &out){
+  template <typename T, class Tstate>
+  void softmax<T,Tstate>::bbprop(Tstate &in, Tstate &out){
     int n = in.x.order();
     if( n == 0) return;
     if( n > 6 ) { eblerror("illegal type")}

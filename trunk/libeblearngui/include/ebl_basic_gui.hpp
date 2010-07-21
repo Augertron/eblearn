@@ -40,13 +40,15 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // linear_module
   
-#define LINEAR_MODULE_GUI(name, T)						\
-  template <class T>							\
-  void linear_module_gui::name(linear_module<T> &nn,				\
-			    state_idx<T> &in, state_idx<T> &out,	\
-			    unsigned int &h0, unsigned int &w0,		\
-			    double zoom, T vmin, T vmax,		\
-			    bool show_out) {				\
+#define LINEAR_MODULE_GUI(name, op, T, state)				\
+  template <typename T, class Tstate>					\
+  void linear_module_gui::name(linear_module<T,Tstate> &nn,		\
+			       Tstate &in, Tstate &out,			\
+			       unsigned int &h0, unsigned int &w0,	\
+			       double zoom, T vmin, T vmax,		\
+			       bool show_out) {				\
+    /* run it */							\
+    nn.op(in, out);							\
     unsigned int h = h0, w = w0;					\
     /* display text */							\
     gui << gui_only() << at(h, w) << "full in:" << in.T;		\
@@ -62,21 +64,23 @@ namespace ebl {
     h0 += (uint) (std::max((uint) 10, (uint) (m.dim(0) * zoom + 1)));	\
   }									
   
-  // LINEAR_MODULE_GUI(display_fprop, x)
-  // LINEAR_MODULE_GUI(display_bprop, dx)
-  // LINEAR_MODULE_GUI(display_bbprop, ddx)
+  LINEAR_MODULE_GUI(display_fprop, fprop, x, fstate_idx)
+  LINEAR_MODULE_GUI(display_bprop, bprop, dx, bstate_idx)
+  LINEAR_MODULE_GUI(display_bbprop, bbprop, ddx, bbstate_idx)
   
   ////////////////////////////////////////////////////////////////
   // convolution_module
 
-#define CONVOLUTION_MODULE_GUI(name, T)					\
-  template <class T>							\
-  void convolution_module_gui::name(convolution_module<T> &nn,		\
-				    state_idx<T> &in, state_idx<T> &out, \
+#define CONVOLUTION_MODULE_GUI(name, op, T, state)			\
+  template <typename T, class Tstate>					\
+  void convolution_module_gui::name(convolution_module<T,Tstate> &nn,	\
+				    Tstate &in, Tstate &out,		\
 				    unsigned int &h0,			\
 				    unsigned int &w0,			\
 				    double zoom, T vmin, T vmax,	\
 				    bool show_out) {			\
+    /* run it */							\
+    nn.op(in, out);							\
     unsigned int h = h0, w = w0;					\
     /* display text */							\
     gui << gui_only() << at(h, w) << "conv. in:" << in.T		\
@@ -105,21 +109,23 @@ namespace ebl {
     h0 += (uint) (std::max((uint) 10, (uint) (mk.dim(0) * zoom + 1)));	\
   }
 
-  CONVOLUTION_MODULE_GUI(display_fprop, x)
-  CONVOLUTION_MODULE_GUI(display_bprop, dx)
-  CONVOLUTION_MODULE_GUI(display_bbprop, ddx)
+  CONVOLUTION_MODULE_GUI(display_fprop, fprop, x, fstate_idx)
+  CONVOLUTION_MODULE_GUI(display_bprop, bprop, dx, bstate_idx)
+  CONVOLUTION_MODULE_GUI(display_bbprop, bbprop, ddx, bbstate_idx)
     
   ////////////////////////////////////////////////////////////////
   // subsampling_module
 
-#define SUBSAMPLING_MODULE_GUI(name, T)					\
-  template <class T>							\
-  void subsampling_module_gui::name(subsampling_module<T> &nn,		\
-				   state_idx<T> &in, state_idx<T> &out, \
-				   unsigned int &h0,			\
-				   unsigned int &w0,			\
-				   double zoom, T vmin, T vmax,		\
-				   bool show_out) {			\
+#define SUBSAMPLING_MODULE_GUI(name, op, T, state)			\
+  template <typename T, class Tstate>					\
+  void subsampling_module_gui::name(subsampling_module<T,Tstate> &nn,	\
+				    Tstate &in, Tstate &out,		\
+				    unsigned int &h0,			\
+				    unsigned int &w0,			\
+				    double zoom, T vmin, T vmax,	\
+				    bool show_out) {			\
+    /* run it */							\
+    nn.op(in, out);							\
     unsigned int h = h0, w = w0;					\
     /* display input text	*/					\
     gui << gui_only() << at(h, w) << "ssampl. in:" << in.T;		\
@@ -133,16 +139,16 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display kernels text */						\
-    gui << gui_only()<< at(h, w) << "kernels:" << nn.sub.T.dim(0); \
-    gui << "x" << in.T.dim(1) / nn.sub.T.dim(1);		\
-    gui << "x" << in.T.dim(2) / nn.sub.T.dim(2);		\
+    gui << gui_only()<< at(h, w) << "kernels:" << nn.sub.T.dim(0);	\
+    gui << "x" << in.T.dim(1) / nn.sub.T.dim(1);			\
+    gui << "x" << in.T.dim(2) / nn.sub.T.dim(2);			\
     w += 150;								\
     h0 += 10;								\
   }
   
-  SUBSAMPLING_MODULE_GUI(display_fprop, x)
-  SUBSAMPLING_MODULE_GUI(display_bprop, dx)
-  SUBSAMPLING_MODULE_GUI(display_bbprop, ddx)
+  SUBSAMPLING_MODULE_GUI(display_fprop, fprop, x, fstate_idx)
+  SUBSAMPLING_MODULE_GUI(display_bprop, bprop, dx, bstate_idx)
+  SUBSAMPLING_MODULE_GUI(display_bbprop, bbprop, ddx, bbstate_idx)
 
 }
   

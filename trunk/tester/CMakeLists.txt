@@ -26,14 +26,14 @@ IF (CPPUNIT_FOUND) # compile only if cppunit is present
     src/idxops_test.cpp
     src/detector_test.cpp
     src/ClusterTest.cpp
-    src/DataSourceTest.cpp
+    src/datasource_test.cpp
     src/ebl_basic_test.cpp
     src/ebl_preprocessing_test.cpp
     src/idxIO_test.cpp
     src/IdxIteratorsTest.cpp
     src/IdxTest.cpp
     src/image_test.cpp
-    src/NetTest.cpp
+    src/ebl_machines_test.cpp
     src/main.cpp
     src/MyBriefTestProgressListener.cpp
     src/MyTextOutputter.cpp

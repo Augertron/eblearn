@@ -43,7 +43,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // channorm_module
   //! Abstract class for normalization of image channels.
-  template <class T> class channorm_module: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class channorm_module: public module_1_1<T,Tstate> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
@@ -52,28 +53,29 @@ namespace ebl {
     //! Destructor
     virtual ~channorm_module();
     //! Forward propagation from in to out (abstract).
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out) = 0;
+    virtual void fprop(Tstate &in, Tstate &out) = 0;
     //! Returns a deep copy of this module (abstract).
-    virtual channorm_module<T>* copy() = 0;
+    virtual channorm_module<T,Tstate>* copy() = 0;
     
   protected:
     //! Resize the output based on input dimensions
     //! \param dim0 An optional size for the first dimension. Set it to 1
     //!             when converting from color to greyscale.
-    virtual void resize_output(state_idx<T> &in, state_idx<T> &out,
+    virtual void resize_output(Tstate &in, Tstate &out,
 			       int dim0 = -1);
 
   protected:
-    uint			normalization_size;	//!< norm kernel size
-    state_idx<T>		tmp;	//!< temporary buffer
-    weighted_std_module<T>	norm;	//!< contrast normalization module
+    uint			        normalization_size;//!< norm kernel size
+    Tstate      	        	tmp;	//!< temporary buffer
+    weighted_std_module<T,Tstate>	norm;//!< contrast normalization module
   };
 
   ////////////////////////////////////////////////////////////////
   // rgb_to_ypuv_module
   //! convert an RGB input into a YpUV output, Yp being a Y channel
   //! with a local normaliztion.
-  template <class T> class rgb_to_ypuv_module: public channorm_module<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class rgb_to_ypuv_module: public channorm_module<T,Tstate> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
@@ -82,16 +84,17 @@ namespace ebl {
     //! destructor
     virtual ~rgb_to_ypuv_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module (abstract).
-    virtual rgb_to_ypuv_module<T>* copy();
+    virtual rgb_to_ypuv_module<T,Tstate>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
   // rgb_to_yp_module
   //! convert an RGB input into a Yp output, Yp being a Y channel
   //! with a local normaliztion.
-  template <class T> class rgb_to_yp_module: public channorm_module<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class rgb_to_yp_module: public channorm_module<T,Tstate> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
@@ -100,16 +103,17 @@ namespace ebl {
     //! destructor
     virtual ~rgb_to_yp_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module (abstract).
-    virtual rgb_to_yp_module<T>* copy();
+    virtual rgb_to_yp_module<T,Tstate>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
   // bgr_to_ypuv_module
   //! convert an BGR input into a YpUV output, Yp being a Y channel
   //! with a local normaliztion.
-  template <class T> class bgr_to_ypuv_module: public channorm_module<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class bgr_to_ypuv_module: public channorm_module<T,Tstate> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
@@ -118,16 +122,17 @@ namespace ebl {
     //! destructor
     virtual ~bgr_to_ypuv_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module (abstract).
-    virtual bgr_to_ypuv_module<T>* copy();
+    virtual bgr_to_ypuv_module<T,Tstate>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
   // bgr_to_yp_module
   //! convert an BGR input into a Yp output, Yp being a Y channel
   //! with a local normaliztion.
-  template <class T> class bgr_to_yp_module: public channorm_module<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class bgr_to_yp_module : public channorm_module<T,Tstate> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
@@ -136,16 +141,17 @@ namespace ebl {
     //! destructor
     virtual ~bgr_to_yp_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module (abstract).
-    virtual bgr_to_yp_module<T>* copy();
+    virtual bgr_to_yp_module<T,Tstate>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
   // rgb_to_hp_module
   //! convert an RGB input into a Hp output, Hp being a H channel (from HSV)
   //! with a local normaliztion.
-  template <class T> class rgb_to_hp_module: public channorm_module<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class rgb_to_hp_module: public channorm_module<T,Tstate> {
   public:
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Hp's
@@ -154,9 +160,9 @@ namespace ebl {
     //! destructor
     virtual ~rgb_to_hp_module();
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module (abstract).
-    virtual rgb_to_hp_module<T>* copy();
+    virtual rgb_to_hp_module<T,Tstate>* copy();
   };
 
   ////////////////////////////////////////////////////////////////
@@ -168,7 +174,8 @@ namespace ebl {
   //! while preserving aspect ratio, the output must eventually be copied into
   //! the true desired output dimensions, but preprocessing must be done before
   //! copying it to avoid edge detection between the empty parts of the image.
-  template <class T> class resizepp_module: public module_1_1<T> {
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class resizepp_module: public module_1_1<T,Tstate> {
   public:
     //! Constructor. Preprocessing module pp will be deleted upon destruction.
     //! \param height target height for resizing.
@@ -182,7 +189,22 @@ namespace ebl {
     //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
     //!             GAUSSIAN_RESIZE).
     resizepp_module(intg height, intg width, uint mode = MEAN_RESIZE,
-		    module_1_1<T> *pp = NULL, uint kernelsz = 0,
+		    module_1_1<T,Tstate> *pp = NULL, uint kernelsz = 0,
+		    bool own_pp = false);
+    //! Constructor without target dimensions. set_dimensions should be called
+    //! later. Preprocessing module pp will be deleted upon destruction.
+    //! \param height target height for resizing.
+    //! \param width target width for resizing.
+    //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
+    //!           preprocessing is performed. This module is responsible for
+    //!           destroying the preprocessing module.
+    //! \param kernelsz The kernel size used by the preprocessing module.
+    //!           This is used to take kernel's (if any) border effect into
+    //!           account during resizing. The default value (0) has no effect.
+    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
+    //!             GAUSSIAN_RESIZE).
+    resizepp_module(uint mode = MEAN_RESIZE,
+		    module_1_1<T,Tstate> *pp = NULL, uint kernelsz = 0,
 		    bool own_pp = false);
     //! destructor
     virtual ~resizepp_module();
@@ -192,21 +214,21 @@ namespace ebl {
     //! by default, the input region is the entire image.
     void set_input_region(const rect &inr);
     //! forward propagation from in to out
-    virtual void fprop(state_idx<T> &in, state_idx<T> &out);
+    virtual void fprop(Tstate &in, Tstate &out);
     //! return the bounding box of the original input in the output coordinate
     //! system.
     rect get_original_bbox();
     //! Returns a deep copy of this module.
-    virtual resizepp_module<T>* copy();
+    virtual resizepp_module<T,Tstate>* copy();
     
     // members ////////////////////////////////////////////////////////
   private:
-    module_1_1<T>	*pp;	        //!< preprocessing module
+    module_1_1<T,Tstate> *pp;	        //!< preprocessing module
     bool                 own_pp;        //!< responsible for pp's deletion
     uint                 kernelsz;      //!< size of pp's kernel
     intg		 height;	//!< target height
     intg		 width;         //!< target width
-    state_idx<T>         inpp, outpp;   //!< input/output buffers for pp
+    Tstate               inpp, outpp;   //!< input/output buffers for pp
     idx<T>               tmp;           //!< temporary buffer
     idx<T>               tmp2;          //!< temporary buffer
     rect                 original_bbox; //!< bbox of original input in output

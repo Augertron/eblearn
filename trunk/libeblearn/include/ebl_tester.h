@@ -72,21 +72,21 @@ namespace ebl {
 
     //! test the derivative of output wrt input
     //! module : pointer to a module_1_1
-    //! in     : pointer to state_idx
-    //! out    : pointer to state_idx
+    //! in     : pointer to fstate_idx
+    //! out    : pointer to fstate_idx
     idx<T> test_jacobian(module_1_1<T> &module, 
-			      state_idx<T> &in, state_idx<T> &out);
+			      bbstate_idx<T> &in, bbstate_idx<T> &out);
 
     //! test the derivative of output wrt parameters of the module
     //! p      : pointer to parameter object that was used to allocate the 
     //!          parameters of module. this parameter object should contain the 
     //!          parameter of only this module
     //! module : pointer to a module_1_1
-    //! in     : pointer to state_idx
-    //! out    : pointer to state_idx
-    void test_jacobian_param(parameter<T> &p, 
+    //! in     : pointer to fstate_idx
+    //! out    : pointer to fstate_idx
+    void test_jacobian_param(parameter<bbstate_idx<T> > &p, 
 			     module_1_1<T>& module, 
-			     state_idx<T> &in, state_idx<T> &out);
+			     bbstate_idx<T> &in, bbstate_idx<T> &out);
 
     //! get accuracy threshold
     T get_acc_thres() const;
@@ -128,10 +128,10 @@ namespace ebl {
     //! get jacobian using 1st order central finite differnce approximation for 
     //! derivative of output wrt input
     //! module : pointer to a module_1_1
-    //! in     : pointer to state_idx
-    //! out    : pointer to state_idx
+    //! in     : pointer to fstate_idx
+    //! out    : pointer to fstate_idx
     void get_jacobian_fprop(module_1_1<T> &module, 
-			    state_idx<T> &in, state_idx<T> &out,
+			    bbstate_idx<T> &in, bbstate_idx<T> &out,
 			    idx<T>& jac);
 
     //! get jacobian using 1st order central finite differnce approximation for 
@@ -140,19 +140,19 @@ namespace ebl {
     //!          parameters of module. this parameter object should contain the 
     //!          parameter of only this module
     //! module : pointer to a module_1_1
-    //! in     : pointer to state_idx
-    //! out    : pointer to state_idx
-    void get_jacobian_fprop_param(parameter<T> &p, 
+    //! in     : pointer to fstate_idx
+    //! out    : pointer to fstate_idx
+    void get_jacobian_fprop_param(parameter<bbstate_idx<T> > &p, 
 				  module_1_1<T> &module, 
-				  state_idx<T> &in, state_idx<T> &out,
+				  bbstate_idx<T> &in, bbstate_idx<T> &out,
 				  idx<T>& jac);
 
     //! get jacobian using bprop for derivative of output wrt input
     //! module : pointer to a module_1_1
-    //! in     : pointer to state_idx
-    //! out    : pointer to state_idx
+    //! in     : pointer to fstate_idx
+    //! out    : pointer to fstate_idx
     void get_jacobian_bprop(module_1_1<T> &module, 
-			    state_idx<T> &in, state_idx<T> &out,
+			    bbstate_idx<T> &in, bbstate_idx<T> &out,
 			    idx<T>& jac);
     
     //! get jacobian using bprop for derivative of output wrt parameter
@@ -160,11 +160,11 @@ namespace ebl {
     //!          parameters of module. this parameter object should contain the 
     //!          parameter of only this module
     //! module : pointer to a module_1_1
-    //! in     : pointer to state_idx
-    //! out    : pointer to state_idx
-    void get_jacobian_bprop_param(parameter<T> &p, 
+    //! in     : pointer to fstate_idx
+    //! out    : pointer to fstate_idx
+    void get_jacobian_bprop_param(parameter<bbstate_idx<T> > &p, 
 				  module_1_1<T> &module, 
-				  state_idx<T> &in, state_idx<T> &out,
+				  bbstate_idx<T> &in, bbstate_idx<T> &out,
 				  idx<T>& jac);
 
     //! a : first idx to compare
@@ -195,7 +195,7 @@ namespace ebl {
 
     // this function take any module_1_1 with a fprop et bprop implemented,
     // and tests if the jacobian is correct (by pertubation) 
-    // (on a state_idx with 3 dimensions)
+    // (on a fstate_idx with 3 dimensions)
     void test(module_1_1<T> &module);
 
   };
@@ -215,7 +215,7 @@ namespace ebl {
 
     // this function take any module_1_1 with a fprop et bbprop implemented, 
     // and tests if the Bbprop is correct (by pertubation) 
-    // (on a state_idx with 3 dimensions)
+    // (on a fstate_idx with 3 dimensions)
     void test(module_1_1<T> &module);
 
   };
@@ -235,7 +235,7 @@ namespace ebl {
 
     // this function take any module_1_1 with a fprop et bprop implemented, 
     // and tests if the bprop is correct (by pertubation) 
-    // (on a state_idx with 3 dimensions)
+    // (on a fstate_idx with 3 dimensions)
     void test(module_1_1<T> &module);
 
   };

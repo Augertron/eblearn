@@ -1,7 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Pierre Sermanet *
- *   pierre.sermanet@gmail.com *
- *   All rights reserved.
+ *   Copyright (C) 2008 by Yann LeCun, Pierre Sermanet *
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,33 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef NETCONF_H_
-#define NETCONF_H_
-
-#include "libeblearn.h"
-#include "configuration.h"
-
 namespace ebl {
-
-  //! Create a new network based on a configuration.
-  //! The configuration should at least contain these variables:
-  //! 'net_type' which can contain so far 'cscscf', 'cscsc', 'cscf', etc.
-  //! Other variables used are convolution and subsampling kernel sizes
-  //! such as 'net_c1h', 'net_c1w', 'net_s1h', etc.
-  //! See netconf.hpp for more details.
-  //! 'in' and 'out' are used for memory optimization if not null, otherwise
-  //! independent buffers are used in between each module (required for
-  //! learning).
-  //! \param in The input buffer for memory optimization.
-  //! \param out The output buffer for memory optimization.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    module_1_1<T,Tstate>* create_network(parameter<Tstate> &theparam,
-					 configuration &conf, uint noutputs,
-					 Tstate *in = NULL,
-					 Tstate *out = NULL);
+  
 
 } // end namespace ebl
-
-#include "netconf.hpp"
-
-#endif /* NETCONF_H_ */

@@ -111,104 +111,84 @@ namespace ebl {
     virtual void update_gd(gd_param &arg);
   };
 
-  template <class T> class parameter;
-  
+  template <typename T> class parameter;
+
   ////////////////////////////////////////////////////////////////
   //! A class that stores a vector/tensor state.
-  template <class T> class state_idx: public state {
+  template <typename T> class fstate_idx: public state {
   public:
-    virtual ~state_idx();
-
-    ////////////////////////////////////////////////////////////////
-    //! member variables
-  private:
-    //! an object containing an order and dimensons to help for idx creations
-    idxdim	dims;
-
-  public:
-    //! state itself
-    idx<T> x;
-    //! gradient of loss with respect to state
-    idx<T> dx;
-    //! diag hessian of loss with respect to state
-    idx<T> ddx;
+    virtual ~fstate_idx();
 
     ////////////////////////////////////////////////////////////////
     //! constructors from specific dimensions
 
-    //! Constructs a state_idx of order 0
-    state_idx();
-    //! Constructs a state_idx of order 1
-    state_idx(intg s0);
-    //! Constructs a state_idx of order 2
-    state_idx(intg s0, intg s1);
-    //! Constructs a state_idx of order 3
-    state_idx(intg s0, intg s1, intg s2);
-    //! Constructor. A state_idx can have up to 8 dimensions.
-    state_idx(intg s0, intg s1, intg s2, intg s3, intg s4 = -1, intg s5 = -1,
+    //! Constructs a fstate_idx of order 0
+    fstate_idx();
+    //! Constructs a fstate_idx of order 1
+    fstate_idx(intg s0);
+    //! Constructs a fstate_idx of order 2
+    fstate_idx(intg s0, intg s1);
+    //! Constructs a fstate_idx of order 3
+    fstate_idx(intg s0, intg s1, intg s2);
+    //! Constructor. A fstate_idx can have up to 8 dimensions.
+    fstate_idx(intg s0, intg s1, intg s2, intg s3, intg s4 = -1, intg s5 = -1,
 	      intg s6 = -1, intg s7 = -1);
     //! Constructor. Use the order and dimensions contained in passed idxdim d.
-    state_idx(const idxdim &d);
+    fstate_idx(const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
-    //! constructors from specific dimensions using a parameter
+    //! constructors from specific dimensions using a fparameter
 
-    //! Constructs a state_idx of order 0, by appending the state_idx into
-    //! the same Srg as the parameter passed as argument. This is useful for
-    //! allocating multiple state_idx inside a parameter.
+    //! Constructs a fstate_idx of order 0, by appending the fstate_idx into
+    //! the same Srg as the fparameter passed as argument. This is useful for
+    //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    state_idx(parameter<T> *st);
-    //! Constructs a state_idx of order 1, by appending the state_idx into
-    //! the same Srg as the parameter passed as argument. This is useful for
-    //! allocating multiple state_idx inside a parameter.
+    fstate_idx(parameter<fstate_idx<T> > *st);
+    //! Constructs a fstate_idx of order 1, by appending the fstate_idx into
+    //! the same Srg as the fparameter passed as argument. This is useful for
+    //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    state_idx(parameter<T> *st, intg s0);
-    //! Constructs a state_idx of order 2, by appending the state_idx into
-    //! the same Srg as the parameter passed as argument. This is useful for
-    //! allocating multiple state_idx inside a parameter.
+    fstate_idx(parameter<fstate_idx<T> > *st, intg s0);
+    //! Constructs a fstate_idx of order 2, by appending the fstate_idx into
+    //! the same Srg as the fparameter passed as argument. This is useful for
+    //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    state_idx(parameter<T> *st, intg s0, intg s1);
-    //! Constructs a state_idx of order 3, by appending the state_idx into
-    //! the same Srg as the parameter passed as argument. This is useful for
-    //! allocating multiple state_idx inside a parameter.
+    fstate_idx(parameter<fstate_idx<T> > *st, intg s0, intg s1);
+    //! Constructs a fstate_idx of order 3, by appending the fstate_idx into
+    //! the same Srg as the fparameter passed as argument. This is useful for
+    //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    state_idx(parameter<T> *st, intg s0, intg s1, intg s2);
-    //! Constructs a state_idx of order up to 8, by appending the state_idx into
-    //! the same Srg as the parameter passed as argument. This is useful for
-    //! allocating multiple state_idx inside a parameter.
+    fstate_idx(parameter<fstate_idx<T> > *st, intg s0, intg s1, intg s2);
+    //! Constructs a fstate_idx of order up to 8, by appending the fstate_idx
+    //! into
+    //! the same Srg as the fparameter passed as argument. This is useful for
+    //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    state_idx(parameter<T> *st, intg s0, intg s1, intg s2, intg s3,
-	      intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
-    //! Constructs a state_idx using the order and dimensions contained in
-    //! passed idxdim d, by appending the state_idx into
-    //! the same Srg as the parameter passed as argument. This is useful for
-    //! allocating multiple state_idx inside a parameter.
+    fstate_idx(parameter<fstate_idx<T> > *st, intg s0, intg s1, intg s2,
+	       intg s3, intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
+    //! Constructs a fstate_idx using the order and dimensions contained in
+    //! passed idxdim d, by appending the fstate_idx into
+    //! the same Srg as the fparameter passed as argument. This is useful for
+    //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    state_idx(parameter<T> *st, const idxdim &d);
+    fstate_idx(parameter<fstate_idx<T> > *st, const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
-    //! constructors from other state_idx
+    //! constructors from other fstate_idx
 
-    //! Constructs a state_idx from a state_idx's 3 internal idx
+    //! Constructs a fstate_idx from an existing idx.
     //! Note: the data pointed to by idxs is not copied, we only create new idx
     //!   pointing to the same data.
-    state_idx(const idx<T> &x, const idx<T> &dx, 
-	      const idx<T> &ddx);
+    fstate_idx(const idx<T> &x);
 
     ////////////////////////////////////////////////////////////////
     //! clear methods
 
-    //! clear x, dx and ddx
+    //! clear all buffers (x, dx and ddx).
     virtual void clear();
 
     //! clear x
     virtual void clear_x();
-
-    //! clear gradients dx
-    virtual void clear_dx();
-
-    //! clear diag hessians ddx
-    virtual void clear_ddx();
 
     ////////////////////////////////////////////////////////////////
     //! information methods
@@ -222,9 +202,6 @@ namespace ebl {
     //! same as footprint
     virtual intg size();
 
-    //! update with gradient descent
-    virtual void update_gd(gd_param &arg);
-      
     ////////////////////////////////////////////////////////////////
     //! resize methods
 
@@ -239,39 +216,403 @@ namespace ebl {
     //! The order cannot be changed.
     virtual void resize1(intg dimn, intg size);
     
-    //! resizes this state_idx with same sizes a <s>.
-    //! Both state_idx are required to have the same order.
-    virtual void resize_as(state_idx& s);
+    //! resizes this fstate_idx with same sizes a <s>.
+    //! Both fstate_idx are required to have the same order.
+    virtual void resize_as(fstate_idx& s);
 
     //! same as resize_as but leave dimension <fixed_dim> untouched.
-    //! Both state_idx are required to have the same order.
-    virtual void resize_as_but1(state_idx<T>& s, intg fixed_dim);
+    //! Both fstate_idx are required to have the same order.
+    virtual void resize_as_but1(fstate_idx<T>& s, intg fixed_dim);
 
     //    virtual void resize(const intg* dimsBegin, const intg* dimsEnd);
 
     //! make a new copy of self
-    virtual state_idx<T> make_copy();
+    fstate_idx<T> make_copy();
+
+    ////////////////////////////////////////////////////////////////
+    //! member variables
+  public:
+    //! state itself
+    idx<T> x;
+    //! gradient of loss with respect to state
+    idx<T> dx;
+    //! diag hessian of loss with respect to state
+    idx<T> ddx;
+  };
+
+  
+  ////////////////////////////////////////////////////////////////
+  //! A class that stores a vector/tensor state.
+  template <typename T> class bstate_idx: public fstate_idx<T> {
+  public:
+    virtual ~bstate_idx();
+
+    ////////////////////////////////////////////////////////////////
+    //! constructors from specific dimensions
+
+    //! Constructs a bstate_idx of order 0
+    bstate_idx();
+    //! Constructs a bstate_idx of order 1
+    bstate_idx(intg s0);
+    //! Constructs a bstate_idx of order 2
+    bstate_idx(intg s0, intg s1);
+    //! Constructs a bstate_idx of order 3
+    bstate_idx(intg s0, intg s1, intg s2);
+    //! Constructor. A bstate_idx can have up to 8 dimensions.
+    bstate_idx(intg s0, intg s1, intg s2, intg s3, intg s4 = -1, intg s5 = -1,
+	      intg s6 = -1, intg s7 = -1);
+    //! Constructor. Use the order and dimensions contained in passed idxdim d.
+    bstate_idx(const idxdim &d);
+
+    ////////////////////////////////////////////////////////////////
+    //! constructors from specific dimensions using a bparameter
+
+    //! Constructs a bstate_idx of order 0, by appending the bstate_idx into
+    //! the same Srg as the bparameter passed as argument. This is useful for
+    //! allocating multiple bstate_idx inside a bparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bstate_idx(parameter<bstate_idx<T> > *st);
+    //! Constructs a bstate_idx of order 1, by appending the bstate_idx into
+    //! the same Srg as the bparameter passed as argument. This is useful for
+    //! allocating multiple bstate_idx inside a bparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bstate_idx(parameter<bstate_idx<T> > *st, intg s0);
+    //! Constructs a bstate_idx of order 2, by appending the bstate_idx into
+    //! the same Srg as the bparameter passed as argument. This is useful for
+    //! allocating multiple bstate_idx inside a bparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bstate_idx(parameter<bstate_idx<T> > *st, intg s0, intg s1);
+    //! Constructs a bstate_idx of order 3, by appending the bstate_idx into
+    //! the same Srg as the bparameter passed as argument. This is useful for
+    //! allocating multiple bstate_idx inside a bparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bstate_idx(parameter<bstate_idx<T> > *st, intg s0, intg s1, intg s2);
+    //! Constructs a bstate_idx of order up to 8, by appending the bstate_idx
+    //! into
+    //! the same Srg as the bparameter passed as argument. This is useful for
+    //! allocating multiple bstate_idx inside a bparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bstate_idx(parameter<bstate_idx<T> > *st, intg s0, intg s1, intg s2,
+	       intg s3, intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
+    //! Constructs a bstate_idx using the order and dimensions contained in
+    //! passed idxdim d, by appending the bstate_idx into
+    //! the same Srg as the bparameter passed as argument. This is useful for
+    //! allocating multiple bstate_idx inside a bparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bstate_idx(parameter<bstate_idx<T> > *st, const idxdim &d);
+
+    ////////////////////////////////////////////////////////////////
+    //! constructors from other bstate_idx
+
+    //! Constructs a bstate_idx from a bstate_idx's 3 internal idx
+    //! Note: the data pointed to by idxs is not copied, we only create new idx
+    //!   pointing to the same data.
+    bstate_idx(const idx<T> &x, const idx<T> &dx);
+
+    ////////////////////////////////////////////////////////////////
+    //! clear methods
+
+    //! clear x and dx.
+    virtual void clear();
+
+    //! clear gradients dx
+    virtual void clear_dx();
+
+    //! update with gradient descent
+    virtual void update_gd(gd_param &arg);
+      
+    ////////////////////////////////////////////////////////////////
+    //! information methods
+
+    //! return number of elements
+    using fstate_idx<T>::nelements;
+
+    //! return footprint in storages
+    using fstate_idx<T>::footprint;
+
+    //! same as footprint
+    using fstate_idx<T>::size;
+    
+    ////////////////////////////////////////////////////////////////
+    //! resize methods
+
+    //! resize. The order cannot be changed with this.
+    virtual void resize(intg s0 = -1, intg s1 = -1, intg s2 = -1, intg s3 = -1,
+			intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
+
+    //! resize with dimensions contained in an idxdim. order cannot be changed.
+    virtual void resize(const idxdim &d);
+
+    //! resize one dimension <dimn> with size <size>. 
+    //! The order cannot be changed.
+    virtual void resize1(intg dimn, intg size);
+    
+    //! resizes this bstate_idx with same sizes a <s>.
+    //! Both bstate_idx are required to have the same order.
+    virtual void resize_as(bstate_idx& s);
+
+    //! same as resize_as but leave dimension <fixed_dim> untouched.
+    //! Both bstate_idx are required to have the same order.
+    virtual void resize_as_but1(bstate_idx<T>& s, intg fixed_dim);
+
+    //    virtual void resize(const intg* dimsBegin, const intg* dimsEnd);
+
+    //! make a new copy of self
+    bstate_idx<T> make_copy();
+
+    ////////////////////////////////////////////////////////////////
+    //! member variables
+  public:
+    //! state itself
+    using fstate_idx<T>::x;
+    //! gradient of loss with respect to state
+    using fstate_idx<T>::dx;
+    //! diag hessian of loss with respect to state
+    using fstate_idx<T>::ddx;
+  };
+  
+  ////////////////////////////////////////////////////////////////
+  //! A class that stores a vector/tensor state.
+  template <typename T> class bbstate_idx: public bstate_idx<T> {
+  public:
+    virtual ~bbstate_idx();
+
+    ////////////////////////////////////////////////////////////////
+    //! constructors from specific dimensions
+
+    //! Constructs a bbstate_idx of order 0
+    bbstate_idx();
+    //! Constructs a bbstate_idx of order 1
+    bbstate_idx(intg s0);
+    //! Constructs a bbstate_idx of order 2
+    bbstate_idx(intg s0, intg s1);
+    //! Constructs a bbstate_idx of order 3
+    bbstate_idx(intg s0, intg s1, intg s2);
+    //! Constructor. A bbstate_idx can have up to 8 dimensions.
+    bbstate_idx(intg s0, intg s1, intg s2, intg s3, intg s4 = -1, intg s5 = -1,
+	      intg s6 = -1, intg s7 = -1);
+    //! Constructor. Use the order and dimensions contained in passed idxdim d.
+    bbstate_idx(const idxdim &d);
+
+    ////////////////////////////////////////////////////////////////
+    //! constructors from specific dimensions using a bbparameter
+
+    //! Constructs a bbstate_idx of order 0, by appending the bbstate_idx into
+    //! the same Srg as the bbparameter passed as argument. This is useful for
+    //! allocating multiple bbstate_idx inside a bbparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bbstate_idx(parameter<bbstate_idx<T> > *st);
+    //! Constructs a bbstate_idx of order 1, by appending the bbstate_idx into
+    //! the same Srg as the bbparameter passed as argument. This is useful for
+    //! allocating multiple bbstate_idx inside a bbparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0);
+    //! Constructs a bbstate_idx of order 2, by appending the bbstate_idx into
+    //! the same Srg as the bbparameter passed as argument. This is useful for
+    //! allocating multiple bbstate_idx inside a bbparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0, intg s1);
+    //! Constructs a bbstate_idx of order 3, by appending the bbstate_idx into
+    //! the same Srg as the bbparameter passed as argument. This is useful for
+    //! allocating multiple bbstate_idx inside a bbparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0, intg s1, intg s2);
+    //! Constructs a bbstate_idx of order up to 8, by appending the
+    //! bbstate_idx into
+    //! the same Srg as the bbparameter passed as argument. This is useful for
+    //! allocating multiple bbstate_idx inside a bbparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0, intg s1, intg s2,
+		intg s3, intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 =-1);
+    //! Constructs a bbstate_idx using the order and dimensions contained in
+    //! passed idxdim d, by appending the bbstate_idx into
+    //! the same Srg as the bbparameter passed as argument. This is useful for
+    //! allocating multiple bbstate_idx inside a bbparameter.
+    //! If st is null, it is just ignore and behaves as regular constructor.
+    bbstate_idx(parameter<bbstate_idx<T> > *st, const idxdim &d);
+
+    ////////////////////////////////////////////////////////////////
+    //! constructors from other bbstate_idx
+
+    //! Constructs a bbstate_idx from a bbstate_idx's 3 internal idx
+    //! Note: the data pointed to by idxs is not copied, we only create new idx
+    //!   pointing to the same data.
+    bbstate_idx(const idx<T> &x, const idx<T> &dx, 
+	      const idx<T> &ddx);
+
+    ////////////////////////////////////////////////////////////////
+    //! clear methods
+
+    //! clear x, dx and ddx
+    virtual void clear();
+
+    //! clear diag hessians ddx
+    virtual void clear_ddx();
+
+    //! update with gradient descent
+    using bstate_idx<T>::update_gd;
+      
+    ////////////////////////////////////////////////////////////////
+    //! information methods
+
+    //! return number of elements
+    using fstate_idx<T>::nelements;
+
+    //! return footprint in storages
+    using fstate_idx<T>::footprint;
+
+    //! same as footprint
+    using fstate_idx<T>::size;
+    
+    ////////////////////////////////////////////////////////////////
+    //! resize methods
+
+    //! resize. The order cannot be changed with this.
+    virtual void resize(intg s0 = -1, intg s1 = -1, intg s2 = -1, intg s3 = -1,
+			intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
+
+    //! resize with dimensions contained in an idxdim. order cannot be changed.
+    virtual void resize(const idxdim &d);
+
+    //! resize one dimension <dimn> with size <size>. 
+    //! The order cannot be changed.
+    virtual void resize1(intg dimn, intg size);
+    
+    //! resizes this bbstate_idx with same sizes a <s>.
+    //! Both bbstate_idx are required to have the same order.
+    virtual void resize_as(bbstate_idx& s);
+
+    //! same as resize_as but leave dimension <fixed_dim> untouched.
+    //! Both bbstate_idx are required to have the same order.
+    virtual void resize_as_but1(bbstate_idx<T>& s, intg fixed_dim);
+
+    //    virtual void resize(const intg* dimsBegin, const intg* dimsEnd);
+
+    //! make a new copy of self
+    bbstate_idx<T> make_copy();
+
+    ////////////////////////////////////////////////////////////////
+    //! member variables
+  public:
+    //! state itself
+    using fstate_idx<T>::x;
+    //! gradient of loss with respect to state
+    using fstate_idx<T>::dx;
+    //! diag hessian of loss with respect to state
+    using fstate_idx<T>::ddx;
   };
 
   ////////////////////////////////////////////////////////////////
-  //! parameter: the main class for a trainable
-  //! parameter vector.
-
-  template <class T> class parameter: public state_idx<T> {
+  //! parameter<T,fstate_idx<T> >: a forward (non-trainable) parameter vector.
+  template <typename T>
+    class parameter<fstate_idx<T> > : public fstate_idx<T> {
   public:
-    using state_idx<T>::x;
-    using state_idx<T>::dx;
-    using state_idx<T>::ddx;
+    //! initialize the fparameter with size initial_size.
+    parameter(intg initial_size = 100);
+
+    //! initialize the fparameter with a previously saved x component.
+    parameter(const char *param_filename);
+
+    //! destructor
+    virtual ~parameter();
+
+    virtual void resize(intg s0);
+
+    ////////////////////////////////////////////////////////////////
+    // I/O methods
+    
+    //! load a fparameter file into the x component.
+    bool load_x(const char *param_filename);
+
+    //! save the x component to a file.
+    bool save_x(const char *param_filename);
+
+    ////////////////////////////////////////////////////////////////
+    //! information methods
+
+    //! return number of elements
+    using fstate_idx<T>::nelements;
+
+    //! return footprint in storages
+    using fstate_idx<T>::footprint;
+
+    //! same as footprint
+    using fstate_idx<T>::size;
+    
+    ////////////////////////////////////////////////////////////////
+    //! members
+  public:
+    using fstate_idx<T>::x;
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! bparameter: the main class for a trainable
+  //! bparameter vector.
+
+  template <typename T>
+    class parameter<bstate_idx<T> >
+    : public bstate_idx<T>, public parameter<fstate_idx<T> > {
+  public:
+    //! initialize the bparameter with size initial_size.
+    parameter(intg initial_size = 100);
+
+    //! initialize the bparameter with a previously saved x component.
+    parameter(const char *param_filename);
+
+    //! destructor
+    virtual ~parameter();
+
+    virtual void resize(intg s0);
+    void update_gd(gd_param &arg);
+    virtual void update(gd_param &arg);
+    void clear_deltax();
+    void update_deltax(T knew, T kold);
+    void set_epsilons(T m);
+
+    ////////////////////////////////////////////////////////////////
+    // I/O methods
+    
+    //! load a bparameter file into the x component.
+    bool load_x(const char *param_filename);
+
+    //! save the x component to a file.
+    bool save_x(const char *param_filename);
+
+    ////////////////////////////////////////////////////////////////
+    //! information methods
+
+    //! return number of elements
+    using fstate_idx<T>::nelements;
+
+    //! return footprint in storages
+    using fstate_idx<T>::footprint;
+
+    //! same as footprint
+    using fstate_idx<T>::size;
+    
+    ////////////////////////////////////////////////////////////////
+    //! members
+  public:
+    using fstate_idx<T>::x;
+    using bstate_idx<T>::dx;
 
     idx<T> gradient;
     idx<T> deltax;
     idx<T> epsilons;
-    idx<T> ddeltax;
+  };
 
-    //! initialize the parameter with size initial_size.
+  ////////////////////////////////////////////////////////////////
+  //! bbparameter: the main class for a trainable
+  //! bbparameter vector.
+
+  template <typename T>
+    class parameter<bbstate_idx<T> >
+    : public bbstate_idx<T> {
+  public:
+    //! initialize the bbparameter with size initial_size.
     parameter(intg initial_size = 100);
 
-    //! initialize the parameter with a previously saved x component.
+    //! initialize the bbparameter with a previously saved x component.
     parameter(const char *param_filename);
 
     //! destructor
@@ -287,27 +628,100 @@ namespace ebl {
     void set_epsilons(T m);
     void compute_epsilons(T mu);
 
-    //! load a parameter file into the x component.
+    ////////////////////////////////////////////////////////////////
+    // I/O methods
+    
+    //! load a bbparameter file into the x component.
     bool load_x(const char *param_filename);
 
     //! save the x component to a file.
     bool save_x(const char *param_filename);
+
+    ////////////////////////////////////////////////////////////////
+    //! information methods
+
+    //! return number of elements
+    using fstate_idx<T>::nelements;
+
+    //! return footprint in storages
+    using fstate_idx<T>::footprint;
+
+    //! same as footprint
+    using fstate_idx<T>::size;
+    
+    ////////////////////////////////////////////////////////////////
+    //! members
+  public:
+    using fstate_idx<T>::x;
+    using fstate_idx<T>::dx;
+    using fstate_idx<T>::ddx;
+    idx<T> gradient;
+    idx<T> deltax;
+    idx<T> epsilons;
+    idx<T> ddeltax;
   };
 
   ////////////////////////////////////////////////////////////////
-  //! state_idx iterator
-  template <class T> class state_idxlooper : public state_idx<T> {
+  // state_idxloopers
+
+  template <typename Tstate> class state_idxlooper;
+  
+  //! fstate_idx iterator
+  template <typename T>
+    class state_idxlooper<fstate_idx<T> > : public fstate_idx<T> {
   public:
-    using state_idx<T>::x;
-    using state_idx<T>::dx;
-    using state_idx<T>::ddx;
+    using fstate_idx<T>::x;
+
+    idxlooper<T> lx;
+
+    //! generic constructor loops over dimensin ld
+    state_idxlooper(fstate_idx<T> &s, int ld);
+    virtual ~state_idxlooper();
+
+    //! return true if loop is over
+    bool notdone();
+
+    //! increment to next item.
+    void next();
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! bstate_idx iterator
+  template <typename T>
+    class state_idxlooper<bstate_idx<T> > : public bstate_idx<T> {
+  public:
+    using bstate_idx<T>::x;
+    using bstate_idx<T>::dx;
+
+    idxlooper<T> lx;
+    idxlooper<T> ldx;
+
+    //! generic constructor loops over dimensin ld
+    state_idxlooper(bstate_idx<T> &s, int ld);
+    virtual ~state_idxlooper();
+
+    //! return true if loop is over
+    bool notdone();
+
+    //! increment to next item.
+    void next();
+  };
+
+  ////////////////////////////////////////////////////////////////
+  //! bbstate_idx iterator
+  template <typename T>
+    class state_idxlooper<bbstate_idx<T> > : public bbstate_idx<T> {
+  public:
+    using bbstate_idx<T>::x;
+    using bbstate_idx<T>::dx;
+    using bbstate_idx<T>::ddx;
 
     idxlooper<T> lx;
     idxlooper<T> ldx;
     idxlooper<T> lddx;
 
     //! generic constructor loops over dimensin ld
-    state_idxlooper(state_idx<T> &s, int ld);
+    state_idxlooper(bbstate_idx<T> &s, int ld);
     virtual ~state_idxlooper();
 
     //! return true if loop is over
@@ -319,12 +733,12 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! loop macro on 1 state_idx
-#define state_idx_eloop1(dst0,src0,type0)			\
-  state_idxlooper<type0> dst0(src0, (src0).x.order() - 1);	\
+#define state_idx_eloop1(dst0,src0,type0)				\
+  state_idxlooper<type0> dst0(src0, (src0).x.order() - 1);		\
   for ( ; dst0.notdone(); dst0.next())
 
   ////////////////////////////////////////////////////////////////
-  //! loop macro on 2 state_idx
+  //! loop macro on 2 state_idx 
 #define state_idx_eloop2(dst0,src0,type0,dst1,src1,type1)		\
   if ((src0).x.dim((src0).x.order() - 1)				\
   != (src1).x.dim((src1).x.order() - 1))				\
@@ -335,7 +749,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   //! loop macro on 3 state_idx
-#define state_idx_eloop3(dst0,src0,type0,dst1,src1,type1,dst2,src2,type2) \
+#define state_idx_eloop3(src0,type0,dst1,src1,type1,dst2,src2,type2)	\
   if (((src0).x.dim((src0).x.order() - 1)				\
        != (src1).x.dim((src1).x.order() - 1))				\
       || ((src0).x.dim((src0).x.order() - 1)				\

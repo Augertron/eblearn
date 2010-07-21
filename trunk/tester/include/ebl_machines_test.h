@@ -1,13 +1,13 @@
-#ifndef NETTEST_H_
-#define NETTEST_H_
+#ifndef EBL_MACHINES_TEST_H_
+#define EBL_MACHINES_TEST_H_
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "libeblearn.h"
 #include "libidx.h"
 
 //! Test class for Blas class
-class NetTest : public CppUnit::TestFixture  {
-  CPPUNIT_TEST_SUITE(NetTest);
+class ebl_machines_test : public CppUnit::TestFixture  {
+  CPPUNIT_TEST_SUITE(ebl_machines_test);
   CPPUNIT_TEST(test_full_table);
   CPPUNIT_TEST(test_lenet5_mnist);
   CPPUNIT_TEST_SUITE_END();
@@ -35,4 +35,4 @@ public:
 }
 
 
-#endif /* NETTEST_H_ */
+#endif /* EBL_MACHINES_TEST_H_ */

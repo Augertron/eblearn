@@ -1,12 +1,12 @@
-#ifndef DATASOURCETEST_H_
-#define DATASOURCETEST_H_
+#ifndef DATASOURCE_TEST_H_
+#define DATASOURCE_TEST_H_
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "datasource.h"
 
 //! Test class for IdxIO class
-class DataSourceTest : public CppUnit::TestFixture  {
-  CPPUNIT_TEST_SUITE(DataSourceTest);
+class datasource_test : public CppUnit::TestFixture  {
+  CPPUNIT_TEST_SUITE(datasource_test);
   //  CPPUNIT_TEST(test_mnist_LabeledDataSource); // TODO: fix test
   CPPUNIT_TEST(test_imageDirToIdx);
   CPPUNIT_TEST_SUITE_END();
@@ -25,4 +25,4 @@ public:
   void test_imageDirToIdx();
 };
 
-#endif /* DATASOURCETEST_H_ */
+#endif /* DATASOURCE_TEST_H_ */

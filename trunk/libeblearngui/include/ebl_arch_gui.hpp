@@ -47,9 +47,9 @@ namespace ebl {
   // module_1_1_gui
 
 #define DISPLAY_1_1(name1, name2)					\
-  template<class T, class Tout>						\
-  void module_1_1_gui::name1(module_1_1_gen<state_idx<T>, Tout> &m,	\
-			     state_idx<T> &in, Tout &out,		\
+  template<typename T, class Tstate>					\
+  void module_1_1_gui::name1(module_1_1<T,Tstate> &m,			\
+			     Tstate &in, Tstate &out,			\
 			     unsigned int h0, unsigned int w0,		\
 			     double zoom, T vmin, T vmax,		\
 			     bool show_out, int wid,			\
@@ -57,10 +57,10 @@ namespace ebl {
     name2(m, in, out, h0, w0, zoom, vmin, vmax, show_out, wid, wname);	\
   }
 
-#define DISPLAY2_1_1(name1, name2)					\
-  template<class T, class Tout>						\
-  void module_1_1_gui::name2(module_1_1_gen<state_idx<T>, Tout> &m,	\
-			     state_idx<T> &in, Tout &out,		\
+#define DISPLAY2_1_1(name1, name2, op)					\
+  template<typename T, class Tstate>					\
+  void module_1_1_gui::name2(module_1_1<T,Tstate> &m,			\
+			     Tstate &in, Tstate &out,			\
 			     unsigned int &h0, unsigned int &w0,	\
 			     double zoom, T vmin, T vmax,		\
 			     bool show_out, int wid,			\
@@ -70,44 +70,45 @@ namespace ebl {
     select_window(display_wid_fprop);					\
     gui << black_on_white(255, 0) << gui_only();			\
     									\
-    if (dynamic_cast< layers_gen<state_idx<T> >* >(&m)) {		\
+    if (dynamic_cast< layers<T,Tstate>* >(&m)) {			\
       /* layers */							\
-      layers_gui::name1(*this,						\
-			dynamic_cast< layers_gen<state_idx<T> >& >(m),	\
+      layers_gui::name1(*this, dynamic_cast< layers<T,Tstate>& >(m),	\
 			in, out, h0, w0, zoom, vmin, vmax, show_out);	\
-    } else if (dynamic_cast< layers_2_gen<state_idx<T>,state_idx<T>,state_idx<T> >* >(&m)) { \
+      /*    } else if(dynamic_cast< layers_2_gen<Tstate,Tstate,Tstate >* >(&m)){ */ \
       /* layers_2 */							\
-      layers_2_gui::							\
-	name1(*this, dynamic_cast< layers_2_gen<state_idx<T>,state_idx<T>,state_idx<T> >& >(m), \
-	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    } else if (dynamic_cast< full_layer<T>* >(&m)) {			\
+      /*      layers_2_gui::						\
+	      name1(*this, dynamic_cast< layers_2<T,Tstate>& >(m),	\
+	      in, out, h0, w0, zoom, vmin, vmax, show_out); */		\
+    } else if (dynamic_cast< full_layer<T,Tstate>* >(&m)) {		\
       /* full_layer */							\
-      full_layer_gui::name1(dynamic_cast< full_layer<T>& >(m), in,	\
+      full_layer_gui::name1(dynamic_cast< full_layer<T,Tstate>& >(m), in, \
 			    out, h0, w0, zoom, vmin, vmax,show_out);	\
-    } else if (dynamic_cast< convolution_layer<T>* >(&m)) {		\
+    } else if (dynamic_cast< convolution_layer<T,Tstate>* >(&m)) {	\
       /* convolution_layer */						\
       convolution_layer_gui::						\
-	name1(dynamic_cast< convolution_layer<T>& >(m),			\
+	name1(dynamic_cast< convolution_layer<T,Tstate>& >(m),		\
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    } else if (dynamic_cast< convabsnorm_layer<T>* >(&m)) {		\
+    } else if (dynamic_cast< convabsnorm_layer<T,Tstate>* >(&m)) {	\
       /* convabsnorm_layer */						\
       convabsnorm_layer_gui::						\
-	name1(dynamic_cast< convabsnorm_layer<T>& >(m),			\
+	name1(dynamic_cast< convabsnorm_layer<T,Tstate>& >(m),		\
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    } else if (dynamic_cast< subsampling_layer<T>* >(&m)) {		\
+    } else if (dynamic_cast< subsampling_layer<T,Tstate>* >(&m)) {	\
       /* subsampling_layer */						\
       subsampling_layer_gui::						\
-	name1(dynamic_cast< subsampling_layer<T>& >(m),			\
+	name1(dynamic_cast< subsampling_layer<T,Tstate>& >(m),		\
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    } else if (dynamic_cast< convolution_module_replicable<T>* >(&m)) {	\
+    } else if (dynamic_cast< convolution_module_replicable<T,Tstate>* >(&m)) { \
       convolution_module_gui::						\
-	name1(dynamic_cast< convolution_module<T>& >(m),		\
+	name1(dynamic_cast< convolution_module<T,Tstate>& >(m),		\
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    } else if (dynamic_cast< subsampling_module_replicable<T>* >(&m)) {	\
+    } else if (dynamic_cast< subsampling_module_replicable<T,Tstate>* >(&m)) { \
       subsampling_module_gui::						\
-	name1(dynamic_cast< subsampling_module<T>& >(m),		\
+	name1(dynamic_cast< subsampling_module<T,Tstate>& >(m),		\
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
-    }}									\
+    } else {								\
+      ((module_1_1<T,Tstate>&)m).op(in, out);				\
+    }}
   /*  else {								\
     	cerr << "Warning: unknown display function for module_1_1 object"; \
     	cerr << " (" << typeid(m).name() << ")." << endl;		   \
@@ -115,19 +116,19 @@ namespace ebl {
     	}*/
   
   DISPLAY_1_1(display_fprop, display_fprop2)
-  DISPLAY2_1_1(display_fprop, display_fprop2)
+  DISPLAY2_1_1(display_fprop, display_fprop2, fprop)
   DISPLAY_1_1(display_bprop, display_bprop2)
-  DISPLAY2_1_1(display_bprop, display_bprop2)
+  DISPLAY2_1_1(display_bprop, display_bprop2, bprop)
   DISPLAY_1_1(display_bbprop, display_bbprop2)
-  DISPLAY2_1_1(display_bbprop, display_bbprop2)
+  DISPLAY2_1_1(display_bbprop, display_bbprop2, bbprop)
 
   ////////////////////////////////////////////////////////////////
   // module_2_1_gui
 
 #define DISPLAY_2_1(name1)						\
-  template<class Tin1, class Tin2, class T>				\
-  void module_2_1_gui::name1(module_2_1_gen<Tin1, Tin2, state_idx<T> > &m, \
-			     Tin1 &in1, Tin2 &in2, state_idx<T> &out,	\
+  template<typename T, class Tstate, class Tin2, class Tout>		\
+  void module_2_1_gui::name1(module_2_1<T,Tstate,Tin2,Tout> &m,		\
+			     Tstate &in1, Tin2 &in2, Tout &out,		\
 			     unsigned int &h0, unsigned int &w0,	\
 			     double zoom, T vmin, T vmax,		\
 			     bool show_out, int wid,			\
@@ -138,10 +139,10 @@ namespace ebl {
     disable_window_updates();						\
     gui << black_on_white(255, 0) << gui_only();			\
     									\
-    if (dynamic_cast< fc_ebm2_gen<Tin1, Tin2, T>* >(&m)) {		\
+    if (dynamic_cast< fc_ebm2<T, Tstate, Tin2, Tout>* >(&m)) {		\
       /* fc_ebm2 */							\
       fc_ebm2_gui::							\
-	name1(*this, dynamic_cast< fc_ebm2_gen<Tin1, Tin2, T>& >(m),	\
+	name1(*this, dynamic_cast< fc_ebm2<T, Tstate, Tin2,Tout>& >(m),	\
 	      in1, in2, out, h0, w0, zoom, vmin, vmax, show_out, wid);	\
     } else {								\
       cerr << "Warning: unknown display function for module_2_1 object"; \
@@ -157,11 +158,11 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // fc_ebm2_gui
 
-#define DISPLAY_FCEBM2(name1, name2)				\
-  template<class Tin1, class Tin2, class T>			\
-  void fc_ebm2_gui::name1(fc_ebm2_gen<Tin1, Tin2, T> &fc,	\
+#define DISPLAY_FCEBM2(name1, name2)			\
+  template<typename T, class Tin1, class Tin2, class Ten>	\
+  void fc_ebm2_gui::name1(fc_ebm2<T, Tin1, Tin2, Ten> &fc,	\
 			  Tin1 &i1, Tin2 &i2,			\
-			  state_idx<T> &energy,			\
+			  Ten &energy,				\
 			  unsigned int &h0, unsigned int &w0,	\
 			  double zoom, T vmin, T vmax,		\
 			  bool show_out,			\
@@ -179,40 +180,64 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // layers_gui
 
-#define DISPLAY_LAYERSN(name1, name2, T)				\
-  template<class T>							\
+#define DISPLAY_LAYERS(name1, name2, T)					\
+  template<typename T, class Tstate>					\
   void layers_gui::name1(module_1_1_gui &g,				\
-			 layers_gen<state_idx<T> > &ln,			\
-			 state_idx<T> &in, state_idx<T> &out,		\
+			 layers<T,Tstate> &ln,				\
+			 Tstate &in, Tstate &out,			\
 			 unsigned int &h0, unsigned int &w0,		\
 			 double zoom, T vmin, T vmax,			\
 			 bool show_out) {				\
     if (ln.modules->empty())						\
       return ;								\
-    state_idx<T>* hi = &in;						\
-    state_idx<T>* ho = &in;						\
-    /* last will be manual */						\
-    int niter = ln.modules->size()-1;					\
-    for(int i=0; i<niter; i++){						\
-      ho = (*ln.hiddens)[i];						\
-      /* allocate hidden buffer if necessary */				\
-      if (ho == NULL) {							\
-	/* create idxdim of same order but sizes 1 */			\
-	idxdim d = hi->x.get_idxdim();					\
-	for (int k = 0; k < d.order(); ++k)				\
-	  d.setdim(k, 1);						\
-	/* assign buffer */						\
-	(*ln.hiddens)[i] = new state_idx<T>(d);				\
-	ho = (*ln.hiddens)[i];						\
+    if (ln.mem_optimization) {						\
+      /* initialize buffers */						\
+      ln.hi = ln.hi0;							\
+      ln.ho = ln.ho0;							\
+      /* loop over modules */						\
+      for(uint i = 0; i < ln.modules->size(); i++){			\
+	/* run module */						\
+	g.name2(*(*ln.modules)[i], *ln.hi, *ln.ho,			\
+		h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
+	/* swap buffers */						\
+	ln.swap_buffers();						\
       }									\
-      g.name2(*(*ln.modules)[i], *hi, *ho,				\
-	      h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
-      hi = ho;								\
+      /* if output is in input buffer, copy data into output */		\
+      /* TODO: can we avoid this? */					\
+      if (ln.ho != ln.ho0) { /* the output is in in, copy it */		\
+	ln.ho0->resize(ln.hi0->x.get_idxdim());				\
+	idx_copy(ln.hi->x, ln.ho->x);					\
+      }									\
+    } else {								\
+      /* initialize buffers */						\
+      ln.hi = &in;							\
+      ln.ho = &out;							\
+      /* loop over modules */						\
+      for(uint i = 0; i < ln.modules->size(); i++) {			\
+	/* if last module, output into out */				\
+	if (i == ln.modules->size() - 1)				\
+	  ln.ho = &out;							\
+	else { /* not last module, use hidden buffers */		\
+	  ln.ho = (Tstate*)(*ln.hiddens)[i];				\
+	  /* allocate hidden buffer if necessary */			\
+	  if (ln.ho == NULL) {						\
+	    /* create idxdim of same order but sizes 1 */		\
+	    idxdim d = ln.hi->x.get_idxdim();				\
+	    for (int k = 0; k < d.order(); ++k)				\
+	      d.setdim(k, 1);						\
+	    /* assign buffer */						\
+	    (*ln.hiddens)[i] = new Tstate(d);				\
+	    ln.ho = (Tstate*)(*ln.hiddens)[i];				\
+	  }								\
+	}								\
+	/* run module */						\
+	g.name2(*(*ln.modules)[i], *ln.hi, *ln.ho,			\
+		h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
+	ln.hi = ln.ho;							\
+      }									\
     }									\
-    g.name2(*(*ln.modules)[niter], *ho, out,				\
-	    h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
     if (show_out) {							\
-      unsigned int h = h0, w = w0, zoomf = 3;				\
+      unsigned int h = h0, w = w0, zoomf = 1;				\
       /* display outputs text */					\
       gui << gui_only() << at(h, w) << "outputs:" << out.x;		\
       w += 150;								\
@@ -225,19 +250,18 @@ namespace ebl {
     }									\
   }
 
-  DISPLAY_LAYERSN(display_fprop, display_fprop2, x)
-  DISPLAY_LAYERSN(display_bprop, display_bprop2, dx)
-  DISPLAY_LAYERSN(display_bbprop, display_bbprop2, ddx)
+  DISPLAY_LAYERS(display_fprop, display_fprop2, x)
+  DISPLAY_LAYERS(display_bprop, display_bprop2, dx)
+  DISPLAY_LAYERS(display_bbprop, display_bbprop2, ddx)
 
   ////////////////////////////////////////////////////////////////
-  // layers_gui
+  // layers2_gui
 
 #define DISPLAY_LAYERS2(name1)						\
-  template<class T>							\
+  template<typename T, class Tstate>					\
   void layers_2_gui::name1(module_1_1_gui &g,				\
-			   layers_2_gen<state_idx<T>,state_idx<T>,	\
-			   state_idx<T> > &l2,				\
-			   state_idx<T> &in, state_idx<T> &out,		\
+			   layers_2<T> &l2,				\
+			   Tstate &in, Tstate &out,			\
 			   unsigned int &h0, unsigned int &w0,		\
 			   double zoom, T vmin, T vmax,			\
 			   bool show_out) {				\
@@ -247,9 +271,9 @@ namespace ebl {
 	    h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
   }
 
-  DISPLAY_LAYERS2(display_fprop)
-  DISPLAY_LAYERS2(display_bprop)
-  DISPLAY_LAYERS2(display_bbprop)
+  // DISPLAY_LAYERS2(display_fprop)
+  // DISPLAY_LAYERS2(display_bprop)
+  // DISPLAY_LAYERS2(display_bbprop)
 
 } // end namespace ebl
 

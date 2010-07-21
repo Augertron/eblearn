@@ -36,12 +36,10 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // weighted_std_module
 
-  template <class T>
-  weighted_std_module<T>::weighted_std_module(uint kernelh, uint kernelw,
-					      int nf, const char *name_, 
-					      bool mirror_,
-					      bool threshold_,
-					      bool global_norm_)
+  template <typename T, class Tstate>
+  weighted_std_module<T,Tstate>::
+  weighted_std_module(uint kernelh, uint kernelw, int nf, const char *name_, 
+		      bool mirror_, bool threshold_, bool global_norm_)
     : mirror(mirror_),
       convmean(true),
       convvar(true),
@@ -78,11 +76,11 @@ namespace ebl {
     w = create_gaussian_kernel<T>(kernelh, kernelw);
     // prepare convolutions and their kernels
     idx<intg> table = one2one_table(nfeatures);
-    convolution_module<T> *conv1 =
-      new convolution_module<T>(&param, w.dim(0), w.dim(1), 1, 1, table, 
+    convolution_module<T,Tstate> *conv1 =
+      new convolution_module<T,Tstate>(&param, w.dim(0), w.dim(1), 1, 1, table, 
 				name_c0.c_str());
-    convolution_module<T> *conv2 =
-      new convolution_module<T>(&param, w.dim(0), w.dim(1), 1, 1, table, 
+    convolution_module<T,Tstate> *conv2 =
+      new convolution_module<T,Tstate>(&param, w.dim(0), w.dim(1), 1, 1, table, 
 				name_c1.c_str());
     idx_bloop1(kx, conv1->kernel.x, T)
       idx_copy(w, kx);
@@ -90,33 +88,35 @@ namespace ebl {
     idx_dotc(conv1->kernel.x, 1/idx_sum(conv1->kernel.x), conv1->kernel.x);
     idx_copy(conv1->kernel.x, conv2->kernel.x);
     // create modules
-    module_1_1<T> *padding1;
+    module_1_1<T,Tstate> *padding1;
     if (mirror) // switch between zero and mirror padding
-      padding1 = new mirrorpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2);
+      padding1 = new mirrorpad_module<T,Tstate>((w.dim(0) - 1)/2,
+						(w.dim(1) - 1)/2);
     else
-      padding1 = new zpad_module<T>(w);
-    convmean.add_module(padding1, new state_idx<T>(1, 1, 1));
-    convmean.add_module(conv1, new state_idx<T>(1, 1, 1));
+      padding1 = new zpad_module<T,Tstate>(w);
+    convmean.add_module(padding1);
+    convmean.add_module(conv1);
     //! feature sum module to sum along features 
     //! this might be implemented by making the table in above conv module
     //! all to all connection, but that would be very inefficient
-    convmean.add_last_module(new fsum_module<T>);
+    convmean.add_module(new fsum_module<T,Tstate>);
     // convvar
-    module_1_1<T> *padding2;
+    module_1_1<T,Tstate> *padding2;
     if (mirror) // switch between zero and mirror padding
-      padding2 = new mirrorpad_module<T>((w.dim(0) - 1)/2, (w.dim(1) - 1)/2);
+      padding2 = new mirrorpad_module<T,Tstate>((w.dim(0) - 1)/2,
+						(w.dim(1) - 1)/2);
     else
-      padding2 = new zpad_module<T>(w);
-    convvar.add_module(padding2, new state_idx<T>(1, 1, 1));
-    convvar.add_module(conv2, new state_idx<T>(1, 1, 1));
+      padding2 = new zpad_module<T,Tstate>(w);
+    convvar.add_module(padding2);
+    convvar.add_module(conv2);
     //! feature sum module to sum along features 
     //! this might be implemented by making the table in above conv module
     //! all to all connection, but that would be very inefficient
-    convvar.add_last_module(new fsum_module<T>);
+    convvar.add_module(new fsum_module<T,Tstate>);
   }
   
-  template <class T>
-  weighted_std_module<T>::~weighted_std_module() {
+  template <typename T, class Tstate>
+  weighted_std_module<T,Tstate>::~weighted_std_module() {
   }
       
   //! {<code>
@@ -124,46 +124,75 @@ namespace ebl {
   //!   s_jk = ( sum_ipq (w_pq * (x_i,j+p,k+q)^2 ) ) ^(1/2)
   //!   y_ijk = v_ijk  / max(s_jk, <s>_jk)
   //! </code>}
-  template <class T>
-  void weighted_std_module<T>::fprop(state_idx<T> &in, state_idx<T> &out) {  
+  template <typename T, class Tstate>
+  void weighted_std_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {  
 #ifdef __DUMP_STATES__ // used to debug
     fname.str("");
     fname << "dump_" << this->name << "_w_module_in.x_" << in.x << ".mat";
     save_matrix(in.x, fname.str());
 #endif
 
+    // if (global_norm) // global normalization
+    //   idx_std_normalize(in.x, in.x);
+    // T a = (T) 1e-5; // avoid divisions by zero
+    // //! sum_j (w_j * in_j)
+    // convmean.fprop(in, out);
+    // //! in - mean
+    // difmod.fprop(in, out, out);
+    // //! (in - inmean)^2
+    // inzmean.resize(out.x.get_idxdim());
+    // idx_addc(out.x, a, inzmean.x); // TODO: temporary
+    // sqmod.fprop(inzmean, in);
+    // //! sum_j (w_j (in - mean)^2)
+    // convvar.fprop(in, out);
+    // //! sqrt(sum_j (w_j (in - mean)^2))
+    // idx_addc(out.x, a, out.x); // TODO: temporary
+    // sqrtmod.fprop(out, in);
+    // if (threshold) { // don't update threshold for inputs
+    //   //! update the threshold values in thres
+    //   T mm = (T) (idx_sum(in.x) / (T) in.size());
+    //   thres.thres = mm;
+    //   thres.val = mm;
+    // }
+    // //! std(std<mean(std)) = mean(std)
+    // thres.fprop(in, out);
+    // //! 1/std
+    // invmod.fprop(out, in);
+    // //! out = (in-mean)/std
+    // mcw.fprop(inzmean, in, out);
+
+
     if (global_norm) // global normalization
       idx_std_normalize(in.x, in.x);
     T a = (T) 1e-5; // avoid divisions by zero
     //! sum_j (w_j * in_j)
-    convmean.fprop(in, out);
+    convmean.fprop(in, inmean);
     //! in - mean
-    difmod.fprop(in, out, out);
+    difmod.fprop(in, inmean, inzmean);
     //! (in - inmean)^2
-    inzmean.resize_as(out);
-    idx_addc(out.x, a, inzmean.x); // TODO: temporary
-    sqmod.fprop(inzmean, in);
+    idx_addc(inzmean.x, a, inzmean.x); // TODO: temporary
+    sqmod.fprop(inzmean, inzmeansq);
     //! sum_j (w_j (in - mean)^2)
-    convvar.fprop(in, out);
+    convvar.fprop(inzmeansq, invar);
     //! sqrt(sum_j (w_j (in - mean)^2))
-    idx_addc(out.x, a, out.x); // TODO: temporary
-    sqrtmod.fprop(out, in);
+    idx_addc(invar.x, a, invar.x); // TODO: temporary
+    sqrtmod.fprop(invar, instd);
     if (threshold) { // don't update threshold for inputs
       //! update the threshold values in thres
-      T mm = (T) (idx_sum(in.x) / (T) in.size());
+      T mm = (T) (idx_sum(instd.x) / (T) instd.size());
       thres.thres = mm;
       thres.val = mm;
     }
     //! std(std<mean(std)) = mean(std)
-    thres.fprop(in, out);
+    thres.fprop(instd, thstd);
     //! 1/std
-    invmod.fprop(out, in);
+    invmod.fprop(thstd, invstd);
     //! out = (in-mean)/std
-    mcw.fprop(inzmean, in, out);
+    mcw.fprop(inzmean, invstd, out);    
   }
 
-  template <class T>
-  void weighted_std_module<T>::bprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void weighted_std_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
     //! clear derivatives from conv module
     param.clear_dx();
     inmean.clear_dx();
@@ -191,8 +220,8 @@ namespace ebl {
     convmean.bprop(in, inmean);
   }
 
-  template <class T>
-  void weighted_std_module<T>::bbprop(state_idx<T> &in, state_idx<T> &out) {
+  template <typename T, class Tstate>
+  void weighted_std_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     param.clear_ddx();
     inmean.clear_ddx();
     inzmean.clear_ddx();
@@ -219,26 +248,27 @@ namespace ebl {
     convmean.bbprop(in, inmean);
   }
 
-  template <class T>
-  weighted_std_module<T>* weighted_std_module<T>::copy() {
-    return new weighted_std_module<T>(w.dim(0), w.dim(1), nfeatures, this->name, 
-				      mirror, threshold, global_norm);
+  template <typename T, class Tstate>
+  weighted_std_module<T,Tstate>* weighted_std_module<T,Tstate>::copy() {
+    return new weighted_std_module<T,Tstate>(w.dim(0), w.dim(1), nfeatures,
+					     this->name, mirror, threshold,
+					     global_norm);
   }
   
   ////////////////////////////////////////////////////////////////
   // abs_module
 
-  template <class T>
-  abs_module<T>::abs_module(double thres) {
+  template <typename T, class Tstate>
+  abs_module<T,Tstate>::abs_module(double thres) {
     threshold = thres;
   }
 
-  template <class T>
-  abs_module<T>::~abs_module() {
+  template <typename T, class Tstate>
+  abs_module<T,Tstate>::~abs_module() {
   }
 
-  template <class T>
-  void abs_module<T>::fprop(state_idx<T>& in, state_idx<T>& out) {
+  template <typename T, class Tstate>
+  void abs_module<T,Tstate>::fprop(Tstate& in, Tstate& out) {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x.spec); // use same dimensions as in
       out.resize(d);
@@ -246,8 +276,8 @@ namespace ebl {
     idx_abs(in.x, out.x);
   }
 
-  template <class T>
-  void abs_module<T>::bprop(state_idx<T>& in, state_idx<T>& out) {
+  template <typename T, class Tstate>
+  void abs_module<T,Tstate>::bprop(Tstate& in, Tstate& out) {
     state_idx_check_different(in, out); // forbid same in and out
     idx_checknelems2_all(in.dx, out.dx); // must have same dimensions
     
@@ -259,37 +289,37 @@ namespace ebl {
     }
   }
 
-  template <class T>
-  void abs_module<T>::bbprop(state_idx<T>& in, state_idx<T>& out) {
+  template <typename T, class Tstate>
+  void abs_module<T,Tstate>::bbprop(Tstate& in, Tstate& out) {
     state_idx_check_different(in, out); // forbid same in and out
     idx_checknelems2_all(in.ddx, out.ddx); // must have same dimensions
     
     idx_add(in.ddx, out.ddx, in.ddx);
   }
   
-  template <class T>
-  abs_module<T>* abs_module<T>::copy() {
-    return new abs_module<T>();
+  template <typename T, class Tstate>
+  abs_module<T,Tstate>* abs_module<T,Tstate>::copy() {
+    return new abs_module<T,Tstate>();
   }
 
   //////////////////////////////////////////////////////////////////
   // smooth_shrink_module
 
-  template <class T>
-  smooth_shrink_module<T>::smooth_shrink_module(parameter<T> *p, intg nf,
-						T bt, T bs)
+  template <typename T, class Tstate>
+  smooth_shrink_module<T,Tstate>::smooth_shrink_module(parameter<Tstate> *p,
+						       intg nf, T bt, T bs)
     : beta(p,nf), bias(p,nf), ebb(1), ebx(1,1,1), tin(1,1,1), absmod(0.0),
       default_beta(bt), default_bias(bs) {
     idx_fill(beta.x, bt);
     idx_fill(bias.x, bs);
   }
   
-  template <class T>
-  smooth_shrink_module<T>::~smooth_shrink_module(){
+  template <typename T, class Tstate>
+  smooth_shrink_module<T,Tstate>::~smooth_shrink_module(){
   }
 
-  template <class T>
-  void smooth_shrink_module<T>::fprop(state_idx<T>& in, state_idx<T>& out) {
+  template <typename T, class Tstate>
+  void smooth_shrink_module<T,Tstate>::fprop(Tstate& in, Tstate& out) {
     if (&in != &out) { // resize only when input and output are different
       idxdim d(in.x.spec); // use same dimensions as in
       out.resize(d);
@@ -301,7 +331,7 @@ namespace ebl {
 	*x = 20;
       }}
     ebb.resize(bias.x.dim(0));
-    ebx.resize_as(in);
+    ebx.resize(in.x.get_idxdim());
     
     idx_mul(beta.x, bias.x, ebb.x);
     idx_exp(ebb.x);
@@ -324,8 +354,8 @@ namespace ebl {
     }
   }
   
-  template <class T>
-  void smooth_shrink_module<T>::bprop(state_idx<T>& in, state_idx<T>& out) {
+  template <typename T, class Tstate>
+  void smooth_shrink_module<T,Tstate>::bprop(Tstate& in, Tstate& out) {
     absmod.fprop(in,tin);
     // failsafe
     { idx_aloop1(x, in.x, T) {
@@ -386,8 +416,8 @@ namespace ebl {
     idx_add(in.dx,tin.dx,in.dx);
   }
   
-  template <class T>
-  void smooth_shrink_module<T>::bbprop(state_idx<T>& in, state_idx<T>& out) {
+  template <typename T, class Tstate>
+  void smooth_shrink_module<T,Tstate>::bbprop(Tstate& in, Tstate& out){    
     absmod.fprop(in,tin);
     // failsafe
     { idx_aloop1(x, in.x, T) {
@@ -451,11 +481,11 @@ namespace ebl {
     idx_add(in.ddx,tin.ddx,in.ddx);
   }
   
-  template <class T>
-  smooth_shrink_module<T>* smooth_shrink_module<T>::copy() {
-    smooth_shrink_module<T>* s2 =
-      new smooth_shrink_module<T>(NULL, beta.x.dim(0),
-				  default_beta, default_bias);
+  template <typename T, class Tstate>
+  smooth_shrink_module<T,Tstate>* smooth_shrink_module<T,Tstate>::copy() {
+    smooth_shrink_module<T,Tstate>* s2 =
+      new smooth_shrink_module<T,Tstate>(NULL, beta.x.dim(0),
+					 default_beta, default_bias);
     // copy data
     idx_copy(beta.x, s2->beta.x);
     idx_copy(bias.x, s2->bias.x);

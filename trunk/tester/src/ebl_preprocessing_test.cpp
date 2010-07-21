@@ -27,18 +27,18 @@ void ebl_preprocessing_test::test_rgb_to_yp() {
   idx<float> im = load_image<float>(path.str());
   path.str(""); path << *gl_data_dir << "/2008_007714.jpg";
   idx<float> imbird = load_image<float>(path.str());
-  rgb_to_yp_module<float> pp(9);
-  rgb_to_ypuv_module<float> ppuv(9);
-  rgb_to_hp_module<float> pph(9);
-  resizepp_module<float> mean_rspp(100, 300, MEAN_RESIZE, &pp, 9);
-  resizepp_module<float> bil_rspp(100, 300, BILINEAR_RESIZE, &pp, 9);
-  resizepp_module<float> gaus_rspp(100, 300, GAUSSIAN_RESIZE, &pp, 9);
-  resizepp_module<float> mean(100, 300, MEAN_RESIZE, NULL, 9);
-  resizepp_module<float> bil(100, 300, BILINEAR_RESIZE, NULL, 9);
-  resizepp_module<float> gaus(100, 300, GAUSSIAN_RESIZE, NULL, 9);
+  rgb_to_yp_module<fs(float)> pp(9);
+  rgb_to_ypuv_module<fs(float)> ppuv(9);
+  rgb_to_hp_module<fs(float)> pph(9);
+  resizepp_module<fs(float)> mean_rspp(100, 300, MEAN_RESIZE, &pp, 9);
+  resizepp_module<fs(float)> bil_rspp(100, 300, BILINEAR_RESIZE, &pp, 9);
+  resizepp_module<fs(float)> gaus_rspp(100, 300, GAUSSIAN_RESIZE, &pp, 9);
+  resizepp_module<fs(float)> mean(100, 300, MEAN_RESIZE, NULL, 9);
+  resizepp_module<fs(float)> bil(100, 300, BILINEAR_RESIZE, NULL, 9);
+  resizepp_module<fs(float)> gaus(100, 300, GAUSSIAN_RESIZE, NULL, 9);
   // barn
   im = im.shift_dim(2, 0);
-  state_idx<float> in(im.get_idxdim()), out(1, 1, 1);
+  fstate_idx<float> in(im.get_idxdim()), out(1, 1, 1);
   idx_copy(im, in.x);
   im = im.shift_dim(0, 2);
   pp.fprop(in, out);
@@ -58,7 +58,7 @@ void ebl_preprocessing_test::test_rgb_to_yp() {
   im6 = idx_copy(im6);
   // bird
   imbird = imbird.shift_dim(2, 0);
-  state_idx<float> inb(imbird.get_idxdim());
+  fstate_idx<float> inb(imbird.get_idxdim());
   idx_copy(imbird, inb.x);
   imbird = imbird.shift_dim(0, 2);
   pp.fprop(inb, out);

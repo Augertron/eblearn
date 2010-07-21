@@ -50,16 +50,16 @@
 #include "ebl_basic_test.h"
 #include "ebl_preprocessing_test.h"
 #include "idxIO_test.h"
-#include "DataSourceTest.h"
+#include "datasource_test.h"
 #include "IdxTest.h"
 #include "IdxIteratorsTest.h"
 #include "detector_test.h"
 #include "ClusterTest.h"
 #include "image_test.h"
-#include "NetTest.h"
+#include "ebl_machines_test.h"
 
 #ifdef __DEBUGMEM__
-  INIT_DEBUGMEM();
+  INIT_DEBUGMEM()
 #endif
   
 #ifdef __GUI__
@@ -164,10 +164,10 @@ int main(int argc, char **argv) {
   runner.addTest(idxIO_test::suite());
   runner.addTest(image_test::suite());
   runner.addTest(ebl_preprocessing_test::suite());
-  runner.addTest(DataSourceTest::suite());
+  runner.addTest(datasource_test::suite());
   runner.addTest(ebl_basic_test::suite());
   runner.addTest(detector_test::suite());
-  runner.addTest(NetTest::suite());
+  runner.addTest(ebl_machines_test::suite());
 
   // run all tests
   runner.run();

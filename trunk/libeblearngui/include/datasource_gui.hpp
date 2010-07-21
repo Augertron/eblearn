@@ -79,9 +79,9 @@ namespace ebl {
     _rmin = rangemin;
     _rmax = rangemax;
     idxdim d = ds.sample_dims();
-    state_idx<Tnet> s(d);
+    fstate_idx<Tnet> s(d);
     idx<Tnet> m = s.x.select(0, 0);
-    idx<Tlabel> lbl;
+    fstate_idx<Tlabel> lbl;
     _h1 = h0 + nh * (m.dim(0) + 1);
     _w1 = w0 + nw * (m.dim(1) + 1);
     display_wid = (wid >= 0) ? wid :
@@ -117,10 +117,10 @@ namespace ebl {
 	m = s.x.shift_dim(0, 2);
 	draw_matrix(m, h, w, _zoom, _zoom, _rmin, _rmax);
 	// draw label if present
-	if ((ds.lblstr) && (ds.lblstr->at((int)lbl.get())))
-	  gui << at(h + 1, w + 1) << (ds.lblstr->at((int)lbl.get()))->c_str();
+	if ((ds.lblstr) && (ds.lblstr->at((int)lbl.x.get())))
+	  gui << at(h + 1, w + 1) << (ds.lblstr->at((int)lbl.x.get()))->c_str();
 	else if (ds.labels.order() == 1) // single continuous labels
-	  gui << at(h + 1, w + 1) << setprecision(1) << lbl.get();
+	  gui << at(h + 1, w + 1) << setprecision(1) << lbl.x.get();
 	w += m.dim(1) + 1;
 	k++;
       }
@@ -212,10 +212,10 @@ namespace ebl {
     this->_rmin = rangemin;
     this->_rmax = rangemax;
     idxdim d = ds.sample_dims();
-    state_idx<Tnet> in1(d);
-    state_idx<Tnet> in2(d);
+    fstate_idx<Tnet> in1(d);
+    fstate_idx<Tnet> in2(d);
     idx<Tnet> m = in1.x.select(0, 0);
-    idx<Tlabel> lbl;
+    fstate_idx<Tlabel> lbl;
     this->_h1 = h0 + nh * (m.dim(0) + 1);
     this->_w1 = w0 + nw * (m.dim(1) + 1);
     this->display_wid = (wid >= 0) ? wid :
@@ -248,8 +248,8 @@ namespace ebl {
 	m = in2.x.select(0, 0);
 	draw_matrix(m, h, w, this->_zoom, this->_zoom,
 		    this->_rmin, this->_rmax);
-	if ((ds.lblstr) && (ds.lblstr->at((int)lbl.get()))) {
-	  string *str = ds.lblstr->at((int)lbl.get());
+	if ((ds.lblstr) && (ds.lblstr->at((int)lbl.x.get()))) {
+	  string *str = ds.lblstr->at((int)lbl.x.get());
 	  
 	  gui << at(h + 1, w + 1 - (str->size() / 2) * 10) << str->c_str();
 	  gui << " pair";

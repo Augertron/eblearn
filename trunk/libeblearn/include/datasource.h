@@ -63,7 +63,7 @@ namespace ebl {
     virtual ~datasource();
 
     //! Copies the current datum to a state and label.
-    virtual void fprop(state_idx<Tnet> &datum, idx<Tin2> &label);
+    virtual void fprop(fstate_idx<Tnet> &datum, fstate_idx<Tin2> &label);
 
     //! shuffle dataset, based on the number of classes
     //! assume the same nb of samples in each class
@@ -321,8 +321,8 @@ namespace ebl {
     virtual ~labeled_pair_datasource();
 
     //! Copies the current datum to a state and label.
-    virtual void fprop(state_idx<Tnet> &d1, state_idx<Tnet> &d2,
-		       idx<Tlabel> &label);
+    virtual void fprop(fstate_idx<Tnet> &d1, fstate_idx<Tnet> &d2,
+		       fstate_idx<Tlabel> &label);
 
     //! Move to the next datum.
     virtual void next();
@@ -374,7 +374,7 @@ namespace ebl {
     //! get the current item and copy the sample into
     //! <out> (an idx3-state) and the corresponding
     //! label into <lbl> (and idx0 of int).
-    virtual void fprop(state_idx<Tnet> &out, idx<Tlabel> &label);
+    virtual void fprop(fstate_idx<Tnet> &out, fstate_idx<Tlabel> &label);
 
   public:
     using datasource<Tnet, Tdata, Tlabel>::bias;
