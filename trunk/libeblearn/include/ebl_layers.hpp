@@ -35,7 +35,7 @@ namespace ebl {
   // full_layer
 
   template <typename T, class Tstate>
-  full_layer<T,Tstate>::full_layer(parameter<Tstate> *p, intg indim0, intg noutputs,
+  full_layer<T,Tstate>::full_layer(parameter<T,Tstate> *p, intg indim0, intg noutputs,
 			    bool btanh_, const char *name_)
     : btanh(btanh_),
       linear(p, indim0, noutputs, name_),
@@ -113,7 +113,7 @@ namespace ebl {
   // convolution_layer
 
   template <typename T, class Tstate>
-  convolution_layer<T,Tstate>::convolution_layer(parameter<Tstate> *p, 
+  convolution_layer<T,Tstate>::convolution_layer(parameter<T,Tstate> *p, 
 					  intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
 					  idx<intg> &tbl, bool btanh_,
@@ -192,7 +192,7 @@ namespace ebl {
   // convabsnorm_layer
 
   template <typename T, class Tstate>
-  convabsnorm_layer<T,Tstate>::convabsnorm_layer(parameter<Tstate> *p, 
+  convabsnorm_layer<T,Tstate>::convabsnorm_layer(parameter<T,Tstate> *p, 
 					  intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
 					  idx<intg> &tbl, bool mirror,
@@ -272,7 +272,7 @@ namespace ebl {
   // subsampling_layer
 
   template <typename T, class Tstate>
-  subsampling_layer<T,Tstate>::subsampling_layer(parameter<Tstate> *p,
+  subsampling_layer<T,Tstate>::subsampling_layer(parameter<T,Tstate> *p,
 					  intg stridei, intg stridej,
 					  intg subi, intg subj, 
 					  intg thick, bool btanh_,

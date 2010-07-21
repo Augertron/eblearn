@@ -43,7 +43,7 @@ void ebl_machines_test::test_lenet5_mnist() {
 
   // create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  parameter<bbstate_idx<t_net> > theparam(60000); // create trainable parameter
+  parameter<t_net> theparam(60000); // create trainable parameter
   lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
 		   targets.dim(0), true, false, true, false);
   supervised_euclidean_machine<t_net, ubyte> thenet(l5, targets, dims);

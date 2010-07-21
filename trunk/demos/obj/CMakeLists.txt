@@ -85,17 +85,17 @@ IF (QT_FOUND) #---------------------------------------------------------------
 ENDIF (QT_FOUND) #------------------------------------------------------------
 LINK_BOOST(mtdetect)
 
-# compile executable: objdetect
-################################################################################
-add_executable (objtrack
-  src/track.cpp
-  )
+# # compile executable: objdetect
+# ################################################################################
+# add_executable (objtrack
+#   src/track.cpp
+#   )
   
-# link executable with external libraries
-################################################################################
-target_link_libraries (objtrack eblearn idx eblearntools)
-IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (objtrack idxgui)
-  target_link_libraries (objtrack eblearngui)
-ENDIF (QT_FOUND) #------------------------------------------------------------
-LINK_BOOST(objtrack)
+# # link executable with external libraries
+# ################################################################################
+# target_link_libraries (objtrack eblearn idx eblearntools)
+# IF (QT_FOUND) #---------------------------------------------------------------
+#   target_link_libraries (objtrack idxgui)
+#   target_link_libraries (objtrack eblearngui)
+# ENDIF (QT_FOUND) #------------------------------------------------------------
+# LINK_BOOST(objtrack)

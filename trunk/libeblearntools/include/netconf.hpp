@@ -37,7 +37,7 @@ namespace ebl {
 
   // select network based on configuration
   template <typename T, class Tstate>
-  module_1_1<T,Tstate>* create_network(parameter<Tstate> &theparam,
+  module_1_1<T,Tstate>* create_network(parameter<T, Tstate> &theparam,
 				       configuration &conf, uint noutputs,
 				       Tstate *in, Tstate *out) {
     string net_type = conf.get_string("net_type");

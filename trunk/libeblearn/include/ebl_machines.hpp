@@ -42,7 +42,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  net_cscscf<T,Tstate>::net_cscscf(parameter<Tstate> &prm, intg ini, intg inj,
+  net_cscscf<T,Tstate>::net_cscscf(parameter<T,Tstate> &prm, intg ini, intg inj,
 				   intg ki0, intg kj0, idx<intg> &tbl0, 
 				   intg si0, intg sj0,
 				   intg ki1, intg kj1, idx<intg> &tbl1, 
@@ -61,7 +61,7 @@ namespace ebl {
   net_cscscf<T,Tstate>::~net_cscscf() {}
 
   template <typename T, class Tstate>
-  void net_cscscf<T,Tstate>::init(parameter<Tstate> &prm, intg ini, intg inj,
+  void net_cscscf<T,Tstate>::init(parameter<T,Tstate> &prm, intg ini, intg inj,
 				  intg ki0, intg kj0, idx<intg> &tbl0, 
 				  intg si0, intg sj0, intg ki1, intg kj1, 
 				  idx<intg> &tbl1, intg si1, intg sj1, 
@@ -160,7 +160,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  net_cscf<T,Tstate>::net_cscf(parameter<Tstate> &prm, intg ini, intg inj,
+  net_cscf<T,Tstate>::net_cscf(parameter<T,Tstate> &prm, intg ini, intg inj,
 			       intg ki0, intg kj0, idx<intg> &tbl0, 
 			       intg si0, intg sj0,
 			       intg ki1, intg kj1, idx<intg> &tbl1, 
@@ -177,7 +177,7 @@ namespace ebl {
   net_cscf<T,Tstate>::~net_cscf() {}
 
   template <typename T, class Tstate>
-  void net_cscf<T,Tstate>::init(parameter<Tstate> &prm, intg ini, intg inj,
+  void net_cscf<T,Tstate>::init(parameter<T,Tstate> &prm, intg ini, intg inj,
 				intg ki0, intg kj0, idx<intg> &tbl0, 
 				intg si0, intg sj0, intg ki1, intg kj1, 
 				idx<intg> &tbl1, intg outthick, bool norm,
@@ -264,7 +264,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  net_cscc<T,Tstate>::net_cscc(parameter<Tstate> &prm, intg ini, intg inj,
+  net_cscc<T,Tstate>::net_cscc(parameter<T,Tstate> &prm, intg ini, intg inj,
 			       intg ki0, intg kj0, idx<intg> &tbl0, 
 			       intg si0, intg sj0,
 			       intg ki1, intg kj1, idx<intg> &tbl1,
@@ -282,7 +282,7 @@ namespace ebl {
   net_cscc<T,Tstate>::~net_cscc() {}
 
   template <typename T, class Tstate>
-  void net_cscc<T,Tstate>::init(parameter<Tstate> &prm, intg ini, intg inj,
+  void net_cscc<T,Tstate>::init(parameter<T,Tstate> &prm, intg ini, intg inj,
 				intg ki0, intg kj0, idx<intg> &tbl0, 
 				intg si0, intg sj0, intg ki1, intg kj1, 
 				idx<intg> &tbl1, idx<intg> &tbl2,
@@ -349,7 +349,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  net_cscsc<T,Tstate>::net_cscsc(parameter<Tstate> &prm, intg ini, intg inj,
+  net_cscsc<T,Tstate>::net_cscsc(parameter<T,Tstate> &prm, intg ini, intg inj,
 				 intg ki0, intg kj0, idx<intg> &tbl0, 
 				 intg si0, intg sj0,
 				 intg ki1, intg kj1, idx<intg> &tbl1, 
@@ -366,7 +366,7 @@ namespace ebl {
   net_cscsc<T,Tstate>::~net_cscsc() {}
 
   template <typename T, class Tstate>
-  void net_cscsc<T,Tstate>::init(parameter<Tstate> &prm, intg ini, intg inj,
+  void net_cscsc<T,Tstate>::init(parameter<T,Tstate> &prm, intg ini, intg inj,
 				 intg ki0, intg kj0, idx<intg> &tbl0, 
 				 intg si0, intg sj0, intg ki1, intg kj1, 
 				 idx<intg> &tbl1, intg si1, intg sj1, 
@@ -446,7 +446,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   lenet_cscsc<T,Tstate>::
-  lenet_cscsc(parameter<Tstate> &prm, intg image_height, intg image_width,
+  lenet_cscsc(parameter<T,Tstate> &prm, intg image_height, intg image_width,
 	      intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
 	      intg kj1, intg si1, intg sj1,
 	      intg output_size, bool norm, bool color, bool mirror, bool tanh,
@@ -494,7 +494,7 @@ namespace ebl {
   // lenet
 
   template <typename T, class Tstate>
-  lenet<T,Tstate>::lenet(parameter<Tstate> &prm, intg image_height,
+  lenet<T,Tstate>::lenet(parameter<T,Tstate> &prm, intg image_height,
 			 intg image_width, intg ki0, intg kj0, intg si0,
 			 intg sj0, intg ki1, intg kj1, intg si1, intg sj1,
 			 intg hid, intg output_size, bool norm, bool color,
@@ -543,7 +543,7 @@ namespace ebl {
   // lenet
 
   template <typename T, class Tstate>
-  lenet_cscf<T,Tstate>::lenet_cscf(parameter<Tstate> &prm,
+  lenet_cscf<T,Tstate>::lenet_cscf(parameter<T,Tstate> &prm,
 				   intg image_height, intg image_width,
 				   intg ki0, intg kj0, intg si0, intg sj0,
 				   intg ki1, intg kj1, intg output_size,
@@ -580,7 +580,7 @@ namespace ebl {
   // lenet5
 
   template <typename T, class Tstate>
-  lenet5<T,Tstate>::lenet5(parameter<Tstate> &prm, intg image_height,
+  lenet5<T,Tstate>::lenet5(parameter<T,Tstate> &prm, intg image_height,
 			   intg image_width,
 			   intg ki0, intg kj0, intg si0, intg sj0,
 			   intg ki1, intg kj1, intg si1, intg sj1,
@@ -610,7 +610,7 @@ namespace ebl {
   // lenet7
 
   template <typename T, class Tstate>
-  lenet7<T,Tstate>::lenet7(parameter<Tstate> &prm, intg image_height,
+  lenet7<T,Tstate>::lenet7(parameter<T,Tstate> &prm, intg image_height,
 			   intg image_width, intg output_size, bool norm,
 			   bool mirror, bool tanh, bool shrink) {
     intg ki0 = 5, kj0 = 5;
@@ -641,7 +641,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   lenet7_binocular<T,Tstate>::
-  lenet7_binocular(parameter<Tstate> &prm, intg image_height, intg image_width,
+  lenet7_binocular(parameter<T,Tstate> &prm, intg image_height, intg image_width,
 		   intg output_size, bool norm, bool mirror, bool tanh,
 		   bool shrink) {
     intg ki0 = 5, kj0 = 5;

@@ -43,7 +43,7 @@ int main(int argc, char **argv) { // regular main without gui
   cout << " using trained network " << paramfname << endl;
 
   // load trained network
-  parameter<fstate_idx<t_net> > theparam;
+  parameter<fs(t_net)> theparam;
   lenet5<fs(t_net)> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120, 10);
   theparam.load_x(paramfname.c_str());
 

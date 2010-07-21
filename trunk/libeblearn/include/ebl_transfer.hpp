@@ -306,7 +306,7 @@ namespace ebl {
   // smooth_shrink_module
 
   template <typename T, class Tstate>
-  smooth_shrink_module<T,Tstate>::smooth_shrink_module(parameter<Tstate> *p,
+  smooth_shrink_module<T,Tstate>::smooth_shrink_module(parameter<T,Tstate> *p,
 						       intg nf, T bt, T bs)
     : beta(p,nf), bias(p,nf), ebb(1), ebx(1,1,1), tin(1,1,1), absmod(0.0),
       default_beta(bt), default_bias(bs) {

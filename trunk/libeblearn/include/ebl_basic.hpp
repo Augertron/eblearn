@@ -35,7 +35,7 @@ namespace ebl {
   // linear_module
 
   template <typename T, class Tstate>
-  linear_module<T, Tstate>::linear_module(parameter<Tstate> *p,
+  linear_module<T, Tstate>::linear_module(parameter<T,Tstate> *p,
 					  intg in, intg out,
 					  const char *name_)
     : w(p, out, in) {
@@ -153,7 +153,7 @@ namespace ebl {
   // convolution_module
 
   template <typename T, class Tstate>
-  convolution_module<T, Tstate>::convolution_module(parameter<Tstate> *p, 
+  convolution_module<T, Tstate>::convolution_module(parameter<T,Tstate> *p, 
 					    intg kerneli, intg kernelj, 
 					    intg stridei_, intg stridej_, 
 					    idx<intg> &tbl, const char *name_)
@@ -398,7 +398,7 @@ namespace ebl {
   // subsampling_module
 
   template <typename T, class Tstate>
-  subsampling_module<T,Tstate>::subsampling_module(parameter<Tstate> *p, 
+  subsampling_module<T,Tstate>::subsampling_module(parameter<T,Tstate> *p, 
 					    intg stridei_, intg stridej_,
 					    intg subi, intg subj, 
 					    intg thick, const char *name_)
@@ -532,7 +532,7 @@ namespace ebl {
   // addc_module
 
   template <typename T, class Tstate>
-  addc_module<T,Tstate>::addc_module(parameter<Tstate> *p, intg size,
+  addc_module<T,Tstate>::addc_module(parameter<T,Tstate> *p, intg size,
 				     const char *name_)
     : bias(p, size) {
     this->name = name_;

@@ -81,7 +81,7 @@ namespace ebl {
   // constructors from specific dimensions using a fparameter
 
   template<typename T>
-  fstate_idx<T>::fstate_idx(parameter<fstate_idx<T> > *st) {
+  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st) {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0);
     if (st)
       st->resize(st->footprint() + nelements());
@@ -89,7 +89,7 @@ namespace ebl {
   }
 
   template<typename T>
-  fstate_idx<T>::fstate_idx(parameter<fstate_idx<T> > *st, intg s0) {
+  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0) {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, s0);
     if (st)
       st->resize(st->footprint() + nelements());
@@ -97,7 +97,7 @@ namespace ebl {
   }
 
   template<typename T>
-  fstate_idx<T>::fstate_idx(parameter<fstate_idx<T> > *st, intg s0, intg s1) {
+  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0, intg s1) {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1);
     if (st)
@@ -106,7 +106,8 @@ namespace ebl {
   }
 
   template<typename T>
-  fstate_idx<T>::fstate_idx(parameter<fstate_idx<T> > *st, intg s0, intg s1, intg s2) {
+  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0, intg s1,
+			    intg s2) {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1, s2);
     if (st)
@@ -115,7 +116,8 @@ namespace ebl {
   }
   
   template<typename T>
-  fstate_idx<T>::fstate_idx(parameter<fstate_idx<T> > *st, intg s0, intg s1, intg s2,
+  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0, intg s1,
+			    intg s2,
 			    intg s3, intg s4, intg s5, intg s6, intg s7) {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1, s2, s3, s4, s5, s6, s7);
@@ -125,7 +127,7 @@ namespace ebl {
   }
 
   template<typename T>
-  fstate_idx<T>::fstate_idx(parameter<fstate_idx<T> > *st, const idxdim &d) {
+  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, const idxdim &d) {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d);
     if (st)
       st->resize(st->footprint() + nelements());
@@ -274,7 +276,7 @@ namespace ebl {
   // constructors from specific dimensions using a bparameter
 
   template<typename T>
-  bstate_idx<T>::bstate_idx(parameter<bstate_idx<T> > *st) {
+  bstate_idx<T>::bstate_idx(parameter<T,bstate_idx<T> > *st) {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0);
     dx = idx<T>(st ? st->dx.getstorage() : NULL, st ? st->dx.footprint() : 0);
     if (st)
@@ -283,7 +285,7 @@ namespace ebl {
   }
 
   template<typename T>
-  bstate_idx<T>::bstate_idx(parameter<bstate_idx<T> > *st, intg s0) {
+  bstate_idx<T>::bstate_idx(parameter<T,bstate_idx<T> > *st, intg s0) {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, s0);
     dx = idx<T>(st ? st->dx.getstorage() : NULL,
 		st ? st->dx.footprint() : 0, s0);
@@ -293,7 +295,7 @@ namespace ebl {
   }
 
   template<typename T>
-  bstate_idx<T>::bstate_idx(parameter<bstate_idx<T> > *st, intg s0, intg s1) {
+  bstate_idx<T>::bstate_idx(parameter<T,bstate_idx<T> > *st, intg s0, intg s1) {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1);
     dx = idx<T>(st ? st->dx.getstorage() : NULL,
@@ -304,7 +306,8 @@ namespace ebl {
   }
 
   template<typename T>
-  bstate_idx<T>::bstate_idx(parameter<bstate_idx<T> > *st, intg s0, intg s1, intg s2) {
+  bstate_idx<T>::bstate_idx(parameter<T,bstate_idx<T> > *st, intg s0, intg s1,
+			    intg s2) {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1, s2);
     dx = idx<T>(st ? st->dx.getstorage() : NULL,
@@ -315,8 +318,9 @@ namespace ebl {
   }
   
   template<typename T>
-  bstate_idx<T>::bstate_idx(parameter<bstate_idx<T> > *st, intg s0, intg s1, intg s2,
-			    intg s3, intg s4, intg s5, intg s6, intg s7) {
+  bstate_idx<T>::bstate_idx(parameter<T,bstate_idx<T> > *st, intg s0, intg s1,
+			    intg s2, intg s3, intg s4, intg s5,
+			    intg s6, intg s7) {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1, s2, s3, s4, s5, s6, s7);
     dx = idx<T>(st ? st->dx.getstorage() : NULL,
@@ -327,7 +331,7 @@ namespace ebl {
   }
 
   template<typename T>
-  bstate_idx<T>::bstate_idx(parameter<bstate_idx<T> > *st, const idxdim &d) {
+  bstate_idx<T>::bstate_idx(parameter<T,bstate_idx<T> > *st, const idxdim &d) {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d);
     dx = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d);
     if (st)
@@ -492,7 +496,7 @@ namespace ebl {
   // constructors from specific dimensions using a bbparameter
 
   template<typename T>
-  bbstate_idx<T>::bbstate_idx(parameter<bbstate_idx<T> > *st) {
+  bbstate_idx<T>::bbstate_idx(parameter<T,bbstate_idx<T> > *st) {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0);
     dx = idx<T>(st ? st->dx.getstorage() : NULL, st ? st->dx.footprint() : 0);
     ddx = idx<T>(st ? st->ddx.getstorage() : NULL, st ? st->ddx.footprint() :0);
@@ -502,7 +506,7 @@ namespace ebl {
   }
 
   template<typename T>
-  bbstate_idx<T>::bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0) {
+  bbstate_idx<T>::bbstate_idx(parameter<T,bbstate_idx<T> > *st, intg s0) {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, s0);
     dx = idx<T>(st ? st->dx.getstorage() : NULL,
 		st ? st->dx.footprint() : 0, s0);
@@ -514,7 +518,8 @@ namespace ebl {
   }
 
   template<typename T>
-  bbstate_idx<T>::bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0, intg s1) {
+  bbstate_idx<T>::bbstate_idx(parameter<T,bbstate_idx<T> > *st, intg s0,
+			      intg s1) {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1);
     dx = idx<T>(st ? st->dx.getstorage() : NULL,
@@ -527,7 +532,8 @@ namespace ebl {
   }
 
   template<typename T>
-  bbstate_idx<T>::bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0, intg s1, intg s2) {
+  bbstate_idx<T>::bbstate_idx(parameter<T,bbstate_idx<T> > *st, intg s0,
+			      intg s1, intg s2) {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1, s2);
     dx = idx<T>(st ? st->dx.getstorage() : NULL,
@@ -540,7 +546,8 @@ namespace ebl {
   }
   
   template<typename T>
-  bbstate_idx<T>::bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0, intg s1, intg s2,
+  bbstate_idx<T>::bbstate_idx(parameter<T,bbstate_idx<T> > *st, intg s0,
+			      intg s1, intg s2,
 			      intg s3, intg s4, intg s5, intg s6, intg s7) {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1, s2, s3, s4, s5, s6, s7);
@@ -554,7 +561,8 @@ namespace ebl {
   }
 
   template<typename T>
-  bbstate_idx<T>::bbstate_idx(parameter<bbstate_idx<T> > *st, const idxdim &d) {
+  bbstate_idx<T>::bbstate_idx(parameter<T,bbstate_idx<T> > *st,
+			      const idxdim &d) {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d);
     dx = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d);
     ddx = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d);
@@ -657,13 +665,13 @@ namespace ebl {
   // parameter
 
   template <typename T>
-  parameter<fstate_idx<T> >::parameter(intg initial_size) 
+  parameter<T,fstate_idx<T> >::parameter(intg initial_size) 
     : fstate_idx<T>(initial_size) {
     resize(0);
   }
 
   template <typename T>
-  parameter<fstate_idx<T> >::parameter(const char *param_filename) 
+  parameter<T,fstate_idx<T> >::parameter(const char *param_filename) 
     : fstate_idx<T>(1) {
     if (!load_x(param_filename)) {
       cerr << "failed to open " << param_filename << endl;
@@ -672,7 +680,7 @@ namespace ebl {
   }
 
   template <typename T>
-  parameter<fstate_idx<T> >::~parameter() {
+  parameter<T,fstate_idx<T> >::~parameter() {
   }
 
   // TODO-0: BUG: a parameter object casted in state_idx* and called
@@ -682,19 +690,19 @@ namespace ebl {
   // resize(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
   //		intg s6, intg s7);
   template <typename T>
-  void parameter<fstate_idx<T> >::resize(intg s0) {
+  void parameter<T,fstate_idx<T> >::resize(intg s0) {
     x.resize(s0);
   }
 
   template <typename T>
-  bool parameter<fstate_idx<T> >::save_x(const char *s) {
+  bool parameter<T,fstate_idx<T> >::save_x(const char *s) {
     if (!save_matrix(x, s))
       return false;
     return true;
   }
 
   template <typename T>
-  bool parameter<fstate_idx<T> >::load_x(const char *s) {
+  bool parameter<T,fstate_idx<T> >::load_x(const char *s) {
     try {
       idx<T> m = load_matrix<T>(s);
       this->resize(m.dim(0));
@@ -709,10 +717,10 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // parameter<bstate_idx<T> >
+  // parameter<T,bstate_idx<T> >
 
   template <typename T>
-  parameter<bstate_idx<T> >::parameter(intg initial_size) 
+  parameter<T,bstate_idx<T> >::parameter(intg initial_size) 
     : bstate_idx<T>(initial_size), gradient(initial_size),
       deltax(initial_size), epsilons(initial_size) {
     idx_clear(gradient);
@@ -722,7 +730,7 @@ namespace ebl {
   }
 
   template <typename T>
-  parameter<bstate_idx<T> >::parameter(const char *param_filename) 
+  parameter<T,bstate_idx<T> >::parameter(const char *param_filename) 
     : bstate_idx<T>(1), gradient(1), deltax(1), epsilons(1) {
     if (!load_x(param_filename)) {
       cerr << "failed to open " << param_filename << endl;
@@ -731,17 +739,17 @@ namespace ebl {
   }
 
   template <typename T>
-  parameter<bstate_idx<T> >::~parameter() {
+  parameter<T,bstate_idx<T> >::~parameter() {
   }
 
   // TODO-0: BUG: a bparameter object casted in state_idx* and called
-  // with resize(n) calls state_idx::resize instead of parameter<bstate_idx<T> >resize
+  // with resize(n) calls state_idx::resize instead of parameter<T,bstate_idx<T> >resize
   // a temporary unclean solution is to use the same bparameters as
-  // in state_idx::resize in parameter<bstate_idx<T> >resize:
+  // in state_idx::resize in parameter<T,bstate_idx<T> >resize:
   // resize(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
   //		intg s6, intg s7);
   template <typename T>
-  void parameter<bstate_idx<T> >::resize(intg s0) {
+  void parameter<T,bstate_idx<T> >::resize(intg s0) {
     x.resize(s0);
     dx.resize(s0);
     gradient.resize(s0);
@@ -750,14 +758,14 @@ namespace ebl {
   }
 
   template <typename T>
-  bool parameter<bstate_idx<T> >::save_x(const char *s) {
+  bool parameter<T,bstate_idx<T> >::save_x(const char *s) {
     if (!save_matrix(x, s))
       return false;
     return true;
   }
 
   template <typename T>
-  bool parameter<bstate_idx<T> >::load_x(const char *s) {
+  bool parameter<T,bstate_idx<T> >::load_x(const char *s) {
     try {
       idx<T> m = load_matrix<T>(s);
       this->resize(m.dim(0));
@@ -772,7 +780,7 @@ namespace ebl {
   }
 
   template <typename T>
-  void parameter<bstate_idx<T> >::update_gd(gd_param &arg) {
+  void parameter<T,bstate_idx<T> >::update_gd(gd_param &arg) {
     if (arg.decay_l2 > 0)
       idx_dotcacc(x, arg.decay_l2, dx);
     if (arg.decay_l1 > 0)
@@ -788,30 +796,30 @@ namespace ebl {
   }
 
   template <typename T>
-  void parameter<bstate_idx<T> >::update(gd_param &arg) {
+  void parameter<T,bstate_idx<T> >::update(gd_param &arg) {
     update_gd(arg);
   }
 
   template <typename T>
-  void parameter<bstate_idx<T> >::clear_deltax() {
+  void parameter<T,bstate_idx<T> >::clear_deltax() {
     idx_clear(deltax);
   }
 
   template <typename T>
-  void parameter<bstate_idx<T> >::update_deltax(T knew, T kold) {
+  void parameter<T,bstate_idx<T> >::update_deltax(T knew, T kold) {
     idx_lincomb(dx, knew, deltax, kold, deltax);
   }
 
   template <typename T>
-  void parameter<bstate_idx<T> >::set_epsilons(T m) {
+  void parameter<T,bstate_idx<T> >::set_epsilons(T m) {
     idx_fill(epsilons, m);
   }
 
   ////////////////////////////////////////////////////////////////
-  // parameter<bbstate_idx<T> >
+  // parameter<T,bbstate_idx<T> >
 
   template <typename T>
-  parameter<bbstate_idx<T> >::parameter(intg initial_size) 
+  parameter<T,bbstate_idx<T> >::parameter(intg initial_size) 
     : bbstate_idx<T>(initial_size), gradient(initial_size),
       deltax(initial_size), epsilons(initial_size), ddeltax(initial_size) {
     idx_clear(gradient);
@@ -822,7 +830,7 @@ namespace ebl {
   }
 
   template <typename T>
-  parameter<bbstate_idx<T> >::parameter(const char *param_filename) 
+  parameter<T,bbstate_idx<T> >::parameter(const char *param_filename) 
     : bbstate_idx<T>(1), gradient(1), deltax(1), epsilons(1), ddeltax(1) {
     if (!load_x(param_filename)) {
       cerr << "failed to open " << param_filename << endl;
@@ -831,17 +839,18 @@ namespace ebl {
   }
 
   template <typename T>
-  parameter<bbstate_idx<T> >::~parameter() {
+  parameter<T,bbstate_idx<T> >::~parameter() {
   }
 
   // TODO-0: BUG: a bbparameter object casted in state_idx* and called
-  // with resize(n) calls state_idx::resize instead of parameter<bbstate_idx<T> >::resize
+  // with resize(n) calls state_idx::resize instead of
+  // parameter<T,bbstate_idx<T> >::resize
   // a temporary unclean solution is to use the same bbparameters as
-  // in state_idx::resize in parameter<bbstate_idx<T> >::resize:
+  // in state_idx::resize in parameter<T,bbstate_idx<T> >::resize:
   // resize(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
   //		intg s6, intg s7);
   template <typename T>
-  void parameter<bbstate_idx<T> >::resize(intg s0) {
+  void parameter<T,bbstate_idx<T> >::resize(intg s0) {
     this->x.resize(s0);
     this->dx.resize(s0);
     this->ddx.resize(s0);
@@ -852,14 +861,14 @@ namespace ebl {
   }
 
   template <typename T>
-  bool parameter<bbstate_idx<T> >::save_x(const char *s) {
+  bool parameter<T,bbstate_idx<T> >::save_x(const char *s) {
     if (!save_matrix(this->x, s))
       return false;
     return true;
   }
 
   template <typename T>
-  bool parameter<bbstate_idx<T> >::load_x(const char *s) {
+  bool parameter<T,bbstate_idx<T> >::load_x(const char *s) {
     try {
       idx<T> m = load_matrix<T>(s);
       this->resize(m.dim(0));
@@ -874,7 +883,7 @@ namespace ebl {
   }
 
   template <typename T>
-  void parameter<bbstate_idx<T> >::update_gd(gd_param &arg) {
+  void parameter<T,bbstate_idx<T> >::update_gd(gd_param &arg) {
     if (arg.decay_l2 > 0)
       idx_dotcacc(this->x, arg.decay_l2, this->dx);
     if (arg.decay_l1 > 0)
@@ -890,37 +899,37 @@ namespace ebl {
   }
 
   template <typename T>
-  void parameter<bbstate_idx<T> >::update(gd_param &arg) {
+  void parameter<T,bbstate_idx<T> >::update(gd_param &arg) {
     update_gd(arg);
   }
 
   template <typename T>
-  void parameter<bbstate_idx<T> >::clear_deltax() {
+  void parameter<T,bbstate_idx<T> >::clear_deltax() {
     idx_clear(deltax);
   }
 
   template <typename T>
-  void parameter<bbstate_idx<T> >::update_deltax(T knew, T kold) {
+  void parameter<T,bbstate_idx<T> >::update_deltax(T knew, T kold) {
     idx_lincomb(this->dx, knew, deltax, kold, deltax);
   }
 
   template <typename T>
-  void parameter<bbstate_idx<T> >::clear_ddeltax() {
+  void parameter<T,bbstate_idx<T> >::clear_ddeltax() {
     idx_clear(ddeltax);
   }
 
   template <typename T>
-  void parameter<bbstate_idx<T> >::update_ddeltax(T knew, T kold) {
+  void parameter<T,bbstate_idx<T> >::update_ddeltax(T knew, T kold) {
     idx_lincomb(this->ddx, knew, ddeltax, kold, ddeltax);
   }
 
   template <typename T>
-  void parameter<bbstate_idx<T> >::set_epsilons(T m) {
+  void parameter<T,bbstate_idx<T> >::set_epsilons(T m) {
     idx_fill(epsilons, m);
   }
 
   template <typename T>
-  void parameter<bbstate_idx<T> >::compute_epsilons(T mu) {
+  void parameter<T,bbstate_idx<T> >::compute_epsilons(T mu) {
     idx_addc(ddeltax, mu, epsilons);
     idx_inv(epsilons, epsilons);
   }
