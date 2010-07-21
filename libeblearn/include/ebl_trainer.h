@@ -102,7 +102,7 @@ namespace ebl {
   public:
     //! constructor.
     supervised_trainer(fc_ebm2<Tnet,bbstate_idx<Tnet>,bbstate_idx<Tlabel> > &m,
-		       parameter<bbstate_idx<Tnet> > &p);
+		       parameter<Tnet, bbstate_idx<Tnet> > &p);
 
     //! destructor.
     virtual ~supervised_trainer();
@@ -175,7 +175,7 @@ namespace ebl {
     //    supervised_trainer<Tdata, Tlabel>* copy();
   public:
     fc_ebm2<Tnet,bbstate_idx<Tnet>,bbstate_idx<Tlabel> > &machine;
-    parameter<bbstate_idx<Tnet> >	  &param;	//!< the learned params
+    parameter<Tnet, bbstate_idx<Tnet> >	  &param;	//!< the learned params
     //! net's tmp input buf. it is a pointer because the order of the input
     //! is not known in advance, and fstate_idx cannot change order dynamically.
     bbstate_idx<Tnet>	*input;

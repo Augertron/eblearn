@@ -21,7 +21,7 @@ void ebl_basic_test::test_convolution_layer_fprop() {
   idx<intg> table(1, 2);
   idx_clear(table);
   idx<intg> tableout = table.select(1, 1);
-  parameter<fstate_idx<double> > prm(10000);
+  parameter<fs(double)> prm(10000);
   convolution_layer<fs(double)> c(&prm, ki, kj, 1, 1, table);
   double fact = 0.05;
 
@@ -62,8 +62,8 @@ void ebl_basic_test::test_jacobian_convolution_layer() {
   idx<intg> table(1, 2);
   idx_clear(table);
   idx<intg> tableout = table.select(1, 1);
-  parameter<bbstate_idx<double> > prm(10000);
-  convolution_layer<bbs(double)> c(&prm, ki, kj, 1, 1, table);
+  parameter<double> prm(10000);
+  convolution_layer<double> c(&prm, ki, kj, 1, 1, table);
 
   ModuleTester<double> mt;
   idx<double> errs = mt.test_jacobian(c, in, out);
@@ -74,9 +74,9 @@ void ebl_basic_test::test_jacobian_convolution_layer() {
 }
 
 void ebl_basic_test::test_jacobian_subsampling_layer() {
-  parameter<bbstate_idx<double> > p(10000);
+  parameter<double> p(10000);
   int ki = 4, kj = 4, thick = 1, si = 2, sj =2;
-  subsampling_layer<bbs(double)> s(&p, ki, kj, si, sj, thick);
+  subsampling_layer<double> s(&p, ki, kj, si, sj, thick);
   bbstate_idx<double> in(1, 8, 8);
   bbstate_idx<double> out(1, 1, 1);
 

@@ -50,7 +50,7 @@ namespace ebl {
   //! \param in The input buffer for memory optimization.
   //! \param out The output buffer for memory optimization.
   template <typename T, class Tstate = bbstate_idx<T> >
-    module_1_1<T,Tstate>* create_network(parameter<Tstate> &theparam,
+    module_1_1<T,Tstate>* create_network(parameter<T, Tstate> &theparam,
 					 configuration &conf, uint noutputs,
 					 Tstate *in = NULL,
 					 Tstate *out = NULL);

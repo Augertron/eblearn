@@ -75,7 +75,7 @@ int main(int argc, char **argv) { // regular main without gui
 
   //! create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  parameter<bbstate_idx<t_net> > theparam(60000); // create trainable parameter
+  parameter<t_net> theparam(60000); // create trainable parameter
   lenet<t_net> net(theparam,
 		   conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
 		   conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),

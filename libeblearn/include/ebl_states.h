@@ -111,7 +111,8 @@ namespace ebl {
     virtual void update_gd(gd_param &arg);
   };
 
-  template <typename T> class parameter;
+  template <typename T> class bbstate_idx;
+  template <typename T, class Tstate = bbstate_idx<T> > class parameter;
 
   ////////////////////////////////////////////////////////////////
   //! A class that stores a vector/tensor state.
@@ -143,35 +144,35 @@ namespace ebl {
     //! the same Srg as the fparameter passed as argument. This is useful for
     //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    fstate_idx(parameter<fstate_idx<T> > *st);
+    fstate_idx(parameter<T,fstate_idx<T> > *st);
     //! Constructs a fstate_idx of order 1, by appending the fstate_idx into
     //! the same Srg as the fparameter passed as argument. This is useful for
     //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    fstate_idx(parameter<fstate_idx<T> > *st, intg s0);
+    fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0);
     //! Constructs a fstate_idx of order 2, by appending the fstate_idx into
     //! the same Srg as the fparameter passed as argument. This is useful for
     //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    fstate_idx(parameter<fstate_idx<T> > *st, intg s0, intg s1);
+    fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0, intg s1);
     //! Constructs a fstate_idx of order 3, by appending the fstate_idx into
     //! the same Srg as the fparameter passed as argument. This is useful for
     //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    fstate_idx(parameter<fstate_idx<T> > *st, intg s0, intg s1, intg s2);
+    fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0, intg s1, intg s2);
     //! Constructs a fstate_idx of order up to 8, by appending the fstate_idx
     //! into
     //! the same Srg as the fparameter passed as argument. This is useful for
     //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    fstate_idx(parameter<fstate_idx<T> > *st, intg s0, intg s1, intg s2,
+    fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0, intg s1, intg s2,
 	       intg s3, intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
     //! Constructs a fstate_idx using the order and dimensions contained in
     //! passed idxdim d, by appending the fstate_idx into
     //! the same Srg as the fparameter passed as argument. This is useful for
     //! allocating multiple fstate_idx inside a fparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    fstate_idx(parameter<fstate_idx<T> > *st, const idxdim &d);
+    fstate_idx(parameter<T,fstate_idx<T> > *st, const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from other fstate_idx
@@ -271,35 +272,35 @@ namespace ebl {
     //! the same Srg as the bparameter passed as argument. This is useful for
     //! allocating multiple bstate_idx inside a bparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bstate_idx(parameter<bstate_idx<T> > *st);
+    bstate_idx(parameter<T,bstate_idx<T> > *st);
     //! Constructs a bstate_idx of order 1, by appending the bstate_idx into
     //! the same Srg as the bparameter passed as argument. This is useful for
     //! allocating multiple bstate_idx inside a bparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bstate_idx(parameter<bstate_idx<T> > *st, intg s0);
+    bstate_idx(parameter<T,bstate_idx<T> > *st, intg s0);
     //! Constructs a bstate_idx of order 2, by appending the bstate_idx into
     //! the same Srg as the bparameter passed as argument. This is useful for
     //! allocating multiple bstate_idx inside a bparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bstate_idx(parameter<bstate_idx<T> > *st, intg s0, intg s1);
+    bstate_idx(parameter<T,bstate_idx<T> > *st, intg s0, intg s1);
     //! Constructs a bstate_idx of order 3, by appending the bstate_idx into
     //! the same Srg as the bparameter passed as argument. This is useful for
     //! allocating multiple bstate_idx inside a bparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bstate_idx(parameter<bstate_idx<T> > *st, intg s0, intg s1, intg s2);
+    bstate_idx(parameter<T,bstate_idx<T> > *st, intg s0, intg s1, intg s2);
     //! Constructs a bstate_idx of order up to 8, by appending the bstate_idx
     //! into
     //! the same Srg as the bparameter passed as argument. This is useful for
     //! allocating multiple bstate_idx inside a bparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bstate_idx(parameter<bstate_idx<T> > *st, intg s0, intg s1, intg s2,
+    bstate_idx(parameter<T,bstate_idx<T> > *st, intg s0, intg s1, intg s2,
 	       intg s3, intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
     //! Constructs a bstate_idx using the order and dimensions contained in
     //! passed idxdim d, by appending the bstate_idx into
     //! the same Srg as the bparameter passed as argument. This is useful for
     //! allocating multiple bstate_idx inside a bparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bstate_idx(parameter<bstate_idx<T> > *st, const idxdim &d);
+    bstate_idx(parameter<T,bstate_idx<T> > *st, const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from other bstate_idx
@@ -401,35 +402,35 @@ namespace ebl {
     //! the same Srg as the bbparameter passed as argument. This is useful for
     //! allocating multiple bbstate_idx inside a bbparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bbstate_idx(parameter<bbstate_idx<T> > *st);
+    bbstate_idx(parameter<T,bbstate_idx<T> > *st);
     //! Constructs a bbstate_idx of order 1, by appending the bbstate_idx into
     //! the same Srg as the bbparameter passed as argument. This is useful for
     //! allocating multiple bbstate_idx inside a bbparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0);
+    bbstate_idx(parameter<T,bbstate_idx<T> > *st, intg s0);
     //! Constructs a bbstate_idx of order 2, by appending the bbstate_idx into
     //! the same Srg as the bbparameter passed as argument. This is useful for
     //! allocating multiple bbstate_idx inside a bbparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0, intg s1);
+    bbstate_idx(parameter<T,bbstate_idx<T> > *st, intg s0, intg s1);
     //! Constructs a bbstate_idx of order 3, by appending the bbstate_idx into
     //! the same Srg as the bbparameter passed as argument. This is useful for
     //! allocating multiple bbstate_idx inside a bbparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0, intg s1, intg s2);
+    bbstate_idx(parameter<T,bbstate_idx<T> > *st, intg s0, intg s1, intg s2);
     //! Constructs a bbstate_idx of order up to 8, by appending the
     //! bbstate_idx into
     //! the same Srg as the bbparameter passed as argument. This is useful for
     //! allocating multiple bbstate_idx inside a bbparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bbstate_idx(parameter<bbstate_idx<T> > *st, intg s0, intg s1, intg s2,
+    bbstate_idx(parameter<T,bbstate_idx<T> > *st, intg s0, intg s1, intg s2,
 		intg s3, intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 =-1);
     //! Constructs a bbstate_idx using the order and dimensions contained in
     //! passed idxdim d, by appending the bbstate_idx into
     //! the same Srg as the bbparameter passed as argument. This is useful for
     //! allocating multiple bbstate_idx inside a bbparameter.
     //! If st is null, it is just ignore and behaves as regular constructor.
-    bbstate_idx(parameter<bbstate_idx<T> > *st, const idxdim &d);
+    bbstate_idx(parameter<T,bbstate_idx<T> > *st, const idxdim &d);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from other bbstate_idx
@@ -505,7 +506,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! parameter<T,fstate_idx<T> >: a forward (non-trainable) parameter vector.
   template <typename T>
-    class parameter<fstate_idx<T> > : public fstate_idx<T> {
+    class parameter<T, fstate_idx<T> > : public fstate_idx<T> {
   public:
     //! initialize the fparameter with size initial_size.
     parameter(intg initial_size = 100);
@@ -550,8 +551,8 @@ namespace ebl {
   //! bparameter vector.
 
   template <typename T>
-    class parameter<bstate_idx<T> >
-    : public bstate_idx<T>, public parameter<fstate_idx<T> > {
+    class parameter<T, bstate_idx<T> >
+    : public bstate_idx<T>, public parameter<T,fstate_idx<T> > {
   public:
     //! initialize the bparameter with size initial_size.
     parameter(intg initial_size = 100);
@@ -606,8 +607,7 @@ namespace ebl {
   //! bbparameter vector.
 
   template <typename T>
-    class parameter<bbstate_idx<T> >
-    : public bbstate_idx<T> {
+    class parameter<T, bbstate_idx<T> > : public bbstate_idx<T> {
   public:
     //! initialize the bbparameter with size initial_size.
     parameter(intg initial_size = 100);

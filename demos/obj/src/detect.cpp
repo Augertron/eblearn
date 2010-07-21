@@ -94,7 +94,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       cout << "Saving outputs to " << outdir << endl;
 
       // load network and weights
-      parameter<fstate_idx<t_net> > theparam;
+      parameter<fs(t_net)> theparam;
       idx<ubyte> classes(1,1);
       try {
 	load_matrix<ubyte>(classes, conf.get_cstring("classes"));

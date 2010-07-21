@@ -121,7 +121,7 @@ int main(int argc, char **argv) { // regular main without gui
 
     //! create the network weights, network and trainer
     idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-    parameter<bbstate_idx<t_net> > theparam(60000);// create trainable parameter
+    parameter<t_net> theparam(60000);// create trainable parameter
     module_1_1<t_net> *net =
       create_network<t_net>(theparam, conf, targets.dim(0));
     supervised_euclidean_machine<t_net, int> thenet(*net, targets, dims);

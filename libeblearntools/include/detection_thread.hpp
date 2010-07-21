@@ -166,11 +166,11 @@ namespace ebl {
   }
 
 // switch between forward only buffers or also backward
-#define STATEBUF fstate_idx
-#define STATEFUNC fs
+#define SFUNC fs
+#define SBUF fstate_idx
 // backward
-// #define STATEBUF bbstate_idx
-// #define STATEFUNC bbs
+// #define SFUNC bbs
+// #define SBUF bbstate_idx
   
   template <typename Tnet>
   void detection_thread<Tnet>::execute() { 
@@ -186,15 +186,15 @@ namespace ebl {
      uint       wid	       = 0;	// window id
      uint       wid_states     = 0;	// window id
      // optimize memory usage by using only 2 buffers for entire flow
-     STATEBUF<Tnet> input(1, 1, 1), output(1, 1, 1);
+     SBUF<Tnet> input(1, 1, 1), output(1, 1, 1);
      // load network and weights in a forward-only parameter
-     parameter<STATEBUF<Tnet> > theparam;
+     parameter<SFUNC(Tnet)> theparam;
      idx<ubyte> classes(1,1);
      try { // try loading classes names but do not stop upon failure
        load_matrix<ubyte>(classes, conf.get_cstring("classes"));
      } catch(string &err) { cerr << "warning: " << err << endl; }
-     module_1_1<STATEFUNC(Tnet)> *net =
-       create_network<STATEFUNC(Tnet)>(theparam, conf, classes.dim(0));//, &input, &output);
+     module_1_1<SFUNC(Tnet)> *net =
+       create_network<SFUNC(Tnet)>(theparam, conf, classes.dim(0));//, &input, &output);
      theparam.load_x(conf.get_cstring("weights"));
 #ifdef __DEBUGMEM__
        pretty_memory();
@@ -202,19 +202,19 @@ namespace ebl {
 
      // select preprocessing  
      string        cam_type        = conf.get_string("camera");
-     module_1_1<STATEFUNC(Tnet)>* pp = NULL;
+     module_1_1<SFUNC(Tnet)>* pp = NULL;
      if (!strcmp(cam_type.c_str(), "v4l2")) // Y -> Yp
-       pp = new weighted_std_module<STATEFUNC(Tnet)>(norm_size, norm_size, 1,
+       pp = new weighted_std_module<SFUNC(Tnet)>(norm_size, norm_size, 1,
 						   "norm", true, false, true);
      else if (color) // RGB -> YpUV
-       pp = (module_1_1<STATEFUNC(Tnet)>*)
-	 new rgb_to_ypuv_module<STATEFUNC(Tnet)>(norm_size);
+       pp = (module_1_1<SFUNC(Tnet)>*)
+	 new rgb_to_ypuv_module<SFUNC(Tnet)>(norm_size);
      else // RGB -> Yp
-       pp = (module_1_1<STATEFUNC(Tnet)>*)
-	 new rgb_to_yp_module<STATEFUNC(Tnet)>(norm_size);
+       pp = (module_1_1<SFUNC(Tnet)>*)
+	 new rgb_to_yp_module<SFUNC(Tnet)>(norm_size);
 
      // detector
-     detector<STATEFUNC(Tnet)> detect(*net, classes, pp, norm_size, NULL, 0,
+     detector<SFUNC(Tnet)> detect(*net, classes, pp, norm_size, NULL, 0,
 				      conf.get_double("gain"));
      detect.set_resolutions(conf.get_double("scaling"));
      //     detect.set_mem_optimization(input, output);
@@ -262,7 +262,7 @@ namespace ebl {
      wid  = display ? new_window("eblearn object recognition") : 0;
      night_mode();
      float		zoom = 1;
-     detector_gui<STATEFUNC(Tnet)>
+     detector_gui<SFUNC(Tnet)>
        dgui(conf.exists_bool("queue1"), qstep1, qheight1,
 	    qwidth1, conf.exists_bool("queue2"), qstep2, qheight2, qwidth2);
      if (bmask_class)

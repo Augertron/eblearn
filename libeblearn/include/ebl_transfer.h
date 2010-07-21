@@ -84,7 +84,7 @@ namespace ebl {
     thres_module<T,Tstate>	thres;	//!< threshold module
     mul_module<T,Tstate>	mcw;
     Tstate  	        inmean, inzmean, inzmeansq, invar, instd, thstd, invstd;
-    parameter<Tstate>	param;
+    parameter<T,Tstate>	param;
     idx<T>              w;	//!< weights
     bool                threshold;
     bool                global_norm; //!< perform global normalization first
@@ -129,7 +129,7 @@ namespace ebl {
     class smooth_shrink_module: public module_1_1<T, Tstate> {
   public:
     //! Constructor 
-    smooth_shrink_module(parameter<Tstate> *p, intg nf, T beta = 10,
+    smooth_shrink_module(parameter<T,Tstate> *p, intg nf, T beta = 10,
 			 T bias = .3);
     //! Destructor.
     virtual ~smooth_shrink_module();

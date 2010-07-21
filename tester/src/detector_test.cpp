@@ -41,7 +41,7 @@ void detector_test::test_norb() {
 
     // parameter, network and classifier
     // load the previously saved weights of a trained network
-    parameter<fstate_idx<t_net> > theparam(1);
+    parameter<fs(t_net)> theparam(1);
     // input to the network will be 96x96 and there are 5 outputs
     lenet7_binocular<fs(t_net)> thenet(theparam, 96, 96, 5, false, false, true);
     theparam.load_x(mono_net.c_str());

@@ -54,7 +54,7 @@ namespace ebl {
     net_cscscf(Tstate *in = NULL, Tstate *out = NULL);
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    net_cscscf(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
+    net_cscscf(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
 	       idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	       idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	       idx<intg> &tbl2, intg outthick, bool norm = false,
@@ -77,7 +77,7 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, intg outthick, bool norm = false,
@@ -94,7 +94,7 @@ namespace ebl {
     net_cscf(Tstate *in = NULL, Tstate *out = NULL);
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    net_cscf(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
+    net_cscf(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
 	     idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	     idx<intg> &tbl1, intg outthick, bool norm = false,
 	     bool mirror = false, bool tanh = false,
@@ -117,7 +117,7 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg outthick, bool norm = false,
 	      bool mirror = false, bool tanh = false, bool shrink = false,
@@ -134,7 +134,7 @@ namespace ebl {
     net_cscc(Tstate *in = NULL, Tstate *out = NULL);
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    net_cscc(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
+    net_cscc(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
 	     idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	     idx<intg> &tbl1, idx<intg> &tbl2, intg outthick, bool norm = false,
 	     bool mirror = false, bool tanh = false,
@@ -156,7 +156,7 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, idx<intg> &tbl2, intg outthick, 
 	      bool norm = false,
@@ -173,7 +173,7 @@ namespace ebl {
     net_cscsc(Tstate *in = NULL, Tstate *out = NULL);
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
-    net_cscsc(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    net_cscsc(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, bool norm = false,
@@ -196,7 +196,7 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
-    void init(parameter<Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
+    void init(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, bool norm = false, bool mirror = false,
@@ -212,7 +212,7 @@ namespace ebl {
   template <typename T, class Tstate = bbstate_idx<T> >
     class lenet_cscsc : public net_cscsc<T,Tstate> {
   public:
-    lenet_cscsc(parameter<Tstate> &prm, intg image_height, intg image_width,
+    lenet_cscsc(parameter<T,Tstate> &prm, intg image_height, intg image_width,
 		intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 		intg si1, intg sj1, intg output_size,
 		bool norm = false, bool color = false, bool mirror = false,
@@ -232,7 +232,7 @@ namespace ebl {
   template <typename T, class Tstate = bbstate_idx<T> >
     class lenet : public net_cscscf<T,Tstate> {
   public:
-    lenet(parameter<Tstate> &prm, intg image_height, intg image_width,
+    lenet(parameter<T,Tstate> &prm, intg image_height, intg image_width,
 	  intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 	  intg si1, intg sj1, intg hid, intg output_size,
 	  bool norm = false, bool color = false, bool mirror = false,
@@ -252,7 +252,7 @@ namespace ebl {
   template <typename T, class Tstate = bbstate_idx<T> >
     class lenet_cscf : public net_cscf<T,Tstate> {
   public:
-    lenet_cscf(parameter<Tstate> &prm, intg image_height, intg image_width,
+    lenet_cscf(parameter<T,Tstate> &prm, intg image_height, intg image_width,
 	       intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 	       intg output_size, bool norm = false, bool color = false,
 	       bool mirror = false, bool tanh = false, bool shrink = false,
@@ -289,7 +289,7 @@ namespace ebl {
   template <typename T, class Tstate = bbstate_idx<T> >
     class lenet5 : public net_cscscf<T,Tstate> {
   public:
-    lenet5(parameter<Tstate> &prm, intg image_height, intg image_width,
+    lenet5(parameter<T,Tstate> &prm, intg image_height, intg image_width,
 	   intg ki0, intg kj0, intg si0, intg sj0,
 	   intg ki1, intg kj1, intg si1, intg sj1,
 	   intg hid, intg output_size, bool norm = false, bool mirror = false,
@@ -305,7 +305,7 @@ namespace ebl {
   public:
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
-    lenet7(parameter<Tstate> &prm, intg image_height, intg image_width,
+    lenet7(parameter<T,Tstate> &prm, intg image_height, intg image_width,
 	   intg output_size, bool norm = false, bool mirror = false,
 	   bool tanh = false, bool shrink = false);
     virtual ~lenet7() {}
@@ -320,7 +320,7 @@ namespace ebl {
   public:
     //! @param output_size the number of ouputs. For a 5 class classifier
     //!        like NORB, this would be 5.
-    lenet7_binocular(parameter<Tstate> &prm, intg image_height,
+    lenet7_binocular(parameter<T,Tstate> &prm, intg image_height,
 		     intg image_width,
 		     intg output_size, bool norm = false, bool mirror = false,
 		     bool tanh = false, bool shrink = false);

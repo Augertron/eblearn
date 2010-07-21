@@ -151,7 +151,7 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>  
   supervised_trainer<Tnet, Tdata, Tlabel>::
   supervised_trainer(fc_ebm2<Tnet,bbstate_idx<Tnet>,bbstate_idx<Tlabel> > &m,
-		     parameter<bbstate_idx<Tnet> > &p)
+		     parameter<Tnet, bbstate_idx<Tnet> > &p)
     : machine(m), param(p), input(NULL), energy(), label(), answer(), age(0),
       iteration(-1), iteration_ptr(NULL), prettied(false) {
     energy.dx.set(1.0);

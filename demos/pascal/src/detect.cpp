@@ -89,7 +89,7 @@ int main(int argc, char **argv) { // regular main without gui
     create_target_matrix<t_net>(classes.dim(0), 1.0);
 
   //! create the network weights, network and trainer
-  parameter<fstate_idx<t_net> > theparam; // trained weights
+  parameter<fs(t_net)> theparam; // trained weights
   lenet<fs(t_net)> net(theparam,
 		       conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
 		       conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),

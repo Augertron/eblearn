@@ -53,7 +53,7 @@ namespace ebl {
     //! \param indim0 The number of inputs
     //! \param noutputs The number of outputs.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    full_layer(parameter<Tstate> *p, intg indim0, intg noutputs,
+    full_layer(parameter<T,Tstate> *p, intg indim0, intg noutputs,
 	       bool tanh = true, const char *name = "");
     //! Destructor.
     virtual ~full_layer();
@@ -101,7 +101,7 @@ namespace ebl {
     //!        the width axis.
     //! \param table is the convolution connection table.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    convolution_layer(parameter<Tstate> *p, intg kerneli, intg kernelj, 
+    convolution_layer(parameter<T,Tstate> *p, intg kerneli, intg kernelj, 
 		      intg stridei, intg stridej, idx<intg> &tbl,
 		      bool tanh = true, const char *name = "");
     virtual ~convolution_layer();
@@ -150,7 +150,7 @@ namespace ebl {
     //!        the width axis.
     //! \param table is the convolution connection table.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    convabsnorm_layer(parameter<Tstate> *p, intg kerneli, intg kernelj, 
+    convabsnorm_layer(parameter<T,Tstate> *p, intg kerneli, intg kernelj, 
 		      intg stridei, intg stridej, idx<intg> &tbl,
 		      bool mirror = false, bool tanh = true,
 		      const char *name = "");
@@ -193,7 +193,7 @@ namespace ebl {
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    subsampling_layer(parameter<Tstate> *p, intg stridei, intg stridej,
+    subsampling_layer(parameter<T,Tstate> *p, intg stridei, intg stridej,
 		      intg subi, intg subj, 
 		      intg thick, bool tanh = true, const char *name = "");
     //! Destructor.
