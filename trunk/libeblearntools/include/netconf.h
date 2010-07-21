@@ -49,7 +49,10 @@ namespace ebl {
   //! learning).
   //! \param in The input buffer for memory optimization.
   //! \param out The output buffer for memory optimization.
-  template <typename T, class Tstate = bbstate_idx<T> >
+  // TODO: default is not allowed for function template,
+  // solution is to use -std=c++0x or -std=gnu++0x but not available everywhere
+  // -> find test for these capabilities in cmake
+  template <typename T, class Tstate> // = bbstate_idx<T> >
     module_1_1<T,Tstate>* create_network(parameter<T, Tstate> &theparam,
 					 configuration &conf, uint noutputs,
 					 Tstate *in = NULL,
