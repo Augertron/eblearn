@@ -29,11 +29,11 @@ SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}"
 # check for required and optional external packages
 FIND_PACKAGE(All)
 
-IF (NOT WINDOWS)
-  # Allow default templates in templated functions
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x"
-    CACHE STRING "CMAKE CXX flags " FORCE )
-ENDIF (NOT WINDOWS)
+# IF (NOT WINDOWS)
+#   # Allow default templates in templated functions
+#   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x"
+#     CACHE STRING "CMAKE CXX flags " FORCE )
+# ENDIF (NOT WINDOWS)
 
 # Check that electric-fence and valgrind are installed for (debug mode only)
 SET(EFENCE_FLAG "")
