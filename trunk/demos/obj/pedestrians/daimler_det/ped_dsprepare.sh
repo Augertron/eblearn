@@ -62,6 +62,10 @@ mkdir -p $nopersons_root
 ###############################################################################
 
 # extract background images at random scales and positions
+echo "$nopersons_root -type patch -precision $precision \
+    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
+    -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
+    -maxdata $maxbg -nopadded "
 $bin/dscompiler $nopersons_root -type patch -precision $precision \
     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
