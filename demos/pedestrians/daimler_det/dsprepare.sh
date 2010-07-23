@@ -63,6 +63,9 @@ mkdir -p $nopersons_root
 # dataset compilations
 ###############################################################################
 
+# remove previous background extractions
+rm -Rf $outbg
+
 # extract background images at random scales and positions
 $bin/dscompiler $nopersons_root -type patch -precision $precision \
     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
