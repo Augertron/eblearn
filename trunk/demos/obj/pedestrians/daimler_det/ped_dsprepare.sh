@@ -7,8 +7,8 @@ meta_command="sh ped_dsprepare.sh"
 meta_name=pedds_daimer_det
 # emailing results or not
 meta_send_email=1
-# email to use
-meta_email=pierre.sermanet@gmail.com
+# email to use (use environment variable "myemail")
+meta_email=${myemail}
 
 ################################################################################
 # ped dataset compilation

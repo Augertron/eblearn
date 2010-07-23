@@ -5,7 +5,8 @@
 ################################################################################
 meta_command="sh text_dsprepare.sh"
 meta_name=textds
-meta_email=pierre.sermanet@gmail.com
+# email to use (use environment variable "myemail")
+meta_email=${myemail}
 
 ################################################################################
 # text dataset compilation

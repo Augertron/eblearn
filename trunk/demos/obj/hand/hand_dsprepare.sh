@@ -5,7 +5,8 @@
 ################################################################################
 meta_command="sh hand_dsprepare.sh"
 meta_name=handds
-meta_email=pierre.sermanet@gmail.com
+# email to use (use environment variable "myemail")
+meta_email=${myemail}
 
 ################################################################################
 # hand dataset compilation

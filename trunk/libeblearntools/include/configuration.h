@@ -172,6 +172,9 @@ namespace ebl {
     //! set variable 'varname' to value 'value'
     void set(const char *varname, const char *value);
 
+    //! get variable 'varname'.
+    const char* get(const char *varname);
+
     //! returns true if the variable exists, false otherwise.
     bool exists(const char *varname);
     

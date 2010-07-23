@@ -42,6 +42,7 @@
 #include <time.h>
 #include <limits>
 #include <string.h>
+#include <stdlib.h>
 
 #include "tools_utils.h"
 #include "configuration.h"
@@ -120,7 +121,7 @@ namespace ebl {
     }
   }
 
-  string resolve(string_map_t &m, const string &v) {
+  string resolve(string_map_t &m, const string &variable, const string &v) {
     string res(v);
     if (v.size() == 0)
       return res;
@@ -128,23 +129,27 @@ namespace ebl {
     size_t qpos = v.find("\"");
     if (qpos != string::npos) { // quote found
       // find matching quote
-      size_t qpos2 = v.find("\"", qpos + 1);
+      size_t qpos2 = res.find("\"", qpos + 1);
+      // skip all quotes preceded by slash
+      while (qpos2 != string::npos && qpos2 > 0 && res[qpos2 - 1] == '\\') {
+	qpos2 = res.find("\"", qpos2 + 1);
+      }
       if (qpos2 == string::npos) {
-	cerr << "unmatched quote in: " << v << endl;
+	cerr << "unmatched quote in: " << res << endl;
 	eblerror("unmatched quote");
       }
       // resolve both sides of quoted section
-      string s0 = v.substr(0, (std::max)((size_t) 0, qpos -1));
-      string s1 = v.substr(qpos, qpos2 + 1);
-      string s2 = v.substr(qpos2 + 1);
+      string s0 = res.substr(0, (std::max)((size_t) 0, qpos -1));
+      string s1 = res.substr(qpos, qpos2 + 1);
+      string s2 = res.substr(qpos2 + 1);
       res = "";
       if (qpos != 0) {
-	s0 = resolve(m, s0);
+	s0 = resolve(m, variable, s0);
 	res += s0;
       }
       res += s1;
-      if (qpos2 < v.size()) {
-	s2 = resolve(m, s2);
+      if (qpos2 < res.size()) {
+	s2 = resolve(m, variable, s2);
 	res += s2;
       }
       // concatenate resolved and quoted sections
@@ -161,10 +166,18 @@ namespace ebl {
 	}
 	// variable to replace
 	string var = res.substr(pos + 2, pos2 - (pos + 2));
-	if (m.find(var) != m.end()) {
-	  string val = resolve(m, m[var]);
+	if (m.find(var) != m.end() && (var != variable)) {
+	  string val = resolve(m, var, m[var]);
 	  res = res.replace(pos, pos2 - pos + 1, val);
 	  pos2 = pos;
+	} else { // not found locally, check environment
+	  char *val = getenv(var.c_str());
+	  if (val) {
+	    cout << "using environment variable \"" << var << "\": "
+		 << val << endl;
+	    res = res.replace(pos, pos2 - pos + 1, val);
+	    pos2 = pos;
+	  }
 	}
 	// check if we have more variables to resolve
 	pos = res.find("${", pos2);
@@ -179,7 +192,7 @@ namespace ebl {
     string_map_t::iterator mi = m.begin();
     for ( ; mi != m.end(); ++mi) {
       string val = mi->second;
-      mi->second = resolve(m, val);
+      mi->second = resolve(m, mi->first, val);
     }
   }
   
@@ -450,9 +463,14 @@ namespace ebl {
   const string &configuration::get_string(const char *varname) {
     exists_throw(varname);
     // remove quotes if present
-    string s = smap[varname];
+    string s = get(varname);
     if ((s[0] == '\"') && (s[s.size() - 1] == '\"'))
       s = s.substr(1, s.size() - 2);
+    // remove slash preceding quotes
+    size_t pos;
+    while ((pos = s.rfind("\\\"")) != string::npos) {
+      s.replace(pos, 2, "\"");
+    }
     smap[varname] = s;
     return smap[varname];
   }
@@ -463,22 +481,22 @@ namespace ebl {
 
   double configuration::get_double(const char *varname) {
     exists_throw(varname);
-    return string_to_double(smap[varname]);
+    return string_to_double(get(varname));
   }
 
   float configuration::get_float(const char *varname) {
     exists_throw(varname);
-    return string_to_float(smap[varname]);
+    return string_to_float(get(varname));
   }
 
   uint configuration::get_uint(const char *varname) {
     exists_throw(varname);
-    return string_to_uint(smap[varname]);
+    return string_to_uint(get(varname));
   }
 
   int configuration::get_int(const char *varname) {
     exists_throw(varname);
-    return string_to_int(smap[varname]);
+    return string_to_int(get(varname));
   }
 
   bool configuration::get_bool(const char *varname) {
@@ -500,14 +518,26 @@ namespace ebl {
     smap[varname] = value;
   }
 
+  const char* configuration::get(const char *varname) {
+    if (smap.find(varname) != smap.end())
+      return smap[varname].c_str();
+    char *val = getenv(varname);
+    if (val) {
+      cout << "using environment variable \"" << varname << "\": "
+	   << val << endl;
+      return val;
+    }
+    return NULL;
+  }
+
   bool configuration::exists(const char *varname) {
-    if (smap.find(varname) == smap.end())
+    if ((smap.find(varname) == smap.end()) && (!getenv(varname)))
       return false;
     return true;
   }
 
   void configuration::exists_throw(const char *varname) {
-    if (smap.find(varname) == smap.end()) {
+    if ((smap.find(varname) == smap.end()) && (!getenv(varname))) {
       cerr << "error: unknown variable: " << varname << endl;
       throw "unknown variable";
     }

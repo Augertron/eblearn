@@ -155,6 +155,10 @@ namespace ebl {
   }
 
   uint string_to_uint(const string &s) {
+    return string_to_uint(s.c_str());
+  }
+  
+  uint string_to_uint(const char *s) {
     istringstream iss(s);
     uint d;
     iss >> d;
@@ -167,6 +171,10 @@ namespace ebl {
   }
 
   int string_to_int(const string &s) {
+    return string_to_int(s.c_str());
+  }
+  
+  int string_to_int(const char *s) {
     istringstream iss(s);
     int d;
     iss >> d;
@@ -179,6 +187,10 @@ namespace ebl {
   }
 
   float string_to_float(const string &s) {
+    return string_to_float(s.c_str());
+  }
+
+  float string_to_float(const char *s) {
     istringstream iss(s);
     float d;
     iss >> d;
@@ -190,6 +202,10 @@ namespace ebl {
   }
 
   double string_to_double(const string &s) {
+    return string_to_double(s.c_str());
+  }
+
+  double string_to_double(const char *s) {
     istringstream iss(s);
     double d;
     iss >> d;
@@ -201,6 +217,10 @@ namespace ebl {
   }
 
   list<uint> string_to_uintlist(const string &s_) {
+    return string_to_uintlist(s_.c_str());
+  }
+  
+  list<uint> string_to_uintlist(const char *s_) {
     list<uint> l;
     string s = s_;
     int k = 0;
@@ -221,6 +241,10 @@ namespace ebl {
   }
 
   list<string> string_to_stringlist(const string &s_) {
+    return string_to_stringlist(s_.c_str());
+  }
+  
+  list<string> string_to_stringlist(const char *s_) {
     list<string> l;
     string s = s_;
     int k = 0;
@@ -241,6 +265,10 @@ namespace ebl {
   }
 
   vector<double> string_to_doublevector(const string &s_) {
+    return string_to_doublevector(s_.c_str());
+  }
+  
+  vector<double> string_to_doublevector(const char *s_) {
     vector<double> l;
     string s = s_;
     int k = 0;
@@ -264,8 +292,8 @@ namespace ebl {
 #ifdef __BOOST__
     ostringstream cmd;
     path p(dir);
-    cmd << "tar cz -C " << dir << "/../ -f " << tgtdir << "/" << p.leaf() << ".tgz " 
-	<< p.leaf();// << " 2> /dev/null";
+    cmd << "tar cz -C " << dir << "/../ -f " << tgtdir << "/" << p.leaf()
+	<< ".tgz " << p.leaf();// << " 2> /dev/null";
     int ret = std::system(cmd.str().c_str());
     if (ret < 0) {
       cerr << "tar failed." << endl;

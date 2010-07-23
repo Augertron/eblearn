@@ -9,7 +9,8 @@ meta_command = pascal_train
 meta_name = pascal_bibg50
 meta_max_cpus = 8
 meta_output_dir = /home/sermanet/humairadata/pascal/out
-meta_email = me@mail.com
+# email to use (use environment variable "myemail")
+meta_email=${myemail}
 meta_email_period = 1 # send an email with plots after every n iterations
 meta_gnuplot_params = set grid ytics;set ytics 5;set mytics 5;set grid mytics;
 
