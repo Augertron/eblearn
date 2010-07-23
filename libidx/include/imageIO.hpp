@@ -75,7 +75,6 @@ namespace ebl {
 #else
     FILE* fp = POPEN(cmd.str().c_str(), "r");
 #endif
-    //    cout << "opening " <<fname <<endl;
     if (!fp) {
       err << "conversion of image " << fname << " failed (errno: " 
 	  << errno << ", " << strerror(errno) << ")";
