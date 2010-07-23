@@ -3,7 +3,7 @@
 ################################################################################
 # meta commands
 ################################################################################
-meta_command="sh ped_dsprepare.sh"
+meta_command="sh dsprepare.sh"
 meta_name=pedds_daimer_det
 # emailing results or not
 meta_send_email=1
