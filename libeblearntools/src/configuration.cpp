@@ -127,6 +127,10 @@ namespace ebl {
       return res;
     // 1. if we find quotes, resolve each unquoted string and concatenate res
     size_t qpos = v.find("\"");
+    // skip all quotes preceded by slash
+    while (qpos != string::npos && qpos > 0 && v[qpos - 1] == '\\') {
+      qpos = res.find("\"", qpos + 1);
+    }
     if (qpos != string::npos) { // quote found
       // find matching quote
       size_t qpos2 = res.find("\"", qpos + 1);
@@ -140,14 +144,16 @@ namespace ebl {
       }
       // resolve both sides of quoted section
       string s0 = res.substr(0, (std::max)((size_t) 0, qpos -1));
-      string s1 = res.substr(qpos, qpos2 + 1);
+      string s1 = res.substr(qpos + 1, qpos2 - 1);
       string s2 = res.substr(qpos2 + 1);
       res = "";
       if (qpos != 0) {
 	s0 = resolve(m, variable, s0);
 	res += s0;
       }
-      res += s1;
+      res += "\"";
+      res += resolve(m, variable, s1);
+      res += "\"";
       if (qpos2 < res.size()) {
 	s2 = resolve(m, variable, s2);
 	res += s2;
@@ -296,6 +302,9 @@ namespace ebl {
 	if ((qpos != string::npos) && (qpos < pos)) { // quote before space
 	  // look for matching quote
 	  qpos2 = s.find("\"", qpos + 1);
+	  while (qpos2 != string::npos && qpos2 > 0 && s[qpos2 - 1] == '\\') {
+	    qpos2 = s.find("\"", qpos2 + 1);
+	  }
 	  if (qpos2 == string::npos) {
 	    cerr << "unmatched quote in: " << s << endl;
 	    eblerror("unmatched quote");
