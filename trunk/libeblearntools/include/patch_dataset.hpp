@@ -82,6 +82,9 @@ namespace ebl {
     ostringstream fname;
     vector<idx<Tdata> > patches;
     
+    // check for capacity
+    if (this->full(label)) // reached full capacity
+      return false;
     // for each scale, find patches and save them
     for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
       patches.clear();
@@ -141,7 +144,7 @@ namespace ebl {
 	  millisleep((long) sleep_delay);
       }
 #endif
-      save_patches(patches, outdir, max_folders, filename, *i);
+      save_patches(patches, outdir, max_folders, filename, *i, label);
     }
     return true;
   }
@@ -154,7 +157,7 @@ namespace ebl {
 					  const string &outdir,
 					  uint max_folders,
 					  const string &filename,
-					  double scale) {
+					  double scale, const t_label label) {
     ostringstream folder, fname;
     try {
       mkdir_full(outdir.c_str());
@@ -187,7 +190,12 @@ namespace ebl {
 	  }
 	  save_image(fname.str(), tmp, save_mode.c_str());
 	}
-	cout << data_cnt++ << ": saved " << fname.str().c_str() << endl;
+	cout << data_cnt << ": saved " << fname.str().c_str() << endl;
+	// increase global counter
+	data_cnt++;
+	// check for capacity
+	if (this->full(label)) // reached full capacity
+	  break ;
       }
 //       if (i < patches.size()) // reached max_folders, fill-up last one
 // 	for ( ; i < patches.size(); ++i) {

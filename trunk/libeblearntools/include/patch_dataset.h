@@ -77,7 +77,7 @@ namespace ebl {
     //! patches, using filename as base filename for patches filenames.
     void save_patches(vector<idx<Tdata> > &patches, const string &outdir,
 		      uint max_folders, const string &filename,
-		      double scale);
+		      double scale, const t_label label);
 
   protected:
     uint max_folders; // maximum number of patch directories
