@@ -11,8 +11,6 @@ LIBS=""
 LIBS_IPP="-lippiemerged -lippimerged -lippcore -lippsmerged"
 MNIST=""
 
-echo "libeblearn configuration."
-
 # echo "1. Use proprietary Intel Integrated Primitives (IPP) libraries? (y/N)"
 # echo -n "\t"
 #   read ans
@@ -36,25 +34,23 @@ echo "libeblearn configuration."
 
 mkdir bin 2> /dev/null
 
-echo "Use MNIST handwritten digit database? (y/N)"
-echo "   (download at http://yann.lecun.com/exdb/mnist/)"
+echo "* (optional) Enter your MNIST dataset directory (absolute path)"
+echo "  (MNIST can be found here: http://yann.lecun.com/exdb/mnist/)"
+echo "  or press ENTER to ignore this:"
 /bin/echo -en "\t"
   read ans
   case $ans in
-    [yY]) echo "\tOk, what is your MNIST directory (absolute path)? (Example: /data/mnist)"
-    /bin/echo -en "\t"
-    read MNIST
-    test -d $MNIST
+    "") echo "Not using mnist."
+    ;;
+    *) test -d $ans
     if [ $? -eq 1 ] 
       then echo -n "Error, not a valid path: "
-           echo $MNIST
+           echo $ans
            exit 1
       fi
-    /bin/echo -en "\tOk, using MNIST from directory: "
-    echo $MNIST
-    /bin/echo -e "\n-mnist $MNIST" >> run.init
-    ;;
-    *) echo "\tNot using MNIST."
+    /bin/echo -en "Ok, using MNIST from directory: "
+    /bin/echo $ans
+    /bin/echo -e "\n-mnist $ans" >> run.init
   esac
 
 #ouputing arguments to main() for runtime
