@@ -97,13 +97,20 @@ namespace ebl {
 	tmp.erase(subvariable);
 	// subvariable list without current subvariable
 	// get existing node
-	if (subtree.find(subval) == subtree.end()) {
+	bool found = false;
+	map<string,pairtree,natural_less>::iterator p;
+	for (p = subtree.begin(); p != subtree.end(); ++p) {
+	  if (!strcmp(p->first.c_str(), subval.c_str())) {
+	    found = true;
+	    break ;
+	  }}
+	if (!found) {
 	  // no node, add new one
-	  pairtree t(subvariable, ivars[subvariable]);
+	  pairtree t(subvariable, subval);
 	  path = t.add(subvar, tmp);
 	  subtree[subval] = t;
 	} else {
-	  path = subtree[subval].add(subvar, tmp);
+	  path = p->second.add(subvar, tmp);
 	}
 	// add current node pair to path
 	path[subvariable] = subval;
