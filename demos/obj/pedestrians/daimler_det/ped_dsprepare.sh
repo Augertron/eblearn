@@ -40,7 +40,7 @@ nbg=1
 # scales in bg images, in terms of factor of the target size, i.e. hxw * scale
 bgscales=5,3.75,2.75
 # initial non-pedestrians should be 15660 to compare with Enzweiler/Gravila
-maxbg=10 #5660
+maxbg=5660
 
 # names
 id=${resize}${h}x${w}_ker${kernel}
