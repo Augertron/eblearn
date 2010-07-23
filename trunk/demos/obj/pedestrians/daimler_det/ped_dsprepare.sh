@@ -17,9 +17,11 @@ meta_email=pierre.sermanet@gmail.com
 machine=banquoa
 # directories
 dataroot=~/${machine}data/ped/daimler_detection/
+#dataroot=/data/pedestrians/daimer_det/
 root=$dataroot/train/data/
 out=$dataroot/ds/
 nopersons_root=$dataroot/train/bg_full/
+#nopersons_root=/data/pedestrians/daimler_det/DaimlerBenchmark/Data/TrainingData/NonPedestrians/
 bin=${HOME}/eblearn/bin/
 
 # target size
@@ -33,10 +35,10 @@ precision=float
 pp=Yp
 kernel=7 #9
 resize=mean #bilinear
-# maximum number of bg extracted per image and per scale
+# maximum number of bg extracted per scale
 nbg=1
 # scales in bg images, in terms of factor of the target size, i.e. hxw * scale
-bgscales=8,6,4
+bgscales=5,3.75,2.75
 # initial non-pedestrians should be 15660 to compare with Enzweiler/Gravila
 maxbg=15660
 
