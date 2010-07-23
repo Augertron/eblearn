@@ -66,6 +66,13 @@ namespace ebl {
     // remove quotes around executable command if present
     if ((exe[0] == '"') && (exe[exe.size() - 1] == '"'))
       exe = exe.substr(1, exe.size() - 2);
+    if (conf.exists_bool("meta_send_email")) {
+      if (conf.exists("meta_email"))
+	cout << "Using email: " << conf.get_string("meta_email") << endl;
+      else
+	cout << "Warning: required sending email but no email address defined."
+	     << endl;
+    }
   }
 
   job::~job() {

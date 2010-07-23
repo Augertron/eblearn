@@ -93,29 +93,57 @@ namespace ebl {
   //! upon failure.
   EXPORT int string_to_int(const string &s);
 
+  //! Convert a string to an int. Throws a const char * exception
+  //! upon failure.
+  EXPORT int string_to_int(const char *s);
+
   //! Convert a string to an unsigned int. Throws a const char * exception
   //! upon failure.
   EXPORT uint string_to_uint(const string &s);
+
+  //! Convert a string to an unsigned int. Throws a const char * exception
+  //! upon failure.
+  EXPORT uint string_to_uint(const char *s);
 
   //! Convert a string to an float. Throws a const char * exception
   //! upon failure.
   EXPORT float string_to_float(const string &s);
 
+  //! Convert a string to an float. Throws a const char * exception
+  //! upon failure.
+  EXPORT float string_to_float(const char *s);
+
   //! Convert a string to an double. Throws a const char * exception
   //! upon failure.
   EXPORT double string_to_double(const string &s);
+
+  //! Convert a string to an double. Throws a const char * exception
+  //! upon failure.
+  EXPORT double string_to_double(const char *s);
 
   //! Convert a string containing a list of uint separated by commas, e.g.
   //! "1,2,3,4" into a list of uints.
   EXPORT list<uint> string_to_uintlist(const string &s);
 
+  //! Convert a string containing a list of uint separated by commas, e.g.
+  //! "1,2,3,4" into a list of uints.
+  EXPORT list<uint> string_to_uintlist(const char *s);
+
   //! Convert a string containing a list of strings separated by commas, e.g.
   //! "errors,2,toto,4" into a list of strings.
   EXPORT list<string> string_to_stringlist(const string &s);
 
+  //! Convert a string containing a list of strings separated by commas, e.g.
+  //! "errors,2,toto,4" into a list of strings.
+  EXPORT list<string> string_to_stringlist(const char *s);
+
   //! Convert a string containing a list of double separated by commas, e.g.
   //! "1,2,3.0,4.0" into a vector of doubles.
   EXPORT vector<double> string_to_doublevector(const string &s);
+
+  //! Convert a string containing a list of double separated by commas, e.g.
+  //! "1,2,3.0,4.0" into a vector of doubles.
+  EXPORT vector<double> string_to_doublevector(const char *s);
 
   //! Convert a map to a string representation.
   template <typename T1, typename T2> string map_to_string(map<T1,T2> &m);

@@ -13,8 +13,8 @@ meta_max_cpus=8
 meta_output_dir=${root}/out/
 # emailing results or not
 meta_send_email=1
-# email to use
-meta_email=pierre.sermanet@gmail.com
+# email to use (use environment variable "myemail")
+meta_email=${myemail}
 # interval in seconds to analyze processes output, and to check who is alive.
 meta_watch_interval=5
 

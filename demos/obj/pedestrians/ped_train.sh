@@ -27,8 +27,8 @@ meta_output_dir=${out}
 meta_name=pedtrain${dset}_${machine}
 # emailing results or not
 meta_send_email=1
-# email to use
-meta_email=pierre.sermanet@gmail.com
+# email to use (use environment variable "myemail")
+meta_email=${myemail}
 # send email with this frequency (if email_iters not defined)
 meta_email_period=1
 
