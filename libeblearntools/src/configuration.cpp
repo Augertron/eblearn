@@ -121,7 +121,8 @@ namespace ebl {
     }
   }
 
-  string resolve(string_map_t &m, const string &variable, const string &v) {
+  string resolve(string_map_t &m, const string &variable, const string &v,
+		 bool firstonly = false) {
     string res(v);
     if (v.size() == 0)
       return res;
@@ -162,10 +163,24 @@ namespace ebl {
       return res;
     } else { // 2. no quotes are present, simply resolve string
       size_t pos = res.find("${");
-      size_t pos2;
+      size_t pos2, pos3;
+      uint cnt = 0;
       // loop until it's all resolved
       while (pos != string::npos) {
+	if (cnt == 1 && firstonly)
+	  break ; // only process first found variable
 	pos2 = res.find("}", pos);
+	pos3 = res.find("${", pos + 2);
+	while (pos3 != string::npos && pos3 < pos2) {
+	  // there is another variable and it's before the closing of current
+	  // recursively call on rest of the string
+	  string rest = res.substr(pos + 2);
+	  string var = resolve(m, variable, rest, true);
+	  res = res.substr(0, pos + 2);
+	  res += var;
+	  pos2 = res.find("}", pos);
+	  pos3 = res.find("${", pos + 2);
+	}
 	if (pos2 == string::npos) {
 	  cerr << "unmatched closing bracket in: " << v << endl;
 	  eblerror("error resolving variables in configuration");
@@ -187,6 +202,7 @@ namespace ebl {
 	}
 	// check if we have more variables to resolve
 	pos = res.find("${", pos2);
+	cnt++;
       }
       return res;
     }
