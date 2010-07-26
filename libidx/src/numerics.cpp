@@ -47,7 +47,10 @@ namespace ebl {
   double dtanh(double x) {
     double e = exp(-2*(double)(x));
     double e1 = 1+e;
-    return ((4*e)/(e1*e1));
+    e1 = e1*e1;
+    if (isinf(e1))
+      return 0.0;
+    return ((4*e)/e1);
   }
 
   ////////////////////////////////////////////////////////////////

@@ -162,22 +162,15 @@ namespace ebl {
     if (!allocated && !scale_mode)
       return false;
     cmatch what;
-    regex hidden_dir(".svn");
-    bool found = false;
+    regex hidden_dir(".svn");    
     directory_iterator end_itr; // default construction yields past-the-end
     for (directory_iterator itr(inroot); itr != end_itr; itr++) {
       if (is_directory(itr->status())
 	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
-	found = true;
 	// process subdirs to extract images into the single image idx
 	process_dir(itr->path().string(), extension, itr->leaf());
       }}
-    if (found)
-      cerr << "Samples adding failures: " << add_errors << endl;
-    else {
-      cerr << "No class found in " << inroot << endl;
-      return false;
-    }
+    cerr << "Samples adding failures: " << add_errors << endl;
 #endif /* __BOOST__ */
     return true;
   }

@@ -35,6 +35,7 @@ void idxops_test::test_idx_sums() {
 			*lmc = (unsigned char) i;
 			i++;
 		}
+		mc.set(0, 0, 0);
 		//m.printElems();
 		//mc.printElems();
 		CPPUNIT_ASSERT(idx_sum(m) == 54);
@@ -44,10 +45,10 @@ void idxops_test::test_idx_sums() {
 		CPPUNIT_ASSERT(idx_sumacc(m, m0) == 108);
 		CPPUNIT_ASSERT(m0.get() == 108);
 		// Testing non double or float versions.
-		CPPUNIT_ASSERT(idx_sumacc(mc, mc0) == 54);
-		CPPUNIT_ASSERT(mc0.get() == 54);
-		CPPUNIT_ASSERT(idx_sumacc(mc, mc0) == 108);
-		CPPUNIT_ASSERT(mc0.get() == 108);
+		CPPUNIT_ASSERT((ubyte)round(idx_sumacc(mc, mc0)) == 55);
+		CPPUNIT_ASSERT((ubyte)round(mc0.get()) == 55);
+		CPPUNIT_ASSERT((ubyte)round(idx_sumacc(mc, mc0)) == 110);
+		CPPUNIT_ASSERT((ubyte)round(mc0.get()) == 110);
 		// TODO: add tests for non contiguous idx and order of 1
 }
 

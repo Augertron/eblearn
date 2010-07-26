@@ -121,7 +121,31 @@ namespace ebl {
   // defined as long if you want very large arrays
   // on 64 bit machines.
   typedef long intg;
+#if __LP64__ == 1 //intg size is 64bits
+  #define SIZEOFINTG 64
+#else //else, assume that intg size is 32bits
+  #define SIZEOFINTG 32
+#endif
+#ifdef __IPP__
+  #include <ipp.h>
+  typedef Ipp8u ubyte;
+  typedef Ipp8s byte;
+  typedef Ipp16u uint16;
+  typedef Ipp16s int16;
+  typedef Ipp32u uint32;
+  typedef Ipp32s int32;
+  typedef Ipp32f float32;
+  typedef Ipp64f float64;
+#else
   typedef unsigned char ubyte;
+  typedef signed char byte;
+  typedef unsigned short int uint16;
+  typedef signed short int int16;
+  typedef unsigned int uint32;
+  typedef signed int int32;
+  typedef float float32;
+  typedef double float64;
+#endif
 
 } // end namespace ebl
 

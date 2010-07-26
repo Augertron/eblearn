@@ -47,6 +47,7 @@
 #include "MyTextOutputter.h"
 
 #include "idxops_test.h"
+#include "idxops_test2.h"
 #include "ebl_basic_test.h"
 #include "ebl_preprocessing_test.h"
 #include "idxIO_test.h"
@@ -57,6 +58,9 @@
 #include "ClusterTest.h"
 #include "image_test.h"
 #include "ebl_machines_test.h"
+#ifdef __IPP__ 
+#include "ippops_test.h"
+#endif
 
 #ifdef __DEBUGMEM__
   INIT_DEBUGMEM()
@@ -161,11 +165,15 @@ int main(int argc, char **argv) {
   runner.addTest(IdxTest::suite());
   runner.addTest(IdxIteratorsTest::suite());
   runner.addTest(idxops_test::suite());
+  runner.addTest(idxops_test2::suite());
+#ifdef __IPP__
+  runner.addTest(ippops_test::suite());
+#endif
+  runner.addTest(ebl_basic_test::suite());
+  runner.addTest(ebl_preprocessing_test::suite());
   runner.addTest(idxIO_test::suite());
   runner.addTest(image_test::suite());
-  runner.addTest(ebl_preprocessing_test::suite());
   runner.addTest(datasource_test::suite());
-  runner.addTest(ebl_basic_test::suite());
   runner.addTest(detector_test::suite());
   runner.addTest(ebl_machines_test::suite());
 

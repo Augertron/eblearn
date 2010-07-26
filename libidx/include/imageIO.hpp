@@ -49,8 +49,6 @@
 #include <Magick++.h>
 #endif
 
-#include <string.h>
-#include <errno.h>
 #include "config.h"
 #include "idxIO.h"
 
@@ -76,22 +74,12 @@ namespace ebl {
     FILE* fp = POPEN(cmd.str().c_str(), "r");
 #endif
     if (!fp) {
-      err << "conversion of image " << fname << " failed (errno: " 
-	  << errno << ", " << strerror(errno) << ")";
+      err << "conversion of image " << fname << " failed";
       throw err.str();
     }
-    try {
     // read pnm image
     tmp = pnm_read(fp);
-    } catch (string &err) {
-      if (PCLOSE(fp) != 0) {
-	cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
-      }
-      throw err;
-    }
-    if (PCLOSE(fp) != 0) {
-      cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
-    }
+    PCLOSE(fp);
 #else
 #ifdef __MAGICKPP__
     // we are under any platform, convert is not available but Magick++ is

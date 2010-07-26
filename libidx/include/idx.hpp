@@ -95,6 +95,11 @@ namespace ebl {
   if (!(src0).contiguousp() || !(src1).contiguousp())			\
     eblerror("idx must be contiguous\n");
 
+  //! Calls eblerror if src0 and src1 are not contiguous.
+#define idx_check_contiguous3(src0, src1, src2)				\
+  if (!(src0).contiguousp() || !(src1).contiguousp() || !(src2.contiguousp())) \
+    eblerror("idx must be contiguous\n");
+
   //! Calls eblerror if src0 and src1 have different number of elements.
 #define idx_checknelems2_all(src0, src1)				\
   if ((src0).nelements() != (src1).nelements()) {			\
@@ -1361,12 +1366,12 @@ namespace ebl {
     i = 0;
     j = iterand->spec.ndim;
     data = iterand->storage->data + iterand->spec.offset;
+    n = iterand->spec.nelements();
     if (iterand->spec.contiguousp()) {
       d[0] = -1;
     } else {
       for(int i=0; i < iterand->spec.ndim; i++) { d[i] = 0; }
     }
-    n = iterand->spec.nelements();
     return data;
   }
 
@@ -1379,7 +1384,9 @@ namespace ebl {
       // non-contiguous idx
       j--;
       do {
-	if (j<0) break;
+	if (j<0) {
+	  break;
+	}
 	if (++d[j] < iterand->spec.dim[j]) {
 	  data += iterand->spec.mod[j];
 	  j++;
@@ -1392,7 +1399,8 @@ namespace ebl {
     return data;
   }
 
-  template <class T> bool idxiter<T>::notdone() { return ( i < n ); }
+  //template <class T> bool idxiter<T>::notdone() { return done; }
+  template <class T> bool idxiter<T>::notdone() { return (i < n); }
 
 #endif // IF USING_STL_ITERS == 0
 
@@ -1408,7 +1416,7 @@ namespace ebl {
   void idxdim::setdims(const idx<T> &i) {
     setdims(i.spec);
   }
-  
+
 } // namespace ebl
 
 #endif

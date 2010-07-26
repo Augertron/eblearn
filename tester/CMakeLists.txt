@@ -24,6 +24,8 @@ IF (CPPUNIT_FOUND) # compile only if cppunit is present
   ##############################################################################
   add_executable (tester
     src/idxops_test.cpp
+    src/idxops_test2.cpp
+    src/ippops_test.cpp
     src/detector_test.cpp
     src/ClusterTest.cpp
     src/datasource_test.cpp

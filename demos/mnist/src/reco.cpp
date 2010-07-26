@@ -73,7 +73,7 @@ int main(int argc, char **argv) { // regular main without gui
   // display internals of the fprop
 #ifdef __GUI__
   module_1_1_gui l5gui;
-  idx_threshold(stout.x, threshold, (t_net) -1.0, stout.x);
+  idx_threshold(stout.x, threshold, (t_net) -1.0);
   l5gui.display_fprop(l5, stin, stout);
   secsleep(1);
 #endif
