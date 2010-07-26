@@ -48,12 +48,30 @@ namespace ebl {
       load_matrix(*table0, conf.get_string("table0"));
       cout << "Loaded table0 (" << *table0 
 	   << ") from " << conf.get_string("table0") << endl;
+    } else if (conf.exists("table0_max")) {
+      if (conf.exists_true("color")) {
+	idx<intg> t0 = full_table(3, conf.get_int("table0_max"));
+	table0 = new idx<intg>(t0);
+	cout << "Using a full table for table 0: 3 -> "
+	     << conf.get_int("table0_max") << endl;
+      } else {
+	idx<intg> t0 = full_table(1, conf.get_int("table0_max"));
+	table0 = new idx<intg>(t0);
+	cout << "Using a full table for table 0: 1 -> "
+	     << conf.get_int("table0_max") << endl;
+      }
     }
     if (conf.exists("table1")) {
       table1 = new idx<intg>(1, 1);
       load_matrix(*table1, conf.get_string("table1"));
       cout << "Loaded table1 (" << *table1
 	   << ") from " << conf.get_string("table1") << endl;
+    } else if (conf.exists("table1_max") && table0) {
+      intg max0 = idx_max(*table0) + 1;
+      idx<intg> t1 = full_table(max0, conf.get_int("table1_max"));
+      table1 = new idx<intg>(t1);
+      cout << "Using a full table for table 1: " << max0 << " -> "
+	   << conf.get_int("table1_max") << endl;
     }
     if (conf.exists("table2")) {
       table2 = new idx<intg>(1, 1);
@@ -72,7 +90,7 @@ namespace ebl {
 	 conf.get_uint("net_full"), noutputs,
 	 conf.get_bool("absnorm"), conf.get_bool("color"),
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_bool("use_shrink"), table0, table1, table2, in, out);
+	 conf.exists_true("use_shrink"), table0, table1, table2, in, out);
     } else if (!strcmp(net_type.c_str(), "cscsc")) {
       return (module_1_1<T,Tstate>*) new lenet_cscsc<T,Tstate>
 	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
@@ -82,7 +100,7 @@ namespace ebl {
 	 conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
 	 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_bool("use_shrink"), table0, table1, table2, in, out);
+	 conf.exists_true("use_shrink"), table0, table1, table2, in, out);
     } else if (!strcmp(net_type.c_str(), "cscf")) {
       return (module_1_1<T,Tstate>*) new lenet_cscf<T,Tstate>
 	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 
@@ -91,7 +109,7 @@ namespace ebl {
 	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
 	 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_bool("use_shrink"), table0, table1, in, out);
+	 conf.exists_true("use_shrink"), table0, table1, in, out);
     } else if (!strcmp(net_type.c_str(), "cscc")) {
       if (!table0 || !table1 || !table2) 
 	eblerror("undefined connection tables");
@@ -102,7 +120,7 @@ namespace ebl {
 	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"), *table1,
 	 *table2, noutputs, conf.get_bool("absnorm"),
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_bool("use_shrink"), in, out);
+	 conf.exists_true("use_shrink"), in, out);
     } else {
       cerr << "network type: " << net_type << endl;
       eblerror("unknown network type");

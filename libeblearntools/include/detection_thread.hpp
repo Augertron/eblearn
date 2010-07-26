@@ -62,7 +62,7 @@ namespace ebl {
 					   const char *arg2_)
     : conf(conf_), arg2(arg2_), frame(120, 160, 1), mutex_in(), mutex_out(),
       in_updated(false), out_updated(false), bavailable(false),
-      frame_name(""), outdir("") {
+      frame_name(""), outdir(""), total_saved(0) {
   }
 
   template <typename Tnet>
@@ -95,7 +95,8 @@ namespace ebl {
  
   template <typename Tnet>
   bool detection_thread<Tnet>::get_data(vector<bbox*> &bboxes2,
-					idx<ubyte> &frame2) {
+					idx<ubyte> &frame2,
+					uint &total_saved_) {
     // lock data
     pthread_mutex_lock(&mutex_out);
     // only read data if it has been updated
@@ -121,6 +122,8 @@ namespace ebl {
       frame2.resize(uframe.get_idxdim());
     // copy frame
     idx_copy(uframe, frame2);    
+    // set total of boxes saved
+    total_saved_ = total_saved;
     // reset updated flag
     out_updated = false;
     // declare thread as available
@@ -312,6 +315,7 @@ namespace ebl {
 	 			       (Tnet)-1.1, (Tnet)1.1, wid); 
 	 enable_window_updates();
        }
+       total_saved = detect.get_total_saved();
        if (display_states) {
 	 dgui.display_current(detect, frame, wid_states);
 	 select_window(wid);

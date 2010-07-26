@@ -65,7 +65,8 @@ namespace ebl {
     //! We get the frame back even though it was set via set_data,
     //! because we do not know which frame was actually used.
     //! (could use some kind of id, and remember frames to avoid copy).
-    virtual bool get_data(vector<bbox*> &bboxes, idx<ubyte> &frame);
+    virtual bool get_data(vector<bbox*> &bboxes, idx<ubyte> &frame,
+			  uint &total_saved);
     //! Return true if the thread is available to process a new frame, false
     //! otherwise.
     virtual bool available();
@@ -96,6 +97,7 @@ namespace ebl {
     bool                         bavailable;    // thread is available
     string                       frame_name;    // name of current frame
     string                       outdir;        // output directory
+    uint                         total_saved;
   };
 
 } // end namespace ebl

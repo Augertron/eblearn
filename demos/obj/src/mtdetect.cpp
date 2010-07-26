@@ -93,6 +93,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	nthreads = (std::max)((uint) 1, conf.get_uint("nthreads"));
       list<detection_thread<t_net>*>  threads;
       list<detection_thread<t_net>*>::iterator ithreads;
+      idx<uint> total_saved(nthreads);
+      idx_clear(total_saved);
       cout << "Initializing " << nthreads << " detection threads." << endl;
       for (uint i = 0; i < nthreads; ++i) {
 	detection_thread<t_net> *dt = new detection_thread<t_net>(conf);
@@ -182,9 +184,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	// get a new frame
 	tpass.restart();
 	// check for results and send new image for each thread
-	for (ithreads = threads.begin(); ithreads != threads.end(); ++ithreads){
+	uint i = 0;
+	for (ithreads = threads.begin(); 
+	     ithreads != threads.end(); ++ithreads, ++i) {
 	  // retrieve new data if present
-	  updated = (*ithreads)->get_data(bboxes, detframe);
+	  updated = (*ithreads)->get_data(bboxes, detframe, 
+					  *(total_saved.idx_ptr() + i));
 	  // save bounding boxes
 	  if (updated) {
 	    for (ibboxes = bboxes.begin(); ibboxes != bboxes.end(); ++ibboxes) {
@@ -196,6 +201,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    }
 	    updated = false;
 	    cnt++;
+	    cout << "total_saved=" << idx_sum(total_saved) << endl;
 	    cout << "i=" << cnt << endl;
 	  }
 	  // check if ready
@@ -217,16 +223,16 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	// ms = tpass.elapsed_milliseconds();
 	// cout << "processing: " << ms << " ms." << endl;
 	// cout << "fps: " << cam->fps() << endl;
-	// // sleep display
-	// if (display_sleep > 0) {
-	//   cout << "sleeping for " << display_sleep << "ms." << endl;
-	//   millisleep(display_sleep);
-	// }
-	// if (conf.exists("save_max") && 
-	//     detect.get_total_saved() > conf.get_uint("save_max")) {
-	//   cout << "Reached max number of detections, exiting." << endl;
-	//   break ; // limit number of detection saves
-	// }
+	// sleep display
+// 	if (display_sleep > 0) {
+// 	  cout << "sleeping for " << display_sleep << "ms." << endl;
+// 	  millisleep(display_sleep);
+// 	}
+	if (conf.exists("save_max") && 
+	    idx_sum(total_saved) > conf.get_uint("save_max")) {
+	  cout << "Reached max number of detections, exiting." << endl;
+	  break ; // limit number of detection saves
+	}
 	// sleep a bit between each iteration
 	millisleep(10);
       }

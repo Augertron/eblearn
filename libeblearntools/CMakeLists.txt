@@ -155,6 +155,15 @@ add_executable (metaparse
 target_link_libraries (metaparse eblearntools)
 LINK_BOOST(metaparse)
 
+# compile executable: maketable
+################################################################################
+add_executable (maketable
+  src/maketable.cpp
+  )
+
+# link executable with external libraries
+target_link_libraries (maketable idx eblearn)
+
 # compile executable: videoffinder
 ################################################################################
 # IF (OpenCV_FOUND) #-------------------------------------------------------------

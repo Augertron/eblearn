@@ -459,7 +459,6 @@ namespace ebl {
       table1 = idx<intg>(60, 2);
       memcpy(table1.idx_ptr(), connection_table_6_16,
 	     table1.nelements() * sizeof (intg));
-      table2 = full_table(16, output_size);
     } else { // for color (assuming 3-layer input), use bigger tables
       table0 = idx<intg>(14, 2);
       intg tbl0[14][2] = {{0, 0},  {0, 1},  {0, 2}, {0, 3},  {1, 4},  {2, 4},
@@ -469,7 +468,6 @@ namespace ebl {
       table1 = idx<intg>(96, 2);
       memcpy(table1.idx_ptr(), connection_table_8_24,
 	     table1.nelements() * sizeof (intg));
-      table2 = full_table(24, output_size);
     }
     // overide default tables if defined
     if (table0_)
@@ -478,6 +476,13 @@ namespace ebl {
       table1 = *table1_;
     if (table2_)
       table2 = *table2_;
+    else {
+      // determine max of previous table
+      idx<intg> outtable = table1.select(1, 1);
+      table2 = full_table(idx_max(outtable) + 1, output_size);
+      cout << "Using a full table for table 2: " << idx_max(outtable) + 1
+	   <<  " -> " << output_size << endl;
+    }
       
     // WARNING: those two numbers must be changed
     // when image-height/image-width change
