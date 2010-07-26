@@ -34,6 +34,9 @@
 
 #include "defines.h"
 #include <cmath>
+#include <limits>
+#include <cfloat>
+#include "defines.h"
 
 namespace ebl {
 
@@ -108,6 +111,54 @@ namespace ebl {
 
   //! n choose k (k must be <= n)
   EXPORT int choose(int n, int k);
+
+  ////////////////////////////////////////////////////////////////
+  
+  template <typename T> class limits {
+  public:
+    static inline T max () { return std::numeric_limits<T>::max(); };
+    static inline T min () { return std::numeric_limits<T>::min(); };
+  };
+  template <> class limits<float32> {
+  public:
+    static inline float32 max () {
+      return FLT_MAX;
+    }
+    static inline float64 min () {
+      return - FLT_MAX;
+    }
+  };
+  template <> class limits<float64> {
+  public:
+    static inline float64 max () {
+      return DBL_MAX;
+    }
+    static inline float64 min () {
+      return - DBL_MAX;
+    }
+  };
+  template <> class limits<long double> {
+  public:
+    static inline long double max () {
+      return LDBL_MAX;
+    }
+    static inline long double min () {
+      return - LDBL_MAX;
+    }
+  };
+  
+  template <typename T> class saturator {
+  public:
+    template <typename T2> inline static T saturate (T2 in) {
+      if (in > limits<T>::max())
+	return limits<T>::max();
+      else if (in < limits<T>::min())
+	return limits<T>::min();
+      else
+	return (T)in;
+    }
+  };
+  #define saturate(in, T) (saturator<T>::saturate(in))
 
   } // end namespace ebl
 

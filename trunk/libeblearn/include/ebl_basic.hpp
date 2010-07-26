@@ -207,21 +207,47 @@ namespace ebl {
     idx_clear(out.x);
     // convolve 2D slice for each convolution kernel
     { idx_bloop2(lk, kernel.x, T, lt, table, intg) {
-	idx<T> suin(uuin.select(0, lt.get(0)));
 	idx<T> sout((out.x).select(0, lt.get(1)));
 #ifdef __IPP__
 	if (float_precision) {
 	  rev_idx2_tr(lk, revkernel);
 	  //	  idx_clear(outtmp);
+	  idx<T> suin(in.x.select(0, lt.get(0)));
 	  ipp_convolution(suin, revkernel, outtmp);
 	  ipp_add(outtmp, sout);
 	}
-	else // not using IPP
+	else {// not using IPP
+	  idx<T> suin(uuin.select(0, lt.get(0)));
 	  idx_m4dotm2acc(suin, lk, sout); // 2D convolution
+	}
 #else
-	idx_m4dotm2acc(suin, lk, sout); // 2D convolution
+	  idx<T> suin(uuin.select(0, lt.get(0)));
+	  idx_m4dotm2acc(suin, lk, sout); // 2D convolution
 #endif
-      }}
+      }
+    }
+#ifdef __DUMP_STATES__ // used to debug
+    ostringstream fname;
+    fname << "dump_" << this->name << "_convolution_module_kernels_"
+	  << kernel.x << ".mat";
+    save_matrix(kernel.x, fname.str());
+    fname.str("");
+    fname << "dump_" << this->name << "_convolution_module_in.x_" << in.x
+	  << ".mat";
+    save_matrix(in.x, fname.str());
+    fname.str("");
+    fname << "dump_" << this->name << "_convolution_module_ker.x_" << kernel.x
+	  << ".mat";
+    save_matrix(kernel.x, fname.str());
+    fname.str("");
+    fname << "dump_" << this->name << "_convolution_module_table_" << table
+	  << ".mat";
+    save_matrix(table, fname.str());
+    fname.str("");
+    fname << "dump_" << this->name << "_convolution_module_out.x_" << out.x
+	  << ".mat";
+    save_matrix(out.x, fname.str());
+#endif
 #ifdef __DUMP_STATES__ // used to debug
     ostringstream fname;
     fname << "dump_" << this->name << "_convolution_module_kernels_"

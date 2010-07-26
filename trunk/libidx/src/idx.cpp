@@ -395,13 +395,13 @@ namespace ebl {
   }
 
   //! total number of elements accessed by idxspec
-  intg idxspec::nelements() {
+  intg idxspec::nelements() const {
     intg r = 1;
     for(int i=0; i<ndim; i++){ r *= dim[i]; }
     return r;
   }
 
-  bool idxspec::contiguousp() {
+  bool idxspec::contiguousp() const {
     intg size = 1; bool r = true;
     for(int i=ndim-1; i>=0; i--){
       if (size != mod[i]) r = false;

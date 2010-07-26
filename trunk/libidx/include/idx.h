@@ -218,12 +218,12 @@ namespace ebl {
     intg footprint();
 
     //! total number of elements accessed by idxspec
-    intg nelements();
+    intg nelements() const;
 
     //! returns true if the idxspec elements are
     //! in a continuous chunk of memory. This is useful
     //! to optimize iterators over the data.
-    bool contiguousp();
+    bool contiguousp() const;
 
     ////////////////////////////////////////////////////////////////
     //! print methods
@@ -304,6 +304,8 @@ namespace ebl {
     friend class idxdim;
     template <class T> friend class idxiter;
     template <class T> friend class idxlooper;
+    template <class T> friend class contiguous_idxiter;
+    template <class T> friend class noncontiguous_idxiter;
     template <class T> friend class idx;
     template <class T> friend class ScalarIter_Base;
     template <class T> friend class ScalarIter;
@@ -396,7 +398,7 @@ namespace ebl {
     //! the storage and set offset to zero.
     idx(int n, intg *dims, intg *mods);
         
-  idx(const idx<T>& other)
+    idx(const idx<T>& other)
     : storage(other.storage), pidxdim(NULL), spec(other.spec) {
       storage->lock();
     }
@@ -609,13 +611,13 @@ namespace ebl {
     virtual srg<T> *getstorage() { return storage; }
 
     //! return size of idx in d-th dimension.
-    virtual intg dim(int d) { return spec.dim[d]; }
+    virtual intg dim(int d) const { return spec.dim[d]; }
 
     //! return const ptr to dims
     virtual const intg* dims(){ return spec.dim; }
 
     //! return stride of idx in d-th dimension.
-    virtual intg mod(int d) { return spec.mod[d]; }
+    virtual intg mod(int d) const { return spec.mod[d]; }
 
     //! return const ptr to mods
     virtual const intg* mods(){ return spec.mod; }
@@ -627,7 +629,7 @@ namespace ebl {
     virtual intg offset() { return spec.offset; }
 
     //! return total number of elements
-    virtual intg nelements() { return spec.nelements(); }
+    virtual intg nelements() const { return spec.nelements(); }
 
     //! return total footprint in the storage
     //! (index after last cell occupied in the storage)
@@ -635,7 +637,7 @@ namespace ebl {
 
     //! return true if elements of idx are
     //! contiguous in memory.
-    virtual bool contiguousp() { return spec.contiguousp(); }
+    virtual bool contiguousp() const { return spec.contiguousp(); }
 
     //! return element if this is an idx0,
     //! otherwise generate an error
@@ -663,6 +665,9 @@ namespace ebl {
 
     //! return pointer on data chunk (on first element)
     virtual T *idx_ptr() {  return storage->data + spec.offset; }
+
+    //! return pointer on data chunk (on first element), const version
+    virtual const T *idx_ptr() const {  return storage->data + spec.offset; }
 
     //! return a pointer to an element (idx0 version)
     virtual T *ptr() { if (spec.ndim != 0) eblerror("not an idx0"); 
@@ -730,6 +735,8 @@ namespace ebl {
 
     template <class U> friend class idxiter;
     template <class U> friend class idxlooper;
+    template <class U> friend class contiguous_idxiter;
+    template <class U> friend class noncontiguous_idxiter;
 #endif
 
   };
@@ -823,6 +830,137 @@ namespace ebl {
     T& operator*() { return *data; }
 
   };
+
+  template <class T> class contiguous_idxiter {
+  public:
+    T *current, *end;
+    inline contiguous_idxiter() {}
+    inline contiguous_idxiter(idx<T> & m)
+      :current(m.storage->data + m.spec.offset), end(NULL) {
+#ifdef __DEBUG__
+      assert(m.contiguousp());
+#endif
+      end = current + (unsigned)m.nelements();
+    }
+    //inline intg i ();
+    inline bool notdone () const {return current < end;}
+    inline void next() {++current;}
+    inline T& operator * () {return *current;}
+    inline void operator += (intg i) {current += i;}
+  };
+
+  template <class T> class noncontiguous_idxiter {
+  public:
+    T* data;
+    intg d[MAXDIMS];
+    intg i, n;
+    int j, jmax;
+    idx<T>* iterand;
+    inline noncontiguous_idxiter() {}
+    inline noncontiguous_idxiter(idx<T> & m)
+      :data(m.storage->data + m.spec.offset), i(0), j(m.spec.ndim - 1),
+       jmax(m.spec.ndim - 1), n(m.spec.nelements()), iterand(&m) {
+      memset(d, 0, MAXDIMS * sizeof(intg));
+    }
+    inline bool notdone () const {return i < n;}
+    inline void next () {
+      ++i;
+      while (j >= 0) {
+	if (++d[j] >= iterand->spec.dim[j]) {
+	  data -= iterand->spec.dim[j] * iterand->spec.mod[j]; //TODO precalculate?
+	  d[j--] = -1;
+	  continue;
+	}
+	data += iterand->spec.mod[j];
+	if (j != jmax)
+	  j++;
+	else
+	  return;
+      }
+    }
+    inline T& operator * () {return *data;}
+    inline void operator += (intg k) {
+      if (k + i >= n) {
+	i = n;
+	return;
+      }
+      i += k;
+      intg m = 1;
+      intg t;
+      while ((t = (iterand->spec.dim[j] - d[j]) * m) < k) {
+	k += d[j];
+	d[j] = 0;
+	data -= d[j] * iterand->spec.mod[j];
+	m *= iterand->spec.dim[j];
+	--j;
+      }
+      for(;;) {
+	t = k/m;
+	d[j] += t;
+	data += iterand->spec.mod[j] * t;
+	if (j == jmax)
+	  return;
+	++j;
+	k -= t*m;
+	m /= iterand->spec.dim[j];
+      }
+    }
+  };
+
+#define new_fast_idxiter(itr, src, type, code)		\
+  if (src.contiguousp()) {				\
+    contiguous_idxiter<type> itr (src);			\
+    code						\
+  } else {						\
+    noncontiguous_idxiter<type> itr (src);		\
+    code						\
+  }
+
+#define idx_aloopf1(itr0, src0, type0, code)				\
+  if (src0.contiguousp()) {						\
+    for (contiguous_idxiter<type0> itr0 (src0); itr0.notdone(); itr0.next()) \
+      code								\
+  } else {							        \
+    for (noncontiguous_idxiter<type0> itr0 (src0); itr0.notdone(); itr0.next()) \
+      code								\
+  }
+
+#define idx_aloopf2(itr0, src0, type0, itr1, src1, type1, code)		\
+  if (src0.contiguousp()) {						\
+    if (src1.contiguousp()) {						\
+      contiguous_idxiter<type0> itr0 (src0);				\
+      contiguous_idxiter<type1> itr1 (src1);				\
+      for (; itr0.notdone(); itr0.next(), itr1.next())			\
+	code								\
+    } else {							        \
+      contiguous_idxiter<type0> itr0 (src0);				\
+      noncontiguous_idxiter<type1> itr1 (src1);				\
+      for (; itr0.notdone(); itr0.next(), itr1.next())			\
+	code								\
+    }								        \
+  } else {								\
+    if (src1.contiguousp()) {						\
+      noncontiguous_idxiter<type0> itr0 (src0);				\
+      contiguous_idxiter<type1> itr1 (src1);				\
+      for (; itr0.notdone(); itr0.next(), itr1.next())			\
+	code								\
+    } else {							        \
+      noncontiguous_idxiter<type0> itr0 (src0);				\
+      noncontiguous_idxiter<type1> itr1 (src1);				\
+      for (; itr0.notdone(); itr0.next(), itr1.next())			\
+	code								\
+    }								        \
+  }
+
+#define idx_aloopf3(itr0, src0, type0, itr1, src1, type1, itr2, src2, type2, code) \
+  new_fast_idxiter(itr0, src0, type0, {					\
+    new_fast_idxiter(itr1, src1, type1, {				\
+      new_fast_idxiter(itr2, src2, type1, {				\
+	for (; itr0.notdone(); itr0.next(), itr1.next(), itr2.next())	\
+	  code								\
+      })								\
+    })								        \
+  })
 
   ////////////////////////////////////////////////////////////////
 #endif // if USING_STL_ITERS == 0

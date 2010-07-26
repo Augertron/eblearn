@@ -29,6 +29,18 @@ SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}"
 # check for required and optional external packages
 FIND_PACKAGE(All)
 
+# check OpenMP flag
+IF ($ENV{USEOPENMP})
+   MESSAGE(STATUS "Using OpenMP.")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__OPENMP__ --openmp")
+ENDIF ($ENV{USEOPENMP})
+
+# check SSE flag
+IF ($ENV{USESSE})
+   MESSAGE(STATUS "Using SSE.")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__USE_SSE__ -msse")
+ENDIF ($ENV{USESSE})
+
 # IF (NOT WINDOWS)
 #   # Allow default templates in templated functions
 #   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x"
@@ -80,11 +92,12 @@ SET(LIBIDXGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libidxgui/include)
 ################################################################################
 MACRO(LINK_BOOST project)
 IF (Boost_FOUND)
+    MESSAGE( "boost system " ${Boost_SYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY} )
 #  IF (${Boost_MINOR_VERSION} GREATER 34)
-#    TARGET_LINK_LIBRARIES(${project} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+    TARGET_LINK_LIBRARIES(${project} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
 #  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(${project} ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
+#    TARGET_LINK_LIBRARIES(${project} ${Boost_FILESYSTEM_LIBRARY} 
+#      ${Boost_REGEX_LIBRARY})
 #  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
 ENDIF (Boost_FOUND)
 ENDMACRO(LINK_BOOST)

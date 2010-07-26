@@ -425,6 +425,45 @@ void IdxTest::test_IdxIter() {
   }
 }
 
+// Testing idxIter and aloop macros (michael, TODO)
+void IdxTest::test_IdxIter2() {
+  idx<double> m(3, 4);
+
+  // Testing idxIter on m (contiguous)
+  CPPUNIT_ASSERT_EQUAL(true, m.contiguousp());
+
+#if USING_STL_ITERS == 0
+  {
+    contiguous_idxiter<double> iter(m);
+    idxiter<double> iter2;
+    iter2.init(m);
+    while(iter.notdone() && iter2.notdone()) {
+      CPPUNIT_ASSERT_EQUAL(*iter, *iter2);
+      iter.next();
+      iter2.next();
+    }
+    CPPUNIT_ASSERT_EQUAL(iter.notdone(), false);
+    CPPUNIT_ASSERT_EQUAL(iter2.notdone(), false);
+  }
+
+  // Testing idxIter on m.narrow(1,2,1) (non-contiguous)
+  {
+    idx<double> z = m.narrow(1, 2, 1);
+    CPPUNIT_ASSERT_EQUAL(false, z.contiguousp());
+    noncontiguous_idxiter<double> iter(z);
+    idxiter<double> iter2;
+    iter2.init(z);
+    while(iter.notdone() && iter2.notdone()) {
+      CPPUNIT_ASSERT_EQUAL(*iter, *iter2);
+      iter.next();
+      iter2.next();
+    }
+    CPPUNIT_ASSERT_EQUAL(iter.notdone(), false);
+    CPPUNIT_ASSERT_EQUAL(iter2.notdone(), false);
+  }
+#endif
+}
+
 // Testing idxLooper and bloop/eloop macros
 void IdxTest::test_Idx_macros() {
   idx<double> m(3, 4);

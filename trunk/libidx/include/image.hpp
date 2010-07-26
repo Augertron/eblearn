@@ -1033,7 +1033,7 @@ namespace ebl {
     // sqrt(sum_j (w_j (in - mean)^2))
     idx_sqrt(out3, out3);    
     // std(std < 1) = 1
-    idx_threshold(out3, (T)1.0, out3);
+    idx_threshold(out3, (T)1.0);
     // 1/std
     idx_inv(out3, out3);
     // out = (in - mean) / std
