@@ -1,30 +1,36 @@
 #!/bin/sh
 
-dset=_nicta
-h=80
-w=32
-traindsname=ped${dset}_mean${h}x${w}_ker7_bg_train
-valdsname=ped${dset}_mean${h}x${w}_ker7_bg_val
+h=96
+w=48
+traindsname=ped_daimlerdet_mean${h}x${w}_ker7_bg_train
+valdsname=ped_daimlerdet_mean${h}x${w}_ker7_bg_val
 
-machine=greendot
-eblearnbin0=~/eblearn2/bin/
-metaconf_name=ped_meta.conf
-save_max=7500
-n_retrain_dirs=5
+ebl=$HOME/eblearn/
+machine=banquoa
+eblearnbin0=$ebl/bin/
+metaconf_name=daimlerdet_meta.conf
+# max number of false positives to extract per iteration
+save_max=15660
+# max number of false positives to extract per full image
+save_max_per_frame=10
+# number of threads to use duing false positive extraction
+nthreads=6
+# maximum number of retraining iterations
+maxiteration=10
 
 ################################################################################
 # meta commands
 ################################################################################
 
 # required variables
-meta_command="sh ped_train.sh"
+meta_command="sh train.sh"
 
 # optional meta variables ######################################################
 
 # directory where to write outputs of all processes
 meta_output_dir=${out}
 # name of this meta job
-meta_name=pedtrain${dset}_${machine}
+meta_name=daimlerdet_${machine}
 # emailing results or not
 meta_send_email=1
 # email to use (use environment variable "myemail")
@@ -38,7 +44,7 @@ meta_watch_interval=120
 # be used to report best weights, or start consequent training
 meta_minimize=i
 # send n best answers that minimize meta_minimize's value
-meta_send_best=15
+meta_send_best=5
 
 ################################################################################
 # variables
@@ -47,22 +53,19 @@ meta_send_best=15
 # directories
 tstamp=`date +"%Y%m%d.%H%M%S"`
 xpname=${meta_name}_${tstamp}
-root=~/${machine}data/pedestrians/
-root2=~/${machine}data/
-dataroot=$root/ds3
+root=~/${machine}data/ped/daimler_detection/
+dataroot=$root/ds/
 out=$root/out/$xpname/
 eblearnbin=${out}/bin/
-nopersons_root=$root2/nopersons_nicta/
+nopersons_root=$root/train/bg_full/
 
 # variables
 
-metaconf0=${eblearnbin}/${metaconf_name}
+metaconf0=$ebl/demos/pedestrians/daimler_det/${metaconf_name}
 metaconf=${out}/${metaconf_name}
 
 precision=float
 
-# maximum number of retraining iterations
-maxiteration=10
 # threshold will be decremented at each iter until -.95
 threshold=.9
 
@@ -91,7 +94,7 @@ echo "meta_output_dir = ${out}" >> $metaconf
 # initial training
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
-echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
+echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
 echo "meta_name = ${meta_name}" >> $metaconf
 ${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
 #touch /home/sermanet/humairadata/pedestrians/out/pedtrain_nictat_humair_20100509.183243/20100509.183243.ped_humair
@@ -125,27 +128,24 @@ for iter in `seq 1 ${maxiteration}`
   echo "save_video = 0" >> $bestconf
   echo "display = 0" >> $bestconf
   echo "save_max = ${save_max}" >> $bestconf
-  echo "save_max_per_frame = 10" >> $bestconf
+  echo "save_max_per_frame = ${save_max_per_frame}" >> $bestconf
 # add directory where to find trained files
   echo "root2 = ${bestout}" >> $bestconf
 # limit input size 
-  echo "input_max = 900" >> $bestconf
+  echo "input_max = 1000" >> $bestconf
 # decrement threshold, capping at -.95
   threshold=`echo "thr=${threshold} - .2; if (thr < -.95){ thr = -.95;}; print thr" | bc`
   echo "threshold = ${threshold}" >> $bestconf
 # set weights to retrain: same as this conf
   echo "retrain_weights = \${weights}" >> $bestconf
-# add subdirectories of retraining dir
-  echo "retrain_dir = ${nopersons_root}/\${retrain_dir_id}/" >> $bestconf
-  echo -n "retrain_dir_id = " >> $bestconf
-  for idir in `seq 1 ${n_retrain_dirs}`
-    do
-    echo -n "${idir} " >> $bestconf
-  done
+# set where to find full images
+  echo "retrain_dir = ${nopersons_root}/" >> $bestconf
 # override train command by detect command
   echo >> $bestconf
-  echo "meta_command = ${eblearnbin}/objdetect" >> $bestconf
+  echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/mtdetect\"" >> $metaconf
   echo "meta_name = ${meta_name}_falsepos_${iter}" >> $bestconf
+# set multi threads for detection
+  echo "nthreads = ${nthreads}" >> $bestconf
 # start parallelized extraction
   ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
 
@@ -192,7 +192,7 @@ for iter in `seq 1 ${maxiteration}`
 # retrain on old + new data
   echo "Retraining from best previous weights: ${bestweights}"
 # add last weights and activate retraining from those
-  echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
+  echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
   echo "retrain = 1" >> $metaconf
   echo "retrain_weights = ${bestweights}" >> $metaconf
   echo "meta_name = ${meta_name}_retraining_${iter}" >> $metaconf

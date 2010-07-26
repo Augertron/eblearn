@@ -22,113 +22,136 @@ meta_watch_interval=5
 # pascal dataset compilation
 ################################################################################
 
+machine=othelloa
 # directories
-#dataroot=/data
-#dataroot=~/texieradata
-dataroot=~/humairadata
-pascalroot=$dataroot/pascal/VOCdevkit_trainval09/VOC2009/
-root=$dataroot/pascal/
+root=${HOME}/${machine}data/pascal/
+dataroot=$root/VOCdevkit_trainval10/VOC2010/
 out=$root/ds/
+out_cleared=$root/cleared_bg/
 
 # variables
 h=96
 w=${h}
-max=10 # number of samples in validation set
-draws=5 # number of train/val sets to draw
+# number of samples per class in validation set
+maxval=50
+# maximum number of background images to extract
+maxbg=20000
+# number of train/val sets to draw
+draws=5 
 precision=float
 pp=YpUV
-kernel=7 9
-resize=mean bilinear
+kernel=7
+resize=mean #bilinear
+# maximum number of bg extracted per scale
 nbg=2
-bgscales=6,4,2,1
+# scales in bg images, in terms of factor of the target size, i.e. hxw * scale
+bgscales=10,8,6,4
 bboxfact=1.2
-easy=0 1
-occluded=${easy}
-truncated=${easy}
-difficult=0
+
+# difficulty
+easy=0 # 1
+ignore_occluded=${easy}
+ignore_truncated=${easy}
+ignore_difficult=1
 
 # names
-id=${resize}${h}x${w}_ker${kernel}_diff${difficult}trunc${truncated}occl${occluded}
+id=${resize}${h}x${w}_ker${kernel}_idiff${ignore_difficult}_itrunc${ignore_truncated}_ioccl${ignore_occluded}
 name=all_${id}
 namebg=${name}_bg
 bgds=pascalbg_${id}
 outbg=${out}/${bgds}
+
+# parts dataset
+extract_parts=0
 partsname=parts${name}
 
 # debug variables
 # maxdata="-maxdata 50"
 # maxperclass="-maxperclass 25"
-# ddisplay="-disp -sleep 1000"
+#ddisplay="-disp -sleep 1000"
 
 # create directories
 mkdir $out 2> /dev/null > /dev/null
 mkdir $outbg 2> /dev/null > /dev/null
 
 # ignore flags
-if [ $difficult -eq 0 ]
+if [ $ignore_difficult -eq 1 ]
 then
     diff_cmd="-ignore_difficult"
 fi
-if [ $occluded -eq 0 ]
+if [ $ignore_occluded -eq 1 ]
 then
     occl_cmd="-ignore_occluded"
 fi
-if [ $truncated -eq 0 ]
+if [ $ignore_truncated -eq 1 ]
 then
     trunc_cmd="-ignore_truncated"
 fi
 
-# get pascal dataset
-#wget http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar $r3d
-#tar xvf "${pascalroot0}/voctrainval_11-may-2009.tar" -c $pascalroot0/
-#mv $pascalroot0/vocdevkit $pascalroot0/vocdevkit_trainval09
+###############################################################################
+# clearing original images from foreground objects.
+# the resulting images can be used later for bootstrapping.
+###############################################################################
 
-# # extract background images at different scales
-# ~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
-#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
-#     -maxperclass $nbg \
-#     -channels $pp -resize $resize -kernelsz $kernel \
+# # clear previous results
+# rm -Rf $out_cleared
+
+# ~/eblearn/bin/dscompiler $dataroot -type pascalclear -precision $precision \
+#     -outdir $out_cleared -scales $bgscales \
 #     $maxdata $ddisplay # debug
 
-# # compile background dataset
-# ~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
-#     -outdir ${out} -dname ${bgds}_${nbg} $maxdata $maxperclass \
-#     -dims ${h}x${w}x3 \
-#     $maxdata $maxperclass $ddisplay # debug
+# exit # stop here
 
-# # delete temporary images
-# rm -Rf $outbg
+###############################################################################
+# dataset compilations
+###############################################################################
 
-# # compile regular dataset
-# ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
-#     -outdir ${out} -channels $pp -dname $name $diff_cmd $occl_cmd $trunc_cmd \
-#     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 -bboxfact $bboxfact \
-#     $maxdata $maxperclass $ddisplay # debug
+# remove previous background extractions
+rm -Rf $outbg
+
+# extract background images at different scales
+~/eblearn/bin/dscompiler $dataroot -type pascalbg -precision $precision \
+    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+    -maxperclass $nbg -maxdata $maxbg \
+    -channels $pp -resize $resize -kernelsz $kernel \
+    $maxdata $ddisplay # debug
+
+# compile background dataset
+~/eblearn/bin/dscompiler ${outbg} -type regular -precision $precision \
+    -outdir ${out} -dname ${bgds}_${nbg} $maxdata $maxperclass \
+    -dims ${h}x${w}x3 \
+    $maxdata $maxperclass $ddisplay # debug
+
+# delete temporary images
+rm -Rf $outbg
+
+# compile regular dataset
+~/eblearn/bin/dscompiler $dataroot -type pascal -precision $precision \
+    -outdir ${out} -channels $pp -dname $name $diff_cmd $occl_cmd $trunc_cmd \
+    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 -bboxfact $bboxfact \
+    $maxdata $maxperclass $ddisplay # debug
 
 # merge normal dataset with background dataset
 ~/eblearn/bin/dsmerge $out ${namebg} ${name} ${bgds}_$nbg
 
 # split dataset into training/validation
-~/eblearn/bin/dssplit $out ${namebg} ${namebg}_val_${max}_ \
-    ${namebg}_train_${max}_ -maxperclass ${max} -draws $draws
+~/eblearn/bin/dssplit $out ${namebg} ${namebg}_val_ \
+    ${namebg}_train_ -maxperclass ${maxval} -draws $draws
 
 # extract parts dataset
-~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
-    -outdir ${out} -channels $pp -dname $partsname \
-    $diff_cmd $occl_cmd $trunc_cmd \
-    -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
-    -useparts -partsonly -bboxfact $bboxfact \
-    $maxdata $maxperclass $ddisplay # debug
- #-usepose -mindims 16x16 
+if [ $extract_parts -eq 1 ] 
+then
+    ~/eblearn/bin/dscompiler $dataroot -type pascal -precision $precision \
+	-outdir ${out} -channels $pp -dname $partsname \
+	$diff_cmd $occl_cmd $trunc_cmd \
+	-resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
+	-useparts -partsonly -bboxfact $bboxfact \
+	$maxdata $maxperclass $ddisplay # debug
+        #-usepose -mindims 16x16 
+    
+    # print out information about extracted datasets to check that their are ok
+    ~/eblearn/bin/dsdisplay ${out}/${namebg} -info
+fi
 
 # print out information about extracted datasets to check that their are ok
-~/eblearn/bin/dsdisplay ${out}/${namebg} -info
 ~/eblearn/bin/dsdisplay ${out}/${partsname} -info
-
-# email yourself the results
-here=`pwd`
-base="`basename ${here}`"
-tgz_name="logs_${base}.tgz"
-tar czvf ${tgz_name} out*.log
-cat $0 | mutt $meta_email -s "pascal dsprepare" -a ${tgz_name}
-

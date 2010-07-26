@@ -562,15 +562,25 @@ namespace ebl {
     if ((dat.dim(0) < mindims.dim(0))
 	|| (r && (r->height < (uint) mindims.dim(0)))
 	|| (dat.dim(1) < mindims.dim(1))
-	|| (r && (r->width < (uint) mindims.dim(1))))
+	|| (r && (r->width < (uint) mindims.dim(1)))) {
+      cerr << "warning: not adding " << *class_name << " from " << filename
+	   << ": smaller than minimum dimensions (" << dat << " < " 
+	   << mindims << ")" << endl;
       return false;
+    }
     // check that class exists (may not exist if excluded)
     if (classes.size() > 0 && 
-	find(classes.begin(), classes.end(), *class_name) == classes.end())
+	find(classes.begin(), classes.end(), *class_name) == classes.end()) {
+      cerr << "warning: not adding " << *class_name << " from " << filename
+	   << ", this class is excluded." << endl;
       return false;
+    }
     // check for capacity
-    if (full(label)) // reached full capacity
+    if (full(label)) { // reached full capacity
+      cerr << "warning: not adding " << *class_name << " from " << filename
+	   << ", reached full capacity for this class." << endl;
       return false;
+    }
     // increase counter for that class
     add_tally.set(add_tally.get(label) + 1, label);
     // print info

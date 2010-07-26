@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -38,6 +39,7 @@
 #include "dataset.h"
 #include "pascal_dataset.h"
 #include "pascalbg_dataset.h"
+#include "pascalclear_dataset.h"
 #include "pascalfull_dataset.h"
 #include "grid_dataset.h"
 #include "tools_utils.h"
@@ -306,6 +308,7 @@ void print_usage() {
   cout << "     pascal: compile images labeled by xml files (PASCAL challenge)";
   cout << endl;
   cout << "     pascalbg: compile background images of PASCAL challenge"<< endl;
+  cout << "     pascalclear: clear objects from original images of PASCAL challenge"<< endl;
   cout << "     pascalfull: copy full original PASCAL images into outdir"<<endl;
   cout << "       (allows to exclude some classes, then call regular compiler)";
   cout << endl;
@@ -415,6 +418,26 @@ void compile() {
     pascalbg_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
 			       outdir.c_str(), maxperclass, ignore_difficult,
 			       ignore_truncated, ignore_occluded); 
+    if (useparts) ds.use_parts();
+    if (partsonly) ds.use_parts_only();
+    ds.set_exclude(exclude);
+    ds.set_include(include);
+    ds.set_resize(resize);
+    if (outdims_set) ds.set_outdims(outdims);
+    if (mindims_set) ds.set_mindims(mindims);
+    ds.set_nopadded(nopadded);
+    ds.set_display(display);
+    ds.set_sleepdisplay(sleep_delay);
+    ds.set_image_pattern(image_pattern);
+    if (maxdata > 0) ds.set_max_data(maxdata);
+    if (scale_mode) ds.set_scales(scales, outdir);
+    if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
+    if (save_set) ds.set_save(save);
+    ds.extract();
+  }
+  else if (!strcmp(type.c_str(), "pascalclear")) {
+    pascalclear_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
+				  outdir.c_str());
     if (useparts) ds.use_parts();
     if (partsonly) ds.use_parts_only();
     ds.set_exclude(exclude);

@@ -16,11 +16,10 @@ meta_email=${myemail}
 
 machine=banquoa
 # directories
-dataroot=~/${machine}data/ped/daimler_detection/
-#dataroot=/data/pedestrians/daimer_det/
-root=$dataroot/train/data/
-out=$dataroot/ds/
-nopersons_root=$dataroot/train/bg_full/
+root=~/${machine}data/ped/daimler_detection/
+dataroot=$root/train/data/
+out=$root/ds/
+nopersons_root=$root/train/bg_full/
 #nopersons_root=/data/pedestrians/daimler_det/DaimlerBenchmark/Data/TrainingData/NonPedestrians/
 bin=${HOME}/eblearn/bin/
 
@@ -28,7 +27,7 @@ bin=${HOME}/eblearn/bin/
 h=96
 w=48
 chans=1
-# number of samples in validation set
+# number of samples per class in validation set
 maxval=2000
 draws=5 # number of train/val sets to draw
 precision=float
@@ -40,7 +39,7 @@ nbg=1
 # scales in bg images, in terms of factor of the target size, i.e. hxw * scale
 bgscales=5,3.75,2.75
 # initial non-pedestrians should be 15660 to compare with Enzweiler/Gravila
-maxbg=5660
+maxbg=15660
 
 # names
 id=${resize}${h}x${w}_ker${kernel}
@@ -82,6 +81,9 @@ $bin/dscompiler ${outbg} -precision $precision \
 $bin/dscompiler $root -precision $precision -outdir ${out} -channels $pp \
     -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
 #    $maxdata $maxperclass $ddisplay # debug
+
+# delete temporary images
+rm -Rf $outbg
 
 # merge normal dataset with background dataset
 $bin/dsmerge $out ${namebg} ${bgds} ${name}

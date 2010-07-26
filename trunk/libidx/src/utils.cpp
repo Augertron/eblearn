@@ -154,6 +154,6 @@ namespace ebl {
 #else
     usleep(seconds * 1000);
 #endif
-  } 
+  }
   
 } // namespace ebl
