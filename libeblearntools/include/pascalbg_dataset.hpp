@@ -201,10 +201,16 @@ namespace ebl {
       cerr << "error: " << err << endl;
       return false;
     }
-    // load image 
-    idx<ubyte> img = load_image<ubyte>(image_fullname);
-    // extract patches given image and bounding boxes
-    process_image(img, bboxes, image_filename);
+    try {
+      // load image 
+      idx<ubyte> img = load_image<ubyte>(image_fullname);
+      // extract patches given image and bounding boxes
+      process_image(img, bboxes, image_filename);
+    } catch(string &err) {
+      cerr << "error: failed to add " << image_fullname;
+      cerr << ": " << endl << err << endl;
+      add_errors++;
+    }
     return true;
   }
   

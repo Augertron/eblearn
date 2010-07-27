@@ -489,68 +489,72 @@ void compile() {
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char**, argv) { 
 #else
-int main(int argc, char **argv) {
+  int main(int argc, char **argv) {
 #endif
-  cout << "___________________________________________________________________";
-  cout << endl << endl;
-  cout << "             Dataset compiler for libeblearn library " << endl;
-  cout << "___________________________________________________________________";
-  cout << endl;
-  // parse arguments
-  if (!parse_args(argc, argv)) {
-    print_usage();
-    return -1;
-  }
-  // print info
-  cout << "input parameters:" << endl;
-  cout << "  dataset name: " << dataset_name << endl;
-  cout << "  dataset type: " << type << endl;
-  cout << "  dataset precision: " << precision << endl;
-  cout << "  images root directory: " << images_root << endl;
-  cout << "  output directory: " << outdir << endl;
-  cout << "  outputs: " << outdir << "/" << dataset_name << "_*.mat" << endl;
-  cout << "  images pattern: " << image_pattern << endl;
-  cout << "  channels mode: " << channels_mode.c_str() << endl;
-  cout << "  preprocessing: " << (preprocessing ? "yes" : "no") << endl;
-  cout << "  display: " << (display ? "yes" : "no") << endl;
-  cout << "  display sleep: " << sleep_delay << " ms." << endl;
-  cout << "  shuffling: " << (shuffle ? "yes" : "no") << endl;
-  cout << "  usepose: " << (usepose ? "yes" : "no") << endl;
-  cout << "  useparts: " << (useparts ? "yes" : "no") << endl;
-  cout << "  partsonly: " << (partsonly ? "yes" : "no") << endl;
-  cout << "  stereo: " << (stereo ? "yes" : "no") << endl;
-  if (stereo) {
-    cout << "    stereo left pattern: " << stereo_lpattern << endl;
-    cout << "    stereo right pattern: " << stereo_rpattern << endl;
-  }
-  cout << "  max per class limitation: ";
-  if (maxperclass > 0) cout << maxperclass; else cout << "none"; cout << endl;
-  cout << "  max data limitation: ";
-  if (maxdata > 0) cout << maxdata; else cout << "none"; cout << endl;
-  cout << "  mexican_hat_size: " << mexican_hat_size << endl;
-  cout << "  preprocessing kernel size: " << kernelsz << endl;
-  cout << "  deformations: " << deformations << endl;
-  cout << "  resizing method: " << resize << endl;
-  cout << "  output dimensions: " << outdims << endl;
-  cout << "  minimum input dimensions: " << mindims << endl;
-  cout << "  no padded: " << (nopadded ? "yes" : "no") << endl;
-  cout << "  scales: ";
-  if (!scale_mode) cout << "none";
-  else for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i)
-      cout << *i << " ";
-  cout << endl;
-  cout << "___________________________________________________________________";
-  cout << endl;
+    try {
+      cout << "___________________________________________________________________";
+      cout << endl << endl;
+      cout << "             Dataset compiler for libeblearn library " << endl;
+      cout << "___________________________________________________________________";
+      cout << endl;
+      // parse arguments
+      if (!parse_args(argc, argv)) {
+	print_usage();
+	return -1;
+      }
+      // print info
+      cout << "input parameters:" << endl;
+      cout << "  dataset name: " << dataset_name << endl;
+      cout << "  dataset type: " << type << endl;
+      cout << "  dataset precision: " << precision << endl;
+      cout << "  images root directory: " << images_root << endl;
+      cout << "  output directory: " << outdir << endl;
+      cout << "  outputs: " << outdir << "/" << dataset_name << "_*.mat" << endl;
+      cout << "  images pattern: " << image_pattern << endl;
+      cout << "  channels mode: " << channels_mode.c_str() << endl;
+      cout << "  preprocessing: " << (preprocessing ? "yes" : "no") << endl;
+      cout << "  display: " << (display ? "yes" : "no") << endl;
+      cout << "  display sleep: " << sleep_delay << " ms." << endl;
+      cout << "  shuffling: " << (shuffle ? "yes" : "no") << endl;
+      cout << "  usepose: " << (usepose ? "yes" : "no") << endl;
+      cout << "  useparts: " << (useparts ? "yes" : "no") << endl;
+      cout << "  partsonly: " << (partsonly ? "yes" : "no") << endl;
+      cout << "  stereo: " << (stereo ? "yes" : "no") << endl;
+      if (stereo) {
+	cout << "    stereo left pattern: " << stereo_lpattern << endl;
+	cout << "    stereo right pattern: " << stereo_rpattern << endl;
+      }
+      cout << "  max per class limitation: ";
+      if (maxperclass > 0) cout << maxperclass; else cout << "none"; cout << endl;
+      cout << "  max data limitation: ";
+      if (maxdata > 0) cout << maxdata; else cout << "none"; cout << endl;
+      cout << "  mexican_hat_size: " << mexican_hat_size << endl;
+      cout << "  preprocessing kernel size: " << kernelsz << endl;
+      cout << "  deformations: " << deformations << endl;
+      cout << "  resizing method: " << resize << endl;
+      cout << "  output dimensions: " << outdims << endl;
+      cout << "  minimum input dimensions: " << mindims << endl;
+      cout << "  no padded: " << (nopadded ? "yes" : "no") << endl;
+      cout << "  scales: ";
+      if (!scale_mode) cout << "none";
+      else for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i)
+	cout << *i << " ";
+      cout << endl;
+      cout << "___________________________________________________________________";
+      cout << endl;
 
-  // compile with specificed precision
-  if (!strcmp(precision.c_str(), "float"))
-    compile<float>();
-  else if (!strcmp(precision.c_str(), "double"))
-    compile<double>();
-  else {
-    cerr << "error: trying to compile dataset with precision \"" << precision;
-    cerr << "\"" << endl;
-    eblerror("unsupported precision for dataset compilation");
-  }
+      // compile with specificed precision
+      if (!strcmp(precision.c_str(), "float"))
+	compile<float>();
+      else if (!strcmp(precision.c_str(), "double"))
+	compile<double>();
+      else {
+	cerr << "error: trying to compile dataset with precision \"" << precision;
+	cerr << "\"" << endl;
+	eblerror("unsupported precision for dataset compilation");
+      }
+    } catch(string &err) {
+      cerr << err << endl;
+    }
   return 0;
 }

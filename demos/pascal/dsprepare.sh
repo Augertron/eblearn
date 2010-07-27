@@ -56,7 +56,7 @@ ignore_difficult=1
 
 # names
 id=${resize}${h}x${w}_ker${kernel}_idiff${ignore_difficult}_itrunc${ignore_truncated}_ioccl${ignore_occluded}
-name=all_${id}
+name=pascal_${id}
 namebg=${name}_bg
 bgds=pascalbg_${id}
 outbg=${out}/${bgds}
