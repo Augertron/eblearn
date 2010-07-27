@@ -663,19 +663,13 @@ template <typename T> void test_signdotc(intg i1, intg i2, intg i3, intg i4,
 
 void idxops_test2::idx_signdotc2() {
   intg i1 = 42, i2 = 3, i3 = 5, i4 = 12;
-  test_signdotc(i1, i2, i3, i4, get_test_idx<ubyte>(i1, i2, i3, i4), (ubyte)42);
   test_signdotc(i1, i2, i3, i4, get_test_idx<byte>(i1, i2, i3, i4), (byte)(-120));
-  test_signdotc(i1, i2, i3, i4, get_test_idx<uint16>(i1, i2, i3, i4), (uint16)123);
   test_signdotc(i1, i2, i3, i4, get_test_idx<int16>(i1, i2, i3, i4), (int16)40000);
-  test_signdotc(i1, i2, i3, i4, get_test_idx<uint32>(i1, i2, i3, i4), 3000000000u);
   test_signdotc(i1, i2, i3, i4, get_test_idx<int32>(i1, i2, i3, i4), 13246543);
   test_signdotc(i1, i2, i3, i4, get_test_idx<float32>(i1, i2, i3, i4), 12341.423f);
   test_signdotc(i1, i2, i3, i4, get_test_idx<float64>(i1, i2, i3, i4), 1324231.54e42);
-  test_signdotc(i1, i2, i3, i4, get_test_idx_nc<ubyte>(i1, i2, i3, i4), (ubyte)42);
   test_signdotc(i1, i2, i3, i4, get_test_idx_nc<byte>(i1, i2, i3, i4), (byte)(-120));
-  test_signdotc(i1, i2, i3, i4, get_test_idx_nc<uint16>(i1, i2, i3, i4), (uint16)123);
   test_signdotc(i1, i2, i3, i4, get_test_idx_nc<int16>(i1, i2, i3, i4), (int16)40000);
-  test_signdotc(i1, i2, i3, i4, get_test_idx_nc<uint32>(i1, i2, i3, i4), 3000000000u);
   test_signdotc(i1, i2, i3, i4, get_test_idx_nc<int32>(i1, i2, i3, i4), 13246543);
   test_signdotc(i1, i2, i3, i4, get_test_idx_nc<float32>(i1, i2, i3, i4), 12341.423f);
   test_signdotc(i1, i2, i3, i4, get_test_idx_nc<float64>(i1,i2, i3, i4), 1324231.54e42);
@@ -800,18 +794,12 @@ template <typename T> void test_signdotcacc(intg i1, intg i2, intg i3, intg i4,
 
 void idxops_test2::idx_signdotcacc2() {
   intg i1 = 42, i2 = 3, i3 = 5, i4 = 12;
-  test_signdotcacc(i1, i2, i3, i4, get_test_idx<ubyte>(i1, i2, i3, i4),
-	   get_test_idx<ubyte>(i1, i2, i3, i4), (ubyte)65);
   test_signdotcacc(i1, i2, i3, i4, get_test_idx<byte>(i1, i2, i3, i4),
 	   get_test_idx<byte>(i1, i2, i3, i4), (byte)65);
   test_signdotcacc(i1, i2, i3, i4, get_test_idx<byte>(i1, i2, i3, i4),
 	   get_test_idx<byte>(i1, i2, i3, i4), (byte)(-65));
-  test_signdotcacc(i1, i2, i3, i4, get_test_idx<uint16>(i1, i2, i3, i4),
-	   get_test_idx<uint16>(i1, i2, i3, i4), (uint16)6531);
   test_signdotcacc(i1, i2, i3, i4, get_test_idx<int16>(i1, i2, i3, i4),
 	   get_test_idx<int16>(i1, i2, i3, i4), (int16)6531);
-  test_signdotcacc(i1, i2, i3, i4, get_test_idx<uint32>(i1, i2, i3, i4),
-	   get_test_idx<uint32>(i1, i2, i3, i4), (uint32)655432);
   test_signdotcacc(i1, i2, i3, i4, get_test_idx<int32>(i1, i2, i3, i4),
 	   get_test_idx<int32>(i1, i2, i3, i4), (int32)6554321);
   test_signdotcacc(i1, i2, i3, i4, get_test_idx<float32>(i1, i2, i3, i4),
@@ -819,18 +807,12 @@ void idxops_test2::idx_signdotcacc2() {
   test_signdotcacc(i1, i2, i3, i4, get_test_idx<float64>(i1, i2, i3, i4),
 	   get_test_idx<float64>(i1, i2, i3, i4), (float64)65.12);
 
-  test_signdotcacc(i1, i2, i3, i4, get_test_idx_nc<ubyte>(i1, i2, i3, i4),
-	   get_test_idx_nc<ubyte>(i1, i2, i3, i4), (ubyte)65);
   test_signdotcacc(i1, i2, i3, i4, get_test_idx_nc<byte>(i1, i2, i3, i4),
 	   get_test_idx_nc<byte>(i1, i2, i3, i4), (byte)65);
   test_signdotcacc(i1, i2, i3, i4, get_test_idx_nc<byte>(i1, i2, i3, i4),
 	   get_test_idx_nc<byte>(i1, i2, i3, i4), (byte)(-65));
-  test_signdotcacc(i1, i2, i3, i4, get_test_idx_nc<uint16>(i1, i2, i3, i4),
-	   get_test_idx_nc<uint16>(i1, i2, i3, i4), (uint16)6531);
   test_signdotcacc(i1, i2, i3, i4, get_test_idx_nc<int16>(i1, i2, i3, i4),
 	   get_test_idx_nc<int16>(i1, i2, i3, i4), (int16)6531);
-  test_signdotcacc(i1, i2, i3, i4, get_test_idx_nc<uint32>(i1, i2, i3, i4),
-	   get_test_idx_nc<uint32>(i1, i2, i3, i4), (uint32)655432);
   test_signdotcacc(i1, i2, i3, i4, get_test_idx_nc<int32>(i1, i2, i3, i4),
 	   get_test_idx_nc<int32>(i1, i2, i3, i4), (int32)6554321);
   test_signdotcacc(i1, i2, i3, i4, get_test_idx_nc<float32>(i1, i2, i3, i4),
@@ -1316,14 +1298,14 @@ template <typename T> void test_power(intg i1, intg i2, intg i3, intg i4,
 				      idx<T> m1, T p) {
   idx<T> mt(i1, i2, i3, i4), mt2(i1, i2, i3, i4);
   idx_abs(m1, mt);
-  idx_addc(mt, 1, mt);
+  idx_addc(mt, (T)1, mt);
   idx_power(mt, p, mt2);
   for (intg it1 = 0; it1 < i1; ++it1)
     for (intg it2 = 0; it2 < i2; ++it2)
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
 	  ASSERT_EQUAL(mt2.get(it1, it2, it3, it4),
-		       saturate(pow((double)mt.get(it1,it2,it3,it4), p), T));
+		       saturate(pow((double)mt.get(it1,it2,it3,it4), (double)p), T));
 	}
 }
 

@@ -615,10 +615,10 @@
     template<> T idx_sum(idx<T> &inp, T* out) {				\
       if (inp.contiguousp()) {						\
 	if (out != NULL) {						\
-	  *out = ipp_sum(inp);						\
+	  *out = (T)ipp_sum(inp);					\
 	  return *out;							\
 	} else {							\
-	  return ipp_sum(inp);						\
+	  return (T)ipp_sum(inp);					\
 	}								\
       } else {								\
 	/* there is a much faster and parallel way */			\
@@ -638,10 +638,10 @@
     template<> T idx_sum(idx<T> &inp, T* out) {				\
       if (inp.contiguousp()) {						\
 	if (out != NULL) {						\
-	  *out = ipp_sum(inp);						\
+	  *out = (T)ipp_sum(inp);					\
 	  return out;							\
 	} else {							\
-	  return ipp_sum(inp);						\
+	  return (T)ipp_sum(inp);					\
 	}								\
       } else {								\
 	/* there is a much faster and parallel way */			\
