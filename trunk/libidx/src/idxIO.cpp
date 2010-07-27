@@ -138,6 +138,7 @@ namespace ebl {
       if (ndim > MAXDIMS) {
 	err << "too many dimensions: " << ndim << " (MAXDIMS = "
 	    << MAXDIMS << ").";
+	fclose(fp);
 	throw err.str();
       }
     } else if (is_magic_vincent(magic_vincent)) { // vincent magic number
@@ -148,6 +149,7 @@ namespace ebl {
     } else { // unkown magic
       err << "unknown magic number: 0x" << std::hex << magic
 	  << " or " << magic << " vincent: " << magic_vincent;
+      fclose(fp);
       throw err.str();
     }
     // read each dimension
@@ -164,6 +166,7 @@ namespace ebl {
       if (i < ndim) { // ndim may be less than ndim_min
 	if (v <= 0) { // check that dimension is valid
 	  err << "dimension is negative or zero";
+	  fclose(fp);
 	  throw err.str();
 	}
 	dims.insert_dim(v, i); // insert dimension

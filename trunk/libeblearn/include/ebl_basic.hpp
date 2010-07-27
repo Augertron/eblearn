@@ -248,28 +248,6 @@ namespace ebl {
 	  << ".mat";
     save_matrix(out.x, fname.str());
 #endif
-#ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << this->name << "_convolution_module_kernels_"
-	  << kernel.x << ".mat";
-    save_matrix(kernel.x, fname.str());
-    fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_in.x_" << in.x
-	  << ".mat";
-    save_matrix(in.x, fname.str());
-    fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_ker.x_" << kernel.x
-	  << ".mat";
-    save_matrix(kernel.x, fname.str());
-    fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_table_" << table
-	  << ".mat";
-    save_matrix(table, fname.str());
-    fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_out.x_" << out.x
-	  << ".mat";
-    save_matrix(out.x, fname.str());
-#endif
   }
   
   template <typename T, class Tstate>
