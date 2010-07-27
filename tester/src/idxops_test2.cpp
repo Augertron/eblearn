@@ -9,7 +9,7 @@ void idxops_test2::tearDown() {
 }
 
 const float64 epsilon = 1e-4;
-template <typename T> void ASSERT_EQUAL(T a1, T a2) {
+template <typename T> bool EQUAL_UTEST(T a1, T a2) {
   float64 amax, amin;
   if (abs((float64)a1) < abs((float64)a2)) {
     amax = (float64)a2;
@@ -18,19 +18,29 @@ template <typename T> void ASSERT_EQUAL(T a1, T a2) {
     amax = (float64)a1;
     amin = (float64)a2;
   }
-  if (isinf(amin)) {
-    CPPUNIT_ASSERT(isinf(amax));
-    return;
+  if (isinf(abs(amax)))
+    return amin == amax;
+  if (abs(amax) > 1e-30)
+    return (1.0 - epsilon < amin / amax) && (amin / amax < 1.0 + epsilon);
+  return true;
+}
+
+template <typename T> void ASSERT_EQUAL(T a1, T a2) {
+  if (!EQUAL_UTEST(a1, a2)) {
+      cout << endl
+	   << a1 << " (" << (int)a1 << ") "
+	   << a2 << " (" << (int)a2 << ")" << endl;
+      CPPUNIT_ASSERT(false);
   }
-  if (isinf(-amin)) {
-    CPPUNIT_ASSERT(isinf(-amax));
-    return;
-  }
-  if (abs(amax) > 1e-30) {
-    if ((1.0 - epsilon >= amin / amax) || (amin / amax >= 1.0 + epsilon))
-      cout << endl << a1 << " " << a2 << endl;
-    CPPUNIT_ASSERT(1.0 - epsilon < amin / amax);
-    CPPUNIT_ASSERT(amin / amax < 1.0 + epsilon);
+}
+
+template <typename T> void ASSERT_EQUAL2(T a1, T a2, T a3) {
+  if (!(EQUAL_UTEST(a1, a2) || EQUAL_UTEST(a1, a3))) {
+    cout << endl
+	 << a1 << " (" << (int)a1 << ") "
+	 << a2 << " (" << (int)a2 << ") "
+	 << a3 << " (" << (int)a3 << ")" << endl;
+    CPPUNIT_ASSERT(false);
   }
 }
 
@@ -212,10 +222,19 @@ template <typename T> void test_add(intg i1, intg i2, intg i3, intg i4,
     for (intg it2 = 0; it2 < i2; ++it2)
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
+#ifdef __IPP__
+	  ASSERT_EQUAL2(mt.get(it1, it2, it3, it4),
+			saturate(m1.get(it1,it2,it3,it4)+m2.get(it1,it2,it3,it4), T),
+			(T)(m1.get(it1,it2,it3,it4)+m2.get(it1,it2,it3,it4)));
+	  ASSERT_EQUAL2(mt2.get(it1, it2, it3, it4),
+			saturate(m1.get(it1,it2,it3,it4)+m2.get(it1,it2,it3,it4), T),
+			(T)(m1.get(it1,it2,it3,it4)+m2.get(it1,it2,it3,it4)));
+#else
 	  ASSERT_EQUAL(mt.get(it1, it2, it3, it4),
 		       (T)(m1.get(it1,it2,it3,it4)+m2.get(it1,it2,it3,it4)));
 	  ASSERT_EQUAL(mt2.get(it1, it2, it3, it4),
 		       (T)(m1.get(it1,it2,it3,it4)+m2.get(it1,it2,it3,it4)));
+#endif
 	}
 }
 
@@ -263,8 +282,14 @@ template <typename T> void test_addc(intg i1, intg i2, intg i3, intg i4,
     for (intg it2 = 0; it2 < i2; ++it2)
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
+#ifdef __IPP__
+	  ASSERT_EQUAL2(mt.get(it1, it2, it3, it4),
+			saturate(m1.get(it1,it2,it3,it4) + p, T),
+			(T)(m1.get(it1,it2,it3,it4) + p));
+#else
 	  ASSERT_EQUAL(mt.get(it1, it2, it3, it4),
 		       (T)(m1.get(it1,it2,it3,it4) + p));
+#endif
 	}
 }
 
@@ -345,8 +370,14 @@ template <typename T> void test_sub(intg i1, intg i2, intg i3, intg i4,
     for (intg it2 = 0; it2 < i2; ++it2)
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
+#ifdef __IPP__
+	  ASSERT_EQUAL2(mt.get(it1, it2, it3, it4),
+			saturate(m1.get(it1,it2,it3,it4)-m2.get(it1,it2,it3,it4), T),
+			(T)(m1.get(it1,it2,it3,it4)-m2.get(it1,it2,it3,it4)));
+#else
 	  ASSERT_EQUAL(mt.get(it1, it2, it3, it4),
 		       (T)(m1.get(it1,it2,it3,it4)-m2.get(it1,it2,it3,it4)));
+#endif
 	}
 }
 
@@ -471,8 +502,14 @@ template <typename T> void test_mul(intg i1, intg i2, intg i3, intg i4,
     for (intg it2 = 0; it2 < i2; ++it2)
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
+#ifdef __IPP__
+	  ASSERT_EQUAL2(mt.get(it1, it2, it3, it4),
+			saturate((float64)m1.get(it1,it2,it3,it4)*(float64)m2.get(it1,it2,it3,it4), T),
+		       (T)(m1.get(it1,it2,it3,it4)*m2.get(it1,it2,it3,it4)));
+#else
 	  ASSERT_EQUAL(mt.get(it1, it2, it3, it4),
 		       (T)(m1.get(it1,it2,it3,it4)*m2.get(it1,it2,it3,it4)));
+#endif
 	}
 }
 
@@ -521,8 +558,14 @@ template <typename T> void test_dotc(intg i1, intg i2, intg i3, intg i4,
     for (intg it2 = 0; it2 < i2; ++it2)
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
+#ifdef __IPP__
+	  ASSERT_EQUAL2(mt.get(it1, it2, it3, it4),
+			saturate(m1.get(it1,it2,it3,it4)*p, T),
+			(T)(m1.get(it1,it2,it3,it4)*p));
+#else
 	  ASSERT_EQUAL(mt.get(it1, it2, it3, it4),
 		       (T)(m1.get(it1,it2,it3,it4)*p));
+#endif
 	}
 }
 
@@ -1190,8 +1233,14 @@ template <typename T> void test_sqrt(intg i1, intg i2, intg i3, intg i4,
     for (intg it2 = 0; it2 < i2; ++it2)
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
+#ifdef __IPP__
+	  ASSERT_EQUAL2(mt2.get(it1, it2, it3, it4),
+			(T)sqrt((double)mt.get(it1,it2,it3,it4)),
+			(T)round(sqrt((double)mt.get(it1,it2,it3,it4))));
+#else
 	  ASSERT_EQUAL(mt2.get(it1, it2, it3, it4),
-		       (T)sqrt((double)mt.get(it1,it2,it3,it4)));
+		       (T)round(sqrt((double)mt.get(it1,it2,it3,it4))));
+#endif
 	}
 }
 
@@ -1231,8 +1280,14 @@ template <typename T> void test_exp(intg i1, intg i2, intg i3, intg i4,
     for (intg it2 = 0; it2 < i2; ++it2)
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
+#ifdef __IPP__
+	  ASSERT_EQUAL2(mt2.get(it1, it2, it3, it4),
+			saturate(round(exp(mt.get(it1,it2,it3,it4))), T),
+			saturate(exp(mt.get(it1,it2,it3,it4)), T));
+#else
 	  ASSERT_EQUAL(mt2.get(it1, it2, it3, it4),
 		       saturate(exp(mt.get(it1,it2,it3,it4)), T));
+#endif
 	}
 }
 
