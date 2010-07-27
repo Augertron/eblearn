@@ -4,7 +4,7 @@
 # meta commands
 ################################################################################
 # the command to run
-meta_command="sh pascal_dsprepare.sh"
+meta_command="sh dsprepare.sh"
 # name of this meta job
 meta_name=pascalds
 # maximum number of cpus to use at the same time
@@ -16,13 +16,13 @@ meta_send_email=1
 # email to use (use environment variable "myemail")
 meta_email=${myemail}
 # interval in seconds to analyze processes output, and to check who is alive.
-meta_watch_interval=5
+meta_watch_interval=120
 
 ################################################################################
 # pascal dataset compilation
 ################################################################################
 
-machine=othelloa
+machine=${HOSTNAME}a
 # directories
 root=${HOME}/${machine}data/pascal/
 dataroot=$root/VOCdevkit_trainval10/VOC2010/
@@ -37,10 +37,10 @@ maxval=50
 # maximum number of background images to extract
 maxbg=20000
 # number of train/val sets to draw
-draws=5 
+draws=3
 precision=float
 pp=YpUV
-kernel=7
+kernel=9
 resize=mean #bilinear
 # maximum number of bg extracted per scale
 nbg=2

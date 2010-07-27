@@ -14,7 +14,7 @@ meta_email=${myemail}
 # ped dataset compilation
 ################################################################################
 
-machine=banquoa
+machine=${HOSTNAME}a
 # directories
 root=~/${machine}data/ped/daimler_detection/
 dataroot=$root/train/data/

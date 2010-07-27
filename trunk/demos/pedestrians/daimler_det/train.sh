@@ -6,7 +6,7 @@ traindsname=ped_daimlerdet_mean${h}x${w}_ker7_bg_train
 valdsname=ped_daimlerdet_mean${h}x${w}_ker7_bg_val
 
 ebl=$HOME/eblearn/
-machine=banquoa
+machine=${HOSTNAME}a
 eblearnbin0=$ebl/bin/
 metaconf_name=daimlerdet_meta.conf
 # max number of false positives to extract per iteration
@@ -142,7 +142,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "retrain_dir = ${nopersons_root}/" >> $bestconf
 # override train command by detect command
   echo >> $bestconf
-  echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/mtdetect\"" >> $metaconf
+  echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/mtdetect\"" >> $bestconf
   echo "meta_name = ${meta_name}_falsepos_${iter}" >> $bestconf
 # set multi threads for detection
   echo "nthreads = ${nthreads}" >> $bestconf
