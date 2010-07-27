@@ -54,7 +54,11 @@ namespace ebl {
   //! Scan an int.
   int fscan_int(FILE *fp) {
     int res = 0;
-    fscanf(fp, "%d", &res);
+    if (fscanf(fp, "%d", &res) < 1) {
+      ostringstream err;
+      err << "cannot read integer from stream" << endl;
+      throw err.str();
+    }
     return res;
   }
 

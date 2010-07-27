@@ -10,7 +10,7 @@ $eb/bin/metarun $eb/tester/timing/go.sh
 exit
 
 # configuration
-meta_name = forward_only_buffers2
+meta_name = iterateurs_not_in_eblearn
 meta_command = "${eb}/bin/mtdetect ${eb}/demos/face/trained/best.conf ${face_cmumit}"
 meta_gnuplot_terminal=png
 meta_output_dir = ${HOME}/timing/
