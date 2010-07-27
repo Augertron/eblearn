@@ -36,15 +36,16 @@ namespace ebl {
 
   template <typename T, class Tstate>
   full_layer<T,Tstate>::full_layer(parameter<T,Tstate> *p, intg indim0, intg noutputs,
-				   bool btanh_, const char* name_)
+			    bool btanh_, const char *name_)
     : btanh(btanh_),
-      linear(p, indim0, noutputs),
-      adder(p, noutputs),
+      linear(p, indim0, noutputs, name_),
+      adder(p, noutputs, name_),
       sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
 	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
     sum = NULL; 
+    this->name = name_;
   }
 
   template <typename T, class Tstate>
@@ -113,16 +114,17 @@ namespace ebl {
 
   template <typename T, class Tstate>
   convolution_layer<T,Tstate>::convolution_layer(parameter<T,Tstate> *p, 
-						 intg kerneli, intg kernelj, 
-						 intg stridei_, intg stridej_, 
-						 idx<intg> &tbl, bool btanh_,
-						 const char *name_) 
+					  intg kerneli, intg kernelj, 
+					  intg stridei_, intg stridej_, 
+					  idx<intg> &tbl, bool btanh_,
+					  const char *name_) 
     : btanh(btanh_),
-      convol(p, kerneli, kernelj, stridei_, stridej_, tbl), 
-      adder(p, convol.thickness),
+      convol(p, kerneli, kernelj, stridei_, stridej_, tbl, name_), 
+      adder(p, convol.thickness, name_),
       sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
 	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
     sum = NULL;
+    this->name = name_;
   }
 
   template <typename T, class Tstate>
@@ -194,11 +196,12 @@ namespace ebl {
 					  intg kerneli, intg kernelj, 
 					  intg stridei_, intg stridej_, 
 					  idx<intg> &tbl, bool mirror,
-					  bool btanh_, const char *name_)
+					  bool btanh_, const char *name_) 
     : btanh(btanh_),
-      lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_),
+      lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_, name_),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, name_, mirror),
       tmp(NULL), tmp2(NULL) {
+    this->name = name_;
   }
 
   template <typename T, class Tstate>
@@ -280,6 +283,7 @@ namespace ebl {
       sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
 	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
     sum = NULL;
+    this->name = name_;
   }
 
   template <typename T, class Tstate>
