@@ -858,8 +858,8 @@ namespace ebl {
     idx<T>* iterand;
     inline noncontiguous_idxiter() {}
     inline noncontiguous_idxiter(idx<T> & m)
-      :data(m.storage->data + m.spec.offset), i(0), j(m.spec.ndim - 1),
-       jmax(m.spec.ndim - 1), n(m.spec.nelements()), iterand(&m) {
+      :data(m.storage->data + m.spec.offset), i(0), n(m.spec.nelements()),
+      j(m.spec.ndim - 1), jmax(m.spec.ndim - 1), iterand(&m) {
       memset(d, 0, MAXDIMS * sizeof(intg));
     }
     inline bool notdone () const {return i < n;}

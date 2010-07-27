@@ -368,31 +368,37 @@ namespace ebl {
 #if USING_FAST_ITERS == 0
   #if USING_STL_ITERS == 0
     idxiter<T> pinp; idxiter<T> pout;
+    #ifdef __DEBUG__
     idx_aloop2_on(pinp,inp,pout,out) {
-#ifdef __DEBUG__
       if (*pinp == 0)
 	eblerror("division by zero");
-#endif
       *pout = 1 / *pinp;
     }
+    #else
+    idx_aloop2_on(pinp,inp,pout,out) { *pout = 1 / *pinp; }
+    #endif
   #else
     ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
+   #ifdef __DEBUG__
     idx_aloop2_on(pinp,inp,pout,out) {
-#ifdef __DEBUG__
       if (*pinp == 0)
 	eblerror("division by zero");
-#endif
       *pout = 1 / *pinp;
     }
+    #else
+    idx_aloop2_on(pinp,inp,pout,out) { *pout = 1 / *pinp; }    
+    #endif
   #endif
 #else
+  #ifdef __DEBUG__
     idx_aloopf2(pinp, inp, T, pout, out, T, {
-#ifdef __DEBUG__
       if (*pinp == 0)
 	eblerror("division by zero");
-#endif
 	*pout = 1 / *pinp;
       });
+  #else
+    idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = 1 / *pinp; });
+  #endif
 #endif
   }
 
@@ -1045,7 +1051,7 @@ namespace ebl {
     }
   #endif
 #else
-    idx_aloopf2(pin, in, T, pout, out, T, { *pout = sqrt(*pin); });
+    idx_aloopf2(pin, in, T, pout, out, T, { *pout = (T)sqrt((float64)(*pin)); });
 #endif
   }
 

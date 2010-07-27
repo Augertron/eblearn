@@ -1198,7 +1198,7 @@ void ippops_test::test_ipp_exp() {
 
 
 void ippops_test::test_ipp_sum() {
-  int nx = 42, ny = 32, nz = 23;
+  int nx = 42, ny = 32;
   idx<ubyte>  A8u(nx);
   idx<uint16> A16u(nx, ny);
   idx<int16>  A16s(nx, ny);
@@ -1211,7 +1211,7 @@ void ippops_test::test_ipp_sum() {
       A32f.set(((184993.2 * i + 15493.3 * j + 532.1) * 2.123), i, j);
     }
   }
-  float64 r8u = 0, r8s = 0, r16u = 0, r16s = 0, r32u = 0, r32s = 0, r32f = 0;
+  float64 r8u = 0, r16u = 0, r16s = 0, r32f = 0;
   for (int i = 0; i < nx; ++i) {
     r8u += A8u.get(i);
     for (int j = 0; j < ny; ++j) {
@@ -1248,7 +1248,7 @@ void ippops_test::test_ipp_sum() {
 }
 
 void ippops_test::test_ipp_sumabs() {
-  int nx = 42, ny = 32, nz = 23;
+  int nx = 42, ny = 32;
   idx<ubyte>  A8u(nx);
   idx<uint16> A16u(nx, ny);
   idx<int16>  A16s(nx, ny);
@@ -1261,7 +1261,7 @@ void ippops_test::test_ipp_sumabs() {
       A32f.set(((184993.2 * i + 15493.3 * j + 532.1) * 2.123), i, j);
     }
   }
-  float64 r8u = 0, r8s = 0, r16u = 0, r16s = 0, r32u = 0, r32s = 0, r32f = 0;
+  float64 r8u = 0, r16u = 0, r16s = 0, r32f = 0;
   for (int i = 0; i < nx; ++i) {
     r8u += A8u.get(i);
     for (int j = 0; j < ny; ++j) {
@@ -1337,7 +1337,7 @@ void ippops_test::test_ipp_std_normalize() {
 }
 
 void ippops_test::test_ipp_mean() {
-  int nx = 42, ny = 32, nz = 23;
+  int nx = 42, ny = 32;
   idx<ubyte>  A8u(nx);
   idx<uint16> A16u(nx, ny);
   idx<int16>  A16s(nx, ny);
@@ -1350,7 +1350,7 @@ void ippops_test::test_ipp_mean() {
       A32f.set(((184993.2 * i + 15493.3 * j + 532.1) * 2.123), i, j);
     }
   }
-  float64 r8u = 0, r8s = 0, r16u = 0, r16s = 0, r32u = 0, r32s = 0, r32f = 0;
+  float64 r8u = 0, r16u = 0, r16s = 0, r32f = 0;
   for (int i = 0; i < nx; ++i) {
     r8u += A8u.get(i);
     for (int j = 0; j < ny; ++j) {
@@ -1629,7 +1629,7 @@ void ippops_test::test_ipp_sqrdist() {
   CPPUNIT_ASSERT(approx_equals(ipp_sqrdist(A32f, B32f, acc32f), e32f));
   ubyte  r8u  = (e8u > 255) ? 255 : (ubyte)e8u;
   uint16 r16u = (e16u > 65535) ? 65535 : (uint16)e16u;
-  int16  r16s = (e16s > 32767.) ? 32767 : ((e16s < -32768.) ? -32768 : e16s);
+  int16  r16s = (e16s > 32767.) ? 32767 : ((e16s < -32768.) ? -32768 : (int16)e16s);
   CPPUNIT_ASSERT(r8u  == acc8u.get());
   CPPUNIT_ASSERT(r16u == acc16u.get());
   CPPUNIT_ASSERT(r16s == acc16s.get());
