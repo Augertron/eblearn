@@ -16,35 +16,6 @@ IF (QT_FOUND)
   include_directories(${LIBEBLEARNGUI_INCLUDE_DIR})
 ENDIF (QT_FOUND)
 
-# copy scripts to bin
-################################################################################
-SET(FILE_TO_BIN 
-  src/pascal_conf
-  src/pascal_metaconf
-  src/pascal_dsprepare.sh
-)
-
-FOREACH(NAME ${FILE_TO_BIN})
-  EXEC_PROGRAM("cp" ARGS "\"${CMAKE_CURRENT_SOURCE_DIR}/${NAME}\""
-		  "\"${LIBRARY_OUTPUT_PATH}\"" OUTPUT_VARIABLE OUT)
-  MESSAGE(STATUS "Copied demos/pascal/${NAME} to bin directory.")
-ENDFOREACH(NAME)
-
-# compile executable: pascal_train
-################################################################################
-add_executable (pascal_train
-  src/train.cpp
-  )
-  
-# link executable with external libraries
-################################################################################
-target_link_libraries (pascal_train eblearn idx eblearntools)
-IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (pascal_train idxgui)
-  target_link_libraries (pascal_train eblearngui)
-ENDIF (QT_FOUND) #------------------------------------------------------------
-
-		
 # compile executable: pascal_detect
 ################################################################################
 add_executable (pascal_detect
@@ -58,13 +29,4 @@ IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (pascal_detect idxgui)
   target_link_libraries (pascal_detect eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
-IF (Boost_FOUND)
-  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(pascal_detect ${Boost_SYSTEM_LIBRARY}
-      ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(pascal_detect ${Boost_FILESYSTEM_LIBRARY} 
-      ${Boost_REGEX_LIBRARY})
-  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
-
+LINK_BOOST(pascal_detect)

@@ -206,6 +206,7 @@ int main(int argc, char **argv) { // regular main without gui
       }
 #endif
       cout << "iteration_minutes=" << titer.elapsed_minutes() << endl;
+      cout << "timestamp=" << tstamp() << endl;
     }
     // free variables
     if (net) delete net;
