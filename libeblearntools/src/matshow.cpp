@@ -205,7 +205,6 @@ int main(int argc, char **argv) {
   try {
     if (!parse_args(argc, argv))
       return -1;
-    Magick::InitializeMagick("C:\\Users\\pierre\\eblearn\\bin\\Debug");
     new_window("matshow");
     // variables
     bool show_info = false;
