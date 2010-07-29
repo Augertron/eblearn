@@ -64,9 +64,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #endif
     try {
       // check input parameters
-      if (argc < 3) {
+      if ((argc != 2) && (argc != 3) ) {
 	cerr << "wrong number of parameters." << endl;
-	cerr << "usage: obj_detect <config file> [directory or file]" << endl;
+	cerr << "usage: objdetect <config file> [directory or file]" << endl;
 	return -1;
       }
 #ifdef __LINUX__

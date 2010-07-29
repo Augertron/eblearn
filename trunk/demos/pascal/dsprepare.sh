@@ -49,7 +49,7 @@ bgscales=10,8,6,4
 bboxfact=1.2
 
 # difficulty
-easy=0 # 1
+easy=1
 ignore_occluded=${easy}
 ignore_truncated=${easy}
 ignore_difficult=1
@@ -147,11 +147,11 @@ then
 	-resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
 	-useparts -partsonly -bboxfact $bboxfact \
 	$maxdata $maxperclass $ddisplay # debug
-        #-usepose -mindims 16x16 
-    
+        #-usepose -mindims 16x16     
+
     # print out information about extracted datasets to check that their are ok
-    ~/eblearn/bin/dsdisplay ${out}/${namebg} -info
+    ~/eblearn/bin/dsdisplay ${out}/${partsname} -info
 fi
 
 # print out information about extracted datasets to check that their are ok
-~/eblearn/bin/dsdisplay ${out}/${partsname} -info
+~/eblearn/bin/dsdisplay ${out}/${namebg} -info

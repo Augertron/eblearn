@@ -51,7 +51,8 @@ meta_send_best=5
 ################################################################################
 
 # directories
-tstamp=`date +"%Y%m%d.%H%M%S"`
+#tstamp=`date +"%Y%m%d.%H%M%S"`
+tstamp=20100727.073128
 xpname=${meta_name}_${tstamp}
 root=~/${machine}data/ped/daimler_detection/
 dataroot=$root/ds/
@@ -96,8 +97,8 @@ echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
 echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
 echo "meta_name = ${meta_name}" >> $metaconf
-${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
-#touch /home/sermanet/humairadata/pedestrians/out/pedtrain_nictat_humair_20100509.183243/20100509.183243.ped_humair
+#${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
+touch $out/${tstamp}.${meta_name}
 
 # looping on retraining on false positives
 echo "________________________________________________________________________"
@@ -140,6 +141,9 @@ for iter in `seq 1 ${maxiteration}`
   echo "retrain_weights = \${weights}" >> $bestconf
 # set where to find full images
   echo "retrain_dir = ${nopersons_root}/" >> $bestconf
+# send report every 1000 frames processed
+  echo "meta_email_iters = " >> $bestconf
+  echo "meta_email_period = 1000" >> $bestconf
 # override train command by detect command
   echo >> $bestconf
   echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/mtdetect\"" >> $bestconf
@@ -196,6 +200,8 @@ for iter in `seq 1 ${maxiteration}`
   echo "retrain = 1" >> $metaconf
   echo "retrain_weights = ${bestweights}" >> $metaconf
   echo "meta_name = ${meta_name}_retraining_${iter}" >> $metaconf
+# send report at specific training iterations
+  echo "meta_email_iters = 0,1,2,3,4,5,7,10,15,20,30,50,75,100,200" >> $bestconf
   ${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
     
 done
