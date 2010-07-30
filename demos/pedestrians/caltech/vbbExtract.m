@@ -19,10 +19,12 @@ function vbbExtract(display, minoverlap, minheight, context, minaratio, extractB
 %   minaratio - minimum aspect ratio, ignore ratio lower than this
 %               This will get rid of some false bounding boxes like half
 %               (or less) pedestrian at edge of image.
-%   extractBg - if 1, save background images with all pedestrians removed (no constraints).
+%   extractBg - modulo at which to extract background images (pedestrian
+%               free). e.g. 1 will extract all backgrounds, 30 will
+%               extract background every 30 frames.
 %  figure
   % default values
-  if (nargin < 6) extractBg = 1; end
+  if (nargin < 6) extractBg = 60; end
   if (nargin < 5) minaratio = .2; end
   if (nargin < 4) context = 1.3; end
   if (nargin < 3) minheight = 30; end
@@ -51,7 +53,7 @@ function vbbExtract(display, minoverlap, minheight, context, minaratio, extractB
       if (~exist(fname_ped))
 	mkdir(fname_ped);
       end
-      if (extractBg == 1)
+      if (extractBg > 0)
 	fname_bg = [outdir_bg vStr];
 	if (~exist(fname_bg))
 	  mkdir(fname_bg);
@@ -73,7 +75,7 @@ function vbbExtract(display, minoverlap, minheight, context, minaratio, extractB
 	savePeds(I, A, iframe, fname_ped, display, minoverlap, minheight, ...
 		 minaratio, context);
 	% extract non pedestrians
-	if (extractBg == 1)
+	if (mod(iframe, extractBg) == 0)
 	  saveBg(I, A, iframe, fname_bg, display);
 	end
       end

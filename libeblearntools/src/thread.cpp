@@ -38,10 +38,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // thread
 
-  thread::thread() {
+  thread::thread() : _stop(false), _finished(false) {
   }
 
   thread::~thread() {
+    cout << "Quitting thread." << endl;
+    pthread_exit((void*)&threadptr);
   }
 
   int thread::start() {
@@ -52,10 +54,19 @@ namespace ebl {
     execute();
   }
 
+  void thread::stop() {
+    _stop = true;
+  }
+
+  bool thread::finished() {
+    return _finished;
+  }
+
   /*static */
   void* thread::entrypoint(void * pthis) {
     thread *pt = (thread*) pthis;
     pt->run();
+    pt->_finished = true;
     return pt;
   }
 

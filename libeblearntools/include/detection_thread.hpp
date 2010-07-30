@@ -279,7 +279,7 @@ namespace ebl {
      toverall.start();
      // we're ready
      bavailable = true;
-     while(1) {
+     while(!_stop) {
        tpass.restart();
        // wait until a new image is made available
        while (!in_updated) {
@@ -343,10 +343,10 @@ namespace ebl {
 	   detect.get_total_saved() > conf.get_uint("save_max"))
 	 break ; // limit number of detection saves
      }
+     cout << "Detection thread finished." << endl;
      cout << "Execution time: " << toverall.elapsed_minutes() <<" mins" <<endl;
      // free variables
      if (net) delete net;
-     if (pp) delete pp;
 #ifdef __GUI__
      quit_gui(); // close all windows
 #endif

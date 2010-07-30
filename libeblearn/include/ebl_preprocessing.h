@@ -49,7 +49,7 @@ namespace ebl {
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
     //!        local normalization.
-    channorm_module(uint normalization_size);
+    channorm_module(uint normalization_size, const char *name = "channorm");
     //! Destructor
     virtual ~channorm_module();
     //! Forward propagation from in to out (abstract).

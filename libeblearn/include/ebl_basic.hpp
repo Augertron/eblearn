@@ -38,8 +38,7 @@ namespace ebl {
   linear_module<T, Tstate>::linear_module(parameter<T,Tstate> *p,
 					  intg in, intg out,
 					  const char *name_)
-    : w(p, out, in) {
-    this->name = name_;
+    : module_1_1<T,Tstate>(name_), w(p, out, in) {
   }
 
   template <typename T, class Tstate>
@@ -157,10 +156,9 @@ namespace ebl {
 					    intg kerneli, intg kernelj, 
 					    intg stridei_, intg stridej_, 
 					    idx<intg> &tbl, const char *name_)
-    : kernel(p, tbl.dim(0), kerneli, kernelj), 
+    : module_1_1<T,Tstate>(name_), kernel(p, tbl.dim(0), kerneli, kernelj), 
       stridei(stridei_), stridej(stridej_), table(tbl), warnings_shown(false),
       float_precision(false) {
-    this->name = name_;
     // check sanity of connection table
     if (table.dim(1) != 2) { // check table order
       cerr << "error: expecting a table with dim 1 equal to 2 but found: ";
@@ -406,9 +404,9 @@ namespace ebl {
 					    intg stridei_, intg stridej_,
 					    intg subi, intg subj, 
 					    intg thick, const char *name_)
-    : coeff(p, thick), sub(thick, subi, subj), thickness(thick), 
+    : module_1_1<T,Tstate>(name_), 
+      coeff(p, thick), sub(thick, subi, subj), thickness(thick), 
       stridei(stridei_), stridej(stridej_) {
-    this->name = name_;
   }
 
   template <typename T, class Tstate>
@@ -538,8 +536,7 @@ namespace ebl {
   template <typename T, class Tstate>
   addc_module<T,Tstate>::addc_module(parameter<T,Tstate> *p, intg size,
 				     const char *name_)
-    : bias(p, size) {
-    this->name = name_;
+    : module_1_1<T,Tstate>(name_), bias(p, size) {
   }
 
   template <typename T, class Tstate>
@@ -616,7 +613,8 @@ namespace ebl {
   // power_module
 
   template <typename T, class Tstate>
-  power_module<T,Tstate>::power_module(T p_) : p(p_) {
+  power_module<T,Tstate>::power_module(T p_)
+    : module_1_1<T,Tstate>("power"), p(p_) {
   }
 
   template <typename T, class Tstate>
@@ -667,7 +665,7 @@ namespace ebl {
   // diff_module
 
   template <typename T, class Tstate>
-  diff_module<T,Tstate>::diff_module() {
+  diff_module<T,Tstate>::diff_module() : module_2_1<T,Tstate>("diff") {
   }
   
   template <typename T, class Tstate>
@@ -708,7 +706,7 @@ namespace ebl {
   // mul_module
 
   template <typename T, class Tstate>
-  mul_module<T,Tstate>::mul_module() {
+  mul_module<T,Tstate>::mul_module() : module_2_1<T,Tstate>("mul") {
   }
   
   template <typename T, class Tstate>
@@ -773,7 +771,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   thres_module<T,Tstate>::thres_module(T thres_, T val_)
-    : thres(thres_), val(val_) {
+    : module_1_1<T,Tstate>("thres"), thres(thres_), val(val_) {
   }
 
   template <typename T, class Tstate>
@@ -818,7 +816,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   cutborder_module<T,Tstate>::cutborder_module(int nr_, int nc_)
-    : nrow(nr_), ncol(nc_) {
+    : module_1_1<T,Tstate>("cutborder"), nrow(nr_), ncol(nc_) {
   }
 
   template <typename T, class Tstate>
@@ -867,7 +865,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   zpad_module<T,Tstate>::zpad_module(int nr, int nc)
-    : nrow(nr), ncol(nc), nrow2(nr), ncol2(nc) {
+    : module_1_1<T,Tstate>("zpad"), nrow(nr), ncol(nc), nrow2(nr), ncol2(nc) {
   }
 
   template <typename T, class Tstate>
@@ -933,7 +931,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   mirrorpad_module<T,Tstate>::mirrorpad_module(int nr, int nc)
-    : nrow(nr), ncol(nc) {
+    : module_1_1<T,Tstate>("mirrorpad"), nrow(nr), ncol(nc) {
   }
 
   template <typename T, class Tstate>
@@ -1006,7 +1004,7 @@ namespace ebl {
   // fsum_module
 
   template <typename T, class Tstate>
-  fsum_module<T,Tstate>::fsum_module() {
+  fsum_module<T,Tstate>::fsum_module() : module_1_1<T,Tstate>("fsum") {
   }
 
   template <typename T, class Tstate>

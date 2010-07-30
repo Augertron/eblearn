@@ -55,7 +55,7 @@ namespace ebl {
   template<typename T, class Tin = bbstate_idx<T>, class Tout = Tin>
     class module_1_1 {
   public:
-    module_1_1(bool bResize = true); //!< by default, resize output
+  module_1_1(const char *name = "module_1_1", bool bResize = true); //!< by default, resize output
     virtual ~module_1_1();
     virtual void fprop(Tin &in, Tout &out);
     virtual void bprop(Tin &in, Tout &out);
@@ -94,12 +94,16 @@ namespace ebl {
     class Tout = Tin1>
     class module_2_1 {
   public:
-    virtual ~module_2_1() {};
+    module_2_1(const char *name = "module_2_1");
+    virtual ~module_2_1();
     virtual void fprop(Tin1 &in1, Tin2 &in2, Tout &out);
     virtual void bprop(Tin1 &in1, Tin2 &in2, Tout &out);
     virtual void bbprop(Tin1 &in1, Tin2 &in2, Tout &out);
     virtual void forget(forget_param &fp);
     virtual void normalize();
+
+  protected:
+    const char *name; //!< optional name of module.
   };
 
   ////////////////////////////////////////////////////////////////

@@ -34,7 +34,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   template <typename T, class Tstate>
-  stdsigmoid_module<T,Tstate>::stdsigmoid_module() {
+  stdsigmoid_module<T,Tstate>::stdsigmoid_module() : module_1_1<T,Tstate>("stdsigmoid") {
   }
 
   template <typename T, class Tstate>
@@ -79,7 +79,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   template <typename T, class Tstate>
-  tanh_module<T,Tstate>::tanh_module() {
+  tanh_module<T,Tstate>::tanh_module() : module_1_1<T,Tstate>("tanh") {
   }
 
   template <typename T, class Tstate>
@@ -132,7 +132,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////////////
 
   template <typename T, class Tstate>
-  softmax<T,Tstate>::softmax(double b){
+  softmax<T,Tstate>::softmax(double b) : module_1_1<T,Tstate>("softmax") {
     beta = b;
   }
 

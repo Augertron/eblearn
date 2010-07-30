@@ -231,6 +231,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	if (conf.exists("save_max") && 
 	    idx_sum(total_saved) > conf.get_uint("save_max")) {
 	  cout << "Reached max number of detections, exiting." << endl;
+	  for (ithreads = threads.begin(); ithreads != threads.end(); ++ithreads) {
+	    (*ithreads)->stop();
+	    // wait that it actually stops
+	    while (!(*ithreads)->finished())
+	      millisleep(10);
+	  }
 	  break ; // limit number of detection saves
 	}
 	// sleep a bit between each iteration

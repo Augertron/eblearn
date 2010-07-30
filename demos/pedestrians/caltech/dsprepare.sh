@@ -19,29 +19,29 @@ meta_email=${myemail}
 machine=${HOSTNAME}a
 # directories
 root=~/${machine}data/ped/${name}/
-dataroot=$root/train/data/
+dataroot=$root/train/data39/
 out=$root/ds/
-nopersons_root=$root/train/bg_full/
+nopersons_root=$root/train/bg_full_2331/
 #nopersons_root=/data/pedestrians/daimler_det/DaimlerBenchmark/Data/TrainingData/NonPedestrians/
 bin=${HOME}/eblearn/bin/
 
 # target size
-h=30
-w=13
+h=39
+w=17
 chans=3
 # number of samples per class in validation set
-maxval=2000
+maxval=5000
 draws=3 # number of train/val sets to draw
 precision=float
-pp=Yp
+pp=YpUV
 kernel=7 #9
 resize=mean #bilinear
 # maximum number of bg extracted per scale
-nbg=1
+nbg=16
 # scales in bg images, in terms of factor of the target size, i.e. hxw * scale
 bgscales=20,10,5
 # initial number of non-pedestrians
-maxbg=2000
+maxbg=30000
 
 # names
 id=${resize}${h}x${w}_ker${kernel}
@@ -65,7 +65,7 @@ mkdir -p $nopersons_root
 ###############################################################################
 
 # compile regular dataset
-$bin/dscompiler $root -precision $precision -outdir ${out} -channels $pp \
+$bin/dscompiler $dataroot -precision $precision -outdir ${out} -channels $pp \
     -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
 #    $maxdata $maxperclass $ddisplay # debug
 

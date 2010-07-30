@@ -40,7 +40,8 @@ namespace ebl {
   weighted_std_module<T,Tstate>::
   weighted_std_module(uint kernelh, uint kernelw, int nf, const char *name_, 
 		      bool mirror_, bool threshold_, bool global_norm_)
-    : mirror(mirror_),
+    : module_1_1<T,Tstate>(name_), 
+      mirror(mirror_),
       convmean(true),
       convvar(true),
       sqrtmod((T) .5), // square root module
@@ -61,7 +62,6 @@ namespace ebl {
       global_norm(global_norm_),
       nfeatures(nf)
   {
-    this->name = name_;
     name_c0 = name_;
     name_c0 += "_c0";
     name_c1 = name_;
@@ -259,7 +259,7 @@ namespace ebl {
   // abs_module
 
   template <typename T, class Tstate>
-  abs_module<T,Tstate>::abs_module(double thres) {
+  abs_module<T,Tstate>::abs_module(double thres) : module_1_1<T,Tstate>("abs") {
     threshold = thres;
   }
 
@@ -308,7 +308,8 @@ namespace ebl {
   template <typename T, class Tstate>
   smooth_shrink_module<T,Tstate>::smooth_shrink_module(parameter<T,Tstate> *p,
 						       intg nf, T bt, T bs)
-    : beta(p,nf), bias(p,nf), ebb(1), ebx(1,1,1), tin(1,1,1), absmod(0.0),
+    : module_1_1<T,Tstate>("smooth_shrink"), 
+      beta(p,nf), bias(p,nf), ebb(1), ebx(1,1,1), tin(1,1,1), absmod(0.0),
       default_beta(bt), default_bias(bs) {
     idx_fill(beta.x, bt);
     idx_fill(bias.x, bs);
