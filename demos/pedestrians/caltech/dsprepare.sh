@@ -19,25 +19,27 @@ meta_email=${myemail}
 machine=${HOSTNAME}a
 # directories
 root=~/${machine}data/ped/${name}/
-dataroot=$root/train/data39/
+dataroot=$root/train/data104/
 out=$root/ds/
-nopersons_root=$root/train/bg_full_2331/
+nopersons_root=$root/train/bg_full/
 #nopersons_root=/data/pedestrians/daimler_det/DaimlerBenchmark/Data/TrainingData/NonPedestrians/
 bin=${HOME}/eblearn/bin/
 
 # target size
-h=39
-w=17
+# h=39
+# w=17
+h=104
+w=45
 chans=3
 # number of samples per class in validation set
-maxval=5000
+maxval=2000
 draws=3 # number of train/val sets to draw
 precision=float
 pp=YpUV
-kernel=7 #9
+kernel=9
 resize=mean #bilinear
 # maximum number of bg extracted per scale
-nbg=16
+nbg=4
 # scales in bg images, in terms of factor of the target size, i.e. hxw * scale
 bgscales=20,10,5
 # initial number of non-pedestrians
