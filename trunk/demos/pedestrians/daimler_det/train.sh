@@ -2,6 +2,7 @@
 
 h=96
 w=48
+chans=1
 traindsname=ped_daimlerdet_mean${h}x${w}_ker7_bg_train
 valdsname=ped_daimlerdet_mean${h}x${w}_ker7_bg_val
 
@@ -72,7 +73,7 @@ threshold=.9
 
 # split ratio of validation over training
 ds_split_ratio=".1"
-draws=5
+draws=3
 
 # create directories
 mkdir -p $out
@@ -118,7 +119,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "Using best conf of previous training: ${bestconf}"
   echo "i=`expr ${maxiteration} - ${iter}`"
 
-#if [ $iter != 1 ]; then  
+if [ $iter != 1 ]; then  
 
 # extract false positives: first add new variables to best conf
 # activate retraining
@@ -158,9 +159,10 @@ for iter in `seq 1 ${maxiteration}`
 
 # recompile data from last output directory which should contain 
 # all false positives
+# note: no need to preprocess, .mat should already be preprocessed
   ${eblearnbin}/dscompiler ${lastout} -precision ${precision} \
-      -outdir ${dataroot} -forcelabel bg -dname allfp -dims ${h}x${w}x3 \
-      -image_pattern ".*[.]mat" -mindims ${h}x${w}x3 
+      -outdir ${dataroot} -forcelabel bg -dname allfp -dims ${h}x${w}x${chans} \
+      -image_pattern ".*[.]mat" -mindims ${h}x${w}x${chans}
 
 # get dataset size
   dssize=`${eblearnbin}/dsdisplay ${dataroot}/allfp -size`
@@ -174,8 +176,6 @@ for iter in `seq 1 ${maxiteration}`
 # split dataset into training and validation
   ${eblearnbin}/dssplit ${dataroot} allfp \
       allfp_val_ allfp_train_ -maxperclass ${valsize} -draws $draws
-
-#fi
 
 # merge new datasets into previous datasets: training
   for i in `seq 1 $draws`
@@ -191,7 +191,7 @@ for iter in `seq 1 ${maxiteration}`
 	  allfp_val_${i} ${valdsname}_${i}
   done
 
-#fi  
+fi  
 
 # retrain on old + new data
   echo "Retraining from best previous weights: ${bestweights}"

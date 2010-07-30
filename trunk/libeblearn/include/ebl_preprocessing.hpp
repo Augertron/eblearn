@@ -35,10 +35,12 @@ namespace ebl {
   // channorm_module
 
   template <typename T, class Tstate>
-  channorm_module<T,Tstate>::channorm_module(uint normalization_size_)
-    : normalization_size(normalization_size_), tmp(1,1,1),
-      norm(normalization_size, normalization_size, 1, "norm", true, false,
-	   true) {
+  channorm_module<T,Tstate>::channorm_module(uint normalization_size_, 
+					     const char *name_)
+    : module_1_1<T,Tstate>(name_), normalization_size(normalization_size_), 
+      tmp(1,1,1),
+      norm(normalization_size, normalization_size, 1, 
+	   "norm", true, false, true) {
   }
 
   template <typename T, class Tstate>
@@ -69,7 +71,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   rgb_to_ypuv_module<T,Tstate>::rgb_to_ypuv_module(uint normalization_size)
-    : channorm_module<T,Tstate>(normalization_size) {
+    : channorm_module<T,Tstate>(normalization_size, "rgb_to_ypuv") {
   }
 
   template <typename T, class Tstate>
@@ -106,7 +108,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   rgb_to_yp_module<T,Tstate>::rgb_to_yp_module(uint normalization_size)
-    : channorm_module<T,Tstate>(normalization_size) {
+    : channorm_module<T,Tstate>(normalization_size, "rgb_to_yp") {
   }
 
   template <typename T, class Tstate>
@@ -136,7 +138,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
    bgr_to_ypuv_module<T,Tstate>::bgr_to_ypuv_module(uint normalization_size)
-    : channorm_module<T,Tstate>(normalization_size) {
+     : channorm_module<T,Tstate>(normalization_size, "bgr_to_ypuv") {
   }
 
   template <typename T, class Tstate>
@@ -173,7 +175,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   bgr_to_yp_module<T,Tstate>::bgr_to_yp_module(uint normalization_size)
-    : channorm_module<T,Tstate>(normalization_size) {
+    : channorm_module<T,Tstate>(normalization_size, "bgr_to_yp") {
   }
 
   template <typename T, class Tstate>
@@ -203,7 +205,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   rgb_to_hp_module<T,Tstate>::rgb_to_hp_module(uint normalization_size)
-    : channorm_module<T,Tstate>(normalization_size) {
+    : channorm_module<T,Tstate>(normalization_size, "rgb_to_hp") {
   }
 
   template <typename T, class Tstate>
@@ -235,7 +237,8 @@ namespace ebl {
   resizepp_module<T,Tstate>::
   resizepp_module(intg height_, intg width_, uint mode_,
 		  module_1_1<T,Tstate> *pp_, uint kernelsz_, bool own_pp_)
-    : pp(pp_), own_pp(own_pp_), kernelsz(kernelsz_), inpp(1,1,1), outpp(1,1,1),
+    : module_1_1<T,Tstate>("resizepp"), 
+      pp(pp_), own_pp(own_pp_), kernelsz(kernelsz_), inpp(1,1,1), outpp(1,1,1),
       mode(mode_), inrect(0, 0, 0, 0), inrect_set(false) {
     set_dimensions(height_, width_);
   }

@@ -49,13 +49,26 @@ namespace ebl {
   public:
     thread();
     virtual ~thread();
+    //! Start the thread.
     int start();
+
+    //! Tell the thread to stop working. Once thread is done,
+    //! finished() will return true.
+    void stop();
+
+    //! Return true if thread has finished executing.
+    bool finished();
+
   protected:
     void run();
     static void* entrypoint(void *pthis);
     virtual void execute() = 0;
+    
+    bool _stop;
+
   private:
     pthread_t threadptr;
+    bool _finished;
   };
 
 } // end namespace ebl

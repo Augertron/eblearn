@@ -700,6 +700,13 @@ namespace ebl {
   bool parameter<T,fstate_idx<T> >::load_x(const char *s) {
     try {
       idx<T> m = load_matrix<T>(s);
+      if ((x.dim(0) != 1) // param has been enlarged by network construction
+	  && (x.dim(0) != m.dim(0))) { // trying to load incompatible network
+	ostringstream err;
+	err << "Trying to load a network with " << m.dim(0) 
+	    << " parameters into a network with " << x.dim(0) << " parameters";
+	eblerror(err.str());
+      }
       this->resize(m.dim(0));
       idx_copy(m, x);
       cout << "Loaded weights from " << s << ": " << x << endl;
@@ -763,6 +770,13 @@ namespace ebl {
   bool parameter<T,bstate_idx<T> >::load_x(const char *s) {
     try {
       idx<T> m = load_matrix<T>(s);
+      if ((x.dim(0) != 1) // param has been enlarged by network construction
+	  && (x.dim(0) != m.dim(0))) { // trying to load incompatible network
+	ostringstream err;
+	err << "Trying to load a network with " << m.dim(0) 
+	    << " parameters into a network with " << x.dim(0) << " parameters";
+	eblerror(err.str());
+      }
       this->resize(m.dim(0));
       idx_copy(m, x);
       cout << "Loaded weights from " << s << ": " << x << endl;
@@ -866,6 +880,13 @@ namespace ebl {
   bool parameter<T,bbstate_idx<T> >::load_x(const char *s) {
     try {
       idx<T> m = load_matrix<T>(s);
+      if ((x.dim(0) != 1) // param has been enlarged by network construction
+	  && (x.dim(0) != m.dim(0))) { // trying to load incompatible network
+	ostringstream err;
+	err << "Trying to load a network with " << m.dim(0) 
+	    << " parameters into a network with " << x.dim(0) << " parameters";
+	eblerror(err.str());
+      }
       this->resize(m.dim(0));
       idx_copy(m, this->x);
       cout << "Loaded weights from " << s << ": " << this->x << endl;

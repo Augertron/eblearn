@@ -40,12 +40,15 @@ namespace ebl {
   // module_1_1
 
   template <typename T, class Tin, class Tout>
-  module_1_1<T,Tin,Tout>::module_1_1(bool bResize_)
-    : bResize(bResize_) { 
+  module_1_1<T,Tin,Tout>::module_1_1(const char *name_, bool bResize_)
+    : bResize(bResize_), name(name_) { 
   }
 
   template <typename T, class Tin, class Tout>
   module_1_1<T,Tin,Tout>::~module_1_1() {
+#ifdef __DEBUG__
+    cout << "deleting module_1_1: " << name << endl;
+#endif
   }
 
   template <typename T, class Tin, class Tout>
@@ -98,6 +101,18 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   // module_2_1
+
+  template <typename T, class Tin1, class Tin2, class Tout>
+  module_2_1<T,Tin1,Tin2,Tout>::module_2_1(const char *name_)
+    : name(name_) { 
+  }
+
+  template <typename T, class Tin1, class Tin2, class Tout>
+  module_2_1<T,Tin1,Tin2,Tout>::~module_2_1() {
+#ifdef __DEBUG__
+    cout << "deleting module_2_1: " << name << endl;
+#endif
+  }
 
   template <typename T, class Tin1, class Tin2, class Tout>
   void module_2_1<T,Tin1,Tin2,Tout>::fprop(Tin1 &in1, Tin2 &in2, Tout &out) { 
@@ -198,7 +213,8 @@ namespace ebl {
 
   template <typename T, class Tstate>
   layers<T,Tstate>::layers(bool oc, Tstate *hi_, Tstate *ho_)
-    : hi(hi_), ho(ho_), htmp(NULL), hi0(hi_), ho0(ho_) {
+    : module_1_1<T,Tstate>("layers"), 
+      hi(hi_), ho(ho_), htmp(NULL), hi0(hi_), ho0(ho_) {
     mem_optimization = false;
     modules = new std::vector< module_1_1<T, Tstate>* >();
     hiddens = new std::vector< Tstate* >();

@@ -55,7 +55,7 @@ namespace ebl {
     //! \param mirror Use mirroring of the input to pad border if true,
     //!               or use zero-padding otherwise (default).
     weighted_std_module(uint kernelh, uint kernelw, int nf,
-			const char *name = "",
+			const char *name = "weighted_std",
 			bool mirror = false, bool threshold = true,
 			bool global_norm = false);
     //! destructor
