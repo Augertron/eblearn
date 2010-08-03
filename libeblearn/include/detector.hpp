@@ -78,10 +78,12 @@ namespace ebl {
     set_bgclass(background);
     // initilizations
     save_max_per_frame = (numeric_limits<uint>::max)();
+    set_bbox_overlaps(.6, .2);
   }
   
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_resolutions(uint nresolutions_, const double *scales_) {
+  void detector<T,Tstate>::set_resolutions(uint nresolutions_,
+					   const double *scales_) {
     nresolutions = nresolutions_;
     restype = SCALES;
     scales = scales_;
@@ -306,6 +308,16 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
+  void detector<T,Tstate>::set_bbox_overlaps(float hmax, float wmax) {
+    max_hoverlap = hmax;
+    max_woverlap = wmax;
+    cout << "Maximum ratios of overlap between bboxes: height: "
+	 << max_hoverlap << " width: " << max_woverlap << endl;
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  
+  template <typename T, class Tstate>
   void detector<T,Tstate>::compute_minmax_resolutions(idxdim &input_dims) {
     // compute maximum closest size of input compatible with the network size
     idxdim indim(input_dims.dim(2), input_dims.dim(0), input_dims.dim(1));
@@ -511,7 +523,7 @@ namespace ebl {
       for (j = raw_bboxes.begin(); (j != raw_bboxes.end()) && add; ++j) {
 	if (i != j) {
 	  rect other_bbox((*j)->h0, (*j)->w0, (*j)->height, (*j)->width);
-	  if ((this_bbox.overlap(other_bbox)) &&
+	  if ((this_bbox.max_overlap(other_bbox, max_hoverlap, max_woverlap)) &&
 	      ((*i)->confidence < (*j)->confidence))
 	    add = false;
 	}

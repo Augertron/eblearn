@@ -241,6 +241,9 @@ namespace ebl {
      if (conf.exists("bbhfactor") && conf.exists("bbwfactor"))
        detect.set_bbox_factors(conf.get_float("bbhfactor"),
 			       conf.get_float("bbwfactor"));
+     if (conf.exists("bbh_overlap") && conf.exists("bbw_overlap"))
+       detect.set_bbox_overlaps(conf.get_float("bbh_overlap"),
+				conf.get_float("bbw_overlap"));
      bool save_video     = conf.exists_bool("save_video");
      string viddir = outdir;
      viddir += "video/";

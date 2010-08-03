@@ -830,6 +830,21 @@ namespace ebl {
     return false;
   }
   
+  bool rect::max_overlap(const rect &r, float hmax, float wmax) {
+    if (((h0 <= r.h0 + r.height) && (h0 + height >= r.h0)) &&
+	((w0 <= r.w0 + r.width) && (w0 + width >= r.w0))) {
+      // there is overlap, now check how much is authorized.
+      uint hoverlap = std::min(h0 + height, r.h0 + r.height)
+	- std::max(h0, r.h0);
+      uint woverlap = std::min(w0 + width, r.w0 + r.width) - std::max(w0, r.w0);
+      float hratio = hoverlap / (float) std::min(height, r.height);
+      float wratio = woverlap / (float) std::min(width, r.width);
+      if (hratio >= hmax && wratio >= wmax)
+	return true;
+    }
+    return false;
+  }
+  
   bool rect::is_within(const rect &r) {
     if (((h0 >= r.h0) && (h0 + height <= r.h0 + r.height)) &&
 	((w0 >= r.w0) && (w0 + width <= r.w0 + r.width)))

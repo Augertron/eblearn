@@ -180,7 +180,11 @@ namespace ebl {
     //! for entire flow. Those same buffers must have been passed to the
     //! network's constructor.
     void set_mem_optimization(Tstate &in, Tstate &out);
-    
+
+    //! Set the maximum overlaps authorized on the height and width axis before
+    //! allowing non maximum suppression between bounding boxes.
+    void set_bbox_overlaps(float hmax, float wmax);
+  
     ////////////////////////////////////////////////////////////////
     // execution
     
@@ -332,6 +336,8 @@ namespace ebl {
     float                bbhfactor; //!< height bbox factor
     float                bbwfactor; //!< width bbox factor
     bool                 mem_optimization; //!< optimize memory or not.
+    float                max_hoverlap; //!< Maximum ratio of overlap authorized.
+    float                max_woverlap; //!< Maximum ratio of overlap authorized.
 
     ////////////////////////////////////////////////////////////////
     // friends
