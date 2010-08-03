@@ -114,7 +114,8 @@ namespace ebl {
     bool write(const char *fname);
 
     //! resolve variables names in variables
-    void resolve();
+    //! @param replquotes Remove quotes or not from variable strings.
+    void resolve(bool replquotes = true);
 
     // accessors
 
