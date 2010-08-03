@@ -1,10 +1,10 @@
 #!/bin/sh
 
 name=caltech
-metaconf_name=${name}104_meta.conf
-machine=${HOSTNAME}a
-h=104
-w=45
+metaconf_name=${name}39_meta.conf
+machine=${HOSTNAME}c
+h=39 #104
+w=17 #45
 chans=3
 ker=9
 traindsname=ped_${name}_mean${h}x${w}_ker${ker}_bg_train
@@ -13,7 +13,7 @@ valdsname=ped_${name}_mean${h}x${w}_ker${ker}_bg_val
 ebl=$HOME/eblearn/
 eblearnbin0=$ebl/bin/
 # max number of false positives to extract per iteration
-save_max=20000
+save_max=30000
 # max number of false positives to extract per full image
 save_max_per_frame=10
 # number of threads to use duing false positive extraction
@@ -54,8 +54,8 @@ meta_send_best=5
 ################################################################################
 
 # directories
-tstamp=`date +"%Y%m%d.%H%M%S"`
-#tstamp=20100727.073128
+#tstamp=`date +"%Y%m%d.%H%M%S"`
+tstamp=20100730.100534
 xpname=${meta_name}_${tstamp}
 root=~/${machine}data/ped/${name}/
 dataroot=$root/ds/
@@ -100,8 +100,8 @@ echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
 echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
 echo "meta_name = ${meta_name}" >> $metaconf
-${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
-#touch $out/${tstamp}.${meta_name}
+#${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
+touch $out/${tstamp}.${meta_name}
 
 # looping on retraining on false positives
 echo "________________________________________________________________________"
