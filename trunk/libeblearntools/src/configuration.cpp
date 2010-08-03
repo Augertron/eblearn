@@ -229,12 +229,13 @@ namespace ebl {
 
   // variables may contain references to other variables, resolve those
   // dependencies by replacing them with their value.
-  void resolve_variables(string_map_t &m) {
+  void resolve_variables(string_map_t &m, bool replquotes = true) {
     string_map_t::iterator mi = m.begin();
     for ( ; mi != m.end(); ++mi) {
       string val = mi->second;
       mi->second = resolve(m, mi->first, val);
-      mi->second = replace_quotes(mi->second);
+      if (replquotes)
+	mi->second = replace_quotes(mi->second);
     }
   }
   
@@ -242,7 +243,8 @@ namespace ebl {
   // e.g. " i = 42 # comment " will yield a entry in smap
   // with "i" as first value and "42" as second value.
   bool extract_variables(const char *fname, string_map_t &smap, textlist &txt,
-			 string_map_t *meta_smap = NULL, bool bresolve = true) {
+			 string_map_t *meta_smap = NULL, bool bresolve = true, 
+			 bool replquotes = true) {
     string s0, s;
     char separator = '=';
     char comment1 = '#';
@@ -314,9 +316,9 @@ namespace ebl {
     in.close();
     // resolve variables
     if (bresolve) {
-      resolve_variables(smap);
+      resolve_variables(smap, replquotes);
       if (meta_smap)
-	resolve_variables(*meta_smap);
+	resolve_variables(*meta_smap, replquotes);
     }
     return true;
   }
@@ -493,8 +495,8 @@ namespace ebl {
     return true;
   }
   
-  void configuration::resolve() {
-    resolve_variables(smap);
+  void configuration::resolve(bool replquotes) {
+    resolve_variables(smap, replquotes);
   }
 
   const string &configuration::get_name() {
@@ -615,7 +617,7 @@ namespace ebl {
 				const string *tstamp) {
     cout << "Reading meta configuration file: " << fname << endl;
     // read file and extract all variables and values
-    if (!extract_variables(fname, smap, otxt, NULL, bresolve))
+    if (!extract_variables(fname, smap, otxt, NULL, bresolve, false))
       return false;
     cout << "loaded: " << endl;
     pretty();
@@ -625,7 +627,7 @@ namespace ebl {
     // count number of possible configurations
     conf_combinations = config_combinations(lmap);
     // resolve
-    resolve();
+    resolve(false);
 
     // name of entire experiment
     if (tstamp && strcmp(tstamp->c_str(), ""))

@@ -15,7 +15,7 @@ save_max=15660
 # max number of false positives to extract per full image
 save_max_per_frame=10
 # number of threads to use duing false positive extraction
-nthreads=6
+nthreads=8
 # maximum number of retraining iterations
 maxiteration=10
 
@@ -69,7 +69,7 @@ metaconf=${out}/${metaconf_name}
 precision=float
 
 # threshold will be decremented at each iter until -.95
-threshold=.9
+threshold=-.5
 
 # split ratio of validation over training
 ds_split_ratio=".1"
@@ -99,12 +99,12 @@ echo "initial training from metaconf: ${metaconf}"
 echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
 echo "meta_name = ${meta_name}" >> $metaconf
 #${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
-touch $out/${tstamp}.${meta_name}
+touch $out/${tstamp}.${meta_name}_retraining_1
 
 # looping on retraining on false positives
 echo "________________________________________________________________________"
 echo "retraining loop"
-for iter in `seq 1 ${maxiteration}`
+for iter in `seq 2 ${maxiteration}`
   do
 
 # find path to latest metarun output: get directory with latest date
