@@ -97,7 +97,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       idx_clear(total_saved);
       cout << "Initializing " << nthreads << " detection threads." << endl;
       for (uint i = 0; i < nthreads; ++i) {
-	detection_thread<t_net> *dt = new detection_thread<t_net>(conf);
+	ostringstream tname;
+	tname << "thread " << i;
+	detection_thread<t_net> *dt =
+	  new detection_thread<t_net>(conf, tname.str().c_str());
 	threads.push_back(dt);
 	dt->start();
 	dt->set_output_directory(outdir);

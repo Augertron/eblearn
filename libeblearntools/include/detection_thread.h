@@ -54,7 +54,8 @@ namespace ebl {
   template <typename Tnet>
   class detection_thread : public thread {
   public:
-    detection_thread(configuration &conf, const char *arg2 = NULL);
+    detection_thread(configuration &conf, const char *name = "",
+		     const char *arg2 = NULL);
     ~detection_thread();
     
     //! Execute the detection thread.
@@ -85,6 +86,7 @@ namespace ebl {
     // private members
   private:
     configuration		&conf;
+    string                       name;          //! Name of this thread.
     const char			*arg2;
     idx<ubyte>			 uframe;
     idx<Tnet>			 frame;
