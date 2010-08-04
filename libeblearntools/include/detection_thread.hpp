@@ -270,7 +270,10 @@ namespace ebl {
      module_1_1_gui	netgui;
      wid_states  = display_states ? new_window("network states"):0;
      night_mode();
-     wid  = display ? new_window("eblearn object recognition") : 0;
+     string title = "eblearn object recognition: ";
+     title += name;
+     wid  = display ? new_window(title.c_str()) : 0;
+     cout << name << " is displaying in window " << wid << endl;
      night_mode();
      float		zoom = 1;
      detector_gui<SFUNC(Tnet)>
@@ -315,7 +318,7 @@ namespace ebl {
 	 if (mindisplay) {
 	   vector<bbox*> &bb =
 	     dgui.display(detect, frame, threshold, frame_name.c_str(),
-	 		  0, 0, zoom, (Tnet)0, (Tnet)255, wid);
+	 		  0, 0, zoom, (Tnet)0, (Tnet)255, wid, name.c_str());
 	   copy_bboxes(bb); // make a copy of bounding boxes
 	 }
 	 else
