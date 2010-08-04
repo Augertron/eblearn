@@ -78,6 +78,7 @@ namespace ebl {
       label.precision(2);
       label << cl.labels[(*i)->class_id].idx_ptr() << " "
 	    << (*i)->confidence;
+      cout << wname << " conf " << (*i)->confidence << endl;
       draw_box(h0 + h, w0 + w, (uint) (dzoom * (*i)->height), 
 	       (uint) (dzoom * (*i)->width), 0, 0, 255,
 	       new string((const char *)label.str().c_str()));
