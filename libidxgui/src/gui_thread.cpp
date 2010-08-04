@@ -57,6 +57,7 @@ namespace ebl {
 	    SLOT(add_mask(idx<ubyte>*, uint,uint, ubyte, ubyte, ubyte, ubyte)));
     connect(&thread, SIGNAL(appquit()), this, SLOT(appquit()));
     connect(&thread, SIGNAL(gui_clear()), this, SLOT(clear()));
+    connect(&thread, SIGNAL(gui_clear_resize()), this, SLOT(clear_resize()));
     connect(&thread, SIGNAL(gui_save_window(const string*, int)),
 			    this, SLOT(save_window(const string*, int)));
     connect(&thread, SIGNAL(gui_new_window(const char*, unsigned int, 
@@ -216,6 +217,11 @@ namespace ebl {
   void gui_thread::clear() {
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->clear();
+  }
+
+  void gui_thread::clear_resize() {
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->clear_resize();
   }
 
   void gui_thread::save_window(const string *filename, int wid) {

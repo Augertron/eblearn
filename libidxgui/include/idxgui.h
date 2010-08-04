@@ -110,8 +110,11 @@ namespace ebl {
     //! closes all windows.
     EXPORT void quit();
     
-    //! clears the window.
+    //! Clears the window but does not resizes it to 1x1.
     EXPORT void clear();
+
+    //! Clears the window and resizes it to 1x1.
+    EXPORT void clear_resize();
 
     //! save current window into filename image.
     //! wid is optional, if given save window with id wid.
@@ -238,6 +241,7 @@ namespace ebl {
 		       ubyte r, ubyte g, ubyte b, ubyte a);
     EXPORT void appquit();
     EXPORT void gui_clear();
+    EXPORT void gui_clear_resize();
     EXPORT void gui_save_window(const string *filename, int wid);
     EXPORT void gui_new_window(const char *wname, unsigned int h, 
 			       unsigned int w);

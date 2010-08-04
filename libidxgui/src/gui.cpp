@@ -70,6 +70,10 @@ namespace ebl {
     gui.clear();
   }
 
+  void clear_resize_window() {
+    gui.clear_resize();
+  }
+
   void save_window(const char *filename, int wid) {
     gui.save_window(filename, wid);
   }

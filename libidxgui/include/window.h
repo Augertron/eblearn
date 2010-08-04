@@ -145,7 +145,11 @@ namespace ebl {
     void update_pixmap(idx<ubyte> *img, uint h0, uint w0, bool updatepix =true);
     //! add img to the window.
     void update_pixmap(idx<ubyte> &img, uint h0, uint w0, bool updatepix =true);
+    //! Clears the window, but does not resize it, leaves it to the current
+    //! size.
     void clear();
+    //! Clears the window and resizes it to 1x1.
+    void clear_resize();
     void set_text_origin(uint h0, uint w0);
 
     ////////////////////////////////////////////////////////////////
@@ -179,11 +183,26 @@ namespace ebl {
   protected:
     ////////////////////////////////////////////////////////////////
     // clear methods
-    void clear_text();
-    void clear_arrows();
-    void clear_boxes();
-    void clear_images();
-    void clear_masks();
+
+    //! Clear this list of objects.
+    //! \param clear_tmp If true, clears the temporary list of objects instead.
+    void clear_text(bool clear_tmp = false);
+
+    //! Clear this list of objects.
+    //! \param clear_tmp If true, clears the temporary list of objects instead.
+    void clear_arrows(bool clear_tmp = false);
+
+    //! Clear this list of objects.
+    //! \param clear_tmp If true, clears the temporary list of objects instead.
+    void clear_boxes(bool clear_tmp = false);
+
+    //! Clear this list of objects.
+    //! \param clear_tmp If true, clears the temporary list of objects instead.
+    void clear_images(bool clear_tmp = false);
+
+    //! Clear this list of objects.
+    //! \param clear_tmp If true, clears the temporary list of objects instead.
+    void clear_masks(bool clear_tmp = false);
 
     ////////////////////////////////////////////////////////////////
     // event methods
@@ -198,10 +217,16 @@ namespace ebl {
     // update methods
     
     //! Resize current buffer to given height and width.
-    void buffer_resize(uint h, uint w);
+    //! \param force If true, will resize to any size, otherwise, will not
+    //!   accept to resize smaller than current size.
+    void buffer_resize(uint h, uint w, bool force = false);
     //! Fill given buffer with background color.
     void buffer_fill(idx<ubyte> *buf);
+    //! Refresh display of the window.
+    //! \param activate Raises the focus to this window if true.
     void update_window(bool activate = false);
+    void update_qimage();
+    void swap();
 
     ////////////////////////////////////////////////////////////////
     // painting/drawing methods
@@ -209,7 +234,7 @@ namespace ebl {
     void draw_arrows(QPainter &painter);
     void draw_boxes(QPainter &painter);
     void draw_masks(QPainter &painter);
-    void draw_images();
+    void draw_images(bool update = false);
 
   private slots:
     void scroll_previous();
@@ -228,11 +253,16 @@ namespace ebl {
     QVector<QRgb>	 colorTable;
     QImage		*qimage;
     vector<text*>        texts;
+    vector<text*>        texts_tmp;
     text*		 txt;
     vector<arrow*>       arrows;
+    vector<arrow*>       arrows_tmp;
     vector<box*>         boxes;
+    vector<box*>         boxes_tmp;
     vector<image*>       images;
-    vector<imask*>        masks;
+    vector<image*>       images_tmp;
+    vector<imask*>       masks;
+    vector<imask*>       masks_tmp;
     bool		 silent;
     uint		 id;
     string		 savefname;
