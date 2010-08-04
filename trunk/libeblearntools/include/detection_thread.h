@@ -66,7 +66,7 @@ namespace ebl {
     //! because we do not know which frame was actually used.
     //! (could use some kind of id, and remember frames to avoid copy).
     virtual bool get_data(vector<bbox*> &bboxes, idx<ubyte> &frame,
-			  uint &total_saved);
+			  uint &total_saved, string &frame_name);
     //! Return true if the thread is available to process a new frame, false
     //! otherwise.
     virtual bool available();

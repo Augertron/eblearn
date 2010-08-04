@@ -187,13 +187,15 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	uint i = 0;
 	for (ithreads = threads.begin(); 
 	     ithreads != threads.end(); ++ithreads, ++i) {
+	  string processed_fname;
 	  // retrieve new data if present
 	  updated = (*ithreads)->get_data(bboxes, detframe, 
-					  *(total_saved.idx_ptr() + i));
+					  *(total_saved.idx_ptr() + i),
+					  processed_fname);
 	  // save bounding boxes
 	  if (updated) {
 	    for (ibboxes = bboxes.begin(); ibboxes != bboxes.end(); ++ibboxes) {
-	      fp << cam->frame_name() << " " << (*ibboxes)->class_id << " "
+	      fp << processed_fname << " " << (*ibboxes)->class_id << " "
 		 << (*ibboxes)->confidence << " ";
 	      fp << (*ibboxes)->w0 << " " << (*ibboxes)->h0 << " ";
 	      fp << (*ibboxes)->w0 + (*ibboxes)->width << " ";

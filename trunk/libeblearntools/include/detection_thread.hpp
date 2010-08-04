@@ -96,7 +96,8 @@ namespace ebl {
   template <typename Tnet>
   bool detection_thread<Tnet>::get_data(vector<bbox*> &bboxes2,
 					idx<ubyte> &frame2,
-					uint &total_saved_) {
+					uint &total_saved_,
+					string &frame_name_) {
     // lock data
     pthread_mutex_lock(&mutex_out);
     // only read data if it has been updated
@@ -124,6 +125,8 @@ namespace ebl {
     idx_copy(uframe, frame2);    
     // set total of boxes saved
     total_saved_ = total_saved;
+    // set frame name
+    frame_name_ = frame_name;
     // reset updated flag
     out_updated = false;
     // declare thread as available
