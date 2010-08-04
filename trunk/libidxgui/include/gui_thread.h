@@ -95,8 +95,11 @@ namespace ebl {
 		  ubyte r, ubyte g, ubyte b, ubyte a);
     void appquit();
 
-    //! clear current window
+    //! Clears the current window, but does not resize it.
     void clear();
+
+    //! Clears the current windows and resizes it to 1x1.
+    void clear_resize();
     
     //! save window with id wid into filename image.
     //! if wid == -1, save current window.

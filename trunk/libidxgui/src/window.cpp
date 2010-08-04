@@ -129,11 +129,18 @@ namespace ebl {
       delete buffer;
     if (qimage)
       delete qimage;
-    clear_text();
-    clear_arrows();
-    clear_boxes();
-    clear_images();
-    clear_masks();
+    // clear temporary lists
+    clear_text(true);
+    clear_arrows(true);
+    clear_boxes(true);
+    clear_images(true);
+    clear_masks(true);
+    // clear regular lists
+    clear_text(false);
+    clear_arrows(false);
+    clear_boxes(false);
+    clear_images(false);
+    clear_masks(false);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -141,92 +148,89 @@ namespace ebl {
 
   void Window::clear() {
     buffer_fill(buffer);
-    if (pixmap) 
-      pixmap->fill(bg_color);
-    clear_text();
-    clear_arrows();
-    clear_boxes();
-    clear_images();
-    clear_masks();
+    // if (pixmap) 
+    //   pixmap->fill(bg_color);
+    // clear regular lists if we can update, temporary otherwise.
+    clear_text(!wupdate);
+    clear_arrows(!wupdate);
+    clear_boxes(!wupdate);
+    clear_images(!wupdate);
+    clear_masks(!wupdate);
     update_window();
   }
 
-  void Window::clear_text() {
-    for (vector<text*>::iterator i = texts.begin(); i != texts.end(); ++i)
+  void Window::clear_resize() {
+    buffer_resize(1, 1, true);
+    buffer_fill(buffer);
+    // if (pixmap) 
+    //   pixmap->fill(bg_color);
+    // clear regular lists if we can update, temporary otherwise.
+    clear_text(!wupdate);
+    clear_arrows(!wupdate);
+    clear_boxes(!wupdate);
+    clear_images(!wupdate);
+    clear_masks(!wupdate);
+    update_window();
+  }
+
+  void Window::clear_text(bool clear_tmp) {
+    vector<text*> *t = &texts;
+    if (clear_tmp)
+      t = &texts_tmp;
+    for (vector<text*>::iterator i = t->begin(); i != t->end(); ++i)
       if (*i)
 	delete (*i);
-    texts.clear();
+    t->clear();
     txt = NULL;
     text_h0 = 0;
     text_w0 = 0;
   }
 
-  void Window::clear_arrows() {
-    for (vector<arrow*>::iterator i = arrows.begin(); i != arrows.end(); ++i)
+  void Window::clear_arrows(bool clear_tmp) {
+    vector<arrow*> *a = &arrows;
+    if (clear_tmp)
+      a = &arrows_tmp;
+    for (vector<arrow*>::iterator i = a->begin(); i != a->end(); ++i)
       if (*i)
 	delete (*i);
-    arrows.clear();
+    a->clear();
   }
 
-  void Window::clear_boxes() {
-    for (vector<box*>::iterator i = boxes.begin(); i != boxes.end(); ++i)
+  void Window::clear_boxes(bool clear_tmp) {
+    vector<box*> *b = &boxes;
+    if (clear_tmp)
+      b = &boxes_tmp;
+    for (vector<box*>::iterator i = b->begin(); i != b->end(); ++i)
       if (*i)
 	delete (*i);
-    boxes.clear();
+    b->clear();
   }
 
-  void Window::clear_images() {
-    for (vector<image*>::iterator i = images.begin(); i != images.end(); ++i)
+  void Window::clear_images(bool clear_tmp) {
+    vector<image*> *ims = &images;
+    if (clear_tmp)
+      ims = &images_tmp;
+    for (vector<image*>::iterator i = ims->begin(); i != ims->end(); ++i)
       if (*i)
 	delete (*i);
-    images.clear();
+    ims->clear();
     buffer_maxh = 0;
     buffer_maxw = 0;
   }
 
-  void Window::clear_masks() {
-    for (vector<imask*>::iterator i = masks.begin(); i != masks.end(); ++i)
+  void Window::clear_masks(bool clear_tmp) {
+    vector<imask*> *m = &masks;
+    if (clear_tmp)
+      m = &masks_tmp;
+    for (vector<imask*>::iterator i = m->begin(); i != m->end(); ++i)
       if (*i)
 	delete (*i);
-    masks.clear();
+    m->clear();
     buffer_maxh = 0;
     buffer_maxw = 0;
   }
 
   ////////////////////////////////////////////////////////////////
-
-//   void Window::set_wupdate(bool ud) {
-//     if (ud) {
-//       if (wupdate_ndisable > 0) { // update only when necessary
-// 	wupdate_ndisable = std::max(0, wupdate_ndisable - 1); // decrement counter
-// 	if (wupdate_ndisable == 0) {
-// 	  setUpdatesEnabled(true);
-// 	  draw_images();
-// 	  repaint();
-// 	  update_window();
-// 	}
-//       }
-//     }
-//     else {
-//       setUpdatesEnabled(false);
-//       wupdate_ndisable++; // increment disables
-//     }
-//     wupdate = ud;
-//   }
-
-  void Window::set_wupdate(bool ud) {
-    if (wupdate != ud) {
-      wupdate = ud;
-      if (wupdate) {
-	setUpdatesEnabled(true);
-	draw_images();
-	repaint();
-	update_window();
-      }
-      else
-	setUpdatesEnabled(false);
-    }
-  }  
 
   void Window::save(const string &filename) {
     QPixmap p = QPixmap::grabWidget(this, rect());
@@ -254,7 +258,10 @@ namespace ebl {
     if (!txt) {
       txt = new text(text_h0, text_w0, pos_reset, fg_r, fg_g, fg_b, fg_a,
 		     bg_r, bg_g, bg_b, bg_a);
-      texts.push_back(txt);
+      if (!wupdate)
+	texts_tmp.push_back(txt);
+      else
+	texts.push_back(txt);
     }
     *txt += *s;
     delete s;
@@ -263,14 +270,22 @@ namespace ebl {
   }
   
   void Window::add_arrow(int h1, int w1, int h2, int w2) {
-    arrows.push_back(new arrow(h1, w1, h2, w2));
+    arrow *a = new arrow(h1, w1, h2, w2);
+    if (!wupdate)
+      arrows_tmp.push_back(a);
+    else
+      arrows.push_back(a);
     update_window();
   }
   
   void Window::add_box(int h0, int w0, int h, int w, unsigned char r,
 		       unsigned char g, unsigned char b, string *s) {
+    box *bb = new box(h0, w0, h, w, r, g, b);
     // add box
-    boxes.push_back(new box(h0, w0, h, w, r, g, b));
+    if (!wupdate)
+      boxes_tmp.push_back(bb);
+    else
+      boxes.push_back(bb);
     // add caption
     set_text_origin(h0 + 1, w0 + 1);
     if (s)
@@ -279,13 +294,21 @@ namespace ebl {
   }
   
   void Window::add_image(idx<ubyte> &img, unsigned int h0, unsigned int w0) {
-    images.push_back(new image(img, h0, w0));
+    image *i = new image(img, h0, w0);
+    if (!wupdate)
+      images_tmp.push_back(i);
+    else
+      images.push_back(i);
     update_window();
   }
 
   void Window::add_mask(idx<ubyte> *img, unsigned int h0, unsigned int w0,
 			ubyte r, ubyte g, ubyte b, ubyte a) {
-    masks.push_back(new imask(img, h0, w0, r, g, b, a));
+    imask *m = new imask(img, h0, w0, r, g, b, a);
+    if (!wupdate)
+      masks_tmp.push_back(m);
+    else
+      masks.push_back(m);
     // update maximum buffer size
     buffer_maxh = std::max(buffer_maxh, std::max(buffer?(uint)buffer->dim(0):0, 
 						 (uint) (h0 + img->dim(0))));
@@ -357,7 +380,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // update methods
 
-  void Window::buffer_resize(uint h, uint w) {
+  void Window::buffer_resize(uint h, uint w, bool force) {
     // arbitrary bounding of h and w to prevent gigantic erroneous values.
     uint bound = 10000;
     if (std::max(h, w) > bound) {
@@ -366,38 +389,31 @@ namespace ebl {
       cerr << " and probably erroneous." << endl;
       eblerror("too big values for resizing");
     }
-    if ((!buffer || (((uint)buffer->dim(0))< h) || (((uint)buffer->dim(1)) < w))
-	&& ((h != 0) && (w != 0))) {
-      resize(w, h);
+    if ((!buffer || (((uint)buffer->dim(0)) < h) ||
+	 (((uint)buffer->dim(1)) < w) || force) && ((h != 0) && (w != 0))) {
       if (!buffer) {
 	buffer = new idx<ubyte>(h, w, 3);
 	buffer_fill(buffer);
       }
       else {
-	idx<ubyte> *inew = new idx<ubyte>(h, w, 3);
-	buffer_fill(inew);
-	idx<ubyte> tmpnew = inew->narrow(0, MIN(h, (uint)buffer->dim(0)), 0);
-	tmpnew = tmpnew.narrow(1, MIN(w, (uint)buffer->dim(1)), 0);
-	idx<ubyte> tmpbuf = buffer->narrow(0, MIN(h, (uint)buffer->dim(0)), 0);
-	tmpbuf = tmpbuf.narrow(1, MIN(w, (uint)buffer->dim(1)), 0);
-	idx_copy(tmpbuf, tmpnew);
-	delete buffer;
-	buffer = inew;
+	buffer->resize(h, w, 3);
       }
+    }
+  }
+
+  void Window::update_qimage() {
+    if (buffer) {
       if (qimage)
-	delete qimage;
+      	delete qimage;
       qimage = new QImage((unsigned char*) buffer->idx_ptr(), 
 			  buffer->dim(1), buffer->dim(0), 
 			  buffer->dim(1) * buffer->dim(2) *
 			  sizeof (unsigned char),
 			  QImage::Format_RGB888);
-//       qimage = new QImage((unsigned char*) buffer->idx_ptr(), 
-// 			  buffer->dim(1), buffer->dim(0), 
-// 			  QImage::Format_RGB32);
       qimage->setColorTable(colorTable);
     }
   }
-
+  
   void Window::buffer_fill(idx<ubyte> *buf) {
     if (buf) {
       idx<ubyte> tmp = buf->select(2, 0);
@@ -451,6 +467,7 @@ namespace ebl {
       // and ready to be displayed
       // copy buffer to pixmap
       if (updatepix) {
+	update_qimage();
 	*pixmap = QPixmap::fromImage(*qimage);
 	update_window();
       }
@@ -464,14 +481,87 @@ namespace ebl {
     }
   }
 
+//   void Window::set_wupdate(bool ud) {
+//     if (ud) {
+//       if (wupdate_ndisable > 0) { // update only when necessary
+// 	wupdate_ndisable = std::max(0, wupdate_ndisable - 1); // decrement counter
+// 	if (wupdate_ndisable == 0) {
+// 	  setUpdatesEnabled(true);
+// 	  draw_images();
+// 	  repaint();
+// 	  update_window();
+// 	}
+//       }
+//     }
+//     else {
+//       setUpdatesEnabled(false);
+//       wupdate_ndisable++; // increment disables
+//     }
+//     wupdate = ud;
+//   }
+
+  void Window::set_wupdate(bool ud) {
+    if (wupdate != ud) {
+      wupdate = ud;
+      if (wupdate) {
+	// swap temporary objects to objects to be displayed.
+	swap();
+	// setUpdatesEnabled(true);
+	draw_images(false);
+	update_window();
+      }
+      else {
+	//	setUpdatesEnabled(false);
+      }
+    }
+  }
+
+  void Window::swap() {
+    // swap text
+    clear_text(false);
+    for (vector<text*>::iterator i = texts_tmp.begin();
+	 i != texts_tmp.end(); ++i)
+      texts.push_back(*i);
+    texts_tmp.clear();
+    // swap arrows
+    clear_arrows(false);
+    for (vector<arrow*>::iterator i = arrows_tmp.begin();
+	 i != arrows_tmp.end(); ++i)
+      arrows.push_back(*i);
+    arrows_tmp.clear();
+    // swap boxes
+    clear_boxes(false);
+    for (vector<box*>::iterator i = boxes_tmp.begin();
+	 i != boxes_tmp.end(); ++i)
+      boxes.push_back(*i);
+    boxes_tmp.clear();
+    // swap images
+    clear_images(false);
+    for (vector<image*>::iterator i = images_tmp.begin();
+	 i != images_tmp.end(); ++i)
+      images.push_back(*i);
+    images_tmp.clear();
+    // swap masks
+    clear_masks(false);
+    for (vector<imask*>::iterator i = masks_tmp.begin();
+	 i != masks_tmp.end(); ++i)
+      masks.push_back(*i);
+    masks_tmp.clear();
+  }
+
   void Window::update_window(bool activate) {
     if (wupdate) {
-      update(); 
+      if (buffer && (width() != buffer->dim(1) ||
+		     height() != buffer->dim(0)))
+	resize(buffer->dim(1), buffer->dim(0));
+      else
+	repaint();
       // saving pixmap if silent or show it otherwise
       if (silent) 
 	save(savefname);
       else {
-	show();
+	if (!isVisible())
+	  show();
 	if (activate) {
 	  activateWindow();
 	}
@@ -615,7 +705,7 @@ namespace ebl {
     }
   }
 
-  void Window::draw_images() {
+  void Window::draw_images(bool update) {
     buffer_resize(buffer_maxh, buffer_maxw); // resize to maximum size first
     // then display all images not displayed
     for (vector<image*>::iterator i = images.begin(); i != images.end(); ++i)
@@ -624,9 +714,11 @@ namespace ebl {
 	delete (*i);
       }
     // now update pixmap
+    update_qimage();
     if (qimage) {
       *pixmap = QPixmap::fromImage(*qimage);
-      update_window();
+      if (update)
+	update_window();
       // clear images
       images.clear();
     }

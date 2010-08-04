@@ -314,7 +314,7 @@ namespace ebl {
 #ifdef __GUI__
        else { // fprop and display
 	 disable_window_updates();
-	 clear_window();
+	 clear_resize_window();
 	 if (mindisplay) {
 	   vector<bbox*> &bb =
 	     dgui.display(detect, frame, threshold, frame_name.c_str(),
@@ -326,6 +326,7 @@ namespace ebl {
 	 			       frame_name.c_str(), 0, 0, zoom,
 	 			       (Tnet)-1.1, (Tnet)1.1, wid); 
 	 enable_window_updates();
+	 //	 sleep(10);
        }
        total_saved = detect.get_total_saved();
        if (display_states) {

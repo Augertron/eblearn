@@ -88,6 +88,11 @@ namespace ebl {
     emit gui_clear();
   }
 
+  void idxgui::clear_resize() {
+    check_init();
+    emit gui_clear_resize();
+  }
+
   void idxgui::save_window(const char *filename, int wid) {
     check_init();
     emit gui_save_window(new string(filename), wid);

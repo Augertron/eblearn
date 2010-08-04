@@ -111,8 +111,11 @@ namespace ebl {
   //! closes all windows.
   EXPORT void quit_gui();
   
-  //! clears the window.
+  //! Clears the window, but does not resize it to 1x1.
   EXPORT void clear_window();
+
+  //! Clears the window and resizes it to 1x1.
+  EXPORT void clear_resize_window();
 
   //! save current window into filename image.
   //! wid is optional, if given save window with id wid.
