@@ -96,10 +96,12 @@ namespace ebl {
   int idxgui::new_window(const char *wname, unsigned int h, 
 			 unsigned int w) {
     check_init();
-    // TODO: add mutex
+    // lock this block to make sure different threads don't use the same window
+    mutex1.lock();
     int wid = nwid;
     nwid++; // increment number of windows
     emit gui_new_window(wname, h, w);
+    mutex1.unlock();
     return wid;
   }
 

@@ -123,6 +123,7 @@ namespace ebl {
     bool			 silent;
     std::string			 savefname;
     bool                         busy; // flag when busy drawing
+    QMutex                       mutex1;
   };
 
   //! This macro is intended to replace your int main(int argc, char **argv)

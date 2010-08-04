@@ -56,7 +56,9 @@ namespace ebl {
     char		**argv;
     int	                  nwid;
     const unsigned int   *nwindows; // owned by gui_thread
-    gui_thread *gt;
+    gui_thread           *gt;
+    QMutex                mutex1;
+
   public:
     bool		  thread_init;
     bool		  cout_output;
