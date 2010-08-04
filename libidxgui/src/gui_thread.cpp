@@ -231,7 +231,8 @@ namespace ebl {
   }
 
   void gui_thread::new_window(const char *wname, unsigned int h, 
-			      unsigned int w){
+			      unsigned int w) {
+    mutex1.lock();
     windows.push_back(new Window(windows.size(), wname, h, w));
     wcur = windows.size() - 1;
     nwindows++;
@@ -239,6 +240,7 @@ namespace ebl {
       windows[wcur]->set_silent(&savefname);
     connect(windows[wcur], SIGNAL(destroyed(QObject*)), 
     	    this, SLOT(window_destroyed(QObject*)));
+    mutex1.unlock();
   }
 
   void gui_thread::select_window(int wid) {
