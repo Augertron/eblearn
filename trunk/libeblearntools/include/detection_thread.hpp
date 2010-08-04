@@ -59,8 +59,10 @@ namespace ebl {
 
   template <typename Tnet>
   detection_thread<Tnet>::detection_thread(configuration &conf_,
+					   const char *name_,
 					   const char *arg2_)
-    : conf(conf_), arg2(arg2_), frame(120, 160, 1), mutex_in(), mutex_out(),
+    : conf(conf_), name(name_), arg2(arg2_), frame(120, 160, 1),
+      mutex_in(), mutex_out(),
       in_updated(false), out_updated(false), bavailable(false),
       frame_name(""), outdir(""), total_saved(0) {
   }
@@ -293,6 +295,7 @@ namespace ebl {
        }
        // we got a new frame, reset new frame flag
        in_updated = false; // no need to lock mutex
+       cout << name << " is processing: " << frame_name << endl;
        // check frame is correctly allocated, if not, allocate.
        if (frame.order() != uframe.order()) 
 	 frame = idx<Tnet>(uframe.get_idxdim());
