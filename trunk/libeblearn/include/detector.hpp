@@ -322,8 +322,14 @@ namespace ebl {
     // compute maximum closest size of input compatible with the network size
     idxdim indim(input_dims.dim(2), input_dims.dim(0), input_dims.dim(1));
     if (max_size > 0) { // cap on maximum input size
-      for (int i = 0; i < indim.order(); ++i) {
-	indim.setdim(i, MIN((intg) max_size, indim.dim(i)));
+      if (indim.dim(1) > max_size || indim.dim(2) > max_size) {
+	if (indim.dim(1) > indim.dim(2)) {
+	  indim.setdim(2, max_size * indim.dim(2) / indim.dim(1));
+	  indim.setdim(1, max_size);
+	} else {
+	  indim.setdim(1, max_size * indim.dim(1) / indim.dim(2));
+	  indim.setdim(2, max_size);
+	}
       }
     }
     thenet.fprop_size(indim); // set a valid input dimensions set
@@ -342,7 +348,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::compute_resolutions(idxdim &input_dims,
-					uint &nresolutions) {
+					       uint &nresolutions) {
     // nresolutions must be >= 1
     if (nresolutions == 0)
       eblerror("expected more resolutions than 0");
@@ -374,6 +380,7 @@ namespace ebl {
       resolutions.set(in_mindim.dim(1), 1, 0); // min
       resolutions.set(in_mindim.dim(2), 1, 1); // min
     } else { // multiple resolutions: interpolate between min and max
+      nresolutions++; // add a special min resolution
       resolutions.resize1(0, nresolutions);
       int n = nresolutions - 2;
       // compute the step factor: x = e^(log(max/min)/(nres-1))
@@ -388,6 +395,17 @@ namespace ebl {
       }
       resolutions.set(in_maxdim.dim(1), 0, 0); // max
       resolutions.set(in_maxdim.dim(2), 0, 1); // max
+      // a special minimum res that respects original ratio
+      resolutions.set(in_mindim.dim(1), nresolutions - 2, 0); // min
+      resolutions.set(in_mindim.dim(2), nresolutions - 2, 1); // min
+      float ri = input_dims.dim(0) / (float) input_dims.dim(1);
+      float rm = in_mindim.dim(1) / (float) in_mindim.dim(2);      
+      if (ri < rm)
+	resolutions.set((uint)(in_mindim.dim(1) / ri), nresolutions - 2, 1);
+      else
+	resolutions.set((uint)(in_mindim.dim(2) * ri), nresolutions - 2, 0);   	
+      // minimum network res (ignore aspect ratio but shows entire
+      // picture in 1 network
       resolutions.set(in_mindim.dim(1), nresolutions - 1, 0); // min
       resolutions.set(in_mindim.dim(2), nresolutions - 1, 1); // min
     }
@@ -395,8 +413,9 @@ namespace ebl {
 
   // use scales
   template <typename T, class Tstate>
-  void detector<T,Tstate>::compute_resolutions(idxdim &input_dims, uint nresolutions,
-					const double *scales) {
+  void detector<T,Tstate>::compute_resolutions(idxdim &input_dims,
+					       uint nresolutions,
+					       const double *scales) {
     uint i;
     // nresolutions must be >= 1
     if (nresolutions == 0)
@@ -424,7 +443,8 @@ namespace ebl {
 
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::compute_resolutions(idxdim &input_dims, double scales_step){
+  void detector<T,Tstate>::compute_resolutions(idxdim &input_dims,
+					       double scales_step){
     // figure out how many resolutions can be used between min and max
     // with a step of scales_step:
     // nres = (log (max/min) / log step) + 1

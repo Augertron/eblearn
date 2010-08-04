@@ -236,16 +236,17 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	if (conf.exists("save_max") && 
 	    idx_sum(total_saved) > conf.get_uint("save_max")) {
 	  cout << "Reached max number of detections, exiting." << endl;
-	  for (ithreads = threads.begin(); ithreads != threads.end(); ++ithreads) {
-	    (*ithreads)->stop();
-	    // wait that it actually stops
-	    while (!(*ithreads)->finished())
-	      millisleep(10);
-	  }
 	  break ; // limit number of detection saves
 	}
 	// sleep a bit between each iteration
 	millisleep(10);
+      }
+      // let's wait for all threads to finish and tell them to stop.
+      for (ithreads = threads.begin(); ithreads != threads.end(); ++ithreads) {
+	(*ithreads)->stop();
+	// wait that it actually stops
+	while (!(*ithreads)->finished())
+	  millisleep(10);
       }
       cout << "Execution time: " << toverall.elapsed_minutes() <<" mins" <<endl;
       if (save_video)
