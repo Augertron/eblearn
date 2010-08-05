@@ -47,7 +47,7 @@ namespace ebl {
   // A thread class
   class thread {
   public:
-    thread();
+    thread(const char *name = "Thread");
     virtual ~thread();
     //! Start the thread.
     int start();
@@ -59,16 +59,21 @@ namespace ebl {
     //! Return true if thread has finished executing.
     bool finished();
 
+    //! Return name of this thread.
+    string& name();
+
   protected:
     void run();
     static void* entrypoint(void *pthis);
     virtual void execute() = 0;
-    
-    bool _stop;
 
+  protected:    
+    bool 		_stop;
+    string      	_name;  //! Name of this thread.
   private:
-    pthread_t threadptr;
-    bool _finished;
+    pthread_t 		threadptr;
+    bool 		_finished;
+    pthread_mutex_t 	mutex1;
   };
 
 } // end namespace ebl

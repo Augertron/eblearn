@@ -86,7 +86,6 @@ namespace ebl {
     // private members
   private:
     configuration		&conf;
-    string                       name;          //! Name of this thread.
     const char			*arg2;
     idx<ubyte>			 uframe;
     idx<Tnet>			 frame;

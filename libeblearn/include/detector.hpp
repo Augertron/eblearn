@@ -474,7 +474,7 @@ namespace ebl {
       int x_max = (int) raw_maps.dim(2);
       int x = 0, y = 0;
       // size of window to search for local maximum
-      int nms = y_max >= 2*6+1 ? ((x_max >= 2*6+1) ? 6 : x_max) : y_max;
+      int nms = 1; //y_max >= 2*6+1 ? ((x_max >= 2*6+1) ? 6 : x_max) : y_max;
 
       idx_fill(max_map, (T)-1);
       // loop on each class
@@ -535,22 +535,24 @@ namespace ebl {
     // another box, and only keep ones with highest score when overlapping
     vector<bbox*>::iterator i, j;
     for (i = raw_bboxes.begin(); i != raw_bboxes.end(); ++i) {
-      // center of the box
-      rect this_bbox((*i)->h0 + (*i)->height / 2,
-		     (*i)->w0 + (*i)->width / 2, 1, 1);
-      bool add = true;
-      // check each other bbox
-      for (j = raw_bboxes.begin(); (j != raw_bboxes.end()) && add; ++j) {
-	if (i != j) {
-	  rect other_bbox((*j)->h0, (*j)->w0, (*j)->height, (*j)->width);
-	  if ((this_bbox.max_overlap(other_bbox, max_hoverlap, max_woverlap)) &&
-	      ((*i)->confidence < (*j)->confidence))
-	    add = false;
+      if (((*i)->class_id != bgclass) && ((*i)->class_id != mask_class)) {
+	// center of the box
+	rect this_bbox((*i)->h0 + (*i)->height / 2,
+		       (*i)->w0 + (*i)->width / 2, 1, 1);
+	bool add = true;
+	// check each other bbox
+	for (j = raw_bboxes.begin(); (j != raw_bboxes.end()) && add; ++j) {
+	  if (i != j) {
+	    rect other_bbox((*j)->h0, (*j)->w0, (*j)->height, (*j)->width);
+	    if ((this_bbox.max_overlap(other_bbox, max_hoverlap, max_woverlap)) &&
+		((*i)->confidence < (*j)->confidence))
+	      add = false;
+	  }
 	}
+	// if bbox survived, add it
+	if (add)
+	  pruned_bboxes.push_back(*i);
       }
-      // if bbox survived, add it
-      if (add)
-	pruned_bboxes.push_back(*i);
     }
   }
 	
@@ -584,15 +586,19 @@ namespace ebl {
 	  / std::max((double) 1, (out_h - 1));
 	double offset_w_factor = (in_w - netw)
 	  / std::max((double) 1, (out_w - 1));
-	offset_h = 0;
-	{ idx_bloop1(re, *((idx<T>*) r.get()), T) {
+	uint classid = 0;
+	// loop on classes
+	idx_bloop1(ro, ((Tstate*) output.get())->x, T) {
+	  if ((classid == bgclass) || (classid == mask_class))
+	    continue ;
+	  offset_h = 0;
+	  { idx_bloop1(roo, ro, T) {
 	    offset_w = 0;
-	    { idx_bloop1(ree, re, T) {
-		if ((ree.get(0) != bgclass) && (ree.get(0) != mask_class) && 
-		    (ree.get(1) > threshold)) {
+	    { idx_bloop1(rooo, roo, T) {
+		if (rooo.get() >= threshold) {
 		  bbox bb;
-		  bb.class_id = (int) ree.get(0); // Class
-		  bb.confidence = ree.get(1); // Confidence
+		  bb.class_id = (int) classid; // Class
+		  bb.confidence = rooo.get(); // Confidence
 		  bb.scale_index = scale_index; // scale index
 		  // original image
 		  uint oh0 = (uint) (offset_h * offset_h_factor * scalehi);
@@ -630,9 +636,86 @@ namespace ebl {
 	      }}
 	    offset_h++;
 	  }}
+	classid++;
+	}
 	scale_index++;
       }}
   }
+  
+//   template <typename T, class Tstate>
+//   void detector<T,Tstate>::map_to_list(T threshold, vector<bbox*> &raw_bboxes) {
+//     // make a list that contains the results
+//     idx<T> in0x(((Tstate*) inputs.get(0))->x);
+//     double original_h = image.dim(0);
+//     double original_w = image.dim(1);
+//     intg offset_h = 0, offset_w = 0;
+//     int scale_index = 0;
+//     { idx_bloop5(input, inputs, void*, output, outputs, void*,
+// 		 r, results, void*, resolution, resolutions, uint,
+// 		 obbox, original_bboxes, uint) {
+// 	rect robbox(obbox.get(0), obbox.get(1), obbox.get(2), obbox.get(3));
+// 	double in_h = (double)(((Tstate*) input.get())->x.dim(1));
+// 	double in_w = (double)(((Tstate*) input.get())->x.dim(2));
+// 	double out_h = (double)(((Tstate*) output.get())->x.dim(1));
+// 	double out_w = (double)(((Tstate*) output.get())->x.dim(2));
+// 	double neth = in_mindim.dim(1); // network's input height
+// 	double netw = in_mindim.dim(2); // netowkr's input width
+// 	double scalehi = original_h / robbox.height; // in to original
+// 	double scalewi = original_w / robbox.width; // in to original
+// 	// offset factor in input map
+// 	double offset_h_factor = (in_h - neth)
+// 	  / std::max((double) 1, (out_h - 1));
+// 	double offset_w_factor = (in_w - netw)
+// 	  / std::max((double) 1, (out_w - 1));
+// 	offset_h = 0;
+// 	{ idx_bloop1(re, *((idx<T>*) r.get()), T) {
+// 	    offset_w = 0;
+// 	    { idx_bloop1(ree, re, T) {
+// 		if ((ree.get(0) != bgclass) && (ree.get(0) != mask_class) && 
+// 		    (ree.get(1) > threshold)) {
+// 		  bbox bb;
+// 		  bb.class_id = (int) ree.get(0); // Class
+// 		  bb.confidence = ree.get(1); // Confidence
+// 		  bb.scale_index = scale_index; // scale index
+// 		  // original image
+// 		  uint oh0 = (uint) (offset_h * offset_h_factor * scalehi);
+// 		  uint ow0 = (uint) (offset_w * offset_w_factor * scalewi);
+// 		  bb.h0 = (uint) std::max(0, (int) (oh0 - robbox.h0 * scalehi));
+// 		  bb.w0 = (uint) std::max(0, (int) (ow0 - robbox.w0 * scalewi));
+// 		  bb.height =
+// 		    (uint) (MIN(neth * scalehi + oh0,
+// 				original_h + robbox.h0 * scalehi)
+// 			    - std::max((uint) (robbox.h0 * scalehi), oh0));
+// 		  bb.width =
+// 		    (uint) (MIN(netw * scalewi + ow0,
+// 				original_w + robbox.w0 * scalewi)
+// 			    - std::max((uint) (robbox.w0 * scalewi), ow0));
+// 		  // apply bbox factors
+// 		  bb.h0 = bb.h0 + (uint)((bb.height - bb.height * bbhfactor)/2);
+// 		  bb.w0 = bb.w0 + (uint)((bb.width - bb.width * bbwfactor)/2);
+// 		  bb.height = (uint) (bb.height * bbhfactor);
+// 		  bb.width = (uint) (bb.width * bbwfactor);
+// 		  // input map
+// 		  bb.iheight = (uint) in_h; // input h
+// 		  bb.iwidth = (uint) in_w; // input w
+// 		  bb.ih0 = (uint) (offset_h * offset_h_factor);
+// 		  bb.iw0 = (uint) (offset_w * offset_w_factor);
+// 		  bb.ih = (uint) neth;
+// 		  bb.iw = (uint) netw;
+// 		  // output map
+// 		  bb.oheight = (uint) out_h; // output height
+// 		  bb.owidth = (uint) out_w; // output width
+// 		  bb.oh0 = offset_h; // answer height in output
+// 		  bb.ow0 = offset_w; // answer height in output
+// 		  raw_bboxes.push_back(new bbox(bb));
+// 		}
+// 		offset_w++;
+// 	      }}
+// 	    offset_h++;
+// 	  }}
+// 	scale_index++;
+//       }}
+//   }
   
   template<typename T, class Tstate>
   void detector<T,Tstate>::pretty_bboxes(const vector<bbox*> &bboxes) {
@@ -672,7 +755,7 @@ namespace ebl {
     // find points that are local maxima spatial and class-wise
     // write result in m. rescale result to [0 1]
     // TODO: use connected components instead of fixed-size window local maxima?
-    mark_maxima(threshold);
+    //mark_maxima(threshold);
     // get bounding boxes
     for (vector<bbox*>::iterator k = raw_bboxes.begin(); k != raw_bboxes.end();
 	 ++k)

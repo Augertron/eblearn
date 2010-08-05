@@ -61,7 +61,7 @@ namespace ebl {
   detection_thread<Tnet>::detection_thread(configuration &conf_,
 					   const char *name_,
 					   const char *arg2_)
-    : conf(conf_), name(name_), arg2(arg2_), frame(120, 160, 1),
+    : thread(name_), conf(conf_), arg2(arg2_), frame(120, 160, 1),
       mutex_in(), mutex_out(),
       in_updated(false), out_updated(false), bavailable(false),
       frame_name(""), outdir(""), total_saved(0) {
@@ -189,10 +189,16 @@ namespace ebl {
      Tnet	threshold      = (Tnet) conf.get_double("threshold");
      bool	display	       = conf.exists_bool("display");
      bool	mindisplay     = conf.exists_bool("minimal_display");
+     bool       save_video     = conf.exists_bool("save_video");
      bool	display_states = conf.exists_bool("display_states");
      uint	display_sleep  = conf.get_uint("display_sleep");
      uint       wid	       = 0;	// window id
      uint       wid_states     = 0;	// window id
+     if (!display && save_video) {
+       // we still want to output images but not show them
+       display = true;
+       set_gui_silent();
+     }
      // optimize memory usage by using only 2 buffers for entire flow
      SBUF<Tnet> input(1, 1, 1), output(1, 1, 1);
      // load network and weights in a forward-only parameter
@@ -249,7 +255,6 @@ namespace ebl {
      if (conf.exists("bbh_overlap") && conf.exists("bbw_overlap"))
        detect.set_bbox_overlaps(conf.get_float("bbh_overlap"),
 				conf.get_float("bbw_overlap"));
-     bool save_video     = conf.exists_bool("save_video");
      string viddir = outdir;
      viddir += "video/";
      mkdir_full(viddir);
@@ -271,9 +276,9 @@ namespace ebl {
      wid_states  = display_states ? new_window("network states"):0;
      night_mode();
      string title = "eblearn object recognition: ";
-     title += name;
+     title += _name;
      wid  = display ? new_window(title.c_str()) : 0;
-     cout << name << " is displaying in window " << wid << endl;
+     cout << _name << " is displaying in window " << wid << endl;
      night_mode();
      float		zoom = 1;
      detector_gui<SFUNC(Tnet)>
@@ -290,15 +295,16 @@ namespace ebl {
      toverall.start();
      // we're ready
      bavailable = true;
-     while(!_stop) {
+     while(!this->_stop) {
        tpass.restart();
        // wait until a new image is made available
-       while (!in_updated) {
+       while (!in_updated && !_stop) {
 	 millisleep(1);
        }
+       if (_stop) break ;
        // we got a new frame, reset new frame flag
        in_updated = false; // no need to lock mutex
-       cout << name << " is processing: " << frame_name << endl;
+       cout << _name << " is processing: " << frame_name << endl;
        // check frame is correctly allocated, if not, allocate.
        if (frame.order() != uframe.order()) 
 	 frame = idx<Tnet>(uframe.get_idxdim());
@@ -318,7 +324,7 @@ namespace ebl {
 	 if (mindisplay) {
 	   vector<bbox*> &bb =
 	     dgui.display(detect, frame, threshold, frame_name.c_str(),
-	 		  0, 0, zoom, (Tnet)0, (Tnet)255, wid, name.c_str());
+	 		  0, 0, zoom, (Tnet)0, (Tnet)255, wid, _name.c_str());
 	   copy_bboxes(bb); // make a copy of bounding boxes
 	 }
 	 else
@@ -326,7 +332,6 @@ namespace ebl {
 	 			       frame_name.c_str(), 0, 0, zoom,
 	 			       (Tnet)-1.1, (Tnet)1.1, wid); 
 	 enable_window_updates();
-	 //	 sleep(10);
        }
        total_saved = detect.get_total_saved();
        if (display_states) {
@@ -341,7 +346,7 @@ namespace ebl {
        }
 #endif
        ms = tpass.elapsed_milliseconds();
-       cout << "processing=" << ms << " ms." << endl;
+       cout << _name << " processing=" << ms << " ms." << endl;
 #ifdef __DEBUGMEM__
        pretty_memory();
 #endif
@@ -356,7 +361,7 @@ namespace ebl {
 	   detect.get_total_saved() > conf.get_uint("save_max"))
 	 break ; // limit number of detection saves
      }
-     cout << name << " finished. Execution time: " 
+     cout << _name << " finished. Execution time: " 
 	  << toverall.elapsed_minutes() <<" mins" <<endl;
      // free variables
      if (net) delete net;
