@@ -38,12 +38,13 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // thread
 
-  thread::thread() : _stop(false), _finished(false) {
+  thread::thread(const char *name_) 
+    : _stop(false), _name(name_), _finished(false), mutex1() {
   }
 
   thread::~thread() {
-    cout << "Quitting thread." << endl;
     pthread_exit((void*)&threadptr);
+    cout << _name << " destroyed." << endl;
   }
 
   int thread::start() {
@@ -54,8 +55,15 @@ namespace ebl {
     execute();
   }
 
+  string& thread::name() {
+    return _name;
+  }
+
   void thread::stop() {
+    pthread_mutex_lock(&mutex1);
     _stop = true;
+    cout << _name << " required to stop." << endl;
+    pthread_mutex_unlock(&mutex1);
   }
 
   bool thread::finished() {
