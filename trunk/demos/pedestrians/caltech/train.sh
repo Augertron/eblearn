@@ -6,7 +6,7 @@ machine=${HOSTNAME}c
 h=39 #104
 w=17 #45
 chans=3
-ker=9
+ker=7
 traindsname=ped_${name}_mean${h}x${w}_ker${ker}_bg_train
 valdsname=ped_${name}_mean${h}x${w}_ker${ker}_bg_val
 
@@ -86,6 +86,7 @@ mkdir -p $nopersons_root
 cp $eblearnbin0/* $eblearnbin/
 # set path to libraries locally
 export LD_LIBRARY_PATH=${eblearnbin}
+LD_LIBRARY_PATH=${eblearnbin}
 
 # make a copy of meta conf and override its output dir
 cp $metaconf0 $metaconf
@@ -121,7 +122,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "Using best conf of previous training: ${bestconf}"
   echo "i=`expr ${maxiteration} - ${iter}`"
 
-#if [ $iter != 1 ]; then  
+if [ $iter != 1 ]; then  
 
 # extract false positives: first add new variables to best conf
 # activate retraining
@@ -156,8 +157,13 @@ for iter in `seq 1 ${maxiteration}`
 # start parallelized extraction
   ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
 
+fi
+
+
 # find path to latest metarun output: get directory with latest date
   lastout=`ls -dt1 ${out}/*/ | head -1`
+
+lastout=$out/${tstamp}.${meta_name}_falsepos_1
 
 # recompile data from last output directory which should contain 
 # all false positives
@@ -177,8 +183,6 @@ for iter in `seq 1 ${maxiteration}`
 # split dataset into training and validation
   ${eblearnbin}/dssplit ${dataroot} allfp \
       allfp_val_ allfp_train_ -maxperclass ${valsize} -draws $draws
-
-#fi
 
 # merge new datasets into previous datasets: training
   for i in `seq 1 $draws`
