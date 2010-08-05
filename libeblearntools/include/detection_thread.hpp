@@ -356,8 +356,8 @@ namespace ebl {
 	   detect.get_total_saved() > conf.get_uint("save_max"))
 	 break ; // limit number of detection saves
      }
-     cout << "Detection thread finished." << endl;
-     cout << "Execution time: " << toverall.elapsed_minutes() <<" mins" <<endl;
+     cout << name << " finished. Execution time: " 
+	  << toverall.elapsed_minutes() <<" mins" <<endl;
      // free variables
      if (net) delete net;
 #ifdef __GUI__
