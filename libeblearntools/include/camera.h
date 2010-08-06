@@ -87,7 +87,9 @@ namespace ebl {
     
     //! Create all videos started with start_recording() using frames dumped
     //! with record_frame(), using fps frames per second.
-    virtual bool stop_recording(float fps);
+    //! \param root Indicates the root where the images are and where
+    //!   to save the video.
+    virtual bool stop_recording(float fps, const char *root = NULL);
 
     ////////////////////////////////////////////////////////////////
     // info

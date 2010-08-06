@@ -57,11 +57,14 @@ namespace ebl {
   }
 
   files_list *find_files(const string &dir, const char *pattern,
-			 files_list *fl_, bool sorted, bool recursive) {
+			 files_list *fl_, bool sort, bool recursive,
+			 bool randomize) {
     files_list *fl = fl_;
 #ifndef __BOOST__
     eblerror("boost not installed, install and recompile");
 #else
+    if (sort && randomize)
+      eblerror("it makes no sense to sort and randomize at the same time");
     cmatch what;
     regex r(pattern);
     path p(dir);
@@ -84,12 +87,29 @@ namespace ebl {
     if (recursive) {
       for (directory_iterator itr(p); itr != end_itr; ++itr) {
 	if (is_directory(itr->status()))
-	  find_files(itr->path().string(), pattern, fl, sorted);
+	  find_files(itr->path().string(), pattern, fl, sort,
+		     recursive, false);
       }
     }
     // sort list
-    if (sorted)
+    if (sort)
       fl->sort(less_than);
+    // randomize list
+    if (randomize) {
+      // list randomization is very inefficient, so first copy to vector,
+      // randomize, then copy back (using vectors directly would be innefficient
+      // too for big file lists because we constantly resize the list as we
+      // find new files).
+      vector<stringpair> v(fl->size());
+      vector<stringpair>::iterator iv = v.begin();
+      for (files_list::iterator i = fl->begin(); i != fl->end(); ++i, ++iv)
+	*iv = *i;
+      delete fl;
+      fl = new files_list();
+      random_shuffle(v.begin(), v.end());
+      for (iv = v.begin(); iv != v.end(); ++iv)
+	fl->push_back(*iv);
+    }
 #endif
     return fl;
   }

@@ -64,7 +64,10 @@ namespace ebl {
     //! \param directory The root directory to recursively search.
     //! \param height Resize input frame to this height if different than -1.
     //! \param width Resize input frame to this width if different than -1.
-    camera_directory(const char *directory, int height_ = -1, int width_ = -1);
+    //! \param randomize Randomize image list if true.
+    //! \param npasses Repeat list this number of times.
+    camera_directory(const char *directory, int height_ = -1, int width_ = -1,
+		     bool randomize = false, uint npasses = 1);
 
     //! Initialize a directory camera without a root directory. This constructor
     //! requires a subsequent call to read_directory to initialize images.
@@ -74,7 +77,10 @@ namespace ebl {
     //! when computing multiple resolutions.
     //! \param height Resize input frame to this height if different than -1.
     //! \param width Resize input frame to this width if different than -1.
-    camera_directory(int height_ = -1, int width_ = -1);
+    //! \param randomize Randomize image list if true.
+    //! \param npasses Repeat list this number of times.
+    camera_directory(int height_ = -1, int width_ = -1,
+		     bool randomize = false, uint npasses = 1);
 
     //! Find all images recursively from this directory.
     bool read_directory(const char *directory);
@@ -100,11 +106,14 @@ namespace ebl {
     using camera<Tdata>::frame_id;	//!< frame counter
     using camera<Tdata>::frame_name_;	//!< frame name
     files_list		*fl;	//!< list of images
+    files_list::iterator fli;   //!< Iterator on the list of images.
     string		 indir; //!< input directory name
     string		 fdir;	//!< directory name
     string		 fname;	//!< file name
     ostringstream	 oss;	//!< temporary string
     uint                 flsize;	//!< original size of list
+    bool                 randomize; //!< Randomize order of images or not.
+    uint                 npasses; //!< Number of passes on the list.
   };
 
 } // end namespace ebl

@@ -872,7 +872,8 @@ namespace ebl {
       sample = data[*i];
       cout << "(original index " << *i << ") ";
       if (!ds1.add_data(sample, labels.get(*i), 
-			classes.size() ? &(classes[(size_t)labels.get(*i)]):NULL))
+			classes.size() ?
+			&(classes[(size_t)labels.get(*i)]) : NULL))
 	ds2.add_data(sample, labels.get(*i), 
 		     classes.size() ? &(classes[(size_t)labels.get(*i)]):NULL);
     }

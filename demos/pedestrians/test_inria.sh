@@ -15,3 +15,8 @@ python $vgdir/main.py --input $1 --input_parser eblearn \
 python $vgdir/plotpickle.py --main_curve inria.curve \
     --xmin 0.003 --xmax 102 --ymin .03 --ymax 1.1 *.curve \
     --xlegend "False positives per image" --ylegend "Miss rate"
+
+# show db
+python $vgdir/main.py --input $1 --input_parser eblearn \
+    --groundtruth $inria --disp --groundtruth_parser inria \
+    --images_path $inria

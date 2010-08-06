@@ -78,7 +78,7 @@ namespace ebl {
     set_bgclass(background);
     // initilizations
     save_max_per_frame = (numeric_limits<uint>::max)();
-    set_bbox_overlaps(.6, .2);
+    set_bbox_overlaps(.5, .5);
   }
   
   template <typename T, class Tstate>
@@ -535,18 +535,32 @@ namespace ebl {
     // another box, and only keep ones with highest score when overlapping
     vector<bbox*>::iterator i, j;
     for (i = raw_bboxes.begin(); i != raw_bboxes.end(); ++i) {
-      if (((*i)->class_id != bgclass) && ((*i)->class_id != mask_class)) {
+      if (*i && ((*i)->class_id != bgclass) && ((*i)->class_id != mask_class)) {
 	// center of the box
-	rect this_bbox((*i)->h0 + (*i)->height / 2,
-		       (*i)->w0 + (*i)->width / 2, 1, 1);
+	rect this_bbox((*i)->h0, (*i)->w0, (*i)->height, (*i)->width);
 	bool add = true;
 	// check each other bbox
 	for (j = raw_bboxes.begin(); (j != raw_bboxes.end()) && add; ++j) {
-	  if (i != j) {
+	  if (*j && i != j) {
 	    rect other_bbox((*j)->h0, (*j)->w0, (*j)->height, (*j)->width);
-	    if ((this_bbox.max_overlap(other_bbox, max_hoverlap, max_woverlap)) &&
-		((*i)->confidence < (*j)->confidence))
-	      add = false;
+	    if (this_bbox.min_overlap(other_bbox, max_hoverlap)) {//, max_woverlap))
+	      if ((*i)->confidence < (*j)->confidence) {
+		// it's not the highest confidence, stop here.
+		add = false;
+		break ;
+	      } else if ((*i)->confidence == (*j)->confidence) {
+		// we have a tie, keep the biggest one.
+		if ((*i)->height * (*i)->width > (*j)->height * (*j)->width) {
+		  delete *j;
+		  *j = NULL;
+		} else {
+		  delete *i;
+		  *i = NULL;
+		  add = false;
+		  break ;
+		}
+	      }
+	    }
 	  }
 	}
 	// if bbox survived, add it
@@ -586,7 +600,7 @@ namespace ebl {
 	  / std::max((double) 1, (out_h - 1));
 	double offset_w_factor = (in_w - netw)
 	  / std::max((double) 1, (out_w - 1));
-	uint classid = 0;
+	int classid = 0;
 	// loop on classes
 	idx_bloop1(ro, ((Tstate*) output.get())->x, T) {
 	  if ((classid == bgclass) || (classid == mask_class)) {

@@ -396,7 +396,22 @@ namespace ebl {
 	buffer_fill(buffer);
       }
       else {
-	buffer->resize(h, w, 3);
+	if (!wupdate)
+	  buffer->resize(h, w, 3);
+	else {
+	  // TODO: we should be able to avoid using this block at all
+	  // with use of enable/disable udpates, but does not seem to work,
+	  // investigate without this block.
+	  idx<ubyte> *inew = new idx<ubyte>(h, w, 3);
+	  buffer_fill(inew);
+	  idx<ubyte> tmpnew = inew->narrow(0, MIN(h, (uint)buffer->dim(0)), 0);
+	  tmpnew = tmpnew.narrow(1, MIN(w, (uint)buffer->dim(1)), 0);
+	  idx<ubyte> tmpbuf = buffer->narrow(0, MIN(h, (uint)buffer->dim(0)),0);
+	  tmpbuf = tmpbuf.narrow(1, MIN(w, (uint)buffer->dim(1)), 0);
+	  idx_copy(tmpbuf, tmpnew);
+	  delete buffer;
+	  buffer = inew;
+	}
       }
     }
   }
