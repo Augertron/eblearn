@@ -589,8 +589,10 @@ namespace ebl {
 	uint classid = 0;
 	// loop on classes
 	idx_bloop1(ro, ((Tstate*) output.get())->x, T) {
-	  if ((classid == bgclass) || (classid == mask_class))
+	  if ((classid == bgclass) || (classid == mask_class)) {
+	    classid++;
 	    continue ;
+	  }
 	  offset_h = 0;
 	  { idx_bloop1(roo, ro, T) {
 	    offset_w = 0;
