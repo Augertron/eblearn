@@ -136,7 +136,7 @@ namespace ebl {
     display_wid_fprop = (wid >= 0) ? wid :				\
       new_window((wname ? wname : "module_2_1 display"));		\
     select_window(display_wid_fprop);					\
-    disable_window_updates();						\
+    /*    disable_window_updates();*/					\
     gui << black_on_white(255, 0) << gui_only();			\
     									\
     if (dynamic_cast< fc_ebm2<T, Tstate, Tin2, Tout>* >(&m)) {		\
@@ -148,7 +148,7 @@ namespace ebl {
       cerr << "Warning: unknown display function for module_2_1 object"; \
       cerr << "(" << typeid(m).name() << ")." << endl;			\
     }									\
-    enable_window_updates();						\
+    /*    enable_window_updates();*/					\
   }
   
   DISPLAY_2_1(display_fprop)

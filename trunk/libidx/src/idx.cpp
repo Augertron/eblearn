@@ -829,17 +829,34 @@ namespace ebl {
       return true;
     return false;
   }
+
+  uint rect::overlapping_area(const rect &r) {
+    int h = min(r.h0 + r.height, h0 + height) - max(r.h0, h0);
+    int w = min(r.w0 + r.width, w0 + width) - max(r.w0, w0);
+    if (h <= 0 || w <= 0)
+      return 0;
+    return (uint) (h * w);
+  }
   
-  bool rect::max_overlap(const rect &r, float hmax, float wmax) {
+  bool rect::min_overlap(const rect &r, float minarea) {
+    uint area1 = height * width;
+    uint area2 = r.height * r.width;
+    uint inter = overlapping_area(r);
+    if ((inter / (float) std::min(area1, area2)) > minarea)
+      return true;
+    return false;
+  }
+  
+  bool rect::min_overlap(const rect &r, float hmin, float wmin) {
     if (((h0 <= r.h0 + r.height) && (h0 + height >= r.h0)) &&
 	((w0 <= r.w0 + r.width) && (w0 + width >= r.w0))) {
       // there is overlap, now check how much is authorized.
       uint hoverlap = std::min(h0 + height, r.h0 + r.height)
-	- std::max(h0, r.h0);
+	- std::min(h0, r.h0);
       uint woverlap = std::min(w0 + width, r.w0 + r.width) - std::max(w0, r.w0);
       float hratio = hoverlap / (float) std::min(height, r.height);
       float wratio = woverlap / (float) std::min(width, r.width);
-      if (hratio >= hmax && wratio >= wmax)
+      if (hratio >= hmin || wratio >= wmin)
 	return true;
     }
     return false;

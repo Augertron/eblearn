@@ -1061,14 +1061,19 @@ namespace ebl {
     virtual ~rect();
     //! return true if current rectangle overlaps with r.
     bool overlap(const rect &r);
+    //! Return the overlapping area with r.
+    uint overlapping_area(const rect &r);
     //! Returns true if current rectangle overlaps with r more than authorized
-    //! ratios hmax and wmax. The ratio is computed with overlap / smallest
+    //! ratios hmin and wmin. The ratio is computed with overlap / smallest
     //! rectangle.
-    //! \param hmax Maximum height overlap ratio authorized before the overlap
-    //!   is declared true.
-    //! \param wmax Maximum width overlap ratio authorized before the overlap
-    //!   is declared true.
-    bool max_overlap(const rect &r, float hmax, float wmax);
+    //! \param hmin Minimum height overlap ratio required to declare overlap.
+    //! \param wmin Minimum width overlap ratio required to declare overlap.
+    bool min_overlap(const rect &r, float hmin, float wmin);
+    //! Returns true if the ratio of the overlapping area over the smallest
+    //! rectangle is more than the minarea ratio.
+    //! \param minarea Ratio of minimum area overlap required to declare
+    //!    overlap.
+    bool min_overlap(const rect &r, float minarea);
     //! return true current rectangle is entirely contained in r.
     bool is_within(const rect &r);
     uint h0, w0, height, width;

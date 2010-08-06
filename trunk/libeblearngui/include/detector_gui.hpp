@@ -285,7 +285,7 @@ namespace ebl {
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
-    //    disable_window_updates();
+    disable_window_updates();
     clear_window();
     // draw internal states of first scale
     module_1_1_gui mg;
@@ -294,7 +294,7 @@ namespace ebl {
     mg.display_fprop(*(module_1_1<T,Tstate>*) &cl.thenet,
     		     *cl.input, *cl.output, (uint) 0, (uint) 0, (double) 1.0,
 		     (T) -1.0, (T) 1.0, true, display_wid_fprop);
-    //    enable_window_updates();
+    enable_window_updates();
   }
 
   template <typename T, class Tstate>

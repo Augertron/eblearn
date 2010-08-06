@@ -33,6 +33,8 @@
 #ifndef CAMERA_DIRECTORY_HPP_
 #define CAMERA_DIRECTORY_HPP_
 
+#include <sstream>
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -40,15 +42,23 @@ namespace ebl {
 
   template <typename Tdata>
   camera_directory<Tdata>::camera_directory(const char *dir,
-					    int height_, int width_)
-    : camera<Tdata>(height_, width_), indir(dir) {
+					    int height_, int width_,
+					    bool randomize_, uint npasses_)
+    : camera<Tdata>(height_, width_), indir(dir),
+      randomize(randomize_), npasses(npasses_) {
+    if (npasses == 0)
+      eblerror("number of passes must be >= 1");
     cout << "Initializing directory camera from: " << dir << endl;
     read_directory(dir);
   }
 
   template <typename Tdata>
-  camera_directory<Tdata>::camera_directory(int height_, int width_)
-    : camera<Tdata>(height_, width_) {
+  camera_directory<Tdata>::camera_directory(int height_, int width_,
+					    bool randomize_, uint npasses_)
+    : camera<Tdata>(height_, width_),
+      randomize(randomize_), npasses(npasses_) {
+    if (npasses == 0)
+      eblerror("number of passes must be >= 1");
   }
 
   template <typename Tdata>
@@ -60,14 +70,19 @@ namespace ebl {
     // if (fl) delete fl;
     // fl = new files_list(n);
     // get all file names
-    fl = find_files(directory, IMAGE_PATTERN);
+    fl = find_files(directory, IMAGE_PATTERN, NULL, false, true, randomize);
     if (!fl) {
       cerr << "invalid directory: " << dir << endl;
       eblerror("invalid directory");
       return false;
     }
     cout << "Found " << fl->size() << " images." << endl;
-    flsize = fl->size();
+    if (randomize)
+      cout << "Image list is randomized." << endl;
+    if (npasses > 1)
+      cout << "Image list will be used " << npasses << " times." << endl;
+    flsize = fl->size() * npasses;
+    fli = fl->begin(); // initialize iterator to beginning
     return true;
   }
   
@@ -84,17 +99,21 @@ namespace ebl {
   idx<Tdata> camera_directory<Tdata>::grab() {
     if (empty())
       eblerror("cannot grab images on empty list");
-    fdir = fl->front().first; // directory
-    fname = fl->front().second; // file name
-    frame_name_ = fl->front().first;
-    frame_name_ += "/";
-    frame_name_ += fl->front().second;
-    size_t npos = frame_name_.length() - indir.length();
-    frame_name_ = frame_name_.substr(indir.length(), npos);
+    fdir = fli->first; // directory
+    fname = fli->second; // file name
+    ostringstream fn("");
+    if (strcmp(fdir.c_str(), ""))
+      fn << fdir << "/";
+    fn << fname << "_" << frame_id;
+    frame_name_ = fn.str();
+    if (strcmp(fdir.c_str(), "")) {
+      size_t npos = frame_name_.length() - indir.length();
+      frame_name_ = frame_name_.substr(indir.length(), npos);
+    }
     for (size_t i = 0; i < frame_name_.length(); ++i)
       if (frame_name_[i] == '/')
 	frame_name_[i] = '_';
-    fl->pop_front(); // remove first element
+    fli++; // move to next element
     cout << frame_id << "/" << flsize << ": processing ";
     cout << fdir << "/" << fname << endl;
     oss.str(""); oss << fdir << "/" << fname;
@@ -111,7 +130,15 @@ namespace ebl {
   bool camera_directory<Tdata>::empty() {
     if (!fl)
       eblerror("directory not initialized");
-    return (fl->size() == 0);
+    if (fli == fl->end()) {
+      if (npasses > 0) {
+	npasses--;
+	fli = fl->begin(); // reset to begining.
+      }
+      if (npasses == 0) // we did all passes, stop.
+	return true;
+    }
+    return false;
   }
     
   template <typename Tdata>

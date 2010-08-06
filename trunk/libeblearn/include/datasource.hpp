@@ -297,7 +297,7 @@ namespace ebl {
 	}
 	if (weigh_samples) {
 	  if (perclass_norm) {
-	    // normalize probabilities for this class, mapping [0..max] to [0..1]
+	    // normalize probas for this class, mapping [0..max] to [0..1]
 	    double maxproba = 0;
 	    // get max
 	    for (vector<intg>::iterator j = label_indices[iitr].begin();
@@ -316,7 +316,7 @@ namespace ebl {
 	    }
 	    //	  cout << "avg proba = " << avg / maxproba << endl;
 	  } else {
-	    // normalize probabilities for all classes, mapping [0..max] to [0..1]
+	    // normalize probas for all classes, mapping [0..max] to [0..1]
 	    double maxproba = idx_max(probas);
 	    if (maxproba == 0)
 	      maxproba = 1.0;

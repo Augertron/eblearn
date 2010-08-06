@@ -76,11 +76,15 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       ipp_init(1); // limit IPP (if available) to 1 core
       // load configuration
       configuration	conf(argv[1]);
-      bool		save_video    = conf.exists_bool("save_video");
+      bool		save_video    = conf.exists_true("save_video");
       string		cam_type      = conf.get_string("camera");
       int		height        = conf.get_int("input_height");
       int		width         = conf.get_int("input_width");
       string		outdir        = "out_";
+      bool              input_random  = conf.exists_true("input_random");
+      uint              npasses       = 1;
+      if (conf.exists("input_npasses"))
+	npasses = conf.get_uint("input_npasses");
       outdir += tstamp();
       outdir += "/";
       cout << "Saving outputs to " << outdir << endl;
@@ -109,39 +113,37 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // initialize camera (opencv, directory, shmem or video)
       idx<ubyte> frame;
       camera<ubyte> *cam = NULL, *cam2 = NULL;
-      if (conf.exists_bool("retrain") && conf.exists("retrain_dir")) {
-	// extract false positives
-	cam = new camera_directory<ubyte>(conf.get_cstring("retrain_dir"));
-      } else { // regular execution
-	if (!strcmp(cam_type.c_str(), "directory")) {
-	  if (argc >= 3) 
-	    cam = new camera_directory<ubyte>(argv[2], height, width);
-	  else if (conf.exists("input_dir"))
-	    cam = new camera_directory<ubyte>(conf.get_cstring("input_dir"), 
-					      height, width);
-	  else eblerror("expected 2nd argument");
-	} else if (!strcmp(cam_type.c_str(), "opencv"))
-	  cam = new camera_opencv<ubyte>(-1, height, width);
+      if (!strcmp(cam_type.c_str(), "directory")) {
+	if (argc >= 3) // read input dir from command line
+	  cam = new camera_directory<ubyte>(argv[2], height, width,
+					    input_random, npasses);
+	else if (conf.exists("input_dir")) // read input dir from conf
+	  cam = new camera_directory<ubyte>(conf.get_cstring("input_dir"), 
+					    height, width, input_random,
+					    npasses);
+	else eblerror("expected 2nd argument");
+      } else if (!strcmp(cam_type.c_str(), "opencv"))
+	cam = new camera_opencv<ubyte>(-1, height, width);
 #ifdef __LINUX__
-	else if (!strcmp(cam_type.c_str(), "v4l2"))
-	  cam = new camera_v4l2<ubyte>(conf.get_cstring("device"),
-				       height, width);
+      else if (!strcmp(cam_type.c_str(), "v4l2"))
+	cam = new camera_v4l2<ubyte>(conf.get_cstring("device"),
+				     height, width);
 #endif
-	else if (!strcmp(cam_type.c_str(), "shmem"))
-	  cam = new camera_shmem<ubyte>("shared-mem", height, width);
-	else if (!strcmp(cam_type.c_str(), "video")) {
-	  if (argc >= 3)
-	    cam = new camera_video<ubyte>
-	      (argv[2], height, width, conf.get_uint("input_video_sstep"),
-	       conf.get_uint("input_video_max_duration"));
-	  else eblerror("expected 2nd argument");
-	} else eblerror("unknown camera type");
-	// a camera directory may be used first, then switching to regular cam
-	if (conf.exists_bool("precamera"))
-	  cam2 = new camera_directory<ubyte>(conf.get_cstring("precamdir"),
-					     height, width);
-      }
-
+      else if (!strcmp(cam_type.c_str(), "shmem"))
+	cam = new camera_shmem<ubyte>("shared-mem", height, width);
+      else if (!strcmp(cam_type.c_str(), "video")) {
+	if (argc >= 3)
+	  cam = new camera_video<ubyte>
+	    (argv[2], height, width, conf.get_uint("input_video_sstep"),
+	     conf.get_uint("input_video_max_duration"));
+	else eblerror("expected 2nd argument");
+      } else eblerror("unknown camera type");
+      // a camera directory may be used first, then switching to regular cam
+      if (conf.exists_bool("precamera"))
+	cam2 = new camera_directory<ubyte>(conf.get_cstring("precamdir"),
+					   height, width, input_random,
+					   npasses);
+	
       // answer variables & initializations
       vector<bbox*> bboxes;
       vector<bbox*>::iterator ibboxes;
@@ -251,7 +253,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       cout << "Execution time: " << toverall.elapsed_minutes() <<" mins" <<endl;
       if (save_video)
 	cam->stop_recording(conf.exists_bool("use_original_fps") ?
-			    cam->fps() : conf.get_uint("save_video_fps"));
+			    cam->fps() : conf.get_uint("save_video_fps"),
+			    outdir.c_str());
       // free variables
       if (cam) delete cam;
       for (ithreads = threads.begin(); ithreads != threads.end(); ++ithreads)
