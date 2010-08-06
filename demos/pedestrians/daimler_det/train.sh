@@ -15,7 +15,7 @@ save_max=15660
 # max number of false positives to extract per full image
 save_max_per_frame=10
 # number of threads to use duing false positive extraction
-nthreads=8
+nthreads=5
 # maximum number of retraining iterations
 maxiteration=10
 
@@ -99,12 +99,12 @@ echo "initial training from metaconf: ${metaconf}"
 echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
 echo "meta_name = ${meta_name}" >> $metaconf
 #${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
-touch $out/${tstamp}.${meta_name}_retraining_1
+touch $out/${tstamp}.${meta_name}_retraining_2
 
 # looping on retraining on false positives
 echo "________________________________________________________________________"
 echo "retraining loop"
-for iter in `seq 2 ${maxiteration}`
+for iter in `seq 3 ${maxiteration}`
   do
 
 # find path to latest metarun output: get directory with latest date
@@ -119,11 +119,9 @@ for iter in `seq 2 ${maxiteration}`
   echo "Using best conf of previous training: ${bestconf}"
   echo "i=`expr ${maxiteration} - ${iter}`"
 
-if [ $iter != 1 ]; then  
+#if [ $iter != 1 ]; then  
 
 # extract false positives: first add new variables to best conf
-# activate retraining
-  echo "retrain = 1" >> $bestconf
 # force saving detections
   echo "save_detections = 1" >> $bestconf
 # do not save video
@@ -141,7 +139,7 @@ if [ $iter != 1 ]; then
 # set weights to retrain: same as this conf
   echo "retrain_weights = \${weights}" >> $bestconf
 # set where to find full images
-  echo "retrain_dir = ${nopersons_root}/" >> $bestconf
+  echo "input_dir = ${nopersons_root}/" >> $bestconf
 # send report every 1000 frames processed
   echo "meta_email_iters = " >> $bestconf
   echo "meta_email_period = 1000" >> $bestconf
@@ -151,6 +149,10 @@ if [ $iter != 1 ]; then
   echo "meta_name = ${meta_name}_falsepos_${iter}" >> $bestconf
 # set multi threads for detection
   echo "nthreads = ${nthreads}" >> $bestconf
+# pass n times on the dataset to make sure we reach the desired amount of fp
+  echo "input_npasses = 3" >> $bestconf
+# randomize list of files to extract fp from
+  echo "input_random = 1" >> $bestconf
 # start parallelized extraction
   ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
 
@@ -191,7 +193,7 @@ if [ $iter != 1 ]; then
 	  allfp_val_${i} ${valdsname}_${i}
   done
 
-fi  
+#fi  
 
 # retrain on old + new data
   echo "Retraining from best previous weights: ${bestweights}"
