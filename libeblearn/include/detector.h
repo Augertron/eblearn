@@ -134,7 +134,12 @@ namespace ebl {
     //! Specify resolutions by the factor step, starting from factor 1
     //! (network's size), adding factor_steps until reaching the original
     //! resolution.
-    void set_resolutions(double scales_steps);
+    //! \param max_scale The maximum scale factor of the original resolution,
+    //!    1.0 by default, i.e. the original resolution.
+    //! \param min_scale The minimum scale factor of the original resolution,
+    //!    0.0 by default, meaning the minimum network input size.
+    void set_resolutions(double scales_steps, double max_scale = 1.0,
+			 double min_scale = 0.0);
 
     //! Return the id of the class 'name' or -1 if not found.
     int get_class_id(const string &name);
@@ -235,7 +240,8 @@ namespace ebl {
     //! compute sizes of each resolutions based on input size <input_dims>,
     //! using scales with a fixed step between each of them, from min to max
     //! resolutions.
-    void compute_resolutions(idxdim &input_dims, double scales_step);
+    void compute_resolutions(idxdim &input_dims, double scales_step,
+  			     double min_scale, double max_scale);
 
     //! print all resolutions.
     void print_resolutions();
@@ -318,6 +324,8 @@ namespace ebl {
     idxdim               input_dim;
     const double        *scales;
     double               scales_step;
+    double               max_scale;//!< Maximum scale as factor of original res.
+    double               min_scale;//!< Minimum scale as factor of original res.
     bool                 silent; //!< print results on std output if not silent
     t_resolution         restype; //!< resolution type
     bool                 save_mode; //!< save detected windows or not
