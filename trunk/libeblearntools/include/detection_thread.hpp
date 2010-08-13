@@ -230,7 +230,10 @@ namespace ebl {
      // detector
      detector<SFUNC(Tnet)> detect(*net, classes, pp, norm_size, NULL, 0,
 				      conf.get_double("gain"));
-     detect.set_resolutions(conf.get_double("scaling"));
+     double maxs = conf.exists("max_scale")?conf.get_double("max_scale") : 1.0;
+     double mins = conf.exists("min_scale")?conf.get_double("min_scale") : 0.0;
+     detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
+		       
      //     detect.set_mem_optimization(input, output);
      bool bmask_class = false;
      if (conf.exists("mask_class"))

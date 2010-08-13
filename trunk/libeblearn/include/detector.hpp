@@ -55,6 +55,7 @@ namespace ebl {
       ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
       bgclass(-1), mask_class(-1), scales(NULL), scales_step(0),
+      max_scale(1.0), min_scale(0.0),
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       min_size(0), max_size(0), bodetections(false),
@@ -96,9 +97,16 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_resolutions(double scales_step_) {
+  void detector<T,Tstate>::set_resolutions(double scales_step_,
+					   double max_scale_,
+					   double min_scale_) {
     restype = SCALES_STEP;
     scales_step = scales_step_;
+    max_scale = max_scale_;
+    min_scale = min_scale_;
+    cout << "Multi resolution scales: step factor " << scales_step
+	 << ", min/max resolution factor " << min_scale << ", " << max_scale
+	 << endl;
   }
   
   template <typename T, class Tstate>
@@ -118,8 +126,8 @@ namespace ebl {
   void detector<T,Tstate>::init(idxdim &dsample) {
     // size of the sample to process
     int thick = (dsample.order() == 2) ? 1 : dsample.dim(2); // TODO FIXME
-    height = dsample.dim(0);    
-    width = dsample.dim(1);
+    height = dsample.dim(0) * max_scale;    
+    width = dsample.dim(1) * max_scale;
     input_dim = idxdim(height, width, thick);
     idxdim sd(thick, height, width);
 
@@ -132,13 +140,13 @@ namespace ebl {
     case MANUAL:
       break ;
     case SCALES:
-	compute_resolutions(input_dim, nresolutions, scales);
-	break ;
+      compute_resolutions(input_dim, nresolutions, scales);
+      break ;
     case NSCALES: // n scale between min and max resolutions
-	compute_resolutions(input_dim, nresolutions);
-	break ;
+      compute_resolutions(input_dim, nresolutions);
+      break ;
     case SCALES_STEP: // step fixed amount between scale from min to max
-	compute_resolutions(input_dim, scales_step);
+      compute_resolutions(input_dim, scales_step, min_scale, max_scale);
       break ;
     default: eblerror("unknown scaling mode");
     }
@@ -444,7 +452,9 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::compute_resolutions(idxdim &input_dims,
-					       double scales_step){
+					       double scales_step,
+					       double min_scale,
+					       double max_scale) {
     // figure out how many resolutions can be used between min and max
     // with a step of scales_step:
     // nres = (log (max/min) / log step) + 1
