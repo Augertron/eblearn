@@ -20,6 +20,7 @@ root=~/${machine}data/ped/daimler_detection/
 dataroot=$root/train/data/
 out=$root/ds/
 nopersons_root=$root/train/bg_full/
+inside_root=$root/train/bg_full/inside/mit
 #nopersons_root=/data/pedestrians/daimler_det/DaimlerBenchmark/Data/TrainingData/NonPedestrians/
 bin=${HOME}/eblearn/bin/
 
@@ -49,48 +50,57 @@ bgds=nopersons_${id}
 outbg=${out}/${bgds}
 
 # debug variables
-# maxdata="-maxdata 50"
-# maxperclass="-maxperclass 25"
-#ddisplay="-disp -sleep 1000"
+maxdata="-maxdata 50"
+maxperclass="-maxperclass 25"
+ddisplay="-disp -sleep 10000"
 
 # create directories
 mkdir -p $out
 mkdir -p $outbg
 mkdir -p $nopersons_root
+mkdir -p $inside_root
 
 ###############################################################################
 # dataset compilations
 ###############################################################################
 
-# remove previous background extractions
-rm -Rf $outbg
+# # remove previous background extractions
+# rm -Rf $outbg
 
-# extract background images at random scales and positions
-$bin/dscompiler $nopersons_root -type patch -precision $precision \
-    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
-    -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
-    -maxdata $maxbg -nopadded \
-    $ddisplay # debug
+# # extract background images at random scales and positions
+# $bin/dscompiler $nopersons_root -type patch -precision $precision \
+#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
+#     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
+#     -maxdata $maxbg -nopadded \
+#     $ddisplay # debug
 
-# compile background dataset
-$bin/dscompiler ${outbg} -precision $precision \
-    -outdir ${out} -dname ${bgds} -dims ${h}x${w}x${chans} \
-    # $maxdata $maxperclass $ddisplay # debug
+# # compile background dataset
+# $bin/dscompiler ${outbg} -precision $precision \
+#     -outdir ${out} -dname ${bgds} -dims ${h}x${w}x${chans} \
+#     # $maxdata $maxperclass $ddisplay # debug
 
-# compile regular dataset
-$bin/dscompiler $root -precision $precision -outdir ${out} -channels $pp \
-    -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
+# # compile regular dataset
+# $bin/dscompiler $root -precision $precision -outdir ${out} -channels $pp \
+#     -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
+# #    $maxdata $maxperclass $ddisplay # debug
+
+# # delete temporary images
+# rm -Rf $outbg
+
+# # merge normal dataset with background dataset
+# $bin/dsmerge $out ${namebg} ${bgds} ${name}
+
+# # split validation and training
+# $bin/dssplit $out ${namebg} \
+#     ${namebg}_val_ ${namebg}_train_ -maxperclass ${maxval} -draws ${draws}
+
+# # print out information about extracted datasets to check that their are ok
+# $bin/dsdisplay $out/${namebg} -info
+
+# extract 'inside' windows (zoom inside bounding box) 
+# from positive examples as negative examples
+dataroot=/home/sermanet/banquoadata/ped/mit/pedestrians128x64
+$bin/dscompiler $dataroot -precision $precision -outdir ${inside_root} \
+    -save mat -resize $resize -dims ${h}x${w}x${chans} \
+    -bboxfact .65 \
 #    $maxdata $maxperclass $ddisplay # debug
-
-# delete temporary images
-rm -Rf $outbg
-
-# merge normal dataset with background dataset
-$bin/dsmerge $out ${namebg} ${bgds} ${name}
-
-# split validation and training
-$bin/dssplit $out ${namebg} \
-    ${namebg}_val_ ${namebg}_train_ -maxperclass ${maxval} -draws ${draws}
-
-# print out information about extracted datasets to check that their are ok
-$bin/dsdisplay $out/${namebg} -info

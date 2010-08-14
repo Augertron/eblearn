@@ -1,12 +1,12 @@
 #!/bin/sh
 
 name=caltech
-metaconf_name=${name}39_meta.conf
-machine=${HOSTNAME}c
-h=39 #104
-w=17 #45
+metaconf_name=${name}104_meta.conf
+machine=${HOSTNAME}a
+h=104 # 39
+w=45 # 17
 chans=3
-ker=7
+ker=9
 traindsname=ped_${name}_mean${h}x${w}_ker${ker}_bg_train
 valdsname=ped_${name}_mean${h}x${w}_ker${ker}_bg_val
 
@@ -17,7 +17,7 @@ save_max=30000
 # max number of false positives to extract per full image
 save_max_per_frame=10
 # number of threads to use duing false positive extraction
-nthreads=6
+nthreads=5
 # maximum number of retraining iterations
 maxiteration=10
 
@@ -47,7 +47,7 @@ meta_watch_interval=120
 # be used to report best weights, or start consequent training
 meta_minimize=i
 # send n best answers that minimize meta_minimize's value
-meta_send_best=5
+meta_send_best=3
 
 ################################################################################
 # variables
@@ -55,7 +55,7 @@ meta_send_best=5
 
 # directories
 #tstamp=`date +"%Y%m%d.%H%M%S"`
-tstamp=20100730.100534
+tstamp=20100730.101714
 xpname=${meta_name}_${tstamp}
 root=~/${machine}data/ped/${name}/
 dataroot=$root/ds/
@@ -122,11 +122,9 @@ for iter in `seq 1 ${maxiteration}`
   echo "Using best conf of previous training: ${bestconf}"
   echo "i=`expr ${maxiteration} - ${iter}`"
 
-if [ $iter != 1 ]; then  
+#if [ $iter != 1 ]; then  
 
 # extract false positives: first add new variables to best conf
-# activate retraining
-  echo "retrain = 1" >> $bestconf
 # force saving detections
   echo "save_detections = 1" >> $bestconf
 # do not save video
@@ -144,10 +142,14 @@ if [ $iter != 1 ]; then
 # set weights to retrain: same as this conf
   echo "retrain_weights = \${weights}" >> $bestconf
 # set where to find full images
-  echo "retrain_dir = ${nopersons_root}/" >> $bestconf
+  echo "input_dir = ${nopersons_root}/" >> $bestconf
 # send report every 1000 frames processed
   echo "meta_email_iters = " >> $bestconf
   echo "meta_email_period = 1000" >> $bestconf
+# pass n times on the dataset to make sure we reach the desired amount of fp
+  echo "input_npasses = 3" >> $bestconf
+# randomize list of files to extract fp from
+  echo "input_random = 1" >> $bestconf
 # override train command by detect command
   echo >> $bestconf
   echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/mtdetect\"" >> $bestconf
@@ -157,13 +159,12 @@ if [ $iter != 1 ]; then
 # start parallelized extraction
   ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
 
-fi
-
+#fi
 
 # find path to latest metarun output: get directory with latest date
   lastout=`ls -dt1 ${out}/*/ | head -1`
 
-lastout=$out/${tstamp}.${meta_name}_falsepos_1
+#lastout=$out/${tstamp}.${meta_name}_falsepos_1
 
 # recompile data from last output directory which should contain 
 # all false positives

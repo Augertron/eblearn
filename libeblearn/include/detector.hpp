@@ -126,8 +126,10 @@ namespace ebl {
   void detector<T,Tstate>::init(idxdim &dsample) {
     // size of the sample to process
     int thick = (dsample.order() == 2) ? 1 : dsample.dim(2); // TODO FIXME
-    height = dsample.dim(0) * max_scale;    
-    width = dsample.dim(1) * max_scale;
+    oheight = dsample.dim(0);
+    owidth = dsample.dim(1);
+    height = (int) (dsample.dim(0) * max_scale);    
+    width = (int) (dsample.dim(1) * max_scale);
     input_dim = idxdim(height, width, thick);
     idxdim sd(thick, height, width);
 
@@ -582,7 +584,7 @@ namespace ebl {
 	
   template <typename T, class Tstate>
   void detector<T,Tstate>::smooth_outputs() {
-    cout << "smoothing not implemented" << endl;
+    //    cout << "smoothing not implemented" << endl;
   }
     
   template <typename T, class Tstate>
@@ -857,15 +859,15 @@ namespace ebl {
       fname << dir_pp[(*bbox)->class_id]
 	    << frame_name << "_" << classname << setw(3) << setfill('0')
 	    << save_counts[(*bbox)->class_id] << MATRIX_EXTENSION;
-      save_matrix(inpp, fname.str());
-      cout << "saved " << fname.str() << endl;
+      if (save_matrix(inpp, fname.str()))
+	cout << "saved " << fname.str() << endl;
       // save original image as png
       fname.str("");
       fname << dir_orig[(*bbox)->class_id] << frame_name << "_"  << classname
 	    << setw(3) << setfill('0') << save_counts[(*bbox)->class_id]
 	    << ".png";
-      save_image(fname.str(), inorig, "png");
-      cout << "saved " << fname.str() << endl;
+      if (save_image(fname.str(), inorig, "png"))
+	cout << "saved " << fname.str() << endl;
       // increment file counter
       save_counts[(*bbox)->class_id]++;
       // stop if reached max save per frame

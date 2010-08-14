@@ -197,6 +197,11 @@ please install");
 
   template<class T>
   bool save_image_ppm(const string &fname, idx<T> &in) {
+    return save_image_ppm(fname.c_str(), in);
+  }
+
+  template<class T>
+  bool save_image_ppm(const char *fname, idx<T> &in) {
     // check order
     // TODO: support grayscale
     if (in.order() != 3) {
@@ -204,9 +209,26 @@ please install");
       return false;
     }
     // save as ppm
-    FILE *fp = fopen(fname.c_str(), "wb");
+    FILE *fp = fopen(fname, "wb");
     if (!fp) {
       cerr << "error: failed to open file " << fname << endl;
+      return false;
+    }
+    save_image_ppm(fp, in);
+    fclose(fp);
+    return true;
+  }
+
+  template<class T>
+  bool save_image_ppm(FILE *fp, idx<T> &in) {
+    // check order
+    // TODO: support grayscale
+    if (in.order() != 3) {
+      cerr << "error: image order (" << in.order() << " not supported." << endl;
+      return false;
+    }
+    if (!fp) {
+      cerr << "error: NULL fp " << endl;
       return false;
     }
     fprintf(fp,"P6 %d %d 255\n", (int) in.dim(1), (int) in.dim(0));
@@ -222,13 +244,15 @@ please install");
       idx_bloop1(inn, in, T) {
 	idx_bloop1(innn, inn, T) {
 	  fputc((ubyte) innn.get(0), fp);
+	  fputc((ubyte) innn.get(0), fp);
+	  fputc((ubyte) innn.get(0), fp);
 	}
       }
     } else {
       cerr << "Error saving image " << in << endl;
       eblerror("Pixel dimension not supported");
     }
-    fclose(fp);
+    fflush(fp);
     return true;
   }
 
@@ -239,25 +263,43 @@ please install");
 
   template<class T>
   bool save_image(const string &fname, idx<T> &in, const char *format) {
-    // save as ppm
-    string fname2 = fname;
-    fname2 += ".ppm";
-    if (!save_image_ppm(fname2, in))
-      return false;
-    // convert ppm to jpg
-    string cmd = "convert PPM:";
-    cmd += fname2;
-    cmd += " ";
-    cmd += format;
-    cmd += ":";
-    cmd += fname;
-    int n = ::system(cmd.c_str());
-    if (n != 0) {
-      cerr << "error (" << n << "): failed to save image " << fname;
-      cerr << " to format " << format << endl;
+    if (!strcmp(format, "mat")) { // save as idx
+      return save_matrix(in, fname);
+    }
+    ostringstream err;
+#if (defined(__IMAGEMAGICK__) && !defined(__NOIMAGEMAGICK__))
+    // we are under linux or mac and convert is available
+    ostringstream cmd;
+    cmd << IMAGEMAGICK_CONVERT << " PPM:- " << format << ":\"" << fname << "\"";
+#ifdef __WINDOWS__
+    FILE* fp = POPEN(cmd.str().c_str(), "wb");
+#else
+    FILE* fp = POPEN(cmd.str().c_str(), "w");
+#endif
+    if (!fp) {
+      err << "conversion of image " << fname << " failed (errno: " 
+	  << errno << ", " << strerror(errno) << ")";
+      cerr << err.str() << endl;
       return false;
     }
-    remove(fname2.c_str());
+    try {
+      // read pnm image
+      save_image_ppm(fp, in);
+    } catch (string &err) {
+      if (PCLOSE(fp) != 0) {
+	cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
+      }
+      return false;
+    }
+    if (PCLOSE(fp) != 0) {
+      cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
+      return false;
+    }
+#else
+    // nor Magick++ nor convert are available, error
+    eblerror("Nor ImageMagick's convert nor Magick++ are available, \
+please install");
+#endif /* __IMAGEMAGICK__ */
     return true;
   }
 

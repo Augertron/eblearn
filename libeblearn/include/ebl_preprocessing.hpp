@@ -81,18 +81,23 @@ namespace ebl {
   template <typename T, class Tstate>
   void rgb_to_ypuv_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
-    idx<T> uv, yuv;
-
-    // RGB to YUV
-    idx_eloop2(inx, in.x, T, outx, out.x, T) {
-      idx_eloop2(inxx, inx, T, outxx, outx, T) {
-	rgb_to_yuv_1D(inxx, outxx);
+    if (in.x.dim(2) != 3) {
+      cerr << "warning: in rgb_to_ypuv, input is not 3-channel, "
+	   << "ignoring color." << endl;
+    } else {
+      idx<T> uv, yuv;
+      
+      // RGB to YUV
+      idx_eloop2(inx, in.x, T, outx, out.x, T) {
+	idx_eloop2(inxx, inx, T, outxx, outx, T) {
+	  rgb_to_yuv_1D(inxx, outxx);
+	}
       }
+      // bring UV between -1 and 1
+      uv = out.x.narrow(0, 2, 1);
+      idx_addc(uv, (T)-128, uv);
+      idx_dotc(uv, (T).01, uv);
     }
-    // bring UV between -1 and 1
-    uv = out.x.narrow(0, 2, 1);
-    idx_addc(uv, (T)-128, uv);
-    idx_dotc(uv, (T).01, uv);
     // convert Y to Yp
     this->tmp.x = out.x.narrow(0, 1, 0);
     this->norm.fprop(this->tmp, this->tmp); // local
@@ -118,14 +123,21 @@ namespace ebl {
   template <typename T, class Tstate>
   void rgb_to_yp_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     if (this->bResize) resize_output(in, out, 1); // resize (iff necessary)
-    // RGB to YUV
-    idx_eloop2(inx, in.x, T, tmpx, this->tmp.x, T) {
-      idx_eloop2(inxx, inx, T, tmpxx, tmpx, T) {
-	rgb_to_y_1D(inxx, tmpxx);
+    if (in.x.dim(2) != 3) {
+      cerr << "warning: in rgb_to_yp, input is not 3-channel, "
+	   << "ignoring color." << endl;
+      // convert Y to Yp
+      this->norm.fprop(in, out); // local
+    } else {
+      // RGB to YUV
+      idx_eloop2(inx, in.x, T, tmpx, this->tmp.x, T) {
+	idx_eloop2(inxx, inx, T, tmpxx, tmpx, T) {
+	  rgb_to_y_1D(inxx, tmpxx);
+	}
       }
+      // convert Y to Yp
+      this->norm.fprop(this->tmp, out); // local
     }
-    // convert Y to Yp
-    this->norm.fprop(this->tmp, out); // local
   }
 
   template <typename T, class Tstate>

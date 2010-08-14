@@ -229,7 +229,7 @@ namespace ebl {
 
   // variables may contain references to other variables, resolve those
   // dependencies by replacing them with their value.
-  void resolve_variables(string_map_t &m, bool replquotes = true) {
+  void resolve_variables(string_map_t &m, bool replquotes = false) {
     string_map_t::iterator mi = m.begin();
     for ( ; mi != m.end(); ++mi) {
       string val = mi->second;
@@ -244,7 +244,7 @@ namespace ebl {
   // with "i" as first value and "42" as second value.
   bool extract_variables(const char *fname, string_map_t &smap, textlist &txt,
 			 string_map_t *meta_smap = NULL, bool bresolve = true, 
-			 bool replquotes = true) {
+			 bool replquotes = false) {
     string s0, s;
     char separator = '=';
     char comment1 = '#';

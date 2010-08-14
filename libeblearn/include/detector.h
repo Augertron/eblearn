@@ -291,6 +291,8 @@ namespace ebl {
   public:
     module_1_1<T,Tstate>	&thenet;
     resizepp_module<T,Tstate>   resizepp;
+    int			 oheight; //!< Original height.
+    int			 owidth; //!< Original width.
     int			 height;
     int			 width;
     idx<T>		 image;
