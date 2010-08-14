@@ -81,9 +81,9 @@ namespace ebl {
   template <typename T, class Tstate>
   void rgb_to_ypuv_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
-    if (in.x.dim(2) != 3) {
-      cerr << "warning: in rgb_to_ypuv, input is not 3-channel, "
-	   << "ignoring color." << endl;
+    if (in.x.dim(0) != 3) {
+      // cerr << "warning: in rgb_to_ypuv, input is not 3-channel, "
+      // 	   << "ignoring color." << endl;
     } else {
       idx<T> uv, yuv;
       
@@ -123,9 +123,9 @@ namespace ebl {
   template <typename T, class Tstate>
   void rgb_to_yp_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     if (this->bResize) resize_output(in, out, 1); // resize (iff necessary)
-    if (in.x.dim(2) != 3) {
-      cerr << "warning: in rgb_to_yp, input is not 3-channel, "
-	   << "ignoring color." << endl;
+    if (in.x.dim(0) != 3) {
+      // cerr << "warning: in rgb_to_yp, input is not 3-channel, "
+      // 	   << "ignoring color." << endl;
       // convert Y to Yp
       this->norm.fprop(in, out); // local
     } else {
