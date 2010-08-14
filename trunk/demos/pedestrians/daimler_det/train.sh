@@ -150,9 +150,13 @@ for iter in `seq 3 ${maxiteration}`
 # set multi threads for detection
   echo "nthreads = ${nthreads}" >> $bestconf
 # pass n times on the dataset to make sure we reach the desired amount of fp
-  echo "input_npasses = 3" >> $bestconf
+  echo "input_npasses = 5" >> $bestconf
 # randomize list of files to extract fp from
   echo "input_random = 1" >> $bestconf
+# keep all detected bbox even overlapping ones
+  echo "pruning = 0" >> $bestconf
+# oversample to n times input (capped by input_max)
+  echo "max_scale = 4" >> $bestconf
 # start parallelized extraction
   ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
 

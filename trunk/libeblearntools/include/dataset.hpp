@@ -68,7 +68,7 @@ namespace ebl {
       inroot = inroot_;
       inroot += "/";
     } else inroot = "";
-    outdims = idxdim(96, 96, 3);
+    outdims = idxdim(96, 96, 1);
     height = outdims.dim(0);
     width = outdims.dim(1);
     mindims = idxdim(1, 1);
@@ -467,8 +467,8 @@ namespace ebl {
 	  idx_addc(tmp, (Tdata) 1.0, tmp);
 	  idx_dotc(tmp, (Tdata) 127.5, tmp);
 	}
-	save_image(fname.str(), tmp, save_mode.c_str());
-	cout << id << ": saved " << fname.str() << endl;
+	if (save_image(fname.str(), tmp, save_mode.c_str()))
+	  cout << id << ": saved " << fname.str() << endl;
       }
     }
     return true;
@@ -492,7 +492,8 @@ namespace ebl {
     if (max_per_class_set)
       n = (std::max)((intg) 0, MIN(n, idx_sum(max_per_class)));
     cout << "Allocating dataset \"" << name << "\" with " << n;
-    cout << " samples of size " << d << " ..." << endl;
+    cout << " samples of size " << d << " (" 
+	 << (n * d.nelements() * sizeof (Tdata)) / (1024 * 1024) << " Mb) ..." << endl;
     if (n <= 0) {
       cerr << "Cannot allocate " << n << " samples." << endl;
       return false;
@@ -1006,7 +1007,7 @@ namespace ebl {
       resizepp->set_dimensions((uint) (outdims.dim(0) * scale), 
 			       (uint) (outdims.dim(1) * scale));
       resizepp->set_input_region(inr);
-    } else if (r) // resize using object's window
+    } else if (bboxfact != 1.0) // resize if factor
       resizepp->set_input_region(inr);
     idx<Tdata> tmp = dat.shift_dim(2, 0);
     fstate_idx<Tdata> in(tmp.get_idxdim()), out(1,1,1);

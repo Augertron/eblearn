@@ -115,7 +115,7 @@ namespace ebl {
 
     //! resolve variables names in variables
     //! @param replquotes Remove quotes or not from variable strings.
-    void resolve(bool replquotes = true);
+    void resolve(bool replquotes = false);
 
     // accessors
 

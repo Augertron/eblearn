@@ -1043,7 +1043,7 @@ namespace ebl {
 
     //! Return total number of elements.
     intg nelements();
-    
+
     // friends
     friend class idxspec;
   };

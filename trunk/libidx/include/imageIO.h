@@ -83,6 +83,8 @@ namespace ebl {
   template <class T> bool save_image(const string &fname, idx<T> &in,
 				    const char *format);
   template <class T> bool save_image_ppm(const string &fname, idx<T> &in);
+  template <class T> bool save_image_ppm(const char *fname, idx<T> &in);
+  template <class T> bool save_image_ppm(FILE *fp, idx<T> &in);
   template <class T> bool save_image_jpg(const string &fname, idx<T> &in);
   
   ////////////////////////////////////////////////////////////////

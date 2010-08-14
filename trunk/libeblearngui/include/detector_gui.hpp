@@ -130,7 +130,7 @@ namespace ebl {
 
     // disable_window_updates();
     // draw internal inputs and outputs
-    int h = (int) (h0 + cl.height * dzoom + 5 + 15);
+    int h = (int) (h0 + cl.oheight * dzoom + 5 + 15);
     int scale = 0;
     int ohmax = ((Tstate*) cl.outputs.get(0))->x.dim(1);
     int ihmax = ((Tstate*) cl.inputs.get(0))->x.dim(1);
