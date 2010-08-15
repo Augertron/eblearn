@@ -17,7 +17,7 @@ save_max_per_frame=10
 # number of threads to use duing false positive extraction
 nthreads=5
 # maximum number of retraining iterations
-maxiteration=10
+maxiteration=5
 
 ################################################################################
 # meta commands
@@ -245,6 +245,7 @@ print_step() {
     echo "step ${step}: ${type} with metaconf ${metaconf}"
     echo "lastname: ${lastname}"
     echo "lastdir: ${lastdir}"
+    echo "maxiteration: ${maxiteration} iter: ${iter}"
     echo "i=`expr ${maxiteration} - ${iter}`"
 }   
 
@@ -296,7 +297,7 @@ go() {
     lastdir=${out}/${lastname}
     if [ $step -ge $minstep ]; then
 	print_step $step $metaconf $lastname $lastdir "training" \
-	    $iter $maxiteration
+	    0 $maxiteration
 	echo -n "meta_command = \"export LD_LIBRARY_PATH=" >> $metaconf
 	echo "${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
 	echo "meta_name = ${meta_name}" >> $metaconf
