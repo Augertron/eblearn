@@ -82,7 +82,7 @@ draws=3
 
 # stop if error
 check_error() {
-    if [ $1 -neq 0 ]
+    if [ $1 -ne 0 ]
     then
 	echo "Error, exiting."
 	exit -1
