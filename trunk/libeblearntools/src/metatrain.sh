@@ -114,7 +114,6 @@ extract_falsepos() {
     echo -e "max_scale=${max_scale}\ntstamp=${tstamp}\nname=${name}"
     echo
     # function body ###########################################################
-    echo "extract"; return 0;
 
     # add new variables to best conf
     # force saving detections
@@ -170,8 +169,8 @@ compile_data() {
     draws=$8
     traindsname=$9
     valdsname=${10}
+    ds_split_ratio=${11}
     # function body ###########################################################
-    echo "compile"; return 0;
 
     # recompile data from last output directory which should contain 
     # all false positives
@@ -224,7 +223,6 @@ retrain() {
     tstamp=$5
     bestconf=$6
     # function body ###########################################################
-    echo "retrain"; return 0;
     # retrain on old + new data
     echo "Retraining from best previous weights: ${bestweights}"
     # add last weights and activate retraining from those
@@ -257,7 +255,7 @@ print_step() {
     echo "i=`expr ${maxiteration} - ${iter}`"
 }   
 
-go() {
+metatrain() {
     # arguments ###############################################################
     minstep=$1
     maxiteration=$2
@@ -283,6 +281,7 @@ go() {
     draws=${22}
     traindsname=${23}
     valdsname=${24}
+    ds_split_ratio=${25}
     echo
     echo -e "Arguments:\nminstep=${minstep}\nmaxiteration=${maxiteration}\nout=${out}"
     echo -e "eblearnbin=${eblearnbin}\nnegatives_root=${negatives_root}\nmetaconf=${metaconf}"
@@ -292,6 +291,7 @@ go() {
     echo -e "npasses=${npasses}\nmax_scale=${max_scale}\nprecision=${precision}"
     echo -e "dataroot=${dataroot}\nh=${h}\nw=${w}\nchans=${chans}\ndraws=${draws}"
     echo -e "traindsname=${traindsname}\nvaldsname=${valdsname}"
+    echo -e "ds_split_ratio=${ds_split_ratio}"
     echo
     # function body ###########################################################
     
@@ -319,7 +319,7 @@ go() {
 	echo -n "meta_command = \"export LD_LIBRARY_PATH=" >> $metaconf
 	echo "${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
 	echo "meta_name = ${meta_name}" >> $metaconf
-#	${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
+	${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
     fi
     step=`expr ${step} + 1` # increment step
     
@@ -336,14 +336,15 @@ go() {
 	bestweights=`ls ${bestout}/*_net*.mat`
 
         # false positives
-	lastname=${tstamp}.${meta_name}_${step}_falsepos
+	name=${meta_name}_${step}_falsepos
+	lastname=${tstamp}.${name}
 	lastdir=${out}/${lastname}
 	if [ $step -ge $minstep ]; then
 	    print_step $step $bestconf $lastname $lastdir "false positives" \
 		$iter $maxiteration
 	    extract_falsepos $bestconf $save_max $save_max_per_frame $bestout \
 		$input_max $threshold $bestweights $negatives_root $eblearnbin \
-		$nthreads $npasses $max_scale $tstamp $lastname
+		$nthreads $npasses $max_scale $tstamp $name
 	fi
 	step=`expr ${step} + 1` # increment step
 	
@@ -352,18 +353,18 @@ go() {
 	    print_step $step $metaconf $lastname $lastdir "data compilation" \
 		$iter $maxiteration
 	    compile_data $eblearnbin $lastdir $precision $dataroot \
-		$h $w $chans $draws $traindsname $valdsname
+		$h $w $chans $draws $traindsname $valdsname $ds_split_ratio
 	fi
 	step=`expr ${step} + 1` # increment step
 	
         # retrain
-	lastname=${tstamp}.${meta_name}_${step}_retraining
+	name=${meta_name}_${step}_retraining
+	lastname=${tstamp}.${name}
 	lastdir=${out}/${lastname}
-
 	if [ $step -ge $minstep ]; then
-	    print_step $step $bestconf $lastname $lastdir "retraining" \
+	    print_step $step $metaconf $lastname $lastdir "retraining" \
 		$iter $maxiteration
-	    retrain $bestweights $eblearnbin $metaconf $lastname $tstamp \
+	    retrain $bestweights $eblearnbin $metaconf $name $tstamp \
 		$bestconf
 	fi
 	step=`expr ${step} + 1` # increment step
@@ -374,7 +375,7 @@ go() {
 # training
 ###############################################################################
 
-go 4 $maxiteration $out $eblearnbin $negatives_root $metaconf $metaconf0 \
-    $meta_name $tstamp $save_max $save_max_per_frame $input_max $threshold \
-    $nthreads $npasses $max_scale $precision $dataroot $h $w $chans $draws \
-    $traindsname $valdsname
+# metatrain 4 $maxiteration $out $eblearnbin $negatives_root $metaconf $metaconf0 \
+#     $meta_name $tstamp $save_max $save_max_per_frame $input_max $threshold \
+#     $nthreads $npasses $max_scale $precision $dataroot $h $w $chans $draws \
+#     $traindsname $valdsname $ds_split_ratio
