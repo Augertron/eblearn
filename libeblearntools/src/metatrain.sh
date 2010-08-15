@@ -59,7 +59,7 @@ root=~/${machine}data/ped/daimler_detection/
 dataroot=$root/ds/
 out=$root/out/$xpname/
 eblearnbin=${out}/bin/
-nopersons_root=$root/train/bg_full/
+negatives_root=$root/train/bg_full/
 
 # variables
 
@@ -75,29 +75,22 @@ threshold=-.5
 ds_split_ratio=".1"
 draws=3
 
-# create directories
-mkdir -p $out
-mkdir -p $eblearnbin
-mkdir -p $nopersons_root
-
-# copy binaries
-cp $eblearnbin0/* $eblearnbin/
-# set path to libraries locally
-export LD_LIBRARY_PATH=${eblearnbin}
-
-# make a copy of meta conf and override its output dir
-cp $metaconf0 $metaconf
-echo "meta_output_dir = ${out}" >> $metaconf
-
 ###############################################################################
 # functions
 ###############################################################################
 
-touch $out/${tstamp}.${meta_name}_falsepos_3
+# stop if error
+check_error() {
+    if [ $1 -neq 0 ]
+    then
+	echo "Error, exiting."
+	exit -1
+    fi
+}
 
 # extract false positives
 extract_falsepos() {
-# function arguments
+    # arguments ###############################################################
     bestconf=$1
     save_max=$2
     save_max_per_frame=$3
@@ -111,52 +104,54 @@ extract_falsepos() {
     npasses=$11
     max_scale=$12
     tstamp=$13
-    iter=$14
-    falsepos_dir=$15
+    name=$14
+    # function body ###########################################################
+    echo "extract"; return 0;
 
-# add new variables to best conf
-# force saving detections
+    # add new variables to best conf
+    # force saving detections
     echo "save_detections = 1" >> $bestconf
-# do not save video
+    # do not save video
     echo "save_video = 0" >> $bestconf
     echo "display = 0" >> $bestconf
     echo "save_max = ${save_max}" >> $bestconf
     echo "save_max_per_frame = ${save_max_per_frame}" >> $bestconf
-# add directory where to find trained files
+    # add directory where to find trained files
     echo "root2 = ${bestout}" >> $bestconf
-# limit input size 
+    # limit input size 
     echo "input_max = 1000" >> $bestconf
-# decrement threshold, capping at -.95
+    # decrement threshold, capping at -.95
     threshold=`echo "thr=${threshold} - .2; if (thr < -.95){ thr = -.95;}; print thr" | bc`
     echo "threshold = ${threshold}" >> $bestconf
-# set weights to retrain: same as this conf
+    # set weights to retrain: same as this conf
     echo "retrain_weights = \${weights}" >> $bestconf
-# set where to find full images
+    # set where to find full images
     echo "input_dir = ${negatives_root}/" >> $bestconf
-# send report every 1000 frames processed
+    # send report every 1000 frames processed
     echo "meta_email_iters = " >> $bestconf
     echo "meta_email_period = 1000" >> $bestconf
-# override train command by detect command
+    # override train command by detect command
     echo >> $bestconf
     echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/mtdetect\"" >> $bestconf
-    echo "meta_name = ${meta_name}_falsepos_${iter}" >> $bestconf
-# set multi threads for detection
+    echo "meta_name = ${name}" >> $bestconf
+    # set multi threads for detection
     echo "nthreads = ${nthreads}" >> $bestconf
-# pass n times on the dataset to make sure we reach the desired amount of fp
+    # pass n times on the dataset to make sure we reach the desired amount of fp
     echo "input_npasses = ${npasses}" >> $bestconf
-# randomize list of files to extract fp from
+    # randomize list of files to extract fp from
     echo "input_random = 1" >> $bestconf
-# keep all detected bbox even overlapping ones
+    # keep all detected bbox even overlapping ones
     echo "pruning = 0" >> $bestconf
-# oversample to n times input (capped by input_max)
+    # oversample to n times input (capped by input_max)
     echo "max_scale = ${max_scale}" >> $bestconf
-# start parallelized extraction
+    # start parallelized extraction
     ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
-    if [ $? -neq 0 ]; then exit -1; fi # stop if error
+    check_error $? 
 }
 
+# add new data to existing sets
 compile_data() {
-    # arguments
+    # arguments ###############################################################
     eblearnbin=$1
     falsepos_dir=$2
     precision=$3
@@ -167,101 +162,196 @@ compile_data() {
     draws=$8
     traindsname=$9
     valdsname=$10
+    # function body ###########################################################
+    echo "compile"; return 0;
 
-# recompile data from last output directory which should contain 
-# all false positives
-# note: no need to preprocess, .mat should already be preprocessed
-  ${eblearnbin}/dscompiler ${falsepos_dir} -precision ${precision} \
-      -outdir ${dataroot} -forcelabel bg -dname allfp -dims ${h}x${w}x${chans} \
-      -image_pattern ".*[.]mat" -mindims ${h}x${w}x${chans}
-  if [ $? -neq 0 ]; then exit -1; fi # stop if error
+    # recompile data from last output directory which should contain 
+    # all false positives
+    # note: no need to preprocess, .mat should already be preprocessed
+    ${eblearnbin}/dscompiler ${falsepos_dir} -precision ${precision} \
+	-outdir ${dataroot} -forcelabel bg -dname allfp \
+	-dims ${h}x${w}x${chans} \
+	-image_pattern ".*[.]mat" -mindims ${h}x${w}x${chans}
+    if [ $? -neq 0 ]; then exit -1; fi # stop if error
 
-# get dataset size
-  dssize=`${eblearnbin}/dsdisplay ${dataroot}/allfp -size`
-  echo "false_positives = ${dssize}"
-  valsize=`echo "(${dssize} * ${ds_split_ratio})/1" | bc`
-  echo "valsize = ${valsize}"
-  
-# print out information about extracted dataset to check it is ok
-  ${eblearnbin}/dsdisplay $dataroot/allfp -info
-  if [ $? -neq 0 ]; then exit -1; fi # stop if error
+    # get dataset size
+    dssize=`${eblearnbin}/dsdisplay ${dataroot}/allfp -size`
+    echo "false_positives = ${dssize}"
+    valsize=`echo "(${dssize} * ${ds_split_ratio})/1" | bc`
+    echo "valsize = ${valsize}"
     
-# split dataset into training and validation
-  ${eblearnbin}/dssplit ${dataroot} allfp \
-      allfp_val_ allfp_train_ -maxperclass ${valsize} -draws $draws
-  if [ $? -neq 0 ]; then exit -1; fi # stop if error
+    # print out information about extracted dataset to check it is ok
+    ${eblearnbin}/dsdisplay $dataroot/allfp -info
+    check_error $? 
+    
+    # split dataset into training and validation
+    ${eblearnbin}/dssplit ${dataroot} allfp \
+	allfp_val_ allfp_train_ -maxperclass ${valsize} -draws $draws
+    check_error $? 
 
-# merge new datasets into previous datasets: training
-  for i in `seq 1 $draws`
-  do
-      ${eblearnbin}/dsmerge ${dataroot} ${traindsname}_${i} \
-	  allfp_train_${i} ${traindsname}_${i}
-      if [ $? -neq 0 ]; then exit -1; fi # stop if error
-  done
+    # merge new datasets into previous datasets: training
+    for i in `seq 1 $draws`
+    do
+	${eblearnbin}/dsmerge ${dataroot} ${traindsname}_${i} \
+	    allfp_train_${i} ${traindsname}_${i}
+	check_error $? 
+    done
 
-# merge new datasets into previous datasets: validation
-  for i in `seq 1 $draws`
-  do
-      ${eblearnbin}/dsmerge ${dataroot} ${valdsname}_${i} \
-	  allfp_val_${i} ${valdsname}_${i}
-      if [ $? -neq 0 ]; then exit -1; fi # stop if error
-  done
+    # merge new datasets into previous datasets: validation
+    for i in `seq 1 $draws`
+    do
+	${eblearnbin}/dsmerge ${dataroot} ${valdsname}_${i} \
+	    allfp_val_${i} ${valdsname}_${i}
+	check_error $? 
+    done
 }
 
-# retrain on old + new data
-  echo "Retraining from best previous weights: ${bestweights}"
-# add last weights and activate retraining from those
-  echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
-  echo "retrain = 1" >> $metaconf
-  echo "retrain_weights = ${bestweights}" >> $metaconf
-  echo "meta_name = ${meta_name}_retraining_${iter}" >> $metaconf
-# send report at specific training iterations
-  echo "meta_email_iters = 0,1,2,3,4,5,7,10,15,20,30,50,75,100,200" >> $bestconf
-  ${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
+# retrain a trained network
+retrain() {
+    # arguments ###############################################################
+    bestweights=$1
+    eblearnbin=$2
+    metaconf=$3
+    name=$4
+    tstamp=$5
+    bestconf=$6
+    # function body ###########################################################
+    echo "retrain"; return 0;
+    # retrain on old + new data
+    echo "Retraining from best previous weights: ${bestweights}"
+    # add last weights and activate retraining from those
+    echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
+    echo "retrain = 1" >> $metaconf
+    echo "retrain_weights = ${bestweights}" >> $metaconf
+    echo "meta_name = ${name}" >> $metaconf
+    # send report at specific training iterations
+    echo "meta_email_iters = 0,1,2,3,4,5,7,10,15,20,30,50,75,100,200" >> \
+	$bestconf
+    ${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
+    check_error $? 
+}
+
+print_step() {
+    # arguments ###############################################################
+    step=$1
+    metaconf=$2
+    lastname=$3
+    lastdir=$4
+    type=$5
+    iter=$6
+    maxiteration=$7
+    # function body ###########################################################
+    echo "_________________________________________________________________"
+    echo "step ${step}: ${type} with metaconf ${metaconf}"
+    echo "lastname: ${lastname}"
+    echo "lastdir: ${lastdir}"
+    echo "i=`expr ${maxiteration} - ${iter}`"
+}   
+
+go() {
+    # arguments ###############################################################
+    minstep=$1
+    maxiteration=$2
+    out=$3
+    eblearnbin=$4
+    negatives_root=$5
+    metaconf=$6
+    metaconf0=$7
+    meta_name=$8
+    tstamp=$9
+    save_max=$10
+    save_max_per_frame=$11
+    input_max=$12
+    threshold=$13
+    nthreads=$14
+    npasses=$15
+    max_scale=$16
+    precision=$17
+    dataroot=$18
+    h=$19
+    w=$20
+    chans=$21
+    draws=$22
+    traindsname=$23
+    valdsname=$24
+    # function body ###########################################################
     
-done
+    # create directories
+    mkdir -p $out
+    mkdir -p $eblearnbin
+    mkdir -p $negatives_root
+
+    # copy binaries
+    cp $eblearnbin0/* $eblearnbin/
+    # set path to libraries locally
+    export LD_LIBRARY_PATH=${eblearnbin}
+
+    # make a copy of meta conf and override its output dir
+    cp $metaconf0 $metaconf
+    echo "meta_output_dir = ${out}" >> $metaconf
+
+    step=0
+    # initial training
+    lastname=${meta_name}_${step}_training
+    lastdir=${out}/${lastname}
+    if [ $step -ge $minstep ]; then
+	print_step $step $metaconf $lastname $lastdir "training" \
+	    $iter $maxiteration
+	echo -n "meta_command = \"export LD_LIBRARY_PATH=" >> $metaconf
+	echo "${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
+	echo "meta_name = ${meta_name}" >> $metaconf
+#	${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
+    fi
+    step=`expr ${step} + 1` # increment step
+    
+    # looping on retraining on false positives
+    for iter in `seq 1 ${maxiteration}`
+    do	
+        # find path to latest metarun output: get directory with latest date
+	bestout=${lastdir}/best/01/
+        # find path to best conf (there should be only 1 conf per folder)
+	bestconf=`ls ${bestout}/*.conf`
+        # find path to best weights (there should be only 1 weights per folder)
+	bestweights=`ls ${bestout}/*_net*.mat`
+
+        # false positives
+	lastname=${meta_name}_${step}_falsepos
+	lastdir=${out}/${lastname}
+	if [ $step -ge $minstep ]; then
+	    print_step $step $bestconf $lastname $lastdir "false positives" \
+		$iter $maxiteration
+	    extract_falsepos $bestconf $save_max $save_max_per_frame $bestout \
+		$input_max $threshold $weights $negatives_root $eblearnbin \
+		$nthreads $npasses $max_scale $tstamp $lastname
+	fi
+	step=`expr ${step} + 1` # increment step
+	
+        # recompile data
+	if [ $step -ge $minstep ]; then
+	    print_step $step $metaconf $lastname $lastdir "data compilation" \
+		$iter $maxiteration
+	    compile_data $eblearnbin $lastdir $precision $dataroot \
+		$h $w $chans $draws $traindsname $valdsname
+	fi
+	step=`expr ${step} + 1` # increment step
+	
+        # retrain
+	lastname=${meta_name}_${step}_training
+	if [ $step -ge $minstep ]; then
+	    print_step $step $bestconf $lastname $lastdir "retraining" \
+		$iter $maxiteration
+	    retrain $bestweights $eblearnbin $metaconf $lastname $tstamp \
+		$bestconf
+	fi
+	step=`expr ${step} + 1` # increment step
+    done
+}
 
 ###############################################################################
 # training
 ###############################################################################
 
-# initial training
-echo "________________________________________________________________________"
-echo "initial training from metaconf: ${metaconf}"
-echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
-echo "meta_name = ${meta_name}" >> $metaconf
-#${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
-touch $out/${tstamp}.${meta_name}_retraining_2
-
-# looping on retraining on false positives
-echo "________________________________________________________________________"
-echo "retraining loop"
-for iter in `seq 3 ${maxiteration}`
-  do
-
-# find path to latest metarun output: get directory with latest date
-  lastout=`ls -dt1 ${out}/*/ | head -1`
-  bestout=${lastout}/best/01/
-# find path to best conf (there should be only 1 conf per folder)
-  bestconf=`ls ${bestout}/*.conf`
-# find path to best weights (there should be only 1 weights per folder)
-  bestweights=`ls ${bestout}/*_net*.mat`
-
-  echo "___________Retraining iteration: ${iter}___________"
-  echo "Using best conf of previous training: ${bestconf}"
-  echo "i=`expr ${maxiteration} - ${iter}`"
-
-  if [ $? -neq 0 ]; then exit -1; fi # stop if error
-extract_falsepos(bestconf, save_max, save_max_per_frame, 
-    bestout=$4 # directory of trained weights
-    input_max=$5
-    threshold=$6
-    weights=$7
-    negatives_root=$8 # directory where to find negative images
-    eblearnbin=$9
-    nthreads=$10
-    npasses=$11
-    max_scale=$12
-    tstamp=$13
-    iter=$14
-    falsepos_dir=$15
+go 0 $maxiteration $out $eblearnbin $negatives_root $metaconf $metaconf0 \
+    $meta_name $tstamp $save_max $save_max_per_frame $input_max $threshold \
+    $nthreads $npasses $max_scale $precision $dataroot $h $w $chans $draws \
+    $traindsname $valdsname
