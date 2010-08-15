@@ -17,8 +17,9 @@ save_max_per_frame=10
 # number of threads to use duing false positive extraction
 nthreads=5
 # maximum number of retraining iterations
-maxiteration=5
-
+maxiteration=3
+npasses=3
+max_scale=4
 ################################################################################
 # meta commands
 ################################################################################
@@ -60,7 +61,7 @@ dataroot=$root/ds/
 out=$root/out/$xpname/
 eblearnbin=${out}/bin/
 negatives_root=$root/train/bg_full/
-
+input_max=1000
 # variables
 
 metaconf0=$ebl/demos/pedestrians/daimler_det/${metaconf_name}
@@ -100,11 +101,18 @@ extract_falsepos() {
     weights=$7
     negatives_root=$8 # directory where to find negative images
     eblearnbin=$9
-    nthreads=$10
-    npasses=$11
-    max_scale=$12
-    tstamp=$13
-    name=$14
+    nthreads=${10}
+    npasses=${11}
+    max_scale=${12}
+    tstamp=${13}
+    name=${14}
+    echo
+    echo -e "Arguments:\nbestconf=${bestconf}\nsave_max=${save_max}"
+    echo -e "save_max_per_frame=${save_max_per_frame}\nbestout=${bestout}\ninput_max=${input_max}"
+    echo -e "threshold=${threshold}\nweights=${weights}\nnegatives_root=${negatives_root}"
+    echo -e "eblearnbin=${eblearnbin}\nnthreads=${nthreads}\nnpasses=${npasses}"
+    echo -e "max_scale=${max_scale}\ntstamp=${tstamp}\nname=${name}"
+    echo
     # function body ###########################################################
     echo "extract"; return 0;
 
@@ -119,7 +127,7 @@ extract_falsepos() {
     # add directory where to find trained files
     echo "root2 = ${bestout}" >> $bestconf
     # limit input size 
-    echo "input_max = 1000" >> $bestconf
+    echo "input_max = ${input_max}" >> $bestconf
     # decrement threshold, capping at -.95
     threshold=`echo "thr=${threshold} - .2; if (thr < -.95){ thr = -.95;}; print thr" | bc`
     echo "threshold = ${threshold}" >> $bestconf
@@ -161,7 +169,7 @@ compile_data() {
     chans=$7
     draws=$8
     traindsname=$9
-    valdsname=$10
+    valdsname=${10}
     # function body ###########################################################
     echo "compile"; return 0;
 
@@ -260,21 +268,31 @@ go() {
     metaconf0=$7
     meta_name=$8
     tstamp=$9
-    save_max=$10
-    save_max_per_frame=$11
-    input_max=$12
-    threshold=$13
-    nthreads=$14
-    npasses=$15
-    max_scale=$16
-    precision=$17
-    dataroot=$18
-    h=$19
-    w=$20
-    chans=$21
-    draws=$22
-    traindsname=$23
-    valdsname=$24
+    save_max=${10}
+    save_max_per_frame=${11}
+    input_max=${12}
+    threshold=${13}
+    nthreads=${14}
+    npasses=${15}
+    max_scale=${16}
+    precision=${17}
+    dataroot=${18}
+    h=${19}
+    w=${20}
+    chans=${21}
+    draws=${22}
+    traindsname=${23}
+    valdsname=${24}
+    echo
+    echo -e "Arguments:\nminstep=${minstep}\nmaxiteration=${maxiteration}\nout=${out}"
+    echo -e "eblearnbin=${eblearnbin}\nnegatives_root=${negatives_root}\nmetaconf=${metaconf}"
+    echo -e "metaconf0=${metaconf0}\nmeta_name=${meta_name}\ntstamp=${tstamp}"
+    echo -e "save_max=${save_max}\nsave_max_per_frame=${save_max_per_frame}"
+    echo -e "input_max=${input_max}\nthreshold=${threshold}\nnthreads=${nthreads}"
+    echo -e "npasses=${npasses}\nmax_scale=${max_scale}\nprecision=${precision}"
+    echo -e "dataroot=${dataroot}\nh=${h}\nw=${w}\nchans=${chans}\ndraws=${draws}"
+    echo -e "traindsname=${traindsname}\nvaldsname=${valdsname}"
+    echo
     # function body ###########################################################
     
     # create directories
@@ -293,7 +311,7 @@ go() {
 
     step=0
     # initial training
-    lastname=${meta_name}_${step}_training
+    lastname=${tstamp}.${meta_name}_${step}_training
     lastdir=${out}/${lastname}
     if [ $step -ge $minstep ]; then
 	print_step $step $metaconf $lastname $lastdir "training" \
@@ -307,7 +325,9 @@ go() {
     
     # looping on retraining on false positives
     for iter in `seq 1 ${maxiteration}`
-    do	
+      do	
+        echo "_________________________________________________________________"
+        echo "iteration ${iter}"
         # find path to latest metarun output: get directory with latest date
 	bestout=${lastdir}/best/01/
         # find path to best conf (there should be only 1 conf per folder)
@@ -316,13 +336,13 @@ go() {
 	bestweights=`ls ${bestout}/*_net*.mat`
 
         # false positives
-	lastname=${meta_name}_${step}_falsepos
+	lastname=${tstamp}.${meta_name}_${step}_falsepos
 	lastdir=${out}/${lastname}
 	if [ $step -ge $minstep ]; then
 	    print_step $step $bestconf $lastname $lastdir "false positives" \
 		$iter $maxiteration
 	    extract_falsepos $bestconf $save_max $save_max_per_frame $bestout \
-		$input_max $threshold $weights $negatives_root $eblearnbin \
+		$input_max $threshold $bestweights $negatives_root $eblearnbin \
 		$nthreads $npasses $max_scale $tstamp $lastname
 	fi
 	step=`expr ${step} + 1` # increment step
@@ -337,7 +357,9 @@ go() {
 	step=`expr ${step} + 1` # increment step
 	
         # retrain
-	lastname=${meta_name}_${step}_training
+	lastname=${tstamp}.${meta_name}_${step}_retraining
+	lastdir=${out}/${lastname}
+
 	if [ $step -ge $minstep ]; then
 	    print_step $step $bestconf $lastname $lastdir "retraining" \
 		$iter $maxiteration
@@ -352,7 +374,7 @@ go() {
 # training
 ###############################################################################
 
-go 0 $maxiteration $out $eblearnbin $negatives_root $metaconf $metaconf0 \
+go 4 $maxiteration $out $eblearnbin $negatives_root $metaconf $metaconf0 \
     $meta_name $tstamp $save_max $save_max_per_frame $input_max $threshold \
     $nthreads $npasses $max_scale $precision $dataroot $h $w $chans $draws \
     $traindsname $valdsname
