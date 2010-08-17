@@ -90,7 +90,11 @@ bool            save_set         = false;
 string          load             = ""; // dataset to load
 bool            load_set         = false;
 float           bboxfact         = 1.0;
+float           bboxhfact        = 1.0;
+float           bboxwfact        = 1.0;
 bool            bboxfact_set     = false;
+bool            bboxhfact_set     = false;
+bool            bboxwfact_set     = false;
 bool            force_label      = false;
 bool            nopadded         = false;
 string          label            = "";
@@ -274,6 +278,14 @@ bool parse_args(int argc, char **argv) {
 	++i; if (i >= argc) throw 0;
 	bboxfact = (float) atof(argv[i]);
 	bboxfact_set = true;
+      } else if (strcmp(argv[i], "-bboxhfact") == 0) {
+	++i; if (i >= argc) throw 0;
+	bboxhfact = (float) atof(argv[i]);
+	bboxhfact_set = true;
+      } else if (strcmp(argv[i], "-bboxwfact") == 0) {
+	++i; if (i >= argc) throw 0;
+	bboxwfact = (float) atof(argv[i]);
+	bboxwfact_set = true;
       } else if ((strcmp(argv[i], "-help") == 0) ||
 		 (strcmp(argv[i], "-h") == 0)) {
 	return false;
@@ -344,6 +356,8 @@ void print_usage() {
   cout << endl;
   cout << "  -scales <scales (e.g: 1.5,2,4)>" << endl;
   cout << "  -bboxfact <float factor> (multiply bounding boxes by a factor)";
+  cout << "  -bboxhfact <float factor> (multiply bboxes height by a factor)";
+  cout << "  -bboxwfact <float factor> (multiply bboxes width by a factor)";
   cout << endl;
   cout << "  -resize <mean(default)|gaussian|bilinear" << endl; 
   cout << "  -exclude <class name> (include all but excluded classes," << endl;
@@ -372,6 +386,8 @@ template <class Tds>
 void compile_ds(Tds &ds, bool imgpat = true) {
   ds.set_outdir(outdir);
   if (bboxfact_set) ds.set_bboxfact(bboxfact);
+  if (bboxhfact_set) ds.set_bboxhfact(bboxhfact);
+  if (bboxwfact_set) ds.set_bboxwfact(bboxwfact);
   if (usepose) ds.use_pose();
   if (useparts) ds.use_parts();
   if (partsonly) ds.use_parts_only();

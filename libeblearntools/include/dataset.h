@@ -168,6 +168,17 @@ namespace ebl {
     //! objects.
     void set_bboxfact(float factor);
 
+    //! Multiply bounding boxes height by factor.
+    //! This is useful to move object's
+    //! boundaries away from borders when bounding boxes are too tight around
+    //! objects.
+    void set_bboxhfact(float factor);
+
+    //! Multiply bounding boxes width by factor. This is useful to move object's
+    //! boundaries away from borders when bounding boxes are too tight around
+    //! objects.
+    void set_bboxwfact(float factor);
+
     //! If true, ignore samples with padded areas, i.e. too small for target 
     //! size.
     void set_nopadded(bool nopadded);
@@ -330,7 +341,8 @@ namespace ebl {
     bool                useparts;       //!< use parts or not
     bool                usepartsonly;   //!< use parts only or not
     string              save_mode;      //!< saving mode (dataset, ppm, png..)
-    float               bboxfact;       //!< bounding boxes factor
+    float               bboxhfact;      //!< bounding boxes height factor
+    float               bboxwfact;      //!< bounding boxes width factor
     string              force_label;    //!< force all labels to this one
     bool                nopadded;       //!< ignore too small samples
     // names ///////////////////////////////////////////////////////
