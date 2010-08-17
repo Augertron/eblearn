@@ -847,6 +847,13 @@ namespace ebl {
     return false;
   }
   
+  float rect::min_overlap(const rect &r) {
+    uint area1 = height * width;
+    uint area2 = r.height * r.width;
+    uint inter = overlapping_area(r);
+    return inter / (float) std::min(area1, area2);
+  }
+  
   bool rect::min_overlap(const rect &r, float hmin, float wmin) {
     if (((h0 <= r.h0 + r.height) && (h0 + height >= r.h0)) &&
 	((w0 <= r.w0 + r.width) && (w0 + width >= r.w0))) {

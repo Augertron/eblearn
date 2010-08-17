@@ -80,6 +80,8 @@ namespace ebl {
     // initilizations
     save_max_per_frame = (numeric_limits<uint>::max)();
     set_bbox_overlaps(.5, .5);
+    // by default, when foot line is equal, no overlap.
+    max_foot_area_overlap = 1.0;
   }
   
   template <typename T, class Tstate>
@@ -325,6 +327,13 @@ namespace ebl {
 	 << max_hoverlap << " width: " << max_woverlap << endl;
   }
   
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_bbox_foot_overlap(float area_max) {
+    max_foot_area_overlap = area_max;
+    cout << "Maximum bbox ratios of overlap when foot is at same height: "
+	 << max_foot_area_overlap << endl;
+  }
+  
   ////////////////////////////////////////////////////////////////
   
   template <typename T, class Tstate>
@@ -555,7 +564,16 @@ namespace ebl {
 	for (j = raw_bboxes.begin(); (j != raw_bboxes.end()) && add; ++j) {
 	  if (*j && i != j) {
 	    rect other_bbox((*j)->h0, (*j)->w0, (*j)->height, (*j)->width);
-	    if (this_bbox.min_overlap(other_bbox, max_hoverlap)) {//, max_woverlap))
+	    float overlap_area = this_bbox.min_overlap(other_bbox);
+	    bool overlap = false;
+	    if (overlap_area >= max_hoverlap)
+	      overlap = true; // there is overlap
+	    else if (other_bbox.height + other_bbox.h0
+		     == this_bbox.h0 + this_bbox.height) { // same foot line
+	      if (overlap_area >= max_foot_area_overlap)
+		overlap = true; // there is overlap
+	    }
+	    if (overlap) {
 	      if ((*i)->confidence < (*j)->confidence) {
 		// it's not the highest confidence, stop here.
 		add = false;

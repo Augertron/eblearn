@@ -190,6 +190,10 @@ namespace ebl {
     //! allowing non maximum suppression between bounding boxes.
     void set_bbox_overlaps(float hmax, float wmax);
   
+    //! Set the maximum area overlaps authorized when foot line is identical
+    //! before allowing non maximum suppression between bounding boxes.
+    void set_bbox_foot_overlap(float area_max);
+  
     ////////////////////////////////////////////////////////////////
     // execution
     
@@ -348,6 +352,7 @@ namespace ebl {
     bool                 mem_optimization; //!< optimize memory or not.
     float                max_hoverlap; //!< Maximum ratio of overlap authorized.
     float                max_woverlap; //!< Maximum ratio of overlap authorized.
+    float                max_foot_area_overlap; //!< Max area overlap when foot.
 
     ////////////////////////////////////////////////////////////////
     // friends
