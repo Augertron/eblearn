@@ -258,6 +258,8 @@ namespace ebl {
      if (conf.exists("bbh_overlap") && conf.exists("bbw_overlap"))
        detect.set_bbox_overlaps(conf.get_float("bbh_overlap"),
 				conf.get_float("bbw_overlap"));
+     if (conf.exists("foot_overlap"))
+	 detect.set_bbox_foot_overlap(conf.get_float("foot_overlap"));
      string viddir = outdir;
      viddir += "video/";
      mkdir_full(viddir);

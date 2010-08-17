@@ -1069,6 +1069,8 @@ namespace ebl {
     //! \param hmin Minimum height overlap ratio required to declare overlap.
     //! \param wmin Minimum width overlap ratio required to declare overlap.
     bool min_overlap(const rect &r, float hmin, float wmin);
+    //! Returns the overlap ratio with the smallest of the 2 rectangles.
+    float min_overlap(const rect &r);
     //! Returns true if the ratio of the overlapping area over the smallest
     //! rectangle is more than the minarea ratio.
     //! \param minarea Ratio of minimum area overlap required to declare
