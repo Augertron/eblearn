@@ -30,7 +30,7 @@ resize=mean #bilinear
 nbg=1 # maximum number of bg extracted per scale
 # scales in bg images, in terms of factor of the target size, i.e. hxw * scale
 bgscales=5,3.75,2.75
-maxbg=40000 # initial number of negatives
+maxbg=60000 # initial number of negatives
 
 # names
 id=${resize}${h}x${w}_ker${kernel}
@@ -53,16 +53,16 @@ mkdir -p $nopersons_root
 ###############################################################################
 # one-time dataset preparations
 
-# crop nicta's 80x64 to 80x40 to reach .5 ratio.
-nicta_positive_root=${HOME}/banquoadata/ped/nicta/
-$bin/dscompiler $nicta_positive_root -precision $precision \
-    -outdir $positive_root/nicta.5/ -save mat -resize $resize \
-    -bboxwfact .625 $debug
+# # crop nicta's 80x64 to 80x40 to reach .5 ratio.
+# nicta_positive_root=${HOME}/banquoadata/ped/nicta/
+# $bin/dscompiler $nicta_positive_root -precision $precision \
+#     -outdir $positive_root/nicta.5/ -save mat -resize $resize \
+#     -bboxwfact .625 $debug
 
-# extract 'inside' windows (zoom inside bounding box) 
-# from all positive examples as negative examples
-$bin/dscompiler $positive_root -precision $precision \
-    -outdir $full_negative_root/bg/inside -save mat -resize $resize -bboxfact .65 $debug
+# # extract 'inside' windows (zoom inside bounding box) 
+# # from all positive examples as negative examples
+# $bin/dscompiler $positive_root -precision $precision \
+#     -outdir $full_negative_root/bg/inside -save mat -resize $resize -bboxfact .65 $debug
 
 ###############################################################################
 # (repeatable) dataset compilations
