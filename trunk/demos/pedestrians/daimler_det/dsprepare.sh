@@ -101,6 +101,5 @@ mkdir -p $inside_root
 # from positive examples as negative examples
 dataroot=/home/sermanet/banquoadata/ped/mit/pedestrians128x64
 $bin/dscompiler $dataroot -precision $precision -outdir ${inside_root} \
-    -save mat -resize $resize -dims ${h}x${w}x${chans} \
-    -bboxfact .65 \
+    -save mat -bboxfact .65 -forcelabel bg \
 #    $maxdata $maxperclass $ddisplay # debug

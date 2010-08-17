@@ -1,4 +1,12 @@
-function vbbExtract(display, minoverlap, minheight, context, minaratio, extractBg)
+% add a directory link to the caltech code directory
+% add your caltech code path
+% addpath('/home/sermanet/matlab/caltech_pedestrians')
+
+% inria extraction for daimler-similar data, i.e. 96x48 with same context size
+% vbbExtract('inria-train', 0, .65, 96, 1.3, 1.3 * 1.16, .2, 1)
+
+function vbbExtract(name, display, minoverlap, minheight, hcontext, wcontext, ...
+		    minaratio, extractBg)
 % Extract all pedestrian images and non-pedestrian images
 % by Pierre Sermanet
 % INPUTS
@@ -13,9 +21,9 @@ function vbbExtract(display, minoverlap, minheight, context, minaratio, extractB
 %                >= 80 -> near
 %                >= 30 -> medium
 %                >= 0   -> far
-%   context - a factor applied to bbox height and width, used to increase
-%             context. e.g. factor 1.2 will result in bbox of size
-%             height*1.2 x width*1.2 and bbox origin moved accordingly.
+%   {h,w}context - a factor applied to bbox height and width, used to increase
+%               context. e.g. factor 1.2 will result in bbox of size
+%               height*1.2 x width*1.2 and bbox origin moved accordingly.
 %   minaratio - minimum aspect ratio, ignore ratio lower than this
 %               This will get rid of some false bounding boxes like half
 %               (or less) pedestrian at edge of image.
@@ -24,16 +32,18 @@ function vbbExtract(display, minoverlap, minheight, context, minaratio, extractB
 %               extract background every 30 frames.
 %  figure
   % default values
-  if (nargin < 6) extractBg = 60; end
-  if (nargin < 5) minaratio = .2; end
-  if (nargin < 4) context = 1.3; end
-  if (nargin < 3) minheight = 30; end
-  if (nargin < 2) minoverlap = .65; end
-  if (nargin < 1) display = 0; end
+  if (nargin < 7) extractBg = 60; end
+  if (nargin < 6) minaratio = .2; end
+  if (nargin < 5) wcontext = 1.3; end
+  if (nargin < 5) hcontext = 1.3; end
+  if (nargin < 4) minheight = 30; end
+  if (nargin < 3) minoverlap = .65; end
+  if (nargin < 2) display = 0; end
+  if (nargin < 1) name = 'use-all'; end
 
-  [pth,setIds,nVids] = dbInfo;
-  extracted = sprintf('extracted_minoverlap%0.2f_minheight%i_context%0.1f', minoverlap, ...
-		      minheight, context);
+  [pth,setIds,nVids] = dbInfo(name);
+  extracted = sprintf('extracted_minoverlap%0.2f_minheight%i_hcontext%0.1f_wcontext%0.1f', ...
+		      minoverlap, minheight, hcontext, wcontext);
   outdir_ped = [pth '/' extracted '/ped/'];
   outdir_bg = [pth '/' extracted '/bg/'];
   for i=1:length(setIds)
@@ -73,7 +83,7 @@ function vbbExtract(display, minoverlap, minheight, context, minaratio, extractB
 	end
 	% extract pedestrians
 	savePeds(I, A, iframe, fname_ped, display, minoverlap, minheight, ...
-		 minaratio, context);
+		 minaratio, hcontext, wcontext);
 	% extract non pedestrians
 	if (mod(iframe, extractBg) == 0)
 	  saveBg(I, A, iframe, fname_bg, display);
@@ -84,7 +94,7 @@ function vbbExtract(display, minoverlap, minheight, context, minaratio, extractB
 end
 
 function savePeds(I, A, iframe, fname, display, minoverlap, minheight, ...
-		  minaratio, context)
+		  minaratio, hcontext, wcontext)
 % Save all pedestrian images for this frame
   if (display == 1)
     subplot(1, 3, 2), imshow(I, 'Border', 'tight');
@@ -136,10 +146,10 @@ function savePeds(I, A, iframe, fname, display, minoverlap, minheight, ...
       end
     end
     % add context 
-    pos(1) = pos(1) - ((pos(3) * context - pos(3)) / 2);
-    pos(2) = pos(2) - ((pos(4) * context - pos(4)) / 2);
-    pos(3) = pos(3) * context;
-    pos(4) = pos(4) * context;
+    pos(1) = pos(1) - ((pos(3) * wcontext - pos(3)) / 2);
+    pos(2) = pos(2) - ((pos(4) * hcontext - pos(4)) / 2);
+    pos(3) = pos(3) * wcontext;
+    pos(4) = pos(4) * hcontext;
     % ignore if box is overlapping outside image
     if ((uint32(pos(1) + pos(3)) > size(I, 2)) || ...
 	(uint32(pos(2) + pos(4)) > size(I, 1)) || ...

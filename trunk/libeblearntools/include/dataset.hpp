@@ -68,6 +68,7 @@ namespace ebl {
       inroot = inroot_;
       inroot += "/";
     } else inroot = "";
+    no_outdims = true;
     outdims = idxdim(96, 96, 1);
     height = outdims.dim(0);
     width = outdims.dim(1);
@@ -448,28 +449,28 @@ namespace ebl {
 	} else cout << "Saved " << fname << endl;
       }
     } else { // single file mode, use save as image extensions
-      root1 += name; root1 += "/";
-      mkdir_full(root1);
-      // save all images
-      ostringstream fname;
-      intg id = 0;
-      idx<Tdata> tmp;
-      idx_bloop2(dat, data, Tdata, lab, labs, t_label) {
-	// make class directory if necessary
-	fname.str("");
-	fname << root1 << "/" << get_class_string(lab.get()) << "/";
-	mkdir_full(fname.str().c_str());
-	// save image
-	fname << get_class_string(lab.get()) << "_" << id++ << "." << save_mode;
-	tmp = dat.shift_dim(0, 2); // shift from planar to interleaved
-	// scale image to 0 255 if preprocessed
-	if (strcmp(ppconv_type.c_str(), "RGB")) {
-	  idx_addc(tmp, (Tdata) 1.0, tmp);
-	  idx_dotc(tmp, (Tdata) 127.5, tmp);
-	}
-	if (save_image(fname.str(), tmp, save_mode.c_str()))
-	  cout << id << ": saved " << fname.str() << endl;
-      }
+//       root1 += name; root1 += "/";
+//       mkdir_full(root1);
+//       // save all images
+//       ostringstream fname;
+//       intg id = 0;
+//       idx<Tdata> tmp;
+//       idx_bloop2(dat, data, Tdata, lab, labs, t_label) {
+// 	// make class directory if necessary
+// 	fname.str("");
+// 	fname << root1 << "/" << get_class_string(lab.get()) << "/";
+// 	mkdir_full(fname.str().c_str());
+// 	// save image
+// 	fname << get_class_string(lab.get()) << "_" << id++ << "." << save_mode;
+// 	tmp = dat.shift_dim(0, 2); // shift from planar to interleaved
+// 	// scale image to 0 255 if preprocessed
+// 	if (strcmp(ppconv_type.c_str(), "RGB")) {
+// 	  idx_addc(tmp, (Tdata) 1.0, tmp);
+// 	  idx_dotc(tmp, (Tdata) 127.5, tmp);
+// 	}
+// 	if (save_image(fname.str(), tmp, save_mode.c_str()))
+// 	  cout << id << ": saved " << fname.str() << endl;
+//      }
     }
     return true;
   }
@@ -605,7 +606,7 @@ namespace ebl {
     if (do_preprocessing)
       sample = preprocess_data(sample, class_name, true, filename, r);
     // check for dimensions
-    if (!sample.same_dim(outdims)) {
+    if (!sample.same_dim(outdims) && !no_outdims) {
       idxdim d2(sample);
       d2.setdim(2, outdims.dim(2)); // try with same # of channels
       if (d2 == outdims) {
@@ -629,14 +630,31 @@ namespace ebl {
 	return false;
       }
     }
-    // put sample's channels dimensions first, if interleaved.
-    if (interleaved_input)
-      sample = sample.shift_dim(2, 0);
-    // copy sample
-    idx<Tdata> tgt = data.select(0, data_cnt);
-    idx_copy(sample, tgt);
-    // copy label
-    labels.set(label, data_cnt);
+    // if save_mode is dataset, copy to dataset, otherwise save individual file
+    if (!strcmp(save_mode.c_str(), DATASET_SAVE)) { // dataset mode
+      // put sample's channels dimensions first, if interleaved.
+      if (interleaved_input)
+	sample = sample.shift_dim(2, 0);
+      // copy sample
+      idx<Tdata> tgt = data.select(0, data_cnt);
+      idx_copy(sample, tgt);
+      // copy label
+      labels.set(label, data_cnt);
+    } else {
+      ostringstream fname;
+      fname.str("");
+      fname << outdir << "/" << get_class_string(label) << "/";
+      mkdir_full(fname.str().c_str());
+      // save image
+      fname << get_class_string(label) << "_" << data_cnt << "." << save_mode;
+//       // scale image to 0 255 if preprocessed
+//       if (strcmp(ppconv_type.c_str(), "RGB")) {
+// 	idx_addc(tmp, (Tdata) 1.0, tmp);
+// 	idx_dotc(tmp, (Tdata) 127.5, tmp);
+//       }
+      if (save_image(fname.str(), sample, save_mode.c_str()))
+	cout << "  saved " << fname.str() << " (" << sample << ")" << endl;
+    }
     // increment data count
     data_cnt++;
     return true;
@@ -676,6 +694,7 @@ namespace ebl {
 
   template <class Tdata>
   void dataset<Tdata>::set_outdims(const idxdim &d) {
+    no_outdims = false;
     cout << "Setting target dimensions to " << d << endl;
     outdims = d;
     if (interleaved_input || (outdims.order() == 2)) {
@@ -685,6 +704,11 @@ namespace ebl {
       height = outdims.dim(1);
       width = outdims.dim(2);
     }
+  }
+
+  template <class Tdata>
+  void dataset<Tdata>::set_outdir(const string &s) {
+    outdir = s;
   }
 
   template <class Tdata>
@@ -1003,6 +1027,10 @@ namespace ebl {
     rect out_region, cropped;
     idxdim d(outdims);
     idx<Tdata> resized;
+    // default dimensions are same as input
+    resizepp->set_dimensions(inr.height, inr.width);
+    if (!no_outdims)
+      resizepp->set_dimensions(outdims.dim(0), outdims.dim(1));
     if (scale > 0) { // resize entire image at specific scale
       resizepp->set_dimensions((uint) (outdims.dim(0) * scale), 
 			       (uint) (outdims.dim(1) * scale));
