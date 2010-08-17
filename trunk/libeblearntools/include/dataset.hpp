@@ -101,7 +101,8 @@ namespace ebl {
     useparts = false;
     usepartsonly = false;
     save_mode = DATASET_SAVE;
-    bboxfact = 1.0;
+    bboxhfact = 1.0;
+    bboxwfact = 1.0;
     force_label = "";
     nclasses = 0;
     add_errors = 0;
@@ -810,8 +811,22 @@ namespace ebl {
 
   template <class Tdata>
   void dataset<Tdata>::set_bboxfact(float factor) {
-    bboxfact = factor;
-    cout << "Setting bounding box factor to " << bboxfact << endl;
+    bboxhfact = factor;
+    bboxwfact = factor;
+    cout << "Setting bounding box height and width factor to " << bboxhfact
+	 << endl;
+  }
+    
+  template <class Tdata>
+  void dataset<Tdata>::set_bboxhfact(float factor) {
+    bboxhfact = factor;
+    cout << "Setting bounding box height factor to " << bboxhfact << endl;
+  }
+    
+  template <class Tdata>
+  void dataset<Tdata>::set_bboxwfact(float factor) {
+    bboxwfact = factor;
+    cout << "Setting bounding box width factor to " << bboxwfact << endl;
   }
     
   template <class Tdata>
@@ -1012,12 +1027,13 @@ namespace ebl {
     rect inr(0, 0, dat.dim(0), dat.dim(1));
     if (r) inr = *r;
     // multiply input region by factor
-    if (bboxfact != 1.0) {
-      int add = (int) ((std::max)(inr.height, inr.width) * (bboxfact - 1.0));
-      inr.h0 = (std::max)((intg)0, MIN(dat.dim(0) - 1, ((int) inr.h0) - add / 2));
-      inr.w0 = (std::max)((intg)0, MIN(dat.dim(1) - 1, ((int) inr.w0) - add / 2));
-      inr.height += add;
-      inr.width += add;
+    if (bboxhfact != 1.0 || bboxwfact != 1.0) {
+      int addh = (int) (inr.height * (bboxhfact - 1.0));
+      int addw = (int) (inr.width * (bboxwfact - 1.0));
+      inr.h0 =(std::max)((intg)0, MIN(dat.dim(0) - 1, ((int) inr.h0) - addh/2));
+      inr.w0 =(std::max)((intg)0, MIN(dat.dim(1) - 1, ((int) inr.w0) - addw/2));
+      inr.height += addh;
+      inr.width += addw;
       if (inr.h0 + inr.height > (uint) dat.dim(0))
 	inr.height -= inr.h0 + inr.height - dat.dim(0);
       if (inr.w0 + inr.width > (uint) dat.dim(1))
@@ -1035,7 +1051,7 @@ namespace ebl {
       resizepp->set_dimensions((uint) (outdims.dim(0) * scale), 
 			       (uint) (outdims.dim(1) * scale));
       resizepp->set_input_region(inr);
-    } else if (bboxfact != 1.0) // resize if factor
+    } else if (bboxhfact != 1.0 || bboxwfact != 1.0) // resize if factor
       resizepp->set_input_region(inr);
     idx<Tdata> tmp = dat.shift_dim(2, 0);
     fstate_idx<Tdata> in(tmp.get_idxdim()), out(1,1,1);
@@ -1104,7 +1120,7 @@ namespace ebl {
       if (r)
 	draw_box(h + r->h0, w + r->w0, r->height, r->width, 255, 0, 0);
       // draw object's factored box if factor != 1.0
-      if (bboxfact != 1.0)
+      if (bboxhfact != 1.0 || bboxwfact != 1.0)
 	draw_box(h + inr.h0, w + inr.w0, inr.height, inr.width, 0, 255, 0);
       h += dat.dim(dh) + 5;
       oss.str("");
