@@ -585,7 +585,7 @@ namespace ebl {
       return false;
     }
     // check for capacity
-    if (full(label)) { // reached full capacity
+    if (!strcmp(save_mode.c_str(), DATASET_SAVE) && full(label)) { // reached full capacity
       cerr << "warning: not adding " << *class_name << " from " << filename
 	   << ", reached full capacity for this class." << endl;
       return false;
