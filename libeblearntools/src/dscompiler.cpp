@@ -370,6 +370,7 @@ void print_usage() {
 
 template <class Tds>
 void compile_ds(Tds &ds, bool imgpat = true) {
+  ds.set_outdir(outdir);
   if (bboxfact_set) ds.set_bboxfact(bboxfact);
   if (usepose) ds.use_pose();
   if (useparts) ds.use_parts();

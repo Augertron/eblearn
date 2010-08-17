@@ -124,6 +124,9 @@ namespace ebl {
     //! The default is: 96x96x3
     void set_outdims(const idxdim &d);
 
+    //! Specify output directory.
+    void set_outdir(const string &s);
+
     //! Specify the minimum dimensions of input samples.
     //! The default is: 1x1
     void set_mindims(const idxdim &d);
@@ -306,6 +309,7 @@ namespace ebl {
     uint                height;         //!< height of output
     uint                width;          //!< width of output
     bool		allocated;	//!< data matrices allocated or not
+    bool                no_outdims;     //!< no outdims were specified.
     idxdim		outdims;	//!< dims of sample out dimensions
     idxdim		mindims;	//!< min dims of input samples
     idxdim		datadims;	//!< dimensions of data out dimensions
