@@ -112,6 +112,15 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
+  void detector<T,Tstate>::set_zpads(uint hzpad_, uint wzpad_) {
+    hzpad = hzpad_;
+    wzpad = wzpad_;
+    resizepp.set_zpads(hzpad, wzpad);
+    cout << "Adding zero padding on input (on each side): hpad: "
+	 << hzpad << " wpad: " << wzpad << endl;
+  }
+					   
+  template <typename T, class Tstate>
   detector<T,Tstate>::~detector() {
     { idx_bloop3(in, inputs, void*, out, outputs, void*, r, results, void*) {
 	Tstate *s;
@@ -339,7 +348,8 @@ namespace ebl {
   template <typename T, class Tstate>
   void detector<T,Tstate>::compute_minmax_resolutions(idxdim &input_dims) {
     // compute maximum closest size of input compatible with the network size
-    idxdim indim(input_dims.dim(2), input_dims.dim(0), input_dims.dim(1));
+    idxdim indim(input_dims.dim(2), input_dims.dim(0) + hzpad * 2,
+		 input_dims.dim(1) + wzpad * 2);
     if (max_size > 0) { // cap on maximum input size
       if (indim.dim(1) > max_size || indim.dim(2) > max_size) {
 	if (indim.dim(1) > indim.dim(2)) {
@@ -356,7 +366,11 @@ namespace ebl {
 
     // compute minimum input size compatible with network size
     idxdim minodim(1, 1, 1); // min output dims
-    in_mindim = thenet.bprop_size(minodim); // compute min input dims
+    netdim = thenet.bprop_size(minodim); // compute min input dims
+    in_mindim = netdim;
+    in_mindim.setdim(1, netdim.dim(1) + hzpad * 2);
+    in_mindim.setdim(2, netdim.dim(2) + wzpad * 2);
+    thenet.fprop_size(in_mindim);
     // TODO: this seems to screw things up
     if (min_size > 0) { // cap on maximum input size
       idxdim indim2(input_dims.dim(2), min_size, min_size);
@@ -621,8 +635,8 @@ namespace ebl {
 	double in_w = (double)(((Tstate*) input.get())->x.dim(2));
 	double out_h = (double)(((Tstate*) output.get())->x.dim(1));
 	double out_w = (double)(((Tstate*) output.get())->x.dim(2));
-	double neth = in_mindim.dim(1); // network's input height
-	double netw = in_mindim.dim(2); // netowkr's input width
+	double neth = netdim.dim(1); // network's input height
+	double netw = netdim.dim(2); // netowkr's input width
 	double scalehi = original_h / robbox.height; // in to original
 	double scalewi = original_w / robbox.width; // in to original
 	// offset factor in input map

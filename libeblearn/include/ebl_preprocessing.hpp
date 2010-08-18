@@ -248,31 +248,55 @@ namespace ebl {
   template <typename T, class Tstate>
   resizepp_module<T,Tstate>::
   resizepp_module(intg height_, intg width_, uint mode_,
-		  module_1_1<T,Tstate> *pp_, uint kernelsz_, bool own_pp_)
+		  module_1_1<T,Tstate> *pp_, uint kernelsz_, bool own_pp_,
+		  uint hzpad_, uint wzpad_)
     : module_1_1<T,Tstate>("resizepp"), 
       pp(pp_), own_pp(own_pp_), kernelsz(kernelsz_), inpp(1,1,1), outpp(1,1,1),
-      mode(mode_), inrect(0, 0, 0, 0), inrect_set(false) {
+      tmp3(1,1,1), mode(mode_), inrect(0, 0, 0, 0), inrect_set(false),
+      hzpad(hzpad_), wzpad(wzpad_), zpad(NULL) {
     set_dimensions(height_, width_);
+    set_zpads(hzpad_, wzpad_);
   }
   
   template <typename T, class Tstate>
   resizepp_module<T,Tstate>::
-  resizepp_module(uint mode_, module_1_1<T,Tstate> *pp_, uint kernelsz_, bool own_pp_)
+  resizepp_module(uint mode_, module_1_1<T,Tstate> *pp_, uint kernelsz_,
+		  bool own_pp_, uint hzpad_, uint wzpad_)
     : pp(pp_), own_pp(own_pp_), kernelsz(kernelsz_), height(0), width(0),
-      inpp(1,1,1), outpp(1,1,1), mode(mode_), inrect(0, 0, 0, 0),
-      inrect_set(false) {
+      inpp(1,1,1), outpp(1,1,1), tmp3(1,1,1), mode(mode_), inrect(0, 0, 0, 0),
+      inrect_set(false), hzpad(hzpad_), wzpad(wzpad_){
+    set_zpads(hzpad_, wzpad_);
   }
   
   template <typename T, class Tstate>
   resizepp_module<T,Tstate>::~resizepp_module() {
     if (pp && own_pp)
       delete pp;
+    if (zpad)
+      delete zpad;
   }
   
   template <typename T, class Tstate>
   void resizepp_module<T,Tstate>::set_dimensions(intg height_, intg width_) {
-    height = height_;
-    width = width_;
+    height = height_ - hzpad * 2;
+    width = width_ - wzpad * 2;
+  }
+
+  template <typename T, class Tstate>
+  void resizepp_module<T,Tstate>::set_zpads(intg hpad, intg wpad) {
+    // reset height/width without current zpad
+    height += hzpad * 2;
+    width += wzpad * 2;
+    // update zpads and height/width
+    hzpad = hpad;
+    wzpad = wpad;
+    height -= hzpad * 2;
+    width -= wzpad * 2;
+    // update zpad module
+    if (zpad)
+      delete zpad;
+    if (hzpad > 0 || wzpad > 0)
+      zpad = new zpad_module<T,Tstate>(hzpad, wzpad);
   }
 
   template <typename T, class Tstate>
@@ -323,7 +347,14 @@ namespace ebl {
 				out.x.dim(2), original_bbox);
     tmp2 = tmp2.shift_dim(2, 0);
     //idx_copy(tmp2, tmp);
-    idx_copy(tmp2, out.x);
+    if (!zpad)
+      idx_copy(tmp2, out.x);
+    else { // zero padding
+      original_bbox.shift(hzpad, wzpad);
+      tmp3.resize(tmp2.get_idxdim());
+      idx_copy(tmp2, tmp3.x);
+      zpad->fprop(tmp3, out);
+    }
 //     // copy pp output into output with target dimensions, removing ker borders
 //     tmp2 = resized.narrow(1, outrect.height, outrect.h0 + kernelsz / 2);
 //     tmp2 = tmp2.narrow(2, outrect.width, outrect.w0 + kernelsz / 2);
@@ -344,7 +375,8 @@ namespace ebl {
     module_1_1<T,Tstate> *newpp = NULL;
     if (pp)
       newpp = (module_1_1<T,Tstate>*) pp->copy();
-    return new resizepp_module(height, width, mode, newpp, kernelsz);
+    return new resizepp_module(height, width, mode, newpp, kernelsz, true,
+			       hzpad, wzpad);
   }
   
 } // end namespace ebl

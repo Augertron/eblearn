@@ -894,4 +894,9 @@ namespace ebl {
     return newr;
   }
 
+  void rect::shift(uint h, uint w) {
+    h0 += h;
+    w0 += w;
+  }
+
 } // end namespace ebl

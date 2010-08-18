@@ -260,6 +260,12 @@ namespace ebl {
 				conf.get_float("bbw_overlap"));
      if (conf.exists("foot_overlap"))
 	 detect.set_bbox_foot_overlap(conf.get_float("foot_overlap"));
+     // zero padding
+     uint hzpad = 0, wzpad = 0;
+     if (conf.exists("hzpad")) hzpad = conf.get_uint("hzpad");
+     if (conf.exists("wzpad")) wzpad = conf.get_uint("wzpad");
+     detect.set_zpads(hzpad, wzpad);
+     
      string viddir = outdir;
      viddir += "video/";
      mkdir_full(viddir);
