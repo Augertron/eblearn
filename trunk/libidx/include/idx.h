@@ -1078,6 +1078,10 @@ namespace ebl {
     bool min_overlap(const rect &r, float minarea);
     //! return true current rectangle is entirely contained in r.
     bool is_within(const rect &r);
+    //! Shift rectangle's origin by h and w.
+    void shift(uint h, uint w);
+    
+    // members
     uint h0, w0, height, width;
 
     // friends

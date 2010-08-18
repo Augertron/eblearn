@@ -188,9 +188,13 @@ namespace ebl {
     //!           account during resizing. The default value (0) has no effect.
     //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
     //!             GAUSSIAN_RESIZE).
+    //! \param hzpad Optional vertical zero-padding is added on each size
+    //!   and taken into account to reach the desired target size.
+    //! \param wzpad Optional horizontal zero-padding is added on each size
+    //!   and taken into account to reach the desired target size.
     resizepp_module(intg height, intg width, uint mode = MEAN_RESIZE,
 		    module_1_1<T,Tstate> *pp = NULL, uint kernelsz = 0,
-		    bool own_pp = false);
+		    bool own_pp = false, uint hzpad = 0, uint wzpad = 0);
     //! Constructor without target dimensions. set_dimensions should be called
     //! later. Preprocessing module pp will be deleted upon destruction.
     //! \param height target height for resizing.
@@ -203,9 +207,13 @@ namespace ebl {
     //!           account during resizing. The default value (0) has no effect.
     //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
     //!             GAUSSIAN_RESIZE).
+    //! \param hzpad Optional vertical zero-padding is added on each size
+    //!   and taken into account to reach the desired target size.
+    //! \param wzpad Optional horizontal zero-padding is added on each size
+    //!   and taken into account to reach the desired target size.
     resizepp_module(uint mode = MEAN_RESIZE,
 		    module_1_1<T,Tstate> *pp = NULL, uint kernelsz = 0,
-		    bool own_pp = false);
+		    bool own_pp = false, uint hzpad = 0, uint wzpad = 0);
     //! destructor
     virtual ~resizepp_module();
     //! sets the desired output dimensions.
@@ -213,6 +221,8 @@ namespace ebl {
     //! set the region to use in the input image.
     //! by default, the input region is the entire image.
     void set_input_region(const rect &inr);
+    //! Set zero padding on each side for each dimension.
+    void set_zpads(intg hpad, intg wpad);
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! return the bounding box of the original input in the output coordinate
@@ -231,11 +241,15 @@ namespace ebl {
     Tstate               inpp, outpp;   //!< input/output buffers for pp
     idx<T>               tmp;           //!< temporary buffer
     idx<T>               tmp2;          //!< temporary buffer
+    Tstate               tmp3;          //!< temporary buffer
     rect                 original_bbox; //!< bbox of original input in output
     uint                 mode;          //!< resizing mode.
     rect                 inrect;        //!< input region of image
     rect                 outrect;       //!< input region in output image
     bool                 inrect_set;    //!< use input region or not.
+    uint                 hzpad;         //!< vertical zero-padding for each side
+    uint                 wzpad;         //!< horiz. zero-padding for each side
+    zpad_module<T,Tstate> *zpad;        //!< Zero padding module.
   };
 
 } // namespace ebl {

@@ -131,6 +131,10 @@ namespace ebl {
     //! \param resolutions A uint idx containing resolutions (of size nx2)
     void set_resolutions(idx<uint> &resolutions);
 
+    //! Add zero padding of hzpad on each vertical sides and wzpad on
+    //! horizontal sides.
+    void set_zpads(uint hzpad, uint wzpad);
+  
     //! Specify resolutions by the factor step, starting from factor 1
     //! (network's size), adding factor_steps until reaching the original
     //! resolution.
@@ -320,6 +324,7 @@ namespace ebl {
   private:
     // dimensions
     idxdim		 in_mindim;
+    idxdim		 netdim; //!< network's input dimensions
     idxdim		 in_maxdim;
     uint		 nresolutions;
     idx<uint>		 resolutions;
@@ -353,6 +358,8 @@ namespace ebl {
     float                max_hoverlap; //!< Maximum ratio of overlap authorized.
     float                max_woverlap; //!< Maximum ratio of overlap authorized.
     float                max_foot_area_overlap; //!< Max area overlap when foot.
+    uint                 hzpad; //! Zero-pad on height (each side).
+    uint                 wzpad; //! Zero-pad on width (each side).
 
     ////////////////////////////////////////////////////////////////
     // friends
