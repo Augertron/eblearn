@@ -34,7 +34,7 @@ maxbg=60000 # initial number of negatives
 
 # names
 id=${resize}${h}x${w}_ker${kernel}
-name=ped_daimlerdet_${id}
+name=allped_${id}
 namebg=${name}_bg
 bgds=nopersons_${id}
 outbg=${out}/${bgds}
