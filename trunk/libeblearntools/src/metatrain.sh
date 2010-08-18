@@ -232,7 +232,7 @@ retrain() {
     echo "meta_name = ${name}" >> $metaconf
     # send report at specific training iterations
     echo "meta_email_iters = 0,1,2,3,4,5,7,10,15,20,30,50,75,100,200" >> \
-	$bestconf
+	$metaconf
     ${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
     check_error $? 
 }
