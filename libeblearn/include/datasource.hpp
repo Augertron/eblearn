@@ -138,6 +138,7 @@ namespace ebl {
     seek_begin();
     seek_begin_train();
     epoch_sz = get_lowest_common_size();
+    cout << "Each training epoch sees " << epoch_sz << " samples." << endl;
   }
 
   template <class Tnet, class Tin1, class Tin2>
