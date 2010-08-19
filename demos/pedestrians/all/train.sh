@@ -3,7 +3,7 @@
 ebl=$HOME/eblearn/ # eblearn root
 source $ebl/libeblearntools/src/metatrain.sh # include script functions
 ################################################################################
-step0=0 # initial step where to (re)start metatraining
+step0=1 # initial step where to (re)start metatraining
 h=80 # network height
 w=40 # network width
 chans=1 # number of input channels
@@ -12,7 +12,7 @@ valdsname=allped_mean${h}x${w}_ker7_bg_val # dataset validation name
 machine=${HOSTNAME}a # machine where experiment is ran
 eblearnbin0=$ebl/bin/ # original binary root
 metaconf_name=allped_meta.conf # metaconf name
-save_max=60000 # max number of false positives to extract per iteration
+save_max=40000 # max number of false positives to extract per iteration
 save_max_per_frame=10 # max number of false positives to extract per full image
 nthreads=6 # number of threads to use duing false positive extraction
 maxiteration=10 # maximum number of retraining iterations
@@ -20,12 +20,14 @@ precision=float # dataset precision
 threshold=.9 # threshold will be decremented at each iter until -.95
 ds_split_ratio=".1" # split ratio of validation over training
 draws=1 # number of dataset draws
-tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
-#tstamp=20100727.073128 # overriding timestamp of experiment
+name=allped_${machine}
+meta_name=${name} # name of this meta job
+#tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
+tstamp=20100818.045156 # overriding timestamp of experiment
 
 # directories
 ################################################################################
-xpname=${meta_name}_${tstamp} # experiment's name
+xpname=${name}_${tstamp} # experiment's name
 root=~/${machine}data/ped/all/
 dataroot=$root/ds/ # datasets directory
 out=$root/out/$xpname/ # root directory of experiment
@@ -45,7 +47,6 @@ metatrain $step0 $maxiteration $out $eblearnbin $negatives_root $metaconf \
 meta_command="sh train.sh"
 # optional meta variables
 meta_output_dir=${out} # directory where to write outputs of all processes
-meta_name=allped_${machine} # name of this meta job
 meta_send_email=1 # emailing results or not
 meta_email=${myemail} # email to use (use environment variable "myemail")
 meta_email_period=1 # send email with this freq (if email_iters not defined)

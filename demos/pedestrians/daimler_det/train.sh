@@ -3,7 +3,7 @@
 ebl=$HOME/eblearn/ # eblearn root
 source $ebl/libeblearntools/src/metatrain.sh # include script functions
 ################################################################################
-step0=9 # initial step where to (re)start metatraining
+step0=11 # initial step where to (re)start metatraining
 h=96 # network height
 w=48 # network width
 chans=1 # number of input channels
@@ -20,6 +20,7 @@ precision=float # dataset precision
 threshold=-.5 # threshold will be decremented at each iter until -.95
 ds_split_ratio=".1" # split ratio of validation over training
 draws=3 # number of dataset draws
+meta_name=daimlerdet_${machine} # name of this meta job
 #tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
 tstamp=20100727.073128 # overriding timestamp of experiment
 
@@ -45,7 +46,6 @@ metatrain $step0 $maxiteration $out $eblearnbin $negatives_root $metaconf $metac
 meta_command="sh train.sh"
 # optional meta variables
 meta_output_dir=${out} # directory where to write outputs of all processes
-meta_name=daimlerdet_${machine} # name of this meta job
 meta_send_email=1 # emailing results or not
 meta_email=${myemail} # email to use (use environment variable "myemail")
 meta_email_period=1 # send email with this freq (if email_iters not defined)
