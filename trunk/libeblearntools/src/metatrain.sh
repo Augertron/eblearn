@@ -3,13 +3,13 @@
 h=96
 w=48
 chans=1
-traindsname=ped_daimlerdet_mean${h}x${w}_ker7_bg_train
-valdsname=ped_daimlerdet_mean${h}x${w}_ker7_bg_val
-
+traindsname=ped_${name}_mean${h}x${w}_ker7_bg_train
+valdsname=ped_${name}_mean${h}x${w}_ker7_bg_val
+name=toto
 ebl=$HOME/eblearn/
 machine=${HOSTNAME}a
 eblearnbin0=$ebl/bin/
-metaconf_name=daimlerdet_meta.conf
+metaconf_name=${name}_meta.conf
 # max number of false positives to extract per iteration
 save_max=15660
 # max number of false positives to extract per full image
@@ -32,7 +32,7 @@ meta_command="sh train.sh"
 # directory where to write outputs of all processes
 meta_output_dir=${out}
 # name of this meta job
-meta_name=daimlerdet_${machine}
+meta_name=${name}_${machine}
 # emailing results or not
 meta_send_email=1
 # email to use (use environment variable "myemail")
@@ -56,7 +56,7 @@ meta_send_best=5
 #tstamp=`date +"%Y%m%d.%H%M%S"`
 tstamp=20100727.073128
 xpname=${meta_name}_${tstamp}
-root=~/${machine}data/ped/daimler_detection/
+root=~/${machine}data/ped/${name}/
 dataroot=$root/ds/
 out=$root/out/$xpname/
 eblearnbin=${out}/bin/
@@ -64,7 +64,7 @@ negatives_root=$root/train/bg_full/
 input_max=1000
 # variables
 
-metaconf0=$ebl/demos/pedestrians/daimler_det/${metaconf_name}
+metaconf0=$ebl/demos/pedestrians/${name}/${metaconf_name}
 metaconf=${out}/${metaconf_name}
 
 precision=float
@@ -310,18 +310,21 @@ metatrain() {
     echo "meta_output_dir = ${out}" >> $metaconf
 
     step=0
+    stepstr=`printf "%02d" ${step}`
     # initial training
-    lastname=${tstamp}.${meta_name}_${step}_training
+    name=${meta_name}_${stepstr}_training
+    lastname=${tstamp}.${name}
     lastdir=${out}/${lastname}
     if [ $step -ge $minstep ]; then
 	print_step $step $metaconf $lastname $lastdir "training" \
 	    0 $maxiteration
 	echo -n "meta_command = \"export LD_LIBRARY_PATH=" >> $metaconf
 	echo "${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
-	echo "meta_name = ${meta_name}" >> $metaconf
+	echo "meta_name = ${name}" >> $metaconf
 	${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
     fi
     step=`expr ${step} + 1` # increment step
+    stepstr=`printf "%02d" ${step}`
     
     # looping on retraining on false positives
     for iter in `seq 1 ${maxiteration}`
@@ -336,7 +339,7 @@ metatrain() {
 	bestweights=`ls ${bestout}/*_net*.mat`
 
         # false positives
-	name=${meta_name}_${step}_falsepos
+	name=${meta_name}_${stepstr}_falsepos
 	lastname=${tstamp}.${name}
 	lastdir=${out}/${lastname}
 	if [ $step -ge $minstep ]; then
@@ -347,6 +350,7 @@ metatrain() {
 		$nthreads $npasses $max_scale $tstamp $name
 	fi
 	step=`expr ${step} + 1` # increment step
+	stepstr=`printf "%02d" ${step}`
 	
         # recompile data
 	if [ $step -ge $minstep ]; then
@@ -356,9 +360,10 @@ metatrain() {
 		$h $w $chans $draws $traindsname $valdsname $ds_split_ratio
 	fi
 	step=`expr ${step} + 1` # increment step
-	
+	stepstr=`printf "%02d" ${step}`
+    
         # retrain
-	name=${meta_name}_${step}_retraining
+	name=${meta_name}_${stepstr}_retraining
 	lastname=${tstamp}.${name}
 	lastdir=${out}/${lastname}
 	if [ $step -ge $minstep ]; then
@@ -368,6 +373,7 @@ metatrain() {
 		$bestconf
 	fi
 	step=`expr ${step} + 1` # increment step
+	stepstr=`printf "%02d" ${step}`
     done
 }
 
