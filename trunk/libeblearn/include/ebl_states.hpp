@@ -219,6 +219,12 @@ namespace ebl {
     return other;
   }
 
+  template <typename T>
+  fstate_idx<T>& fstate_idx<T>::operator=(const fstate_idx<T>& other) {
+    this->x = other.x;
+    return *this;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // bstate_idx
 
@@ -431,6 +437,13 @@ namespace ebl {
     return other;
   }
 
+  template <typename T>
+  bstate_idx<T>& bstate_idx<T>::operator=(const bstate_idx<T>& other) {
+    this->x = other.x;
+    this->dx = other.dx;
+    return *this;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // bbstate_idx
 
@@ -656,6 +669,14 @@ namespace ebl {
     return other;
   }
 
+  template <typename T>
+  bbstate_idx<T>& bbstate_idx<T>::operator=(const bbstate_idx<T>& other) {
+    this->x = other.x;
+    this->dx = other.dx;
+    this->ddx = other.ddx;
+    return *this;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // parameter
 

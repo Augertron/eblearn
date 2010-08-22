@@ -109,6 +109,9 @@ namespace ebl {
     //! clear ddx
     virtual void clear_ddx();
     virtual void update_gd(gd_param &arg);
+    //! Assignment operator, involves assignment of internal idx
+    //! (avoid using this in critical loops).
+    virtual state& operator=(const state& other);
   };
 
   template <typename T> class bbstate_idx;
@@ -229,6 +232,10 @@ namespace ebl {
 
     //! make a new copy of self
     fstate_idx<T> make_copy();
+
+    //! Assignment operator, involves assignment of internal idx
+    //! (avoid using this in critical loops).
+    virtual fstate_idx<T>& operator=(const fstate_idx<T>& other);
 
     ////////////////////////////////////////////////////////////////
     //! member variables
@@ -361,6 +368,10 @@ namespace ebl {
     //! make a new copy of self
     bstate_idx<T> make_copy();
 
+    //! Assignment operator, involves assignment of internal idx
+    //! (avoid using this in critical loops).
+    virtual bstate_idx<T>& operator=(const bstate_idx<T>& other);
+
     ////////////////////////////////////////////////////////////////
     //! member variables
   public:
@@ -492,6 +503,10 @@ namespace ebl {
     //! make a new copy of self
     bbstate_idx<T> make_copy();
 
+    //! Assignment operator, involves assignment of internal idx
+    //! (avoid using this in critical loops).
+    virtual bbstate_idx<T>& operator=(const bbstate_idx<T>& other);
+    
     ////////////////////////////////////////////////////////////////
     //! member variables
   public:

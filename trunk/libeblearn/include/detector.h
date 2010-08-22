@@ -45,7 +45,7 @@ namespace ebl {
   class bbox {
   public:
     int		class_id;	//<! object class
-    double	confidence;	//<! detection confidence, 1 is the best.
+    float	confidence;	//<! detection confidence, 1 is the best.
     double	scaleh;		//<! scale factor at which object was detected
     double	scalew;		//<! scale factor at which object was detected
     int		scale_index;	//<! scale index at which object was detected
@@ -228,6 +228,14 @@ namespace ebl {
     //! Limit the number of regions saved per frame.
     void set_save_max_per_frame(uint max);
 
+    //! Print bounding boxes on standard output.
+    void pretty_bboxes(const vector<bbox*> &bboxes);
+
+    //! Print short description of bounding boxes on standard output,
+    //! with an optional prefix string in front of each line.
+    void pretty_bboxes_short(const vector<bbox*> &bboxes,
+ 			     const char *prefix = NULL);
+
   private:
     //! initialize dimensions and multi-resolution buffers.
     void init(idxdim &dinput);
@@ -286,13 +294,13 @@ namespace ebl {
     //! Extract bounding boxes from outputs into raw_bboxes.
     void map_to_list(T threshold, vector<bbox*> &raw_bboxes);
 
-    //! Print bounding boxes on standard output.
-    void pretty_bboxes(const vector<bbox*> &bboxes);
-
     //! save all bounding boxes of original (in original resolution) and
     //! preprocessed (resized and filtered) input into directory dir.
     void save_bboxes(const vector<bbox*> &bboxes, const string &dir,
 		     const char *frame_name = NULL);
+
+    //! Sort bboxes by confidence (most confident first);
+    void sort_bboxes(vector<bbox*> &bboxes);
 
     ////////////////////////////////////////////////////////////////
     // members

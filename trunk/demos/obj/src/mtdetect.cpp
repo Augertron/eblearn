@@ -66,9 +66,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
     try {
       // check input parameters
       if ((argc != 2) && (argc != 3) ) {
-	cerr << "wrong number of parameters." << endl;
+	cerr << "warning: wrong number of parameters." << endl;
 	cerr << "usage: mtdetect <config file> [directory or file]" << endl;
-	return -1;
+	//	return -1;
       }
 #ifdef __LINUX__
       feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
