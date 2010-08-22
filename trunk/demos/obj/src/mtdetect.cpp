@@ -208,7 +208,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    }
 	    updated = false;
 	    cnt++;
-	    cout << "total_saved=" << idx_sum(total_saved) << endl;
+	    cout << "total_saved=" << idx_sum(total_saved);
+	    if (conf.exists("save_max"))
+	      cout << " / " << conf.get_uint("save_max");
+	    cout << endl;
 	    cout << "i=" << cnt << endl;
 	  }
 	  // check if ready
