@@ -70,7 +70,7 @@ namespace ebl {
     // if (fl) delete fl;
     // fl = new files_list(n);
     // get all file names
-    fl = find_files(directory, IMAGE_PATTERN_MAT, NULL, false, true, randomize);
+    fl = find_files(directory, IMAGE_PATTERN_MAT, NULL, randomize?false:true, true, randomize);
     if (!fl) {
       cerr << "invalid directory: " << dir << endl;
       eblerror("invalid directory");
