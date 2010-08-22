@@ -200,7 +200,9 @@ namespace ebl {
        set_gui_silent();
      }
      // optimize memory usage by using only 2 buffers for entire flow
-     SBUF<Tnet> input(1, 1, 1), output(1, 1, 1);
+     // SBUF<Tnet> *input = new SBUF<Tnet>(1, 1, 1);
+     // SBUF<Tnet> *output = new SBUF<Tnet>(1, 1, 1);
+     SBUF<Tnet> *input = NULL, *output = NULL;
      // load network and weights in a forward-only parameter
      parameter<SFUNC(Tnet)> theparam;
      idx<ubyte> classes(1,1);
@@ -208,7 +210,7 @@ namespace ebl {
        load_matrix<ubyte>(classes, conf.get_cstring("classes"));
      } catch(string &err) { cerr << "warning: " << err << endl; }
      module_1_1<SFUNC(Tnet)> *net =
-       create_network<SFUNC(Tnet)>(theparam, conf, classes.dim(0));//, &input, &output);
+       create_network<SFUNC(Tnet)>(theparam, conf, classes.dim(0),input,output);
      theparam.load_x(conf.get_cstring("weights"));
 #ifdef __DEBUGMEM__
        pretty_memory();
@@ -357,6 +359,7 @@ namespace ebl {
        }
 #endif
        ms = tpass.elapsed_milliseconds();
+       detect.pretty_bboxes_short(bboxes, _name.c_str());
        cout << _name << " processing=" << ms << " ms." << endl;
 #ifdef __DEBUGMEM__
        pretty_memory();
@@ -376,6 +379,8 @@ namespace ebl {
 	  << toverall.elapsed_minutes() <<" mins" <<endl;
      // free variables
      if (net) delete net;
+     if (input) delete input;
+     if (output) delete output;
 #ifdef __GUI__
      quit_gui(); // close all windows
 #endif

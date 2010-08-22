@@ -64,6 +64,10 @@ namespace ebl {
     eblerror("not implemented");
   }
 
+  state& state::operator=(const state& other) {
+    eblerror("not implemented");
+  }
+  
   ////////////////////////////////////////////////////////////////
 
   gd_param::gd_param(double leta, double ln, double l1, double l2, int dtime,

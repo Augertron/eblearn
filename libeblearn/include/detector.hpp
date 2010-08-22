@@ -801,6 +801,26 @@ namespace ebl {
       }
     }
   }
+
+  template<typename T, class Tstate>
+  void detector<T,Tstate>::pretty_bboxes_short(const vector<bbox*> &bboxes,
+					       const char *prefix_) {
+    string prefix = "";
+    if (prefix_)
+      prefix = prefix_;
+    if (bboxes.size() == 0)
+      cout << prefix << ": no object found." << endl;
+    else {
+      cout << prefix << ": found " << bboxes.size() << " objects." << endl;
+      vector<bbox*>::const_iterator i = bboxes.begin();
+      for ( ; i != bboxes.end(); ++i) {
+	cout << prefix << ": " << labels[(*i)->class_id].idx_ptr();
+	cout << " " << (*i)->confidence;
+	cout << " bbox: " << (*i)->oh0 << "x" << (*i)->ow0;
+	cout << "x(" << (*i)->oheight << "x" << (*i)->owidth << ")" << endl;
+      }
+    }
+  }
   
   template <typename T, class Tstate> template <class Tin>
   vector<bbox*>& detector<T,Tstate>::fprop(idx<Tin> &img, T threshold,
@@ -830,6 +850,8 @@ namespace ebl {
       prune(raw_bboxes, pruned_bboxes);
       bb = pruned_bboxes;
     }
+    // sort bboxes by confidence (most confident first)
+    sort_bboxes(bb);
     // print results
     if (!silent)
       pretty_bboxes(bb);
@@ -841,8 +863,28 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::save_bboxes(const vector<bbox*> &bboxes, const string &dir,
-				const char *frame_name) {
+  void detector<T,Tstate>::sort_bboxes(vector<bbox*> &bboxes) {
+    bbox *tmp = NULL;
+    float confidence;
+    for (int i = 1; i < bboxes.size(); ++i) {
+      int k = i;
+      confidence = bboxes[k]->confidence;
+      for (int j = i - 1; j >= 0; j--) {
+	if (confidence > bboxes[j]->confidence) {
+	  // swap them
+	  tmp = bboxes[j];
+	  bboxes[j] = bboxes[k];
+	  bboxes[k] = tmp;
+	  k = j;
+	}
+      }
+    }
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::save_bboxes(const vector<bbox*> &bboxes,
+				       const string &dir,
+				       const char *frame_name) {
     string classname;
     ostringstream fname, cmd;
     Tstate *input = NULL;
@@ -892,14 +934,16 @@ namespace ebl {
 	    << frame_name << "_" << classname << setw(3) << setfill('0')
 	    << save_counts[(*bbox)->class_id] << MATRIX_EXTENSION;
       if (save_matrix(inpp, fname.str()))
-	cout << "saved " << fname.str() << endl;
+	cout << "saved " << fname.str() << " (confidence "
+	     << (*bbox)->confidence << ")" << endl;
       // save original image as png
       fname.str("");
       fname << dir_orig[(*bbox)->class_id] << frame_name << "_"  << classname
 	    << setw(3) << setfill('0') << save_counts[(*bbox)->class_id]
 	    << ".png";
       if (save_image(fname.str(), inorig, "png"))
-	cout << "saved " << fname.str() << endl;
+	cout << "saved " << fname.str() << " (confidence "
+	     << (*bbox)->confidence << ")" << endl;
       // increment file counter
       save_counts[(*bbox)->class_id]++;
       // stop if reached max save per frame

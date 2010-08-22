@@ -387,8 +387,8 @@ namespace ebl {
     // and feed the input of the following module.
 
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>(&prm, ki0, kj0, 1, 1, tbl0,
-						    "c0"));
+    add_module(new convolution_module_replicable<T,Tstate>
+	       (&prm, ki0, kj0, 1, 1, tbl0, "c0"));
     // bias
     add_module(new addc_module<T,Tstate>(&prm, thick0, "c0"));
     // non linearity
@@ -401,13 +401,16 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>(ki0, kj0, thick0, "w0", mirror));
+      add_module(new weighted_std_module<T,Tstate>
+		 (ki0, kj0, thick0, "w0", mirror, true, false,
+		  this->hi, this->ho));
     }
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
+    add_module(new subsampling_layer<T,Tstate>
+	       (&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>(&prm, ki1, kj1, 1, 1,tbl1,
-						    "c1"));
+    add_module(new convolution_module_replicable<T,Tstate>
+	       (&prm, ki1, kj1, 1, 1,tbl1, "c1"));
     // bias
     add_module(new addc_module<T,Tstate>(&prm, thick1, "c1"));
     // non linearity
@@ -420,12 +423,16 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>(ki1, kj1, thick1, "w1", mirror));
+      add_module(new weighted_std_module<T,Tstate>
+		 (ki1, kj1, thick1, "w1", mirror, true, false,
+		  this->hi, this->ho));
     }
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>(&prm,si1,sj1,si1,sj1,thick1,tanh,"s1"));
+    add_module(new subsampling_layer<T,Tstate>
+	       (&prm,si1,sj1,si1,sj1,thick1,tanh,"s1"));
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T,Tstate>(&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
+    add_module(new convolution_layer<T,Tstate>
+	       (&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
 
     // if (norm) // absolute rectification + contrast normalization
     //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki0, kj0,1,1,tbl0,mirror,tanh));
