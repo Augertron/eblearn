@@ -106,6 +106,7 @@ extract_falsepos() {
     max_scale=${12}
     tstamp=${13}
     name=${14}
+    display=${15}
     echo
     echo -e "Arguments:\nbestconf=${bestconf}\nsave_max=${save_max}"
     echo -e "save_max_per_frame=${save_max_per_frame}\nbestout=${bestout}\ninput_max=${input_max}"
@@ -120,7 +121,7 @@ extract_falsepos() {
     echo "save_detections = 1" >> $bestconf
     # do not save video
     echo "save_video = 0" >> $bestconf
-    echo "display = 0" >> $bestconf
+    echo "display = ${display}" >> $bestconf
     echo "save_max = ${save_max}" >> $bestconf
     echo "save_max_per_frame = ${save_max_per_frame}" >> $bestconf
     # add directory where to find trained files
@@ -282,6 +283,7 @@ metatrain() {
     traindsname=${23}
     valdsname=${24}
     ds_split_ratio=${25}
+    display=${26}
     echo
     echo -e "Arguments:\nminstep=${minstep}\nmaxiteration=${maxiteration}\nout=${out}"
     echo -e "eblearnbin=${eblearnbin}\nnegatives_root=${negatives_root}\nmetaconf=${metaconf}"
@@ -347,7 +349,7 @@ metatrain() {
 		$iter $maxiteration
 	    extract_falsepos $bestconf $save_max $save_max_per_frame $bestout \
 		$input_max $threshold $bestweights $negatives_root $eblearnbin \
-		$nthreads $npasses $max_scale $tstamp $name
+		$nthreads $npasses $max_scale $tstamp $name $display
 	fi
 	step=`expr ${step} + 1` # increment step
 	stepstr=`printf "%02d" ${step}`

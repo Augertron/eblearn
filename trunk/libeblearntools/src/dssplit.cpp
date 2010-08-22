@@ -1,3 +1,4 @@
+
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
@@ -51,6 +52,7 @@ string ds1_name = "";
 string ds2_name = "";
 intg ds1_max_per_class = 0;
 int draws = 1;
+bool draws_set = false;
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -84,6 +86,7 @@ bool parse_args(int argc, char **argv) {
 	return false;
       }
       draws = atoi(argv[i]);
+      draws_set = true;
     }
   }
   return true;
@@ -109,7 +112,7 @@ void split() {
   for (int i = 0; i < draws; ++i) {
     string ds1 = ds1_name;
     string ds2 = ds2_name;
-    if (draws > 1) {
+    if (draws_set) {
       int id = i + 1;
       ostringstream oss;
       oss << id;

@@ -3,7 +3,7 @@
 ebl=$HOME/eblearn/ # eblearn root
 source $ebl/libeblearntools/src/metatrain.sh # include script functions
 ################################################################################
-step0=1 # initial step where to (re)start metatraining
+step0=5 # initial step where to (re)start metatraining
 h=80 # network height
 w=40 # network width
 chans=1 # number of input channels
@@ -12,7 +12,7 @@ valdsname=allped_mean${h}x${w}_ker7_bg_val # dataset validation name
 machine=${HOSTNAME}a # machine where experiment is ran
 eblearnbin0=$ebl/bin/ # original binary root
 metaconf_name=allped_meta.conf # metaconf name
-save_max=40000 # max number of false positives to extract per iteration
+save_max=34000 # max number of false positives to extract per iteration
 save_max_per_frame=10 # max number of false positives to extract per full image
 nthreads=6 # number of threads to use duing false positive extraction
 maxiteration=10 # maximum number of retraining iterations
@@ -24,6 +24,7 @@ name=allped_${machine}
 meta_name=${name} # name of this meta job
 #tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
 tstamp=20100818.045156 # overriding timestamp of experiment
+display=1 # display training or not
 
 # directories
 ################################################################################
@@ -32,7 +33,8 @@ root=~/${machine}data/ped/all/
 dataroot=$root/ds/ # datasets directory
 out=$root/out/$xpname/ # root directory of experiment
 eblearnbin=${out}/bin/ # binaries copy
-negatives_root=$root/train/bg_full/ # negative examples
+#negatives_root=$root/train/bg_full/bg/inside/inria/ # negative examples
+negatives_root=$root/train/bg_full/bg/inside/inria/ # negative examples
 metaconf0=$ebl/demos/pedestrians/all/${metaconf_name} # original metaconf
 metaconf=${out}/${metaconf_name} # metaconf copy
 
@@ -40,7 +42,7 @@ metaconf=${out}/${metaconf_name} # metaconf copy
 metatrain $step0 $maxiteration $out $eblearnbin $negatives_root $metaconf \
     $metaconf0 $meta_name $tstamp $save_max $save_max_per_frame $input_max \
     $threshold $nthreads $npasses $max_scale $precision $dataroot $h $w $chans \
-    $draws $traindsname $valdsname $ds_split_ratio
+    $draws $traindsname $valdsname $ds_split_ratio $display
 
 # meta variables (used only if running this script with metarun)
 ################################################################################
