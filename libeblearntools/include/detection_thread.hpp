@@ -200,9 +200,9 @@ namespace ebl {
        set_gui_silent();
      }
      // optimize memory usage by using only 2 buffers for entire flow
-     // SBUF<Tnet> *input = new SBUF<Tnet>(1, 1, 1);
-     // SBUF<Tnet> *output = new SBUF<Tnet>(1, 1, 1);
-     SBUF<Tnet> *input = NULL, *output = NULL;
+     SBUF<Tnet> *input = new SBUF<Tnet>(1, 1, 1);
+     SBUF<Tnet> *output = new SBUF<Tnet>(1, 1, 1);
+     // SBUF<Tnet> *input = NULL, *output = NULL;
      // load network and weights in a forward-only parameter
      parameter<SFUNC(Tnet)> theparam;
      idx<ubyte> classes(1,1);
@@ -212,6 +212,8 @@ namespace ebl {
      module_1_1<SFUNC(Tnet)> *net =
        create_network<SFUNC(Tnet)>(theparam, conf, classes.dim(0),input,output);
      theparam.load_x(conf.get_cstring("weights"));
+     if (!net->optimize_fprop(*input, *output))
+       cout << "**************** inversed outputs" << endl;
 #ifdef __DEBUGMEM__
        pretty_memory();
 #endif

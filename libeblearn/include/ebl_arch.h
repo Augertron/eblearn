@@ -77,9 +77,14 @@ namespace ebl {
     virtual idxdim bprop_size(const idxdim &o_size);
     //! prints the forward transformation of dimensions. this method calls
     //! fprop_size to determine the output size given the input.
-  virtual void pretty(idxdim &isize);
+    virtual void pretty(idxdim &isize);
     //! Returns a deep copy of current module.
-  virtual module_1_1<T, Tin, Tout>* copy();
+    virtual module_1_1<T, Tin, Tout>* copy();
+    //! Pre-determine the order of hidden buffers to use only 2 buffers
+    //! in order to reduce memory footprint.
+    //! This returns true if outputs is actually put in out, false if it's
+    //! in in.
+    virtual bool optimize_fprop(Tin &in, Tout &out);
     
   protected:
     bool bResize; //!< tells module to resize output or not
@@ -172,7 +177,12 @@ namespace ebl {
     layers(bool oc = true, Tstate* hi = NULL, Tstate* ho = NULL);
     virtual ~layers();
     //! Add a module to the stack of modules.
-    virtual void add_module(module_1_1<T, Tstate, Tstate>* module);
+    virtual void add_module(module_1_1<T, Tstate, Tstate>* module); 
+    //! Pre-determine the order of hidden buffers to use only 2 buffers
+    //! in order to reduce memory footprint.
+    //! This returns true if outputs is actually put in out, false if it's
+    //! in in.
+    virtual bool optimize_fprop(Tstate &in, Tstate &out);
     virtual void fprop(Tstate &in, Tstate &out);
     virtual void bprop(Tstate &in, Tstate &out);
     virtual void bbprop(Tstate &in, Tstate &out);

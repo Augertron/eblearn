@@ -424,7 +424,7 @@ namespace ebl {
     if (confs && confs->size() > 0) {
       confname = confs->front();
       delete confs;
-      conf.read(confname.c_str());
+      conf.read(confname.c_str(), true, false);
     } else {
       cerr << "warning: could not find a .conf file describing how to analyze "
 	   << "this directory" << endl;

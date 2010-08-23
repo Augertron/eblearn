@@ -82,6 +82,7 @@ namespace ebl {
   class EXPORT configuration {
   protected:
     string_map_t	smap; 	//!< map between variables and values
+    string_map_t	tmp_smap; //!< map between variables and values
     string 		name; 	//!< name of configuration
     string 		output_dir;	//!< output directory
     textlist 		otxt; 	//!< original text
