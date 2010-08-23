@@ -99,6 +99,11 @@ namespace ebl {
     return NULL;
   }
   
+  template <typename T, class Tin, class Tout>
+  bool module_1_1<T,Tin,Tout>::optimize_fprop(Tin& in, Tout& out){
+    return true;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // module_2_1
 
@@ -246,27 +251,46 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
+  bool layers<T,Tstate>::optimize_fprop(Tstate& in, Tstate& out){
+    if (modules->empty())
+      eblerror("trying to fprop through empty layers");
+    // initialize buffers
+    hi = &in;
+    ho = &out; 
+    // loop over modules
+    for (uint i = 0; i < modules->size(); i++) {
+      (*hiddens)[i] = ho;
+      // if output is truly in ho, swap buffers, otherwise do nothing.
+      if ((*modules)[i]->optimize_fprop(*hi,*ho))
+	swap_buffers();
+    }
+    if (ho == &out)
+      return true; // output is in out
+    return false; // output is in in
+  }
+
+  template <typename T, class Tstate>
   void layers<T,Tstate>::fprop(Tstate& in, Tstate& out){
     if (modules->empty())
       eblerror("trying to fprop through empty layers");
-    if (mem_optimization) { // use 2 buffers for all modules
-      // initialize buffers
-      hi = hi0;
-      ho = ho0;
-      // loop over modules
-      for(uint i = 0; i < modules->size(); i++){
-	// run module
-	(*modules)[i]->fprop(*hi,*ho);
-	// swap buffers
-	swap_buffers();
-      }
-      // if output is in input buffer, copy data into output
-      // TODO: can we avoid this?
-      if (ho != ho0) { // the output is in in, copy it
-	ho0->resize(hi0->x.get_idxdim());
-	idx_copy(hi->x, ho->x);
-      }
-    } else { // use one independent buffer between each module
+    // if (mem_optimization) { // use 2 buffers for all modules
+    //   // initialize buffers
+    //   hi = &in;
+    //   ho = hi0; 
+    //   // loop over modules
+    //   for (uint i = 0; i < modules->size(); i++) {
+    // 	// if last module, output into out
+    // 	if (i == modules->size() - 1)
+    // 	  ho = &out;
+    // 	// run module
+    // 	(*modules)[i]->fprop(*hi,*ho);
+    // 	if (i == 0) { // first time
+    // 	  hi = hi0;
+    // 	  ho = ho0;
+    // 	} else // swap buffers
+    // 	  swap_buffers();
+    //   }
+    // } else { // use one independent buffer between each module
       // initialize buffers
       hi = &in;
       ho = &out;
@@ -295,7 +319,7 @@ namespace ebl {
 	(*modules)[i]->fprop(*hi,*ho);
 	hi = ho;
       }
-    }
+      //    }
   }
 
   template <typename T, class Tstate>

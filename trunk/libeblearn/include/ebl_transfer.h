@@ -69,6 +69,11 @@ namespace ebl {
     virtual void bbprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module.
     virtual weighted_std_module<T,Tstate>* copy();
+    //! Pre-determine the order of hidden buffers to use only 2 buffers
+    //! in order to reduce memory footprint.
+    //! This returns true if outputs is actually put in out, false if it's
+    //! in in.
+    virtual bool optimize_fprop(Tstate &in, Tstate &out);
 
     // friends
     friend class weighted_std_module_gui;

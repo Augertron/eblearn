@@ -114,18 +114,21 @@ namespace ebl {
     //! this might be implemented by making the table in above conv module
     //! all to all connection, but that would be very inefficient
     convvar.add_module(new fsum_module<T,Tstate>);
+  }
 
+  template <typename T, class Tstate>
+  bool weighted_std_module<T,Tstate>::optimize_fprop(Tstate &in, Tstate &out) {
     // memory optimization
-    if (hi && ho) { // dual buffers are provided, use them
-      cout << "Using dual buffer memory optimization in weighted_std_module"
-	   << endl;
-      inmean = *ho;
-      inzmeansq = *hi;
-      invar = *ho;
-      instd = *hi;
-      thstd = *ho;
-      invstd = *hi;
-    }
+    // if (false) {//hi && ho) { // dual buffers are provided, use them
+    cout << "Using dual buffer memory optimization in weighted_std_module"
+	 << endl;
+    inmean = out;
+    inzmeansq = in;
+    invar = out;
+    instd = in;
+    thstd = out;
+    invstd = in;
+    return true;
   }
   
   template <typename T, class Tstate>
