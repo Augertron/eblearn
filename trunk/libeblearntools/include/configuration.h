@@ -94,10 +94,10 @@ namespace ebl {
     configuration(const configuration &other);
 
     //! load configuration found in filename.
-    configuration(const char *filename);
+    configuration(const char *filename, bool replquotes = false);
 
     //! load configuration found in filename.
-    configuration(const string &filename);
+    configuration(const string &filename, bool replquotes = false);
 
     //! load configuration from already loaded map of variables, name and
     //! output directory.
@@ -108,7 +108,7 @@ namespace ebl {
     virtual ~configuration();
 
     //! load configuration from file fname.
-    bool read(const char *fname, bool bresolve = true);
+    bool read(const char *fname, bool bresolve = true, bool replquotes = true);
 
     //! save configuration into file fname.
     bool write(const char *fname);

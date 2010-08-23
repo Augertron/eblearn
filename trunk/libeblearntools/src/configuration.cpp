@@ -447,13 +447,13 @@ namespace ebl {
   configuration::configuration() {
   }
 
-  configuration::configuration(const char *filename) {
-    if (!read(filename))
+  configuration::configuration(const char *filename, bool replquotes) {
+    if (!read(filename, true, replquotes))
       eblerror("failed to open configuration file");
   }
 
-  configuration::configuration(const string &filename) {
-    if (!read(filename.c_str()))
+  configuration::configuration(const string &filename, bool replquotes) {
+    if (!read(filename.c_str(), true, replquotes))
       eblerror("failed to open configuration file");
   }
 
@@ -470,10 +470,11 @@ namespace ebl {
   configuration::~configuration() {
   }
   
-  bool configuration::read(const char *fname, bool bresolve) {
+  bool configuration::read(const char *fname, bool bresolve, 
+			   bool replacequotes) {
     // read file and extract all variables and values
     cout << "loading configuration file: " << fname << endl;
-    if (!extract_variables(fname, smap, otxt, NULL, bresolve))
+    if (!extract_variables(fname, smap, otxt, NULL, bresolve, replacequotes))
       return false;
     pretty();
     return true;
