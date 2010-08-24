@@ -207,6 +207,9 @@ namespace ebl {
      } catch(string &err) { cerr << "warning: " << err << endl; }
      module_1_1<SFUNC(Tnet)> *net =
        create_network<SFUNC(Tnet)>(theparam, conf, classes.dim(0));
+     if (!conf.exists("weights"))
+       eblerror("\"weights\" variable not defined");
+     cout << "Loading weights from: " << conf.get_string("weights") << endl;
      theparam.load_x(conf.get_cstring("weights"));
 #ifdef __DEBUGMEM__
        pretty_memory();

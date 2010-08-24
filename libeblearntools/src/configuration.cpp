@@ -513,18 +513,19 @@ namespace ebl {
 
   const string &configuration::get_string(const char *varname) {
     exists_throw(varname);
-    // remove quotes if present
-    string s = get(varname);
-    if ((s[0] == '\"') && (s[s.size() - 1] == '\"'))
-      s = s.substr(1, s.size() - 2);
-    // remove slash preceding quotes
-    size_t pos;
-    while ((pos = s.rfind("\\\"")) != string::npos) {
-      s.replace(pos, 2, "\"");
-    }
-    tmp_smap[varname] = s;
-    return tmp_smap[varname];
-    //    return smap[varname];
+    //TODO: block below seems to not sustain string in tmp_smap
+//     // remove quotes if present
+//     string s = get(varname);
+//     if ((s[0] == '\"') && (s[s.size() - 1] == '\"'))
+//       s = s.substr(1, s.size() - 2);
+//     // remove slash preceding quotes
+//     size_t pos;
+//     while ((pos = s.rfind("\\\"")) != string::npos) {
+//       s.replace(pos, 2, "\"");
+//     }
+//     tmp_smap[varname] = s;
+//     return tmp_smap[varname];
+    return smap[varname];
   }
 
   const char *configuration::get_cstring(const char *varname) {
