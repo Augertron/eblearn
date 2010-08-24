@@ -7,7 +7,7 @@
 //! Test class for Classifier2D class
 class detector_test : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(detector_test);
-  //  CPPUNIT_TEST(test_face);
+  CPPUNIT_TEST(test_face);
   /* CPPUNIT_TEST(test_norb); */
   //CPPUNIT_TEST(test_norb_binoc);
   CPPUNIT_TEST_SUITE_END();
