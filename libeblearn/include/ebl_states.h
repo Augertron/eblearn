@@ -446,11 +446,12 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! constructors from other bbstate_idx
 
-    //! Constructs a bbstate_idx from an idx to be used as x. dx and ddx
-    //! will be allocated with the same size as x.
-    //! Note: the data pointed to by x is not copied, we only create new idx
-    //!   pointing to the same data.
-    bbstate_idx(const idx<T> &x);
+    // TODO: this causes bug in mnist part of tester
+    /* //! Constructs a bbstate_idx from an idx to be used as x. dx and ddx */
+    /* //! will be allocated with the same size as x. */
+    /* //! Note: the data pointed to by x is not copied, we only create new idx */
+    /* //!   pointing to the same data. */
+    /* bbstate_idx(const idx<T> &x); */
 
     //! Constructs a bbstate_idx from a bbstate_idx's 3 internal idx
     //! Note: the data pointed to by idxs is not copied, we only create new idx
