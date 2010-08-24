@@ -57,8 +57,7 @@ namespace ebl {
     weighted_std_module(uint kernelh, uint kernelw, int nf,
 			const char *name = "weighted_std",
 			bool mirror = false, bool threshold = true,
-			bool global_norm = false,
-			Tstate* hi = NULL, Tstate* ho = NULL);
+			bool global_norm = false);
     //! destructor
     virtual ~weighted_std_module();    
     //! forward propagation from in to out

@@ -199,10 +199,6 @@ namespace ebl {
        display = true;
        set_gui_silent();
      }
-     // optimize memory usage by using only 2 buffers for entire flow
-     SBUF<Tnet> *input = new SBUF<Tnet>(1, 1, 1);
-     SBUF<Tnet> *output = new SBUF<Tnet>(1, 1, 1);
-     // SBUF<Tnet> *input = NULL, *output = NULL;
      // load network and weights in a forward-only parameter
      parameter<SFUNC(Tnet)> theparam;
      idx<ubyte> classes(1,1);
@@ -210,10 +206,8 @@ namespace ebl {
        load_matrix<ubyte>(classes, conf.get_cstring("classes"));
      } catch(string &err) { cerr << "warning: " << err << endl; }
      module_1_1<SFUNC(Tnet)> *net =
-       create_network<SFUNC(Tnet)>(theparam, conf, classes.dim(0),input,output);
+       create_network<SFUNC(Tnet)>(theparam, conf, classes.dim(0));
      theparam.load_x(conf.get_cstring("weights"));
-     if (!net->optimize_fprop(*input, *output))
-       cout << "**************** inversed outputs" << endl;
 #ifdef __DEBUGMEM__
        pretty_memory();
 #endif
@@ -233,12 +227,15 @@ namespace ebl {
 
      // detector
      detector<SFUNC(Tnet)> detect(*net, classes, pp, norm_size, NULL, 0,
-				      conf.get_double("gain"));
+				  conf.get_double("gain"));
      double maxs = conf.exists("max_scale")?conf.get_double("max_scale") : 1.0;
      double mins = conf.exists("min_scale")?conf.get_double("min_scale") : 0.0;
      detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
-		       
-     //     detect.set_mem_optimization(input, output);
+
+     // optimize memory usage by using only 2 buffers for entire flow
+     SBUF<Tnet> input(1, 1, 1), output(1, 1, 1);
+     if (!conf.exists_false("mem_optimization"))
+       detect.set_mem_optimization(input, output);
      bool bmask_class = false;
      if (conf.exists("mask_class"))
        bmask_class = detect.set_mask_class(conf.get_cstring("mask_class"));
@@ -353,7 +350,7 @@ namespace ebl {
 	 dgui.display_current(detect, frame, wid_states);
 	 select_window(wid);
        }
-       if (save_video) {
+       if (save_video && display) {
 	 string fname = viddir;
 	 fname += frame_name;
 	 save_window(fname.c_str());
@@ -381,8 +378,6 @@ namespace ebl {
 	  << toverall.elapsed_minutes() <<" mins" <<endl;
      // free variables
      if (net) delete net;
-     if (input) delete input;
-     if (output) delete output;
 #ifdef __GUI__
      quit_gui(); // close all windows
 #endif

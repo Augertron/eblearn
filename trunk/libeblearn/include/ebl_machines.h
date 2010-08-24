@@ -51,7 +51,7 @@ namespace ebl {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
-    net_cscscf(Tstate *in = NULL, Tstate *out = NULL);
+    net_cscscf();
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
     net_cscscf(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
@@ -59,8 +59,7 @@ namespace ebl {
 	       idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	       idx<intg> &tbl2, intg outthick, bool norm = false,
 	       bool mirror = false, bool tanh = false,
-	       bool shrink = false,
-	       Tstate *in = NULL, Tstate *out = NULL);
+	       bool shrink = false);
     virtual ~net_cscscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -91,7 +90,7 @@ namespace ebl {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
-    net_cscf(Tstate *in = NULL, Tstate *out = NULL);
+    net_cscf();
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
     net_cscf(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
@@ -99,8 +98,7 @@ namespace ebl {
 	     idx<intg> &tbl1, intg outthick, bool norm = false,
 	     bool mirror = false, bool tanh = false,
 	     bool shrink = false, bool lut_features = false,
-	     idx<T> *lut = NULL,
-	     Tstate *in = NULL, Tstate *out = NULL);
+	     idx<T> *lut = NULL);
     virtual ~net_cscf();
 
     //! The init function creates the machine by stacking the modules in this
@@ -131,15 +129,14 @@ namespace ebl {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
-    net_cscc(Tstate *in = NULL, Tstate *out = NULL);
+    net_cscc();
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
     net_cscc(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0,
 	     idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	     idx<intg> &tbl1, idx<intg> &tbl2, intg outthick, bool norm = false,
 	     bool mirror = false, bool tanh = false,
-	     bool shrink = false,
-	     Tstate *in = NULL, Tstate *out = NULL);
+	     bool shrink = false);
     virtual ~net_cscc();
 
     //! The init function creates the machine by stacking the modules in this
@@ -170,7 +167,7 @@ namespace ebl {
   public:
     //! Empty constructor, awaiting for initialization by the user via the 
     //! init() function.
-    net_cscsc(Tstate *in = NULL, Tstate *out = NULL);
+    net_cscsc();
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
     net_cscsc(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
@@ -178,8 +175,7 @@ namespace ebl {
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, bool norm = false,
 	      bool mirror = false, bool tanh = false,
-	      bool shrink = false,
-	      Tstate *in = NULL, Tstate *out = NULL);
+	      bool shrink = false);
     virtual ~net_cscsc();
 
     //! The init function creates the machine by stacking the modules in this
@@ -218,8 +214,7 @@ namespace ebl {
 		bool norm = false, bool color = false, bool mirror = false,
 		bool tanh = false, bool shrink = false,
 		idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL,
-		idx<intg> *table2_ = NULL,
-		Tstate *in = NULL, Tstate *out = NULL);
+		idx<intg> *table2_ = NULL);
     virtual ~lenet_cscsc() {}
   };
 
@@ -238,8 +233,7 @@ namespace ebl {
 	  bool norm = false, bool color = false, bool mirror = false,
 	  bool tanh = false, bool shrink = false,
 	  idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL,
-	  idx<intg> *table2_ = NULL,
-	  Tstate *in = NULL, Tstate *out = NULL);
+	  idx<intg> *table2_ = NULL);
     virtual ~lenet() {}
   };
 
@@ -256,8 +250,7 @@ namespace ebl {
 	       intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 	       intg output_size, bool norm = false, bool color = false,
 	       bool mirror = false, bool tanh = false, bool shrink = false,
-	       idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL,
-	       Tstate *in = NULL, Tstate *out = NULL);
+	       idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL);
     virtual ~lenet_cscf() {}
   };
 

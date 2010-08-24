@@ -41,7 +41,7 @@ namespace ebl {
 
   template <typename T, class Tin, class Tout>
   module_1_1<T,Tin,Tout>::module_1_1(const char *name_, bool bResize_)
-    : bResize(bResize_), name(name_) { 
+    : bResize(bResize_), name(name_), memoptimized(false) { 
   }
 
   template <typename T, class Tin, class Tout>
@@ -217,16 +217,12 @@ namespace ebl {
   // layers
 
   template <typename T, class Tstate>
-  layers<T,Tstate>::layers(bool oc, Tstate *hi_, Tstate *ho_)
+  layers<T,Tstate>::layers(bool oc)
     : module_1_1<T,Tstate>("layers"), 
-      hi(hi_), ho(ho_), htmp(NULL), hi0(hi_), ho0(ho_) {
-    mem_optimization = false;
+      hi(NULL), ho(NULL), htmp(NULL) {
     modules = new std::vector< module_1_1<T, Tstate>* >();
     hiddens = new std::vector< Tstate* >();
     this->own_contents = oc;
-    // if we use dual buffers for memory optimization, we can't bprop.
-    if (hi0 && ho0)
-      mem_optimization = true;
   }
 
   // Clean vectors. Module doesn't have ownership of sub-modules
@@ -236,8 +232,10 @@ namespace ebl {
       for(unsigned int i=0;i<modules->size(); i++){
     	delete (*modules)[i];
       }
-      for(unsigned int i=0;i<hiddens->size(); i++){
-    	delete (*hiddens)[i];
+      if (!this->memoptimized) {
+	for(unsigned int i=0;i<hiddens->size(); i++){
+	  delete (*hiddens)[i];
+	}
       }
     }
     delete modules;
@@ -252,6 +250,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   bool layers<T,Tstate>::optimize_fprop(Tstate& in, Tstate& out){
+    this->memoptimized = true;
     if (modules->empty())
       eblerror("trying to fprop through empty layers");
     // initialize buffers
@@ -273,58 +272,39 @@ namespace ebl {
   void layers<T,Tstate>::fprop(Tstate& in, Tstate& out){
     if (modules->empty())
       eblerror("trying to fprop through empty layers");
-    // if (mem_optimization) { // use 2 buffers for all modules
-    //   // initialize buffers
-    //   hi = &in;
-    //   ho = hi0; 
-    //   // loop over modules
-    //   for (uint i = 0; i < modules->size(); i++) {
-    // 	// if last module, output into out
-    // 	if (i == modules->size() - 1)
-    // 	  ho = &out;
-    // 	// run module
-    // 	(*modules)[i]->fprop(*hi,*ho);
-    // 	if (i == 0) { // first time
-    // 	  hi = hi0;
-    // 	  ho = ho0;
-    // 	} else // swap buffers
-    // 	  swap_buffers();
-    //   }
-    // } else { // use one independent buffer between each module
-      // initialize buffers
-      hi = &in;
-      ho = &out;
-      // loop over modules
-      for(uint i = 0; i < modules->size(); i++){
-	// if last module, output into out
-	if (i == modules->size() - 1)
-	  ho = &out;
-	else { // not last module, use hidden buffers
-	  ho = (Tstate*)(*hiddens)[i];
-	  // allocate hidden buffer if necessary
-	  if (ho == NULL) {
+    // initialize buffers
+    hi = &in;
+    ho = &out;
+    // loop over modules
+    for(uint i = 0; i < modules->size(); i++){
+      // if last module, output into out
+      if (i == modules->size() - 1)
+	ho = &out;
+      else { // not last module, use hidden buffers
+	ho = (Tstate*)(*hiddens)[i];
+	// allocate hidden buffer if necessary
+	if (ho == NULL) {
 #ifdef __DEBUG__
-	    cout << "Allocating state_idx buffer: "<<hi->x.get_idxdim() << endl;
+	  cout << "Allocating state_idx buffer: "<<hi->x.get_idxdim() << endl;
 #endif
-	    // create idxdim of same order but sizes 1
-	    idxdim d = hi->x.get_idxdim();
-	    for (int k = 0; k < d.order(); ++k)
-	      d.setdim(k, 1);
-	    // assign buffer
-	    (*hiddens)[i] = new Tstate(d);
-	    ho = (Tstate*)(*hiddens)[i];
-	  }
+	  // create idxdim of same order but sizes 1
+	  idxdim d = hi->x.get_idxdim();
+	  for (int k = 0; k < d.order(); ++k)
+	    d.setdim(k, 1);
+	  // assign buffer
+	  (*hiddens)[i] = new Tstate(d);
+	  ho = (Tstate*)(*hiddens)[i];
 	}
-	// run module
-	(*modules)[i]->fprop(*hi,*ho);
-	hi = ho;
       }
-      //    }
+      // run module
+      (*modules)[i]->fprop(*hi,*ho);
+      hi = ho;
+    }
   }
 
   template <typename T, class Tstate>
   void layers<T,Tstate>::bprop(Tstate& in, Tstate& out){
-    if (mem_optimization)
+    if (this->memoptimized)
       eblerror("cannot bprop while using dual-buffer memory optimization");
     if (modules->empty())
       eblerror("trying to bprop through empty layers");
@@ -349,7 +329,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void layers<T,Tstate>::bbprop(Tstate& in, Tstate& out){
-    if (mem_optimization)
+    if (this->memoptimized)
       eblerror("cannot bbprop while using dual-buffer memory optimization");
     if (modules->empty())
       eblerror("trying to bbprop through empty layers");

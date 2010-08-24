@@ -43,7 +43,7 @@ namespace ebl {
   }
 
   thread::~thread() {
-    pthread_exit((void*)&threadptr);
+    //      pthread_exit((void*)&threadptr);
     cout << _name << " destroyed." << endl;
   }
 
@@ -59,11 +59,13 @@ namespace ebl {
     return _name;
   }
 
-  void thread::stop() {
+  void thread::stop(bool wait) {
     pthread_mutex_lock(&mutex1);
     _stop = true;
     cout << _name << " required to stop." << endl;
     pthread_mutex_unlock(&mutex1);
+    while (!_finished)
+      millisleep(5);
   }
 
   bool thread::finished() {

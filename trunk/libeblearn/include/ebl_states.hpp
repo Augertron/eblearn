@@ -580,7 +580,15 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
-  // constructors from other bbstate_idx's dimensions
+  // constructors from existing idx
+
+  template<typename T>
+  bbstate_idx<T>::bbstate_idx(const idx<T> &_x) {
+    idxdim d(_x);
+    x = idx<T>(_x);
+    dx = idx<T>(d);
+    ddx = idx<T>(d);
+  }
 
   template<typename T>
   bbstate_idx<T>::bbstate_idx(const idx<T> &_x, const idx<T> &_dx, 

@@ -196,8 +196,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void convolution_module<T, Tstate>::fprop(Tstate &in,
-					    Tstate &out) {
+  void convolution_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     // unfolding input for a faster convolution operation
     idx<T> uuin(in.x.unfold(1, kernel.x.dim(1), stridei));
@@ -400,10 +399,9 @@ namespace ebl {
   // subsampling_module
 
   template <typename T, class Tstate>
-  subsampling_module<T,Tstate>::subsampling_module(parameter<T,Tstate> *p, 
-					    intg stridei_, intg stridej_,
-					    intg subi, intg subj, 
-					    intg thick, const char *name_)
+  subsampling_module<T,Tstate>::
+  subsampling_module(parameter<T,Tstate> *p, intg stridei_, intg stridej_,
+		     intg subi, intg subj, intg thick, const char *name_)
     : module_1_1<T,Tstate>(name_), 
       coeff(p, thick), sub(thick, subi, subj), thickness(thick), 
       stridei(stridei_), stridej(stridej_) {
@@ -414,8 +412,15 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void subsampling_module<T,Tstate>::fprop(Tstate &in,
-					   Tstate &out) {
+  bool subsampling_module<T,Tstate>::optimize_fprop(Tstate &in, Tstate &out) {
+    this->memoptimized = true;
+    sub = out;
+    return false;
+  }
+    
+  template <typename T, class Tstate>
+  void subsampling_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+    if (this->memoptimized) out = in; // memory optimization
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     // subsampling ( coeff * average )
     idx_clear(sub.x);

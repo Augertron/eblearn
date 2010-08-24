@@ -319,8 +319,8 @@ namespace ebl {
     idx<float>		 sizes;
     Tstate              *input;        //!< input buffer
     Tstate              *output;       //!< output buffer
+    Tstate              *tmp;           //!< tmp.
     Tstate              *minput;       //!< input buffer, used with mem optim.
-    Tstate              *moutput;      //!< output buffer, used with mem optim.
     idx<void*>		 inputs;	//!< fstate_idx*
     idx<void*>		 outputs;	//!< fstate_idx*
     idx<void*>		 results;	//!< idx<double>*
@@ -363,6 +363,7 @@ namespace ebl {
     float                bbhfactor; //!< height bbox factor
     float                bbwfactor; //!< width bbox factor
     bool                 mem_optimization; //!< optimize memory or not.
+    bool                 optimization_swap; //!< swap buffers or not.
     float                max_hoverlap; //!< Maximum ratio of overlap authorized.
     float                max_woverlap; //!< Maximum ratio of overlap authorized.
     float                max_foot_area_overlap; //!< Max area overlap when foot.

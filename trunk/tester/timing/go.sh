@@ -10,7 +10,7 @@ $eb/bin/metarun $eb/tester/timing/go.sh
 exit
 
 # meta configuration
-meta_name = regular
+meta_name = 2buffers_and_forward
 meta_command = "${eb}/bin/mtdetect ${eb}/demos/face/trained/best.conf ${face_cmumit}"
 meta_gnuplot_terminal=png
 meta_output_dir = ${HOME}/timing/

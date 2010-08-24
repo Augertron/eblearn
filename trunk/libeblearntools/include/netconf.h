@@ -54,9 +54,7 @@ namespace ebl {
   // -> find test for these capabilities in cmake
   template <typename T, class Tstate> // = bbstate_idx<T> >
     module_1_1<T,Tstate>* create_network(parameter<T, Tstate> &theparam,
-					 configuration &conf, uint noutputs,
-					 Tstate *in = NULL,
-					 Tstate *out = NULL);
+					 configuration &conf, uint noutputs);
 
 } // end namespace ebl
 

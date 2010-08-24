@@ -109,7 +109,8 @@ namespace ebl {
     virtual ~configuration();
 
     //! load configuration from file fname.
-    bool read(const char *fname, bool bresolve = true, bool replquotes = true);
+    bool read(const char *fname, bool bresolve = true, bool replquotes = true,
+	      bool silent = false);
 
     //! save configuration into file fname.
     bool write(const char *fname);
@@ -169,6 +170,9 @@ namespace ebl {
 
     //! Returns true if variable exists and its value is true, false otherwise.
     bool exists_true(const char *varname);
+
+    //! Returns true if variable exists and its value is false, true otherwise.
+    bool exists_false(const char *varname);
 
     //! Checks that variable varname exists in the map,
     //! if not throw an exception.

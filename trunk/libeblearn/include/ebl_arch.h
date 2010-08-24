@@ -55,7 +55,8 @@ namespace ebl {
   template<typename T, class Tin = bbstate_idx<T>, class Tout = Tin>
     class module_1_1 {
   public:
-  module_1_1(const char *name = "module_1_1", bool bResize = true); //!< by default, resize output
+    //! \param bResize By default, resize output.
+    module_1_1(const char *name = "module_1_1", bool bResize = true);
     virtual ~module_1_1();
     virtual void fprop(Tin &in, Tout &out);
     virtual void bprop(Tin &in, Tout &out);
@@ -87,8 +88,9 @@ namespace ebl {
     virtual bool optimize_fprop(Tin &in, Tout &out);
     
   protected:
-    bool bResize; //!< tells module to resize output or not
-    const char *name; //!< optional name of module.
+    bool	 bResize;	//!< tells module to resize output or not
+    const char	*name;		//!< optional name of module.
+    bool	 memoptimized;	//!< This module is using mem optim or not.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -165,16 +167,7 @@ namespace ebl {
   public:
     //! If oc is true, this class owns all its content and is responsible for
     //! deleting modules and buffers.
-    //! hi and ho are buffers used over and over by swapping them between
-    //! each operation for memory efficency. If they are both not null,
-    //! then the buffers given as parameters to the fprop function are ignored,
-    //! assuming that hi will contain the input data. When using this
-    //! memory efficiency mechanism, bprop and bbprop cannot be called as they
-    //! require keeping buffers for each fprop operation.
-    //! \param hi The address of the input buffer used for memory efficiency.
-    //! \param ho The address of the output buffer used for memory
-    //!   efficiency.
-    layers(bool oc = true, Tstate* hi = NULL, Tstate* ho = NULL);
+    layers(bool oc = true);
     virtual ~layers();
     //! Add a module to the stack of modules.
     virtual void add_module(module_1_1<T, Tstate, Tstate>* module); 
@@ -216,12 +209,9 @@ namespace ebl {
     vector<Tstate*>				*hiddens;    
   protected:
     bool own_contents;
-    bool mem_optimization; //! we are using dual buffer memory optimization.
     Tstate* hi; //! temporary buffer pointer
     Tstate* ho; //! temporary buffer pointer
     Tstate* htmp; //! temporary buffer pointer used for swapping
-    Tstate* hi0; //! original input buffer for optimization.
-    Tstate* ho0; //! original output dual for optimization.
   };
 
   ////////////////////////////////////////////////////////////////

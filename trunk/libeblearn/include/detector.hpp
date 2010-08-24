@@ -50,8 +50,8 @@ namespace ebl {
 			       module_1_1<T,Tstate> *pp_, uint ppkersz_,
 			       const char *background, T bias_, float coef_)
     : thenet(thenet_), resizepp(MEAN_RESIZE, pp_, ppkersz_, true),
-      coef(coef_), bias(bias_), input(NULL), output(NULL),
-      minput(NULL), moutput(NULL), inputs(1), outputs(1), results(1), pp(pp_),
+      coef(coef_), bias(bias_), input(NULL), output(NULL), minput(NULL),
+      inputs(1), outputs(1), results(1), pp(pp_),
       ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
       original_bboxes(nresolutions, 4),
       bgclass(-1), mask_class(-1), scales(NULL), scales_step(0),
@@ -60,7 +60,7 @@ namespace ebl {
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       min_size(0), max_size(0), bodetections(false),
       bppdetections(false), pruning(true), bbhfactor(1.0), bbwfactor(1.0),
-      mem_optimization(false) {
+      mem_optimization(false), optimization_swap(false) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -325,7 +325,10 @@ namespace ebl {
 	 << endl;
     mem_optimization = true;
     minput = &in;
-    moutput = &out;
+    input = &in;
+    output = &out;
+    // remember if we need to swap buffers because of odd operations.
+    optimization_swap = !thenet.optimize_fprop(*input, *output);
   }
   
   template <typename T, class Tstate>
@@ -437,6 +440,12 @@ namespace ebl {
 	resolutions.set((uint)(in_mindim.dim(1) / ri), nresolutions - 2, 1);
       else
 	resolutions.set((uint)(in_mindim.dim(2) * ri), nresolutions - 2, 0);   	
+      if ((resolutions.get(nresolutions-1,0) == in_mindim.dim(1)) &&
+	  (resolutions.get(nresolutions-1,1) == in_mindim.dim(2))) {
+	// the special resolution is the same as the minimum one, remove it.
+	nresolutions--;
+	resolutions.resize1(0, nresolutions);
+      }
       // minimum network res (ignore aspect ratio but shows entire
       // picture in 1 network
       resolutions.set(in_mindim.dim(1), nresolutions - 1, 0); // min
@@ -622,7 +631,7 @@ namespace ebl {
   template <typename T, class Tstate>
   void detector<T,Tstate>::map_to_list(T threshold, vector<bbox*> &raw_bboxes) {
     // make a list that contains the results
-    idx<T> in0x(((Tstate*) inputs.get(0))->x);
+    //    idx<T> in0x(((Tstate*) inputs.get(0))->x);
     double original_h = image.dim(0);
     double original_w = image.dim(1);
     intg offset_h = 0, offset_w = 0;
@@ -781,7 +790,7 @@ namespace ebl {
   void detector<T,Tstate>::pretty_bboxes(const vector<bbox*> &bboxes) {
     cout << endl << "detector: ";
     if (bboxes.size() == 0)
-      cout << "no object found." << endl;
+      cout << "no objects found." << endl;
     else {
       cout << "found " << bboxes.size() << " objects." << endl;
       vector<bbox*>::const_iterator i = bboxes.begin();
@@ -809,7 +818,7 @@ namespace ebl {
     if (prefix_)
       prefix = prefix_;
     if (bboxes.size() == 0)
-      cout << prefix << ": no object found." << endl;
+      cout << prefix << ": no objects found." << endl;
     else {
       cout << prefix << ": found " << bboxes.size() << " objects." << endl;
       vector<bbox*>::const_iterator i = bboxes.begin();
@@ -866,7 +875,7 @@ namespace ebl {
   void detector<T,Tstate>::sort_bboxes(vector<bbox*> &bboxes) {
     bbox *tmp = NULL;
     float confidence;
-    for (int i = 1; i < bboxes.size(); ++i) {
+    for (int i = 1; i < (int) bboxes.size(); ++i) {
       int k = i;
       confidence = bboxes[k]->confidence;
       for (int j = i - 1; j >= 0; j--) {
@@ -1053,6 +1062,11 @@ namespace ebl {
     for (intg i = 0; i < nresolutions; ++i) {
       preprocess_resolution(i);
       thenet.fprop(*input, *output);
+      if (optimization_swap) { // swap output and input
+      	tmp = input;
+      	input = output;
+      	output = tmp;
+      }
     }
     cout << "net_processing=" << t.elapsed_milliseconds() << " ms. ";
   }
@@ -1095,13 +1109,11 @@ namespace ebl {
     Tstate iminput(imres);
     idx<uint> bbox = original_bboxes.select(0, res);
     // select input/outputs buffers
-    if (mem_optimization) { // we use only 2 buffers
-      input = minput;
-      output = moutput;
-    } else { // we use different buffers for each resolution
+    output = (Tstate*)(outputs.get(res));
+    if (!mem_optimization) // we use different buffers for each resolution
       input = (Tstate*)(inputs.get(res));
-      output = (Tstate*)(outputs.get(res));
-    }
+    else
+      input = minput;
     // resize and preprocess input
     resizepp.set_dimensions(resolutions.get(res, 0), resolutions.get(res, 1));
     resizepp.fprop(iminput, *input);
