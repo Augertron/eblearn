@@ -3,7 +3,7 @@
 ebl=$HOME/eblearn/ # eblearn root
 source $ebl/libeblearntools/src/metatrain.sh # include script functions
 ################################################################################
-step0=7 # initial step where to (re)start metatraining
+step0=9 # initial step where to (re)start metatraining
 h=80 # network height
 w=40 # network width
 chans=1 # number of input channels
@@ -12,7 +12,7 @@ valdsname=allped_mean${h}x${w}_ker7_bg_val # dataset validation name
 machine=${HOSTNAME}a # machine where experiment is ran
 eblearnbin0=$ebl/bin/ # original binary root
 metaconf_name=allped_meta.conf # metaconf name
-save_max=40000 # max number of false positives to extract per iteration
+save_max=30000 # max number of false positives to extract per iteration
 save_max_per_frame=10 # max number of false positives to extract per full image
 nthreads=6 # number of threads to use duing false positive extraction
 maxiteration=10 # maximum number of retraining iterations
