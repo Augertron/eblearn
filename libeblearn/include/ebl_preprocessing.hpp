@@ -264,7 +264,7 @@ namespace ebl {
 		  bool own_pp_, uint hzpad_, uint wzpad_)
     : pp(pp_), own_pp(own_pp_), kernelsz(kernelsz_), height(0), width(0),
       inpp(1,1,1), outpp(1,1,1), tmp3(1,1,1), mode(mode_), inrect(0, 0, 0, 0),
-      inrect_set(false), hzpad(hzpad_), wzpad(wzpad_){
+      inrect_set(false), hzpad(hzpad_), wzpad(wzpad_), zpad(NULL) {
     set_zpads(hzpad_, wzpad_);
   }
   

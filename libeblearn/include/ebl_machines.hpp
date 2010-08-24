@@ -36,8 +36,8 @@ namespace ebl {
 
   // the empty constructor (must call init afterwards)
   template <typename T, class Tstate>
-  net_cscscf<T,Tstate>::net_cscscf(Tstate *in, Tstate *out)
-    : layers<T,Tstate>(true, in, out) {
+  net_cscscf<T,Tstate>::net_cscscf()
+    : layers<T,Tstate>(true) {
     // owns modules, responsible for deleting it
   }
 
@@ -49,9 +49,8 @@ namespace ebl {
 				   intg si1, intg sj1,
 				   intg ki2, intg kj2, idx<intg> &tbl2,
 				   intg outthick, bool norm, bool mirror,
-				   bool tanh, bool shrink,
-				   Tstate *in, Tstate *out)
-    : layers<T,Tstate>(true, in, out) {
+				   bool tanh, bool shrink)
+    : layers<T,Tstate>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 si1, sj1, ki2, kj2, tbl2, outthick, norm, mirror, tanh, shrink);
@@ -154,8 +153,8 @@ namespace ebl {
 
   // the empty constructor (must call init afterwards)
   template <typename T, class Tstate>
-  net_cscf<T,Tstate>::net_cscf(Tstate *in, Tstate *out)
-    : layers<T,Tstate>(true, in, out) {
+  net_cscf<T,Tstate>::net_cscf()
+    : layers<T,Tstate>(true) {
     // owns modules, responsible for deleting it
   }
 
@@ -166,8 +165,8 @@ namespace ebl {
 			       intg ki1, intg kj1, idx<intg> &tbl1, 
 			       intg outthick, bool norm, bool mirror,
 			       bool tanh, bool shrink, bool lut_features,
-			       idx<T> *lut, Tstate *in, Tstate *out)
-    : layers<T,Tstate>(true, in, out) {
+			       idx<T> *lut)
+    : layers<T,Tstate>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 outthick, norm, mirror, tanh, shrink, lut_features, lut);
@@ -258,8 +257,8 @@ namespace ebl {
 
   // the empty constructor (must call init afterwards)
   template <typename T, class Tstate>
-  net_cscc<T,Tstate>::net_cscc(Tstate *in, Tstate *out)
-    : layers<T,Tstate>(true, in, out) {
+  net_cscc<T,Tstate>::net_cscc()
+    : layers<T,Tstate>(true) {
     // owns modules, responsible for deleting it
   }
 
@@ -270,9 +269,8 @@ namespace ebl {
 			       intg ki1, intg kj1, idx<intg> &tbl1,
 			       idx<intg> &tbl2,
 			       intg outthick, bool norm, bool mirror,
-			       bool tanh, bool shrink,
-			       Tstate *in, Tstate *out)
-    : layers<T,Tstate>(true, in, out) {
+			       bool tanh, bool shrink)
+    : layers<T,Tstate>(true) {
     // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 tbl2, outthick, norm, mirror, tanh, shrink);
@@ -344,8 +342,8 @@ namespace ebl {
 
   // the empty constructor (must call init afterwards)
   template <typename T, class Tstate>
-  net_cscsc<T,Tstate>::net_cscsc(Tstate *in, Tstate *out)
-    : layers<T,Tstate>(true, in, out) { // owns modules, responsible for deleting it
+  net_cscsc<T,Tstate>::net_cscsc()
+    : layers<T,Tstate>(true) { // owns modules, responsible for deleting it
   }
 
   template <typename T, class Tstate>
@@ -356,8 +354,8 @@ namespace ebl {
 				 intg si1, intg sj1,
 				 intg ki2, intg kj2, idx<intg> &tbl2,
 				 bool norm, bool mirror, bool tanh,
-				 bool shrink, Tstate *in, Tstate *out)
-    : layers<T,Tstate>(true, in, out) { // owns modules, responsible for deleting it
+				 bool shrink)
+    : layers<T,Tstate>(true) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
 	 si1, sj1, ki2, kj2, tbl2, norm, mirror, tanh, shrink);
   }
@@ -402,8 +400,7 @@ namespace ebl {
     if (norm) {
       add_module(new abs_module<T,Tstate>());
       add_module(new weighted_std_module<T,Tstate>
-		 (ki0, kj0, thick0, "w0", mirror, true, false,
-		  this->hi, this->ho));
+		 (ki0, kj0, thick0, "w0", mirror, true, false));
     }
     // subsampling
     add_module(new subsampling_layer<T,Tstate>
@@ -424,8 +421,7 @@ namespace ebl {
     if (norm) {
       add_module(new abs_module<T,Tstate>());
       add_module(new weighted_std_module<T,Tstate>
-		 (ki1, kj1, thick1, "w1", mirror, true, false,
-		  this->hi, this->ho));
+		 (ki1, kj1, thick1, "w1", mirror, true, false));
     }
     // subsampling
     add_module(new subsampling_layer<T,Tstate>
@@ -458,8 +454,8 @@ namespace ebl {
 	      intg kj1, intg si1, intg sj1,
 	      intg output_size, bool norm, bool color, bool mirror, bool tanh,
 	      bool shrink, idx<intg> *table0_, idx<intg> *table1_,
-	      idx<intg> *table2_, Tstate *in, Tstate *out)
-    : net_cscsc<T,Tstate>(in, out) {
+	      idx<intg> *table2_)
+    : net_cscsc<T,Tstate>() {
     idx<intg> table0, table1, table2;
     if (!color) { // use smaller tables
       table0 = full_table(1, 6);
@@ -512,8 +508,8 @@ namespace ebl {
 			 intg hid, intg output_size, bool norm, bool color,
 			 bool mirror, bool tanh, bool shrink,
 			 idx<intg> *table0_, idx<intg> *table1_,
-			 idx<intg> *table2_, Tstate *in, Tstate *out)
-    : net_cscscf<T,Tstate>(in, out) {
+			 idx<intg> *table2_)
+    : net_cscscf<T,Tstate>() {
     idx<intg> table0, table1, table2;
     if (!color) { // use smaller tables
       table0 = full_table(1, 6);
@@ -561,8 +557,8 @@ namespace ebl {
 				   intg ki1, intg kj1, intg output_size,
 				   bool norm, bool color, bool mirror,
 				   bool tanh, bool shrink, idx<intg> *table0_,
-				   idx<intg> *table1_, Tstate *in, Tstate *out)
-    : net_cscf<T,Tstate>(in, out) {
+				   idx<intg> *table1_)
+    : net_cscf<T,Tstate>() {
     idx<intg> table0, table1;
     if (!color) { // use smaller tables
       table0 = full_table(1, 6);
@@ -653,9 +649,9 @@ namespace ebl {
 
   template <typename T, class Tstate>
   lenet7_binocular<T,Tstate>::
-  lenet7_binocular(parameter<T,Tstate> &prm, intg image_height, intg image_width,
-		   intg output_size, bool norm, bool mirror, bool tanh,
-		   bool shrink) {
+  lenet7_binocular(parameter<T,Tstate> &prm, intg image_height,
+		   intg image_width, intg output_size, bool norm, bool mirror,
+		   bool tanh, bool shrink) {
     intg ki0 = 5, kj0 = 5;
     intg si0 = 4, sj0 = 4;
     intg ki1 = 6, kj1 = 6;

@@ -472,12 +472,14 @@ namespace ebl {
   }
   
   bool configuration::read(const char *fname, bool bresolve, 
-			   bool replacequotes) {
+			   bool replacequotes, bool silent) {
     // read file and extract all variables and values
-    cout << "loading configuration file: " << fname << endl;
+    if (!silent)
+      cout << "loading configuration file: " << fname << endl;
     if (!extract_variables(fname, smap, otxt, NULL, bresolve, replacequotes))
       return false;
-    pretty();
+    if (!silent)
+      pretty();
     return true;
   }
 
@@ -570,6 +572,14 @@ namespace ebl {
     if (get_uint(varname) == 0)
       return false;
     return true;
+  }
+
+  bool configuration::exists_false(const char *varname) {
+    if (!exists(varname))
+      return false;
+    if (get_uint(varname) == 0)
+      return true;
+    return false;
   }
 
   void configuration::set(const char *varname, const char *value) {

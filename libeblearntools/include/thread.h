@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include "utils.h"
 
 #ifndef __WINDOWS__
 #include <pthread.h>
@@ -54,7 +55,8 @@ namespace ebl {
 
     //! Tell the thread to stop working. Once thread is done,
     //! finished() will return true.
-    void stop();
+    //! \param wait If true, wait until finished() is true.
+    void stop(bool wait = false);
 
     //! Return true if thread has finished executing.
     bool finished();

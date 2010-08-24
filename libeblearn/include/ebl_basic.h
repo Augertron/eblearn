@@ -216,6 +216,11 @@ namespace ebl {
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
     virtual subsampling_module<T,Tstate>* copy();
+    //! Pre-determine the order of hidden buffers to use only 2 buffers
+    //! in order to reduce memory footprint.
+    //! This returns true if outputs is actually put in out, false if it's
+    //! in in.
+    virtual bool optimize_fprop(Tstate &in, Tstate &out);
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -223,7 +228,7 @@ namespace ebl {
     Tstate	        sub;
     intg		thickness;
     intg		stridei;
-    intg		stridej;    
+    intg		stridej;
   };
 
   //! The replicable version of subsampling_module.

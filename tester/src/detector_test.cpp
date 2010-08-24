@@ -1,8 +1,11 @@
 #include "detector_test.h"
 
+#include "libeblearntools.h"
 #ifdef __GUI__
 #include "libeblearngui.h"
 #endif
+
+#include <sstream>
 
 using namespace ebl;
 
@@ -14,6 +17,48 @@ void detector_test::setUp() {
 }
 
 void detector_test::tearDown() {
+}
+
+void detector_test::test_face() {
+  try {
+    typedef float t_net;
+    CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
+
+    string name = "nens.gif";
+    ostringstream confname, imagename, root;
+    root << *gl_data_dir << "/face/";
+    confname << root.str() << "best.conf";
+    imagename << root.str() << name;
+    idx<ubyte> im = load_image<ubyte>(imagename.str());
+    configuration conf;
+    conf.read(confname.str().c_str(), false, false, true);
+    conf.set("root2", root.str().c_str());
+    conf.resolve(true);
+    detection_thread<t_net> dt(conf, "detection thread");
+    vector<bbox*> bboxes;
+    idx<ubyte> detframe;
+    idx<uint> total_saved(1);
+    string processed_fname;
+    
+    dt.start();
+    while (!dt.set_data(im, name))
+      millisleep(5);
+    bool updated = false;
+    while (!updated) {
+      updated = dt.get_data(bboxes, detframe, *(total_saved.idx_ptr()),
+			    processed_fname);
+      millisleep(5);
+    }
+    sleep(5);
+    dt.stop(true);
+
+    // tests
+    CPPUNIT_ASSERT_EQUAL((size_t) 1, bboxes.size()); // only 1 object
+    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 0.973895462819159,
+    				 bboxes[0]->confidence, .0000001);
+    CPPUNIT_ASSERT_EQUAL((int) 1, bboxes[0]->class_id);
+  }
+  catch(string &err) { cerr << err << endl; }
 }
 
 void detector_test::test_norb() {

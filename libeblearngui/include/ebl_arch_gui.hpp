@@ -190,51 +190,31 @@ namespace ebl {
 			 bool show_out) {				\
     if (ln.modules->empty())						\
       return ;								\
-    if (ln.mem_optimization) {						\
-      /* initialize buffers */						\
-      ln.hi = ln.hi0;							\
-      ln.ho = ln.ho0;							\
-      /* loop over modules */						\
-      for(uint i = 0; i < ln.modules->size(); i++){			\
-	/* run module */						\
-	g.name2(*(*ln.modules)[i], *ln.hi, *ln.ho,			\
-		h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
-	/* swap buffers */						\
-	ln.swap_buffers();						\
-      }									\
-      /* if output is in input buffer, copy data into output */		\
-      /* TODO: can we avoid this? */					\
-      if (ln.ho != ln.ho0) { /* the output is in in, copy it */		\
-	ln.ho0->resize(ln.hi0->x.get_idxdim());				\
-	idx_copy(ln.hi->x, ln.ho->x);					\
-      }									\
-    } else {								\
-      /* initialize buffers */						\
-      ln.hi = &in;							\
-      ln.ho = &out;							\
-      /* loop over modules */						\
-      for(uint i = 0; i < ln.modules->size(); i++) {			\
-	/* if last module, output into out */				\
-	if (i == ln.modules->size() - 1)				\
-	  ln.ho = &out;							\
-	else { /* not last module, use hidden buffers */		\
+    /* initialize buffers */						\
+    ln.hi = &in;							\
+    ln.ho = &out;							\
+    /* loop over modules */						\
+    for(uint i = 0; i < ln.modules->size(); i++) {			\
+      /* if last module, output into out */				\
+      if (i == ln.modules->size() - 1)					\
+	ln.ho = &out;							\
+      else { /* not last module, use hidden buffers */			\
+	ln.ho = (Tstate*)(*ln.hiddens)[i];				\
+	/* allocate hidden buffer if necessary */			\
+	if (ln.ho == NULL) {						\
+	  /* create idxdim of same order but sizes 1 */			\
+	  idxdim d = ln.hi->x.get_idxdim();				\
+	  for (int k = 0; k < d.order(); ++k)				\
+	    d.setdim(k, 1);						\
+	  /* assign buffer */						\
+	  (*ln.hiddens)[i] = new Tstate(d);				\
 	  ln.ho = (Tstate*)(*ln.hiddens)[i];				\
-	  /* allocate hidden buffer if necessary */			\
-	  if (ln.ho == NULL) {						\
-	    /* create idxdim of same order but sizes 1 */		\
-	    idxdim d = ln.hi->x.get_idxdim();				\
-	    for (int k = 0; k < d.order(); ++k)				\
-	      d.setdim(k, 1);						\
-	    /* assign buffer */						\
-	    (*ln.hiddens)[i] = new Tstate(d);				\
-	    ln.ho = (Tstate*)(*ln.hiddens)[i];				\
-	  }								\
 	}								\
-	/* run module */						\
-	g.name2(*(*ln.modules)[i], *ln.hi, *ln.ho,			\
-		h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
-	ln.hi = ln.ho;							\
       }									\
+      /* run module */							\
+      g.name2(*(*ln.modules)[i], *ln.hi, *ln.ho,			\
+	      h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
+      ln.hi = ln.ho;							\
     }									\
     if (show_out) {							\
       unsigned int h = h0, w = w0, zoomf = 1;				\

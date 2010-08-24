@@ -39,8 +39,7 @@ namespace ebl {
   template <typename T, class Tstate>
   weighted_std_module<T,Tstate>::
   weighted_std_module(uint kernelh, uint kernelw, int nf, const char *name_, 
-		      bool mirror_, bool threshold_, bool global_norm_,
-		      Tstate* hi, Tstate* ho)
+		      bool mirror_, bool threshold_, bool global_norm_)
     : module_1_1<T,Tstate>(name_), 
       mirror(mirror_),
       convmean(true),
