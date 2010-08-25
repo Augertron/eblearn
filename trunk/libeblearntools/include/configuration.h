@@ -195,7 +195,6 @@ namespace ebl {
   //! meta configuration. derive from configuration, to handle meta variables.
   class EXPORT meta_configuration : public configuration {
   private:
-    string_map_t	tmpsmap;
     string_list_map_t	lmap;
     vector<size_t>	conf_indices;
     int			conf_combinations;
