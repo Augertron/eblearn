@@ -73,9 +73,11 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #ifdef __LINUX__
       feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
-      ipp_init(1); // limit IPP (if available) to 1 core
       // load configuration
       configuration	conf(argv[1]);
+      uint              ipp_cores     = 1;
+      if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
+      ipp_init(ipp_cores); // limit IPP (if available) to 1 core
       bool		save_video    = conf.exists_true("save_video");
       string		cam_type      = conf.get_string("camera");
       int		height        = conf.get_int("input_height");

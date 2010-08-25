@@ -85,7 +85,7 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     // private members
   private:
-    configuration		&conf;
+    configuration		 conf;
     const char			*arg2;
     idx<ubyte>			 uframe;
     idx<Tnet>			 frame;
