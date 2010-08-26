@@ -362,7 +362,8 @@ namespace ebl {
 #endif
        ms = tpass.elapsed_milliseconds();
        detect.pretty_bboxes_short(bboxes, _name.c_str());
-       cout << _name << " processing=" << ms << " ms." << endl;
+       cout << _name << " processing=" << ms << " ms (";
+       tpass.pretty_elapsed(); cout << ")" << endl;
 #ifdef __DEBUGMEM__
        pretty_memory();
 #endif
@@ -377,8 +378,8 @@ namespace ebl {
 	   detect.get_total_saved() > conf.get_uint("save_max"))
 	 break ; // limit number of detection saves
      }
-     cout << _name << " finished. Execution time: " 
-	  << toverall.elapsed_minutes() <<" mins" <<endl;
+     cout << _name << " finished. Execution time: ";
+     toverall.pretty_elapsed(); cout <<endl;
      // free variables
      if (net) delete net;
 #ifdef __GUI__

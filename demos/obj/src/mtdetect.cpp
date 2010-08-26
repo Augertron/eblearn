@@ -221,6 +221,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	      timer::pretty_secs((cam->size() - cnt)
 				 * (toverall.elapsed_seconds() / (float) cnt));
 	    }
+	    if (conf.exists("save_max")) {
+	      cout << " save_max_ETA=";
+	      uint total = idx_sum(total_saved);
+	      timer::pretty_secs((conf.get_uint("save_max") - total)
+				 * (toverall.elapsed_seconds() / (float)total));
+	    }
 	    cout << endl;
 	  }
 	  // check if ready
