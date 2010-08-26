@@ -1,16 +1,17 @@
 #!/bin/sh
 
+dsname=inria
 ################################################################################
 # meta commands
 meta_command="sh dsprepare.sh"
-meta_name=inria_dsprepare
+meta_name=${dsname}_dsprepare
 meta_send_email=1 # emailing results or not
 meta_email=${myemail} # email to use (use environment variable "myemail")
 
 ################################################################################
 # ped dataset compilation
 machine=${HOSTNAME}a
-root=~/${machine}data/ped/inria/
+root=~/${machine}data/ped/${dsname}/
 dataroot=$root/train/data/
 positive_root=$dataroot/ped/
 negative_root=$dataroot/bg/
@@ -29,12 +30,12 @@ kernel=7 #9
 resize=mean #bilinear
 nbg=1 # maximum number of bg extracted per scale
 # scales in bg images, in terms of factor of the target size, i.e. hxw * scale
-bgscales=5,3.75,2.75
+bgscales=6,3,1
 maxbg=3000 # initial number of negatives
 
 # names
 id=${resize}${h}x${w}_ker${kernel}
-name=allped_${id}
+name=${dsname}_${id}
 namebg=${name}_bg
 bgds=nopersons_${id}
 outbg=${out}/${bgds}
@@ -48,7 +49,6 @@ debug= #"$maxdata $maxperclass $ddisplay"
 # create directories
 mkdir -p $out
 mkdir -p $outbg
-mkdir -p $nopersons_root
 
 ###############################################################################
 # one-time dataset preparations
@@ -57,11 +57,14 @@ mkdir -p $nopersons_root
 # around human for negative examples.
 # cropping factors: 0.6x0.41
 
-# extract 'inside' windows (zoom inside bounding box) 
-# from all positive examples as negative examples
-$bin/dscompiler $positive_root -precision $precision \
-    -outdir $full_negative_root/bg/inside -save mat -resize $resize \
-    -bboxhfact .6 -bboxwfact .41 $debug
+# # extract 'inside' windows (zoom inside bounding box) 
+# # from all positive examples as negative examples
+# $bin/dscompiler $dataroot -precision $precision \
+#     -outdir $full_negative_root/bg/inside -save mat -resize $resize \
+#     -bboxhfact .6 -bboxwfact .41 $debug
+
+# # copy 'inside' negatives to initial bg directory
+# cp -R $full_negative_root/bg/inside/* $negative_root
 
 ###############################################################################
 # (repeatable) dataset compilations
@@ -80,9 +83,12 @@ $bin/dscompiler ${outbg} -precision $precision \
     -outdir ${out} -dname ${bgds} -dims ${h}x${w}x${chans} $debug
 
 # compile regular dataset
+# crop inria so that the window height is 1.3 the height of the pedestrians,
+# i.e. H96 gives 125 window height, and cropping factor of .78
+# then width target is 62.4, yielding cropping factor of .65
 $bin/dscompiler $dataroot -precision $precision -outdir ${out} -channels $pp \
     -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
-    $debug
+    -bboxhfact .78 -bboxwfact .65 $debug
 
 # delete temporary images
 rm -Rf $outbg
