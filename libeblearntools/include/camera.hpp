@@ -160,6 +160,16 @@ namespace ebl {
     return name.str();
   }
   
+  template <typename Tdata>
+  int camera<Tdata>::remaining() {
+    return -1;
+  }
+  
+  template <typename Tdata>
+  int camera<Tdata>::size() {
+    return -1;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // internal methods
   

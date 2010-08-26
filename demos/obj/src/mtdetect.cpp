@@ -214,7 +214,14 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    if (conf.exists("save_max"))
 	      cout << " / " << conf.get_uint("save_max");
 	    cout << endl;
-	    cout << "i=" << cnt << endl;
+	    cout << "i=" << cnt << " remaining=" << (cam->size() - cnt);
+	    cout << " elapsed="; toverall.pretty_elapsed();
+	    if (cam->size() > 0) {
+	      cout << " ETA=";
+	      timer::pretty_secs((cam->size() - cnt)
+				 * (toverall.elapsed_seconds() / (float) cnt));
+	    }
+	    cout << endl;
 	  }
 	  // check if ready
 	  if ((*ithreads)->available()) {
@@ -255,7 +262,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	while (!(*ithreads)->finished())
 	  millisleep(10);
       }
-      cout << "Execution time: " << toverall.elapsed_minutes() <<" mins" <<endl;
+      cout << "Execution time: "; toverall.pretty_elapsed(); cout << endl;
       if (save_video)
 	cam->stop_recording(conf.exists_bool("use_original_fps") ?
 			    cam->fps() : conf.get_uint("save_video_fps"),
