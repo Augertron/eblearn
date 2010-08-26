@@ -35,6 +35,7 @@
 #endif
 
 #include <sstream>
+#include <iomanip>
 #include "ebl_utils.h"
 
 using namespace std;
@@ -104,7 +105,7 @@ void print_usage() {
   cout << "  -random <in size> <out size>" << endl
        << "   Connect randomly inputs to outputs." << endl;
   cout << "  -fanin <n>" 
-       << "   Number of outputs connected to each input." << endl;
+       << "   Number of inputs connected to each output." << endl;
   cout << "  -one2one <size>" << endl
        << "   Connect [0 .. size] to [0 .. size] in a 1 to 1 mapping." << endl;
 }
@@ -122,12 +123,14 @@ int main(int argc, char **argv) {
   }
   // make table
   idx<intg> table;
-  ostringstream name; name << "table_";
+  ostringstream name;
+  string type = "";
   if (full) {
     cout << "Making a full table from " << insize << " to "
 	 << outsize << endl;
     table = full_table(insize, outsize);
-    name << "full_" << insize << "_" << outsize;
+    type = "full";
+    fanin = insize; // full fanin
   } else if (brandom) {
     if (fanin == 0)
       eblerror("you must set a fanin > 0");
@@ -135,17 +138,23 @@ int main(int argc, char **argv) {
 	 << outsize << " with fanin " << fanin << endl;
     dynamic_init_drand(); // init random seed
     table = random_table(insize, outsize, fanin);
-    name << "random_" << insize << "_" << outsize;
+    type = "random";
   } else if (one2one) {
     cout << "Making a one to one table from " << insize << " to "
 	 << insize << endl;
     table = one2one_table(insize);
-    name << "one2one_" << insize;
+    type = "one2one";
+    fanin = 1;
+    outsize = insize;
   } else
     eblerror("unknown type");
   table.printElems();
+  float density = table.dim(0) / (float) (insize * outsize);
   cout << "Table dimensions: " << table << endl;
-  name << "_connect_" << table.dim(0) << ".mat";
+  name << "table_" << insize << "_" << outsize << "_connect_" << table.dim(0)
+       << "_fanin_" << fanin
+       << "_density_" << setw(1) << setfill('0') << setprecision(2)
+       << density << "_" << type << ".mat";
   save_matrix<int>(table, name.str());
   cout << "Saved table in " << name.str() << endl;
   return 0;

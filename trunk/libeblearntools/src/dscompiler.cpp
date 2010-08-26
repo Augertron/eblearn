@@ -356,7 +356,9 @@ void print_usage() {
   cout << endl;
   cout << "  -scales <scales (e.g: 1.5,2,4)>" << endl;
   cout << "  -bboxfact <float factor> (multiply bounding boxes by a factor)";
+  cout << endl;
   cout << "  -bboxhfact <float factor> (multiply bboxes height by a factor)";
+  cout << endl;
   cout << "  -bboxwfact <float factor> (multiply bboxes width by a factor)";
   cout << endl;
   cout << "  -resize <mean(default)|gaussian|bilinear" << endl; 
