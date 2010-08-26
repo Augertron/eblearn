@@ -70,7 +70,8 @@ namespace ebl {
     // if (fl) delete fl;
     // fl = new files_list(n);
     // get all file names
-    fl = find_files(directory, IMAGE_PATTERN_MAT, NULL, randomize?false:true, true, randomize);
+    fl = find_files(directory, IMAGE_PATTERN_MAT, NULL,
+		    randomize ? false : true, true, randomize);
     if (!fl) {
       cerr << "invalid directory: " << dir << endl;
       eblerror("invalid directory");
@@ -144,6 +145,16 @@ namespace ebl {
   template <typename Tdata>
   string camera_directory<Tdata>::frame_name() {
     return frame_name_;
+  }
+  
+  template <typename Tdata>
+  int camera_directory<Tdata>::remaining() {
+    return (int) (flsize - frame_id);
+  }
+  
+  template <typename Tdata>
+  int camera_directory<Tdata>::size() {
+    return (int) flsize;
   }
   
 } // end namespace ebl

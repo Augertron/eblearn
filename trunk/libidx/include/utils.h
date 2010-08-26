@@ -81,11 +81,19 @@ namespace ebl {
     long elapsed_seconds();
     //! Return elapsed time in milliseconds since start() or restart().
     long elapsed_milliseconds();
+    //! Print elapsed time in a human-friendly way since start() or restart().
+    void pretty_elapsed();
+    //! Print the provided seconds in a human-friendly way.
+    static void pretty_secs(long seconds);
+    
   private:
 #ifdef __WINDOWS__
 #else // linux & mac
     struct timeval t0, t1;
 #endif
+    // second equivalences
+    static const long secmin = 60, sechour = 3600, secday = 86400,
+      secweek = 604800, secmonth = 18144000;
   };
 
   //! Sleep for 'millis' milliseconds.

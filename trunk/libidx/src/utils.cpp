@@ -140,6 +140,41 @@ namespace ebl {
 #endif
   }
 
+  void timer::pretty_elapsed() {
+    pretty_secs(elapsed_seconds());
+  }
+    
+  void timer::pretty_secs(long seconds) {
+    long div, mod;
+    bool pretty = false;
+    div = seconds / secmonth; mod = seconds % secmonth;
+    if (div > 0 || pretty) {
+      cout << div << "months ";
+      pretty = true;
+    }
+    div = mod / secweek; mod = mod % secweek;
+    if (div > 0 || pretty) {
+      cout << div << "weeks ";
+      pretty = true;
+    }
+    div = mod / secday; mod = mod % secday;
+    if (div > 0 || pretty) {
+      cout << div << "days ";
+      pretty = true;
+    }
+    div = mod / sechour; mod = mod % sechour;
+    if (div > 0 || pretty) {
+      cout << div << "hours ";
+      pretty = true;
+    }
+    div = mod / secmin; mod = mod % secmin;
+    if (div > 0 || pretty) {
+      cout << div << "mins ";
+      pretty = true;
+    }
+    cout << mod << "secs";
+  }
+  
   void millisleep(long millis) {
 #ifdef __WINDOWS__
     Sleep(millis);
