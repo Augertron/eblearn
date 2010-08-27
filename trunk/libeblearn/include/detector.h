@@ -188,7 +188,11 @@ namespace ebl {
     //! Enable memory optimization by using only 2 buffers (in and out)
     //! for entire flow. Those same buffers must have been passed to the
     //! network's constructor.
-    void set_mem_optimization(Tstate &in, Tstate &out);
+    //! \param keep_inputs If false, re-use input buffers for optimization.
+    //!   If true, some operations may be unavailable, such as saving
+    //!   the pre-processed detected windows.
+    void set_mem_optimization(Tstate &in, Tstate &out, 
+			      bool keep_inputs = false);
 
     //! Set the maximum overlaps authorized on the height and width axis before
     //! allowing non maximum suppression between bounding boxes.
@@ -364,6 +368,7 @@ namespace ebl {
     float                bbwfactor; //!< width bbox factor
     bool                 mem_optimization; //!< optimize memory or not.
     bool                 optimization_swap; //!< swap buffers or not.
+    bool                 keep_inputs; //! optimize input buffers or not.
     float                max_hoverlap; //!< Maximum ratio of overlap authorized.
     float                max_woverlap; //!< Maximum ratio of overlap authorized.
     float                max_foot_area_overlap; //!< Max area overlap when foot.
