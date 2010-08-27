@@ -218,14 +218,16 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    cout << " elapsed="; toverall.pretty_elapsed();
 	    if (cam->size() > 0) {
 	      cout << " ETA=";
-	      timer::pretty_secs((cam->size() - cnt)
-				 * (toverall.elapsed_seconds() / (float) cnt));
+	      timer::pretty_secs((long)((cam->size() - cnt) * 
+					(toverall.elapsed_seconds() 
+					 / (float) cnt)));
 	    }
 	    if (conf.exists("save_max")) {
 	      cout << " save_max_ETA=";
 	      uint total = idx_sum(total_saved);
-	      timer::pretty_secs((conf.get_uint("save_max") - total)
-				 * (toverall.elapsed_seconds() / (float)total));
+	      timer::pretty_secs((long)((conf.get_uint("save_max") - total)
+					* (toverall.elapsed_seconds() 
+					   / (float)total)));
 	    }
 	    cout << endl;
 	  }
@@ -279,6 +281,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	delete *ithreads;
       // close files
       fp.close();
+      cout << "Detection finished." << endl;
 #ifdef __GUI__
       quit_gui(); // close all windows
 #endif

@@ -4,7 +4,7 @@ ebl=$HOME/eblearn/ # eblearn root
 source $ebl/libeblearntools/src/metatrain.sh # include script functions
 ################################################################################
 dsname=inria
-step0=0 # initial step where to (re)start metatraining
+step0=3 # initial step where to (re)start metatraining
 h=80 # network height
 w=40 # network width
 chans=1 # number of input channels
@@ -23,8 +23,8 @@ ds_split_ratio=".1" # split ratio of validation over training
 draws=1 # number of dataset draws
 name=${dsname}_${machine}
 meta_name=${name} # name of this meta job
-tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
-#tstamp=20100818.045156 # overriding timestamp of experiment
+#tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
+tstamp=20100826.120221 # overriding timestamp of experiment
 display=1 # display training or not
 
 # directories

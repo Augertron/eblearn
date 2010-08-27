@@ -60,7 +60,7 @@ namespace ebl {
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       min_size(0), max_size(0), bodetections(false),
       bppdetections(false), pruning(true), bbhfactor(1.0), bbwfactor(1.0),
-      mem_optimization(false), optimization_swap(false) {
+      mem_optimization(false), optimization_swap(false), keep_inputs(true) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -320,10 +320,12 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_mem_optimization(Tstate &in, Tstate &out){
+  void detector<T,Tstate>::set_mem_optimization(Tstate &in, Tstate &out, 
+						bool keep_inputs_) {
     cout << "Optimizing memory usage by using only 2 alternating buffers."
 	 << endl;
     mem_optimization = true;
+    keep_inputs = keep_inputs_;
     minput = &in;
     input = &in;
     output = &out;
@@ -1110,7 +1112,7 @@ namespace ebl {
     idx<uint> bbox = original_bboxes.select(0, res);
     // select input/outputs buffers
     output = (Tstate*)(outputs.get(res));
-    if (!mem_optimization) // we use different buffers for each resolution
+    if (!mem_optimization || keep_inputs) // we use different buffers for each resolution
       input = (Tstate*)(inputs.get(res));
     else
       input = minput;

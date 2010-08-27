@@ -238,7 +238,7 @@ namespace ebl {
      // optimize memory usage by using only 2 buffers for entire flow
      SBUF<Tnet> input(1, 1, 1), output(1, 1, 1);
      if (!conf.exists_false("mem_optimization"))
-       detect.set_mem_optimization(input, output);
+       detect.set_mem_optimization(input, output, conf.exists_true("save_detections"));
      bool bmask_class = false;
      if (conf.exists("mask_class"))
        bmask_class = detect.set_mask_class(conf.get_cstring("mask_class"));
