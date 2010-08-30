@@ -50,7 +50,7 @@ void ebl_machines_test::test_lenet5_mnist() {
   supervised_trainer<t_net, ubyte, ubyte> thetrainer(thenet, theparam);
 
 #ifdef __GUI__
-//   labeled_datasource_gui<ubyte, ubyte> dsgui(true);
+  //  labeled_datasource_gui<t_net, ubyte, ubyte> dsgui(true);
 //   dsgui.display(test_ds, 10, 10);
   supervised_trainer_gui<t_net, ubyte, ubyte> stgui;
 #endif
@@ -111,14 +111,17 @@ void ebl_machines_test::test_lenet5_mnist() {
   // this goes at about 25 examples per second on a PIIIM 800MHz
   for (int i = 0; i < 10; ++i) {
 #ifdef __DEBUGMEM__
-  pretty_memory();
+    pretty_memory();
 #endif
     thetrainer.train(train_ds, trainmeter, gdp, 1);
+    train_ds.save_pickings();
     thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
     thetrainer.compute_diaghessian(train_ds, 100, 0.02);
 #ifdef __GUI__
     if (display) {
+      //      dsgui.display_pickings(train_ds, 3, 3);
+      stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
       stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
       stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
     }

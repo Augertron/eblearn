@@ -75,6 +75,14 @@ namespace ebl {
 			 const char *wname = NULL, bool scrolling = false,
 			 Tnet rangemin = 0, Tnet rangemax = 0);
 
+    virtual void display_pickings(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+				  unsigned int nh, unsigned int nw, 
+				  unsigned int h0 = 0, unsigned int w0 = 0, 
+				  double zoom = 1.0, int wid = -1, 
+				  const char *wname = NULL,
+				  bool scrolling = false,
+				  Tnet rangemin = 0, Tnet rangemax = 0);
+
     ////////////////////////////////////////////////////////////////
     // inherited methods to implement for scrolling capabilities
     
