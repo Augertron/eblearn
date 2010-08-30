@@ -36,15 +36,19 @@
 #include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_states.h"
+#include <map>
 
 using namespace std;
 
 namespace ebl {
 
+  
   ////////////////////////////////////////////////////////////////
   //! datasource
   template<class Tnet, class Tin1, class Tin2> class datasource {
   public:
+    typedef map<uint,idx<Tin1> > t_pick_map;
+    
     //! CAUTION: This empty constructor requires a subsequent call to init().
     datasource();
 
@@ -65,6 +69,9 @@ namespace ebl {
     //! Copies the current datum to a state and label.
     virtual void fprop(fstate_idx<Tnet> &datum, fstate_idx<Tin2> &label);
 
+    //! Return original sample's idx at this index.
+    virtual idx<Tin1> get_sample(intg index);
+    
     //! shuffle dataset, based on the number of classes
     //! assume the same nb of samples in each class
     virtual void shuffle();
@@ -188,6 +195,10 @@ namespace ebl {
     //! by get_lowest_common_size().
     virtual void set_epoch_size(intg sz);
 
+    //! Output statistics of samples picking, i.e. the number of times each
+    //! sample has been picked for training.
+    virtual void save_pickings(const char *name = NULL);
+    
     ////////////////////////////////////////////////////////////////
   protected:    
 
@@ -199,18 +210,23 @@ namespace ebl {
     //! This is useful to keep iterations to a meaningful size when a class
     //! has many more examples than another.
     virtual intg get_lowest_common_size();
+
+    //! Return a vector of sample indices, sorted by their picking counts.
+    virtual map<uint,intg>& get_pickings();
     
     ////////////////////////////////////////////////////////////////
     // members
   protected:
     intg                                        nclasses; // # of classes
     vector<intg>                                counts; // # of samples / class
+    map<uint,intg>                              picksmap;
   public:
     Tnet					bias;
     float					coeff;
     idx<Tin1>					data; // samples
     idx<Tin2>					labels; // labels
     idx<double>					probas;//!< sample probabilities
+    idx<uint>                                   pick_count;//!< count pickings.
     // regular iterators
     typename idx<Tin1>::dimension_iterator	dataIter;
     typename idx<Tin2>::dimension_iterator	labelsIter;
@@ -221,6 +237,7 @@ namespace ebl {
     typename idx<Tin1>::dimension_iterator	dataIter_train;
     typename idx<Tin2>::dimension_iterator	labelsIter_train;
     typename idx<double>::dimension_iterator	probasIter_train;
+    typename idx<uint>::dimension_iterator	pickIter_train;
     unsigned int				height;
     unsigned int				width;
     string					name;

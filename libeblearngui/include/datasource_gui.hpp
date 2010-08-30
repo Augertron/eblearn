@@ -132,6 +132,73 @@ namespace ebl {
     display_controls();
   }
   
+  template <class Tnet, class Tdata, class Tlabel>
+  void labeled_datasource_gui<Tnet, Tdata, Tlabel>::
+  display_pickings(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+		   unsigned int nh, unsigned int nw,
+		   unsigned int h0, unsigned int w0,
+		   double zoom, int wid, const char *wname, bool scrolling,
+		   Tnet rangemin, Tnet rangemax){
+    // do a deep copy of dataset only when necessary
+    if (scroll && !scrolling && (_last_ds != &ds)) {
+      if (_ds)
+	delete _ds;
+      _ds = new labeled_datasource<Tnet, Tdata, Tlabel>(ds);
+    }
+    _last_ds = &ds;
+    // copy parameters
+    _nh = nh;
+    _nw = nw;
+    _h0 = h0;
+    _w0 = w0;
+    _zoom = zoom;
+    _rmin = rangemin;
+    _rmax = rangemax;
+    idxdim d = ds.sample_dims();
+    idx<Tdata> m = ds.get_sample(0);
+    fstate_idx<Tlabel> lbl;
+    _h1 = h0 + nh * (m.dim(0) + 1);
+    _w1 = w0 + nw * (m.dim(1) + 1);
+    display_wid = (wid >= 0) ? wid :
+      (display_wid >= 0) ? display_wid :
+      new_window((wname ? wname : ds.name), 
+		 nh * (ds.height + 1) - 1, 
+		 nw * (ds.width + 1) - 1);
+    select_window(display_wid);
+    if (scroll && !scroll_added) {
+      gui.add_scroll_box((scroll_box*) this);
+      scroll_added = true;
+    }
+    disable_window_updates();
+    if (wid == -1) // clear only if we created the window
+      clear_window();
+    gui << white_on_transparent() << gui_only();
+    
+    map<uint,intg> &picks = ds.get_pickings();
+    map<uint,intg>::iterator ipicks = picks.begin();
+    unsigned int h = h0, w = w0;
+    uint k = 0;
+    for (unsigned int ih = 0; (ih < nh) && (k < ds.size()); ++ih) {
+      for (unsigned int iw = 0; (iw < nw) && (k < ds.size()); ++iw) {
+	m = ds.get_sample(ipicks->second);
+	//	m = m.shift_dim(0, 2);
+	ipicks++;
+	draw_matrix(m, h, w, _zoom, _zoom, (Tdata) _rmin, (Tdata) _rmax);
+	// // draw label if present
+	// if ((ds.lblstr) && (ds.lblstr->at((int)lbl.x.get())))
+	//   gui << at(h + 1, w + 1) << (ds.lblstr->at((int)lbl.x.get()))->c_str();
+	// else if (ds.labels.order() == 1) // single continuous labels
+	//   gui << at(h + 1, w + 1) << setprecision(1) << lbl.x.get();
+	w += m.dim(1) + 1;
+	k++;
+      }
+      w = w0;
+      h += m.dim(0) + 1;
+    }
+    enable_window_updates();
+    display_controls();
+  }
+  
   ////////////////////////////////////////////////////////////////
   // inherited methods to implement for scrolling capabilities
 

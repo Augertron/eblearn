@@ -186,7 +186,12 @@ int main(int argc, char **argv) { // regular main without gui
 	thetrainer.test(train_ds, trainmeter, infp);	// test
       thetrainer.test(test_ds, testmeter, infp);	// test
       cout << "test_minutes=" << ttest.elapsed_minutes() << endl;
-
+      
+      // save samples picking statistics
+      if (conf.exists_true("save_pickings")) {
+	  name.str(""); name << "pickings_" << i;
+	  train_ds.save_pickings(name.str().c_str());
+      }
       // save weights and confusion matrix for test set
       name.str("");
       if (conf.exists("job_name"))

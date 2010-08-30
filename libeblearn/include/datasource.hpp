@@ -46,10 +46,11 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::datasource()
     : nclasses(0), bias(0), coeff(1.0), data(1), labels(1), probas(1),
+      pick_count(1),
       dataIter(data, 0), labelsIter(labels, 0), 
       dataIter_test(data, 0), labelsIter_test(labels, 0), 
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
-      probasIter_train(probas, 0),
+      probasIter_train(probas, 0), pickIter_train(pick_count, 0),
       height(0), width(0), balance(true), test_set(false),
       sample_min_proba(0.0), epoch_sz(0) {
   }
@@ -58,11 +59,11 @@ namespace ebl {
   datasource<Tnet, Tin1, Tin2>::
   datasource(const datasource<Tnet, Tin1, Tin2> &ds)
     : nclasses(0), bias(ds.bias), coeff(ds.coeff), data(ds.data),
-      labels(ds.labels), probas(ds.probas),
+      labels(ds.labels), probas(ds.probas), pick_count(ds.pick_count),
       dataIter(data, 0), labelsIter(labels, 0),
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
-      probasIter_train(probas, 0), 
+      probasIter_train(probas, 0), pickIter_train(pick_count, 0),
       height(ds.height), width(ds.width), name(ds.name), balance(true),
       test_set(false),
       sample_min_proba(0.0), epoch_sz(0) {
@@ -73,11 +74,11 @@ namespace ebl {
   datasource(idx<Tin1> &data_, idx<Tin2> &labels_, const char *name_,
 	     Tin1 b, float c)
     : nclasses(0), bias(b), coeff(c), data(data_), labels(labels_),
-      probas(data_.dim(0)),
+      probas(data_.dim(0)), pick_count(data_.dim(0)),
       dataIter(data, 0), labelsIter(labels, 0),
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
-      probasIter_train(probas, 0),
+      probasIter_train(probas, 0), pickIter_train(pick_count, 0),
       height(data.dim(1)), width(data.dim(2)), balance(true), test_set(false),
       sample_min_proba(0.0), epoch_sz(0) {
     init(data_, labels_, name_, b, c);
@@ -96,6 +97,8 @@ namespace ebl {
     data = data_;
     labels = labels_;
     probas = idx<double>(data.dim(0));
+    pick_count = idx<uint>(data.dim(0));
+    idx_clear(pick_count);
     dynamic_init_drand(); // initialize random seed
     // default probability for a sample of being used is 1
     idx_fill(probas, 1.0);
@@ -119,9 +122,11 @@ namespace ebl {
     typename idx<Tin1>::dimension_iterator	 dIter_train(data, 0);
     typename idx<Tin2>::dimension_iterator	 lIter_train(labels, 0);
     typename idx<double>::dimension_iterator	 pIter_train(probas, 0);
+    typename idx<uint>::dimension_iterator	 pcIter_train(pick_count, 0);
     dataIter_train = dIter_train;
     labelsIter_train = lIter_train;
     probasIter_train = pIter_train;
+    pickIter_train = pcIter_train;
     // count number of samples per class if discrete
     if (discrete_labels) {
       counts.resize(nclasses);
@@ -201,6 +206,11 @@ namespace ebl {
   }
 
   template <class Tnet, class Tin1, class Tin2>
+  idx<Tin1> datasource<Tnet, Tin1, Tin2>::get_sample(intg index) {
+    return data.select(0, index);
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next() {
     // increment data and labels iterators
     ++dataIter_test;
@@ -225,11 +235,14 @@ namespace ebl {
     // draw random number between 0 and 1 and return true if lower
     // than sample's probability.
     double r = drand(); // [0..1]
-    if (r <= probasIter_train->get())
+    if (r <= probasIter_train->get()) {
+      // increment pick counter for this sample
+      pickIter_train->set(pickIter_train->get() + 1);
       return true;
+    }
     return false;
   }
-  
+
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::next_train(intg *callcnt) {
     // check that this datasource is allowed to call this method
@@ -262,6 +275,7 @@ namespace ebl {
       dataIter_train = dataIter_train.at(*ub_itr);
       labelsIter_train = labelsIter_train.at(*ub_itr);
       probasIter_train = probasIter_train.at(*ub_itr);
+      pickIter_train = pickIter_train.at(*ub_itr);
       // recursively loop until we find a sample that is picked for this class
       if (!pick_current())
 	return next_train(callcnt);
@@ -287,6 +301,7 @@ namespace ebl {
       dataIter_train = dataIter_train.at(i);
       labelsIter_train = labelsIter_train.at(i);
       probasIter_train = probasIter_train.at(i);
+      pickIter_train = pickIter_train.at(i);
       indices_itr[iitr] += 1;
       if (indices_itr[iitr] >= label_indices[iitr].size()) {
 	// returning to begining of list for this class
@@ -366,6 +381,7 @@ namespace ebl {
     dataIter_train = data.dim_begin(0);
     labelsIter_train = labels.dim_begin(0);
     probasIter_train = probas.dim_begin(0);
+    pickIter_train = pick_count.dim_begin(0);
     // set regular iters used by fprop
     dataIter = dataIter_train;
     labelsIter = labelsIter_train;
@@ -484,6 +500,47 @@ namespace ebl {
   bool datasource<Tnet, Tin1, Tin2>::is_test() {
     return test_set;
   }
+  
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::save_pickings(const char *name_) {
+    string name = "pickings";
+    if (name_)
+      name = name_;
+    string fname = name;
+    fname += ".plot"; 
+    ofstream fp(fname.c_str());
+    if (!fp) {
+      cerr << "failed to open " << fname << endl;
+      eblerror("failed to open file for writing");
+    }
+    typename idx<uint>::dimension_iterator i = pick_count.dim_begin(0);
+    uint j = 0;
+    for ( ; i.notdone(); i++, j++)
+      fp << j << " " << i->get() << endl;
+    fp.close();
+    cout << "Wrote picking statistics in " << fname << endl;
+    string fname2 = name;
+    fname2 += ".p";
+    ofstream fp2(fname2.c_str());
+    if (!fp2) {
+      cerr << "failed to open " << fname2 << endl;
+      eblerror("failed to open file for writing");
+    }
+    fp2 << "plot \"" << fname << "\" with impulse" << endl;
+    fp2.close();
+    cout << "Wrote gnuplot file in " << fname2 << endl;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+    map<uint,intg>& datasource<Tnet, Tin1, Tin2>::get_pickings() {
+    picksmap.clear();
+    typename idx<uint>::dimension_iterator i = pick_count.dim_begin(0);
+    uint j = 0;
+    for ( ; i.notdone(); i++, j++)
+      picksmap[i->get()] = j;
+    return picksmap;
+  }
+
   
   ////////////////////////////////////////////////////////////////
   // labeled_datasource
