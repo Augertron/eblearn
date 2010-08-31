@@ -202,7 +202,7 @@ namespace ebl {
   idx_add_macro_in_place(uint16)
   idx_add_macro_in_place(int16)
 #endif
-
+#if 0
   template<> void idx_add(idx<float> &src, idx<float> &dst) {
     // loop and copy
     idxop_ii(src, dst,
@@ -228,6 +228,7 @@ namespace ebl {
 	       idx_aloop2_on(psrc, src, pdst, dst) { *pdst = *pdst + *psrc; }}
 	     );
   }
+#endif
 #endif /* USING_STL_ITERS == 0 */
 
   ////////////////////////////////////////////////////////////////
@@ -331,14 +332,13 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // idx_exp
 
-
-  template <> void idx_exp(idx<float32> &m) {
+  template <> void idx_exp(idx<float> &m) {
 #if USING_FAST_ITERS == 0
     idx_aloop1(i, m, float32) {
       *i = exp(*i);
     };
 #else
-    idx_aloopf1(i, m, float32, { *i = exp(*i); });
+    idx_aloopf1(i, m, float32, { *i = expf(*i); });
 #endif
   }
 
@@ -580,31 +580,19 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // idx_std_normalize
 
-  template<>
-  void idx_std_normalize(idx<ubyte> & in, idx<ubyte> & out,
-			 ubyte* mean) {
-#ifdef __IPP__
-    if (in.contiguousp() && out.contiguousp()) {
-      ipp_std_normalize(in, out, mean);
-      return;
-    }
-    eblerror("idx_std_normalize<ubyte> : can only be used with contiguous data");
-#else
-
-    eblerror("idx_std_normalize<ubyte> : can only be used with IPP (and contiguous data)");
-#endif
+  template<> void idx_std_normalize(idx<ubyte> & in, idx<ubyte> & out,
+	  ubyte* mean) {
+	eblerror("idx_std_normalize<ubyte> : makes no sense with an unsigned type");
   }
 
-  template<>
-  void idx_std_normalize(idx<uint16> & in, idx<uint16> & out,
+  template<> void idx_std_normalize(idx<uint16> & in, idx<uint16> & out,
 			 uint16* mean) {
-    eblerror("idx_std_normalize<uint16> : no implementation for uint16");
+    eblerror("idx_std_normalize<uint16> : makes no sense with an unsigned type");
   }
 
-  template<>
-  void idx_std_normalize(idx<uint32> & in, idx<uint32> & out,
+  template<> void idx_std_normalize(idx<uint32> & in, idx<uint32> & out,
 			 uint32* mean) {
-    eblerror("idx_std_normalize<uint32> : no implementation for uint32");
+    eblerror("idx_std_normalize<uint32> : makes no sense with an unsigned type");
   }
 
   template<> void idx_std_normalize(idx<float32> &in, idx<float32> &out,
@@ -624,7 +612,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // idx_dot
 
-#if defined(__IPP__) and defined(__IPP_DOT__)
+#if defined(__IPP__) && defined(__IPP_DOT__)
   idx_dot_macro(ubyte)
   idx_dot_macro(byte)
   idx_dot_macro(uint16)
@@ -725,6 +713,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // idx_m2dotm1acc
 
+#ifdef __CBLAS__
   // matrix-vector multiplication: y <- y + a.x
   void idx_m2dotm1acc(idx<double> &a, idx<double> &x, idx<double> &y) {
     check_m2dotm1(a,x,y);
@@ -739,7 +728,6 @@ namespace ebl {
     }
   }
 
-
   // matrix-vector multiplication: y <- y + a.x
   void idx_m2dotm1acc(idx<float> &a, idx<float> &x, idx<float> &y) {
     check_m2dotm1(a,x,y);
@@ -753,6 +741,7 @@ namespace ebl {
 		  1.0, y.idx_ptr(), y.mod(0));
     }
   }
+#endif
 
   ////////////////////////////////////////////////////////////////
   // idx_m1extm1

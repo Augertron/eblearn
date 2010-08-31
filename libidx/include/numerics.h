@@ -34,6 +34,9 @@
 
 #include "defines.h"
 #include <cmath>
+#ifdef __WINDOWS__
+#define isinf(a) (!_finite(a))
+#endif
 #include <limits>
 #include <cfloat>
 #include "defines.h"

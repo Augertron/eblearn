@@ -282,7 +282,7 @@ namespace ebl {
 #endif
 
   //! Add two idx's as follow: out = out + in, specialized float32 version
-  template<> EXPORT void idx_add(idx<float32> &in, idx<float32> &out);
+  //template<> EXPORT void idx_add(idx<float32> &in, idx<float32> &out);
 
   ////////////////////////////////////////////////////////////////
   // idx_addc
@@ -775,20 +775,20 @@ namespace ebl {
   // idx_exp
 
   //! computes the exponential of inp
-  template<class T> void idx_exp(idx<T>& inp);
+  template<class T> EXPORT void idx_exp(idx<T>& inp);
 
   //! computes the exponential of inp, float version
-  template<> void idx_exp(idx<float32>& inp);
+  template <> EXPORT void idx_exp(idx<float>& inp);
 
   //! computes the exponential of inp
-  template<> void idx_exp(idx<float64>& inp);
+  template <> EXPORT void idx_exp(idx<float64>& inp);
 
 #ifdef __IPP__
   //! exponential, specialized ubyte version
-  template<> void idx_exp(idx<ubyte>& inp);
+  template<> EXPORT void idx_exp(idx<ubyte>& inp);
 
   //! exponential, specialized uint16 version
-  template<> void idx_exp(idx<uint16>& inp);
+  template<> EXPORT void idx_exp(idx<uint16>& inp);
 
   //! exponential, specialized int16 version
   template<> void idx_exp(idx<int16>& inp);
@@ -931,27 +931,26 @@ namespace ebl {
   //! removes the mean of <in> and divide by the standard deviation.
   //! reuse <mean> if not null, otherwise recompute it.
   template <typename T>
-  void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean = NULL);
+  EXPORT void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean = (T*)NULL);
 
-  //! This template can only be used with ipps in contiguous case,
-  //! otherwise it returns an error
-  template<>
-  void idx_std_normalize(idx<ubyte> &in, idx<ubyte> &out, ubyte *mean);
+  //! his has no sense, it returns an error.
+  template <>
+  EXPORT void idx_std_normalize(idx<ubyte> &in, idx<ubyte> &out, ubyte *mean);
 
-  //! This template returns an error, and must not be used.
-  template<>
-  void idx_std_normalize(idx<uint16> &in, idx<uint16> &out, uint16 *mean);
+  //! his has no sense, it returns an error.
+  template <>
+  EXPORT void idx_std_normalize(idx<uint16> &, idx<uint16> &out, uint16 *mean);
 
-  //! This template returns an error, and must not be used.
-  template<>
-  void idx_std_normalize(idx<uint32> &in, idx<uint32> &out, uint32 *mean);
+  //! his has no sense, it returns an error.
+  template <>
+  EXPORT void idx_std_normalize(idx<uint32> &in, idx<uint32> &out, uint32 *mean);
 
 #ifdef __IPP__
   //! removes the mean of <in> and divide by the standard deviation.
   //! reuse <mean> if not null, otherwise recompute it.
   //! specialized float32 version
   template<>
-  void idx_std_normalize(idx<float32> &in, idx<float32> &out, float32 *mean);
+  EXPORT void idx_std_normalize(idx<float32> &in, idx<float32> &out, float32 *mean);
 #endif
   
   ////////////////////////////////////////////////////////////////
@@ -965,12 +964,12 @@ namespace ebl {
   //! dot product of two idx. Returns sum of product of all elements.
   EXPORT float64 idx_dot(idx<double> &i1, idx<double> &i2);
 #endif
-#if defined(__CBLAS__) or (defined(__IPP__) and defined(__IPP_DOT__))
+#if defined(__CBLAS__) || (defined(__IPP__) && defined(__IPP_DOT__))
   //! dot product of two idx. Returns sum of product of all elements.
   EXPORT float64 idx_dot(idx<float32> &i1, idx<float32> &i2);
 #endif
 
-#if defined(__IPP__) and defined(__IPP_DOT__)
+#if defined(__IPP__) && defined(__IPP_DOT__)
   //! dot product of two idx, specialized ubyte version
   template<> float64 idx_dot(idx<ubyte> &i1, idx<ubyte> &i2);
 

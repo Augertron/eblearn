@@ -1209,7 +1209,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////////////
   // idx_std_normalize
 
-  template<class T> void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean_) {
+  template<typename T> void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean_) {
     idx_checknelems2_all(in, out);
     T mean = mean_ ? *mean_ : idx_mean(in);
     idx_addc(in, (T)-mean, out); // remove mean
