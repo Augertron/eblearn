@@ -143,31 +143,38 @@ namespace ebl {
   void timer::pretty_elapsed() {
     pretty_secs(elapsed_seconds());
   }
-    
+
+  // second equivalences
+#define SECMIN 60
+#define SECHOUR 3600
+#define SECDAY 86400
+#define SECWEEK 604800
+#define SECMONTH 18144000
+  
   void timer::pretty_secs(long seconds) {
     long div, mod;
     bool pretty = false;
-    div = seconds / secmonth; mod = seconds % secmonth;
+    div = seconds / SECMONTH; mod = seconds % SECMONTH;
     if (div > 0 || pretty) {
       cout << div << "months ";
       pretty = true;
     }
-    div = mod / secweek; mod = mod % secweek;
+    div = mod / SECWEEK; mod = mod % SECWEEK;
     if (div > 0 || pretty) {
       cout << div << "weeks ";
       pretty = true;
     }
-    div = mod / secday; mod = mod % secday;
+    div = mod / SECDAY; mod = mod % SECDAY;
     if (div > 0 || pretty) {
       cout << div << "days ";
       pretty = true;
     }
-    div = mod / sechour; mod = mod % sechour;
+    div = mod / SECHOUR; mod = mod % SECHOUR;
     if (div > 0 || pretty) {
       cout << div << "hours ";
       pretty = true;
     }
-    div = mod / secmin; mod = mod % secmin;
+    div = mod / SECMIN; mod = mod % SECMIN;
     if (div > 0 || pretty) {
       cout << div << "mins ";
       pretty = true;

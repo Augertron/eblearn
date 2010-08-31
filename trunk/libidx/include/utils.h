@@ -91,9 +91,6 @@ namespace ebl {
 #else // linux & mac
     struct timeval t0, t1;
 #endif
-    // second equivalences
-    static const long secmin = 60, sechour = 3600, secday = 86400,
-      secweek = 604800, secmonth = 18144000;
   };
 
   //! Sleep for 'millis' milliseconds.
