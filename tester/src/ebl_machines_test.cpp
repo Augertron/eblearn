@@ -113,8 +113,8 @@ void ebl_machines_test::test_lenet5_mnist() {
 #ifdef __DEBUGMEM__
     pretty_memory();
 #endif
-    thetrainer.train(train_ds, trainmeter, gdp, 1);
-    train_ds.save_pickings();
+    thetrainer.train(train_ds, trainmeter, gdp, 1, infp);
+    //    train_ds.save_pickings();
     thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
     thetrainer.compute_diaghessian(train_ds, 100, 0.02);

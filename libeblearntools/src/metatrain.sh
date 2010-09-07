@@ -152,6 +152,9 @@ extract_falsepos() {
     echo "pruning = 0" >> $bestconf
     # oversample to n times input (capped by input_max)
     echo "max_scale = ${max_scale}" >> $bestconf
+    # do not change bbox
+    echo "bbhfactor = 1" >> $bestconf
+    echo "bbwfactor = 1" >> $bestconf
     # start parallelized extraction
     ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
     check_error $? 
@@ -201,7 +204,7 @@ compile_data() {
     for i in `seq 1 $draws`
     do
 	${eblearnbin}/dsmerge ${dataroot} ${traindsname}_${i} \
-	    allfp_train_${i} ${traindsname}_${i}
+	    ${traindsname}_${i} allfp_train_${i}
 	check_error $? 
     done
 
@@ -209,7 +212,7 @@ compile_data() {
     for i in `seq 1 $draws`
     do
 	${eblearnbin}/dsmerge ${dataroot} ${valdsname}_${i} \
-	    allfp_val_${i} ${valdsname}_${i}
+	    ${valdsname}_${i} allfp_val_${i} 
 	check_error $? 
     done
 }
@@ -241,7 +244,7 @@ retrain() {
 print_step() {
     # arguments ###############################################################
     step=$1
-    metaconf=$2
+    conf=$2
     lastname=$3
     lastdir=$4
     type=$5
@@ -249,7 +252,7 @@ print_step() {
     maxiteration=$7
     # function body ###########################################################
     echo "_________________________________________________________________"
-    echo "step ${step}: ${type} with metaconf ${metaconf}"
+    echo "step ${step}: ${type} with metaconf ${conf}"
     echo "lastname: ${lastname}"
     echo "lastdir: ${lastdir}"
     echo "maxiteration: ${maxiteration} iter: ${iter}"

@@ -133,7 +133,7 @@ int main(int argc, char **argv) { // regular main without gui
   cout << "Training network on MNIST with " << train_ds.size();
   cout << " training samples and " << test_ds.size() <<" test samples:" << endl;
   for (uint i = 0; i < conf.get_uint("iterations"); ++i) {
-    thetrainer.train(train_ds, trainmeter, gdp, 1);	         // train
+    thetrainer.train(train_ds, trainmeter, gdp, 1, infp);        // train
     thetrainer.test(train_ds, trainmeter, infp);	         // test
     thetrainer.test(test_ds, testmeter, infp);	                 // test
     theparam.save_x("mnist_trained_network.mat"); // save trained network

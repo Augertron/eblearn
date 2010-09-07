@@ -86,7 +86,7 @@ namespace ebl {
     _w1 = w0 + nw * (m.dim(1) + 1);
     display_wid = (wid >= 0) ? wid :
       (display_wid >= 0) ? display_wid :
-      new_window((wname ? wname : ds.name), 
+      new_window((wname ? wname : ds.name()), 
 		 nh * (ds.height + 1) - 1, 
 		 nw * (ds.width + 1) - 1);
     select_window(display_wid);
@@ -161,7 +161,7 @@ namespace ebl {
     _w1 = w0 + nw * (m.dim(1) + 1);
     display_wid = (wid >= 0) ? wid :
       (display_wid >= 0) ? display_wid :
-      new_window((wname ? wname : ds.name), 
+      new_window((wname ? wname : ds.name()), 
 		 nh * (ds.height + 1) - 1, 
 		 nw * (ds.width + 1) - 1);
     select_window(display_wid);
@@ -287,7 +287,7 @@ namespace ebl {
     this->_w1 = w0 + nw * (m.dim(1) + 1);
     this->display_wid = (wid >= 0) ? wid :
       (this->display_wid >= 0) ? this->display_wid :
-      new_window((wname ? wname : ds.name), 
+      new_window((wname ? wname : ds.name()), 
 		 nh * (ds.height + 1) - 1, 
 		 nw * (ds.width + 1) - 1);
     select_window(this->display_wid);

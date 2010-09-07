@@ -105,11 +105,16 @@ namespace ebl {
     //! or/and in a random order after each pass.
     //! When all samples of a class have been shown, it loops back to the first
     //! sample of that class. This should be used during training only.
-    //! \param callcnt A counter of the number of recursive calls, used
-    //!   to stop recursion if called more than the # of samples for cur class.
-    virtual void next_train(intg *callcnt = NULL);
+    //! If a sample was not selected because of a low probability, this will 
+    //! return false, if it was selected it returns true. In any case,
+    //! internal iterators will always be set to the next sample, regardless
+    //! if it was selected or not. It is up to the caller, to train on 
+    //! the sample if selected, or only test and update its energy if not
+    //! selected.
+    virtual bool next_train();
 
-    //! Set the distance between the answer of the model to train and the
+    //! Set the distance (or energy) between the answer of the model to train 
+    //! and the
     //! true answer. This is used to give more or less probability for a
     //! sample to be used for training. At the beginning of training, all
     //! samples start with a probability of 1, thus all samples are used,
@@ -121,7 +126,15 @@ namespace ebl {
     //! should be normalized so that a distance of 1 represents an offending
     //! answer.
     //! This is used only by next_train(), not by next().
-    virtual void set_answer_distance(double dist);
+    virtual void set_sample_energy(double e);
+
+    //! Normalize picking probabilities by maximum probability for all classes 
+    //! if perclass_norm is true, or globally otherwise.
+    virtual void normalize_all_probas();
+
+    //! Normalize picking probabilities by maximum probability of classid if 
+    //! perclass_norm is true, or globally otherwise.
+    virtual void normalize_probas(int classid = -1);
 
     //! Set the minimum probaility of a sample to be picked by next_train().
     //! By default, this is zero. Acceptable range is [0 .. 1].
@@ -190,14 +203,49 @@ namespace ebl {
     //! Default behavior can be overriden with set_epoch_size().
     virtual intg get_epoch_size();
 
+    //! Return the number of samples this epoch has processed.
+    virtual intg get_epoch_count();
+
     //! Set the number of samples to train on for one epoch.
     //! If not called, default number used is the one returned
     //! by get_lowest_common_size().
     virtual void set_epoch_size(intg sz);
 
+    //! Set the epoch mode, i.e. how samples are presented for training.
+    //! 0: show a fixed number of samples (set by set_epoch_size()).
+    //! 1: show all samples at least once (samples may be shown multiple times
+    //!    if a class is unbalanced and the balance mode is activated).
+    virtual void set_epoch_mode(uint mode);
+
+    //! Return true if current epoch is finished. Call init_epoch() to
+    //! restart a new epoch.
+    virtual bool epoch_done();
+
+    //! Restarts a new epoch.
+    virtual void init_epoch();
+
     //! Output statistics of samples picking, i.e. the number of times each
     //! sample has been picked for training.
     virtual void save_pickings(const char *name = NULL);
+    
+    //! Return true if counting of pickings is enabled.
+    virtual bool get_count_pickings();
+    
+    //! Enable or disable the counting of pickings.
+    virtual void set_count_pickings(bool count = true);
+    
+    //! Return name of dataset.
+    virtual string& name();
+
+    //! Save internal iterators. Calling restore_state() will return to the
+    //! current sample.
+    virtual void save_state();
+    
+    //! Restore previously saved internal iterators.
+    virtual void restore_state();
+
+    //! Print training count every module samples.
+    virtual void set_epoch_show(uint modulo);
     
     ////////////////////////////////////////////////////////////////
   protected:    
@@ -226,7 +274,11 @@ namespace ebl {
     idx<Tin1>					data; // samples
     idx<Tin2>					labels; // labels
     idx<double>					probas;//!< sample probabilities
+    idx<double>					energies;//!< sample energies
     idx<uint>                                   pick_count;//!< count pickings.
+    bool                                        count_pickings;
+    bool                                        count_pickings_save;
+    bool                                        state_saved;
     // regular iterators
     typename idx<Tin1>::dimension_iterator	dataIter;
     typename idx<Tin2>::dimension_iterator	labelsIter;
@@ -237,17 +289,24 @@ namespace ebl {
     typename idx<Tin1>::dimension_iterator	dataIter_train;
     typename idx<Tin2>::dimension_iterator	labelsIter_train;
     typename idx<double>::dimension_iterator	probasIter_train;
+    typename idx<double>::dimension_iterator	energiesIter_train;
     typename idx<uint>::dimension_iterator	pickIter_train;
     unsigned int				height;
     unsigned int				width;
-    string					name;
+    string					_name;
   protected:
     bool					balance;
     vector<vector<intg> >                       label_indices;
+    vector<vector<intg> >                       label_indices_saved;
     vector<uint>                                indices_itr;
+    vector<uint>                                indices_itr_saved;
+    vector<uint>                                epoch_done_counters;
     vector<intg>                                ub_indices; //! unbalanced ids.
     vector<intg>::iterator                      ub_itr; //! unbalanced itr.
+    vector<intg>::iterator                      ub_itr_saved;
     uint                                        iitr;
+    uint                                        iitr_saved;
+    intg                                        isample; //! cur sample index
     // switches to activate or deactivate features
     bool                                        shuffle_passes;
     bool                                        weigh_samples;
@@ -256,6 +315,10 @@ namespace ebl {
     bool                                        discrete_labels;
     double                                      sample_min_proba;
     intg                                        epoch_sz;
+    intg                                        epoch_cnt;
+    uint                                        epoch_show; // show modulo
+    uint                                        epoch_mode;
+    uint                                        not_picked;                     
   };
 
   ////////////////////////////////////////////////////////////////

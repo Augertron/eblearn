@@ -151,7 +151,8 @@ namespace ebl {
     //! <update-args> is a list of arguments for the parameter
     //! update method (e.g. learning rate and weight decay).
     void train(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
-	       classifier_meter &log, gd_param &args, int niter);
+	       classifier_meter &log, gd_param &args, int niter,
+	       infer_param &infp);
 
     //! compute hessian
     void compute_diaghessian(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
