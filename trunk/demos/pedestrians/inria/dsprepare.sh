@@ -12,9 +12,10 @@ meta_email=${myemail} # email to use (use environment variable "myemail")
 # ped dataset compilation
 machine=${HOSTNAME}a
 root=~/${machine}data/ped/${dsname}/
-dataroot=$root/train/data/
-positive_root=$dataroot/ped/
-negative_root=$dataroot/bg/
+dataroot_pos=$root/train/data_pos/
+dataroot_neg=$root/train/data_neg/
+positive_root=$dataroot_pos/ped/
+negative_root=$dataroot_neg/bg/
 full_negative_root=$root/train/bg_full
 out=$root/ds/
 bin=${HOME}/eblearn/bin/
@@ -31,11 +32,13 @@ resize=mean #bilinear
 nbg=1 # maximum number of bg extracted per scale
 # scales in bg images, in terms of factor of the target size, i.e. hxw * scale
 bgscales=6,3,1
-maxbg=3000 # initial number of negatives
+maxbg=1500 # initial number of negatives
 
 # names
 id=${resize}${h}x${w}_ker${kernel}
 name=${dsname}_${id}
+name_pos=${name}_pos
+name_neg=${name}_neg
 namebg=${name}_bg
 bgds=nopersons_${id}
 outbg=${out}/${bgds}
@@ -49,6 +52,7 @@ debug= #"$maxdata $maxperclass $ddisplay"
 # create directories
 mkdir -p $out
 mkdir -p $outbg
+mkdir -p $negative_root
 
 ###############################################################################
 # one-time dataset preparations
@@ -59,7 +63,7 @@ mkdir -p $outbg
 
 # # extract 'inside' windows (zoom inside bounding box) 
 # # from all positive examples as negative examples
-# $bin/dscompiler $dataroot -precision $precision \
+# $bin/dscompiler $dataroot_pos -precision $precision \
 #     -outdir $full_negative_root/bg/inside -save mat -resize $resize \
 #     -bboxhfact .6 -bboxwfact .41 $debug
 
@@ -82,19 +86,27 @@ $bin/dscompiler $full_negative_root -type patch -precision $precision \
 $bin/dscompiler ${outbg} -precision $precision \
     -outdir ${out} -dname ${bgds} -dims ${h}x${w}x${chans} $debug
 
-# compile regular dataset
+# compile regular POSITIVE ONLY dataset
 # crop inria so that the window height is 1.3 the height of the pedestrians,
 # i.e. H96 gives 125 window height, and cropping factor of .78
 # then width target is 62.4, yielding cropping factor of .65
-$bin/dscompiler $dataroot -precision $precision -outdir ${out} -channels $pp \
-    -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
+$bin/dscompiler ${dataroot_pos} -precision $precision -outdir ${out} -channels $pp \
+    -dname ${name_pos} -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
     -bboxhfact .78 -bboxwfact .65 $debug
+
+# compile regular negative dataset (no cropping)
+$bin/dscompiler ${dataroot_neg} -precision $precision -outdir ${out} -channels $pp \
+    -dname ${name_neg} -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
+    $debug
 
 # delete temporary images
 rm -Rf $outbg
 
 # merge normal dataset with background dataset
-$bin/dsmerge $out ${namebg} ${bgds} ${name}
+$bin/dsmerge $out ${name_neg} ${bgds} ${name_neg}
+
+# merge normal positive and negative datasets
+$bin/dsmerge $out ${namebg} ${name_pos} ${name_neg}
 
 # split validation and training
 $bin/dssplit $out ${namebg} \

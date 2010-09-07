@@ -55,31 +55,31 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 
 typedef double t_net; // precision at which network is trained (ideally double)
 
-// // temporary code
-// void koray_temp(configuration &conf, layers<t_net> &net) {
-//   ostringstream m;
-//   idx<t_net> mat;
-//   m.str(""); m << conf.get_string("koray_dir")
-// 	       << conf.get_string("wkoray") << "_conv0_kernel.x.mat";
-//   mat = load_matrix<t_net>(m.str());
-//   idx_copy(mat, ((convolution_module<t_net>*)((*net.modules)[0]))->kernel.x);
+// temporary code
+void koray_temp(configuration &conf, layers<t_net> &net) {
+  ostringstream m;
+  idx<t_net> mat;
+  m.str(""); m << conf.get_string("koray_dir")
+	       << conf.get_string("wkoray") << "_conv0_kernel.x.mat";
+  mat = load_matrix<t_net>(m.str());
+  idx_copy(mat, ((convolution_module<t_net>*)((*net.modules)[0]))->kernel.x);
 
-//   m.str(""); m << conf.get_string("koray_dir")
-// 	       << conf.get_string("wkoray") << "_bias0_bias.x.mat";
-//   mat = load_matrix<t_net>(m.str());
-//   idx_copy(mat, ((addc_module<t_net>*)((*net.modules)[1]))->bias.x);
-//   if (conf.exists_bool("use_shrink")) {
-//     m.str(""); m << conf.get_string("koray_dir")
-// 		 << conf.get_string("wkoray") << "_shrink0_bias.x.mat";
-//     mat = load_matrix<t_net>(m.str());
-//     idx_copy(mat, ((smooth_shrink_module<t_net>*)((*net.modules)[2]))->bias.x);
+  m.str(""); m << conf.get_string("koray_dir")
+	       << conf.get_string("wkoray") << "_bias0_bias.x.mat";
+  mat = load_matrix<t_net>(m.str());
+  idx_copy(mat, ((addc_module<t_net>*)((*net.modules)[1]))->bias.x);
+  if (conf.exists_bool("use_shrink")) {
+    m.str(""); m << conf.get_string("koray_dir")
+		 << conf.get_string("wkoray") << "_shrink0_bias.x.mat";
+    mat = load_matrix<t_net>(m.str());
+    idx_copy(mat, ((smooth_shrink_module<t_net>*)((*net.modules)[2]))->bias.x);
     
-//     m.str(""); m << conf.get_string("koray_dir")
-// 		 << conf.get_string("wkoray") << "_shrink0_beta.x.mat";
-//     mat = load_matrix<t_net>(m.str());
-//     idx_copy(mat, ((smooth_shrink_module<t_net>*)((*net.modules)[2]))->beta.x);
-//   }
-// }
+    m.str(""); m << conf.get_string("koray_dir")
+		 << conf.get_string("wkoray") << "_shrink0_beta.x.mat";
+    mat = load_matrix<t_net>(m.str());
+    idx_copy(mat, ((smooth_shrink_module<t_net>*)((*net.modules)[2]))->beta.x);
+  }
+}
 
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
@@ -104,13 +104,19 @@ int main(int argc, char **argv) { // regular main without gui
       train_ds(conf.get_cstring("root"),conf.get_cstring("train"),"train"),
       test_ds(conf.get_cstring("root"), conf.get_cstring("val"), "val");
     test_ds.set_test(); // test is the test set, used for reporting
-    train_ds.set_weigh_samples(conf.exists_bool("wsamples"));
-    train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));
+    train_ds.set_weigh_samples(conf.exists_bool("sample_probabilities"));
+    train_ds.set_weigh_normalization(conf.exists_true("per_class_norm"));
+    if (conf.exists("min_sample_weight"))
+      train_ds.set_min_proba(conf.get_double("min_sample_weight"));
     train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
     if (conf.exists("balanced_training"))
       train_ds.set_balanced(conf.get_bool("balanced_training"));
     if (conf.exists("epoch_size"))
       train_ds.set_epoch_size(conf.get_int("epoch_size"));
+    if (conf.exists("epoch_mode"))
+      train_ds.set_epoch_mode(conf.get_uint("epoch_mode"));
+    if (conf.exists("epoch_show_modulo"))
+      train_ds.set_epoch_show(conf.get_uint("epoch_show_modulo"));
 
     //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
     idx<t_net> targets =
@@ -134,10 +140,10 @@ int main(int argc, char **argv) { // regular main without gui
       cout << "Initializing weights from random." << endl;
       thenet.forget(fgp);
     }
-    // if ((!conf.exists_bool("retrain")) && (conf.exists_bool("koray"))) {
-    //   cout << "Initializing some weights from koray." << endl;
-    //   koray_temp(conf, *((layers<t_net>*)net));
-    // }
+    if ((!conf.exists_bool("retrain")) && (conf.exists_bool("koray"))) {
+      cout << "Initializing some weights from koray." << endl;
+      koray_temp(conf, *((layers<t_net>*)net));
+    }
 
     //! a classifier-meter measures classification errors
     classifier_meter trainmeter, testmeter;
@@ -164,28 +170,32 @@ int main(int argc, char **argv) { // regular main without gui
     }
 #endif
 
+    timer titer, ttest;
     // first show classification results without training
+    ttest.restart();
     if (!conf.exists_bool("no_training_test"))
       thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
+    cout << "testing_time="; ttest.pretty_elapsed(); cout << endl;
 
     // now do training iterations 
     cout << "Training network with " << train_ds.size();
     cout << " training samples and " << test_ds.size() <<" val samples for " 
 	 << conf.get_uint("iterations") << " iterations:" << endl;
     ostringstream name, fname;
-    timer titer, ttest;
+    intg dh = conf.exists("ndiaghessian") ? conf.get_int("ndiaghessian") : 100;
     for (uint i = 1; i <= conf.get_uint("iterations"); ++i) {
       titer.restart();
       // estimate second derivative on 100 iterations, using mu=0.02
-      thetrainer.compute_diaghessian(train_ds, 100, 0.02);
+      thetrainer.compute_diaghessian(train_ds, dh, 0.02);
       // train and test
-      thetrainer.train(train_ds, trainmeter, gdp, 1);	// train
+      thetrainer.train(train_ds, trainmeter, gdp, 1, infp); // train
       ttest.restart();
       if (!conf.exists_bool("no_training_test"))
 	thetrainer.test(train_ds, trainmeter, infp);	// test
       thetrainer.test(test_ds, testmeter, infp);	// test
       cout << "test_minutes=" << ttest.elapsed_minutes() << endl;
+      cout << "testing_time="; ttest.pretty_elapsed(); cout << endl;
       
       // save samples picking statistics
       if (conf.exists_true("save_pickings")) {
@@ -211,6 +221,7 @@ int main(int argc, char **argv) { // regular main without gui
       }
 #endif
       cout << "iteration_minutes=" << titer.elapsed_minutes() << endl;
+      cout << "iteration_time="; titer.pretty_elapsed(); cout << endl;
       cout << "timestamp=" << tstamp() << endl;
     }
     // free variables

@@ -39,34 +39,37 @@
 using namespace std;
 
 namespace ebl {
-
+ 
   ////////////////////////////////////////////////////////////////
   // datasource
 
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::datasource()
     : nclasses(0), bias(0), coeff(1.0), data(1), labels(1), probas(1),
-      pick_count(1),
+      energies(1), pick_count(1), count_pickings(true), state_saved(false),
       dataIter(data, 0), labelsIter(labels, 0), 
       dataIter_test(data, 0), labelsIter_test(labels, 0), 
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
-      probasIter_train(probas, 0), pickIter_train(pick_count, 0),
-      height(0), width(0), balance(true), test_set(false),
-      sample_min_proba(0.0), epoch_sz(0) {
+      probasIter_train(probas, 0), energiesIter_train(energies, 0),
+      pickIter_train(pick_count, 0),
+      height(0), width(0), balance(true), isample(0), test_set(false),
+      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_mode(1) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::
   datasource(const datasource<Tnet, Tin1, Tin2> &ds)
     : nclasses(0), bias(ds.bias), coeff(ds.coeff), data(ds.data),
-      labels(ds.labels), probas(ds.probas), pick_count(ds.pick_count),
-      dataIter(data, 0), labelsIter(labels, 0),
+      labels(ds.labels), probas(ds.probas), energies(ds.energies),
+      pick_count(ds.pick_count), count_pickings(ds.count_pickings),
+      state_saved(false), dataIter(data, 0), labelsIter(labels, 0),
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
-      probasIter_train(probas, 0), pickIter_train(pick_count, 0),
-      height(ds.height), width(ds.width), name(ds.name), balance(true),
-      test_set(false),
-      sample_min_proba(0.0), epoch_sz(0) {
+      probasIter_train(probas, 0), energiesIter_train(energies, 0),
+      pickIter_train(pick_count, 0),
+      height(ds.height), width(ds.width), _name(ds._name), balance(true),
+      isample(0), test_set(false),
+      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_mode(1) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -74,13 +77,16 @@ namespace ebl {
   datasource(idx<Tin1> &data_, idx<Tin2> &labels_, const char *name_,
 	     Tin1 b, float c)
     : nclasses(0), bias(b), coeff(c), data(data_), labels(labels_),
-      probas(data_.dim(0)), pick_count(data_.dim(0)),
+      probas(data_.dim(0)), energies(data_.dim(0)), pick_count(data_.dim(0)),
+      count_pickings(true), state_saved(false),
       dataIter(data, 0), labelsIter(labels, 0),
       dataIter_test(data, 0), labelsIter_test(labels, 0),
       dataIter_train(data, 0), labelsIter_train(labels, 0), 
-      probasIter_train(probas, 0), pickIter_train(pick_count, 0),
-      height(data.dim(1)), width(data.dim(2)), balance(true), test_set(false),
-      sample_min_proba(0.0), epoch_sz(0) {
+      probasIter_train(probas, 0), energiesIter_train(energies, 0),
+      pickIter_train(pick_count, 0),
+      height(data.dim(1)), width(data.dim(2)), balance(true), isample(0), 
+      test_set(false),
+      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_mode(1) {
     init(data_, labels_, name_, b, c);
   }
 
@@ -97,17 +103,19 @@ namespace ebl {
     data = data_;
     labels = labels_;
     probas = idx<double>(data.dim(0));
+    energies = idx<double>(data.dim(0));
     pick_count = idx<uint>(data.dim(0));
     idx_clear(pick_count);
     dynamic_init_drand(); // initialize random seed
     // default probability for a sample of being used is 1
     idx_fill(probas, 1.0);
+    idx_fill(energies, -1.0);
     height = data.dim(1);
     width = data.dim(2);
     nclasses = (intg) idx_max(labels) + 1;
     bias = b;
     coeff = c;
-    name = (name_ ? name_ : "Unknown Dataset");
+    _name = (name_ ? name_ : "Unknown Dataset");
     // regular iterators
     typename idx<Tin1>::dimension_iterator	 dIter(data, 0);
     typename idx<Tin2>::dimension_iterator	 lIter(labels, 0);
@@ -122,10 +130,12 @@ namespace ebl {
     typename idx<Tin1>::dimension_iterator	 dIter_train(data, 0);
     typename idx<Tin2>::dimension_iterator	 lIter_train(labels, 0);
     typename idx<double>::dimension_iterator	 pIter_train(probas, 0);
+    typename idx<double>::dimension_iterator	 eIter_train(energies, 0);
     typename idx<uint>::dimension_iterator	 pcIter_train(pick_count, 0);
     dataIter_train = dIter_train;
     labelsIter_train = lIter_train;
     probasIter_train = pIter_train;
+    energiesIter_train = eIter_train;
     pickIter_train = pcIter_train;
     // count number of samples per class if discrete
     if (discrete_labels) {
@@ -142,8 +152,12 @@ namespace ebl {
     datasource<Tnet, Tin1, Tin2>::pretty();
     seek_begin();
     seek_begin_train();
-    epoch_sz = get_lowest_common_size();
-    cout << "Each training epoch sees " << epoch_sz << " samples." << endl;
+    epoch_sz = size(); //get_lowest_common_size();
+    epoch_mode = 1;
+    cout << _name << ": Each training epoch sees " << epoch_sz << " samples." << endl;
+    init_epoch();
+    not_picked = 0;
+    epoch_show = 50; // print epoch count message every epoch_show
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -235,24 +249,53 @@ namespace ebl {
     // draw random number between 0 and 1 and return true if lower
     // than sample's probability.
     double r = drand(); // [0..1]
-    if (r <= probasIter_train->get()) {
-      // increment pick counter for this sample
-      pickIter_train->set(pickIter_train->get() + 1);
+    if (r <= probasIter_train->get())
       return true;
+    return false;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  bool datasource<Tnet, Tin1, Tin2>::epoch_done() {
+    switch (epoch_mode) {
+    case 0: // fixed number of samples
+      if (epoch_cnt >= epoch_sz)
+	return true;
+      break ;
+    case 1: // see all samples at least once
+      if (balance) {
+	// check that all classes are done
+	for (uint i = 0; i < epoch_done_counters.size(); ++i) {
+	  if (epoch_done_counters[i])
+	    return false;
+	}
+	return true; // all classes are done
+      } else { // do not balance, use epoch_sz
+	if (epoch_cnt >= epoch_sz)
+	  return true;
+      }
+      break ;
+    default: eblerror("unknown epoch_mode");
     }
     return false;
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::next_train(intg *callcnt) {
+  void datasource<Tnet, Tin1, Tin2>::init_epoch() {
+    epoch_cnt = 0;
+    if (balance) {
+      // for balanced training, set each class to not done.
+      for (uint k = 0; k < label_indices.size(); ++k)
+	epoch_done_counters[k] = label_indices[k].size();
+    }
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  bool datasource<Tnet, Tin1, Tin2>::next_train() {
     // check that this datasource is allowed to call this method
     if (test_set)
       eblerror("forbidden call of next_train() on testing sets");
-    // count how many times this recursion was called
-    intg callcnt2 = 0;
-    if (!callcnt)
-      callcnt = &callcnt2;
-    (*callcnt)++;
+    bool pick = false;
+    not_picked++;
     // return samples in original order, regardless of their class
     if (!balance) {
       // increment iterators
@@ -265,44 +308,38 @@ namespace ebl {
 	// reset iterator
 	ub_itr = ub_indices.begin();
 	// normalize probabilities for all classes, mapping [0..max] to [0..1]
-	if (weigh_samples) {
-	  double maxproba = idx_max(probas);
-	  if (maxproba == 0)
-	    maxproba = 1.0;
-	  idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
-	}
+	if (weigh_samples) 
+	  normalize_probas();
       }
       dataIter_train = dataIter_train.at(*ub_itr);
       labelsIter_train = labelsIter_train.at(*ub_itr);
       probasIter_train = probasIter_train.at(*ub_itr);
+      energiesIter_train = energiesIter_train.at(*ub_itr);
       pickIter_train = pickIter_train.at(*ub_itr);
+      isample = *ub_itr; // current sample's index
       // recursively loop until we find a sample that is picked for this class
-      if (!pick_current())
-	return next_train(callcnt);
-    }
-    else { // return samples in class-balanced order
+      pick = pick_current();
+    } else { // return samples in class-balanced order
       // get pointer to first non empty class
       while (!label_indices[iitr].size()) {
 	iitr++; // next class if class is empty
 	if (iitr >= label_indices.size())
 	  iitr = 0;
       }
-      // recursion failsafe, allow 1000 max recursions
-      if (callcnt && *callcnt > MIN(1000, (intg) label_indices[iitr].size())) {
-	// we called recursion on this method more than number of class samples
-	// give up and go to next class
-	iitr++; // next class
-	if (iitr >= label_indices.size())
-	  iitr = 0; // reseting to first class in class list
-	return next_train();
-      }
       intg i = label_indices[iitr][indices_itr[iitr]];
       //      cout << "#" << i << "/" << iitr << " ";
       dataIter_train = dataIter_train.at(i);
       labelsIter_train = labelsIter_train.at(i);
       probasIter_train = probasIter_train.at(i);
+      energiesIter_train = energiesIter_train.at(i);
       pickIter_train = pickIter_train.at(i);
+      isample = i; // current sample's index
       indices_itr[iitr] += 1;
+      // decide if we want to select this sample for training
+      pick = pick_current();
+      // decrement epoch counter
+      if (epoch_done_counters[iitr] > 0)
+	epoch_done_counters[iitr] = epoch_done_counters[iitr] - 1;
       if (indices_itr[iitr] >= label_indices[iitr].size()) {
 	// returning to begining of list for this class
 	indices_itr[iitr] = 0;
@@ -311,60 +348,130 @@ namespace ebl {
 	  vector<intg> &clist = label_indices[iitr];
 	  random_shuffle(clist.begin(), clist.end());
 	}
-	if (weigh_samples) {
-	  if (perclass_norm) {
-	    // normalize probas for this class, mapping [0..max] to [0..1]
-	    double maxproba = 0;
-	    // get max
-	    for (vector<intg>::iterator j = label_indices[iitr].begin();
-		 j != label_indices[iitr].end(); ++j)
-	      maxproba = (std::max)(probasIter_train.at(*j)->get(), maxproba);
-	    // cout << "normalizing with maxproba for class "
-	    //      << iitr << ": " << maxproba << endl;
-	    // set normalized proba
-	    double avg = 0;
-	    for (vector<intg>::iterator j = label_indices[iitr].begin();
-		 j != label_indices[iitr].end(); ++j) {
-	      probasIter_train.at(*j)->set((maxproba == 0) ? 1.0 :
-					   probasIter_train.at(*j)->get() 
-					   / maxproba);
-	      avg = probasIter_train.at(*j)->get();
-	    }
-	    //	  cout << "avg proba = " << avg / maxproba << endl;
-	  } else {
-	    // normalize probas for all classes, mapping [0..max] to [0..1]
-	    double maxproba = idx_max(probas);
-	    if (maxproba == 0)
-	      maxproba = 1.0;
-	    idx_dotc(probas, (maxproba == 0) ? 1.0 : 1 / maxproba, probas);
-	  }
-	}
+	normalize_probas(iitr);
       }
-      // recursively loop until we find a sample that is picked for this class
-      if (!pick_current())
-	return next_train(callcnt);
-      else { // if we picked a sample, jump to next class
-	iitr++; // next class
-	if (iitr >= label_indices.size())
-	  iitr = 0; // reseting to first class in class list
+      // recursion failsafe, allow 1000 max recursions
+      if (not_picked > MIN(1000, (intg) label_indices[iitr].size())) {
+	// we called recursion on this method more than number of class samples
+	// give up and show current sample
+	pick = true;
       }
     }
     // set regular iters used by fprop
     dataIter = dataIter_train;
     labelsIter = labelsIter_train;
+    if (pick) {
+      // increment pick counter for this sample
+      if (count_pickings)
+	pickIter_train->set(pickIter_train->get() + 1);
+#ifdef __DEBUG__
+	cout << "Picking sample " << isample << " (label: " << labelsIter.get()
+	     << ", pickings: " << pickIter_train->get() << ", energy: "
+	     << energiesIter_train->get();
+	if (weigh_samples)
+	  cout << ", proba: " << probasIter_train->get();
+	cout << ")" << endl;
+#endif
+      // if we picked a sample, jump to next class
+      iitr++; // next class
+      if (iitr >= label_indices.size())
+	iitr = 0; // reseting to first class in class list
+      // increment sample counter
+      epoch_cnt++;
+      not_picked = 0;
+      if (epoch_show > 0 && epoch_cnt % epoch_show == 0)
+	cout << "epoch_cnt: " << epoch_cnt << endl;
+      return true;
+  } else {
+#ifdef __DEBUG__
+      cout << "Not picking sample " << isample << " (label: " << labelsIter.get()
+	   << ", proba: " << probasIter_train->get() << ", energy: "
+	   << energiesIter_train->get() << ") " << endl;
+#endif
+      return false;
+    }
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::set_answer_distance(double dist) {
+  void datasource<Tnet, Tin1, Tin2>::normalize_all_probas() {
+    if (weigh_samples) {
+      if (perclass_norm && balance) {
+	for (uint i = 0; i < label_indices.size(); ++i)
+	  normalize_probas(i);
+      } else
+	normalize_probas();
+    }
+  }
+    
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::normalize_probas(int classid) {
+    double maxproba, minproba, maxenergy;
+    if (weigh_samples && !is_test()) {
+      if (perclass_norm && balance) {
+	uint iitr = (uint) classid;
+	if (classid < 0)
+	  eblerror("class id cannot be negative");
+	// normalize probas for this class, mapping [0..max] to [0..1]
+	maxenergy = 0;
+	// get max
+	for (vector<intg>::iterator j = label_indices[iitr].begin();
+	     j != label_indices[iitr].end(); ++j)
+	  maxenergy = (std::max)(energiesIter_train.at(*j)->get(), maxenergy);
+	cout << _name << ": Normalizing probabilities for class " << iitr
+	     << ", with maximum energy " << maxenergy;
+	for (vector<intg>::iterator j = label_indices[iitr].begin();
+	     j != label_indices[iitr].end(); ++j) {
+	  // compute probas
+	  double e = energiesIter_train.at(*j)->get();
+	  if (e < 0 || maxenergy == 0) // energy not set yet
+	    probasIter_train.at(*j)->set(1.0);
+	  else
+	    probasIter_train.at(*j)->set((std::max)(sample_min_proba, 
+						    e / maxenergy));
+	  // first time, init min and max
+	  if (j == label_indices[iitr].begin()) {
+	    maxproba = probasIter_train.at(*j)->get();
+	    minproba = probasIter_train.at(*j)->get();
+	  } else {
+	    maxproba = (std::max)(probasIter_train.at(*j)->get(), maxproba);
+	    minproba = (std::min)(probasIter_train.at(*j)->get(), minproba);
+	  }
+	}
+	//	  cout << "avg proba = " << avg / maxproba << endl;
+      } else {
+	// normalize probas for all classes, mapping [0..max] to [0..1]
+	maxenergy = idx_max(energies);
+	cout << _name << ": Normalizing probabilities with maximum energy: " 
+	     << maxenergy;
+	if (maxenergy <= 0)
+	  maxenergy = 1.0;
+	idx_bloop2(e, energies, double, p, probas, double) {
+	  if (e.get() < 0 || maxenergy == 0)
+	    p.set(1.0); // energy hasn't been set yet, use proba 1.
+	  else
+	    p.set(e.get() / maxenergy);
+	}
+	idx_threshold(probas, sample_min_proba);
+	maxproba = idx_max(probas);
+	minproba = idx_min(probas);
+      }
+      cout << ", Min/Max probas are: " << minproba << ", "
+	   << maxproba << endl;
+    }  
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_sample_energy(double e) {
     if (weigh_samples) { // if false, keep default probability 1 for all samples
-      probasIter_train->set((std::max)(sample_min_proba, MIN(1.0, fabs(dist))));
+      energiesIter_train->set(fabs(e));
+      //      probasIter_train->set((std::max)(sample_min_proba, MIN(1.0, fabs(dist))));
     }
   }
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_min_proba(double min_proba) {
     sample_min_proba = MIN(1.0, min_proba);
-    cout << "Setting minimum probability to " << sample_min_proba << endl;
+    cout << _name << ": Setting minimum probability to " << sample_min_proba << endl;
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -381,6 +488,7 @@ namespace ebl {
     dataIter_train = data.dim_begin(0);
     labelsIter_train = labels.dim_begin(0);
     probasIter_train = probas.dim_begin(0);
+    energiesIter_train = energies.dim_begin(0);
     pickIter_train = pick_count.dim_begin(0);
     // set regular iters used by fprop
     dataIter = dataIter_train;
@@ -391,7 +499,7 @@ namespace ebl {
   void datasource<Tnet, Tin1, Tin2>::set_balanced(bool bal) {
     balance = bal;
     if (!balance) { // unbalanced
-      cout << "Setting training as unbalanced (not taking class "
+      cout << _name << ": Setting training as unbalanced (not taking class "
 	   << "distributions into account)." << endl;
       // initialize a random list of indexes for each sample, so that
       // we can randomize the access without moving data around.
@@ -402,12 +510,13 @@ namespace ebl {
       // reset iterator to 0
       ub_itr = ub_indices.begin();
     } else { // balanced
-      cout << "Setting training as balanced (taking class "
+      cout << _name << ": Setting training as balanced (taking class "
 	   << "distributions into account)." << endl;
       if (discrete_labels) {
 	// compute vector of sample indices for each class
 	label_indices.clear();
 	indices_itr.clear();
+	epoch_done_counters.clear();
 	iitr = 0;
 	for (intg i = 0; i < nclasses; ++i) {
 	  vector<intg> indices;
@@ -417,6 +526,12 @@ namespace ebl {
 	// distribute sample indices into each vector based on label
 	for (uint i = 0; i < size(); ++i)
 	  label_indices[(intg) (labels.get(i))].push_back(i);
+	for (uint i = 0; i < label_indices.size(); ++i) {
+	  // shuffle
+	  random_shuffle(label_indices[i].begin(), label_indices[i].end());
+	  // init epoch counters
+	  epoch_done_counters.push_back(label_indices[i].size());
+	}
       } else
 	cerr << "warning: cannot use balanced() with continuous labels" << endl;
     }
@@ -425,21 +540,21 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_shuffle_passes(bool activate) {
     shuffle_passes = activate;
-    cout << "Shuffling of samples (training only) after each pass is "
+    cout << _name << ": Shuffling of samples (training only) after each pass is "
 	 << (shuffle_passes ? "activated" : "deactivated") << "." << endl;
   }
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_weigh_samples(bool activate) {
     weigh_samples = activate;
-    cout << "Weighing of samples (training only) based on classification is "
+    cout << _name << ": Weighing of samples (training only) based on classification is "
 	 << (weigh_samples ? "activated" : "deactivated") << "." << endl;
   }
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_weigh_normalization(bool perclass) {
     perclass_norm = perclass;
-    cout << "Weighing normalization (training only) is "
+    cout << _name << ": Weighing normalization (training only) is "
 	 << (perclass_norm ? "per class" : "global") << "." << endl;
   }
   
@@ -454,9 +569,25 @@ namespace ebl {
   }
 
   template <class Tnet, class Tin1, class Tin2>
+  intg datasource<Tnet, Tin1, Tin2>::get_epoch_count() {
+    return epoch_cnt;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_epoch_size(intg sz) {
-    cout << "Setting epoch size to " << sz << endl;
+    cout << _name << ": Setting epoch size to " << sz << endl;
     epoch_sz = sz;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_epoch_mode(uint mode) {
+    epoch_mode = mode;
+    cout << _name << ": Setting epoch mode to " << epoch_mode;
+    switch (epoch_mode) {
+    case 0: cout << " (fixed number of samples)" << endl; break ;
+    case 1: cout << " (see all samples at least once)" << endl; break ;
+    default: eblerror("unknown mode");
+    }
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -478,13 +609,13 @@ namespace ebl {
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::pretty() {
-    cout << "Dataset \"" << name << "\" contains " << data.dim(0);
+    cout << _name << ": Dataset \"" << _name << "\" contains " << data.dim(0);
     cout << " samples of dimension " << sample_dims();
     if (discrete_labels)
       cout << " with " << get_nclasses() << " classes," << endl;
     else
       cout << " with continous labels," << endl;
-    cout << "bias is " << bias << ", coefficient is " << coeff;
+    cout << _name << ": bias is " << bias << ", coefficient is " << coeff;
     if (discrete_labels)
       cout << " and iteration size in samples is " << get_lowest_common_size();
     cout << "." << endl;
@@ -493,7 +624,7 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_test() {
     test_set = true;
-    cout << "This is a testing set only." << endl;
+    cout << _name << ": This is a testing set only." << endl;
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -503,6 +634,7 @@ namespace ebl {
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::save_pickings(const char *name_) {
+    // plot file
     string name = "pickings";
     if (name_)
       name = name_;
@@ -518,7 +650,8 @@ namespace ebl {
     for ( ; i.notdone(); i++, j++)
       fp << j << " " << i->get() << endl;
     fp.close();
-    cout << "Wrote picking statistics in " << fname << endl;
+    cout << _name << ": Wrote picking statistics in " << fname << endl; 
+    // p file
     string fname2 = name;
     fname2 += ".p";
     ofstream fp2(fname2.c_str());
@@ -528,7 +661,61 @@ namespace ebl {
     }
     fp2 << "plot \"" << fname << "\" with impulse" << endl;
     fp2.close();
-    cout << "Wrote gnuplot file in " << fname2 << endl;
+    cout << _name << ": Wrote gnuplot file in " << fname2 << endl;
+    // ordered plot file
+    if (labels.order() == 1) { // single label value
+      if (name_)
+	name = name_;
+      string fname3 = name;
+      fname3 += "_ordered.plot"; 
+      ofstream fp(fname3.c_str());
+      if (!fp) {
+	cerr << "failed to open " << fname3 << endl;
+	eblerror("failed to open file for writing");
+      }
+      typename idx<uint>::dimension_iterator i = pick_count.dim_begin(0);
+      typename idx<Tin2>::dimension_iterator l = labels.dim_begin(0);
+      uint j = 0;
+      for ( ; i.notdone(); i++, j++, l++) {
+	fp << j;
+	for (Tin2 k = 0; k < (Tin2) nclasses; ++k) {
+	  if (k == l.get())
+	    fp << "\t" << i->get();
+	  else
+	    fp << "\t?";
+	}
+	fp << endl;
+      }
+      fp.close();
+      cout << _name << ": Wrote picking statistics in " << fname3 << endl;
+      // p file
+      string fname4 = name;
+      fname4 += "_ordered.p";
+      ofstream fp2(fname4.c_str());
+      if (!fp2) {
+	cerr << "failed to open " << fname4 << endl;
+	eblerror("failed to open file for writing");
+      }
+      fp2 << "plot \"" << fname3 
+	  << "\" using 1:2 title \"class 0\" with impulse" << endl;
+      for (uint k = 1; k < nclasses; ++k) {
+	fp2 << ", \"" << fname3 << "\" using 1:" << k + 2 
+	    << " title \"class " << k << "\" with impulse";
+      }
+      fp << endl;
+      fp2.close();
+      cout << _name << ": Wrote gnuplot file in " << fname4 << endl;
+    }
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  bool datasource<Tnet, Tin1, Tin2>::get_count_pickings() {
+    return count_pickings;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_count_pickings(bool count) {
+    count_pickings = count;
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -541,7 +728,64 @@ namespace ebl {
     return picksmap;
   }
 
+  template <class Tnet, class Tin1, class Tin2>
+  string& datasource<Tnet, Tin1, Tin2>::name() {
+    return _name;
+  }
   
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::save_state() {
+    state_saved = true;
+    count_pickings_save = count_pickings;
+    ub_itr_saved = ub_itr;
+    indices_itr_saved.clear();
+    label_indices_saved.clear();
+    for (uint k = 0; k < indices_itr.size(); ++k) {
+      indices_itr_saved.push_back(indices_itr[k]);
+      vector<intg> indices;
+      for (uint l = 0; l < label_indices[k].size(); ++l)
+	indices.push_back(label_indices[k][l]);
+      label_indices_saved.push_back(indices);
+    }
+    iitr_saved = iitr;
+  }
+  
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::restore_state() {
+    if (!state_saved)
+      eblerror("state not saved, call save_state() before restore_state()");
+    count_pickings = count_pickings_save;
+    if (!balance) {
+      ub_itr = ub_itr_saved; // reset unbalanced iterator
+      dataIter_train = dataIter_train.at(*ub_itr);
+      labelsIter_train = labelsIter_train.at(*ub_itr);
+      probasIter_train = probasIter_train.at(*ub_itr);
+      energiesIter_train = energiesIter_train.at(*ub_itr);
+      pickIter_train = pickIter_train.at(*ub_itr);
+      isample = *ub_itr; // current sample's index
+    } else {
+      for (uint k = 0; k < indices_itr.size(); ++k) {
+	indices_itr[k] = indices_itr_saved[k];
+	for (uint l = 0; l < label_indices[k].size(); ++l)
+	  label_indices[k][l] = label_indices_saved[k][l];
+      }
+      iitr = iitr_saved;
+      intg i = label_indices[iitr][indices_itr[iitr]];
+      dataIter_train = dataIter_train.at(i);
+      labelsIter_train = labelsIter_train.at(i);
+      probasIter_train = probasIter_train.at(i);
+      energiesIter_train = energiesIter_train.at(i);
+      pickIter_train = pickIter_train.at(i);
+      isample = i; // current sample's index
+    }
+  }
+  
+  template <class Tnet, class Tdata, class Tlabel>
+  void datasource<Tnet, Tdata, Tlabel>::set_epoch_show(uint modulo) {
+    cout << _name << "Print training count every " << modulo << " samples." << endl;
+    epoch_show = modulo;
+  }
+
   ////////////////////////////////////////////////////////////////
   // labeled_datasource
 
@@ -674,7 +918,7 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>
   void labeled_datasource<Tnet, Tdata, Tlabel>::pretty() {
     if (lblstr) {
-      cout << "It has: ";
+      cout << this->_name << ": It has: ";
       uint i;
       for (i = 0; i < this->counts.size() - 1; ++i)
 	cout << this->counts[i] << " \"" << *(*lblstr)[i] << "\", ";

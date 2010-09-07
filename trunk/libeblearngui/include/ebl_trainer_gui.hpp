@@ -104,7 +104,7 @@ namespace ebl {
 
     // display top
     gui << set_colors(255, 0, 0, 255, 255, 255, 255, 127) << gui_only();
-    gui << at(h0, w0) << ds.name;
+    gui << at(h0, w0) << ds.name();
     gui << black_on_white();
     gui << at(h0 + 17, w0) << "Groundtruth";
     gui << at(h0 + 17, w01) << "Correct & incorrect answers";

@@ -4,7 +4,11 @@ ebl=$HOME/eblearn/ # eblearn root
 source $ebl/libeblearntools/src/metatrain.sh # include script functions
 ################################################################################
 dsname=inria
-step0=5 # initial step where to (re)start metatraining
+step0=0 # initial step where to (re)start metatraining
+tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
+#tstamp=20100826.120221 # overriding timestamp of experiment
+#tstamp=20100901.113409 # overriding timestamp of experiment
+#tstamp=20100902.122820 # overriding timestamp of experiment
 h=80 # network height
 w=40 # network width
 chans=1 # number of input channels
@@ -13,19 +17,18 @@ valdsname=${dsname}_mean${h}x${w}_ker7_bg_val # dataset validation name
 machine=${HOSTNAME}a # machine where experiment is ran
 eblearnbin0=$ebl/bin/ # original binary root
 metaconf_name=${dsname}_meta.conf # metaconf name
+#metaconf_name=koray_meta.conf # metaconf name
 save_max=3000 # max number of false positives to extract per iteration
 save_max_per_frame=10 # max number of false positives to extract per full image
 nthreads=8 # number of threads to use duing false positive extraction
 maxiteration=10 # maximum number of retraining iterations
 precision=float # dataset precision
-threshold=-.4 # threshold will be decremented at each iter until -.95
+threshold=1 # threshold will be decremented at each iter until -.95
 ds_split_ratio=".1" # split ratio of validation over training
 draws=1 # number of dataset draws
 name=${dsname}_${machine}
 meta_name=${name} # name of this meta job
-#tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
-tstamp=20100826.120221 # overriding timestamp of experiment
-display=1 # display training or not
+display=0 # display training or not
 
 # directories
 ################################################################################

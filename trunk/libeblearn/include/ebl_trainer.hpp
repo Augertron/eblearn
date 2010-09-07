@@ -207,10 +207,11 @@ namespace ebl {
       log.update(age, (uint) label.x.get(), (uint) answer.x.get(),
 		 (double) energy.x.get());
       // use energy as distance for samples probabilities to be used
-      ds.set_answer_distance(energy.x.get());
+      ds.set_sample_energy(energy.x.get());
       ds.next();
     }
-    log.display(iteration, ds.name, ds.lblstr, ds.is_test());
+    ds.normalize_all_probas();
+    log.display(iteration, ds.name(), ds.lblstr, ds.is_test());
     cout << endl;
   }
 
@@ -246,22 +247,30 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel> 
   void supervised_trainer<Tnet, Tdata, Tlabel>::
   train(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log, 
-	gd_param &args, int niter) {
+	gd_param &args, int niter, infer_param &infp) {
     timer t;
     init(ds, &log);
+    bool selected = true;
     for (int i = 0; i < niter; ++i) { // niter iterations
       t.start();
+      ds.init_epoch();
       // training on lowest size common to all classes (times # classes)
-      for (intg j = 0; j < ds.get_epoch_size(); ++j) {
+      while (!ds.epoch_done()) {
 	ds.fprop(*input, label);
-	learn_sample(*input, label, args);
+	if (selected) // selected for training
+	  learn_sample(*input, label, args);
+	else // not selected for training, test to update energy
+	  test_sample(*input, label, infp);
 	// use energy as distance for samples probabilities to be used
-	ds.set_answer_distance(energy.x.get());
+	ds.set_sample_energy(energy.x.get());
 	//      log.update(age, output, label.get(), energy);
 	age++;
-	ds.next_train();
+	selected = ds.next_train();
       }
-      cout << "train_minutes=" << t.elapsed_minutes() << endl;
+      ds.normalize_all_probas();
+      cout << "epoch_count=" << ds.get_epoch_count() << endl;
+      cout << "training_time="; t.pretty_elapsed();
+      cout << " train_minutes=" << t.elapsed_minutes() << endl;
     }
   }
 
@@ -272,6 +281,8 @@ namespace ebl {
     timer t;
     t.start();
     init(ds, NULL);
+    ds.save_state(); // save current ds state
+    ds.set_count_pickings(false); // do not counts those samples in training
     param.clear_ddeltax();
     // loop
     for (int i = 0; i < niter; ++i) {
@@ -282,8 +293,9 @@ namespace ebl {
       param.clear_ddx();
       machine.bbprop(*input, label, energy);
       param.update_ddeltax((1 / (double) niter), 1.0);
-      ds.next_train();
+      while (!ds.next_train()) ; // skipping all non selected samples
     }
+    ds.restore_state(); // set ds state back
     param.compute_epsilons(mu);
     cout << "diaghessian inf: " << idx_min(param.epsilons);
     cout << " sup: " << idx_max(param.epsilons);
