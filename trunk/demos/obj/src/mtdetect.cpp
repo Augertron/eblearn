@@ -184,16 +184,22 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       timer tpass, toverall;
       uint cnt = 0;
       cout << "i=" << cnt << endl;
+      bool stop = false, finished = false;
   
       // loop
       toverall.start();
-      while(!cam->empty()) {
+      while(!cam->empty() || !finished) {
 	// get a new frame
 	tpass.restart();
 	// check for results and send new image for each thread
 	uint i = 0;
+	finished = true;
 	for (ithreads = threads.begin(); 
 	     ithreads != threads.end(); ++ithreads, ++i) {
+	  // do nothing if thread is finished already
+	  if ((*ithreads)->finished())
+	    continue ;
+	  finished = false; // a thread is not finished
 	  string processed_fname;
 	  // retrieve new data if present
 	  updated = (*ithreads)->get_data(bboxes, detframe, 
@@ -233,18 +239,26 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  }
 	  // check if ready
 	  if ((*ithreads)->available()) {
-	    // grab a new frame if available
-	    if (cam->empty())
-	      break ;
-	    // if the pre-camera is defined use it until empty
-	    if (cam2 && !cam2->empty())
-	      frame = cam2->grab();
-	    else // empty pre-camera, use regular camera
-	      frame = cam->grab();
-	    // send new frame to this thread
-	    string frame_name = cam->frame_name();
-	    while (!(*ithreads)->set_data(frame, frame_name))
-	      millisleep(5);
+	    if (stop)
+	      (*ithreads)->stop(); // ask this thread to stop
+	    else {
+	      // grab a new frame if available
+	      if (cam->empty()) {
+		stop = true;
+		(*ithreads)->stop(); // ask this thread to stop
+		millisleep(50);
+	      } else {
+		// if the pre-camera is defined use it until empty
+		if (cam2 && !cam2->empty())
+		  frame = cam2->grab();
+		else // empty pre-camera, use regular camera
+		  frame = cam->grab();
+		// send new frame to this thread
+		string frame_name = cam->frame_name();
+		while (!(*ithreads)->set_data(frame, frame_name))
+		  millisleep(5);
+	      }
+	    }
 	  }
 	}
 	// ms = tpass.elapsed_milliseconds();
@@ -258,17 +272,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	if (conf.exists("save_max") && 
 	    idx_sum(total_saved) > conf.get_uint("save_max")) {
 	  cout << "Reached max number of detections, exiting." << endl;
-	  break ; // limit number of detection saves
+	  stop = true; // limit number of detection saves
 	}
 	// sleep a bit between each iteration
 	millisleep(10);
-      }
-      // let's wait for all threads to finish and tell them to stop.
-      for (ithreads = threads.begin(); ithreads != threads.end(); ++ithreads) {
-	(*ithreads)->stop();
-	// wait that it actually stops
-	while (!(*ithreads)->finished())
-	  millisleep(10);
       }
       cout << "Execution time: "; toverall.pretty_elapsed(); cout << endl;
       if (save_video)

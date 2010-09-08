@@ -122,6 +122,7 @@ namespace ebl {
       frame = load_image<Tdata>(oss.str());
     } catch (const string &err) {
       cerr << err << ". Trying next image..." << endl;
+      frame_id++;
       return grab();
     }
     return this->postprocess();
@@ -134,7 +135,8 @@ namespace ebl {
     if (fli == fl->end()) {
       if (npasses > 0) {
 	npasses--;
-	fli = fl->begin(); // reset to begining.
+	if (npasses > 0)
+	  fli = fl->begin(); // reset to begining.
       }
       if (npasses == 0) // we did all passes, stop.
 	return true;
