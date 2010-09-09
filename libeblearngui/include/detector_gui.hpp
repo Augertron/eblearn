@@ -64,10 +64,11 @@ namespace ebl {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector"));
     select_window(display_wid);
-    // disable_window_updates();
 
     // run network
     vector<bbox*>& vb = cl.fprop(img, threshold, frame_name);
+    draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
+    disable_window_updates();
     // draw output
     ostringstream label;
     vector<bbox*>::iterator i = vb.begin();
@@ -82,14 +83,13 @@ namespace ebl {
 	       (uint) (dzoom * (*i)->width), 0, 0, 255,
 	       new string((const char *)label.str().c_str()));
     }
-    draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
+    enable_window_updates();
     // draw masks class
     if (!mask_class.empty()) {
       idx<T> mask = cl.get_mask(mask_class);
       draw_mask(mask, h0, w0, dzoom, dzoom,
 		255, 0, 0, 127, mask_threshold);
     }
-    // enable_window_updates();
     return vb;
   }
 
