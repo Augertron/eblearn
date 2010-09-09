@@ -521,7 +521,7 @@ namespace ebl {
       if (wupdate) {
 	// swap temporary objects to objects to be displayed.
 	swap();
-	// setUpdatesEnabled(true);
+	setUpdatesEnabled(true);
 	draw_images(false);
 	update_window();
       }
