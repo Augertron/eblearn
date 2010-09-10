@@ -247,6 +247,9 @@ namespace ebl {
     //! Print training count every module samples.
     virtual void set_epoch_show(uint modulo);
     
+    //! Pretty the progress of current epoch.
+    virtual void pretty_progress();
+    
     ////////////////////////////////////////////////////////////////
   protected:    
 
@@ -261,7 +264,12 @@ namespace ebl {
 
     //! Return a vector of sample indices, sorted by their picking counts.
     virtual map<uint,intg>& get_pickings();
-    
+
+    //! Write plot of m organized by class.
+    template <typename T>
+      void write_classed_pickings(idx<T> &m, string &name_, 
+				  const char *name2_ = NULL);
+
     ////////////////////////////////////////////////////////////////
     // members
   protected:
@@ -316,8 +324,10 @@ namespace ebl {
     double                                      sample_min_proba;
     intg                                        epoch_sz;
     intg                                        epoch_cnt;
+    intg                                        epoch_pick_cnt;//!< # pickings
     uint                                        epoch_show; // show modulo
     uint                                        epoch_mode;
+    timer                                       epoch_timer;
     uint                                        not_picked;                     
   };
 

@@ -269,7 +269,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 // 	  cout << "sleeping for " << display_sleep << "ms." << endl;
 // 	  millisleep(display_sleep);
 // 	}
-	if (conf.exists("save_max") && 
+	if (conf.exists("save_max") && !stop &&
 	    idx_sum(total_saved) > conf.get_uint("save_max")) {
 	  cout << "Reached max number of detections, exiting." << endl;
 	  stop = true; // limit number of detection saves

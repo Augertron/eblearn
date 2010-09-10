@@ -53,7 +53,8 @@ namespace ebl {
       probasIter_train(probas, 0), energiesIter_train(energies, 0),
       pickIter_train(pick_count, 0),
       height(0), width(0), balance(true), isample(0), test_set(false),
-      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_mode(1) {
+      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_pick_cnt(0),
+      epoch_mode(1) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -69,7 +70,8 @@ namespace ebl {
       pickIter_train(pick_count, 0),
       height(ds.height), width(ds.width), _name(ds._name), balance(true),
       isample(0), test_set(false),
-      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_mode(1) {
+      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_pick_cnt(0),
+      epoch_mode(1) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -86,7 +88,8 @@ namespace ebl {
       pickIter_train(pick_count, 0),
       height(data.dim(1)), width(data.dim(2)), balance(true), isample(0), 
       test_set(false),
-      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_mode(1) {
+      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_pick_cnt(0),
+      epoch_mode(1) {
     init(data_, labels_, name_, b, c);
   }
 
@@ -282,10 +285,18 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::init_epoch() {
     epoch_cnt = 0;
+    epoch_pick_cnt = 0;
+    epoch_timer.restart();
     if (balance) {
+      intg maxsize = 0;
       // for balanced training, set each class to not done.
-      for (uint k = 0; k < label_indices.size(); ++k)
+      for (uint k = 0; k < label_indices.size(); ++k) {
 	epoch_done_counters[k] = label_indices[k].size();
+	if (label_indices[k].size() > maxsize)
+	  maxsize = label_indices[k].size();
+      }
+      // for ETA estimation only, estimate epoch size
+      epoch_sz = maxsize * label_indices.size();
     }
   }
 
@@ -360,6 +371,7 @@ namespace ebl {
     // set regular iters used by fprop
     dataIter = dataIter_train;
     labelsIter = labelsIter_train;
+    epoch_cnt++;
     if (pick) {
       // increment pick counter for this sample
       if (count_pickings)
@@ -377,10 +389,9 @@ namespace ebl {
       if (iitr >= label_indices.size())
 	iitr = 0; // reseting to first class in class list
       // increment sample counter
-      epoch_cnt++;
+      epoch_pick_cnt++;
       not_picked = 0;
-      if (epoch_show > 0 && epoch_cnt % epoch_show == 0)
-	cout << "epoch_cnt: " << epoch_cnt << endl;
+      pretty_progress();
       return true;
   } else {
 #ifdef __DEBUG__
@@ -388,7 +399,21 @@ namespace ebl {
 	   << ", proba: " << probasIter_train->get() << ", energy: "
 	   << energiesIter_train->get() << ") " << endl;
 #endif
+      pretty_progress();
       return false;
+    }
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::pretty_progress() {
+    if (epoch_show > 0 && epoch_cnt % epoch_show == 0) {
+      cout << "epoch_cnt: " << epoch_cnt << " / " << epoch_sz 
+	   << ", used samples: " << epoch_pick_cnt << ", epoch elapsed: ";
+      epoch_timer.pretty_elapsed();
+      cout << ", ETA: ";
+      timer::pretty_secs((long) epoch_timer.elapsed_seconds() 
+			 * (epoch_sz / epoch_cnt - 1));
+      cout << endl;
     }
   }
 
@@ -683,112 +708,35 @@ namespace ebl {
     fp2 << "plot \"" << fname << "\" with impulse" << endl;
     fp2.close();
     cout << _name << ": Wrote gnuplot file in " << fname2 << endl;
-    // classed plot file
-    if (labels.order() == 1) { // single label value
-      if (name_)
-	name = name_;
-      string fname3 = name;
-      fname3 += "_classed.plot"; 
-      ofstream fp(fname3.c_str());
-      if (!fp) {
-	cerr << "failed to open " << fname3 << endl;
-	eblerror("failed to open file for writing");
-      }
-      typename idx<uint>::dimension_iterator i = pick_count.dim_begin(0);
-      typename idx<Tin2>::dimension_iterator l = labels.dim_begin(0);
-      uint j = 0;
-      for ( ; i.notdone(); i++, j++, l++) {
-	fp << j;
-	for (Tin2 k = 0; k < (Tin2) nclasses; ++k) {
-	  if (k == l.get())
-	    fp << "\t" << i->get();
-	  else
-	    fp << "\t?";
-	}
-	fp << endl;
-      }
-      fp.close();
-      cout << _name << ": Wrote picking statistics in " << fname3 << endl;
-      // p file
-      string fname4 = name;
-      fname4 += "_classed.p";
-      ofstream fp2(fname4.c_str());
-      if (!fp2) {
-	cerr << "failed to open " << fname4 << endl;
-	eblerror("failed to open file for writing");
-      }
-      fp2 << "plot \"" << fname3 
-	  << "\" using 1:2 title \"class 0\" with impulse";
-      for (uint k = 1; k < nclasses; ++k) {
-	fp2 << ", \"" << fname3 << "\" using 1:" << k + 2 
-	    << " title \"class " << k << "\" with impulse";
-      }
-      fp << endl;
-      fp2.close();
-      cout << _name << ": Wrote gnuplot file in " << fname4 << endl;
-    }
 
-    // classed plot file
-    if (labels.order() == 1) { // single label value
-      if (name_)
-	name = name_;
-      name += "_energies";
-      string fname5 = name;
-      fname5 += "_classed.plot"; 
-      ofstream fp(fname5.c_str());
-      if (!fp) {
-	cerr << "failed to open " << fname5 << endl;
-	eblerror("failed to open file for writing");
-      }
-      typename idx<double>::dimension_iterator i = energies.dim_begin(0);
-      typename idx<Tin2>::dimension_iterator l = labels.dim_begin(0);
-      uint j = 0;
-      for ( ; i.notdone(); i++, j++, l++) {
-	fp << j;
-	for (Tin2 k = 0; k < (Tin2) nclasses; ++k) {
-	  if (k == l.get())
-	    fp << "\t" << i->get();
-	  else
-	    fp << "\t?";
-	}
-	fp << endl;
-      }
-      fp.close();
-      cout << _name << ": Wrote picking energies statistics in " << fname5 << endl;
-      // p file
-      string fname6 = name;
-      fname6 += "_classed.p";
-      ofstream fp2(fname6.c_str());
-      if (!fp2) {
-	cerr << "failed to open " << fname6 << endl;
-	eblerror("failed to open file for writing");
-      }
-      fp2 << "plot \"" << fname5 
-	  << "\" using 1:2 title \"class 0\" with impulse";
-      for (uint k = 1; k < nclasses; ++k) {
-	fp2 << ", \"" << fname5 << "\" using 1:" << k + 2 
-	    << " title \"class " << k << "\" with impulse";
-      }
-      fp << endl;
-      fp2.close();
-      cout << _name << ": Wrote gnuplot file in " << fname6 << endl;
-    }
+    // plot by class
+    write_classed_pickings(pick_count, name);
+    write_classed_pickings(energies, name, "_energies");
+    idx<double> e = idx_copy(energies);
+    idx_sortup(e);
+    write_classed_pickings(e, name, "_sorted_energies");
+    idx<double> p = idx_copy(probas);
+    idx_sortup(p);
+    write_classed_pickings(p, name, "_sorted_probas");
+  }
 
+  template <class Tnet, class Tin1, class Tin2> template <typename T>
+  void datasource<Tnet, Tin1, Tin2>::
+  write_classed_pickings(idx<T> &m, string &name_, const char *name2_) {
+    string name = name_;
+    if (name2_)
+      name += name2_;
+    name += "_classed";
     // sorted classed plot file
     if (labels.order() == 1) { // single label value
-      if (name_)
-	name = name_;
-      name += "_energies";
-      string fname7 = name;
-      fname7 += "_classed.plot"; 
-      ofstream fp(fname7.c_str());
+      string fname = name;
+      fname += ".plot"; 
+      ofstream fp(fname.c_str());
       if (!fp) {
-	cerr << "failed to open " << fname7 << endl;
+	cerr << "failed to open " << fname << endl;
 	eblerror("failed to open file for writing");
       }
-      idx<double> e = idx_copy(energies);
-      idx_sortup(e);
-      typename idx<double>::dimension_iterator i = e.dim_begin(0);
+      typename idx<T>::dimension_iterator i = m.dim_begin(0);
       typename idx<Tin2>::dimension_iterator l = labels.dim_begin(0);
       uint j = 0;
       for ( ; i.notdone(); i++, j++, l++) {
@@ -802,24 +750,24 @@ namespace ebl {
 	fp << endl;
       }
       fp.close();
-      cout << _name << ": Wrote picking energies statistics in " << fname7 << endl;
+      cout << _name << ": Wrote picking statistics in " << fname << endl;
       // p file
-      string fname8 = name;
-      fname8 += "_classed.p";
-      ofstream fp2(fname8.c_str());
+      string fname2 = name;
+      fname2 += ".p";
+      ofstream fp2(fname2.c_str());
       if (!fp2) {
-	cerr << "failed to open " << fname8 << endl;
+	cerr << "failed to open " << fname2 << endl;
 	eblerror("failed to open file for writing");
       }
-      fp2 << "plot \"" << fname7 
+      fp2 << "plot \"" << fname 
 	  << "\" using 1:2 title \"class 0\" with impulse";
       for (uint k = 1; k < nclasses; ++k) {
-	fp2 << ", \"" << fname7 << "\" using 1:" << k + 2 
+	fp2 << ", \"" << fname << "\" using 1:" << k + 2 
 	    << " title \"class " << k << "\" with impulse";
       }
       fp << endl;
       fp2.close();
-      cout << _name << ": Wrote gnuplot file in " << fname8 << endl;
+      cout << _name << ": Wrote gnuplot file in " << fname2 << endl;
     }
   }
 
