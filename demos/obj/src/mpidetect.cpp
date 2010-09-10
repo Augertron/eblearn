@@ -84,8 +84,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #ifdef __LINUX__
       feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
-
-
  
       char idstr[32];
       char buff[BUFSIZE];
@@ -97,37 +95,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       MPI_Init(&argc,&argv); /* all MPI programs start with MPI_Init; all 'N' processes exist thereafter */
       MPI_Comm_size(MPI_COMM_WORLD,&numprocs); /* find out how big the SPMD world is */
       MPI_Comm_rank(MPI_COMM_WORLD,&myid); /* and this processes' rank is */
- 
-   /* At this point, all programs are running equivalently, the rank distinguishes
-      the roles of the programs in the SPMD model, with rank 0 often used specially... */
-   if(myid == 0)
-   {
-     printf("%d: We have %d processors\n", myid, numprocs);
-     for(i=1;i<numprocs;i++)
-     {
-       sprintf(buff, "Hello %d! ", i);
-       MPI_Send(buff, BUFSIZE, MPI_CHAR, i, TAG, MPI_COMM_WORLD);
-     }
-     for(i=1;i<numprocs;i++)
-     {
-       MPI_Recv(buff, BUFSIZE, MPI_CHAR, i, TAG, MPI_COMM_WORLD, &stat);
-       printf("%d: %s\n", myid, buff);
-     }
-   }
-   else
-   {
-     /* receive from rank 0: */
-     MPI_Recv(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD, &stat);
-     sprintf(idstr, "Processor %d ", myid);
-     strncat(buff, idstr, BUFSIZE-1);
-     strncat(buff, "reporting for duty\n", BUFSIZE-1);
-     /* send to rank 0: */
-     MPI_Send(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
-   }
- 
-   MPI_Finalize(); /* MPI Programs end with MPI Finalize; this is a weak synchronization point */
-   return 0;
-      
+       
       // load configuration
       configuration	conf(argv[1]);
       uint              ipp_cores     = 1;
@@ -146,26 +114,57 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       outdir += "/";
       cout << "Saving outputs to " << outdir << endl;
 
-      // allocate threads
-      uint nthreads = 1;
-      bool updated = false;
-      idx<ubyte> detframe; // frame returned by detection thread
-      if (conf.exists("nthreads"))
-	nthreads = (std::max)((uint) 1, conf.get_uint("nthreads"));
-      list<detection_thread<t_net>*>  threads;
-      list<detection_thread<t_net>*>::iterator ithreads;
-      idx<uint> total_saved(nthreads);
-      idx_clear(total_saved);
-      cout << "Initializing " << nthreads << " detection threads." << endl;
-      for (uint i = 0; i < nthreads; ++i) {
+      /* At this point, all programs are running equivalently, the rank distinguishes
+	 the roles of the programs in the SPMD model, with rank 0 often used specially... */
+      if (myid == 0) { // main program
+	cout << myid << ": Initializing " << numprocs 
+	     << " detection threads." << endl;
+	for(i=1;i<numprocs;i++) {
+	  sprintf(buff, "Hello %d! ", i);
+	  MPI_Send(buff, BUFSIZE, MPI_CHAR, i, TAG, MPI_COMM_WORLD);
+	}
+	for(i=1;i<numprocs;i++)
+	  {
+	    MPI_Recv(buff, BUFSIZE, MPI_CHAR, i, TAG, MPI_COMM_WORLD, &stat);
+	    printf("%d: %s\n", myid, buff);
+	  }
+      } else { // thread
+	/* receive from rank 0: */
+	MPI_Recv(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD, &stat);
+	sprintf(idstr, "Processor %d ", myid);
+	strncat(buff, idstr, BUFSIZE-1);
+	strncat(buff, "reporting for duty\n", BUFSIZE-1);
+	/* send to rank 0: */
+	MPI_Send(buff, BUFSIZE, MPI_CHAR, 0, TAG, MPI_COMM_WORLD);
+
+	// allocate thread
 	ostringstream tname;
-	tname << "Thread " << i;
+	tname << "Thread " << myid;
 	detection_thread<t_net> *dt =
 	  new detection_thread<t_net>(conf, tname.str().c_str());
 	threads.push_back(dt);
 	dt->start();
 	dt->set_output_directory(outdir);
       }
+
+	// allocate threads
+	uint nthreads = numprocs;
+	bool updated = false;
+	idx<ubyte> detframe; // frame returned by detection thread
+	list<detection_thread<t_net>*>  threads;
+	list<detection_thread<t_net>*>::iterator ithreads;
+	idx<uint> total_saved(nthreads);
+	idx_clear(total_saved);
+	cout << "Initializing " << nthreads << " detection threads." << endl;
+	for (uint i = 0; i < nthreads; ++i) {
+	  ostringstream tname;
+	  tname << "Thread " << i;
+	  detection_thread<t_net> *dt =
+	    new detection_thread<t_net>(conf, tname.str().c_str());
+	  threads.push_back(dt);
+	  dt->start();
+	  dt->set_output_directory(outdir);
+	}
 
       // initialize camera (opencv, directory, shmem or video)
       idx<ubyte> frame;
@@ -349,5 +348,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #endif
     } catch(string &err) { eblerror(err.c_str()); }
 #endif
+  }
+  MPI_Finalize(); /* MPI Programs end with MPI Finalize; this is a weak synchronization point */
   return 0;
 }

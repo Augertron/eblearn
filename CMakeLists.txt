@@ -26,6 +26,13 @@ SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts
 SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}"
   CACHE STRING "CMAKE CXX flags " FORCE )
 
+# MPI
+IF ($ENV{USEMPI})
+   MESSAGE(STATUS "Compiling with MPI compiler")
+   SET(CMAKE_CXX_COMPILER "mpicxx")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -shared-intel -O3 -fPIC -align -Zp8 -axP -unroll -ip -xP -vec-report -par-report -openmp-report")
+ENDIF ($ENV{USEMPI})
+
 # check for required and optional external packages
 FIND_PACKAGE(All)
 
