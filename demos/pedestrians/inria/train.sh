@@ -4,9 +4,9 @@ ebl=$HOME/eblearn/ # eblearn root
 source $ebl/libeblearntools/src/metatrain.sh # include script functions
 ################################################################################
 dsname=inria
-step0=0 # initial step where to (re)start metatraining
-tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
-#tstamp=20100907.145718 # overriding timestamp of experiment
+step0=3 # initial step where to (re)start metatraining
+#tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
+tstamp=20100909.225939 # overriding timestamp of experiment
 h=80 # network height
 w=40 # network width
 chans=1 # number of input channels
