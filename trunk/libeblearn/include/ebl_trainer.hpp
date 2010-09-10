@@ -281,6 +281,7 @@ namespace ebl {
     timer t;
     t.start();
     init(ds, NULL);
+    ds.init_epoch();
     ds.save_state(); // save current ds state
     ds.set_count_pickings(false); // do not counts those samples in training
     param.clear_ddeltax();

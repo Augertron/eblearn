@@ -268,7 +268,7 @@ namespace ebl {
       if (balance) {
 	// check that all classes are done
 	for (uint i = 0; i < epoch_done_counters.size(); ++i) {
-	  if (epoch_done_counters[i])
+	  if (epoch_done_counters[i] > 0)
 	    return false;
 	}
 	return true; // all classes are done
@@ -349,8 +349,8 @@ namespace ebl {
       // decide if we want to select this sample for training
       pick = pick_current();
       // decrement epoch counter
-      if (epoch_done_counters[iitr] > 0)
-	epoch_done_counters[iitr] = epoch_done_counters[iitr] - 1;
+      //      if (epoch_done_counters[iitr] > 0)
+      epoch_done_counters[iitr] = epoch_done_counters[iitr] - 1;
       if (indices_itr[iitr] >= label_indices[iitr].size()) {
 	// returning to begining of list for this class
 	indices_itr[iitr] = 0;
