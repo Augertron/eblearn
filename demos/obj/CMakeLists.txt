@@ -60,6 +60,7 @@ IF (QT_FOUND) #---------------------------------------------------------------
 ENDIF (QT_FOUND) #------------------------------------------------------------
 LINK_BOOST(mtdetect)
 
+IF (FALSE)
 # compile executable: mpidetect
 ################################################################################
 add_executable (mpidetect
@@ -77,6 +78,9 @@ IF (MPI_FOUND)
   target_link_libraries (mpidetect pmpich++) # mpi_cxx)
 ENDIF (MPI_FOUND)    
 LINK_BOOST(mpidetect)
+
+
+ENDIF (FALSE)
 
 # # compile executable: objdetect
 # ################################################################################

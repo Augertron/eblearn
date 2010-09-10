@@ -80,6 +80,7 @@ ENDIF ($ENV{NOBOOST})
   
 # find opencv
 ###############################################################################
+IF ($ENV{USEOPENCV})
 IF ($ENV{NOOPENCV})
   MESSAGE(STATUS "OPENCV DISABLED by env variable $NOOPENCV=1.")
 ELSE ($ENV{NOOPENCV})
@@ -95,7 +96,10 @@ ELSE ($ENV{NOOPENCV})
     MESSAGE("__ WARNING: OpenCV not found (optional).")
   ENDIF(OpenCV_FOUND)
 ENDIF ($ENV{NOOPENCV})
-  
+ELSE ($ENV{USEOPENCV})
+  MESSAGE(STATUS "OpenCV is disabled, export USEOPENCV=1 to activate it.")
+ENDIF ($ENV{USEOPENCV})
+
 # find XML++
 ##############################################################################
 IF ($ENV{NOXML})
