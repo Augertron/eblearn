@@ -197,7 +197,9 @@ namespace ebl {
      if (!display && save_video) {
        // we still want to output images but not show them
        display = true;
+#ifdef __GUI__
        set_gui_silent();
+#endif
      }
      // load network and weights in a forward-only parameter
      parameter<SFUNC(Tnet)> theparam;
