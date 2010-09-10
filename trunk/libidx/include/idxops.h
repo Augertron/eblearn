@@ -1253,6 +1253,14 @@ namespace ebl {
   //! is sorted with the same permutation table.
   template <class T1, class T2> void idx_sortdown(idx<T1> &m, idx<T2> &p);
 
+  //! In-place sort of elements of (continuous) vector <m> 
+  //! in ascending order.
+  template<class T> void idx_sortup(idx<T> &m);
+
+  //! In-place sort of elements of (continuous) vector <m> 
+  //! in descending order.
+  template<class T> void idx_sortdown(idx<T> &m);
+
   ////////////////////////////////////////////////////////////////
   // idx_sqrdist
 

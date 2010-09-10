@@ -1758,7 +1758,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////////////
   // idx_sortdown
 
-  template<class T1, class T2> void idx_sortdown(idx<T1> &m, idx<T2> &p) {
+template<class T1, class T2> void idx_sortdown(idx<T1> &m, idx<T2> &p) {
     idx_checkorder2(m, 1, p, 1);
     if (m.mod(0) != 1) eblerror("idx_sortdown: vector is not contiguous");
     if (p.mod(0) != 1) eblerror("idx_sortdown: vector is not contiguous");
@@ -1802,6 +1802,79 @@ namespace ebl {
       }
     }
   }
+
+//! Sorts in-place elements of (continuous) vector <m> 
+//! in ascending order.
+template<class T> void idx_sortup(idx<T> &m) {
+  idx_checkorder1(m, 1);
+  idx_check_contiguous1(m);
+  intg n = m.dim(0);
+  if (n > 1) {
+    int l,j,ir,i;
+    T *ra, rra;
+    
+    ra = m.idx_ptr() - 1;
+    l=(n >> 1)+1;
+    ir= n;
+    for (;;) {
+      if (l > 1)
+	rra=ra[--l];
+      else {
+	rra=ra[ir];
+	ra[ir]=ra[1];
+	if (--ir == 1) {
+	  ra[1]=rra;
+	  goto end; 
+	}
+      }
+      i=l;
+      j=l << 1;
+      while (j <= ir) {
+	if (j < ir && ra[j] < ra[j+1]) ++j;
+	if (rra < ra[j]) {
+	  ra[i]=ra[j];
+	  j += (i=j);
+	} else j=ir+1; 
+      }
+      ra[i]=rra; 
+    }
+  }
+ end:;
+}
+
+template<class T> void idx_sortdown(idx<T> &m) {
+  idx_checkorder1(m, 1);
+  idx_check_contiguous1(m);
+  intg n = m.dim(0);
+  if (n > 1) {
+    int l,j,ir,i;
+    T *ra, rra;
+    
+    ra = m.idx_ptr() - 1;
+    l=(n >> 1)+1;
+    ir= n;
+    for (;;) {
+      if (l > 1)
+	rra=ra[--l];
+      else {
+	rra=ra[ir];
+	ra[ir]=ra[1];
+	if (--ir == 1) {
+	  ra[1]=rra;
+	  goto end; }}
+      i=l;
+      j=l << 1;
+      while (j <= ir) {
+	if (j < ir && ra[j] > ra[j+1]) ++j;
+	if (rra > ra[j]) {
+	  ra[i]=ra[j];
+	  j += (i=j);
+	} else j=ir+1; }
+      ra[i]=rra; 
+    }
+  }
+ end:;
+}
 
   ////////////////////////////////////////////////////////////////////////
   // idx_sqrdist
