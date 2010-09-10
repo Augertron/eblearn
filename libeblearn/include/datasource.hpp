@@ -405,20 +405,31 @@ namespace ebl {
     
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::normalize_probas(int classid) {
-    double maxproba, minproba, maxenergy;
+    double maxproba, minproba, maxenergy, sum, energy_ratio, maxenergy2;
     if (weigh_samples && !is_test()) {
       if (perclass_norm && balance) {
 	uint iitr = (uint) classid;
 	if (classid < 0)
 	  eblerror("class id cannot be negative");
 	// normalize probas for this class, mapping [0..max] to [0..1]
-	maxenergy = 0;
-	// get max
+	maxenergy = 0; sum = 0;
+	// get max and sum
 	for (vector<intg>::iterator j = label_indices[iitr].begin();
-	     j != label_indices[iitr].end(); ++j)
+	     j != label_indices[iitr].end(); ++j) {
 	  maxenergy = (std::max)(energiesIter_train.at(*j)->get(), maxenergy);
+	  sum += energiesIter_train.at(*j)->get();
+	}
+	// the ratio of total energies over n times the max energy
+	energy_ratio = sum / (maxenergy * label_indices[iitr].size());
+	// the max probability will be proportional to the energy ratio
+	// this balances the probabilities so that outliers don't take
+	// all the probabilites
+	maxenergy2 = maxenergy * energy_ratio;
 	cout << _name << ": Normalizing probabilities for class " << iitr
-	     << ", with maximum energy " << maxenergy;
+	     << ", with maximum energy " << maxenergy 
+	     << ", energy ratio " << energy_ratio 
+	     << " and normalized max energy " << maxenergy2;
+	// normalize
 	for (vector<intg>::iterator j = label_indices[iitr].begin();
 	     j != label_indices[iitr].end(); ++j) {
 	  // compute probas
@@ -427,7 +438,7 @@ namespace ebl {
 	    probasIter_train.at(*j)->set(1.0);
 	  else
 	    probasIter_train.at(*j)->set((std::max)(sample_min_proba, 
-						    e / maxenergy));
+						    e / maxenergy2));
 	  // first time, init min and max
 	  if (j == label_indices[iitr].begin()) {
 	    maxproba = probasIter_train.at(*j)->get();
@@ -441,15 +452,25 @@ namespace ebl {
       } else {
 	// normalize probas for all classes, mapping [0..max] to [0..1]
 	maxenergy = idx_max(energies);
+	sum = idx_sum(energies);
 	cout << _name << ": Normalizing probabilities with maximum energy: " 
 	     << maxenergy;
-	if (maxenergy <= 0)
-	  maxenergy = 1.0;
+	// the ratio of total energies over n times the max energy
+	energy_ratio = sum / (maxenergy * energies.dim(0));
+	// the max probability will be proportional to the energy ratio
+	// this balances the probabilities so that outliers don't take
+	// all the probabilites
+	maxenergy2 = maxenergy * energy_ratio;
+	cout << _name << ": Normalizing probabilities with maximum energy: "
+	     << maxenergy << ", energy ratio " << energy_ratio 
+	     << " and normalized max energy " << maxenergy2;
+	if (maxenergy2 <= 0)
+	  maxenergy2 = 1.0;
 	idx_bloop2(e, energies, double, p, probas, double) {
-	  if (e.get() < 0 || maxenergy == 0)
+	  if (e.get() < 0 || maxenergy2 == 0)
 	    p.set(1.0); // energy hasn't been set yet, use proba 1.
 	  else
-	    p.set(e.get() / maxenergy);
+	    p.set(e.get() / maxenergy2);
 	}
 	idx_threshold(probas, sample_min_proba);
 	maxproba = idx_max(probas);
@@ -662,12 +683,12 @@ namespace ebl {
     fp2 << "plot \"" << fname << "\" with impulse" << endl;
     fp2.close();
     cout << _name << ": Wrote gnuplot file in " << fname2 << endl;
-    // ordered plot file
+    // classed plot file
     if (labels.order() == 1) { // single label value
       if (name_)
 	name = name_;
       string fname3 = name;
-      fname3 += "_ordered.plot"; 
+      fname3 += "_classed.plot"; 
       ofstream fp(fname3.c_str());
       if (!fp) {
 	cerr << "failed to open " << fname3 << endl;
@@ -690,14 +711,14 @@ namespace ebl {
       cout << _name << ": Wrote picking statistics in " << fname3 << endl;
       // p file
       string fname4 = name;
-      fname4 += "_ordered.p";
+      fname4 += "_classed.p";
       ofstream fp2(fname4.c_str());
       if (!fp2) {
 	cerr << "failed to open " << fname4 << endl;
 	eblerror("failed to open file for writing");
       }
       fp2 << "plot \"" << fname3 
-	  << "\" using 1:2 title \"class 0\" with impulse" << endl;
+	  << "\" using 1:2 title \"class 0\" with impulse";
       for (uint k = 1; k < nclasses; ++k) {
 	fp2 << ", \"" << fname3 << "\" using 1:" << k + 2 
 	    << " title \"class " << k << "\" with impulse";
@@ -705,6 +726,100 @@ namespace ebl {
       fp << endl;
       fp2.close();
       cout << _name << ": Wrote gnuplot file in " << fname4 << endl;
+    }
+
+    // classed plot file
+    if (labels.order() == 1) { // single label value
+      if (name_)
+	name = name_;
+      name += "_energies";
+      string fname5 = name;
+      fname5 += "_classed.plot"; 
+      ofstream fp(fname5.c_str());
+      if (!fp) {
+	cerr << "failed to open " << fname5 << endl;
+	eblerror("failed to open file for writing");
+      }
+      typename idx<double>::dimension_iterator i = energies.dim_begin(0);
+      typename idx<Tin2>::dimension_iterator l = labels.dim_begin(0);
+      uint j = 0;
+      for ( ; i.notdone(); i++, j++, l++) {
+	fp << j;
+	for (Tin2 k = 0; k < (Tin2) nclasses; ++k) {
+	  if (k == l.get())
+	    fp << "\t" << i->get();
+	  else
+	    fp << "\t?";
+	}
+	fp << endl;
+      }
+      fp.close();
+      cout << _name << ": Wrote picking energies statistics in " << fname5 << endl;
+      // p file
+      string fname6 = name;
+      fname6 += "_classed.p";
+      ofstream fp2(fname6.c_str());
+      if (!fp2) {
+	cerr << "failed to open " << fname6 << endl;
+	eblerror("failed to open file for writing");
+      }
+      fp2 << "plot \"" << fname5 
+	  << "\" using 1:2 title \"class 0\" with impulse";
+      for (uint k = 1; k < nclasses; ++k) {
+	fp2 << ", \"" << fname5 << "\" using 1:" << k + 2 
+	    << " title \"class " << k << "\" with impulse";
+      }
+      fp << endl;
+      fp2.close();
+      cout << _name << ": Wrote gnuplot file in " << fname6 << endl;
+    }
+
+    // sorted classed plot file
+    if (labels.order() == 1) { // single label value
+      if (name_)
+	name = name_;
+      name += "_energies";
+      string fname7 = name;
+      fname7 += "_classed.plot"; 
+      ofstream fp(fname7.c_str());
+      if (!fp) {
+	cerr << "failed to open " << fname7 << endl;
+	eblerror("failed to open file for writing");
+      }
+      idx<double> e = idx_copy(energies);
+      idx_sortup(e);
+      typename idx<double>::dimension_iterator i = e.dim_begin(0);
+      typename idx<Tin2>::dimension_iterator l = labels.dim_begin(0);
+      uint j = 0;
+      for ( ; i.notdone(); i++, j++, l++) {
+	fp << j;
+	for (Tin2 k = 0; k < (Tin2) nclasses; ++k) {
+	  if (k == l.get())
+	    fp << "\t" << i->get();
+	  else
+	    fp << "\t?";
+	}
+	fp << endl;
+      }
+      fp.close();
+      cout << _name << ": Wrote picking energies statistics in " << fname7 << endl;
+      // p file
+      string fname8 = name;
+      fname8 += "_classed.p";
+      ofstream fp2(fname8.c_str());
+      if (!fp2) {
+	cerr << "failed to open " << fname8 << endl;
+	eblerror("failed to open file for writing");
+      }
+      fp2 << "plot \"" << fname7 
+	  << "\" using 1:2 title \"class 0\" with impulse";
+      for (uint k = 1; k < nclasses; ++k) {
+	fp2 << ", \"" << fname7 << "\" using 1:" << k + 2 
+	    << " title \"class " << k << "\" with impulse";
+      }
+      fp << endl;
+      fp2.close();
+      cout << _name << ": Wrote gnuplot file in " << fname8 << endl;
     }
   }
 
