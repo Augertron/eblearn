@@ -19,3 +19,14 @@
  # SET(CPPUNIT_INCLUDE_DIR "B:/windows/installed/cppunit-1.12.1/include")
  # SET(CPPUNIT_LIBRARY "B:/windows/installed/cppunit-1.12.1/lib/cppunitd.lib")
  # MESSAGE(STATUS "Found CPPUNIT")
+
+#SET(MPI_FOUND TRUE)
+#SET(MPI_INCLUDE_PATH "/share/apps/openmpi/1.3.3/intel/include/openmpi/ompi/mpi/cxx/")
+SET(MPI_INCLUDE_PATH "/share/apps/openmpi/1.3.3/intel/include/")
+SET(MPI_LIBRARIES "/share/apps/openmpi/1.3.3/intel/lib/")
+#SET(MPI_LIBRARIES "/share/apps/openmpi/1.3.3/intel/lib/libmpi.so;/share/apps/openmpi/1.3.3/intel/lib/libmpi_cxx.so;/share/apps/openmpi/1.3.3/intel/lib/libmca_common_sm.so;/share/apps/openmpi/1.3.3/intel/lib/libmpi_f77.so;/share/apps/openmpi/1.3.3/intel/lib/libmpi_f90.so")
+#SET(MPI_LIBRARIES "/share/apps/openmpi/1.3.3/intel/lib/libmpi_cxx.so;/share/apps/openmpi/1.3.3/intel/lib/libmpi.so")
+
+LINK_DIRECTORIES("/share/apps/intel/cce/10.0.023/lib/")
+#LINK_DIRECTORIES("/share/apps/intel/cce/10.0.023/lib/libirc.so")
+#LINK_DIRECTORIES("/share/apps/intel/fce/10.0.023/lib/;/share/apps/intel/fce/10.0.023/lib/libirc.so")

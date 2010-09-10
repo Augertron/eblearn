@@ -72,10 +72,10 @@ target_link_libraries (mpidetect eblearn idx eblearntools)
 IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (mpidetect idxgui)
   target_link_libraries (mpidetect eblearngui)
-  IF (MPI_FOUND)
-    target_link_libraries (mpidetect mpi)
-  ENDIF (MPI_FOUND)    
 ENDIF (QT_FOUND) #------------------------------------------------------------
+IF (MPI_FOUND)
+  target_link_libraries (mpidetect mpi mpi_cxx clusterguide guide svml ipgo imf irc mca_common_sm mpi_f77 mpi_f90)
+ENDIF (MPI_FOUND)    
 LINK_BOOST(mpidetect)
 
 # # compile executable: objdetect
