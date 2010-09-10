@@ -308,7 +308,7 @@ namespace ebl {
     vector<vector<intg> >                       label_indices_saved;
     vector<uint>                                indices_itr;
     vector<uint>                                indices_itr_saved;
-    vector<uint>                                epoch_done_counters;
+    vector<intg>                                epoch_done_counters;
     vector<intg>                                ub_indices; //! unbalanced ids.
     vector<intg>::iterator                      ub_itr; //! unbalanced itr.
     vector<intg>::iterator                      ub_itr_saved;

@@ -188,7 +188,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
   
       // loop
       toverall.start();
-      while(!cam->empty() || !finished) {
+      while (!finished) {
 	// get a new frame
 	tpass.restart();
 	// check for results and send new image for each thread
