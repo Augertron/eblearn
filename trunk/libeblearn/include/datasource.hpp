@@ -413,6 +413,12 @@ namespace ebl {
       cout << ", ETA: ";
       timer::pretty_secs((long) epoch_timer.elapsed_seconds() 
 			 * (epoch_sz / epoch_cnt - 1));
+      if (balance) {
+	cout << ", remaining:";
+	for (uint i = 0; i < epoch_done_counters.size(); ++i) {
+	  cout << " " << i << ": " << epoch_done_counters[i];
+	}
+      }
       cout << endl;
     }
   }
