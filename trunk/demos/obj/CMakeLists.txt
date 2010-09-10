@@ -74,7 +74,7 @@ IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (mpidetect eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
 IF (MPI_FOUND)
-  target_link_libraries (mpidetect mpi mpi_cxx clusterguide guide svml ipgo imf irc mca_common_sm mpi_f77 mpi_f90)
+  target_link_libraries (mpidetect pmpich++) # mpi_cxx)
 ENDIF (MPI_FOUND)    
 LINK_BOOST(mpidetect)
 
