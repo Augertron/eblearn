@@ -60,6 +60,24 @@ IF (QT_FOUND) #---------------------------------------------------------------
 ENDIF (QT_FOUND) #------------------------------------------------------------
 LINK_BOOST(mtdetect)
 
+# compile executable: mpidetect
+################################################################################
+add_executable (mpidetect
+  src/mpidetect.cpp
+  )
+  
+# link executable with external libraries
+################################################################################
+target_link_libraries (mpidetect eblearn idx eblearntools)
+IF (QT_FOUND) #---------------------------------------------------------------
+  target_link_libraries (mpidetect idxgui)
+  target_link_libraries (mpidetect eblearngui)
+  IF (MPI_FOUND)
+    target_link_libraries (mpidetect mpi)
+  ENDIF (MPI_FOUND)    
+ENDIF (QT_FOUND) #------------------------------------------------------------
+LINK_BOOST(mpidetect)
+
 # # compile executable: objdetect
 # ################################################################################
 # add_executable (objtrack
