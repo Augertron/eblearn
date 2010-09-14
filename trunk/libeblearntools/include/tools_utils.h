@@ -170,6 +170,11 @@ namespace ebl {
   //! Resize and fill vector v with values in l.
   template <typename T>
     void list_to_vector(list<T> &l, vector<T> &v);
+
+  //! Return the directory name of a file. This is just looking for the first
+  //! directory separator from the right, this is not doing any system calls
+  //! to find the directory.
+  string dirname(char *s);
     
 } // end namespace ebl
 

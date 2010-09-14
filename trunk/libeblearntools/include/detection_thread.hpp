@@ -207,8 +207,9 @@ namespace ebl {
      try { // try loading classes names but do not stop upon failure
        load_matrix<ubyte>(classes, conf.get_cstring("classes"));
      } catch(string &err) { cerr << "warning: " << err << endl; }
+     uint noutputs = conf.exists_true("binary_target") ? 1 : classes.dim(0);
      module_1_1<SFUNC(Tnet)> *net =
-       create_network<SFUNC(Tnet)>(theparam, conf, classes.dim(0));
+       create_network<SFUNC(Tnet)>(theparam, conf, noutputs);
      if (!conf.exists("weights"))
        eblerror("\"weights\" variable not defined");
      cout << "Loading weights from: " << conf.get_string("weights") << endl;
@@ -232,7 +233,8 @@ namespace ebl {
 
      // detector
      detector<SFUNC(Tnet)> detect(*net, classes, pp, norm_size, NULL, 0,
-				  conf.get_double("gain"));
+				  conf.get_double("gain"),
+				  conf.exists_true("binary_target"));
      double maxs = conf.exists("max_scale")?conf.get_double("max_scale") : 1.0;
      double mins = conf.exists("min_scale")?conf.get_double("min_scale") : 0.0;
      detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
