@@ -75,6 +75,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #endif
       // load configuration
       configuration	conf(argv[1]);
+      if (!conf.exists("root2")) {
+	string dir = dirname(argv[1]);
+	cout << "Looking for trained files in: " << dir << endl;
+	conf.set("root2", dir.c_str());
+	conf.resolve();
+      }
       uint              ipp_cores     = 1;
       if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
       ipp_init(ipp_cores); // limit IPP (if available) to 1 core

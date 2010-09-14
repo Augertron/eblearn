@@ -358,4 +358,15 @@ namespace ebl {
     return s.str();
   }
 
+  string dirname(char *s_) {
+#ifdef __LINUX__
+    char c = '/';
+#else /* __WINDOWS__ */
+    char c = '\\';
+#endif
+    string s = s_;
+    size_t pos = s.find_last_of(c);
+    return s.substr(0, pos);
+  }
+  
 } // namespace ebl

@@ -99,9 +99,12 @@ namespace ebl {
     //! \param bias After preprocessing, add this bias to input values.
     //! \param coeff After preprocessing and bias adding,
     //!              scale input values by this coefficient.
+    //! \param single_output Set this to true when network outputs only 1
+    //!          output so that detection is handle correctly.
     detector(module_1_1<T,Tstate> &thenet, idx<ubyte> &lbls,
 	     module_1_1<T,Tstate> *pp = NULL, uint ppkersz = 0,
-	     const char *background = NULL, T bias = 0, float coeff = 1.0);
+	     const char *background = NULL, T bias = 0, float coeff = 1.0,
+	     bool single_output = false);
 
     //! Destructor.
     virtual ~detector();
