@@ -112,9 +112,11 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_zpads(uint hzpad_, uint wzpad_) {
-    hzpad = hzpad_;
-    wzpad = wzpad_;
+  void detector<T,Tstate>::set_zpads(float hzpad_, float wzpad_) {
+    idxdim minodim(1, 1, 1); // min output dims
+    netdim = thenet.bprop_size(minodim); // compute min input dims
+    hzpad = (uint) (hzpad_ * netdim.dim(1));
+    wzpad = (uint) (wzpad_ * netdim.dim(2));
     resizepp.set_zpads(hzpad, wzpad);
     cout << "Adding zero padding on input (on each side): hpad: "
 	 << hzpad << " wpad: " << wzpad << endl;
@@ -354,6 +356,19 @@ namespace ebl {
   
   template <typename T, class Tstate>
   void detector<T,Tstate>::compute_minmax_resolutions(idxdim &input_dims) {
+    // compute minimum input size compatible with network size
+    idxdim minodim(1, 1, 1); // min output dims
+    netdim = thenet.bprop_size(minodim); // compute min input dims
+    in_mindim = netdim;
+    in_mindim.setdim(1, netdim.dim(1) + hzpad * 2);
+    in_mindim.setdim(2, netdim.dim(2) + wzpad * 2);
+    thenet.fprop_size(in_mindim);
+    // TODO: this seems to screw things up
+    if (min_size > 0) { // cap on maximum input size
+      idxdim indim2(input_dims.dim(2), min_size, min_size);
+      thenet.fprop_size(indim2);
+      in_mindim.setdims(indim2);
+    }
     // compute maximum closest size of input compatible with the network size
     idxdim indim(input_dims.dim(2), input_dims.dim(0) + hzpad * 2,
 		 input_dims.dim(1) + wzpad * 2);
@@ -370,20 +385,6 @@ namespace ebl {
     }
     thenet.fprop_size(indim); // set a valid input dimensions set
     in_maxdim.setdims(indim); // copy valid dims to in_maxdim
-
-    // compute minimum input size compatible with network size
-    idxdim minodim(1, 1, 1); // min output dims
-    netdim = thenet.bprop_size(minodim); // compute min input dims
-    in_mindim = netdim;
-    in_mindim.setdim(1, netdim.dim(1) + hzpad * 2);
-    in_mindim.setdim(2, netdim.dim(2) + wzpad * 2);
-    thenet.fprop_size(in_mindim);
-    // TODO: this seems to screw things up
-    if (min_size > 0) { // cap on maximum input size
-      idxdim indim2(input_dims.dim(2), min_size, min_size);
-      thenet.fprop_size(indim2);
-      in_mindim.setdims(indim2);
-    }
   }
 
   template <typename T, class Tstate>

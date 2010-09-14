@@ -131,9 +131,9 @@ namespace ebl {
     //! \param resolutions A uint idx containing resolutions (of size nx2)
     void set_resolutions(idx<uint> &resolutions);
 
-    //! Add zero padding of hzpad on each vertical sides and wzpad on
-    //! horizontal sides.
-    void set_zpads(uint hzpad, uint wzpad);
+    //! Add zero padding of (hzpad * the network's minimum input height)
+    //! on each vertical sides and (wzpad * min width) on horizontal sides.
+    void set_zpads(float hzpad, float wzpad);
   
     //! Specify resolutions by the factor step, starting from factor 1
     //! (network's size), adding factor_steps until reaching the original
