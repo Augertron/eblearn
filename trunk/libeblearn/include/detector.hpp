@@ -52,10 +52,10 @@ namespace ebl {
     : thenet(thenet_), resizepp(MEAN_RESIZE, pp_, ppkersz_, true),
       coef(coef_), bias(bias_), input(NULL), output(NULL), minput(NULL),
       inputs(1), outputs(1), results(1), pp(pp_),
-      ppkersz(ppkersz_), nresolutions(3), resolutions(1, 2),
+      ppkersz(ppkersz_), nresolutions(3), resolutions(1, 4),
       original_bboxes(nresolutions, 4),
       bgclass(-1), mask_class(-1), scales(NULL), scales_step(0),
-      max_scale(1.0), min_scale(0.0),
+      max_scale(1.0), min_scale(1.0),
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       min_size(0), max_size(0), bodetections(false),
@@ -205,8 +205,10 @@ namespace ebl {
 	// Adapt the size to the network structure:
 	idxdim outd = thenet.fprop_size(scaled);
 	// remember correct resolution
-	resolution.set(scaled.dim(1), 0);
-	resolution.set(scaled.dim(2), 1);
+	resolution.set(resolution.get(0), 2); // originally requested
+	resolution.set(resolution.get(1), 3); // originally requested
+	resolution.set(scaled.dim(1), 0); // network compatible
+	resolution.set(scaled.dim(2), 1); // network compatible
 	// set or resize buffers
 	if (sin == NULL)
 	  in.set((void*) new Tstate(thick, scaled.dim(1),
@@ -418,40 +420,40 @@ namespace ebl {
       resolutions.set(in_mindim.dim(1), 1, 0); // min
       resolutions.set(in_mindim.dim(2), 1, 1); // min
     } else { // multiple resolutions: interpolate between min and max
-      nresolutions++; // add a special min resolution
+      //      nresolutions += 10; // add a special min resolution
       resolutions.resize1(0, nresolutions);
-      int n = nresolutions - 2;
+      int n = nresolutions;
       // compute the step factor: x = e^(log(max/min)/(nres-1))
       double fact = MIN(in_maxdim.dim(1) / (double) in_mindim.dim(1),
 			in_maxdim.dim(2) / (double) in_mindim.dim(2));
       double step = exp(log(fact)/(nresolutions - 1));
       double f;
       int i;
-      for (f = step, i = 1; i <= n; ++i, f *= step) {
+      for (f = step, i = 1; i < n; ++i, f *= step) {
 	resolutions.set((uint)(in_maxdim.dim(1) / f), i, 0);
 	resolutions.set((uint)(in_maxdim.dim(2) / f), i, 1);
       }
       resolutions.set(in_maxdim.dim(1), 0, 0); // max
       resolutions.set(in_maxdim.dim(2), 0, 1); // max
-      // a special minimum res that respects original ratio
-      resolutions.set(in_mindim.dim(1), nresolutions - 2, 0); // min
-      resolutions.set(in_mindim.dim(2), nresolutions - 2, 1); // min
-      float ri = input_dims.dim(0) / (float) input_dims.dim(1);
-      float rm = in_mindim.dim(1) / (float) in_mindim.dim(2);      
-      if (ri < rm)
-	resolutions.set((uint)(in_mindim.dim(1) / ri), nresolutions - 2, 1);
-      else
-	resolutions.set((uint)(in_mindim.dim(2) * ri), nresolutions - 2, 0);   	
-      if ((resolutions.get(nresolutions-1,0) == in_mindim.dim(1)) &&
-	  (resolutions.get(nresolutions-1,1) == in_mindim.dim(2))) {
-	// the special resolution is the same as the minimum one, remove it.
-	nresolutions--;
-	resolutions.resize1(0, nresolutions);
-      }
-      // minimum network res (ignore aspect ratio but shows entire
-      // picture in 1 network
-      resolutions.set(in_mindim.dim(1), nresolutions - 1, 0); // min
-      resolutions.set(in_mindim.dim(2), nresolutions - 1, 1); // min
+      // // a special minimum res that respects original ratio
+      // resolutions.set(in_mindim.dim(1), nresolutions - 2, 0); // min
+      // resolutions.set(in_mindim.dim(2), nresolutions - 2, 1); // min
+      // float ri = input_dims.dim(0) / (float) input_dims.dim(1);
+      // float rm = in_mindim.dim(1) / (float) in_mindim.dim(2);      
+      // if (ri < rm)
+      // 	resolutions.set((uint)(in_mindim.dim(1) / ri), nresolutions - 2, 1);
+      // else
+      // 	resolutions.set((uint)(in_mindim.dim(2) * ri), nresolutions - 2, 0);   	
+      // if ((resolutions.get(nresolutions-1,0) == in_mindim.dim(1)) &&
+      // 	  (resolutions.get(nresolutions-1,1) == in_mindim.dim(2))) {
+      // 	// the special resolution is the same as the minimum one, remove it.
+      // 	nresolutions--;
+      // 	resolutions.resize1(0, nresolutions);
+      // }
+      // // minimum network res (ignore aspect ratio but shows entire
+      // // picture in 1 network
+      // resolutions.set(in_mindim.dim(1), nresolutions - 1, 0); // min
+      // resolutions.set(in_mindim.dim(2), nresolutions - 1, 1); // min
     }
   }
 
@@ -491,11 +493,15 @@ namespace ebl {
 					       double scales_step,
 					       double min_scale,
 					       double max_scale) {
+    double hmin = in_mindim.dim(1) * min_scale;
+    double wmin = in_mindim.dim(2) * min_scale;
+    in_mindim.setdim(1, hmin);
+    in_mindim.setdim(2, wmin);
     // figure out how many resolutions can be used between min and max
     // with a step of scales_step:
     // nres = (log (max/min) / log step) + 1
-    double fact = MIN(in_maxdim.dim(1) / (double) in_mindim.dim(1),
-		      in_maxdim.dim(2) / (double) in_mindim.dim(2));
+    double fact = MIN(in_maxdim.dim(1) / hmin,
+		      in_maxdim.dim(2) / wmin);
     nresolutions = (uint) (log(fact) / log(scales_step)) + 1;
     compute_resolutions(input_dims, nresolutions);
   }
@@ -641,15 +647,18 @@ namespace ebl {
     { idx_bloop5(input, inputs, void*, output, outputs, void*,
 		 r, results, void*, resolution, resolutions, uint,
 		 obbox, original_bboxes, uint) {
+	// image region in the input at this scale.
 	rect robbox(obbox.get(0), obbox.get(1), obbox.get(2), obbox.get(3));
 	double in_h = (double)(((Tstate*) input.get())->x.dim(1));
 	double in_w = (double)(((Tstate*) input.get())->x.dim(2));
 	double out_h = (double)(((Tstate*) output.get())->x.dim(1));
 	double out_w = (double)(((Tstate*) output.get())->x.dim(2));
 	double neth = netdim.dim(1); // network's input height
-	double netw = netdim.dim(2); // netowkr's input width
-	double scalehi = original_h / robbox.height; // in to original
-	double scalewi = original_w / robbox.width; // in to original
+	double netw = netdim.dim(2); // network's input width
+	double scalehi = original_h / robbox.height; // input to original
+	double scalewi = original_w / robbox.width; // input to original
+	uint image_h0 = (uint) robbox.h0 * scalehi;
+	uint image_w0 = (uint) robbox.w0 * scalewi;
 	// offset factor in input map
 	double offset_h_factor = (in_h - neth)
 	  / std::max((double) 1, (out_h - 1));
@@ -672,23 +681,21 @@ namespace ebl {
 		  bb.confidence = rooo.get(); // Confidence
 		  bb.scale_index = scale_index; // scale index
 		  // original image
-		  uint oh0 = (uint) (offset_h * offset_h_factor * scalehi);
-		  uint ow0 = (uint) (offset_w * offset_w_factor * scalewi);
-		  bb.h0 = (uint) std::max(0, (int) (oh0 - robbox.h0 * scalehi));
-		  bb.w0 = (uint) std::max(0, (int) (ow0 - robbox.w0 * scalewi));
-		  bb.height =
-		    (uint) (MIN(neth * scalehi + oh0,
-				original_h + robbox.h0 * scalehi)
-			    - std::max((uint) (robbox.h0 * scalehi), oh0));
-		  bb.width =
-		    (uint) (MIN(netw * scalewi + ow0,
-				original_w + robbox.w0 * scalewi)
-			    - std::max((uint) (robbox.w0 * scalewi), ow0));
+		  // bbox's rectangle in original image
+		  bb.h0 = (uint) (offset_h * offset_h_factor * scalehi);
+		  bb.w0 = (uint) (offset_w * offset_w_factor * scalewi);
+		  bb.height = (uint) (neth * scalehi);
+		  bb.width = (uint) (netw * scalewi);
 		  // apply bbox factors
 		  bb.h0 = bb.h0 + (uint)((bb.height - bb.height * bbhfactor)/2);
 		  bb.w0 = bb.w0 + (uint)((bb.width - bb.width * bbwfactor)/2);
-		  bb.height = (uint) (bb.height * bbhfactor);
-		  bb.width = (uint) (bb.width * bbwfactor);
+		  bb.height *= bbhfactor;
+		  bb.width *= bbwfactor;
+		  // cut off bbox at image boundaries
+		  bb.h0 = (uint) std::max(0, (int) (bb.h0 - image_h0));
+		  bb.w0 = (uint) std::max(0, (int) (bb.w0 - image_w0));
+		  bb.height = MIN(bb.height + bb.h0, original_h) - bb.h0;
+		  bb.width = MIN(bb.width + bb.w0, original_w) - bb.w0;
 		  // input map
 		  bb.iheight = (uint) in_h; // input h
 		  bb.iwidth = (uint) in_w; // input w
@@ -1112,12 +1119,14 @@ namespace ebl {
     idx<uint> bbox = original_bboxes.select(0, res);
     // select input/outputs buffers
     output = (Tstate*)(outputs.get(res));
-    if (!mem_optimization || keep_inputs) // we use different buffers for each resolution
+    if (!mem_optimization || keep_inputs) // we use different bufs for each res
       input = (Tstate*)(inputs.get(res));
     else
       input = minput;
     // resize and preprocess input
     resizepp.set_dimensions(resolutions.get(res, 0), resolutions.get(res, 1));
+    rect outr(0, 0, resolutions.get(res, 2), resolutions.get(res, 3));
+    resizepp.set_output_region(outr);
     resizepp.fprop(iminput, *input);
     // memorize original input's bbox in resized input
     rect bb = resizepp.get_original_bbox();

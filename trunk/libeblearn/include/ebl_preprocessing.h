@@ -221,6 +221,10 @@ namespace ebl {
     //! set the region to use in the input image.
     //! by default, the input region is the entire image.
     void set_input_region(const rect &inr);
+    //! set the region to use in the output image.
+    //! by default, the output region is the entire size defined by
+    //! set_dimensions().
+    void set_output_region(const rect &outr);
     //! Set zero padding on each side for each dimension.
     void set_zpads(intg hpad, intg wpad);
     //! forward propagation from in to out
@@ -247,6 +251,7 @@ namespace ebl {
     rect                 inrect;        //!< input region of image
     rect                 outrect;       //!< input region in output image
     bool                 inrect_set;    //!< use input region or not.
+    bool                 outrect_set;   //!< use output region or not.
     uint                 hzpad;         //!< vertical zero-padding for each side
     uint                 wzpad;         //!< horiz. zero-padding for each side
     zpad_module<T,Tstate> *zpad;        //!< Zero padding module.

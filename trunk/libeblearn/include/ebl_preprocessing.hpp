@@ -306,22 +306,36 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
+  void resizepp_module<T,Tstate>::set_output_region(const rect &outr) {
+    outrect = outr;
+    outrect.height -= hzpad * 2;
+    outrect.width -= wzpad * 2;
+    outrect_set = true;
+  }
+
+  template <typename T, class Tstate>
   void resizepp_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     // set input region to entire image if no input region is given
     if (!inrect_set)
       inrect = rect(0, 0, in.x.dim(1), in.x.dim(2));
+    if (!outrect_set)
+      outrect = rect(0, 0, height, width);
+    rect outr;
     // resize input while preserving aspect ratio
     tmp = in.x.shift_dim(0, 2);
     idx<T> resized;
     switch (mode) {
     case MEAN_RESIZE:
-      resized =	image_mean_resize(tmp, height,width, 0, &inrect, &outrect);
+      resized = image_mean_resize(tmp, outrect.height,
+				  outrect.width, 0, &inrect, &outr);
       break ;
     case GAUSSIAN_RESIZE:
-      resized =	image_gaussian_resize(tmp, height,width, 0, &inrect, &outrect);
+      resized = image_gaussian_resize(tmp, outrect.height,
+				      outrect.width, 0, &inrect,&outr);
       break ;
     case BILINEAR_RESIZE:
-      resized =	image_resize(tmp, height, width, 0, &inrect, &outrect);
+      resized = image_resize(tmp, outrect.height, outrect.width, 0,
+			     &inrect, &outr);
       break ;
     default:
       eblerror("unknown resizing mode");
@@ -341,9 +355,9 @@ namespace ebl {
       out.x.resize(outpp.x.dim(0), height, width);
     idx_clear(out.x);
     // copy out region to output
-    original_bbox = outrect;
+    original_bbox = outr;
     resized = resized.shift_dim(0, 2);
-    tmp2 = image_region_to_rect(resized, outrect, out.x.dim(1),
+    tmp2 = image_region_to_rect(resized, outr, out.x.dim(1),
 				out.x.dim(2), original_bbox);
     tmp2 = tmp2.shift_dim(2, 0);
     //idx_copy(tmp2, tmp);
@@ -355,14 +369,6 @@ namespace ebl {
       idx_copy(tmp2, tmp3.x);
       zpad->fprop(tmp3, out);
     }
-//     // copy pp output into output with target dimensions, removing ker borders
-//     tmp2 = resized.narrow(1, outrect.height, outrect.h0 + kernelsz / 2);
-//     tmp2 = tmp2.narrow(2, outrect.width, outrect.w0 + kernelsz / 2);
-//     idx_copy(tmp2, tmp);
-//     // remember where the original image has been placed in output
-//     original_bbox = rect((height - resized0.dim(1)) / 2,
-// 			 (width - resized0.dim(2)) / 2,
-// 			 resized0.dim(1), resized0.dim(2));
   }
   
   template <typename T, class Tstate>
