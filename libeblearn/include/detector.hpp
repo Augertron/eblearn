@@ -436,25 +436,6 @@ namespace ebl {
       }
       resolutions.set(in_maxdim.dim(1), 0, 0); // max
       resolutions.set(in_maxdim.dim(2), 0, 1); // max
-      // // a special minimum res that respects original ratio
-      // resolutions.set(in_mindim.dim(1), nresolutions - 2, 0); // min
-      // resolutions.set(in_mindim.dim(2), nresolutions - 2, 1); // min
-      // float ri = input_dims.dim(0) / (float) input_dims.dim(1);
-      // float rm = in_mindim.dim(1) / (float) in_mindim.dim(2);      
-      // if (ri < rm)
-      // 	resolutions.set((uint)(in_mindim.dim(1) / ri), nresolutions - 2, 1);
-      // else
-      // 	resolutions.set((uint)(in_mindim.dim(2) * ri), nresolutions - 2, 0);   	
-      // if ((resolutions.get(nresolutions-1,0) == in_mindim.dim(1)) &&
-      // 	  (resolutions.get(nresolutions-1,1) == in_mindim.dim(2))) {
-      // 	// the special resolution is the same as the minimum one, remove it.
-      // 	nresolutions--;
-      // 	resolutions.resize1(0, nresolutions);
-      // }
-      // // minimum network res (ignore aspect ratio but shows entire
-      // // picture in 1 network
-      // resolutions.set(in_mindim.dim(1), nresolutions - 1, 0); // min
-      // resolutions.set(in_mindim.dim(2), nresolutions - 1, 1); // min
     }
   }
 
@@ -494,8 +475,8 @@ namespace ebl {
 					       double scales_step,
 					       double min_scale,
 					       double max_scale) {
-    double hmin = in_mindim.dim(1) * min_scale;
-    double wmin = in_mindim.dim(2) * min_scale;
+    double hmin = (std::max)((double)min_size, in_mindim.dim(1) * min_scale);
+    double wmin = (std::max)((double)min_size, in_mindim.dim(2) * min_scale);
     in_mindim.setdim(1, (intg) hmin);
     in_mindim.setdim(2, (intg) wmin);
     // figure out how many resolutions can be used between min and max
