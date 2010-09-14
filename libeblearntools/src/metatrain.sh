@@ -174,13 +174,22 @@ compile_data() {
     traindsname=$9
     valdsname=${10}
     ds_split_ratio=${11}
+    step=${12} # current step number
+    compile_step=${13} # previous data compilation step
     # function body ###########################################################
 
+    if [ $compile_step -gt 0 ] # first dataset doesn't have a prefix
+    then
+	prefix="${compile_step}_"
+    else
+	prefix=""
+    fi
+    
     # recompile data from last output directory which should contain 
     # all false positives
     # note: no need to preprocess, .mat should already be preprocessed
     ${eblearnbin}/dscompiler ${falsepos_dir} -precision ${precision} \
-	-outdir ${dataroot} -forcelabel bg -dname allfp \
+	-outdir ${dataroot} -forcelabel bg -dname ${step}_allfp \
 	-dims ${h}x${w}x${chans} \
 	-image_pattern ".*[.]mat" -mindims ${h}x${w}x${chans}
     if [ $? -neq 0 ]; then exit -1; fi # stop if error
@@ -192,27 +201,28 @@ compile_data() {
     echo "valsize = ${valsize}"
     
     # print out information about extracted dataset to check it is ok
-    ${eblearnbin}/dsdisplay $dataroot/allfp -info
+    ${eblearnbin}/dsdisplay $dataroot/${step}_allfp -info
     check_error $? 
     
     # split dataset into training and validation
-    ${eblearnbin}/dssplit ${dataroot} allfp \
-	allfp_val_ allfp_train_ -maxperclass ${valsize} -draws $draws
+    ${eblearnbin}/dssplit ${dataroot} ${step}_allfp \
+	${step}_allfp_val_ ${step}_allfp_train_ \
+	-maxperclass ${valsize} -draws $draws
     check_error $? 
 
     # merge new datasets into previous datasets: training
     for i in `seq 1 $draws`
     do
-	${eblearnbin}/dsmerge ${dataroot} ${traindsname}_${i} \
-	    ${traindsname}_${i} allfp_train_${i}
+	${eblearnbin}/dsmerge ${dataroot} ${step}_${traindsname}_${i} \
+	    ${prefix}${traindsname}_${i} ${step}_allfp_train_${i}
 	check_error $? 
     done
 
     # merge new datasets into previous datasets: validation
     for i in `seq 1 $draws`
     do
-	${eblearnbin}/dsmerge ${dataroot} ${valdsname}_${i} \
-	    ${valdsname}_${i} allfp_val_${i} 
+	${eblearnbin}/dsmerge ${dataroot} ${step}_${valdsname}_${i} \
+	    ${prefix}${valdsname}_${i} ${step}_allfp_val_${i} 
 	check_error $? 
     done
 }
@@ -226,6 +236,9 @@ retrain() {
     name=$4
     tstamp=$5
     bestconf=$6
+    compile_step=$7 # last data compilation step id
+    traindsname=$8
+    valdsname=$9
     # function body ###########################################################
     # retrain on old + new data
     echo "Retraining from best previous weights: ${bestweights}"
@@ -233,6 +246,8 @@ retrain() {
     echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
     echo "retrain = 1" >> $metaconf
     echo "retrain_weights = ${bestweights}" >> $metaconf
+    echo "train = ${compile_step}_${traindsname}_\${ds}" >> $metaconf
+    echo "val = ${compile_step}_${valdsname}_\${ds}" >> $metaconf
     echo "meta_name = ${name}" >> $metaconf
     # send report at specific training iterations
     echo "meta_email_iters = 0,1,2,3,4,5,7,10,15,20,30,50,75,100,200" >> \
@@ -315,6 +330,7 @@ metatrain() {
     echo "meta_output_dir = ${out}" >> $metaconf
 
     step=0
+    compile_step=0
     stepstr=`printf "%02d" ${step}`
     # initial training
     name=${meta_name}_${stepstr}_training
@@ -362,8 +378,10 @@ metatrain() {
 	    print_step $step $metaconf $lastname $lastdir "data compilation" \
 		$iter $maxiteration
 	    compile_data $eblearnbin $lastdir $precision $dataroot \
-		$h $w $chans $draws $traindsname $valdsname $ds_split_ratio
+		$h $w $chans $draws $traindsname $valdsname $ds_split_ratio \
+		$step $compile_step
 	fi
+	compile_step=$step # remember last data compilation step
 	step=`expr ${step} + 1` # increment step
 	stepstr=`printf "%02d" ${step}`
     
@@ -375,7 +393,7 @@ metatrain() {
 	    print_step $step $metaconf $lastname $lastdir "retraining" \
 		$iter $maxiteration
 	    retrain $bestweights $eblearnbin $metaconf $name $tstamp \
-		$bestconf
+		$bestconf $compile_step $traindsname $valdsname
 	fi
 	step=`expr ${step} + 1` # increment step
 	stepstr=`printf "%02d" ${step}`
