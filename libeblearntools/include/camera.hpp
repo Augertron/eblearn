@@ -94,6 +94,8 @@ namespace ebl {
     
   template <typename Tdata>
   bool camera<Tdata>::stop_recording(float fps, const char *root) {
+    if (record_cnt == 0)
+      return false;
     string rname;
     if (root) {
       rname += root;
