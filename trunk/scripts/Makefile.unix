@@ -37,7 +37,7 @@ LIBS=libidx.${LIB_EXT} libidxgui.${LIB_EXT} libeblearn.${LIB_EXT} \
 BINS=dscompiler dssplit dsmerge matshow dsdisplay metarun metaparse capture
 DEMOS=objtrain objdetect mnist_train mnist_reco
 
-all: release
+all: libs
 
 release:
 	@echo __________________________________________________________________
