@@ -495,8 +495,8 @@ namespace ebl {
 					       double max_scale) {
     double hmin = in_mindim.dim(1) * min_scale;
     double wmin = in_mindim.dim(2) * min_scale;
-    in_mindim.setdim(1, hmin);
-    in_mindim.setdim(2, wmin);
+    in_mindim.setdim(1, (intg) hmin);
+    in_mindim.setdim(2, (intg) wmin);
     // figure out how many resolutions can be used between min and max
     // with a step of scales_step:
     // nres = (log (max/min) / log step) + 1
@@ -657,8 +657,8 @@ namespace ebl {
 	double netw = netdim.dim(2); // network's input width
 	double scalehi = original_h / robbox.height; // input to original
 	double scalewi = original_w / robbox.width; // input to original
-	uint image_h0 = (uint) robbox.h0 * scalehi;
-	uint image_w0 = (uint) robbox.w0 * scalewi;
+	uint image_h0 = (uint) (robbox.h0 * scalehi);
+	uint image_w0 = (uint) (robbox.w0 * scalewi);
 	// offset factor in input map
 	double offset_h_factor = (in_h - neth)
 	  / std::max((double) 1, (out_h - 1));
@@ -689,13 +689,13 @@ namespace ebl {
 		  // apply bbox factors
 		  bb.h0 = bb.h0 + (uint)((bb.height - bb.height * bbhfactor)/2);
 		  bb.w0 = bb.w0 + (uint)((bb.width - bb.width * bbwfactor)/2);
-		  bb.height *= bbhfactor;
-		  bb.width *= bbwfactor;
+		  bb.height = (uint) (bb.height * bbhfactor);
+		  bb.width = (uint) (bb.width * bbwfactor);
 		  // cut off bbox at image boundaries
 		  bb.h0 = (uint) std::max(0, (int) (bb.h0 - image_h0));
 		  bb.w0 = (uint) std::max(0, (int) (bb.w0 - image_w0));
-		  bb.height = MIN(bb.height + bb.h0, original_h) - bb.h0;
-		  bb.width = MIN(bb.width + bb.w0, original_w) - bb.w0;
+		  bb.height = MIN(bb.height + bb.h0, (uint) original_h) - bb.h0;
+		  bb.width = MIN(bb.width + bb.w0, (uint) original_w) - bb.w0;
 		  // input map
 		  bb.iheight = (uint) in_h; // input h
 		  bb.iwidth = (uint) in_w; // input w
