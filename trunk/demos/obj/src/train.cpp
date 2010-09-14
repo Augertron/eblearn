@@ -121,6 +121,19 @@ int main(int argc, char **argv) { // regular main without gui
     //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
     idx<t_net> targets =
       create_target_matrix<t_net>(train_ds.get_nclasses(), 1.0);
+    if (conf.exists_true("binary_target")) {
+      if (train_ds.get_nclasses() != 2)
+	eblerror("expecting 2 classes only when binary_target is on");
+      targets = idx<t_net>(2, 1);
+      int neg_id = train_ds.get_class_id("bg"); // negative class
+      if (neg_id == 0) {
+	targets.set(-1.0, 0, 0); // negative: -1.0
+	targets.set( 1.0, 1, 0); // positive:  1.0
+      } else {
+	targets.set( 1.0, 0, 0); // positive:  1.0
+	targets.set(-1.0, 1, 0); // negative: -1.0
+      }
+    }
     if (conf.exists("target_factor"))
       idx_dotc(targets, conf.get_double("target_factor"), targets);
     cout << "Targets:" << endl; targets.printElems();

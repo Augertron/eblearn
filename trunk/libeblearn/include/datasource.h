@@ -380,6 +380,9 @@ namespace ebl {
     //! Print info about the datasource on the standard output.
     virtual void pretty();
 
+    //! Return the label id corresponding to name, or -1 if not found.
+    virtual int get_class_id(const char *name);
+
     ////////////////////////////////////////////////////////////////
     // friends
     template <typename T1, typename T2, typename T3>

@@ -592,14 +592,16 @@ namespace ebl {
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_shuffle_passes(bool activate) {
     shuffle_passes = activate;
-    cout << _name << ": Shuffling of samples (training only) after each pass is "
+    cout << _name
+	 << ": Shuffling of samples (training only) after each pass is "
 	 << (shuffle_passes ? "activated" : "deactivated") << "." << endl;
   }
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::set_weigh_samples(bool activate) {
     weigh_samples = activate;
-    cout << _name << ": Weighing of samples (training only) based on classification is "
+    cout << _name
+	 << ": Weighing of samples (training only) based on classification is "
 	 << (weigh_samples ? "activated" : "deactivated") << "." << endl;
   }
   
@@ -996,6 +998,17 @@ namespace ebl {
     }
   }
     
+  template <class Tnet, class Tdata, class Tlabel>
+  int labeled_datasource<Tnet, Tdata, Tlabel>::get_class_id(const char *name) {
+    int id = -1;
+    vector<string*>::iterator i = lblstr->begin();
+    for (int j = 0; i != lblstr->end(); ++i, ++j) {
+      if (!strcmp(name, (*i)->c_str()))
+	id = j;
+    }
+    return id;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // labeled_pair_datasource
 
