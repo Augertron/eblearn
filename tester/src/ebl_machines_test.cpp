@@ -36,6 +36,7 @@ void ebl_machines_test::test_lenet5_mnist() {
   train_ds.set_weigh_samples(true);
   train_ds.set_weigh_normalization(false);
   train_ds.set_min_proba(0.01);
+  train_ds.set_epoch_show(500); // show progress every 500 samples
 
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =
