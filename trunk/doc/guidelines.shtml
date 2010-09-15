@@ -48,11 +48,28 @@
       </ul>
       <h2>SVN</h2>
       <ul>
-	<li>Creating a new branch:<br>
-	  svn copy https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk https://eblearn.svn.sourceforge.net/svnroot/eblearn/branches/george
+	<li>Creating a new branch for bob:<br>
+	  svn copy https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk https://eblearn.svn.sourceforge.net/svnroot/eblearn/branches/bob
 	</li>
-	<li>Merging a branch into trunk:</li>
-	<li>Merging a trunk into branch:</li>
+	<li>Merging the trunk into bob's branch:</li>
+	  <ul><li>Get branch's creation revision:<br>
+	      svn log --stop-on-copy</li>
+	    <li>Merge trunk into branch, assuming branch's creation revision
+	      is "XXX". From the branch directory, do:<br>
+	      svn merge -rXXX:HEAD https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk
+	    </li>
+	    <li>The branch is now locally updated with the latest trunk,
+	      commit to apply the changes to the branch.</li>
+	  </ul>
+	<li>Merging bob's branch into trunk:</li>
+	<ul><li>Get branch's creation revision:<br>
+	    svn log --stop-on-copy</li>
+	  <li>
+	    Assuming branch's creation revision
+	    is "XXX", from the trunk directory, do:<br>
+	    svn merge -rXXX:HEAD https://eblearn.svn.sourceforge.net/svnroot/eblearn/branches/bob
+	  </li>
+	</ul>
 	<li>Never commit a broken code in the main trunk (allowed in
 	branches).</li>
 	<li>Run the tester before a commit to make sure nothing is broken.</li>

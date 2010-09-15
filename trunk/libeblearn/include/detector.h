@@ -143,10 +143,10 @@ namespace ebl {
     //! resolution.
     //! \param max_scale The maximum scale factor of the original resolution,
     //!    1.0 by default, i.e. the original resolution.
-    //! \param min_scale The minimum scale factor of the original resolution,
-    //!    0.0 by default, meaning the minimum network input size.
+    //! \param min_scale The minimum scale factor of the smallest network size
+    //!    1.0 by default, meaning the minimum network input size.
     void set_resolutions(double scales_steps, double max_scale = 1.0,
-			 double min_scale = 0.0);
+			 double min_scale = 1.0);
 
     //! Return the id of the class 'name' or -1 if not found.
     int get_class_id(const string &name);

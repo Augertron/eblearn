@@ -257,11 +257,15 @@ namespace ebl {
 
   template<class T>
   idx<T> image_mean_resize(idx<T> &im, double oheight, double owidth,
-				uint mode, rect *iregion_, rect *oregion) {
+			   uint mode, rect *iregion_, rect *oregion) {
     // only accept 2D or 3D images
     if ((im.order() != 2) && (im.order() != 3)) {
       cerr << "illegal order: " << im << endl;
       eblerror("unexpected image format");
+    }
+    if (oheight == 0 || owidth == 0) {
+      cerr << "oheight: " << oheight << " owidth " << owidth << endl;
+      eblerror("illegal resize image to zero");
     }
     // iregion is optional, set it to entire image if not given
     rect iregion(0, 0, im.dim(0), im.dim(1));
@@ -303,20 +307,10 @@ namespace ebl {
       default:
 	eblerror("unsupported mode");
       }
-      // find closest multiple of target dimension
-      uint fact = 1;
-      uint mindist = (numeric_limits<uint>::max)();
-      uint area = iregion.height * iregion.width;
-      uint dist = abs((int)(outr.height * outr.width * fact * fact) -(int)area);
-      while ((dist <= mindist)
-	     && (outr.height * fact <= iregion.height) // avoid upsampling
-	     && (outr.width * fact <= iregion.width)) {
-	mindist = dist;
-	dist = abs((int)(outr.height * outr.width * (fact+1) * (fact+1))
-		   - (int)area);
-	if (dist <= mindist)
-	  fact++;
-      }
+      // find closest multiple of target area that is smaller than input area
+      // (smaller to avoid upsampling)
+      uint fact = (std::min)((uint)floor(iregion.height / (float) outr.height),
+			     (uint)floor(iregion.width / (float) outr.width));
       // bilinear resize at closest resolution to current resolution
       rim = image_resize(im, inr.height * fact, inr.width * fact, 1);
       //  add extra padding around original image if it's not a multiple of fact

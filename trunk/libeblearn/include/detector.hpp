@@ -479,6 +479,8 @@ namespace ebl {
 					       double max_scale) {
     double hmin = (std::max)((double)min_size, in_mindim.dim(1) * min_scale);
     double wmin = (std::max)((double)min_size, in_mindim.dim(2) * min_scale);
+    if (min_scale == 0)
+      eblerror("min_scale cannot be zero");
     in_mindim.setdim(1, (intg) hmin);
     in_mindim.setdim(2, (intg) wmin);
     // figure out how many resolutions can be used between min and max
