@@ -19,6 +19,8 @@
       <a href="#linux">Linux</a><br>
       <a href="#windows">Windows</a><br>
       <a href="#mac">MAC</a><br>
+      Instructions on how to work with following IDEs:<br>
+      <a href="#eclipse">Eclipse</a><br>
       </p>
 
       <a name=linux><h1>Linux</h1></a>
@@ -34,15 +36,20 @@
 	</li>
       </ul>
      
-     <h3>Quick install</h3>
+     <h3>Quick install for core</h3>
+       <code>$ sudo apt-get install subversion cmake g++ imagemagick<br>
+	 $ cd core && make<br>
+	 $ cd core && sudo make install<br>
+       </code>
+
+     <h3>Quick install for core and tools</h3>
        <code>$ sudo apt-get install subversion cmake g++
 	 libatlas-base-dev libboost-filesystem-dev imagemagick
 	 libboost-regex-dev libqt4-core libqt4-dev libqt4-gui
 	 libcppunit-dev libxml++2.6-dev doxygen mplayer mencoder<br>
-	 $ ./configure<br>
-	 $ make release<br>
-	 $ sudo make install<br>
-	 $ make test<br>
+	 $ cd tools && make<br>
+	 $ cd tools && sudo make install<br>
+	 $ cd tools && make test<br>
        </code>
 
        <h3>Execution</h3>
@@ -51,25 +58,27 @@
 	   run the tester:<br>
 	   <code>$ ./bin/tester</code> (Or <code>$ make test</code>)</li>
 	 <li>To test face detection demo, call:<br>
-	   <code>$ ./bin/objdetect demos/obj/face/trained/best.conf</code></li>
+	   <code>$ ./bin/objdetect tools/demos/obj/face/trained/best.conf</code>
+	 </li>
        </ul>
 
        <h3>Database installation</h3>
        The MNIST handwritten digit database is used by the tester to unit-test
-       the learning algorithms.<br>
-       You can download MNIST from the following website
-       and specify its path to the tester via the configure script:<br>
+       the learning algorithms. The tester offers an automatic download
+       of MNIST.<br>
+       Or you can manually download MNIST from the following website:<br>
        <a href="http://yann.lecun.com/exdb/mnist/">
 	 http://yann.lecun.com/exdb/mnist/</a>
+       <strong>Note:</strong>when decompressing the MNIST archives,
+       it happens that a dash is replaced by a point by the extractor.
+       Symply rename the extracted file to its original name.<br>
+       e.g.: 't10k-images.idx3-ubyte' should be 't10k-images-idx3-ubyte'
 
        <h3>Compilation</h3>
        <ul>
-	 <li>Configure will first generate the Makefile and setup some
-	   directories, call it once:<br>
-	   <code>$ ./configure</code></li>
 	 <li>To compile libraries only (libeblearn, libidx, libidxgui,
 	   libeblearngui and libeblearntools):<br>
-	   <code>$ make</code></li>
+	   <code>$ make libs</code></li>
 	 <li>To compile all projects release mode:<br>
 	   <code>$ make release</code></li>
 	 <li>To compile all projects debug mode (slower execution):<br>
@@ -203,16 +212,35 @@
 	</li>
       </ul>
      
-     <h3>Quick install</h3>
+     <h3>Quick install of core</h3>
      <ul>
        <li>Install CMake (details below). Run it and
-	 enter your source code path (e.g.: C:/Users/pierre/eblearn)
+	 enter the core source code path (e.g.: C:/Users/pierre/eblearn/core)
+	 and the output path (e.g.: C:/Users/pierre/eblearn/bin).</li>
+       <li>(optional) Install ImageMagick to be able to read images 
+	 (see procedure below).</li>
+       <li>In CMake, click 'configure', select the type of project you want
+	 to generate (e.g. 'Visual Studio 9 2008' if you work with
+	 Visual Studio), then click 'generate'.</li>
+       <li>Open the generated project in your output path with Visual
+	 Studio.</li>
+       <li>Right-click on the project you want to compile and select
+	 'build'.</li>
+     </ul>
+
+     <h3>Quick install of core and tools</h3>
+     <ul>
+       <li>Install CMake (details below). Run it and
+	 enter the tools source code path (e.g.: C:/Users/pierre/eblearn/tools)
 	 and the output path (e.g.: C:/Users/pierre/eblearn/bin).</li>
        <li>Install ImageMagick to be able to read images 
 	 (see procedure below).</li>
        <li>(optional) Download and extract MNIST
 	 (http://yann.lecun.com/exdb/mnist/) and set variable 
-	 MNIST_PATH in CMake with 'Add Entry' to your MNIST path.</li>
+	 MNIST_PATH in CMake with 'Add Entry' to your MNIST path (as string).
+	 If your path contains '\', be sure to add an extra slash in front '\\',
+	 e.g. C:\mnist should be C:\\mnist.
+       </li>
        <li>(optional) Install 3rd-party software (see below), such as
 	 Qt for graphics, Boost, CPPUNIT for testing, IPP and CBlas for speed,
 	 etc.</li>
@@ -226,7 +254,7 @@
        <li>(optional) Install third-party libraries (see below) depending on
 	 which project you want to compile.<br>
      </ul>
-
+     
      <h3>Execution</h3>
      <ul>
        <li>To unit-test basic functionalities of the libraries, run the tester
@@ -246,7 +274,11 @@
      CMake:<br>
      <a href="http://yann.lecun.com/exdb/mnist/">
        http://yann.lecun.com/exdb/mnist/</a>
-
+     <strong>Note:</strong>when decompressing the MNIST archives,
+     it happens that a dash is replaced by a point by the extractor.
+     Symply rename the extracted file to its original name.<br>
+     e.g.: 't10k-images.idx3-ubyte' should be 't10k-images-idx3-ubyte'
+     
      <h3>Compilation</h3>
      <ul>
        <li>To exclude some components such as QT or OpenCV from being used,
@@ -360,13 +392,18 @@
 	</li>
       </ul>
      
-     <h3>Quick install</h3>
+     <h3>Quick install of core</h3>
+     <code>$ sudo port install subversion cmake imagemagick<br>
+       $ cd core && make<br>
+       $ cd core && sudo make install<br>
+     </code>
+
+     <h3>Quick install of core and tools</h3>
      <code>$ sudo port install subversion cmake imagemagick boost qt4-mac
        cppunit doxygen<br>
-       $ ./configure<br>
-       $ make release<br>
-       $ sudo make install<br>
-       $ make test<br>
+       $ cd tools && make<br>
+       $ cd tools && sudo make install<br>
+       $ cd tools && make test<br>
      </code>
      
      <h3>Execution</h3>
@@ -380,17 +417,18 @@
        
        <h3>Database installation</h3>
        The MNIST handwritten digit database is used by the tester to unit-test
-       the learning algorithms.<br>
-       You can download MNIST from the following website
-       and specify its path to the tester via the configure script:<br>
+       the learning algorithms. The tester offers an automatic download
+       of MNIST.<br>
+       Or you can manually download MNIST from the following website:<br>
        <a href="http://yann.lecun.com/exdb/mnist/">
 	 http://yann.lecun.com/exdb/mnist/</a>
+       <strong>Note:</strong>when decompressing the MNIST archives,
+       it happens that a dash is replaced by a point by the extractor.
+       Symply rename the extracted file to its original name.<br>
+       e.g.: 't10k-images.idx3-ubyte' should be 't10k-images-idx3-ubyte'
        
        <h3>Compilation</h3>
        <ul>
-	 <li>Configure will first generate the Makefile and setup some
-	   directories, call it once:<br>
-	   <code>$ ./configure</code></li>
 	 <li>To compile libraries only (libeblearn, libidx, libidxgui,
 	   libeblearngui and libeblearntools):<br>
 	   <code>$ make</code></li>
@@ -496,6 +534,40 @@
 	 </li>
        </ul>
        
-     
+     <a name="eclipse"><h1>Eclipse</h1></a>
+      <h3>How to work with eblearn from within Eclipse</h3>
+      <ul>
+	<li>Get the Eclipse CDT (C/C++ development tools), version 4.0 or above:
+	  http://www.eclipse.org/cdt/</li>
+	<li>Rename any existing eblearn project directories that might get
+	  overwritten.</li>
+	<li>Right-click on any existing copies of eblearn and select "rename".
+	  </li>
+	<li>Download Subclipse, the Eclipse plugin for svn:
+	  http://subclipse.tigris.org/install.html</li>
+	<li>Make sure to install all suggested packages from subclipse,
+	  not just the mandatory ones.</li>
+	<li>Check out the svn repositories from within Eclipse:
+	  Right-click in a blank area of the project list, and select "Import". 
+	  Select "svn project".</li>
+	<li>Enter https://sourceforge.net/projects/eblearn/ as the repo
+	  address. </li>
+	<li>Import the the repository root. Do not import its
+	  subdirectories "eblearn" or "libeblearn" individually.</li>
+	<li>Download the mnist data set if you want to run the unit tests:
+	  http://yann.lecun.com/exdb/mnist/</li>
+	<li>Run configure.sh from the new root directory, follow the
+	  prompts.</li>
+	<li>Generate eclipse project files from cmake. 
+	  You may need cmake 2.6 or above. Within the eblearn root
+	  directory (eblearn, not eblearn/eblearn), run:
+	  $  cmake -G"Eclipse CDT4 - Unix Makefiles" .
+	  For more info, see http://www.cmake.org/Wiki/Eclipse_CDT4_Generator
+	</li>
+	<li>Get Eclipse to see the newly generated project metadata files:
+	  Within Eclipse, right-click on the eblearn root directory
+	  and select "Refresh".</li>
+	</ul>
+       
     </div>
    </body></html>
