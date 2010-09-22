@@ -33,15 +33,18 @@
 #ifndef LIBIDX_DEFINES_H_
 #define LIBIDX_DEFINES_H_
 
+#ifdef __ANDROID__
+#define __NOSTL__
+#endif
+
 #include "config.h"
 
-#ifndef __WINDOWS__
+#if !defined(__WINDOWS__) && !defined(__ANDROID__)
 #include <execinfo.h>
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
 #include <limits.h>
 
 #ifndef NULL
@@ -70,26 +73,8 @@
 #define DEBUG(s,d)
 #endif
 
-#ifdef __WINDOWS__
-#define eblerror(s) {						\
-    std::cerr << "Exception: " << s;				\
-    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
-    std::cerr << ":" << __LINE__ << std::endl;			\
-    abort();							\
-  }
-#else
-#define eblerror(s) {						\
-    std::cerr << "\033[1;31mException:\033[0m " << s;		\
-    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;	\
-    std::cerr << ":" << __LINE__ << std::endl;			\
-    std::cerr << "\033[1;31mStack:\033[0m" << std::endl;	\
-    void *array[10];						\
-    size_t size;						\
-    size = backtrace(array, 10);				\
-    backtrace_symbols_fd(array, size, 2);			\
-    abort();							\
-  }
-#endif /* __WINDOWS__ */
+////////////////////////////////////////////////////////////////
+// library export macros
 
 #ifdef __WINDOWS__
 #define EXPORT __declspec(dllexport)
@@ -101,10 +86,56 @@
 #define IMPORT
 #endif
 
-#define ylerror(s) eblerror(s)
+////////////////////////////////////////////////////////////////
+// error reporting macros
 
-// not used right now
-#define ITER(x) x##__iter
+#ifdef __ANDROID__ // no exceptions
+#define eblthrow(s) {					\
+    eblerror(s);					\
+  }
+#else
+#define eblthrow(s) {					\
+    std::string e;					\
+    e << s;						\
+    throw ebl::eblexception(e);				\
+  }
+#endif
+
+#if defined(__ANDROID__) ///////////////////////////////////////////////////
+
+#include <android/log.h>
+
+#define LOG_TAG    "eblearn"
+#define LOGI(info) {						\
+    std::string s; s << info;					\
+    __android_log_print(ANDROID_LOG_INFO,LOG_TAG,s.c_str()); }
+#define LOGE(info) {						\
+    std::string s; s << info;					\
+    __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,s.c_str()); }
+#define eblerror(s) LOGE(s)
+
+#elif defined(__WINDOWS__) ///////////////////////////////////////////////////
+
+#define eblerror(s) {							\
+    std::cerr << "Error: " << s;					\
+    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;		\
+    std::cerr << ":" << __LINE__ << std::endl;				\
+    abort();								\
+  }
+
+#else ///////////////////////////////////////////////////
+#define eblerror(s) {							\
+    std::cerr << "\033[1;31mError:\033[0m " << s;			\
+    std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;		\
+    std::cerr << ":" << __LINE__ << std::endl;				\
+    std::cerr << "\033[1;31mStack:\033[0m" << std::endl;		\
+    void *array[10];							\
+    size_t size;							\
+    size = backtrace(array, 10);					\
+    backtrace_symbols_fd(array, size, 2);				\
+    abort();								\
+  }
+#endif /* __WINDOWS__ */
 
 /* #ifndef MAX */
 /* # define MAX(a, b) (((a) > (b)) ? (a) : (b)) */
@@ -146,7 +177,7 @@ namespace ebl {
   typedef float float32;
   typedef double float64;
 #endif
-
+  
 } // end namespace ebl
 
 #endif /* LIBIDX_DEFINES_H_ */

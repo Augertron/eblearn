@@ -187,7 +187,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // night_mode();
 #endif  
       // timing variables
-      timer tpass, toverall;
+      timer tpass, toverall, tstop;
       uint cnt = 0;
       cout << "i=" << cnt << endl;
       bool stop = false, finished = false;
@@ -251,6 +251,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	      // grab a new frame if available
 	      if (cam->empty()) {
 		stop = true;
+		tstop.start(); // start countdown timer
 		(*ithreads)->stop(); // ask this thread to stop
 		millisleep(50);
 	      } else {
@@ -279,9 +280,13 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    idx_sum(total_saved) > conf.get_uint("save_max")) {
 	  cout << "Reached max number of detections, exiting." << endl;
 	  stop = true; // limit number of detection saves
+	  tstop.start(); // start countdown timer
 	}
 	// sleep a bit between each iteration
 	millisleep(10);
+	// check if stop countdown reached 0
+	if (stop && tstop.elapsed_minutes() >= 20)
+	  break ; // program too long to stop, force exit
       }
       cout << "Execution time: "; toverall.pretty_elapsed(); cout << endl;
       if (save_video)

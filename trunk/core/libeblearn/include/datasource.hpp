@@ -426,8 +426,8 @@ namespace ebl {
 	   << ", used samples: " << epoch_pick_cnt << ", epoch elapsed: ";
       epoch_timer.pretty_elapsed();
       cout << ", ETA: ";
-      timer::pretty_secs((long) epoch_timer.elapsed_seconds() 
-			 * (epoch_sz / epoch_cnt - 1));
+      timer::pretty_secs((long) (epoch_timer.elapsed_seconds() 
+				 * ((double)(epoch_sz / epoch_cnt) - 1)));
       if (balance) {
 	cout << ", remaining:";
 	for (uint i = 0; i < epoch_done_counters.size(); ++i) {

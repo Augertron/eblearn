@@ -36,6 +36,7 @@
 #include <stdio.h>
 
 #include "defines.h"
+#include "stl.h"
 
 namespace ebl {
 

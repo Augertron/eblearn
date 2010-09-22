@@ -140,6 +140,10 @@ namespace ebl {
 
     //! Return true if variable var exists in the tree.
     bool exists(const string &var);
+ 
+    //! Delete pair var/val and its children. Returns true if found and deleted,
+    //! false otherwise.
+    bool delete_pair(const char *var, const char *value);
 
     //! Return sub tree.
     map<string,pairtree,natural_less>& get_subtree();
@@ -150,7 +154,9 @@ namespace ebl {
     string			variable;	//!< The variable.
     string			value;	//!< The value.
     string			subvariable;	//!< variable name of subtree.
-    map<string, pairtree, natural_less>	subtree;//!< Subtree of the subvariable.
+    //! The subtree of the subvariable. It is a map with keys the values
+    //! of subvariable and values the pairtree for each key.
+    map<string, pairtree, natural_less>	subtree;
     map<string, string>		vars;//!< Map of leaf variables and their value.
   };
   

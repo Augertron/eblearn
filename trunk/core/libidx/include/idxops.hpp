@@ -33,8 +33,6 @@
 #ifndef IDXOPS_HPP
 #define IDXOPS_HPP
 
-#include <algorithm>
-
 //TODO
 #define USING_FAST_ITERS 1
 
@@ -816,6 +814,9 @@ namespace ebl {
 
   template<class T> inline T abs2 (T a) {
     return (T)abs((float64)a);
+  }
+  template<> inline float abs2 (float a) {
+    return fabs(a);
   }
   template<> inline byte abs2 (byte a) {
     if (a >= 0)

@@ -31,8 +31,6 @@
 
 #include "ebl_logger.h"
 
-using namespace std;
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////////////
@@ -204,7 +202,7 @@ namespace ebl {
   }
 
   void classifier_meter::display(int iteration, string &dsname,
-				 vector<string*> *lblstr, bool ds_is_test) {
+				 std::vector<string*> *lblstr, bool ds_is_test) {
     cout << "i=" << iteration << " name=" << dsname << " ";
     cout << "[" << (int) age << "]  sz=" <<  (int) size << " ";
     cout << (ds_is_test ? "test_":"") << "energy="
@@ -231,7 +229,7 @@ namespace ebl {
   }
 
   void classifier_meter::display_positive_rates(double threshold,
-						vector<string*> *lblstr) {
+						std::vector<string*> *lblstr) {
     for (uint i = 0; i < class_fpr.size(); ++i) {
       cout << class_fpr[i] / (float) (size - class_totals[i]) << " ROC_";
       if (lblstr) cout << *((*lblstr)[i]);

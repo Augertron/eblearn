@@ -81,8 +81,8 @@ bool parse_args(int argc, char **argv) {
 
 template <typename T>
 int display(list<string>::iterator &ifname,
-	    bool signd, bool load, bool show_info,
-	    bool show_help, uint nh, uint nw, list<string> *mats) {
+	    bool signd, bool load, bool show_info, bool show_help,
+	    bool autorange, uint nh, uint nw, list<string> *mats) {
   int loaded = 0;
 #ifdef __GUI__
   static idx<T> mat;
@@ -101,11 +101,16 @@ int display(list<string>::iterator &ifname,
 	loaded++;
 	maxh = (std::max)(maxh, (uint) (rowh + mat.dim(0)));
 	T min = 0, max = 0;
-	if (signd) {
-	  T matmin = idx_min(mat);
-	  if (matmin < 0) {
-	    min = -1; 
-	    max = -1;
+	if (autorange || signd) {
+	  if (autorange) {
+	    min = idx_min(mat);
+	    max = idx_max(mat);
+	  } else if (signd) {
+	    T matmin = idx_min(mat);
+	    if (matmin < 0) {
+	      min = -1; 
+	      max = -1;
+	    }
 	  }
 	  draw_matrix(mat, rowh, w, 1.0, 1.0, min, max);
 	} else
@@ -128,6 +133,7 @@ int display(list<string>::iterator &ifname,
     set_text_colors(0, 0, 0, 255, 255, 255, 255, 200);
     gui << mat;
     gui << at(15, 0) << *fname;
+    gui << at(29, 0) << "min: " << idx_min(mat) << " max: " << idx_max(mat);
   }
   // help
   if (show_help) {
@@ -140,6 +146,7 @@ int display(list<string>::iterator &ifname,
     gui << at(h, w) << "Spacebar/Right: next image"; h += hstep;
     gui << at(h, w) << "Left: previous image"; h += hstep;
     gui << at(h, w) << "i: image info"; h += hstep;
+    gui << at(h, w) << "a: auto-range (use min and max as range)"; h += hstep;
     gui << at(h, w) << "x/z: show more/less images on width axis"; h += hstep;
     gui << at(h, w) << "y/t: show more/less images on height axis"; h += hstep;
     gui << at(h, w) << "h: help"; h += hstep;
@@ -152,41 +159,41 @@ int display(list<string>::iterator &ifname,
 //! Retrieve type so that we know if we can look
 //! for negative values when estimating range.
 int load_display(list<string>::iterator &ifname,
-		 bool load, bool show_info, bool show_help,
+		 bool load, bool show_info, bool show_help, bool autorange,
 		 uint nh, uint nw, list<string> *mats) {
   try {
     switch (get_matrix_type((*ifname).c_str())) {
     case MAGIC_BYTE_MATRIX:
     case MAGIC_UBYTE_VINCENT:
-      return display<ubyte>(ifname, false, load, show_info, show_help,
-			    nh, nw, mats);
+      return display<ubyte>(ifname, false, load, show_info, show_help, 
+			    autorange, nh, nw, mats);
       break ;
     case MAGIC_INTEGER_MATRIX:
     case MAGIC_INT_VINCENT:
       return display<int>(ifname, true, load, show_info, show_help,
-			  nh, nw, mats);
+			  autorange, nh, nw, mats);
     break ;
     case MAGIC_FLOAT_MATRIX:
     case MAGIC_FLOAT_VINCENT:
       return display<float>(ifname, true, load, show_info, show_help,
-			    nh, nw, mats);
+			    autorange, nh, nw, mats);
       break ;
     case MAGIC_DOUBLE_MATRIX:
     case MAGIC_DOUBLE_VINCENT:
       return display<double>(ifname, true, load, show_info, show_help,
-			     nh, nw, mats);
+			     autorange, nh, nw, mats);
       break ;
     case MAGIC_LONG_MATRIX:
-      return display<long>(ifname, true, load, show_info, show_help, nh,
-			   nw, mats);
+      return display<long>(ifname, true, load, show_info, show_help,
+			   autorange, nh, nw, mats);
     break ;
     case MAGIC_UINT_MATRIX:
-      return display<uint>(ifname, false, load, show_info, show_help, nh,
-			   nw, mats);
+      return display<uint>(ifname, false, load, show_info, show_help,
+			   autorange, nh, nw, mats);
       break ;
     default: // not a matrix, try as regular float image
-      return display<float>(ifname, true, load, show_info, show_help, nh,
-			    nw, mats);
+      return display<float>(ifname, true, load, show_info, show_help,
+			    autorange, nh, nw, mats);
     }
   } catch(string &err) {
     ERROR_MSG(err.c_str());
@@ -216,6 +223,7 @@ int main(int argc, char **argv) {
     // variables
     bool show_info = false;
     bool show_help = false;
+    bool autorange = false;
     uint nh = 1, nw = 1;
     // show mat images
     list<string> *argmats = new list<string>();
@@ -225,7 +233,8 @@ int main(int argc, char **argv) {
       argmats->push_front(argv[i]);
     }
     i = argmats->begin();
-    if (!load_display(i, true, show_info, show_help, nh, nw, argmats)) {
+    if (!load_display(i, true, show_info, show_help, autorange,
+		      nh, nw, argmats)) {
       ERROR_MSG("failed to load image(s)");
       return -1;
     }
@@ -268,7 +277,8 @@ int main(int argc, char **argv) {
 		i = mats->begin();
 	      }
 	    }
-	    load_display(i, true, show_info, show_help, nh, nw, mats);
+	    load_display(i, true, show_info, show_help, autorange, nh, nw,
+			 mats);
 	  } else if (key == Qt::Key_Left) {
 	    // show previous image
 	    for (uint k = 0; k < nw * nh; ++k) {
@@ -278,7 +288,8 @@ int main(int argc, char **argv) {
 		i--;
 	      }
 	    }
-	    load_display(i, true, show_info, show_help, nh, nw, mats);
+	    load_display(i, true, show_info, show_help, autorange, nh, nw,
+			 mats);
 	  }
 	}
 	if (key == Qt::Key_I) {
@@ -286,31 +297,35 @@ int main(int argc, char **argv) {
 	  show_info = !show_info;
 	  if (show_info)
 	    show_help = false;
-	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
+	} else if (key == Qt::Key_A) {
+	  // show help
+	  autorange = !autorange;
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
 	} else if (key == Qt::Key_H) {
 	  // show help
 	  show_help = !show_help;
 	  if (show_help)
 	    show_info = false;
-	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
 	} else if (key == Qt::Key_Y) {
 	  // increase number of images shown on height axis
 	  if (nh * nw < mats->size())
 	    nh++;
-	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
 	} else if (key == Qt::Key_T) {
 	  // decrease number of images shown on height axis
 	  nh = (std::max)((uint) 1, nh - 1);
-	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
 	} else if (key == Qt::Key_X) {
 	  // increase number of images shown on width axis
 	  if (nh * nw < mats->size())
 	    nw++;
-	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
 	} else if (key == Qt::Key_Z) {
 	  // decrease number of images shown on width axis
 	  nw = (std::max)((uint) 1, nw - 1);
-	  load_display(i, false, show_info, show_help, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
 	}
       }
     }

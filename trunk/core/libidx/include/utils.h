@@ -40,9 +40,9 @@
 #include <unistd.h>
 #endif
 
-#include <string>
 #include <stdio.h>
 #include "defines.h"
+#include "stl.h"
 
 using namespace std;
 
@@ -104,7 +104,9 @@ namespace ebl {
   
   //! Sleep for 'seconds' seconds.
   EXPORT void secsleep(long seconds);
-  
+
 } // end namespace ebl
+
+#include "utils.hpp"
 
 #endif /* UTILS_ */

@@ -23,6 +23,13 @@ SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts
 SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}"
   CACHE STRING "CMAKE CXX flags " FORCE )
 
+# use STL or not
+################################################################################
+IF ($ENV{NOSTL})
+  MESSAGE(STATUS "STL DISABLED by env variable $NOSTL=1.")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__NOSTL__")
+ENDIF ($ENV{NOSTL})   
+
 # MPI
 IF ($ENV{USEMPI})
    MESSAGE(STATUS "Compiling with MPI compiler")

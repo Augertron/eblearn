@@ -318,6 +318,19 @@ namespace ebl {
     return false;
   }
   
+  bool pairtree::delete_pair(const char *var, const char *value) {
+    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
+	 i != subtree.end(); ++i) {
+      if (!strcmp(subvariable.c_str(), var) // same var
+	  && !strcmp(i->first.c_str(), value)) { // same value
+	subtree.erase(i); // found var/value, delete it
+	return true;
+      }
+      i->second.delete_pair(var, value);
+    }
+    return false;
+  }
+
   map<string,pairtree,natural_less>& pairtree::get_subtree() {
     return subtree;
   }
@@ -602,8 +615,12 @@ namespace ebl {
     else {
       list<string> keys =
 	string_to_stringlist(conf.get_string("meta_minimize"));
-      best =
-	tree.best(keys, std::max((uint) 1, conf.get_uint("meta_send_best")));
+      if (conf.exists_true("meta_ignore_iter0") // ignore iter 0's results
+	  && get_max_iter() > 0) // don't ignore if max iter == 0
+	tree.delete_pair("i", "0");
+      // get best values to be minimized
+      best = tree.best(keys, std::max((uint) 1,
+				      conf.get_uint("meta_send_best")));
       ostringstream dirbest, tmpdir, cmd;
       string job;
       int ret;

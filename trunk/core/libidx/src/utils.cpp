@@ -34,12 +34,15 @@
 #define LIBIDX
 
 #include "utils.h"
-#include <stdlib.h>
-#include <iostream>
-#include <stdio.h>
+
+#ifndef __NOSTL__
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#endif
+
+#include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -125,9 +128,15 @@ namespace ebl {
   // timing utilities
 
   string tstamp() {
-    ostringstream ts;
     static time_t t = time(NULL);
     static struct tm *lt = localtime(&t);
+#ifdef __NOSTL__
+    string ts;
+    ts << lt->tm_year + 1900 << lt->tm_mon << lt->tm_mday
+       << "." << lt->tm_hour << lt->tm_min << lt->tm_sec;
+    return ts;
+#else
+    ostringstream ts;
     ts << setw(2) << setfill('0') << lt->tm_year + 1900
        << setw(2) << setfill('0') << lt->tm_mon
        << setw(2) << setfill('0') << lt->tm_mday
@@ -136,6 +145,7 @@ namespace ebl {
        << setw(2) << setfill('0') << lt->tm_min
        << setw(2) << setfill('0') << lt->tm_sec;
     return ts.str();
+#endif
   }
 
   timer::timer() {
@@ -244,5 +254,5 @@ namespace ebl {
     usleep(seconds * 1000);
 #endif
   }
-  
+
 } // namespace ebl

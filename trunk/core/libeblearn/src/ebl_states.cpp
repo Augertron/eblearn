@@ -49,23 +49,23 @@ namespace ebl {
   }
   
   void state::clear_x() {
-    eblerror("not implemented");
+    eblerror("state::clear_x not implemented");
   }
   
   void state::clear_dx() {
-    eblerror("not implemented");
+    eblerror("state::clear_dx not implemented");
   }
   
   void state::clear_ddx() {
-    eblerror("not implemented");
+    eblerror("state::clear_ddx not implemented");
   }
   
   void state::update_gd(gd_param &arg) {
-    eblerror("not implemented");
+    eblerror("state::update_gd not implemented");
   }
 
   state& state::operator=(const state& other) {
-    eblerror("not implemented");
+    eblerror("state::operator= not implemented");
     return *this; // just for windows to compile
   }
   

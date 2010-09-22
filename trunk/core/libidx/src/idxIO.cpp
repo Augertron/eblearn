@@ -34,31 +34,27 @@
 #define LIBIDX
 
 #include <stdio.h>
-#include <iomanip>
 #include "idxIO.h"
-
-using namespace std;
 
 namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   // helper functions
   
-  // TODO: use c++ IO to catch IO exceptions more easily
   // TODO: if types differ, print warning and cast to expected type
   // TODO: allow not knowing order in advance (just assign new idx to m)
-  bool get_matrix_type(const char *filename, string &type) {
+  bool get_matrix_type(const char *filename, std::string &type) {
     // open file
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-      cerr << "get_matrix_type failed to open " << filename << "." << endl;
+      cerr << "get_matrix_type failed to open " << filename << endl;
       return false;
     }
 
     int magic;
     // header: read magic number
     if (fread(&magic, sizeof (int), 1, fp) != 1) {
-      cerr << "failed to read " << filename << "." << endl;
+      cerr << "failed to read " << filename << endl;
       fclose(fp);
       return false;
     }
@@ -69,19 +65,14 @@ namespace ebl {
   int get_matrix_type(const char *filename) {
     // open file
     FILE *fp = fopen(filename, "rb");
-    if (!fp) {
-      ostringstream err;
-      err << "get_matrix_type failed to open " << filename;
-      throw err.str();
-    }
+    if (!fp)
+      eblthrow("get_matrix_type failed to open " << filename);
 
     int magic;
     // header: read magic number
     if (fread(&magic, sizeof (int), 1, fp) != 1) {
-      ostringstream err;
-      err << "failed to read magic number in " << filename;
       fclose(fp);
-      throw err.str();
+      eblthrow("failed to read magic number in " << filename);
     }
     return magic;
   }
@@ -113,7 +104,6 @@ namespace ebl {
   }
 
   idxdim read_matrix_header(FILE *fp, int &magic) {
-    ostringstream err;
     int ndim, v, magic_vincent;
     int ndim_min = 3; // std header requires at least 3 dims even empty ones.
     idxdim dims;
@@ -121,8 +111,7 @@ namespace ebl {
     // read magic number
     if (fread(&magic, sizeof (int), 1, fp) != 1) {
       fclose(fp);
-      err << "cannot read magic number";
-      throw err.str();
+      eblthrow("cannot read magic number");
     }
     magic_vincent = endian(magic);
     magic_vincent &= ~0xF; // magic contained in higher bits
@@ -131,15 +120,13 @@ namespace ebl {
     if (is_magic(magic)) { // regular magic number, read next number
       if (fread(&ndim, sizeof (int), 1, fp) != 1) {
 	fclose(fp);
-	err << "cannot read number of dimensions";
-	throw err.str();
+	eblthrow("cannot read number of dimensions");
       }
       // check number is valid
       if (ndim > MAXDIMS) {
-	err << "too many dimensions: " << ndim << " (MAXDIMS = "
-	    << MAXDIMS << ").";
 	fclose(fp);
-	throw err.str();
+	eblthrow("too many dimensions: " << ndim << " (MAXDIMS = "
+		 << MAXDIMS << ").");
       }
     } else if (is_magic_vincent(magic_vincent)) { // vincent magic number
       // ndim is contained in lower bits of the magic number
@@ -147,27 +134,23 @@ namespace ebl {
       ndim_min = ndim;
       magic = magic_vincent;
     } else { // unkown magic
-      err << "unknown magic number: 0x" << std::hex << magic
-	  << " or " << magic << " vincent: " << magic_vincent;
       fclose(fp);
-      throw err.str();
+      eblthrow("unknown magic number: 0x" << (void*) magic
+	       << " or " << magic << " vincent: " << magic_vincent);
     }
     // read each dimension
     for (int i = 0; (i < ndim) || (i < ndim_min); ++i) {
       if (fread(&v, sizeof (int), 1, fp) != 1) {
 	fclose(fp);
-	ostringstream oss;
-	oss << "failed to read matrix dimensions";
-	throw oss.str();
+	eblthrow("failed to read matrix dimensions");
       }
       // if vincent, convert to endian first
       if (is_magic_vincent(magic_vincent))
 	v = endian(v);
       if (i < ndim) { // ndim may be less than ndim_min
 	if (v <= 0) { // check that dimension is valid
-	  err << "dimension is negative or zero";
 	  fclose(fp);
-	  throw err.str();
+	  eblthrow("dimension is negative or zero");
 	}
 	dims.insert_dim(v, i); // insert dimension
       }

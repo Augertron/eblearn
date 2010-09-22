@@ -35,6 +35,7 @@
 
 #include "config.h"
 #include "defines.h"
+#include "stl.h"
 #include "numerics.h"
 #include "srg.h"
 #include "idx.h"

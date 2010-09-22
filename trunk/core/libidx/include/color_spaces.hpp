@@ -32,7 +32,6 @@
 #ifndef COLOR_SPACES_HPP_
 #define COLOR_SPACES_HPP_
 
-#include <algorithm>
 #include <math.h>
 
 using namespace std;

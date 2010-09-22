@@ -1,6 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2010 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,15 +33,15 @@
 #ifndef DETECTOR_HPP
 #define DETECTOR_HPP
 
-#include "detector.h"
+#include "numerics.h"
+
+#ifndef __NOSTL__
 #include <algorithm>
 #include <typeinfo>
-#include <iostream>
 #include <iomanip>
-#include <sstream>
+#endif
 
 using namespace std;
-
 
 namespace ebl {
 
@@ -70,17 +71,21 @@ namespace ebl {
     labels = labels_;
     cout << "Classes names:";
     idx_bloop1(name, labels, ubyte) {
-      cout << " " << name.idx_ptr();
+      cout << " " << (const char*) name.idx_ptr();
     }
     cout << endl;
     // clear buffers
     idx_clear(inputs);
     idx_clear(outputs);
     idx_clear(results);
+// #ifdef __ANDROID__ // TODO: temporary
+//     bgclass = 0;
+// #else
     if (!single_output)
       set_bgclass(background);
+    //#endif
     // initilizations
-    save_max_per_frame = (numeric_limits<uint>::max)();
+    save_max_per_frame = limits<uint>::max();
     set_bbox_overlaps(.5, .5);
     // by default, when foot line is equal, no overlap.
     max_foot_area_overlap = 1.0;
@@ -571,16 +576,19 @@ namespace ebl {
 			  vector<bbox*> &pruned_bboxes) {
     // for each bbox, check that center of current box is not within
     // another box, and only keep ones with highest score when overlapping
-    vector<bbox*>::iterator i, j;
-    for (i = raw_bboxes.begin(); i != raw_bboxes.end(); ++i) {
-      if (*i && ((*i)->class_id != bgclass) && ((*i)->class_id != mask_class)) {
+    size_t ib, jb;
+    bbox *i, *j;
+    for (ib = 0; ib < raw_bboxes.size(); ++ib) {
+      i = raw_bboxes[ib];
+      if (i && i->class_id != bgclass && i->class_id != mask_class) {
 	// center of the box
-	rect this_bbox((*i)->h0, (*i)->w0, (*i)->height, (*i)->width);
+	rect this_bbox(i->h0, i->w0, i->height, i->width);
 	bool add = true;
 	// check each other bbox
-	for (j = raw_bboxes.begin(); (j != raw_bboxes.end()) && add; ++j) {
-	  if (*j && i != j) {
-	    rect other_bbox((*j)->h0, (*j)->w0, (*j)->height, (*j)->width);
+	for (jb = 0; jb < raw_bboxes.size() && add; ++jb) {
+	  j = raw_bboxes[jb];
+	  if (j && i != j) {
+	    rect other_bbox(j->h0, j->w0, j->height, j->width);
 	    float overlap_area = this_bbox.min_overlap(other_bbox);
 	    bool overlap = false;
 	    if (overlap_area >= max_hoverlap)
@@ -591,18 +599,18 @@ namespace ebl {
 		overlap = true; // there is overlap
 	    }
 	    if (overlap) {
-	      if ((*i)->confidence < (*j)->confidence) {
+	      if (i->confidence < j->confidence) {
 		// it's not the highest confidence, stop here.
 		add = false;
 		break ;
-	      } else if ((*i)->confidence == (*j)->confidence) {
+	      } else if (i->confidence == j->confidence) {
 		// we have a tie, keep the biggest one.
-		if ((*i)->height * (*i)->width > (*j)->height * (*j)->width) {
-		  delete *j;
-		  *j = NULL;
+		if (i->height * i->width > j->height * j->width) {
+		  delete j;
+		  raw_bboxes[jb] = NULL;
 		} else {
-		  delete *i;
-		  *i = NULL;
+		  delete i;
+		  raw_bboxes[ib] = NULL;
 		  add = false;
 		  break ;
 		}
@@ -612,9 +620,13 @@ namespace ebl {
 	}
 	// if bbox survived, add it
 	if (add)
-	  pruned_bboxes.push_back(*i);
+	  pruned_bboxes.push_back(i);
       }
     }
+#ifdef __DEBUG__
+    cout << "Pruned " << raw_bboxes.size() << " bboxes to "
+	 << pruned_bboxes.size() << " bboxes." << endl;
+#endif
   }
 	
   template <typename T, class Tstate>
@@ -707,53 +719,56 @@ namespace ebl {
   }
   
   template<typename T, class Tstate>
-  void detector<T,Tstate>::pretty_bboxes(const vector<bbox*> &bboxes) {
+  void detector<T,Tstate>::pretty_bboxes(vector<bbox*> &bboxes) {
     cout << endl << "detector: ";
     if (bboxes.size() == 0)
       cout << "no objects found." << endl;
     else {
       cout << "found " << bboxes.size() << " objects." << endl;
-      vector<bbox*>::const_iterator i = bboxes.begin();
-      for ( ; i != bboxes.end(); ++i) {
-	cout << "- " << labels[(*i)->class_id].idx_ptr();
-	cout << " with confidence " << (*i)->confidence;
-	cout << " in scale #" << (*i)->scale_index;
+      size_t ib;
+      bbox *i;
+      for (ib = 0 ; ib < bboxes.size(); ++ib) {
+	i = bboxes[ib];
+	cout << "- " << (const char*) (labels[i->class_id].idx_ptr());
+	cout << " with confidence " << i->confidence;
+	cout << " in scale #" << i->scale_index;
 	cout << " (" << image.dim(0) << "x" << image.dim(1);
-	cout << " / " << (*i)->scaleh << "x" << (*i)->scalew;
-	cout << " = " << (*i)->iheight << "x" << (*i)->iwidth << ")";
+	cout << " / " << i->scaleh << "x" << i->scalew;
+	cout << " = " << i->iheight << "x" << i->iwidth << ")";
 	cout << endl;
-	cout << "  bounding box: top left " << (*i)->h0 << "x" << (*i)->w0;
-	cout << " and size " << (*i)->height << "x" << (*i)->width;
-	cout << " out position: " << (*i)->oh0 << "x" << (*i)->ow0;
-	cout << " in " << (*i)->oheight << "x" << (*i)->owidth;
+	cout << "  bounding box: top left " << i->h0 << "x" << i->w0;
+	cout << " and size " << i->height << "x" << i->width;
+	cout << " out position: " << i->oh0 << "x" << i->ow0;
+	cout << " in " << i->oheight << "x" << i->owidth;
 	cout << endl;
       }
     }
   }
 
   template<typename T, class Tstate>
-  void detector<T,Tstate>::pretty_bboxes_short(const vector<bbox*> &bboxes,
+  void detector<T,Tstate>::pretty_bboxes_short(vector<bbox*> &bboxes,
 					       const char *prefix_) {
     string prefix = "";
     if (prefix_)
-      prefix = prefix_;
+      prefix << prefix_ << ": ";
     if (bboxes.size() == 0)
-      cout << prefix << ": no objects found." << endl;
+      cout << prefix << "no objects found." << endl;
     else {
-      cout << prefix << ": found " << bboxes.size() << " objects." << endl;
-      vector<bbox*>::const_iterator i = bboxes.begin();
-      for ( ; i != bboxes.end(); ++i) {
-	cout << prefix << ": " << labels[(*i)->class_id].idx_ptr();
-	cout << " " << (*i)->confidence;
-	cout << " bbox: " << (*i)->oh0 << "x" << (*i)->ow0;
-	cout << "x(" << (*i)->oheight << "x" << (*i)->owidth << ")" << endl;
+      cout << prefix << "found " << bboxes.size() << " objects." << endl;
+      size_t ib; const bbox *i;
+      for (ib = 0 ; ib < bboxes.size(); ++ib) {
+	i = bboxes[ib];
+	cout << prefix << (const char*) labels[i->class_id].idx_ptr();
+	cout << " " << i->confidence;
+	cout << " bbox: " << i->oh0 << "x" << i->ow0;
+	cout << "x(" << i->oheight << "x" << i->owidth << ")" << endl;
       }
     }
   }
   
   template <typename T, class Tstate> template <class Tin>
   vector<bbox*>& detector<T,Tstate>::fprop(idx<Tin> &img, T threshold,
-				    const char *frame_name) {
+					   const char *frame_name) {
     // prepare image and resolutions
     prepare(img);
     // do a fprop for each scaled input, based on the 'image' slot prepared
@@ -766,10 +781,12 @@ namespace ebl {
     // TODO: use connected components instead of fixed-size window local maxima?
     //mark_maxima(threshold);
     // get bounding boxes
-    for (vector<bbox*>::iterator k = raw_bboxes.begin(); k != raw_bboxes.end();
-	 ++k)
-      if (*k)
-	delete *k;
+    size_t ib; bbox *i;
+    for (ib = 0 ; ib < raw_bboxes.size(); ++ib) {
+      i = raw_bboxes[ib];
+      if (i)
+	delete i;
+    }
     raw_bboxes.clear();
     map_to_list(threshold, raw_bboxes);
     vector<bbox*> &bb = raw_bboxes;
@@ -814,6 +831,9 @@ namespace ebl {
   void detector<T,Tstate>::save_bboxes(const vector<bbox*> &bboxes,
 				       const string &dir,
 				       const char *frame_name) {
+#ifdef __NOSTL__
+    eblerror("save_bboxes not implemented");
+#else
     string classname;
     ostringstream fname, cmd;
     Tstate *input = NULL;
@@ -879,14 +899,14 @@ namespace ebl {
       if (i >= save_max_per_frame)
 	break ;
     }
+#endif
   }
   
   template <typename T, class Tstate>
   uint detector<T,Tstate>::get_total_saved() {
     uint total = 0;
-    for (vector<uint>::iterator i = save_counts.begin();
-	 i != save_counts.end(); ++i)
-      total += *i;
+    for (size_t i = 0; i < save_counts.size(); ++i)
+      total += save_counts[i];
     return total;
   }
 
@@ -900,18 +920,18 @@ namespace ebl {
     if (bodetections) // recompute only if not up-to-date
       return odetections;
     idx<T> input;
-    vector<bbox*>::const_iterator bbox;
-
+    size_t i; bbox *bb;
     // clear vector
     odetections.clear();
     // loop on bounding boxes
-    for (bbox = pruned_bboxes.begin(); bbox != pruned_bboxes.end(); ++bbox) {
+    for (i = 0; i < pruned_bboxes.size(); ++i) {
+      bb = pruned_bboxes[i];
       // exclude background class
-      if (((*bbox)->class_id == bgclass) || ((*bbox)->class_id == mask_class))
+      if ((bb->class_id == bgclass) || (bb->class_id == mask_class))
 	continue ;
       // get bbox of input
-      input = image.narrow(0, (*bbox)->height, (*bbox)->h0);
-      input = input.narrow(1, (*bbox)->width, (*bbox)->w0);
+      input = image.narrow(0, bb->height, bb->h0);
+      input = input.narrow(1, bb->width, bb->w0);
       odetections.push_back(input);
     }
     bodetections = true;
@@ -924,19 +944,20 @@ namespace ebl {
       return ppdetections;
     idx<T> input;
     Tstate *sinput = NULL;
-    vector<bbox*>::const_iterator bbox;
+    size_t i; bbox *bb;
 
     // clear vector
     ppdetections.clear();
     // loop on bounding boxes
-    for (bbox = pruned_bboxes.begin(); bbox != pruned_bboxes.end(); ++bbox) {
+    for (i = 0; i < pruned_bboxes.size(); ++i) {
+      bb = pruned_bboxes[i];
       // exclude background class
-      if (((*bbox)->class_id == bgclass) || ((*bbox)->class_id == mask_class))
+      if ((bb->class_id == bgclass) || (bb->class_id == mask_class))
 	continue ;
       // get bbox of input
-      sinput = (Tstate*) inputs.get((*bbox)->scale_index);
-      input = sinput->x.narrow(1, (*bbox)->ih, (*bbox)->ih0);
-      input = input.narrow(2, (*bbox)->iw, (*bbox)->iw0);
+      sinput = (Tstate*) inputs.get(bb->scale_index);
+      input = sinput->x.narrow(1, bb->ih, bb->ih0);
+      input = input.narrow(2, bb->iw, bb->iw0);
       ppdetections.push_back(input);
     }
     bppdetections = true;
@@ -980,15 +1001,32 @@ namespace ebl {
     timer t;
     t.start();
     for (intg i = 0; i < nresolutions; ++i) {
+
+#ifdef __DUMP_STATES__
+      RESET_DUMP(); // set dump counter to zero
+      DUMP_PREFIX("dump" << i);
+#endif
+
       preprocess_resolution(i);
+      
+#ifdef __DUMP_STATES__
+      DUMP(input->x, "detector_input_");
+#endif
+      
       thenet.fprop(*input, *output);
+      
+#ifdef __DUMP_STATES__
+      DUMP(output->x, "detector_output_");
+#endif
+      
       if (optimization_swap) { // swap output and input
       	tmp = input;
       	input = output;
       	output = tmp;
       }
     }
-    cout << "net_processing=" << t.elapsed_milliseconds() << " ms. ";
+    cout << "net_processing=";
+    t.pretty_elapsed(); cout << endl;
   }
 
   template <typename T, class Tstate> template <class Tin>
@@ -998,18 +1036,25 @@ namespace ebl {
     bppdetections = false;
     // cast input if necessary
     idx<T> img2, tmp;
+#ifndef __NOSTL__
     if (typeid(T) == typeid(Tin)) // input same type as net, shallow copy
       img2 = (idx<T>&) img;
-    else { // deep copy to cast input into net's type
-      img2 = idx<T>(img.get_idxdim());
-      idx_copy(img, img2);
-    }
+    else
+#endif
+      { // deep copy to cast input into net's type
+	img2 = idx<T>(img.get_idxdim());
+	idx_copy(img, img2);
+      }
     if (img2.order() == 2) {
       image = idx<T>(img2.dim(0), img2.dim(1), 1);
       tmp = image.select(2, 0);
       idx_copy(img2, tmp);  // TODO: avoid copy just to augment order
     } else
       image = img2;
+#ifdef __DEBUG__
+    cout << "Image in detector is " << image << " with range "
+	 << idx_min(image) << ", " << idx_max(image) << endl;
+#endif
     // if input size had changed, reinit resolutions
     if (!(input_dim == img.get_idxdim())) {
       init(img.get_idxdim());
@@ -1018,12 +1063,9 @@ namespace ebl {
   
   template <typename T, class Tstate>
   void detector<T,Tstate>::preprocess_resolution(uint res) {
-    if (res >= nresolutions) {
-      ostringstream err;
-      err << "cannot request resolution " << res << ", there are only "
-	  << nresolutions << " resolutions";
-      throw err.str();
-    }
+    if (res >= nresolutions)
+      eblthrow("cannot request resolution " << res << ", there are only "
+	       << nresolutions << " resolutions");
     // create a fstate_idx pointing to our image
     idx<T> imres = image.shift_dim(2, 0);
     Tstate iminput(imres);
@@ -1051,6 +1093,8 @@ namespace ebl {
     if (coef != 1)
       idx_dotc(input->x, coef, input->x);
 #ifdef __DEBUG__
+    cout << "preprocessed input range: " << idx_min(input->x) << ", "
+	 << idx_max(input->x) << endl;
     cout << "resized input (" << imres << ") to resolution " << res
 	 << " (" << resolutions.get(res, 0) << "x" << resolutions.get(res, 1)
 	 << "): " << input->x << endl;

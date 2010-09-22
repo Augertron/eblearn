@@ -33,31 +33,39 @@
 #ifndef EBL_DEFINES_H
 #define EBL_DEFINES_H
 
-#ifndef __WINDOWS__
-#include <execinfo.h>
-#endif
+#include "defines.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
+#ifdef __DUMP_STATES__
 
-#ifndef NULL
-#define NULL (void*)0
-#endif
-
-// #define DEBUG_ON
-
-#ifdef DEBUG_ON
-#define DEBUG(s,d) fprintf(stderr,s,d)
+#ifdef __ANDROID__
+#define DUMP_ROOT "/sdcard/"
 #else
-#define DEBUG(s,d)
+#define DUMP_ROOT "";
 #endif
+
+#include "stl.h"
+
+extern uint dump_count;
+extern std::string dump_prefix;
+
+#define RESET_DUMP() dump_count = 0;
+#define DUMP_PREFIX(s) { dump_prefix.clear(); dump_prefix << s << "_"; }
+
+#define DUMP(mat, fname) {						\
+    string n = DUMP_ROOT;						\
+    n << dump_prefix << (dump_count < 10? "0":"") << dump_count++ << "_" \
+      << fname << "_" << mat << ".mat";					\
+    if (save_matrix(mat, n))						\
+      cout << "Dumped " << n << " (min: " << idx_min(mat)		\
+	   << " max: " << idx_max(mat) << ")" <<endl;			\
+    else								\
+      cerr << "Failed to dump " << n << endl;				\
+  }
+
+#endif /* DUMP_STATES */
 
 #define err_not_implemented() {						\
     eblerror("member function not implemented for this class"); }
-
-// not used right now
-#define ITER(x) x##__iter
 
 //! see numerics.h for description
 extern bool drand_ini;
@@ -65,16 +73,5 @@ extern bool drand_ini;
 #define check_drand_ini() {					      \
     if (!drand_ini) printf("You have not initialized random sequence. \
 Please call init_drand(time(NULL)) before using this function !\n"); }
-
-/* namespace ebl { */
-
-/* // intg is used for array indexing, hence should be */
-/* // defined as long if you want very large arrays */
-/* // on 64 bit machines. */
-/* typedef long intg; */
-/* typedef unsigned char ubyte; */
-
-/* } // end namespace ebl */
-
 
 #endif /* EBL_DEFINES */

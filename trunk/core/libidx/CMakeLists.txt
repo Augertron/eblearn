@@ -26,6 +26,7 @@ add_library (idx SHARED
   src/numerics.cpp
   src/utils.cpp
   src/srg.cpp
+  src/stl.cpp
   )
 
 # link

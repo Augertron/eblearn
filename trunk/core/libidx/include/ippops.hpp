@@ -33,8 +33,8 @@
 #ifndef IPPOPS_HPP_
 #define IPPOPS_HPP_
 
-#include <limits.h>
 #include "numerics.h"
+#include "stl.h"
 
 namespace ebl {
 
@@ -46,9 +46,9 @@ namespace ebl {
     if (ncores > 0)
       ippSetNumThreads(ncores);
     ippGetNumThreads(&ncores);
-    cout << "Using Intel IPP with " << ncores << " core(s)." << endl;
+    std::cout << "Using Intel IPP with " << ncores << " core(s)." << std::endl;
 #else
-    cout << "Not using Intel IPP." << endl;
+    std::cout << "Not using Intel IPP." << std::endl;
 #endif
   }
 

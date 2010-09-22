@@ -36,6 +36,10 @@
 #include "ebl_defines.h"
 #include "ebl_states.h"
 
+#ifndef __NOSTL__
+#include <vector>
+#endif
+
 using namespace std;
 
 namespace ebl {
@@ -205,8 +209,8 @@ namespace ebl {
     
     // class member variables
   public:
-  vector<module_1_1<T, Tstate, Tstate>*>	*modules;
-    vector<Tstate*>				*hiddens;    
+    std::vector<module_1_1<T, Tstate, Tstate>*>	*modules;
+    std::vector<Tstate*>			*hiddens;    
   protected:
     bool own_contents;
     Tstate* hi; //! temporary buffer pointer

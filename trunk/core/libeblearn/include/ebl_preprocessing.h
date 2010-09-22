@@ -109,6 +109,25 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  // y_to_yp_module
+  //! convert an Y input into a Yp output, Yp being a Y channel
+  //! with a local normaliztion.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class y_to_yp_module: public channorm_module<T,Tstate> {
+  public:
+    //! Constructor.
+    //! \param normalization_size is the size of the kernel used for Yp's
+    //!        local normalization.
+    y_to_yp_module(uint normalization_size);
+    //! destructor
+    virtual ~y_to_yp_module();
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! Returns a deep copy of this module (abstract).
+    virtual y_to_yp_module<T,Tstate>* copy();
+  };
+
+  ////////////////////////////////////////////////////////////////
   // bgr_to_ypuv_module
   //! convert an BGR input into a YpUV output, Yp being a Y channel
   //! with a local normaliztion.

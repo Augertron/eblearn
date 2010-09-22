@@ -34,7 +34,6 @@
 #define IDXOPS_H
 
 #include "config.h"
-#include <cmath>
 #include "numerics.h"
 #include "idx.h"
 #include "ippops.h"

@@ -100,7 +100,7 @@ namespace ebl {
   //! untouched.
   EXPORT idx<ubyte> pnm_read(FILE *fp, idx<ubyte> *out = NULL);
   
-  EXPORT idx<ubyte> pnm_read2(istream &in, idx<ubyte> *out = NULL);
+  //  EXPORT idx<ubyte> pnm_read2(istream &in, idx<ubyte> *out = NULL);
 
   //! read any kind of image that can be converted to a PPM by ImageMagick
   //! See above for description, as it is the same function used,

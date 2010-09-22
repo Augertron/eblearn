@@ -54,13 +54,8 @@ namespace ebl {
     idx_m2dotm1(w.x, inx, outx); // linear combination
 
 #ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << this->name << "_linear_module_weights_" << w.x
-	  << ".mat";
-    save_matrix(w.x, fname.str());
-    fname.str("");
-    fname << "dump_" << this->name << "_linear_module_in.x_" << in.x << ".mat";
-    save_matrix(in.x, fname.str());
+    DUMP(in.x, this->name << "_linear_module_in.x");
+    DUMP(w.x, this->name << "_linear_module_weights");
 #endif
   }
 
@@ -224,26 +219,10 @@ namespace ebl {
       }
     }
 #ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << this->name << "_convolution_module_kernels_"
-	  << kernel.x << ".mat";
-    save_matrix(kernel.x, fname.str());
-    fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_in.x_" << in.x
-	  << ".mat";
-    save_matrix(in.x, fname.str());
-    fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_ker.x_" << kernel.x
-	  << ".mat";
-    save_matrix(kernel.x, fname.str());
-    fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_table_" << table
-	  << ".mat";
-    save_matrix(table, fname.str());
-    fname.str("");
-    fname << "dump_" << this->name << "_convolution_module_out.x_" << out.x
-	  << ".mat";
-    save_matrix(out.x, fname.str());
+    DUMP(in.x, this->name << "_convolution_module_in.x");
+    DUMP(kernel.x, this->name << "_convolution_module_ker.x");
+    DUMP(table, this->name << "_convolution_module_table");
+    DUMP(out.x, this->name << "_convolution_module_out.x");
 #endif
   }
   
@@ -436,10 +415,9 @@ namespace ebl {
       }}
 
 #ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << this->name << "_subsampling_module_coeff_"
-	  << coeff.x << ".mat";
-    save_matrix(coeff.x, fname.str());
+    DUMP(in.x, this->name << "_subsampling_module_in.x");
+    DUMP(coeff.x, this->name << "_subsampling_module_coeff");
+    DUMP(out.x, this->name << "_subsampling_module_out.x");
 #endif
   }
 
@@ -567,10 +545,9 @@ namespace ebl {
     }
       
 #ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << this->name << "_addc_module_weights_"
-	  << bias.x << ".mat";
-    save_matrix(bias.x, fname.str());
+    DUMP(in.x, this->name << "_addc_module_in.x");
+    DUMP(bias.x, this->name << "_addc_module_weights");
+    DUMP(out.x, this->name << "_addc_module_out.x");
 #endif
   }
 
@@ -902,10 +879,7 @@ namespace ebl {
     idx_copy(in.x, tmp);
 
 #ifdef __DUMP_STATES__ // used to debug
-    ostringstream fname;
-    fname << "dump_" << "" << "_zpad_module_out_" << out.x
-	  << ".mat";
-    save_matrix(out.x, fname.str());
+    DUMP(out.x, this->name << "_zpad_module_out");
 #endif
   }
 

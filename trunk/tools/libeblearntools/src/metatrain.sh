@@ -1,25 +1,25 @@
 #!/bin/sh
 
-h=96
-w=48
-chans=1
-traindsname=ped_${name}_mean${h}x${w}_ker7_bg_train
-valdsname=ped_${name}_mean${h}x${w}_ker7_bg_val
-name=toto
-ebl=$HOME/eblearn/
-machine=${HOSTNAME}a
-eblearnbin0=$ebl/bin/
-metaconf_name=${name}_meta.conf
-# max number of false positives to extract per iteration
-save_max=15660
-# max number of false positives to extract per full image
-save_max_per_frame=10
-# number of threads to use duing false positive extraction
-nthreads=5
-# maximum number of retraining iterations
-maxiteration=3
-npasses=3
-max_scale=4
+# h=96
+# w=48
+# chans=1
+# traindsname=ped_${name}_mean${h}x${w}_ker7_bg_train
+# valdsname=ped_${name}_mean${h}x${w}_ker7_bg_val
+# name=toto
+# ebl=$HOME/eblearn/
+# machine=${HOSTNAME}a
+# eblearnbin0=$ebl/bin/
+# metaconf_name=${name}_meta.conf
+# # max number of false positives to extract per iteration
+# save_max=15660
+# # max number of false positives to extract per full image
+# save_max_per_frame=10
+# # number of threads to use duing false positive extraction
+# nthreads=5
+# # maximum number of retraining iterations
+# maxiteration=3
+# npasses=3
+# max_scale=4
 ################################################################################
 # meta commands
 ################################################################################
@@ -195,7 +195,7 @@ compile_data() {
     if [ $? -neq 0 ]; then exit -1; fi # stop if error
 
     # get dataset size
-    dssize=`${eblearnbin}/dsdisplay ${dataroot}/allfp -size`
+    dssize=`${eblearnbin}/dsdisplay ${dataroot}/${step}_allfp -size`
     echo "false_positives = ${dssize}"
     valsize=`echo "(${dssize} * ${ds_split_ratio})/1" | bc`
     echo "valsize = ${valsize}"

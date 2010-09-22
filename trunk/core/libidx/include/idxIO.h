@@ -33,14 +33,14 @@
 #ifndef IDXIO_H_
 #define IDXIO_H_
 
+#include "idx.h"
+
+#ifndef __NOSTL__
+#include <iterator>
 #include <iostream>
 #include <fstream>
-#include <string>
-#include <iterator>
-#include "idx.h"
-#include "idx_iterators.h"
-
 using namespace std;
+#endif
 
 // standard lush magic numbers
 #define MAGIC_FLOAT_MATRIX	0x1e3d4c51
@@ -82,7 +82,7 @@ namespace ebl {
   //! than requested type, it is casted (copied) into the new type.
   //! This throws string exceptions upon errors.
   template<typename T>
-    idx<T> load_matrix(const string &filename);
+    idx<T> load_matrix(const std::string &filename);
   
   //! Loads a matrix from file filename into given matrix m.
   //! m if resized if necessary. Data is cast into m's type if different.
@@ -94,7 +94,7 @@ namespace ebl {
   //! m if resized if necessary. Data is cast into m's type if different.
   //! This throws string exceptions upon errors.
   template<typename T>
-    void load_matrix(idx<T>& m, const string &filename);
+    void load_matrix(idx<T>& m, const std::string &filename);
   
   //! Loads a matrix from an opened file pointer 'fp'
   //! into given matrix out if given,
@@ -111,14 +111,14 @@ namespace ebl {
   
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
-  template<typename T> bool save_matrix(idx<T>& m, const string &filename);
+  template<typename T> bool save_matrix(idx<T>& m, const std::string &filename);
 
   //! Saves a matrix m in file filename. One can force the saving type to
   //! a different type than the passed idx, e.g.
   //! by calling save_matrix<float>(m, ..);
   //! Returns true if successful, false otherwise.
   template<typename T2, typename T>
-    bool save_matrix(idx<T>& m, const string &filename);
+    bool save_matrix(idx<T>& m, const std::string &filename);
   
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
@@ -131,7 +131,7 @@ namespace ebl {
   //! Possible strings are: ubyte, int, float, double, long, uint,
   //! ubyte (pascal vincent), int (pascal vincent), float (pascal vincent),
   //! double (pascal vincent).
-  EXPORT bool get_matrix_type(const char *filename, string &type);
+  EXPORT bool get_matrix_type(const char *filename, std::string &type);
 
   //! Return the magic number associated with the matrix's type found in 
   //! 'filename'.

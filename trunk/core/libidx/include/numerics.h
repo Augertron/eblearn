@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,17 +30,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef Numerics_H
-#define Numerics_H
+#ifndef NUMERICS_H
+#define NUMERICS_H
 
 #include "defines.h"
+#include "stl.h"
+
+#ifndef __NOSTL__
+#include <limits>
+#endif
+
+#ifdef __ANDROID__
+#include <math.h>
+#include <float.h>
+#else
+#include <cfloat>
 #include <cmath>
+#endif
+
 #ifdef __WINDOWS__
 #define isinf(a) (!_finite(a))
 #endif
-#include <limits>
-#include <cfloat>
-#include "defines.h"
 
 namespace ebl {
 
@@ -116,53 +127,45 @@ namespace ebl {
   EXPORT int choose(int n, int k);
 
   ////////////////////////////////////////////////////////////////
+  // limits
   
   template <typename T> class limits {
   public:
-    static inline T max () { return std::numeric_limits<T>::max(); };
-    static inline T min () { return std::numeric_limits<T>::min(); };
+    static inline T max ();
+    static inline T min ();
   };
+  
+  template <> class limits<uint32> {
+  public:
+    static inline float32 max () { return UINT_MAX; }
+    static inline float64 min () { return 0; }
+  };
+  
   template <> class limits<float32> {
   public:
-    static inline float32 max () {
-      return FLT_MAX;
-    }
-    static inline float64 min () {
-      return - FLT_MAX;
-    }
+    static inline float32 max () { return FLT_MAX; }
+    static inline float64 min () { return - FLT_MAX; }
   };
+  
   template <> class limits<float64> {
   public:
-    static inline float64 max () {
-      return DBL_MAX;
-    }
-    static inline float64 min () {
-      return - DBL_MAX;
-    }
+    static inline float64 max () { return DBL_MAX; }
+    static inline float64 min () { return - DBL_MAX; }
   };
+
   template <> class limits<long double> {
   public:
-    static inline long double max () {
-      return LDBL_MAX;
-    }
-    static inline long double min () {
-      return - LDBL_MAX;
-    }
+    static inline long double max () { return LDBL_MAX; }
+    static inline long double min () { return - LDBL_MAX; }
   };
   
   template <typename T> class saturator {
   public:
-    template <typename T2> inline static T saturate (T2 in) {
-      if (in > limits<T>::max())
-	return limits<T>::max();
-      else if (in < limits<T>::min())
-	return limits<T>::min();
-      else
-	return (T)in;
-    }
+    template <typename T2> inline static T saturate (T2 in);
   };
-  #define saturate(in, T) (saturator<T>::saturate(in))
-
+  
   } // end namespace ebl
 
-#endif
+#include "numerics.hpp"
+
+#endif /* NUMERICS_H */

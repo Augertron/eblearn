@@ -33,7 +33,9 @@
 #ifndef IDX_ITERATORS_H_
 #define IDX_ITERATORS_H_
 
+#ifndef __NOSTL__
 #include <iostream>
+#endif
 
 namespace ebl {
 
