@@ -72,8 +72,6 @@ import android.text.Editable;
 
 import java.util.ArrayList;
 
-import com.eblearn.bboxes;
-
 import android.graphics.Rect;
 
 public class eblearn extends Activity {
