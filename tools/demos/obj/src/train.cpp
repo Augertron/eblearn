@@ -105,8 +105,8 @@ int main(int argc, char **argv) { // regular main without gui
       test_ds(conf.get_cstring("root"), conf.get_cstring("val"), "val");
     test_ds.set_test(); // test is the test set, used for reporting
     train_ds.ignore_correct(conf.exists_true("ignore_correct"));
-    train_ds.set_weigh_samples(conf.exists_bool("sample_probabilities"),
-			       conf.exists_bool("hardest_focus"));
+    train_ds.set_weigh_samples(conf.exists_true("sample_probabilities"),
+			       conf.exists_true("hardest_focus"));
     train_ds.set_weigh_normalization(conf.exists_true("per_class_norm"));
     if (conf.exists("min_sample_weight"))
       train_ds.set_min_proba(conf.get_double("min_sample_weight"));

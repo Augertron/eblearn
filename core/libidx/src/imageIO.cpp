@@ -33,9 +33,7 @@
 // tell header that we are in the libidx scope
 #define LIBIDX
 
-#include <algorithm>
 #include <stdio.h>
-#include <ostream>
 
 #ifndef __WINDOWS__
 #include <inttypes.h>
@@ -44,6 +42,7 @@
 #include "imageIO.h"
 #include "idxops.h"
 #include "idx.h"
+#include "stl.h"
 
 using namespace std;
 
@@ -54,11 +53,8 @@ namespace ebl {
   //! Scan an int.
   int fscan_int(FILE *fp) {
     int res = 0;
-    if (fscanf(fp, "%d", &res) < 1) {
-      ostringstream err;
-      err << "cannot read integer from stream" << endl;
-      throw err.str();
-    }
+    if (fscanf(fp, "%d", &res) < 1)
+      eblthrow("cannot read integer from stream");
     return res;
   }
 
@@ -95,10 +91,10 @@ namespace ebl {
 	!strcmp("P4", s) || !strcmp("P5", s) || !strcmp("P6", s))
       type = (int) s[1] - '0';
     else {
-      ostringstream err;
-      err << "invalid binary PNM file type: " << s;
+      std::string e;
+      e << "invalid binary PNM file type: " << s;
       delete s;
-      throw err.str();
+      eblthrow(e);
     }
     if (s) delete s;
     skip_comments(35, fp);
@@ -111,7 +107,6 @@ namespace ebl {
   }
   
   idx<ubyte> pnm_read(FILE *fp, idx<ubyte> *out_) {
-    ostringstream err;
     int type, vmax;
     size_t expected_size, read_size;
     idxdim dims = read_pnm_header(fp, type, vmax);
@@ -149,12 +144,9 @@ namespace ebl {
 	}
 	read_size /= sz;
 	if (expected_size != read_size) {
-	    ostringstream err;
-	    err << "image read: not enough items read. expected ";
-	    err << expected_size;
-	    err << " but found " << read_size;
-	    throw err.str();
-	  }
+	  eblthrow("image read: not enough items read. expected "
+		   << expected_size << " but found " << read_size);
+	}
       } else {
 	{ idx_bloop1(ou, *pout, ubyte) {
 	    { idx_bloop1(o, ou, ubyte) {

@@ -1,14 +1,15 @@
 #!/bin/sh
 
-ebl=$HOME/eblearn/ # eblearn root
-source $ebl/libeblearntools/src/metatrain.sh # include script functions
+ebl=$HOME/eblpierre/ # eblearn root
+source $ebl/tools/libeblearntools/src/metatrain.sh # include script functions
 ################################################################################
 dsname=inria
-step0=14 # initial step where to (re)start metatraining
+step0=1 # initial step where to (re)start metatraining
 #tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
-tstamp=20100907.140651 # overriding timestamp of experiment
-h=80 # network height
-w=40 # network width
+tstamp=20100917.161746 # overriding timestamp of experiment
+threshold=1.0 # threshold will be decremented at each iter until -.95
+h=126 # 80 # network height
+w=63 # 40 # network width
 chans=1 # number of input channels
 traindsname=${dsname}_mean${h}x${w}_ker7_bg_train # dataset train name
 valdsname=${dsname}_mean${h}x${w}_ker7_bg_val # dataset validation name
@@ -21,12 +22,13 @@ save_max_per_frame=10 # max number of false positives to extract per full image
 nthreads=8 # number of threads to use duing false positive extraction
 maxiteration=10 # maximum number of retraining iterations
 precision=float # dataset precision
-threshold=-.5 # threshold will be decremented at each iter until -.95
 ds_split_ratio=".1" # split ratio of validation over training
 draws=1 # number of dataset draws
 name=${dsname}_${machine}
 meta_name=${name} # name of this meta job
-display=0 # display training or not
+display=1 # display training or not
+max_scale=4
+npasses=3
 
 # directories
 ################################################################################
@@ -36,7 +38,7 @@ dataroot=$root/ds/ # datasets directory
 out=$root/out/$xpname/ # root directory of experiment
 eblearnbin=${out}/bin/ # binaries copy
 negatives_root=$root/train/bg_full/ # negative examples
-metaconf0=$ebl/demos/pedestrians/${dsname}/${metaconf_name} # original metaconf
+metaconf0=$ebl/tools/demos/pedestrians/${dsname}/${metaconf_name} # original metaconf
 metaconf=${out}/${metaconf_name} # metaconf copy
 
 # run the experiment

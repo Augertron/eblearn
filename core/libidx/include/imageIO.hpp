@@ -33,26 +33,27 @@
 #ifndef IMAGEIO_HPP_
 #define IMAGEIO_HPP_
 
-#include <algorithm>
 #include <math.h>
 #include <stdlib.h>
+
+#ifndef __NOSTL__
 #include <fstream>
 #include <cstdlib>
 #include <cstdio>
-#include <iostream>
+#endif
 
 #ifndef __WINDOWS__
 #include <unistd.h>
 #endif
 
 #ifdef __MAGICKPP__
-#include <Magick++.h>
+//#include <Magick++.h>
 #endif
 
-#include <string.h>
 #include <errno.h>
 #include "config.h"
 #include "idxIO.h"
+#include "stl.h"
 
 using namespace std;
 
@@ -63,31 +64,28 @@ namespace ebl {
 
   template<class T>
   idx<T> image_read(const char *fname, idx<T> *out_) {
-    ostringstream err;
     idx<ubyte> tmp;
 #if (defined(__IMAGEMAGICK__) && !defined(__NOIMAGEMAGICK__))
     // we are under linux or mac and convert is available
-    ostringstream cmd;
+    string cmd;
     cmd << IMAGEMAGICK_CONVERT << " -compress lossless -depth 8 \"" 
 	<< fname << "\" PPM:-";
 #ifdef __WINDOWS__
-    FILE* fp = POPEN(cmd.str().c_str(), "rb");
+    FILE* fp = POPEN(cmd.c_str(), "rb");
 #else
-    FILE* fp = POPEN(cmd.str().c_str(), "r");
+    FILE* fp = POPEN(cmd.c_str(), "r");
 #endif
-    if (!fp) {
-      err << "conversion of image " << fname << " failed (errno: " 
-	  << errno << ", " << strerror(errno) << ")";
-      throw err.str();
-    }
+    if (!fp)
+      eblthrow("conversion of image " << fname << " failed (errno: " 
+	       << errno << ", " << strerror(errno) << ")");
     try {
     // read pnm image
     tmp = pnm_read(fp);
-    } catch (string &err) {
+    } catch (eblexception &e) {
       if (PCLOSE(fp) != 0) {
 	cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
       }
-      throw err;
+      throw e;
     }
     if (PCLOSE(fp) != 0) {
       cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
@@ -96,7 +94,7 @@ namespace ebl {
 #ifdef __MAGICKPP__
     // we are under any platform, convert is not available but Magick++ is
     try {
-      eblerror("not implemented");
+      eblerror("magickpp not implemented");
       Magick::Image im(fname);
       tmp = idx<ubyte>(im.rows(), im.columns(), im.depth() / 8);
       im.write(0, 0, im.depth() / 8, im.rows(), "RGB", (Magick::StorageType)0, 
@@ -123,8 +121,8 @@ namespace ebl {
       }
 #else
     // nor Magick++ nor convert are available, error
-    eblerror("Nor ImageMagick's convert nor Magick++ are available, \
-please install");
+    eblerror("Nor ImageMagick's convert nor Magick++ are available, "
+	     << "please install");
 #endif /* __MAGICK++__ */
 #endif /* __IMAGEMAGICK__ */
     
@@ -158,8 +156,8 @@ please install");
       if (((out.dim(0) == 1) || (out.dim(0) == 3)) && (out.order() == 3))
 	out = out.shift_dim(0, 2);
       return ;
-    } catch(string &err) {
-      err = err;
+    } catch(eblexception &e) {
+      e = e;
       // not a mat file, try regular image
     }
     image_read(fname, &out);
@@ -181,8 +179,8 @@ please install");
       if (((m.dim(0) == 1) || (m.dim(0) == 3)) && (m.order() == 3))
 	m = m.shift_dim(0, 2);
       return m;
-    } catch(string &err) {
-      err = err; // not a mat file, try regular image
+    } catch(eblexception &e) {
+      e = e; // not a mat file, try regular image
     }
     return image_read<T>(fname);
   }
@@ -248,10 +246,9 @@ please install");
 	  fputc((ubyte) innn.get(0), fp);
 	}
       }
-    } else {
-      cerr << "Error saving image " << in << endl;
-      eblerror("Pixel dimension not supported");
-    }
+    } else
+      eblerror("Error saving image " << in <<
+	       ", pixel dimension not supported");
     fflush(fp);
     return true;
   }
@@ -266,26 +263,24 @@ please install");
     if (!strcmp(format, "mat")) { // save as idx
       return save_matrix(in, fname);
     }
-    ostringstream err;
 #if (defined(__IMAGEMAGICK__) && !defined(__NOIMAGEMAGICK__))
     // we are under linux or mac and convert is available
-    ostringstream cmd;
+    string cmd;
     cmd << IMAGEMAGICK_CONVERT << " PPM:- " << format << ":\"" << fname << "\"";
 #ifdef __WINDOWS__
-    FILE* fp = POPEN(cmd.str().c_str(), "wb");
+    FILE* fp = POPEN(cmd.c_str(), "wb");
 #else
-    FILE* fp = POPEN(cmd.str().c_str(), "w");
+    FILE* fp = POPEN(cmd.c_str(), "w");
 #endif
     if (!fp) {
-      err << "conversion of image " << fname << " failed (errno: " 
-	  << errno << ", " << strerror(errno) << ")";
-      cerr << err.str() << endl;
+      cerr << "conversion of image " << fname << " failed (errno: " 
+	   << errno << ", " << strerror(errno) << ")";
       return false;
     }
     try {
       // read pnm image
       save_image_ppm(fp, in);
-    } catch (string &err) {
+    } catch (eblexception &err) {
       if (PCLOSE(fp) != 0) {
 	cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
       }
@@ -297,8 +292,8 @@ please install");
     }
 #else
     // nor Magick++ nor convert are available, error
-    eblerror("Nor ImageMagick's convert nor Magick++ are available, \
-please install");
+    eblerror("Nor ImageMagick's convert nor Magick++ are available, "
+	     << "please install");
 #endif /* __IMAGEMAGICK__ */
     return true;
   }

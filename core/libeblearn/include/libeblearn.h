@@ -44,12 +44,15 @@
 #include "ebl_layers.h"
 #include "ebl_machines.h"
 #include "ebl_nonlinearity.h"
-#include "ebl_tester.h"
 #include "ebl_logger.h"
-#include "ebl_trainer.h"
 #include "ebl_preprocessing.h"
 #include "ebl_utils.h"
-#include "datasource.h"
 #include "detector.h"
+
+#ifndef __NOSTL__
+#include "ebl_tester.h"
+#include "ebl_trainer.h"
+#include "datasource.h"
+#endif
 
 #endif

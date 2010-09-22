@@ -101,6 +101,10 @@ namespace ebl {
     }
     
     idx_tanh(in.x, out.x);
+
+#ifdef __DUMP_STATES__ // used to debug
+    DUMP(out.x, this->name << "_tanh_module_out.x");
+#endif
   }
 
   template <typename T, class Tstate>

@@ -36,6 +36,10 @@
 #include "libidx.h"
 #include "ebl_states.h"
 
+#ifndef __NOSTL__
+#include <vector>
+#endif
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -155,13 +159,13 @@ namespace ebl {
     //! recognized samples, and the percentage of rejected samples.
     //! names of each class (lblstr) are optional.
     //! \param ds_is_test If true, prepend "test_" in front of varialbes.
-    void display(int iteration, string &dsname, vector<string*> *lblstr = NULL,
+    void display(int iteration, string &dsname, std::vector<string*> *lblstr = NULL,
 		 bool ds_is_test = false);
 
     //! display ROC points for each class.
     //! names of each class (lblstr) are optional.
     void display_positive_rates(double threshold,
-				vector<string*> *lblstr = NULL);
+				std::vector<string*> *lblstr = NULL);
     
     bool save();
     bool load();
@@ -175,10 +179,10 @@ namespace ebl {
     intg		total_error;
     intg		total_punt;
     double		total_energy;
-    vector<uint>	class_errors;
-    vector<uint>	class_totals;
-    vector<uint>	class_tpr;
-    vector<uint>	class_fpr;
+    std::vector<uint>	class_errors;
+    std::vector<uint>	class_totals;
+    std::vector<uint>	class_tpr;
+    std::vector<uint>	class_fpr;
   private:
     idx<int>		confusion;	//!< confusion matrix
     uint                nclasses;       //!< number of classes

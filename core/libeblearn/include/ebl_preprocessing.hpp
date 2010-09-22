@@ -146,6 +146,28 @@ namespace ebl {
   }
     
   ////////////////////////////////////////////////////////////////
+  // y_to_yp_module
+
+  template <typename T, class Tstate>
+  y_to_yp_module<T,Tstate>::y_to_yp_module(uint normalization_size)
+    : channorm_module<T,Tstate>(normalization_size, "y_to_yp") {
+  }
+
+  template <typename T, class Tstate>
+  y_to_yp_module<T,Tstate>::~y_to_yp_module() {
+  }
+
+  template <typename T, class Tstate>
+  void y_to_yp_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+    this->norm.fprop(in, out); // local
+  }
+
+  template <typename T, class Tstate>
+  y_to_yp_module<T,Tstate>* y_to_yp_module<T,Tstate>::copy() {
+    return new y_to_yp_module<T,Tstate>(this->normalization_size);
+  }
+    
+  ////////////////////////////////////////////////////////////////
   // bgr_to_ypuv_module
 
   template <typename T, class Tstate>

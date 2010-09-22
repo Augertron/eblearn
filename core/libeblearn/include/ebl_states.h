@@ -546,6 +546,9 @@ namespace ebl {
     //! load a fparameter file into the x component.
     bool load_x(const char *param_filename);
 
+    //! load a fparameter matrix into the x component.
+    bool load_x(idx<T> &m);
+
     //! save the x component to a file.
     bool save_x(const char *param_filename);
 

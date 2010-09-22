@@ -33,15 +33,11 @@
 #ifndef IDXIO_HPP_
 #define IDXIO_HPP_
 
-#include <stdio.h>
-#include <sstream>
 #include "idxops.h"
 
 // endianess test
 static int endiantest = 1;
 #define LITTLE_ENDIAN_P (*(char*)&endiantest)
-
-using namespace std;
 
 namespace ebl {
 
@@ -70,7 +66,7 @@ namespace ebl {
   template <> inline int get_magic_vincent<long>() {return 0x0000; }
 
   // type to string function for debug message.
-  inline string get_magic_str(int magic) {
+  inline std::string get_magic_str(int magic) {
     switch (magic) {
       // standard format
     case MAGIC_BYTE_MATRIX: 	return "ubyte";
@@ -140,38 +136,30 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // loading
 
-  template <typename T> idx<T> load_matrix(const string &filename) {
+  template <typename T> idx<T> load_matrix(const std::string &filename) {
     return load_matrix<T>(filename.c_str());
   }
 
   template <typename T> idx<T> load_matrix(const char *filename) {
     // open file
     FILE *fp = fopen(filename, "rb");
-    if (!fp) {
-      ostringstream oss;
-      oss << "load_matrix failed to open " << filename;
-      cerr << oss.str() << endl;
-      throw oss.str();
-    }
+    if (!fp)
+      eblthrow("load_matrix failed to open " << filename);
     // read it
     idx<T> m = load_matrix<T>(fp);
     fclose(fp);
     return m;
   }
 
-  template <typename T> void load_matrix(idx<T>& m, const string &filename) {
+  template <typename T> void load_matrix(idx<T>& m, const std::string &filename) {
     load_matrix(m, filename.c_str());
   }
 
   template <typename T> void load_matrix(idx<T>& m, const char *filename) {
     // open file
     FILE *fp = fopen(filename, "rb");
-    if (!fp) {
-      ostringstream oss;
-      oss << "load_matrix failed to open " << filename;
-      cerr << oss.str() << endl;
-      throw oss.str();
-    }
+    if (!fp)
+      eblthrow("load_matrix failed to open " << filename);
     // read it
     m = load_matrix<T>(fp, &m);
     fclose(fp);
@@ -191,10 +179,8 @@ namespace ebl {
     // resize out if necessary
     if (pout->get_idxdim() != dims) { // different order/dimensions
       // if order is different, it's from the input matrix, error
-      if (pout->order() != dims.order()) {
-	cerr << "error: different orders: " << *pout << " " << dims << endl;
-	eblerror("idx have different orders");
-      }
+      if (pout->order() != dims.order())
+	eblerror("error: different orders: " << *pout << " " << dims);
       // resize output idx
       pout->resize(dims);
     }
@@ -236,19 +222,19 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // saving
   
-  template <typename T> bool save_matrix(idx<T>& m, const string &filename) {
+  template <typename T> bool save_matrix(idx<T>& m,
+					 const std::string &filename) {
     return save_matrix(m, filename.c_str());
   }
 
   template <typename T2, typename T>
-  bool save_matrix(idx<T>& m, const string &filename) {
+  bool save_matrix(idx<T>& m, const std::string &filename) {
     idx<T2> m2(m.get_idxdim());
     idx_copy(m, m2);
     return save_matrix(m2, filename.c_str());
   }
 
   // TODO: intg support
-  // TODO: use c++ IO to catch IO exceptions more easily
   template <typename T> bool save_matrix(idx<T>& m, const char *filename) {
     int v, i;
     FILE *fp = fopen(filename, "wb");

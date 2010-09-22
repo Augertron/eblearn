@@ -30,13 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef idx_HPP
-#define idx_HPP
-
-#include <sstream>
-#include <vector>
-
-using namespace std;
+#ifndef IDX_HPP_
+#define IDX_HPP_
 
 namespace ebl {
 
@@ -58,29 +53,28 @@ namespace ebl {
 
   //! Print incompatible idx1 and idx2 and call eblerror with errmsg.
 #define idx_compatibility_error2(idx1, idx2, errmsg) {			\
-    cerr <<"error: "<<idx1 << " and " << idx2 << " are incompatible." << endl; \
-    eblerror(errmsg); }
+    eblerror(idx1 << " and " << idx2 << " are incompatible:" << errmsg); }
   
   //! Print incompatible idx1, idx2, idx3 and call eblerror with errmsg.
 #define idx_compatibility_error3(idx1, idx2, idx3, errmsg) {		\
-    cerr << "error: " << idx1 << ", " << idx2 << " and " << idx3	\
-	 << " are incompatible." << endl; eblerror(errmsg); }
+    eblerror(idx1 << ", " << idx2 << " and " << idx3			\
+	     << " are incompatible:" << errmsg); }
   
   //! Print incompatible idx1, idx2, idx3 and call eblerror with errmsg.
 #define idx_compatibility_error4(idx1, idx2, idx3, idx4, errmsg) {	\
-    cerr << "error: " << idx1 << ", " << idx2 << ", " << idx3 << " and " \
-	 << idx4 << " are incompatible." << endl; eblerror(errmsg); }
+    eblerror(idx1 << ", " << idx2 << ", " << idx3 << " and "		\
+	     << idx4 << " are incompatible:" << errmsg); }
   
   //! Print incompatible idx1, idx2, idx3 and call eblerror with errmsg.
 #define idx_compatibility_error5(idx1, idx2, idx3, idx4, idx5, errmsg) { \
-    cerr << "error: " << idx1 << ", " << idx2 << ", " << idx3 << ", " << idx4 \
-	 << " and " << idx5 << " are incompatible." << endl; eblerror(errmsg); }
+    eblerror("error: " << idx1 << ", " << idx2 << ", " << idx3 << ", " << idx4 \
+	     << " and " << idx5 << " are incompatible:" << errmsg); }
   
   //! Print incompatible idx1, idx2, idx3 and call eblerror with errmsg.
 #define idx_compatibility_error6(idx1, idx2, idx3, idx4, idx5, idx6, errmsg) { \
-    cerr << "error: " << idx1 << ", " << idx2 << ", " << idx3 << ", " << idx4 \
-	 << ", " << idx5 << " and " << idx6				\
-	 << " are incompatible." << endl; eblerror(errmsg); }
+    eblerror("error: " << idx1 << ", " << idx2 << ", " << idx3 << ", " << idx4 \
+	     << ", " << idx5 << " and " << idx6				\
+	     << " are incompatible:" << errmsg); }
   
   ////////////////////////////////////////////////////////////////
   //! idx elements and dimensions error checking macros
@@ -88,59 +82,54 @@ namespace ebl {
   //! Calls eblerror if src0 is not contiguous.
 #define idx_check_contiguous1(src0)				\
   if (!(src0).contiguousp())					\
-    eblerror("idx must be contiguous\n");
+    eblerror("idx must be contiguous");
 
   //! Calls eblerror if src0 and src1 are not contiguous.
 #define idx_check_contiguous2(src0, src1)				\
   if (!(src0).contiguousp() || !(src1).contiguousp())			\
-    eblerror("idx must be contiguous\n");
+    eblerror("idx must be contiguous");
 
   //! Calls eblerror if src0 and src1 are not contiguous.
 #define idx_check_contiguous3(src0, src1, src2)				\
   if (!(src0).contiguousp() || !(src1).contiguousp() || !(src2.contiguousp())) \
-    eblerror("idx must be contiguous\n");
+    eblerror("idx must be contiguous");
 
   //! Calls eblerror if src0 and src1 have different number of elements.
 #define idx_checknelems2_all(src0, src1)				\
   if ((src0).nelements() != (src1).nelements()) {			\
-    cerr << "error: " << src0 << " and " << src1;			\
-    cerr << " should have the same number of elements." << endl;	\
-    eblerror("incompatible idx sizes\n"); }
+    eblerror(src0 << " and " << src1 <<					\
+	     " should have the same number of elements"); }
 
   //! Calls eblerror if src0 and src1 and src2 have different number of
   //! elements.
 #define idx_checknelems3_all(src0, src1, src2)				\
   if (((src0).nelements() != (src1).nelements()) ||			\
       ((src0).nelements() != (src2).nelements())) {			\
-    cerr << "error: " << src0 << ", " << src1 << " and " << src2;	\
-    cerr << " should have the same number of elements." << endl;	\
-    eblerror("incompatible idx sizes\n"); }
+  eblerror(src0 << ", " << src1 << " and " << src2			\
+	   << " should have the same number of elements"); }
   
   //! Calls eblerror if src0 and o0 do not match.
 #define idx_checkorder1(src0, o0)					\
   if ((src0).order() != o0) {						\
-    cerr << "error: " << src0 << " does not have order " << o0 << endl; \
-    eblerror("idx has wrong order"); }
+    eblerror(src0 << " does not have order " << o0); }
 
   //! Calls eblerror if src0,src1 and o0,o1 do not match.
 #define idx_checkorder2(src0, o0, src1, o1)				\
   if (((src0).order() != o0) || ((src1).order() != o1)) {		\
-    cerr << "error: ";							\
-    if ((src0).order() != o0) cerr << src0 <<" should have order "<< o0<<". "; \
-    if ((src1).order() != o1) cerr << src1 <<" should have order "<< o1<<". "; \
-    cerr << endl;							\
-    eblerror("idx have incompatible orders"); }
+    std::string err;							\
+    if ((src0).order() != o0) err << src0 <<" should have order "<< o0<<". "; \
+    if ((src1).order() != o1) err << src1 <<" should have order "<< o1<<". "; \
+    eblerror("idx have incompatible orders: " << err); }
 
   //! Calls eblerror if src0,src1,src2 and o0,o1,o2 do not match.
 #define idx_checkorder3(src0, o0, src1, o1, src2, o2)			\
   if (((src0).order() != o0) || ((src1).order() != o1)			\
       || ((src2).order() != o2)) {					\
-    cerr << "error: ";							\
-    if ((src0).order() != o0) cerr << src0 <<" should have order "<< o0<<". "; \
-    if ((src1).order() != o1) cerr << src1 <<" should have order "<< o1<<". "; \
-    if ((src2).order() != o2) cerr << src2 <<" should have order "<< o2<<". "; \
-    cerr << endl;							\
-    eblerror("idx have incompatible orders"); }
+    std::string err;							\
+    if ((src0).order() != o0) err << src0 <<" should have order "<< o0<<". "; \
+    if ((src1).order() != o1) err << src1 <<" should have order "<< o1<<". "; \
+    if ((src2).order() != o2) err << src2 <<" should have order "<< o2<<". "; \
+    eblerror("idx have incompatible orders: " << err); }
 
   //! Calls eblerror if src0.order(), src1.order() and src2.order() differ
 #define idx_checkorder3_all(src0, src1, src2)				\
@@ -587,21 +576,15 @@ namespace ebl {
   // idx methods
 
   template <class T> void idx<T>::growstorage() {
-    if ( storage->growsize(spec.footprint()) < 0) {
-      ostringstream err;
-      err << "cannot grow storage to " << spec.footprint()
-	  << " bytes (probably out of memory)";
-      eblerror(err.str().c_str());
-    }
+    if (storage->growsize(spec.footprint()) < 0)
+      eblerror("cannot grow storage to " << spec.footprint()
+	       << " bytes (probably out of memory)");
   }
 
   template <class T> void idx<T>::growstorage_chunk(intg s_chunk){
-    if( storage->growsize_chunk(spec.footprint(), s_chunk) < 0) {
-      ostringstream err;
-      err << "cannot grow storage to " << spec.footprint()
-	  << " bytes (probably out of memory)";
-      eblerror(err.str().c_str());
-    }
+    if (storage->growsize_chunk(spec.footprint(), s_chunk) < 0)
+      eblerror("cannot grow storage to " << spec.footprint()
+	       << " bytes (probably out of memory)");
   }
 
   /* the constructor doesn't exist and I didn't find one to replace it
@@ -647,6 +630,14 @@ namespace ebl {
   
   template <class T> idx<T>::idx(const T *mat, intg s0, intg s1)
     : pidxdim(NULL), spec(0, s0, s1) {
+    storage = new srg<T>();
+    growstorage();
+    storage->lock();
+    memcpy(idx_ptr(), mat, nelements() * sizeof (T));
+  }
+
+  template <class T> idx<T>::idx(const T *mat, intg s0, intg s1, intg s2)
+    : pidxdim(NULL), spec(0, s0, s1, s2) {
     storage = new srg<T>();
     growstorage();
     storage->lock();
@@ -831,6 +822,37 @@ namespace ebl {
       growstorage();
     }
   }
+  
+//   template <class T> template <typename SizeIter>
+//   intg idx<T>::resize(SizeIter& dimsBegin, SizeIter& dimsEnd) {
+// #ifdef __NOSTL__
+//     eblerror("not implemented");
+//     return 0;
+// #else
+//     const int nArgDims = std::distance(dimsBegin, dimsEnd);
+
+//     // Error-check the supplied number of dims.
+//     if (ndim == 0)
+//       eblerror("Cannot call resize on a 0-dimensional idxspec.")
+//       else if (ndim != nArgDims)
+// 	eblerror("Number of supplied dimension sizes (" << nArgDims
+// 		 << ") doesn't match idxspec's number of dims (" << ndim <<")")
+
+// 	  // copy dimensions to dim
+// 	  std::copy(dimsBegin, dimsEnd, dim);
+
+//     // set mod to be the partial sum of the dim sequence, in reverse order.
+//     typedef std::reverse_iterator<SizeIter> RIter;
+//     typedef std::reverse_iterator<intg*> RintgIter;
+//     std::partial_sum( RIter(dimsEnd-1),
+// 		      RIter(dimsBegin-1),
+// 		      RintgIter(mod+(nArgDims-1)),
+// 		      std::multiplies<intg>() );
+
+//     // return the memory footprint
+//     return mod[0] * dim[0] + offset;
+// #endif
+//   }
 
   template <class T> 
   void idx<T>::resize_chunk(intg s_chunk, intg s0, intg s1, intg s2, intg s3, 
@@ -899,23 +921,13 @@ namespace ebl {
 
   template <class T> idx<T> idx<T>::transpose(int d1, int d2) {
     idx<T> r(storage,spec.getoffset());
-    try {
-      spec.transpose_into(&r.spec, d1, d2); 
-    } catch(const string &err) {
-      cerr << "error in idx " << *this << endl;
-      eblerror(err.c_str());
-    }
-   return r;
+    spec.transpose_into(&r.spec, d1, d2); 
+    return r;
   }
 
   template <class T> idx<T> idx<T>::transpose(int *p) {
     idx<T> r(storage,spec.getoffset());
-    try {
-      spec.transpose_into(&r.spec, p);
-    } catch(const string &err) {
-      cerr << "error in idx " << *this << endl;
-      eblerror(err.c_str());
-    }
+    spec.transpose_into(&r.spec, p);
     return r;
   }
 
@@ -1007,45 +1019,41 @@ namespace ebl {
       + i2*spec.mod[2];
   }
 
+  // replacing exception throwing by macro to handle environments without
+  // macros (e.g. android). this makes the compiled code a bit bigger.
+#define PTR_ERROR(v)							\
+  eblerror("idx::get: (error " << v					\
+	   << "wrong number of indices, negative or out of bound index");
+  
   // return a pointer to an element of an idx
   // generic function for order>3
   template <class T> T *idx<T>::ptr(intg i0, intg i1, intg i2, intg i3, 
 				    intg i4, intg i5, intg i6, intg i7) {
-    try {
-      // check that we passed the right number of indices
-      // and that they are all positive
-      switch (spec.ndim) {
-      case 8: if (i7 < 0) throw(-8);break;
-      case 7: if ((i6 < 0) || (i7 != -1)) throw(-7);break;
-      case 6: if ((i5 < 0) || (i6 != -1)) throw(-6);break;
-      case 5: if ((i4 < 0) || (i5 != -1)) throw(-5);break;
-      case 4: if ((i3<0)||(i2<0)||(i1<0)||(i0<0)||(i4 != -1)) throw(-4);break;
-      default: throw(10);
-      }
-      // now compute offset, and check that all
-      // indices are within bounds.
-      intg k = 0;
-      switch (spec.ndim) {
-      case 8: k += spec.mod[7]*i7; if (i7 >= spec.dim[7])  throw(7);
-      case 7: k += spec.mod[6]*i6; if (i6 >= spec.dim[6])  throw(6);
-      case 6: k += spec.mod[5]*i5; if (i5 >= spec.dim[5])  throw(5);
-      case 5: k += spec.mod[4]*i4; if (i4 >= spec.dim[4])  throw(4);
-      case 4: k += spec.mod[3]*i3; if (i3 >= spec.dim[3])  throw(3);
-      }
-      k += spec.mod[2]*i2; if (i2 >= spec.dim[2])  throw(2);
-      k += spec.mod[1]*i1; if (i1 >= spec.dim[1])  throw(1);
-      k += spec.mod[0]*i0; if (i0 >= spec.dim[0])  throw(0);
-      return storage->data + spec.offset + k;
+    // check that we passed the right number of indices
+    // and that they are all positive
+    switch (spec.ndim) {
+    case 8: if (i7 < 0) PTR_ERROR(-8);break;
+    case 7: if ((i6 < 0) || (i7 != -1)) PTR_ERROR(-7);break;
+    case 6: if ((i5 < 0) || (i6 != -1)) PTR_ERROR(-6);break;
+    case 5: if ((i4 < 0) || (i5 != -1)) PTR_ERROR(-5);break;
+    case 4: if ((i3<0)||(i2<0)||(i1<0)||(i0<0)||(i4 != -1)) PTR_ERROR(-4);break;
+    default:
+      eblerror("idx::get: number of indices and order are different");
     }
-    catch(int k) {
-      if (k==10) eblerror("idx::get: number of indices and order are different");
-      if (k < 0) {
-	eblerror("idx::get: wrong number of indices, or negative index");
-      } else {
-	eblerror("idx::get: index out of bound");
-      }
-      return NULL;
+    // now compute offset, and check that all
+    // indices are within bounds.
+    intg k = 0;
+    switch (spec.ndim) {
+    case 8: k += spec.mod[7]*i7; if (i7 >= spec.dim[7])  PTR_ERROR(7);
+    case 7: k += spec.mod[6]*i6; if (i6 >= spec.dim[6])  PTR_ERROR(6);
+    case 6: k += spec.mod[5]*i5; if (i5 >= spec.dim[5])  PTR_ERROR(5);
+    case 5: k += spec.mod[4]*i4; if (i4 >= spec.dim[4])  PTR_ERROR(4);
+    case 4: k += spec.mod[3]*i3; if (i3 >= spec.dim[3])  PTR_ERROR(3);
     }
+    k += spec.mod[2]*i2; if (i2 >= spec.dim[2])  PTR_ERROR(2);
+    k += spec.mod[1]*i1; if (i1 >= spec.dim[1])  PTR_ERROR(1);
+    k += spec.mod[0]*i0; if (i0 >= spec.dim[0])  PTR_ERROR(0);
+    return storage->data + spec.offset + k;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -1060,12 +1068,12 @@ namespace ebl {
   }
 
   // get element of idx1
-  template <class T> T idx<T>::get(intg i0) {
+  template <class T> T& idx<T>::get(intg i0) {
 #ifdef __DEBUG__
     idx_checkorder1(*this, 1);
     if ((i0 < 0) || (i0 >= spec.dim[0])) {
-      cerr << "error accessing elt " << i0 << " in " << *this << endl;
-      eblerror("index out of bound");
+      eblerror("error accessing elt " << i0 << " in " << *this
+	       << ", index out of bound");
     }
 #endif
     return (storage->data)[spec.offset + i0*spec.mod[0]];
@@ -1077,9 +1085,8 @@ namespace ebl {
     idx_checkorder1(*this, 2);
     if (((i0 < 0) || (i0 >= spec.dim[0])) || 
 	((i1 < 0) || (i1 >= spec.dim[1]))) {
-      cerr << "error accessing elt " << i0 << "x" 
-	   << i1 << " in " << *this << endl;
-      eblerror("index out of bound");
+      eblerror("error accessing elt " << i0 << "x" 
+		<< i1 << " in " << *this << ", index out of bound");
     }
 #endif
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1]];
@@ -1092,9 +1099,9 @@ namespace ebl {
     if (((i0 < 0) || (i0 >= spec.dim[0])) || 
 	((i1 < 0) || (i1 >= spec.dim[1])) ||
 	((i2 < 0) || (i2 >= spec.dim[2]))) {
-      cerr << "error accessing elt " << i0 << "x" 
-	   << i1 << "x" << i2 << " in " << *this << endl;
-      eblerror("index out of bound");
+      eblerror("error accessing elt " << i0 << "x" 
+	       << i1 << "x" << i2 << " in " << *this
+	       << ", index out of bound");
     }
 #endif
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1] 
@@ -1159,13 +1166,13 @@ namespace ebl {
   // print methods
 
   template <typename T>
-  void idx<T>::printElems( std::ostream& out ){
+  void idx<T>::printElems(std::ostream& out){
     printElems_impl(0, out);
   }
 
   template <typename T>
   void idx<T>::printElems(){
-    this->printElems( std::cout );
+    this->printElems(std::cout);
   }
 
   template<class T> inline T printElems_impl_cast(T val) {
@@ -1178,15 +1185,15 @@ namespace ebl {
   }
 
   template <typename T>
-  void idx<T>::printElems_impl( int indent, std::ostream& out ) {
+  void idx<T>::printElems_impl(int indent, std::ostream& out) {
     static const std::string lbrace = "[";
     static const std::string rbrace = "]";
     static const std::string sep = " ";
-    std::ostringstream oss;
+    // prepare indentation
+    std::string tab;
     for( unsigned int ii = 0; ii < lbrace.length(); ++ii ) {
-      oss<<" ";
+      tab << " ";
     }
-    const std::string tab(oss.str());
 
     // printing a 0-dimensional tensor
     if( order() == 0 ){
@@ -1213,7 +1220,7 @@ namespace ebl {
 	// only print indent if this isn't the first subtensor.
 	if( dimInd > 0 ){
 	  for( int ii = 0; ii < indent+1; ++ii ){
-	    out<<(tab);
+	    out << tab;
 	  }
 	}
 
@@ -1238,7 +1245,7 @@ namespace ebl {
   }
 
   template <class T> void idx<T>::pretty(){
-    pretty(cout);
+    pretty(std::cout);
   }
 
   template <class T> void idx<T>::pretty(std::ostream& out){
@@ -1248,33 +1255,36 @@ namespace ebl {
     spec.pretty(out);
   }
 
-  template <class T> int idx<T>::fdump(FILE *f) {
-    if (spec.ndim == 0) {
-      std::ostringstream oss;
-      // fprintf(f,"[@ %g]\n",this->get());
-      oss << "[@ " << this->get() << "]\n";
-      fputs(oss.str().data(), f);
-    } else if (spec.ndim == 1) {
-      std::ostringstream oss;
-      // fprintf(f,"[");
-      oss << "[";
-      for (intg i=0; i<dim(0); i += mod(0)) {
-	// fprintf(f,"%g ",(storage->data)[spec.offset + i]);
-	oss << (storage->data)[spec.offset + i] << " ";
-      }
-      // fprintf(f,"]\n");
-      oss << "]\n";
-      fputs(oss.str().data(), f);
+  template <class T> int idx<T>::fdump(std::ostream &f) {
+    if (spec.ndim == 0)
+      f << "[@ " << this->get() << "]" << std::endl;
+    else if (spec.ndim == 1) {
+      f << "[";
+      for (intg i=0; i<dim(0); i += mod(0))
+	f << (storage->data)[spec.offset + i] << " ";
+      f << "]\n";
     } else {
-      fprintf(f,"[");
+      f << "[";
       { idx_bloop1(p,*this,T) { p.fdump(f); } }
-      fprintf(f,"]\n");
+      f << "]\n";
     }
     return 0;
   }
 
   template <class T> 
   std::ostream& operator<<(std::ostream& out, idx<T>& m) {
+    out << m.spec;
+    return out;
+  }
+
+  template <class T> 
+  std::ostream& operator<<(std::ostream& out, const idx<T>& m) {
+    out << m.spec;
+    return out;
+  }
+
+  template <class T> 
+  std::string& operator<<(std::string& out, idx<T>& m) {
     out << m.spec;
     return out;
   }
@@ -1330,10 +1340,8 @@ namespace ebl {
 
   template <class T> 
   idxlooper<T>::idxlooper(idx<T> &m, int ld) : idx<T>((dummyt*)0) {
-    if (m.order() == 0) { // TODO: allow looping once on 0-order idx
-      cerr << "cannot loop on idx with order 0. idx is: " << m << endl;
-      eblerror("cannot loop on zero-order idx");
-    }
+    if (m.order() == 0) // TODO: allow looping once on 0-order idx
+      eblerror("cannot loop on idx with order 0. idx is: " << m);
     i = 0;
     dimd = m.spec.dim[ld];
     modd = m.spec.mod[ld];
@@ -1419,4 +1427,4 @@ namespace ebl {
 
 } // namespace ebl
 
-#endif
+#endif /* IDX_HPP_ */

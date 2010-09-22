@@ -33,7 +33,6 @@
 #ifndef IMAGE_HPP_
 #define IMAGE_HPP_
 
-#include <algorithm>
 #include <math.h>
 #include <stdlib.h>
 
@@ -84,34 +83,36 @@ namespace ebl {
     int imh = (int) contim.dim(0);
     int rw = 0, rh = 0;
     double ow = 0, oh = 0;
-    try {
-      if ((imw == 0) || (imh == 0))
-	throw "cannot have dimensions of size 0";
-      // determine actual size of output image
-      if ((0 == w) || (0 == h)) {
-	if (0 == w) {
-	  if (0 == h) throw "desired width and height cannot be both zero";
+    if ((imw == 0) || (imh == 0))
+      eblerror("cannot have dimensions of size 0"
+	       << " while trying to resize image " << image
+	       << " to " << h << "x" << w << " with mode " << mode);
+    // determine actual size of output image
+    if ((0 == w) || (0 == h)) {
+      if (0 == w) {
+	if (0 == h)
+	  eblerror("desired width and height cannot be both zero"
+		   << " while trying to resize image " << image
+		   << " to " << h << "x" << w << " with mode " << mode)
 	  else	w = max(1, (int) (imw * (w / imh)));
-	} else	h = max(1, (int) (imh * (h / imw)));
-      }
-      if ((mode == 0) || (mode == 3)) { // preserve aspect ratio
-	ratiow = ratiomin;
-	ratioh = ratiomin;
-      }
-      else if (mode == 1) { // possibly modify aspect ratio
-	ratiow = ratiow;
-	ratioh = ratioh;
-      }
-      else if (mode == 2) { // use w and h as scaling ratios
-	ratiow = w;
-	ratioh = h;
-      }
-      else throw "illegal mode or desired dimensions";
-    } catch (const char *err) {
-      cerr << "error: trying to resize image " << image;
-      cerr << " to " << h << "x" << w << " with mode " << mode << endl;
-      eblerror(err);
+      } else	h = max(1, (int) (imh * (h / imw)));
     }
+    if ((mode == 0) || (mode == 3)) { // preserve aspect ratio
+      ratiow = ratiomin;
+      ratioh = ratiomin;
+    }
+    else if (mode == 1) { // possibly modify aspect ratio
+      ratiow = ratiow;
+      ratioh = ratioh;
+    }
+    else if (mode == 2) { // use w and h as scaling ratios
+      ratiow = w;
+      ratioh = h;
+    }
+    else
+      eblerror("illegal mode or desired dimensions"
+	       << " while trying to resize image " << image
+	       << " to " << h << "x" << w << " with mode " << mode);
     // output sizes of entire image
     if (iregion_ || (mode == 2) || (mode == 0) || (mode == 3)) {
       ow = max(1.0, imw * ratiow);
@@ -131,11 +132,11 @@ namespace ebl {
       *oregion_ = oregion;
     // TODO: why is this useful? for ubyte images?
     // subsample by integer ratio if necessary
-//     if ((rh > 1) || (rw > 1)) {
-//       contim = image_subsample(contim, rh, rw);
-//       imw = contim.dim(1);
-//       imh = contim.dim(0);
-//     }
+    //     if ((rh > 1) || (rw > 1)) {
+    //       contim = image_subsample(contim, rh, rw);
+    //       imw = contim.dim(1);
+    //       imh = contim.dim(0);
+    //     }
     // resample from subsampled image with bilinear interpolation
     idx<T> rez((intg) oh, (intg) ow, (contim.order() == 3) ? contim.dim(2) : 1);
     idx<T> bg(4);

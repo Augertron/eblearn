@@ -35,14 +35,19 @@
 
 #define USING_STL_ITERS 0
 
-#include <stdio.h>
-#include <iostream>
-#include <sstream>
+#include "defines.h"
+
+#ifndef __NOSTL__
 #include <vector>
 #include <algorithm>
-#include <numeric>
-#include "defines.h"
+#include <iterator>
+#include <iostream>
+#endif
+
+#include <stdio.h>
+//#include <numeric>
 #include "srg.h"
+#include "stl.h"
 
 namespace ebl {
 
@@ -121,35 +126,8 @@ namespace ebl {
     //! (order is not allowed to change).
     intg resize1(intg dimn, intg size);
 
-    template<typename SizeIter> intg resize( SizeIter& dimsBegin, 
-					     SizeIter& dimsEnd ){
-      const int nArgDims = std::distance(dimsBegin, dimsEnd);
-
-      // Error-check the supplied number of dims.
-      if( ndim == 0 ){
-	eblerror("Cannot call resize on a 0-dimensional idxspec.");
-      }
-      else if( ndim != nArgDims ){
-	std::ostringstream oss;
-	oss<<"Number of supplied dimension sizes ("<<nArgDims;
-	oss<<") doesn't match idxspec's number of dims ("<<ndim<<")";
-	eblerror(oss.str().c_str());
-      }
-
-      // copy dimensions to dim
-      std::copy(dimsBegin, dimsEnd, dim);
-
-      // set mod to be the partial sum of the dim sequence, in reverse order.
-      typedef std::reverse_iterator<SizeIter> RIter;
-      typedef std::reverse_iterator<intg*> RintgIter;
-      std::partial_sum( RIter(dimsEnd-1),
-			RIter(dimsBegin-1),
-			RintgIter(mod+(nArgDims-1)),
-			std::multiplies<intg>() );
-
-      // return the memory footprint
-      return mod[0] * dim[0] + offset;
-    }
+    /* template<typename SizeIter> */
+    /*   intg resize(SizeIter& dimsBegin, SizeIter& dimsEnd); */
 
     //! set the offset and return the new value
     intg setoffset(intg o) { return offset = o; }
@@ -210,7 +188,7 @@ namespace ebl {
     intg getoffset() { return offset; }
 
     //! return the order (number of dimensions).
-    int getndim() { return ndim; }
+    int getndim() const { return ndim; }
 
     //! return the memory footprint, including the offset.
     //! The storage of an idx containing this idxspec must
@@ -317,6 +295,10 @@ namespace ebl {
     friend bool same_dim(idxspec &s1, idxspec &s2);
     //! idxspec print operator.
     friend EXPORT std::ostream& operator<<(std::ostream& out, idxspec& d);
+    //! idxspec print operator.
+    friend EXPORT std::ostream& operator<<(std::ostream& out, const idxspec& d);
+    //! idxspec print operator.
+    friend EXPORT std::string& operator<<(std::string& out, idxspec& d);
   };
 
   //! return true if two idxspec have the same dimensions,
@@ -349,7 +331,7 @@ namespace ebl {
     void growstorage_chunk(intg s_chunk);
 
     //! Implementation of public printElems() method.
-    void printElems_impl( int indent, std::ostream& );
+    void printElems_impl(int indent, std::ostream&);
 
   protected:
     //! fake constructor that does nothing.
@@ -406,9 +388,13 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! constructors initialized with an array
 
-    //! creates an idx2 of size (s0, s1) and fills it with mat, expected
+    //! Allocates an idx2 of size (s0, s1) and fills it with mat, expected
     //! to be of size (s0, s1).
     idx(const T *mat, intg s0, intg s1);
+
+    //! Allocates an idx3 of size (s0, s1, s2) and fills it with mat, expected
+    //! to be of size (s0, s1, s2).
+    idx(const T *mat, intg s0, intg s1, intg s2);
 
     ////////////////////////////////////////////////////////////////
     //! specific constructors for each number of dimensions
@@ -519,6 +505,7 @@ namespace ebl {
 			      intg s7=-1);
 
 
+#ifndef __NOSTL__
     /**
      * Resizes the idx using the dimension sizes listed
      * in a sequence.
@@ -528,19 +515,16 @@ namespace ebl {
     template<typename SizeIter>
       void resize( SizeIter& sizesBegin, SizeIter& sizesEnd) {
       const int ndims = std::distance( sizesBegin, sizesEnd );
-      if ( ndims > MAXDIMS ){
-	std::ostringstream oss;
-	oss<<"Number of dimensions ("<<ndims<<") exceeds MAX_DIMS (";
-	oss<<MAXDIMS<<")";
-	eblerror(oss.str().c_str());
-      }
-
+      if ( ndims > MAXDIMS )
+	eblerror("Number of dimensions ("<<ndims<<") exceeds MAX_DIMS ("
+		 <<MAXDIMS<<")");
       std::vector<T> sizes(ndims+1);
       std::copy(sizesBegin, sizesEnd, sizes.begin());
       sizes.back() = -1;
       spec.resize( sizesBegin, sizesEnd );
       growstorage();
     }
+#endif
 
     ////////////////////////////////////////////////////////////////
     //! idx manipulation methods
@@ -686,7 +670,7 @@ namespace ebl {
     //! return the value of an element (idx0 version)
     virtual T get();
     //! return the value of an element (idx1 version)
-    virtual T get(intg i0);
+    virtual T& get(intg i0);
     //! return the value of an element (idx2 version)
     virtual T get(intg i0, intg i1);
     //! return the value of an element (idx3 version)
@@ -711,7 +695,7 @@ namespace ebl {
     //! print methods
 
     //! Pretty-prints elements to a stream.
-    //friend std::ostream& operator<<( std::ostream& out, idx<T>& tensor );
+    //friend std::ostream& operator<<(std::ostream& out, idx<T>& tensor );
 
     //! Pretty-prints Idx metadata to std::cout.
     virtual void pretty();
@@ -722,11 +706,11 @@ namespace ebl {
 
     //! Pretty-prints elements to a stream.
     virtual void printElems(); // calls printElems( std::cout );
-    virtual void printElems( std::ostream& out );
+    virtual void printElems(std::ostream& out);
     // void printElems( FILE* out );  doesn't work (cf implementation)
 
     //! print content of idx on stream
-    virtual int fdump(FILE *f);
+    virtual int fdump(std::ostream &f);
 
 #if USING_STL_ITERS == 0
     // horrible syntax again. This time we have to
@@ -745,14 +729,24 @@ namespace ebl {
   template <class T> 
     std::ostream& operator<<(std::ostream& out, idx<T>& m);  
 
-} // end namespace ebl
+  //! idx print operator.
+  template <class T> 
+    std::ostream& operator<<(std::ostream& out, const idx<T>& m);  
 
+  //! idx print operator.
+  template <class T> 
+    std::string& operator<<(std::string& out, idx<T>& m);  
+
+} /* namespace ebl */
+  
+#ifndef __NOSTL__
 #include "idx_iterators.h"
+#endif
 
 namespace ebl {
-
+  
 #if USING_STL_ITERS == 0
-
+  
   ////////////////////////////////////////////////////////////////
   // idx Iterators are a subclass of idx
 
@@ -838,7 +832,8 @@ namespace ebl {
     inline contiguous_idxiter(idx<T> & m)
       :current(m.storage->data + m.spec.offset), end(NULL) {
 #ifdef __DEBUG__
-      assert(m.contiguousp());
+      if (!m.contiguousp())
+	eblerror("this idx should be contiguous");
 #endif
       end = current + (unsigned)m.nelements();
     }
@@ -1049,7 +1044,11 @@ namespace ebl {
   };
 
   //! idxdim print operator.
+  EXPORT std::ostream& operator<<(std::ostream& out, idxdim& d);
+  //! idxdim print operator.
   EXPORT std::ostream& operator<<(std::ostream& out, const idxdim& d);
+  //! idxdim string concatenation operator.
+  EXPORT std::string& operator<<(std::string& out, const idxdim& d);
 
   // TODO: move into image.h when idx specializes into image
   // TODO: templatize
@@ -1085,6 +1084,7 @@ namespace ebl {
     uint h0, w0, height, width;
 
     // friends
+    friend EXPORT std::ostream& operator<<(std::ostream& out, rect& r);
     friend EXPORT std::ostream& operator<<(std::ostream& out, const rect& r);
     friend rect operator/(const rect &r, double d);
     friend rect operator*(const rect &r, double d);
@@ -1093,7 +1093,7 @@ namespace ebl {
 } // end namespace ebl
 
 ////////////////////////////////////////////////////////////////
-#include "idx_iterators.hpp"
+
 #include "idx.hpp"
 
-#endif
+#endif /* IDX_H_ */

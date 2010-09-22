@@ -40,6 +40,11 @@
 
 #include "ebl_utils.h"
 
+#ifdef __DUMP_STATES__
+uint dump_count = 0;
+std::string dump_prefix;
+#endif
+
 using namespace std;
 
 namespace ebl {
@@ -72,12 +77,9 @@ namespace ebl {
   }
 
   idx<intg> concat_tables(idx<intg> &t0, idx<intg> &t1) {
-    if (t0.dim(0) == 0 || t1.dim(0) == 0) {
-      ostringstream err;
-      err << "expecting tables dimension 0 to be at least 1, but found: "
-	  << t0 << " and " << t1;
-      eblerror(err.str());
-    }
+    if (t0.dim(0) == 0 || t1.dim(0) == 0)
+      eblerror("expecting tables dimension 0 to be at least 1, but found: "
+	       << t0 << " and " << t1);
     idx<intg> t(t0.dim(0) + t1.dim(0), 2);
     idx<intg> tmp = t.narrow(0, t0.dim(0), 0);
     idx_copy(t0, tmp);

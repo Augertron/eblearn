@@ -33,10 +33,6 @@
 // tell header that we are in the libidx scope
 #define LIBIDX
 
-#include <algorithm>
-#include <stdio.h>
-#include <ostream>
-
 #ifndef __WINDOWS__
 #include <inttypes.h>
 #endif
@@ -44,6 +40,7 @@
 #include "image.h"
 #include "idxops.h"
 #include "idx.h"
+#include "stl.h"
 
 using namespace std;
 

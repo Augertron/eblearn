@@ -130,8 +130,7 @@ namespace ebl {
     //if (refcount == 0) this->nopened--;
     DEBUG("srg::unlock: refcount=%d\n",refcount);
     if (refcount<0) {
-      std::cerr << "srg negative reference counter: " << refcount << std:: endl;
-      eblerror("srg has negative refcount");
+      eblerror("srg negative reference counter: " << refcount);
       return refcount;
     }
     else {

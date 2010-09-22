@@ -142,9 +142,7 @@ namespace ebl {
   template <typename T, class Tstate>
   void weighted_std_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {  
 #ifdef __DUMP_STATES__ // used to debug
-    fname.str("");
-    fname << "dump_" << this->name << "_w_module_in.x_" << in.x << ".mat";
-    save_matrix(in.x, fname.str());
+    DUMP(in.x, this->name << "_weighted_std_module_in.x");
 #endif
 
     // if (global_norm) // global normalization
@@ -289,6 +287,13 @@ namespace ebl {
       out.resize(d);
     }
     idx_abs(in.x, out.x);
+
+#ifdef __DUMP_STATES__ // used to debug
+    DUMP(in.x, this->name << "_abs_module_in.x");
+    DUMP(out.x, this->name << "_abs_module_out.x");
+    cerr << "FABS OUT MIN: " << idx_min(out.x) << " MAX: " << idx_max(out.x)
+	 << endl;
+#endif
   }
 
   template <typename T, class Tstate>

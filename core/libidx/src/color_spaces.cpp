@@ -32,16 +32,12 @@
 // tell header that we are in the libidx scope
 #define LIBIDX
 
-#include <algorithm>
-#include <stdio.h>
-
 #ifndef __WINDOWS__
 #include <inttypes.h>
 #endif
 
 #include "color_spaces.h"
-
-using namespace std;
+#include "idxops.h"
 
 namespace ebl {
 

@@ -35,8 +35,6 @@
 
 #include "idx.h"
 
-using namespace std;
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -47,30 +45,24 @@ namespace ebl {
   // It is also used to deallocate them by passing a zero argument.
   // Hence, if ndim is reduced, the arrays are preserved.
   int idxspec::setndim(int n) {
-    try {
-      if ((n<0) || (n>MAXDIMS)) {
-	throw("idx: cannot set ndim, ndim < 0 or ndim > MAXDIMS");
-      } else {
-	// if new ndim is zero or larger than before: deallocate arrays
-	if ((n == 0) || (n > ndim)) {
-	  if (dim) { delete []dim; }
-	  if (mod) { delete []mod; }
-	  dim = NULL; mod = NULL;
-	}
-	// now allocate new arrays if necessary
-	if (n > 0) {
-	  if (!dim) { dim = new intg[n]; }
-	  if (!mod) { mod = new intg[n]; }
-	}
-	// if the arrays allocated and ndim was larger 
-	// than new ndim, we don't do anything.
-	ndim = n;
-	return ndim;
+    if ((n<0) || (n>MAXDIMS)) {
+      eblerror("idx: cannot set ndim with n=" << n << " MAXDIMS=" << MAXDIMS)
+    } else {
+      // if new ndim is zero or larger than before: deallocate arrays
+      if ((n == 0) || (n > ndim)) {
+	if (dim) { delete []dim; }
+	if (mod) { delete []mod; }
+	dim = NULL; mod = NULL;
       }
-    }
-    catch(const char *s) {
-      eblerror(s);
-      return -1;
+      // now allocate new arrays if necessary
+      if (n > 0) {
+	if (!dim) { dim = new intg[n]; }
+	if (!mod) { mod = new intg[n]; }
+      }
+      // if the arrays allocated and ndim was larger 
+      // than new ndim, we don't do anything.
+      ndim = n;
+      return ndim;
     }
   }
 
@@ -78,21 +70,15 @@ namespace ebl {
   // using pre-allocated mod/dim arrays.
   // Probably not useful.
   int idxspec::setndim(int n, intg *ldim, intg *lmod) {
-    try {
-      if ((n<1) || (n>=MAXDIMS)) { 
-	throw("idx: cannot set ndim, ndim < 0 or ndim > MAXDIMS");
-      } else {
-	if (dim) { delete []dim; }
-	if (mod) { delete []mod; }
-	dim = ldim;
-	mod = lmod;
-	ndim = n;
-	return ndim;
-      }
-    }
-    catch(const char *s) {
-      eblerror(s);
-      return -1;
+    if ((n<1) || (n>=MAXDIMS)) { 
+      eblerror("idx: cannot set ndim with n=" << n << " MAXDIMS=" << MAXDIMS)
+    } else {
+      if (dim) { delete []dim; }
+      if (mod) { delete []mod; }
+      dim = ldim;
+      mod = lmod;
+      ndim = n;
+      return ndim;
     }
   }
 
@@ -123,63 +109,52 @@ namespace ebl {
   //	return mod[0] * dim[0] + offset;
   //}
 
+#define DIMS_ERROR(v)							\
+  eblerror("incompatible dimensions (error " << v			\
+	   << ") while trying to resize from (" << *this << ") to ("	\
+	   << s0 << " x " << s1 << " x " << s2 << " x " << s3 << " x "	\
+	   << s4 << " x " << s5 << " x " << s6 << " x " << s7 << ")");
+  
   // resizing: order is not allowed to change
   intg idxspec::resize(intg s0, intg s1, intg s2, intg s3, 
 		       intg s4, intg s5, intg s6, intg s7) {
     intg md = 1;
-    try {
-      // resizeing non-contiguous is forbiden to prevent nasty bugs
-      if (!contiguousp()) throw(42);
-      if (ndim==0) { throw(0); }  // can't resize idx0
-      if (s7>=0) { 
-	if (ndim<8) throw(8); 
-	dim[7] = s7; mod[7] = md; md *= s7; 
-      } else { if (ndim>7) throw(-8); }
-      if (s6>=0) { 
-	if (ndim<7) throw(7); 
-	dim[6] = s6; mod[6] = md; md *= s6; 
-      } else { if (ndim>6) throw(-7); }
-      if (s5>=0) { 
-	if (ndim<6) throw(6); 
-	dim[5] = s5; mod[5] = md; md *= s5; 
-      } else { if (ndim>5) throw(-6); }
-      if (s4>=0) { 
-	if (ndim<5) throw(5); 
-	dim[4] = s4; mod[4] = md; md *= s4; 
-      } else { if (ndim>4) throw(-5); }
-      if (s3>=0) { 
-	if (ndim<4) throw(4); 
-	dim[3] = s3; mod[3] = md; md *= s3; 
-      } else { if (ndim>3) throw(-4); }
-      if (s2>=0) { 
-	if (ndim<3) throw(3); 
-	dim[2] = s2; mod[2] = md; md *= s2; 
-      } else { if (ndim>2) throw(-3); }
-      if (s1>=0) { 
-	if (ndim<2) throw(2); 
-	dim[1] = s1; mod[1] = md; md *= s1; 
-      } else { if (ndim>1) throw(-2); }
-      if (s0>=0) { 
-	if (ndim<1) throw(1); 
-	dim[0] = s0; mod[0] = md; md *= s0; 
-      } else { if (ndim>0) throw(-1); }
-    }
-    catch(int v) { 
-      if (v == 42) {
-	eblerror("Resizing non-contiguous idx is not allowed"); 
-      }
-      else {
-	cerr << "error while trying to resize from (";
-	if (ndim > 0)
-	  cerr << dim[0];
-	for (int i = 1; i < ndim; ++i)
-	  cerr << " x " << dim[i];
-	cerr << ") to (";
-	cerr << s0 << " x " << s1 << " x " << s2 << " x " << s3 << " x " << s4;
-	cerr << " x " << s5 << " x " << s6 << " x " << s7 << ")." << endl;
-	eblerror("idxspec::resize: dimensions are incompatible"); 
-      }
-    }
+    // resizeing non-contiguous is forbiden to prevent nasty bugs
+    if (!contiguousp())
+      eblerror("Resizing non-contiguous idx is not allowed"); 
+    if (ndim==0) { DIMS_ERROR(0); }  // can't resize idx0
+    if (s7>=0) { 
+      if (ndim<8) DIMS_ERROR(8); 
+      dim[7] = s7; mod[7] = md; md *= s7; 
+    } else { if (ndim>7) DIMS_ERROR(-8); }
+    if (s6>=0) { 
+      if (ndim<7) DIMS_ERROR(7); 
+      dim[6] = s6; mod[6] = md; md *= s6; 
+    } else { if (ndim>6) DIMS_ERROR(-7); }
+    if (s5>=0) { 
+      if (ndim<6) DIMS_ERROR(6); 
+      dim[5] = s5; mod[5] = md; md *= s5; 
+    } else { if (ndim>5) DIMS_ERROR(-6); }
+    if (s4>=0) { 
+      if (ndim<5) DIMS_ERROR(5); 
+      dim[4] = s4; mod[4] = md; md *= s4; 
+    } else { if (ndim>4) DIMS_ERROR(-5); }
+    if (s3>=0) { 
+      if (ndim<4) DIMS_ERROR(4); 
+      dim[3] = s3; mod[3] = md; md *= s3; 
+    } else { if (ndim>3) DIMS_ERROR(-4); }
+    if (s2>=0) { 
+      if (ndim<3) DIMS_ERROR(3); 
+      dim[2] = s2; mod[2] = md; md *= s2; 
+    } else { if (ndim>2) DIMS_ERROR(-3); }
+    if (s1>=0) { 
+      if (ndim<2) DIMS_ERROR(2); 
+      dim[1] = s1; mod[1] = md; md *= s1; 
+    } else { if (ndim>1) DIMS_ERROR(-2); }
+    if (s0>=0) { 
+      if (ndim<1) DIMS_ERROR(1); 
+      dim[0] = s0; mod[0] = md; md *= s0; 
+    } else { if (ndim>0) DIMS_ERROR(-1); }
     return md + offset; // return new footprint
   }
 
@@ -327,46 +302,39 @@ namespace ebl {
     dim = NULL; mod = NULL;
     offset = o;
     ndim = 0; // required in constructors to avoid side effects in setndim
-    try {
-      if (s7>=0) { 
-	if (!ndimset) { setndim(8); ndimset = true; } 
-	dim[7] = s7; mod[7] = md; md *= s7; 
-      } else { if (ndimset) { throw(-8); } }
-      if (s6>=0) { 
-	if (!ndimset) { setndim(7); ndimset = true; } 
-	dim[6] = s6; mod[6] = md; md *= s6; 
-      } else { if (ndimset) { throw(-7); } }
-      if (s5>=0) { 
-	if (!ndimset) { setndim(6); ndimset = true; } 
-	dim[5] = s5; mod[5] = md; md *= s5; 
-      } else { if (ndimset) { throw(-6); } }
-      if (s4>=0) { 
-	if (!ndimset) { setndim(5); ndimset = true; } 
-	dim[4] = s4; mod[4] = md; md *= s4; 
-      } else { if (ndimset) { throw(-5); } }
-      if (s3>=0) { 
-	if (!ndimset) { setndim(4); ndimset = true; } 
-	dim[3] = s3; mod[3] = md; md *= s3; 
-      } else { if (ndimset) { throw(-4); } }
-      if (s2>=0) { 
-	if (!ndimset) { setndim(3); ndimset = true; } 
-	dim[2] = s2; mod[2] = md; md *= s2; 
-      } else { if (ndimset) { throw(-3); } }
-      if (s1>=0) { 
-	if (!ndimset) { setndim(2); ndimset = true; } 
-	dim[1] = s1; mod[1] = md; md *= s1; 
-      } else { if (ndimset) { throw(-2); } }
-      if (s0>=0) { 
-	if (!ndimset) { setndim(1); ndimset = true; } 
-	dim[0] = s0; mod[0] = md; md *= s0; 
-      } else { if (ndimset) { throw(-1); } }
-      if (!ndimset) { setndim(0); }
-    }
-    catch(int v) {
-      cerr << "bad dimensions (error " << v << "): " 
-	   << s0 << "x" << s1 << "x" << s2 << "x" << s3;
-      cerr << "x" << s4 << "x" << s5 << "x" << s6 << "x" << s7 << endl;
-      eblerror("idxspec: bad dimensions in constructor"); }
+    if (s7>=0) { 
+      if (!ndimset) { setndim(8); ndimset = true; } 
+      dim[7] = s7; mod[7] = md; md *= s7; 
+    } else { if (ndimset) { DIMS_ERROR(-8); } }
+    if (s6>=0) { 
+      if (!ndimset) { setndim(7); ndimset = true; } 
+      dim[6] = s6; mod[6] = md; md *= s6; 
+    } else { if (ndimset) { DIMS_ERROR(-7); } }
+    if (s5>=0) { 
+      if (!ndimset) { setndim(6); ndimset = true; } 
+      dim[5] = s5; mod[5] = md; md *= s5; 
+    } else { if (ndimset) { DIMS_ERROR(-6); } }
+    if (s4>=0) { 
+      if (!ndimset) { setndim(5); ndimset = true; } 
+      dim[4] = s4; mod[4] = md; md *= s4; 
+    } else { if (ndimset) { DIMS_ERROR(-5); } }
+    if (s3>=0) { 
+      if (!ndimset) { setndim(4); ndimset = true; } 
+      dim[3] = s3; mod[3] = md; md *= s3; 
+    } else { if (ndimset) { DIMS_ERROR(-4); } }
+    if (s2>=0) { 
+      if (!ndimset) { setndim(3); ndimset = true; } 
+      dim[2] = s2; mod[2] = md; md *= s2; 
+    } else { if (ndimset) { DIMS_ERROR(-3); } }
+    if (s1>=0) { 
+      if (!ndimset) { setndim(2); ndimset = true; } 
+      dim[1] = s1; mod[1] = md; md *= s1; 
+    } else { if (ndimset) { DIMS_ERROR(-2); } }
+    if (s0>=0) { 
+      if (!ndimset) { setndim(1); ndimset = true; } 
+      dim[0] = s0; mod[0] = md; md *= s0; 
+    } else { if (ndimset) { DIMS_ERROR(-1); } }
+    if (!ndimset) { setndim(0); }
   }
 
   idxspec::idxspec(intg o, const idxdim &d) {
@@ -460,12 +428,10 @@ namespace ebl {
 
   intg idxspec::select_into(idxspec *dst, int d, intg n) {
     if (ndim <= 0) eblerror("cannot select a scalar");
-    if ((n < 0) || (n >= dim[d])) {
-      cerr << "error: trying to select layer " << n;
-      cerr << " of dimension " << d << " which is of size ";
-      cerr << dim[d] << " in idx " << *this << "." << endl;
-      eblerror("idx::select error");
-    }
+    if ((n < 0) || (n >= dim[d]))
+      eblerror("trying to select layer " << n
+	       << " of dimension " << d << " which is of size "
+	       << dim[d] << " in idx " << *this);
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim-1);
     dst->offset = offset + n * mod[d];
@@ -496,17 +462,14 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   intg idxspec::narrow_into(idxspec *dst, int d, intg s, intg o) {
-    try {
-      if (ndim <= 0) throw("cannot narrow a scalar");
-      if ((d < 0) || (d>=ndim)) throw("narrow: illegal dimension index");
-      if ((o < 0)||(s < 1)||(s+o > dim[d])) {
-	cerr << "trying to narrow dimension " << d << " to size " << s;
-	cerr << " starting at offset " << o << " (dimension " << d << " is ";
-	cerr << dim[d] << " large)." << endl;
-	throw("narrow: illegal size/offset");
-      }
-    }
-    catch(const char *s) { eblerror(s); return -1;}
+    if (ndim <= 0)
+      eblerror("cannot narrow a scalar");
+    if ((d < 0) || (d>=ndim))
+      eblerror("narrow: illegal dimension index");
+    if ((o < 0)||(s < 1)||(s+o > dim[d]))
+      eblerror("trying to narrow dimension " << d << " to size " << s
+	       << " starting at offset " << o << " (dimension " << d << " is "
+	       << dim[d] << " large)");
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim);
     dst->offset = offset + o * mod[d];
@@ -534,12 +497,9 @@ namespace ebl {
 
   // tranpose two dimensions into pre-existing idxspec
   int idxspec::transpose_into(idxspec *dst, int d1, int d2) {
-    if ((d1 < 0) || (d1 >= ndim) || (d2 < 0) || (d2 >= ndim)) {
-      ostringstream err;
-      err << "illegal transpose of dimension " << d1
-	  << " to dimension " << d2;
-      throw err.str();
-    }
+    if ((d1 < 0) || (d1 >= ndim) || (d2 < 0) || (d2 >= ndim))
+      eblerror("illegal transpose of dimension " << d1
+	       << " to dimension " << d2);
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim);
     dst->offset = offset;
@@ -557,11 +517,8 @@ namespace ebl {
   // tranpose all dims with a permutation vector
   int idxspec::transpose_into(idxspec *dst, int *p) {
     for (int i=0; i<ndim; i++) {
-      if ((p[i] < 0) || (p[i] >= ndim)) {
-	ostringstream err;
-	err << "illegal transpose of dimensions";
-	throw err.str();
-      }
+      if ((p[i] < 0) || (p[i] >= ndim))
+	eblerror("illegal transpose of dimensions");
     }
     dst->setndim(ndim);
     dst->offset = offset;
@@ -612,20 +569,20 @@ namespace ebl {
   // d: dimension; k: kernel size; s: stride.
   intg idxspec::unfold_into(idxspec *dst, int d, intg k, intg s) {
     intg ns; // size of newly created dimension
-    try {
-      if (ndim <= 0) throw("cannot unfold an idx of maximum order");
-      if ((d < 0) || (d>=ndim)) throw("unfold: illegal dimension index");
-      if ((k < 1) || (s < 1)) throw("unfold: kernel and stride must be >= 1");
-      ns = 1+ (dim[d]-k)/s;
-      if ((ns <= 0) || ( dim[d] != s*(ns-1)+k )) 
-	throw("unfold: kernel and stride incompatible with size");
-    }
-    catch(const char *err) {
-      cerr << "error: unfolding dimension " << d << " to size " << k;
-      cerr << " with step " << s << " from idx " << *this << " into idx ";
-      cerr << *dst << endl;
-      eblerror(err);
-    }
+    std::string err;
+    if (ndim <= 0)
+      err << "cannot unfold an idx of maximum order";
+    else if ((d < 0) || (d>=ndim))
+      err << "unfold: illegal dimension index";
+    else if ((k < 1) || (s < 1))
+      err << "unfold: kernel and stride must be >= 1";
+    ns = 1+ (dim[d]-k)/s;
+    if (!err.size() && ((ns <= 0) || ( dim[d] != s*(ns-1)+k )))
+      err << "unfold: kernel and stride incompatible with size";
+    if (err.size())
+      eblerror(err << ", while unfolding dimension " << d << " to size " << k
+	       << " with step " << s << " from idx " << *this << " into idx "
+	       << *dst);
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim+1);
     dst->offset = offset;
@@ -717,23 +674,17 @@ namespace ebl {
   }
   
   bool idxdim::insert_dim(intg dim_size, uint pos) {
-    if (ndim + 1 > MAXDIMS) {
-      cerr << "error: cannot add another dimension to dim.";
-      cerr << " Maximum number of dimensions (" << MAXDIMS << ") reached.";
-      cerr << endl;
-      eblerror("maximum order reached.");
-      return false;
-    }
+    if (ndim + 1 > MAXDIMS)
+      eblerror("error: cannot add another dimension to dim."
+	       << " Maximum number of dimensions (" << MAXDIMS << ") reached.")
     // check that dim_size is valid
     if (dim_size <= 0)
       eblerror("cannot set negative or zero dimension");
     // check that all dimensions up to pos (excluded) are > 0.
     for (uint i = 0; i < pos; ++i)
-      if (dims[i] <= 0) {
-	cerr << "error: cannot insert dimension " << pos
-	     << " after empty dimensions: " << *this << endl;
-	eblerror("empty dimensions before new dimension to insert");
-      }
+      if (dims[i] <= 0)
+	eblerror("error: cannot insert dimension " << pos
+		 << " after empty dimensions: " << *this);
     // add order of 1
     ndim++;
     if (ndim == 0) // one more if it was empty
@@ -746,21 +697,17 @@ namespace ebl {
   }
  
   void idxdim::setdim(intg dimn, intg size) {
-    if (dimn >= ndim) {
-      cerr << "error: trying to set dimension " << dimn << " to size ";
-      cerr << size << " but idxidm has only " << ndim;
-      cerr << " dimension(s)." << endl;
-      eblerror("cannot change the order of idxdim");
-    }
+    if (dimn >= ndim)
+      eblerror("error: trying to set dimension " << dimn << " to size "
+	       << size << " but idxidm has only " << ndim
+	       << " dimension(s).");
     dims[dimn] = size; 
   }
 
   intg idxdim::dim(intg dimn) const {
-    if (dimn >= MAXDIMS) {
-      cerr << "trying to access size of dimension " << dimn;
-      cerr << " but idxdim's maximum dimensions is " << MAXDIMS << "." << endl;
-      eblerror("dimension error");
-    }
+    if (dimn >= MAXDIMS)
+      eblerror("trying to access size of dimension " << dimn
+	       << " but idxdim's maximum dimensions is " << MAXDIMS);
     return dims[dimn]; 
   }
 
@@ -777,6 +724,17 @@ namespace ebl {
     return !(*this == other);
   }
   
+  std::ostream& operator<<(std::ostream& out, idxdim& d) {
+    if (d.order() <= 0)
+      out << "<empty>";
+    else {
+      out << d.dim(0);
+      for (int i = 1; i < d.order(); ++i)
+	out << "x" << d.dim(i);
+    }
+    return out;
+  }
+
   std::ostream& operator<<(std::ostream& out, const idxdim& d) {
     if (d.order() <= 0)
       out << "<empty>";
@@ -788,7 +746,40 @@ namespace ebl {
     return out;
   }
 
+  std::string& operator<<(std::string& out, const idxdim& d) {
+    if (d.order() <= 0)
+      out << "<empty>";
+    else {
+      out << d.dim(0);
+      for (int i = 1; i < d.order(); ++i)
+	out << "x" << d.dim(i);
+    }
+    return out;
+  }
+
   std::ostream& operator<<(std::ostream& out, idxspec& d) {
+    if (d.getndim() <= 0)
+      out << "<empty>";
+    else {
+      out << d.dim[0];
+      for (int i = 1; i < d.getndim(); ++i)
+	out << "x" << d.dim[i];
+    }
+    return out;
+  }
+
+  std::ostream& operator<<(std::ostream& out, const idxspec& d) {
+    if (d.getndim() <= 0)
+      out << "<empty>";
+    else {
+      out << d.dim[0];
+      for (int i = 1; i < d.getndim(); ++i)
+	out << "x" << d.dim[i];
+    }
+    return out;
+  }
+
+  std::string& operator<<(std::string& out, idxspec& d) {
     if (d.getndim() <= 0)
       out << "<empty>";
     else {
@@ -831,8 +822,8 @@ namespace ebl {
   }
 
   uint rect::overlapping_area(const rect &r) {
-    int h = min(r.h0 + r.height, h0 + height) - max(r.h0, h0);
-    int w = min(r.w0 + r.width, w0 + width) - max(r.w0, w0);
+    int h = (std::min)(r.h0 + r.height, h0 + height) - (std::max)(r.h0, h0);
+    int w = (std::min)(r.w0 + r.width, w0 + width) - (std::max)(r.w0, w0);
     if (h <= 0 || w <= 0)
       return 0;
     return (uint) (h * w);
@@ -842,7 +833,7 @@ namespace ebl {
     uint area1 = height * width;
     uint area2 = r.height * r.width;
     uint inter = overlapping_area(r);
-    if ((inter / (float) std::min(area1, area2)) > minarea)
+    if ((inter / (float) (std::min)(area1, area2)) > minarea)
       return true;
     return false;
   }
@@ -851,7 +842,7 @@ namespace ebl {
     uint area1 = height * width;
     uint area2 = r.height * r.width;
     uint inter = overlapping_area(r);
-    return inter / (float) std::min(area1, area2);
+    return inter / (float) (std::min)(area1, area2);
   }
   
   bool rect::min_overlap(const rect &r, float hmin, float wmin) {
@@ -876,6 +867,12 @@ namespace ebl {
     return false;
   }
   
+  std::ostream& operator<<(std::ostream& out, rect& r) {
+    out << "rect:<(" << r.h0 << "," << r.w0 << ")," << r.height;
+    out << "x" << r.width << ">";
+    return out;
+  }
+
   std::ostream& operator<<(std::ostream& out, const rect& r) {
     out << "rect:<(" << r.h0 << "," << r.w0 << ")," << r.height;
     out << "x" << r.width << ">";

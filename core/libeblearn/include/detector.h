@@ -1,6 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2010 by Pierre Sermanet *
+ *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,7 +33,10 @@
 #ifndef DETECTOR_H_
 #define DETECTOR_H_
 
-#include "libeblearn.h"
+#include "libidx.h"
+#include "ebl_states.h"
+#include "ebl_arch.h"
+#include "ebl_preprocessing.h"
 
 using namespace std;
 
@@ -152,7 +156,7 @@ namespace ebl {
     int get_class_id(const string &name);
 
     //! set background class (which will be ignored).
-    void set_bgclass(const char *bg);
+    void set_bgclass(const char *bg = NULL);
 
     //! Set the mask class, which is ignored by bounding box detection.
     //! Instead, call get_mask() to retrieve a mask map of values above
@@ -236,11 +240,11 @@ namespace ebl {
     void set_save_max_per_frame(uint max);
 
     //! Print bounding boxes on standard output.
-    void pretty_bboxes(const vector<bbox*> &bboxes);
+    void pretty_bboxes(vector<bbox*> &bboxes);
 
     //! Print short description of bounding boxes on standard output,
     //! with an optional prefix string in front of each line.
-    void pretty_bboxes_short(const vector<bbox*> &bboxes,
+    void pretty_bboxes_short(vector<bbox*> &bboxes,
  			     const char *prefix = NULL);
 
   private:
