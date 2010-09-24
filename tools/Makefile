@@ -30,8 +30,8 @@ INCLUDE_INSTALL=$(INSTALL_DIR)/include/eblearn/
 LIB_INSTALL=$(INSTALL_DIR)/lib/
 BIN_INSTALL=$(INSTALL_DIR)/bin
 
-INCLUDES="libidx/include/*" "libeblearn/include/*" "libidxgui/include/*" \
-         "libeblearngui/include/*" "libeblearntools/include/*"
+INCLUDES="../core/libidx/include/*" "../core/libeblearn/include/*" \
+"libidxgui/include/*" "libeblearngui/include/*" "libeblearntools/include/*"	
 LIBS=libidx.${LIB_EXT} libidxgui.${LIB_EXT} libeblearn.${LIB_EXT} \
 		       libeblearngui.${LIB_EXT} libeblearntools.${LIB_EXT}
 BINS=dscompiler dssplit dsmerge matshow dsdisplay metarun metaparse capture

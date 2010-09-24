@@ -30,6 +30,8 @@ INCLUDE_INSTALL=$(INSTALL_DIR)/include/eblearn/
 LIB_INSTALL=$(INSTALL_DIR)/lib/
 BIN_INSTALL=$(INSTALL_DIR)/bin
 
+LIB_DIR=../bin/
+
 INCLUDES="libidx/include/*" "libeblearn/include/*"
 LIBS=libidx.${LIB_EXT} libeblearn.${LIB_EXT}
 
@@ -73,8 +75,8 @@ doc:
 
 clean:
 	rm -rf build
-	rm -rf ../lib/libidx.${LIB_EXT}
-	rm -rf ../lib/libeblearn.${LIB_EXT}
+	rm -rf ${LIB_DIR}/libidx.${LIB_EXT}
+	rm -rf ${LIB_DIR}/libeblearn.${LIB_EXT}
 	rm -rf ../doc/documentation/libidx_html
 	rm -rf ../doc/documentation/libeblearn_html
 
@@ -85,9 +87,9 @@ prepare_install:
 	mkdir -p $(INCLUDE_INSTALL) $(LIB_INSTALL) $(BIN_INSTALL)
 
 $(LIBS):
-	@if test -e ../lib/$@; \
+	@if test -e ${LIB_DIR}/$@; \
 	then echo "cp -f ../lib/$@ $(LIB_INSTALL)" \
-	     && cp -f ../lib/$@ $(LIB_INSTALL); \
+	     && cp -f ${LIB_DIR}/$@ $(LIB_INSTALL); \
 	else echo "warning: ../lib/$@ not found, not installed"; \
 	fi
 
