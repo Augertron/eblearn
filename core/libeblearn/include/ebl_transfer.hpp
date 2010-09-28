@@ -432,7 +432,7 @@ namespace ebl {
       idx_log(ebxdxi);
       idx_dotc(ebxdxi,-1/(beta.x[i].get()*beta.x[i].get()),tty);
       idx_add(ttx,tty,ttx);
-      beta.dx[i].set(idx_dot(outdxi,ttx));
+      beta.dx[i].set((T)idx_dot(outdxi,ttx));
     }
     idx_add(in.dx,tin.dx,in.dx);
   }
@@ -486,7 +486,7 @@ namespace ebl {
       idx_dotc(ebxddxi,ebb.x[i].get(),ttx);
       idx_addc(ttx,(T)-1.0,ttx);
       idx_mul(ttx,ttx,ttx);
-      bias.ddx[i].set(idx_dot(outdxi,ttx));
+      bias.ddx[i].set((T)idx_dot(outdxi,ttx));
       
       // df/dbeta
       idx_mul(tinxi,ebxxi,ttx);
@@ -497,7 +497,7 @@ namespace ebl {
       idx_dotc(ebxdxi,-1/(beta.x[i].get()*beta.x[i].get()),tty);
       idx_add(ttx,tty,ttx);
       idx_mul(ttx,ttx,ttx);
-      beta.ddx[i].set(idx_dot(outdxi,ttx));
+      beta.ddx[i].set((T)idx_dot(outdxi,ttx));
     }
     idx_add(in.ddx,tin.ddx,in.ddx);
   }
