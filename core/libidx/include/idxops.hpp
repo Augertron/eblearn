@@ -2046,20 +2046,36 @@ template<class T> void idx_sortdown(idx<T> &m) {
   ////////////////////////////////////////////////////////////////////////
   // idx_dot
 
-  template <class T> float64 idx_dot(idx<T> & in1, idx<T> & in2) {
-    float64 z = 0;
+  template <class T> T idx_dot(idx<T> & in1, idx<T> & in2) {
+    T z = 0;
 #if USING_FAST_ITERS == 0
     { idx_aloop2(pi1, in1, T, pi2, in2, T) {
-	z += ((float64)(*pi1)) * ((float64)(*pi2));
+	z += *pi1 * *pi2;
       }
     }
 #else
     idx_aloopf2(pi1, in1, T, pi2, in2, T, {
-	z += ((float64)(*pi1)) * ((float64)(*pi2));
+	z += *pi1 * *pi2;
       });
 #endif
     return z;
   }
+
+// TODO: this doesn't compile on newest gcc
+//   template <class T> float64 idx_dot(idx<T> & in1, idx<T> & in2) {
+//     float64 z = 0;
+// #if USING_FAST_ITERS == 0
+//     { idx_aloop2(pi1, in1, T, pi2, in2, T) {
+// 	z += ((float64)(*pi1)) * ((float64)(*pi2));
+//       }
+//     }
+// #else
+//     idx_aloopf2(pi1, in1, T, pi2, in2, T, {
+// 	z += ((float64)(*pi1)) * ((float64)(*pi2));
+//       });
+// #endif
+//     return z;
+//   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_dotacc

@@ -958,7 +958,12 @@ namespace ebl {
 
   //! dot product of two idx. This generic version is not efficient.
   //! Returns sum of product of all elements.
-  template <class T> float64 idx_dot(idx<T> &i1, idx<T> &i2);
+  template <class T> T idx_dot(idx<T> &i1, idx<T> &i2);
+
+  // TODO: this doesn't compiile on newest gcc
+  /* //! dot product of two idx. This generic version is not efficient. */
+  /* //! Returns sum of product of all elements. */
+  /* template <class T> float64 idx_dot(idx<T> &i1, idx<T> &i2); */
 
 #ifdef __CBLAS__
   //! dot product of two idx. Returns sum of product of all elements.
