@@ -2047,7 +2047,7 @@ template<class T> void idx_sortdown(idx<T> &m) {
   // idx_dot
 
   template <class T> float64 idx_dot(idx<T> & in1, idx<T> & in2) {
-    T z = 0;
+    float64 z = 0;
 #if USING_FAST_ITERS == 0
     { idx_aloop2(pi1, in1, T, pi2, in2, T) {
 	z += ((float64)(*pi1)) * ((float64)(*pi2));
@@ -2067,7 +2067,7 @@ template<class T> void idx_sortdown(idx<T> &m) {
   template<class T> void idx_dotacc(idx<T> &i1, idx<T> &i2, idx<T> &o) {
     if (o.order() != 0)
       eblerror("output idx should have order 0");
-    o.set(o.get() + idx_dot(i1, i2));
+    o.set(o.get() + (T) idx_dot(i1, i2));
   }
 
   ////////////////////////////////////////////////////////////////////////
