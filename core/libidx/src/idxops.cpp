@@ -672,7 +672,7 @@ namespace ebl {
 	     );
   }
 #else
-#ifdef __IPP__
+#if defined(__IPP__) && defined(__IPP_DOT__)
   idx_dot_macro(float32)
 #endif
 #endif
