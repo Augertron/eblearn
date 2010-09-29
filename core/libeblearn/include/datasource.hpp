@@ -423,11 +423,10 @@ namespace ebl {
   void datasource<Tnet, Tin1, Tin2>::pretty_progress() {
     if (epoch_show > 0 && epoch_cnt % epoch_show == 0) {
       cout << "epoch_cnt: " << epoch_cnt << " / " << epoch_sz 
-	   << ", used samples: " << epoch_pick_cnt << ", epoch elapsed: ";
-      epoch_timer.pretty_elapsed();
-      cout << ", ETA: ";
-      timer::pretty_secs((long) (epoch_timer.elapsed_seconds() 
-				 * ((double)(epoch_sz / epoch_cnt) - 1)));
+	   << ", used samples: " << epoch_pick_cnt << ", epoch elapsed: "
+	   << epoch_timer.elapsed() << ", ETA: "
+	   << epoch_timer.elapsed((long) (epoch_timer.elapsed_seconds() 
+					  * ((double)(epoch_sz / epoch_cnt) - 1)));
       if (balance) {
 	cout << ", remaining:";
 	for (uint i = 0; i < epoch_done_counters.size(); ++i) {

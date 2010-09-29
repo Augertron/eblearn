@@ -90,7 +90,17 @@ namespace ebl {
     //! Print elapsed time in a human-friendly way since start() or restart().
     void pretty_elapsed();
     //! Print the provided seconds in a human-friendly way.
-    static void pretty_secs(long seconds);
+    void pretty_secs(long seconds);
+    //! Return seconds in a human-friendly string.
+    string elapsed(long seconds);
+    //! Return elapsed time in a human-friendly string since start()/restart().
+    string elapsed();
+    //! Return seconds in a human-friendly string,
+    //! with millisecond precision
+    string elapsed_ms(long milliseconds);
+    //! Return elapsed time in a human-friendly string since start()/restart(),
+    //! with millisecond precision.
+    string elapsed_ms();
     
   private:
 #ifdef __WINDOWS__

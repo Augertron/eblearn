@@ -99,7 +99,8 @@ namespace ebl {
 	 conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
 	 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_true("use_shrink"), table0, table1, table2);
+	 conf.exists_true("use_shrink"), conf.exists_true("norm_pos"),
+	 table0, table1, table2);
     } else if (!strcmp(net_type.c_str(), "cscf")) {
       return (module_1_1<T,Tstate>*) new lenet_cscf<T,Tstate>
 	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"), 

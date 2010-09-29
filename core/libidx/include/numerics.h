@@ -137,14 +137,14 @@ namespace ebl {
   
   template <> class limits<uint32> {
   public:
-    static inline float32 max () { return UINT_MAX; }
-    static inline float64 min () { return 0; }
+    static inline uint32 max () { return UINT_MAX; }
+    static inline uint32 min () { return 0; }
   };
   
   template <> class limits<float32> {
   public:
     static inline float32 max () { return FLT_MAX; }
-    static inline float64 min () { return - FLT_MAX; }
+    static inline float32 min () { return FLT_MIN; }
   };
   
   template <> class limits<float64> {

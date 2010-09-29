@@ -33,9 +33,6 @@
 #ifndef DETECTION_THREAD_H_
 #define DETECTION_THREAD_H_
 
-// Windows does not know linux/mac mutexes, TODO: implement windows mutexes
-#ifndef __WINDOWS__
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -54,8 +51,12 @@ namespace ebl {
   template <typename Tnet>
   class detection_thread : public thread {
   public:
-    detection_thread(configuration &conf, const char *name = "",
-		     const char *arg2 = NULL);
+    //! \param om A mutex used to synchronize threads outputs/
+    //!   To synchronize all threads, give the same mutex to each of them.
+    //! \param sync If true, synchronize outputs between threads, using
+    //!    om, otherwise use regular unsynced outputs.
+    detection_thread(configuration &conf, mutex &om, const char *name = "",
+		     const char *arg2 = NULL, bool sync = true);
     ~detection_thread();
     
     //! Execute the detection thread.
@@ -89,8 +90,8 @@ namespace ebl {
     const char			*arg2;
     idx<ubyte>			 uframe;
     idx<Tnet>			 frame;
-    pthread_mutex_t		 mutex_in;	// mutex for thread input
-    pthread_mutex_t		 mutex_out;	// mutex for thread output
+    mutex		         mutex_in;	// mutex for thread input
+    mutex 		         mutex_out;	// mutex for thread output
     vector<bbox*>		 bboxes;
     vector<bbox*>::iterator	 ibox;
     bool			 in_updated;	// thread input updated
@@ -99,6 +100,8 @@ namespace ebl {
     string                       frame_name;    // name of current frame
     string                       outdir;        // output directory
     uint                         total_saved;
+    using thread::mout; //! synchronized cout
+    using thread::merr; //! synchronized cerr
   };
 
 } // end namespace ebl
@@ -107,4 +110,3 @@ namespace ebl {
 
 #endif /* DETECTION_THREAD_H_ */
 
-#endif /* __WINDOWS__ */

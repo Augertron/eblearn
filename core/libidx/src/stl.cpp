@@ -191,13 +191,26 @@ namespace std {
   
 #else // extending STL
 
-  template<>
-  string& operator<<(string& e, void *v) {
-    char buf[32];
-    sprintf(buf, "%p", v);
-    e += buf;
-    return e;
+#define CONCAT_SPRINTF(type, specifier, type_cast)	  \
+  template <>						  \
+  string& operator<<(string &e, type v) {		  \
+    char buf[64];					  \
+    sprintf(buf, specifier, (type_cast) v);		  \
+    e << buf;						  \
+    return e;						  \
   }
+
+  CONCAT_SPRINTF(void*, "%p", void*);
+  CONCAT_SPRINTF(int, "%d", int);
+  CONCAT_SPRINTF(uint, "%u", uint);
+  CONCAT_SPRINTF(char, "%c", char);
+  CONCAT_SPRINTF(float, "%f", float);
+  CONCAT_SPRINTF(double, "%f", double);
+  CONCAT_SPRINTF(long, "%ld", long);
+  CONCAT_SPRINTF(unsigned char, "%c", unsigned char);
+#ifndef __ANDROID__
+  CONCAT_SPRINTF(size_t, "%u", uint);
+#endif
   
 #endif
 
@@ -297,7 +310,7 @@ namespace std {
   CONCAT_FPRINTF(size_t, "%u", uint);
 #endif
   
-#endif
+#endif /* __NOSTL__ */
 
 } // namespace std
 

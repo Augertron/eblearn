@@ -354,10 +354,10 @@ namespace ebl {
 				 intg si1, intg sj1,
 				 intg ki2, intg kj2, idx<intg> &tbl2,
 				 bool norm, bool mirror, bool tanh,
-				 bool shrink)
+				 bool shrink, bool norm_pos)
     : layers<T,Tstate>(true) { // owns modules, responsible for deleting it
     init(prm, ini, inj, ki0, kj0, tbl0, si0, sj0, ki1, kj1, tbl1, 
-	 si1, sj1, ki2, kj2, tbl2, norm, mirror, tanh, shrink);
+	 si1, sj1, ki2, kj2, tbl2, norm, mirror, tanh, shrink, norm_pos);
   }
   
   template <typename T, class Tstate>
@@ -370,7 +370,7 @@ namespace ebl {
 				 idx<intg> &tbl1, intg si1, intg sj1, 
 				 intg ki2, intg kj2, idx<intg> &tbl2,
 				 bool norm, bool mirror, bool tanh,
-				 bool shrink) {
+				 bool shrink, bool norm_pos) {
     // here we compute the thickness of the feature maps based on the
     // convolution tables.
     idx<intg> tblmax = tbl0.select(1, 1);
@@ -384,6 +384,9 @@ namespace ebl {
     // which serve as temporary buffer to hold the output of a module
     // and feed the input of the following module.
 
+    if (norm)
+      cout << "Using contrast normalization " << (norm_pos?"after":"before")
+	   << " subsampling. " << endl;
     // convolution
     add_module(new convolution_module_replicable<T,Tstate>
 	       (&prm, ki0, kj0, 1, 1, tbl0, "c0"));
@@ -396,15 +399,20 @@ namespace ebl {
       add_module(new tanh_module<T,Tstate>());
     else
       add_module(new stdsigmoid_module<T,Tstate>());
-    // absolute rectification + contrast normalization
-    if (norm) {
+    // absolute rectification
+    if (norm)
       add_module(new abs_module<T,Tstate>());
+    // contrast normalization (positioned before sub)
+    if (norm && !norm_pos)
       add_module(new weighted_std_module<T,Tstate>
 		 (ki0, kj0, thick0, "w0", mirror, true, false));
-    }
     // subsampling
     add_module(new subsampling_layer<T,Tstate>
 	       (&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
+    // contrast normalization (positioned after sub)
+    if (norm && norm_pos)
+      add_module(new weighted_std_module<T,Tstate>
+		 (ki1, kj1, thick0, "w0", mirror, true, false));
     // convolution
     add_module(new convolution_module_replicable<T,Tstate>
 	       (&prm, ki1, kj1, 1, 1,tbl1, "c1"));
@@ -417,31 +425,23 @@ namespace ebl {
       add_module(new tanh_module<T,Tstate>());
     else
       add_module(new stdsigmoid_module<T,Tstate>());
-    // absolute rectification + contrast normalization
-    if (norm) {
+    // absolute rectification
+    if (norm)
       add_module(new abs_module<T,Tstate>());
+    // contrast normalization (position before sub)
+    if (norm && !norm_pos)
       add_module(new weighted_std_module<T,Tstate>
 		 (ki1, kj1, thick1, "w1", mirror, true, false));
-    }
     // subsampling
     add_module(new subsampling_layer<T,Tstate>
 	       (&prm,si1,sj1,si1,sj1,thick1,tanh,"s1"));
+    // contrast normalization (position after sub)
+    if (norm && norm_pos)
+      add_module(new weighted_std_module<T,Tstate>
+		 (ki2, kj2, thick1, "w1", mirror, true, false));
     // convolution + bias + sigmoid
     add_module(new convolution_layer<T,Tstate>
 	       (&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
-
-    // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki0, kj0,1,1,tbl0,mirror,tanh));
-    // else // old fashioned way
-    //   add_module(new convolution_layer<T,Tstate>(&prm, ki0, kj0, 1, 1, tbl0, tanh));
-    // add_module(new subsampling_layer<T,Tstate>(&prm, si0, sj0, si0, sj0, thick0,tanh));
-    // // convolution
-    // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki1, kj1,1,1,tbl1,mirror,tanh));
-    // else // old fashioned way
-    //   add_module(new convolution_layer<T,Tstate>(&prm, ki1, kj1, 1, 1, tbl1, tanh));
-    // add_module(new subsampling_layer<T,Tstate>(&prm, si1, sj1, si1, sj1, thick1,tanh));
-    // add_module(new convolution_layer<T,Tstate>(&prm, ki2, kj2, 1, 1, tbl2, tanh));
   }
 
   ////////////////////////////////////////////////////////////////
@@ -453,7 +453,7 @@ namespace ebl {
 	      intg ki0, intg kj0, intg si0, intg sj0, intg ki1,
 	      intg kj1, intg si1, intg sj1,
 	      intg output_size, bool norm, bool color, bool mirror, bool tanh,
-	      bool shrink, idx<intg> *table0_, idx<intg> *table1_,
+	      bool shrink, bool norm_pos, idx<intg> *table0_, idx<intg> *table1_,
 	      idx<intg> *table2_)
     : net_cscsc<T,Tstate>() {
     idx<intg> table0, table1, table2;
@@ -495,7 +495,7 @@ namespace ebl {
     
     this->init(prm, image_height, image_width, ki0, kj0, table0, si0, sj0,
 	       ki1, kj1, table1, si1, sj1, ki2, kj2, table2, norm, mirror,
-	       tanh, shrink);
+	       tanh, shrink, norm_pos);
   }
   
   ////////////////////////////////////////////////////////////////

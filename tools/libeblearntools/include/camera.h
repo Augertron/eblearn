@@ -60,7 +60,8 @@ namespace ebl {
     //! when computing multiple resolutions.
     //! \param height Resize input frame to this height if different than -1.
     //! \param width Resize input frame to this width if different than -1.
-    camera(int height = -1, int width = -1);
+    camera(int height = -1, int width = -1, std::ostream &out = std::cout,
+	   std::ostream &err = std::cerr);
 
     //! Destructor.
     virtual ~camera();
@@ -130,6 +131,11 @@ namespace ebl {
     uint         record_cnt;    //!< frame counter for recording
     float        fps_grab;      //!< frames per second of grabbing
     string       audio_filename;//!< filename of audio file
+    std::ostream &out;          //!< stream where to output info
+    std::ostream &err;          //!< stream where to output info
+    timer        tfps;          //!< timer for computing fps.
+    long         fps_ms_elapsed;//!< ms elapsed since last reset
+    uint         cntfps;        //!< counter for computing fps.
   };
 
 } // end namespace ebl

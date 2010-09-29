@@ -65,7 +65,7 @@ namespace std {
     return *this;
   }
 
-#endif
+#endif /* __NOSTL__ */
 
   ////////////////////////////////////////////////////////////////
   // vector

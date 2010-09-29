@@ -59,9 +59,10 @@ namespace ebl {
 
   template <typename Tnet>
   detection_thread<Tnet>::detection_thread(configuration &conf_,
+					   mutex &om,
 					   const char *name_,
-					   const char *arg2_)
-    : thread(name_), conf(conf_), arg2(arg2_), frame(120, 160, 1),
+					   const char *arg2_, bool sync)
+    : thread(om, name_, sync), conf(conf_), arg2(arg2_), frame(120, 160, 1),
       mutex_in(), mutex_out(),
       in_updated(false), out_updated(false), bavailable(false),
       frame_name(""), outdir(""), total_saved(0) {
@@ -74,7 +75,7 @@ namespace ebl {
   template <typename Tnet>
   void detection_thread<Tnet>::copy_bboxes(vector<bbox*> &bb) {
     // lock data
-    pthread_mutex_lock(&mutex_out);
+    mutex_out.lock();
     // clear bboxes
     bboxes.clear();
     // copy bboxes
@@ -82,17 +83,17 @@ namespace ebl {
       bboxes.push_back(new bbox(**ibox));
     }
     // unlock data
-    pthread_mutex_unlock(&mutex_out);
+    mutex_out.unlock();
   }
 
   template <typename Tnet>
   void detection_thread<Tnet>::set_out_updated() {
     // lock data
-    pthread_mutex_lock(&mutex_out);
+    mutex_out.lock();
     // set flag
     out_updated = true;
     // unlock data
-    pthread_mutex_unlock(&mutex_out);
+    mutex_out.unlock();
   }
  
   template <typename Tnet>
@@ -101,11 +102,11 @@ namespace ebl {
 					uint &total_saved_,
 					string &frame_name_) {
     // lock data
-    pthread_mutex_lock(&mutex_out);
+    mutex_out.lock();
     // only read data if it has been updated
     if (!out_updated) {
       // unlock data
-      pthread_mutex_unlock(&mutex_out);
+      mutex_out.unlock();
       return false;
     }
     // clear bboxes
@@ -134,7 +135,7 @@ namespace ebl {
     // declare thread as available
     bavailable = true;
     // unlock data
-    pthread_mutex_unlock(&mutex_out);
+    mutex_out.unlock();
     // confirm that we copied data.
     return true;
   }
@@ -142,7 +143,7 @@ namespace ebl {
   template <typename Tnet>
   bool detection_thread<Tnet>::set_data(idx<ubyte> &frame2, string &name) {
     // lock data (non blocking)
-    if (!pthread_mutex_trylock(&mutex_in))
+    if (!mutex_in.trylock())
       return false;
     // check frame is correctly allocated, if not, allocate.
     if (frame2.order() != uframe.order())
@@ -156,7 +157,7 @@ namespace ebl {
     // reset updated flag
     in_updated = true;
     // unlock data
-    pthread_mutex_unlock(&mutex_in);
+    mutex_in.unlock();
     // declare thread as not available
     bavailable = false;
     // confirm that we copied data.
@@ -184,10 +185,11 @@ namespace ebl {
   void detection_thread<Tnet>::execute() { 
    try {
      // configuration
+     bool       silent         = conf.exists_true("silent");
      bool	color	       = conf.exists_bool("color");
      uint	norm_size      = conf.get_uint("normalization_size");
      Tnet	threshold      = (Tnet) conf.get_double("threshold");
-     bool	display	       = conf.exists_bool("display");
+     bool	display	       = conf.exists_bool("display_threads");
      bool	mindisplay     = conf.exists_bool("minimal_display");
      bool       save_video     = conf.exists_bool("save_video");
      bool	display_states = conf.exists_bool("display_states");
@@ -206,13 +208,16 @@ namespace ebl {
      idx<ubyte> classes(1,1);
      try { // try loading classes names but do not stop upon failure
        load_matrix<ubyte>(classes, conf.get_cstring("classes"));
-     } catch(string &err) { cerr << "warning: " << err << endl; }
+     } catch(string &err) {
+       merr << "warning: " << err;
+       merr << endl;
+     }
      uint noutputs = conf.exists_true("binary_target") ? 1 : classes.dim(0);
      module_1_1<SFUNC(Tnet)> *net =
        create_network<SFUNC(Tnet)>(theparam, conf, noutputs);
      if (!conf.exists("weights"))
        eblerror("\"weights\" variable not defined");
-     cout << "Loading weights from: " << conf.get_string("weights") << endl;
+     mout << "Loading weights from: " << conf.get_string("weights") << endl;
      theparam.load_x(conf.get_cstring("weights"));
 #ifdef __DEBUGMEM__
        pretty_memory();
@@ -234,7 +239,8 @@ namespace ebl {
      // detector
      detector<SFUNC(Tnet)> detect(*net, classes, pp, norm_size, NULL, 0,
 				  conf.get_double("gain"),
-				  conf.exists_true("binary_target"));
+				  conf.exists_true("binary_target"),
+				  mout, merr);
      double maxs = conf.exists("max_scale")?conf.get_double("max_scale") : 1.0;
      double mins = conf.exists("min_scale")?conf.get_double("min_scale") : 1.0;
      detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
@@ -300,7 +306,7 @@ namespace ebl {
      string title = "eblearn object recognition: ";
      title += _name;
      wid  = display ? new_window(title.c_str()) : 0;
-     cout << _name << " is displaying in window " << wid << endl;
+     mout << "displaying in window " << wid << endl;
      night_mode();
      float		zoom = 1;
      detector_gui<SFUNC(Tnet)>
@@ -326,7 +332,7 @@ namespace ebl {
        if (_stop) break ;
        // we got a new frame, reset new frame flag
        in_updated = false; // no need to lock mutex
-       cout << _name << " is processing: " << frame_name << endl;
+       if (!silent) mout << "processing " << frame_name << endl;
        // check frame is correctly allocated, if not, allocate.
        if (frame.order() != uframe.order()) 
 	 frame = idx<Tnet>(uframe.get_idxdim());
@@ -366,13 +372,15 @@ namespace ebl {
 	 string fname = viddir;
 	 fname += frame_name;
 	 save_window(fname.c_str());
-	 cout << "saved " << fname << endl;
+	 if (!silent) mout << "saved " << fname << endl;
        }
 #endif
        ms = tpass.elapsed_milliseconds();
-       detect.pretty_bboxes_short(bboxes, _name.c_str());
-       cout << _name << " processing=" << ms << " ms (";
-       tpass.pretty_elapsed(); cout << ")" << endl;
+       if (!silent) {
+	 detect.pretty_bboxes_short(bboxes, mout);
+	 mout << "processing=" << ms << " ms ("
+	      << tpass.elapsed() << ")" << endl;
+       }
 #ifdef __DEBUGMEM__
        pretty_memory();
 #endif
@@ -380,15 +388,14 @@ namespace ebl {
        set_out_updated();
        // display sleep
        if (display_sleep > 0) {
-	 cout << "sleeping for " << display_sleep << "ms." << endl;
+	 mout << "sleeping for " << display_sleep << "ms." << endl;
 	 millisleep(display_sleep);
        }
        if (conf.exists("save_max") && 
 	   detect.get_total_saved() > conf.get_uint("save_max"))
 	 break ; // limit number of detection saves
      }
-     cout << _name << " finished. Execution time: ";
-     toverall.pretty_elapsed(); cout <<endl;
+     mout << "finished. Execution time: " << toverall.elapsed() <<endl;
      // free variables
      if (net) delete net;
 #ifdef __GUI__

@@ -170,12 +170,14 @@ namespace ebl {
     net_cscsc();
     //! Complete constructor, calls the init() function.
     //! See the init() description for complete arguments description.
+    //! \param norm_pos Position of normalization: before subsampling (false)
+    //!   or after (true).
     net_cscsc(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, bool norm = false,
 	      bool mirror = false, bool tanh = false,
-	      bool shrink = false);
+	      bool shrink = false, bool norm_pos = false);
     virtual ~net_cscsc();
 
     //! The init function creates the machine by stacking the modules in this
@@ -192,11 +194,13 @@ namespace ebl {
     //! <ki2> <kj2> <tbl2>: same for last convolution layer
     //! <outthick>: number of outputs.
     //! <prm> an idx1-ddparam in which the parameters will be allocated.
+    //! \param norm_pos Position of normalization: before subsampling (false)
+    //!   or after (true).
     void init(parameter<T,Tstate> &prm, intg ini, intg inj, intg ki0, intg kj0, 
 	      idx<intg> &tbl0, intg si0, intg sj0, intg ki1, intg kj1, 
 	      idx<intg> &tbl1, intg si1, intg sj1, intg ki2, intg kj2, 
 	      idx<intg> &tbl2, bool norm = false, bool mirror = false,
-	      bool tanh = false, bool shrink = false);
+	      bool tanh = false, bool shrink = false, bool norm_pos = false);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -212,7 +216,7 @@ namespace ebl {
 		intg ki0, intg kj0, intg si0, intg sj0, intg ki1, intg kj1,
 		intg si1, intg sj1, intg output_size,
 		bool norm = false, bool color = false, bool mirror = false,
-		bool tanh = false, bool shrink = false,
+		bool tanh = false, bool shrink = false, bool norm_pos = false,
 		idx<intg> *table0_ = NULL, idx<intg> *table1_ = NULL,
 		idx<intg> *table2_ = NULL);
     virtual ~lenet_cscsc() {}

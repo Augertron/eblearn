@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2010 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,41 +30,137 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef __WINDOWS__
-
 #include "thread.h"
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  // mutex
+  
+  //! Use non-recursive mutex so that lock can be called multiple times
+  //! by the same thread but require only 1 unlock.
+  //! Also this has to be the 'fast' kind of mutex that blocks the
+  //! thread until locking/unlocking is successful.
+  mutex::mutex() {
+#ifndef __WINDOWS__
+    pthread_mutex_init(&m, NULL);
+#else
+    eblerror("mutex not implemented for Windows (TODO)");
+#endif
+    }
+
+    mutex::~mutex() {
+#ifndef __WINDOWS__
+      pthread_mutex_destroy(&m);
+#endif
+    }
+
+    bool mutex::trylock() {
+#ifndef __WINDOWS__
+      return (pthread_mutex_trylock(&m) == 0);
+#endif
+    }
+
+    void mutex::lock() {
+#ifndef __WINDOWS__
+      pthread_mutex_lock(&m);
+#endif
+    }
+
+    void mutex::unlock() {
+#ifndef __WINDOWS__
+      pthread_mutex_unlock(&m);
+#endif
+    }
+
+  ////////////////////////////////////////////////////////////////
+  // sbuf
+
+  sbuf::sbuf(std::ostream &o, mutex &m, const char *p)
+    : out(o), new_line(true), own_lock(false), busy(m), prefix(p) {
+  }
+
+  sbuf::~sbuf() {
+  }
+
+  int sbuf::sync() {
+    if (own_lock) {
+      own_lock = false;
+      out << str();
+      str("");
+      out.flush();
+      new_line = true;
+      busy.unlock();
+    } else { // we don't own the lock, wait for it to unlock
+      busy.lock();
+      out << str();
+      str("");
+      out.flush();
+      new_line = true;
+      busy.unlock();
+    }
+    return 0;
+  }
+
+  streamsize sbuf::xsputn ( const char * s, streamsize n ) {
+    if (!own_lock)
+      busy.lock();
+    own_lock = true; // own lock until we output endl
+    if (prefix && new_line)
+      out << prefix << ": ";
+    new_line = false;
+    return std::stringbuf::xsputn(s, n);
+   }
+  
+  ////////////////////////////////////////////////////////////////
+  // mutex_ostream
+
+  mutex_ostream::mutex_ostream(std::ostream &o, mutex &m, const char *p)
+    : std::ostream(&buffer), buffer(o, m, p) {
+  }
+
+  mutex_ostream::~mutex_ostream() {
+  }
+  
+  ////////////////////////////////////////////////////////////////
   // thread
 
-  thread::thread(const char *name_) 
-    : _stop(false), _name(name_), _finished(false), mutex1() {
+  thread::thread(mutex &outmutex, const char *name_, bool sync) 
+    : _stop(false), _name(name_), mutout(std::cout, outmutex, _name.c_str()),
+      muterr(std::cerr, outmutex, _name.c_str()),
+      mout(sync ? mutout : std::cout), merr(sync ? muterr : std::cerr),
+      _finished(false) {
+    mout << "initializing thread (" << (sync ? "synched" : "unsynched" )
+	 << " outputs)" << endl;
   }
 
   thread::~thread() {
     //      pthread_exit((void*)&threadptr);
-    cout << _name << " destroyed." << endl;
+    mout << "destroyed." << endl;
   }
 
   int thread::start() {
+#ifdef __WINDOWS__
+    eblerror("thread::start not implemented for Windows");
+    return -1;
+#else
     return pthread_create(&threadptr, NULL, thread::entrypoint, this);
+#endif
   }
   
   void thread::run() {
     execute();
   }
 
-  string& thread::name() {
+  std::string& thread::name() {
     return _name;
   }
 
   void thread::stop(bool wait) {
-    pthread_mutex_lock(&mutex1);
+    mutex1.lock();
     _stop = true;
-    cout << _name << " required to stop." << endl;
-    pthread_mutex_unlock(&mutex1);
+    mout << "required to stop." << std::endl;
+    mutex1.unlock();
     while (!_finished)
       millisleep(5);
   }
@@ -81,5 +178,3 @@ namespace ebl {
   }
 
 } // end namespace ebl
-
-#endif /* __WINDOWS__ */
