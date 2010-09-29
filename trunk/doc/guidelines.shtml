@@ -52,7 +52,11 @@
 	  svn copy https://eblearn.svn.sourceforge.net/svnroot/eblearn/trunk https://eblearn.svn.sourceforge.net/svnroot/eblearn/branches/bob
 	</li>
 	<li>Merging the trunk into bob's branch:</li>
-	  <ul><li>Get branch's creation revision:<br>
+	  <ul><li>Find out the latest revision at which a merge was done between
+	      the trunk and the branch. Assuming that the merge was documented
+	      during the commit, find the revision with 'svn log' from the
+	      trunk directory. Or get the branch's creation revision (might
+	      run into a lot more conflict):<br>
 	      svn log --stop-on-copy</li>
 	    <li>Merge trunk into branch, assuming branch's creation revision
 	      is "XXX". From the branch directory, do:<br>
@@ -62,7 +66,8 @@
 	      commit to apply the changes to the branch.</li>
 	  </ul>
 	<li>Merging bob's branch into trunk:</li>
-	<ul><li>Get branch's creation revision:<br>
+	<ul><li>Get branch's creation revision or the latest merging revision:
+	    <br>
 	    svn log --stop-on-copy</li>
 	  <li>
 	    Assuming branch's creation revision

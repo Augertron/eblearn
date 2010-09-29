@@ -38,7 +38,8 @@ void detector_test::test_face() {
     conf.read(confname.str().c_str(), false, false, true);
     conf.set("root2", root.str().c_str());
     conf.resolve(true);
-    detection_thread<t_net> dt(conf, "detection thread");
+    mutex mut;
+    detection_thread<t_net> dt(conf, mut, "detection thread");
     vector<bbox*> bboxes;
     idx<ubyte> detframe;
     idx<uint> total_saved(1);

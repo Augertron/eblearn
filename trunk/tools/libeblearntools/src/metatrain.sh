@@ -93,24 +93,27 @@ check_error() {
 extract_falsepos() {
     # arguments ###############################################################
     bestconf=$1
-    save_max=$2
+    save_maximum=$2
     save_max_per_frame=$3
     bestout=$4 # directory of trained weights
     input_max=$5
-    threshold=$6
+    thresh=$6
     weights=$7
-    negatives_root=$8 # directory where to find negative images
+    neg_root=$8 # directory where to find negative images
     eblearnbin=$9
     nthreads=${10}
     npasses=${11}
-    max_scale=${12}
-    tstamp=${13}
-    name=${14}
-    display=${15}
+    minsc=${12}
+    maxsc=${13}
+    tstamp=${14}
+    name=${15}
+    display=${16}
+    mindisplay=${17}
+    savevideo=${18}
     echo
-    echo -e "Arguments:\nbestconf=${bestconf}\nsave_max=${save_max}"
+    echo -e "Arguments:\nbestconf=${bestconf}\nsave_max=${save_maximum}"
     echo -e "save_max_per_frame=${save_max_per_frame}\nbestout=${bestout}\ninput_max=${input_max}"
-    echo -e "threshold=${threshold}\nweights=${weights}\nnegatives_root=${negatives_root}"
+    echo -e "threshold=${thresh}\nweights=${weights}\nnegatives_root=${neg_root}"
     echo -e "eblearnbin=${eblearnbin}\nnthreads=${nthreads}\nnpasses=${npasses}"
     echo -e "max_scale=${max_scale}\ntstamp=${tstamp}\nname=${name}"
     echo
@@ -120,21 +123,22 @@ extract_falsepos() {
     # force saving detections
     echo "save_detections = 1" >> $bestconf
     # do not save video
-    echo "save_video = 0" >> $bestconf
+    echo "save_video = ${savevideo}" >> $bestconf
     echo "display = ${display}" >> $bestconf
-    echo "save_max = ${save_max}" >> $bestconf
+    echo "minimal_display = ${mindisplay}" >> $bestconf
+    echo "save_max = ${save_maximum}" >> $bestconf
     echo "save_max_per_frame = ${save_max_per_frame}" >> $bestconf
     # add directory where to find trained files
     echo "root2 = ${bestout}" >> $bestconf
     # limit input size 
     echo "input_max = ${input_max}" >> $bestconf
     # decrement threshold, capping at -.95
-    threshold=`echo "thr=${threshold} - .2; if (thr < -.95){ thr = -.95;}; print thr" | bc`
-    echo "threshold = ${threshold}" >> $bestconf
+    thresh=`echo "thr=${thresh} - .2; if (thr < -.95){ thr = -.95;}; print thr" | bc`
+    echo "threshold = ${thresh}" >> $bestconf
     # set weights to retrain: same as this conf
     echo "retrain_weights = \${weights}" >> $bestconf
     # set where to find full images
-    echo "input_dir = ${negatives_root}/" >> $bestconf
+    echo "input_dir = ${neg_root}/" >> $bestconf
     # send report every 1000 frames processed
     echo "meta_email_iters = " >> $bestconf
     echo "meta_email_period = 1000" >> $bestconf
@@ -150,8 +154,10 @@ extract_falsepos() {
     echo "input_random = 1" >> $bestconf
     # keep all detected bbox even overlapping ones
     echo "pruning = 0" >> $bestconf
+    # downsample to n times input (capped by input_min)
+    echo "min_scale = ${minsc}" >> $bestconf
     # oversample to n times input (capped by input_max)
-    echo "max_scale = ${max_scale}" >> $bestconf
+    echo "max_scale = ${maxsc}" >> $bestconf
     # do not change bbox
     echo "bbhfactor = 1" >> $bestconf
     echo "bbwfactor = 1" >> $bestconf
@@ -291,17 +297,20 @@ metatrain() {
     threshold=${13}
     nthreads=${14}
     npasses=${15}
-    max_scale=${16}
-    precision=${17}
-    dataroot=${18}
-    h=${19}
-    w=${20}
-    chans=${21}
-    draws=${22}
-    traindsname=${23}
-    valdsname=${24}
-    ds_split_ratio=${25}
-    display=${26}
+    min_scale=${16}
+    max_scale=${17}
+    precision=${18}
+    dataroot=${19}
+    h=${20}
+    w=${21}
+    chans=${22}
+    draws=${23}
+    traindsname=${24}
+    valdsname=${25}
+    ds_split_ratio=${26}
+    display=${27}
+    mindisplay=${28}
+    savevideo=${29}
     echo
     echo -e "Arguments:\nminstep=${minstep}\nmaxiteration=${maxiteration}\nout=${out}"
     echo -e "eblearnbin=${eblearnbin}\nnegatives_root=${negatives_root}\nmetaconf=${metaconf}"
@@ -366,9 +375,25 @@ metatrain() {
 	if [ $step -ge $minstep ]; then
 	    print_step $step $bestconf $lastname $lastdir "false positives" \
 		$iter $maxiteration
-	    extract_falsepos $bestconf $save_max $save_max_per_frame $bestout \
-		$input_max $threshold $bestweights $negatives_root $eblearnbin \
-		$nthreads $npasses $max_scale $tstamp $name $display
+            # zoomed in positives (forbid zooming out)
+	    save_max_tmp=`expr $save_max / 4` # limit zoomed in to 1/4th
+	    extract_falsepos $bestconf $save_max_tmp $save_max_per_frame $bestout \
+		$input_max $threshold $bestweights $negatives_root/zoomed_in $eblearnbin \
+		$nthreads $npasses 1 $max_scale $tstamp $name $display $mindisplay $savevideo
+            # zoomed out positives (forbid zooming in)
+	    if [ -d $negatives_root/zoomed_out ] ; then
+		save_max_tmp=`expr $save_max / 4` # limit zoomed in to 1/4th
+		extract_falsepos $bestconf $save_max_tmp $save_max_per_frame $bestout \
+		    $input_max $threshold $bestweights $negatives_root/zoomed_out $eblearnbin \
+		    $nthreads $npasses $min_scale 1 $tstamp $name $display $mindisplay $savevideo
+	    fi
+            # full size negatives (zooming in/out allowed)
+	    saved=`ls -R $lastdir | grep -e ".mat$" | wc -l` # saved so far
+	    save_max_tmp=`expr $save_max - $saved` # limit to remaining max
+	    extract_falsepos $bestconf $save_max_tmp $save_max_per_frame $bestout \
+		$input_max $threshold $bestweights $negatives_root/bg_full $eblearnbin \
+		$nthreads $npasses $min_scale $max_scale $tstamp $name $display \
+		$mindisplay $savevideo
 	fi
 	step=`expr ${step} + 1` # increment step
 	stepstr=`printf "%02d" ${step}`

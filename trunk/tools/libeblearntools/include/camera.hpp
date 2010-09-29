@@ -41,13 +41,15 @@ namespace ebl {
   // constructors & initializations
 
   template <typename Tdata>
-  camera<Tdata>::camera(int height_, int width_)
+  camera<Tdata>::camera(int height_, int width_, std::ostream &o,
+			std::ostream &e)
     : height(height_), width(width_), bresize(false), frame_id(0),
       grabbed(false), wid(0), recording_name("video"), record_cnt(0),
-      fps_grab(0.0), audio_filename("") {
+      fps_grab(0.0), audio_filename(""), out(o), err(e), cntfps(0) {
     // decide if we resize input or not
     if ((height != -1) && (width != -1))
       bresize = true;
+    tfps.start(); // timer for computing fps
   }
 
   template <typename Tdata>
@@ -86,7 +88,7 @@ namespace ebl {
     oss << recording_name << "/frame_";
     oss << setfill('0') << setw(6) << record_cnt << ".png";
     save_window(oss.str().c_str());
-    cout << "saved " << oss.str() << endl;
+    out << "saved " << oss.str() << endl;
     record_cnt++;
 #endif
     return true;
@@ -131,8 +133,8 @@ namespace ebl {
     ret = std::system(oss.str().c_str());
     if (ret < 0)
       return false;
-    cout << "Saved " << rname << ".avi";
-    cout << " at " << fps << " fps." << endl;
+    out << "Saved " << rname << ".avi";
+    out << " at " << fps << " fps." << endl;
     return true;
   }
 
@@ -141,17 +143,6 @@ namespace ebl {
   
   template <typename Tdata>
   float camera<Tdata>::fps() {
-    // counters
-    // cnt++;
-    // iframe++;
-    // time(&t1);
-    // diff = difftime(t1, t0);
-    // if (diff >= 1) {
-    //   fps = cnt;
-    //   cnt = 0;
-    //   time(&t0);
-    //   cout << "fps: " << fps << endl;
-    // }
     return fps_grab;
   }
 
@@ -178,6 +169,13 @@ namespace ebl {
   template <typename Tdata>
   inline idx<Tdata> camera<Tdata>::postprocess() {
     frame_id++;
+    fps_ms_elapsed = tfps.elapsed_milliseconds();
+    cntfps++;
+    if (fps_ms_elapsed > 1000) {
+      fps_grab = cntfps * 1000 / (float) fps_ms_elapsed;
+      tfps.restart(); // restart timer
+      cntfps = 0; // reset counter
+    }
     if (!bresize)
       return frame; // return original frame
     else // or return a resized frame

@@ -117,7 +117,25 @@ namespace std {
   //! Operator to concatenate elements into the string.
   template<>
     EXPORT string& operator<<(string& e, void *v);
-
+  template<>
+    EXPORT string& operator<<(string& e, int v);
+  template<>
+    EXPORT string& operator<<(string& e, uint v);
+  template<>
+    EXPORT string& operator<<(string& e, char v);
+  template<>
+    EXPORT string& operator<<(string& e, unsigned char v);
+  template<>
+    EXPORT string& operator<<(string& e, float v);
+  template<>
+    EXPORT string& operator<<(string& e, double v);
+  template<>
+    EXPORT string& operator<<(string& e, long v); 
+#ifndef __ANDROID__
+  template<>
+    EXPORT string& operator<<(string& e, size_t v);
+#endif
+    
 #endif
 
   ////////////////////////////////////////////////////////////////
@@ -175,7 +193,7 @@ namespace std {
 #endif
   };
   
-#endif
+#endif /* __NOSTL__ */
 
   ////////////////////////////////////////////////////////////////
   // vector

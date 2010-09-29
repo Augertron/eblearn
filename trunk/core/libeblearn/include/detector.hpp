@@ -50,7 +50,8 @@ namespace ebl {
 			       idx<ubyte> &labels_,
 			       module_1_1<T,Tstate> *pp_, uint ppkersz_,
 			       const char *background, T bias_, float coef_,
-			       bool single_output)
+			       bool single_output, std::ostream &o,
+			       std::ostream &e)
     : thenet(thenet_), resizepp(MEAN_RESIZE, pp_, ppkersz_, true),
       coef(coef_), bias(bias_), input(NULL), output(NULL), minput(NULL),
       inputs(1), outputs(1), results(1), pp(pp_),
@@ -62,18 +63,19 @@ namespace ebl {
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       min_size(0), max_size(0), bodetections(false),
       bppdetections(false), pruning(true), bbhfactor(1.0), bbwfactor(1.0),
-      mem_optimization(false), optimization_swap(false), keep_inputs(true) {
+      mem_optimization(false), optimization_swap(false), keep_inputs(true),
+      mout(o), merr(e) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
     // labels
     //labels = strings_to_idx(labels_);
     labels = labels_;
-    cout << "Classes names:";
+    mout << "Classes names:";
     idx_bloop1(name, labels, ubyte) {
-      cout << " " << (const char*) name.idx_ptr();
+      mout << " " << (const char*) name.idx_ptr();
     }
-    cout << endl;
+    mout << endl;
     // clear buffers
     idx_clear(inputs);
     idx_clear(outputs);
@@ -113,7 +115,7 @@ namespace ebl {
     scales_step = scales_step_;
     max_scale = max_scale_;
     min_scale = min_scale_;
-    cout << "Multi resolution scales: step factor " << scales_step
+    mout << "Multi resolution scales: step factor " << scales_step
 	 << ", min/max resolution factor " << min_scale << ", " << max_scale
 	 << endl;
   }
@@ -125,7 +127,7 @@ namespace ebl {
     hzpad = (uint) (hzpad_ * netdim.dim(1));
     wzpad = (uint) (wzpad_ * netdim.dim(2));
     resizepp.set_zpads(hzpad, wzpad);
-    cout << "Adding zero padding on input (on each side): hpad: "
+    mout << "Adding zero padding on input (on each side): hpad: "
 	 << hzpad << " wpad: " << wzpad << endl;
   }
 					   
@@ -155,8 +157,9 @@ namespace ebl {
 
     // first compute minimum and maximum resolutions for this input dims.
     compute_minmax_resolutions(input_dim);
-    cout << "resolutions: input: " << input_dim << " min: " << in_mindim;
-    cout << " max: " << in_maxdim << endl;
+    mout << "resolutions: input: " << dsample << " max-scaled (* " << max_scale 
+	 << ") input: " << input_dim << " min: " << in_mindim
+	 << " max: " << in_maxdim << endl;
 
     switch (restype) {
     case MANUAL:
@@ -174,7 +177,7 @@ namespace ebl {
     }
     original_bboxes = idx<uint>(nresolutions, 4);
     
-    cout << "multi-resolution detection initialized to ";
+    mout << "multi-resolution detection initialized to ";
     print_resolutions();
     
     // resize input to closest compatible size
@@ -202,7 +205,7 @@ namespace ebl {
     }
 
     //sizes.set(sample.dim(0) / (float) in_mindim.dim(0), 3);
-    cout << "machine's intermediate sizes for each resolution: " << endl;
+    mout << "machine's intermediate sizes for each resolution: " << endl;
     { idx_bloop4(resolution, resolutions, unsigned int, in, inputs, void*,
 		 out, outputs, void*, r, results, void*) {
 	// cast pointers
@@ -261,10 +264,10 @@ namespace ebl {
       name = "bg"; // default name
     bgclass = get_class_id(name);
     if (bgclass != -1) {
-      cout << "Background class is \"" << name << "\" with id " << bgclass;
-      cout << "." << endl;
+      mout << "Background class is \"" << name << "\" with id " << bgclass;
+      mout << "." << endl;
     } else if (bg)
-      cerr << "warning: background class \"" << bg << "\" not found." << endl;
+      merr << "warning: background class \"" << bg << "\" not found." << endl;
   }
 
   // TODO: handle more than 1 class
@@ -277,11 +280,11 @@ namespace ebl {
     name = mask;
     mask_class = get_class_id(name);
     if (mask_class != -1) {
-      cout << "Mask class is \"" << name << "\" with id " << mask_class;
-      cout << "." << endl;
+      mout << "Mask class is \"" << name << "\" with id " << mask_class;
+      mout << "." << endl;
       return true;
     }
-    cerr << "warning: mask class \"" << mask << "\" not found." << endl;
+    merr << "warning: mask class \"" << mask << "\" not found." << endl;
     return false;
   }
 
@@ -296,21 +299,21 @@ namespace ebl {
     save_dir = directory;
     // save_dir += "_";
     // save_dir += tstamp();
-    cout << "Enabling saving of detected regions into: ";
-    cout << save_dir << endl;
+    mout << "Enabling saving of detected regions into: ";
+    mout << save_dir << endl;
     return save_dir;
   }
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_max_resolution(uint max_size_) {
-    cout << "Setting maximum input size to " << max_size_ << "x"
+    mout << "Setting maximum input size to " << max_size_ << "x"
 	 << max_size_ << "." << endl;
     max_size = max_size_;
   }
   
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_min_resolution(uint min_size_) {
-    cout << "Setting minimum input size to " << min_size_ << "x"
+    mout << "Setting minimum input size to " << min_size_ << "x"
 	 << min_size_ << "." << endl;
     min_size = min_size_;
   }
@@ -318,7 +321,7 @@ namespace ebl {
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_pruning(bool pruning_) {
     pruning = pruning_;
-    cout << "Pruning of neighbor answers is "
+    mout << "Pruning of neighbor answers is "
 	 << (pruning ? "enabled" : "disabled") << endl;
   }
   
@@ -326,14 +329,14 @@ namespace ebl {
   void detector<T,Tstate>::set_bbox_factors(float hfactor, float wfactor) {
     bbhfactor = hfactor;
     bbwfactor = wfactor;
-    cout << "Setting factors on output bounding boxes sizes, height: "
+    mout << "Setting factors on output bounding boxes sizes, height: "
 	 << hfactor << ", width: " << wfactor << endl;
   }
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_mem_optimization(Tstate &in, Tstate &out, 
 						bool keep_inputs_) {
-    cout << "Optimizing memory usage by using only 2 alternating buffers."
+    mout << "Optimizing memory usage by using only 2 alternating buffers."
 	 << endl;
     mem_optimization = true;
     keep_inputs = keep_inputs_;
@@ -348,14 +351,14 @@ namespace ebl {
   void detector<T,Tstate>::set_bbox_overlaps(float hmax, float wmax) {
     max_hoverlap = hmax;
     max_woverlap = wmax;
-    cout << "Maximum ratios of overlap between bboxes: height: "
+    mout << "Maximum ratios of overlap between bboxes: height: "
 	 << max_hoverlap << " width: " << max_woverlap << endl;
   }
   
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_bbox_foot_overlap(float area_max) {
     max_foot_area_overlap = area_max;
-    cout << "Maximum bbox ratios of overlap when foot is at same height: "
+    mout << "Maximum bbox ratios of overlap when foot is at same height: "
 	 << max_foot_area_overlap << endl;
   }
   
@@ -405,15 +408,15 @@ namespace ebl {
     unsigned int max_res = MIN(in_maxdim.dim(1) - in_mindim.dim(1),
 			       in_maxdim.dim(2) - in_mindim.dim(2));
     if (nresolutions > max_res) {
-      cerr << "warning: the number of resolutions requested (";
-      cerr << nresolutions << ") is more than";
-      cerr << " the minimum distance between minimum and maximum possible";
-      cerr << " resolutions. (min: " << in_mindim << " max: " << in_maxdim;
+      merr << "warning: the number of resolutions requested (";
+      merr << nresolutions << ") is more than";
+      merr << " the minimum distance between minimum and maximum possible";
+      merr << " resolutions. (min: " << in_mindim << " max: " << in_maxdim;
       if (in_mindim == in_maxdim)
 	nresolutions = 1;
       else
 	nresolutions = 2;
-      cerr << ") setting it to " << nresolutions << endl;
+      merr << ") setting it to " << nresolutions << endl;
     }
     
     // only 1 scale if min == max or if only 1 scale requested.
@@ -463,7 +466,7 @@ namespace ebl {
     intg max_res = (intg) (std::max(in_mindim.dim(1),
 				    in_mindim.dim(2)) * maxscale);
     if (max_res > std::max(input_dims.dim(0), input_dims.dim(1)))
-      cerr << "warning: maxscale (" << maxscale << ") produces a resolution "
+      merr << "warning: maxscale (" << maxscale << ") produces a resolution "
 	   << "bigger than original input (" << input_dims << ")." << endl;
     // compute minimum resolution scale
     double mscale = MIN(in_mindim.dim(1) / (double) input_dims.dim(0),
@@ -499,11 +502,11 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::print_resolutions() {
-    cout << resolutions.dim(0) << " resolutions: ";
-    cout << resolutions.get(0, 0) << "x" << resolutions.get(0, 1);
+    mout << resolutions.dim(0) << " resolutions: ";
+    mout << resolutions.get(0, 0) << "x" << resolutions.get(0, 1);
     for (int i = 1; i < resolutions.dim(0); ++i)
-      cout << ", " << resolutions.get(i, 0) << "x" << resolutions.get(i, 1);
-    cout << endl;
+      mout << ", " << resolutions.get(i, 0) << "x" << resolutions.get(i, 1);
+    mout << endl;
   }
   
   template <typename T, class Tstate>
@@ -624,14 +627,14 @@ namespace ebl {
       }
     }
 #ifdef __DEBUG__
-    cout << "Pruned " << raw_bboxes.size() << " bboxes to "
+    mout << "Pruned " << raw_bboxes.size() << " bboxes to "
 	 << pruned_bboxes.size() << " bboxes." << endl;
 #endif
   }
 	
   template <typename T, class Tstate>
   void detector<T,Tstate>::smooth_outputs() {
-    //    cout << "smoothing not implemented" << endl;
+    //    mout << "smoothing not implemented" << endl;
   }
     
   template <typename T, class Tstate>
@@ -719,49 +722,47 @@ namespace ebl {
   }
   
   template<typename T, class Tstate>
-  void detector<T,Tstate>::pretty_bboxes(vector<bbox*> &bboxes) {
-    cout << endl << "detector: ";
+  void detector<T,Tstate>::pretty_bboxes(vector<bbox*> &bboxes,
+					 std::ostream &out) {
+    out << endl << "detector: ";
     if (bboxes.size() == 0)
-      cout << "no objects found." << endl;
+      out << "no objects found." << endl;
     else {
-      cout << "found " << bboxes.size() << " objects." << endl;
+      out << "found " << bboxes.size() << " objects." << endl;
       size_t ib;
       bbox *i;
       for (ib = 0 ; ib < bboxes.size(); ++ib) {
 	i = bboxes[ib];
-	cout << "- " << (const char*) (labels[i->class_id].idx_ptr());
-	cout << " with confidence " << i->confidence;
-	cout << " in scale #" << i->scale_index;
-	cout << " (" << image.dim(0) << "x" << image.dim(1);
-	cout << " / " << i->scaleh << "x" << i->scalew;
-	cout << " = " << i->iheight << "x" << i->iwidth << ")";
-	cout << endl;
-	cout << "  bounding box: top left " << i->h0 << "x" << i->w0;
-	cout << " and size " << i->height << "x" << i->width;
-	cout << " out position: " << i->oh0 << "x" << i->ow0;
-	cout << " in " << i->oheight << "x" << i->owidth;
-	cout << endl;
+	out << "- " << (const char*) (labels[i->class_id].idx_ptr());
+	out << " with confidence " << i->confidence;
+	out << " in scale #" << i->scale_index;
+	out << " (" << image.dim(0) << "x" << image.dim(1);
+	out << " / " << i->scaleh << "x" << i->scalew;
+	out << " = " << i->iheight << "x" << i->iwidth << ")";
+	out << endl;
+	out << "  bounding box: top left " << i->h0 << "x" << i->w0;
+	out << " and size " << i->height << "x" << i->width;
+	out << " out position: " << i->oh0 << "x" << i->ow0;
+	out << " in " << i->oheight << "x" << i->owidth;
+	out << endl;
       }
     }
   }
 
   template<typename T, class Tstate>
   void detector<T,Tstate>::pretty_bboxes_short(vector<bbox*> &bboxes,
-					       const char *prefix_) {
-    string prefix = "";
-    if (prefix_)
-      prefix << prefix_ << ": ";
+					       std::ostream &out) {
     if (bboxes.size() == 0)
-      cout << prefix << "no objects found." << endl;
+      out << "no objects found." << endl;
     else {
-      cout << prefix << "found " << bboxes.size() << " objects." << endl;
+      out << "found " << bboxes.size() << " objects." << endl;
       size_t ib; const bbox *i;
       for (ib = 0 ; ib < bboxes.size(); ++ib) {
 	i = bboxes[ib];
-	cout << prefix << (const char*) labels[i->class_id].idx_ptr();
-	cout << " " << i->confidence;
-	cout << " bbox: " << i->oh0 << "x" << i->ow0;
-	cout << "x(" << i->oheight << "x" << i->owidth << ")" << endl;
+	out << (const char*) labels[i->class_id].idx_ptr();
+	out << " " << i->confidence;
+	out << " bbox: " << i->oh0 << "x" << i->ow0;
+	out << "x(" << i->oheight << "x" << i->owidth << ")" << endl;
       }
     }
   }
@@ -883,7 +884,7 @@ namespace ebl {
 	    << frame_name << "_" << classname << setw(3) << setfill('0')
 	    << save_counts[(*bbox)->class_id] << MATRIX_EXTENSION;
       if (save_matrix(inpp, fname.str()))
-	cout << "saved " << fname.str() << " (confidence "
+	mout << "saved " << fname.str() << " (confidence "
 	     << (*bbox)->confidence << ")" << endl;
       // save original image as png
       fname.str("");
@@ -891,7 +892,7 @@ namespace ebl {
 	    << setw(3) << setfill('0') << save_counts[(*bbox)->class_id]
 	    << ".png";
       if (save_image(fname.str(), inorig, "png"))
-	cout << "saved " << fname.str() << " (confidence "
+	mout << "saved " << fname.str() << " (confidence "
 	     << (*bbox)->confidence << ")" << endl;
       // increment file counter
       save_counts[(*bbox)->class_id]++;
@@ -971,7 +972,7 @@ namespace ebl {
     if (mask.get_idxdim() != d)
       mask = idx<T>(d);
     if (id == -1) { // class not found
-      cerr << "warning: unknown class " << classname << endl;
+      merr << "warning: unknown class " << classname << endl;
       idx_clear(mask);
       return mask;
     }
@@ -1025,8 +1026,7 @@ namespace ebl {
       	output = tmp;
       }
     }
-    cout << "net_processing=";
-    t.pretty_elapsed(); cout << endl;
+    mout << "net_processing=" << t.elapsed_ms() << endl;
   }
 
   template <typename T, class Tstate> template <class Tin>
@@ -1052,7 +1052,7 @@ namespace ebl {
     } else
       image = img2;
 #ifdef __DEBUG__
-    cout << "Image in detector is " << image << " with range "
+    mout << "Image in detector is " << image << " with range "
 	 << idx_min(image) << ", " << idx_max(image) << endl;
 #endif
     // if input size had changed, reinit resolutions
@@ -1093,9 +1093,9 @@ namespace ebl {
     if (coef != 1)
       idx_dotc(input->x, coef, input->x);
 #ifdef __DEBUG__
-    cout << "preprocessed input range: " << idx_min(input->x) << ", "
+    mout << "preprocessed input range: " << idx_min(input->x) << ", "
 	 << idx_max(input->x) << endl;
-    cout << "resized input (" << imres << ") to resolution " << res
+    mout << "resized input (" << imres << ") to resolution " << res
 	 << " (" << resolutions.get(res, 0) << "x" << resolutions.get(res, 1)
 	 << "): " << input->x << endl;
 #endif

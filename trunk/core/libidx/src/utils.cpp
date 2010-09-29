@@ -201,42 +201,101 @@ namespace ebl {
     pretty_secs(elapsed_seconds());
   }
 
+  string timer::elapsed() {
+    return elapsed(elapsed_seconds());
+  }
+  
+  string timer::elapsed_ms() {
+    return elapsed_ms(elapsed_milliseconds());
+  }
+  
+  void timer::pretty_secs(long seconds) {
+    cout << elapsed(seconds);
+  }
+  
   // second equivalences
 #define SECMIN 60
 #define SECHOUR 3600
 #define SECDAY 86400
 #define SECWEEK 604800
 #define SECMONTH 18144000
-  
-  void timer::pretty_secs(long seconds) {
+
+  std::string timer::elapsed(long seconds) {
+    std::string sout;
     long div, mod;
     bool pretty = false;
     div = seconds / SECMONTH; mod = seconds % SECMONTH;
     if (div > 0 || pretty) {
-      cout << div << "months ";
+      sout << (int) div << "m ";
       pretty = true;
     }
     div = mod / SECWEEK; mod = mod % SECWEEK;
     if (div > 0 || pretty) {
-      cout << div << "weeks ";
+      sout << (int) div << "w ";
       pretty = true;
     }
     div = mod / SECDAY; mod = mod % SECDAY;
     if (div > 0 || pretty) {
-      cout << div << "days ";
+      sout << (int) div << "d ";
       pretty = true;
     }
     div = mod / SECHOUR; mod = mod % SECHOUR;
     if (div > 0 || pretty) {
-      cout << div << "hours ";
+      sout << (int) div << "h ";
       pretty = true;
     }
     div = mod / SECMIN; mod = mod % SECMIN;
     if (div > 0 || pretty) {
-      cout << div << "mins ";
+      sout << (int) div << "m ";
       pretty = true;
     }
-    cout << mod << "secs";
+    sout << (int) mod << "s";
+    return sout;
+  }
+
+  // second equivalences
+#define MSMIN 60000
+#define MSHOUR 3600000
+#define MSDAY 86400000
+#define MSWEEK 604800000
+#define MSMONTH 18144000000
+
+  std::string timer::elapsed_ms(long milliseconds) {
+    std::string sout;
+    long div, mod;
+    bool pretty = false;
+    div = milliseconds / MSMONTH; mod = milliseconds % MSMONTH;
+    if (div > 0 || pretty) {
+      sout << (int) div << "m ";
+      pretty = true;
+    }
+    div = mod / MSWEEK; mod = mod % MSWEEK;
+    if (div > 0 || pretty) {
+      sout << (int) div << "w ";
+      pretty = true;
+    }
+    div = mod / MSDAY; mod = mod % MSDAY; 
+    if (div > 0 || pretty) {
+      sout << (int) div << "d ";
+      pretty = true;
+    }
+    div = mod / MSHOUR; mod = mod % MSHOUR;
+    if (div > 0 || pretty) {
+      sout << (int) div << "h ";
+      pretty = true;
+    }
+    div = mod / MSMIN; mod = mod % MSMIN;
+    if (div > 0 || pretty) {
+      sout << (int) div << "m ";
+      pretty = true;
+    }
+    div = mod / 1000; mod = mod % 1000;
+    if (div > 0 || pretty) {
+      sout << (int) div << "s ";
+      pretty = true;
+    }
+    sout << (int) mod << "ms";
+    return sout;
   }
   
   void millisleep(long millis) {

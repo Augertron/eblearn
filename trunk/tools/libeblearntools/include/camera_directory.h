@@ -67,7 +67,9 @@ namespace ebl {
     //! \param randomize Randomize image list if true.
     //! \param npasses Repeat list this number of times.
     camera_directory(const char *directory, int height_ = -1, int width_ = -1,
-		     bool randomize = false, uint npasses = 1);
+		     bool randomize = false, uint npasses = 1,
+		     std::ostream &out = std::cout,
+		     std::ostream &err = std::cerr);
 
     //! Initialize a directory camera without a root directory. This constructor
     //! requires a subsequent call to read_directory to initialize images.
@@ -80,7 +82,9 @@ namespace ebl {
     //! \param randomize Randomize image list if true.
     //! \param npasses Repeat list this number of times.
     camera_directory(int height_ = -1, int width_ = -1,
-		     bool randomize = false, uint npasses = 1);
+		     bool randomize = false, uint npasses = 1,
+		     std::ostream &out = std::cout,
+		     std::ostream &err = std::cerr);
 
     //! Find all images recursively from this directory.
     bool read_directory(const char *directory);
@@ -112,6 +116,8 @@ namespace ebl {
     using camera<Tdata>::frame;	//!< frame buffer 
     using camera<Tdata>::frame_id;	//!< frame counter
     using camera<Tdata>::frame_name_;	//!< frame name
+    using camera<Tdata>::out;	//!< output stream
+    using camera<Tdata>::err;	//!< error output stream
     files_list		*fl;	//!< list of images
     files_list::iterator fli;   //!< Iterator on the list of images.
     string		 indir; //!< input directory name

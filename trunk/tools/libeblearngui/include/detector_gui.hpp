@@ -67,23 +67,7 @@ namespace ebl {
 
     // run network
     vector<bbox*>& vb = cl.fprop(img, threshold, frame_name);
-    draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
-    disable_window_updates();
-    // draw output
-    ostringstream label;
-    vector<bbox*>::iterator i = vb.begin();
-    for ( ; i != vb.end(); ++i) {
-      uint h = (uint) (dzoom * (*i)->h0);
-      uint w = (uint) (dzoom * (*i)->w0);
-      label.str("");
-      label.precision(2);
-      label << cl.labels[(*i)->class_id].idx_ptr() << " "
-	    << (*i)->confidence;
-      draw_box(h0 + h, w0 + w, (uint) (dzoom * (*i)->height), 
-	       (uint) (dzoom * (*i)->width), 0, 0, 255,
-	       new string((const char *)label.str().c_str()));
-    }
-    enable_window_updates();
+    display_minimal(img, vb, cl.labels, h0, w0, dzoom, vmin, vmax, display_wid);
     // draw masks class
     if (!mask_class.empty()) {
       idx<T> mask = cl.get_mask(mask_class);
@@ -91,6 +75,32 @@ namespace ebl {
 		255, 0, 0, 127, mask_threshold);
     }
     return vb;
+  }
+
+  template <typename T, class Tstate> template <typename Tin>
+  void detector_gui<T,Tstate>::
+  display_minimal(idx<Tin> &img, vector<bbox*>& vb, idx<ubyte> &labels,
+		  unsigned int h0, unsigned int w0,
+		  double dzoom,  T vmin, T vmax, int wid) {
+    select_window(wid);
+    disable_window_updates();
+    // draw image
+    draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
+    // draw bboxes
+    ostringstream label;
+    vector<bbox*>::iterator i = vb.begin();
+    for ( ; i != vb.end(); ++i) {
+      uint h = (uint) (dzoom * (*i)->h0);
+      uint w = (uint) (dzoom * (*i)->w0);
+      label.str("");
+      label.precision(2);
+      label << labels[(*i)->class_id].idx_ptr() << " "
+	    << (*i)->confidence;
+      draw_box(h0 + h, w0 + w, (uint) (dzoom * (*i)->height), 
+	       (uint) (dzoom * (*i)->width), 0, 0, 255,
+	       new string((const char *)label.str().c_str()));
+    }
+    enable_window_updates();
   }
 
   template <typename T, class Tstate> template <typename Tin> 
@@ -114,7 +124,8 @@ namespace ebl {
 
   template <typename T, class Tstate> template <typename Tin>
   vector<bbox*>& detector_gui<T,Tstate>::
-  display_inputs_outputs(detector<T,Tstate> &cl, idx<Tin> &img, double threshold,
+  display_inputs_outputs(detector<T,Tstate> &cl, idx<Tin> &img,
+			 double threshold,
 			 const char *frame_name, 
 			 unsigned int h0, unsigned int w0, double dzoom,
 			 T vmin, T vmax, int wid, const char *wname){

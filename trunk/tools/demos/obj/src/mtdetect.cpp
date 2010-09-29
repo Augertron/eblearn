@@ -81,6 +81,22 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	conf.set("root2", dir.c_str());
 	conf.resolve();
       }
+      // output synchronization
+      bool sync = conf.exists_true("sync_outputs");
+      mutex out_mutex;
+      mutex_ostream mutout(std::cout, out_mutex, "Thread M");
+      mutex_ostream muterr(std::cerr, out_mutex, "Thread M");
+      ostream &mout = sync ? mutout : cout;
+      ostream &merr = sync ? muterr : cerr;
+      // load classes of network
+      idx<ubyte> classes(1,1);
+      try { // try loading classes names but do not stop upon failure
+	load_matrix<ubyte>(classes, conf.get_cstring("classes"));
+      } catch(string &err) {
+	merr << "warning: " << err;
+	merr << endl;
+      }
+      
       bool              silent        = conf.exists_true("silent");
       uint              ipp_cores     = 1;
       if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
@@ -96,7 +112,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	npasses = conf.get_uint("input_npasses");
       outdir += tstamp();
       outdir += "/";
-      cout << "Saving outputs to " << outdir << endl;
+      mout << "Saving outputs to " << outdir << endl;
 
       // allocate threads
       uint nthreads = 1;
@@ -108,12 +124,13 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       list<detection_thread<t_net>*>::iterator ithreads;
       idx<uint> total_saved(nthreads);
       idx_clear(total_saved);
-      cout << "Initializing " << nthreads << " detection threads." << endl;
+      mout << "Initializing " << nthreads << " detection threads." << endl;
       for (uint i = 0; i < nthreads; ++i) {
 	ostringstream tname;
 	tname << "Thread " << i;
 	detection_thread<t_net> *dt =
-	  new detection_thread<t_net>(conf, tname.str().c_str());
+	  new detection_thread<t_net>(conf, out_mutex, tname.str().c_str(),
+				      NULL, sync);
 	threads.push_back(dt);
 	dt->start();
 	dt->set_output_directory(outdir);
@@ -125,11 +142,11 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       if (!strcmp(cam_type.c_str(), "directory")) {
 	if (argc >= 3) // read input dir from command line
 	  cam = new camera_directory<ubyte>(argv[2], height, width,
-					    input_random, npasses);
+					    input_random, npasses, mout, merr);
 	else if (conf.exists("input_dir")) // read input dir from conf
 	  cam = new camera_directory<ubyte>(conf.get_cstring("input_dir"), 
 					    height, width, input_random,
-					    npasses);
+					    npasses, mout, merr);
 	else eblerror("expected 2nd argument");
       } else if (!strcmp(cam_type.c_str(), "opencv"))
 	cam = new camera_opencv<ubyte>(-1, height, width);
@@ -162,13 +179,13 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // open file      
       ofstream fp(answer_fname.str().c_str());
       if (!fp) {
-	cerr << "failed to open " << answer_fname.str() << endl;
+	merr << "failed to open " << answer_fname.str() << endl;
 	eblerror("open failed");
       }
     
       // gui
 #ifdef __GUI__
-      // display	     = conf.exists_bool("display");
+      bool display	     = conf.exists_bool("display");
       // mindisplay     = conf.exists_bool("minimal_display");
       // display_sleep  = conf.get_uint("display_sleep");
       // display_states = conf.exists_bool("display_states");
@@ -184,20 +201,18 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	qwidth2 = conf.get_uint("qwidth2"); }
       // wid_states  = display_states ? new_window("network states"):0;
       // night_mode();
-      // wid  = display ? new_window("eblearn object recognition") : 0;
-      // night_mode();
+      uint wid  = display ? new_window("eblearn object recognition") : 0;
+      night_mode();
 #endif  
       // timing variables
       timer tpass, toverall, tstop;
       uint cnt = 0;
-      cout << "i=" << cnt << endl;
+      mout << "i=" << cnt << endl;
       bool stop = false, finished = false;
   
       // loop
       toverall.start();
       while (!finished) {
-	// get a new frame
-	tpass.restart();
 	// check for results and send new image for each thread
 	uint i = 0;
 	finished = true;
@@ -223,30 +238,37 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    }
 	    updated = false;
 	    cnt++;
+	    // display processed frame
+#ifdef __GUI__
+	    detector_gui<t_net>::
+	      display_minimal(detframe, bboxes, classes, 0, 0, 1, 0, 0, wid);
+#endif
+	    // output info
 	    if (!silent) {
-	      cout << "total_saved=" << idx_sum(total_saved);
+	      mout << "total_saved=" << idx_sum(total_saved);
 	      if (conf.exists("save_max"))
-		cout << " / " << conf.get_uint("save_max");
-	      cout << endl;
-	      cout << "i=" << cnt << " remaining=" << (cam->size() - cnt);
-	      cout << " elapsed="; toverall.pretty_elapsed();
+		mout << " / " << conf.get_uint("save_max");
+	      mout << endl;
+	      mout << " remaining=" << (cam->size() - cnt);
+	      mout << " elapsed=" << toverall.elapsed();
 	      if (cam->size() > 0) {
-		cout << " ETA=";
-		timer::pretty_secs((long)((cam->size() - cnt) * 
-					  (toverall.elapsed_seconds() 
-					   / (float)std::max((uint)1, cnt))));
+		mout << " ETA=" << toverall.
+		  elapsed((long)((cam->size() - cnt) * 
+				 (toverall.elapsed_seconds() 
+				  /(float)std::max((uint)1,cnt))));
 	      }
+	      if (conf.exists("save_max")) {
+		uint total = idx_sum(total_saved);
+		mout << " save_max_ETA="
+		     << toverall.
+		  elapsed((long)((conf.get_uint("save_max") - total)
+				 * (toverall.elapsed_seconds() 
+				    / (float)std::max((uint)1,total))));
+	      }
+	      mout << endl;
 	    }
-	    if (conf.exists("save_max")) {
-	      cout << " save_max_ETA=";
-	      uint total = idx_sum(total_saved);
-	      if (!silent)
-		timer::pretty_secs((long)((conf.get_uint("save_max") - total)
-					  * (toverall.elapsed_seconds() 
-					     /(float)std::max((uint)1,total))));
-	    }
-	    if (!silent)
-	      cout << endl;
+	    mout << "i=" << cnt << " processing: " << tpass.elapsed_ms()
+		 << " fps: " << cam->fps() << endl;
 	  }
 	  // check if ready
 	  if ((*ithreads)->available()) {
@@ -269,31 +291,33 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 		string frame_name = cam->frame_name();
 		while (!(*ithreads)->set_data(frame, frame_name))
 		  millisleep(5);
+		// we just sent a new frame
+		tpass.restart();
 	      }
 	    }
 	  }
 	}
-	// ms = tpass.elapsed_milliseconds();
-	// cout << "processing: " << ms << " ms." << endl;
-	// cout << "fps: " << cam->fps() << endl;
 	// sleep display
 // 	if (display_sleep > 0) {
-// 	  cout << "sleeping for " << display_sleep << "ms." << endl;
+// 	  mout << "sleeping for " << display_sleep << "ms." << endl;
 // 	  millisleep(display_sleep);
 // 	}
 	if (conf.exists("save_max") && !stop &&
 	    idx_sum(total_saved) > conf.get_uint("save_max")) {
-	  cout << "Reached max number of detections, exiting." << endl;
+	  mout << "Reached max number of detections, exiting." << endl;
 	  stop = true; // limit number of detection saves
 	  tstop.start(); // start countdown timer
 	}
 	// sleep a bit between each iteration
-	millisleep(10);
+	millisleep(5);
 	// check if stop countdown reached 0
-	if (stop && tstop.elapsed_minutes() >= 20)
+	if (stop && tstop.elapsed_minutes() >= 20) {
+	  cerr << "threads did not all return 20 min after request, stopping"
+	       << endl;
 	  break ; // program too long to stop, force exit
+	}
       }
-      cout << "Execution time: "; toverall.pretty_elapsed(); cout << endl;
+      mout << "Execution time: " << toverall.elapsed() << endl;
       if (save_video)
 	cam->stop_recording(conf.exists_bool("use_original_fps") ?
 			    cam->fps() : conf.get_uint("save_video_fps"),
@@ -304,10 +328,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	delete *ithreads;
       // close files
       fp.close();
-      cout << "Detection finished." << endl;
 #ifdef __GUI__
+      mout << "Closing windows..." << endl;
       quit_gui(); // close all windows
+      mout << "Windows closed." << endl;
 #endif
+      mout << "Detection finished." << endl;
     } catch(string &err) { eblerror(err.c_str()); }
   return 0;
 }

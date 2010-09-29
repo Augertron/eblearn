@@ -108,7 +108,8 @@ namespace ebl {
     detector(module_1_1<T,Tstate> &thenet, idx<ubyte> &lbls,
 	     module_1_1<T,Tstate> *pp = NULL, uint ppkersz = 0,
 	     const char *background = NULL, T bias = 0, float coeff = 1.0,
-	     bool single_output = false);
+	     bool single_output = false, std::ostream &out = std::cout,
+	     std::ostream &err = std::cerr);
 
     //! Destructor.
     virtual ~detector();
@@ -240,12 +241,12 @@ namespace ebl {
     void set_save_max_per_frame(uint max);
 
     //! Print bounding boxes on standard output.
-    void pretty_bboxes(vector<bbox*> &bboxes);
+    void pretty_bboxes(vector<bbox*> &bboxes, std::ostream &out = std::cout);
 
     //! Print short description of bounding boxes on standard output,
     //! with an optional prefix string in front of each line.
     void pretty_bboxes_short(vector<bbox*> &bboxes,
- 			     const char *prefix = NULL);
+ 			     std::ostream &out = std::cout);
 
   private:
     //! initialize dimensions and multi-resolution buffers.
@@ -381,6 +382,8 @@ namespace ebl {
     float                max_foot_area_overlap; //!< Max area overlap when foot.
     uint                 hzpad; //! Zero-pad on height (each side).
     uint                 wzpad; //! Zero-pad on width (each side).
+    std::ostream         &mout; //! output stream.
+    std::ostream         &merr; //! error output stream.
 
     ////////////////////////////////////////////////////////////////
     // friends

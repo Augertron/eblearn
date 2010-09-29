@@ -43,19 +43,23 @@ namespace ebl {
   template <typename Tdata>
   camera_directory<Tdata>::camera_directory(const char *dir,
 					    int height_, int width_,
-					    bool randomize_, uint npasses_)
-    : camera<Tdata>(height_, width_), indir(dir),
+					    bool randomize_, uint npasses_,
+					    std::ostream &o,
+					    std::ostream &e)
+    : camera<Tdata>(height_, width_, o, e), indir(dir),
       randomize(randomize_), npasses(npasses_) {
     if (npasses == 0)
       eblerror("number of passes must be >= 1");
-    cout << "Initializing directory camera from: " << dir << endl;
+    out << "Initializing directory camera from: " << dir << endl;
     read_directory(dir);
   }
 
   template <typename Tdata>
   camera_directory<Tdata>::camera_directory(int height_, int width_,
-					    bool randomize_, uint npasses_)
-    : camera<Tdata>(height_, width_),
+					    bool randomize_, uint npasses_,
+					    std::ostream &o,
+					    std::ostream &e)
+    : camera<Tdata>(height_, width_, o, e),
       randomize(randomize_), npasses(npasses_) {
     if (npasses == 0)
       eblerror("number of passes must be >= 1");
@@ -73,15 +77,15 @@ namespace ebl {
     fl = find_files(directory, IMAGE_PATTERN_MAT, NULL,
 		    randomize ? false : true, true, randomize);
     if (!fl) {
-      cerr << "invalid directory: " << dir << endl;
+      err << "invalid directory: " << dir << endl;
       eblerror("invalid directory");
       return false;
     }
-    cout << "Found " << fl->size() << " images." << endl;
+    out << "Found " << fl->size() << " images." << endl;
     if (randomize)
-      cout << "Image list is randomized." << endl;
+      out << "Image list is randomized." << endl;
     if (npasses > 1)
-      cout << "Image list will be used " << npasses << " times." << endl;
+      out << "Image list will be used " << npasses << " times." << endl;
     flsize = fl->size() * npasses;
     fli = fl->begin(); // initialize iterator to beginning
     return true;
@@ -115,13 +119,13 @@ namespace ebl {
       if (frame_name_[i] == '/')
 	frame_name_[i] = '_';
     fli++; // move to next element
-    cout << frame_id << "/" << flsize << ": processing ";
-    cout << fdir << "/" << fname << endl;
+    out << frame_id << "/" << flsize << ": processing ";
+    out << fdir << "/" << fname << endl;
     oss.str(""); oss << fdir << "/" << fname;
     try {
       frame = load_image<Tdata>(oss.str());
-    } catch (const string &err) {
-      cerr << err << ". Trying next image..." << endl;
+    } catch (const string &e) {
+      err << e << ". Trying next image..." << endl;
       frame_id++;
       return grab();
     }

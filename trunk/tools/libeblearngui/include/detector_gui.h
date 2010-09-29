@@ -47,7 +47,7 @@ namespace ebl {
   // detector_gui
 
   //! The display class of class detector.
-  template <typename T, class Tstate>
+  template <typename T, class Tstate = fstate_idx<T> >
     class detector_gui {
   public:
     //! Constructor.
@@ -79,6 +79,18 @@ namespace ebl {
 			     unsigned int h0 = 0, unsigned int w0 = 0, 
 			     double dzoom = 1.0, T vmin = 0, T vmax = 0,
 			     int wid = -1, const char *wname = NULL);
+    
+    //! displays only the output of the classifier after a a call to 
+    //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
+    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
+    //! use that window, otherwise create a new window and reuse it.
+    //! <wname> is an optional window title.
+    template <typename Tin>
+      static void display_minimal(idx<Tin> &img, vector<bbox*>& vb,
+				  idx<ubyte> &labels,
+				  unsigned int h0 = 0, unsigned int w0 = 0, 
+				  double dzoom = 1.0, T vmin = 0, T vmax = 0,
+				  int wid = -1);
 
     //! displays only the output of the classifier after a a call to 
     //! detector::fprop(img, zoom, threshold, objsize) at coordinates 

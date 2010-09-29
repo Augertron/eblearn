@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2010 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -39,16 +40,101 @@
 
 #ifndef __WINDOWS__
 #include <pthread.h>
-
-using namespace std;
+#endif
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // A thread class
-  class thread {
+  // mutex
+  
+  //! A mutex abstraction class.
+  class EXPORT mutex {
   public:
-    thread(const char *name = "Thread");
+    mutex();
+    ~mutex();
+
+    //! Try to lock the mutex but do not wait until mutex is available.
+    //! This returns true if mutex was available and successfully locked,
+    //! false otherwise.
+    bool trylock();
+
+    //! Lock the mutex (wait if necessary until mutex is available).   
+    void lock();
+
+    //! Unlock the mutex.
+    void unlock();
+
+  protected:
+#ifndef __WINDOWS__
+    //! Use non-recursive mutex so that lock can be called multiple times
+    //! by the same thread but require only 1 unlock.
+    //! Also this has to be the 'fast' kind of mutex that blocks the
+    //! thread until locking/unlocking is successful.
+    pthread_mutex_t m;
+#endif
+  };
+  
+  ////////////////////////////////////////////////////////////////
+  // sbuf
+
+  class mutex_ostream;
+
+  // Specialize a stringbuf to handle flushing to unblock mutex.
+  class EXPORT sbuf : public std::stringbuf {
+  public:
+
+    //! Output to ostream o but prevent other
+    //! \param m The mutex shared by all threads used to synchronize.
+    //! \param prefix If not null, prefix is printed before each new line.
+    sbuf(std::ostream &o, mutex &m, const char *prefix = NULL);
+    ~sbuf();
+    
+    // When we sync the stream with the output. 
+    // 1) Output prefix then the buffer
+    // 2) Reset the buffer
+    // 3) flush the actual output stream we are using. 
+    virtual int sync();
+    //! Put sequence of characters in buffer.
+    virtual streamsize xsputn(const char *s, streamsize n);
+
+    friend class mutex_ostream;
+    
+  private:
+    std::ostream& out;
+    bool new_line; //! Indicate if we are starting new line or not.
+    bool own_lock; //! True if mutex was locked by this instance.
+    mutex &busy; //! Mutex prevents simultaneous output.
+    const char *prefix;
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // mutex_ostream
+
+  //! An ostream class that contains a mutex, preventing different threads
+  //! from writing before current thread finishes outputting a line.
+  class EXPORT mutex_ostream : public std::ostream {
+  public:
+    //! Output to ostream o but prevent other
+    //! \param m The mutex shared by all threads used to synchronize.
+    //! \param prefix If not null, prefix is printed before each new line.
+    mutex_ostream(std::ostream &o, mutex &m, const char *prefix = NULL);
+    ~mutex_ostream();
+
+  protected:
+    sbuf buffer;
+  };
+  
+  ////////////////////////////////////////////////////////////////
+  // thread 
+  
+  //! A thread abstraction class
+  class EXPORT thread {
+  public:
+    //! \param outmutex A mutex used to synchronize threads outputs/
+    //!   To synchronize all threads, give the same mutex to each of them.
+    //! \param sync If true, synchronize outputs between threads, using
+    //!    outmutex, otherwise use regular unsynced outputs.
+    thread(mutex &outmutex, const char *name = "Thread", bool sync = true);
     virtual ~thread();
     //! Start the thread.
     int start();
@@ -62,7 +148,7 @@ namespace ebl {
     bool finished();
 
     //! Return name of this thread.
-    string& name();
+    std::string& name();
 
   protected:
     void run();
@@ -71,15 +157,19 @@ namespace ebl {
 
   protected:    
     bool 		_stop;
-    string      	_name;  //! Name of this thread.
+    std::string      	_name;  //! Name of this thread.
+    mutex_ostream       mutout; // synchronized cout
+    mutex_ostream       muterr; // synchronized cerr
+    ostream             &mout; // may contained synced or standard output
+    ostream             &merr; // may contained synced or standard err output
   private:
+#ifndef __WINDOWS__
     pthread_t 		threadptr;
+#endif
+    mutex 	        mutex1;
     bool 		_finished;
-    pthread_mutex_t 	mutex1;
   };
 
 } // end namespace ebl
 
 #endif /* THREAD_H_ */
-
-#endif /* __WINDOWS__ */
