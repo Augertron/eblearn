@@ -81,6 +81,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	conf.set("root2", dir.c_str());
 	conf.resolve();
       }
+      bool              silent        = conf.exists_true("silent");
       uint              ipp_cores     = 1;
       if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
       ipp_init(ipp_cores); // limit IPP (if available) to 1 core
@@ -222,26 +223,30 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    }
 	    updated = false;
 	    cnt++;
-	    cout << "total_saved=" << idx_sum(total_saved);
-	    if (conf.exists("save_max"))
-	      cout << " / " << conf.get_uint("save_max");
-	    cout << endl;
-	    cout << "i=" << cnt << " remaining=" << (cam->size() - cnt);
-	    cout << " elapsed="; toverall.pretty_elapsed();
-	    if (cam->size() > 0) {
-	      cout << " ETA=";
-	      timer::pretty_secs((long)((cam->size() - cnt) * 
-					(toverall.elapsed_seconds() 
-					 / (float)std::max((uint)1, cnt))));
+	    if (!silent) {
+	      cout << "total_saved=" << idx_sum(total_saved);
+	      if (conf.exists("save_max"))
+		cout << " / " << conf.get_uint("save_max");
+	      cout << endl;
+	      cout << "i=" << cnt << " remaining=" << (cam->size() - cnt);
+	      cout << " elapsed="; toverall.pretty_elapsed();
+	      if (cam->size() > 0) {
+		cout << " ETA=";
+		timer::pretty_secs((long)((cam->size() - cnt) * 
+					  (toverall.elapsed_seconds() 
+					   / (float)std::max((uint)1, cnt))));
+	      }
 	    }
 	    if (conf.exists("save_max")) {
 	      cout << " save_max_ETA=";
 	      uint total = idx_sum(total_saved);
-	      timer::pretty_secs((long)((conf.get_uint("save_max") - total)
-					* (toverall.elapsed_seconds() 
-					   / (float)std::max((uint)1,total))));
+	      if (!silent)
+		timer::pretty_secs((long)((conf.get_uint("save_max") - total)
+					  * (toverall.elapsed_seconds() 
+					     /(float)std::max((uint)1,total))));
 	    }
-	    cout << endl;
+	    if (!silent)
+	      cout << endl;
 	  }
 	  // check if ready
 	  if ((*ithreads)->available()) {

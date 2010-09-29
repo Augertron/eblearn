@@ -42,11 +42,12 @@
 
 #ifdef __IPP__
   #include <ipp.h>
-  #if IPP_VERSION_MAJOR == 5
-      #pragma message "IPP version is 5.x, ipp_dot is disabled"
-  #else
-    #define __IPP_DOT__
-  #endif
+/*   #if IPP_VERSION_MAJOR == 5 */
+/*       #pragma message "IPP version is 5.x, ipp_dot is disabled" */
+/*   #else */
+/* //TODO: does not compile when IPP_DOT is defined */
+/* //    #define __IPP_DOT__ */
+/*   #endif */
   //TODO : check version (< 5)
 #endif
 
