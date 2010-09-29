@@ -84,6 +84,7 @@ namespace ebl {
 		  double dzoom,  T vmin, T vmax, int wid) {
     select_window(wid);
     disable_window_updates();
+    clear_resize_window();
     // draw image
     draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
     // draw bboxes

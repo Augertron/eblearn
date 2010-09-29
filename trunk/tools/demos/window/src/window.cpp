@@ -334,7 +334,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  }
 	    
 	  // update position and draw if gui thread ready
-	  if (!gui.busy_drawing()) {
+	  if (!gui.busy_drawing() && gui_timer.elapsed_milliseconds() > 30) {
 	    // recompute position
 	    if (dt_time > 0)
 	      tgt_time_distance = detection_timer.elapsed_milliseconds()

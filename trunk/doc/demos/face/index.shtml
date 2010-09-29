@@ -27,20 +27,30 @@
 
       <h2>Compiling the demo</h2>
       This demo relies on the generic object detection demo located in
-      eblearn/demos/obj. To compile the detector (from the eblearn root), call:
+      eblearn/tools/demos/obj. To compile the detector (from the tools
+      directory), call:
       <br>
-      <code>make release prj=objdetect</code>
+      <code>make release prj=mtdetect</code>
       
       <h2>Running the demo</h2>
-      First modify the eblearn root directory 'root2' in
-      demos/obj/face/trained/best.conf with your own eblearn path.<br>
-      Then to run the demo (from the eblearn root), call:<br>
-      <code>./bin/objdetect demos/obj/face/trained/best.conf your-data-input
+      To run the demo on a webcam, run from the tools directory:<br>
+      <code>../bin/mtdetect demos/face/trained/best_webcam.conf
+	</code><br><br>
+      To run the demo on a folder of images, run from the tools directory:<br>
+      <code>../bin/mtdetect demos/face/trained/best_directory.conf
+	your-image-folder
 	</code><br>
-      <p>The data input can be a directory containing images, a video file,
-	a webcam or a shared-memory.
+      <p>One can change the type of input mtdetect reads by changing the
+	'camera' variable in the .conf file. The input can be a directory
+	containing images, a video file, a webcam or a shared-memory.
 	Update the 'camera' variable as described below to
 	change your input type.</p>
+      <p>One can also change the number of threads or CPUs used for the demo.
+	Increasing the number of threads will not increase the latency of the
+	detection, but will increase the frequency, yielding a smoother video
+	with the 'webcam' setting, or processing more images in the 'directory'
+	setting. Change variable 'nthreads' to the number of free CPUs
+	available on your machine.</p>
       <h3>Recommended parameters for webcam setting</h3>
       <p>Simply add the following code at the end of your .conf file (last
 	variable assignments will override previous ones):</p>
