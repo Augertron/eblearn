@@ -48,6 +48,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // A detection thread class
 
+  typedef enum { CHANS_RGB, CHANS_Y } t_chans;
+  
   template <typename Tnet>
   class detection_thread : public thread {
   public:
@@ -55,8 +57,11 @@ namespace ebl {
     //!   To synchronize all threads, give the same mutex to each of them.
     //! \param sync If true, synchronize outputs between threads, using
     //!    om, otherwise use regular unsynced outputs.
+    //! \param tc The channels type of the input image, e.g. brightness Y,
+    //!    or color RGB.
     detection_thread(configuration &conf, mutex &om, const char *name = "",
-		     const char *arg2 = NULL, bool sync = true);
+		     const char *arg2 = NULL, bool sync = true,
+		     t_chans tc = CHANS_RGB);
     ~detection_thread();
     
     //! Execute the detection thread.
@@ -102,6 +107,7 @@ namespace ebl {
     uint                         total_saved;
     using thread::mout; //! synchronized cout
     using thread::merr; //! synchronized cerr
+    t_chans                      color_space;
   };
 
 } // end namespace ebl

@@ -69,6 +69,10 @@ namespace ebl {
     //! Returns true if busy drawing, false otherwise.
     bool busy_drawing();
 
+    //! Set the internal flag 'bquit' to true in order to skip the queue
+    //! of graphic messages.
+    void quit();
+
     ////////////////////////////////////////////////////////////////
   private slots:
     void window_destroyed(QObject *obj);
@@ -127,6 +131,7 @@ namespace ebl {
     std::string			 savefname;
     bool                         busy; // flag when busy drawing
     QMutex                       mutex1;
+    bool                         bquit; // indicate if we want to quit
   };
 
   //! This macro is intended to replace your int main(int argc, char **argv)

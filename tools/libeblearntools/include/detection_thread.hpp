@@ -61,11 +61,12 @@ namespace ebl {
   detection_thread<Tnet>::detection_thread(configuration &conf_,
 					   mutex &om,
 					   const char *name_,
-					   const char *arg2_, bool sync)
+					   const char *arg2_, bool sync,
+					   t_chans tc)
     : thread(om, name_, sync), conf(conf_), arg2(arg2_), frame(120, 160, 1),
       mutex_in(), mutex_out(),
       in_updated(false), out_updated(false), bavailable(false),
-      frame_name(""), outdir(""), total_saved(0) {
+      frame_name(""), outdir(""), total_saved(0), color_space(tc) {
   }
 
   template <typename Tnet>
@@ -186,23 +187,23 @@ namespace ebl {
    try {
      // configuration
      bool       silent         = conf.exists_true("silent");
-     bool	color	       = conf.exists_bool("color");
+     bool	color	       = conf.exists_true("color");
      uint	norm_size      = conf.get_uint("normalization_size");
      Tnet	threshold      = (Tnet) conf.get_double("threshold");
-     bool	display	       = conf.exists_bool("display_threads");
-     bool	mindisplay     = conf.exists_bool("minimal_display");
-     bool       save_video     = conf.exists_bool("save_video");
-     bool	display_states = conf.exists_bool("display_states");
+     bool	display	       = conf.exists_true("display_threads");
+     bool	mindisplay     = conf.exists_true("minimal_display");
+     bool       save_video     = conf.exists_true("save_video");
+     bool	display_states = conf.exists_true("display_states");
      uint	display_sleep  = conf.get_uint("display_sleep");
      uint       wid	       = 0;	// window id
      uint       wid_states     = 0;	// window id
-     if (!display && save_video) {
-       // we still want to output images but not show them
-       display = true;
-#ifdef __GUI__
-       set_gui_silent();
-#endif
-     }
+//      if (!display && save_video) {
+//        // we still want to output images but not show them
+//        display = true;
+// #ifdef __GUI__
+//        set_gui_silent();
+// #endif
+//      }
      // load network and weights in a forward-only parameter
      parameter<SFUNC(Tnet)> theparam;
      idx<ubyte> classes(1,1);
@@ -224,9 +225,8 @@ namespace ebl {
 #endif
 
      // select preprocessing  
-     string        cam_type        = conf.get_string("camera");
      module_1_1<SFUNC(Tnet)>* pp = NULL;
-     if (!strcmp(cam_type.c_str(), "v4l2")) // Y -> Yp
+     if (color_space == CHANS_Y) // Y -> Yp
        pp = new weighted_std_module<SFUNC(Tnet)>(norm_size, norm_size, 1,
 						   "norm", true, false, true);
      else if (color) // RGB -> YpUV
@@ -305,9 +305,11 @@ namespace ebl {
      night_mode();
      string title = "eblearn object recognition: ";
      title += _name;
-     wid  = display ? new_window(title.c_str()) : 0;
-     mout << "displaying in window " << wid << endl;
-     night_mode();
+     if (display) {
+       wid = new_window(title.c_str());
+       mout << "displaying in window " << wid << endl;
+       night_mode();
+     }
      float		zoom = 1;
      detector_gui<SFUNC(Tnet)>
        dgui(conf.exists_bool("queue1"), qstep1, qheight1,
@@ -348,6 +350,7 @@ namespace ebl {
 #ifdef __GUI__
        else { // fprop and display
 	 disable_window_updates();
+	 select_window(wid);
 	 clear_resize_window();
 	 if (mindisplay) {
 	   vector<bbox*> &bb =

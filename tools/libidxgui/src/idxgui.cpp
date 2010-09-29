@@ -81,6 +81,9 @@ namespace ebl {
   void idxgui::quit() {
     check_init();
     emit appquit();
+    // set main thread's internal bquit to true, so that it can skip
+    // for queue of messages, in case the queue is too busy.
+    gt->quit(); 
   }
 
   void idxgui::clear() {

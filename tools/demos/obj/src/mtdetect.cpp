@@ -101,8 +101,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       uint              ipp_cores     = 1;
       if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
       ipp_init(ipp_cores); // limit IPP (if available) to 1 core
-      bool		save_video    = conf.exists_true("save_video");
-      string		cam_type      = conf.get_string("camera");
+      bool		save_video    = conf.exists_true("save_video");      
       int		height        = conf.get_int("input_height");
       int		width         = conf.get_int("input_width");
       string		outdir        = "out_";
@@ -113,7 +112,19 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       outdir += tstamp();
       outdir += "/";
       mout << "Saving outputs to " << outdir << endl;
+      string viddir;
+      if (save_video) {
+	viddir << outdir << "video/";
+	mkdir_full(viddir);
+      }
 
+      string		cam_type;
+#ifdef __LINUX__ // default camera for linux if not defined
+      cam_type = "v4l2";
+#endif
+      if (conf.exists("camera"))
+	cam_type = conf.get_string("camera");
+      
       // allocate threads
       uint nthreads = 1;
       bool updated = false;
@@ -163,7 +174,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    (argv[2], height, width, conf.get_uint("input_video_sstep"),
 	     conf.get_uint("input_video_max_duration"));
 	else eblerror("expected 2nd argument");
-      } else eblerror("unknown camera type");
+      } else eblerror("unknown camera type, set \"camera\" in your .conf");
       // a camera directory may be used first, then switching to regular cam
       if (conf.exists_bool("precamera"))
 	cam2 = new camera_directory<ubyte>(conf.get_cstring("precamdir"),
@@ -242,6 +253,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #ifdef __GUI__
 	    detector_gui<t_net>::
 	      display_minimal(detframe, bboxes, classes, 0, 0, 1, 0, 0, wid);
+	    if (save_video && display) {
+	      string fname;
+	      fname << viddir << processed_fname;
+	      save_window(fname.c_str());
+	      if (!silent) mout << "saved " << fname << endl;
+	    }
 #endif
 	    // output info
 	    if (!silent) {
