@@ -258,7 +258,7 @@ namespace ebl {
 #define MSHOUR 3600000
 #define MSDAY 86400000
 #define MSWEEK 604800000
-#define MSMONTH 18144000000
+#define MSMONTH 18144000000ULL
 
   std::string timer::elapsed_ms(long milliseconds) {
     std::string sout;

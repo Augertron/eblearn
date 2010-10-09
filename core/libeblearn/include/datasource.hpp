@@ -1082,13 +1082,13 @@ namespace ebl {
     
   template <class Tnet, class Tdata, class Tlabel>
   int labeled_datasource<Tnet, Tdata, Tlabel>::get_class_id(const char *name) {
-    int id = -1;
+    int id_ = -1;
     vector<string*>::iterator i = lblstr->begin();
     for (int j = 0; i != lblstr->end(); ++i, ++j) {
       if (!strcmp(name, (*i)->c_str()))
-	id = j;
+	id_ = j;
     }
-    return id;
+    return id_;
   }
   
   ////////////////////////////////////////////////////////////////
