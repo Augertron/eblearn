@@ -54,8 +54,10 @@ namespace ebl {
   template <class Tdata>
   pascalclear_dataset<Tdata>::pascalclear_dataset(const char *name_,
 						  const char *inroot_,
-						  const char *outdir_)
-    : pascalbg_dataset<Tdata>(name_, inroot_, outdir_, 0, false, false, false) {
+						  const char *outdir_,
+						  const char *annotations)
+    : pascalbg_dataset<Tdata>(name_, inroot_, outdir_, 0, false, false, false,
+			      annotations) {
   }
 
   template <class Tdata>
@@ -104,9 +106,9 @@ namespace ebl {
 
   template <class Tdata>
   void pascalclear_dataset<Tdata>::
-  process_image(idx<ubyte> &img, vector<rect>& bboxes,
+  process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
 		const string &image_filename) {
-    vector<rect>::iterator ibb;
+    vector<rect<int> >::iterator ibb;
     ostringstream fname;
 
 #ifdef __GUI__

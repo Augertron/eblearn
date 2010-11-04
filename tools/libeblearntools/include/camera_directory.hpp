@@ -81,7 +81,7 @@ namespace ebl {
       eblerror("invalid directory");
       return false;
     }
-    out << "Found " << fl->size() << " images." << endl;
+    out << "Found " << fl->size() << " images in " << directory << endl;
     if (randomize)
       out << "Image list is randomized." << endl;
     if (npasses > 1)
@@ -107,20 +107,22 @@ namespace ebl {
     fdir = fli->first; // directory
     fname = fli->second; // file name
     ostringstream fn("");
+    if (fdir[fdir.length() - 1] != '/')
+      fdir += "/";
     if (strcmp(fdir.c_str(), ""))
-      fn << fdir << "/";
-    fn << fname << "_" << frame_id;
+      fn << fdir;
+    fn << fname; // << "_" << frame_id;
     frame_name_ = fn.str();
     if (strcmp(fdir.c_str(), "")) {
-      size_t npos = frame_name_.length() - indir.length();
-      frame_name_ = frame_name_.substr(indir.length(), npos);
+      size_t npos = frame_name_.length() - fdir.length();
+      frame_name_ = frame_name_.substr(fdir.length(), npos);
     }
     for (size_t i = 0; i < frame_name_.length(); ++i)
       if (frame_name_[i] == '/')
 	frame_name_[i] = '_';
     fli++; // move to next element
     out << frame_id << "/" << flsize << ": processing ";
-    out << fdir << "/" << fname << endl;
+    out << fdir << fname << endl;
     oss.str(""); oss << fdir << "/" << fname;
     try {
       frame = load_image<Tdata>(oss.str());
@@ -130,6 +132,21 @@ namespace ebl {
       return grab();
     }
     return this->postprocess();
+  }
+
+  template <typename Tdata>
+  void camera_directory<Tdata>::skip(uint n) {
+    if (n == 0) return ;
+    uint i;
+    for (i = 0; i < n; ++i) {
+      if (empty()) {
+	i--;
+	break ;
+      }
+      fli++;
+      frame_id++;
+    }
+    cout << "Skipped " << i << " frames." << endl;
   }
     
   template <typename Tdata>

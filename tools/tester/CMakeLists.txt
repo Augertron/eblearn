@@ -35,10 +35,10 @@ IF (CPPUNIT_FOUND) # compile only if cppunit is present
     src/IdxIteratorsTest.cpp
     src/IdxTest.cpp
     src/image_test.cpp
+    src/ebl_machines_test.cpp
     src/main.cpp
     src/MyBriefTestProgressListener.cpp
     src/MyTextOutputter.cpp
-    src/ebl_machines_test.cpp
     )
 
   # link executable with external libraries

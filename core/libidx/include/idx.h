@@ -1050,46 +1050,6 @@ namespace ebl {
   //! idxdim string concatenation operator.
   EXPORT std::string& operator<<(std::string& out, const idxdim& d);
 
-  // TODO: move into image.h when idx specializes into image
-  // TODO: templatize
-  class EXPORT rect {
-  public:
-    rect(uint h0_, uint w0_, uint height_, uint width_);
-    rect();
-    rect(const rect &r);
-    virtual ~rect();
-    //! return true if current rectangle overlaps with r.
-    bool overlap(const rect &r);
-    //! Return the overlapping area with r.
-    uint overlapping_area(const rect &r);
-    //! Returns true if current rectangle overlaps with r more than authorized
-    //! ratios hmin and wmin. The ratio is computed with overlap / smallest
-    //! rectangle.
-    //! \param hmin Minimum height overlap ratio required to declare overlap.
-    //! \param wmin Minimum width overlap ratio required to declare overlap.
-    bool min_overlap(const rect &r, float hmin, float wmin);
-    //! Returns the overlap ratio with the smallest of the 2 rectangles.
-    float min_overlap(const rect &r);
-    //! Returns true if the ratio of the overlapping area over the smallest
-    //! rectangle is more than the minarea ratio.
-    //! \param minarea Ratio of minimum area overlap required to declare
-    //!    overlap.
-    bool min_overlap(const rect &r, float minarea);
-    //! return true current rectangle is entirely contained in r.
-    bool is_within(const rect &r);
-    //! Shift rectangle's origin by h and w.
-    void shift(uint h, uint w);
-    
-    // members
-    uint h0, w0, height, width;
-
-    // friends
-    friend EXPORT std::ostream& operator<<(std::ostream& out, rect& r);
-    friend EXPORT std::ostream& operator<<(std::ostream& out, const rect& r);
-    friend rect operator/(const rect &r, double d);
-    friend rect operator*(const rect &r, double d);
-  };
-
 } // end namespace ebl
 
 ////////////////////////////////////////////////////////////////

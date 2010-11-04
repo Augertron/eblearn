@@ -67,13 +67,14 @@ namespace ebl {
       fps_video = conf.get_float("ID_VIDEO_FPS");
     cout << "Video FPS is: " << fps_video << endl;
     // extract all images from video
-    cout << "Extracting video frames..." << endl;
     cmd.str("");
-    cmd << "mplayer " << filename << " -ao null -vo png:z=0:outdir=" << dir;
+    cmd << "mplayer " << filename << " -ao null -vo pnm:outdir=" << dir;
     if (endpos > 0)
       cmd << " -endpos " << endpos;
     if (sstep > 0)
       cmd << " -sstep " << sstep;
+    cout << "Extracting video frames with command:" << endl 
+	 << cmd.str() << endl;
     ret = std::system(cmd.str().c_str());
     if (ret < 0)
       eblerror("video images extraction failed");

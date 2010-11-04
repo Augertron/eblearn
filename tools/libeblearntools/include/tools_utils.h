@@ -176,6 +176,12 @@ namespace ebl {
   //! to find the directory.
   EXPORT string dirname(const char *s);
     
+  //! Return the name of a file stripped from its root.
+  //! This is just looking for the first
+  //! directory separator from the right, this is not doing any system calls
+  //! to find the directory.
+  EXPORT string filename(const char *s);
+    
 } // end namespace ebl
 
 #include "tools_utils.hpp"

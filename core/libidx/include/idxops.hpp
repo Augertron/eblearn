@@ -1226,6 +1226,33 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////////////
   // rev_idx2*
 
+  template<class T> idx<T> idx_flip(idx<T> &m, uint n, idx<T> *m2) {
+    if (m2 == NULL) {
+      idx<T> flipped(m.get_idxdim());
+      return idx_flip(m, n, &flipped);
+    } else {
+      if (!m.same_dim(m2->get_idxdim())) {
+	eblerror("expected same dim idx in idx_flip, but got " << m
+		 << " and " << *m2);
+      } else {
+	if (n == 0) {
+	  // we reached the dimension we want to flip, flip it
+	  for (intg i = 0; i < m.dim(0); ++i) {
+	    idx<T> a = m.select(0, i);
+	    idx<T> b = m2->select(0, m.dim(0) - i - 1);
+	    idx_copy(a, b);
+	  }
+	} else {
+	  // we didn't reach the dimension to flip, call another recursion
+	  idx_bloop2(mm, m, T, mm2, *m2, T) {
+	    idx_flip(mm, n - 1, &mm2);
+	  }
+	}
+      }
+      return *m2;
+    }
+  }
+
   template<class T> void rev_idx2 (idx<T> &m) {
     idx_check_contiguous1(m);
     if (m.order() != 2)

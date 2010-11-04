@@ -34,7 +34,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   template <typename T, class Tstate>
-  stdsigmoid_module<T,Tstate>::stdsigmoid_module() : module_1_1<T,Tstate>("stdsigmoid") {
+  stdsigmoid_module<T,Tstate>::stdsigmoid_module()
+  : module_1_1<T,Tstate>("stdsigmoid") {
   }
 
   template <typename T, class Tstate>

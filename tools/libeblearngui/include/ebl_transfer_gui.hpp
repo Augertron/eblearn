@@ -29,6 +29,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#define MAXWIDTH 1000
+
 using namespace std;
 
 namespace ebl {
@@ -54,8 +56,10 @@ namespace ebl {
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.inmean.T, T) {					\
-      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += (uint) (m.dim(1) * zoom + 1);				\
+	if (w - w0 < MAXWIDTH) {					\
+	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+	  w += (uint) (m.dim(1) * zoom + 1);				\
+	}								\
       }									\
       h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
@@ -68,8 +72,10 @@ namespace ebl {
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.inzmeansq.T, T) {				\
-      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += (uint) (m.dim(1) * zoom + 1);				\
+	if (w - w0 < MAXWIDTH) {					\
+	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+	  w += (uint) (m.dim(1) * zoom + 1);				\
+	}								\
       }									\
       h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
@@ -82,8 +88,10 @@ namespace ebl {
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.invar.T, T) {					\
-      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += (uint) (m.dim(1) * zoom + 1);				\
+	if (w - w0 < MAXWIDTH) {					\
+	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+	  w += (uint) (m.dim(1) * zoom + 1);				\
+	}								\
       }									\
       h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
@@ -96,8 +104,10 @@ namespace ebl {
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.instd.T, T) {					\
-      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += (uint) (m.dim(1) * zoom + 1);				\
+	if (w - w0 < MAXWIDTH) {					\
+	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+	  w += (uint) (m.dim(1) * zoom + 1);				\
+	}								\
       }									\
       h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
@@ -110,8 +120,10 @@ namespace ebl {
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.thstd.T, T) {					\
-      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += (uint) (m.dim(1) * zoom + 1);				\
+	if (w - w0 < MAXWIDTH) {					\
+	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+	  w += (uint) (m.dim(1) * zoom + 1);				\
+	}								\
       }									\
       h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\
@@ -124,8 +136,10 @@ namespace ebl {
     w += 150;								\
     /* display image */							\
     {idx_bloop1(m, wsm.invstd.T, T) {					\
-      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += (uint) (m.dim(1) * zoom + 1);				\
+	if (w - w0 < MAXWIDTH) {					\
+	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+	  w += (uint) (m.dim(1) * zoom + 1);				\
+	}								\
       }									\
       h0 += (uint) (m.dim(0) * zoom + 1);				\
     }									\

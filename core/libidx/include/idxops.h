@@ -285,10 +285,13 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // idx_addc
+  // TODO: add inplace addc, which can be used for speed up in
+  // bias modules for example where output is the input
 
   //! add a constant to each element:  o1 <- i1+c;
   //! If c overflows the type of inp, it saturates
-  template<class T, class T2> inline void idx_addc(idx<T> &inp, T2 c, idx<T> &out);
+  template<class T, class T2>
+    inline void idx_addc(idx<T> &inp, T2 c, idx<T> &out);
 
   //! add a constant to each element:  o1 <- i1+c;
   template<class T> void idx_addc(idx<T> &inp, T c, idx<T> &out);
@@ -1047,10 +1050,10 @@ namespace ebl {
   template <typename T> 
     void idx_m2squextm2acc(idx<T> &i1, idx<T> &i2, idx<T> &o1);
 
-  //! returns sum(M1_ij * (M2_ij)^2) in the output idx0
+  //! returns sum((M1_ij)^2 * M2_ij) in the output idx0
   template <typename T> void idx_m2squdotm2(idx<T>& i1, idx<T>& i2, idx<T>& o);
 
-  //! accumulates sum(M1_ij * (M2_ij)^2) in the output idx0
+  //! accumulates sum((M1_ij)^2 * M2_ij) in the output idx0
   template <typename T> 
     void idx_m2squdotm2acc(idx<T>& i1, idx<T>& i2, idx<T>& o);
 
@@ -1114,6 +1117,10 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // Flip functions
+
+  //! flip dimension n of idx and return a new idx with the result,
+  //! or put it in m2 if specified.
+  template <typename T> idx<T> idx_flip (idx<T> &m, uint n, idx<T> *m2 = NULL);
 
   //! flip an idx2 on each dimension
   template <typename T> void rev_idx2 (idx<T> &m);

@@ -915,20 +915,21 @@
 // TODO: this does not compile
 // #ifdef __IPP_DOT__
 
-//   #define idx_dot_macro(T)						\
-//     template<> float64 idx_dot(idx<T> & in1, idx<T> & in2) {		\
-//       if (in1.contiguousp() && in2.contiguousp()) {			\
-// 	return ipp_dot(in1, in2);					\
-//       } else {								\
-// 	float64 z = 0;							\
-// 	{ idx_aloop2(pi1, in1, T, pi2, in2, T) {			\
-// 	    z += ((float64)(*pi1)) * ((float64)(*pi2));			\
-// 	  }								\
-// 	}								\
-// 	return z;							\
-//       }									\
-//     }
-
+/*
+  #define idx_dot_macro(T)						\
+    template<> float64 idx_dot(idx<T> & in1, idx<T> & in2) {		\
+      if (in1.contiguousp() && in2.contiguousp()) {			\
+	return ipp_dot(in1, in2);					\
+      } else {								\
+	float64 z = 0;							\
+	{ idx_aloop2(pi1, in1, T, pi2, in2, T) {			\
+	    z += ((float64)(*pi1)) * ((float64)(*pi2));			\
+	  }								\
+	}								\
+	return z;							\
+      }									\
+    }
+*/
 // #endif
 
 #endif /* #ifdef __IPP__ */

@@ -36,12 +36,23 @@
 #include "stl.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 namespace std {
   
   ////////////////////////////////////////////////////////////////
   // string
 
+  string strip_num(const string &str) {
+    string ret;
+    const char *s = str.c_str();
+    for (uint i = 0; i < str.size(); ++i, s++) {
+      if (!isdigit(*s))
+	ret << *s;
+    }
+    return ret;
+  }
+  
 #ifdef __NOSTL__
   
   string::string() : s(NULL) {
@@ -177,16 +188,16 @@ namespace std {
     return *this;					  \
   }
 
-  CONCAT_SPRINTF(void*, "%p", void*);
-  CONCAT_SPRINTF(int, "%d", int);
-  CONCAT_SPRINTF(uint, "%u", uint);
-  CONCAT_SPRINTF(char, "%c", char);
-  CONCAT_SPRINTF(float, "%f", float);
-  CONCAT_SPRINTF(double, "%f", double);
-  CONCAT_SPRINTF(long, "%ld", long);
-  CONCAT_SPRINTF(unsigned char, "%c", unsigned char);
+  CONCAT_SPRINTF(void*, "%p", void*)
+  CONCAT_SPRINTF(int, "%d", int)
+  CONCAT_SPRINTF(uint, "%u", uint)
+  CONCAT_SPRINTF(char, "%c", char)
+  CONCAT_SPRINTF(float, "%f", float)
+  CONCAT_SPRINTF(double, "%f", double)
+  CONCAT_SPRINTF(long, "%ld", long)
+  CONCAT_SPRINTF(unsigned char, "%c", unsigned char)
 #ifndef __ANDROID__
-  CONCAT_SPRINTF(size_t, "%u", uint);
+  CONCAT_SPRINTF(size_t, "%u", uint)
 #endif
   
 #else // extending STL
@@ -200,16 +211,16 @@ namespace std {
     return e;						  \
   }
 
-  CONCAT_SPRINTF(void*, "%p", void*);
-  CONCAT_SPRINTF(int, "%d", int);
-  CONCAT_SPRINTF(uint, "%u", uint);
-  CONCAT_SPRINTF(char, "%c", char);
-  CONCAT_SPRINTF(float, "%f", float);
-  CONCAT_SPRINTF(double, "%f", double);
-  CONCAT_SPRINTF(long, "%ld", long);
-  CONCAT_SPRINTF(unsigned char, "%c", unsigned char);
+  CONCAT_SPRINTF(void*, "%p", void*)
+  CONCAT_SPRINTF(const int, "%d", const int)
+  CONCAT_SPRINTF(const uint, "%u", const uint)
+  CONCAT_SPRINTF(const char, "%c", const char)
+  CONCAT_SPRINTF(const float, "%f", const float)
+  CONCAT_SPRINTF(const double, "%f", const double)
+  CONCAT_SPRINTF(const long, "%ld", const long)
+  CONCAT_SPRINTF(const unsigned char, "%c", const unsigned char)
 #ifndef __ANDROID__
-  CONCAT_SPRINTF(size_t, "%u", uint);
+  CONCAT_SPRINTF(const size_t, "%u", const uint)
 #endif
   
 #endif
@@ -297,17 +308,17 @@ namespace std {
     return *this;						  \
   }
 
-  CONCAT_FPRINTF(void*, "%p", void*);
-  CONCAT_FPRINTF(int, "%d", int);
-  CONCAT_FPRINTF(uint, "%u", uint);
-  CONCAT_FPRINTF(char, "%c", char);
-  CONCAT_FPRINTF(float, "%f", float);
-  CONCAT_FPRINTF(double, "%f", double);
-  CONCAT_FPRINTF(short, "%d", int);
-  CONCAT_FPRINTF(long, "%ld", long);
-  CONCAT_FPRINTF(unsigned char, "%c", unsigned char);
+  CONCAT_FPRINTF(void*, "%p", void*)
+  CONCAT_FPRINTF(int, "%d", int)
+  CONCAT_FPRINTF(uint, "%u", uint)
+  CONCAT_FPRINTF(char, "%c", char)
+  CONCAT_FPRINTF(float, "%f", float)
+  CONCAT_FPRINTF(double, "%f", double)
+  CONCAT_FPRINTF(short, "%d", int)
+  CONCAT_FPRINTF(long, "%ld", long)
+  CONCAT_FPRINTF(unsigned char, "%c", unsigned char)
 #ifndef __ANDROID__
-  CONCAT_FPRINTF(size_t, "%u", uint);
+  CONCAT_FPRINTF(size_t, "%u", uint)
 #endif
   
 #endif /* __NOSTL__ */

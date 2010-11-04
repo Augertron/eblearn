@@ -35,6 +35,8 @@
 #include "libidxgui.h"
 #include "ebl_arch.h"
 
+#define MAXWIDTH 1000
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////

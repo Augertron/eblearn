@@ -87,6 +87,15 @@ test:
 	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
 	&& make tester && cd ../.. && ../bin/tester
 
+mtdetect:
+	@echo __________________________________________________________________
+	@echo
+	@echo "Compiling mtdetect in release mode..."
+	@echo __________________________________________________________________
+	mkdir -p build/Release 2> /dev/null
+	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
+	&& make mtdetect
+
 debug:
 	@echo __________________________________________________________________
 	@echo

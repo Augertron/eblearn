@@ -34,4 +34,52 @@
 
 namespace ebl {
 
+  ubyte bbox_colors[12][3] = {
+    {0,0,255}, // blue
+    {0,255,0}, // green
+    {255,0,0}, // red
+    {255,255,255}, // white
+    {0,255,255}, // light blue
+    {255,0,255}, // pink
+    {255,255,0}, // yellow
+    {255,128,0}, // orange
+    {0,128,255}, // medium blue
+    {128,0,255}, // blue/pink
+    {0,128,128}, // blue/green
+    {128,128,128} // gray
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // bbox parts
+
+  void draw_bbox(bbox &bb, idx<ubyte> &labels, uint h0, uint w0, double dzoom) {
+    ostringstream label;
+    int classid, colorid;
+    classid = bb.class_id;
+    colorid = classid % (sizeof (bbox_colors) / 3);
+    uint h = (uint) (dzoom * bb.h0);
+    uint w = (uint) (dzoom * bb.w0);
+    label.str("");
+    label.precision(2);
+    label << (classid < labels.dim(0) ?(const char*)labels[classid].idx_ptr() : "****") 
+	  << " " << bb.confidence;
+    draw_box(h0 + h, w0 + w, (uint) (dzoom * bb.height), 
+	     (uint) (dzoom * bb.width), bbox_colors[colorid][0],
+	     bbox_colors[colorid][1], bbox_colors[colorid][2],
+	     new string((const char *)label.str().c_str()));
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // bbox parts
+
+  void draw_bbox_parts(bbox_parts &bb, idx<ubyte> &labels, uint h0, uint w0,
+		       double dzoom) {
+    std::vector<bbox_parts> &parts = bb.get_parts();
+    for(uint i = 0; i < parts.size(); ++i) {
+      bbox_parts &p = parts[i];
+      draw_bbox(p, labels, h0, w0, dzoom); // draw part
+      draw_bbox_parts(p, labels, h0, w0, dzoom); // explore sub parts
+    }
+  }
+
 } // end namespace ebl

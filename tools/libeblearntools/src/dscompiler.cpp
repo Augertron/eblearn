@@ -92,13 +92,22 @@ bool            load_set         = false;
 float           bboxfact         = 1.0;
 float           bboxhfact        = 1.0;
 float           bboxwfact        = 1.0;
+float           bbox_woverh      = 1.0;
 bool            bboxfact_set     = false;
 bool            bboxhfact_set     = false;
 bool            bboxwfact_set     = false;
+bool            bbox_woverh_set  = false;
 bool            force_label      = false;
 bool            nopadded         = false;
 string          label            = "";
 idxdim          gridsz;
+string          annotations;
+uint            hjitter          = 0; // add vertically shifted samples
+uint            wjitter          = 0; // add horizontally shifted samples
+uint            nsjitter         = 0; // number of possible scale jitters
+float           sjitter          = 0; // scale jitter range around original
+uint            njitter          = 0; // number of jitters (including original)
+bool            wmirror          = false; // add symmetry with vertical axis
 
 ////////////////////////////////////////////////////////////////
 // command line
@@ -132,10 +141,15 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-image_pattern") == 0) {
 	++i; if (i >= argc) throw 0;
 	image_pattern = argv[i];
+      } else if (strcmp(argv[i], "-annotations") == 0) {
+	++i; if (i >= argc) throw 0;
+	annotations = argv[i];
       } else if (strcmp(argv[i], "-disp") == 0) {
 	display = true;
       } else if (strcmp(argv[i], "-nopp") == 0) {
 	preprocessing = true;
+      } else if (strcmp(argv[i], "-wmirror") == 0) {
+	wmirror = true;
       } else if (strcmp(argv[i], "-ignore_difficult") == 0) {
 	ignore_difficult = true;
       } else if (strcmp(argv[i], "-ignore_truncated") == 0) {
@@ -268,6 +282,16 @@ bool parse_args(int argc, char **argv) {
 	scales = string_to_doublevector(s);
 	scale_mode = true;
 	preprocessing = true;
+      } else if (strcmp(argv[i], "-jitter") == 0) {
+	++i; if (i >= argc) throw 0;
+	vector<double> l = string_to_doublevector(argv[i]);
+	if (l.size() != 5)
+	  eblerror("expected 5 arguments to -jitter, found " << l.size());
+	hjitter = (uint) l[0];
+	wjitter = (uint) l[1];
+	nsjitter = (uint) l[2];
+	sjitter = (float) l[3];
+	njitter = (uint) l[4];
       } else if (strcmp(argv[i], "-forcelabel") == 0) {
 	++i; if (i >= argc) throw 0;
 	label = argv[i];
@@ -286,6 +310,10 @@ bool parse_args(int argc, char **argv) {
 	++i; if (i >= argc) throw 0;
 	bboxwfact = (float) atof(argv[i]);
 	bboxwfact_set = true;
+      } else if (strcmp(argv[i], "-bbox_woverh") == 0) {
+	++i; if (i >= argc) throw 0;
+	bbox_woverh = (float) atof(argv[i]);
+	bbox_woverh_set = true;
       } else if ((strcmp(argv[i], "-help") == 0) ||
 		 (strcmp(argv[i], "-h") == 0)) {
 	return false;
@@ -327,6 +355,7 @@ void print_usage() {
   cout << "     grid: extract non-overlapping cells from each image."
        << "       cell sizes are determined by -gridsz option"<<endl;
   cout << "  -precision <float(default)|double>" << endl;
+  cout << "  -annotations <directory>" << endl;
   cout << "  -image_pattern <pattern>" << endl;
   cout << "     default: " << IMAGE_PATTERN_MAT << endl;
   cout << "  -channels <channel>" << endl;
@@ -361,6 +390,7 @@ void print_usage() {
   cout << endl;
   cout << "  -bboxwfact <float factor> (multiply bboxes width by a factor)";
   cout << endl;
+  cout << "  -bbox_woverh <float factor> (force w to be h * this factor)"<<endl;
   cout << "  -resize <mean(default)|gaussian|bilinear" << endl; 
   cout << "  -exclude <class name> (include all but excluded classes," << endl;
   cout << "                         exclude can be called multiple times)";
@@ -379,6 +409,13 @@ void print_usage() {
   cout << "  -ignore_occluded (ignore sample if \"occluded\" flag is on)";
   cout << endl;
   cout << "  -nopadded (ignore padded image too small for target size)" << endl;
+  cout << "  -jitter <h>,<w>,<nscales>,<scale range>,<n>" << endl
+       << "   (add n samples randomly jittered from spatial neighborhood hxw "
+       << "and nscales within scale_range around original location/scale)"
+       << endl;
+  cout << "  -wmirror (add mirrored sample using vertical-axis symmetry)"
+       << endl;
+  cout << "  -forcelabel <label name>" << endl;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -387,9 +424,12 @@ void print_usage() {
 template <class Tds>
 void compile_ds(Tds &ds, bool imgpat = true) {
   ds.set_outdir(outdir);
+  if (wmirror) ds.set_wmirror();
+  if (njitter > 0) ds.set_jitter(hjitter, wjitter, nsjitter, sjitter, njitter);
   if (bboxfact_set) ds.set_bboxfact(bboxfact);
   if (bboxhfact_set) ds.set_bboxhfact(bboxhfact);
   if (bboxwfact_set) ds.set_bboxwfact(bboxwfact);
+  if (bbox_woverh_set) ds.set_bbox_woverh(bbox_woverh);
   if (usepose) ds.use_pose();
   if (useparts) ds.use_parts();
   if (partsonly) ds.use_parts_only();
@@ -430,13 +470,14 @@ void compile() {
   else if (!strcmp(type.c_str(), "pascal")) {
     pascal_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
 			     ignore_difficult, ignore_truncated,
-			     ignore_occluded);
+			     ignore_occluded, annotations.c_str());
     compile_ds(ds);
   }
   else if (!strcmp(type.c_str(), "pascalbg")) {
     pascalbg_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
 			       outdir.c_str(), maxperclass, ignore_difficult,
-			       ignore_truncated, ignore_occluded); 
+			       ignore_truncated, ignore_occluded,
+			       annotations.c_str()); 
     if (useparts) ds.use_parts();
     if (partsonly) ds.use_parts_only();
     ds.set_exclude(exclude);
@@ -456,7 +497,7 @@ void compile() {
   }
   else if (!strcmp(type.c_str(), "pascalclear")) {
     pascalclear_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
-				  outdir.c_str());
+				  outdir.c_str(), annotations.c_str());
     if (useparts) ds.use_parts();
     if (partsonly) ds.use_parts_only();
     ds.set_exclude(exclude);
@@ -476,7 +517,7 @@ void compile() {
   }
   else if (!strcmp(type.c_str(), "pascalfull")) {
     pascalfull_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
-				 outdir.c_str());
+				 outdir.c_str(), annotations.c_str());
     if (useparts) ds.use_parts();
     if (partsonly) ds.use_parts_only();
     ds.set_exclude(exclude);
@@ -527,8 +568,10 @@ MAIN_QTHREAD(int, argc, char**, argv) {
       cout << "  dataset type: " << type << endl;
       cout << "  dataset precision: " << precision << endl;
       cout << "  images root directory: " << images_root << endl;
+      cout << "  annotations directory: " << annotations << endl;
       cout << "  output directory: " << outdir << endl;
-      cout << "  outputs: " << outdir << "/" << dataset_name << "_*.mat" << endl;
+      cout << "  outputs: " << outdir << "/" << dataset_name << "_*.mat"
+	   << endl;
       cout << "  images pattern: " << image_pattern << endl;
       cout << "  channels mode: " << channels_mode.c_str() << endl;
       cout << "  preprocessing: " << (preprocessing ? "yes" : "no") << endl;
@@ -544,7 +587,8 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 	cout << "    stereo right pattern: " << stereo_rpattern << endl;
       }
       cout << "  max per class limitation: ";
-      if (maxperclass > 0) cout << maxperclass; else cout << "none"; cout << endl;
+      if (maxperclass > 0) cout << maxperclass; else cout << "none";
+      cout << endl;
       cout << "  max data limitation: ";
       if (maxdata > 0) cout << maxdata; else cout << "none"; cout << endl;
       cout << "  mexican_hat_size: " << mexican_hat_size << endl;

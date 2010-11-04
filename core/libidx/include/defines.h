@@ -101,6 +101,11 @@
   }
 #endif
 
+#define eblcatch()					\
+    catch(ebl::eblexception &e) {			\
+      cerr << e << endl;				\
+    }
+
 #if defined(__ANDROID__) ///////////////////////////////////////////////////
 
 #include <android/log.h>

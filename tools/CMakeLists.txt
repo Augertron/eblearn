@@ -31,11 +31,11 @@ IF ($ENV{NOSTL})
 ENDIF ($ENV{NOSTL})   
 
 # MPI
-IF ($ENV{USEMPI})
-   MESSAGE(STATUS "Compiling with MPI compiler")
+IF ($ENV{USEMPI} AND NOT $ENV{NOMPI})
    SET(CMAKE_CXX_COMPILER "mpicxx")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -shared-intel -O3 -fPIC -align -Zp8 -axP -unroll -ip -xP -vec-report -par-report -openmp-report")
-ENDIF ($ENV{USEMPI})
+   MESSAGE(STATUS "Compiling with MPI compiler ${CMAKE_CXX_COMPILER}")
+ENDIF ($ENV{USEMPI} AND NOT $ENV{NOMPI})
 
 # check for required and optional external packages
 FIND_PACKAGE(All)
@@ -117,17 +117,33 @@ SET(LIBIDXGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libidxgui/include)
 
 # link macros
 ################################################################################
-MACRO(LINK_BOOST project)
-IF (Boost_FOUND)
-#  IF (${Boost_MINOR_VERSION} GREATER 34)
-    TARGET_LINK_LIBRARIES(${project} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-#  ELSE(${Boost_MINOR_VERSION} GREATER 34)
-#    TARGET_LINK_LIBRARIES(${project} ${Boost_FILESYSTEM_LIBRARY} 
-#      ${Boost_REGEX_LIBRARY})
-#  ENDIF (${Boost_MINOR_VERSION} GREATER 34)
-ENDIF (Boost_FOUND)
+MACRO(LINK_BOOST project component)
+STRING(TOUPPER "${component}" COMP)
+IF (Boost_${COMP}_FOUND)
+    TARGET_LINK_LIBRARIES(${project} ${Boost_${COMP}_LIBRARY})
+ENDIF (Boost_${COMP}_FOUND)
 ENDMACRO(LINK_BOOST)
 
+MACRO(LINK_QT project component)
+IF (QT_FOUND)
+    TARGET_LINK_LIBRARIES(${project} ${component})
+ENDIF (QT_FOUND)
+ENDMACRO(LINK_QT)
+
+MACRO(LINK_OPENCV project component)
+IF (OpenCV_FOUND)
+    TARGET_LINK_LIBRARIES(${project} ${component})
+ENDIF (OpenCV_FOUND)
+ENDMACRO(LINK_OPENCV)
+
+MACRO(LINK_XML project)
+IF (XML_FOUND)
+    TARGET_LINK_LIBRARIES(${project} ${XML_LIBRARY_FLAGS})
+ENDIF (XML_FOUND)
+ENDMACRO(LINK_XML)
+
+# subdirectories
+################################################################################
 ADD_SUBDIRECTORY(../core/libidx
   ${CMAKE_CURRENT_SOURCE_DIR}/../core/build/${CMAKE_BUILD_TYPE}/libidx)
 ADD_SUBDIRECTORY(../core/libeblearn

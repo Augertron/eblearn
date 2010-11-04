@@ -103,10 +103,18 @@ namespace ebl {
     save_mode = DATASET_SAVE;
     bboxhfact = 1.0;
     bboxwfact = 1.0;
+    bbox_woverh = 0.0; // 0.0 means not set
     force_label = "";
     nclasses = 0;
     add_errors = 0;
     nopadded = false;
+    wmirror = false;
+    // jitter
+    hjitter = 0;
+    wjitter = 0;
+    nsjitter = 0;
+    sjitter = 0;
+    njitter = 0;
 #ifndef __BOOST__
     eblerror(BOOST_LIB_ERROR);
 #endif
@@ -133,6 +141,16 @@ namespace ebl {
     if (!this->count_samples())
       eblerror("failed to count samples to be compiled");
     cout << "Found: " << total_samples << " total samples." << endl;
+    if (njitter > 0) {
+      total_samples *= njitter;
+      cout << "Jitter is on with " << njitter << " jitters per sample, "
+	   << "bringing total samples to " << total_samples << endl;
+    }
+    if (wmirror) {
+      total_samples *= 2;
+      cout << "Vertical-axis mirroring is on, "
+	   << "bringing total samples to " << total_samples << endl;
+    }
     if (total_samples == 0)
       return false;
     if (classes.size() == 0)
@@ -495,7 +513,8 @@ namespace ebl {
       n = (std::max)((intg) 0, MIN(n, idx_sum(max_per_class)));
     cout << "Allocating dataset \"" << name << "\" with " << n;
     cout << " samples of size " << d << " (" 
-	 << (n * d.nelements() * sizeof (Tdata)) / (1024 * 1024) << " Mb) ..." << endl;
+	 << (n * d.nelements() * sizeof (Tdata)) / (1024 * 1024)
+	 << " Mb) ..." << endl;
     if (n <= 0) {
       cerr << "Cannot allocate " << n << " samples." << endl;
       return false;
@@ -562,57 +581,97 @@ namespace ebl {
   template <class Tdata>
   bool dataset<Tdata>::add_data(idx<Tdata> &dat, const t_label label,
 				const string *class_name,
-				const char *filename, const rect *r) { 
-    // check for errors
-    if (!allocated) {
-      cerr << "error: dataset has not been allocated, cannot add data." <<endl;
+				const char *filename, const rect<int> *r,
+				pair<uint,uint> *center) {
+#ifdef __DEBUG__
+    cout << "Adding image " << dat << " with label " << label;
+    if (class_name) cout << ", class name " << *class_name;
+    if (r) cout << ", ROI " << *r;
+    if (center) cout << ", center " << center->first << "," << center->second;
+    cout << " from " << (filename?filename:"") << endl;
+#endif
+    try {
+      // check for errors
+      if (!allocated)
+	eblthrow("dataset has not been allocated, cannot add data.");
+      // check that input is bigger than minimum dimensions allowed
+      if ((dat.dim(0) < mindims.dim(0))
+	  || (r && (r->height < (uint) mindims.dim(0)))
+	  || (dat.dim(1) < mindims.dim(1))
+	  || (r && (r->width < (uint) mindims.dim(1))))
+	eblthrow("not adding " << *class_name << " from " 
+		 << (filename?filename:"")
+		 << ": smaller than minimum dimensions (" << dat << " < " 
+		 << mindims << ")");
+      // check that class exists (may not exist if excluded)
+      if (classes.size() > 0 && 
+	  find(classes.begin(), classes.end(), *class_name) == classes.end())
+	eblthrow("not adding " << *class_name << " from " 
+		 << (filename?filename:"") << ", this class is excluded.");
+      // draw random jitter
+      vector<jitter> jitt;
+      if (njitter > 0) {
+	// draw last n random pairs
+	for (uint i = 0; i < njitter; ++i) {
+	  if (random_jitter.size() == 0) // refill vector of random jitters
+	    compute_random_jitter();
+	  jitt.push_back(random_jitter.back());
+	  random_jitter.pop_back();
+	}
+      }
+      if (jitt.size() == 0)
+	jitt.push_back(jitter(0,0,1.0)); // no jitter
+      // add all jittered samples
+      vector<jitter>::iterator ijit;
+      for (ijit = jitt.begin(); ijit != jitt.end(); ++ijit) {
+	// check for capacity
+	if (!strcmp(save_mode.c_str(), DATASET_SAVE) && full(label))
+	  // reached full capacity
+	  eblthrow("not adding " << *class_name << " from " 
+		   << (filename?filename:"")
+		   << ", reached full capacity for this class.");
+	// copy data into target type
+	idxdim d(dat);
+	idx<Tdata> sample(d);
+	idx_copy(dat, sample);
+	// do preprocessing
+	if (do_preprocessing)
+	  sample = preprocess_data(sample, class_name, true, filename, r, 0,
+				   true, NULL, center, &(*ijit));
+	// add mirrors
+	if (wmirror) {
+	  // flip using vertical axis
+	  idx<Tdata> flipped = idx_flip(sample, 1);
+	  cout << "(vertical-axis mirror) ";
+	  add_data2(flipped, label, class_name, filename, &(*ijit));	  
+	}
+	// add/save sample
+	add_data2(sample, label, class_name, filename, &(*ijit));
+      }
+      return true;
+    } catch(eblexception &e) {
+      cerr << "warning: " << e << endl;
       return false;
     }
-    // check that input is bigger than minimum dimensions allowed
-    if ((dat.dim(0) < mindims.dim(0))
-	|| (r && (r->height < (uint) mindims.dim(0)))
-	|| (dat.dim(1) < mindims.dim(1))
-	|| (r && (r->width < (uint) mindims.dim(1)))) {
-      cerr << "warning: not adding " << *class_name << " from " << filename
-	   << ": smaller than minimum dimensions (" << dat << " < " 
-	   << mindims << ")" << endl;
-      return false;
-    }
-    // check that class exists (may not exist if excluded)
-    if (classes.size() > 0 && 
-	find(classes.begin(), classes.end(), *class_name) == classes.end()) {
-      cerr << "warning: not adding " << *class_name << " from " << filename
-	   << ", this class is excluded." << endl;
-      return false;
-    }
+  }
+
+  template <class Tdata>
+  void dataset<Tdata>::add_data2(idx<Tdata> &sample, t_label label,
+				 const string *class_name,
+				 const char *filename, jitter *jitt) {
     // check for capacity
-    if (!strcmp(save_mode.c_str(), DATASET_SAVE) && full(label)) { // reached full capacity
-      cerr << "warning: not adding " << *class_name << " from " << filename
-	   << ", reached full capacity for this class." << endl;
-      return false;
-    }
-    // increase counter for that class
-    add_tally.set(add_tally.get(label) + 1, label);
-    // print info
-    cout << data_cnt+1 << ": add ";
-    cout << (filename ? filename : "sample" );
-    if (class_name)
-      cout << " as " << *class_name;
-    cout << " (" << label << ")" << endl;
-    // copy data into target type
-    idxdim d(dat);
-    idx<Tdata> sample(d);
-    idx_copy(dat, sample);
-    // do preprocessing
-    if (do_preprocessing)
-      sample = preprocess_data(sample, class_name, true, filename, r);
+    if (!strcmp(save_mode.c_str(), DATASET_SAVE) && full(label))
+      // reached full capacity
+      eblthrow("not adding " << (class_name?*class_name:"sample")
+	       << " from " << (filename?filename:"")
+	       << ", reached full capacity for this class.");
     // check for dimensions
     if (!sample.same_dim(outdims) && !no_outdims) {
       idxdim d2(sample);
       d2.setdim(2, outdims.dim(2)); // try with same # of channels
       if (d2 == outdims) {
 	// same size except for the channel dimension, replicate it
-	cout << "warning: duplicating image channel (" << sample;
+	cout << "duplicating image channel (" << sample;
 	cout << ") to fit target (" << outdims << ")." << endl;
 	idx<Tdata> sample2(d2);
 	idx_bloop2(samp2, sample2, Tdata, samp, sample, Tdata) {
@@ -625,13 +684,22 @@ namespace ebl {
 	  }
 	}
 	sample = sample2;
-      } else {
-	cerr << "error: expected data with dimensions " << outdims;
-	cerr << " but found " << sample.get_idxdim() << endl;
-	return false;
-      }
+      } else
+	eblthrow("expected data with dimensions " << outdims
+		 << " but found " << sample.get_idxdim());
     }
-    // if save_mode is dataset, copy to dataset, otherwise save individual file
+    // increase counter for that class
+    add_tally.set(add_tally.get(label) + 1, label);
+    // print info
+    cout << data_cnt+1 << ": add ";
+    cout << (filename ? filename : "sample" );
+    if (class_name)
+      cout << " as " << *class_name;
+    cout << " (" << label << ")";
+    if (jitt)
+      cout << " (jitter " << jitt->h << "," << jitt->w << "," << jitt->s << ")";
+    cout << endl;
+    // if save_mode is dataset, cpy to dataset, otherwise save individ file
     if (!strcmp(save_mode.c_str(), DATASET_SAVE)) { // dataset mode
       // put sample's channels dimensions first, if interleaved.
       if (interleaved_input)
@@ -647,20 +715,22 @@ namespace ebl {
       fname << outdir << "/" << get_class_string(label) << "/";
       mkdir_full(fname.str().c_str());
       // save image
-      fname << get_class_string(label) << "_" << data_cnt << "." << save_mode;
-//       // scale image to 0 255 if preprocessed
-//       if (strcmp(ppconv_type.c_str(), "RGB")) {
-// 	idx_addc(tmp, (Tdata) 1.0, tmp);
-// 	idx_dotc(tmp, (Tdata) 127.5, tmp);
-//       }
+      fname << get_class_string(label) << "_" << data_cnt << "."<<save_mode;
+      //       // scale image to 0 255 if preprocessed
+      //       if (strcmp(ppconv_type.c_str(), "RGB")) {
+      // 	idx_addc(tmp, (Tdata) 1.0, tmp);
+      // 	idx_dotc(tmp, (Tdata) 127.5, tmp);
+      //       }
       if (save_image(fname.str(), sample, save_mode.c_str()))
 	cout << "  saved " << fname.str() << " (" << sample << ")" << endl;
     }
+    // copy label
+    if (labels.dim(0) > data_cnt)
+      labels.set(label, data_cnt);
     // increment data count
     data_cnt++;
-    return true;
   }
-    
+  
   template <class Tdata>
   bool dataset<Tdata>::add_class(const string &class_name) {
     vector<string>::iterator res;
@@ -830,6 +900,12 @@ namespace ebl {
   }
     
   template <class Tdata>
+  void dataset<Tdata>::set_bbox_woverh(float factor) {
+    bbox_woverh = factor;
+    cout << "Forcing width to be h * " << bbox_woverh << endl;
+  }
+    
+  template <class Tdata>
   void dataset<Tdata>::set_nopadded(bool nopadded_) {
     nopadded = nopadded_;
     if (nopadded)
@@ -837,6 +913,25 @@ namespace ebl {
 	   << " small for target size." << endl;
   }
   
+  template <class Tdata>
+  void dataset<Tdata>::set_jitter(uint h, uint w, uint ns, float s, uint n) {
+    hjitter = h;
+    wjitter = w;
+    nsjitter = ns;
+    sjitter = s;
+    njitter = n;
+    cout << "Adding " << n << " samples randomly jittered over a " << h
+	 << "x" << w << " neighborhood and over " << nsjitter << " scales"
+	 << " within a " << sjitter << " scale range around original location"
+	 << "/scale" << endl;
+  }
+  
+  template <class Tdata>
+  void dataset<Tdata>::set_wmirror() {
+    wmirror = true;
+    cout << "Adding vertical-axis mirror." << endl;
+  }
+      
   template <class Tdata>
   void dataset<Tdata>::use_pose() {
     usepose = true;
@@ -906,16 +1001,18 @@ namespace ebl {
     // samples to dataset 1 and the remaining to dataset 2.
     vector<intg> ids;
     idx<Tdata> sample;
+    t_label label;
     for (intg i = 0; i < data.dim(0); ++i) ids.push_back(i);
     random_shuffle(ids.begin(), ids.end());
     for (vector<intg>::iterator i = ids.begin(); i != ids.end(); ++i) {
       sample = data[*i];
+      label = labels.get(*i);
       cout << "(original index " << *i << ") ";
-      if (!ds1.add_data(sample, labels.get(*i), 
-			classes.size() ?
-			&(classes[(size_t)labels.get(*i)]) : NULL))
-	ds2.add_data(sample, labels.get(*i), 
-		     classes.size() ? &(classes[(size_t)labels.get(*i)]):NULL);
+      if (ds1.full(label) || 
+	  !ds1.add_data(sample, label, 
+			classes.size() ? &(classes[(size_t)label]) : NULL))
+	ds2.add_data(sample, label, 
+		     classes.size() ? &(classes[(size_t)label]):NULL);
     }
     ds1.data_cnt = idx_sum(ds1.add_tally);
     ds2.data_cnt = idx_sum(ds2.add_tally);
@@ -1021,37 +1118,37 @@ namespace ebl {
   template <class Tdata>
   idx<Tdata> dataset<Tdata>::
   preprocess_data(idx<Tdata> &dat, const string *class_name, bool squared,
-		  const char *filename, const rect *r, double scale,
-		  bool active_sleepd, rect *outr) {
+		  const char *filename, const rect<int> *r, double scale,
+		  bool active_sleepd, rect<int> *outr,
+		  pair<uint,uint> *center, jitter *jitt) {
     // input region
-    rect inr(0, 0, dat.dim(0), dat.dim(1));
+    rect<int> inr(0, 0, dat.dim(0), dat.dim(1));
     if (r) inr = *r;
-    // multiply input region by factor
-    if (bboxhfact != 1.0 || bboxwfact != 1.0) {
-      int addh = (int) (inr.height * (bboxhfact - 1.0));
-      int addw = (int) (inr.width * (bboxwfact - 1.0));
-      inr.h0 =(std::max)((intg)0, MIN(dat.dim(0) - 1, ((int) inr.h0) - addh/2));
-      inr.w0 =(std::max)((intg)0, MIN(dat.dim(1) - 1, ((int) inr.w0) - addw/2));
-      inr.height += addh;
+    // multiply input region by factor (keeping same center)
+    if (bboxhfact != 1.0 || bboxwfact != 1.0)
+      inr.scale_centered(bboxhfact, bboxwfact);
+    // force width to be h * bbox_woverh
+    if (bbox_woverh > 0) {
+      int addw = (int) (inr.height * bbox_woverh - inr.width);
+      inr.w0 -= addw/2;
       inr.width += addw;
-      if (inr.h0 + inr.height > (uint) dat.dim(0))
-	inr.height -= inr.h0 + inr.height - dat.dim(0);
-      if (inr.w0 + inr.width > (uint) dat.dim(1))
-	inr.width -= inr.w0 + inr.width - dat.dim(1);
     }
     // resize image to target dims
-    rect out_region, cropped;
+    rect<int> out_region, cropped;
     idxdim d(outdims);
     idx<Tdata> resized;
+    // add jitter
+    if (jitt)
+      resizepp->set_jitter(jitt->h, jitt->w, jitt->s);
     // default dimensions are same as input
     resizepp->set_dimensions(inr.height, inr.width);
     if (!no_outdims)
       resizepp->set_dimensions(outdims.dim(0), outdims.dim(1));
-    if (scale > 0) { // resize entire image at specific scale
+    if (scale > 0) // resize entire image at specific scale
       resizepp->set_dimensions((uint) (outdims.dim(0) * scale), 
-			       (uint) (outdims.dim(1) * scale));
-      resizepp->set_input_region(inr);
-    } else if (bboxhfact != 1.0 || bboxwfact != 1.0) // resize if factor
+    			       (uint) (outdims.dim(1) * scale));
+    //   resizepp->set_input_region(inr);
+    // } else if (bboxhfact != 1.0 || bboxwfact != 1.0) // resize if factor
       resizepp->set_input_region(inr);
     idx<Tdata> tmp = dat.shift_dim(2, 0);
     fstate_idx<Tdata> in(tmp.get_idxdim()), out(1,1,1);
@@ -1116,6 +1213,10 @@ namespace ebl {
       if (class_name)
 	oss << *class_name;
       draw_matrix(dat, oss.str().c_str(), h, w);
+      // draw object's center
+      if (center)
+	draw_box(h + center->second - 5, w + center->first - 5, 10, 10,
+		 0, 0, 255);
       // draw object's original box
       if (r)
 	draw_box(h + r->h0, w + r->w0, r->height, r->width, 255, 0, 0);
@@ -1126,8 +1227,10 @@ namespace ebl {
       oss.str("");
       // display object
       idx<Tdata> obj = dat;
-      obj = obj.narrow(dh, inr.height, inr.h0);
-      obj = obj.narrow(dw, inr.width, inr.w0);
+      int offh = std::max((int)0, inr.h0);
+      int offw = std::max((int)0, inr.w0);
+      obj = obj.narrow(dh, std::min((int)obj.dim(0) - offh, inr.height), offh);
+      obj = obj.narrow(dw, std::min((int)obj.dim(1) - offw, inr.width), offw);
       // display object
       if (class_name)
 	oss << *class_name << " ";
@@ -1156,7 +1259,7 @@ namespace ebl {
     if (nclasses > 0) {
       class_tally = idx<intg>(nclasses);
       idx_clear(class_tally);
-      for (intg i = 0; i < data_cnt; ++i) {
+      for (intg i = 0; i < data_cnt && i < labels.dim(0); ++i) {
 	class_tally.set(class_tally.get(labels.get(i)) + 1,
 			(intg) labels.get(i));
       }
@@ -1224,10 +1327,10 @@ namespace ebl {
 				   const string &class_name_) {
 #ifdef __BOOST__
     string class_name = class_name_;
-    t_label label = get_label_from_class(class_name);
     // if force label is on, replace label by force_label
     if (strcmp(force_label.c_str(), ""))
       class_name = force_label;
+    t_label label = get_label_from_class(class_name);
     cmatch what;
     regex r(ext);
     path p(dir);
@@ -1249,7 +1352,8 @@ namespace ebl {
 // 	  if (scale_mode) // saving image at different scales
 // 	    save_scales(load_img, itr->leaf());
 // 	  else // adding data to dataset
-	  this->add_data(load_img, label, &class_name, itr->path().string().c_str());
+	  this->add_data(load_img, label, &class_name,
+			 itr->path().string().c_str());
 	} catch(const char *err) {
 	  cerr << "error: failed to add " << itr->path().string();
 	  cerr << ": " << endl << err << endl;
@@ -1267,7 +1371,29 @@ namespace ebl {
   void dataset<Tdata>::load_data(const string &fname) {
     load_img = load_image<Tdata>(fname.c_str());
   }  
-  
+
+  template <class Tdata>
+  void dataset<Tdata>::compute_random_jitter() {
+    // compute all possible jitters
+    random_jitter.clear();
+    // min/max scale jitter
+    float min_sjitt = 1.0 - sjitter / 2;
+    float max_sjitt = 1.0 + sjitter / 2;
+    // scale step
+    float sstep = sjitter / std::max((int) 0, (int) nsjitter - 1);
+    for (float sj = min_sjitt; sj <= max_sjitt; sj += sstep) {
+      // take into account the fact that scaling already does some spatial
+      // jitter, by multiplying min/max spatial jitters by scaling
+      float f = min_sjitt + max_sjitt - sj;
+      int hhalf = (int) (hjitter * f / 2), whalf = (int) (wjitter * f / 2);
+      for (int hj = -hhalf; hj <= hhalf; ++hj)
+	for (int wj = -whalf; wj <= whalf; ++wj)
+	  random_jitter.push_back(jitter(hj, wj, sj));
+    }
+    // randomize possibilities
+    random_shuffle(random_jitter.begin(), random_jitter.end());
+  }
+
   ////////////////////////////////////////////////////////////////
   // loading errors
 

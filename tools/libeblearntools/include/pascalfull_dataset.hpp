@@ -50,8 +50,9 @@ namespace ebl {
   template <class Tdata>
   pascalfull_dataset<Tdata>::pascalfull_dataset(const char *name_,
 						const char *inroot_,
-						const char *outdir_)
-    : pascal_dataset<Tdata>(name_, inroot_, false) {
+						const char *outdir_,
+						const char *annotations)
+    : pascal_dataset<Tdata>(name_, inroot_, false, false, false, annotations) {
     outdir = outdir_;
     data_cnt = 0;
     this->allocated = true; // fool extract method

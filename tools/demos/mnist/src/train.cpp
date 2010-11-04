@@ -70,10 +70,11 @@ int main(int argc, char **argv) { // regular main without gui
     test_ds(conf.get_cstring("root"), conf.get_cstring("val_name"),
 	    conf.get_uint("testing_size"));
   test_ds.set_test(); // test is the test set, used for reporting
-  train_ds.set_weigh_samples(conf.exists_bool("wsamples"));
-  train_ds.set_weigh_normalization(conf.exists_bool("wnorm"));
+  train_ds.set_weigh_samples(conf.exists_true("wsamples"), true, 
+			     conf.exists_true("wnorm"),
+			     conf.exists("min_sample_weight") ?
+			     conf.get_double("min_sample_weight") : 0.0);
   train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
-  train_ds.set_min_proba(conf.get_double("min_sample_weight"));
   //! randomization
   if (conf.exists_bool("fixed_randomization")) {
     cout << "Random seed is fixed (0)." << endl;

@@ -55,32 +55,6 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 
 typedef double t_net; // precision at which network is trained (ideally double)
 
-// temporary code
-void koray_temp(configuration &conf, layers<t_net> &net) {
-  ostringstream m;
-  idx<t_net> mat;
-  m.str(""); m << conf.get_string("koray_dir")
-	       << conf.get_string("wkoray") << "_conv0_kernel.x.mat";
-  mat = load_matrix<t_net>(m.str());
-  idx_copy(mat, ((convolution_module<t_net>*)((*net.modules)[0]))->kernel.x);
-
-  m.str(""); m << conf.get_string("koray_dir")
-	       << conf.get_string("wkoray") << "_bias0_bias.x.mat";
-  mat = load_matrix<t_net>(m.str());
-  idx_copy(mat, ((addc_module<t_net>*)((*net.modules)[1]))->bias.x);
-  if (conf.exists_bool("use_shrink")) {
-    m.str(""); m << conf.get_string("koray_dir")
-		 << conf.get_string("wkoray") << "_shrink0_bias.x.mat";
-    mat = load_matrix<t_net>(m.str());
-    idx_copy(mat, ((smooth_shrink_module<t_net>*)((*net.modules)[2]))->bias.x);
-    
-    m.str(""); m << conf.get_string("koray_dir")
-		 << conf.get_string("wkoray") << "_shrink0_beta.x.mat";
-    mat = load_matrix<t_net>(m.str());
-    idx_copy(mat, ((smooth_shrink_module<t_net>*)((*net.modules)[2]))->beta.x);
-  }
-}
-
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #else
@@ -106,10 +80,10 @@ int main(int argc, char **argv) { // regular main without gui
     test_ds.set_test(); // test is the test set, used for reporting
     train_ds.ignore_correct(conf.exists_true("ignore_correct"));
     train_ds.set_weigh_samples(conf.exists_true("sample_probabilities"),
-			       conf.exists_true("hardest_focus"));
-    train_ds.set_weigh_normalization(conf.exists_true("per_class_norm"));
-    if (conf.exists("min_sample_weight"))
-      train_ds.set_min_proba(conf.get_double("min_sample_weight"));
+			       conf.exists_true("hardest_focus"),
+			       conf.exists_true("per_class_norm"),
+			       conf.exists("min_sample_weight") ?
+			       conf.get_double("min_sample_weight") : 0.0);
     train_ds.set_shuffle_passes(conf.exists_bool("shuffle_passes"));
     if (conf.exists("balanced_training"))
       train_ds.set_balanced(conf.get_bool("balanced_training"));
@@ -149,16 +123,14 @@ int main(int argc, char **argv) { // regular main without gui
     supervised_trainer<t_net, float, int> thetrainer(thenet, theparam);
     //! initialize the network weights
     forget_param_linear fgp(1, 0.5);
-    if (conf.exists_bool("retrain")) {
+    if (conf.exists_true("retrain")) {
       theparam.load_x(conf.get_cstring("retrain_weights"));
     } else {
       cout << "Initializing weights from random." << endl;
       thenet.forget(fgp);
     }
-    if ((!conf.exists_bool("retrain")) && (conf.exists_bool("koray"))) {
-      cout << "Initializing some weights from koray." << endl;
-      koray_temp(conf, *((layers<t_net>*)net));
-    }
+    if (!conf.exists_true("retrain") && conf.exists_true("manual_load"))
+      manually_load_network(*((layers<t_net>*)net), conf);
 
     //! a classifier-meter measures classification errors
     classifier_meter trainmeter, testmeter;
@@ -244,8 +216,6 @@ int main(int argc, char **argv) { // regular main without gui
 #ifdef __GUI__
     quit_gui(); // close all windows
 #endif
-  } catch(string &err) {
-    cerr << err << endl;
-  }
+  } eblcatch();
   return 0;
 }

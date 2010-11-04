@@ -214,6 +214,8 @@ namespace ebl {
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
     virtual subsampling_layer<T,Tstate>* copy();
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
 
     // members ////////////////////////////////////////////////////////
   private:

@@ -157,8 +157,7 @@ namespace ebl {
       set_balanced(true); // balance dataset for each class in next_train
     }
     set_shuffle_passes(true); // for next_train only
-    set_weigh_samples(true); // for next_train only
-    set_weigh_normalization(true); // per class by default
+    set_weigh_samples(true, true, true, 0.0); // for next_train only
     datasource<Tnet, Tin1, Tin2>::pretty();
     seek_begin();
     seek_begin_train();
@@ -169,6 +168,7 @@ namespace ebl {
     init_epoch();
     not_picked = 0;
     epoch_show = 50; // print epoch count message every epoch_show
+    epoch_show_printed = -1; // last epoch count we have printed
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -295,6 +295,7 @@ namespace ebl {
     epoch_cnt = 0;
     epoch_pick_cnt = 0;
     epoch_timer.restart();
+    epoch_show_printed = -1; // last epoch count we have printed
     if (balance) {
       uint maxsize = 0;
       // for balanced training, set each class to not done.
@@ -303,8 +304,8 @@ namespace ebl {
 	if (label_indices[k].size() > maxsize)
 	  maxsize = label_indices[k].size();
       }
-      // for ETA estimation only, estimate epoch size
-      epoch_sz = maxsize * label_indices.size();
+      if (epoch_mode == 1) // for ETA estimation only, estimate epoch size
+	epoch_sz = maxsize * label_indices.size();
     }
     // if we have prior information about each sample energy and classification
     // let's use it to initialize the picking probabilities.
@@ -421,12 +422,16 @@ namespace ebl {
 
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::pretty_progress() {
-    if (epoch_show > 0 && epoch_cnt % epoch_show == 0) {
-      cout << "epoch_cnt: " << epoch_cnt << " / " << epoch_sz 
-	   << ", used samples: " << epoch_pick_cnt << ", epoch elapsed: "
-	   << epoch_timer.elapsed() << ", ETA: "
-	   << epoch_timer.elapsed((long) (epoch_timer.elapsed_seconds() 
-					  * ((double)(epoch_sz / epoch_cnt) - 1)));
+    if (epoch_show > 0 && epoch_pick_cnt % epoch_show == 0 &&
+	epoch_show_printed != (intg) epoch_pick_cnt) {
+      epoch_show_printed = (intg) epoch_pick_cnt; // remember last time printed
+      cout << "epoch_cnt: " << epoch_cnt << " picked: " << epoch_pick_cnt
+	   << " / " << epoch_sz 
+	   << ", epoch elapsed: " << epoch_timer.elapsed() << ", ETA: "
+	   << epoch_timer.
+	elapsed((long) ((epoch_sz - epoch_pick_cnt) *
+		(epoch_timer.elapsed_seconds() 
+		 /(double)std::max((intg)1,epoch_pick_cnt))));
       if (balance) {
 	cout << ", remaining:";
 	for (uint i = 0; i < epoch_done_counters.size(); ++i) {
@@ -467,27 +472,28 @@ namespace ebl {
 	for (intg i = 0; i < energies.dim(0); ++i)
 	  allindices[i] = i;
 	indices = &allindices;
-	cout << " for all classes ";
+	cout << " for all classes";
       }
       idx<double> sorted_energies(indices->size());
       // normalize probas for this class, mapping [0..max] to [0..1]
       maxenergy = 0; sum = 0;
-      intg nincorrect = 0, ncorrect = 0;
+      intg nincorrect = 0, ncorrect = 0, i = 0;
       // get max and sum
       for (vector<intg>::iterator j = indices->begin();
 	   j != indices->end(); ++j) {
 	// don't take correct ones into account
 	if (energies.get(*j) < 0) // energy not set yet
 	  continue ;
-	if (ignore_correct_ && correct.get(*j) == 1) {
+	if (correct.get(*j) == 1) { // correct	  
 	  ncorrect++;
-	  continue ; // skip this one
-	}
+	  if (ignore_correct_)
+	    continue ; // skip this one
+	} else 
+	  nincorrect++;
 	// max and sum
 	maxenergy = (std::max)(energies.get(*j), maxenergy);
 	sum += energies.get(*j);
-	sorted_energies.set(energies.get(*j), nincorrect);
-	nincorrect++;
+	sorted_energies.set(energies.get(*j), i++);
       }
       cout << ", nincorrect: " << nincorrect << ", ncorrect: " << ncorrect;
       // We choose 2 pivot points in the sorted energies curve,
@@ -498,7 +504,7 @@ namespace ebl {
       sorted_energies.resize(nincorrect);
       idx_sortup(sorted_energies);      
       intg pivot1 = (intg) (sorted_energies.dim(0) * (float) .25);
-      intg pivot2 = (intg) (sorted_energies.dim(0) * (float) .75);
+      intg pivot2 = (intg) (sorted_energies.dim(0) * (float) 1.0);//.75);
       if (sorted_energies.dim(0) == 0) {
 	e1 = 0; e2 = 1;
       } else {
@@ -551,13 +557,6 @@ namespace ebl {
       icorrect->set(correct_ ? 1 : 0);
       //      iprobas->set((std::max)(sample_min_proba, MIN(1.0, fabs(dist))));
     }
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::set_min_proba(double min_proba) {
-    sample_min_proba = MIN(1.0, min_proba);
-    cout << _name << ": Setting minimum probability to "
-	 << sample_min_proba << endl;
   }
 
   template <class Tnet, class Tin1, class Tin2>
@@ -633,10 +632,13 @@ namespace ebl {
   }
   
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::set_weigh_samples(bool activate,
-						       bool hardest_focus_) {
+  void datasource<Tnet, Tin1, Tin2>::
+  set_weigh_samples(bool activate, bool hardest_focus_, bool perclass_norm_,
+		    double min_proba) {
     weigh_samples = activate;
     hardest_focus = hardest_focus_;
+    perclass_norm = perclass_norm_;
+    sample_min_proba = MIN(1.0, min_proba);
     cout << _name
 	 << ": Weighing of samples (training only) based on classification is "
 	 << (weigh_samples ? "activated" : "deactivated") << "." << endl;
@@ -647,14 +649,10 @@ namespace ebl {
       if (!ignore_correct_ && !hardest_focus)
 	cerr << "Warning: correct samples are not ignored and focus is on "
 	     << "easiest samples, this may not be optimal" << endl;
+      cout << "Sample picking probabilities are normalized "
+	   << (perclass_norm ? "per class" : "globally") 
+	   << " with minimum probability " << sample_min_proba << endl;
     }
-  }
-  
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::set_weigh_normalization(bool perclass) {
-    perclass_norm = perclass;
-    cout << _name << ": Weighing normalization (training only) is "
-	 << (perclass_norm ? "per class" : "global") << "." << endl;
   }
   
   template <class Tnet, class Tin1, class Tin2>
@@ -777,15 +775,19 @@ namespace ebl {
     e = idx_copy(energies);
     c = idx_copy(correct);
     idx_sortup3(e, c, p);
-    write_classed_pickings(p, c, name, "_probas_sorted_by_energy", true);
+    write_classed_pickings(p, c, name, "_probas_sorted_by_energy", true,
+			   "Picking probability");
     write_classed_pickings(p, c, name, "_probas_sorted_by_energy_wrong_only",
-			   false);
+			   false, "Picking probability");
+    write_classed_pickings(e, c, name, "_energies_sorted_by_energy_wrong_only",
+			   false, "Energy");
   }
 
   template <class Tnet, class Tin1, class Tin2> template <typename T>
   void datasource<Tnet, Tin1, Tin2>::
   write_classed_pickings(idx<T> &m, idx<ubyte> &c, string &name_,
-			 const char *name2_, bool plot_correct) {
+			 const char *name2_, bool plot_correct,
+			 const char *ylabel) {
     string name = name_;
     if (name2_)
       name += name2_;
@@ -803,10 +805,10 @@ namespace ebl {
       typename idx<Tin2>::dimension_iterator l = labels.dim_begin(0);
       typename idx<ubyte>::dimension_iterator ic = c.dim_begin(0);
       uint j = 0;
-      for ( ; i.notdone(); i++, j++, l++, ic++) {
+      for ( ; i.notdone(); i++, l++, ic++) {
 	if (!plot_correct && ic->get() == 1)
 	  continue ; // don't plot correct ones
-	fp << j;
+	fp << j++;
 	for (Tin2 k = 0; k < (Tin2) nclasses; ++k) {
 	  if (k == l.get()) {
 	    if (ic->get() == 0) { // wrong
@@ -833,7 +835,8 @@ namespace ebl {
 	cerr << "failed to open " << fname2 << endl;
 	eblerror("failed to open file for writing");
       }
-      fp2 << "plot \""
+      fp2 << "set title \"" << name << "\"; set ylabel \"" << ylabel
+	  << "\"; plot \""
 	  << fname << "\" using 1:2 title \"class 0 wrong\" with impulse";
       if (plot_correct)
 	fp2 << ", \""
@@ -935,7 +938,8 @@ namespace ebl {
   
   template <class Tnet, class Tdata, class Tlabel>
   void datasource<Tnet, Tdata, Tlabel>::set_epoch_show(uint modulo) {
-    cout << _name << "Print training count every " << modulo << " samples." << endl;
+    cout << _name << "Print training count every " << modulo
+	 << " samples." << endl;
     epoch_show = modulo;
   }
 

@@ -20,6 +20,8 @@ ADD_LIBRARY (eblearn SHARED
 		     src/ebl_states.cpp  
 		     src/ebl_utils.cpp  
 		     src/ebl_logger.cpp  
+#		     src/detector.cpp
+		     src/bbox.cpp
 		     )
 
 # linking

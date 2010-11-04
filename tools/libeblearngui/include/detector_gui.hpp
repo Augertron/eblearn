@@ -81,27 +81,20 @@ namespace ebl {
   void detector_gui<T,Tstate>::
   display_minimal(idx<Tin> &img, vector<bbox*>& vb, idx<ubyte> &labels,
 		  unsigned int h0, unsigned int w0,
-		  double dzoom,  T vmin, T vmax, int wid) {
-    select_window(wid);
-    disable_window_updates();
-    clear_resize_window();
+		  double dzoom,  T vmin, T vmax, int wid, bool show_parts) {
     // draw image
     draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
     // draw bboxes
-    ostringstream label;
     vector<bbox*>::iterator i = vb.begin();
+    bbox *bb = NULL;
     for ( ; i != vb.end(); ++i) {
-      uint h = (uint) (dzoom * (*i)->h0);
-      uint w = (uint) (dzoom * (*i)->w0);
-      label.str("");
-      label.precision(2);
-      label << labels[(*i)->class_id].idx_ptr() << " "
-	    << (*i)->confidence;
-      draw_box(h0 + h, w0 + w, (uint) (dzoom * (*i)->height), 
-	       (uint) (dzoom * (*i)->width), 0, 0, 255,
-	       new string((const char *)label.str().c_str()));
+      bb = *i;
+      // draw parts
+      if (show_parts && dynamic_cast<bbox_parts*>(bb))
+	draw_bbox_parts(*((bbox_parts*) bb), labels, h0, w0, dzoom);
+      // draw box
+      draw_bbox(*bb, labels, h0, w0, dzoom);
     }
-    enable_window_updates();
   }
 
   template <typename T, class Tstate> template <typename Tin> 
@@ -115,12 +108,13 @@ namespace ebl {
     select_window(display_wid);
     //    disable_window_updates();
 
+
+    vector<bbox*> &bb = display(cl, img, threshold, frame_name,
+				h0, w0, dzoom, vmin, vmax, wid, wname);
+    w0 += (uint) (img.dim(1) * dzoom + 5);
     // draw input
     draw_matrix(img, "input", h0, w0, dzoom, dzoom, (Tin) vmin, (Tin) vmax);
-    w0 += (uint) (img.dim(1) * dzoom + 5);
-
-    return display(cl, img, threshold, frame_name,
-		   h0, w0, dzoom, vmin, vmax, wid, wname);
+    return bb;
   }
 
   template <typename T, class Tstate> template <typename Tin>
@@ -137,7 +131,8 @@ namespace ebl {
     // draw input and output
     vector<bbox*>& bb =
       display_input(cl, img, threshold, frame_name,
-		    h0, w0, dzoom, (T)0, (T)255, display_wid_fprop);
+		    h0, w0, dzoom, vmin, vmax, display_wid_fprop);
+    //		    h0, w0, dzoom, (T)0, (T)255, display_wid_fprop);
 
     // disable_window_updates();
     // draw internal inputs and outputs
@@ -291,8 +286,9 @@ namespace ebl {
 
   template <typename T, class Tstate> template <typename Tin>
   void detector_gui<T,Tstate>::display_current(detector<T,Tstate> &cl, 
-					   idx<Tin> &sample,
-					   int wid, const char *wname){
+					       idx<Tin> &sample,
+					       int wid, const char *wname,
+					       double dzoom){
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
@@ -303,7 +299,7 @@ namespace ebl {
     cl.prepare(sample);
     cl.preprocess_resolution(0);
     mg.display_fprop(*(module_1_1<T,Tstate>*) &cl.thenet,
-    		     *cl.input, *cl.output, (uint) 0, (uint) 0, (double) 1.0,
+    		     *cl.input, *cl.output, (uint) 0, (uint) 0, dzoom,
 		     (T) -1.0, (T) 1.0, true, display_wid_fprop);
     enable_window_updates();
   }

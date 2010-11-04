@@ -36,6 +36,7 @@
 #include "libidxgui.h"
 #include "libeblearn.h"
 #include "detector.h"
+#include "ebl_arch_gui.h"
 
 #include <deque>
 
@@ -43,8 +44,14 @@ using namespace std;
 
 namespace ebl {
 
+  void draw_bbox_parts(bbox_parts &bb, idx<ubyte> &labels, uint h0, uint w0,
+		       double dzoom);
+  void draw_bbox(bbox &bb, idx<ubyte> &labels, uint h0, uint w0, double dzoom);
+
   ////////////////////////////////////////////////////////////////
   // detector_gui
+
+  extern ubyte bbox_colors[12][3];
 
   //! The display class of class detector.
   template <typename T, class Tstate = fstate_idx<T> >
@@ -90,7 +97,7 @@ namespace ebl {
 				  idx<ubyte> &labels,
 				  unsigned int h0 = 0, unsigned int w0 = 0, 
 				  double dzoom = 1.0, T vmin = 0, T vmax = 0,
-				  int wid = -1);
+				  int wid = -1, bool show_parts = false);
 
     //! displays only the output of the classifier after a a call to 
     //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
@@ -145,7 +152,7 @@ namespace ebl {
       void display_current(detector<T,Tstate> &cl, 
 			   idx<Tin> &sample,
 			   int wid = -1, 
-			   const char *wname = NULL);
+			   const char *wname = NULL, double dzoom = 1.0);
 
     void set_mask_class(const char *name, T threshold);
 

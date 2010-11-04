@@ -39,19 +39,20 @@ void detector_test::test_face() {
     conf.set("root2", root.str().c_str());
     conf.resolve(true);
     mutex mut;
-    detection_thread<t_net> dt(conf, mut, "detection thread");
+    detection_thread<t_net> dt(conf, &mut, "detection thread");
     vector<bbox*> bboxes;
     idx<ubyte> detframe;
     idx<uint> total_saved(1);
     string processed_fname;
+    uint cnt = 0;
     
     dt.start();
-    while (!dt.set_data(im, name))
+    while (!dt.set_data(im, name, cnt))
       millisleep(5);
     bool updated = false;
     while (!updated) {
       updated = dt.get_data(bboxes, detframe, *(total_saved.idx_ptr()),
-			    processed_fname);
+			    processed_fname, cnt);
       millisleep(5);
     }
     sleep(2);
@@ -59,7 +60,7 @@ void detector_test::test_face() {
 
     // tests
     CPPUNIT_ASSERT_EQUAL((size_t) 17, bboxes.size()); // only 1 object
-    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) .999637,
+    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) .99982,
     				 bboxes[0]->confidence, .00001);
     CPPUNIT_ASSERT_EQUAL((int) 1, bboxes[0]->class_id);
   }
@@ -90,6 +91,11 @@ void detector_test::test_norb() {
 
     idx<ubyte> left = load_image<ubyte>(imgfile.c_str());
 
+    //! create 1-of-n targets with target 1.0 for shown class, -1.0 for rest
+    idx<t_net> targets =
+      create_target_matrix<t_net>(5, 1.0);
+    cout << "Targets:" << endl; targets.printElems();
+    
     // parameter, network and classifier
     // load the previously saved weights of a trained network
     parameter<fs(t_net)> theparam(1);
@@ -101,7 +107,7 @@ void detector_test::test_norb() {
     //left = left.transpose(tr);
     //left = left.select(2, 0);
     double scales [] = { 2, 1.5, 1};
-    detector<fs(t_net)> cb((module_1_1<fs(t_net)>&)thenet, labs, NULL,
+    detector<fs(t_net)> cb((module_1_1<fs(t_net)>&)thenet, labs, targets, NULL,
 			   0, NULL, 0, (float)0.01);
     cb.set_resolutions(3, scales);
 

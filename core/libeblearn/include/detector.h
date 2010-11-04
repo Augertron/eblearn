@@ -37,40 +37,11 @@
 #include "ebl_states.h"
 #include "ebl_arch.h"
 #include "ebl_preprocessing.h"
+#include "bbox.h"
 
 using namespace std;
 
 namespace ebl {
-
-  ////////////////////////////////////////////////////////////////
-  // bbox
-  
-  //! bounding box class.
-  class bbox {
-  public:
-    int		class_id;	//<! object class
-    float	confidence;	//<! detection confidence, 1 is the best.
-    double	scaleh;		//<! scale factor at which object was detected
-    double	scalew;		//<! scale factor at which object was detected
-    int		scale_index;	//<! scale index at which object was detected
-    // original map //////////////////////////////////////////////
-    uint	h0;		//<! height of top left pixel
-    uint	w0;		//<! width of top left pixel
-    uint	height;		//<! height of bounding box in original image
-    uint	width;		//<! width of bounding box in original image
-    // input map /////////////////////////////////////////////////
-    uint	iheight;	//<! scaled input image height
-    uint	iwidth;		//<! scaled input image width
-    uint	ih0;		//<! height0 of bbox in network's input map
-    uint	iw0;		//<! width0 of bbox in network's input map
-    uint	ih;		//<! height of bbox in network's input map
-    uint	iw;		//<! width of bbox in network's input map
-    // output map ////////////////////////////////////////////////
-    uint	oheight;	//<! height of network's output map
-    uint	owidth;		//<! width of network's output map
-    uint	oh0;		//<! pixel's height in network's output map
-    uint	ow0;		//<! pixel's width in network's output map
-  };
 
   ////////////////////////////////////////////////////////////////
   // detector
@@ -82,9 +53,27 @@ namespace ebl {
   //!          size and maximum resolution.
   //! SCALES_STEP: scales range from 1 to maximum resolution, with a step size
   enum t_resolution { MANUAL, SCALES, NSCALES, SCALES_STEP };
+  //! The formula for computing the confidence of a detection:
+  //! sqrdist (0): use the sum of the squared differences between
+  //!   output and target for each class, i.e. this takes into account
+  //!   the fact that multiple high responses is more uncertain than
+  //!   a single high response.
+  //! single (1): simply use the score of the class without
+  //!   taking into account scores of other classes.
+  //! max (2): confidence is the difference between class' output
+  //!   and the maximum output from other classes, normalized by maximum range,
+  //!   yielding [-1,1] confidence range. The advantage over the sqrdist is that
+  //!   it doesn't matter how well other classes match their target other than
+  //!   the maximum one, only how much this one stands out.
+  enum t_confidence { confidence_sqrdist = 0, confidence_single = 1,
+		      confidence_max = 2 };  
+  
+  enum t_pruning { pruning_none = 0, pruning_overlap = 1,
+		   pruning_pedestrian = 2 };
   
   template <typename T, class Tstate = fstate_idx<T> > class detector {
   public:    
+  
     ////////////////////////////////////////////////////////////////
     // constructors
     
@@ -105,7 +94,7 @@ namespace ebl {
     //!              scale input values by this coefficient.
     //! \param single_output Set this to true when network outputs only 1
     //!          output so that detection is handle correctly.
-    detector(module_1_1<T,Tstate> &thenet, idx<ubyte> &lbls,
+    detector(module_1_1<T,Tstate> &thenet, idx<ubyte> &lbls, idx<T> &targets,
 	     module_1_1<T,Tstate> *pp = NULL, uint ppkersz = 0,
 	     const char *background = NULL, T bias = 0, float coeff = 1.0,
 	     bool single_output = false, std::ostream &out = std::cout,
@@ -186,12 +175,20 @@ namespace ebl {
     //! \param max_size The maximum width or height in pixels.
     void set_max_resolution(uint max_size);
 
-    //! Enable or disable pruning of responses in the same area.
-    void set_pruning(bool pruning);
+    //! Enable pruning of type 'type'. Refer to t_pruning declaration for
+    //! different types. Default type is 1, regular pruning.
+    void set_pruning(t_pruning type = pruning_overlap, bool ped_only = false,
+		     float min_hcenter_dist = 0.0, float min_wcenter_dist = 0.0,
+		     float max_overlap = 1.0,
+		     bool share_parts = false, T threshold_parts = 0.0,
+		     float min_hcenter_dist2 = 0.0,
+		     float min_wcenter_dist2 = 0.0,
+		     float max_overlap2 = 0.0, bool mean_bb = false);
 
     //! Set factors to be applied on the height and width of output bounding
     //! boxes.
-    void set_bbox_factors(float hfactor, float wfactor);
+    void set_bbox_factors(float hfactor, float wfactor,
+			  float hfactor2, float wfactor2);
 
     //! Enable memory optimization by using only 2 buffers (in and out)
     //! for entire flow. Those same buffers must have been passed to the
@@ -202,13 +199,20 @@ namespace ebl {
     void set_mem_optimization(Tstate &in, Tstate &out, 
 			      bool keep_inputs = false);
 
-    //! Set the maximum overlaps authorized on the height and width axis before
-    //! allowing non maximum suppression between bounding boxes.
-    void set_bbox_overlaps(float hmax, float wmax);
-  
-    //! Set the maximum area overlaps authorized when foot line is identical
-    //! before allowing non maximum suppression between bounding boxes.
-    void set_bbox_foot_overlap(float area_max);
+    //! Select the formula for computing the confidence of a detection:
+    //! CONFIDENCE_SQRDIST (0): use the sum of the squared differences between
+    //!   output and target for each class, i.e. this takes into account
+    //!   the fact that multiple high responses is more uncertain than
+    //!   a single high response.
+    //! CONFIDENCE_SINGLE (1): simply use the score of the class without
+    //!   taking into account scores of other classes.
+    void set_confidence_type(t_confidence type);
+
+    //! Limit the size of the image to be processed based on the maximum
+    //! image_height / object_height. This ratio can be seen as the
+    //! maximum number of objects that can fit next to each other
+    //! in one image along the height axis.
+    void set_max_object_hratio(double hratio);
   
     ////////////////////////////////////////////////////////////////
     // execution
@@ -221,6 +225,11 @@ namespace ebl {
     template <class Tin>
       vector<bbox*>& fprop(idx<Tin> &img, T threshold,
 			   const char *frame_name = NULL);
+
+    //! Non-maximum suppression, fills pruned given raw and excludes bbox
+    //! lower than threshold.
+    void nms(vector<bbox*> &raw, vector<bbox*> &pruned,
+	     float threshold, uint image_height, uint image_width);
 
     //! Return a reference to a vector of windows in the original image that
     //! yielded a detection.
@@ -297,9 +306,36 @@ namespace ebl {
     //! find maximas in output layer
     void mark_maxima(T threshold);
 
+    ////////////////////////////////////////////////////////////////
+    // pruning
+  
     //! Prune bounding boxes between scales into prune_bboxes.
-    void prune(vector<bbox*> &raw_bboxes, vector<bbox*> &prune_bboxes);
+    //! The pruning criterion is the overlap between two bounding boxes.
+    //! If 2 bb's overlap ratio is more than 'max_overlap' (see
+    //! set_bbox_overlap()), keep only the one with highest confidence.
+    //! \param same_class_only If true, only classes from the same class
+    //!   can prune each other, otherwise any bb can cancel any other bb.
+    void prune_overlap(vector<bbox*> &raw_bboxes, vector<bbox*> &prune_bboxes,
+		       float max_match,
+		       bool same_class_only = false,
+		       float min_hcenter_dist = 0.0,
+		       float min_wcenter_dist = 0.0, float threshold = 0.0,
+		       // TODO: this is dangerous, get rid of it
+		       uint image_height = 0, uint image_width = 0);
 
+    void prune_vote(vector<bbox*> &raw_bboxes, vector<bbox*> &prune_bboxes,
+		    float max_match,
+		    bool same_class_only = false,
+		    float min_hcenter_dist = 0.0,
+		    float min_wcenter_dist = 0.0, int classid = 0);
+
+    //! Special custom handling of pedestrian bboxes. temporary (TODO).
+    void prune_pedestrian(vector<bbox*> &raw_bboxes,
+			  vector<bbox*> &prune_bboxes, bool ped_only = false,
+			  T threshold = 0.0);
+
+    ////////////////////////////////////////////////////////////////
+  
     //! Smooth outputs.
     void smooth_outputs();
 
@@ -313,6 +349,11 @@ namespace ebl {
 
     //! Sort bboxes by confidence (most confident first);
     void sort_bboxes(vector<bbox*> &bboxes);
+
+    //! Add a name to the vector of class names.
+    //! This can be useful when generating
+    //! intermediate classes from existing classes.
+    void add_class(const char *name);
 
     ////////////////////////////////////////////////////////////////
     // members
@@ -371,20 +412,34 @@ namespace ebl {
     bool                 bodetections; //!< odetections is up-to-date or not
     bool                 bppdetections; //!< ppdetections is up-to-date or not
     uint                 save_max_per_frame; //!< max number of region saved
-    bool                 pruning; //!< enable pruning or not
+    t_pruning            pruning; //!< Type of pruning.
+    bool                 ped_only; //!< temporary TODO
+    bool                 share_parts; //!< Allow parts sharing or not.
+    T                    threshold_parts;
+    bool                 mean_bb;
     float                bbhfactor; //!< height bbox factor
     float                bbwfactor; //!< width bbox factor
+    float                bbhfactor2; //!< height bbox factor
+    float                bbwfactor2; //!< width bbox factor
     bool                 mem_optimization; //!< optimize memory or not.
     bool                 optimization_swap; //!< swap buffers or not.
     bool                 keep_inputs; //! optimize input buffers or not.
-    float                max_hoverlap; //!< Maximum ratio of overlap authorized.
-    float                max_woverlap; //!< Maximum ratio of overlap authorized.
-    float                max_foot_area_overlap; //!< Max area overlap when foot.
+    float                max_overlap; //!< Maximum ratio of overlap authorized.
     uint                 hzpad; //! Zero-pad on height (each side).
     uint                 wzpad; //! Zero-pad on width (each side).
     std::ostream         &mout; //! output stream.
     std::ostream         &merr; //! error output stream.
+    idx<T>               &targets;
+    t_confidence         conf_type; //! Formula for computing confidence
+    T                    conf_ratio; //! Ratio to normalize confidence to 1.
+    T                    conf_shift; //! to be subtracted before div conf_ratio
+    float                min_hcenter_dist;
+    float                min_wcenter_dist;
 
+    float                min_hcenter_dist2;
+    float                min_wcenter_dist2;
+    float                max_overlap2;
+    double               max_object_hratio; //! max image_height/object_height
     ////////////////////////////////////////////////////////////////
     // friends
     template <typename T2, class Tstate2> friend class detector_gui;

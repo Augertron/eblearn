@@ -20,30 +20,24 @@ ENDIF (QT_FOUND)
 ################################################################################
 add_executable (objtrain
   src/train.cpp
-  )
-  
+  )  
 # link executable with external libraries
-################################################################################
 target_link_libraries (objtrain eblearn idx eblearntools)
-IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (objtrain idxgui)
-  target_link_libraries (objtrain eblearngui)
-ENDIF (QT_FOUND) #------------------------------------------------------------
+LINK_QT(objtrain idxgui)
+LINK_QT(objtrain eblearngui)
 		
 # compile executable: objdetect
 ################################################################################
 add_executable (objdetect
   src/detect.cpp
   )
-  
 # link executable with external libraries
-################################################################################
 target_link_libraries (objdetect eblearn idx eblearntools)
-IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (objdetect idxgui)
-  target_link_libraries (objdetect eblearngui)
-ENDIF (QT_FOUND) #------------------------------------------------------------
-LINK_BOOST(objdetect)
+LINK_QT(objdetect idxgui)
+LINK_QT(objdetect eblearngui)
+LINK_BOOST(objdetect system)
+LINK_BOOST(objdetect filesystem)
+LINK_BOOST(objdetect regex)
 
 # compile executable: mtdetect
 ################################################################################
@@ -52,42 +46,43 @@ IF (WINDOWS) # do not compile this project under windows
 ELSE (WINDOWS)
 add_executable (mtdetect
   src/mtdetect.cpp
-  )
-  
+  )  
 # link executable with external libraries
-################################################################################
 target_link_libraries (mtdetect eblearn idx eblearntools)
-IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (mtdetect idxgui)
-  target_link_libraries (mtdetect eblearngui)
-ENDIF (QT_FOUND) #------------------------------------------------------------
-LINK_BOOST(mtdetect)
+LINK_QT(mtdetect idxgui)
+LINK_QT(mtdetect eblearngui)
+LINK_BOOST(mtdetect system)
+LINK_BOOST(mtdetect filesystem)
+LINK_BOOST(mtdetect regex)
 ENDIF (WINDOWS) # do not compile this project under windows
 
-IF (FALSE)
-IF (WINDOWS) # do not compile this project under windows
-  MESSAGE("__ WARNING: Not generating mpidetect project under Windows")
-ELSe (WINDOWS) # do not compile this project under windows
 # compile executable: mpidetect
 ################################################################################
+IF (MPI_FOUND AND Boost_SERIALIZATION_FOUND AND Boost_MPI_FOUND)
+IF (WINDOWS) # do not compile this project under windows
+  MESSAGE("__ WARNING: Not generating mpidetect project under Windows")
+ELSE (WINDOWS) # do not compile this project under windows
+  
 add_executable (mpidetect
   src/mpidetect.cpp
-  )
-  
+  )  
 # link executable with external libraries
-################################################################################
 target_link_libraries (mpidetect eblearn idx eblearntools)
-IF (QT_FOUND) #---------------------------------------------------------------
-  target_link_libraries (mpidetect idxgui)
-  target_link_libraries (mpidetect eblearngui)
-ENDIF (QT_FOUND) #------------------------------------------------------------
+LINK_QT(mpidetect idxgui)
+LINK_QT(mpidetect eblearngui)
+LINK_BOOST(mpidetect system)
+LINK_BOOST(mpidetect filesystem)
+LINK_BOOST(mpidetect regex)
+LINK_BOOST(mpidetect serialization)
+LINK_BOOST(mpidetect mpi)
 IF (MPI_FOUND)
   target_link_libraries (mpidetect pmpich++) # mpi_cxx)
 ENDIF (MPI_FOUND)    
-LINK_BOOST(mpidetect)
 
 ENDIF (WINDOWS) # do not compile this project under windows
-ENDIF (FALSE)
+ELSE (MPI_FOUND AND Boost_SERIALIZATION_FOUND AND Boost_MPI_FOUND)
+  MESSAGE("__ WARNING: mpidetect will not be compiled because of missing MPI libraries (optional).")
+ENDIF (MPI_FOUND AND Boost_SERIALIZATION_FOUND AND Boost_MPI_FOUND)
 
 # # compile executable: objdetect
 # ################################################################################
@@ -96,10 +91,9 @@ ENDIF (FALSE)
 #   )
   
 # # link executable with external libraries
-# ################################################################################
 # target_link_libraries (objtrack eblearn idx eblearntools)
-# IF (QT_FOUND) #---------------------------------------------------------------
-#   target_link_libraries (objtrack idxgui)
-#   target_link_libraries (objtrack eblearngui)
-# ENDIF (QT_FOUND) #------------------------------------------------------------
-# LINK_BOOST(objtrack)
+# LINK_QT(objtrack idxgui)
+# LINK_QT(objtrack eblearngui)
+# LINK_BOOST(objtrack system)
+# LINK_BOOST(objtrack filesystem)
+# LINK_BOOST(objtrack regex)

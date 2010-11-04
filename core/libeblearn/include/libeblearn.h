@@ -47,6 +47,7 @@
 #include "ebl_logger.h"
 #include "ebl_preprocessing.h"
 #include "ebl_utils.h"
+#include "bbox.h"
 #include "detector.h"
 
 #ifndef __NOSTL__

@@ -69,12 +69,13 @@ namespace ebl {
   template <class Tdata>
   bool grid_dataset<Tdata>::
   add_data(idx<Tdata> &d, const string &class_name,
-	   const char *filename, const rect *r) {
+	   const char *filename, const rect<int> *r,
+	   pair<uint,uint> *center) {
     bool ret;
 
     for (uint i = 0; i <= d.dim(0) - cell_height; i += cell_height) {
       for (uint j = 0; j <= d.dim(1) - cell_width; j += cell_width) {
-	rect roi(i, j, cell_height, cell_width);
+	rect<int> roi(i, j, cell_height, cell_width);
 	cout << "roi: " << roi << endl;
 	t_label label = this->get_label_from_class(class_name);
 	ret = dataset<Tdata>::add_data(d, label, &class_name, filename, &roi);

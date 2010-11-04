@@ -90,10 +90,17 @@ namespace ebl {
     //! This returns true if outputs is actually put in out, false if it's
     //! in in.
     virtual bool optimize_fprop(Tin &in, Tout &out);
-    
+    //! Return the name of this module.
+    virtual const char* name();
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+    //! Load internal weights of module with passed weights w.
+    //! TODO: there should be not idx specialization at this level.
+    virtual void load_x(idx<T> &weights);
+
   protected:
     bool	 bResize;	//!< tells module to resize output or not
-    const char	*name;		//!< optional name of module.
+    std::string	 _name;		//!< optional name of module.
     bool	 memoptimized;	//!< This module is using mem optim or not.
   };
 
@@ -112,9 +119,11 @@ namespace ebl {
     virtual void bbprop(Tin1 &in1, Tin2 &in2, Tout &out);
     virtual void forget(forget_param &fp);
     virtual void normalize();
+    //! Return the name of this module.
+    virtual const char* name();
 
   protected:
-    const char *name; //!< optional name of module.
+    const char *_name; //!< optional name of module.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -202,6 +211,8 @@ namespace ebl {
     virtual layers<T, Tstate>* copy();
     //! Swap the dual buffers used for memory optimization.
     virtual void swap_buffers();
+    //! Return the number of layers contained in this object.
+    virtual uint size();
 
     // friends
     friend class layers_gui;

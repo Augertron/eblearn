@@ -47,7 +47,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   detector<T,Tstate>::detector(module_1_1<T,Tstate> &thenet_,
-			       idx<ubyte> &labels_,
+			       idx<ubyte> &labels_, idx<T> &tgt,
 			       module_1_1<T,Tstate> *pp_, uint ppkersz_,
 			       const char *background, T bias_, float coef_,
 			       bool single_output, std::ostream &o,
@@ -62,9 +62,13 @@ namespace ebl {
       silent(false), restype(SCALES),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       min_size(0), max_size(0), bodetections(false),
-      bppdetections(false), pruning(true), bbhfactor(1.0), bbwfactor(1.0),
+      bppdetections(false), pruning(pruning_overlap),
+      bbhfactor(1.0), bbwfactor(1.0),
       mem_optimization(false), optimization_swap(false), keep_inputs(true),
-      mout(o), merr(e) {
+      mout(o), merr(e), targets(tgt), 
+      min_hcenter_dist(0.0), min_wcenter_dist(0.0), max_overlap(.5),
+      min_hcenter_dist2(0.0), min_wcenter_dist2(0.0), max_overlap2(0.0), mean_bb(false),
+      max_object_hratio(0.0) {
     // default resolutions
     double sc[] = { 4, 2, 1 };
     set_resolutions(3, sc);
@@ -88,9 +92,10 @@ namespace ebl {
     //#endif
     // initilizations
     save_max_per_frame = limits<uint>::max();
-    set_bbox_overlaps(.5, .5);
     // by default, when foot line is equal, no overlap.
-    max_foot_area_overlap = 1.0;
+    set_confidence_type(confidence_max);
+    ped_only = false; // temporary TODO
+    share_parts = false;
   }
   
   template <typename T, class Tstate>
@@ -129,6 +134,8 @@ namespace ebl {
     resizepp.set_zpads(hzpad, wzpad);
     mout << "Adding zero padding on input (on each side): hpad: "
 	 << hzpad << " wpad: " << wzpad << endl;
+    if (hzpad_ > 1 || wzpad_ > 1)
+      eblerror("zero padding coeff should be in [0 1] range");
   }
 					   
   template <typename T, class Tstate>
@@ -146,6 +153,24 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::init(idxdim &dsample) {
+    // compute minimum input size compatible with network size
+    idxdim minodim(1, 1, 1); // min output dims
+    netdim = thenet.bprop_size(minodim); // compute min input dims
+    mout << "Network's minimum input dimension is: " << netdim << endl;
+    // limit the input size as a factor of the object's height
+    if (max_object_hratio > 0.0) {
+      double objh = (double) netdim.dim(1) * bbhfactor; // object's height
+      // max image's height
+      double h = (double) dsample.dim(0);
+      double w = (double) dsample.dim(1);
+      double max_imh = objh * max_object_hratio + (double) (2 * hzpad);
+      double max_imw = w * max_imh / h;
+      max_size = (uint) std::max(max_imh, max_imw);
+      mout << "Limiting image's height to " << max_size
+	   << " in accordance to max_object_hratio " 
+	   << max_object_hratio << " and total extra height padding " 
+	   << hzpad * 2 << endl;
+    }
     // size of the sample to process
     int thick = (dsample.order() == 2) ? 1 : dsample.dim(2); // TODO FIXME
     oheight = dsample.dim(0);
@@ -157,8 +182,8 @@ namespace ebl {
 
     // first compute minimum and maximum resolutions for this input dims.
     compute_minmax_resolutions(input_dim);
-    mout << "resolutions: input: " << dsample << " max-scaled (* " << max_scale 
-	 << ") input: " << input_dim << " min: " << in_mindim
+    mout << "resolutions: input: " << dsample << " max-scaled input (* " 
+	 << max_scale << "): " << input_dim << " min: " << in_mindim
 	 << " max: " << in_maxdim << endl;
 
     switch (restype) {
@@ -306,9 +331,11 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_max_resolution(uint max_size_) {
+    uint mzpad = std::max(hzpad * 2, wzpad * 2);
+    max_size = max_size_ + mzpad;
     mout << "Setting maximum input size to " << max_size_ << "x"
-	 << max_size_ << "." << endl;
-    max_size = max_size_;
+	 << max_size_ << " (add twice max(hzpad,wzpad): " << mzpad
+	 << ")" << endl;
   }
   
   template <typename T, class Tstate>
@@ -319,18 +346,101 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_pruning(bool pruning_) {
-    pruning = pruning_;
-    mout << "Pruning of neighbor answers is "
-	 << (pruning ? "enabled" : "disabled") << endl;
+  void detector<T,Tstate>::set_pruning(t_pruning type, bool ped_only_,
+				       float min_hcenter_dist_, 
+				       float min_wcenter_dist_, 
+				       float max_overlap_,
+				       bool share_parts_,
+				       T threshold_parts_,
+				       float min_hcenter_dist2_, 
+				       float min_wcenter_dist2_, 
+				       float max_overlap2_, bool mean_bb_) {
+    mean_bb = mean_bb_;
+    ped_only = ped_only_;
+    share_parts = share_parts_;
+    threshold_parts = threshold_parts_;
+    min_hcenter_dist = min_hcenter_dist_;
+    min_wcenter_dist = min_wcenter_dist_;
+    max_overlap = max_overlap_;
+    min_hcenter_dist2 = min_hcenter_dist2_;
+    min_wcenter_dist2 = min_wcenter_dist2_;
+    max_overlap2 = max_overlap2_;
+
+    pruning = type;
+    mout << "Pruning of bounding boxings: ";
+    switch (pruning) {
+    case pruning_none: mout << "none"; break ;
+    case pruning_overlap:
+      mout << " overlap, ignore matching bboxes (intersection/union) beyond "
+	   << "the max_overlap threshold (" << max_overlap << ") and centers "
+	   << "closer than " << min_hcenter_dist << " * height and "
+	   << min_wcenter_dist << " * width." << endl;
+      break ;
+    case pruning_pedestrian: 
+      mout << "pedestrian"; 
+      // add composed classes
+      add_class("ht");
+      add_class("tb");
+      add_class("htb");
+      add_class("hb");
+      add_class("mean");
+      add_class("h");
+      add_class("t");
+      break ;
+    default:
+      eblerror("unknown type of pruning " << pruning);
+    }
+    mout << endl;
   }
   
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_bbox_factors(float hfactor, float wfactor) {
+  void detector<T,Tstate>::set_bbox_factors(float hfactor, float wfactor,
+					    float hfactor2, float wfactor2) {
     bbhfactor = hfactor;
     bbwfactor = wfactor;
+    bbhfactor2 = hfactor2;
+    bbwfactor2 = wfactor2;
     mout << "Setting factors on output bounding boxes sizes, height: "
-	 << hfactor << ", width: " << wfactor << endl;
+	 << hfactor << ", width: " << wfactor << " height2: "
+	 << hfactor2 << ", width2: " << wfactor2 << endl;
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_confidence_type(t_confidence type) {
+    conf_type = type;
+    T max_dist;
+    switch (conf_type) {
+    case confidence_sqrdist:
+      max_dist = idx_max(targets) - idx_min(targets);
+      conf_ratio = targets.dim(0) * max_dist * max_dist;
+      // shift value to be subtracted before dividing by conf_ratio
+      conf_shift = idx_min(targets);
+      mout << "Using sqrdist confidence formula with normalization ratio "
+	   << conf_ratio << " and shift value " << conf_shift << endl;
+      break ;
+    case confidence_single:
+      conf_ratio = idx_max(targets) - idx_min(targets);
+      // shift value to be subtracted before dividing by conf_ratio
+      conf_shift = idx_min(targets);
+      mout << "Using single output confidence with normalization ratio "
+	   << conf_ratio << " and shift value " << conf_shift << endl;
+      break ;
+    case confidence_max:
+      conf_ratio = 2 * (idx_max(targets) - idx_min(targets));
+      // shift value to be subtracted before dividing by conf_ratio
+      conf_shift = 2 * (idx_min(targets));
+      mout << "Using max confidence formula with normalization ratio "
+	   << conf_ratio << " and shift value " << conf_shift << endl;
+      break ;
+    default:
+      eblerror("confidence type " << conf_type << " undefined");
+    }
+  }
+  
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_max_object_hratio(double hratio) {
+    max_object_hratio = hratio;
+    cout << "Max image's height / object's height ratio is " << hratio << endl;
   }
 
   template <typename T, class Tstate>
@@ -347,28 +457,10 @@ namespace ebl {
     optimization_swap = !thenet.optimize_fprop(*input, *output);
   }
   
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::set_bbox_overlaps(float hmax, float wmax) {
-    max_hoverlap = hmax;
-    max_woverlap = wmax;
-    mout << "Maximum ratios of overlap between bboxes: height: "
-	 << max_hoverlap << " width: " << max_woverlap << endl;
-  }
-  
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::set_bbox_foot_overlap(float area_max) {
-    max_foot_area_overlap = area_max;
-    mout << "Maximum bbox ratios of overlap when foot is at same height: "
-	 << max_foot_area_overlap << endl;
-  }
-  
   ////////////////////////////////////////////////////////////////
   
   template <typename T, class Tstate>
   void detector<T,Tstate>::compute_minmax_resolutions(idxdim &input_dims) {
-    // compute minimum input size compatible with network size
-    idxdim minodim(1, 1, 1); // min output dims
-    netdim = thenet.bprop_size(minodim); // compute min input dims
     in_mindim = netdim;
     in_mindim.setdim(1, netdim.dim(1) + hzpad * 2);
     in_mindim.setdim(2, netdim.dim(2) + wzpad * 2);
@@ -572,36 +664,50 @@ namespace ebl {
     }
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // pruning
+  
   // prune a list of detections.
   // only keep the largest scoring within an area
   template <typename T, class Tstate>
-  void detector<T,Tstate>::prune(vector<bbox*> &raw_bboxes,
-			  vector<bbox*> &pruned_bboxes) {
-    // for each bbox, check that center of current box is not within
-    // another box, and only keep ones with highest score when overlapping
+  void detector<T,Tstate>::prune_overlap(vector<bbox*> &raw_bboxes,
+					 vector<bbox*> &pruned_bboxes,
+					 float max_match,
+					 bool same_class_only,
+					 float min_hcenter_dist, float min_wcenter_dist,
+					 float threshold,
+					 uint image_height, uint image_width) {
+    // for each bbox, check that matching with other bboxes does not go beyond
+    // the maximum authorized matching score (0 means no overlap, 1 is identity)
+    // and only keep ones with highest score when overlapping.
     size_t ib, jb;
     bbox *i, *j;
+    // prune
     for (ib = 0; ib < raw_bboxes.size(); ++ib) {
       i = raw_bboxes[ib];
       if (i && i->class_id != bgclass && i->class_id != mask_class) {
-	// center of the box
-	rect this_bbox(i->h0, i->w0, i->height, i->width);
+	if (i->confidence < threshold)
+	  continue ; // ignore if lower than threshold
 	bool add = true;
 	// check each other bbox
 	for (jb = 0; jb < raw_bboxes.size() && add; ++jb) {
 	  j = raw_bboxes[jb];
 	  if (j && i != j) {
-	    rect other_bbox(j->h0, j->w0, j->height, j->width);
-	    float overlap_area = this_bbox.min_overlap(other_bbox);
+	    float match = i->match(*j);
 	    bool overlap = false;
-	    if (overlap_area >= max_hoverlap)
+	    if (match >= max_match)
 	      overlap = true; // there is overlap
-	    else if (other_bbox.height + other_bbox.h0
-		     == this_bbox.h0 + this_bbox.height) { // same foot line
-	      if (overlap_area >= max_foot_area_overlap)
-		overlap = true; // there is overlap
-	    }
-	    if (overlap) {
+	    // forbid centers to be closer than min dist to each other in each axis
+	    if ((i->center_hdistance(*j) < min_hcenter_dist
+		 && i->center_wdistance(*j) < min_wcenter_dist)
+		|| (j->center_hdistance(*i) < min_hcenter_dist
+		    && j->center_wdistance(*i) < min_wcenter_dist))
+	      overlap = true;
+	    // if same_class_only, allow pruning only if 2 bb are same class
+	    bool allow_pruning = !same_class_only ||
+	      (same_class_only && i->class_id == j->class_id);
+	    // keep only 1 bb if overlap and pruning is ok
+	    if (overlap && allow_pruning) {
 	      if (i->confidence < j->confidence) {
 		// it's not the highest confidence, stop here.
 		add = false;
@@ -630,8 +736,459 @@ namespace ebl {
     mout << "Pruned " << raw_bboxes.size() << " bboxes to "
 	 << pruned_bboxes.size() << " bboxes." << endl;
 #endif
+    // apply post process bb factors
+    for (ib = 0; ib < pruned_bboxes.size(); ++ib) {
+      i = pruned_bboxes[ib];
+      // apply bbox factors
+      float h0 = i->h0 + (i->height - i->height * bbhfactor2)/2;
+      float w0 = i->w0 + (i->width - i->width * bbwfactor2)/2;
+      float height = i->height * bbhfactor2;
+      float width = i->width * bbwfactor2;
+      // cut off bbox at image boundaries
+      i->h0 = (uint)std::max((float)0, h0);
+      i->w0 = (uint)std::max((float)0, w0);
+      i->height = (uint) MIN(height + h0,
+		      (uint) image_height) - i->h0;
+      i->width = (uint) MIN(width + w0,
+		     (uint) image_width) - i->w0;
+    }
   }
 	
+  // prune a list of detections, take average vote for overlapping areas
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::prune_vote(vector<bbox*> &raw_bboxes,
+				      vector<bbox*> &pruned_bboxes,
+				      float max_match,
+				      bool same_class_only,
+				      float min_hcenter_dist, float min_wcenter_dist,
+				      int classid) {
+    // for each bbox, check that matching with other bboxes does not go beyond
+    // the maximum authorized matching score (0 means no overlap, 1 is identity)
+    // and only keep ones with highest score when overlapping.
+    size_t ib, jb;
+    bbox *i, *j;
+    for (ib = 0; ib < raw_bboxes.size(); ++ib) {
+      i = raw_bboxes[ib];
+      if (i && i->class_id != bgclass && i->class_id != mask_class) {
+	// center of the box
+	rect<uint> this_bbox(i->h0, i->w0, i->height, i->width);
+	bool add = true;
+	vector<bbox*> overlaps;
+	overlaps.push_back(i);
+	// check each other bbox
+	for (jb = 0; jb < raw_bboxes.size() && add; ++jb) {
+	  j = raw_bboxes[jb];
+	  if (j && i != j) {
+	    rect<uint> other_bbox(j->h0, j->w0, j->height, j->width);
+	    float match = this_bbox.match(other_bbox);
+	    bool overlap = false;
+	    if (match >= max_match)
+	      overlap = true; // there is overlap
+// 	    // forbid centers to be closer than min dist to each other in each axis
+// 	    if ((this_bbox.center_hdistance(other_bbox) < min_hcenter_dist
+// 		 && this_bbox.center_wdistance(other_bbox) < min_wcenter_dist)
+// 		|| (other_bbox.center_hdistance(this_bbox) < min_hcenter_dist
+// 		    && other_bbox.center_wdistance(this_bbox) < min_wcenter_dist))
+// 	      overlap = true;
+	    // if same_class_only, allow pruning only if 2 bb are same class
+	    bool allow_pruning = !same_class_only ||
+	      (same_class_only && i->class_id == j->class_id);
+	    // keep only 1 bb if overlap and pruning is ok
+	    if (overlap && allow_pruning) {
+	      overlaps.push_back(j);
+	    }
+	  }
+	}
+	// ********** TODO: delete non kept bboxes
+
+	// take mean of overlaps
+	bbox mean = mean_bbox(overlaps, .01, same_class_only ? 
+			      i->class_id : classid);
+	bbox_parts *p = new bbox_parts(mean);
+	for (uint k = 0; k < overlaps.size(); ++k)
+	  p->add_part(*(overlaps[k]));
+	pruned_bboxes.push_back(p);
+      }
+    }
+#ifdef __DEBUG__
+    mout << "Pruned " << raw_bboxes.size() << " bboxes to "
+	 << pruned_bboxes.size() << " mean bboxes." << endl;
+#endif
+  }
+	
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::prune_pedestrian(vector<bbox*> &raw_bboxes,
+					    vector<bbox*> &pruned_bboxes, bool ped_only,
+					    T threshold) {
+    size_t ib, jb;
+    bbox *i, *head, *trunk, *body;
+    uint head_area, trunk_area, body_area;
+
+    // our intermediate bbox vector where we're gonna add synthethized bb
+    vector<bbox*> raw2, raw22;
+
+    mout << "raw bboxes: " << raw_bboxes.size() << endl;
+    // apply regular overlap pruning to regular bboxes,
+    // but forbid different classes to prune each other.
+
+    //    prune_vote(raw_bboxes, raw22, max_overlap2, true, min_hcenter_dist2, min_wcenter_dist2);
+    //    prune_overlap(raw22, raw2, max_overlap2, true, 0.0, 0.0);
+
+    prune_overlap(raw_bboxes, raw2, max_overlap, true, 0.0, 0.0, oheight, owidth);
+
+    mout << "raw2: " << raw2.size() << endl;
+    
+    // build lists of bb for each class
+    vector<bbox*> bb_head, bb_trunk, bb_body;
+    int id_head = get_class_id("head");
+    int id_trunk = get_class_id("trunk");
+    int id_body = get_class_id("ped");
+    int id_ht = get_class_id("ht");
+    int id_tb = get_class_id("tb");
+    int id_htb = get_class_id("htb");
+    int id_hb = get_class_id("hb");
+    int id_mean = get_class_id("mean");
+    int id_h = get_class_id("h");
+    int id_t = get_class_id("t");
+    for (ib = 0; ib < raw2.size(); ++ib) {
+      i = raw2[ib];
+      if (i->class_id == id_head)
+	bb_head.push_back(i);
+      else if (i->class_id == id_trunk)
+	bb_trunk.push_back(i);
+      else if (i->class_id == id_body)
+	bb_body.push_back(i);
+    }
+     mout << "heads: " << bb_head.size() << " trunk: " << bb_trunk.size()
+	  << " body: " << bb_body.size() << " raw2: " << raw2.size() << endl;
+
+//      // add bodies for single heads
+//     for (ib = 0; ib < bb_head.size(); ++ib) {
+//       head = bb_head[ib];
+//       // add an estimated body box
+//       bbox_parts *b = new bbox_parts(*head);
+//       b->class_id = id_h; // create new class
+//       b->add_part(*head);
+//       // estimate ped bb
+//       float addw = (b->width / (float) .3) - b->width;
+//       b->height = (uint) (b->height / (float) .3);
+//       b->width = (uint) (b->width / (float) .3);
+//       //b->h0 += (uint) (b->height * (float) .3);
+//       // re-center bbox and cut out of image borders if necessary
+//       int outbound = b->w0 - (int) (addw / 2.0);
+//       if (outbound < 0) {
+// 	b->w0 = 0;
+// 	b->width += outbound;
+//       } else
+// 	b->w0 = outbound;
+//       // check upper bounds
+//       if (b->h0 + b->height > image.dim(0))
+// 	b->height -= b->h0 + b->height - image.dim(0);
+//       if (b->w0 + b->width > image.dim(1))
+// 	b->width -= b->w0 + b->width - image.dim(1);
+//       raw2.push_back(b);
+//     }
+
+     // add bodies for single trunks
+    for (ib = 0; ib < bb_trunk.size(); ++ib) {
+      trunk = bb_trunk[ib];
+      // add an estimated body box
+      bbox_parts *b = new bbox_parts(*trunk);
+      b->class_id = id_t; // create new class
+      b->add_part(*trunk);
+      // estimate ped bb
+      float addw = (b->width / (float) .6) - b->width;
+      b->height = (uint) (b->height / (float) .6);
+      b->width = (uint) (b->width / (float) .6);
+      //b->h0 += (uint) (b->height * (float) .3);
+      // re-center bbox and cut out of image borders if necessary
+      int outbound = b->w0 - (int) (addw / 2.0);
+      if (outbound < 0) {
+	b->w0 = 0;
+	b->width += outbound;
+      } else
+	b->w0 = outbound;
+      // check upper bounds
+      if (b->h0 + b->height > image.dim(0))
+	b->height -= b->h0 + b->height - image.dim(0);
+      if (b->w0 + b->width > image.dim(1))
+	b->width -= b->w0 + b->width - image.dim(1);
+      raw2.push_back(b);
+    }
+
+
+    float min_ht_overlap = .65; // minimum head/trunk overlap
+    float min_tb_overlap = .65; // minimum trunk/body overlap
+    float min_ht_ratio = .2, max_ht_ratio = .5; // min/max head/trunk area ratio
+    float min_tb_ratio = .2, max_tb_ratio = .5; // min/max trunk/body area ratio
+    float min_hb_ratio = .1, max_hb_ratio = .2; // min/max head/body area ratio
+    // internal component bottom bar shouldnt be lower than external component
+    // height * this ratio + h0
+    float max_internal_height = .8; 
+    float max_internal_height_hb = .5; 
+    // max bonus for multiple confidences, per contributing class (> 1)
+    // avg conf * max bonus * number of contributing classes (> 1)
+    float conf_max_bonus = 0; //.1; 
+
+    // build list of head/trunk overlapping bb pairs
+    vector<bbox*> ht;
+    for (ib = 0; ib < bb_trunk.size(); ++ib) {
+      trunk = bb_trunk[ib];
+      for (jb = 0; jb < bb_head.size(); ++jb) {
+	head = bb_head[jb];
+	head_area = head->area();
+	trunk_area = trunk->area();
+	// sanity check
+	if (head_area == 0 || trunk_area == 0)
+	  eblerror("zero-area bboxes should exists");
+	// ignore if head is bigger than trunk
+	if (head_area > trunk_area)
+	  continue ;
+	// ignore if head doesn't overlap by at least min_ht_overlap with trunk
+	if (head->min_overlap(*trunk) < min_ht_overlap)
+	  continue ;
+	// head/trunk area ratio has to be in a certain range
+	float r = head_area / (float) trunk_area;
+	if (r < min_ht_ratio || r > max_ht_ratio)
+	  continue ;
+	// head has to be in the top end of the trunk
+	if (head->h1() > trunk->h0 + trunk->height * max_internal_height)
+	  continue ;
+	// we met all conditions, add a new trunk box
+	bbox_parts *b = new bbox_parts(*trunk);
+	b->confidence += head->confidence; // accumulate confidences
+	// remember which parts we used to compose this bb
+	b->add_part(*head);
+	ht.push_back(b);
+	// also add an estimated body box
+	b = new bbox_parts(*trunk);
+	// remember which parts we used to compose this bb
+	b->add_part(*head);
+	b->confidence += head->confidence; // accumulate confidences
+	// normalize confidence
+	b->confidence /= 2; // 2 classes contributed, take mean conf
+	b->confidence += b->confidence * conf_max_bonus * 2; // add bonus
+	b->class_id = id_ht; // create new class
+	// estimate ped bb
+	float addw = (b->width / (float) .6) - b->width;
+	b->height = (uint) (b->height / (float) .6);
+	b->width = (uint) (b->width / (float) .6);
+	//	b->h0 += (uint) (b->height * (float) .3);
+	// re-center bbox and cut out of image borders if necessary
+	int outbound = b->w0 - (int) (addw / 2.0);
+	if (outbound < 0) {
+	  b->w0 = 0;
+	  b->width += outbound;
+	} else
+	  b->w0 = outbound;
+	// check upper bounds
+	if (b->h0 + b->height > image.dim(0))
+	  b->height -= b->h0 + b->height - image.dim(0);
+	if (b->w0 + b->width > image.dim(1))
+	  b->width -= b->w0 + b->width - image.dim(1);
+	raw2.push_back(b);
+      }
+    }
+
+    mout << "head/trunk: " << ht.size() << " raw2: " << raw2.size() << endl;
+
+    // add head/trunk/body combinations to raw2
+    for (ib = 0; ib < bb_body.size(); ++ib) {
+      body = bb_body[ib];
+      // loop over already found combinations of head/trunk
+      for (jb = 0; jb < ht.size(); ++jb) {
+	trunk = ht[jb];
+	body_area = body->area();
+	trunk_area = trunk->area();
+	// sanity check
+	if (body_area == 0 || trunk_area == 0)
+	  eblerror("zero-area bboxes should exists");
+	// ignore if trunk is bigger than body
+	if (trunk_area > body_area)
+	  continue ;
+	// ignore if trunk doesn't overlap by at least min_tb_overlap with body
+	if (trunk->min_overlap(*body) < min_tb_overlap)
+	  continue ;
+	// trunk has to be in the top end of the body
+	if (trunk->h1() > body->h0 + body->height * max_internal_height)
+	  continue ;
+	// trunk/body area ratio has to be in a certain range
+	float r = trunk_area / (float) body_area;
+	if (r < min_tb_ratio || r > max_tb_ratio)
+	  continue ;
+	//	cout << "****** adding htb bbox" << endl;
+	// we met all conditions, add a new box
+	bbox_parts *b = new bbox_parts(*body);
+	// remember which parts we used to compose this bb
+	b->add_part(*trunk);
+	b->confidence += trunk->confidence; // accumulate confidences
+	// normalize confidence
+	b->confidence /= 3; // 3 classes contributed, take mean conf
+	b->confidence += b->confidence * conf_max_bonus * 3; // add bonus
+	b->class_id = id_htb; // create new class
+	//	b->class_id = id_body;
+	raw2.push_back(b);
+      }
+    }
+
+    mout << "head/trunk/body raw2: " << raw2.size() << endl;
+
+    // add head/body combinations to raw2
+    for (ib = 0; ib < bb_body.size(); ++ib) {
+      body = bb_body[ib];
+      // loop over heads
+      for (jb = 0; jb < bb_head.size(); ++jb) {
+	head = bb_head[jb];
+	body_area = body->area();
+	head_area = head->area();
+	// sanity check
+	if (head_area == 0 || body_area == 0)
+	  eblerror("zero-area bboxes should exists");
+	// ignore if head is bigger than body
+	if (head_area > body_area)
+	  continue ;
+	// ignore if head doesn't overlap by at least min_tb_overlap with body
+	if (head->min_overlap(*body) < min_tb_overlap)
+	  continue ;
+	// head has to be in the top end of the body
+	if (head->h1() > body->h0 + body->height * max_internal_height_hb)
+	  continue ;
+	// head/body area ratio has to be in a certain range
+	float r = head_area / (float) body_area;
+	if (r < min_hb_ratio || r > max_hb_ratio)
+	  continue ;
+	// we met all conditions, add a new box
+	bbox_parts *b = new bbox_parts(*body);
+	// remember which parts we used to compose this bb
+	b->add_part(*head);
+	b->confidence += head->confidence; // accumulate confidences
+	// normalize confidence
+	b->confidence /= 2; // 2 classes contributed, take mean conf
+	b->confidence += b->confidence * conf_max_bonus * 2; // add bonus
+	b->class_id = id_hb; // create new class
+	//	b->class_id = id_body;
+	raw2.push_back(b);
+      }
+    }
+
+    mout << "head/body raw2: " << raw2.size() << endl;
+
+    // add trunk/body combinations to raw2
+    for (ib = 0; ib < bb_body.size(); ++ib) {
+      body = bb_body[ib];
+      // loop over heads
+      for (jb = 0; jb < bb_trunk.size(); ++jb) {
+	trunk = bb_trunk[jb];
+	body_area = body->area();
+	trunk_area = trunk->area();
+	// sanity check
+	if (body_area == 0 || trunk_area == 0)
+	  eblerror("zero-area bboxes should exists");
+	// ignore if trunk is bigger than body
+	if (trunk_area > body_area)
+	  continue ;
+	// ignore if trunk doesn't overlap by at least min_tb_overlap with body
+	if (trunk->min_overlap(*body) < min_tb_overlap)
+	  continue ;
+	// trunk has to be in the top end of the body
+	if (trunk->h1() > body->h0 + body->height * max_internal_height)
+	  continue ;
+	// trunk/body area ratio has to be in a certain range
+	float r = trunk_area / (float) body_area;
+	if (r < min_tb_ratio || r > max_tb_ratio)
+	  continue ;
+	// we met all conditions, add a new box
+	bbox_parts *b = new bbox_parts(*body);
+	// remember which parts we used to compose this bb
+	b->add_part(*trunk);
+	b->confidence += trunk->confidence; // accumulate confidences
+	// normalize confidence
+	b->confidence /= 2; // 2 classes contributed, take mean conf
+	b->confidence += b->confidence * conf_max_bonus * 2; // add bonus
+	//b->class_id = id_body;
+	b->class_id = id_tb; // create new class
+	raw2.push_back(b);
+      }
+    }
+
+    uint k, j, n = 0;
+    bbox_parts *b1, *b2;
+    vector<bbox*> raw3;
+    if (share_parts) { // allow parts sharing
+      for (k = 0; k < raw2.size(); ++k)
+	raw3.push_back(raw2[k]);
+    } else {
+      // if bounding boxes are composed from same parts, keep the best one
+      bool keep;
+      for (k = 0; k < raw2.size(); ++k) {
+	keep = true;
+	b1 = (bbox_parts*) raw2[k];
+	for (j = 0; j < raw2.size(); ++j) {
+	  if (k == j)
+	    continue ;
+	  b2 = (bbox_parts*) raw2[j];
+	  if (b1->share_parts(*b2)) {
+	    if (b1->confidence < b2->confidence) {
+	      keep = false;
+	      break ;
+	    }
+	  }
+	}
+	if (keep)
+	  raw3.push_back(b1);
+	else 
+	  n++;
+      }
+      mout << "Trashed " << n << "/" << raw2.size()
+	   << " bboxes because they shared part with higher "
+	   << "confidence bbox." << endl;
+    }
+    raw2.clear();
+
+    // delete temporary bboxes
+    for (jb = 0; jb < ht.size(); ++jb)
+      delete(ht[jb]);
+    ht.clear();
+    
+    if (ped_only) {
+      vector<bbox*> raw4;
+      for (ib = 0; ib < raw3.size(); ++ib) {
+	i = raw3[ib];
+	if (i->class_id == id_body || i->class_id == id_ht
+	    || i->class_id == id_htb || i->class_id == id_hb
+	    || i->class_id == id_tb || i->class_id == id_h 
+	    || i->class_id == id_t)
+	  raw4.push_back(i);
+	else
+	  delete i;
+      }
+      raw3.clear();
+      
+      // apply regular overlap pruning to regular and synthetized bboxes,
+      // but forbid different classes to prune each other.      
+      vector<bbox*> raw5, raw6;
+      if (mean_bb) {
+	prune_vote(raw4, raw5, max_overlap2, false, min_hcenter_dist2, min_wcenter_dist2, id_mean);
+	prune_overlap(raw5, raw6, max_overlap, false, min_hcenter_dist, min_wcenter_dist,
+		      oheight, owidth);
+      } else
+	prune_overlap(raw4, raw6, max_overlap, false, min_hcenter_dist, min_wcenter_dist,
+		      oheight, owidth);
+
+      for(ib=0; ib < raw6.size();++ib) 
+	if (raw6[ib]->confidence >= threshold)
+	  pruned_bboxes.push_back(raw6[ib]);
+    } else {
+      // apply regular overlap pruning to regular and synthetized bboxes,
+      // but forbid different classes to prune each other.
+      prune_overlap(raw3, pruned_bboxes, max_overlap, 
+		    true, min_hcenter_dist, min_wcenter_dist, oheight, owidth);
+    }
+    mout << "pruned_bboxes: " << pruned_bboxes.size() << endl;
+  }
+	
+  //////////////////////////////////////////////////////////////////////////////
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::smooth_outputs() {
     //    mout << "smoothing not implemented" << endl;
@@ -639,6 +1196,7 @@ namespace ebl {
     
   template <typename T, class Tstate>
   void detector<T,Tstate>::map_to_list(T threshold, vector<bbox*> &raw_bboxes) {
+    bbox::init_instance_id(); // reset unique ids to start from zero.
     // make a list that contains the results
     //    idx<T> in0x(((Tstate*) inputs.get(0))->x);
     double original_h = image.dim(0);
@@ -649,7 +1207,8 @@ namespace ebl {
 		 r, results, void*, resolution, resolutions, uint,
 		 obbox, original_bboxes, uint) {
 	// image region in the input at this scale.
-	rect robbox(obbox.get(0), obbox.get(1), obbox.get(2), obbox.get(3));
+	rect<uint> robbox(obbox.get(0), obbox.get(1),
+			  obbox.get(2), obbox.get(3));
 	double in_h = (double)(((Tstate*) input.get())->x.dim(1));
 	double in_w = (double)(((Tstate*) input.get())->x.dim(2));
 	double out_h = (double)(((Tstate*) output.get())->x.dim(1));
@@ -665,57 +1224,91 @@ namespace ebl {
 	  / std::max((double) 1, (out_h - 1));
 	double offset_w_factor = (in_w - netw)
 	  / std::max((double) 1, (out_w - 1));
-	int classid = 0;
-	// loop on classes
-	idx_bloop1(ro, ((Tstate*) output.get())->x, T) {
-	  if ((classid == bgclass) || (classid == mask_class)) {
-	    classid++;
-	    continue ;
-	  }
+	offset_w = 0;
+	// loop on width
+	idx_eloop1(ro, ((Tstate*) output.get())->x, T) {
 	  offset_h = 0;
-	  { idx_bloop1(roo, ro, T) {
-	    offset_w = 0;
-	    { idx_bloop1(rooo, roo, T) {
-		if (rooo.get() >= threshold) {
-		  bbox bb;
-		  bb.class_id = (int) classid; // Class
-		  bb.confidence = rooo.get(); // Confidence
-		  bb.scale_index = scale_index; // scale index
-		  // original image
-		  // bbox's rectangle in original image
-		  bb.h0 = (uint) (offset_h * offset_h_factor * scalehi);
-		  bb.w0 = (uint) (offset_w * offset_w_factor * scalewi);
-		  bb.height = (uint) (neth * scalehi);
-		  bb.width = (uint) (netw * scalewi);
-		  // apply bbox factors
-		  bb.h0 = bb.h0 + (uint)((bb.height - bb.height * bbhfactor)/2);
-		  bb.w0 = bb.w0 + (uint)((bb.width - bb.width * bbwfactor)/2);
-		  bb.height = (uint) (bb.height * bbhfactor);
-		  bb.width = (uint) (bb.width * bbwfactor);
-		  // cut off bbox at image boundaries
-		  bb.h0 = (uint) std::max(0, (int) (bb.h0 - image_h0));
-		  bb.w0 = (uint) std::max(0, (int) (bb.w0 - image_w0));
-		  bb.height = MIN(bb.height + bb.h0, (uint) original_h) - bb.h0;
-		  bb.width = MIN(bb.width + bb.w0, (uint) original_w) - bb.w0;
-		  // input map
-		  bb.iheight = (uint) in_h; // input h
-		  bb.iwidth = (uint) in_w; // input w
-		  bb.ih0 = (uint) (offset_h * offset_h_factor);
-		  bb.iw0 = (uint) (offset_w * offset_w_factor);
-		  bb.ih = (uint) neth;
-		  bb.iw = (uint) netw;
-		  // output map
-		  bb.oheight = (uint) out_h; // output height
-		  bb.owidth = (uint) out_w; // output width
-		  bb.oh0 = offset_h; // answer height in output
-		  bb.ow0 = offset_w; // answer height in output
-		  raw_bboxes.push_back(new bbox(bb));
+	  // loop on height
+	  idx_eloop1(roo, ro, T) {
+	    int classid = 0;
+	    // loop on classes (and their targets)
+	    idx_bloop1(target, targets, T) {
+	      if ((classid == bgclass) || (classid == mask_class)) {
+		classid++;
+		continue ;
+	      }
+	      T conf, max2;
+	      intg p;
+	      bool ini = false;
+	      switch (conf_type) {
+	      case confidence_sqrdist:
+		conf = 1.0 - ((idx_sqrdist(target, roo) - conf_shift)
+			      / conf_ratio);
+		break ;
+	      case confidence_single: // simply return class' out (normalized)
+		conf = (roo.get(classid) - conf_shift) / conf_ratio;
+	      case confidence_max:
+		conf = roo.get(classid);
+		for (p = 0; p < roo.dim(0); ++p) {
+		  if (p != classid) {
+		    if (!ini) {
+		      max2 = roo.get(p);
+		      ini = true;
+		    } else {
+		      if (roo.get(p) > max2)
+			max2 = roo.get(p);
+		    }
+		  }
 		}
-		offset_w++;
-	      }}
+		conf = ((conf - max2) - conf_shift) / conf_ratio;
+		break ;
+	      default:
+		eblerror("confidence type " << conf_type << " undefined");
+	      }
+	      if (conf >= threshold) {
+		bbox_parts bb;
+		bb.class_id = (int) classid; // Class
+		bb.confidence = conf; // Confidence
+		bb.scale_index = scale_index; // scale index
+		// original image
+		// bbox's rectangle in original image
+		bb.h0 = (uint) (offset_h * offset_h_factor * scalehi);
+		bb.w0 = (uint) (offset_w * offset_w_factor * scalewi);
+		bb.height = (uint) (neth * scalehi);
+		bb.width = (uint) (netw * scalewi);
+		// apply bbox factors
+		bb.h0 = bb.h0 + (uint)((bb.height - bb.height * bbhfactor)/2);
+		bb.w0 = bb.w0 + (uint)((bb.width - bb.width * bbwfactor)/2);
+		bb.height = (uint) (bb.height * bbhfactor);
+		bb.width = (uint) (bb.width * bbwfactor);
+		// cut off bbox at image boundaries
+		int tmp_bbh0 = (int) (bb.h0 - image_h0);
+		int tmp_bbw0 = (int) (bb.w0 - image_w0);
+		bb.h0 = (uint) std::max(0, tmp_bbh0);
+		bb.w0 = (uint) std::max(0, tmp_bbw0);
+		bb.height = MIN(bb.height + tmp_bbh0,
+				(uint) original_h) - bb.h0;
+		bb.width = MIN(bb.width + tmp_bbw0,
+			       (uint) original_w) - bb.w0;
+		// input map
+		bb.iheight = (uint) in_h; // input h
+		bb.iwidth = (uint) in_w; // input w
+		bb.ih0 = (uint) (offset_h * offset_h_factor);
+		bb.iw0 = (uint) (offset_w * offset_w_factor);
+		bb.ih = (uint) neth;
+		bb.iw = (uint) netw;
+		// output map
+		bb.oheight = (uint) out_h; // output height
+		bb.owidth = (uint) out_w; // output width
+		bb.oh0 = offset_h; // answer height in output
+		bb.ow0 = offset_w; // answer height in output
+		raw_bboxes.push_back(new bbox_parts(bb));
+	      }
+	      classid++;
+	    }
 	    offset_h++;
-	  }}
-	classid++;
+	  }
+	  offset_w++;
 	}
 	scale_index++;
       }}
@@ -733,7 +1326,8 @@ namespace ebl {
       bbox *i;
       for (ib = 0 ; ib < bboxes.size(); ++ib) {
 	i = bboxes[ib];
-	out << "- " << (const char*) (labels[i->class_id].idx_ptr());
+	out << "- " << (i->class_id < labels.dim(0) ? 
+			(const char*) (labels[i->class_id].idx_ptr()):"");
 	out << " with confidence " << i->confidence;
 	out << " in scale #" << i->scale_index;
 	out << " (" << image.dim(0) << "x" << image.dim(1);
@@ -759,10 +1353,9 @@ namespace ebl {
       size_t ib; const bbox *i;
       for (ib = 0 ; ib < bboxes.size(); ++ib) {
 	i = bboxes[ib];
-	out << (const char*) labels[i->class_id].idx_ptr();
-	out << " " << i->confidence;
-	out << " bbox: " << i->oh0 << "x" << i->ow0;
-	out << "x(" << i->oheight << "x" << i->owidth << ")" << endl;
+	out << (i->class_id < labels.dim(0) ? 
+		(const char*) labels[i->class_id].idx_ptr() : "")
+	    << " " << (const bbox&) *i << endl;
       }
     }
   }
@@ -789,19 +1382,12 @@ namespace ebl {
 	delete i;
     }
     raw_bboxes.clear();
-    map_to_list(threshold, raw_bboxes);
+    map_to_list(pruning == pruning_pedestrian ? threshold_parts : threshold, 
+		raw_bboxes);
     vector<bbox*> &bb = raw_bboxes;
-    // prune bounding boxes btwn scales
-    if (pruning) {
-      pruned_bboxes.clear();
-      prune(raw_bboxes, pruned_bboxes);
-      bb = pruned_bboxes;
-    }
-    // sort bboxes by confidence (most confident first)
-    sort_bboxes(bb);
-    // print results
-    if (!silent)
-      pretty_bboxes(bb);
+    // non-maximum suppression
+    nms(raw_bboxes, pruned_bboxes, threshold, oheight, owidth);
+    bb = pruned_bboxes; // assign pruned bb to bb
     // save positive response input windows in save mode
     if (save_mode)
       save_bboxes(bb, save_dir, frame_name);
@@ -810,22 +1396,29 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::sort_bboxes(vector<bbox*> &bboxes) {
-    bbox *tmp = NULL;
-    float confidence;
-    for (int i = 1; i < (int) bboxes.size(); ++i) {
-      int k = i;
-      confidence = bboxes[k]->confidence;
-      for (int j = i - 1; j >= 0; j--) {
-	if (confidence > bboxes[j]->confidence) {
-	  // swap them
-	  tmp = bboxes[j];
-	  bboxes[j] = bboxes[k];
-	  bboxes[k] = tmp;
-	  k = j;
-	}
+  void detector<T,Tstate>::nms(vector<bbox*> &raw, vector<bbox*> &pruned,
+			       float threshold, 
+			       uint image_height, uint image_width) {
+    // prune bounding boxes btwn scales
+    if (pruning != pruning_none) {
+      pruned.clear(); // reset pruned bb vector
+      switch (pruning) {
+      case pruning_overlap: 
+	prune_overlap(raw, pruned, max_overlap, false, min_hcenter_dist, 
+		      min_wcenter_dist, threshold, image_height, 
+		      image_width); 
+	break ;
+      case pruning_pedestrian:
+	prune_pedestrian(raw, pruned, ped_only, threshold); break ;
+      default: break;
       }
-    }
+    } else
+      pruned = raw;
+    // sort bboxes by confidence (most confident first)
+    sort_bboxes(pruned);
+    // print results
+    if (!silent)
+      pretty_bboxes(pruned);
   }
 
   template <typename T, class Tstate>
@@ -904,6 +1497,48 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
+  void detector<T,Tstate>::sort_bboxes(vector<bbox*> &bboxes) {
+    bbox *tmp = NULL;
+    float confidence;
+    for (int i = 1; i < (int) bboxes.size(); ++i) {
+      int k = i;
+      confidence = bboxes[k]->confidence;
+      for (int j = i - 1; j >= 0; j--) {
+	if (confidence > bboxes[j]->confidence) {
+	  // swap them
+	  tmp = bboxes[j];
+	  bboxes[j] = bboxes[k];
+	  bboxes[k] = tmp;
+	  k = j;
+	}
+      }
+    }
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::add_class(const char *name) {
+    if (!name)
+      eblerror("cannot add empty class name");
+    mout << "Adding class " << name << endl;
+    intg len = (std::max)(labels.dim(1), (intg) strlen(name) + 1);
+    idx<ubyte> l2(labels.dim(0) + 1, len);
+    idx_clear(l2);
+    idx<ubyte> l1 = l2.narrow(0, labels.dim(0), 0);
+    l1 = l1.narrow(1, labels.dim(1), 0);
+    idx_copy(labels, l1);
+    for (uint i = 0; i < strlen(name); ++i)
+      l2.set(name[i], labels.dim(0), i);
+    labels = l2;
+    mout << "New class list is:";
+    uint i = 0;
+    idx_bloop1(lab, labels, ubyte)
+      mout << " " << (const char *) lab.idx_ptr() << "(" << i++ << ")";
+    mout << endl;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  template <typename T, class Tstate>
   uint detector<T,Tstate>::get_total_saved() {
     uint total = 0;
     for (size_t i = 0; i < save_counts.size(); ++i)
@@ -981,8 +1616,8 @@ namespace ebl {
 	       obbox, original_bboxes, uint) {
       idx<T> in = ((Tstate*) input.get())->x.select(0, 0);
       idx<T> out = ((Tstate*) output.get())->x.select(0, id);
-      rect o(obbox.get(0), obbox.get(1),
-	     obbox.get(2), obbox.get(3));
+      rect<uint> o(obbox.get(0), obbox.get(1),
+		   obbox.get(2), obbox.get(3));
       // resizing to inputs, then to original input, to avoid precision loss
       out = image_resize(out, in.dim(0), in.dim(1), 1);
       out = out.narrow(0, obbox.get(2), obbox.get(0));
@@ -1078,11 +1713,11 @@ namespace ebl {
       input = minput;
     // resize and preprocess input
     resizepp.set_dimensions(resolutions.get(res, 0), resolutions.get(res, 1));
-    rect outr(0, 0, resolutions.get(res, 2), resolutions.get(res, 3));
+    rect<int> outr(0, 0, resolutions.get(res, 2), resolutions.get(res, 3));
     resizepp.set_output_region(outr);
     resizepp.fprop(iminput, *input);
     // memorize original input's bbox in resized input
-    rect bb = resizepp.get_original_bbox();
+    rect<int> bb = resizepp.get_original_bbox();
     bbox.set(bb.h0, 0);
     bbox.set(bb.w0, 1);
     bbox.set(bb.height, 2);

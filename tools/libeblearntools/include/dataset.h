@@ -44,6 +44,16 @@ typedef int t_label;
 
 namespace ebl {
 
+  //! A class that describes jitter attributes.
+  class jitter {
+  public:
+    jitter(int h_, int w_, float s_) : h(h_), w(w_), s(s_) { }
+    virtual ~jitter() {} 
+    int h;
+    int w;
+    float s;
+  };
+  
   //! The dataset class allows to extract a dataset from sample files and
   //! compile all samples into one dataset matrix, formatted for learning.
   template <class Tdata> class dataset {
@@ -179,10 +189,22 @@ namespace ebl {
     //! objects.
     void set_bboxwfact(float factor);
 
+    //! Force bounding box width to be h * factor.
+    //! This is useful to normalize bounding boxes with varying width to a fixed
+    //! height/width ratio.
+    void set_bbox_woverh(float factor);
+
     //! If true, ignore samples with padded areas, i.e. too small for target 
     //! size.
     void set_nopadded(bool nopadded);
 
+    //! Add n samples randomly jittered over a hxw neighborhood 
+    //! around original location.
+    void set_jitter(uint h, uint w, uint ns, float s, uint n);
+
+    //! Add sample mirrored with vertical-axis symmetry.
+    void set_wmirror();
+    
     //! use pose information to separate classes. e.g. if for class "person"
     //! we have "front" and "side" pose, create 2 classes "person_front"
     //! and "person_side" instead of 1 class "person".
@@ -247,8 +269,14 @@ namespace ebl {
     //! r is an optional region of interest rectangle in the image d.
     virtual bool add_data(idx<Tdata> &d, const t_label label,
 			  const string *class_name,
-			  const char *filename = NULL, const rect *r = NULL);
+			  const char *filename = NULL,
+			  const rect<int> *r = NULL,
+			  pair<uint,uint> *center = NULL);
 
+    //! add/save sample, called at the end of add_data.
+    void add_data2(idx<Tdata> &sample, t_label label, const string *class_name,
+		   const char *filename, jitter *jitt);
+    
     //! add a class name
     bool add_class(const string &class_name);
 
@@ -280,8 +308,11 @@ namespace ebl {
     //!        output image.
     idx<Tdata> preprocess_data(idx<Tdata> &d, const string *class_name,
 			       bool squared = true, const char *filename = NULL,
-			       const rect *r = NULL, double scale = 0,
-			       bool active_sleepd = true, rect *outr = NULL);
+			       const rect<int> *r = NULL, double scale = 0,
+			       bool active_sleepd = true,
+			       rect<int> *outr = NULL,
+			       pair<uint,uint> *center = NULL,
+			       jitter *jitt = NULL);
 
     ////////////////////////////////////////////////////////////////
     // Helper functions
@@ -308,6 +339,11 @@ namespace ebl {
     
     //! Method to load an image.
     virtual void load_data(const string &fname);
+
+    //! (Re)fills the random vector of possible jitters. Jitter configurations
+    //! will be pulled from this vector, and this method should be called
+    //! once the vector is empty again.
+    void compute_random_jitter();
     
   protected:
     // data ////////////////////////////////////////////////////////
@@ -341,10 +377,20 @@ namespace ebl {
     bool                useparts;       //!< use parts or not
     bool                usepartsonly;   //!< use parts only or not
     string              save_mode;      //!< saving mode (dataset, ppm, png..)
+    bool                wmirror;        //!< add vertical-axis symmetry
+    // bbox transformations /////////////////////////////////////////////////
     float               bboxhfact;      //!< bounding boxes height factor
     float               bboxwfact;      //!< bounding boxes width factor
+    float               bbox_woverh;    //!< bounding boxes width over h factor
     string              force_label;    //!< force all labels to this one
     bool                nopadded;       //!< ignore too small samples
+    // jitter ///////////////////////////////////////////////////////
+    uint                hjitter;        //!< add shifted versions of sample 
+    uint                wjitter;        //!< add shifted versions of sample 
+    uint                nsjitter;       //!< number of possible scales
+    float               sjitter;        //!< range of scales
+    uint                njitter;        //!< number of random jitters
+    vector<jitter>      random_jitter;  //!< pre-computed list of random jitter
     // names ///////////////////////////////////////////////////////
     string		name;	        //!< dataset name
     string		data_fname;	//!< data filename
@@ -376,7 +422,7 @@ namespace ebl {
     string              resize_mode;    //!< type of resizing (bilin, gaussian)
     module_1_1<fs(Tdata)>  *ppmodule;       //!< pp module 
     resizepp_module<fs(Tdata)> *resizepp;   //!< pp resizing module
-    rect                original_bbox;  //!< bbox of image in resized image
+    rect<int>           original_bbox;  //!< bbox of image in resized image
   };
   
   ////////////////////////////////////////////////////////////////

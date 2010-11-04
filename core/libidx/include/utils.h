@@ -49,6 +49,19 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
+  // file IO utilities
+
+  //! Scan an int.
+  EXPORT int fscan_int(FILE *fp);
+
+  //! Scan a float.
+  EXPORT float fscan_float(FILE *fp);
+
+  //! Scan a word and return it. The caller is responsible for deleting
+  //! returned string.
+  EXPORT char *fscan_str(FILE *fp);
+
+  ////////////////////////////////////////////////////////////////
   // directory utilities
 
   //! Create specified directory and all its parents if they do not exists.

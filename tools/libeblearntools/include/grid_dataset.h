@@ -66,7 +66,9 @@ namespace ebl {
     //! (and converting from Toriginal to Tdata type).
     //! r is an optional region of interest rectangle in the image d.
     virtual bool add_data(idx<Tdata> &d, const string &class_name,
-			  const char *filename = NULL, const rect *r = NULL);
+			  const char *filename = NULL,
+			  const rect<int> *r = NULL,
+			  pair<uint,uint> *center = NULL);
 
   protected:
     // base class members to be used ///////////////////////////////

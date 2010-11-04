@@ -35,6 +35,7 @@
 
 #include "libeblearn.h"
 #include "configuration.h"
+#include "tools_utils.h"
 
 namespace ebl {
 
@@ -56,6 +57,48 @@ namespace ebl {
     module_1_1<T,Tstate>* create_network(parameter<T, Tstate> &theparam,
 					 configuration &conf, uint noutputs);
 
+  //! Create a new network based on a configuration. This is relying
+  //! on the old-style variables like 'net_type' and 'net_c1h'. The more
+  //! generic version of this function is 'create_netowrk', which calls
+  //! this function if none of the generic variables were found.
+  //! The configuration should at least contain these variables:
+  //! 'net_type' which can contain so far 'cscscf', 'cscsc', 'cscf', etc.
+  //! Other variables used are convolution and subsampling kernel sizes
+  //! such as 'net_c1h', 'net_c1w', 'net_s1h', etc.
+  //! See netconf.hpp for more details.
+  //! 'in' and 'out' are used for memory optimization if not null, otherwise
+  //! independent buffers are used in between each module (required for
+  //! learning).
+  //! \param in The input buffer for memory optimization.
+  //! \param out The output buffer for memory optimization.
+  // TODO: default is not allowed for function template,
+  // solution is to use -std=c++0x or -std=gnu++0x but not available everywhere
+  // -> find test for these capabilities in cmake
+  template <typename T, class Tstate> // = bbstate_idx<T> >
+    module_1_1<T,Tstate>* create_network_old(parameter<T, Tstate> &theparam,
+					     configuration &conf,
+					     uint noutputs);
+  
+  //! Tries to find the weights variables associated with module_name, i.e.
+  //! module_name"_weights" and load the corresponding matrix file
+  //! into module m.
+  template <class Tmodule, typename T, class Tstate>
+    bool load_module(configuration &conf, module_1_1<T,Tstate> &m,
+		     const string &module_name, const string &type);
+
+  //! Load network's modules individually based on configuration.
+  template <typename T, class Tstate>
+    void manually_load_network(layers<T,Tstate> &l, configuration &conf);
+  
+  //! Load the table for module with name 'module_name'. E.g. for module42,
+  //! this will look for variable 'module42_table' for the table filename
+  //! to load.
+  //! If not found it will then look for 'module42_table_in' and
+  //! 'module42_table_out' to create a full table from in to out.
+  //! If none of those variables are found, it'll return false.
+  bool load_table(configuration &conf, std::string &module_name,
+		  idx<intg> &table, intg thickness, intg noutputs);
+  
 } // end namespace ebl
 
 #include "netconf.hpp"

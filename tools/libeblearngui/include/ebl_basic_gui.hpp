@@ -35,14 +35,16 @@
 
 using namespace std;
 
+#define MAXWIDTH 1000
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // linear_module
   
-#define LINEAR_MODULE_GUI(name, op, T, state)				\
+#define LINEAR_MODULE_GUI(dname, op, T, state)				\
   template <typename T, class Tstate>					\
-  void linear_module_gui::name(linear_module<T,Tstate> &nn,		\
+  void linear_module_gui::dname(linear_module<T,Tstate> &nn,		\
 			       Tstate &in, Tstate &out,			\
 			       unsigned int &h0, unsigned int &w0,	\
 			       double zoom, T vmin, T vmax,		\
@@ -51,12 +53,12 @@ namespace ebl {
     nn.op(in, out);							\
     unsigned int h = h0, w = w0;					\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "full in:" << in.T;		\
+    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T;	\
     w += 150;								\
     zoom *= 3;								\
     /* display inputs */						\
     idx_bloop1(m, in.T, T) {						\
-      if (w - w0 < 500) {						\
+      if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (m.dim(1) * zoom + 1);				\
       }									\
@@ -71,9 +73,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // convolution_module
 
-#define CONVOLUTION_MODULE_GUI(name, op, T, state)			\
+#define CONVOLUTION_MODULE_GUI(dname, op, T, state)			\
   template <typename T, class Tstate>					\
-  void convolution_module_gui::name(convolution_module<T,Tstate> &nn,	\
+  void convolution_module_gui::dname(convolution_module<T,Tstate> &nn,	\
 				    Tstate &in, Tstate &out,		\
 				    unsigned int &h0,			\
 				    unsigned int &w0,			\
@@ -83,14 +85,16 @@ namespace ebl {
     nn.op(in, out);							\
     unsigned int h = h0, w = w0;					\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "conv. in:" << in.T		\
+    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T	\
 	<< at(h + 15, w) << "min:" << idx_min(in.T)			\
 	<< at(h + 30, w) << "max:" << idx_max(in.T);			\
     w += 150;								\
     /* display inputs */						\
     idx_bloop1(m, in.T, T) {						\
-      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += (uint) (m.dim(1) * zoom + 1);				\
+      if (w - w0 < MAXWIDTH) {						\
+	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+	w += (uint) (m.dim(1) * zoom + 1);				\
+      }									\
     }									\
     h0 += (uint) (m.dim(0) * zoom + 1);					\
     w = w0;								\
@@ -101,7 +105,7 @@ namespace ebl {
     /* display kernels */						\
     /* zoom *= 4; */	 						\
     idx_bloop1(mk, nn.kernel.T, T) {					\
-      if (w - w0 < 500) {						\
+      if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(mk, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (mk.dim(1) * zoom + 1);				\
       }									\
@@ -116,9 +120,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // subsampling_module
 
-#define SUBSAMPLING_MODULE_GUI(name, op, T, state)			\
+#define SUBSAMPLING_MODULE_GUI(dname, op, T, state)			\
   template <typename T, class Tstate>					\
-  void subsampling_module_gui::name(subsampling_module<T,Tstate> &nn,	\
+  void subsampling_module_gui::dname(subsampling_module<T,Tstate> &nn,	\
 				    Tstate &in, Tstate &out,		\
 				    unsigned int &h0,			\
 				    unsigned int &w0,			\
@@ -128,12 +132,14 @@ namespace ebl {
     nn.op(in, out);							\
     unsigned int h = h0, w = w0;					\
     /* display input text	*/					\
-    gui << gui_only() << at(h, w) << "ssampl. in:" << in.T;		\
+    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T;	\
     w += 150;								\
     /* display inputs */						\
     idx_bloop1(m, in.T, T) {						\
-      draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-      w += (uint) (m.dim(1) * zoom + 1);				\
+      if (w - w0 < MAXWIDTH) {						\
+	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
+	w += (uint) (m.dim(1) * zoom + 1);				\
+      }									\
     }									\
     h0 += (uint) (m.dim(0) * zoom + 1);					\
     w = w0;								\

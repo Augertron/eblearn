@@ -37,13 +37,13 @@ namespace ebl {
 
   template <typename T, class Tin, class Tout>
   module_1_1<T,Tin,Tout>::module_1_1(const char *name_, bool bResize_)
-    : bResize(bResize_), name(name_), memoptimized(false) { 
+    : bResize(bResize_), _name(name_), memoptimized(false) { 
   }
 
   template <typename T, class Tin, class Tout>
   module_1_1<T,Tin,Tout>::~module_1_1() {
 #ifdef __DEBUG__
-    cout << "deleting module_1_1: " << name << endl;
+    cout << "deleting module_1_1: " << _name << endl;
 #endif
   }
 
@@ -100,18 +100,33 @@ namespace ebl {
     return true;
   }
   
+  template <typename T, class Tin, class Tout>
+  const char *module_1_1<T,Tin,Tout>::name() {
+    return this->_name.c_str();
+  }
+  
+  template <typename T, class Tin, class Tout>
+  std::string module_1_1<T,Tin,Tout>::describe() {
+    std::string desc = _name; // default, just return the module's name
+    return desc;
+  }
+  
+  template <typename T, class Tin, class Tout>
+  void module_1_1<T,Tin,Tout>::load_x(idx<T> &weights) { 
+    err_not_implemented(); }
+
   ////////////////////////////////////////////////////////////////
   // module_2_1
 
   template <typename T, class Tin1, class Tin2, class Tout>
   module_2_1<T,Tin1,Tin2,Tout>::module_2_1(const char *name_)
-    : name(name_) { 
+    : _name(name_) { 
   }
 
   template <typename T, class Tin1, class Tin2, class Tout>
   module_2_1<T,Tin1,Tin2,Tout>::~module_2_1() {
 #ifdef __DEBUG__
-    cout << "deleting module_2_1: " << name << endl;
+    cout << "deleting module_2_1: " << _name << endl;
 #endif
   }
 
@@ -134,6 +149,11 @@ namespace ebl {
   template <typename T, class Tin1, class Tin2, class Tout>
   void module_2_1<T,Tin1,Tin2,Tout>::normalize() { err_not_implemented(); }
 
+  template <typename T, class Tin1, class Tin2, class Tout>
+  const char *module_2_1<T,Tin1,Tin2,Tout>::name() {
+    return _name;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // ebm_1
 
@@ -423,6 +443,11 @@ namespace ebl {
     ho = htmp;
   }
   
+  template <typename T, class Tstate>
+  uint layers<T,Tstate>::size() {
+    return modules->size();
+  }
+
   template <typename T, class Tstate>
   void layers<T,Tstate>::pretty(idxdim &isize) {
     idxdim is(isize);

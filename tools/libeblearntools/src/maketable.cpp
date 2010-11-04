@@ -32,6 +32,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include "stl.h"
 #include "ebl_utils.h"
 
 using namespace std;
@@ -40,9 +41,13 @@ using namespace ebl;
 uint insize = 0; // number of inputs
 uint outsize = 0; // number of outputs
 uint fanin = 0; // fanin
+uint yend = 0;
+uint uend = 0;
+uint vend = 0;
 bool full = false;
 bool brandom = false; // random table
 bool one2one = false; // 1 to 1 table
+bool yuv0 = false; // yuv layer 0 table
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -66,6 +71,14 @@ bool parse_args(int argc, char **argv) {
 	++i; if (i >= argc) throw 1;
 	outsize = atoi(argv[i]);
 	brandom = true;
+      } else if (strcmp(argv[i], "-yuv0") == 0) {
+	++i; if (i >= argc) throw 1;
+	yend = atoi(argv[i]);
+	++i; if (i >= argc) throw 1;
+	uend = atoi(argv[i]);
+	++i; if (i >= argc) throw 1;
+	vend = atoi(argv[i]);
+	yuv0 = true;
       } else if (strcmp(argv[i], "-fanin") == 0) {
 	++i; if (i >= argc) throw 1;
 	fanin = atoi(argv[i]);
@@ -104,6 +117,10 @@ void print_usage() {
        << "   Number of inputs connected to each output." << endl;
   cout << "  -one2one <size>" << endl
        << "   Connect [0 .. size] to [0 .. size] in a 1 to 1 mapping." << endl;
+  cout << "  -yuv0 <yend> <uend> <vend>" << endl
+       << "   Connect 3-channel input (e.g. YUV) independently for layer 0, "
+       << "   Y to [0 .. yend - 1], U to [yend .. uend - 1] and V to "
+       << "   [uend .. vend - 1]." << endl;
 }
 
 int main(int argc, char **argv) {
@@ -135,6 +152,16 @@ int main(int argc, char **argv) {
     dynamic_init_drand(); // init random seed
     table = random_table(insize, outsize, fanin);
     type = "random";
+  } else if (yuv0) {
+    if (yend == 0 && uend == 0 && vend == 0)
+      eblerror("you must set at least yend, uend or vend > 0");
+    cout << "Making a 3-channel table from 3 to "
+	 << yend << " (chan 1), " << uend << " (chan 2), " << vend
+	 << " (chan 3)." << endl;
+    table = yuv_table0(yend, uend, vend);
+    type << "yuv0_y" << yend << "_u" << uend << "_v" << vend;
+    insize = 3;
+    outsize = vend;
   } else if (one2one) {
     cout << "Making a one to one table from " << insize << " to "
 	 << insize << endl;

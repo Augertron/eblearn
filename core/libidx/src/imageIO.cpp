@@ -43,33 +43,13 @@
 #include "idxops.h"
 #include "idx.h"
 #include "stl.h"
+#include "utils.h"
 
 using namespace std;
 
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-
-  //! Scan an int.
-  int fscan_int(FILE *fp) {
-    int res = 0;
-    if (fscanf(fp, "%d", &res) < 1)
-      eblthrow("cannot read integer from stream");
-    return res;
-  }
-
-  //! Scan a word and return it. The caller is responsible for deleting
-  //! returned string.
-  char *fscan_str(FILE *fp) {
-    char buffer[1024], *res = NULL;
-    int s;
-    s = fscanf(fp,"%s",buffer);
-    if ( s < 1)
-      buffer[0]=0;
-    res = new char[strlen(buffer) + 1];
-    strcpy(res, buffer);
-    return res;
-  }
 
   //! skip comments lines starting with <start>
   void skip_comments(ubyte start, FILE *fp) {

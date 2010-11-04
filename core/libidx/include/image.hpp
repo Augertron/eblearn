@@ -61,11 +61,11 @@ namespace ebl {
   }
 
   template<class T> idx<T> image_resize(idx<T> &image, double h, double w, 
-					int mode,
-					rect *iregion_, rect *oregion_) {
+					int mode, rect<int> *iregion_,
+					rect<int> *oregion_) {
     if (image.order() < 2) eblerror("image must have at least an order of 2.");
     // iregion is optional, set it to entire image if not given
-    rect iregion = rect(0, 0, image.dim(0), image.dim(1));
+    rect<int> iregion = rect<int>(0, 0, image.dim(0), image.dim(1));
     if (iregion_)
       iregion = *iregion_;
     double ratioh = h / iregion.height;
@@ -125,7 +125,7 @@ namespace ebl {
     rw = std::max(1, (int) (1 / ratiow));
     rh = std::max(1, (int) (1 / ratioh));
     // compute output region
-    rect oregion((uint)(iregion.h0 * ratioh), (uint)(iregion.w0 * ratiow),
+    rect<int> oregion((uint)(iregion.h0 * ratioh), (uint)(iregion.w0 * ratiow),
 		 (uint)(iregion.height * ratioh),
 		 (uint)(iregion.width * ratiow));
     if (oregion_)
@@ -165,14 +165,15 @@ namespace ebl {
 
   template<class T>
   idx<T> image_gaussian_resize(idx<T> &im, double oheight, double owidth,
-				uint mode, rect *iregion_, rect *oregion) {
+			       uint mode, rect<int> *iregion_,
+			       rect<int> *oregion) {
     // only accept 2D or 3D images
     if ((im.order() != 2) && (im.order() != 3)) {
       cerr << "illegal order: " << im << endl;
       eblerror("unexpected image format");
     }
     // iregion is optional, set it to entire image if not given
-    rect iregion(0, 0, im.dim(0), im.dim(1));
+    rect<uint> iregion(0, 0, im.dim(0), im.dim(1));
     if (iregion_)
       iregion = *iregion_;
     // if region's height and width already have the correct size, return
@@ -183,11 +184,11 @@ namespace ebl {
     }
     // gaussian resize
     gaussian_pyramid<T> gp;
-    rect outr;
+    rect<uint> outr;
     idx<T> rim;
     ////////////////////////////////////////////////////////////////
     if ((iregion.width > owidth) || (iregion.height > oheight)) { // reduce
-      rect exact_inr;
+      rect<uint> exact_inr;
       uint reductions;
   
       switch (mode) {
@@ -197,15 +198,17 @@ namespace ebl {
 	// more precise without the variable.
 	if (oheight / (double) iregion.height <
 	    owidth  / (double) iregion.width)
-	  outr = rect((uint)(iregion.h0 * oheight / (double)iregion.height),
-		      (uint)(iregion.w0 * oheight / (double)iregion.height),
-		      (uint)(iregion.height * oheight / (double)iregion.height),
-		      (uint)(iregion.width * oheight / (double)iregion.height));
+	  outr = rect<uint>
+	    ((uint)(iregion.h0 * oheight / (double)iregion.height),
+	     (uint)(iregion.w0 * oheight / (double)iregion.height),
+	     (uint)(iregion.height * oheight / (double)iregion.height),
+	     (uint)(iregion.width * oheight / (double)iregion.height));
 	else
-	  outr = rect((uint) (iregion.h0     * owidth / (double)iregion.width),
-		      (uint) (iregion.w0     * owidth / (double)iregion.width),
-		      (uint) (iregion.height * owidth / (double)iregion.width),
-		      (uint) (iregion.width  * owidth / (double)iregion.width));
+	  outr = rect<uint>
+	    ((uint) (iregion.h0     * owidth / (double)iregion.width),
+	     (uint) (iregion.w0     * owidth / (double)iregion.width),
+	     (uint) (iregion.height * owidth / (double)iregion.width),
+	     (uint) (iregion.width  * owidth / (double)iregion.width));
 	reductions = gp.count_reductions_exact(iregion, outr, exact_inr);
 	break ;
       default:
@@ -225,7 +228,7 @@ namespace ebl {
     } else { // expand
       uint expansions;
       uint imax, omax, dist;
-      rect outr2;
+      rect<uint> outr2;
       // select biggest side
       if (iregion.height > iregion.width) {
 	imax = iregion.height;
@@ -248,7 +251,11 @@ namespace ebl {
       outr2 = gp.expand_rect(iregion, expansions);
       // bilinear resize to target resolution
       rim = rim.shift_dim(0, 2);
-      rim = image_resize(rim, oheight, owidth, mode, &outr2, &outr);
+      // TODO: casting to int correct?
+      rect<int> oor2, oor;
+      oor2 = outr2; oor = outr;
+      rim = image_resize(rim, oheight, owidth, mode, &oor2, &oor);
+      outr2 = oor2; outr = oor;
     }
     ////////////////////////////////////////////////////////////////
     if (oregion)
@@ -258,7 +265,7 @@ namespace ebl {
 
   template<class T>
   idx<T> image_mean_resize(idx<T> &im, double oheight, double owidth,
-			   uint mode, rect *iregion_, rect *oregion) {
+			   uint mode, rect<int> *iregion_, rect<int> *oregion) {
     // only accept 2D or 3D images
     if ((im.order() != 2) && (im.order() != 3)) {
       cerr << "illegal order: " << im << endl;
@@ -269,7 +276,7 @@ namespace ebl {
       eblerror("illegal resize image to zero");
     }
     // iregion is optional, set it to entire image if not given
-    rect iregion(0, 0, im.dim(0), im.dim(1));
+    rect<int> iregion(0, 0, im.dim(0), im.dim(1));
     if (iregion_)
       iregion = *iregion_;
     // if region's height and width already have the correct size, return
@@ -279,7 +286,7 @@ namespace ebl {
       return im;
     }
     // mean resize
-    rect outr, inr;
+    rect<int> outr, inr;
     idx<T> rim, out;
     ////////////////////////////////////////////////////////////////
     if ((iregion.width > owidth) || (iregion.height > oheight)) { // reduce
@@ -290,18 +297,18 @@ namespace ebl {
 	// more precise without the variable.
 	if (oheight / (double) iregion.height <
 	    owidth  / (double) iregion.width) {
-	  outr = rect((uint)(iregion.h0 * oheight / (double) iregion.height),
+	  outr = rect<int>((uint)(iregion.h0 * oheight / (double) iregion.height),
 		      (uint)(iregion.w0 * oheight / (double) iregion.height),
 		      (uint)(iregion.height * oheight / (double)iregion.height),
 		      (uint)(iregion.width * oheight / (double)iregion.height));
-	  inr = rect(0, 0, (uint) (im.dim(0) * oheight /(double)iregion.height),
+	  inr = rect<int>(0, 0, (uint) (im.dim(0) * oheight /(double)iregion.height),
 		     (uint) (im.dim(1) * oheight / (double)iregion.height));
 	} else {
-	  outr = rect((uint) (iregion.h0     * owidth / (double)iregion.width),
+	  outr = rect<int>((uint) (iregion.h0     * owidth / (double)iregion.width),
 		      (uint) (iregion.w0     * owidth / (double)iregion.width),
 		      (uint) (iregion.height * owidth / (double)iregion.width),
 		      (uint) (iregion.width  * owidth / (double)iregion.width));
-	  inr = rect(0, 0, (uint) (im.dim(0) * owidth / (double)iregion.width),
+	  inr = rect<int>(0, 0, (uint) (im.dim(0) * owidth / (double)iregion.width),
 		     (uint) (im.dim(1) * owidth / (double)iregion.width));
 	}
 	break ;
@@ -351,8 +358,8 @@ namespace ebl {
   }
 
   template<class T> 
-  idx<T> image_region_to_rect(idx<T> &im, const rect &r, uint oheight,
-			      uint owidth, rect &cropped) {
+  idx<T> image_region_to_rect(idx<T> &im, const rect<int> &r, uint oheight,
+			      uint owidth, rect<int> &cropped) {
     // TODO: check expecting 2D or 3D
     // TODO: check that rectangle is within image
     idxdim d(im);
@@ -364,12 +371,12 @@ namespace ebl {
 
     float hcenter = r.h0 + (float) r.height / 2; // input height center
     float wcenter = r.w0 + (float) r.width / 2; // input width center
-    // limit centers to half the width/height away from borders
-    // to handle incorrect regions
-    hcenter = MIN((float)im.dim(dh) - (float)r.height/2,
-		  std::max((float)r.height/2, hcenter));
-    wcenter = MIN((float)im.dim(dw) - (float)r.width/2,
-		  std::max((float)r.width/2, wcenter));
+    // // limit centers to half the width/height away from borders
+    // // to handle incorrect regions
+    // hcenter = MIN((float)im.dim(dh) - (float)r.height/2,
+    // 		  std::max((float)r.height/2, hcenter));
+    // wcenter = MIN((float)im.dim(dw) - (float)r.width/2,
+    // 		  std::max((float)r.width/2, wcenter));
     float h0 = hcenter - (float) oheight / 2; // out height offset in input
     float w0 = wcenter - (float) owidth / 2; // out width offset in input
     float h1 = hcenter + (float) oheight / 2;
@@ -378,27 +385,34 @@ namespace ebl {
     int gw0 = (int) std::max(0, (int) MIN(im.dim(dw), w0)); // input w offset
     int gh1 = (int) std::max(0, (int) MIN(im.dim(dh), h1));
     int gw1 = (int) std::max(0, (int) MIN(im.dim(dw), w1));
-    int h = gh1 - gh0; // out height narrow
-    int w = gw1 - gw0; // out width narrow
+    int h = gh1 - gh0 + std::max(0, -r.h0); // out height narrow
+    int w = gw1 - gw0 + std::max(0, -r.w0); // out width narrow
     int fh0 = (int) std::max(0, (int) (gh0 - h0)); // out height offset narrow
     int fw0 = (int) std::max(0, (int) (gw0 - w0)); // out width offset narrow
 
-    idx<T> tmpres = res.narrow(dh, h, fh0);
-    tmpres = tmpres.narrow(dw, w, fw0);
-    idx<T> tmpim = im.narrow(dh, h, gh0);
-    tmpim = tmpim.narrow(dw, w, gw0);
+    // narrow original image
+    int hmin = std::max(1, std::min((int)res.dim(0) - fh0,
+				    std::min((int)im.dim(0) - gh0, h)));
+    int wmin = std::max(1, std::min((int)res.dim(1) - fw0,
+				    std::min((int)im.dim(1) - gw0, w)));
+    idx<T> tmpim = im.narrow(dh, hmin, gh0);
+    tmpim = tmpim.narrow(dw, wmin, gw0);
+    // narrow target image
+    idx<T> tmpres = res.narrow(dh, hmin, fh0);
+    tmpres = tmpres.narrow(dw, wmin, fw0);
+    // copy original to target
     idx_clear(res);
     idx_copy(tmpim, tmpres);
     // set cropped rectangle to region in the output image containing input
     cropped.h0 = fh0;
     cropped.w0 = fw0;
-    cropped.height = h;
-    cropped.width = w;
+    cropped.height = hmin;
+    cropped.width = wmin;
     return res;
   }
   
   template<class T> 
-  idx<T> image_region_to_square(idx<T> &im, const rect &r) {
+  idx<T> image_region_to_square(idx<T> &im, const rect<uint> &r) {
     // TODO: check expecting 2D or 3D
     // TODO: check that rectangle is within image
     uint sz = std::max(r.height, r.width);

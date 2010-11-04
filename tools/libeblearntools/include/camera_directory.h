@@ -101,6 +101,9 @@ namespace ebl {
     //! Return true until all images have been processed.
     virtual bool empty();
 
+    //! Skip n frames.
+    virtual void skip(uint n);
+
     //! Return a name for current frame.
     virtual string frame_name();
 

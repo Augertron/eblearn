@@ -275,7 +275,8 @@ namespace ebl {
     : module_1_1<T,Tstate>("resizepp"), 
       pp(pp_), own_pp(own_pp_), kernelsz(kernelsz_), inpp(1,1,1), outpp(1,1,1),
       tmp3(1,1,1), mode(mode_), inrect(0, 0, 0, 0), inrect_set(false),
-      outrect_set(false), hzpad(hzpad_), wzpad(wzpad_), zpad(NULL) {
+      outrect_set(false), hzpad(hzpad_), wzpad(wzpad_), zpad(NULL),
+      hjitter(0), wjitter(0), sjitter(1.0) {
     set_dimensions(height_, width_);
     set_zpads(hzpad_, wzpad_);
   }
@@ -286,8 +287,8 @@ namespace ebl {
 		  bool own_pp_, uint hzpad_, uint wzpad_)
     : pp(pp_), own_pp(own_pp_), kernelsz(kernelsz_), height(0), width(0),
       inpp(1,1,1), outpp(1,1,1), tmp3(1,1,1), mode(mode_), inrect(0, 0, 0, 0),
-      inrect_set(false), outrect_set(false),
-      hzpad(hzpad_), wzpad(wzpad_), zpad(NULL) {
+      inrect_set(false), outrect_set(false), hzpad(hzpad_), wzpad(wzpad_),
+      zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0) {
     set_zpads(hzpad_, wzpad_);
   }
   
@@ -323,13 +324,20 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_input_region(const rect &inr) {
+  void resizepp_module<T,Tstate>::set_jitter(int h, int w, float s) {
+    hjitter = h;
+    wjitter = w;
+    sjitter = s;
+  }
+  
+  template <typename T, class Tstate>
+  void resizepp_module<T,Tstate>::set_input_region(const rect<int> &inr) {
     inrect = inr;
     inrect_set = true;
   }
 
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_output_region(const rect &outr) {
+  void resizepp_module<T,Tstate>::set_output_region(const rect<int> &outr) {
     outrect = outr;
     outrect.height -= hzpad * 2;
     outrect.width -= wzpad * 2;
@@ -340,10 +348,14 @@ namespace ebl {
   void resizepp_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     // set input region to entire image if no input region is given
     if (!inrect_set)
-      inrect = rect(0, 0, in.x.dim(1), in.x.dim(2));
+      inrect = rect<int>(0, 0, in.x.dim(1), in.x.dim(2));
+    // apply scale jitter (keeping same center)
+    if (sjitter != 1.0)
+      inrect.scale_centered(sjitter, sjitter);
+
     if (!outrect_set)
-      outrect = rect(0, 0, height, width);
-    rect outr;
+      outrect = rect<int>(0, 0, height, width);
+    rect<int> outr;
     // resize input while preserving aspect ratio
     tmp = in.x.shift_dim(0, 2);
     idx<T> resized;
@@ -377,6 +389,9 @@ namespace ebl {
 	      || (out.x.dim(0) != outpp.x.dim(0))) && pp)
       out.x.resize(outpp.x.dim(0), height, width);
     idx_clear(out.x);
+    // apply spatial jitter
+    outr.h0 += hjitter;
+    outr.w0 += wjitter;
     // copy out region to output
     original_bbox = outr;
     resized = resized.shift_dim(0, 2);
@@ -395,7 +410,7 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
-  rect resizepp_module<T,Tstate>::get_original_bbox() {
+  rect<int> resizepp_module<T,Tstate>::get_original_bbox() {
     return original_bbox;
   }
   

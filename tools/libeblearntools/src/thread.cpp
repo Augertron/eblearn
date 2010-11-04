@@ -76,7 +76,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // sbuf
 
-  sbuf::sbuf(std::ostream &o, mutex &m, const char *p)
+  sbuf::sbuf(std::ostream &o, mutex *m, const char *p)
     : out(o), new_line(true), own_lock(false), busy(m), prefix(p) {
   }
 
@@ -90,21 +90,24 @@ namespace ebl {
       str("");
       out.flush();
       new_line = true;
-      busy.unlock();
+      if (busy)
+	busy->unlock();
     } else { // we don't own the lock, wait for it to unlock
-      busy.lock();
+      if (busy)
+	busy->lock();
       out << str();
       str("");
       out.flush();
       new_line = true;
-      busy.unlock();
+      if (busy)
+	busy->unlock();
     }
     return 0;
   }
 
   streamsize sbuf::xsputn ( const char * s, streamsize n ) {
-    if (!own_lock)
-      busy.lock();
+    if (!own_lock && busy)
+      busy->lock();
     own_lock = true; // own lock until we output endl
     if (prefix && new_line)
       out << prefix << ": ";
@@ -115,7 +118,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // mutex_ostream
 
-  mutex_ostream::mutex_ostream(std::ostream &o, mutex &m, const char *p)
+  mutex_ostream::mutex_ostream(std::ostream &o, mutex *m, const char *p)
     : std::ostream(&buffer), buffer(o, m, p) {
   }
 
@@ -125,7 +128,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // thread
 
-  thread::thread(mutex &outmutex, const char *name_, bool sync) 
+  thread::thread(mutex *outmutex, const char *name_, bool sync) 
     : _stop(false), _name(name_), mutout(std::cout, outmutex, _name.c_str()),
       muterr(std::cerr, outmutex, _name.c_str()),
       mout(sync ? mutout : std::cout), merr(sync ? muterr : std::cerr),
@@ -156,13 +159,36 @@ namespace ebl {
     return _name;
   }
 
-  void thread::stop(bool wait) {
+  void thread::stop(long wait_seconds) {
+    ask_stop(); // make sure the thread knows it should stop
+    if (wait_seconds > 0) { // wait for thread to stop by itself
+      timer wait;
+      wait.start();
+      while (!_finished && wait.elapsed_seconds() < wait_seconds)
+	millisleep(5);
+    }
+    // force stopping thread 
+#ifdef __WINDOWS__
+    eblerror("thread::stop not implemented for Windows");
+#else
+    int ret = pthread_cancel(threadptr);
+    if (ret) {
+      merr << "Warning: failed to cancel thread, with error code " << ret << endl;
+      return ;
+    }
+#endif     
     mutex1.lock();
-    _stop = true;
-    mout << "required to stop." << std::endl;
+    _finished = true;
     mutex1.unlock();
-    while (!_finished)
-      millisleep(5);
+  }
+
+  void thread::ask_stop() {
+    if (!_stop) {
+      mutex1.lock();
+      _stop = true;
+      mout << "required to stop." << std::endl;
+      mutex1.unlock();
+    }
   }
 
   bool thread::finished() {
@@ -174,6 +200,7 @@ namespace ebl {
     thread *pt = (thread*) pthis;
     pt->run();
     pt->_finished = true;
+    pt->mout << "finished" << endl;
     return pt;
   }
 

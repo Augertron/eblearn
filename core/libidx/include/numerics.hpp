@@ -43,7 +43,7 @@ namespace ebl {
 #else
     return (std::numeric_limits<T>::max)();
 #endif
-  };
+  }
   
   template <typename T>
   T limits<T>::min() {
@@ -52,7 +52,7 @@ namespace ebl {
 #else
       return (std::numeric_limits<T>::min)();
 #endif
-  };
+  }
 
   template <typename T> template <typename T2>
   T saturator<T>::saturate (T2 in) {

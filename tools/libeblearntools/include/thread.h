@@ -86,7 +86,7 @@ namespace ebl {
     //! Output to ostream o but prevent other
     //! \param m The mutex shared by all threads used to synchronize.
     //! \param prefix If not null, prefix is printed before each new line.
-    sbuf(std::ostream &o, mutex &m, const char *prefix = NULL);
+    sbuf(std::ostream &o, mutex *m = NULL, const char *prefix = NULL);
     ~sbuf();
     
     // When we sync the stream with the output. 
@@ -103,7 +103,7 @@ namespace ebl {
     std::ostream& out;
     bool new_line; //! Indicate if we are starting new line or not.
     bool own_lock; //! True if mutex was locked by this instance.
-    mutex &busy; //! Mutex prevents simultaneous output.
+    mutex *busy; //! Mutex prevents simultaneous output.
     const char *prefix;
   };
 
@@ -117,7 +117,7 @@ namespace ebl {
     //! Output to ostream o but prevent other
     //! \param m The mutex shared by all threads used to synchronize.
     //! \param prefix If not null, prefix is printed before each new line.
-    mutex_ostream(std::ostream &o, mutex &m, const char *prefix = NULL);
+    mutex_ostream(std::ostream &o, mutex *m = NULL, const char *prefix = NULL);
     ~mutex_ostream();
 
   protected:
@@ -134,15 +134,21 @@ namespace ebl {
     //!   To synchronize all threads, give the same mutex to each of them.
     //! \param sync If true, synchronize outputs between threads, using
     //!    outmutex, otherwise use regular unsynced outputs.
-    thread(mutex &outmutex, const char *name = "Thread", bool sync = true);
+    thread(mutex *outmutex = NULL, const char *name = "Thread",
+	   bool sync = true);
     virtual ~thread();
     //! Start the thread.
     int start();
 
-    //! Tell the thread to stop working. Once thread is done,
-    //! finished() will return true.
-    //! \param wait If true, wait until finished() is true.
-    void stop(bool wait = false);
+    //! Stop the thread. If wait_seconds is zero, stop the thread right now,
+    //! otherwise wait until the thread has finished its current task or force
+    //! it to exit if it's not finished after wait_seconds seconds.
+    void stop(long wait_seconds = 0);
+
+    //! Tell the thread it should stop. The thread might be busy finishing
+    //! some task, so this only tells it to quit when it is finished.
+    //! One can check if the thread is finished with the finished() method.
+    void ask_stop();
 
     //! Return true if thread has finished executing.
     bool finished();

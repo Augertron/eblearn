@@ -46,6 +46,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 
 #ifdef __WINDOWS__
 #include <Windows.h>
@@ -55,6 +56,38 @@
 using namespace std;
 
 namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // file IO utilities
+
+  //! Scan an int.
+  int fscan_int(FILE *fp) {
+    int res = 0;
+    if (fscanf(fp, "%d", &res) < 1)
+      eblthrow("cannot read integer from stream");
+    return res;
+  }
+
+  //! Scan a float.
+  float fscan_float(FILE *fp) {
+    float res = 0;
+    if (fscanf(fp, "%f", &res) < 1)
+      eblthrow("cannot read float from stream");
+    return res;
+  }
+
+  //! Scan a word and return it. The caller is responsible for deleting
+  //! returned string.
+  char *fscan_str(FILE *fp) {
+    char buffer[1024], *res = NULL;
+    int s;
+    s = fscanf(fp,"%s",buffer);
+    if ( s < 1)
+      buffer[0]=0;
+    res = new char[strlen(buffer) + 1];
+    strcpy(res, buffer);
+    return res;
+  }
 
   ////////////////////////////////////////////////////////////////
   // directory utilities

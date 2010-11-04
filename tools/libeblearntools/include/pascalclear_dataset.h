@@ -40,7 +40,8 @@ namespace ebl {
 
   //! The pascalclear_dataset class extract background patches from
   //! a dataset of type PASCAL.
-  template <class Tdata> class pascalclear_dataset : public pascalbg_dataset<Tdata> {
+  template <class Tdata> class pascalclear_dataset
+    : public pascalbg_dataset<Tdata> {
   public:
 
     ////////////////////////////////////////////////////////////////
@@ -50,7 +51,8 @@ namespace ebl {
     //! not allocate data matrices, user must call alloc for that effect.
     //! outdims are the target output dimensions of each sample.
     //! inroot is the root directory from which we extract data.
-    pascalclear_dataset(const char *name, const char *inroot, const char *outdir);
+    pascalclear_dataset(const char *name, const char *inroot,
+			const char *outdir, const char *annotations);
 
     //! Destructor.
     virtual ~pascalclear_dataset();
@@ -70,7 +72,7 @@ namespace ebl {
     // internal methods
 
     //! process image given all bounding boxes.
-    virtual void process_image(idx<ubyte> &img, vector<rect>& bboxes,
+    virtual void process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
 			       const string &image_filename);
 
 #endif /* __BOOST__ */

@@ -239,18 +239,20 @@ namespace ebl {
     void set_dimensions(intg height_, intg width_);
     //! set the region to use in the input image.
     //! by default, the input region is the entire image.
-    void set_input_region(const rect &inr);
+    void set_input_region(const rect<int> &inr);
     //! set the region to use in the output image.
     //! by default, the output region is the entire size defined by
     //! set_dimensions().
-    void set_output_region(const rect &outr);
+    void set_output_region(const rect<int> &outr);
+    //! Shift output by h and w pixels, and multiply scale by s.
+    void set_jitter(int h, int w, float s);
     //! Set zero padding on each side for each dimension.
     void set_zpads(intg hpad, intg wpad);
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! return the bounding box of the original input in the output coordinate
     //! system.
-    rect get_original_bbox();
+    rect<int> get_original_bbox();
     //! Returns a deep copy of this module.
     virtual resizepp_module<T,Tstate>* copy();
     
@@ -265,15 +267,18 @@ namespace ebl {
     idx<T>               tmp;           //!< temporary buffer
     idx<T>               tmp2;          //!< temporary buffer
     Tstate               tmp3;          //!< temporary buffer
-    rect                 original_bbox; //!< bbox of original input in output
+    rect<int>            original_bbox; //!< bbox of original input in output
     uint                 mode;          //!< resizing mode.
-    rect                 inrect;        //!< input region of image
-    rect                 outrect;       //!< input region in output image
+    rect<int>            inrect;        //!< input region of image
+    rect<int>            outrect;       //!< input region in output image
     bool                 inrect_set;    //!< use input region or not.
     bool                 outrect_set;   //!< use output region or not.
     uint                 hzpad;         //!< vertical zero-padding for each side
     uint                 wzpad;         //!< horiz. zero-padding for each side
     zpad_module<T,Tstate> *zpad;        //!< Zero padding module.
+    int                  hjitter;       //!< Shift output by this many pixels
+    int                  wjitter;       //!< Shift output by this many pixels
+    float                sjitter;       //!< Multiply scale by this
   };
 
 } // namespace ebl {

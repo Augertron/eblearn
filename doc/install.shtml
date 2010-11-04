@@ -46,7 +46,8 @@
        <code>$ sudo apt-get install subversion cmake g++
 	 libatlas-base-dev libboost-filesystem-dev imagemagick
 	 libboost-regex-dev libqt4-core libqt4-dev libqt4-gui
-	 libcppunit-dev libxml++2.6-dev doxygen mplayer mencoder<br>
+	 libcppunit-dev libxml++2.6-dev doxygen mplayer mencoder
+	 <br>
 	 $ cd tools && make<br>
 	 $ cd tools && sudo make install<br>
 	 $ cd tools && make test<br>
@@ -197,6 +198,17 @@
 	 </code>
        </li>
        </ul>
+
+       <h3>Parallel environment: MPI</h3>
+       <p>The mpidetect project can run multiple detection threads in
+	 an MPI environment. How to use it:
+       <ul><li>to install: libboost-serialization libboost-mpi</li>
+	 <li>in the shell, define USEMPI to 1, e.g.: export USEMPI=1.
+	   This will select the mpi compiler in CMake and appropriate flags.
+	 </li>
+	 <li>Run it with N cores: mpiexec -np N ./mpidetect</li>
+	 </ul>
+       </p>
      </p>
 
      <a name="windows"><h1>Windows</h1></a>

@@ -84,10 +84,21 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // output synchronization
       bool sync = conf.exists_true("sync_outputs");
       mutex out_mutex;
-      mutex_ostream mutout(std::cout, out_mutex, "Thread M");
-      mutex_ostream muterr(std::cerr, out_mutex, "Thread M");
+      mutex_ostream mutout(std::cout, &out_mutex, "Thread M");
+      mutex_ostream muterr(std::cerr, &out_mutex, "Thread M");
       ostream &mout = sync ? mutout : cout;
       ostream &merr = sync ? muterr : cerr;
+      // output dir
+      string		outdir        = "out_";
+      outdir += tstamp();
+      outdir += "/";
+      mkdir_full(outdir);
+      mout << "Saving outputs to " << outdir << endl;
+      // save conf to output dir
+      string cname = outdir;
+      cname << filename(argv[1]);
+      if (conf.write(cname.c_str()))
+	mout << "Wrote configuration to " << cname << endl;
       // load classes of network
       idx<ubyte> classes(1,1);
       try { // try loading classes names but do not stop upon failure
@@ -96,22 +107,24 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	merr << "warning: " << err;
 	merr << endl;
       }
+      bboxes boxes(conf.exists("bbox_saving") ?
+		   (t_bbox_saving) conf.get_int("bbox_saving") : bbox_all,
+		   &outdir, mout, merr);
       
       bool              silent        = conf.exists_true("silent");
       uint              ipp_cores     = 1;
       if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
       ipp_init(ipp_cores); // limit IPP (if available) to 1 core
       bool		save_video    = conf.exists_true("save_video");      
+      bool              save_detections = conf.exists_true("save_detections");
       int		height        = conf.get_int("input_height");
       int		width         = conf.get_int("input_width");
-      string		outdir        = "out_";
       bool              input_random  = conf.exists_true("input_random");
       uint              npasses       = 1;
+      uint              skip_frames   = conf.exists("skip_frames") ? 
+	conf.get_uint("skip_frames") : 0;
       if (conf.exists("input_npasses"))
 	npasses = conf.get_uint("input_npasses");
-      outdir += tstamp();
-      outdir += "/";
-      mout << "Saving outputs to " << outdir << endl;
       string viddir;
       if (save_video) {
 	viddir << outdir << "video/";
@@ -140,7 +153,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	ostringstream tname;
 	tname << "Thread " << i;
 	detection_thread<t_net> *dt =
-	  new detection_thread<t_net>(conf, out_mutex, tname.str().c_str(),
+	  new detection_thread<t_net>(conf, &out_mutex, tname.str().c_str(),
 				      NULL, sync);
 	threads.push_back(dt);
 	dt->start();
@@ -182,21 +195,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 					   npasses);
 	
       // answer variables & initializations
-      vector<bbox*> bboxes;
-      vector<bbox*>::iterator ibboxes;
-      ostringstream answer_fname;
-      mkdir_full(outdir);
-      answer_fname << outdir << "bbox.txt";
-      // open file      
-      ofstream fp(answer_fname.str().c_str());
-      if (!fp) {
-	merr << "failed to open " << answer_fname.str() << endl;
-	eblerror("open failed");
-      }
+      vector<bbox*> bb;
     
       // gui
 #ifdef __GUI__
       bool display	     = conf.exists_bool("display");
+      bool show_parts        = conf.exists_true("show_parts");
       // mindisplay     = conf.exists_bool("minimal_display");
       // display_sleep  = conf.get_uint("display_sleep");
       // display_states = conf.exists_bool("display_states");
@@ -234,39 +238,47 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    continue ;
 	  finished = false; // a thread is not finished
 	  string processed_fname;
+	  uint processed_id = 0;
 	  // retrieve new data if present
-	  updated = (*ithreads)->get_data(bboxes, detframe, 
+	  updated = (*ithreads)->get_data(bb, detframe, 
 					  *(total_saved.idx_ptr() + i),
-					  processed_fname);
+					  processed_fname, processed_id);
 	  // save bounding boxes
 	  if (updated) {
-	    for (ibboxes = bboxes.begin(); ibboxes != bboxes.end(); ++ibboxes) {
-	      fp << processed_fname << " " << (*ibboxes)->class_id << " "
-		 << (*ibboxes)->confidence << " ";
-	      fp << (*ibboxes)->w0 << " " << (*ibboxes)->h0 << " ";
-	      fp << (*ibboxes)->w0 + (*ibboxes)->width << " ";
-	      fp << (*ibboxes)->h0 + (*ibboxes)->height << endl;
-	    }
 	    updated = false;
+	    boxes.new_group(&processed_fname, processed_id);
+	    boxes.add(bb);
+	    boxes.save_eblearn();
 	    cnt++;
 	    // display processed frame
 #ifdef __GUI__
-	    detector_gui<t_net>::
-	      display_minimal(detframe, bboxes, classes, 0, 0, 1, 0, 0, wid);
-	    if (save_video && display) {
-	      string fname;
-	      fname << viddir << processed_fname;
-	      save_window(fname.c_str());
-	      if (!silent) mout << "saved " << fname << endl;
+	    if (display) {
+	      select_window(wid);
+	      disable_window_updates();
+	      clear_resize_window();
+	      detector_gui<t_net>::
+		display_minimal(detframe, bb, 
+				((*ithreads)->pdetect ?
+				 (*ithreads)->pdetect->labels : classes),
+				0, 0, 1, 0, 255,wid, show_parts);
+	      enable_window_updates();
+	      if (save_video && display) {
+		string fname;
+		fname << viddir << processed_fname;
+		save_window(fname.c_str());
+		if (!silent) mout << "saved " << fname << endl;
+	      }
 	    }
 #endif
 	    // output info
 	    if (!silent) {
-	      mout << "total_saved=" << idx_sum(total_saved);
-	      if (conf.exists("save_max"))
-		mout << " / " << conf.get_uint("save_max");
-	      mout << endl;
-	      mout << " remaining=" << (cam->size() - cnt);
+	      if (save_detections) {
+		mout << "total_saved=" << idx_sum(total_saved);
+		if (conf.exists("save_max"))
+		  mout << " / " << conf.get_uint("save_max");
+		mout << endl;
+	      }
+	      mout << "remaining=" << (cam->size() - cnt);
 	      mout << " elapsed=" << toverall.elapsed();
 	      if (cam->size() > 0) {
 		mout << " ETA=" << toverall.
@@ -274,7 +286,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 				 (toverall.elapsed_seconds() 
 				  /(float)std::max((uint)1,cnt))));
 	      }
-	      if (conf.exists("save_max")) {
+	      if (conf.exists("save_max") && save_detections) {
 		uint total = idx_sum(total_saved);
 		mout << " save_max_ETA="
 		     << toverall.
@@ -290,23 +302,26 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  // check if ready
 	  if ((*ithreads)->available()) {
 	    if (stop)
-	      (*ithreads)->stop(); // ask this thread to stop
+	      (*ithreads)->ask_stop(); // stop but let thread finish
 	    else {
 	      // grab a new frame if available
 	      if (cam->empty()) {
 		stop = true;
 		tstop.start(); // start countdown timer
-		(*ithreads)->stop(); // ask this thread to stop
+		(*ithreads)->ask_stop(); // ask this thread to stop
 		millisleep(50);
 	      } else {
 		// if the pre-camera is defined use it until empty
 		if (cam2 && !cam2->empty())
 		  frame = cam2->grab();
-		else // empty pre-camera, use regular camera
+		else { // empty pre-camera, use regular camera
+		  cam->skip(skip_frames); // skip frames if skip_frames > 0
+		  if (cam->empty()) continue ;
 		  frame = cam->grab();
+		}
 		// send new frame to this thread
 		string frame_name = cam->frame_name();
-		while (!(*ithreads)->set_data(frame, frame_name))
+		while (!(*ithreads)->set_data(frame, frame_name, cnt))
 		  millisleep(5);
 		// we just sent a new frame
 		tpass.restart();
@@ -328,12 +343,14 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	// sleep a bit between each iteration
 	millisleep(5);
 	// check if stop countdown reached 0
-	if (stop && tstop.elapsed_minutes() >= 20) {
-	  cerr << "threads did not all return 20 min after request, stopping"
+	if (stop && tstop.elapsed_minutes() >= 5) {
+	  cerr << "threads did not all return 5 min after request, stopping"
 	       << endl;
 	  break ; // program too long to stop, force exit
 	}
       }
+      // saving boxes
+      boxes.save();
       mout << "Execution time: " << toverall.elapsed() << endl;
       if (save_video)
 	cam->stop_recording(conf.exists_bool("use_original_fps") ?
@@ -341,10 +358,11 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 			    outdir.c_str());
       // free variables
       if (cam) delete cam;
-      for (ithreads = threads.begin(); ithreads != threads.end(); ++ithreads)
+      for (ithreads = threads.begin(); ithreads != threads.end(); ++ithreads) {
+	if (!(*ithreads)->finished())
+	  (*ithreads)->stop(); // stop thread without waiting
 	delete *ithreads;
-      // close files
-      fp.close();
+      }
 #ifdef __GUI__
       mout << "Closing windows..." << endl;
       quit_gui(); // close all windows

@@ -59,7 +59,7 @@ namespace ebl {
   class IDXGUIEXPORT gui_thread : public QWidget { 
     Q_OBJECT
   public:
-    gui_thread(int argc, char **argv);
+    gui_thread(int argc, char **argv, QApplication &qa);
     virtual ~gui_thread();
 
     //! Return first key pressed of the key pressed even list for
@@ -132,6 +132,7 @@ namespace ebl {
     bool                         busy; // flag when busy drawing
     QMutex                       mutex1;
     bool                         bquit; // indicate if we want to quit
+    QApplication                &qapp; // reference to main QT thread
   };
 
   //! This macro is intended to replace your int main(int argc, char **argv)
@@ -147,7 +148,7 @@ namespace ebl {
     gui.thread_init = true;			\
     QApplication a(argc, argv);			\
     a.setQuitOnLastWindowClosed(false);		\
-    ebl::gui_thread gt(argc, argv);		\
+    ebl::gui_thread gt(argc, argv, a);		\
     gt.thread.start();				\
     a.exec();					\
     return 0;					\
@@ -156,7 +157,7 @@ namespace ebl {
   
 
 #define WINMAIN_QTHREAD(targc, argc, targv, argv)			\
-  int run_main(targc argc, targv argv);				\
+  int run_main(targc argc, targv argv);					\
   using namespace ebl;							\
   int WINAPI WinMain(HINSTANCE d1, HINSTANCE d2, LPSTR d3, int d4) {	\
     LPWSTR *argvw;							\
@@ -173,7 +174,7 @@ namespace ebl {
     gui.thread_init = true;						\
     QApplication a(argc, argv);						\
     a.setQuitOnLastWindowClosed(false);					\
-    ebl::gui_thread gt(argc, argv);					\
+    ebl::gui_thread gt(argc, argv), a;					\
     gt.thread.start();							\
     a.exec();								\
     LocalFree(argv);							\
