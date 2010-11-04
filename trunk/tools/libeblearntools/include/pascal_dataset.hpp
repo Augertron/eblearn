@@ -54,15 +54,21 @@ namespace ebl {
   template <class Tdata>
   pascal_dataset<Tdata>::pascal_dataset(const char *name_, const char *inroot_,
 					bool ignore_diff, bool ignore_trunc,
-					bool ignore_occl)
+					bool ignore_occl,
+					const char *annotations)
     : dataset<Tdata>(name_, inroot_) {
     // initialize pascal-specific members
-    if (inroot_) {
-      annroot = inroot;
-      annroot += "/Annotations/"; // look for xml files in annotations
-      imgroot = inroot;
-      imgroot += "JPEGImages/"; // image directory
-    }
+    // if (inroot_) {
+    //   annroot = inroot;
+    //   annroot += "/Annotations/"; // look for xml files in annotations
+    //   imgroot = inroot;
+    //   imgroot += "JPEGImages/"; // image directory
+    // }
+    imgroot = inroot;
+    if (annotations)
+      annroot = annotations;
+    else
+      eblerror("expected annotations folder, please specify with -annotations");
     ignore_difficult = ignore_diff;
     ignore_truncated = ignore_trunc;
     ignore_occluded = ignore_occl;
@@ -327,10 +333,11 @@ namespace ebl {
 					     uint &h0, uint &w0,uint obj_number,
 					     const string &image_filename) {
     unsigned int xmin, ymin, xmax, ymax;
-    unsigned int sizex, sizey;
+    unsigned int sizex, sizey, centerx = 0, centery = 0;
     string obj_class, pose;
     unsigned int difficult, truncated, occluded;
     bool pose_found = false;
+    pair<uint,uint> *center = NULL;
   
     ////////////////////////////////////////////////////////////////
     // object
@@ -354,6 +361,16 @@ namespace ebl {
 	    else if (!strcmp((*biter)->get_name().c_str(), "ymax"))
 	      ymax = xml_get_uint(*biter);
 	  }
+	} else if (!strcmp((*iter)->get_name().c_str(), "center")) {
+	  Node::NodeList blist = (*iter)->get_children();
+	  for(Node::NodeList::iterator biter = blist.begin();
+	      biter != blist.end(); ++biter) {
+	    if (!strcmp((*biter)->get_name().c_str(), "x"))
+	      centerx = xml_get_uint(*biter);
+	    else if (!strcmp((*biter)->get_name().c_str(), "y"))
+	      centery = xml_get_uint(*biter);
+	  }
+	  center = new pair<uint,uint>(centerx, centery);
 	} // else get object class name
 	else if (!strcmp((*iter)->get_name().c_str(), "name"))
 	  xml_get_string(*iter, obj_class);
@@ -378,7 +395,7 @@ namespace ebl {
       // process image  
       if (included(obj_class, difficult, truncated, occluded))
 	process_image(img, h0, w0, xmin, ymin, xmax, ymax, sizex, sizey,
-		      obj_class, obj_number, difficult, image_filename);
+		      obj_class, obj_number, difficult, image_filename, center);
     }
     
     ////////////////////////////////////////////////////////////////
@@ -425,10 +442,11 @@ namespace ebl {
 	  if (included(part_class, difficult, truncated, occluded))
 	    this->process_image(img, h0, w0, xmin, ymin, xmax, ymax, sizex,
 				sizey, part_class, obj_number, difficult,
-				image_filename);
+				image_filename, center);
 	}
       }
     }
+    if (center) delete center;
   }
   
   ////////////////////////////////////////////////////////////////
@@ -439,10 +457,14 @@ namespace ebl {
   process_image(idx<Tdata> &img, uint &h0, uint &w0,
 		uint xmin, uint ymin, uint xmax,
 		uint ymax, uint sizex, uint sizey, string &obj_class,
-		uint obj_number, uint difficult, const string &image_filename) {
-    rect r(ymin, xmin, sizey, sizex);
+		uint obj_number, uint difficult, const string &image_filename,
+		pair<uint,uint> *center) {
+    rect<int> r(ymin, xmin, sizey, sizex);
+    // if force label is on, replace label by force_label
+    if (strcmp(force_label.c_str(), ""))
+      obj_class = force_label;
     t_label label = this->get_label_from_class(obj_class);
-    add_data(img, label, &obj_class, image_filename.c_str(), &r);
+    add_data(img, label, &obj_class, image_filename.c_str(), &r, center);
   }
 
 #endif /* __XML__ */

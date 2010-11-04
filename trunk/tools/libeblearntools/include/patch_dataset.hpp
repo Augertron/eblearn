@@ -75,9 +75,10 @@ namespace ebl {
   bool patch_dataset<Tdata>::
   add_data(idx<Tdata> &img, const t_label label,
 	   const string *class_name,
-	   const char *filename, const rect *r) {
-    vector<rect> patch_bboxes;
-    vector<rect>::iterator ibb;
+	   const char *filename, const rect<int>  *r,
+	   pair<uint,uint> *center) {
+    vector<rect<int> > patch_bboxes;
+    vector<rect<int> >::iterator ibb;
     string cname = "patch";
     ostringstream fname;
     vector<idx<Tdata> > patches;
@@ -106,17 +107,17 @@ namespace ebl {
       	continue ; // do nothing for this scale
       }
       // preprocess image
-      rect r(0, 0, img.dim(0), img.dim(1));
-      rect outr;
+      rect<int>  r(0, 0, img.dim(0), img.dim(1));
+      rect<int>  outr;
       idx<Tdata> im =
 	this->preprocess_data(img, &cname, false, filename, &r, *i, false, 
 			      &outr);
       // extract all non overlapping patches with dimensions outdims that
       // do not overlap with bounding boxes
-      rect patch(0, 0, outdims.dim(0), outdims.dim(1));
-      for (patch.h0 = outr.h0; patch.h0 + patch.height < outr.h0 + outr.height;
+      rect<int>  patch(0, 0, outdims.dim(0), outdims.dim(1));
+      for (patch.h0 = outr.h0; patch.h0 + patch.height <= outr.h0 + outr.height;
 	   patch.h0 += patch.height) {
-	for (patch.w0 = outr.w0; patch.w0 + patch.width < outr.w0 + outr.width;
+	for (patch.w0 = outr.w0; patch.w0 + patch.width <= outr.w0 + outr.width;
 	     patch.w0 += patch.width) {
 	  // add patch
 	  idx<Tdata> p = im.narrow(0, patch.height, patch.h0);
@@ -128,18 +129,14 @@ namespace ebl {
 #ifdef __GUI__
       if (display_extraction) {
 	uint h = 63, w = 0;
-	disable_window_updates();
+	//	disable_window_updates();
 // 	// draw original image
 // 	draw_matrix(im, h, w, 1.0, 1.0, (Tdata) -1, (Tdata) 1);
 	// draw patches boxes
 	for (ibb = patch_bboxes.begin(); ibb != patch_bboxes.end(); ++ibb)
 	  draw_box(h + ibb->h0, w + ibb->w0,
 		   ibb->height, ibb->width, 0, 255, 0);
-// 	// draw bboxes on original
-// 	for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb)
-// 	  draw_box(h + ibb->h0, w + ibb->w0,
-// 		   ibb->height, ibb->width, 255, 0, 0);
-	enable_window_updates();
+	//	enable_window_updates();
 	if (sleep_display)
 	  millisleep((long) sleep_delay);
       }
@@ -190,7 +187,8 @@ namespace ebl {
 	  }
 	  save_image(fname.str(), tmp, save_mode.c_str());
 	}
-	cout << data_cnt << ": saved " << fname.str().c_str() << endl;
+	cout << data_cnt << ": saved " << fname.str().c_str()
+	     << "(" << patches[i] << ")" << endl;
 	// increase global counter
 	data_cnt++;
 	// check for capacity

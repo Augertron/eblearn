@@ -58,7 +58,8 @@ namespace ebl {
     //! ignore_diff ignores difficult objects if true.
     pascal_dataset(const char *name, const char *inroot = NULL,
 		   bool ignore_diff = true, bool ignore_trunc = false,
-		   bool ignore_occluded = false);
+		   bool ignore_occluded = false,
+		   const char *annotations = NULL);
 
     //! Destructor.
     virtual ~pascal_dataset();
@@ -105,7 +106,8 @@ namespace ebl {
 			       uint xmin, uint ymin,
 			       uint xmax, uint ymax, uint sizex, uint sizey,
 			       string &obj_class, uint obj_number,
-			       uint difficult, const string &image_filename);
+			       uint difficult, const string &image_filename,
+			       pair<uint,uint> *center);
     
 #endif /* __XML__ */
 #endif /* __BOOST__ */
@@ -141,6 +143,7 @@ namespace ebl {
     using dataset<Tdata>::scale_mode;
     using dataset<Tdata>::exclude;
     using dataset<Tdata>::include;
+    using dataset<Tdata>::force_label;
   };
 
 } // end namespace ebl

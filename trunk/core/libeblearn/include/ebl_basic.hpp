@@ -54,8 +54,8 @@ namespace ebl {
     idx_m2dotm1(w.x, inx, outx); // linear combination
 
 #ifdef __DUMP_STATES__ // used to debug
-    DUMP(in.x, this->name << "_linear_module_in.x");
-    DUMP(w.x, this->name << "_linear_module_weights");
+    DUMP(in.x, this->name() << "_linear_module_in.x");
+    DUMP(w.x, this->name() << "_linear_module_weights");
 #endif
   }
 
@@ -107,8 +107,7 @@ namespace ebl {
   template <typename T, class Tstate>
   void linear_module<T, Tstate>::resize_output(Tstate &in, Tstate &out) {
     // resize output based on input dimensions
-    idxdim d(in.x.spec); // use same dimensions as in
-    d.setdim(0, w.x.dim(0)); // except for the first one
+    idxdim d(in.x); // use same dimensions as in
     d.setdim(0, w.x.dim(0)); // except for the first one
     if (out.x.get_idxdim() != d) { // resize only if necessary
 #ifdef __DEBUG__
@@ -143,6 +142,22 @@ namespace ebl {
     return l2;
   }
 
+  template <typename T, class Tstate>
+  void linear_module<T, Tstate>::load_x(idx<T> &weights) {
+    if (!w.x.same_dim(weights))
+      eblthrow("expected same dimension weights but got " << w.x << " and "
+	       << weights << " instead");
+    idx_copy(weights, w.x);
+  }
+
+  template <typename T, class Tstate>
+  std::string linear_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "linear module " << this->name() << " "
+	 << w.x.dim(1) << " -> " << w.x.dim(0);
+    return desc;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // convolution_module
 
@@ -219,10 +234,10 @@ namespace ebl {
       }
     }
 #ifdef __DUMP_STATES__ // used to debug
-    DUMP(in.x, this->name << "_convolution_module_in.x");
-    DUMP(kernel.x, this->name << "_convolution_module_ker.x");
-    DUMP(table, this->name << "_convolution_module_table");
-    DUMP(out.x, this->name << "_convolution_module_out.x");
+    DUMP(in.x, this->name() << "_convolution_module_in.x");
+    DUMP(kernel.x, this->name() << "_convolution_module_ker.x");
+    DUMP(table, this->name() << "_convolution_module_table");
+    DUMP(out.x, this->name() << "_convolution_module_out.x");
 #endif
   }
   
@@ -308,9 +323,9 @@ namespace ebl {
     }
     if (!warnings_shown && (in.x.dim(0) > tablemax + 1)) {
       warnings_shown = true;
-      cerr << "warning: convolution connection table is not using all inputs,";
-      cerr << " the maximum input index used by the table is " << tablemax;
-      cerr << " but the input is " << in.x << endl;
+      cerr << "warning: convolution connection table is not using all inputs "
+	   << "in layer " << this->name() << " the maximum input index used by the "
+	   << "table is " << tablemax << " but the input is " << in.x << endl;
     }
     // check sizes
     if (((sini - (ki - stridei)) % stridei != 0) || 
@@ -374,6 +389,23 @@ namespace ebl {
     return l2;
   }
 
+  template <typename T, class Tstate>
+  void convolution_module<T, Tstate>::load_x(idx<T> &weights) {
+    if (!kernel.x.same_dim(weights))
+      eblthrow("expected same dimension weights but got " << kernel.x
+	       << " and " << weights << " instead");
+    idx_copy(weights, kernel.x);
+  }
+
+  template <typename T, class Tstate>
+  std::string convolution_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "convolution module " << this->name() << " with kernel "
+	 << kernel.x
+	 << ", stride " << stridei << "x" << stridej << " and table " << table;
+    return desc;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // subsampling_module
 
@@ -391,15 +423,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  bool subsampling_module<T,Tstate>::optimize_fprop(Tstate &in, Tstate &out) {
-    this->memoptimized = true;
-    sub = out;
-    return false;
-  }
-    
-  template <typename T, class Tstate>
   void subsampling_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
-    if (this->memoptimized) out = in; // memory optimization
     if (this->bResize) resize_output(in, out); // resize (iff necessary)
     // subsampling ( coeff * average )
     idx_clear(sub.x);
@@ -415,9 +439,9 @@ namespace ebl {
       }}
 
 #ifdef __DUMP_STATES__ // used to debug
-    DUMP(in.x, this->name << "_subsampling_module_in.x");
-    DUMP(coeff.x, this->name << "_subsampling_module_coeff");
-    DUMP(out.x, this->name << "_subsampling_module_out.x");
+    DUMP(in.x, this->name() << "_subsampling_module_in.x");
+    DUMP(coeff.x, this->name() << "_subsampling_module_coeff");
+    DUMP(out.x, this->name() << "_subsampling_module_out.x");
 #endif
   }
 
@@ -512,7 +536,16 @@ namespace ebl {
     idx_copy(sub.x, l2->sub.x);
     return l2;
   }
-
+ 
+  template <typename T, class Tstate>
+  std::string subsampling_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "subsampling module " << this->name() << " with kernel "
+	 << sub.x
+	 << " and stride " << stridei << "x" << stridej;
+    return desc;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // addc_module
 
@@ -545,9 +578,9 @@ namespace ebl {
     }
       
 #ifdef __DUMP_STATES__ // used to debug
-    DUMP(in.x, this->name << "_addc_module_in.x");
-    DUMP(bias.x, this->name << "_addc_module_weights");
-    DUMP(out.x, this->name << "_addc_module_out.x");
+    DUMP(in.x, this->name() << "_addc_module_in.x");
+    DUMP(bias.x, this->name() << "_addc_module_weights");
+    DUMP(out.x, this->name() << "_addc_module_out.x");
 #endif
   }
 
@@ -591,6 +624,22 @@ namespace ebl {
     return l2;
   }
 
+  template <typename T, class Tstate>
+  void addc_module<T, Tstate>::load_x(idx<T> &weights) {
+    if (!bias.x.same_dim(weights))
+      eblthrow("expected same dimension weights but got " << bias.x << " and "
+	       << weights << " instead");
+    idx_copy(weights, bias.x);
+  }
+
+  template <typename T, class Tstate>
+  std::string addc_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "bias module " << this->name() << " with "
+	 << bias.x.dim(0) << " biases.";
+    return desc;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // power_module
 
@@ -879,7 +928,7 @@ namespace ebl {
     idx_copy(in.x, tmp);
 
 #ifdef __DUMP_STATES__ // used to debug
-    DUMP(out.x, this->name << "_zpad_module_out");
+    DUMP(out.x, this->name() << "_zpad_module_out");
 #endif
   }
 
@@ -1087,4 +1136,82 @@ namespace ebl {
     }
   }
 
+  ////////////////////////////////////////////////////////////////
+  // diag_module
+
+  template <typename T, class Tstate>
+  diag_module<T, Tstate>::diag_module(parameter<T,Tstate> *p, intg thick,
+				      const char *name_)
+    : module_1_1<T,Tstate>(name_), coeff(p, thick) {
+    // initialize coeffs to 1
+    idx_fill(coeff.x, (T)1.0);
+  }
+
+  template <typename T, class Tstate>
+  diag_module<T, Tstate>::~diag_module() {
+  }
+
+  template <typename T, class Tstate>
+  void diag_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
+    if (this->bResize) resize_output(in, out); // resize (iff necessary)
+
+    idx_bloop3(c, coeff.x, T, i, in.x, T, o, out.x, T) {
+      idx_dotc(i, c.get(), o);
+    }
+
+#ifdef __DUMP_STATES__ // used to debug
+    DUMP(in.x, this->name() << "_diag_module_in.x");
+    DUMP(coeff.x, this->name() << "_diag_module_coeff");
+#endif
+  }
+
+  template <typename T, class Tstate>
+  void diag_module<T, Tstate>::bprop(Tstate &in, Tstate &out) {
+    idx_bloop5(c, coeff.x, T, cd, coeff.dx, T, i, in.x, T, id, in.dx, T, 
+	       od, out.dx, T) {
+      idx_dotcacc(od, c.get(), id); // bprop to input
+      idx_dotacc(i, od, cd); // bprop to weights
+    }
+  }
+
+  template <typename T, class Tstate>
+  void diag_module<T, Tstate>::bbprop(Tstate &in,
+					Tstate &out) {
+    idx_bloop5(c, coeff.x, T, cdd, coeff.ddx, T, i, in.x, T, idd, in.ddx, T, 
+	       odd, out.ddx, T) {
+      idx_dotcacc(odd, c.get() * c.get(), idd); // bprop to input
+      idx_m2squdotm2acc(i, odd, cdd); // bprop to weights
+    }
+  }
+
+  template <typename T, class Tstate>
+  void diag_module<T, Tstate>::resize_output(Tstate &in, Tstate &out) {
+    // resize output based on input dimensions
+    idxdim d(in.x); // use same dimensions as in
+    d.setdim(0, coeff.x.dim(0)); // except for the first one
+    if (out.x.get_idxdim() != d) { // resize only if necessary
+#ifdef __DEBUG__
+      cout << "linear: resizing output from " << out.x.get_idxdim();
+      cout << " to " << d << endl;
+#endif
+      out.resize(d);
+    }
+  }
+
+  template <typename T, class Tstate>
+  void diag_module<T, Tstate>::load_x(idx<T> &weights) {
+    if (!coeff.x.same_dim(weights))
+      eblthrow("expected same dimension weights but got " << coeff.x << " and "
+	       << weights << " instead");
+    idx_copy(weights, coeff.x);
+  }
+
+  template <typename T, class Tstate>
+  std::string diag_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "diag module " << this->name() << " with "
+	 << coeff.x << " coefficients";
+    return desc;
+  }
+  
 } // end namespace ebl

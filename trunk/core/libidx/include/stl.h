@@ -108,7 +108,7 @@ namespace std {
     char *s;
   };
 
-#else
+#else // extending STL
   
   //! Operator to concatenate elements into the string.
   template<class T>
@@ -118,25 +118,33 @@ namespace std {
   template<>
     EXPORT string& operator<<(string& e, void *v);
   template<>
-    EXPORT string& operator<<(string& e, int v);
+    EXPORT string& operator<<(string& e, const int v);
   template<>
-    EXPORT string& operator<<(string& e, uint v);
+    EXPORT string& operator<<(string& e, const uint v);
   template<>
-    EXPORT string& operator<<(string& e, char v);
+    EXPORT string& operator<<(string& e, const char v);
   template<>
-    EXPORT string& operator<<(string& e, unsigned char v);
+    EXPORT string& operator<<(string& e, const unsigned char v);
   template<>
-    EXPORT string& operator<<(string& e, float v);
+    EXPORT string& operator<<(string& e, const float v);
   template<>
-    EXPORT string& operator<<(string& e, double v);
+    EXPORT string& operator<<(string& e, const double v);
   template<>
-    EXPORT string& operator<<(string& e, long v); 
+    EXPORT string& operator<<(string& e, const long v); 
+  template<>
+    EXPORT string& operator<<(string& e, const ebl::intg v); 
 #ifndef __ANDROID__
   template<>
-    EXPORT string& operator<<(string& e, size_t v);
+    EXPORT string& operator<<(string& e, const size_t &v);
 #endif
     
 #endif
+
+  // extending string
+
+  //! Returns a copy of string e with all digits removed.
+  EXPORT string strip_num(const string &e);
+    
 
   ////////////////////////////////////////////////////////////////
   // ostream

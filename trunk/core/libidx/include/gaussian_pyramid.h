@@ -33,7 +33,10 @@
 #ifndef GAUSSIAN_PYRAMID_H_
 #define GAUSSIAN_PYRAMID_H_
 
+#include "defines.h"
 #include "idx.h"
+#include "numerics.h"
+#include "geometry.h"
 
 namespace ebl {
 
@@ -78,14 +81,15 @@ namespace ebl {
     idx<Tdata> reduce(idx<Tdata> &in, uint n = 1);
 
     //! returns a reduced rectangle by n reductions.
-    rect reduce_rect(const rect &r, uint n = 1);
+    rect<uint> reduce_rect(const rect<uint> &r, uint n = 1);
 
     //! return number of reductions necessary for size insz to be <= outsz
     uint count_reductions(uint insz, uint outsz, uint &dist);
     
     //! return number of reductions and set size of the input (closest to
     //! current one) to exactly downsample to outr (aspect ratio unchanged).
-    uint count_reductions_exact(rect &inr, rect &outr, rect &inr_exact);
+    uint count_reductions_exact(rect<uint> &inr, rect<uint> &outr,
+				rect<uint> &inr_exact);
     
     //! The expand method for obtaining an upsampled version of a given
     //! image from gaussian pyramid.
@@ -96,7 +100,7 @@ namespace ebl {
     idx<Tdata> expand(idx<Tdata> &in, uint n = 1);
     
     //! returns a expanded rectangle by n expansions.
-    rect expand_rect(const rect &r, uint n = 1);
+    rect<uint> expand_rect(const rect<uint> &r, uint n = 1);
 
     //! return number of expansions necessary for size insz to be >= outsz
     uint count_expansions(uint insz, uint outsz, uint &dist);

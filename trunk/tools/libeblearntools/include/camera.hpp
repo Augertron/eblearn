@@ -64,6 +64,11 @@ namespace ebl {
     return false; // never empty by default
   }
   
+  template <typename Tdata>
+  void camera<Tdata>::skip(uint n) {
+    eblerror("not implemented");
+  }
+  
   ////////////////////////////////////////////////////////////////
   // video recording
     

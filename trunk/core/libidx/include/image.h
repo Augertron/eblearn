@@ -33,7 +33,9 @@
 #ifndef IMAGE_H_
 #define IMAGE_H_
 
-#include "libidx.h"
+#include "idx.h"
+#include "geometry.h"
+#include "gaussian_pyramid.h"
 
 namespace ebl {
   
@@ -70,7 +72,7 @@ namespace ebl {
   //! smaller than the computed sizes, or to 1, whichever is largest.
   template<class T> 
     idx<T> image_resize(idx<T> &im, double h, double w, int mode = 1,
-			rect *iregion = NULL, rect *oregion = NULL);
+			rect<int> *iregion = NULL, rect<int> *oregion = NULL);
 
   //! resizes an image (a region iregion of im if specified) into an image of
   //! size oheightxowidth using gaussian pyramids. Bilinear resizing is first
@@ -82,8 +84,8 @@ namespace ebl {
   //! region of iregion.
   template<class T>
     idx<T> image_gaussian_resize(idx<T> &im_, double oheight, double owidth,
-				  uint mode = 0,
-				  rect *iregion = NULL, rect *oregion = NULL);
+				  uint mode = 0, rect<int> *iregion = NULL,
+				 rect<int> *oregion = NULL);
 
   //! resizes an image (a region iregion of im if specified) into an image of
   //! size oheightxowidth using mean. Bilinear resizing is first used to
@@ -95,19 +97,19 @@ namespace ebl {
   //! region of iregion.
   template<class T>
     idx<T> image_mean_resize(idx<T> &im_, double oheight, double owidth,
-			     uint mode = 0,
-			     rect *iregion = NULL, rect *oregion = NULL);
+			     uint mode = 0, rect<int> *iregion = NULL,
+			     rect<int> *oregion = NULL);
 
   //! returns the biggest square image including image region r.
   template<class T> 
-    idx<T> image_region_to_square(idx<T> &im, const rect &r);
+    idx<T> image_region_to_square(idx<T> &im, const rect<uint> &r);
 
-  //! returns the rectangular image of size oheightxowidth centered on region r.
+  //! Returns the rectangular image of size oheightxowidth centered on region r.
   //! cropped is set by the function to the region in the output image
   //! that comes from the input image. the rest contains no image (0).
   template<class T> 
-    idx<T> image_region_to_rect(idx<T> &im, const rect &r, uint oheight,
-				uint owidth, rect &cropped);
+    idx<T> image_region_to_rect(idx<T> &im, const rect<int> &r, uint oheight,
+				uint owidth, rect<int> &cropped);
 
   //! This function takes 2D or 3D images (greyscale or RGB)
   //! as input of type T and converts

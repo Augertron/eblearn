@@ -38,7 +38,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   weighted_std_module<T,Tstate>::
-  weighted_std_module(uint kernelh, uint kernelw, int nf, const char *name_, 
+  weighted_std_module(uint kerh, uint kerw, int nf, const char *name_, 
 		      bool mirror_, bool threshold_, bool global_norm_)
     : module_1_1<T,Tstate>(name_), 
       mirror(mirror_),
@@ -60,7 +60,9 @@ namespace ebl {
       invstd(1, 1, 1),
       threshold(threshold_),
       global_norm(global_norm_),
-      nfeatures(nf)
+      nfeatures(nf),
+      kernelh(kerh),
+      kernelw(kerw)
   {
     name_c0 = name_;
     name_c0 += "_c0";
@@ -142,7 +144,7 @@ namespace ebl {
   template <typename T, class Tstate>
   void weighted_std_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {  
 #ifdef __DUMP_STATES__ // used to debug
-    DUMP(in.x, this->name << "_weighted_std_module_in.x");
+    DUMP(in.x, this->name() << "_weighted_std_module_in.x");
 #endif
 
     // if (global_norm) // global normalization
@@ -264,8 +266,16 @@ namespace ebl {
   template <typename T, class Tstate>
   weighted_std_module<T,Tstate>* weighted_std_module<T,Tstate>::copy() {
     return new weighted_std_module<T,Tstate>(w.dim(0), w.dim(1), nfeatures,
-					     this->name, mirror, threshold,
+					     this->name(), mirror, threshold,
 					     global_norm);
+  }
+  
+  template <typename T, class Tstate>
+  std::string weighted_std_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "weighted_std module " << this->name() << " with kernel "
+	 << kernelh << "x" << kernelw;
+    return desc;
   }
   
   ////////////////////////////////////////////////////////////////
@@ -289,8 +299,8 @@ namespace ebl {
     idx_abs(in.x, out.x);
 
 #ifdef __DUMP_STATES__ // used to debug
-    DUMP(in.x, this->name << "_abs_module_in.x");
-    DUMP(out.x, this->name << "_abs_module_out.x");
+    DUMP(in.x, this->name() << "_abs_module_in.x");
+    DUMP(out.x, this->name() << "_abs_module_out.x");
     cerr << "FABS OUT MIN: " << idx_min(out.x) << " MAX: " << idx_max(out.x)
 	 << endl;
 #endif

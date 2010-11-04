@@ -57,9 +57,10 @@ namespace ebl {
 					    const char *outdir_,
 					    uint max_folders_,
 					    bool ignore_diff, bool ignore_trunc,
-					    bool ignore_occl)
+					    bool ignore_occl,
+					    const char *annotations)
     : pascal_dataset<Tdata>(name_, inroot_, ignore_diff, ignore_trunc,
-			    ignore_occl) {
+			    ignore_occl, annotations) {
     outdir = outdir_;
     cout << "output directory: " << outdir << endl;
     max_folders = max_folders_;
@@ -115,7 +116,7 @@ namespace ebl {
   template <class Tdata>
   bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
     string image_filename, image_fullname;
-    vector<rect> bboxes;
+    vector<rect<int> > bboxes;
     string obj_classname, pose;
     bool pose_found = false;
     Node::NodeList::iterator oiter;
@@ -218,7 +219,7 @@ namespace ebl {
   // process 1 object of an xml file
 
   template <class Tdata>
-  rect pascalbg_dataset<Tdata>::get_object(Node* onode) {
+  rect<int> pascalbg_dataset<Tdata>::get_object(Node* onode) {
     unsigned int xmin = 0, ymin = 0, xmax = 0, ymax = 0;
     
     // parse object node
@@ -242,7 +243,7 @@ namespace ebl {
 	}
       } // else get object class name
     }
-    rect r(ymin, xmin, ymax - ymin, xmax - xmin);
+    rect<int> r(ymin, xmin, ymax - ymin, xmax - xmin);
     return r;
   }
   
@@ -251,11 +252,11 @@ namespace ebl {
 
   template <class Tdata>
   void pascalbg_dataset<Tdata>::
-  process_image(idx<ubyte> &img, vector<rect>& bboxes,
+  process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
 		const string &image_filename) {
-    vector<rect> scaled_bboxes;
-    vector<rect> patch_bboxes;
-    vector<rect>::iterator ibb;
+    vector<rect<int> > scaled_bboxes;
+    vector<rect<int> > patch_bboxes;
+    vector<rect<int> >::iterator ibb;
     idxdim d(img);
     idx<Tdata> im(d);
     string cname = "background";
@@ -277,7 +278,7 @@ namespace ebl {
       // 	continue ; // do nothing for this scale
       // rescale original bboxes
       for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb) {
-	rect rs = *ibb / ratio;
+	rect<int> rs = *ibb / ratio;
 	if (im.dim(0) < im.dim(1))
 	  rs.h0 += (uint) (((outdims.dim(0) * *i) - (im.dim(0) / ratio)) / 2);
 	else 
@@ -285,13 +286,13 @@ namespace ebl {
 	scaled_bboxes.push_back(rs);
       }
       // preprocess image
-      rect r(0, 0, im.dim(0), im.dim(1));
+      rect<int> r(0, 0, im.dim(0), im.dim(1));
       idx<Tdata> im2 =
 	this->preprocess_data(im, &cname, false, image_filename.c_str(),
 			      &r, *i, false);
       // extract all non overlapping patches with dimensions outdims that
       // do not overlap with bounding boxes
-      rect patch(0, 0, outdims.dim(0), outdims.dim(1));
+      rect<int> patch(0, 0, outdims.dim(0), outdims.dim(1));
       for (patch.h0 = 0; patch.h0 + patch.height <= (uint) im2.dim(0);
 	   patch.h0 += patch.height) {
 	for (patch.w0 = 0; patch.w0 + patch.width <= (uint) im2.dim(1);

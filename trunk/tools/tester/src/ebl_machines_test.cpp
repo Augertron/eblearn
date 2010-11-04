@@ -33,11 +33,10 @@ void ebl_machines_test::test_lenet5_mnist() {
     test_ds(gl_mnist_dir->c_str(), false, 1000);
   train_ds.set_balanced(true);
   train_ds.set_shuffle_passes(true);
-  train_ds.set_weigh_samples(true, true);
-  train_ds.set_weigh_normalization(false);
-  train_ds.set_min_proba(0.01);
-  train_ds.set_epoch_show(500); // show progress every 500 samples
-  train_ds.ignore_correct(false);
+  // set 2nd argument to true for focusing on hardest examples
+  train_ds.set_weigh_samples(true, false, false, 0.01);
+  train_ds.set_epoch_show(100); // show progress every 500 samples
+  train_ds.ignore_correct(true);
   
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<t_net> targets =

@@ -80,6 +80,10 @@ namespace ebl {
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
     virtual linear_module<T,Tstate>* copy();
+    //! Copy passed weights into x component of internal weights.
+    virtual void load_x(idx<T> &weights);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -145,6 +149,10 @@ namespace ebl {
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
     virtual convolution_module<T,Tstate>* copy();
+    //! Copy passed weights into x component of internal weights.
+    virtual void load_x(idx<T> &weights);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -216,11 +224,8 @@ namespace ebl {
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
     virtual subsampling_module<T,Tstate>* copy();
-    //! Pre-determine the order of hidden buffers to use only 2 buffers
-    //! in order to reduce memory footprint.
-    //! This returns true if outputs is actually put in out, false if it's
-    //! in in.
-    virtual bool optimize_fprop(Tstate &in, Tstate &out);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -273,6 +278,10 @@ namespace ebl {
     virtual void forget(forget_param_linear &fp);
     //! Returns a deep copy of this module.
     virtual addc_module<T,Tstate>* copy();
+    //! Copy passed weights into x component of internal weights.
+    virtual void load_x(idx<T> &weights);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -535,6 +544,37 @@ namespace ebl {
     T	threshold;
     T	false_value;
     T	true_value;
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // diag_module
+  //! This module applies a gain per unit (like a diagonal linear module).
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class diag_module : public module_1_1<T,Tstate> {
+  public:
+    //! Constructor.
+    //! \param p is used to store all parametric variables in a single place.
+    //!        If p is null, a local buffer will be used.
+    //! \param thickness The number of feature maps.
+    diag_module(parameter<T,Tstate> *p, intg thickness,
+	        const char *name = "diag");
+    //! Destructor.
+    virtual ~diag_module();    
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! backward propagation from out to in
+    virtual void bprop(Tstate &in, Tstate &out);
+    //! second-derivative backward propagation from out to in
+    virtual void bbprop(Tstate &in, Tstate &out);
+    //! resize the output based on input dimensions
+    virtual void resize_output(Tstate &in, Tstate &out);
+    //! Copy passed weights into x component of internal weights.
+    virtual void load_x(idx<T> &weights);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+  
+  protected:
+    Tstate	coeff;
   };
 
 } // namespace ebl {

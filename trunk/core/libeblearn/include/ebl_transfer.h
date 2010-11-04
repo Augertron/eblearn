@@ -73,6 +73,8 @@ namespace ebl {
     //! This returns true if outputs is actually put in out, false if it's
     //! in in.
     virtual bool optimize_fprop(Tstate &in, Tstate &out);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
 
     // friends
     friend class weighted_std_module_gui;
@@ -96,6 +98,8 @@ namespace ebl {
     int                 nfeatures;
     string              name_c0;
     string              name_c1;
+    uint                kernelh;
+    uint                kernelw;
   };
 
   ////////////////////////////////////////////////////////////////

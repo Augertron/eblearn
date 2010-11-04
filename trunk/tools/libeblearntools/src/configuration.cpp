@@ -511,10 +511,15 @@ namespace ebl {
     return output_dir;
   }
 
+  void configuration::get(intg &v, const char *varname) {
+    exists_throw(varname);
+    v = (intg) string_to_int(get_cstr(varname));
+  }
+
   const string &configuration::get_string(const char *varname) {
     exists_throw(varname);
     // remove quotes if present
-    string s = get(varname);
+    string s = get_cstr(varname);
     if ((s[0] == '\"') && (s[s.size() - 1] == '\"'))
       s = s.substr(1, s.size() - 2);
     // remove slash preceding quotes
@@ -526,28 +531,32 @@ namespace ebl {
     return tmp_smap[varname];
   }
 
+  const string &configuration::get_string(const string &varname) {
+    return get_string(varname.c_str());
+  }
+
   const char *configuration::get_cstring(const char *varname) {
     return get_string(varname).c_str();
   }
 
   double configuration::get_double(const char *varname) {
     exists_throw(varname);
-    return string_to_double(get(varname));
+    return string_to_double(get_cstr(varname));
   }
 
   float configuration::get_float(const char *varname) {
     exists_throw(varname);
-    return string_to_float(get(varname));
+    return string_to_float(get_cstr(varname));
   }
 
   uint configuration::get_uint(const char *varname) {
     exists_throw(varname);
-    return string_to_uint(get(varname));
+    return string_to_uint(get_cstr(varname));
   }
 
   int configuration::get_int(const char *varname) {
     exists_throw(varname);
-    return string_to_int(get(varname));
+    return string_to_int(get_cstr(varname));
   }
 
   bool configuration::get_bool(const char *varname) {
@@ -585,24 +594,34 @@ namespace ebl {
     smap[varname] = value;
   }
 
-  const char* configuration::get(const char *varname) {
+  const char* configuration::get_cstr(const char *varname, bool silent) {
     if (smap.find(varname) != smap.end())
       return smap[varname].c_str();
     char *val = getenv(varname);
     if (val) {
-      cout << "using environment variable \"" << varname << "\": "
-	   << val << endl;
+      if (!silent)
+	cout << "using environment variable \"" << varname << "\": "
+	     << val << endl;
       return val;
     }
     return NULL;
   }
 
   bool configuration::exists(const char *varname) {
-    if ((smap.find(varname) == smap.end()) && (!getenv(varname)))
+    const char *s = get_cstr(varname, true);
+    // does not exist if not defined
+    if (s == NULL)
+      return false;
+    // does not exist if empty string
+    if (!strcmp(s, ""))
       return false;
     return true;
   }
 
+  bool configuration::exists(const std::string &varname) {
+    return exists(varname.c_str());
+  }
+  
   void configuration::exists_throw(const char *varname) {
     if ((smap.find(varname) == smap.end()) && (!getenv(varname))) {
       cerr << "error: unknown variable: " << varname << endl;

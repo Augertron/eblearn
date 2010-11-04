@@ -57,7 +57,7 @@ namespace ebl {
     name2(m, in, out, h0, w0, zoom, vmin, vmax, show_out, wid, wname);	\
   }
 
-#define DISPLAY2_1_1(name1, name2, op)					\
+#define DISPLAY2_1_1(name1, name2, op, T)				\
   template<typename T, class Tstate>					\
   void module_1_1_gui::name2(module_1_1<T,Tstate> &m,			\
 			     Tstate &in, Tstate &out,			\
@@ -107,7 +107,36 @@ namespace ebl {
 	name1(dynamic_cast< subsampling_module<T,Tstate>& >(m),		\
 	      in, out, h0, w0, zoom, vmin, vmax, show_out);		\
     } else {								\
+      unsigned int h = h0, w = w0;					\
+      /* display text */						\
+      gui << gui_only() << at(h, w) << m.name() << " in:" << in.T	\
+	  << at(h + 15, w) << "min:" << idx_min(in.T)			\
+	  << at(h + 30, w) << "max:" << idx_max(in.T);			\
+      w += 150;								\
+      /* display inputs */						\
+      idx_bloop1(inp, in.T, T) {					\
+	if (w - w0 < MAXWIDTH) {					\
+	  draw_matrix(inp, h, w, zoom, zoom, vmin, vmax);		\
+	  w += (uint) (inp.dim(1) * zoom + 1);				\
+	}								\
+      }									\
+      h += (uint) (inp.dim(0) * zoom + 1);				\
+      /* run it */							\
       ((module_1_1<T,Tstate>&)m).op(in, out);				\
+      w = w0;								\
+      /* display text */						\
+      gui << gui_only() << at(h, w) << m.name() << " out:" << out.T	\
+	  << at(h + 15, w) << "min:" << idx_min(out.T)			\
+	  << at(h + 30, w) << "max:" << idx_max(out.T);			\
+      w += 150;								\
+      /* display outputs */						\
+      idx_bloop1(outp, out.T, T) {					\
+	if (w - w0 < MAXWIDTH) {					\
+	  draw_matrix(outp, h, w, zoom, zoom, vmin, vmax);		\
+	  w += (uint) (outp.dim(1) * zoom + 1);				\
+	}								\
+      }									\
+      h0 = h + (uint) (outp.dim(0) * zoom + 1);				\
     }}
   /*  else {								\
     	cerr << "Warning: unknown display function for module_1_1 object"; \
@@ -116,11 +145,11 @@ namespace ebl {
     	}*/
   
   DISPLAY_1_1(display_fprop, display_fprop2)
-  DISPLAY2_1_1(display_fprop, display_fprop2, fprop)
+  DISPLAY2_1_1(display_fprop, display_fprop2, fprop, x)
   DISPLAY_1_1(display_bprop, display_bprop2)
-  DISPLAY2_1_1(display_bprop, display_bprop2, bprop)
+  DISPLAY2_1_1(display_bprop, display_bprop2, bprop, dx)
   DISPLAY_1_1(display_bbprop, display_bbprop2)
-  DISPLAY2_1_1(display_bbprop, display_bbprop2, bbprop)
+  DISPLAY2_1_1(display_bbprop, display_bbprop2, bbprop, ddx)
 
   ////////////////////////////////////////////////////////////////
   // module_2_1_gui

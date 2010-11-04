@@ -75,6 +75,9 @@ namespace ebl {
     //! Return true if no frames available, false otherwise.
     virtual bool empty();
 
+    //! Skip n frames.
+    virtual void skip(uint n);
+
     ////////////////////////////////////////////////////////////////
     // video recording
     

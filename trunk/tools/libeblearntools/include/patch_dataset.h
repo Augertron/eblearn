@@ -68,7 +68,9 @@ namespace ebl {
     //! Extract patches from image.
     virtual bool add_data(idx<Tdata> &d, const t_label label,
 			  const string *class_name,
-			  const char *filename = NULL, const rect *r = NULL);
+			  const char *filename = NULL,
+			  const rect<int> *r = NULL,
+			  pair<uint,uint> *center = NULL);
 
   protected:
     

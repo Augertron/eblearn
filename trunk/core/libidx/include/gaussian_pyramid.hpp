@@ -100,14 +100,14 @@ namespace ebl {
   }
 
   template <class Tdata>
-  rect gaussian_pyramid<Tdata>::reduce_rect(const rect &r, uint n) {
+  rect<uint> gaussian_pyramid<Tdata>::reduce_rect(const rect<uint> &r, uint n) {
     if (n == 0)
       return r;
     uint h = 1+ ((1 + 2 * ((int) (r.height - 1) / 2)) - 5) / 2;
     uint w = 1+((1 + 2 * ((int) (r.width - 1) / 2)) - 5) / 2;  
     uint h0 = r.h0 / 2;
     uint w0 = r.w0 / 2;
-    rect rr(h0, w0, h, w);
+    rect<uint> rr(h0, w0, h, w);
     return reduce_rect(rr, n - 1);
   }
 
@@ -125,12 +125,14 @@ namespace ebl {
 
   template <class Tdata>
   uint gaussian_pyramid<Tdata>::
-  count_reductions_exact(rect &inr, rect &outr, rect &inr_exact) {
+  count_reductions_exact(rect<uint> &inr, rect<uint> &outr,
+			 rect<uint> &inr_exact) {
     // upsample from exact target size beyond current input size
     uint distup;
     uint expansions = count_expansions(outr.height, inr.height, distup);
-    rect uprect = expand_rect(outr, expansions);
-    rect downrect = expand_rect(outr, (std::max)((uint) 0, expansions - 1));
+    rect<uint> uprect = expand_rect(outr, expansions);
+    rect<uint> downrect = expand_rect(outr, (std::max)((uint) 0,
+						       expansions - 1));
     if (uprect.height - inr.height < inr.height - downrect.height) {
       inr_exact = uprect;
       return expansions;
@@ -187,14 +189,14 @@ namespace ebl {
   }
 
   template <class Tdata>
-  rect gaussian_pyramid<Tdata>::expand_rect(const rect &r, uint n) {
+  rect<uint> gaussian_pyramid<Tdata>::expand_rect(const rect<uint> &r, uint n) {
     if (n == 0)
       return r;
     uint h = (r.height - 1) * 2 + 5;
     uint w = (r.width - 1) * 2 + 5;
     uint h0 = r.h0 * 2;
     uint w0 = r.w0 * 2;
-    rect rr(h0, w0, h, w);
+    rect<uint> rr(h0, w0, h, w);
     return expand_rect(rr, n - 1);
   }
   

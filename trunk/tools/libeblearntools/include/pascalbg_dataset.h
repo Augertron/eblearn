@@ -53,7 +53,8 @@ namespace ebl {
     //! ignore_diff ignores difficult objects if true.
     pascalbg_dataset(const char *name, const char *inroot, const char *outdir, 
 		     uint max_folders = 1, bool ignore_diff = true,
-		     bool ignore_trunc = false, bool ignore_occl = false);
+		     bool ignore_trunc = false, bool ignore_occl = false,
+		     const char *annotations = NULL);
 
     //! Destructor.
     virtual ~pascalbg_dataset();
@@ -76,10 +77,10 @@ namespace ebl {
     virtual bool process_xml(const string &xmlfile);
 
     //! return bounding box of object
-    virtual rect get_object(Node* onode);
+    virtual rect<int> get_object(Node* onode);
 
     //! process image given all bounding boxes.
-    virtual void process_image(idx<ubyte> &img, vector<rect>& bboxes,
+    virtual void process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
 			       const string &image_filename);
 
     //! save patches into directory outdir, creating 1 subdirectory per patch

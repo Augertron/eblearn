@@ -44,9 +44,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // cons/destructors
 
-  gui_thread::gui_thread(int argc, char** argv) 
+  gui_thread::gui_thread(int argc, char** argv, QApplication &qa) 
     : thread(gui), wcur(-1), nwindows(0), silent(false), busy(false),
-      bquit(false) {
+      bquit(false), qapp(qa) {
     thread.init(argc, argv, &nwindows, this);
     // register exotic types
     qRegisterMetaType<ubyte>("ubyte");
@@ -124,13 +124,13 @@ namespace ebl {
   // add methods
 
   void gui_thread::add_text(const string *s) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->add_text(s);
   }
 
   void gui_thread::add_arrow(int x1, int y1, int x2, int y2) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->add_arrow(x1, y1, x2, y2);
   }
@@ -138,13 +138,13 @@ namespace ebl {
   void gui_thread::add_box(int h0, int w0, int h, int w,
 			   unsigned char r, unsigned char g,
 			   unsigned char b, string *s) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->add_box(h0, w0, h, w, r, g, b, s);
   }
 
   void gui_thread::set_text_origin(unsigned int h0, unsigned int w0) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->set_text_origin(h0, w0);
   }
@@ -153,7 +153,7 @@ namespace ebl {
 				   unsigned char fg_b, unsigned char fg_a,
 				   unsigned char bg_r, unsigned char bg_g, 
 				   unsigned char bg_b, unsigned char bg_a) { 
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->set_text_colors(fg_r, fg_g, fg_b, fg_a, 
 				     bg_r, bg_g, bg_b, bg_a);
@@ -161,19 +161,19 @@ namespace ebl {
 
   void gui_thread::set_bg_colors(unsigned char r, unsigned char g, 
 				 unsigned char b) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->set_bg_colors(r, g, b);
   }
 
   void gui_thread::set_font_size(int sz) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->set_font_size(sz);
   }
 
   void gui_thread::set_wupdate(bool update) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur])) {
       // when drawing, turn busy flag on
       busy = true;
@@ -183,13 +183,13 @@ namespace ebl {
   }
 
   void gui_thread::freeze_style(bool freeze) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->freeze_style(freeze);
   }
 
   void gui_thread::set_silent(const std::string *filename) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     silent = true;
     for (vector<Window*>::iterator i = windows.begin(); i != windows.end(); ++i)
       {
@@ -203,12 +203,13 @@ namespace ebl {
   }
 
   void gui_thread::appquit() {
+    qapp.quit();
     exit(0);
   }
 
   // add image
   void gui_thread::updatePixmap(idx<ubyte> *img, uint h0, uint w0) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if (nwindows == 0)
       new_window();
     if ((wcur >= 0) && (windows[wcur])) {
@@ -219,7 +220,7 @@ namespace ebl {
   // add mask
   void gui_thread::add_mask(idx<ubyte> *img, uint h0, uint w0, ubyte r,
 			    ubyte g, ubyte b, ubyte a) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if (nwindows == 0)
       new_window();
     if ((wcur >= 0) && (windows[wcur])) {
@@ -228,19 +229,19 @@ namespace ebl {
   }
 
   void gui_thread::clear() {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->clear();
   }
 
   void gui_thread::clear_resize() {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->clear_resize();
   }
 
   void gui_thread::save_window(const string *filename, int wid) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     int id = wid < 0 ? wcur : wid;
     if ((id >= 0) && (windows[id])) {
       if (filename) {
@@ -254,7 +255,7 @@ namespace ebl {
 
   void gui_thread::new_window(const char *wname, unsigned int h, 
 			      unsigned int w) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     mutex1.lock();
     windows.push_back(new Window(windows.size(), wname, h, w));
     wcur = windows.size() - 1;
@@ -267,7 +268,7 @@ namespace ebl {
   }
 
   void gui_thread::select_window(int wid) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if (wid >= (int) windows.size()) {
       cerr << "gui Warning: trying to select an unknown window (id = ";
       cerr << wid << ")." << endl;
@@ -291,7 +292,7 @@ namespace ebl {
   }
 
   void gui_thread::add_scroll_box(scroll_box0 *sb) {
-    if (bquit) appquit(); // force quitting if we are trying to.
+    if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->add_scroll_box(sb);    
   }
@@ -310,7 +311,9 @@ namespace ebl {
   }
 
   void gui_thread::quit() {
+    mutex1.lock();
     bquit = true;
+    mutex1.unlock();
   }
 
 } // end namespace ebl

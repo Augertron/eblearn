@@ -19,6 +19,7 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   ##############################################################################
   add_library (eblearngui SHARED
     src/datasource_gui.cpp
+    src/detector_gui.cpp
 #    src/ebl_trainer_gui.cpp
 #    src/ebl_transfer_gui.cpp    
 #    src/ebl_layers_gui.cpp

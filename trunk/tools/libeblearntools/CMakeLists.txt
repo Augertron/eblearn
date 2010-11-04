@@ -26,22 +26,19 @@ add_library (eblearntools SHARED
   src/metaparser.cpp
   src/sort.cpp
   src/thread.cpp
+  src/netconf.cpp
 #  src/VFWCapture.cpp
   )
-
-IF (OpenCV_FOUND)
-  target_link_libraries (eblearntools cv highgui cxcore)
-ENDIF (OpenCV_FOUND)
 # link executable with external libraries
 target_link_libraries (eblearntools eblearn idx)
-LINK_BOOST(eblearntools)
-IF (QT_FOUND)
-  target_link_libraries (eblearntools idxgui eblearngui)
-ENDIF (QT_FOUND)
-
-# IF (NOT Boost_FOUND)
-#   MESSAGE(STATUS "___WARNING___: libeblearntools is compiled but missing capabilities because of missing Boost libraries.")
-# ENDIF (NOT Boost_FOUND) #-------------------------------------------------------
+LINK_OPENCV(eblearntools cv)
+LINK_OPENCV(eblearntools highgui)
+LINK_OPENCV(eblearntools cxcore)
+LINK_BOOST(eblearntools system)
+LINK_BOOST(eblearntools filesystem)
+LINK_BOOST(eblearntools regex)
+LINK_QT(eblearntools idxgui)
+LINK_QT(eblearntools eblearngui)
 
 # compile executable: dscompiler
 ################################################################################
@@ -50,16 +47,13 @@ add_executable (dscompiler
   src/dataset.cpp
   src/xml_utils.cpp
   )
-
 # link executable with external libraries
 target_link_libraries (dscompiler idx eblearn eblearntools)
-IF (QT_FOUND)
-  target_link_libraries (dscompiler idxgui)
-ENDIF (QT_FOUND)
-IF (XML_FOUND)
-  target_link_libraries (dscompiler ${XML_LIBRARY_FLAGS})
-ENDIF (XML_FOUND)
-LINK_BOOST(dscompiler)
+LINK_XML(dscompiler)
+LINK_QT(dscompiler idxgui)
+LINK_BOOST(dscompiler system)
+LINK_BOOST(dscompiler filesystem)
+LINK_BOOST(dscompiler regex)
 
 # compile executable: dssplit
 ################################################################################
@@ -67,13 +61,13 @@ add_executable (dssplit
   src/dssplit.cpp
   src/dataset.cpp
   )
-
 # link executable with external libraries
 target_link_libraries (dssplit eblearn idx)
-IF (QT_FOUND)
-  target_link_libraries (dssplit idxgui eblearngui)
-ENDIF (QT_FOUND)
-LINK_BOOST(dssplit)
+LINK_QT(dssplit idxgui)
+LINK_QT(dssplit eblearngui)
+LINK_BOOST(dssplit system)
+LINK_BOOST(dssplit filesystem)
+LINK_BOOST(dssplit regex)
 
 # compile executable: dsmerge
 ################################################################################
@@ -81,13 +75,13 @@ add_executable (dsmerge
   src/dsmerge.cpp
   src/dataset.cpp
   )
-
 # link executable with external libraries
 target_link_libraries (dsmerge eblearn idx)
-IF (QT_FOUND)
-  target_link_libraries (dsmerge idxgui eblearngui)
-ENDIF (QT_FOUND)
-LINK_BOOST(dsmerge)
+LINK_QT(dsmerge idxgui)
+LINK_QT(dsmerge eblearngui)
+LINK_BOOST(dsmerge system)
+LINK_BOOST(dsmerge filesystem)
+LINK_BOOST(dsmerge regex)
 
 # compile executable: dsdisplay
 ################################################################################
@@ -95,20 +89,21 @@ add_executable (dsdisplay
   src/dsdisplay.cpp
   src/dataset.cpp
   )
-
 # link executable with external libraries
 target_link_libraries (dsdisplay eblearn idx)
-IF (QT_FOUND)
-  target_link_libraries (dsdisplay idxgui eblearngui)
-ENDIF (QT_FOUND)
-LINK_BOOST(dsdisplay)
+LINK_QT(dsdisplay idxgui)
+LINK_QT(dsdisplay eblearngui)
+LINK_BOOST(dsdisplay system)
+LINK_BOOST(dsdisplay filesystem)
+LINK_BOOST(dsdisplay regex)
 
-IF (WINDOWS AND NOT QT_FOUND) # do not compile this project under windows
-  MESSAGE("__ WARNING: Not generating matshow project because of missing QT")
-ELSE (WINDOWS AND NOT QT_FOUND) # do not compile this project under windows
 # compile executable: matshow
 ################################################################################
 # tell compiler to build WinMain application, not a console app
+IF (WINDOWS AND NOT QT_FOUND) # do not compile this project under windows
+  MESSAGE("__ WARNING: Not generating matshow project because of missing QT")
+ELSE (WINDOWS AND NOT QT_FOUND) # do not compile this project under windows
+
 IF (WINDOWS)
   SET(WINTYPE WIN32)
   MESSAGE(STATUS "Building matshow as a windowed application (not console)")
@@ -117,13 +112,9 @@ ENDIF (WINDOWS)
 add_executable (matshow ${WINTYPE}
   src/matshow.cpp
   )
-
 # link executable with external libraries
-target_link_libraries (matshow idx)
-target_link_libraries (matshow eblearntools)
-IF (QT_FOUND)
-  target_link_libraries (matshow idxgui)
-ENDIF (QT_FOUND)
+target_link_libraries (matshow idx eblearntools)
+LINK_QT(matshow idxgui)
 
 ENDIF (WINDOWS AND NOT QT_FOUND)
 
@@ -132,13 +123,9 @@ ENDIF (WINDOWS AND NOT QT_FOUND)
 add_executable (capture
   src/capture.cpp
   )
-
 # link executable with external libraries
 target_link_libraries (capture idx eblearntools)
-IF (QT_FOUND)
-  target_link_libraries (capture idxgui)
-ENDIF (QT_FOUND)
-
+LINK_QT(capture idxgui)
 
 # compile executable: metarun
 ################################################################################
@@ -149,10 +136,11 @@ add_executable (metarun
   src/metarun.cpp
   src/metajobs.cpp
   )
-
 # link executable with external libraries
 target_link_libraries (metarun idx eblearntools)
-LINK_BOOST(metarun)
+LINK_BOOST(metarun system)
+LINK_BOOST(metarun filesystem)
+LINK_BOOST(metarun regex)
 ENDIF (WINDOWS) # do not compile this project under windows
 
 # compile executable: metaparse
@@ -161,17 +149,17 @@ add_executable (metaparse
   src/metaparser.cpp
   src/metaparse.cpp
   )
-
 # link executable with external libraries
 target_link_libraries (metaparse eblearntools)
-LINK_BOOST(metaparse)
+LINK_BOOST(metaparse system)
+LINK_BOOST(metaparse filesystem)
+LINK_BOOST(metaparse regex)
 
 # compile executable: maketable
 ################################################################################
 add_executable (maketable
   src/maketable.cpp
   )
-
 # link executable with external libraries
 target_link_libraries (maketable idx eblearn)
 

@@ -45,6 +45,13 @@ using namespace std;
 
 namespace ebl {
 
+// switch between forward only buffers or also backward
+#define SFUNC fs
+#define SBUF fstate_idx
+// backward
+// #define SFUNC bbs
+// #define SBUF bbstate_idx
+  
   ////////////////////////////////////////////////////////////////
   // A detection thread class
 
@@ -59,21 +66,24 @@ namespace ebl {
     //!    om, otherwise use regular unsynced outputs.
     //! \param tc The channels type of the input image, e.g. brightness Y,
     //!    or color RGB.
-    detection_thread(configuration &conf, mutex &om, const char *name = "",
+    detection_thread(configuration &conf, mutex *om = NULL,
+		     const char *name = "",
 		     const char *arg2 = NULL, bool sync = true,
 		     t_chans tc = CHANS_RGB);
     ~detection_thread();
     
     //! Execute the detection thread.
     virtual void execute();
-    //! Return true if new data was copied to the thread, false otherwise.
-    virtual bool set_data(idx<ubyte> &frame, string &frame_name);
+    //! Return true if new data was copied to the thread, false otherwise,
+    //! if we could not obtain the mutex lock.
+    virtual bool set_data(idx<ubyte> &frame, string &frame_name, uint frame_id);
     //! Return true if new data was copied from the thread, false otherwise.
     //! We get the frame back even though it was set via set_data,
     //! because we do not know which frame was actually used.
     //! (could use some kind of id, and remember frames to avoid copy).
     virtual bool get_data(vector<bbox*> &bboxes, idx<ubyte> &frame,
-			  uint &total_saved, string &frame_name);
+			  uint &total_saved, string &frame_name,
+			  uint &frame_id);
     //! Return true if the thread is available to process a new frame, false
     //! otherwise.
     virtual bool available();
@@ -81,6 +91,9 @@ namespace ebl {
     virtual void set_output_directory(string &out);
     
   private:
+    //! Copy passed bounding boxes into bboxes class member
+    //! (allocating new 'bbox' objects).
+    void copy_bboxes(vector<bbox> &bb);
     //! Copy passed bounding boxes into bboxes class member
     //! (allocating new 'bbox' objects).
     void copy_bboxes(vector<bbox*> &bb);
@@ -97,17 +110,21 @@ namespace ebl {
     idx<Tnet>			 frame;
     mutex		         mutex_in;	// mutex for thread input
     mutex 		         mutex_out;	// mutex for thread output
-    vector<bbox*>		 bboxes;
+    vector<bbox*>		 bbs;
     vector<bbox*>::iterator	 ibox;
     bool			 in_updated;	// thread input updated
     bool			 out_updated;	// thread output updated
     bool                         bavailable;    // thread is available
     string                       frame_name;    // name of current frame
+    uint                         frame_id;      //! Unique ID for frame.
     string                       outdir;        // output directory
     uint                         total_saved;
     using thread::mout; //! synchronized cout
     using thread::merr; //! synchronized cerr
     t_chans                      color_space;
+
+  public:
+    detector<SFUNC(Tnet)>       *pdetect;
   };
 
 } // end namespace ebl

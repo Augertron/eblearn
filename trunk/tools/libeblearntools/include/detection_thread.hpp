@@ -59,14 +59,15 @@ namespace ebl {
 
   template <typename Tnet>
   detection_thread<Tnet>::detection_thread(configuration &conf_,
-					   mutex &om,
+					   mutex *om,
 					   const char *name_,
 					   const char *arg2_, bool sync,
 					   t_chans tc)
     : thread(om, name_, sync), conf(conf_), arg2(arg2_), frame(120, 160, 1),
       mutex_in(), mutex_out(),
       in_updated(false), out_updated(false), bavailable(false),
-      frame_name(""), outdir(""), total_saved(0), color_space(tc) {
+      frame_name(""), frame_id(0), outdir(""), total_saved(0), color_space(tc),
+      pdetect(NULL) {
   }
 
   template <typename Tnet>
@@ -78,10 +79,10 @@ namespace ebl {
     // lock data
     mutex_out.lock();
     // clear bboxes
-    bboxes.clear();
+    bbs.clear();
     // copy bboxes
     for (ibox = bb.begin(); ibox != bb.end(); ++ibox) {
-      bboxes.push_back(new bbox(**ibox));
+      bbs.push_back(new bbox(**ibox));
     }
     // unlock data
     mutex_out.unlock();
@@ -101,7 +102,8 @@ namespace ebl {
   bool detection_thread<Tnet>::get_data(vector<bbox*> &bboxes2,
 					idx<ubyte> &frame2,
 					uint &total_saved_,
-					string &frame_name_) {
+					string &frame_name_,
+					uint &id) {
     // lock data
     mutex_out.lock();
     // only read data if it has been updated
@@ -117,9 +119,10 @@ namespace ebl {
     }
     bboxes2.clear();
     // copy bboxes pointers (now responsible for deleting them).
-    for (ibox = bboxes.begin(); ibox != bboxes.end(); ++ibox) {
+    for (ibox = bbs.begin(); ibox != bbs.end(); ++ibox) {
       bboxes2.push_back(*ibox);
     }
+    bbs.clear(); // no use for local bounding boxes anymore, clear them
     // check frame is correctly allocated, if not, allocate.
     if (frame2.order() != uframe.order()) 
       frame2 = idx<ubyte>(uframe.get_idxdim());
@@ -131,6 +134,8 @@ namespace ebl {
     total_saved_ = total_saved;
     // set frame name
     frame_name_ = frame_name;
+    // set frame id
+    id = frame_id;
     // reset updated flag
     out_updated = false;
     // declare thread as available
@@ -142,7 +147,8 @@ namespace ebl {
   }
 
   template <typename Tnet>
-  bool detection_thread<Tnet>::set_data(idx<ubyte> &frame2, string &name) {
+  bool detection_thread<Tnet>::set_data(idx<ubyte> &frame2, string &name,
+					uint id) {
     // lock data (non blocking)
     if (!mutex_in.trylock())
       return false;
@@ -155,6 +161,8 @@ namespace ebl {
     idx_copy(frame2, uframe);
     // copy name
     frame_name = name;
+    // copy frame_id
+    frame_id = id;
     // reset updated flag
     in_updated = true;
     // unlock data
@@ -175,13 +183,6 @@ namespace ebl {
     outdir = out;
   }
 
-// switch between forward only buffers or also backward
-#define SFUNC fs
-#define SBUF fstate_idx
-// backward
-// #define SFUNC bbs
-// #define SBUF bbstate_idx
-  
   template <typename Tnet>
   void detection_thread<Tnet>::execute() { 
    try {
@@ -207,19 +208,27 @@ namespace ebl {
      // load network and weights in a forward-only parameter
      parameter<SFUNC(Tnet)> theparam;
      idx<ubyte> classes(1,1);
-     try { // try loading classes names but do not stop upon failure
+     //try { // try loading classes names but do not stop upon failure
        load_matrix<ubyte>(classes, conf.get_cstring("classes"));
-     } catch(string &err) {
-       merr << "warning: " << err;
-       merr << endl;
-     }
+     // } catch(string &err) {
+     //   merr << "warning: " << err;
+     //   merr << endl;
+     // }
      uint noutputs = conf.exists_true("binary_target") ? 1 : classes.dim(0);
      module_1_1<SFUNC(Tnet)> *net =
        create_network<SFUNC(Tnet)>(theparam, conf, noutputs);
-     if (!conf.exists("weights"))
-       eblerror("\"weights\" variable not defined");
-     mout << "Loading weights from: " << conf.get_string("weights") << endl;
-     theparam.load_x(conf.get_cstring("weights"));
+
+     // loading weights
+     if (!conf.exists("weights")) { // manual weights
+       merr << "warning: \"weights\" variable not defined, loading manually "
+	    << "if manual_load defined" << endl;
+       if (conf.exists_true("manual_load"))
+	 manually_load_network(*((layers<SFUNC(Tnet)>*)net), conf);
+     } else { // 1-file weights
+       mout << "Loading weights from: " << conf.get_string("weights") << endl;
+       theparam.load_x(conf.get_cstring("weights"));
+     }
+
 #ifdef __DEBUGMEM__
        pretty_memory();
 #endif
@@ -236,11 +245,33 @@ namespace ebl {
        pp = (module_1_1<SFUNC(Tnet)>*)
 	 new rgb_to_yp_module<SFUNC(Tnet)>(norm_size);
 
+     //! create 1-of-n targets with target 1.0 for shown class, -1.0 for rest
+     idx<Tnet> targets =
+       create_target_matrix<Tnet>(classes.dim(0), 1.0);
+     if (conf.exists_true("binary_target")) {
+       if (classes.dim(0) != 2)
+	 eblerror("expecting 2 classes only when binary_target is on");
+       targets = idx<Tnet>(2, 1);
+       eblerror("binary target not handled here");
+       int neg_id = 0;//train_ds.get_class_id("bg"); // negative class
+       if (neg_id == 0) {
+	 targets.set(-1.0, 0, 0); // negative: -1.0
+	 targets.set( 1.0, 1, 0); // positive:  1.0
+       } else {
+	 targets.set( 1.0, 0, 0); // positive:  1.0
+	 targets.set(-1.0, 1, 0); // negative: -1.0
+       }
+     }
+     if (conf.exists("target_factor"))
+       idx_dotc(targets, conf.get_double("target_factor"), targets);
+     cout << "Targets:" << endl; targets.printElems();
+     
      // detector
-     detector<SFUNC(Tnet)> detect(*net, classes, pp, norm_size, NULL, 0,
-				  conf.get_double("gain"),
+     detector<SFUNC(Tnet)> detect(*net, classes, targets, pp, norm_size,
+				  NULL, 0, conf.get_double("gain"),
 				  conf.exists_true("binary_target"),
 				  mout, merr);
+     pdetect = &detect;
      double maxs = conf.exists("max_scale")?conf.get_double("max_scale") : 1.0;
      double mins = conf.exists("min_scale")?conf.get_double("min_scale") : 1.0;
      detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
@@ -250,8 +281,13 @@ namespace ebl {
      if (!conf.exists_false("mem_optimization"))
        detect.set_mem_optimization(input, output, 
 				   conf.exists_true("save_detections") || 
-				   (conf.exists_true("display") && 
+				   (display && 
 				    !conf.exists_true("minimal_display")));
+     // zero padding
+     float hzpad = 0, wzpad = 0;
+     if (conf.exists("hzpad")) hzpad = conf.get_float("hzpad");
+     if (conf.exists("wzpad")) wzpad = conf.get_float("wzpad");
+     detect.set_zpads(hzpad, wzpad);
      bool bmask_class = false;
      if (conf.exists("mask_class"))
        bmask_class = detect.set_mask_class(conf.get_cstring("mask_class"));
@@ -268,21 +304,48 @@ namespace ebl {
 	 detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
      }
      if (conf.exists("pruning"))
-       detect.set_pruning(conf.get_bool("pruning"));
+       detect.set_pruning((t_pruning)conf.get_uint("pruning"), 
+			  conf.exists_true("ped_only"),
+			  conf.exists("min_hcenter_dist") ? 
+			  conf.get_float("min_hcenter_dist") : 0.0,
+			  conf.exists("min_wcenter_dist") ? 
+			  conf.get_float("min_wcenter_dist") : 0.0,
+			  conf.exists("max_bb_overlap") ? 
+			  conf.get_float("max_bb_overlap") : 1.0,
+			  conf.exists_true("share_parts"),
+			  conf.exists("threshold_parts") ? 
+			  (Tnet) conf.get_float("threshold_parts") : 0.0,
+			  conf.exists("min_hcenter_dist2") ? 
+			  conf.get_float("min_hcenter_dist2") : 0.0,
+			  conf.exists("min_wcenter_dist2") ? 
+			  conf.get_float("min_wcenter_dist2") : 0.0,
+			  conf.exists("max_bb_overlap2") ? 
+			  conf.get_float("max_bb_overlap2") : 0.0,
+			  conf.exists_true("mean_bb")
+			  );
      if (conf.exists("bbhfactor") && conf.exists("bbwfactor"))
        detect.set_bbox_factors(conf.get_float("bbhfactor"),
-			       conf.get_float("bbwfactor"));
-     if (conf.exists("bbh_overlap") && conf.exists("bbw_overlap"))
-       detect.set_bbox_overlaps(conf.get_float("bbh_overlap"),
-				conf.get_float("bbw_overlap"));
-     if (conf.exists("foot_overlap"))
-	 detect.set_bbox_foot_overlap(conf.get_float("foot_overlap"));
-     // zero padding
-     float hzpad = 0, wzpad = 0;
-     if (conf.exists("hzpad")) hzpad = conf.get_float("hzpad");
-     if (conf.exists("wzpad")) wzpad = conf.get_float("wzpad");
-     detect.set_zpads(hzpad, wzpad);
-     
+			       conf.get_float("bbwfactor"),
+			       conf.exists("bbhfactor2") ?
+			       conf.get_float("bbhfactor2") : 1.0,
+			       conf.exists("bbwfactor2") ?
+			       conf.get_float("bbwfactor2") : 1.0);
+     if (conf.exists("confidence_type"))
+       detect.set_confidence_type((t_confidence)
+				  conf.get_uint("confidence_type"));
+     if (conf.exists("max_object_hratio"))
+       detect.set_max_object_hratio(conf.get_double("max_object_hratio"));
+
+     // when a bbox file is given, ignore the processing, load the pre-computed
+     // bboxes and feed them to the nms (non-maximum suppression).
+     bboxes boxes(bbox_all, NULL, mout, merr);
+     bool precomputed_boxes = false;
+     if (conf.exists("bbox_file")) {
+       precomputed_boxes = true;
+       string bbfile = conf.get_string("bbox_file");
+       boxes.load_eblearn(bbfile);
+     }
+
      string viddir = outdir;
      viddir += "video/";
      mkdir_full(viddir);
@@ -344,31 +407,49 @@ namespace ebl {
        idx_copy(uframe, frame);
        // run detector
        if (!display) { // fprop without display
-	 vector<bbox*> &bb = detect.fprop(frame, threshold, frame_name.c_str());
-	 copy_bboxes(bb); // make a copy of bounding boxes
+	 if (precomputed_boxes) {
+	   try {
+	     vector<bbox*> *bb = boxes.get_group(frame_name);
+	     vector<bbox*> pruned;
+	     detect.nms(*bb, pruned, threshold, frame.dim(0), frame.dim(1));
+	     copy_bboxes(pruned); // make a copy of bounding boxes
+	     // delete bb and its bboxes
+	     for (uint i = 0; i < bb->size(); ++i) {
+	       bbox *b = (*bb)[i];
+	       if (b) delete b;
+	     }
+	     delete bb;
+	   } catch(eblexception &e) {
+	     merr << e << endl;
+	   }
+	 } else {
+	   vector<bbox*> &bb = detect.fprop(frame, threshold, frame_name.c_str());
+	   copy_bboxes(bb); // make a copy of bounding boxes
+	 }
        }
 #ifdef __GUI__
        else { // fprop and display
 	 disable_window_updates();
 	 select_window(wid);
-	 clear_resize_window();
+	 //	 clear_resize_window();
 	 if (mindisplay) {
 	   vector<bbox*> &bb =
 	     dgui.display(detect, frame, threshold, frame_name.c_str(),
-	 		  0, 0, zoom, (Tnet)0, (Tnet)255, wid, _name.c_str());
+	 		  0, 0, zoom, (Tnet)-1.7, (Tnet)1.7,
+			  wid, _name.c_str());
 	   copy_bboxes(bb); // make a copy of bounding boxes
 	 } else {
 	   vector<bbox*> &bb =
 	     dgui.display_inputs_outputs(detect, frame, threshold,
 					 frame_name.c_str(), 0, 0, zoom,
-					 (Tnet)-1.1, (Tnet)1.1, wid);
+					 (Tnet)-1.7, (Tnet)1.7, wid);
 	   copy_bboxes(bb); // make a copy of bounding boxes
 	 }
 	 enable_window_updates();
        }
        total_saved = detect.get_total_saved();
        if (display_states) {
-	 dgui.display_current(detect, frame, wid_states);
+	 dgui.display_current(detect, frame, wid_states, NULL, .25);
 	 select_window(wid);
        }
        if (save_video && display) {
@@ -380,7 +461,7 @@ namespace ebl {
 #endif
        ms = tpass.elapsed_milliseconds();
        if (!silent) {
-	 detect.pretty_bboxes_short(bboxes, mout);
+	 detect.pretty_bboxes_short(bbs, mout);
 	 mout << "processing=" << ms << " ms ("
 	      << tpass.elapsed() << ")" << endl;
        }
@@ -398,12 +479,12 @@ namespace ebl {
 	   detect.get_total_saved() > conf.get_uint("save_max"))
 	 break ; // limit number of detection saves
      }
-     mout << "finished. Execution time: " << toverall.elapsed() <<endl;
+     mout << "detection finished. Execution time: " << toverall.elapsed() <<endl;
      // free variables
      if (net) delete net;
-#ifdef __GUI__
-     quit_gui(); // close all windows
-#endif
+// #ifdef __GUI__
+//      quit_gui(); // close all windows
+// #endif
    } catch(string &err) { eblerror(err.c_str()); }
   }
 

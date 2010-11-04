@@ -139,10 +139,6 @@ namespace ebl {
     //! perclass_norm is true, or globally otherwise.
     virtual void normalize_probas(int classid = -1);
 
-    //! Set the minimum probaility of a sample to be picked by next_train().
-    //! By default, this is zero. Acceptable range is [0 .. 1].
-    virtual void set_min_proba(double proba);
-
     //! Move to the beginning of the data, for the test iterators only,
     //! i.e. only next() is affected, next_train() is unaffected.
     virtual void seek_begin();
@@ -173,20 +169,20 @@ namespace ebl {
     //! This is used only by next_train(), not by next().
     //! \param hardest_focus If true, focus on hardest samples, otherwise
     //!          focus on easiest ones.
-    virtual void set_weigh_samples(bool activate, bool hardest_focus = false);
-
-    //! Set the normalization of the sample probabilities to be per class or
-    //! global. This matters only if sample weighing is actived
-    //! (see set_weigh_samples()).
-    //! If perclass is true, the probabilities for
-    //! each sample of a same class are normalized from [0..max_class] to [0..1]
-    //! otherwise from [0..max_global]. Perclass can be used (or not) for
-    //! discrete classification problems, but should be global for continuous
-    //! labels.
-    //! This normalization avoids looping on samples rarely picking any if
-    //! all probabilities tend to zero for example.
-    //! This is used only by next_train(), not by next().
-    virtual void set_weigh_normalization(bool perclass);
+    //! \param perclass_norm  Set the normalization of the sample probabilities 
+    //!   to be per class or global. If perclass is true, the probabilities for
+    //!   each sample of a same class are normalized from [0..max_class] to [0..1]
+    //!   otherwise from [0..max_global]. Perclass can be used (or not) for
+    //!   discrete classification problems, but should be global for continuous
+    //!   labels. This normalization avoids looping on samples rarely picking 
+    //!   any if all probabilities tend to zero for example.
+    //!   This is used only by next_train(), not by next().
+    //! \param min_proba Set the minimum probaility of a sample to be picked 
+    //!   by next_train(). By default, this is zero. 
+    //!   Acceptable range is [0 .. 1].
+    virtual void set_weigh_samples(bool activate, bool hardest_focus = false, 
+				   bool perclass_norm = true, 
+				   double min_proba = 0.0);
     
     //! Return the number of classes.
     virtual intg get_nclasses();
@@ -278,7 +274,8 @@ namespace ebl {
       void write_classed_pickings(idx<T> &m, idx<ubyte> &correct,
 				  string &name_, 
 				  const char *name2_ = NULL,
-				  bool plot_correct = true);
+				  bool plot_correct = true,
+				  const char *ylabel = "");
 
     ////////////////////////////////////////////////////////////////
     // members
@@ -338,6 +335,7 @@ namespace ebl {
     intg                                        epoch_cnt;
     intg                                        epoch_pick_cnt;//!< # pickings
     uint                                        epoch_show; // show modulo
+    intg                                        epoch_show_printed;
     uint                                        epoch_mode;
     timer                                       epoch_timer;
     uint                                        not_picked;

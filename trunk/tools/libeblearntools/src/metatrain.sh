@@ -60,7 +60,7 @@ root=~/${machine}data/ped/${name}/
 dataroot=$root/ds/
 out=$root/out/$xpname/
 eblearnbin=${out}/bin/
-negatives_root=$root/train/bg_full/
+negatives_root=$root/train/full/
 input_max=1000
 # variables
 
@@ -132,8 +132,6 @@ extract_falsepos() {
     echo "root2 = ${bestout}" >> $bestconf
     # limit input size 
     echo "input_max = ${input_max}" >> $bestconf
-    # decrement threshold, capping at -.95
-    thresh=`echo "thr=${thresh} - .2; if (thr < -.95){ thr = -.95;}; print thr" | bc`
     echo "threshold = ${thresh}" >> $bestconf
     # set weights to retrain: same as this conf
     echo "retrain_weights = \${weights}" >> $bestconf
@@ -161,6 +159,9 @@ extract_falsepos() {
     # do not change bbox
     echo "bbhfactor = 1" >> $bestconf
     echo "bbwfactor = 1" >> $bestconf
+    # not zpad allowed
+    echo "hzpad = 0" >> $bestconf
+    echo "wzpad = 0" >> $bestconf
     # start parallelized extraction
     ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
     check_error $? 
@@ -198,11 +199,12 @@ compile_data() {
 	-outdir ${dataroot} -forcelabel bg -dname ${step}_allfp \
 	-dims ${h}x${w}x${chans} \
 	-image_pattern ".*[.]mat" -mindims ${h}x${w}x${chans}
-    if [ $? -neq 0 ]; then exit -1; fi # stop if error
+    check_error $? 
 
     # get dataset size
     dssize=`${eblearnbin}/dsdisplay ${dataroot}/${step}_allfp -size`
     echo "false_positives = ${dssize}"
+    echo "ds_split_ratio = ${ds_split_ratio}"
     valsize=`echo "(${dssize} * ${ds_split_ratio})/1" | bc`
     echo "valsize = ${valsize}"
     
@@ -366,20 +368,25 @@ metatrain() {
         # find path to best conf (there should be only 1 conf per folder)
 	bestconf=`ls ${bestout}/*.conf`
         # find path to best weights (there should be only 1 weights per folder)
-	bestweights=`ls ${bestout}/*_net*.mat`
+	bestweights=`find ${bestout} -name "*_net[0-9][0-9][0-9].mat"`
 
         # false positives
 	name=${meta_name}_${stepstr}_falsepos
 	lastname=${tstamp}.${name}
 	lastdir=${out}/${lastname}
 	if [ $step -ge $minstep ]; then
+            # decrement threshold, capping at 0.1
+	    threshold=`echo "thr=${threshold} - .2; if (thr < .1){ thr = -.95;}; print thr" | bc`
+
 	    print_step $step $bestconf $lastname $lastdir "false positives" \
 		$iter $maxiteration
             # zoomed in positives (forbid zooming out)
-	    save_max_tmp=`expr $save_max / 4` # limit zoomed in to 1/4th
-	    extract_falsepos $bestconf $save_max_tmp $save_max_per_frame $bestout \
-		$input_max $threshold $bestweights $negatives_root/zoomed_in $eblearnbin \
-		$nthreads $npasses 1 $max_scale $tstamp $name $display $mindisplay $savevideo
+	    if [ -d $negatives_root/zoomed_in ] ; then
+		save_max_tmp=`expr $save_max / 4` # limit zoomed in to 1/4th
+		extract_falsepos $bestconf $save_max_tmp $save_max_per_frame $bestout \
+		    $input_max $threshold $bestweights $negatives_root/zoomed_in $eblearnbin \
+		    $nthreads $npasses 1 $max_scale $tstamp $name $display $mindisplay $savevideo
+	    fi
             # zoomed out positives (forbid zooming in)
 	    if [ -d $negatives_root/zoomed_out ] ; then
 		save_max_tmp=`expr $save_max / 4` # limit zoomed in to 1/4th
@@ -391,7 +398,7 @@ metatrain() {
 	    saved=`ls -R $lastdir | grep -e ".mat$" | wc -l` # saved so far
 	    save_max_tmp=`expr $save_max - $saved` # limit to remaining max
 	    extract_falsepos $bestconf $save_max_tmp $save_max_per_frame $bestout \
-		$input_max $threshold $bestweights $negatives_root/bg_full $eblearnbin \
+		$input_max $threshold $bestweights $negatives_root/full $eblearnbin \
 		$nthreads $npasses $min_scale $max_scale $tstamp $name $display \
 		$mindisplay $savevideo
 	fi

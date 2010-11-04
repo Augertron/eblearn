@@ -116,9 +116,30 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	pp = (module_1_1<fs(t_net)>*)
 	  new rgb_to_yp_module<fs(t_net)>(norm_size);
   
+      //! create 1-of-n targets with target 1.0 for shown class, -1.0 for rest
+      idx<t_net> targets =
+	create_target_matrix<t_net>(classes.dim(0), 1.0);
+      if (conf.exists_true("binary_target")) {
+	if (classes.dim(0) != 2)
+	  eblerror("expecting 2 classes only when binary_target is on");
+	targets = idx<t_net>(2, 1);
+	eblerror("binary target not handled here");
+	int neg_id = 0;//train_ds.get_class_id("bg"); // negative class
+	if (neg_id == 0) {
+	  targets.set(-1.0, 0, 0); // negative: -1.0
+	  targets.set( 1.0, 1, 0); // positive:  1.0
+	} else {
+	  targets.set( 1.0, 0, 0); // positive:  1.0
+	  targets.set(-1.0, 1, 0); // negative: -1.0
+	}
+      }
+      if (conf.exists("target_factor"))
+	idx_dotc(targets, conf.get_double("target_factor"), targets);
+      cout << "Targets:" << endl; targets.printElems();
+
       // detector
-      detector<fs(t_net)> detect(*net, classes, pp, norm_size, NULL, 0,
-			     conf.get_double("gain"));
+      detector<fs(t_net)> detect(*net, classes, targets, pp, norm_size, NULL, 0,
+				 conf.get_double("gain"));
       detect.set_resolutions(conf.get_double("scaling"));
       bool bmask_class = false;
       if (conf.exists("mask_class"))
@@ -135,11 +156,23 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	if (conf.exists("save_max_per_frame"))
 	  detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
       }
-      if (conf.exists("pruning"))
-	detect.set_pruning(conf.get_bool("pruning"));
-      if (conf.exists("bbhfactor") && conf.exists("bbwfactor"))
-	detect.set_bbox_factors(conf.get_float("bbhfactor"),
-				conf.get_float("bbwfactor"));
+     if (conf.exists("pruning"))
+       detect.set_pruning((t_pruning)conf.get_uint("pruning"), 
+			  conf.exists_true("ped_only"),
+			  conf.exists("min_hcenter_dist") ? 
+			  conf.get_float("min_hcenter_dist") : 0.0,
+			  conf.exists("min_wcenter_dist") ? 
+			  conf.get_float("min_wcenter_dist") : 0.0,
+			  conf.exists("max_bb_overlap") ? 
+			  conf.get_float("max_bb_overlap") : 1.0
+			  );
+     if (conf.exists("bbhfactor") && conf.exists("bbwfactor"))
+       detect.set_bbox_factors(conf.get_float("bbhfactor"),
+			       conf.get_float("bbwfactor"),
+			       conf.exists("bbhfactor2") ?
+			       conf.get_float("bbhfactor2") : 1.0,
+			       conf.exists("bbwfactor2") ?
+			       conf.get_float("bbwfactor2") : 1.0);
 
       // initialize camera (opencv, directory, shmem or video)
       idx<t_net> frame;

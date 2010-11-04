@@ -56,7 +56,7 @@ namespace ebl {
     //! outdims are the target output dimensions of each sample.
     //! inroot is the root directory from which we extract data.
     pascalfull_dataset(const char *name, const char *inroot,
-		       const char *outdir);
+		       const char *outdir, const char *annotations);
 
     //! Destructor.
     virtual ~pascalfull_dataset();

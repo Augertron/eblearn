@@ -49,9 +49,9 @@ namespace ebl {
   typedef map<string, vector<string>, less<string> > string_list_map_t;
   
   ////////////////////////////////////////////////////////////////
-  //! a class containing the original text of the configuration file in a list form.
-  //! once variables have been updated, they can be inserted back to this list to
-  //! recreate the original file with the new values.
+  //! a class containing the original text of the configuration file in a
+  //! list form. once variables have been updated, they can be inserted back
+  //! to this list to recreate the original file with the new values.
   class textlist : public list< pair<string,string> > {
   public:
     //! constructor.
@@ -127,9 +127,25 @@ namespace ebl {
     //! return output directory.
     const string &get_output_dir();
 
+    //! Generic template get, return the value associated with varname,
+    //! if varname exists, otherwise throws an execption.
+    template <typename T>
+      void get(T &v, const char *varname);
+
+    //! Generic template get, return the value associated with varname,
+    //! if varname exists, otherwise throws an execption.
+    template <typename T>
+      void get(T &v, const std::string &varname);
+
+    void get(intg &v, const char *varname);
+
     //! returns the string contained the variable with name varname.
     //! if varname does not exist, this throws an exception.
     const string &get_string(const char *varname);
+
+    //! returns the string contained the variable with name varname.
+    //! if varname does not exist, this throws an exception.
+    const string &get_string(const string &varname);
 
     //! returns the string contained the variable with name varname.
     //! if varname does not exist, this throws an exception.
@@ -182,10 +198,14 @@ namespace ebl {
     void set(const char *varname, const char *value);
 
     //! get variable 'varname'.
-    const char* get(const char *varname);
+    //! \param silent If false, warn when using env variable.
+    const char* get_cstr(const char *varname, bool silent = false);
 
     //! returns true if the variable exists, false otherwise.
     bool exists(const char *varname);
+    
+    //! returns true if the variable exists, false otherwise.
+    bool exists(const std::string &varname);
     
     //! print loaded variables
     virtual void pretty();
@@ -217,5 +237,7 @@ namespace ebl {
   };
 
 } // end namespace ebl
+
+#include "configuration.hpp"
 
 #endif /* CONFIGURATION_H_ */

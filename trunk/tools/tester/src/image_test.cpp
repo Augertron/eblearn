@@ -90,10 +90,11 @@ void image_test::test_resize() {
     idx<float> im18 = image_gaussian_resize(im10, 96, 96, 0);
     idx<float> im19 = image_mean_resize(im10, 96, 96, 0);
     // test resizing of region of the original image
-    rect iregion(50, 50, 50, 150);
-    rect oregion1, oregion2, oregion3;
+    rect<int> iregion(50, 50, 50, 150);
+    rect<int> oregion1, oregion2, oregion3;
     idx<float> im20 = image_resize(im4, 64, 64, 0, &iregion, &oregion1);
-    idx<float> im21 = image_gaussian_resize(im4, 64, 64, 0, &iregion, &oregion2);
+    idx<float> im21 = image_gaussian_resize(im4, 64, 64, 0, &iregion,
+					    &oregion2);
     idx<float> im22 = image_mean_resize(im4, 64, 64, 0, &iregion, &oregion3);
 #ifdef __GUI__  
 #ifdef __SHOW__

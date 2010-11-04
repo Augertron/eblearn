@@ -45,7 +45,7 @@ namespace ebl {
     // the order of sum is not yet known and this is just an internal buffer
     // that does not need to be save in the parameter, so we allocate it later
     sum = NULL; 
-    this->name = name_;
+    this->_name = name_;
   }
 
   template <typename T, class Tstate>
@@ -124,7 +124,7 @@ namespace ebl {
       sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
 	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
     sum = NULL;
-    this->name = name_;
+    this->_name = name_;
   }
 
   template <typename T, class Tstate>
@@ -201,7 +201,7 @@ namespace ebl {
       lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_, name_),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, name_, mirror),
       tmp(NULL), tmp2(NULL) {
-    this->name = name_;
+    this->_name = name_;
   }
 
   template <typename T, class Tstate>
@@ -283,7 +283,7 @@ namespace ebl {
       sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
 	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
     sum = NULL;
-    this->name = name_;
+    this->_name = name_;
   }
 
   template <typename T, class Tstate>
@@ -347,4 +347,15 @@ namespace ebl {
     return l2;
   }
 
+  template <typename T, class Tstate>
+  std::string subsampling_layer<T, Tstate>::describe() {
+    std::string desc;
+    desc << "subsampling layer " << this->name() << " with kernel "
+	 << subsampler.sub.x
+	 << ", stride " << subsampler.stridei << "x" << subsampler.stridej
+	 << ", bias " << adder.bias.x
+	 << " and non linearity " << sigmoid->name();
+    return desc;
+  }
+  
 } // end namespace ebl

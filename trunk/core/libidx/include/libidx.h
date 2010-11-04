@@ -44,6 +44,7 @@
 #include "ippops.h"
 #include "color_spaces.h"
 #include "gaussian_pyramid.h"
+#include "geometry.h"
 #include "image.h"
 #include "imageIO.h"
 #include "utils.h"
