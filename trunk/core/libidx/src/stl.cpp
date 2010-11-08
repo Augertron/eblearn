@@ -219,9 +219,9 @@ namespace std {
   CONCAT_SPRINTF(const double, "%f", const double)
   CONCAT_SPRINTF(const long, "%ld", const long)
   CONCAT_SPRINTF(const unsigned char, "%c", const unsigned char)
-#ifndef __ANDROID__
-  CONCAT_SPRINTF(const size_t, "%u", const uint)
-#endif
+// #ifndef __ANDROID__
+//   CONCAT_SPRINTF(const size_t, "%u", const uint)
+// #endif
   
 #endif
 
