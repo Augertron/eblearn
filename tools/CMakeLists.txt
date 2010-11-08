@@ -31,11 +31,13 @@ IF ($ENV{NOSTL})
 ENDIF ($ENV{NOSTL})   
 
 # MPI
-IF ($ENV{USEMPI} AND NOT $ENV{NOMPI})
+IF ($ENV{USEMPI})
+IF (NOT $ENV{NOMPI})
    SET(CMAKE_CXX_COMPILER "mpicxx")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -shared-intel -O3 -fPIC -align -Zp8 -axP -unroll -ip -xP -vec-report -par-report -openmp-report")
    MESSAGE(STATUS "Compiling with MPI compiler ${CMAKE_CXX_COMPILER}")
-ENDIF ($ENV{USEMPI} AND NOT $ENV{NOMPI})
+ENDIF (NOT $ENV{NOMPI})
+ENDIF ($ENV{USEMPI})
 
 # check for required and optional external packages
 FIND_PACKAGE(All)

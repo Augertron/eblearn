@@ -100,9 +100,9 @@ namespace std {
     string& operator<<(float v);
     string& operator<<(double v);
     string& operator<<(long v); 
-#ifndef __ANDROID__
-    string& operator<<(size_t v);
-#endif
+/* #ifndef __ANDROID__ */
+/*     string& operator<<(size_t v); */
+/* #endif */
 
   protected:
     char *s;
