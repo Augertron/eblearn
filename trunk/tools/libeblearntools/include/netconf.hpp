@@ -100,7 +100,7 @@ namespace ebl {
 	    (&theparam, kerh, kerw, strideh, stridew, table, name.c_str());
 	}
 	// convolution layer ///////////////////////////////////////////////////
-	if (!type.compare("convl")) {
+	else if (!type.compare("convl")) {
 	  intg kerh, kerw, strideh, stridew;
 	  idx<intg> table(1, 1);
 	  if (!get_param(conf, name, "kerh", kerh, thick, nout)) continue ;
