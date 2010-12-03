@@ -366,6 +366,12 @@ namespace ebl {
 #endif
     string s = s_;
     size_t pos = s.find_last_of(c);
+    // if there is no dirname, return local dirname .
+    if (pos == string::npos) {
+      s = ".";
+      s += c;
+      return s;
+    }
     return s.substr(0, pos);
   }
   
