@@ -107,9 +107,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	merr << "warning: " << err;
 	merr << endl;
       }
-      bboxes boxes(conf.exists("bbox_saving") ?
-		   (t_bbox_saving) conf.get_int("bbox_saving") : bbox_all,
-		   &outdir, mout, merr);
+      t_bbox_saving bbsaving = bbox_none;
+      if (conf.exists("bbox_saving"))
+	bbsaving = (t_bbox_saving) conf.get_int("bbox_saving");
+      bboxes boxes(bbsaving, &outdir, mout, merr);
       
       bool              silent        = conf.exists_true("silent");
       uint              ipp_cores     = 1;
@@ -248,7 +249,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    updated = false;
 	    boxes.new_group(&processed_fname, processed_id);
 	    boxes.add(bb);
-	    boxes.save_eblearn();
+	    if (bbsaving != bbox_none)
+	      boxes.save_eblearn();
 	    cnt++;
 	    // display processed frame
 #ifdef __GUI__
@@ -315,7 +317,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 		if (cam2 && !cam2->empty())
 		  frame = cam2->grab();
 		else { // empty pre-camera, use regular camera
-		  cam->skip(skip_frames); // skip frames if skip_frames > 0
+		  if (skip_frames > 0)
+		    cam->skip(skip_frames); // skip frames if skip_frames > 0
 		  if (cam->empty()) continue ;
 		  frame = cam->grab();
 		}
@@ -350,7 +353,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	}
       }
       // saving boxes
-      boxes.save();
+      if (bbsaving != bbox_none)
+	boxes.save();
       mout << "Execution time: " << toverall.elapsed() << endl;
       if (save_video)
 	cam->stop_recording(conf.exists_bool("use_original_fps") ?
