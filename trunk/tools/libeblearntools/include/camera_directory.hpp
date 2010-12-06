@@ -44,10 +44,10 @@ namespace ebl {
   camera_directory<Tdata>::camera_directory(const char *dir,
 					    int height_, int width_,
 					    bool randomize_, uint npasses_,
-					    std::ostream &o,
-					    std::ostream &e)
+					    std::ostream &o, std::ostream &e,
+					    const char *pattern)
     : camera<Tdata>(height_, width_, o, e), indir(dir),
-      randomize(randomize_), npasses(npasses_) {
+      randomize(randomize_), npasses(npasses_), file_pattern(pattern) {
     if (npasses == 0)
       eblerror("number of passes must be >= 1");
     out << "Initializing directory camera from: " << dir << endl;
@@ -57,24 +57,25 @@ namespace ebl {
   template <typename Tdata>
   camera_directory<Tdata>::camera_directory(int height_, int width_,
 					    bool randomize_, uint npasses_,
-					    std::ostream &o,
-					    std::ostream &e)
+					    std::ostream &o, std::ostream &e,
+					    const char *pattern)
     : camera<Tdata>(height_, width_, o, e),
-      randomize(randomize_), npasses(npasses_) {
+      randomize(randomize_), npasses(npasses_), file_pattern(pattern) {
     if (npasses == 0)
       eblerror("number of passes must be >= 1");
   }
 
   template <typename Tdata>
   bool camera_directory<Tdata>::read_directory(const char *dir) {
+    out << "Image search pattern: " << file_pattern << endl;
     string directory = dir;
     indir = dir;
     // // first count number of images, to allocate list and speed up
-    // uint n = count_files(directory, IMAGE_PATTERN);
+    // uint n = count_files(directory, file_pattern);
     // if (fl) delete fl;
     // fl = new files_list(n);
     // get all file names
-    fl = find_files(directory, IMAGE_PATTERN_MAT, NULL,
+    fl = find_files(directory, file_pattern, NULL,
 		    randomize ? false : true, true, randomize);
     if (!fl) {
       err << "invalid directory: " << dir << endl;

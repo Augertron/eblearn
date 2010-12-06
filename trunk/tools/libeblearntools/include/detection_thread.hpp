@@ -272,9 +272,21 @@ namespace ebl {
 				  conf.exists_true("binary_target"),
 				  mout, merr);
      pdetect = &detect;
+
+     // multi-scaling parameters
      double maxs = conf.exists("max_scale")?conf.get_double("max_scale") : 1.0;
      double mins = conf.exists("min_scale")?conf.get_double("min_scale") : 1.0;
-     detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
+     t_scaling scaling_type = SCALES_STEP;
+     if (conf.exists("scaling_type"))
+       scaling_type = (t_scaling) conf.get_uint("scaling_type");
+     switch (scaling_type) {
+     case ORIGINAL: detect.set_scaling_original(); break ;
+     case SCALES_STEP:
+       detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
+       break ;
+     default:
+       eblerror("to be implemented");
+     }
 
      // optimize memory usage by using only 2 buffers for entire flow
      SBUF<Tnet> input(1, 1, 1), output(1, 1, 1);

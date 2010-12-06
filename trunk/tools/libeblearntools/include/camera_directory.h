@@ -66,10 +66,12 @@ namespace ebl {
     //! \param width Resize input frame to this width if different than -1.
     //! \param randomize Randomize image list if true.
     //! \param npasses Repeat list this number of times.
+    //! \param file_pattern The regexp defining the files patterns to search.
     camera_directory(const char *directory, int height_ = -1, int width_ = -1,
 		     bool randomize = false, uint npasses = 1,
 		     std::ostream &out = std::cout,
-		     std::ostream &err = std::cerr);
+		     std::ostream &err = std::cerr,
+		     const char *file_pattern = IMAGE_PATTERN_MAT);
 
     //! Initialize a directory camera without a root directory. This constructor
     //! requires a subsequent call to read_directory to initialize images.
@@ -81,10 +83,12 @@ namespace ebl {
     //! \param width Resize input frame to this width if different than -1.
     //! \param randomize Randomize image list if true.
     //! \param npasses Repeat list this number of times.
+    //! \param file_pattern The regexp defining the files patterns to search.
     camera_directory(int height_ = -1, int width_ = -1,
 		     bool randomize = false, uint npasses = 1,
 		     std::ostream &out = std::cout,
-		     std::ostream &err = std::cerr);
+		     std::ostream &err = std::cerr,
+		     const char *file_pattern = IMAGE_PATTERN_MAT);
 
     //! Find all images recursively from this directory.
     bool read_directory(const char *directory);
@@ -130,6 +134,7 @@ namespace ebl {
     uint                 flsize;	//!< original size of list
     bool                 randomize; //!< Randomize order of images or not.
     uint                 npasses; //!< Number of passes on the list.
+    const char          *file_pattern; //!< File search regex.
   };
 
 } // end namespace ebl
