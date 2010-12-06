@@ -160,6 +160,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	dt->start();
 	dt->set_output_directory(outdir);
       }
+      // image search can be configured with a search pattern
+      const char *fpattern = IMAGE_PATTERN_MAT;
+      if (conf.exists("file_pattern"))
+	fpattern = conf.get_cstring("file_pattern");
 
       // initialize camera (opencv, directory, shmem or video)
       idx<ubyte> frame;
@@ -167,11 +171,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       if (!strcmp(cam_type.c_str(), "directory")) {
 	if (argc >= 3) // read input dir from command line
 	  cam = new camera_directory<ubyte>(argv[2], height, width,
-					    input_random, npasses, mout, merr);
+					    input_random, npasses, mout, merr,
+					    fpattern);
 	else if (conf.exists("input_dir")) // read input dir from conf
 	  cam = new camera_directory<ubyte>(conf.get_cstring("input_dir"), 
 					    height, width, input_random,
-					    npasses, mout, merr);
+					    npasses, mout, merr, fpattern);
 	else eblerror("expected 2nd argument");
       } else if (!strcmp(cam_type.c_str(), "opencv"))
 	cam = new camera_opencv<ubyte>(-1, height, width);
@@ -193,7 +198,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       if (conf.exists_bool("precamera"))
 	cam2 = new camera_directory<ubyte>(conf.get_cstring("precamdir"),
 					   height, width, input_random,
-					   npasses);
+					   npasses, mout, merr, fpattern);
 	
       // answer variables & initializations
       vector<bbox*> bb;

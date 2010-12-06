@@ -59,7 +59,7 @@ namespace ebl {
       original_bboxes(nresolutions, 4),
       bgclass(-1), mask_class(-1), scales(NULL), scales_step(0),
       max_scale(1.0), min_scale(1.0),
-      silent(false), restype(SCALES),
+      silent(false), restype(ORIGINAL),
       save_mode(false), save_dir(""), save_counts(labels_.dim(0), 0),
       min_size(0), max_size(0), bodetections(false),
       bppdetections(false), pruning(pruning_overlap),
@@ -67,11 +67,11 @@ namespace ebl {
       mem_optimization(false), optimization_swap(false), keep_inputs(true),
       mout(o), merr(e), targets(tgt), 
       min_hcenter_dist(0.0), min_wcenter_dist(0.0), max_overlap(.5),
-      min_hcenter_dist2(0.0), min_wcenter_dist2(0.0), max_overlap2(0.0), mean_bb(false),
-      max_object_hratio(0.0) {
-    // default resolutions
-    double sc[] = { 4, 2, 1 };
-    set_resolutions(3, sc);
+      min_hcenter_dist2(0.0), min_wcenter_dist2(0.0), max_overlap2(0.0),
+      mean_bb(false), max_object_hratio(0.0) {
+    // // default resolutions
+    // double sc[] = { 4, 2, 1 };
+    // set_resolutions(3, sc);
     // labels
     //labels = strings_to_idx(labels_);
     labels = labels_;
@@ -96,6 +96,12 @@ namespace ebl {
     set_confidence_type(confidence_max);
     ped_only = false; // temporary TODO
     share_parts = false;
+  }
+  
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_scaling_original() {
+    nresolutions = 1;
+    restype = ORIGINAL;
   }
   
   template <typename T, class Tstate>
@@ -185,17 +191,25 @@ namespace ebl {
     mout << "resolutions: input: " << dsample << " max-scaled input (* " 
 	 << max_scale << "): " << input_dim << " min: " << in_mindim
 	 << " max: " << in_maxdim << endl;
-
+    mout << "Scaling type: ";
     switch (restype) {
+    case ORIGINAL:
+      mout << "1 scale only, the image's original scale." << endl;
+      compute_resolutions(input_dim);
+      break ;
     case MANUAL:
+      mout << "Manual specification of each scale size." << endl;
       break ;
     case SCALES:
+      mout << "Manual specification of each scale factor." << endl;
       compute_resolutions(input_dim, nresolutions, scales);
       break ;
     case NSCALES: // n scale between min and max resolutions
+      mout << nresolutions << " scales between min and max scales." << endl;
       compute_resolutions(input_dim, nresolutions);
       break ;
     case SCALES_STEP: // step fixed amount between scale from min to max
+      mout << scales_step << " scale step between min and max scales." << endl;
       compute_resolutions(input_dim, scales_step, min_scale, max_scale);
       break ;
     default: eblerror("unknown scaling mode");
@@ -539,6 +553,14 @@ namespace ebl {
       resolutions.set(in_maxdim.dim(1), 0, 0); // max
       resolutions.set(in_maxdim.dim(2), 0, 1); // max
     }
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::compute_resolutions(idxdim &input_dims) {
+    nresolutions = 1;
+    resolutions.resize1(0, nresolutions);
+    resolutions.set(input_dims.dim(0), 0, 0); // original resolution
+    resolutions.set(input_dims.dim(1), 0, 1); // original resolution
   }
 
   // use scales

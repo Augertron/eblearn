@@ -52,7 +52,9 @@ namespace ebl {
   //! NSCALES: n scales are computed by evenely interpolating between network's
   //!          size and maximum resolution.
   //! SCALES_STEP: scales range from 1 to maximum resolution, with a step size
-  enum t_resolution { MANUAL, SCALES, NSCALES, SCALES_STEP };
+  //! ORIGINAL: only use image's original resolution.
+  enum t_scaling { MANUAL = 0, SCALES = 1, NSCALES = 2, SCALES_STEP = 3,
+		   ORIGINAL = 4 };
   //! The formula for computing the confidence of a detection:
   //! sqrdist (0): use the sum of the squared differences between
   //!   output and target for each class, i.e. this takes into account
@@ -106,6 +108,9 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     // configuration
 
+    //! Set the multi-scale to 1 scale only: the image's original scale.
+    void set_scaling_original();
+  
     //! \param nresolutions The number of resolutions to use.
     //! \param scales This is an array of size nresolutions describing
     //!               the scales to use, taking the minimum resolution as scale
@@ -280,6 +285,9 @@ namespace ebl {
     void compute_resolutions(idxdim &input_dims, double scales_step,
   			     double min_scale, double max_scale);
 
+    //! Set scales to 1 scale: the original input dimensions.
+    void compute_resolutions(idxdim &input_dims);
+
     //! print all resolutions.
     void print_resolutions();
 
@@ -399,7 +407,7 @@ namespace ebl {
     double               max_scale;//!< Maximum scale as factor of original res.
     double               min_scale;//!< Minimum scale as factor of original res.
     bool                 silent; //!< print results on std output if not silent
-    t_resolution         restype; //!< resolution type
+    t_scaling            restype; //!< resolution type
     bool                 save_mode; //!< save detected windows or not
     string               save_dir; //!< directory where to save detections
     vector<uint>         save_counts; //!< file counter for each class
