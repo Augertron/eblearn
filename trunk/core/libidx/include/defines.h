@@ -65,12 +65,14 @@
 #define CLASSPAIRS_NAME "classpairs"
 #define DEFORMPAIRS_NAME "deformpairs"
 
-// #define DEBUG_ON
+// low-level debug
+#define DEBUG_LOW(s)
 
-#ifdef DEBUG_ON
-#define DEBUG(s,d) fprintf(stderr,s,d)
+// debug message
+#ifdef __DEBUG__
+#define DEBUG(s) std::cout << s << std::endl;
 #else
-#define DEBUG(s,d)
+#define DEBUG(s)
 #endif
 
 ////////////////////////////////////////////////////////////////
@@ -102,9 +104,20 @@
 #endif
 
 #define eblcatch()					\
-    catch(ebl::eblexception &e) {			\
-      cerr << e << endl;				\
-    }
+  catch(ebl::eblexception &e) {				\
+    cerr << "exception: " << e << endl;			\
+  }							\
+  catch(std::string &e) {				\
+    cerr << "exception: " << e << endl;			\
+  }
+
+#define eblcatcherror()					\
+  catch(ebl::eblexception &e) {				\
+    eblerror(e);					\
+  }							\
+  catch(std::string &e) {				\
+    eblerror(e);					\
+  }
 
 #if defined(__ANDROID__) ///////////////////////////////////////////////////
 

@@ -63,6 +63,11 @@ namespace ebl {
   //! [uend .. vend - 1].
   EXPORT idx<intg> yuv_table0(intg yend, intg uend, intg vend);
 
+  //! Create a table for a first convolution layer on uv input,
+  //! fully and independently connecting  u (1) to [0 .. uend - 1] and v(2) to
+  //! [uend .. vend - 1].
+  EXPORT idx<intg> uv_table0(intg uend, intg vend);
+
   //! Create a table for a second convolution layer on the output
   //! of a first convolution on yuv input, randomly connecting
   //! [0 .. yend - 1] to [0 .. p0 - 1] with fanin of size 'fanin_y',

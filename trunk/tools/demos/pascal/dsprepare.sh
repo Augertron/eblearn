@@ -96,7 +96,7 @@ fi
 # # clear previous results
 # rm -Rf $out_cleared
 
-# ~/eblearn/bin/dscompiler $dataroot -type pascalclear -precision $precision \
+# ~/eblearn/bin/dscompile $dataroot -type pascalclear -precision $precision \
 #     -outdir $out_cleared -scales $bgscales \
 #     $maxdata $ddisplay # debug
 
@@ -110,14 +110,14 @@ fi
 rm -Rf $outbg
 
 # extract background images at different scales
-~/eblearn/bin/dscompiler $dataroot -type pascalbg -precision $precision \
+~/eblearn/bin/dscompile $dataroot -type pascalbg -precision $precision \
     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
     -maxperclass $nbg -maxdata $maxbg \
     -channels $pp -resize $resize -kernelsz $kernel \
     $maxdata $ddisplay # debug
 
 # compile background dataset
-~/eblearn/bin/dscompiler ${outbg} -type regular -precision $precision \
+~/eblearn/bin/dscompile ${outbg} -type regular -precision $precision \
     -outdir ${out} -dname ${bgds}_${nbg} $maxdata $maxperclass \
     -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug
@@ -126,7 +126,7 @@ rm -Rf $outbg
 rm -Rf $outbg
 
 # compile regular dataset
-~/eblearn/bin/dscompiler $dataroot -type pascal -precision $precision \
+~/eblearn/bin/dscompile $dataroot -type pascal -precision $precision \
     -outdir ${out} -channels $pp -dname $name $diff_cmd $occl_cmd $trunc_cmd \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 -bboxfact $bboxfact \
     $maxdata $maxperclass $ddisplay # debug
@@ -141,7 +141,7 @@ rm -Rf $outbg
 # extract parts dataset
 if [ $extract_parts -eq 1 ] 
 then
-    ~/eblearn/bin/dscompiler $dataroot -type pascal -precision $precision \
+    ~/eblearn/bin/dscompile $dataroot -type pascal -precision $precision \
 	-outdir ${out} -channels $pp -dname $partsname \
 	$diff_cmd $occl_cmd $trunc_cmd \
 	-resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \

@@ -1,12 +1,12 @@
 # determine machine architecture
 ################################################################################
 IF (APPLE) # MAC OS
-  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__MAC__ -pthread")
+  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__MAC__")
   SET (MAC true)
   SET (OS_NAME "Mac")
 ELSE (APPLE)
   IF("${CMAKE_SYSTEM}" MATCHES "Linux")
-    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__LINUX__ -pthread")
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__LINUX__")
     SET (LINUX true)
     SET (OS_NAME "Linux")
   ELSE ("${CMAKE_SYSTEM}" MATCHES "Linux")
@@ -129,6 +129,18 @@ ELSE ($ENV{NOXML})
   ENDIF (XML_FOUND)
 ENDIF ($ENV{NOXML})
 
+# find KINECT
+##############################################################################
+IF ($ENV{NOKINECT})
+  MESSAGE(STATUS "KINECT DISABLED by env variable $NOKINECT=1.")
+ELSE ($ENV{NOKINECT})
+  FIND_PACKAGE(Kinect)
+  IF (KINECT_FOUND)
+    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__KINECT__")
+    INCLUDE_DIRECTORIES(${KINECT_INCLUDE_DIRS})
+  ENDIF (KINECT_FOUND)
+ENDIF ($ENV{NOKINECT})
+
 # find QT
 ##############################################################################
 IF ($ENV{NOQT})
@@ -212,17 +224,19 @@ ENDIF ($ENV{NOQT})
 
 # find CBLAS
 ################################################################################
-IF ($ENV{NOCBLAS})
-  MESSAGE(STATUS "CBLAS DISABLED by env variable $NOCBLAS=1.")
-ELSE ($ENV{NOCBLAS})
-  FIND_PACKAGE(CBLAS)
-  IF(CBLAS_FOUND)
-    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__CBLAS__")
-    INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
-  ELSE (CBLAS_FOUND)
-    MESSAGE("__ WARNING: cblas not found, install to speed up (optional).")
-  ENDIF(CBLAS_FOUND)
-ENDIF ($ENV{NOCBLAS})
+MESSAGE(STATUS "CBLAS DISABLED")
+# IF ($ENV{NOCBLAS})
+#   MESSAGE(STATUS "CBLAS DISABLED by env variable $NOCBLAS=1.")
+# ELSE ($ENV{NOCBLAS})
+#   FIND_PACKAGE(CBLAS)
+#   IF(CBLAS_FOUND)
+#     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__CBLAS__")
+#     INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
+#     MESSAGE(STATUS "Found CBLAS: ${CBLAS_INCLUDE_DIR}/${CBLAS_INCLUDE_FILE}")
+#   ELSE (CBLAS_FOUND)
+#     MESSAGE("__ WARNING: cblas not found, install to speed up (optional).")
+#   ENDIF(CBLAS_FOUND)
+# ENDIF ($ENV{NOCBLAS})
 
 # find CPPUnit
 ################################################################################
@@ -323,3 +337,22 @@ ELSE ($ENV{NOMPI})
     MESSAGE("__ WARNING: MPI not found (optional).")
   ENDIF (MPI_FOUND)
 ENDIF ($ENV{NOMPI})
+
+# find pthread
+################################################################################
+if (APPLE OR LINUX)
+  set(PTHREAD_FOUND TRUE) # present by default on apple and linux
+  set(PTHREAD_INCLUDE_DIR "/usr/include")
+  set(PTHREAD_LIBRARY "/usr/lib/libpthread.so")
+else (APPLE OR LINUX) # installed manually under windows
+  
+endif (APPLE OR LINUX)
+
+if (PTHREAD_FOUND)
+  message(STATUS "pthread Found.")
+  message(STATUS "pthread include path: ${PTHREAD_INCLUDE_DIR}")
+  message(STATUS "pthread library: ${PTHREAD_LIBRARY}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -D__PTHREAD__")
+  include_directories(${PTHREAD_INCLUDE_DIR})
+  link_directories(${PTHREAD_LIBRARY})
+endif (PTHREAD_FOUND)

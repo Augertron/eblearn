@@ -33,6 +33,7 @@
 // tell header that we are in the libidx scope
 #define LIBIDX
 
+#include "config.h"
 #include "idxops.h"
 
 namespace ebl {

@@ -55,13 +55,13 @@ mkdir -p $nopersons_root
 
 # # crop nicta's 80x64 to 80x40 to reach .5 ratio.
 # nicta_positive_root=${HOME}/banquoadata/ped/nicta/
-# $bin/dscompiler $nicta_positive_root -precision $precision \
+# $bin/dscompile $nicta_positive_root -precision $precision \
 #     -outdir $positive_root/nicta.5/ -save mat -resize $resize \
 #     -bboxwfact .625 $debug
 
 # # extract 'inside' windows (zoom inside bounding box) 
 # # from all positive examples as negative examples
-# $bin/dscompiler $positive_root -precision $precision \
+# $bin/dscompile $positive_root -precision $precision \
 #     -outdir $full_negative_root/bg/inside -save mat -resize $resize -bboxfact .65 $debug
 
 ###############################################################################
@@ -91,17 +91,17 @@ mkdir -p $nopersons_root
 rm -Rf $outbg
 
 # extract background images at random scales and positions
-$bin/dscompiler $full_negative_root -type patch -precision $precision \
+$bin/dscompile $full_negative_root -type patch -precision $precision \
     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
     -maxdata $maxbg -nopadded $debug
 
 # compile background dataset
-$bin/dscompiler ${outbg} -precision $precision \
+$bin/dscompile ${outbg} -precision $precision \
     -outdir ${out} -dname ${bgds} -dims ${h}x${w}x${chans} $debug
 
 # compile regular dataset
-$bin/dscompiler $dataroot -precision $precision -outdir ${out} -channels $pp \
+$bin/dscompile $dataroot -precision $precision -outdir ${out} -channels $pp \
     -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
     $debug
 

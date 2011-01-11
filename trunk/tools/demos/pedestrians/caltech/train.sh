@@ -99,7 +99,7 @@ echo "meta_output_dir = ${out}" >> $metaconf
 # initial training
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
-echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
+echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/train\"" >> $metaconf
 echo "meta_name = ${meta_name}" >> $metaconf
 #${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
 touch $out/${tstamp}.${meta_name}
@@ -152,7 +152,7 @@ for iter in `seq 1 ${maxiteration}`
   echo "input_random = 1" >> $bestconf
 # override train command by detect command
   echo >> $bestconf
-  echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/mtdetect\"" >> $bestconf
+  echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/detect\"" >> $bestconf
   echo "meta_name = ${meta_name}_falsepos_${iter}" >> $bestconf
 # set multi threads for detection
   echo "nthreads = ${nthreads}" >> $bestconf
@@ -168,7 +168,7 @@ for iter in `seq 1 ${maxiteration}`
 
 # recompile data from last output directory which should contain 
 # all false positives
-  ${eblearnbin}/dscompiler ${lastout} -precision ${precision} \
+  ${eblearnbin}/dscompile ${lastout} -precision ${precision} \
       -outdir ${dataroot} -forcelabel bg -dname allfp -dims ${h}x${w}x${chans} \
       -image_pattern ".*[.]mat" -mindims ${h}x${w}x${chans}
 
@@ -204,7 +204,7 @@ for iter in `seq 1 ${maxiteration}`
 # retrain on old + new data
   echo "Retraining from best previous weights: ${bestweights}"
 # add last weights and activate retraining from those
-  echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
+  echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/train\"" >> $metaconf
   echo "retrain = 1" >> $metaconf
   echo "retrain_weights = ${bestweights}" >> $metaconf
   echo "meta_name = ${meta_name}_retraining_${iter}" >> $metaconf

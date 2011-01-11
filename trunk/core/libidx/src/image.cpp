@@ -72,6 +72,7 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // interpolation
 
   void image_interpolate_bilin(ubyte* background, ubyte *pin,
 			       int indimi, int indimj, int inmodi, int inmodj,
@@ -164,22 +165,133 @@ namespace ebl {
       v11 = background;
       v10 = background;
     }
-    if (outsize == 1)
+    if (outsize >= 1)
       *out = (ndeltaj * (( *v10*deltai + *v00*ndeltai )>>16) +
 	      deltaj  * (( *v11*deltai + *v01*ndeltai )>>16))>>16;
-    else {
-      if (outsize >= 3) {
-	*out = (ndeltaj * (( v10[0]*deltai + v00[0]*ndeltai )>>16) +
-		deltaj  * (( v11[0]*deltai + v01[0]*ndeltai )>>16))>>16;
-	*(out + 1) = (ndeltaj * (( v10[1]*deltai + v00[1]*ndeltai )>>16) +
-		      deltaj  * (( v11[1]*deltai + v01[1]*ndeltai )>>16))>>16;
-	*(out + 2) = (ndeltaj * (( v10[2]*deltai + v00[2]*ndeltai )>>16) +
-		      deltaj  * (( v11[2]*deltai + v01[2]*ndeltai )>>16))>>16;
+    if (outsize >= 2)
+      *(out + 1) = (ndeltaj * (( v10[1]*deltai + v00[1]*ndeltai )>>16) +
+		    deltaj  * (( v11[1]*deltai + v01[1]*ndeltai )>>16))>>16;
+    if (outsize >= 3)
+      *(out + 2) = (ndeltaj * (( v10[2]*deltai + v00[2]*ndeltai )>>16) +
+		    deltaj  * (( v11[2]*deltai + v01[2]*ndeltai )>>16))>>16;
+    if (outsize >= 4)
+      *(out + 3) = (ndeltaj * (( v10[3]*deltai + v00[3]*ndeltai )>>16) +
+		    deltaj  * (( v11[3]*deltai + v01[3]*ndeltai )>>16))>>16;
+    if (outsize >= 5) {
+      eblerror("not implemented for more than 4 channels ("
+	       << outsize << " channels in " << indimi << "x" << indimj
+	       << " image)");
+    }
+  }
+
+  void image_interpolate_bilin(float* background, float *pin,
+			       int indimi, int indimj,
+			       int inmodi, int inmodj,
+			       int ppi, int ppj,
+			       float* out, int outsize) {
+    int li0, lj0;
+    register int li1, lj1;
+    float deltai, ndeltai;
+    float deltaj, ndeltaj;
+    register float *pin00;
+    register float *v00, *v01, *v10, *v11;
+    li0 = ppi >> 16;
+    li1 = li0+1;
+    deltai = 0.0000152587890625 * (float)(ppi & 0x0000ffff);
+    ndeltai = 1.0 - deltai;
+    lj0 = ppj  >> 16;
+    lj1 = lj0+1;
+    deltaj = 0.0000152587890625 * (float)(ppj & 0x0000ffff);
+    ndeltaj = 1.0 - deltaj;
+    pin00 = (float*)(pin) + inmodi * li0 + inmodj * lj0;
+    if ((li1>0)&&(li1<indimi)) {
+      if ((lj1>0)&&(lj1<indimj)) {
+	v00 = (pin00);
+	v01 = (pin00+inmodj);
+	v11 = (pin00+inmodi+inmodj);
+	v10 = (pin00+inmodi);
+      } else if (lj1==0) {
+	v00 = background;
+	v01 = (pin00+inmodj);
+	v11 = (pin00+inmodi+inmodj);
+	v10 = background;
+      } else if (lj1==indimj) {
+	v00 = (pin00);
+	v01 = background;
+	v11 = background;
+	v10 = (pin00+inmodi);
+      } else {
+	v00 = background;
+	v01 = background;
+	v11 = background;
+	v10 = background;
       }
-      if (outsize >= 4) {
-	*(out + 3) = (ndeltaj * (( v10[3]*deltai + v00[3]*ndeltai )>>16) +
-		      deltaj  * (( v11[3]*deltai + v01[3]*ndeltai )>>16))>>16;
+    } else if (li1==0) {
+      if ((lj1>0)&&(lj1<indimj)) {
+	v00 = background;
+	v01 = background;
+	v11 = (pin00+inmodi+inmodj);
+	v10 = (pin00+inmodi);
+      } else if (lj1==0) {
+	v00 = background;
+	v01 = background;
+	v11 = (pin00+inmodi+inmodj);
+	v10 = background;
+      } else if (lj1==indimj) {
+	v00 = background;
+	v01 = background;
+	v11 = background;
+	v10 = (pin00+inmodi);
+      } else {
+	v00 = background;
+	v01 = background;
+	v11 = background;
+	v10 = background;
       }
+    } else if (li1==indimi) {
+      if ((lj1>0)&&(lj1<indimj)) {
+	v00 = (pin00);
+	v01 = (pin00+inmodj);
+	v11 = background;
+	v10 = background;
+      } else if (lj1==0) {
+	v00 = background;
+	v01 = (pin00+inmodj);
+	v11 = background;
+	v10 = background;
+      } else if (lj1==indimj) {
+	v00 = (pin00);
+	v01 = background;
+	v11 = background;
+	v10 = background;
+      } else {
+	v00 = background;
+	v01 = background;
+	v11 = background;
+	v10 = background;
+      }
+    } else {
+      v00 = background;
+      v01 = background;
+      v11 = background;
+      v10 = background;
+    }
+    if (outsize >= 1)
+      *out = ndeltaj * (*v10*deltai + *v00*ndeltai) +
+	     deltaj  * (*v11*deltai + *v01*ndeltai);
+    if (outsize >= 2)
+      *(out + 1) = ndeltaj * (v10[1]*deltai + v00[1]*ndeltai) +
+	           deltaj  * (v11[1]*deltai + v01[1]*ndeltai);
+    if (outsize >= 3)
+      *(out + 2) = ndeltaj * (v10[2]*deltai + v00[2]*ndeltai) +
+		   deltaj  * (v11[2]*deltai + v01[2]*ndeltai);
+    if (outsize >= 4)
+      *(out + 3) = ndeltaj * (v10[3]*deltai + v00[3]*ndeltai) +
+		   deltaj  * (v11[3]*deltai + v01[3]*ndeltai);
+    if (outsize >= 5) {
+      eblerror("not implemented for more than 4 channels ("
+	       << outsize << " channels in " << indimi << "x" << indimj
+	       << " image)");
     }
   }
 

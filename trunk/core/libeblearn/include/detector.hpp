@@ -66,9 +66,11 @@ namespace ebl {
       bbhfactor(1.0), bbwfactor(1.0),
       mem_optimization(false), optimization_swap(false), keep_inputs(true),
       mout(o), merr(e), targets(tgt), 
-      min_hcenter_dist(0.0), min_wcenter_dist(0.0), max_overlap(.5),
-      min_hcenter_dist2(0.0), min_wcenter_dist2(0.0), max_overlap2(0.0),
-      mean_bb(false), max_object_hratio(0.0) {
+      min_hcenter_dist(0.0), min_wcenter_dist(0.0), 
+      min_hcenter_dist2(0.0), min_wcenter_dist2(0.0), 
+      max_overlap(.5), max_overlap2(0.0),
+      mean_bb(false), max_object_hratio(0.0), 
+      min_input_height(-1), min_input_width(-1) {
     // // default resolutions
     // double sc[] = { 4, 2, 1 };
     // set_resolutions(3, sc);
@@ -159,10 +161,16 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::init(idxdim &dsample) {
-    // compute minimum input size compatible with network size
-    idxdim minodim(1, 1, 1); // min output dims
-    netdim = thenet.bprop_size(minodim); // compute min input dims
+    // manually set net min input
+    if (min_input_height > 0 && min_input_width > 0) {
+      idxdim minodim(1, min_input_height, min_input_width);
+      netdim = minodim;
+    } else { // compute minimum input size compatible with network size
+      idxdim minodim(1, 1, 1); // min output dims
+      netdim = thenet.bprop_size(minodim); // compute min input dims
+    }
     mout << "Network's minimum input dimension is: " << netdim << endl;
+    mout << "min input -> "; thenet.pretty(netdim);
     // limit the input size as a factor of the object's height
     if (max_object_hratio > 0.0) {
       double objh = (double) netdim.dim(1) * bbhfactor; // object's height
@@ -216,7 +224,7 @@ namespace ebl {
     }
     original_bboxes = idx<uint>(nresolutions, 4);
     
-    mout << "multi-resolution detection initialized to ";
+    mout << "multi-resolution detection initialized to (ideal scales) ";
     print_resolutions();
     
     // resize input to closest compatible size
@@ -368,7 +376,8 @@ namespace ebl {
 				       T threshold_parts_,
 				       float min_hcenter_dist2_, 
 				       float min_wcenter_dist2_, 
-				       float max_overlap2_, bool mean_bb_) {
+				       float max_overlap2_, bool mean_bb_,
+				       float ss_mhd, float ss_mwd) {
     mean_bb = mean_bb_;
     ped_only = ped_only_;
     share_parts = share_parts_;
@@ -379,6 +388,8 @@ namespace ebl {
     min_hcenter_dist2 = min_hcenter_dist2_;
     min_wcenter_dist2 = min_wcenter_dist2_;
     max_overlap2 = max_overlap2_;
+    same_scale_mhd = ss_mhd;
+    same_scale_mwd = ss_mwd;
 
     pruning = type;
     mout << "Pruning of bounding boxings: ";
@@ -454,7 +465,15 @@ namespace ebl {
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_max_object_hratio(double hratio) {
     max_object_hratio = hratio;
-    cout << "Max image's height / object's height ratio is " << hratio << endl;
+    mout << "Max image's height / object's height ratio is " << hratio << endl;
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_min_input(intg h, intg w) {
+    min_input_height = h;
+    min_input_width = w;
+    mout << "Manually setting network's minimum input: " << h << "x" << w 
+	 << endl;
   }
 
   template <typename T, class Tstate>
@@ -559,8 +578,8 @@ namespace ebl {
   void detector<T,Tstate>::compute_resolutions(idxdim &input_dims) {
     nresolutions = 1;
     resolutions.resize1(0, nresolutions);
-    resolutions.set(input_dims.dim(0), 0, 0); // original resolution
-    resolutions.set(input_dims.dim(1), 0, 1); // original resolution
+    resolutions.set(std::min((intg) max_size, input_dims.dim(0)), 0, 0);
+    resolutions.set(std::min((intg) max_size, input_dims.dim(1)), 0, 1);
   }
 
   // use scales
@@ -696,14 +715,26 @@ namespace ebl {
 					 vector<bbox*> &pruned_bboxes,
 					 float max_match,
 					 bool same_class_only,
-					 float min_hcenter_dist, float min_wcenter_dist,
+					 float min_hcenter_dist,
+					 float min_wcenter_dist,
 					 float threshold,
-					 uint image_height, uint image_width) {
+					 uint image_height, uint image_width,
+					 float same_scale_mhd,
+					 float same_scale_mwd) {
+    size_t ib, jb;
+    bbox *i, *j;
+    // apply pre-process bb factors
+    for (ib = 0; ib < raw_bboxes.size(); ++ib) {
+      i = raw_bboxes[ib];
+      // apply bbox factors
+      i->h0 += (int) (i->height - i->height * bbhfactor)/2;
+      i->w0 += (int) (i->width - i->width * bbwfactor)/2;
+      i->height = (int) (i->height * bbhfactor);
+      i->width = (int) (i->width * bbwfactor);
+    }
     // for each bbox, check that matching with other bboxes does not go beyond
     // the maximum authorized matching score (0 means no overlap, 1 is identity)
     // and only keep ones with highest score when overlapping.
-    size_t ib, jb;
-    bbox *i, *j;
     // prune
     for (ib = 0; ib < raw_bboxes.size(); ++ib) {
       i = raw_bboxes[ib];
@@ -724,6 +755,14 @@ namespace ebl {
 		 && i->center_wdistance(*j) < min_wcenter_dist)
 		|| (j->center_hdistance(*i) < min_hcenter_dist
 		    && j->center_wdistance(*i) < min_wcenter_dist))
+	      overlap = true;
+	    // forbid centers to be closer than min dist to each other in each axis
+	    // for boxes originating from the same scale. similar to applying stride on output.
+	    if (i->scale_index == j->scale_index &&
+		((i->center_hdistance(*j) < same_scale_mhd
+		  && i->center_wdistance(*j) < same_scale_mwd)
+		 || (j->center_hdistance(*i) < same_scale_mhd
+		     && j->center_wdistance(*i) < same_scale_mwd)))
 	      overlap = true;
 	    // if same_class_only, allow pruning only if 2 bb are same class
 	    bool allow_pruning = !same_class_only ||
@@ -767,12 +806,12 @@ namespace ebl {
       float height = i->height * bbhfactor2;
       float width = i->width * bbwfactor2;
       // cut off bbox at image boundaries
-      i->h0 = (uint)std::max((float)0, h0);
-      i->w0 = (uint)std::max((float)0, w0);
-      i->height = (uint) MIN(height + h0,
-		      (uint) image_height) - i->h0;
-      i->width = (uint) MIN(width + w0,
-		     (uint) image_width) - i->w0;
+      i->h0 = (int)std::max((float)0, h0);
+      i->w0 = (int)std::max((float)0, w0);
+      i->height = (int) MIN(height + h0,
+		      (int) image_height) - i->h0;
+      i->width = (int) MIN(width + w0,
+		     (int) image_width) - i->w0;
     }
   }
 	
@@ -782,7 +821,8 @@ namespace ebl {
 				      vector<bbox*> &pruned_bboxes,
 				      float max_match,
 				      bool same_class_only,
-				      float min_hcenter_dist, float min_wcenter_dist,
+				      float min_hcenter_dist,
+				      float min_wcenter_dist,
 				      int classid) {
     // for each bbox, check that matching with other bboxes does not go beyond
     // the maximum authorized matching score (0 means no overlap, 1 is identity)
@@ -1210,12 +1250,57 @@ namespace ebl {
   }
 	
   //////////////////////////////////////////////////////////////////////////////
+  // outputs smoothing
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_smoothing(uint type) {
+    smoothing_type = type;
+    idx<T> ker;
+    switch (smoothing_type) {
+    case 0: mout << "Outputs smoothing disabled." << endl; break ;
+    case 1:
+      ker = idx<T>(3, 3);
+      ker.set(.3, 0, 0);
+      ker.set(.5, 0, 1);
+      ker.set(.3, 0, 2);
+      ker.set(.5, 1, 0);
+      ker.set(1 , 1, 1);
+      ker.set(.5, 1, 2);
+      ker.set(.3, 2, 0);
+      ker.set(.5, 2, 1);
+      ker.set(.3, 2, 2);
+      idx_dotc(ker, (T) (1 / (double) idx_sum(ker)), ker);
+      smoothing_kernel = ker;
+      mout << "Smoothing outputs with kernel: " << endl;
+      smoothing_kernel.printElems();
+      break ;
+    default:
+      eblerror("Unknown smoothing type " << type);
+    }
+  }
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::smooth_outputs() {
-    //    mout << "smoothing not implemented" << endl;
+    if (smoothing_type != 0) {
+      uint hpad = (uint) (smoothing_kernel.dim(0) / 2);
+      uint wpad = (uint) (smoothing_kernel.dim(1) / 2);
+      idx_bloop1(output, outputs, void*) {
+	idx<T> &outx = ((Tstate*) output.get())->x;
+	intg h = outx.dim(1), w = outx.dim(2);
+	idx<T> in(h + 2 * hpad, w + 2 * wpad);
+	idx<T> inc = in.narrow(0, h, hpad);
+	inc = inc.narrow(1, w, wpad);
+	idx_clear(in);
+	idx_bloop1(out, outx, T) {
+	  idx_copy(out, inc);
+	  idx_2dconvol(in, smoothing_kernel, out);
+	}
+      }
+    }
   }
     
+  //////////////////////////////////////////////////////////////////////////////
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::map_to_list(T threshold, vector<bbox*> &raw_bboxes) {
     bbox::init_instance_id(); // reset unique ids to start from zero.
@@ -1239,8 +1324,8 @@ namespace ebl {
 	double netw = netdim.dim(2); // network's input width
 	double scalehi = original_h / robbox.height; // input to original
 	double scalewi = original_w / robbox.width; // input to original
-	uint image_h0 = (uint) (robbox.h0 * scalehi);
-	uint image_w0 = (uint) (robbox.w0 * scalewi);
+	int image_h0 = (int) (robbox.h0 * scalehi);
+	int image_w0 = (int) (robbox.w0 * scalewi);
 	// offset factor in input map
 	double offset_h_factor = (in_h - neth)
 	  / std::max((double) 1, (out_h - 1));
@@ -1294,34 +1379,20 @@ namespace ebl {
 		bb.scale_index = scale_index; // scale index
 		// original image
 		// bbox's rectangle in original image
-		bb.h0 = (uint) (offset_h * offset_h_factor * scalehi);
-		bb.w0 = (uint) (offset_w * offset_w_factor * scalewi);
-		bb.height = (uint) (neth * scalehi);
-		bb.width = (uint) (netw * scalewi);
-		// apply bbox factors
-		bb.h0 = bb.h0 + (uint)((bb.height - bb.height * bbhfactor)/2);
-		bb.w0 = bb.w0 + (uint)((bb.width - bb.width * bbwfactor)/2);
-		bb.height = (uint) (bb.height * bbhfactor);
-		bb.width = (uint) (bb.width * bbwfactor);
-		// cut off bbox at image boundaries
-		int tmp_bbh0 = (int) (bb.h0 - image_h0);
-		int tmp_bbw0 = (int) (bb.w0 - image_w0);
-		bb.h0 = (uint) std::max(0, tmp_bbh0);
-		bb.w0 = (uint) std::max(0, tmp_bbw0);
-		bb.height = MIN(bb.height + tmp_bbh0,
-				(uint) original_h) - bb.h0;
-		bb.width = MIN(bb.width + tmp_bbw0,
-			       (uint) original_w) - bb.w0;
+		bb.h0 = (int) (offset_h * offset_h_factor * scalehi) - image_h0;
+		bb.w0 = (int) (offset_w * offset_w_factor * scalewi) - image_w0;
+		bb.height = (int) (neth * scalehi);
+		bb.width = (int) (netw * scalewi);
 		// input map
-		bb.iheight = (uint) in_h; // input h
-		bb.iwidth = (uint) in_w; // input w
-		bb.ih0 = (uint) (offset_h * offset_h_factor);
-		bb.iw0 = (uint) (offset_w * offset_w_factor);
-		bb.ih = (uint) neth;
-		bb.iw = (uint) netw;
+		bb.iheight = (int) in_h; // input h
+		bb.iwidth = (int) in_w; // input w
+		bb.ih0 = (int) (offset_h * offset_h_factor);
+		bb.iw0 = (int) (offset_w * offset_w_factor);
+		bb.ih = (int) neth;
+		bb.iw = (int) netw;
 		// output map
-		bb.oheight = (uint) out_h; // output height
-		bb.owidth = (uint) out_w; // output width
+		bb.oheight = (int) out_h; // output height
+		bb.owidth = (int) out_w; // output width
 		bb.oh0 = offset_h; // answer height in output
 		bb.ow0 = offset_w; // answer height in output
 		raw_bboxes.push_back(new bbox_parts(bb));
@@ -1392,11 +1463,13 @@ namespace ebl {
     multi_res_fprop();
     // smooth outputs
     smooth_outputs();
+
     // find points that are local maxima spatial and class-wise
     // write result in m. rescale result to [0 1]
     // TODO: use connected components instead of fixed-size window local maxima?
     //mark_maxima(threshold);
-    // get bounding boxes
+
+    // clear previous bounding boxes
     size_t ib; bbox *i;
     for (ib = 0 ; ib < raw_bboxes.size(); ++ib) {
       i = raw_bboxes[ib];
@@ -1404,6 +1477,7 @@ namespace ebl {
 	delete i;
     }
     raw_bboxes.clear();
+    // get new bboxes
     map_to_list(pruning == pruning_pedestrian ? threshold_parts : threshold, 
 		raw_bboxes);
     vector<bbox*> &bb = raw_bboxes;
@@ -1413,6 +1487,11 @@ namespace ebl {
     // save positive response input windows in save mode
     if (save_mode)
       save_bboxes(bb, save_dir, frame_name);
+    // backward connections
+    back_module<T, Tstate>* back = (back_module<T, Tstate>*)((layers<T,Tstate>&)thenet).find("back");
+    if (back) {
+      back->bb(bb);
+    }
     // return bounding boxes
     return bb;
   }
@@ -1428,7 +1507,7 @@ namespace ebl {
       case pruning_overlap: 
 	prune_overlap(raw, pruned, max_overlap, false, min_hcenter_dist, 
 		      min_wcenter_dist, threshold, image_height, 
-		      image_width); 
+		      image_width, same_scale_mhd, same_scale_mwd); 
 	break ;
       case pruning_pedestrian:
 	prune_pedestrian(raw, pruned, ped_only, threshold); break ;
@@ -1491,8 +1570,17 @@ namespace ebl {
       inpp = inpp.narrow(2, (*bbox)->iw, (*bbox)->iw0);
       //inpp = inpp.shift_dim(0, 2); // put channels back to 3rd position
       // get bbox of original input
-      inorig = image.narrow(0, (*bbox)->height, (*bbox)->h0);
-      inorig = inorig.narrow(1, (*bbox)->width, (*bbox)->w0);
+      if ((*bbox)->height + (*bbox)->h0 > image.dim(0) || 
+	  (*bbox)->width + (*bbox)->w0 > image.dim(1) || 
+	  (*bbox)->h0 < 0 || (*bbox)->w0 < 0)
+	cerr << "warning: trying to crop bbox outside of image bounds: bbox "
+	     << **bbox << " in image " << image << endl;
+      // make sure we don't try to crop outside of image bounds
+      int h = std::max(0, (*bbox)->h0), w = std::max(0, (*bbox)->w0);
+      int height = std::min((int) image.dim(0) - h, h + (*bbox)->height);
+      int width = std::min((int) image.dim(1) - w, h + (*bbox)->width);
+      inorig = image.narrow(0, height, h);
+      inorig = inorig.narrow(1, width, w);
       // save preprocessed image as lush mat
       fname.str("");
       fname << dir_pp[(*bbox)->class_id]
@@ -1735,7 +1823,8 @@ namespace ebl {
       input = minput;
     // resize and preprocess input
     resizepp.set_dimensions(resolutions.get(res, 0), resolutions.get(res, 1));
-    rect<int> outr(0, 0, resolutions.get(res, 2), resolutions.get(res, 3));
+    //    rect<int> outr(0, 0, resolutions.get(res, 2), resolutions.get(res, 3));
+    rect<int> outr(0, 0, resolutions.get(res, 0), resolutions.get(res, 1));
     resizepp.set_output_region(outr);
     resizepp.fprop(iminput, *input);
     // memorize original input's bbox in resized input
@@ -1749,13 +1838,12 @@ namespace ebl {
       idx_addc(input->x, bias, input->x);
     if (coef != 1)
       idx_dotc(input->x, coef, input->x);
-#ifdef __DEBUG__
-    mout << "preprocessed input range: " << idx_min(input->x) << ", "
-	 << idx_max(input->x) << endl;
-    mout << "resized input (" << imres << ") to resolution " << res
-	 << " (" << resolutions.get(res, 0) << "x" << resolutions.get(res, 1)
-	 << "): " << input->x << endl;
-#endif
+
+    DEBUG("preprocessed input range: " << idx_min(input->x) << ", "
+	  << idx_max(input->x) << endl
+	  << "resized input (" << imres << ") to resolution " << res
+	  << " (" << resolutions.get(res, 0) << "x" << resolutions.get(res, 1)
+	  << "): " << input->x);
   }
 
 } // end namespace ebl

@@ -60,14 +60,16 @@ namespace ebl {
   vector<bbox*>& detector_gui<T,Tstate>::
   display(detector<T,Tstate> &cl, idx<Tin> &img, double threshold,
 	  const char *frame_name, unsigned int h0, unsigned int w0,
-	  double dzoom,  T vmin, T vmax, int wid, const char *wname) {
+	  double dzoom,  T vmin, T vmax, int wid, const char *wname,
+	  float transparency) {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector"));
     select_window(display_wid);
 
     // run network
     vector<bbox*>& vb = cl.fprop(img, threshold, frame_name);
-    display_minimal(img, vb, cl.labels, h0, w0, dzoom, vmin, vmax, display_wid);
+    display_minimal(img, vb, cl.labels, h0, w0, dzoom, vmin, vmax, display_wid,
+		    false, transparency);
     // draw masks class
     if (!mask_class.empty()) {
       idx<T> mask = cl.get_mask(mask_class);
@@ -81,19 +83,19 @@ namespace ebl {
   void detector_gui<T,Tstate>::
   display_minimal(idx<Tin> &img, vector<bbox*>& vb, idx<ubyte> &labels,
 		  unsigned int h0, unsigned int w0,
-		  double dzoom,  T vmin, T vmax, int wid, bool show_parts) {
+		  double dzoom,  T vmin, T vmax, int wid, bool show_parts,
+		  float transparency) {
     // draw image
     draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
-    // draw bboxes
-    vector<bbox*>::iterator i = vb.begin();
+    // draw bboxes (in reverse order to display best on top)
     bbox *bb = NULL;
-    for ( ; i != vb.end(); ++i) {
-      bb = *i;
+    for (int i = vb.size() - 1; i >= 0; --i) {
+      bb = vb[(uint) i];
       // draw parts
       if (show_parts && dynamic_cast<bbox_parts*>(bb))
 	draw_bbox_parts(*((bbox_parts*) bb), labels, h0, w0, dzoom);
       // draw box
-      draw_bbox(*bb, labels, h0, w0, dzoom);
+      draw_bbox(*bb, labels, h0, w0, dzoom, transparency);
     }
   }
 
@@ -102,7 +104,7 @@ namespace ebl {
   display_input(detector<T,Tstate> &cl, idx<Tin> &img, double threshold,
 		const char *frame_name, 
 		unsigned int h0, unsigned int w0, double dzoom, T vmin,
-		T vmax, int wid, const char *wname) {
+		T vmax, int wid, const char *wname, float transparency) {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: output"));
     select_window(display_wid);
@@ -110,7 +112,8 @@ namespace ebl {
 
 
     vector<bbox*> &bb = display(cl, img, threshold, frame_name,
-				h0, w0, dzoom, vmin, vmax, wid, wname);
+				h0, w0, dzoom, vmin, vmax, wid, wname,
+				transparency);
     w0 += (uint) (img.dim(1) * dzoom + 5);
     // draw input
     draw_matrix(img, "input", h0, w0, dzoom, dzoom, (Tin) vmin, (Tin) vmax);
@@ -123,7 +126,8 @@ namespace ebl {
 			 double threshold,
 			 const char *frame_name, 
 			 unsigned int h0, unsigned int w0, double dzoom,
-			 T vmin, T vmax, int wid, const char *wname){
+			 T vmin, T vmax, int wid, const char *wname,
+			 T in_vmin, T in_vmax, float transparency) {
     display_wid_fprop = (wid >= 0) ? wid : 
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
@@ -131,8 +135,8 @@ namespace ebl {
     // draw input and output
     vector<bbox*>& bb =
       display_input(cl, img, threshold, frame_name,
-		    h0, w0, dzoom, vmin, vmax, display_wid_fprop);
-    //		    h0, w0, dzoom, (T)0, (T)255, display_wid_fprop);
+		    h0, w0, dzoom, in_vmin, in_vmax, display_wid_fprop, wname,
+		    transparency);
 
     // disable_window_updates();
     // draw internal inputs and outputs
@@ -168,13 +172,13 @@ namespace ebl {
 	gui << black_on_white() << at(h - 15, w0) << "scale #" << scale
 	    << " " << inx.dim(0) << "x" << inx.dim(1);
 	draw_matrix(inx, h, w0, dzoom, dzoom, (T)vmin, (T)vmax);
-	// draw bboxes on scaled input
+	// draw bboxes on scaled input 
 	for (vector<bbox*>::iterator i = bb.begin(); i != bb.end(); ++i) {
 	  if (scale == (*i)->scale_index)
 	    draw_box((uint) (h + dzoom * (*i)->ih0), 
 		     (uint) (w0 + dzoom * (*i)->iw0),
 		     (uint) (dzoom * (*i)->ih), 
-		     (uint) (dzoom * (*i)->iw), 0, 0, 255,
+		     (uint) (dzoom * (*i)->iw), 0, 0, 255, 255,
 		     new string((const char*)
 				cl.labels[(*i)->class_id].idx_ptr()));
 	}

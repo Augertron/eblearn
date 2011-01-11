@@ -188,7 +188,12 @@ namespace ebl {
 		     bool share_parts = false, T threshold_parts = 0.0,
 		     float min_hcenter_dist2 = 0.0,
 		     float min_wcenter_dist2 = 0.0,
-		     float max_overlap2 = 0.0, bool mean_bb = false);
+		     float max_overlap2 = 0.0, bool mean_bb = false,
+		     float same_scale_mhd = 0.0,
+		     float same_scale_mwd = 0.0);
+
+    //! Set output smoothing type. 0: none, 1: 3x3 kernel.
+    void set_smoothing(uint type);
 
     //! Set factors to be applied on the height and width of output bounding
     //! boxes.
@@ -218,6 +223,9 @@ namespace ebl {
     //! maximum number of objects that can fit next to each other
     //! in one image along the height axis.
     void set_max_object_hratio(double hratio);
+
+    //! Set by hand the minimum network input.
+    void set_min_input(intg h, intg w);
   
     ////////////////////////////////////////////////////////////////
     // execution
@@ -326,10 +334,11 @@ namespace ebl {
     void prune_overlap(vector<bbox*> &raw_bboxes, vector<bbox*> &prune_bboxes,
 		       float max_match,
 		       bool same_class_only = false,
-		       float min_hcenter_dist = 0.0,
-		       float min_wcenter_dist = 0.0, float threshold = 0.0,
+		       float min_hcenter_dist = 0.0, float min_wcenter_dist = 0.0,
+		       float threshold = 0.0,
 		       // TODO: this is dangerous, get rid of it
-		       uint image_height = 0, uint image_width = 0);
+		       uint image_height = 0, uint image_width = 0,
+		       float same_scale_mhd = 0.0, float same_scale_mwd = 0.0);
 
     void prune_vote(vector<bbox*> &raw_bboxes, vector<bbox*> &prune_bboxes,
 		    float max_match,
@@ -387,7 +396,6 @@ namespace ebl {
     idx<void*>		 results;	//!< idx<double>*
     module_1_1<T,Tstate> *pp;            //!< preprocessing module
     uint                 ppkersz;       //!< size of pp kernel (if any)
-    idx<T>		 smoothing_kernel;
     idx<ubyte>   	 labels;
     ////////////////////////////////////////////////////////////////
   private:
@@ -424,7 +432,6 @@ namespace ebl {
     bool                 ped_only; //!< temporary TODO
     bool                 share_parts; //!< Allow parts sharing or not.
     T                    threshold_parts;
-    bool                 mean_bb;
     float                bbhfactor; //!< height bbox factor
     float                bbwfactor; //!< width bbox factor
     float                bbhfactor2; //!< height bbox factor
@@ -432,7 +439,6 @@ namespace ebl {
     bool                 mem_optimization; //!< optimize memory or not.
     bool                 optimization_swap; //!< swap buffers or not.
     bool                 keep_inputs; //! optimize input buffers or not.
-    float                max_overlap; //!< Maximum ratio of overlap authorized.
     uint                 hzpad; //! Zero-pad on height (each side).
     uint                 wzpad; //! Zero-pad on width (each side).
     std::ostream         &mout; //! output stream.
@@ -446,8 +452,19 @@ namespace ebl {
 
     float                min_hcenter_dist2;
     float                min_wcenter_dist2;
+    float                same_scale_mhd;
+    float                same_scale_mwd;
+
+    float                max_overlap; //!< Maximum ratio of overlap authorized.
     float                max_overlap2;
+    bool                 mean_bb;
     double               max_object_hratio; //! max image_height/object_height
+    intg                 min_input_height;
+    intg                 min_input_width;
+    // smoothing //////////////////////////////////////////////////////////////
+    uint                 smoothing_type;
+    idx<T>               smoothing_kernel;
+    
     ////////////////////////////////////////////////////////////////
     // friends
     template <typename T2, class Tstate2> friend class detector_gui;

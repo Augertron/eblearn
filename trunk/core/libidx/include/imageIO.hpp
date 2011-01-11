@@ -63,7 +63,7 @@ namespace ebl {
   // I/O: helper functions
 
   template<class T>
-  idx<T> image_read(const char *fname, idx<T> *out_) {
+  idx<T> image_read(const char *fname, idx<T> *out_, int attempts) {
     idx<ubyte> tmp;
 #if (defined(__IMAGEMAGICK__) && !defined(__NOIMAGEMAGICK__))
     // we are under linux or mac and convert is available
@@ -75,17 +75,30 @@ namespace ebl {
 #else
     FILE* fp = POPEN(cmd.c_str(), "r");
 #endif
-    if (!fp)
-      eblthrow("conversion of image " << fname << " failed (errno: " 
-	       << errno << ", " << strerror(errno) << ")");
+    if (!fp) {
+      std::string err;
+      err << "conversion of image " << fname << " failed (errno: " 
+	  << errno << ", " << strerror(errno) << ")";
+      if (attempts > 0) {
+	cerr << "warning: " << err << endl;
+	cerr << "trying again... (remaining attempts: " << attempts << ")" << endl;
+	return image_read(fname, out_, attempts - 1);
+      } else
+	eblthrow(err);
+    }
     try {
     // read pnm image
     tmp = pnm_read(fp);
-    } catch (eblexception &e) {
+    } catch (eblexception &err) {
       if (PCLOSE(fp) != 0) {
 	cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
-      }
-      throw e;
+      } 
+      if (attempts > 0) {
+	cerr << "warning: " << err << endl;
+	cerr << "trying again... (remaining attempts: " << attempts << ")" << endl;
+	return image_read(fname, out_, attempts - 1);
+      } else
+	eblthrow(err);
     }
     if (PCLOSE(fp) != 0) {
       cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;

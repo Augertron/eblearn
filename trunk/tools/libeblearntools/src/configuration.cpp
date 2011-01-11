@@ -39,7 +39,6 @@
 #include <sys/types.h>
 #include <vector>
 #include <stdio.h>
-#include <time.h>
 #include <limits>
 #include <string.h>
 #include <stdlib.h>
@@ -95,19 +94,6 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // utility functions
 
-  string timestamp() {
-    time_t rawtime;
-    struct tm * timeinfo;
-    char buffer [80];
-
-    time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
-
-    strftime (buffer,80,"%Y%m%d.%H%M%S",timeinfo);
-    string s = buffer;
-    return s;
-  }
-  
   void remove_trailing_whitespaces(string &s) {
     string::size_type pos;
   
@@ -121,6 +107,7 @@ namespace ebl {
     }
   }
 
+  //! Remove quotes, except if they are preceded by a \.
   string replace_quotes(const string &s) {
     string res(s), tmp;
     size_t qpos = res.find("\"");
@@ -159,13 +146,11 @@ namespace ebl {
       while (qpos2 != string::npos && qpos2 > 0 && res[qpos2 - 1] == '\\') {
 	qpos2 = res.find("\"", qpos2 + 1);
       }
-      if (qpos2 == string::npos) {
-	cerr << "unmatched quote in: " << res << endl;
-	eblerror("unmatched quote");
-      }
+      if (qpos2 == string::npos)
+	eblerror("unmatched quote in: " << res);
       // resolve both sides of quoted section
       string s0 = res.substr(0, (std::max)((size_t) 0, qpos -1));
-      string s1 = res.substr(qpos + 1, qpos2 - 1);
+      string s1 = res.substr(qpos + 1, qpos2 - 1 - qpos);
       string s2 = res.substr(qpos2 + 1);
       res = "";
       if (qpos != 0) {
@@ -175,10 +160,8 @@ namespace ebl {
       res += "\"";
       res += resolve(m, variable, s1);
       res += "\"";
-      if (qpos2 < res.size()) {
-	s2 = resolve(m, variable, s2);
-	res += s2;
-      }
+      s2 = resolve(m, variable, s2);
+      res += s2;
       // concatenate resolved and quoted sections
       return res;
     } else { // 2. no quotes are present, simply resolve string
@@ -214,8 +197,8 @@ namespace ebl {
 	} else { // not found locally, check environment
 	  char *val = getenv(var.c_str());
 	  if (val) {
-	    cout << "using environment variable \"" << var << "\": "
-		 << val << endl;
+// 	    cout << "using environment variable \"" << var << "\": "
+// 		 << val << endl;
 	    res = res.replace(pos, pos2 - pos + 1, val);
 	    pos2 = pos;
 	  }
@@ -349,6 +332,8 @@ namespace ebl {
 	    eblerror("unmatched quote");
 	  }
 	  pos = qpos2 + 1; // update pos to skip quoted section
+	  //	  s = s.substr(pos);
+	  //	  pos = s.find(' ');
 	  continue ; // try again with updated pos
 	}
 	stmp = s.substr(0, pos);
@@ -392,12 +377,13 @@ namespace ebl {
   }
 
   string get_conf_name(vector<size_t> &conf_indices, string_list_map_t &lmap,
-		       int combination_id) {
+		       int combination_id, bool no_conf_id) {
     string_list_map_t::iterator lmi = lmap.begin();
     vector<size_t>::iterator ci = conf_indices.begin();
     ostringstream name;
   
-    name << "conf" << setfill('0') << setw(2) << combination_id;
+    if (!no_conf_id)
+      name << "_conf" << setfill('0') << setw(2) << combination_id;
     for ( ; lmi != lmap.end(); ++lmi, ++ci)
       if (lmi->second.size() > 1) {
 	name << "_" << lmi->first << "_" << lmi->second[*ci];
@@ -516,6 +502,21 @@ namespace ebl {
     v = (intg) string_to_int(get_cstr(varname));
   }
 
+  void configuration::get(uint &v, const char *varname) {
+    exists_throw(varname);
+    v = string_to_uint(get_cstr(varname));
+  }
+
+  void configuration::get(double &v, const char *varname) {
+    exists_throw(varname);
+    v = string_to_double(get_cstr(varname));
+  }
+
+  void configuration::get(string &v, const char *varname) {
+    exists_throw(varname);
+    v = get_string(varname);
+  }
+
   const string &configuration::get_string(const char *varname) {
     exists_throw(varname);
     // remove quotes if present
@@ -600,8 +601,8 @@ namespace ebl {
     char *val = getenv(varname);
     if (val) {
       if (!silent)
-	cout << "using environment variable \"" << varname << "\": "
-	     << val << endl;
+// 	cout << "using environment variable \"" << varname << "\": "
+// 	     << val << endl;
       return val;
     }
     return NULL;
@@ -645,10 +646,10 @@ namespace ebl {
   }
   
   bool meta_configuration::read(const char *fname, bool bresolve,
-				const string *tstamp) {
+				const string *stamp, bool replacequotes) {
     cout << "Reading meta configuration file: " << fname << endl;
     // read file and extract all variables and values
-    if (!extract_variables(fname, smap, otxt, NULL, bresolve, false))
+    if (!extract_variables(fname, smap, otxt, NULL, bresolve, replacequotes))
       return false;
     cout << "loaded: " << endl;
     pretty();
@@ -661,10 +662,10 @@ namespace ebl {
     resolve(false);
 
     // name of entire experiment
-    if (tstamp && strcmp(tstamp->c_str(), ""))
-      name = *tstamp; // override timestamp manually
+    if (stamp && strcmp(stamp->c_str(), ""))
+      name = *stamp; // override timestamp manually
     else // use current timestamp
-      name = timestamp();
+      name = tstamp();
     name += ".";
     if (smap.find("meta_name") != smap.end())
       name += smap["meta_name"];
@@ -683,8 +684,8 @@ namespace ebl {
     conf_indices.assign(lmap.size(), 0); // reset conf
     for (int i = 0; i < conf_combinations; ++i) {
       string conf_name = name;
-      conf_name += "_";
-      conf_name += get_conf_name(conf_indices, lmap, i);
+      conf_name += get_conf_name(conf_indices, lmap, i, 
+				 exists_true("meta_no_conf_id"));
       string_map_t new_smap;
       assign_current_smap(new_smap, conf_indices, lmap);
       configuration conf(new_smap, otxt, conf_name, output_dir);

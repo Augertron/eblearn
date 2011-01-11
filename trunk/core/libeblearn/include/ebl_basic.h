@@ -37,6 +37,7 @@
 #include "ebl_arch.h"
 #include "ebl_states.h"
 #include "ebl_utils.h"
+#include "bbox.h"
 
 namespace ebl {
 
@@ -199,7 +200,11 @@ namespace ebl {
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //!        If p is null, a local buffer will be used.
-    subsampling_module(parameter<T,Tstate> *p, intg stridei_, intg stridej_,
+    //! \param stridei Stride in height of subsampling kernel.
+    //! \param stridej Stride in width of subsampling kernel.
+    //! \param subi Size in height of subsampling kernel.
+    //! \param subj Size in width of subsampling kernel.
+    subsampling_module(parameter<T,Tstate> *p, intg stridei, intg stridej,
 		       intg subi, intg subj, intg thick,
 		       const char *name = "subsampling");
     //! destructor
@@ -229,8 +234,8 @@ namespace ebl {
 
     // members ////////////////////////////////////////////////////////
   public:
-    Tstate	        coeff;
-    Tstate	        sub;
+    Tstate	        coeff; //! Learned averaging coefficients.
+    Tstate	        sub; //! Temporary buffer to hold sum of neighborhood.
     intg		thickness;
     intg		stridei;
     intg		stridej;
@@ -575,6 +580,105 @@ namespace ebl {
   
   protected:
     Tstate	coeff;
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // copy_module
+  //! This module does nothing but copying the input into the output.
+  //! This can be useful for parallel branching.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class copy_module : public module_1_1<T,Tstate> {
+  public:
+    //! Constructor.
+    copy_module(const char *name = "copy");
+    //! Destructor.
+    virtual ~copy_module();    
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! backward propagation from out to in
+    virtual void bprop(Tstate &in, Tstate &out);
+    //! second-derivative backward propagation from out to in
+    virtual void bbprop(Tstate &in, Tstate &out);
+    //! resize the output based on input dimensions
+    virtual void resize_output(Tstate &in, Tstate &out);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // back_module
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class back_module : public module_1_1<T,Tstate> {
+  public:
+    //! Constructor.
+    back_module(const char *name = "back");
+    //! Destructor.
+    virtual ~back_module();    
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! resize the output based on input dimensions
+    virtual void resize_output(Tstate &in, Tstate &out);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+    //! Return dimensions compatible with this module given output dimensions.
+    //! See module_1_1_gen's documentation for more details.
+    //! This module doesn't actually change the size, but we use it to know
+    //! the corresponding size of 1 output pixel at this point.
+    virtual idxdim bprop_size(const idxdim &o_size);
+    //! Apply boxes.
+    void bb(std::vector<bbox*> &boxes);
+
+  protected:
+    idx<T>	*s0;
+    idx<T>	*s1;
+    idx<T>	*s2;
+    idxdim       pixel_size;
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // maxss_module
+  //! This module applies max subsampling.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class maxss_module : public module_1_1<T,Tstate> {
+  public:
+    //! Constructor.
+    //! \param stridei Stride in height of subsampling kernel.
+    //! \param stridej Stride in width of subsampling kernel.
+    //! \param subi Size in height of subsampling kernel.
+    //! \param subj Size in width of subsampling kernel.
+    maxss_module(intg stridei, intg stridej,
+		 intg subi, intg subj, intg thick,
+		 const char *name = "maxss");
+    //! Destructor.
+    virtual ~maxss_module();    
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! backward propagation from out to in
+    virtual void bprop(Tstate &in, Tstate &out);
+    //! second-derivative backward propagation from out to in
+    virtual void bbprop(Tstate &in, Tstate &out);
+    //! resize the output based on input dimensions
+    virtual void resize_output(Tstate &in, Tstate &out);
+    //! order of operation
+    virtual int replicable_order() { return 3; }
+    //! Return dimensions that are compatible with this module.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim fprop_size(idxdim &i_size);
+    //! Return dimensions compatible with this module given output dimensions.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim bprop_size(const idxdim &o_size);
+    //! Returns a deep copy of this module.
+    virtual maxss_module<T,Tstate>* copy();
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+    // members ////////////////////////////////////////////////////////
+  protected:
+    intg                subi; //!< height size of kernel
+    intg                subj; //!< width size of kernel
+    intg		thickness;
+    intg		stridei;
+    intg		stridej;
+    idx<int>            switches; //!< Remember max locations
   };
 
 } // namespace ebl {

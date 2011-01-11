@@ -207,7 +207,7 @@ namespace ebl {
       log.update(age, (uint) label.x.get(), (uint) answer.x.get(),
 		 (double) energy.x.get());
       // use energy as distance for samples probabilities to be used
-      ds.set_sample_energy(energy.x.get(), correct);
+      ds.set_sample_energy(energy.x.get(), correct, answer.x.get());
       ds.next();
     }
     ds.normalize_all_probas();
@@ -262,7 +262,7 @@ namespace ebl {
 	// test if answer is correct
 	correct = test_sample(*input, label, infp);
 	// use energy and answer as distance for samples probabilities
-	ds.set_sample_energy(energy.x.get(), correct);
+	ds.set_sample_energy(energy.x.get(), correct, answer.x.get());
 	//      log.update(age, output, label.get(), energy);
 	age++;
 	selected = ds.next_train();

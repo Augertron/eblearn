@@ -71,6 +71,10 @@ namespace ebl {
 
     //! Return original sample's idx at this index.
     virtual idx<Tin1> get_sample(intg index);
+
+    //! Set the internal iterators such that a call to fprop() will return
+    //! the data associated with this index.
+    virtual void select_sample(intg index);
     
     //! shuffle dataset, based on the number of classes
     //! assume the same nb of samples in each class
@@ -129,7 +133,8 @@ namespace ebl {
     //! \param correct True if the answer was correct, false otherwise.
     //!          This is used to ignore samples for which we already get
     //!          the correct answer.
-    virtual void set_sample_energy(double e, bool correct);
+    //! \param answer The estimated label for this sample.
+    virtual void set_sample_energy(double e, bool correct, Tin2 answer);
 
     //! Normalize picking probabilities by maximum probability for all classes 
     //! if perclass_norm is true, or globally otherwise.
@@ -171,7 +176,8 @@ namespace ebl {
     //!          focus on easiest ones.
     //! \param perclass_norm  Set the normalization of the sample probabilities 
     //!   to be per class or global. If perclass is true, the probabilities for
-    //!   each sample of a same class are normalized from [0..max_class] to [0..1]
+    //!   each sample of a same class are normalized from [0..max_class]
+    //!   to [0..1]
     //!   otherwise from [0..max_global]. Perclass can be used (or not) for
     //!   discrete classification problems, but should be global for continuous
     //!   labels. This normalization avoids looping on samples rarely picking 
@@ -279,68 +285,70 @@ namespace ebl {
 
     ////////////////////////////////////////////////////////////////
     // members
-  protected:
-    intg                                        nclasses; // # of classes
-    vector<intg>                                counts; // # of samples / class
-    map<uint,intg>                              picksmap;
   public:
-    Tnet					bias;
-    float					coeff;
-    idx<Tin1>					data; // samples
-    idx<Tin2>					labels; // labels
-    idx<double>					probas;//!< sample probabilities
-    idx<double>					energies;//!< sample energies
-    idx<ubyte>					correct;//!< sample correctness
-    idx<uint>                                   pick_count;//!< count pickings.
-    bool                                        count_pickings;
-    bool                                        count_pickings_save;
-    bool                                        state_saved;
-    // regular iterators
-    typename idx<Tin1>::dimension_iterator	idata;
-    typename idx<Tin2>::dimension_iterator	ilabels;
-    // test iterators
-    typename idx<Tin1>::dimension_iterator	idata_test;
-    typename idx<Tin2>::dimension_iterator	ilabels_test;
-    // training only iterators
-    typename idx<Tin1>::dimension_iterator	idata_train;
-    typename idx<Tin2>::dimension_iterator	ilabels_train;
-    typename idx<double>::dimension_iterator	iprobas;
-    typename idx<double>::dimension_iterator	ienergies;
-    typename idx<ubyte>::dimension_iterator	icorrect;
-    typename idx<uint>::dimension_iterator	ipick;
-    unsigned int				height;
-    unsigned int				width;
-    string					_name;
+    Tnet		bias;
+    float		coeff;
+    idx<Tin1>		data;	// samples
+    idx<Tin2>		labels; // labels
+    idx<double>		probas;	//!< sample probabilities
+    idx<double>		energies;	//!< sample energies
+    idx<ubyte>		correct; //!< sample correctness
+    idx<Tin2>		answers; //!< estimated label
+    idx<uint>           pick_count;	//!< count pickings.
+    bool                count_pickings;
+    bool                count_pickings_save;
+    unsigned int	height;
+    unsigned int	width;
+    string		_name;
   protected:
-    bool					balance;
-    vector<vector<intg> >                       label_indices;
-    vector<vector<intg> >                       label_indices_saved;
-    vector<uint>                                indices_itr;
-    vector<uint>                                indices_itr_saved;
-    vector<intg>                                epoch_done_counters;
-    vector<intg>                                ub_indices; //! unbalanced ids.
-    vector<intg>::iterator                      ub_itr; //! unbalanced itr.
-    vector<intg>::iterator                      ub_itr_saved;
-    uint                                        iitr;
-    uint                                        iitr_saved;
-    intg                                        isample; //! cur sample index
-    // switches to activate or deactivate features
-    bool                                        shuffle_passes;
-    bool                                        weigh_samples;
-    bool                                        perclass_norm;
-    bool                                        test_set; //!< Is a test set.
-    bool                                        discrete_labels;
-    double                                      sample_min_proba;
-    intg                                        epoch_sz;
-    intg                                        epoch_cnt;
-    intg                                        epoch_pick_cnt;//!< # pickings
-    uint                                        epoch_show; // show modulo
-    intg                                        epoch_show_printed;
-    uint                                        epoch_mode;
-    timer                                       epoch_timer;
-    uint                                        not_picked;
-    bool                                        hardest_focus;
-    bool                                        ignore_correct_;
+    intg                nclasses;	// # of classes
+    vector<intg>        counts; // # of samples / class
+    map<uint,intg>      picksmap;
+    ////////////////////////////////////////////////////////////////////////////
+    // (unbalanced) iterating indices
+    intg                it; //!< Index of current sample in data matrix.
+    intg                it_test; //!< Current test index in data matrix.
+    intg                it_train; //!< Current train index in vector 'indices'.
+    idx<intg>           indices; //!< Vector of indices to the data matrix.
+    ////////////////////////////////////////////////////////////////////////////
+    // class-balanced iterating indices
+    bool		balance; //!< We want to balance iterating or not.
+    vector<vector<intg> > bal_indices; //!< Balanced iterating indices.
+    vector<uint>        bal_it; //!< Sample iterators for each class.
+    uint                class_it; //!< Iterator on classes.
+    ////////////////////////////////////////////////////////////////////////////
+    // state saving
+    bool                state_saved; //!< State has been saved or not.
+    intg                it_saved; //!< Saving current iterator it.
+    intg                it_test_saved; //!< Saving current test iterator.
+    intg                it_train_saved; //!< Saving current train iterator.
+    idx<intg>           indices_saved; //!< Saving (unbalanced) sample indices.
+    vector<vector<intg> > bal_indices_saved;
+    vector<uint>        bal_it_saved;
+    uint                class_it_saved;
+    ////////////////////////////////////////////////////////////////////////////
+    // sample picking with probabilities
+    bool                weigh_samples; //!< Use probas to pick samples.
+    bool                perclass_norm; //!< Normalize probas per class.
+    double              sample_min_proba; //!< Minimum proba of each sample.
+    ////////////////////////////////////////////////////////////////////////////
+    // features switches
+    bool                shuffle_passes; //!< Shuffle at end of each pass.
+    bool                test_set; //!< This set is a test set or not.
+    bool                discrete_labels; //!< Labels are discrete or continuous.
+    ////////////////////////////////////////////////////////////////////////////
+    // epoch variables
+    vector<intg>        epoch_done_counters;
+    intg                epoch_sz;
+    intg                epoch_cnt;
+    intg                epoch_pick_cnt;	//!< # pickings
+    uint                epoch_show;	// show modulo
+    intg                epoch_show_printed;
+    uint                epoch_mode;
+    timer               epoch_timer;
+    uint                not_picked;
+    bool                hardest_focus;
+    bool                ignore_correct_;
   };
 
   ////////////////////////////////////////////////////////////////
@@ -394,6 +402,9 @@ namespace ebl {
 
     //! Return the label id corresponding to name, or -1 if not found.
     virtual int get_class_id(const char *name);
+
+    //! Return the label string for index id.
+    virtual string& get_class_name(int id);
 
     ////////////////////////////////////////////////////////////////
     // friends
@@ -487,6 +498,8 @@ namespace ebl {
     using datasource<Tnet, Tdata, Tlabel>::height;
     using datasource<Tnet, Tdata, Tlabel>::width;
     using datasource<Tnet, Tdata, Tlabel>::data;
+    using datasource<Tnet, Tdata, Tlabel>::labels;
+    using datasource<Tnet, Tdata, Tlabel>::it;    
   };
 
   ////////////////////////////////////////////////////////////////

@@ -217,18 +217,26 @@ namespace ebl {
 			 unsigned int &h0, unsigned int &w0,		\
 			 double zoom, T vmin, T vmax,			\
 			 bool show_out) {				\
-    if (ln.modules->empty())						\
+    if (ln.modules.empty())						\
       return ;								\
     /* initialize buffers */						\
     ln.hi = &in;							\
     ln.ho = &out;							\
+    /* narrow input data if required by branch */			\
+    Tstate narrowed;							\
+    if (ln.branch && ln.branch_narrow) {				\
+      narrowed = ln.hi->narrow(ln.narrow_dim, ln.narrow_size,		\
+			       ln.narrow_offset);			\
+      DEBUG("branch narrowing input " << ln.hi->x << " to " << narrowed.x); \
+      ln.hi = &narrowed;						\
+    }									\
     /* loop over modules */						\
-    for(uint i = 0; i < ln.modules->size(); i++) {			\
+    for(uint i = 0; i < ln.modules.size(); i++) {			\
       /* if last module, output into out */				\
-      if (i == ln.modules->size() - 1)					\
+      if (i == ln.modules.size() - 1 && !ln.branch)			\
 	ln.ho = &out;							\
       else { /* not last module, use hidden buffers */			\
-	ln.ho = (Tstate*)(*ln.hiddens)[i];				\
+	ln.ho = (Tstate*) ln.hiddens[i];				\
 	/* allocate hidden buffer if necessary */			\
 	if (ln.ho == NULL) {						\
 	  /* create idxdim of same order but sizes 1 */			\
@@ -236,14 +244,23 @@ namespace ebl {
 	  for (int k = 0; k < d.order(); ++k)				\
 	    d.setdim(k, 1);						\
 	  /* assign buffer */						\
-	  (*ln.hiddens)[i] = new Tstate(d);				\
-	  ln.ho = (Tstate*)(*ln.hiddens)[i];				\
+	  ln.hiddens[i] = new Tstate(d);				\
+	  ln.ho = (Tstate*) ln.hiddens[i];				\
 	}								\
       }									\
       /* run module */							\
-      g.name2(*(*ln.modules)[i], *ln.hi, *ln.ho,			\
+      g.name2(*ln.modules[i], *ln.hi, *ln.ho,				\
 	      h0, w0, zoom, vmin, vmax, false, g.display_wid_fprop);	\
-      ln.hi = ln.ho;							\
+      /* keep same input if current module is a branch */		\
+      /* otherwise take out as in */					\
+      bool isbranch = false;						\
+      if (dynamic_cast<layers<T,Tstate>*>(ln.modules[i]) &&		\
+	  ((layers<T,Tstate>*)ln.modules[i])->branch)			\
+	isbranch = true;						\
+      if (!isbranch)							\
+	ln.hi = ln.ho;							\
+      if (isbranch && i + 1 == ln.modules.size())			\
+	ln.ho = ln.hi; /* if last is branch, set in to be the branch out */ \
     }									\
     if (show_out) {							\
       unsigned int h = h0, w = w0, zoomf = 1;				\

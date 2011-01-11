@@ -106,6 +106,8 @@ uint            hjitter          = 0; // add vertically shifted samples
 uint            wjitter          = 0; // add horizontally shifted samples
 uint            nsjitter         = 0; // number of possible scale jitters
 float           sjitter          = 0; // scale jitter range around original
+uint            nrjitter         = 0; // number of possible rotation jitters
+float           rjitter          = 0; // rotation jitter range around original
 uint            njitter          = 0; // number of jitters (including original)
 bool            wmirror          = false; // add symmetry with vertical axis
 
@@ -285,13 +287,15 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-jitter") == 0) {
 	++i; if (i >= argc) throw 0;
 	vector<double> l = string_to_doublevector(argv[i]);
-	if (l.size() != 5)
-	  eblerror("expected 5 arguments to -jitter, found " << l.size());
+	if (l.size() != 7)
+	  eblerror("expected 7 arguments to -jitter, found " << l.size());
 	hjitter = (uint) l[0];
 	wjitter = (uint) l[1];
 	nsjitter = (uint) l[2];
 	sjitter = (float) l[3];
-	njitter = (uint) l[4];
+	nrjitter = (uint) l[4];
+	rjitter = (float) l[5];
+	njitter = (uint) l[6];
       } else if (strcmp(argv[i], "-forcelabel") == 0) {
 	++i; if (i >= argc) throw 0;
 	label = argv[i];
@@ -339,7 +343,7 @@ bool parse_args(int argc, char **argv) {
 
 // print command line usage
 void print_usage() {
-  cout << "Usage: ./dscompiler <images_root> [OPTIONS]" << endl;
+  cout << "Usage: ./dscompile <images_root> [OPTIONS]" << endl;
   cout << "Options are:" << endl;
   cout << "  -type <regular(default)|patch|pascal|pascalbg|pascalfull|grid>" << endl;
   cout << "     regular: compile images labeled by their top folder name"<<endl;
@@ -354,14 +358,14 @@ void print_usage() {
   cout << endl;
   cout << "     grid: extract non-overlapping cells from each image."
        << "       cell sizes are determined by -gridsz option"<<endl;
-  cout << "  -precision <float(default)|double>" << endl;
+  cout << "  -precision <float(default)|double|ubyte>" << endl;
   cout << "  -annotations <directory>" << endl;
   cout << "  -image_pattern <pattern>" << endl;
   cout << "     default: " << IMAGE_PATTERN_MAT << endl;
   cout << "  -channels <channel>" << endl;
   cout << "     channels are: RGB (default), YpUV, HSV, Yp (Yp only in YpUV)";
   cout << endl;
-  cout << "  -disp" << endl;
+  cout << "  -disp (display extraction)" << endl;
   cout << "  -nopp (no preprocessing, i.e. no resizing or conversion)" << endl;
   cout << "  -sleep <delay in ms> (sleep between frame display)" << endl;
   cout << "  -shuffle" << endl;
@@ -409,9 +413,11 @@ void print_usage() {
   cout << "  -ignore_occluded (ignore sample if \"occluded\" flag is on)";
   cout << endl;
   cout << "  -nopadded (ignore padded image too small for target size)" << endl;
-  cout << "  -jitter <h>,<w>,<nscales>,<scale range>,<n>" << endl
+  cout << "  -jitter <h>,<w>,<nscales>,<scale range>,<nrotations>,"
+       << "<rotation range (in degrees)>,<n>" << endl
        << "   (add n samples randomly jittered from spatial neighborhood hxw "
-       << "and nscales within scale_range around original location/scale)"
+       << ", nscales within scale_range and nrotations within rotation range "
+       << "around original location/scale)"
        << endl;
   cout << "  -wmirror (add mirrored sample using vertical-axis symmetry)"
        << endl;
@@ -425,7 +431,8 @@ template <class Tds>
 void compile_ds(Tds &ds, bool imgpat = true) {
   ds.set_outdir(outdir);
   if (wmirror) ds.set_wmirror();
-  if (njitter > 0) ds.set_jitter(hjitter, wjitter, nsjitter, sjitter, njitter);
+  if (njitter > 0) ds.set_jitter(hjitter, wjitter, nsjitter, sjitter,
+				 nrjitter, rjitter, njitter);
   if (bboxfact_set) ds.set_bboxfact(bboxfact);
   if (bboxhfact_set) ds.set_bboxhfact(bboxhfact);
   if (bboxwfact_set) ds.set_bboxwfact(bboxwfact);
@@ -552,10 +559,10 @@ MAIN_QTHREAD(int, argc, char**, argv) {
   int main(int argc, char **argv) {
 #endif
     try {
-      cout << "___________________________________________________________________";
+      cout << "_______________________________________________________________";
       cout << endl << endl;
       cout << "             Dataset compiler for libeblearn library " << endl;
-      cout << "___________________________________________________________________";
+      cout << "_______________________________________________________________";
       cout << endl;
       // parse arguments
       if (!parse_args(argc, argv)) {
@@ -600,10 +607,11 @@ MAIN_QTHREAD(int, argc, char**, argv) {
       cout << "  no padded: " << (nopadded ? "yes" : "no") << endl;
       cout << "  scales: ";
       if (!scale_mode) cout << "none";
-      else for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i)
-	cout << *i << " ";
+      else for (vector<double>::iterator i = scales.begin(); i != scales.end();
+		++i)
+	     cout << *i << " ";
       cout << endl;
-      cout << "___________________________________________________________________";
+      cout << "_______________________________________________________________";
       cout << endl;
 
       // compile with specificed precision
@@ -611,13 +619,11 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 	compile<float>();
       else if (!strcmp(precision.c_str(), "double"))
 	compile<double>();
-      else {
-	cerr << "error: trying to compile dataset with precision \"" << precision;
-	cerr << "\"" << endl;
-	eblerror("unsupported precision for dataset compilation");
-      }
-    } catch(string &err) {
-      cerr << err << endl;
-    }
+      else if (!strcmp(precision.c_str(), "ubyte"))
+	compile<ubyte>();
+      else
+	eblerror("trying to compile dataset with unsupported precision \""
+		 << precision << "\"");
+    } eblcatcherror();
   return 0;
 }

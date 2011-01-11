@@ -16,12 +16,14 @@ do
   while read line
     do
     name=`echo $line | cut -d' ' -f1`
-    classid=`echo $line | cut -d' ' -f2`
-    confidence=`echo $line | cut -d' ' -f3`
-    w0=`echo $line | cut -d' ' -f4`
-    h0=`echo $line | cut -d' ' -f5`
-    w1=`echo $line | cut -d' ' -f6`
-    h1=`echo $line | cut -d' ' -f7`
+    imh=`echo $line | cut -d' ' -f2`
+    imw=`echo $line | cut -d' ' -f3`
+    classid=`echo $line | cut -d' ' -f4`
+    confidence=`echo $line | cut -d' ' -f5`
+    w0=`echo $line | cut -d' ' -f6`
+    h0=`echo $line | cut -d' ' -f7`
+    w1=`echo $line | cut -d' ' -f8`
+    h1=`echo $line | cut -d' ' -f9`
     width=`expr $w1 - $w0`
     height=`expr $h1 - $h0`
     echo "${w0},${h0},${width},${height},${confidence}" >> $dir/$fname

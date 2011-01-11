@@ -102,8 +102,8 @@ namespace ebl {
       ratioh = ratiomin;
     }
     else if (mode == 1) { // possibly modify aspect ratio
-      ratiow = ratiow;
-      ratioh = ratioh;
+      ratiow = w; //ratiow;
+      ratioh = h; //ratioh;
     }
     else if (mode == 2) { // use w and h as scaling ratios
       ratiow = w;
@@ -115,8 +115,8 @@ namespace ebl {
 	       << " to " << h << "x" << w << " with mode " << mode);
     // output sizes of entire image
     if (iregion_ || (mode == 2) || (mode == 0) || (mode == 3)) {
-      ow = max(1.0, imw * ratiow);
-      oh = max(1.0, imh * ratioh);
+      ow = rint(max(1.0, imw * ratiow));
+      oh = rint(max(1.0, imh * ratioh));
     } else {
       ow = w;//max(1.0, imw * ratiow);
       oh = h;//max(1.0, imh * ratioh);
@@ -297,19 +297,25 @@ namespace ebl {
 	// more precise without the variable.
 	if (oheight / (double) iregion.height <
 	    owidth  / (double) iregion.width) {
-	  outr = rect<int>((uint)(iregion.h0 * oheight / (double) iregion.height),
-		      (uint)(iregion.w0 * oheight / (double) iregion.height),
-		      (uint)(iregion.height * oheight / (double)iregion.height),
+	  outr =
+	    rect<int>((uint)(iregion.h0    * oheight / (double)iregion.height),
+		      (uint)(iregion.w0    * oheight / (double)iregion.height),
+		      (uint)(iregion.height* oheight / (double)iregion.height),
 		      (uint)(iregion.width * oheight / (double)iregion.height));
-	  inr = rect<int>(0, 0, (uint) (im.dim(0) * oheight /(double)iregion.height),
-		     (uint) (im.dim(1) * oheight / (double)iregion.height));
-	} else {
-	  outr = rect<int>((uint) (iregion.h0     * owidth / (double)iregion.width),
+	  inr =
+	    rect<int>(0, 0,
+		      (uint) (im.dim(0) * oheight / (double)iregion.height),
+		      (uint) (im.dim(1) * oheight / (double)iregion.height));
+	} else { // use width factor (smaller factor)
+	  outr =
+	    rect<int>((uint) (iregion.h0     * owidth / (double)iregion.width),
 		      (uint) (iregion.w0     * owidth / (double)iregion.width),
 		      (uint) (iregion.height * owidth / (double)iregion.width),
 		      (uint) (iregion.width  * owidth / (double)iregion.width));
-	  inr = rect<int>(0, 0, (uint) (im.dim(0) * owidth / (double)iregion.width),
-		     (uint) (im.dim(1) * owidth / (double)iregion.width));
+	  inr =
+	    rect<int>(0, 0,
+		      (uint) (im.dim(0) * owidth / (double)iregion.width),
+		      (uint) (im.dim(1) * owidth / (double)iregion.width));
 	}
 	break ;
       default:
@@ -611,7 +617,8 @@ namespace ebl {
 	    ppi = llpi.get();
 	    ppj = llpj.get();
 	    image_interpolate_bilin(background.idx_ptr(), pin, indimi, indimj,
-				    inmodi, inmodj, ppi, ppj, llout.idx_ptr(), (int) out.dim(2));
+				    inmodi, inmodj, ppi, ppj, llout.idx_ptr(),
+				    (int) out.dim(2));
 	  }}
       }}
   }
@@ -754,22 +761,22 @@ namespace ebl {
     T d = (T) dd;
     if (sizeof (T) <= 2)
       d = 0;
-    if (outsize == 1)
+    if (outsize >= 1)
       *out = (ndeltaj * (( *v10*deltai + *v00*ndeltai )*d) +
 	      deltaj  * (( *v11*deltai + *v01*ndeltai )*d))*d;
-    else {
-      if (outsize >= 3) {
-	*out = (ndeltaj * (( v10[0]*deltai + v00[0]*ndeltai )*d) +
-		deltaj  * (( v11[0]*deltai + v01[0]*ndeltai )*d))*d;
-	*(out + 1) = (ndeltaj * (( v10[1]*deltai + v00[1]*ndeltai )*d) +
-		      deltaj  * (( v11[1]*deltai + v01[1]*ndeltai )*d))*d;
-	*(out + 2) = (ndeltaj * (( v10[2]*deltai + v00[2]*ndeltai )*d) +
-		      deltaj  * (( v11[2]*deltai + v01[2]*ndeltai )*d))*d;
-      }
-      if (outsize >= 4) {
-	*(out + 3) = (ndeltaj * (( v10[3]*deltai + v00[3]*ndeltai )*d) +
-		      deltaj  * (( v11[3]*deltai + v01[3]*ndeltai )*d))*d;
-      }
+    if (outsize >= 2)
+      *(out + 1) = (ndeltaj * ((v10[1]*deltai + v00[1]*ndeltai) * d) +
+		    deltaj  * ((v11[1]*deltai + v01[1]*ndeltai) * d)) * d;
+    if (outsize >= 3)
+      *(out + 2) = (ndeltaj * ((v10[2]*deltai + v00[2]*ndeltai) * d) +
+		    deltaj  * ((v11[2]*deltai + v01[2]*ndeltai) * d)) * d;
+    if (outsize >= 4)
+      *(out + 3) = (ndeltaj * ((v10[3]*deltai + v00[3]*ndeltai) * d) +
+		    deltaj  * ((v11[3]*deltai + v01[3]*ndeltai) * d)) * d;
+    if (outsize >= 5) {
+      eblerror("not implemented for more than 4 channels ("
+	       << outsize << " channels in " << indimi << "x" << indimj
+	       << " image)");
     }
   }
 
@@ -863,7 +870,9 @@ namespace ebl {
   template<class T> void image_rotscale(idx<T> &src, idx<T> &out,
 					double sx, double sy, double dx,
 					double dy, double angle, double coeff,
-					idx<ubyte> &bg){
+					idx<T> &bg){
+    if (!src.contiguousp())
+      eblerror("image must be contiguous");
     double q = 1000;
     double coeff_inv = 1/coeff;
     double sa = q*sin(angle * 0.017453292);
@@ -882,13 +891,46 @@ namespace ebl {
     float q1 = dy-q;
     float p3 = dx + q;
     float q3 = dy + q;
-    image_warp_quad(src, out, bg, 1, x1, y1, x2, y2, x3, y3, x4, y4, p1, q1, p3, q3);
+    image_warp_quad(src, out, bg, 1, x1, y1, x2, y2, x3, y3, x4, y4,
+		    p1, q1, p3, q3);
   }
 
+  template<class T>
+  idx<T> image_rotate(idx<T> &src, double angle, int ch, int cw, T bg_val) {
+    if (!src.contiguousp())
+      eblerror("image must be contiguous");
+    if (ch == -1) ch = src.dim(0) / 2;
+    if (cw == -1) cw = src.dim(1) / 2;
+    idx<T> rotated(src.get_idxdim());
+    double q = 1000;
+    double sa = q*sin(angle * 0.017453292);
+    double ca = q*cos(angle * 0.017453292);
+    double ca_plus_sa = sa + ca;
+    double ca_minus_sa = ca - sa;
+    float x1 = ch - ca_plus_sa;
+    float y1 = cw - ca_minus_sa;
+    float x2 = ch + ca_minus_sa;
+    float y2 = cw - ca_plus_sa;
+    float x3 = ch + ca_plus_sa;
+    float y3 = cw + ca_minus_sa;
+    float x4 = ch - ca_minus_sa;
+    float y4 = cw + ca_plus_sa;
+    float p1 = ch - q;
+    float q1 = cw - q;
+    float p3 = ch + q;
+    float q3 = cw + q;
+    idx<T> bg(src.dim(0));
+    idx_fill(bg, bg_val);
+    image_warp_quad(src, rotated, bg, 1, x1, y1, x2, y2, x3, y3, x4, y4,
+		    p1, q1, p3, q3);
+    return rotated;
+  }
 
+  ////////////////////////////////////////////////////////////////
+  // Drawing
 
   template<class T> void image_draw_box(idx<T> &img, T val,
-					unsigned int x, unsigned int y, unsigned int dx, unsigned int dy) {
+					uint x, uint y, uint dx, uint dy) {
     idx_checkorder1(img, 2);
     for (unsigned int i = x; i < x + dx; ++i) {
       img.set(val, i, y);

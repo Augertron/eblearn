@@ -430,6 +430,8 @@ namespace ebl {
     { idx_bloop4(lix, in.x, T, lsx, sub.x, T, lcx, coeff.x, T, ltx, out.x, T) {
 	idx<T> uuin(lix.unfold(1, stridej, stridej));
 	uuin = uuin.unfold(0, stridei, stridei);
+	// loop on each pixel of subs kernel, assuming that idx_add is faster 
+	// than looping on each kernel
 	idx_eloop1(z1, uuin, T) {
 	  idx_eloop1(z2, z1, T) {
 	    idx_add(z2, lsx); // average
@@ -447,29 +449,31 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void subsampling_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
-    // oversampling
+    // update internal coefficient's dx
     idx_bloop3(lcdx, coeff.dx, T, ltdx, out.dx, T, lsx, sub.x, T) {
       idx_dotacc(lsx, ltdx, lcdx);
     }
+    // oversampling and accumulate to input's dx
     idx_bloop4(lidx, in.dx, T, lsdx, sub.dx, T,
 	       lcx, coeff.x, T, ltdx2, out.dx, T) {
       idx_dotc(ltdx2, lcx.get(), lsdx);
-      idx_m2oversample(lsdx, stridei, stridej, lidx);
+      idx_m2oversampleacc(lsdx, stridei, stridej, lidx);
     }
   }
 
   template <typename T, class Tstate>
   void subsampling_module<T,Tstate>::bbprop(Tstate &in,
 					    Tstate &out) {	
-    // oversampling
+    // update internal coefficient's ddx
     idx_bloop3(lcdx, coeff.ddx, T, ltdx, out.ddx, T, lsx, sub.x, T) {
       idx_m2squdotm2acc(lsx, ltdx, lcdx);
     }
+    // oversampling and accumulte to input's ddx
     idx_bloop4(lidx, in.ddx, T, lsdx, sub.ddx, T,
 	       lcx, coeff.x, T, ltdx2, out.ddx, T) {
       T cf = lcx.get();
       idx_dotc(ltdx2, cf * cf, lsdx);
-      idx_m2oversample(lsdx, stridei, stridej, lidx);
+      idx_m2oversampleacc(lsdx, stridei, stridej, lidx);
     }
   }
 
@@ -591,9 +595,9 @@ namespace ebl {
     
     idx_bloop3(indx, in.dx, T, biasdx, bias.dx, T, 
 	       outdx, out.dx, T) {
-      if (&in != &out)
-	idx_copy(outdx, indx); // only pass on info if necessary
-      idx_sumacc(outdx, biasdx);
+      if (&in != &out) // only pass on info if necessary
+	idx_add(outdx, indx, indx); // accumulate gradients to input
+      idx_sumacc(outdx, biasdx); // accumulate gradients to weights
     }
   }
 
@@ -604,9 +608,9 @@ namespace ebl {
     
     idx_bloop3(inddx, in.ddx, T, biasddx, bias.ddx, T, 
 	       outddx, out.ddx, T) {
-      if (&in != &out)
-	idx_copy(outddx, inddx); // only pass on info if necessary
-      idx_sumacc(outddx, biasddx);
+      if (&in != &out) // only pass on info if necessary
+	idx_add(outddx, inddx, inddx); // accumulate 2nd gradients to input
+      idx_sumacc(outddx, biasddx); // accumulate 2nd gradients to weights
     }
   }
   
@@ -1211,6 +1215,307 @@ namespace ebl {
     std::string desc;
     desc << "diag module " << this->name() << " with "
 	 << coeff.x << " coefficients";
+    return desc;
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // copy_module
+
+  template <typename T, class Tstate>
+  copy_module<T, Tstate>::copy_module(const char *name_)
+    : module_1_1<T,Tstate>(name_) {
+  }
+
+  template <typename T, class Tstate>
+  copy_module<T, Tstate>::~copy_module() {
+  }
+
+  template <typename T, class Tstate>
+  void copy_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
+    if (this->bResize) resize_output(in, out); // resize (iff necessary)
+    idx_copy(in.x, out.x);
+  }
+
+  template <typename T, class Tstate>
+  void copy_module<T, Tstate>::bprop(Tstate &in, Tstate &out) {
+    idx_copy(out.dx, in.dx);
+  }
+
+  template <typename T, class Tstate>
+  void copy_module<T, Tstate>::bbprop(Tstate &in, Tstate &out) {
+    idx_copy(out.ddx, in.ddx);
+  }
+
+  template <typename T, class Tstate>
+  void copy_module<T, Tstate>::resize_output(Tstate &in, Tstate &out) {
+    // resize output based on input dimensions
+    idxdim d(in.x); // use same dimensions as in
+    if (out.x.get_idxdim() != d) { // resize only if necessary
+#ifdef __DEBUG__
+      cout << "copy: resizing output from " << out.x.get_idxdim();
+      cout << " to " << d << endl;
+#endif
+      out.resize(d);
+    }
+  }
+
+  template <typename T, class Tstate>
+  std::string copy_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "copy module " << this->name();
+    return desc;
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // back_module
+
+#define BACK_MIN -10.0
+
+  template <typename T, class Tstate>
+  back_module<T, Tstate>::back_module(const char *name_)
+    : module_1_1<T,Tstate>(name_), s0(NULL), s1(NULL), s2(NULL) {
+  }
+
+  template <typename T, class Tstate>
+  back_module<T, Tstate>::~back_module() {
+  }
+
+  template <typename T, class Tstate>
+  void back_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
+    if (this->bResize) resize_output(in, out); // resize (iff necessary)
+    // copy input to s0
+    idx_copy(in.x, *s0);
+    cout << "back: mins: so: " << idx_min(*s0) << " s1: " << idx_min(*s1) << " s2: "
+	 << idx_min(*s2) << endl;
+    cout << "back: maxs: so: " << idx_max(*s0) << " s1: " << idx_max(*s1) << " s2: "
+	 << idx_max(*s2) << endl;
+    // put max of all buffers in output
+//     idx_aloop3(x0, *s0, T, x1, *s1, T, o, out.x, T) {
+//       *o = std::max(*x0, *x1);
+//     }
+    // put max of all buffers in output
+    idx_aloop4(x0, *s0, T, x1, *s1, T, x2, *s2, T, o, out.x, T) {
+      *o = std::max(*x0, std::max(*x1, *x2));
+    }
+  }
+
+  template <typename T, class Tstate>
+  void back_module<T, Tstate>::bb(std::vector<bbox*> &boxes) {
+    cout << "back: " << boxes.size() << " boxes" << endl;
+    // shift internal buffers and clear first one
+    idx_copy(*s1, *s2);
+    idx_fill(*s1, (T)BACK_MIN);
+    // copy all boxes features to s1
+    int height = s0->dim(1);
+    int width = s0->dim(2);
+    for (uint i = 0; i < boxes.size(); ++i) {
+      bbox &b = *(boxes[i]);
+      // find box's location at this stage
+      float rho = b.oh0 / (float) b.oheight;
+      float rwo = b.ow0 / (float) b.owidth;
+      int h0 = (int) (height * rho);
+      int w0 = (int) (width * rwo);
+      int h = pixel_size.dim(1);
+      int w = pixel_size.dim(2);
+      // cut bbox if outside of buffers
+      if (h0 < 0) { h -= h0; h0 = 0; }
+      if (w0 < 0) { w -= w0; w0 = 0; }
+      if (h0 + h > height) h -= h0 + h - height;
+      if (w0 + w > width) w -= w0 + w - width;
+      // max-copy box features from s0 to s1
+      idx<T> b1 = s1->narrow(1, h, h0);
+      b1 = b1.narrow(2, w, w0);
+      idx<T> b0 = s0->narrow(1, h, h0);
+      b0 = b0.narrow(2, w, w0);
+      idx_max(b0, b1);      
+    }
+    // shift buffers for horizontal motion
+    int wshift = (int) (.02 * width);
+    cout << "back: shift by " << wshift << " pixels (width: " 
+	 << width << ")" << endl;
+    idx<T> tmp(s1->get_idxdim());
+    idx_fill(tmp, (T)BACK_MIN);
+    idx<T> shifted = tmp.narrow(2, width - wshift, wshift);
+    idx<T> original = s1->narrow(2, width - wshift, 0);
+    idx_copy(original, shifted);
+    idx_copy(tmp, *s1);
+    // shift s2
+    idx_fill(tmp, (T)BACK_MIN);
+    shifted = tmp.narrow(2, width - wshift, wshift);
+    original = s2->narrow(2, width - wshift, 0);
+    idx_copy(original, shifted);
+    idx_copy(tmp, *s2);
+    // decay buffers
+    //    idx_addc(*s1, (T) -0.2, *s1);
+    //    idx_addc(*s2, (T) -0.2, *s2);
+  }
+
+  template <typename T, class Tstate>
+  void back_module<T, Tstate>::resize_output(Tstate &in, Tstate &out) {
+    // resize output based on input dimensions
+    idxdim d(in.x); // use same dimensions as in
+    if (out.x.get_idxdim() != d) { // resize only if necessary
+#ifdef __DEBUG__
+      cout << "back: resizing output from " << out.x.get_idxdim();
+      cout << " to " << d << endl;
+#endif
+      out.resize(d);
+    }
+    if (!s0 || s0->get_idxdim() != d) {
+      cout << "back: resizing internal buffers to " << d << endl;
+      if (s0) s0->resize(d); else s0 = new idx<T>(d);
+      if (s1) s1->resize(d); else s1 = new idx<T>(d);
+      if (s2) s2->resize(d); else s2 = new idx<T>(d);
+      idx_fill(*s0, (T)BACK_MIN);
+      idx_fill(*s1, (T)BACK_MIN);
+      idx_fill(*s2, (T)BACK_MIN);
+    }
+  }
+
+  template <typename T, class Tstate>
+  idxdim back_module<T, Tstate>::bprop_size(const idxdim &osize) {
+    pixel_size = osize;
+    cout << "back_module: 1 output pixel corresponds here to " << pixel_size
+	 << endl;
+    return osize;
+  }
+
+  template <typename T, class Tstate>
+  std::string back_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "back module " << this->name();
+    return desc;
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // maxss_module
+
+  template <typename T, class Tstate>
+  maxss_module<T,Tstate>::
+  maxss_module(intg stridei_, intg stridej_,
+	       intg subi_, intg subj_, intg thick, const char *name_)
+    : module_1_1<T,Tstate>(name_), 
+      subi(subi_), subj(subj_), thickness(thick), 
+      stridei(stridei_), stridej(stridej_),
+      switches(thick, 1, 1, 2) {
+  }
+
+  template <typename T, class Tstate>
+  maxss_module<T,Tstate>::~maxss_module() {
+  }
+
+  template <typename T, class Tstate>
+  void maxss_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+    if (this->bResize) resize_output(in, out); // resize (iff necessary)
+    { idx_bloop3(lix, in.x, T, sw, switches, int, ltx, out.x, T) {
+	int i = 0, j = 0;
+	idx<T> uuin(lix.unfold(1, subj, stridej));
+	uuin = uuin.unfold(0, subi, stridei);
+	idx_bloop3(z1, uuin, T, sw1, sw, int, o1, ltx, T) {
+	  idx_bloop3(z2, z1, T, sw2, sw1, int, o2, o1, T) {
+	    intg indx = idx_indexmax(z2); // find index of max
+	    sw2.set((int) (indx / subj + stridei * i), 0); // height in input
+	    sw2.set((int) (indx / subj + stridej * j), 1); // width in input
+	    o2.set(z2.get(indx)); // copy max to output
+	  }
+	  j++;
+	}
+	i++;
+      }}
+
+#ifdef __DUMP_STATES__ // used to debug
+    DUMP(in.x, this->name() << "_maxss_module_in.x");
+    DUMP(out.x, this->name() << "_maxss_module_out.x");
+#endif
+  }
+
+  template <typename T, class Tstate>
+  void maxss_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
+    // copy derivatives in the position given by the switches  
+    int i = 0, j = 0;
+    idx_bloop3(di1, in.dx, T, s1, switches, int, do1, out.dx, T) {
+      idx_bloop2(s2, s1, int, do2, do1, T) {
+	idx_bloop2(s3, s2, int, do3, do2, T) {
+	  i = s3.get(0); j = s3.get(1);
+	  di1.set(di1.get(i, j) + do3.get(), i, j);
+	}}}
+  }
+
+  template <typename T, class Tstate>
+  void maxss_module<T,Tstate>::bbprop(Tstate &in,
+					    Tstate &out) {	
+    // copy derivatives in the position given by the switches  
+    int i = 0, j = 0;
+    idx_bloop3(di1, in.ddx, T, s1, switches, int, do1, out.ddx, T) {
+      idx_bloop2(s2, s1, int, do2, do1, T) {
+	idx_bloop2(s3, s2, int, do3, do2, T) {
+	  i = s3.get(0); j = s3.get(1);
+	  di1.set(di1.get(i, j) + do3.get(), i, j);
+	}}}
+  }
+
+  template <typename T, class Tstate>
+  void maxss_module<T,Tstate>::resize_output(Tstate &in, Tstate &out) {
+    intg sin_i = in.x.dim(1);
+    intg sin_j = in.x.dim(2);
+    intg si = sin_i / stridei;
+    intg sj = sin_j / stridej;
+    // check sizes
+    if ((sin_i % stridei) != 0 || (sin_j % stridej) != 0) {
+      cerr << "maxss " << sin_i << "x" << sin_j << " with stride "
+	   << stridei << "x" << stridej << endl;
+      eblerror("inconsistent input size and maxss ratio");
+    }
+    // resize output and sub based in input dimensions
+    idxdim d(in.x.spec); // use same dimensions as in
+    d.setdim(1, si); // new size after maxss
+    d.setdim(2, sj); // new size after maxss
+    if (out.x.get_idxdim() != d) { // resize only if necessary
+#ifdef __DEBUG__
+      cout << "maxss: resizing output from " << out.x.get_idxdim();
+      cout << " to " << d << endl;
+#endif
+      out.resize(d);
+      d.insert_dim(2, d.order());
+      switches.resize(d);
+    }
+  }
+ 
+  template <typename T, class Tstate>
+  idxdim maxss_module<T,Tstate>::fprop_size(idxdim &isize) {
+    //! Update input size
+    idxdim osize(thickness,
+		 std::max((intg) 1, isize.dim(1) / stridei),
+		 std::max((intg) 1, isize.dim(2) / stridej));
+    //! Recompute the input size to be compliant with the output
+    isize = bprop_size(osize);
+    return osize;
+  }
+
+  template <typename T, class Tstate>
+  idxdim maxss_module<T,Tstate>::bprop_size(const idxdim &osize) {
+    //! Update input size
+    idxdim isize(thickness,
+		 osize.dim(1) * stridei,
+		 osize.dim(2) * stridej);
+    return isize;
+  }
+
+  template <typename T, class Tstate>
+  maxss_module<T,Tstate>* maxss_module<T,Tstate>::copy() {
+    // new module (with its own local parameter buffers)
+    maxss_module<T,Tstate> *l2 =
+      new maxss_module<T, Tstate>(stridei, stridej,
+				  subi, subj, thickness);
+    return l2;
+  }
+ 
+  template <typename T, class Tstate>
+  std::string maxss_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "maxss module " << this->name() << " with kernel "
+	 << subi << "x" << subj
+	 << " and stride " << stridei << "x" << stridej;
     return desc;
   }
   

@@ -63,20 +63,20 @@ mkdir -p $nopersons_root
 ###############################################################################
 
 # # extract background images at random scales and positions
-# ~/eblearn/bin/dscompiler $nopersons_root -type patch -precision $precision \
+# ~/eblearn/bin/dscompile $nopersons_root -type patch -precision $precision \
 #     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
 #     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
 #     -maxdata $maxbg -nopadded \
 #     $ddisplay # debug
 
 # # compile background dataset
-# ~/eblearn/bin/dscompiler ${outbg} -precision $precision \
+# ~/eblearn/bin/dscompile ${outbg} -precision $precision \
 #     -outdir ${out} -dname ${bgds} \
 #     -dims ${h}x${w}x3 \
 #     # $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
-~/eblearn/bin/dscompiler $root -precision $precision \
+~/eblearn/bin/dscompile $root -precision $precision \
     -outdir ${out} -channels $pp -dname $name \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
 #    $maxdata $maxperclass $ddisplay # debug

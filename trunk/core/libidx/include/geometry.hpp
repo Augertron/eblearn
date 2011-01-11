@@ -118,6 +118,12 @@ namespace ebl {
   }
 
   template <typename T>
+  float rect<T>::min_match(const rect<T> &r) {
+    float a1 = (float) area(), a2 = (float) r.area();
+    return intersection_area(r) / std::min(a1, a2);
+  }
+
+  template <typename T>
   bool rect<T>::overlap(const rect<T> &r) {
     if (((h0 <= r.h0 + r.height) && (h0 + height >= r.h0)) &&
 	((w0 <= r.w0 + r.width) && (w0 + width >= r.w0)))

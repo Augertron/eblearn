@@ -293,9 +293,9 @@ namespace ebl {
       // extract all non overlapping patches with dimensions outdims that
       // do not overlap with bounding boxes
       rect<int> patch(0, 0, outdims.dim(0), outdims.dim(1));
-      for (patch.h0 = 0; patch.h0 + patch.height <= (uint) im2.dim(0);
+      for (patch.h0 = 0; patch.h0 + patch.height <= im2.dim(0);
 	   patch.h0 += patch.height) {
-	for (patch.w0 = 0; patch.w0 + patch.width <= (uint) im2.dim(1);
+	for (patch.w0 = 0; patch.w0 + patch.width <= im2.dim(1);
 	     patch.w0 += patch.width) {
 	  // test if patch overlaps with any bounding box or is outside of image
 	  overlap = false;

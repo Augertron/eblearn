@@ -207,14 +207,14 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // idx_shuffle_*
 
-  //! shuffle elements order of dimension d.
+  //! shuffle elements order of dimension d (0 by default).
   //! if <out> is not null, then the shuffled version of <in> is put directly
   //! into <out> (faster), otherwise a temporary copy of <in> is used
   //! and copied back into in (slower).
   //! Warning: this function assumes that drand is already initialized
   //! (with dynamic_init_drand())
   template <typename T> 
-    void idx_shuffle(idx<T> &in, intg d, idx<T> *out = NULL);
+    void idx_shuffle(idx<T> &in, intg d = 0, idx<T> *out = NULL);
 
   //! shuffle elements order of dimension d simultaneously of <in1> and <in2>.
   //! the shuffled order will be the same for <in1> and <in2>, which means
@@ -819,6 +819,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // idx_sum
 
+  //! Returns the sum of type Tout of all elements in inp of type T.
+  //! Call example: idx<ubyte> m(10); double d = idx_sum<double>(m); 
+  template <typename Tout, typename T> Tout idx_sum(idx<T> &inp);
   //! returns the sum of all the terms, and optionally puts the result
   //! in out if passed.
   template <typename T> T idx_sum(idx<T> &inp);
@@ -1113,6 +1116,7 @@ namespace ebl {
 
   //! 2D convolution. all arguments are idx2.
   //! Be careful that it does not uses IPP
+  // TODO: specialize a float version that uses IPP
   template<class T> void idx_2dconvol(idx<T> &in, idx<T> &kernel, idx<T> &out);
 
   ////////////////////////////////////////////////////////////////
@@ -1271,12 +1275,12 @@ namespace ebl {
 
   //! In-place sort of elements of (continuous) vector <m> 
   //! in ascending order. m2 will be sorted with the same order as m.
-  template<class T1, class T2> void idx_sortup2(idx<T1> &m, idx<T2> &m2);
+  template<class T1, class T2> void idx_sortup(idx<T1> &m, idx<T2> &m2);
 
   //! In-place sort of elements of (continuous) vector <m> 
   //! in ascending order. m2 and m3 will be sorted with the same order as m.
   template<class T1, class T2, class T3>
-    void idx_sortup3(idx<T1> &m, idx<T2> &m2, idx<T3> &m3);
+    void idx_sortup(idx<T1> &m, idx<T2> &m2, idx<T3> &m3);
 
   //! In-place sort of elements of (continuous) vector <m> 
   //! in descending order.
@@ -1338,6 +1342,10 @@ namespace ebl {
   //! oversample (by repetition) a 2-d matrix
   template <typename T> 
   void idx_m2oversample(idx<T>& small, intg nlin, intg ncol, idx<T>& big);
+
+  //! oversample (by repetition) a 2-d matrix and accumulate into big.
+  template <typename T> 
+  void idx_m2oversampleacc(idx<T>& small, intg nlin, intg ncol, idx<T>& big);
 
   ////////////////////////////////////////////////////////////////
   // idx_clip

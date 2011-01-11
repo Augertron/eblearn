@@ -83,9 +83,9 @@ namespace ebl {
   class box {
   public:
     int			 h0, w0, h, w;
-    unsigned char	 r, g, b;
+    unsigned char	 r, g, b, a;
     box(int h0, int w0, int h, int w, unsigned char r,
-	unsigned char g, unsigned char b);
+	unsigned char g, unsigned char b, unsigned char a);
     ~box() {};
   };
 
@@ -135,7 +135,7 @@ namespace ebl {
     void add_text(const std::string *s);
     void add_arrow(int h1, int w1, int h2, int w2);
     void add_box(int h0, int w0, int h, int w, unsigned char r, unsigned char g,
-		 unsigned char b, string *s);
+		 unsigned char b, unsigned char a, string *s);
     void add_image(idx<ubyte> &img, uint h0, uint w0);
 
     void add_mask(idx<ubyte> *img, uint h0, uint w0,
@@ -155,10 +155,12 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     // Style methods
     
+    //! \param ignore_frozen Ignore style freeze and apply color changes anyway.
     void set_text_colors(unsigned char fg_r, unsigned char fg_g, 
 			 unsigned char fg_b, unsigned char fg_a,
 			 unsigned char bg_r, unsigned char bg_g, 
-			 unsigned char bg_b, unsigned char bg_a);
+			 unsigned char bg_b, unsigned char bg_a,
+			 bool ignore_frozen = false);
     //! Set color of background.
     void set_bg_colors(unsigned char r, unsigned char g, unsigned char b);
 

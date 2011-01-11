@@ -72,12 +72,22 @@ namespace ebl {
   //! Return false upon failure.
   EXPORT bool mkdir_full(string &dir);
 
-  // Returns true if directory 's' exists.
+  //! Returns true if directory 's' exists.
   EXPORT bool dir_exists(const char *s);
   
-  // Returns true if file 's' exists.
+  //! Returns true if file 's' exists.
   EXPORT bool file_exists(const char *s);
+
+  //! Returns the directory part of 'fname'. E.g. when fname equals
+  //! '/usr/lib', it will return '/usr'.
+  EXPORT const char *dirname(const char *fname);
   
+  //! Returns the file part of 'fname'. E.g. when fname equals
+  //! '/usr/lib', it will return 'lib'.
+  //! If suffix is provided, the suffix 'suffix' is removed from the
+  //! filename.
+  EXPORT const char *basename(const char *fname, const char *suffix = NULL);
+    
   ////////////////////////////////////////////////////////////////
   // timing utilities
 
@@ -128,6 +138,12 @@ namespace ebl {
   //! Sleep for 'seconds' seconds.
   EXPORT void secsleep(long seconds);
 
+  ////////////////////////////////////////////////////////////////
+  // process utilities
+  
+  //! Return PID of current process.
+  int pid();
+  
 } // end namespace ebl
 
 #include "utils.hpp"

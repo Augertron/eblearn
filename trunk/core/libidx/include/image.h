@@ -84,7 +84,7 @@ namespace ebl {
   //! region of iregion.
   template<class T>
     idx<T> image_gaussian_resize(idx<T> &im_, double oheight, double owidth,
-				  uint mode = 0, rect<int> *iregion = NULL,
+				 uint mode = 0, rect<int> *iregion = NULL,
 				 rect<int> *oregion = NULL);
 
   //! resizes an image (a region iregion of im if specified) into an image of
@@ -183,6 +183,21 @@ namespace ebl {
     void image_warp_fast(idx<T> &in, idx<T> &out, T *background,
 			 idx<int> &pi, idx<int> &pj);
 
+  //////////////////////////////////////////////////////////////////////////////
+  // bilinear interpolation
+  
+  //! Ubyte specialization of image_interpolate_bilin template.
+  EXPORT void image_interpolate_bilin(ubyte* background, ubyte *pin, int indimi,
+				      int indimj, int inmodi, int inmodj, 
+				      int ppi, int ppj, ubyte* out, 
+				      int outsize);
+
+  //! Float specialization of image_interpolate_bilin template.
+  EXPORT void image_interpolate_bilin(float* background, float *pin, int indimi,
+				      int indimj, int inmodi, int inmodj, 
+				      int ppi, int ppj, float* out, 
+				      int outsize);
+
   //! RETURNS: (-ubyte-)
   //! SIDE EFFECTS: None
   //! AUTHOR: Y. LeCun
@@ -195,11 +210,6 @@ namespace ebl {
   //! pixel values are ubytes, while coordinates are 32 bit fixed point
   //! with 16 bit integer part and 16 bit fractional part.
   //! The function does not use floating point arithmetics.
-  EXPORT void image_interpolate_bilin(ubyte* background, ubyte *pin, int indimi,
-				      int indimj, int inmodi, int inmodj, 
-				      int ppi, int ppj, ubyte* out, 
-				      int outsize);
-
   template<class T> 
     void image_interpolate_bilin(T* background, T *pin, int indimi, int indimj,
 				 int inmodi, int inmodj, int ppi, int ppj,
@@ -252,7 +262,16 @@ namespace ebl {
   template<class T> 
     void image_rotscale(idx<T> &src, idx<T> &out, double sx, double sy, 
 			double dx, double dy, double angle, double coeff, 
-			idx<ubyte> &bg);
+			idx<T> &bg);
+
+  //! Rotate image 'src' by 'angle' (in degrees) around center (ch,cw)
+  //! and return it. By default,
+  //! use image's center (when equal to -1) and fill cut out areas with zeros.
+  //! \param angle The roration angle in degrees.
+  //! \param bg The value of the cut out areas (0 by default).
+  template<class T> 
+    idx<T> image_rotate(idx<T> &src, double angle,
+			int ch = -1, int cw = -1, T bg = 0);
 
   //! Given an input image of width <w>, height <h>, with a "hot" point
   //! at coordinate <cx> and <cy>, this function computes the width,

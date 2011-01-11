@@ -93,7 +93,7 @@ echo "meta_output_dir = ${out}" >> $metaconf
 # initial training
 echo "________________________________________________________________________"
 echo "initial training from metaconf: ${metaconf}"
-echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
+echo "meta_command = ${eblearnbin}/train" >> $metaconf
 ${eblearnbin}/metarun $metaconf
 
 # looping on retraining on false positives
@@ -159,7 +159,7 @@ for iter in `seq 1 ${maxiteration}`
 if [ $iter != 1 ]; then  
 # recompile data from last output directory which should contain 
 # all false positives
-  ${eblearnbin}/dscompiler ${lastout} -precision ${precision} \
+  ${eblearnbin}/dscompile ${lastout} -precision ${precision} \
       -outdir ${dataroot} -forcelabel bg -dname allfp -dims ${h}x${w}x3 \
       -image_pattern ".*[.]mat" -mindims ${h}x${w}x3 
 
@@ -196,7 +196,7 @@ if [ $iter != 1 ]; then
 # retrain on old + new data
   echo "Retraining from best previous weights: ${bestweights}"
 # add last weights and activate retraining from those
-  echo "meta_command = ${eblearnbin}/objtrain" >> $metaconf
+  echo "meta_command = ${eblearnbin}/train" >> $metaconf
   echo "retrain = 1" >> $metaconf
   echo "retrain_weights = ${bestweights}" >> $metaconf
   echo "meta_name = ${meta_name}_retrain_${iter}" >> $metaconf

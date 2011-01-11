@@ -124,16 +124,16 @@ namespace ebl {
     bbox b;
     b.class_id = classid;
     b.confidence = confidence + boxes.size() * bonus_per_bbox;
-    b.height = (uint) height;
-    b.width = (uint) width;
-    b.h0 = (uint) (hcenter - height / 2);
-    b.w0 = (uint) (wcenter - width / 2);
+    b.height = (int) height;
+    b.width = (int) width;
+    b.h0 = (int) (hcenter - height / 2);
+    b.w0 = (int) (wcenter - width / 2);
     return b;
   }
 
   std::ostream& operator<<(std::ostream& out, const bbox& b) {
     out << "bbox:<class " << b.class_id << ", conf " << b.confidence << ", "
-	<< (rect<uint>&) b << ">";
+	<< (rect<int>&) b << ">";
     return out;
   }
 
@@ -218,40 +218,53 @@ namespace ebl {
     }
   }
 
-  void bboxes::new_group(std::string *name, int index) {
-    if (boxes.size() < (uint) (index + 1)) {
-      boxes.resize((uint) (index + 1), NULL); // resize and init with NULL
-      boxes[(uint) std::max((int)0, index)] = new std::vector<bbox>();
-      group_names.resize((uint) (index + 1), "");
-      if (name)
-	group_names[index] = *name;
-    } else {    
+  void bboxes::new_group(idxdim &dims, std::string *name, int index) {
+    if (index < 0) {
       boxes.push_back(new std::vector<bbox>());
       group_names.push_back(name ? *name : "");
+      group_dims.push_back(dims);
+    } else {
+      uint ind = (uint) index;
+      if (boxes.size() < ind + 1) {
+	boxes.resize(ind + 1, NULL); // resize and init with NULL
+	group_names.resize(ind + 1, "");
+	group_dims.resize(ind + 1);
+      }
+      if (boxes[ind] != NULL) {
+	merr << "Warning: replacing existing group of bbox " << group_names[ind]
+	     << " at index " << index << " with new group" << (name ? *name : "")
+	     << "." << endl;
+	delete boxes[ind];
+      }
+      boxes[ind] = new std::vector<bbox>();
+      if (name)
+	group_names[ind] = *name;
+      group_dims[ind] = dims;
     }
   }
   
-  void bboxes::add(bbox &b, std::string *name, int index) {
+  void bboxes::add(bbox &b, idxdim &dims, std::string *name, int index) {
     std::vector<bbox> *current_group = NULL;
     if (boxes.size() == 0)
-      new_group(name, index);
+      new_group(dims, name, index);
     if (index < 0) { // addition ordering, just push_back
       current_group = boxes[boxes.size() - 1];
       current_group->push_back(b);
     } else { // force ordering by index
       if (boxes.size() < (uint) (index + 1))
-	new_group(name, index);
+	new_group(dims, name, index);
       current_group = boxes[index];
       current_group->push_back(b);
     }
   }
 
-  void bboxes::add(std::vector<bbox*> &bb, std::string *name, int index) {
+  void bboxes::add(std::vector<bbox*> &bb, idxdim &dims, 
+		   std::string *name, int index) {
     for (uint i = 0; i < bb.size(); ++i) {
       bbox *b = bb[i];
       if (!b)
 	eblerror("expected non-null bbox");
-      add(*b, name, index);
+      add(*b, dims, name, index);
     }
   }
   
@@ -289,22 +302,25 @@ namespace ebl {
 	char *str = fscan_str(fp);
 	name = str;
 	delete str;
+	int imh = fscan_int(fp);
+	int imw = fscan_int(fp);
+	idxdim d(imh, imw);
 	// add new group if we have a new name (this assumes we won't go back
 	// to the same name again).
 	if (name.compare(lastname))
-	  new_group(&name);
+	  new_group(d, &name);
 	lastname = name;
 	// get values
 	bbox bb;
 	bb.class_id = fscan_int(fp);
 	bb.confidence = fscan_float(fp);
-	bb.w0 = (uint) fscan_int(fp);
-	bb.h0 = (uint) fscan_int(fp);
-	uint w1 = (uint) fscan_int(fp);
-	uint h1 = (uint) fscan_int(fp);
+	bb.w0 = fscan_int(fp);
+	bb.h0 = fscan_int(fp);
+	int w1 = fscan_int(fp);
+	int h1 = fscan_int(fp);
 	bb.width = w1 - bb.w0;
 	bb.height = h1 - bb.h0;
-	add(bb);
+	add(bb, d);
 	// get new line character
 	fgetc(fp);
 	int c = fgetc(fp);
@@ -337,12 +353,14 @@ namespace ebl {
     // loop on groups
     for (uint i = 0; i < boxes.size(); ++i) {
       std::vector<bbox> *bb = boxes[i];
-      std::string &name = group_names[i];
       if (bb) {
+	std::string &name = group_names[i];
+	idxdim d = group_dims[i];
 	// loop on boxes
 	for (uint j = 0; j < bb->size(); ++j) {
 	  bbox &b = (*bb)[j];
-	  fp << name << " " << b.class_id << " "
+	  fp << name << " " << d.dim(0) << " " << d.dim(1) << " "
+	     << b.class_id << " "
 	     << b.confidence << " " << b.w0 << " " << b.h0 << " "
 	     << b.w0 + b.width << " " << b.h0 + b.height << endl;
 	}
@@ -387,10 +405,13 @@ namespace ebl {
 
   std::string bboxes::describe() {
     std::string desc = "bboxes (";
-    uint nbb = 0;
+    uint nbb = 0, ngroups = 0;
     for (uint i = 0; i < boxes.size(); ++i)
-      nbb += boxes[i]->size(); // size of each group
-    desc << nbb << " boxes in " << (int) boxes.size() << " groups)";
+      if (boxes[i]) {
+	nbb += boxes[i]->size(); // size of each group
+	ngroups++;
+      }
+    desc << nbb << " boxes in " << ngroups << " groups)";
     return desc;
   }
 
@@ -406,6 +427,16 @@ namespace ebl {
     for (i = 0; i < bbs.size(); ++i)
       ret->push_back(new bbox(bbs[i]));
     return ret;
+  }
+  
+  idxdim bboxes::get_group_dims(const std::string &name) {
+    uint i;
+    for (i = 0; i < group_names.size(); ++i)
+      if (!name.compare(group_names[i]))
+	break ;
+    if (i >= group_names.size())
+      eblthrow("could not find image " << name << " in existing bboxes");
+    return group_dims[i];
   }
   
 } // end namespace ebl

@@ -105,6 +105,12 @@ namespace ebl {
     return natural_compare(a.c_str(), b.c_str());
   }
 
+  bool natural_compare_less(const string& a, const string& b) {
+    if (natural_compare(a.c_str(), b.c_str()) < 0)
+      return true;
+    return false;
+  }
+
   // bool natural_less::operator()(const std::string& a, const std::string& b) {
   //   return natural_compare(a, b) < 0;
   // }

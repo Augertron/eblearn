@@ -67,7 +67,7 @@ mkdir -p $nopersons_root
 ###############################################################################
 
 # compile regular dataset
-$bin/dscompiler $dataroot -precision $precision -outdir ${out} -channels $pp \
+$bin/dscompile $dataroot -precision $precision -outdir ${out} -channels $pp \
     -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
 #    $maxdata $maxperclass $ddisplay # debug
 
@@ -75,14 +75,14 @@ $bin/dscompiler $dataroot -precision $precision -outdir ${out} -channels $pp \
 rm -Rf $outbg
 
 # extract background images at random scales and positions
-$bin/dscompiler $nopersons_root -type patch -precision $precision \
+$bin/dscompile $nopersons_root -type patch -precision $precision \
     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
     -maxdata $maxbg -nopadded \
     $ddisplay # debug
 
 # compile background dataset
-$bin/dscompiler ${outbg} -precision $precision \
+$bin/dscompile ${outbg} -precision $precision \
     -outdir ${out} -dname ${bgds} -dims ${h}x${w}x${chans} \
     # $maxdata $maxperclass $ddisplay # debug
 

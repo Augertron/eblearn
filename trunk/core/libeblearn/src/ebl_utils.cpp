@@ -128,11 +128,22 @@ namespace ebl {
 
   idx<intg> yuv_table0(intg yend, intg uend, intg vend) {
     // table 0
-    idx<intg> t0 = full_table(1, yend);
-    idx<intg> t1 = full_table(2, uend, 1, yend);
+    idx<intg> table0;
+    if (yend > 0) {
+      idx<intg> t0 = full_table(1, yend); // Y channel
+      idx<intg> t1 = full_table(2, uend, 1, yend); // U channel
+      table0 = concat_tables(t0, t1);
+    } else // ignore y channel
+      table0 = full_table(2, uend, 1, yend);
+    // V channel
     idx<intg> t2 = full_table(3, vend, 2, uend);
-    idx<intg> table0 = concat_tables(t0, t1);
     return concat_tables(table0, t2);
+  }
+  
+  idx<intg> uv_table0(intg uend, intg vend) {
+    idx<intg> t1 = full_table(1, uend); // U channel
+    idx<intg> t2 = full_table(2, vend, 1, uend);
+    return concat_tables(t1, t2);
   }
   
   idx<intg> yuv_table1(intg yend, intg uend, intg vend,

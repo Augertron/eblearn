@@ -43,6 +43,7 @@
 #include "camera_opencv.h"
 #include "camera_v4l2.h"
 #include "camera_shmem.h"
+#include "camera_kinect.h"
 //#include "camera_windows.h"
 #include "camera_directory.h"
 #include "camera_video.h"

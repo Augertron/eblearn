@@ -86,6 +86,15 @@ namespace ebl {
     niter_done = 0;
   }
 
+  std::ostream& operator<<(std::ostream &out, const gd_param &p) {
+    out << "Gradient parameters: eta " << p.eta << " stopping threshold "
+	<< p.n << " decay_l1 " << p.decay_l1 << " decay_l2 " << p.decay_l2 
+	<< " decay_time " << p.decay_time << " inertia " << p.inertia
+	<< " anneal_value " << p.anneal_value << " annueal_time " 
+	<< p.anneal_time << " gradient threshold " << p.gradient_threshold;
+    return out;
+  }
+
   ////////////////////////////////////////////////////////////////
 
   forget_param_linear::forget_param_linear(double v, double e)

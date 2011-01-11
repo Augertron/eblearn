@@ -60,7 +60,7 @@ void detector_test::test_face() {
 
     // tests
     CPPUNIT_ASSERT_EQUAL((size_t) 17, bboxes.size()); // only 1 object
-    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) .99982,
+    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) .99966,
     				 bboxes[0]->confidence, .00001);
     CPPUNIT_ASSERT_EQUAL((int) 1, bboxes[0]->class_id);
   }

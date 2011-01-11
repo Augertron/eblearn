@@ -52,20 +52,31 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // bbox parts
 
-  void draw_bbox(bbox &bb, idx<ubyte> &labels, uint h0, uint w0, double dzoom) {
+  void draw_bbox(bbox &bb, idx<ubyte> &labels, uint h0, uint w0, double dzoom,
+		 float transparency) {
     ostringstream label;
     int classid, colorid;
     classid = bb.class_id;
     colorid = classid % (sizeof (bbox_colors) / 3);
     uint h = (uint) (dzoom * bb.h0);
     uint w = (uint) (dzoom * bb.w0);
+    float conf = bb.confidence;
     label.str("");
     label.precision(2);
-    label << (classid < labels.dim(0) ?(const char*)labels[classid].idx_ptr() : "****") 
-	  << " " << bb.confidence;
+    label << (classid < labels.dim(0) ?
+	      (const char*)labels[classid].idx_ptr() : "****") 
+	  << " " << conf;
+    ubyte transp = 255;
+    if (transparency > 0)
+      transp = (ubyte) std::max((float) 50,
+				std::min((float) 255,
+					 (255 * (exp((conf - transparency + (float) .5) *12))
+						 / 60000)));
     draw_box(h0 + h, w0 + w, (uint) (dzoom * bb.height), 
-	     (uint) (dzoom * bb.width), bbox_colors[colorid][0],
-	     bbox_colors[colorid][1], bbox_colors[colorid][2],
+	     (uint) (dzoom * bb.width), 
+	     bbox_colors[colorid][0],
+	     bbox_colors[colorid][1], 
+	     bbox_colors[colorid][2], transp,
 	     new string((const char *)label.str().c_str()));
   }
 
@@ -77,7 +88,7 @@ namespace ebl {
     std::vector<bbox_parts> &parts = bb.get_parts();
     for(uint i = 0; i < parts.size(); ++i) {
       bbox_parts &p = parts[i];
-      draw_bbox(p, labels, h0, w0, dzoom); // draw part
+      draw_bbox(p, labels, h0, w0, dzoom, 0.0); // draw part
       draw_bbox_parts(p, labels, h0, w0, dzoom); // explore sub parts
     }
   }

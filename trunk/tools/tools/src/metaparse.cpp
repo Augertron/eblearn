@@ -94,6 +94,6 @@ int main(int argc, char **argv) {
     }
     // parser
     metaparser m;
-    m.process(root);
+    m.process(root, true);
     return 0;
   }

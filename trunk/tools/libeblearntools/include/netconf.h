@@ -53,9 +53,19 @@ namespace ebl {
   // TODO: default is not allowed for function template,
   // solution is to use -std=c++0x or -std=gnu++0x but not available everywhere
   // -> find test for these capabilities in cmake
+  //! \param isbranch Return a layers that is a branch if true.
   template <typename T, class Tstate> // = bbstate_idx<T> >
     module_1_1<T,Tstate>* create_network(parameter<T, Tstate> &theparam,
-					 configuration &conf, uint noutputs);
+					 configuration &conf, uint noutputs,
+					 const char *varname = "arch",
+					 intg thick = -1,
+					 bool isbranch = false,
+					 bool narrow = 0, intg narrow_dim = 0,
+					 intg narrow_size = 0,
+					 intg narrow_offset = 0,
+					 vector<layers<T,Tstate>*>* branches
+					 = NULL,
+					 vector<intg> *branches_thick = NULL);
 
   //! Create a new network based on a configuration. This is relying
   //! on the old-style variables like 'net_type' and 'net_c1h'. The more
@@ -86,9 +96,11 @@ namespace ebl {
     bool load_module(configuration &conf, module_1_1<T,Tstate> &m,
 		     const string &module_name, const string &type);
 
-  //! Load network's modules individually based on configuration.
+  //! Load network's modules individually based on configuration and return
+  //! the number of weights loaded.
   template <typename T, class Tstate>
-    void manually_load_network(layers<T,Tstate> &l, configuration &conf);
+    uint manually_load_network(layers<T,Tstate> &l, configuration &conf, 
+			       const char *varname = "arch");
   
   //! Load the table for module with name 'module_name'. E.g. for module42,
   //! this will look for variable 'module42_table' for the table filename

@@ -339,6 +339,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #ifdef __GUI__
       quit_gui(); // close all windows
 #endif
-    } catch(string &err) { eblerror(err.c_str()); }
+    } eblcatcherror();
   return 0;
 }

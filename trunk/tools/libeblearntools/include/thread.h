@@ -38,7 +38,7 @@
 #include <iostream>
 #include "utils.h"
 
-#ifndef __WINDOWS__
+#ifdef __PTHREAD__
 #include <pthread.h>
 #endif
 
@@ -65,7 +65,7 @@ namespace ebl {
     void unlock();
 
   protected:
-#ifndef __WINDOWS__
+#ifdef __PTHREAD__
     //! Use non-recursive mutex so that lock can be called multiple times
     //! by the same thread but require only 1 unlock.
     //! Also this has to be the 'fast' kind of mutex that blocks the
@@ -169,7 +169,7 @@ namespace ebl {
     ostream             &mout; // may contained synced or standard output
     ostream             &merr; // may contained synced or standard err output
   private:
-#ifndef __WINDOWS__
+#ifdef __PTHREAD__
     pthread_t 		threadptr;
 #endif
     mutex 	        mutex1;

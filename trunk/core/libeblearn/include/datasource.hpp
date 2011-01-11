@@ -40,39 +40,31 @@ using namespace std;
 
 namespace ebl {
  
-  ////////////////////////////////////////////////////////////////
+   ////////////////////////////////////////////////////////////////
   // datasource
 
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::datasource()
-    : nclasses(0), bias(0), coeff(1.0), data(1), labels(1), probas(1),
-      energies(1), correct(1), pick_count(1), count_pickings(true),
-      state_saved(false),
-      idata(data, 0), ilabels(labels, 0), 
-      idata_test(data, 0), ilabels_test(labels, 0), 
-      idata_train(data, 0), ilabels_train(labels, 0), 
-      iprobas(probas, 0), ienergies(energies, 0),
-      icorrect(correct, 0), ipick(pick_count, 0),
-      height(0), width(0), balance(true), isample(0), test_set(false),
-      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_pick_cnt(0),
+    : bias(0), coeff(1.0), data(1), labels(1), probas(1),
+      energies(1), correct(1), answers(1), pick_count(1), count_pickings(true),
+      height(0), width(0), nclasses(0), it(0), it_test(0), it_train(0),
+      indices(1), balance(true), state_saved(false),
+      sample_min_proba(0.0), test_set(false), epoch_sz(0), epoch_cnt(0),
+      epoch_pick_cnt(0),
       epoch_mode(1), hardest_focus(false), ignore_correct_(false) {
   }
 
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::
   datasource(const datasource<Tnet, Tin1, Tin2> &ds)
-    : nclasses(0), bias(ds.bias), coeff(ds.coeff), data(ds.data),
+    : bias(ds.bias), coeff(ds.coeff), data(ds.data),
       labels(ds.labels), probas(ds.probas), energies(ds.energies),
-      correct(ds.correct),
-      pick_count(ds.pick_count), count_pickings(ds.count_pickings),
-      state_saved(false), idata(data, 0), ilabels(labels, 0),
-      idata_test(data, 0), ilabels_test(labels, 0),
-      idata_train(data, 0), ilabels_train(labels, 0), 
-      iprobas(probas, 0), ienergies(energies, 0),
-      icorrect(correct, 0), ipick(pick_count, 0),
-      height(ds.height), width(ds.width), _name(ds._name), balance(true),
-      isample(0), test_set(false),
-      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_pick_cnt(0),
+      correct(ds.correct), answers(ds.answers), pick_count(ds.pick_count),
+      count_pickings(ds.count_pickings),
+      height(ds.height), width(ds.width), _name(ds._name), nclasses(0), it(0),
+      it_test(0), it_train(0), indices(1), balance(true),
+      state_saved(false), sample_min_proba(0.0), test_set(false),
+      epoch_sz(0), epoch_cnt(0), epoch_pick_cnt(0),
       epoch_mode(1), hardest_focus(false), ignore_correct_(false) {
   }
 
@@ -80,19 +72,15 @@ namespace ebl {
   datasource<Tnet, Tin1, Tin2>::
   datasource(idx<Tin1> &data_, idx<Tin2> &labels_, const char *name_,
 	     Tin1 b, float c)
-    : nclasses(0), bias(b), coeff(c), data(data_), labels(labels_),
+    : bias(b), coeff(c), data(data_), labels(labels_),
       probas(data_.dim(0)), energies(data_.dim(0)),
-      correct(data_.dim(0)), pick_count(data_.dim(0)),
-      count_pickings(true), state_saved(false),
-      idata(data, 0), ilabels(labels, 0),
-      idata_test(data, 0), ilabels_test(labels, 0),
-      idata_train(data, 0), ilabels_train(labels, 0), 
-      iprobas(probas, 0), ienergies(energies, 0),
-      icorrect(correct, 0), ipick(pick_count, 0),
-      height(data.dim(1)), width(data.dim(2)), balance(true), isample(0), 
-      test_set(false),
-      sample_min_proba(0.0), epoch_sz(0), epoch_cnt(0), epoch_pick_cnt(0),
-      epoch_mode(1), hardest_focus(false), ignore_correct_(false) {
+      correct(data_.dim(0)), answers(data_.dim(0)), pick_count(data_.dim(0)),
+      count_pickings(true), 
+      height(data.dim(1)), width(data.dim(2)), nclasses(0), it(0), it_test(0),
+      it_train(0), indices(1), balance(true), state_saved(false),
+      sample_min_proba(0.0), test_set(false), epoch_sz(0), epoch_cnt(0),
+      epoch_pick_cnt(0), epoch_mode(1), hardest_focus(false),
+      ignore_correct_(false) {
     init(data_, labels_, name_, b, c);
   }
 
@@ -108,9 +96,12 @@ namespace ebl {
       discrete_labels = true; 
     data = data_;
     labels = labels_;
+    indices = idx<intg>(data.dim(0));
+    indices_saved = idx<intg>(data.dim(0));
     probas = idx<double>(data.dim(0));
     energies = idx<double>(data.dim(0));
     correct = idx<ubyte>(data.dim(0));
+    answers = idx<Tin2>(data.dim(0));
     pick_count = idx<uint>(data.dim(0));
     idx_clear(pick_count);
     dynamic_init_drand(); // initialize random seed
@@ -118,35 +109,13 @@ namespace ebl {
     idx_fill(probas, 1.0);
     idx_fill(energies, -1.0);
     idx_fill(correct, 0);
+    idx_fill(answers, 0);
     height = data.dim(1);
     width = data.dim(2);
     nclasses = (intg) idx_max(labels) + 1;
     bias = b;
     coeff = c;
     _name = (name_ ? name_ : "Unknown Dataset");
-    // regular iterators
-    typename idx<Tin1>::dimension_iterator	 dIter(data, 0);
-    typename idx<Tin2>::dimension_iterator	 lIter(labels, 0);
-    idata = dIter;
-    ilabels = lIter;
-    // testing iterators
-    typename idx<Tin1>::dimension_iterator	 dIter_test(data, 0);
-    typename idx<Tin2>::dimension_iterator	 lIter_test(labels, 0);
-    idata_test = dIter_test;
-    ilabels_test = lIter_test;
-    // training only iterators
-    typename idx<Tin1>::dimension_iterator	 dIter_train(data, 0);
-    typename idx<Tin2>::dimension_iterator	 lIter_train(labels, 0);
-    typename idx<double>::dimension_iterator	 pIter_train(probas, 0);
-    typename idx<double>::dimension_iterator	 eIter_train(energies, 0);
-    typename idx<ubyte>::dimension_iterator	 cIter_train(correct, 0);
-    typename idx<uint>::dimension_iterator	 pcIter_train(pick_count, 0);
-    idata_train = dIter_train;
-    ilabels_train = lIter_train;
-    iprobas = pIter_train;
-    ienergies = eIter_train;
-    icorrect = cIter_train;
-    ipick = pcIter_train;
     // count number of samples per class if discrete
     if (discrete_labels) {
       counts.resize(nclasses);
@@ -169,12 +138,22 @@ namespace ebl {
     not_picked = 0;
     epoch_show = 50; // print epoch count message every epoch_show
     epoch_show_printed = -1; // last epoch count we have printed
+    // fill indices with original data order
+    for (it = 0; it < data.dim(0); ++it)
+      indices.set(it, it);
+    // initialize index to 0
+    it = 0;
+    // shuffle data indices
+    shuffle();
   }
 
   template <class Tnet, class Tin1, class Tin2>
   datasource<Tnet, Tin1, Tin2>::~datasource() {
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // info access methods
+  
   template <class Tnet, class Tin1, class Tin2>
   unsigned int datasource<Tnet, Tin1, Tin2>::size() {
     return data.dim(0);
@@ -192,467 +171,19 @@ namespace ebl {
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::shuffle() {
-    // create a target idx with the same dimensions
-    idx<Tin1> shuffledData(data.get_idxdim());
-    idx<Tin2> shuffledLabels(labels.get_idxdim());
-    // get the nb of classes
-    intg nbOfClasses = (intg) (1 + idx_max(labels));
-    intg nbOfSamples = data.dim(0);
-    intg nbOfSamplesPerClass = nbOfSamples / nbOfClasses;
-    // create new dataset...
-    intg iterator=0;
-    for(int i = 0; i<nbOfSamples; i++){
-      idx<Tin1> oneSample = data[iterator];
-      idx<Tin1> destSample = shuffledData[i];
-      idx_copy(oneSample, destSample);
-
-      idx<Tin2> oneLabel = labels[iterator];
-      idx<Tin2> destLabel = shuffledLabels[i];
-      idx_copy(oneLabel, destLabel);
-
-      iterator += nbOfSamplesPerClass;
-      if (iterator >= nbOfSamples)
-	iterator = (iterator % nbOfSamples) + 1;
-    }
-    // replace the original dataset, and labels
-    data = shuffledData;
-    labels = shuffledLabels;
+  string& datasource<Tnet, Tin1, Tin2>::name() {
+    return _name;
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::
-  fprop(fstate_idx<Tnet> &out, fstate_idx<Tin2> &label) {
-    out.resize(sample_dims());
-    idx_copy(*(this->idata), out.x);
-    idx_addc(out.x, bias, out.x);
-    idx_dotc(out.x, coeff, out.x);
-    idx_copy(*ilabels, label.x);
+  void datasource<Tnet, Tin1, Tin2>::set_test() {
+    test_set = true;
+    cout << _name << ": This is a testing set only." << endl;
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  idx<Tin1> datasource<Tnet, Tin1, Tin2>::get_sample(intg index) {
-    return data.select(0, index);
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::next() {
-    // increment data and labels iterators
-    ++idata_test;
-    ++ilabels_test;
-    // reset if reached end
-    if(!idata_test.notdone()) {
-      // reset iterators
-      idata_test = data.dim_begin(0);
-      ilabels_test = labels.dim_begin(0);
-    }
-    // set regular iters used by fprop
-    idata = idata_test;
-    ilabels = ilabels_test;
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  bool datasource<Tnet, Tin1, Tin2>::pick_current() {
-    if (test_set) // check that this datasource is allowed to call this method
-      eblerror("forbidden call of pick_current() on testing sets");
-    if (!weigh_samples) // always pick sample when not using probabilities
-      return true;
-    // draw random number between 0 and 1 and return true if lower
-    // than sample's probability.
-    double r = drand(); // [0..1]
-    if (r <= iprobas->get())
-      return true;
-    return false;
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  bool datasource<Tnet, Tin1, Tin2>::epoch_done() {
-    switch (epoch_mode) {
-    case 0: // fixed number of samples
-      if (epoch_cnt >= epoch_sz)
-	return true;
-      break ;
-    case 1: // see all samples at least once
-      if (balance) {
-	// check that all classes are done
-	for (uint i = 0; i < epoch_done_counters.size(); ++i) {
-	  if (epoch_done_counters[i] > 0)
-	    return false;
-	}
-	return true; // all classes are done
-      } else { // do not balance, use epoch_sz
-	if (epoch_cnt >= epoch_sz)
-	  return true;
-      }
-      break ;
-    default: eblerror("unknown epoch_mode");
-    }
-    return false;
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::init_epoch() {
-    epoch_cnt = 0;
-    epoch_pick_cnt = 0;
-    epoch_timer.restart();
-    epoch_show_printed = -1; // last epoch count we have printed
-    if (balance) {
-      uint maxsize = 0;
-      // for balanced training, set each class to not done.
-      for (uint k = 0; k < label_indices.size(); ++k) {
-	epoch_done_counters[k] = label_indices[k].size();
-	if (label_indices[k].size() > maxsize)
-	  maxsize = label_indices[k].size();
-      }
-      if (epoch_mode == 1) // for ETA estimation only, estimate epoch size
-	epoch_sz = maxsize * label_indices.size();
-    }
-    // if we have prior information about each sample energy and classification
-    // let's use it to initialize the picking probabilities.
-    normalize_all_probas();
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  bool datasource<Tnet, Tin1, Tin2>::next_train() {
-    // check that this datasource is allowed to call this method
-    if (test_set)
-      eblerror("forbidden call of next_train() on testing sets");
-    bool pick = false;
-    not_picked++;
-    // return samples in original order, regardless of their class
-    if (!balance) {
-      // increment iterators
-      ub_itr++;
-      // reset if reached end
-      if(ub_itr == ub_indices.end()) {
-	// shuffling list for this class
-	if (shuffle_passes)
-	  random_shuffle(ub_indices.begin(), ub_indices.end());
-	// reset iterator
-	ub_itr = ub_indices.begin();
-	// normalize probabilities for all classes, mapping [0..max] to [0..1]
-	if (weigh_samples) 
-	  normalize_probas();
-      }
-      idata_train = idata_train.at(*ub_itr);
-      ilabels_train = ilabels_train.at(*ub_itr);
-      iprobas = iprobas.at(*ub_itr);
-      ienergies = ienergies.at(*ub_itr);
-      icorrect = icorrect.at(*ub_itr);
-      ipick = ipick.at(*ub_itr);
-      isample = *ub_itr; // current sample's index
-      // recursively loop until we find a sample that is picked for this class
-      pick = pick_current();
-    } else { // return samples in class-balanced order
-      // get pointer to first non empty class
-      while (!label_indices[iitr].size()) {
-	iitr++; // next class if class is empty
-	if (iitr >= label_indices.size())
-	  iitr = 0;
-      }
-      intg i = label_indices[iitr][indices_itr[iitr]];
-      //      cout << "#" << i << "/" << iitr << " ";
-      idata_train = idata_train.at(i);
-      ilabels_train = ilabels_train.at(i);
-      iprobas = iprobas.at(i);
-      ienergies = ienergies.at(i);
-      icorrect = icorrect.at(i);
-      ipick = ipick.at(i);
-      isample = i; // current sample's index
-      indices_itr[iitr] += 1;
-      // decide if we want to select this sample for training
-      pick = pick_current();
-      // decrement epoch counter
-      //      if (epoch_done_counters[iitr] > 0)
-      epoch_done_counters[iitr] = epoch_done_counters[iitr] - 1;
-      if (indices_itr[iitr] >= label_indices[iitr].size()) {
-	// returning to begining of list for this class
-	indices_itr[iitr] = 0;
-	// shuffling list for this class
-	if (shuffle_passes) {
-	  vector<intg> &clist = label_indices[iitr];
-	  random_shuffle(clist.begin(), clist.end());
-	}
-	normalize_probas(iitr);
-      }
-      // recursion failsafe, allow 1000 max recursions
-      if (not_picked > MIN(1000, (intg) label_indices[iitr].size())) {
-	// we called recursion on this method more than number of class samples
-	// give up and show current sample
-	pick = true;
-      }
-    }
-    // set regular iters used by fprop
-    idata = idata_train;
-    ilabels = ilabels_train;
-    epoch_cnt++;
-    if (pick) {
-      // increment pick counter for this sample
-      if (count_pickings)
-	ipick->set(ipick->get() + 1);
-#ifdef __DEBUG__
-      cout << "Picking sample " << isample << " (label: " << (int)ilabels.get()
-	   << ", pickings: " << ipick->get() << ", energy: "
-	   << ienergies->get() << ", correct: " << (int) icorrect->get();
-      if (weigh_samples)
-	cout << ", proba: " << iprobas->get();
-      cout << ")" << endl;
-#endif
-      // if we picked a sample, jump to next class
-      iitr++; // next class
-      if (iitr >= label_indices.size())
-	iitr = 0; // reseting to first class in class list
-      // increment sample counter
-      epoch_pick_cnt++;
-      not_picked = 0;
-      pretty_progress();
-      return true;
-  } else {
-#ifdef __DEBUG__
-      cout << "Not picking sample " << isample << " (label: "
-	   << (int)ilabels.get() << ", pickings: " << ipick->get()
-	   << ", energy: " << ienergies->get() 
-	   << ", correct: " << (int)icorrect->get()
-	   << ", proba: " << iprobas->get() << ")" << endl;
-#endif
-      pretty_progress();
-      return false;
-    }
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::pretty_progress() {
-    if (epoch_show > 0 && epoch_pick_cnt % epoch_show == 0 &&
-	epoch_show_printed != (intg) epoch_pick_cnt) {
-      epoch_show_printed = (intg) epoch_pick_cnt; // remember last time printed
-      cout << "epoch_cnt: " << epoch_cnt << " picked: " << epoch_pick_cnt
-	   << " / " << epoch_sz 
-	   << ", epoch elapsed: " << epoch_timer.elapsed() << ", ETA: "
-	   << epoch_timer.
-	elapsed((long) ((epoch_sz - epoch_pick_cnt) *
-		(epoch_timer.elapsed_seconds() 
-		 /(double)std::max((intg)1,epoch_pick_cnt))));
-      if (balance) {
-	cout << ", remaining:";
-	for (uint i = 0; i < epoch_done_counters.size(); ++i) {
-	  cout << " " << i << ": " << epoch_done_counters[i];
-	}
-      }
-      cout << endl;
-    }
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::normalize_all_probas() {
-    if (weigh_samples) {
-      if (perclass_norm && balance) {
-	for (uint i = 0; i < label_indices.size(); ++i)
-	  normalize_probas(i);
-      } else
-	normalize_probas();
-    }
-  }
-    
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::normalize_probas(int classid) {
-    double maxproba = 0, minproba = (numeric_limits<double>::max)();
-    double maxenergy = 0, sum = 0; //, energy_ratio, maxenergy2;
-    vector<intg> *indices = NULL;
-    vector<intg> allindices;
-    if (weigh_samples && !is_test()) {
-      cout << _name << ": Normalizing probabilities";
-      if (perclass_norm && balance) { // use only iitr class samples
-	if (classid < 0)
-	  eblerror("class id cannot be negative");
-	uint iitr = (uint) classid;
-	indices = &(label_indices[iitr]);
-	cout << " for class " << iitr;
-      } else { // use all samples
-	allindices.resize(energies.dim(0)); // allocate
-	for (intg i = 0; i < energies.dim(0); ++i)
-	  allindices[i] = i;
-	indices = &allindices;
-	cout << " for all classes";
-      }
-      idx<double> sorted_energies(indices->size());
-      // normalize probas for this class, mapping [0..max] to [0..1]
-      maxenergy = 0; sum = 0;
-      intg nincorrect = 0, ncorrect = 0, i = 0;
-      // get max and sum
-      for (vector<intg>::iterator j = indices->begin();
-	   j != indices->end(); ++j) {
-	// don't take correct ones into account
-	if (energies.get(*j) < 0) // energy not set yet
-	  continue ;
-	if (correct.get(*j) == 1) { // correct	  
-	  ncorrect++;
-	  if (ignore_correct_)
-	    continue ; // skip this one
-	} else 
-	  nincorrect++;
-	// max and sum
-	maxenergy = (std::max)(energies.get(*j), maxenergy);
-	sum += energies.get(*j);
-	sorted_energies.set(energies.get(*j), i++);
-      }
-      cout << ", nincorrect: " << nincorrect << ", ncorrect: " << ncorrect;
-      // We choose 2 pivot points in the sorted energies curve,
-      // one will be used as maximum energy and the other as the minimum
-      // energy. This helps to have a meaningful range of energies not
-      // biased by single extrema.
-      double e1, e2;
-      sorted_energies.resize(nincorrect);
-      idx_sortup(sorted_energies);      
-      intg pivot1 = (intg) (sorted_energies.dim(0) * (float) .25);
-      intg pivot2 = (intg) (sorted_energies.dim(0) * (float) 1.0);//.75);
-      if (sorted_energies.dim(0) == 0) {
-	e1 = 0; e2 = 1;
-      } else {
-	e1 = sorted_energies.get(pivot1);
-	e2 = sorted_energies.get(pivot2);
-      }
-      // the ratio of total energies over n times the max energy
-      //energy_ratio = sum / (maxenergy * indices->size());
-      // the max probability will be proportional to the energy ratio
-      // this balances the probabilities so that outliers don't take
-      // all the probabilites
-      //maxenergy2 = maxenergy * energy_ratio;
-      cout << ", max energy: " << maxenergy;
-	   // << ", energy ratio " << energy_ratio 
-	   // << " and normalized max energy " << maxenergy2;
-      // normalize
-      for (vector<intg>::iterator j = indices->begin();
-	   j != indices->end(); ++j) {
-	double e = energies.get(*j);
-	// set proba 0 for correct samples if we ignore correct ones
-	if (e >= 0 && ignore_correct_ && correct.get(*j) == 1)
-	  probas.set(0.0, *j);
-	else {
-	  // compute probas
-	  double den = e2 - e1;
-	  if (e < 0 || maxenergy == 0 || den == 0) // energy not set yet
-	    probas.set(1.0, *j);
-	  else {
-	    probas.set((std::max)((double) 0, (std::min)((e - e1) / den,
-							  (double) 1)), *j);
-	    if (!hardest_focus) // concentrate on easiest misclassified
-	      probas.set(1 - probas.get(*j), *j); // reverse proba
-	    // iprobas.at(*j)->set((std::max)(sample_min_proba, 
-	    // 				   e / maxenergy2));
-	    // remember min and max proba
-	    maxproba = (std::max)(probas.get(*j), maxproba);
-	    minproba = (std::min)(probas.get(*j), minproba);
-	  }
-	}
-      }
-      cout << ", Min/Max probas are: " << minproba << ", "
-	   << maxproba << endl;
-    }
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::set_sample_energy(double e, bool correct_){
-    if (weigh_samples) { // if false, keep default probability 1 for all samples
-      ienergies->set(fabs(e));
-      icorrect->set(correct_ ? 1 : 0);
-      //      iprobas->set((std::max)(sample_min_proba, MIN(1.0, fabs(dist))));
-    }
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::seek_begin() {
-    idata_test = data.dim_begin(0);
-    ilabels_test = labels.dim_begin(0);
-    // set regular iters used by fprop
-    idata = idata_test;
-    ilabels = ilabels_test;
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::seek_begin_train() {
-    idata_train = data.dim_begin(0);
-    ilabels_train = labels.dim_begin(0);
-    iprobas = probas.dim_begin(0);
-    ienergies = energies.dim_begin(0);
-    icorrect = correct.dim_begin(0);
-    ipick = pick_count.dim_begin(0);
-    // set regular iters used by fprop
-    idata = idata_train;
-    ilabels = ilabels_train;
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::set_balanced(bool bal) {
-    balance = bal;
-    if (!balance) { // unbalanced
-      cout << _name << ": Setting training as unbalanced (not taking class "
-	   << "distributions into account)." << endl;
-      // initialize a random list of indexes for each sample, so that
-      // we can randomize the access without moving data around.
-      ub_indices.clear();
-      for (intg i = 0; i < data.dim(0); ++i)
-	ub_indices.push_back(i);
-      random_shuffle(ub_indices.begin(), ub_indices.end());
-      // reset iterator to 0
-      ub_itr = ub_indices.begin();
-    } else { // balanced
-      cout << _name << ": Setting training as balanced (taking class "
-	   << "distributions into account)." << endl;
-      if (discrete_labels) {
-	// compute vector of sample indices for each class
-	label_indices.clear();
-	indices_itr.clear();
-	epoch_done_counters.clear();
-	iitr = 0;
-	for (intg i = 0; i < nclasses; ++i) {
-	  vector<intg> indices;
-	  label_indices.push_back(indices);
-	  indices_itr.push_back(0); // init iterators
-	}
-	// distribute sample indices into each vector based on label
-	for (uint i = 0; i < size(); ++i)
-	  label_indices[(intg) (labels.get(i))].push_back(i);
-	for (uint i = 0; i < label_indices.size(); ++i) {
-	  // shuffle
-	  random_shuffle(label_indices[i].begin(), label_indices[i].end());
-	  // init epoch counters
-	  epoch_done_counters.push_back(label_indices[i].size());
-	}
-      } else
-	cerr << "warning: cannot use balanced() with continuous labels" << endl;
-    }
-  }
-
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::set_shuffle_passes(bool activate) {
-    shuffle_passes = activate;
-    cout << _name
-	 << ": Shuffling of samples (training only) after each pass is "
-	 << (shuffle_passes ? "activated" : "deactivated") << "." << endl;
-  }
-  
-  template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::
-  set_weigh_samples(bool activate, bool hardest_focus_, bool perclass_norm_,
-		    double min_proba) {
-    weigh_samples = activate;
-    hardest_focus = hardest_focus_;
-    perclass_norm = perclass_norm_;
-    sample_min_proba = MIN(1.0, min_proba);
-    cout << _name
-	 << ": Weighing of samples (training only) based on classification is "
-	 << (weigh_samples ? "activated" : "deactivated") << "." << endl;
-    if (activate) {
-      cout << _name << ": learning is focused on "
-	   << (hardest_focus ? "hardest" : "easiest")
-	   << " misclassified samples" << endl;
-      if (!ignore_correct_ && !hardest_focus)
-	cerr << "Warning: correct samples are not ignored and focus is on "
-	     << "easiest samples, this may not be optimal" << endl;
-      cout << "Sample picking probabilities are normalized "
-	   << (perclass_norm ? "per class" : "globally") 
-	   << " with minimum probability " << sample_min_proba << endl;
-    }
+  bool datasource<Tnet, Tin1, Tin2>::is_test() {
+    return test_set;
   }
   
   template <class Tnet, class Tin1, class Tin2>
@@ -704,31 +235,387 @@ namespace ebl {
     return min_nonzero * nclasses;
   }
   
+  //////////////////////////////////////////////////////////////////////////////
+  // data access methods
+  
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::pretty() {
-    cout << _name << ": Dataset \"" << _name << "\" contains " << data.dim(0);
-    cout << " samples of dimension " << sample_dims();
-    if (discrete_labels)
-      cout << " with " << get_nclasses() << " classes," << endl;
-    else
-      cout << " with continous labels," << endl;
-    cout << _name << ": bias is " << bias << ", coefficient is " << coeff;
-    if (discrete_labels)
-      cout << " and iteration size in samples is " << get_lowest_common_size();
-    cout << "." << endl;
+  void datasource<Tnet, Tin1, Tin2>::
+  fprop(fstate_idx<Tnet> &out, fstate_idx<Tin2> &label) {
+    out.resize(sample_dims());
+    idx<Tin1> dat = data[it];
+    idx<Tin2> lab = labels[it];
+    idx_copy(dat, out.x);
+    idx_addc(out.x, bias, out.x);
+    idx_dotc(out.x, coeff, out.x);
+    idx_copy(lab, label.x);
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::set_test() {
-    test_set = true;
-    cout << _name << ": This is a testing set only." << endl;
+  idx<Tin1> datasource<Tnet, Tin1, Tin2>::get_sample(intg index) {
+    return data[index];
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  bool datasource<Tnet, Tin1, Tin2>::is_test() {
-    return test_set;
+  void datasource<Tnet, Tin1, Tin2>::select_sample(intg index) {
+    if (index < 0 || index >= data.dim(0))
+      eblthrow("cannot select index " << index
+	       << " in datasource of dimensions " << data);
+    it = index;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // iterating methods
+  
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::shuffle() {
+    // shuffle indices to the data
+    idx_shuffle(indices);
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::next() {
+    // increment test iterator
+    it_test++;
+    // reset if reached end
+    if(!it_test >= data.dim(0))
+      it_test = 0;
+    // set main iterator used by fprop
+    it = it_test;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  bool datasource<Tnet, Tin1, Tin2>::next_train() {
+    // check that this datasource is allowed to call this method
+    if (test_set)
+      eblerror("forbidden call of next_train() on testing sets");
+    bool pick = false;
+    not_picked++;
+    // return samples in original order, regardless of their class
+    if (!balance) {
+      // increment iterator
+      it_train++;
+      // reset if reached end
+      if(it_train >= indices.dim(0)) {
+	if (shuffle_passes)
+	  shuffle(); // shuffle indices to the data
+	// reset iterator
+	it_train = 0;
+	// normalize probabilities for all classes, mapping [0..max] to [0..1]
+	if (weigh_samples) 
+	  normalize_probas();
+      }
+      it = indices.get(it_train); // set main iterator to the train iterator
+      // recursively loop until we find a sample that is picked for this class
+      pick = pick_current();
+    } else { // return samples in class-balanced order
+      // get pointer to first non empty class
+      while (!bal_indices[class_it].size()) {
+	class_it++; // next class if class is empty
+	if (class_it >= bal_indices.size())
+	  class_it = 0;
+      }
+      it = bal_indices[class_it][bal_it[class_it]];
+      bal_it[class_it] += 1;
+      // decide if we want to select this sample for training
+      pick = pick_current();
+      // decrement epoch counter
+      //      if (epoch_done_counters[class_it] > 0)
+      epoch_done_counters[class_it] = epoch_done_counters[class_it] - 1;
+      if (bal_it[class_it] >= bal_indices[class_it].size()) {
+	// returning to begining of list for this class
+	bal_it[class_it] = 0;
+	// shuffling list for this class
+	if (shuffle_passes) {
+	  vector<intg> &clist = bal_indices[class_it];
+	  random_shuffle(clist.begin(), clist.end());
+	}
+	normalize_probas(class_it);
+      }
+      // recursion failsafe, allow 1000 max recursions
+      if (not_picked > MIN(1000, (intg) bal_indices[class_it].size())) {
+	// we called recursion on this method more than number of class samples
+	// give up and show current sample
+	pick = true;
+      }
+    }
+    epoch_cnt++;
+    if (pick) {
+      // increment pick counter for this sample
+      if (count_pickings)
+	pick_count.set(pick_count.get(it) + 1, it);
+#ifdef __DEBUG__
+      cout << "Picking sample " << it << " (label: " << (int)labels.get(it)
+	   << ", pickings: " << pick_count.get(it) << ", energy: "
+	   << energies.get(it) << ", correct: " << (int) correct.get(it);
+      if (weigh_samples) cout << ", proba: " << probas.get(it);
+      cout << ")" << endl;
+#endif
+      // if we picked a sample, jump to next class
+      class_it++; // next class
+      if (class_it >= bal_indices.size())
+	class_it = 0; // reseting to first class in class list
+      // increment sample counter
+      epoch_pick_cnt++;
+      not_picked = 0;
+      pretty_progress();
+      return true;
+  } else {
+#ifdef __DEBUG__
+      cout << "Not picking sample " << it << " (label: "
+	   << (int) labels.get(it) << ", pickings: " << pick_count.get(it)
+	   << ", energy: " << energies.get(it)
+	   << ", correct: " << (int) correct.get(it)
+	   << ", proba: " << probas.get(it) << ")" << endl;
+#endif
+      pretty_progress();
+      return false;
+    }
   }
   
+  template <class Tnet, class Tin1, class Tin2>
+  bool datasource<Tnet, Tin1, Tin2>::pick_current() {
+    if (test_set) // check that this datasource is allowed to call this method
+      eblerror("forbidden call of pick_current() on testing sets");
+    if (!weigh_samples) // always pick sample when not using probabilities
+      return true;
+    // draw random number between 0 and 1 and return true if lower
+    // than sample's probability.
+    double r = drand(); // [0..1]
+    if (r <= probas.get(it))
+      return true;
+    return false;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  bool datasource<Tnet, Tin1, Tin2>::epoch_done() {
+    switch (epoch_mode) {
+    case 0: // fixed number of samples
+      if (epoch_cnt >= epoch_sz)
+	return true;
+      break ;
+    case 1: // see all samples at least once
+      if (balance) {
+	// check that all classes are done
+	for (uint i = 0; i < epoch_done_counters.size(); ++i) {
+	  if (epoch_done_counters[i] > 0)
+	    return false;
+	}
+	return true; // all classes are done
+      } else { // do not balance, use epoch_sz
+	if (epoch_cnt >= epoch_sz)
+	  return true;
+      }
+      break ;
+    default: eblerror("unknown epoch_mode");
+    }
+    return false;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::init_epoch() {
+    epoch_cnt = 0;
+    epoch_pick_cnt = 0;
+    epoch_timer.restart();
+    epoch_show_printed = -1; // last epoch count we have printed
+    if (balance) {
+      uint maxsize = 0;
+      // for balanced training, set each class to not done.
+      for (uint k = 0; k < bal_indices.size(); ++k) {
+	epoch_done_counters[k] = bal_indices[k].size();
+	if (bal_indices[k].size() > maxsize)
+	  maxsize = bal_indices[k].size();
+      }
+      if (epoch_mode == 1) // for ETA estimation only, estimate epoch size
+	epoch_sz = maxsize * bal_indices.size();
+    }
+    // if we have prior information about each sample energy and classification
+    // let's use it to initialize the picking probabilities.
+    normalize_all_probas();
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::seek_begin() {
+    // reset test iterator
+    it_test = 0;
+    // set main iterator to test iterator
+    it = it_test;
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::seek_begin_train() {
+    // reset train iterator
+    it_train = 0;
+    // set main iterator to train iterator
+    it = indices.get(it_train);
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_balanced(bool bal) {
+    balance = bal;
+    if (!balance) // unbalanced
+      cout << _name << ": Setting training as unbalanced (not taking class "
+	   << "distributions into account)." << endl;
+    else { // balanced
+      cout << _name << ": Setting training as balanced (taking class "
+	   << "distributions into account)." << endl;
+      if (discrete_labels) {
+	// compute vector of sample indices for each class
+	bal_indices.clear();
+	bal_it.clear();
+	epoch_done_counters.clear();
+	class_it = 0;
+	for (intg i = 0; i < nclasses; ++i) {
+	  vector<intg> indices;
+	  bal_indices.push_back(indices);
+	  bal_it.push_back(0); // init iterators
+	}
+	// distribute sample indices into each vector based on label
+	for (uint i = 0; i < size(); ++i)
+	  bal_indices[(intg) (labels.get(i))].push_back(i);
+	for (uint i = 0; i < bal_indices.size(); ++i) {
+	  // shuffle
+	  random_shuffle(bal_indices[i].begin(), bal_indices[i].end());
+	  // init epoch counters
+	  epoch_done_counters.push_back(bal_indices[i].size());
+	}
+      } else
+	cerr << "warning: cannot use balanced() with continuous labels" << endl;
+    }
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_shuffle_passes(bool activate) {
+    shuffle_passes = activate;
+    cout << _name
+	 << ": Shuffling of samples (training only) after each pass is "
+	 << (shuffle_passes ? "activated" : "deactivated") << "." << endl;
+  }
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // picking probability methods
+  
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::normalize_all_probas() {
+    if (weigh_samples) {
+      if (perclass_norm && balance) {
+	for (uint i = 0; i < bal_indices.size(); ++i)
+	  normalize_probas(i);
+      } else
+	normalize_probas();
+    }
+  }
+    
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::normalize_probas(int classid) {
+    double maxproba = 0, minproba = (numeric_limits<double>::max)();
+    double maxenergy = 0, sum = 0; //, energy_ratio, maxenergy2;
+    vector<intg> *cindices = NULL;
+    vector<intg> allindices;
+    if (weigh_samples && !is_test()) {
+      cout << _name << ": Normalizing probabilities";
+      if (perclass_norm && balance) { // use only class_it class samples
+	if (classid < 0)
+	  eblerror("class id cannot be negative");
+	uint class_it = (uint) classid;
+	cindices = &(bal_indices[class_it]);
+	cout << " for class " << class_it;
+      } else { // use all samples
+	allindices.resize(energies.dim(0)); // allocate
+	for (intg i = 0; i < energies.dim(0); ++i)
+	  allindices[i] = i;
+	cindices = &allindices;
+	cout << " for all classes";
+      }
+      idx<double> sorted_energies(cindices->size());
+      // normalize probas for this class, mapping [0..max] to [0..1]
+      maxenergy = 0; sum = 0;
+      intg nincorrect = 0, ncorrect = 0, i = 0;
+      // get max and sum
+      for (vector<intg>::iterator j = cindices->begin();
+	   j != cindices->end(); ++j) {
+	// don't take correct ones into account
+	if (energies.get(*j) < 0) // energy not set yet
+	  continue ;
+	if (correct.get(*j) == 1) { // correct	  
+	  ncorrect++;
+	  if (ignore_correct_)
+	    continue ; // skip this one
+	} else 
+	  nincorrect++;
+	// max and sum
+	maxenergy = (std::max)(energies.get(*j), maxenergy);
+	sum += energies.get(*j);
+	sorted_energies.set(energies.get(*j), i++);
+      }
+      cout << ", nincorrect: " << nincorrect << ", ncorrect: " << ncorrect;
+      // no incorrect set all to 1
+      if (!nincorrect) {
+	idx_fill(probas, 1.0);
+	return ;
+      }
+      // We choose 2 pivot points in the sorted energies curve,
+      // one will be used as maximum energy and the other as the minimum
+      // energy. This helps to have a meaningful range of energies not
+      // biased by single extrema.
+      double e1, e2;
+      sorted_energies.resize(nincorrect);
+      idx_sortup(sorted_energies);      
+      intg pivot1 = (intg) (sorted_energies.dim(0) * (float) .25);
+      intg pivot2 = std::min(sorted_energies.dim(0) - 1,
+			     (intg) (sorted_energies.dim(0)*(float)1.0));//.75);
+      if (sorted_energies.dim(0) == 0) {
+	e1 = 0; e2 = 1;
+      } else {
+	e1 = sorted_energies.get(pivot1);
+	e2 = sorted_energies.get(pivot2);
+      }
+      // the ratio of total energies over n times the max energy
+      //energy_ratio = sum / (maxenergy * cindices->size());
+      // the max probability will be proportional to the energy ratio
+      // this balances the probabilities so that outliers don't take
+      // all the probabilites
+      //maxenergy2 = maxenergy * energy_ratio;
+      cout << ", max energy: " << maxenergy;
+	   // << ", energy ratio " << energy_ratio 
+	   // << " and normalized max energy " << maxenergy2;
+      // normalize
+      for (vector<intg>::iterator j = cindices->begin();
+	   j != cindices->end(); ++j) {
+	double e = energies.get(*j);
+	// set proba 0 for correct samples if we ignore correct ones
+	if (e >= 0 && ignore_correct_ && correct.get(*j) == 1)
+	  probas.set(0.0, *j);
+	else {
+	  // compute probas
+	  double den = e2 - e1;
+	  if (e < 0 || maxenergy == 0 || den == 0) // energy not set yet
+	    probas.set(1.0, *j);
+	  else {
+	    probas.set((std::max)((double) 0, (std::min)((e - e1) / den,
+							  (double) 1)), *j);
+	    if (!hardest_focus) // concentrate on easiest misclassified
+	      probas.set(1 - probas.get(*j), *j); // reverse proba
+	    // iprobas.at(*j)->set((std::max)(sample_min_proba, 
+	    // 				   e / maxenergy2));
+	    // remember min and max proba
+	    maxproba = (std::max)(probas.get(*j), maxproba);
+	    minproba = (std::min)(probas.get(*j), minproba);
+	  }
+	}
+      }
+      cout << ", Min/Max probas are: " << minproba << ", "
+	   << maxproba << endl;
+    }
+  }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::set_sample_energy(double e, bool correct_, 
+						       Tin2 label_estimate) {
+    energies.set(e, it);
+    correct.set(correct_ ? 1 : 0, it);
+    answers.set(label_estimate, it);
+  }
+
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::save_pickings(const char *name_) {
     // plot file
@@ -765,16 +652,16 @@ namespace ebl {
     write_classed_pickings(energies, correct, name, "_energies");
     idx<double> e = idx_copy(energies);
     idx<ubyte> c = idx_copy(correct);
-    idx_sortup2(e, c);
+    idx_sortup(e, c);
     write_classed_pickings(e, c, name, "_sorted_energies");
     idx<double> p = idx_copy(probas);
     c = idx_copy(correct);
-    idx_sortup2(p, c);
+    idx_sortup(p, c);
     write_classed_pickings(p, c, name, "_sorted_probas");
     p = idx_copy(probas);
     e = idx_copy(energies);
     c = idx_copy(correct);
-    idx_sortup3(e, c, p);
+    idx_sortup(e, c, p);
     write_classed_pickings(p, c, name, "_probas_sorted_by_energy", true,
 			   "Picking probability");
     write_classed_pickings(p, c, name, "_probas_sorted_by_energy_wrong_only",
@@ -855,6 +742,14 @@ namespace ebl {
   }
 
   template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::ignore_correct(bool ignore) {
+    ignore_correct_ = ignore;
+    if (ignore)
+      cout << (ignore ? "Ignoring" : "Using") <<
+	" correctly classified samples for training." << endl;
+  }
+    
+  template <class Tnet, class Tin1, class Tin2>
   bool datasource<Tnet, Tin1, Tin2>::get_count_pickings() {
     return count_pickings;
   }
@@ -875,33 +770,93 @@ namespace ebl {
   }
 
   template <class Tnet, class Tin1, class Tin2>
-  void datasource<Tnet, Tin1, Tin2>::ignore_correct(bool ignore) {
-    ignore_correct_ = ignore;
-    if (ignore)
-      cout << (ignore ? "Ignoring" : "Using") <<
-	" correctly classified samples for training." << endl;
+  void datasource<Tnet, Tin1, Tin2>::
+  set_weigh_samples(bool activate, bool hardest_focus_, bool perclass_norm_,
+		    double min_proba) {
+    weigh_samples = activate;
+    hardest_focus = hardest_focus_;
+    perclass_norm = perclass_norm_;
+    sample_min_proba = MIN(1.0, min_proba);
+    cout << _name
+	 << ": Weighing of samples (training only) based on classification is "
+	 << (weigh_samples ? "activated" : "deactivated") << "." << endl;
+    if (activate) {
+      cout << _name << ": learning is focused on "
+	   << (hardest_focus ? "hardest" : "easiest")
+	   << " misclassified samples" << endl;
+      if (!ignore_correct_ && !hardest_focus)
+	cerr << "Warning: correct samples are not ignored and focus is on "
+	     << "easiest samples, this may not be optimal" << endl;
+      cout << "Sample picking probabilities are normalized "
+	   << (perclass_norm ? "per class" : "globally") 
+	   << " with minimum probability " << sample_min_proba << endl;
+    }
   }
-    
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // pretty methods
+  
   template <class Tnet, class Tin1, class Tin2>
-  string& datasource<Tnet, Tin1, Tin2>::name() {
-    return _name;
+  void datasource<Tnet, Tin1, Tin2>::pretty_progress() {
+    if (epoch_show > 0 && epoch_pick_cnt % epoch_show == 0 &&
+	epoch_show_printed != (intg) epoch_pick_cnt) {
+      epoch_show_printed = (intg) epoch_pick_cnt; // remember last time printed
+      cout << "epoch_cnt: " << epoch_cnt << " picked: " << epoch_pick_cnt
+	   << " / " << epoch_sz 
+	   << ", epoch elapsed: " << epoch_timer.elapsed() << ", ETA: "
+	   << epoch_timer.
+	elapsed((long) ((epoch_sz - epoch_pick_cnt) *
+		(epoch_timer.elapsed_seconds() 
+		 /(double)std::max((intg)1,epoch_pick_cnt))));
+      if (balance) {
+	cout << ", remaining:";
+	for (uint i = 0; i < epoch_done_counters.size(); ++i) {
+	  cout << " " << i << ": " << epoch_done_counters[i];
+	}
+      }
+      cout << endl;
+    }
   }
+
+  template <class Tnet, class Tin1, class Tin2>
+  void datasource<Tnet, Tin1, Tin2>::pretty() {
+    cout << _name << ": Dataset \"" << _name << "\" contains " << data.dim(0);
+    cout << " samples of dimension " << sample_dims();
+    if (discrete_labels)
+      cout << " with " << get_nclasses() << " classes," << endl;
+    else
+      cout << " with continous labels," << endl;
+    cout << _name << ": bias is " << bias << ", coefficient is " << coeff;
+    if (discrete_labels)
+      cout << " and iteration size in samples is " << get_lowest_common_size();
+    cout << "." << endl;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // state saving
   
   template <class Tnet, class Tin1, class Tin2>
   void datasource<Tnet, Tin1, Tin2>::save_state() {
     state_saved = true;
     count_pickings_save = count_pickings;
-    ub_itr_saved = ub_itr;
-    indices_itr_saved.clear();
-    label_indices_saved.clear();
-    for (uint k = 0; k < indices_itr.size(); ++k) {
-      indices_itr_saved.push_back(indices_itr[k]);
-      vector<intg> indices;
-      for (uint l = 0; l < label_indices[k].size(); ++l)
-	indices.push_back(label_indices[k][l]);
-      label_indices_saved.push_back(indices);
+    it_saved = it; // save main iterator
+    if (!balance) { // save (unbalanced) iterators
+      it_test_saved = it_test;
+      it_train_saved = it_train;
+      for (intg k = 0; k < indices.dim(0); ++k)
+	indices_saved[k] = indices[k];
+    } else { // save balanced iterators
+      bal_it_saved.clear();
+      bal_indices_saved.clear();
+      for (uint k = 0; k < bal_it.size(); ++k) {
+	bal_it_saved.push_back(bal_it[k]);
+	vector<intg> indices;
+	for (uint l = 0; l < bal_indices[k].size(); ++l)
+	  indices.push_back(bal_indices[k][l]);
+	bal_indices_saved.push_back(indices);
+      }
+      class_it_saved = class_it;
     }
-    iitr_saved = iitr;
   }
   
   template <class Tnet, class Tin1, class Tin2>
@@ -909,30 +864,19 @@ namespace ebl {
     if (!state_saved)
       eblerror("state not saved, call save_state() before restore_state()");
     count_pickings = count_pickings_save;
-    if (!balance) {
-      ub_itr = ub_itr_saved; // reset unbalanced iterator
-      idata_train = idata_train.at(*ub_itr);
-      ilabels_train = ilabels_train.at(*ub_itr);
-      iprobas = iprobas.at(*ub_itr);
-      ienergies = ienergies.at(*ub_itr);
-      icorrect = icorrect.at(*ub_itr);
-      ipick = ipick.at(*ub_itr);
-      isample = *ub_itr; // current sample's index
-    } else {
-      for (uint k = 0; k < indices_itr.size(); ++k) {
-	indices_itr[k] = indices_itr_saved[k];
-	for (uint l = 0; l < label_indices[k].size(); ++l)
-	  label_indices[k][l] = label_indices_saved[k][l];
+    it = it_saved; // restore main iterator
+    if (!balance) { // restore unbalanced
+      it_test = it_test_saved;
+      it_train = it_train_saved;
+      for (intg k = 0; k < indices.dim(0); ++k)
+	indices[k] = indices_saved[k];
+    } else { // restore balanced iterators
+      for (uint k = 0; k < bal_it.size(); ++k) {
+	bal_it[k] = bal_it_saved[k];
+	for (uint l = 0; l < bal_indices[k].size(); ++l)
+	  bal_indices[k][l] = bal_indices_saved[k][l];
       }
-      iitr = iitr_saved;
-      intg i = label_indices[iitr][indices_itr[iitr]];
-      idata_train = idata_train.at(i);
-      ilabels_train = ilabels_train.at(i);
-      iprobas = iprobas.at(i);
-      ienergies = ienergies.at(i);
-      icorrect = icorrect.at(i);
-      ipick = ipick.at(i);
-      isample = i; // current sample's index
+      class_it = class_it_saved;
     }
   }
   
@@ -1095,6 +1039,20 @@ namespace ebl {
     return id_;
   }
   
+  template <class Tnet, class Tdata, class Tlabel>
+  std::string &labeled_datasource<Tnet, Tdata, Tlabel>::get_class_name(int id) {
+    if (!lblstr) 
+      eblerror("no label strings");
+    if (id >= (int) lblstr->size())
+      eblerror("requesting label string at index " << id 
+	       << " but string vector has only " << lblstr->size() 
+	       << " elements.");
+    string *s = (*lblstr)[id];
+    if (!s)
+      eblerror("empty label string");
+    return *s;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // labeled_pair_datasource
 
@@ -1245,6 +1203,8 @@ namespace ebl {
   void mnist_datasource<Tnet, Tdata, Tlabel>::
   fprop(fstate_idx<Tnet> &out, fstate_idx<Tlabel> &label) {
     out.resize(this->sample_dims());
+    idx<Tdata> dat = data[it];
+    idx<Tlabel> lab = labels[it];
     uint ni = data.dim(1);
     uint nj = data.dim(2);
     uint di = (uint) (0.5 * (height - ni));
@@ -1253,10 +1213,10 @@ namespace ebl {
     idx<Tnet> tgt = out.x.select(0, 0);
     tgt = tgt.narrow(0, ni, di);
     tgt = tgt.narrow(1, nj, dj);
-    idx_copy(*(this->idata), tgt);
+    idx_copy(dat, tgt);
     idx_addc(out.x, bias, out.x);
     idx_dotc(out.x, coeff, out.x);
-    label.x.set((this->ilabels).get());
+    label.x.set(lab.get());
   }
 
   ////////////////////////////////////////////////////////////////

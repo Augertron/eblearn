@@ -53,6 +53,9 @@ namespace ebl {
     unsigned int				 _nw;
     double					 _zoom;
     int						 datasource_wid;
+    int						 datasource_wid2;
+    int						 datasource_wid3;
+    int						 datasource_wid4;
     int						 internals_wid;
     int						 internals_wid2;
     int						 internals_wid3;
@@ -60,6 +63,10 @@ namespace ebl {
     bool					 scroll_added;
     unsigned int				 pos;
     labeled_datasource_gui<Tnet, Tdata, Tlabel>	*dsgui;
+    string                                       title1;
+    string                                       title2;
+    string                                       title3;
+    string                                       title4;
     
 
   public:
@@ -88,6 +95,22 @@ namespace ebl {
 			   double zoom = 1.0, int wid = -1,
 			   const char *title = NULL);
 
+    //! displays correct or incorrect nh x nw samples of the datasource ds,
+    //! ordered by decreasing energies.
+    //! This method assumes correctness has been previously set in
+    //! datasource by a test call.
+    //! \param incorrect Show incorrect samples if true, correct otherwise.
+    //! \param up If true, sort starting with lowest energies, 
+    //!        highest otherwise.
+    void display_correctness(bool incorrect, bool up,
+			     supervised_trainer<Tnet, Tdata, Tlabel> &st,
+			     labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+			     infer_param &infp,
+			     unsigned int nh, unsigned int nw, 
+			     unsigned int h0 = 0, unsigned int w0 = 0, 
+			     double zoom = 1.0, int wid = -1,
+			     const char *title = NULL, bool scrolling = false);
+    
     ////////////////////////////////////////////////////////////////
     // inherited methods to implement for scrolling capabilities
     

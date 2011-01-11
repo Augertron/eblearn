@@ -43,7 +43,8 @@ namespace ebl {
   template <typename Tdata>
   camera<Tdata>::camera(int height_, int width_, std::ostream &o,
 			std::ostream &e)
-    : height(height_), width(width_), bresize(false), frame_id(0),
+    : height(height_), width(width_), bresize(false), mresize(true),
+      resize_mode(0), frame_id_(0),
       grabbed(false), wid(0), recording_name("video"), record_cnt(0),
       fps_grab(0.0), audio_filename(""), out(o), err(e), cntfps(0) {
     // decide if we resize input or not
@@ -58,6 +59,10 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   // grabbin
+  
+  template <typename Tdata>
+  void camera<Tdata>::next() {
+  }
   
   template <typename Tdata>
   bool camera<Tdata>::empty() {
@@ -152,9 +157,14 @@ namespace ebl {
   }
 
   template <typename Tdata>
+  uint camera<Tdata>::frame_id() {
+    return frame_id_;
+  }
+  
+  template <typename Tdata>
   string camera<Tdata>::frame_name() {
     ostringstream name;
-    name << "frame_" << frame_id;
+    name << "frame_" << frame_id_;
     return name.str();
   }
   
@@ -173,7 +183,6 @@ namespace ebl {
   
   template <typename Tdata>
   inline idx<Tdata> camera<Tdata>::postprocess() {
-    frame_id++;
     fps_ms_elapsed = tfps.elapsed_milliseconds();
     cntfps++;
     if (fps_ms_elapsed > 1000) {
@@ -183,8 +192,12 @@ namespace ebl {
     }
     if (!bresize)
       return frame; // return original frame
-    else // or return a resized frame
-      return image_mean_resize(frame, height, width, 0);
+    else { // or return a resized frame
+      if (mresize)
+	return image_mean_resize(frame, height, width, resize_mode);
+      else
+ 	return image_resize(frame, height, width, resize_mode);
+    }
   }
   
 } // end namespace ebl

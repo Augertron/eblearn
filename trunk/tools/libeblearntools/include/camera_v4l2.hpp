@@ -387,6 +387,7 @@ namespace ebl {
     // todo: resize in postprocessing if different size than expected
     //        e.g.: illegal ratio
 #endif
+    frame_id_++;
     return this->postprocess();
   }
 

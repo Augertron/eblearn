@@ -42,33 +42,33 @@ namespace ebl {
   //! Also this has to be the 'fast' kind of mutex that blocks the
   //! thread until locking/unlocking is successful.
   mutex::mutex() {
-#ifndef __WINDOWS__
+#ifdef __PTHREAD__
     pthread_mutex_init(&m, NULL);
 #else
-    eblerror("mutex not implemented for Windows (TODO)");
+    eblerror("pthread missing, install it and recompile.");
 #endif
     }
 
     mutex::~mutex() {
-#ifndef __WINDOWS__
+#ifdef __PTHREAD__
       pthread_mutex_destroy(&m);
 #endif
     }
 
     bool mutex::trylock() {
-#ifndef __WINDOWS__
+#ifdef __PTHREAD__
       return (pthread_mutex_trylock(&m) == 0);
 #endif
     }
 
     void mutex::lock() {
-#ifndef __WINDOWS__
+#ifdef __PTHREAD__
       pthread_mutex_lock(&m);
 #endif
     }
 
     void mutex::unlock() {
-#ifndef __WINDOWS__
+#ifdef __PTHREAD__
       pthread_mutex_unlock(&m);
 #endif
     }
@@ -143,8 +143,8 @@ namespace ebl {
   }
 
   int thread::start() {
-#ifdef __WINDOWS__
-    eblerror("thread::start not implemented for Windows");
+#ifndef __PTHREAD__
+    eblerror("pthread missing, install it and recompile");
     return -1;
 #else
     return pthread_create(&threadptr, NULL, thread::entrypoint, this);
@@ -168,12 +168,13 @@ namespace ebl {
 	millisleep(5);
     }
     // force stopping thread 
-#ifdef __WINDOWS__
-    eblerror("thread::stop not implemented for Windows");
+#ifndef __PTHREAD__
+    eblerror("pthread missing, install it and recompile.");
 #else
     int ret = pthread_cancel(threadptr);
     if (ret) {
-      merr << "Warning: failed to cancel thread, with error code " << ret << endl;
+      merr << "Warning: failed to cancel thread, with error code " << ret
+	   << endl;
       return ;
     }
 #endif     

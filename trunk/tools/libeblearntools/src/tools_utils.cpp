@@ -260,6 +260,30 @@ namespace ebl {
     return l;
   }
 
+  vector<uint> string_to_uintvector(const string &s_) {
+    return string_to_uintvector(s_.c_str());
+  }
+  
+  vector<uint> string_to_uintvector(const char *s_) {
+    vector<uint> l;
+    string s = s_;
+    int k = 0;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == ',')
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      l.push_back(string_to_uint(s0));
+      k++;
+    }
+    return l;
+  }
+
   list<string> string_to_stringlist(const string &s_) {
     return string_to_stringlist(s_.c_str());
   }
@@ -358,23 +382,6 @@ namespace ebl {
     return s.str();
   }
 
-  string dirname(const char *s_) {
-#ifdef __LINUX__
-    char c = '/';
-#else /* __WINDOWS__ */
-    char c = '\\';
-#endif
-    string s = s_;
-    size_t pos = s.find_last_of(c);
-    // if there is no dirname, return local dirname .
-    if (pos == string::npos) {
-      s = ".";
-      s += c;
-      return s;
-    }
-    return s.substr(0, pos);
-  }
-  
   string filename(const char *s_) {
 #ifdef __LINUX__
     char c = '/';

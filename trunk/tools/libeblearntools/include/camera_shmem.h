@@ -83,6 +83,7 @@ namespace ebl {
   protected:
     using camera<Tdata>::frame;	//!< frame buffer 
     using camera<Tdata>::grabbed;	//!< frame buffer grabbed yet or not 
+    using camera<Tdata>::frame_id_;	//!< frame counter
     t_video_buffer	*buffer;
 #ifndef __WINDOWS__
     key_t		 shmem_key;

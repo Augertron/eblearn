@@ -49,6 +49,7 @@ using namespace boost::filesystem;
 using namespace boost;
 #endif
 
+#include "numerics.h"
 #include "metajobs.h"
 #include "tools_utils.h"
 #include "metaparser.h"
@@ -62,7 +63,7 @@ namespace ebl {
 
   job::job(configuration &conf_, const string &exe_, const string &oconffname) 
     : conf(conf_), exe(exe_), oconffname_(oconffname), pid(-1),
-      classesname_("") {
+      classesname_(""), _started(false) {
     // remove quotes around executable command if present
     if ((exe[0] == '"') && (exe[exe.size() - 1] == '"'))
       exe = exe.substr(1, exe.size() - 2);
@@ -92,14 +93,20 @@ namespace ebl {
 	<< " 3>&1 1>&2 2>&3 | tee /dev/tty | tee " << errlog.str()
 	<< ") 3>&1 1>&2 2>&3) >> " << log.str() << " 2>&1 && exit 0";
     // fork job
+    _started = true;
     pid = fork();
     if (pid == -1)
       eblerror("fork failed");
     if (pid == 0) { // child code
-      cout << "executing: " << cmd.str() << endl;
+      cout << endl << "Executing job " << filename(confname_.c_str()) 
+	   << " with cmd:" << endl << cmd.str() << endl;
       // execl takes over this process (and its pid)
       execl("/bin/sh", "sh", "-c", cmd.str().c_str(), (char*)NULL);
     }
+  }
+
+  bool job::started() {
+    return _started;
   }
 
   bool job::write() {
@@ -140,6 +147,8 @@ namespace ebl {
   }
 
   bool job::alive() {
+    if (!_started)
+      return false;
     // if job is alive, it will receive this harmless signal
     return (kill(pid, SIGCHLD) == 0); 
   }
@@ -166,7 +175,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // job manager
 
-  job_manager::job_manager() : copy_path("") {
+  job_manager::job_manager() : copy_path(""), max_jobs(limits<uint32>::max()) {
   }
   
   job_manager::~job_manager() {
@@ -177,7 +186,7 @@ namespace ebl {
     size_t pos = mconf_fullfname.find_last_of('/');
     mconf_fname = mconf_fullfname.substr(pos == string::npos ? 0 : pos);
     // read meta configuration
-    if (!mconf.read(mconf_fullfname.c_str(), false, tstamp))
+    if (!mconf.read(mconf_fullfname.c_str(), false, tstamp, false))
       return false;
     // create job list from all possible configurations
     vector<configuration> &confs = mconf.configurations();
@@ -186,6 +195,10 @@ namespace ebl {
       iconf->resolve();
       jobs.push_back(job(*iconf, mconf.get_string("meta_command"),
 			 mconf_fname));
+    }
+    if (mconf.exists("meta_max_jobs")) {
+      max_jobs = mconf.get_uint("meta_max_jobs");
+      cout << "Limiting to " << max_jobs << " jobs at the time." << endl;
     }
     return true;
   }
@@ -239,22 +252,29 @@ namespace ebl {
       }
     } catch (const char *s) { cerr << s << endl; }
     // run jobs and get their pid by forking
-    for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i)
-      i->run();
+    for (uint i = 0; i < jobs.size() && i < max_jobs; ++i)
+      jobs[i].run();
     // loop until all jobs are finished
     uint swait = 30; // default wait is 30 seconds
     if (mconf.exists("meta_watch_interval"))
       swait = mconf.get_uint("meta_watch_interval");
-    uint nrunning = 1;
-    while (nrunning) {
+    uint nrunning = 1, unstarted = 0, ready_slots = max_jobs;
+    while (nrunning || unstarted > 0) {
       sleep(swait);
       // check if each pid responds to a harmless signal
       nrunning = 0;
+      unstarted = 0;
+      ready_slots = max_jobs;
       mintime = 0;
       maxtime = 0;
       for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
-	if (i->alive())
+	if (i->alive()) {
 	  nrunning++;
+	  if (ready_slots > 0)
+	    ready_slots--;
+	}
+	if (!i->started())
+	  unstarted++;
 	maxtime = std::max(i->minutes(), maxtime);
 	if (mintime == 0)
 	  mintime = i->minutes();
@@ -263,7 +283,19 @@ namespace ebl {
       }
       int status = 0;
       waitpid(-1, &status, WNOHANG); // check children status
-      cout << "Jobs alive: " << nrunning << " Iteration: " << maxiter << endl;
+      cout << "Jobs alive: " << nrunning << ", waiting to start: " << unstarted
+	   << " / " << jobs.size()
+	   << ", empty job slots: " << ready_slots << ", Iteration: " << maxiter 
+	   << endl;
+      // if there are jobs waiting to be started, start them if possible
+      if (unstarted > 0 && ready_slots > 0) {
+	for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
+	  if (!i->started() && ready_slots > 0) {
+	    i->run();
+	    ready_slots--;
+	  }
+	}
+      }
       // get jobs info for reporting
       jobs_info.str("");
       uint j = 1;
@@ -313,7 +345,7 @@ namespace ebl {
     // email last results before exiting
     if (mconf.exists_bool("meta_analyze"))
       best = p.analyze(mconf, mconf.get_output_dir(),
-		       maxiter_tmp); // parse output and get best results
+		       maxiter_tmp, true); // parse output and get best results
     // send report
     p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
 		  mconf_fullfname, jobs_info.str(), nrunning, maxtime, mintime);

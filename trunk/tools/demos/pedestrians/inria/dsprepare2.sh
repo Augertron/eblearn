@@ -87,14 +87,14 @@ check_error() {
 rm -Rf $outbg
 
 # extract background images at random scales and positions
-$bin/dscompiler $full_negative_root/../ -type patch -precision $precision \
+$bin/dscompile $full_negative_root/../ -type patch -precision $precision \
     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
     -maxdata $maxbg -nopadded -forcelabel bg $debug
 check_error $? 
 
 # compile background dataset
-$bin/dscompiler ${outbg} -precision $precision \
+$bin/dscompile ${outbg} -precision $precision \
     -outdir ${out} -dname ${bgds} -dims ${h}x${w}x${chans} $debug
 check_error $? 
 
@@ -105,7 +105,7 @@ rm -Rf $outbg
 # crop inria so that the window height is 1.33333 the height of the pedestrians,
 # i.e. H96 gives 128 window height, and cropping factor of .8
 # then width target is 76, yielding cropping factor of .791
-$bin/dscompiler $dataroot_pos -type pascal -annotations $annotations \
+$bin/dscompile $dataroot_pos -type pascal -annotations $annotations \
     -precision $precision -outdir ${out} \
     -channels $pp -dname ${name_pos} -resize $resize -kernelsz $kernel \
     -dims ${h}x${w}x${chans} -bboxhfact 1.4 -bboxwfact 1.4 -jitter 5,5,8,.2,5 \

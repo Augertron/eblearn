@@ -41,7 +41,7 @@ namespace ebl {
   // bbox
   
   //! A bounding box class, based on the rect class.
-  class bbox : public rect<uint> {
+  class EXPORT bbox : public rect<int> {
   public:
     //! Empty constructor (assign a new unique instance_id).
     bbox();
@@ -53,26 +53,26 @@ namespace ebl {
     int		class_id;	//<! object class
     float	confidence;	//<! detection confidence, 1 is the best.
     // original map //////////////////////////////////////////////
-    using rect<uint>::h0;	//<! height of top left pixel
-    using rect<uint>::w0;	//<! width of top left pixel
-    using rect<uint>::height;	//<! height of bounding box in original image
-    using rect<uint>::width;	//<! width of bounding box in original image
+    using rect<int>::h0;	//<! height of top left pixel
+    using rect<int>::w0;	//<! width of top left pixel
+    using rect<int>::height;	//<! height of bounding box in original image
+    using rect<int>::width;	//<! width of bounding box in original image
     // scale /////////////////////////////////////////////////
     double	scaleh;		//<! scale factor at which object was detected
     double	scalew;		//<! scale factor at which object was detected
     int		scale_index;	//<! scale index at which object was detected
     // input map /////////////////////////////////////////////////
-    uint	iheight;	//<! scaled input image height
-    uint	iwidth;		//<! scaled input image width
-    uint	ih0;		//<! height0 of bbox in network's input map
-    uint	iw0;		//<! width0 of bbox in network's input map
-    uint	ih;		//<! height of bbox in network's input map
-    uint	iw;		//<! width of bbox in network's input map
+    int	iheight;	//<! scaled input image height
+    int	iwidth;		//<! scaled input image width
+    int	ih0;		//<! height0 of bbox in network's input map
+    int	iw0;		//<! width0 of bbox in network's input map
+    int	ih;		//<! height of bbox in network's input map
+    int	iw;		//<! width of bbox in network's input map
     // output map ////////////////////////////////////////////////
-    uint	oheight;	//<! height of network's output map
-    uint	owidth;		//<! width of network's output map
-    uint	oh0;		//<! pixel's height in network's output map
-    uint	ow0;		//<! pixel's width in network's output map
+    int	oheight;	//<! height of network's output map
+    int	owidth;		//<! width of network's output map
+    int	oh0;		//<! pixel's height in network's output map
+    int	ow0;		//<! pixel's width in network's output map
 
     //! Set instance_id to zero.
     static void init_instance_id();
@@ -87,7 +87,7 @@ namespace ebl {
   };
 
   //! A bounding box that can be composed from multiple bounding boxes.
-  class bbox_parts : public bbox {
+  class EXPORT bbox_parts : public bbox {
   public:
     //! Empty constructor (assign a new unique instance_id).
     bbox_parts();
@@ -129,7 +129,7 @@ namespace ebl {
 
   //! A collection of bounding boxes, that can be saved to multiple formats,
   //! and grouped by image.
-  class bboxes {
+  class EXPORT bboxes {
   public:
     //! Initialize parameters.
     //! \param saving_type Determines the formats save() will save data.
@@ -140,27 +140,37 @@ namespace ebl {
 
     //! Create a new group of bounding boxes. Add() will then put new bboxes
     //! into that group (unless index is less than boxes.size()).
+    //! \param dims The image size associated with this group.
     //! \param index If negative (default), the order is the addition order,
     //!   otherwise use the index to order the bboxes.
     //! \param name An optional name for the new group.
-    void new_group(std::string *name = NULL, int index = -1);
+    void new_group(idxdim &dims, std::string *name = NULL,
+			  int index = -1);
 
     //! Return an entire vector of pointers to bbox for group with name
     //! 'name'. This throws an exception if the group is not found.    
     vector<bbox*>* get_group(const std::string &name);
 
+    //! Return the image dimensions associated with a group of bbox with
+    //! name 'name'. This throws an exception if the group is not found.
+    idxdim get_group_dims(const std::string &name);
+
     //! Add a new bbox to the collection (in last group or the group with index
-    //! 'index'.
+    //! 'index').
+    //! \param dims The image size associated with this bbox.
     //! \param index If negative (default), the order is the addition order,
     //!   otherwise use the index to order the bboxes.
     //! \param name An optional name for the new group.
-    void add(bbox &b, std::string *name = NULL, int index = -1);
+    void add(bbox &b, idxdim &dims, std::string *name = NULL,
+		    int index = -1);
 
     //! Create a new group and add a set of bbox to this group.
+    //! \param dims The image size associated with this group.
     //! \param index If negative (default), the order is the addition order,
     //!   otherwise use the index as the group's index in the vector of groups.
     //! \param name An optional name for the new group.
-    void add(std::vector<bbox*> &bb, std::string *name = NULL, int index = -1);
+    void add(std::vector<bbox*> &bb, idxdim &dims,
+		    std::string *name = NULL, int index = -1);
 
     //! Save boxes using the internal parameters initialized by the constructor.
     //! \param dir Output directory. If null (default), use internal directory
@@ -185,11 +195,12 @@ namespace ebl {
     
   private:
     std::vector<std::vector<bbox>* >	 boxes;
-    std::vector<std::string> group_names;
-    std::string		 outdir;
-    t_bbox_saving        saving_type;
-    std::ostream        &mout;	//! output stream.
-    std::ostream        &merr;	//! error output stream.
+    std::vector<std::string> 	 group_names;
+    std::vector<idxdim> 	 group_dims;
+    std::string		 	 outdir;
+    t_bbox_saving        	 saving_type;
+    std::ostream        	&mout;	//! output stream.
+    std::ostream        	&merr;	//! error output stream.
   };
   
 } // end namespace ebl

@@ -90,7 +90,8 @@ namespace ebl {
     //! a caption string.
     EXPORT void draw_box(int h0, int w0, int h, int w,
 			 unsigned char r = 255, unsigned char g = 255,
-			 unsigned char b = 255, string *s = NULL);
+			 unsigned char b = 255, unsigned char a = 255,
+			 string *s = NULL);
 
     //! do not show windows, instead save them in png files in current dir.
     EXPORT void set_silent();
@@ -249,7 +250,8 @@ namespace ebl {
     EXPORT void gui_add_text(const string *s);
     EXPORT void gui_add_arrow(int h1, int w1, int h2, int w2);
     EXPORT void gui_add_box(int h0, int w0, int h, int w, unsigned char r,
-		     unsigned char g, unsigned char b, string *s);
+			    unsigned char g, unsigned char b, unsigned char a,
+			    string *s);
     EXPORT void gui_set_text_origin(unsigned int h0, unsigned int w0);
     EXPORT void gui_set_text_colors(unsigned char fg_r, unsigned char fg_g, 
 			     unsigned char fg_b, unsigned char fg_a,

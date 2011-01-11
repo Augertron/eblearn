@@ -64,7 +64,7 @@ mkdir -p "$false_positive_root/bg/"
 ###############################################################################
 
 # compile regular dataset
-~/eblearn/bin/dscompiler $root -precision $precision -type regular \
+~/eblearn/bin/dscompile $root -precision $precision -type regular \
     -outdir ${out} -channels $pp -dname ${name} \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug

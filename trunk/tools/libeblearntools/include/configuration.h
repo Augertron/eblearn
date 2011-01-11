@@ -137,7 +137,14 @@ namespace ebl {
     template <typename T>
       void get(T &v, const std::string &varname);
 
+    //! Get variable with name varname as an intg into v.
     void get(intg &v, const char *varname);
+    //! Get variable with name varname as an uint into v.
+    void get(uint &v, const char *varname);
+    //! Get variable with name varname as a double into v.
+    void get(double &v, const char *varname);
+    //! Get variable with name varname as a string into v.
+    void get(string &v, const char *varname);
 
     //! returns the string contained the variable with name varname.
     //! if varname does not exist, this throws an exception.
@@ -225,7 +232,8 @@ namespace ebl {
     virtual ~meta_configuration();
 
     bool read(const char *fname, bool bresolve = true,
-	      const string *tstamp = NULL);
+	      const string *tstamp = NULL, 
+	      bool replace_quotes = false);
 
     // accessors
 

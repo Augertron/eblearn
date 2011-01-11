@@ -88,6 +88,7 @@ namespace ebl {
 	bmpData = (char *)pbmi;
 	bmpData += cap.CalcBitmapInfoSize(bmih);
       }
+    frame_id_++;
     return bmpData;
   }
 
