@@ -105,8 +105,10 @@ namespace ebl {
   //! read any kind of image that can be converted to a PPM by ImageMagick
   //! See above for description, as it is the same function used,
   //! after a conversion to PPM
+  //! \param attempts If imagemagick conversion fails, try again this number of
+  //!        times.
   template <class T>
-    idx<T> image_read(const char *fname, idx<T> *out = NULL);
+    idx<T> image_read(const char *fname, idx<T> *out = NULL, int attempts = 3);
 
 } // end namespace ebl
 

@@ -142,8 +142,6 @@ int main(int argc, char **argv) {
     default:
       eblerror("unsupported precision for dataset loading");
     }
-  } catch (string &err) {
-    cerr << err << endl;
-  }
+  } eblcatcherror();
   return 0;
 }

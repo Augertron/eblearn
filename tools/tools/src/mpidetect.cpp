@@ -525,7 +525,7 @@ int main(int argc, char **argv) { // regular main without gui
     // check input parameters
     if ((argc != 2) && (argc != 3) ) {
       cerr << "warning: wrong number of parameters." << endl;
-      cerr << "usage: mtdetect <config file> [directory or file]" << endl;
+      cerr << "usage: mpidetect <config file> [directory or file]" << endl;
       //	return -1;
     }
 #ifdef __LINUX__

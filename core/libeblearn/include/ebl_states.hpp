@@ -207,6 +207,26 @@ namespace ebl {
     resize(d);
   }
 
+  ////////////////////////////////////////////////////////////////
+  //! slicing methods
+
+  template <typename T>
+  fstate_idx<T> fstate_idx<T>::select(int dimension, intg slice_index) {
+    fstate_idx<T> s = make_copy();
+    s.x = s.x.select(dimension, slice_index);
+    return s;
+  }
+    
+  template <typename T>
+  fstate_idx<T> fstate_idx<T>::narrow(int d, intg sz, intg o) {
+    fstate_idx<T> s = make_copy();
+    s.x = s.x.narrow(d, sz, o);
+    return s;
+  }
+    
+  ////////////////////////////////////////////////////////////////
+  //! copy methods
+    
   template <typename T>
   fstate_idx<T> fstate_idx<T>::make_copy() {
     intg dims[8] ={-1,-1,-1,-1,-1,-1,-1,-1};
@@ -424,6 +444,28 @@ namespace ebl {
     idx_dotcacc(dx, -arg.eta, x);
   }
 
+  ////////////////////////////////////////////////////////////////
+  //! slicing methods
+
+  template <typename T>
+  bstate_idx<T> bstate_idx<T>::select(int dimension, intg slice_index) {
+    bstate_idx<T> s = make_copy();
+    s.x = s.x.select(dimension, slice_index);
+    s.dx = s.dx.select(dimension, slice_index);
+    return s;
+  }
+    
+  template <typename T>
+  bstate_idx<T> bstate_idx<T>::narrow(int d, intg sz, intg o) {
+    bstate_idx<T> s = make_copy();
+    s.x = s.x.narrow(d, sz, o);
+    s.dx = s.dx.narrow(d, sz, o);
+    return s;
+  }
+    
+  ////////////////////////////////////////////////////////////////
+  //! copy methods
+    
   template <typename T>
   bstate_idx<T> bstate_idx<T>::make_copy() {
     intg dims[8] ={-1,-1,-1,-1,-1,-1,-1,-1};
@@ -663,6 +705,30 @@ namespace ebl {
   //   ddx.resize(dimsBegin, dimsEnd);
   // }
 
+  ////////////////////////////////////////////////////////////////
+  //! slicing methods
+
+  template <typename T>
+  bbstate_idx<T> bbstate_idx<T>::select(int dimension, intg slice_index) {
+    bbstate_idx<T> s = make_copy();
+    s.x = s.x.select(dimension, slice_index);
+    s.dx = s.dx.select(dimension, slice_index);
+    s.ddx = s.ddx.select(dimension, slice_index);
+    return s;
+  }
+    
+  template <typename T>
+  bbstate_idx<T> bbstate_idx<T>::narrow(int d, intg sz, intg o) {
+    bbstate_idx<T> s = make_copy();
+    s.x = s.x.narrow(d, sz, o);
+    s.dx = s.dx.narrow(d, sz, o);
+    s.ddx = s.ddx.narrow(d, sz, o);
+    return s;
+  }
+    
+  ////////////////////////////////////////////////////////////////
+  //! copy methods
+    
   template <typename T>
   bbstate_idx<T> bbstate_idx<T>::make_copy() {
     intg dims[8] ={-1,-1,-1,-1,-1,-1,-1,-1};

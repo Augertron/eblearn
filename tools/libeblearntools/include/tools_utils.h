@@ -130,6 +130,14 @@ namespace ebl {
   //! "1,2,3,4" into a list of uints.
   EXPORT list<uint> string_to_uintlist(const char *s);
 
+  //! Convert a string containing a list of uint separated by commas, e.g.
+  //! "1,2,3,4" into a vector of uints.
+  EXPORT vector<uint> string_to_uintvector(const string &s);
+
+  //! Convert a string containing a list of uint separated by commas, e.g.
+  //! "1,2,3,4" into a vector of uints.
+  EXPORT vector<uint> string_to_uintvector(const char *s);
+
   //! Convert a string containing a list of strings separated by commas, e.g.
   //! "errors,2,toto,4" into a list of strings.
   EXPORT list<string> string_to_stringlist(const string &s);
@@ -171,11 +179,6 @@ namespace ebl {
   template <typename T>
     void list_to_vector(list<T> &l, vector<T> &v);
 
-  //! Return the directory name of a file. This is just looking for the first
-  //! directory separator from the right, this is not doing any system calls
-  //! to find the directory.
-  EXPORT string dirname(const char *s);
-    
   //! Return the name of a file stripped from its root.
   //! This is just looking for the first
   //! directory separator from the right, this is not doing any system calls

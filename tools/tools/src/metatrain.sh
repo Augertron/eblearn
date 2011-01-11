@@ -142,7 +142,7 @@ extract_falsepos() {
     echo "meta_email_period = 1000" >> $bestconf
     # override train command by detect command
     echo >> $bestconf
-    echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/mtdetect\"" >> $bestconf
+    echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/detect\"" >> $bestconf
     echo "meta_name = ${name}" >> $bestconf
     # set multi threads for detection
     echo "nthreads = ${nthreads}" >> $bestconf
@@ -151,7 +151,7 @@ extract_falsepos() {
     # randomize list of files to extract fp from
     echo "input_random = 1" >> $bestconf
     # keep all detected bbox even overlapping ones
-    echo "pruning = 0" >> $bestconf
+    echo "nms = 0" >> $bestconf
     # downsample to n times input (capped by input_min)
     echo "min_scale = ${minsc}" >> $bestconf
     # oversample to n times input (capped by input_max)
@@ -163,6 +163,7 @@ extract_falsepos() {
     echo "hzpad = 0" >> $bestconf
     echo "wzpad = 0" >> $bestconf
     # start parallelized extraction
+    echo "executing: ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}"
     ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
     check_error $? 
 }
@@ -195,7 +196,7 @@ compile_data() {
     # recompile data from last output directory which should contain 
     # all false positives
     # note: no need to preprocess, .mat should already be preprocessed
-    ${eblearnbin}/dscompiler ${falsepos_dir} -precision ${precision} \
+    ${eblearnbin}/dscompile ${falsepos_dir} -precision ${precision} \
 	-outdir ${dataroot} -forcelabel bg -dname ${step}_allfp \
 	-dims ${h}x${w}x${chans} \
 	-image_pattern ".*[.]mat" -mindims ${h}x${w}x${chans}
@@ -251,7 +252,7 @@ retrain() {
     # retrain on old + new data
     echo "Retraining from best previous weights: ${bestweights}"
     # add last weights and activate retraining from those
-    echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
+    echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/train\"" >> $metaconf
     echo "retrain = 1" >> $metaconf
     echo "retrain_weights = ${bestweights}" >> $metaconf
     echo "train = ${compile_step}_${traindsname}_\${ds}" >> $metaconf
@@ -313,6 +314,8 @@ metatrain() {
     display=${27}
     mindisplay=${28}
     savevideo=${29}
+    min_threshold=${30}
+    step_threshold=${31}
     echo
     echo -e "Arguments:\nminstep=${minstep}\nmaxiteration=${maxiteration}\nout=${out}"
     echo -e "eblearnbin=${eblearnbin}\nnegatives_root=${negatives_root}\nmetaconf=${metaconf}"
@@ -351,7 +354,7 @@ metatrain() {
 	print_step $step $metaconf $lastname $lastdir "training" \
 	    0 $maxiteration
 	echo -n "meta_command = \"export LD_LIBRARY_PATH=" >> $metaconf
-	echo "${eblearnbin} && ${eblearnbin}/objtrain\"" >> $metaconf
+	echo "${eblearnbin} && ${eblearnbin}/train\"" >> $metaconf
 	echo "meta_name = ${name}" >> $metaconf
 	${eblearnbin}/metarun $metaconf -tstamp ${tstamp}
     fi
@@ -376,7 +379,7 @@ metatrain() {
 	lastdir=${out}/${lastname}
 	if [ $step -ge $minstep ]; then
             # decrement threshold, capping at 0.1
-	    threshold=`echo "thr=${threshold} - .2; if (thr < .1){ thr = -.95;}; print thr" | bc`
+	    threshold=`echo "thr=${threshold} - ${step_threshold}; if (thr < ${min_threshold}){ thr = ${min_threshold};}; print thr" | bc`
 
 	    print_step $step $bestconf $lastname $lastdir "false positives" \
 		$iter $maxiteration

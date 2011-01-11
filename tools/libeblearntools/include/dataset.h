@@ -47,11 +47,12 @@ namespace ebl {
   //! A class that describes jitter attributes.
   class jitter {
   public:
-    jitter(int h_, int w_, float s_) : h(h_), w(w_), s(s_) { }
+    jitter(int h_, int w_, float s_, float r_) : h(h_), w(w_), s(s_), r(r_) { }
     virtual ~jitter() {} 
-    int h;
-    int w;
-    float s;
+    int h; //!< height
+    int w; //!< width
+    float s; //!< scale
+    float r; //!< rotation
   };
   
   //! The dataset class allows to extract a dataset from sample files and
@@ -200,7 +201,7 @@ namespace ebl {
 
     //! Add n samples randomly jittered over a hxw neighborhood 
     //! around original location.
-    void set_jitter(uint h, uint w, uint ns, float s, uint n);
+    void set_jitter(uint h, uint w, uint ns, float s, uint nr, float r, uint n);
 
     //! Add sample mirrored with vertical-axis symmetry.
     void set_wmirror();
@@ -389,6 +390,8 @@ namespace ebl {
     uint                wjitter;        //!< add shifted versions of sample 
     uint                nsjitter;       //!< number of possible scales
     float               sjitter;        //!< range of scales
+    uint                nrjitter;       //!< number of possible rotations
+    float               rjitter;        //!< range of rotations
     uint                njitter;        //!< number of random jitters
     vector<jitter>      random_jitter;  //!< pre-computed list of random jitter
     // names ///////////////////////////////////////////////////////
@@ -447,6 +450,11 @@ namespace ebl {
   //! success. return succcess.
   template <typename T>
     bool loading_warning(idx<T> &mat, string &fname);
+
+  //! optional datasets, no warning if bool is false, otherwise print
+  //! success. return succcess.
+  template <typename T>
+    bool loading_nowarning(idx<T> &mat, string &fname);
 
 } // end namespace ebl
 

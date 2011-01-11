@@ -42,8 +42,8 @@ namespace ebl {
 		      bool mirror_, bool threshold_, bool global_norm_)
     : module_1_1<T,Tstate>(name_), 
       mirror(mirror_),
-      convmean(true),
-      convvar(true),
+      convmean(true, name_),
+      convvar(true, name_),
       sqrtmod((T) .5), // square root module
       invmod(-1), // inverse module
       sqmod(2), // square module
@@ -275,6 +275,7 @@ namespace ebl {
     std::string desc;
     desc << "weighted_std module " << this->name() << " with kernel "
 	 << kernelh << "x" << kernelw;
+    desc << ", using " << (mirror ? "mirror" : "zero") << " padding";
     return desc;
   }
   

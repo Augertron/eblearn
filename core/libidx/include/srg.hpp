@@ -62,7 +62,7 @@ namespace ebl {
   // is not dynamically allocated. Hence this must
   // make sure the data is not deallocated twice.
   template <typename T> srg<T>::~srg() {
-    DEBUG("srg::destructor: refcount=%d\n",refcount);
+    DEBUG_LOW("srg::destructor: refcount = " << refcount);
     if (refcount != 0) {
       eblerror("can't delete an srg with non zero refcount"); }
     if (data != NULL) {
@@ -128,7 +128,7 @@ namespace ebl {
   template <typename T> int srg<T>::unlock() {
     refcount--;
     //if (refcount == 0) this->nopened--;
-    DEBUG("srg::unlock: refcount=%d\n",refcount);
+    DEBUG_LOW("srg::unlock: refcount = " << refcount);
     if (refcount<0) {
       eblerror("srg negative reference counter: " << refcount);
       return refcount;
@@ -146,7 +146,7 @@ namespace ebl {
   // increment refcount
   template <typename T> int srg<T>::lock() {
     //  if (refcount == 0) this->nopened++;
-    DEBUG("srg::lock: refcount=%d\n",refcount+1);
+    DEBUG_LOW("srg::lock: refcount=" << refcount+1);
     return ++refcount;
   }
 

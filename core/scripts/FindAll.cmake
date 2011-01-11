@@ -49,17 +49,19 @@ FIND_PACKAGE(Custom)
 
 # find CBLAS
 ################################################################################
-IF ($ENV{NOCBLAS})
-  MESSAGE(STATUS "CBLAS DISABLED by env variable $NOCBLAS=1.")
-ELSE ($ENV{NOCBLAS})
-  FIND_PACKAGE(CBLAS)
-  IF(CBLAS_FOUND)
-    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__CBLAS__")
-    INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
-  ELSE (CBLAS_FOUND)
-    MESSAGE("__ WARNING: cblas not found, install to speed up (optional).")
-  ENDIF(CBLAS_FOUND)
-ENDIF ($ENV{NOCBLAS})
+MESSAGE(STATUS "CBLAS DISABLED")
+# IF ($ENV{NOCBLAS})
+#   MESSAGE(STATUS "CBLAS DISABLED by env variable $NOCBLAS=1.")
+# ELSE ($ENV{NOCBLAS})
+#   FIND_PACKAGE(CBLAS)
+#   IF(CBLAS_FOUND)
+#     SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__CBLAS__")
+#     INCLUDE_DIRECTORIES(${CBLAS_INCLUDE_DIR})
+#     MESSAGE(STATUS "Found CBLAS: ${CBLAS_INCLUDE_DIR}/${CBLAS_INCLUDE_FILE}")
+#   ELSE (CBLAS_FOUND)
+#     MESSAGE("__ WARNING: cblas not found, install to speed up (optional).")
+#   ENDIF(CBLAS_FOUND)
+# ENDIF ($ENV{NOCBLAS})
 
 # find IPP
 ################################################################################

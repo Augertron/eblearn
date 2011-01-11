@@ -138,32 +138,52 @@ int main(int argc, char **argv) { // regular main without gui
     // learning parameters
     gd_param gdp(/* double leta*/ conf.get_double("eta"),
 		 /* double ln */ 	0.0,
-		 /* double l1 */ 	0.0,
-		 /* double l2 */ 	0.0,
+		 /* double l1 */  conf.get_double("reg_l1"),
+		 /* double l2 */  conf.get_double("reg_l2"),
 		 /* int dtime */ 	0,
 		 /* double iner */0.0, 
 		 /* double a_v */ 0.0,
 		 /* double a_t */ 0.0,
 		 /* double g_t*/ 	0.0);
+    cout << gdp << endl;
     infer_param infp;
 	
-#ifdef __GUI__
-    supervised_trainer_gui<t_net, float, int> stgui;
-    bool display = conf.exists_bool("train_display"); // enable/disable display
-    uint ninternals = conf.get_uint("ninternals"); // # examples' to display
-    if (display) {
-      //stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
-      stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
-    }
-#endif
-
     timer titer, ttest;
     // first show classification results without training
+    cout << "Testing..." << endl;
     ttest.restart();
-    if (!conf.exists_bool("no_training_test"))
+    if (!conf.exists_true("no_training_test"))
       thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
     cout << "testing_time="; ttest.pretty_elapsed(); cout << endl;
+
+#ifdef __GUI__
+    supervised_trainer_gui<t_net, float, int> stgui;
+    bool display = conf.exists_true("show_train"); // enable/disable display
+    uint ninternals = conf.exists("show_train_ninternals") ? 
+      conf.get_uint("show_train_ninternals") : 1; // # examples' to display
+    bool show_train_errors = conf.exists_true("show_train_errors");
+    bool show_val_errors = conf.exists_true("show_val_errors");
+    bool show_val_correct = conf.exists_true("show_val_correct");
+    uint hsample = conf.exists("show_hsample") ?conf.get_uint("show_hsample"):5;
+    uint wsample = conf.exists("show_wsample") ?conf.get_uint("show_wsample"):5;
+    if (display) {
+      cout << "Displaying training..." << endl;
+      if (show_val_errors) {
+	stgui.display_correctness(true, true, thetrainer, test_ds, infp,
+				  hsample, wsample);
+	stgui.display_correctness(true, false, thetrainer, test_ds, infp,
+				  hsample, wsample);
+      }
+      if (show_val_correct) {
+	stgui.display_correctness(false, true, thetrainer, test_ds, infp,
+				  hsample, wsample);
+	stgui.display_correctness(false, false, thetrainer, test_ds, infp,
+				  hsample, wsample);
+      }
+      stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
+    }
+#endif
 
     // now do training iterations 
     cout << "Training network with " << train_ds.size();
@@ -178,7 +198,8 @@ int main(int argc, char **argv) { // regular main without gui
       // train and test
       thetrainer.train(train_ds, trainmeter, gdp, 1, infp); // train
       ttest.restart();
-      if (!conf.exists_bool("no_training_test"))
+      cout << "Testing..." << endl;
+      if (!conf.exists_true("no_training_test"))
 	thetrainer.test(train_ds, trainmeter, infp);	// test
       thetrainer.test(test_ds, testmeter, infp);	// test
       cout << "test_minutes=" << ttest.elapsed_minutes() << endl;
@@ -203,7 +224,19 @@ int main(int argc, char **argv) { // regular main without gui
       save_matrix(testmeter.get_confusion(), fname.str().c_str());
 #ifdef __GUI__ // display
       if (display) {
-	//stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
+	cout << "Displaying training..." << endl;
+	if (show_val_errors) {
+	  stgui.display_correctness(true, true, thetrainer, test_ds, infp,
+				    hsample, wsample);
+	  stgui.display_correctness(true, false, thetrainer, test_ds, infp,
+				    hsample, wsample);
+	}
+	if (show_val_correct) {
+	  stgui.display_correctness(false, true, thetrainer, test_ds, infp,
+				    hsample, wsample);
+	  stgui.display_correctness(false, false, thetrainer, test_ds, infp,
+				    hsample, wsample);
+	}
 	stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
       }
 #endif
@@ -216,6 +249,6 @@ int main(int argc, char **argv) { // regular main without gui
 #ifdef __GUI__
     quit_gui(); // close all windows
 #endif
-  } eblcatch();
+  } eblcatcherror();
   return 0;
 }

@@ -47,14 +47,14 @@ namespace ebl {
   public:
     //! global step size
     double eta;
-    //! time at which to start using decay values
-    int decay_time;
-    //! L2 regularizer coefficient
-    double decay_l2;
-    //! L1 regularizer coefficient
-    double decay_l1;
     //! stopping criterion threshold
     double n;
+    //! L1 regularizer coefficient
+    double decay_l1;
+    //! L2 regularizer coefficient
+    double decay_l2;
+    //! time at which to start using decay values
+    int decay_time;
     //! momentum term
     double inertia;
     //! annealing coefficient for the learning rate
@@ -69,6 +69,8 @@ namespace ebl {
     gd_param(double leta, double ln, double l1, double l2, int dtime,
 	     double iner, double a_v, double a_t, double g_t);
   };
+
+  std::ostream& operator<<(std::ostream &out, const gd_param &p);
 
   ////////////////////////////////////////////////////////////////
   //! abstract class for randomization parameters
@@ -230,6 +232,27 @@ namespace ebl {
 
     //    virtual void resize(const intg* dimsBegin, const intg* dimsEnd);
 
+    ////////////////////////////////////////////////////////////////
+    //! slicing methods
+
+    //! Same as idx::select(), applied to internal buffers.
+    //! This returns a state_idx pointing to the same data as current state,
+    //! but pointing to a slice of it.
+    //! \param dimension The dimension to slice.
+    //! \param slice_index The slice to return.
+    fstate_idx<T> select(int dimension, intg slice_index);
+    
+    //! Same as idx::narrow(), applied to internal buffers.
+    //! This returns a state_idx pointing to the same data as current state,
+    //! but pointing to a slice of it.
+    //! \param dimension The dimension to slice.
+    //! \param slice_index The size of the slize to return.
+    //! \param offset The offset to start slicing.
+    fstate_idx<T> narrow(int dimension, intg size, intg offset);
+    
+    ////////////////////////////////////////////////////////////////
+    //! copy methods
+    
     //! make a new copy of self
     fstate_idx<T> make_copy();
 
@@ -365,6 +388,27 @@ namespace ebl {
 
     //    virtual void resize(const intg* dimsBegin, const intg* dimsEnd);
 
+    ////////////////////////////////////////////////////////////////
+    //! slicing methods
+
+    //! Same as idx::select(), applied to internal buffers.
+    //! This returns a state_idx pointing to the same data as current state,
+    //! but pointing to a slice of it.
+    //! \param dimension The dimension to slice.
+    //! \param slice_index The slice to return.
+    bstate_idx<T> select(int dimension, intg slice_index);
+     
+    //! Same as idx::narrow(), applied to internal buffers.
+    //! This returns a state_idx pointing to the same data as current state,
+    //! but pointing to a slice of it.
+    //! \param dimension The dimension to slice.
+    //! \param slice_index The size of the slize to return.
+    //! \param offset The offset to start slicing.
+    bstate_idx<T> narrow(int dimension, intg size, intg offset);
+    
+    ////////////////////////////////////////////////////////////////
+    //! copy methods
+    
     //! make a new copy of self
     bstate_idx<T> make_copy();
 
@@ -506,6 +550,27 @@ namespace ebl {
 
     //    virtual void resize(const intg* dimsBegin, const intg* dimsEnd);
 
+    ////////////////////////////////////////////////////////////////
+    //! slicing methods
+
+    //! Same as idx::select(), applied to internal buffers.
+    //! This returns a state_idx pointing to the same data as current state,
+    //! but pointing to a slice of it.
+    //! \param dimension The dimension to slice.
+    //! \param slice_index The slice to return.
+    bbstate_idx<T> select(int dimension, intg slice_index);
+     
+    //! Same as idx::narrow(), applied to internal buffers.
+    //! This returns a state_idx pointing to the same data as current state,
+    //! but pointing to a slice of it.
+    //! \param dimension The dimension to slice.
+    //! \param slice_index The size of the slize to return.
+    //! \param offset The offset to start slicing.
+    bbstate_idx<T> narrow(int dimension, intg size, intg offset);
+    
+    ////////////////////////////////////////////////////////////////
+    //! copy methods
+    
     //! make a new copy of self
     bbstate_idx<T> make_copy();
 

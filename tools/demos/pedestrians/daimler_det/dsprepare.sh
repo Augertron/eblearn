@@ -68,19 +68,19 @@ mkdir -p $inside_root
 # rm -Rf $outbg
 
 # # extract background images at random scales and positions
-# $bin/dscompiler $nopersons_root -type patch -precision $precision \
+# $bin/dscompile $nopersons_root -type patch -precision $precision \
 #     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
 #     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
 #     -maxdata $maxbg -nopadded \
 #     $ddisplay # debug
 
 # # compile background dataset
-# $bin/dscompiler ${outbg} -precision $precision \
+# $bin/dscompile ${outbg} -precision $precision \
 #     -outdir ${out} -dname ${bgds} -dims ${h}x${w}x${chans} \
 #     # $maxdata $maxperclass $ddisplay # debug
 
 # # compile regular dataset
-# $bin/dscompiler $root -precision $precision -outdir ${out} -channels $pp \
+# $bin/dscompile $root -precision $precision -outdir ${out} -channels $pp \
 #     -dname $name -resize $resize -kernelsz $kernel -dims ${h}x${w}x${chans} \
 # #    $maxdata $maxperclass $ddisplay # debug
 
@@ -100,6 +100,6 @@ mkdir -p $inside_root
 # extract 'inside' windows (zoom inside bounding box) 
 # from positive examples as negative examples
 dataroot=/home/sermanet/banquoadata/ped/mit/pedestrians128x64
-$bin/dscompiler $dataroot -precision $precision -outdir ${inside_root} \
+$bin/dscompile $dataroot -precision $precision -outdir ${inside_root} \
     -save mat -bboxfact .65 -forcelabel bg \
 #    $maxdata $maxperclass $ddisplay # debug

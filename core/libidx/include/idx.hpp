@@ -108,6 +108,15 @@ namespace ebl {
   eblerror(src0 << ", " << src1 << " and " << src2			\
 	   << " should have the same number of elements"); }
   
+  //! Calls eblerror if src0 and src1 and src2 have different number of
+  //! elements.
+#define idx_checknelems4_all(src0, src1, src2, src3)			\
+  if (((src0).nelements() != (src1).nelements()) ||			\
+      ((src0).nelements() != (src2).nelements()) ||			\
+      ((src0).nelements() != (src3).nelements())) {			\
+    eblerror(src0 << ", " << src1 << " and " << src2 << " and " << src3	\
+	     << " should have the same number of elements"); }
+  
   //! Calls eblerror if src0 and o0 do not match.
 #define idx_checkorder1(src0, o0)					\
   if ((src0).order() != o0) {						\
@@ -138,9 +147,11 @@ namespace ebl {
     idx_compatibility_error3(src0, src1, src2, "idx have incompatible orders");
 
   //! Calls eblerror if src0.dim(0) and src1.dim(d1) don't match e0,e1
-#define idx_checkdim2(src0, d0, e0, src1, d1, e1)	\
-  if (((src0).dim(d0) != e0) || ((src1).dim(d1) != e1))	\
-    idx_compatibility_error2(src0, src1, "idx have incompatible dimensions");
+#define idx_checkdim2(src0, d0, e0, src1, d1, e1)			\
+  if ((src0).dim(d0) != e0)						\
+    eblerror("expected dim " << d0 << " to be " << e0 << " in " << src0); \
+  if ((src1).dim(d1) != e1)						\
+    eblerror("expected dim " << d1 << " to be " << e1 << " in " << src1);
 
   //! Calls eblerror if src0.dim(d) and src1.dim(d) don't match
 #define idx_checkdim2_all(src0, src1, d)		\
@@ -570,6 +581,17 @@ namespace ebl {
        itr0.notdone();							\
        itr0.next(), itr1.next(), itr2.next())
 
+#define idx_aloop4(itr0,src0,type0,itr1,src1,type1,itr2,src2,type2,	\
+		   itr3,src3,type3)					\
+  idxiter<type0> itr0;							\
+  idxiter<type1> itr1;							\
+  idxiter<type2> itr2;							\
+  idxiter<type3> itr3;							\
+  idx_checknelems4_all(src0, src1, src2, src3);				\
+  for (itr0.init(src0), itr1.init(src1), itr2.init(src2), itr3.init(src3); \
+       itr0.notdone();							\
+       itr0.next(), itr1.next(), itr2.next(), itr3.next())
+
 #endif // if USING_STL_ITERS, else
 
   ////////////////////////////////////////////////////////////////
@@ -595,7 +617,7 @@ namespace ebl {
   */
 
   template <class T> idx<T>::~idx() {
-    DEBUG("idx::destructor %ld\n",long(this));
+    DEBUG_LOW("idx::destructor " << long(this));
     storage->unlock();
     if (pidxdim)
       delete pidxdim;

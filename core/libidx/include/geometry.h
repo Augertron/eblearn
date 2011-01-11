@@ -64,6 +64,10 @@ namespace ebl {
     //! i.e. intersection / union, 0.0 means the 2 rectangles do not overlap
     //! at all whereas 1.0 means they are identical.
     float match(const rect<T> &r);
+    //! Return how much this rect matches with r, between 0.0 and 1.0,
+    //! i.e. intersection / min(area, r.area), 0.0 means the 2 rectangles 
+    //! do not overlap at all whereas 1.0 means they are identical.
+    float min_match(const rect<T> &r);
     //! Return the height distance between this and r's centers height,
     //! over the height of this rect.
     float center_hdistance(const rect<T> &r) const;

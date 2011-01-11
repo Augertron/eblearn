@@ -83,8 +83,9 @@ namespace ebl {
   }
 
   void draw_box(int h0, int w0, int h, int w,
-		unsigned char r, unsigned char g, unsigned char b, string *s) {
-    gui.draw_box(h0, w0, h, w, r, g, b, s);
+		unsigned char r, unsigned char g, unsigned char b, 
+		unsigned char a, string *s) {
+    gui.draw_box(h0, w0, h, w, r, g, b, a, s);
   }
 
   void set_gui_silent() {

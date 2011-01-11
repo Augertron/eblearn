@@ -80,6 +80,8 @@ namespace ebl {
 
     map<string,string> add(list<string> &subvar, map<string,string> &ivars);
 
+    void add(string &var, string &val);
+
     //! Return a flat representation of the tree, using the variable name
     //! key as key to represent each group of variables.
     //! E.g. if we have a tree with nodes "name" and "i", and leaves
@@ -94,14 +96,14 @@ namespace ebl {
     varmaplist flatten(varmaplist *flat = NULL,
 		       map<string,string> *path = NULL);
 
-    //! Return the n best values (minimized) of key.
+    //! Return the n best values (minimized) of key, or all if n == 0.
     //! \param display If true, pretty best answers.
-    natural_varmap best(const string &key, uint n, bool display = false);
+    natural_varmap best(const string &key, uint n = 0, bool display = false);
     
     //! Return the n best sets of variables that minimize the key in the order
-    //! of their list.
+    //! of their list, or all if n == 0.
     //! \param display If true, pretty best answers.
-    varmaplist best(list<string> &keys, uint n, bool display = false);
+    varmaplist best(list<string> &keys, uint n = 0, bool display = false);
 
     //! Returns the variable name associated with this pair.
     string& get_variable();
@@ -115,13 +117,13 @@ namespace ebl {
     //! Returns a string representation of this tree flattened using key.
     //! If flat is not NULL, pretty this flat, otherwise generate
     //! a flat representation of the current tree.
-    static string flat_to_string(const string key, natural_varmap *flat =NULL);
+    static string flat_to_string(const string key, natural_varmap *flat = NULL);
 
     //! Returns a string representation of this tree flattened using key.
     //! If flat is not NULL, pretty this flat, otherwise generate
     //! a flat representation of the current tree.
     //! \param keys If not null, display keys first.
-    static string flat_to_string(varmaplist *flat =NULL,
+    static string flat_to_string(varmaplist *flat = NULL,
 				 list<string> *keys = NULL);
 
     //! Pretty this tree, flattened using key.
@@ -178,14 +180,13 @@ namespace ebl {
 
     //! Parse all files in root matching the .log extension.
     //! If 'sticky' is not null, keep those variables between iterations.
-    void parse_logs(const string &root, list<string> *sticky = NULL);
+    //! If 'watch' is not null and not empty, only extract those variables.
+    void parse_logs(const string &root, list<string> *sticky = NULL,
+		    list<string> *watch = NULL);
 
     //! Write text files parsable by plotting tools such as gnuplot,
     //! and generate pdf plots with gnuplot into directory dir.
-    //! \param gpparams Extra plot configurations parameters.
-    //! \param gptermianl The gnuplot terminal to use (default is pdf).
-    void write_plots(const char *dir = NULL, const char *gpparams = NULL,
-		     const char *gpterminal = "pdf");
+    void write_plots(configuration &conf, const char *dir = NULL);
 
     //! Return the n best values (minimized) of key.
     natural_varmap best(const string &key, uint n, bool display = false);
@@ -204,11 +205,12 @@ namespace ebl {
     int get_max_common_iter(const string &dir);
     
     //! Parse, analyze and report.
-    void process(const string &dir);
+    void process(const string &dir, bool displayall = false);
 
     //! Analyze log files and return the best set of variables.
     //! \param maxiter Set this to the maximum iteration number found.
-    varmaplist analyze(configuration &conf, const string &dir, int &maxiter);
+    varmaplist analyze(configuration &conf, const string &dir, int &maxiter,
+		       bool displayall = false);
 
     //! Send an email reporting the status of the runs.
     void send_report(configuration &conf, const string dir,
@@ -220,7 +222,9 @@ namespace ebl {
     // internal methods
   private:
     //! If 'sticky' is not null, keep those variables between iterations.
-    bool parse_log(const string &fname, list<string> *sticky = NULL);
+    //! If 'watch' is not null and not empty, only extract those variables.
+    bool parse_log(const string &fname, list<string> *sticky = NULL,
+		   list<string> *watch = NULL);
     
     ////////////////////////////////////////////////////////////////
     // members

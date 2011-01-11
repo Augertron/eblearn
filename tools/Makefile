@@ -34,8 +34,9 @@ INCLUDES="../core/libidx/include/*" "../core/libeblearn/include/*" \
 "libidxgui/include/*" "libeblearngui/include/*" "libeblearntools/include/*"	
 LIBS=libidx.${LIB_EXT} libidxgui.${LIB_EXT} libeblearn.${LIB_EXT} \
 		       libeblearngui.${LIB_EXT} libeblearntools.${LIB_EXT}
-BINS=dscompiler dssplit dsmerge matshow dsdisplay metarun metaparse capture
-DEMOS=objtrain objdetect mnist_train mnist_reco
+BINS=train detect dscompile dssplit dsmerge matshow dsdisplay \
+metarun metaparse capture
+DEMOS=mnist_train mnist_reco
 
 all: release
 
@@ -60,7 +61,7 @@ libs:
 	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
 	&& make idx eblearn eblearntools && cd ../..
 
-tools:
+tool:
 	@echo __________________________________________________________________
 	@echo
 	@echo "Compiling tools in release mode..."
@@ -87,14 +88,14 @@ test:
 	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
 	&& make tester && cd ../.. && ../bin/tester
 
-mtdetect:
+detect:
 	@echo __________________________________________________________________
 	@echo
-	@echo "Compiling mtdetect in release mode..."
+	@echo "Compiling detect in release mode..."
 	@echo __________________________________________________________________
 	mkdir -p build/Release 2> /dev/null
 	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
-	&& make mtdetect
+	&& make detect
 
 debug:
 	@echo __________________________________________________________________
@@ -114,6 +115,7 @@ doc:
 
 clean:
 	rm -rf build
+	rm -rf ../core/build
 	rm -rf bin/*
 	rm -rf lib/*
 	rm -rf ../doc/documentation/libeblearn_html

@@ -80,6 +80,7 @@ namespace ebl {
     else // first time, allocate frame
       frame = ipl_to_idx<Tdata>(ipl_frame);
 #endif /* __OPENCV__ */
+    frame_id_++;
     return this->postprocess();
   }
     

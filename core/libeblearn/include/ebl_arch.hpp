@@ -1,4 +1,3 @@
-
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun, Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
@@ -233,160 +232,241 @@ namespace ebl {
   // layers
 
   template <typename T, class Tstate>
-  layers<T,Tstate>::layers(bool oc)
-    : module_1_1<T,Tstate>("layers"), 
-      hi(NULL), ho(NULL), htmp(NULL) {
-    modules = new std::vector< module_1_1<T, Tstate>* >();
-    hiddens = new std::vector< Tstate* >();
+  layers<T,Tstate>::layers(bool oc, const char *name_,
+			   bool is_branch, bool narrow, intg dim,
+			   intg sz, intg offset)
+    : module_1_1<T,Tstate>(name_), intern_out(NULL),
+      hi(NULL), ho(NULL), htmp(NULL),
+      /* parallelism */
+      branch(is_branch), intern_h0(NULL), intern_h1(NULL),
+      // narrowing
+      branch_narrow(narrow), narrow_dim(dim), narrow_size(sz),
+      narrow_offset(offset) {
     this->own_contents = oc;
   }
 
   // Clean vectors. Module doesn't have ownership of sub-modules
   template <typename T, class Tstate>
   layers<T,Tstate>::~layers() {
-    if (this->own_contents){
-      for(unsigned int i=0;i<modules->size(); i++){
-    	delete (*modules)[i];
-      }
+    if (this->own_contents) {
+      for (unsigned int i=0; i < modules.size(); i++)
+    	delete modules[i];
       if (!this->memoptimized) {
-	for(unsigned int i=0;i<hiddens->size(); i++){
-	  delete (*hiddens)[i];
-	}
+	for(unsigned int i=0;i < hiddens.size(); i++)
+	  delete hiddens[i];
       }
     }
-    delete modules;
-    delete hiddens;
   }
 
   template <typename T, class Tstate>
   void layers<T,Tstate>::add_module(module_1_1<T, Tstate, Tstate>* module) {
-    modules->push_back(module);
-    hiddens->push_back(NULL);
+    // regular addition
+    modules.push_back(module);
+    hiddens.push_back(NULL);
   }
 
   template <typename T, class Tstate>
   bool layers<T,Tstate>::optimize_fprop(Tstate& in, Tstate& out){
     this->memoptimized = true;
-    if (modules->empty())
+    if (modules.empty())
       eblerror("trying to fprop through empty layers");
     // initialize buffers
     hi = &in;
-    ho = &out; 
-    // loop over modules
-    for (uint i = 0; i < modules->size(); i++) {
-      (*hiddens)[i] = ho;
-      // if output is truly in ho, swap buffers, otherwise do nothing.
-      if ((*modules)[i]->optimize_fprop(*hi,*ho))
-	swap_buffers();
+    ho = &out;
+    // parallelism: do not modify input nor output
+    if (branch) {
+      // create idxdim of same order but sizes 1
+      idxdim d = in.x.get_idxdim();
+      for (int k = 0; k < d.order(); ++k)
+	d.setdim(k, 1);
+      // create our internal buffers
+      intern_h0 = new Tstate(d);
+      intern_h1 = new Tstate(d);
+      ho = intern_h0;
     }
-    if (ho == &out)
+    // loop over modules
+    for (uint i = 0; i < modules.size(); i++) {
+      hiddens[i] = ho;
+      // parallelism: for first module, do not allow optim with in buffer
+      if (branch && i == 0) {
+	hi = intern_h1; // now we use only internal buffers
+	swap_buffers(); // swap hi and ho
+      } else {
+	// call optimization on submodules, and remember if they put
+	// the output in ho (swap == true) or not (swap == false).
+	bool swap = modules[i]->optimize_fprop(*hi,*ho);
+	// if output is truly in ho, swap buffers, otherwise do nothing.
+	// if module was a branch, it di
+	if (swap)
+	  swap_buffers();
+      }
+    }
+    // parallelism: remember which buffer contains the output
+    if (branch) {
+      intern_out = hiddens[modules.size() - 1];
+      // a branch does not output to current track, so the output for the
+      // mother branch is actually the branch's input, which is left in in
+      return false; // output is in in
+    }
+    // tell the outside if the output is in in or out
+    if (hiddens[modules.size() - 1] == &out)
       return true; // output is in out
     return false; // output is in in
   }
 
   template <typename T, class Tstate>
   void layers<T,Tstate>::fprop(Tstate& in, Tstate& out){
-    if (modules->empty())
+    if (modules.empty())
       eblerror("trying to fprop through empty layers");
     // initialize buffers
     hi = &in;
     ho = &out;
+    // create idxdim of same order but sizes 1
+    idxdim d = hi->x.get_idxdim();
+    for (int k = 0; k < d.order(); ++k)
+      d.setdim(k, 1);
+    // narrow input data if required by branch
+    Tstate narrowed;
+    if (branch && branch_narrow) {
+      narrowed = hi->narrow(narrow_dim, narrow_size, narrow_offset);
+      DEBUG("branch narrowing input " << hi->x << " to " << narrowed.x);
+      hi = &narrowed;
+    }
     // loop over modules
-    for(uint i = 0; i < modules->size(); i++){
+    for(uint i = 0; i < modules.size(); i++){
       // if last module, output into out
-      if (i == modules->size() - 1)
+      if (i == modules.size() - 1 && !branch)
 	ho = &out;
       else { // not last module, use hidden buffers
-	ho = (Tstate*)(*hiddens)[i];
+	ho = (Tstate*) hiddens[i];
 	// allocate hidden buffer if necessary
 	if (ho == NULL) {
-#ifdef __DEBUG__
-	  cout << "Allocating state_idx buffer: "<<hi->x.get_idxdim() << endl;
-#endif
-	  // create idxdim of same order but sizes 1
-	  idxdim d = hi->x.get_idxdim();
-	  for (int k = 0; k < d.order(); ++k)
-	    d.setdim(k, 1);
-	  // assign buffer
-	  (*hiddens)[i] = new Tstate(d);
-	  ho = (Tstate*)(*hiddens)[i];
+	  hiddens[i] = new Tstate(d);
+	  ho = (Tstate*) hiddens[i];
 	}
       }
       // run module
-      (*modules)[i]->fprop(*hi,*ho);
-      hi = ho;
+      modules[i]->fprop(*hi, *ho);
+      DEBUG("fprop " << this->name() << " " << hi->x << " -> "
+	    << modules[i]->name() << " -> " << ho->x);
+      // keep same input if current module is a branch, otherwise take out as in
+      bool isbranch = false;
+      if (dynamic_cast<layers<T,Tstate>*>(modules[i]) &&
+	  ((layers<T,Tstate>*)modules[i])->branch)
+	isbranch = true;
+      if (!isbranch)
+	hi = ho;
+      if (isbranch && i + 1 == modules.size())
+	ho = hi; // if last module is branch, set the input to be the branch out
     }
+    if (branch) // remember output buffer (did not output to out)
+      intern_out = ho;
   }
 
   template <typename T, class Tstate>
   void layers<T,Tstate>::bprop(Tstate& in, Tstate& out){
     if (this->memoptimized)
       eblerror("cannot bprop while using dual-buffer memory optimization");
-    if (modules->empty())
+    if (modules.empty())
       eblerror("trying to bprop through empty layers");
 
     // clear hidden states
-    for (unsigned int i=0; i<hiddens->size(); i++){
-      if ((*hiddens)[i])
-	(*hiddens)[i]->clear_dx();
-    }
+    // do not clear if we are a branch, it must have been cleared already by
+    // main branch
+    if (!branch)
+      clear_dx();
+    
     hi = &out;
     ho = &out;
 
+    if (branch) // we are a branch, use the internal output
+      ho = intern_out;
+
     // last will be manual
-    int niter = modules->size()-1;
-    for(int i=niter; i>0; i--){
-      hi = (*hiddens)[i-1];
-      (*modules)[i]->bprop(*hi,*ho);
+    for (uint i = modules.size() - 1; i > 0; i--){
+      // set input
+      hi = hiddens[i - 1];
+      // if previous module is a branch, take its input as input
+      if (dynamic_cast<layers<T,Tstate>*>(modules[i - 1]) &&
+	  ((layers<T,Tstate>*)modules[i - 1])->branch) {
+	if (i >= 2)
+	  hi = hiddens[i - 2];
+	else // i == 1
+	  hi = &in;
+      }
+      // bprop
+      DEBUG("bprop " << this->name() << " " << hi->dx << " <- "
+	    << modules[i]->name() << " <- " << ho->dx);
+      modules[i]->bprop(*hi, *ho);
+      // shift output pointer to input
       ho = hi;
     }
-    (*modules)[0]->bprop(in,*ho);
+    DEBUG("bprop " << this->name() << " " << in.dx << " <- "
+	  << modules[0]->name() << " <- " << ho->dx);
+    modules[0]->bprop(in, *ho);
   }
 
   template <typename T, class Tstate>
   void layers<T,Tstate>::bbprop(Tstate& in, Tstate& out){
     if (this->memoptimized)
       eblerror("cannot bbprop while using dual-buffer memory optimization");
-    if (modules->empty())
+    if (modules.empty())
       eblerror("trying to bbprop through empty layers");
 
     // clear hidden states
-    for (unsigned int i=0; i<hiddens->size(); i++){
-      if ((*hiddens)[i])
-	(*hiddens)[i]->clear_ddx();
-    }
+    // do not clear if we are a branch, it must have been cleared already by
+    // main branch
+    if (!branch)
+      clear_ddx();
 
     hi = &out;
     ho = &out;
 
+    if (branch) // we are a branch, use the internal output
+      ho = intern_out;
+    
     // last will be manual
-    int niter = modules->size()-1;
-    for(int i=niter; i>0; i--){
-      hi = (*hiddens)[i-1];
-      (*modules)[i]->bbprop(*hi,*ho);
+    for(uint i = modules.size() - 1; i > 0; i--){
+      // set input
+      hi = hiddens[i-1];
+      // if previous module is a branch, take its input as input
+      if (dynamic_cast<layers<T,Tstate>*>(modules[i - 1]) &&
+	  ((layers<T,Tstate>*)modules[i - 1])->branch) {
+	if (i >= 2)
+	  hi = hiddens[i - 2];
+	else // i == 1
+	  hi = &in;
+      }
+      // bbprop
+      DEBUG("bbprop " << this->name() << " " << hi->ddx << " <- "
+	    << modules[i]->name() << " <- " << ho->ddx);
+      modules[i]->bbprop(*hi,*ho);
+      // shift output pointer to input
       ho = hi;
     }
-    (*modules)[0]->bbprop(in,*ho);
+    DEBUG("bbprop " << this->name() << " " << in.ddx << " <- "
+	  << modules[0]->name() << " <- " << ho->ddx);
+    modules[0]->bbprop(in,*ho);
   }
 
   template <typename T, class Tstate>
   void layers<T,Tstate>::forget(forget_param_linear& fp){
-    if (modules->empty())
+    if (modules.empty())
       eblerror("trying to forget through empty layers");
 
-    for(unsigned int i=0; i<modules->size(); i++){
-      module_1_1<T,Tstate,Tstate> *tt = (*modules)[i];
+    for(unsigned int i=0; i<modules.size(); i++){
+      module_1_1<T,Tstate,Tstate> *tt = modules[i];
       tt->forget(fp);
     }
   }
 
   template <typename T, class Tstate>
   void layers<T,Tstate>::normalize(){
-    if (modules->empty())
+    if (modules.empty())
       eblerror("trying to normalize through empty layers");
 
-    for(unsigned int i=0; i<modules->size(); i++){
-      (*modules)[i]->normalize();
+    for(unsigned int i=0; i<modules.size(); i++){
+      modules[i]->normalize();
     }
   }
 
@@ -398,9 +478,16 @@ namespace ebl {
     idxdim os(isize);
     //! Loop through all the layers of the module, and update output
     //! size accordingly.
-    for (unsigned int i = 0; i < modules->size(); i++) {
-      module_1_1<T,Tstate,Tstate> *tt = (*modules)[i];
-      os = tt->fprop_size(os);
+    for (unsigned int i = 0; i < modules.size(); i++) {
+      module_1_1<T,Tstate,Tstate> *tt = modules[i];
+      // determine if module is a branch
+      bool isbranch = false;
+      if (dynamic_cast<layers<T,Tstate>*>(modules[i]) &&
+	  ((layers<T,Tstate>*)modules[i])->branch)
+	isbranch = true;
+      // do not go to branches
+      if (!isbranch)
+	os = tt->fprop_size(os);
     }
     //! Recompute the input size to be compliant with the output
     isize = bprop_size(os);
@@ -413,9 +500,16 @@ namespace ebl {
   idxdim layers<T,Tstate>::bprop_size(const idxdim &osize) {
     idxdim isize(osize);
     //! Loop through all the layers of the module, from the end to the beg.
-    for (int i = (int) modules->size() - 1; i >= 0; i--) {
-      module_1_1<T,Tstate,Tstate> *tt = (*modules)[i];
-      isize = tt->bprop_size(isize);
+    for (int i = (int) modules.size() - 1; i >= 0; i--) {
+      module_1_1<T,Tstate,Tstate> *tt = modules[i];
+      // determine if module is a branch
+      bool isbranch = false;
+      if (dynamic_cast<layers<T,Tstate>*>(modules[i]) &&
+	  ((layers<T,Tstate>*)modules[i])->branch)
+	isbranch = true;
+      // do not go to branches
+      if (!isbranch)
+	isize = tt->bprop_size(isize);
     }
     return isize;
   }
@@ -424,13 +518,13 @@ namespace ebl {
   layers<T,Tstate>* layers<T,Tstate>::copy() {
     layers<T,Tstate> *l2 = new layers<T,Tstate>(true);
     //! Loop through all the modules and buffers and copy them
-    int niter = this->modules->size();
+    int niter = this->modules.size();
     for(int i = 0; i < niter; i++) {
-      l2->add_module((module_1_1<T,Tstate>*)(*this->modules)[i]->copy());
-      if ((*this->hiddens)[i] != NULL) {
-	(*l2->hiddens)[i] =
-	  new Tstate((*this->hiddens)[i]->x.get_idxdim());
-	idx_copy((*this->hiddens)[i]->x, (*l2->hiddens)[i]->x);
+      l2->add_module((module_1_1<T,Tstate>*)this->modules[i]->copy());
+      if (this->hiddens[i] != NULL) {
+	l2->hiddens[i] =
+	  new Tstate(this->hiddens[i]->x.get_idxdim());
+	idx_copy(this->hiddens[i]->x, l2->hiddens[i]->x);
       }
     }
     return l2;
@@ -445,7 +539,7 @@ namespace ebl {
   
   template <typename T, class Tstate>
   uint layers<T,Tstate>::size() {
-    return modules->size();
+    return modules.size();
   }
 
   template <typename T, class Tstate>
@@ -454,14 +548,75 @@ namespace ebl {
     cout << is;
     //! Loop through all the layers of the module, and update output
     //! size accordingly.
-    for (unsigned int i = 0; i < modules->size(); i++) {
-      module_1_1<T,Tstate> *tt = (*modules)[i];
-      tt->pretty(is);
-      is = tt->fprop_size(is);
+    for (unsigned int i = 0; i < modules.size(); i++) {
+      module_1_1<T,Tstate> *tt = modules[i];
+      // determine if module is a branch
+      bool isbranch = false;
+      if (dynamic_cast<layers<T,Tstate>*>(modules[i]) &&
+	  ((layers<T,Tstate>*)modules[i])->branch)
+	isbranch = true;
+      // do not go to branches
+      if (!isbranch) {
+	tt->pretty(is);
+	is = tt->fprop_size(is);
+      }
     }
     cout << endl;
   }
 
+  template <typename T, class Tstate>
+  void layers<T,Tstate>::clear_dx() {
+    // clear hidden states
+    for (uint i = 0; i<hiddens.size(); i++){
+      if (hiddens[i])
+	hiddens[i]->clear_dx();
+    }
+    // clear hidden states of branches
+    for (uint i = 0; i < modules.size(); ++i) {
+      // check if this module is a branch
+      if (dynamic_cast<layers<T,Tstate>*>(modules[i]) &&
+	  ((layers<T,Tstate>*)modules[i])->branch) {
+	// if yes, clear its hidden states
+	layers<T,Tstate> *branch = (layers<T,Tstate>*) modules[i];
+	branch->clear_dx();
+      }
+    }
+  }
+
+  template <typename T, class Tstate>
+  void layers<T,Tstate>::clear_ddx() {
+    // clear hidden states
+    for (uint i = 0; i < hiddens.size(); i++) {
+      if (hiddens[i])
+	hiddens[i]->clear_ddx();
+    }
+    // clear hidden states of branches
+    for (uint i = 0; i < modules.size(); ++i) {
+      // check if this module is a branch
+      if (dynamic_cast<layers<T,Tstate>*>(modules[i]) &&
+	  ((layers<T,Tstate>*)modules[i])->branch) {
+	// if yes, clear its hidden states
+	layers<T,Tstate> *branch = (layers<T,Tstate>*) modules[i];
+	branch->clear_ddx();
+      }
+    }
+  }
+  
+  template <typename T, class Tstate>
+  bool layers<T,Tstate>::is_branch() {
+    return branch;
+  }
+
+  template <typename T, class Tstate>
+  module_1_1<T, Tstate, Tstate>* layers<T,Tstate>::find(const char *name) {
+    for (uint i = 0; i < modules.size(); ++i) {
+      module_1_1<T, Tstate, Tstate>* m = modules[i];
+      if (!strcmp(name, m->name()))
+	return m;
+    }
+    return NULL; // not found
+  }
+  
   ////////////////////////////////////////////////////////////////
   // layers_2
 
@@ -622,6 +777,282 @@ namespace ebl {
 					  Ten *energy) {
     fmod.fprop(i1, fout); // first propagate all the way up
     return fcost.infer2(fout, i2, ip, label, energy); //then infer from energies
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // flat_merge_module
+
+  template <typename T, class Tstate>
+  flat_merge_module<T, Tstate>::flat_merge_module(std::vector<Tstate**> &ins,
+						  std::vector<uint> &insh_,
+						  std::vector<uint> &insw_,
+						  uint inh_, uint inw_,
+						  std::vector<uint> &stridesh_,
+						  std::vector<uint> &stridesw_,
+						  uint instrideh_,
+						  uint instridew_,
+						  const char *name_,
+						  const char *list)
+    : module_1_1<T,Tstate>(name_), inh(inh_), inw(inw_), 
+      instrideh(instrideh_), instridew(instridew_), merge_list(list) {
+    if (ins.size() != insh_.size() || ins.size() != insw_.size()
+	|| ins.size() != stridesw_.size() || ins.size() != stridesw_.size())
+      eblerror("expected same size lists of inputs and strides but got "
+	       << ins.size() << ", " << insh_.size()  << ", " << insw_.size() 
+	       << ", " << stridesh_.size() << " and " << stridesw_.size());
+    for (uint i = 0; i < ins.size(); ++i)
+      inputs.push_back(ins[i]);
+    for (uint i = 0; i < insh_.size(); ++i)
+      insh.push_back(insh_[i]);
+    for (uint i = 0; i < insw_.size(); ++i)
+      insw.push_back(insw_[i]);
+    for (uint i = 0; i < stridesh_.size(); ++i)
+      stridesh.push_back(stridesh_[i]);
+    for (uint i = 0; i < stridesw_.size(); ++i)
+      stridesw.push_back(stridesw_[i]);
+  }
+
+  template <typename T, class Tstate>
+  flat_merge_module<T, Tstate>::~flat_merge_module() {
+  }
+
+  template <typename T, class Tstate>
+  void flat_merge_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
+    // check that input is compatible with windows sizes
+    if ((in.x.dim(1) - inh) % instrideh != 0 ||
+	(in.x.dim(2) - inw) % instridew != 0)
+      eblerror("input " << in.x << " incompatible with window " << inh << "x"
+	       << inw << " and stride " << instrideh << "x" << instridew);
+    // compute new size and resize output if necessary
+    intg fsize = inh * inw * in.x.dim(0); // feature size for main input
+    intg nh = 1 + (in.x.dim(1) - inh) / instrideh; // number of possible windows
+    intg nw = 1 + (in.x.dim(2) - inw) / instridew; // number of possible windows
+    for (uint i = 0; i < inputs.size(); ++i) // total feature size for all input
+      fsize += (*inputs[i])->x.dim(0) * insh[i] * insw[i];
+    idxdim d(fsize, nh, nw);
+    if (!out.x.same_dim(d))
+      out.resize(d);
+    intg offset = 0;
+    // copy main input to out
+    fsize = inh * inw * in.x.dim(0); // feature size for main input
+    idx<T> uin(in.x.unfold(1, inh, instrideh));
+    uin = uin.unfold(2, inw, instridew);
+    idx<T> o = out.x.narrow(0, fsize, offset);
+    for (uint p = 0; p < o.dim(1); ++p) {
+      for (uint q = 0; q < o.dim(2); ++q) {
+	idx<T> flat = uin.select(1, p);
+	flat = flat.select(1, q);
+	idx<T> tmp(flat.get_idxdim());
+	// TODO: tmp buffer less efficient than direct copy which but requires
+	// continuous data, make idx pointing to oo with flat's dims?
+	idx_copy(flat, tmp); 
+	flat = tmp.view_as_order(1);
+	idx<T> oo = o.select(1, p);
+	oo = oo.select(1, q);
+	idx_copy(flat, oo);
+      }
+    }
+    offset += fsize;
+    // copy inputs to out
+    for (uint i = 0; i < inputs.size(); ++i) {
+      idx<T> input = (*inputs[i])->x;
+      fsize = insh[i] * insw[i] * input.dim(0); // feature size from input
+      idx<T> uin(input.unfold(1, insh[i], stridesh[i]));
+      uin = uin.unfold(2, insw[i], stridesw[i]);
+      idx<T> o = out.x.narrow(0, fsize, offset);
+      for (uint p = 0; p < o.dim(1); ++p) {
+	for (uint q = 0; q < o.dim(2); ++q) {
+	  idx<T> flat = uin.select(1, p);
+	  flat = flat.select(1, q);
+	  idx<T> tmp(flat.get_idxdim());
+	  // TODO: tmp buffer less efficient than direct copy which but requires
+	  // continuous data, make idx pointing to oo with flat's dims?
+	  idx_copy(flat, tmp); 
+	  flat = tmp.view_as_order(1);
+	  idx<T> oo = o.select(1, p);
+	  oo = oo.select(1, q);
+	  idx_copy(flat, oo);
+	}
+      }
+      offset += fsize;
+    }
+#ifdef __DEBUG__
+    cout << describe() << ": " << in.x << " (in " << inh << "x" << inw
+	 << " stride " << instrideh << "x" << instridew << ")";
+    for (uint i = 0; i < inputs.size(); ++i)
+      cout << " + " << (*inputs[i])->x << " (in " << insh[i] << "x" << insw[i]
+	   << " stride " << stridesh[i] << "x" << stridesw[i] << ")";
+    cout << " -> " << out.x << endl;
+#endif
+  }
+
+  template <typename T, class Tstate>
+  void flat_merge_module<T, Tstate>::bprop(Tstate &in, Tstate &out) {
+    // copy out to main input
+    intg offset = 0;
+    idx<T> o1 = out.dx.view_as_order(1);
+    idx<T> o = o1.narrow(0, in.dx.nelements(), offset);
+    idx<T> input = in.dx.view_as_order(1);
+    idx_add(o, input, input);
+    offset += input.nelements();
+    // copy out to inputs
+    for (uint i = 0; i < inputs.size(); ++i) {
+      input = (*inputs[i])->dx.view_as_order(1);
+      o = o1.narrow(0, input.nelements(), offset);
+      idx_add(o, input, input);
+      offset += input.nelements();
+    }
+  }
+
+  template <typename T, class Tstate>
+  void flat_merge_module<T, Tstate>::bbprop(Tstate &in,
+					Tstate &out) {
+    // copy out to main input
+    intg offset = 0;
+    idx<T> o1 = out.ddx.view_as_order(1);
+    idx<T> o = o1.narrow(0, in.ddx.nelements(), offset);
+    idx<T> input = in.ddx.view_as_order(1);
+    idx_add(o, input, input);
+    offset += input.nelements();
+    // copy out to inputs
+    for (uint i = 0; i < inputs.size(); ++i) {
+      input = (*inputs[i])->ddx.view_as_order(1);
+      o = o1.narrow(0, input.nelements(), offset);
+      idx_add(o, input, input);
+      offset += input.nelements();
+    }
+  }
+
+  template <typename T, class Tstate>
+  idxdim flat_merge_module<T,Tstate>::fprop_size(idxdim &isize) {
+    intg fsize = inh * inw * isize.dim(0); // feature size for main input
+    intg nh = 1 + (isize.dim(1) - inh) / instrideh; // number of possible windows
+    intg nw = 1 + (isize.dim(2) - inw) / instridew; // number of possible windows
+    //! Extract its dimensions, update output size
+    idxdim osize(fsize, std::max((intg) 1, nh),
+		 std::max((intg) 1, nw));
+    isize = bprop_size(osize);
+    return osize;
+  }
+
+  template <typename T, class Tstate>
+  idxdim flat_merge_module<T,Tstate>::bprop_size(const idxdim &osize) {
+    intg fsize = osize.dim(0) / inh / inw; // feature size for main input
+    intg ih = ((osize.dim(1) - 1) * instrideh) + inh; // number of possible windows
+    intg iw = ((osize.dim(2) - 1) * instridew) + inw; // number of possible windows
+    //! Extract its dimensions, update output size
+    idxdim isize(fsize, ih, iw);
+    return isize;
+  }
+
+  template <typename T, class Tstate>
+  std::string flat_merge_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "flat_merge module " << this->name() << ", merging main input "
+	 << " (in " << inh << "x" << inw << " stride " << instrideh << "x" 
+	 << instridew << ") + " << inputs.size() << " inputs: ";
+    for (uint i = 0; i < inputs.size(); ++i)
+      desc << " (in " << insh[i] << "x" << insw[i]
+	   << " stride " << stridesh[i] << "x" << stridesw[i] << "), ";
+    if (!merge_list.empty())
+      desc << " (" << merge_list << ")";
+    return desc;
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // merge
+  
+  template <typename T, class Tstate>
+  merge_module<T, Tstate>::merge_module(std::vector<Tstate**> &ins,
+					intg concat_dim_,
+					const char *name_,
+					const char *list)
+    : module_1_1<T,Tstate>(name_), concat_dim(concat_dim_), merge_list(list) {
+    for (uint i = 0; i < ins.size(); ++i)
+      inputs.push_back(ins[i]);
+  }
+
+  template <typename T, class Tstate>
+  merge_module<T, Tstate>::~merge_module() {
+  }
+
+  template <typename T, class Tstate>
+  void merge_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
+    idxdim d(in.x), dtmp(in.x);
+    // check that all inputs are compatible and compute output size
+    for (uint i = 0; i < inputs.size(); ++i) {
+      Tstate *input = *(inputs[i]);
+      dtmp.setdim(concat_dim, input->x.dim(concat_dim));
+      if (!input->x.same_dim(dtmp))
+	eblerror("expected same dimensions but got " << input->x.get_idxdim()
+		 << " and " << dtmp);
+      // increment dimension
+      d.setdim(concat_dim, d.dim(concat_dim) + input->x.dim(concat_dim));
+    }
+    // check that output has the right size, if not, resize
+    if (out.x.get_idxdim() != d)
+      out.resize(d);
+    // copy main input to out
+    intg offset = 0;
+    idx<T> o = out.x.narrow(concat_dim, in.x.dim(concat_dim), offset);
+    idx_copy(in.x, o);
+    offset += in.x.dim(concat_dim);
+    // copy inputs to out
+    for (uint i = 0; i < inputs.size(); ++i) {
+      Tstate *input = *(inputs[i]);
+      o = out.x.narrow(concat_dim, input->x.dim(concat_dim), offset);
+      idx_copy(input->x, o);
+      offset += input->x.dim(concat_dim);
+    }
+#ifdef __DEBUG__
+    cout << describe() << ": " << in.x;
+    for (uint i = 0; i < inputs.size(); ++i)
+      cout << " + " << (*inputs[i])->x;
+    cout << " -> " << out.x << endl;
+#endif
+  }
+
+  template <typename T, class Tstate>
+  void merge_module<T, Tstate>::bprop(Tstate &in, Tstate &out) {
+    // copy out to main input
+    intg offset = 0;
+    idx<T> o = out.dx.narrow(concat_dim, in.dx.dim(concat_dim), offset);
+    idx_add(o, in.dx, in.dx);
+    offset += in.dx.dim(concat_dim);
+    // copy out to inputs
+    for (uint i = 0; i < inputs.size(); ++i) {
+      Tstate *input = *(inputs[i]);
+      o = out.dx.narrow(concat_dim, input->dx.dim(concat_dim), offset);
+      idx_add(o, input->dx, input->dx);
+      offset += input->dx.dim(concat_dim);
+    }
+  }
+
+  template <typename T, class Tstate>
+  void merge_module<T, Tstate>::bbprop(Tstate &in,
+					Tstate &out) {
+    // copy out to main input
+    intg offset = 0;
+    idx<T> o = out.ddx.narrow(concat_dim, in.ddx.dim(concat_dim), offset);
+    idx_add(o, in.ddx, in.ddx);
+    offset += in.ddx.dim(concat_dim);
+    // copy out to inputs
+    for (uint i = 0; i < inputs.size(); ++i) {
+      Tstate *input = *(inputs[i]);
+      o = out.ddx.narrow(concat_dim, input->ddx.dim(concat_dim), offset);
+      idx_add(o, input->ddx, input->ddx);
+      offset += input->ddx.dim(concat_dim);
+    }
+  }
+
+  template <typename T, class Tstate>
+  std::string merge_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "merge module " << this->name() << ", merging main input + "
+	 << (uint) inputs.size() << " inputs";
+    if (!merge_list.empty())
+      desc << " (" << merge_list << ")";
+    return desc;
   }
   
   ////////////////////////////////////////////////////////////////

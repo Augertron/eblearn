@@ -1,18 +1,20 @@
 #!/bin/sh
 
 ebl=$HOME/eblpierre/ # eblearn root
-source $ebl/tools/libeblearntools/src/metatrain.sh # include script functions
+source $ebl/tools/tools/src/metatrain.sh # include script functions
 ################################################################################
 dsname=inria
-metaconf_name=${dsname}_meta.conf # metaconf name
+metaconf_name=${dsname}3_meta.conf # metaconf name
 #metaconf_name=koray_meta.conf # metaconf name
 step0=0 # initial step where to (re)start metatraining
 tstamp=`date +"%Y%m%d.%H%M%S"` # timestamp of experiment
-#tstamp=20101021.012237 # overriding timestamp of experiment
-#tstamp=20101024.222755
+#tstamp=20101129.193427 #rose2
+#tstamp=20101215.173105
 threshold=.9 # threshold will be decremented at each iter until -.95
-h=78 #160 # 128 # 80 # network height
-w=38 # 96 # 64 # 40 # network width
+min_threshold=.1
+step_threshold=.1
+h=126 #78 #160 # 128 # 80 # network height
+w=78 #54 #78 #38 # 96 # 64 # 40 # network width
 chans=3 # number of input channels
 ker=7
 traindsname=${dsname}_mean${h}x${w}_ker${ker}_bg_train # dataset train name
@@ -22,7 +24,7 @@ eblearnbin0=$ebl/bin/ # original binary root
 save_max=3000 # max number of false positives to extract per iteration
 save_max_per_frame=5 # max number of false positives to extract per full image
 nthreads=6 # number of threads to use during false positive extraction
-maxiteration=20 # maximum number of retraining iterations
+maxiteration=30 # maximum number of retraining iterations
 precision=float # dataset precision
 ds_split_ratio=".1" # split ratio of validation over training
 draws=1 # number of dataset draws
@@ -51,7 +53,7 @@ metatrain $step0 $maxiteration $out $eblearnbin $negatives_root $metaconf \
     $metaconf0 $meta_name $tstamp $save_max $save_max_per_frame $input_max \
     $threshold $nthreads $npasses $min_scale $max_scale $precision $dataroot \
     $h $w $chans $draws $traindsname $valdsname $ds_split_ratio $display \
-    $minimal_display $save_video
+    $minimal_display $save_video $min_threshold $step_threshold
 
 # meta variables (used only if running this script with metarun)
 ################################################################################

@@ -70,14 +70,14 @@ mkdir -p "$false_positive_root/bg/"
 
 # # extract background images at different scales from all images parts that
 # # don't contain persons
-# ~/eblearn/bin/dscompiler $pascalroot -type pascalbg -precision $precision \
+# ~/eblearn/bin/dscompile $pascalroot -type pascalbg -precision $precision \
 #     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
 #     -maxperclass $nbg $maxdata -include "person" \
 #     -channels $pp -resize $resize -kernelsz $kernel \
 #     $maxdata $ddisplay # debug
 
 # # extract texts from pascal
-# ~/eblearn/bin/dscompiler $pascalroot -type pascal -precision $precision \
+# ~/eblearn/bin/dscompile $pascalroot -type pascal -precision $precision \
 #     -outdir $out -dims ${h}x${w}x3 \
 #     -channels $pp -ignore_difficult -resize $resize -kernelsz $kernel \
 #     -mindims 24x24 -include "head_Frontal" \
@@ -85,25 +85,25 @@ mkdir -p "$false_positive_root/bg/"
 #     $maxdata $maxperclass $ddisplay # debug
 
 # # compile background dataset
-# ~/eblearn/bin/dscompiler ${outbg} -type lush -precision $precision \
+# ~/eblearn/bin/dscompile ${outbg} -type lush -precision $precision \
 #     -outdir ${out} -dname ${bgds}_${nbg} \
 #     -dims ${h}x${w}x3 \
 #     $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
-~/eblearn/bin/dscompiler $root -precision $precision -type grid\
+~/eblearn/bin/dscompile $root -precision $precision -type grid\
     -outdir ${out} -channels $pp -dname ${name}_128 -gridsz 128x128 \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug
 
 # # compile regular dataset
-# ~/eblearn/bin/dscompiler $root -precision $precision -type grid\
+# ~/eblearn/bin/dscompile $root -precision $precision -type grid\
 #     -outdir ${out} -channels $pp -dname ${name}_32 -gridsz 32x32 \
 #     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
 #     $maxdata $maxperclass $ddisplay # debug
 
 # compile regular dataset
-~/eblearn/bin/dscompiler $root -precision $precision -type grid\
+~/eblearn/bin/dscompile $root -precision $precision -type grid\
     -outdir ${out} -channels $pp -dname $name -gridsz 64x64 \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug
@@ -133,7 +133,7 @@ mkdir -p "$false_positive_root/bg/"
 ###############################################################################
 
 # # extract all pascal full images that do not contain texts
-# ~/eblearn/bin/dscompiler $pascalroot -type pascalfull -precision $precision \
+# ~/eblearn/bin/dscompile $pascalroot -type pascalfull -precision $precision \
 #     -outdir $nopersons_root_pascal -exclude "person" \
 #     $maxdata $ddisplay # debug
 
@@ -145,7 +145,7 @@ mkdir -p "$false_positive_root/bg/"
 # && cd -
 
 # # compile false positive dataset
-# ~/eblearn/bin/dscompiler ${false_positive_root} -type lush \
+# ~/eblearn/bin/dscompile ${false_positive_root} -type lush \
 #     -precision ${precision} -input_precision ${precision} -outdir ${out} \
 #     -dname ${fp_name} \
 #     -dims ${h}x${w}x3 \

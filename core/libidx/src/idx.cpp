@@ -187,7 +187,7 @@ namespace ebl {
 
   // destructor: deletes dim/mod arrays
   idxspec::~idxspec() {
-    DEBUG("idxspec::~idxspec: %ld\n",(intg)this);
+    DEBUG_LOW("idxspec::~idxspec: " << (intg)this);
     setndim(0);
   }
 
@@ -200,7 +200,7 @@ namespace ebl {
   // copy method: this allocates new dim/mod arrays
   // and copies them from original
   void idxspec::copy( const idxspec &src) {
-    DEBUG("idxspec::copy: %ld\n",(intg)this);
+    DEBUG_LOW("idxspec::copy: " << (intg)this);
     offset = src.offset;
     // we do not initialize ndim before setndim here because it may already 
     // be initialized.
@@ -247,8 +247,8 @@ namespace ebl {
 
   // constructor for idx1
   idxspec::idxspec(intg o, intg size0) {
-    if ( size0 < 0) { 
-      eblerror("negative dimension"); }
+    if (size0 < 0)
+      eblerror("trying to construct idx1 with negative dimension " << size0);
     dim = NULL; mod = NULL;
     offset = o;
     ndim = 0; // required in constructors to avoid side effects in setndim
@@ -345,7 +345,7 @@ namespace ebl {
   // generic constructor for any dimension.
   // The dim and mod arrays past as argument are copied.
   idxspec::idxspec(intg o, int n, intg *ldim, intg *lmod) {
-    DEBUG("idxspec::idxspec: %ld\n",(intg)this);
+    DEBUG_LOW("idxspec::idxspec: " << (intg)this);
     dim = NULL; mod = NULL;
     offset = o;
     ndim = 0; // required in constructors to avoid side effects in setndim
@@ -465,11 +465,10 @@ namespace ebl {
     if (ndim <= 0)
       eblerror("cannot narrow a scalar");
     if ((d < 0) || (d>=ndim))
-      eblerror("narrow: illegal dimension index");
+      eblerror("narrow: illegal dimension index " << d << " in " << *this);
     if ((o < 0)||(s < 1)||(s+o > dim[d]))
       eblerror("trying to narrow dimension " << d << " to size " << s
-	       << " starting at offset " << o << " (dimension " << d << " is "
-	       << dim[d] << " large)");
+	       << " starting at offset " << o << " in " << *this);
     // this preserves the dim/mod arrays if dst == this
     dst->setndim(ndim);
     dst->offset = offset + o * mod[d];
@@ -655,9 +654,11 @@ namespace ebl {
      
   void idxdim::setdims(const idxspec &s) {
     ndim = s.ndim;
-    memcpy(dims, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
+    if (s.ndim > 0)
+      memcpy(dims, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
     // set remaining to -1
-    memset(dims + s.ndim, -1, (MAXDIMS - s.ndim) * sizeof (intg));
+    int ord = std::max((int) 0, s.ndim);
+    memset(dims + ord, -1, (MAXDIMS - ord) * sizeof (intg));
   }
   
   void idxdim::setdims(const idxdim &s) {
@@ -665,7 +666,8 @@ namespace ebl {
     for (int i = 0; i < s.order(); ++i)
       dims[i] = s.dim(i);
     // set remaining to -1
-    memset(dims + s.order(), -1, (MAXDIMS - s.order()) * sizeof (intg)); 
+    intg ord = std::max((intg) 0, s.order());
+    memset(dims + ord, -1, (MAXDIMS - ord) * sizeof (intg)); 
   }
 
   void idxdim::setdims(intg n) {

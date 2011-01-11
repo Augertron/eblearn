@@ -25,8 +25,8 @@ out=$root/ds/
 ebl=${HOME}/eblpierre/
 bin=${ebl}/bin/
 
-h=78 #114 #78 #128 # 160 # 128 # target height
-w=36 # 58 #38 # 64 # 96 # 76 # target width
+h=126 #78 #114 #78 #128 # 160 # 128 # target height
+w=78 #36 # 58 #38 # 64 # 96 # 76 # target width
 chans=3 # target color channels
 maxval=1000 # number of samples per class in validation set
 draws=1 # number of train/val sets to draw
@@ -36,7 +36,7 @@ kernel=7 #9
 resize=mean #bilinear
 nbg=2 # maximum number of bg extracted per scale
 # scales in bg images, in terms of factor of the target size, i.e. hxw * scale
-bgscales=3.5,4.75,6
+bgscales=3,3.5,4 #3.5,4.75,6
 maxbg=6000 # initial number of negatives
 max_zoomedin=2000 # initial number of zoomed in negatives
 max_zoomedout=2000 # initial number of zoomed out negatives
@@ -79,7 +79,7 @@ check_error() {
 # one-time dataset preparations
 
 # convert annotation files to pascal format
-#${ebl}/tools/demos/pedestrians/inria/inria_to_xmlpascal.sh $inria_root
+# ${ebl}/tools/demos/pedestrians/inria/inria_to_xmlpascal.sh $inria_root
 
 ###############################################################################
 # (repeatable) dataset compilations
@@ -88,14 +88,14 @@ check_error() {
 rm -Rf $outbg
 
 # extract background images at random scales and positions
-$bin/dscompiler $full_negative_root/../ -type patch -precision $precision \
+$bin/dscompile $full_negative_root/../ -type patch -precision $precision \
     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x${chans} \
     -maxperclass $nbg -channels $pp -resize $resize -kernelsz $kernel \
     -maxdata $maxbg -nopadded -forcelabel bg $debug
 check_error $? 
 
 # compile background dataset
-$bin/dscompiler ${outbg} -precision $precision \
+$bin/dscompile ${outbg} -precision $precision \
     -outdir ${out} -dname ${bgds} -dims ${h}x${w}x${chans} $debug
 check_error $? 
 
@@ -106,7 +106,7 @@ rm -Rf $outbg
 # crop inria so that the window height is 1.33333 the height of the pedestrians,
 # i.e. H96 gives 128 window height, and cropping factor of .8
 # then width target is 76, yielding cropping factor of .791
-$bin/dscompiler $dataroot_pos -type pascal -annotations $annotations \
+$bin/dscompile $dataroot_pos -type pascal -annotations $annotations \
     -precision $precision -outdir ${out} \
     -channels $pp -dname ${name_pos} -resize $resize -kernelsz $kernel \
     -dims ${h}x${w}x${chans} -bboxhfact 1.4 -bboxwfact 1.4 -jitter 4,4,8,.15,5 \
@@ -119,7 +119,7 @@ check_error $?
 # into individual mat images, so that they can be used by detector
 # later to extract false positives out of them
 mkdir -p $zoomedin_negative_root
-$bin/dscompiler $dataroot_pos -type pascal -annotations $annotations \
+$bin/dscompile $dataroot_pos -type pascal -annotations $annotations \
     -precision $precision -outdir $zoomedin_negative_root \
     -bboxhfact .9 -bboxwfact .9 -bbox_woverh .5 -wmirror -save mat \
     -include ped  \
@@ -130,7 +130,7 @@ check_error $?
 # into individual mat images, so that they can be used by detector
 # later to extract false positives out of them
 mkdir -p $zoomedout_negative_root
-$bin/dscompiler $dataroot_pos -type pascal -annotations $annotations \
+$bin/dscompile $dataroot_pos -type pascal -annotations $annotations \
     -precision $precision -outdir $zoomedout_negative_root \
     -bboxhfact 2.0 -bboxwfact 2.0 -bbox_woverh .5 -save mat -wmirror \
     -include ped  \
@@ -139,7 +139,7 @@ check_error $?
 
 # compile regular zoomed in negative dataset (no cropping) from
 # extracted mat images
-$bin/dscompiler $dataroot_pos -type pascal -annotations $annotations \
+$bin/dscompile $dataroot_pos -type pascal -annotations $annotations \
     -precision $precision -forcelabel bg -bboxhfact 1.0 -bboxwfact 1.0 -wmirror\
     -outdir ${out} -channels $pp -dname ${name_neg} -resize $resize \
     -kernelsz $kernel -dims ${h}x${w}x${chans} -maxdata $max_zoomedin \
@@ -152,7 +152,7 @@ check_error $?
 
 if [ -d ${zoomedout_negative_root} ] ; then
     # compile regular zoomed out negative dataset (no cropping)
-    $bin/dscompiler $dataroot_pos -type pascal -annotations $annotations \
+    $bin/dscompile $dataroot_pos -type pascal -annotations $annotations \
 	-precision $precision -forcelabel bg -bboxhfact 1.8 -bboxwfact 1.8 \
 	-wmirror\
 	-outdir ${out} -channels $pp -dname ${name_neg} -resize $resize \

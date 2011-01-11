@@ -125,7 +125,7 @@ namespace ebl {
 	read_size /= sz;
 	if (expected_size != read_size) {
 	  eblthrow("image read: not enough items read. expected "
-		   << expected_size << " but found " << read_size);
+		   << (int) expected_size << " but found " << (int) read_size);
 	}
       } else {
 	{ idx_bloop1(ou, *pout, ubyte) {

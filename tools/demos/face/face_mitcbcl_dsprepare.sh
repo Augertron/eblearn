@@ -54,7 +54,7 @@ mkdir -p $out
 ###############################################################################
 
 # compile regular dataset
-~/eblearn/bin/dscompiler $root -precision $precision \
+~/eblearn/bin/dscompile $root -precision $precision \
     -outdir ${out} -channels $pp -dname $name \
     -resize $resize -kernelsz $kernel -dims ${h}x${w}x3 \
     $maxdata $maxperclass $ddisplay # debug

@@ -70,6 +70,10 @@ namespace ebl {
   pairtree::~pairtree() {
   }
 
+  void pairtree::add(string &var, string &val) {
+    vars[var] = val;
+  }
+
   map<string,string> pairtree::add(list<string> &subvar_,
 				   map<string,string> &ivars) {
     list<string> subvar = subvar_;
@@ -176,6 +180,8 @@ namespace ebl {
     natural_varmap flat = flatten(key);
     // keep only first n entries
     natural_varmap::iterator i = flat.begin();
+    if (n == 0)
+      n = flat.size();
     for (uint j = 0; j < n && i != flat.end(); j++, i++) ;
     flat.erase(i, flat.end());
     // display
@@ -191,6 +197,8 @@ namespace ebl {
     flat.sort(map_natural_less(keys));
     // keep only first n entries
     varmaplist::iterator i = flat.begin();
+    if (n == 0)
+      n = flat.size();
     for (uint j = 0; j < n && i != flat.end(); j++, i++) ;
     flat.erase(i, flat.end());
     // display
@@ -232,6 +240,7 @@ namespace ebl {
     ostringstream s;
     if (!flat)
       return s.str();
+    s << "________________________________________________________" << endl;
     for (natural_varmap::iterator i = flat->begin(); i != flat->end(); ++i) {
       s << i->first << ": ";
       s << map_to_string2(i->second);
@@ -245,6 +254,7 @@ namespace ebl {
     ostringstream s;
     if (!flat_)
       return s.str();
+    s << "________________________________________________________" << endl;
     varmaplist flat = *flat_; // make a copy
     uint j = 1;
     for (varmaplist::iterator i = flat.begin(); i != flat.end(); ++i, ++j) {
@@ -346,7 +356,8 @@ namespace ebl {
   metaparser::~metaparser() {
   }
 
-  bool metaparser::parse_log(const string &fname, list<string> *sticky) {
+  bool metaparser::parse_log(const string &fname, list<string> *sticky,
+			     list<string> *watch) {
     ifstream in(fname.c_str());
     string s, var, val;
     char separator = VALUE_SEPARATOR;
@@ -377,8 +388,13 @@ namespace ebl {
 	  stok = s.size();
 	val = s.substr(itok + 1, stok - itok - 1);
 	s = s.substr(stok);
-	vars[var] = val;
 	itok = s.find(separator);
+	// if not in watch list, ignore
+	if (watch && watch->size() 
+	    && find(watch->begin(), watch->end(), var) == watch->end())
+	  continue ;
+	// remember var/val
+	vars[var] = val;
 	// if a key, make it sticky
 	if (find(hierarchy.begin(), hierarchy.end(), var) != hierarchy.end())
 	  stick[var] = val;
@@ -428,7 +444,7 @@ namespace ebl {
     return tree.best(keys, n, display);
   }
 
-  void metaparser::process(const string &dir) {
+  void metaparser::process(const string &dir, bool displayall) {
     string confname, jobs_info;
     configuration conf;
     // find all configurations in non-sorted order, the meta conf
@@ -443,13 +459,18 @@ namespace ebl {
 	   << "this directory" << endl;
     }
     int iter = 0;
-    varmaplist best = analyze(conf, dir, iter);
+    varmaplist best = analyze(conf, dir, iter, displayall);
     send_report(conf, dir, best, iter, confname, jobs_info);
   }
   
   // write plot files, using gpparams as additional gnuplot parameters
-  void metaparser::write_plots(const char *dir, const char *gpparams,
-			       const char *gpterminal) {
+  void metaparser::write_plots(configuration &conf, const char *dir) {
+    string gpparams = "", gpterminal = "pdf";
+    if (conf.exists("meta_gnuplot_params"))
+      gpparams = conf.get_string("meta_gnuplot_params");
+    if (conf.exists("meta_gnuplot_terminal"))
+      gpterminal = conf.get_string("meta_gnuplot_terminal");
+
     string colsep = "\t";
     string gnuplot_config1 = "clear ; set terminal ";
     gnuplot_config1 += gpterminal;
@@ -465,9 +486,12 @@ namespace ebl {
     if (!tree.exists("job"))
       cerr << "warning: expected a \"job\" variable to differentiate each "
 	   << "curve in the plots but not found." << endl;
-    if (!tree.exists("i"))
+    bool iexists = true;
+    if (!tree.exists("i")) {
+      iexists = false;
       cerr << "warning: expected a \"i\" variable for the x-axis "
 	   << "in the plots but not found." << endl;
+    }
     // we assume that the tree has been extracted using those keys in that
     // order: job, i
     // loop on each job
@@ -478,7 +502,14 @@ namespace ebl {
       string job = i->first;
       // flatten remaining tree based on key "i"
       string ikey = "i";
+      // if key doesn't exist, define it
+      if (!iexists) {
+	string ival;
+	ival << ijob;
+	i->second.add(ikey, ival);
+      }
       natural_varmap flat = i->second.flatten(ikey);
+      map<string,bool> initiated;
       // loop on all i
       for (natural_varmap::iterator j = flat.begin(); j != flat.end(); ++j) {
 	// convert i to double
@@ -509,8 +540,7 @@ namespace ebl {
 	    fname << k->first << ".p";
 	    plist.push_back(fname.str());
 	    *outp << gnuplot_config1;
-	    if (gpparams)
-	      *outp << gpparams;
+	    *outp << gpparams;
 	    *outp << ";" << gnuplot_config2;
 	    *outp << k->first << gnuplot_config3;
 	  }
@@ -527,8 +557,9 @@ namespace ebl {
 	      continue ; // keep going
 	    }
 	  }
-	  // for the first i only, add job plot description in p file
-	  if (j == flat.begin()) {
+	  // if not initiated, add job plot description in p file
+	  if (initiated.find(k->first) == initiated.end()) {
+	    initiated[k->first] = true;
 	    ofstream &outp = *pfiles[k->first];
 	    if (ijob > 0)
 	      outp << ", ";
@@ -574,13 +605,14 @@ namespace ebl {
       cerr << "Warning: no plots created." << endl;
   }
 
-  void metaparser::parse_logs(const string &root, list<string> *sticky) {
+  void metaparser::parse_logs(const string &root, list<string> *sticky,
+			      list<string> *watch) {
     cout << "Parsing all .log files recursively..." << endl;
     list<string> *fl = find_fullfiles(root, ".*[.]log");
     if (fl) {
       for (list<string>::iterator i = fl->begin(); i != fl->end(); ++i) {
 	cout << "Parsing " << *i << endl;
-	parse_log(*i, sticky);
+	parse_log(*i, sticky, watch);
       }
       delete fl;
     }
@@ -592,22 +624,21 @@ namespace ebl {
   }
   
   varmaplist metaparser::analyze(configuration &conf, const string &dir,
-				int &maxiter) {
-    list<string> sticky;
+				 int &maxiter, bool displayall) {
+    list<string> sticky, watch;
     varmaplist best;
-    string gpparams = "";
-    if (conf.exists("meta_gnuplot_params"))
-      gpparams = conf.get_string("meta_gnuplot_params");
+    // get list of sticky variables
     if (conf.exists("meta_sticky_vars")) {
       sticky = string_to_stringlist(conf.get_string("meta_sticky_vars"));
       cout << "Sticky variables: " << stringlist_to_string(sticky) << endl;
     }
-    parse_logs(dir, &sticky);
-    if (conf.exists("meta_gnuplot_terminal"))
-      write_plots(dir.c_str(), gpparams.c_str(),
-		  conf.get_cstring("meta_gnuplot_terminal"));
-    else
-      write_plots(dir.c_str(), gpparams.c_str());
+    // get list of variables to watch for
+    if (conf.exists("meta_watch_vars")) {
+      watch = string_to_stringlist(conf.get_string("meta_watch_vars"));
+      cout << "Variables to watch (ignoring others): " 
+	   << stringlist_to_string(watch) << endl;
+    }
+    parse_logs(dir, &sticky, &watch);
     maxiter = get_max_common_iter();
     if (!conf.exists("meta_minimize"))
       cerr << "Warning: meta_minimize not defined, not attempting to determine"
@@ -615,12 +646,18 @@ namespace ebl {
     else {
       list<string> keys =
 	string_to_stringlist(conf.get_string("meta_minimize"));
+      // display all (sorted) results if required
+      if (displayall) {
+	cout << "All sorted results at iteration " << maxiter << ":" << endl;
+	varmaplist b = tree.best(keys);
+	cout << pairtree::flat_to_string(&b, &keys) << endl;
+      }
       if (conf.exists_true("meta_ignore_iter0") // ignore iter 0's results
 	  && get_max_iter() > 0) // don't ignore if max iter == 0
 	tree.delete_pair("i", "0");
       // get best values to be minimized
-      best = tree.best(keys, std::max((uint) 1,
-				      conf.get_uint("meta_send_best")));
+      uint nbest = conf.exists("meta_nbest") ? conf.get_uint("meta_nbest") : 1;
+      best = tree.best(keys, std::max((uint) 1, nbest));
       ostringstream dirbest, tmpdir, cmd;
       string job;
       int ret;
@@ -731,7 +768,7 @@ namespace ebl {
       list<string> *errlogs = find_fullfiles(dir, ".*[.]errlog");
       if (errlogs) {
 	cmd.str("");
-	cmd << "echo \"Errors:\"";
+	cmd << "echo \"Errors / Warnings:\"";
 	cmd << " >> " << tmpfile;
 	res = std::system(cmd.str().c_str());
 	for (list<string>::iterator ierr = errlogs->begin();
@@ -752,6 +789,8 @@ namespace ebl {
       cout << cmd.str();
       cmd << "\" >> " << tmpfile;
       res = std::system(cmd.str().c_str());
+      // create plot files
+      write_plots(conf, dir.c_str());
       // print metaconf
       cmd.str("");
       cmd << "echo \"\nMeta Configuration:\"";
@@ -766,10 +805,11 @@ namespace ebl {
       // subject of email
       cmd << " -s \"MetaRun " << conf.get_name() << "\"";
       // attach files
-      if (best.size() > 0)
+      if (!conf.exists_false("meta_send_best") && best.size() > 0)
 	cmd << " -a " << dir << "/best.tgz"; 
       // attach logs
-      if (tar_pattern(dir, dir, "logs.tgz", ".*[.]log"))
+      if (!conf.exists_false("meta_send_logs")
+	  && tar_pattern(dir, dir, "logs.tgz", ".*[.]log"))
 	cmd << " -a " << dir << "/logs.tgz";
       // attach plots
       list<string> *plots = find_fullfiles(dir, ".*[.]pdf");

@@ -350,7 +350,18 @@
 	 http://www.imagemagick.org/www/binary-releases.html#windows<br>
 	 During installation, check both "Add application directory to your
 	 system path" and "Install development headers and libraries for
-	 C and C++".
+	 C and C++".</li>
+       <li><strong>pthread</strong><br>
+	 For multi-thread support (e.g. multi-threaded detection with
+	 'detect' tool), download pthread for Windows:
+	 http://sourceware.org/pthreads-win32/<br>
+	 Then set pthread paths in eblearn/tools/scripts/FindCustom.cmake:<br>
+	 <code>
+	   SET(PTHREAD_FOUND TRUE)<br>
+	   SET(PTHREAD_INCLUDE_DIR "\pthread\Pre-built.2\include")<br>
+	   SET(PTHREAD_LIBRARY "\pthread\Pre-built.2\lib\pthreadVC2.lib")<br>
+	 </code>
+	 </li>
        <li><strong>CPPUnit</strong><br>
        Download from
        http://sourceforge.net/projects/cppunit/files/cppunit/1.12.1/<br>
@@ -362,7 +373,7 @@
        button.</li>
 	 <li>The resulting libraries can be found in the lib/ directory.</li>
        </ul>
-       Finally add those lines in eblearn/scripts/FindCustom.cmake:<br>
+       Finally add those lines in eblearn/tools/scripts/FindCustom.cmake:<br>
        <code>
 	 SET(CPPUNIT_FOUND TRUE)<br>
 	 SET(CPPUNIT_INCLUDE_DIR "B:/windows/cppunit-1.12.1/include")<br>

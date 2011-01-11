@@ -12,63 +12,191 @@
     <!--#include virtual="../../nav.html" --> 
     
     <div id="globalWrapper">
-      <h1 id="firstHeading" class="firstHeading"><b>libidx
-	  tutorial:</b>Tensor Descriptors and Operators</h1> 
-      <h3 id="siteSub">By <a href="http://sermanet.free.fr/">Pierre
-	  Sermanet</a> and <a href="http://yann.lecun.com/">Yann LeCun</a>
+      <h2 id="firstHeading" class="firstHeading">libidx
+	tutorial</h2> 
+      <h4 id="siteSub">by <a href="http://sermanet.free.fr/">Pierre
+	  Sermanet</a> (January 10th, 2011)</h4><br><br> 
 
-	(New York University)</h3><br><br> 
-
-      <p>The eblearn (energy-based learning) C++
-	library <b>libidx</b> contains tensor based operations
-	which can be used for tensor manipulation. 
-	The library has a generic and modular architecture, allowing
-	easy prototyping and building tensors of different datatype  
-	and perform manipulation or operation on them. This library  
-	within eblearn is one of the foundation library which provide completeness to whole module.</p>
-
+      <p>The idx library provides support for tensor description and
+	manipulation. It is self-contained and the foundation for the eblearn
+	learning library. In addition to generic tensor operations,
+	it provides a set of operations specific to images, which are
+	described as 3-dimensional tensors.</p>
+      
       <table class="toc" style="width: 250px;" summary="Contents">
 	<tbody><tr><td><div id="toctitle"><h2>Contents</h2></div>
 	      <ul>
-
-		<li><a href="#libidx">EB Learn: LIBIDX</a></li>
-		<a href="#libidx">	      </a><li><a href="#tensdesc">Tensor Descriptor</a></li>
-		<a href="#tensdesc">	      </a><ul>
-		  <a href="#storage">		</a><li><a href="#storage">Storages</a></li>
-		  <li><a href="#tensmanip">Tensor manipulation operation</a></li>
-		  <li><a href="#tensiter">Tensors Iterators</a></li>
-
-		  <li><a href="#idxmanip">
-		      Idx Manipulation</a></li>
-		  <li><a href="#gui">GUI display</a></li>
+		<li><a href="#overview">Overview</a></li>
+		<li><a href="#idx">1 Tensors</a></li>
+		<ul>
+		  <li><a href="#descriptors">1.1 Descriptor</a></li>
+		  <li><a href="#accessors">1.2 Accessors</a></li>
+		  <li><a href="#shallow">1.3 Shallow manipulators</a></li>
 		</ul>
-		
+		<li><a href="#idxops">2 Tensor operations</a></li>
+		<li><a href="#image">3 Image operations</a></li>
+		<li><a href="#idxIOr">4 Tensor I/O</a></li>
+		<li><a href="#gui">5 Tensor display (libidxgui)</a></li>
+	      </ul>
 	  </tr>
       </tbody></table>
 
-      <a name="libidx"></a>
-      <h2>LIBIDX</h2>
-      <p>The idx library (or libidx) provides convenient and efficient tensor (multi-dimensional arrays)manipulations, used as a basis for the eblearn library.</p>
+      <a name="overview"></a>
+      <h2>Overview</h2>
+      <p>The idx library (libidx) provides tensor (multi-dimensional arrays)
+	descriptors and manipulators, basis to the eblearn library. This core
+	library along with libeblearn is self-contained and templated,
+	allowing compilation for any type and on any platform. Headers (.h) and
+	templates (.hpp) files are located in core/libidx/include,
+	source files (.cpp) in core/libidx/src.</p>
 
-      <p>There are three main components to the library:
-      </p><ol>
-	<li>tensor descriptors and iterators,</li>
-	<li>content operators and</li><li>
-	  image-specific operators.
-	</li>
+      <p>There are five main components to the library:</p>
+      <ol>
+	<li><b>Tensor descriptors and iterators:</b> they constitute the shallow
+	  and inexpensive tensor operations,
+	  declared in <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/trunk/core/libidx/include/idx.h?revision=HEAD&view=markup">idx.h</a>.</li>
+	<li><b>Tensor content operators:</b> these are generic deep operators
+	  that modify the actually data pointed to by the descriptor, declared
+	  in <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/trunk/core/libidx/include/idxops.h?revision=HEAD&view=markup">idxops.h</a>.</li>
+	<li><b>Image operators:</b> these apply image-specific and deep
+	  operations such as rotations or edge extraction, declared in
+	  <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/trunk/core/libidx/include/image.h?revision=HEAD&view=markup">image.h</a>.</li>
+	<li><b>Tensor I/O:</b> the loading and saving operations for
+	  tensors and images, declared in
+	  <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/trunk/core/libidx/include/idxIO.h?revision=HEAD&view=markup">idxIO.h</a> and
+	  <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/trunk/core/libidx/include/imageIO.h?revision=HEAD&view=markup">imageIO.h</a>.</li>
+	<li><b>Tensor display:</b> draw tensors on a 2-dimensional GUI,
+	  implemented as a separate library called libidxgui in 
+	  <a href="http://eblearn.svn.sourceforge.net/viewvc/eblearn/trunk/tools/libidxgui/include/">tools/libidxgui/</a> in order to keep core libraries
+	  self-contained and indepedent of GUIs.</li>
       </ol>
       <p></p>
 
-      <a name="tensdesc"></a>
-      <h2>TENSOR DESCRIPTORS</h2>
-      <h3>Scalars, Vectors, Matrices, Tensors, and Storages</h3>
-      <p>Basically, it is underlying support of EBLEARN library for creation & manipulations of various kind of dataset represented in form of multidimensional arrays. It can operate on scalars, vectors, matrices, or high-dimensional tensors from 0 to 8 dimensions.</p>
-      <p>The implementation provide rely on templates to support any data type format along with standard format such as UBYTE, INT, FLOAT, DOUBLE, LONG.</p><p>For example:</p>
+      <a name="idx"></a>
+      <h2>Tensors</h2>
+
+      <!----------------------------------------------------------------------->
+      <a name="descriptors"></a>
+      <h4>Descriptor</h4>
+
+      <p>The idx class can represent tensors up to 8 dimensions.
+	It is templated in order to be compiled to work with any data type.
+	For a floating point 8 by 4 matrix can be created as follow:</p>
 
       <div id="vc_markup"><pre>
-	  idx&lt;float&gt; M(10, 8, 4);  //It creates a 3-Dimensional matrix of float;
-	  M.set(34.7, 2, 7, 1);  //set value of element (2,7,1) to 34.7 with 0-based indexing
-	  float x = M.get(2, 7, 1); //get value of element (2, 7, 1)</pre></div>
+	  idx&lt;float&gt; m(8, 4);              // create a 2-dimensional float matrix</pre></div>
+
+      <p>idx objects only describe tensors, they do not actually contain data.
+	They can therefore be copied at low computation cost. Multiple tensors
+	with different orders and dimensions
+	can point to the same data, e.g.:
+      
+      <div id="vc_markup"><pre>
+	  idx&lt;float&gt; m2 = m;               // same size and pointing to the same data as m
+	  idx&lt;float&gt; m3 = m.select(0,0);   // a 1D slice of m pointing to the same data</pre></div>
+
+      <p>In the above examples, m, m2 and m3 all point to the same data storage.
+	A storage keeps a reference counter so that even if m, the idx which
+	created it is deleted, it stays allocated until all refering idx
+	(m2 and m3) are deleted.</p>
+      
+      <!----------------------------------------------------------------------->
+      <a name="accessors"></a>
+      <h4>Accessors</h4>
+      <p>One can assign or retrieve the value of a tensor element via set()
+	and get() methods:</p>
+      <div id="vc_markup"><pre>
+	  m.set(34.7, 7, 1);        // set value of element (7,1) to 34.7
+	  float x = m.get(7, 1);    // get value of element (7, 1)</pre></div>
+
+      <!----------------------------------------------------------------------->
+      <a name="shallow"></a>
+      <h4>Shallow manipulators</h4> 
+
+      <p>Shallow idx operations allow for example to slice or resize an existing
+	idx, only modifying its dimensions or offsets. They are shallow in the
+	sense that the pointed data is never modified and remain therefore
+	efficient to compute. They merely derive new idx objects from existing
+	ones to access the data in new ways.</p>
+      <ul>
+	<li><b>select:</b> return a new idx corresponding to a slice of the current idx with slice i in dimension d. In other words, if m is an idx of order 2 of size (10,4), the call idx p = m.select(0,3) will set p to an idx or order 1 containing the 4-th row of m.
+	  <div id="vc_markup"><pre>
+	      idx<T> slice = M.select(d , i)//Syntax:where d is the dimension and i the slice in that dimension
+		//It returns a result with one dimension less than source or ith slice
+	  </pre></div>
+	  <p>For example:
+	    Suppose a  rgb image, I of dimension 75 x 100. Effectively, the dimension of matrix containing colour information for image is 75 x 100 x 3, where first two dimension represent index of pixel and three is for r, g, & b for each pixel. Now, to only select information about green color for every pixel, you can select the 2nd slice in last dimension:</p>
+	  <div id="vc_markup"><pre>
+	      //Result is 75x100 matrix
+	      idx<ubyte> slice_green = I.select(2, 1) // slice[1] of last dimension[2]
+	      </pre></div>
+	</li>			
+	<li><b>narrow:</b> returns a clone of idx m where the size in the n -th
+	  dimension is reduced to s elements , offset by o . This can be used to select
+	  bands or rectangular areas in matrices.
+	  <p> 
+	    So, the user can narrow a dimension d to size s starting at position p to create a 3-dimensional subset of the 3d tensor t:</p>
+	  <div id="vc_markup"><pre>
+	      idx &lt;double&gt; subset3d = t.narrow(d, s, p);
+	      //d:dimension, s:size required, p:offset position
+
+	      For colored image I, 75x100x3, bottom half of image is:
+	      idx&lt;ubyte> bottom_half = I.narrow(0, 37, 38);
+	  </pre></div>
+	</li>
+	
+	<li><p><b>transpose:</b> It is merely changing the order of dimension of tensor i.e to change the way elements of the tensor are accessed via the get and set methods. It is inexpensive operation as no data is actually moved around, this merely manipulates the idx structure itself.</p>
+	      <p>For example:</p>
+	      <div id="vc_markup"><pre>
+		  Image I, 75x100x3 can be changed to 
+		  3x75x100, via transpose method.
+		  int p[] = {2, 0, 1}
+		  idx&lt;ubyte&gt;image_transpose = I.transpose(p); //p is array containing changed order of dimension
+	    </pre></div></li>
+
+	<li><p><b>unfold:</b>returns an idx with an added dimension at the end of m obtained by âunfoldingâ n -th dimension. More explicitely , successive rows in the last dimension will contain successive, possibly overlapping , subsets of size ksize of consecutive elements in the n -th dimension. The separation between successive subsets is step . Here is an example:</p>
+	  <div id="vc_markup"><pre>
+	      Suppose M is vector [0 1 2 3 4 5 6 7]:
+	      M.unfold(0, 3, 1);  //unfold(n ksize step)
+	      [[ 0.00 1.00 2.00 ]
+	      [ 1.00 2.00 3.00 ]
+	      [ 2.00 3.00 4.00 ]
+	      [ 3.00 4.00 5.00 ]
+	      [ 4.00 5.00 6.00 ]
+		  [ 5.00 6.00 7.00 ]]
+	  </pre></div>
+	  <p>No data is copied or replicated in the process , i.e. the three occurences of the number 2 in the above example actually come from a single memory location. The size of the new dimension is ksize . If dimn is the size of the  n -th dimension of m , the size of the returned idx in the n -th dimension is (dimn-ksize)/step + 1 . The values of dimn, ksize, and step must be such that the new size is an integer.</p>
+	  <p> This essentially manipulates the mod array to make convolutions look like matrix-vector multiplies.The unfold function essentially allows to reduce a discrete convolution to a matrix-vector product.
+	    Here is an example:</p>
+	  
+	  <div id="vc_markup"><pre>
+	      vector M = [ 1 1 0 2 3 4 2 0 ] and 
+	      vector kernel = [-1 2 -1]
+	      
+	      idx<double> U = M.unfold(0 3 1);
+		    idx_m2dotm1( U kernel output);
+		
+		So, output = [ 1.00 -3.00 1.00 0.00 3.00 0.00 ]
+		
+		A subsampled convolution can be implemented by unfolding with a step larger than 1:
+		Let m = [0 1 2 3 4 5 6 7 8] & kernel =  [1 2 1];
+		idx&lt;double&gt; z = m.unfold(0, 3, 2);
+		= [[ 0.00 1.00 2.00 ]
+		    [ 2.00 3.00 4.00 ]
+		[ 4.00 5.00 6.00 ]
+		[ 6.00 7.00 8.00 ]]
+		    idx-m2dotm1( z, kernel, output);
+		Finally, output  = [ 4.00 12.00 20.00 28.00 ]
+	  </pre></div>
+	  Naturally , there is no real need for most programmers to use the unfold construct because the idx library contains efficient 1D and 2D convolutions.
+	  </li>
+      </ul>
+
+      
+      <div id="vc_markup"><pre>
+	  idx&lt;float&gt; m(8, 4);       // create a 2-dimensional float matrix
+	  m.set(34.7, 7, 1);        // set value of element (7,1) to 34.7
+	  float x = m.get(7, 1);    // get value of element (7, 1)</pre></div>
 
       <p>All of these functions to create matrices take 0 to 8 integer argument that are the sizes in each dimension. LIBIDX provides variety of operation from basic advance to cover all commonly used linear algebra operations to operate on matrix. It also provides large variety of iterators to loop over  for slices/elements of matrix.</p>
       <p>  </p>
@@ -342,86 +470,11 @@
 	  </pre></div>
 
 	  <a name="idxmanip"></a>
-	  <h2>idx  manipulations</h2>
-	  <p>
-	    Several functions are provided to conveniently manipulate the idx structure itself. These functions do not manipulate the actual data (and therefore are efficient) , they merely derive new idx from existing idx to access the data in new ways.</p>
-	  <ol>
-	    <li><b>Select:</b> return a new idx corresponding to a slice of the current idx with slice i in dimension d. In other words, if m is an idx of order 2 of size (10,4), the call idx p = m.select(0,3) will set p to an idx or order 1 containing the 4-th row of m.
-	      <div id="vc_markup"><pre>
-		  idx<T> slice = M.select(d , i)//Syntax:where d is the dimension and i the slice in that dimension
-		    //It returns a result with one dimension less than source or ith slice
-	      </pre></div>
-	      <p>For example:
-		Suppose a  rgb image, I of dimension 75 x 100. Effectively, the dimension of matrix containing colour information for image is 75 x 100 x 3, where first two dimension represent index of pixel and three is for r, g, & b for each pixel. Now, to only select information about green color for every pixel, you can select the 2nd slice in last dimension:</p>
-	      <div id="vc_markup"><pre>
-		  //Result is 75x100 matrix
-		  idx<ubyte> slice_green = I.select(2, 1) // slice[1] of last dimension[2]
-	      </pre></div>
-	    </li>			
-	    <li><b>Narrow:</b> returns a clone of idx m where the size in the n -th
-	      dimension is reduced to s elements , offset by o . This can be used to select
-	      bands or rectangular areas in matrices.
-	      <p> 
-		So, the user can narrow a dimension d to size s starting at position p to create a 3-dimensional subset of the 3d tensor t:</p>
-	      <div id="vc_markup"><pre>
-		  idx &lt;double&gt; subset3d = t.narrow(d, s, p);
-		  //d:dimension, s:size required, p:offset position
-
-		  For colored image I, 75x100x3, bottom half of image is:
-		  idx&lt;ubyte> bottom_half = I.narrow(0, 37, 38);
-	      </pre></div>
-	    </li>
-
-	    <li><p><b>Transpose:</b> It is merely changing the order of dimension of tensor i.e to change the way elements of the tensor are accessed via the get and set methods. It is inexpensive operation as no data is actually moved around, this merely manipulates the idx structure itself.</p>
-	      <p>For example:</p>
-	      <div id="vc_markup"><pre>
-		  Image I, 75x100x3 can be changed to 
-		  3x75x100, via transpose method.
-		  int p[] = {2, 0, 1}
-		  idx&lt;ubyte&gt;image_transpose = I.transpose(p); //p is array containing changed order of dimension
-	    </pre></div></li>
-
-	    <li><p><b>Unfold:</b>returns an idx with an added dimension at the end of m obtained by âunfoldingâ n -th dimension. More explicitely , successive rows in the last dimension will contain successive, possibly overlapping , subsets of size ksize of consecutive elements in the n -th dimension. The separation between successive subsets is step . Here is an example:</p>
-	      <div id="vc_markup"><pre>
-		  Suppose M is vector [0 1 2 3 4 5 6 7]:
-		  M.unfold(0, 3, 1);  //unfold(n ksize step)
-		  [[ 0.00 1.00 2.00 ]
-		  [ 1.00 2.00 3.00 ]
-		  [ 2.00 3.00 4.00 ]
-		  [ 3.00 4.00 5.00 ]
-		  [ 4.00 5.00 6.00 ]
-		  [ 5.00 6.00 7.00 ]]
-	      </pre></div>
-	      <p>No data is copied or replicated in the process , i.e. the three occurences of the number 2 in the above example actually come from a single memory location. The size of the new dimension is ksize . If dimn is the size of the  n -th dimension of m , the size of the returned idx in the n -th dimension is (dimn-ksize)/step + 1 . The values of dimn, ksize, and step must be such that the new size is an integer.</p>
-	      <p> This essentially manipulates the mod array to make convolutions look like matrix-vector multiplies.The unfold function essentially allows to reduce a discrete convolution to a matrix-vector product.
-		Here is an example:</p>
-
-	      <div id="vc_markup"><pre>
-		  vector M = [ 1 1 0 2 3 4 2 0 ] and 
-		  vector kernel = [-1 2 -1]
-
-		  idx<double> U = M.unfold(0 3 1);
-		    idx_m2dotm1( U kernel output);
-
-		    So, output = [ 1.00 -3.00 1.00 0.00 3.00 0.00 ]
-
-		    A subsampled convolution can be implemented by unfolding with a step larger than 1:
-		    Let m = [0 1 2 3 4 5 6 7 8] & kernel =  [1 2 1];
-		    idx&lt;double&gt; z = m.unfold(0, 3, 2);
-		    = [[ 0.00 1.00 2.00 ]
-		    [ 2.00 3.00 4.00 ]
-		    [ 4.00 5.00 6.00 ]
-		    [ 6.00 7.00 8.00 ]]
-		    idx-m2dotm1( z, kernel, output);
-		    Finally, output  = [ 4.00 12.00 20.00 28.00 ]
-	      </pre></div>
-	      Naturally , there is no real need for most programmers to use the unfold construct because the idx library contains efficient 1D and 2D convolutions.
-	  </li></ol>
 
 
 	  <h2>Images</h2>
 
-	  Tensor Operators: Content Manipulation 
+	  <h3>Tensor Operators: Content Manipulation</h3>
 
 	  While idx descriptors are inexpensive pointers, the idx content operators work with the actual tensor data (also allowed to modify it) yielding more expensive operations. We now describe a few important operators among others: 
 

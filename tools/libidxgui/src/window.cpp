@@ -61,8 +61,8 @@ namespace ebl {
   // box
 
   box::box(int h0_, int w0_, int h_, int w_, unsigned char r_, unsigned char g_,
-	   unsigned char b_)
-    : h0(h0_), w0(w0_), h(h_), w(w_), r(r_), g(g_), b(b_) {
+	   unsigned char b_, unsigned char a_)
+    : h0(h0_), w0(w0_), h(h_), w(w_), r(r_), g(g_), b(b_), a(a_) {
   }
 
   ////////////////////////////////////////////////////////////////
@@ -279,8 +279,9 @@ namespace ebl {
   }
   
   void Window::add_box(int h0, int w0, int h, int w, unsigned char r,
-		       unsigned char g, unsigned char b, string *s) {
-    box *bb = new box(h0, w0, h, w, r, g, b);
+		       unsigned char g, unsigned char b, unsigned char a,
+		       string *s) {
+    box *bb = new box(h0, w0, h, w, r, g, b, a);
     // add box
     if (!wupdate)
       boxes_tmp.push_back(bb);
@@ -288,8 +289,14 @@ namespace ebl {
       boxes.push_back(bb);
     // add caption
     set_text_origin(h0 + 1, w0 + 1);
+    // modulate caption transparency with bbox's transparency
+    unsigned char save_fga = fg_a, save_bga = bg_a;
+    set_text_colors(fg_r, fg_g, fg_b, a, bg_r, bg_g, bg_b, a, true);
     if (s)
       add_text(s);
+    // restore previous transparency
+    set_text_colors(fg_r, fg_g, fg_b, save_fga, bg_r, bg_g, bg_b, save_bga, 
+		    true);
     update_window();
   }
   
@@ -322,9 +329,10 @@ namespace ebl {
   void Window::set_text_colors(unsigned char fg_r_, unsigned char fg_g_, 
 			       unsigned char fg_b_, unsigned char fg_a_,
 			       unsigned char bg_r_, unsigned char bg_g_, 
-			       unsigned char bg_b_, unsigned char bg_a_) {
+			       unsigned char bg_b_, unsigned char bg_a_,
+			       bool ignore_frozen) {
     txt = NULL;
-    if (frozen_style)
+    if (frozen_style && !ignore_frozen)
       return ;
     fg_r = fg_r_;
     fg_g = fg_g_;
@@ -665,7 +673,7 @@ namespace ebl {
     for (vector<box*>::iterator i = boxes.begin(); i != boxes.end(); ++i) {
       if (*i) {
 	// set color
-	painter.setPen(QColor((*i)->r, (*i)->g, (*i)->b));
+	painter.setPen(QColor((*i)->r, (*i)->g, (*i)->b, (*i)->a));
 	// draw box lines
 	painter.drawLine((*i)->w0,               (*i)->h0,
 			 (*i)->w0,               (*i)->h0 + (*i)->h - 1);

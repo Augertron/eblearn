@@ -113,6 +113,7 @@ namespace ebl {
     for (uint i = 0; i < sz; ++i, ++out, ++in)
       *out = (Tdata) *in;
 #endif
+    frame_id_++;
     return this->postprocess();
   }
   

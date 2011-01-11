@@ -65,9 +65,8 @@ namespace ebl {
     // loop and copy
     intg N1=src.nelements();
     intg N2 =dst.nelements();
-    if (N1 != N2) {
-      cerr << "incompatible idxs: " << src << " and " << dst << endl;
-      eblerror("idx_op: idxs have different number of elements\n"); }
+    if (N1 != N2)
+      eblerror("expected same number of elements in " << src << " and " << dst);
     if ( (src.order() == 0) && (dst.order() == 0) ) {
       *(dst.idx_ptr()) = *(src.idx_ptr());
     } else if ( src.contiguousp() && dst.contiguousp() ) {
@@ -160,6 +159,9 @@ namespace ebl {
     // and put output back into in.
     idx<T> in, out;
     if (out_) { // use in_ as input and out_ as output
+      // check that in_ and out_ are different
+      if (&in_ == out_)
+	eblerror("input and output idx should be different");
       idx_checknelems2_all(in_, *out_);
       in = in_;
       out = *out_;
@@ -208,6 +210,9 @@ namespace ebl {
     idx<T1> in1, out1;
     idx<T2> in2, out2;
     if (out1_) { // use in_ as input and out_ as output
+      // check that in_ and out_ are different
+      if (&in1_ == out1_)
+	eblerror("input and output idx should be different");
       idx_checknelems2_all(in1_, *out1_);
       in1 = in1_;
       out1 = *out1_;
@@ -218,6 +223,8 @@ namespace ebl {
       out1 = in1_;
     }
     if (out2_) { // use in_ as input and out_ as output
+      if (&in2_ == out2_)
+	eblerror("input and output idx should be different");
       idx_checknelems2_all(in2_, *out2_);
       in2 = in2_;
       out2 = *out2_;
@@ -273,6 +280,8 @@ namespace ebl {
     idx<T2> in2, out2;
     idx<T3> in3, out3;
     if (out1_) { // use in_ as input and out_ as output
+      if (&in1_ == out1_)
+	eblerror("input and output idx should be different");
       idx_checknelems2_all(in1_, *out1_);
       in1 = in1_;
       out1 = *out1_;
@@ -283,6 +292,8 @@ namespace ebl {
       out1 = in1_;
     }
     if (out2_) { // use in_ as input and out_ as output
+      if (&in2_ == out2_)
+	eblerror("input and output idx should be different");
       idx_checknelems2_all(in2_, *out2_);
       in2 = in2_;
       out2 = *out2_;
@@ -293,6 +304,8 @@ namespace ebl {
       out2 = in2_;
     }
     if (out3_) { // use in_ as input and out_ as output
+      if (&in3_ == out3_)
+	eblerror("input and output idx should be different");
       idx_checknelems2_all(in3_, *out3_);
       in3 = in3_;
       out3 = *out3_;
@@ -1090,6 +1103,24 @@ namespace ebl {
 
   // there is a much faster and parallel way
   // of doing this using a tree.
+template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
+    Tout z = 0;
+#if USING_FAST_ITERS == 0
+  #if USING_STL_ITERS == 0
+    idxiter<T> pinp;
+    idx_aloop1_on(pinp,inp) { z += (Tout)(*pinp); }
+  #else
+    ScalarIter<T> pinp(inp);
+    idx_aloop1_on(pinp,inp) { z += (Tout)(*pinp); }
+  #endif
+#else
+    idx_aloopf1(pinp, inp, T, { z += (Tout)(*pinp); });
+#endif
+    return z;
+  }
+
+  // there is a much faster and parallel way
+  // of doing this using a tree.
   template<class T> T idx_sum(idx<T> &inp, T *out) {
     T z = idx_sum(inp);
     if (out != NULL)
@@ -1664,13 +1695,23 @@ namespace ebl {
 
   // Fu Jie Huang, May 20, 2008
   template<typename T>
-  void idx_m2oversample(idx<T>& small, intg nlin, intg ncol, idx<T>& big)
-  {
+  void idx_m2oversample(idx<T>& small, intg nlin, intg ncol, idx<T>& big) {
     idx<T> uin  = big.unfold(0, nlin, nlin);
     idx<T> uuin = uin.unfold(1, ncol, ncol);
     idx_eloop1(z1, uuin, T) {
-      idx_eloop1( z2, z1, T) {
+      idx_eloop1(z2, z1, T) {
 	idx_copy(small, z2);
+      }
+    }
+  }
+
+  template<typename T>
+  void idx_m2oversampleacc(idx<T>& small, intg nlin, intg ncol, idx<T>& big) {
+    idx<T> uin  = big.unfold(0, nlin, nlin);
+    idx<T> uuin = uin.unfold(1, ncol, ncol);
+    idx_eloop1(z1, uuin, T) {
+      idx_eloop1(z2, z1, T) {
+	idx_add(small, z2, z2);
       }
     }
   }
@@ -1872,7 +1913,7 @@ template<class T> void idx_sortup(idx<T> &m) {
 
 //! Sorts in-place elements of (continuous) vector <m> 
 //! in ascending order.
-template<class T1, class T2> void idx_sortup2(idx<T1> &m, idx<T2> &m2) {
+template<class T1, class T2> void idx_sortup(idx<T1> &m, idx<T2> &m2) {
   idx_checkorder2(m, 1, m2, 1);
   idx_check_contiguous2(m, m2);
   idx_checknelems2_all(m, m2); // they must have same number of elements
@@ -1920,7 +1961,7 @@ template<class T1, class T2> void idx_sortup2(idx<T1> &m, idx<T2> &m2) {
 
 //! Sorts in-place elements of (continuous) vector <m> 
 //! in ascending order.
-template<class T1, class T2, class T3> void idx_sortup3(idx<T1> &m, idx<T2> &m2,
+template<class T1, class T2, class T3> void idx_sortup(idx<T1> &m, idx<T2> &m2,
 							idx<T3> &m3) {
   idx_checkorder3(m, 1, m2, 1, m3, 1);
   idx_check_contiguous3(m, m2, m3);

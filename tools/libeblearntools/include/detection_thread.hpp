@@ -235,15 +235,17 @@ namespace ebl {
 
      // select preprocessing  
      module_1_1<SFUNC(Tnet)>* pp = NULL;
-     if (color_space == CHANS_Y) // Y -> Yp
-       pp = new weighted_std_module<SFUNC(Tnet)>(norm_size, norm_size, 1,
-						   "norm", true, false, true);
-     else if (color) // RGB -> YpUV
-       pp = (module_1_1<SFUNC(Tnet)>*)
-	 new rgb_to_ypuv_module<SFUNC(Tnet)>(norm_size);
-     else // RGB -> Yp
-       pp = (module_1_1<SFUNC(Tnet)>*)
-	 new rgb_to_yp_module<SFUNC(Tnet)>(norm_size);
+     if (!conf.exists_false("preprocessing")) { // pp by default
+       if (color_space == CHANS_Y) // Y -> Yp
+	 pp = new weighted_std_module<SFUNC(Tnet)>(norm_size, norm_size, 1,
+     						   "norm", true, false, true);
+       else if (color) // RGB -> YpUV
+	 pp = (module_1_1<SFUNC(Tnet)>*)
+	   new rgb_to_ypuv_module<SFUNC(Tnet)>(norm_size);
+       else // RGB -> Yp
+	 pp = (module_1_1<SFUNC(Tnet)>*)
+	   new rgb_to_yp_module<SFUNC(Tnet)>(norm_size);
+     }
 
      //! create 1-of-n targets with target 1.0 for shown class, -1.0 for rest
      idx<Tnet> targets =
@@ -267,8 +269,11 @@ namespace ebl {
      cout << "Targets:" << endl; targets.printElems();
      
      // detector
+     Tnet bias = 0; float gain = 1.0;
+     if (conf.exists("bias")) bias = (Tnet) conf.get_double("bias");
+     if (conf.exists("gain")) gain = conf.get_float("gain");
      detector<SFUNC(Tnet)> detect(*net, classes, targets, pp, norm_size,
-				  NULL, 0, conf.get_double("gain"),
+				  NULL, bias, gain,
 				  conf.exists_true("binary_target"),
 				  mout, merr);
      pdetect = &detect;
@@ -315,8 +320,8 @@ namespace ebl {
        if (conf.exists("save_max_per_frame"))
 	 detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
      }
-     if (conf.exists("pruning"))
-       detect.set_pruning((t_pruning)conf.get_uint("pruning"), 
+     if (conf.exists("nms"))
+       detect.set_pruning((t_pruning)conf.get_uint("nms"), 
 			  conf.exists_true("ped_only"),
 			  conf.exists("min_hcenter_dist") ? 
 			  conf.get_float("min_hcenter_dist") : 0.0,
@@ -333,7 +338,11 @@ namespace ebl {
 			  conf.get_float("min_wcenter_dist2") : 0.0,
 			  conf.exists("max_bb_overlap2") ? 
 			  conf.get_float("max_bb_overlap2") : 0.0,
-			  conf.exists_true("mean_bb")
+			  conf.exists_true("mean_bb"),
+			  conf.exists("same_scale_mhd") ? 
+			  conf.get_float("same_scale_mhd") : 0.0,
+			  conf.exists("same_scale_mwd") ? 
+			  conf.get_float("same_scale_mwd") : 0.0
 			  );
      if (conf.exists("bbhfactor") && conf.exists("bbwfactor"))
        detect.set_bbox_factors(conf.get_float("bbhfactor"),
@@ -347,6 +356,13 @@ namespace ebl {
 				  conf.get_uint("confidence_type"));
      if (conf.exists("max_object_hratio"))
        detect.set_max_object_hratio(conf.get_double("max_object_hratio"));
+     if (conf.exists("net_min_height") && conf.exists("net_min_width"))
+       detect.set_min_input(conf.get_int("net_min_height"),
+			    conf.get_int("net_min_width"));
+     if (conf.exists("smoothing"))
+       detect.set_smoothing(conf.get_uint("smoothing"));
+     if (conf.exists("background_name"))
+       detect.set_bgclass(conf.get_cstring("background_name"));
 
      // when a bbox file is given, ignore the processing, load the pre-computed
      // bboxes and feed them to the nms (non-maximum suppression).
@@ -363,6 +379,19 @@ namespace ebl {
      mkdir_full(viddir);
      // gui
 #ifdef __GUI__
+     Tnet display_min = -1.7, display_max = 1.7, display_in_min = 0,
+       display_in_max = 255;
+     if (conf.exists("display_min"))
+       display_min = (Tnet) conf.get_double("display_min");
+     if (conf.exists("display_max"))
+       display_max = (Tnet) conf.get_double("display_max");
+     if (conf.exists("display_in_max"))
+       display_in_max = (Tnet) conf.get_double("display_in_max");
+     if (conf.exists("display_in_min"))
+       display_in_min = (Tnet) conf.get_double("display_in_min");
+     float display_transp = 0.0;
+     if (conf.exists("display_bb_transparency"))
+       display_transp = conf.get_float("display_bb_transparency");
      uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
        qheight2 = 0, qwidth2 = 0, qstep2 = 0;
      if (conf.exists_bool("queue1")) {
@@ -386,6 +415,7 @@ namespace ebl {
        night_mode();
      }
      float		zoom = 1;
+     if (conf.exists("display_zoom")) zoom = conf.get_float("display_zoom");
      detector_gui<SFUNC(Tnet)>
        dgui(conf.exists_bool("queue1"), qstep1, qheight1,
 	    qwidth1, conf.exists_bool("queue2"), qstep2, qheight2, qwidth2);
@@ -422,9 +452,15 @@ namespace ebl {
 	 if (precomputed_boxes) {
 	   try {
 	     vector<bbox*> *bb = boxes.get_group(frame_name);
+	     idxdim d = boxes.get_group_dims(frame_name);
 	     vector<bbox*> pruned;
-	     detect.nms(*bb, pruned, threshold, frame.dim(0), frame.dim(1));
+	     detect.nms(*bb, pruned, threshold, d.dim(0), d.dim(1));
 	     copy_bboxes(pruned); // make a copy of bounding boxes
+	     // resize frame so that caller knows the size of the frame
+	     idxdim framedim = frame.get_idxdim();
+	     framedim.setdim(0, d.dim(0));
+	     framedim.setdim(1, d.dim(1));
+	     frame.resize(framedim);
 	     // delete bb and its bboxes
 	     for (uint i = 0; i < bb->size(); ++i) {
 	       bbox *b = (*bb)[i];
@@ -435,7 +471,8 @@ namespace ebl {
 	     merr << e << endl;
 	   }
 	 } else {
-	   vector<bbox*> &bb = detect.fprop(frame, threshold, frame_name.c_str());
+	   vector<bbox*> &bb = detect.fprop(frame, threshold,
+					    frame_name.c_str());
 	   copy_bboxes(bb); // make a copy of bounding boxes
 	 }
        }
@@ -447,21 +484,24 @@ namespace ebl {
 	 if (mindisplay) {
 	   vector<bbox*> &bb =
 	     dgui.display(detect, frame, threshold, frame_name.c_str(),
-	 		  0, 0, zoom, (Tnet)-1.7, (Tnet)1.7,
-			  wid, _name.c_str());
+	 		  0, 0, zoom, display_min, display_max,
+			  wid, _name.c_str(), display_transp);
 	   copy_bboxes(bb); // make a copy of bounding boxes
 	 } else {
 	   vector<bbox*> &bb =
 	     dgui.display_inputs_outputs(detect, frame, threshold,
 					 frame_name.c_str(), 0, 0, zoom,
-					 (Tnet)-1.7, (Tnet)1.7, wid);
+					 display_min, display_max, wid,
+					 _name.c_str(),
+					 display_in_min, display_in_max,
+					 display_transp);
 	   copy_bboxes(bb); // make a copy of bounding boxes
 	 }
 	 enable_window_updates();
        }
        total_saved = detect.get_total_saved();
        if (display_states) {
-	 dgui.display_current(detect, frame, wid_states, NULL, .25);
+	 dgui.display_current(detect, frame, wid_states, NULL, zoom);
 	 select_window(wid);
        }
        if (save_video && display) {

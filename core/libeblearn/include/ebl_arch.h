@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -178,12 +179,18 @@ namespace ebl {
   template<typename T, class Tstate = bbstate_idx<T> >
     class layers : public module_1_1<T, Tstate, Tstate> {
   public:
-    //! If oc is true, this class owns all its content and is responsible for
-    //! deleting modules and buffers.
-    layers(bool oc = true);
+    //! Constructor.
+    //! \param oc If true, this class owns all its content and is responsible
+    //! for deleting modules and buffers.
+    //! \param is_branch If true, this branch will not modify its input
+    //!   and output buffers, instead will output to public intern_out buffer.
+    layers(bool oc = true, const char *name = "layers",
+	   bool is_branch = false, bool narrow = false,
+	   intg dim = 0, intg sz = 0, intg offset = 0);
     virtual ~layers();
     //! Add a module to the stack of modules.
-    virtual void add_module(module_1_1<T, Tstate, Tstate>* module); 
+    //! \param branch_id If > 0, add this module to branch with this id.
+    virtual void add_module(module_1_1<T, Tstate, Tstate>* module);
     //! Pre-determine the order of hidden buffers to use only 2 buffers
     //! in order to reduce memory footprint.
     //! This returns true if outputs is actually put in out, false if it's
@@ -213,20 +220,38 @@ namespace ebl {
     virtual void swap_buffers();
     //! Return the number of layers contained in this object.
     virtual uint size();
-
+    //! Clear the hidden's states dx and recursively clear all branches
+    //! contained in modules.
+    virtual void clear_dx();
+    //! Clear the hidden's states ddx and recursively clear all branches
+    //! contained in modules.
+    virtual void clear_ddx();
+    //! Returns true if this layer is being used as a branch, false otherwise.
+    bool is_branch();
+    //! Find first module whose name matches 'name', return NULL if not found.
+    module_1_1<T, Tstate, Tstate>* find(const char *name);
+  
     // friends
-    friend class layers_gui;
     friend class layers_gui;
     
     // class member variables
   public:
-    std::vector<module_1_1<T, Tstate, Tstate>*>	*modules;
-    std::vector<Tstate*>			*hiddens;    
+    std::vector<module_1_1<T, Tstate, Tstate>*>	modules;
+    std::vector<Tstate*>			hiddens;    
+    Tstate* intern_out; //! internal output, set if this is a branch
   protected:
     bool own_contents;
     Tstate* hi; //! temporary buffer pointer
     Tstate* ho; //! temporary buffer pointer
     Tstate* htmp; //! temporary buffer pointer used for swapping
+    // used for parallelism ///////////////////////////////////////////////////
+    bool branch; //! this is a branch or not
+    Tstate* intern_h0; //! internal buffer 0 if branch
+    Tstate* intern_h1; //! internal bufer 1 if branch
+    bool branch_narrow; //! narrow input data for branch
+    intg narrow_dim; //! The dimension to narrow
+    intg narrow_size; //! The number of slices
+    intg narrow_offset; //! The offset.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -305,6 +330,79 @@ namespace ebl {
 			  Tin2 *label = NULL, Ten *energy = NULL);
   };
 
+  ////////////////////////////////////////////////////////////////
+  // merge
+
+  //! A module that flattens and concatenate multiple inputs. It takes one
+  //! primary input to which inputs will be
+  //! concatenated into the output (by allocating a bigger output
+  //! and copying all data to that output).
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class flat_merge_module : public module_1_1<T, Tstate> {
+  public:
+    //! Initialize inputs list.
+    //! \param inputs A vector of pointers to the input states
+    //!   pointers to concatenate.
+    flat_merge_module(std::vector<Tstate**> &inputs, std::vector<uint> &insh,
+		      std::vector<uint> &insw, uint inh, uint inw,
+		      std::vector<uint> &stridesh,
+		      std::vector<uint> &stridesw, uint instrideh, uint instridew,
+		      const char *name_ = "flatmerge", const char *list = NULL);
+    virtual ~flat_merge_module();
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! backward propagation from out to in
+    virtual void bprop(Tstate &in, Tstate &out);
+    //! second-derivative backward propagation from out to in
+    virtual void bbprop(Tstate &in, Tstate &out);
+    //! Return dimensions that are compatible with this module.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim fprop_size(idxdim &i_size);
+    //! Return dimensions compatible with this module given output dimensions.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim bprop_size(const idxdim &o_size);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+
+  private:
+    std::vector<Tstate**> inputs;
+    std::vector<uint> insh, insw;
+    uint inh, inw;
+    std::vector<uint> stridesh, stridesw;
+    uint instrideh, instridew;
+    std::string merge_list;
+  };
+  
+  //! A module that can concatenate multiple inputs. It takes one
+  //! primary input to which inputs will be
+  //! concatenated into the output (by allocating a bigger output
+  //! and copying all data to that output).
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class merge_module : public module_1_1<T, Tstate> {
+  public:
+    //! Initialize inputs list.
+    //! \param inputs A vector of pointers to the input states
+    //!   pointers to concatenate.
+    //! \param concat_dim Input dimension to assuming all other dimensions
+    //!   have the same size.
+    merge_module(std::vector<Tstate**> &inputs, intg concat_dim,
+		 const char *name_ = "merge", const char *list = NULL);
+    virtual ~merge_module();
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! backward propagation from out to in
+    virtual void bprop(Tstate &in, Tstate &out);
+    //! second-derivative backward propagation from out to in
+    virtual void bbprop(Tstate &in, Tstate &out);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+
+  private:
+    std::vector<Tstate**> inputs;
+    intg concat_dim; //! The dimension to concatenante.
+    std::string merge_list;
+  };
+  
   ////////////////////////////////////////////////////////////////
   // helper functions
 

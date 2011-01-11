@@ -102,6 +102,11 @@ namespace ebl {
     //! Return a new frame.
     virtual idx<Tdata> grab();
 
+    //! Move to the next frame, without returning the frame.
+    //! This is called by grab before grabbing.
+    //! This can be used to get frames infos without grabbing.
+    virtual void next();
+
     //! Return true until all images have been processed.
     virtual bool empty();
 
@@ -121,7 +126,7 @@ namespace ebl {
     // members ////////////////////////////////////////////////////////
   protected:
     using camera<Tdata>::frame;	//!< frame buffer 
-    using camera<Tdata>::frame_id;	//!< frame counter
+    using camera<Tdata>::frame_id_;	//!< frame counter
     using camera<Tdata>::frame_name_;	//!< frame name
     using camera<Tdata>::out;	//!< output stream
     using camera<Tdata>::err;	//!< error output stream

@@ -67,14 +67,14 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // check input parameters
       if ((argc != 2) && (argc != 3) ) {
 	cerr << "warning: wrong number of parameters." << endl;
-	cerr << "usage: mtdetect <config file> [directory or file]" << endl;
+	cerr << "usage: detect <config file> [directory or file]" << endl;
 	//	return -1;
       }
 #ifdef __LINUX__
       feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
       // load configuration
-      configuration	conf(argv[1]);
+      configuration	conf(argv[1], true);
       if (!conf.exists("root2")) {
 	string dir = dirname(argv[1]);
 	cout << "Looking for trained files in: " << dir << endl;
@@ -89,9 +89,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       ostream &mout = sync ? mutout : cout;
       ostream &merr = sync ? muterr : cerr;
       // output dir
-      string		outdir        = "out_";
-      outdir += tstamp();
-      outdir += "/";
+      string outdir = "detections"; 
+      if (conf.exists_true("nms"))
+	outdir << "_" << tstamp();
+      outdir << "/";
       mkdir_full(outdir);
       mout << "Saving outputs to " << outdir << endl;
       // save conf to output dir
@@ -118,8 +119,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       ipp_init(ipp_cores); // limit IPP (if available) to 1 core
       bool		save_video    = conf.exists_true("save_video");      
       bool              save_detections = conf.exists_true("save_detections");
-      int		height        = conf.get_int("input_height");
-      int		width         = conf.get_int("input_width");
+      int		height        = -1;
+      int		width         = -1;
+      if (conf.exists("input_height")) height = conf.get_int("input_height");
+      if (conf.exists("input_width")) width = conf.get_int("input_width");
       bool              input_random  = conf.exists_true("input_random");
       uint              npasses       = 1;
       uint              skip_frames   = conf.exists("skip_frames") ? 
@@ -131,7 +134,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	viddir << outdir << "video/";
 	mkdir_full(viddir);
       }
-
+      bool precomputed_boxes = conf.exists("bbox_file");
+    
       string		cam_type;
 #ifdef __LINUX__ // default camera for linux if not defined
       cam_type = "v4l2";
@@ -166,7 +170,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	fpattern = conf.get_cstring("file_pattern");
 
       // initialize camera (opencv, directory, shmem or video)
-      idx<ubyte> frame;
+      idx<ubyte> frame(1,1,1);
       camera<ubyte> *cam = NULL, *cam2 = NULL;
       if (!strcmp(cam_type.c_str(), "directory")) {
 	if (argc >= 3) // read input dir from command line
@@ -184,6 +188,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       else if (!strcmp(cam_type.c_str(), "v4l2"))
 	cam = new camera_v4l2<ubyte>(conf.get_cstring("device"),
 				     height, width);
+#endif
+#ifdef __KINECT__
+      else if (!strcmp(cam_type.c_str(), "kinect"))
+	cam = new camera_kinect<ubyte>(height, width);
 #endif
       else if (!strcmp(cam_type.c_str(), "shmem"))
 	cam = new camera_shmem<ubyte>("shared-mem", height, width);
@@ -208,7 +216,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       bool display	     = conf.exists_bool("display");
       bool show_parts        = conf.exists_true("show_parts");
       // mindisplay     = conf.exists_bool("minimal_display");
-      // display_sleep  = conf.get_uint("display_sleep");
+      uint display_sleep  = 0;
+      if (conf.exists("display_sleep"))
+	display_sleep = conf.get_uint("display_sleep");
       // display_states = conf.exists_bool("display_states");
       uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
 	qheight2 = 0, qwidth2 = 0, qstep2 = 0;
@@ -252,10 +262,14 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  // save bounding boxes
 	  if (updated) {
 	    updated = false;
-	    boxes.new_group(&processed_fname, processed_id);
-	    boxes.add(bb);
-	    if (bbsaving != bbox_none)
+	    idxdim d(detframe);
+	    if (bbsaving != bbox_none) {
+	      mout << "Adding " << bb.size() << " boxes into new group: "
+		   << processed_fname << " with id " << processed_id << endl;
+	      boxes.new_group(d, &processed_fname, processed_id);
+	      boxes.add(bb, d, &processed_fname, processed_id);
 	      boxes.save_eblearn();
+	    }
 	    cnt++;
 	    // display processed frame
 #ifdef __GUI__
@@ -325,11 +339,15 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 		  if (skip_frames > 0)
 		    cam->skip(skip_frames); // skip frames if skip_frames > 0
 		  if (cam->empty()) continue ;
-		  frame = cam->grab();
+		  if (precomputed_boxes && !save_video)
+		    cam->next(); // move to next frame but without grabbing
+		  else // actually grab the frame
+		    frame = cam->grab();
 		}
 		// send new frame to this thread
 		string frame_name = cam->frame_name();
-		while (!(*ithreads)->set_data(frame, frame_name, cnt))
+		while (!(*ithreads)->set_data(frame, frame_name, 
+					      cam->frame_id()))
 		  millisleep(5);
 		// we just sent a new frame
 		tpass.restart();
@@ -338,10 +356,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  }
 	}
 	// sleep display
-// 	if (display_sleep > 0) {
-// 	  mout << "sleeping for " << display_sleep << "ms." << endl;
-// 	  millisleep(display_sleep);
-// 	}
+	if (display_sleep > 0) {
+	  mout << "sleeping for " << display_sleep << "ms." << endl;
+	  millisleep(display_sleep);
+	}
 	if (conf.exists("save_max") && !stop &&
 	    idx_sum(total_saved) > conf.get_uint("save_max")) {
 	  mout << "Reached max number of detections, exiting." << endl;
@@ -351,8 +369,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	// sleep a bit between each iteration
 	millisleep(5);
 	// check if stop countdown reached 0
-	if (stop && tstop.elapsed_minutes() >= 5) {
-	  cerr << "threads did not all return 5 min after request, stopping"
+	if (stop && tstop.elapsed_minutes() >= 20) {
+	  cerr << "threads did not all return 20 min after request, stopping"
 	       << endl;
 	  break ; // program too long to stop, force exit
 	}
@@ -378,6 +396,14 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       mout << "Windows closed." << endl;
 #endif
       mout << "Detection finished." << endl;
-    } catch(string &err) { eblerror(err.c_str()); }
+      // evaluation of bbox
+      if (conf.exists_true("evaluate") && conf.exists("evaluate_cmd")) {
+	string cmd;
+	cmd << "cd " << outdir << " && " << conf.get_string("evaluate_cmd");
+	int res = std::system(cmd.c_str());
+	if (res != 0)
+	  cerr << "bbox evaluation failed with command " << cmd << endl;
+      }
+    } eblcatcherror();
   return 0;
 }

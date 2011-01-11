@@ -44,6 +44,7 @@
 #endif
 
 #include "defines_tools.h"
+#include "sort.h"
 
 #ifdef __BOOST__
 #include "boost/filesystem.hpp"
@@ -114,6 +115,8 @@ namespace ebl {
     wjitter = 0;
     nsjitter = 0;
     sjitter = 0;
+    nrjitter = 0;
+    rjitter = 0;
     njitter = 0;
 #ifndef __BOOST__
     eblerror(BOOST_LIB_ERROR);
@@ -188,9 +191,8 @@ namespace ebl {
     for (directory_iterator itr(inroot); itr != end_itr; itr++) {
       if (is_directory(itr->status())
 	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
-	found = true;
-	// process subdirs to extract images into the single image idx
 	process_dir(itr->path().string(), extension, itr->leaf());
+	found = true;
       }}
     if (found) {
       cerr << "Samples adding failures: " << add_errors << endl;
@@ -396,11 +398,11 @@ namespace ebl {
     // load classpairs
     classpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
     fname = root1; fname += classpairs_fname;
-    loading_warning(classpairs, fname);
+    loading_nowarning(classpairs, fname);
     // load deformation pairs
     deformpairs = idx<t_label>(1,1); // TODO: implement generic load_matrix
     fname = root1; fname += deformpairs_fname;
-    loading_warning(deformpairs, fname);
+    loading_nowarning(deformpairs, fname);
     // initialize some members
     data_cnt = data.dim(0);
     allocated = true;
@@ -596,9 +598,9 @@ namespace ebl {
 	eblthrow("dataset has not been allocated, cannot add data.");
       // check that input is bigger than minimum dimensions allowed
       if ((dat.dim(0) < mindims.dim(0))
-	  || (r && (r->height < (uint) mindims.dim(0)))
+	  || (r && (r->height < mindims.dim(0)))
 	  || (dat.dim(1) < mindims.dim(1))
-	  || (r && (r->width < (uint) mindims.dim(1))))
+	  || (r && (r->width < mindims.dim(1))))
 	eblthrow("not adding " << *class_name << " from " 
 		 << (filename?filename:"")
 		 << ": smaller than minimum dimensions (" << dat << " < " 
@@ -620,7 +622,7 @@ namespace ebl {
 	}
       }
       if (jitt.size() == 0)
-	jitt.push_back(jitter(0,0,1.0)); // no jitter
+	jitt.push_back(jitter(0,0,1.0,0.0)); // no jitter
       // add all jittered samples
       vector<jitter>::iterator ijit;
       for (ijit = jitt.begin(); ijit != jitt.end(); ++ijit) {
@@ -697,7 +699,8 @@ namespace ebl {
       cout << " as " << *class_name;
     cout << " (" << label << ")";
     if (jitt)
-      cout << " (jitter " << jitt->h << "," << jitt->w << "," << jitt->s << ")";
+      cout << " (jitter " << jitt->h << "," << jitt->w << "," << jitt->s << ","
+	   << jitt->r << ")";
     cout << endl;
     // if save_mode is dataset, cpy to dataset, otherwise save individ file
     if (!strcmp(save_mode.c_str(), DATASET_SAVE)) { // dataset mode
@@ -914,16 +917,21 @@ namespace ebl {
   }
   
   template <class Tdata>
-  void dataset<Tdata>::set_jitter(uint h, uint w, uint ns, float s, uint n) {
+  void dataset<Tdata>::set_jitter(uint h, uint w, uint ns, float s, uint nr,
+				  float r, uint n) {
     hjitter = h;
     wjitter = w;
     nsjitter = ns;
     sjitter = s;
+    nrjitter = nr;
+    rjitter = r;
     njitter = n;
     cout << "Adding " << n << " samples randomly jittered over a " << h
-	 << "x" << w << " neighborhood and over " << nsjitter << " scales"
-	 << " within a " << sjitter << " scale range around original location"
-	 << "/scale" << endl;
+	 << "x" << w << " neighborhood, over " << nsjitter << " scales"
+	 << " within a " << sjitter << " scale range and "
+	 << nrjitter << " rotations within a " << rjitter
+	 << " degrees rotation range around original location"
+	 << "/scale/orientation" << endl;
   }
   
   template <class Tdata>
@@ -963,17 +971,24 @@ namespace ebl {
       return false;
     }
     // loop over all directories
+    std::vector<std::string> dirs;
     for (directory_iterator itr(inroot); itr != end_itr; itr++) {
       if (is_directory(itr->status())
 	  && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
 	// ignore excluded classes and use included if defined
 	if (included(itr->leaf())) {
-	  // add directory as new class
-	  add_class(itr->leaf());
+	  dirs.push_back(itr->leaf());
 	  // recursively search each directory
 	  total_samples += count_matches(itr->path().string(), extension);
 	}
       }
+    }
+    // sort directories
+    std::sort(dirs.begin(), dirs.end(), natural_compare_less);
+    // process subdirs to extract images into the single image idx
+    for (uint i = 0; i < dirs.size(); ++i) {
+      // add directory as new class
+      add_class(dirs[i]);
     }
 #endif /* __BOOST__ */
     return true;
@@ -1139,7 +1154,7 @@ namespace ebl {
     idx<Tdata> resized;
     // add jitter
     if (jitt)
-      resizepp->set_jitter(jitt->h, jitt->w, jitt->s);
+      resizepp->set_jitter(jitt->h, jitt->w, jitt->s, jitt->r);
     // default dimensions are same as input
     resizepp->set_dimensions(inr.height, inr.width);
     if (!no_outdims)
@@ -1381,14 +1396,26 @@ namespace ebl {
     float max_sjitt = 1.0 + sjitter / 2;
     // scale step
     float sstep = sjitter / std::max((int) 0, (int) nsjitter - 1);
-    for (float sj = min_sjitt; sj <= max_sjitt; sj += sstep) {
-      // take into account the fact that scaling already does some spatial
-      // jitter, by multiplying min/max spatial jitters by scaling
-      float f = min_sjitt + max_sjitt - sj;
-      int hhalf = (int) (hjitter * f / 2), whalf = (int) (wjitter * f / 2);
-      for (int hj = -hhalf; hj <= hhalf; ++hj)
-	for (int wj = -whalf; wj <= whalf; ++wj)
-	  random_jitter.push_back(jitter(hj, wj, sj));
+    // min/max rotation jitter
+    float min_rjitt = 0.0 - rjitter / 2;
+    float max_rjitt = 0.0 + rjitter / 2;
+    // rotation step
+    float rstep = rjitter / std::max((int) 0, (int) nrjitter - 1);
+    // loop over possible rotations
+    for (float rj = min_rjitt; rj <= max_rjitt; rj += rstep) {
+      // loop over possible scales
+      for (float sj = min_sjitt; sj <= max_sjitt; sj += sstep) {
+	// take into account the fact that scaling already does some spatial
+	// jitter, by multiplying min/max spatial jitters by scaling
+	float f = min_sjitt + max_sjitt - sj;
+	// the bigger the scale, the less spatial jitter allowed
+	int hhalf = (int) (hjitter * f / 2), whalf = (int) (wjitter * f / 2);
+	// loop over possible heights
+	for (int hj = -hhalf; hj <= hhalf; ++hj)
+	  // loop over possible width
+	  for (int wj = -whalf; wj <= whalf; ++wj)
+	    random_jitter.push_back(jitter(hj, wj, sj, rj));
+      }
     }
     // randomize possibilities
     random_shuffle(random_jitter.begin(), random_jitter.end());
@@ -1420,6 +1447,18 @@ namespace ebl {
     } catch (const string &err) {
       cerr << err << endl;
       cerr << "warning: failed to load dataset file " << fname << endl;
+      return false;
+    }
+    cout << "Loaded " << fname << endl;
+    return true;
+  }
+  
+  //! optional datasets, issue warning.
+  template <typename T>
+  bool loading_nowarning(idx<T> &mat, string &fname) {
+    try {
+      mat = load_matrix<T>(fname);
+    } catch (const string &err) {
       return false;
     }
     cout << "Loaded " << fname << endl;

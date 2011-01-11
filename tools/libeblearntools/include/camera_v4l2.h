@@ -80,6 +80,7 @@ namespace ebl {
     // members ////////////////////////////////////////////////////////
   protected:
     using camera<Tdata>::frame;		//!< frame buffer 
+    using camera<Tdata>::frame_id_;	//!< frame counter
     using camera<Tdata>::grabbed;	//!< frame buffer grabbed yet or not
     using camera<Tdata>::height;	//!< height
     using camera<Tdata>::width;	        //!< width

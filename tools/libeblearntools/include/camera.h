@@ -72,6 +72,11 @@ namespace ebl {
     //! Return a new frame.
     virtual idx<Tdata> grab() = 0;
 
+    //! Move to the next frame, without returning the frame.
+    //! This is called by grab before grabbing.
+    //! This can be used to get frames infos without grabbing.
+    virtual void next();
+
     //! Return true if no frames available, false otherwise.
     virtual bool empty();
 
@@ -101,6 +106,9 @@ namespace ebl {
     //! Return the number of frames per second obtained via grab().
     virtual float fps();
 
+    //! Return the id for current frame.
+    virtual uint frame_id();
+
     //! Return a name for current frame.
     virtual string frame_name();
 
@@ -126,7 +134,9 @@ namespace ebl {
     int          height;        //!< resize input
     int          width;         //!< resize input
     bool         bresize;       //!< resize or not
-    uint         frame_id;      //!< frame counter
+    bool         mresize;       //!< mean resize or not
+    uint         resize_mode;   //!< resize mode: 0, 1 or 2
+    uint         frame_id_;     //!< frame counter
     string	 frame_name_;	//!< frame name
     bool         grabbed;       //!< false if no frame grabbed yet
     uint         wid;           //!< window to record from

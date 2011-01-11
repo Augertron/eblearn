@@ -37,7 +37,7 @@
 #include <windows.h>
 #endif
 
-#include "VFWCapture.h"
+#include "vfw.h"
 #include "camera.h"
 
 namespace ebl {
@@ -82,6 +82,7 @@ namespace ebl {
   protected:
     using camera<Tdata>::frame;		//!< frame buffer 
     using camera<Tdata>::grabbed;	//!< frame buffer grabbed yet or not
+    using camera<Tdata>::frame_id;	//!< frame counter
     using camera<Tdata>::height;	//!< height
     using camera<Tdata>::width;	        //!< width
     using camera<Tdata>::bresize;       //!< resize or not during postproc.

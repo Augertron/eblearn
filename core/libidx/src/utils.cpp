@@ -53,10 +53,14 @@
 #include <direct.h>
 #endif
 
+#define STRING_BUFFER (int)4096	/* string operations buffer size */
+
 using namespace std;
 
 namespace ebl {
 
+  char string_buffer[STRING_BUFFER];
+  
   ////////////////////////////////////////////////////////////////
   // file IO utilities
 
@@ -100,6 +104,11 @@ namespace ebl {
   
   bool mkdir_full(const char *dir) {
 #ifdef __WINDOWS__
+    // recursive directory creation, check if parent exists first
+    string parent = dirname(dir);
+    if (!dir_exists(parent.c_str()))
+      mkdir_full(parent.c_str());
+    // parents are created or already exist, make current directory.
     if (!_mkdir(dir))
       return true;
     return false;
@@ -120,7 +129,7 @@ namespace ebl {
     if (stat(s,&buf)==0)
       if (buf.st_mode & S_IFDIR)
 	return true;
-#else
+#else /* WINDOWS */
     char *last;
     char buffer[FILELEN];
     struct _stat buf;
@@ -143,43 +152,225 @@ namespace ebl {
   bool file_exists(const char *s) {
 #ifndef __WINDOWS__
     struct stat buf;
-    if (stat(s,&buf)==-1)
+    if (stat(s, &buf) == -1)
       return false;
     if (buf.st_mode & S_IFREG) 
-      return false;
-#else
+      return true;
+#else /* WINDOWS */
     struct _stat buf;
-    if (_stat(s,&buf)==-1)
+    if (_stat(s, &buf) == -1)
       return false;
     if (buf.st_mode & S_IFREG) 
-      return false;
+      return true;
 #endif
-    return true;
+    return false;
+  }
+
+//     string dirname(const char *s_) {
+// #ifdef __LINUX__
+//     char c = '/';
+// #else /* __WINDOWS__ */
+//     char c = '\\';
+// #endif
+//     string s = s_;
+//     size_t pos = s.find_last_of(c);
+//     // if there is no dirname, return local dirname .
+//     if (pos == string::npos) {
+//       s = ".";
+//       s += c;
+//       return s;
+//     }
+//     return s.substr(0, pos);
+//   }  
+
+  const char *dirname(const char *fname) {
+#ifndef __WINDOWS__ // UNIX and MAC
+    const char *s = fname;
+    const char *p = 0;
+    char *q = string_buffer;
+    while (*s) {
+      if (s[0]=='/' && s[1])
+	p = s;
+      s++;
+    }
+    if (!p) {
+      if (fname[0]=='/')
+	return fname;
+      else
+	return ".";
+    }
+    s = fname;
+    if (p-s > STRING_BUFFER-1)
+      eblerror("filename is too long: " << fname);
+    do {
+      *q++ = *s++;
+    } while (s<p);
+    *q = 0;
+    return string_buffer;
+#else // WINDOWS
+    char *s, *p;
+    char *q = string_buffer;
+    /* Handle leading drive specifier */
+    if (fname[0] && fname[1]==':') {
+      *q++ = *fname++;
+      *q++ = *fname++;
+    }
+    /* Search last non terminal / or \ */
+    p = 0;
+    s = (char*)fname;
+    while (*s) {
+      if (s[0]=='\\' || s[0]=='/')
+	if (s[1] && s[1]!='/' && s[1]!='\\')
+	  p = s;
+      s++;
+    }
+    /* Cannot find non terminal / or \ */
+    if (p == 0) {
+      if (q>string_buffer) {
+	if (fname[0]==0 || fname[0]=='/' || fname[0]=='\\')
+	  return "\\\\";
+	*q = 0;
+	return string_buffer;
+      } else {
+	if (fname[0]=='/' || fname[0]=='\\')
+	  return "\\\\";
+	else
+	  return ".";
+      }
+    }
+    /* Single leading slash */
+    if (p == fname) {
+      strcpy(q,"\\");
+      return string_buffer;
+    }
+    /* Backtrack all slashes */
+    while (p>fname && (p[-1]=='/' || p[-1]=='\\'))
+      p--;
+    /* Multiple leading slashes */
+    if (p == fname)
+      return "\\\\";
+    /* Regular case */
+    s = fname;
+    if (p-s > STRING_BUFFER-4)
+      eblerror("filename is too long: " << fname);
+    do {
+      *q++ = *s++;
+    } while (s<p);
+    *q = 0;
+    return string_buffer;
+#endif
+  }
+
+  static char *strcpyif(char *d, const char *s) {
+    if (d != s)
+      return strcpy(d,s);
+    return d;
+  }
+  
+  const char *basename(const char *fname, const char *suffix) {
+#ifndef __WINDOWS__ // LINUX and MAC
+    int sl;
+    char *s;
+    if (strlen(fname) > STRING_BUFFER-4)
+      eblerror("filename is too long: " << fname);
+    s = (char *) strrchr(fname,'/');
+    if (s)
+      fname = s+1;
+    /* Process suffix */
+    if (suffix==0 || suffix[0]==0)
+      return fname;
+    if (suffix[0]=='.')
+      suffix += 1;
+    if (suffix[0]==0)
+      return fname;
+    strcpyif(string_buffer,fname);
+    sl = strlen(suffix);
+    s = string_buffer + strlen(string_buffer);
+    if (s > string_buffer + sl) {
+      s =  s - (sl + 1);
+      if (s[0]=='.' && strcmp(s+1,suffix)==0)
+	*s = 0;
+    }
+    return string_buffer;
+#else // WINDOWS
+    int sl;
+    char *p = (char*)fname;
+    char *s = (char*)fname;
+    /* Special cases */
+    if (fname[0] && fname[1]==':') {
+      strcpyif(string_buffer,fname);
+      if (fname[2]==0)
+	return string_buffer;
+      string_buffer[2] = '\\'; 
+      if (fname[3]==0 && (fname[2]=='/' || fname[2]=='\\'))
+	return string_buffer;
+    }
+    /* Position p after last slash */
+    while (*s) {
+      if (s[0]=='\\' || s[0]=='/')
+        p = s + 1;
+      s++;
+    }
+    /* Copy into buffer */
+    if (strlen(p) > STRING_BUFFER-10)
+      eblerror("filename is too long: " << fname);
+    s = string_buffer;
+    while (*p && *p!='/' && *p!='\\')
+      *s++ = *p++;
+    *s = 0;
+    /* Process suffix */
+    if (suffix==0 || suffix[0]==0)
+      return string_buffer;
+    if (suffix[0]=='.')
+      suffix += 1;
+    if (suffix[0]==0)
+      return string_buffer;    
+    sl = strlen(suffix);
+    if (s > string_buffer + sl) {
+      s = s - (sl + 1);
+      if (s[0]=='.' && stricmp(s+1,suffix)==0)
+	*s = 0;
+    }
+    return string_buffer;
+#endif
   }
 
   ////////////////////////////////////////////////////////////////
   // timing utilities
 
   string tstamp() {
-    static time_t t = time(NULL);
-    static struct tm *lt = localtime(&t);
-#ifdef __NOSTL__
-    string ts;
-    ts << lt->tm_year + 1900 << lt->tm_mon << lt->tm_mday
-       << "." << lt->tm_hour << lt->tm_min << lt->tm_sec;
-    return ts;
-#else
-    ostringstream ts;
-    ts << setw(2) << setfill('0') << lt->tm_year + 1900
-       << setw(2) << setfill('0') << lt->tm_mon
-       << setw(2) << setfill('0') << lt->tm_mday
-       << "."
-       << setw(2) << setfill('0') << lt->tm_hour
-       << setw(2) << setfill('0') << lt->tm_min
-       << setw(2) << setfill('0') << lt->tm_sec;
-    return ts.str();
-#endif
-  }
+    time_t rawtime;
+    struct tm * timeinfo;
+    char buffer [80];
+
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+
+    strftime (buffer,80,"%Y%m%d.%H%M%S",timeinfo);
+    string s = buffer;
+    return s;
+  }  
+
+//   string tstamp() {
+//     static time_t t = time(NULL);
+//     static struct tm *lt = localtime(&t);
+// #ifdef __NOSTL__
+//     string ts;
+//     ts << lt->tm_year + 1900 << lt->tm_mon << lt->tm_mday
+//        << "." << lt->tm_hour << lt->tm_min << lt->tm_sec;
+//     return ts;
+// #else
+//     ostringstream ts;
+//     ts << setw(2) << setfill('0') << lt->tm_year + 1900
+//        << setw(2) << setfill('0') << lt->tm_mon
+//        << setw(2) << setfill('0') << lt->tm_mday
+//        << "."
+//        << setw(2) << setfill('0') << lt->tm_hour
+//        << setw(2) << setfill('0') << lt->tm_min
+//        << setw(2) << setfill('0') << lt->tm_sec;
+//     return ts.str();
+// #endif
+//   }
 
   timer::timer() {
   }
@@ -344,6 +535,23 @@ namespace ebl {
     Sleep(seconds * 1000);
 #else
     usleep(seconds * 1000);
+#endif
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  // process utilities
+
+#ifndef __WINDOWS__
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
+  int pid() {
+#ifdef __WINDOWS__
+    eblerror("not implemented");
+    return 0;
+#else
+    return (int) getpid();
 #endif
   }
 

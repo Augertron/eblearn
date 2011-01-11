@@ -213,7 +213,7 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! manipulation methods
 
-    //! select: return a new idxspec corresponding to
+    //! Returns a new idxspec corresponding to
     //! a slice of the current idxspec with slice i
     //! in dimension d. In other words, if m is an
     //! idxspec of order 2 of size (10,4), the call
@@ -529,13 +529,10 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
     //! idx manipulation methods
 
-    //! select: return a new idx corresponding to
-    //! a slice of the current idx with slice i
-    //! in dimension d. In other words, if m is an
-    //! idx of order 2 of size (10,4), the call
-    //! idx p = m.select(0,3) will set p to
-    //! an idx or order 1 containing the 4-th
-    //! row of m.
+    //! Returns a new idx corresponding to a slice of the current idx with
+    //! slice i in dimension d. In other words, if m is an idx of order 2
+    //! of size (10,4), the call idx p = m.select(0,3) will set p to
+    //! an idx or order 1 containing the 4-th row of m.
     idx<T> select(int d, intg i);
 
     //! narrow: return a new idx in which the d-th
@@ -966,12 +963,7 @@ namespace ebl {
   //! but one can modify the size of a particular dimension via the setdim 
   //! method.
   class EXPORT idxdim {
-  private:
-    intg	dims[MAXDIMS];	// size of each dimensions
-    intg	ndim;		// order
-    
   public:
-
     ////////////////////////////////////////////////////////////////
     // constructors
     
@@ -1041,6 +1033,12 @@ namespace ebl {
 
     // friends
     friend class idxspec;
+
+    ////////////////////////////////////////////////////////////////
+    // member variables
+  private:
+    intg	dims[MAXDIMS];	// size of each dimensions
+    intg	ndim;		// order    
   };
 
   //! idxdim print operator.

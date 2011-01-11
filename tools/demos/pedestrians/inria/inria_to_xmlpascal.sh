@@ -7,8 +7,9 @@ trunk_center=.2 # position of center in bbox's height starting from top
 woverh=.5 # ratio of width/height for head and trunk classes
 inria=$1
 #inria=/data/pedestrians/inria/INRIAPerson
-annotations=$inria #/Train/annotations
-annotations2=$inria/../pascal_annotations
+inria=${HOME}/${HOSTNAME}adata/ped/inria/INRIAPerson
+annotations=$inria/Train/annotations
+annotations2=$annotations/../pascal_annotations
 echo "Converting INRIA annotations ${annotations} to bbox format ${bbox}..."
 
 mkdir -p $annotations2
@@ -41,6 +42,7 @@ do
 	    len=`expr length "${line}"`
 	    len=`expr $len - 19`
 	    fname=`expr substr "${line}" 19 ${len}`
+	    fname=`basename ${fname}`
 	    echo "\t<filename>${fname}</filename>" >> $bbfile
 	fi
 	tmp=`expr substr "${line}" 1 25`
@@ -142,7 +144,7 @@ do
 	    if [ $sup -eq 1 ] ; then
 		max_himage_over_hped=$hh
 	    fi
-	    echo "$inria/$fname (${hsize}x${wsize}) $bb $center | ped ${hped}x${wped} | trunk ${htrunk}x${wtrunk} | head ${hhead}x${whead} | maxhh ${max_himage_over_hped} | min_area $min_area max_area $max_area"
+	    echo "$fname (${hsize}x${wsize}) $bb $center | ped ${hped}x${wped} | trunk ${htrunk}x${wtrunk} | head ${hhead}x${whead} | maxhh ${max_himage_over_hped} | min_area $min_area max_area $max_area"
 	fi
     done
     echo "</annotation>" >> $bbfile

@@ -194,8 +194,8 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
   loading_error(data, data_fname);
   loading_error(labels, labels_fname);
   loading_warning(classes, classes_fname);
-  bclasspairs = loading_warning(classpairs, classpairs_fname);
-  bdefpairs = loading_warning(defpairs, deformpairs_fname);
+  bclasspairs = loading_nowarning(classpairs, classpairs_fname);
+  bdefpairs = loading_nowarning(defpairs, deformpairs_fname);
 
   // display only 1 channel
   if (channel >= 0) {
@@ -350,9 +350,7 @@ int main(int argc, char **argv) {
     default:
       eblerror("unknown magic number");
     }
-  } catch(string &err) {
-    cerr << err << endl;
-  }
-  sleep(50);
+  } eblcatcherror();
+  sleep(20);
   return 0;
 }

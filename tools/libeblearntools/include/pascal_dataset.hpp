@@ -306,7 +306,11 @@ namespace ebl {
 	}
 	image_fullname = imgroot;
 	image_fullname += image_filename;
-	// load image 
+	// load image
+	if (!file_exists(image_fullname.c_str())) {
+	  cerr << "warning: " << image_fullname << " not found." << endl;
+	  return false;
+	}
 	idx<Tdata> img = load_image<Tdata>(image_fullname);
 	// parse all objects in image
 	for(Node::NodeList::iterator iter = list.begin();

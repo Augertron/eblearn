@@ -125,11 +125,12 @@ namespace ebl {
   EXPORT void draw_arrow(int h1, int w1, int h2, int w2);
 
   //! draws a bounding box with top left corner (h0, w0) and size (h, w).
-  //! the (r,g,b) color of the box can optionally be specified as well as
+  //! the (r,g,b,a) color of the box can optionally be specified as well as
   //! a caption string.
   EXPORT void draw_box(int h0, int w0, int h, int w,
-		unsigned char r = 255, unsigned char g = 255,
-		unsigned char b = 255, string *s = NULL);
+		       unsigned char r = 255, unsigned char g = 255,
+		       unsigned char b = 255, unsigned char a = 255,
+		       string *s = NULL);
 
   //! do not show windows, instead save them in png files in current dir.
   EXPORT void set_gui_silent();

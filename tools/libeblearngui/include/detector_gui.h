@@ -46,7 +46,8 @@ namespace ebl {
 
   void draw_bbox_parts(bbox_parts &bb, idx<ubyte> &labels, uint h0, uint w0,
 		       double dzoom);
-  void draw_bbox(bbox &bb, idx<ubyte> &labels, uint h0, uint w0, double dzoom);
+  void draw_bbox(bbox &bb, idx<ubyte> &labels, uint h0, uint w0, double dzoom,
+		 float transparency);
 
   ////////////////////////////////////////////////////////////////
   // detector_gui
@@ -85,7 +86,8 @@ namespace ebl {
 			     double threshold, const char *frame_name = NULL,
 			     unsigned int h0 = 0, unsigned int w0 = 0, 
 			     double dzoom = 1.0, T vmin = 0, T vmax = 0,
-			     int wid = -1, const char *wname = NULL);
+			     int wid = -1, const char *wname = NULL,
+			     float transparency = 1.0);
     
     //! displays only the output of the classifier after a a call to 
     //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
@@ -97,7 +99,8 @@ namespace ebl {
 				  idx<ubyte> &labels,
 				  unsigned int h0 = 0, unsigned int w0 = 0, 
 				  double dzoom = 1.0, T vmin = 0, T vmax = 0,
-				  int wid = -1, bool show_parts = false);
+				  int wid = -1, bool show_parts = false,
+				  float transparency = 1.0);
 
     //! displays only the output of the classifier after a a call to 
     //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
@@ -111,7 +114,8 @@ namespace ebl {
 				   unsigned int h0 = 0, unsigned int w0 = 0, 
 				   double dzoom = 1.0, T vmin = 0,
 				   T vmax = 0,
-				   int wid = -1, const char *wname = NULL);
+				   int wid = -1, const char *wname = NULL,
+				   float transparency = 1.0); 
 
     //! display the regular input/output display but also the inputs and outputs
     //! corresponding to each scale, corresponding to a call to 
@@ -127,7 +131,9 @@ namespace ebl {
 					    unsigned int w0 = 0, 
 					    double dzoom = 1.0, T vmin = 0,
 					    T vmax = 0, int wid = -1, 
-					    const char *wname = NULL);
+					    const char *wname = NULL,
+					    T in_vmin = 0, T in_vmax = 255,
+					    float transparency = 1.0); 
     
     //! display all, display_inputs_outputs and the internal states of the fprop
     //! on the first scale, corresponding to a call to 

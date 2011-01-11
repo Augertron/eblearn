@@ -59,6 +59,9 @@ namespace ebl {
     //! Execute job
     void run();
 
+    //! Returns true if the job has been started, false otherwise.
+    bool started();
+
     //! Write job's files in configuration's output directory.
     bool write();
 
@@ -88,6 +91,7 @@ namespace ebl {
     pid_t		pid;	//!< pid of this job
     string              classesname_; //!< filename of classes matrix
     timer               t;
+    bool                _started;
   };
 
   ////////////////////////////////////////////////////////////////
@@ -121,6 +125,7 @@ namespace ebl {
     string		mconf_fname;	//!< Filename of metaconf
     vector<job>		jobs; //!< A vector of jobs to run
     string              copy_path; //!< Copy path to jobs folders.
+    uint                max_jobs; //!< Max number of jobs at the same time.
   };
 
 } // end namespace ebl

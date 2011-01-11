@@ -102,7 +102,7 @@ namespace ebl {
   // frame grabbing
 
   template <typename Tdata>
-  idx<Tdata> camera_directory<Tdata>::grab() {
+  void camera_directory<Tdata>::next() {
     if (empty())
       eblerror("cannot grab images on empty list");
     fdir = fli->first; // directory
@@ -112,7 +112,7 @@ namespace ebl {
       fdir += "/";
     if (strcmp(fdir.c_str(), ""))
       fn << fdir;
-    fn << fname; // << "_" << frame_id;
+    fn << fname; // << "_" << frame_id_;
     frame_name_ = fn.str();
     if (strcmp(fdir.c_str(), "")) {
       size_t npos = frame_name_.length() - fdir.length();
@@ -122,14 +122,21 @@ namespace ebl {
       if (frame_name_[i] == '/')
 	frame_name_[i] = '_';
     fli++; // move to next element
-    out << frame_id << "/" << flsize << ": processing ";
+    frame_id_++;
+  }
+
+  template <typename Tdata>
+  idx<Tdata> camera_directory<Tdata>::grab() {
+    next();
+    out << frame_id_ << "/" << flsize << ": processing ";
     out << fdir << fname << endl;
     oss.str(""); oss << fdir << "/" << fname;
     try {
       frame = load_image<Tdata>(oss.str());
     } catch (const string &e) {
-      err << e << ". Trying next image..." << endl;
-      frame_id++;
+      err << "failed to load image " << oss.str() << " (" << e << "). "
+	  << "Trying next image..." << endl;
+      frame_id_++;
       return grab();
     }
     return this->postprocess();
@@ -145,7 +152,7 @@ namespace ebl {
 	break ;
       }
       fli++;
-      frame_id++;
+      frame_id_++;
     }
     cout << "Skipped " << i << " frames." << endl;
   }
@@ -173,7 +180,7 @@ namespace ebl {
   
   template <typename Tdata>
   int camera_directory<Tdata>::remaining() {
-    return (int) (flsize - frame_id);
+    return (int) (flsize - frame_id_);
   }
   
   template <typename Tdata>

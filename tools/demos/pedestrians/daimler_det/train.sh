@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ebl=$HOME/eblearn/ # eblearn root
-source $ebl/libeblearntools/src/metatrain.sh # include script functions
+source $ebl/tools/tools/src/metatrain.sh # include script functions
 ################################################################################
 step0=11 # initial step where to (re)start metatraining
 h=96 # network height

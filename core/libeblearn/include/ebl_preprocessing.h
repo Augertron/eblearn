@@ -244,8 +244,8 @@ namespace ebl {
     //! by default, the output region is the entire size defined by
     //! set_dimensions().
     void set_output_region(const rect<int> &outr);
-    //! Shift output by h and w pixels, and multiply scale by s.
-    void set_jitter(int h, int w, float s);
+    //! Shift output by h and w pixels, multiply scale by s and rotate by r.
+    void set_jitter(int h, int w, float s, float r);
     //! Set zero padding on each side for each dimension.
     void set_zpads(intg hpad, intg wpad);
     //! forward propagation from in to out
@@ -279,6 +279,109 @@ namespace ebl {
     int                  hjitter;       //!< Shift output by this many pixels
     int                  wjitter;       //!< Shift output by this many pixels
     float                sjitter;       //!< Multiply scale by this
+    float                rjitter;       //!< Rotate by this degrees.
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // resize_module
+  //! Resize the input to the desired output (not preserving aspect ratio by
+  //! default, see 'preserve_ratio' parameter).
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class resize_module: public module_1_1<T,Tstate> {
+  public:
+    //! This constructor specifies resizing ratio for each dimension instead
+    //! of fixed target sizes. The default resizing method is bilinear, as
+    //! as other methods do not currently implement ratio inputs.
+    //! \param height target height for resizing.
+    //! \param width target width for resizing.
+    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
+    //!             GAUSSIAN_RESIZE).
+    //! \param hzpad Optional vertical zero-padding is added on each size
+    //!   and taken into account to reach the desired target size.
+    //! \param wzpad Optional horizontal zero-padding is added on each size
+    //!   and taken into account to reach the desired target size.
+    //! \param preserve_ratio If true, fit the image into target size while
+    //!   keeping aspect ratio, eventual empty areas are filled with zeros.
+    resize_module(double hratio, double wratio, uint mode = BILINEAR_RESIZE,
+		  uint hzpad = 0, uint wzpad = 0, bool preserve_ratio = false);
+    //! Constructor.
+    //! \param height target height for resizing.
+    //! \param width target width for resizing.
+    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
+    //!             GAUSSIAN_RESIZE).
+    //! \param hzpad Optional vertical zero-padding is added on each size
+    //!   and taken into account to reach the desired target size.
+    //! \param wzpad Optional horizontal zero-padding is added on each size
+    //!   and taken into account to reach the desired target size.
+    //! \param preserve_ratio If true, fit the image into target size while
+    //!   keeping aspect ratio, eventual empty areas are filled with zeros.
+    resize_module(intg height, intg width, uint mode = MEAN_RESIZE,
+		  uint hzpad = 0, uint wzpad = 0, bool preserve_ratio = false);
+    //! Constructor without target dimensions. set_dimensions should be called
+    //! later.
+    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
+    //!             GAUSSIAN_RESIZE).
+    //! \param hzpad Optional vertical zero-padding is added on each size
+    //!   and taken into account to reach the desired target size.
+    //! \param wzpad Optional horizontal zero-padding is added on each size
+    //!   and taken into account to reach the desired target size.
+    //! \param preserve_ratio If true, fit the image into target size while
+    //!   keeping aspect ratio, eventual empty areas are filled with zeros.
+    resize_module(uint mode = MEAN_RESIZE, uint hzpad = 0, uint wzpad = 0,
+		  bool preserve_ratio = false);
+    //! destructor
+    virtual ~resize_module();
+    //! sets the desired output dimensions.
+    void set_dimensions(intg height, intg width);
+    //! set the region to use in the input image.
+    //! by default, the input region is the entire image.
+    void set_input_region(const rect<int> &inr);
+    //! set the region to use in the output image.
+    //! by default, the output region is the entire size defined by
+    //! set_dimensions().
+    void set_output_region(const rect<int> &outr);
+    //! Shift output by h and w pixels, multiply scale by s and rotate by r.
+    void set_jitter(int h, int w, float s, float r);
+    //! Set zero padding on each side for each dimension.
+    void set_zpads(intg hpad, intg wpad);
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! bprop from in to out
+    virtual void bprop(Tstate &in, Tstate &out);
+    //! bbprop from in to out
+    virtual void bbprop(Tstate &in, Tstate &out);
+    //! return the bounding box of the original input in the output coordinate
+    //! system.
+    rect<int> get_original_bbox();
+    //! Returns a deep copy of this module.
+    virtual resize_module<T,Tstate>* copy();
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+    
+    // members ////////////////////////////////////////////////////////
+  private:
+    intg		 height;	//!< target height
+    intg		 width;         //!< target width
+    idx<T>               tmp;           //!< temporary buffer
+    idx<T>               tmp2;          //!< temporary buffer
+    Tstate               tmp3;          //!< temporary buffer
+    rect<int>            original_bbox; //!< bbox of original input in output
+    uint                 mode;          //!< resizing mode.
+    int                  input_mode;    //!< mode parameter to resize function.
+    rect<int>            inrect;        //!< input region of image
+    rect<int>            outrect;       //!< input region in output image
+    bool                 inrect_set;    //!< use input region or not.
+    bool                 outrect_set;   //!< use output region or not.
+    uint                 hzpad;         //!< vertical zero-padding for each side
+    uint                 wzpad;         //!< horiz. zero-padding for each side
+    zpad_module<T,Tstate> *zpad;        //!< Zero padding module.
+    int                  hjitter;       //!< Shift output by this many pixels
+    int                  wjitter;       //!< Shift output by this many pixels
+    float                sjitter;       //!< Multiply scale by this
+    float                rjitter;       //!< Rotate by this degrees.
+    bool                 preserve_ratio;//!< Preserve aspect ratio or not.
+    double               hratio;        //!< Resizing ratio in height dim.
+    double               wratio;        //!< Resizing ratio in width dim.
   };
 
 } // namespace ebl {

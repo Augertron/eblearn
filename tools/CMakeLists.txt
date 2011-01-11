@@ -144,6 +144,18 @@ IF (XML_FOUND)
 ENDIF (XML_FOUND)
 ENDMACRO(LINK_XML)
 
+MACRO(LINK_KINECT project)
+IF (KINECT_FOUND)
+    TARGET_LINK_LIBRARIES(${project} ${KINECT_LIBRARY_FLAGS})
+ENDIF (KINECT_FOUND)
+ENDMACRO(LINK_KINECT)
+
+MACRO(LINK_PTHREAD project)
+IF (PTHREAD_FOUND)
+    TARGET_LINK_LIBRARIES(${project} ${PTHREAD_LIBRARY})
+ENDIF (PTHREAD_FOUND)
+ENDMACRO(LINK_PTHREAD)
+
 # subdirectories
 ################################################################################
 ADD_SUBDIRECTORY(../core/libidx
@@ -153,6 +165,7 @@ ADD_SUBDIRECTORY(../core/libeblearn
 ADD_SUBDIRECTORY(libidxgui)
 ADD_SUBDIRECTORY(libeblearngui)
 ADD_SUBDIRECTORY(libeblearntools)
+ADD_SUBDIRECTORY(tools)
 ADD_SUBDIRECTORY(tester)
 ADD_SUBDIRECTORY(demos)
 

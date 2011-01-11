@@ -84,6 +84,13 @@ namespace ebl {
     int non_value() const { return whitespace() + zeros(); }
   };
 
+  //! Compare two strings in the natural way, returns true if a < b,
+  //! false otherwise.
+  bool natural_compare_less(const string& a, const string& b);
+
+  //! Compare two strings in the natural way.
+  int natural_compare(const string& a, const string& b);
+
   //! Compare two strings using the natural comparison of numbers
   //! ("2" is less than "10").
   struct EXPORT natural_less: binary_function<string, string, bool> {
