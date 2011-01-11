@@ -2222,8 +2222,28 @@ template<class T> void idx_sortdown(idx<T> &m) {
       d1_0 += d1_m0; 
       c1 += c1_m0; 
     } 
-  } 
-  
+  }
+
+  template <typename T>
+  void idx_m2squdotm1(idx<T> &a, idx<T> &x, idx<T> &y) {
+    eblerror("not implemented");
+  }
+
+  template <typename T>
+  void idx_m2squdotm1acc(idx<T> &a, idx<T> &x, idx<T> &y) {
+    eblerror("not implemented");
+  }
+
+  template <typename T>
+  void idx_m1squextm1(idx<T> &x, idx<T> &y, idx<T> &a) {
+    eblerror("not implemented");
+  }
+
+  template <typename T>
+  void idx_m1squextm1acc(idx<T> &x, idx<T> &y, idx<T> &a) {
+    eblerror("not implemented");
+  }
+
 } // end namespace ebl
 
 #ifdef __OPENMP__

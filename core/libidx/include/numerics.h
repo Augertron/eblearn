@@ -163,6 +163,14 @@ namespace ebl {
   public:
     template <typename T2> inline static T saturate (T2 in);
   };
+
+#ifdef __WINDOWS__
+  // Windows replacements for missing functions
+  
+  //! rint replacement for Windows.
+  double rint(double x);
+  
+#endif
   
   } // end namespace ebl
 

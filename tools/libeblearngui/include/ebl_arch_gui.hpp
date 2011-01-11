@@ -151,6 +151,50 @@ namespace ebl {
   DISPLAY_1_1(display_bbprop, display_bbprop2)
   DISPLAY2_1_1(display_bbprop, display_bbprop2, bbprop, ddx)
 
+  template<typename T, class Tstate>					
+  void module_1_1_gui::
+  display_internals(module_1_1<T,Tstate> &m, unsigned int &h0, unsigned int &w0,
+		    double zoom, T vmin, T vmax, int wid,
+		    const char *wname) {
+    display_wid_fprop = (wid >= 0) ? wid :				
+      (display_wid_fprop >= 0) ? display_wid_fprop :
+      new_window((wname ? wname : "module_1_1 display"));		
+    select_window(display_wid_fprop);
+    
+    gui << black_on_white(255, 0) << gui_only();			
+    unsigned int h = h0, w = w0;					
+    /* display internals */
+    for (uint i = 0; i < m.internals.size(); ++i) {
+      idx<T> internal = m.internals[i];
+      string s;
+      if (i < m.internals_str.size())
+	s = m.internals_str[i];
+      // expect 3d internal
+      if (internal.order() != 3)
+	eblerror("only 3d buffers currently supported, found " << internal);
+      // show internal's text
+      gui << gui_only() << at(h, w) << m.name() << " " << s << " " << internal
+	<< at(h + 15, w) << "min:" << idx_min(internal)			
+	<< at(h + 30, w) << "max:" << idx_max(internal);			
+      w += TEXT_MARGIN;      
+      // show each slice of internal
+      idx_bloop1(in, internal, T) {
+	if (w - w0 >= MAXWIDTH) {
+	  h += (uint) (in.dim(0) * zoom + 1);
+	  w = w0 + TEXT_MARGIN;
+	}
+	if (h < MAXHEIGHT) {
+	  draw_matrix(in, h, w, zoom, zoom, vmin, vmax);		
+	  w += (uint) (in.dim(1) * zoom + 1);
+	}
+      }
+      w = w0;
+      h += (uint) (internal.dim(1) * zoom + 1);
+    }
+    if (!m.internals.empty())
+      h0 = std::max(h0 + TEXT_MIN_HEIGHT, h + MODULES_HSPACE);
+  }
+
   ////////////////////////////////////////////////////////////////
   // module_2_1_gui
 
@@ -280,6 +324,36 @@ namespace ebl {
   DISPLAY_LAYERS(display_bprop, display_bprop2, dx)
   DISPLAY_LAYERS(display_bbprop, display_bbprop2, ddx)
 
+  template<typename T, class Tstate>					
+  void layers_gui::display_internals(layers<T,Tstate> &ln,
+				     unsigned int &h0,
+				     unsigned int &w0, double zoom, T vmin,
+				     T vmax) {
+    if (ln.modules.empty())						
+      return ;
+    /* loop over modules */						
+    for(uint i = 0; i < ln.modules.size(); i++) {			
+      /* display module's internals */
+      m11g.display_internals(*ln.modules[i], h0, w0, zoom, vmin, vmax);
+      // recursively display layers
+      if (dynamic_cast<layers<T,Tstate>*>(ln.modules[i])) {
+	layers<T,Tstate> &b = (layers<T,Tstate>&) *(ln.modules[i]);
+	display_internals(b, h0, w0, zoom, vmin, vmax);
+      }
+    }
+  }
+
+  template<typename T, class Tstate>					
+  void layers_gui::display_internals(module_1_1<T,Tstate> &m,
+				     unsigned int &h0,
+				     unsigned int &w0, double zoom, T vmin,
+				     T vmax) {
+    if (dynamic_cast< layers<T,Tstate>*>(&m))
+      display_internals((layers<T,Tstate>&) m, h0, w0, zoom, vmin, vmax);
+    else
+      eblerror("failed to cast module_1_1 m to layers object for display");
+  }
+  
   ////////////////////////////////////////////////////////////////
   // layers2_gui
 

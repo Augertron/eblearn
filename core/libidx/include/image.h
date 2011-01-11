@@ -36,6 +36,7 @@
 #include "idx.h"
 #include "geometry.h"
 #include "gaussian_pyramid.h"
+#include "numerics.h"
 
 namespace ebl {
   

@@ -36,6 +36,10 @@
 #include "ebl_arch.h"
 
 #define MAXWIDTH 1000
+#define MAXHEIGHT 1000
+#define TEXT_MIN_HEIGHT 50
+#define TEXT_MARGIN 170
+#define MODULES_HSPACE 2
 
 namespace ebl {
 
@@ -44,11 +48,12 @@ namespace ebl {
 
   class module_1_1_gui {
   public:
-    uint	 display_wid_fprop;
-    uint	 display_wid_bprop;
-    uint	 display_wid_bbprop;
+    int	 display_wid_fprop;
+    int	 display_wid_bprop;
+    int	 display_wid_bbprop;
 
-    module_1_1_gui() {};
+  module_1_1_gui(int fwid = -1)
+    : display_wid_fprop(fwid), display_wid_bprop(-1), display_wid_bbprop(-1) {};
     virtual ~module_1_1_gui() {};
 
 #define DISPLAY_PROTO_1_1(name)						\
@@ -74,7 +79,15 @@ namespace ebl {
     DISPLAY_PROTO_1_1(display_bprop)
     DISPLAY2_PROTO_1_1(display_bprop2)
     DISPLAY_PROTO_1_1(display_bbprop)
-    DISPLAY2_PROTO_1_1(display_bbprop2)    
+    DISPLAY2_PROTO_1_1(display_bbprop2)
+     
+    //! Display internal buffers of module 'm', as declared in
+    //! module_1_1's member 'internals'.
+    template<typename T, class Tstate>
+      void display_internals(module_1_1<T,Tstate> &m, unsigned int &h0,
+			     unsigned int &w0, double zoom = 1.0,
+			     T vmin = 0, T vmax = 0, int wid = -1,
+			     const char *wname = NULL);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -107,7 +120,7 @@ namespace ebl {
 
   class layers_gui {
   public:
-    layers_gui() {};
+    layers_gui(int wid = -1) : m11g(wid) {};
     virtual ~layers_gui() {};
 
 #define DISPLAY_PROTO_LAYERSN(name)				\
@@ -122,6 +135,24 @@ namespace ebl {
     DISPLAY_PROTO_LAYERSN(display_fprop)
     DISPLAY_PROTO_LAYERSN(display_bprop)
     DISPLAY_PROTO_LAYERSN(display_bbprop)
+
+    //! Display internal buffers of modules contained in layer 'ln'.
+    template<typename T, class Tstate>
+      void display_internals(layers<T,Tstate> &ln,
+			     unsigned int &h0, unsigned int &w0,
+			     double dzoom = 1.0,
+			     T vmin = 0, T vmax = 0);
+
+    //! Tries to cast 'm' as a layers object and display internal buffers
+    //! of all sub modules.
+    template<typename T, class Tstate>
+      void display_internals(module_1_1<T,Tstate> &m,
+			     unsigned int &h0, unsigned int &w0,
+			     double dzoom = 1.0,
+			     T vmin = 0, T vmax = 0);
+    
+  protected:
+    module_1_1_gui	m11g;
   };
 
   ////////////////////////////////////////////////////////////////

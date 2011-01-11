@@ -58,6 +58,12 @@ top of Qt, which enables the graphic visualization of internal
 variables and other data. The library has been used successfully to
 train face detectors, and object recognizers.</p>
 
+     <h2>Mailing list</h2>
+     <p>To get updated about important information, 
+       <a href="https://lists.sourceforge.net/lists/listinfo/eblearn-general">
+	 subscribe</a> to the
+       <a href="https://sourceforge.net/mailarchive/forum.php?forum_name=eblearn-general">eblearn-general</a> mailing list.
+     
      <h2>Who are we ?</h2>
      <p>
 The Eblearn project is currently under development at the Computational
