@@ -344,6 +344,7 @@ if (APPLE OR LINUX)
   set(PTHREAD_FOUND TRUE) # present by default on apple and linux
   set(PTHREAD_INCLUDE_DIR "/usr/include")
   set(PTHREAD_LIBRARY "/usr/lib/libpthread.so")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 else (APPLE OR LINUX) # installed manually under windows
   
 endif (APPLE OR LINUX)
@@ -352,7 +353,7 @@ if (PTHREAD_FOUND)
   message(STATUS "pthread Found.")
   message(STATUS "pthread include path: ${PTHREAD_INCLUDE_DIR}")
   message(STATUS "pthread library: ${PTHREAD_LIBRARY}")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -D__PTHREAD__")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__PTHREAD__")
   include_directories(${PTHREAD_INCLUDE_DIR})
   link_directories(${PTHREAD_LIBRARY})
 endif (PTHREAD_FOUND)

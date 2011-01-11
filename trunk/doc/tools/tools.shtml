@@ -69,8 +69,11 @@
       </ul>
       <h4>Display tools</h4>
       <ul>
-	<li><strong>matshow:</strong>
-	  display a .mat matrix file as an image.</li>
+	<li><strong><a href="matshow.shtml">matshow</a>:</strong>
+	  display images of any type and .mat matrix types. matshow can
+	  show multiple images at the same time. It can also
+	  display weights of a stored model.
+	</li>
       </ul>
       <h4>Capture tools</h4>
       <ul>

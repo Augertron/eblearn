@@ -37,9 +37,6 @@ LINK_BOOST(stdetect regex)
 
 # compile executable: detect
 ################################################################################
-IF (WINDOWS) # do not compile this project under windows
-  MESSAGE("__ WARNING: Not generating detect project under Windows")
-ELSE (WINDOWS)
 add_executable (detect src/detect.cpp)  
 # link executable with external libraries
 target_link_libraries (detect eblearn idx eblearntools)
@@ -48,7 +45,6 @@ LINK_QT(detect eblearngui)
 LINK_BOOST(detect system)
 LINK_BOOST(detect filesystem)
 LINK_BOOST(detect regex)
-ENDIF (WINDOWS) # do not compile this project under windows
 
 # compile executable: mpidetect
 ################################################################################
@@ -149,6 +145,7 @@ add_executable (matshow ${WINTYPE} src/matshow.cpp)
 # link executable with external libraries
 target_link_libraries (matshow idx eblearntools)
 LINK_QT(matshow idxgui)
+LINK_QT(matshow eblearngui)
 
 ENDIF (WINDOWS AND NOT QT_FOUND)
 

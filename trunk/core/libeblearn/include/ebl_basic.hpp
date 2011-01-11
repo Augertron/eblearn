@@ -199,6 +199,9 @@ namespace ebl {
       outtmp = idx<T>(1, 1);
     }
 #endif
+    // for external display classes, declare which internal buffers to display
+    this->internals.push_back(kernel.x);
+    this->internals_str.push_back("kernels");
   }
 
   template <typename T, class Tstate>

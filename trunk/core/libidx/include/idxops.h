@@ -1083,6 +1083,12 @@ namespace ebl {
 #endif
 
   //! square matrix vector multiplication : Yi = sum((Aij)^2 * Xj)
+  template <typename T>
+    void idx_m2squdotm1(idx<T> &a, idx<T> &x, idx<T> &y);
+  //! square matrix vector multiplication : Yi += sum((Aij)^2 * Xj)
+  template <typename T>
+    void idx_m2squdotm1acc(idx<T> &a, idx<T> &x, idx<T> &y);
+  //! square matrix vector multiplication : Yi = sum((Aij)^2 * Xj)
   EXPORT void idx_m2squdotm1(idx<double> &a, idx<double> &x, idx<double> &y);
   //! square matrix vector multiplication : Yi = sum((Aij)^2 * Xj)
   EXPORT void idx_m2squdotm1(idx<float> &a, idx<float> &x, idx<float> &y);
@@ -1091,6 +1097,12 @@ namespace ebl {
   //! square matrix vector multiplication : Yi += sum((Aij)^2 * Xj)
   EXPORT void idx_m2squdotm1acc(idx<float> &a, idx<float> &x, idx<float> &y);
 
+  //! Aij = Xi * Yj^2
+  template <typename T>
+    void idx_m1squextm1(idx<T> &a, idx<T> &x, idx<T> &y);
+  //! Aij += Xi * Yj^2
+  template <typename T>
+    void idx_m1squextm1acc(idx<T> &a, idx<T> &x, idx<T> &y);
   //! Aij = Xi * Yj^2
   EXPORT void idx_m1squextm1(idx<double> &a, idx<double> &x, idx<double> &y);
   //! Aij = Xi * Yj^2

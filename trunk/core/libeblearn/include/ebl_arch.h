@@ -99,6 +99,12 @@ namespace ebl {
     //! TODO: there should be not idx specialization at this level.
     virtual void load_x(idx<T> &weights);
 
+  // variable members ////////////////////////////////////////////
+  public:
+    // these variables describe internal buffers declared to be displayed
+    // by external display objects.
+    std::vector<idx<T> >     internals; //!< internal buffers to display
+    std::vector<std::string> internals_str; //!< internal buffers descriptions
   protected:
     bool	 bResize;	//!< tells module to resize output or not
     std::string	 _name;		//!< optional name of module.

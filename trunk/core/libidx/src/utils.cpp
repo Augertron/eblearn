@@ -208,7 +208,7 @@ namespace ebl {
     *q = 0;
     return string_buffer;
 #else // WINDOWS
-    char *s, *p;
+    const char *s, *p;
     char *q = string_buffer;
     /* Handle leading drive specifier */
     if (fname[0] && fname[1]==':') {

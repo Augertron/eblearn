@@ -31,7 +31,10 @@
  ***************************************************************************/
 
 #include "libidx.h"
+#include "libeblearn.h"
 #include "tools_utils.h"
+#include "configuration.h"
+#include "netconf.h"
 
 #define NOCONSOLE
 
@@ -48,6 +51,7 @@
 
 #ifdef __GUI__
 #include "libidxgui.h"
+#include "libeblearngui.h"
 #include "defines_windows.h"
 #endif
 
@@ -59,7 +63,15 @@ using namespace ebl;
 
 // print command line usage
 void print_usage() {
-  cout << "Usage: ./matshow *.mat" << endl;
+  cout << "Usage: ./matshow <mat or image file(s)> [OPTIONS]" << endl;
+  cout << " e.g.: ./matshow *.mat" << endl;
+  cout << " e.g.: ./matshow *.jpg" << endl;
+  cout << " e.g.: ./matshow *.mat -conf best.conf -zoom 2.0" << endl;
+  cout << "Options are:" << endl;
+  cout << "  -conf <filename> (show a trained network's weights)" << endl;
+  cout << "  -zoom <factor> (zoom on weights by this factor)" << endl;
+  cout << "  -range <range, e.g.: -1,1>: range to map to 0..255 for display."
+       << endl;
 }
 
 // parse command line input
@@ -67,12 +79,15 @@ bool parse_args(int argc, char **argv) {
   // Read arguments from shell input
   if (argc < 2) {
     ERROR_MSG("input error: expecting arguments.");
+    print_usage();
     return false;
   }
   // if requesting help, print usage
   if ((strcmp(argv[1], "-help") == 0) ||
-      (strcmp(argv[1], "-h") == 0))
+      (strcmp(argv[1], "-h") == 0)) {
+    print_usage();
     return false;
+  }
   return true;
 }
 
@@ -80,9 +95,39 @@ bool parse_args(int argc, char **argv) {
 // gui
 
 template <typename T>
+int display_net(list<string>::iterator &ifname,
+		bool signd, bool load, bool show_info, bool show_help,
+		bool autorange, uint nh, uint nw, list<string> *mats,
+		layers_gui &lg, configuration *conf, float zoom,
+		vector<double> &range) {
+  // create network
+  idx<ubyte> classes(1,1);
+  load_matrix<ubyte>(classes, conf->get_cstring("classes"));
+  uint noutputs = conf->exists_true("binary_target") ? 1 : classes.dim(0); 
+  parameter<fs(T)> theparam;
+  module_1_1<fs(T)> *net = create_network<fs(T)>(theparam, *conf, noutputs);
+  // loading weights
+  theparam.load_x(ifname->c_str());
+  // displaying internals
+  uint h0 = 0, w0 = 0;
+  if (autorange) // automatic range
+    lg.display_internals(*net, h0, w0, zoom);
+  else // fixed range
+    lg.display_internals(*net, h0, w0, zoom, (T) range[0], (T) range[1]);    
+  return 1;
+}
+
+template <typename T>
 int display(list<string>::iterator &ifname,
 	    bool signd, bool load, bool show_info, bool show_help,
-	    bool autorange, uint nh, uint nw, list<string> *mats) {
+	    bool autorange, uint nh, uint nw, list<string> *mats,
+	    layers_gui &lg, configuration *conf, float zoom,
+	    vector<double> &range) {
+  // conf mode
+  if (conf)
+    return display_net<T>(ifname, signd, load, show_info, show_help, autorange,
+			  nh, nw, mats, lg, conf, zoom, range);
+  // image mode
   int loaded = 0;
 #ifdef __GUI__
   static idx<T> mat;
@@ -112,9 +157,9 @@ int display(list<string>::iterator &ifname,
 	      max = -1;
 	    }
 	  }
-	  draw_matrix(mat, rowh, w, 1.0, 1.0, min, max);
+	  draw_matrix(mat, rowh, w, zoom, zoom, min, max);
 	} else
-	  draw_matrix(mat, rowh, w);
+	  draw_matrix(mat, rowh, w, zoom, zoom, (T) range[0], (T) range[1]);
 	w += mat.dim(1) + 1;
       } catch(string &err) { 
 	ERROR_MSG(err.c_str());
@@ -160,40 +205,42 @@ int display(list<string>::iterator &ifname,
 //! for negative values when estimating range.
 int load_display(list<string>::iterator &ifname,
 		 bool load, bool show_info, bool show_help, bool autorange,
-		 uint nh, uint nw, list<string> *mats) {
+		 uint nh, uint nw, list<string> *mats,
+		 layers_gui &lg, configuration *conf, float zoom,
+		 vector<double> &range) {
   try {
     switch (get_matrix_type((*ifname).c_str())) {
     case MAGIC_BYTE_MATRIX:
     case MAGIC_UBYTE_VINCENT:
       return display<ubyte>(ifname, false, load, show_info, show_help, 
-			    autorange, nh, nw, mats);
+			    autorange, nh, nw, mats, lg, conf, zoom, range);
       break ;
     case MAGIC_INTEGER_MATRIX:
     case MAGIC_INT_VINCENT:
       return display<int>(ifname, true, load, show_info, show_help,
-			  autorange, nh, nw, mats);
+			  autorange, nh, nw, mats, lg, conf, zoom, range);
     break ;
     case MAGIC_FLOAT_MATRIX:
     case MAGIC_FLOAT_VINCENT:
       return display<float>(ifname, true, load, show_info, show_help,
-			    autorange, nh, nw, mats);
+			    autorange, nh, nw, mats, lg, conf, zoom, range);
       break ;
     case MAGIC_DOUBLE_MATRIX:
     case MAGIC_DOUBLE_VINCENT:
       return display<double>(ifname, true, load, show_info, show_help,
-			     autorange, nh, nw, mats);
+			     autorange, nh, nw, mats, lg, conf, zoom, range);
       break ;
     case MAGIC_LONG_MATRIX:
       return display<long>(ifname, true, load, show_info, show_help,
-			   autorange, nh, nw, mats);
+			   autorange, nh, nw, mats, lg, conf, zoom, range);
     break ;
     case MAGIC_UINT_MATRIX:
       return display<uint>(ifname, false, load, show_info, show_help,
-			   autorange, nh, nw, mats);
+			   autorange, nh, nw, mats, lg, conf, zoom, range);
       break ;
     default: // not a matrix, try as regular float image
       return display<float>(ifname, true, load, show_info, show_help,
-			    autorange, nh, nw, mats);
+			    autorange, nh, nw, mats, lg, conf, zoom, range);
     }
   } catch(string &err) {
     ERROR_MSG(err.c_str());
@@ -203,6 +250,7 @@ int load_display(list<string>::iterator &ifname,
 
 ////////////////////////////////////////////////////////////////
 // main
+    typedef float Tnet;
 
 #ifdef __GUI__
 #ifdef NOCONSOLE
@@ -219,22 +267,91 @@ int main(int argc, char **argv) {
   try {
     if (!parse_args(argc, argv))
       return -1;
-    new_window("matshow");
+    uint wid = new_window("matshow");
     // variables
     bool show_info = false;
     bool show_help = false;
     bool autorange = false;
+    bool fixed_range = false;
+    vector<double> range; // display range of values
+    range.push_back(-1.0); // default range min
+    range.push_back(1.0); // default range max
+    string conf_fname;
+    float zoom = 1.0;
     uint nh = 1, nw = 1;
+    layers_gui lg(wid);
+    configuration *conf = NULL;
     // show mat images
     list<string> *argmats = new list<string>();
     list<string>::iterator i;
     for (int i = 1; i < argc; ++i) {
-      cout << argv[i] << endl;
-      argmats->push_front(argv[i]);
+      // check for options
+      try {
+	if (!strcmp(argv[i], "-conf")) {
+	  ++i; if (i >= argc) throw 0;
+	  conf_fname = argv[i];
+	} else if (!strcmp(argv[i], "-zoom")) {
+	  ++i; if (i >= argc) throw 0;
+	  zoom = (float) atof(argv[i]);
+	} else if (!strcmp(argv[i], "-range")) {
+	  range.clear();
+	  ++i; if (i >= argc) throw 0;
+	  string s = argv[i];
+	  int k = 0;
+	  while (s.size()) {
+	    uint j;
+	    for (j = 0; j < s.size(); ++j)
+	      if (s[j] == ',')
+		break ;
+	    string s0 = s.substr(0, j);
+	    if (j >= s.size())
+	      s = "";
+	    else
+	    s = s.substr(j + 1, s.size());
+	    range.push_back(atof(s0.c_str()));
+	    k++;
+	  }
+	  cout << "Fixing input range to " << range[0] << " .. "
+	       << range[1] << endl;
+	  fixed_range = true;
+	}
+	// enqueue file names
+	else {
+	  cout << argv[i] << endl;
+	  argmats->push_front(argv[i]);
+	}
+      } catch (int err) {
+	cerr << "input error: ";
+	switch (err) {
+	case 0: cerr << "expecting string after " << argv[i-1]; break;
+	case 1: cerr << "expecting integer after " << argv[i-1]; break;
+	case 2: cerr << "unknown parameter " << argv[i-1]; break;
+	case 3: cerr << "unknown channel mode " << argv[i-1]; break;
+	default: cerr << "undefined error";
+	}
+	cerr << endl << endl;
+	return false;
+      }
     }
+
+    // load configuration in conf mode
+    if (conf_fname.size() > 0) {
+      conf = new configuration(conf_fname);
+      if (!conf->exists("root2")) {
+	string dir = dirname(conf_fname.c_str());
+	cout << "Looking for trained files in: " << dir << endl;
+	conf->set("root2", dir.c_str());
+	conf->resolve();
+      }
+      // enable auto range by default in conf mode
+      if (!fixed_range)
+	autorange = true;
+    }
+    
+    // display first matrix/image
     i = argmats->begin();
     if (!load_display(i, true, show_info, show_help, autorange,
-		      nh, nw, argmats)) {
+		      nh, nw, argmats, lg, conf, zoom, range)) {
       ERROR_MSG("failed to load image(s)");
       return -1;
     }
@@ -278,7 +395,7 @@ int main(int argc, char **argv) {
 	      }
 	    }
 	    load_display(i, true, show_info, show_help, autorange, nh, nw,
-			 mats);
+			 mats, lg, conf, zoom, range);
 	  } else if (key == Qt::Key_Left) {
 	    // show previous image
 	    for (uint k = 0; k < nw * nh; ++k) {
@@ -289,7 +406,7 @@ int main(int argc, char **argv) {
 	      }
 	    }
 	    load_display(i, true, show_info, show_help, autorange, nh, nw,
-			 mats);
+			 mats, lg, conf, zoom, range);
 	  }
 	}
 	if (key == Qt::Key_I) {
@@ -297,35 +414,46 @@ int main(int argc, char **argv) {
 	  show_info = !show_info;
 	  if (show_info)
 	    show_help = false;
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
+		       lg, conf, zoom, range);
 	} else if (key == Qt::Key_A) {
-	  // show help
+	  // enable autorange
 	  autorange = !autorange;
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
+	  if (autorange)
+	    cout << "Enabling automatic input range." << endl;
+	  else
+	    cout << "Disabling automatic input range." << endl;
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
+		       lg, conf, zoom, range);
 	} else if (key == Qt::Key_H) {
 	  // show help
 	  show_help = !show_help;
 	  if (show_help)
 	    show_info = false;
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
+		       lg, conf, zoom, range);
 	} else if (key == Qt::Key_Y) {
 	  // increase number of images shown on height axis
 	  if (nh * nw < mats->size())
 	    nh++;
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
+		       lg, conf, zoom, range);
 	} else if (key == Qt::Key_T) {
 	  // decrease number of images shown on height axis
 	  nh = (std::max)((uint) 1, nh - 1);
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
+		       lg, conf, zoom, range);
 	} else if (key == Qt::Key_X) {
 	  // increase number of images shown on width axis
 	  if (nh * nw < mats->size())
 	    nw++;
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
+		       lg, conf, zoom, range);
 	} else if (key == Qt::Key_Z) {
 	  // decrease number of images shown on width axis
 	  nw = (std::max)((uint) 1, nw - 1);
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats);
+	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
+		       lg, conf, zoom, range);
 	}
       }
     }
@@ -335,6 +463,8 @@ int main(int argc, char **argv) {
 #endif /* __BOOST__ */
     if (argmats)
       delete argmats;
+    if (conf)
+      delete conf;
   } catch(string &err) {
     ERROR_MSG(err.c_str());
   }

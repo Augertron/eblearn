@@ -310,7 +310,15 @@ dstdsigmoid(float x)
     }
     return nf / (kf * nkf);
   }
-
+  
   ////////////////////////////////////////////////////////////////
 
+#ifdef __WINDOWS__
+  
+  double rint(double x) {
+    return floor(x + .5);
+  }
+  
+#endif
+  
 } // end namespace ebl
