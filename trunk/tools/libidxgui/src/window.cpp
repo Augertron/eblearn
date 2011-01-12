@@ -385,6 +385,11 @@ namespace ebl {
     //cout << scrollbox << endl;
   }
 
+  void Window::set_title(const char *title) {
+    QString t(title);
+    setWindowTitle(t);
+  }
+
   ////////////////////////////////////////////////////////////////
   // update methods
 

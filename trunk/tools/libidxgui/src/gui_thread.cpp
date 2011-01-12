@@ -100,6 +100,8 @@ namespace ebl {
 	    this, SLOT(freeze_style(bool)));
     connect(&thread, SIGNAL(gui_add_scroll_box(scroll_box0*)),
 	    this, SLOT(add_scroll_box(scroll_box0*)));
+    connect(&thread, SIGNAL(gui_set_title(const string*)), 
+	    this, SLOT(set_title(const string*)));
   }
 
   gui_thread::~gui_thread() {
@@ -295,6 +297,13 @@ namespace ebl {
     if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->add_scroll_box(sb);    
+  }
+
+  void gui_thread::set_title(const string *s) {
+    if (bquit) return ; // do not do any work if we are trying to quit
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->set_title(s->c_str());
+    delete s; // caller expects us to delete this string
   }
 
   ////////////////////////////////////////////////////////////////

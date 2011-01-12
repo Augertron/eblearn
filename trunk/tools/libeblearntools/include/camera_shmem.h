@@ -35,6 +35,14 @@
 
 #include "camera.h"
 
+#ifndef __WINDOWS__
+
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
+#endif /* __WINDOW__ */
+
 using namespace std;
 
 namespace ebl {

@@ -188,6 +188,9 @@ namespace ebl {
   //! Override all colors into night mode: blue on black background.
   EXPORT void night_mode();
   
+  //! Set the title of the currently selected window.
+  EXPORT void set_window_title(const char *s);
+
 } // namespace ebl
 
 #include "gui.hpp"

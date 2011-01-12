@@ -110,10 +110,17 @@ int display_net(list<string>::iterator &ifname,
   theparam.load_x(ifname->c_str());
   // displaying internals
   uint h0 = 0, w0 = 0;
+  disable_window_updates();
+  clear_window();
   if (autorange) // automatic range
     lg.display_internals(*net, h0, w0, zoom);
   else // fixed range
-    lg.display_internals(*net, h0, w0, zoom, (T) range[0], (T) range[1]);    
+    lg.display_internals(*net, h0, w0, zoom, (T) range[0], (T) range[1]);
+  // update title
+  string title;
+  title << "matshow: " << ebl::basename(ifname->c_str());
+  set_window_title(title.c_str());
+  enable_window_updates();
   return 1;
 }
 
@@ -123,6 +130,7 @@ int display(list<string>::iterator &ifname,
 	    bool autorange, uint nh, uint nw, list<string> *mats,
 	    layers_gui &lg, configuration *conf, float zoom,
 	    vector<double> &range) {
+  //cout << "displaying " << ifname->c_str() << endl;
   // conf mode
   if (conf)
     return display_net<T>(ifname, signd, load, show_info, show_help, autorange,
@@ -188,14 +196,18 @@ int display(list<string>::iterator &ifname,
     set_text_colors(0, 0, 255, 255, 255, 255, 255, 200);
     gui << at(h, w) << "Controls:"; h += hstep;
     set_text_colors(0, 0, 0, 255, 255, 255, 255, 200);
-    gui << at(h, w) << "Spacebar/Right: next image"; h += hstep;
-    gui << at(h, w) << "Left: previous image"; h += hstep;
+    gui << at(h, w) << "Right/Space: next image"; h += hstep;
+    gui << at(h, w) << "Left/Backspace: previous image"; h += hstep;
     gui << at(h, w) << "i: image info"; h += hstep;
     gui << at(h, w) << "a: auto-range (use min and max as range)"; h += hstep;
     gui << at(h, w) << "x/z: show more/less images on width axis"; h += hstep;
     gui << at(h, w) << "y/t: show more/less images on height axis"; h += hstep;
     gui << at(h, w) << "h: help"; h += hstep;
   }
+  // update title
+  string title;
+  title << "matshow: " << ebl::basename(ifname->c_str());
+  set_window_title(title.c_str());
   enable_window_updates();
 #endif
   return loaded;
@@ -273,6 +285,8 @@ int main(int argc, char **argv) {
     bool show_help = false;
     bool autorange = false;
     bool fixed_range = false;
+    bool explore = false; // explore working dir for other images
+    bool video = false; // show and save all frames
     vector<double> range; // display range of values
     range.push_back(-1.0); // default range min
     range.push_back(1.0); // default range max
@@ -293,6 +307,8 @@ int main(int argc, char **argv) {
 	} else if (!strcmp(argv[i], "-zoom")) {
 	  ++i; if (i >= argc) throw 0;
 	  zoom = (float) atof(argv[i]);
+	} else if (!strcmp(argv[i], "-video")) {
+	  video = true;
 	} else if (!strcmp(argv[i], "-range")) {
 	  range.clear();
 	  ++i; if (i >= argc) throw 0;
@@ -318,7 +334,7 @@ int main(int argc, char **argv) {
 	// enqueue file names
 	else {
 	  cout << argv[i] << endl;
-	  argmats->push_front(argv[i]);
+	  argmats->push_back(argv[i]);
 	}
       } catch (int err) {
 	cerr << "input error: ";
@@ -350,12 +366,18 @@ int main(int argc, char **argv) {
     
     // display first matrix/image
     i = argmats->begin();
-    if (!load_display(i, true, show_info, show_help, autorange,
-		      nh, nw, argmats, lg, conf, zoom, range)) {
-      ERROR_MSG("failed to load image(s)");
-      return -1;
+    if (!video) {
+      if (!load_display(i, true, show_info, show_help, autorange,
+			nh, nw, argmats, lg, conf, zoom, range)) {
+	ERROR_MSG("failed to load image(s)");
+	return -1;
+      }
     }
-
+    // explore working directory for more images only if a
+    // single file was passed
+    if (argmats->size() == 1)
+      explore = true;
+    
 #ifdef __BOOST__
     // list all other mat files in image directory
     string dir = argv[1];
@@ -368,92 +390,114 @@ int main(int argc, char **argv) {
       imgname = dir.substr(pos + 1, dir.size() - pos + 1);
       dir = dir.substr(0, pos);
     }
-    list<string> *mats = find_fullfiles(dir, IMAGE_PATTERN_MAT,
-					NULL, true, false);
-    if ((mats) && (mats->size() > 1)) {
-      // find current position in this list
-      for (i = mats->begin(); i != mats->end(); ++i) {
-	tmpname = i->substr(pos + 1, i->size() - pos + 1);
-	if (!imgname.compare(tmpname)) {
-	  break ;
+    list<string> *mats = argmats;
+    if (explore)
+      mats = find_fullfiles(dir, IMAGE_PATTERN_MAT,
+			    NULL, true, false);
+    // video mode
+    if (video) {
+      string out;
+      out << "video_" << tstamp();
+      mkdir_full(out);
+      uint j = 0;
+      for (i = mats->begin(); i != mats->end(); ++i, ++j) {
+	cout << "video mode: displaying " << *i << endl;
+	if (!load_display(i, true, show_info, show_help, autorange,
+			  nh, nw, mats, lg, conf, zoom, range)) {
+	  ERROR_MSG("failed to load image(s)");
+	  return -1;
 	}
+	millisleep(3000);
+	ostringstream fname;
+	fname << out << "/" << setfill('0') << setw(4) << j << "_"
+	      << ebl::basename(i->c_str()) << ".png";
+	save_window(fname.str().c_str());
+	cout << "video mode: saved " << fname.str() << endl;
       }
-      if (i == mats->end())
-	i = mats->begin();
-      // loop and wait for key pressed
-      while (1) {
-	millisleep(50);
-	int key = gui.pop_key_pressed();
-	// next/previous images only if not everuything is already displayed
-	if (mats->size() > nh * nw) {
-	  if ((key == Qt::Key_Space) || (key == Qt::Key_Right)) {
-	    // show next image
-	    for (uint k = 0; k < nw * nh; ++k) {
-	      i++;
-	      if (i == mats->end()) {
-		i = mats->begin();
-	      }
-	    }
-	    load_display(i, true, show_info, show_help, autorange, nh, nw,
-			 mats, lg, conf, zoom, range);
-	  } else if (key == Qt::Key_Left) {
-	    // show previous image
-	    for (uint k = 0; k < nw * nh; ++k) {
-	      i--;
-	      if (i == mats->begin()) {
-		i = mats->end();
-		i--;
-	      }
-	    }
-	    load_display(i, true, show_info, show_help, autorange, nh, nw,
-			 mats, lg, conf, zoom, range);
+    } else { // interactive mode
+      if ((mats) && (mats->size() >= 1)) {
+	// find current position in this list
+	for (i = mats->begin(); i != mats->end(); ++i) {
+	  tmpname = i->substr(pos + 1, i->size() - pos + 1);
+	  if (!imgname.compare(tmpname)) {
+	    break ;
 	  }
 	}
-	if (key == Qt::Key_I) {
-	  // show info
-	  show_info = !show_info;
-	  if (show_info)
-	    show_help = false;
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
-		       lg, conf, zoom, range);
-	} else if (key == Qt::Key_A) {
-	  // enable autorange
-	  autorange = !autorange;
-	  if (autorange)
-	    cout << "Enabling automatic input range." << endl;
-	  else
-	    cout << "Disabling automatic input range." << endl;
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
-		       lg, conf, zoom, range);
-	} else if (key == Qt::Key_H) {
-	  // show help
-	  show_help = !show_help;
-	  if (show_help)
-	    show_info = false;
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
-		       lg, conf, zoom, range);
-	} else if (key == Qt::Key_Y) {
-	  // increase number of images shown on height axis
-	  if (nh * nw < mats->size())
-	    nh++;
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
-		       lg, conf, zoom, range);
-	} else if (key == Qt::Key_T) {
-	  // decrease number of images shown on height axis
-	  nh = (std::max)((uint) 1, nh - 1);
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
-		       lg, conf, zoom, range);
-	} else if (key == Qt::Key_X) {
-	  // increase number of images shown on width axis
-	  if (nh * nw < mats->size())
-	    nw++;
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
-		       lg, conf, zoom, range);
-	} else if (key == Qt::Key_Z) {
-	  // decrease number of images shown on width axis
-	  nw = (std::max)((uint) 1, nw - 1);
-	  load_display(i, false, show_info, show_help, autorange, nh, nw, mats,
-		       lg, conf, zoom, range);
+	if (i == mats->end())
+	  i = mats->begin();
+	// loop and wait for key pressed
+	while (1) {
+	  millisleep(50);
+	  int key = gui.pop_key_pressed();
+	  // next/previous images only if not everuything is already displayed
+	  if (mats->size() > nh * nw) {
+	    if ((key == Qt::Key_Space) || (key == Qt::Key_Right)) {
+	      // show next image
+	      for (uint k = 0; k < nw * nh; ++k) {
+		i++;
+		if (i == mats->end()) {
+		  i = mats->begin();
+		}
+	      }
+	      load_display(i, true, show_info, show_help, autorange, nh, nw,
+			   mats, lg, conf, zoom, range);
+	    } else if ((key == Qt::Key_Backspace) || (key == Qt::Key_Left)) {
+	      // show previous image
+	      for (uint k = 0; k < nw * nh; ++k) {
+		if (i == mats->begin())
+		  i = mats->end();
+		i--;
+	      }
+	      load_display(i, true, show_info, show_help, autorange, nh, nw,
+			   mats, lg, conf, zoom, range);
+	    }
+	  }
+	  if (key == Qt::Key_I) {
+	    // show info
+	    show_info = !show_info;
+	    if (show_info)
+	      show_help = false;
+	    load_display(i, false, show_info, show_help, autorange, nh, nw,
+			 mats, lg, conf, zoom, range);
+	  } else if (key == Qt::Key_A) {
+	    // enable autorange
+	    autorange = !autorange;
+	    if (autorange)
+	      cout << "Enabling automatic input range." << endl;
+	    else
+	      cout << "Disabling automatic input range." << endl;
+	    load_display(i, false, show_info, show_help, autorange, nh, nw,
+			 mats, lg, conf, zoom, range);
+	  } else if (key == Qt::Key_H) {
+	    // show help
+	    show_help = !show_help;
+	    if (show_help)
+	      show_info = false;
+	    load_display(i, false, show_info, show_help, autorange, nh, nw,
+			 mats, lg, conf, zoom, range);
+	  } else if (key == Qt::Key_Y) {
+	    // increase number of images shown on height axis
+	    if (nh * nw < mats->size())
+	      nh++;
+	    load_display(i, false, show_info, show_help, autorange, nh, nw,
+			 mats, lg, conf, zoom, range);
+	  } else if (key == Qt::Key_T) {
+	    // decrease number of images shown on height axis
+	    nh = (std::max)((uint) 1, nh - 1);
+	    load_display(i, false, show_info, show_help, autorange, nh, nw,
+			 mats, lg, conf, zoom, range);
+	  } else if (key == Qt::Key_X) {
+	    // increase number of images shown on width axis
+	    if (nh * nw < mats->size())
+	      nw++;
+	    load_display(i, false, show_info, show_help, autorange, nh, nw,
+			 mats, lg, conf, zoom, range);
+	  } else if (key == Qt::Key_Z) {
+	    // decrease number of images shown on width axis
+	    nw = (std::max)((uint) 1, nw - 1);
+	    load_display(i, false, show_info, show_help, autorange, nh, nw,
+			 mats, lg, conf, zoom, range);
+	  }
 	}
       }
     }

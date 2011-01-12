@@ -221,6 +221,9 @@ namespace ebl {
 
     EXPORT void add_scroll_box(scroll_box0* sb);
 
+    //! Set the title of the currently selected window.
+    EXPORT void set_window_title(const char *s);
+
     //! Freeze or unfreeze style, no modification of colors are allowed when
     //! frozen.
     EXPORT void freeze_style(bool freeze);
@@ -264,6 +267,7 @@ namespace ebl {
     EXPORT void gui_set_wupdate(bool update);
     EXPORT void gui_freeze_style(bool freeze);
     EXPORT void gui_add_scroll_box(scroll_box0 *sb);
+    EXPORT void gui_set_title(const string *s);
 
   protected:
     virtual void run();
