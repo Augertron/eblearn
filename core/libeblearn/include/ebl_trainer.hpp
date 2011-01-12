@@ -247,7 +247,7 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel> 
   void supervised_trainer<Tnet, Tdata, Tlabel>::
   train(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log, 
-	gd_param &args, int niter, infer_param &infp) {
+	gd_param &gdp, int niter, infer_param &infp) {
     timer t;
     init(ds, &log);
     bool selected = true, correct;
@@ -258,14 +258,21 @@ namespace ebl {
       while (!ds.epoch_done()) {
 	ds.fprop(*input, label);
 	if (selected) // selected for training
-	  learn_sample(*input, label, args);
+	  learn_sample(*input, label, gdp);
 	// test if answer is correct
 	correct = test_sample(*input, label, infp);
 	// use energy and answer as distance for samples probabilities
 	ds.set_sample_energy(energy.x.get(), correct, answer.x.get());
 	//      log.update(age, output, label.get(), energy);
 	age++;
+	// select next sample
 	selected = ds.next_train();
+	// decrease learning rate if specified
+	if (gdp.anneal_period > 0 && ((age - 1) % gdp.anneal_period) == 0) {
+	  gdp.eta = gdp.eta /
+	    (1 + ((age / gdp.anneal_period) * gdp.anneal_value));
+	  cout << "age: " << age << " updated eta=" << gdp.eta << endl;
+	}
       }
       ds.normalize_all_probas();
       cout << "epoch_count=" << ds.get_epoch_count() << endl;

@@ -71,9 +71,21 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
 
-  gd_param::gd_param(double leta, double ln, double l1, double l2, int dtime,
-		     double iner, double a_v, double a_t, double g_t)
-  {
+  gd_param::gd_param() {
+    eta = 0.0;
+    n = 0;
+    decay_time = 0;
+    decay_l2 = 0.0;
+    decay_l1 = 0.0;
+    inertia = 0.0;
+    anneal_value = 0.0;
+    anneal_period = 0;
+    gradient_threshold = 0.0;
+    niter_done = 0;
+  }
+
+  gd_param::gd_param(double leta, double ln, double l1, double l2, intg dtime,
+		     double iner, double a_v, intg a_p, double g_t) {
     eta = leta;
     n = ln;
     decay_time = dtime;
@@ -81,7 +93,7 @@ namespace ebl {
     decay_l1 = l1;
     inertia = iner;
     anneal_value = a_v;
-    anneal_time = a_t;
+    anneal_period = a_p;
     gradient_threshold = g_t;
     niter_done = 0;
   }
@@ -90,8 +102,8 @@ namespace ebl {
     out << "Gradient parameters: eta " << p.eta << " stopping threshold "
 	<< p.n << " decay_l1 " << p.decay_l1 << " decay_l2 " << p.decay_l2 
 	<< " decay_time " << p.decay_time << " inertia " << p.inertia
-	<< " anneal_value " << p.anneal_value << " annueal_time " 
-	<< p.anneal_time << " gradient threshold " << p.gradient_threshold;
+	<< " anneal_value " << p.anneal_value << " annueal_period " 
+	<< p.anneal_period << " gradient threshold " << p.gradient_threshold;
     return out;
   }
 

@@ -199,9 +199,25 @@ namespace ebl {
     int d;
     iss >> d;
     if (iss.fail()) {
-      cerr << "\"" << s << "\" is not an unsigned int." << endl;
+      cerr << "\"" << s << "\" is not an int." << endl;
       eblerror("invalid conversion to int");
       throw "invalid conversion to int";
+    }
+    return d;
+  }
+
+  intg string_to_intg(const string &s) {
+    return string_to_intg(s.c_str());
+  }
+  
+  intg string_to_intg(const char *s) {
+    istringstream iss(s);
+    intg d;
+    iss >> d;
+    if (iss.fail()) {
+      cerr << "\"" << s << "\" is not an intg." << endl;
+      eblerror("invalid conversion to intg");
+      throw "invalid conversion to intg";
     }
     return d;
   }

@@ -72,4 +72,28 @@ namespace ebl {
     return false;
   }
 
+  ////////////////////////////////////////////////////////////////
+
+  void load_gd_param(configuration &conf, gd_param &gdp) {
+    // mandatory learning parameters
+    gdp.eta = conf.get_double("eta");
+    // optional learning parameters
+    if (conf.exists("reg_time"))
+      gdp.decay_time = conf.get_intg("reg_time");
+    if (conf.exists("reg_l1"))
+      gdp.decay_l1 = conf.get_double("reg_l1");
+    if (conf.exists("reg_l2"))
+      gdp.decay_l2 = conf.get_double("reg_l2");
+    if (conf.exists("inertia"))
+      gdp.inertia = conf.get_double("inertia");
+    if (conf.exists("anneal_value"))
+      gdp.anneal_value = conf.get_double("anneal_value");
+    if (conf.exists("anneal_period"))
+      gdp.anneal_period = conf.get_intg("anneal_period");
+    if (conf.exists("gradient_threshold"))
+      gdp.gradient_threshold = conf.get_double("gradient_threshold");
+    // printing parameters
+    cout << gdp << endl;
+  }
+  
 } /* namespace ebl */

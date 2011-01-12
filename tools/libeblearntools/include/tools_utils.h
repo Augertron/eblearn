@@ -98,6 +98,14 @@ namespace ebl {
   //! upon failure.
   EXPORT int string_to_int(const char *s);
 
+  //! Convert a string to an intg. Throws a const char * exception
+  //! upon failure.
+  EXPORT intg string_to_intg(const string &s);
+
+  //! Convert a string to an intg. Throws a const char * exception
+  //! upon failure.
+  EXPORT intg string_to_intg(const char *s);
+
   //! Convert a string to an unsigned int. Throws a const char * exception
   //! upon failure.
   EXPORT uint string_to_uint(const string &s);

@@ -362,8 +362,8 @@ void main_thread(int argc, char **argv, configuration &conf,
       // save bounding boxes
       if (updated) {
 	updated = false;
-	boxes.new_group(&processed_fname, processed_id);
-	boxes.add(bb);
+	// boxes.new_group(&processed_fname, processed_id);
+	// boxes.add(bb);
 	cnt++;
 	// display processed frame
 // #ifdef __GUI__

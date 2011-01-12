@@ -110,7 +110,11 @@ namespace ebl {
   //! If none of those variables are found, it'll return false.
   bool load_table(configuration &conf, std::string &module_name,
 		  idx<intg> &table, intg thickness, intg noutputs);
-  
+
+  //! Load mandatory and optional gradient parameters from configuration
+  //! 'conf' into gradient parameters object 'gdp'.
+  void load_gd_param(configuration &conf, gd_param &gdp);
+    
 } // end namespace ebl
 
 #include "netconf.hpp"

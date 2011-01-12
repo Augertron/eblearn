@@ -136,16 +136,8 @@ int main(int argc, char **argv) { // regular main without gui
     classifier_meter trainmeter, testmeter;
 
     // learning parameters
-    gd_param gdp(/* double leta*/ conf.get_double("eta"),
-		 /* double ln */ 	0.0,
-		 /* double l1 */  conf.get_double("reg_l1"),
-		 /* double l2 */  conf.get_double("reg_l2"),
-		 /* int dtime */ 	0,
-		 /* double iner */0.0, 
-		 /* double a_v */ 0.0,
-		 /* double a_t */ 0.0,
-		 /* double g_t*/ 	0.0);
-    cout << gdp << endl;
+    gd_param gdp;
+    load_gd_param(conf, gdp);
     infer_param infp;
 	
     timer titer, ttest;

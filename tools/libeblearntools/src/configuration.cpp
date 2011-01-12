@@ -560,6 +560,11 @@ namespace ebl {
     return string_to_int(get_cstr(varname));
   }
 
+  intg configuration::get_intg(const char *varname) {
+    exists_throw(varname);
+    return string_to_intg(get_cstr(varname));
+  }
+
   bool configuration::get_bool(const char *varname) {
     exists_throw(varname);
     if (get_uint(varname) == 0)

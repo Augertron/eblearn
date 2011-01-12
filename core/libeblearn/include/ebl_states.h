@@ -53,24 +53,28 @@ namespace ebl {
     double decay_l1;
     //! L2 regularizer coefficient
     double decay_l2;
-    //! time at which to start using decay values
-    int decay_time;
+    //! Time (in number of training samples) after which to decay values
+    intg decay_time;
     //! momentum term
     double inertia;
     //! annealing coefficient for the learning rate
     double anneal_value;
-    //! number of iteration beetween two annealings
-    double anneal_time;
+    //! Number of training samples beetween two annealings.
+    intg anneal_period;
     //! threshold on square norm of gradient for stopping
     double gradient_threshold;
     //! for debugging purpose
     int niter_done;
 
-    gd_param(double leta, double ln, double l1, double l2, int dtime,
-	     double iner, double a_v, double a_t, double g_t);
+    //! Empty constructor, set all variables to zero.
+    gd_param();
+    
+    //! Constructor.
+    gd_param(double leta, double ln, double l1, double l2, intg dtime,
+	     double iner, double a_v, intg a_p, double g_t);
   };
 
-  std::ostream& operator<<(std::ostream &out, const gd_param &p);
+  EXPORT std::ostream& operator<<(std::ostream &out, const gd_param &p);
 
   ////////////////////////////////////////////////////////////////
   //! abstract class for randomization parameters
