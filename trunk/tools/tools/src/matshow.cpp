@@ -59,6 +59,25 @@ using namespace std;
 using namespace ebl;
 
 ////////////////////////////////////////////////////////////////
+// global parameters
+
+#ifdef __GUI__
+layers_gui lg;
+#endif
+
+bool show_info = false;
+bool show_help = false;
+bool autorange = false;
+bool fixed_range = false;
+bool explore = false; // explore working dir for other images
+bool video = false; // show and save all frames
+uint nh = 1;
+uint nw = 1;
+configuration *conf = NULL;
+float zoom = 1.0;
+vector<double> range;
+				      
+////////////////////////////////////////////////////////////////
 // interface
 
 // print command line usage
@@ -96,10 +115,8 @@ bool parse_args(int argc, char **argv) {
 
 template <typename T>
 int display_net(list<string>::iterator &ifname,
-		bool signd, bool load, bool show_info, bool show_help,
-		bool autorange, uint nh, uint nw, list<string> *mats,
-		layers_gui &lg, configuration *conf, float zoom,
-		vector<double> &range) {
+		bool signd, bool load, list<string> *mats) {
+#ifdef __GUI__
   // create network
   idx<ubyte> classes(1,1);
   load_matrix<ubyte>(classes, conf->get_cstring("classes"));
@@ -121,20 +138,17 @@ int display_net(list<string>::iterator &ifname,
   title << "matshow: " << ebl::basename(ifname->c_str());
   set_window_title(title.c_str());
   enable_window_updates();
+#endif
   return 1;
 }
 
 template <typename T>
 int display(list<string>::iterator &ifname,
-	    bool signd, bool load, bool show_info, bool show_help,
-	    bool autorange, uint nh, uint nw, list<string> *mats,
-	    layers_gui &lg, configuration *conf, float zoom,
-	    vector<double> &range) {
+	    bool signd, bool load, list<string> *mats) {
   //cout << "displaying " << ifname->c_str() << endl;
   // conf mode
   if (conf)
-    return display_net<T>(ifname, signd, load, show_info, show_help, autorange,
-			  nh, nw, mats, lg, conf, zoom, range);
+    return display_net<T>(ifname, signd, load, mats);
   // image mode
   int loaded = 0;
 #ifdef __GUI__
@@ -216,43 +230,33 @@ int display(list<string>::iterator &ifname,
 //! Retrieve type so that we know if we can look
 //! for negative values when estimating range.
 int load_display(list<string>::iterator &ifname,
-		 bool load, bool show_info, bool show_help, bool autorange,
-		 uint nh, uint nw, list<string> *mats,
-		 layers_gui &lg, configuration *conf, float zoom,
-		 vector<double> &range) {
+		 bool load, list<string> *mats) {
   try {
     switch (get_matrix_type((*ifname).c_str())) {
     case MAGIC_BYTE_MATRIX:
     case MAGIC_UBYTE_VINCENT:
-      return display<ubyte>(ifname, false, load, show_info, show_help, 
-			    autorange, nh, nw, mats, lg, conf, zoom, range);
+      return display<ubyte>(ifname, false, load, mats);
       break ;
     case MAGIC_INTEGER_MATRIX:
     case MAGIC_INT_VINCENT:
-      return display<int>(ifname, true, load, show_info, show_help,
-			  autorange, nh, nw, mats, lg, conf, zoom, range);
+      return display<int>(ifname, true, load, mats);
     break ;
     case MAGIC_FLOAT_MATRIX:
     case MAGIC_FLOAT_VINCENT:
-      return display<float>(ifname, true, load, show_info, show_help,
-			    autorange, nh, nw, mats, lg, conf, zoom, range);
+      return display<float>(ifname, true, load, mats);
       break ;
     case MAGIC_DOUBLE_MATRIX:
     case MAGIC_DOUBLE_VINCENT:
-      return display<double>(ifname, true, load, show_info, show_help,
-			     autorange, nh, nw, mats, lg, conf, zoom, range);
+      return display<double>(ifname, true, load, mats);
       break ;
     case MAGIC_LONG_MATRIX:
-      return display<long>(ifname, true, load, show_info, show_help,
-			   autorange, nh, nw, mats, lg, conf, zoom, range);
+      return display<long>(ifname, true, load, mats);
     break ;
     case MAGIC_UINT_MATRIX:
-      return display<uint>(ifname, false, load, show_info, show_help,
-			   autorange, nh, nw, mats, lg, conf, zoom, range);
+      return display<uint>(ifname, false, load, mats);
       break ;
     default: // not a matrix, try as regular float image
-      return display<float>(ifname, true, load, show_info, show_help,
-			    autorange, nh, nw, mats, lg, conf, zoom, range);
+      return display<float>(ifname, true, load, mats);
     }
   } catch(string &err) {
     ERROR_MSG(err.c_str());
@@ -279,22 +283,10 @@ int main(int argc, char **argv) {
   try {
     if (!parse_args(argc, argv))
       return -1;
-    uint wid = new_window("matshow");
     // variables
-    bool show_info = false;
-    bool show_help = false;
-    bool autorange = false;
-    bool fixed_range = false;
-    bool explore = false; // explore working dir for other images
-    bool video = false; // show and save all frames
-    vector<double> range; // display range of values
     range.push_back(-1.0); // default range min
     range.push_back(1.0); // default range max
     string conf_fname;
-    float zoom = 1.0;
-    uint nh = 1, nw = 1;
-    layers_gui lg(wid);
-    configuration *conf = NULL;
     // show mat images
     list<string> *argmats = new list<string>();
     list<string>::iterator i;
@@ -367,8 +359,7 @@ int main(int argc, char **argv) {
     // display first matrix/image
     i = argmats->begin();
     if (!video) {
-      if (!load_display(i, true, show_info, show_help, autorange,
-			nh, nw, argmats, lg, conf, zoom, range)) {
+      if (!load_display(i, true, argmats)) {
 	ERROR_MSG("failed to load image(s)");
 	return -1;
       }
@@ -402,8 +393,7 @@ int main(int argc, char **argv) {
       uint j = 0;
       for (i = mats->begin(); i != mats->end(); ++i, ++j) {
 	cout << "video mode: displaying " << *i << endl;
-	if (!load_display(i, true, show_info, show_help, autorange,
-			  nh, nw, mats, lg, conf, zoom, range)) {
+	if (!load_display(i, true, mats)) {
 	  ERROR_MSG("failed to load image(s)");
 	  return -1;
 	}
@@ -439,8 +429,7 @@ int main(int argc, char **argv) {
 		  i = mats->begin();
 		}
 	      }
-	      load_display(i, true, show_info, show_help, autorange, nh, nw,
-			   mats, lg, conf, zoom, range);
+	      load_display(i, true, mats);
 	    } else if ((key == Qt::Key_Backspace) || (key == Qt::Key_Left)) {
 	      // show previous image
 	      for (uint k = 0; k < nw * nh; ++k) {
@@ -448,8 +437,7 @@ int main(int argc, char **argv) {
 		  i = mats->end();
 		i--;
 	      }
-	      load_display(i, true, show_info, show_help, autorange, nh, nw,
-			   mats, lg, conf, zoom, range);
+	      load_display(i, true, mats);
 	    }
 	  }
 	  if (key == Qt::Key_I) {
@@ -457,8 +445,7 @@ int main(int argc, char **argv) {
 	    show_info = !show_info;
 	    if (show_info)
 	      show_help = false;
-	    load_display(i, false, show_info, show_help, autorange, nh, nw,
-			 mats, lg, conf, zoom, range);
+	    load_display(i, false, mats);
 	  } else if (key == Qt::Key_A) {
 	    // enable autorange
 	    autorange = !autorange;
@@ -466,37 +453,31 @@ int main(int argc, char **argv) {
 	      cout << "Enabling automatic input range." << endl;
 	    else
 	      cout << "Disabling automatic input range." << endl;
-	    load_display(i, false, show_info, show_help, autorange, nh, nw,
-			 mats, lg, conf, zoom, range);
+	    load_display(i, false, mats);
 	  } else if (key == Qt::Key_H) {
 	    // show help
 	    show_help = !show_help;
 	    if (show_help)
 	      show_info = false;
-	    load_display(i, false, show_info, show_help, autorange, nh, nw,
-			 mats, lg, conf, zoom, range);
+	    load_display(i, false, mats);
 	  } else if (key == Qt::Key_Y) {
 	    // increase number of images shown on height axis
 	    if (nh * nw < mats->size())
 	      nh++;
-	    load_display(i, false, show_info, show_help, autorange, nh, nw,
-			 mats, lg, conf, zoom, range);
+	    load_display(i, false, mats);
 	  } else if (key == Qt::Key_T) {
 	    // decrease number of images shown on height axis
 	    nh = (std::max)((uint) 1, nh - 1);
-	    load_display(i, false, show_info, show_help, autorange, nh, nw,
-			 mats, lg, conf, zoom, range);
+	    load_display(i, false, mats);
 	  } else if (key == Qt::Key_X) {
 	    // increase number of images shown on width axis
 	    if (nh * nw < mats->size())
 	      nw++;
-	    load_display(i, false, show_info, show_help, autorange, nh, nw,
-			 mats, lg, conf, zoom, range);
+	    load_display(i, false, mats);
 	  } else if (key == Qt::Key_Z) {
 	    // decrease number of images shown on width axis
 	    nw = (std::max)((uint) 1, nw - 1);
-	    load_display(i, false, show_info, show_help, autorange, nh, nw,
-			 mats, lg, conf, zoom, range);
+	    load_display(i, false, mats);
 	  }
 	}
       }

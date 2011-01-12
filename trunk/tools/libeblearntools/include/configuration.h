@@ -176,11 +176,17 @@ namespace ebl {
     //! this throws an exception.
     uint get_uint(const char *varname);
 
-    //! returns a int conversion of the string contained in the variable
+    //! returns an int conversion of the string contained in the variable
     //! with name varname.
     //! if varname does not exist or the int conversion fails,
     //! this throws an exception.
     int get_int(const char *varname);
+
+    //! Returns an intg conversion of the string contained in the variable
+    //! with name varname.
+    //! if varname does not exist or the int conversion fails,
+    //! this throws an exception.
+    intg get_intg(const char *varname);
 
     //! returns a bool conversion of the string contained in the variable
     //! with name varname.

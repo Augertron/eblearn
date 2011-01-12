@@ -69,10 +69,10 @@ void ebl_machines_test::test_lenet5_mnist() {
 	       /* double ln */ 	0.0,
 	       /* double l1 */ 	0.0,
 	       /* double l2 */ 	0.0,
-	       /* int dtime */ 	0,
+	       /* intg dtime */ 	0,
 	       /* double iner */0.0, 
 	       /* double a_v */ 0.0,
-	       /* double a_t */ 0.0,
+	       /* intg a_p */ 0,
 	       /* double g_t*/ 	0.0);
   infer_param infp;
   fixed_init_drand(); // fixed randomization

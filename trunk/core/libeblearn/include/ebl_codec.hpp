@@ -186,7 +186,7 @@ namespace ebl {
       idx_dotcacc(dec_energy.x, weight_energy_dec, energy.x);
       idx_dotcacc(z_energy.x, weight_energy_z, energy.x);
       cnt++;
-      if ((cnt % (int) infp.anneal_time) == 0)
+      if ((cnt % (int) infp.anneal_period) == 0)
 	temp_ip.eta *= infp.anneal_value;
     }
     /* TODO: for logging

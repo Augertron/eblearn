@@ -355,11 +355,13 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    }
 	  }
 	}
+#ifdef __GUI__
 	// sleep display
 	if (display_sleep > 0) {
 	  mout << "sleeping for " << display_sleep << "ms." << endl;
 	  millisleep(display_sleep);
 	}
+#endif
 	if (conf.exists("save_max") && !stop &&
 	    idx_sum(total_saved) > conf.get_uint("save_max")) {
 	  mout << "Reached max number of detections, exiting." << endl;

@@ -112,15 +112,8 @@ int main(int argc, char **argv) { // regular main without gui
   thenet.forget(fgp);
 
   // learning parameters
-  gd_param gdp(/* double leta*/ conf.get_double("eta"),
-	       /* double ln */ 	0.0,
-	       /* double l1 */ 	0.0,
-	       /* double l2 */ 	0.0,
-	       /* int dtime */ 	0,
-	       /* double iner */0.0, 
-	       /* double a_v */ 0.0,
-	       /* double a_t */ 0.0,
-	       /* double g_t*/ 	0.0);
+  gd_param gdp;
+  load_gd_param(conf, gdp);
   infer_param infp;
 	
   // estimate second derivative on 100 iterations, using mu=0.02

@@ -729,6 +729,9 @@ namespace ebl {
     ostringstream cmd;
     string tmpfile = "report.tmp";
     int res;
+    string extension = "pdf"; // plots extension
+    if (conf.exists("meta_gnuplot_terminal"))
+      extension = conf.get_string("meta_gnuplot_terminal");
  
     if (conf.exists_bool("meta_send_email")) {
       if (!conf.exists("meta_email")) {
@@ -812,7 +815,9 @@ namespace ebl {
 	  && tar_pattern(dir, dir, "logs.tgz", ".*[.]log"))
 	cmd << " -a " << dir << "/logs.tgz";
       // attach plots
-      list<string> *plots = find_fullfiles(dir, ".*[.]pdf");
+      string pat;
+      pat << ".*[.]" << extension;
+      list<string> *plots = find_fullfiles(dir, pat.c_str());
       if (plots) {
 	for (list<string>::iterator i = plots->begin(); i != plots->end(); ++i)
 	  cmd << " -a " << *i;
