@@ -343,7 +343,11 @@ ENDIF ($ENV{NOMPI})
 if (APPLE OR LINUX)
   set(PTHREAD_FOUND TRUE) # present by default on apple and linux
   set(PTHREAD_INCLUDE_DIR "/usr/include")
-  set(PTHREAD_LIBRARY "/usr/lib/libpthread.so")
+  if (APPLE)
+    set(PTHREAD_LIBRARY "/usr/lib/libpthread.dylib")
+  else (APPLE) # LINUX
+    set(PTHREAD_LIBRARY "/usr/lib/libpthread.so")
+  endif (APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 else (APPLE OR LINUX) # installed manually under windows
   

@@ -49,7 +49,7 @@
 	  or y and t keys vertically.</li>
 	<li><b>previous/next</b>:
 	  user can show images back and forth
-	  using left/right or spacebar keys.</li>
+	  using left/right or backspace/space keys.</li>
 	<li><b>image information</b>: display image informations
 	  such as size by pressing i.</li>
 	<li><b>help</b>: key controls can be shown by pressing h.</li>

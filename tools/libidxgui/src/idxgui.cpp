@@ -310,4 +310,9 @@ namespace ebl {
     return gt->busy_drawing();
   }
 
+  void idxgui::set_window_title(const char *s) {
+    check_init();
+    emit gui_set_title(new string(s));    
+  }
+
 } // end namespace ebl

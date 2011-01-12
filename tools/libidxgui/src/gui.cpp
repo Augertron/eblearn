@@ -146,4 +146,8 @@ namespace ebl {
     gui.freeze_style(true);
   }
 
+  void set_window_title(const char *s) {
+    gui.set_window_title(s);
+  }
+
 } // end namespace ebl

@@ -175,6 +175,9 @@ namespace ebl {
     void remove_scroll_box(scroll_box0 *sb);
     void replace_scroll_box_with_copy(scroll_box0 *sb);
 
+    //! Change window title.
+    void set_title(const char *title);
+
     ////////////////////////////////////////////////////////////////
     // Events methods
     

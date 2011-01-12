@@ -114,6 +114,8 @@ namespace ebl {
     void select_window(int wid);
     void set_silent(const std::string *filename = NULL);
     void add_scroll_box(scroll_box0 *sb);
+    //! Modify current window's title.
+    void set_title(const string *s);
 
     //! Freeze or unfreeze style, no modification of colors are allowed when
     //! frozen.
