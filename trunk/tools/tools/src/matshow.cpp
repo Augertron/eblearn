@@ -36,11 +36,11 @@
 #include "configuration.h"
 #include "netconf.h"
 
-#define NOCONSOLE
+//#define NOCONSOLE
 
 #define MBOX_ERROR_TITLE "MatShow error"
 #ifdef __WINDOWS__
-#ifdef   NOCONSOLE_	
+#ifdef NOCONSOLE
 #define  ERROR_MSG(err) MessageBox(NULL, err, MBOX_ERROR_TITLE, MB_OK)
 #else
 #define  ERROR_MSG(err) cerr << err << endl
@@ -91,6 +91,8 @@ void print_usage() {
   cout << "  -zoom <factor> (zoom on weights by this factor)" << endl;
   cout << "  -range <range, e.g.: -1,1>: range to map to 0..255 for display."
        << endl;
+  cout << "  -video (display and save all input images in a video_<timestamp>"
+       << " directory, than can later be compile into a video)" << endl;
 }
 
 // parse command line input

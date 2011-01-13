@@ -24,7 +24,8 @@ add_library (eblearntools SHARED
   src/tools_utils.cpp
   src/opencv.cpp
   src/metaparser.cpp
-  src/metajobs.cpp
+  src/job.cpp
+  src/mpijob.cpp
   src/sort.cpp
   src/thread.cpp
   src/netconf.cpp
@@ -45,3 +46,7 @@ LINK_QT(eblearntools eblearngui)
 LINK_KINECT(eblearntools)
 LINK_XML(eblearntools)
 LINK_PTHREAD(eblearntools)
+IF (MPI_FOUND)
+#  target_link_libraries (eblearntools pmpich++) # mpi_cxx)
+  target_link_libraries (eblearntools mpi_cxx)
+ENDIF (MPI_FOUND)    

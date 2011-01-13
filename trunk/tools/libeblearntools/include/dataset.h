@@ -432,11 +432,11 @@ namespace ebl {
   // Helper functions
   
   //! Builds dataset filenames based on root, name, etc.
-  void build_fname(string &ds_name, const char *fname, string &fullname);
+  EXPORT void build_fname(string &ds_name, const char *fname, string &fullname);
 
   //! Recursively goes through dir, looking for files matching extension ext,
   //! and returns the number of matches.
-  uint count_matches(const string &dir, const string &pattern);
+  EXPORT uint count_matches(const string &dir, const string &pattern);
 
   ////////////////////////////////////////////////////////////////
   // loading errors

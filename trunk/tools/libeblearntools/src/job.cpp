@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,12 +36,15 @@
 #include <sstream>
 #include <stdio.h>
 #include <map>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <unistd.h>
 #include <iomanip>
+
+#ifndef __WINDOWS__
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
 
 #ifdef __BOOST__
 #include "boost/filesystem.hpp"
@@ -50,7 +54,7 @@ using namespace boost;
 #endif
 
 #include "numerics.h"
-#include "metajobs.h"
+#include "job.h"
 #include "tools_utils.h"
 #include "metaparser.h"
 
@@ -62,8 +66,8 @@ namespace ebl {
   // job
 
   job::job(configuration &conf_, const string &exe_, const string &oconffname) 
-    : conf(conf_), exe(exe_), oconffname_(oconffname), pid(-1),
-      classesname_(""), _started(false) {
+    : conf(conf_), exe(exe_), oconffname_(oconffname),
+      classesname_(""), _started(false), pid(-1) {
     // remove quotes around executable command if present
     if ((exe[0] == '"') && (exe[exe.size() - 1] == '"'))
       exe = exe.substr(1, exe.size() - 2);
@@ -80,6 +84,22 @@ namespace ebl {
   }
 
   void job::run() {
+#ifndef __WINDOWS__
+    // fork job
+    _started = true;
+    pid = (int) fork();
+    if (pid == -1)
+      eblerror("fork failed");
+    if (pid == 0) { // child code
+      run_child();
+    }
+#else
+    eblerror("not implemented");
+#endif
+  }
+
+  void job::run_child() {
+#ifndef __WINDOWS__
     // start timer
     t.start();
     ostringstream cmd, log, errlog;
@@ -92,17 +112,14 @@ namespace ebl {
 	<< log.str() << " && ((" << exe << " " << confname_
 	<< " 3>&1 1>&2 2>&3 | tee /dev/tty | tee " << errlog.str()
 	<< ") 3>&1 1>&2 2>&3) >> " << log.str() << " 2>&1 && exit 0";
-    // fork job
-    _started = true;
-    pid = fork();
-    if (pid == -1)
-      eblerror("fork failed");
-    if (pid == 0) { // child code
-      cout << endl << "Executing job " << filename(confname_.c_str()) 
-	   << " with cmd:" << endl << cmd.str() << endl;
-      // execl takes over this process (and its pid)
-      execl("/bin/sh", "sh", "-c", cmd.str().c_str(), (char*)NULL);
-    }
+    
+    cout << endl << "Executing job " << filename(confname_.c_str()) 
+	 << " with cmd:" << endl << cmd.str() << endl;
+    // execl takes over this process (and its pid)
+    execl("/bin/sh", "sh", "-c", cmd.str().c_str(), (char*)NULL);
+#else
+    eblerror("not implemented");
+#endif
   }
 
   bool job::started() {
@@ -149,11 +166,16 @@ namespace ebl {
   bool job::alive() {
     if (!_started)
       return false;
+#ifndef __WINDOWS__
     // if job is alive, it will receive this harmless signal
-    return (kill(pid, SIGCHLD) == 0); 
+    return (kill((pid_t) pid, SIGCHLD) == 0);
+#else
+    eblerror("not implemented");
+    return false;
+#endif
   }
 
-  pid_t job::getpid() {
+  int job::getpid() {
     return pid;
   }
 
@@ -171,11 +193,14 @@ namespace ebl {
   double job::minutes() {
     return t.elapsed_minutes();
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // job manager
 
-  job_manager::job_manager() : copy_path(""), max_jobs(limits<uint32>::max()) {
+  job_manager::job_manager() : copy_path(""), max_jobs(limits<uint32>::max()),
+			       maxiter(-1), mintime(0.0), maxtime(0.0),
+			       nrunning(1), unstarted(0),
+			       ready_slots(max_jobs), swait(30) {
   }
   
   job_manager::~job_manager() {
@@ -200,6 +225,8 @@ namespace ebl {
       max_jobs = mconf.get_uint("meta_max_jobs");
       cout << "Limiting to " << max_jobs << " jobs at the time." << endl;
     }
+    if (mconf.exists("meta_watch_interval"))
+      swait = mconf.get_uint("meta_watch_interval");
     return true;
   }
 
@@ -211,11 +238,44 @@ namespace ebl {
   }
 
   void job_manager::run() {
-    varmaplist best; // best results
-    ostringstream cmd, jobs_info;
-    int maxiter = -1, maxiter_tmp;
-    double maxtime = 0.0, mintime = 0.0;
-    metaparser p;
+    // prepare folders and files
+    prepare();
+    // run jobs and get their pid by forking
+    for (uint i = 0; i < jobs.size() && i < max_jobs; ++i)
+      jobs[i].run();
+    // loop until all jobs are finished
+    while (nrunning || unstarted > 0) {
+      secsleep(swait);
+      jobs_info();
+      release_dead_children();
+      // if there are jobs waiting to be started, start them if possible
+      if (unstarted > 0 && ready_slots > 0) {
+	for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
+	  if (!i->started() && ready_slots > 0) {
+	    i->run();
+	    ready_slots--;
+	  }
+	}
+      }
+      report();
+    }
+    last_report();
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // job manager: protected methods
+
+  void job_manager::release_dead_children() {
+#ifndef __WINDOWS__
+    int status = 0;
+    waitpid(-1, &status, WNOHANG); // check children status
+#else
+    eblerror("not implemented");
+#endif
+  }
+
+  void job_manager::prepare() {
+    ostringstream cmd;
 
     // write job directories and files
     for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
@@ -251,104 +311,89 @@ namespace ebl {
 	}
       }
     } catch (const char *s) { cerr << s << endl; }
-    // run jobs and get their pid by forking
-    for (uint i = 0; i < jobs.size() && i < max_jobs; ++i)
-      jobs[i].run();
-    // loop until all jobs are finished
-    uint swait = 30; // default wait is 30 seconds
-    if (mconf.exists("meta_watch_interval"))
-      swait = mconf.get_uint("meta_watch_interval");
-    uint nrunning = 1, unstarted = 0, ready_slots = max_jobs;
-    while (nrunning || unstarted > 0) {
-      sleep(swait);
-      // check if each pid responds to a harmless signal
-      nrunning = 0;
-      unstarted = 0;
-      ready_slots = max_jobs;
-      mintime = 0;
-      maxtime = 0;
-      for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
-	if (i->alive()) {
-	  nrunning++;
-	  if (ready_slots > 0)
-	    ready_slots--;
-	}
-	if (!i->started())
-	  unstarted++;
-	maxtime = std::max(i->minutes(), maxtime);
-	if (mintime == 0)
-	  mintime = i->minutes();
-	else
-	  mintime = MIN(i->minutes(), mintime);
+  }
+
+  void job_manager::jobs_info() {
+    nrunning = 0;
+    unstarted = 0;
+    ready_slots = max_jobs;
+    mintime = 0.0;
+    maxtime = 0.0;
+    infos.str("");
+    uint j = 1;
+    for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i, ++j) {
+      if (i->alive()) {
+	nrunning++;
+	if (ready_slots > 0)
+	  ready_slots--;
       }
-      int status = 0;
-      waitpid(-1, &status, WNOHANG); // check children status
-      cout << "Jobs alive: " << nrunning << ", waiting to start: " << unstarted
-	   << " / " << jobs.size()
-	   << ", empty job slots: " << ready_slots << ", Iteration: " << maxiter 
-	   << endl;
-      // if there are jobs waiting to be started, start them if possible
-      if (unstarted > 0 && ready_slots > 0) {
-	for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
-	  if (!i->started() && ready_slots > 0) {
-	    i->run();
-	    ready_slots--;
-	  }
-	}
-      }
-      // get jobs info for reporting
-      jobs_info.str("");
-      uint j = 1;
-      for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i, ++j) {
-      	jobs_info << j << ". pid: " << i->getpid() << ", name: " << i->name()
-		  << ", status: " << (i->alive() ? "alive" : "dead")
-		  << ", minutes: " << i->minutes() << endl;
-      }
-      // analyze outputs if requested
-      if (mconf.exists_bool("meta_analyze")) {
-	maxiter_tmp = p.get_max_common_iter(mconf.get_output_dir());
-	if (maxiter_tmp != maxiter) { // iteration number has changed
-	  maxiter = maxiter_tmp;
-	  if (mconf.exists_bool("meta_send_email")) {
-	    // send reports at certain iterations
-	    if (mconf.exists("meta_email_iters")) {
-	      // loop over set of iterations
-	      list<uint> l =
-		string_to_uintlist(mconf.get_string("meta_email_iters"));
-	      for (list<uint>::iterator i = l.begin(); i != l.end(); ++i) {
-		if (*i == (uint) maxiter) {
-		  cout << "Reached iteration " << *i << endl;
-		  // analyze 
-		  best = p.analyze(mconf, mconf.get_output_dir(),
-				   maxiter_tmp);
-		  // send report
-		  p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
-				mconf_fullfname, jobs_info.str(), nrunning,
-				maxtime, mintime);
-		}
+      if (!i->started())
+	unstarted++;
+      maxtime = std::max(i->minutes(), maxtime);
+      if (mintime == 0)
+	mintime = i->minutes();
+      else
+	mintime = MIN(i->minutes(), mintime); 
+      infos << j << ". pid: " << i->getpid() << ", name: " << i->name()
+	    << ", status: " << (i->alive() ? "alive" : "dead")
+	    << ", minutes: " << i->minutes() << endl;
+    }
+    cout << "Jobs alive: " << nrunning << ", waiting to start: " << unstarted
+	 << " / " << jobs.size()
+	 << ", empty job slots: " << ready_slots << ", Iteration: "
+	 << maxiter << endl;
+  }
+
+  void job_manager::report() {
+    // analyze outputs if requested
+    if (mconf.exists_bool("meta_analyze")) {
+      maxiter_tmp = parser.get_max_common_iter(mconf.get_output_dir());
+      if (maxiter_tmp != maxiter) { // iteration number has changed
+	maxiter = maxiter_tmp;
+	if (mconf.exists_bool("meta_send_email")) {
+	  // send reports at certain iterations
+	  if (mconf.exists("meta_email_iters")) {
+	    // loop over set of iterations
+	    list<uint> l =
+	      string_to_uintlist(mconf.get_string("meta_email_iters"));
+	    for (list<uint>::iterator i = l.begin(); i != l.end(); ++i) {
+	      if (*i == (uint) maxiter) {
+		cout << "Reached iteration " << *i << endl;
+		// analyze 
+		best = parser.analyze(mconf, mconf.get_output_dir(),
+				      maxiter_tmp);
+		// send report
+		parser.send_report(mconf, mconf.get_output_dir(), best, maxiter,
+				   mconf_fullfname, infos.str(), nrunning,
+				   maxtime, mintime);
 	      }
-	    } else if (mconf.exists("meta_email_period") &&
-		       (maxiter % mconf.get_uint("meta_email_period") == 0)) {
-	      // analyze 
-	      best = p.analyze(mconf, mconf.get_output_dir(),
-			       maxiter_tmp);
-	      // send report
-	      p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
-			    mconf_fullfname, jobs_info.str(), nrunning,
-			    maxtime, mintime);
 	    }
+	  } else if (mconf.exists("meta_email_period") &&
+		     (maxiter % mconf.get_uint("meta_email_period") == 0)) {
+	    // analyze 
+	    best = parser.analyze(mconf, mconf.get_output_dir(),
+				  maxiter_tmp);
+	    // send report
+	    parser.send_report(mconf, mconf.get_output_dir(), best, maxiter,
+			       mconf_fullfname, infos.str(), nrunning,
+			       maxtime, mintime);
 	  }
 	}
       }
     }
+  }
+
+  void job_manager::last_report() {
     cout << "All processes are finished. Exiting." << endl;
     // email last results before exiting
     if (mconf.exists_bool("meta_analyze"))
-      best = p.analyze(mconf, mconf.get_output_dir(),
-		       maxiter_tmp, true); // parse output and get best results
+      // parse output and get best results
+      best = parser.analyze(mconf, mconf.get_output_dir(),
+			    maxiter_tmp, true);
     // send report
-    p.send_report(mconf, mconf.get_output_dir(), best, maxiter,
-		  mconf_fullfname, jobs_info.str(), nrunning, maxtime, mintime);
+    parser.send_report(mconf, mconf.get_output_dir(), best, maxiter,
+		       mconf_fullfname, infos.str(), nrunning,
+		       maxtime, mintime);
   }
 
 } // namespace ebl

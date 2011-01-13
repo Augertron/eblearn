@@ -108,12 +108,12 @@ namespace ebl {
   //! If not found it will then look for 'module42_table_in' and
   //! 'module42_table_out' to create a full table from in to out.
   //! If none of those variables are found, it'll return false.
-  bool load_table(configuration &conf, std::string &module_name,
-		  idx<intg> &table, intg thickness, intg noutputs);
+  bool EXPORT load_table(configuration &conf, std::string &module_name,
+			 idx<intg> &table, intg thickness, intg noutputs);
 
   //! Load mandatory and optional gradient parameters from configuration
   //! 'conf' into gradient parameters object 'gdp'.
-  void load_gd_param(configuration &conf, gd_param &gdp);
+  void EXPORT load_gd_param(configuration &conf, gd_param &gdp);
     
 } // end namespace ebl
 

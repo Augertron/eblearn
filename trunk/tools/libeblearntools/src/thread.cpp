@@ -59,6 +59,7 @@ namespace ebl {
 #ifdef __PTHREAD__
       return (pthread_mutex_trylock(&m) == 0);
 #endif
+      return false;
     }
 
     void mutex::lock() {

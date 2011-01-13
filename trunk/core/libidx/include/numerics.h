@@ -168,7 +168,7 @@ namespace ebl {
   // Windows replacements for missing functions
   
   //! rint replacement for Windows.
-  double rint(double x);
+  EXPORT double rint(double x);
   
 #endif
   

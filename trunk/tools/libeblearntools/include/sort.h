@@ -50,7 +50,7 @@ using namespace std;
 namespace ebl {
 
   //! Credits to http://www.daniweb.com/forums/thread259447.html#
-  class int_span {
+  class EXPORT int_span {
     int _ws;
     int _zeros;
     const char *_value;
@@ -86,10 +86,10 @@ namespace ebl {
 
   //! Compare two strings in the natural way, returns true if a < b,
   //! false otherwise.
-  bool natural_compare_less(const string& a, const string& b);
+  EXPORT bool natural_compare_less(const string& a, const string& b);
 
   //! Compare two strings in the natural way.
-  int natural_compare(const string& a, const string& b);
+  EXPORT int natural_compare(const string& a, const string& b);
 
   //! Compare two strings using the natural comparison of numbers
   //! ("2" is less than "10").

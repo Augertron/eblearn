@@ -137,8 +137,8 @@ IF (WINDOWS AND NOT QT_FOUND) # do not compile this project under windows
 ELSE (WINDOWS AND NOT QT_FOUND) # do not compile this project under windows
 
 IF (WINDOWS)
-  SET(WINTYPE WIN32)
-  MESSAGE(STATUS "Building matshow as a windowed application (not console)")
+#  SET(WINTYPE WIN32)
+#  MESSAGE(STATUS "Building matshow as a windowed application (not console)")
 ENDIF (WINDOWS)
 
 add_executable (matshow ${WINTYPE} src/matshow.cpp)

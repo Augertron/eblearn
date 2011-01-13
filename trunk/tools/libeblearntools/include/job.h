@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef METAJOBS_H_
-#define METAJOBS_H_
+#ifndef JOB_H_
+#define JOB_H_
 
 #include "configuration.h"
 #include "metaparser.h"
@@ -39,9 +39,12 @@
 
 #include <sstream>
 #include <stdlib.h>
+#include <stdio.h>
+
+#ifndef __WINDOWS__
 #include <sys/wait.h>
 #include <unistd.h>
-#include <stdio.h>
+#endif
 
 using namespace std;
 
@@ -51,54 +54,59 @@ namespace ebl {
   // job
   
   //! Jobs to be executed.
-  class job {
+  class EXPORT job {
   public:
     job(configuration &conf, const string &exe, const string &oconffname);
     virtual ~job();
 
-    //! Execute job
-    void run();
+    //! Execute job (fork and call run_child()).
+    virtual void run();
 
     //! Returns true if the job has been started, false otherwise.
-    bool started();
+    virtual bool started();
 
     //! Write job's files in configuration's output directory.
-    bool write();
+    virtual bool write();
 
     //! Return true if the process is alive.
-    bool alive();
+    virtual bool alive();
 
     //! Return pid of this job.
-    pid_t getpid();
+    virtual int getpid();
 
     //! Return the name of this job (its configuration filename).
-    string &name();
+    virtual string &name();
 
     //! Return root directory of this job.
-    string get_root();
+    virtual string get_root();
 
     //! Return job's running time in minutes.
-    double minutes();
+    virtual double minutes();
     
+  protected:
+
+    //! Execute child's code.
+    virtual void run_child();
+
     ////////////////////////////////////////////////////////////////
     // members
-  private:
+  protected:
     configuration	conf;
     string		exe;	//!< executable full path
     string		outdir_;	//!< job's output directory
     string		confname_;	//!< job's configuration filename
     string		oconffname_;	//!< job's original conf filename
-    pid_t		pid;	//!< pid of this job
     string              classesname_; //!< filename of classes matrix
     timer               t;
     bool                _started;
+    int 		pid;	//!< pid of this job
   };
 
   ////////////////////////////////////////////////////////////////
   // job manager
 
   //! A class to manage jobs.
-  class job_manager {
+  class EXPORT job_manager {
   public:
     //! Constructor.
     job_manager();
@@ -109,25 +117,54 @@ namespace ebl {
     //! Read meta configuration.
     //! @param tstamp An optional timestamp to be used for the job's name
     //!               instead of the current timestamp.
-    bool read_metaconf(const char *fname, const string *tstamp = NULL);
+    virtual bool read_metaconf(const char *fname, const string *tstamp = NULL);
 
     //! Enable recursive copy of this path into jobs folders.
-    void set_copy(const string &path);
+    virtual void set_copy(const string &path);
     
     //! Run all jobs.
-    void run();
+    virtual void run();
+
+  protected:
+
+    //! Release child processes that have terminated from their zombie state.
+    virtual void release_dead_children();
+    
+    //! Prepare all jobs (create folders and copy/create files).
+    virtual void prepare();
+
+    //! Gather and print information about jobs, such as number of jobs running,
+    //! number to run left, min/max running time.
+    virtual void jobs_info();
+
+    //! Analyze and send a report.
+    virtual void report();
+
+    //! Print stopping message and send last report.
+    virtual void last_report();
 
     ////////////////////////////////////////////////////////////////
     // members
-  private:
-    meta_configuration	mconf; //!< Meta configuration
-    string		mconf_fullfname;	//!< Full filename of metaconf
+  protected:
+    meta_configuration	mconf;	   //!< Meta configuration
+    string		mconf_fullfname;//!< Full filename of metaconf
     string		mconf_fname;	//!< Filename of metaconf
-    vector<job>		jobs; //!< A vector of jobs to run
+    vector<job>		jobs;	   //!< A vector of jobs to run
     string              copy_path; //!< Copy path to jobs folders.
-    uint                max_jobs; //!< Max number of jobs at the same time.
+    uint                max_jobs;  //!< Max number of jobs at the same time.
+    metaparser          parser;
+    int			maxiter;
+    int			maxiter_tmp;
+    double		mintime;
+    double		maxtime;
+    uint		nrunning;
+    uint		unstarted;
+    uint		ready_slots;
+    ostringstream       infos;
+    varmaplist          best; //!< best results
+    uint                swait; //!< Waiting time when looping, in seconds.
   };
 
 } // end namespace ebl
 
-#endif /* METAJOBS_H_ */
+#endif /* JOB_H_ */

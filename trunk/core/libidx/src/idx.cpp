@@ -45,41 +45,37 @@ namespace ebl {
   // It is also used to deallocate them by passing a zero argument.
   // Hence, if ndim is reduced, the arrays are preserved.
   int idxspec::setndim(int n) {
-    if ((n<0) || (n>MAXDIMS)) {
-      eblerror("idx: cannot set ndim with n=" << n << " MAXDIMS=" << MAXDIMS)
-    } else {
-      // if new ndim is zero or larger than before: deallocate arrays
-      if ((n == 0) || (n > ndim)) {
-	if (dim) { delete []dim; }
-	if (mod) { delete []mod; }
-	dim = NULL; mod = NULL;
-      }
-      // now allocate new arrays if necessary
-      if (n > 0) {
-	if (!dim) { dim = new intg[n]; }
-	if (!mod) { mod = new intg[n]; }
-      }
-      // if the arrays allocated and ndim was larger 
-      // than new ndim, we don't do anything.
-      ndim = n;
-      return ndim;
+    if ((n<0) || (n>MAXDIMS))
+      eblerror("idx: cannot set ndim with n=" << n << " MAXDIMS=" << MAXDIMS);
+    // if new ndim is zero or larger than before: deallocate arrays
+    if ((n == 0) || (n > ndim)) {
+      if (dim) { delete []dim; }
+      if (mod) { delete []mod; }
+      dim = NULL; mod = NULL;
     }
+    // now allocate new arrays if necessary
+    if (n > 0) {
+      if (!dim) { dim = new intg[n]; }
+      if (!mod) { mod = new intg[n]; }
+    }
+    // if the arrays allocated and ndim was larger 
+    // than new ndim, we don't do anything.
+    ndim = n;
+    return ndim;
   }
 
   // set the order (number of dimensions).
   // using pre-allocated mod/dim arrays.
   // Probably not useful.
   int idxspec::setndim(int n, intg *ldim, intg *lmod) {
-    if ((n<1) || (n>=MAXDIMS)) { 
-      eblerror("idx: cannot set ndim with n=" << n << " MAXDIMS=" << MAXDIMS)
-    } else {
-      if (dim) { delete []dim; }
-      if (mod) { delete []mod; }
-      dim = ldim;
-      mod = lmod;
-      ndim = n;
-      return ndim;
-    }
+    if ((n<1) || (n>=MAXDIMS))
+      eblerror("idx: cannot set ndim with n=" << n << " MAXDIMS=" << MAXDIMS);
+    if (dim) { delete []dim; }
+    if (mod) { delete []mod; }
+    dim = ldim;
+    mod = lmod;
+    ndim = n;
+    return ndim;
   }
 
   //intg idxspec::resize( intg* dimsBegin, intg* dimsEnd ){

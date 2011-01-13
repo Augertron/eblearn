@@ -110,8 +110,8 @@ namespace ebl {
     std::vector<bbox_parts> parts;
   };
 
-  bbox mean_bbox(std::vector<bbox*> &boxes, float bonus_per_bbox,
-		 int classid);
+  EXPORT bbox mean_bbox(std::vector<bbox*> &boxes, float bonus_per_bbox,
+			int classid);
 
   //! bbox stream operator.
   EXPORT std::ostream& operator<<(std::ostream& out, const bbox& b);

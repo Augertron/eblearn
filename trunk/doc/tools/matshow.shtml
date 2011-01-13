@@ -66,6 +66,9 @@
 	  Zoom on weights by this factor.</li>
 	<li><b>-range</b> &lt;range, e.g.: -1,1&gt;<br>
 	  Input range to map to display range (0 - 255).</li>
+	<li><b>-video</b><br>
+	  Display and save all input images in a video_&lt;timestamp&gt;
+	  directory, than can later be compile into a video.</li>
 	
       </ul>
 	  

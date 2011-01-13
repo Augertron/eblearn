@@ -277,7 +277,7 @@ namespace ebl {
     // increment test iterator
     it_test++;
     // reset if reached end
-    if(!it_test >= data.dim(0))
+    if(it_test >= data.dim(0))
       it_test = 0;
     // set main iterator used by fprop
     it = it_test;
