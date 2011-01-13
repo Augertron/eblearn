@@ -44,6 +44,12 @@
 
 #ifdef __MPI__
 #include <mpi.h>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/mpi.hpp>
+
+//namespace mpi = boost::mpi;
 #endif
 
 #ifndef __WINDOWS__
@@ -65,13 +71,6 @@ typedef float t_net; // network precision
 
 //////////////////////////////////////////////////////////////////////////
 // serialization functions
-
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/mpi.hpp>
-
-//namespace mpi = boost::mpi;
 
 namespace boost {
   namespace serialization {

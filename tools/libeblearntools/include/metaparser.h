@@ -65,7 +65,7 @@ namespace ebl {
   //! corresponding to 1 subvariable only (could be extended to multiple
   //! variables). The subtree is a map of pairtrees for each value of this
   //! subvariable.
-  class pairtree {
+  class EXPORT pairtree {
   public:
     //! Constructor.
     //! \param var A string containing a variable name.
@@ -167,7 +167,7 @@ namespace ebl {
   
   //! A parser that can analyze the output of multiple jobs (usually used in
   //! conjunction with metarun).
-  class metaparser {
+  class EXPORT metaparser {
   public:
     //! Constructor, initialize the hierarchy. This hierarchy defines
     //! groups of variables, e.g. we want to have a first level of variables

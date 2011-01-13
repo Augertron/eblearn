@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet *
+ *   Copyright (C) 2011 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
@@ -28,32 +28,80 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARNTOOLS_H_
-#define LIBEBLEARNTOOLS_H_
-
-#include "defines_tools.h"
-#include "configuration.h"
-#include "gdb.h"
-#include "xml_utils.h"
-#include "tools_utils.h"
-#include "opencv.h"
-#include "camera.h"
-#include "camera_opencv.h"
-#include "camera_v4l2.h"
-#include "camera_shmem.h"
-#include "camera_kinect.h"
-//#include "camera_windows.h"
-#include "camera_directory.h"
-#include "camera_video.h"
-#include "metaparser.h"
-#include "sort.h"
-#include "thread.h"
-#include "detection_thread.h"
-#include "tracking_thread.h"
-#include "netconf.h"
-#include "job.h"
 #include "mpijob.h"
+#include "utils.h"
 
-#endif /* LIBEBLEARNTOOLS_H_ */
+using namespace std;
+
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // mpijob manager
+
+  mpijob_manager::mpijob_manager() {
+#ifndef __MPI__
+  eblerror("MPI was not found during compilation, install and recompile");
+#else
+  // boost::mpi::environment env(argc, argv);
+  //  int rank = world.rank();    
+#endif    
+  }
+  
+  mpijob_manager::~mpijob_manager() {
+  }
+  
+  void mpijob_manager::run() {
+    if (rank == 0)
+      run_master();
+    else
+      run_slave();
+  }
+  
+  void mpijob_manager::run_master() {
+    // prepare folders and files
+    prepare();
+    // run jobs and get their pid by forking
+    for (uint i = 0; i < jobs.size() && i < max_jobs; ++i)
+      jobs[i].run();
+    // loop until all jobs are finished
+    while (nrunning || unstarted > 0) {
+      secsleep(swait);
+      jobs_info();
+      release_dead_children();
+      // if there are jobs waiting to be started, start them if possible
+      if (unstarted > 0 && ready_slots > 0) {
+	for (vector<job>::iterator i = jobs.begin(); i != jobs.end(); ++i) {
+	  if (!i->started() && ready_slots > 0) {
+	    i->run();
+	    ready_slots--;
+	  }
+	}
+      }
+      report();
+    }
+    last_report();
+  }
+
+  void mpijob_manager::run_slave() {
+    while (1) {
+      // wait for master command
+      int cmd = 42;
+      // execute command
+      switch (cmd) {
+      case -1: // stop
+	return; break ;
+      case 0: // run a new job
+	break ;
+      case 1: // tell master if we are available
+	break ;
+      case 2: // send master job's running time
+	break ;
+      default:
+	cerr << "unknown master command: " << cmd << endl;
+      }
+    }
+  }
+  
+} // namespace ebl

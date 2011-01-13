@@ -351,6 +351,6 @@ int main(int argc, char **argv) {
       eblerror("unknown magic number");
     }
   } eblcatcherror();
-  sleep(20);
+  secsleep(20);
   return 0;
 }

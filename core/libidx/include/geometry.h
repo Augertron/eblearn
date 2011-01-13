@@ -108,13 +108,12 @@ namespace ebl {
     // members
     T h0, w0, height, width;
 
-    // friends
-    template <typename T2>
-      friend EXPORT std::ostream& operator<<(std::ostream& out, rect<T2>& r);
-    template <typename T2>
-      friend EXPORT std::ostream& operator<<(std::ostream& out,
-					     const rect<T2>& r);
   };
+
+  template <typename T>
+    EXPORT std::ostream& operator<<(std::ostream& out, rect<T>& r);
+  template <typename T>
+    EXPORT std::ostream& operator<<(std::ostream& out, const rect<T>& r);
 
 } // end namespace ebl
 

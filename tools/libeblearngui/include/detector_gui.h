@@ -44,10 +44,10 @@ using namespace std;
 
 namespace ebl {
 
-  void draw_bbox_parts(bbox_parts &bb, idx<ubyte> &labels, uint h0, uint w0,
-		       double dzoom);
-  void draw_bbox(bbox &bb, idx<ubyte> &labels, uint h0, uint w0, double dzoom,
-		 float transparency);
+  EXPORT void draw_bbox_parts(bbox_parts &bb, idx<ubyte> &labels, uint h0,
+			      uint w0, double dzoom);
+  EXPORT void draw_bbox(bbox &bb, idx<ubyte> &labels, uint h0, uint w0,
+			double dzoom, float transparency);
 
   ////////////////////////////////////////////////////////////////
   // detector_gui
@@ -56,7 +56,7 @@ namespace ebl {
 
   //! The display class of class detector.
   template <typename T, class Tstate = fstate_idx<T> >
-    class detector_gui {
+    class EXPORT detector_gui {
   public:
     //! Constructor.
     //! \param show_detqueue If true, show the queue of the latest detected

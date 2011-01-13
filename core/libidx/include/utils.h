@@ -142,7 +142,7 @@ namespace ebl {
   // process utilities
   
   //! Return PID of current process.
-  int pid();
+  EXPORT int pid();
   
 } // end namespace ebl
 
