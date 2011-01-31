@@ -36,7 +36,7 @@
 #include <map>
 #include <string.h>
 
-#include "metajobs.h"
+#include "job.h"
 
 using namespace std;
 using namespace ebl;
