@@ -70,7 +70,7 @@ namespace ebl {
       min_hcenter_dist2(0.0), min_wcenter_dist2(0.0), 
       max_overlap(.5), max_overlap2(0.0),
       mean_bb(false), max_object_hratio(0.0), 
-      min_input_height(-1), min_input_width(-1) {
+      min_input_height(-1), min_input_width(-1), smoothing_type(0) {
     // // default resolutions
     // double sc[] = { 4, 2, 1 };
     // set_resolutions(3, sc);
