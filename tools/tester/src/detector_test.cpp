@@ -29,14 +29,16 @@ void detector_test::test_face() {
     CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
 
     string name = "nens.gif";
-    ostringstream confname, imagename, root;
+    ostringstream confname, imagename, root, ebl;
     root << *gl_data_dir << "/face/";
+    ebl << *gl_data_dir << "/../../";
     confname << root.str() << "best.conf";
     imagename << root.str() << name;
     idx<ubyte> im = load_image<ubyte>(imagename.str());
     configuration conf;
     conf.read(confname.str().c_str(), false, false, true);
     conf.set("root2", root.str().c_str());
+    conf.set("ebl", ebl.str().c_str());
     conf.resolve(true);
     mutex mut;
     detection_thread<t_net> dt(conf, &mut, "detection thread");
