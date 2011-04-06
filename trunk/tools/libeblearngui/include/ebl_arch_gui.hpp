@@ -271,7 +271,6 @@ namespace ebl {
     if (ln.branch && ln.branch_narrow) {				\
       narrowed = ln.hi->narrow(ln.narrow_dim, ln.narrow_size,		\
 			       ln.narrow_offset);			\
-      DEBUG("branch narrowing input " << ln.hi->x << " to " << narrowed.x); \
       ln.hi = &narrowed;						\
     }									\
     /* loop over modules */						\
