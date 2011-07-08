@@ -33,6 +33,8 @@
 #ifndef GEOMETRY_HPP_
 #define GEOMETRY_HPP_
 
+#include <math.h>
+
 namespace ebl {
   
   ////////////////////////////////////////////////////////////////
@@ -44,7 +46,7 @@ namespace ebl {
   }
   
   template <typename T>
-  rect<T>::rect() {
+  rect<T>::rect() : h0(0), w0(0), height(0), width(0) {
   }
   
   template <typename T>
@@ -82,6 +84,13 @@ namespace ebl {
   }
   
   template <typename T>
+  float rect<T>::center_distance(const rect<T> &r) const {
+    float a = r.hcenter() - hcenter();
+    float b = r.wcenter() - wcenter();
+    return sqrt(a * a + b * b);
+  }
+
+  template <typename T>
   float rect<T>::center_hdistance(const rect<T> &r) const {
     return fabs(hcenter() - r.hcenter()) / height;
   }
@@ -92,7 +101,7 @@ namespace ebl {
   }
 
   template <typename T>
-  T rect<T>::intersection_area(const rect<T> &r) {
+  T rect<T>::intersection_area(const rect<T> &r) const {
     // check height intersection exists
     T nh0 = (std::max)(h0, r.h0);
     T nh1 = (std::min)(h0 + height, r.h0 + r.height);
@@ -108,12 +117,12 @@ namespace ebl {
   }
   
   template <typename T>
-  T rect<T>::union_area(const rect<T> &r) {
+  T rect<T>::union_area(const rect<T> &r) const {
     return area() + r.area() - intersection_area(r);
   }
   
   template <typename T>
-  float rect<T>::match(const rect<T> &r) {
+  float rect<T>::match(const rect<T> &r) const {
     return intersection_area(r) / (float) union_area(r);
   }
 
@@ -124,7 +133,7 @@ namespace ebl {
   }
 
   template <typename T>
-  bool rect<T>::overlap(const rect<T> &r) {
+  bool rect<T>::overlap(const rect<T> &r) const {
     if (((h0 <= r.h0 + r.height) && (h0 + height >= r.h0)) &&
 	((w0 <= r.w0 + r.width) && (w0 + width >= r.w0)))
       return true;
@@ -132,7 +141,14 @@ namespace ebl {
   }
 
   template <typename T>
-  bool rect<T>::min_overlap(const rect<T> &r, float minarea) {
+  float rect<T>::overlap_ratio(const rect<T> &r) const {
+    T area1 = height * width;
+    T inter = intersection_area(r);
+    return inter / (float) area1;
+  }
+  
+  template <typename T>
+  bool rect<T>::min_overlap(const rect<T> &r, float minarea) const {
     T area1 = height * width;
     T area2 = r.height * r.width;
     T inter = intersection_area(r);
@@ -142,7 +158,7 @@ namespace ebl {
   }
   
   template <typename T>
-  float rect<T>::min_overlap(const rect<T> &r) {
+  float rect<T>::min_overlap(const rect<T> &r) const {
     T area1 = height * width;
     T area2 = r.height * r.width;
     T inter = intersection_area(r);
@@ -150,7 +166,7 @@ namespace ebl {
   }
   
   template <typename T>
-  bool rect<T>::min_overlap(const rect<T> &r, float hmin, float wmin) {
+  bool rect<T>::min_overlap(const rect<T> &r, float hmin, float wmin) const {
     if (((h0 <= r.h0 + r.height) && (h0 + height >= r.h0)) &&
 	((w0 <= r.w0 + r.width) && (w0 + width >= r.w0))) {
       // there is overlap, now check how much is authorized.
@@ -183,6 +199,34 @@ namespace ebl {
     width += addw;
   }
   
+  template <typename T>
+  void rect<T>::scale_width(float woverh) {
+    float addw = height * woverh - width;
+    w0 -= (T) addw/2;
+    width += (T) addw;
+  }
+
+  template <typename T>
+  float rect<T>::radius() {
+    float a = h0 - hcenter();
+    float b = w0 - wcenter();
+    return sqrt(a * a + b * b);
+  }
+  
+  template <typename T>
+  std::string& operator<<(std::string& out, rect<T>& r) {
+    out << "rect:<(" << r.h0 << "," << r.w0 << ")," << r.height;
+    out << "x" << r.width << ">";
+    return out;
+  }
+
+  template <typename T>
+  std::string& operator<<(std::string& out, const rect<T>& r) {
+    out << "rect:<(" << r.h0 << "," << r.w0 << ")," << r.height;
+    out << "x" << r.width << ">";
+    return out;
+  }
+
   template <typename T>
   std::ostream& operator<<(std::ostream& out, rect<T>& r) {
     out << "rect:<(" << r.h0 << "," << r.w0 << ")," << r.height;

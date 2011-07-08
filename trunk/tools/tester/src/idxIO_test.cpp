@@ -1,10 +1,14 @@
 #include "idxIO_test.h"
+#include "libidx.h"
 
 #ifdef __WINDOWS__
 #define TEST_FILE "C:/Windows/Temp/eblearn_tester_matrix.mat"
 #else
 #define TEST_FILE "/tmp/eblearn_tester_matrix.mat"
 #endif
+
+extern string *gl_data_dir;
+extern string *gl_data_errmsg;
 
 using namespace std;
 using namespace ebl;
@@ -81,4 +85,32 @@ void idxIO_test::test_save_load_matrix_long() {
     cerr << err << endl;
     CPPUNIT_ASSERT(false); // err
   }
+}
+
+void idxIO_test::test_save_load_matrix_matrix() {
+  CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
+  string root = *gl_data_dir;
+  string sim1, sim2, sim3, sall;
+  sim1 << root << "/car_bull_cropped.jpg";
+  sim2 << root << "/car_human.jpg";
+  sim3 << root << "/car_human_plane.jpg";
+  sall << root << "/all.mat";
+  idx<float> im1 = load_image<float>(sim1);
+  idx<float> im2 = load_image<float>(sim2);
+  idx<float> im3 = load_image<float>(sim3);
+
+  idxs<float> all(3);
+  all.set(im1, 0);
+  all.set(im2, 1);
+  all.set(im3, 2);
+
+  save_matrices(all, sall);
+  idxs<float> all2 = load_matrices<float>(sall);
+
+  idx<float> m1 = all.get(0);
+  idx<float> m2 = all.get(1);
+  idx<float> m3 = all.get(2);
+  float sum = idx_sum(im1) - idx_sum(m1) + idx_sum(im2) - idx_sum(m2)
+    + idx_sum(im3) - idx_sum(m3);
+  CPPUNIT_ASSERT_EQUAL(sum, (float) 0);
 }

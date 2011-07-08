@@ -74,9 +74,10 @@ namespace ebl {
   template <class Tdata>
   bool patch_dataset<Tdata>::
   add_data(idx<Tdata> &img, const t_label label,
-	   const string *class_name,
-	   const char *filename, const rect<int>  *r,
-	   pair<uint,uint> *center) {
+	   const string *class_name, const char *filename, const rect<int> *r,
+	   pair<int,int> *center, const rect<int> *visr,
+	   const rect<int> *cropr, const vector<object*> *objs,
+	   const jitter *jittforce) {
     vector<rect<int> > patch_bboxes;
     vector<rect<int> >::iterator ibb;
     string cname = "patch";
@@ -110,8 +111,7 @@ namespace ebl {
       rect<int>  r(0, 0, img.dim(0), img.dim(1));
       rect<int>  outr;
       idx<Tdata> im =
-	this->preprocess_data(img, &cname, false, filename, &r, *i, false, 
-			      &outr);
+	this->preprocess_data(img, &cname, filename, &r, *i, &outr);
       // extract all non overlapping patches with dimensions outdims that
       // do not overlap with bounding boxes
       rect<int>  patch(0, 0, outdims.dim(0), outdims.dim(1));

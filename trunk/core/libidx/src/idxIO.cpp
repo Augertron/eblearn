@@ -43,23 +43,20 @@ namespace ebl {
   
   // TODO: if types differ, print warning and cast to expected type
   // TODO: allow not knowing order in advance (just assign new idx to m)
-  bool get_matrix_type(const char *filename, std::string &type) {
+  int get_matrix_type(const char *filename, std::string &type) {
     // open file
     FILE *fp = fopen(filename, "rb");
-    if (!fp) {
-      cerr << "get_matrix_type failed to open " << filename << endl;
-      return false;
-    }
+    if (!fp)
+      eblthrow("get_matrix_type failed to open " << filename);
 
     int magic;
     // header: read magic number
     if (fread(&magic, sizeof (int), 1, fp) != 1) {
-      cerr << "failed to read " << filename << endl;
       fclose(fp);
-      return false;
+      eblthrow("failed to read magic number in " << filename);
     }
     type = get_magic_str(magic);
-    return true;
+    return magic;
   }
 
   int get_matrix_type(const char *filename) {
@@ -103,6 +100,18 @@ namespace ebl {
     return false;
   }
 
+  idxdim get_matrix_dims(const char *filename) {
+    // open file
+    FILE *fp = fopen(filename, "rb");
+    if (!fp)
+      eblthrow("load_matrix failed to open " << filename);
+    // read it
+    int magic;
+    idxdim d = read_matrix_header(fp, magic);
+    fclose(fp);
+    return d;
+  }
+  
   idxdim read_matrix_header(FILE *fp, int &magic) {
     int ndim, v, magic_vincent;
     int ndim_min = 3; // std header requires at least 3 dims even empty ones.
@@ -135,7 +144,7 @@ namespace ebl {
       magic = magic_vincent;
     } else { // unkown magic
       fclose(fp);
-      eblthrow("unknown magic number: 0x" << (void*) magic
+      eblthrow("unknown magic number: " << (void*) magic
 	       << " or " << magic << " vincent: " << magic_vincent);
     }
     // read each dimension
@@ -152,7 +161,7 @@ namespace ebl {
 	  fclose(fp);
 	  eblthrow("dimension is negative or zero");
 	}
-	dims.insert_dim(v, i); // insert dimension
+	dims.insert_dim(i, v); // insert dimension
       }
     }
     return dims;

@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -73,6 +74,14 @@ namespace ebl {
 
   template<typename T>
   fstate_idx<T>::fstate_idx(const idxdim &d) {
+    x = idx<T>(d);
+    clear();
+  }
+
+  template <typename T>
+  fstate_idx<T>::fstate_idx(intg n, fstate_idx<T> &s) {
+    idxdim d = s.x.get_idxdim();
+    d.setdims(n);
     x = idx<T>(d);
     clear();
   }
@@ -212,14 +221,14 @@ namespace ebl {
 
   template <typename T>
   fstate_idx<T> fstate_idx<T>::select(int dimension, intg slice_index) {
-    fstate_idx<T> s = make_copy();
+    fstate_idx<T> s = *this;
     s.x = s.x.select(dimension, slice_index);
     return s;
   }
     
   template <typename T>
   fstate_idx<T> fstate_idx<T>::narrow(int d, intg sz, intg o) {
-    fstate_idx<T> s = make_copy();
+    fstate_idx<T> s = *this;
     s.x = s.x.narrow(d, sz, o);
     return s;
   }
@@ -229,13 +238,8 @@ namespace ebl {
     
   template <typename T>
   fstate_idx<T> fstate_idx<T>::make_copy() {
-    intg dims[8] ={-1,-1,-1,-1,-1,-1,-1,-1};
-    for (int i=0; i<x.order(); i++){
-      dims[i] = x.dim(i);
-    }
-    fstate_idx<T> other(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6],
-		    dims[7]);
-    idx_copy(x,other.x);
+    fstate_idx<T> other(x.get_idxdim());
+    idx_copy(x, other.x);
     return other;
   }
 
@@ -243,6 +247,24 @@ namespace ebl {
   fstate_idx<T>& fstate_idx<T>::operator=(const fstate_idx<T>& other) {
     this->x = other.x;
     return *this;
+  }
+  
+  template <typename T>
+  void fstate_idx<T>::copy(fstate_idx<T> &s) {
+    idx_copy(s.x, x);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  //! info printing methods
+    
+  template <typename T>
+  void fstate_idx<T>::pretty() {
+    cout << "x: "; this->x.pretty();
+  }
+
+  template <typename T>
+  void fstate_idx<T>::print() {
+    cout << "x: "; this->x.print();
   }
   
   ////////////////////////////////////////////////////////////////
@@ -291,6 +313,15 @@ namespace ebl {
 
   template<typename T>
   bstate_idx<T>::bstate_idx(const idxdim &d) {
+    x = idx<T>(d);
+    dx = idx<T>(d);
+    clear();
+  }
+
+  template <typename T>
+  bstate_idx<T>::bstate_idx(intg n, bstate_idx<T> &s) {
+    idxdim d = s.x.get_idxdim();
+    d.setdims(n);
     x = idx<T>(d);
     dx = idx<T>(d);
     clear();
@@ -449,7 +480,7 @@ namespace ebl {
 
   template <typename T>
   bstate_idx<T> bstate_idx<T>::select(int dimension, intg slice_index) {
-    bstate_idx<T> s = make_copy();
+    bstate_idx<T> s = *this;
     s.x = s.x.select(dimension, slice_index);
     s.dx = s.dx.select(dimension, slice_index);
     return s;
@@ -457,7 +488,7 @@ namespace ebl {
     
   template <typename T>
   bstate_idx<T> bstate_idx<T>::narrow(int d, intg sz, intg o) {
-    bstate_idx<T> s = make_copy();
+    bstate_idx<T> s = *this;
     s.x = s.x.narrow(d, sz, o);
     s.dx = s.dx.narrow(d, sz, o);
     return s;
@@ -468,14 +499,9 @@ namespace ebl {
     
   template <typename T>
   bstate_idx<T> bstate_idx<T>::make_copy() {
-    intg dims[8] ={-1,-1,-1,-1,-1,-1,-1,-1};
-    for (int i=0; i<x.order(); i++){
-      dims[i] = x.dim(i);
-    }
-    bstate_idx<T> other(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6],
-			dims[7]);
-    idx_copy(x,other.x);
-    idx_copy(dx,other.dx);
+    bstate_idx<T> other(x.get_idxdim());
+    idx_copy(x, other.x);
+    idx_copy(dx, other.dx);
     return other;
   }
 
@@ -484,6 +510,27 @@ namespace ebl {
     this->x = other.x;
     this->dx = other.dx;
     return *this;
+  }
+
+  template <typename T>
+  void bstate_idx<T>::copy(bstate_idx<T> &s) {
+    idx_copy(s.x, x);
+    idx_copy(s.dx, dx);
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  //! info printing methods
+    
+  template <typename T>
+  void bstate_idx<T>::pretty() {
+    cout << "x: "; this->x.pretty();
+    cout << "dx: "; this->dx.pretty();
+  }
+
+  template <typename T>
+  void bstate_idx<T>::print() {
+    cout << "x: "; this->x.print();
+    cout << " dx: "; this->dx.print();
   }
   
   ////////////////////////////////////////////////////////////////
@@ -536,6 +583,16 @@ namespace ebl {
 
   template<typename T>
   bbstate_idx<T>::bbstate_idx(const idxdim &d) {
+    x = idx<T>(d);
+    dx = idx<T>(d);
+    ddx = idx<T>(d);
+    clear();
+  }
+
+  template <typename T>
+  bbstate_idx<T>::bbstate_idx(intg n, bbstate_idx<T> &s) {
+    idxdim d = s.x.get_idxdim();
+    d.setdims(n);
     x = idx<T>(d);
     dx = idx<T>(d);
     ddx = idx<T>(d);
@@ -602,7 +659,7 @@ namespace ebl {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1, s2, s3, s4, s5, s6, s7);
     dx = idx<T>(st ? st->dx.getstorage() : NULL,
-		st ? st->dx.footprint : 0, s0, s1, s2, s3, s4, s5, s6,s7);
+		st ? st->dx.footprint() : 0, s0, s1, s2, s3, s4, s5, s6,s7);
     ddx = idx<T>(st ? st->ddx.getstorage() : NULL,
 		 st ? st->ddx.footprint() : 0, s0, s1, s2, s3, s4, s5, s6, s7);
     if (st)
@@ -613,9 +670,12 @@ namespace ebl {
   template<typename T>
   bbstate_idx<T>::bbstate_idx(parameter<T,bbstate_idx<T> > *st,
 			      const idxdim &d) {
-    x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d);
-    dx = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d);
-    ddx = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d);
+    x = idx<T>(st ? st->x.getstorage() : NULL,
+	       st ? st->x.footprint() : 0, d);
+    dx = idx<T>(st ? st->dx.getstorage() : NULL,
+		st ? st->dx.footprint() : 0, d);
+    ddx = idx<T>(st ? st->ddx.getstorage() : NULL,
+		 st ? st->ddx.footprint() : 0, d);
     if (st)
       st->resize(st->footprint() + nelements());
     clear();
@@ -710,7 +770,7 @@ namespace ebl {
 
   template <typename T>
   bbstate_idx<T> bbstate_idx<T>::select(int dimension, intg slice_index) {
-    bbstate_idx<T> s = make_copy();
+    bbstate_idx<T> s = *this;
     s.x = s.x.select(dimension, slice_index);
     s.dx = s.dx.select(dimension, slice_index);
     s.ddx = s.ddx.select(dimension, slice_index);
@@ -719,7 +779,7 @@ namespace ebl {
     
   template <typename T>
   bbstate_idx<T> bbstate_idx<T>::narrow(int d, intg sz, intg o) {
-    bbstate_idx<T> s = make_copy();
+    bbstate_idx<T> s = *this;
     s.x = s.x.narrow(d, sz, o);
     s.dx = s.dx.narrow(d, sz, o);
     s.ddx = s.ddx.narrow(d, sz, o);
@@ -731,15 +791,10 @@ namespace ebl {
     
   template <typename T>
   bbstate_idx<T> bbstate_idx<T>::make_copy() {
-    intg dims[8] ={-1,-1,-1,-1,-1,-1,-1,-1};
-    for (int i=0; i<x.order(); i++){
-      dims[i] = x.dim(i);
-    }
-    bbstate_idx<T> other(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],
-			 dims[6],dims[7]);
-    idx_copy(x,other.x);
-    idx_copy(dx,other.dx);
-    idx_copy(ddx,other.ddx);
+    bbstate_idx<T> other(x.get_idxdim());
+    idx_copy(x, other.x);
+    idx_copy(dx, other.dx);
+    idx_copy(ddx, other.ddx);
     return other;
   }
 
@@ -749,6 +804,30 @@ namespace ebl {
     this->dx = other.dx;
     this->ddx = other.ddx;
     return *this;
+  }
+  
+  template <typename T>
+  void bbstate_idx<T>::copy(bbstate_idx<T> &s) {
+    idx_copy(s.x, x);
+    idx_copy(s.dx, dx);
+    idx_copy(s.ddx, ddx);
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  //! info printing methods
+    
+  template <typename T>
+  void bbstate_idx<T>::pretty() {
+    cout << "x: "; this->x.pretty();
+    cout << "dx: "; this->dx.pretty();
+    cout << "ddx: "; this->ddx.pretty();
+  }
+
+  template <typename T>
+  void bbstate_idx<T>::print() {
+    cout << "x: "; this->x.print();
+    cout << " dx: "; this->dx.print();
+    cout << " ddx: "; this->ddx.print();
   }
   
   ////////////////////////////////////////////////////////////////
@@ -791,6 +870,19 @@ namespace ebl {
     return true;
   }
 
+  template <typename T>
+  bool parameter<T,fstate_idx<T> >::load_x(std::vector<string> &files) {
+    if (files.size() == 0) eblerror("expected at least 1 file to load");
+    idx<T> w = load_matrix<T>(files[0]);
+    for (uint i = 1; i < files.size(); ++i) {
+      idx<T> tmp = load_matrix<T>(files[i]);
+      w = idx_concat(w, tmp);
+    }
+    cout << "Concatenated " << files.size() << " matrices into 1: "
+	 << w << " from " << files << endl;
+    return load_x(w);
+  }
+  
   template <typename T>
   bool parameter<T,fstate_idx<T> >::load_x(const char *s) {
 #ifndef __NOSTL__
@@ -835,9 +927,9 @@ namespace ebl {
 
   template <typename T>
   parameter<T,bstate_idx<T> >::parameter(intg initial_size) 
-    : bstate_idx<T>(initial_size), gradient(initial_size),
+    : bstate_idx<T>(initial_size), //gradient(initial_size),
       deltax(initial_size), epsilons(initial_size) {
-    idx_clear(gradient);
+    //idx_clear(gradient);
     idx_clear(deltax);
     idx_clear(epsilons);
     resize(0);
@@ -845,7 +937,8 @@ namespace ebl {
 
   template <typename T>
   parameter<T,bstate_idx<T> >::parameter(const char *param_filename) 
-    : bstate_idx<T>(1), gradient(1), deltax(1), epsilons(1) {
+    : bstate_idx<T>(1), //gradient(1),
+      deltax(1), epsilons(1) {
     if (!load_x(param_filename)) {
       cerr << "failed to open " << param_filename << endl;
       eblerror("failed to load bparameter file in bparameter constructor");
@@ -866,7 +959,7 @@ namespace ebl {
   void parameter<T,bstate_idx<T> >::resize(intg s0) {
     x.resize(s0);
     dx.resize(s0);
-    gradient.resize(s0);
+    //gradient.resize(s0);
     deltax.resize(s0);
     epsilons.resize(s0);
   }
@@ -899,6 +992,24 @@ namespace ebl {
   }
 
   template <typename T>
+  void parameter<T,bstate_idx<T> >::update(gd_param &arg) {
+    update_gd(arg);
+  }
+
+  template <typename T>
+  void parameter<T,bstate_idx<T> >::clear_deltax() {
+    idx_clear(deltax);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // protected methods
+  
+  template <typename T>
+  void parameter<T,bstate_idx<T> >::set_epsilon(T m) {
+    idx_fill(epsilons, m);
+  }
+
+  template <typename T>
   void parameter<T,bstate_idx<T> >::update_gd(gd_param &arg) {
     if (arg.decay_l2 > 0)
       idx_dotcacc(x, arg.decay_l2, dx);
@@ -909,19 +1020,9 @@ namespace ebl {
       idx_dotcacc(dx, -arg.eta, x);
     } else {
       update_deltax((T) (1 - arg.inertia), (T) arg.inertia);
-  	idx_mul(deltax, epsilons, deltax);
-  	idx_dotcacc(deltax, -arg.eta, x);
+      idx_mul(deltax, epsilons, deltax);
+      idx_dotcacc(deltax, -arg.eta, x);
     }
-  }
-
-  template <typename T>
-  void parameter<T,bstate_idx<T> >::update(gd_param &arg) {
-    update_gd(arg);
-  }
-
-  template <typename T>
-  void parameter<T,bstate_idx<T> >::clear_deltax() {
-    idx_clear(deltax);
   }
 
   template <typename T>
@@ -929,19 +1030,14 @@ namespace ebl {
     idx_lincomb(dx, knew, deltax, kold, deltax);
   }
 
-  template <typename T>
-  void parameter<T,bstate_idx<T> >::set_epsilons(T m) {
-    idx_fill(epsilons, m);
-  }
-
   ////////////////////////////////////////////////////////////////
   // parameter<T,bbstate_idx<T> >
 
   template <typename T>
   parameter<T,bbstate_idx<T> >::parameter(intg initial_size) 
-    : bbstate_idx<T>(initial_size), gradient(initial_size),
+    : bbstate_idx<T>(initial_size), //gradient(initial_size),
       deltax(initial_size), epsilons(initial_size), ddeltax(initial_size) {
-    idx_clear(gradient);
+    //idx_clear(gradient);
     idx_clear(deltax);
     idx_clear(epsilons);
     idx_clear(ddeltax);
@@ -950,7 +1046,8 @@ namespace ebl {
 
   template <typename T>
   parameter<T,bbstate_idx<T> >::parameter(const char *param_filename) 
-    : bbstate_idx<T>(1), gradient(1), deltax(1), epsilons(1), ddeltax(1) {
+    : bbstate_idx<T>(1), //gradient(1),
+      deltax(1), epsilons(1), ddeltax(1) {
     if (!load_x(param_filename)) {
       cerr << "failed to open " << param_filename << endl;
       eblerror("failed to load bbparameter file in bbparameter constructor");
@@ -973,7 +1070,7 @@ namespace ebl {
     this->x.resize(s0);
     this->dx.resize(s0);
     this->ddx.resize(s0);
-    gradient.resize(s0);
+    //gradient.resize(s0);
     deltax.resize(s0);
     epsilons.resize(s0);
     ddeltax.resize(s0);
@@ -986,6 +1083,20 @@ namespace ebl {
     return true;
   }
 
+  template <typename T>
+  bool parameter<T,bbstate_idx<T> >::load_x(std::vector<string> &files) {
+    if (files.size() == 0) eblerror("expected at least 1 file to load");
+    idx<T> w = load_matrix<T>(files[0]);
+    for (uint i = 1; i < files.size(); ++i) {
+      idx<T> tmp = load_matrix<T>(files[i]);
+      w = idx_concat(w, tmp);
+    }
+    cout << "Concatenated " << files.size() << " matrices into 1: "
+	 << w << " from " << files << endl;
+    load_x(w);
+    return true;
+  }
+  
   template <typename T>
   bool parameter<T,bbstate_idx<T> >::load_x(const char *s) {
     try {
@@ -1007,19 +1118,17 @@ namespace ebl {
   }
 
   template <typename T>
-  void parameter<T,bbstate_idx<T> >::update_gd(gd_param &arg) {
-    if (arg.decay_l2 > 0)
-      idx_dotcacc(this->x, arg.decay_l2, this->dx);
-    if (arg.decay_l1 > 0)
-      idx_signdotcacc(this->x, (T) arg.decay_l1, this->dx);
-    if (arg.inertia == 0) {
-      idx_mul(this->dx, epsilons, this->dx);
-      idx_dotcacc(this->dx, -arg.eta, this->x);
-    } else {
-      update_deltax((T) (1 - arg.inertia), (T) arg.inertia);
-  	idx_mul(deltax, epsilons, deltax);
-  	idx_dotcacc(deltax, -arg.eta, this->x);
+  bool parameter<T,bbstate_idx<T> >::load_x(idx<T> &m) {
+    if ((x.dim(0) != 1) // param has been enlarged by network construction
+	&& (x.dim(0) != m.dim(0))) { // trying to load incompatible network
+      eblerror("Trying to load a network with " << m.dim(0) 
+	       << " parameters into a network with " << x.dim(0)
+	       << " parameters");
     }
+    this->resize(m.dim(0));
+    idx_copy(m, x);
+    cout << "Loaded weights from " << m << ": " << x << endl;
+    return true;
   }
 
   template <typename T>
@@ -1033,22 +1142,12 @@ namespace ebl {
   }
 
   template <typename T>
-  void parameter<T,bbstate_idx<T> >::update_deltax(T knew, T kold) {
-    idx_lincomb(this->dx, knew, deltax, kold, deltax);
-  }
-
-  template <typename T>
   void parameter<T,bbstate_idx<T> >::clear_ddeltax() {
     idx_clear(ddeltax);
   }
 
   template <typename T>
-  void parameter<T,bbstate_idx<T> >::update_ddeltax(T knew, T kold) {
-    idx_lincomb(this->ddx, knew, ddeltax, kold, ddeltax);
-  }
-
-  template <typename T>
-  void parameter<T,bbstate_idx<T> >::set_epsilons(T m) {
+  void parameter<T,bbstate_idx<T> >::set_epsilon(T m) {
     idx_fill(epsilons, m);
   }
 
@@ -1056,6 +1155,35 @@ namespace ebl {
   void parameter<T,bbstate_idx<T> >::compute_epsilons(T mu) {
     idx_addc(ddeltax, mu, epsilons);
     idx_inv(epsilons, epsilons);
+  }
+
+  template <typename T>
+  void parameter<T,bbstate_idx<T> >::update_ddeltax(T knew, T kold) {
+    idx_lincomb(this->ddx, knew, ddeltax, kold, ddeltax);
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // protected methods
+  
+  template <typename T>
+  void parameter<T,bbstate_idx<T> >::update_gd(gd_param &arg) {
+    if (arg.decay_l2 > 0)
+      idx_dotcacc(this->x, arg.decay_l2, this->dx);
+    if (arg.decay_l1 > 0)
+      idx_signdotcacc(this->x, (T) arg.decay_l1, this->dx);
+    if (arg.inertia == 0) {
+      idx_mul(this->dx, epsilons, this->dx);
+      idx_dotcacc(this->dx, -arg.eta, this->x);
+    } else {
+      update_deltax((T) (1 - arg.inertia), (T) arg.inertia);
+      idx_mul(deltax, epsilons, deltax);
+      idx_dotcacc(deltax, -arg.eta, this->x);
+    }
+  }
+
+  template <typename T>
+  void parameter<T,bbstate_idx<T> >::update_deltax(T knew, T kold) {
+    idx_lincomb(this->dx, knew, deltax, kold, deltax);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -1140,4 +1268,110 @@ namespace ebl {
     return lx.notdone(); 
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // mstate_idx
+
+  template <class Tstate> mstate<Tstate>::mstate() {}  
+
+  template <class Tstate> mstate<Tstate>::mstate(intg n, mstate<Tstate> &ms) {
+    for (uint i = 0; i < ms.size(); ++i) {
+      idxdim d = ms[i].x.get_idxdim();
+      d.setdims(n);
+      this->push_back(d);
+    }
+  }  
+
+  template <class Tstate> mstate<Tstate>::~mstate() {}
+
+  template <class Tstate>
+  void mstate<Tstate>::clear_x() {
+    for (it = this->begin(); it != this->end(); ++it)
+      it->clear_x();
+  }
+
+  template <class Tstate>
+  void mstate<Tstate>::clear_dx() {
+    for (it = this->begin(); it != this->end(); ++it)
+      it->clear_dx();
+  }
+
+  template <class Tstate>
+  void mstate<Tstate>::clear_ddx() {
+    for (it = this->begin(); it != this->end(); ++it)
+      it->clear_ddx();
+  }
+
+  template <class Tstate>
+  void mstate<Tstate>::copy(mstate<Tstate> &s) {
+    for (uint i = 0; i < this->size(); ++i) {
+      Tstate& local = (*this)[i];
+      Tstate& cpy = s[i];
+      local.copy(cpy);
+    }
+  }
+
+  template <class Tstate>
+  mstate<Tstate> mstate<Tstate>::narrow(int dimension, intg size, intg offset) {
+    eblerror("not implemented");
+    mstate<Tstate> ms;
+    return ms;
+  }
+
+  template <class Tstate>
+  void mstate<Tstate>::resize(mstate<Tstate> &s2) {
+    if (this->size() != s2.size())
+      this->clear();
+    for (uint i = 0; i < s2.size(); ++i) {
+      Tstate &t2 = s2[i];
+      idxdim d = t2.x;
+      if (this->size() < s2.size())
+	this->push_back(d);
+      else { // state already exists
+	Tstate &t = (*this)[i];
+	if (t.x.order() != d.order()) // wrong order, reassign state
+	  t = Tstate(d);
+	else if (t.x.get_idxdim() != d) // correct order but wrong dimensions
+	  t.resize(d);
+      }
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // stream operators
+
+  template <typename T>
+  EXPORT std::ostream& operator<<(std::ostream &out, const fstate_idx<T> &m) {
+    out << "(x:" << m.x << ")";
+    return out;
+  }
+  
+  template <typename T>
+  EXPORT std::ostream& operator<<(std::ostream &out, const bstate_idx<T> &m) {
+    out << "(x:" << m.x << "," << m.dx << ")";
+    return out;
+  }
+  
+  template <typename T>
+  EXPORT std::ostream& operator<<(std::ostream &out, const bbstate_idx<T> &m) {
+    out << "(x:" << m.x << "," << m.dx << "," << m.ddx << ")";
+    return out;
+  }
+  
+  template <class Tstate>
+  EXPORT std::ostream& operator<<(std::ostream &out, const mstate<Tstate> &m) {
+    out << "[";
+    if (m.size() == 0)
+      out << "empty";
+    else {
+      const Tstate &s = m[0];
+      out << s;
+      for (uint i = 1; i < m.size(); ++i) {
+	const Tstate &st = m[i];
+	out << "," << st;
+      }
+    }
+    out << "]";
+    return out;
+  }
+  
 } // end namespace ebl

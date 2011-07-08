@@ -44,6 +44,12 @@
 using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
 
+// data types
+typedef double Tnet;
+typedef ubyte Tdata;
+typedef ubyte Tlab;
+
+
 // argv[1] is expected to contain the directory of the mnist dataset
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
@@ -57,7 +63,6 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "Usage: ./mnist <config file>" << endl;
     eblerror("config file not specified");
   }
-  typedef double t_net;
   configuration conf(argv[1]); // configuration file
 #ifdef __LINUX__
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
@@ -66,16 +71,16 @@ int main(int argc, char **argv) { // regular main without gui
   const char *root = conf.get_cstring("root");
   uint train_size = conf.get_uint("training_size");
   uint test_size = conf.get_uint("testing_size");
-  mnist_datasource<t_net, ubyte, ubyte> *train_ds = NULL, *test_ds = NULL;
+  mnist_datasource<Tnet, Tdata, Tlab> *train_ds = NULL, *test_ds = NULL;
   // use names defined in configuration
   if (conf.exists("train_name") && conf.exists("test_name")) {
-    train_ds = new mnist_datasource<t_net, ubyte, ubyte>
+    train_ds = new mnist_datasource<Tnet, Tdata, Tlab>
       (root, conf.get_cstring("train_name"), train_size);
-    test_ds = new mnist_datasource<t_net, ubyte, ubyte>
+    test_ds = new mnist_datasource<Tnet, Tdata, Tlab>
       (root, conf.get_cstring("test_name"), test_size);
   } else { // use official names
-    train_ds = new mnist_datasource<t_net, ubyte, ubyte>(root, true,train_size);
-    test_ds = new mnist_datasource<t_net, ubyte, ubyte>(root, false, test_size);
+    train_ds = new mnist_datasource<Tnet, Tdata, Tlab>(root, true,train_size);
+    test_ds = new mnist_datasource<Tnet, Tdata, Tlab>(root, false, test_size);
   }
   test_ds->set_test(); // test is the test set, used for reporting
   train_ds->set_weigh_samples(conf.exists_true("wsamples"), true, 
@@ -93,23 +98,25 @@ int main(int argc, char **argv) { // regular main without gui
   }
 
   //! create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
-  idx<t_net> targets =
-    create_target_matrix<t_net>(train_ds->get_nclasses(), 1.0);
+  idx<Tnet> targets =
+    create_target_matrix<Tnet>(train_ds->get_nclasses(), 1.0);
 
   //! create the network weights, network and trainer
   idxdim dims(train_ds->sample_dims()); // get order and dimensions of sample
-  parameter<t_net> theparam(60000); // create trainable parameter
-  lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
+  parameter<Tnet> theparam(60000); // create trainable parameter
+  lenet5<Tnet> net(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
 		   train_ds->get_nclasses(), conf.get_bool("absnorm"));
-  supervised_euclidean_machine<t_net, ubyte> thenet(l5, targets, dims);
-  supervised_trainer<t_net, ubyte, ubyte> thetrainer(thenet, theparam);
+  l2_energy<Tnet> energy;
+  class_answer<Tnet,Tdata,Tlab> answer(train_ds->get_nclasses());
+  trainable_module<Tnet,Tdata,Tlab> trainable(energy, net, NULL, NULL, &answer);
+  supervised_trainer<Tnet, Tdata, Tlab> thetrainer(trainable, theparam);
 
   //! a classifier-meter measures classification errors
   classifier_meter trainmeter, testmeter;
 
   //! initialize the network weights
   forget_param_linear fgp(1, 0.5);
-  thenet.forget(fgp);
+  trainable.forget(fgp);
 
   // learning parameters
   gd_param gdp;
@@ -125,7 +132,7 @@ int main(int argc, char **argv) { // regular main without gui
   thetrainer.test(*test_ds, testmeter, infp);
 
 #ifdef __GUI__
-  supervised_trainer_gui<t_net, ubyte, ubyte> stgui;
+  supervised_trainer_gui<Tnet, Tdata, Tlab> stgui;
   bool display = conf.exists_true("show_train"); // enable/disable display
   uint ninternals = conf.exists("show_train_ninternals") ? 
     conf.get_uint("show_train_ninternals") : 1; // # examples' to display

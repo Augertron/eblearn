@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,56 +41,6 @@
 
 namespace ebl {
 
-/*   //////////////////////////////////////////////////////////////// */
-/*   //! Generic Stochastic Gradient Trainer */
-/*   template<class Tin1, class Tin2, class T> */
-/*     class stochastic_gd_trainer { */
-/*   private: */
-/*     int		 iteration; */
-/*     void	*iteration_ptr; */
-/*     bool         prettied; */
-
-/*   public: */
-/*     fc_ebm2_gen<Tin1,Tin2,T>	&machine; */
-/*     parameter<T>		&param; */
-/*     fstate_idx<T>		 energy; */
-/*     intg			 age; */
-/*     Tin1			*in1; */
-/*     Tin2			*in2; */
-    
-/*     stochastic_gd_trainer(fc_ebm2_gen<Tin1, Tin2, T> &m, parameter<T> &p); */
-/*     virtual ~stochastic_gd_trainer(); */
-
-/*     //! train for <niter> sweeps over the training set. <samples> contains the */
-/*     //! inputs samples, and <labels> the corresponding desired categories */
-/*     //! <labels>. */
-/*     //! return the average energy computed on-the-fly. */
-/*     //! <update-args> is a list of arguments for the parameter */
-/*     //! update method (e.g. learning rate and weight decay). */
-/*     //! if <compute_hessian> is true, then recompute the hessian matrix */
-/*     //! every <hessian_interval> steps with the parameters <niter_hessian> */
-/*     //! and <mu_hessian>. */
-/*     void train(datasource<Tin1, Tin2> &ds, classifier_meter &log,  */
-/* 	       gd_param &args, int niter, */
-/* 	       bool compute_hessian, int hessian_interval, */
-/* 	       int niter_hessian, double mu_hessian, intg max = 0); */
-
-/*     //! train on one sample. */
-/*     void train_sample(datasource<Tin1, Tin2> &ds, gd_param &args); */
-
-/*     //! compute hessian */
-/*     void compute_diaghessian(datasource<Tin1, Tin2> &ds, intg niter,  */
-/* 			     double mu); */
-
-/*     //! Resize <input> based on the datasource. If <input> is not allocated, */
-/*     //! allocate it.  */
-/*     //! TODO: If order or dimensions have changed, reallocate. */
-/*     void resize_input(datasource<Tin1, Tin2> &ds); */
-
-/*     template <class T1, class T2> */
-/*       friend class stochastic_gd_trainer_gui; */
-/*   }; */
-
   ////////////////////////////////////////////////////////////////
   //! Supervised Trainer. A specialisation of the generic trainer, taking
   //! samples (of type Tnet) and labels (of type Tlabel) as training input.
@@ -97,53 +48,36 @@ namespace ebl {
   //! However datasources with different data type may be provided in which
   //! case a conversion will occur after each sample extraction from the
   //! datasource (via a deep idx_copy).
-  template<class Tnet, class Tdata, class Tlabel>
+  template<typename Tnet, typename Tdata, typename Tlabel>
     class supervised_trainer {
   public:
     //! constructor.
-    supervised_trainer(fc_ebm2<Tnet,bbstate_idx<Tnet>,bbstate_idx<Tlabel> > &m,
-		       parameter<Tnet, bbstate_idx<Tnet> > &p);
-
+    supervised_trainer(trainable_module<Tnet,Tdata,Tlabel> &m,
+		       parameter<Tnet,bbstate_idx<Tnet> > &p);
     //! destructor.
     virtual ~supervised_trainer();
 
-    //! take an input and a vector of possible labels (each of which
-    //! is a vector, hence <label-set> is a matrix) and
-    //! return the index of the label that minimizes the energy
-    //! fill up the vector <energies> with the energy produced by each
-    //! possible label. The first dimension of <label-set> must be equal
-    //! to the dimension of <energies>.
-    void run(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label,
-	     infer_param &infp);
+    // per-sample methods //////////////////////////////////////////////////////
 
-    //! Test a single sample and its label <label> (an integer).
-    //! Returns true if the sample was correctly classified, false otherwise.
-    bool test_sample(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label,
+    //! Test the current sample of 'ds', put the answers in 'answers' and
+    //! return true if the infered label equals the groundtruth 'label'.
+    bool test_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds,
+		     bbstate_idx<Tnet> &label, bbstate_idx<Tnet> &answers,
 		     infer_param &infp);
+    //! Perform a learning update on the current sample of 'ds', using
+    //! 'arguments arg' for the parameter update method
+    //! (e.g. learning rate and weight decay).
+    Tnet train_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds,
+		      gd_param &arg);
 
-    //! perform a learning update on one sample. <sample> is the input
-    //! sample, <label> is the desired category (an integer), <label-set> is
-    //! a matrix where  the i-th row is the desired output
-    //! for the i-th category, and <update-args> is a list of arguments
-    //! for the parameter update method (e.g. learning rate and weight decay).
-    double learn_sample(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label,
-			gd_param &arg);
+    // epoch methods ///////////////////////////////////////////////////////////
 
     //! Measure the average energy and classification error rate
     //! on a dataset.
+    //! \param max_test If > 0, limit the number of tests to this number.
     void test(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
-	      classifier_meter &log, infer_param &infp);
-
-    /* //! Measures for each class the rates of true and false positives */
-    /* //! (TPR and FPR) given a threshold. */
-    /* //! The answer for each class is the default class (usually a junk class) */
-    /* //! if the maximum response is below the threshold, otherwise it is the */
-    /* //! class with maximum response. */
-    /* //! TODO: use energy for detection instead of raw net outputs?(more generic) */
-    /* void test_threshold(labeled_datasource<Tnet, Tdata, Tlabel> &ds, */
-    /* 			classifier_meter &log, infer_param &infp, */
-    /* 			double threshold, Tlabel defclass); */
-
+	      classifier_meter &log, infer_param &infp,
+	      uint max_test = 0);
     //! train for <niter> sweeps over the training set. <samples> contains the
     //! inputs samples, and <labels> the corresponding desired categories
     //! <labels>.
@@ -153,41 +87,43 @@ namespace ebl {
     void train(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
 	       classifier_meter &log, gd_param &args, int niter,
 	       infer_param &infp);
-
     //! compute hessian
     void compute_diaghessian(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
 			     intg niter, double mu);
 
+    // accessors ///////////////////////////////////////////////////////////////
+    
+    //! Set iteration id to i. This can be useful when resuming a training
+    //! to a certain iteration.
+    void set_iteration(int i);
+    //! pretty some information about training, e.g. input and network sizes.
+    void pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds);
+
+    // friends /////////////////////////////////////////////////////////////////
+    
+    // template <class Tdata, class Tlabel> friend class supervised_trainer_gui;
+    template <class T1, class T2, class T3> friend class supervised_trainer_gui;
+
+    // internal methods ////////////////////////////////////////////////////////
+  protected:
+    
     //! init datasource to begining and assign indata to a buffer
     //! corresponding to ds's sample size. also increment iteration counter,
     //! unless new_iteration is false.
     void init(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
 	      classifier_meter *log = NULL, bool new_iteration = false);
 
-    //! pretty some information about training, e.g. input and network sizes.
-    void pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds);
-
-    // friends
-    // template <class Tdata, class Tlabel> friend class supervised_trainer_gui;
-    template <class T1, class T2, class T3>
-      friend class supervised_trainer_gui;
-
-    //! returns a pointer to a copy on this datasource
-    //    supervised_trainer<Tdata, Tlabel>* copy();
-  public:
-    fc_ebm2<Tnet,bbstate_idx<Tnet>,bbstate_idx<Tlabel> > &machine;
+    // members /////////////////////////////////////////////////////////////////
+  protected:
+    trainable_module<Tnet,Tdata,Tlabel> &machine;
     parameter<Tnet, bbstate_idx<Tnet> >	  &param;	//!< the learned params
-    //! net's tmp input buf. it is a pointer because the order of the input
-    //! is not known in advance, and fstate_idx cannot change order dynamically.
-    bbstate_idx<Tnet>	*input;
-    bbstate_idx<Tnet>	 energy;//!< tmp energy buf
-    bbstate_idx<Tlabel>	 label;
-    bbstate_idx<Tlabel>	 answer;
+    bbstate_idx<Tnet>	 energy;	//!< Tmp energy buffer.
+    bbstate_idx<Tnet>	*answers;	//!< Tmp answer buffer.
+    bbstate_idx<Tnet>	*label;	        //!< Tmp label buffer.
     intg		 age;
-  private:
     int			 iteration;
     void		*iteration_ptr;
-    bool		 prettied;//!< flag used to pretty info just once
+    bool		 prettied;	//!< Flag used to pretty info just once.
   };
 
 } // namespace ebl {

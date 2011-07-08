@@ -80,52 +80,54 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! configuration class. handle files containing variable definitions.
   class EXPORT configuration {
-  protected:
-    string_map_t	smap; 	//!< map between variables and values
-    string_map_t	tmp_smap; //!< map between variables and values
-    string 		name; 	//!< name of configuration
-    string 		output_dir;	//!< output directory
-    textlist 		otxt; 	//!< original text
-    
   public:
     //! empty constructor.
     configuration();
-
     //! copy constructor.
     configuration(const configuration &other);
-
     //! load configuration found in filename.
-    configuration(const char *filename, bool replquotes = false);
-
+    //! \param resolve If true, replace all referenced variables by their value.
+    configuration(const char *filename, bool replquotes = false, 
+		  bool silent = false, bool resolve = true);
     //! load configuration found in filename.
-    configuration(const string &filename, bool replquotes = false);
-
-    //! load configuration from already loaded map of variables, name and
+    //! \param resolve If true, replace all referenced variables by their value.
+    configuration(const string &filename, bool replquotes = false, 
+		  bool silent = false, bool resolve = true);
+    //! Load configuration from already loaded map of variables, name and
     //! output directory.
+    //! \param txt Original text lines of configuration.
     configuration(string_map_t &smap, textlist &txt, string &name, 
 		  string &output_dir);
-
     //! destructor.
     virtual ~configuration();
 
+    // input/output ////////////////////////////////////////////////////////////
+    
     //! load configuration from file fname.
-    bool read(const char *fname, bool bresolve = true, bool replquotes = true,
-	      bool silent = false);
-
+    //! \param resolve If true, replace all referenced variables by their value.
+    bool read(const char *fname, bool resolve = true, bool replquotes = true,
+	      bool silent = false, const char *outdir = NULL);
     //! save configuration into file fname.
     bool write(const char *fname);
-
     //! resolve variables names in variables
     //! @param replquotes Remove quotes or not from variable strings.
     void resolve(bool replquotes = false);
+    //! only resolve backquotes blocs.
+    void resolve_bq();
 
-    // accessors
+    // accessors ///////////////////////////////////////////////////////////////
 
     //! return the name of the configuration
     const string &get_name();
 
+    //! set name of the configuration
+    void set_name(const string &name);
+
     //! return output directory.
     const string &get_output_dir();
+
+    //! set output directory.
+    void set_output_dir(const string &d);
 
     //! Generic template get, return the value associated with varname,
     //! if varname exists, otherwise throws an execption.
@@ -190,15 +192,24 @@ namespace ebl {
 
     //! returns a bool conversion of the string contained in the variable
     //! with name varname.
-    //! if varname does not exist or the uint conversion fails,
+    //! if varname does not exist or the bool conversion fails,
     //! this throws an exception.
     bool get_bool(const char *varname);
+
+    //! returns a char conversion of the string contained in the variable
+    //! with name varname.
+    //! if varname does not exist or the char conversion fails,
+    //! this throws an exception.
+    char get_char(const char *varname);
 
     //! Returns true if variable exists and its value is true, false otherwise.
     bool exists_bool(const char *varname);
 
     //! Returns true if variable exists and its value is true, false otherwise.
     bool exists_true(const char *varname);
+
+    //! Returns true if variable exists and its value is true, false otherwise.
+    bool exists_true(const string &varname);
 
     //! Returns true if variable exists and its value is false, true otherwise.
     bool exists_false(const char *varname);
@@ -222,6 +233,43 @@ namespace ebl {
     
     //! print loaded variables
     virtual void pretty();
+
+    //! Print all variables who's name is contained in string 's'.
+    virtual void pretty_match(const string &s);
+
+    ////////////////////////////////////////////////////////////////
+  protected:
+
+    //! Resolve all variables in map m.
+    void resolve_variables(string_map_t &m, bool replquotes = false);
+
+    //! Resolve double quotes blocs, or entire string if not present.
+    string resolve0(string_map_t &m, const string &variable, 
+		    const string &v, bool firstonly = false);
+
+    //! Resolve back quotes blocs only.
+    string resolve_backquotes(string_map_t &m, 
+			     const string &variable, const string &v,
+			     bool firstonly = false);
+
+    //! Resolve an unquoted string (just variables).
+    string resolve_string(string_map_t &m, const string &variable, 
+			  const string &v, bool firstonly = false);
+    
+    // open file fname and put variables assignments in smap.
+    // e.g. " i = 42 # comment " will yield a entry in smap
+    // with "i" as first value and "42" as second value.
+    bool extract_variables(const char *fname, string_map_t &smap, textlist &txt,
+			   string_map_t *meta_smap = NULL, bool bresolve = true,
+			   bool replquotes = false, bool silent = false);
+
+  protected:
+    string_map_t	smap; 	//!< map between variables and values
+    string_map_t	tmp_smap; //!< map between variables and values
+    string 		name; 	//!< name of configuration
+    string 		output_dir;	//!< output directory
+    textlist 		otxt; 	//!< original text    
+    bool                silent;
   };
 
   ////////////////////////////////////////////////////////////////
@@ -237,9 +285,13 @@ namespace ebl {
     meta_configuration();
     virtual ~meta_configuration();
 
+    //! Read a meta configuration.
+    //! \param resume_name Name of experiment to be resumed.
     bool read(const char *fname, bool bresolve = true,
 	      const string *tstamp = NULL, 
-	      bool replace_quotes = false);
+	      bool replace_quotes = false,
+	      const char *resume_name = NULL,
+	      bool silent = false);
 
     // accessors
 
@@ -248,6 +300,9 @@ namespace ebl {
 
     //! print loaded variables
     virtual void pretty();
+
+    //! print a summary of all possible combinations.
+    virtual void pretty_combinations();
   };
 
 } // end namespace ebl

@@ -128,7 +128,7 @@ namespace ebl {
     std::string err;							\
     if ((src0).order() != o0) err << src0 <<" should have order "<< o0<<". "; \
     if ((src1).order() != o1) err << src1 <<" should have order "<< o1<<". "; \
-    eblerror("idx have incompatible orders: " << err); }
+    eblerror("incompatible orders: " << err); }
 
   //! Calls eblerror if src0,src1,src2 and o0,o1,o2 do not match.
 #define idx_checkorder3(src0, o0, src1, o1, src2, o2)			\
@@ -138,7 +138,7 @@ namespace ebl {
     if ((src0).order() != o0) err << src0 <<" should have order "<< o0<<". "; \
     if ((src1).order() != o1) err << src1 <<" should have order "<< o1<<". "; \
     if ((src2).order() != o2) err << src2 <<" should have order "<< o2<<". "; \
-    eblerror("idx have incompatible orders: " << err); }
+    eblerror("incompatible orders: " << err); }
 
   //! Calls eblerror if src0.order(), src1.order() and src2.order() differ
 #define idx_checkorder3_all(src0, src1, src2)				\
@@ -146,7 +146,12 @@ namespace ebl {
       || ((src0).order() != (src2).order()))				\
     idx_compatibility_error3(src0, src1, src2, "idx have incompatible orders");
 
-  //! Calls eblerror if src0.dim(0) and src1.dim(d1) don't match e0,e1
+  //! Calls eblerror if src0.dim(d0) != e0
+#define idx_checkdim1(src0, d0, e0)					\
+  if ((src0).dim(d0) != e0)						\
+    eblerror("expected dim " << d0 << " to be " << e0 << " in " << src0);
+
+  //! Calls eblerror if src0.dim(d0) and src1.dim(d1) don't match e0,e1
 #define idx_checkdim2(src0, d0, e0, src1, d1, e1)			\
   if ((src0).dim(d0) != e0)						\
     eblerror("expected dim " << d0 << " to be " << e0 << " in " << src0); \
@@ -595,7 +600,7 @@ namespace ebl {
 #endif // if USING_STL_ITERS, else
 
   ////////////////////////////////////////////////////////////////
-  // idx methods
+  // idx memory methods
 
   template <class T> void idx<T>::growstorage() {
     if (storage->growsize(spec.footprint()) < 0)
@@ -609,12 +614,8 @@ namespace ebl {
 	       << " bytes (probably out of memory)");
   }
 
-  /* the constructor doesn't exist and I didn't find one to replace it
-     template<typename T>
-     void idx<T>::printElems(FILE* filePtr){
-     this->printElems(std::ofstream(filePtr));
-     }
-  */
+  ////////////////////////////////////////////////////////////////
+  // idx basic constructors/destructor
 
   template <class T> idx<T>::~idx() {
     DEBUG_LOW("idx::destructor " << long(this));
@@ -631,21 +632,10 @@ namespace ebl {
     pidxdim = NULL;
   }
 
-  //template <typename T>
-  //idx<T>::idx( idx<T>& other )
-  //	:storage(other.storage),
-  //	 spec(other.spec)
-  // {
-  //	storage->lock();
-  // }
-  //
-  //template <typename T>
-  //idx<T>::idx( const idx<T>& other )
-  //	:storage(other.storage),
-  //	 spec(other.spec)
-  // {
-  //	storage->lock();
-  // }
+  template <class T> idx<T>::idx(const idx<T>& other)
+    : storage(other.storage), pidxdim(NULL), spec(other.spec) {
+    storage->lock();
+  }
 
   ////////////////////////////////////////////////////////////////
   //! constructors initialized with an array
@@ -803,6 +793,33 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // operators
+
+  template <class T>
+  idx<T>& idx<T>::operator=(T other){
+    eblerror("Forbidden idx assignment: it can only be assigned another idx");
+    return *this;
+  }
+
+  template <class T>
+  idx<T>& idx<T>::operator=(const idx<T>& other) {
+    srg<T> *tmp = NULL;
+    if (this->storage != NULL)
+      tmp = this->storage;
+    this->storage = other.storage;
+    this->spec = other.spec;
+    this->storage->lock();
+    if (tmp)
+      tmp->unlock();
+    return *this;
+  }
+  
+  template <class T>
+  idx<T> idx<T>::operator[](const intg i) {
+    return this->select(0,i);
+  }
+  
+  ////////////////////////////////////////////////////////////////
   // resize methods
   
   template <class T> 
@@ -924,6 +941,12 @@ namespace ebl {
       pidxdim = new idxdim();
     pidxdim->setdims(spec);
     return *pidxdim;
+  }
+
+  template <class T> idxdim idx<T>::get_idxdim() const {
+    idxdim d;
+    d.setdims(spec);
+    return d;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -1082,7 +1105,7 @@ namespace ebl {
   // get methods
 
   // get element of idx0
-  template <class T> T idx<T>::get() {
+  template <class T> T idx<T>::get() const {
 #ifdef __DEBUG__
     idx_checkorder1(*this, 0);
 #endif
@@ -1090,7 +1113,7 @@ namespace ebl {
   }
 
   // get element of idx1
-  template <class T> T& idx<T>::get(intg i0) {
+  template <class T> T& idx<T>::get(intg i0) const {
 #ifdef __DEBUG__
     idx_checkorder1(*this, 1);
     if ((i0 < 0) || (i0 >= spec.dim[0])) {
@@ -1102,7 +1125,7 @@ namespace ebl {
   }
 
   // get element of idx2
-  template <class T> T idx<T>::get(intg i0, intg i1) {
+  template <class T> T idx<T>::get(intg i0, intg i1) const {
 #ifdef __DEBUG__
     idx_checkorder1(*this, 2);
     if (((i0 < 0) || (i0 >= spec.dim[0])) || 
@@ -1115,7 +1138,7 @@ namespace ebl {
   }
 
   // get element of idx3
-  template <class T> T idx<T>::get(intg i0, intg i1, intg i2) {
+  template <class T> T idx<T>::get(intg i0, intg i1, intg i2) const {
 #ifdef __DEBUG__
     idx_checkorder1(*this, 3);
     if (((i0 < 0) || (i0 >= spec.dim[0])) || 
@@ -1133,6 +1156,23 @@ namespace ebl {
   // get element of an idx of any order
   template <class T> T idx<T>::get(intg i0, intg i1, intg i2, intg i3, 
 				   intg i4, intg i5, intg i6, intg i7) {
+    return *ptr(i0,i1,i2,i3,i4,i5,i6,i7);
+  }
+
+  // get element of an idx of any order
+  template <class T> T idx<T>::gget(intg i0, intg i1, intg i2, intg i3, 
+				    intg i4, intg i5, intg i6, intg i7) {
+    switch (spec.ndim) {
+    case 7: i7 = -1; break ;
+    case 6: i6 = -1; i7 = -1; break ;
+    case 5: i5 = -1; i6 = -1; i7 = -1; break ;
+    case 4: i4 = -1; i5 = -1; i6 = -1; i7 = -1; break ;
+    case 3: return get(i0, i1, i2);
+    case 2: return get(i0, i1);
+    case 1: return get(i0);
+    case 0: return get();
+    default: break ;
+    }
     return *ptr(i0,i1,i2,i3,i4,i5,i6,i7);
   }
 
@@ -1184,17 +1224,52 @@ namespace ebl {
     return *ptr(i0,i1,i2,i3,i4,i5,i6,i7) = val;
   }
 
+  // get element of an idx of any order
+  template <class T> T idx<T>::sset(T val, intg i0, intg i1, intg i2, intg i3, 
+				    intg i4, intg i5, intg i6, intg i7) {
+    switch (spec.ndim) {
+    case 7: i7 = -1; break ;
+    case 6: i6 = -1; i7 = -1; break ;
+    case 5: i5 = -1; i6 = -1; i7 = -1; break ;
+    case 4: i4 = -1; i5 = -1; i6 = -1; i7 = -1; break ;
+    case 3: return set(val, i0, i1, i2);
+    case 2: return set(val, i0, i1);
+    case 1: return set(val, i0);
+    case 0: return set(val);
+    default: break ;
+    }
+    return *ptr(i0,i1,i2,i3,i4,i5,i6,i7) = val;
+  }
+
   ////////////////////////////////////////////////////////////////
   // print methods
 
   template <typename T>
-  void idx<T>::printElems(std::ostream& out){
+  void idx<T>::printElems(std::ostream& out) const {
+    printElems_impl(0, out);
+    out.flush();
+  }
+
+  template <typename T>
+  void idx<T>::printElems(std::string& out) const {
     printElems_impl(0, out);
   }
 
   template <typename T>
-  void idx<T>::printElems(){
+  void idx<T>::printElems() const {
     this->printElems(std::cout);
+  }
+
+  template <typename T>
+  void idx<T>::print() const {
+    this->printElems(std::cout);
+  }
+
+  template <typename T>
+  std::string idx<T>::str() const {
+    std::string s;
+    this->printElems(s);
+    return s;
   }
 
   template<class T> inline T printElems_impl_cast(T val) {
@@ -1206,8 +1281,8 @@ namespace ebl {
     return (unsigned int) val;
   }
 
-  template <typename T>
-  void idx<T>::printElems_impl(int indent, std::ostream& out) {
+  template <typename T> template <class stream>
+  void idx<T>::printElems_impl(int indent, stream& out) const {
     static const std::string lbrace = "[";
     static const std::string rbrace = "]";
     static const std::string sep = " ";
@@ -1216,7 +1291,6 @@ namespace ebl {
     for( unsigned int ii = 0; ii < lbrace.length(); ++ii ) {
       tab << " ";
     }
-
     // printing a 0-dimensional tensor
     if( order() == 0 ){
       out<<lbrace<<"@"<<sep<< printElems_impl_cast(get()) <<sep<<rbrace<<"\n";
@@ -1293,12 +1367,8 @@ namespace ebl {
     return 0;
   }
 
-  template <class T> 
-  std::ostream& operator<<(std::ostream& out, idx<T>& m) {
-    out << m.spec;
-    return out;
-  }
-
+  // stream printing ///////////////////////////////////////////////////////////
+  
   template <class T> 
   std::ostream& operator<<(std::ostream& out, const idx<T>& m) {
     out << m.spec;
@@ -1308,6 +1378,42 @@ namespace ebl {
   template <class T> 
   std::string& operator<<(std::string& out, idx<T>& m) {
     out << m.spec;
+    return out;
+  }
+
+  template <class T> 
+  std::string& operator<<(std::string& out, idx<T>* m) {
+    if (!m)
+      out << "null";
+    else
+      out << m->spec;
+    return out;
+  }
+
+  template <typename T, class stream>
+  stream& operator<<(stream& out, idxs<T>& m) {
+    idxdim dmin, dmax;
+    bool dnull = false, bpos = false;
+    for (uint i = 0; i < m.dim(0); ++i) {
+      if (m.exists(i)) {
+	idx<T> p = m.get(i);
+	idxdim d(p);
+	if (d.nelements() < dmin.nelements()) dmin = d;
+	if (d.nelements() > dmax.nelements()) dmax = d;
+	bpos = true;
+      } else
+	dnull = true;
+    }
+    out << "[" << (idx<idx<T>*>&) m << ", ";
+    if (!bpos)
+      out << "all empty";
+    else {
+      out << "from ";
+      if (dnull) out << "null";
+      else out << dmin;
+      out << " to " << dmax;
+    }
+    out << "]";
     return out;
   }
 
@@ -1391,7 +1497,7 @@ namespace ebl {
   // empty constructor;
   template <class T> idxiter<T>::idxiter() { }
 
-  template <class T> T *idxiter<T>::init(idx<T> &m) {
+  template <class T> T *idxiter<T>::init(const idx<T> &m) {
     iterand = &m;
     i = 0;
     j = iterand->spec.ndim;
@@ -1435,18 +1541,414 @@ namespace ebl {
 #endif // IF USING_STL_ITERS == 0
 
   ////////////////////////////////////////////////////////////////
-  // idxdim
+  // idxdim: constructors
+    
+  template <typename T>
+  idxd<T>::~idxd() {
+    if (offsets) {
+      delete offsets;
+    }
+  }
+
+  template <typename T>
+  idxd<T>::idxd() : offsets(NULL) {
+    ndim = -1;
+    memset(dims, -1, MAXDIMS * sizeof (T));
+  }
   
-  template <class T>
-  idxdim::idxdim(const idx<T> &i) {
+  template <typename T> template <class Tidx>
+  idxd<T>::idxd(const idx<Tidx> &i) : offsets(NULL) {
     setdims(i.spec);
   }
   
-  template <class T>
-  void idxdim::setdims(const idx<T> &i) {
+  template <typename T>
+  idxd<T>::idxd(const idxspec &s) : offsets(NULL) {
+    setdims(s);
+  }
+
+  template <typename T>
+  idxd<T>::idxd(const idxd<T> &s) : offsets(NULL) {
+    setdims(s);
+  }
+
+  template <typename T>
+  idxd<T>::idxd(T s0, T s1, T s2, T s3, T s4, T s5, T s6, T s7)
+  : offsets(NULL) {
+    dims[0] = s0; dims[1] = s1; dims[2] = s2; dims[3] = s3;
+    dims[4] = s4; dims[5] = s5; dims[6] = s6; dims[7] = s7;
+    ndim = 0;
+    for (int i = 0; i < MAXDIMS; i++)
+      if (dims[i] >= 0) ndim++;
+      else break;
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // idxdim: set dimensions
+     
+  template <typename T> template <class Tidx>
+  void idxd<T>::setdims(const idx<Tidx> &i) {
     setdims(i.spec);
   }
 
+  template <typename T>
+  void idxd<T>::setdims(const idxspec &s) {
+    ndim = s.ndim;
+    // copy existing dimensions
+    for (int i = 0; i < ndim; ++i)
+      dims[i] = (T) s.dim[i];
+    // set remaining to -1
+    int ord = std::max((int) 0, s.ndim);
+    memset(dims + ord, -1, (MAXDIMS - ord) * sizeof (T));
+  }
+  
+  template <typename T>
+  void idxd<T>::setdims(const idxd<T> &s) {
+    ndim = s.order();
+    // copy existing dimensions
+    for (int i = 0; i < s.order(); ++i)
+      dims[i] = s.dim(i);
+    // set remaining to -1
+    intg ord = std::max((intg) 0, s.order());
+    memset(dims + ord, -1, (MAXDIMS - ord) * sizeof (T));
+    // copy all offsets if exist
+    if (s.offsets) {
+      if (!offsets)
+	offsets = new T[MAXDIMS];
+      memcpy(offsets, s.offsets, MAXDIMS * sizeof(T));
+    } else if (offsets) { // no offsets, delete existing
+      delete offsets;
+      offsets = NULL;
+    }
+  }
+
+  template <typename T>
+  void idxd<T>::setdims(T n) {
+    for (int i = 0; i < ndim; ++i)
+      dims[i] = n;
+  }
+  
+  template <typename T>
+  void idxd<T>::insert_dim(intg pos, T dim_size) {
+    if (ndim + 1 > MAXDIMS)
+      eblerror("error: cannot add another dimension to dim."
+	       << " Maximum number of dimensions (" << MAXDIMS << ") reached.")
+    // check that dim_size is valid
+    if (dim_size <= 0)
+      eblerror("cannot set negative or zero dimension");
+    // check that all dimensions up to pos (excluded) are > 0.
+    for (uint i = 0; i < pos; ++i)
+      if (dims[i] <= 0)
+	eblerror("error: cannot insert dimension " << pos
+		 << " after empty dimensions: " << *this);
+    // add order of 1
+    ndim++;
+    if (ndim == 0) // one more if it was empty
+      ndim++;
+    // shift all dimensions until position pos
+    for (uint i = ndim - 1; i > pos && i >= 1; i--)
+      dims[i] = dims[i - 1];
+    if (offsets)
+      for (uint i = ndim - 1; i > pos && i >= 1; i--)
+	offsets[i] = offsets[i - 1];
+    // insert new dim
+    dims[pos] = dim_size;
+    if (offsets)
+      offsets[pos] = 0;
+  }
+ 
+  template <typename T>
+  T idxd<T>::remove_dim(intg pos) {
+    // check that dim_size is valid
+    if (ndim <= 1)
+      eblerror("not enough dimensions to remove one in " << *this);
+    T rdim = dim(pos);
+    // shift all dimensions until position pos
+    for (uint i = pos; i < ndim - 1; i++)
+      dims[i] = dims[i + 1];
+    dims[ndim - 1] = -1; // empty last dimension
+    if (offsets) {
+      for (uint i = pos; i < ndim - 1; i++)
+	offsets[i] = offsets[i + 1];
+      offsets[ndim - 1] = 0; // empty last offset
+    }
+    // decrease order by 1
+    ndim--;
+    return rdim;
+  }
+
+  template <typename T>
+  void idxd<T>::setdim(intg dimn, T size) {
+    if (dimn >= ndim)
+      eblerror("error: trying to set dimension " << dimn << " to size "
+	       << size << " but idxidm has only " << ndim
+	       << " dimension(s): " << *this);
+    dims[dimn] = size; 
+  }
+
+  template <typename T>
+  void idxd<T>::setoffset(intg dimn, T offset) {
+    if (dimn >= ndim)
+      eblerror("error: trying to set offset of dim " << dimn << " to "
+	       << offset << " but idxidm has only " << ndim
+	       << " dimension(s): " << *this);
+    // allocate if not allocated
+    if (!offsets) {
+      offsets = new T[MAXDIMS];
+      memset(offsets, 0, MAXDIMS * sizeof (T));      
+    }
+    offsets[dimn] = offset; 
+  }
+
+  template <typename T> 
+  void idxd<T>::set_max(const idxd<T> &other) {
+    if (other.order() != ndim)
+      eblerror("expected same order in " << *this << " and " << other);
+    for (uint i = 0; i < ndim; i++)
+      dims[i] = std::max(dims[i], other.dim(i));
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // get dimensions
+  
+  template <typename T>
+  intg idxd<T>::order() const {
+    return ndim;
+  }
+
+  template <typename T>
+  bool idxd<T>::empty() const {
+    return ndim == -1;
+  }
+
+  template <typename T>
+  T idxd<T>::dim(intg dimn) const {
+    if (dimn >= ndim)
+      eblerror("trying to access size of dimension " << dimn
+	       << " but idxdim's maximum dimensions is " << ndim);
+    return dims[dimn]; 
+  }
+
+  template <typename T>
+  T idxd<T>::offset(intg dimn) const {
+    if (dimn >= ndim)
+      eblerror("trying to access size of dimension " << dimn
+	       << " but idxdim's maximum dimensions is " << ndim);
+    if (offsets)
+      return offsets[dimn];
+    else
+      return 0;
+  }
+
+  template <typename T>
+  bool idxd<T>::operator==(const idxd<T>& other) {
+    if (other.ndim != ndim)
+      return false;
+    for (int i = 0; i < ndim; ++i)
+      if (other.dim(i) != dim(i))
+	return false;
+    return true;
+  }
+  
+  template <typename T>
+  bool idxd<T>::operator!=(const idxd<T>& other) {
+    return !(*this == other);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // operators
+  
+  template <typename T>
+  void idxd<T>::operator=(const idxd<T> &d2) {
+    setdims(d2);
+  }
+  
+  template <typename T> template <typename T2>
+  void idxd<T>::operator=(const idxd<T2> &d2) {
+    ndim = d2.ndim;
+    for (uint i = 0; i < MAXDIMS; ++i)
+      dims[i] = (T) d2.dims[i];
+    if (offsets && !d2.offsets) {
+      delete offsets;
+      offsets = NULL;
+    } else if (d2.offsets) {
+      if (!offsets)
+	offsets = new T[MAXDIMS];
+      for (uint i = 0; i < MAXDIMS; ++i)
+	offsets[i] = (T) d2.offsets[i];
+    }
+  }
+  
+  template <typename T> template <typename T2>
+  idxd<T> idxd<T>::operator*(const idxd<T2> &d2) const {
+    idxd<T> d = *this;
+    if (d2.order() != d.order())
+      eblerror("expected same order idxd but got " << d << " and " << d2);
+    for (int i = 0; i < d.order(); ++i)
+      d.setdim(i, (T) (d.dim(i) * d2.dim(i)));
+    if (offsets)
+      for (int i = 0; i < d.order(); ++i)
+	d.setoffset(i, (T) (d.offset(i) * d2.dim(i)));
+    return d;
+  }
+  
+  template <typename T> template <typename T2>
+  idxd<T> idxd<T>::operator*(T2 f) {
+    idxd<T> d = *this;
+    for (int i = 0; i < d.order(); ++i)
+      d.setdim(i, (T) (d.dim(i) * f));
+    if (offsets)
+      for (int i = 0; i < d.order(); ++i)
+	d.setoffset(i, (T) (d.offset(i) * f));
+    return d;
+  }
+  
+  template <typename T> template <typename T2>
+  idxd<T> idxd<T>::operator+(T2 f) {
+    idxd<T> d = *this;
+    for (int i = 0; i < d.order(); ++i)
+      d.setdim(i, (T) (d.dim(i) + f));
+    return d;
+  }  
+
+  template <typename T>
+  idxd<T> idxd<T>::operator+(idxd<T> &d2) {
+    idxd<T> d = *this;
+    if (d.order() != d2.order())
+      eblerror("cannot add two idxdim with different orders: " << d << " and "
+	       << d2);
+    for (int i = 0; i < d.order(); ++i)
+      d.setdim(i, d.dim(i) + d2.dim(i));
+    return d;
+  }  
+
+  template <typename T>
+  bool idxd<T>::operator<=(idxd<T> &d2) {
+    if (this->order() != d2.order())
+      eblerror("cannot add two idxdim with different orders: " << *this
+	       << " and " << d2);
+    for (int i = 0; i < this->order(); ++i)
+      if (this->dim(i) > d2.dim(i))
+	return false;
+    return true;
+  }
+
+  template <typename T>
+  bool idxd<T>::operator>=(idxd<T> &d2) {
+    if (this->order() != d2.order())
+      eblerror("cannot add two idxdim with different orders: " << *this
+	       << " and " << d2);
+    for (int i = 0; i < this->order(); ++i)
+      if (this->dim(i) < d2.dim(i))
+	return false;
+    return true;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  
+  template <typename T>
+  intg idxd<T>::nelements() {
+    intg total = 1;
+    for (int i = 0; i < ndim; ++i)
+      total *= dim(i);
+    return total;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+    
+  template <typename T>
+  std::ostream& operator<<(std::ostream& out, const idxd<T>& d) {
+    string s;
+    s << d;
+    out << s;
+    return out;
+  }
+  
+  template <typename T>
+  std::string& operator<<(std::string& out, const idxd<T>& d) {
+    if (d.order() <= 0)
+      out << "<empty>";
+    else {
+      if (d.offsets) {
+	bool show = false;
+	for (int i = 0; i < d.order(); ++i)
+	  if (d.offset(i) != 0) {
+	    show = true;
+	    break;
+	  }
+	if (show) {
+	  out << "(";
+	  out << d.offset(0);
+	  for (int i = 1; i < d.order(); ++i)
+	    out << "," << d.offset(i);
+	  out << ")";
+	}
+      }
+      out << d.dim(0);
+      for (int i = 1; i < d.order(); ++i)
+	out << "x" << d.dim(i);
+    }
+    return out;
+  }
+
+  // idxs //////////////////////////////////////////////////////////////////////
+
+  template <typename T>
+  idxs<T>::idxs(idx<idx<T>*> &o) : idx<idx<T>*>(o) {
+  }
+
+  template <typename T>
+  idxs<T>::idxs(intg size) : idx<idx<T>*>(size) {
+    idx_clear(*this);
+  }
+
+  template <typename T>
+  idxs<T>::idxs() : idx<idx<T>*>() {
+    idx_clear(*this);
+  }
+
+  template <typename T>
+  idxs<T>::~idxs() {
+  }
+
+  template <typename T>
+  void idxs<T>::set(idx<T> &e, intg pos) {
+    idx<idx<T>*>::set(new idx<T>(e), pos);
+  }
+
+  template <typename T>
+  idx<T> idxs<T>::get(intg pos) {
+    idx<T> *e = idx<idx<T>*>::get(pos);
+    if (!e) eblerror("trying to access null element " << pos);
+    idx<T> m(*e);
+    return m;
+  }
+  
+  template <typename T>
+  idxs<T> idxs<T>::narrow(int d, intg s, intg o) {
+    idx<idx<T>*> tmp = idx<idx<T>*>::narrow(d, s, o);
+    idxs<T> r(tmp);
+    return r;
+  }
+
+  template <typename T>
+  bool idxs<T>::exists(intg pos) const {
+    idx<T> *e = idx<idx<T>*>::get(pos);
+    return (e != NULL);
+  }
+
+  template <typename T>
+  idxdim idxs<T>::get_maxdim() {
+    idxdim dmax;
+    for (intg i = 0; i < this->dim(0); ++i) {
+      if (exists(i)) {
+	idx<T> p = this->get(i);
+	idxdim d(p);
+	if (d.nelements() > dmax.nelements()) dmax = d;
+      }
+    }
+    return dmax;
+  }
+  
 } // namespace ebl
 
 #endif /* IDX_HPP_ */

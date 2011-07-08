@@ -69,6 +69,43 @@ namespace ebl {
     }
   }
 
+  template <typename T>
+  idx<T> string_to_idx(const char *s_, char sep) {
+    idx<T> d(1);
+    string s = s_;
+    int k = 0;
+    bool found = false;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == sep)
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      if (!s0.empty()) {
+	if (!found)
+	  d.set(string_to_number<T>(s0.c_str()), 0); // 1st element
+	else {
+	  d.resize(d.dim(0) + 1);
+	  d.set(string_to_number<T>(s0.c_str()), d.dim(0) - 1);
+	}
+	found = true;
+	k++;
+      }
+    }
+    if (!found)
+      eblerror("expected at least 1 number in: " << s_);
+    return d;
+  }
+  
+  template <typename T>
+  T string_to_number(const char *s_) {
+    return (T) string_to_double(s_);
+  }
+  
 } // end namespace ebl
 
 #endif /* TOOLS_UTILS_HPP_ */

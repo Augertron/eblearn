@@ -97,7 +97,10 @@ namespace ebl {
 	cout << "tanh: resizing output from " << out.x.get_idxdim();
 	cout << " to " << d << endl;
 #endif
-	out.resize(d);
+	if (out.x.order() != d.order())
+	  out = Tstate(d); // re-allocate
+	else
+	  out.resize(d); // simply resize
       }
     }
     

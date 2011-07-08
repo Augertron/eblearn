@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,234 +36,103 @@
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // stochastic_gd_trainer
-
-//   template <class Tin1, class Tin2, class T>  
-//   stochastic_gd_trainer<Tin1, Tin2, T>::
-//   stochastic_gd_trainer(fc_ebm2_gen<Tin1, Tin2, T> &m, parameter<T> &p)
-//     : iteration(-1), iteration_ptr(NULL), prettied(false),
-//       machine(m), param(p), energy(), age(0),
-//       in1(NULL), // allocated when input is passed, based in its order/dims
-//       in2(NULL) // allocated when input is passed, based in its order/dims
-//   {
-//     energy.dx.set(1.0);
-//     energy.ddx.set(0.0);
-//   }
-
-//   template <class Tin1, class Tin2, class T>
-//   stochastic_gd_trainer<Tin1, Tin2, T>::~stochastic_gd_trainer() {
-//     if (in1) delete in1;
-//     if (in2) delete in2;
-//   }
-
-//   // train: train on all samples
-//   template <class Tin1, class Tin2, class T>  
-//   void stochastic_gd_trainer<Tin1, Tin2, T>::
-//   train(datasource<Tin1, Tin2> &ds, classifier_meter &log, 
-// 	gd_param &args, int niter,
-// 	bool compute_hessian, int hessian_interval,
-// 	int niter_hessian, double mu_hessian, intg max) {
-//     // initialize
-//     ds.seek_begin();
-//     log.clear();
-//     resize_input(ds);
-//     // if not computing hessian, fill the epsilons with 1
-//     if (!compute_hessian)
-//       param.set_epsilons(1.0);
-//     // loop over samples for niter iterations
-//     for (int i = 0; i < niter; ++i) { // niter iterations
-//       for (unsigned int j = 0; j < ds.size(); ++j) { // training on entire set
-// 	// compute hessian after hessian_interval iterations
-// 	if (compute_hessian && (age % hessian_interval == 0))
-// 	  compute_diaghessian(ds, niter_hessian, mu_hessian);
-// 	// do one step of training
-// 	train_sample(ds, args);
-// 	// advance data and age by one
-// 	ds.next();
-// 	age++;
-//       }
-//     }
-//   }
-
-//   // train_sample: train on one sample
-//   template <class Tin1, class Tin2, class T>
-//   void stochastic_gd_trainer<Tin1, Tin2, T>::
-//   train_sample(datasource<Tin1, Tin2> &ds, gd_param &args) {
-//     // fprop input
-//     ds.fprop(*in1, *in2);
-//     // fprop machine
-//     machine.fprop(*in1, *in2, energy);
-//     // bprop machine
-//     param.clear_dx();
-//     machine.bprop(*in1, *in2, energy);
-//     // update parameters
-//     param.update(args);
-//     // update machine
-//     machine.normalize();
-//     // return total energy
-//     return energy.x.get();
-//   }
-
-//   // compute_diaghessian
-//   template <class Tin1, class Tin2, class T>  
-//   void stochastic_gd_trainer<Tin1, Tin2, T>::
-//   compute_diaghessian(datasource<Tin1, Tin2> &ds, intg niter, 
-// 		      double mu) {
-//     resize_input(ds);
-//     param.clear_ddeltax();
-//     for (int i = 0; i < niter; ++i) {
-//       ds.fprop(*in1, *in2);
-//       machine.fprop(*in1, *in2, energy);
-//       param.clear_dx();
-//       machine.bprop(*in1, *in2, energy);
-//       param.clear_ddx();
-//       machine.bbprop(*in1, *in2, energy);
-//       param.update_ddeltax((1 / (double) niter), 1.0);
-//       ds.next();
-//     }
-//     param.compute_epsilons(mu);
-//     cout << "diaghessian inf: " << idx_min(param.epsilons);
-//     cout << " sup: " << idx_max(param.epsilons) << endl;
-//   }
-
-//   // resize_input
-//   template <class Tin1, class Tin2, class T>  
-//   void stochastic_gd_trainer<Tin1, Tin2, T>::
-//   resize_input(datasource<Tin1, Tin2> &ds) {
-//     idxdim d = ds.sample_dims();
-//     if (!in1)
-//       in1 = new state_idx<T>(d);
-//     else
-//       in1->resize(d);
-//     if (!in2)
-//       in2 = new state_idx<T>(d);
-//     else
-//       in2->resize(d);
-//     // pretty sizes of input/output for each module the first time
-//     if (!prettied) {
-//       machine.pretty(d);
-//       prettied = true;
-//     }
-//   }
-
-  ////////////////////////////////////////////////////////////////
   // supervised_trainer
 
-  template <class Tnet, class Tdata, class Tlabel>  
+  template <typename Tnet, typename Tdata, typename Tlabel>  
   supervised_trainer<Tnet, Tdata, Tlabel>::
-  supervised_trainer(fc_ebm2<Tnet,bbstate_idx<Tnet>,bbstate_idx<Tlabel> > &m,
+  supervised_trainer(trainable_module<Tnet,Tdata,Tlabel> &m,
 		     parameter<Tnet, bbstate_idx<Tnet> > &p)
-    : machine(m), param(p), input(NULL), energy(), label(), answer(), age(0),
+    : machine(m), param(p), energy(), answers(NULL), label(NULL), age(0),
       iteration(-1), iteration_ptr(NULL), prettied(false) {
-    energy.dx.set(1.0);
-    energy.ddx.set(0.0);
+    energy.dx.set(1.0); // d(E)/dE is always 1
+    energy.ddx.set(0.0); // dd(E)/dE is always 0
+    cout << "Training with: " << m.describe() << endl;
   }
 
-  template <class Tnet, class Tdata, class Tlabel>  
+  template <typename Tnet, typename Tdata, typename Tlabel>  
   supervised_trainer<Tnet, Tdata, Tlabel>::~supervised_trainer() {
   }
 		     
-  template <class Tnet, class Tdata, class Tlabel>  
-  void supervised_trainer<Tnet, Tdata, Tlabel>::
-  run(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label, infer_param &infp) {
-    answer.x.set(-1); // TODO: is this necessary?
-    // infer answer from energies and fill energy of correct answer
-    machine.infer2(input, answer, infp, &label, &energy);
-  }
+  // per-sample methods ////////////////////////////////////////////////////////
   
-  template <class Tnet, class Tdata, class Tlabel>  
+  template <typename Tnet, typename Tdata, typename Tlabel>  
   bool supervised_trainer<Tnet, Tdata, Tlabel>::
-  test_sample(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label,
+  test_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds,
+	      bbstate_idx<Tnet> &label, bbstate_idx<Tnet> &answers,
 	      infer_param &infp) {
-    run(input, label, infp);
-    // TODO: for now, simple comparison, make this more generic
-    return (label.x.get() == answer.x.get()); // return true if correct answer
+    machine.compute_answers(answers);
+    return machine.correct(answers, label);
   }
 
-  template <class Tnet, class Tdata, class Tlabel>  
-  double supervised_trainer<Tnet, Tdata, Tlabel>::
-  learn_sample(bbstate_idx<Tnet> &input, bbstate_idx<Tlabel> &label,
-	       gd_param &args) {
-    machine.fprop(input, label, energy);
+  template <typename Tnet, typename Tdata, typename Tlabel>  
+  Tnet supervised_trainer<Tnet, Tdata, Tlabel>::
+  train_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds, gd_param &args) {
+    machine.fprop(ds, energy);
     param.clear_dx();
-    machine.bprop(input, label, energy);
+    machine.bprop(ds, energy);
     param.update(args);
-#ifdef __DUMP_STATES__
-    save_matrix(input.x, "dump_trainer_net_in.x.mat");
-    save_matrix(energy.x, "dump_trainer_net_energy.x.mat");
-#endif
     return energy.x.get();
   }
 
-  template <class Tnet, class Tdata, class Tlabel> 
+  // epoch methods /////////////////////////////////////////////////////////////
+
+  template <typename Tnet, typename Tdata, typename Tlabel> 
   void supervised_trainer<Tnet, Tdata, Tlabel>::
   test(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log,
-       infer_param &infp) {
-    bool correct;
+       infer_param &infp, uint max_test) {
     init(ds, &log, true);
+    idx<Tnet> target;
+    uint ntest = ds.size();
+    if (max_test > 0) { // limit the number of tests
+      ntest = std::min(ntest, max_test);
+      cout << "Limiting the number of tested samples to " << ntest << endl;
+    }
     // loop
-    for (unsigned int i = 0; i < ds.size(); ++i) {
-      ds.fprop(*input, label);
-      correct = test_sample(*input, label, infp);
-      log.update(age, (uint) label.x.get(), (uint) answer.x.get(),
-		 (double) energy.x.get());
+    for (unsigned int i = 0; i < ntest; ++i) {
+      ds.fprop_label_net(*label);
+      machine.fprop(ds, energy);
+      bool correct = test_sample(ds, *label, *answers, infp);
+      target = machine.compute_targets(ds);
+      machine.update_log(log, age, energy.x, answers->x, label->x, target,
+			 machine.out1.x);
       // use energy as distance for samples probabilities to be used
-      ds.set_sample_energy(energy.x.get(), correct, answer.x.get());
+      ds.set_sample_energy((double) energy.x.get(), correct, machine.out1.x,
+			   answers->x, target);
       ds.next();
     }
     ds.normalize_all_probas();
-    log.display(iteration, ds.name(), ds.lblstr, ds.is_test());
+    // TODO: simplify this
+    vector<string*> lblstr;
+    class_datasource<Tnet,Tdata,Tlabel> *cds =
+      dynamic_cast<class_datasource<Tnet,Tdata,Tlabel>*>(&ds);
+    if (cds)
+      lblstr = cds->get_label_strings();    
+    log.display(iteration, ds.name(), &lblstr, ds.is_test());
     cout << endl;
   }
 
-  // template <class Tnet, class Tdata, class Tlabel> 
-  // void supervised_trainer<Tnet, Tdata, Tlabel>::
-  // test_threshold(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
-  // 		 classifier_meter &log, infer_param &infp, double threshold,
-  // 		 Tlabel defclass) {
-  //   Tlabel answer, lab;
-  //   idx<Tnet> raw;
-  //   Tnet rawmax;
-  //   init(ds, &log, true);
-  //   // loop
-  //   for (unsigned int i = 0; i < ds.size(); ++i) {
-  //     ds.fprop(*input, label); // get sample
-  //     lab = label.get();
-  //     machine.fprop(*input, lab, energy); // fprop sample
-  //     raw = machine.fout.x; // raw network outputs
-  //     rawmax = idx_max(raw);
-  //     if (rawmax < threshold) // no response stronger than threshold
-  // 	answer = defclass; // default class when no detection
-  //     else // stronger responses
-  // 	answer = idx_indexmax(raw); // answer = maximum response
-  //     // update TPR and FPR
-  //     log.update(age, (uint) label.get(), (uint) answer,
-  // 		 (double) energy.x.get());
-  //     ds.next();
-  //   }
-  //   cout << "threshold: " << threshold << " default class: " << defclass <<endl;
-  //   log.display_positive_rates(threshold, ds.lblstr);
-  // }
-  
-  template <class Tnet, class Tdata, class Tlabel> 
+  template <typename Tnet, typename Tdata, typename Tlabel> 
   void supervised_trainer<Tnet, Tdata, Tlabel>::
   train(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log, 
 	gd_param &gdp, int niter, infer_param &infp) {
     timer t;
     init(ds, &log);
     bool selected = true, correct;
+    idx<Tnet> target;
     for (int i = 0; i < niter; ++i) { // niter iterations
       t.start();
       ds.init_epoch();
       // training on lowest size common to all classes (times # classes)
       while (!ds.epoch_done()) {
-	ds.fprop(*input, label);
+	ds.fprop_label_net(*label);
 	if (selected) // selected for training
-	  learn_sample(*input, label, gdp);
+	  train_sample(ds, gdp);
 	// test if answer is correct
-	correct = test_sample(*input, label, infp);
+	correct = test_sample(ds, *label, *answers, infp);
 	// use energy and answer as distance for samples probabilities
-	ds.set_sample_energy(energy.x.get(), correct, answer.x.get());
+	target = machine.compute_targets(ds);
+	ds.set_sample_energy((double) energy.x.get(), correct, machine.out1.x,
+			     answers->x, target);
 	//      log.update(age, output, label.get(), energy);
 	age++;
 	// select next sample
@@ -277,13 +147,13 @@ namespace ebl {
       ds.normalize_all_probas();
       cout << "epoch_count=" << ds.get_epoch_count() << endl;
       cout << "training_time="; t.pretty_elapsed();
-      cout << " train_minutes=" << t.elapsed_minutes() << endl;
+      cout << endl;
     }
   }
 
-  template <class Tnet, class Tdata, class Tlabel> 
-  void supervised_trainer<Tnet, Tdata, Tlabel>::
-  compute_diaghessian(labeled_datasource<Tnet, Tdata, Tlabel> &ds, intg niter, 
+  template <typename Tnet, typename Tdata, typename Tlabel> 
+  void supervised_trainer<Tnet,Tdata,Tlabel>::
+  compute_diaghessian(labeled_datasource<Tnet,Tdata,Tlabel> &ds, intg niter, 
 		      double mu) {
     timer t;
     t.start();
@@ -294,12 +164,11 @@ namespace ebl {
     param.clear_ddeltax();
     // loop
     for (int i = 0; i < niter; ++i) {
-      ds.fprop(*input, label);
-      machine.fprop(*input, label, energy);
+      machine.fprop(ds, energy);
       param.clear_dx();
-      machine.bprop(*input, label, energy);
+      machine.bprop(ds, energy);
       param.clear_ddx();
-      machine.bbprop(*input, label, energy);
+      machine.bbprop(ds, energy);
       param.update_ddeltax((1 / (double) niter), 1.0);
       while (!ds.next_train()) ; // skipping all non selected samples
     }
@@ -310,21 +179,52 @@ namespace ebl {
     cout << " diaghessian_minutes=" << t.elapsed_minutes() << endl;
   }
 
-  template <class Tnet, class Tdata, class Tlabel>
+  // accessors /////////////////////////////////////////////////////////////////
+
+  template <typename Tnet, typename Tdata, typename Tlabel>  
+  void supervised_trainer<Tnet, Tdata, Tlabel>::set_iteration(int i) {
+    cout << "Setting iteration id to " << i << endl;
+    iteration = i;
+  }
+		     
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void supervised_trainer<Tnet, Tdata, Tlabel>::
+  pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds) {
+    if (!prettied) {
+      // pretty sizes of input/output for each module the first time
+      idxdim d(ds.sample_dims());
+      cout << "machine sizes: " << d << machine.mod1.pretty(d) << endl
+	   << "trainable parameters: " << param.x << endl;
+      prettied = true;
+    }
+  }
+
+  // internal methods //////////////////////////////////////////////////////////
+  
+  template <typename Tnet, typename Tdata, typename Tlabel>
   void supervised_trainer<Tnet, Tdata, Tlabel>::
   init(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
        classifier_meter *log, bool new_iteration) {
     pretty(ds); // pretty info
-    // if not allocated, allocate input. input is allocated dynamically
+    // if not allocated, allocate answers. answers are allocated dynamically
     // based on ds dimensions because fstate_idx cannot change orders.
-    if (!input)
-      input = new bbstate_idx<Tnet>(ds.sample_dims());
-    else
-      input->resize(ds.sample_dims());
+    idxdim d = ds.sample_dims();
+    d.setdims(1);
+    if (answers)
+      delete answers;
+    answers = new bbstate_idx<Tnet>(d);
+    //
+    idxdim dl = ds.label_dims();
+    if (label)
+      delete label;
+    label = new bbstate_idx<Tnet>(dl);    
     // reinit ds
     ds.seek_begin();
-    if (log) // reinit logger
-      log->init(ds.get_nclasses());
+    if (log) { // reinit logger
+      class_datasource<Tnet,Tdata,Tlabel> *cds =
+	dynamic_cast<class_datasource<Tnet,Tdata,Tlabel>* >(&ds);
+      log->init(cds ? cds->get_nclasses() : 0);
+    }
     // new iteration
     if (new_iteration) {
       if (!iteration_ptr) 
@@ -333,23 +233,5 @@ namespace ebl {
 	++iteration;
     }
   }
-
-  template <class Tnet, class Tdata, class Tlabel>
-  void supervised_trainer<Tnet, Tdata, Tlabel>::
-  pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds) {
-    if (!prettied) {
-      // pretty sizes of input/output for each module the first time
-      cout << "machine sizes: ";
-      idxdim d(ds.sample_dims());
-      machine.fmod.pretty(d);
-      cout << "trainable parameters: " << param.x << endl;
-      prettied = true;
-    }
-  }
-
-//   supervised_trainer<Tnet, Tdata, Tlabel>* copy() {
-//     fc_ebm2_gen<fstate_idx,int,fstate_idx>	&machine;
-//     parameter				&param;
-//   }
 
 } // end namespace ebl

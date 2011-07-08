@@ -37,4 +37,7 @@
 #define BOOST_LIB_ERROR "Boost libraries not available, install \
 libboost-filesystem-dev libboost-regex-dev and recompile"
 
+//! Preprocessing types.
+typedef enum { CHANS_RGB, CHANS_Y } t_chans;  
+
 #endif /* DEFINES_TOOLS_H_ */

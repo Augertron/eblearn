@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -72,8 +73,10 @@ namespace ebl {
     virtual ~idxgui();
 
     //! creates a new window.
-    EXPORT int new_window(const char *wname = NULL, unsigned int h = 0,
-			  unsigned int w = 0);
+    EXPORT int new_window(const char *wname = NULL, uint h = 0, uint w = 0);
+
+    //! creates a new window with 3D display.
+    EXPORT int new_window3d(const char *wname = NULL, uint h = 0, uint w = 0);
 
     //! selects window wid.
     EXPORT void select_window(int wid);
@@ -88,10 +91,21 @@ namespace ebl {
     //! draws a bounding box with top left corner (h0, w0) and size (h, w).
     //! the (r,g,b) color of the box can optionally be specified as well as
     //! a caption string.
-    EXPORT void draw_box(int h0, int w0, int h, int w,
-			 unsigned char r = 255, unsigned char g = 255,
-			 unsigned char b = 255, unsigned char a = 255,
+    EXPORT void draw_box(float h0, float w0, float h, float w, ubyte r = 255,
+			 ubyte g = 255, ubyte b = 255, ubyte a = 255,
 			 string *s = NULL);
+    //! draws a cross at location (h0, w0) with length 'length'.
+    //! the (r,g,b) color of the box can optionally be specified as well as
+    //! a caption string.
+    EXPORT void draw_cross(float h0, float w0, float length, ubyte r = 255,
+			   ubyte g = 255, ubyte b = 255, ubyte a = 255,
+			   string *s = NULL);
+    //! draws an ellipse with center (h0,w0) and radii (h,w).
+    //! the (r,g,b) color of the box can optionally be specified as well as
+    //! a caption string.
+    EXPORT void draw_ellipse(float h0, float w0, float h, float w,
+			     ubyte r = 255, ubyte g = 255, ubyte b = 255,
+			     ubyte a = 255, string *s = NULL);
 
     //! do not show windows, instead save them in png files in current dir.
     EXPORT void set_silent();
@@ -228,12 +242,31 @@ namespace ebl {
     //! frozen.
     EXPORT void freeze_style(bool freeze);
 
+    //! Force window size to hxw and forbid any resizing.
+    EXPORT void freeze_window_size(uint h, uint w);
+
     //! Return the first key pressed in the queue of key events and remove it
     //! from the queue.
     EXPORT int pop_key_pressed();
     
     //! Return true if the gui is busy drawing, false otherwise.
     EXPORT bool busy_drawing();
+    
+    // 3d calls ////////////////////////////////////////////////////////////////
+
+    //! Add a sphere at position (x,y,z) with 'radius' and color (r,g,b,a).
+    EXPORT void draw_sphere(float x, float y, float z, float radius,
+			    const char *s = NULL,
+			    int r = 255, int g = 255, int b = 255, int a = 255);
+    //! Add a cylinder which base is centered at (x,y,z), with length 'length',
+    //! with radiuses 'top_radius' and 'base_radius', with degree angles
+    //! 'a1', 'a2' and color (r,g,b,a).
+    //! \param tops If true, draw closing caps on each end of cylinder.
+    EXPORT void draw_cylinder(float x, float y, float z, float length,
+			      float top_radius, float base_radius, float a1,
+			      float a2, const char *s = NULL,
+			      int r = 255, int g = 255,
+			      int b = 255, int a = 255, bool tops = false);
     
   private:
     // check that user used MAIN_QTHREAD instead of regular main
@@ -247,14 +280,17 @@ namespace ebl {
     EXPORT void gui_clear();
     EXPORT void gui_clear_resize();
     EXPORT void gui_save_window(const string *filename, int wid);
-    EXPORT void gui_new_window(const char *wname, unsigned int h, 
-			       unsigned int w);
+    EXPORT void gui_new_window(const char *wname, uint h, uint w);
+    EXPORT void gui_new_window3d(const char *wname, uint h, uint w);
     EXPORT void gui_select_window(int wid);
     EXPORT void gui_add_text(const string *s);
     EXPORT void gui_add_arrow(int h1, int w1, int h2, int w2);
-    EXPORT void gui_add_box(int h0, int w0, int h, int w, unsigned char r,
-			    unsigned char g, unsigned char b, unsigned char a,
-			    string *s);
+    EXPORT void gui_add_box(float h0, float w0, float h, float w, ubyte r,
+			    ubyte g, ubyte b, ubyte a, string *s);
+    EXPORT void gui_add_cross(float h0, float w0, float length, ubyte r,
+			    ubyte g, ubyte b, ubyte a, string *s);
+    EXPORT void gui_add_ellipse(float h0, float w0, float h, float w,
+				ubyte r, ubyte g, ubyte b, ubyte a, string *s);
     EXPORT void gui_set_text_origin(unsigned int h0, unsigned int w0);
     EXPORT void gui_set_text_colors(unsigned char fg_r, unsigned char fg_g, 
 			     unsigned char fg_b, unsigned char fg_a,
@@ -266,9 +302,17 @@ namespace ebl {
     EXPORT void gui_set_silent(const std::string *filename);
     EXPORT void gui_set_wupdate(bool update);
     EXPORT void gui_freeze_style(bool freeze);
+    EXPORT void gui_freeze_window_size(uint h, uint w);
     EXPORT void gui_add_scroll_box(scroll_box0 *sb);
     EXPORT void gui_set_title(const string *s);
-
+    // 3d signals //////////////////////////////////////////////////////////////
+    EXPORT void gui_add_sphere(float,float,float,float, string *s,
+			       int,int,int,int);
+    EXPORT void gui_add_cylinder(float x, float y, float z, float length,
+				 float top_radius, float base_radius,
+				 float a1, float a2, string *s,
+				 int r, int g, int b, int a, bool tops);
+    
   protected:
     virtual void run();
   };

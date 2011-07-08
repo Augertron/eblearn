@@ -41,38 +41,37 @@ namespace ebl {
   // bbox
   
   //! A bounding box class, based on the rect class.
-  class EXPORT bbox : public rect<int> {
+  class EXPORT bbox : public rect<float> {
   public:
     //! Empty constructor (assign a new unique instance_id).
     bbox();
+    bbox(float h0, float w0, float height, float width);
 /*     //! Copy constructor. */
 /*     bbox(bbox &other); */
     //! Destructor.
     virtual ~bbox();
 
-    int		class_id;	//<! object class
-    float	confidence;	//<! detection confidence, 1 is the best.
+    int		class_id;	//!< object class
+    float	confidence;	//!< detection confidence, 1 is the best.
+    uint        nacc;           //!< Number of accumulated boxes.
     // original map //////////////////////////////////////////////
-    using rect<int>::h0;	//<! height of top left pixel
-    using rect<int>::w0;	//<! width of top left pixel
-    using rect<int>::height;	//<! height of bounding box in original image
-    using rect<int>::width;	//<! width of bounding box in original image
+    using rect<float>::h0;	//!< height of top left pixel
+    using rect<float>::w0;	//!< width of top left pixel
+    using rect<float>::height;	//!< height of bounding box in original image
+    using rect<float>::width;	//!< width of bounding box in original image
     // scale /////////////////////////////////////////////////
-    double	scaleh;		//<! scale factor at which object was detected
-    double	scalew;		//<! scale factor at which object was detected
-    int		scale_index;	//<! scale index at which object was detected
+    double	scaleh;		//!< scale factor at which object was detected
+    double	scalew;		//!< scale factor at which object was detected
+    int		scale_index;	//!< scale index at which object was detected
     // input map /////////////////////////////////////////////////
-    int	iheight;	//<! scaled input image height
-    int	iwidth;		//<! scaled input image width
-    int	ih0;		//<! height0 of bbox in network's input map
-    int	iw0;		//<! width0 of bbox in network's input map
-    int	ih;		//<! height of bbox in network's input map
-    int	iw;		//<! width of bbox in network's input map
+    rect<float> i;        //!< Box in pyramid input space.
+    rect<float> i0;        //!< Non-transformed box in pyramid input space.
+    int	iheight;	//!< scaled input image height
+    int	iwidth;		//!< scaled input image width
     // output map ////////////////////////////////////////////////
-    int	oheight;	//<! height of network's output map
-    int	owidth;		//<! width of network's output map
-    int	oh0;		//<! pixel's height in network's output map
-    int	ow0;		//<! pixel's width in network's output map
+    rect<int> o;        //!< Box in pyramid output space.
+    int	oheight;	//!< height of network's output map
+    int	owidth;		//!< width of network's output map
 
     //! Set instance_id to zero.
     static void init_instance_id();
@@ -80,6 +79,12 @@ namespace ebl {
     //! This can be useful if this bbox was instantiated with the copy
     //! constructor which retains original instance_id.
     void new_instance_id();
+    //! Accumulate all spatial values and confidence of b into this box.
+    //! This can be useful to compute an average of boxes.
+    void accumulate(bbox &b);
+    //! Multiply all spatial values of this box by d.
+    //! This can be useful to compute an average of boxes.
+    void mul(float d);
 
   protected:
     uint instance_id;    //<! A unique id for this bbox.
@@ -123,9 +128,13 @@ namespace ebl {
   //! bbox_eblearn: output 1 bbox per line, 1 file for all images.
   //!   one line contains: filename class_id confidence w0 h0 w1 h1
   //! bbox_caltech: output 1 bbox per line, 1 file per image.
-  //!   one line contains: w0,h0,width,height,confidence (positive only?) 
+  //!   one line contains: w0,h0,width,height,confidence (positive only?)
+  //! bbox_class: single output file with 1 line per bbox which values are
+  //!   comma-separated, no confidence nor bbox, only class id:
+  //!   filename; classid
   enum t_bbox_saving { bbox_none = 0, bbox_all = 1, 
-		       bbox_eblearn = 2, bbox_caltech = 3 };
+		       bbox_eblearn = 2, bbox_caltech = 3,
+		       bbox_class = 4};
 
   //! A collection of bounding boxes, that can be saved to multiple formats,
   //! and grouped by image.
@@ -162,7 +171,7 @@ namespace ebl {
     //!   otherwise use the index to order the bboxes.
     //! \param name An optional name for the new group.
     void add(bbox &b, idxdim &dims, std::string *name = NULL,
-		    int index = -1);
+	     int index = -1);
 
     //! Create a new group and add a set of bbox to this group.
     //! \param dims The image size associated with this group.
@@ -170,7 +179,15 @@ namespace ebl {
     //!   otherwise use the index as the group's index in the vector of groups.
     //! \param name An optional name for the new group.
     void add(std::vector<bbox*> &bb, idxdim &dims,
-		    std::string *name = NULL, int index = -1);
+	     std::string *name = NULL, int index = -1);
+
+    //! Create a new group and add a set of bbox to this group.
+    //! \param dims The image size associated with this group.
+    //! \param index If negative (default), the order is the addition order,
+    //!   otherwise use the index as the group's index in the vector of groups.
+    //! \param name An optional name for the new group.
+    void add(std::vector<bbox> &bb, idxdim &dims,
+	     std::string *name = NULL, int index = -1);
 
     //! Save boxes using the internal parameters initialized by the constructor.
     //! \param dir Output directory. If null (default), use internal directory
@@ -189,6 +206,11 @@ namespace ebl {
     //! \param dir Output directory. If null (default), use internal directory
     //!   initialized by the constructor.
     void save_caltech(std::string *dir = NULL);
+
+    //! Save boxes class-style in dir.
+    //! \param dir Output directory. If null (default), use internal directory
+    //!   initialized by the constructor.
+    void save_class(std::string *dir = NULL);
 
     //! Returns a string describing the number of bboxes and number of groups.
     std::string describe();

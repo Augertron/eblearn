@@ -72,10 +72,17 @@ namespace ebl {
     //! Return a new frame.
     virtual idx<Tdata> grab() = 0;
 
+    //! Do not read the file, instead return the filename to be grabbed.
+    //! This method should only be used by file-based cameras.
+    virtual string grab_filename();
+    
     //! Move to the next frame, without returning the frame.
     //! This is called by grab before grabbing.
     //! This can be used to get frames infos without grabbing.
     virtual void next();
+
+    //! Move to the previous frame, without returning the frame.
+    virtual void previous();
 
     //! Return true if no frames available, false otherwise.
     virtual bool empty();

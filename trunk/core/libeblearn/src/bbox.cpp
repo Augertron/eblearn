@@ -41,8 +41,12 @@ namespace ebl {
 
   uint bbox::iid_cnt = 0;
 
-  bbox::bbox() {
+  bbox::bbox() : nacc(1) {
     new_instance_id();
+  }
+
+  bbox::bbox(float h0, float w0, float height, float width)
+    : rect<float>(h0, w0, height, width), nacc(1) {
   }
 
 //   bbox::bbox(bbox &other) 
@@ -77,6 +81,51 @@ namespace ebl {
   void bbox::new_instance_id() {
     iid_cnt++;
     instance_id = iid_cnt;
+  }
+
+  void bbox::accumulate(bbox &b) {
+    float acc = (float) b.nacc;
+    nacc += b.nacc;
+    confidence += b.confidence;
+    h0 += b.h0 * acc;
+    w0 += b.w0 * acc;
+    height += b.height * acc;
+    width += b.width * acc;
+    iheight += (int) (b.iheight * acc);
+    iwidth += (int) (b.iwidth * acc);
+    i.h0 += b.i.h0 * acc;
+    i.w0 += b.i.w0 * acc;
+    i.height += b.i.height * acc;
+    i.width += b.i.width * acc;
+    i0.h0 += b.i0.h0 * acc;
+    i0.w0 += b.i0.w0 * acc;
+    i0.height += b.i0.height * acc;
+    i0.width += b.i0.width * acc;
+    oheight += (int) (b.oheight * acc);
+    owidth += (int) (b.owidth * acc);
+    o.h0 += (int) (b.o.h0 * acc);
+    o.w0 += (int) (b.o.w0 * acc);
+  }
+
+  void bbox::mul(float d) {
+    h0 *= d;
+    w0 *= d;
+    height *= d;
+    width *= d;
+    iheight = (int) (iheight * d);
+    iwidth = (int) (iwidth * d);
+    i.h0 *= d;
+    i.w0 *= d;
+    i.height *= d;
+    i.width *= d;
+    i0.h0 *= d;
+    i0.w0 *= d;
+    i0.height *= d;
+    i0.width *= d;
+    oheight = (int) (oheight * d);
+    owidth = (int) (owidth * d);
+    o.h0 = (int) (o.h0 * d);
+    o.w0 = (int) (o.w0 * d);
   }
 
   bbox mean_bbox(std::vector<bbox*> &boxes, float bonus_per_bbox, int classid) {
@@ -124,16 +173,19 @@ namespace ebl {
     bbox b;
     b.class_id = classid;
     b.confidence = confidence + boxes.size() * bonus_per_bbox;
-    b.height = (int) height;
-    b.width = (int) width;
-    b.h0 = (int) (hcenter - height / 2);
-    b.w0 = (int) (wcenter - width / 2);
+    b.height =  height;
+    b.width = width;
+    b.h0 = (hcenter - height / 2);
+    b.w0 = (wcenter - width / 2);
     return b;
   }
 
   std::ostream& operator<<(std::ostream& out, const bbox& b) {
     out << "bbox:<class " << b.class_id << ", conf " << b.confidence << ", "
-	<< (rect<int>&) b << ">";
+	<< "nacc " << b.nacc << ", " << (rect<float>&) b << ">";
+    out.flush();
+    DEBUG(" input win: " << b.i << " output win: " << b.o
+	  << " input scale: " << b.iheight << "x" << b.iwidth);
     return out;
   }
 
@@ -204,6 +256,7 @@ namespace ebl {
     case bbox_all: mout << "in all formats." << endl; break ;
     case bbox_eblearn: mout << "in eblearn formats." << endl; break ;
     case bbox_caltech: mout << "in caltech formats." << endl; break ;
+    case bbox_class: mout << "in classification format." << endl; break ;
     default:
       eblerror("Unknown saving type " << saving_type);
     }
@@ -232,7 +285,7 @@ namespace ebl {
       }
       if (boxes[ind] != NULL) {
 	merr << "Warning: replacing existing group of bbox " << group_names[ind]
-	     << " at index " << index << " with new group" << (name ? *name : "")
+	     << " at index " << index << " with new group " << (name ? *name : "")
 	     << "." << endl;
 	delete boxes[ind];
       }
@@ -268,6 +321,12 @@ namespace ebl {
     }
   }
   
+  void bboxes::add(std::vector<bbox> &bb, idxdim &dims, 
+		   std::string *name, int index) {
+    for (uint i = 0; i < bb.size(); ++i)
+      add(bb[i], dims, name, index);
+  }
+  
   void bboxes::save(std::string *dir_) {
     std::string dir = outdir;
     if (dir_) dir = *dir_;
@@ -284,13 +343,17 @@ namespace ebl {
     case bbox_caltech:
       save_caltech(&outdir);
       break ;
+    case bbox_class:
+      save_class(&outdir);
+      break ;
     default:
       eblerror("Unknown saving type " << saving_type);
     }
   }
   
   void bboxes::load_eblearn(const std::string &fname) {
-    mout << "Loading bounding boxes from bbox-eblearn format file " << fname << endl;
+    mout << "Loading bounding boxes from bbox-eblearn format file "
+	 << fname << endl;
     // open file      
     FILE *fp = fopen(fname.c_str(), "r");
     if (!fp) {
@@ -314,10 +377,10 @@ namespace ebl {
 	bbox bb;
 	bb.class_id = fscan_int(fp);
 	bb.confidence = fscan_float(fp);
-	bb.w0 = fscan_int(fp);
-	bb.h0 = fscan_int(fp);
-	int w1 = fscan_int(fp);
-	int h1 = fscan_int(fp);
+	bb.w0 = fscan_float(fp);
+	bb.h0 = fscan_float(fp);
+	float w1 = fscan_float(fp);
+	float h1 = fscan_float(fp);
 	bb.width = w1 - bb.w0;
 	bb.height = h1 - bb.h0;
 	add(bb, d);
@@ -342,7 +405,7 @@ namespace ebl {
     // open file      
     std::ofstream fp;
     fp.open(fname.c_str());
-    if (!fp) {
+    if (!fp.is_open()) {
       merr << "failed to open " << fname << endl;
       eblerror("open failed");
     }
@@ -374,7 +437,8 @@ namespace ebl {
     std::string dir = outdir;
     if (dir_) dir = *dir_;
     dir << "/bbox_caltech/";    
-    mkdir_full(dir);
+    if (!mkdir_full(dir))
+      eblerror("failed to create directory " << dir);
     mout << "Saving bboxes in caltech format to " << dir << endl;
     
     if (group_names.size() != boxes.size())
@@ -384,13 +448,23 @@ namespace ebl {
     for (uint i = 0; i < boxes.size(); ++i) {
       std::vector<bbox> *bb = boxes[i];
       if (bb) {
+	// make names
+	string gname = group_names[i];
+	string subdir = dirname(gname.c_str());
+	string name = basename(gname.c_str());
+	name = noext_name(name.c_str());
+	string fn, fdir;
+	fdir << dir << "/" << subdir;
+	fn << fdir << "/" << name << ".txt";
+	if (!mkdir_full(fdir))
+	  eblerror("failed to create directory " << fdir);
+// 	std::ostringstream fn;
+// 	fn << dir << "/I" << setw(5) << setfill('0') << i << ".txt";
 	// open file
-	std::ostringstream fn;
 	std::ofstream fp;
-	fn << dir << "/I" << setw(5) << setfill('0') << i << ".txt";
-	fp.open(fn.str().c_str());
-	if (!fp)
-	  eblerror("failed to open " << fn.str());
+	fp.open(fn.c_str());
+	if (!fp.is_open())
+	  eblerror("failed to open " << fn);
 	// loop on boxes
 	for (uint j = 0; j < bb->size(); ++j) {
 	  bbox &b = (*bb)[j];
@@ -401,6 +475,42 @@ namespace ebl {
       }
     }
     mout << "Saved " << describe() << " (caltech style) to " << dir << endl;
+  }
+
+  void bboxes::save_class(std::string *dir_) {
+    std::string dir = outdir;
+    if (dir_) dir = *dir_;
+    mkdir_full(dir);
+    std::string fname = dir;
+    fname << "/" << "bbox_class.txt";
+    mout << "Saving bboxes in classification format to " << fname << endl;
+    // open file      
+    std::ofstream fp;
+    fp.open(fname.c_str());
+    if (!fp) {
+      merr << "failed to open " << fname << endl;
+      eblerror("open failed");
+    }
+    // write
+    if (group_names.size() != boxes.size())
+      eblerror("group_names and boxes should have the same size but have "
+	       << group_names.size() << " and " << boxes.size());
+    // loop on groups
+    for (uint i = 0; i < boxes.size(); ++i) {
+      std::vector<bbox> *bb = boxes[i];
+      if (bb) {
+	std::string &name = group_names[i];
+	idxdim d = group_dims[i];
+	// loop on boxes
+	for (uint j = 0; j < bb->size(); ++j) {
+	  bbox &b = (*bb)[j];
+	  fp << name << "; " << b.class_id << endl;
+	}
+      }
+    }
+    fp.close();
+    mout << "Saved " << describe() << " (classification style) to "
+	 << fname << endl;
   }
 
   std::string bboxes::describe() {

@@ -57,7 +57,7 @@
       </ul>
       <h4>Jobs tools</h4>
       <ul>
-	<li><strong>metarun:</strong>
+	<li><strong><a href="metarun.shtml">metarun:</a></strong>
 	  run multiple jobs in parallel or in sequence,
 	  given all possible configurations in a
 	  configuration file with multi-values variables. metarun analyzes

@@ -71,11 +71,14 @@ bool autorange = false;
 bool fixed_range = false;
 bool explore = false; // explore working dir for other images
 bool video = false; // show and save all frames
+bool show_filename = false;
 uint nh = 1;
 uint nw = 1;
 configuration *conf = NULL;
 float zoom = 1.0;
 vector<double> range;
+int chans = -1; // -1: show all chans, 0: chan 0 only, etc
+uint maxwidth = MAXWIDTH;
 				      
 ////////////////////////////////////////////////////////////////
 // interface
@@ -93,6 +96,7 @@ void print_usage() {
        << endl;
   cout << "  -video (display and save all input images in a video_<timestamp>"
        << " directory, than can later be compile into a video)" << endl;
+  cout << "  -filename (display filename within drawing area)" << endl;
 }
 
 // parse command line input
@@ -118,23 +122,34 @@ bool parse_args(int argc, char **argv) {
 template <typename T>
 int display_net(list<string>::iterator &ifname,
 		bool signd, bool load, list<string> *mats) {
-#ifdef __GUI__
   // create network
   idx<ubyte> classes(1,1);
   load_matrix<ubyte>(classes, conf->get_cstring("classes"));
-  uint noutputs = conf->exists_true("binary_target") ? 1 : classes.dim(0); 
+  answer_module<T,T,T,fstate_idx<T> > *answer = 
+    create_answer<T,T,T,fstate_idx<T> >(*conf, classes.dim(0));
+  if (!answer) eblerror("no answer module found");
+  uint noutputs = answer->get_nfeatures();
   parameter<fs(T)> theparam;
   module_1_1<fs(T)> *net = create_network<fs(T)>(theparam, *conf, noutputs);
+  cout << "Network parameters: " << theparam.x << endl;
+  vector<string> weights =
+    string_to_stringvector(conf->get_string("weights_file"));
   // loading weights
-  theparam.load_x(ifname->c_str());
+  theparam.load_x(weights);
   // displaying internals
   uint h0 = 0, w0 = 0;
+#ifdef __GUI__
   disable_window_updates();
-  clear_window();
+  clear_window(); 
+  if (show_filename) {
+    gui << at(h0, w0) << black_on_white() << ifname->c_str();
+    h0 += 16;
+  }
   if (autorange) // automatic range
-    lg.display_internals(*net, h0, w0, zoom);
+    lg.display_internals(*net, h0, w0, zoom, (T) 0, (T) 0, maxwidth);
   else // fixed range
-    lg.display_internals(*net, h0, w0, zoom, (T) range[0], (T) range[1]);
+    lg.display_internals(*net, h0, w0, zoom, (T) range[0], (T) range[1],
+			 maxwidth);
   // update title
   string title;
   title << "matshow: " << ebl::basename(ifname->c_str());
@@ -151,6 +166,18 @@ int display(list<string>::iterator &ifname,
   // conf mode
   if (conf)
     return display_net<T>(ifname, signd, load, mats);
+  // mat mode
+  idxdim d = get_matrix_dims(ifname->c_str());
+  if (!(d.order() == 2 ||
+	(d.order() == 3 && (d.dim(2) == 1 || d.dim(2) == 3)))) {
+    // this is probably not an image, just display info and print matrix
+    string type;
+    get_matrix_type(ifname->c_str(), type);
+    idx<T> m = load_matrix<T>(ifname->c_str());
+    cout << "Matrix " << ifname->c_str() << " is of type " << type
+	 << " with dimensions " << d << ":" << endl << m.str() << endl;
+    return 0;
+  }
   // image mode
   int loaded = 0;
 #ifdef __GUI__
@@ -159,6 +186,11 @@ int display(list<string>::iterator &ifname,
   list<string>::iterator fname = ifname;
   disable_window_updates();
   clear_window();
+  if (show_filename) {
+    gui << at(h, w) << black_on_white() << ifname->c_str();
+    h += 16;
+  }
+  maxh = h;
   for (uint i = 0; i < nh; ++i) {
     rowh = maxh;
     for (uint j = 0; j < nw; ++j) {
@@ -167,6 +199,9 @@ int display(list<string>::iterator &ifname,
       try {
 	//      if (load)
 	mat = load_image<T>(*fname);
+	// show only some channels
+	if (chans >= 0)
+	  mat = mat.select(2, chans);
 	loaded++;
 	maxh = (std::max)(maxh, (uint) (rowh + mat.dim(0)));
 	T min = 0, max = 0;
@@ -218,6 +253,8 @@ int display(list<string>::iterator &ifname,
     gui << at(h, w) << "a: auto-range (use min and max as range)"; h += hstep;
     gui << at(h, w) << "x/z: show more/less images on width axis"; h += hstep;
     gui << at(h, w) << "y/t: show more/less images on height axis"; h += hstep;
+    gui << at(h, w) << "0,1,2: show channel 0, 1 or 2 only"; h += hstep;
+    gui << at(h, w) << "9: show alls channels"; h += hstep;
     gui << at(h, w) << "h: help"; h += hstep;
   }
   // update title
@@ -260,9 +297,7 @@ int load_display(list<string>::iterator &ifname,
     default: // not a matrix, try as regular float image
       return display<float>(ifname, true, load, mats);
     }
-  } catch(string &err) {
-    ERROR_MSG(err.c_str());
-  }
+  } eblcatcherror();
   return 0;
 }
 
@@ -278,10 +313,8 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 #endif /* NOCONSOLE */
 #else
 int main(int argc, char **argv) {
-#endif
-#ifndef __GUI__
   ERROR_MSG("QT not found, install and recompile.");
-#else
+#endif /* __GUI__ */
   try {
     if (!parse_args(argc, argv))
       return -1;
@@ -301,8 +334,13 @@ int main(int argc, char **argv) {
 	} else if (!strcmp(argv[i], "-zoom")) {
 	  ++i; if (i >= argc) throw 0;
 	  zoom = (float) atof(argv[i]);
+	} else if (!strcmp(argv[i], "-maxwidth")) {
+	  ++i; if (i >= argc) throw 0;
+	  maxwidth = (int) atoi(argv[i]);
 	} else if (!strcmp(argv[i], "-video")) {
 	  video = true;
+	} else if (!strcmp(argv[i], "-filename")) {
+	  show_filename = true;
 	} else if (!strcmp(argv[i], "-range")) {
 	  range.clear();
 	  ++i; if (i >= argc) throw 0;
@@ -370,7 +408,8 @@ int main(int argc, char **argv) {
     // single file was passed
     if (argmats->size() == 1)
       explore = true;
-    
+
+#ifdef __GUI__    
 #ifdef __BOOST__
     // list all other mat files in image directory
     string dir = argv[1];
@@ -410,10 +449,9 @@ int main(int argc, char **argv) {
       if ((mats) && (mats->size() >= 1)) {
 	// find current position in this list
 	for (i = mats->begin(); i != mats->end(); ++i) {
-	  tmpname = i->substr(pos + 1, i->size() - pos + 1);
-	  if (!imgname.compare(tmpname)) {
+	  tmpname = ebl::basename(i->c_str());
+	  if (!imgname.compare(tmpname))
 	    break ;
-	  }
 	}
 	if (i == mats->end())
 	  i = mats->begin();
@@ -480,6 +518,26 @@ int main(int argc, char **argv) {
 	    // decrease number of images shown on width axis
 	    nw = (std::max)((uint) 1, nw - 1);
 	    load_display(i, false, mats);
+	  } else if (key == Qt::Key_0) {
+	    // show only channel 0
+	    chans = 0;
+	    load_display(i, false, mats);
+	    cout << "Showing channel 0 only." << endl;
+	  } else if (key == Qt::Key_1) {
+	    // show only channel 1
+	    chans = 1;
+	    load_display(i, false, mats);
+	    cout << "Showing channel 1 only." << endl;
+	  } else if (key == Qt::Key_2) {
+	    // show only channel 2
+	    chans = 2;
+	    load_display(i, false, mats);
+	    cout << "Showing channel 2 only." << endl;
+	  } else if (key == Qt::Key_9) {
+	    // show all channels
+	    chans = -1;
+	    load_display(i, false, mats);
+	    cout << "Showing alls channel." << endl;
 	  }
 	}
       }
@@ -488,6 +546,7 @@ int main(int argc, char **argv) {
     if (mats)
       delete mats;
 #endif /* __BOOST__ */
+#endif /* __GUI__ */
     if (argmats)
       delete argmats;
     if (conf)
@@ -496,6 +555,5 @@ int main(int argc, char **argv) {
     ERROR_MSG(err.c_str());
   }
   millisleep(500); // TODO: this lets time for window to open, fix this issue
-#endif
   return 0;
 }

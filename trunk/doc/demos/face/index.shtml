@@ -30,17 +30,17 @@
       eblearn/tools/demos/obj. To compile the detector (from the tools
       directory), call:
       <br>
-      <code>make release prj=mtdetect</code>
+      <code>make release prj=detect</code>
       
       <h2>Running the demo</h2>
       To run the demo on a webcam, run from the tools directory:<br>
-      <code>../bin/mtdetect demos/face/trained/best_webcam.conf
+      <code>../bin/detect demos/face/trained/best_webcam.conf
 	</code><br><br>
       To run the demo on a folder of images, run from the tools directory:<br>
-      <code>../bin/mtdetect demos/face/trained/best_directory.conf
+      <code>../bin/detect demos/face/trained/best_directory.conf
 	your-image-folder
 	</code><br>
-      <p>One can change the type of input mtdetect reads by changing the
+      <p>One can change the type of input detect reads by changing the
 	'camera' variable in the .conf file. The input can be a directory
 	containing images, a video file, a webcam or a shared-memory.
 	Update the 'camera' variable as described below to
@@ -76,9 +76,9 @@
 	  Possible values are:
 	  <ul><li><b>directory</b>:
 	      This will process all images found recursively
-	    in the directory given as second argument to objdetect.</li>
+	    in the directory given as second argument to detect.</li>
 	    <li><b>video</b>: This will process all frames found in video file
-	    specified as second argument to objdetect and encode the output
+	    specified as second argument to detect and encode the output
 	    frames as a new video if 'save_video' is set.</li>
 	    <li><b>opencv</b>: This is taking input frames from your webcam,
 	      using opencv to connect to the webcam (requires opencv).</li>
@@ -123,7 +123,7 @@
       eblearn/demos/obj. To compile the detector trainer
       (from the eblearn root), call:
       <br>
-      <code>make release prj=objtrain</code>
+      <code>make release prj=train</code>
       </p>
       <p>Also compile the meta trainer which generates multiple jobs based on
 	the multiple-value variables in face_meta.conf and reports results by

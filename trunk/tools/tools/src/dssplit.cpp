@@ -53,6 +53,7 @@ string ds2_name = "";
 intg ds1_max_per_class = 0;
 int draws = 1;
 bool draws_set = false;
+vector<string>  exclude;
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -87,6 +88,9 @@ bool parse_args(int argc, char **argv) {
       }
       draws = atoi(argv[i]);
       draws_set = true;
+    } else if (strcmp(argv[i], "-exclude") == 0) {
+      ++i; if (i >= argc) throw 0;
+      exclude.push_back(argv[i]);
     }
   }
   return true;
@@ -103,11 +107,16 @@ void print_usage() {
   cout << "  -draws <integer n>" << endl;
   cout << "    Draws n dataset splits, shuffling assignments between";
   cout << " each draw." << endl;
+  cout << "  -exclude <class name> (include all but excluded classes," << endl;
+  cout << "                         exclude can be called multiple times)";
+  cout << endl;
 }
 
 template <class Tdata>
 void split() {
   dataset<Tdata> ds0(ds0_name.c_str());
+  if (exclude.size() > 0)
+    ds0.set_exclude(exclude);
   ds0.load(inroot);
   for (int i = 0; i < draws; ++i) {
     string ds1 = ds1_name;

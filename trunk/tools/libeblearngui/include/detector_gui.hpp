@@ -44,12 +44,16 @@ namespace ebl {
 
   template <typename T, class Tstate>
   detector_gui<T,Tstate>::
-  detector_gui(bool show_detqueue_, uint step_, uint qheight_,
+  detector_gui(uint draw_extracted_,
+	       bool show_detqueue_, uint step_, uint qheight_,
 	       uint qwidth_, bool show_detqueue2_, uint step2_,
 	       uint qheight2_, uint qwidth2_)
-    : show_detqueue(show_detqueue_), show_detqueue2(show_detqueue2_),
+    : draw_extracted(draw_extracted_),
+      show_detqueue(show_detqueue_), show_detqueue2(show_detqueue2_),
       step(step_), step2(step2_), qheight(qheight_), qwidth(qwidth_), 
       qheight2(qheight2_), qwidth2(qwidth2_), detcnt(0) {
+    cout << "detector_gui: " << (draw_extracted > 0 ? "" : "not ")
+	 << "showing extracted windows." << endl;
   }
 
   template <typename T, class Tstate>
@@ -81,7 +85,7 @@ namespace ebl {
 
   template <typename T, class Tstate> template <typename Tin>
   void detector_gui<T,Tstate>::
-  display_minimal(idx<Tin> &img, vector<bbox*>& vb, idx<ubyte> &labels,
+  display_minimal(idx<Tin> &img, vector<bbox*>& vb, vector<string> &labels,
 		  unsigned int h0, unsigned int w0,
 		  double dzoom,  T vmin, T vmax, int wid, bool show_parts,
 		  float transparency) {
@@ -137,59 +141,138 @@ namespace ebl {
       display_input(cl, img, threshold, frame_name,
 		    h0, w0, dzoom, in_vmin, in_vmax, display_wid_fprop, wname,
 		    transparency);
-
-    // disable_window_updates();
-    // draw internal inputs and outputs
-    int h = (int) (h0 + cl.oheight * dzoom + 5 + 15);
-    int scale = 0;
-    int ohmax = ((Tstate*) cl.outputs.get(0))->x.dim(1);
-    int ihmax = ((Tstate*) cl.inputs.get(0))->x.dim(1);
-    bool first_time = true;
-    ostringstream s;
     // compute min and max of all outputs, to maximize intensity display range
+    bool first_time = true;
     if (vmin == vmax) {
-      { idx_bloop1(out, cl.outputs, void*) {
-	  idx<T> outx = ((Tstate*) out.get())->x;
-	  if (first_time) {
-	    vmin = idx_min(outx);
-	    vmax = idx_max(outx);
-	    first_time = false;
-	  } else {
-	    vmin = MIN(vmin, idx_min(outx));
-	    vmax = std::max(vmax, idx_max(outx));	  
-	  }
-	}}
+      for (uint i = 0; i < cl.outputs.size(); ++i) {
+	idx<T> outx = cl.outputs[i]->x;
+	if (first_time) {
+	  vmin = idx_min(outx);
+	  vmax = idx_max(outx);
+	  first_time = false;
+	} else {
+	  vmin = MIN(vmin, idx_min(outx));
+	  vmax = std::max(vmax, idx_max(outx));	  
+	}
+      }
     }
+    DEBUG("Displaying outputs in range [" << vmin << ", " << vmax
+	  << "], outputs actual range is [" << idx_min(cl.outputs[0]->x) << ", "
+	  << idx_max(cl.outputs[0]->x) << "]");
+    int h = (int) (cl.indim.dim(1) * dzoom + 20);
+    // draw extracted windows
+    if (draw_extracted == 1) { // preprocessed
+      vector<idx<T> >& pp = cl.get_preprocessed();
+      idx<T> m;
+      if (pp.size() > 0) {
+	m = pp[0];
+	h += 15 * 3;
+	uint wpp = w0, hpp = h;
+	gui << black_on_white() << at(h - 15 * 4, w0) << pp.size()
+	    << " positive windows with dimensions " << m;
+	ostringstream o;
+	o.precision(3);
+	for (uint i = 0; i < pp.size() && wpp < 5000; ++i) {
+	  hpp = h;
+	  m = pp[i];
+	  bbox &b = *bb[i];
+	  // print bbox infos
+	  o.str(""); o << b.confidence; gui << at(hpp - 15 * 3, wpp) << o.str();
+	  gui << at(hpp - 15 * 2, wpp) << b.scale_index;
+	  gui << at(hpp - 15 * 1, wpp)
+	      << ((uint) b.class_id < cl.labels.size() ?
+		  cl.labels[b.class_id].c_str() : "***");
+	  // draw input box
+	  rect<float> r(hpp + b.i.h0 - b.i0.h0,
+		      wpp + b.i.w0 - b.i0.w0, b.i.height, b.i.width);
+	  draw_box(r, 0, 0, 255);
+	  idx_bloop1(chan, m, T) {
+	    // draw channel
+	    draw_matrix(chan, hpp, wpp, dzoom, dzoom, (T)vmin, (T)vmax);
+	    hpp += chan.dim(0) + 1;
+	  }
+	  wpp += m.dim(2) + 2;
+	}
+	h = hpp + 20;
+      }
+    }
+    else if (draw_extracted == 2) { // originals
+      vector<idx<T> >& pp = cl.get_originals();
+      idx<T> m;
+      if (pp.size() > 0) {
+	m = pp[0];
+	h += 15 * 3;
+	uint wpp = w0, hpp = h;
+	gui << black_on_white() << at(h - 15 * 4, w0) << pp.size()
+	    << " positive windows with dimensions " << m;
+	ostringstream o;
+	o.precision(3);
+	for (uint i = 0; i < pp.size() && wpp < 5000; ++i) {
+	  hpp = h;
+	  m = pp[i];
+	  bbox &b = *bb[i];
+	  // print bbox infos
+	  o.str(""); o << b.confidence; gui << at(hpp - 15 * 3, wpp) << o.str();
+	  gui << at(hpp - 15 * 2, wpp) << b.scale_index;
+	  gui << at(hpp - 15 * 1, wpp)
+	      << ((uint) b.class_id < cl.labels.size() ?
+		  cl.labels[b.class_id].c_str() : "***");
+	  m = m.shift_dim(0, 2);
+	  draw_matrix(m, hpp, wpp, dzoom, dzoom, (T)0, (T)255);
+	  hpp += m.dim(0) + 1;
+	  wpp += m.dim(1) + 2;
+	}
+	h = hpp + 20;
+      }
+    }
+    // draw internal inputs and outputs
+    int scale = 0;
+    // maximum height of outputs to display
+    int ohmax = cl.outputs[0]->x.dim(1);
+    // find the maximum height of inputs to display
+    int ihmax = 0;
+    for (uint i = 0; i < cl.ppinputs[0]->size(); ++i) {
+      Tstate &t = (*(cl.ppinputs[0]))[i];
+      ihmax += t.x.dim(1) + 2;
+    }
+    ostringstream s;
     // display all outputs
     first_time = true;
-    { idx_bloop2(in, cl.inputs, void*, out, cl.outputs, void*) {
-	idx<T> inx = ((Tstate*) in.get())->x;
-	//inx = inx.select(0, 0);
-	inx = inx.shift_dim(0, 2);
-	idx<T> outx = ((Tstate*) out.get())->x;
+    for (uint i = 0; i < cl.ppinputs.size(); ++i) {
+      Tstate &t = (*cl.ppinputs[i])[0];
+      idx<T> outx = cl.outputs[i]->x;
 
-	// draw inputs
-	gui << black_on_white() << at(h - 15, w0) << "scale #" << scale
-	    << " " << inx.dim(0) << "x" << inx.dim(1);
-	draw_matrix(inx, h, w0, dzoom, dzoom, (T)vmin, (T)vmax);
-	// draw bboxes on scaled input 
+      // draw inputs
+      string ss;
+      ss << "scale #" << scale;
+      int htmp = h;
+      for (uint j = 0; j < cl.ppinputs[i]->size(); ++j) {
+	Tstate &t = (*(cl.ppinputs[i]))[j];
+	ss << " " << t.x.dim(1) << "x" << t.x.dim(2);
+	idx<T> tx = t.x.shift_dim(0, 2);
+	draw_matrix(tx, htmp, w0, dzoom, dzoom, (T)vmin, (T)vmax);
+	htmp += t.x.dim(1) + 2;
+      }
+      gui << black_on_white() << at(h - 15, w0) << ss;
+      gui << white_on_transparent();
+      // draw bboxes on scaled input
+      if (!cl.bboxes_off) {
 	for (vector<bbox*>::iterator i = bb.begin(); i != bb.end(); ++i) {
 	  if (scale == (*i)->scale_index)
-	    draw_box((uint) (h + dzoom * (*i)->ih0), 
-		     (uint) (w0 + dzoom * (*i)->iw0),
-		     (uint) (dzoom * (*i)->ih), 
-		     (uint) (dzoom * (*i)->iw), 0, 0, 255, 255,
-		     new string((const char*)
-				cl.labels[(*i)->class_id].idx_ptr()));
+	    draw_bbox(**i, cl.labels, h, w0, dzoom, transparency, false);
 	}
 	// draw outputs
 	int hcat = 0;
 	double czoom = dzoom * 2.0;
-	int lab = 0;
+	uint lab = 0;
 	{ idx_bloop1(category, outx, T) {
 	    s.str("");
-	    if (first_time)
-	      s << cl.labels[lab].idx_ptr() << " ";
+	    if (first_time) {
+	      if (lab < cl.labels.size())
+		s << cl.labels[lab] << " ";
+	      else
+		s << "feature " << lab << " ";
+	    }
 	    s << category.dim(0) << "x" << category.dim(1);
 	    gui << at((uint) (h + ihmax * dzoom + 5 + hcat), 
 		      (uint) (w0 + category.dim(1) * czoom + 2));
@@ -199,11 +282,11 @@ namespace ebl {
 	    hcat += (int) (ohmax * czoom + 2);
 	    lab++;
 	  }}
-
-	scale++;
-	w0 += (uint) (inx.dim(1) * dzoom + 5);
-	first_time = false;
-      }}
+      }
+      scale++;
+      w0 += (uint) (t.x.dim(2) * dzoom + 5);
+      first_time = false;
+    }
 
     // display queues of detections
     if (show_detqueue || show_detqueue2) {
@@ -277,10 +360,10 @@ namespace ebl {
 
     // disable_window_updates();
     // draw internal states of first scale
-    w0 = (cl.width + 5) * 2 + 5;
+    w0 = (cl.indim.dim(2) + 5) * 2 + 5;
     module_1_1_gui mg;
     cl.prepare(img);
-    cl.preprocess_resolution(0);
+    cl.prepare_scale(0);
     mg.display_fprop(*(module_1_1<T,Tstate>*) &cl.thenet,
     		     *cl.input, *cl.output, h0, w0, (double) 1.0,
 		     (T) -1.0, (T) 1.0, true, display_wid_fprop);
@@ -301,7 +384,7 @@ namespace ebl {
     // draw internal states of first scale
     module_1_1_gui mg;
     cl.prepare(sample);
-    cl.preprocess_resolution(0);
+    cl.prepare_scale(0);
     mg.display_fprop(*(module_1_1<T,Tstate>*) &cl.thenet,
     		     *cl.input, *cl.output, (uint) 0, (uint) 0, dzoom,
 		     (T) -1.0, (T) 1.0, true, display_wid_fprop);

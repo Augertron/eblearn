@@ -156,6 +156,12 @@ namespace ebl {
     //! Return name of this thread.
     std::string& name();
 
+    //! Return a reference this thread's output stream.
+    std::ostream& get_mout();
+
+    //! Return a reference this thread's output error stream.
+    std::ostream& get_merr();
+
   protected:
     void run();
     static void* entrypoint(void *pthis);

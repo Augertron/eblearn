@@ -155,7 +155,7 @@ namespace ebl {
   void module_1_1_gui::
   display_internals(module_1_1<T,Tstate> &m, unsigned int &h0, unsigned int &w0,
 		    double zoom, T vmin, T vmax, int wid,
-		    const char *wname) {
+		    const char *wname, uint maxwidth) {
     display_wid_fprop = (wid >= 0) ? wid :				
       (display_wid_fprop >= 0) ? display_wid_fprop :
       new_window((wname ? wname : "module_1_1 display"));		
@@ -179,7 +179,7 @@ namespace ebl {
       w += TEXT_MARGIN;      
       // show each slice of internal
       idx_bloop1(in, internal, T) {
-	if (w - w0 >= MAXWIDTH) {
+	if (w - w0 >= maxwidth) {
 	  h += (uint) (in.dim(0) * zoom + 1);
 	  w = w0 + TEXT_MARGIN;
 	}
@@ -200,7 +200,7 @@ namespace ebl {
 
 #define DISPLAY_2_1(name1)						\
   template<typename T, class Tstate, class Tin2, class Tout>		\
-  void module_2_1_gui::name1(module_2_1<T,Tstate,Tin2,Tout> &m,		\
+  void module_2_1_gui::name1(module_2_1<T,Tstate,Tstate,Tout> &m,	\
 			     Tstate &in1, Tin2 &in2, Tout &out,		\
 			     unsigned int &h0, unsigned int &w0,	\
 			     double zoom, T vmin, T vmax,		\
@@ -212,10 +212,10 @@ namespace ebl {
     /*    disable_window_updates();*/					\
     gui << black_on_white(255, 0) << gui_only();			\
     									\
-    if (dynamic_cast< fc_ebm2<T, Tstate, Tin2, Tout>* >(&m)) {		\
-      /* fc_ebm2 */							\
-      fc_ebm2_gui::							\
-	name1(*this, dynamic_cast< fc_ebm2<T, Tstate, Tin2,Tout>& >(m),	\
+    if (dynamic_cast< trainable_module<T,T,T,Tstate,Tstate,Tout>* >(&m)) { \
+      /* trainable_module */						\
+      trainable_module_gui::						\
+	name1(*this, dynamic_cast<trainable_module<T,T,T,Tstate,Tstate,Tout>& >(m), \
 	      in1, in2, out, h0, w0, zoom, vmin, vmax, show_out, wid);	\
     } else {								\
       cerr << "Warning: unknown display function for module_2_1 object"; \
@@ -229,26 +229,25 @@ namespace ebl {
   DISPLAY_2_1(display_bbprop)
   
   ////////////////////////////////////////////////////////////////
-  // fc_ebm2_gui
+  // trainable_module_gui
 
-#define DISPLAY_FCEBM2(name1, name2)			\
-  template<typename T, class Tin1, class Tin2, class Ten>	\
-  void fc_ebm2_gui::name1(fc_ebm2<T, Tin1, Tin2, Ten> &fc,	\
-			  Tin1 &i1, Tin2 &i2,			\
-			  Ten &energy,				\
-			  unsigned int &h0, unsigned int &w0,	\
-			  double zoom, T vmin, T vmax,		\
-			  bool show_out,			\
-			  int wid, const char *wname) {		\
-    module_1_1_gui m;						\
-    m.name2(fc.fmod, i1, fc.fout, h0, w0, zoom, vmin, vmax,	\
-	    show_out, wid, wname);				\
-    /* TODO add energy, answer display */			\
+#define DISPLAY_TRAINABLE(name1, name2)					\
+  template<typename T, class Tin1, class Tin2, class Ten,typename	\
+	   Tds1,typename Tds2>						\
+  void trainable_module_gui::						\
+  name1(trainable_module<T,Tds1,Tds2,Tin1,Tin1,Ten> &dse,	\
+	Tin1 &i1, Tin2 &i2, Ten &energy, uint &h0, uint &w0,		\
+	double zoom, T vmin, T vmax, bool show_out, int wid,		\
+	const char *wname) {						\
+    module_1_1_gui m;							\
+    m.name2(dse.mod1, i1, dse.out1, h0, w0, zoom, vmin, vmax,		\
+	    show_out, wid, wname);					\
+    /* TODO add energy, answer display */				\
   }
 
-  DISPLAY_FCEBM2(display_fprop, display_fprop2)
-  DISPLAY_FCEBM2(display_bprop, display_bprop2)
-  DISPLAY_FCEBM2(display_bbprop, display_bbprop2)
+  DISPLAY_TRAINABLE(display_fprop, display_fprop2)
+  DISPLAY_TRAINABLE(display_bprop, display_bprop2)
+  DISPLAY_TRAINABLE(display_bbprop, display_bbprop2)
 
   ////////////////////////////////////////////////////////////////
   // layers_gui
@@ -327,17 +326,18 @@ namespace ebl {
   void layers_gui::display_internals(layers<T,Tstate> &ln,
 				     unsigned int &h0,
 				     unsigned int &w0, double zoom, T vmin,
-				     T vmax) {
+				     T vmax, uint maxwidth) {
     if (ln.modules.empty())						
       return ;
     /* loop over modules */						
     for(uint i = 0; i < ln.modules.size(); i++) {			
       /* display module's internals */
-      m11g.display_internals(*ln.modules[i], h0, w0, zoom, vmin, vmax);
+      m11g.display_internals(*ln.modules[i], h0, w0, zoom, vmin, vmax,
+			     -1, NULL, maxwidth);
       // recursively display layers
       if (dynamic_cast<layers<T,Tstate>*>(ln.modules[i])) {
 	layers<T,Tstate> &b = (layers<T,Tstate>&) *(ln.modules[i]);
-	display_internals(b, h0, w0, zoom, vmin, vmax);
+	display_internals(b, h0, w0, zoom, vmin, vmax, maxwidth);
       }
     }
   }
@@ -346,9 +346,10 @@ namespace ebl {
   void layers_gui::display_internals(module_1_1<T,Tstate> &m,
 				     unsigned int &h0,
 				     unsigned int &w0, double zoom, T vmin,
-				     T vmax) {
+				     T vmax, uint maxwidth) {
     if (dynamic_cast< layers<T,Tstate>*>(&m))
-      display_internals((layers<T,Tstate>&) m, h0, w0, zoom, vmin, vmax);
+      display_internals((layers<T,Tstate>&) m, h0, w0, zoom, vmin, vmax,
+			maxwidth);
     else
       eblerror("failed to cast module_1_1 m to layers object for display");
   }

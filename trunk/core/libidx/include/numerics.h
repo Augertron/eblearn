@@ -52,11 +52,17 @@
 #define isinf(a) (!_finite(a))
 #endif
 
+#define PI		3.141592654
+#define PI_OVER2	1.570796327
+
 namespace ebl {
 
   //! derivative of tanh
   EXPORT double dtanh(double x);
 
+  //! The cotangent inverse function.
+  EXPORT double arccot(double x);
+  
   //! "standard" sigmoid, used in Lush.
   //! Rational polynomial for computing y = 1.71593428*tanh(0.66666666*x)
   EXPORT float stdsigmoid(float x);
@@ -84,13 +90,17 @@ namespace ebl {
   //! initializes drand by calling dseed, and raises drand_ini
   EXPORT void init_drand(int x);
 
-  //! initializes drand by calling dseed with a random seed (time(NULL), 
-  //! and raises drand_ini.
-  EXPORT void dynamic_init_drand();
+  //! Initializes drand by calling dseed with a random seed taken
+  //! from current time and the sum of all arguments characters,
+  //! if present.
+  //! This can be useful if several programs are called at the same
+  //! time with different input arguments.
+  //! Returns the random seed used.
+  EXPORT int dynamic_init_drand(int argc = 0, char **argv = NULL);
 
-  //! initializes drand by calling dseed with a fixed seed (0), 
-  //! and raises drand_ini.
-  EXPORT void fixed_init_drand();
+  //! Initializes drand by calling dseed with a fixed seed (0), 
+  //! and raises drand_ini. This returns the seed used (0).
+  EXPORT int fixed_init_drand();
 
   //! sets the seed of the random number generator.
   //! This MUST be called at least once before

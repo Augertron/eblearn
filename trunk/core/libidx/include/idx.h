@@ -75,7 +75,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   class dummyt {  bool someunk; };
-  class idxdim;
+  template <typename T = intg> class idxd;
+  typedef idxd<intg> idxdim;
+  typedef idxd<float> fidxdim;
 
   //! idxspec contains all the characteristics of an idx,
   //! except the storage. It includes the order (number of dimensions)
@@ -84,60 +86,7 @@ namespace ebl {
   //! generic manipulation functions that do not depend on the
   //! type of the storage.
   class EXPORT idxspec {
-
-  private:
-
-    //! private method to set the order (number of dims) to n.
-    //! Calling this with n = 0 deallocates the dim and mod arrays.
-    //! The dim and mod arrays are reallocated as necessary when
-    //! the order is increased.
-    int setndim(int n);
-
-    //! private method to set the order to n, and the dim and
-    //! mod arrays to pre-allocated arrays ldim and lmod.
-    int setndim(int n, intg *ldim, intg *lmod);
-
-    //! number of dimensions
-    int ndim;
-    //! offset in the storage
-    intg offset;
-    //! array of sizes in each dimension
-    intg *dim;
-    //! array of strides in each dimension
-    intg *mod;
-
-    //! resize the spec and return the new footprint.
-    //! this is private because only idx can call this
-    //! so that the storage gets properly resized.
-    //! We do not allow the order to be changed with this,
-    //! only the size of each dimension can be modified.
-    //! The resized spec will be contiguous but will have
-    //! the same offset as the original.
-    intg resize(intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,
-		intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
-    
-    //! resize the spec and return the new footprint,
-    //! using dimensions contained in an idxdim. 
-    //! The order is not allowed to change.
-    intg resize(const idxdim &d);
-
-    //! resize dimension <dimn> with size <size> and return new footprint.
-    //! only already allocated dimensions can be resized 
-    //! (order is not allowed to change).
-    intg resize1(intg dimn, intg size);
-
-    /* template<typename SizeIter> */
-    /*   intg resize(SizeIter& dimsBegin, SizeIter& dimsEnd); */
-
-    //! set the offset and return the new value
-    intg setoffset(intg o) { return offset = o; }
-
-    //! initialize a spec with offset o and 8 dimensions
-    void init_spec(intg o, intg s0, intg s1, intg s2, intg s3, 
-		   intg s4, intg s5, intg s6, intg s7);
-
   public:
-
     //! the destructor of idxspec deallocates the dim and mod arrays.
     virtual ~idxspec();
 
@@ -223,7 +172,7 @@ namespace ebl {
     idxspec select(int d, intg i);
     //! select_into: same as select, but modifies an existing
     //! idxspec instead of returning a new one.
-    intg select_into(idxspec *dst, int d, intg n);
+    intg select_into(idxspec *dst, int d, intg n) const;
     //! select_inplace: same as select, but modifies the
     //! current idxspec.
     intg select_inplace(int d, intg i);
@@ -279,7 +228,7 @@ namespace ebl {
 
     // horrible syntax to declare a template class friend.
     // isn't C++ wonderful?
-    friend class idxdim;
+    friend class idxd<>;
     template <class T> friend class idxiter;
     template <class T> friend class idxlooper;
     template <class T> friend class contiguous_idxiter;
@@ -299,6 +248,58 @@ namespace ebl {
     friend EXPORT std::ostream& operator<<(std::ostream& out, const idxspec& d);
     //! idxspec print operator.
     friend EXPORT std::string& operator<<(std::string& out, idxspec& d);
+
+  private:
+
+    //! private method to set the order (number of dims) to n.
+    //! Calling this with n = 0 deallocates the dim and mod arrays.
+    //! The dim and mod arrays are reallocated as necessary when
+    //! the order is increased.
+    int setndim(int n);
+
+    //! private method to set the order to n, and the dim and
+    //! mod arrays to pre-allocated arrays ldim and lmod.
+    int setndim(int n, intg *ldim, intg *lmod);
+
+    //! number of dimensions
+    int ndim;
+    //! offset in the storage
+    intg offset;
+    //! array of sizes in each dimension
+    intg *dim;
+    //! array of strides in each dimension
+    intg *mod;
+
+    //! resize the spec and return the new footprint.
+    //! this is private because only idx can call this
+    //! so that the storage gets properly resized.
+    //! We do not allow the order to be changed with this,
+    //! only the size of each dimension can be modified.
+    //! The resized spec will be contiguous but will have
+    //! the same offset as the original.
+    intg resize(intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,
+		intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
+    
+    //! resize the spec and return the new footprint,
+    //! using dimensions contained in an idxdim. 
+    //! The order is not allowed to change.
+    intg resize(const idxdim &d);
+
+    //! resize dimension <dimn> with size <size> and return new footprint.
+    //! only already allocated dimensions can be resized 
+    //! (order is not allowed to change).
+    intg resize1(intg dimn, intg size);
+
+    /* template<typename SizeIter> */
+    /*   intg resize(SizeIter& dimsBegin, SizeIter& dimsEnd); */
+
+    //! set the offset and return the new value
+    intg setoffset(intg o) { return offset = o; }
+
+    //! initialize a spec with offset o and 8 dimensions
+    void init_spec(intg o, intg s0, intg s1, intg s2, intg s3, 
+		   intg s4, intg s5, intg s6, intg s7);
+
   };
 
   //! return true if two idxspec have the same dimensions,
@@ -326,12 +327,11 @@ namespace ebl {
 
     //! increase size of storage to fit the current dimension
     void growstorage();
-
     //! increase size of storage to fit the current dimension + a given size
     void growstorage_chunk(intg s_chunk);
-
     //! Implementation of public printElems() method.
-    void printElems_impl(int indent, std::ostream&);
+    template <class stream>
+      void printElems_impl(int indent, stream&) const;
 
   protected:
     //! fake constructor that does nothing.
@@ -344,46 +344,18 @@ namespace ebl {
     //! offset, dimensions and strides.
     idxspec spec;
 
+    ////////////////////////////////////////////////////////////////
+    // basic constructors/destructor
+    
     //! destructor: unlocks the srg.
     virtual ~idx();
-
-    // TODO: Find out why code such as idx<float> = 1 compiles
-    // (even without default operator below).
-    // default operator below outputs an error that this is forbidden.
-    virtual idx<T>& operator=(T other){
-      eblerror("Forbidden idx assignment: it can only be assigned another idx");
-      return *this;
-    }
-
-    virtual idx<T>& operator=(const idx<T>& other) {
-      srg<T> *tmp = NULL;
-      if (this->storage != NULL)
-	tmp = this->storage;
-      this->storage = other.storage;
-      this->spec = other.spec;
-      this->storage->lock();
-      if (tmp)
-	tmp->unlock();
-      return *this;
-    }
-
-    virtual idx<T> operator[](const intg i) {
-      return this->select(0,i);
-    }
-
-    //! Copy constructor. Prevents implcit calls via '='.
-    // Keep this 'explicit' until we decide to implement operator=.
-    //idx( idx<T>& other );
-    //idx( const idx<T>& other );
 
     //! generic constructor with dims and mods creates
     //! the storage and set offset to zero.
     idx(int n, intg *dims, intg *mods);
-        
-    idx(const idx<T>& other)
-    : storage(other.storage), pidxdim(NULL), spec(other.spec) {
-      storage->lock();
-    }
+
+    //! Construct an idx from another one.
+    idx(const idx<T>& other);
 
     ////////////////////////////////////////////////////////////////
     //! constructors initialized with an array
@@ -433,7 +405,23 @@ namespace ebl {
     //! creates an idx of any order with existing srg and offset.
     idx(srg<T> *srg, intg o, intg s0, intg s1, intg s2, intg s3, intg s4=-1, 
 	intg s5=-1, intg s6=-1, intg s7=-1);
+    //! Creates an idx with dimensions 'd' using storage 'srg' and offset 'o'.
     idx(srg<T> *srg, intg o, const idxdim &d);
+
+    ////////////////////////////////////////////////////////////////
+    // operators
+    
+    // TODO: Find out why code such as idx<float> = 1 compiles
+    // (even without default operator below).
+    // default operator below outputs an error that this is forbidden.
+    virtual idx<T>& operator=(T other);
+
+    //! Copy an idx into another.
+    virtual idx<T>& operator=(const idx<T>& other);
+
+    //! Return an idx that is the 'i'th slice in dimensions 0.
+    //! Equivalent to select(0, i).
+    virtual idx<T> operator[](const intg i);
 
     ////////////////////////////////////////////////////////////////
     //! STL-like iterators 
@@ -567,7 +555,8 @@ namespace ebl {
     //! convolutions look like matrix-vector multiplies.
     virtual idx<T> unfold(int d, intg k, intg s);
 
-    //! Returns a new idx with an order n.
+    //! Returns a new idx with an order n (the data must be contiguous,
+    //! this will raise an exception otherwise).
     //! if n == 1, the data is viewed as a 1D idx, regardless of its
     //!   current order.
     //! if n > 1 and n > current order, then extra dimensions of size 1
@@ -575,7 +564,7 @@ namespace ebl {
     //! if n > 1 and n < current order, this is undefined, an error is raised.
     //! if n == current order, an identical idx is returned.
     // TODO: forbid this function as it conflicts with the forbidden
-    // order-change law? unfold also conflicts with this law?
+    // order-change rule? unfold also conflicts with this rule?
     idx<T> view_as_order(int n);
 
     //! Return an new idx in which dimension d is shifted to position pos,
@@ -604,7 +593,7 @@ namespace ebl {
     virtual const intg* mods(){ return spec.mod; }
 
     //! return order of idx (number of dimensions).
-    virtual int order() { return spec.ndim; }
+    virtual int order() const { return spec.ndim; }
 
     //! return offset of idx.
     virtual intg offset() { return spec.offset; }
@@ -641,6 +630,12 @@ namespace ebl {
     //! containing the order and dimensions of this idx.
     virtual idxdim& get_idxdim();
 
+    //! The 'const' version of get_idxdim(), i.e. does not modify internal
+    //! members. This is less efficient in that it returns the full object
+    //! and does not remember it internally. This is useful when dealing with
+    //! a const idx, i.e. where members cannot be modified.
+    virtual idxdim get_idxdim() const;
+
    ////////////////////////////////////////////////////////////////
     //! data access methods
 
@@ -665,16 +660,24 @@ namespace ebl {
 		   intg i6=-1, intg i7=-1);
 
     //! return the value of an element (idx0 version)
-    virtual T get();
+    virtual T get() const;
     //! return the value of an element (idx1 version)
-    virtual T& get(intg i0);
+    virtual T& get(intg i0) const;
     //! return the value of an element (idx2 version)
-    virtual T get(intg i0, intg i1);
+    virtual T get(intg i0, intg i1) const;
     //! return the value of an element (idx3 version)
-    virtual T get(intg i0, intg i1, intg i2);
+    virtual T get(intg i0, intg i1, intg i2) const;
     //! return the value of an element (generic version)
-    virtual T get(intg i0, intg i1, intg i2, intg i3, intg i4=-1, intg i5=-1, 
-		  intg i6=-1, intg i7=-1);
+    virtual T get(intg i0, intg i1, intg i2, intg i3, intg i4=-1,
+		  intg i5=-1, intg i6=-1, intg i7=-1);
+    //! Returns the value of an element (generic version). The difference with 
+    //! other 'get' methods is that the user can specify a different number of
+    //! arguments than the order of the idx. All remaining dimensions will
+    //! be assumed to have offset 0 or none if the dimension does not exist.
+    //! This is useful when one does not know in advance the order of the idx
+    //! but only needs to access some elements while remaining offsets are 0.
+    virtual T gget(intg i0=0, intg i1=0, intg i2=0, intg i3=0, intg i4=0,
+		  intg i5=0, intg i6=0, intg i7=0);
 
     //! sets the value of an element (idx0 version)
     virtual T set(T val);
@@ -687,6 +690,14 @@ namespace ebl {
     //! sets the value of an element (generic version)
     virtual T set(T val, intg i0, intg i1, intg i2, intg i3, intg i4=-1, 
 		  intg i5=-1, intg i6=-1, intg i7=-1);
+    //! Sets the value of an element (generic version). The difference with 
+    //! other 'set' methods is that the user can specify a different number of
+    //! arguments than the order of the idx. All remaining dimensions will
+    //! be assumed to have offset 0 or none if the dimension does not exist.
+    //! This is useful when one does not know in advance the order of the idx
+    //! but only needs to access some elements while remaining offsets are 0.
+    virtual T sset(T val, intg i0=0, intg i1=0, intg i2=0, intg i3=0, intg i4=0,
+		   intg i5=0, intg i6=0, intg i7=0);
 
     ////////////////////////////////////////////////////////////////
     //! print methods
@@ -702,8 +713,11 @@ namespace ebl {
     virtual void pretty(FILE *);
 
     //! Pretty-prints elements to a stream.
-    virtual void printElems(); // calls printElems( std::cout );
-    virtual void printElems(std::ostream& out);
+    virtual void print() const;
+    virtual std::string str() const;
+    virtual void printElems() const;
+    virtual void printElems(std::ostream& out) const;
+    virtual void printElems(std::string& out) const;
     // void printElems( FILE* out );  doesn't work (cf implementation)
 
     //! print content of idx on stream
@@ -722,17 +736,50 @@ namespace ebl {
 
   };
 
-  //! idx print operator.
-  template <class T> 
-    std::ostream& operator<<(std::ostream& out, idx<T>& m);  
+  // idxs //////////////////////////////////////////////////////////////////////
 
+  //! An idx vector containing pointers to other idx.
+  template <typename T>
+    class idxs : public idx<idx<T>*> {
+  public:
+    //! This creates a vector of matrices of size 'size'. Initially all elements
+    //! are set to empty.
+    idxs(intg size);
+    //! Empty constructor.
+    idxs();
+    //! Construct an idxs given an idx of pointers to idx.
+    idxs(idx<idx<T>*> &o);
+    //! The destructor deletes all allocated idx pointers.
+    ~idxs();
+    //! Set matrix 'e' at position 'pos'.
+    void set(idx<T> &e, intg pos);
+    //! Get matrix at position 'pos'. This throws an error if matrix does not
+    //! exist. Use exists() to verify it does.
+    idx<T> get(intg pos);
+    //! Return a narrowed version of current idxs.
+    idxs<T> narrow(int d, intg s, intg o);
+    //! Returns true if a matrix is present at position 'pos', false otherwise.
+    bool exists(intg pos) const;
+    //! Returns the dimensions of the matrix with maximum number of elements
+    //! among all matrices contained in this idxs.
+    idxdim get_maxdim();
+  };
+  
+  // stream printing ///////////////////////////////////////////////////////////
+  
   //! idx print operator.
   template <class T> 
-    std::ostream& operator<<(std::ostream& out, const idx<T>& m);  
+    std::ostream& operator<<(std::ostream& out, const idx<T>& m);
+  //! idx print operator.
+  template <class T>
+    std::string& operator<<(std::string& out, idx<T>& m);
+  //! idx print operator.
+  template <class T>
+    std::string& operator<<(std::string& out, idx<T>* m);
 
-  //! idx print operator.
-  template <class T> 
-    std::string& operator<<(std::string& out, idx<T>& m);  
+  //! matrices print operator.
+  template <typename T, class stream>
+    stream& operator<<(stream& out, idxs<T>& m);
 
 } /* namespace ebl */
   
@@ -802,14 +849,14 @@ namespace ebl {
     //! loop index array for non-contiguous idx
     intg d[MAXDIMS];
     //! pointer to idx being looped over.
-    idx<T> *iterand;
+    const idx<T> *iterand;
 
     //! empty constructor;
     idxiter();
 
     //! Initialize an idxiter to the start of
     //! the idx passed as argument.
-    T *init(idx<T> &m);
+    T *init(const idx<T> &m);
 
     //! Return true while the loop is not completed
     bool notdone();
@@ -959,94 +1006,119 @@ namespace ebl {
 
   //! This class allows to extract dimensions information from existing idx
   //! objects in order to create other idx objects with the same order without
-  //! knowning their order in advance. It does not allow to change the order
-  //! but one can modify the size of a particular dimension via the setdim 
-  //! method.
-  class EXPORT idxdim {
+  //! knowning their order in advance. One can modify the order, each dimensions
+  //! and their offsets. Offsets are 0 by default, but can be used to define
+  //! bounding boxes for a n-dimensional tensor.
+  template <typename T> class idxd {
   public:
     ////////////////////////////////////////////////////////////////
     // constructors
     
-    //! Empty constructor, creates an empty idxdim.
-    idxdim();
-    
-    //! Create an idxdim based on the information found in an idxspec.
-    idxdim(const idxspec &s);
-    
-    //! Create an idxdim based on the information found in an idx<T>.
-    template <class T> idxdim(const idx<T> &i);
-    
-    //! Create an idxdim based on the information found in an idxdim.
-    idxdim(const idxdim &s);
-    
+    //! Empty constructor, creates an empty idxd.
+    idxd();    
+    //! Create an idxd based on the information found in an idxspec.
+    idxd(const idxspec &s);    
+    //! Create an idxd based on the information found in an idx<T>.
+    template <class Tidx> idxd(const idx<Tidx> &i);    
+    //! Create an idxd based on the information found in an idxd.
+    idxd(const idxd<T> &s);
     //! Generic constructor.
-    idxdim(intg s0, intg s1=-1, intg s2=-1, intg s3=-1,
-	   intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
-
+    idxd(T s0, T s1=-1, T s2=-1, T s3=-1, T s4=-1, T s5=-1, T s6=-1, T s7=-1);
     //! Destructor.
-    virtual ~idxdim();
+    virtual ~idxd();
 
     ////////////////////////////////////////////////////////////////
     // set dimensions
     
     //! Change the dimensions dimn to size size. One cannot change the
-    //! order of an idxdim, only existing dimensions can be changed.
-    void setdim(intg dimn, intg size);
-
+    //! order of an idxd, only existing dimensions can be changed.
+    void setdim(intg dimn, T size);
     //! Set sames dimensions as an idx.
-    template <class T>
-      void setdims(const idx<T> &i);
-    
-    //! Set sames dimensions as an idxdim.
-    void setdims(const idxdim &s);
-     
+    template <class Tidx> void setdims(const idx<Tidx> &i);    
+    //! Set sames dimensions as an idxd.
+    void setdims(const idxd<T> &s);     
     //! Set sames dimensions as an idxspec.
     void setdims(const idxspec &s);
-
     //! Set all existing dimensions to n.
-    void setdims(intg n);
-
+    void setdims(T n);
     //! Insert a dimension of size dim_size at position pos, shifting
     //! all dimensions after pos and incrementing order by 1.
     //! This is valid only if all dimensions up to pos (excluded) are > 0.
-    bool insert_dim(intg dim_size, uint pos);    
+    void insert_dim(intg pos, T dim_size);    
+    //! Remove dimension at position pos and return it, shifting
+    //! all dimensions after pos and decrementing order by 1.
+    //! This is valid only if all dimensions up to pos (excluded) are > 0.
+    T remove_dim(intg pos);
+    //! Set the offset of dimensions 'dimn' to 'offset'.
+    void setoffset(intg dimn, T offset);
+    //! Set each dimension of this idxd to the max of this one and 'other'.
+    //! Note: 'other' and this idx are expected to have the same order.
+    void set_max(const idxd<T> &other);
     
     ////////////////////////////////////////////////////////////////
     // get dimensions
 
+    //! Returns true if this idxd has not been set at all.
+    bool empty() const;
     //! Returns the order.
-    intg order() const;
-    
-    //! Returns the size of dimensions dimn.
-    intg dim(intg dimn) const;
-
-    //! Return true if dimensions and order are equal.
-    bool operator==(const idxdim& other);
-
-    //! Return true if dimensions and order are different.
-    bool operator!=(const idxdim& other);
-
-    ////////////////////////////////////////////////////////////////
-
+    intg order() const;    
+    //! Returns the size of dimension 'dimn'.
+    T dim(intg dimn) const;
+    //! Returns the offset of dimension 'dimn'.
+    T offset(intg dimn) const;
+    //! Return true if dimensions and order are equal (regardless of offsets).
+    bool operator==(const idxd<T>& other);
+    //! Return true if dimensions and/or order are different
+    //! (regardless of offsets).
+    bool operator!=(const idxd<T>& other);
     //! Return total number of elements.
     intg nelements();
 
-    // friends
-    friend class idxspec;
+    ////////////////////////////////////////////////////////////////
+    // operators
 
+    //! Assign idxd 'd2' into current idxd (copies offsets if they exist).
+    void operator=(const idxd<T> &d2);
+    //! Assign idxd 'd2' with different type into current idxd
+    //! (copies offsets if they exist).
+    template <typename T2> void operator=(const idxd<T2> &d2);
+    //! Return an idxd who's each dimension and offset is multiplied
+    //! with each dimension of idxd 'd2'.
+    template <typename T2> idxd<T> operator*(const idxd<T2> &d2) const;
+    //! Return an idxd who's dimensions and offsets are multiplied by d.
+    template <typename T2> idxd<T> operator*(T2 d);
+    //! Return an idxd who's dimensions are added d.
+    template <typename T2> idxd<T> operator+(T2 d);
+    //! Return the addition of this idxd with another one 'd2' with same order.
+    idxd<T> operator+(idxd<T> &d2);
+    //! Return true if all of this idxd's dimensions are <= to corresponding
+    //! dimensions in d2.
+    bool operator<=(idxd<T> &d2);
+    //! Return true if all of this idxd's dimensions are >= to corresponding
+    //! dimensions in d2.
+    bool operator>=(idxd<T> &d2);
+    
+    ////////////////////////////////////////////////////////////////
+    // friends
+    
+    template <typename T2>
+      friend std::string& operator<<(std::string& out, const idxd<T2>& d);
+    friend class idxspec;
+    
     ////////////////////////////////////////////////////////////////
     // member variables
-  private:
-    intg	dims[MAXDIMS];	// size of each dimensions
-    intg	ndim;		// order    
+  protected:
+    T	        dims[MAXDIMS];	//!< Size of each dimension.
+    intg 	ndim;		//!< Order, i.e. number of dimensions.
+    T           *offsets;       //!< Offsets (optional).
   };
 
-  //! idxdim print operator.
-  EXPORT std::ostream& operator<<(std::ostream& out, idxdim& d);
-  //! idxdim print operator.
-  EXPORT std::ostream& operator<<(std::ostream& out, const idxdim& d);
-  //! idxdim string concatenation operator.
-  EXPORT std::string& operator<<(std::string& out, const idxdim& d);
+  //! idxd print operator.
+  template <typename T>
+    EXPORT std::ostream& operator<<(std::ostream& out, const idxd<T>& d);
+  //! idxd string concatenation operator.
+  template <typename T>
+    EXPORT std::string& operator<<(std::string& out, const idxd<T>& d);
 
 } // end namespace ebl
 

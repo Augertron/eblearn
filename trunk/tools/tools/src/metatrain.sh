@@ -110,12 +110,13 @@ extract_falsepos() {
     display=${16}
     mindisplay=${17}
     savevideo=${18}
+    scaling=${19}
     echo
     echo -e "Arguments:\nbestconf=${bestconf}\nsave_max=${save_maximum}"
     echo -e "save_max_per_frame=${save_max_per_frame}\nbestout=${bestout}\ninput_max=${input_max}"
     echo -e "threshold=${thresh}\nweights=${weights}\nnegatives_root=${neg_root}"
     echo -e "eblearnbin=${eblearnbin}\nnthreads=${nthreads}\nnpasses=${npasses}"
-    echo -e "max_scale=${max_scale}\ntstamp=${tstamp}\nname=${name}"
+    echo -e "max_scale=${max_scale}\ntstamp=${tstamp}\nname=${name}\nscaling=${scaling}"
     echo
     # function body ###########################################################
 
@@ -150,21 +151,33 @@ extract_falsepos() {
     echo "input_npasses = ${npasses}" >> $bestconf
     # randomize list of files to extract fp from
     echo "input_random = 1" >> $bestconf
+    # no input list
+    echo "input_list = " >> $bestconf
     # keep all detected bbox even overlapping ones
     echo "nms = 0" >> $bestconf
     # downsample to n times input (capped by input_min)
     echo "min_scale = ${minsc}" >> $bestconf
     # oversample to n times input (capped by input_max)
     echo "max_scale = ${maxsc}" >> $bestconf
+    echo "scaling = ${scaling}" >> $bestconf
+    echo "scaling_type = 3" >> $bestconf
     # do not change bbox
     echo "bbhfactor = 1" >> $bestconf
     echo "bbwfactor = 1" >> $bestconf
     # not zpad allowed
     echo "hzpad = 0" >> $bestconf
     echo "wzpad = 0" >> $bestconf
+    # detect mode
+    echo "run_type = detect" >> $bestconf
+    # in scaler mode, use output as confidence
+    echo "scaler_answer1_rawconf = 1" >> $bestconf
+    # no specific input list
+    echo "input_list = " >> $bestconf
+    # do not use scale predictions
+    echo "scaler_mode = 0" >> $bestconf
     # start parallelized extraction
     echo "executing: ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}"
-    ${eblearnbin}/metarun $bestconf -tstamp ${tstamp}
+    ${eblearnbin}/metarun $bestconf -tstamp ${tstamp} -reset_progress
     check_error $? 
 }
 
@@ -219,21 +232,29 @@ compile_data() {
 	-maxperclass ${valsize} -draws $draws
     check_error $? 
 
-    # merge new datasets into previous datasets: training
-    for i in `seq 1 $draws`
-    do
-	${eblearnbin}/dsmerge ${dataroot} ${step}_${traindsname}_${i} \
-	    ${prefix}${traindsname}_${i} ${step}_allfp_train_${i}
-	check_error $? 
-    done
+    # assume only 1 draw
+    ${eblearnbin}/dsmerge ${dataroot} ${step}_${traindsname} \
+	${prefix}${traindsname} ${step}_allfp_train_1
+    check_error $? 
+    ${eblearnbin}/dsmerge ${dataroot} ${step}_${valdsname} \
+	${prefix}${valdsname} ${step}_allfp_val_1
+    check_error $? 
 
-    # merge new datasets into previous datasets: validation
-    for i in `seq 1 $draws`
-    do
-	${eblearnbin}/dsmerge ${dataroot} ${step}_${valdsname}_${i} \
-	    ${prefix}${valdsname}_${i} ${step}_allfp_val_${i} 
-	check_error $? 
-    done
+#     # merge new datasets into previous datasets: training
+#     for i in `seq 1 $draws`
+#     do
+# 	${eblearnbin}/dsmerge ${dataroot} ${step}_${traindsname}_${i} \
+# 	    ${prefix}${traindsname}_${i} ${step}_allfp_train_${i}
+# 	check_error $? 
+#     done
+
+#     # merge new datasets into previous datasets: validation
+#     for i in `seq 1 $draws`
+#     do
+# 	${eblearnbin}/dsmerge ${dataroot} ${step}_${valdsname}_${i} \
+# 	    ${prefix}${valdsname}_${i} ${step}_allfp_val_${i} 
+# 	check_error $? 
+#     done
 }
 
 # retrain a trained network
@@ -255,8 +276,11 @@ retrain() {
     echo "meta_command = \"export LD_LIBRARY_PATH=${eblearnbin} && ${eblearnbin}/train\"" >> $metaconf
     echo "retrain = 1" >> $metaconf
     echo "retrain_weights = ${bestweights}" >> $metaconf
-    echo "train = ${compile_step}_${traindsname}_\${ds}" >> $metaconf
-    echo "val = ${compile_step}_${valdsname}_\${ds}" >> $metaconf
+    echo "train = ${compile_step}_${traindsname}" >> $metaconf
+    echo "val = ${compile_step}_${valdsname}" >> $metaconf
+    echo "run_type = train" >> $metaconf
+#     echo "train = ${compile_step}_${traindsname}_\${ds}" >> $metaconf
+#     echo "val = ${compile_step}_${valdsname}_\${ds}" >> $metaconf
     echo "meta_name = ${name}" >> $metaconf
     # send report at specific training iterations
     echo "meta_email_iters = 0,1,2,3,4,5,7,10,15,20,30,50,75,100,200" >> \
@@ -316,16 +340,18 @@ metatrain() {
     savevideo=${29}
     min_threshold=${30}
     step_threshold=${31}
+    scaling=${32}
     echo
     echo -e "Arguments:\nminstep=${minstep}\nmaxiteration=${maxiteration}\nout=${out}"
     echo -e "eblearnbin=${eblearnbin}\nnegatives_root=${negatives_root}\nmetaconf=${metaconf}"
     echo -e "metaconf0=${metaconf0}\nmeta_name=${meta_name}\ntstamp=${tstamp}"
     echo -e "save_max=${save_max}\nsave_max_per_frame=${save_max_per_frame}"
     echo -e "input_max=${input_max}\nthreshold=${threshold}\nnthreads=${nthreads}"
-    echo -e "npasses=${npasses}\nmax_scale=${max_scale}\nprecision=${precision}"
+    echo -e "npasses=${npasses}\nmin_scale=${min_scale}\nmax_scale=${max_scale}\nprecision=${precision}"
     echo -e "dataroot=${dataroot}\nh=${h}\nw=${w}\nchans=${chans}\ndraws=${draws}"
     echo -e "traindsname=${traindsname}\nvaldsname=${valdsname}"
     echo -e "ds_split_ratio=${ds_split_ratio}"
+    echo -e "scaling=${scaling}"
     echo
     # function body ###########################################################
     
@@ -341,6 +367,7 @@ metatrain() {
 
     # make a copy of meta conf and override its output dir
     cp $metaconf0 $metaconf
+    echo "" >> $metaconf # new line
     echo "meta_output_dir = ${out}" >> $metaconf
 
     step=0
@@ -371,7 +398,7 @@ metatrain() {
         # find path to best conf (there should be only 1 conf per folder)
 	bestconf=`ls ${bestout}/*.conf`
         # find path to best weights (there should be only 1 weights per folder)
-	bestweights=`find ${bestout} -name "*_net[0-9][0-9][0-9].mat"`
+	bestweights=`find ${bestout} -name "*_net[0-9]*[0-9].mat"`
 
         # false positives
 	name=${meta_name}_${stepstr}_falsepos
@@ -388,14 +415,16 @@ metatrain() {
 		save_max_tmp=`expr $save_max / 4` # limit zoomed in to 1/4th
 		extract_falsepos $bestconf $save_max_tmp $save_max_per_frame $bestout \
 		    $input_max $threshold $bestweights $negatives_root/zoomed_in $eblearnbin \
-		    $nthreads $npasses 1 $max_scale $tstamp $name $display $mindisplay $savevideo
+		    $nthreads $npasses $min_scale $max_scale $tstamp $name \
+		    $display $mindisplay $savevideo $scaling
 	    fi
             # zoomed out positives (forbid zooming in)
 	    if [ -d $negatives_root/zoomed_out ] ; then
 		save_max_tmp=`expr $save_max / 4` # limit zoomed in to 1/4th
 		extract_falsepos $bestconf $save_max_tmp $save_max_per_frame $bestout \
 		    $input_max $threshold $bestweights $negatives_root/zoomed_out $eblearnbin \
-		    $nthreads $npasses $min_scale 1 $tstamp $name $display $mindisplay $savevideo
+		    $nthreads $npasses $min_scale $max_scale $tstamp $name $display $mindisplay $savevideo \
+		    $scaling
 	    fi
             # full size negatives (zooming in/out allowed)
 	    saved=`ls -R $lastdir | grep -e ".mat$" | wc -l` # saved so far
@@ -403,7 +432,7 @@ metatrain() {
 	    extract_falsepos $bestconf $save_max_tmp $save_max_per_frame $bestout \
 		$input_max $threshold $bestweights $negatives_root/full $eblearnbin \
 		$nthreads $npasses $min_scale $max_scale $tstamp $name $display \
-		$mindisplay $savevideo
+		$mindisplay $savevideo $scaling
 	fi
 	step=`expr ${step} + 1` # increment step
 	stepstr=`printf "%02d" ${step}`

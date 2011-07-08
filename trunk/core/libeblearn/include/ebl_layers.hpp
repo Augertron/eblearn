@@ -35,9 +35,10 @@ namespace ebl {
   // full_layer
 
   template <typename T, class Tstate>
-  full_layer<T,Tstate>::full_layer(parameter<T,Tstate> *p, intg indim0, intg noutputs,
-			    bool btanh_, const char *name_)
-    : btanh(btanh_),
+  full_layer<T,Tstate>::full_layer(parameter<T,Tstate> *p, intg indim0,
+				   intg noutputs, bool btanh_,
+				   const char *name_)
+    : module_1_1<T,Tstate>(name_), btanh(btanh_),
       linear(p, indim0, noutputs, name_),
       adder(p, noutputs, name_),
       sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
@@ -69,6 +70,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void full_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
+    idx_clear(sum->dx);
     sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     linear.bprop(in, *sum);
@@ -76,6 +78,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void full_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
+    idx_clear(sum->ddx);
     sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     linear.bbprop(in, *sum);
@@ -113,13 +116,11 @@ namespace ebl {
   // convolution_layer
 
   template <typename T, class Tstate>
-  convolution_layer<T,Tstate>::convolution_layer(parameter<T,Tstate> *p, 
-					  intg kerneli, intg kernelj, 
-					  intg stridei_, intg stridej_, 
-					  idx<intg> &tbl, bool btanh_,
-					  const char *name_) 
-    : btanh(btanh_),
-      convol(p, kerneli, kernelj, stridei_, stridej_, tbl, name_), 
+  convolution_layer<T,Tstate>::
+  convolution_layer(parameter<T,Tstate> *p, idxdim &ker, idxdim &stride,
+		    idx<intg> &tbl, bool btanh_, const char *name_) 
+    : module_1_1<T,Tstate>(name_), btanh(btanh_),
+      convol(p, ker, stride, tbl, name_), 
       adder(p, convol.thickness, name_),
       sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
 	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
@@ -148,6 +149,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void convolution_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
+    idx_clear(sum->dx);
     sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     convol.bprop(in, *sum);
@@ -155,6 +157,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void convolution_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
+    idx_clear(sum->ddx);
     sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     convol.bbprop(in, *sum);
@@ -180,8 +183,7 @@ namespace ebl {
   convolution_layer<T,Tstate>* convolution_layer<T,Tstate>::copy() {
     // allocate
     convolution_layer<T,Tstate> *l2 = new convolution_layer<T,Tstate>
-      (NULL, convol.kernel.x.dim(1), convol.kernel.x.dim(2), convol.stridei,
-       convol.stridej, convol.table, btanh);
+      (NULL, convol.ker, convol.stride, convol.table, btanh);
     // copy data
     idx_copy(convol.kernel.x, l2->convol.kernel.x);
     idx_copy(adder.bias.x, l2->adder.bias.x);
@@ -197,7 +199,7 @@ namespace ebl {
 					  intg stridei_, intg stridej_, 
 					  idx<intg> &tbl, bool mirror,
 					  bool btanh_, const char *name_) 
-    : btanh(btanh_),
+    : module_1_1<T,Tstate>(name_), btanh(btanh_),
       lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_, name_),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, name_, mirror),
       tmp(NULL), tmp2(NULL) {
@@ -228,6 +230,8 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void convabsnorm_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
+    idx_clear(tmp->dx);
+    idx_clear(tmp2->dx);
     norm.bprop(*tmp2, out);
     abs.bprop(*tmp, *tmp2);
     lconv.bprop(in, *tmp);
@@ -235,6 +239,8 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void convabsnorm_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
+    idx_clear(tmp->ddx);
+    idx_clear(tmp2->ddx);
     norm.bbprop(*tmp2, out);
     abs.bbprop(*tmp, *tmp2);
     lconv.bbprop(in, *tmp);
@@ -272,14 +278,12 @@ namespace ebl {
   // subsampling_layer
 
   template <typename T, class Tstate>
-  subsampling_layer<T,Tstate>::subsampling_layer(parameter<T,Tstate> *p,
-					  intg stridei, intg stridej,
-					  intg subi, intg subj, 
-					  intg thick, bool btanh_,
-					  const char *name_)
-    : btanh(btanh_),
-      subsampler(p, stridei, stridej, subi, subj, thick, name_),
-      adder(p, thick, name_),
+  subsampling_layer<T,Tstate>::
+  subsampling_layer(parameter<T,Tstate> *p, uint thickness, idxdim &kernel,
+		    idxdim &stride, bool btanh_, const char *name_)
+    : module_1_1<T,Tstate>(name_), btanh(btanh_),
+      subsampler(p, thickness, kernel, stride, name_),
+      adder(p, thickness, name_),
       sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
 	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
     sum = NULL;
@@ -307,6 +311,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void subsampling_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
+    idx_clear(sum->dx);
     sigmoid->bprop(*sum, out);
     adder.bprop(*sum, *sum);
     subsampler.bprop(in, *sum);
@@ -314,6 +319,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void subsampling_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
+    idx_clear(sum->ddx);
     sigmoid->bbprop(*sum, out);
     adder.bbprop(*sum, *sum);
     subsampler.bbprop(in, *sum);
@@ -338,9 +344,10 @@ namespace ebl {
   template <typename T, class Tstate>
   subsampling_layer<T,Tstate>* subsampling_layer<T,Tstate>::copy() {
     // allocate
-    subsampling_layer<T,Tstate> *l2 = new subsampling_layer<T,Tstate>
-      (NULL, subsampler.stridei, subsampler.stridej, subsampler.sub.x.dim(1),
-       subsampler.sub.x.dim(2), subsampler.thickness, btanh);
+    subsampling_layer<T,Tstate> *l2 =
+      new subsampling_layer<T,Tstate>(NULL, subsampler.thickness,
+				      subsampler.kernel, subsampler.stride,
+				      btanh);
     // copy data
     idx_copy(subsampler.coeff.x, l2->subsampler.coeff.x);
     idx_copy(adder.bias.x, l2->adder.bias.x);
@@ -350,9 +357,9 @@ namespace ebl {
   template <typename T, class Tstate>
   std::string subsampling_layer<T, Tstate>::describe() {
     std::string desc;
-    desc << "subsampling layer " << this->name() << " with kernel "
-	 << subsampler.sub.x
-	 << ", stride " << subsampler.stridei << "x" << subsampler.stridej
+    desc << "subsampling layer " << this->name() << " with thickness "
+	 << subsampler.thickness << ", kernel "
+	 << subsampler.kernel << ", stride " << subsampler.stride
 	 << ", bias " << adder.bias.x
 	 << " and non linearity " << sigmoid->name();
     return desc;

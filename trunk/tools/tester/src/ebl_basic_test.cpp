@@ -12,17 +12,17 @@ void ebl_basic_test::tearDown() {
 void ebl_basic_test::test_convolution_layer_fprop() {
   intg ini = 3;
   intg inj = 3;
-  intg ki = 2;
-  intg kj = 2;
-  intg si = 1 + ini - ki;
-  intg sj = 1 + inj - kj;
+  idxdim ker(2,2);
+  idxdim stride(1,1);
+  intg si = 1 + ini - ker.dim(0);
+  intg sj = 1 + inj - ker.dim(1);
   fstate_idx<double> in(1, ini, inj);
   fstate_idx<double> out(1, si, sj);
   idx<intg> table(1, 2);
   idx_clear(table);
   idx<intg> tableout = table.select(1, 1);
   parameter<fs(double)> prm(10000);
-  convolution_layer<fs(double)> c(&prm, ki, kj, 1, 1, table);
+  convolution_layer<fs(double)> c(&prm, ker, stride, table);
   double fact = 0.05;
 
   in.x.set(1, 0, 0, 0);
@@ -53,17 +53,17 @@ void ebl_basic_test::test_convolution_layer_fprop() {
 void ebl_basic_test::test_jacobian_convolution_layer() {
   intg ini = 3;
   intg inj = 3;
-  intg ki = 2;
-  intg kj = 2;
-  intg si = 1 + ini - ki;
-  intg sj = 1 + inj - kj;
+  idxdim ker(2,2);
+  idxdim stride(1,1);
+  intg si = 1 + ini - ker.dim(0);
+  intg sj = 1 + inj - ker.dim(1);
   bbstate_idx<double> in(1, ini, inj);
   bbstate_idx<double> out(1, si, sj);
   idx<intg> table(1, 2);
   idx_clear(table);
   idx<intg> tableout = table.select(1, 1);
   parameter<double> prm(10000);
-  convolution_layer<double> c(&prm, ki, kj, 1, 1, table);
+  convolution_layer<double> c(&prm, ker, stride, table);
 
   ModuleTester<double> mt;
   idx<double> errs = mt.test_jacobian(c, in, out);
@@ -75,8 +75,8 @@ void ebl_basic_test::test_jacobian_convolution_layer() {
 
 void ebl_basic_test::test_jacobian_subsampling_layer() {
   parameter<double> p(10000);
-  int ki = 4, kj = 4, thick = 1, si = 2, sj =2;
-  subsampling_layer<double> s(&p, ki, kj, si, sj, thick);
+  idxdim kd(4, 4), sd(2, 2);
+  subsampling_layer<double> s(&p, 1, kd, sd);
   bbstate_idx<double> in(1, 8, 8);
   bbstate_idx<double> out(1, 1, 1);
 
@@ -233,9 +233,11 @@ void ebl_basic_test::test_convolution_timing() {
   layers<fs(float)> l(true);
   idx<intg> tbl = full_table(1, 8);
   idx<intg> tbl2 = full_table(8, 16);
-  l.add_module(new convolution_module<fs(float)>(NULL, 9, 9, 1, 1, tbl));
+  idxdim ker(9,9);
+  idxdim stride(1,1);
+  l.add_module(new convolution_module<fs(float)>(NULL, ker, stride, tbl));
   l.add_module(new tanh_module<fs(float)>());
-  l.add_module(new convolution_module<fs(float)>(NULL, 9, 9, 1, 1, tbl2));
+  l.add_module(new convolution_module<fs(float)>(NULL, ker, stride, tbl2));
   l.add_module(new tanh_module<fs(float)>());
   fstate_idx<float> in(1, 512, 512), out(16, 496, 496);
   timer t;

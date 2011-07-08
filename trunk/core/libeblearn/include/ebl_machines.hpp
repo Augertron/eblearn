@@ -75,6 +75,15 @@ namespace ebl {
     intg thick1 = 1 + idx_max(tblmax);
     tblmax = tbl2.select(1, 1);
     intg thick2 = 1 + idx_max(tblmax);
+    // convolution sizes
+    idxdim ker0(ki0, kj0);
+    idxdim ker1(ki1, kj1);
+    idxdim ker2(ki2, kj2);
+    idxdim stride(1, 1);
+    // subsampling sizes
+    idxdim sker0(si0, sj0);
+    idxdim sker1(si1, sj1);
+    
     // layers was initialized with true so it owns the modules we give it,
     // we can add modules with "new".
     // we add convolutions (c), subsamplings (s), and full layers (f)
@@ -84,7 +93,7 @@ namespace ebl {
     
     // convolution
     add_module(new convolution_module_replicable<T,Tstate>
-	       (&prm, ki0, kj0, 1, 1, tbl0, "c0"));
+	       (&prm, ker0, stride, tbl0, "c0"));
     // bias
     add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
     // non linearity
@@ -101,14 +110,13 @@ namespace ebl {
     if (norm) {
       add_module(new abs_module<T,Tstate>());
       add_module(new weighted_std_module<T,Tstate>
-		 (ki0, kj0, thick0, "w0", mirror, true, false));
+		 (ker0, thick0, "w0", mirror, true, false));
     }
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>
-	       (&prm, si0, sj0, si0, sj0, thick0, tanh));
+    add_module(new subsampling_layer<T,Tstate>(&prm, thick0,sker0,sker0, tanh));
     // convolution
     add_module(new convolution_module_replicable<T,Tstate>
-	       (&prm, ki1, kj1, 1, 1, tbl1));
+	       (&prm, ker1, stride, tbl1));
     // bias
     add_module(new addc_module<T,Tstate>(&prm, thick1));
     // non linearity
@@ -125,14 +133,13 @@ namespace ebl {
     if (norm) {
       add_module(new abs_module<T,Tstate>());
       add_module(new weighted_std_module<T,Tstate>
-		 (ki1, kj1, thick1, "w1", mirror, true, false));
+		 (ker1, thick1, "w1", mirror, true, false));
     }
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>
-	       (&prm,si1,sj1,si1,sj1,thick1,tanh));
+    add_module(new subsampling_layer<T,Tstate>(&prm, thick1,sker1,sker1, tanh));
     // convolution + bias + sigmoid
     add_module(new convolution_layer<T,Tstate>
-	       (&prm, ki2, kj2, 1, 1, tbl2, tanh));
+	       (&prm, ker2, stride, tbl2, tanh));
     // full
     add_module(new full_layer<T,Tstate>(&prm, thick2, outthick, tanh));
   }
@@ -177,6 +184,13 @@ namespace ebl {
     intg thick0 = 1 + idx_max(tblmax);
     tblmax = tbl1.select(1, 1);
     intg thick1 = 1 + idx_max(tblmax);
+    // convolution sizes
+    idxdim ker0(ki0, kj0);
+    idxdim ker1(ki1, kj1);
+    idxdim stride(1, 1);
+    // subsampling sizes
+    idxdim sker0(si0, sj0);
+
     // layers was initialized with true so it owns the modules we give it,
     // we can add modules with "new".
     // we add convolutions (c), subsamplings (s), and full layers (f)
@@ -185,8 +199,8 @@ namespace ebl {
     // and feed the input of the following module.
     
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>(&prm,ki0,kj0,1,1,
-						    tbl0,"c0"));
+    add_module(new convolution_module_replicable<T,Tstate>(&prm, ker0, stride,
+							   tbl0, "c0"));
     // bias
     add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
     // non linearity
@@ -202,13 +216,13 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>(ki0, kj0, thick0, "w0", mirror));
+      add_module(new weighted_std_module<T,Tstate>(ker0, thick0, "w0", mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
+    add_module(new subsampling_layer<T,Tstate>(&prm,thick0,sker0,sker0,tanh,"s0"));
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>(&prm,ki1,kj1,1,1,
-						    tbl1,"c1"));
+    add_module(new convolution_module_replicable<T,Tstate>(&prm,ker1,stride,
+							   tbl1,"c1"));
     // bias
     add_module(new addc_module<T,Tstate>(&prm, thick1, "c1bias"));
     // non linearity
@@ -224,7 +238,7 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>(ki1, kj1, thick1, "w1", mirror));
+      add_module(new weighted_std_module<T,Tstate>(ker1, thick1, "w1", mirror));
     }
     if (lut_features)
       add_module(new range_lut_module<T,Tstate>(lut));
@@ -233,16 +247,16 @@ namespace ebl {
 
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki0, kj0,1,1,tbl0,mirror,tanh));
+    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ker0,stride,tbl0,mirror,tanh));
     // else // old fashioned way
-    //   add_module(new convolution_layer<T,Tstate>(&prm, ki0, kj0, 1, 1, tbl0, tanh));
+    //   add_module(new convolution_layer<T,Tstate>(&prm, ker0, stride, tbl0, tanh));
     // // subsampling
-    // add_module(new subsampling_layer<T,Tstate>(&prm, si0, sj0, si0, sj0,thick0,tanh));,
+    // add_module(new subsampling_layer<T,Tstate>(&prm,thick0,sker0, sker0, tanh));,
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ki1, kj1,1,1,tbl1,mirror,tanh));
+    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ker1,stride,tbl1,mirror,tanh));
     // else // old fashioned way
-    //   add_module(new convolution_layer<T,Tstate>(&prm, ki1, kj1, 1, 1, tbl1, tanh));
+    //   add_module(new convolution_layer<T,Tstate>(&prm, ker1, stride, tbl1, tanh));
     // // full
     // add_last_module(new full_layer<T,Tstate>(&prm, thick1, outthick, tanh));
   }
@@ -292,9 +306,18 @@ namespace ebl {
     // TODO: add assertion test here?
     intg ki2 = (((ini - ki0 + 1) / si0) - ki1 + 1);
     intg kj2 = (((inj  - kj0 + 1) / sj0) - kj1 + 1);
+
+    // convolution sizes
+    idxdim ker0(ki0, kj0);
+    idxdim ker1(ki1, kj1);
+    idxdim ker2(ki2, kj2);
+    idxdim stride(1, 1);
+    // subsampling sizes
+    idxdim sker0(si0, sj0);
+
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>(&prm,ki0,kj0,1,1,
-						    tbl0,"c0"));
+    add_module(new convolution_module_replicable<T,Tstate>(&prm,ker0,stride,
+							   tbl0,"c0"));
     // bias
     add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
     // non linearity
@@ -310,12 +333,12 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>(ki0, kj0, thick0, "w0", mirror));
+      add_module(new weighted_std_module<T,Tstate>(ker0, thick0, "w0", mirror));
     }
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>(&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
+    add_module(new subsampling_layer<T,Tstate>(&prm, thick0, sker0, sker0, tanh, "s0"));
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>(&prm,ki1,kj1,1,1,
+    add_module(new convolution_module_replicable<T,Tstate>(&prm,ker1,stride,
 						    tbl1,"c1"));
     // bias
     add_module(new addc_module<T,Tstate>(&prm, thick1, "c1bias"));
@@ -332,10 +355,10 @@ namespace ebl {
     // absolute rectification + contrast normalization
     if (norm) {
       add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>(ki1, kj1, thick1, "w1", mirror));
+      add_module(new weighted_std_module<T,Tstate>(ker1, thick1, "w1", mirror));
     }
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T,Tstate>(&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
+    add_module(new convolution_layer<T,Tstate>(&prm, ker2, stride, tbl2, tanh,"c2"));
   }
 
   ////////////////////////////////////////////////////////////////
@@ -378,6 +401,16 @@ namespace ebl {
     intg thick0 = 1 + idx_max(tblmax);
     tblmax = tbl1.select(1, 1);
     intg thick1 = 1 + idx_max(tblmax);
+
+    // convolution sizes
+    idxdim ker0(ki0, kj0);
+    idxdim ker1(ki1, kj1);
+    idxdim ker2(ki2, kj2);
+    idxdim stride(1, 1);
+    // subsampling sizes
+    idxdim sker0(si0, sj0);
+    idxdim sker1(si1, sj1);
+
     // layers was initialized with true so it owns the modules we give it,
     // we can add modules with "new".
     // we add convolutions (c), subsamplings (s), and full layers (f)
@@ -390,7 +423,7 @@ namespace ebl {
 	   << " subsampling. " << endl;
     // convolution
     add_module(new convolution_module_replicable<T,Tstate>
-	       (&prm, ki0, kj0, 1, 1, tbl0, "c0"));
+	       (&prm, ker0, stride, tbl0, "c0"));
     // bias
     add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
     // non linearity
@@ -409,17 +442,16 @@ namespace ebl {
     // contrast normalization (positioned before sub)
     if (norm && !norm_pos)
       add_module(new weighted_std_module<T,Tstate>
-		 (ki0, kj0, thick0, "w0", mirror, true, false));
+		 (ker0, thick0, "w0", mirror, true, false));
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>
-	       (&prm,si0,sj0,si0,sj0,thick0,tanh,"s0"));
+    add_module(new subsampling_layer<T,Tstate>(&prm, thick0, sker0, sker0, tanh, "s0"));
     // contrast normalization (positioned after sub)
     if (norm && norm_pos)
       add_module(new weighted_std_module<T,Tstate>
-		 (ki1, kj1, thick0, "w0", mirror, true, false));
+		 (ker1, thick0, "w0", mirror, true, false));
     // convolution
     add_module(new convolution_module_replicable<T,Tstate>
-	       (&prm, ki1, kj1, 1, 1,tbl1, "c1"));
+	       (&prm, ker1, stride,tbl1, "c1"));
     // bias
     add_module(new addc_module<T,Tstate>(&prm, thick1, "c1bias"));
     // non linearity
@@ -438,17 +470,16 @@ namespace ebl {
     // contrast normalization (position before sub)
     if (norm && !norm_pos)
       add_module(new weighted_std_module<T,Tstate>
-		 (ki1, kj1, thick1, "w1", mirror, true, false));
+		 (ker1, thick1, "w1", mirror, true, false));
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>
-	       (&prm,si1,sj1,si1,sj1,thick1,tanh,"s1"));
+    add_module(new subsampling_layer<T,Tstate>(&prm, thick1, sker1, sker1, tanh, "s1"));
     // contrast normalization (position after sub)
     if (norm && norm_pos)
       add_module(new weighted_std_module<T,Tstate>
-		 (ki2, kj2, thick1, "w1", mirror, true, false));
+		 (ker2, thick1, "w1", mirror, true, false));
     // convolution + bias + sigmoid
     add_module(new convolution_layer<T,Tstate>
-	       (&prm, ki2, kj2, 1, 1, tbl2, tanh,"c2"));
+	       (&prm, ker2, stride, tbl2, tanh,"c2"));
   }
 
   ////////////////////////////////////////////////////////////////

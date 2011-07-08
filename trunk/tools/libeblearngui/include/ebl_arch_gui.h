@@ -34,6 +34,7 @@
 
 #include "libidxgui.h"
 #include "ebl_arch.h"
+#include "ebl_answer.h"
 
 #define MAXWIDTH 1000
 #define MAXHEIGHT 1000
@@ -83,11 +84,13 @@ namespace ebl {
      
     //! Display internal buffers of module 'm', as declared in
     //! module_1_1's member 'internals'.
+    //! \param maxwidth Max width after which to create a new line
     template<typename T, class Tstate>
       void display_internals(module_1_1<T,Tstate> &m, unsigned int &h0,
 			     unsigned int &w0, double zoom = 1.0,
 			     T vmin = 0, T vmax = 0, int wid = -1,
-			     const char *wname = NULL);
+			     const char *wname = NULL,
+			     uint maxwidth = MAXWIDTH);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -103,7 +106,7 @@ namespace ebl {
 
 #define DISPLAY_PROTO_2_1(name)						\
     template<typename T, class Tstate, class Tin2, class Tout>		\
-      void name(module_2_1<T,Tstate,Tin2,Tout> &m,			\
+      void name(module_2_1<T,Tstate,Tstate,Tout> &m,			\
 		Tstate &in1, Tin2 &in2, Tout &out,			\
 		unsigned int &h0, unsigned int &w0,			\
 		double dzoom = 1.0, T vmin = 0, T vmax = 0,		\
@@ -141,7 +144,7 @@ namespace ebl {
       void display_internals(layers<T,Tstate> &ln,
 			     unsigned int &h0, unsigned int &w0,
 			     double dzoom = 1.0,
-			     T vmin = 0, T vmax = 0);
+			     T vmin = 0, T vmax = 0, uint maxwidth = MAXWIDTH);
 
     //! Tries to cast 'm' as a layers object and display internal buffers
     //! of all sub modules.
@@ -149,7 +152,7 @@ namespace ebl {
       void display_internals(module_1_1<T,Tstate> &m,
 			     unsigned int &h0, unsigned int &w0,
 			     double dzoom = 1.0,
-			     T vmin = 0, T vmax = 0);
+			     T vmin = 0, T vmax = 0, uint maxwidth = MAXWIDTH);
     
   protected:
     module_1_1_gui	m11g;
@@ -179,26 +182,25 @@ namespace ebl {
 /*   }; */
 
   ////////////////////////////////////////////////////////////////
-  // fc_ebm2_gui
+  // trainable_module_gui
 
-  class fc_ebm2_gui {
+  class trainable_module_gui {
   public:
-    fc_ebm2_gui() {};
-    virtual ~fc_ebm2_gui() {};
+    trainable_module_gui() {};
+    virtual ~trainable_module_gui() {};
     
-#define DISPLAY_PROTO_FCEBM2(name)					\
-    template<typename T, class Tin1, class Tin2, class Ten>		\
-      static void name(fc_ebm2<T, Tin1, Tin2, Ten> &fc,			\
-		       Tin1 &i1, Tin2 &i2,				\
-		       Ten &energy,					\
+#define DISPLAY_PROTO_TRAINABLE(name)					\
+    template<typename T, class Tin1, class Tin2, class Ten,typename Tds1,typename Tds2> \
+      static void name(trainable_module<T,Tds1,Tds2,Tin1,Tin1,Ten> &dse, \
+		       Tin1 &i1, Tin2 &i2, Ten &energy,			\
 		       unsigned int &h0, unsigned int &w0,		\
 		       double zoom, T vmin = 0, T vmax = 0,		\
 		       bool show_out = true,				\
 		       int wid = -1, const char *wname = NULL);
 
-    DISPLAY_PROTO_FCEBM2(display_fprop)
-    DISPLAY_PROTO_FCEBM2(display_bprop)
-    DISPLAY_PROTO_FCEBM2(display_bbprop)
+    DISPLAY_PROTO_TRAINABLE(display_fprop)
+    DISPLAY_PROTO_TRAINABLE(display_bprop)
+    DISPLAY_PROTO_TRAINABLE(display_bbprop)
   };
 
 } // namespace ebl {

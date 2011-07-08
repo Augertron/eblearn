@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -37,6 +38,8 @@
 #include <string.h>
 
 #include "job.h"
+#include "mpijob.h"
+#include "tools_utils.h"
 
 using namespace std;
 using namespace ebl;
@@ -49,8 +52,14 @@ using namespace ebl;
 ////////////////////////////////////////////////////////////////
 // global variables
 
-string copy_path = ""; // path to copy to target folder
-string manual_tstamp = ""; // tstamp string prefix to the experiment name
+string 	copy_path     = ""; 	// path to copy to target folder
+string 	manual_tstamp = ""; 	// tstamp string prefix to the experiment name
+bool 	resume 	      = false;  // resume metajob or not
+bool 	resumedir     = false;  // resume metajob or not
+bool 	create 	      = false;  // create metajob directories only
+bool    monitor       = false;  // monitor jobs from existing directories
+int     maxjobs       = -1;     // max concurrent number of jobs
+bool    reset_progress = false; // ignore existing progress in target dir
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -79,6 +88,24 @@ bool parse_args(int argc, char **argv) {
 	return false;
       }
       manual_tstamp = argv[i];
+    } else if (strcmp(argv[i], "-maxjobs") == 0) {
+      ++i;
+      if (i >= argc) {
+	cerr << "input error: expecting number after -maxjobs." << endl;
+	return false;
+      }
+      maxjobs = string_to_int(argv[i]);
+    } else if (strcmp(argv[i], "-resumedir") == 0) {
+      resumedir = true;
+      resume = true;
+    } else if (strcmp(argv[i], "-resume") == 0) {
+      resume = true;
+    } else if (strcmp(argv[i], "-monitor") == 0) {
+      monitor = true;
+    } else if (strcmp(argv[i], "-create") == 0) {
+      create = true;
+    } else if (strcmp(argv[i], "-reset_progress") == 0) {
+      reset_progress = true;
     } else {
       cerr << "input error: unknown parameter: " << argv[i] << endl;
       return false;
@@ -89,7 +116,7 @@ bool parse_args(int argc, char **argv) {
 
 // print command line usage
 void print_usage() {
-  cout << "Usage: ./meta_trainer <logs_root> [OPTIONS]" << endl;
+  cout << "Usage: ./metarun <config_file> [OPTIONS]" << endl;
   cout << "Options are:" << endl;
   cout << "  -copy <path>" << endl;
   cout << "      Copy the specified path recursively to each job's directory."
@@ -97,6 +124,22 @@ void print_usage() {
   cout << "  -tstamp <timestamp>" << endl
        << "      Manually set the timestamp prefix for the experiment's name."
        << endl;
+  cout << "  -maxjobs <n>" << endl
+       << "      Limits the concurrent number of jobs." << endl;
+  cout << "  -monitor" 
+       << "      Monitor jobs progress from the given configuration file" << endl
+       << "      and its working directory." << endl;
+  cout << "  -resume" 
+       << "      Resume an already created job from the given " << endl
+       << "      configuration file." << endl;
+  cout << "  -resumedir" 
+       << "      Resume an already created job from the directory " << endl
+       << "      of the give configuration file." << endl;
+  cout << "  -create" 
+       << "      Only create the directory structure and other files in " 
+       << endl
+       << "      preparation for running all possible configurations." << endl
+       << "      Jobs can subsequently be started with -resume" << endl;
 }
 
 int main(int argc, char **argv) {
@@ -107,11 +150,46 @@ int main(int argc, char **argv) {
     print_usage();
     return -1;
   }
-
+  for (int i = 0; i < argc; ++i)
+    cout << "arg " << i << ": " << argv[i] << endl;
   string metaconf = argv[1];
-  job_manager jm;
-  jm.read_metaconf(metaconf.c_str(), &manual_tstamp);
-  jm.set_copy(copy_path);
-  jm.run();
+  job_manager *jm = NULL;
+#ifdef __MPI__
+  mpijob_manager *mjm = new mpijob_manager(argc, argv);
+  if (mjm->world_size() == 1) { // we are not in a MPI environment
+    cout << "Switching to non-mpi execution." << endl;
+    jm = new job_manager();
+    delete mjm;
+  } else { // use MPI env
+    if (mjm->is_master()) {
+      cout << "Found MPI world of size " << mjm->world_size()
+	   << ", executing in MPI mode." << endl;
+    }
+    jm = mjm;
+  }
+#else
+  jm = new job_manager();
+#endif
+  string resume_name;
+  if (resume) { // extract metajob name to be resumed
+    string dir = dirname(metaconf.c_str());
+    resume_name = ebl::basename(dir.c_str());
+    cout << "Resuming metajob with name: " << resume_name << endl;
+  }
+  if (monitor) // just monitor progress in job directories
+    jm->monitor(metaconf.c_str());
+  else { 
+    jm->read_metaconf(metaconf.c_str(), &manual_tstamp, 
+		      (resume_name.empty() ? NULL : resume_name.c_str()), 
+		      resumedir, false, maxjobs);
+    jm->set_copy(copy_path);
+    if (!resume)
+      jm->prepare(reset_progress);
+    if (create) // do not run if creating structure only
+      cout << "Not running jobs, only creating directories and files." << endl;
+    else
+      jm->run();
+  }
+  delete jm;
   return 0;
 }

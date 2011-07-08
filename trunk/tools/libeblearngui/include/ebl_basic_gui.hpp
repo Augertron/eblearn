@@ -133,6 +133,8 @@ namespace ebl {
     unsigned int h = h0, w = w0;					\
     /* display input text	*/					\
     gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T;	\
+    gui << at(h + 15, w) << "in min:" << idx_min(in.T);			\
+    gui << at(h + 30, w) << "in max:" << idx_max(in.T);			\
     w += 150;								\
     /* display inputs */						\
     idx_bloop1(m, in.T, T) {						\
@@ -148,8 +150,10 @@ namespace ebl {
     gui << gui_only()<< at(h, w) << "kernels:" << nn.sub.T.dim(0);	\
     gui << "x" << in.T.dim(1) / nn.sub.T.dim(1);			\
     gui << "x" << in.T.dim(2) / nn.sub.T.dim(2);			\
+    gui << at(h + 15, w) << "coeff min:" << idx_min(nn.coeff.T);	\
+    gui << at(h + 30, w) << "coeff max:" << idx_max(nn.coeff.T);	\
     w += 150;								\
-    h0 += 10;								\
+    h0 += 45;								\
   }
   
   SUBSAMPLING_MODULE_GUI(display_fprop, fprop, x, fstate_idx)

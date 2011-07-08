@@ -37,18 +37,22 @@ namespace ebl {
 
   template <class Tnet, class Tdata, class Tlabel>  
   supervised_trainer_gui<Tnet, Tdata, Tlabel>::
-  supervised_trainer_gui(bool scroll_)
+  supervised_trainer_gui(const char *title_, bool scroll_)
     : _st(NULL), _ds(NULL), _last_ds(NULL), 
       datasource_wid(-1), datasource_wid2(-1), 
       datasource_wid3(-1), datasource_wid4(-1),
       internals_wid(-1), internals_wid2(-1), internals_wid3(-1),
       scroll(scroll_), scroll_added(false), pos(0), dsgui(NULL) {
+    if (title_) {
+      title0 = title_;
+      title0 << ": ";
+    }
   }
 
   template <class Tnet, class Tdata, class Tlabel>  
   supervised_trainer_gui<Tnet, Tdata, Tlabel>::~supervised_trainer_gui() {
-    if (win)
-      win->replace_scroll_box_with_copy(this);
+    if (w)
+      w->replace_scroll_box_with_copy(this);
   }
   
   template <class Tnet, class Tdata, class Tlabel>  
@@ -78,11 +82,14 @@ namespace ebl {
     _last_ds = &ds;
     // init datasource
     st.init(ds);
-    // find out sample size
-    ds.fprop(*st.input, st.label);
-    idx<Tnet> m = st.input->x.select(0, 0);
-    _h1 = h0 + nh * (m.dim(0) + 1) * 3;
-    _w1 = w0 + nw * (m.dim(1) + 1) * 3;
+    vector<string*> lblstr;
+    class_datasource<Tnet,Tdata,Tlabel> *cds =
+      dynamic_cast<class_datasource<Tnet,Tdata,Tlabel>*>(&ds);
+    if (cds)
+      lblstr = cds->get_label_strings();
+    idxdim d = ds.sample_dims();
+    _h1 = h0 + nh * (d.dim(0) + 1) * 3;
+    _w1 = w0 + nw * (d.dim(1) + 1) * 3;
     _zoom = zoom;
     // if no window given, create a new one or reuse previous one
     datasource_wid = (wid >= 0) ? wid : 
@@ -97,8 +104,8 @@ namespace ebl {
     if (wid == -1) // clear only if we created the window
       clear_window();
     // top left coordinates of datasets display 1 and 2
-    unsigned int w01 = nh * (m.dim(1) + 2) + 5, h01 = h0 + 35;
-    unsigned int w02 = (nh * (m.dim(1) + 2) + 5) * 2, h02 = h0 + 35;
+    unsigned int w01 = nh * (d.dim(1) + 2) + 5, h01 = h0 + 35;
+    unsigned int w02 = (nh * (d.dim(1) + 2) + 5) * 2, h02 = h0 + 35;
     // working variables
     unsigned int h1 = h01, w1 = w01, nh1 = 0;
     unsigned int h2 = h02, w2 = w02, i2 = 0;
@@ -124,34 +131,34 @@ namespace ebl {
       ds.next(); // FIXME add a seek(p) method to ds
     for (unsigned int i = 0; (i < ds.size()) && (i2 < nh * nw); ++i) {
       // test sample
-      ds.fprop(*st.input, st.label);
-      correct = st.test_sample(*st.input, st.label, infp);
+      ds.fprop_label_net(*st.label);
+      correct = st.test_sample(ds, *st.label, *st.answers, infp);
       ds.next();
-      idx<Tnet> m = st.input->x.select(0, 0);
+      idx<Tnet> m = st.machine.in1.x.select(0, 0);
 
       // 1. display dataset with incorrect and correct answers
       if (nh1 < nh) {
 	draw_matrix_frame(m, (correct?0:128), 0, 0, h1, w1, zoom, zoom);
-	if ((ds.lblstr) && (ds.lblstr->at(st.answer.x.get())))
+	if ((lblstr.size() > 0) && (lblstr[(int)st.answers->x.gget()]))
 	  gui << at(h1 + 2, w1 + 2)
-	      << (ds.lblstr->at(st.answer.x.get()))->c_str();
-	w1 += m.dim(1) + 2;
+	      << (lblstr[(int)st.answers->x.gget()])->c_str();
+	w1 += d.dim(1) + 2;
 	if (((i + 1) % nw == 0) && (i > 1)) {  
 	  w1 = w01;
-	  h1 += m.dim(0) + 2;
+	  h1 += d.dim(0) + 2;
 	  nh1++;
 	}
       }
       // 2. display first nh * nw incorrect answers
       if (!correct) {
 	draw_matrix_frame(m, (correct?0:128), 0, 0, h2, w2, zoom, zoom);
-	if ((ds.lblstr) && (ds.lblstr->at(st.answer.x.get())))
+	if ((lblstr.size() > 0) && (lblstr[(int)st.answers->x.gget()]))
 	  gui << at(h2 + 2, w2 + 2)
-	      << (ds.lblstr->at(st.answer.x.get()))->c_str();
-	w2 += m.dim(1) + 2;
+	      << (lblstr[(int)st.answers->x.gget()])->c_str();
+	w2 += d.dim(1) + 2;
 	if (((i2 + 1) % nw == 0) && (i2 > 1)) {  
 	  w2 = w02;
-	  h2 += m.dim(0) + 2;
+	  h2 += d.dim(0) + 2;
 	}
 	i2++;
       }
@@ -195,39 +202,39 @@ namespace ebl {
     unsigned int wfdisp = 0, hfdisp = 0;
     unsigned int wfdisp2 = 0, hfdisp2 = 0;
     unsigned int wfdisp3 = 0, hfdisp3 = 0;
-    ds.fprop(*st.input, st.label);
-    idx<Tnet> m = st.input->x.select(0, 0);
     
     // display first ninternals samples
-    fc_ebm2_gui mg;
+    trainable_module_gui mg;
+    bbstate_idx<Tnet> input(ds.sample_dims());
+    bbstate_idx<Tlabel> label(ds.label_dims());
     for (unsigned int i = 0; (i < ds.size()) && (i < ninternals); ++i) {
       // prepare input
-      ds.fprop(*st.input, st.label);
-      // fprop and bprop
-      //st.test_sample(*st.input, st.label, infp);
-      // TODO: display is influencing learning, remove influence
-      //      st.learn_sample(*st.input, st.label.get(), args);
-      st.machine.fprop(*st.input, st.label, st.energy);
-      st.param.clear_dx();
-      st.machine.bprop(*st.input, st.label, st.energy);
-      st.param.clear_ddx();
-      st.machine.bbprop(*st.input, st.label, st.energy);
+      ds.fprop(input, label);
+      // // fprop and bprop
+      // //st.test_sample(*st.input, st.label, infp);
+      // // TODO: display is influencing learning, remove influence
+      // //      st.learn_sample(*st.input, st.label.get(), args);
+      // st.machine.fprop(*st.input, st.label, st.energy);
+      // st.param.clear_dx();
+      // st.machine.bprop(*st.input, st.label, st.energy);
+      // st.param.clear_ddx();
+      // st.machine.bbprop(*st.input, st.label, st.energy);
       
-      ds.next();
       // display fprop
-      mg.display_fprop(st.machine, *st.input, st.answer, st.energy, 
+      mg.display_fprop(st.machine, input, label, st.energy, 
 		       hfdisp, wfdisp, display_zoom, (Tnet) -1.0, (Tnet) 1.0,
 		       true, internals_wid);
       // display bprop
       select_window(internals_wid2);
-      mg.display_bprop(st.machine, *st.input, st.answer, st.energy, 
-      		       hfdisp2, wfdisp2, display_zoom, (Tnet) 1.0, (Tnet) 1.0,
+      mg.display_bprop(st.machine, input, label, st.energy, 
+      		       hfdisp2, wfdisp2, display_zoom, (Tnet) -1.0, (Tnet) 1.0,
 		       true, internals_wid2);
       // display bprop
       select_window(internals_wid3);
-      mg.display_bbprop(st.machine, *st.input, st.answer, st.energy, 
-			hfdisp3, wfdisp3, display_zoom, (Tnet) .01, (Tnet) .01,
+      mg.display_bbprop(st.machine, input, label, st.energy, 
+			hfdisp3, wfdisp3, display_zoom, (Tnet) -.01, (Tnet) .01,
 			true, internals_wid3);
+      ds.next(); // next sample
       hfdisp += 10;
       hfdisp2 += 10;
       hfdisp3 += 10;
@@ -247,9 +254,10 @@ namespace ebl {
 		      supervised_trainer<Tnet, Tdata, Tlabel> &st,
 		      labeled_datasource<Tnet, Tdata, Tlabel> &ds,
 		      infer_param &infp,
-		      unsigned int nh, unsigned int nw, unsigned int h0, 
-		      unsigned int w0, double zoom, int wid, const char *title,
-		      bool scrolling) {
+		      unsigned int nh, unsigned int nw,
+		      bool print_raw_outputs, bool draw_all_jitter,
+		      unsigned int h0, unsigned int w0, double zoom, int wid,
+		      const char *title, bool scrolling) {
     // copy parameters
     _st = &st;
     _infp = &infp;
@@ -269,21 +277,26 @@ namespace ebl {
     _last_ds = &ds;
     // init datasource
     st.init(ds);
+    class_datasource<Tnet,Tdata,Tlabel> *cds =
+      dynamic_cast<class_datasource<Tnet,Tdata,Tlabel>*>(&ds);
     // find out sample size
-    ds.fprop(*st.input, st.label);
-    idx<Tnet> m = st.input->x.select(0, 0);
-    _h1 = h0 + nh * (m.dim(0) + 1) * 3;
-    _w1 = w0 + nw * (m.dim(1) + 1) * 3;
+    idxdim d = ds.sample_dims();
+    _h1 = h0 + nh * (d.dim(0) + 1) * 3;
+    _w1 = w0 + nw * (d.dim(1) + 1) * 3;
     _zoom = zoom;
     string corname = (incorrect ? "incorrect" : "correct");
-    title1 = "Incorrect classifications, lowest energies first (pid ";
-    title1 << pid() << ")";
-    title2 = "Incorrect classifications, highest energies first (pid ";
-    title2 << pid() << ")";
-    title3 = "Correct classifications, lowest energies first (pid ";
-    title3 << pid() << ")";
-    title4 = "Correct classifications, highest energies first (pid ";
-    title4 << pid() << ")";
+    title1 = title0;
+    title1 << "Incorrect classifications, lowest energies first (pid "
+	   << pid() << ")";
+    title2 = title0;
+    title2 << "Incorrect classifications, highest energies first (pid "
+	   << pid() << ")";
+    title3 = title0;
+    title3 << "Correct classifications, lowest energies first (pid "
+	   << pid() << ")";
+    title4 = title0;
+    title4 << "Correct classifications, highest energies first (pid "
+	   << pid() << ")";
     // if no window given, create a new one or reuse previous one
     if (incorrect) { // incorrect window
       if (up) {
@@ -361,26 +374,94 @@ namespace ebl {
       idx_sortdown(energies, indices);
     
     // loop on nh * nw first samples
-    Tlabel answer;
+    Tlabel answer, bgid = -1;
+    if (cds)
+      cds->get_class_id("bg");
+    bbstate_idx<Tnet> input(ds.sample_dims());
+    bbstate_idx<Tlabel> label(ds.label_dims());
+    bbstate_idx<Tnet> jitt(1, 1);
     for (unsigned int i = 0; (i < indices.dim(0)) && (i < nh * nw); ++i) {
-      answer = ds.answers.get(indices.get(i));
+      idx<Tnet> raw = ds.raw_outputs.select(0, indices.get(i));
+      idx<Tnet> answers = ds.answers.select(0, indices.get(i));
+      idx<Tnet> target = ds.targets.select(0, indices.get(i));
+      answer = (Tlabel) answers.get(0);
       ds.select_sample(indices.get(i));
-      ds.fprop(*st.input, st.label);
-      idx<Tnet> m = st.input->x.shift_dim(0, 2);
+      ds.fprop(input, label);
+      idx<Tnet> m = input.x.shift_dim(0, 2);
 
       // 1. display dataset with incorrect and correct answers
       if (nh1 < nh) {
 	draw_matrix(m, h1, w1, zoom, zoom);
 	ostringstream s;
 	s.precision(2);
-	s << ds.get_class_name((int)answer) << " " << energies.get(i);
+	if (cds)
+	  s << cds->get_class_name((int)answer) << " ";
+	s << energies.get(i);
 	gui << at(h1 + 2, w1 + 2) << s.str().c_str();
-	if (incorrect) {
-	  s.str("");
-	  s << "(" << ds.get_class_name((int) st.label.x.get()) << ")";
-	  gui << at(h1 + m.dim(0) - 15, w1 + 2) << s.str().c_str();
+	// print raw outputs
+	if (print_raw_outputs) {
+	  for (uint a = 0; a < raw.dim(0); ++a) {
+	    s.str(""); s << raw.get(a);
+	    gui << at(h1 + 17 + a * 15, w1 + 2) << s.str().c_str();
+	  }
+	} else { // print outputs answers
+	  for (uint a = 0; a < answers.dim(0); ++a) {
+	    s.str(""); s << answers.get(a);
+	    gui << at(h1 + 17 + a * 15, w1 + 2) << s.str().c_str();
+	  }
 	}
-	
+	// print target info
+	//ds.fprop_jitter(jitt);
+	for (uint a = 0; a < target.dim(0); ++a) {
+	  s.str(""); s << target.gget(a);
+	  gui << at(h1 + 17 + a * 15, w1 + m.dim(1) - 35) << s.str().c_str();
+	}
+	// print correct info when incorrect
+	if (incorrect && cds) {
+	  s.str("");
+	  s << "(" << cds->get_class_name((int) label.x.get(0)) << ")";
+	  gui << at(h1 + d.dim(0) - 15, w1 + 2) << s.str().c_str();
+	}
+	// draw scale box if not a background class
+	if (answer != bgid && answers.dim(0) > 2) {
+	  float scale = answers.gget(2), hoff = 0, woff = 0;
+	  rect<float> r;
+	  if (scale > 0) {
+	    scale = 1 / scale;
+	    if (answers.dim(0) == 5) {
+	      hoff = answers.gget(3) * m.dim(0);
+	      woff = answers.gget(4) * m.dim(0);
+	    }
+	    r = rect<float>(h1 + hoff, w1 + woff, m.dim(0), m.dim(1));
+	    r.scale_centered(scale, scale);
+	    draw_box(r, 0, 0, 255);
+	    // draw all groundtruth
+	    if (draw_all_jitter) {
+	      ds.fprop_jitter(jitt);
+	      idx_bloop1(ji, jitt.x, Tnet) {
+		scale = ji.gget(0); // TODO: fix hardcoded offset
+		if (scale != 0) {
+		  scale = 1 / scale;
+		  hoff = ji.gget(1) * m.dim(0);// TODO: fix hardcoded offset
+		  woff = ji.gget(2) * m.dim(0);// TODO: fix hardcoded offset
+		  r = rect<float>(h1 + hoff, w1 + woff, m.dim(0), m.dim(1));
+		  r.scale_centered(scale, scale);
+		draw_box(r, 0, 255, 0);
+		}
+	      }
+	    }
+	  }
+	  // draw groundtruth box
+	  scale = target.gget(2); // TODO: fix hardcoded offset
+	  if (scale != 0) {
+	    scale = 1 / scale;
+	    hoff = target.gget(3) * m.dim(0);// TODO: fix hardcoded offset
+	    woff = target.gget(4) * m.dim(0);// TODO: fix hardcoded offset
+	    r = rect<float>(h1 + hoff, w1 + woff, m.dim(0), m.dim(1));
+	    r.scale_centered(scale, scale);
+	    draw_box(r, 255, 0, 0);
+	  }
+	}
 	// if ((ds.lblstr) && (ds.lblstr->at(st.answer.x.get())))
 	//   gui << at(h1 + 2, w1 + 2)
 	//       << (ds.lblstr->at(st.answer.x.get()))->c_str();
@@ -402,6 +483,7 @@ namespace ebl {
   void supervised_trainer_gui<Tnet, Tdata, Tlabel>::display_next() {
     if (next_page()) {
       pos = MIN(_ds->size(), pos + _nh * _nw);
+
       display_datasource(*_st, *_ds, *_infp, _nh, _nw, _h0, _w0, _zoom,
 			 -1, NULL, true);
     }

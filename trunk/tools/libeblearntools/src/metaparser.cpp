@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -59,27 +60,76 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // pairtree
 
+  // static members
+  map<string,uint> pairtree::vars_map;
+  map<string,uint> pairtree::vals_map;
+  vector<string> pairtree::vars_vector;
+  vector<string> pairtree::vals_vector;
+
   pairtree::pairtree(string &var, string &val)
-    : variable(var), value(val), subvariable("") {
+    : variable(get_var_id(var)), value(get_val_id(val)), subvariable(0) {
+  }
+  
+  pairtree::pairtree(uint var, uint val)
+    : variable(var), value(val), subvariable(0) {
   }
   
   pairtree::pairtree()
-    : variable(""), value(""), subvariable("") {
+    : variable(0), value(0), subvariable(0) {
   }
   
   pairtree::~pairtree() {
   }
 
-  void pairtree::add(string &var, string &val) {
-    vars[var] = val;
+  uint pairtree::get_var_id(const string &var) {
+    uint id = 0;
+    map<string,uint>::iterator i = vars_map.find(var);
+    if (i == vars_map.end()) { // new variable not yed added
+      id = vars_vector.size();
+      vars_vector.push_back(var);
+      vars_map[var] = id;
+    } else {
+      id = vars_map[var];
+    }
+    //DEBUG("var id of " << var << " is: " << id);
+    return id;
   }
 
-  map<string,string> pairtree::add(list<string> &subvar_,
-				   map<string,string> &ivars) {
-    list<string> subvar = subvar_;
-    string subval;
+  uint pairtree::get_var_id(const char *var) {
+    string s = var;
+    return get_var_id(s);
+  }
+
+  uint pairtree::get_val_id(const string &val) {
+    uint id = 0;
+    map<string,uint>::iterator i = vals_map.find(val);
+    if (i == vals_map.end()) { // new variable not yed added
+      id = vals_vector.size();
+      vals_vector.push_back(val);
+      vals_map[val] = id;
+    } else {
+      id = vals_map[val];
+    }
+    //DEBUG("val id of " << val << " is: " << id);
+    return id;
+  }
+
+  list<uint> pairtree::to_varid_list(list<string> &l) {
+    list<uint> ret;
+    for (list<string>::iterator i = l.begin(); i != l.end(); ++i)
+      ret.push_back(get_var_id(*i));
+    return ret;
+  }
+
+  void pairtree::add(const string &var, string &val) {
+    vars[get_var_id(var)] = get_val_id(val);
+  }
+
+  map<uint,uint> pairtree::add(list<uint> &subvar_, map<uint,uint> &ivars) {
+    list<uint> subvar = subvar_;
+    uint subval;
     // the path leading to the current node 
-    map<string,string> path;
+    map<uint,uint> path;
     // use first string that is in vars as subvariable
     if (subvar.size() > 0) {
       subvariable = subvar.front();
@@ -97,14 +147,14 @@ namespace ebl {
       } else { // node
 	subval = ivars[subvariable];
 	// the var list without subvariable
-	map<string,string> tmp(ivars);
+	map<uint,uint> tmp(ivars);
 	tmp.erase(subvariable);
 	// subvariable list without current subvariable
 	// get existing node
 	bool found = false;
-	map<string,pairtree,natural_less>::iterator p;
+	map<uint,pairtree,natural_less>::iterator p;
 	for (p = subtree.begin(); p != subtree.end(); ++p) {
-	  if (!strcmp(p->first.c_str(), subval.c_str())) {
+	  if (p->first == subval) {
 	    found = true;
 	    break ;
 	  }}
@@ -124,51 +174,51 @@ namespace ebl {
   }
 
   natural_varmap pairtree::flatten(const string &key, natural_varmap *flat,
-				   map<string,string> *path) {
+				   map<uint,uint> *path) {
     natural_varmap flat2;
-    map<string,string> path2;
+    map<uint,uint> path2;
     if (!flat)
       flat = &flat2;
     if (!path)
       path = &path2;
 
-    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
+    for (map<uint,pairtree>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
       (*path)[subvariable] = i->first;
       i->second.flatten(key, flat, path);
     }
     if (subtree.size() == 0) { // leaf
       // merge path and vars
-      map<string,string> all = vars;
+      map<uint,uint> all = vars;
       all.insert(path->begin(), path->end());
       // look for key
-      map<string,string>::iterator k = all.find(key);
+      map<uint,uint>::iterator k = all.find(get_var_id(key));
       if (k == all.end())
 	return *flat;
       // key is found, extract key
-      string kval = k->second;
+      uint kval = k->second;
       all.erase(k);
       (*flat)[kval] = all;
     }
     return *flat;
   } 
 
-  varmaplist pairtree::flatten(varmaplist *flat, map<string,string> *path) {
+  varmaplist pairtree::flatten(varmaplist *flat, map<uint,uint> *path) {
     varmaplist flat2;
-    map<string,string> path2;
+    map<uint,uint> path2;
     if (!flat)
       flat = &flat2;
     if (!path)
       path = &path2;
 
-    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
+    for (map<uint,pairtree>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
       (*path)[subvariable] = i->first;
       i->second.flatten(flat, path);
     }
     if (subtree.size() == 0) { // leaf
       // merge path and vars
-      map<string,string> all = vars;
+      map<uint,uint> all = vars;
       all.insert(path->begin(), path->end());
       // push this map of variables onto the list of maps
       flat->push_back(all);
@@ -177,6 +227,7 @@ namespace ebl {
   } 
 
   natural_varmap pairtree::best(const string &key, uint n, bool display) {
+    timer t; t.start();
     natural_varmap flat = flatten(key);
     // keep only first n entries
     natural_varmap::iterator i = flat.begin();
@@ -189,12 +240,16 @@ namespace ebl {
       cout << "Best " << n << " results for \"" << key << "\":" << endl;
       pretty_flat(key, &flat);
     }
+    cout << "best() computation time: " << t.elapsed() << endl;
     return flat;
   }
 
   varmaplist pairtree::best(list<string> &keys, uint n, bool display) {
+    timer t; t.start();
     varmaplist flat = flatten();
-    flat.sort(map_natural_less(keys));
+    // sort
+    list<uint> ukeys = pairtree::to_varid_list(keys);
+    flat.sort(map_natural_less_uint(ukeys, vals_vector));
     // keep only first n entries
     varmaplist::iterator i = flat.begin();
     if (n == 0)
@@ -209,29 +264,119 @@ namespace ebl {
       cout << ":" << endl;
       pretty_flat(&flat, &keys);
     }
+    cout << "best() computation time: " << t.elapsed() << endl;
     return flat;
   }
+
+  varmaplist pairtree::best(list<string> &keys, const string &key,
+			    bool display) {
+    timer t; t.start();
+    varmaplist flat = flatten();
+    varmaplist res;
+    list<uint> seen; // remember which 'key' values have been seen.
+    list<uint> ukeys = pairtree::to_varid_list(keys);
+    // sort based on keys
+    flat.sort(map_natural_less_uint(ukeys, vals_vector));
+    // loop on sorted answers, only add each first time we see a different
+    // value for key 'key'. This will only report the best of each
+    // possible value of key
+    uint keyval;
+    varmaplist::iterator i = flat.begin();
+    for ( ; i != flat.end(); i++) {
+      keyval = (*i)[get_var_id(key)];
+      // check if we have seen this value of 'key' before
+      if (find(seen.begin(), seen.end(), keyval) != seen.end())
+	continue ; // we got best result for this value already
+      // if not, add it to res and seen
+      res.push_back(*i);
+      seen.push_back(keyval);
+    }
+    // display
+    if (display && flat.size() > 0) {
+      cout << "Best results for each value of " << key << ":" << endl;
+      pretty_flat(&res, &keys);
+    }
+    cout << "best() computation time: " << t.elapsed() << endl;
+    return res;
+  }
  
-  string& pairtree::get_variable() {
+  varmaplist pairtree::best(list<string> &keys, list<string> &keycomb,
+			    bool display) {
+    timer t; t.start();
+    varmaplist flat = flatten();
+    varmaplist res;
+    list<list<uint> > seen; // remember which 'key' values have been seen.
+    list<uint> val;
+    list<uint> ukeys = pairtree::to_varid_list(keys);
+    list<uint> ukeycomb = pairtree::to_varid_list(keycomb);
+    // sort based on keys
+    flat.sort(map_natural_less_uint(ukeys, vals_vector));
+    // loop on sorted answers, only add each first time we see a different
+    // value for key 'keycomb'. This will only report the best of each
+    // possible value of keycomb
+    string keyval;
+    varmaplist::iterator i = flat.begin();
+    for ( ; i != flat.end(); i++) {
+      // get each value of each keycomb
+      val.clear();
+      for (list<uint>::iterator j = ukeycomb.begin(); j != ukeycomb.end(); ++j)
+	val.push_back((*i)[*j]);
+      // check if we have seen this value combination of 'keycomb' before
+      bool found = false, breaked = false;
+      for (list<list<uint> >::iterator k = seen.begin(); k != seen.end();++k){
+	// check that we can find an element with all values equal
+	list<uint>::iterator j = k->begin();
+	list<uint>::iterator v = val.begin();
+	breaked = false;
+	for (; j != k->end(); ++j, ++v) {
+	  // stop this loop if 2 strings differ
+	  if (*j != *v) {
+	    breaked = true;
+	    break ;
+	  }
+	}
+	if (breaked)
+	  continue ; // try another element
+	found = true;
+	break ; // if found a match, stop this loop
+      }
+      if (found)
+	continue ; // we got best result for this value already
+      // if not, add it to res and seen
+      res.push_back(*i);
+      seen.push_back(val);
+    }
+    // display
+    if (display && flat.size() > 0) {
+      cout << "Best results for each combination of " << keycomb << ":" << endl;
+      pretty_flat(&res, &keys);
+    }
+    cout << "best() computation time: " << t.elapsed() << endl;
+    return res;
+  }
+ 
+  uint& pairtree::get_variable() {
     return variable;
   }
   
-  string& pairtree::get_value() {
+  uint& pairtree::get_value() {
     return value;
   }
+
+  // printing methods //////////////////////////////////////////////////////////
 
   void pairtree::pretty(string offset) {
     string off = offset;
     off += "--";
     cout << off << " (" << variable << ", " << value << ")" << endl
 	 << off << " vars: ";
-    for (map<string,string>::iterator i = vars.begin(); i != vars.end(); ++i)
-      cout << "(" << i->first << ", " << i->second << ") ";
+    for (map<uint,uint>::iterator i = vars.begin(); i != vars.end(); ++i)
+      cout << "(" << vars_vector[i->first] << ", " << vals_vector[i->second] << ") ";
     cout << endl << off << " subtree:" << endl;
-    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
+    for (map<uint,pairtree>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
-      cout << off << " (" << subvariable << ", " << i->first << ") ";
-      cout << endl;
+      cout << off << " (" << vars_vector[subvariable] << ", "
+	   << vars_vector[i->first] << ") " << endl;
       i->second.pretty(off);
     }
   }
@@ -242,7 +387,7 @@ namespace ebl {
       return s.str();
     s << "________________________________________________________" << endl;
     for (natural_varmap::iterator i = flat->begin(); i != flat->end(); ++i) {
-      s << i->first << ": ";
+      s << vars_vector[i->first] << ": ";
       s << map_to_string2(i->second);
       s << endl;
       s << "________________________________________________________" << endl;
@@ -254,6 +399,8 @@ namespace ebl {
     ostringstream s;
     if (!flat_)
       return s.str();
+    list<uint> ukeys;
+    if (keys) ukeys = pairtree::to_varid_list(*keys);
     s << "________________________________________________________" << endl;
     varmaplist flat = *flat_; // make a copy
     uint j = 1;
@@ -261,20 +408,20 @@ namespace ebl {
       s << j << ":";
       // first display keys in order
       if (keys) {
-	for (list<string>::iterator k = keys->begin(); k != keys->end(); ++k) {
-	  map<string,string>::iterator key = i->find(*k);
+	for (list<uint>::iterator k = ukeys.begin(); k != ukeys.end(); ++k) {
+	  map<uint,uint>::iterator key = i->find(*k);
 	  if (key != i->end()) {
 	    // display key
-	    s << " " << key->first << ": " << key->second;
+	    s << " " << vars_vector[key->first] << ": " << vals_vector[key->second];
 	    // remove key
 	    i->erase(key);
 	  }
 	}
       }
       s << endl;
-      for (map<string,string>::iterator j = i->begin();
+      for (map<uint,uint>::iterator j = i->begin();
 	   j != i->end(); ++j)
-	s << j->first << ": " << j->second << endl;
+	s << vars_vector[j->first] << ": " << vals_vector[j->second] << endl;
       s << "________________________________________________________" << endl;
     }
     return s.str();
@@ -300,27 +447,31 @@ namespace ebl {
 
   uint pairtree::get_max_uint(const string &var) {
     uint max = 0;
-    for (map<string,string>::iterator i = vars.begin(); i != vars.end(); ++i) {
-      if (i->first == var)
-	max = std::max(max, string_to_uint(i->second));
-    }
-    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
+    uint varid = get_var_id(var);
+    // find max locally
+    map<uint,uint>::iterator i = vars.find(varid);
+    if (i != vars.end())
+      max = std::max(max, string_to_uint(vals_vector[i->second]));
+    // find max is subtrees
+    for (map<uint,pairtree>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
-      if (subvariable == var)
-	max = std::max(max, string_to_uint(i->first));
+      if (subvariable == varid)
+	max = std::max(max, string_to_uint(vals_vector[i->first]));
       max = std::max(max, i->second.get_max_uint(var));
     }
     return max;
   }
   
   bool pairtree::exists(const string &var) {
-    for (map<string,string>::iterator i = vars.begin(); i != vars.end(); ++i) {
-      if (i->first == var)
-	return true;
-    }
-    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
+    // check locally
+    uint varid = get_var_id(var);
+    map<uint,uint>::iterator i = vars.find(varid);
+    if (i != vars.end())
+      return true;
+    // check in subtrees
+    for (map<uint,pairtree>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
-      if (subvariable == var)
+      if (subvariable == varid)
 	return true;
       if (i->second.exists(var))
 	return true;
@@ -329,10 +480,12 @@ namespace ebl {
   }
   
   bool pairtree::delete_pair(const char *var, const char *value) {
-    for (map<string,pairtree,natural_less>::iterator i = subtree.begin();
+    uint varid = get_var_id(var);
+    uint valid = get_val_id(value);
+    for (map<uint,pairtree>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
-      if (!strcmp(subvariable.c_str(), var) // same var
-	  && !strcmp(i->first.c_str(), value)) { // same value
+      if (subvariable == varid // same var
+	  && i->first == valid) { // same value
 	subtree.erase(i); // found var/value, delete it
 	return true;
       }
@@ -341,7 +494,7 @@ namespace ebl {
     return false;
   }
 
-  map<string,pairtree,natural_less>& pairtree::get_subtree() {
+  map<uint,pairtree>& pairtree::get_subtree() {
     return subtree;
   }
   
@@ -349,8 +502,8 @@ namespace ebl {
   // metaparser
 
   metaparser::metaparser() : separator(VALUE_SEPARATOR) {
-    hierarchy.push_back("job");
-    hierarchy.push_back("i");
+    hierarchy.push_back(pairtree::get_var_id("job"));
+    hierarchy.push_back(pairtree::get_var_id("i"));
   }
 
   metaparser::~metaparser() {
@@ -360,9 +513,14 @@ namespace ebl {
 			     list<string> *watch) {
     ifstream in(fname.c_str());
     string s, var, val;
+    uint varid, valid;
     char separator = VALUE_SEPARATOR;
     string::size_type itok, stok;
-    map<string,string> vars, stick;
+    map<uint,uint> vars, stick;
+    list<uint> usticky;
+    list<uint> uwatch;
+    if (sticky) usticky = pairtree::to_varid_list(*sticky);    
+    if (watch) uwatch = pairtree::to_varid_list(*watch);
 
     if (!in) {
       cerr << "warning: failed to open " << fname << endl;
@@ -389,19 +547,20 @@ namespace ebl {
 	val = s.substr(itok + 1, stok - itok - 1);
 	s = s.substr(stok);
 	itok = s.find(separator);
+	varid = pairtree::get_var_id(var);
 	// if not in watch list, ignore
-	if (watch && watch->size() 
-	    && find(watch->begin(), watch->end(), var) == watch->end())
+	if (watch && watch->size()
+	    && find(uwatch.begin(), uwatch.end(), varid) == uwatch.end())
 	  continue ;
 	// remember var/val
-	vars[var] = val;
+	valid = pairtree::get_val_id(val);
+	vars[varid] = valid;
 	// if a key, make it sticky
-	if (find(hierarchy.begin(), hierarchy.end(), var) != hierarchy.end())
-	  stick[var] = val;
+	if (find(hierarchy.begin(), hierarchy.end(), varid) != hierarchy.end())
+	  stick[varid] = valid;
 	// if sticky, remember value
-	if (sticky && find(sticky->begin(), sticky->end(), var)
-	    != sticky->end())
-	  stick[var] = val;
+	if (sticky && find(usticky.begin(), usticky.end(), varid) != usticky.end())
+	  stick[varid] = valid;
       }
       // add variables to tree, and remember the path to the leaf
       tree.add(hierarchy, vars);
@@ -416,20 +575,38 @@ namespace ebl {
     return (int) tree.get_max_uint("i");
   }
   
+  int metaparser::get_max_common_iter(configuration &conf, 
+				      const string &dir) {
+    list<string> sticky, watch;
+    // get list of sticky variables
+    if (conf.exists("meta_sticky_vars")) {
+      sticky = string_to_stringlist(conf.get_string("meta_sticky_vars"));
+      //cout << "Sticky variables: " << stringlist_to_string(sticky) << endl;
+    }
+    // get list of variables to watch for
+    if (conf.exists("meta_watch_vars")) {
+      watch = string_to_stringlist(conf.get_string("meta_watch_vars"));
+      //cout << "Variables to watch (ignoring others): " 
+      //<< stringlist_to_string(watch) << endl;
+    }
+    parse_logs(dir, &sticky, &watch);
+    return get_max_common_iter();
+  }
+
   int metaparser::get_max_common_iter() {
     if (!tree.exists("i"))
       return -1;
     int minmax = (std::numeric_limits<int>::max)();
     // assuming that "job" is first level and "i" second one:
-    for (map<string,pairtree,natural_less>::iterator i = 
+    for (map<uint,pairtree>::iterator i = 
 	   tree.get_subtree().begin();
          i != tree.get_subtree().end(); ++i) {
       // for job i, find maximum i
       int max = 0;
-      for (map<string,pairtree,natural_less>::iterator j = 
+      for (map<uint,pairtree>::iterator j = 
 	     i->second.get_subtree().begin();
 	   j != i->second.get_subtree().end(); ++j)
-	max = std::max(max, string_to_int(j->first));
+	max = std::max(max, string_to_int(pairtree::vals_vector[j->first]));
       // find minimum of the maximums
       minmax = MIN(minmax, max);
     }
@@ -444,7 +621,7 @@ namespace ebl {
     return tree.best(keys, n, display);
   }
 
-  void metaparser::process(const string &dir, bool displayall) {
+  void metaparser::process(const string &dir) {
     string confname, jobs_info;
     configuration conf;
     // find all configurations in non-sorted order, the meta conf
@@ -458,18 +635,74 @@ namespace ebl {
       cerr << "warning: could not find a .conf file describing how to analyze "
 	   << "this directory" << endl;
     }
+    // check if the hierarchy is manually specified
+    if (conf.exists("meta_hierarchy")) {
+      hierarchy.clear();
+      list<string> l = string_to_stringlist(conf.get_string("meta_hierarchy"));
+      cout << "Using user-specified hierarchy: " << l << endl;
+      for (list<string>::iterator i = l.begin(); i != l.end(); ++i)
+	hierarchy.push_back(pairtree::get_var_id(i->c_str()));
+    }
+    // analyze
     int iter = 0;
-    varmaplist best = analyze(conf, dir, iter, displayall);
-    send_report(conf, dir, best, iter, confname, jobs_info);
+    varmaplist besteach;
+    varmaplist best = analyze(conf, dir, iter, besteach, 
+			      conf.exists_true("meta_display_all"));
+    send_report(conf, dir, best, iter, confname, jobs_info, 0, 0, 0, &besteach);
   }
   
+  void metaparser::organize_plot(list<string> &names, varmaplist &flat, pairtree &p) {
+    // subvar represents the hierarchy, with "job" followed by last of 'names'
+    list<uint> subvar;
+    list<uint> unames = pairtree::to_varid_list(names);
+    uint jobid = pairtree::get_var_id("job");
+    subvar.push_back(jobid);
+    subvar.push_back(unames.back());
+    // loop over each set of variables in flat
+    varmaplist::iterator i = flat.begin();
+    for ( ; i != flat.end(); ++i) {
+      // extract and merge all variables found in names (except last one)
+      string name;
+      int l = 0;
+      bool first = true;
+      for (list<uint>::iterator j = unames.begin();
+	   l < (int) unames.size() - 1 && j != unames.end(); ++j, l++) {
+	map<uint,uint>::iterator k = i->find(*j);
+	if (k != i->end()) {
+	  if (!first)
+	    name << "_";
+	  else
+	    first = false;
+	  name << pairtree::vars_vector[*j] << "_" 
+	       << pairtree::vals_vector[k->second];
+	  i->erase(k);
+	}
+      }
+      // rename job with new name
+      (*i)[jobid] = pairtree::get_val_id(name);
+      // add this to tree
+      p.add(subvar, *i);
+    }
+  }
+
   // write plot files, using gpparams as additional gnuplot parameters
-  void metaparser::write_plots(configuration &conf, const char *dir) {
-    string gpparams = "", gpterminal = "pdf";
+  void metaparser::write_plots(configuration &conf, const char *dir,
+			       pairtree *p, string *prefix) {
+    pairtree *pt = &tree;
+    if (p) pt = p;
+    string gpparams = "", gpterminal = "pdf", gpfont = "Times=10",
+      gpline = "";
+    bool usefont = false;
     if (conf.exists("meta_gnuplot_params"))
       gpparams = conf.get_string("meta_gnuplot_params");
     if (conf.exists("meta_gnuplot_terminal"))
       gpterminal = conf.get_string("meta_gnuplot_terminal");
+    if (conf.exists("meta_gnuplot_font")) {
+      gpfont = conf.get_string("meta_gnuplot_font");
+      usefont = true;
+    }
+    if (conf.exists("meta_gnuplot_line"))
+      gpline = conf.get_string("meta_gnuplot_line");
 
     string colsep = "\t";
     string gnuplot_config1 = "clear ; set terminal ";
@@ -483,11 +716,11 @@ namespace ebl {
     map<string,ofstream*> plotfiles, pfiles;
     list<string> plist; // list p file names
 
-    if (!tree.exists("job"))
+    if (!pt->exists("job"))
       cerr << "warning: expected a \"job\" variable to differentiate each "
 	   << "curve in the plots but not found." << endl;
     bool iexists = true;
-    if (!tree.exists("i")) {
+    if (!pt->exists("i")) {
       iexists = false;
       cerr << "warning: expected a \"i\" variable for the x-axis "
 	   << "in the plots but not found." << endl;
@@ -496,10 +729,9 @@ namespace ebl {
     // order: job, i
     // loop on each job
     uint ijob = 0;
-    for (map<string,pairtree,natural_less>::iterator i = 
-	   tree.get_subtree().begin();
-	 i != tree.get_subtree().end(); ++i, ++ijob) {
-      string job = i->first;
+    t_subtree &st = pt->get_subtree();
+    for (t_subtree::iterator i = st.begin(); i != st.end(); ++i, ++ijob) {
+      uint job = i->first;
       // flatten remaining tree based on key "i"
       string ikey = "i";
       // if key doesn't exist, define it
@@ -513,61 +745,78 @@ namespace ebl {
       // loop on all i
       for (natural_varmap::iterator j = flat.begin(); j != flat.end(); ++j) {
 	// convert i to double
-	double ival = string_to_double(j->first);
+	double ival = string_to_double(pairtree::vals_vector[j->first]);
 	// loop on all variables
-	for (map<string,string>::iterator k = j->second.begin();
+	for (map<uint,uint>::iterator k = j->second.begin();
 	     k != j->second.end(); ++k) {
+	  string kvar = pairtree::vars_vector[k->first];
+	  string kval = pairtree::vals_vector[k->second];
 	  // try to convert value to double
-	  istringstream iss(k->second);
+	  istringstream iss(kval);
 	  double val;
 	  iss >> val;
 	  if (iss.fail())
 	    continue ; // not a number, do not plot
 	  // check that p file is open
-	  if (pfiles.find(k->first) == pfiles.end()) {
+	  if (pfiles.find(kvar) == pfiles.end()) {
 	    // not open, add file
 	    ostringstream fname;
 	    if (dir)
 	      fname << dir << "/";
-	    fname << k->first << ".p";
+	    if (prefix)
+	      fname << *prefix;
+	    fname << kvar << ".p";
 	    ofstream *outp = new ofstream(fname.str().c_str());
 	    if (!outp) {
 	      cerr << "warning: failed to open " << fname.str() << endl;
 	      continue ; // keep going
 	    }
-	    pfiles[k->first] = outp;
+	    pfiles[kvar] = outp;
 	    fname.str("");
-	    fname << k->first << ".p";
+	    if (prefix)
+	      fname << *prefix;	    
+	    fname << kvar << ".p";
 	    plist.push_back(fname.str());
 	    *outp << gnuplot_config1;
 	    *outp << gpparams;
 	    *outp << ";" << gnuplot_config2;
-	    *outp << k->first << gnuplot_config3;
+	    if (prefix)
+	      *outp << *prefix;	    
+	    *outp << kvar << gnuplot_config3;
 	  }
 	  // check that plot file is open
-	  if (plotfiles.find(k->first) == plotfiles.end()) {
+	  if (plotfiles.find(kvar) == plotfiles.end()) {
 	    // not open, add file
 	    ostringstream fname;
 	    if (dir)
 	      fname << dir << "/";
-	    fname << k->first << ".plot";
-	    plotfiles[k->first] = new ofstream(fname.str().c_str());
-	    if (!plotfiles[k->first]) {
+	    if (prefix)
+	      fname << *prefix;
+	    fname << kvar << ".plot";
+	    plotfiles[kvar] = new ofstream(fname.str().c_str());
+	    if (!plotfiles[kvar]) {
 	      cerr << "warning: failed to open " << fname.str() << endl;
 	      continue ; // keep going
 	    }
 	  }
 	  // if not initiated, add job plot description in p file
-	  if (initiated.find(k->first) == initiated.end()) {
-	    initiated[k->first] = true;
-	    ofstream &outp = *pfiles[k->first];
+	  if (initiated.find(kvar) == initiated.end()) {
+	    initiated[kvar] = true;
+	    ofstream &outp = *pfiles[kvar];
 	    if (ijob > 0)
 	      outp << ", ";
-	    outp << "\"" << k->first << ".plot\" using 1:"
-		 << ijob + 2 << " title \"" << job << "\" with linespoints";
+	    outp << "\"";
+	    if (prefix)
+	      outp << *prefix;	    
+	    outp << kvar << ".plot\" using 1:"
+		 << ijob + 2 << " title \"";
+	    if (usefont) outp << "{/" << gpfont;
+	    outp << " " << job;
+	    if (usefont) outp << "}";
+	    outp << "\" with linespoints " << gpline;
 	  }
 	  // add this value into plot file
-	  ofstream &outp = *plotfiles[k->first];
+	  ofstream &outp = *plotfiles[kvar];
 	  // first add abscissa value i
 	  outp << ival << colsep;
 	  // then fill with empty values until reaching job's column
@@ -597,6 +846,7 @@ namespace ebl {
       cout << "Creating plot from " << *i << endl;
       cmd.str("");
       cmd << "cd " << dir << " && cat " << *i << " | gnuplot && sleep .1";
+      cout << "with cmd: " << cmd.str() << endl;
       int ret = std::system(cmd.str().c_str());
       if (ret < 0)
 	cerr << "warning: command failed" << endl;
@@ -618,14 +868,10 @@ namespace ebl {
     }
   }
 
-  int metaparser::get_max_common_iter(const string &dir) {
-    parse_logs(dir);
-    return get_max_common_iter();
-  }
-  
   varmaplist metaparser::analyze(configuration &conf, const string &dir,
-				 int &maxiter, bool displayall) {
-    list<string> sticky, watch;
+				 int &maxiter, varmaplist &besteach,
+				 bool displayall) {
+    list<string> sticky, watch, keycomb;
     varmaplist best;
     // get list of sticky variables
     if (conf.exists("meta_sticky_vars")) {
@@ -649,12 +895,22 @@ namespace ebl {
       // display all (sorted) results if required
       if (displayall) {
 	cout << "All sorted results at iteration " << maxiter << ":" << endl;
-	varmaplist b = tree.best(keys);
-	cout << pairtree::flat_to_string(&b, &keys) << endl;
+	varmaplist b = tree.best(keys, 0, true);
       }
       if (conf.exists_true("meta_ignore_iter0") // ignore iter 0's results
 	  && get_max_iter() > 0) // don't ignore if max iter == 0
 	tree.delete_pair("i", "0");
+      // get best value of each job
+      if (conf.exists("meta_best_keycomb")) {
+	keycomb = string_to_stringlist(conf.get_string("meta_best_keycomb"));
+	cout << "Computing best combinations of " << keycomb << " ..." << endl;
+	besteach = tree.best(keys, keycomb, true);
+      } else {
+	string k = "job";
+	if (conf.exists("meta_job_var")) k = conf.get_string("meta_job_var");
+	cout << "Computing best answers..." << endl;
+	besteach = tree.best(keys, k, true);
+      }
       // get best values to be minimized
       uint nbest = conf.exists("meta_nbest") ? conf.get_uint("meta_nbest") : 1;
       best = tree.best(keys, std::max((uint) 1, nbest));
@@ -673,22 +929,29 @@ namespace ebl {
 	tmpdir << dirbest.str() << "/" << setfill('0') << setw(2) << j << "/";
 	mkdir_full(tmpdir.str().c_str());
 	// look for conf filename to save
-	if (i->find("config") != i->end()) { // found config
+	uint configid = pairtree::get_var_id("config");
+	if (i->find(configid) != i->end()) { // found config
 	  cmd.str("");
-	  cmd << "cp " << i->find("config")->second << " " << tmpdir.str();
+	  cmd << "cp " << pairtree::vals_vector[i->find(configid)->second]
+	      << " " << tmpdir.str();
 	  ret = std::system(cmd.str().c_str());
 	}
 	// find job name
-	if (i->find("job") == i->end()) // not found, continue
+	uint jobid = pairtree::get_var_id("job");
+	if (i->find(jobid) == i->end()) // not found, continue
 	  continue ; // can't do anything without job name
 	else
-	  job = i->find("job")->second;
+	  job = pairtree::vals_vector[i->find(jobid)->second];
 	// look for classes filename to save
-	if (i->find("classes") != i->end()) { // found classes
+	uint classesid = pairtree::get_var_id("classes");
+	if (i->find(classesid) != i->end()) { // found classes
 	  cmd.str("");
-	  cmd << "cp " << dir << "/" << job << "/"
-	      << i->find("classes")->second << " " << tmpdir.str();
+	  cmd << "cp " //<< dir << "/" << job << "/"
+	      << pairtree::vals_vector[i->find(classesid)->second] << " " << tmpdir.str();
 	  ret = std::system(cmd.str().c_str());
+	  if (ret < 0) 
+	    cerr << "warning: failed to copy classes with cmd: "
+		 << cmd.str() << endl;
 	}
 	// save out log
 	cmd.str("");
@@ -696,18 +959,21 @@ namespace ebl {
 	    << "out_" << job << ".log " << tmpdir.str();
 	ret = std::system(cmd.str().c_str());
 	// look for weights filename to save
-	if (i->find("saved") != i->end()) { // found weights
+	uint savedid = pairtree::get_var_id("saved");
+	if (i->find(savedid) != i->end()) { // found weights
 	  cmd.str("");
 	  cmd << "cp " << dir << "/" << job << "/"
-	      << i->find("saved")->second << " " << tmpdir.str();
+	      << pairtree::vals_vector[i->find(savedid)->second]
+	      << " " << tmpdir.str();
 	  ret = std::system(cmd.str().c_str());
 	  // add weights filename into configuration
 #ifdef __BOOST__
-	  if ((i->find("config") != i->end()) &&
-	      (i->find("saved") != i->end())) {
-	    path p(i->find("config")->second);
+	  if ((i->find(configid) != i->end()) &&
+	      (i->find(savedid) != i->end())) {
+	    path p(pairtree::vals_vector[i->find(configid)->second]);
 	    cmd.str("");
-	    cmd << "echo \"weights_file=" << i->find("saved")->second 
+	    cmd << "echo \"weights_file=" 
+		<< pairtree::vals_vector[i->find(savedid)->second]
 		<< " # variable added by metarun\n\" >> "
 		<< tmpdir.str() << "/" << p.leaf();
 	    ret = std::system(cmd.str().c_str());
@@ -725,7 +991,7 @@ namespace ebl {
 			       varmaplist &best, int maxiter,
 			       string conf_fullfname, string jobs_info,
 			       uint nrunning, double maxminutes,
-			       double minminutes) {
+			       double minminutes, varmaplist *besteach) {
     ostringstream cmd;
     string tmpfile = "report.tmp";
     int res;
@@ -756,9 +1022,9 @@ namespace ebl {
       cmd << "\" >> " << tmpfile;
       res = std::system(cmd.str().c_str());
       // print best results
+      list<string> keys =
+	string_to_stringlist(conf.get_string("meta_minimize"));
       if (best.size() > 0) {
-	list<string> keys =
-	  string_to_stringlist(conf.get_string("meta_minimize"));
 	cmd.str("");
 	cmd << "echo \"Best " << best.size() << " results at iteration " 
 	    << maxiter << ":" << endl;
@@ -766,6 +1032,25 @@ namespace ebl {
 	res = std::system(cmd.str().c_str()); // print on screen
 	cmd << " >> " << tmpfile;
 	res = std::system(cmd.str().c_str());
+      }
+      // print best of each job
+      if (besteach) {
+	cmd.str("");
+	cmd << "echo \"Best result of each job at iteration " << maxiter << ":"
+	    << endl << pairtree::flat_to_string(besteach, &keys) << "\"";
+	res = std::system(cmd.str().c_str()); // print on screen
+	cmd << " >> " << tmpfile;
+	res = std::system(cmd.str().c_str());
+	// write plots of best of each job for given plot axis
+	if (conf.exists("meta_plot_keys")) {
+	  pairtree p;
+	  list<string> plot_keys = 
+	    string_to_stringlist(conf.get_string("meta_plot_keys"));
+	  string prefix;
+	  prefix << plot_keys.back() << "_";
+	  organize_plot(plot_keys, *besteach, p);
+	  write_plots(conf, dir.c_str(), &p, &prefix);
+	}
       }
       // print err logs
       list<string> *errlogs = find_fullfiles(dir, ".*[.]errlog");
@@ -796,8 +1081,8 @@ namespace ebl {
       write_plots(conf, dir.c_str());
       // print metaconf
       cmd.str("");
-      cmd << "echo \"\nMeta Configuration:\"";
-      cmd << " >> " << tmpfile;
+      cmd << "echo \"\nMeta Configuration (" << conf_fullfname << "):\""
+	  << " >> " << tmpfile;
       res = std::system(cmd.str().c_str());
       cmd.str("");
       cmd << "cat " << conf_fullfname << " >> " << tmpfile;

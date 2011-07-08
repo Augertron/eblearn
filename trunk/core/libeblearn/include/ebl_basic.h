@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -118,16 +119,14 @@ namespace ebl {
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //!        If p is null, a local buffer will be used.
-    //! \param kerneli is the height of the convolution kernel
-    //! \param kernelj is the width of the convolution kernel
-    //! \param stridei is the stride at which convolutions are done on 
-    //!        the height axis.
-    //! \param stridej is the stride at which convolutions are done on 
-    //!        the width axis.
+    //! \param ker The convolution kernel sizes.
+    //! \param stride The convolution strides.
     //! \param table is the convolution connection table.
-    convolution_module(parameter<T,Tstate> *p, intg kerneli, intg kernelj, 
-		       intg  stridei, intg stridej, 
-		       idx<intg> &table, const char *name = "convolution");
+    //! \param crop If true, crop input when it does not match with the kernel.
+    //!          This allows to feed any input size to this module.
+    convolution_module(parameter<T,Tstate> *p, idxdim &ker, idxdim &stride,
+		       idx<intg> &table, const char *name = "convolution",
+		       bool crop = true);
     //! destructor
     virtual ~convolution_module();
     //! forward propagation from in to out
@@ -160,12 +159,13 @@ namespace ebl {
     intg		tablemax;
     Tstate	        kernel;
     intg		thickness;
-    intg		stridei;
-    intg		stridej;
+    idxdim		ker;
+    idxdim		stride;
     idx<intg>		table;	//!< table of connections btw input and output
-  private:
+  protected:
     bool		warnings_shown;
     bool                float_precision; //!< used for IPP
+    bool                crop; //! Crop input when size mismatch or not.
 #ifdef __IPP__
     idx<T>              revkernel; //!< a reversed kernel for IPP
     idx<T>              outtmp; //!< a tmp buffer for IPP conv output
@@ -182,10 +182,10 @@ namespace ebl {
   //! the output of the processing of each <2x16x16> slice.
   DECLARE_REPLICABLE_MODULE_1_1(convolution_module_replicable, 
 				convolution_module, T, Tstate,
-				(parameter<T,Tstate> *p, intg ki, intg kj,
-				 intg si, intg sj, idx<intg> &table,
+				(parameter<T,Tstate> *p,
+				 idxdim &ker, idxdim &stride, idx<intg> &table,
 				 const char *name = "convolution_replicable"),
-				(p, ki, kj, si, sj, table, name));
+				(p, ker, stride, table, name));
 
   ////////////////////////////////////////////////////////////////
   // subsampling_module
@@ -200,13 +200,14 @@ namespace ebl {
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //!        If p is null, a local buffer will be used.
-    //! \param stridei Stride in height of subsampling kernel.
-    //! \param stridej Stride in width of subsampling kernel.
-    //! \param subi Size in height of subsampling kernel.
-    //! \param subj Size in width of subsampling kernel.
-    subsampling_module(parameter<T,Tstate> *p, intg stridei, intg stridej,
-		       intg subi, intg subj, intg thick,
-		       const char *name = "subsampling");
+    //! \param thickness The number of features.
+    //! \param kernel Size of subsampling kernel (without thickness).
+    //! \param stride Stride of subsampling kernel (without thickness).
+    //! \param crop If true, crop input when it does not match with the kernel.
+    //!          This allows to feed any input size to this module.
+    subsampling_module(parameter<T,Tstate> *p, uint thickness, idxdim &kernel,
+		       idxdim &stride, const char *name = "subsampling",
+		       bool crop = true);
     //! destructor
     virtual ~subsampling_module();
     //! forward propagation from in to out
@@ -234,11 +235,13 @@ namespace ebl {
 
     // members ////////////////////////////////////////////////////////
   public:
-    Tstate	        coeff; //! Learned averaging coefficients.
-    Tstate	        sub; //! Temporary buffer to hold sum of neighborhood.
-    intg		thickness;
-    intg		stridei;
-    intg		stridej;
+    Tstate	        coeff; //!< Learned averaging coefficients.
+    Tstate	        sub; //!< Temporary buffer to hold sum of neighborhood.
+    uint                thickness; //!< Number of features.
+    idxdim              kernel; //!< Dimensions of subsampling kernel.
+    idxdim              stride; //!< Strides of subsampling.
+  protected:
+    bool                crop; //! Crop input when size mismatch or not.
   };
 
   //! The replicable version of subsampling_module.
@@ -251,10 +254,10 @@ namespace ebl {
   //! the output of the processing of each <2x16x16> slice.
   DECLARE_REPLICABLE_MODULE_1_1(subsampling_module_replicable, 
 				subsampling_module, T, Tstate,
-				(parameter<T,Tstate> *p, intg sti, intg stj,
-				 intg subi, intg subj, intg thick,
+				(parameter<T,Tstate> *p, uint thickness,
+				 idxdim &kernel, idxdim &strides,
 				 const char *name = "subsampling_replicable"),
-				(p, sti, stj, subi, subj, thick, name));
+				(p, thickness, kernel, strides, name));
 
   ////////////////////////////////////////////////////////////////
   // addc_module
@@ -432,12 +435,22 @@ namespace ebl {
   template <typename T, class Tstate = bbstate_idx<T> >
     class zpad_module : public module_1_1<T,Tstate> {
   public:
+    //! Empty constructor. User should set paddings via the set_paddings()
+    //! method.
+    zpad_module();
     //! Constructor. Adding same size borders on each side.
     //! \param nr The number of rows added on each side.
     //! \param nc The number of cols added on each side.
     //! the output size is enlarged by 2*nrow in rows and 2*ncols in cols
     //! for each feature map.
     zpad_module(int nr, int nc);
+    //! Constructs a zpad module that adds padding on each side of a 2D input.
+    //! (the 1st (features) dimension is left unchanged).
+    //! \param top The number of rows added on to the top side.
+    //! \param left The number of rows added on to the left side.
+    //! \param bottom The number of rows added on to the bottom side.
+    //! \param right The number of rows added on to the right side.
+    zpad_module(int top, int left, int bottom, int right);
     //! Constructor adding zero borders with same size on each size if the
     //! kernel had odd size, otherwise adding 1 pixel less on the right
     //! and bottom borders.
@@ -451,9 +464,15 @@ namespace ebl {
     virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(Tstate &in, Tstate &out);
-  private:
+    //! Return all paddings in an idxdim: top,left,bottom,right.
+    virtual idxdim get_paddings();
+    //! Set all paddings from 'pads' in this order: top,left,bottom,right.
+    virtual void set_paddings(idxdim &pads);
+  
+  protected:
     int nrow, ncol; //!< padding on left and top
     int nrow2, ncol2; //!< padding on botton and right
+    idxdim pads; //!< all paddings: top,left,bottom,right
   };
   
   ////////////////////////////////////////////////////////////////
@@ -642,12 +661,10 @@ namespace ebl {
     class maxss_module : public module_1_1<T,Tstate> {
   public:
     //! Constructor.
-    //! \param stridei Stride in height of subsampling kernel.
-    //! \param stridej Stride in width of subsampling kernel.
-    //! \param subi Size in height of subsampling kernel.
-    //! \param subj Size in width of subsampling kernel.
-    maxss_module(intg stridei, intg stridej,
-		 intg subi, intg subj, intg thick,
+    //! \param thickness The number of features.
+    //! \param kernel Size of subsampling kernel (without thickness).
+    //! \param stride Stride of subsampling kernel (without thickness).
+    maxss_module(uint thickness, idxdim &kernel, idxdim &stride,
 		 const char *name = "maxss");
     //! Destructor.
     virtual ~maxss_module();    
@@ -673,12 +690,10 @@ namespace ebl {
     virtual std::string describe();
     // members ////////////////////////////////////////////////////////
   protected:
-    intg                subi; //!< height size of kernel
-    intg                subj; //!< width size of kernel
-    intg		thickness;
-    intg		stridei;
-    intg		stridej;
-    idx<int>            switches; //!< Remember max locations
+    uint        thickness;    //!< Number of features.
+    idxdim	kernel;	      //!< Kernel dimensions (1st dim is thickness).
+    idxdim	stride;	      //!< Stride dimensions (stride 1 in 1st dim).
+    idx<int>    switches;     //!< Remember max locations
   };
 
 } // namespace ebl {

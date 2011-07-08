@@ -38,12 +38,20 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // gui
 
-  int new_window(const char *wname, unsigned int h, unsigned int w) {
+  int new_window(const char *wname, uint h, uint w) {
     return gui.new_window(wname, h, w);
   }
 
-  int new_window(const string &wname, unsigned int h, unsigned int w) {
+  int new_window(const string &wname, uint h, uint w) {
     return gui.new_window(wname.c_str(), h, w);
+  }
+
+  int new_window3d(const char *wname, uint h, uint w) {
+    return gui.new_window3d(wname, h, w);
+  }
+
+  int new_window3d(const string &wname, uint h, uint w) {
+    return gui.new_window3d(wname.c_str(), h, w);
   }
 
   void select_window(int wid) {
@@ -82,10 +90,35 @@ namespace ebl {
     gui.draw_arrow(h1, w1, h2, w2);
   }
 
-  void draw_box(int h0, int w0, int h, int w,
-		unsigned char r, unsigned char g, unsigned char b, 
-		unsigned char a, string *s) {
+  void draw_box(int h0, int w0, int h, int w, ubyte r, ubyte g, ubyte b,
+		ubyte a, string *s) {
+    gui.draw_box((float) h0, (float) w0, (float) h, (float) w, r, g, b, a, s);
+  }
+
+  void draw_box(rect<int> &box, ubyte r, ubyte g, ubyte b,
+		ubyte a, string *s) {
+    gui.draw_box((float) box.h0, (float) box.w0, (float) box.height,
+		 (float) box.width, r, g, b, a, s);
+  }
+
+  void draw_box(rect<float> &box, ubyte r, ubyte g, ubyte b,
+		ubyte a, string *s) {
+    gui.draw_box(box.h0, box.w0, box.height, box.width, r, g, b, a, s);
+  }
+
+  void draw_box(float h0, float w0, float h, float w, ubyte r, ubyte g, ubyte b,
+		ubyte a, string *s) {
     gui.draw_box(h0, w0, h, w, r, g, b, a, s);
+  }
+
+  void draw_cross(float h0, float w0, float length, ubyte r, ubyte g, ubyte b, 
+		  ubyte a, string *s) {
+    gui.draw_cross(h0, w0, length, r, g, b, a, s);
+  }
+
+  void draw_ellipse(float h0, float w0, float h, float w,
+		    ubyte r, ubyte g, ubyte b, ubyte a, string *s) {
+    gui.draw_ellipse(h0, w0, h, w, r, g, b, a, s);
   }
 
   void set_gui_silent() {
@@ -150,4 +183,23 @@ namespace ebl {
     gui.set_window_title(s);
   }
 
+  void freeze_window_size(uint h, uint w) {
+    gui.freeze_window_size(h, w);
+  }
+
+  // 3d calls //////////////////////////////////////////////////////////////////
+
+  void draw_sphere(float x, float y, float z, float radius,
+		   const char *s, int r, int g, int b, int a) {
+    gui.draw_sphere(x, y, z, radius, s, r, g, b, a);
+  }
+
+  void draw_cylinder(float x, float y, float z, float length,
+		     float top_radius, float base_radius, float a1,
+		     float a2, const char *s, int r, int g, int b,
+		     int a, bool tops) {
+    gui.draw_cylinder(x, y, z, length, top_radius, base_radius,
+		      a1, a2, s, r, g, b, a, tops);
+  }
+  
 } // end namespace ebl

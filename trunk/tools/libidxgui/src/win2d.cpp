@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,7 +30,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "moc_window.cxx"
+#include "moc_win2d.cxx"
 #include <qstyle.h>
 #include <math.h>
 
@@ -38,115 +39,34 @@ using namespace std;
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
-  // text
+  // win2d
 
-  text::text(unsigned int h0_, unsigned int w0_, bool pos_reset_,
-	     unsigned char fg_r_, unsigned char fg_g_, 
-	     unsigned char fg_b_, unsigned char fg_a_,
-	     unsigned char bg_r_, unsigned char bg_g_, 
-	     unsigned char bg_b_, unsigned char bg_a_)
-    : string(""), h0(h0_), w0(w0_), pos_reset(pos_reset_),
-      fg_r(fg_r_), fg_g(fg_g_), fg_b(fg_b_), fg_a(fg_a_), 
-      bg_r(bg_r_), bg_g(bg_g_), bg_b(bg_b_), bg_a(bg_a_) {
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // arrow
-
-  arrow::arrow(int h1_, int w1_, int h2_, int w2_)
-    : h1(h1_), w1(w1_), h2(h2_), w2(w2_) {
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // box
-
-  box::box(int h0_, int w0_, int h_, int w_, unsigned char r_, unsigned char g_,
-	   unsigned char b_, unsigned char a_)
-    : h0(h0_), w0(w0_), h(h_), w(w_), r(r_), g(g_), b(b_), a(a_) {
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // image
-
-  image::image(idx<ubyte> &img_, unsigned int h0_, unsigned int w0_)
-    : h0(h0_), w0(w0_) {
-    img = img_;
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // imask
-
-  imask::imask(idx<ubyte> *img, unsigned int h0_, unsigned int w0_,
-	       ubyte r, ubyte g, ubyte b, ubyte a)
-    : h0(h0_), w0(w0_), map(img->dim(1), img->dim(0)) {
-    // fill the pixmap with desired color
-    map.fill(QColor(r, g, b, a));
-    // set mask
-    QImage qim((unsigned char*) img->idx_ptr(), img->dim(1), img->dim(0), 
-	       img->dim(1) * img->dim(2) * sizeof (unsigned char),
-	       QImage::Format_RGB888);
-    map.setMask(QBitmap::fromImage(qim));
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // Window
-
-  Window::Window(unsigned int wid, const char *wname, int height, int width) 
-    : pixmapScale(1.0), curScale(1.0), scaleIncr(1), colorTable(256),
-      texts(), silent(false), id(wid), savefname(""), wupdate_ndisable(0),
-      frozen_style(false), font_size(-1) {
-    setAttribute(Qt::WA_DeleteOnClose);
-    if (wname) {
-      QString q(wname);
-      setWindowTitle(q);
-    } else {
-      QString q("EBLearn Graphics");
-      setWindowTitle(q);
-    }
+  win2d::win2d(uint wid, const char *wname, uint height, uint width) 
+    : win((QWidget*) this, wid, wname, height, width),
+      pixmapScale(1.0) {
     pixmap = new QPixmap(1, 1);
     buffer = NULL;
     qimage = NULL;
-    for (int i = 0; i < 256; i++){
-      colorTable[i] = qRgb(i, i, i);
-    }
     clear();
-    if ((height != 0) && (width != 0))
-      buffer_resize(height, width);
-    wupdate = true; // always update display
-    set_text_colors(255, 255, 255, 255, 0, 0, 0, 127); // default text color
-    set_bg_colors(255, 255, 255); // default background color is white
     buffer_maxh = height;
     buffer_maxw = width;
-    pos_reset = true;
-    scrollbox = NULL;
-    setFocusPolicy(Qt::NoFocus);
+    if ((height != 0) && (width != 0))
+      resize_window(height, width);
     update_window();
   }
 
-  Window::~Window() {
+  win2d::~win2d() {
     delete pixmap;
     if (buffer)
       delete buffer;
     if (qimage)
       delete qimage;
-    // clear temporary lists
-    clear_text(true);
-    clear_arrows(true);
-    clear_boxes(true);
-    clear_images(true);
-    clear_masks(true);
-    // clear regular lists
-    clear_text(false);
-    clear_arrows(false);
-    clear_boxes(false);
-    clear_images(false);
-    clear_masks(false);
   }
 
   ////////////////////////////////////////////////////////////////
   // clear methods
 
-  void Window::clear() {
+  void win2d::clear() {
     buffer_fill(buffer);
     // if (pixmap) 
     //   pixmap->fill(bg_color);
@@ -154,12 +74,14 @@ namespace ebl {
     clear_text(!wupdate);
     clear_arrows(!wupdate);
     clear_boxes(!wupdate);
+    clear_crosses(!wupdate);
+    clear_ellipses(!wupdate);
     clear_images(!wupdate);
     clear_masks(!wupdate);
     update_window();
   }
 
-  void Window::clear_resize() {
+  void win2d::clear_resize() {
     buffer_resize(1, 1, true);
     buffer_fill(buffer);
     // if (pixmap) 
@@ -168,234 +90,28 @@ namespace ebl {
     clear_text(!wupdate);
     clear_arrows(!wupdate);
     clear_boxes(!wupdate);
+    clear_crosses(!wupdate);
+    clear_ellipses(!wupdate);
     clear_images(!wupdate);
     clear_masks(!wupdate);
     update_window();
   }
 
-  void Window::clear_text(bool clear_tmp) {
-    vector<text*> *t = &texts;
-    if (clear_tmp)
-      t = &texts_tmp;
-    for (vector<text*>::iterator i = t->begin(); i != t->end(); ++i)
-      if (*i)
-	delete (*i);
-    t->clear();
-    txt = NULL;
-    text_h0 = 0;
-    text_w0 = 0;
-  }
-
-  void Window::clear_arrows(bool clear_tmp) {
-    vector<arrow*> *a = &arrows;
-    if (clear_tmp)
-      a = &arrows_tmp;
-    for (vector<arrow*>::iterator i = a->begin(); i != a->end(); ++i)
-      if (*i)
-	delete (*i);
-    a->clear();
-  }
-
-  void Window::clear_boxes(bool clear_tmp) {
-    vector<box*> *b = &boxes;
-    if (clear_tmp)
-      b = &boxes_tmp;
-    for (vector<box*>::iterator i = b->begin(); i != b->end(); ++i)
-      if (*i)
-	delete (*i);
-    b->clear();
-  }
-
-  void Window::clear_images(bool clear_tmp) {
-    vector<image*> *ims = &images;
-    if (clear_tmp)
-      ims = &images_tmp;
-    for (vector<image*>::iterator i = ims->begin(); i != ims->end(); ++i)
-      if (*i)
-	delete (*i);
-    ims->clear();
-    buffer_maxh = 0;
-    buffer_maxw = 0;
-  }
-
-  void Window::clear_masks(bool clear_tmp) {
-    vector<imask*> *m = &masks;
-    if (clear_tmp)
-      m = &masks_tmp;
-    for (vector<imask*>::iterator i = m->begin(); i != m->end(); ++i)
-      if (*i)
-	delete (*i);
-    m->clear();
-    buffer_maxh = 0;
-    buffer_maxw = 0;
-  }
-
-  ////////////////////////////////////////////////////////////////
-
-  void Window::save(const string &filename) {
-    QPixmap p = QPixmap::grabWidget(this, rect());
-    string fname = filename;
-    fname += ".png";
-    if (!p.save(fname.c_str(), "PNG", 90))
-      cerr << "Warning: failed to save window to " << filename << "." << endl;
-  }
-  
-  void Window::set_silent(const std::string *filename) {
-    silent = true;
-    ostringstream o;
-    if ((filename) && (strcmp(filename->c_str(), "") != 0))
-      o << *filename << ".";
-    o << id << ".png";
-    savefname = o.str();
-    hide();
-    update();
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // add methods
-
-  void Window::add_text(const string *s) {
-    if (!txt) {
-      txt = new text(text_h0, text_w0, pos_reset, fg_r, fg_g, fg_b, fg_a,
-		     bg_r, bg_g, bg_b, bg_a);
-      if (!wupdate)
-	texts_tmp.push_back(txt);
-      else
-	texts.push_back(txt);
+  void win2d::resize_window(uint h, uint w, bool force) {    
+    if ((h != 0) && (w != 0)) {
+      buffer_resize(h, w, force);
     }
-    *txt += *s;
-    delete s;
-    update_window();
-    pos_reset = false;
-  }
-  
-  void Window::add_arrow(int h1, int w1, int h2, int w2) {
-    arrow *a = new arrow(h1, w1, h2, w2);
-    if (!wupdate)
-      arrows_tmp.push_back(a);
-    else
-      arrows.push_back(a);
-    update_window();
-  }
-  
-  void Window::add_box(int h0, int w0, int h, int w, unsigned char r,
-		       unsigned char g, unsigned char b, unsigned char a,
-		       string *s) {
-    box *bb = new box(h0, w0, h, w, r, g, b, a);
-    // add box
-    if (!wupdate)
-      boxes_tmp.push_back(bb);
-    else
-      boxes.push_back(bb);
-    // add caption
-    set_text_origin(h0 + 1, w0 + 1);
-    // modulate caption transparency with bbox's transparency
-    unsigned char save_fga = fg_a, save_bga = bg_a;
-    set_text_colors(fg_r, fg_g, fg_b, a, bg_r, bg_g, bg_b, a, true);
-    if (s)
-      add_text(s);
-    // restore previous transparency
-    set_text_colors(fg_r, fg_g, fg_b, save_fga, bg_r, bg_g, bg_b, save_bga, 
-		    true);
-    update_window();
-  }
-  
-  void Window::add_image(idx<ubyte> &img, unsigned int h0, unsigned int w0) {
-    image *i = new image(img, h0, w0);
-    if (!wupdate)
-      images_tmp.push_back(i);
-    else
-      images.push_back(i);
-    update_window();
-  }
-
-  void Window::add_mask(idx<ubyte> *img, unsigned int h0, unsigned int w0,
-			ubyte r, ubyte g, ubyte b, ubyte a) {
-    imask *m = new imask(img, h0, w0, r, g, b, a);
-    if (!wupdate)
-      masks_tmp.push_back(m);
-    else
-      masks.push_back(m);
-    // update maximum buffer size
-    buffer_maxh = std::max(buffer_maxh, std::max(buffer?(uint)buffer->dim(0):0, 
-						 (uint) (h0 + img->dim(0))));
-    buffer_maxw = std::max(buffer_maxw, std::max(buffer?(uint)buffer->dim(1):0, 
-						 (uint) (w0 + img->dim(1))));
-    // we are responsible for deleting img
-    delete img;
-    update_window();
-  }
-
-  void Window::set_text_colors(unsigned char fg_r_, unsigned char fg_g_, 
-			       unsigned char fg_b_, unsigned char fg_a_,
-			       unsigned char bg_r_, unsigned char bg_g_, 
-			       unsigned char bg_b_, unsigned char bg_a_,
-			       bool ignore_frozen) {
-    txt = NULL;
-    if (frozen_style && !ignore_frozen)
-      return ;
-    fg_r = fg_r_;
-    fg_g = fg_g_;
-    fg_b = fg_b_;
-    fg_a = fg_a_;
-    bg_r = bg_r_;
-    bg_g = bg_g_;
-    bg_b = bg_b_;
-    bg_a = bg_a_;
-  }
-  
-  void Window::set_bg_colors(unsigned char r, unsigned char g, 
-			     unsigned char b) {
-    if (frozen_style)
-      return ;
-    bg_color.setRed(r);
-    bg_color.setGreen(g);
-    bg_color.setBlue(b);
-  }
-
-  void Window::set_font_size(int sz) {
-    font_size = sz;
-  }
-
-  void Window::freeze_style(bool freeze) {
-    frozen_style = freeze;
-  }
-  
-  void Window::set_text_origin(unsigned int h0, unsigned int w0) {
-    text_h0 = h0;
-    text_w0 = w0;
-    txt = NULL;
-    pos_reset = true;
-  }
-
-  void Window::add_scroll_box(scroll_box0 *sb) {
-    scrollbox = sb;
-    scrollbox->set_parent(this);
-    //cout << "adding scrollbox " << sb << endl;
-  }
-
-  void Window::remove_scroll_box(scroll_box0 *sb) {
-    scrollbox = NULL;
-    //cout << "removing scroll box " << sb << endl;
-  }
-
-  void Window::replace_scroll_box_with_copy(scroll_box0 *sb) {
-    //cout << "replacing scroll box " << scrollbox << " with a copy: " << endl;
-    scrollbox = sb->copy();
-    //cout << scrollbox << endl;
-  }
-
-  void Window::set_title(const char *title) {
-    QString t(title);
-    setWindowTitle(t);
   }
 
   ////////////////////////////////////////////////////////////////
   // update methods
 
-  void Window::buffer_resize(uint h, uint w, bool force) {
+  void win2d::buffer_resize(uint h, uint w, bool force) {
+    // forbid buffer resizing if frozen
+    if (frozen_size)
+      return ;
     // arbitrary bounding of h and w to prevent gigantic erroneous values.
-    uint bound = 10000;
+    uint bound = 20000;
     if (std::max(h, w) > bound) {
       cerr << "error: trying to resize display buffer to " << h << "x" << w;
       cerr << ", one of those dimensions is greater than " << bound;
@@ -429,7 +145,7 @@ namespace ebl {
     }
   }
 
-  void Window::update_qimage() {
+  void win2d::update_qimage() {
     if (buffer) {
       if (qimage)
       	delete qimage;
@@ -442,7 +158,7 @@ namespace ebl {
     }
   }
   
-  void Window::buffer_fill(idx<ubyte> *buf) {
+  void win2d::buffer_fill(idx<ubyte> *buf) {
     if (buf) {
       idx<ubyte> tmp = buf->select(2, 0);
       idx_fill(tmp, (ubyte) bg_color.red());
@@ -453,7 +169,7 @@ namespace ebl {
     }    
   }
 
-  void Window::update_pixmap(idx<ubyte> *img, unsigned int h0, 
+  void win2d::update_pixmap(idx<ubyte> *img, unsigned int h0, 
 			     unsigned int w0, bool updatepix) {
     if (img) {
       update_pixmap(*img, h0, w0, updatepix);
@@ -461,8 +177,8 @@ namespace ebl {
     }
   }
 
-  void Window::update_pixmap(idx<ubyte> &img, unsigned int h0, 
-			     unsigned int w0, bool updatepix) {
+  void win2d::update_pixmap(idx<ubyte> &img, uint h0, uint w0,
+			     bool updatepix) {
     unsigned int h = std::max(buffer?(uint)buffer->dim(0):0, 
 			      (uint) (h0 + img.dim(0)));
     unsigned int w = std::max(buffer?(uint)buffer->dim(1):0, 
@@ -473,24 +189,30 @@ namespace ebl {
       else if ((h > (unsigned int) buffer->dim(0)) || 
 	       (w > (unsigned int) buffer->dim(1)))
 	buffer_resize(h, w);
-      idx<ubyte> tmpbuf = buffer->narrow(0, img.dim(0), h0);
-      tmpbuf = tmpbuf.narrow(1, img.dim(1), w0);
-      // RGB input, simple copy
-      if ((img.order() == 3) && (img.dim(2) == 3))
-	idx_copy(img, tmpbuf);
-      // Grayscale input, replicate over RGB channels
-      else if ((img.order() == 2) ||
-	       ((img.order() == 3) && (img.dim(2) == 1))) {
-	idx<ubyte> tmpbufl = tmpbuf.select(2, 0);
-	idx_copy(img, tmpbufl);
-	tmpbufl = tmpbuf.select(2, 1);
-	idx_copy(img, tmpbufl);
-	tmpbufl = tmpbuf.select(2, 2);
-	idx_copy(img, tmpbufl);
-      }
-      else {
-	cerr << "unknown image dimensions: " << img << endl;
-	eblerror("expected a grayscale or rgb image");
+      if (h0 < buffer->dim(0) && w0 < buffer->dim(1)) {
+	uint height = std::min((uint) buffer->dim(0) - h0, (uint) img.dim(0));
+	uint width = std::min((uint) buffer->dim(1) - w0, (uint) img.dim(1));
+	idx<ubyte> tmpbuf = buffer->narrow(0, height, h0);
+	tmpbuf = tmpbuf.narrow(1, width, w0);
+	idx<ubyte> tmpimg = img.narrow(0, height, 0);
+	tmpimg = tmpimg.narrow(1, width, 0);
+	// RGB input, simple copy
+	if ((img.order() == 3) && (img.dim(2) == 3))
+	  idx_copy(tmpimg, tmpbuf);
+	// Grayscale input, replicate over RGB channels
+	else if ((img.order() == 2) ||
+		 ((img.order() == 3) && (img.dim(2) == 1))) {
+	  idx<ubyte> tmpbufl = tmpbuf.select(2, 0);
+	  idx_copy(tmpimg, tmpbufl);
+	  tmpbufl = tmpbuf.select(2, 1);
+	  idx_copy(tmpimg, tmpbufl);
+	  tmpbufl = tmpbuf.select(2, 2);
+	  idx_copy(tmpimg, tmpbufl);
+	}
+	else {
+	  cerr << "unknown image dimensions: " << img << endl;
+	  eblerror("expected a grayscale or rgb image");
+	}
       }
       // and ready to be displayed
       // copy buffer to pixmap
@@ -509,7 +231,7 @@ namespace ebl {
     }
   }
 
-//   void Window::set_wupdate(bool ud) {
+//   void win2d::set_wupdate(bool ud) {
 //     if (ud) {
 //       if (wupdate_ndisable > 0) { // update only when necessary
 // 	wupdate_ndisable = std::max(0, wupdate_ndisable - 1); // decrement counter
@@ -528,7 +250,7 @@ namespace ebl {
 //     wupdate = ud;
 //   }
 
-  void Window::set_wupdate(bool ud) {
+  void win2d::set_wupdate(bool ud) {
     if (wupdate != ud) {
       wupdate = ud;
       if (wupdate) {
@@ -544,7 +266,7 @@ namespace ebl {
     }
   }
 
-  void Window::swap() {
+  void win2d::swap() {
     // swap text
     clear_text(false);
     for (vector<text*>::iterator i = texts_tmp.begin();
@@ -563,6 +285,18 @@ namespace ebl {
 	 i != boxes_tmp.end(); ++i)
       boxes.push_back(*i);
     boxes_tmp.clear();
+    // swap crosses
+    clear_crosses(false);
+    for (vector<cross*>::iterator i = crosses_tmp.begin();
+	 i != crosses_tmp.end(); ++i)
+      crosses.push_back(*i);
+    crosses_tmp.clear();
+    // swap ellipses
+    clear_ellipses(false);
+    for (vector<box*>::iterator i = ellipses_tmp.begin();
+	 i != ellipses_tmp.end(); ++i)
+      ellipses.push_back(*i);
+    ellipses_tmp.clear();
     // swap images
     clear_images(false);
     for (vector<image*>::iterator i = images_tmp.begin();
@@ -577,31 +311,41 @@ namespace ebl {
     masks_tmp.clear();
   }
 
-  void Window::update_window(bool activate) {
+  void win2d::update_window(bool activate) {
     if (wupdate) {
       if (buffer && (width() != buffer->dim(1) ||
 		     height() != buffer->dim(0)))
 	resize(buffer->dim(1), buffer->dim(0));
       else
-	repaint();
+	QWidget::update(); //repaint();
       // saving pixmap if silent or show it otherwise
       if (silent) 
 	save(savefname);
       else {
 	if (!isVisible())
-	  show();
+	  QWidget::show();
 	if (activate) {
-	  activateWindow();
+	  QWidget::activateWindow();
 	}
       }
     }
   }
   
+  void win2d::set_bg_colors(ubyte r, ubyte g, ubyte b) {
+    if (frozen_style)
+      return ;
+    bg_color.setRed(r);
+    bg_color.setGreen(g);
+    bg_color.setBlue(b);
+    buffer_fill(buffer);
+  }
+
   ////////////////////////////////////////////////////////////////
   // painting/drawing methods
 
-  void Window::paintEvent(QPaintEvent * /* event */) {
+  void win2d::paintEvent(QPaintEvent * /* event */) {
     QStylePainter painter(this);
+
     if (font_size > 0) {
       const QFont &font0 = painter.font();
       QFont font(font0.defaultFamily(), font_size);
@@ -610,15 +354,53 @@ namespace ebl {
     painter.fillRect(rect(), bg_color);
     double scaleFactor = pixmapScale / curScale;
     painter.save();
+    //QTransform wt = painter.worldTransform();
+    //    wt.translate(-pixmapOffset.x(), -pixmapOffset.y());
+    //    wt.translate(pixmapOffset.x() - 500, pixmapOffset.y() - 500);
+    // wt.translate(- 500, - 500);
+    // painter.setWorldTransform(wt);
+    // QPoint p = pixmapOffset;
+    // p.setX(p.x() - 500);
+    // p.setY(p.y() - 500);
     painter.translate(pixmapOffset);
+    // painter.translate(p);
     painter.scale(scaleFactor, scaleFactor);
     QRectF exposed = 
       painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
+    // painter.matrix().inverted().mapRect(rect());
+    // cout << "exposed: "<< exposed.x() << "," << exposed.y()
+    // 	 << " " << exposed.height() << "x"  << exposed.width() << endl;
+    // cout << "rect: "<< rect().x() << "," << rect().y()
+    // 	 << " " << rect().height() << "x"  << rect().width() << endl;
+    // cout << "hasclipping: " << painter.hasClipping() << endl;
+    // exposed.setX(-500);
+    // exposed.setY(-500);
+    // QRectF exposed2 = 
+    //   painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
+    // exposed2.setX(500);
+    // exposed2.setY(500);
+    // exposed.setHeight(2500);
+    // exposed.setWidth(2500);
+    // painter.setMatrix(exposed.inverted());
+    // painter.setClipRect(exposed2);
+
+    // cout << "rect: "<< rect().x() << "," << rect().y()
+    // 	 << " " << rect().height() << "x"  << rect().width() << endl;
+    
     painter.drawPixmap(exposed, *pixmap, exposed);
     draw_masks(painter);
     draw_boxes(painter);
-    draw_text(painter, scaleFactor);
     draw_arrows(painter);
+    draw_crosses(painter);
+    draw_ellipses(painter);
+
+    win::paint(painter, scaleFactor);
+    
+    
+
+    // wt.translate(pixmapOffset.x() , pixmapOffset.y() );
+    // painter.setWorldTransform(wt);
+
     painter.restore();
 //     if (!silent) {
 //       QString txt = tr("Use mouse wheel to zoom, left click to drag.");
@@ -636,7 +418,7 @@ namespace ebl {
 //     }
   }
 
-  void Window::draw_arrows(QPainter &painter) {
+  void win2d::draw_arrows(QPainter &painter) {
     int len_factor = 1;
     int ax1, ay1, ax2, ay2;
     painter.setBrush(QColor(255, 255, 255, 127));
@@ -673,67 +455,53 @@ namespace ebl {
     painter.setPen(Qt::black);
   }
 
-  void Window::draw_boxes(QPainter &painter) {
-    painter.setBrush(QColor(255, 255, 255, 127));
+  void win2d::draw_boxes(QPainter &painter) {
+    painter.setBrush(Qt::NoBrush);
     for (vector<box*>::iterator i = boxes.begin(); i != boxes.end(); ++i) {
       if (*i) {
+	box &b = **i;
 	// set color
-	painter.setPen(QColor((*i)->r, (*i)->g, (*i)->b, (*i)->a));
-	// draw box lines
-	painter.drawLine((*i)->w0,               (*i)->h0,
-			 (*i)->w0,               (*i)->h0 + (*i)->h - 1);
-	painter.drawLine((*i)->w0,               (*i)->h0 + (*i)->h - 1,
-			 (*i)->w0 + (*i)->w - 1, (*i)->h0 + (*i)->h - 1);
-	painter.drawLine((*i)->w0,               (*i)->h0,
-			 (*i)->w0 + (*i)->w - 1, (*i)->h0);
-	painter.drawLine((*i)->w0 + (*i)->w - 1, (*i)->h0,
-			 (*i)->w0 + (*i)->w - 1, (*i)->h0 + (*i)->h - 1);
+	painter.setPen(QColor(b.r, b.g, b.b, b.a));
+	// draw box
+	QRectF r(b.w0, b.h0, b.w, b.h);
+	painter.drawRect(r);
       }
     }
     painter.setPen(Qt::black);
   }
 
-  void Window::draw_text(QPainter &painter, double scaleFactor) {
-    unsigned int th = 0, tw = 0;
-    for (vector<text*>::iterator i = texts.begin(); i != texts.end(); ++i) {
+  void win2d::draw_crosses(QPainter &painter) {
+    painter.setBrush(QColor(255, 255, 255, 127));
+    for (vector<cross*>::iterator i = crosses.begin(); i != crosses.end(); ++i){
       if (*i) {
-	text_fg_color.setRgb((*i)->fg_r, (*i)->fg_g, (*i)->fg_b, (*i)->fg_a);
-	text_bg_color.setRgb((*i)->bg_r, (*i)->bg_g, (*i)->bg_b, (*i)->bg_a); 
-	QString txt((*i)->c_str());
-	QRectF bg;
-	//	QFontMetrics metrics = painter.fontMetrics();
-	QRect qr = rect();
-	qr.setLeft((*i)->pos_reset ? (*i)->w0 : tw);
-	qr.setTop( (*i)->pos_reset ? (*i)->h0 - 1 : th);
-// 	// resize buffer if text is out?
-// 	QRect br = painter.boundingRect(qr, Qt::AlignLeft & Qt::TextWordWrap 
-// 					& Qt::AlignTop, txt);
-// 	buffer_maxh = std::max(buffer?(unsigned int)buffer->dim(0):0, 
-// 			  (*i)->h0 + br.height());
-// 	buffer_maxw = std::max(buffer?(unsigned int)buffer->dim(1):0, 
-// 			  (*i)->w0 + br.width());
-// 	buffer_resize(buffer_maxh, buffer_maxw);
-
-//	painter.setPen(text_fg_color);
-//	painter.setPen(Qt::NoPen);
-	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
-			 txt, &bg);
-	th = (uint) bg.top();
-	tw = (uint) bg.right();
-	bg.setTop(bg.top() + 1);
-	bg.setHeight(bg.height() - 3);
-	painter.setBrush(text_bg_color);
-	painter.setPen(Qt::NoPen);
-	painter.drawRect((int) bg.left(), (int) bg.top(),
-			 (int) bg.width(), (int) bg.height());
-	painter.setPen(text_fg_color);
-	painter.drawText(qr, Qt::AlignLeft & Qt::TextWordWrap & Qt::AlignTop,
-			 txt, &bg);
+	cross &c = **i;
+	painter.setPen(QColor(c.r, c.g, c.b, c.a));
+	float half = c.length / 2;
+	QLineF f1(c.h0 - half, c.w0 - half, c.h0 + half, c.w0 + half);
+	QLineF f2(c.h0 - half, c.w0 + half, c.h0 + half, c.w0 - half);
+	painter.drawLine(f1);
+	painter.drawLine(f2);
       }
     }
+    painter.setPen(Qt::black);
   }
 
-  void Window::draw_images(bool update) {
+  void win2d::draw_ellipses(QPainter &painter) {
+    painter.setBrush(Qt::NoBrush);
+    for (vector<box*>::iterator i = ellipses.begin(); i != ellipses.end(); ++i){
+      if (*i) {
+	box &b = **i;
+	// set color
+	painter.setPen(QColor(b.r, b.g, b.b, b.a));
+	QPointF p(b.h0, b.w0);
+	// draw ellipse
+	painter.drawEllipse(p, b.h, b.w);
+      }
+    }
+    painter.setPen(Qt::black);
+  }
+
+  void win2d::draw_images(bool update) {
     buffer_resize(buffer_maxh, buffer_maxw); // resize to maximum size first
     // then display all images not displayed
     for (vector<image*>::iterator i = images.begin(); i != images.end(); ++i)
@@ -752,7 +520,7 @@ namespace ebl {
     }
   }
 
-  void Window::draw_masks(QPainter &painter) {
+  void win2d::draw_masks(QPainter &painter) {
     buffer_resize(buffer_maxh, buffer_maxw); // resize to maximum size first
     // then display all images not displayed
     for (vector<imask*>::iterator i = masks.begin(); i != masks.end(); ++i)
@@ -764,7 +532,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // events methods
 
-  void Window::wheelEvent(QWheelEvent *event) {
+  void win2d::wheelEvent(QWheelEvent *event) {
     float precision = .25;
     float sign = (event->delta() > 0)? precision : -precision;
     if ((scaleIncr >= -1) && (scaleIncr <= 1)) {
@@ -787,7 +555,7 @@ namespace ebl {
     update();
   }
 
-  void Window::mousePressEvent(QMouseEvent *event) {
+  void win2d::mousePressEvent(QMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
       lastDragPos = event->pos();
       QCursor qc(Qt::SizeAllCursor);
@@ -795,7 +563,7 @@ namespace ebl {
     }
   }
 
-  void Window::mouseMoveEvent(QMouseEvent *event) {
+  void win2d::mouseMoveEvent(QMouseEvent *event) {
     if (event->buttons() & Qt::LeftButton) {
       pixmapOffset += event->pos() - lastDragPos;
       lastDragPos = event->pos();
@@ -803,7 +571,7 @@ namespace ebl {
     }
   }
 
-  void Window::mouseReleaseEvent(QMouseEvent *event) {
+  void win2d::mouseReleaseEvent(QMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
       pixmapOffset += event->pos() - lastDragPos;
       lastDragPos = QPoint();
@@ -817,7 +585,7 @@ namespace ebl {
     }
   }
 
-  void Window::keyPressEvent(QKeyEvent *event) {
+  void win2d::keyPressEvent(QKeyEvent *event) {
     // push key on the list
     keyspressed.push_back(event->key());
     // handle key events
@@ -828,24 +596,41 @@ namespace ebl {
 	cout << "display_previous" << endl;
 	scrollbox->display_previous();
       }
-    }
-    else if (event->key() == Qt::Key_Right) {
+    } else if (event->key() == Qt::Key_Right) {
       if (scrollbox) {
 	cout << "display_next" << endl;
 	scrollbox->display_next();
       }
+    } else if (event->key() == Qt::Key_Control) {
+      ctrl_on = true;
+    } else if (event->key() == Qt::Key_T) {
+      if (ctrl_on) {
+	if (text_on) { // text is currently displayed
+	  text_on = false;
+	  // cout << "Disabling Text in window (ctrl + t)" << endl;
+	  update();
+	} else { // text not currently displayed
+	  text_on = true;
+	  // cout << "Enabling Text in window (ctrl + t)" << endl;
+	  update();
+	}
+      }
+    } else if (event->key() == Qt::Key_S) {
+      string fname;
+      fname << "win" << id;
+      save(fname, true);
+      save_mat(fname, true);
     }
   }
 
-  int Window::pop_key_pressed() {
-    if (keyspressed.size() == 0)
-      return -1;
-    int key = keyspressed.front();
-    keyspressed.pop_front();
-    return key;
+  void win2d::keyReleaseEvent(QKeyEvent *event) {
+    // handle key events
+    if (event->key() == Qt::Key_Control) {
+      ctrl_on = false;
+    }
   }
 
-  void Window::scroll_previous() {
+  void win2d::scroll_previous() {
     if (scrollbox)
       scrollbox->display_previous();
     else {
@@ -856,7 +641,7 @@ namespace ebl {
     }    
   }
 
-  void Window::scroll_next() {
+  void win2d::scroll_next() {
     if (scrollbox)
       scrollbox->display_next();
     else {
@@ -866,5 +651,5 @@ namespace ebl {
       cerr << "that no longer exists.";
     }    
   }
-
+  
 } // end namespace ebl

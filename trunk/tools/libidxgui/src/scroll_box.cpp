@@ -39,7 +39,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // scroll_box
 
-  scroll_box::scroll_box() : win(NULL) {
+  scroll_box::scroll_box() : w(NULL) {
   }
   
   scroll_box::~scroll_box() {
@@ -47,40 +47,40 @@ namespace ebl {
   }
 
   void scroll_box::set_parent(void *win_) {
-    if (dynamic_cast<Window*>((Window*)win_)) {
-      win = (Window*) win_;
+    if (dynamic_cast<win*>((win*)win_)) {
+      w = (win*) win_;
       // page controls
       if (!button_previous) {
-	button_previous = new QPushButton("<", win);
+	button_previous = new QPushButton("<", w->get_widget());
 	button_previous->setGeometry(_w1 - 80, _h0 - 1, 40, 20);
-	win->connect(button_previous, SIGNAL(clicked()), 
-		     (QWidget*) win,
-		     SLOT(scroll_previous()));
+	w->get_widget()->connect(button_previous, SIGNAL(clicked()), 
+				 (QWidget*) w->get_widget(),
+				 SLOT(scroll_previous()));
 	button_previous->show();
       }
       if (!button_next) {
-	button_next = new QPushButton(">", win);
+	button_next = new QPushButton(">", w->get_widget());
 	button_next->setGeometry(_w1 - 40, _h0 - 1, 40, 20);
-	win->connect(button_next, SIGNAL(clicked()), 
-		     (QWidget*) win, 
-		     SLOT(scroll_next()));
+	w->get_widget()->connect(button_next, SIGNAL(clicked()), 
+				 (QWidget*) w->get_widget(),
+				 SLOT(scroll_next()));
 	button_next->show();
       }
     }
     else
-      eblerror("expected a Window* object");
+      eblerror("expected a win* object");
   }
 
   void scroll_box::display_controls() {
-    if (win) {
+    if (w) {
       // page count
       //      gui << black_on_white() << at(h0, w0);
       //gui << "page " << page_number << "/" << max_pages();
-      win->set_text_colors(0,0,0,255,255,255,255,255);
-      win->set_text_origin(_h0, _w0);
+      w->set_text_colors(0,0,0,255,255,255,255,255);
+      w->set_text_origin(_h0, _w0);
       ostringstream o("");
       o << "page " << page_number << "/" << max_pages();
-      win->add_text(new string(o.str()));
+      w->add_text(new string(o.str()));
     }
   }
 

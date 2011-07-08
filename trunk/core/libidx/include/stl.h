@@ -42,6 +42,8 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <vector>
+#include <list>
 #endif
 
 namespace ebl {
@@ -99,7 +101,7 @@ namespace std {
     string& operator<<(unsigned char v);
     string& operator<<(float v);
     string& operator<<(double v);
-    string& operator<<(long v); 
+    string& operator<<(long v);
 /* #ifndef __ANDROID__ */
 /*     string& operator<<(size_t v); */
 /* #endif */
@@ -145,6 +147,14 @@ namespace std {
   //! Returns a copy of string e with all digits removed.
   EXPORT string strip_num(const string &e);
     
+  //! Returns a copy of string with last digits removed.
+  EXPORT string strip_last_num(const string &e);
+    
+  //! Returns a copy of string s with all instance of 'toreplace' string
+  //! replaced with 'replacement' string.
+  EXPORT string string_replace(const string &s,
+			       const char *toreplace, 
+			       const char *replacement);
 
   ////////////////////////////////////////////////////////////////
   // ostream
@@ -243,6 +253,22 @@ namespace std {
 
 #endif
 
+  //! Prints a vector into a stream.
+  template<class T>
+    EXPORT string& operator<<(string &o, const vector<T> &v);
+  
+  //! Prints a vector into a stream.
+  template<class T>
+    EXPORT ostream& operator<<(ostream &o, const vector<T> &v);
+  
+  //! Prints a list into a stream.
+  template<class T>
+    EXPORT string& operator<<(string &o, const list<T> &v);
+  
+  //! Prints a list into a stream.
+  template<class T>
+    EXPORT ostream& operator<<(ostream &o, const list<T> &v);
+  
   ////////////////////////////////////////////////////////////////
   // min/max
 
@@ -259,7 +285,7 @@ namespace std {
 } // end namespace std
 
 namespace ebl {
-  
+
   ////////////////////////////////////////////////////////////////
   // error reporting
 

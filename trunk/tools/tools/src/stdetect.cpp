@@ -49,13 +49,15 @@
 #include "libeblearngui.h"
 #endif
 
+#define SFUNC2(T) T,T,T,SBUF<T>
+
 using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
 
 ////////////////////////////////////////////////////////////////
 // network
 
-typedef float t_net; // network precision
+typedef float Tnet; // network precision
 
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
@@ -83,7 +85,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       }
       bool		color	      = conf.exists_bool("color");
       uint		norm_size     = conf.get_uint("normalization_size");
-      t_net		threshold     = (t_net) conf.get_double("threshold");
+      Tnet		threshold     = (Tnet) conf.get_double("threshold");
       bool		display       = false;
       bool		display_states= false;
       bool		mindisplay    = false;
@@ -100,52 +102,33 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       cout << "Saving outputs to " << outdir << endl;
 
       // load network and weights
-      parameter<fs(t_net)> theparam;
+      parameter<fs(Tnet)> theparam;
       idx<ubyte> classes(1,1);
       try {
 	load_matrix<ubyte>(classes, conf.get_cstring("classes"));
       } catch(string &err) { cerr << "warning: " << err << endl; }
-      cout << "loading weights from " << conf.get_cstring("weights") << endl;
-      module_1_1<fs(t_net)> *net =
-	create_network<fs(t_net)>(theparam, conf, classes.dim(0));
-      theparam.load_x(conf.get_cstring("weights"));
-
-      // select preprocessing  
-      module_1_1<fs(t_net)>* pp = NULL;
-      if (!strcmp(cam_type.c_str(), "v4l2")) // Y -> Yp
-	pp = new weighted_std_module<fs(t_net)>(norm_size, norm_size, 1, "norm",
-						true, false, true);
-      else if (color) // RGB -> YpUV
-	pp = (module_1_1<fs(t_net)>*)
-	  new rgb_to_ypuv_module<fs(t_net)>(norm_size);
-      else // RGB -> Yp
-	pp = (module_1_1<fs(t_net)>*)
-	  new rgb_to_yp_module<fs(t_net)>(norm_size);
-  
-      //! create 1-of-n targets with target 1.0 for shown class, -1.0 for rest
-      idx<t_net> targets =
-	create_target_matrix<t_net>(classes.dim(0), 1.0);
-      if (conf.exists_true("binary_target")) {
-	if (classes.dim(0) != 2)
-	  eblerror("expecting 2 classes only when binary_target is on");
-	targets = idx<t_net>(2, 1);
-	eblerror("binary target not handled here");
-	int neg_id = 0;//train_ds.get_class_id("bg"); // negative class
-	if (neg_id == 0) {
-	  targets.set(-1.0, 0, 0); // negative: -1.0
-	  targets.set( 1.0, 1, 0); // positive:  1.0
-	} else {
-	  targets.set( 1.0, 0, 0); // positive:  1.0
-	  targets.set(-1.0, 1, 0); // negative: -1.0
-	}
+      vector<string> sclasses = ubyteidx_to_stringvector(classes);
+      answer_module<SFUNC2(Tnet)> *ans =
+       create_answer<SFUNC2(Tnet)>(conf, classes.dim(0));
+      uint noutputs = ans->get_nfeatures();
+      module_1_1<SFUNC(Tnet)> *net =
+	create_network<SFUNC(Tnet)>(theparam, conf, noutputs);
+      // loading weights
+      if (!conf.exists("weights")) { // manual weights
+	cerr << "warning: \"weights\" variable not defined, loading manually "
+	     << "if manual_load defined" << endl;
+       if (conf.exists_true("manual_load"))
+	 manually_load_network(*((layers<SFUNC(Tnet)>*)net), conf);
+      } else { // multiple-file weights
+	// concatenate weights if multiple ones
+	vector<string> w =
+	  string_to_stringvector(conf.get_string("weights"));
+	cout << "Loading weights from: " << w << endl;
+	theparam.load_x(w);
       }
-      if (conf.exists("target_factor"))
-	idx_dotc(targets, conf.get_double("target_factor"), targets);
-      cout << "Targets:" << endl; targets.printElems();
 
       // detector
-      detector<fs(t_net)> detect(*net, classes, targets, pp, norm_size, NULL, 0,
-				 conf.get_double("gain"));
+      detector<fs(Tnet)> detect(*net, sclasses, *ans, NULL, NULL);
       detect.set_resolutions(conf.get_double("scaling"));
       bool bmask_class = false;
       if (conf.exists("mask_class"))
@@ -172,47 +155,49 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 			  conf.exists("max_bb_overlap") ? 
 			  conf.get_float("max_bb_overlap") : 1.0
 			  );
-     if (conf.exists("bbhfactor") && conf.exists("bbwfactor"))
-       detect.set_bbox_factors(conf.get_float("bbhfactor"),
-			       conf.get_float("bbwfactor"),
-			       conf.exists("bbhfactor2") ?
-			       conf.get_float("bbhfactor2") : 1.0,
-			       conf.exists("bbwfactor2") ?
-			       conf.get_float("bbwfactor2") : 1.0);
+     if (conf.exists("bbox_hfactor") && conf.exists("bbox_wfactor"))
+       detect.set_bbox_factors(conf.get_float("bbox_hfactor"),
+			       conf.get_float("bbox_wfactor"),
+			       conf.exists("bbox_woverh") ?
+			       conf.get_float("bbox_woverh") : 1.0,
+			       conf.exists("bbox_hfactor2") ?
+			       conf.get_float("bbox_hfactor2") : 1.0,
+			       conf.exists("bbox_wfactor2") ?
+			       conf.get_float("bbox_wfactor2") : 1.0);
 
       // initialize camera (opencv, directory, shmem or video)
-      idx<t_net> frame;
-      camera<t_net> *cam = NULL, *cam2 = NULL;
+      idx<Tnet> frame;
+      camera<Tnet> *cam = NULL, *cam2 = NULL;
       if (conf.exists_bool("retrain") && conf.exists("retrain_dir")) {
 	// extract false positives
-	cam = new camera_directory<t_net>(conf.get_cstring("retrain_dir"));
+	cam = new camera_directory<Tnet>(conf.get_cstring("retrain_dir"));
       } else { // regular execution
 	if (!strcmp(cam_type.c_str(), "directory")) {
 	  if (argc >= 3) 
-	    cam = new camera_directory<t_net>(argv[2], height, width);
+	    cam = new camera_directory<Tnet>(argv[2], height, width);
 	  else if (conf.exists("input_dir"))
-	    cam = new camera_directory<t_net>(conf.get_cstring("input_dir"), 
+	    cam = new camera_directory<Tnet>(conf.get_cstring("input_dir"), 
 					      height, width);
 	  else eblerror("expected 2nd argument");
 	} else if (!strcmp(cam_type.c_str(), "opencv"))
-	  cam = new camera_opencv<t_net>(-1, height, width);
+	  cam = new camera_opencv<Tnet>(-1, height, width);
 #ifdef __LINUX__
 	else if (!strcmp(cam_type.c_str(), "v4l2"))
-	  cam = new camera_v4l2<t_net>(conf.get_cstring("device"),
+	  cam = new camera_v4l2<Tnet>(conf.get_cstring("device"),
 				       height, width);
 #endif
 	else if (!strcmp(cam_type.c_str(), "shmem"))
-	  cam = new camera_shmem<t_net>("shared-mem", height, width);
+	  cam = new camera_shmem<Tnet>("shared-mem", height, width);
 	else if (!strcmp(cam_type.c_str(), "video")) {
 	  if (argc >= 3)
-	    cam = new camera_video<t_net>
+	    cam = new camera_video<Tnet>
 	      (argv[2], height, width, conf.get_uint("input_video_sstep"),
 	       conf.get_uint("input_video_max_duration"));
 	  else eblerror("expected 2nd argument");
 	} else eblerror("unknown camera type");
 	// a camera directory may be used first, then switching to regular cam
 	if (conf.exists_bool("precamera"))
-	  cam2 = new camera_directory<t_net>(conf.get_cstring("precamdir"),
+	  cam2 = new camera_directory<Tnet>(conf.get_cstring("precamdir"),
 					     height, width);
       }
 
@@ -252,12 +237,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       wid  = display ? new_window("eblearn object recognition") : 0;
       night_mode();
       float	zoom = 1;
-      detector_gui<fs(t_net)> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
+      detector_gui<fs(Tnet)> dgui(conf.exists_bool("queue1"), qstep1, qheight1,
 				   qwidth1, conf.exists_bool("queue2"), qstep2,
 				   qheight2, qwidth2);
       if (bmask_class)
 	dgui.set_mask_class(conf.get_cstring("mask_class"),
-			    (t_net) conf.get_double("mask_threshold"));
+			    (Tnet) conf.get_double("mask_threshold"));
       if (save_video) {
 	string viddir = outdir;
 	viddir += "video";
@@ -289,12 +274,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  clear_window();
 	  if (mindisplay)
 	    bboxes = dgui.display(detect, frame, threshold, frame_name.c_str(),
-				  0, 0, zoom, (t_net)0, (t_net)255, wid);
+				  0, 0, zoom, (Tnet)0, (Tnet)255, wid);
 	  else
 	    bboxes =
 	      dgui.display_inputs_outputs(detect, frame, threshold,
 					  frame_name.c_str(), 0, 0, zoom,
-					  (t_net)-1.1, (t_net)1.1, wid);
+					  (Tnet)-1.1, (Tnet)1.1, wid);
 	  enable_window_updates();
 	  if (display_states) {
 	    dgui.display_current(detect, frame, wid_states);
@@ -333,7 +318,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // free variables
       if (net) delete net;
       if (cam) delete cam;
-      if (pp) delete pp;
       // close files
       fp.close();
 #ifdef __GUI__

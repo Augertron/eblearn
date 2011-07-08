@@ -47,6 +47,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <utime.h>
 
 #ifdef __WINDOWS__
 #include <Windows.h>
@@ -103,6 +104,8 @@ namespace ebl {
   }
   
   bool mkdir_full(const char *dir) {
+    if (dir_exists(dir))
+      return true;
 #ifdef __WINDOWS__
     // recursive directory creation, check if parent exists first
     string parent = dirname(dir);
@@ -113,13 +116,25 @@ namespace ebl {
       return true;
     return false;
 #else
-    string cmd = "mkdir -p ";
-    cmd += dir;
-    if (system(cmd.c_str()) < 0) {
-      cerr << "warning: failed to create directory " << dir;
+    // recursive directory creation, check if parent exists first
+    string parent = dirname(dir);
+    if (!dir_exists(parent.c_str()))
+      mkdir_full(parent.c_str());
+    // parents are created or already exist, make current directory.
+    if (mkdir(dir, 0700) < 0)
       return false;
-    }
     return true;
+
+//     string cmd = "mkdir -p ";
+//     cmd += dir;
+//     int ret = system(cmd.c_str());
+//     if (ret != 0) {
+//       cerr << "warning: (error " << ret 
+// 	   << ") failed to create directory " << dir;
+//       return false;
+//     }
+//     cout << "mkdir ret: " << ret << endl;
+//     return true;
 #endif
   }
 
@@ -149,6 +164,10 @@ namespace ebl {
     return false;
   }
 
+  bool dir_exists(const std::string &s) {
+    return dir_exists(s.c_str());
+  }
+
   bool file_exists(const char *s) {
 #ifndef __WINDOWS__
     struct stat buf;
@@ -164,6 +183,78 @@ namespace ebl {
       return true;
 #endif
     return false;
+  }
+
+  bool file_exists(const std::string &s) {
+    return file_exists(s.c_str());
+  }
+
+  uint file_size(const char *s) {
+#ifndef __WINDOWS__
+    struct stat buf;
+    if (stat(s, &buf) == -1)
+      return 0; // file not found
+#else /* WINDOWS */
+    struct _stat buf;
+    if (_stat(s, &buf) == -1)
+      return 0; // file not found    
+#endif
+    return buf.st_size;
+  }
+
+  uint file_size(const std::string &s) {
+    return file_size(s.c_str());
+  }
+
+  time_t file_modified(const char *s) {
+#ifndef __WINDOWS__
+    struct stat buf;
+    if (stat(s, &buf) == -1)
+      return 0; // file not found
+#else /* WINDOWS */
+    struct _stat buf;
+    if (_stat(s, &buf) == -1)
+      return 0; // file not found    
+#endif
+    return buf.st_mtime;
+  }
+
+  time_t file_modified(const std::string &s) {
+    return file_size(s.c_str());
+  }
+
+  int file_modified_elapsed(const char *s) {
+    time_t tm = file_modified(s);
+    time_t t = time(NULL);
+    return (int) (t - tm);
+  }
+
+  bool touch_file(const char *s) {
+#ifndef __WINDOWS__
+    if (utime(s, NULL) == 0)
+      return true;
+#else /* WINDOWS */
+    eblerror("not implemented");
+#endif
+    return false;
+  }
+
+  bool touch_file(const std::string &s) {
+    return touch_file(s.c_str());
+  }
+
+  bool rm_file(const char *s) {
+#ifdef __WINDOWS__
+    if (dir_exists(s))
+      return _rmdir(s) == 0;
+    else
+      return _unlink(s) == 0;
+#else
+    if (dir_exists(s))
+      return rmdir(s) == 0;
+    else
+      return unlink(s) == 0;
+#endif
   }
 
 //     string dirname(const char *s_) {
@@ -333,6 +424,13 @@ namespace ebl {
     }
     return string_buffer;
 #endif
+  }
+
+  std::string noext_name(const char *fname) {
+    std::string res = fname;
+    size_t pos = res.find_last_of('.');
+    res = res.substr(0, pos);
+    return res;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -534,10 +632,15 @@ namespace ebl {
 #ifdef __WINDOWS__
     Sleep(seconds * 1000);
 #else
-    usleep(seconds * 1000);
+    usleep(seconds * 1000000);
 #endif
   }
 
+  string timer::eta(uint n, uint total) {
+    return elapsed((long)((total - n)
+			  * (elapsed_seconds() / (float)std::max((uint)1,n))));
+  }
+  
   /////////////////////////////////////////////////////////////////////////////
   // process utilities
 
@@ -548,7 +651,7 @@ namespace ebl {
 
   int pid() {
 #ifdef __WINDOWS__
-    eblerror("not implemented");
+    cerr << "pid() not implemented for Windows" << endl;
     return 0;
 #else
     return (int) getpid();

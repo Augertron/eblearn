@@ -57,7 +57,7 @@ namespace ebl {
   template <typename Tdata>
   camera_v4l2<Tdata>::camera_v4l2(const char *device, int height_, int width_)
     : camera<Tdata>(height_, width_), started(false),
-      nbuffers(1), buffers(new void*[nbuffers]), sizes(new int[nbuffers]) {
+      nbuffers(3), buffers(new void*[nbuffers]), sizes(new int[nbuffers]) {
     cout << "Initializing V4l2 camera from device " << device << " ..." << endl;
 #ifndef __LINUX__
     eblerror("V4l2 is for linux only");

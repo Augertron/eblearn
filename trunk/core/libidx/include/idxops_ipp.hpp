@@ -4,7 +4,7 @@
 // idx_copy
 
   #define idx_copy_macro(T)						\
-    template<> void idx_copy(idx<T> &src, idx<T> &dst) {		\
+    template<> void idx_copy(const idx<T> &src, idx<T> &dst) {		\
       idx_checknelems2_all(src, dst);					\
       if ( (src.order() == 0) && (dst.order() == 0) ) {			\
 	*(dst.idx_ptr()) = *(src.idx_ptr());				\

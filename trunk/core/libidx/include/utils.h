@@ -75,8 +75,39 @@ namespace ebl {
   //! Returns true if directory 's' exists.
   EXPORT bool dir_exists(const char *s);
   
+  //! Returns true if directory 's' exists.
+  EXPORT bool dir_exists(const std::string &s);
+  
   //! Returns true if file 's' exists.
   EXPORT bool file_exists(const char *s);
+
+  //! Returns true if file 's' exists.
+  EXPORT bool file_exists(const std::string &s);
+
+  //! Returns size of file 's'. If the file does not exist, return 0.
+  EXPORT uint file_size(const char *s);
+
+  //! Returns size of file 's'. If the file does not exist, return 0.
+  EXPORT uint file_size(const std::string &s);
+
+  //! Returns the time of last modification of file 's'.
+  EXPORT time_t file_modified(const char *s);
+
+  //! Returns the time of last modification of file 's'.
+  EXPORT time_t file_modified(const std::string &s);
+
+  //! Returns the number of seconds elapsed since file 's' 
+  //! was last modified.
+  EXPORT int file_modified_elapsed(const char *s);
+
+  //! Update the modified timestamp of file 's'. Returns true on success.
+  EXPORT bool touch_file(const char *s);
+
+  //! Update the modified timestamp of file 's'. Returns true on success.
+  EXPORT bool touch_file(const std::string &s);
+
+  //! Remove the file or empty directory 's' and return true on success.
+  EXPORT bool rm_file(const char *s);
 
   //! Returns the directory part of 'fname'. E.g. when fname equals
   //! '/usr/lib', it will return '/usr'.
@@ -88,6 +119,10 @@ namespace ebl {
   //! filename.
   EXPORT const char *basename(const char *fname, const char *suffix = NULL);
     
+  //! Returns a name without its extension, basically returns the
+  //! first part before the last '.' character.
+  EXPORT std::string noext_name(const char *fname);
+
   ////////////////////////////////////////////////////////////////
   // timing utilities
 
@@ -124,6 +159,9 @@ namespace ebl {
     //! Return elapsed time in a human-friendly string since start()/restart(),
     //! with millisecond precision.
     string elapsed_ms();
+    //! Return a string with the human-friendly remaining time based on
+    //! elapsed time and n/total progress.
+    string eta(uint n, uint total);
     
   private:
 #ifdef __WINDOWS__

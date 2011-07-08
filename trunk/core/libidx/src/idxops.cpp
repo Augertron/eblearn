@@ -124,7 +124,7 @@ namespace ebl {
 #else
 #ifdef __IPP__
   template <>
-  void idx_copy(idx<float> &src, idx<float> &dst) {
+  void idx_copy(const idx<float> &src, idx<float> &dst) {
     if (src.contiguousp() && dst.contiguousp()) {
       ipp_copy(src, dst);
     } else {

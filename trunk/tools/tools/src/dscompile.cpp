@@ -54,7 +54,7 @@ using namespace ebl;
 string		images_root	 = ".";
 string		image_pattern	 = IMAGE_PATTERN_MAT;
 string		channels_mode	 = "RGB";
-bool            preprocessing    = true;
+bool            preprocessing    = false;
 bool		display		 = false;
 bool		stereo		 = false;
 bool		ignore_difficult = false;
@@ -63,6 +63,8 @@ bool		ignore_occluded  = false;
 bool		shuffle		 = false;
 bool		scale_mode	 = false;
 vector<double>  scales;
+bool		fovea_mode = false;
+vector<double>  fovea_scales;
 string		stereo_lpattern	 = "_L";
 string		stereo_rpattern	 = "_R";
 string		outdir		 = ".";
@@ -70,7 +72,7 @@ string		dataset_name	 = "ds";
 intg		maxperclass	 = 0;	// 0 means no limitation
 intg            maxdata          = 0;	// 0 means no limitation
 unsigned int	mexican_hat_size = 0;
-uint		kernelsz	 = 9; // kernel size for preprocessing
+idxdim		kernelsz	 = idxdim(9, 9); // kernel size for pp
 int		deformations	 = -1;	// <= means no deformations
 string		type		 = "regular";
 string          resize           = "mean";
@@ -80,6 +82,8 @@ idxdim          outdims;	        // dimensions of output sample
 bool		outdims_set	 = false;
 idxdim          mindims;	        // minimum dimensions in input
 bool		mindims_set	 = false;
+idxdim          maxdims;	        // maximum dimensions in input
+bool		maxdims_set	 = false;
 vector<string>  exclude;
 vector<string>  include;
 bool            usepose          = false; // use pose if given
@@ -102,14 +106,32 @@ bool            nopadded         = false;
 string          label            = "";
 idxdim          gridsz;
 string          annotations;
-uint            hjitter          = 0; // add vertically shifted samples
-uint            wjitter          = 0; // add horizontally shifted samples
-uint            nsjitter         = 0; // number of possible scale jitters
-float           sjitter          = 0; // scale jitter range around original
-uint            nrjitter         = 0; // number of possible rotation jitters
+string		ignore_path;
+uint            tjitter_step = 0; // translation step in pixels
+uint            tjitter_hmin = 0; // translation min height in pixels
+uint            tjitter_hmax = 0; // translation max height in pixels
+uint            tjitter_wmin = 0; // translation min height in pixels
+uint            tjitter_wmax = 0; // translation max height in pixels
+uint            sjitter_steps    = 0; // number of possible scale jitters
+float           sjitter_min      = 0; // min scale jitter
+float           sjitter_max      = 0; // max scale jitter
+uint            rjitter_steps    = 0; // number of possible rotation jitters
 float           rjitter          = 0; // rotation jitter range around original
 uint            njitter          = 0; // number of jitters (including original)
 bool            wmirror          = false; // add symmetry with vertical axis
+float           minvisibility    = 0.0; // minimum visible / true area ratio
+bool            minvisibility_set= false; // minvisibility has been set or not
+idxdim          minborders;	        // minimum distance to borders for bbs
+bool		minborders_set	 = false;
+bool            save_display     = false;
+idxdim          save_display_dims;
+string          save_display_dir;
+float           max_aspect_ratio = 0.0; // maximum width/height aspect ratio
+bool            max_aspect_ratio_set = false; // has been set or not
+float           min_aspect_ratio = 0.0; // minimum width/height aspect ratio
+bool            min_aspect_ratio_set = false; // has been set or not
+bool            nopp = false; // force disabling of preprocessing
+float           max_jitt_match = 0.0; // maximum jitter match with others.
 
 ////////////////////////////////////////////////////////////////
 // command line
@@ -146,10 +168,13 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-annotations") == 0) {
 	++i; if (i >= argc) throw 0;
 	annotations = argv[i];
+      } else if (strcmp(argv[i], "-ignore_path") == 0) {
+	++i; if (i >= argc) throw 0;
+	ignore_path = argv[i];
       } else if (strcmp(argv[i], "-disp") == 0) {
 	display = true;
       } else if (strcmp(argv[i], "-nopp") == 0) {
-	preprocessing = true;
+	nopp = true;
       } else if (strcmp(argv[i], "-wmirror") == 0) {
 	wmirror = true;
       } else if (strcmp(argv[i], "-ignore_difficult") == 0) {
@@ -211,7 +236,7 @@ bool parse_args(int argc, char **argv) {
 	maxdata = atoi(argv[i]);
       } else if (strcmp(argv[i], "-kernelsz") == 0) {
 	++i; if (i >= argc) throw 1;
-	kernelsz = atoi(argv[i]);
+	kernelsz = string_to_idxdim(argv[i]);
       } else if (strcmp(argv[i], "-sleep") == 0) {
 	++i; if (i >= argc) throw 1;
 	sleep_delay = atoi(argv[i]);
@@ -223,79 +248,68 @@ bool parse_args(int argc, char **argv) {
 	deformations = atoi(argv[i]);
       } else if (strcmp(argv[i], "-dims") == 0) {
 	++i; if (i >= argc) throw 0;
-	idxdim d;
-	string s = argv[i];
-	int k = 0;
-	while (s.size()) {
-	  uint j;
-	  for (j = 0; j < s.size(); ++j)
-	    if (s[j] == 'x')
-	      break ;
-	  string s0 = s.substr(0, j);
-	  if (j >= s.size())
-	    s = "";
-	  else
-	    s = s.substr(j + 1, s.size());
-	  d.insert_dim(atoi(s0.c_str()), k++);
-	}
-	outdims = d;
+	outdims = string_to_idxdim(argv[i]);
 	outdims_set = true;
 	preprocessing = true;
       } else if (strcmp(argv[i], "-mindims") == 0) {
 	++i; if (i >= argc) throw 0;
-	idxdim d;
-	string s = argv[i];
-	int k = 0;
-	while (s.size()) {
-	  uint j;
-	  for (j = 0; j < s.size(); ++j)
-	    if (s[j] == 'x')
-	      break ;
-	  string s0 = s.substr(0, j);
-	  if (j >= s.size())
-	    s = "";
-	  else
-	    s = s.substr(j + 1, s.size());
-	  d.insert_dim(atoi(s0.c_str()), k++);
-	}
-	mindims = d;
+	mindims = string_to_idxdim(argv[i]);
 	mindims_set = true;
+      } else if (strcmp(argv[i], "-maxdims") == 0) {
+	++i; if (i >= argc) throw 0;
+	maxdims = string_to_idxdim(argv[i]);
+	maxdims_set = true;
+      } else if (strcmp(argv[i], "-minborders") == 0) {
+	++i; if (i >= argc) throw 0;
+	minborders = string_to_idxdim(argv[i]);
+	minborders_set = true;
+      } else if (strcmp(argv[i], "-savedisplay") == 0) {
+	++i; if (i >= argc) throw 0;
+	save_display_dir = argv[i];
+	++i; if (i >= argc) throw 0;
+	save_display_dims = string_to_idxdim(argv[i]);
+	save_display = true;
       } else if (strcmp(argv[i], "-gridsz") == 0) {
 	++i; if (i >= argc) throw 0;
-	idxdim d;
-	string s = argv[i];
-	int k = 0;
-	while (s.size()) {
-	  uint j;
-	  for (j = 0; j < s.size(); ++j)
-	    if (s[j] == 'x')
-	      break ;
-	  string s0 = s.substr(0, j);
-	  if (j >= s.size())
-	    s = "";
-	  else
-	    s = s.substr(j + 1, s.size());
-	  d.insert_dim(atoi(s0.c_str()), k++);
-	}
-	gridsz = d;
+	gridsz = string_to_idxdim(argv[i]);
       } else if (strcmp(argv[i], "-scales") == 0) {
 	++i; if (i >= argc) throw 0;
 	string s = argv[i];
 	scales = string_to_doublevector(s);
 	scale_mode = true;
 	preprocessing = true;
-      } else if (strcmp(argv[i], "-jitter") == 0) {
+      } else if (strcmp(argv[i], "-fovea_scales") == 0) {
+	++i; if (i >= argc) throw 0;
+	string s = argv[i];
+	fovea_scales = string_to_doublevector(s);
+	fovea_mode = true;
+	preprocessing = true;
+      } else if (strcmp(argv[i], "-njitter") == 0) {
+	++i; if (i >= argc) throw 0;
+	njitter = (uint) atoi(argv[i]);	
+      } else if (strcmp(argv[i], "-jitter_translation") == 0) {
+	++i; if (i >= argc) throw 0;
+	vector<uint> l = string_to_uintvector(argv[i]);
+	if (l.size() != 5)
+	  eblerror("expected 5 arguments to -jitter_translation");
+	tjitter_step = l[0];
+	tjitter_hmin = l[1];
+	tjitter_hmax = l[2];
+	tjitter_wmin = l[3];
+	tjitter_wmax = l[4];
+      } else if (strcmp(argv[i], "-jitter_rotation") == 0) {
 	++i; if (i >= argc) throw 0;
 	vector<double> l = string_to_doublevector(argv[i]);
-	if (l.size() != 7)
-	  eblerror("expected 7 arguments to -jitter, found " << l.size());
-	hjitter = (uint) l[0];
-	wjitter = (uint) l[1];
-	nsjitter = (uint) l[2];
-	sjitter = (float) l[3];
-	nrjitter = (uint) l[4];
-	rjitter = (float) l[5];
-	njitter = (uint) l[6];
+	rjitter_steps = (uint) l[0];
+	rjitter = l[1];
+      } else if (strcmp(argv[i], "-jitter_scale") == 0) {
+	++i; if (i >= argc) throw 0;
+	vector<double> l = string_to_doublevector(argv[i]);
+	if (l.size() != 3)
+	  eblerror("expected 3 arguments to -jitter_scale");
+	sjitter_steps = (uint) l[0];
+	sjitter_min = l[1];
+	sjitter_max = l[2];
       } else if (strcmp(argv[i], "-forcelabel") == 0) {
 	++i; if (i >= argc) throw 0;
 	label = argv[i];
@@ -318,6 +332,21 @@ bool parse_args(int argc, char **argv) {
 	++i; if (i >= argc) throw 0;
 	bbox_woverh = (float) atof(argv[i]);
 	bbox_woverh_set = true;
+      } else if (strcmp(argv[i], "-minvisibility") == 0) {
+	++i; if (i >= argc) throw 0;
+	minvisibility = (float) atof(argv[i]);
+	minvisibility_set = true;
+      } else if (strcmp(argv[i], "-max_aspect_ratio") == 0) {
+	++i; if (i >= argc) throw 0;
+	max_aspect_ratio = (float) atof(argv[i]);
+	max_aspect_ratio_set = true;
+      } else if (strcmp(argv[i], "-min_aspect_ratio") == 0) {
+	++i; if (i >= argc) throw 0;
+	min_aspect_ratio = (float) atof(argv[i]);
+	min_aspect_ratio_set = true;
+      } else if (strcmp(argv[i], "-max_jitt_match") == 0) {
+	++i; if (i >= argc) throw 0;
+	max_jitt_match = (float) atof(argv[i]);
       } else if ((strcmp(argv[i], "-help") == 0) ||
 		 (strcmp(argv[i], "-h") == 0)) {
 	return false;
@@ -352,7 +381,8 @@ void print_usage() {
   cout << "     pascal: compile images labeled by xml files (PASCAL challenge)";
   cout << endl;
   cout << "     pascalbg: compile background images of PASCAL challenge"<< endl;
-  cout << "     pascalclear: clear objects from original images of PASCAL challenge"<< endl;
+  cout << "     pascalclear: clear objects from original images of PASCAL "
+       << "challenge"<< endl;
   cout << "     pascalfull: copy full original PASCAL images into outdir"<<endl;
   cout << "       (allows to exclude some classes, then call regular compiler)";
   cout << endl;
@@ -360,6 +390,8 @@ void print_usage() {
        << "       cell sizes are determined by -gridsz option"<<endl;
   cout << "  -precision <float(default)|double|ubyte>" << endl;
   cout << "  -annotations <directory>" << endl;
+  cout << "  -ignore_path <directory>" << endl
+       << "     Path of ignored annotations files." << endl;
   cout << "  -image_pattern <pattern>" << endl;
   cout << "     default: " << IMAGE_PATTERN_MAT << endl;
   cout << "  -channels <channel>" << endl;
@@ -380,14 +412,17 @@ void print_usage() {
   cout << "  -dname <name>" << endl;
   cout << "  -maxperclass <integer>" << endl;
   cout << "  -maxdata <integer>" << endl;
-  cout << "  -kernelsz <integer>" << endl;
+  cout << "  -kernelsz <dims, e.g.: 7x7>" << endl;
   cout << "  -mexican_hat_size <integer>" << endl;
   cout << "  -deformations <integer>" << endl;
   cout << "  -dims <dimensions (default: 96x96x3)>" << endl;
   cout << "  -mindims <dimensions (default: 1x1)>" << endl;
   cout << "     (exclude inputs for which one dimension is less than specified";
+  cout << "  -maxdims <dimensions (e.g.: 100x100)>" << endl;
+  cout << "     (exclude inputs for which one dimension is more than specified";
   cout << endl;
   cout << "  -scales <scales (e.g: 1.5,2,4)>" << endl;
+  cout << "  -fovea_scales <scales (e.g: 1.5,2,4)>" << endl;
   cout << "  -bboxfact <float factor> (multiply bounding boxes by a factor)";
   cout << endl;
   cout << "  -bboxhfact <float factor> (multiply bboxes height by a factor)";
@@ -413,15 +448,32 @@ void print_usage() {
   cout << "  -ignore_occluded (ignore sample if \"occluded\" flag is on)";
   cout << endl;
   cout << "  -nopadded (ignore padded image too small for target size)" << endl;
-  cout << "  -jitter <h>,<w>,<nscales>,<scale range>,<nrotations>,"
-       << "<rotation range (in degrees)>,<n>" << endl
-       << "   (add n samples randomly jittered from spatial neighborhood hxw "
-       << ", nscales within scale_range and nrotations within rotation range "
-       << "around original location/scale)"
+  cout << "  -njitter <uint>" << endl
+       << "   Number of jitters to take among all possible ones." << endl;
+  cout << "  -jitter_translation <step,hmin,hmax,wmin,wmax>" << endl
+       << "   Range of translations for jitters in pixels." << endl;
+  cout << "  -jitter_roration <nsteps,range (in degrees)>" << endl
+       << "   Steps and range of rotation jitter, e.g. 10,90" << endl;
+  cout << "  -jitter_scale <nsteps,min_scale,max_scale>" << endl
+       << "   Steps and range of scale jitter, e.g. 10,.8,1.2" << endl;
+  cout << "  -max_jitt_match <float>" << endl
+       << "     Maximum match allowed for a jittered rect with other objects."
        << endl;
   cout << "  -wmirror (add mirrored sample using vertical-axis symmetry)"
        << endl;
   cout << "  -forcelabel <label name>" << endl;
+  cout << "  -minvisibility <ratio [0.0,1.0]>" << endl;
+  cout << "     If visible bounding boxes are defined, reject bbs with " << endl
+       << "     visible/full ratios less than ratio." << endl;
+  cout << "  -minborders <dimensions (default: 0x0)>" << endl;
+  cout << "     Exclude bounding boxes which are closer to image borders"
+       << endl << "     than those dimensions." << endl;
+  cout << "  -min_aspect_ratio <ratio [0.0,1.0]>" << endl;
+  cout << "     Minimum aspect ratio (width/height) allowed for input bb."
+       << endl;
+  cout << "  -max_aspect_ratio <ratio [0.0,1.0]>" << endl;
+  cout << "     Maximum aspect ratio (width/height) allowed for input bb."
+       << endl;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -429,10 +481,14 @@ void print_usage() {
 
 template <class Tds>
 void compile_ds(Tds &ds, bool imgpat = true) {
+  if (nopp) preprocessing = false; // force disabling of pp
   ds.set_outdir(outdir);
   if (wmirror) ds.set_wmirror();
-  if (njitter > 0) ds.set_jitter(hjitter, wjitter, nsjitter, sjitter,
-				 nrjitter, rjitter, njitter);
+  if (njitter > 0)
+    ds.set_jitter(tjitter_step, tjitter_hmin, tjitter_hmax,
+		  tjitter_wmin, tjitter_wmax,
+		  sjitter_steps, sjitter_min, sjitter_max,
+		  rjitter_steps, rjitter, njitter);
   if (bboxfact_set) ds.set_bboxfact(bboxfact);
   if (bboxhfact_set) ds.set_bboxhfact(bboxhfact);
   if (bboxwfact_set) ds.set_bboxwfact(bboxwfact);
@@ -444,7 +500,11 @@ void compile_ds(Tds &ds, bool imgpat = true) {
   ds.set_include(include);
   if (outdims_set) ds.set_outdims(outdims);
   if (mindims_set) ds.set_mindims(mindims);
+  if (maxdims_set) ds.set_maxdims(maxdims);
   ds.set_display(display);
+  if (save_display)
+    ds.save_display(save_display_dir, save_display_dims.dim(0),
+		    save_display_dims.dim(1));
   ds.set_nopadded(nopadded);
   ds.set_sleepdisplay(sleep_delay);
   ds.set_resize(resize);
@@ -454,6 +514,8 @@ void compile_ds(Tds &ds, bool imgpat = true) {
   if (maxdata > 0) ds.set_max_data(maxdata);
   if (imgpat) ds.set_image_pattern(image_pattern);
   if (force_label) ds.set_label(label);
+  if (fovea_mode) ds.set_fovea(fovea_scales);
+  if (minvisibility_set) ds.set_minvisibility(minvisibility);
   // switch between load and normal mode
   if (load_set) { // in load mode, do nothing but loading dataset
     ds.set_name(load); // dataset to load
@@ -477,7 +539,16 @@ void compile() {
   else if (!strcmp(type.c_str(), "pascal")) {
     pascal_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
 			     ignore_difficult, ignore_truncated,
-			     ignore_occluded, annotations.c_str());
+			     ignore_occluded, annotations.c_str(),
+			     ignore_path.c_str());
+    if (min_aspect_ratio_set)
+      ds.set_min_aspect_ratio(min_aspect_ratio);
+    if (max_aspect_ratio_set)
+      ds.set_max_aspect_ratio(max_aspect_ratio);
+    if (minborders_set)
+      ds.set_minborders(minborders);
+    if (max_jitt_match > 0.0)
+      ds.set_max_jitter_match(max_jitt_match);
     compile_ds(ds);
   }
   else if (!strcmp(type.c_str(), "pascalbg")) {
@@ -492,6 +563,7 @@ void compile() {
     ds.set_resize(resize);
     if (outdims_set) ds.set_outdims(outdims);
     if (mindims_set) ds.set_mindims(mindims);
+    if (maxdims_set) ds.set_maxdims(maxdims);
     ds.set_nopadded(nopadded);
     ds.set_display(display);
     ds.set_sleepdisplay(sleep_delay);
@@ -499,6 +571,7 @@ void compile() {
     if (maxdata > 0) ds.set_max_data(maxdata);
     if (scale_mode) ds.set_scales(scales, outdir);
     if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
+    if (fovea_mode) ds.set_fovea(fovea_scales);
     if (save_set) ds.set_save(save);
     ds.extract();
   }
@@ -512,6 +585,7 @@ void compile() {
     ds.set_resize(resize);
     if (outdims_set) ds.set_outdims(outdims);
     if (mindims_set) ds.set_mindims(mindims);
+    if (maxdims_set) ds.set_maxdims(maxdims);
     ds.set_nopadded(nopadded);
     ds.set_display(display);
     ds.set_sleepdisplay(sleep_delay);
@@ -576,6 +650,7 @@ MAIN_QTHREAD(int, argc, char**, argv) {
       cout << "  dataset precision: " << precision << endl;
       cout << "  images root directory: " << images_root << endl;
       cout << "  annotations directory: " << annotations << endl;
+      cout << "  ignored annotations directory: " << ignore_path << endl;
       cout << "  output directory: " << outdir << endl;
       cout << "  outputs: " << outdir << "/" << dataset_name << "_*.mat"
 	   << endl;
@@ -604,6 +679,7 @@ MAIN_QTHREAD(int, argc, char**, argv) {
       cout << "  resizing method: " << resize << endl;
       cout << "  output dimensions: " << outdims << endl;
       cout << "  minimum input dimensions: " << mindims << endl;
+      cout << "  maximum input dimensions: " << maxdims << endl;
       cout << "  no padded: " << (nopadded ? "yes" : "no") << endl;
       cout << "  scales: ";
       if (!scale_mode) cout << "none";
@@ -625,5 +701,9 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 	eblerror("trying to compile dataset with unsupported precision \""
 		 << precision << "\"");
     } eblcatcherror();
+#ifdef __GUI__
+    cout << "Closing windows..." << endl;
+    quit_gui(); // close all windows
+#endif
   return 0;
 }

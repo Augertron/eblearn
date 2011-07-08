@@ -55,4 +55,5 @@ IF (QT_FOUND) #---------------------------------------------------------------
   target_link_libraries (mnist_reco idxgui)
   target_link_libraries (mnist_reco eblearngui)
 ENDIF (QT_FOUND) #------------------------------------------------------------
+LINK_MAGICKPP(mnist_reco)
   

@@ -129,15 +129,23 @@ namespace ebl {
     //! Returns the average error percentage computed from the confusion matrix,
     //! i.e. taking into account the class distributions, in other words,
     //! returns the mean of the per-class mean error.
-    double class_normalized_average_error();
+    double class_normalized_average_error(idx<int> &confu);
 
     //! Returns the average error percentage computed regardless of the class.
     //! This measure might be bias with unbalanced datasets.
-    double overall_average_error();
+    double overall_average_error(idx<int> &confu);
 
     //! Returns the average success percentage computed
-    //! from the confusion matrix.
-    double class_normalized_average_success();
+    //! from the confusion matrix 'confu'.
+    double class_normalized_average_success(idx<int> &confu);
+
+    //! Return the number of samples for class with id 'classid'
+    //! in confusion matrix 'confu'.
+    int get_class_samples(idx<int> &confu, intg classid);
+
+    //! Return the number of errors for class with id 'classid'
+    //! in confusion matrix 'confu'.
+    int get_class_errors(idx<int> &confu, intg classid);
 
     //! Returns the confusion matrix;
     idx<int>& get_confusion();
@@ -159,8 +167,13 @@ namespace ebl {
     //! recognized samples, and the percentage of rejected samples.
     //! names of each class (lblstr) are optional.
     //! \param ds_is_test If true, prepend "test_" in front of varialbes.
-    void display(int iteration, string &dsname, std::vector<string*> *lblstr = NULL,
+    void display(int iteration, string &dsname, 
+		 std::vector<string*> *lblstr = NULL,
 		 bool ds_is_test = false);
+
+    //! Display information averaged over all iterations.
+    void display_average(string &dsname, std::vector<string*> *lblstr = NULL,
+			 bool ds_is_test = false);
 
     //! display ROC points for each class.
     //! names of each class (lblstr) are optional.
@@ -173,7 +186,7 @@ namespace ebl {
   public:
     double		energy;
     float		confidence;
-    intg		size;
+    intg		size; //! Number of samples seen for this iteration.
     intg		age;
     intg		total_correct;
     intg		total_error;
@@ -183,8 +196,12 @@ namespace ebl {
     std::vector<uint>	class_totals;
     std::vector<uint>	class_tpr;
     std::vector<uint>	class_fpr;
+    std::vector<std::string> log_fields; //!< Names of variables to log.
+    std::vector<double> log_values; //!< Values to log.
+    std::vector<double> total_values; //!< Totals samples used for values.
   private:
     idx<int>		confusion;	//!< confusion matrix
+    idx<int>            total_confusion;//!< Confusion matrix over all iterations.
     uint                nclasses;       //!< number of classes
   };
 

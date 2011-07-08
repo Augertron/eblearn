@@ -86,8 +86,17 @@ namespace ebl {
     //! save patches into directory outdir, creating 1 subdirectory per patch
     //! until reaching max_folders, then filling last folder with remaining
     //! patches, using filename as base filename for patches filenames.
-    void save_patches(vector<idx<Tdata> > &patches, const string &outdir,
+    void save_patches(idx<ubyte> &img, const string &image_filename, 
+		      vector<rect<int> > &patch_bboxes,
+		      vector<rect<int> > &objs_bboxes, const string &outdir,
 		      uint max_folders, const string &filename);
+
+    void display_patch(idx<Tdata> &patch, idx<Tdata> &img, 
+		       const string &image_filename,
+		       const string &cname,
+		       rect<int> &pbbox, rect<int> &r,
+		       vector<rect<int> > &objs_bboxes,
+		       vector<rect<int> > &patch_bboxes);
 
 #endif /* __BOOST__ */
 #endif /* __XML__ */
@@ -122,6 +131,9 @@ namespace ebl {
     using pascal_dataset<Tdata>::ignore_difficult;
     using pascal_dataset<Tdata>::ignore_truncated;
     using pascal_dataset<Tdata>::ignore_occluded;
+    using dataset<Tdata>::xtimer;
+    using dataset<Tdata>::processed_cnt;
+    using dataset<Tdata>::fovea;
   };
 
 } // end namespace ebl

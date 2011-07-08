@@ -64,10 +64,10 @@ using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
 
 #ifdef __DEBUGMEM__
-  INIT_DEBUGMEM()
+INIT_DEBUGMEM()
 #endif
 
-typedef float t_net; // network precision
+  typedef float t_net; // network precision
 
 //////////////////////////////////////////////////////////////////////////
 // serialization functions
@@ -118,396 +118,535 @@ namespace boost {
       ar & b.width;
       // we dont' really care about other members here
     }
-    // template<class Archive>
-    // void serialize(Archive & ar, bbox*& b, const unsigned int version) {
-    //   if (b == NULL)
-    // 	b = new bbox();
-    //   ar & b->class_id;
-    //   ar & b->confidence;
-    //   ar & b->h0;
-    //   ar & b->w0;
-    //   ar & b->height;
-    //   ar & b->width;
-    //   // we dont' really care about other members here
-    // }
+
+//     template<class Archive>
+//     void serialize(Archive & ar, bbox*& b, const unsigned int version) {
+//       if (b == NULL)
+//     	b = new bbox();
+//       ar & b->class_id;
+//       ar & b->confidence;
+//       ar & b->h0;
+//       ar & b->w0;
+//       ar & b->height;
+//       ar & b->width;
+//       // we dont' really care about other members here
+//     }
     
   } // namespace serialization
 } // namespace boost
 
-//////////////////////////////////////////////////////////////////////////
-// comm functions
+enum tag { cmd_finished = 0, cmd_get_data = 1, cmd_set_data = 2, 
+	   cmd_available = 3, cmd_stop = 4 };
 
-enum tag { cmd_finished = 0, cmd_get_data = 1 };
+class mpichild {
+public:
 
-// blocking-ask if thread 'rank' has finished.
-bool ask_thread_finished(boost::mpi::communicator &world, int rank) {
-  bool finished = 0;
-  world.send(rank, cmd_finished); // send command (no data)
-  world.recv(rank, cmd_finished, finished); // get bool
-  return finished;
-}
-
-// non-blocking check if question was asked, and blocking-answer it.
-void answer_thread_finished(boost::mpi::communicator &world, int rank,
-			    bool finished) {
-  // check if we received a question, non blocking
-  boost::mpi::request r = world.irecv(rank, cmd_finished);
-  // check if the comm went through
-  if (!r.test())
-    return ; // no cmd received
-  // we received the command, send the answer
-  world.send(rank, cmd_finished, finished);
-}
-
-// blocking-ask for new data, return false if no new data is available.
-bool ask_get_data(boost::mpi::communicator &world, int rank, vector<bbox*> &bb,
-		  idx<ubyte> &frame, uint &total_saved, string &frame_name,
-		  uint &frame_id) {
-  bool new_data = 0;
-  world.send(rank, cmd_get_data);
-  world.recv(rank, cmd_get_data, new_data);
-  if (!new_data)
-    return false; // no new data, stop here
-  // get the new data
-  world.recv(rank, cmd_get_data, bb);
-  world.recv(rank, cmd_get_data, frame);
-  world.recv(rank, cmd_get_data, total_saved);
-  world.recv(rank, cmd_get_data, frame_name);
-  world.recv(rank, cmd_get_data, frame_id);
-  return true;
-}
-
-// non-blocking check if question was asked, then blocking send data.
-void answer_get_data(boost::mpi::communicator &world, int rank,
-		     detection_thread<t_net> &dt) {
-  // data variables
-  idx<ubyte> frame;
-  string frame_name;
-  uint frame_id;
-  vector<bbox*> bb;
-  uint total_saved;
-  // check if we received a question, non blocking
-  boost::mpi::request r = world.irecv(rank, cmd_get_data);
-  // check if the comm went through
-  if (!r.test())
-    return ; // no cmd received
-  // we got the question, answer it
-  bool new_data = dt.get_data(bb, frame, total_saved, frame_name, frame_id);
-  world.send(rank, cmd_get_data, new_data);
-  if (!new_data)
-    return ; // no new data, stop here
-  // send the new data
-  world.send(rank, cmd_get_data, bb);
-  world.send(rank, cmd_get_data, frame);
-  world.send(rank, cmd_get_data, total_saved);
-  world.send(rank, cmd_get_data, frame_name);
-  world.send(rank, cmd_get_data, frame_id);
-}
-
-// blocking-ask to send data.
-void ask_set_data(boost::mpi::communicator &world, int rank, idx<ubyte> &frame,
-		  string &frame_name, uint frame_id) {
-}
-
-// non-blocking check if question was asked, then blocking get data into thread.
-// return true if data was retrieved.
-bool answer_set_data(boost::mpi::communicator &world, int rank, idx<ubyte> &frame,
-		     string &frame_name, uint frame_id) {
-  return true;
-}
-
-// blocking-ask if thread is available for new data
-bool ask_available(boost::mpi::communicator &world, int rank) {
-  return true;
-}
-
-// non-blocking check if question was asked, and blocking-answer it.
-void answer_ask_available(boost::mpi::communicator &world, int rank, bool available) {
-}
-
-// blocking-ask the thread to stop
-void ask_ask_stop(boost::mpi::communicator &world, int rank) {
-}
-
-// non-blocking check if command was sent, return true if thread was asked to
-// stop.
-bool check_ask_stop(boost::mpi::communicator &world) {
-}
-
-//////////////////////////////////////////////////////////////////////////
-// main thread
-
-void main_thread(int argc, char **argv, configuration &conf,
-		 boost::mpi::communicator &world) {
-  // config
-  ostream &mout = cout;
-  ostream &merr = cerr;
-  uint          ipp_cores		  = 1;
-  if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
-  ipp_init(ipp_cores);		// limit IPP (if available) to 1 core
-  bool		save_video		  = conf.exists_true("save_video");
-  string	cam_type		  = conf.get_string("camera");
-  int		height			  = conf.get_int("input_height");
-  int		width			  = conf.get_int("input_width");
-  bool          input_random		  = conf.exists_true("input_random");
-  uint          npasses			  = 1;
-  bool              silent        = conf.exists_true("silent");
-  if (conf.exists("input_npasses"))
-    npasses = conf.get_uint("input_npasses");
-  // outputs
-  string outdir = "out_";
-  outdir += tstamp();
-  outdir += "/";
-  cout << "Saving outputs to " << outdir << endl;
-  string viddir;
-  if (save_video) {
-    viddir << outdir << "video/";
-    mkdir_full(viddir);
+  //! Constructor.
+  mpichild(configuration &conf, boost::mpi::communicator &world_,
+	   mutex &out_mutex, const char *thread_name, bool sync) 
+    : dt(conf, &out_mutex, thread_name, NULL, sync), world(world_),
+      mout(dt.get_mout()), merr(dt.get_merr()) {
   }
-  // save conf to output dir
-  string cname = outdir;
-  cname << filename(argv[1]);
-  if (conf.write(cname.c_str()))
-    mout << "Wrote configuration to " << cname << endl;
-  // bbox saving
-  bboxes boxes(conf.exists("bbox_saving") ?
-	       (t_bbox_saving) conf.get_int("bbox_saving") : bbox_all,
-	       &outdir, mout, merr);
 
-  int nprocs = world.size();
-  int nthreads = nprocs - 1;
-  mout << "Thread M: Initialized " << nthreads << " detection threads." << endl;
+  virtual ~mpichild() {
+  }
+
+  //////////////////////////////////////////////////////////////////////////
+  // comm methods
+  
+  // non-blocking check if question was asked, then blocking send data.
+  void answer_get_data() {
+    // data variables
+    idx<ubyte> frame;
+    string frame_name;
+    uint frame_id;
+    vector<bbox*> bb;
+    vector<bbox> bb2;
+    uint total_saved;
+    // we got the question, answer it
+    bool new_data = dt.get_data(bb, frame, total_saved, frame_name, frame_id);
+    world.send(0, cmd_get_data, new_data);
+    if (!new_data)
+      return ; // no new data, stop here
+    // create a non-pointer vector
+    for (uint i = 0; i < bb.size(); ++i) {
+      bb2.push_back(*(bb[i]));
+    }
+    int frame_height = frame.dim(0);
+    int frame_width = frame.dim(1);
+    // send the new data
+    world.send(0, cmd_get_data, bb2);
+    //    world.send(0, cmd_get_data, frame);
+    world.send(0, cmd_get_data, frame_height);
+    world.send(0, cmd_get_data, frame_width);
+    world.send(0, cmd_get_data, total_saved);
+    world.send(0, cmd_get_data, frame_name);
+    world.send(0, cmd_get_data, frame_id);
+  }
+
+  //////////////////////////////////////////////////////////////////////////
+  
+  //! Constructor
+  void run() {
+    // data variables
+    string fullname, frame_name;
+    uint frame_id;
+    vector<bbox*> bb;
+    uint total_saved;
+    idx<ubyte> uframe;
+    bool stopped = false, available = false, finished = false, loaded = false;
+  
+    // start thread
+    dt.start();
+  
+    boost::mpi::request req = world.irecv(0, boost::mpi::any_tag);
+    // loop to receive/send messages
+    while (1) {
+      // wait for master command
+      boost::optional<boost::mpi::status> ret = req.test();
+      if (ret) {
+	boost::mpi::status s = ret.get();
+	// execute command
+	switch (s.tag()) {
+	case cmd_finished:
+	  finished = dt.finished();
+	  if (finished)
+	    mout << "is finished." << endl;
+	  world.send(0, cmd_finished, finished);
+	  break ;
+	case cmd_get_data:
+	  if (stopped) 
+	    eblerror("Thread " << world.rank() << " cannot ask stopped thread");
+	  answer_get_data();
+	  break ;
+	case cmd_set_data:
+	  if (stopped) 
+	    eblerror("Thread " << world.rank() << " cannot ask stopped thread");
+	  // get the new data
+	  world.recv(0, cmd_set_data, fullname);
+	  world.recv(0, cmd_set_data, frame_name);
+	  world.recv(0, cmd_set_data, frame_id);
+	  // try to set data until successful (meaning we got the mutex lock)
+	  loaded = false;
+	  try {
+	    uframe = load_image<ubyte>(fullname);
+	    mout << "mpi slave loaded image " << fullname 
+		 << " " << uframe << endl;
+	    loaded = true;
+	  } catch(eblexception &e) {
+	    merr << "exception: " << e << endl;
+	    mout << "Failed to process " << fullname << endl;
+	  }
+	  world.send(0, cmd_set_data, loaded);
+	  if (!loaded)
+	    break ; // failed to load image stop here
+	  // image is loaded, feed it to thread
+	  while (!dt.set_data(uframe, frame_name, frame_id))
+	    millisleep(5);
+	  break ;
+	case cmd_available:
+	  available = dt.available();
+	  world.send(0, cmd_available, available);
+	  break ;
+	case cmd_stop:
+	  if (!stopped) {
+	    dt.ask_stop();
+	    // wait that thread finishes
+	    while (!dt.finished())
+	      millisleep(5);
+	    stopped = true;
+	  }
+	  break ;
+	default:
+	  eblerror("child " << world.rank() << ": unknown command "
+		   << s.tag());
+	}
+	// wait for a new command
+	req = world.irecv(0, boost::mpi::any_tag);
+      }
+      millisleep(100); // sleep to avoid eating cpu
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////
+  // members
+private:
+  detection_thread<t_net> dt;
+  boost::mpi::communicator &world;
+  boost::mpi::request req;
+  std::ostream &mout, &merr;
+};
+
+//////////////////////////////////////////////////////////////////////////
+// master class
+
+class mpimaster {
+public:
+
+  mpimaster(int argc_, char **argv_, configuration &conf_,
+	    boost::mpi::communicator &world_, 
+	    ostream &mout_, ostream &merr_)
+    : argc(argc_), argv(argv_), conf(conf_), world(world_), 
+      mout(mout_), merr(merr_) {
+  }
+
+  virtual ~mpimaster() {
+  }
+
+  //////////////////////////////////////////////////////////////////////////
+  // comm methods
+
+  // blocking-ask if thread 'rank' has finished.
+  bool ask_thread_finished(int rank) {
+    bool finished = 0;
+    world.send(rank, cmd_finished); // send command (no data)
+    world.recv(rank, cmd_finished, finished); // get bool
+//     if (finished)
+//       mout << "thread " << rank << " is saying its finished." << endl;
+    return finished;
+  }
+
+  // blocking-ask for new data, return false if no new data is available.
+  bool ask_get_data(int rank, vector<bbox> &bb,
+		    int &frame_height, int &frame_width, 
+		    uint &total_saved, string &frame_name,
+		    uint &frame_id) {
+    bool new_data = 0;
+    world.send(rank, cmd_get_data);
+    world.recv(rank, cmd_get_data, new_data);
+    if (!new_data)
+      return false; // no new data, stop here
+    // get the new data
+    bb.clear();
+    world.recv(rank, cmd_get_data, bb);
+    //    world.recv(rank, cmd_get_data, frame);
+    world.recv(rank, cmd_get_data, frame_height);
+    world.recv(rank, cmd_get_data, frame_width);
+    world.recv(rank, cmd_get_data, total_saved);
+    world.recv(rank, cmd_get_data, frame_name);
+    world.recv(rank, cmd_get_data, frame_id);
+    return true;
+  }
+
+  // blocking-ask to send data.
+  bool ask_set_data(int rank, string &fullname,
+		    string &frame_name, uint frame_id) {
+    bool success = false;
+    world.send(rank, cmd_set_data);
+    // send the new data
+    world.send(rank, cmd_set_data, fullname);
+    world.send(rank, cmd_set_data, frame_name);
+    world.send(rank, cmd_set_data, frame_id);
+    world.recv(rank, cmd_set_data, success);
+    if (!success)
+      mout << "failed to assign image to slot " << rank << ": " 
+	   << fullname << endl;
+    return success;
+  }
+
+  // blocking-ask if thread is available for new data
+  bool ask_available(int rank) {
+    bool available = false;
+    // ask the question, blocking
+    world.send(rank, cmd_available);
+    world.recv(rank, cmd_available, available);
+    return available;
+  }
+
+  // blocking-ask the thread to stop
+  void ask_ask_stop(int rank) {
+    mout << "asking Thread " << rank << " to finish and stop." << endl;
+    world.send(rank, cmd_stop);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  void run() {
+    // config
+    uint        ipp_cores		    = 1;
+    if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
+    ipp_init(ipp_cores);	// limit IPP (if available) to 1 core
+    bool	save_video		    = conf.exists_true("save_video");
+    string	cam_type		    = conf.get_string("camera");
+    int		height			    = conf.get_int("input_height");
+    int		width			    = conf.get_int("input_width");
+    bool        input_random		    = conf.exists_true("input_random");
+    uint        npasses			    = 1;
+    bool        silent        		    = conf.exists_true("silent");
+    bool        save_detections 	    = conf.exists_true("save_detections");
+    uint 	save_bbox_period 	    = 1;
+    if (conf.exists("save_bbox_period")) 
+      save_bbox_period = std::max((uint)1, conf.get_uint("save_bbox_period"));
+    if (conf.exists("input_npasses"))
+      npasses = conf.get_uint("input_npasses");
+    // outputs
+    string outdir = conf.get_string("meta_output_dir");
+    outdir << "detections_" << tstamp();
+    outdir << "/";
+    mkdir_full(outdir);
+    mout << "Saving outputs to " << outdir << endl;
+    string viddir;
+    if (save_video) {
+      viddir << outdir << "video/";
+      mkdir_full(viddir);
+    }
+    // save conf to output dir
+    string cname = outdir;
+    cname << filename(argv[1]);
+    if (conf.write(cname.c_str()))
+      mout << "Wrote configuration to " << cname << endl;
+    // bbox saving
+    t_bbox_saving bbsaving = bbox_none;
+    if (conf.exists("bbox_saving"))
+      bbsaving = (t_bbox_saving) conf.get_int("bbox_saving");
+    bboxes boxes(bbsaving, &outdir, mout, merr);
+
+    int nprocs = world.size();
+    int nthreads = nprocs - 1;
+    mout << "Thread M: Initialized " << nthreads << " detection threads." << endl;
     
-  // initialize camera (opencv, directory, shmem or video)
-  idx<ubyte> frame;
-  camera<ubyte> *cam = NULL, *cam2 = NULL;
-  if (!strcmp(cam_type.c_str(), "directory")) {
-    if (argc >= 3) // read input dir from command line
-      cam = new camera_directory<ubyte>(argv[2], height, width,
-					input_random, npasses, mout, merr);
-    else if (conf.exists("input_dir")) // read input dir from conf
-      cam = new camera_directory<ubyte>(conf.get_cstring("input_dir"), 
-					height, width, input_random,
-					npasses, mout, merr);
-    else eblerror("expected 2nd argument");
-  } else if (!strcmp(cam_type.c_str(), "opencv"))
-    cam = new camera_opencv<ubyte>(-1, height, width);
+    // initialize camera (opencv, directory, shmem or video)
+    idx<ubyte> frame;
+    camera<ubyte> *cam = NULL, *cam2 = NULL;
+    if (!strcmp(cam_type.c_str(), "directory")) {
+      if (argc >= 3) // read input dir from command line
+	cam = new camera_directory<ubyte>(argv[2], height, width,
+					  input_random, npasses, mout, merr);
+      else if (conf.exists("input_dir")) // read input dir from conf
+	cam = new camera_directory<ubyte>(conf.get_cstring("input_dir"), 
+					  height, width, input_random,
+					  npasses, mout, merr);
+      else eblerror("expected 2nd argument");
+    } else if (!strcmp(cam_type.c_str(), "opencv"))
+      cam = new camera_opencv<ubyte>(-1, height, width);
 #ifdef __LINUX__
-  else if (!strcmp(cam_type.c_str(), "v4l2"))
-    cam = new camera_v4l2<ubyte>(conf.get_cstring("device"),
-				 height, width);
+    else if (!strcmp(cam_type.c_str(), "v4l2"))
+      cam = new camera_v4l2<ubyte>(conf.get_cstring("device"),
+				   height, width);
 #endif
-  else if (!strcmp(cam_type.c_str(), "shmem"))
-    cam = new camera_shmem<ubyte>("shared-mem", height, width);
-  else if (!strcmp(cam_type.c_str(), "video")) {
-    if (argc >= 3)
-      cam = new camera_video<ubyte>
-	(argv[2], height, width, conf.get_uint("input_video_sstep"),
-	 conf.get_uint("input_video_max_duration"));
-    else eblerror("expected 2nd argument");
-  } else eblerror("unknown camera type, set \"camera\" in your .conf");
+    else if (!strcmp(cam_type.c_str(), "shmem"))
+      cam = new camera_shmem<ubyte>("shared-mem", height, width);
+    else if (!strcmp(cam_type.c_str(), "video")) {
+      if (argc >= 3)
+	cam = new camera_video<ubyte>
+	  (argv[2], height, width, conf.get_uint("input_video_sstep"),
+	   conf.get_uint("input_video_max_duration"));
+      else eblerror("expected 2nd argument");
+    } else eblerror("unknown camera type, set \"camera\" in your .conf");
 
-  // answer variables & initializations
-  vector<bbox*> bb;
+    // answer variables & initializations
+    vector<bbox> bb;
 
-  // gui
+    // gui
 #ifdef __GUI__
-  bool display	     = conf.exists_bool("display");
-  bool show_parts        = conf.exists_true("show_parts");
-  // mindisplay     = conf.exists_bool("minimal_display");
-  // display_sleep  = conf.get_uint("display_sleep");
-  // display_states = conf.exists_bool("display_states");
-  uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
-    qheight2 = 0, qwidth2 = 0, qstep2 = 0;
-  if (conf.exists_bool("queue1")) {
-    qstep1 = conf.get_uint("qstep1");
-    qheight1 = conf.get_uint("qheight1");
-    qwidth1 = conf.get_uint("qwidth1"); }
-  if (conf.exists_bool("queue2")) {
-    qstep2 = conf.get_uint("qstep2");
-    qheight2 = conf.get_uint("qheight2");
-    qwidth2 = conf.get_uint("qwidth2"); }
-  // wid_states  = display_states ? new_window("network states"):0;
-  // night_mode();
-  uint wid  = display ? new_window("eblearn object recognition") : 0;
-  night_mode();
+    bool display	     = conf.exists_bool("display");
+    bool show_parts        = conf.exists_true("show_parts");
+    // mindisplay     = conf.exists_bool("minimal_display");
+    // display_sleep  = conf.get_uint("display_sleep");
+    // display_states = conf.exists_bool("display_states");
+    uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
+      qheight2 = 0, qwidth2 = 0, qstep2 = 0;
+    if (conf.exists_bool("queue1")) {
+      qstep1 = conf.get_uint("qstep1");
+      qheight1 = conf.get_uint("qheight1");
+      qwidth1 = conf.get_uint("qwidth1"); }
+    if (conf.exists_bool("queue2")) {
+      qstep2 = conf.get_uint("qstep2");
+      qheight2 = conf.get_uint("qheight2");
+      qwidth2 = conf.get_uint("qwidth2"); }
+    // wid_states  = display_states ? new_window("network states"):0;
+    // night_mode();
+    uint wid  = display ? new_window("eblearn object recognition") : 0;
+    night_mode();
 #endif  
-  // timing variables
-  timer tpass, toverall, tstop;
-  uint cnt = 0;
-  mout << "i=" << cnt << endl;
-  bool stop = false, finished = false, updated = false;
-  idx<ubyte> detframe; // frame returned by detection thread
-  idx<uint> total_saved(nthreads);
-  idx_clear(total_saved);
+    // timing variables
+    timer tpass, toverall, tstop;
+    uint cnt = 0;
+    mout << "i=" << cnt << endl;
+    bool stop = false, finished = false, updated = false;
+    //    idx<ubyte> detframe; // frame returned by detection thread
+    int frame_height = -1, frame_width = -1;
+    idx<uint> total_saved(nthreads);
+    idx_clear(total_saved);
+    // bookkeep jobs assigments
+    idx<int> jobs(world.size());
+    idx_fill(jobs, -1);
+    jobs.set(-2, 0); // master slot is considered finished already
   
-  // loop
-  toverall.start();
-  while (!finished) {
-    // check for results and send new image for each thread
-    uint i = 0;
-    finished = true;
-    for (int rank = 1; rank < nprocs; ++rank) {
-      // do nothing if thread is finished already
-      if (ask_thread_finished(world, rank))
-	continue ;
-      finished = false; // a thread is not finished
-      string processed_fname;
-      uint processed_id = 0;
-      // retrieve new data if present
-      updated = ask_get_data(world, rank, bb, detframe, 
-			     *(total_saved.idx_ptr() + rank - 1),
-			     processed_fname, processed_id);
-      // save bounding boxes
-      if (updated) {
-	updated = false;
-	// boxes.new_group(&processed_fname, processed_id);
-	// boxes.add(bb);
-	cnt++;
-	// display processed frame
-// #ifdef __GUI__
-// 	if (display) {
-// 	  select_window(wid);
-// 	  disable_window_updates();
-// 	  clear_resize_window();
-// 	  detector_gui<t_net>::
-// 	    display_minimal(detframe, bb, 
-// 			    ((*ithreads)->pdetect ?
-// 			     (*ithreads)->pdetect->labels : classes),
-// 			    0, 0, 1, 0, 255,wid, show_parts);
-// 	  enable_window_updates();
-// 	  if (save_video && display) {
-// 	    string fname;
-// 	    fname << viddir << processed_fname;
-// 	    save_window(fname.c_str());
-// 	    if (!silent) mout << "saved " << fname << endl;
-// 	  }
-// 	}
-// #endif
-	  // output info
-	if (!silent) {
-	  mout << "total_saved=" << idx_sum(total_saved);
-	  if (conf.exists("save_max"))
-	    mout << " / " << conf.get_uint("save_max");
-	  mout << endl;
-	  mout << " remaining=" << (cam->size() - cnt);
-	  mout << " elapsed=" << toverall.elapsed();
-	  if (cam->size() > 0) {
-	    mout << " ETA=" << toverall.
-	      elapsed((long)((cam->size() - cnt) * 
-			     (toverall.elapsed_seconds() 
-			      /(float)std::max((uint)1,cnt))));
+    // loop
+    toverall.start();
+    while (!finished) {
+      // check for results and send new image for each thread
+      uint i = 0;
+      for (int rank = 1; rank < nprocs; ++rank) {
+	if (jobs.get(rank) == -2)
+	  continue ; // slave is finished, do nothing
+	string processed_fname;
+	uint processed_id = 0;
+	if (jobs.get(rank) >= 0) { // slot is assigned a job
+	  // retrieve new data if present
+	  updated = ask_get_data(rank, bb, frame_height, frame_width,
+				 *(total_saved.idx_ptr() + rank - 1),
+				 processed_fname, processed_id);
+	  // save bounding boxes
+	  if (updated) {
+	    mout << "received new data from Thread " << rank << endl;
+	    updated = false;
+	    if (frame_height == -1 || frame_width == -1)
+	      eblerror("expected positive frame sizes but got: " << frame_height
+		       << "x" << frame_width);
+	    idxdim d(frame_height, frame_width);
+	    if (bbsaving != bbox_none) {
+	      mout << "Adding " << bb.size() << " boxes into new group: "
+		   << processed_fname << " with id " << processed_id << endl;
+	      boxes.new_group(d, &processed_fname, processed_id);
+	      boxes.add(bb, d, &processed_fname, processed_id);
+	      if (cnt % save_bbox_period == 0)
+		boxes.save();
+	    }
+	    cnt++;
+	    // display processed frame
+	    // #ifdef __GUI__
+	    // 	if (display) {
+	    // 	  select_window(wid);
+	    // 	  disable_window_updates();
+	    // 	  clear_resize_window();
+	    // 	  detector_gui<t_net>::
+	    // 	    display_minimal(detframe, bb, 
+	    // 			    ((*ithreads)->pdetect ?
+	    // 			     (*ithreads)->pdetect->labels : classes),
+	    // 			    0, 0, 1, 0, 255,wid, show_parts);
+	    // 	  enable_window_updates();
+	    // 	  if (save_video && display) {
+	    // 	    string fname;
+	    // 	    fname << viddir << processed_fname;
+	    // 	    save_window(fname.c_str());
+	    // 	    if (!silent) mout << "saved " << fname << endl;
+	    // 	  }
+	    // 	}
+	    // #endif
+	    // output info
+	    if (!silent) {
+	      if (save_detections) {
+		mout << "total_saved=" << idx_sum(total_saved);
+		if (conf.exists("save_max"))
+		  mout << " / " << conf.get_uint("save_max");
+		mout << endl;
+	      }
+	      mout << "remaining=" << (cam->size() - cnt)
+		   << " elapsed=" << toverall.elapsed();
+	      if (cam->size() > 0)
+		mout << " ETA=" << toverall.eta(cnt, cam->size());
+	      if (conf.exists("save_max") && save_detections) {
+		uint total = idx_sum(total_saved);
+		mout << " save_max_ETA="
+		     << toverall.eta(total, (conf.get_uint("save_max")));
+	      }
+	      mout << endl;
+	    }
+	    mout << "i=" << cnt << " processing: " << tpass.elapsed_ms()
+		 << " fps: " << cam->fps() << endl;
 	  }
-	  if (conf.exists("save_max")) {
-	    uint total = idx_sum(total_saved);
-	    mout << " save_max_ETA="
-		 << toverall.
-	      elapsed((long)((conf.get_uint("save_max") - total)
-			     * (toverall.elapsed_seconds() 
-				/ (float)std::max((uint)1,total))));
-	  }
-	  mout << endl;
 	}
-	mout << "i=" << cnt << " processing: " << tpass.elapsed_ms()
-	     << " fps: " << cam->fps() << endl;
-      }
-      // check if ready
-      if (ask_available(world, rank)) {
-	if (stop)
-	  ask_ask_stop(world, rank); // stop but let thread finish
-	else {
-	  // grab a new frame if available
-	  if (cam->empty()) {
-	    stop = true;
-	    tstop.start(); // start countdown timer
-	    ask_ask_stop(world, rank); // ask this thread to stop
-	    millisleep(50);
+	// check if ready
+	if (jobs.get(rank) == -1 || ask_available(rank)) {
+	  jobs.set(-1, rank); // remember that this slave is available
+	  if (stop) {
+	    ask_ask_stop(rank); // stop but let thread finish
+	    // check if it is finished
+	    if (ask_thread_finished(rank))
+	      jobs.set(-2, rank);
 	  } else {
-	    // if the pre-camera is defined use it until empty
-	    if (cam2 && !cam2->empty())
-	      frame = cam2->grab();
-	    else // empty pre-camera, use regular camera
-	      frame = cam->grab();
-	    // send new frame to this thread
-	    string frame_name = cam->frame_name();
-	    ask_set_data(world, rank, frame, frame_name, cnt);
-	    // we just sent a new frame
-	    tpass.restart();
+	    // grab a new frame if available
+	    if (cam->empty()) {
+	      stop = true;
+	      tstop.start(); // start countdown timer
+	      ask_ask_stop(rank); // ask this thread to stop
+	      millisleep(50);
+	      // check if it is finished
+	      if (ask_thread_finished(rank))
+		jobs.set(-2, rank);
+	    } else {
+	      // if the pre-camera is defined use it until empty
+	      // 	    if (cam2 && !cam2->empty())
+	      // 	      frame = cam2->grab();
+	      // 	    else // empty pre-camera, use regular camera
+	      // 	      frame = cam->grab();
+	      // send new frame to this thread
+	      string fullname = cam->grab_filename();
+	      string frame_name = cam->frame_name();
+	      if (ask_set_data(rank, fullname, frame_name, cam->frame_id())) {
+		jobs.set(cam->frame_id(), rank);
+		// we just sent a new frame
+		tpass.restart();
+	      } else { // failed to set new frame, go back
+		cam->previous(); // move back 1 step
+	      }
+	    }
 	  }
 	}
       }
+      // check if all jobs are done
+      if (stop && idx_sum(jobs) == -2 * world.size()) {
+	mout << "All jobs finished (sum(jobs): " 
+	     << idx_sum(jobs) << ")" << endl;
+	finished = true;
+      }
+      // print all jobs status
+      jobs.printElems(mout);
+      mout << " elapsed=" << toverall.elapsed() << endl;
+      // sleep display
+      // 	if (display_sleep > 0) {
+      // 	  mout << "sleeping for " << display_sleep << "ms." << endl;
+      // 	  millisleep(display_sleep);
+      // 	}
+      if (conf.exists("save_max") && !stop &&
+	  idx_sum(total_saved) > conf.get_uint("save_max")) {
+	mout << "Reached max number of detections, exiting." << endl;
+	stop = true; // limit number of detection saves
+	tstop.start(); // start countdown timer
+      }
+      // sleep a bit between each iteration
+      millisleep(5);
+//       // check if stop countdown reached 0
+//       if (stop && tstop.elapsed_minutes() >= 5) {
+// 	merr << "threads did not all return 5 min after request, stopping"
+// 	     << endl;
+// 	break ; // program too long to stop, force exit
+//       }
     }
-    // sleep display
-    // 	if (display_sleep > 0) {
-    // 	  mout << "sleeping for " << display_sleep << "ms." << endl;
-    // 	  millisleep(display_sleep);
-    // 	}
-    if (conf.exists("save_max") && !stop &&
-	idx_sum(total_saved) > conf.get_uint("save_max")) {
-      mout << "Reached max number of detections, exiting." << endl;
-      stop = true; // limit number of detection saves
-      tstop.start(); // start countdown timer
+    // saving boxes
+    boxes.save();
+    mout << "Execution time: " << toverall.elapsed() << endl;
+    // check all processes are correctly finished
+    mout << "Checking all processes are finished..." << endl;
+    while (idx_sum(jobs) != -2 * world.size()) {
+      for (int rank = 1; rank < nprocs; ++rank) {
+	// check if it is finished
+	if (ask_thread_finished(rank))
+	  jobs.set(-2, rank);
+      }
+      jobs.printElems(mout); mout << endl;
     }
-    // sleep a bit between each iteration
-    millisleep(5);
-    // check if stop countdown reached 0
-    if (stop && tstop.elapsed_minutes() >= 5) {
-      cerr << "threads did not all return 5 min after request, stopping"
-	   << endl;
-      break ; // program too long to stop, force exit
-    }
-  }
-  // saving boxes
-  boxes.save();
-  mout << "Execution time: " << toverall.elapsed() << endl;
-  if (save_video)
-    cam->stop_recording(conf.exists_bool("use_original_fps") ?
-			cam->fps() : conf.get_uint("save_video_fps"),
-			outdir.c_str());
-  // free variables
-  if (cam) delete cam;
-  mout << "Detection finished." << endl;
-}
 
-//////////////////////////////////////////////////////////////////////////
-// child_thread
-
-void child_thread(configuration &conf, boost::mpi::communicator &world) {
-  // data variables
-  idx<ubyte> frame;
-  string frame_name;
-  uint frame_id;
-  vector<bbox*> bb;
-  uint total_saved;
-  
-  // start thread
-  detection_thread<t_net> dt(conf);
-  dt.start();
-  
-  // loop to receive/send messages
-  while (1) {
-    // check for new commands (non blocking) and answer them (blocking)
-    // answer if thread is finished
-    answer_thread_finished(world, 0, dt.finished());
-    // send data back to main thread
-    answer_get_data(world, 0, dt);
-    // receive new data
-    if (answer_set_data(world, 0, frame, frame_name, frame_id)) {
-      // try to set data until successful (meaning we got the mutex lock)
-      while (!dt.set_data(frame, frame_name, frame_id))
-	millisleep(5);
-    }
-    // answer if thread is available to process new data
-    answer_ask_available(world, 0, dt.available());
-    // check if we were asked to stop
-    if (check_ask_stop(world)) {
-      dt.ask_stop();
-      return ; // quit loop
-    }
-    // sleep a little bit.
-    millisleep(20);
+    if (save_video)
+      cam->stop_recording(conf.exists_bool("use_original_fps") ?
+			  cam->fps() : conf.get_uint("save_video_fps"),
+			  outdir.c_str());
+    // free variables
+    if (cam) delete cam;
+    mout << "Detection finished." << endl;
   }
-}
+
+  //////////////////////////////////////////////////////////////////////////
+  // members
+private:
+  int argc;
+  char **argv;
+  configuration &conf;
+  boost::mpi::communicator &world;
+  std::ostream &mout, &merr;
+};
 
 //////////////////////////////////////////////////////////////////////////
 // main
@@ -515,18 +654,17 @@ void child_thread(configuration &conf, boost::mpi::communicator &world) {
 #ifdef __GUI__
 MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #else
-int main(int argc, char **argv) { // regular main without gui
+  int main(int argc, char **argv) { // regular main without gui
 #endif
 #ifndef __MPI__
-  eblerror("MPI was not found during compilation, install and recompile");
+    eblerror("MPI was not found during compilation, install and recompile");
 #else
-  try {
     // check input parameters
     if ((argc != 2) && (argc != 3) ) {
       cerr << "warning: wrong number of parameters." << endl;
       cerr << "usage: mpidetect <config file> [directory or file]" << endl;
       //	return -1;
-    }
+      }
 #ifdef __LINUX__
     feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
@@ -534,27 +672,44 @@ int main(int argc, char **argv) { // regular main without gui
     boost::mpi::environment env(argc, argv);
     boost::mpi::communicator world;
     int myid = world.rank();    
+    try {
     
-    // load configuration
-    configuration	conf(argv[1]);
-    if (!conf.exists("root2")) {
-      string dir = dirname(argv[1]);
-      cout << "Looking for trained files in: " << dir << endl;
-      conf.set("root2", dir.c_str());
-      conf.resolve();
+      // load configuration
+      configuration	conf(argv[1], false, myid == 0 ? false : true);
+      if (!conf.exists("root2")) {
+	string dir = dirname(argv[1]);
+	cout << "Looking for trained files in: " << dir << endl;
+	conf.set("root2", dir.c_str());
+	conf.resolve();
+      }
+      uint              ipp_cores     = 1;
+      if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
+      ipp_init(ipp_cores); // limit IPP (if available) to 1 core
+      // output synchronization
+      bool sync = conf.exists_true("sync_outputs");
+      mutex out_mutex;
+      mutex_ostream mutout(std::cout, &out_mutex, "Thread M");
+      mutex_ostream muterr(std::cerr, &out_mutex, "Thread M");
+      ostream &mout = sync ? mutout : cout;
+      ostream &merr = sync ? muterr : cerr;
+
+      // At this point, all programs are running equivalently, the rank
+      // distinguishes the roles of the programs in the SPMD model,
+      // with rank 0 often used specially...    
+      if (myid == 0) {
+	mpimaster master(argc, argv, conf, world, mout, merr);
+	master.run();
+	mout << "stopping all MPI processes." << endl;
+	env.abort(0);
+      } else {
+	string tname;
+	tname << "Thread " << myid;
+	mpichild child(conf, world, out_mutex, tname.c_str(), sync);
+	child.run();
+      }
+    } catch(eblexception &e) {
+      cout << "Thread " << myid << ": " << e << endl;
     }
-    uint              ipp_cores     = 1;
-    if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
-    ipp_init(ipp_cores); // limit IPP (if available) to 1 core
-  
-    // At this point, all programs are running equivalently, the rank
-    // distinguishes the roles of the programs in the SPMD model,
-    // with rank 0 often used specially...    
-    if (myid == 0)
-      main_thread(argc, argv, conf, world);
-    else
-      child_thread(conf, world);
-  } eblcatch();
 #endif
-  return 0;
-}
+    return 0;
+  }

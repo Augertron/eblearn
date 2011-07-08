@@ -52,19 +52,26 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // bbox parts
 
-  void draw_bbox(bbox &bb, idx<ubyte> &labels, uint h0, uint w0, double dzoom,
-		 float transparency) {
+  void draw_bbox(bbox &bb, vector<string> &labels, uint h0, uint w0,
+		 double dzoom, float transparency, bool scaled) {
     ostringstream label;
     int classid, colorid;
     classid = bb.class_id;
     colorid = classid % (sizeof (bbox_colors) / 3);
-    uint h = (uint) (dzoom * bb.h0);
-    uint w = (uint) (dzoom * bb.w0);
+    int h = (int) (dzoom * bb.h0);
+    int w = (int) (dzoom * bb.w0);
+    int height = (int) (dzoom * bb.height);
+    int width = (int) (dzoom * bb.width);
+    if (!scaled) { // draw unscaled box
+      h = (int) (dzoom * bb.i.h0);
+      w = (int) (dzoom * bb.i.w0);
+      height = (int) (dzoom * bb.i.height);
+      width = (int) (dzoom * bb.i.width);
+    }
     float conf = bb.confidence;
     label.str("");
     label.precision(2);
-    label << (classid < labels.dim(0) ?
-	      (const char*)labels[classid].idx_ptr() : "****") 
+    label << ((uint) classid < labels.size() ? labels[classid].c_str() : "***") 
 	  << " " << conf;
     ubyte transp = 255;
     if (transparency > 0)
@@ -72,8 +79,7 @@ namespace ebl {
 				std::min((float) 255,
 					 (255 * (exp((conf - transparency + (float) .5) *12))
 						 / 60000)));
-    draw_box(h0 + h, w0 + w, (uint) (dzoom * bb.height), 
-	     (uint) (dzoom * bb.width), 
+    draw_box(h0 + h, w0 + w, height, width,
 	     bbox_colors[colorid][0],
 	     bbox_colors[colorid][1], 
 	     bbox_colors[colorid][2], transp,
@@ -83,7 +89,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // bbox parts
 
-  void draw_bbox_parts(bbox_parts &bb, idx<ubyte> &labels, uint h0, uint w0,
+  void draw_bbox_parts(bbox_parts &bb, vector<string> &labels, uint h0, uint w0,
 		       double dzoom) {
     std::vector<bbox_parts> &parts = bb.get_parts();
     for(uint i = 0; i < parts.size(); ++i) {

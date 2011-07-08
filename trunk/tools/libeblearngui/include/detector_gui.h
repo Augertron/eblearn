@@ -44,10 +44,12 @@ using namespace std;
 
 namespace ebl {
 
-  EXPORT void draw_bbox_parts(bbox_parts &bb, idx<ubyte> &labels, uint h0,
+  EXPORT void draw_bbox_parts(bbox_parts &bb, vector<string> &labels, uint h0,
 			      uint w0, double dzoom);
-  EXPORT void draw_bbox(bbox &bb, idx<ubyte> &labels, uint h0, uint w0,
-			double dzoom, float transparency);
+  //! \param scaled If false, scale box with respect to its original scale,
+  //!           otherwise draw its unscaled size.
+  EXPORT void draw_bbox(bbox &bb, vector<string> &labels, uint h0, uint w0,
+			double dzoom, float transparency, bool scaled = true);
 
   ////////////////////////////////////////////////////////////////
   // detector_gui
@@ -69,7 +71,10 @@ namespace ebl {
     //! \param step2 Step for show_detqueue2.
     //! \param qheight2 Number of rows to show for show_detqueue2.
     //! \param qwidth2 Number of cols to show for show_detqueue2.
-    detector_gui(bool show_detqueue = false, uint step = 1, uint qheight = 5,
+    //! \param draw_extracted 0: do not draw, 1: draw preprocessed,
+    //!   2: draw original image extractions
+    detector_gui(uint draw_extracted = 0,
+		 bool show_detqueue = false, uint step = 1, uint qheight = 5,
 		 uint qwidth = 5, bool show_detqueue2 = false, uint step2 = 1,
 		 uint qheight2 = 5, uint qwidth2 = 5);
 
@@ -96,7 +101,7 @@ namespace ebl {
     //! <wname> is an optional window title.
     template <typename Tin>
       static void display_minimal(idx<Tin> &img, vector<bbox*>& vb,
-				  idx<ubyte> &labels,
+				  vector<string> &labels,
 				  unsigned int h0 = 0, unsigned int w0 = 0, 
 				  double dzoom = 1.0, T vmin = 0, T vmax = 0,
 				  int wid = -1, bool show_parts = false,
@@ -177,6 +182,7 @@ namespace ebl {
   private:
     int		display_wid;	//!< window id
     int		display_wid_fprop;	//!< window id for fprop
+    uint        draw_extracted;
     bool	show_detqueue;	//!< show queue of last detections or not
     bool	show_detqueue2; //!< show queue of last detections or not
     uint	step;		//!< step for detqueue

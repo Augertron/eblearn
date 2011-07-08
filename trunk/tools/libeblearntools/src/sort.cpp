@@ -105,6 +105,10 @@ namespace ebl {
     return natural_compare(a.c_str(), b.c_str());
   }
 
+  int natural_compare(const string& a, const string* b) {
+    return natural_compare(a.c_str(), b->c_str());
+  }
+
   bool natural_compare_less(const string& a, const string& b) {
     if (natural_compare(a.c_str(), b.c_str()) < 0)
       return true;
@@ -135,6 +139,28 @@ namespace ebl {
     return operator()(ra, rb);
   }
 
+  bool natural_less_pointer::operator()(const string& a, const string* b) const {
+    istringstream ia(a), ib(*b);
+    double da = 0, db = 0;
+
+    ia >> da;
+    ib >> db;
+    if (ia.fail() || ib.fail() ||
+  	(ia.rdbuf()->in_avail() == 0) || (ib.rdbuf()->in_avail() == 0)) {
+      if (da == db)
+	return a < *b;
+      return da < db;
+    }
+    if (da < db)
+      return da < db;
+    // else read the remaining
+    string ra = a.substr(a.size() - ia.rdbuf()->in_avail());
+    string rb = b->substr(b->size() - ib.rdbuf()->in_avail());
+    return operator()(ra, &rb);
+  }
+
+  // map_natural_less //////////////////////////////////////////////////////////
+
   map_natural_less::map_natural_less(list<string> &k) {
     keys = k;
   }
@@ -156,6 +182,68 @@ namespace ebl {
       if (nl(k1->second, k2->second))
 	return true; // m1 < m2
       if (k1->second != k2->second)
+	return false; // m1 > m2
+    }
+    // we reached this point, m1 == m2
+    return true; // or false, they are equal.
+  }
+  
+  // map_natural_less //////////////////////////////////////////////////////////
+
+  map_natural_less_pointer::map_natural_less_pointer(list<string> &k) {
+    keys = k;
+  }
+  
+  bool map_natural_less_pointer::operator()(const map<string,string*>& m1,
+				    const map<string,string*>& m2) const {
+    natural_less nl;
+    // loop over comparison keys
+    for (list<string>::const_iterator i = keys.begin(); i != keys.end(); ++i) {
+      // check that key exists in both maps
+      map<string,string*>::const_iterator k1 = m1.find(*i);
+      map<string,string*>::const_iterator k2 = m2.find(*i);
+      if ((k1 == m1.end()) && (k2 == m2.end()))
+      	continue ; // unknown key for both, try another one.
+      if (k1 == m1.end())
+	return false; // m1 doesn't contain the key but m2 does, m1 > m2
+      if (k2 == m2.end())
+	return true;  // m2 doesn't contain the key but m1 does, m1 < m2
+      string &k1second = *(k1->second);
+      string &k2second = *(k2->second);
+      if (nl(k1second, k2second))
+	return true; // m1 < m2
+      if (k1second != k2second)
+	return false; // m1 > m2
+    }
+    // we reached this point, m1 == m2
+    return true; // or false, they are equal.
+  }
+  
+  // map_natural_less_id //////////////////////////////////////////////////////////
+
+  map_natural_less_uint::map_natural_less_uint(list<uint> &k, vector<string> &v)
+    : keys(k), vals(v) {
+  }
+  
+  bool map_natural_less_uint::operator()(const map<uint,uint>& m1,
+					 const map<uint,uint>& m2) const {
+    natural_less nl;
+    // loop over comparison keys
+    for (list<uint>::const_iterator i = keys.begin(); i != keys.end(); ++i) {
+      // check that key exists in both maps
+      map<uint,uint>::const_iterator k1 = m1.find(*i);
+      map<uint,uint>::const_iterator k2 = m2.find(*i);
+      if ((k1 == m1.end()) && (k2 == m2.end()))
+      	continue ; // unknown key for both, try another one.
+      if (k1 == m1.end())
+	return false; // m1 doesn't contain the key but m2 does, m1 > m2
+      if (k2 == m2.end())
+	return true;  // m2 doesn't contain the key but m1 does, m1 < m2
+      string &k1second = vals[k1->second];
+      string &k2second = vals[k2->second];
+      if (nl(k1second, k2second))
+	return true; // m1 < m2
+      if (k1second != k2second)
 	return false; // m1 > m2
     }
     // we reached this point, m1 == m2

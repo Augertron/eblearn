@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 
 namespace std {
   
@@ -53,6 +54,36 @@ namespace std {
     return ret;
   }
   
+  string strip_last_num(const string &str) {
+    string ret;
+    const char *s = str.c_str();
+    int i = (int) str.size();
+    for ( ; i > 0; i--) {
+      if (!isdigit(s[i - 1]))
+	break ;
+    }
+    ret = str.substr(0, i);
+    return ret;
+  }
+  
+  string string_replace(const string &s,
+			const char *toreplace, 
+			const char *replacement) {
+    string ret;
+    size_t pos = 0, pos0 = 0;
+    size_t tolen = strlen(toreplace);
+    pos = s.find(toreplace, pos);
+    while (pos != string::npos) {
+      if (pos > 0)
+	ret += s.substr(pos0, pos - pos0);
+      ret += replacement;
+      pos0 = pos + tolen;
+      pos = s.find(toreplace, pos + tolen);
+    }
+    ret += s.substr(pos0, s.size() - pos0);
+    return ret;
+  }
+
 #ifdef __NOSTL__
   
   string::string() : s(NULL) {
@@ -153,7 +184,7 @@ namespace std {
     *this << v.s;
     return *this;
   }
-  
+
   string& string::operator<<(char *v) {
     if (v == NULL)
       return *this;

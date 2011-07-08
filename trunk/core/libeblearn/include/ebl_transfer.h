@@ -52,9 +52,10 @@ namespace ebl {
     //! <weighting> is <idx2<double>> that defines the weighting around
     //! the center component.
     //! <nfeatures> is the number of feature maps input to this module.
+    //! \param kernel The kernel dimensions.
     //! \param mirror Use mirroring of the input to pad border if true,
     //!               or use zero-padding otherwise (default).
-    weighted_std_module(uint kernelh, uint kernelw, int nf,
+    weighted_std_module(idxdim &kerdim, int nf,
 			const char *name = "weighted_std",
 			bool mirror = false, bool threshold = true,
 			bool global_norm = false);
@@ -98,8 +99,7 @@ namespace ebl {
     int                 nfeatures;
     string              name_c0;
     string              name_c1;
-    uint                kernelh;
-    uint                kernelw;
+    idxdim              kerdim;
   };
 
   ////////////////////////////////////////////////////////////////

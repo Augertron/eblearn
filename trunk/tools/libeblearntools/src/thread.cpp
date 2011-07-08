@@ -160,6 +160,14 @@ namespace ebl {
     return _name;
   }
 
+  std::ostream& thread::get_mout() {
+    return mout;
+  }
+
+  std::ostream& thread::get_merr() {
+    return merr;
+  }
+
   void thread::stop(long wait_seconds) {
     ask_stop(); // make sure the thread knows it should stop
     if (wait_seconds > 0) { // wait for thread to stop by itself

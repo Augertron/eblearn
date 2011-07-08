@@ -124,10 +124,9 @@ namespace ebl {
   }
 
   template <class T>
-  void ModuleTester<T>::get_jacobian_fprop(module_1_1<T> &module, 
-					   bbstate_idx<T> &in, bbstate_idx<T> &out,
-					   idx<T>& jac)
-  {
+  void ModuleTester<T>::
+  get_jacobian_fprop(module_1_1<T> &module, bbstate_idx<T> &in,
+		     bbstate_idx<T> &out, idx<T>& jac) {
     bbstate_idx<T> sina = in.make_copy(); //x-small
     bbstate_idx<T> sinb = in.make_copy(); //x+small
     bbstate_idx<T> souta = out.make_copy(); //f(x-small)
@@ -135,31 +134,27 @@ namespace ebl {
     double small = 1e-6;
     int cnt = 0;
     // clear out jacobian matrix
-    jac.resize(in.size(),out.size());
+    jac.resize(in.size(), out.size());
     idx_clear(jac);
-    {
-      idx_aloop3(sx,in.x,T,sxa,sina.x,T,sxb,sinb.x,T){
-	idx_copy(in.x, sina.x);
-	idx_copy(in.x, sinb.x);
-	// perturb
-	*sxa = *sx - small;
-	*sxb = *sx + small;
-	module.fprop(sina, souta);
-	module.fprop(sinb, soutb);
-	idx_sub(soutb.x,souta.x,soutb.x);
-	idx<T> j = jac.select(0,cnt);
-	idx_dotc(soutb.x,1.0/(2*small),j);
-	cnt++;
-      }
+    idx_aloop3(sx, in.x, T, sxa, sina.x, T, sxb, sinb.x, T) {
+      idx_copy(in.x, sina.x);
+      idx_copy(in.x, sinb.x);
+      // perturb
+      *sxa = *sx - small;
+      *sxb = *sx + small;
+      module.fprop(sina, souta);
+      module.fprop(sinb, soutb);
+      idx_sub(soutb.x, souta.x, soutb.x);
+      idx<T> j = jac.select(0, cnt);
+      idx_dotc(soutb.x, 1.0 / (2 * small), j);
+      cnt++;
     }
   }
 
   template <class T>
-  void ModuleTester<T>::get_jacobian_fprop_param(parameter<bbstate_idx<T> > &p, 
-						 module_1_1<T> &module, 
-						 bbstate_idx<T> &in, 
-						 bbstate_idx<T> &out,
-						 idx<T>& jac)
+  void ModuleTester<T>::
+  get_jacobian_fprop_param(parameter<bbstate_idx<T> > &p, module_1_1<T> &module,
+			   bbstate_idx<T> &in, bbstate_idx<T> &out, idx<T>& jac)
   {
     bbstate_idx<T> souta = out.make_copy(); //f(x-small)
     bbstate_idx<T> soutb = out.make_copy(); //f(x+small)
@@ -184,38 +179,32 @@ namespace ebl {
   }
 
   template <class T>
-  void ModuleTester<T>::get_jacobian_bprop(module_1_1<T> &module, 
-					bbstate_idx<T> &in, bbstate_idx<T> &out,
-					idx<T>& jac)
-  {
-    jac.resize(in.size(),out.size());
+  void ModuleTester<T>::
+  get_jacobian_bprop(module_1_1<T> &module, bbstate_idx<T> &in,
+		     bbstate_idx<T> &out, idx<T>& jac) {
+    jac.resize(in.size(), out.size());
     idx_clear(jac);
     int cnt = 0;
-    {
-      idx_aloop1(dx,out.dx,T){
-	idx_clear(out.dx);
-	idx_clear(in.dx);
-	*dx = 1.0;
-	module.bprop(in, out);
-	idx<T> j = jac.select(1,cnt);
-	idx_copy(in.dx,j);
-	cnt++;
-      }
+    idx_aloop1(dx, out.dx,T) {
+      idx_clear(out.dx);
+      idx_clear(in.dx);
+      *dx = 1.0;
+      module.bprop(in, out);
+      idx<T> j = jac.select(1, cnt);
+      idx_copy(in.dx, j);
+      cnt++;
     }
   }
 
   template <class T>
-  void ModuleTester<T>::get_jacobian_bprop_param(parameter<bbstate_idx<T> > &p, 
-					      module_1_1<T> &module, 
-					      bbstate_idx<T> &in,
-					      bbstate_idx<T> &out,
-					      idx<T>& jac)
+  void ModuleTester<T>::
+  get_jacobian_bprop_param(parameter<bbstate_idx<T> > &p, module_1_1<T> &module,
+			   bbstate_idx<T> &in, bbstate_idx<T> &out, idx<T>& jac)
   {
   }
 
   template <class T>
-  idx<T> ModuleTester<T>::get_errs(idx<T>& a, idx<T>& b)
-  {
+  idx<T> ModuleTester<T>::get_errs(idx<T>& a, idx<T>& b) {
     T maxdist;
     T totdist = idx_sqrdist(a,b);
     // max distance
@@ -229,8 +218,7 @@ namespace ebl {
   }
 
   template <class T>
-  void ModuleTester<T>::report_err(idx<T>& a, idx<T>& b, const char* msg)
-  {
+  void ModuleTester<T>::report_err(idx<T>& a, idx<T>& b, const char* msg) {
     idx<T> errs = get_errs(a, b);
     stringstream ss(stringstream::in | stringstream::out);
     // report results
@@ -292,8 +280,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   template <class T>
-  void Jacobian_tester<T>::test(module_1_1<T> &module){
-
+  void Jacobian_tester<T>::test(module_1_1<T> &module) {
     int insize = 16;
     bbstate_idx<T> in(insize, 1, 1);
     bbstate_idx<T> out(insize, 1, 1);
@@ -315,7 +302,6 @@ namespace ebl {
 	    }
 	}
     }
-
 
     // check the Jacobian
     int ndim_in = in.x.nelements();
@@ -372,7 +358,7 @@ namespace ebl {
     }
 
     // comparison
-    printf("Jacobian error: %8.7e \n", idx_sqrdist(jac_fprop, jac_bprop));
+    printf("Jacobian error: %8.7e\n", idx_sqrdist(jac_fprop, jac_bprop));
   }
 
   ////////////////////////////////////////////////////////////////////////

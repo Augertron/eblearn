@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -41,12 +42,16 @@ using namespace std;
 namespace ebl {
   
   //! creates a new window.
-  EXPORT int new_window(const char *wname = NULL, unsigned int h = 0,
-		 unsigned int w = 0);
+  EXPORT int new_window(const char *wname = NULL, uint h = 0, uint w = 0);
 
   //! creates a new window.
-  EXPORT int new_window(const string &wname, unsigned int h = 0, 
-			unsigned int w = 0);
+  EXPORT int new_window(const string &wname, uint h = 0, uint w = 0);
+
+  //! creates a new window with 3D rendering.
+  EXPORT int new_window3d(const char *wname = NULL, uint h = 0, uint w = 0);
+
+  //! creates a new window with 3D rendering.
+  EXPORT int new_window3d(const string &wname, uint h = 0, uint w = 0);
 
   //! selects window wid.
   EXPORT void select_window(int wid);
@@ -117,7 +122,8 @@ namespace ebl {
   //! Clears the window and resizes it to 1x1.
   EXPORT void clear_resize_window();
 
-  //! save current window into filename image.
+  //! Save current window as a PNG into filename image.
+  //! filename should contain an extension, '.png' will be added.
   //! wid is optional, if given save window with id wid.
   EXPORT void save_window(const char *filename, int wid = -1);
 
@@ -127,11 +133,43 @@ namespace ebl {
   //! draws a bounding box with top left corner (h0, w0) and size (h, w).
   //! the (r,g,b,a) color of the box can optionally be specified as well as
   //! a caption string.
-  EXPORT void draw_box(int h0, int w0, int h, int w,
-		       unsigned char r = 255, unsigned char g = 255,
-		       unsigned char b = 255, unsigned char a = 255,
+  EXPORT void draw_box(rect<int> &box, ubyte r = 255, ubyte g = 255,
+		       ubyte b = 255, ubyte a = 255, string *s = NULL);
+
+  //! draws a bounding box with top left corner (h0, w0) and size (h, w).
+  //! the (r,g,b,a) color of the box can optionally be specified as well as
+  //! a caption string.
+  EXPORT void draw_box(rect<float> &box, ubyte r = 255, ubyte g = 255,
+		       ubyte b = 255, ubyte a = 255, string *s = NULL);
+
+  //! draws a bounding box with top left corner (h0, w0) and size (h, w).
+  //! the (r,g,b,a) color of the box can optionally be specified as well as
+  //! a caption string.
+  EXPORT void draw_box(int h0, int w0, int h, int w, ubyte r = 255,
+		       ubyte g = 255, ubyte b = 255, ubyte a = 255,
 		       string *s = NULL);
 
+  //! draws a bounding box with top left corner (h0, w0) and size (h, w).
+  //! the (r,g,b,a) color of the box can optionally be specified as well as
+  //! a caption string.
+  EXPORT void draw_box(float h0, float w0, float h, float w, ubyte r = 255,
+		       ubyte g = 255, ubyte b = 255, ubyte a = 255,
+		       string *s = NULL);
+
+  //! draws a cross at location (h0, w0) and length 'length'.
+  //! the (r,g,b,a) color of the box can optionally be specified as well as
+  //! a caption string.
+  EXPORT void draw_cross(float h0, float w0, float length, ubyte r = 255,
+			 ubyte g = 255, ubyte b = 255, ubyte a = 255,
+			 string *s = NULL);
+
+  //! draws an ellipse with center (h0,w0) and radii (hxw).
+  //! the (r,g,b,a) color of the box can optionally be specified as well as
+  //! a caption string.
+  EXPORT void draw_ellipse(float h0, float w0, float h, float w, ubyte r = 255,
+			   ubyte g = 255, ubyte b = 255, ubyte a = 255,
+			   string *s = NULL);
+  
   //! do not show windows, instead save them in png files in current dir.
   EXPORT void set_gui_silent();
   //! do not show windows, instead save them in png files in current dir.
@@ -191,6 +229,25 @@ namespace ebl {
   //! Set the title of the currently selected window.
   EXPORT void set_window_title(const char *s);
 
+  //! Force window size to hxw and forbid any resizing.
+  EXPORT void freeze_window_size(uint h, uint w);
+
+  /// 3d calls ///////////////////////////////////////////////////////////////
+  
+  //! Add a sphere at position (x,y,z) with 'radius' and color (r,g,b,a).
+  EXPORT void draw_sphere(float x, float y, float z, float radius,
+			  const char *s = NULL,
+			  int r = 255, int g = 255, int b = 255, int a = 255);
+  //! Add a cylinder which base is centered at (x,y,z), with length 'length',
+  //! with radiuses 'top_radius' and 'base_radius', with degree angles
+  //! 'a1', 'a2' and color (r,g,b,a).
+  //! \param tops If true, draw closing caps on each end of cylinder.
+  EXPORT void draw_cylinder(float x, float y, float z, float length,
+			    float top_radius, float base_radius,
+			    float a1, float a2, const char *s = NULL,
+			    int r = 255, int g = 255,
+			    int b = 255, int a = 255, bool tops = false);
+  
 } // namespace ebl
 
 #include "gui.hpp"
