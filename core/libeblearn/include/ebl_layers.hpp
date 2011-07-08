@@ -194,14 +194,13 @@ namespace ebl {
   // convabsnorm_layer
 
   template <typename T, class Tstate>
-  convabsnorm_layer<T,Tstate>::convabsnorm_layer(parameter<T,Tstate> *p, 
-					  intg kerneli, intg kernelj, 
-					  intg stridei_, intg stridej_, 
-					  idx<intg> &tbl, bool mirror,
-					  bool btanh_, const char *name_) 
+  convabsnorm_layer<T,Tstate>::
+  convabsnorm_layer(parameter<T,Tstate> *p, idxdim kernel, idxdim stride,
+		    idx<intg> &tbl, bool mirror, bool btanh_,
+		    const char *name_) 
     : module_1_1<T,Tstate>(name_), btanh(btanh_),
-      lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_, name_),
-      abs(), norm(kerneli, kernelj, lconv.convol.thickness, name_, mirror),
+      lconv(p, kernel, stride, tbl, btanh_, name_),
+      abs(), norm(kernel, lconv.convol.thickness, name_, mirror),
       tmp(NULL), tmp2(NULL) {
     this->_name = name_;
   }
@@ -265,8 +264,7 @@ namespace ebl {
   convabsnorm_layer<T,Tstate>* convabsnorm_layer<T,Tstate>::copy() {
     // allocate
     convabsnorm_layer<T,Tstate> *l2 = new convabsnorm_layer<T,Tstate>
-      (NULL, lconv.convol.kernel.x.dim(1), lconv.convol.kernel.x.dim(2),
-       lconv.convol.stridei, lconv.convol.stridej, lconv.convol.table,
+      (NULL, lconv.convol.ker, lconv.convol.stride, lconv.convol.table,
        norm.mirror, btanh);
     // copy data
     idx_copy(lconv.convol.kernel.x, l2->lconv.convol.kernel.x);
