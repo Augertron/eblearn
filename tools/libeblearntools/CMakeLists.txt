@@ -31,6 +31,7 @@ add_library (eblearntools SHARED
   src/netconf.cpp
   src/xml_utils.cpp
   src/dataset.cpp
+  src/pascal_dataset.cpp
 #  src/vfw.cpp
   )
 # link executable with external libraries
@@ -41,12 +42,10 @@ LINK_OPENCV(eblearntools cxcore)
 LINK_BOOST(eblearntools system)
 LINK_BOOST(eblearntools filesystem)
 LINK_BOOST(eblearntools regex)
+LINK_BOOST(eblearntools mpi)
+LINK_BOOST(eblearntools serialization)
 LINK_QT(eblearntools idxgui)
 LINK_QT(eblearntools eblearngui)
 LINK_KINECT(eblearntools)
 LINK_XML(eblearntools)
 LINK_PTHREAD(eblearntools)
-IF (MPI_FOUND)
-#  target_link_libraries (eblearntools pmpich++) # mpi_cxx)
-  target_link_libraries (eblearntools mpi_cxx)
-ENDIF (MPI_FOUND)    

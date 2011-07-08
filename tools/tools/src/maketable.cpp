@@ -41,9 +41,12 @@ using namespace ebl;
 uint insize = 0; // number of inputs
 uint outsize = 0; // number of outputs
 uint fanin = 0; // fanin
+float density = 0; // density
 uint yend = 0;
 uint uend = 0;
 uint vend = 0;
+bool fanin_set = false; // fanin
+bool density_set = false; // density
 bool full = false;
 bool brandom = false; // random table
 bool one2one = false; // 1 to 1 table
@@ -89,6 +92,11 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-fanin") == 0) {
 	++i; if (i >= argc) throw 1;
 	fanin = atoi(argv[i]);
+	fanin_set = true;
+      } else if (strcmp(argv[i], "-density") == 0) {
+	++i; if (i >= argc) throw 1;
+	density = atof(argv[i]);
+	density_set = true;
       } else if (strcmp(argv[i], "-one2one") == 0) {
 	one2one = true;
 	++i; if (i >= argc) throw 1;
@@ -122,6 +130,8 @@ void print_usage() {
        << "   Connect randomly inputs to outputs." << endl;
   cout << "  -fanin <n>" 
        << "   Number of inputs connected to each output." << endl;
+  cout << "  -density <float [0, 1]>" 
+       << "   Connection density (0: empty, 1: full), replaces fanin parameter." << endl;
   cout << "  -one2one <size>" << endl
        << "   Connect [0 .. size] to [0 .. size] in a 1 to 1 mapping." << endl;
   cout << "  -yuv0 <yend> <uend> <vend>" << endl
@@ -156,6 +166,8 @@ int main(int argc, char **argv) {
     type = "full";
     fanin = insize; // full fanin
   } else if (brandom) {
+    if (density_set)
+      fanin = (uint) (density * insize);
     if (fanin == 0)
       eblerror("you must set a fanin > 0");
     cout << "Making a random table from " << insize << " to "

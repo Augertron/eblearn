@@ -67,6 +67,46 @@ namespace std {
 
 #endif /* __NOSTL__ */
 
+  template<class T> 
+  string& operator<<(string &o, const vector<T> &v) {
+    o << "[ ";
+    for (typename vector<T>::const_iterator i = v.begin(); 
+	 i != v.end(); ++i)
+      o << *i << " ";
+    o << "]";
+    return o;
+  }
+
+  template<class T> 
+  ostream& operator<<(ostream &o, const vector<T> &v) {
+    o << "[ ";
+    for (typename vector<T>::const_iterator i = v.begin(); 
+	 i != v.end(); ++i)
+      o << *i << " ";
+    o << "]";
+    return o;
+  }
+
+  template<class T> 
+  string& operator<<(string &o, const list<T> &v) {
+    o << "[ ";
+    for (typename list<T>::const_iterator i = v.begin(); 
+	 i != v.end(); ++i)
+      o << *i << " ";
+    o << "]";
+    return o;
+  }
+
+  template<class T> 
+  ostream& operator<<(ostream &o, const list<T> &v) {
+    o << "[ ";
+    for (typename list<T>::const_iterator i = v.begin(); 
+	 i != v.end(); ++i)
+      o << *i << " ";
+    o << "]";
+    return o;
+  }
+
   ////////////////////////////////////////////////////////////////
   // vector
 

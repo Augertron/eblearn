@@ -45,4 +45,77 @@ namespace ebl {
     fullname += MATRIX_EXTENSION;
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // object methods
+
+  object::object(uint id_)
+    : rect<int>(), id(id_), visible(NULL), centroid(NULL), name(""),
+      difficult(false), truncated(false), occluded(false), pose("") {
+  }
+
+  object::~object() {
+    if (visible)
+      delete visible;
+    if (centroid)
+      delete centroid;
+  }
+
+  void object::set_rect(int xmin, int ymin, int xmax, int ymax) {
+    h0 = ymin;
+    w0 = xmin;
+    height = ymax - ymin;
+    width = xmax - xmin;
+  }
+  
+  void object::set_visible(int xmin, int ymin, int xmax, int ymax) {
+    visible = new rect<int>(ymin, xmin, ymax - ymin, xmax - xmin);
+  }
+
+  void object::set_centroid(int x, int y) {
+    centroid = new pair<int,int>(x, y);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // jitter
+
+  jitter::jitter(float h_, float w_, float s_, float r_, int spatial_norm)
+    : h(h_), w(w_), s(s_), r(r_), jitts(JITTERS) {
+    jitts.set(s, 0);
+    jitts.set(h / (float) spatial_norm, 1);
+    jitts.set(w / (float) spatial_norm, 2);
+    jitts.set(r, 3);
+  }
+
+  jitter::jitter(rect<float> &context, rect<float> &jit, int spatial_norm)
+    : jitts(JITTERS) {
+    h = jit.hcenter() - context.hcenter();
+    w = jit.wcenter() - context.wcenter();
+    r = 0;
+    s = context.height / (float) jit.height;
+    jitts.set(s, 0);
+    jitts.set(h / (float) spatial_norm, 1);
+    jitts.set(w / (float) spatial_norm, 2);
+    jitts.set(r, 3);
+  }
+  
+  jitter::jitter()
+    : h(0), w(0), s(0), r(0), jitts(JITTERS) {
+    idx_clear(jitts);
+  }
+
+  jitter::~jitter() {
+  }
+  
+  const idx<t_jitter>& jitter::get_jitter_vector() const {
+    return jitts;
+  }
+  
+  void jitter::set(const idx<t_jitter> &j) {
+    s = j.get(0);
+    h = (int) j.get(1);
+    w = (int) j.get(2);
+    r = j.get(3);
+    idx_copy(j, jitts);
+  }
+
 } // end namespace ebl

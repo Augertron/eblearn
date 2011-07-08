@@ -23,6 +23,7 @@ IF (CPPUNIT_FOUND) # compile only if cppunit is present
   # compile executable
   ##############################################################################
   add_executable (tester
+    src/idxIO_test.cpp
     src/idxops_test.cpp
     src/idxops_test2.cpp
     src/ippops_test.cpp
@@ -31,7 +32,6 @@ IF (CPPUNIT_FOUND) # compile only if cppunit is present
     src/datasource_test.cpp
     src/ebl_basic_test.cpp
     src/ebl_preprocessing_test.cpp
-    src/idxIO_test.cpp
     src/IdxIteratorsTest.cpp
     src/IdxTest.cpp
     src/image_test.cpp
@@ -53,6 +53,7 @@ IF (CPPUNIT_FOUND) # compile only if cppunit is present
     target_link_libraries (tester idxgui)
     target_link_libraries (tester eblearngui)
   ENDIF (QT_FOUND) #------------------------------------------------------------
+  LINK_MAGICKPP(tester)
   
 ELSE (CPPUNIT_FOUND)
   MESSAGE("Error: CppUnit required to build tester")

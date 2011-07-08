@@ -110,7 +110,7 @@ bool parse_args(int argc, char **argv) {
   // 	    s = "";
   // 	  else
   // 	    s = s.substr(j + 1, s.size());
-  // 	  d.insert_dim(atoi(s0.c_str()), k++);
+  // 	  d.insert_dim(k++, atoi(s0.c_str()));
   // 	}
   // 	dims = d;
   //     } else if (strcmp(argv[i], "-range") == 0) {
@@ -192,8 +192,8 @@ int main(int argc, char **argv) {
     for (uint h0 = 0; h0 <= frame.dim(0) - szline; h0 += szline)
       draw_box(h0, 0, sz, frame.dim(1), 0, 255, 0);
     // draw grid on frame
-    for (uint h0 = 0; h0 <= frame.dim(0) - sz; h0 += sz)
-      for (uint w0 = 0; w0 <= frame.dim(1) - sz; w0 += sz)
+    for (int h0 = 0; h0 <= frame.dim(0) - sz; h0 += sz)
+      for (int w0 = 0; w0 <= frame.dim(1) - sz; w0 += sz)
 	draw_box(h0, w0, sz, sz, 0, 0, 255);
     // saving
     if (gui.pop_key_pressed() == Qt::Key_Space) {

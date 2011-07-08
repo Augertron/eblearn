@@ -61,7 +61,20 @@ namespace ebl {
   // grabbin
   
   template <typename Tdata>
+  string camera<Tdata>::grab_filename() {
+    string err;
+    eblerror("not implemented");
+    return err;
+  }
+  
+  template <typename Tdata>
   void camera<Tdata>::next() {
+    eblerror("not implemented");
+  }
+  
+  template <typename Tdata>
+  void camera<Tdata>::previous() {
+    eblerror("not implemented");
   }
   
   template <typename Tdata>

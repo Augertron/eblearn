@@ -115,7 +115,8 @@ namespace ebl {
   }
 
   list<string> *find_fullfiles(const string &dir, const char *pattern,
-			       list<string> *fl_, bool sorted, bool recursive) {
+			       list<string> *fl_, bool sorted, bool recursive,
+			       bool randomize, bool finddirs) {
     list<string> *fl = fl_;
 #ifndef __BOOST__
     eblerror("boost not installed, install and recompile");
@@ -131,7 +132,7 @@ namespace ebl {
     directory_iterator end_itr; // default construction yields past-the-end
     // first process all elements of current directory
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if (!is_directory(itr->status()) && 
+      if ((finddirs || !is_directory(itr->status())) && 
 	  regex_match(itr->leaf().c_str(), what, r)) {
 	// found an match, add it to the list
 	fl->push_back(itr->path().string());
@@ -141,12 +142,29 @@ namespace ebl {
     if (recursive) {
       for (directory_iterator itr(p); itr != end_itr; ++itr) {
 	if (is_directory(itr->status()))
-	  find_fullfiles(itr->path().string(), pattern, fl, sorted);
+	  find_fullfiles(itr->path().string(), pattern, fl, sorted, 
+			 recursive, randomize, finddirs);
       }
     }
     // sort list
     if (sorted)
       fl->sort();
+    // randomize list
+    if (randomize) {
+      // list randomization is very inefficient, so first copy to vector,
+      // randomize, then copy back (using vectors directly would be innefficient
+      // too for big file lists because we constantly resize the list as we
+      // find new files).
+      vector<string> v(fl->size());
+      vector<string>::iterator iv = v.begin();
+      for (list<string>::iterator i = fl->begin(); i != fl->end(); ++i, ++iv)
+	*iv = *i;
+      delete fl;
+      fl = new list<string>();
+      random_shuffle(v.begin(), v.end());
+      for (iv = v.begin(); iv != v.end(); ++iv)
+	fl->push_back(*iv);
+    }
 #endif
     return fl;
   }
@@ -270,56 +288,156 @@ namespace ebl {
 	s = "";
       else
 	s = s.substr(j + 1, s.size());
-      l.push_back(string_to_uint(s0));
-      k++;
+      if (!s0.empty()) {
+	l.push_back(string_to_uint(s0));
+	k++;
+      }
     }
     return l;
   }
 
-  vector<uint> string_to_uintvector(const string &s_) {
-    return string_to_uintvector(s_.c_str());
+  vector<uint> string_to_uintvector(const string &s_, char sep) {
+    return string_to_uintvector(s_.c_str(), sep);
   }
   
-  vector<uint> string_to_uintvector(const char *s_) {
+  vector<uint> string_to_uintvector(const char *s_, char sep) {
     vector<uint> l;
     string s = s_;
     int k = 0;
     while (s.size()) {
       uint j;
       for (j = 0; j < s.size(); ++j)
-	if (s[j] == ',')
+	if (s[j] == sep)
 	  break ;
       string s0 = s.substr(0, j);
       if (j >= s.size())
 	s = "";
       else
 	s = s.substr(j + 1, s.size());
-      l.push_back(string_to_uint(s0));
-      k++;
+      if (!s0.empty()) {
+	l.push_back(string_to_uint(s0));
+	k++;
+      }
     }
     return l;
   }
 
-  list<string> string_to_stringlist(const string &s_) {
+  idxdim string_to_idxdim(const string &s_, char sep) {
+    return string_to_idxdim(s_.c_str(), sep);
+  }
+
+  idxdim string_to_idxdim(const char *s_, char sep) {
+    idxdim d;
+    string s = s_;
+    int k = 0;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == sep)
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      if (!s0.empty()) {
+	d.insert_dim(k, string_to_uint(s0));
+	k++;
+      }
+    }
+    return d;
+  }
+
+  fidxdim string_to_fidxdim(const char *s_, char sep) {
+    fidxdim d;
+    string s = s_;
+    int k = 0;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == sep)
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      if (!s0.empty()) {
+	d.insert_dim(k, string_to_float(s0));
+	k++;
+      }
+    }
+    return d;
+  }
+
+  vector<idxdim> string_to_idxdimvector(const char *s_, char vecsep,
+					char dimsep) {
+    vector<idxdim> v;
+    list<string> l = string_to_stringlist(s_, vecsep);
+    list<string>::iterator i;
+    for (i = l.begin(); i != l.end(); ++i)
+      v.push_back(string_to_idxdim(i->c_str()));
+    return v;
+  }
+
+  vector<fidxdim > string_to_fidxdimvector(const char *s_, char vecsep,
+					   char dimsep) {
+    vector<fidxdim > v;
+    list<string> l = string_to_stringlist(s_, vecsep);
+    list<string>::iterator i;
+    for (i = l.begin(); i != l.end(); ++i)
+      v.push_back(string_to_fidxdim(i->c_str()));
+    return v;
+  }
+
+  list<string> string_to_stringlist(const string &s_, char sep) {
     return string_to_stringlist(s_.c_str());
   }
   
-  list<string> string_to_stringlist(const char *s_) {
+  list<string> string_to_stringlist(const char *s_, char sep) {
     list<string> l;
     string s = s_;
     int k = 0;
     while (s.size()) {
       uint j;
       for (j = 0; j < s.size(); ++j)
-	if (s[j] == ',')
+	if (s[j] == sep)
 	  break ;
       string s0 = s.substr(0, j);
       if (j >= s.size())
 	s = "";
       else
 	s = s.substr(j + 1, s.size());
-      l.push_back(s0);
-      k++;
+      if (!s0.empty()) {
+	l.push_back(s0);
+	k++;
+      }
+    }
+    return l;
+  }
+
+  vector<string> string_to_stringvector(const string &s_, char sep) {
+    return string_to_stringvector(s_.c_str());
+  }
+  
+  vector<string> string_to_stringvector(const char *s_, char sep) {
+    vector<string> l;
+    string s = s_;
+    int k = 0;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == sep)
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      if (!s0.empty()) {
+	l.push_back(s0);
+	k++;
+      }
     }
     return l;
   }
@@ -342,8 +460,10 @@ namespace ebl {
 	s = "";
       else
 	s = s.substr(j + 1, s.size());
-      l.push_back(string_to_double(s0));
-      k++;
+      if (!s0.empty()) {
+	l.push_back(string_to_double(s0));
+	k++;
+      }
     }
     return l;
   }    
@@ -398,6 +518,30 @@ namespace ebl {
     return s.str();
   }
 
+  vector<string> ubyteidx_to_stringvector(idx<ubyte> &u) {
+    if (u.order() != 2)
+      eblerror("expected an idx with order 2 but found: " << u);
+    vector<string> v;
+    idx_bloop1(uu, u, ubyte) {
+      v.push_back((const char *) uu.idx_ptr());
+    }
+    return v;
+  }
+
+  string string_replaceall(const string &s, const char *s1, const char *s2) {
+    string res = s;
+    size_t pos = res.find(s1);
+    while (pos != string::npos) {
+      // found an occurence, replace it with s2
+      res = res.replace(pos, strlen(s1), s2);
+      // look for other occurences
+      pos = res.find(s1);
+    }
+    return res;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  
   string filename(const char *s_) {
 #ifdef __LINUX__
     char c = '/';
@@ -407,6 +551,29 @@ namespace ebl {
     string s = s_;
     size_t pos = s.find_last_of(c);
     return s.substr(pos + 1);
+  }
+
+  string system_to_string(const string &cmd) {
+#ifdef __DEBUG__
+    cout << "system call: " << cmd << ", answer: " << flush;
+#endif
+    string res;
+    char buf[256];
+#ifdef __WINDOWS__
+    FILE* fp = POPEN(cmd.c_str(), "rb");
+#else
+    FILE* fp = POPEN(cmd.c_str(), "r");
+#endif
+    while (fgets(buf, 256, fp))
+      res << buf;
+    if (PCLOSE(fp) != 0) {
+      cerr << "Warning: pclose failed (errno: " << errno 
+	   << ") after calling command: " << cmd << endl;
+    }
+#ifdef __DEBUG__
+    cout << res << endl;
+#endif
+    return res;
   }
   
 } // namespace ebl

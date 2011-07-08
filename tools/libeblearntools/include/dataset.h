@@ -42,17 +42,76 @@
 
 typedef int t_label;
 
+// jitter
+typedef float t_jitter;
+#define JITTERS 4 // number of jitter variables
+
 namespace ebl {
+
+  //! A class describing all attributes of a groundtruth object.
+  class object : public rect<int> {
+  public:
+    // constructors/destructors ////////////////////////////////////////////////
+    
+    //! Initialize this object by its bounding box.
+    object(uint id);
+    //! Destructor.
+    virtual ~object();
+
+    // accessors ///////////////////////////////////////////////////////////////
+
+    //! Set rect attributes given these coordinates.
+    virtual void set_rect(int xmin, int ymin, int xmax, int ymax);
+    //! Set visible rect attributes given these coordinates.
+    virtual void set_visible(int xmin, int ymin, int xmax, int ymax);
+    //! Set centroid coordinates.
+    virtual void set_centroid(int x, int y);
+
+    // members /////////////////////////////////////////////////////////////////
+    uint id; //!< Object id.
+    rect<int> *visible; //!< The visible part of the object.
+    pair<int,int> *centroid; //!< Centroid of object.
+    string name; //!< The name of this object.
+    bool difficult; //!< Difficulty flag.
+    bool truncated; //!< Truncated flag.
+    bool occluded; //!< Occlusion flag.
+    string pose; //!< Pose description string.
+    std::vector<object*> parts; //!< Parts of this object.
+    bool ignored; //!< The object exists but not used as sample.
+  };
 
   //! A class that describes jitter attributes.
   class jitter {
   public:
-    jitter(int h_, int w_, float s_, float r_) : h(h_), w(w_), s(s_), r(r_) { }
-    virtual ~jitter() {} 
-    int h; //!< height
-    int w; //!< width
-    float s; //!< scale
-    float r; //!< rotation
+    //! \param spatial_norm Normalize spatial components by dividing by this,
+    //!   applied to the vector return by get_jitter_vector() only.
+    jitter(float h_, float w_, float s_, float r_, int spatial_norm = 1);
+    //! Create a jitter object from 'jit' with respect to a specific
+    //! 'context' box.
+    //! \param spatial_norm Normalize spatial components by dividing by this,
+    //!   applied to the vector return by get_jitter_vector() only.
+    jitter(rect<float> &context, rect<float> &jit, int spatial_norm = 1);
+    //! Empty jitter.
+    jitter();
+    //! Destructor.
+    virtual ~jitter();
+    //! Returns the jittered version of r, except for rotation.
+    //! \param ratio Scale spatial jitter by this ratio.
+    template <typename T> 
+      rect<T> get_rect(const rect<T> &r, float ratio = 1.0);
+    //! Return a reference to a vector containing all jittering variables.
+    const idx<t_jitter>& get_jitter_vector() const;
+    //! Set jitter variables given a jitter vector.
+    void set(const idx<t_jitter> &j);
+    
+    // members /////////////////////////////////////////////////////////////////
+  public:
+    float h; //!< Height offset
+    float w; //!< Width offset.
+    float s; //!< Scale factor.
+    float r; //!< Rotation.
+  private:
+    idx<t_jitter> jitts; //!< A vector containing all jitter values.
   };
   
   //! The dataset class allows to extract a dataset from sample files and
@@ -107,7 +166,7 @@ namespace ebl {
     //! Set type of image conversion with string conv_type.
     //! con_type can accept a number of strings,
     //! including RGB, Y, YUV, HSV, etc.
-    void set_pp_conversion(const char *conv_type, uint ppkernel_size = 9);
+    void set_pp_conversion(const char *conv_type, idxdim &ppkernel_size);
 
     ////////////////////////////////////////////////////////////////
     // accessors    
@@ -142,9 +201,16 @@ namespace ebl {
     //! The default is: 1x1
     void set_mindims(const idxdim &d);
 
+    //! Specify the maximum dimensions of input samples.
+    void set_maxdims(const idxdim &d);
+
     //! Setting scale mode and scales: preprocess and save each image
     //! in each scale in outdir directory.
     void set_scales(const vector<double> &sc, const string &od);
+    
+    //! Setting fovea scales: the feature layer is duplicated for
+    //! each scale factor provided here.
+    void set_fovea(const vector<double> &scales);
     
     //! Set all max per class to max.
     void set_max_per_class(intg max);
@@ -199,12 +265,28 @@ namespace ebl {
     //! size.
     void set_nopadded(bool nopadded);
 
-    //! Add n samples randomly jittered over a hxw neighborhood 
-    //! around original location.
-    void set_jitter(uint h, uint w, uint ns, float s, uint nr, float r, uint n);
+    //! Add n samples randomly jittered over in a (minradius,maxradius)
+    //! spatial neighborhood around original location.
+    void set_jitter(uint tjitter_step, uint tjitter_hmin, uint tjitter_hmax,
+		    uint tjitter_wmin, uint tjitter_wmax,
+		    uint scale_steps, float scale_min, float scale_max,
+		    uint rotation_steps, float rotation_range,
+		    uint njitter);
+
+    //! Set minimum visibility ratio (between 0.0 and 1.0) of a sample.
+    //! This may be used to ignore
+    //! sample rects that are cropped too much while jittering.
+    //! It may also be used when visible regions are defined, in which case
+    //! the ratio is computed using the overlap of the visible bounding box
+    //! with the original bounding box.
+    virtual void set_minvisibility(float minvis);
 
     //! Add sample mirrored with vertical-axis symmetry.
     void set_wmirror();
+
+    //! Saves all displayed frames to 'dir'.
+    //! If h and w are different than 0, fix the saved frames to hxw.
+    void save_display(const string &dir, uint h = 0, uint w = 0);
     
     //! use pose information to separate classes. e.g. if for class "person"
     //! we have "front" and "side" pose, create 2 classes "person_front"
@@ -268,15 +350,29 @@ namespace ebl {
     //! add sample d to the data with label class_name
     //! (and converting from Toriginal to Tdata type).
     //! r is an optional region of interest rectangle in the image d.
+    //! \param visr An optional bounding box for the visible area of the object
+    //! \param cropr An optional bounding box of ROI of the image to crop.
+    //!    Image should already be cropped, use only for display.
+    //! \param objs An optional vector of other objects in current image,
+    //!    for display purposes.
+    //! \param objs An optional vector of other objects in current image,
+    //!    for display purposes.
+    //! \param jittforce If not null, ignore other jittering and use only this
+    //!   one.
     virtual bool add_data(idx<Tdata> &d, const t_label label,
 			  const string *class_name,
 			  const char *filename = NULL,
 			  const rect<int> *r = NULL,
-			  pair<uint,uint> *center = NULL);
+			  pair<int,int> *center = NULL,
+			  const rect<int> *visr = NULL,
+			  const rect<int> *cropr = NULL,
+			  const vector<object*> *objs = NULL,
+			  const jitter *jittforce = NULL);
 
     //! add/save sample, called at the end of add_data.
     void add_data2(idx<Tdata> &sample, t_label label, const string *class_name,
-		   const char *filename, jitter *jitt);
+		   const char *filename, const jitter *jitt,
+		   idx<t_jitter> *js);
     
     //! add a class name
     bool add_class(const string &class_name);
@@ -307,13 +403,41 @@ namespace ebl {
     //! The type of preprocessing can be selected using set_pp_conversion().
     //! @param outr If not null, copy the rect of the input region in the
     //!        output image.
+    //! \param visr An optional bounding box for the visible area of the object
+    //! \param cropr An optional bounding box of ROI of the image to crop.
+    //!    Image should already be cropped, use only for display.
+    //! \param scale Scale the input box by this factor.
+    //! \param inr_out If not null, this rectangle will be filled with the
+    //!          actual rectangle used for extraction.
     idx<Tdata> preprocess_data(idx<Tdata> &d, const string *class_name,
-			       bool squared = true, const char *filename = NULL,
+			       const char *filename = NULL,
 			       const rect<int> *r = NULL, double scale = 0,
-			       bool active_sleepd = true,
 			       rect<int> *outr = NULL,
-			       pair<uint,uint> *center = NULL,
-			       jitter *jitt = NULL);
+			       pair<int,int> *center = NULL,
+			       jitter *jitt = NULL,
+			       const rect<int> *visr = NULL,
+			       const rect<int> *cropr = NULL,
+			       rect<int> *inr_out = NULL);
+
+    //! Display the added sample and the original image.
+    //! \param visr An optional bounding box for the visible area of the object
+    //! \param cropr An optional bounding box of ROI of the image to crop.
+    //!    Image should already be cropped, use only for display.
+    //! \param scale Scale the input box by this factor.
+    //! \param inr The actual rectangle used for extraction.
+    //! \param origr The original object bounding box.
+    void display_added(idx<Tdata> &added, idx<Tdata> &original, 
+		       const string *class_name, 
+		       const char *filename = NULL,
+ 		       const rect<int> *inr = NULL,  
+		       const rect<int> *origr = NULL,  
+		       bool active_sleepd = true,
+		       pair<int,int> *center = NULL,
+		       const rect<int> *visr = NULL,
+		       const rect<int> *cropr = NULL,
+		       const vector<object*> *objs = NULL,
+		       const jitter *jitt = NULL,
+		       idx<t_jitter> *js = NULL);
 
     ////////////////////////////////////////////////////////////////
     // Helper functions
@@ -341,15 +465,15 @@ namespace ebl {
     //! Method to load an image.
     virtual void load_data(const string &fname);
 
-    //! (Re)fills the random vector of possible jitters. Jitter configurations
-    //! will be pulled from this vector, and this method should be called
-    //! once the vector is empty again.
-    void compute_random_jitter();
+    //! Fills internal 'random_jitter' vector with all possible jitters
+    //! in random order.
+    virtual void compute_random_jitter();
     
   protected:
     // data ////////////////////////////////////////////////////////
-    idx<Tdata>		data;	//!< data matrix
-    idx<t_label>	labels;	//!< labels matrix
+    idx<Tdata>		data;        	//!< data matrix
+    idx<t_label>	labels;	        //!< labels matrix
+    idxs<t_jitter>	jitters;        //!< jitter info matrix
     vector<string>	classes;	//!< list of classes strings
     idx<t_label>        classpairs;	//!< sample pairs class-wise
     idx<t_label>        deformpairs;	//!< sample pairs deformation-wise
@@ -360,8 +484,11 @@ namespace ebl {
     bool                no_outdims;     //!< no outdims were specified.
     idxdim		outdims;	//!< dims of sample out dimensions
     idxdim		mindims;	//!< min dims of input samples
+    idxdim		maxdims;	//!< max dims of input samples
+    bool		maxdims_set;	//!< max dims of input samples is set?
     idxdim		datadims;	//!< dimensions of data out dimensions
     intg		data_cnt;	//!< number of samples added so far
+    intg		processed_cnt;	//!< #processed (not necessarly added)
     intg		max_data;	//!< user can limit samples# with this
     bool		max_data_set;	//!< max_data been set by user or not
     intg                total_samples;	//!< number of samples of dataset
@@ -385,19 +512,26 @@ namespace ebl {
     float               bbox_woverh;    //!< bounding boxes width over h factor
     string              force_label;    //!< force all labels to this one
     bool                nopadded;       //!< ignore too small samples
+    float               minvisibility;
     // jitter ///////////////////////////////////////////////////////
-    uint                hjitter;        //!< add shifted versions of sample 
-    uint                wjitter;        //!< add shifted versions of sample 
-    uint                nsjitter;       //!< number of possible scales
-    float               sjitter;        //!< range of scales
-    uint                nrjitter;       //!< number of possible rotations
+    int                 tjitter_step;   //!< Translation step, in pixels.
+    int                 tjitter_hmin;   //!< Translation height jitter min.
+    int                 tjitter_hmax;   //!< Translation height jitter max.
+    int                 tjitter_wmin;   //!< Translation width jitter min.
+    int                 tjitter_wmax;   //!< Translation width jitter max.
+    int                 sjitter_steps;  //!< number of possible scales
+    float               sjitter_min;    //!< min range of scales
+    float               sjitter_max;    //!< max range of scales
+    int                 rjitter_steps;  //!< number of possible rotations
     float               rjitter;        //!< range of rotations
     uint                njitter;        //!< number of random jitters
+    bool                bjitter;        //!< use jitter or not
     vector<jitter>      random_jitter;  //!< pre-computed list of random jitter
     // names ///////////////////////////////////////////////////////
     string		name;	        //!< dataset name
     string		data_fname;	//!< data filename
     string		labels_fname;	//!< labels filename
+    string		jitters_fname;	//!< jitters filename
     string		classes_fname;	//!< classes filename
     string		classpairs_fname;	//!< classpairs filename
     string		deformpairs_fname;	//!< deformpairs filename
@@ -412,20 +546,24 @@ namespace ebl {
     Tdata               maxval;         //!< minimum value to display
     bool                sleep_display;	//!< enable sleeping when displaying
     uint                sleep_delay;	//!< display sleep delay in ms
+    bool                bsave_display;
+    string              save_display_dir;
     // stats ///////////////////////////////////////////////////////
     uint                nclasses;       //!< Number of classes.
     idx<intg>           class_tally;	//!< counter for class tally
     idx<intg>		add_tally;	//!< counter for additions tally
     uint                add_errors;     //!< Number of adding failures.
+    timer               xtimer;         //!< Extraction timer.
     // preprocessing ///////////////////////////////////////////////
     string		ppconv_type;	//!< name of image conversion
-    uint		ppkernel_size;	//!< size of kernel for pp
+    idxdim		ppkernel_size;	//!< size of kernel for pp
     bool		ppconv_set;	//!< ppconv_type has been set or not
     bool		do_preprocessing;	//!< activate or deactivate pp
     string              resize_mode;    //!< type of resizing (bilin, gaussian)
     module_1_1<fs(Tdata)>  *ppmodule;       //!< pp module 
     resizepp_module<fs(Tdata)> *resizepp;   //!< pp resizing module
     rect<int>           original_bbox;  //!< bbox of image in resized image
+    vector<double>      fovea; //!< fovea context
   };
   
   ////////////////////////////////////////////////////////////////
@@ -445,12 +583,14 @@ namespace ebl {
   //! return success.
   template <typename T>
     bool loading_error(idx<T> &mat, string &fname);
-
   //! optional datasets, issue warning if bool is false, otherwise print
   //! success. return succcess.
   template <typename T>
     bool loading_warning(idx<T> &mat, string &fname);
-
+  //! Optionally load matrices from fname into 'mat', issue warning if bool is
+  //! false, otherwise print success. return succcess.
+  template <typename T>
+    bool loading_warning(idxs<T> &mat, string &fname);
   //! optional datasets, no warning if bool is false, otherwise print
   //! success. return succcess.
   template <typename T>

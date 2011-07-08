@@ -43,9 +43,11 @@ namespace ebl {
   }
 
   void classifier_meter::init(uint nclasses_) {
-    if (nclasses != nclasses_) {
+    if (nclasses != nclasses_) { // 1st time only
       nclasses = nclasses_;
       confusion = idx<int>(nclasses, nclasses);
+      total_confusion = idx<int>(nclasses, nclasses);
+      idx_clear(total_confusion);
     }
     this->clear();
   }
@@ -71,6 +73,8 @@ namespace ebl {
     class_tpr.clear();
     class_fpr.clear();
     idx_clear(confusion);
+    log_values.assign(log_values.size(), (double) 0.0);
+    total_values.assign(log_values.size(), (double) 0.0);
   }
 
   void classifier_meter::resize (intg sz) {
@@ -133,30 +137,34 @@ namespace ebl {
     size++;
     // update confusion matrix
     confusion.set(confusion.get(infered, desired) + 1, infered, desired);
+    total_confusion.set(total_confusion.get(infered, desired) + 1, 
+			infered, desired);
   }
 
-  double classifier_meter::class_normalized_average_error() {
+  double classifier_meter::class_normalized_average_error(idx<int> &confu) {
     // normalize the error per class
     double err = 0.0;
     uint i = 0;
-    idx_eloop1(desired, confusion, int) {
+    idx_eloop1(desired, confu, int) {
       double sum = idx_sum(desired); // all answers
       double positive = desired.get(i); // true answers
       err += (sum - positive) / (std::max)((double) 1, sum); // error for class i
       i++;
     }
-    err /= confusion.dim(0); // average error
+    err /= confu.dim(0); // average error
     return err * 100; // average error percentage
   }
 
-  double classifier_meter::overall_average_error() {
+  double classifier_meter::overall_average_error(idx<int> &confu) {
     // return average ignoring class counts (possibly biased in unbalanced
     // datasets).
-    return (total_error / (double) size) * 100.0;
+    int totalsize = idx_sum(confu);
+    int totalerr = totalsize - idx_trace(confu);
+    return (totalerr / (double) totalsize) * 100.0;
   }
 
-  double classifier_meter::class_normalized_average_success() {
-    return 100 - class_normalized_average_error();
+  double classifier_meter::class_normalized_average_success(idx<int> &confu) {
+    return 100 - class_normalized_average_error(confu);
   }
 
   idx<int>& classifier_meter::get_confusion() {
@@ -200,30 +208,94 @@ namespace ebl {
   void classifier_meter::info_print() {
     err_not_implemented();
   }
-
+  
   void classifier_meter::display(int iteration, string &dsname,
-				 std::vector<string*> *lblstr, bool ds_is_test) {
+				 std::vector<string*> *lblstr,
+				 bool ds_is_test) {
     cout << "i=" << iteration << " name=" << dsname << " ";
     cout << "[" << (int) age << "]  sz=" <<  (int) size << " ";
     cout << (ds_is_test ? "test_":"") << "energy="
 	 << total_energy / (double) size << " ";
-    cout << (ds_is_test ? "test_":"") << "errors=" << class_normalized_average_error() << "% ";
-    cout << (ds_is_test ? "test_":"") << "overall_errors=" << overall_average_error() << "% ";
-    cout << (ds_is_test ? "test_":"") << "rejects="
+    // classes display
+    if (nclasses > 0) {
+      cout << (ds_is_test ? "test_":"") << "errors=" 
+	   << class_normalized_average_error(confusion) << "% ";
+      cout << (ds_is_test ? "test_":"") << "overall_errors=" 
+	   << overall_average_error(confusion) << "% ";
+      cout << (ds_is_test ? "test_":"") << "rejects="
+	   << (total_punt * 100) / (double) size << "% ";
+      cout << (ds_is_test ? "test_":"") << "correct=" 
+	   << class_normalized_average_success(confusion) <<"% ";
+      cout << endl;
+      cout << "errors per class: ";
+      for (uint i = 0; i < class_errors.size(); ++i) {
+	// number of samples for this class
+	cout << (ds_is_test ? "test_" : "");
+	if (lblstr) cout << *((*lblstr)[i]); else cout << i;
+	cout << "_samples=" << class_totals[i] << " ";
+	// percentage of error for this class
+	cout << (ds_is_test ? "test_" : "");
+	if (lblstr) cout << *((*lblstr)[i]); else cout << i;
+	cout << "_errors=" << class_errors[i] * 100.0
+	  / (float) ((class_totals[i]==0)?1:class_totals[i]) << "% ";
+      }
+    } else {
+      if (size > 0) {
+	cout << (ds_is_test ? "test_":"") << "correct="
+	     << total_correct * 100 / (float) size << "% ";
+	cout << (ds_is_test ? "test_":"") << "errors="
+	     << total_error * 100 / (float) size << "% ";
+      }
+    }
+    // display additional variables
+    if (size > 0) {
+      for (uint i = 0; i < log_values.size(); ++i) {
+	cout << (ds_is_test ? "test_":"") << log_fields[i] << "="
+	     << log_values[i] / std::max((double)1, total_values[i]) << " ";
+      }
+    }
+    cout << endl;
+  }
+
+  int classifier_meter::get_class_samples(idx<int> &confu, intg classid) {
+    idx<int> thisclass = confu.select(1, classid);
+    return idx_sum(thisclass);
+  }
+
+  int classifier_meter::get_class_errors(idx<int> &confu, intg classid) {
+    idx<int> thisclass = confu.select(1, classid);
+    return idx_sum(thisclass) - thisclass.get(classid);
+  }
+
+  void classifier_meter::display_average(string &dsname,
+					 std::vector<string*> *lblstr, 
+					 bool ds_is_test) {
+    cout << "averages over all iterations: name=" << dsname << " ";
+    cout << "[" << (int) age << "]  sz=" <<  (int) size << " ";
+    cout << (ds_is_test ? "test_":"") << "energy_avg="
+	 << total_energy / (double) size << " ";
+    cout << (ds_is_test ? "test_":"") << "errors_avg=" 
+	 << class_normalized_average_error(total_confusion) << "% ";
+    cout << (ds_is_test ? "test_":"") << "overall_errors_avg=" 
+	 << overall_average_error(total_confusion) << "% ";
+    cout << (ds_is_test ? "test_":"") << "rejects_avg="
 	 << (total_punt * 100) / (double) size << "% ";
-    cout << (ds_is_test ? "test_":"") << "correct=" << class_normalized_average_success() <<"% ";
+    cout << (ds_is_test ? "test_":"") << "correct_avg=" 
+	 << class_normalized_average_success(total_confusion) <<"% ";
     cout << endl;
     cout << "errors per class: ";
     for (uint i = 0; i < class_errors.size(); ++i) {
+      int classsamples = get_class_samples(total_confusion, i);
+      int classerrors = get_class_errors(total_confusion, i);
       // number of samples for this class
       cout << (ds_is_test ? "test_" : "");
       if (lblstr) cout << *((*lblstr)[i]); else cout << i;
-      cout << "_samples=" << class_totals[i] << " ";
+      cout << "_samples=" << classsamples << " ";
       // percentage of error for this class
       cout << (ds_is_test ? "test_" : "");
       if (lblstr) cout << *((*lblstr)[i]); else cout << i;
-      cout << "_errors=" << class_errors[i] * 100.0
-	/ (float) ((class_totals[i]==0)?1:class_totals[i]) << "% ";
+      cout << "_errors_avg=" << classerrors * 100.0
+	/ (float) ((classsamples==0)?1:classsamples) << "% ";
     }
     cout << endl;
   }

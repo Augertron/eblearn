@@ -52,8 +52,8 @@ namespace ebl {
 
   template <class Tnet, class Tdata, class Tlabel>
   labeled_datasource_gui<Tnet, Tdata, Tlabel>::~labeled_datasource_gui() {
-    if (win && !_replaced)
-      win->replace_scroll_box_with_copy(this);
+    if (w && !_replaced)
+      w->replace_scroll_box_with_copy(this);
   }
 
   template <class Tnet, class Tdata, class Tlabel>
@@ -79,9 +79,14 @@ namespace ebl {
     _rmin = rangemin;
     _rmax = rangemax;
     idxdim d = ds.sample_dims();
-    fstate_idx<Tnet> s(d);
+    bbstate_idx<Tnet> s(d);
     idx<Tnet> m = s.x.select(0, 0);
-    fstate_idx<Tlabel> lbl;
+    bbstate_idx<Tlabel> lbl;
+    vector<string*> lblstr;
+    class_datasource<Tnet,Tdata,Tlabel> *cds =
+      dynamic_cast<class_datasource<Tnet,Tdata,Tlabel>*>(&ds);
+    if (cds)
+      lblstr = cds->get_label_strings();
     _h1 = h0 + nh * (m.dim(0) + 1);
     _w1 = w0 + nw * (m.dim(1) + 1);
     display_wid = (wid >= 0) ? wid :
@@ -98,9 +103,6 @@ namespace ebl {
     if (wid == -1) // clear only if we created the window
       clear_window();
     gui << white_on_transparent() << gui_only();
-    // single continuous labels, set smaller font
-    if (ds.labels.order() == 1 && !ds.discrete_labels)
-      set_font_size(4);
     uint k = 0;
     ds.seek_begin();
     // loop to reach pos
@@ -117,8 +119,8 @@ namespace ebl {
 	m = s.x.shift_dim(0, 2);
 	draw_matrix(m, h, w, _zoom, _zoom, _rmin, _rmax);
 	// draw label if present
-	if ((ds.lblstr) && (ds.lblstr->at((int)lbl.x.get())))
-	  gui << at(h + 1, w + 1) << (ds.lblstr->at((int)lbl.x.get()))->c_str();
+	if ((lblstr.size() > 0) && (lblstr[(int)lbl.x.get()]))
+	  gui << at(h + 1, w + 1) << (lblstr[(int)lbl.x.get()])->c_str();
 	else if (ds.labels.order() == 1) // single continuous labels
 	  gui << at(h + 1, w + 1) << setprecision(1) << lbl.x.get();
 	w += m.dim(1) + 1;
@@ -156,7 +158,7 @@ namespace ebl {
     _rmax = rangemax;
     idxdim d = ds.sample_dims();
     idx<Tdata> m = ds.get_sample(0);
-    fstate_idx<Tlabel> lbl;
+    bbstate_idx<Tlabel> lbl;
     _h1 = h0 + nh * (m.dim(0) + 1);
     _w1 = w0 + nw * (m.dim(1) + 1);
     display_wid = (wid >= 0) ? wid :
@@ -249,8 +251,8 @@ namespace ebl {
   template <class Tnet, class Tdata, class Tlabel>
   labeled_pair_datasource_gui<Tnet, Tdata, Tlabel>::
   ~labeled_pair_datasource_gui() {
-    if (this->win) {
-      this->win->replace_scroll_box_with_copy(this);
+    if (this->w) {
+      this->w->replace_scroll_box_with_copy(this);
       this->_replaced = true;
     }
   }
@@ -279,10 +281,10 @@ namespace ebl {
     this->_rmin = rangemin;
     this->_rmax = rangemax;
     idxdim d = ds.sample_dims();
-    fstate_idx<Tnet> in1(d);
-    fstate_idx<Tnet> in2(d);
+    bbstate_idx<Tnet> in1(d);
+    bbstate_idx<Tnet> in2(d);
     idx<Tnet> m = in1.x.select(0, 0);
-    fstate_idx<Tlabel> lbl;
+    bbstate_idx<Tlabel> lbl;
     this->_h1 = h0 + nh * (m.dim(0) + 1);
     this->_w1 = w0 + nw * (m.dim(1) + 1);
     this->display_wid = (wid >= 0) ? wid :

@@ -117,7 +117,7 @@ bool parse_args(int argc, char **argv, string &ds_name) {
 	    s = "";
 	  else
 	    s = s.substr(j + 1, s.size());
-	  d.insert_dim(atoi(s0.c_str()), k++);
+	  d.insert_dim(k++, atoi(s0.c_str()));
 	}
 	dims = d;
       } else if (strcmp(argv[i], "-range") == 0) {
@@ -208,32 +208,32 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
     data = data.select(1, channel);
   }
   // create datasource object
-  labeled_datasource<Tdata, Tdata, Tlabel>
+  class_datasource<Tdata, Tdata, Tlabel>
     train_ds(data, labels, classes, "Dataset");
   // display it
 #ifdef __GUI__
   if (!info) { // only display if info is false
-    if (bclasspairs) {
-      labeled_pair_datasource<Tdata, Tdata, Tlabel>
-	train_cp_ds(data, labels, classes, classpairs,
-		    "Class pairs (training)");
-      labeled_pair_datasource_gui<Tdata, Tdata, Tlabel> dsgui_cp(true);
-      dsgui_cp.display(train_cp_ds, dims.dim(0), dims.dim(1),
-		       0, 0, 1, -1, NULL, false,
-		       (Tdata) range[0], (Tdata) range[1]);
-      secsleep(1);
-    }
+    // if (bclasspairs) {
+    //   labeled_pair_datasource<Tdata, Tdata, Tlabel>
+    // 	train_cp_ds(data, labels, classes, classpairs,
+    // 		    "Class pairs (training)");
+    //   labeled_pair_datasource_gui<Tdata, Tdata, Tlabel> dsgui_cp(true);
+    //   dsgui_cp.display(train_cp_ds, dims.dim(0), dims.dim(1),
+    // 		       0, 0, 1, -1, NULL, false,
+    // 		       (Tdata) range[0], (Tdata) range[1]);
+    //   secsleep(1);
+    // }
     
-    if (bdefpairs) {
-      labeled_pair_datasource<Tdata, Tdata, Tlabel>
-	train_dp_ds(data, labels, classes, defpairs,
-		    "Deformation pairs (training)");
-      labeled_pair_datasource_gui<Tdata, Tdata, Tlabel> dsgui_dp(true);
-      dsgui_dp.display(train_dp_ds, dims.dim(0), dims.dim(1),
-		       0, 0, 1, -1, NULL, false,
-		       (Tdata) range[0], (Tdata) range[1]);
-      secsleep(1);
-    }
+    // if (bdefpairs) {
+    //   labeled_pair_datasource<Tdata, Tdata, Tlabel>
+    // 	train_dp_ds(data, labels, classes, defpairs,
+    // 		    "Deformation pairs (training)");
+    //   labeled_pair_datasource_gui<Tdata, Tdata, Tlabel> dsgui_dp(true);
+    //   dsgui_dp.display(train_dp_ds, dims.dim(0), dims.dim(1),
+    // 		       0, 0, 1, -1, NULL, false,
+    // 		       (Tdata) range[0], (Tdata) range[1]);
+    //   secsleep(1);
+    // }
   
     labeled_datasource_gui<Tdata, Tdata, Tlabel> dsgui(true);
     dsgui.display(train_ds, dims.dim(0), dims.dim(1), 0, 0, 1, -1, NULL, false,

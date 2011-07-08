@@ -1,7 +1,7 @@
-
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -101,14 +101,24 @@ namespace ebl {
     emit gui_save_window(new string(filename), wid);
   }
 
-  int idxgui::new_window(const char *wname, unsigned int h, 
-			 unsigned int w) {
+  int idxgui::new_window(const char *wname, uint h, uint w) {
     check_init();
     // lock this block to make sure different threads don't use the same window
     mutex1.lock();
     int wid = nwid;
     nwid++; // increment number of windows
     emit gui_new_window(wname, h, w);
+    mutex1.unlock();
+    return wid;
+  }
+
+  int idxgui::new_window3d(const char *wname, uint h, uint w) {
+    check_init();
+    // lock this block to make sure different threads don't use the same window
+    mutex1.lock();
+    int wid = nwid;
+    nwid++; // increment number of windows
+    emit gui_new_window3d(wname, h, w);
     mutex1.unlock();
     return wid;
   }
@@ -163,12 +173,22 @@ namespace ebl {
     emit gui_add_arrow(h1, w1, h2, w2);
   }
 
-  void idxgui::draw_box(int h0, int w0, int h, int w,
-			unsigned char r, unsigned char g,
-			unsigned char b, unsigned char a,
-			string *s) {
+  void idxgui::draw_box(float h0, float w0, float h, float w, ubyte r, ubyte g,
+			ubyte b, ubyte a, string *s) {
     check_init();
-    emit gui_add_box(h0, w0, h, w, r, g, b, a, s);
+    emit gui_add_box(h0, w0, h, w, r, g, b, a, (s ? new string(*s) : s));
+  }
+  
+  void idxgui::draw_cross(float h0, float w0, float length, ubyte r, ubyte g,
+			  ubyte b, ubyte a, string *s) {
+    check_init();
+    emit gui_add_cross(h0, w0, length, r, g, b, a, (s ? new string(*s) : s));
+  }
+  
+  void idxgui::draw_ellipse(float h0, float w0, float h, float w,
+			    ubyte r, ubyte g, ubyte b, ubyte a, string *s) {
+    check_init();
+    emit gui_add_ellipse(h0, w0, h, w, r, g, b, a, (s ? new string(*s) : s));
   }
   
   void idxgui::set_text_origin(unsigned int h0, unsigned int w0) {
@@ -176,10 +196,8 @@ namespace ebl {
     emit gui_set_text_origin(h0, w0);    
   }
 
-  void idxgui::set_text_colors(int fg_r, int fg_g, 
-			       int fg_b, int fg_a,
-			       int bg_r, int bg_g, 
-			       int bg_b, int bg_a) {
+  void idxgui::set_text_colors(int fg_r, int fg_g, int fg_b, int fg_a,
+			       int bg_r, int bg_g, int bg_b, int bg_a) {
     check_init();
     set_text_colors((unsigned char) fg_r, (unsigned char) fg_g, 
 		    (unsigned char) fg_b, (unsigned char) fg_a, 
@@ -220,6 +238,11 @@ namespace ebl {
   void idxgui::freeze_style(bool freeze) {
     check_init();
     emit gui_freeze_style(freeze);    
+  }
+
+  void idxgui::freeze_window_size(uint h, uint w) {
+    check_init();
+    emit gui_freeze_window_size(h, w);    
   }
 
   idxgui& att(idxgui& r, unsigned int h0, unsigned int w0) {
@@ -315,4 +338,21 @@ namespace ebl {
     emit gui_set_title(new string(s));    
   }
 
+  // 3d signals ////////////////////////////////////////////////////////////////
+
+  void idxgui::draw_sphere(float x, float y, float z, float radius,
+			   const char *s, int r, int g, int b, int a) {
+    check_init();
+    emit gui_add_sphere(x, y, z, radius, s ? new string(s) : NULL, r, g, b, a);
+  }
+  
+  void idxgui::draw_cylinder(float x, float y, float z, float length,
+			     float top_radius, float base_radius, float a1,
+			     float a2, const char *s,
+			     int r, int g, int b, int a, bool tops) {
+    check_init();
+    emit gui_add_cylinder(x, y, z, length, top_radius, base_radius,
+			  a1, a2, s ? new string(s) : NULL, r, g, b, a, tops);
+  }
+  
 } // end namespace ebl

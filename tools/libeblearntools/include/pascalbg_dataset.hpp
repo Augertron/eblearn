@@ -82,24 +82,28 @@ namespace ebl {
 #ifdef __XML__    
     cout << "Extracting samples from files into dataset..." << endl;
     // adding data to dataset using all xml files in annroot
-    regex eExt(XML_PATTERN);
-    cmatch what;
     path p(annroot);
-    if (!exists(p)) {
-      cerr << "path " << annroot << " does not exist." << endl;
-      return false;
-    }    
-    directory_iterator end_itr; // default construction yields past-the-end
-    for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if (!is_directory(itr->status()) &&
-	  regex_match(itr->leaf().c_str(), what, eExt)) {
-	process_xml(itr->path().string());
-	if (this->full()) //max_data_set && (data_cnt >= max_data))
-	  break ;
-      }
+    if (!exists(p))
+      eblerror("Annotation path " << annroot << " does not exist.");
+    xtimer.start();
+    processed_cnt = 0;
+    // find all xml files recursively (and randomize list)
+    list<string> *files = find_fullfiles(annroot, XML_PATTERN, NULL, false, 
+					 true, true);
+    if (!files || files->size() == 0)
+      eblerror("no xml files found in " << annroot << " using file pattern "
+	       << XML_PATTERN);
+    cout << "Found " << files->size() << " xml files." << endl;
+    for (list<string>::iterator i = files->begin(); i != files->end(); ++i) {
+      this->process_xml(*i);
+      processed_cnt++;
+      if (this->full())
+	break;
     }
     cout << "Extracted and saved " << data_cnt;
     cout << " background patches from dataset." << endl;
+    cout << "Extraction time: " << xtimer.elapsed() << endl;
+    if (files) delete files;
 #endif /* __XML__ */
 #endif /* __BOOSt__ */
     return true;
@@ -115,7 +119,7 @@ namespace ebl {
   // background patches even in difficult bounding boxes.
   template <class Tdata>
   bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
-    string image_filename, image_fullname;
+    string image_filename, image_fullname, folder;
     vector<rect<int> > bboxes;
     string obj_classname, pose;
     bool pose_found = false;
@@ -135,11 +139,21 @@ namespace ebl {
 	    iter != list.end(); ++iter) {
 	  if (!strcmp((*iter)->get_name().c_str(), "filename")) {
 	    xml_get_string(*iter, image_filename);
-	    iter = list.end(); iter--; // stop loop
+	  } else if (!strcmp((*iter)->get_name().c_str(), "folder")) {
+	    xml_get_string(*iter, folder);
 	  }
 	}
 	image_fullname = imgroot;
+	if (!folder.empty())
+	  image_fullname << "/" << folder << "/";
 	image_fullname += image_filename;
+	// include folder into filename to avoid conflicts
+	if (!folder.empty()) { 
+	  string tmp;
+	  tmp << folder << "_" << image_filename;
+	  tmp = string_replace(tmp, "/", "_");
+	  image_filename = tmp;
+	}
 	// parse all objects in image
 	for(Node::NodeList::iterator iter = list.begin();
 	    iter != list.end(); ++iter) {
@@ -254,99 +268,49 @@ namespace ebl {
   void pascalbg_dataset<Tdata>::
   process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
 		const string &image_filename) {
-    vector<rect<int> > scaled_bboxes;
     vector<rect<int> > patch_bboxes;
     vector<rect<int> >::iterator ibb;
     idxdim d(img);
-    idx<Tdata> im(d);
-    string cname = "background";
     ostringstream fname;
-    vector<idx<Tdata> > patches;
     bool overlap;
     
     // for each scale, find patches and save them
     for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
-      patches.clear();
       patch_bboxes.clear();
-      scaled_bboxes.clear(); 
-      idx_copy(img, im); // initialize im to original image
       // rescale original bboxes
-      double ratio = std::max(im.dim(0) / (double) outdims.dim(0),
-			      im.dim(1) / (double) outdims.dim(1)) / *i;
-      // do not upsample to avoid creating artefacts
-      // if (ratio < 1)
-      // 	continue ; // do nothing for this scale
-      // rescale original bboxes
-      for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb) {
-	rect<int> rs = *ibb / ratio;
-	if (im.dim(0) < im.dim(1))
-	  rs.h0 += (uint) (((outdims.dim(0) * *i) - (im.dim(0) / ratio)) / 2);
-	else 
-	  rs.w0 += (uint) (((outdims.dim(1) * *i) - (im.dim(1) / ratio)) / 2);
-	scaled_bboxes.push_back(rs);
-      }
-      // preprocess image
-      rect<int> r(0, 0, im.dim(0), im.dim(1));
-      idx<Tdata> im2 =
-	this->preprocess_data(im, &cname, false, image_filename.c_str(),
-			      &r, *i, false);
+      double ratio = std::max(outdims.dim(0) / (double) img.dim(0),
+			      outdims.dim(1) / (double) img.dim(1)) * *i;
       // extract all non overlapping patches with dimensions outdims that
       // do not overlap with bounding boxes
       rect<int> patch(0, 0, outdims.dim(0), outdims.dim(1));
-      for (patch.h0 = 0; patch.h0 + patch.height <= im2.dim(0);
+      patch = patch * ratio;
+      for (patch.h0 = 0; patch.h0 + patch.height <= img.dim(0);
 	   patch.h0 += patch.height) {
-	for (patch.w0 = 0; patch.w0 + patch.width <= im2.dim(1);
+	for (patch.w0 = 0; patch.w0 + patch.width <= img.dim(1);
 	     patch.w0 += patch.width) {
 	  // test if patch overlaps with any bounding box or is outside of image
 	  overlap = false;
-	  for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb) {
+	  for (ibb = bboxes.begin(); ibb != bboxes.end(); ++ibb) {
 	    if (patch.overlap(*ibb)) {
 	      overlap = true;
 	      break ;
 	    }
 	  }
-	  if (!patch.is_within(original_bbox))
-	    overlap = true;
 	  if (!overlap) {
-	    // not overlapping, add patch
-	    idx<Tdata> p = im2.narrow(0, patch.height, patch.h0);
-	    p = p.narrow(1, patch.width, patch.w0);
-	    patches.push_back(p);
+	    // push patch to list of extracted patches
 	    patch_bboxes.push_back(patch);
 	  }
 	}
       }
-#ifdef __GUI__
-      if (display_extraction) {
-	uint h = 63, w = 0;
-	disable_window_updates();
-	// draw bboxes
-	for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb)
-	  draw_box(h + ibb->h0, w + ibb->w0,
-		   ibb->height, ibb->width, 255, 0, 0);
-	// draw patches
-	for (ibb = patch_bboxes.begin(); ibb != patch_bboxes.end(); ++ibb)
-	  draw_box(h + ibb->h0, w + ibb->w0,
-		   ibb->height, ibb->width, 0, 255, 0);
-	// draw original bbox
-	draw_box(h + original_bbox.h0, w + original_bbox.w0,
-		 original_bbox.height, original_bbox.width, 0, 0, 255);
-// 	// draw original image
-// 	h = im2.dim(0) + 5, w = 0;
-// 	idx<Tdata> tmp = im2.select(2, 0);
-// 	draw_matrix(tmp, h, w, 1.0, 1.0, (Tdata) -1, (Tdata) 1);
-// 	// draw bboxes on original
-// 	for (ibb = scaled_bboxes.begin(); ibb != scaled_bboxes.end(); ++ibb)
-// 	  draw_box(h + ibb->h0, w + ibb->w0,
-// 		   ibb->height, ibb->width, 255, 0, 0);
-	enable_window_updates();
-	if (sleep_display)
-	  millisleep((long) sleep_delay);
-      }
-#endif
       fname.str("");
       fname << image_filename << "_scale" << *i;
-      save_patches(patches, outdir, max_folders, fname.str());
+      if (patch_bboxes.size() == 0)
+	cout << "No background patches could be extracted at scale " 
+	     << *i << endl;
+      else {
+	save_patches(img, image_filename, patch_bboxes, bboxes,
+		     outdir, max_folders, fname.str());
+      }
     }
   }
   
@@ -354,19 +318,33 @@ namespace ebl {
   // save patches
 
   template <class Tdata>
-  void pascalbg_dataset<Tdata>::save_patches(vector<idx<Tdata> > &patches,
+  void pascalbg_dataset<Tdata>::save_patches(idx<ubyte> &im, const string &image_filename,
+					     vector<rect<int> > &patch_bboxes,
+					     vector<rect<int> > &objs_bboxes,
 					     const string &outdir,
 					     uint max_folders,
 					     const string &filename) {
     ostringstream folder, fname;
+    string cname = "background";
+    rect<int> inr;
+    // change image type from ubyte to Tdata
+    idx<Tdata> img(im.get_idxdim());
+    idx_copy(im, img);
     try {
       mkdir_full(outdir.c_str());
       uint i;
       // shuffle randomly vector of patches to avoid taking top left corner
       // as first patch every time
-      random_shuffle(patches.begin(), patches.end());
+      random_shuffle(patch_bboxes.begin(), patch_bboxes.end());
       // loop on patches
-      for (i = 0; (i < patches.size()) && (i < max_folders); ++i) {
+      for (i = 0; (i < patch_bboxes.size()) && (i < max_folders); ++i) {
+	// extract patch
+	rect<int> p = patch_bboxes[i];
+	idx<Tdata> patch = 
+	  this->preprocess_data(img, &cname, image_filename.c_str(),
+				&p, 0, NULL, NULL, 
+				NULL, NULL, NULL, &inr);
+	
 	// create folder if doesn't exist
 	folder.str("");
 	folder << outdir << "/" << "bg" << i+1 << "/";
@@ -379,11 +357,11 @@ namespace ebl {
 	fname << folder.str() << filename << ".bg" << i+1;
 	if (!strcmp(save_mode.c_str(), "mat")) { // lush matrix mode
 	  fname << MATRIX_EXTENSION;
-	  if (!save_matrix(patches[i], fname.str()))
+	  if (!save_matrix(patch, fname.str()))
 	    throw fname.str();
 	} else { // image file mode
 	  fname << "." << save_mode;
-	  idx<Tdata> tmp = patches[i];
+	  idx<Tdata> tmp = patch;
 	  // scale image to 0 255 if preprocessed
 	  if (strcmp(ppconv_type.c_str(), "RGB")) {
 	    idx_addc(tmp, (Tdata) 1.0, tmp);
@@ -391,7 +369,11 @@ namespace ebl {
 	  }
 	  save_image(fname.str(), tmp, save_mode.c_str());
 	}
-	cout << data_cnt++ << ": saved " << fname.str().c_str() << endl;
+	cout << data_cnt++ << ": saved " << fname.str().c_str() 
+	     << " " << patch << ", eta: " << xtimer.eta(data_cnt, max_data)
+	     << ", elapsed: " << xtimer.elapsed() << endl;
+	display_patch(patch, img, image_filename, cname, p, inr,
+		      objs_bboxes, patch_bboxes);
       }
 //       if (i < patches.size()) // reached max_folders, fill-up last one
 // 	for ( ; i < patches.size(); ++i) {
@@ -406,6 +388,41 @@ namespace ebl {
       cerr << "error: failed to save patch in " << err << endl;
     }
   }
+
+  template <class Tdata>
+  void pascalbg_dataset<Tdata>::display_patch(idx<Tdata> &patch, idx<Tdata> &img, 
+					      const string &image_filename,
+					      const string &cname,
+					      rect<int> &pbbox, rect<int> &r,
+					      vector<rect<int> > &objs_bboxes,
+					      vector<rect<int> > &patch_bboxes) {
+#ifdef __GUI__
+      if (display_extraction) {
+ 	disable_window_updates();
+	// display
+	idx<Tdata> im3 = patch.shift_dim(2, 0);
+	display_added(im3, img, &cname, image_filename.c_str(), NULL,
+		      &r, false);
+	uint h = 47, w = patch.dim(1) + 5;
+	// draw patch bboxes
+	vector<rect<int> >::iterator ibb;
+	for (ibb = patch_bboxes.begin(); ibb != patch_bboxes.end(); ++ibb)
+	  draw_box(h + ibb->h0, w + ibb->w0,
+		   ibb->height, ibb->width, 0, 255, 0);
+	// draw objects bboxes
+	for (ibb = objs_bboxes.begin(); ibb != objs_bboxes.end(); ++ibb)
+	  draw_box(h + ibb->h0, w + ibb->w0,
+		   ibb->height, ibb->width, 255, 255, 0);
+	// draw requested patch bbox
+	draw_box(h + pbbox.h0, w + pbbox.w0,
+		 pbbox.height, pbbox.width, 0, 0, 255);
+	enable_window_updates();
+	if (sleep_display)
+	  millisleep((long) sleep_delay);
+      }
+#endif
+  }
+
 
 #endif /* __XML__ */
 #endif /* __BOOST__ */

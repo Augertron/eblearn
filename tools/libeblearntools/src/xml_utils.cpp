@@ -31,6 +31,7 @@
 
 #ifdef __XML__
 
+#include "libidx.h"
 #include "xml_utils.h"
 #include <libxml++/libxml++.h>
 
@@ -43,6 +44,19 @@ namespace ebl {
 
   unsigned int xml_get_uint(Node *element) {
     unsigned int u = 0;
+    
+    const Element* e = dynamic_cast<const Element*>(element);
+    const TextNode* txt = dynamic_cast<const TextNode*>
+      (e->get_child_text());
+    if (!txt)
+      eblthrow("could not get uint from xml");
+    istringstream iss(txt->get_content(), istringstream::in);
+    iss >> u;
+    return u;
+  }
+  
+  int xml_get_int(Node *element) {
+    int u = 0;
     
     const Element* e = dynamic_cast<const Element*>(element);
     const TextNode* txt = dynamic_cast<const TextNode*>

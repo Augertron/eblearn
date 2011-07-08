@@ -61,10 +61,10 @@ namespace ebl {
 
 
   // generic copy for the same type.
-  template<class T> void idx_copy(idx<T> &src, idx<T> &dst) {
+  template<class T> void idx_copy(const idx<T> &src, idx<T> &dst) {
     // loop and copy
-    intg N1=src.nelements();
-    intg N2 =dst.nelements();
+    intg N1 = src.nelements();
+    intg N2 = dst.nelements();
     if (N1 != N2)
       eblerror("expected same number of elements in " << src << " and " << dst);
     if ( (src.order() == 0) && (dst.order() == 0) ) {
@@ -79,24 +79,25 @@ namespace ebl {
     }
   }
 
-  template<class T1, class T2> void idx_copy(idx<T1> &src, idx<T2> &dst){
+  template<class T1, class T2> void idx_copy(const idx<T1> &src, idx<T2> &dst){
     // loop and copy
     idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }
   }
 
-  template<class T1, class T2> idx<T1> idx_copy(idx<T2> &src){
+  template<class T1, class T2> idx<T1> idx_copy(const idx<T2> &src){
     idx<T1> dst(src.get_idxdim());
     idx_copy(src, dst);
     return dst;
   }
 
-  template<class T> idx<T> idx_copy(idx<T> &src){
+  template<class T> idx<T> idx_copy(const idx<T> &src){
     idx<T> dst(src.get_idxdim());
     idx_copy(src, dst);
     return dst;
   }
 
-  template<class T1, class T2> void idx_copy_clip(idx<T1> &src, idx<T2> &dst){
+  template<class T1, class T2> void idx_copy_clip(const idx<T1> &src,
+						  idx<T2> &dst){
     // loop and copy
     idx_aloop2(isrc, src, T1, idst, dst, T2) { 
       *idst = saturate(*isrc, T2);
@@ -124,6 +125,21 @@ namespace ebl {
     }
   }
 
+  template<class T> void idx_delete(idxs<T> &m) {
+    idx<T> *p = NULL;
+    if (m.order() == 0) {
+      p = ((idx<idx<T>*>&)m).get();
+      if (p)
+	delete p;
+    } else {
+      idx_bloop1(e, m, idx<T>*) {
+	p = e.get();
+	if (p != NULL)
+	  delete p;
+      }
+    }
+  }
+  
   ////////////////////////////////////////////////////////////////
   // idx_fill
 
@@ -729,6 +745,23 @@ namespace ebl {
 #endif
   }
 
+  template<class T> void idx_subsquareacc(idx<T> &i1, idx<T> &i2, idx<T> &out) {
+#if USING_FAST_ITERS == 0
+  #if USING_STL_ITERS == 0
+    idxiter<T> pi1; idxiter<T> pi2; idxiter<T> pout;
+    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { T d = *pi1 - *pi2; *pout += d*d; }
+  #else
+    ScalarIter<T> pi1; ScalarIter<T> pi2; ScalarIter<T> pout(out);
+    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { T d = *pi1 - *pi2; *pout += d*d; }
+  #endif
+#else
+    idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {
+      T d = *pi1 - *pi2;
+      *pout += d*d;
+    });
+#endif
+  }
+
   ////////////////////////////////////////////////////////////////////////
   // idx_lincomb
 
@@ -911,6 +944,26 @@ namespace ebl {
   #endif
 #else
     idx_aloopf1(pin, in, T, { if (*pin < th) *pin = th; });
+#endif
+  }
+
+  template<class T> void idx_threshold2(idx<T>& in, T th) {
+#if USING_FAST_ITERS == 0
+  #if USING_STL_ITERS == 0
+    idxiter<T> pin;
+    idx_aloop1_on(pin,in) {
+      if (*pin > th)
+	*pin = th;
+    }
+  #else
+    ScalarIter<T> pin(in);
+    idx_aloop1_on(pin,in) {
+      if (*pin > th)
+	*pin = th;
+    }
+  #endif
+#else
+    idx_aloopf1(pin, in, T, { if (*pin > th) *pin = th; });
 #endif
   }
 
@@ -1221,10 +1274,47 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   }
 
   ////////////////////////////////////////////////////////////////////////
+  // idx_l1
+
+  template<class T> float64 idx_l1(idx<T> &m1, idx<T> &m2) {
+    float64 z = 0;
+#if USING_FAST_ITERS == 0
+    idxiter<T> pm1, pm2;
+    idx_aloop2_on(pm1,m1,pm2,m2) {
+      z += (float64) fabs((float64) (*pm1 - *pm2)); }
+#else
+    idx_aloopf2(pm1, m1, T, pm2, m2, T,
+		{ z += (float64) fabs((float64) (*pm1 - *pm2)); });
+#endif
+    return z;
+  }
+
+  ////////////////////////////////////////////////////////////////////////
   // idx_l2norm
 
   template<class T> float64 idx_l2norm(idx<T> &in) {
     return sqrt((T) idx_sumsqr(in));
+  }
+
+  template<class T> float64 idx_l2(idx<T> &in) {
+    return sqrt((T) idx_sumsqr(in));
+  }
+
+  template<class T> float64 idx_l2(idx<T> &m1, idx<T> &m2) {
+    float64 z = 0;
+    float64 tmp;
+#if USING_FAST_ITERS == 0
+    idxiter<T> pm1, pm2;
+    idx_aloop2_on(pm1,m1,pm2,m2) {
+      tmp = *pm1 - (float64) *pm2;
+      z += tmp * tmp;
+    }
+#else
+    idx_aloopf2(pm1, m1, T, pm2, m2, T,
+		{ tmp = *pm1 - (float64) *pm2;
+		  z += tmp * tmp; });
+#endif
+    return sqrt(z);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -1747,6 +1837,19 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   }
 
   ////////////////////////////////////////////////////////////////////////
+  // idx_min (between 2 idx's, in-place)
+
+  template <class T> void idx_min(idx<T> &in1, idx<T> &in2) {
+#if USING_FAST_ITERS == 0
+    idx_aloop2(i1, in1, T, i2, in2, T) {
+      *i2 = std::min(*i1, *i2);
+    }
+#else
+    idx_aloopf2(i1, in1, T, i2, in2, T, { *i2 = std::min(*i1, *i2); });
+#endif
+  }
+
+  ////////////////////////////////////////////////////////////////////////
   // idx_indexmax
 
   template<class T> intg idx_indexmax(idx<T> &m) {
@@ -2242,6 +2345,41 @@ template<class T> void idx_sortdown(idx<T> &m) {
   template <typename T>
   void idx_m1squextm1acc(idx<T> &x, idx<T> &y, idx<T> &a) {
     eblerror("not implemented");
+  }
+
+  template <typename T>
+  T idx_trace(idx<T> &m2) {
+    idx_checkorder1(m2, 2); // must be 2D
+    if (m2.dim(0) != m2.dim(1))
+      eblerror("Expected a square matrix, but found: " << m2);
+    T sum = 0;
+    for (uint i = 0; i < m2.dim(0); ++i)
+      sum += m2.get(i, i);
+    return sum;
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // concatenation
+
+  template <typename T> 
+  idx<T> idx_concat(idx<T> &m1, idx<T> &m2, intg dim) {
+    idxdim d(m1);
+    // m1 and m2 must have the same order
+    idx_checkorder2(m1, d.order(), m2, d.order());
+    // check that all dimensions have the same size except for
+    for (intg i = 0; i < d.order(); ++i) {
+      if (i != dim && m1.dim(i) != m2.dim(i))
+	eblerror("expected same dimensions except for dim " << dim
+		 << " but found differences: " << m1 << " and " << m2);
+    }
+    // allocate and copy
+    d.setdim(dim, m1.dim(dim) + m2.dim(dim));
+    idx<T> m3(d);
+    idx<T> tmp = m3.narrow(dim, m1.dim(dim), 0);
+    idx_copy(m1, tmp);
+    tmp = m3.narrow(dim, m2.dim(dim), m1.dim(dim));
+    idx_copy(m2, tmp);
+    return m3;
   }
 
 } // end namespace ebl

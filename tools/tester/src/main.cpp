@@ -190,13 +190,13 @@ void parse_args(int argc, char **argv) {
 	    f.str(""); f << buf;
 	    if (!ebl::dir_exists(buf)) throw f.str();
 	    f.str(""); f << buf << "/" << MNIST1;
-	    if (!ebl::file_exists(buf)) throw f.str();
+	    if (!ebl::file_exists(f.str().c_str())) throw f.str();
 	    f.str(""); f << buf << "/" << MNIST2;
-	    if (!ebl::file_exists(buf)) throw f.str();
+	    if (!ebl::file_exists(f.str().c_str())) throw f.str();
 	    f.str(""); f << buf << "/" << MNIST3;
-	    if (!ebl::file_exists(buf)) throw f.str();
+	    if (!ebl::file_exists(f.str().c_str())) throw f.str();
 	    f.str(""); f << buf << "/" << MNIST4;
-	    if (!ebl::file_exists(buf)) throw f.str();
+	    if (!ebl::file_exists(f.str().c_str())) throw f.str();
 	  } catch (string &err) {
 	    delete gl_mnist_dir;
 	    gl_mnist_dir = NULL;

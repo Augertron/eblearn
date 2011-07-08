@@ -61,77 +61,77 @@ void detector_test::test_face() {
     dt.stop(true);
 
     // tests
-    CPPUNIT_ASSERT_EQUAL((size_t) 17, bboxes.size()); // only 1 object
-    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) .99966,
-    				 bboxes[0]->confidence, .00001);
+    CPPUNIT_ASSERT_EQUAL((size_t) 16, bboxes.size()); // 16 faces to be found
+    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 5.89,
+    				 bboxes[0]->confidence, .01);
     CPPUNIT_ASSERT_EQUAL((int) 1, bboxes[0]->class_id);
   }
   catch(string &err) { cerr << err << endl; }
 #endif
 }
 
-void detector_test::test_norb() {
-  try {
-    typedef double t_net;
-    CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-    string mono_net = *gl_data_dir;
-    mono_net += 
-      "/norb/20040618-1628-031617-lenet7-jitt-bg-mono-demo-4082400.prm";
-    string imgfile = *gl_data_dir;
-    //  imgfile += "/norb/dino.jpg";
-    //    imgfile += "/norb/planes.png";
-    //      imgfile += "/einstein.jpg";
-    //      imgfile += "/einstein_bicycle.jpg";
-    imgfile += "/car_bull_cropped.jpg";
-    //    imgfile += "/norb/car_left.png";
+// void detector_test::test_norb() {
+//   try {
+//     typedef double t_net;
+//     CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
+//     string mono_net = *gl_data_dir;
+//     mono_net += 
+//       "/norb/20040618-1628-031617-lenet7-jitt-bg-mono-demo-4082400.prm";
+//     string imgfile = *gl_data_dir;
+//     //  imgfile += "/norb/dino.jpg";
+//     //    imgfile += "/norb/planes.png";
+//     //      imgfile += "/einstein.jpg";
+//     //      imgfile += "/einstein_bicycle.jpg";
+//     imgfile += "/car_bull_cropped.jpg";
+//     //    imgfile += "/norb/car_left.png";
 
-    const char labels[5][10] = {"animal", "human", "plane", "truck", "car"};
-    idx<const char*> lbl(5);
-    for (int i = 0; i < lbl.nelements(); ++i)
-      lbl.set(labels[i], i);
-    idx<ubyte> labs = strings_to_idx(lbl);
+//     const char labels[5][10] = {"animal", "human", "plane", "truck", "car"};
+//     idx<const char*> lbl(5);
+//     for (int i = 0; i < lbl.nelements(); ++i)
+//       lbl.set(labels[i], i);
+//     idx<ubyte> labs = strings_to_idx(lbl);
 
-    idx<ubyte> left = load_image<ubyte>(imgfile.c_str());
+//     idx<ubyte> left = load_image<ubyte>(imgfile.c_str());
 
-    //! create 1-of-n targets with target 1.0 for shown class, -1.0 for rest
-    idx<t_net> targets =
-      create_target_matrix<t_net>(5, 1.0);
-    cout << "Targets:" << endl; targets.printElems();
+//     //! create 1-of-n targets with target 1.0 for shown class, -1.0 for rest
+//     idx<t_net> targets =
+//       create_target_matrix<t_net>(5, 1.0);
+//     cout << "Targets:" << endl; targets.printElems();
     
-    // parameter, network and classifier
-    // load the previously saved weights of a trained network
-    parameter<fs(t_net)> theparam(1);
-    // input to the network will be 96x96 and there are 5 outputs
-    lenet7_binocular<fs(t_net)> thenet(theparam, 96, 96, 5, false, false, true);
-    theparam.load_x(mono_net.c_str());
-    //left = left.narrow(2, 2, 0);
-    //  int tr[3] = { 2, 1, 0 };
-    //left = left.transpose(tr);
-    //left = left.select(2, 0);
-    double scales [] = { 2, 1.5, 1};
-    detector<fs(t_net)> cb((module_1_1<fs(t_net)>&)thenet, labs, targets, NULL,
-			   0, NULL, 0, (float)0.01);
-    cb.set_resolutions(3, scales);
+//     // parameter, network and classifier
+//     // load the previously saved weights of a trained network
+//     parameter<fs(t_net)> theparam(1);
+//     // input to the network will be 96x96 and there are 5 outputs
+//     lenet7_binocular<fs(t_net)> thenet(theparam, 96, 96, 5, false, false, true);
+//     theparam.load_x(mono_net.c_str());
+//     //left = left.narrow(2, 2, 0);
+//     //  int tr[3] = { 2, 1, 0 };
+//     //left = left.transpose(tr);
+//     //left = left.select(2, 0);
+//     double scales [] = { 2, 1.5, 1};
+//     detector<fs(t_net)> cb((module_1_1<fs(t_net)>&)thenet, labs, targets, NULL,
+// 			   0, NULL, 0, (float)0.01);
+//     cb.set_resolutions(3, scales);
 
-#ifdef __GUI__
-    detector_gui<fs(t_net)> cgui;
-    vector<bbox*> &bb = cgui.display_all(cb, left, .97);
-    CPPUNIT_ASSERT_EQUAL((size_t) 1, bb.size()); // only 1 object
-    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 0.973895462819159,
-				 bb[0]->confidence, .0000001);
-    CPPUNIT_ASSERT_EQUAL((int) 0, bb[0]->class_id);
-#else
-    vector<bbox*> &bb = cb.fprop(left, .97);
-    CPPUNIT_ASSERT_EQUAL((size_t) 1, bb.size()); // only 1 object
-    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 0.973895462819159,
-				 bb[0]->confidence, .0000001);
-    CPPUNIT_ASSERT_EQUAL((int) 0, bb[0]->class_id);
-#endif
-    secsleep(5);
-  } catch(string &err) {
-    cerr << err << endl;
-  }
-}
+// #ifdef __GUI__
+//     detector_gui<fs(t_net)> cgui;
+//     vector<bbox*> &bb = cgui.display_all(cb, left, .97);
+//     CPPUNIT_ASSERT_EQUAL((size_t) 1, bb.size()); // only 1 object
+//     CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 0.973895462819159,
+// 				 bb[0]->confidence, .0000001);
+//     CPPUNIT_ASSERT_EQUAL((int) 0, bb[0]->class_id);
+// #else
+//     vector<bbox*> &bb = cb.fprop(left, .97);
+//     CPPUNIT_ASSERT_EQUAL((size_t) 1, bb.size()); // only 1 object
+//     CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 0.973895462819159,
+// 				 bb[0]->confidence, .0000001);
+//     CPPUNIT_ASSERT_EQUAL((int) 0, bb[0]->class_id);
+// #endif
+//     secsleep(5);
+//   } catch(string &err) {
+//     cerr << err << endl;
+//   }
+// }
 
 void detector_test::test_norb_binoc() {
   try {

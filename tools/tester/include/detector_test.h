@@ -23,7 +23,7 @@ public:
 
   // Test functions
   void test_face();
-  void test_norb();
+  //  void test_norb();
   void test_norb_binoc();
 };
 

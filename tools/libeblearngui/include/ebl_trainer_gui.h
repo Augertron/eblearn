@@ -43,35 +43,10 @@ namespace ebl {
   //! Supervised Trainer gui
 
   template <class Tnet, class Tdata, class Tlabel>
-    class supervised_trainer_gui : public scroll_box {
-  private:
-    supervised_trainer<Tnet, Tdata, Tlabel>	*_st;
-    labeled_datasource<Tnet, Tdata, Tlabel>	*_ds;
-    labeled_datasource<Tnet, Tdata, Tlabel>	*_last_ds;
-    infer_param					*_infp;
-    unsigned int				 _nh;
-    unsigned int				 _nw;
-    double					 _zoom;
-    int						 datasource_wid;
-    int						 datasource_wid2;
-    int						 datasource_wid3;
-    int						 datasource_wid4;
-    int						 internals_wid;
-    int						 internals_wid2;
-    int						 internals_wid3;
-    bool					 scroll;
-    bool					 scroll_added;
-    unsigned int				 pos;
-    labeled_datasource_gui<Tnet, Tdata, Tlabel>	*dsgui;
-    string                                       title1;
-    string                                       title2;
-    string                                       title3;
-    string                                       title4;
-    
-
+    class supervised_trainer_gui : public scroll_box {    
   public:
     //! add scrolling controls if scroll is true.
-    supervised_trainer_gui(bool scroll = false);
+    supervised_trainer_gui(const char *title = NULL, bool scroll = false);
     virtual ~supervised_trainer_gui();
     
     //! displays nh x nw samples of the datasource ds 3 times:
@@ -106,7 +81,9 @@ namespace ebl {
 			     supervised_trainer<Tnet, Tdata, Tlabel> &st,
 			     labeled_datasource<Tnet, Tdata, Tlabel> &ds,
 			     infer_param &infp,
-			     unsigned int nh, unsigned int nw, 
+			     unsigned int nh, unsigned int nw,
+			     bool print_raw_outputs = false,
+			     bool draw_all_jitter = false,
 			     unsigned int h0 = 0, unsigned int w0 = 0, 
 			     double zoom = 1.0, int wid = -1,
 			     const char *title = NULL, bool scrolling = false);
@@ -123,6 +100,32 @@ namespace ebl {
     //    virtual scroll_box0* copy();
     //! deep copy (for independent multi-threaded display).
     virtual supervised_trainer_gui<Tnet, Tdata, Tlabel>* copy();
+
+    // members /////////////////////////////////////////////////////////////////
+  protected:
+    supervised_trainer<Tnet, Tdata, Tlabel>	*_st;
+    labeled_datasource<Tnet, Tdata, Tlabel>	*_ds;
+    labeled_datasource<Tnet, Tdata, Tlabel>	*_last_ds;
+    infer_param					*_infp;
+    unsigned int				 _nh;
+    unsigned int				 _nw;
+    double					 _zoom;
+    int						 datasource_wid;
+    int						 datasource_wid2;
+    int						 datasource_wid3;
+    int						 datasource_wid4;
+    int						 internals_wid;
+    int						 internals_wid2;
+    int						 internals_wid3;
+    bool					 scroll;
+    bool					 scroll_added;
+    unsigned int				 pos;
+    labeled_datasource_gui<Tnet, Tdata, Tlabel>	*dsgui;
+    string                                       title0; //!< Main title.    
+    string                                       title1;
+    string                                       title2;
+    string                                       title3;
+    string                                       title4;    
   };
 
 } // namespace ebl {

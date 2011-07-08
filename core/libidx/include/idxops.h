@@ -122,44 +122,45 @@ namespace ebl {
 
   //! generic copy
   // TODO-0: using slow idx_copy version, others are bugged, debug
-  template <class T1, class T2> void idx_copy(idx<T1> &src, idx<T2> &dst);
+  template <class T1, class T2> void idx_copy(const idx<T1> &src, idx<T2> &dst);
 
 #ifdef __IPP__
   //! copy, specialized ubyte version
-  template <> void idx_copy(idx<ubyte> &src, idx<ubyte> &dst);
+  template <> void idx_copy(const idx<ubyte> &src, idx<ubyte> &dst);
 
   //! copy, specialized uint16 version
-  template <> void idx_copy(idx<uint16> &src, idx<uint16> &dst);
+  template <> void idx_copy(const idx<uint16> &src, idx<uint16> &dst);
 
   //! copy, specialized int16 version
-  template <> void idx_copy(idx<int16> &src, idx<int16> &dst);
+  template <> void idx_copy(const idx<int16> &src, idx<int16> &dst);
 
   //! copy, specialized int32 version
-  template <> void idx_copy(idx<int32> &src, idx<int32> &dst);
+  template <> void idx_copy(const idx<int32> &src, idx<int32> &dst);
 #endif
 
   //! copy, specialized float32 version
-  template <> void idx_copy(idx<float32> &src, idx<float32> &dst);
+  template <> void idx_copy(const idx<float32> &src, idx<float32> &dst);
 
   //! copy, specialized float64 version
-  template <> void idx_copy(idx<float64> &src, idx<float64> &dst);
+  template <> void idx_copy(const idx<float64> &src, idx<float64> &dst);
 
   //! Generic copy, returns the copied idx
-  template <class T1, class T2> idx<T1> idx_copy(idx<T2> &src);
+  template <class T1, class T2> idx<T1> idx_copy(const idx<T2> &src);
 
-  //! Generic cpoy, returns the copied idx
-  template <class T> idx<T> idx_copy(idx<T> &src);
+  //! Generic copy, returns the copied idx
+  template <class T> idx<T> idx_copy(const idx<T> &src);
 
 #ifdef __CBLAS__
-  template <> EXPORT void idx_copy(idx<double> &src, idx<double> &dst);
-  template <> EXPORT void idx_copy(idx<float> &src, idx<float> &dst);
+  template <> EXPORT void idx_copy(const idx<double> &src, idx<double> &dst);
+  template <> EXPORT void idx_copy(const idx<float> &src, idx<float> &dst);
 #endif
   //template <typename T> void idx_copy(idx<T> &src, idx<T> &dst);
 
   //! copy src into dst but prevent under and overflow if values in src
   //! are bigger than maximum and minimum values of type T1.
   //! Caution: note that this is slower than a reguler idx_copy.
-  template <class T1, class T2> void idx_copy_clip(idx<T1> &src, idx<T2> &dst);
+  template <class T1, class T2> void idx_copy_clip(const idx<T1> &src,
+						   idx<T2> &dst);
 
   ////////////////////////////////////////////////////////////////
   // idx_clear
@@ -180,6 +181,9 @@ namespace ebl {
   //! Fill this idx with zeros, specialized float32 version.
   template<> void idx_clear(idx<float32> &inp);
 #endif
+
+  //! Delete all matrices pointed to by idxs m.
+  template <typename T> void idx_delete(idxs<T> &m);
 
   ////////////////////////////////////////////////////////////////
   // idx_fill
@@ -555,11 +559,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // idx_inv
 
-  //! inverts all elements
+  //! Inverts all elements, i.e. for each element e, e = 1/e.
   template<class T> void idx_inv(idx<T> &inp, idx<T> &out);
 
 #ifdef __IPP__
-  //! invert all elements, specialized float32 version
+  //! Inverts all elements, i.e. for each element e, e = 1/e.
+  //! This version is a specialized to float32 with IPP.
   template<> void idx_inv(idx<float32> &inp, idx<float32> &out);
 #endif
 
@@ -581,6 +586,10 @@ namespace ebl {
 
   //! square of difference of each term:  out <- (i1-i2)^2
   template <typename T> void idx_subsquare(idx<T> &i1, idx<T> &i2, idx<T> &out);
+
+  //! Accumulates the square of difference of each term:  out += (i1-i2)^2
+  template <typename T>
+    void idx_subsquareacc(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
   ////////////////////////////////////////////////////////////////
   // idx_lincomb
@@ -641,6 +650,9 @@ namespace ebl {
 
   //! if input is less than th, assign <th>
   template<class T> void idx_threshold(idx<T>& in, T th);
+
+  //! if input is more than th, assign <th>
+  template<class T> void idx_threshold2(idx<T>& in, T th);
 
 #ifdef __IPP__
   //! if input is less than th, assign th, specialized ubyte version
@@ -889,11 +901,24 @@ namespace ebl {
   template<class T> float64 idx_sumsqr(idx<T> &in);
 
   ////////////////////////////////////////////////////////////////
+  // idx_l1
+
+  //! l1 norm of two matrices, seen as a vectors.
+  template <class T> float64 idx_l1(idx<T> &m1, idx<T> &m2);
+
+  ////////////////////////////////////////////////////////////////
   // idx_l2norm
 
   //! l2 norm of an idx, seen as a vector.
   //! equivalent to the square root of idx_sumsqr
   template<class T> float64 idx_l2norm(idx<T> &in);
+
+  //! l2 norm of an idx, seen as a vector (same as idx_l2norm()).
+  //! equivalent to the square root of idx_sumsqr
+  template<class T> float64 idx_l2(idx<T> &in);
+
+  //! l2 distance between two matrices, each seen as a vector.
+  template<class T> float64 idx_l2(idx<T> &m1, idx<T> &m2);
 
 #ifdef __IPP__
   //! l2 norm of an idx, seen as a vector, specialized ubyte version
@@ -1234,6 +1259,12 @@ namespace ebl {
 #endif
 
   ////////////////////////////////////////////////////////////////
+  // idx_min between two idx's (in-place)
+
+  //! Copy minimum between each element of in1 and in2 into in2.
+  template<class T> void idx_min(idx<T> &in1, idx<T> &in2);
+
+  ////////////////////////////////////////////////////////////////
   // idx_indexmax
 
   //! returns index of largest element of m.
@@ -1373,6 +1404,21 @@ namespace ebl {
   //! string.
   EXPORT idx<ubyte> strings_to_idx(idx<const char *> &strings);
 
+  //! Returns the trace of square matrix m2 (assumed to be a 2D nxn matrix),
+  //! i.e. the sum of diagonal elements.
+  template <typename T>
+    EXPORT T idx_trace(idx<T> &m2);
+
+  ////////////////////////////////////////////////////////////////
+  // concatenation
+
+  //! Concatenate m1 and m2 into a new idx that is returned.
+  //! The concatenated dimension 'dim' is the only one that can have a different
+  //! size, all other dimensions must be the same size in m1 and m2.
+  //! By default, the concatenated dimension is dimension 0.
+  template <typename T> 
+    idx<T> idx_concat(idx<T> &m1, idx<T> &m2, intg dim = 0);
+  
 } // end namespace ebl
 
 #include "idxops.hpp"

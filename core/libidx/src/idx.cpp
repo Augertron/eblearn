@@ -155,8 +155,8 @@ namespace ebl {
   }
 
   intg idxspec::resize(const idxdim &d) {
-    return resize(d.dim(0), d.dim(1), d.dim(2), d.dim(3), 
-		  d.dim(4), d.dim(5), d.dim(6), d.dim(7)); 
+    return resize(d.dims[0], d.dims[1], d.dims[2], d.dims[3], 
+		  d.dims[4], d.dims[5], d.dims[6], d.dims[7]); 
   }
 
   // resize one dimension <dimn> with size <size>.
@@ -255,8 +255,9 @@ namespace ebl {
 
   // constructor for idx2
   idxspec::idxspec(intg o, intg size0, intg size1) {
-    if ( (size0<0)||(size1<0)) { 
-      eblerror("negative dimension"); }
+    if (size0 < 0 || size1 < 0) 
+      eblerror("trying to construct idx2 with negative dimensions: "
+	       << size0 << "x" << size1 << " offset: " << o);
     dim = NULL; mod = NULL;
     offset = o;
     ndim = 0; // required in constructors to avoid side effects in setndim
@@ -269,8 +270,9 @@ namespace ebl {
 
   // constructor for idx3
   idxspec::idxspec(intg o, intg size0, intg size1, intg size2) {
-    if ( (size0<0)||(size1<0)||(size2<0)) { 
-      eblerror("negative dimension"); }
+    if (size0 < 0 || size1 < 0 || size2 < 0) 
+      eblerror("trying to construct idx3 with negative dimensions: "
+	       << size0 << "x" << size1 << "x" << size2 << " offset: " << o);
     dim = NULL; mod = NULL;
     offset = o;
     ndim = 0; // required in constructors to avoid side effects in setndim
@@ -334,8 +336,8 @@ namespace ebl {
   }
 
   idxspec::idxspec(intg o, const idxdim &d) {
-    init_spec(o, d.dim(0), d.dim(1), d.dim(2), d.dim(3), d.dim(4), d.dim(5), 
-	      d.dim(6), d.dim(7));
+    init_spec(o, d.dims[0], d.dims[1], d.dims[2], d.dims[3], d.dims[4],
+	      d.dims[5], d.dims[6], d.dims[7]);
   }
 
   // generic constructor for any dimension.
@@ -422,7 +424,7 @@ namespace ebl {
   // 2. XXX_inplace: writes into the current idxspec
   // 3. XXX: creates a new idxspec and returns it.
 
-  intg idxspec::select_into(idxspec *dst, int d, intg n) {
+  intg idxspec::select_into(idxspec *dst, int d, intg n) const {
     if (ndim <= 0) eblerror("cannot select a scalar");
     if ((n < 0) || (n >= dim[d]))
       eblerror("trying to select layer " << n
@@ -612,149 +614,6 @@ namespace ebl {
     return true;
   }
 
-  ////////////////////////////////////////////////////////////////
-  // idxdim: constructors
-    
-  idxdim::~idxdim() {
-  }
-
-  idxdim::idxdim() {
-    ndim = -1;
-    memset(dims, -1, MAXDIMS * sizeof (intg));
-  }
-  
-  idxdim::idxdim(const idxspec &s) {
-    setdims(s);
-  }
-
-  idxdim::idxdim(const idxdim &s) {
-    setdims(s);
-  }
-
-  idxdim::idxdim(intg s0, intg s1, intg s2, intg s3,
-		 intg s4, intg s5, intg s6, intg s7) {
-    dims[0] = s0; dims[1] = s1; dims[2] = s2; dims[3] = s3;
-    dims[4] = s4; dims[5] = s5; dims[6] = s6; dims[7] = s7;
-    ndim = 0;
-    for (int i=0; i<8; i++)
-      if (dims[i] >= 0) ndim++;
-      else break;
-  }
-
-  intg idxdim::order() const {
-    return ndim;
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // idxdim: set dimensions
-     
-  void idxdim::setdims(const idxspec &s) {
-    ndim = s.ndim;
-    if (s.ndim > 0)
-      memcpy(dims, s.dim, s.ndim * sizeof (intg)); // copy input dimensions
-    // set remaining to -1
-    int ord = std::max((int) 0, s.ndim);
-    memset(dims + ord, -1, (MAXDIMS - ord) * sizeof (intg));
-  }
-  
-  void idxdim::setdims(const idxdim &s) {
-    ndim = s.order();
-    for (int i = 0; i < s.order(); ++i)
-      dims[i] = s.dim(i);
-    // set remaining to -1
-    intg ord = std::max((intg) 0, s.order());
-    memset(dims + ord, -1, (MAXDIMS - ord) * sizeof (intg)); 
-  }
-
-  void idxdim::setdims(intg n) {
-    for (int i = 0; i < ndim; ++i)
-      dims[i] = n;
-  }
-  
-  bool idxdim::insert_dim(intg dim_size, uint pos) {
-    if (ndim + 1 > MAXDIMS)
-      eblerror("error: cannot add another dimension to dim."
-	       << " Maximum number of dimensions (" << MAXDIMS << ") reached.")
-    // check that dim_size is valid
-    if (dim_size <= 0)
-      eblerror("cannot set negative or zero dimension");
-    // check that all dimensions up to pos (excluded) are > 0.
-    for (uint i = 0; i < pos; ++i)
-      if (dims[i] <= 0)
-	eblerror("error: cannot insert dimension " << pos
-		 << " after empty dimensions: " << *this);
-    // add order of 1
-    ndim++;
-    if (ndim == 0) // one more if it was empty
-      ndim++;
-    // shift all dimensions until position pos
-    for (uint i = ndim - 1; i > pos && i >= 1; i--)
-      dims[i] = dims[i - 1];
-    dims[pos] = dim_size;
-    return true;
-  }
- 
-  void idxdim::setdim(intg dimn, intg size) {
-    if (dimn >= ndim)
-      eblerror("error: trying to set dimension " << dimn << " to size "
-	       << size << " but idxidm has only " << ndim
-	       << " dimension(s).");
-    dims[dimn] = size; 
-  }
-
-  intg idxdim::dim(intg dimn) const {
-    if (dimn >= MAXDIMS)
-      eblerror("trying to access size of dimension " << dimn
-	       << " but idxdim's maximum dimensions is " << MAXDIMS);
-    return dims[dimn]; 
-  }
-
-  bool idxdim::operator==(const idxdim& other) {
-    if (other.ndim != ndim)
-      return false;
-    for (int i = 0; i < ndim; ++i)
-      if (other.dim(i) != dim(i))
-	return false;
-    return true;
-  }
-  
-  bool idxdim::operator!=(const idxdim& other) {
-    return !(*this == other);
-  }
-  
-  std::ostream& operator<<(std::ostream& out, idxdim& d) {
-    if (d.order() <= 0)
-      out << "<empty>";
-    else {
-      out << d.dim(0);
-      for (int i = 1; i < d.order(); ++i)
-	out << "x" << d.dim(i);
-    }
-    return out;
-  }
-
-  std::ostream& operator<<(std::ostream& out, const idxdim& d) {
-    if (d.order() <= 0)
-      out << "<empty>";
-    else {
-      out << d.dim(0);
-      for (int i = 1; i < d.order(); ++i)
-	out << "x" << d.dim(i);
-    }
-    return out;
-  }
-
-  std::string& operator<<(std::string& out, const idxdim& d) {
-    if (d.order() <= 0)
-      out << "<empty>";
-    else {
-      out << d.dim(0);
-      for (int i = 1; i < d.order(); ++i)
-	out << "x" << d.dim(i);
-    }
-    return out;
-  }
-
   std::ostream& operator<<(std::ostream& out, idxspec& d) {
     if (d.getndim() <= 0)
       out << "<empty>";
@@ -786,13 +645,6 @@ namespace ebl {
 	out << "x" << d.dim[i];
     }
     return out;
-  }
-
-  intg idxdim::nelements() {
-    intg total = 1;
-    for (int i = 0; i < ndim; ++i)
-      total *= dim(i);
-    return total;
   }
 
 } // end namespace ebl

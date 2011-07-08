@@ -87,14 +87,21 @@ namespace ebl {
   //! Compare two strings in the natural way, returns true if a < b,
   //! false otherwise.
   EXPORT bool natural_compare_less(const string& a, const string& b);
-
   //! Compare two strings in the natural way.
   EXPORT int natural_compare(const string& a, const string& b);
+  //! Compare two strings in the natural way.
+  EXPORT int natural_compare(const string& a, const string* b);
 
   //! Compare two strings using the natural comparison of numbers
   //! ("2" is less than "10").
   struct EXPORT natural_less: binary_function<string, string, bool> {
     bool operator()(const string& a, const string& b) const;
+  };
+
+  //! Compare two strings using the natural comparison of numbers
+  //! ("2" is less than "10").
+  struct EXPORT natural_less_pointer: binary_function<string, string*, bool> {
+    bool operator()(const string& a, const string* b) const;
   };
 
   //! Compare two maps of var/val strings using the comparison keys list
@@ -106,6 +113,29 @@ namespace ebl {
 		    const map<string,string>& m2) const;
     // members
     list<string> keys;
+  };
+  
+  //! Compare two maps of var/val strings using the comparison keys list
+  //! and using the natural comparison of numbers ("2" is less than "10").
+  struct EXPORT map_natural_less_pointer
+    : binary_function<map<string,string*>, map<string,string*>, bool> {
+    map_natural_less_pointer(list<string> &keys);
+    bool operator()(const map<string,string*>& m1, 
+		    const map<string,string*>& m2) const;
+    // members
+    list<string> keys;
+  };
+  
+  //! Compare two maps of var/val strings using the comparison keys list
+  //! and using the natural comparison of numbers ("2" is less than "10").
+  struct EXPORT map_natural_less_uint
+    : binary_function<map<uint,uint>, map<uint,uint>, bool> {
+    map_natural_less_uint(list<uint> &keys, vector<string> &vals);
+    bool operator()(const map<uint,uint>& m1, 
+		    const map<uint,uint>& m2) const;
+    // members
+    list<uint> &keys;
+    vector<string> &vals;
   };
   
 } // end namespace ebl

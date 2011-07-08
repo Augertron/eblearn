@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -145,6 +146,9 @@ namespace ebl {
 	      intg s6 = -1, intg s7 = -1);
     //! Constructor. Use the order and dimensions contained in passed idxdim d.
     fstate_idx(const idxdim &d);
+    //! This constructor initializes each buffer to the same order as 'ms.x'
+    //! but sets all dimensions to 'n'.
+    fstate_idx(intg n, fstate_idx<T> &fs);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from specific dimensions using a fparameter
@@ -196,7 +200,6 @@ namespace ebl {
 
     //! clear all buffers (x, dx and ddx).
     virtual void clear();
-
     //! clear x
     virtual void clear_x();
 
@@ -205,10 +208,8 @@ namespace ebl {
 
     //! return number of elements
     virtual intg nelements();
-
     //! return footprint in storages
     virtual intg footprint();
-
     //! same as footprint
     virtual intg size();
 
@@ -218,18 +219,14 @@ namespace ebl {
     //! resize. The order cannot be changed with this.
     virtual void resize(intg s0 = -1, intg s1 = -1, intg s2 = -1, intg s3 = -1,
 			intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
-
     //! resize with dimensions contained in an idxdim. order cannot be changed.
     virtual void resize(const idxdim &d);
-
     //! resize one dimension <dimn> with size <size>. 
     //! The order cannot be changed.
-    virtual void resize1(intg dimn, intg size);
-    
+    virtual void resize1(intg dimn, intg size);   
     //! resizes this fstate_idx with same sizes a <s>.
     //! Both fstate_idx are required to have the same order.
     virtual void resize_as(fstate_idx& s);
-
     //! same as resize_as but leave dimension <fixed_dim> untouched.
     //! Both fstate_idx are required to have the same order.
     virtual void resize_as_but1(fstate_idx<T>& s, intg fixed_dim);
@@ -244,8 +241,7 @@ namespace ebl {
     //! but pointing to a slice of it.
     //! \param dimension The dimension to slice.
     //! \param slice_index The slice to return.
-    fstate_idx<T> select(int dimension, intg slice_index);
-    
+    fstate_idx<T> select(int dimension, intg slice_index);    
     //! Same as idx::narrow(), applied to internal buffers.
     //! This returns a state_idx pointing to the same data as current state,
     //! but pointing to a slice of it.
@@ -259,11 +255,19 @@ namespace ebl {
     
     //! make a new copy of self
     fstate_idx<T> make_copy();
-
     //! Assignment operator, involves assignment of internal idx
     //! (avoid using this in critical loops).
     virtual fstate_idx<T>& operator=(const fstate_idx<T>& other);
+    //! Copy state 'cpy' into internal buffers.
+    virtual void copy(fstate_idx<T> &cpy);
 
+    // info printing ///////////////////////////////////////////////////////////
+    
+    //! Prints idx metadata.
+    virtual void pretty();    
+    //! Prints all elements.
+    virtual void print();
+    
     ////////////////////////////////////////////////////////////////
     //! member variables
   public:
@@ -298,6 +302,9 @@ namespace ebl {
 	      intg s6 = -1, intg s7 = -1);
     //! Constructor. Use the order and dimensions contained in passed idxdim d.
     bstate_idx(const idxdim &d);
+    //! This constructor initializes each buffer to the same order as 'ms.x'
+    //! but sets all dimensions to 'n'.
+    bstate_idx(intg n, bstate_idx<T> &fs);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from specific dimensions using a bparameter
@@ -349,10 +356,8 @@ namespace ebl {
 
     //! clear x and dx.
     virtual void clear();
-
     //! clear gradients dx
     virtual void clear_dx();
-
     //! update with gradient descent
     virtual void update_gd(gd_param &arg);
       
@@ -361,10 +366,8 @@ namespace ebl {
 
     //! return number of elements
     using fstate_idx<T>::nelements;
-
     //! return footprint in storages
     using fstate_idx<T>::footprint;
-
     //! same as footprint
     using fstate_idx<T>::size;
     
@@ -374,18 +377,14 @@ namespace ebl {
     //! resize. The order cannot be changed with this.
     virtual void resize(intg s0 = -1, intg s1 = -1, intg s2 = -1, intg s3 = -1,
 			intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
-
     //! resize with dimensions contained in an idxdim. order cannot be changed.
     virtual void resize(const idxdim &d);
-
     //! resize one dimension <dimn> with size <size>. 
     //! The order cannot be changed.
-    virtual void resize1(intg dimn, intg size);
-    
+    virtual void resize1(intg dimn, intg size);    
     //! resizes this bstate_idx with same sizes a <s>.
     //! Both bstate_idx are required to have the same order.
     virtual void resize_as(bstate_idx& s);
-
     //! same as resize_as but leave dimension <fixed_dim> untouched.
     //! Both bstate_idx are required to have the same order.
     virtual void resize_as_but1(bstate_idx<T>& s, intg fixed_dim);
@@ -400,8 +399,7 @@ namespace ebl {
     //! but pointing to a slice of it.
     //! \param dimension The dimension to slice.
     //! \param slice_index The slice to return.
-    bstate_idx<T> select(int dimension, intg slice_index);
-     
+    bstate_idx<T> select(int dimension, intg slice_index);     
     //! Same as idx::narrow(), applied to internal buffers.
     //! This returns a state_idx pointing to the same data as current state,
     //! but pointing to a slice of it.
@@ -415,11 +413,19 @@ namespace ebl {
     
     //! make a new copy of self
     bstate_idx<T> make_copy();
-
     //! Assignment operator, involves assignment of internal idx
     //! (avoid using this in critical loops).
     virtual bstate_idx<T>& operator=(const bstate_idx<T>& other);
-
+    //! Copy state 'cpy' into internal buffers.
+    virtual void copy(bstate_idx<T> &cpy);
+    
+    // info printing ///////////////////////////////////////////////////////////
+    
+    //! Prints idx metadata.
+    virtual void pretty();    
+    //! Prints all elements.
+    virtual void print();
+    
     ////////////////////////////////////////////////////////////////
     //! member variables
   public:
@@ -453,6 +459,9 @@ namespace ebl {
 	      intg s6 = -1, intg s7 = -1);
     //! Constructor. Use the order and dimensions contained in passed idxdim d.
     bbstate_idx(const idxdim &d);
+    //! This constructor initializes each buffer to the same order as 'ms.x'
+    //! but sets all dimensions to 'n'.
+    bbstate_idx(intg n, bbstate_idx<T> &fs);
 
     ////////////////////////////////////////////////////////////////
     //! constructors from specific dimensions using a bbparameter
@@ -497,7 +506,7 @@ namespace ebl {
     // TODO: this causes bug in mnist part of tester
     /* //! Constructs a bbstate_idx from an idx to be used as x. dx and ddx */
     /* //! will be allocated with the same size as x. */
-    /* //! Note: the data pointed to by x is not copied, we only create new idx */
+    /*//! Note: the data pointed to by x is not copied, we only create new idx*/
     /* //!   pointing to the same data. */
     /* bbstate_idx(const idx<T> &x); */
 
@@ -511,10 +520,8 @@ namespace ebl {
 
     //! clear x, dx and ddx
     virtual void clear();
-
     //! clear diag hessians ddx
     virtual void clear_ddx();
-
     //! update with gradient descent
     using bstate_idx<T>::update_gd;
       
@@ -523,10 +530,8 @@ namespace ebl {
 
     //! return number of elements
     using fstate_idx<T>::nelements;
-
     //! return footprint in storages
     using fstate_idx<T>::footprint;
-
     //! same as footprint
     using fstate_idx<T>::size;
     
@@ -536,18 +541,14 @@ namespace ebl {
     //! resize. The order cannot be changed with this.
     virtual void resize(intg s0 = -1, intg s1 = -1, intg s2 = -1, intg s3 = -1,
 			intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
-
     //! resize with dimensions contained in an idxdim. order cannot be changed.
     virtual void resize(const idxdim &d);
-
     //! resize one dimension <dimn> with size <size>. 
     //! The order cannot be changed.
-    virtual void resize1(intg dimn, intg size);
-    
+    virtual void resize1(intg dimn, intg size);    
     //! resizes this bbstate_idx with same sizes a <s>.
     //! Both bbstate_idx are required to have the same order.
     virtual void resize_as(bbstate_idx& s);
-
     //! same as resize_as but leave dimension <fixed_dim> untouched.
     //! Both bbstate_idx are required to have the same order.
     virtual void resize_as_but1(bbstate_idx<T>& s, intg fixed_dim);
@@ -562,8 +563,7 @@ namespace ebl {
     //! but pointing to a slice of it.
     //! \param dimension The dimension to slice.
     //! \param slice_index The slice to return.
-    bbstate_idx<T> select(int dimension, intg slice_index);
-     
+    bbstate_idx<T> select(int dimension, intg slice_index);     
     //! Same as idx::narrow(), applied to internal buffers.
     //! This returns a state_idx pointing to the same data as current state,
     //! but pointing to a slice of it.
@@ -577,10 +577,18 @@ namespace ebl {
     
     //! make a new copy of self
     bbstate_idx<T> make_copy();
-
     //! Assignment operator, involves assignment of internal idx
     //! (avoid using this in critical loops).
     virtual bbstate_idx<T>& operator=(const bbstate_idx<T>& other);
+    //! Copy state 'cpy' into internal buffers.
+    virtual void copy(bbstate_idx<T> &cpy);
+    
+    // info printing ///////////////////////////////////////////////////////////
+    
+    //! Prints idx metadata.
+    virtual void pretty();    
+    //! Prints all elements.
+    virtual void print();
     
     ////////////////////////////////////////////////////////////////
     //! member variables
@@ -600,24 +608,23 @@ namespace ebl {
   public:
     //! initialize the fparameter with size initial_size.
     parameter(intg initial_size = 100);
-
     //! initialize the fparameter with a previously saved x component.
     parameter(const char *param_filename);
-
     //! destructor
     virtual ~parameter();
-
     virtual void resize(intg s0);
 
     ////////////////////////////////////////////////////////////////
     // I/O methods
     
+    //! Given a vector of matrix filename, load each of them separately,
+    //! concatenate it along their dimension 0, then load the resulting matrix
+    //! into this parameter's x component.
+    bool load_x(std::vector<string> &files);
     //! load a fparameter file into the x component.
     bool load_x(const char *param_filename);
-
     //! load a fparameter matrix into the x component.
     bool load_x(idx<T> &m);
-
     //! save the x component to a file.
     bool save_x(const char *param_filename);
 
@@ -626,10 +633,8 @@ namespace ebl {
 
     //! return number of elements
     using fstate_idx<T>::nelements;
-
     //! return footprint in storages
     using fstate_idx<T>::footprint;
-
     //! same as footprint
     using fstate_idx<T>::size;
     
@@ -640,35 +645,33 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-  //! bparameter: the main class for a trainable
-  //! bparameter vector.
+  //! bparameter
 
+  //! The main class for a trainable bparameter vector.
   template <typename T>
     class parameter<T, bstate_idx<T> >
     : public bstate_idx<T>, public parameter<T,fstate_idx<T> > {
   public:
     //! initialize the bparameter with size initial_size.
     parameter(intg initial_size = 100);
-
     //! initialize the bparameter with a previously saved x component.
     parameter(const char *param_filename);
-
     //! destructor
     virtual ~parameter();
-
+    //! Resize the current parameter to size 's0'.
     virtual void resize(intg s0);
-    void update_gd(gd_param &arg);
+    //! Update the weights 'x', with current gradients 'dx'.
     virtual void update(gd_param &arg);
-    void clear_deltax();
-    void update_deltax(T knew, T kold);
-    void set_epsilons(T m);
+    //! Clear average derivatives 'deltax'.
+    void clear_deltax();    
+    //! Set all epsilons (each individual learning rate) to 'm'.
+    void set_epsilon(T m);
 
     ////////////////////////////////////////////////////////////////
     // I/O methods
     
     //! load a bparameter file into the x component.
     bool load_x(const char *param_filename);
-
     //! save the x component to a file.
     bool save_x(const char *param_filename);
 
@@ -677,12 +680,23 @@ namespace ebl {
 
     //! return number of elements
     using fstate_idx<T>::nelements;
-
     //! return footprint in storages
     using fstate_idx<T>::footprint;
-
     //! same as footprint
     using fstate_idx<T>::size;
+    
+    ////////////////////////////////////////////////////////////////
+    // protected methods
+
+  protected:
+
+    //! Update the weights 'x', with current gradients 'dx',
+    //! called by update() method.
+    void update_gd(gd_param &arg);
+    //! Update average derivatives 'deltax'. This is called
+    //! by update() method, whenever update() is called with
+    //! a non-zero inertia parameter.
+    void update_deltax(T knew, T kold);
     
     ////////////////////////////////////////////////////////////////
     //! members
@@ -690,9 +704,9 @@ namespace ebl {
     using fstate_idx<T>::x;
     using bstate_idx<T>::dx;
 
-    idx<T> gradient;
-    idx<T> deltax;
-    idx<T> epsilons;
+    //    idx<T> gradient;
+    idx<T> deltax;   //!< Average derivatives.
+    idx<T> epsilons; //!< Individual learning rates.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -704,29 +718,39 @@ namespace ebl {
   public:
     //! initialize the bbparameter with size initial_size.
     parameter(intg initial_size = 100);
-
     //! initialize the bbparameter with a previously saved x component.
     parameter(const char *param_filename);
-
     //! destructor
     virtual ~parameter();
-
+    //! Resize the current parameter to size 's0'.
     virtual void resize(intg s0);
-    void update_gd(gd_param &arg);
+    //! Update the weights 'x', with current gradients 'dx'.
     virtual void update(gd_param &arg);
+    //! Clear average derivatives 'deltax'.
     void clear_deltax();
-    void update_deltax(T knew, T kold);
+    //! Clear average second-derivatives 'ddeltax'.
     void clear_ddeltax();
-    void update_ddeltax(T knew, T kold);
-    void set_epsilons(T m);
+    //! Set all epsilons (each individual learning rate) to 'm'.
+    void set_epsilon(T m);
+    //! Compute each individual learning rates (epsilons)
+    //! based on second derivatives.
     void compute_epsilons(T mu);
-
+    //! Update average derivatives 'deltax'. This is called
+    //! by update() method, whenever update() is called with
+    //! a non-zero inertia parameter.
+    void update_ddeltax(T knew, T kold);
+    
     ////////////////////////////////////////////////////////////////
     // I/O methods
     
+    //! Given a vector of matrix filename, load each of them separately,
+    //! concatenate it along their dimension 0, then load the resulting matrix
+    //! into this parameter's x component.
+    bool load_x(std::vector<string> &files);
     //! load a bbparameter file into the x component.
     bool load_x(const char *param_filename);
-
+    //! load a fparameter matrix into the x component.
+    bool load_x(idx<T> &m);
     //! save the x component to a file.
     bool save_x(const char *param_filename);
 
@@ -735,12 +759,22 @@ namespace ebl {
 
     //! return number of elements
     using fstate_idx<T>::nelements;
-
     //! return footprint in storages
     using fstate_idx<T>::footprint;
-
     //! same as footprint
     using fstate_idx<T>::size;
+    
+    ////////////////////////////////////////////////////////////////
+    // protected methods
+  protected:
+    
+    //! Update the weights 'x', with current gradients 'dx',
+    //! called by update() method.
+    void update_gd(gd_param &arg);    
+    //! Update average derivatives 'deltax'. This is called
+    //! by update() method, whenever update() is called with
+    //! a non-zero inertia parameter.
+    void update_deltax(T knew, T kold);
     
     ////////////////////////////////////////////////////////////////
     //! members
@@ -748,10 +782,11 @@ namespace ebl {
     using fstate_idx<T>::x;
     using fstate_idx<T>::dx;
     using fstate_idx<T>::ddx;
-    idx<T> gradient;
-    idx<T> deltax;
-    idx<T> epsilons;
-    idx<T> ddeltax;
+
+    //idx<T> gradient;    
+    idx<T> deltax;   //!< Average derivatives.
+    idx<T> epsilons; //!< Individual learning rates.
+    idx<T> ddeltax;  //!< Average second-derivatives.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -770,10 +805,8 @@ namespace ebl {
     //! generic constructor loops over dimensin ld
     state_idxlooper(fstate_idx<T> &s, int ld);
     virtual ~state_idxlooper();
-
     //! return true if loop is over
     bool notdone();
-
     //! increment to next item.
     void next();
   };
@@ -792,10 +825,8 @@ namespace ebl {
     //! generic constructor loops over dimensin ld
     state_idxlooper(bstate_idx<T> &s, int ld);
     virtual ~state_idxlooper();
-
     //! return true if loop is over
     bool notdone();
-
     //! increment to next item.
     void next();
   };
@@ -816,10 +847,8 @@ namespace ebl {
     //! generic constructor loops over dimensin ld
     state_idxlooper(bbstate_idx<T> &s, int ld);
     virtual ~state_idxlooper();
-
     //! return true if loop is over
     bool notdone();
-
     //! increment to next item.
     void next();
   };
@@ -853,6 +882,56 @@ namespace ebl {
   state_idxlooper<type2> dst2(src2,(src2).x.order()-1);			\
   for ( ; dst0.notdone(); dst0.next(), dst1.next(), dst2.next())
 
+  ////////////////////////////////////////////////////////////////
+  //! A class that stores multiple states. Use regular STL vector accessors
+  //! to access states.
+  template <class Tstate> class mstate : public std::vector<Tstate> {
+  public:
+    //! Empty constructor.
+    mstate();
+    //! This constructor initializes the same number of states as 'ms',
+    //! with the same number of dimensions for each state,
+    //! and sets all these dimensions to 'n'.
+    mstate(intg n, mstate<Tstate> &ms);
+    //! Destructor.
+    virtual ~mstate();
+
+    ////////////////////////////////////////////////////////////////
+
+    //! Clears x field of all states.
+    virtual void clear_x();
+    //! Clears dx field of all states.
+    virtual void clear_dx();
+    //! Clears ddx field of all states.
+    virtual void clear_ddx();
+    //! Copy mstate 'cpy' into internal buffers.
+    virtual void copy(mstate<Tstate> &cpy);
+    //! Not implemented.
+    virtual mstate<Tstate> narrow(int dimension, intg size, intg offset);
+    //! Resize to have the same number of states with the same dimensions as s2.
+    virtual void resize(mstate<Tstate> &s2);
+
+    ////////////////////////////////////////////////////////////////
+    //! member variables
+  protected:
+    typename std::vector<Tstate>::iterator it;
+  };
+
+  //////////////////////////////////////////////////////////////////////////////
+  // stream operators
+
+  template <typename T>
+  EXPORT std::ostream& operator<<(std::ostream &out, const fstate_idx<T> &p);
+  
+  template <typename T>
+  EXPORT std::ostream& operator<<(std::ostream &out, const bstate_idx<T> &p);
+  
+  template <typename T>
+  EXPORT std::ostream& operator<<(std::ostream &out, const bbstate_idx<T> &p);
+  
+  template <class Tstate>
+  EXPORT std::ostream& operator<<(std::ostream &out, const mstate<Tstate> &p);
+  
 } // namespace ebl {
 
 #include "ebl_states.hpp"

@@ -445,8 +445,8 @@ namespace ebl {
     // check the order and dimensions
     if ((im.order() < 2) || (im.order() > 3) || 
 	((im.order() == 3) && (im.dim(2) != 1) && (im.dim(2) != 3))) {
-      cerr << "converting image_to_ubyte with dims " << im << " failed." <<endl;
-      eblerror("expecting a 2D idx or a 3D idx with 1 or 3 channels only");
+      eblerror("expected a 2D idx or a 3D idx with 1 or 3 channels only "
+	       << "but got: " << im);
     }
     // create a copy
     idxdim d(im);

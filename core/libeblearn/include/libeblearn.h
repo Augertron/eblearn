@@ -40,6 +40,8 @@
 #include "ebl_basic.h"
 #include "ebl_transfer.h"
 #include "ebl_cost.h"
+#include "ebl_energy.h"
+#include "ebl_answer.h"
 #include "ebl_codec.h"
 #include "ebl_layers.h"
 #include "ebl_machines.h"

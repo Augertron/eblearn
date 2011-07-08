@@ -57,9 +57,10 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // iteration
 
-  typedef map<string,map<string,string>,natural_less> natural_varmap;
-  typedef list<map<string,string> > varmaplist;
-  
+  //!< A map of maps that is sorted in natural order.
+  typedef map<uint,map<uint,uint> > natural_varmap;
+  typedef list<map<uint,uint> > varmaplist;
+
   //! A class representing a tree hierarchy of variable/value pairs.
   //! A pair tree is defined by a variable/value pair, and a subtree
   //! corresponding to 1 subvariable only (could be extended to multiple
@@ -67,20 +68,38 @@ namespace ebl {
   //! subvariable.
   class EXPORT pairtree {
   public:
-    //! Constructor.
+    //! Constructor
     //! \param var A string containing a variable name.
     //! \param val A string containing a value.
     pairtree(string &var, string &val);
-
+    //! Construct a pairtree with its string ids directly.
+    pairtree(uint var, uint val);
     //! Empty constructor, should be used for the unique root only.
     pairtree();
-      
     //! Destructor.
     virtual ~pairtree();
 
-    map<string,string> add(list<string> &subvar, map<string,string> &ivars);
+    // data addition methods ///////////////////////////////////////////////////
 
-    void add(string &var, string &val);
+    //! Returns the string id of variable 'var'. If not present, 'var' is added
+    //! and assigned a new id.
+    static uint get_var_id(const string &var);
+    //! Returns the string id of variable 'var'. If not present, 'var' is added
+    //! and assigned a new id.
+    static uint get_var_id(const char *var);
+    //! Returns the string id of variable 'val'. If not present, 'val' is added
+    //! and assigned a new id.
+    static uint get_val_id(const string &val);
+    //! Returns list of ids corresponding to the list of strings 'l'. All strings
+    //! are added to static internal members if not assigned yet.
+    static list<uint> to_varid_list(list<string> &l);
+    //! Add variable/value pair to this tree.
+    void add(const string &var, string &val);
+    //! Add a set of variable/value pairs, organized by the 'subvar'
+    //! order of variable names.
+    map<uint,uint> add(list<uint> &subvar, map<uint,uint> &ivars);
+
+    // flattening methods //////////////////////////////////////////////////////
 
     //! Return a flat representation of the tree, using the variable name
     //! key as key to represent each group of variables.
@@ -89,27 +108,35 @@ namespace ebl {
     //! this will return a map with all error values paired with
     //! all var/val pairs of "name", "i" and "success".
     natural_varmap flatten(const string &key, natural_varmap *flat = NULL,
-			   map<string,string> *path = NULL);
-
+			   map<uint,uint> *path = NULL);
     //! Return a flat representation of the tree, as a list of all possible
     //! branches (each branch is a map of var/val pairs).
     varmaplist flatten(varmaplist *flat = NULL,
-		       map<string,string> *path = NULL);
-
+		       map<uint,uint> *path = NULL);
     //! Return the n best values (minimized) of key, or all if n == 0.
     //! \param display If true, pretty best answers.
     natural_varmap best(const string &key, uint n = 0, bool display = false);
-    
-    //! Return the n best sets of variables that minimize the key in the order
+    //! Return the n best sets of variables that minimize the keys in the order
     //! of their list, or all if n == 0.
     //! \param display If true, pretty best answers.
     varmaplist best(list<string> &keys, uint n = 0, bool display = false);
+    //! Return the best sets of variables that minimize the keys in the order
+    //! of their list. Only 1 best answer per value of key 'key' is returned.
+    //! \param display If true, pretty best answers.
+    varmaplist best(list<string> &keys, const string &key,
+		    bool display = false);
+    //! Return the best sets of variables that minimize the keys in the order
+    //! of their list. Only 1 best answer per combination of values of each
+    //! key contained in 'keycomb' is returned.
+    //! \param display If true, pretty best answers.
+    varmaplist best(list<string> &keys, list<string> &keycomb,
+		    bool display = false);
 
     //! Returns the variable name associated with this pair.
-    string& get_variable();
+    uint& get_variable();
 
     //! Returns the value associated with this pair.
-    string& get_value();
+    uint& get_value();
 
     //! Pretty this tree, with a string offset beforehand.
     void pretty(string offset = "");
@@ -118,25 +145,21 @@ namespace ebl {
     //! If flat is not NULL, pretty this flat, otherwise generate
     //! a flat representation of the current tree.
     static string flat_to_string(const string key, natural_varmap *flat = NULL);
-
     //! Returns a string representation of this tree flattened using key.
     //! If flat is not NULL, pretty this flat, otherwise generate
     //! a flat representation of the current tree.
     //! \param keys If not null, display keys first.
     static string flat_to_string(varmaplist *flat = NULL,
 				 list<string> *keys = NULL);
-
     //! Pretty this tree, flattened using key.
     //! If flat is not NULL, pretty this flat, otherwise generate
     //! a flat representation of the current tree.
     void pretty_flat(const string key, natural_varmap *flat = NULL);
-
     //! Pretty this tree, flattened.
     //! If flat is not NULL, pretty this flat, otherwise generate
     //! a flat representation of the current tree.
     //! \param keys If not null, display keys first.
     void pretty_flat(varmaplist *flat = NULL, list<string> *keys = NULL);
-
     //! Return the maximum uint value of variable var.
     uint get_max_uint(const string &var);
 
@@ -148,23 +171,30 @@ namespace ebl {
     bool delete_pair(const char *var, const char *value);
 
     //! Return sub tree.
-    map<string,pairtree,natural_less>& get_subtree();
+    map<uint,pairtree>& get_subtree();
 
     ////////////////////////////////////////////////////////////////
     // members
   private:
-    string			variable;	//!< The variable.
-    string			value;	//!< The value.
-    string			subvariable;	//!< variable name of subtree.
-    //! The subtree of the subvariable. It is a map with keys the values
+    uint			variable;	//!< The variable id.
+    uint			value;	//!< The value id.
+    uint			subvariable;	//!< variable id of subtree.
+    //! The subtree of the subvariable. It is a map where keys are the values
     //! of subvariable and values the pairtree for each key.
-    map<string, pairtree, natural_less>	subtree;
-    map<string, string>		vars;//!< Map of leaf variables and their value.
+    map<uint,pairtree>	                subtree;
+    map<uint,uint>		vars;//!< Map of leaf variables and their value.
+    static map<string,uint> vars_map; //!< Map of all variables to a unique uint id.
+    static map<string,uint> vals_map; //!< Map of all values to a unique uint id.
+  public:
+    static vector<string> vars_vector; //!< Vector of all variables strings, ordered by their id.
+    static vector<string> vals_vector; //!< Vector of all values strings, ordered by their id.
   };
   
   ////////////////////////////////////////////////////////////////
   // metaparser
   
+  typedef map<uint,pairtree> t_subtree;
+
   //! A parser that can analyze the output of multiple jobs (usually used in
   //! conjunction with metarun).
   class EXPORT metaparser {
@@ -184,13 +214,25 @@ namespace ebl {
     void parse_logs(const string &root, list<string> *sticky = NULL,
 		    list<string> *watch = NULL);
 
+    //! Organize a flat representation 'flat' into a plottable tree
+    //! representation, organized in hierarchy where the 1st depth
+    //! contains curves names composed of each possible configuration of
+    //! each variable name in 'names' except for the last one.
+    //! The last one will be used as the x axis.
+    //! The last depth contains all remaining variables, that can be ploted
+    //! against the first 2 depths, as the y value.
+    //! This fills the pairtree p accordingly.
+    void organize_plot(list<string> &names, varmaplist &flat,
+		       pairtree &p);
+
     //! Write text files parsable by plotting tools such as gnuplot,
     //! and generate pdf plots with gnuplot into directory dir.
-    void write_plots(configuration &conf, const char *dir = NULL);
+    //! \param p Optional tree to use in lieu of internal tree.
+    void write_plots(configuration &conf, const char *dir = NULL,
+		     pairtree *p = NULL, string *prefix = NULL);
 
     //! Return the n best values (minimized) of key.
     natural_varmap best(const string &key, uint n, bool display = false);
-
     //! Return the n best values (minimized) of key.
     varmaplist best(list<string> &keys, uint n, bool display = false);
 
@@ -199,24 +241,31 @@ namespace ebl {
     int get_max_iter();
     
     //! Return the minimum iteration number of maximums for each job.
+    //! This assumes a call to parse_logs beforehand.
     int get_max_common_iter();
     
-    //! Return the common maximum iteration number among all jobs.
-    int get_max_common_iter(const string &dir);
-    
+    //! Return the minimum iteration number of maximums for each job.
+    //! Same as get_max_common_iter() without arguments, but calls
+    //! parse_logs() with directory 'dir' and uses 'conf' to configure
+    //! the call to parse_logs().
+    int get_max_common_iter(configuration &conf, const string &dir);
+
     //! Parse, analyze and report.
-    void process(const string &dir, bool displayall = false);
+    void process(const string &dir);
 
     //! Analyze log files and return the best set of variables.
     //! \param maxiter Set this to the maximum iteration number found.
+    //! \param besteach This will be set to the best answers of each job.
     varmaplist analyze(configuration &conf, const string &dir, int &maxiter,
-		       bool displayall = false);
+		       varmaplist &besteach, bool displayall = false);
 
     //! Send an email reporting the status of the runs.
+    //! \param besteach An optional list of best results for each job.
     void send_report(configuration &conf, const string dir,
 		     varmaplist &best, int iteration, string conf_fullfname,
 		     string jobs_info, uint nrunning = 0,
-		     double maxminutes = 0.0, double minminutes = 0.0);
+		     double maxminutes = 0.0, double minminutes = 0.0,
+		     varmaplist *besteach = NULL);
 
     ////////////////////////////////////////////////////////////////
     // internal methods
@@ -232,7 +281,7 @@ namespace ebl {
     pairtree		tree;	        //!< A tree of var/val pairs.
     char		separator;      //!< token separating var/val
     map<string,string>	curpath;	//!< Current path to pairtree leaf.
-    list<string>	hierarchy;	//!< List of vars forming the hierarchy.
+    list<uint>	hierarchy;	//!< List of vars forming the hierarchy.
   };
 
 } // end namespace ebl

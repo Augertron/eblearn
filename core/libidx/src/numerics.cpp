@@ -34,6 +34,7 @@
 
 #include "numerics.h"
 #include "defines.h"
+#include "utils.h"
 
 int isinf_local(double x){
 #ifdef __MAC__
@@ -61,6 +62,14 @@ namespace ebl {
     return ((4*e)/e1);
   }
 
+  double arccot(double x) {
+    if (x == 0)
+      return PI_OVER2;
+    if (x > 0)
+      return atan(1/x);
+    return PI + atan(1/x);
+  }
+  
   ////////////////////////////////////////////////////////////////
   // "standard" sigmoid
 
@@ -209,12 +218,27 @@ dstdsigmoid(float x)
     dseed(x);
   }
 
-  void dynamic_init_drand(){
-    init_drand((int) time(NULL));
+  int dynamic_init_drand(int argc, char **argv) {
+    uint seed = (uint) time(NULL);
+    init_drand(seed);
+    // use command line arguments to introduce more randomization
+    for (int i = 0; i < argc; ++i) {
+      std::string s = argv[i];
+      // note: we don't care about overflow here.
+      for (uint j = 0; j < s.size(); ++j) {
+	seed += (uint) drand(limits<uint32>::min(), limits<uint32>::max()) * (uint32) s[j];
+      }
+    }
+    // use pid to introduce more randomization
+    seed += (uint) drand(limits<uint32>::min(), limits<uint32>::max()) * (uint32) pid();
+    init_drand((int) seed);
+    return (int) seed;
   }
 
-  void fixed_init_drand(){
-    init_drand((int) 0);
+  int fixed_init_drand(){
+    int seed = 0;
+    init_drand(seed);
+    return seed;
   }
 
   void dseed(int x) {

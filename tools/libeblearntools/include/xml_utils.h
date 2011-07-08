@@ -50,6 +50,9 @@ namespace ebl {
 //! return unsigned int value from text content
 unsigned int	xml_get_uint(Node *element);
 
+//! return int value from text content
+int	        xml_get_int(Node *element);
+
 //! set string s from text content
 void		xml_get_string(Node *element, string &s);
  

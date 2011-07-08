@@ -24,6 +24,24 @@ target_link_libraries (train eblearn idx eblearntools)
 LINK_QT(train idxgui)
 LINK_QT(train eblearngui)
 		
+# compile executable: dsfprop
+################################################################################
+add_executable (dsfprop src/dsfprop.cpp)  
+# link executable with external libraries
+target_link_libraries (dsfprop eblearn idx eblearntools)
+LINK_QT(dsfprop idxgui)
+LINK_QT(dsfprop eblearngui)
+LINK_MAGICKPP(dsfprop)
+		
+# compile executable: imfprop
+################################################################################
+add_executable (imfprop src/imfprop.cpp)  
+# link executable with external libraries
+target_link_libraries (imfprop eblearn idx eblearntools)
+LINK_QT(imfprop idxgui)
+LINK_QT(imfprop eblearngui)
+LINK_MAGICKPP(imfprop)
+		
 # compile executable: stdetect
 ################################################################################
 add_executable (stdetect src/stdetect.cpp)
@@ -34,6 +52,7 @@ LINK_QT(stdetect eblearngui)
 LINK_BOOST(stdetect system)
 LINK_BOOST(stdetect filesystem)
 LINK_BOOST(stdetect regex)
+LINK_MAGICKPP(stdetect)
 
 # compile executable: detect
 ################################################################################
@@ -45,6 +64,7 @@ LINK_QT(detect eblearngui)
 LINK_BOOST(detect system)
 LINK_BOOST(detect filesystem)
 LINK_BOOST(detect regex)
+LINK_MAGICKPP(detect)
 
 # compile executable: mpidetect
 ################################################################################
@@ -63,9 +83,9 @@ LINK_BOOST(mpidetect filesystem)
 LINK_BOOST(mpidetect regex)
 LINK_BOOST(mpidetect serialization)
 LINK_BOOST(mpidetect mpi)
-IF (MPI_FOUND)
-  target_link_libraries (mpidetect pmpich++) # mpi_cxx)
-ENDIF (MPI_FOUND)    
+#IF (MPI_FOUND)
+#  target_link_libraries (mpidetect pmpich++) # mpi_cxx)
+#ENDIF (MPI_FOUND)    
 
 ENDIF (WINDOWS) # do not compile this project under windows
 ELSE (MPI_FOUND AND Boost_SERIALIZATION_FOUND AND Boost_MPI_FOUND)
@@ -95,6 +115,7 @@ LINK_QT(dscompile idxgui)
 LINK_BOOST(dscompile system)
 LINK_BOOST(dscompile filesystem)
 LINK_BOOST(dscompile regex)
+LINK_MAGICKPP(dscompile)
 
 # compile executable: dssplit
 ################################################################################
@@ -106,6 +127,7 @@ LINK_QT(dssplit eblearngui)
 LINK_BOOST(dssplit system)
 LINK_BOOST(dssplit filesystem)
 LINK_BOOST(dssplit regex)
+LINK_MAGICKPP(dssplit)
 
 # compile executable: dsmerge
 ################################################################################
@@ -117,6 +139,7 @@ LINK_QT(dsmerge eblearngui)
 LINK_BOOST(dsmerge system)
 LINK_BOOST(dsmerge filesystem)
 LINK_BOOST(dsmerge regex)
+LINK_MAGICKPP(dsmerge)
 
 # compile executable: dsdisplay
 ################################################################################
@@ -146,6 +169,7 @@ add_executable (matshow ${WINTYPE} src/matshow.cpp)
 target_link_libraries (matshow idx eblearntools)
 LINK_QT(matshow idxgui)
 LINK_QT(matshow eblearngui)
+LINK_MAGICKPP(matshow)
 
 ENDIF (WINDOWS AND NOT QT_FOUND)
 
@@ -166,9 +190,9 @@ add_executable (metarun
   )
 # link executable with external libraries
 target_link_libraries (metarun idx eblearntools)
-LINK_BOOST(metarun system)
-LINK_BOOST(metarun filesystem)
-LINK_BOOST(metarun regex)
+#LINK_BOOST(metarun system)
+#LINK_BOOST(metarun filesystem)
+#LINK_BOOST(metarun regex)
 ENDIF (WINDOWS) # do not compile this project under windows
 
 # compile executable: metaparse

@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "defines_tools.h"
 #include "thread.h"
 #include "netconf.h"
 #include "configuration.h"
@@ -47,6 +48,8 @@ namespace ebl {
 // switch between forward only buffers or also backward
 #define SFUNC fs
 #define SBUF fstate_idx
+#define SFUNC2(T) T,T,T,SBUF<T>
+#define SFUNC3(T) T,SBUF<T>,mstate<SBUF<T> >
 // backward
 // #define SFUNC bbs
 // #define SBUF bbstate_idx
@@ -54,8 +57,6 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // A detection thread class
 
-  typedef enum { CHANS_RGB, CHANS_Y } t_chans;
-  
   template <typename Tnet>
   class detection_thread : public thread {
   public:
@@ -76,6 +77,10 @@ namespace ebl {
     //! Return true if new data was copied to the thread, false otherwise,
     //! if we could not obtain the mutex lock.
     virtual bool set_data(idx<ubyte> &frame, string &frame_name, uint frame_id);
+    //! Return true if new data was copied to the thread, false otherwise,
+    //! if we could not obtain the mutex lock.
+    virtual bool set_data(string &frame_fullname, string &frame_name, 
+			  uint frame_id);
     //! Return true if new data was copied from the thread, false otherwise.
     //! We get the frame back even though it was set via set_data,
     //! because we do not know which frame was actually used.
@@ -86,6 +91,8 @@ namespace ebl {
     //! Return true if the thread is available to process a new frame, false
     //! otherwise.
     virtual bool available();
+    //! Returns true if at least 1 input has been fed for detection.
+    virtual bool fed();
     //! Set the directory where to write outputs.
     virtual void set_output_directory(string &out);
     
@@ -114,6 +121,7 @@ namespace ebl {
     bool			 in_updated;	// thread input updated
     bool			 out_updated;	// thread output updated
     bool                         bavailable;    // thread is available
+    bool                         bfed;          //!< Thread has been fed data.
     string                       frame_name;    // name of current frame
     uint                         frame_id;      //! Unique ID for frame.
     string                       outdir;        // output directory

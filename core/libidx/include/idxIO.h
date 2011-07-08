@@ -106,12 +106,20 @@ namespace ebl {
   template<typename T>
     idx<T> load_matrix(FILE *fp, idx<T> *out = NULL);
 
+  //! Returns matrix of pointers to matrices from file filename.
+  //! If original matrix type is different
+  //! than requested type, it is casted (copied) into the new type.
+  //! This throws string exceptions upon errors.
+  template<typename T>
+    idxs<T> load_matrices(const std::string &filename);
+  
   ////////////////////////////////////////////////////////////////
   // saving
   
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
-  template<typename T> bool save_matrix(idx<T>& m, const std::string &filename);
+  template<typename T>
+    bool save_matrix(idx<T>& m, const std::string &filename);
 
   //! Saves a matrix m in file filename. One can force the saving type to
   //! a different type than the passed idx, e.g.
@@ -122,7 +130,20 @@ namespace ebl {
   
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
-  template<typename T> bool save_matrix(idx<T>& m, const char *filename);
+  template<typename T>
+    bool save_matrix(idx<T>& m, const char *filename);
+
+  //! Saves a matrix m into a file pointer 'fp'. The user is responsible
+  //! for closing the file pointer afterwards, even if an error occured.
+  //! Returns true if successful, false otherwise.
+  template<typename T>
+    bool save_matrix(idx<T>& m, FILE *fp);
+
+  //! Saves a matrices m in file filename. Elements of m may be NULL and will
+  //! be remembered as empty when loaded back.
+  //! Returns true if successful, false otherwise.
+  template<typename T>
+    bool save_matrices(idxs<T>& m, const std::string &filename);
 
   ////////////////////////////////////////////////////////////////
   // helper functions
@@ -131,7 +152,8 @@ namespace ebl {
   //! Possible strings are: ubyte, int, float, double, long, uint,
   //! ubyte (pascal vincent), int (pascal vincent), float (pascal vincent),
   //! double (pascal vincent).
-  EXPORT bool get_matrix_type(const char *filename, std::string &type);
+  //! This returns the magic number found in 'filename'.
+  EXPORT int get_matrix_type(const char *filename, std::string &type);
 
   //! Return the magic number associated with the matrix's type found in 
   //! 'filename'.
@@ -142,6 +164,9 @@ namespace ebl {
 
   //! Return true if this magic number is a regular magic number.
   EXPORT bool is_magic(int magic);
+
+  //! Return the dimensions of the matrix contained in 'filename'
+  EXPORT idxdim get_matrix_dims(const char *filename);
 
   //! Return the dimensions found in the header and set 'magic' to the magic
   //! number found (either vincent or regular type).

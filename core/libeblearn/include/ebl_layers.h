@@ -54,7 +54,7 @@ namespace ebl {
     //! \param noutputs The number of outputs.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
     full_layer(parameter<T,Tstate> *p, intg indim0, intg noutputs,
-	       bool tanh = true, const char *name = "");
+	       bool tanh = true, const char *name = "full_layer");
     //! Destructor.
     virtual ~full_layer();
     //! fprop from in to out
@@ -93,17 +93,13 @@ namespace ebl {
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
     //! \param p is used to store all parametric variables in a single place.
-    //! \param kerneli is the height of the convolution kernel
-    //! \param kernelj is the width of the convolution kernel
-    //! \param stridei is the stride at which convolutions are done on 
-    //!        the height axis.
-    //! \param stridej is the stride at which convolutions are done on 
-    //!        the width axis.
+    //! \param ker The convolution kernel sizes.
+    //! \param stride The convolution strides.
     //! \param table is the convolution connection table.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    convolution_layer(parameter<T,Tstate> *p, intg kerneli, intg kernelj, 
-		      intg stridei, intg stridej, idx<intg> &tbl,
-		      bool tanh = true, const char *name = "");
+    convolution_layer(parameter<T,Tstate> *p, idxdim &ker, idxdim &stride,
+		      idx<intg> &tbl, bool tanh = true,
+		      const char *name = "convolution_layer");
     virtual ~convolution_layer();
     //! fprop from in to out
     void fprop(Tstate &in, Tstate &out);
@@ -153,7 +149,7 @@ namespace ebl {
     convabsnorm_layer(parameter<T,Tstate> *p, intg kerneli, intg kernelj, 
 		      intg stridei, intg stridej, idx<intg> &tbl,
 		      bool mirror = false, bool tanh = true,
-		      const char *name = "");
+		      const char *name = "convabsnorm_layer");
     //! Destructor.
     virtual ~convabsnorm_layer();
     //! fprop from in to out
@@ -189,13 +185,16 @@ namespace ebl {
   template <typename T, class Tstate = bbstate_idx<T> >
     class subsampling_layer : public module_1_1<T,Tstate> {
   public:
-    //! constructor. Arguments are a pointer to a parameter
+    //! Constructor. Arguments are a pointer to a parameter
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
+    //! \param thickness The number of features.
+    //! \param kernel Size of subsampling kernel (without thickness).
+    //! \param strides Strides of subsampling kernel (without thickness).
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    subsampling_layer(parameter<T,Tstate> *p, intg stridei, intg stridej,
-		      intg subi, intg subj, 
-		      intg thick, bool tanh = true, const char *name = "");
+    subsampling_layer(parameter<T,Tstate> *p, uint thickness,
+		      idxdim &kernel, idxdim &stride,
+		      bool tanh = true, const char *name = "subsampling_layer");
     //! Destructor.
     virtual ~subsampling_layer();
     //! fprop from in to out

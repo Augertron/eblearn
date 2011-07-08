@@ -47,7 +47,7 @@
 #endif
 
 #ifdef __MAGICKPP__
-//#include <Magick++.h>
+#include <Magick++.h>
 #endif
 
 #include <errno.h>
@@ -65,6 +65,32 @@ namespace ebl {
   template<class T>
   idx<T> image_read(const char *fname, idx<T> *out_, int attempts) {
     idx<ubyte> tmp;
+#ifdef __MAGICKPP__
+    // we are under any platform, convert is not available but Magick++ is
+    try {
+      Magick::Image im(fname);
+      tmp = idx<ubyte>(im.rows(), im.columns(), 3);
+      im.write(0, 0, im.columns(), im.rows(), "RGB", Magick::CharPixel,
+	       tmp.idx_ptr());
+      // TODO: handle grayscale?
+    } catch(Magick::WarningCoder &warning) {
+      // Process coder warning while loading file (e.g. TIFF warning)
+      // Maybe the user will be interested in these warnings (or not).
+      // If a warning is produced while loading an image, the image
+      // can normally still be used (but not if the warning was about
+      // something important!)
+      eblthrow("Coder Warning: " << warning.what());
+    } catch(Magick::Warning &warning) {
+      // Handle any other Magick++ warning.
+      eblthrow("Warning: " << warning.what());
+    } catch(Magick::ErrorBlob &error) { 
+      // Process Magick++ file open error
+      eblthrow("Error: " << error.what());
+    } catch(Magick::ErrorOption &error) { 
+      // Process Magick++ file open error
+      eblthrow("Error: " << error.what());
+    }
+#else
 #if (defined(__IMAGEMAGICK__) && !defined(__NOIMAGEMAGICK__))
     // we are under linux or mac and convert is available
     string cmd;
@@ -80,21 +106,21 @@ namespace ebl {
       err << "conversion of image " << fname << " failed (errno: " 
 	  << errno << ", " << strerror(errno) << ")";
       if (attempts > 0) {
-	cerr << "warning: " << err << endl;
+	cerr << "Warning: " << err << endl;
 	cerr << "trying again... (remaining attempts: " << attempts << ")" << endl;
 	return image_read(fname, out_, attempts - 1);
       } else
 	eblthrow(err);
     }
     try {
-    // read pnm image
-    tmp = pnm_read(fp);
+      // read pnm image
+      tmp = pnm_read(fp);
     } catch (eblexception &err) {
       if (PCLOSE(fp) != 0) {
 	cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
       } 
       if (attempts > 0) {
-	cerr << "warning: " << err << endl;
+	cerr << "Warning: " << err << endl;
 	cerr << "trying again... (remaining attempts: " << attempts << ")" << endl;
 	return image_read(fname, out_, attempts - 1);
       } else
@@ -104,40 +130,11 @@ namespace ebl {
       cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
     }
 #else
-#ifdef __MAGICKPP__
-    // we are under any platform, convert is not available but Magick++ is
-    try {
-      eblerror("magickpp not implemented");
-      Magick::Image im(fname);
-      tmp = idx<ubyte>(im.rows(), im.columns(), im.depth() / 8);
-      im.write(0, 0, im.depth() / 8, im.rows(), "RGB", (Magick::StorageType)0, 
-	       tmp.idx_ptr());
-    }
-    catch( Magick::WarningCoder &warning )
-      {
-	// Process coder warning while loading file (e.g. TIFF warning)
-	// Maybe the user will be interested in these warnings (or not).
-	// If a warning is produced while loading an image, the image
-	// can normally still be used (but not if the warning was about
-	// something important!)
-	cerr << "Coder Warning: " << warning.what() << endl;
-      }
-    catch( Magick::Warning &warning )
-      {
-	// Handle any other Magick++ warning.
-	cerr << "Warning: " << warning.what() << endl;
-      }
-    catch( Magick::ErrorBlob &error ) 
-      { 
-	// Process Magick++ file open error
-	cerr << "Error: " << error.what() << endl;
-      }
-#else
     // nor Magick++ nor convert are available, error
     eblerror("Nor ImageMagick's convert nor Magick++ are available, "
 	     << "please install");
-#endif /* __MAGICK++__ */
 #endif /* __IMAGEMAGICK__ */
+#endif /* __MAGICK++__ */
     
     idxdim dims(tmp);
     idx<T> out;
@@ -276,6 +273,45 @@ namespace ebl {
     if (!strcmp(format, "mat")) { // save as idx
       return save_matrix(in, fname);
     }
+#ifdef __MAGICKPP__
+    // we are under any platform, convert is not available but Magick++ is
+    try {
+      Magick::Image im;
+      idx<T> tmp = in;//.shift_dim(0, 1);
+      idx<ubyte> tmp2(tmp.get_idxdim());
+      idx_copy(tmp, tmp2);
+      switch (tmp2.dim(2)) {
+      case 1: // grayscale
+	im.read(tmp2.dim(1), tmp2.dim(0), "I", Magick::CharPixel, tmp2.idx_ptr());
+	im.type(Magick::GrayscaleType);
+	break ;
+      case 3: // RGB
+	im.read(tmp2.dim(1), tmp2.dim(0), "RGB", Magick::CharPixel, tmp2.idx_ptr());
+	im.type(Magick::TrueColorType);
+	break ;
+      default: // unsupported
+	eblerror("unsupported channels size for saving: " << tmp2);
+      }
+      im.write(fname);
+      // TODO: handle grayscale?
+    } catch(Magick::WarningCoder &warning) {
+      // Process coder warning while loading file (e.g. TIFF warning)
+      // Maybe the user will be interested in these warnings (or not).
+      // If a warning is produced while loading an image, the image
+      // can normally still be used (but not if the warning was about
+      // something important!)
+      eblthrow("Coder Warning: " << warning.what());
+    } catch(Magick::Warning &warning) {
+      // Handle any other Magick++ warning.
+      eblthrow("Warning: " << warning.what());
+    } catch(Magick::ErrorBlob &error) { 
+      // Process Magick++ file open error
+      eblthrow("Error: " << error.what());
+    } catch(Magick::ErrorOption &error) { 
+      // Process Magick++ file open error
+      eblthrow("Error: " << error.what());
+    }
+#else
 #if (defined(__IMAGEMAGICK__) && !defined(__NOIMAGEMAGICK__))
     // we are under linux or mac and convert is available
     string cmd;
@@ -308,6 +344,7 @@ namespace ebl {
     eblerror("Nor ImageMagick's convert nor Magick++ are available, "
 	     << "please install");
 #endif /* __IMAGEMAGICK__ */
+#endif /* __MAGICK++__ */
     return true;
   }
 

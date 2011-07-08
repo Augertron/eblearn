@@ -36,7 +36,8 @@ void datasource_test::test_mnist_LabeledDataSource() {
     fstate_idx<double> datum(28, 28);
     fstate_idx<ubyte> label;
     for (int i = 0; i < 5; i++) {
-      ds.fprop(datum, label);
+      ds.fprop_data(datum);
+      ds.fprop_label(label);
       /* cout<<"Datum:"<<endl;
 	 datum.x.printElems();
 	 cout<<"Label: ";
@@ -51,18 +52,4 @@ void datasource_test::test_mnist_LabeledDataSource() {
     err = err;
     CPPUNIT_ASSERT(false); // error
   }
-}
-
-void datasource_test::test_imageDirToIdx() {
-  // TODO: add test for dataset class
-//   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-//   string dir = *gl_data_dir;
-//   dir += "/pnm/";
-// #ifdef __BOOST__
-//   CPPUNIT_ASSERT(imagedir_to_idx(dir.c_str(), 48, 0, ".*[.]ppm", 
-// 				 NULL, "/tmp", NULL, true) == true);
-// #else
-//   CPPUNIT_ASSERT_MESSAGE("Not tested because of missing Boost libraries", 
-// 			 false);
-// #endif
 }

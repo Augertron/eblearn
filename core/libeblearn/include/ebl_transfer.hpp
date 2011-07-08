@@ -38,7 +38,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   weighted_std_module<T,Tstate>::
-  weighted_std_module(uint kerh, uint kerw, int nf, const char *name_, 
+  weighted_std_module(idxdim &kerdim_, int nf, const char *name_, 
 		      bool mirror_, bool threshold_, bool global_norm_)
     : module_1_1<T,Tstate>(name_), 
       mirror(mirror_),
@@ -61,9 +61,7 @@ namespace ebl {
       threshold(threshold_),
       global_norm(global_norm_),
       nfeatures(nf),
-      kernelh(kerh),
-      kernelw(kerw)
-  {
+      kerdim(kerdim_) {
     name_c0 = name_;
     name_c0 += "_c0";
     name_c1 = name_;
@@ -75,15 +73,20 @@ namespace ebl {
     //! that is why I normalize the kernel using all kernel, not one by one.
 
     // create weighting kernel
-    w = create_gaussian_kernel<T>(kernelh, kernelw);
+    if (kerdim.order() != 2)
+      eblerror("expected kernel dimensions with order 2 but found order "
+	       << kerdim.order() << " in " << kerdim);
+    w = create_gaussian_kernel<T>(kerdim.dim(0), kerdim.dim(1));
+    idxdim kerdim = w.get_idxdim();
+    idxdim stride(1,1);
     // prepare convolutions and their kernels
     idx<intg> table = one2one_table(nfeatures);
     convolution_module<T,Tstate> *conv1 =
-      new convolution_module<T,Tstate>(&param, w.dim(0), w.dim(1), 1, 1, table, 
-				name_c0.c_str());
+      new convolution_module<T,Tstate>(&param, kerdim, stride, table, 
+				       name_c0.c_str());
     convolution_module<T,Tstate> *conv2 =
-      new convolution_module<T,Tstate>(&param, w.dim(0), w.dim(1), 1, 1, table, 
-				name_c1.c_str());
+      new convolution_module<T,Tstate>(&param, kerdim, stride, table, 
+				       name_c1.c_str());
     idx_bloop1(kx, conv1->kernel.x, T)
       idx_copy(w, kx);
     //! normalize the kernels
@@ -180,18 +183,20 @@ namespace ebl {
     if (global_norm) // global normalization
       idx_std_normalize(in.x, in.x, (T*) NULL);
     T a = (T) 1e-5; // avoid divisions by zero
-    //! sum_j (w_j * in_j)
+    //! inmean = sum_j (w_j * in_j)
     convmean.fprop(in, inmean);
-    //! in - mean
+    //! inzmean = in - inmean
     difmod.fprop(in, inmean, inzmean);
-    //! (in - inmean)^2
+    //! inzmeansq = (in - inmean)^2
     idx_addc(inzmean.x, a, inzmean.x); // TODO: temporary
     sqmod.fprop(inzmean, inzmeansq);
-    //! sum_j (w_j (in - mean)^2)
+    //! invar = sum_j (w_j (in - mean)^2)
     convvar.fprop(inzmeansq, invar);
-    //! sqrt(sum_j (w_j (in - mean)^2))
+    //! instd = sqrt(sum_j (w_j (in - mean)^2))
     idx_addc(invar.x, a, invar.x); // TODO: temporary
     sqrtmod.fprop(invar, instd);
+    // the threshold is the average of all the standard deviations over
+    // the entire input. values below it will be set to the threshold.
     if (threshold) { // don't update threshold for inputs
       //! update the threshold values in thres
       T mm = (T) (idx_sum(instd.x) / (T) instd.size());
@@ -200,9 +205,9 @@ namespace ebl {
     }
     //! std(std<mean(std)) = mean(std)
     thres.fprop(instd, thstd);
-    //! 1/std
+    //! invstd = 1 / thstd
     invmod.fprop(thstd, invstd);
-    //! out = (in-mean)/std
+    //! out = (in-mean) / thstd
     mcw.fprop(inzmean, invstd, out);    
   }
 
@@ -265,17 +270,15 @@ namespace ebl {
 
   template <typename T, class Tstate>
   weighted_std_module<T,Tstate>* weighted_std_module<T,Tstate>::copy() {
-    return new weighted_std_module<T,Tstate>(w.dim(0), w.dim(1), nfeatures,
-					     this->name(), mirror, threshold,
-					     global_norm);
+    return new weighted_std_module<T,Tstate>(kerdim, nfeatures, this->name(),
+					     mirror, threshold, global_norm);
   }
   
   template <typename T, class Tstate>
   std::string weighted_std_module<T, Tstate>::describe() {
     std::string desc;
     desc << "weighted_std module " << this->name() << " with kernel "
-	 << kernelh << "x" << kernelw;
-    desc << ", using " << (mirror ? "mirror" : "zero") << " padding";
+	 << kerdim << ", using " << (mirror ? "mirror" : "zero") << " padding";
     return desc;
   }
   

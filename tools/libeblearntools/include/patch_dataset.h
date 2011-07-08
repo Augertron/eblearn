@@ -70,7 +70,11 @@ namespace ebl {
 			  const string *class_name,
 			  const char *filename = NULL,
 			  const rect<int> *r = NULL,
-			  pair<uint,uint> *center = NULL);
+			  pair<int,int> *center = NULL,
+			  const rect<int> *visr = NULL,
+			  const rect<int> *cropr = NULL,
+			  const vector<object*> *objs = NULL,
+			  const jitter *jittforce = NULL);
 
   protected:
     

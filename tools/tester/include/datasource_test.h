@@ -8,7 +8,6 @@
 class datasource_test : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(datasource_test);
   //  CPPUNIT_TEST(test_mnist_LabeledDataSource); // TODO: fix test
-  CPPUNIT_TEST(test_imageDirToIdx);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -22,7 +21,6 @@ public:
 
   // Test functions
   void test_mnist_LabeledDataSource();
-  void test_imageDirToIdx();
 };
 
 #endif /* DATASOURCE_TEST_H_ */

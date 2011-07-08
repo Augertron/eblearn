@@ -53,27 +53,15 @@ namespace ebl {
   //!          size and maximum resolution.
   //! SCALES_STEP: scales range from 1 to maximum resolution, with a step size
   //! ORIGINAL: only use image's original resolution.
+  //! NETWORK: resize all inputs to the minimal network's input size.
+  //! SCALES_STEP_UP: scale step from min up to max scale.
   enum t_scaling { MANUAL = 0, SCALES = 1, NSCALES = 2, SCALES_STEP = 3,
-		   ORIGINAL = 4 };
-  //! The formula for computing the confidence of a detection:
-  //! sqrdist (0): use the sum of the squared differences between
-  //!   output and target for each class, i.e. this takes into account
-  //!   the fact that multiple high responses is more uncertain than
-  //!   a single high response.
-  //! single (1): simply use the score of the class without
-  //!   taking into account scores of other classes.
-  //! max (2): confidence is the difference between class' output
-  //!   and the maximum output from other classes, normalized by maximum range,
-  //!   yielding [-1,1] confidence range. The advantage over the sqrdist is that
-  //!   it doesn't matter how well other classes match their target other than
-  //!   the maximum one, only how much this one stands out.
-  enum t_confidence { confidence_sqrdist = 0, confidence_single = 1,
-		      confidence_max = 2 };  
+		   ORIGINAL = 4, NETWORK = 5, SCALES_STEP_UP = 6 };
   
-  enum t_pruning { pruning_none = 0, pruning_overlap = 1,
-		   pruning_pedestrian = 2 };
+  enum t_pruning { pruning_none = 0, pruning_overlap = 1 };
   
-  template <typename T, class Tstate = fstate_idx<T> > class detector {
+  template <typename T, class Tstate = fstate_idx<T> >
+    class detector {
   public:    
   
     ////////////////////////////////////////////////////////////////
@@ -84,23 +72,20 @@ namespace ebl {
     //! Background class name default "bg" will be searched in the list
     //! of class names. To specify another background class, pass a non NULL
     //! background parameter.
-    //! \param lbls A const char* idx containing class name strings.
-    //! \param pp A preprocessing module, e.g. rgb_to_yp_module.
-    //! \param ppkersz The size of the preprocessing kernel (if any), to take
-    //!               border effects into account during resizing.
-    //!               Default value 0 has no effect.
+    //! \param labels A vector of label strings.
+    //! \param pp An optional resizing (and preprocessing) module,
+    //!   e.g. resizepp_module. If null, use resize_module by default.
     //! \param background The name of the background class. Default is "bg".
     //!          If given, positive answers for this class are ignored.
-    //! \param bias After preprocessing, add this bias to input values.
-    //! \param coeff After preprocessing and bias adding,
-    //!              scale input values by this coefficient.
-    //! \param single_output Set this to true when network outputs only 1
-    //!          output so that detection is handle correctly.
-    detector(module_1_1<T,Tstate> &thenet, idx<ubyte> &lbls, idx<T> &targets,
-	     module_1_1<T,Tstate> *pp = NULL, uint ppkersz = 0,
-	     const char *background = NULL, T bias = 0, float coeff = 1.0,
-	     bool single_output = false, std::ostream &out = std::cout,
-	     std::ostream &err = std::cerr);
+    //! \param adapt_scales If true, adapt each scale so that they are valid
+    //!          input sizes for 'thenet' network. Otherwise, the network
+    //!          must crop inputs itself (see 'crop' attribute of modules).
+    detector(module_1_1<T,Tstate> &thenet, vector<string> &labels,
+	     answer_module<T,T,T,Tstate> &answer,
+	     resizepp_module<T,Tstate> *resize = NULL,
+	     const char *background = NULL,
+	     std::ostream &out = std::cout, std::ostream &err = std::cerr,
+	     bool adapt_scales = false);
 
     //! Destructor.
     virtual ~detector();
@@ -110,18 +95,15 @@ namespace ebl {
 
     //! Set the multi-scale to 1 scale only: the image's original scale.
     void set_scaling_original();
-  
-    //! \param nresolutions The number of resolutions to use.
-    //! \param scales This is an array of size nresolutions describing
-    //!               the scales to use, taking the minimum resolution as scale
-    //!               1. e.g. if our input image is 500x960, and our network
-    //!               size is 96x96, the minimum resolution that fits inside
-    //!               96x96 is 96x50. So this is scale 1, scale 2 will then be
-    //!               192x100. Resolutions are automatically fit to the network
-    //!               size, so 192x100 will be changed to closest
-    //!               network-compatible size, i.e. 192x96 in that case
-    //!               (still preserving the aspect ratio).
-    void set_resolutions(uint nresolutions, const double *scales);
+
+    //! Set the scaling type.
+    void set_scaling_type(t_scaling type);
+
+    //! Set all scales manually.
+    void set_resolutions(const vector<idxdim> &scales);
+
+    //! Set scales a factors of the input sizes.
+    void set_resolutions(const vector<double> &factors);
 
     //! Use nresolutions resolutions between the maximum resolution and the
     //! minimum resolution.
@@ -182,22 +164,30 @@ namespace ebl {
 
     //! Enable pruning of type 'type'. Refer to t_pruning declaration for
     //! different types. Default type is 1, regular pruning.
-    void set_pruning(t_pruning type = pruning_overlap, bool ped_only = false,
+    void set_pruning(t_pruning type = pruning_overlap,
 		     float min_hcenter_dist = 0.0, float min_wcenter_dist = 0.0,
 		     float max_overlap = 1.0,
-		     bool share_parts = false, T threshold_parts = 0.0,
-		     float min_hcenter_dist2 = 0.0,
+		     bool share_parts = false, T threshold2 = 0.0,
+		     float max_center_dist = 0.0,
+		     float max_center_dist2 = 0.0,
+		     float max_wcenter_dist = 0.0,
+		     float max_wcenter_dist2 = 0.0,
 		     float min_wcenter_dist2 = 0.0,
 		     float max_overlap2 = 0.0, bool mean_bb = false,
 		     float same_scale_mhd = 0.0,
-		     float same_scale_mwd = 0.0);
+		     float same_scale_mwd = 0.0,
+		     float min_scale_pred = 0.0, float max_scale_pred = 0.0);
 
+    //! Enable or disable clustering nms.
+    void set_cluster_nms(bool set);
+    //! Enable or disable scaler mode, i.e. using scale prediction for boxes.
+    void set_scaler_mode(bool set);
     //! Set output smoothing type. 0: none, 1: 3x3 kernel.
     void set_smoothing(uint type);
 
     //! Set factors to be applied on the height and width of output bounding
     //! boxes.
-    void set_bbox_factors(float hfactor, float wfactor,
+    void set_bbox_factors(float hfactor, float wfactor, float woverh,
 			  float hfactor2, float wfactor2);
 
     //! Enable memory optimization by using only 2 buffers (in and out)
@@ -209,15 +199,6 @@ namespace ebl {
     void set_mem_optimization(Tstate &in, Tstate &out, 
 			      bool keep_inputs = false);
 
-    //! Select the formula for computing the confidence of a detection:
-    //! CONFIDENCE_SQRDIST (0): use the sum of the squared differences between
-    //!   output and target for each class, i.e. this takes into account
-    //!   the fact that multiple high responses is more uncertain than
-    //!   a single high response.
-    //! CONFIDENCE_SINGLE (1): simply use the score of the class without
-    //!   taking into account scores of other classes.
-    void set_confidence_type(t_confidence type);
-
     //! Limit the size of the image to be processed based on the maximum
     //! image_height / object_height. This ratio can be seen as the
     //! maximum number of objects that can fit next to each other
@@ -226,6 +207,19 @@ namespace ebl {
 
     //! Set by hand the minimum network input.
     void set_min_input(intg h, intg w);
+
+    //! Enables dumping of all outputs using the base name 'name', to which
+    //! is appending the idx's size and '.mat'. Each resolution
+    //! will be dump as a separate matrix file.
+    //! Dumping will be called at the end of each fprop call for each
+    //! resolution.
+    void set_outputs_dumping(const char *name);
+
+    //! Turn off the extraction of bounding boxes.
+    void set_bboxes_off();
+
+    //! Returns the vector of label strings.
+    vector<string>& get_labels();
   
     ////////////////////////////////////////////////////////////////
     // execution
@@ -241,12 +235,15 @@ namespace ebl {
 
     //! Non-maximum suppression, fills pruned given raw and excludes bbox
     //! lower than threshold.
-    void nms(vector<bbox*> &raw, vector<bbox*> &pruned,
-	     float threshold, uint image_height, uint image_width);
+    void nms(vector<bbox*> &raw, vector<bbox*> &pruned, float threshold);
 
     //! Return a reference to a vector of windows in the original image that
     //! yielded a detection.
     vector<idx<T> >& get_originals();
+
+    //! Return the preprocessed input corresponding to bounding box 'b'
+    //! or throws an exception if out of bounds.
+    idx<T> get_preprocessed(const bbox &b);
 
     //! Return a reference to a vector of windows in the preprocessed/scaled
     //! image that yielded a detection.
@@ -270,57 +267,53 @@ namespace ebl {
     void pretty_bboxes_short(vector<bbox*> &bboxes,
  			     std::ostream &out = std::cout);
 
-  private:
+  protected:
+  
     //! initialize dimensions and multi-resolution buffers.
     void init(idxdim &dinput);
 
-    //! compute and set minimum and maximum resolutions
-    //! based on input size <input_dims>.
-    void compute_minmax_resolutions(idxdim &input_dims);
-    
-    //! compute sizes of each resolutions based on input size <input_dims>,
-    //! choosing nresolutions going from the minimum to the maximum resolutions.
-    void compute_resolutions(idxdim &input_dims, uint &nresolutions);
+    ////////////////////////////////////////////////////////////////////////////
+    // scales methods
+  
+    //! Compute all scales based on minimum, maximum and input dimensions,
+    //! and scaling type.
+    //! \param netdim The network's minimal input size. 
+    //! \param mindim The minimum scale size.
+    //! \param maxdim The maximum scale size.
+    //! \param indim The original input dimensions.
+    void compute_scales(vector<idxdim> &scales, idxdim &netdim, idxdim &mindim,
+			idxdim &maxdim, idxdim &indim, t_scaling type,
+			uint nscales, double scales_step);
+  
+    //! Compute 'nscales' scales between 'mindim' and 'maxdim' resolutions
+    //! and push them into 'scales' vector.
+    void compute_resolutions(vector<idxdim> &scales,
+			     idxdim &mindim, idxdim &maxdim, uint nscales);
+ 
+    //! Compute each scale as a factor of 'indim' for each element of
+    //! 'scale_factors' and put them into 'scales' vector.
+    void compute_resolutions(vector<idxdim> &scales,
+			     idxdim &indim, vector<double> &scale_factors);
 
-    //! compute sizes of each resolutions based on input size <input_dims>,
-    //! using scales, taking the minimum resolution as scale 1.
-    void compute_resolutions(idxdim &input_dims, uint nresolutions,
-			     const double *scales);
+    //! Compute each scale with a step of 'scales_step' starting from 'maxdim'
+    //! down to 'mindim'.
+    //! \param mindim The minimum scale size.
+    //! \param maxdim The maximum scale size.
+    void compute_resolutions(vector<idxdim> &scales, idxdim &mindim,
+			     idxdim &maxdim, double scales_step);
 
-    //! compute sizes of each resolutions based on input size <input_dims>,
-    //! using scales with a fixed step between each of them, from min to max
-    //! resolutions.
-    void compute_resolutions(idxdim &input_dims, double scales_step,
-  			     double min_scale, double max_scale);
-
-    //! Set scales to 1 scale: the original input dimensions.
-    void compute_resolutions(idxdim &input_dims);
-
-    //! print all resolutions.
-    void print_resolutions();
+    //! Compute each scale with a step of 'scales_step' starting from 'mindim'
+    //! up to 'maxdim'.
+    //! \param mindim The minimum scale size.
+    //! \param maxdim The maximum scale size.
+    void compute_resolutions_up(vector<idxdim> &scales, idxdim &indim,
+				idxdim &mindim, idxdim &maxdim,
+				double scales_step);
 
     //! checks that resolutions match the network size, if not adjust them.
     //! this method assumes nresolutions and resolutions members have already
     //! been initialized.
     void validate_resolutions();
-
-    //! do a fprop on thenet with multiple rescaled inputs
-    void multi_res_fprop();       
-
-    //! Prepare image and resolutions. This should be called before
-    //! preprocess_resolution().
-    template <class Tin>
-      void prepare(idx<Tin> &img);
-    
-    //! Do preprocessing (resizing and channel/edge processing) for a particular
-    //! resolution. This will set 'input' and 'output' buffers, that can then
-    //! be used to fprop the network. This uses the 'image' member prepared
-    //! by prepare() and should therefore be called after prepare().
-    //! \param res The resolution to be preprocessed.
-    void preprocess_resolution(uint res);
-    
-    //! find maximas in output layer
-    void mark_maxima(T threshold);
 
     ////////////////////////////////////////////////////////////////
     // pruning
@@ -334,10 +327,9 @@ namespace ebl {
     void prune_overlap(vector<bbox*> &raw_bboxes, vector<bbox*> &prune_bboxes,
 		       float max_match,
 		       bool same_class_only = false,
-		       float min_hcenter_dist = 0.0, float min_wcenter_dist = 0.0,
+		       float min_hcenter_dist = 0.0,
+		       float min_wcenter_dist = 0.0,
 		       float threshold = 0.0,
-		       // TODO: this is dangerous, get rid of it
-		       uint image_height = 0, uint image_width = 0,
 		       float same_scale_mhd = 0.0, float same_scale_mwd = 0.0);
 
     void prune_vote(vector<bbox*> &raw_bboxes, vector<bbox*> &prune_bboxes,
@@ -346,18 +338,19 @@ namespace ebl {
 		    float min_hcenter_dist = 0.0,
 		    float min_wcenter_dist = 0.0, int classid = 0);
 
-    //! Special custom handling of pedestrian bboxes. temporary (TODO).
-    void prune_pedestrian(vector<bbox*> &raw_bboxes,
-			  vector<bbox*> &prune_bboxes, bool ped_only = false,
-			  T threshold = 0.0);
-
-    ////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    // bboxes operations
   
     //! Smooth outputs.
     void smooth_outputs();
 
-    //! Extract bounding boxes from outputs into raw_bboxes.
-    void map_to_list(T threshold, vector<bbox*> &raw_bboxes);
+    //! Extract bounding boxes with higher confidence than 'threshold'
+    //! from internal 'outputs' into 'bboxes'.
+    void extract_bboxes(T threshold, vector<bbox*> &bboxes);
+
+    void dfs(vector<bbox*> &bboxes, vector<bool> &explored,
+	     uint i, float match, float max_center_dist, vector<bbox*> &comp);
+  void cluster_bboxes(float match, float max_center_dist, float max_wcenter_dist, vector<bbox*> &bboxes, float threshold = 0);
 
     //! save all bounding boxes of original (in original resolution) and
     //! preprocessed (resized and filtered) input into directory dir.
@@ -367,55 +360,77 @@ namespace ebl {
     //! Sort bboxes by confidence (most confident first);
     void sort_bboxes(vector<bbox*> &bboxes);
 
+    //! Normalize width of boxes w.r.t. to their height with ratio 'woverh'.
+    void normalize_bboxes(vector<bbox*> &bboxes, float woverh);
+
     //! Add a name to the vector of class names.
     //! This can be useful when generating
     //! intermediate classes from existing classes.
     void add_class(const char *name);
 
+    ////////////////////////////////////////////////////////////////////////////
+    // processing methods
+  
+    //! Prepare image and resolutions. This should be called before
+    //! preprocess_resolution().
+    //! This mostly involves casting image into network's type and computing
+    //! each scale's dimensions (no resizing) based on image's size.
+    template <class Tin>
+      void prepare(idx<Tin> &img);
+    
+    //! Do preprocessing (resizing and channel/edge processing) for a particular
+    //! resolution. This will set 'input' and 'output' buffers, that can then
+    //! be used to fprop the network. This uses the 'image' member prepared
+    //! by prepare() and should therefore be called after prepare().
+    //! \param res The resolution to be preprocessed.
+    void prepare_scale(uint i);
+    
+    //! do a fprop on thenet with multiple rescaled inputs
+    void multi_res_fprop();       
+
     ////////////////////////////////////////////////////////////////
     // members
-  public:
-    module_1_1<T,Tstate>	&thenet;
-    resizepp_module<T,Tstate>   resizepp;
-    int			 oheight; //!< Original height.
-    int			 owidth; //!< Original width.
-    int			 height;
-    int			 width;
+  protected:
+    module_1_1<T,Tstate>	&thenet; //!< The network.
+    resizepp_module<T,Tstate>   *resizepp; //!< Resize module for multi-scaling.
+    bool                 resizepp_delete; //!< We are responsible for deleting.
     idx<T>		 image;
     double		 contrast;
     double		 brightness;
-    float		 coef;
-    T			 bias;    
     idx<float>		 sizes;
+    fstate_idx<T>        finput; //! A forward buffer containing input image.
     Tstate              *input;        //!< input buffer
     Tstate              *output;       //!< output buffer
     Tstate              *tmp;           //!< tmp.
-    Tstate              *minput;       //!< input buffer, used with mem optim.
-    idx<void*>		 inputs;	//!< fstate_idx*
-    idx<void*>		 outputs;	//!< fstate_idx*
-    idx<void*>		 results;	//!< idx<double>*
-    module_1_1<T,Tstate> *pp;            //!< preprocessing module
-    uint                 ppkersz;       //!< size of pp kernel (if any)
-    idx<ubyte>   	 labels;
-    ////////////////////////////////////////////////////////////////
-  private:
-    // dimensions
-    idxdim		 in_mindim;
+    Tstate              *minput; //!< input buffer, used with mem optim.
+    vector<mstate<Tstate>*> ppinputs; //!< Preprocessed inputs of all scales.
+    vector<Tstate*>	 outputs; //!< Output buffers of all scales.
+    vector<string>   	 labels; //!< String label of each class.
+  protected:
+    // dimensions //////////////////////////////////////////////////////////////
+    idxdim               indim; //!< Input dimensions.
     idxdim		 netdim; //!< network's input dimensions
-    idxdim		 in_maxdim;
-    uint		 nresolutions;
-    idx<uint>		 resolutions;
-    idx<uint>		 original_bboxes; //!< bboxes orig image after resizing
+    // bboxes //////////////////////////////////////////////////////////////////
+    vector<rect<int> >	 original_bboxes; //!< Bboxes in image after resizing.
+
+
+  
     int                  bgclass;
     int                  mask_class;
     idx<T>               mask;
-    idxdim               input_dim;
-    const double        *scales;
+    // scales //////////////////////////////////////////////////////////////
+    vector<idxdim>       scales; //!< Multi-scale (ideal) scales.
+    vector<idxdim>       actual_scales; //!< Actually used scales.
+    vector<idxdim>       manual_scales; //!< Scales set manually.
+    vector<double>       scale_factors; //!< A list of scale factors.
+    uint		 nscales; //!< Number of scales if set by hand.
     double               scales_step;
-    double               max_scale;//!< Maximum scale as factor of original res.
     double               min_scale;//!< Minimum scale as factor of original res.
-    bool                 silent; //!< print results on std output if not silent
+    double               max_scale;//!< Maximum scale as factor of original res.
     t_scaling            restype; //!< resolution type
+    // saving //////////////////////////////////////////////////////////////
+  
+    bool                 silent; //!< print results on std output if not silent
     bool                 save_mode; //!< save detected windows or not
     string               save_dir; //!< directory where to save detections
     vector<uint>         save_counts; //!< file counter for each class
@@ -429,11 +444,11 @@ namespace ebl {
     bool                 bppdetections; //!< ppdetections is up-to-date or not
     uint                 save_max_per_frame; //!< max number of region saved
     t_pruning            pruning; //!< Type of pruning.
-    bool                 ped_only; //!< temporary TODO
     bool                 share_parts; //!< Allow parts sharing or not.
-    T                    threshold_parts;
+    T                    threshold2; //!< A threshold used for pruning.
     float                bbhfactor; //!< height bbox factor
     float                bbwfactor; //!< width bbox factor
+    float                bb_woverh; //!< width / height factor
     float                bbhfactor2; //!< height bbox factor
     float                bbwfactor2; //!< width bbox factor
     bool                 mem_optimization; //!< optimize memory or not.
@@ -443,17 +458,17 @@ namespace ebl {
     uint                 wzpad; //! Zero-pad on width (each side).
     std::ostream         &mout; //! output stream.
     std::ostream         &merr; //! error output stream.
-    idx<T>               &targets;
-    t_confidence         conf_type; //! Formula for computing confidence
-    T                    conf_ratio; //! Ratio to normalize confidence to 1.
-    T                    conf_shift; //! to be subtracted before div conf_ratio
     float                min_hcenter_dist;
     float                min_wcenter_dist;
-
-    float                min_hcenter_dist2;
+    float                max_center_dist; //!< Max center distance for pruning.
+    float                max_center_dist2; //!< Max center distance for pruning.
+    float                max_wcenter_dist; //!< Max center distance for pruning.
+    float                max_wcenter_dist2; //!< Max center distance for pruning.
     float                min_wcenter_dist2;
     float                same_scale_mhd;
     float                same_scale_mwd;
+    float                min_scale_pred;
+    float                max_scale_pred;
 
     float                max_overlap; //!< Maximum ratio of overlap authorized.
     float                max_overlap2;
@@ -464,6 +479,13 @@ namespace ebl {
     // smoothing //////////////////////////////////////////////////////////////
     uint                 smoothing_type;
     idx<T>               smoothing_kernel;
+    bool                 initialized;
+    string               outputs_dump; //!< Outputs dumping name.
+    bool                 bboxes_off; //!< Do not extract bboxes if true.
+    bool                 adapt_scales; //!< Adapt scales to network structure.
+    bool scaler_mode;
+    answer_module<T,T,T,Tstate> &answer;
+    bool cluster_nms;
     
     ////////////////////////////////////////////////////////////////
     // friends

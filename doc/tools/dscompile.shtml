@@ -18,9 +18,11 @@
       <h4 id="siteSub">by <a href="http://sermanet.free.fr/">Pierre
 	  Sermanet</a> (January 10th, 2011)</h4><br><br> 
       <p>
-	dscompile finds objects in images at multiple scales and outputs
-	corresponding bounding boxes, given a trained model and variables
-	definitions found a configuration file.</p>
+	dscompile assembles preprocessed samples for training and testing
+	purposes. It accepts a variety of input format, from simple directory
+	structure to Xml files describing objects bounding boxes (e.g. PASCAL
+	VOC format). See an example of sample extraction in this
+	<a href="dscompile_video.shtml">video</a>.</p>
       
       <h4>Calls</h4>
       <ul>

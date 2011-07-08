@@ -61,6 +61,7 @@
 // official names for dataset files
 #define DATA_NAME "data"
 #define LABELS_NAME "labels"
+#define JITTERS_NAME "jitters"
 #define CLASSES_NAME "classes"
 #define CLASSPAIRS_NAME "classpairs"
 #define DEFORMPAIRS_NAME "deformpairs"
@@ -97,9 +98,9 @@
   }
 #else
 #define eblthrow(s) {					\
-    std::string e;					\
-    e << s;						\
-    throw ebl::eblexception(e);				\
+    std::string eblthrow_error;				\
+    eblthrow_error << s;				\
+    throw ebl::eblexception(eblthrow_error);		\
   }
 #endif
 
@@ -141,16 +142,23 @@
     abort();								\
   }
 
+#define trace()
+
 #else ///////////////////////////////////////////////////
+
+#define trace() {				\
+    void *array[10];							\
+    size_t size;							\
+    size = backtrace(array, 10);					\
+    backtrace_symbols_fd(array, size, 2);				\
+  }
+
 #define eblerror(s) {							\
     std::cerr << "\033[1;31mError:\033[0m " << s;			\
     std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;		\
     std::cerr << ":" << __LINE__ << std::endl;				\
     std::cerr << "\033[1;31mStack:\033[0m" << std::endl;		\
-    void *array[10];							\
-    size_t size;							\
-    size = backtrace(array, 10);					\
-    backtrace_symbols_fd(array, size, 2);				\
+    trace();								\
     abort();								\
   }
 #endif /* __WINDOWS__ */

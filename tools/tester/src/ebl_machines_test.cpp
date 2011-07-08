@@ -18,7 +18,9 @@ void ebl_machines_test::tearDown() {
 }
 
 void ebl_machines_test::test_lenet5_mnist() {
-  typedef double t_net;
+  typedef double Tnet;
+  typedef ubyte Tdata;
+  typedef ubyte Tlab;
   bool display = true;
   uint ninternals = 1;
   cout << endl;
@@ -28,32 +30,38 @@ void ebl_machines_test::test_lenet5_mnist() {
   CPPUNIT_ASSERT_MESSAGE(*gl_mnist_errmsg, gl_mnist_dir != NULL);
   
   // load MNIST dataset
-  mnist_datasource<t_net,ubyte,ubyte>
+  mnist_datasource<Tnet,Tdata,Tlab>
     train_ds(gl_mnist_dir->c_str(), true, 2000),
     test_ds(gl_mnist_dir->c_str(), false, 1000);
   train_ds.set_balanced(true);
   train_ds.set_shuffle_passes(true);
   // set 2nd argument to true for focusing on hardest examples
-  train_ds.set_weigh_samples(true, false, false, 0.01);
-  train_ds.set_epoch_show(100); // show progress every 500 samples
+  //  train_ds.set_weigh_samples(true, false, false, 0.01);
+  train_ds.set_weigh_samples(false, false, false, 0.01);
+  train_ds.set_epoch_show(100); // show progress every 100 samples
   train_ds.ignore_correct(true);
   
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
-  idx<t_net> targets =
-    create_target_matrix<t_net>(1+idx_max(train_ds.labels), 1.0);
+  idx<Tnet> targets =
+    create_target_matrix<Tnet>(1+idx_max(train_ds.labels), 1.0);
+  uint nclasses = targets.dim(0);
 
   // create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  parameter<t_net> theparam(60000); // create trainable parameter
-  lenet5<t_net> l5(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
-		   targets.dim(0), true, false, true, false);
-  supervised_euclidean_machine<t_net, ubyte> thenet(l5, targets, dims);
-  supervised_trainer<t_net, ubyte, ubyte> thetrainer(thenet, theparam);
+  parameter<Tnet> theparam(60000); // create trainable parameter
+  lenet5<Tnet> net(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
+		   nclasses, true, false, true, false);
+  cout << net.describe() << endl;
+
+  l2_energy<Tnet> energy;
+  class_answer<Tnet,Tdata,Tlab> answer(nclasses);
+  trainable_module<Tnet,Tdata,Tlab> trainable(energy, net, NULL, NULL, &answer);
+  supervised_trainer<Tnet, ubyte, ubyte> thetrainer(trainable, theparam);
 
 #ifdef __GUI__
-  //  labeled_datasource_gui<t_net, ubyte, ubyte> dsgui(true);
+  //  labeled_datasource_gui<Tnet, ubyte, ubyte> dsgui(true);
 //   dsgui.display(test_ds, 10, 10);
-  supervised_trainer_gui<t_net, ubyte, ubyte> stgui;
+  supervised_trainer_gui<Tnet,Tdata,Tlab> stgui;
 #endif
 
   // a classifier-meter measures classification errors
@@ -62,18 +70,19 @@ void ebl_machines_test::test_lenet5_mnist() {
    
   // initialize the network weights
   forget_param_linear fgp(1, 0.5);
-  thenet.forget(fgp);
+  trainable.forget(fgp);
 
   // gradient parameters
-  gd_param gdp(/* double leta*/ 0.0001,
+  gd_param gdp(/* double eta*/ 0.0001,
 	       /* double ln */ 	0.0,
 	       /* double l1 */ 	0.0,
 	       /* double l2 */ 	0.0,
 	       /* intg dtime */ 	0,
 	       /* double iner */0.0, 
-	       /* double a_v */ 0.0,
-	       /* intg a_p */ 0,
+	       /* double anneal_value */ 0.001,
+	       /* intg anneal_period */ 2000,
 	       /* double g_t*/ 	0.0);
+  cout << gdp << endl;
   infer_param infp;
   fixed_init_drand(); // fixed randomization
 

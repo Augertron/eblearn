@@ -67,11 +67,14 @@ namespace ebl {
     //! \param randomize Randomize image list if true.
     //! \param npasses Repeat list this number of times.
     //! \param file_pattern The regexp defining the files patterns to search.
+    //! \param files An optional list of files to search for in 'directory'
+    //!    instead of using the file pattern.
     camera_directory(const char *directory, int height_ = -1, int width_ = -1,
 		     bool randomize = false, uint npasses = 1,
 		     std::ostream &out = std::cout,
 		     std::ostream &err = std::cerr,
-		     const char *file_pattern = IMAGE_PATTERN_MAT);
+		     const char *file_pattern = IMAGE_PATTERN_MAT,
+		     const list<string> *files = NULL);
 
     //! Initialize a directory camera without a root directory. This constructor
     //! requires a subsequent call to read_directory to initialize images.
@@ -102,10 +105,16 @@ namespace ebl {
     //! Return a new frame.
     virtual idx<Tdata> grab();
 
+    //! Do not read the file, instead return the filename to be grabbed.
+    virtual string grab_filename();
+
     //! Move to the next frame, without returning the frame.
     //! This is called by grab before grabbing.
     //! This can be used to get frames infos without grabbing.
     virtual void next();
+
+    //! Move to the previous frame, without returning the frame.
+    virtual void previous();
 
     //! Return true until all images have been processed.
     virtual bool empty();
@@ -115,6 +124,10 @@ namespace ebl {
 
     //! Return a name for current frame.
     virtual string frame_name();
+
+    //! Return the subdirectory name for the current frame,
+    //! relative to the global input directory.
+    virtual string get_subdir();
 
     //! Return the number of frames left to process, -1 if unknown.
     virtual int remaining();
@@ -135,6 +148,7 @@ namespace ebl {
     string		 indir; //!< input directory name
     string		 fdir;	//!< directory name
     string		 fname;	//!< file name
+    string               subdir;//!< subdirs to indir.
     ostringstream	 oss;	//!< temporary string
     uint                 flsize;	//!< original size of list
     bool                 randomize; //!< Randomize order of images or not.

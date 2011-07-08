@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -48,6 +49,7 @@ namespace ebl {
     : thread(gui), wcur(-1), nwindows(0), silent(false), busy(false),
       bquit(false), qapp(qa) {
     thread.init(argc, argv, &nwindows, this);
+
     // register exotic types
     qRegisterMetaType<ubyte>("ubyte");
     // connect methods to incoming signals
@@ -61,21 +63,28 @@ namespace ebl {
     connect(&thread, SIGNAL(gui_clear_resize()), this, SLOT(clear_resize()));
     connect(&thread, SIGNAL(gui_save_window(const string*, int)),
 			    this, SLOT(save_window(const string*, int)));
-    connect(&thread, SIGNAL(gui_new_window(const char*, unsigned int, 
-					   unsigned int)), 
-	    this, SLOT(new_window(const char*, unsigned int, unsigned int)));
+    connect(&thread, SIGNAL(gui_new_window(const char*, uint, uint)), 
+	    this, SLOT(new_window(const char*, uint, uint)));
+    connect(&thread, SIGNAL(gui_new_window3d(const char*, uint, uint)), 
+	    this, SLOT(new_window3d(const char*, uint, uint)));
     connect(&thread, SIGNAL(gui_select_window(int)), 
 	    this, SLOT(select_window(int)));
     connect(&thread, SIGNAL(gui_add_text(const string*)), 
 	    this, SLOT(add_text(const string*)));
     connect(&thread, SIGNAL(gui_add_arrow(int, int, int, int)), 
 	    this, SLOT(add_arrow(int, int, int, int)));
-    connect(&thread, SIGNAL(gui_add_box(int, int, int, int, unsigned char,
-					unsigned char, unsigned char, 
-					unsigned char, string *)), 
-	    this, SLOT(add_box(int, int, int, int, unsigned char,
-			       unsigned char, unsigned char,
-			       unsigned char, string *)));
+    connect(&thread, SIGNAL(gui_add_box(float, float, float, float, ubyte,
+					ubyte, ubyte, ubyte, string *)), 
+	    this, SLOT(add_box(float, float, float, float, ubyte, ubyte, ubyte,
+			       ubyte, string *)));
+    connect(&thread, SIGNAL(gui_add_cross(float, float, float, ubyte, ubyte,
+					  ubyte, ubyte, string *)), 
+	    this, SLOT(add_cross(float, float, float, ubyte, ubyte, ubyte,
+				 ubyte, string *)));
+    connect(&thread, SIGNAL(gui_add_ellipse(float, float, float, float, ubyte,
+					    ubyte, ubyte, ubyte, string *)), 
+	    this, SLOT(add_ellipse(float, float, float, float, ubyte, ubyte,
+				   ubyte, ubyte, string *)));
     connect(&thread, SIGNAL(gui_set_text_origin(unsigned int, unsigned int)), 
 	    this, SLOT(set_text_origin(unsigned int, unsigned int)));
     connect(&thread, SIGNAL(gui_set_text_colors(unsigned char, unsigned char, 
@@ -98,26 +107,39 @@ namespace ebl {
 	    this, SLOT(set_wupdate(bool)));
     connect(&thread, SIGNAL(gui_freeze_style(bool)), 
 	    this, SLOT(freeze_style(bool)));
+    connect(&thread, SIGNAL(gui_freeze_window_size(uint, uint)), 
+	    this, SLOT(freeze_window_size(uint, uint)));
     connect(&thread, SIGNAL(gui_add_scroll_box(scroll_box0*)),
 	    this, SLOT(add_scroll_box(scroll_box0*)));
     connect(&thread, SIGNAL(gui_set_title(const string*)), 
 	    this, SLOT(set_title(const string*)));
+    // 3d calls ////////////////////////////////////////////////////////////////
+    connect(&thread,
+	    SIGNAL(gui_add_sphere(float,float,float,float,
+				  string*,int,int,int,int)), 
+	    this, SLOT(add_sphere(float,float,float,float,
+				  string*,int,int,int,int)));
+    connect(&thread,
+	    SIGNAL(gui_add_cylinder(float,float,float,float,float,float,
+				    float,float,string*,int,int,int,int,bool)),
+	    this, SLOT(add_cylinder(float,float,float,float,float,float,
+				    float,float,string*,int,int,int,int,bool)));
   }
 
   gui_thread::~gui_thread() {
-    for (vector<Window*>::iterator i = windows.begin(); i != windows.end(); ++i)
+    for (vector<win*>::iterator i = windows.begin(); i != windows.end(); ++i)
       if (*i)
 	delete *i;
   }
 
   void gui_thread::window_destroyed(QObject *obj) {
     for (uint i = 0; i < windows.size(); ++i) {
-	// decrement windows counter
-	if (windows[i] == obj) {
-	  windows[i] = NULL;
-	  nwindows--;
-	}
+      // decrement windows counter
+      if (windows[i] && windows[i]->get_widget() == obj) {
+	windows[i] = NULL;
+	nwindows--;
       }
+    }
     if (gui.main_done && (nwindows == 0))
       appquit();
   }
@@ -137,12 +159,25 @@ namespace ebl {
       windows[wcur]->add_arrow(x1, y1, x2, y2);
   }
 
-  void gui_thread::add_box(int h0, int w0, int h, int w,
-			   unsigned char r, unsigned char g,
-			   unsigned char b, unsigned char a, string *s) {
+  void gui_thread::add_box(float h0, float w0, float h, float w,
+			   ubyte r, ubyte g, ubyte b, ubyte a, string *s) {
     if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->add_box(h0, w0, h, w, r, g, b, a, s);
+  }
+
+  void gui_thread::add_cross(float h0, float w0, float length,
+			     ubyte r, ubyte g, ubyte b, ubyte a, string *s) {
+    if (bquit) return ; // do not do any work if we are trying to quit
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->add_cross(h0, w0, length, r, g, b, a, s);
+  }
+
+  void gui_thread::add_ellipse(float h0, float w0, float h, float w,
+			       ubyte r, ubyte g, ubyte b, ubyte a, string *s) {
+    if (bquit) return ; // do not do any work if we are trying to quit
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->add_ellipse(h0, w0, h, w, r, g, b, a, s);
   }
 
   void gui_thread::set_text_origin(unsigned int h0, unsigned int w0) {
@@ -190,10 +225,16 @@ namespace ebl {
       windows[wcur]->freeze_style(freeze);
   }
 
+  void gui_thread::freeze_window_size(uint h, uint w) {
+    if (bquit) return ; // do not do any work if we are trying to quit
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->freeze_window_size(h, w);
+  }
+
   void gui_thread::set_silent(const std::string *filename) {
     if (bquit) return ; // do not do any work if we are trying to quit
     silent = true;
-    for (vector<Window*>::iterator i = windows.begin(); i != windows.end(); ++i)
+    for (vector<win*>::iterator i = windows.begin(); i != windows.end(); ++i)
       {
 	if (*i)
 	  (*i)->set_silent(filename);
@@ -215,7 +256,9 @@ namespace ebl {
     if (nwindows == 0)
       new_window();
     if ((wcur >= 0) && (windows[wcur])) {
-      windows[wcur]->update_pixmap(img, h0, w0);
+      win2d *w = dynamic_cast<win2d*>(windows[wcur]);
+      if (!w) eblerror("drawing requires a 2d window");
+      w->update_pixmap(img, h0, w0);
     }
   }
 
@@ -226,7 +269,9 @@ namespace ebl {
     if (nwindows == 0)
       new_window();
     if ((wcur >= 0) && (windows[wcur])) {
-      windows[wcur]->add_mask(img, h0, w0, r, g, b, a);
+      win2d *w = dynamic_cast<win2d*>(windows[wcur]);
+      if (!w) eblerror("drawing requires a 2d window");
+      w->add_mask(img, h0, w0, r, g, b, a);
     }
   }
 
@@ -255,16 +300,30 @@ namespace ebl {
     }
   }
 
-  void gui_thread::new_window(const char *wname, unsigned int h, 
-			      unsigned int w) {
+  void gui_thread::new_window(const char *wname, uint h, uint w) {
     if (bquit) return ; // do not do any work if we are trying to quit
     mutex1.lock();
-    windows.push_back(new Window(windows.size(), wname, h, w));
+    windows.push_back(new win2d(windows.size(), wname, h, w));
     wcur = windows.size() - 1;
     nwindows++;
     if (silent)
       windows[wcur]->set_silent(&savefname);
-    connect(windows[wcur], SIGNAL(destroyed(QObject*)), 
+    connect(windows[wcur]->get_widget(), SIGNAL(destroyed(QObject*)), 
+    	    this, SLOT(window_destroyed(QObject*)));
+    mutex1.unlock();
+  }
+
+  void gui_thread::new_window3d(const char *wname, uint h, uint w) {
+    if (bquit) return ; // do not do any work if we are trying to quit
+    mutex1.lock();
+    //    QGL::setPreferredPaintEngine ( QPaintEngine::OpenGL );
+	 
+    windows.push_back(new win3d(windows.size(), wname, h, w));
+    wcur = windows.size() - 1;
+    nwindows++;
+    if (silent)
+      windows[wcur]->set_silent(&savefname);
+    connect(windows[wcur]->get_widget(), SIGNAL(destroyed(QObject*)), 
     	    this, SLOT(window_destroyed(QObject*)));
     mutex1.unlock();
   }
@@ -295,8 +354,11 @@ namespace ebl {
 
   void gui_thread::add_scroll_box(scroll_box0 *sb) {
     if (bquit) return ; // do not do any work if we are trying to quit
-    if ((wcur >= 0) && (windows[wcur]))
-      windows[wcur]->add_scroll_box(sb);    
+    if ((wcur >= 0) && (windows[wcur])) {
+      win2d *w = dynamic_cast<win2d*>(windows[wcur]);
+      if (!w) eblerror("drawing requires a 2d window");
+      w->add_scroll_box(sb);
+    }
   }
 
   void gui_thread::set_title(const string *s) {
@@ -323,6 +385,44 @@ namespace ebl {
     mutex1.lock();
     bquit = true;
     mutex1.unlock();
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // 3d calls
+
+  void gui_thread::add_sphere(float x, float y, float z, float radius,
+			      string *s, int r, int g, int b, int a) {
+    if (bquit) return ; // do not do any work if we are trying to quit
+    if (nwindows == 0)
+      new_window();
+    if ((wcur >= 0) && (windows[wcur])) {
+      win3d *w = dynamic_cast<win3d*>(windows[wcur]);
+      if (!w) eblerror("drawing a sphere3d requires a 3d window");
+#ifdef __GUI3D__
+      w->add_sphere(x, y, z, radius, s?s->c_str():NULL, r, g, b, a);
+#endif
+    }
+    // if we don't delete this string, no one will
+    if (s) delete s;
+  }
+
+  void gui_thread::add_cylinder(float x, float y, float z, float length,
+				float top_radius, float base_radius,
+				float a1, float a2, string *s,
+				int r, int g, int b, int a, bool tops) {
+    if (bquit) return ; // do not do any work if we are trying to quit
+    if (nwindows == 0)
+      new_window();
+    if ((wcur >= 0) && (windows[wcur])) {
+      win3d *w = dynamic_cast<win3d*>(windows[wcur]);
+      if (!w) eblerror("drawing a sphere3d requires a 3d window");
+#ifdef __GUI3D__
+      w->add_cylinder(x, y, z, length, top_radius, base_radius,
+		      a1, a2, s?s->c_str():NULL, r, g, b, a, tops);
+#endif
+    }
+    // if we don't delete this string, no one will
+    if (s) delete s;
   }
 
 } // end namespace ebl

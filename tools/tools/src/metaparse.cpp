@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -94,6 +95,6 @@ int main(int argc, char **argv) {
     }
     // parser
     metaparser m;
-    m.process(root, true);
+    m.process(root);
     return 0;
   }

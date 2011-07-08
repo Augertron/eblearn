@@ -49,7 +49,7 @@ namespace ebl {
 
   class EXPORT scroll_box : public scroll_box0 {
   protected:
-    Window *win;
+    win *w;
 
   public:
     scroll_box();

@@ -35,7 +35,7 @@ INCLUDES="../core/libidx/include/*" "../core/libeblearn/include/*" \
 LIBS=libidx.${LIB_EXT} libidxgui.${LIB_EXT} libeblearn.${LIB_EXT} \
 		       libeblearngui.${LIB_EXT} libeblearntools.${LIB_EXT}
 BINS=train detect dscompile dssplit dsmerge matshow dsdisplay \
-metarun metaparse capture
+metarun metaparse capture dsfprop imfprop
 DEMOS=mnist_train mnist_reco
 
 all: release
@@ -87,15 +87,6 @@ test:
 	mkdir -p build/Release 2> /dev/null
 	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
 	&& make tester && cd ../.. && ../bin/tester
-
-detect:
-	@echo __________________________________________________________________
-	@echo
-	@echo "Compiling detect in release mode..."
-	@echo __________________________________________________________________
-	mkdir -p build/Release 2> /dev/null
-	cd build/Release &&  cmake -DCMAKE_BUILD_TYPE=Release ../.. \
-	&& make detect
 
 debug:
 	@echo __________________________________________________________________

@@ -16,25 +16,39 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   # QT specific: produce moc files from headers
   ##############################################################################
   include_directories(${CMAKE_CURRENT_BINARY_DIR})
+  include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
+  # convert flags string to list
+  string(REPLACE " " ";" dflags ${CMAKE_CXX_DFLAGS})
+
+  if (qt3d_found)
+    QT4_WRAP_CPP(IDXGUI_SRC_MOC
+      include/gui_thread.h include/idxgui.h include/win2d.h include/win3d.h
+      OPTIONS  ${dflags})
+    set(MOCSRC "include/")
+    SET_SOURCE_FILES_PROPERTIES(src/win3d.cpp PROPERTIES 
+      OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MOCSRC}moc_win3d.cxx)
+  else (qt3d_found)
+    QT_WRAP_CPP(idxgui IDXGUI_SRC_MOC
+      include/gui_thread.h include/idxgui.h include/win2d.h)
+    set(MOCSRC "")
+  endif (qt3d_found)
+  
   SET_SOURCE_FILES_PROPERTIES(src/gui_thread.cpp PROPERTIES 
-    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/moc_gui_thread.cxx)
+    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MOCSRC}moc_gui_thread.cxx)
   SET_SOURCE_FILES_PROPERTIES(src/idxgui.cpp PROPERTIES 
-    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/moc_idxgui.cxx)
-  SET_SOURCE_FILES_PROPERTIES(src/window.cpp PROPERTIES 
-    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/moc_window.cxx)
+    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MOCSRC}moc_idxgui.cxx)
+  SET_SOURCE_FILES_PROPERTIES(src/win2d.cpp PROPERTIES 
+    OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MOCSRC}moc_win2d.cxx)
 
-  QT_WRAP_CPP(idxgui IDXGUI_SRC_MOC
-    include/gui_thread.h
-    include/idxgui.h
-    include/window.h)
-    
   # compile library
   ##############################################################################
   add_library (idxgui SHARED
     src/gui_thread.cpp
     src/idxgui.cpp
-    src/window.cpp
+    src/win.cpp
+    src/win2d.cpp
+    src/win3d.cpp
     src/gui.cpp
     src/scroll_box0.cpp
     src/scroll_box.cpp
@@ -48,6 +62,10 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   target_link_libraries (idxgui idx)
   target_link_libraries (idxgui ${QT_QTCORE_LIBRARY})
   target_link_libraries (idxgui ${QT_QTGUI_LIBRARY})
+
+  if (qt3d_found)
+    target_link_libraries (idxgui QtCore Qt3D QtOpenGL)
+  endif (qt3d_found)
   
 ELSE (QT_FOUND) #---------------------------------------------------------------
   MESSAGE("__ WARNING: libidxgui won't be compiled because of missing QT libraries.")

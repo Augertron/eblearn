@@ -146,12 +146,19 @@ namespace ebl {
     if (!fp)
       eblthrow("load_matrix failed to open " << filename);
     // read it
-    idx<T> m = load_matrix<T>(fp);
-    fclose(fp);
+    idx<T> m;
+    try {
+      m = load_matrix<T>(fp);
+      fclose(fp);
+    } catch(eblexception &e) {
+      e << " while loading " << filename;
+      throw e;
+    }
     return m;
   }
 
-  template <typename T> void load_matrix(idx<T>& m, const std::string &filename) {
+  template <typename T>
+  void load_matrix(idx<T>& m, const std::string &filename) {
     load_matrix(m, filename.c_str());
   }
 
@@ -219,6 +226,26 @@ namespace ebl {
     return *pout;
   }
 
+  template <typename T>
+  idxs<T> load_matrices(const std::string &filename){
+    // open file
+    FILE *fp = fopen(filename.c_str(), "rb");
+    if (!fp)
+      eblthrow("load_matrix failed to open " << filename);
+    // first read presence matrix
+    idx<ubyte> p = load_matrix<ubyte>(fp);
+    // read all present matrices
+    idxs<T> all(p.dim(0));
+    for (uint i = 0; i < p.dim(0); ++i) {
+      if (p.get(i) == 1) { // matrix is present, get it
+	idx<T> m = load_matrix<T>(fp);
+	all.set(m, i);
+      }
+    }
+    fclose(fp);
+    return all;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // saving
   
@@ -236,45 +263,82 @@ namespace ebl {
 
   // TODO: intg support
   template <typename T> bool save_matrix(idx<T>& m, const char *filename) {
-    int v, i;
     FILE *fp = fopen(filename, "wb");
 
     if (!fp) {
       cerr << "save_matrix failed (" << filename << ")." << endl;
       return false;
     }
-    // header
+    bool ret = save_matrix(m, fp);
+    if (!ret)
+      cerr << "failed to write matrix " << m << " to " << filename << "."
+	   << endl;
+    fclose(fp);
+    return ret;
+  }
+  
+  // TODO: intg support
+  template <typename T> bool save_matrix(idx<T>& m, FILE *fp) {
+    int v, i;
+    // write header
     v = get_magic<T>();
-    if (fwrite(&v, sizeof (int), 1, fp) != 1) {
-      cerr << "failed to write to " << filename << "." << endl;
-      fclose(fp);
-      return false;
-    }
+    if (fwrite(&v, sizeof (int), 1, fp) != 1) return false;
     v = m.order();
-    if (fwrite(&v, sizeof (int), 1, fp) != 1) {
-      cerr << "failed to write to " << filename << "." << endl;
-      fclose(fp);
-      return false;
-    }
+    if (fwrite(&v, sizeof (int), 1, fp) != 1) return false;
     for (i = 0; (i < m.order()) || (i < 3); ++i) {
       if (i < m.order())
 	v = m.dim(i);
       else
 	v = 1;
-      if (fwrite(&v, sizeof (int), 1, fp) != 1) {
-	cerr << "failed to write to " << filename << "." << endl;
-	fclose(fp);
-	return false;
-      }
+      if (fwrite(&v, sizeof (int), 1, fp) != 1) return false;
     }
-    // body
+    // write body
     int res;
-    { idx_aloop1(i, m, T) 
-	res = fwrite(&(*i), sizeof (T), 1, fp); }
-    fclose(fp);
+    idx_aloop1(k, m, T) 
+      res = fwrite(&(*k), sizeof (T), 1, fp);
     return true;
   }
 
+  template <typename T>
+  bool save_matrices(idxs<T>& m, const std::string &filename) {
+    FILE *fp = fopen(filename.c_str(), "wb");
+
+    if (!fp) {
+      cerr << "save_matrix failed (" << filename << ")." << endl;
+      return false;
+    }
+    // convert pointers to presence/absence matrix
+    idx<ubyte> p(m.dim(0));
+    idx_clear(p);
+    for (uint i = 0; i < m.dim(0); ++i) {
+      if (m.exists(i))
+	p.set((ubyte) 1, i);
+    }
+    // save presence matrix first    
+    bool ret = save_matrix(p, fp);
+    if (!ret) {
+      cerr << "failed to write matrix " << p << " to " << filename << "."
+	   << endl;
+      fclose(fp);
+      return false;
+    }
+    // then save all matrices contained in m
+    for (uint i = 0; i < m.dim(0); ++i) {
+      if (m.exists(i)) {
+	idx<T> e = m.get(i);
+	ret = save_matrix(e, fp);
+	if (!ret) {
+	  cerr << "failed to write matrix " << e << " to " << filename << "."
+	       << endl;
+	  fclose(fp);
+	  return false;
+	}
+      }
+    }
+    fclose(fp);
+    return ret;
+  }
+  
 } // end namespace ebl
 
 #endif /* IDXIO_HPP_ */

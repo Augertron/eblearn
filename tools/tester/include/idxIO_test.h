@@ -12,6 +12,7 @@ class idxIO_test : public CppUnit::TestFixture  {
   CPPUNIT_TEST(test_save_load_matrix_float);
   CPPUNIT_TEST(test_save_load_matrix_double);
   CPPUNIT_TEST(test_save_load_matrix_long);
+  CPPUNIT_TEST(test_save_load_matrix_matrix);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -29,6 +30,7 @@ public:
   void test_save_load_matrix_float();
   void test_save_load_matrix_double();
   void test_save_load_matrix_long();
+  void test_save_load_matrix_matrix();
 };
 
 #endif /* IDXIOTEST_H_ */
