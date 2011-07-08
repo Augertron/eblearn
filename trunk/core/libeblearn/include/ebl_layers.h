@@ -138,17 +138,12 @@ namespace ebl {
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
     //! \param p is used to store all parametric variables in a single place.
-    //! \param kerneli is the height of the convolution kernel
-    //! \param kernelj is the width of the convolution kernel
-    //! \param stridei is the stride at which convolutions are done on 
-    //!        the height axis.
-    //! \param stridej is the stride at which convolutions are done on 
-    //!        the width axis.
+    //! \param kernel The convolution kernel sizes.
+    //! \param stride The convolution strides.
     //! \param table is the convolution connection table.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    convabsnorm_layer(parameter<T,Tstate> *p, intg kerneli, intg kernelj, 
-		      intg stridei, intg stridej, idx<intg> &tbl,
-		      bool mirror = false, bool tanh = true,
+    convabsnorm_layer(parameter<T,Tstate> *p, idxdim kernel, idxdim stride,
+		      idx<intg> &tbl, bool mirror = false, bool tanh = true,
 		      const char *name = "convabsnorm_layer");
     //! Destructor.
     virtual ~convabsnorm_layer();
