@@ -95,7 +95,7 @@ namespace ebl {
       conf_type(conf), binary_target(binary_target_), resize_output(true), 
       apply_tanh(apply_tanh_), tmp(1,1,1) {
     // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
-    targets = create_target_matrix<T>(nclasses, 1.0);
+    targets = create_target_matrix<T>(nclasses, (T)1.0);
     // binary target
     if (binary_target) {
       if (nclasses != 2)
@@ -151,8 +151,6 @@ namespace ebl {
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void class_answer<T,Tds1,Tds2,Tstate>::fprop(Tstate &in, Tstate &out) {
-    // only works for 3d bufs, TODO: make this generic
-    idx_checkorder2(in.x, 3, out.x, 3);
     // resize out if necessary
     idxdim d(in.x);
     d.setdim(0, 2); // 2 outputs per pixel: class,confidence
@@ -174,8 +172,8 @@ namespace ebl {
     }
     // loop on features (dimension 0) to set class and confidence
     int classid;
-    idx_eloop2(i, inx, T, o, outx, T) {
-      idx_eloop2(ii, i, T, oo, o, T) {
+    T conf, max2;
+    idx_1loop2(ii, inx, T, oo, outx, T, {
 	if (binary_target) {
 	  T t0 = targets.gget(0);
 	  T t1 = targets.gget(1);
@@ -187,21 +185,22 @@ namespace ebl {
 	    oo.set((T) 1, 0); // class 1
 	    oo.set((T) (2 - fabs(a - t1)) / 2, 1); // conf
 	  }
-	} else { // 1-of-n target
+	} 
+	else { // 1-of-n target
 	  // set class answer
 	  classid = idx_indexmax(ii);
 	  oo.set((T) classid, 0);
 	  // set confidence
-	  T conf, max2;
 	  intg p;
 	  bool ini = false;
 	  switch (conf_type) {
 	  case confidence_sqrdist: // squared distance to target
 	    target = targets.select(0, classid);
-	    conf = 1.0 - ((idx_sqrdist(target, ii) - conf_shift) / conf_ratio);
+	    conf = (T) (1.0 - ((idx_sqrdist(target, ii) - conf_shift) 
+			       / conf_ratio));
 	    break ;
 	  case confidence_single: // simply return class' out (normalized)
-	    conf = (ii.get(classid) - conf_shift) / conf_ratio;
+	    conf = (T) ((ii.get(classid) - conf_shift) / conf_ratio);
 	  case confidence_max: // distance with 2nd max answer
 	    conf = std::max(target_min, std::min(target_max, ii.get(classid)));
 	    for (p = 0; p < ii.dim(0); ++p) {
@@ -222,8 +221,7 @@ namespace ebl {
 	    eblerror("confidence type " << conf_type << " undefined");
 	  }
 	}
-      }
-    }
+      });
   }
   
   template <typename T, typename Tds1, typename Tds2, class Tstate>
@@ -442,7 +440,7 @@ namespace ebl {
 	float vis = r.overlap_ratio(netrec);
 	// compute confidence given visibility (output is [0,1])
 	// gnuplot: set yrange[0:1];set xrange[0:1]; plot tanh(x*20 - 18)/1.4+.33
-	T visconf = tanh(vis * 20 - 18) / 1.4 + .33;
+	T visconf = (T) (tanh(vis * 20 - 18) / 1.4 + .33);
 	// compute confidence given scale (output is [0,1])
 	// gnuplot: set yrange[0:1];set xrange[0:3];plot (exp(-(x-1.5)*(x-1.5)/(2 * .2)) * 4 - 1)/2+.5
 	T sconf = std::min((T) 1.0, (T)
@@ -450,7 +448,7 @@ namespace ebl {
 				 / (2 * .2)) * 4 - 1)/2+.5));
 	// compute distance to center (the closer the higher the conf)
 	// set xrange[-1:1];set yrange[-1:1];plot exp(-2*sqrt(x*x))
-	T dconf = exp(-2 * sqrt(h*h + w*w));
+	T dconf = (T) (exp(-2 * sqrt(h*h + w*w)));
 	// take minimum of all confs for final confidence
 	//	T final_conf = std::min(visconf, std::min(dconf, sconf));
 	T final_conf = std::min(visconf, sconf);
@@ -506,8 +504,8 @@ namespace ebl {
     if (conf_target > .5 && s > 0) {
       T herr = target.gget(jittoff + 1) - answer.gget(3);
       T werr = target.gget(jittoff + 2) - answer.gget(4);
-      T spatial_err = sqrt(herr * herr + werr * werr); // spatial
-      T scale_err = fabs(target.gget(jittoff) - answer.gget(2));; // scale
+      T spatial_err = (T) sqrt(herr * herr + werr * werr); // spatial
+      T scale_err = (T) fabs(target.gget(jittoff) - answer.gget(2));; // scale
       log.log_values[0] += spatial_err; // spatial
       log.log_values[1] += scale_err; // scale
       log.log_values[2] += spatial_err + scale_err / 2; // localization

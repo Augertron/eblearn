@@ -279,6 +279,14 @@ namespace ebl {
       module = (module_1_1<T,Tstate>*)
 	new ms_module<T,Tstate>(pre, mpipe, post, name.c_str());
     }
+    // zpad /////////////////////////////////////////////////////////
+    else if (!type.compare("zpad")) {
+      string szpad;
+      idxdim dims;
+      if (get_param(conf, name, "dims", szpad))
+	dims = string_to_idxdim(szpad);
+      module = (module_1_1<T,Tstate>*) new zpad_module<T,Tstate>(dims);
+    }
     // resizepp /////////////////////////////////////////////////////////
     else if (!type.compare("resizepp")) {
       string pps;
@@ -448,7 +456,7 @@ namespace ebl {
       //////////////////////////////////////////////////////////////////////////
     } else if (!type.compare("regression_answer")) {
       string threshold_name;
-      T threshold = 0.0;
+      float64 threshold = 0.0;
       if (get_param(conf, name, "threshold", threshold_name, true))
 	threshold = (float64) string_to_double(threshold_name);
       module = new regression_answer<T,Tds1,Tds2,Tstate>

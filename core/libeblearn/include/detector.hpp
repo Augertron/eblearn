@@ -625,10 +625,10 @@ namespace ebl {
 					 float same_scale_mwd) {
     size_t ib, jb;
     bbox *i, *j;
-    // apply pre-process bb factors
-    if (bbhfactor != 1.0 || bbwfactor != 1.0)
-      for (ib = 0; ib < raw_bboxes.size(); ++ib)
-	raw_bboxes[ib]->scale_centered(bbhfactor, bbwfactor);
+//     // apply pre-process bb factors
+//     if (bbhfactor != 1.0 || bbwfactor != 1.0)
+//       for (ib = 0; ib < raw_bboxes.size(); ++ib)
+// 	raw_bboxes[ib]->scale_centered(bbhfactor, bbwfactor);
     // for each bbox, check that matching with other bboxes does not go beyond
     // the maximum authorized matching score (0 means no overlap, 1 is identity)
     // and only keep ones with highest score when overlapping.
@@ -1083,6 +1083,11 @@ namespace ebl {
 	}
 	offset_w++;
       }
+      // apply pre-process bb factors
+      if (bbhfactor != 1.0 || bbwfactor != 1.0)
+	for (uint ib = 0; ib < bbtmp.size(); ++ib)
+	  bbtmp[ib]->scale_centered(bbhfactor, bbwfactor);
+      // cluster
       if (cluster_nms)
 	cluster_bboxes(max_overlap, max_center_dist, max_wcenter_dist, bbtmp);
       // add scale boxes into all boxes

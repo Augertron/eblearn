@@ -71,6 +71,7 @@ bool autorange = false;
 bool fixed_range = false;
 bool explore = false; // explore working dir for other images
 bool video = false; // show and save all frames
+bool print = false; // print matrix values
 bool show_filename = false;
 uint nh = 1;
 uint nw = 1;
@@ -97,6 +98,7 @@ void print_usage() {
   cout << "  -video (display and save all input images in a video_<timestamp>"
        << " directory, than can later be compile into a video)" << endl;
   cout << "  -filename (display filename within drawing area)" << endl;
+  cout << "  -print (print all values of current matrix)" << endl;
 }
 
 // parse command line input
@@ -168,8 +170,8 @@ int display(list<string>::iterator &ifname,
     return display_net<T>(ifname, signd, load, mats);
   // mat mode
   idxdim d = get_matrix_dims(ifname->c_str());
-  if (!(d.order() == 2 ||
-	(d.order() == 3 && (d.dim(2) == 1 || d.dim(2) == 3)))) {
+  if (print || !(d.order() == 2 ||
+		 (d.order() == 3 && (d.dim(2) == 1 || d.dim(2) == 3)))) {
     // this is probably not an image, just display info and print matrix
     string type;
     get_matrix_type(ifname->c_str(), type);
@@ -339,6 +341,8 @@ int main(int argc, char **argv) {
 	  maxwidth = (int) atoi(argv[i]);
 	} else if (!strcmp(argv[i], "-video")) {
 	  video = true;
+	} else if (!strcmp(argv[i], "-print")) {
+	  print = true;
 	} else if (!strcmp(argv[i], "-filename")) {
 	  show_filename = true;
 	} else if (!strcmp(argv[i], "-range")) {

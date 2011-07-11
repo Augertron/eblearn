@@ -48,13 +48,9 @@ namespace ebl {
     FILE *fp = fopen(filename, "rb");
     if (!fp)
       eblthrow("get_matrix_type failed to open " << filename);
-
-    int magic;
     // header: read magic number
-    if (fread(&magic, sizeof (int), 1, fp) != 1) {
-      fclose(fp);
-      eblthrow("failed to read magic number in " << filename);
-    }
+    int magic;
+    read_matrix_header(fp, magic);
     type = get_magic_str(magic);
     return magic;
   }
@@ -64,13 +60,9 @@ namespace ebl {
     FILE *fp = fopen(filename, "rb");
     if (!fp)
       eblthrow("get_matrix_type failed to open " << filename);
-
-    int magic;
     // header: read magic number
-    if (fread(&magic, sizeof (int), 1, fp) != 1) {
-      fclose(fp);
-      eblthrow("failed to read magic number in " << filename);
-    }
+    int magic;
+    read_matrix_header(fp, magic);
     return magic;
   }
 

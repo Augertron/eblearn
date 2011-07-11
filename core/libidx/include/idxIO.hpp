@@ -70,6 +70,10 @@ namespace ebl {
     switch (magic) {
       // standard format
     case MAGIC_BYTE_MATRIX: 	return "ubyte";
+    case MAGIC_PACKED_MATRIX:	return "packed";
+    case MAGIC_SHORT_MATRIX: 	return "short";
+    case MAGIC_SHORT8_MATRIX: 	return "short8";
+    case MAGIC_ASCII_MATRIX: 	return "ascii";
     case MAGIC_INTEGER_MATRIX: 	return "int";
     case MAGIC_FLOAT_MATRIX: 	return "float";
     case MAGIC_DOUBLE_MATRIX: 	return "double";
@@ -77,11 +81,16 @@ namespace ebl {
       // non standard
     case MAGIC_UINT_MATRIX: 	return "uint";
       // pascal vincent format
+    case MAGIC_BYTE_VINCENT: 	return "byte (pascal vincent)";
     case MAGIC_UBYTE_VINCENT: 	return "ubyte (pascal vincent)";
+    case MAGIC_SHORT_VINCENT: 	return "short (pascal vincent)";
     case MAGIC_INT_VINCENT: 	return "int (pascal vincent)";
     case MAGIC_FLOAT_VINCENT: 	return "float (pascal vincent)";
     case MAGIC_DOUBLE_VINCENT: 	return "double (pascal vincent)";
-    default: return "unknown type";
+    default: 
+      string s;
+      s << "unknown type (magic: " << (void*)magic << ")";
+      return s;
     }
   }
 

@@ -375,8 +375,10 @@ namespace ebl {
     //! Initialize from matrices.
     void init(idx<Tdata> &data, idx<Tlabel> &labels, const char *name);
     //! Intialize from matrices filenames.
+    //! \param max_size If > 0, limit the number of samples to this value.
     void init(const char *data_fname, const char *labels_fname,
-	      const char *jitters_fname = NULL, const char *name = NULL);
+	      const char *jitters_fname = NULL, const char *name = NULL,
+	      uint max_size = 0);
     //! Intialize from root and partial matrices filenames.
     void init_root(const char *root, const char *data_fname,
 	      const char *labels_fname, const char *jitters_fname = NULL,
@@ -478,9 +480,11 @@ namespace ebl {
     void init(idx<Tdata> &data, idx<Tlabel> &labels, 
 	      vector<string*> *lblstr, const char *name);
     //! Intialize from matrices filenames.
+    //! \param max_size If > 0, limit the number of samples to this value.
     void init(const char *data_fname, const char *labels_fname,
 	      const char *jitters_fname = NULL,
-	      const char *classes_fname = NULL, const char *name = NULL);
+	      const char *classes_fname = NULL, const char *name = NULL,
+	      uint max_size = 0);
     //! Intialize from root and partial matrices filenames.
     void init_root(const char *root, const char *data_fname,
 		   const char *labels_fname, const char *jitters_fname = NULL,
