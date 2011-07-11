@@ -138,7 +138,7 @@ void test_and_save(uint iter, configuration &conf, string &conffname,
     }
     cmd << "cp " << conffname << " tmp.conf && echo \"silent=1\n"
 	<< "nthreads=" << dt_nthreads << "\nevaluate=1\nweights_file=" 
-	<< wfname.str() << "\n" << params << "\" >> tmp.conf && detect tmp.conf";
+	<< wfname.str() << "\n" << params <<"\" >> tmp.conf && detect tmp.conf";
     if (std::system(cmd.c_str()))
       cerr << "warning: failed to execute: " << cmd << endl;
     cout << "detection_test_time="; dtest.pretty_elapsed(); cout << endl;
