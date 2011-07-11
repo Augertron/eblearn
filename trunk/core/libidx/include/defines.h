@@ -203,6 +203,10 @@ namespace ebl {
   typedef float float32;
   typedef double float64;
 #endif
+
+  // iterators
+#define USING_STL_ITERS 0
+#define USING_FAST_ITERS 1
   
 } // end namespace ebl
 

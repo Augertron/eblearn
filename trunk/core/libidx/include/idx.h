@@ -33,8 +33,6 @@
 #ifndef idx_H
 #define idx_H
 
-#define USING_STL_ITERS 0
-
 #include "defines.h"
 
 #ifndef __NOSTL__
@@ -799,22 +797,18 @@ namespace ebl {
   //! It is used as follows:
   //! for (idxlooper z(&idx,0); z.notdone(); z.next()) { .... }
   template <class T> class idxlooper : public idx<T> {
-
   public:
+    //! generic constructor loops over dimensin ld
+    idxlooper(idx<T> &m, int ld);
+    //! return true if loop is over
+    bool notdone();
+    //! increment to next item. Return pointer to data.
+    T *next();
+    void operator++();
+  protected:
     intg i;  // loop index
     intg dimd;  // number of elements to iterated upon
     intg modd; // stride in dimension being iterated upon
-
-    //! generic constructor loops over dimensin ld
-    idxlooper(idx<T> &m, int ld);
-
-    //! return true if loop is over
-    bool notdone();
-
-    //! increment to next item. Return pointer to data.
-    T *next();
-
-    void operator++();
   };
 
   ////////////////////////////////////////////////////////////////
@@ -836,42 +830,29 @@ namespace ebl {
   //! being worked on is stored in idx.d[k] for k=0
   //! to idx.order()-1.
   template <class T> class idxiter {
-
   public:
-    //! pointer to current item
-    T *data;
-    //! number of elements visited so far (loop index)
-    intg i;
-    //! total number of elements in idx
-    intg n;
-    //! dimension being looped over
-    int j;
-    //! loop index array for non-contiguous idx
-    intg d[MAXDIMS];
-    //! pointer to idx being looped over.
-    const idx<T> *iterand;
-
     //! empty constructor;
     idxiter();
-
     //! Initialize an idxiter to the start of
     //! the idx passed as argument.
     T *init(const idx<T> &m);
-
     //! Return true while the loop is not completed
     bool notdone();
-
     //! Increments idxiter to next element
     T *next();
-
     //! dereferencing operator: returns data item.
     T& operator*() { return *data; }
-
+  protected:
+    T *data; //!< pointer to current item
+    intg i; //!< number of elements visited so far (loop index)
+    intg n; //!< total number of elements in idx
+    int j; //!< dimension being looped over
+    intg d[MAXDIMS]; //!< loop index array for non-contiguous idx
+    const idx<T> *iterand; //!< pointer to idx being looped over.
   };
 
   template <class T> class contiguous_idxiter {
   public:
-    T *current, *end;
     inline contiguous_idxiter() {}
     inline contiguous_idxiter(idx<T> & m)
       :current(m.storage->data + m.spec.offset), end(NULL) {
@@ -886,6 +867,8 @@ namespace ebl {
     inline void next() {++current;}
     inline T& operator * () {return *current;}
     inline void operator += (intg i) {current += i;}
+  protected: // members
+    T *current, *end;
   };
 
   template <class T> class noncontiguous_idxiter {

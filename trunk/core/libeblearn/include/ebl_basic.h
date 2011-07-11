@@ -468,6 +468,14 @@ namespace ebl {
     virtual idxdim get_paddings();
     //! Set all paddings from 'pads' in this order: top,left,bottom,right.
     virtual void set_paddings(idxdim &pads);
+    //! Return dimensions that are compatible with this module.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim fprop_size(idxdim &i_size);
+    //! Return dimensions compatible with this module given output dimensions.
+    //! See module_1_1_gen's documentation for more details.
+    virtual idxdim bprop_size(const idxdim &o_size);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
   
   protected:
     int nrow, ncol; //!< padding on left and top

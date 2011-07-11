@@ -112,7 +112,10 @@ namespace ebl {
     d.setdim(0, w.x.dim(0)); // except for the first one
     if (out.x.get_idxdim() != d) { // resize only if necessary
       DEBUG(this->name() << ": resizing output from " << out.x << " to " << d);
-      out.resize(d);
+      if (out.x.order() != d.order())
+	out = Tstate(d); // re-allocate
+      else
+	out.resize(d);
     }
   }
 
@@ -1060,6 +1063,32 @@ namespace ebl {
     ncol = pads.dim(1);
     nrow2 = pads.dim(2);
     ncol2 = pads.dim(3);
+  }
+  
+  template <typename T, class Tstate>
+  idxdim zpad_module<T,Tstate>::fprop_size(idxdim &isize) {
+    idxdim osize = isize;
+    osize.setdim(1, isize.dim(1) + nrow + nrow2);
+    osize.setdim(2, isize.dim(2) + ncol + ncol2);
+    //! Recompute the input size to be compliant with the output
+    isize = bprop_size(osize);
+    return osize;
+  }
+
+  template <typename T, class Tstate>
+  idxdim zpad_module<T, Tstate>::bprop_size(const idxdim &osize) {
+    idxdim isize = osize;
+    isize.setdim(1, osize.dim(1) - nrow - nrow2);
+    isize.setdim(2, osize.dim(2) - ncol - ncol2);
+    return isize;
+  }
+
+  template <typename T, class Tstate>
+  std::string zpad_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "zpad module " << this->name() << " is padding with: "
+	 << pads;
+    return desc;
   }
   
   ////////////////////////////////////////////////////////////////

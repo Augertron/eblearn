@@ -245,18 +245,21 @@ int train(configuration &conf, string &conffname) {
       trainclasses = conf.get_string("train_classes");
     if (conf.exists("train_jitters"))
       trainjitters = conf.get_string("train_jitters");
+    uint maxtrain = 0, maxval = 0;
+    if (conf.exists("train_size")) maxtrain = conf.get_uint("train_size");
+    if (conf.exists("val_size")) maxval = conf.get_uint("val_size");
     labeled_datasource<Tnet,Tdata,Tlabel> *train_ds = NULL;
     labeled_datasource<Tnet,Tdata,Tlabel> *test_ds = NULL;
     if (classification) { // classification task
       class_datasource<Tnet,Tdata,Tlabel> *ds =
 	new class_datasource<Tnet,Tdata,Tlabel>;
       ds->init(valdata.c_str(), vallabels.c_str(), valjitters.c_str(),
-		    valclasses.c_str(), "val");
+	       valclasses.c_str(), "val", maxval);
       test_ds = ds;
     } else { // regression task
       test_ds = new labeled_datasource<Tnet,Tdata,Tlabel>;
       test_ds->init(valdata.c_str(), vallabels.c_str(), valjitters.c_str(),
-		    "val");
+		    "val", maxval);
     }
     test_ds->set_test(); // test is the test set, used for reporting
     test_ds->pretty();
@@ -265,7 +268,7 @@ int train(configuration &conf, string &conffname) {
 	class_datasource<Tnet,Tdata,Tlabel> *ds =
 	  new class_datasource<Tnet,Tdata,Tlabel>;
 	ds->init(traindata.c_str(), trainlabels.c_str(),
-		 trainjitters.c_str(), trainclasses.c_str(), "train");
+		 trainjitters.c_str(), trainclasses.c_str(), "train", maxtrain);
 	noutputs = ds->get_nclasses();
 	if (conf.exists("balanced_training"))
 	  ds->set_balanced(conf.get_bool("balanced_training"));
@@ -273,7 +276,7 @@ int train(configuration &conf, string &conffname) {
       } else { // regression task
 	train_ds = new labeled_datasource<Tnet,Tdata,Tlabel>;
 	train_ds->init(traindata.c_str(), trainlabels.c_str(),
-		       trainjitters.c_str(), "train");
+		       trainjitters.c_str(), "train", maxtrain);
 	idxdim d = train_ds->label_dims();
 	noutputs = d.nelements();
       }
@@ -422,7 +425,9 @@ int select_label_type(configuration &conf, string &conffname) {
     //   return train<Tdata, uint>(conf, conffname);
     //   break ;
     default:
-      eblerror("train is not compiled for labels with type " << type);
+      cout << "train is not compiled for labels with type " << type 
+	   << ", found in " << labels_fname << ", using int instead." << endl;
+      return train<Tdata, int>(conf, conffname);
     }
   } eblcatcherror();
   return -1;
@@ -456,7 +461,9 @@ int select_data_type(configuration &conf, string &conffname) {
     //   return select_label_type<uint>(conf, conffname);
     //   break ;
     default:
-      eblerror("train is not compiled for data with type " << type);
+      cout << "train is not compiled for data with type " << type 
+	   << ", found in " << data_fname << ", using float instead." << endl;
+      return select_label_type<float>(conf, conffname);
     }
   } eblcatcherror();
   return -1;
@@ -480,6 +487,7 @@ int main(int argc, char **argv) { // regular main without gui
 #endif
   cout << "Using random seed " << dynamic_init_drand(argc, argv) << endl;
   string conffname = argv[1];
-  configuration conf(conffname); // configuration file
+  configuration conf(conffname, false, true); // configuration file
+  if (conf.exists_true("show_conf")) conf.pretty();
   return select_data_type(conf, conffname);
 }

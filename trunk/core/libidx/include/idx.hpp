@@ -500,7 +500,35 @@ namespace ebl {
   for ( ; dst0.notdone();						\
 	dst0.next(), dst1.next(), dst2.next(), dst3.next(), dst4.next(), \
 	  dst5.next())
+
+  // 1loop macros: loop on all but the 1st dimension
   
+#define idx_1loop2(dst0,src0,type0,dst1,src1,type1,code) {		\
+    uint src0o = src0.order();						\
+    if (src0o == 1) {							\
+      idx<type0> dst0 = src0;						\
+      idx<type1> dst1 = src1;						\
+      code								\
+    } else if (src0o == 2) {						\
+      idxlooper<type0> dst0(src0, 1);					\
+      idxlooper<type1> dst1(src1, 1);					\
+      for ( ; dst0.notdone(); dst0.next(), dst1.next()) {		\
+	code								\
+	  }								\
+    } else if (src0o == 3) {						\
+      idxlooper<type0> src00(src0, 2);					\
+      idxlooper<type1> src11(src1, 2);					\
+      for ( ; src00.notdone(); src00.next(), src11.next()) {		\
+	idxlooper<type0> dst0(src00, 1);				\
+	idxlooper<type1> dst1(src11, 1);				\
+	for ( ; dst0.notdone(); dst0.next(), dst1.next()) {		\
+	  code								\
+	    }								\
+      }									\
+    } else								\
+      eblerror("order " << src0o << " not implemented");		\
+  }
+
   // eloop macros
 
 #define idx_eloop1(dst0,src0,type0)		\
@@ -1191,7 +1219,8 @@ namespace ebl {
   template <class T> T idx<T>::set(T val, intg i0) {
 #ifdef __DEBUG__
     idx_checkorder1(*this, 1);
-    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
+    if ((i0 < 0) || (i0 >= spec.dim[0]))
+      eblerror("index " << i0 << " in dim 0 out of bound in " << *this);
 #endif
     return (storage->data)[spec.offset + i0*spec.mod[0]] = val;
   }
@@ -1200,8 +1229,10 @@ namespace ebl {
   template <class T> T idx<T>::set(T val, intg i0, intg i1) {
 #ifdef __DEBUG__
     idx_checkorder1(*this, 2);
-    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
-    if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
+    if ((i0 < 0) || (i0 >= spec.dim[0]))
+      eblerror("index " << i0 << " in dim 0 out of bound in " << *this);
+    if ((i1 < 0) || (i1 >= spec.dim[1]))
+      eblerror("index " << i1 << " in dim 1 out of bound in " << *this);
 #endif
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1]] = val;
   }
@@ -1210,9 +1241,12 @@ namespace ebl {
   template <class T> T idx<T>::set(T val, intg i0, intg i1, intg i2) {
 #ifdef __DEBUG__
     idx_checkorder1(*this, 3);
-    if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
-    if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
-    if ((i2 < 0) || (i2 >= spec.dim[2])) eblerror("index 2 out of bound");
+    if ((i0 < 0) || (i0 >= spec.dim[0]))
+      eblerror("index " << i0 << " in dim 0 out of bound in " << *this);
+    if ((i1 < 0) || (i1 >= spec.dim[1]))
+      eblerror("index " << i1 << " in dim 1 out of bound in " << *this);
+    if ((i2 < 0) || (i2 >= spec.dim[2]))
+      eblerror("index " << i2 << " in dim 2 out of bound in " << *this);
 #endif
     return (storage->data)[spec.offset + i0*spec.mod[0] + i1*spec.mod[1] 
 			   + i2*spec.mod[2]] = val;

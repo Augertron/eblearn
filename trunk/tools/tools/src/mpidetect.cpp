@@ -361,7 +361,8 @@ public:
 
   //////////////////////////////////////////////////////////////////////////////
 
-  void run() {
+  void run() { 
+    if (conf.exists_true("show_conf")) conf.pretty();
     // config
     uint        ipp_cores		    = 1;
     if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
@@ -409,13 +410,17 @@ public:
     idx<ubyte> frame;
     camera<ubyte> *cam = NULL, *cam2 = NULL;
     if (!strcmp(cam_type.c_str(), "directory")) {
+      string dir;
       if (argc >= 3) // read input dir from command line
-	cam = new camera_directory<ubyte>(argv[2], height, width,
+	dir = argv[2];
+      else if (conf.exists("input_dir"))
+	dir = conf.get_string("input_dir");
+      if (argc >= 3) // read input dir from command line
+	cam = new camera_directory<ubyte>(dir.c_str(), height, width,
 					  input_random, npasses, mout, merr);
       else if (conf.exists("input_dir")) // read input dir from conf
-	cam = new camera_directory<ubyte>(conf.get_cstring("input_dir"), 
-					  height, width, input_random,
-					  npasses, mout, merr);
+	cam = new camera_directory<ubyte>(dir.c_str(), height, width, 
+					  input_random, npasses, mout, merr);
       else eblerror("expected 2nd argument");
     } else if (!strcmp(cam_type.c_str(), "opencv"))
       cam = new camera_opencv<ubyte>(-1, height, width);
@@ -675,13 +680,14 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
     try {
     
       // load configuration
-      configuration	conf(argv[1], false, myid == 0 ? false : true);
+      configuration	conf(argv[1], false, true, false);
       if (!conf.exists("root2")) {
-	string dir = dirname(argv[1]);
+	string dir;
+	dir << dirname(argv[1]) << "/";
 	cout << "Looking for trained files in: " << dir << endl;
 	conf.set("root2", dir.c_str());
-	conf.resolve();
       }
+      conf.resolve(); // manual call to resolving variable
       uint              ipp_cores     = 1;
       if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
       ipp_init(ipp_cores); // limit IPP (if available) to 1 core

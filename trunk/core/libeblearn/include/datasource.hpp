@@ -766,25 +766,30 @@ namespace ebl {
   template <typename Tnet, typename Tdata, typename Tlabel>
   void labeled_datasource<Tnet, Tdata, Tlabel>::
   init(const char *data_fname, const char *labels_fname,
-       const char *jitters_fname, const char *name_) {
+       const char *jitters_fname, const char *name_, uint max_size) {
     idx<Tdata> dat;
     idx<Tlabel> lab;
 
     try {
       dat = load_matrix<Tdata>(data_fname);
       lab = load_matrix<Tlabel>(labels_fname);
+      if (max_size > 0) {
+	cout << "Limiting " << name_<< " to " << max_size << " samples." <<endl;
+	dat = dat.narrow(0, std::min((intg) max_size, dat.dim(0)), 0);
+	lab = lab.narrow(0, std::min((intg) max_size, lab.dim(0)), 0);
+      }
     } catch (string &err) {
       cerr << err << endl;
       eblerror("Failed to load dataset file");
     }
     // load jitters
-    if (jitters_fname) {
+    if (jitters_fname && strlen(jitters_fname) != 0) {
       try {
 	jitters = load_matrices<float>(jitters_fname);
 	jitters_maxdim = jitters.get_maxdim();
       }
       catch (string &err) { cerr << "warning: " << err << endl; }
-    }
+    } else cout << "No jitter information loaded." << endl;
     // init
     labeled_datasource<Tnet, Tdata, Tlabel>::init(dat, lab, name_);
   }
@@ -990,7 +995,7 @@ namespace ebl {
     counts.resize(nclasses);
     fill(counts.begin(), counts.end(), 0);
     idx_bloop1(lab, labels, Tlabel) {
-      counts[(size_t)lab.get()]++;
+      counts[(size_t)lab.gget()]++;
     }
     // balance
     set_balanced(true); // balance dataset for each class in next_train
@@ -1008,15 +1013,18 @@ namespace ebl {
   template <typename Tnet, typename Tdata, typename Tlabel>
   void class_datasource<Tnet, Tdata, Tlabel>::
   init(const char *data_fname, const char *labels_fname,
-       const char *jitters_fname, const char *classes_fname, const char *name_){
+       const char *jitters_fname, const char *classes_fname, const char *name_,
+       uint max_size) {
     // load classes
     idx<ubyte> classes;
-    bool classes_found = true;
-    try { classes = load_matrix<ubyte>(classes_fname); }
-    catch (string &err) {
-      cerr << "warning: " << err << endl;
-      classes_found = false;
-    }
+    bool classes_found = false;
+    if (classes_fname && strlen(classes_fname) != 0) {
+      try {
+	classes = load_matrix<ubyte>(classes_fname);
+	classes_found = true;
+      } catch (string &err) { cerr << "warning: " << err << endl; }
+    } else
+      cout << "No catergory names found, using numbers." << endl;
     // classes names are optional, use numbers by default if not specified
     if (classes_found) {
       this->lblstr = new vector<string*>;
@@ -1026,7 +1034,7 @@ namespace ebl {
     }
     // init
     labeled_datasource<Tnet, Tdata, Tlabel>::
-      init(data_fname, labels_fname, jitters_fname, name_);
+      init(data_fname, labels_fname, jitters_fname, name_, max_size);
     class_datasource<Tnet, Tdata, Tlabel>::init_local(this->lblstr);
   }
   
@@ -1119,7 +1127,7 @@ namespace ebl {
       if (count_pickings)
 	pick_count.set(pick_count.get(it) + 1, it);
 #ifdef __DEBUG__
-      cout << "Picking sample " << it << " (label: " << (int)labels.get(it)
+      cout << "Picking sample " << it << " (label: " << (int)labels.gget(it)
 	   << ", pickings: " << pick_count.get(it) << ", energy: "
 	   << energies.get(it) << ", correct: " << (int) correct.get(it);
       if (weigh_samples) cout << ", proba: " << probas.get(it);
@@ -1137,7 +1145,7 @@ namespace ebl {
     } else {
 #ifdef __DEBUG__
       cout << "Not picking sample " << it << " (label: "
-	   << (int) labels.get(it) << ", pickings: " << pick_count.get(it)
+	   << (int) labels.gget(it) << ", pickings: " << pick_count.get(it)
 	   << ", energy: " << energies.get(it)
 	   << ", correct: " << (int) correct.get(it)
 	   << ", proba: " << probas.get(it) << ")" << endl;
@@ -1168,7 +1176,7 @@ namespace ebl {
       }
       // distribute sample indices into each vector based on label
       for (uint i = 0; i < this->size(); ++i)
-	bal_indices[(intg) (labels.get(i))].push_back(i);
+	bal_indices[(intg) (labels.gget(i))].push_back(i);
       for (uint i = 0; i < bal_indices.size(); ++i) {
 	// shuffle
 	random_shuffle(bal_indices[i].begin(), bal_indices[i].end());

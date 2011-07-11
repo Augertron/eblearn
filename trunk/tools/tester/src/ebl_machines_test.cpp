@@ -31,8 +31,8 @@ void ebl_machines_test::test_lenet5_mnist() {
   
   // load MNIST dataset
   mnist_datasource<Tnet,Tdata,Tlab>
-    train_ds(gl_mnist_dir->c_str(), true, 2000),
-    test_ds(gl_mnist_dir->c_str(), false, 1000);
+    test_ds(gl_mnist_dir->c_str(), false, 1000),
+    train_ds(gl_mnist_dir->c_str(), true, 2000);
   train_ds.set_balanced(true);
   train_ds.set_shuffle_passes(true);
   // set 2nd argument to true for focusing on hardest examples
@@ -119,13 +119,13 @@ void ebl_machines_test::test_lenet5_mnist() {
   }
 #endif
   // this goes at about 25 examples per second on a PIIIM 800MHz
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 5; ++i) {
 #ifdef __DEBUGMEM__
     pretty_memory();
 #endif
     thetrainer.train(train_ds, trainmeter, gdp, 1, infp);
-    ostringstream name(""); name << "pickings_" << i+1;
-    train_ds.save_pickings(name.str().c_str());
+    // ostringstream name(""); name << "pickings_" << i+1;
+    // train_ds.save_pickings(name.str().c_str());
     thetrainer.test(train_ds, trainmeter, infp);
     thetrainer.test(test_ds, testmeter, infp);
     thetrainer.compute_diaghessian(train_ds, 100, 0.02);
@@ -141,7 +141,7 @@ void ebl_machines_test::test_lenet5_mnist() {
   }
   CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, // old: 97.00
 			       ((trainmeter.total_correct * 100) 
-				/ (double) trainmeter.size), 0.5);
+				/ (double) trainmeter.size), 1.5);
   CPPUNIT_ASSERT_DOUBLES_EQUAL(95.4262, // 96.4630, // old: 95.90
 			       ((testmeter.total_correct * 100) 
 				/ (double) testmeter.size), 1.5);

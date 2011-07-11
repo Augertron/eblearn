@@ -33,9 +33,6 @@
 #ifndef IDXOPS_HPP
 #define IDXOPS_HPP
 
-//TODO
-#define USING_FAST_ITERS 1
-
 using namespace std;
 
 namespace ebl {
