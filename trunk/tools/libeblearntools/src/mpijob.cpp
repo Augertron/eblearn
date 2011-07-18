@@ -147,7 +147,7 @@ namespace ebl {
   eblerror("MPI was not found during compilation, install and recompile");
 #else
   rank = world.rank();
-  slots = world.size() - 1; // number of available cpus, excluding master
+  jslots = world.size() - 1; // number of available cpus, excluding master
   id_running = -1; // no job running intially
 #endif    
   }
@@ -223,7 +223,7 @@ namespace ebl {
 //       }
 //       if (mconf.exists("meta_watch_interval"))
 // 	swait = rmconf.get_uint("meta_watch_interval");
-//       max_jobs = slots;
+//       max_jobs = jslots;
 //     }
     return true;
   }
@@ -262,7 +262,7 @@ namespace ebl {
     time.start();
     // print info
     string prefix = "master: ";
-    cout << prefix << "world has " << slots 
+    cout << prefix << "world has " << jslots 
 	 << " slots (excluding master)." << endl;
     cout << prefix << jobs.size() << " jobs to process." << endl;
     // ask each slave if available
@@ -371,7 +371,7 @@ namespace ebl {
       if (running[i] >= 0)
 	nalive++;
     }
-    ready_slots = slots - nalive;
+    ready_slots = jslots - nalive;
     // count unstarted/unfinished/running
     for (uint i = 0; i < jobs.size(); ++i) {
       jobs[i]->check_running();

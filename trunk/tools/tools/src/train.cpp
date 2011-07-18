@@ -337,7 +337,13 @@ int main(int argc, char **argv) { // regular main without gui
 #endif
   cout << "Using random seed " << dynamic_init_drand(argc, argv) << endl;
   string conffname = argv[1];
-  configuration conf(conffname, false, true); // configuration file
+  configuration conf(conffname, true, true, false); // configuration file
+  // set current directory
+  string curdir;
+  curdir << dirname(argv[1]) << "/";
+  cout << "Setting conf directory to: " << curdir << endl;
+  conf.set("current_dir", curdir.c_str());
+  conf.resolve();
   if (conf.exists_true("show_conf")) conf.pretty();
   return select_data_type(conf, conffname);
 }

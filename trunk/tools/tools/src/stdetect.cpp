@@ -82,9 +82,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	dir << dirname(argv[1]) << "/";
 	cout << "Looking for trained files in: " << dir << endl;
 	conf.set("root2", dir.c_str());
+	conf.set("current_dir", dir.c_str());
       }
-	  conf.resolve();
-	  if (conf.exists_true("show_conf")) conf.pretty();
+      conf.resolve();
+      if (conf.exists_true("show_conf")) conf.pretty();
       bool		color	      = conf.exists_bool("color");
       uint		norm_size     = conf.get_uint("normalization_size");
       Tnet		threshold     = (Tnet) conf.get_double("threshold");
@@ -94,11 +95,20 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       uint		display_sleep = 0;
       bool		save_video    = false;
       string		cam_type      = conf.get_string("camera");
-      int		height        = conf.get_int("input_height");
-      int		width         = conf.get_int("input_width");
+      int		height        = -1;
+      int		width         = -1;
+      if (conf.exists("input_height")) height = conf.get_int("input_height");
+      if (conf.exists("input_width")) width = conf.get_int("input_width");
+      bool              input_random  = conf.exists_true("input_random");
+      uint              npasses       = 1;
+      char              next_on_key   = 0;
       uint              wid           = 0; // window id
       uint              wid_states    = 0; // window id
       string		outdir        = "out_";
+      if (conf.exists("next_on_key")) {
+	next_on_key = conf.get_char("next_on_key");
+	cout << "Press " << next_on_key << " to process next frame." << endl;
+      }
       outdir += tstamp();
       outdir += "/";
       cout << "Saving outputs to " << outdir << endl;
@@ -131,7 +141,41 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 
       // detector
       detector<fs(Tnet)> detect(*net, sclasses, *ans, NULL, NULL);
-      detect.set_resolutions(conf.get_double("scaling"));
+      // multi-scaling parameters      
+      double maxs = conf.exists("max_scale")?conf.get_double("max_scale") : 1.0;
+      double mins = conf.exists("min_scale")?conf.get_double("min_scale") : 1.0;
+      t_scaling scaling_type = SCALES_STEP;
+      vector<idxdim> scales;
+      if (conf.exists("scaling_type"))
+       scaling_type = (t_scaling) conf.get_uint("scaling_type");
+      switch (scaling_type) {
+      case MANUAL:
+	if (!conf.exists("scales"))
+	  eblerror("expected \"scales\" variable to be defined in manual mode");
+	scales = string_to_idxdimvector(conf.get_cstring("scales"));
+	detect.set_resolutions(scales);
+	break ;
+      case ORIGINAL: detect.set_scaling_original(); break ;
+      case SCALES_STEP:
+	detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
+	break ;
+      case SCALES_STEP_UP:
+	detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
+	detect.set_scaling_type(scaling_type);
+	break ;
+      default:
+	detect.set_scaling_type(scaling_type);
+      }
+     // optimize memory usage by using only 2 buffers for entire flow
+     SBUF<Tnet> input(1, 1, 1), output(1, 1, 1);
+     if (!conf.exists_false("mem_optimization"))
+       detect.set_mem_optimization(input, output, true);
+     // zero padding
+     float hzpad = 0, wzpad = 0;
+     if (conf.exists("hzpad")) hzpad = conf.get_float("hzpad");
+     if (conf.exists("wzpad")) wzpad = conf.get_float("wzpad");
+     detect.set_zpads(hzpad, wzpad);
+      
       bool bmask_class = false;
       if (conf.exists("mask_class"))
 	bmask_class = detect.set_mask_class(conf.get_cstring("mask_class"));
@@ -147,61 +191,108 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	if (conf.exists("save_max_per_frame"))
 	  detect.set_save_max_per_frame(conf.get_uint("save_max_per_frame"));
       }
-     if (conf.exists("pruning"))
-       detect.set_pruning((t_pruning)conf.get_uint("pruning"), 
-			  conf.exists_true("ped_only"),
-			  conf.exists("min_hcenter_dist") ? 
-			  conf.get_float("min_hcenter_dist") : 0.0,
-			  conf.exists("min_wcenter_dist") ? 
-			  conf.get_float("min_wcenter_dist") : 0.0,
-			  conf.exists("max_bb_overlap") ? 
-			  conf.get_float("max_bb_overlap") : 1.0
-			  );
-     if (conf.exists("bbox_hfactor") && conf.exists("bbox_wfactor"))
-       detect.set_bbox_factors(conf.get_float("bbox_hfactor"),
-			       conf.get_float("bbox_wfactor"),
-			       conf.exists("bbox_woverh") ?
-			       conf.get_float("bbox_woverh") : 1.0,
-			       conf.exists("bbox_hfactor2") ?
-			       conf.get_float("bbox_hfactor2") : 1.0,
-			       conf.exists("bbox_wfactor2") ?
-			       conf.get_float("bbox_wfactor2") : 1.0);
+      // nms
+      detect.set_cluster_nms(conf.exists_true("cluster_nms"));
+      detect.set_scaler_mode(conf.exists_true("scaler_mode"));
+      if (conf.exists("nms"))
+	detect.set_pruning((t_pruning)conf.get_uint("nms"), 
+			   conf.exists("min_hcenter_dist") ? 
+			   conf.get_float("min_hcenter_dist") : 0.0,
+			   conf.exists("min_wcenter_dist") ? 
+			   conf.get_float("min_wcenter_dist") : 0.0,
+			   conf.exists("bbox_max_overlap") ? 
+			   conf.get_float("bbox_max_overlap") : 1.0,
+			   conf.exists_true("share_parts"),
+			   conf.exists("threshold2") ? 
+			   (Tnet) conf.get_float("threshold2") : 0.0,
+			   conf.exists("bbox_max_center_dist") ? 
+			   conf.get_float("bbox_max_center_dist") : 0.0,
+			   conf.exists("bbox_max_center_dist2") ? 
+			   conf.get_float("bbox_max_center_dist2") : 0.0,
+			   conf.exists("bbox_max_wcenter_dist") ? 
+			   conf.get_float("bbox_max_wcenter_dist") : 0.0,
+			   conf.exists("bbox_max_wcenter_dist2") ? 
+			   conf.get_float("bbox_max_wcenter_dist2") : 0.0,
+			   conf.exists("min_wcenter_dist2") ? 
+			   conf.get_float("min_wcenter_dist2") : 0.0,
+			   conf.exists("bbox_max_overlap2") ? 
+			   conf.get_float("bbox_max_overlap2") : 0.0,
+			   conf.exists_true("mean_bb"),
+			   conf.exists("same_scale_mhd") ? 
+			   conf.get_float("same_scale_mhd") : 0.0,
+			   conf.exists("same_scale_mwd") ? 
+			   conf.get_float("same_scale_mwd") : 0.0,
+			   conf.exists("min_scale_pred") ? 
+			   conf.get_float("min_scale_pred") : 0.0,
+			   conf.exists("max_scale_pred") ? 
+			   conf.get_float("max_scale_pred") : 0.0
+			   );
+      if (conf.exists("bbox_hfactor") && conf.exists("bbox_wfactor"))
+	detect.set_bbox_factors(conf.get_float("bbox_hfactor"),
+				conf.get_float("bbox_wfactor"),
+				conf.exists("bbox_woverh") ?
+				conf.get_float("bbox_woverh") : 1.0,
+				conf.exists("bbox_hfactor2") ?
+				conf.get_float("bbox_hfactor2") : 1.0,
+				conf.exists("bbox_wfactor2") ?
+				conf.get_float("bbox_wfactor2") : 1.0);
+      if (conf.exists("max_object_hratio"))
+	detect.set_max_object_hratio(conf.get_double("max_object_hratio"));
+      if (conf.exists("net_min_height") && conf.exists("net_min_width"))
+	detect.set_min_input(conf.get_int("net_min_height"),
+			     conf.get_int("net_min_width"));
+      if (conf.exists("smoothing"))
+	detect.set_smoothing(conf.get_uint("smoothing"));
+      if (conf.exists("background_name"))
+	detect.set_bgclass(conf.get_cstring("background_name"));
+      // image search can be configured with a search pattern
+      const char *fpattern = IMAGE_PATTERN_MAT;
+      if (conf.exists("file_pattern"))
+	fpattern = conf.get_cstring("file_pattern");
 
       // initialize camera (opencv, directory, shmem or video)
-      idx<Tnet> frame;
-      camera<Tnet> *cam = NULL, *cam2 = NULL;
-      if (conf.exists_bool("retrain") && conf.exists("retrain_dir")) {
-	// extract false positives
-	cam = new camera_directory<Tnet>(conf.get_cstring("retrain_dir"));
-      } else { // regular execution
-	if (!strcmp(cam_type.c_str(), "directory")) {
-	  if (argc >= 3) 
-	    cam = new camera_directory<Tnet>(argv[2], height, width);
-	  else if (conf.exists("input_dir"))
-	    cam = new camera_directory<Tnet>(conf.get_cstring("input_dir"), 
-					      height, width);
-	  else eblerror("expected 2nd argument");
-	} else if (!strcmp(cam_type.c_str(), "opencv"))
-	  cam = new camera_opencv<Tnet>(-1, height, width);
+      idx<ubyte> frame;
+      camera<ubyte> *cam = NULL, *cam2 = NULL;
+      if (!strcmp(cam_type.c_str(), "directory")) {
+	string dir;
+	if (argc >= 3) // read input dir from command line
+	  dir = argv[2];
+	else if (conf.exists("input_dir"))
+	  dir = conf.get_string("input_dir");
+	// given list
+	list<string> files;
+	if (conf.exists("input_list")) {
+	  files = string_to_stringlist(conf.get_string("input_list"));
+	  cam = new camera_directory<ubyte>(dir.c_str(), height, width,
+					    input_random, npasses,
+					    std::cout, std::cerr,
+					    fpattern, &files);
+	} else // given directory only
+	  cam = new camera_directory<ubyte>(dir.c_str(), height, width,
+					    input_random, npasses,
+					    std::cout, std::cerr,
+					    fpattern, &files);
+      } else if (!strcmp(cam_type.c_str(), "opencv"))
+	cam = new camera_opencv<ubyte>(-1, height, width);
 #ifdef __LINUX__
-	else if (!strcmp(cam_type.c_str(), "v4l2"))
-	  cam = new camera_v4l2<Tnet>(conf.get_cstring("device"),
-				       height, width);
+      else if (!strcmp(cam_type.c_str(), "v4l2"))
+	cam = new camera_v4l2<ubyte>(conf.get_cstring("device"),
+				     height, width,
+				     conf.exists_true("camera_grayscale"));
 #endif
-	else if (!strcmp(cam_type.c_str(), "shmem"))
-	  cam = new camera_shmem<Tnet>("shared-mem", height, width);
-	else if (!strcmp(cam_type.c_str(), "video")) {
-	  if (argc >= 3)
-	    cam = new camera_video<Tnet>
-	      (argv[2], height, width, conf.get_uint("input_video_sstep"),
-	       conf.get_uint("input_video_max_duration"));
-	  else eblerror("expected 2nd argument");
-	} else eblerror("unknown camera type");
-	// a camera directory may be used first, then switching to regular cam
-	if (conf.exists_bool("precamera"))
-	  cam2 = new camera_directory<Tnet>(conf.get_cstring("precamdir"),
-					     height, width);
-      }
+      else if (!strcmp(cam_type.c_str(), "shmem"))
+	cam = new camera_shmem<ubyte>("shared-mem", height, width);
+      else if (!strcmp(cam_type.c_str(), "video")) {
+	if (argc >= 3)
+	  cam = new camera_video<ubyte>
+	    (argv[2], height, width, conf.get_uint("input_video_sstep"),
+	     conf.get_uint("input_video_max_duration"));
+	else eblerror("expected 2nd argument");
+      } else eblerror("unknown camera type");
+      // a camera directory may be used first, then switching to regular cam
+      if (conf.exists_bool("precamera"))
+	cam2 = new camera_directory<ubyte>(conf.get_cstring("precamdir"),
+					   height, width);
 
       // answer variables & initializations
       vector<bbox*> bboxes;
@@ -323,7 +414,11 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // close files
       fp.close();
 #ifdef __GUI__
-      quit_gui(); // close all windows
+      if (!conf.exists_true("no_gui_quit")) {
+	cout << "Closing windows..." << endl;
+	quit_gui(); // close all windows
+	cout << "Windows closed." << endl;
+      }
 #endif
     } eblcatcherror();
   return 0;
