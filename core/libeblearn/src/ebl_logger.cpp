@@ -145,13 +145,19 @@ namespace ebl {
     // normalize the error per class
     double err = 0.0;
     uint i = 0;
+    double active_classes = 0; // count active classes
     idx_eloop1(desired, confu, int) {
       double sum = idx_sum(desired); // all answers
       double positive = desired.get(i); // true answers
-      err += (sum - positive) / (std::max)((double) 1, sum); // error for class i
+      if (sum > 0.0) {
+	err += (sum - positive) / sum; // error for class i
+	active_classes += 1;
+      }
       i++;
     }
-    err /= confu.dim(0); // average error
+    if (active_classes == 0)
+      eblerror("no active classes in confusion matrix " << confu.str());
+    err /= active_classes; // average error
     return err * 100; // average error percentage
   }
 
@@ -229,15 +235,17 @@ namespace ebl {
       cout << endl;
       cout << "errors per class: ";
       for (uint i = 0; i < class_errors.size(); ++i) {
-	// number of samples for this class
-	cout << (ds_is_test ? "test_" : "");
-	if (lblstr) cout << *((*lblstr)[i]); else cout << i;
-	cout << "_samples=" << class_totals[i] << " ";
-	// percentage of error for this class
-	cout << (ds_is_test ? "test_" : "");
-	if (lblstr) cout << *((*lblstr)[i]); else cout << i;
-	cout << "_errors=" << class_errors[i] * 100.0
-	  / (float) ((class_totals[i]==0)?1:class_totals[i]) << "% ";
+	if (class_totals[i] > 0) {
+	  // number of samples for this class
+	  cout << (ds_is_test ? "test_" : "");
+	  if (lblstr) cout << *((*lblstr)[i]); else cout << i;
+	  cout << "_samples=" << class_totals[i] << " ";
+	  // percentage of error for this class
+	  cout << (ds_is_test ? "test_" : "");
+	  if (lblstr) cout << *((*lblstr)[i]); else cout << i;
+	  cout << "_errors=" << class_errors[i] * 100.0
+	    / (float) ((class_totals[i]==0)?1:class_totals[i]) << "% ";
+	}
       }
     } else {
       if (size > 0) {
@@ -265,6 +273,10 @@ namespace ebl {
   int classifier_meter::get_class_errors(idx<int> &confu, intg classid) {
     idx<int> thisclass = confu.select(1, classid);
     return idx_sum(thisclass) - thisclass.get(classid);
+  }
+
+  double classifier_meter::get_normalized_error() {
+    return class_normalized_average_error(confusion);
   }
 
   void classifier_meter::display_average(string &dsname,

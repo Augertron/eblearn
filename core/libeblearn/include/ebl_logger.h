@@ -146,7 +146,9 @@ namespace ebl {
     //! Return the number of errors for class with id 'classid'
     //! in confusion matrix 'confu'.
     int get_class_errors(idx<int> &confu, intg classid);
-
+    //! Returns the error rate, normalized by the number of examples of in each
+    //! class.
+    double get_normalized_error();
     //! Returns the confusion matrix;
     idx<int>& get_confusion();
 

@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Matt Grimes and Pierre Sermanet   *
- *   mkg@cs.nyu.edu, pierre.sermanet@gmail.com   *
+ *   Copyright (C) 2011 by Pierre Sermanet   *
+ *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,21 +66,6 @@ namespace ebl {
     } eblcatcherror();
   }
 
-  // template <typename Tnet, typename Tdata>
-  // datasource<Tnet,Tdata>::
-  // datasource(const datasource<Tnet,Tdata> &ds)
-  //   : bias(ds.bias), coeff(ds.coeff), data(ds.data),
-  //     labels(ds.labels), probas(ds.probas), energies(ds.energies),
-  //     correct(ds.correct), raw_outputs(ds.raw_outputs), answers(ds.answers),
-  //     targets(ds.targets),
-  //     pick_count(ds.pick_count), count_pickings(ds.count_pickings),
-  //     height(ds.height), width(ds.width), _name(ds._name), nclasses(0), it(0),
-  //     it_test(0), it_train(0), indices(1), balance(true),
-  //     state_saved(false), sample_min_proba(0.0), shuffle_passes(false), 
-  //     test_set(false), epoch_sz(0), epoch_cnt(0), epoch_pick_cnt(0),
-  //     epoch_mode(1), hardest_focus(false), _ignore_correct(false) {
-  // }
-
   template <typename Tnet, typename Tdata>
   datasource<Tnet,Tdata>::~datasource() {
   }
@@ -95,8 +80,8 @@ namespace ebl {
     if (!drand_ini) // only re-init if not initialized
       dynamic_init_drand(); // initialize random seed
     // no bias and coeff by default (0 and 1)
-    bias = 0;
-    coeff = 1.0;
+    bias = (Tnet) 0;
+    coeff = (Tnet) 1.0;
     // iterating
     it = 0;
     it_test = 0;
@@ -735,12 +720,6 @@ namespace ebl {
     this->pretty(); // print information about this dataset
   }
 
-  // template <typename Tnet, typename Tdata, typename Tlabel>
-  // labeled_datasource<Tnet, Tdata, Tlabel>::
-  // labeled_datasource(const labeled_datasource<Tnet, Tdata, Tlabel> &ds)
-  //   : datasource<Tnet,Tdata,Tlabel>((const datasource<Tnet,Tdata,Tlabel>&) ds) {
-  // }
-
   template <typename Tnet, typename Tdata, typename Tlabel>
   labeled_datasource<Tnet, Tdata, Tlabel>::~labeled_datasource() {
   }
@@ -925,13 +904,7 @@ namespace ebl {
   class_datasource<Tnet, Tdata, Tlabel>::
   class_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
 		   idx<ubyte> &classes, const char *name_) {
-    this->lblstr = NULL;
-    if (classes.order() == 2) {
-      this->lblstr = new vector<string*>;
-      idx_bloop1(classe, classes, ubyte) {
-	this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
-      }
-    }
+    init_strings(classes);
     init(data_, labels_, this->lblstr, name_);
     this->init_epoch();
     this->pretty(); // print info about dataset
@@ -976,8 +949,23 @@ namespace ebl {
 
   template <typename Tnet, typename Tdata, typename Tlabel>
   void class_datasource<Tnet, Tdata, Tlabel>::
+  init_strings(idx<ubyte> &classes) {
+    this->lblstr = NULL;
+    // load classes strings
+    if (classes.order() == 2) {
+      this->lblstr = new vector<string*>;
+      idx_bloop1(classe, classes, ubyte) {
+	this->lblstr->push_back(new string((const char*) classe.idx_ptr()));
+      }
+    }
+  }
+    
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void class_datasource<Tnet, Tdata, Tlabel>::
   init_local(vector<string*> *lblstr_) {
     nclasses = (intg) idx_max(labels) + 1;
+    if (lblstr_)
+      nclasses = std::max(nclasses, (intg) lblstr_->size());
     // assign classes strings
     this->lblstr = lblstr_;
     // if no names are given and discrete, use indices as names
@@ -1024,7 +1012,7 @@ namespace ebl {
 	classes_found = true;
       } catch (string &err) { cerr << "warning: " << err << endl; }
     } else
-      cout << "No catergory names found, using numbers." << endl;
+      cout << "No category names found, using numbers." << endl;
     // classes names are optional, use numbers by default if not specified
     if (classes_found) {
       this->lblstr = new vector<string*>;
@@ -1480,7 +1468,7 @@ namespace ebl {
 
   template <typename Tnet, typename Tdata, typename Tlabel>
   void class_datasource<Tnet, Tdata, Tlabel>::pretty() {
-    cout << _name << ": (classification) class dataset \"" << _name
+    cout << _name << ": classification dataset \"" << _name
 	 << "\" contains "
 	 << data.dim(0) << " samples of dimension " << sampledims
 	 << " and defines an epoch as " << epoch_sz << " samples." << endl;
@@ -1491,6 +1479,809 @@ namespace ebl {
 	cout << this->counts[i] << " \"" << *(*lblstr)[i] << "\", ";
       cout << "and " << this->counts[i] << " \"" << *(*lblstr)[i] << "\".";
       cout << endl;
+    }
+  }
+    
+  //////////////////////////////////////////////////////////////////////////////
+  //! class_node
+
+  template <typename Tlabel>
+  class_node<Tlabel>::class_node(Tlabel id, string &name_)
+    : _label(id), _name(name_), parent(NULL), it_children(children.begin()),
+      bempty(true), iempty(true), _depth(0), it_samples(samples.begin()) {
+    //DEBUG("creating node " << this << " label: " << id << " name: "
+    //<< _name);
+  }
+
+  template <typename Tlabel>
+  class_node<Tlabel>::~class_node() {
+  }
+  
+  template <typename Tlabel>
+  bool class_node<Tlabel>::empty() {
+    return bempty;
+  }
+  
+  template <typename Tlabel>
+  bool class_node<Tlabel>::internally_empty() {
+    return iempty;
+  }
+  
+  template <typename Tlabel>
+  intg class_node<Tlabel>::next() {
+    if (bempty) eblerror("cannot call next() on empty node");
+    intg id = -1;
+    if (it_children == children.end()) { // we reached the end of children
+      // roll back children iterator
+      it_children = children.begin();
+      if (samples.size() > 0) { // return internal samples if present	
+	id = *it_samples;
+	it_samples++;
+	if (it_samples == samples.end()) // roll back samples iterator
+	  it_samples = samples.begin();
+	return id;
+      }
+    }
+    // return a sample from children
+    if ((*it_children)->empty()) {
+      it_children++;
+      return next(); // skip current empty child
+    } else // this child is not empty
+      return (*it_children)->next();      
+  }
+
+  template <typename Tlabel>
+  void class_node<Tlabel>::add_child(class_node *child) {
+    // make sure child is not added twice
+    for (typename vector<class_node<Tlabel>*>::iterator i = children.begin();
+	 i != children.end(); ++i)
+      if (*i == child)
+	eblerror("trying to push same child node twice");
+    // push
+    children.push_back(child);
+    // set child's parent to this node
+    child->set_parent(this);
+    // propagate up if child is non-empty
+    if (!child->empty())
+      set_non_empty();
+  }
+
+  template <typename Tlabel>
+  void class_node<Tlabel>::add_sample(intg index) {
+    samples.push_back(index);
+    iempty = false;
+    // propagate information back to parents
+    set_non_empty();
+  }
+
+  template <typename Tlabel>
+  intg class_node<Tlabel>::nsamples() {
+    // TODO: we might want to use idx here to handle large sets (intg)
+    return samples.size();
+  }
+  
+  template <typename Tlabel>
+  Tlabel class_node<Tlabel>::label() {
+    return _label;
+  }
+  
+  template <typename Tlabel>
+  Tlabel class_node<Tlabel>::label(uint depth) {
+    // current depth is lower or equal to target depth, return current label
+    if (_depth <= depth || !parent)
+      return _label;
+    // current depth is higher than target depth, call parent's label
+    return parent->label(depth);
+  }
+  
+  template <typename Tlabel>
+  uint class_node<Tlabel>::depth() {
+    return _depth;
+  }
+  
+  template <typename Tlabel>
+  uint class_node<Tlabel>::set_depth(uint d) {
+    _depth = d;
+    uint dmax = d;
+    for (typename vector<class_node<Tlabel>*>::iterator i = children.begin();
+	 i != children.end(); ++i)
+      dmax = std::max(dmax, (*i)->set_depth(d + 1));
+    return dmax;
+  }
+
+  template <typename Tlabel>
+  string &class_node<Tlabel>::name() {
+    return _name;
+  }
+  
+  template <typename Tlabel>
+  class_node<Tlabel>* class_node<Tlabel>::get_parent() {
+    return parent;
+  }
+  
+  template <typename Tlabel>
+  bool class_node<Tlabel>::is_parent(Tlabel lab) {
+    if (lab == _label)
+      return true;
+    if (parent)
+      return parent->is_parent(lab);
+    return false;
+  }
+  
+  // protected methods /////////////////////////////////////////////////////////
+
+  template <typename Tlabel>
+  void class_node<Tlabel>::set_non_empty() {
+    bempty = false;
+    // propagate information back to parents
+    if (parent)
+      parent->set_non_empty();    
+  }
+    
+  template <typename Tlabel>
+  void class_node<Tlabel>::set_parent(class_node *p) {
+    parent = p;
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // hierarchy_datasource
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  hierarchy_datasource<Tnet, Tdata, Tlabel>::hierarchy_datasource()
+    : class_datasource<Tnet,Tdata,Tlabel>() {
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  hierarchy_datasource<Tnet, Tdata, Tlabel>::
+  hierarchy_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
+		       idx<Tlabel> &parents_,
+		       vector<string*> *lblstr_, const char *name_) {
+    class_datasource<Tnet,Tdata,Tlabel>::init(data_, labels_, name_, lblstr_);
+    this->init_parents(parents_);
+    this->init_epoch();
+    this->pretty(); // print info about dataset
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  hierarchy_datasource<Tnet, Tdata, Tlabel>::
+  hierarchy_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
+		       idx<Tlabel> &parents_, idx<ubyte> &classes,
+		       const char *name_) {
+    this->init_strings(classes);
+    class_datasource<Tnet,Tdata,Tlabel>::init(data_, labels_, this->lblstr,
+					      name_);
+    this->init_parents(parents_);
+    this->init_epoch();
+    this->pretty(); // print info about dataset
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  hierarchy_datasource<Tnet, Tdata, Tlabel>::
+  hierarchy_datasource(const char *data_name, const char *labels_name,
+		       const char *parents_name, const char *jitters_name,
+		       const char *classes_name, const char *name_) {
+    class_datasource<Tnet,Tdata,Tlabel>::init(data_name, labels_name,
+					      jitters_name, classes_name,name_);
+    // load parent
+    idx<Tlabel> parents_;
+    try {
+      parents_ = load_matrix<Tlabel>(parents_name);
+    } eblcatcherror();
+    // inits
+    this->init_parents(parents_);
+    this->init_epoch();
+    this->pretty(); // print info about dataset
+  }
+
+  // template <typename Tnet, typename Tdata, typename Tlabel>
+  // hierarchy_datasource<Tnet, Tdata, Tlabel>::
+  // hierarchy_datasource(const hierarchy_datasource<Tnet, Tdata, Tlabel> &ds)
+  //   : class_datasource<Tnet,Tdata>((const class_datasource<Tnet,Tdata>&) ds) {
+  // }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  hierarchy_datasource<Tnet, Tdata, Tlabel>::~hierarchy_datasource() {
+    // delete all nodes
+    for (typename vector<class_node<Tlabel>*>::iterator i = all_nodes.begin();
+	 i != all_nodes.end(); ++i) {
+      class_node<Tlabel> *n = *i;
+      if (n) delete n;
+    }
+    // delete depth vectors
+    for (typename vector<vector<class_node<Tlabel>*>*>::iterator i =
+	   all_depths.begin(); i != all_depths.end(); ++i) {
+      vector<class_node<Tlabel>*> *n = *i;
+      if (n) delete n;
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // init methods
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void hierarchy_datasource<Tnet, Tdata, Tlabel>::
+  init_parents(idx<Tlabel> &parents_) {
+    parents = parents_;
+    // check that parent id do not exceed number of classes
+    if (idx_max(parents) > nclasses)
+      eblerror("maximum parent id (" << idx_max(parents)
+	       << ") cannot exceed number of classes (" << nclasses << ")");
+    if (parents.dim(1) != 2)
+      eblerror("expected dim 1 to be size 2 (child/parent)");
+    if (!lblstr)
+      eblerror("expected class strings to be defined");
+    // create hierarchy tree for efficient balanced samples ordering
+    all_nodes.resize(nclasses, NULL);
+    // add a new node for each class
+    Tlabel l = 0;
+    for (vector<string*>::iterator i = lblstr->begin(); i != lblstr->end();++i){
+      class_node<Tlabel> *node = all_nodes[l];
+      if (!node) {
+	node = new class_node<Tlabel>(l, *((*lblstr)[l]));
+	all_nodes[l] = node;
+      }
+      l++;
+    }
+    // add samples to each node
+    intg i = 0;
+    idx_bloop1(lab, labels, Tlabel) {
+      Tlabel l = lab.get();
+      class_node<Tlabel> *node = all_nodes[l];
+      if (!node) eblerror("node " << l << " is not defined");
+      // add sample to node
+      node->add_sample(i);
+      i++;
+    }
+    // associate each class to its parent
+    idx_bloop1(par, parents, Tlabel) {
+      class_node<Tlabel> *child = all_nodes[par.get(0)];
+      if (!child) eblerror("no node with id " << par.get(0));
+      if (par.get(1) >= 0) {
+	class_node<Tlabel> *parent = all_nodes[par.get(1)];
+	parent->add_child(child);
+	//DEBUG("adding "<< child->name() << " as child of " << parent->name());
+      }
+    }
+    // assign depth to all nodes, starting from all orphan nodes
+    uint maxdepth = 0;
+    for (typename vector<class_node<Tlabel>*>::iterator i = all_nodes.begin();
+	 i != all_nodes.end(); ++i) {
+      class_node<Tlabel> *n = *i;
+      if (n && !n->get_parent())
+	maxdepth = std::max(maxdepth, n->set_depth(0));
+    }
+    // remember nodes arranged by depth
+    all_depths.resize(maxdepth + 1, NULL);
+    for (typename vector<class_node<Tlabel>*>::iterator i = all_nodes.begin();
+	 i != all_nodes.end(); ++i) {
+      class_node<Tlabel> *n = *i;
+      if (n) {
+	vector<class_node<Tlabel>*> *d = all_depths[n->depth()];
+        if (!d) {
+	  d = new vector<class_node<Tlabel>*>;
+	  all_depths[n->depth()] = d;
+	}
+	d->push_back(n);
+	//DEBUG("assigning " << n->name() << " to depth " << n->depth());
+      }
+    }
+    // remember nodes arranged by depth and keep nodes with lower depth that
+    // have samples internally. this garantees that all samples are used even
+    // at lower depths than current one.
+    complete_depths.resize(maxdepth + 1, NULL);
+    for (typename vector<class_node<Tlabel>*>::iterator i = all_nodes.begin();
+	 i != all_nodes.end(); ++i) {
+      class_node<Tlabel> *n = *i;
+      if (n) {
+	vector<class_node<Tlabel>*> *d = complete_depths[n->depth()];
+        if (!d) {
+	  d = new vector<class_node<Tlabel>*>;
+	  complete_depths[n->depth()] = d;
+	}
+	d->push_back(n);
+	// add node to all higher depths if it has internal samples
+	if (!n->internally_empty()) {
+	  for (uint i = n->depth() + 1; i < complete_depths.size(); ++i) {
+	    vector<class_node<Tlabel>*> *dd = complete_depths[i];
+	    if (!dd) {
+	      dd = new vector<class_node<Tlabel>*>;
+	      complete_depths[i] = dd;
+	    }
+	    dd->push_back(n);
+	  }
+	}
+	//DEBUG("assigning " << n->name() << " to depth " << n->depth());
+      }
+    }
+    // order all by depth
+    for (typename vector<vector<class_node<Tlabel>*>*>::iterator i =
+	   all_depths.begin(); i != all_depths.end(); ++i) {
+      for (typename vector<class_node<Tlabel>*>::iterator j = (*i)->begin();
+	   j != (*i)->end(); ++j) {
+	all_nodes_by_depth.push_back(*j);
+      }
+    }
+    // initialize depths iterators
+    it_depths.resize(complete_depths.size(), 0);
+    // allocate depth labels
+    depth_labels = idx<Tlabel>(labels.get_idxdim());
+    set_current_depth(0);
+    it = 0;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // data access
+  
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  Tlabel hierarchy_datasource<Tnet,Tdata,Tlabel>::get_parent() {
+    // idx<Tlabel> lab = labels[it];
+    // if (lab.order() != 1 && lab.dim(0) != 1)
+    //   eblerror("expected single-element labels");
+    // return parents.get(lab.get(0));
+    return -1;
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  bool hierarchy_datasource<Tnet,Tdata,Tlabel>::
+  is_parent_of(Tlabel l1, Tlabel l2) {
+    class_node<Tlabel> *n = all_nodes[l2];
+    if (!n) eblerror("node " << l2  << " not found");
+    return n->is_parent(l1);
+  }
+  
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  vector<class_node<Tlabel>*>& hierarchy_datasource<Tnet,Tdata,Tlabel>::
+  get_nodes() {
+    return all_nodes;
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  vector<class_node<Tlabel>*>&
+  hierarchy_datasource<Tnet,Tdata,Tlabel>::get_nodes_by_depth() {
+    return all_nodes_by_depth;
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void hierarchy_datasource<Tnet,Tdata,Tlabel>::
+  fprop_label(fstate_idx<Tlabel> &label) {
+    label.x.sset(get_current_label());
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void hierarchy_datasource<Tnet,Tdata,Tlabel>::
+  fprop_label_net(fstate_idx<Tnet> &label) {
+    label.x.sset((Tnet) get_current_label());
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void hierarchy_datasource<Tnet,Tdata,Tlabel>::
+  fprop_label_net(bbstate_idx<Tnet> &label) {
+    label.x.sset((Tnet) get_current_label());
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  Tlabel hierarchy_datasource<Tnet,Tdata,Tlabel>::get_current_label() {
+    // select label based on current depth and current iterator
+    Tlabel l = labels[it].gget();
+    return all_nodes[l]->label(current_depth);
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  idx<Tlabel>& hierarchy_datasource<Tnet,Tdata,Tlabel>::get_depth_labels() {
+    return depth_labels;
+  }
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // iterating
+  
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void hierarchy_datasource<Tnet,Tdata,Tlabel>::set_current_depth(uint depth) {
+    if (depth >= all_depths.size())
+      eblerror("cannot set current depth to " << depth << " because it is "
+	       << "more than maximum depth " << all_depths.size());
+    current_depth = depth;
+    // fill depth_labels matrix with labels of all samples given current depth
+    idx_bloop2(l, labels, Tlabel, dl, depth_labels, Tlabel) {
+      dl.set(all_nodes[l.get()]->label(current_depth));
+    }
+  }
+  
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  uint hierarchy_datasource<Tnet,Tdata,Tlabel>::get_current_depth() {
+    return current_depth;
+  }
+  
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void hierarchy_datasource<Tnet,Tdata,Tlabel>::incr_current_depth() {
+    if (current_depth + 1 >= all_depths.size())
+      cout << "warning: cannot increment current depth beyond maximum ("
+	   << all_depths.size() << ")" << endl;
+    else
+      current_depth++;
+  }
+  
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  bool hierarchy_datasource<Tnet,Tdata,Tlabel>::next_train() {
+    // check that this datasource is allowed to call this method
+    if (test_set)
+      eblerror("forbidden call of next_train() on testing sets");
+    if (!balance) // return samples in original order, regardless of their class
+      return datasource<Tnet,Tdata>::next_train();
+    // balanced training
+    vector<class_node<Tlabel>*> *nodes = complete_depths[current_depth];
+    uint itd = it_depths[current_depth];
+    // set it for further fprop calls
+    class_node<Tlabel> *node = (*nodes)[itd];
+    it = node->next();
+    // increment depth iterator
+    itd++;
+    if (itd >= nodes->size())
+      it_depths[current_depth] = 0;
+    this->pretty_progress();
+    return true;
+  }
+
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   void hierarchy_datasource<Tnet,Tdata,Tlabel>::set_balanced(bool bal) {
+//     balance = bal;
+//     if (!balance) // unbalanced
+//       cout << _name << ": Setting training as unbalanced (not taking class "
+// 	   << "distributions into account)." << endl;
+//     else { // balanced
+//       cout << _name << ": Setting training as balanced (taking class "
+// 	   << "distributions into account)." << endl;
+//       // compute vector of sample indices for each class
+//       bal_indices.clear();
+//       bal_it.clear();
+//       epoch_done_counters.clear();
+//       class_it = 0;
+//       for (intg i = 0; i < nclasses; ++i) {
+// 	vector<intg> indices;
+// 	bal_indices.push_back(indices);
+// 	bal_it.push_back(0); // init iterators
+//       }
+//       // distribute sample indices into each vector based on label
+//       for (uint i = 0; i < this->size(); ++i)
+// 	bal_indices[(intg) (labels.gget(i))].push_back(i);
+//       for (uint i = 0; i < bal_indices.size(); ++i) {
+// 	// shuffle
+// 	random_shuffle(bal_indices[i].begin(), bal_indices[i].end());
+// 	// init epoch counters
+// 	epoch_done_counters.push_back(bal_indices[i].size());
+//       }
+//     }
+//   }
+
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   bool hierarchy_datasource<Tnet,Tdata,Tlabel>::epoch_done() {
+//     switch (epoch_mode) {
+//     case 0: // fixed number of samples
+//       if (epoch_cnt >= epoch_sz)
+// 	return true;
+//       break ;
+//     case 1: // see all samples at least once
+//       if (balance) {
+// 	// check that all classes are done
+// 	for (uint i = 0; i < epoch_done_counters.size(); ++i) {
+// 	  if (epoch_done_counters[i] > 0)
+// 	    return false;
+// 	}
+// 	return true; // all classes are done
+//       } else { // do not balance, use epoch_sz
+// 	if (epoch_cnt >= epoch_sz)
+// 	  return true;
+//       }
+//       break ;
+//     default: eblerror("unknown epoch_mode");
+//     }
+//     return false;
+//   }
+
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   void hierarchy_datasource<Tnet,Tdata,Tlabel>::init_epoch() {
+//     epoch_cnt = 0;
+//     epoch_pick_cnt = 0;
+//     epoch_timer.restart();
+//     epoch_show_printed = -1; // last epoch count we have printed
+//     if (balance) {
+//       uint maxsize = 0;
+//       // for balanced training, set each class to not done.
+//       for (uint k = 0; k < bal_indices.size(); ++k) {
+// 	epoch_done_counters[k] = bal_indices[k].size();
+// 	if (bal_indices[k].size() > maxsize)
+// 	  maxsize = bal_indices[k].size();
+//       }
+//       if (epoch_mode == 1) // for ETA estimation only, estimate epoch size
+// 	epoch_sz = maxsize * bal_indices.size();
+//     }
+//     // if we have prior information about each sample energy and classification
+//     // let's use it to initialize the picking probabilities.
+//     this->normalize_all_probas();
+//   }
+
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   void hierarchy_datasource<Tnet,Tdata,Tlabel>::normalize_all_probas() {
+//     if (weigh_samples) {
+//       if (perclass_norm && balance) {
+// 	for (uint i = 0; i < bal_indices.size(); ++i)
+// 	  normalize_probas(i);
+//       } else
+// 	normalize_probas();
+//     }
+//   }
+    
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   void hierarchy_datasource<Tnet,Tdata,Tlabel>::normalize_probas(int classid) {
+//     vector<intg> *cindices = NULL;
+//     if (perclass_norm && balance) { // use only class_it class samples
+//       if (classid < 0)
+// 	eblerror("class id cannot be negative");
+//       uint class_it = (uint) classid;
+//       cindices = &(bal_indices[class_it]);
+//       cout << _name << ": Normalizing probabilities for class" << class_it;
+//       datasource<Tnet,Tdata>::normalize_probas(cindices);
+//     } else // use all samples
+//       datasource<Tnet,Tdata>::normalize_probas();
+//   }
+
+//   //////////////////////////////////////////////////////////////////////////////
+//   // accessors
+  
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   intg hierarchy_datasource<Tnet, Tdata, Tlabel>::get_nclasses() {
+//     return nclasses;
+//   }
+
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   int hierarchy_datasource<Tnet, Tdata, Tlabel>::get_class_id(const char *name) {
+//     int id_ = -1;
+//     vector<string*>::iterator i = lblstr->begin();
+//     for (int j = 0; i != lblstr->end(); ++i, ++j) {
+//       if (!strcmp(name, (*i)->c_str()))
+// 	id_ = j;
+//     }
+//     return id_;
+//   }
+  
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   std::string &hierarchy_datasource<Tnet, Tdata, Tlabel>::get_class_name(int id) {
+//     if (!lblstr) 
+//       eblerror("no label strings");
+//     if (id >= (int) lblstr->size())
+//       eblerror("requesting label string at index " << id 
+// 	       << " but string vector has only " << lblstr->size() 
+// 	       << " elements.");
+//     string *s = (*lblstr)[id];
+//     if (!s)
+//       eblerror("empty label string");
+//     return *s;
+//   }
+  
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   std::vector<std::string*>& hierarchy_datasource<Tnet, Tdata, Tlabel>::
+//   get_label_strings() {
+//     if (!lblstr)
+//       eblerror("expected label strings to be set");
+//     return *lblstr;
+//   }
+  
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   intg hierarchy_datasource<Tnet,Tdata,Tlabel>::get_lowest_common_size() {
+//     intg min_nonzero = (std::numeric_limits<intg>::max)();
+//     for (vector<intg>::iterator i = counts.begin(); i != counts.end(); ++i) {
+//       if ((*i < min_nonzero) && (*i != 0))
+// 	min_nonzero = *i;
+//     }
+//     if (min_nonzero == (std::numeric_limits<intg>::max)())
+//       eblerror("empty dataset");
+//     return min_nonzero * nclasses;
+//   }
+  
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   void hierarchy_datasource<Tnet,Tdata,Tlabel>::save_pickings(const char *name_) {
+//     // non-class plotting
+//     datasource<Tnet,Tdata>::save_pickings(name_);
+//     string name = "pickings";
+//     if (name_)
+//       name = name_;
+//     // plot by class
+//     write_classed_pickings(pick_count, correct, name);
+//     write_classed_pickings(energies, correct, name, "_energies");
+//     idx<double> e = idx_copy(energies);
+//     idx<ubyte> c = idx_copy(correct);
+//     idx_sortup(e, c);
+//     write_classed_pickings(e, c, name, "_sorted_energies");
+//     idx<double> p = idx_copy(probas);
+//     c = idx_copy(correct);
+//     idx_sortup(p, c);
+//     write_classed_pickings(p, c, name, "_sorted_probas");
+//     p = idx_copy(probas);
+//     e = idx_copy(energies);
+//     c = idx_copy(correct);
+//     idx_sortup(e, c, p);
+//     write_classed_pickings(p, c, name, "_probas_sorted_by_energy", true,
+// 			   "Picking probability");
+//     write_classed_pickings(p, c, name, "_probas_sorted_by_energy_wrong_only",
+// 			   false, "Picking probability");
+//     write_classed_pickings(e, c, name, "_energies_sorted_by_energy_wrong_only",
+// 			   false, "Energy");
+//   }
+
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   template <typename T>
+//   void hierarchy_datasource<Tnet,Tdata,Tlabel>::
+//   write_classed_pickings(idx<T> &m, idx<ubyte> &c, string &name_,
+// 			 const char *name2_, bool plot_correct,
+// 			 const char *ylabel) {
+//     string name = name_;
+//     if (name2_)
+//       name += name2_;
+//     name += "_classed";
+//     // sorted classed plot file
+//     if (labels.order() == 1) { // single label value
+//       string fname = name;
+//       fname += ".plot"; 
+//       ofstream fp(fname.c_str());
+//       if (!fp) {
+// 	cerr << "failed to open " << fname << endl;
+// 	eblerror("failed to open file for writing");
+//       }
+//       typename idx<T>::dimension_iterator i = m.dim_begin(0);
+//       typename idx<Tlabel>::dimension_iterator l = labels.dim_begin(0);
+//       typename idx<ubyte>::dimension_iterator ic = c.dim_begin(0);
+//       uint j = 0;
+//       for ( ; i.notdone(); i++, l++, ic++) {
+// 	if (!plot_correct && ic->get() == 1)
+// 	  continue ; // don't plot correct ones
+// 	fp << j++;
+// 	for (Tlabel k = 0; k < (Tlabel) nclasses; ++k) {
+// 	  if (k == l.get()) {
+// 	    if (ic->get() == 0) { // wrong
+// 	      fp << "\t" << i->get();
+// 	      if (plot_correct)
+// 		fp << "\t?";
+// 	    } else if (plot_correct) // correct
+// 	      fp << "\t?\t" << i->get();
+// 	  } else {
+// 	    fp << "\t?";
+// 	    if (plot_correct)
+// 	      fp << "\t?";
+// 	  }
+// 	}
+// 	fp << endl;
+//       }
+//       fp.close();
+//       cout << _name << ": Wrote picking statistics in " << fname << endl;
+//       // p file
+//       string fname2 = name;
+//       fname2 += ".p";
+//       ofstream fp2(fname2.c_str());
+//       if (!fp2) {
+// 	cerr << "failed to open " << fname2 << endl;
+// 	eblerror("failed to open file for writing");
+//       }
+//       fp2 << "set title \"" << name << "\"; set ylabel \"" << ylabel
+// 	  << "\"; plot \""
+// 	  << fname << "\" using 1:2 title \"class 0 wrong\" with impulse";
+//       if (plot_correct)
+// 	fp2 << ", \""
+// 	    << fname << "\" using 1:3 title \"class 0 correct\" with impulse";
+//       for (uint k = 1; k < nclasses; ++k) {
+// 	fp2 << ", \"" << fname << "\" using 1:" << k * (plot_correct?2:1) + 2 
+// 	    << " title \"class " << k << " wrong\" with impulse";
+// 	if (plot_correct)
+// 	  fp2 << ", \"" << fname << "\" using 1:" << k * 2 + 3 
+// 	      << " title \"class " << k << " correct\" with impulse";
+//       }
+//       fp << endl;
+//       fp2.close();
+//       cout << _name << ": Wrote gnuplot file in " << fname2 << endl;
+//     }
+//   }
+
+//   //////////////////////////////////////////////////////////////////////////////
+//   // state saving
+  
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   void hierarchy_datasource<Tnet,Tdata,Tlabel>::save_state() {
+//     state_saved = true;
+//     count_pickings_save = count_pickings;
+//     it_saved = it; // save main iterator
+//     it_test_saved = it_test;
+//     it_train_saved = it_train;
+//     if (!balance) // save (unbalanced) iterators
+//       datasource<Tnet,Tdata>::save_state();
+//     else { // save balanced iterators
+//       bal_it_saved.clear();
+//       bal_indices_saved.clear();
+//       for (uint k = 0; k < bal_it.size(); ++k) {
+// 	bal_it_saved.push_back(bal_it[k]);
+// 	vector<intg> indices;
+// 	for (uint l = 0; l < bal_indices[k].size(); ++l)
+// 	  indices.push_back(bal_indices[k][l]);
+// 	bal_indices_saved.push_back(indices);
+//       }
+//       class_it_saved = class_it;
+//     }
+//   }
+  
+//   template <typename Tnet, typename Tdata, typename Tlabel>
+//   void hierarchy_datasource<Tnet,Tdata,Tlabel>::restore_state() {
+//     if (!state_saved)
+//       eblerror("state not saved, call save_state() before restore_state()");
+//     count_pickings = count_pickings_save;
+//     it = it_saved; // restore main iterator
+//     it_test = it_test_saved;
+//     it_train = it_train_saved;
+//     if (!balance) // restore unbalanced
+//       datasource<Tnet,Tdata>::restore_state();
+//     else { // restore balanced iterators
+//       for (uint k = 0; k < bal_it.size(); ++k) {
+// 	bal_it[k] = bal_it_saved[k];
+// 	for (uint l = 0; l < bal_indices[k].size(); ++l)
+// 	  bal_indices[k][l] = bal_indices_saved[k][l];
+//       }
+//       class_it = class_it_saved;
+//     }
+//   }
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // pretty methods
+  
+  // template <typename Tnet, typename Tdata, typename Tlabel>
+  // void hierarchy_datasource<Tnet,Tdata,Tlabel>::pretty_progress(bool newline) {
+  //   if (epoch_show > 0 && epoch_pick_cnt % epoch_show == 0 &&
+  // 	epoch_show_printed != (intg) epoch_pick_cnt) {
+  //     datasource<Tnet,Tdata>::pretty_progress(false);
+  //     if (balance) {
+  // 	cout << ", remaining:";
+  // 	for (uint i = 0; i < epoch_done_counters.size(); ++i) {
+  // 	  cout << " " << i << ": " << epoch_done_counters[i];
+  // 	}
+  //     }
+  //     if (newline)
+  // 	cout << endl;
+  //   }
+  // }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void hierarchy_datasource<Tnet, Tdata, Tlabel>::pretty() {
+    cout << _name << ": hierarchy class dataset \"" << _name
+	 << "\" contains "
+	 << data.dim(0) << " samples of dimension " << sampledims
+	 << " and defines an epoch as " << epoch_sz << " samples." << endl;
+    if (lblstr) {
+      cout << this->_name << ": It has " << nclasses << " classes: ";
+      uint i;
+      for (i = 0; i < this->counts.size() - 1; ++i)
+	cout << this->counts[i] << " \"" << *(*lblstr)[i] << "\", ";
+      cout << "and " << this->counts[i] << " \"" << *(*lblstr)[i] << "\".";
+      cout << endl;
+      // pretty hierarchy
+      cout << "Hierarchy by depth:" << endl;
+      for (typename vector<vector<class_node<Tlabel>*>*>::iterator
+	     j = all_depths.begin(); j != all_depths.end(); ++j) {
+	vector<class_node<Tlabel>*> &d = **j;
+	cout << "depth " << j - all_depths.begin() << " ("
+	     << d.size() << " nodes): ";
+	for (typename vector<class_node<Tlabel>*>::iterator k = d.begin();
+	     k != d.end(); ++k)
+	  cout << (*k)->name() << " ";
+	cout << endl;
+      }
+      // pretty complete-depth hierarchy
+      cout << "Hierarchy by depth, keeping lower depth nodes with samples:"
+	   << endl;
+      for (typename vector<vector<class_node<Tlabel>*>*>::iterator
+	     j = complete_depths.begin(); j != complete_depths.end(); ++j) {
+	vector<class_node<Tlabel>*> &d = **j;
+	cout << "depth " << j - complete_depths.begin() << " ("
+	     << d.size() << " nodes): ";
+	for (typename vector<class_node<Tlabel>*>::iterator k = d.begin();
+	     k != d.end(); ++k)
+	  cout << (*k)->name() << " ";
+	cout << endl;
+      }
     }
   }
     

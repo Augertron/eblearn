@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet   *
- *   pierre.sermanet@gmail.com   *
+ *   Copyright (C) 2011 by Soumith Chintala and Pierre Sermanet *
+ *   soumith@gmail.com, pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,58 +30,67 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "detector_gui.h"
+#ifndef MATLAB_H
+#define MATLAB_H
+
+#include "idx.h"
+
+#ifdef __MATLAB__
+
+// TODO: temporary dependency
+#include "mat.h" //mat.h from MATLAB/extern/include directory
+
+#else
+
+typedef enum {
+  mxUNKNOWN_CLASS,
+  mxCELL_CLASS,
+  mxSTRUCT_CLASS,
+  mxLOGICAL_CLASS,
+  mxCHAR_CLASS,
+  mxVOID_CLASS,
+  mxDOUBLE_CLASS,
+  mxSINGLE_CLASS,
+  mxINT8_CLASS,
+  mxUINT8_CLASS,
+  mxINT16_CLASS,
+  mxUINT16_CLASS,
+  mxINT32_CLASS,
+  mxUINT32_CLASS,
+  mxINT64_CLASS,
+  mxUINT64_CLASS,
+  mxFUNCTION_CLASS
+} mxClassID;
+
+typedef FILE MATFile;
+typedef void mxArray;
+
+#endif
 
 namespace ebl {
+  
+  //! A class to directly import Matlab variables from Matlab .mat files into idx tensors
+  class matlab {
+  public:
+    //! Constructs a matlab object by loading all headers but does not actually load the data.
+    //! \param filename name of the .mat (matlab format) file to be read.
+    matlab(const char *filename);
+    //! Close file handle.
+    virtual ~matlab();
+    //! Loads data of element with name 'name' and returns a matrix of type T
+    template <typename T> idx<T> load_matrix(const char *name);
+    //! Load and cast data from matlab 'var' with type 'Tmatlab' into 'm' with type 'T'.
+    template <typename Tmatlab, typename T>
+      void read_cast_matrix(mxArray *var, idx<T> &m);
+    
+  protected:
+    const char* filename; //!< Loaded filename.
+    MATFile *fp; //!< File pointer.
+    int nvar; //!< Number of objects in matlab file.
+  };  
+  
+}
 
-  ////////////////////////////////////////////////////////////////
-  // bbox parts
+#include "matlab.hpp"
 
-  void draw_bbox(bbox &bb, vector<string> &labels, uint h0, uint w0,
-		 double dzoom, float transparency, bool scaled) {
-    ostringstream label;
-    int classid, colorid;
-    classid = bb.class_id;
-    colorid = classid % (sizeof (color_list) / 3);
-    int h = (int) (dzoom * bb.h0);
-    int w = (int) (dzoom * bb.w0);
-    int height = (int) (dzoom * bb.height);
-    int width = (int) (dzoom * bb.width);
-    if (!scaled) { // draw unscaled box
-      h = (int) (dzoom * bb.i.h0);
-      w = (int) (dzoom * bb.i.w0);
-      height = (int) (dzoom * bb.i.height);
-      width = (int) (dzoom * bb.i.width);
-    }
-    float conf = bb.confidence;
-    label.str("");
-    label.precision(2);
-    label << ((uint) classid < labels.size() ? labels[classid].c_str() : "***") 
-	  << " " << conf;
-    ubyte transp = 255;
-    if (transparency > 0)
-      transp = (ubyte) std::max((float) 50,
-				std::min((float) 255,
-					 (255 * (exp((conf - transparency + (float) .5) *12))
-						 / 60000)));
-    draw_box(h0 + h, w0 + w, height, width,
-	     color_list[colorid][0],
-	     color_list[colorid][1], 
-	     color_list[colorid][2], transp,
-	     new string((const char *)label.str().c_str()));
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // bbox parts
-
-  void draw_bbox_parts(bbox_parts &bb, vector<string> &labels, uint h0, uint w0,
-		       double dzoom) {
-    std::vector<bbox_parts> &parts = bb.get_parts();
-    for(uint i = 0; i < parts.size(); ++i) {
-      bbox_parts &p = parts[i];
-      draw_bbox(p, labels, h0, w0, dzoom, 0.0); // draw part
-      draw_bbox_parts(p, labels, h0, w0, dzoom); // explore sub parts
-    }
-  }
-
-} // end namespace ebl
+#endif // MATLAB_H

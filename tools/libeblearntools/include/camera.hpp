@@ -46,7 +46,8 @@ namespace ebl {
     : height(height_), width(width_), bresize(false), mresize(true),
       resize_mode(0), frame_id_(0),
       grabbed(false), wid(0), recording_name("video"), record_cnt(0),
-      fps_grab(0.0), audio_filename(""), out(o), err(e), cntfps(0) {
+      fps_grab(0.0), audio_filename(""), out(o), err(e), cntfps(0),
+      narrow_dim(-1), narrow_size(-1), narrow_off(-1), grayscale(false) {
     // decide if we resize input or not
     if ((height != -1) && (width != -1))
       bresize = true;
@@ -85,6 +86,18 @@ namespace ebl {
   template <typename Tdata>
   void camera<Tdata>::skip(uint n) {
     eblerror("not implemented");
+  }
+  
+  template <typename Tdata>
+  void camera<Tdata>::set_input_narrow(int dim, int size, int off) {
+    narrow_dim = dim;
+    narrow_size = size;
+    narrow_off = off;    
+  }
+  
+  template <typename Tdata>
+  void camera<Tdata>::set_grayscale() {
+    grayscale = true;
   }
   
   ////////////////////////////////////////////////////////////////
@@ -198,6 +211,8 @@ namespace ebl {
   inline idx<Tdata> camera<Tdata>::postprocess() {
     fps_ms_elapsed = tfps.elapsed_milliseconds();
     cntfps++;
+    if (narrow_dim >= 0)
+      frame = frame.narrow(narrow_dim, narrow_size, narrow_off);
     if (fps_ms_elapsed > 1000) {
       fps_grab = cntfps * 1000 / (float) fps_ms_elapsed;
       tfps.restart(); // restart timer

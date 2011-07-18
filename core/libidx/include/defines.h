@@ -200,6 +200,8 @@ namespace ebl {
   typedef signed short int int16;
   typedef unsigned int uint32;
   typedef signed int int32;
+  typedef unsigned long int uint64;
+  typedef signed long int int64;
   typedef float float32;
   typedef double float64;
 #endif

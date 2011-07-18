@@ -204,7 +204,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #ifdef __LINUX__
       else if (!strcmp(cam_type.c_str(), "v4l2"))
 	cam = new camera_v4l2<ubyte>(conf.get_cstring("device"),
-				     height, width);
+				     height, width,
+				     conf.exists_true("camera_grayscale"));
 #endif
 #ifdef __KINECT__
       else if (!strcmp(cam_type.c_str(), "kinect"))
@@ -220,10 +221,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	else eblerror("expected 2nd argument");
       } else eblerror("unknown camera type, set \"camera\" in your .conf");
       // a camera directory may be used first, then switching to regular cam
-      if (conf.exists_bool("precamera"))
+      if (conf.exists_true("precamera"))
 	cam2 = new camera_directory<ubyte>(conf.get_cstring("precamdir"),
 					   height, width, input_random,
 					   npasses, mout, merr, fpattern);
+      if (conf.exists_true("camera_grayscale"))
+	cam->set_grayscale();
 	
       // answer variables & initializations
       vector<bbox*> bb;

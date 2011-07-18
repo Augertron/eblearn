@@ -35,8 +35,7 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // supervised_trainer
+  // supervised_trainer ////////////////////////////////////////////////////////
 
   template <typename Tnet, typename Tdata, typename Tlabel>  
   supervised_trainer<Tnet, Tdata, Tlabel>::

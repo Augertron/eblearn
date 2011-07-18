@@ -1015,8 +1015,12 @@ namespace ebl {
 		 << " does not produce " << nh << "x" << nw << " windows");
     }
     idxdim d(fsize, nh, nw);
-    if (!out.x.same_dim(d))
-      out.resize(d);
+    if (!out.x.same_dim(d)) {
+      if (out.x.order() != d.order())
+	out = Tstate(d);
+      else
+	out.resize(d);
+    }
     intg offset = 0;
     // copy main input to out
     fsize = din.nelements() * in.x.dim(0); // feat size for main input

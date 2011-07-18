@@ -430,53 +430,41 @@ namespace ebl {
   // idx_add
 
   template<class T> void idx_add(idx<T> &in, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pin, pout;
-    idx_aloop2_on(pin,in,pout,out) { *pout = *pout + *pin; }
-  #else
-    ScalarIter<T> pin(in), pout(out);
-    idx_aloop2_on(pin, in, pout, out) { *pout = *pout + *pin; }
-  #endif
-#else
     idx_aloopf2 (pin, in, T, pout, out, T, { *pout = *pout + *pin; });
-#endif
   }
 
   template<typename T> void idx_add(idx<T> &i1, idx<T> &i2, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pi1, pi2, pout;
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = *pi1 + *pi2; }
-  #else
-    ScalarIter<T> pi1(i1), pi2(i2); ScalarIter<T> pout(out);
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = *pi1 + *pi2; }
-  #endif
-#else
     idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, { *pout = *pi1 + *pi2; });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_sub
 
   template<class T> void idx_sub(idx<T> &i1, idx<T> &i2, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pi1, pi2; idxiter<T> pout;
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = *pi1 - *pi2; }
-  #else
-    ScalarIter<T> pi1(i1), pi2(i2); ScalarIter<T> pout(out);
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = *pi1 - *pi2; }
-  #endif
-#else
     idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {*pout = *pi1 - *pi2; });
-#endif
+  }
+
+  ////////////////////////////////////////////////////////////////////////
+  // idx_spherical_sub
+
+  template<class T> void idx_spherical_sub(idx<T> &i1, idx<T> &i2, idx<T> &out){
+    T tmp, tmpabs, tmpabs2;
+    idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {
+	tmp = *pi1 - *pi2;
+	tmpabs = abs(tmp);
+	tmpabs2 = TWOPI - tmpabs;
+	if (tmpabs > tmpabs2) {
+	  if (tmp > 0)
+	    tmp = tmpabs2;
+	  else
+	    tmp = -tmpabs2;
+	}
+	*pout = tmp;
+      });
   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_mul
-
 
   template<class T> void idx_mul(idx<T> &i1, idx<T> &i2, idx<T> &out) {
 #if USING_FAST_ITERS == 0
@@ -2182,6 +2170,51 @@ template<class T> void idx_sortdown(idx<T> &m) {
   }
 
   ////////////////////////////////////////////////////////////////////////
+  // idx_spherical_sqrdist
+
+  template<class T> float64 idx_spherical_sqrdist(idx<T> &i1, idx<T> &i2) {
+    idx_checknelems2_all(i1, i2);
+    float64 z = 0;
+    float64 tmp, tmpabs, tmpabs2;
+#if USING_FAST_ITERS == 0
+    { idx_aloop2(pi1, i1, T, pi2, i2, T) {
+  	tmp = fmod((float64)(*pi1) - (float64)(*pi2), TWOPI);
+	tmpabs = fabs(tmp);
+	tmpabs2 = TWOPI - tmpabs;
+	if (tmpabs > tmpabs2) {
+	  if (tmp > 0)
+	    tmp = tmpabs2;
+	  else
+	    tmp = -tmpabs2;
+	}
+  	z += tmp * tmp;
+      }
+    }
+#else
+    idx_aloopf2(pi1, i1, T, pi2, i2, T, {
+	tmp = fmod((float64)(*pi1) - (float64)(*pi2), TWOPI);
+	tmpabs = fabs(tmp);
+	tmpabs2 = TWOPI - tmpabs;
+	if (tmpabs > tmpabs2) {
+	  if (tmp > 0)
+	    tmp = tmpabs2;
+	  else
+	    tmp = -tmpabs2;
+	}
+	z += tmp * tmp;
+      });
+#endif
+    return z;
+  }
+
+  ////////////////////////////////////////////////////////////////////////
+  // idx_modulo
+
+  template <class T> void idx_modulo(idx<T> &m, T mod) {
+    idx_aloopf1(e, m, T, { *e = *e % mod; });
+  }
+
+  ////////////////////////////////////////////////////////////////////////
   // idx_exp
 
   template <class T> void idx_exp(idx<T> &m) {
@@ -2189,13 +2222,7 @@ template<class T> void idx_sortdown(idx<T> &m) {
     // specialized template, therefore, calls to this generic template
     // will be with types of lower precision than float32, no need for
     // float64 precision.
-#if USING_FAST_ITERS == 0
-    idx_aloop1(i, m, T) {
-      *i = saturate(exp((float32)*i), T);
-    };
-#else
     idx_aloopf1(i, m, T, { *i = saturate(exp((float32)*i), T); });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////

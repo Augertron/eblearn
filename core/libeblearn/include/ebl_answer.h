@@ -80,12 +80,20 @@ namespace ebl {
     virtual void fprop(Tstate &in, Tstate &out);
     //! Produce target matrix into 'out' for training, given a datasource 'ds'.
     virtual void fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
+    //! Back-propagates gradients. This might be useful if answer module has
+    //! learnable internal parameters.
+    virtual void bprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
+    //! Back-propagates 2nd derivatives. This might be useful if answer module
+    //! has learnable internal parameters.
+    virtual void bbprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
     //! Returns true if 'answer' matches with 'label'.
     virtual bool correct(Tstate &answer, Tstate &label);
     //! Update the 'log' according to this type of answer module.
     virtual void update_log(classifier_meter &log, intg age, idx<T> &energy,
 			    idx<T> &answer, idx<T> &label, idx<T> &target,
 			    idx<T> &rawout);
+    //! forgetting weights by replacing with random values
+    virtual void forget(forget_param_linear &fp);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
     //! Returns the number of features expected as inputs.

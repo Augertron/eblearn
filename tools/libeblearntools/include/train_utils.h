@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet   *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com   *
+ *   Copyright (C) 2011 by Pierre Sermanet   *
+ *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source
- *       Initiative (http://www.opensource.org) must display the
+ *     * Redistribution under a license not approved by the Open Source 
+ *       Initiative (http://www.opensource.org) must display the 
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -28,26 +28,44 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBIDX_H
-#define LIBIDX_H
+#ifndef TRAIN_UTILS_H_
+#define TRAIN_UTILS_H_
 
-#include "config.h"
+#include <list>
+#include <string>
+#include <vector>
+#include <map>
+
 #include "defines.h"
-#include "stl.h"
-#include "numerics.h"
-#include "srg.h"
 #include "idx.h"
-#include "idxIO.h"
-#include "idxops.h"
-#include "ippops.h"
-#include "color_spaces.h"
-#include "gaussian_pyramid.h"
-#include "geometry.h"
-#include "image.h"
-#include "imageIO.h"
-#include "utils.h"
-#include "matlab.h"
+#include "job.h"
 
-#endif /* LIBIDX_H_ */
+#ifdef __GUI__
+#include "ebl_trainer_gui.h"
+#endif
+
+using namespace std;
+
+namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // training utilities
+
+  //! A function that performs training iterations and display.
+  template <typename Tnet, typename Tdata, typename Tlabel>
+    void test_and_save(uint iter, configuration &conf, string &conffname,
+		       parameter<Tnet> &theparam,
+		       supervised_trainer<Tnet,Tdata,Tlabel> &thetrainer,
+		       labeled_datasource<Tnet,Tdata,Tlabel> &train_ds,
+		       labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
+		       classifier_meter &trainmeter,
+		       classifier_meter &testmeter,
+		       infer_param &infp, gd_param &gdp, string &shortname);
+
+} // end namespace ebl
+
+#include "train_utils.hpp"
+
+#endif /* TRAIN_UTILS_ */

@@ -1279,14 +1279,14 @@ namespace ebl {
   // print methods
 
   template <typename T>
-  void idx<T>::printElems(std::ostream& out) const {
-    printElems_impl(0, out);
+  void idx<T>::printElems(std::ostream& out, bool newline) const {
+    printElems_impl(0, out, newline);
     out.flush();
   }
 
   template <typename T>
-  void idx<T>::printElems(std::string& out) const {
-    printElems_impl(0, out);
+  void idx<T>::printElems(std::string& out, bool newline) const {
+    printElems_impl(0, out, newline);
   }
 
   template <typename T>
@@ -1297,12 +1297,13 @@ namespace ebl {
   template <typename T>
   void idx<T>::print() const {
     this->printElems(std::cout);
+    std::cout << "\n";
   }
 
   template <typename T>
   std::string idx<T>::str() const {
     std::string s;
-    this->printElems(s);
+    this->printElems(s, false);
     return s;
   }
 
@@ -1316,7 +1317,7 @@ namespace ebl {
   }
 
   template <typename T> template <class stream>
-  void idx<T>::printElems_impl(int indent, stream& out) const {
+  void idx<T>::printElems_impl(int indent, stream& out, bool newline) const {
     static const std::string lbrace = "[";
     static const std::string rbrace = "]";
     static const std::string sep = " ";
@@ -1327,7 +1328,7 @@ namespace ebl {
     }
     // printing a 0-dimensional tensor
     if( order() == 0 ){
-      out<<lbrace<<"@"<<sep<< printElems_impl_cast(get()) <<sep<<rbrace<<"\n";
+      out << lbrace<<"@"<<sep<< printElems_impl_cast(get()) <<sep<<rbrace;
     }
     // printing a 1-D tensor
     else if( order() == 1 ){
@@ -1346,25 +1347,21 @@ namespace ebl {
       // print subtensors.
       idx<T> subtensor(storage, spec.offset);
       for( int dimInd = 0; dimInd < dim(0); ++dimInd ){
-
 	// only print indent if this isn't the first subtensor.
 	if( dimInd > 0 ){
 	  for( int ii = 0; ii < indent+1; ++ii ){
 	    out << tab;
 	  }
 	}
-
 	// print subtensor
 	spec.select_into(&subtensor.spec, 0, dimInd);
-	subtensor.printElems_impl( indent+1, out );
-
+	subtensor.printElems_impl(indent+1, out, newline);
 	// only print the newline if this isn't the last subtensor.
-	if( dimInd < (dim(0)-1)){
-	  out<<"\n";
-	}
+	if (dimInd < dim(0) - 1 && newline) out << "\n";
       }
       // closing brace
-      out<<rbrace<<"\n";
+      out << rbrace;
+      //      if (newline) out << "\n";
     }
   }
 

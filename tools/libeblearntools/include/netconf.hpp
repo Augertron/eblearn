@@ -237,6 +237,11 @@ namespace ebl {
       if (get_param(conf, name, "kernel", skernel))
 	kernel = string_to_idxdim(skernel);
       module = (module_1_1<T,Tstate>*) new rgb_to_yp_module<T,Tstate>(kernel);
+    } else if (!type.compare("y_to_yp")) {
+      string skernel; idxdim kernel;
+      if (get_param(conf, name, "kernel", skernel))
+	kernel = string_to_idxdim(skernel);
+      module = (module_1_1<T,Tstate>*) new y_to_yp_module<T,Tstate>(kernel);
     } else if (!type.compare("rgb_to_yuv"))
       module = (module_1_1<T,Tstate>*) new rgb_to_yuv_module<T,Tstate>();
     else if (!type.compare("rgb_to_y"))

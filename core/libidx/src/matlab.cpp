@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet   *
- *   pierre.sermanet@gmail.com   *
+ *   Copyright (C) 2011 by Soumith Chintala and Pierre Sermanet *
+ *   soumith@gmail.com, pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,58 +30,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "detector_gui.h"
+#include "matlab.h"
 
 namespace ebl {
-
-  ////////////////////////////////////////////////////////////////
-  // bbox parts
-
-  void draw_bbox(bbox &bb, vector<string> &labels, uint h0, uint w0,
-		 double dzoom, float transparency, bool scaled) {
-    ostringstream label;
-    int classid, colorid;
-    classid = bb.class_id;
-    colorid = classid % (sizeof (color_list) / 3);
-    int h = (int) (dzoom * bb.h0);
-    int w = (int) (dzoom * bb.w0);
-    int height = (int) (dzoom * bb.height);
-    int width = (int) (dzoom * bb.width);
-    if (!scaled) { // draw unscaled box
-      h = (int) (dzoom * bb.i.h0);
-      w = (int) (dzoom * bb.i.w0);
-      height = (int) (dzoom * bb.i.height);
-      width = (int) (dzoom * bb.i.width);
-    }
-    float conf = bb.confidence;
-    label.str("");
-    label.precision(2);
-    label << ((uint) classid < labels.size() ? labels[classid].c_str() : "***") 
-	  << " " << conf;
-    ubyte transp = 255;
-    if (transparency > 0)
-      transp = (ubyte) std::max((float) 50,
-				std::min((float) 255,
-					 (255 * (exp((conf - transparency + (float) .5) *12))
-						 / 60000)));
-    draw_box(h0 + h, w0 + w, height, width,
-	     color_list[colorid][0],
-	     color_list[colorid][1], 
-	     color_list[colorid][2], transp,
-	     new string((const char *)label.str().c_str()));
-  }
-
-  ////////////////////////////////////////////////////////////////
-  // bbox parts
-
-  void draw_bbox_parts(bbox_parts &bb, vector<string> &labels, uint h0, uint w0,
-		       double dzoom) {
-    std::vector<bbox_parts> &parts = bb.get_parts();
-    for(uint i = 0; i < parts.size(); ++i) {
-      bbox_parts &p = parts[i];
-      draw_bbox(p, labels, h0, w0, dzoom, 0.0); // draw part
-      draw_bbox_parts(p, labels, h0, w0, dzoom); // explore sub parts
+  
+  matlab::matlab(const char* fname) : filename(fname), fp(NULL), nvar(-1) {
+#ifdef __MATLAB__
+    fp = matOpen(filename,"r");
+    if (!fp)
+      eblthrow("failed to open " << filename);
+    matGetDir(fp, &nvar);
+#endif
+    if (nvar == -1) {
+      eblthrow("empty matlab file : " << filename);
     }
   }
 
-} // end namespace ebl
+  matlab::~matlab() {
+#ifdef __MATLAB__
+    if (fp && matClose(fp) != 0)
+      eblthrow("failed to close file pointer to " << filename);
+#endif
+  }
+
+} //end of namespace ebl

@@ -401,3 +401,9 @@ if (PTHREAD_FOUND)
   include_directories(${PTHREAD_INCLUDE_DIR})
   link_directories(${PTHREAD_LIBRARY})
 endif (PTHREAD_FOUND)
+
+# matlab (temporary) #############################################################
+# TODO: temporary
+#include_directories ("/opt/matlab/extern/include")
+#link_directories("/opt/matlab/bin/glnxa64/")
+

@@ -329,7 +329,7 @@ namespace ebl {
     void growstorage_chunk(intg s_chunk);
     //! Implementation of public printElems() method.
     template <class stream>
-      void printElems_impl(int indent, stream&) const;
+      void printElems_impl(int indent, stream&, bool newline = true) const;
 
   protected:
     //! fake constructor that does nothing.
@@ -714,8 +714,8 @@ namespace ebl {
     virtual void print() const;
     virtual std::string str() const;
     virtual void printElems() const;
-    virtual void printElems(std::ostream& out) const;
-    virtual void printElems(std::string& out) const;
+    virtual void printElems(std::ostream& out, bool newline = true) const;
+    virtual void printElems(std::string& out, bool newline = true) const;
     // void printElems( FILE* out );  doesn't work (cf implementation)
 
     //! print content of idx on stream

@@ -243,6 +243,30 @@ namespace ebl {
 #endif
 
   ////////////////////////////////////////////////////////////////
+  // idx_sub_spherical
+  
+#define idx_spherical_sub_macro(type)					\
+  template<>								\
+  void idx_spherical_sub(idx<type> &i1, idx<type> &i2, idx<type> &out) { \
+    type tmp, tmpabs, tmpabs2;						\
+    idx_aloopf3(pi1, i1, type, pi2, i2, type, pout, out, type, {	\
+	tmp = *pi1 - *pi2;						\
+	tmpabs = abs(tmp);						\
+	tmpabs2 = TWOPI - tmpabs;					\
+	if (tmpabs > tmpabs2) {						\
+	  if (tmp > 0)							\
+	    tmp = tmpabs2;						\
+	  else								\
+	    tmp = -tmpabs2;						\
+	}								\
+	*pout = tmp;							\
+      });								\
+  }
+  
+  idx_spherical_sub_macro(float);
+  idx_spherical_sub_macro(double);
+
+  ////////////////////////////////////////////////////////////////
   // idx_mul
 
 #ifdef __IPP__
@@ -1070,5 +1094,18 @@ namespace ebl {
     return out;
   }
 
+  // idx_modulo ////////////////////////////////////////////////////////////////
+
+  template <> void idx_modulo(idx<double> &m, double mod) {
+    idx_aloopf1(e, m, double, { *e = fmod(*e, mod); });
+  }
+
+  template <> void idx_modulo(idx<long double> &m, long double mod) {
+    idx_aloopf1(e, m, long double, { *e = fmod(*e, mod); });
+  }
+
+  template <> void idx_modulo(idx<float> &m, float mod) {
+    idx_aloopf1(e, m, float, { *e = fmod(*e, mod); });
+  }
   
 } // end namespace ebl
