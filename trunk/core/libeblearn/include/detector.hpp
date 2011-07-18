@@ -52,7 +52,7 @@ namespace ebl {
 	   resizepp_module<T,Tstate> *resize, const char *background,
 	   std::ostream &o, std::ostream &e,
 	   bool adapt_scales_)
-    : thenet(thenet_), resizepp(resize),
+    : thenet(thenet_), resizepp(resize), resizepp_delete(false),
       input(NULL), output(NULL), minput(NULL), bgclass(-1), mask_class(-1),
       scales_step(0), min_scale(1.0), max_scale(1.0), restype(ORIGINAL),
       silent(false), save_mode(false), save_dir(""),
@@ -188,7 +188,7 @@ namespace ebl {
       if (ppinputs[i]) delete ppinputs[i];
       if (outputs[i]) delete outputs[i];
     }
-    if (resizepp_delete && resizepp)
+	if (resizepp_delete && resizepp)
       delete resizepp;
   }
     
@@ -981,11 +981,16 @@ namespace ebl {
       added = true;
     }
     // remove empty entries in bboxes
+	uint j = 0;
     for (vector<bbox*>::iterator i = bboxes.begin(); i != bboxes.end(); ) {
-      if (*i == NULL)
-	bboxes.erase(i);
-      else
-	i++;
+	  if (*i == NULL) {
+		bboxes.erase(i);
+		i = bboxes.begin() + j;
+	  }
+	  else {
+		  j++;
+		  i++;
+	  }
     }
     if (!added)
       return ;
