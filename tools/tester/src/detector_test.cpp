@@ -38,6 +38,7 @@ void detector_test::test_face() {
     configuration conf;
     conf.read(confname.str().c_str(), false, false, true);
     conf.set("root2", root.str().c_str());
+    conf.set("current_dir", root.str().c_str());
     conf.set("ebl", ebl.str().c_str());
     conf.resolve(true);
     mutex mut;
