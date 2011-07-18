@@ -75,25 +75,25 @@ namespace ebl {
   //! Returns matrix from file filename. If original matrix type is different
   //! than requested type, it is casted (copied) into the new type.
   //! This throws string exceptions upon errors.
-  template<typename T>
+  template <typename T>
     idx<T> load_matrix(const char *filename);
 
   //! Returns matrix from file filename. If original matrix type is different
   //! than requested type, it is casted (copied) into the new type.
   //! This throws string exceptions upon errors.
-  template<typename T>
+  template <typename T>
     idx<T> load_matrix(const std::string &filename);
   
   //! Loads a matrix from file filename into given matrix m.
   //! m if resized if necessary. Data is cast into m's type if different.
   //! This throws string exceptions upon errors.
-  template<typename T>
+  template <typename T>
     void load_matrix(idx<T>& m, const char *filename);
 
   //! Loads a matrix from file filename into given matrix m.
   //! m if resized if necessary. Data is cast into m's type if different.
   //! This throws string exceptions upon errors.
-  template<typename T>
+  template <typename T>
     void load_matrix(idx<T>& m, const std::string &filename);
   
   //! Loads a matrix from an opened file pointer 'fp'
@@ -103,14 +103,14 @@ namespace ebl {
   //! If out is not null, it is resized if necessary.
   //! In all cases, data is cast into T if different.
   //! This throws string exceptions upon errors.
-  template<typename T>
+  template <typename T>
     idx<T> load_matrix(FILE *fp, idx<T> *out = NULL);
 
   //! Returns matrix of pointers to matrices from file filename.
   //! If original matrix type is different
   //! than requested type, it is casted (copied) into the new type.
   //! This throws string exceptions upon errors.
-  template<typename T>
+  template <typename T>
     idxs<T> load_matrices(const std::string &filename);
   
   ////////////////////////////////////////////////////////////////
@@ -118,31 +118,31 @@ namespace ebl {
   
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
-  template<typename T>
+  template <typename T>
     bool save_matrix(idx<T>& m, const std::string &filename);
 
   //! Saves a matrix m in file filename. One can force the saving type to
   //! a different type than the passed idx, e.g.
   //! by calling save_matrix<float>(m, ..);
   //! Returns true if successful, false otherwise.
-  template<typename T2, typename T>
+  template <typename T2, typename T>
     bool save_matrix(idx<T>& m, const std::string &filename);
   
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
-  template<typename T>
+  template <typename T>
     bool save_matrix(idx<T>& m, const char *filename);
 
   //! Saves a matrix m into a file pointer 'fp'. The user is responsible
   //! for closing the file pointer afterwards, even if an error occured.
   //! Returns true if successful, false otherwise.
-  template<typename T>
+  template <typename T>
     bool save_matrix(idx<T>& m, FILE *fp);
 
   //! Saves a matrices m in file filename. Elements of m may be NULL and will
   //! be remembered as empty when loaded back.
   //! Returns true if successful, false otherwise.
-  template<typename T>
+  template <typename T>
     bool save_matrices(idxs<T>& m, const std::string &filename);
 
   ////////////////////////////////////////////////////////////////

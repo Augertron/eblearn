@@ -49,9 +49,7 @@ namespace ebl {
   //! to save gui outputs into video files.
   template <typename Tdata> class camera {
   public:
-
-    ////////////////////////////////////////////////////////////////
-    // constructors/allocation
+    // constructors/allocation /////////////////////////////////////////////////
 
     //! Initialize a camera.
     //! height and width are optional parameters that resize the input image
@@ -62,72 +60,61 @@ namespace ebl {
     //! \param width Resize input frame to this width if different than -1.
     camera(int height = -1, int width = -1, std::ostream &out = std::cout,
 	   std::ostream &err = std::cerr);
-
     //! Destructor.
     virtual ~camera();
 
-    ////////////////////////////////////////////////////////////////
-    // frame grabbing
+    // frame grabbing //////////////////////////////////////////////////////////
 
     //! Return a new frame.
     virtual idx<Tdata> grab() = 0;
-
     //! Do not read the file, instead return the filename to be grabbed.
     //! This method should only be used by file-based cameras.
-    virtual string grab_filename();
-    
+    virtual string grab_filename();    
     //! Move to the next frame, without returning the frame.
     //! This is called by grab before grabbing.
     //! This can be used to get frames infos without grabbing.
     virtual void next();
-
     //! Move to the previous frame, without returning the frame.
     virtual void previous();
-
     //! Return true if no frames available, false otherwise.
     virtual bool empty();
-
     //! Skip n frames.
     virtual void skip(uint n);
+    //! This will narrow all images coming out of the camera in dimension
+    //! 'dim' with size 'size' starting at offset 'off'.
+    virtual void set_input_narrow(int dim, int size, int off);
+    //! This will force the camera to output grayscale images.
+    virtual void set_grayscale();
 
-    ////////////////////////////////////////////////////////////////
-    // video recording
+    // video recording /////////////////////////////////////////////////////////
     
     //! Start recording of frames from window window_id into path.
     //! This creates a directory name in path.
     //! No frames are actually recorded,
     virtual bool start_recording(uint window_id = 0, const char *name = NULL);
-
     //! Dump all frames declared to be recorded by start_recording().
-    virtual bool record_frame();
-    
+    virtual bool record_frame();    
     //! Create all videos started with start_recording() using frames dumped
     //! with record_frame(), using fps frames per second.
     //! \param root Indicates the root where the images are and where
     //!   to save the video.
     virtual bool stop_recording(float fps, const char *root = NULL);
 
-    ////////////////////////////////////////////////////////////////
-    // info
+    // info ////////////////////////////////////////////////////////////////////
 
     //! Return the number of frames per second obtained via grab().
     virtual float fps();
-
     //! Return the id for current frame.
     virtual uint frame_id();
-
     //! Return a name for current frame.
     virtual string frame_name();
-
     //! Return the number of frames left to process, -1 if unknown.
     virtual int remaining();
-
     //! Return the total number of frames to process from the initialization,
     //! of the camera, -1 if unknown.
     virtual int size();
 
-    ////////////////////////////////////////////////////////////////
-    // internal methods
+    // internal methods ////////////////////////////////////////////////////////
   protected:
 
     //! Return post processed frame after grabbing it, e.g. resize frame to
@@ -135,7 +122,7 @@ namespace ebl {
     //! This also increments frame counter.
     virtual idx<Tdata> postprocess();
     
-    // members ////////////////////////////////////////////////////////
+    // members /////////////////////////////////////////////////////////////////
   protected:
     idx<Tdata>	 frame;		//!< frame buffer 
     int          height;        //!< resize input
@@ -156,6 +143,8 @@ namespace ebl {
     timer        tfps;          //!< timer for computing fps.
     long         fps_ms_elapsed;//!< ms elapsed since last reset
     uint         cntfps;        //!< counter for computing fps.
+    int          narrow_dim, narrow_size, narrow_off; //!< Narrow parameters.
+    bool         grayscale;     //!< If true, output grayscale images.
   };
 
 } // end namespace ebl

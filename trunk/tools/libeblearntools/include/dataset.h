@@ -325,10 +325,15 @@ namespace ebl {
 
     //! Prints number of classes and list on standard output
     void print_classes();
-
     //! Prints number of samples for each class on std output
     void print_stats();
     
+    ////////////////////////////////////////////////////////////////
+    // Helper functions
+
+    //! Returns a matrix of class names based on the classes vector
+    static idx<ubyte> build_classes_idx(vector<string> &classes);
+
   protected:
     
     ////////////////////////////////////////////////////////////////
@@ -441,9 +446,6 @@ namespace ebl {
 
     ////////////////////////////////////////////////////////////////
     // Helper functions
-
-    //! Returns a matrix of class names based on the classes vector
-    idx<ubyte> build_classes_idx();
 
     //! Return the class name associated with label id.
     string& get_class_string(t_label id);

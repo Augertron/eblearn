@@ -60,6 +60,21 @@ using namespace std;
 
 namespace ebl {
 
+  ubyte color_list[12][3] = {
+    {0,0,255}, // blue
+    {0,255,0}, // green
+    {255,0,0}, // red
+    {255,255,255}, // white
+    {0,255,255}, // light blue
+    {255,0,255}, // pink
+    {255,255,0}, // yellow
+    {255,128,0}, // orange
+    {0,128,255}, // medium blue
+    {128,0,255}, // blue/pink
+    {0,128,128}, // blue/green
+    {128,128,128} // gray
+  };
+
   char string_buffer[STRING_BUFFER];
   
   ////////////////////////////////////////////////////////////////

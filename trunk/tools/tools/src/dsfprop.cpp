@@ -175,6 +175,8 @@ int main(int argc, char **argv) { // regular main without gui
       }
     } else // simple datasource
       test_ds = new datasource<Tnet,Tdata>(valdata.c_str(), "val");
+    if (conf.exists("noutputs")) // force number of outputs
+	noutputs = conf.get_uint("noutputs");
     // load train set
     datasource<Tnet,Tdata> train_ds(traindata.c_str(), "train");
     // use simple iterating of test sets

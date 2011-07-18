@@ -130,7 +130,7 @@ namespace ebl {
   }
   
   win3d::~win3d() {
-    clear_spheres();
+    clear();
   }
 
   // window matters ////////////////////////////////////////////////////////////
@@ -185,6 +185,11 @@ namespace ebl {
   }
   
   // clear methods /////////////////////////////////////////////////////////////
+
+  void win3d::clear() {
+    clear_spheres();
+    clear_cylinders();    
+  }
   
   void win3d::clear_spheres() {
     for (vector<sphere3d*>::iterator i = spheres.begin(); i != spheres.end();

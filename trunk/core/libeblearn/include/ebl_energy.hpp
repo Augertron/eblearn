@@ -30,6 +30,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#ifndef EBL_ENERGY_HPP_
+#define EBL_ENERGY_HPP_
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -287,11 +290,13 @@ namespace ebl {
       // narrow inputs for jitter energy
       tmp = in.narrow(0, jsize, nclass);
       idx_sub(tmp.x, last_jitt_target.x, tmp.dx); // derivative w.r.t in1
+      idx_dotc(tmp.dx, energy.dx.get(), tmp.dx);// multiply by energy derivative
     }
     // penalize predicted confidence only if positive (i.e. scale > 0)
     if (predict_conf && s > 0) {
       tmp = in.narrow(0, 1, conf_offset);
       idx_sub(tmp.x, last_conf_target.x, tmp.dx);
+      idx_dotc(tmp.dx, energy.dx.get(), tmp.dx);// multiply by energy derivative
     }
   }
 
@@ -371,10 +376,13 @@ namespace ebl {
     T i = in.x.gget();
     T s = in2.x.gget();
     // no scale case: penalize quadraticaly only if above -1
-    if (s == 0)
+    if (s == 0) {
       in.dx.sset(std::max((T) 0, i + 1));
-    else // scale case: penalize quadraticaly with distance to value
+      in.dx.sset(in.dx.gget() * energy.dx.get());
+    } else { // scale case: penalize quadraticaly with distance to value
       idx_sub(in.x, in2.x, in.dx);
+      idx_dotc(in.dx, energy.dx.get(), in.dx); // multiply by energy derivative
+    }
   }
 
   template <typename T, class Tstate>
@@ -404,3 +412,5 @@ namespace ebl {
   }
     
 } // end namespace ebl
+
+#endif /* EBL_ENERGY_HPP */

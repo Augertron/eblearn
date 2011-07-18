@@ -266,7 +266,7 @@ namespace ebl {
 
     // copy classes strings
     if (classes.size() > 0) {
-      idx<ubyte> classidx = build_classes_idx();
+      idx<ubyte> classidx = build_classes_idx(classes);
       ds1.set_classes(classidx);
       ds2.set_classes(classidx);
     }
@@ -521,7 +521,7 @@ namespace ebl {
       if (classes.size() > 0) {
 	fname = root1;
 	fname += classes_fname;
-	idx<ubyte> classes_idx = build_classes_idx();
+	idx<ubyte> classes_idx = build_classes_idx(classes);
 	cout << "Saving " << fname << " (" << classes_idx << ")"  << endl;
 	if (!save_matrix(classes_idx, fname)) {
 	  cerr << "error: failed to save classes into " << fname << endl;
@@ -1457,7 +1457,7 @@ namespace ebl {
     // clear jitters, in case a dataset doesn't have any
     idx_clear(jitters);
     // update classes
-    idx<ubyte> classidx = ds1.build_classes_idx();
+    idx<ubyte> classidx = ds1.build_classes_idx(ds1.classes);
     set_classes(classidx); // initialize with ds1's class names
     cout << "Added all classes to new dataset from " << ds1.name << endl;
     // for each ds2 class name, push on new class names vector if not found
@@ -1616,7 +1616,7 @@ namespace ebl {
   }
 
   template <class Tdata>
-  idx<ubyte> dataset<Tdata>::build_classes_idx() {
+  idx<ubyte> dataset<Tdata>::build_classes_idx(vector<string> &classes) {
     // determine max length of strings
     uint max = 0;
     vector<string>::iterator i = classes.begin();

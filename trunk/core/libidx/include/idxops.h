@@ -366,28 +366,35 @@ namespace ebl {
   //! result: o1 <- o1 + i1+c;
   template<class T> void idx_addcacc(idx<T> &inp, T c, idx<T> &out);
 
-  ////////////////////////////////////////////////////////////////
-  // idx_sub (not-in-place)
+  // idx_sub (not-in-place) ////////////////////////////////////////////////////
 
   //! subtract two idx's
   template<class T> void idx_sub(idx<T> &i1, idx<T> &i2, idx<T> &out);
-
 #ifdef __IPP__
   //! sub two idx's, specialized ubyte version
   template<> void idx_sub(idx<ubyte> &i1, idx<ubyte> &i2, idx<ubyte> &out);
-
   //! sub two idx's, specialized uint16 version
   template<> void idx_sub(idx<uint16> &i1, idx<uint16> &i2, idx<uint16> &out);
-
   //! sub two idx's, specialized int16 version
   template<> void idx_sub(idx<int16> &i1, idx<int16> &i2, idx<int16> &out);
-
   //! sub two idx's, specialized float32 version
-  template<> void idx_sub(idx<float32> &i1, idx<float32> &i2, idx<float32> &out);
+  template<> void idx_sub(idx<float32> &i1, idx<float32> &i2,
+			  idx<float32> &out);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_subc_bounded  
+  // idx_spherical_sub (not-in-place) //////////////////////////////////////////
+
+  //! Subtracts two spherical coordinates idx's. The lowest angle difference
+  //! between each angle is used.
+  template<class T> void idx_spherical_sub(idx<T> &i1, idx<T> &i2, idx<T> &out);
+  //! Float specialization of idx_spherical_sub().
+  template<>
+    void idx_spherical_sub(idx<float> &i1, idx<float> &i2, idx<float> &out);
+  //! Double specialization of idx_spherical_sub().
+  template<>
+    void idx_spherical_sub(idx<double> &i1, idx<double> &i2, idx<double> &out);
+  
+  // idx_subc_bounded //////////////////////////////////////////////////////////
 
   //! subtract a constant to each element:  o1 <- i1-c;
   //! This version bounds the new values to minimum and maximum of type T,
@@ -398,7 +405,6 @@ namespace ebl {
   //! If c overflows the type of inp, it saturates
   template<class T, class T2>
   inline void idx_subc_bounded(idx<T> &inp, T2 c, idx<T> &out);
-
   //! subtract a constant to each element:  o1 <- i1-c;
   //! This version bounds the new values to minimum and maximum of type T,
   //! for example in the case of an underflow with type ubyte, the new value
@@ -411,54 +417,44 @@ namespace ebl {
   //! sub a constant to each element:  o1 <- i1+c, bounding the min and max.
   // specialized ubyte version
   template<> void idx_subc_bounded(idx<ubyte> &inp, ubyte c, idx<ubyte> &out);
-
   //! sub a constant to each element:  o1 <- i1+c, bounding the min and max.
   // specialized uint16 version
   template<>
   void idx_subc_bounded(idx<uint16> &inp, uint16 c, idx<uint16> &out);
-
   //! sub a constant to each element:  o1 <- i1+c, bounding the min and max.
   // specialized int16 version
   template<> void idx_subc_bounded(idx<int16> &inp, int16 c, idx<int16> &out);
-
   //! sub a constant to each element:  o1 <- i1+c, bounding the min and max.
   // specialized float32 version
   template<>
   void idx_subc_bounded(idx<float32> &inp, float32 c, idx<float32> &out);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_minus
+  // idx_minus /////////////////////////////////////////////////////////////////
 
   //! negate all elements
   template<class T> void idx_minus(idx<T> &inp, idx<T> &out);
-
 #ifdef __IPP__
   //! negate all elements, specialized int16 version
   template<> void idx_minus(idx<int16> &inp, idx<int16> &out);
-
   //! negate all elements, specialized float32 version
   template<> void idx_minus(idx<float32> &inp, idx<float32> &out);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_mul (not-in-place)
+  // idx_mul (not-in-place) ////////////////////////////////////////////////////
 
   //! multiply two idx's element-wise: out = i1 * i2
   template<class T> void idx_mul(idx<T> &i1, idx<T> &i2, idx<T> &out);
-
 #ifdef __IPP__
   //! mul two idx's, specialized ubyte version
   template<> void idx_mul(idx<ubyte> &i1, idx<ubyte> &i2, idx<ubyte> &out);
-
   //! mul two idx's, specialized uint16 version
   template<> void idx_mul(idx<uint16> &i1, idx<uint16> &i2, idx<uint16> &out);
-
   //! mul two idx's, specialized int16 version
   template<> void idx_mul(idx<int16> &i1, idx<int16> &i2, idx<int16> &out);
-
   //! mul two idx's, specialized float32 version
-  template<> void idx_mul(idx<float32> &i1, idx<float32> &i2, idx<float32> &out);
+  template<> void idx_mul(idx<float32> &i1, idx<float32> &i2,
+			  idx<float32> &out);
 #endif
 
   ////////////////////////////////////////////////////////////////
@@ -765,48 +761,36 @@ namespace ebl {
   template <class T, class T2>
   void idx_threshold(idx<T>& in, T th, T2 below, T2 above, idx<T2>& out);
 
-  ////////////////////////////////////////////////////////////////
-  // idx_sqrt
+  // idx_sqrt //////////////////////////////////////////////////////////////////
   
   //! takes the square root of in and puts it in out.
   template <typename T> void idx_sqrt(idx<T>& in, idx<T>& out);
-
 #ifdef __IPP__
   //! square root, specialized ubyte version
   template<> void idx_sqrt(idx<ubyte>& inp, idx<ubyte>& out);
-
   //! square root, specialized uint16 version
   template<> void idx_sqrt(idx<uint16>& inp, idx<uint16>& out);
-
   //! square root, specialized int16 version
   template<> void idx_sqrt(idx<int16>& inp, idx<int16>& out);
-
   //! square root, specialized float32 version
   template<> void idx_sqrt(idx<float32>& inp, idx<float32>& out);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_exp
+  // idx_exp ///////////////////////////////////////////////////////////////////
 
   //! computes the exponential of inp
   template<class T> EXPORT void idx_exp(idx<T>& inp);
-
   //! computes the exponential of inp, float version
   template <> EXPORT void idx_exp(idx<float>& inp);
-
   //! computes the exponential of inp
   template <> EXPORT void idx_exp(idx<float64>& inp);
-
 #ifdef __IPP__
   //! exponential, specialized ubyte version
   template<> EXPORT void idx_exp(idx<ubyte>& inp);
-
   //! exponential, specialized uint16 version
   template<> EXPORT void idx_exp(idx<uint16>& inp);
-
   //! exponential, specialized int16 version
   template<> void idx_exp(idx<int16>& inp);
-
   //! exponential, specialized float32 version
   //template<> void idx_exp(idx<float32>& inp);
 #endif
@@ -1213,179 +1197,160 @@ namespace ebl {
   template<> void idx_max(idx<float32> &in1, idx<float32> &in2);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_max between two idx's (not-in-place)
+  // idx_max between two idx's (not-in-place) //////////////////////////////////
 
   //! Copy maximum between each element of in1 and in2 into out.
   template <typename T> void idx_max(idx<T> &in1, idx<T> &in2, idx<T> &out);
-
 #ifdef __IPP__
   //! Copy maximum between each element of in1 and in2 into out.
   //! specialized ubyte version
   template<> void idx_max(idx<ubyte> &in1, idx<ubyte> &in2, idx<ubyte> &out);
-
   //! Copy maximum between each element of in1 and in2 into out.
   //! specialized uint16 version
   template<> void idx_max(idx<uint16> &in1, idx<uint16> &in2, idx<uint16> &out);
-
   //! Copy maximum between each element of in1 and in2 into out.
   //! specialized int16 version
   template<> void idx_max(idx<int16> &in1, idx<int16> &in2, idx<int16> &out);
-
   //! Copy maximum between each element of in1 and in2 into out.
   //! specialized float32 version
   template<>
   void idx_max(idx<float32> &in1, idx<float32> &in2, idx<float32> &out);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_min
+  // idx_min ///////////////////////////////////////////////////////////////////
 
   //! returns smallest element in m
   template <typename T> T idx_min(idx<T> &m);
-
 #ifdef __IPP__
   //! returns smallest element in m, specialized ubyte version
   template<> ubyte idx_min(idx<ubyte> &m);
-
   //! returnssmallest element in m, specialized uint16 version
   template<> uint16 idx_min(idx<uint16> &m);
-
   //! returns smallest element in m, specialized int16 version
   template<> int16 idx_min(idx<int16> &m);
-
   //! returns smallest element in m, specialized float32 version
   template<> float32 idx_min(idx<float32> &m);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_min between two idx's (in-place)
+  // idx_min between two idx's (in-place) //////////////////////////////////////
 
   //! Copy minimum between each element of in1 and in2 into in2.
   template<class T> void idx_min(idx<T> &in1, idx<T> &in2);
 
-  ////////////////////////////////////////////////////////////////
-  // idx_indexmax
+  // idx_indexmax //////////////////////////////////////////////////////////////
 
   //! returns index of largest element of m.
   template <typename T> intg idx_indexmax(idx<T> &m);
-
 #ifdef __IPP__
   //! returns index of largest element of m, specialized ubyte version
   template<> intg idx_indexmax(idx<ubyte> &m);
-
   //! returns index of largest element of m, specialized uint16 version
   template<> intg idx_indexmax(idx<uint16> &m);
-
   //! returns index of largest element of m, specialized int16 version
   template<> intg idx_indexmax(idx<int16> &m);
-
   //! returns index of largest element of m, specialized float32 version
   template<> intg idx_indexmax(idx<float32> &m);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_indexmin
+  // idx_indexmin //////////////////////////////////////////////////////////////
 
   //! returns index of smallest element of m.
   template <typename T> intg idx_indexmin(idx<T> &m);
-
 #ifdef __IPP__
   //! returns index of smallest element of m, specialized ubyte version
   template<> intg idx_indexmin(idx<ubyte> &m);
-
   //! returns index of smallest element of m, specialized uint16 version
   template<> intg idx_indexmin(idx<uint16> &m);
-
   //! returns index of smallest element of m, specialized int16 version
   template<> intg idx_indexmin(idx<int16> &m);
-
   //! returns index of smallest element of m, specialized float32 version
   template<> intg idx_indexmin(idx<float32> &m);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // sort functions
+  // sort functions ////////////////////////////////////////////////////////////
 
   //! <m> is a vector, <p> is a vector (same dimension as <m>).
   //! on output, <m> is sorted in descending order, and <p>
   //! is sorted with the same permutation table.
   template <class T1, class T2> void idx_sortdown(idx<T1> &m, idx<T2> &p);
-
   //! In-place sort of elements of (continuous) vector <m> 
   //! in ascending order.
   template<class T> void idx_sortup(idx<T> &m);
-
   //! In-place sort of elements of (continuous) vector <m> 
   //! in ascending order. m2 will be sorted with the same order as m.
   template<class T1, class T2> void idx_sortup(idx<T1> &m, idx<T2> &m2);
-
   //! In-place sort of elements of (continuous) vector <m> 
   //! in ascending order. m2 and m3 will be sorted with the same order as m.
   template<class T1, class T2, class T3>
     void idx_sortup(idx<T1> &m, idx<T2> &m2, idx<T3> &m3);
-
   //! In-place sort of elements of (continuous) vector <m> 
   //! in descending order.
   template<class T> void idx_sortdown(idx<T> &m);
 
-  ////////////////////////////////////////////////////////////////
-  // idx_sqrdist
+  // idx_sqrdist ///////////////////////////////////////////////////////////////
 
   //! generalized Euclidean distance between <i1> and <i2>,
   //! i.e. the sum of squares of all the differences
   //! between corresponding terms of <i1> and <i2>.
   //! The result is returned by the function.
   template <typename T> float64 idx_sqrdist(idx<T> &i1, idx<T> &i2);
-
 #ifdef __IPP__
   //! generalized Euclidean distance, specialized ubyte version
   template<> float64 idx_sqrdist(idx<ubyte> &i1, idx<ubyte> &i2);
-
   //! generalized Euclidean distance, specialized uint16 version
   template<> float64 idx_sqrdist(idx<uint16> &i1, idx<uint16> &i2);
-
   //! generalized Euclidean distance, specialized int16 version
   template<> float64 idx_sqrdist(idx<int16> &i1, idx<int16> &i2);
-
   //! generalized Euclidean distance, specialized float32 version
   template<> float64 idx_sqrdist(idx<float32> &i1, idx<float32> &i2);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_sqrdist (with idx out)
+  // idx_sqrdist (with idx out) ////////////////////////////////////////////////
 
   //! generalized Euclidean distance between <i1> and <i2>,
   //! i.e. the sum of squares of all the differences
   //! between corresponding terms of <i1> and <i2>.
   //! The result is assigned into the idx out (of order 0).
   template <typename T> void idx_sqrdist(idx<T> &i1, idx<T> &i2, idx<T> &out);
-
 #ifdef __IPP__
   //! generalized Euclidean distance, specialized ubyte version
   template<>
   void idx_sqrdist(idx<ubyte> &i1, idx<ubyte> &i2, idx<ubyte> &out);
-
   //! generalized Euclidean distance, specialized uint16 version
   template<>
   void idx_sqrdist(idx<uint16> &i1, idx<uint16> &i2, idx<uint16> &out);
-
   //! generalized Euclidean distance, specialized int16 version
   template<>
   void idx_sqrdist(idx<int16> &i1, idx<int16> &i2, idx<int16> &out);
-
   //! generalized Euclidean distance, specialized float32 version
   template<>
   void idx_sqrdist(idx<float32> &i1, idx<float32> &i2, idx<float32> &out);
 #endif
 
+  // idx_spherical_sqrdist /////////////////////////////////////////////////////
+
+  //! idx_sqrdist adapted to spherical coordinates, i.e. a 2PI modulo is
+  //! applied to differences before squaring.
+  //! The result is returned by the function.
+  template <typename T> float64 idx_sqrdist(idx<T> &i1, idx<T> &i2);
+  
+  // idx_modulo ////////////////////////////////////////////////////////////////
+
+  //! Apply modulo of 'mod' to each element of 'm'.
+  template <typename T> void idx_modulo(idx<T> &m, T mod);
+  //! Double specialization of idx_modulo().
+  template <> void idx_modulo(idx<double> &m, double mod);
+  //! Long double specialization of idx_modulo().
+  template <> void idx_modulo(idx<long double> &m, long double mod);
+  //! Float specialization of idx_modulo().
+  template <> void idx_modulo(idx<float> &m, float mod);
+  
   ////////////////////////////////////////////////////////////////
   // idx_m2oversample
 
   //! oversample (by repetition) a 2-d matrix
   template <typename T> 
   void idx_m2oversample(idx<T>& small, intg nlin, intg ncol, idx<T>& big);
-
   //! oversample (by repetition) a 2-d matrix and accumulate into big.
   template <typename T> 
   void idx_m2oversampleacc(idx<T>& small, intg nlin, intg ncol, idx<T>& big);
@@ -1403,7 +1368,6 @@ namespace ebl {
   //! and return it. The width of the output idx is determined by the longest
   //! string.
   EXPORT idx<ubyte> strings_to_idx(idx<const char *> &strings);
-
   //! Returns the trace of square matrix m2 (assumed to be a 2D nxn matrix),
   //! i.e. the sum of diagonal elements.
   template <typename T>

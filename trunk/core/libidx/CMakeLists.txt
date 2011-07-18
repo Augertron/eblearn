@@ -27,10 +27,16 @@ add_library (idx SHARED
   src/utils.cpp
   src/srg.cpp
   src/stl.cpp
+  src/matlab.cpp
   )
 
 # link
 ################################################################################
+
+#TODO: temporary
+#TARGET_LINK_LIBRARIES(idx mat)
+
+
 IF(CBLAS_FOUND)
   TARGET_LINK_LIBRARIES(idx ${CBLAS_LIBRARIES})
 ENDIF(CBLAS_FOUND)

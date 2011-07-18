@@ -56,7 +56,9 @@ namespace ebl {
     //! \param device The device string, e.g. "/dev/video".
     //! \param height Resize input frame to this height if different than -1.
     //! \param width Resize input frame to this width if different than -1.
-    camera_v4l2(const char *device, int height = -1, int width = -1);
+    //! \param grayscale If true, output grayscale directly.
+    camera_v4l2(const char *device, int height = -1, int width = -1,
+		bool grayscale = false);
 
     //! Destructor.
     virtual ~camera_v4l2();
@@ -85,6 +87,7 @@ namespace ebl {
     using camera<Tdata>::height;	//!< height
     using camera<Tdata>::width;	        //!< width
     using camera<Tdata>::bresize;       //!< resize or not during postproc.
+    using camera<Tdata>::grayscale;     //!< Output grayscale or not.
     bool started;
     int nbuffers;
     void* *buffers;

@@ -62,6 +62,18 @@ namespace ebl {
   }
     
   template <typename T, typename Tds1, typename Tds2, class Tstate>
+  void answer_module<T,Tds1,Tds2,Tstate>::
+  bprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
+    // empty bprop by default
+  }
+    
+  template <typename T, typename Tds1, typename Tds2, class Tstate>
+  void answer_module<T,Tds1,Tds2,Tstate>::
+  bbprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
+    // empty bbprop by default
+  }
+    
+  template <typename T, typename Tds1, typename Tds2, class Tstate>
   bool answer_module<T,Tds1,Tds2,Tstate>::
   correct(Tstate &answer, Tstate &label) {
     eblerror("not implemented");
@@ -74,6 +86,10 @@ namespace ebl {
     eblerror("not implemented");
   }
     
+  template <typename T, typename Tds1, typename Tds2, class Tstate>
+  void answer_module<T,Tds1,Tds2,Tstate>::forget(forget_param_linear &fp) {
+  }
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   std::string answer_module<T,Tds1,Tds2,Tstate>::describe() {
     eblerror("not implemented");
@@ -760,6 +776,8 @@ namespace ebl {
     // bprop
     energy_mod.bprop(out1, out2, energy);
     mod1.bprop(in1, out1);
+    if (dsmod2)
+      dsmod2->bprop(ds, out2);
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
@@ -772,6 +790,8 @@ namespace ebl {
     // bbprop
     energy_mod.bbprop(out1, out2, energy);
     mod1.bbprop(in1, out1);
+    if (dsmod2)
+      dsmod2->bbprop(ds, out2);
   }
   
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
@@ -788,6 +808,8 @@ namespace ebl {
     mod1.forget(fp);
     if (mod2)
       mod2->forget(fp);
+    if (dsmod2)
+      dsmod2->forget(fp);
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,

@@ -1522,7 +1522,7 @@ namespace ebl {
       eblerror("expected at least 2 dimensions in input but got " << img);
     // if input size had changed, reinit resolutions
     if (!initialized ||
-	(!(indim == img.get_idxdim()) && restype != NETWORK)) {
+	(!(indim == image.get_idxdim()) && restype != NETWORK)) {
       init(image.get_idxdim());
     }
   }

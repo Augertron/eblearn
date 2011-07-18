@@ -308,6 +308,12 @@ dstdsigmoid(float x)
   double dgauss(double sigma) { return sigma*dgauss(); }
   double dgauss(double m, double sigma) { return sigma*dgauss() + m; }
 
+  double gaussian(double x, double m, double sigma) {
+    sigma *= sigma * 2;
+    x -= m;
+    return exp(-x*x / sigma) / sqrt(PI * sigma);
+  }
+  
 #undef MMASK
 #undef MSEED
 #undef FAC

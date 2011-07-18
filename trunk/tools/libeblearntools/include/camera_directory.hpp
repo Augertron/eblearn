@@ -64,12 +64,16 @@ namespace ebl {
 	} else
 	  e << "warning: file not found: " << fullname << endl;
       }
-      if (fl->size() == 0)
-	eblerror("No images in image list were found: " << *files);
+      if (fl->size() == 0) {
+	err << "warning: No images in image list were found: "
+	     << *files << endl;
+	err << "Looking for other images..." << endl;
+	if (!read_directory(dir)) eblerror( "No images found in " << dir);
+      }
     } else { // search all files matching pattern
-      read_directory(dir);
+      if (!read_directory(dir)) eblerror( "No images found in " << dir);
     }
-    out << "Found " << fl->size() << " images in " << indir << endl;
+    cout << "Found " << fl->size() << " images in " << indir << endl;
     if (randomize)
       out << "Image list is randomized." << endl;
     if (npasses > 1)
@@ -91,7 +95,7 @@ namespace ebl {
 
   template <typename Tdata>
   bool camera_directory<Tdata>::read_directory(const char *dir) {
-    out << "Image search pattern: " << file_pattern << endl;
+    out << "Image search pattern: " << file_pattern << " in " << dir << endl;
     string directory = dir;
     if (directory[directory.length() - 1] != '/')
       directory += '/';

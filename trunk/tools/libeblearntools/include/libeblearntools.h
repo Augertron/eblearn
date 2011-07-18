@@ -38,6 +38,7 @@
 #include "gdb.h"
 #include "xml_utils.h"
 #include "tools_utils.h"
+#include "train_utils.h"
 #include "opencv.h"
 #include "camera.h"
 #include "camera_opencv.h"
@@ -56,5 +57,6 @@
 #include "netconf.h"
 #include "job.h"
 #include "mpijob.h"
+#include "dataset.h"
 
 #endif /* LIBEBLEARNTOOLS_H_ */

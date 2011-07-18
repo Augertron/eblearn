@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Matt Grimes and Pierre Sermanet   *
- *   mkg@cs.nyu.edu, pierre.sermanet@gmail.com   *
+ *   Copyright (C) 2011 by Pierre Sermanet   *
+ *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,8 +64,6 @@ namespace ebl {
     //! feature dimension, or the channel dimension in case of images.
     //! \param name An optional name for this dataset.
     datasource(const char *data_fname, const char *name = NULL);
-    /* //! copy constructor */
-    /* datasource(const datasource<Tnet, Tdata> &ds); */
     //! destructor
     virtual ~datasource();
 
@@ -365,8 +363,6 @@ namespace ebl {
     labeled_datasource(const char *root, const char *data_name,
 		       const char *labels_name, const char *jitters_name = NULL,
 		       const char *name = NULL);
-    /* //! (Shallow) copy constructor. */
-    /* labeled_datasource(const labeled_datasource<Tnet, Tdata, Tlabel> &ds); */
     //! Destructor.
     virtual ~labeled_datasource();
 
@@ -473,6 +469,8 @@ namespace ebl {
 
     // init methods ////////////////////////////////////////////////////////////
     
+    //! Allocate class strings vector from ubyte matrix 'classes'.
+    virtual void init_strings(idx<ubyte> &classes);
     //! Initialize things specific to this class. The rest can be initialized
     //! with parent init methods.
     void init_local(vector<string*> *lblstr);
@@ -637,6 +635,315 @@ namespace ebl {
     using datasource<Tnet,Tdata>::test_set;
     using datasource<Tnet,Tdata>::shuffle_passes;
     using datasource<Tnet,Tdata>::not_picked;
+  };
+
+  //////////////////////////////////////////////////////////////////////////////
+  //! class_node
+
+  //! A node class describing a class hierarchy.
+  //! This class allows recursive balanced selection of samples.
+  template <typename Tlabel> class class_node {
+  public:
+    //! Construct a class_node with label 'id'. Call set_parent() to
+    //! establish parent relationship.
+    class_node(Tlabel id, string &name);
+    //! Destructor.
+    virtual ~class_node();
+    //! Returns false if this node or its children contain at least 1 sample,
+    //! true otherwise. If false, next() can be called.
+    virtual bool empty();
+    //! Returns false if this node contains at least 1 sample, true otherwise.
+    virtual bool internally_empty();
+    //! This returns the index of the next sample of this class in a balanced
+    //! way, i.e. it will alternate between each direct children and itself.
+    //! e.g. if this class id is 1, and has 3 children with ids 2,3,4, samples
+    //! classes id will have this order: 1,2,3,4,1,2,3,4,1,etc.
+    virtual intg next();
+    //! Add 'child' to the vector of children and check that child's parent
+    //! is indeed this node.
+    virtual void add_child(class_node *child);
+    //! Add a sample index to this node, i.e. this sample has the same label.
+    virtual void add_sample(intg index);
+    //! Returns the number of samples contained in this node.
+    inline virtual intg nsamples();
+    //! Returns node label.
+    inline virtual Tlabel label();
+    //! Returns node label at depth 'depth'. If node has lower depth than d,
+    //! this returns its leaf label.
+    inline virtual Tlabel label(uint depth);
+    //! Returns the depth of this node.
+    inline virtual uint depth();
+    //! Set the depth of this node to d, and recursively set depth of children
+    //! with d + 1, and return the maximum depth of all children.
+    virtual uint set_depth(uint d);
+    //! Returns the name of this node.
+    virtual string& name();
+    //! Returns the parent pointer (NULL if no parent).
+    virtual class_node<Tlabel>* get_parent();
+    //! Returns true if label 'lab' is a parent of this node.
+    virtual bool is_parent(Tlabel lab);
+      
+  protected:
+    //! Set this node to non-empty. This can be called by children when they
+    //! receive samples, so that the information propagates back to the top.
+    //! Later, parents know if they can attempt to get samples from their
+    //! children or not.
+    virtual void set_non_empty();
+    //! Set the parent to 'parent'.
+    virtual void set_parent(class_node *parent);
+    
+    // members /////////////////////////////////////////////////////////////////
+  protected:
+    Tlabel		 _label; //!< This class' label.
+    string               &_name;
+    // hierarchy variables /////////////////////////////////////////////////////
+    class_node		*parent;	//!< Parent node.
+    vector<class_node<Tlabel>*>	 children;	//!< Children nodes.
+    typename vector<class_node<Tlabel>*>::iterator it_children;
+    bool bempty; //!< This node or its children have samples or not.
+    bool iempty; //!< This node has internal samples or not.
+    uint _depth; //!< Depth of this node.
+    // samples corresponding to this node //////////////////////////////////////
+    vector<intg>	 samples;	//!< Sample ids with this label.
+    vector<intg>::iterator it_samples;	//!< Iterator in this class' samples.
+  };
+  
+  //////////////////////////////////////////////////////////////////////////////
+  //! hierarchy_datasource
+
+  //! A datasource associating samples with a discrete class which can are
+  //! organized as a hierarchy.
+  template <typename Tnet, typename Tdata, typename Tlabel>
+    class hierarchy_datasource : public class_datasource<Tnet, Tdata, Tlabel> {
+  public:
+    //! CAUTION: This empty constructor requires a subsequent call to init().
+    hierarchy_datasource();
+    //! Construct dataset with 'data' and its corresponding 'labels'.
+    //! \param parents The parent label associated with each label. A Nx2 matrix
+    //! with N the number of classes and 2 the pair child/parent.
+    //! \param lblstr An optional vector of strings describing each class.
+    //! \param name An optional name for this dataset.
+    hierarchy_datasource(idx<Tdata> &data, idx<Tlabel> &labels,
+			 idx<Tlabel> &parents, vector<string*> *lblstr = NULL,
+			 const char *name = NULL);
+    //! Construct dataset with 'data' and its corresponding 'labels'.
+    //! \param parents The parent label associated with each label. A Nx2 matrix
+    //! with N the number of classes and 2 the pair child/parent.
+    //! \param classes A vector of strings describing each class.
+    //! \param name An optional name for this dataset.
+    hierarchy_datasource(idx<Tdata> &data, idx<Tlabel> &labels,
+			 idx<Tlabel> &parents,
+			 idx<ubyte> &classes, const char *name = NULL);
+    //! Constructor from full names for each dataset file.
+    //! Note: jitters and classes files are optional.
+    //! \param parents_name The parent label associated with each label.
+    //! A Nx2 matrix with N the number of classes and 2 the pair child/parent.
+    //! \param name An optional name for this dataset.
+    hierarchy_datasource(const char *data_name, const char *labels_name,
+			 const char *parents_name,
+			 const char *jitters_name = NULL,
+			 const char *classes_name = NULL,
+			 const char *name = NULL);
+    //! Destructor.
+    virtual ~hierarchy_datasource();
+
+    // init methods ////////////////////////////////////////////////////////////
+
+    //! Initialize parents and check their validity.
+    void init_parents(idx<Tlabel> &parents);
+    
+    // data access /////////////////////////////////////////////////////////////
+    
+    //! Return the parent's label of current sample. This supposes
+    //! a label is only constituted of 1 element and will produce and error
+    //! otherwise.
+    virtual Tlabel get_parent();
+    //! Returns true if 'lab1' is a parent of 'lab2'.
+    virtual bool is_parent_of(Tlabel lab1, Tlabel lab2);
+    //! Returns a reference to all nodes of the hierarchy.
+    virtual vector<class_node<Tlabel>*>& get_nodes();
+    //! Returns a reference to all nodes ordered by depth, i.e. the following
+    //! node is guaranteed to be of equal or higher depth.
+    virtual vector<class_node<Tlabel>*>& get_nodes_by_depth();
+
+    //! Copy current sample's label into s.
+    virtual void fprop_label(fstate_idx<Tlabel> &s);
+    //! Copy current sample's label into s (name has to be different than
+    //! fprop_label in case Tnet == Tlabel).
+    virtual void fprop_label_net(fstate_idx<Tnet> &s);
+    //! Copy current sample's label into s (name has to be different than
+    //! fprop_label in case Tnet == Tlabel).
+    virtual void fprop_label_net(bbstate_idx<Tnet> &s);
+    //! Returns the label corresponding to current iterator and current depth.
+    //! If current sample has a deeper label, it will return its parent's
+    //! label at depth 'current_depth' (see set_current_depth()).
+    virtual Tlabel get_current_label();
+    //! Returns the matrix of all labels at current depth, i.e. labels deeper
+    //! than current depth, are given their parent's label at current depth.
+    idx<Tlabel>& get_depth_labels();
+    
+    // iterating ///////////////////////////////////////////////////////////////
+
+    //! Set the current depth to 'depth' (for testing or training),
+    //! i.e. the training or testing will set samples to have this depth at
+    //! most.
+    //! The label will be set to this depth's node's label, even if the sample
+    //! come from children.
+    virtual void set_current_depth(uint depth);
+    //! Returns current depth.
+    virtual uint get_current_depth();
+    //! Increment current depth (see set_current_depth() for more details).
+    virtual void incr_current_depth();
+    //! Move to the next datum in a way suited for training (_not_ for testing,
+    //! for testing see next()).  If balance is activated (see set_balanced())
+    //! this will return samples in a class-balanced way,
+    //! i.e. showing each class
+    //! sequentially, with different probabilities based on sample's difficulty,
+    //! or/and in a random order after each pass.
+    //! Samples coming from children are also recursively
+    //! balanced, so that even if a child has lot of samples compared to other
+    //! children, others will be shown as many times.
+    //! When all samples of a class have been shown, it loops back to the first
+    //! sample of that class. This should be used during training only.
+    //! If a sample was not selected because of a low probability, this will
+    //! return false, if it was selected it returns true. In any case,
+    //! internal iterators will always be set to the next sample, regardless
+    //! if it was selected or not. It is up to the caller, to train on
+    //! the sample if selected, or only test and update its energy if not
+    //! selected.
+    virtual bool next_train();
+
+    /* //! If 'bal' is true, make the next_train() method call sequentially one */
+    /* //! sample of each class instead of following the dataset's distribution. */
+    /* //! This is important to use when the dataset is unbalanced. */
+    /* //! This is set to true by default. */
+    /* //! Balance is used only by next_train(), not by next(). */
+    /* virtual void set_balanced(bool bal = true); */
+    /* //! Return true if current epoch is finished. Call init_epoch() to */
+    /* //! restart a new epoch. */
+    /* virtual bool epoch_done(); */
+    /* //! Restarts a new epoch, i.e. resets counters but do not reset iterators */
+    /* //! positions. */
+    /* virtual void init_epoch(); */
+    /* //! Normalize picking probabilities by maximum probability for all classes */
+    /* //! if perclass_norm is true, or globally otherwise. */
+    /* virtual void normalize_all_probas(); */
+    /* //! Normalize picking probabilities by maximum probability of classid if */
+    /* //! perclass_norm is true, or globally otherwise. */
+    /* virtual void normalize_probas(int classid = -1); */
+    
+    /* // accessors /////////////////////////////////////////////////////////////// */
+    
+    /* //! Return the number of classes. */
+    /* virtual intg get_nclasses(); */
+    /* //! Return the label id corresponding to name, or -1 if not found. */
+    /* virtual int get_class_id(const char *name); */
+    /* //! Return the label string for index id. */
+    /* virtual string& get_class_name(int id); */
+    /* //! Returns a reference to a vector of each label string. */
+    /* virtual vector<string*>& get_label_strings(); */
+    /* //! Return the lowest (non-zero) size per class, multiplied by the number */
+    /* //! of classes. */
+    /* //! e.g. if a dataset has 10 classes with 100 examples and 5 classes with */
+    /* //! 50 examples, it will return 50 * (10 + 5) = 750, whereas size() */
+    /* //! will return 1250. */
+    /* //! This is useful to keep iterations to a meaningful size when a class */
+    /* //! has many more examples than another. */
+    /* virtual intg get_lowest_common_size(); */
+
+    /* // picking methods ///////////////////////////////////////////////////////// */
+
+    /* //! Output statistics of samples picking, i.e. the number of times each */
+    /* //! sample has been picked for training. */
+    /* virtual void save_pickings(const char *name = NULL);     */
+    /* //! Write plot of m organized by class and correctness */
+    /* template <typename T> */
+    /*   void write_classed_pickings(idx<T> &m, idx<ubyte> &correct, */
+    /* 				  string &name_, const char *name2_ = NULL, */
+    /* 				  bool plot_correct = true, */
+    /* 				  const char *ylabel = "");     */
+
+    /* // state saving //////////////////////////////////////////////////////////// */
+    
+    /* //! Save internal iterators. Calling restore_state() will return to the */
+    /* //! current sample. */
+    /* virtual void save_state();     */
+    /* //! Restore previously saved internal iterators. */
+    /* virtual void restore_state(); */
+
+    // pretty methods //////////////////////////////////////////////////////////
+
+    //! Print info about the datasource on the standard output.
+    virtual void pretty();
+    /* //! Pretty the progress of current epoch. */
+    /* //! \param newline If true, end pretty with a new line. */
+    /* virtual void pretty_progress(bool newline = true); */
+    
+    // friends //////////////////////////////////////////////////////////////
+    template <typename T1, typename T2, typename T3>
+      friend class class_datasource_gui;
+
+    // members /////////////////////////////////////////////////////////////////
+  protected:
+    // hierarchy
+    vector<class_node<Tlabel>*> all_nodes; //!< All hierarchy nodes.
+    vector<class_node<Tlabel>*> all_nodes_by_depth; //!< All, ordered by depth.
+    vector<vector<class_node<Tlabel>*>*> all_depths; //!< All nodes by depth.
+    //! All nodes by depth, plus ones with lower depth that contain samples
+    //! internally. When iterating at one depth ensures samples at lower depth
+    //! are also used.
+    vector<vector<class_node<Tlabel>*>*> complete_depths;
+    // data
+    idx<Tlabel> parents; //!< Parents matrix.
+    idx<Tlabel> depth_labels; //!< All labels given a certain depth.
+    using labeled_datasource<Tnet,Tdata,Tlabel>::labels;
+    using datasource<Tnet,Tdata>::_name;
+    // classes
+    using class_datasource<Tnet,Tdata,Tlabel>::nclasses;//!< Number of classes.
+    using class_datasource<Tnet,Tdata,Tlabel>::lblstr;	//!< Name of each class.
+    using datasource<Tnet,Tdata>::data;
+    /* using datasource<Tnet,Tdata>::correct; */
+    /* using datasource<Tnet,Tdata>::energies; */
+    /* using datasource<Tnet,Tdata>::probas; */
+    // iterating
+    uint current_depth; //!< Maximum depth at which labels are set.
+    vector<uint> it_depths; //!< Depths iterators.
+    using datasource<Tnet,Tdata>::it;
+    /* using datasource<Tnet,Tdata>::epoch_mode; */
+    /* using datasource<Tnet,Tdata>::epoch_show; */
+    using datasource<Tnet,Tdata>::epoch_sz;
+    /* using datasource<Tnet,Tdata>::epoch_timer; */
+    /* using datasource<Tnet,Tdata>::epoch_show_printed; */
+    // class-balanced iterating indices
+    /* using datasource<Tnet,Tdata>::epoch_done_counters; */
+    bool		 balance;	//!< Balance iterating or not.
+    /* vector<vector<intg> > bal_indices;	//!< Balanced iterating indices. */
+    /* vector<uint>	 bal_it;	//!< Sample iterators for each class. */
+    /* uint		 class_it;	//!< Iterator on classes. */
+    /* // sample picking with probabilities */
+    /* bool		 perclass_norm;	//!< Normalize probas per class. */
+    /* using datasource<Tnet,Tdata>::epoch_pick_cnt;	//!< # pickings */
+    /* using datasource<Tnet,Tdata>::epoch_cnt;	//!< # sample seen this epoch. */
+    /* using datasource<Tnet,Tdata>::count_pickings; */
+    /* using datasource<Tnet,Tdata>::pick_count; */
+    /* using datasource<Tnet,Tdata>::counts; */
+    /* using datasource<Tnet,Tdata>::weigh_samples; */
+    /* // state saving */
+    /* vector<vector<intg> > bal_indices_saved; */
+    /* vector<uint>        bal_it_saved; */
+    /* uint                class_it_saved; */
+    /* using datasource<Tnet,Tdata>::state_saved; */
+    /* using datasource<Tnet,Tdata>::count_pickings_save; */
+    /* using datasource<Tnet,Tdata>::it_saved; */
+    /* using datasource<Tnet,Tdata>::it_test; */
+    /* using datasource<Tnet,Tdata>::it_test_saved; */
+    /* using datasource<Tnet,Tdata>::it_train; */
+    /* using datasource<Tnet,Tdata>::it_train_saved; */
+    // misc
+    using datasource<Tnet,Tdata>::sampledims;
+    using datasource<Tnet,Tdata>::test_set;
+    /* using datasource<Tnet,Tdata>::shuffle_passes; */
+    /* using datasource<Tnet,Tdata>::not_picked; */
   };
 
   ////////////////////////////////////////////////////////////////

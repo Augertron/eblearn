@@ -54,8 +54,6 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // detector_gui
 
-  extern ubyte bbox_colors[12][3];
-
   //! The display class of class detector.
   template <typename T, class Tstate = fstate_idx<T> >
     class EXPORT detector_gui {

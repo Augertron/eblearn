@@ -48,83 +48,65 @@ using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // file IO utilities
+  //! A pre-defined color list
+  extern ubyte color_list[12][3];
+
+  // file IO utilities /////////////////////////////////////////////////////////
 
   //! Scan an int.
   EXPORT int fscan_int(FILE *fp);
-
   //! Scan a float.
   EXPORT float fscan_float(FILE *fp);
-
   //! Scan a word and return it. The caller is responsible for deleting
   //! returned string.
   EXPORT char *fscan_str(FILE *fp);
 
-  ////////////////////////////////////////////////////////////////
-  // directory utilities
+  // directory utilities ///////////////////////////////////////////////////////
 
   //! Create specified directory and all its parents if they do not exists.
   //! Return false upon failure.
-  EXPORT bool mkdir_full(const char *dir);
-  
+  EXPORT bool mkdir_full(const char *dir);  
   //! Create specified directory and all its parents if they do not exists.
   //! Return false upon failure.
   EXPORT bool mkdir_full(string &dir);
-
   //! Returns true if directory 's' exists.
-  EXPORT bool dir_exists(const char *s);
-  
+  EXPORT bool dir_exists(const char *s);  
   //! Returns true if directory 's' exists.
-  EXPORT bool dir_exists(const std::string &s);
-  
+  EXPORT bool dir_exists(const std::string &s);  
   //! Returns true if file 's' exists.
   EXPORT bool file_exists(const char *s);
-
   //! Returns true if file 's' exists.
   EXPORT bool file_exists(const std::string &s);
-
   //! Returns size of file 's'. If the file does not exist, return 0.
   EXPORT uint file_size(const char *s);
-
   //! Returns size of file 's'. If the file does not exist, return 0.
   EXPORT uint file_size(const std::string &s);
-
   //! Returns the time of last modification of file 's'.
   EXPORT time_t file_modified(const char *s);
-
   //! Returns the time of last modification of file 's'.
   EXPORT time_t file_modified(const std::string &s);
-
   //! Returns the number of seconds elapsed since file 's' 
   //! was last modified.
   EXPORT int file_modified_elapsed(const char *s);
-
   //! Update the modified timestamp of file 's'. Returns true on success.
   EXPORT bool touch_file(const char *s);
-
   //! Update the modified timestamp of file 's'. Returns true on success.
   EXPORT bool touch_file(const std::string &s);
-
   //! Remove the file or empty directory 's' and return true on success.
   EXPORT bool rm_file(const char *s);
-
   //! Returns the directory part of 'fname'. E.g. when fname equals
   //! '/usr/lib', it will return '/usr'.
-  EXPORT const char *dirname(const char *fname);
-  
+  EXPORT const char *dirname(const char *fname);  
   //! Returns the file part of 'fname'. E.g. when fname equals
   //! '/usr/lib', it will return 'lib'.
   //! If suffix is provided, the suffix 'suffix' is removed from the
   //! filename.
-  EXPORT const char *basename(const char *fname, const char *suffix = NULL);
-    
+  EXPORT const char *basename(const char *fname, const char *suffix = NULL);    
   //! Returns a name without its extension, basically returns the
   //! first part before the last '.' character.
   EXPORT std::string noext_name(const char *fname);
 
-  ////////////////////////////////////////////////////////////////
-  // timing utilities
+  // timing utilities //////////////////////////////////////////////////////////
 
   //! Return a string containing a timestamp of localtime in the following
   //! format: "<year><month><day>.<hour><minutes><seconds>".
@@ -171,13 +153,11 @@ namespace ebl {
   };
 
   //! Sleep for 'millis' milliseconds.
-  EXPORT void millisleep(long millis);
-  
+  EXPORT void millisleep(long millis);  
   //! Sleep for 'seconds' seconds.
   EXPORT void secsleep(long seconds);
 
-  ////////////////////////////////////////////////////////////////
-  // process utilities
+  // process utilities /////////////////////////////////////////////////////////
   
   //! Return PID of current process.
   EXPORT int pid();

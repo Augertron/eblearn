@@ -156,7 +156,10 @@ namespace ebl {
 		      bool tops = false);
 
     // clear methods ///////////////////////////////////////////////////////////
-    
+
+    //! Clears the window, but does not resize it, leaves it to the current
+    //! size.
+    virtual void clear();
     void clear_spheres();
     void clear_cylinders();
 
