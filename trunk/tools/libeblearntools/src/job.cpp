@@ -296,8 +296,9 @@ namespace ebl {
     else {
       // set retrain to next iteration with current saved weights
       progress << "i = " << i << endl
-	       << "total = " << total << endl
-	       << additional;
+	       << "total = " << total << endl;
+      if (additional)
+	progress << additional;
       progress.close();
     }
   }
