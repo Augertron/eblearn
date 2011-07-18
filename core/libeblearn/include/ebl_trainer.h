@@ -38,6 +38,7 @@
 #include "ebl_machines.h"
 #include "ebl_logger.h"
 #include "datasource.h"
+#include "ebl_answer.h"
 
 namespace ebl {
 

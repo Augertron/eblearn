@@ -152,7 +152,8 @@ namespace ebl {
 	// subvariable list without current subvariable
 	// get existing node
 	bool found = false;
-	map<uint,pairtree,natural_less>::iterator p;
+//	map<uint,pairtree,natural_less>::iterator p;
+	map<uint,pairtree,std::less<uint> >::iterator p;
 	for (p = subtree.begin(); p != subtree.end(); ++p) {
 	  if (p->first == subval) {
 	    found = true;

@@ -723,7 +723,7 @@ namespace ebl {
     summary.str("");
     summary << setfill(' ');
     int total_progress = 0;
-    uint jwidth = 1 + (int) floor(log10(jobs.size()));
+    uint jwidth = 1 + (int) floor(log10((float)jobs.size()));
     uint k = 0;
     for (uint i = 0; i < jobs.size(); ++i) {
       job &j = *(jobs[i]);

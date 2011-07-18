@@ -135,7 +135,10 @@ namespace ebl {
     boost::mpi::communicator world;
     boost::mpi::environment env;
 #endif
-    int rank, slots;
+    int rank;
+#ifndef __WINDOWS__
+	int slots;
+#endif
     int id_running; //!< id of running job (-1 if none).
   };
 

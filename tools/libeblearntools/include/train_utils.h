@@ -41,6 +41,7 @@
 #include "defines.h"
 #include "idx.h"
 #include "job.h"
+#include "tools_utils.h"
 
 #ifdef __GUI__
 #include "ebl_trainer_gui.h"

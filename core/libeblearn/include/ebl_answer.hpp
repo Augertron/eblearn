@@ -77,6 +77,7 @@ namespace ebl {
   bool answer_module<T,Tds1,Tds2,Tstate>::
   correct(Tstate &answer, Tstate &label) {
     eblerror("not implemented");
+	return false;
   }
     
   template <typename T, typename Tds1, typename Tds2, class Tstate>
@@ -93,6 +94,8 @@ namespace ebl {
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   std::string answer_module<T,Tds1,Tds2,Tstate>::describe() {
     eblerror("not implemented");
+	string s;
+	return s;
   }
   
   template <typename T, typename Tds1, typename Tds2, class Tstate>
@@ -194,12 +197,12 @@ namespace ebl {
 	  T t0 = targets.gget(0);
 	  T t1 = targets.gget(1);
 	  T a = ii.gget();
-	  if (fabs(a - t0) < fabs(a - t1)) {
+	  if (fabs((double) a - t0) < fabs((double) a - t1)) {
 	    oo.set((T) 0, 0); // class 0
-	    oo.set((T) (2 - fabs(a - t0)) / 2, 1); // conf
+	    oo.set((T) (2 - fabs((double) a - t0)) / 2, 1); // conf
 	  } else {
 	    oo.set((T) 1, 0); // class 1
-	    oo.set((T) (2 - fabs(a - t1)) / 2, 1); // conf
+	    oo.set((T) (2 - fabs((double) a - t1)) / 2, 1); // conf
 	  }
 	} 
 	else { // 1-of-n target
@@ -464,7 +467,7 @@ namespace ebl {
 				 / (2 * .2)) * 4 - 1)/2+.5));
 	// compute distance to center (the closer the higher the conf)
 	// set xrange[-1:1];set yrange[-1:1];plot exp(-2*sqrt(x*x))
-	T dconf = (T) (exp(-2 * sqrt(h*h + w*w)));
+	T dconf = (T) (exp(-2 * sqrt((double) h*h + w*w)));
 	// take minimum of all confs for final confidence
 	//	T final_conf = std::min(visconf, std::min(dconf, sconf));
 	T final_conf = std::min(visconf, sconf);
@@ -520,8 +523,8 @@ namespace ebl {
     if (conf_target > .5 && s > 0) {
       T herr = target.gget(jittoff + 1) - answer.gget(3);
       T werr = target.gget(jittoff + 2) - answer.gget(4);
-      T spatial_err = (T) sqrt(herr * herr + werr * werr); // spatial
-      T scale_err = (T) fabs(target.gget(jittoff) - answer.gget(2));; // scale
+      T spatial_err = (T) sqrt((double) herr * herr + werr * werr); // spatial
+      T scale_err = (T) fabs((double) target.gget(jittoff) - answer.gget(2));; // scale
       log.log_values[0] += spatial_err; // spatial
       log.log_values[1] += scale_err; // scale
       log.log_values[2] += spatial_err + scale_err / 2; // localization
@@ -534,7 +537,7 @@ namespace ebl {
     }
     // update confidence value if positive example
     if (s > 0) {
-      log.log_values[3] += fabs(rawout.gget(conf_off) - target.gget(conf_off));
+      log.log_values[3] += fabs((double) rawout.gget(conf_off) - target.gget(conf_off));
       log.log_values[5] += 1; // count samples
       // normalization
       log.total_values[3] = log.log_values[5]; // normalization total
@@ -579,7 +582,7 @@ namespace ebl {
     : answer_module<T,Tds1,Tds2,Tstate>(spatial_ ? 3 : 1, name_),
       negative_id(negative_id_), positive_id(positive_id_),
       raw_confidence(raw_confidence_), jitter(1), threshold((T) threshold_),
-      spatial(spatial_), jsize(this->nfeatures) {
+	  spatial(spatial_), jsize(answer_module<T,Tds1,Tds2,Tstate>::nfeatures) {
   }
   
   template <typename T, typename Tds1, typename Tds2, class Tstate>
@@ -799,6 +802,7 @@ namespace ebl {
   int trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
   infer2(labeled_datasource<T,Tds1,Tds2> &ds, Ten &energy) {
     eblerror("not implemented");
+	return 0;
   }
   
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,

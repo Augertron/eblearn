@@ -210,6 +210,12 @@ namespace ebl {
 #define USING_STL_ITERS 0
 #define USING_FAST_ITERS 1
   
+#ifdef LIBIDX // we are inside the library
+#define IDXEXPORT EXPORT
+#else // we are outside
+#define IDXEXPORT IMPORT
+#endif
+
 } // end namespace ebl
 
 #endif /* LIBIDX_DEFINES_H_ */

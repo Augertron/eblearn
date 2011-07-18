@@ -47,11 +47,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
-#include <utime.h>
 
 #ifdef __WINDOWS__
 #include <Windows.h>
 #include <direct.h>
+#include <sys/utime.h>
+#else
+#include <utime.h>
 #endif
 
 #define STRING_BUFFER (int)4096	/* string operations buffer size */
@@ -653,7 +655,7 @@ namespace ebl {
 
   string timer::eta(uint n, uint total) {
     return elapsed((long)((total - n)
-			  * (elapsed_seconds() / (float)std::max((uint)1,n))));
+			  * (elapsed_seconds() / (float)max((uint)1,n))));
   }
   
   /////////////////////////////////////////////////////////////////////////////

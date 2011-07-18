@@ -49,7 +49,7 @@ typedef float t_jitter;
 namespace ebl {
 
   //! A class describing all attributes of a groundtruth object.
-  class object : public rect<int> {
+  class EXPORT object : public rect<int> {
   public:
     // constructors/destructors ////////////////////////////////////////////////
     
@@ -81,7 +81,7 @@ namespace ebl {
   };
 
   //! A class that describes jitter attributes.
-  class jitter {
+  class EXPORT jitter {
   public:
     //! \param spatial_norm Normalize spatial components by dividing by this,
     //!   applied to the vector return by get_jitter_vector() only.

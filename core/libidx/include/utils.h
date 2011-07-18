@@ -49,7 +49,7 @@ using namespace std;
 namespace ebl {
 
   //! A pre-defined color list
-  extern ubyte color_list[12][3];
+  extern IDXEXPORT ubyte color_list[12][3];
 
   // file IO utilities /////////////////////////////////////////////////////////
 

@@ -76,13 +76,15 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 #endif
       ipp_init(1); // limit IPP (if available) to 1 core
       // load configuration
-      configuration	conf(argv[1]);
+      configuration	conf(argv[1], true, true, false);
       if (!conf.exists("root2")) {
-	string dir = dirname(argv[1]);
+	string dir;
+	dir << dirname(argv[1]) << "/";
 	cout << "Looking for trained files in: " << dir << endl;
 	conf.set("root2", dir.c_str());
-	conf.resolve();
       }
+	  conf.resolve();
+	  if (conf.exists_true("show_conf")) conf.pretty();
       bool		color	      = conf.exists_bool("color");
       uint		norm_size     = conf.get_uint("normalization_size");
       Tnet		threshold     = (Tnet) conf.get_double("threshold");
