@@ -162,6 +162,7 @@ namespace ebl {
   bool module_1_1<T,Tin,Tout>::optimize_fprop(mstate<Tin>& in,
 					      mstate<Tout>& out){
     eblerror("memory optimization not implemented for mstates");
+	return false;
   }
   
   template <typename T, class Tin, class Tout>
@@ -375,7 +376,10 @@ namespace ebl {
   }
 
   template <class Tin1, class Tin2, class Ten>
-  std::string ebm_2<Tin1,Tin2,Ten>::describe() { err_not_implemented(); }
+  std::string ebm_2<Tin1,Tin2,Ten>::describe() { 
+	  err_not_implemented(); 
+	  return std::string();
+  }
 
   ////////////////////////////////////////////////////////////////
   // layers
@@ -1734,6 +1738,7 @@ order");
   template <typename T, class Tin, class Tout>
   idxdim s2m_module<T,Tin,Tout>::bprop_msize(const vector<idxdim> &osize) {
     eblerror("not implemented");
+	return idxdim();
   }
 
   template <typename T, class Tin, class Tout>
@@ -1799,6 +1804,8 @@ order");
   template <typename T, class Tin, class Tout>
   vector<idxdim> m2s_module<T,Tin,Tout>::bprop_msize(const idxdim &osize) {
     eblerror("not implemented");
+	vector<idxdim> v;
+	return v;
   }
 
   template <typename T, class Tin, class Tout>

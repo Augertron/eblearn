@@ -438,7 +438,7 @@ namespace ebl {
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   answer_module<T,Tds1,Tds2,Tstate>*
   create_answer(configuration &conf, uint noutputs,
-		const char *varname = "answer") {
+		const char *varname) {
     string name = conf.get_string(varname);
     string type = strip_last_num(name);
     answer_module<T,Tds1,Tds2,Tstate> *module = NULL;
@@ -534,7 +534,7 @@ namespace ebl {
   create_trainer(configuration &conf, labeled_datasource<T,Tds1,Tds2> &ds,
 		 module_1_1<T,Tstate> &net, 
 		 answer_module<T,Tds1,Tds2,Tstate> &answer,
-		 const char *varname = "trainer") {
+		 const char *varname) {
     string name = conf.get_string(varname);
     string type = strip_last_num(name);
     trainable_module<T,Tds1,Tds2,Tstate> *module = NULL;

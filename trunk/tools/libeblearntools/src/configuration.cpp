@@ -456,7 +456,7 @@ namespace ebl {
 
     // short name
     name << "conf" << setfill('0') 
-	 << setw(1 + (int) floor(log10(conf_combinations))) << combination_id;
+	 << setw(1 + (int) floor(log10((float)conf_combinations))) << combination_id;
     shortname = name.str();
     // full name
     fullname = "_";

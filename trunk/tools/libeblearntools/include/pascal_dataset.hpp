@@ -669,6 +669,8 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+#endif /* __XML__ */
+#endif /* __BOOST__ */
   
   template <class Tdata>
   void pascal_dataset<Tdata>::compute_random_jitter() {
@@ -718,9 +720,6 @@ namespace ebl {
     }
   }
   
-#endif /* __XML__ */
-#endif /* __BOOST__ */
-
 } // end namespace ebl
 
 #endif /* PASCAL_DATASET_HPP_ */

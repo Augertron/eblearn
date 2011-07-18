@@ -237,7 +237,7 @@ namespace ebl {
   EXPORT vector<string> ubyteidx_to_stringvector(idx<ubyte> &u);
 
   //! Replace all occurences of 's1' by 's2' in s and return the result.
-  string string_replaceall(const string &s, const char *s1, const char *s2);
+  EXPORT string string_replaceall(const string &s, const char *s1, const char *s2);
   
   //////////////////////////////////////////////////////////////////////////////
   // system functions

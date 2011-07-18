@@ -542,8 +542,8 @@ namespace ebl {
   void subsampling_module<T,Tstate>::resize_output(Tstate &in, Tstate &out) {
     intg sin_i = in.x.dim(1);
     intg sin_j = in.x.dim(2);
-    intg si = (intg) floor(sin_i / stride.dim(0));
-    intg sj = (intg) floor(sin_j / stride.dim(1));
+    intg si = (intg) floor(sin_i / (float) stride.dim(0));
+    intg sj = (intg) floor(sin_j / (float) stride.dim(1));
     // check sizes
     if (!crop &&
 	((sin_i % stride.dim(0)) != 0 || (sin_j % stride.dim(2)) != 0)) {
@@ -568,7 +568,7 @@ namespace ebl {
     // update spatial dimensions
     for (uint i = 1; i < isize.order(); ++i)
       osize.setdim(i, std::max((intg) 1,
-			       (intg) floor(isize.dim(i) / stride.dim(i - 1))));
+			       (intg) floor(isize.dim(i) / (float) stride.dim(i - 1))));
     //! Recompute the input size to be compliant with the output
     isize = bprop_size(osize);
     return osize;
@@ -1619,7 +1619,7 @@ namespace ebl {
     // update spatial dimensions
     for (uint i = 1; i < isize.order(); ++i)
       osize.setdim(i, std::max((intg) 1,
-			       (intg) floor(isize.dim(i) / stride.dim(i - 1))));
+			       (intg) floor((float) (isize.dim(i) / stride.dim(i - 1)))));
     //! Recompute the input size to be compliant with the output
     isize = bprop_size(osize);
     return osize;

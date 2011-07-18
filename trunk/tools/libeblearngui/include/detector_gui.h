@@ -37,12 +37,16 @@
 #include "libeblearn.h"
 #include "detector.h"
 #include "ebl_arch_gui.h"
+#include "utils.h"
 
 #include <deque>
 
 using namespace std;
 
 namespace ebl {
+
+  //! A pre-defined color list
+  //EXPORT extern ubyte color_list[12][3];
 
   EXPORT void draw_bbox_parts(bbox_parts &bb, vector<string> &labels, uint h0,
 			      uint w0, double dzoom);

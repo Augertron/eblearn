@@ -161,12 +161,6 @@ namespace std {
     
 #ifdef __NOSTL__
   
-#ifdef LIBIDX // we are inside the library
-#define IDXEXPORT EXPORT
-#else // we are outside
-#define IDXEXPORT IMPORT
-#endif
-
   class EXPORT ostream;
 
   // global variables declaration
