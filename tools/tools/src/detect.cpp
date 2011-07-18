@@ -80,6 +80,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	dir << dirname(argv[1]) << "/";
 	cout << "Looking for trained files in: " << dir << endl;
 	conf.set("root2", dir.c_str());
+	conf.set("current_dir", dir.c_str());
       }
       conf.resolve(); // manual call to resolving variable
       if (conf.exists_true("show_conf")) conf.pretty();

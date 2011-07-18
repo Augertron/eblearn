@@ -136,9 +136,7 @@ namespace ebl {
     boost::mpi::environment env;
 #endif
     int rank;
-#ifndef __WINDOWS__
-	int slots;
-#endif
+    int jslots;
     int id_running; //!< id of running job (-1 if none).
   };
 
