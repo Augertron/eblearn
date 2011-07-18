@@ -138,7 +138,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	cout << "Loading weights from: " << w << endl;
 	theparam.load_x(w);
       }
-
+      
       // detector
       detector<fs(Tnet)> detect(*net, sclasses, *ans, NULL, NULL);
       // multi-scaling parameters      
