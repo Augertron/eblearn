@@ -244,7 +244,7 @@ int main(int argc, char **argv) { // regular main without gui
 	      } else { // thread loads data itself, just get filename
 		in_fname = cam->grab_filename();
 		out_fname = outdir;
-		out_fname << basename(in_fname.c_str());
+		out_fname << ebl::basename(in_fname.c_str());
 		while (!(*ithreads)->set_dump(in_fname, out_fname))
 		  millisleep(5);		
 	      }
