@@ -62,7 +62,7 @@ using namespace std;
 
 namespace ebl {
 
-  ubyte color_list[12][3] = {
+  ubyte color_list[COLOR_LIST_SIZE][3] = {
     {0,0,255}, // blue
     {0,255,0}, // green
     {255,0,0}, // red

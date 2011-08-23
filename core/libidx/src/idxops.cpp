@@ -156,12 +156,18 @@ namespace ebl {
   idx_fill_macro(float32)
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_minus
-
+  // idx_minus /////////////////////////////////////////////////////////////////
+  
 #ifdef __IPP__
   idx_minus_macro(int16)
   idx_minus_macro(float32)
+#endif
+
+  // idx_minus_acc /////////////////////////////////////////////////////////////
+  
+#ifdef __IPP__
+  idx_minus_acc_macro(int16)
+  idx_minus_acc_macro(float32)
 #endif
 
   ////////////////////////////////////////////////////////////////
@@ -241,30 +247,6 @@ namespace ebl {
   idx_sub_macro(int16)
   idx_sub_macro(float32)
 #endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_sub_spherical
-  
-#define idx_spherical_sub_macro(type)					\
-  template<>								\
-  void idx_spherical_sub(idx<type> &i1, idx<type> &i2, idx<type> &out) { \
-    type tmp, tmpabs, tmpabs2;						\
-    idx_aloopf3(pi1, i1, type, pi2, i2, type, pout, out, type, {	\
-	tmp = *pi1 - *pi2;						\
-	tmpabs = abs(tmp);						\
-	tmpabs2 = TWOPI - tmpabs;					\
-	if (tmpabs > tmpabs2) {						\
-	  if (tmp > 0)							\
-	    tmp = tmpabs2;						\
-	  else								\
-	    tmp = -tmpabs2;						\
-	}								\
-	*pout = tmp;							\
-      });								\
-  }
-  
-  idx_spherical_sub_macro(float);
-  idx_spherical_sub_macro(double);
 
   ////////////////////////////////////////////////////////////////
   // idx_mul

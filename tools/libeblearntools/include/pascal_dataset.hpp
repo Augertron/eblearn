@@ -97,7 +97,7 @@ namespace ebl {
     this->init_preprocessing();
 #ifdef __BOOST__
 #ifdef __XML__    
-    if (!allocated)
+    if (!allocated && !strcmp(save_mode.c_str(), DATASET_SAVE))
       return false;
     cout << "Extracting samples from PASCAL files into dataset..." << endl;
     // adding data to dataset using all xml files in annroot
@@ -569,7 +569,7 @@ namespace ebl {
   // process all objects
 
   template <class Tdata>
-  void pascal_dataset<Tdata>::
+  bool pascal_dataset<Tdata>::
   process_objects(const vector<object*> &objs, int height, int width,
 		  const string &image_fullname, const string &image_filename,
 		  const rect<int> *cropr) {
@@ -634,7 +634,20 @@ namespace ebl {
 	  if (included(o.name, o.difficult, o.truncated, o.occluded)) {
 	    // load image if not already loaded
 	    if (!img) {
+	      // check that image exists
+	      if (!file_exists(image_fullname)) {
+		cerr << "Error: image not found " << image_fullname << endl;
+		return false;
+	      }
+	      // load image
 	      idx<Tdata> im = load_image<Tdata>(image_fullname);
+	      // check that image matches expected sizes
+	      if (im.dim(0) != height || im.dim(1) != width) {
+		cerr << "Error: expected image of size " << height << "x" << width
+		     << " but got " << im << " in " << image_fullname << endl;
+		return false;
+	      }
+	      // crop it
 	      if (cropr) {
 		im = im.narrow(0, cropr->height, cropr->h0);
 		im = im.narrow(1, cropr->width, cropr->w0);
@@ -652,6 +665,7 @@ namespace ebl {
       }
     }
     if (img) delete img;
+    return true;
   }
   
   ////////////////////////////////////////////////////////////////

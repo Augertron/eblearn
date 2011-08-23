@@ -128,6 +128,9 @@ namespace ebl {
   EXPORT double gaussian(double x, double m, double sigma);
   //! n choose k (k must be <= n)
   EXPORT int choose(int n, int k);
+  //! Returns the minimum distance between angles a1 and a2 (in radians).
+  //! e.g. angle_distance(0, 1.5 * PI) -> .5 * PI.
+  template <typename T> EXPORT T angle_distance(T a1, T a2);
 
   ////////////////////////////////////////////////////////////////
   // limits

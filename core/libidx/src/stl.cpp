@@ -354,6 +354,36 @@ namespace std {
   
 #endif /* __NOSTL__ */
 
+  //////////////////////////////////////////////////////////////////////////////
+  // file
+
+  file::file(const char *filename, const char *mode) : refcounter(0) {
+    fp = fopen(filename, mode);
+    if (!fp)
+      eblthrow("failed to open " << filename);    
+  }
+
+  file::~file() {
+    fclose(fp);
+  }
+
+  FILE *file::get_fp() {
+    return fp;
+  }
+
+  void file::incr_ref() {
+    refcounter++;
+  }
+
+  void file::decr_ref() {
+    if (refcounter > 0)
+      refcounter--;
+  }
+
+  bool file::no_references() {
+    return refcounter == 0;
+  }
+
 } // namespace std
 
 namespace ebl {

@@ -124,6 +124,11 @@ namespace ebl {
 				    float,float,string*,int,int,int,int,bool)),
 	    this, SLOT(add_cylinder(float,float,float,float,float,float,
 				    float,float,string*,int,int,int,int,bool)));
+    connect(&thread,
+	    SIGNAL(gui_draw_text_3d(float,float,float,string*,
+				    int,int,int,int)),
+	    this, SLOT(draw_text_3d(float,float,float,string*,
+				    int,int,int,int)));
   }
 
   gui_thread::~gui_thread() {
@@ -213,9 +218,11 @@ namespace ebl {
     if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur])) {
       // when drawing, turn busy flag on
-      busy = true;
       windows[wcur]->set_wupdate(update);
-      busy = false;
+      if (update)
+	busy = false;
+      else
+	busy = true;
     }
   }
 
@@ -378,7 +385,10 @@ namespace ebl {
   }
 
   bool gui_thread::busy_drawing() {
-    return busy;
+    bool b = busy;
+    if ((wcur >= 0) && (windows[wcur]))
+      b = b || windows[wcur]->busy_drawing();
+    return b;
   }
 
   void gui_thread::quit() {
@@ -415,10 +425,26 @@ namespace ebl {
       new_window();
     if ((wcur >= 0) && (windows[wcur])) {
       win3d *w = dynamic_cast<win3d*>(windows[wcur]);
-      if (!w) eblerror("drawing a sphere3d requires a 3d window");
+      if (!w) eblerror("drawing a cylinder3d requires a 3d window");
 #ifdef __GUI3D__
       w->add_cylinder(x, y, z, length, top_radius, base_radius,
 		      a1, a2, s?s->c_str():NULL, r, g, b, a, tops);
+#endif
+    }
+    // if we don't delete this string, no one will
+    if (s) delete s;
+  }
+
+  void gui_thread::draw_text_3d(float x, float y, float z, string *s,
+				int r, int g, int b, int a) {
+    if (bquit) return ; // do not do any work if we are trying to quit
+    if (nwindows == 0)
+      new_window();
+    if ((wcur >= 0) && (windows[wcur])) {
+      win3d *w = dynamic_cast<win3d*>(windows[wcur]);
+      if (!w) eblerror("drawing a text3d requires a 3d window");
+#ifdef __GUI3D__
+      w->add_text(x, y, z, s->c_str(), r, g, b, a);
 #endif
     }
     // if we don't delete this string, no one will

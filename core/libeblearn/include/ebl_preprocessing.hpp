@@ -36,10 +36,10 @@ namespace ebl {
   // channorm_module
 
   template <typename T, class Tstate>
-  channorm_module<T,Tstate>::channorm_module(idxdim &kerdim_, 
+  channorm_module<T,Tstate>::channorm_module(idxdim &kerdim_, bool mirror,
 					     const char *name_)
     : module_1_1<T,Tstate>(name_), normker(kerdim_), tmp(1,1,1),
-      norm(normker, 1, "norm", true, false, true) {
+      norm(normker, 1, "norm", mirror, false, true) {
   }
 
   template <typename T, class Tstate>
@@ -69,8 +69,9 @@ namespace ebl {
   // rgb_to_ypuv_module
 
   template <typename T, class Tstate>
-  rgb_to_ypuv_module<T,Tstate>::rgb_to_ypuv_module(idxdim &normker_)
-    : channorm_module<T,Tstate>(normker_, "rgb_to_ypuv") {
+  rgb_to_ypuv_module<T,Tstate>::
+  rgb_to_ypuv_module(idxdim &normker_, bool mirror)
+    : channorm_module<T,Tstate>(normker_, mirror, "rgb_to_ypuv") {
   }
 
   template <typename T, class Tstate>
@@ -194,8 +195,8 @@ namespace ebl {
   // rgb_to_yp_module
 
   template <typename T, class Tstate>
-  rgb_to_yp_module<T,Tstate>::rgb_to_yp_module(idxdim &normker)
-    : channorm_module<T,Tstate>(normker, "rgb_to_yp") {
+  rgb_to_yp_module<T,Tstate>::rgb_to_yp_module(idxdim &normker, bool mirror)
+    : channorm_module<T,Tstate>(normker, mirror, "rgb_to_yp") {
   }
 
   template <typename T, class Tstate>
@@ -231,8 +232,8 @@ namespace ebl {
   // y_to_yp_module
 
   template <typename T, class Tstate>
-  y_to_yp_module<T,Tstate>::y_to_yp_module(idxdim &normker)
-    : channorm_module<T,Tstate>(normker, "y_to_yp") {
+  y_to_yp_module<T,Tstate>::y_to_yp_module(idxdim &normker, bool mirror)
+    : channorm_module<T,Tstate>(normker, mirror, "y_to_yp") {
   }
 
   template <typename T, class Tstate>
@@ -253,8 +254,9 @@ namespace ebl {
   // bgr_to_ypuv_module
 
   template <typename T, class Tstate>
-   bgr_to_ypuv_module<T,Tstate>::bgr_to_ypuv_module(idxdim &normker)
-     : channorm_module<T,Tstate>(normker, "bgr_to_ypuv") {
+   bgr_to_ypuv_module<T,Tstate>::
+  bgr_to_ypuv_module(idxdim &normker, bool mirror)
+     : channorm_module<T,Tstate>(normker, mirror, "bgr_to_ypuv") {
   }
 
   template <typename T, class Tstate>
@@ -290,8 +292,8 @@ namespace ebl {
   // bgr_to_yp_module
 
   template <typename T, class Tstate>
-  bgr_to_yp_module<T,Tstate>::bgr_to_yp_module(idxdim &normker)
-    : channorm_module<T,Tstate>(normker, "bgr_to_yp") {
+  bgr_to_yp_module<T,Tstate>::bgr_to_yp_module(idxdim &normker, bool mirror)
+    : channorm_module<T,Tstate>(normker, mirror, "bgr_to_yp") {
   }
 
   template <typename T, class Tstate>
@@ -320,8 +322,8 @@ namespace ebl {
   // rgb_to_hp_module
 
   template <typename T, class Tstate>
-  rgb_to_hp_module<T,Tstate>::rgb_to_hp_module(idxdim &normker)
-    : channorm_module<T,Tstate>(normker, "rgb_to_hp") {
+  rgb_to_hp_module<T,Tstate>::rgb_to_hp_module(idxdim &normker, bool mirror)
+    : channorm_module<T,Tstate>(normker, mirror, "rgb_to_hp") {
   }
 
   template <typename T, class Tstate>
@@ -573,7 +575,7 @@ namespace ebl {
     // remember input box
     input_bbox = r;
     double rh = out.x.dim(1) / (double) outr.height;
-    double rw = out.x.dim(2) / (double) outr.width;
+    double rw = out.x.dim(2) / (double) (std::max)((int) 1, outr.width);
     input_bbox.scale_centered(rh, rw);
     //idx_copy(tmp2, tmp);
     if (!zpad)

@@ -23,7 +23,6 @@
 #   MESSAGE(STATUS "Copied demos/obj/${NAME} to bin directory.")
 # ENDFOREACH(NAME)
 
-ADD_SUBDIRECTORY(mnist)
 #ADD_SUBDIRECTORY(pascal)
 #ADD_SUBDIRECTORY(window)
 

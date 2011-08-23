@@ -1116,27 +1116,27 @@ namespace ebl {
     tmp = tmp.narrow(2, inc, ncol);
     idx_copy(in.x, tmp);
     // mirror border left
-    for (i = 0; i < ncol; ++i) {
+    for (i = std::max(0, (int) (ncol - in.x.dim(1) / 2)); i < ncol; ++i) {
       tmp2 = in.x.narrow(1, 1, ncol - i - 1);
       tmp = out.x.narrow(1, 1, i);
       tmp = tmp.narrow(2, in.x.dim(2), ncol);
       idx_copy(tmp2, tmp);
     }
     // mirror border right
-    for (i = 0; i < ncol; ++i) {
+    for (i = std::max(0, (int) (ncol - in.x.dim(1) / 2)); i < ncol; ++i) {
       tmp2 = in.x.narrow(1, 1, in.x.dim(1) - ncol - 1 + i);
       tmp = out.x.narrow(1, 1, out.x.dim(1) - 1 - i);
       tmp = tmp.narrow(2, in.x.dim(2), ncol);
       idx_copy(tmp2, tmp);
     }
     // mirror border top using out as input
-    for (i = 0; i < nrow; ++i) {
+    for (i = std::max(0, (int) (nrow - in.x.dim(2) / 2)); i < nrow; ++i) {
       tmp2 = out.x.narrow(2, 1, nrow + nrow - i - 1);
       tmp = out.x.narrow(2, 1, i);
       idx_copy(tmp2, tmp);
     }
     // mirror border bottom using out as input
-    for (i = 0; i < nrow; ++i) {
+    for (i = std::max(0, (int) (nrow - in.x.dim(2) / 2)); i < nrow; ++i) {
       tmp2 = out.x.narrow(2, 1, out.x.dim(2) - nrow * 2 - 1 + i);
       tmp = out.x.narrow(2, 1, out.x.dim(2) - 1 - i);
       idx_copy(tmp2, tmp);

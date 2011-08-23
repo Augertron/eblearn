@@ -71,13 +71,7 @@ namespace ebl {
     // if (pixmap) 
     //   pixmap->fill(bg_color);
     // clear regular lists if we can update, temporary otherwise.
-    clear_text(!wupdate);
-    clear_arrows(!wupdate);
-    clear_boxes(!wupdate);
-    clear_crosses(!wupdate);
-    clear_ellipses(!wupdate);
-    clear_images(!wupdate);
-    clear_masks(!wupdate);
+    win::clear_all(!wupdate);
     update_window();
   }
 
@@ -87,13 +81,7 @@ namespace ebl {
     // if (pixmap) 
     //   pixmap->fill(bg_color);
     // clear regular lists if we can update, temporary otherwise.
-    clear_text(!wupdate);
-    clear_arrows(!wupdate);
-    clear_boxes(!wupdate);
-    clear_crosses(!wupdate);
-    clear_ellipses(!wupdate);
-    clear_images(!wupdate);
-    clear_masks(!wupdate);
+    win::clear_all(!wupdate);
     update_window();
   }
 

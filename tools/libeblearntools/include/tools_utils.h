@@ -95,42 +95,36 @@ namespace ebl {
   EXPORT uint count_files(const string &dir, 
 			  const char *pattern = IMAGE_PATTERN);
 
+  //! Convert a string to a bool. Throws a const char * exception
+  //! upon failure.
+  EXPORT bool string_to_bool(const string &s);
   //! Convert a string to an int. Throws a const char * exception
   //! upon failure.
   EXPORT int string_to_int(const string &s);
-
   //! Convert a string to an int. Throws a const char * exception
   //! upon failure.
   EXPORT int string_to_int(const char *s);
-
   //! Convert a string to an intg. Throws a const char * exception
   //! upon failure.
   EXPORT intg string_to_intg(const string &s);
-
   //! Convert a string to an intg. Throws a const char * exception
   //! upon failure.
   EXPORT intg string_to_intg(const char *s);
-
   //! Convert a string to an unsigned int. Throws a const char * exception
   //! upon failure.
   EXPORT uint string_to_uint(const string &s);
-
   //! Convert a string to an unsigned int. Throws a const char * exception
   //! upon failure.
   EXPORT uint string_to_uint(const char *s);
-
   //! Convert a string to an float. Throws a const char * exception
   //! upon failure.
   EXPORT float string_to_float(const string &s);
-
   //! Convert a string to an float. Throws a const char * exception
   //! upon failure.
   EXPORT float string_to_float(const char *s);
-
   //! Convert a string to an double. Throws a const char * exception
   //! upon failure.
   EXPORT double string_to_double(const string &s);
-
   //! Convert a string to an double. Throws a const char * exception
   //! upon failure.
   EXPORT double string_to_double(const char *s);
@@ -138,16 +132,13 @@ namespace ebl {
   //! Convert a string containing a list of uint separated by commas, e.g.
   //! "1,2,3,4" into a list of uints.
   EXPORT list<uint> string_to_uintlist(const string &s);
-
   //! Convert a string containing a list of uint separated by commas, e.g.
   //! "1,2,3,4" into a list of uints.
   EXPORT list<uint> string_to_uintlist(const char *s);
-
   //! Convert a string containing a list of uint separated by commas, e.g.
   //! "1,2,3,4" into a vector of uints.
   //! \param sep Specifies the separating character, comma by default.
   EXPORT vector<uint> string_to_uintvector(const string &s, char sep = ',');
-
   //! Convert a string containing a list of uint separated by commas, e.g.
   //! "1,2,3,4" into a vector of uints.
   //! \param sep Specifies the separating character, comma by default.
@@ -158,33 +149,27 @@ namespace ebl {
   //! \param sep Specifies the separating character, 'x' by default.
   template <typename T>
   EXPORT idx<T> string_to_idx(const char *s, char sep = ',');
-
   //! Convert the number in s into a value of type T and return it.
   template <typename T>
-  EXPORT T string_to_number(const char *s);
-  
+  EXPORT T string_to_number(const char *s);  
   //! Convert a string containing a list of uint separated by 'sep', e.g.
   //! "1x2x3x4" into an idxdim.
   //! \param sep Specifies the separating character, 'x' by default.
   EXPORT idxdim string_to_idxdim(const char *s, char sep = 'x');
-
   //! Convert a string containing a list of float separated by 'sep', e.g.
   //! "1.5x2x3x4.5" into an fidxdim.
   //! \param sep Specifies the separating character, 'x' by default.
   EXPORT fidxdim string_to_fidxdim(const char *s, char sep = 'x');
-
   //! Convert a string containing a list of uint separated by 'sep', e.g.
   //! "1x2x3x4" into an idxdim.
   //! \param sep Specifies the separating character, 'x' by default.
   EXPORT idxdim string_to_idxdim(const string &s, char sep = 'x');
-
   //! Convert a string containing a list of dimension strings separated by 
   //! commas, e.g. "10x10,20x20" into a vector of idxdim.
   //! \param vecsep Specifies the vector separating character, ',' by default.
   //! \param dimsep Specifies the dim separating character, 'x' by default.
   EXPORT vector<idxdim> 
     string_to_idxdimvector(const char *s, char vecsep = ',', char dimsep = 'x');
-
   //! Convert a string containing a list of float dimension strings separated by
   //! commas, e.g. "1.5x1.5,2.5x2.5" into a vector of fidxdim.
   //! \param vecsep Specifies the vector separating character, ',' by default.
@@ -197,47 +182,39 @@ namespace ebl {
   //! "errors,2,toto,4" into a list of strings.
   //! \param sep Specifies the separating character, ',' by default.
   EXPORT list<string> string_to_stringlist(const string &s, char sep = ',');
-
   //! Convert a string containing a list of strings separated by commas, e.g.
   //! "errors,2,toto,4" into a list of strings.
   //! \param sep Specifies the separating character, ',' by default.
   EXPORT list<string> string_to_stringlist(const char *s, char sep = ',');
-
   //! Convert a string containing a list of strings separated by commas, e.g.
   //! "errors,2,toto,4" into a vector of strings.
   //! \param sep Specifies the separating character, ',' by default.
   EXPORT vector<string> string_to_stringvector(const string &s, char sep = ',');
-
   //! Convert a string containing a list of strings separated by commas, e.g.
   //! "errors,2,toto,4" into a vector of strings.
   //! \param sep Specifies the separating character, ',' by default.
   EXPORT vector<string> string_to_stringvector(const char *s, char sep = ',');
-
   //! Convert a string containing a list of double separated by commas, e.g.
   //! "1,2,3.0,4.0" into a vector of doubles.
   EXPORT vector<double> string_to_doublevector(const string &s);
-
   //! Convert a string containing a list of double separated by commas, e.g.
   //! "1,2,3.0,4.0" into a vector of doubles.
   EXPORT vector<double> string_to_doublevector(const char *s);
 
   //! Convert a map to a string representation.
   template <typename T1, typename T2>
-    EXPORT string map_to_string(map<T1,T2> &m);
-  
+    EXPORT string map_to_string(map<T1,T2> &m);  
   //! Convert a map to a string representation, printing a new line between
   //! each variables/value pair.
   template <typename T1, typename T2>
-    EXPORT string map_to_string2(map<T1,T2> &m);
-  
+    EXPORT string map_to_string2(map<T1,T2> &m);  
   //! Convert a string list to a string representation.
-  EXPORT string stringlist_to_string(list<string> &l);
-  
+  EXPORT string stringlist_to_string(list<string> &l);  
   //! Convert an idx of string to a vector of strings.
   EXPORT vector<string> ubyteidx_to_stringvector(idx<ubyte> &u);
-
   //! Replace all occurences of 's1' by 's2' in s and return the result.
-  EXPORT string string_replaceall(const string &s, const char *s1, const char *s2);
+  EXPORT string string_replaceall(const string &s, const char *s1,
+				  const char *s2);
   
   //////////////////////////////////////////////////////////////////////////////
   // system functions
@@ -246,7 +223,6 @@ namespace ebl {
   //! into target directory tgtdir.
   //! Return false upon failure, true otherwise.
   EXPORT bool tar(const string &dir, const string &tgtdir);
-
   //! Tar all files found recursively in directory dir into a compressed tar 
   //! archive "tgtdir/tgtfilename", using matching pattern 'pattern'.
   //! Return false upon failure, true otherwise.

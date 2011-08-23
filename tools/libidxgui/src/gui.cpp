@@ -202,4 +202,9 @@ namespace ebl {
 		      a1, a2, s, r, g, b, a, tops);
   }
   
+  void draw_text(float x, float y, float z, const char *s,
+		 int r, int g, int b, int a) {
+    gui.draw_text_3d(x, y, z, s, r, g, b, a);
+  }
+  
 } // end namespace ebl

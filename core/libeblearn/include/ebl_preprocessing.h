@@ -49,7 +49,11 @@ namespace ebl {
   public:
     //! Constructor.
     //! \param kerdim Kernel dimensions for local normalization.
-    channorm_module(idxdim &kerdim, const char *name = "channorm");
+    //! \param mirror If true, pad normalization if a mirror of the image
+    //!   instead of with zeros. This can be useful in object detection when
+    //!   objects are close to borders.
+    channorm_module(idxdim &kerdim, bool mirror = true,
+		    const char *name = "channorm");
     //! Destructor
     virtual ~channorm_module();
     //! Forward propagation from in to out (abstract).
@@ -80,7 +84,10 @@ namespace ebl {
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
     //!        local normalization.
-    rgb_to_ypuv_module(idxdim &norm_kernel);
+    //! \param mirror If true, pad normalization if a mirror of the image
+    //!   instead of with zeros. This can be useful in object detection when
+    //!   objects are close to borders.
+    rgb_to_ypuv_module(idxdim &norm_kernel, bool mirror = true);
     //! destructor
     virtual ~rgb_to_ypuv_module();
     //! forward propagation from in to out
@@ -137,7 +144,10 @@ namespace ebl {
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
     //!        local normalization.
-    rgb_to_yp_module(idxdim &norm_kernel);
+    //! \param mirror If true, pad normalization if a mirror of the image
+    //!   instead of with zeros. This can be useful in object detection when
+    //!   objects are close to borders.
+    rgb_to_yp_module(idxdim &norm_kernel, bool mirror = true);
     //! destructor
     virtual ~rgb_to_yp_module();
     //! forward propagation from in to out
@@ -156,7 +166,10 @@ namespace ebl {
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
     //!        local normalization.
-    y_to_yp_module(idxdim &norm_kernel);
+    //! \param mirror If true, pad normalization if a mirror of the image
+    //!   instead of with zeros. This can be useful in object detection when
+    //!   objects are close to borders.
+    y_to_yp_module(idxdim &norm_kernel, bool mirror = true);
     //! destructor
     virtual ~y_to_yp_module();
     //! forward propagation from in to out
@@ -175,7 +188,10 @@ namespace ebl {
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
     //!        local normalization.
-    bgr_to_ypuv_module(idxdim &norm_kernel);
+    //! \param mirror If true, pad normalization if a mirror of the image
+    //!   instead of with zeros. This can be useful in object detection when
+    //!   objects are close to borders.
+    bgr_to_ypuv_module(idxdim &norm_kernel, bool mirror = true);
     //! destructor
     virtual ~bgr_to_ypuv_module();
     //! forward propagation from in to out
@@ -194,7 +210,10 @@ namespace ebl {
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Yp's
     //!        local normalization.
-    bgr_to_yp_module(idxdim &norm_kernel);
+    //! \param mirror If true, pad normalization if a mirror of the image
+    //!   instead of with zeros. This can be useful in object detection when
+    //!   objects are close to borders.
+    bgr_to_yp_module(idxdim &norm_kernel, bool mirror = true);
     //! destructor
     virtual ~bgr_to_yp_module();
     //! forward propagation from in to out
@@ -213,7 +232,10 @@ namespace ebl {
     //! Constructor.
     //! \param normalization_size is the size of the kernel used for Hp's
     //!        local normalization.
-    rgb_to_hp_module(idxdim &norm_kernel);
+    //! \param mirror If true, pad normalization if a mirror of the image
+    //!   instead of with zeros. This can be useful in object detection when
+    //!   objects are close to borders.
+    rgb_to_hp_module(idxdim &norm_kernel, bool mirror = true);
     //! destructor
     virtual ~rgb_to_hp_module();
     //! forward propagation from in to out

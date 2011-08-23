@@ -145,7 +145,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	mkdir_full(viddir);
       }
       bool precomputed_boxes = conf.exists("bbox_file");
-      bool save_bbox_each_iter = conf.exists_true("save_bbox_each_iter");
+      uint 	save_bbox_period 	    = 1;
+      if (conf.exists("save_bbox_period")) 
+	save_bbox_period = std::max((uint)1, conf.get_uint("save_bbox_period"));
     
       string		cam_type;
 #ifdef __LINUX__ // default camera for linux if not defined
@@ -294,7 +296,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 		   << processed_fname << " with id " << processed_id << endl;
 	      boxes.new_group(d, &processed_fname, processed_id);
 	      boxes.add(bb, d, &processed_fname, processed_id);
-	      if (save_bbox_each_iter)
+	      if (cnt % save_bbox_period == 0)
 		boxes.save();
 	    }
 	    cnt++;

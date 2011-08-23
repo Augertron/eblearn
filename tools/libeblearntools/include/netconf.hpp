@@ -228,20 +228,29 @@ namespace ebl {
     }
     // preprocessing //////////////////////////////////////////////////////
     else if (!type.compare("rgb_to_ypuv")) {
-      string skernel; idxdim kernel;
+      string skernel, smirror; idxdim kernel; bool mirror = true;
       if (get_param(conf, name, "kernel", skernel))
 	kernel = string_to_idxdim(skernel);
-      module = (module_1_1<T,Tstate>*) new rgb_to_ypuv_module<T,Tstate>(kernel);
+      if (get_param(conf, name, "mirror", smirror))
+	mirror = string_to_bool(smirror);
+      module = (module_1_1<T,Tstate>*)
+	new rgb_to_ypuv_module<T,Tstate>(kernel, mirror);
     } else if (!type.compare("rgb_to_yp")) {
-      string skernel; idxdim kernel;
+      string skernel, smirror; idxdim kernel; bool mirror = true;
       if (get_param(conf, name, "kernel", skernel))
 	kernel = string_to_idxdim(skernel);
-      module = (module_1_1<T,Tstate>*) new rgb_to_yp_module<T,Tstate>(kernel);
+      if (get_param(conf, name, "mirror", smirror))
+	mirror = string_to_bool(smirror);
+      module = (module_1_1<T,Tstate>*)
+	new rgb_to_yp_module<T,Tstate>(kernel, mirror);
     } else if (!type.compare("y_to_yp")) {
-      string skernel; idxdim kernel;
+      string skernel, smirror; idxdim kernel; bool mirror = true;
       if (get_param(conf, name, "kernel", skernel))
 	kernel = string_to_idxdim(skernel);
-      module = (module_1_1<T,Tstate>*) new y_to_yp_module<T,Tstate>(kernel);
+      if (get_param(conf, name, "mirror", smirror))
+	mirror = string_to_bool(smirror);
+      module = (module_1_1<T,Tstate>*)
+	new y_to_yp_module<T,Tstate>(kernel, mirror);
     } else if (!type.compare("rgb_to_yuv"))
       module = (module_1_1<T,Tstate>*) new rgb_to_yuv_module<T,Tstate>();
     else if (!type.compare("rgb_to_y"))
@@ -457,6 +466,22 @@ namespace ebl {
       if (get_param(conf, name, "tanh", tanh_name, true))
 	btanh = (bool) string_to_uint(tanh_name);
       module = new class_answer<T,Tds1,Tds2,Tstate>
+	(noutputs, factor, binary, tconf, btanh, name.c_str());
+      //////////////////////////////////////////////////////////////////////////
+    } else if (!type.compare("vote_answer")) {
+      string factor_name, binary_name, tconf_name, tanh_name;
+      t_confidence tconf = confidence_max;
+      bool binary = false, btanh = false;
+      float factor = 1.0;
+      if (get_param(conf, name, "factor", factor_name, true))
+	factor = string_to_float(factor_name);
+      if (get_param(conf, name, "binary", binary_name, true))
+	binary = (bool) string_to_uint(binary_name);
+      if (get_param(conf, name, "confidence", tconf_name, true))
+	tconf = (t_confidence) string_to_uint(tconf_name);
+      if (get_param(conf, name, "tanh", tanh_name, true))
+	btanh = (bool) string_to_uint(tanh_name);
+      module = new vote_answer<T,Tds1,Tds2,Tstate>
 	(noutputs, factor, binary, tconf, btanh, name.c_str());
       //////////////////////////////////////////////////////////////////////////
     } else if (!type.compare("regression_answer")) {

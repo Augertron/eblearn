@@ -191,6 +191,8 @@ namespace ebl {
   typedef Ipp16s int16;
   typedef Ipp32u uint32;
   typedef Ipp32s int32;
+  typedef long int64;
+  typedef unsigned long uint64;
   typedef Ipp32f float32;
   typedef Ipp64f float64;
 #else
@@ -200,8 +202,8 @@ namespace ebl {
   typedef signed short int int16;
   typedef unsigned int uint32;
   typedef signed int int32;
-  typedef unsigned long int uint64;
-  typedef signed long int int64;
+  typedef unsigned long uint64;
+  typedef signed long int64;
   typedef float float32;
   typedef double float64;
 #endif

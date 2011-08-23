@@ -325,6 +325,8 @@ namespace ebl {
       // (smaller to avoid upsampling)
       uint fact = (std::min)((uint)floor(iregion.height / (float) outr.height),
 			     (uint)floor(iregion.width / (float) outr.width));
+      if (fact == 0) // no multiple smaller than input, go straight for bilinear
+	return image_resize(im, oheight, owidth, mode, iregion_, oregion);	
       // bilinear resize at closest resolution to current resolution
       rim = image_resize(im, inr.height * fact, inr.width * fact, 1);
       //  add extra padding around original image if it's not a multiple of fact

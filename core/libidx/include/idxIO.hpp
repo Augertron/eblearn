@@ -54,6 +54,7 @@ namespace ebl {
   template <> inline int get_magic<double>()      {return MAGIC_DOUBLE_MATRIX; }
   template <> inline int get_magic<long>()        {return MAGIC_LONG_MATRIX; }
   template <> inline int get_magic<uint>()        {return MAGIC_UINT_MATRIX; }
+  template <> inline int get_magic<uint64>()      {return MAGIC_UINT64_MATRIX; }
 
   // Pascal Vincent type
   template <class T> inline int get_magic_vincent() {
@@ -80,6 +81,8 @@ namespace ebl {
     case MAGIC_LONG_MATRIX:	return "long";
       // non standard
     case MAGIC_UINT_MATRIX: 	return "uint";
+    case MAGIC_UINT64_MATRIX: 	return "uint64";
+    case MAGIC_INT64_MATRIX: 	return "int64";
       // pascal vincent format
     case MAGIC_BYTE_VINCENT: 	return "byte (pascal vincent)";
     case MAGIC_UBYTE_VINCENT: 	return "ubyte (pascal vincent)";
@@ -228,6 +231,12 @@ namespace ebl {
       case MAGIC_UINT_MATRIX:
 	read_cast_matrix<uint>(fp, *pout);
 	break ;
+      case MAGIC_UINT64_MATRIX:
+	read_cast_matrix<uint64>(fp, *pout);
+	break ;
+      case MAGIC_INT64_MATRIX:
+	read_cast_matrix<int64>(fp, *pout);
+	break ;
       default:
 	eblerror("unknown magic number");
       }
@@ -236,30 +245,36 @@ namespace ebl {
   }
 
   template <typename T>
-  idxs<T> load_matrices(const std::string &filename){
+  idxs<T> load_matrices(const std::string &filename, bool ondemand){
     // open file
-    FILE *fp = fopen(filename.c_str(), "rb");
-    if (!fp)
-      eblthrow("load_matrix failed to open " << filename);
-    // first read presence matrix
-    idx<ubyte> p = load_matrix<ubyte>(fp);
-    // read all present matrices
-    idxs<T> all(p.dim(0));
-    for (uint i = 0; i < p.dim(0); ++i) {
-      if (p.get(i) == 1) { // matrix is present, get it
-	idx<T> m = load_matrix<T>(fp);
-	all.set(m, i);
+    file *f = new file(filename.c_str(), "rb");
+    FILE *fp = f->get_fp();
+    // first read offsets matrix
+    idx<int64> p = load_matrix<int64>(fp);
+    // switch loading mode
+    if (ondemand) { // do not load data now
+      fseek(fp, 0, SEEK_SET); // reset fp to beginning
+      idxs<T> all(p.dim(0), f, &p);
+      return all;
+    } else { // load all data now
+      // read all present matrices
+      idxs<T> all(p.dim(0));
+      for (uint i = 0; i < p.dim(0); ++i) {
+	if (p.get(i) == 1) { // matrix is present, get it
+	  idx<T> m = load_matrix<T>(fp);
+	  all.set(m, i);
+	}
       }
+      delete f;
+      return all;
     }
-    fclose(fp);
-    return all;
   }
   
   ////////////////////////////////////////////////////////////////
   // saving
   
-  template <typename T> bool save_matrix(idx<T>& m,
-					 const std::string &filename) {
+  template <typename T>
+  bool save_matrix(idx<T>& m, const std::string &filename) {
     return save_matrix(m, filename.c_str());
   }
 
@@ -310,30 +325,30 @@ namespace ebl {
 
   template <typename T>
   bool save_matrices(idxs<T>& m, const std::string &filename) {
-    FILE *fp = fopen(filename.c_str(), "wb");
-
+    FILE *fp = fopen(filename.c_str(), "wb+");
     if (!fp) {
       cerr << "save_matrix failed (" << filename << ")." << endl;
       return false;
     }
-    // convert pointers to presence/absence matrix
-    idx<ubyte> p(m.dim(0));
-    idx_clear(p);
-    for (uint i = 0; i < m.dim(0); ++i) {
-      if (m.exists(i))
-	p.set((ubyte) 1, i);
-    }
-    // save presence matrix first    
-    bool ret = save_matrix(p, fp);
+    // allocate offset matrix
+    idx<int64> offsets(m.dim(0));
+    idx_clear(offsets);
+    // save offsets matrix first    
+    bool ret = save_matrix(offsets, fp);
     if (!ret) {
-      cerr << "failed to write matrix " << p << " to " << filename << "."
+      cerr << "failed to write matrix " << offsets << " to " << filename << "."
 	   << endl;
       fclose(fp);
       return false;
     }
     // then save all matrices contained in m
+    fpos_t pos;
     for (uint i = 0; i < m.dim(0); ++i) {
       if (m.exists(i)) {
+	// save offset of matrix
+	fgetpos(fp, &pos);
+	offsets.set((int64) pos.__pos, i);
+	// save matrix to file
 	idx<T> e = m.get(i);
 	ret = save_matrix(e, fp);
 	if (!ret) {
@@ -343,6 +358,75 @@ namespace ebl {
 	  return false;
 	}
       }
+    }
+    fclose(fp);
+    // finally rewrite offset matrix at beginning of file
+    fp = fopen(filename.c_str(), "rb+");
+    if (!fp) {
+      cerr << "save_matrix failed (" << filename << ")." << endl;
+      return false;
+    }
+    ret = save_matrix(offsets, fp);
+    if (!ret) {
+      cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << endl;
+      fclose(fp);
+      return false;
+    }    
+    fclose(fp);
+    return ret;
+  }
+  
+  template <typename T>
+  bool save_matrices(std::list<std::string> &filenames,
+		     const std::string &filename) {
+    FILE *fp = fopen(filename.c_str(), "wb+");
+    if (!fp) {
+      cerr << "save_matrix failed (" << filename << ")." << endl;
+      return false;
+    }
+    // allocate offsets matrix
+    idx<int64> offsets(filenames.size());
+    idx_clear(offsets);
+    // put this matrix first in the file
+    bool ret = save_matrix(offsets, fp);
+    if (!ret) {
+      cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << endl;
+      fclose(fp);
+      return false;
+    }
+    // then save all matrices
+    fpos_t pos;
+    intg j = 0;
+    for (std::list<std::string>::iterator i = filenames.begin();
+	 i != filenames.end(); ++i, ++j) {
+      idx<T> e = load_matrix<T>(*i);
+      // save offset of matrix
+      fgetpos(fp, &pos);
+      offsets.set((int64) pos.__pos, j);
+      // save matrix into file
+      ret = save_matrix(e, fp);
+      if (!ret) {
+	cerr << "failed to write matrix " << e << " to " << filename << "."
+	     << endl;
+	fclose(fp);
+	return false;
+      }      
+    }
+    fclose(fp);
+    // finally rewrite offset matrix at beginning of file
+    fp = fopen(filename.c_str(), "rb+");
+    if (!fp) {
+      cerr << "save_matrix failed (" << filename << ")." << endl;
+      return false;
+    }
+    ret = save_matrix(offsets, fp);
+    if (!ret) {
+      cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << endl;
+      fclose(fp);
+      return false;
     }
     fclose(fp);
     return ret;

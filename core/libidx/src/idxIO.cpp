@@ -44,26 +44,33 @@ namespace ebl {
   // TODO: if types differ, print warning and cast to expected type
   // TODO: allow not knowing order in advance (just assign new idx to m)
   int get_matrix_type(const char *filename, std::string &type) {
-    // open file
-    FILE *fp = fopen(filename, "rb");
-    if (!fp)
-      eblthrow("get_matrix_type failed to open " << filename);
-    // header: read magic number
-    int magic;
-    read_matrix_header(fp, magic);
+    int magic = get_matrix_type(filename);
     type = get_magic_str(magic);
     return magic;
   }
 
   int get_matrix_type(const char *filename) {
-    // open file
-    FILE *fp = fopen(filename, "rb");
-    if (!fp)
-      eblthrow("get_matrix_type failed to open " << filename);
-    // header: read magic number
-    int magic;
-    read_matrix_header(fp, magic);
-    return magic;
+    if (has_multiple_matrices(filename)) {
+      // open file
+      FILE *fp = fopen(filename, "rb");
+      if (!fp)
+	eblthrow("get_matrix_type failed to open " << filename);
+      // first read offsets matrix
+      idx<int64> p = load_matrix<int64>(fp);
+      // read 2nd matrix header
+      int magic;
+      read_matrix_header(fp, magic);
+      return magic;      
+    } else {
+      // open file
+      FILE *fp = fopen(filename, "rb");
+      if (!fp)
+	eblthrow("get_matrix_type failed to open " << filename);
+      // header: read magic number
+      int magic;
+      read_matrix_header(fp, magic);
+      return magic;
+    }
   }
 
   bool is_magic_vincent(int magic) {
@@ -87,7 +94,9 @@ namespace ebl {
 	|| magic == MAGIC_SHORT8_MATRIX
 	|| magic == MAGIC_LONG_MATRIX
 	|| magic == MAGIC_ASCII_MATRIX
-	|| magic == MAGIC_UINT_MATRIX)
+	|| magic == MAGIC_UINT_MATRIX
+	|| magic == MAGIC_UINT64_MATRIX
+	|| magic == MAGIC_INT64_MATRIX)
       return true;
     return false;
   }
@@ -157,6 +166,63 @@ namespace ebl {
       }
     }
     return dims;
+  }
+
+  bool has_multiple_matrices(const char *filename) {
+    // open file
+    FILE *fp = fopen(filename, "rb");
+    if (!fp)
+      return false;
+    // read header
+    int magic;
+    idxdim d = read_matrix_header(fp, magic);
+    intg size = d.nelements();
+    // compute data size
+    switch (magic) {
+    case MAGIC_BYTE_MATRIX:
+    case MAGIC_UBYTE_VINCENT:
+      size *= sizeof (ubyte);
+      break ;
+    case MAGIC_INTEGER_MATRIX:
+    case MAGIC_INT_VINCENT:
+      size *= sizeof (int);
+      break ;
+    case MAGIC_FLOAT_MATRIX:
+    case MAGIC_FLOAT_VINCENT:
+      size *= sizeof (float);
+      break ;
+    case MAGIC_DOUBLE_MATRIX:
+    case MAGIC_DOUBLE_VINCENT:
+      size *= sizeof (double);
+      break ;
+    case MAGIC_LONG_MATRIX:
+      size *= sizeof (long);
+      break ;
+    case MAGIC_UINT_MATRIX:
+      size *= sizeof (uint);
+      break ;
+    case MAGIC_UINT64_MATRIX:
+      size *= sizeof (uint64);
+      break ;
+    case MAGIC_INT64_MATRIX:
+      size *= sizeof (int64);
+      break ;
+    default:
+      eblerror("unknown magic number");
+    }
+    // go to end of data
+    fseek(fp, size, SEEK_CUR);
+    fpos_t pos;
+    fgetpos(fp, &pos);
+    // now go to end of file
+    fseek(fp, 0, SEEK_END);
+    fpos_t endpos;
+    fgetpos(fp, &endpos);
+    fclose(fp);
+    // compare 
+    if (pos.__pos != endpos.__pos)
+      return true;
+    return false;    
   }
   
 } // end namespace ebl

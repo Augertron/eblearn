@@ -1738,6 +1738,23 @@ namespace ebl {
       dims[i] = std::max(dims[i], other.dim(i));
   }
 
+  template <typename T> 
+  void idxd<T>::shift_dim(int d, int pos) {
+    T dims2[MAXDIMS];
+    for (int i = 0, j = 0; i < MAXDIMS; ++i) {
+      if (i == pos)
+	dims2[i] = dims[d];
+      else {
+	if (j == d)
+	  j++;
+	dims2[i] = dims[j++];
+      }
+    }
+    memcpy(dims, dims2, MAXDIMS * sizeof (T));
+    if (offsets)
+      eblerror("not implemented (TODO)");
+  }
+    
   //////////////////////////////////////////////////////////////////////////////
   // get dimensions
   
@@ -1924,21 +1941,44 @@ namespace ebl {
   // idxs //////////////////////////////////////////////////////////////////////
 
   template <typename T>
-  idxs<T>::idxs(idx<idx<T>*> &o) : idx<idx<T>*>(o) {
+  idxs<T>::idxs(intg size, std::file *fp_, idx<int64> *off)
+    : idx<idx<T>*>(size), fp(fp_) {
+    idx_clear(*this);
+    if (fp) {
+      if (!off) eblerror("expected an offset matrix");
+      offsets = *off;
+      fp->incr_ref();
+    }
   }
 
   template <typename T>
-  idxs<T>::idxs(intg size) : idx<idx<T>*>(size) {
+  idxs<T>::idxs() : idx<idx<T>*>(), fp(NULL) {
     idx_clear(*this);
   }
 
   template <typename T>
-  idxs<T>::idxs() : idx<idx<T>*>() {
-    idx_clear(*this);
+  idxs<T>::idxs(const idxs<T> &o)
+    : idx<idx<T>*>((idx<idx<T>*>&)o), fp(o.fp), offsets(o.offsets) {
+    if (fp)
+      fp->incr_ref(); // signify fp that we're using it
   }
 
   template <typename T>
   idxs<T>::~idxs() {
+    if (fp) {
+      fp->decr_ref();
+      if (fp->no_references())
+	delete fp; // close file       
+    }
+  }
+
+  template <typename T>
+  idxs<T>& idxs<T>::operator=(const idxs<T>& other) {
+    *((idx<idx<T>*>*)this) = (idx<idx<T>*>&) other;
+    fp = other.fp;
+    offsets = other.offsets;
+    if (fp) fp->incr_ref();
+    return *this;
   }
 
   template <typename T>
@@ -1946,29 +1986,50 @@ namespace ebl {
     idx<idx<T>*>::set(new idx<T>(e), pos);
   }
 
+  // early definition of load_matrix
+  template <typename T> idx<T> load_matrix(FILE *fp, idx<T> *out = NULL);
+  
   template <typename T>
   idx<T> idxs<T>::get(intg pos) {
-    idx<T> *e = idx<idx<T>*>::get(pos);
-    if (!e) eblerror("trying to access null element " << pos);
-    idx<T> m(*e);
-    return m;
+    if (fp) { // on-demand loading
+      if (fseek(fp->get_fp(), offsets.get(pos), SEEK_SET)) {
+	fseek(fp->get_fp(), 0, SEEK_END);
+	fpos_t fppos;
+	fgetpos(fp->get_fp(), &fppos);
+	eblerror("fseek to position " << offsets.get(pos) << " failed, "
+		 << "file is " << (intg) fppos.__pos << " big");
+      }
+      return load_matrix<T>(fp->get_fp());
+    } else { // all data is already loaded
+      idx<T> *e = idx<idx<T>*>::get(pos);
+      if (!e) eblerror("trying to access null element " << pos);
+      idx<T> m(*e);
+      return m;
+    }
   }
   
   template <typename T>
   idxs<T> idxs<T>::narrow(int d, intg s, intg o) {
     idx<idx<T>*> tmp = idx<idx<T>*>::narrow(d, s, o);
-    idxs<T> r(tmp);
+    idxs<T> r((idxs<T>&)tmp);
     return r;
   }
 
   template <typename T>
   bool idxs<T>::exists(intg pos) const {
-    idx<T> *e = idx<idx<T>*>::get(pos);
-    return (e != NULL);
+    if (fp) // on-demand loading
+      return offsets.get(pos) != 0; // check that offset is defined
+    else { // data already loaded, check if present
+      idx<T> *e = idx<idx<T>*>::get(pos);
+      return (e != NULL);
+    }
   }
 
   template <typename T>
   idxdim idxs<T>::get_maxdim() {
+    if (fp)
+      eblerror("get_maxdim should be avoided when loading on-demand"
+	       << " because it would required loading all data");
     idxdim dmax;
     for (intg i = 0; i < this->dim(0); ++i) {
       if (exists(i)) {

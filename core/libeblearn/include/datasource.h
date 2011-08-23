@@ -52,7 +52,15 @@ namespace ebl {
     typedef map<uint,idx<Tdata> > t_pick_map;
     
     //! CAUTION: This empty constructor requires a subsequent call to init().
-    datasource();
+    datasource(); 
+    //! Construct a datasource from 'data', where data
+    //! is a multi-matrix matrix (idxs type). This allows for dynamic loading
+    //! of data and avoids the need to fit all data in memory.
+    //! The first dimension of each data sample
+    //! is expected to be the samples dimension, and the second one the
+    //! feature dimension, or the channel dimension in case of images.
+    //! \param name An optional name for this dataset.
+    datasource(idxs<Tdata> &data, const char *name = NULL);
     //! Construct a datasource from 'data'. The first dimension of 'data'
     //! is expected to be the samples dimension, and the second one the
     //! feature dimension, or the channel dimension in case of images.
@@ -69,6 +77,8 @@ namespace ebl {
 
     // intialization ///////////////////////////////////////////////////////////
     
+    //! Initialize from a multi-matrix data.
+    void init(idxs<Tdata> &data, const char *name);
     //! Initialize.
     void init(idx<Tdata> &data, const char *name);
     
@@ -82,6 +92,12 @@ namespace ebl {
     virtual void fprop(bbstate_idx<Tnet> &s);
     //! Return original sample's idx at this index.
     virtual idx<Tdata> get_sample(intg index);
+    //! Returns an idx of the last raw output of current sample.
+    //! This supposes raw outputs have been previously initialized via
+    //! set_sample_energy().
+    //! \param index If -1, return current sample's, otherwise sample's at
+    //! 'index' position.
+    virtual idx<Tnet> get_raw_output(intg index = -1);
 
     // iterating methods ///////////////////////////////////////////////////////
     
@@ -92,11 +108,12 @@ namespace ebl {
     //! assume the same nb of samples in each class
     virtual void shuffle();
     //! Move to the next datum (in the original order of the dataset).
+    //! Returns false if we reached the end.
     //! This should be used during testing.
     //! It will always return the data in the same order with the same
     //! probability of 1. See next_train() for data returned with
     //! variable probability, balance, etc. (used for training only).
-    virtual void next();
+    virtual bool next();
     //! Move to the next datum, in a way suited for training (_not_ for testing,
     //! for testing see next()): depending on the configuration, this will
     //! return samples in a class-balanced way, i.e. showing each class
@@ -266,6 +283,11 @@ namespace ebl {
     ////////////////////////////////////////////////////////////////
   protected:    
 
+    // intialization ///////////////////////////////////////////////////////////
+
+    //! Initialize. Should be called only after data matrix has been assigned.
+    void init2(const char *name);
+
     // picking methods /////////////////////////////////////////////////////////
     
     //! Draw a random number between 0 and 1 and return true if higher
@@ -280,6 +302,7 @@ namespace ebl {
     Tnet		coeff;
     // data
     idx<Tdata>		data;	// samples
+    idxs<Tdata>		datas;	// samples (multi-matrix).
     idx<double>		probas;	//!< sample probabilities
     // predictions
     idx<double>		energies;	//!< sample energies
@@ -297,6 +320,7 @@ namespace ebl {
   protected:
     vector<intg>        counts; // # of samples / class
     map<uint,intg>      picksmap;
+    bool                multimat; //!< True if data is a multi-matrix matrix.
     ////////////////////////////////////////////////////////////////////////////
     // (unbalanced) iterating indices
     intg                it; //!< Index of current sample in data matrix.
@@ -347,6 +371,12 @@ namespace ebl {
   public:
     //! CAUTION: This empty constructor requires a subsequent call to init().
     labeled_datasource();
+    //! Construct a datasource associating 'data' and its 'labels' where data
+    //! is a multi-matrix matrix (idxs type). This allows for dynamic loading
+    //! of data and avoids the need to fit all data in memory.
+    //! \param name An optional name for this dataset.
+    labeled_datasource(idxs<Tdata> &data, idx<Tlabel> &labels, 
+		       const char *name = NULL);
     //! Construct a datasource associating 'data' and its 'labels'.
     //! \param name An optional name for this dataset.
     labeled_datasource(idx<Tdata> &data, idx<Tlabel> &labels, 
@@ -368,6 +398,8 @@ namespace ebl {
 
     // init methods ////////////////////////////////////////////////////////////
     
+    //! Initialize from matrices, where data is a multi-matrix.
+    void init(idxs<Tdata> &data, idx<Tlabel> &labels, const char *name);
     //! Initialize from matrices.
     void init(idx<Tdata> &data, idx<Tlabel> &labels, const char *name);
     //! Intialize from matrices filenames.
@@ -414,7 +446,15 @@ namespace ebl {
 
     // friends //////////////////////////////////////////////////////////////
     template <typename T1, typename T2, typename T3>
-    friend class labeled_datasource_gui;
+      friend class labeled_datasource_gui;
+    template <typename T1, typename T2, typename T3>
+      friend class supervised_trainer;
+
+    // protected methods ///////////////////////////////////////////////////////
+  protected:
+
+    //! Initialize labels. This should only be called by init().
+    void init_labels(idx<Tlabel> &labels, const char *name);
 
     // members /////////////////////////////////////////////////////////////////
   protected:
@@ -446,11 +486,25 @@ namespace ebl {
     //! CAUTION: This empty constructor requires a subsequent call to init().
     class_datasource();
 
+    //! Construct dataset with 'data' and its corresponding 'labels', where data
+    //! is a multi-matrix matrix (idxs type). This allows for dynamic loading
+    //! of data and avoids the need to fit all data in memory.
+    //! \param lblstr An optional vector of strings describing each class.
+    //! \param name An optional name for this dataset.
+    class_datasource(idxs<Tdata> &data, idx<Tlabel> &labels, 
+		     vector<string*> *lblstr = NULL, const char *name = NULL);
     //! Construct dataset with 'data' and its corresponding 'labels'.
     //! \param lblstr An optional vector of strings describing each class.
     //! \param name An optional name for this dataset.
     class_datasource(idx<Tdata> &data, idx<Tlabel> &labels, 
 		     vector<string*> *lblstr = NULL, const char *name = NULL);
+    //! Construct dataset with 'data' and its corresponding 'labels', where data
+    //! is a multi-matrix matrix (idxs type). This allows for dynamic loading
+    //! of data and avoids the need to fit all data in memory.
+    //! \param classes A vector of strings describing each class.
+    //! \param name An optional name for this dataset.
+    class_datasource(idxs<Tdata> &data, idx<Tlabel> &labels,
+		     idx<ubyte> &classes, const char *name = NULL);
     //! Construct dataset with 'data' and its corresponding 'labels'.
     //! \param classes A vector of strings describing each class.
     //! \param name An optional name for this dataset.
@@ -474,6 +528,9 @@ namespace ebl {
     //! Initialize things specific to this class. The rest can be initialized
     //! with parent init methods.
     void init_local(vector<string*> *lblstr);
+    //! Initialize from matrices where the data is a multi-matrix matrix.
+    void init(idxs<Tdata> &data, idx<Tlabel> &labels, 
+	      vector<string*> *lblstr, const char *name);
     //! Initialize from matrices.
     void init(idx<Tdata> &data, idx<Tlabel> &labels, 
 	      vector<string*> *lblstr, const char *name);
@@ -706,6 +763,10 @@ namespace ebl {
     // samples corresponding to this node //////////////////////////////////////
     vector<intg>	 samples;	//!< Sample ids with this label.
     vector<intg>::iterator it_samples;	//!< Iterator in this class' samples.
+
+    // friends /////////////////////////////////////////////////////////////////
+    template <typename Tnet1, typename Tdata1, typename Tlabel1>
+      friend class hierarchy_datasource;
   };
   
   //////////////////////////////////////////////////////////////////////////////
@@ -718,13 +779,25 @@ namespace ebl {
   public:
     //! CAUTION: This empty constructor requires a subsequent call to init().
     hierarchy_datasource();
+    //! Construct dataset with 'data' and its corresponding 'labels',
+    //! where data is a multi-matrix (useful for dynamic loading, avoiding
+    //! the need to fit all data in memory).
+    //! \param parents The parent label associated with each label. A Nx2 matrix
+    //! with N the number of classes and 2 the pair child/parent.
+    //! \param lblstr An optional vector of strings describing each class.
+    //! \param name An optional name for this dataset.
+    hierarchy_datasource(idxs<Tdata> &data, idx<Tlabel> &labels,
+			 idx<Tlabel> *parents = NULL,
+			 vector<string*> *lblstr = NULL,
+			 const char *name = NULL);
     //! Construct dataset with 'data' and its corresponding 'labels'.
     //! \param parents The parent label associated with each label. A Nx2 matrix
     //! with N the number of classes and 2 the pair child/parent.
     //! \param lblstr An optional vector of strings describing each class.
     //! \param name An optional name for this dataset.
     hierarchy_datasource(idx<Tdata> &data, idx<Tlabel> &labels,
-			 idx<Tlabel> &parents, vector<string*> *lblstr = NULL,
+			 idx<Tlabel> *parents = NULL,
+			 vector<string*> *lblstr = NULL,
 			 const char *name = NULL);
     //! Construct dataset with 'data' and its corresponding 'labels'.
     //! \param parents The parent label associated with each label. A Nx2 matrix
@@ -732,25 +805,27 @@ namespace ebl {
     //! \param classes A vector of strings describing each class.
     //! \param name An optional name for this dataset.
     hierarchy_datasource(idx<Tdata> &data, idx<Tlabel> &labels,
-			 idx<Tlabel> &parents,
-			 idx<ubyte> &classes, const char *name = NULL);
+			 idx<Tlabel> *parents = NULL,
+			 idx<ubyte> *classes = NULL, const char *name = NULL);
     //! Constructor from full names for each dataset file.
     //! Note: jitters and classes files are optional.
     //! \param parents_name The parent label associated with each label.
     //! A Nx2 matrix with N the number of classes and 2 the pair child/parent.
     //! \param name An optional name for this dataset.
+    //! \param max_size If > 0, limit the number of samples to this value.
     hierarchy_datasource(const char *data_name, const char *labels_name,
-			 const char *parents_name,
+			 const char *parents_name = NULL,
 			 const char *jitters_name = NULL,
 			 const char *classes_name = NULL,
-			 const char *name = NULL);
-    //! Destructor.
+			 const char *name = NULL,
+			 uint max_size = 0);
+     //! Destructor.
     virtual ~hierarchy_datasource();
 
     // init methods ////////////////////////////////////////////////////////////
 
     //! Initialize parents and check their validity.
-    void init_parents(idx<Tlabel> &parents);
+    void init_parents(idx<Tlabel> *parents = NULL);
     
     // data access /////////////////////////////////////////////////////////////
     
@@ -777,13 +852,23 @@ namespace ebl {
     //! Returns the label corresponding to current iterator and current depth.
     //! If current sample has a deeper label, it will return its parent's
     //! label at depth 'current_depth' (see set_current_depth()).
-    virtual Tlabel get_current_label();
+    virtual Tlabel get_label();
+    //! Returns the label corresponding to current iterator and 'depth'.
+    //! If current sample has a deeper label, it will return its parent's
+    //! label at depth 'depth'.
+    //! \param index If -1, return current sample's, otherwise sample's at
+    //! 'index' position.
+    virtual Tlabel get_label(uint depth, intg index = -1);
     //! Returns the matrix of all labels at current depth, i.e. labels deeper
     //! than current depth, are given their parent's label at current depth.
     idx<Tlabel>& get_depth_labels();
+    //! Returns the number of brothers of node 'n'.
+    uint get_nbrothers(class_node<Tlabel> &n);
     
     // iterating ///////////////////////////////////////////////////////////////
 
+    //! Balance samples selection by current depth if 'bal' is true.
+    void set_depth_balanced(bool bal);
     //! Set the current depth to 'depth' (for testing or training),
     //! i.e. the training or testing will set samples to have this depth at
     //! most.
@@ -894,7 +979,7 @@ namespace ebl {
     //! are also used.
     vector<vector<class_node<Tlabel>*>*> complete_depths;
     // data
-    idx<Tlabel> parents; //!< Parents matrix.
+    idx<Tlabel> *parents; //!< Parents matrix.
     idx<Tlabel> depth_labels; //!< All labels given a certain depth.
     using labeled_datasource<Tnet,Tdata,Tlabel>::labels;
     using datasource<Tnet,Tdata>::_name;
@@ -902,9 +987,9 @@ namespace ebl {
     using class_datasource<Tnet,Tdata,Tlabel>::nclasses;//!< Number of classes.
     using class_datasource<Tnet,Tdata,Tlabel>::lblstr;	//!< Name of each class.
     using datasource<Tnet,Tdata>::data;
-    /* using datasource<Tnet,Tdata>::correct; */
-    /* using datasource<Tnet,Tdata>::energies; */
-    /* using datasource<Tnet,Tdata>::probas; */
+    using datasource<Tnet,Tdata>::correct;
+    using datasource<Tnet,Tdata>::energies;
+    using datasource<Tnet,Tdata>::probas;
     // iterating
     uint current_depth; //!< Maximum depth at which labels are set.
     vector<uint> it_depths; //!< Depths iterators.
@@ -916,18 +1001,19 @@ namespace ebl {
     /* using datasource<Tnet,Tdata>::epoch_show_printed; */
     // class-balanced iterating indices
     /* using datasource<Tnet,Tdata>::epoch_done_counters; */
-    bool		 balance;	//!< Balance iterating or not.
+    bool depth_balance; //!< Balance samples by depth.
+    using class_datasource<Tnet,Tdata,Tlabel>::balance;	//!< Balance iterating or not.
     /* vector<vector<intg> > bal_indices;	//!< Balanced iterating indices. */
     /* vector<uint>	 bal_it;	//!< Sample iterators for each class. */
     /* uint		 class_it;	//!< Iterator on classes. */
     /* // sample picking with probabilities */
     /* bool		 perclass_norm;	//!< Normalize probas per class. */
-    /* using datasource<Tnet,Tdata>::epoch_pick_cnt;	//!< # pickings */
-    /* using datasource<Tnet,Tdata>::epoch_cnt;	//!< # sample seen this epoch. */
+    using datasource<Tnet,Tdata>::epoch_pick_cnt;	//!< # pickings
+    using datasource<Tnet,Tdata>::epoch_cnt;	//!< # sample seen this epoch.
     /* using datasource<Tnet,Tdata>::count_pickings; */
-    /* using datasource<Tnet,Tdata>::pick_count; */
+    using datasource<Tnet,Tdata>::pick_count;
     /* using datasource<Tnet,Tdata>::counts; */
-    /* using datasource<Tnet,Tdata>::weigh_samples; */
+    using datasource<Tnet,Tdata>::weigh_samples;
     /* // state saving */
     /* vector<vector<intg> > bal_indices_saved; */
     /* vector<uint>        bal_it_saved; */
@@ -974,8 +1060,8 @@ namespace ebl {
     virtual void fprop(bbstate_idx<Tnet> &d1, bbstate_idx<Tnet> &d2,
 		       bbstate_idx<Tlabel> &label);
 
-    //! Move to the next datum.
-    virtual void next();
+    //! Move to the next datum. Returns false if we reached the end.
+    virtual bool next();
 
     //! Move to the beginning of the data, for the test iterators only,
     //! i.e. only next() is affected, next_train() is unaffected.
@@ -1025,6 +1111,8 @@ namespace ebl {
     using datasource<Tnet,Tdata>::height;
     using datasource<Tnet,Tdata>::width;
     using datasource<Tnet,Tdata>::data;
+    using datasource<Tnet,Tdata>::datas;
+    using datasource<Tnet,Tdata>::multimat;
     using labeled_datasource<Tnet,Tdata,Tlabel>::labels;
     using datasource<Tnet,Tdata>::it;    
   };

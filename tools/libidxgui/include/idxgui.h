@@ -267,6 +267,9 @@ namespace ebl {
 			      float a2, const char *s = NULL,
 			      int r = 255, int g = 255,
 			      int b = 255, int a = 255, bool tops = false);
+    //! Draw 3d text 's' at (x,y,z) with color (r,g,b,a).
+    EXPORT void draw_text_3d(float x, float y, float z, const char *s,
+			     int r = 255, int g = 255, int b = 255, int a =255);
     
   private:
     // check that user used MAIN_QTHREAD instead of regular main
@@ -312,6 +315,8 @@ namespace ebl {
 				 float top_radius, float base_radius,
 				 float a1, float a2, string *s,
 				 int r, int g, int b, int a, bool tops);
+    EXPORT void gui_draw_text_3d(float x, float y, float z, string* s,
+				 int r, int g, int b, int a);
     
   protected:
     virtual void run();

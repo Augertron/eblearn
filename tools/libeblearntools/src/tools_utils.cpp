@@ -208,6 +208,10 @@ namespace ebl {
     return d;
   }
 
+  bool string_to_bool(const string &s) {
+    return (bool) string_to_int(s.c_str());
+  }
+  
   int string_to_int(const string &s) {
     return string_to_int(s.c_str());
   }

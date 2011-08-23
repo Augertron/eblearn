@@ -386,7 +386,11 @@ if (APPLE OR LINUX)
   if (APPLE)
     set(PTHREAD_LIBRARY "/usr/lib/libpthread.dylib")
   else (APPLE) # LINUX
-    set(PTHREAD_LIBRARY "/usr/lib/libpthread.so")
+    find_path(PTHREAD_LIBRARY "libpthread.so" paths
+      "/usr/lib/"
+      "/lib/x86_64-linux-gnu/"
+      "/usr/lib/x86_64-linux-gnu/")
+    set(PTHREAD_LIBRARY "${PTHREAD_LIBRARY}/libpthread.so")
   endif (APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 else (APPLE OR LINUX) # installed manually under windows
