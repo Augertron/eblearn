@@ -372,17 +372,14 @@ namespace ebl {
   // idx_minus
 
   template<class T> void idx_minus(idx<T> &inp, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = - *pinp; }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = - *pinp; }
-  #endif    
-#else
     idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = - *pinp; });
-#endif
+  }
+
+  ////////////////////////////////////////////////////////////////////////
+  // idx_minus_acc
+
+  template<class T> void idx_minus_acc(idx<T> &inp, idx<T> &out) {
+    idx_aloopf2(pinp, inp, T, pout, out, T, { *pout += - *pinp; });
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -454,12 +451,22 @@ namespace ebl {
 	tmpabs = abs(tmp);
 	tmpabs2 = TWOPI - tmpabs;
 	if (tmpabs > tmpabs2) {
-	  if (tmp > 0)
+	  if (tmp < 0)
 	    tmp = tmpabs2;
 	  else
 	    tmp = -tmpabs2;
 	}
 	*pout = tmp;
+      });
+  }
+
+  ////////////////////////////////////////////////////////////////////////
+  // idx_spherical_add
+
+  template<class T> void idx_spherical_add(idx<T> &i1, idx<T> &i2, idx<T> &out){
+    T tmp, tmpabs, tmpabs2;
+    idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {
+	*pout = std::min(TWOPI - *pi1, *pi1) + std::min(TWOPI - *pi2, - *pi2);
       });
   }
 
@@ -2145,18 +2152,10 @@ template<class T> void idx_sortdown(idx<T> &m) {
     idx_checknelems2_all(i1, i2);
     float64 z = 0;
     float64 tmp;
-#if USING_FAST_ITERS == 0
-    { idx_aloop2(pi1, i1, T, pi2, i2, T) {
-  	tmp = (float64)(*pi1) - (float64)(*pi2);
-  	z += tmp * tmp;
-      }
-    }
-#else
     idx_aloopf2(pi1, i1, T, pi2, i2, T, {
 	tmp = (float64)(*pi1) - (float64)(*pi2);
 	z += tmp * tmp;
       });
-#endif
     return z;
   }
 
@@ -2176,35 +2175,25 @@ template<class T> void idx_sortdown(idx<T> &m) {
     idx_checknelems2_all(i1, i2);
     float64 z = 0;
     float64 tmp, tmpabs, tmpabs2;
-#if USING_FAST_ITERS == 0
-    { idx_aloop2(pi1, i1, T, pi2, i2, T) {
-  	tmp = fmod((float64)(*pi1) - (float64)(*pi2), TWOPI);
-	tmpabs = fabs(tmp);
-	tmpabs2 = TWOPI - tmpabs;
-	if (tmpabs > tmpabs2) {
-	  if (tmp > 0)
-	    tmp = tmpabs2;
-	  else
-	    tmp = -tmpabs2;
-	}
-  	z += tmp * tmp;
-      }
-    }
-#else
     idx_aloopf2(pi1, i1, T, pi2, i2, T, {
 	tmp = fmod((float64)(*pi1) - (float64)(*pi2), TWOPI);
 	tmpabs = fabs(tmp);
 	tmpabs2 = TWOPI - tmpabs;
-	if (tmpabs > tmpabs2) {
-	  if (tmp > 0)
-	    tmp = tmpabs2;
-	  else
-	    tmp = -tmpabs2;
-	}
+	if (tmpabs > tmpabs2)
+	  tmp = tmpabs2;
 	z += tmp * tmp;
       });
-#endif
     return z;
+  }
+
+  ////////////////////////////////////////////////////////////////////////
+  // idx_gaussian
+
+  template <typename T>
+  void idx_gaussian(idx<T> &in, double m, double sigma, idx<T> &out) {
+    idx_aloopf2(i, in, T, o, out, T, {
+	*o = (T) gaussian((double) (*i), m, sigma);
+      });      
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -2405,6 +2394,14 @@ template<class T> void idx_sortdown(idx<T> &m) {
     idx_copy(m2, tmp);
     return m3;
   }
+
+  // randomization ////////////////////////////////////////////////////////////
+
+  template <typename T>
+  void idx_random(idx<T> &m, double v0, double v1) {
+    idx_aloopf1(mm, m, T, { *mm = (T) drand(v0, v1); });
+  }
+
 
 } // end namespace ebl
 

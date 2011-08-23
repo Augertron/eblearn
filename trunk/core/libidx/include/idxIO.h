@@ -55,6 +55,8 @@ using namespace std;
 
 // non-standard magic numbers
 #define MAGIC_UINT_MATRIX	0x1e3d4c59
+#define MAGIC_UINT64_MATRIX	0x1e3d4c5a
+#define MAGIC_INT64_MATRIX	0x1e3d4c5b
 
 // pascal vincent's magic numbers
 #define MAGIC_UBYTE_VINCENT	0x0800
@@ -65,7 +67,7 @@ using namespace std;
 #define MAGIC_DOUBLE_VINCENT	0x0E00
 
 namespace ebl {
-
+  
   // TODO: implement all types.
   // TODO: is check for endianess required?
 
@@ -77,25 +79,21 @@ namespace ebl {
   //! This throws string exceptions upon errors.
   template <typename T>
     idx<T> load_matrix(const char *filename);
-
   //! Returns matrix from file filename. If original matrix type is different
   //! than requested type, it is casted (copied) into the new type.
   //! This throws string exceptions upon errors.
   template <typename T>
     idx<T> load_matrix(const std::string &filename);
-  
   //! Loads a matrix from file filename into given matrix m.
   //! m if resized if necessary. Data is cast into m's type if different.
   //! This throws string exceptions upon errors.
   template <typename T>
     void load_matrix(idx<T>& m, const char *filename);
-
   //! Loads a matrix from file filename into given matrix m.
   //! m if resized if necessary. Data is cast into m's type if different.
   //! This throws string exceptions upon errors.
   template <typename T>
     void load_matrix(idx<T>& m, const std::string &filename);
-  
   //! Loads a matrix from an opened file pointer 'fp'
   //! into given matrix out if given,
   //! allocates a new one otherwise. This returns either *out or the newly
@@ -105,13 +103,14 @@ namespace ebl {
   //! This throws string exceptions upon errors.
   template <typename T>
     idx<T> load_matrix(FILE *fp, idx<T> *out = NULL);
-
   //! Returns matrix of pointers to matrices from file filename.
   //! If original matrix type is different
   //! than requested type, it is casted (copied) into the new type.
   //! This throws string exceptions upon errors.
+  //! \param ondemand If true, do not load matrices but keep a file pointer
+  //!   open and dynamically load each matrix when requested in the idxs object.
   template <typename T>
-    idxs<T> load_matrices(const std::string &filename);
+    idxs<T> load_matrices(const std::string &filename, bool ondemand = true);
   
   ////////////////////////////////////////////////////////////////
   // saving
@@ -120,30 +119,32 @@ namespace ebl {
   //! Returns true if successful, false otherwise.
   template <typename T>
     bool save_matrix(idx<T>& m, const std::string &filename);
-
   //! Saves a matrix m in file filename. One can force the saving type to
   //! a different type than the passed idx, e.g.
   //! by calling save_matrix<float>(m, ..);
   //! Returns true if successful, false otherwise.
   template <typename T2, typename T>
     bool save_matrix(idx<T>& m, const std::string &filename);
-  
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
   template <typename T>
     bool save_matrix(idx<T>& m, const char *filename);
-
   //! Saves a matrix m into a file pointer 'fp'. The user is responsible
   //! for closing the file pointer afterwards, even if an error occured.
   //! Returns true if successful, false otherwise.
   template <typename T>
     bool save_matrix(idx<T>& m, FILE *fp);
-
   //! Saves a matrices m in file filename. Elements of m may be NULL and will
   //! be remembered as empty when loaded back.
   //! Returns true if successful, false otherwise.
   template <typename T>
     bool save_matrices(idxs<T>& m, const std::string &filename);
+  //! Saves a matrices with filenames 'filenames' in a collection of matrices
+  //! in file 'filename'. 
+  //! Returns true if successful, false otherwise.
+  template <typename T>
+    bool save_matrices(std::list<std::string> &filenames,
+		       const std::string &filename);
 
   ////////////////////////////////////////////////////////////////
   // helper functions
@@ -154,23 +155,20 @@ namespace ebl {
   //! double (pascal vincent).
   //! This returns the magic number found in 'filename'.
   EXPORT int get_matrix_type(const char *filename, std::string &type);
-
   //! Return the magic number associated with the matrix's type found in 
   //! 'filename'.
   EXPORT int get_matrix_type(const char *filename);
-
   //! Return true if this magic number is a vincent magic number.
   EXPORT bool is_magic_vincent(int magic);
-
   //! Return true if this magic number is a regular magic number.
   EXPORT bool is_magic(int magic);
-
   //! Return the dimensions of the matrix contained in 'filename'
   EXPORT idxdim get_matrix_dims(const char *filename);
-
   //! Return the dimensions found in the header and set 'magic' to the magic
   //! number found (either vincent or regular type).
   EXPORT idxdim read_matrix_header(FILE *fp, int &magic);
+  //! Returns true if mat file 'filename' contains more than 1 matrix.
+  EXPORT bool has_multiple_matrices(const char *filename);
 
 } // end namespace ebl
 

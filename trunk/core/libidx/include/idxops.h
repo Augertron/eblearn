@@ -247,22 +247,18 @@ namespace ebl {
 			      idx<T1> *out1 = NULL, idx<T2> *out2 = NULL,
 			      idx<T3> *out3 = NULL);
 
-  ////////////////////////////////////////////////////////////////
-  // idx_add (not-in-place)
+  // idx_add (not-in-place) ////////////////////////////////////////////////////
 
-  //! add two idx's
+  //! Add 'i1' and 'i2' into 'out'.
   template<typename T> void idx_add(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
 #ifdef __IPP__
   //! add two idx's, specialized ubyte version
   template<> void idx_add(idx<ubyte> &i1, idx<ubyte> &i2, idx<ubyte> &out);
-
   //! add two idx's, specialized uint16 version
   template<> void idx_add(idx<uint16> &i1, idx<uint16> &i2, idx<uint16> &out);
-
   //! add two idx's, specialized int16 version
   template<> void idx_add(idx<int16> &i1, idx<int16> &i2, idx<int16> &out);
-
   //! add two idx's, specialized float32 version
   template<> void idx_add(idx<float32> &i1, idx<float32> &i2, idx<float32> &out);
 #endif
@@ -368,7 +364,7 @@ namespace ebl {
 
   // idx_sub (not-in-place) ////////////////////////////////////////////////////
 
-  //! subtract two idx's
+  //! Subtract 'i2' to 'i1' into 'out', i.e. out = i1 - i2.
   template<class T> void idx_sub(idx<T> &i1, idx<T> &i2, idx<T> &out);
 #ifdef __IPP__
   //! sub two idx's, specialized ubyte version
@@ -387,12 +383,12 @@ namespace ebl {
   //! Subtracts two spherical coordinates idx's. The lowest angle difference
   //! between each angle is used.
   template<class T> void idx_spherical_sub(idx<T> &i1, idx<T> &i2, idx<T> &out);
-  //! Float specialization of idx_spherical_sub().
-  template<>
-    void idx_spherical_sub(idx<float> &i1, idx<float> &i2, idx<float> &out);
-  //! Double specialization of idx_spherical_sub().
-  template<>
-    void idx_spherical_sub(idx<double> &i1, idx<double> &i2, idx<double> &out);
+  
+  // idx_spherical_add (not-in-place) //////////////////////////////////////////
+
+  //! Add two spherical coordinates idx's. The lowest angle value is used,
+  //! i.e. min(2PI - a, a) for angle 'a'.
+  template<class T> void idx_spherical_add(idx<T> &i1, idx<T> &i2, idx<T> &out);
   
   // idx_subc_bounded //////////////////////////////////////////////////////////
 
@@ -432,13 +428,24 @@ namespace ebl {
 
   // idx_minus /////////////////////////////////////////////////////////////////
 
-  //! negate all elements
-  template<class T> void idx_minus(idx<T> &inp, idx<T> &out);
+  //! Negate all elements of 'in' into 'out'.
+  template<class T> void idx_minus(idx<T> &in, idx<T> &out);
 #ifdef __IPP__
   //! negate all elements, specialized int16 version
-  template<> void idx_minus(idx<int16> &inp, idx<int16> &out);
+  template<> void idx_minus(idx<int16> &in, idx<int16> &out);
   //! negate all elements, specialized float32 version
-  template<> void idx_minus(idx<float32> &inp, idx<float32> &out);
+  template<> void idx_minus(idx<float32> &in, idx<float32> &out);
+#endif
+
+  // idx_minus_acc /////////////////////////////////////////////////////////////
+
+  //! Negate all elements of 'in' and accumulate them into 'out'.
+  template<class T> void idx_minus_acc(idx<T> &in, idx<T> &out);
+#ifdef __IPP__
+  //! negate all elements, specialized int16 version
+  template<> void idx_minus_acc(idx<int16> &in, idx<int16> &out);
+  //! negate all elements, specialized float32 version
+  template<> void idx_minus_acc(idx<float32> &in, idx<float32> &out);
 #endif
 
   // idx_mul (not-in-place) ////////////////////////////////////////////////////
@@ -463,17 +470,13 @@ namespace ebl {
   //! multiply all elements by a constant:  o1 <- i1*c;
   //! Be careful that c does not overflow in the type of inp
   template<class T, class T2> void idx_dotc(idx<T> &inp, T2 c, idx<T> &out);
-
 #ifdef __IPP__
   //! multiply all elements by a constant, specialized ubyte version
   template<> void idx_dotc(idx<ubyte> &inp, ubyte c, idx<ubyte> &out);
-
   //! multiply all elements by a constant, specialized uint16 version
   template<> void idx_dotc(idx<uint16> &inp, uint16 c, idx<uint16> &out);
-
   //! multiply all elements by a constant, specialized int16 version
   template<> void idx_dotc(idx<int16> &inp, int16 c, idx<int16> &out);
-
   //! multiply all elements by a constant, specialized float32 version
   template<> void idx_dotc(idx<float32> &inp, float32 c, idx<float32> &out);
 #endif
@@ -532,24 +535,20 @@ namespace ebl {
   //! is positive, and to -c otherwise.
   template<class T> void idx_signdotc(idx<T> &inp, T c, idx<T> &out);
 
-  ////////////////////////////////////////////////////////////////
-  // idx_div
+  // idx_div ///////////////////////////////////////////////////////////////////
 
   //! divide two idx's element-wise: out = i1 / i2
   template<class T> void idx_div(idx<T> &i1, idx<T> &i2, idx<T> &out);
-
 #ifdef __IPP__
   //! div two idx's, specialized ubyte version
   template<> void idx_div(idx<ubyte> &i1, idx<ubyte> &i2, idx<ubyte> &out);
-
   //! div two idx's, specialized uint16 version
   template<> void idx_div(idx<uint16> &i1, idx<uint16> &i2, idx<uint16> &out);
-
   //! div two idx's, specialized int16 version
   template<> void idx_div(idx<int16> &i1, idx<int16> &i2, idx<int16> &out);
-
   //! div two idx's, specialized float32 version
-  template<> void idx_div(idx<float32> &i1, idx<float32> &i2, idx<float32> &out);
+  template<> void idx_div(idx<float32> &i1, idx<float32> &i2,
+			  idx<float32> &out);
 #endif
 
   ////////////////////////////////////////////////////////////////
@@ -609,16 +608,13 @@ namespace ebl {
   //! derivative of standard Lush sigmoid
   template <typename T> void idx_dstdsigmoid(idx<T> &inp, idx<T> &out);
 
-  ////////////////////////////////////////////////////////////////
-  // idx_abs
+  // idx_abs ///////////////////////////////////////////////////////////////////
 
   //! absolute value
   template <typename T> void idx_abs(idx<T>& inp, idx<T>& out);
-
 #ifdef __IPP__
   //! absolute value, specialized int16 version
   template<> void idx_abs(idx<int16>& inp, idx<int16>& out);
-
   //! absolute value, specialized float32 version
   template<> void idx_abs(idx<float32>& inp, idx<float32>& out);
 #endif
@@ -636,117 +632,92 @@ namespace ebl {
   //! 0 otherwise (this is used as bprop for sumabs).
   template<class T> void idx_thresdotc_acc(idx<T>& in, T c, T th, idx<T>& out);
 
-  ////////////////////////////////////////////////////////////////
-  // idx_threshold (in-place)
+  // idx_threshold (in-place) //////////////////////////////////////////////////
 
   //! if input is less than th, assign <th>
   //! If <th> overflows the type of inp, it saturates
   template<class T, class T2>
   inline void idx_threshold(idx<T>& in, T2 th);
-
   //! if input is less than th, assign <th>
   template<class T> void idx_threshold(idx<T>& in, T th);
-
   //! if input is more than th, assign <th>
   template<class T> void idx_threshold2(idx<T>& in, T th);
-
 #ifdef __IPP__
   //! if input is less than th, assign th, specialized ubyte version
   template<> void idx_threshold(idx<ubyte>& in, ubyte th);
-
   //! if input is less than th, assign th, specialized uint16 version
   template<> void idx_threshold(idx<uint16>& in, uint16 th);
-
   //! if input is less than th, assign th, specialized int16 version
   template<> void idx_threshold(idx<int16>& in, int16 th);
-
   //! if input is less than th, assign th, specialized float32 version
   template<> void idx_threshold(idx<float32>& in, float32 th);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_threshold (not-in-place)
+  // idx_threshold (not-in-place) //////////////////////////////////////////////
   
   //! if input is less than th, assign th, otherwise copy <in>
   //! If <th> overflows the type of inp, it saturates
   template<class T, class T2>
   inline void idx_threshold(idx<T>& in, T2 th, idx<T>& out);
-
   //! if input is less than th, assign th, otherwise copy <in>
   template <typename T>
     void idx_threshold(idx<T>& in, T th, idx<T>& out);
-
 #ifdef __IPP__
   //! if input is less than th, assign th, otherwise copy <in>
   //! specialized ubyte version
   template<> void idx_threshold(idx<ubyte>& in, ubyte th, idx<ubyte>& out);
-
   //! if input is less than th, assign th, otherwise copy <in>
   //! specialized uint16 version
   template<> void idx_threshold(idx<uint16>& in, uint16 th, idx<uint16>& out);
-
   //! if input is less than th, assign th, otherwise copy <in>
   //! specialized int16 version
   template<> void idx_threshold(idx<int16>& in, int16 th, idx<int16>& out);
-
   //! if input is less than th, assign th, otherwise copy <in>
   //! specialized float32 version
-  template<> void idx_threshold(idx<float32>& in, float32 th, idx<float32>& out);
+  template<> void idx_threshold(idx<float32>& in, float32 th,idx<float32>& out);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_threshold (with value, in-place)
+  // idx_threshold (with value, in-place) //////////////////////////////////////
   
   //! if input is less than th, assign value, otherwise copy <in>
   //! If <th> od <value> overflows the type of inp, it saturates
   template<class T, class T2, class T3>
   void idx_threshold(idx<T>& in, T2 th, T3 value);
-
   //! if input is less than th, assign value
   template<class T> void idx_threshold(idx<T>& in, T th, T value);
-
 #ifdef __IPP__
   //! if input is less than th, assign value, specialized ubyte version
   template<> void idx_threshold(idx<ubyte>& in, ubyte th, ubyte value);
-
   //! if input is less than th, assign value, specialized uint16 version
   template<> void idx_threshold(idx<uint16>& in, uint16 th, uint16 value);
-
   //! if input is less than th, assign value, specialized int16 version
   template<> void idx_threshold(idx<int16>& in, int16 th, int16 value);
-
   //! if input is less than th, assign value, specialized float32 version
   template<> void idx_threshold(idx<float32>& in, float32 th, float32 value);
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // idx_threshold (with value, not-in-place)
+  // idx_threshold (with value, not-in-place) //////////////////////////////////
 
   //! if input is less than th, assign value, otherwise copy <in>
   //! If <th> od <value> overflows the type of inp, it saturates
   template<class T, class T2, class T3>
   void idx_threshold(idx<T>& in, T2 th, T3 value, idx<T>& out);
-
   //! if input is less than th, assign value, otherwise copy <in>
   template <typename T>
     void idx_threshold(idx<T>& in, T th, T value, idx<T>& out);
-
 #ifdef __IPP__
   //! if input is less than th, assign value, otherwise copy <in>
   //! specialized ubyte version
   template<>
   void idx_threshold(idx<ubyte>& in, ubyte th, ubyte value, idx<ubyte>& out);
-
   //! if input is less than th, assign value, otherwise copy <in>
   //! specialized uint16 version
   template<>
-  void idx_threshold(idx<uint16>& in, uint16 th, uint16 value, idx<uint16>& out);
-
+  void idx_threshold(idx<uint16>& in, uint16 th, uint16 value,idx<uint16>& out);
   //! if input is less than th, assign value, otherwise copy <in>
   //! specialized int16 version
   template<>
-  void idx_threshold(idx<int16>& in, int16 th, int16 value, idx<int16>& out);
-  
+  void idx_threshold(idx<int16>& in, int16 th, int16 value, idx<int16>& out);  
   //! if input is less than th, assign value, otherwise copy <in>
   //! specialized float32 version
   template<>
@@ -754,8 +725,7 @@ namespace ebl {
 		     float32 value, idx<float32>& out);
 #endif
  
-  ////////////////////////////////////////////////////////////////
-  // idx_threshold (with below and above)
+  // idx_threshold (with below and above) //////////////////////////////////////
 
   //! if input is less than th, assign 'below', else assign 'above'.
   template <class T, class T2>
@@ -1332,7 +1302,14 @@ namespace ebl {
   //! idx_sqrdist adapted to spherical coordinates, i.e. a 2PI modulo is
   //! applied to differences before squaring.
   //! The result is returned by the function.
-  template <typename T> float64 idx_sqrdist(idx<T> &i1, idx<T> &i2);
+  template <typename T> float64 idx_spherical_sqrdist(idx<T> &i1, idx<T> &i2);
+  
+  // idx_gaussian //////////////////////////////////////////////////////////////
+
+  //! Apply the gaussian function with mean 'm' and variance 'sigma' to each
+  //! element of 'in' and put the result into 'out'.
+  template <typename T>
+    void idx_gaussian(idx<T> &in, double m, double sigma, idx<T> &out);
   
   // idx_modulo ////////////////////////////////////////////////////////////////
 
@@ -1382,6 +1359,12 @@ namespace ebl {
   //! By default, the concatenated dimension is dimension 0.
   template <typename T> 
     idx<T> idx_concat(idx<T> &m1, idx<T> &m2, intg dim = 0);
+
+  // randomization ////////////////////////////////////////////////////////////
+
+  //! Set each element of 'm' to a random value in [v0, v1].
+  template <typename T>
+    void idx_random(idx<T> &m, double v0, double v1);
   
 } // end namespace ebl
 

@@ -719,6 +719,56 @@ namespace ebl {
   }
 
   ////////////////////////////////////////////////////////////////
+  // vote_answer
+
+  template <typename T, typename Tds1, typename Tds2, class Tstate>
+  vote_answer<T,Tds1,Tds2,Tstate>::
+  vote_answer(uint nclasses, double target_factor, bool binary_target_,
+	      t_confidence conf, bool apply_tanh_, const char *name_)
+    : class_answer<T,Tds1,Tds2,Tstate>(nclasses, target_factor, binary_target_,
+				       conf, apply_tanh_, name_) {
+  }
+  
+  template <typename T, typename Tds1, typename Tds2, class Tstate>
+  vote_answer<T,Tds1,Tds2,Tstate>::~vote_answer() {
+  }
+
+  template <typename T, typename Tds1, typename Tds2, class Tstate>
+  void vote_answer<T,Tds1,Tds2,Tstate>::fprop(Tstate &in, Tstate &out) {
+    // check that in's dim 0 is a multiple of nfeatures
+    if (in.x.dim(0) % this->nfeatures != 0)
+      eblerror("expected number of features to be multiple of "
+	       << this->nfeatures);
+    Tstate i;
+    idx<T> confidences(this->nfeatures);
+    idx_clear(confidences);
+    // loop on all concatenated outputs
+    uint off;
+    uint bestid = 0;
+    T bestconf = 0;
+    for (off = 0; off < in.x.dim(0); off += this->nfeatures) {
+      i = in.narrow(0, this->nfeatures, off);
+      class_answer<T,Tds1,Tds2,Tstate>::fprop(i, out);
+      // accumulate confidence
+      uint index = (uint) out.x.get(0);
+      confidences.set(out.x.get(1) + confidences.get(index), index);
+      cout << "id: " << index << " conf: " << out.x.get(1) << endl;
+      if (bestconf < out.x.get(1)) {
+	bestconf = out.x.get(1);
+	bestid = index;
+      }
+    }
+    // take strongest confidence as vote
+    intg id = idx_indexmax(confidences);
+    T conf = confidences.get(id) / (T) (off / this->nfeatures);
+//     out.x.sset(bestid, 0); // class id
+//     out.x.sset(bestconf, 1); // confidence
+    out.x.sset((T) id, 0); // class id
+    out.x.sset(conf, 1); // confidence
+    cout << "vote: id: " << id << " conf: " << conf << endl;
+  }
+
+  ////////////////////////////////////////////////////////////////
   // trainable_module
 
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,

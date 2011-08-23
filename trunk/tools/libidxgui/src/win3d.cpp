@@ -44,7 +44,7 @@ namespace ebl {
   text3d::text3d(const char *s_, float x_, float y_, float z_,
 		 int r, int g, int b, int a)
     : s(s_), x(x_), y(y_), z(z_), col(r, g, b, a) {
-    //DEBUG("win3d added: " << describe());
+    // DEBUG("win3d added: " << describe());
   }
 
   text3d::~text3d() {
@@ -139,6 +139,22 @@ namespace ebl {
     QGLWidget::show();
   }
     
+  void win3d::set_wupdate(bool ud) {
+    // if (wupdate != ud) {
+    //   wupdate = ud;
+    //   if (wupdate) {
+    // 	cout << "updating **************************" << endl;
+    // 	setUpdatesEnabled(true);
+    // 	//	draw_images(false);
+    // 	update_window();
+    //   }
+    //   else {
+    // 	cout << "disabling updating **************************" << endl;
+    // 	//	setUpdatesEnabled(false);
+    //   }
+    // }
+  }
+
   void win3d::update_window(bool activate) {
     if (wupdate) {
       QWidget::update();
@@ -184,11 +200,18 @@ namespace ebl {
     texts.push_back(new text3d(label, x, y, z, r, g, b, a));
   }
   
+  void win3d::add_text(float x, float y, float z, const char *s,
+		       int r, int g, int b, int a) {
+    texts.push_back(new text3d(s, x, y, z, r, g, b, a));
+  }
+
   // clear methods /////////////////////////////////////////////////////////////
 
   void win3d::clear() {
     clear_spheres();
-    clear_cylinders();    
+    clear_cylinders();
+    clear_texts();
+    win::clear();
   }
   
   void win3d::clear_spheres() {
@@ -205,6 +228,12 @@ namespace ebl {
     cylinders.clear();
   }
 
+  void win3d::clear_texts() {
+    for (vector<text3d*>::iterator i = texts.begin(); i != texts.end(); ++i)
+      if (*i) delete *i;
+    texts.clear();
+  }
+
   ////////////////////////////////////////////////////////////////
   // painting/drawing methods
 
@@ -213,14 +242,14 @@ namespace ebl {
     QGLPainter painter(this);
     painter.setStandardEffect(QGL::LitMaterial);
 
-    // qglClearColor (QColor(128,128,128));
-    // glEnable(GL_BLEND);
+    glEnable(GL_BLEND);
     // setFormat(QGLFormat(QGL::SampleBuffers)); // enable anti-aliasing support
  
+    glEnable( GL_DEPTH_TEST );
+    glDisable(GL_CULL_FACE );
+
     // glShadeModel( GL_SMOOTH );
-    // glEnable( GL_DEPTH_TEST );
     // glDepthFunc( GL_LESS );
-    glEnable( GL_CULL_FACE );
     // glEnable( GL_COLOR_SUM_EXT );
   
     // GLfloat mat_ambient[] = { 0.5, 0.5, 0.5, 1.0 };
@@ -366,9 +395,13 @@ namespace ebl {
     QPainter painter(this);
     QGLPainter p(this);
     // clear
+    qglClearColor(QColor(0,0,0));
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // 3D painting
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
     paint_spheres(&p);
     paint_cylinders(&p);
     
@@ -377,9 +410,13 @@ namespace ebl {
     p.end();
     
     // 3D text painting
+    glEnable(GL_DEPTH_TEST);
     paint_text();
     
     // 2D painting
+    glDisable(GL_CULL_FACE);
+    //    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
     draw_text(painter);
   }
 
@@ -451,11 +488,11 @@ namespace ebl {
 	painter->modelViewMatrix().rotate(xRot / 16.0, 1.0, 0.0, 0.0);
 	painter->modelViewMatrix().rotate(yRot / 16.0, 0.0, 1.0, 0.0);
 	painter->modelViewMatrix().rotate(zRot / 16.0, 0.0, 0.0, 1.0);
-	// first rotate around each axis
-  	painter->modelViewMatrix().rotate(s->a1, 1, 0, 0);
-  	painter->modelViewMatrix().rotate(s->a2, 0, 1, 0);
   	// now translate
   	painter->modelViewMatrix().translate(s->x, s->y, s->z);
+	// first rotate around each axis
+  	painter->modelViewMatrix().rotate(s->a2 + 90, 1, 0, 0);
+  	painter->modelViewMatrix().rotate(s->a1 + 90, 0, 1, 0);
   	// set color
   	painter->setFaceColor(QGL::AllFaces, s->col);
   	// draw

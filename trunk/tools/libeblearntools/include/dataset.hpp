@@ -118,7 +118,7 @@ namespace ebl {
     usepose = false;
     useparts = false;
     usepartsonly = false;
-    save_mode = DATASET_SAVE;
+    save_mode = DYNSET_SAVE;
     bboxhfact = 1.0;
     bboxwfact = 1.0;
     bbox_woverh = 0.0; // 0.0 means not set
@@ -207,7 +207,7 @@ namespace ebl {
       init_preprocessing();
     // extract
 #ifdef __BOOST__
-    if (!allocated && !scale_mode)
+    if (!allocated && !scale_mode && !strcmp(save_mode.c_str(), DATASET_SAVE))
       return false;
     cmatch what;
     regex hidden_dir(".svn");    
@@ -453,7 +453,7 @@ namespace ebl {
   
   template <class Tdata>
   bool dataset<Tdata>::save(const string &root) {
-    if (!allocated)
+    if (!allocated && !strcmp(save_mode.c_str(), DATASET_SAVE))
       return false;
     string root1 = root;
     root1 += "/";
@@ -477,28 +477,37 @@ namespace ebl {
     idx<Tdata> dat = data;
     idx<t_label> labs = labels;
     idxs<t_jitter> jitts = jitters;
-    if (data_cnt < data.dim(0)) {
+    if (data_cnt < total_samples) {
       cerr << "Warning: not all samples were added to dataset (";
-      cerr << data.dim(0) - data_cnt << " missing on " << data.dim(0);
+      cerr << total_samples - data_cnt << " missing out of " << total_samples;
       cerr << ")" << endl;
       cout << "Downsizing dataset to igore missing samples." << endl;
-      dat = dat.narrow(0, data_cnt, 0);
+      if (!strcmp(save_mode.c_str(), DATASET_SAVE))
+	dat = dat.narrow(0, data_cnt, 0);
       labs = labs.narrow(0, data_cnt, 0);
       if (jitters.order() >= 1)
 	jitts = jitts.narrow(0, data_cnt, 0);
     }
     // switch between saving modes
-    if (!strcmp(save_mode.c_str(), DATASET_SAVE)) { // dataset mode
+    if (!strcmp(save_mode.c_str(), DATASET_SAVE) ||
+	!strcmp(save_mode.c_str(), DYNSET_SAVE)) { // dataset mode
       cout << "Saving dataset " << name << " in " << root << "/";
       cout << name << "_*" << MATRIX_EXTENSION << endl;
       // save data
       string fname = root1;
       fname += data_fname;
       cout << "Saving " << fname << " (" << dat << ")" << endl;
-      if (!save_matrix(dat, fname)) {
-	cerr << "error: failed to save " << fname << endl;
-	return false;
-      } else cout << "Saved " << fname << endl;
+      if (!strcmp(save_mode.c_str(), DATASET_SAVE)) { // save data matrix
+	if (!save_matrix(dat, fname)) {
+	  cerr << "error: failed to save " << fname << endl;
+	  return false;
+	} else cout << "Saved " << fname << endl;
+      } else if (!strcmp(save_mode.c_str(), DYNSET_SAVE)) { // compile data file from existing files
+	if (!save_matrices<Tdata>(images_list, fname)) {
+	  cerr << "error: failed to save " << fname << endl;
+	  return false;
+	} else cout << "Saved " << fname << endl;
+      }
       // save labels
       fname = root1;
       fname += labels_fname;
@@ -569,25 +578,29 @@ namespace ebl {
     // if max_data has been set, max n with max_data
     if (max_data_set)
       n = MIN(n, max_data);
+    cout << "Dataset \"" << name << "\" will have " << n;
+    cout << " samples of size " << d << endl;
     // max with max_per_class
     if (max_per_class_set)
       n = (std::max)((intg) 0, MIN(n, idx_sum(max_per_class)));
-    cout << "Allocating dataset \"" << name << "\" with " << n;
-    cout << " samples of size " << d << " (" 
-	 << (n * d.nelements() * sizeof (Tdata)) / (1024 * 1024)
-	 << " Mb) ..." << endl;
     if (n <= 0) {
       cerr << "Cannot allocate " << n << " samples." << endl;
       return false;
     }
-    // allocate data buffer
-    uint c = 0, h = 1, w = 2;
-    if (interleaved_input) {
-      c = 2; h = 0; w = 1;
+    // allocate data buffer (only in dataset_save mode)
+    if (!strcmp(save_mode.c_str(), DATASET_SAVE)) {
+      cout << "Allocating dataset \"" << name << "\" with " << n;
+      cout << " samples of size " << d << " (" 
+	   << (n * d.nelements() * sizeof (Tdata)) / (1024 * 1024)
+	   << " Mb) ..." << endl;
+      uint c = 0, h = 1, w = 2;
+      if (interleaved_input) {
+	c = 2; h = 0; w = 1;
+      }
+      idxdim datadims(outdims.dim(c), outdims.dim(h), outdims.dim(w));
+      datadims.insert_dim(0, n);
+      data = idx<Tdata>(datadims);
     }
-    idxdim datadims(outdims.dim(c), outdims.dim(h), outdims.dim(w));
-    datadims.insert_dim(0, n);
-    data = idx<Tdata>(datadims);
     // allocate labels buffer
     labels = idx<t_label>(n);
     // allocate jitter buffer
@@ -665,7 +678,7 @@ namespace ebl {
 #endif
     try {
       // check for errors
-      if (!allocated)
+      if (!allocated && !strcmp(save_mode.c_str(), DATASET_SAVE))
 	eblthrow("dataset has not been allocated, cannot add data.");
       // check that input is bigger than minimum dimensions allowed
       if ((dat.dim(0) < mindims.dim(0))
@@ -842,13 +855,13 @@ namespace ebl {
     if (class_name)
       cout << " as " << *class_name;
     cout << " (" << label << ")";
-    cout << " eta: " << xtimer.eta(processed_cnt, data.dim(0));
+    cout << " eta: " << xtimer.eta(processed_cnt, total_samples);
     cout << " elapsed: " << xtimer.elapsed();
     if (jitt)
       cout << " (jitter " << jitt->h << "," << jitt->w << "," << jitt->s << ","
 	   << jitt->r << ")";
     cout << endl;
-    // if save_mode is dataset, cpy to dataset, otherwise save individ file
+    // if save_mode is dataset, cpy to dataset, otherwise save individual file
     if (!strcmp(save_mode.c_str(), DATASET_SAVE)) { // dataset mode
       // put sample's channels dimensions first, if interleaved.
       if (interleaved_input)
@@ -862,19 +875,27 @@ namespace ebl {
       if (jitters.order() > 0 && js)
 	jitters.set(*js, data_cnt);
     } else {
-      ostringstream fname;
-      fname.str("");
+      string format = save_mode;
+      if (!strcmp(save_mode.c_str(), DYNSET_SAVE)) {
+	format = "mat"; // force mat format for dynamic set
+	// put sample's channels dimensions first, if interleaved.
+	if (interleaved_input)
+	  sample = sample.shift_dim(2, 0);
+      }
+      string fname;
       fname << outdir << "/" << get_class_string(label) << "/";
-      mkdir_full(fname.str().c_str());
+      mkdir_full(fname.c_str());
       // save image
-      fname << get_class_string(label) << "_" << data_cnt << "."<<save_mode;
+      fname << get_class_string(label) << "_" << data_cnt << "." << format;
       //       // scale image to 0 255 if preprocessed
       //       if (strcmp(ppconv_type.c_str(), "RGB")) {
       // 	idx_addc(tmp, (Tdata) 1.0, tmp);
       // 	idx_dotc(tmp, (Tdata) 127.5, tmp);
       //       }
-      if (save_image(fname.str(), sample, save_mode.c_str()))
-	cout << "  saved " << fname.str() << " (" << sample << ")" << endl;
+      if (save_image(fname, sample, format.c_str()))
+	cout << "  saved " << fname << " (" << sample << ")" << endl;
+      if (!strcmp(save_mode.c_str(), DYNSET_SAVE))
+	images_list.push_back(fname); // add image to files list
     }
     // copy label
     if (labels.dim(0) > data_cnt)

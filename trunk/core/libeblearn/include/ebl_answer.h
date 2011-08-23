@@ -282,6 +282,29 @@ namespace ebl {
     float64          threshold;	//!< The threshold used for correctness.
   };
   
+  //! This module produces answers based on voting of multiple answers.
+  //! It assumes multiple network outputs have been concatenated in its input.
+  template <typename T, typename Tds1 = T, typename Tds2 = T,
+    class Tstate = bbstate_idx<T> >
+    class vote_answer : public class_answer<T,Tds1,Tds2,Tstate> {
+  public:
+    //! Initialize target vectors given the number of classes.
+    //! \param nclasses The number of classes for classification.
+    //! \param target_factor A factor applied to targets.
+    //! \param binary_target If true, target is a scalar with -1 or 1.
+    //! \param conf The type of confidence.
+    //! \param apply_tanh If true, a tanh is applied to inputs. 
+    vote_answer(uint nclasses, double target_factor = 1.0,
+		 bool binary_target = false,
+		 t_confidence conf = confidence_max,
+		 bool apply_tanh = false,
+		 const char *name = "vote_answer");
+    virtual ~vote_answer();
+    //! Produce a vector of answers given input 'in'. 'out' contains answers
+    //! in this order: class id and confidence.
+    virtual void fprop(Tstate &in, Tstate &out);
+  };
+
   //////////////////////////////////////////////////////////////////////////////
   // trainable_module
 

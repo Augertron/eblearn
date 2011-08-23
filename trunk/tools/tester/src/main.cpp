@@ -59,6 +59,7 @@
 #include "ClusterTest.h"
 #include "image_test.h"
 #include "ebl_machines_test.h"
+#include "gui3d_test.h"
 
 #include "utils.h"
 #include "tools_utils.h"
@@ -276,6 +277,10 @@ int main(int argc, char **argv) {
   runner.addTest(datasource_test::suite());
   runner.addTest(detector_test::suite());
   runner.addTest(ebl_machines_test::suite());
+#ifdef __GUI3D__
+  runner.addTest(gui3d_test::suite());
+#endif
+  
 
   // run all tests
   runner.run();

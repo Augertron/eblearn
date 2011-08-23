@@ -48,8 +48,9 @@ using namespace std;
 
 namespace ebl {
 
+  #define COLOR_LIST_SIZE 12
   //! A pre-defined color list
-  extern IDXEXPORT ubyte color_list[12][3];
+  extern IDXEXPORT ubyte color_list[COLOR_LIST_SIZE][3];
 
   // file IO utilities /////////////////////////////////////////////////////////
 

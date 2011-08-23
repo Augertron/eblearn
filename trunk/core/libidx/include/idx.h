@@ -413,10 +413,8 @@ namespace ebl {
     // (even without default operator below).
     // default operator below outputs an error that this is forbidden.
     virtual idx<T>& operator=(T other);
-
     //! Copy an idx into another.
     virtual idx<T>& operator=(const idx<T>& other);
-
     //! Return an idx that is the 'i'th slice in dimensions 0.
     //! Equivalent to select(0, i).
     virtual idx<T> operator[](const intg i);
@@ -736,19 +734,27 @@ namespace ebl {
 
   // idxs //////////////////////////////////////////////////////////////////////
 
-  //! An idx vector containing pointers to other idx.
+  //! An idx vector containing pointers to other idx. Pointed idx can either
+  //! be loaded all at once using 'load_matrices()' or on-demand using
+  //! 'load_matrices_ondemand()'. Loading on-demand can be useful if the
+  //! matrices are too big to all fit in memory at once.
   template <typename T>
     class idxs : public idx<idx<T>*> {
   public:
     //! This creates a vector of matrices of size 'size'. Initially all elements
     //! are set to empty.
-    idxs(intg size);
+    //! \param fp If not null, use this file pointer to dynamically
+    //!   load each matrix when requested.
+    idxs(intg size, std::file *fp = NULL, idx<int64> *offsets = NULL);
     //! Empty constructor.
     idxs();
     //! Construct an idxs given an idx of pointers to idx.
-    idxs(idx<idx<T>*> &o);
+    //    idxs(const idx<idx<T>*> &o);
+    idxs(const idxs<T> &o);
     //! The destructor deletes all allocated idx pointers.
-    ~idxs();
+    virtual ~idxs();
+    //! Copy an idxs into another.
+    virtual idxs<T>& operator=(const idxs<T>& other);
     //! Set matrix 'e' at position 'pos'.
     void set(idx<T> &e, intg pos);
     //! Get matrix at position 'pos'. This throws an error if matrix does not
@@ -761,6 +767,11 @@ namespace ebl {
     //! Returns the dimensions of the matrix with maximum number of elements
     //! among all matrices contained in this idxs.
     idxdim get_maxdim();
+
+    // members /////////////////////////////////////////////////////////////////
+  protected:
+    std::file *fp; //!< Load matrices ondemand if not null.
+    idx<int64> offsets; //!< File offsets for each element.
   };
   
   // stream printing ///////////////////////////////////////////////////////////
@@ -1037,6 +1048,8 @@ namespace ebl {
     //! Set each dimension of this idxd to the max of this one and 'other'.
     //! Note: 'other' and this idx are expected to have the same order.
     void set_max(const idxd<T> &other);
+    //! Shift dimension 'd' to position 'pos'.
+    void shift_dim(int d, int pos);
     
     ////////////////////////////////////////////////////////////////
     // get dimensions

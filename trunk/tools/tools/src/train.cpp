@@ -74,7 +74,6 @@ int train(configuration &conf, string &conffname) {
     uint original_tests = 1; // number of tests to run initially
     if (test_only) // in testing mode only, allow several tests for averaging
       original_tests = conf.get_uint("test_only");
-    bool no_training_test = conf.exists_true("no_training_test");
     uint              ipp_cores     = 1;
     if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
     ipp_init(ipp_cores); // limit IPP (if available) to 1 core
@@ -105,21 +104,23 @@ int train(configuration &conf, string &conffname) {
 	new class_datasource<Tnet,Tdata,Tlabel>;
       ds->init(valdata.c_str(), vallabels.c_str(), valjitters.c_str(),
 	       valclasses.c_str(), "val", maxval);
+      noutputs = ds->get_nclasses();
       test_ds = ds;
     } else { // regression task
       test_ds = new labeled_datasource<Tnet,Tdata,Tlabel>;
       test_ds->init(valdata.c_str(), vallabels.c_str(), valjitters.c_str(),
 		    "val", maxval);
+      idxdim d = test_ds->label_dims();
+      noutputs = d.nelements();
     }
     test_ds->set_test(); // test is the test set, used for reporting
     test_ds->pretty();
-    if (!(test_only && no_training_test)) {
+    if (!test_only) {
       if (classification) { // classification task
 	class_datasource<Tnet,Tdata,Tlabel> *ds =
 	  new class_datasource<Tnet,Tdata,Tlabel>;
 	ds->init(traindata.c_str(), trainlabels.c_str(),
 		 trainjitters.c_str(), trainclasses.c_str(), "train", maxtrain);
-	noutputs = ds->get_nclasses();
 	if (conf.exists("balanced_training"))
 	  ds->set_balanced(conf.get_bool("balanced_training"));
 	train_ds = ds;
@@ -127,8 +128,6 @@ int train(configuration &conf, string &conffname) {
 	train_ds = new labeled_datasource<Tnet,Tdata,Tlabel>;
 	train_ds->init(traindata.c_str(), trainlabels.c_str(),
 		       trainjitters.c_str(), "train", maxtrain);
-	idxdim d = train_ds->label_dims();
-	noutputs = d.nelements();
       }
       train_ds->ignore_correct(conf.exists_true("ignore_correct"));
       train_ds->set_weigh_samples(conf.exists_true("sample_probabilities"),
@@ -248,7 +247,7 @@ int train(configuration &conf, string &conffname) {
 
 template <typename Tdata>
 int select_label_type(configuration &conf, string &conffname) {
-  string labels_fname = conf.get_string("train_labels");
+  string labels_fname = conf.get_string("val_labels");
   string type;
   try {
     switch (get_matrix_type(labels_fname.c_str(), type)) {
@@ -284,7 +283,7 @@ int select_label_type(configuration &conf, string &conffname) {
 }
 
 int select_data_type(configuration &conf, string &conffname) {
-  string data_fname = conf.get_string("train");
+  string data_fname = conf.get_string("val");
   string type;
   try {
     switch (get_matrix_type(data_fname.c_str(), type)) {

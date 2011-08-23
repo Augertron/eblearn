@@ -408,7 +408,9 @@ void print_usage() {
   cout << "  -outdir <directory (default=images_root)>" << endl;
   cout << "  -load <dataset name> (this loads the dataset instead of compiling";
   cout << "     it from images found in root." << endl;
-  cout << "  -save <dataset(default)|mat|ppm|png|jpg|...>" << endl;
+  cout << "  -save <dynset(default)|dataset|mat|ppm|png|jpg|...>" << endl;
+  cout << "     dynset: dynamically loadable dataset (more memory efficient)" << endl;
+  cout << "     dataset: regular dataset (needs to entirely fit in memory)" << endl;
   cout << "  -dname <name>" << endl;
   cout << "  -maxperclass <integer>" << endl;
   cout << "  -maxdata <integer>" << endl;

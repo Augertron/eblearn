@@ -355,4 +355,11 @@ namespace ebl {
 			  a1, a2, s ? new string(s) : NULL, r, g, b, a, tops);
   }
   
+  void idxgui::draw_text_3d(float x, float y, float z, const char *s,
+			    int r, int g, int b, int a) {
+    check_init();
+    if (!s) eblerror("expected a non-null string");
+    emit gui_draw_text_3d(x, y, z, new string(s), r, g, b, a);
+  }
+  
 } // end namespace ebl

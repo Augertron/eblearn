@@ -131,28 +131,14 @@ namespace ebl {
     pos_reset = true;
     scrollbox = NULL;
     qw->setFocusPolicy(Qt::NoFocus);
+    busy = false;
   }
 
   win::win() {
   }
 
   win::~win() {
-    // clear temporary lists
-    clear_text(true);
-    clear_arrows(true);
-    clear_boxes(true);
-    clear_crosses(true);
-    clear_ellipses(true);
-    clear_images(true);
-    clear_masks(true);
-    // clear regular lists
-    clear_text(false);
-    clear_arrows(false);
-    clear_boxes(false);
-    clear_crosses(false);
-    clear_ellipses(false);
-    clear_images(false);
-    clear_masks(false);
+    clear();
   }
 
   void win::show() {
@@ -173,6 +159,10 @@ namespace ebl {
 
   void win::resize_window(uint h, uint w, bool force) {    
     cout << "warning: resize_window not implemented" << endl;
+  }
+
+  bool win::busy_drawing() {
+    return busy;
   }
   
   ////////////////////////////////////////////////////////////////
@@ -290,12 +280,23 @@ namespace ebl {
   // clear methods
 
   void win::clear() {
+    clear_all();
   }
 
   void win::clear_resize() {
     resize_window(1, 1);
-    clear();
+    clear_all();
     update_window();
+  }
+
+  void win::clear_all(bool clear_tmp) {
+    clear_text(clear_tmp);
+    clear_arrows(clear_tmp);
+    clear_boxes(clear_tmp);
+    clear_crosses(clear_tmp);
+    clear_ellipses(clear_tmp);
+    clear_images(clear_tmp);
+    clear_masks(clear_tmp);
   }
 
   void win::clear_text(bool clear_tmp) {

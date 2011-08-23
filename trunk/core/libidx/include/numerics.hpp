@@ -64,6 +64,20 @@ namespace ebl {
 	return (T)in;
   }
 
+  template <typename T>
+  T angle_distance(T a1, T a2) {
+    double d = (double) a1 - (double) a2;
+    double fd = fabs(d);
+    if (fd < TWOPI - fd)
+      return (T) d;
+    else {
+      if (d < 0)
+	return (T) (TWOPI - fd);
+      else
+	return (T) (fd - TWOPI);
+    }
+  }
+
 #define saturate(in, T) (saturator<T>::saturate(in))  
 
 } // end namespace ebl

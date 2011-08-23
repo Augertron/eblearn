@@ -144,9 +144,6 @@ namespace ebl {
     virtual void show();
     virtual QWidget* get_widget();
 
-    //! used to disable or enable updating of window, for batch displaying.
-    //! this is useful to avoid flickering and speed up display.
-    virtual void set_wupdate(bool ud);
     //! Save the Qt window to 'filename'.png.    
     virtual void save(const string &filename, bool confirm = false);
     //! Save raw buffer matrix to 'filename'.mat (this will just contain
@@ -161,6 +158,9 @@ namespace ebl {
     virtual void freeze_window_size(uint h, uint w);
     //! Change window title.
     virtual void set_title(const char *title);
+    //! used to disable or enable updating of window, for batch displaying.
+    //! this is useful to avoid flickering and speed up display.
+    virtual void set_wupdate(bool ud);
     //! Resize this window to hxw.
     //! \param force If true, will resize to any size, otherwise, will not
     //!   accept to resize smaller than current size.
@@ -168,6 +168,8 @@ namespace ebl {
     //! Refresh display of the window.
     //! \param activate Raises the focus to this window if true.
     virtual void update_window(bool activate = false);
+    //! Returns true if busy drawing.
+    virtual bool busy_drawing();
 
     ////////////////////////////////////////////////////////////////
     // Objects adding methods
@@ -196,6 +198,9 @@ namespace ebl {
     virtual void clear();
     //! Clears the window and resizes it to 1x1.
     virtual void clear_resize();
+    //! Clears the window and resizes it to 1x1.
+    //! \param clear_tmp If true, clears the temporary list of objects instead.
+    virtual void clear_all(bool clear_tmp = false);
     //! Clear this list of objects.
     //! \param clear_tmp If true, clears the temporary list of objects instead.
     void clear_text(bool clear_tmp = false);
@@ -314,6 +319,7 @@ namespace ebl {
     bool                 ctrl_on; //!< ctrl key is on or not.
     bool                 text_on; //!< Text is displayed or not.
     scroll_box0         *scrollbox;
+    bool                 busy; //!< Busy drawing.
   };
 
 } // namespace ebl {

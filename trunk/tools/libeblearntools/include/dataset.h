@@ -36,6 +36,7 @@
 #define MKDIR_RIGHTS 0755
 
 #define DATASET_SAVE "dataset"
+#define DYNSET_SAVE "dynset"
 
 #include "libidx.h"
 #include "libeblearn.h"
@@ -507,6 +508,7 @@ namespace ebl {
     bool                useparts;       //!< use parts or not
     bool                usepartsonly;   //!< use parts only or not
     string              save_mode;      //!< saving mode (dataset, ppm, png..)
+    list<string>        images_list;    //!< List of saved image files.
     bool                wmirror;        //!< add vertical-axis symmetry
     // bbox transformations /////////////////////////////////////////////////
     float               bboxhfact;      //!< bounding boxes height factor

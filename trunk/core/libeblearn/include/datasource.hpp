@@ -40,7 +40,7 @@ using namespace std;
 
 namespace ebl {
  
-   ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // datasource
 
   template <typename Tnet, typename Tdata>
@@ -49,7 +49,17 @@ namespace ebl {
   
   template <typename Tnet, typename Tdata>
   datasource<Tnet,Tdata>::
-  datasource(idx<Tdata> &data_, const char *name_) {    
+  datasource(idxs<Tdata> &data_, const char *name_) {
+    multimat = true; // data matrix is composed of multiple matrices
+    init(data_, name_);
+    init_epoch();
+    pretty(); // print information about the dataset
+  }
+
+  template <typename Tnet, typename Tdata>
+  datasource<Tnet,Tdata>::
+  datasource(idx<Tdata> &data_, const char *name_) {
+    multimat = false; // data matrix is composed of multiple matrices
     init(data_, name_);
     init_epoch();
     pretty(); // print information about the dataset
@@ -59,8 +69,15 @@ namespace ebl {
   datasource<Tnet,Tdata>::
   datasource(const char *data_fname, const char *name_) {
     try {
-      idx<Tdata> data_ = load_matrix<Tdata>(data_fname);
-      init(data_, name_);
+      if (has_multiple_matrices(data_fname)) {
+	multimat = true;
+	idxs<Tdata> datas_ = load_matrices<Tdata>(data_fname);
+	init(datas_, name_);
+      } else {
+	multimat = false;
+	idx<Tdata> data_ = load_matrix<Tdata>(data_fname);
+	init(data_, name_);
+      }
       init_epoch();
       pretty(); // print information about the dataset
     } eblcatcherror();
@@ -75,7 +92,25 @@ namespace ebl {
   
   template<typename Tnet, typename Tdata>
   void datasource<Tnet,Tdata>::
+  init(idxs<Tdata> &datas_, const char *name_) {
+    cout << "assigning idxs" << endl;
+    datas = datas_;
+    data = (idx<Tdata>&) datas_;
+    multimat = true;
+    init2(name_);
+  }
+
+  template<typename Tnet, typename Tdata>
+  void datasource<Tnet,Tdata>::
   init(idx<Tdata> &data_, const char *name_) {
+    multimat = false;
+    data = data_;
+    init2(name_);
+  }
+
+  template<typename Tnet, typename Tdata>
+  void datasource<Tnet,Tdata>::
+  init2(const char *name_) {
     // init randomization
     if (!drand_ini) // only re-init if not initialized
       dynamic_init_drand(); // initialize random seed
@@ -97,7 +132,6 @@ namespace ebl {
     // state saving
     state_saved = false;
     // buffers assigments/allocations
-    data = data_;
     indices = idx<intg>(data.dim(0));
     indices_saved = idx<intg>(data.dim(0));
     probas = idx<double>(data.dim(0));
@@ -135,7 +169,23 @@ namespace ebl {
     for (it = 0; it < data.dim(0); ++it)
       indices.set(it, it);
     // set sample dimensions
-    sampledims = idxdim(data.select(0, 0));
+    if (multimat) {
+      bool found = false;
+      uint i = 0;
+      idx<Tdata> e;
+      while (!found && i < datas.dim(0)) {
+	if (datas.exists(i)) {
+	  found = true;
+	  e = datas.get(i);
+	}
+	cout << endl;
+	i++;
+      }
+      if (!found)
+	eblerror("no sample found in multi-matrix data " << datas);
+      sampledims = e.get_idxdim();
+    } else
+      sampledims = idxdim(data.select(0, 0));
     if (sampledims.order() == 2)
       sampledims.insert_dim(0, 1);
     if (sampledims.order() > 2) {
@@ -213,7 +263,11 @@ namespace ebl {
       out = fstate_idx<Tnet>(sampledims);
     else
       out.resize(sampledims);
-    idx<Tdata> dat = data[it];
+    idx<Tdata> dat;
+    if (multimat)
+      dat = datas.get(it);
+    else
+      dat = data[it];
     idx_copy(dat, out.x);
     if (bias != 0.0)
       idx_addc(out.x, bias, out.x);
@@ -241,7 +295,17 @@ namespace ebl {
 
   template <typename Tnet, typename Tdata>
   idx<Tdata> datasource<Tnet,Tdata>::get_sample(intg index) {
-    return data[index];
+    if (multimat)
+      return datas.get(index);
+    else
+      return data[index];
+  }
+
+  template <typename Tnet, typename Tdata>
+  idx<Tnet> datasource<Tnet,Tdata>::get_raw_output(intg index) {
+    if (index >= 0)
+      return raw_outputs[index];
+    return raw_outputs[it];
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -262,14 +326,18 @@ namespace ebl {
   }
 
   template <typename Tnet, typename Tdata>
-  void datasource<Tnet,Tdata>::next() {
+  bool datasource<Tnet,Tdata>::next() {
     // increment test iterator
     it_test++;
     // reset if reached end
-    if (it_test >= data.dim(0))
+    if (it_test >= data.dim(0)) {
       it_test = 0;
+      it = it_test;
+      return false;
+    }
     // set main iterator used by fprop
     it = it_test;
+    return true;
   }
 
   template <typename Tnet, typename Tdata>
@@ -363,7 +431,8 @@ namespace ebl {
     epoch_show_printed = -1; // last epoch count we have printed
     // if we have prior information about each sample energy and classification
     // let's use it to initialize the picking probabilities.
-    this->normalize_all_probas();
+    if (weigh_samples)
+      this->normalize_all_probas();
   }
 
   template <typename Tnet, typename Tdata>
@@ -695,6 +764,15 @@ namespace ebl {
 
   template <typename Tnet, typename Tdata, typename Tlabel>
   labeled_datasource<Tnet, Tdata, Tlabel>::
+  labeled_datasource(idxs<Tdata> &data_, idx<Tlabel> &labels_,
+		     const char *name_) {
+    init(data_, labels_, name_);
+    this->init_epoch();
+    this->pretty(); // print information about this dataset
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  labeled_datasource<Tnet, Tdata, Tlabel>::
   labeled_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
 		     const char *name_) {
     init(data_, labels_, name_);
@@ -729,8 +807,21 @@ namespace ebl {
   
   template <typename Tnet, typename Tdata, typename Tlabel>
   void labeled_datasource<Tnet, Tdata, Tlabel>::
+  init(idxs<Tdata> &data_, idx<Tlabel> &labels_, const char *name) {
+    datasource<Tnet,Tdata>::init(data_, name);
+    init_labels(labels_, name);
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void labeled_datasource<Tnet, Tdata, Tlabel>::
   init(idx<Tdata> &data_, idx<Tlabel> &labels_, const char *name) {
     datasource<Tnet,Tdata>::init(data_, name);
+    init_labels(labels_, name);
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void labeled_datasource<Tnet, Tdata, Tlabel>::
+  init_labels(idx<Tlabel> &labels_, const char *name) {
     labels = labels_;
     label_bias = 0;
     label_coeff = 1;
@@ -893,9 +984,28 @@ namespace ebl {
 
   template <typename Tnet, typename Tdata, typename Tlabel>
   class_datasource<Tnet, Tdata, Tlabel>::
+  class_datasource(idxs<Tdata> &data_, idx<Tlabel> &labels_,
+		   vector<string*> *lblstr_, const char *name_) {
+    init(data_, labels_, name_, lblstr_);
+    this->init_epoch();
+    this->pretty(); // print info about dataset
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  class_datasource<Tnet, Tdata, Tlabel>::
   class_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
 		   vector<string*> *lblstr_, const char *name_) {
     init(data_, labels_, name_, lblstr_);
+    this->init_epoch();
+    this->pretty(); // print info about dataset
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  class_datasource<Tnet, Tdata, Tlabel>::
+  class_datasource(idxs<Tdata> &data_, idx<Tlabel> &labels_,
+		   idx<ubyte> &classes, const char *name_) {
+    init_strings(classes);
+    init(data_, labels_, this->lblstr, name_);
     this->init_epoch();
     this->pretty(); // print info about dataset
   }
@@ -992,6 +1102,14 @@ namespace ebl {
 
   template <typename Tnet, typename Tdata, typename Tlabel>
   void class_datasource<Tnet, Tdata, Tlabel>::
+  init(idxs<Tdata> &data_, idx<Tlabel> &labels_, vector<string*> *lblstr_,
+       const char *name_) {
+    labeled_datasource<Tnet, Tdata, Tlabel>::init(data_, labels_, name_);
+    class_datasource<Tnet, Tdata, Tlabel>::init_local(lblstr_);
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void class_datasource<Tnet, Tdata, Tlabel>::
   init(idx<Tdata> &data_, idx<Tlabel> &labels_, vector<string*> *lblstr_,
        const char *name_) {
     labeled_datasource<Tnet, Tdata, Tlabel>::init(data_, labels_, name_);
@@ -1075,7 +1193,7 @@ namespace ebl {
     // check that this datasource is allowed to call this method
     if (test_set)
       eblerror("forbidden call of next_train() on testing sets");
-    if (!balance) // return samples in original order, regardless of their class
+    if (!balance) // do not balance by class
       return datasource<Tnet,Tdata>::next_train();
     bool pick = false;
     not_picked++;    
@@ -1101,7 +1219,8 @@ namespace ebl {
 	vector<intg> &clist = bal_indices[class_it];
 	random_shuffle(clist.begin(), clist.end());
       }
-      normalize_probas(class_it);
+      if (weigh_samples)
+	normalize_probas(class_it);
     }
     // recursion failsafe, allow 1000 max recursions
     if (not_picked > MIN(1000, (intg) bal_indices[class_it].size())) {
@@ -1115,8 +1234,10 @@ namespace ebl {
       if (count_pickings)
 	pick_count.set(pick_count.get(it) + 1, it);
 #ifdef __DEBUG__
-      cout << "Picking sample " << it << " (label: " << (int)labels.gget(it)
-	   << ", pickings: " << pick_count.get(it) << ", energy: "
+      cout << "Picking sample " << it << " (label: " << (int)get_label();
+      if (lblstr)
+	cout << ", name: " << *((*lblstr)[(int)get_label()]);
+      cout << ", pickings: " << pick_count.get(it) << ", energy: "
 	   << energies.get(it) << ", correct: " << (int) correct.get(it);
       if (weigh_samples) cout << ", proba: " << probas.get(it);
       cout << ")" << endl;
@@ -1218,7 +1339,8 @@ namespace ebl {
     }
     // if we have prior information about each sample energy and classification
     // let's use it to initialize the picking probabilities.
-    this->normalize_all_probas();
+    if (weigh_samples)
+      this->normalize_all_probas();
   }
 
   template <typename Tnet, typename Tdata, typename Tlabel>
@@ -1487,7 +1609,8 @@ namespace ebl {
 
   template <typename Tlabel>
   class_node<Tlabel>::class_node(Tlabel id, string &name_)
-    : _label(id), _name(name_), parent(NULL), it_children(children.begin()),
+    : _label(id), _name(name_), parent(NULL), children(),
+      it_children(children.begin()),
       bempty(true), iempty(true), _depth(0), it_samples(samples.begin()) {
     //DEBUG("creating node " << this << " label: " << id << " name: "
     //<< _name);
@@ -1510,6 +1633,8 @@ namespace ebl {
   template <typename Tlabel>
   intg class_node<Tlabel>::next() {
     if (bempty) eblerror("cannot call next() on empty node");
+    if (it_children < children.begin()) it_children = children.begin();
+    if (it_samples < samples.begin()) it_samples = samples.begin();
     intg id = -1;
     if (it_children == children.end()) { // we reached the end of children
       // roll back children iterator
@@ -1633,8 +1758,8 @@ namespace ebl {
 
   template <typename Tnet, typename Tdata, typename Tlabel>
   hierarchy_datasource<Tnet, Tdata, Tlabel>::
-  hierarchy_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
-		       idx<Tlabel> &parents_,
+  hierarchy_datasource(idxs<Tdata> &data_, idx<Tlabel> &labels_,
+		       idx<Tlabel> *parents_,
 		       vector<string*> *lblstr_, const char *name_) {
     class_datasource<Tnet,Tdata,Tlabel>::init(data_, labels_, name_, lblstr_);
     this->init_parents(parents_);
@@ -1645,9 +1770,21 @@ namespace ebl {
   template <typename Tnet, typename Tdata, typename Tlabel>
   hierarchy_datasource<Tnet, Tdata, Tlabel>::
   hierarchy_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
-		       idx<Tlabel> &parents_, idx<ubyte> &classes,
+		       idx<Tlabel> *parents_,
+		       vector<string*> *lblstr_, const char *name_) {
+    class_datasource<Tnet,Tdata,Tlabel>::init(data_, labels_, name_, lblstr_);
+    this->init_parents(parents_);
+    this->init_epoch();
+    this->pretty(); // print info about dataset
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  hierarchy_datasource<Tnet, Tdata, Tlabel>::
+  hierarchy_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
+		       idx<Tlabel> *parents_, idx<ubyte> *classes,
 		       const char *name_) {
-    this->init_strings(classes);
+    if (classes)
+      this->init_strings(*classes);
     class_datasource<Tnet,Tdata,Tlabel>::init(data_, labels_, this->lblstr,
 					      name_);
     this->init_parents(parents_);
@@ -1659,16 +1796,20 @@ namespace ebl {
   hierarchy_datasource<Tnet, Tdata, Tlabel>::
   hierarchy_datasource(const char *data_name, const char *labels_name,
 		       const char *parents_name, const char *jitters_name,
-		       const char *classes_name, const char *name_) {
+		       const char *classes_name, const char *name_,
+		       uint max_size) {
     class_datasource<Tnet,Tdata,Tlabel>::init(data_name, labels_name,
-					      jitters_name, classes_name,name_);
+					      jitters_name, classes_name,name_,
+					      max_size);
     // load parent
     idx<Tlabel> parents_;
-    try {
-      parents_ = load_matrix<Tlabel>(parents_name);
-    } eblcatcherror();
+    if (parents_name) {
+      try {
+	parents_ = load_matrix<Tlabel>(parents_name);
+      } eblcatcherror();
+    }
     // inits
-    this->init_parents(parents_);
+    this->init_parents(parents_name ? &parents_ : NULL);
     this->init_epoch();
     this->pretty(); // print info about dataset
   }
@@ -1693,6 +1834,8 @@ namespace ebl {
       vector<class_node<Tlabel>*> *n = *i;
       if (n) delete n;
     }
+    if (parents)
+      delete parents;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1700,14 +1843,18 @@ namespace ebl {
 
   template <typename Tnet, typename Tdata, typename Tlabel>
   void hierarchy_datasource<Tnet, Tdata, Tlabel>::
-  init_parents(idx<Tlabel> &parents_) {
-    parents = parents_;
+  init_parents(idx<Tlabel> *parents_) {
+    parents = NULL;
+    if (parents_)
+      parents = new idx<Tlabel>(*parents_);
     // check that parent id do not exceed number of classes
-    if (idx_max(parents) > nclasses)
-      eblerror("maximum parent id (" << idx_max(parents)
-	       << ") cannot exceed number of classes (" << nclasses << ")");
-    if (parents.dim(1) != 2)
-      eblerror("expected dim 1 to be size 2 (child/parent)");
+    if (parents) {
+      if (idx_max(*parents) > nclasses)
+	eblerror("maximum parent id (" << idx_max(*parents)
+		 << ") cannot exceed number of classes (" << nclasses << ")");
+      if (parents->dim(1) != 2)
+	eblerror("expected dim 1 to be size 2 (child/parent)");
+    }
     if (!lblstr)
       eblerror("expected class strings to be defined");
     // create hierarchy tree for efficient balanced samples ordering
@@ -1733,13 +1880,15 @@ namespace ebl {
       i++;
     }
     // associate each class to its parent
-    idx_bloop1(par, parents, Tlabel) {
-      class_node<Tlabel> *child = all_nodes[par.get(0)];
-      if (!child) eblerror("no node with id " << par.get(0));
-      if (par.get(1) >= 0) {
-	class_node<Tlabel> *parent = all_nodes[par.get(1)];
-	parent->add_child(child);
-	//DEBUG("adding "<< child->name() << " as child of " << parent->name());
+    if (parents) {
+      idx_bloop1(par, *parents, Tlabel) {
+	class_node<Tlabel> *child = all_nodes[par.get(0)];
+	if (!child) eblerror("no node with id " << par.get(0));
+	if (par.get(1) >= 0) {
+	  class_node<Tlabel> *parent = all_nodes[par.get(1)];
+	  parent->add_child(child);
+        //DEBUG("adding "<< child->name() << " as child of " << parent->name());
+	}
       }
     }
     // assign depth to all nodes, starting from all orphan nodes
@@ -1807,6 +1956,7 @@ namespace ebl {
     depth_labels = idx<Tlabel>(labels.get_idxdim());
     set_current_depth(0);
     it = 0;
+    depth_balance = false;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1844,35 +1994,66 @@ namespace ebl {
   template <typename Tnet, typename Tdata, typename Tlabel>
   void hierarchy_datasource<Tnet,Tdata,Tlabel>::
   fprop_label(fstate_idx<Tlabel> &label) {
-    label.x.sset(get_current_label());
+    label.x.sset(get_label());
   }
 
   template <typename Tnet, typename Tdata, typename Tlabel>
   void hierarchy_datasource<Tnet,Tdata,Tlabel>::
   fprop_label_net(fstate_idx<Tnet> &label) {
-    label.x.sset((Tnet) get_current_label());
+    label.x.sset((Tnet) get_label());
   }
 
   template <typename Tnet, typename Tdata, typename Tlabel>
   void hierarchy_datasource<Tnet,Tdata,Tlabel>::
   fprop_label_net(bbstate_idx<Tnet> &label) {
-    label.x.sset((Tnet) get_current_label());
+    label.x.sset((Tnet) get_label());
   }
 
   template <typename Tnet, typename Tdata, typename Tlabel>
-  Tlabel hierarchy_datasource<Tnet,Tdata,Tlabel>::get_current_label() {
+  Tlabel hierarchy_datasource<Tnet,Tdata,Tlabel>::get_label() {
     // select label based on current depth and current iterator
     Tlabel l = labels[it].gget();
     return all_nodes[l]->label(current_depth);
   }
 
   template <typename Tnet, typename Tdata, typename Tlabel>
+  Tlabel hierarchy_datasource<Tnet,Tdata,Tlabel>::get_label(uint d, intg index){
+    // select label based on current depth and current iterator
+    Tlabel l;
+    if (index < 0)
+      l = labels[it].gget();
+    else
+      l = labels[index].gget();
+    return all_nodes[l]->label(d);
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
   idx<Tlabel>& hierarchy_datasource<Tnet,Tdata,Tlabel>::get_depth_labels() {
     return depth_labels;
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  uint hierarchy_datasource<Tnet,Tdata,Tlabel>::
+  get_nbrothers(class_node<Tlabel> &n) {
+    if (n.parent)
+      return n.parent->children.size();
+    vector<class_node<Tlabel>*>* d0 = all_depths[0];
+    if (d0)
+      return d0->size();
+    return 0;
   }
   
   //////////////////////////////////////////////////////////////////////////////
   // iterating
+  
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void hierarchy_datasource<Tnet,Tdata,Tlabel>::set_depth_balanced(bool bal) {
+    depth_balance = bal;
+    if (!depth_balance) // unbalanced
+      cout << _name << ": Setting training as depth-unbalanced." << endl;
+    else // balanced
+      cout << _name << ": Setting training as depth-balanced." << endl;
+  }
   
   template <typename Tnet, typename Tdata, typename Tlabel>
   void hierarchy_datasource<Tnet,Tdata,Tlabel>::set_current_depth(uint depth) {
@@ -1898,6 +2079,7 @@ namespace ebl {
 	   << all_depths.size() << ")" << endl;
     else
       current_depth++;
+    set_current_depth(current_depth);
   }
   
   template <typename Tnet, typename Tdata, typename Tlabel>
@@ -1905,8 +2087,8 @@ namespace ebl {
     // check that this datasource is allowed to call this method
     if (test_set)
       eblerror("forbidden call of next_train() on testing sets");
-    if (!balance) // return samples in original order, regardless of their class
-      return datasource<Tnet,Tdata>::next_train();
+    if (!depth_balance) // do not balance by depth
+      return class_datasource<Tnet,Tdata,Tlabel>::next_train();
     // balanced training
     vector<class_node<Tlabel>*> *nodes = complete_depths[current_depth];
     uint itd = it_depths[current_depth];
@@ -1915,8 +2097,21 @@ namespace ebl {
     it = node->next();
     // increment depth iterator
     itd++;
+    it_depths[current_depth] = itd;
     if (itd >= nodes->size())
       it_depths[current_depth] = 0;
+    // increment epoch counters
+    epoch_cnt++;
+    epoch_pick_cnt++;
+#ifdef __DEBUG__
+    cout << "Picking sample " << it << " (label: " << (int)get_label();
+    if (lblstr)
+      cout << ", name: " << *((*lblstr)[(int)get_label()]);
+    cout << ", pickings: " << pick_count.get(it) << ", energy: "
+	 << energies.get(it) << ", correct: " << (int) correct.get(it);
+    if (weigh_samples) cout << ", proba: " << probas.get(it);
+    cout << ")" << endl;
+#endif
     this->pretty_progress();
     return true;
   }
@@ -2347,10 +2542,13 @@ namespace ebl {
 
   // next pair
   template <typename Tnet, typename Tdata, typename Tlabel>
-  void labeled_pair_datasource<Tnet, Tdata, Tlabel>::next() {
+  bool labeled_pair_datasource<Tnet, Tdata, Tlabel>::next() {
     ++pairsIter;
-    if(!pairsIter.notdone())
+    if(!pairsIter.notdone()) {
       pairsIter = pairs.dim_begin(0);
+      return false;
+    }
+    return true;
   }
 
   // begin pair
@@ -2430,7 +2628,11 @@ namespace ebl {
       out = bbstate_idx<Tnet>(sampledims);
     else
       out.resize(this->sample_dims());
-    idx<Tdata> dat = data[it];
+    idx<Tdata> dat;
+    if (multimat)
+      dat = datas.get(it);
+    else
+      dat = data[it];
     uint ni = data.dim(1);
     uint nj = data.dim(2);
     uint di = (uint) (0.5 * (height - ni));

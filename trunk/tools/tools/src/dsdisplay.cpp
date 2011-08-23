@@ -174,6 +174,7 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
   bool		bclasspairs = true;
   // data files
   idx<Tdata>	data;
+  idxs<Tdata>   datas;
   idx<Tlabel>	labels;
   idx<ubyte>	classes;
   idx<intg>	classpairs;
@@ -184,14 +185,25 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
   build_fname(ds_name, CLASSPAIRS_NAME, classpairs_fname);
   build_fname(ds_name, DEFORMPAIRS_NAME, deformpairs_fname);
 
+  // check format of data file
+  bool multimat = has_multiple_matrices(data_fname.c_str());
+
   // if size is defined, only load data and print dimensions
   if (size) {
-    data = load_matrix<Tdata>(data_fname);
-    cout << data.dim(0) << endl;
+    if (multimat) {
+      datas = load_matrices<Tdata>(data_fname);
+      cout << datas.dim(0) << endl;
+    } else {
+      data = load_matrix<Tdata>(data_fname);
+      cout << data.dim(0) << endl;
+    }
     return ;
   }
   // load data
-  loading_error(data, data_fname);
+  if (multimat)
+    datas = load_matrices<Tdata>(data_fname);
+  else
+    data = load_matrix<Tdata>(data_fname);
   loading_error(labels, labels_fname);
   loading_warning(classes, classes_fname);
   bclasspairs = loading_nowarning(classpairs, classpairs_fname);
@@ -199,6 +211,9 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
 
   // display only 1 channel
   if (channel >= 0) {
+    if (multimat)
+      eblerror("showing only 1 channel is not supported with "
+	       << "multimats yet (TODO)");
     if (channel >= data.dim(1)) {
       cerr << "trying to select channel " << channel
 	   << " but channel dimension is of size " << data.dim(0)
@@ -208,8 +223,11 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
     data = data.select(1, channel);
   }
   // create datasource object
-  class_datasource<Tdata, Tdata, Tlabel>
-    train_ds(data, labels, classes, "Dataset");
+  class_datasource<Tdata, Tdata, Tlabel> *train_ds = NULL;
+  if (multimat)
+    train_ds = new class_datasource<Tdata, Tdata, Tlabel>(datas, labels, classes, "Dataset");
+  else
+    train_ds = new class_datasource<Tdata, Tdata, Tlabel>(data, labels, classes, "Dataset");
   // display it
 #ifdef __GUI__
   if (!info) { // only display if info is false
@@ -236,12 +254,13 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
     // }
   
     labeled_datasource_gui<Tdata, Tdata, Tlabel> dsgui(true);
-    dsgui.display(train_ds, dims.dim(0), dims.dim(1), 0, 0, 1, -1, NULL, false,
+    dsgui.display(*train_ds, dims.dim(0), dims.dim(1), 0, 0, 1, -1, NULL, false,
 		  (Tdata) range[0], (Tdata) range[1]);
     if (font_size > 0)
       set_font_size(font_size);
     secsleep(1);
   }
+  delete train_ds;
 #else
   cerr << "warning: QT gui libraries not available, install them and recompile"
        << endl;

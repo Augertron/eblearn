@@ -79,7 +79,8 @@ configuration *conf = NULL;
 float zoom = 1.0;
 vector<double> range;
 int chans = -1; // -1: show all chans, 0: chan 0 only, etc
-uint maxwidth = MAXWIDTH;
+uint maxwidth = 1000;
+bool interleaved = false;
 				      
 ////////////////////////////////////////////////////////////////
 // interface
@@ -99,6 +100,7 @@ void print_usage() {
        << " directory, than can later be compile into a video)" << endl;
   cout << "  -filename (display filename within drawing area)" << endl;
   cout << "  -print (print all values of current matrix)" << endl;
+  cout << "  -interleaved (channels are in dimension 0)" << endl;
 }
 
 // parse command line input
@@ -170,6 +172,8 @@ int display(list<string>::iterator &ifname,
     return display_net<T>(ifname, signd, load, mats);
   // mat mode
   idxdim d = get_matrix_dims(ifname->c_str());
+  if (interleaved)
+    d.shift_dim(0, 2);
   if (print || !(d.order() == 2 ||
 		 (d.order() == 3 && (d.dim(2) == 1 || d.dim(2) == 3)))) {
     // this is probably not an image, just display info and print matrix
@@ -343,6 +347,8 @@ int main(int argc, char **argv) {
 	  video = true;
 	} else if (!strcmp(argv[i], "-print")) {
 	  print = true;
+	} else if (!strcmp(argv[i], "-interleaved")) {
+	  interleaved = true;
 	} else if (!strcmp(argv[i], "-filename")) {
 	  show_filename = true;
 	} else if (!strcmp(argv[i], "-range")) {

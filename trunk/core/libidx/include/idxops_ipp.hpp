@@ -77,31 +77,28 @@
 ////////////////////////////////////////////////////////////////////////
 // idx_minus
 
-#if USING_STL_ITERS == 0
-
-  #define idx_minus_macro(T)						\
-    template<> void idx_minus(idx<T> &inp, idx<T> &out) {		\
-      if (inp.contiguousp() && out.contiguousp()) {			\
-	ipp_minus(inp, out);						\
-      } else {								\
-	idxiter<T> pinp; idxiter<T> pout;				\
+#define idx_minus_macro(T)						\
+  template<> void idx_minus(idx<T> &inp, idx<T> &out) {			\
+    if (inp.contiguousp() && out.contiguousp()) {			\
+      ipp_minus(inp, out);						\
+    } else {								\
+      idxiter<T> pinp; idxiter<T> pout;					\
       idx_aloop2_on(pinp,inp,pout,out) { *pout = - *pinp; }		\
-      }									\
-    }
+    }									\
+  }
 
-#else
+////////////////////////////////////////////////////////////////////////
+// idx_minus
 
-  #define idx_minus_macro(T)						\
-    template<> void idx_minus(idx<T> &inp, idx<T> &out) {		\
-      if (inp.contiguousp() && out.contiguousp()) {			\
-	ipp_minus(inp, out);						\
-      } else {								\
-	ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);		\
-	idx_aloop2_on(pinp,inp,pout,out) { *pout = - *pinp; }		\
-      }									\
-    }
-
-#endif
+#define idx_minus_acc_macro(T)						\
+  template<> void idx_minus_acc(idx<T> &inp, idx<T> &out) {		\
+    if (inp.contiguousp() && out.contiguousp()) {			\
+      ipp_minus(inp, out);						\
+    } else {								\
+      idxiter<T> pinp; idxiter<T> pout;					\
+      idx_aloop2_on(pinp,inp,pout,out) { *pout += - *pinp; }		\
+    }									\
+  }
 
 ////////////////////////////////////////////////////////////////////////
 // idx_add

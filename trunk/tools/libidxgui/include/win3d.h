@@ -131,6 +131,9 @@ namespace ebl {
     // window matters //////////////////////////////////////////////////////////
     
     virtual void show();
+    //! Used to disable or enable updating of window, for batch displaying.
+    //! This is useful to avoid flickering and speed up display.
+    virtual void set_wupdate(bool ud);
     //! Resize this window to hxw.
     //! \param force If true, will resize to any size, otherwise, will not
     //!   accept to resize smaller than current size.
@@ -153,7 +156,10 @@ namespace ebl {
 		      float base_radius, float a1, float a2,
 		      const char *label = NULL,
 		      int r = 255, int g = 255, int b = 255, int a = 255,
-		      bool tops = false);
+		      bool tops = false); 
+    //! Draw 3d text 's' at (x,y,z) with color (r,g,b,a).    
+    void add_text(float x, float y, float z, const char *s,
+		  int r = 255, int g = 255, int b = 255, int a = 255);
 
     // clear methods ///////////////////////////////////////////////////////////
 
@@ -162,6 +168,7 @@ namespace ebl {
     virtual void clear();
     void clear_spheres();
     void clear_cylinders();
+    void clear_texts();
 
     ////////////////////////////////////////////////////////////////
     // event methods

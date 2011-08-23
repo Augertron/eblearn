@@ -36,6 +36,7 @@ IF (CPPUNIT_FOUND) # compile only if cppunit is present
     src/IdxTest.cpp
     src/image_test.cpp
     src/ebl_machines_test.cpp
+    src/gui3d_test.cpp
     src/main.cpp
     src/MyBriefTestProgressListener.cpp
     src/MyTextOutputter.cpp

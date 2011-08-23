@@ -43,23 +43,17 @@ namespace ebl {
   
   //! creates a new window.
   EXPORT int new_window(const char *wname = NULL, uint h = 0, uint w = 0);
-
   //! creates a new window.
   EXPORT int new_window(const string &wname, uint h = 0, uint w = 0);
-
   //! creates a new window with 3D rendering.
   EXPORT int new_window3d(const char *wname = NULL, uint h = 0, uint w = 0);
-
   //! creates a new window with 3D rendering.
   EXPORT int new_window3d(const string &wname, uint h = 0, uint w = 0);
-
   //! selects window wid.
   EXPORT void select_window(int wid);
-
   //! do not update display until enable_updates is called again.
   //! this should make the display faster.
   EXPORT void disable_window_updates();
-
   //! allow display updates and display if it was previously off after a
   //! call to disable_updates().
   EXPORT void enable_window_updates();
@@ -77,35 +71,30 @@ namespace ebl {
   //! @param zoomw and @param zoomh are the zoom factors in width and height
   template<class T>
     void draw_matrix(idx<T> &im, unsigned int h0, unsigned int w0,
-		     double zoomh, double zoomw, T minv = 0, T maxv = 0);
-    
+		     double zoomh, double zoomw, T minv = 0, T maxv = 0);    
   //! Like draw_matrix template but without zooming and range options
   //! (faster).
   template<class T>
-    void draw_matrix(idx<T> &im, uint h0 = 0, uint w0 = 0);
-  
+    void draw_matrix(idx<T> &im, uint h0 = 0, uint w0 = 0);  
   //! ubyte specialised draw_matrix (faster, does not involve type
   //! conversion) without zooming and range options (also faster).
   //! Warning: use with caution. This is not thread safe (but faster),
   //! i.e. there might be a race condition on the deletion of the idx data.
   //! To avoid race condition, only manipulate/delete the idx when
   //! the gui's data mutex is unlocked (see (un)lock_data_mutex()).
-  EXPORT void draw_matrix_unsafe(idx<ubyte> &im, uint h0 = 0, uint w0 = 0); 
-  
+  EXPORT void draw_matrix_unsafe(idx<ubyte> &im, uint h0 = 0, uint w0 = 0);   
   //! same as draw_matrix but draws a frame of color (r,g,b) around it.
   template<class T>
     void draw_matrix_frame(idx<T> &im, ubyte r, ubyte g, ubyte b,
 			   unsigned int h0 = 0, unsigned int w0 = 0,
 			   double zoomh = 1.0, double zoomw = 1.0,
 			   T minv = 0, T maxv = 0);
-
   //! same a draw_matrix but overlays the string <str> in the top left corner.
   template<class T>
     void draw_matrix(idx<T> &im, const char *str,
 		     unsigned int h0 = 0, unsigned int w0 = 0,
 		     double zoomh = 1.0, double zoomw = 1.0,
 		     T minv = 0, T maxv = 0);
-
   //! Draws a mask from image.
   template<class T>
     void draw_mask(idx<T> &im, uint h0 = 0, uint w0 = 0, 
@@ -114,14 +103,11 @@ namespace ebl {
 		   T threshold = 0.0);
     
   //! closes all windows.
-  EXPORT void quit_gui();
-  
+  EXPORT void quit_gui();  
   //! Clears the window, but does not resize it to 1x1.
   EXPORT void clear_window();
-
   //! Clears the window and resizes it to 1x1.
   EXPORT void clear_resize_window();
-
   //! Save current window as a PNG into filename image.
   //! filename should contain an extension, '.png' will be added.
   //! wid is optional, if given save window with id wid.
@@ -129,40 +115,34 @@ namespace ebl {
 
   //! draws an arrow from (h1, w1) to (h2, w2).
   EXPORT void draw_arrow(int h1, int w1, int h2, int w2);
-
   //! draws a bounding box with top left corner (h0, w0) and size (h, w).
   //! the (r,g,b,a) color of the box can optionally be specified as well as
   //! a caption string.
   EXPORT void draw_box(rect<int> &box, ubyte r = 255, ubyte g = 255,
 		       ubyte b = 255, ubyte a = 255, string *s = NULL);
-
   //! draws a bounding box with top left corner (h0, w0) and size (h, w).
   //! the (r,g,b,a) color of the box can optionally be specified as well as
   //! a caption string.
   EXPORT void draw_box(rect<float> &box, ubyte r = 255, ubyte g = 255,
 		       ubyte b = 255, ubyte a = 255, string *s = NULL);
-
   //! draws a bounding box with top left corner (h0, w0) and size (h, w).
   //! the (r,g,b,a) color of the box can optionally be specified as well as
   //! a caption string.
   EXPORT void draw_box(int h0, int w0, int h, int w, ubyte r = 255,
 		       ubyte g = 255, ubyte b = 255, ubyte a = 255,
 		       string *s = NULL);
-
   //! draws a bounding box with top left corner (h0, w0) and size (h, w).
   //! the (r,g,b,a) color of the box can optionally be specified as well as
   //! a caption string.
   EXPORT void draw_box(float h0, float w0, float h, float w, ubyte r = 255,
 		       ubyte g = 255, ubyte b = 255, ubyte a = 255,
 		       string *s = NULL);
-
   //! draws a cross at location (h0, w0) and length 'length'.
   //! the (r,g,b,a) color of the box can optionally be specified as well as
   //! a caption string.
   EXPORT void draw_cross(float h0, float w0, float length, ubyte r = 255,
 			 ubyte g = 255, ubyte b = 255, ubyte a = 255,
 			 string *s = NULL);
-
   //! draws an ellipse with center (h0,w0) and radii (hxw).
   //! the (r,g,b,a) color of the box can optionally be specified as well as
   //! a caption string.
@@ -180,18 +160,15 @@ namespace ebl {
   //! draws text on the current window.
   //! you can also use the << operator instead of this function to add text 
   //! to the gui. for example: gui << "text" << endl;
-  EXPORT void draw_text(string *s);
-  
+  EXPORT void draw_text(string *s);  
   //! draws text on the current window at origin (h0, w0).
   //! you can also use the << operator instead of this function to add text 
   //! to the gui. for example: gui << at(h0, w0) << "text" << endl;
   EXPORT void draw_text(string *s, unsigned int h0, unsigned int w0);
-
   //! sets the origin of further calls to draw_text or gui << "text".
   //! you can also use the at() function instead of this one.
   //! for example: gui << at(42, 0) << "text";
   EXPORT void set_text_origin(unsigned int h0, unsigned int w0);
-
   //! sets the text color for further calls to draw_text or gui << "text".
   //! you can also use the set_colors() function to set
   //! text and background colors and transparency.
@@ -205,10 +182,8 @@ namespace ebl {
   //! see unsigned char version.
   EXPORT void set_text_colors(int fg_r, int fg_g, int fg_b, int fg_a,
 		       int bg_r, int bg_g, int bg_b, int bg_a);
-
   //! Set the color of the background.
   EXPORT void set_bg_colors(int r, int g, int b);
-
   //! Set size of font.
   EXPORT void set_font_size(int sz);
 
@@ -217,18 +192,14 @@ namespace ebl {
   //! you can also use the cout_and_gui() function.
   //! for example: gui << cout_and_gui() << "text";
   EXPORT void set_window_cout_and_gui();
-
   //! set the << operator to output text only to the current window.
   //! you can also use the gui_only() function and not to std::cout.
   //! for example: gui << gui_only() << "text";
   EXPORT void set_window_gui_only();
-
   //! Override all colors into night mode: blue on black background.
-  EXPORT void night_mode();
-  
+  EXPORT void night_mode();  
   //! Set the title of the currently selected window.
   EXPORT void set_window_title(const char *s);
-
   //! Force window size to hxw and forbid any resizing.
   EXPORT void freeze_window_size(uint h, uint w);
 
@@ -247,6 +218,10 @@ namespace ebl {
 			    float a1, float a2, const char *s = NULL,
 			    int r = 255, int g = 255,
 			    int b = 255, int a = 255, bool tops = false);
+  //! Draw 3d text 's' at (x,y,z) with color (r,g,b,a).
+  EXPORT void draw_text(float x, float y, float z, const char *s,
+			int r = 255, int g = 255, int b = 255, int a = 255);
+			
   
 } // namespace ebl
 

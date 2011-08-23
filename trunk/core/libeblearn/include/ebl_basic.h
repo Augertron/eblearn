@@ -485,7 +485,7 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   // mirrorpad_module
-  //! A simple zero padding module that is mostly usefull for doing
+  //! A simple mirror padding module that is mostly usefull for doing
   //! same size output convolutions.
   template <typename T, class Tstate = bbstate_idx<T> >
     class mirrorpad_module : public module_1_1<T,Tstate> {

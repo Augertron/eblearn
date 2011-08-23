@@ -145,6 +145,9 @@ namespace ebl {
 		      float base_radius, float a1, float a2, string *s,
 		      int r = 255, int g = 255, int b = 255, int a = 255,
 		      bool tops = false);
+    //! Draw 3d text 's' at (x,y,z) with color (r,g,b,a).    
+    void draw_text_3d(float x, float y, float z, string *s,
+		      int r, int g, int b, int a);
 
     ////////////////////////////////////////////////////////////////
     // class members

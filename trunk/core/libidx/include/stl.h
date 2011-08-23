@@ -276,6 +276,31 @@ namespace std {
 
 #endif
 
+  //////////////////////////////////////////////////////////////////////////////
+
+  //! A file class containing a reference counter which knows when to close
+  //! the file pointer.
+  class file {
+  public:
+    //! Open file 'filename' with mode 'mode'.
+    //! This throws an error upon failure.
+    file(const char *filename, const char *mode);
+    //! Close file pointer.
+    virtual ~file();
+    //! Returns the file pointer.
+    FILE *get_fp();
+    //! Increase reference counter.
+    void incr_ref();
+    //! Decrease reference counter.
+    void decr_ref();
+    //! Returns true if no object refers to this instance.
+    bool no_references();
+    
+  protected:
+    FILE *fp;
+    uint refcounter; //!< Count how many objects refer to this instance.
+  };
+
 } // end namespace std
 
 namespace ebl {

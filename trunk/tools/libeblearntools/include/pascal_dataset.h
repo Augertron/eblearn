@@ -133,7 +133,7 @@ namespace ebl {
 			     rect<int> *cropr = NULL, bool ignore = false);
 
     //! process one object from an xml file.
-    virtual void process_objects(const vector<object*> &objs,
+    virtual bool process_objects(const vector<object*> &objs,
 				 int height, int width,
 				 const string &image_fullname,
 				 const string &image_filename,
@@ -206,6 +206,7 @@ namespace ebl {
     using dataset<Tdata>::xtimer;
     using dataset<Tdata>::processed_cnt;
     using dataset<Tdata>::minvisibility;
+    using dataset<Tdata>::save_mode;
     // jitter //////////////////////////////////////////////////////
     using dataset<Tdata>::random_jitter; //!< Vector of possible jitters.
     float max_jitter_match; //!< Maximum match of jitter rect with neighbors.
