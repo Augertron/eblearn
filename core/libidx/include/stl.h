@@ -280,7 +280,7 @@ namespace std {
 
   //! A file class containing a reference counter which knows when to close
   //! the file pointer.
-  class file {
+  class EXPORT file {
   public:
     //! Open file 'filename' with mode 'mode'.
     //! This throws an error upon failure.
