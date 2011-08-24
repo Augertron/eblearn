@@ -1997,7 +1997,7 @@ namespace ebl {
 	fpos_t fppos;
 	fgetpos(fp->get_fp(), &fppos);
 	eblerror("fseek to position " << offsets.get(pos) << " failed, "
-		 << "file is " << (intg) fppos.__pos << " big");
+		 << "file is " << (intg) fppos << " big");
       }
       return load_matrix<T>(fp->get_fp());
     } else { // all data is already loaded

@@ -233,7 +233,7 @@ namespace ebl {
     fgetpos(fp, &endpos);
     fclose(fp);
     // compare 
-    if (pos.__pos != endpos.__pos)
+    if (pos != endpos)
       return true;
     return false;    
   }
