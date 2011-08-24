@@ -50,25 +50,24 @@ namespace ebl {
   }
 
   int get_matrix_type(const char *filename) {
+    // open file
+    FILE *fp = fopen(filename, "rb");
+    if (!fp)
+      eblthrow("get_matrix_type failed to open " << filename);
+    int magic = 0;
     if (has_multiple_matrices(filename)) {
-      // open file
-      FILE *fp = fopen(filename, "rb");
-      if (!fp)
-	eblthrow("get_matrix_type failed to open " << filename);
       // first read offsets matrix
       idx<int64> p = load_matrix<int64>(fp);
       // read 2nd matrix header
-      int magic;
-      read_matrix_header(fp, magic);
+      try {
+	read_matrix_header(fp, magic);
+      } catch (ebl::eblexception &e) {}
       return magic;      
     } else {
-      // open file
-      FILE *fp = fopen(filename, "rb");
-      if (!fp)
-	eblthrow("get_matrix_type failed to open " << filename);
       // header: read magic number
-      int magic;
-      read_matrix_header(fp, magic);
+      try {
+	read_matrix_header(fp, magic);
+      } catch (ebl::eblexception &e) {}
       return magic;
     }
   }
@@ -99,6 +98,18 @@ namespace ebl {
 	|| magic == MAGIC_INT64_MATRIX)
       return true;
     return false;
+  }
+
+  bool is_matrix(const char *filename) {
+    try {
+      // open file
+      FILE *fp = fopen(filename, "rb");
+      if (!fp)
+	eblthrow("get_matrix_type failed to open " << filename);
+      int magic = 0;
+      read_matrix_header(fp, magic);
+    } catch (eblexception &e) { return false; }
+    return true;
   }
 
   idxdim get_matrix_dims(const char *filename) {
@@ -175,7 +186,9 @@ namespace ebl {
       return false;
     // read header
     int magic;
-    idxdim d = read_matrix_header(fp, magic);
+    idxdim d;
+    try { d = read_matrix_header(fp, magic); }
+    catch(ebl::eblexception &e) { return false; }
     intg size = d.nelements();
     // compute data size
     switch (magic) {
