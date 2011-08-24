@@ -102,7 +102,7 @@ namespace ebl {
   //! In all cases, data is cast into T if different.
   //! This throws string exceptions upon errors.
   template <typename T>
-    idx<T> load_matrix(FILE *fp, idx<T> *out = NULL);
+    idx<T> load_matrix(FILE *fp, idx<T> *out);
   //! Returns matrix of pointers to matrices from file filename.
   //! If original matrix type is different
   //! than requested type, it is casted (copied) into the new type.
