@@ -171,18 +171,20 @@ int display(list<string>::iterator &ifname,
   if (conf)
     return display_net<T>(ifname, signd, load, mats);
   // mat mode
-  idxdim d = get_matrix_dims(ifname->c_str());
-  if (interleaved)
-    d.shift_dim(0, 2);
-  if (print || !(d.order() == 2 ||
-		 (d.order() == 3 && (d.dim(2) == 1 || d.dim(2) == 3)))) {
-    // this is probably not an image, just display info and print matrix
-    string type;
-    get_matrix_type(ifname->c_str(), type);
-    idx<T> m = load_matrix<T>(ifname->c_str());
-    cout << "Matrix " << ifname->c_str() << " is of type " << type
-	 << " with dimensions " << d << ":" << endl << m.str() << endl;
-    return 0;
+  if (is_matrix(ifname->c_str())) {
+    idxdim d = get_matrix_dims(ifname->c_str());
+    if (interleaved)
+      d.shift_dim(0, 2);
+    if (print || !(d.order() == 2 ||
+		   (d.order() == 3 && (d.dim(2) == 1 || d.dim(2) == 3)))) {
+      // this is probably not an image, just display info and print matrix
+      string type;
+      get_matrix_type(ifname->c_str(), type);
+      idx<T> m = load_matrix<T>(ifname->c_str());
+      cout << "Matrix " << ifname->c_str() << " is of type " << type
+	   << " with dimensions " << d << ":" << endl << m.str() << endl;
+      return 0;
+    }
   }
   // image mode
   int loaded = 0;
@@ -205,6 +207,8 @@ int display(list<string>::iterator &ifname,
       try {
 	//      if (load)
 	mat = load_image<T>(*fname);
+	if (print)
+	  cout << *fname << ": " << mat << endl << mat.str() << endl;
 	// show only some channels
 	if (chans >= 0)
 	  mat = mat.select(2, chans);

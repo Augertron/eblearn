@@ -158,6 +158,8 @@ namespace ebl {
   //! Return the magic number associated with the matrix's type found in 
   //! 'filename'.
   EXPORT int get_matrix_type(const char *filename);
+  //! Returns true if the file 'filename' is a matrix file.
+  EXPORT bool is_matrix(const char *filename);
   //! Return true if this magic number is a vincent magic number.
   EXPORT bool is_magic_vincent(int magic);
   //! Return true if this magic number is a regular magic number.
