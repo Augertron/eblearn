@@ -1996,8 +1996,13 @@ namespace ebl {
 	fseek(fp->get_fp(), 0, SEEK_END);
 	fpos_t fppos;
 	fgetpos(fp->get_fp(), &fppos);
+#ifdef __WINDOWS__
 	eblerror("fseek to position " << offsets.get(pos) << " failed, "
 		 << "file is " << (intg) fppos << " big");
+#else
+	eblerror("fseek to position " << offsets.get(pos) << " failed, "
+		 << "file is " << (intg) fppos.__pos << " big");
+#endif
       }
       return load_matrix<T>(fp->get_fp());
     } else { // all data is already loaded
