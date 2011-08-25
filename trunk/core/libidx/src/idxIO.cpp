@@ -232,8 +232,12 @@ namespace ebl {
     fpos_t endpos;
     fgetpos(fp, &endpos);
     fclose(fp);
-    // compare 
+    // compare
+#ifdef __WINDOWS__
     if (pos != endpos)
+#else
+    if (pos.__pos != endpos.__pos)
+#endif
       return true;
     return false;    
   }

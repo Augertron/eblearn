@@ -347,7 +347,11 @@ namespace ebl {
       if (m.exists(i)) {
 	// save offset of matrix
 	fgetpos(fp, &pos);
+#ifdef __WINDOWS__
 	offsets.set((int64) pos, i);
+#else
+	offsets.set((int64) pos.__pos, i);
+#endif
 	// save matrix to file
 	idx<T> e = m.get(i);
 	ret = save_matrix(e, fp);
@@ -404,7 +408,11 @@ namespace ebl {
       idx<T> e = load_matrix<T>(*i);
       // save offset of matrix
       fgetpos(fp, &pos);
+#ifdef __WINDOWS__
       offsets.set((int64) pos, j);
+#else
+      offsets.set((int64) pos.__pos, j);
+#endif
       // save matrix into file
       ret = save_matrix(e, fp);
       if (!ret) {
