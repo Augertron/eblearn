@@ -92,9 +92,9 @@ void idxIO_test::test_save_load_matrix_matrix() {
     CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
     string root = *gl_data_dir;
     string sim1, sim2, sim3, sall;
-    sim1 << root << "/car_bull_cropped.jpg";
-    sim2 << root << "/car_human.jpg";
-    sim3 << root << "/car_human_plane.jpg";
+    sim1 << root << "/barn.png";
+    sim2 << root << "/lena.png";
+    sim3 << root << "/2008_007714.jpg";
     sall << root << "/all.mat";
     idx<float> im1 = load_image<float>(sim1);
     idx<float> im2 = load_image<float>(sim2);
