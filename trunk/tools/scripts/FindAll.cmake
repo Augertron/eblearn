@@ -389,6 +389,7 @@ if (APPLE OR LINUX)
     find_path(PTHREAD_LIBRARY "libpthread.so" paths
       "/usr/lib/"
       "/lib/x86_64-linux-gnu/"
+      "/usr/lib/i386-linux-gnu/"
       "/usr/lib/x86_64-linux-gnu/")
     set(PTHREAD_LIBRARY "${PTHREAD_LIBRARY}/libpthread.so")
   endif (APPLE)
