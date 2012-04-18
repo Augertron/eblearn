@@ -39,9 +39,9 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  //! l2_energy
-  
+  // l2_energy /////////////////////////////////////////////////////////////////
+  //! A generalized euclidean distance energy between inputs,
+  //! i.e. the energy equals: .5 * || X - Y ||^2
   template<typename T, class Tstate = bbstate_idx<T> >
     class l2_energy : public ebm_2<Tstate> {
   public:
@@ -54,7 +54,47 @@ namespace ebl {
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
   protected:
-    idx<T> tmp;
+    idx<T> tmp; //!< Buffer for temporary operations.
+  };
+
+  // l1_penalty ////////////////////////////////////////////////////////////////
+  //! An L1 penalty energy given a single input.
+  template<typename T, class Tstate = bbstate_idx<T> >
+    class l1_penalty : public ebm_1<T,Tstate> {
+  public:
+    //! \param threshold A threshold defining a flat region around zero, for
+    //!   derivatives only.
+    //! \param coeff A coefficient applied to the energy of the fprop.
+    l1_penalty(T threshold = 0, T coeff = 1);
+    virtual ~l1_penalty();
+    virtual void fprop(Tstate &in, Tstate &energy);
+    virtual void bprop(Tstate &in, Tstate &energy);
+    virtual void bbprop(Tstate &in, Tstate &energy);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+    // member variables 
+  protected:
+    T threshold;
+    T coeff;
+  };
+
+  // cross_entropy_energy //////////////////////////////////////////////////////
+  //! A cross-entropy energy module for multinomiol logistic regression.
+  //! Energy equals: - desired
+  //! where desired is a 1-of-n encoding of the groundtruth class.
+  template<typename T, class Tstate = bbstate_idx<T> >
+    class cross_entropy_energy : public ebm_2<Tstate> {
+  public:
+    cross_entropy_energy(const char *name = "cross_entropy_energy");
+    virtual ~cross_entropy_energy();
+    virtual void fprop(Tstate &in1, Tstate &in2, Tstate &energy);
+    virtual void bprop(Tstate &in1, Tstate &in2, Tstate &energy);
+    virtual void bbprop(Tstate &in1, Tstate &in2, Tstate &energy);
+    virtual void infer2_copy(Tstate &i1, Tstate &i2, Tstate &energy);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+  protected:
+    idx<T> tmp; //!< Buffer for temporary operations.
   };
 
   ////////////////////////////////////////////////////////////////

@@ -34,48 +34,27 @@ using namespace std;
 namespace ebl {
 
   template <class T>
-  ModuleTester<T>::ModuleTester() {
-    this->out = stdout;
-    this->acc_thres = 1e-6;
-    this->rrange = 2;
-    this->jac_fprop = idx<T>(1,1);
-    this->jac_bprop = idx<T>(1,1);
-    this->jac_fprop_param = idx<T>(1,1);
-    this->jac_bprop_param = idx<T>(1,1);
-
-    kk = new idx<T>(100,100);
+  module_tester<T>::module_tester(double thres_, T rrange_min_, T rrange_max_,
+				  FILE* out_)  
+    : acc_thres(thres_), rrange_min(rrange_min_), rrange_max(rrange_max_), 
+      out(out_),
+      jac_fprop(1,1), jac_bprop(1,1), jac_pfprop(1,1), jac_pbprop(1,1),
+      hes_fprop(1,1), hes_bprop(1,1), hes_pfprop(1,1), hes_pbprop(1,1) {
     dynamic_init_drand();
   }
 
   template <class T>
-  ModuleTester<T>::ModuleTester(FILE* out, T thres, T rrange) {
-    this->out = out;
-    this->acc_thres = thres;
-    this->rrange = rrange;
+  module_tester<T>::~module_tester() {
   }
 
   template <class T>
-  ModuleTester<T>::ModuleTester(T thres, T rrange) {
-    this->out = stdout;
-    this->acc_thres = thres;
-    this->rrange = rrange;
-  }
-
-  template <class T>
-  ModuleTester<T>::~ModuleTester() {
-    delete kk;
-  }
-
-  template <class T>
-  idx<T> ModuleTester<T>::test_jacobian(module_1_1<T> 
-					     &module, bbstate_idx<T> &in, 
-					     bbstate_idx<T> &out) {
+  idx<double> module_tester<T>::
+  test_jacobian(module_1_1<T>  &module, bbstate_idx<T> &in, 
+		bbstate_idx<T> &out) {
     forget_param_linear fp(2,0.5);
-
-    // just to resize states
-    module.fprop(in,out);
-    // randomize parametes if there are any
-    module.forget(fp);
+    idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
+    module.fprop(in,out); // just to resize states
+    module.forget(fp); // randomize parametes if there are any
     // clear all input and output
     in.clear();
     in.clear_dx();
@@ -83,27 +62,23 @@ namespace ebl {
     out.clear();
     out.clear_dx();
     out.clear_ddx();
-
-    // randomize input for fprop
-    randomize_idx(in.x);
-
-    get_jacobian_fprop(module,in,out,jac_fprop);
-    get_jacobian_bprop(module,in,out,jac_bprop);
-
+    idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
+    // EDEBUG("in: " << in.x.str() << " out: " << out.x.str());
+    get_jacobian_fprop(module, in, out, jac_fprop);
+    get_jacobian_bprop(module, in, out, jac_bprop);
+    // EDEBUG(" jac_fprop: " << jac_fprop.str()
+    // 	  << " jac_bprop " << jac_bprop.str());
     return get_errs(jac_fprop,jac_bprop);
   }
 
   template <class T>
-  void ModuleTester<T>::test_jacobian_param(parameter<bbstate_idx<T> > &p, 
-					    module_1_1<T> &module,
-					    bbstate_idx<T> &in, bbstate_idx<T> &out)
-  {
+  idx<double> module_tester<T>::
+  test_jacobian_param(parameter<bbstate_idx<T> > &p, module_1_1<T> &module,
+		      bbstate_idx<T> &in, bbstate_idx<T> &out) {
     forget_param_linear fp(2,0);
-
-    // just to resize states
-    module.fprop(in,out);
-    // randomize parametes if there are any
-    module.forget(fp);
+    idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
+    module.fprop(in,out); // just to resize states
+    module.forget(fp); // randomize parametes if there are any
     // clear all input and output
     in.clear();
     in.clear_dx();
@@ -111,27 +86,101 @@ namespace ebl {
     out.clear();
     out.clear_dx();
     out.clear_ddx();
-
-    // randomize input for fprop
-    randomize_idx(p.x);
-    randomize_idx(in.x);
-
-    get_jacobian_fprop_param(p,module,in,out,jac_fprop_param);
+    idx_random(p.x, rrange_min, rrange_max); // randomize input for fprop
+    idx_random(in.x, rrange_min, rrange_max);
+    get_jacobian_fprop_param(p, module, in, out, jac_pfprop);
     in.clear_dx();
-    get_jacobian_bprop_param(p,module,in,out,jac_bprop_param);
+    get_jacobian_bprop_param(p, module, in, out, jac_pbprop);
+    return get_errs(jac_pfprop, jac_pbprop);
+  }
 
-    report_err(jac_fprop_param,jac_bprop_param,"jacobian param");
+
+  template <class T>
+  idx<double> module_tester<T>::
+  test_hessian(module_1_1<T>  &module, bbstate_idx<T> &in, 
+	       bbstate_idx<T> &out) {
+    forget_param_linear fp(2,0.5);
+    idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
+    module.fprop(in,out); // just to resize states
+    module.forget(fp); // randomize parametes if there are any
+    // clear all input and output
+    in.clear();
+    in.clear_dx();
+    in.clear_ddx();
+    out.clear();
+    out.clear_dx();
+    out.clear_ddx();
+    idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
+    get_hessian_fprop(module, in, out, hes_fprop);
+    get_hessian_bprop(module, in, out, hes_bprop);
+    return get_errs(hes_fprop, hes_bprop);
   }
 
   template <class T>
-  void ModuleTester<T>::
+  idx<double> module_tester<T>::
+  test_hessian_param(parameter<bbstate_idx<T> > &p, module_1_1<T> &module,
+		     bbstate_idx<T> &in, bbstate_idx<T> &out) {
+    forget_param_linear fp(2,0);
+    idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
+    module.fprop(in,out); // just to resize states
+    module.forget(fp); // randomize parametes if there are any
+    // clear all input and output
+    in.clear();
+    in.clear_dx();
+    in.clear_ddx();
+    out.clear();
+    out.clear_dx();
+    out.clear_ddx();
+    idx_random(p.x, rrange_min, rrange_max); // randomize input for fprop
+    idx_random(in.x, rrange_min, rrange_max);
+    get_hessian_fprop_param(p, module, in, out, hes_pfprop);
+    in.clear_dx();
+    get_hessian_bprop_param(p, module, in, out, hes_pbprop);
+    return get_errs(hes_pfprop, hes_pbprop);
+  }
+
+  template <class T>
+  double module_tester<T>::get_acc_thres() const {
+    return acc_thres;
+  }
+
+  template <class T>
+  void module_tester<T>::set_acc_thres(double acc_thres_) {
+    acc_thres = acc_thres_;
+  }
+
+  template <class T>
+  T module_tester<T>::get_rrange() const {
+    return rrange_max;
+  }
+
+  template <class T>
+  void module_tester<T>::set_rrange(T rrange) {
+    rrange_min = -rrange;
+    rrange_max = rrange;
+  }
+
+  template <class T>
+  FILE* module_tester<T>::get_out() const {
+    return out;
+  }
+
+  template <class T>
+  void module_tester<T>::set_out(FILE* out) {
+    this->out = out;
+  }
+  
+  // protected members /////////////////////////////////////////////////////////
+
+  template <class T>
+  void module_tester<T>::
   get_jacobian_fprop(module_1_1<T> &module, bbstate_idx<T> &in,
 		     bbstate_idx<T> &out, idx<T>& jac) {
     bbstate_idx<T> sina = in.make_copy(); //x-small
     bbstate_idx<T> sinb = in.make_copy(); //x+small
     bbstate_idx<T> souta = out.make_copy(); //f(x-small)
     bbstate_idx<T> soutb = out.make_copy(); //f(x+small)
-    double small = 1e-6;
+    T small = 1e-6;
     int cnt = 0;
     // clear out jacobian matrix
     jac.resize(in.size(), out.size());
@@ -142,28 +191,50 @@ namespace ebl {
       // perturb
       *sxa = *sx - small;
       *sxb = *sx + small;
+      
+      // idx_addc(in.x, -small, sina.x);
+      // idx_addc(in.x, small, sinb.x);
+      // perturb
+      // T t0 = *sx;
+      // T t1 = t0 - small;
+      // T t2 = t0 + small;
+      // double t3 = (double) t2 - (double) t1;
+      // cout << "t0 " << t0 << " t1 " << t1 << " t2 " << t2 << " t3 " << t3 << endl;
+      // *sxa = *sx - small;
+      // cout << "sina: " << sina.x.gget() << " souta: " << souta.x.gget() <<endl;
+      // cout << "sinb: " << sinb.x.gget() << " soutb: " << soutb.x.gget() <<endl;
+      //      idx_sub(sinb.x, sina.x, soutb.x);
+      // //      cout << "diff: " << soutb.x.gget() <<endl;
+      // idx_clear(souta.x);
+      // idx_clear(soutb.x);
+      
       module.fprop(sina, souta);
+      //      *sxb = *sxa + 2 * small;
       module.fprop(sinb, soutb);
       idx_sub(soutb.x, souta.x, soutb.x);
+      // cout << "diff: " << soutb.x.gget() <<endl;
       idx<T> j = jac.select(0, cnt);
-      idx_dotc(soutb.x, 1.0 / (2 * small), j);
+      idx_dotc(soutb.x, (T) (1.0 / (2 * small)), j);
+      // cout << "1/2small: " << (T) (1.0 / (2 * small)) <<endl;
+      // cout << "soutbx: " << soutb.x.gget() <<endl;
+      // cout << "soutbx/2small: " << (soutb.x.gget() / (2 * small)) <<endl;
+      // cout << "jac: " << (T) jac.gget() << endl;
       cnt++;
     }
   }
 
   template <class T>
-  void ModuleTester<T>::
+  void module_tester<T>::
   get_jacobian_fprop_param(parameter<bbstate_idx<T> > &p, module_1_1<T> &module,
-			   bbstate_idx<T> &in, bbstate_idx<T> &out, idx<T>& jac)
-  {
+			   bbstate_idx<T> &in, bbstate_idx<T> &out,
+			   idx<T>& jac) {
     bbstate_idx<T> souta = out.make_copy(); //f(x-small)
     bbstate_idx<T> soutb = out.make_copy(); //f(x+small)
-    double small = 1e-6;
+    T small = 1e-6;
     int cnt = 0;
     // clear out jacobian matrix
     idx_clear(jac);
-    {
-      idx_aloop1(px, p.x, T){
+    { idx_aloop1(px, p.x, T) {
 	// perturb
 	*px = *px - small;
 	module.fprop(in, souta);
@@ -174,12 +245,11 @@ namespace ebl {
 	idx<T> j = jac.select(0,cnt);
 	idx_dotc(soutb.x,1.0/(2*small),j);
 	cnt++;
-      }
-    }
+      }}
   }
 
   template <class T>
-  void ModuleTester<T>::
+  void module_tester<T>::
   get_jacobian_bprop(module_1_1<T> &module, bbstate_idx<T> &in,
 		     bbstate_idx<T> &out, idx<T>& jac) {
     jac.resize(in.size(), out.size());
@@ -188,38 +258,127 @@ namespace ebl {
     idx_aloop1(dx, out.dx,T) {
       idx_clear(out.dx);
       idx_clear(in.dx);
-      *dx = 1.0;
+      *dx = (T) 1.0;
       module.bprop(in, out);
       idx<T> j = jac.select(1, cnt);
       idx_copy(in.dx, j);
       cnt++;
     }
+    //cout << "jac bprop: " << (T) jac.gget() << endl;
   }
 
   template <class T>
-  void ModuleTester<T>::
+  void module_tester<T>::
   get_jacobian_bprop_param(parameter<bbstate_idx<T> > &p, module_1_1<T> &module,
-			   bbstate_idx<T> &in, bbstate_idx<T> &out, idx<T>& jac)
-  {
+			   bbstate_idx<T> &in, bbstate_idx<T> &out,
+			   idx<T>& jac) {
+    eblerror("not implemented");
   }
 
   template <class T>
-  idx<T> ModuleTester<T>::get_errs(idx<T>& a, idx<T>& b) {
-    T maxdist;
-    T totdist = idx_sqrdist(a,b);
+  void module_tester<T>::
+  get_hessian_fprop(module_1_1<T> &module, bbstate_idx<T> &in,
+		    bbstate_idx<T> &out, idx<T> &jac) {
+    bbstate_idx<T> sina = in.make_copy(); //x-small
+    bbstate_idx<T> sinb = in.make_copy(); //x+small
+    bbstate_idx<T> souta = out.make_copy(); //f(x-small)
+    bbstate_idx<T> soutb = out.make_copy(); //f(x+small)
+    double small = 1e-6;
+    int cnt = 0;
+    // clear out hessian matrix
+    jac.resize(in.size(), out.size());
+    idx_clear(jac);
+    idx_aloop3(sx, in.x, T, sxa, sina.x, T, sxb, sinb.x, T) {
+      idx_copy(in.x, sina.x);
+      idx_copy(in.x, sinb.x);
+      // perturb
+      *sxa = *sx - small;
+      *sxb = *sx + small;
+      module.fprop(sina, souta);
+      module.fprop(sinb, soutb);
+      idx<T> ad(souta.x.get_idxdim());
+      idx<T> dot(souta.x.get_idxdim());
+      idx<T> sub(souta.x.get_idxdim());
+      idx_add(souta.x, soutb.x, ad);
+      idx_dotc(out.x, 2, dot);
+      idx_sub(ad, dot, sub);
+      idx<T> j = jac.select(0, cnt);
+      idx_dotc(sub, 1.0 / small, j);
+      cnt++;
+    }
+  }
+
+  template <class T>
+  void module_tester<T>::
+  get_hessian_fprop_param(parameter<bbstate_idx<T> > &p, module_1_1<T> &module,
+			  bbstate_idx<T> &in, bbstate_idx<T> &out, idx<T>& jac){
+    bbstate_idx<T> souta = out.make_copy(); //f(x-small)
+    bbstate_idx<T> soutb = out.make_copy(); //f(x+small)
+    double small = 1e-6;
+    int cnt = 0;
+    // clear out hessian matrix
+    idx_clear(jac);
+    { idx_aloop1(px, p.x, T) {
+	// perturb
+	*px = *px - small;
+	module.fprop(in, souta);
+	*px = *px + 2*small;
+	module.fprop(in, soutb);
+	*px = *px - small;
+	idx_sub(soutb.x,souta.x,soutb.x);
+	idx<T> j = jac.select(0,cnt);
+	idx_dotc(soutb.x,1.0/(2*small),j);
+	cnt++;
+      }}
+  }
+
+  template <class T>
+  void module_tester<T>::
+  get_hessian_bprop(module_1_1<T> &module, bbstate_idx<T> &in,
+		    bbstate_idx<T> &out, idx<T>& jac) {
+    jac.resize(in.size(), out.size());
+    idx_clear(jac);
+//     module.fprop(in, out);
+//     module.bprop(in, out);
+//     module.bbprop(in, out);
+//     idx_copy(in.ddx, jac);
+
+    int cnt = 0;
+    idx_aloop1(ddx, out.ddx,T) {
+      idx_clear(out.ddx);
+      idx_clear(in.ddx);
+      //      *ddx = 1.0;
+      module.bbprop(in, out);
+      idx<T> j = jac.select(1, cnt);
+      idx_copy(in.ddx, j);
+      cnt++;
+    }
+  }
+
+  template <class T>
+  void module_tester<T>::
+  get_hessian_bprop_param(parameter<bbstate_idx<T> > &p, module_1_1<T> &module,
+			  bbstate_idx<T> &in, bbstate_idx<T> &out, idx<T>& jac){
+    eblerror("not implemented");
+  }
+
+  template <class T>
+  idx<double> module_tester<T>::get_errs(idx<T>& a, idx<T>& b) {
+    double maxdist;
     // max distance
     idx_sub(a,b,a);
     idx_abs(a,a);
-    maxdist = idx_max(a);
-    idx<T> errs(2);
+    double totdist = idx_sum(a);
+    maxdist = (double) idx_max(a);
+    idx<double> errs(2);
     errs.set(maxdist, 0);
     errs.set(totdist, 1);
     return errs;
   }
 
   template <class T>
-  void ModuleTester<T>::report_err(idx<T>& a, idx<T>& b, const char* msg) {
-    idx<T> errs = get_errs(a, b);
+  void module_tester<T>::report_err(idx<T>& a, idx<T>& b, const char* msg) {
+    idx<double> errs = get_errs(a, b);
     stringstream ss(stringstream::in | stringstream::out);
     // report results
     ss << "Max " << msg << " distance";
@@ -231,51 +390,6 @@ namespace ebl {
 	    ((errs.get(1) < this->acc_thres)?"OK":"NOT OK"));
     fflush(this->out);
   }
-
-  template <class T>
-  void ModuleTester<T>::randomize_idx(idx<T>& m)
-  {
-    idx_aloop1(v,m,T) {
-      *v = drand(this->rrange);
-    }
-  }
-
-  template <class T>
-  T ModuleTester<T>::get_acc_thres() const
-  {
-    return acc_thres;
-  }
-
-  template <class T>
-  void ModuleTester<T>::set_acc_thres(T acc_thres)
-  {
-    this->acc_thres = acc_thres;
-  }
-
-  template <class T>
-  T ModuleTester<T>::get_rrange() const
-  {
-    return rrange;
-  }
-
-  template <class T>
-  void ModuleTester<T>::set_rrange(T rrange)
-  {
-    this->rrange = rrange;
-  }
-
-  template <class T>
-  FILE* ModuleTester<T>::get_out() const
-  {
-    return out;
-  }
-
-  template <class T>
-  void ModuleTester<T>::set_out(FILE* out)
-  {
-    this->out = out;
-  }
-
 
   ////////////////////////////////////////////////////////////////
 

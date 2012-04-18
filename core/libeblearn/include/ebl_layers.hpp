@@ -91,7 +91,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  idxdim full_layer<T,Tstate>::fprop_size(idxdim &isize) {
+  fidxdim full_layer<T,Tstate>::fprop_size(fidxdim &isize) {
     return linear.fprop_size(isize);
   }
 
@@ -112,6 +112,16 @@ namespace ebl {
     return l2;
   }
 
+  template <typename T, class Tstate>
+  std::string full_layer<T,Tstate>::describe() {
+    std::string s;
+    s << "fully connected layer " << this->name() << " composed of a linear "
+      << "module: " << linear.describe() << ", a bias module: "
+      << adder.describe();
+    if (sigmoid) s << ", and a sigmoid module: " << sigmoid->describe();
+    return s;
+  }
+    
   ////////////////////////////////////////////////////////////////
   // convolution_layer
 
@@ -170,12 +180,12 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  idxdim convolution_layer<T,Tstate>::fprop_size(idxdim &isize) {
+  fidxdim convolution_layer<T,Tstate>::fprop_size(fidxdim &isize) {
     return convol.fprop_size(isize);
   }
 
   template <typename T, class Tstate>
-  idxdim convolution_layer<T,Tstate>::bprop_size(const idxdim &osize) {
+  fidxdim convolution_layer<T,Tstate>::bprop_size(const fidxdim &osize) {
     return convol.bprop_size(osize);
   }
 
@@ -194,13 +204,14 @@ namespace ebl {
   // convabsnorm_layer
 
   template <typename T, class Tstate>
-  convabsnorm_layer<T,Tstate>::
-  convabsnorm_layer(parameter<T,Tstate> *p, idxdim kernel, idxdim stride,
-		    idx<intg> &tbl, bool mirror, bool btanh_,
-		    const char *name_) 
+  convabsnorm_layer<T,Tstate>::convabsnorm_layer(parameter<T,Tstate> *p, 
+                                                 intg kerneli, intg kernelj,
+                                                 intg stridei_, intg stridej_,
+                                                 idx<intg> &tbl, bool mirror, bool btanh_,
+                                                 const char *name_) 
     : module_1_1<T,Tstate>(name_), btanh(btanh_),
-      lconv(p, kernel, stride, tbl, btanh_, name_),
-      abs(), norm(kernel, lconv.convol.thickness, name_, mirror),
+      lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_, name_),
+      abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
       tmp(NULL), tmp2(NULL) {
     this->_name = name_;
   }
@@ -251,12 +262,12 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  idxdim convabsnorm_layer<T,Tstate>::fprop_size(idxdim &isize) {
+  fidxdim convabsnorm_layer<T,Tstate>::fprop_size(fidxdim &isize) {
     return lconv.fprop_size(isize);
   }
 
   template <typename T, class Tstate>
-  idxdim convabsnorm_layer<T,Tstate>::bprop_size(const idxdim &osize) {
+  fidxdim convabsnorm_layer<T,Tstate>::bprop_size(const fidxdim &osize) {
     return lconv.bprop_size(osize);
   }
 
@@ -330,12 +341,12 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  idxdim subsampling_layer<T,Tstate>::fprop_size(idxdim &isize) {
+  fidxdim subsampling_layer<T,Tstate>::fprop_size(fidxdim &isize) {
     return subsampler.fprop_size(isize);
   }
 
   template <typename T, class Tstate>
-  idxdim subsampling_layer<T,Tstate>::bprop_size(const idxdim &osize) {
+  fidxdim subsampling_layer<T,Tstate>::bprop_size(const fidxdim &osize) {
     return subsampler.bprop_size(osize);
   }
 

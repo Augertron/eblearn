@@ -122,11 +122,13 @@ namespace ebl {
 	<< ") 3>&1 1>&2 2>&3) >> " << log << " 2>&1 && exit 0";
     
     // execute child
-    cout << endl << "(mpi) Executing job " << basename(confname.c_str()) 
+    string jname = basename(confname.c_str());
+    cout << endl << "(mpi) Executing job " << jname
 	 << " with cmd:" << endl << cmd << endl;
     int ret = std::system(cmd.c_str());
     if (ret != 0) {
-      cerr << "child command error: " << ret << endl;
+      cerr << "execution of job " << jname << " with command "
+	   << cmd << " failed with return error: " << ret << endl;
       cerr << "WIFSIGNALED(" << ret << "): " << WIFSIGNALED(ret) << endl;
       cerr << "WTERMSIG(" << ret << "): " << WTERMSIG(ret) << endl;
     }
@@ -140,14 +142,15 @@ namespace ebl {
 
   mpijob_manager::mpijob_manager(int argc, char **argv)
 #ifdef __MPI__
-    : env(argc, argv)
+    : env(argc, argv), use_master(false)
 #endif
   {
 #ifndef __MPI__
   eblerror("MPI was not found during compilation, install and recompile");
 #else
   rank = world.rank();
-  jslots = world.size() - 1; // number of available cpus, excluding master
+  jslots = world.size(); // number of available cpus
+  ready_slots = jslots;
   id_running = -1; // no job running intially
 #endif    
   }
@@ -156,7 +159,8 @@ namespace ebl {
   }
   
   bool mpijob_manager::read_metaconf(const char *fname, const string *tstamp,
-				     const char *resume_name, bool resumedir) {
+				     const char *resume_name, bool resumedir,
+				     bool nomax, int maxjobs) {
     if (is_master()) { // only read metaconf if we are the master
       job_manager::read_metaconf(fname, tstamp, resume_name, resumedir, true);
     }
@@ -228,17 +232,14 @@ namespace ebl {
     return true;
   }
 
-  void mpijob_manager::prepare() {
+  void mpijob_manager::prepare(bool reset_progress) {
     // only the master prepares the directory structure
-    if (is_master())
-      prepare();
+    if (is_master()) prepare();
   }
 
-  void mpijob_manager::run() {
-    if (is_master())
-      run_master();
-    else
-      run_slave();
+  void mpijob_manager::run(bool force_start) {
+    if (is_master()) run_master();
+    else run_slave();
   }
 
   uint mpijob_manager::world_size() {
@@ -262,16 +263,17 @@ namespace ebl {
     time.start();
     // print info
     string prefix = "master: ";
-    cout << prefix << "world has " << jslots 
-	 << " slots (excluding master)." << endl;
+    cout << prefix << "world has " << jslots << " slots." << endl;
     cout << prefix << jobs.size() << " jobs to process." << endl;
     // ask each slave if available
     boost::mpi::request *reqs = new boost::mpi::request[world.size()];
     int *running = new int[world.size()];
-    for (int i = 1; i < world.size(); ++i) {
-      world.isend(i, CMD_RUNNING, 0);
+    for (int i = 0; i < world.size(); ++i) {
       running[i] = -1; // not running initially
-      reqs[i] = world.irecv(i, CMD_RUNNING, running[i]);
+      if (i > 0) {
+	world.isend(i, CMD_RUNNING, 0);
+	reqs[i] = world.irecv(i, CMD_RUNNING, running[i]);
+      }
     }
     jinfos(running);
     unstarted = jobs.size();
@@ -285,16 +287,21 @@ namespace ebl {
 	jobs[i]->check_running();
 	// start job if not finished and not alive
 	if (!jobs[i]->finished() && !jobs[i]->running()) {
+	  // check if master can run this job
+	  if (use_master && running[0] == -1) {
+	    cout << prefix << "slot 0 is free" << endl;
+	    if (assign(i, 0)) {
+	      running[0] = i;
+	      jinfos(running);
+	      break ;
+	    }
+	  }
+	  // or check slaves
 	  for (int j = 1; j < world.size(); ++j) {
 	    // check if this slot has answered and what its answer is
 	    if (reqs[j].test() && running[j] == -1) { // answer and free
-	      cout << prefix << j << " is free" << endl;
-	      if (!assign(i, j))
-		cerr << "failed to assign job " << i << " to slot " 
-		     << j << endl;
-	      else {
-		cout << "master: assigned job " << i 
-		     << " to slot " << j << endl;
+	      cout << prefix << "slot " << j << " is free" << endl;
+	      if (assign(i, j)) {
 		running[j] = i;
 		// re-ask if slot j is available for when its done
 		world.isend(j, CMD_RUNNING, 0);
@@ -325,9 +332,8 @@ namespace ebl {
 #ifdef __MPI__
     cout << "master: ordering all slaves to stop." << endl;
     boost::mpi::request *reqs = new boost::mpi::request[world.size()];
-    for (int i = 1; i < world.size(); ++i) {
+    for (int i = 1; i < world.size(); ++i)
       reqs[i] = world.isend(i, CMD_STOP, 0);
-    }
     wait_all(reqs + 1, reqs + world.size());
     cout << "master: all slaves stopped." << endl;
     // deleting reqs makes the program crash
@@ -337,14 +343,31 @@ namespace ebl {
 
   bool mpijob_manager::assign(uint jobid, uint slave_id) {
 #ifdef __MPI__
+    string prefix = "master: ";
+    cout << prefix << "assigning job " << jobid << " to slot " << slave_id 
+	 << endl;
     if (slave_id == 0) { // master
-      if (id_running != -1)
-	eblerror("already running job " << id_running);
+      if (id_running != -1) eblerror("already running job " << id_running);
       id_running = jobid;
-      jobs[jobid]->run();
+      cout << prefix << "assigned job " << jobid << " to slot " << slave_id 
+	   << endl;
+      // output dir is the one up where conf is
+      timer t;
+      string confname = jobs[jobid]->name();
+      bool resume = jobs[jobid]->resumed();
+      string outdir = dirname(confname.c_str());
+      outdir = dirname(outdir.c_str());
+      configuration c;
+      c.read(confname.c_str(), true, false, true, outdir.c_str());
+      mpijob *j = new mpijob(c, NULL, (bool) resume);
+      t.start();
+      j->run();
+      delete j;
+      cout << prefix << "job " << jobid << " has finished after "
+	   << t.elapsed() << endl;
       return true;
     } else { // slaves
-      // ask slave
+      // ask slave 
       string confname = jobs[jobid]->name();
       bool resumed = jobs[jobid]->resumed();
       world.send(slave_id, CMD_RUN, jobid);
@@ -352,8 +375,12 @@ namespace ebl {
       world.send(slave_id, CMD_RESUME, resumed);
       // remember in master that this job has been started
       jobs[jobid]->force_started();
+      cout << prefix << "assigned job " << jobid << " to slot " << slave_id 
+	   << endl;
       return true;
     }
+    cerr << prefix << "failed to assign job " << jobid << " to slot " 
+	 << slave_id << endl;
 #endif
     return false;    
   }
@@ -367,20 +394,17 @@ namespace ebl {
     maxtime = 0.0;
     infos.str("");
     // count alive slots
-    for (int i = 1; i < world.size(); ++i) {
-      if (running[i] >= 0)
-	nalive++;
-    }
+    for (int i = 0; i < world.size(); ++i)
+      if (running[i] >= 0) nalive++;
     ready_slots = jslots - nalive;
+    if (!use_master) ready_slots--;
     // count unstarted/unfinished/running
     for (uint i = 0; i < jobs.size(); ++i) {
       jobs[i]->check_running();
       jobs[i]->check_finished();
       jobs[i]->check_started();
-      if (!jobs[i]->started() && !jobs[i]->finished())
-	unstarted++;
-      if (jobs[i]->running())
-	nrunning++;
+      if (!jobs[i]->started() && !jobs[i]->finished()) unstarted++;
+      if (jobs[i]->running()) nrunning++;
       infos << i << ". pid: " << jobs[i]->getpid() << ", name: " 
 	    << jobs[i]->name() << ", status: " 
 	    << (jobs[i]->alive() ? "alive" : "dead")
@@ -388,12 +412,12 @@ namespace ebl {
     }
     cout << "Jobs alive: " << nalive << ", waiting to start: " << unstarted
 	 << " / " << jobs.size()
-	 << ", empty job slots: " << ready_slots << ", Iteration: "
+	 << ", empty (MPI) job slots: " << ready_slots << ", Iteration: "
 	 << maxiter << ", elapsed: " << time.elapsed() << ", ETA: " 
 	 << time.eta(jobs.size() - unstarted, jobs.size()) << endl;
     cout << "Running: ";
-    for (int k = 1; k < world.size(); ++k)
-      cout << running[k] << " ";
+    int k = use_master ? 0 : 1;
+    for ( ; k < world.size(); ++k) cout << running[k] << " ";
     cout << endl;
 #endif
   }

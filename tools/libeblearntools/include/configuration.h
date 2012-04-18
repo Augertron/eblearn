@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -47,7 +47,7 @@ namespace ebl {
 
   typedef map<string, string, less<string> > string_map_t;
   typedef map<string, vector<string>, less<string> > string_list_map_t;
-  
+
   ////////////////////////////////////////////////////////////////
   //! a class containing the original text of the configuration file in a
   //! list form. once variables have been updated, they can be inserted back
@@ -76,7 +76,7 @@ namespace ebl {
   // utility functions
 
   string timestamp();
-  
+
   ////////////////////////////////////////////////////////////////
   //! configuration class. handle files containing variable definitions.
   class EXPORT configuration {
@@ -87,22 +87,22 @@ namespace ebl {
     configuration(const configuration &other);
     //! load configuration found in filename.
     //! \param resolve If true, replace all referenced variables by their value.
-    configuration(const char *filename, bool replquotes = false, 
+    configuration(const char *filename, bool replquotes = false,
 		  bool silent = false, bool resolve = true);
     //! load configuration found in filename.
     //! \param resolve If true, replace all referenced variables by their value.
-    configuration(const string &filename, bool replquotes = false, 
+    configuration(const string &filename, bool replquotes = false,
 		  bool silent = false, bool resolve = true);
     //! Load configuration from already loaded map of variables, name and
     //! output directory.
     //! \param txt Original text lines of configuration.
-    configuration(string_map_t &smap, textlist &txt, string &name, 
+    configuration(string_map_t &smap, textlist &txt, string &name,
 		  string &output_dir);
     //! destructor.
     virtual ~configuration();
 
     // input/output ////////////////////////////////////////////////////////////
-    
+
     //! load configuration from file fname.
     //! \param resolve If true, replace all referenced variables by their value.
     bool read(const char *fname, bool resolve = true, bool replquotes = true,
@@ -119,13 +119,10 @@ namespace ebl {
 
     //! return the name of the configuration
     const string &get_name();
-
     //! set name of the configuration
     void set_name(const string &name);
-
     //! return output directory.
     const string &get_output_dir();
-
     //! set output directory.
     void set_output_dir(const string &d);
 
@@ -145,8 +142,12 @@ namespace ebl {
     void get(uint &v, const char *varname);
     //! Get variable with name varname as a double into v.
     void get(double &v, const char *varname);
+    //! Get variable with name varname as a double into v.
+    void get(float &v, const char *varname);
     //! Get variable with name varname as a string into v.
     void get(string &v, const char *varname);
+    //! Get variable with name varname as a string into v.
+    void get(bool &v, const char *varname);
 
     //! returns the string contained the variable with name varname.
     //! if varname does not exist, this throws an exception.
@@ -165,6 +166,25 @@ namespace ebl {
     //! if varname does not exist or the double conversion fails,
     //! this throws an exception.
     double get_double(const char *varname);
+
+    //! If variable "varname" exists, return its value in uint, otherwise
+    //! return 'default_val'. If uint conversion fails, it throws an exception.
+    uint try_get_uint(const char *varname, uint default_val);
+    //! If variable "varname" exists, return its value in int, otherwise
+    //! return 'default_val'. If int conversion fails, it throws an exception.
+    int try_get_int(const char *varname, int default_val);
+    //! If variable "varname" exists, return its value in float, otherwise
+    //! return 'default_val'. If float conversion fails, it throws an exception.
+    intg try_get_intg(const char *varname, intg default_val);
+    //! If variable "varname" exists, return its value in float, otherwise
+    //! return 'default_val'. If float conversion fails, it throws an exception.
+    float try_get_float(const char *varname, float default_val);
+    //! If variable "varname" exists, return its value in double, otherwise
+    //! return 'default_val'. If double conversion fails, it throws an exception.
+    double try_get_double(const char *varname, double default_val);
+    //! If variable "varname" exists, return its value in float, otherwise
+    //! return 'default_val'. If float conversion fails, it throws an exception.
+    string try_get_string(const char *varname, const char *default_val = "");
 
     //! returns a float conversion of the string contained in the variable
     //! with name varname.
@@ -224,16 +244,16 @@ namespace ebl {
     //! get variable 'varname'.
     //! \param silent If false, warn when using env variable.
     const char* get_cstr(const char *varname, bool silent = false);
+    //! Return a vector of all variable names that begin with 's'.
+    vector<string> get_all_strings(const string &s);
 
     //! returns true if the variable exists, false otherwise.
     bool exists(const char *varname);
-    
     //! returns true if the variable exists, false otherwise.
     bool exists(const std::string &varname);
-    
+
     //! print loaded variables
     virtual void pretty();
-
     //! Print all variables who's name is contained in string 's'.
     virtual void pretty_match(const string &s);
 
@@ -244,18 +264,18 @@ namespace ebl {
     void resolve_variables(string_map_t &m, bool replquotes = false);
 
     //! Resolve double quotes blocs, or entire string if not present.
-    string resolve0(string_map_t &m, const string &variable, 
+    string resolve0(string_map_t &m, const string &variable,
 		    const string &v, bool firstonly = false);
 
     //! Resolve back quotes blocs only.
-    string resolve_backquotes(string_map_t &m, 
+    string resolve_backquotes(string_map_t &m,
 			     const string &variable, const string &v,
 			     bool firstonly = false);
 
     //! Resolve an unquoted string (just variables).
-    string resolve_string(string_map_t &m, const string &variable, 
+    string resolve_string(string_map_t &m, const string &variable,
 			  const string &v, bool firstonly = false);
-    
+
     // open file fname and put variables assignments in smap.
     // e.g. " i = 42 # comment " will yield a entry in smap
     // with "i" as first value and "42" as second value.
@@ -268,7 +288,7 @@ namespace ebl {
     string_map_t	tmp_smap; //!< map between variables and values
     string 		name; 	//!< name of configuration
     string 		output_dir;	//!< output directory
-    textlist 		otxt; 	//!< original text    
+    textlist 		otxt; 	//!< original text
     bool                silent;
   };
 
@@ -280,7 +300,7 @@ namespace ebl {
     vector<size_t>	conf_indices;
     int			conf_combinations;
     vector<configuration> confs;
-    
+
   public:
     meta_configuration();
     virtual ~meta_configuration();
@@ -288,7 +308,7 @@ namespace ebl {
     //! Read a meta configuration.
     //! \param resume_name Name of experiment to be resumed.
     bool read(const char *fname, bool bresolve = true,
-	      const string *tstamp = NULL, 
+	      const string *tstamp = NULL,
 	      bool replace_quotes = false,
 	      const char *resume_name = NULL,
 	      bool silent = false);

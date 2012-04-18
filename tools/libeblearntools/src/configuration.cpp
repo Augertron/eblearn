@@ -102,13 +102,13 @@ namespace ebl {
 
   void remove_trailing_whitespaces(string &s) {
     string::size_type pos;
-  
-    pos = s.find_first_not_of(' ');
+    char whites[] = " \t";
+    pos = s.find_first_not_of(whites);
     if (pos == string::npos)
       s = "";
     else {
       s = s.substr(pos);
-      pos = s.find_last_not_of(' ');
+      pos = s.find_last_not_of(whites);
       s = s.erase(pos + 1);
     }
   }
@@ -132,9 +132,9 @@ namespace ebl {
       qpos = res.find(DQ);
     }
     return res;
-  } 
+  }
 
-  string configuration::resolve0(string_map_t &m, const string &variable, 
+  string configuration::resolve0(string_map_t &m, const string &variable,
 				 const string &v,
 				 bool firstonly) {
     string res(v);
@@ -178,10 +178,10 @@ namespace ebl {
     res = resolve_string(m, variable, res, firstonly);
     return res;
   }
-  
+
   //! Resolve single quotes blocs, or entire string if not present.
   string configuration::
-  resolve_backquotes(string_map_t &m, const string &variable, 
+  resolve_backquotes(string_map_t &m, const string &variable,
 		    const string &v, bool firstonly) {
     string res(v);
     if (v.size() == 0)
@@ -216,9 +216,9 @@ namespace ebl {
     }
     return res;
   }
- 
+
   //! Resolve an unquoted string (just variables).
-  string configuration::resolve_string(string_map_t &m, const string &variable, 
+  string configuration::resolve_string(string_map_t &m, const string &variable,
 				       const string &v, bool firstonly) {
     string res(v);
     if (v.size() == 0)
@@ -265,7 +265,7 @@ namespace ebl {
 	  pos2 = pos;
 	} else { // found nowhere, replace with an empty string
 	  res = res.replace(pos, pos2 - pos + 1, "");
-	  pos2 = pos;	    
+	  pos2 = pos;
 	}
       }
       // check if we have more variables to resolve
@@ -274,13 +274,13 @@ namespace ebl {
     }
     return res;
   }
- 
+
   // open file fname and put variables assignments in smap.
   // e.g. " i = 42 # comment " will yield a entry in smap
   // with "i" as first value and "42" as second value.
-  bool configuration::extract_variables(const char *fname, string_map_t &smap, 
+  bool configuration::extract_variables(const char *fname, string_map_t &smap,
 					textlist &txt,
-					string_map_t *meta_smap, bool bresolve, 
+					string_map_t *meta_smap, bool bresolve,
 					bool replquotes, bool silent) {
     string s0, s;
     char separator = '=';
@@ -310,13 +310,9 @@ namespace ebl {
 	// look for separator
 	pos = s.find(separator);
 	if (pos != string::npos) {
-	  if (pos >= s.size() - 1) {
-	    // empty variable
-	    continue ;
-	  }
-	  // separate in 2
 	  name = s.substr(0, pos);
-	  value = s.substr(pos + 1);
+	  if (pos >= s.size() - 1) value = ""; // empty variable
+	  else value = s.substr(pos + 1);
 	  // removing trailing whitespaces
 	  remove_trailing_whitespaces(name);
 	  remove_trailing_whitespaces(value);
@@ -341,10 +337,8 @@ namespace ebl {
 	  // if variable name starts with "meta_" put it in the meta conf list
 	  if (meta_smap && (name.compare(0, 5, "meta_") == 0))
 	    (*meta_smap)[name] = value;
-	  else {
-	    // add variable to map
+	  else // add variable to map
 	    smap[name] = value;
-	  }
 	}
       }
       // add original line and variable name (if any) to txt
@@ -447,32 +441,36 @@ namespace ebl {
   }
 
   void set_conf_name(vector<size_t> &conf_indices, string_list_map_t &lmap,
-		     int combination_id, bool no_conf_id, 
+		     int combination_id, bool no_conf_id,
 		     uint conf_combinations,
-		     string &fullname, string &shortname) {
+		     string &fullname, string &shortname, string &variables) {
     string_list_map_t::iterator lmi = lmap.begin();
     vector<size_t>::iterator ci = conf_indices.begin();
     ostringstream name;
 
     // short name
-    name << "conf" << setfill('0') 
+    name << "conf" << setfill('0')
 	 << setw(1 + (int) floor(log10((float)conf_combinations))) << combination_id;
     shortname = name.str();
     // full name
     fullname = "_";
     if (!no_conf_id)
       fullname << shortname;
+    variables = "";
+    bool first = true;
     for ( ; lmi != lmap.end(); ++lmi, ++ci)
       if (lmi->second.size() > 1) {
-	fullname << "_" << lmi->first << "_" << lmi->second[*ci];
+	if (first) first = false;
+	else variables << "_";
+	variables << lmi->first << "_" << lmi->second[*ci];
       }
-    
+    fullname << "_" << variables;
   }
 
   void print_conf(vector<size_t> &conf_indices, string_list_map_t &lmap) {
     string_list_map_t::iterator lmi = lmap.begin();
     vector<size_t>::iterator ci = conf_indices.begin();
-  
+
     for ( ; lmi != lmap.end(); ++lmi, ++ci)
       cout << lmi->first << " = " << lmi->second[*ci] << endl;
   }
@@ -501,7 +499,7 @@ namespace ebl {
 			   string_list_map_t &lmap) {
     string_list_map_t::iterator lmi = lmap.begin();
     vector<size_t>::iterator ci = conf_indices.begin();
-  
+
     for ( ; lmi != lmap.end(); ++lmi, ++ci)
       new_smap[lmi->first] = lmi->second[*ci];
   }
@@ -524,8 +522,8 @@ namespace ebl {
       eblerror("failed to open configuration file");
   }
 
-  configuration::configuration(const configuration &other) 
-    : smap(other.smap), name(other.name), 
+  configuration::configuration(const configuration &other)
+    : smap(other.smap), name(other.name),
       output_dir(other.output_dir), otxt(other.otxt),
       silent(false) {
   }
@@ -538,8 +536,8 @@ namespace ebl {
 
   configuration::~configuration() {
   }
-  
-  bool configuration::read(const char *fname, bool bresolve, 
+
+  bool configuration::read(const char *fname, bool bresolve,
 			   bool replacequotes, bool silent_,
 			   const char *outdir) {
     silent = silent_;
@@ -548,7 +546,7 @@ namespace ebl {
     // read file and extract all variables and values
     if (!silent)
       cout << "loading configuration file: " << fname << endl;
-    if (!extract_variables(fname, smap, otxt, NULL, bresolve, replacequotes, 
+    if (!extract_variables(fname, smap, otxt, NULL, bresolve, replacequotes,
 			   silent_))
       return false;
     // set output directory
@@ -578,7 +576,7 @@ namespace ebl {
     of.close();
     return true;
   }
-  
+
   void configuration::resolve_variables(string_map_t &m, bool replquotes) {
     string_map_t::iterator mi = m.begin();
     for ( ; mi != m.end(); ++mi) {
@@ -632,9 +630,19 @@ namespace ebl {
     v = string_to_double(get_cstr(varname));
   }
 
+  void configuration::get(float &v, const char *varname) {
+    exists_throw(varname);
+    v = string_to_float(get_cstr(varname));
+  }
+
   void configuration::get(string &v, const char *varname) {
     exists_throw(varname);
     v = get_string(varname);
+  }
+
+  void configuration::get(bool &v, const char *varname) {
+    exists_throw(varname);
+    v = string_to_bool(get_cstr(varname));
   }
 
   const string &configuration::get_string(const char *varname) {
@@ -668,6 +676,38 @@ namespace ebl {
   float configuration::get_float(const char *varname) {
     exists_throw(varname);
     return string_to_float(get_cstr(varname));
+  }
+
+  float configuration::try_get_float(const char *varname, float default_val) {
+    if (!exists(varname)) return default_val;
+    return string_to_float(get_cstr(varname));
+  }
+
+  double configuration::try_get_double(const char *varname, double default_val) {
+    if (!exists(varname)) return default_val;
+    return string_to_double(get_cstr(varname));
+  }
+
+  uint configuration::try_get_uint(const char *varname, uint default_val) {
+    if (!exists(varname)) return default_val;
+    return string_to_uint(get_cstr(varname));
+  }
+
+  int configuration::try_get_int(const char *varname, int default_val) {
+    if (!exists(varname)) return default_val;
+    return string_to_int(get_cstr(varname));
+  }
+
+  intg configuration::try_get_intg(const char *varname, intg default_val) {
+    if (!exists(varname)) return default_val;
+    return string_to_intg(get_cstr(varname));
+  }
+
+  string configuration::try_get_string(const char *varname,
+				       const char *default_val) {
+    string s = default_val;
+    if (!exists(varname)) return s;
+    return s = get_cstr(varname);
   }
 
   uint configuration::get_uint(const char *varname) {
@@ -743,6 +783,15 @@ namespace ebl {
     return NULL;
   }
 
+  vector<string> configuration::get_all_strings(const string &s) {
+    string_map_t::iterator smi = smap.begin();
+    vector<string> all;
+    for ( ; smi != smap.end(); ++smi)
+      if (smi->first.find(s) != string::npos)
+	all.push_back(smi->first);
+    return all;
+  }
+
   bool configuration::exists(const char *varname) {
     const char *s = get_cstr(varname, true);
     // does not exist if not defined
@@ -757,12 +806,11 @@ namespace ebl {
   bool configuration::exists(const std::string &varname) {
     return exists(varname.c_str());
   }
-  
+
   void configuration::exists_throw(const char *varname) {
-    if ((smap.find(varname) == smap.end()) && (!getenv(varname))) {
-      cerr << "error: unknown variable: " << varname << endl;
-      throw "unknown variable";
-    }
+    if ((smap.find(varname) == smap.end()) && (!getenv(varname)))
+      eblthrow("unknown requested variable \"" << varname
+	       << "\" in configuration file");
   }
 
   void configuration::pretty() {
@@ -770,7 +818,7 @@ namespace ebl {
     print_string_map(smap);
     cout << "_________________________________________________________" << endl;
   }
-  
+
   void configuration::pretty_match(const string &s) {
     string_map_t::iterator smi = smap.begin();
     for ( ; smi != smap.end(); ++smi)
@@ -783,10 +831,10 @@ namespace ebl {
 
   meta_configuration::meta_configuration() {
   }
-  
+
   meta_configuration::~meta_configuration() {
   }
-  
+
   bool meta_configuration::read(const char *fname, bool bresolve,
 				const string *stamp, bool replacequotes,
 				const char *resume_name, bool silent) {
@@ -831,21 +879,23 @@ namespace ebl {
   }
 
   vector<configuration>& meta_configuration::configurations() {
-    cout << "Creating all " << conf_combinations 
+    cout << "Creating all " << conf_combinations
 	 << " possible configurations..." << endl;
     // create all possible configurations
     confs.clear();
     conf_indices.assign(lmap.size(), 0); // reset conf
     for (int i = 0; i < conf_combinations; ++i) {
       string conf_name = name;
-      string shortname, fullname;
+      string shortname, fullname, variables;
       set_conf_name(conf_indices, lmap, i, exists_true("meta_no_conf_id"),
-		    conf_combinations, fullname, shortname);
+		    conf_combinations, fullname, shortname, variables);
       conf_name << fullname;
       string_map_t new_smap;
       assign_current_smap(new_smap, conf_indices, lmap);
       configuration conf(new_smap, otxt, conf_name, output_dir);
       conf.set("meta_conf_shortname", shortname.c_str());
+      conf.set("meta_conf_fullname", fullname.c_str());
+      conf.set("meta_conf_variables", variables.c_str());
       confs.push_back(conf);
       config_indices_incr(conf_indices, lmap); // incr conf
     }
@@ -865,7 +915,7 @@ namespace ebl {
     for ( ; lmi != lmap.end(); ++lmi) {
       if (lmi->second.size() > 1) {
 	cout << lmi->second.size() << " " << lmi->first << ":";
-	for (lmj = lmi->second.begin(); lmj != lmi->second.end(); ++lmj) 
+	for (lmj = lmi->second.begin(); lmj != lmi->second.end(); ++lmj)
 	  cout << " " << *lmj;
 	cout << endl;
       }

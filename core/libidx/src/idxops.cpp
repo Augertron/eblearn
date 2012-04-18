@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   Copyright (C) 2012 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
@@ -38,177 +38,88 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // size compatibility checking functions
+  // simple operations /////////////////////////////////////////////////////////
 
-  template<class T> void check_m2dotm1(idx<T> &m, idx<T> &x, idx<T> &y) {
-    idx_checkorder3(m, 2, x, 1, y, 1);
-    idx_checkdim2(y, 0, m.dim(0), x, 0, m.dim(1));
+#define idxop_ii(i1,i2,op_idx0, op_idx1, op_contig, op_recursive, op_any) { \
+    intg N1=(i1).nelements();						\
+    intg N2 =(i2).nelements();						\
+    if (N1 != N2) {							\
+      cerr << "incompatible idxs: " << i1 << " and " << i2 << endl;	\
+      eblerror("idx_op: idxs have different number of elements\n"); }	\
+    if ( ((i1).order() == 0) && ((i2).order() == 0) ) {			\
+      /* they are 1D vectors of the same size, use the stride version */ \
+      op_idx0;								\
+    } else if ( (i1).contiguousp() && (i2).contiguousp() ) {		\
+      /* they are both contiguous: call the stride 1 routine */		\
+      op_contig;							\
+    } else if ( ((i1).order() == 1) && ((i2).order() == 1) ) {		\
+      /* they are 1D vectors of the same size, use the stride version */ \
+      op_idx1;								\
+    } else if ( same_dim((i1).spec,(i2).spec) ) {			\
+      op_recursive;							\
+    } else {								\
+      /* else, they don't have the same structure: do it "by hand".	\
+	 This is slower */						\
+      op_any;								\
+    }									\
   }
 
-  template<class T> void check_m1extm1(idx<T> &x, idx<T> &y, idx<T> &m) {
-    idx_checkorder3(m, 2, x, 1, y, 1);
-    idx_checkdim2(y, 0, m.dim(1), x, 0, m.dim(0));
+#define idxop_i(i,op_idx0, op_idx1, op_contig, op_recursive) {		\
+    if ((i).order() == 0) {						\
+      /* they are 1D vectors of the same size, use the stride version */ \
+      op_idx0;								\
+    } else if ((i).contiguousp()) {					\
+      /* they are both contiguous: call the stride 1 routine */		\
+      op_contig;							\
+    } else if ((i).order() == 1) {					\
+      /* they are 1D vectors of the same size, use the stride version */ \
+      op_idx1;								\
+    } else { \
+      op_recursive;							\
+    }									\
   }
 
-  ////////////////////////////////////////////////////////////////
-  // idx_copy
+#define idxop_simple_ii(i1,i2,op_idx0, op_idx1, op_contig,		\
+			op_recursive, op_any) {				\
+    intg N1=(i1).nelements();						\
+    intg N2 =(i2).nelements();						\
+    if (N1 != N2) {							\
+      cerr << "incompatible idxs: " << i1 << " and " << i2 << endl;	\
+      eblerror("idx_op: idxs have different number of elements\n"); }	\
+    if ( ((i1).order() == 0) && ((i2).order() == 0) ) {			\
+      /* they are 1D vectors of the same size, use the stride version */ \
+      op_idx0;								\
+    } else if ( (i1).contiguousp() && (i2).contiguousp() ) {		\
+      /* they are both contiguous: call the stride 1 routine */		\
+      op_contig;							\
+    } else if ( ((i1).order() == 1) && ((i2).order() == 1) ) {		\
+      /* they are 1D vectors of the same size, use the stride version */ \
+      op_idx1;								\
+    } else if ( same_dim((i1).spec,(i2).spec) ) {			\
+      op_recursive;							\
+    } else {								\
+      /* else, they don't have the same structure: do it "by hand".	\
+	 This is slower */						\
+      op_any;								\
+    }									\
+  }
 
-#ifdef __IPP__
-  idx_copy_macro(ubyte)
-  idx_copy_macro(uint16)
-  idx_copy_macro(int16)
-  idx_copy_macro(int32)
-#endif
+  // size compatibility checking macros ////////////////////////////////////////
 
-#ifdef __CBLAS__
+#define check_m2dotm1(m, x, y) {			\
+    idx_checkorder3(m, 2, x, 1, y, 1);			\
+    idx_checkdim2(y, 0, m.dim(0), x, 0, m.dim(1));	\
+  }
   
-  // specialization for doubles: can use blas versions.
-  template <>
-  void idx_copy(idx<double> &src, idx<double> &dst) {
-    // loop and copy
-    idxop_ii(src, dst,
-	     // idx0 version
-	     { *(dst.idx_ptr()) = *(src.idx_ptr()); },
-	     // idx1 version
-	     { cblas_dcopy(N1, src.idx_ptr(), src.mod(0), dst.idx_ptr(), 
-			   dst.mod(0)); },
-	     // contiguous version
-	     {
-
-// #ifdef __IPP__
-// 	       ipp_set(in, (float) 0);
-// #else
-	       memset(src.idx_ptr(), 0, src.nelements() * sizeof (float));
-		 // TODO: cblas version?
-		 //cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
-// #endif
-	     },
-	     // recursive version
-	     { idx_bloop2(lsrc, src, double, ldst, dst, double) { 
-		 idx_copy(lsrc, ldst); } },
-	     // any version
-	     { idx_aloop2(isrc, src, double, idst, dst, double) { 
-		 *idst = *isrc; }
-	     }
-	     );
+#define check_m1extm1(x, y, m) {			\
+    idx_checkorder3(m, 2, x, 1, y, 1);			\
+    idx_checkdim2(y, 0, m.dim(1), x, 0, m.dim(0));	\
   }
 
-  // specialization for floats: can use blas versions.
-  template <>
-  void idx_copy(idx<float> &src, idx<float> &dst) {
-    // loop and copy
-    idxop_ii(src, dst,
-	     // idx0 version
-	     { *(dst.idx_ptr()) = *(src.idx_ptr()); },
-	     // idx1 version
-	     { cblas_scopy(N1, src.idx_ptr(), src.mod(0), dst.idx_ptr(), 
-			   dst.mod(0)); },
-	     // contiguous version
-	     {
-#ifdef __IPP__
-	       ipp_copy(src, dst);
-#else
-	       cblas_scopy(N1, src.idx_ptr(), 1, dst.idx_ptr(), 1);
-#endif
-	     },
-	     // recursive version
-	     { idx_bloop2(lsrc, src, float, ldst, dst, float) { 
-		 idx_copy(lsrc, ldst); } },
-	     // any version
-	     { idx_aloop2(isrc, src, float, idst, dst, float) { 
-		 *idst = *isrc; }
-	     }
-	     );
-  }
-#else
-#ifdef __IPP__
-  template <>
-  void idx_copy(const idx<float> &src, idx<float> &dst) {
-    if (src.contiguousp() && dst.contiguousp()) {
-      ipp_copy(src, dst);
-    } else {
-      {idx_aloop2(isrc, src, float, idst, dst, float) {*idst = *isrc;}}
-    }
-  }
-#endif
-#endif
+  // idx_copy //////////////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////////////
-  // idx_clear
+  // idx_add (in-place) ////////////////////////////////////////////////////////
 
-#ifdef __IPP__
-  idx_clear_macro(ubyte)
-  idx_clear_macro(uint16)
-  idx_clear_macro(int16)
-  idx_clear_macro(int32)
-  idx_clear_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_fill
-
-#ifdef __IPP__
-  idx_fill_macro(ubyte)
-  idx_fill_macro(uint16)
-  idx_fill_macro(int16)
-  idx_fill_macro(int32)
-  idx_fill_macro(float32)
-#endif
-
-  // idx_minus /////////////////////////////////////////////////////////////////
-  
-#ifdef __IPP__
-  idx_minus_macro(int16)
-  idx_minus_macro(float32)
-#endif
-
-  // idx_minus_acc /////////////////////////////////////////////////////////////
-  
-#ifdef __IPP__
-  idx_minus_acc_macro(int16)
-  idx_minus_acc_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_inv
-
-#ifdef __IPP__
-  template<>
-  void idx_inv (idx<float32> & inp, idx<float32> & out) {
-    if (inp.contiguousp() && out.contiguousp()) {
-      ipp_inv(inp, out);
-    } else {
-#if USING_STL_ITERS == 0
-      idxiter<float32> pinp; idxiter<float32> pout;
-      idx_aloop2_on(pinp,inp,pout,out) { *pout = 1 / *pinp; }
-#else
-      ScalarIter<float32> pinp(inp); ScalarIter<float32> pout(out);
-      idx_aloop2_on(pinp,inp,pout,out) { *pout = 1 / *pinp; }
-#endif /* USING_STL_ITERS == 0*/
-    }
-  }
-#endif /* __IPP__ */
-
-  ////////////////////////////////////////////////////////////////
-  // idx_add (not-in-place)
-
-#ifdef __IPP__
-  idx_add_macro(ubyte)
-  idx_add_macro(uint16)
-  idx_add_macro(int16)
-  idx_add_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_add (in-place)
-
-#if USING_STL_ITERS == 0
-#ifdef __IPP__
-  idx_add_macro_in_place(ubyte)
-  idx_add_macro_in_place(uint16)
-  idx_add_macro_in_place(int16)
-#endif
 #if 0
   template<> void idx_add(idx<float> &src, idx<float> &dst) {
     // loop and copy
@@ -236,190 +147,34 @@ namespace ebl {
 	     );
   }
 #endif
-#endif /* USING_STL_ITERS == 0 */
 
-  ////////////////////////////////////////////////////////////////
-  // idx_sub
-
-#ifdef __IPP__
-  idx_sub_macro(ubyte)
-  idx_sub_macro(uint16)
-  idx_sub_macro(int16)
-  idx_sub_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_mul
-
-#ifdef __IPP__
-  idx_mul_macro(ubyte)
-  idx_mul_macro(uint16)
-  idx_mul_macro(int16)
-  idx_mul_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_div
-
-#ifdef __IPP__
-  idx_div_macro(ubyte)
-  idx_div_macro(uint16)
-  idx_div_macro(int16)
-  idx_div_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_addc
-
-#ifdef __IPP__
-  idx_addc_macro(ubyte)
-  idx_addc_macro(uint16)
-  idx_addc_macro(int16)
-  idx_addc_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_addc_bounded
-
-#ifdef __IPP__
-  idx_addc_bounded_macro(ubyte)
-  idx_addc_bounded_macro(uint16)
-  idx_addc_bounded_macro(int16)
-  idx_addc_bounded_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_subc_bounded
-
-#ifdef __IPP__
-  idx_subc_bounded_macro(ubyte)
-  idx_subc_bounded_macro(uint16)
-  idx_subc_bounded_macro(int16)
-  idx_subc_bounded_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_dotc
-
-#ifdef __IPP__
-  idx_dotc_macro(ubyte)
-  idx_dotc_macro(uint16)
-  idx_dotc_macro(int16)
-  idx_dotc_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_dotc_bounded
-
-#ifdef __IPP__
-  idx_dotc_bounded_macro(ubyte)
-  idx_dotc_bounded_macro(uint16)
-  idx_dotc_bounded_macro(int16)
-  idx_dotc_bounded_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_abs
-
-#ifdef __IPP__
-  idx_abs_macro(int16)
-  idx_abs_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_sqrt
-
-#ifdef __IPP__
-  idx_sqrt_macro(ubyte)
-  idx_sqrt_macro(uint16)
-  idx_sqrt_macro(int16)
-  idx_sqrt_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_exp
+  // idx_exp ///////////////////////////////////////////////////////////////////
 
   template <> void idx_exp(idx<float> &m) {
-#if USING_FAST_ITERS == 0
-    idx_aloop1(i, m, float32) {
-      *i = exp(*i);
-    };
-#else
     idx_aloopf1(i, m, float32, { *i = expf(*i); });
-#endif
   }
 
   template <> void idx_exp(idx<float64> &m) {
-#if USING_FAST_ITERS == 0
-    idx_aloop1(i, m, float64) {
-      *i = exp(*i);
-    };
-#else
     idx_aloopf1(i, m, float64, { *i = exp(*i); });
-#endif
   }
 
+  // idx_power /////////////////////////////////////////////////////////////////
 
-#ifdef __IPP__
-  idx_exp_macro(ubyte)
-  idx_exp_macro(uint16)
-  idx_exp_macro(int16)
-  //idx_exp_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_power
-  
+#ifndef __TH__
+  //disabling for TH  
   template<> void idx_power(idx<float>& in, float p, idx<float>& out) {
-#if USING_FASfloat_ITERS == 0
-  #if USING_SfloatL_ITERS == 0
-    idxiter<float> pin; idxiter<float> pout;
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout = powf(*pin, p);
-    }
-  #else
-    ScalarIter<float> pin(in); ScalarIter<float> pout(out);
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout = powf(*pin, p);
-    }
-  #endif
-#else
     idx_aloopf2(pin, in, float, pout, out, float, {
 	*pout = powf(*pin, p);
     });
-#endif
   }
 
   template<> void idx_power(idx<float64>& in, float64 p, idx<float64>& out) {
-#if USING_FASfloat64_ITERS == 0
-  #if USING_Sfloat64L_ITERS == 0
-    idxiter<float64> pin; idxiter<float64> pout;
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout = pow(*pin, p);
-    }
-  #else
-    ScalarIter<float64> pin(in); ScalarIter<float64> pout(out);
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout = pow(*pin, p);
-    }
-  #endif
-#else
     idx_aloopf2(pin, in, float64, pout, out, float64, {
-	*pout = pow(*pin, p);
-    });
-#endif
+	*pout = pow(*pin, p); });
   }
-
-
-  ////////////////////////////////////////////////////////////////
-  // idx_sum
-
-#ifdef __IPP__
-  idx_sum_macro(ubyte)
-  idx_sum_macro(uint16)
-  idx_sum_macro(int16)
-  idx_sum_macro(float32)
 #endif
+
+  // idx_sum ///////////////////////////////////////////////////////////////////
 
 #if 0 // TODO
 #if defined(__USE_SSE__) and defined(__OPENMP__)
@@ -554,52 +309,22 @@ namespace ebl {
 #endif
   }
   */
-  ////////////////////////////////////////////////////////////////
-  // idx_sumabs
 
-#ifdef __IPP__
-  idx_sumabs_macro(ubyte)
-  idx_sumabs_macro(uint16)
-  idx_sumabs_macro(int16)
-  idx_sumabs_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_l2norm
-
-#ifdef __IPP__
-  idx_l2norm_macro(ubyte)
-  idx_l2norm_macro(uint16)
-  idx_l2norm_macro(int16)
-  idx_l2norm_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_mean
-
-#ifdef __IPP__
-  idx_mean_macro(ubyte)
-  idx_mean_macro(uint16)
-  idx_mean_macro(int16)
-  idx_mean_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_std_normalize
+  // idx_std_normalize /////////////////////////////////////////////////////////
 
   template<> void idx_std_normalize(idx<ubyte> & in, idx<ubyte> & out,
-	  ubyte* mean) {
-	eblerror("idx_std_normalize<ubyte> : makes no sense with an unsigned type");
+				    ubyte* mean) {
+    eblerror("idx_std_normalize<ubyte>: makes no sense with an unsigned type");
   }
 
   template<> void idx_std_normalize(idx<uint16> & in, idx<uint16> & out,
-			 uint16* mean) {
-    eblerror("idx_std_normalize<uint16> : makes no sense with an unsigned type");
+				    uint16* mean) {
+    eblerror("idx_std_normalize<uint16>: makes no sense with an unsigned type");
   }
 
   template<> void idx_std_normalize(idx<uint32> & in, idx<uint32> & out,
-			 uint32* mean) {
-    eblerror("idx_std_normalize<uint32> : makes no sense with an unsigned type");
+				    uint32* mean) {
+    eblerror("idx_std_normalize<uint32>: makes no sense with an unsigned type");
   }
 
   template<> void idx_std_normalize(idx<float32> &in, idx<float32> &out,
@@ -616,186 +341,7 @@ namespace ebl {
     idx_dotc(out, 1 / coeff, out);
   }
 
-  ////////////////////////////////////////////////////////////////
-  // idx_dot
-
-#if defined(__IPP__) && defined(__IPP_DOT__)
-  idx_dot_macro(ubyte)
-  idx_dot_macro(byte)
-  idx_dot_macro(uint16)
-  idx_dot_macro(int16)
-  idx_dot_macro(uint32)
-  idx_dot_macro(int32)
-#endif
-
-#ifdef __CBLAS__
-  double idx_dot(idx<float32> &i1, idx<float32> &i2) {
-    idxop_ii(i1, i2,
-	     // idx0 version
-	     { return *(i1.idx_ptr()) * *(i2.idx_ptr()); },
-	     // idx1 version
-	     { return cblas_sdot(N1, i1.idx_ptr(), i1.mod(0), i2.idx_ptr(), 
-				 i2.mod(0)); },
-	     // contiguous version
-	     {
-#if defined(__IPP__) and defined(__IPP_DOT__)
-	       return ipp_dot(i1, i2);
-#else
-	       return cblas_sdot(N1, i1.idx_ptr(), 1, i2.idx_ptr(), 1);
-#endif
-	     },
-	     // recursive version
-	     { float64 z = 0; idx_bloop2(li1, i1, float, li2, i2, float) { 
-		 z += (float64)idx_dot(li1, li2); } return z; },
-	     // any version
-	     { float64 z = 0;
-	       //     idxiter<float> ii1; idxiter<float> ii2;
-	       //     idx_aloop2_on(ii1, i1, ii2, i2) { z += (*ii1)*(*ii2); }
-	       idx_aloop2(ii1, i1, float, ii2, i2, float) { 
-		 z += ((float64)(*ii1))*((float64)(*ii2)); }
-	       return z; }
-	     );
-  }
-
-  double idx_dot(idx<double> &i1, idx<double> &i2) {
-    idxop_ii(i1, i2,
-	     // idx0 version
-	     { return *(i1.idx_ptr()) * *(i2.idx_ptr()); },
-	     // idx1 version
-	     { return cblas_ddot(N1, i1.idx_ptr(), i1.mod(0), i2.idx_ptr(), 
-				 i2.mod(0)); },
-	     // contiguous version
-	     { return cblas_ddot(N1, i1.idx_ptr(), 1, i2.idx_ptr(), 1); },
-	     // recursive version
-	     { double z = 0; idx_bloop2(li1, i1, double, li2, i2, double) { 
-		 z += idx_dot(li1, li2); } return z; },
-	     // any version
-	     { double z = 0;
-	       //     idxiter<double> ii1; idxiter<double> ii2;
-	       //     idx_aloop2_on(ii1, i1, ii2, i2) { z += (*ii1)*(*ii2); }
-	       idx_aloop2(ii1, i1, double, ii2, i2, double) { 
-		 z += (*ii1)*(*ii2); }
-	       return z; }
-	     );
-  }
-#else
-#if defined(__IPP__) && defined(__IPP_DOT__)
-  idx_dot_macro(float32)
-#endif
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_m2dotm1
-#ifdef __CBLAS__
-  // matrix-vector multiplication: y <- a.x
-  void idx_m2dotm1(idx<double> &a, idx<double> &x, idx<double> &y) {
-    check_m2dotm1(a,x,y);
-    if (a.mod(0) > a.mod(1)) {
-      cblas_dgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
-		  1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0),
-		  0.0, y.idx_ptr(), y.mod(0));
-    } else {
-      cblas_dgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),
-		  1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0),
-		  0.0, y.idx_ptr(), y.mod(0));
-    }
-  }
-
-  // matrix-vector multiplication: y <- a.x
-  void idx_m2dotm1(idx<float> &a, idx<float> &x, idx<float> &y) {
-    check_m2dotm1(a,x,y);
-    if (a.mod(0) > a.mod(1)) {
-      cblas_sgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
-		  1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0),
-		  0.0, y.idx_ptr(), y.mod(0));
-    } else {
-      cblas_sgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),
-		  1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0),
-		  0.0, y.idx_ptr(), y.mod(0));
-    }
-  }
-#endif
-
-
-  ////////////////////////////////////////////////////////////////
-  // idx_m2dotm1acc
-
-#ifdef __CBLAS__
-  // matrix-vector multiplication: y <- y + a.x
-  void idx_m2dotm1acc(idx<double> &a, idx<double> &x, idx<double> &y) {
-    check_m2dotm1(a,x,y);
-    if (a.mod(0) > a.mod(1)) {
-      cblas_dgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
-		  1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0),
-		  1.0, y.idx_ptr(), y.mod(0));
-    } else {
-      cblas_dgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),
-		  1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0),
-		  1.0, y.idx_ptr(), y.mod(0));
-    }
-  }
-
-  // matrix-vector multiplication: y <- y + a.x
-  void idx_m2dotm1acc(idx<float> &a, idx<float> &x, idx<float> &y) {
-    check_m2dotm1(a,x,y);
-    if (a.mod(0) > a.mod(1)) {
-      cblas_sgemv(CblasRowMajor, CblasNoTrans, a.dim(0), a.dim(1),
-		  1.0, a.idx_ptr(), a.mod(0), x.idx_ptr(), x.mod(0),
-		  1.0, y.idx_ptr(), y.mod(0));
-    } else {
-      cblas_sgemv(CblasColMajor, CblasNoTrans, a.dim(0), a.dim(1),
-		  1.0, a.idx_ptr(), a.mod(1), x.idx_ptr(), x.mod(0),
-		  1.0, y.idx_ptr(), y.mod(0));
-    }
-  }
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_m1extm1
-
-#ifdef __CBLAS__
-  // vector-vector outer product: a <- x.y'
-  void idx_m1extm1(idx<double> &x, idx<double> &y, idx<double> &a) {
-    check_m1extm1(x,y,a);
-    idx_clear(a);
-    cblas_dger(CblasRowMajor, a.dim(0), a.dim(1),
-	       1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
-	       a.idx_ptr(), a.mod(0));
-  }
-
-  // vector-vector outer product: a <- x.y'
-  void idx_m1extm1(idx<float> &x, idx<float> &y, idx<float> &a) {
-    check_m1extm1(x,y,a);
-    idx_clear(a);
-    cblas_sger(CblasRowMajor, a.dim(0), a.dim(1),
-	       1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
-	       a.idx_ptr(), a.mod(0));
-  }
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_m1extm1acc
-
-#ifdef __CBLAS__
-  // vector-vector outer product: a <- a + x.y'
-  void idx_m1extm1acc(idx<double> &x, idx<double> &y, idx<double> &a) {
-    check_m1extm1(x,y,a);
-    cblas_dger(CblasRowMajor, a.dim(0), a.dim(1),
-	       1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
-	       a.idx_ptr(), a.mod(0));
-  }
-
-  // vector-vector outer product: a <- a + x.y'
-  void idx_m1extm1acc(idx<float> &x, idx<float> &y, idx<float> &a) {
-    check_m1extm1(x,y,a);
-    cblas_sger(CblasRowMajor, a.dim(0), a.dim(1),
-	       1.0, x.idx_ptr(), x.mod(0), y.idx_ptr(), y.mod(0),
-	       a.idx_ptr(), a.mod(0));
-  }
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_m2squdotm1
+  // idx_m2squdotm1 ////////////////////////////////////////////////////////////
 
   // square matrix-vector multiplication: Yi = sum((Aij)^2 * Xj)
   void idx_m2squdotm1(idx<double> &a, idx<double> &x, idx<double> &y) {
@@ -829,8 +375,7 @@ namespace ebl {
     }
   }
 
-  ////////////////////////////////////////////////////////////////
-  // idx_m2squdotm1acc
+  // idx_m2squdotm1acc /////////////////////////////////////////////////////////
 
   // square matrix-vector multiplication: Yi += sum((Aij)^2 * Xj)
   void idx_m2squdotm1acc(idx<double> &a, idx<double> &x, idx<double> &y) {
@@ -862,8 +407,7 @@ namespace ebl {
     }
   }
 
-  ////////////////////////////////////////////////////////////////
-  // idx_m1sqextm1
+  // idx_m1sqextm1 /////////////////////////////////////////////////////////////
 
   // Aij = Xi * Yj^2
   void idx_m1squextm1(idx<double> &x, idx<double> &y, idx<double> &a) {
@@ -888,8 +432,7 @@ namespace ebl {
     }
   }
 
-  ////////////////////////////////////////////////////////////////
-  // idx_m1sqextm1acc
+  // idx_m1sqextm1acc //////////////////////////////////////////////////////////
 
   // Aij += Xi * Yj^2
   void idx_m1squextm1acc(idx<double> &x, idx<double> &y, idx<double> &a) {
@@ -915,151 +458,7 @@ namespace ebl {
     }
   }
 
-  ////////////////////////////////////////////////////////////////
-  // norm_columns
-
-#ifdef __CBLAS__
-  void norm_columns(idx<double> &m) {
-    if ( m.order() != 2) { eblerror("norm_columns: must be an idx2"); }
-    idx_eloop1(lm,m,double) {
-      double *p = lm.idx_ptr();
-      double z = cblas_dnrm2(m.dim(0),p,m.mod(0));
-      cblas_dscal(m.dim(0),1/z,p,m.mod(0));
-    }
-  }
-
-  void norm_columns(idx<float> &m) {
-    if ( m.order() != 2) { eblerror("norm_columns: must be an idx2"); }
-    idx_eloop1(lm,m,float) {
-      float *p = lm.idx_ptr();
-      float z = cblas_snrm2(m.dim(0),p,m.mod(0));
-      cblas_sscal(m.dim(0),1/z,p,m.mod(0));
-    }
-  }
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_max
-
-#ifdef __IPP__
-  idx_max_macro(ubyte)
-  idx_max_macro(uint16)
-  idx_max_macro(int16)
-  idx_max_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_min
-
-#ifdef __IPP__
-  idx_min_macro(ubyte)
-  idx_min_macro(uint16)
-  idx_min_macro(int16)
-  idx_min_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_indexmax
-
-#ifdef __IPP__
-  idx_indexmax_macro(ubyte)
-  idx_indexmax_macro(uint16)
-  idx_indexmax_macro(int16)
-  idx_indexmax_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_indexmin
-
-#ifdef __IPP__
-  idx_indexmin_macro(ubyte)
-  idx_indexmin_macro(uint16)
-  idx_indexmin_macro(int16)
-  idx_indexmin_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_max between 2 idx's (in-place)
-
-#ifdef __IPP__
-  idx_maxevery_macro(ubyte)
-  idx_maxevery_macro(uint16)
-  idx_maxevery_macro(int16)
-  idx_maxevery_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_max between 2 idx's (not-in-place)
-
-#ifdef __IPP__
-  idx_maxevery2_macro(ubyte)
-  idx_maxevery2_macro(uint16)
-  idx_maxevery2_macro(int16)
-  idx_maxevery2_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_sqrdist (in-place)
-
-#ifdef __IPP__
-  idx_sqrdist_macro(ubyte)
-  idx_sqrdist_macro(uint16)
-  idx_sqrdist_macro(int16)
-  idx_sqrdist_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_sqrdist (with out idx0)
-
-#ifdef __IPP__
-  idx_sqrdist2_macro(ubyte)
-  idx_sqrdist2_macro(uint16)
-  idx_sqrdist2_macro(int16)
-  idx_sqrdist2_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_threshold (in-place)
-
-#ifdef __IPP__
-  idx_threshold_in_place_macro(ubyte)
-  idx_threshold_in_place_macro(uint16)
-  idx_threshold_in_place_macro(int16)
-  idx_threshold_in_place_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_threshold (not-in-place)
-
-#ifdef __IPP__
-  idx_threshold_macro(ubyte)
-  idx_threshold_macro(uint16)
-  idx_threshold_macro(int16)
-  idx_threshold_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_threshold (with value, in-place)
-
-#ifdef __IPP__
-  idx_threshold_in_place_val_macro(ubyte)
-  idx_threshold_in_place_val_macro(uint16)
-  idx_threshold_in_place_val_macro(int16)
-  idx_threshold_in_place_val_macro(float32)
-#endif
-
-  ////////////////////////////////////////////////////////////////
-  // idx_threshold (with value, not-in-place)
-
-#ifdef __IPP__
-  idx_threshold_val_macro(ubyte)
-  idx_threshold_val_macro(uint16)
-  idx_threshold_val_macro(int16)
-  idx_threshold_val_macro(float32)
-#endif
-  
-  ////////////////////////////////////////////////////////////////  
-  // strings_to_idx
+  // strings_to_idx ////////////////////////////////////////////////////////////
 
   idx<ubyte> strings_to_idx(idx<const char *> &strings) {
     // determine max length of strings
@@ -1085,7 +484,7 @@ namespace ebl {
   template <> void idx_modulo(idx<long double> &m, long double mod) {
     idx_aloopf1(e, m, long double, { *e = fmod(*e, mod); });
   }
-
+  
   template <> void idx_modulo(idx<float> &m, float mod) {
     idx_aloopf1(e, m, float, { *e = fmod(*e, mod); });
   }

@@ -41,6 +41,7 @@
 #include "libidx.h"
 #include "libeblearn.h"
 #include "libeblearntools.h"
+#include "eblapp.h"
 
 #ifndef __WINDOWS__
 #include <fenv.h>
@@ -50,74 +51,152 @@
 #include "libeblearngui.h"
 #endif
 
-using namespace std;
-using namespace ebl; // all eblearn objects are under the ebl namespace
-
 typedef float Tnet; // precision at which network is fprop (float is ok)
 typedef float Tdata; // data's original type
 typedef int Tlabel; // label's original type
 #define bbsds Tnet,Tdata,int,bbstate_idx<Tnet>
+
+// global variables
+
+bool dump = false; // Dump weights/buffers of first sample.
 
 // dataset fproping ////////////////////////////////////////////////////////////
 
 void fprop_and_save(configuration &conf, module_1_1<fs(Tnet)> &net,
 		    datasource<Tnet,Tdata> &ds,
 		    string outdir, string data_fname, string arch_name,
-		    uint total_size) {
+		    uint &counter, uint total_size) {
   cout << "Fprop network on " << ds.size() << " samples from " << ds.name()
        << endl;
   ostringstream name, fname;
-  fstate_idx<Tnet> in;
+  fstate_idx<Tnet> in, out;
+  mstate<fstate_idx<Tnet> > msin;
+  string insize;
     
   // determine output size
   ds.init_epoch();
-  ds.fprop_data(in);
-  idxdim outd = in.x.get_idxdim();
-  outd.setdims(1);
-  fstate_idx<Tnet> out(outd);
-  net.fprop(in, out);
-  cout << "Input size: " << in.x << " Output size: " << out.x << endl;
+
+  if (net.mstate_input()) { // input must be multi-state
+    ds.fprop_data(msin);
+    net.fprop(msin, out);
+    insize << msin[0].x;
+  } else {
+    ds.fprop_data(in);
+    net.fprop(in, out);
+    insize << in.x;
+  }
+  cout << "Input size: " << insize << " Output size: " << out.x << endl;
 
   // input/output names
   string output = outdir;
   output << "/" << ebl::basename(data_fname.c_str()) << "_" << arch_name;
+  string outtmp;
+  outtmp << output << "_tmp/";
+  if (!mkdir_full(outtmp.c_str()))
+    eblerror("failed to create " << outtmp);
   cout << "Input: " << data_fname << endl;
   cout << "Output: " << output << endl;
+  cout << "Temporary outputs: " << outtmp << endl;
     
-  // prepare output matrix
-  idxdim d(out.x);
-  d.insert_dim(0, ds.size());
-  idx<Tnet> allout(d);
-  idx_clear(allout);
-
   // extract
   timer textraction;
   textraction.start(); // start extraction timer
-  uint i = 0, info = 100;
+  uint info = 100;
+  std::list<string> files;
   if (conf.exists("epoch_show_modulo"))
     info = conf.get_uint("epoch_show_modulo");
-  ds.init_epoch();    
-  { idx_bloop1(tout, allout, Tnet) {
-      out.x = tout;
+  ds.init_epoch();
+  ds.set_test(); // make sure we iterate straight through dataset
+  for (uint i = 0; i < ds.size(); ++i) {
+    // fprop
+    TIMING2("between fprop and sample retrieval");
+    if (net.mstate_input()) { // input must be multi-state
+      ds.fprop_data(msin);
+      TIMING2("sample retrieval");
+      if (dump) {
+	cout << "Dumping weights/internal buffers of " << msin << endl;
+	net.dump_fprop(msin, out);
+	return ;
+      } else
+	net.fprop(msin, out);
+      TIMING2("entire fprop");
+    } else {
       ds.fprop_data(in); // get input
-      net.fprop(in, out); // fprop input
-      ds.next(); // move to next input
-      i++;
-      if (i % info == 0)
-    	cout << "Extracted " << i << " / " << total_size << ", elapsed: "
-    	     << textraction.elapsed() << ", ETA: "
-    	     << textraction.eta(i, total_size) << endl;
-    }}
+      TIMING2("sample retrieval");
+      if (dump) {
+	cout << "Dumping weights/internal buffers of " << in << endl;
+	net.dump_fprop(in, out);
+	return ;
+      } else
+	net.fprop(in, out); // fprop input
+      TIMING2("entire fprop");
+    }
+    // save output to individual files
+    string file;
+    file << outtmp << i << ".mat";
+    save_matrix(out.x, file);
+    files.push_back(file);
+    // move to next input
+    ds.next();
+    counter++;
+    if (counter % info == 0)
+      cout << "Extracted " << counter << " / " << total_size << ", elapsed: "
+	   << textraction.elapsed() << ", ETA: "
+	   << textraction.eta(counter, total_size) << endl;
+  }
   cout << "Extraction time: " << textraction.elapsed() << endl;
 
   // saving outputs
-  cout << "Outputs min: " << idx_min(allout)
-       << " max: " << idx_max(allout) << endl;
   string out_fname;
   out_fname << output << "_data.mat";
-  save_matrix(allout, out_fname);
+  save_matrices<Tnet>(files, out_fname);
+  midx<Tnet> allout = load_matrices<Tnet>(out_fname, true);
   cout << "Saved output to " << out_fname << " (" << allout
        << ")" << endl;
+  // delete temporary files
+  list<string>::iterator fi = files.begin();
+  for ( ; fi != files.end(); ++fi)
+    rm_file(fi->c_str());
+  rm_file(outtmp.c_str());
+}
+
+// args ////////////////////////////////////////////////////////////////////////
+
+// parse command line input
+bool parse_args(int argc, char **argv) {
+  // Read arguments from shell input
+  if (argc <= 1) {
+    cerr << "input error: expecting arguments." << endl;
+    return false;
+  }
+  // loop over arguments
+  for (int i = 2; i < argc; ++i) {
+    try {
+      if (strcmp(argv[i], "-dump") == 0) {
+	dump = true;
+      } else throw 2;
+    } catch (int err) {
+      cerr << "input error: ";
+      switch (err) {
+      case 0: cerr << "expecting string after " << argv[i-1]; break;
+      case 1: cerr << "expecting integer after " << argv[i-1]; break;
+      case 2: cerr << "unknown parameter " << argv[i-1]; break;
+      default: cerr << "undefined error";
+      }
+      cerr << endl << endl;
+      return false;
+    }
+  }
+  return true;
+}
+
+// print command line usage
+void print_usage() {
+  cout << "Usage: ./dsfprop <conf> [OPTIONS]"
+       << endl << "Options are:" << endl;
+  cout << "  -dump" << endl
+       << "   Dump individual weights and internal buffers of 1st sample."
+       << endl;
 }
 
 // main ////////////////////////////////////////////////////////////////////////
@@ -128,9 +207,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 int main(int argc, char **argv) { // regular main without gui
 #endif
   cout << "* Dataset fprop" << endl;
-  if (argc != 2) {
-    cout << "Usage: ./dsfprop <config file>" << endl;
-    eblerror("config file not specified");
+  // parse arguments
+  if (!parse_args(argc, argv)) {
+    print_usage();
+    return -1;
   }
 #ifdef __LINUX__
     feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
@@ -141,56 +221,21 @@ int main(int argc, char **argv) { // regular main without gui
     gtimer.start(); // total running time
     configuration conf(argv[1]); // configuration file
     string input_root = conf.get_string("root");
-    bool              silent        = conf.exists_true("silent");
+    string outdir = input_root;
+    if (conf.exists("root_out")) outdir = conf.get_string("root_out");
     uint              ipp_cores     = 1;
     if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
     ipp_init(ipp_cores); // limit IPP (if available) to 1 core
 
-    // load dataset ////////////////////////////////////////////////////////////
+    //! load datasets
     uint noutputs = 0;
-    string valdata = conf.get_string("val"),
-      traindata = conf.get_string("train");
-    datasource<Tnet,Tdata> *test_ds = NULL;
-    // if labels are present, use them to determine output size
-    if (conf.exists("val_labels")) {
-      string vallabels = conf.get_string("val_labels");
-      string valjitters;
-      if (conf.exists("val_jitters"))
-	valjitters = conf.get_string("val_jitters");
-      if (conf.exists_true("classification")) { // class dataset
-	string valclasses;
-	if (conf.exists("val_classes"))
-	  valclasses = conf.get_string("val_classes");
-	test_ds = new class_datasource<Tnet,Tdata,Tlabel>
-	  (valdata.c_str(), vallabels.c_str(), valjitters.c_str(),
-	   valclasses.c_str(), "val");
-	noutputs = ((class_datasource<Tnet,Tdata,Tlabel>*)test_ds)->
-	  get_nclasses();
-      } else { // labeled datasource
-	test_ds = new labeled_datasource<Tnet,Tdata,Tlabel>
-	  (valdata.c_str(), vallabels.c_str(), valjitters.c_str(), "val");
-	idxdim d = ((labeled_datasource<Tnet,Tdata,Tlabel>*)test_ds)->
-	  label_dims();
-	noutputs = d.nelements();
-      }
-    } else // simple datasource
-      test_ds = new datasource<Tnet,Tdata>(valdata.c_str(), "val");
-    if (conf.exists("noutputs")) // force number of outputs
-	noutputs = conf.get_uint("noutputs");
-    // load train set
-    datasource<Tnet,Tdata> train_ds(traindata.c_str(), "train");
-    // use simple iterating of test sets
-    test_ds->set_test();
-    train_ds.set_test();
-    // apply biases and coeffs if present
-    if (conf.exists("data_bias")) {
-      test_ds->set_data_bias((Tnet)conf.get_double("data_bias"));
-      train_ds.set_data_bias((Tnet)conf.get_double("data_bias"));
-    }
-    if (conf.exists("data_coeff")) {
-      test_ds->set_data_coeff((Tnet)conf.get_double("data_coeff"));
-      train_ds.set_data_coeff((Tnet)conf.get_double("data_coeff"));
-    }
+    labeled_datasource<Tnet,Tdata,Tlabel> *train_ds = NULL;
+    labeled_datasource<Tnet,Tdata,Tlabel> *test_ds = NULL;
+    string valdata, traindata;
+    test_ds = create_validation_set<Tnet,Tdata,Tlabel>(conf, noutputs, valdata);
+    if (!conf.exists_true("test_only"))
+      train_ds = 
+	create_training_set<Tnet,Tdata,Tlabel>(conf, noutputs, traindata);
 
     // create network //////////////////////////////////////////////////////////
     answer_module<bbsds> *answer = create_answer<bbsds>(conf, noutputs);
@@ -201,8 +246,10 @@ int main(int argc, char **argv) { // regular main without gui
     }
     //! create the network weights, network and trainer
     parameter<fs(Tnet) > theparam;// create trainable parameter
+    intg inthick = conf.exists("input_thickness") ?
+      conf.get_int("input_thickness") : -1;
     module_1_1<fs(Tnet) > *net =
-      create_network<fs(Tnet) >(theparam, conf, noutputs, "arch");
+      create_network<fs(Tnet) >(theparam, conf, inthick, noutputs, "arch");
     //! initialize the network weights
     forget_param_linear fgp(1, 0.5);
     if (conf.exists_true("retrain")) {
@@ -215,24 +262,30 @@ int main(int argc, char **argv) { // regular main without gui
       manually_load_network(*((layers<fs(Tnet) >*)net), conf);
 
     // save weights ////////////////////////////////////////////////////////////
-    string outdir = input_root;
     outdir << "/features/";
     mkdir_full(outdir);
     cout << "Saving outputs to " << outdir << endl;
     string arch_name = conf.get_string("arch_name");
+    if (conf.exists("meta_conf_shortname"))
+      arch_name = conf.get_string("meta_conf_variables");
     string weights_name = outdir;
     weights_name << arch_name << "_weights.mat";
     theparam.save_x(weights_name.c_str());
     cout << "Saved weights to " << weights_name << endl;     
     
     // fprop network ///////////////////////////////////////////////////////////
-    uint total_size = test_ds->size() + train_ds.size();
-    fprop_and_save(conf, *net, *test_ds, outdir, valdata, arch_name, total_size);
-    fprop_and_save(conf, *net, train_ds, outdir, traindata, arch_name, total_size);    
+    uint total_size = test_ds->size() + train_ds->size();
+    uint counter = 0;
+    fprop_and_save(conf, *net, *test_ds, outdir, valdata, arch_name, 
+		   counter, total_size);
+    if (!dump)
+      fprop_and_save(conf, *net, *train_ds, outdir, traindata, arch_name, 
+		     counter, total_size);    
     
     //free variables
     if (net) delete net;
     if (test_ds) delete test_ds;
+    if (train_ds) delete train_ds;
 #ifdef __GUI__
     quit_gui(); // close all windows
 #endif

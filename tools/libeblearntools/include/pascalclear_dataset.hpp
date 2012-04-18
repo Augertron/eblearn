@@ -38,6 +38,7 @@
 #include "xml_utils.h"
 
 #ifdef __BOOST__
+#define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 using namespace boost::filesystem;
@@ -69,7 +70,6 @@ namespace ebl {
 
   template <class Tdata>
   bool pascalclear_dataset<Tdata>::extract() {
-    this->init_preprocessing();
 #ifdef __BOOST__    
 #ifdef __XML__    
     cout << "Clearing objects from original pascal images..." << endl;

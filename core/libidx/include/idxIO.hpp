@@ -35,10 +35,6 @@
 
 #include "idxops.h"
 
-// endianess test
-static int endiantest = 1;
-#define LITTLE_ENDIAN_P (*(char*)&endiantest)
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -92,7 +88,7 @@ namespace ebl {
     case MAGIC_DOUBLE_VINCENT: 	return "double (pascal vincent)";
     default: 
       string s;
-      s << "unknown type (magic: " << (void*)magic << ")";
+      s << "unknown type (magic: " << reinterpret_cast<void*>(magic) << ")";
       return s;
     }
   }
@@ -126,7 +122,9 @@ namespace ebl {
 
   template <class T> inline T endian(T ptr) {
     T v = ptr;
-    if (LITTLE_ENDIAN_P) reverse_n(&v, 1);
+    // endianess test
+    int endiantest = 1;
+    if (*(char*)&endiantest) reverse_n(&v, 1);
     return v;
   }
 
@@ -143,6 +141,7 @@ namespace ebl {
     idx_aloop1(i, m, T) {
       res = fread(&(*i), sizeof (T), 1, fp);
     }
+    res = 0; // just to avoid warning
   }
   
   ////////////////////////////////////////////////////////////////
@@ -245,7 +244,7 @@ namespace ebl {
   }
 
   template <typename T>
-  idxs<T> load_matrices(const std::string &filename, bool ondemand){
+  midx<T> load_matrices(const std::string &filename, bool ondemand){
     // open file
     file *f = new file(filename.c_str(), "rb");
     FILE *fp = f->get_fp();
@@ -254,13 +253,27 @@ namespace ebl {
     // switch loading mode
     if (ondemand) { // do not load data now
       fseek(fp, 0, SEEK_SET); // reset fp to beginning
-      idxs<T> all(p.dim(0), f, &p);
+      midx<T> all(p.get_idxdim(), f, &p);
       return all;
     } else { // load all data now
+      cout << "Loading the whole dataset into memory" <<endl;
       // read all present matrices
-      idxs<T> all(p.dim(0));
+      midx<T> all(p.dim(0));
       for (uint i = 0; i < p.dim(0); ++i) {
-	if (p.get(i) == 1) { // matrix is present, get it
+	if (p.get(i) > 0) { // matrix is present, get it
+	  if (fseek(fp, p.get(i), SEEK_SET)) {
+	    fseek(fp, 0, SEEK_END);
+	    fpos_t fppos;
+	    fgetpos(fp, &fppos);
+#if defined(__WINDOWS__) || defined(__MAC__)
+	    eblerror("fseek to position " << p.get(i) << " failed, "
+		     << "file is " << (intg) fppos << " big");
+#else
+	    eblerror("fseek to position " << p.get(i) << " failed, "
+		     << "file is " << (intg) fppos.__pos << " big");
+#endif
+	  }
+	  // move fp to matrix beginning
 	  idx<T> m = load_matrix<T>(fp);
 	  all.set(m, i);
 	}
@@ -288,9 +301,9 @@ namespace ebl {
   // TODO: intg support
   template <typename T> bool save_matrix(idx<T>& m, const char *filename) {
     FILE *fp = fopen(filename, "wb");
-
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << ")." << endl;
+      cerr << "save_matrix failed (" << filename << "): ";
+      perror("");
       return false;
     }
     bool ret = save_matrix(m, fp);
@@ -320,18 +333,20 @@ namespace ebl {
     int res;
     idx_aloop1(k, m, T) 
       res = fwrite(&(*k), sizeof (T), 1, fp);
+    res = 0; // just to avoid compilation warning
     return true;
   }
 
   template <typename T>
-  bool save_matrices(idxs<T>& m, const std::string &filename) {
+  bool save_matrices(midx<T>& m, const std::string &filename) {
     FILE *fp = fopen(filename.c_str(), "wb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << ")." << endl;
+      cerr << "save_matrix failed (" << filename << "): ";
+      perror("");
       return false;
     }
     // allocate offset matrix
-    idx<int64> offsets(m.dim(0));
+    idx<int64> offsets(m.get_idxdim());
     idx_clear(offsets);
     // save offsets matrix first    
     bool ret = save_matrix(offsets, fp);
@@ -343,23 +358,49 @@ namespace ebl {
     }
     // then save all matrices contained in m
     fpos_t pos;
-    for (uint i = 0; i < m.dim(0); ++i) {
-      if (m.exists(i)) {
-	// save offset of matrix
-	fgetpos(fp, &pos);
-#ifdef __WINDOWS__
-	offsets.set((int64) pos, i);
+    // TODO: implement generic looping for midx
+    if (m.order() == 1) {
+      for (uint i = 0; i < m.dim(0); ++i) {
+	if (m.exists(i)) {
+	  // save offset of matrix
+	  fgetpos(fp, &pos);
+#if defined(__WINDOWS__) || defined(__MAC__)
+	  offsets.set((int64) pos, i);
 #else
-	offsets.set((int64) pos.__pos, i);
+	  offsets.set((int64) pos.__pos, i);
 #endif
-	// save matrix to file
-	idx<T> e = m.get(i);
-	ret = save_matrix(e, fp);
-	if (!ret) {
-	  cerr << "failed to write matrix " << e << " to " << filename << "."
-	       << endl;
-	  fclose(fp);
-	  return false;
+	  // save matrix to file
+	  idx<T> e = m.get(i);
+	  ret = save_matrix(e, fp);
+	  if (!ret) {
+	    cerr << "failed to write matrix " << e << " to " << filename << "."
+		 << endl;
+	    fclose(fp);
+	    return false;
+	  }
+	}
+      }
+    } else if (m.order() == 2) {
+      for (uint i = 0; i < m.dim(0); ++i) {
+	for (uint j = 0; j < m.dim(1); ++j) {
+	  if (m.exists(i, j)) {
+	    // save offset of matrix
+	    fgetpos(fp, &pos);
+#if defined(__WINDOWS__) || defined(__MAC__)
+	    offsets.set((int64) pos, i, j);
+#else
+	    offsets.set((int64) pos.__pos, i, j);
+#endif
+	    // save matrix to file
+	    idx<T> e = m.get(i, j);
+	    ret = save_matrix(e, fp);
+	    if (!ret) {
+	      cerr << "failed to write matrix " << e << " to "
+		   << filename << "." << endl;
+	      fclose(fp);
+	      return false;
+	    }
+	  }
 	}
       }
     }
@@ -367,7 +408,143 @@ namespace ebl {
     // finally rewrite offset matrix at beginning of file
     fp = fopen(filename.c_str(), "rb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << ")." << endl;
+      cerr << "save_matrix failed (" << filename << "): ";
+      perror("");
+      return false;
+    }
+    ret = save_matrix(offsets, fp);
+    if (!ret) {
+      cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << endl;
+      fclose(fp);
+      return false;
+    }    
+    fclose(fp);
+    return ret;
+  }
+
+  template <typename T>
+  bool save_matrices_individually(midx<T>& m, const std::string &root,
+				  bool print) {
+    intg id = 0;
+    // TODO: implement generic looping for midx
+    if (m.order() == 1) {
+      for (uint i = 0; i < m.dim(0); ++i) {
+	if (m.exists(i)) {
+	  // save matrix to file
+	  string fname; fname << root << "_" << id++ << ".mat";
+	  idx<T> e = m.get(i);
+	  if (!save_matrix(e, fname)) return false;
+	  if (print) std::cout << "saved " << fname << std::endl;
+	}
+      }
+    } else if (m.order() == 2) {
+      for (uint i = 0; i < m.dim(0); ++i) {
+	for (uint j = 0; j < m.dim(1); ++j) {
+	  if (m.exists(i, j)) {
+	    // save matrix to file
+	    string fname; fname << root << "_" << id++ << ".mat";
+	    idx<T> e = m.get(i, j);
+	    if (!save_matrix(e, fname)) return false;
+	    if (print) std::cout << "saved " << fname << std::endl;
+	  }
+	}
+      }
+    }
+    return true;
+  }
+  
+  template <typename T>
+  bool save_matrices(midx<T>& m1, midx<T> &m2, const std::string &filename) {
+    FILE *fp = fopen(filename.c_str(), "wb+");
+    if (!fp) {
+      cerr << "save_matrix failed (" << filename << "): ";
+      perror("");
+      return false;
+    }
+    // target dimensions
+    idxdim d1 = m1, d2 = m2, dd1 = m1, dd2 = m2;
+    dd1.remove_dim(0); dd2.remove_dim(0);
+    if (dd1 != dd2)
+      eblerror("expected same dimensions but got " << dd1 << " and " << dd2);
+    idxdim dall(d1);
+    dall.setdim(0, d1.dim(0) + d2.dim(0));
+    // allocate offset matrix
+    idx<int64> offsets(dall);
+    idx_clear(offsets);
+    // save offsets matrix first    
+    bool ret = save_matrix(offsets, fp);
+    if (!ret) {
+      cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << endl;
+      fclose(fp);
+      return false;
+    }
+    // then save all matrices contained in m
+    fpos_t pos;
+    // TODO: implement generic looping for midx
+    midx<T> *m = &m1;
+    if (dall.order() == 1) {
+      for (uint i = 0, k = 0; i < dall.dim(0); ++i, ++k) {
+	// switch to second matrix
+	if (i == m1.dim(0)) {
+	  m = &m2;
+	  k = 0; // reset iterator
+	}
+	if (m->exists(k)) {
+	  // save offset of matrix
+	  fgetpos(fp, &pos);
+#if defined(__WINDOWS__) || defined(__MAC__)
+	  offsets.set((int64) pos, i);
+#else
+	  offsets.set((int64) pos.__pos, i);
+#endif
+	  // save matrix to file
+	  idx<T> e = m->get(k);
+	  ret = save_matrix(e, fp);
+	  if (!ret) {
+	    cerr << "failed to write matrix " << e << " to " << filename << "."
+		 << endl;
+	    fclose(fp);
+	    return false;
+	  }
+	}
+      }
+    } else if (m->order() == 2) {
+      for (uint i = 0, k = 0; i < dall.dim(0); ++i, ++k) {
+	// switch to second matrix
+	if (i == m1.dim(0)) {
+	  m = &m2;
+	  k = 0; // reset iterator
+	}
+	for (uint j = 0; j < m->dim(1); ++j) {
+	  if (m->exists(k, j)) {
+	    // save offset of matrix
+	    fgetpos(fp, &pos);
+#if defined(__WINDOWS__) || defined(__MAC__)
+	    offsets.set((int64) pos, i, j);
+#else
+	    offsets.set((int64) pos.__pos, i, j);
+#endif
+	    // save matrix to file
+	    idx<T> e = m->get(k, j);
+	    ret = save_matrix(e, fp);
+	    if (!ret) {
+	      cerr << "failed to write matrix " << e << " to "
+		   << filename << "." << endl;
+	      fclose(fp);
+	      return false;
+	    }
+	  }
+	}
+      }
+    }
+    fclose(fp);
+    // finally rewrite offset matrix at beginning of file
+    fp = fopen(filename.c_str(), "rb+");
+    if (!fp) {
+      cerr << "save_matrix failed (" << filename << "): ";
+      perror("");
       return false;
     }
     ret = save_matrix(offsets, fp);
@@ -384,13 +561,25 @@ namespace ebl {
   template <typename T>
   bool save_matrices(std::list<std::string> &filenames,
 		     const std::string &filename) {
+    if (filenames.size() == 0) eblerror("expected a non-empty list");
     FILE *fp = fopen(filename.c_str(), "wb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << ")." << endl;
+      cerr << "save_matrix failed (" << filename << "): ";
+      perror("");
       return false;
     }
+    // determine matrices dims
+    idxdim alld(filenames.size());
+    std::string s = filenames.front();
+    bool multi = has_multiple_matrices(s.c_str());
+    if (multi) {
+      midx<T> e = load_matrices<T>(s);
+      idxdim d = e.get_idxdim();
+      for (uint i = 0; i < d.order(); ++i)
+	alld.insert_dim(d.order(), d.dim(i));
+    }
     // allocate offsets matrix
-    idx<int64> offsets(filenames.size());
+    idx<int64> offsets(alld);
     idx_clear(offsets);
     // put this matrix first in the file
     bool ret = save_matrix(offsets, fp);
@@ -405,28 +594,51 @@ namespace ebl {
     intg j = 0;
     for (std::list<std::string>::iterator i = filenames.begin();
 	 i != filenames.end(); ++i, ++j) {
-      idx<T> e = load_matrix<T>(*i);
-      // save offset of matrix
-      fgetpos(fp, &pos);
-#ifdef __WINDOWS__
-      offsets.set((int64) pos, j);
+      if (multi) { // each matrix is composed of multiple matrices
+	midx<T> e = load_matrices<T>(*i, false);
+	for (uint k = 0; k < e.dim(0); ++k) {
+	  // save offset of matrix
+	  fgetpos(fp, &pos);
+#if defined(__WINDOWS__) || defined(__MAC__)
+	  offsets.set((int64) pos, j, k);
 #else
-      offsets.set((int64) pos.__pos, j);
+	  offsets.set((int64) pos.__pos, j, k);
 #endif
-      // save matrix into file
-      ret = save_matrix(e, fp);
-      if (!ret) {
-	cerr << "failed to write matrix " << e << " to " << filename << "."
-	     << endl;
-	fclose(fp);
-	return false;
-      }      
+	  // save matrix into file
+	  idx<T> ee = e.get(k);
+	  ret = save_matrix(ee, fp);
+	  if (!ret) {
+	    cerr << "failed to write matrix " << k << " to " << filename << "."
+		 << endl;
+	    fclose(fp);
+	    return false;
+	  }
+	}
+      } else {
+	idx<T> e = load_matrix<T>(*i);
+	// save offset of matrix
+	fgetpos(fp, &pos);
+#if defined(__WINDOWS__) || defined(__MAC__)
+	offsets.set((int64) pos, j);
+#else
+	offsets.set((int64) pos.__pos, j);
+#endif
+	// save matrix into file
+	ret = save_matrix(e, fp);
+	if (!ret) {
+	  cerr << "failed to write matrix " << e << " to " << filename << "."
+	       << endl;
+	  fclose(fp);
+	  return false;
+	}
+      }
     }
     fclose(fp);
     // finally rewrite offset matrix at beginning of file
     fp = fopen(filename.c_str(), "rb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << ")." << endl;
+      cerr << "save_matrix failed (" << filename << "): ";
+      perror("");
       return false;
     }
     ret = save_matrix(offsets, fp);
@@ -438,6 +650,42 @@ namespace ebl {
     }
     fclose(fp);
     return ret;
+  }
+  
+  template <typename T>
+  bool save_matrix(std::list<std::string> &filenames,
+		   const std::string &filename) {
+    if (filenames.size() == 0) eblerror("expected a non-empty list");
+    FILE *fp = fopen(filename.c_str(), "wb+");
+    if (!fp) {
+      cerr << "save_matrix failed (" << filename << "): ";
+      perror("");
+      return false;
+    }
+    // determine matrices dims
+    idxdim alld(filenames.size());
+    std::string s = filenames.front();
+    bool multi = has_multiple_matrices(s.c_str());
+    if (multi)
+      eblerror("expected a single-matrix file in " << s.c_str());
+    idx<T> e = load_matrix<T>(s);
+    idxdim d = e.get_idxdim();
+    for (uint i = 0; i < d.order(); ++i)
+      alld.insert_dim(alld.order(), d.dim(i));
+    // allocate matrix
+    idx<T> all(alld);
+    idx_clear(all);
+    // add all matrices
+    intg j = 0;
+    for (std::list<std::string>::iterator i = filenames.begin();
+	 i != filenames.end(); ++i, ++j) {
+      if (multi)
+	eblerror("expected a single-matrix file in " << s.c_str());      
+      idx<T> e = all.select(0, j);
+      load_matrix<T>(e, *i);
+    }
+    // save matrix
+    return save_matrix(all, filename);
   }
   
 } // end namespace ebl

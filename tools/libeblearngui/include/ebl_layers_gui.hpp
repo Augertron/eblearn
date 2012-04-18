@@ -165,8 +165,8 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display normalization internals */				\
-    weighted_std_module_gui::dname(layer.norm, in, out, h0, w0,		\
-				   zoom, vmin, vmax, show_out, false);	\
+    contrast_norm_module_gui::dname(layer.norm, in, out, h0, w0,	\
+				    zoom, vmin, vmax, show_out, false);	\
   }
 
   CONVABSNORM_LAYER_GUI(display_fprop, x, fprop, fstate_idx)

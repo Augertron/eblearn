@@ -20,7 +20,7 @@ SET(EBLEARN_TOOLS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 ################################################################################
 add_library (eblearntools SHARED
   src/configuration.cpp
-  src/gdb.cpp
+#  src/gdb.cpp
   src/tools_utils.cpp
   src/opencv.cpp
   src/metaparser.cpp
@@ -32,8 +32,16 @@ add_library (eblearntools SHARED
   src/xml_utils.cpp
   src/dataset.cpp
   src/pascal_dataset.cpp
+  src/pascal_xml.cpp
 #  src/vfw.cpp
   )
+
+# change target name if debugging
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set_target_properties(eblearntools PROPERTIES OUTPUT_NAME
+    "eblearntools_debug")
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+
 # link executable with external libraries
 target_link_libraries (eblearntools eblearn idx)
 LINK_OPENCV(eblearntools cv)
@@ -49,3 +57,4 @@ LINK_QT(eblearntools eblearngui)
 LINK_KINECT(eblearntools)
 LINK_XML(eblearntools)
 LINK_PTHREAD(eblearntools)
+#LINK_MPI(eblearntools)

@@ -156,7 +156,7 @@ namespace ebl {
       magic = magic_vincent;
     } else { // unkown magic
       fclose(fp);
-      eblthrow("unknown magic number: " << (void*) magic
+      eblthrow("unknown magic number: " << reinterpret_cast<void*>(magic)
 	       << " or " << magic << " vincent: " << magic_vincent);
     }
     // read each dimension
@@ -233,7 +233,7 @@ namespace ebl {
     fgetpos(fp, &endpos);
     fclose(fp);
     // compare
-#ifdef __WINDOWS__
+#if defined(__WINDOWS__) || defined(__MAC__)
     if (pos != endpos)
 #else
     if (pos.__pos != endpos.__pos)

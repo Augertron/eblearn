@@ -1322,7 +1322,7 @@ template <> void test_power(intg i1, intg i2, intg i3, intg i4,
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
 	  ASSERT_EQUAL(mt2.get(it1, it2, it3, it4),
-		       powf(mt.get(it1,it2,it3,it4), p));
+		       pow(mt.get(it1,it2,it3,it4), p));
 	}
 }
 
@@ -1357,6 +1357,6 @@ void idxops_test2::idx_power2() {
   test_power(i1, i2, i3, i4, get_test_idx_nc<int16>(i1, i2, i3, i4), (int16)2);
   test_power(i1, i2, i3, i4, get_test_idx_nc<uint32>(i1, i2, i3, i4), 44u);
   test_power(i1, i2, i3, i4, get_test_idx_nc<int32>(i1, i2, i3, i4), 9);
-  test_power(i1, i2, i3, i4, get_test_idx_nc<float32>(i1, i2, i3, i4), 23.5f);
+  // test_power(i1, i2, i3, i4, get_test_idx_nc<float32>(i1, i2, i3, i4), 9.5f);
   test_power(i1, i2, i3, i4, get_test_idx_nc<float64>(i1, i2, i3, i4), 3.23e-6);
 }

@@ -34,6 +34,8 @@
 #include <algorithm>
 #include <sstream>
 #include <iostream>
+#include <errno.h>
+#include "libidx.h"
 
 #ifdef __BOOST__
 #define BOOST_FILESYSTEM_VERSION 2
@@ -117,7 +119,7 @@ namespace ebl {
 
   list<string> *find_fullfiles(const string &dir, const char *pattern,
 			       list<string> *fl_, bool sorted, bool recursive,
-			       bool randomize, bool finddirs) {
+			       bool randomize, bool finddirs, bool fullpattern) {
     list<string> *fl = fl_;
 #ifndef __BOOST__
     eblerror("boost not installed, install and recompile");
@@ -133,8 +135,11 @@ namespace ebl {
     directory_iterator end_itr; // default construction yields past-the-end
     // first process all elements of current directory
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if ((finddirs || !is_directory(itr->status())) && 
-	  regex_match(itr->leaf().c_str(), what, r)) {
+      bool match;
+      // apply pattern on full name or leaf only
+      if (fullpattern) match = regex_match(itr->path().string().c_str(), what, r);
+      else match = regex_match(itr->leaf().c_str(), what, r);
+      if ((finddirs || !is_directory(itr->status())) && match) {
 	// found an match, add it to the list
 	fl->push_back(itr->path().string());
       }
@@ -144,7 +149,7 @@ namespace ebl {
       for (directory_iterator itr(p); itr != end_itr; ++itr) {
 	if (is_directory(itr->status()))
 	  find_fullfiles(itr->path().string(), pattern, fl, sorted, 
-			 recursive, randomize, finddirs);
+			 recursive, randomize, finddirs, fullpattern);
       }
     }
     // sort list
@@ -160,8 +165,7 @@ namespace ebl {
       vector<string>::iterator iv = v.begin();
       for (list<string>::iterator i = fl->begin(); i != fl->end(); ++i, ++iv)
 	*iv = *i;
-      delete fl;
-      fl = new list<string>();
+      fl->clear();
       random_shuffle(v.begin(), v.end());
       for (iv = v.begin(); iv != v.end(); ++iv)
 	fl->push_back(*iv);
@@ -191,6 +195,33 @@ namespace ebl {
     }
 #endif
     return total;
+  }
+
+  string increment_filename(const char *fullname, const uint stride) {
+    vector<string> path_vector = string_to_stringvector(fullname, '/');
+    string filename = path_vector[path_vector.size() - 1];
+    //split filename into name and extension
+    string filename_head = noext_name(filename.c_str());
+    //since file can contain . apart from the extension, make sure of that case
+    string filename_str = strip_last_num(filename_head);
+    string filename_num = return_last_num(filename_head);
+    intg filenum = string_to_intg(filename_num);
+    filenum = filenum + stride;
+    string outnum;
+    std::stringstream tempstream;
+    tempstream << filenum;
+    tempstream >> outnum;
+    if(outnum.size() < filename_num.size())
+      for(uint i=0; i < (1 + filename_num.size() - outnum.size()); ++i)
+        outnum = "0" + outnum;
+    //now add back the filename
+    filename_head = filename_str + outnum;
+    filename = filename_head + ext_name(filename.c_str());
+    string ret = "";
+    for(uint i = 0; i < (path_vector.size() - 1); ++i)
+      ret = ret + "/" + path_vector[i];
+    ret = ret+ "/" + filename;
+    return ret;
   }
 
   uint string_to_uint(const string &s) {
@@ -301,6 +332,32 @@ namespace ebl {
     return l;
   }
 
+  vector<int> string_to_intvector(const string &s_, char sep) {
+    return string_to_intvector(s_.c_str(), sep);
+  }
+  
+  vector<int> string_to_intvector(const char *s_, char sep) {
+    vector<int> l;
+    string s = s_;
+    int k = 0;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == sep)
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      if (!s0.empty()) {
+	l.push_back(string_to_int(s0));
+	k++;
+      }
+    }
+    return l;
+  }
+
   vector<uint> string_to_uintvector(const string &s_, char sep) {
     return string_to_uintvector(s_.c_str(), sep);
   }
@@ -321,6 +378,50 @@ namespace ebl {
 	s = s.substr(j + 1, s.size());
       if (!s0.empty()) {
 	l.push_back(string_to_uint(s0));
+	k++;
+      }
+    }
+    return l;
+  }
+
+  vector<intg> string_to_intgvector(const char *s_, char sep) {
+    vector<intg> l;
+    string s = s_;
+    int k = 0;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == sep)
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      if (!s0.empty()) {
+	l.push_back(string_to_intg(s0));
+	k++;
+      }
+    }
+    return l;
+  }
+
+  vector<float> string_to_floatvector(const char *s_, char sep) {
+    vector<float> l;
+    string s = s_;
+    int k = 0;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == sep)
+	  break ;
+      string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      if (!s0.empty()) {
+	l.push_back(string_to_float(s0));
 	k++;
       }
     }
@@ -375,9 +476,8 @@ namespace ebl {
     return d;
   }
 
-  vector<idxdim> string_to_idxdimvector(const char *s_, char vecsep,
-					char dimsep) {
-    vector<idxdim> v;
+  midxdim string_to_idxdimvector(const char *s_, char vecsep, char dimsep) {
+    midxdim v;
     list<string> l = string_to_stringlist(s_, vecsep);
     list<string>::iterator i;
     for (i = l.begin(); i != l.end(); ++i)
@@ -385,9 +485,8 @@ namespace ebl {
     return v;
   }
 
-  vector<fidxdim > string_to_fidxdimvector(const char *s_, char vecsep,
-					   char dimsep) {
-    vector<fidxdim > v;
+  mfidxdim string_to_fidxdimvector(const char *s_, char vecsep, char dimsep) {
+    mfidxdim v;
     list<string> l = string_to_stringlist(s_, vecsep);
     list<string>::iterator i;
     for (i = l.begin(); i != l.end(); ++i)
@@ -396,7 +495,7 @@ namespace ebl {
   }
 
   list<string> string_to_stringlist(const string &s_, char sep) {
-    return string_to_stringlist(s_.c_str());
+    return string_to_stringlist(s_.c_str(), sep);
   }
   
   list<string> string_to_stringlist(const char *s_, char sep) {
@@ -422,7 +521,7 @@ namespace ebl {
   }
 
   vector<string> string_to_stringvector(const string &s_, char sep) {
-    return string_to_stringvector(s_.c_str());
+    return string_to_stringvector(s_.c_str(), sep);
   }
   
   vector<string> string_to_stringvector(const char *s_, char sep) {

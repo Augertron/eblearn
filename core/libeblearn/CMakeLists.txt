@@ -16,14 +16,24 @@ SET(LIBEBLEARN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 # compile library
 ################################################################################
 ADD_LIBRARY (eblearn SHARED
-		     src/ebl_arch.cpp  
-		     src/ebl_states.cpp  
-		     src/ebl_utils.cpp  
-		     src/ebl_logger.cpp  
+		     src/ebl_arch.cpp
+		     src/ebl_states.cpp
+		     src/ebl_utils.cpp
+		     src/ebl_logger.cpp
 #		     src/detector.cpp
 		     src/bbox.cpp
+		     src/nms.cpp
 		     )
+
+# change target name if debugging
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set_target_properties(eblearn PROPERTIES OUTPUT_NAME "eblearn_debug")
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # linking
 ################################################################################
 TARGET_LINK_LIBRARIES(eblearn idx)
+
+if (LUA_FOUND)
+  TARGET_LINK_LIBRARIES(eblearn ${LUA_LIBRARIES})
+endif (LUA_FOUND)

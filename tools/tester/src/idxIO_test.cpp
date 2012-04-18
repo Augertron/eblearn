@@ -4,7 +4,7 @@
 #ifdef __WINDOWS__
 #define TEST_FILE "C:/Windows/Temp/eblearn_tester_matrix.mat"
 #else
-#define TEST_FILE "/tmp/eblearn_tester_matrix.mat"
+#define TEST_FILE "/tmp/eblearn_tester_matrix_2.mat"
 #endif
 
 extern string *gl_data_dir;
@@ -100,13 +100,13 @@ void idxIO_test::test_save_load_matrix_matrix() {
     idx<float> im2 = load_image<float>(sim2);
     idx<float> im3 = load_image<float>(sim3);
     
-    idxs<float> all(3);
+    midx<float> all(3);
     all.set(im1, 0);
     all.set(im2, 1);
     all.set(im3, 2);
     
     save_matrices(all, sall);
-    idxs<float> all2 = load_matrices<float>(sall, false);
+    midx<float> all2 = load_matrices<float>(sall, false);
     
     idx<float> m1 = all.get(0);
     idx<float> m2 = all.get(1);
@@ -135,7 +135,7 @@ void idxIO_test::test_save_load_matrices() {
     l.push_back(sim2);
     l.push_back(sim3);
     save_matrices<float>(l, sall);
-    idxs<float> all2 = load_matrices<float>(sall, true);
+    midx<float> all2 = load_matrices<float>(sall, true);
     // check 1st matrix is ok
     idx<float> m1 = load_matrix<float>(sim1);
     idx<float> m2 = all2.get(0);

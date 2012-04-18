@@ -46,7 +46,56 @@ namespace ebl {
 		     labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
 		     classifier_meter &trainmeter,
 		     classifier_meter &testmeter,
-		     infer_param &infp, gd_param &gdp, string &shortname) {
+		     infer_param &infp, gd_param &gdp, string &shortname,
+		     long iteration_seconds) {
+    ostringstream wname, wfname;
+    // save samples picking statistics
+    if (conf.exists_true("save_pickings")) {
+      string fname; fname << "pickings_" << iter;
+      train_ds.save_pickings(fname.c_str());
+    }
+    // save weights and confusion matrix for test set
+    wname.str("");
+    if (conf.exists("job_name"))
+      wname << conf.get_string("job_name");
+    wname << "_net" << setfill('0') << setw(5) << iter;
+    wfname.str(""); wfname << wname.str() << ".mat";
+    if (conf.exists_false("save_weights"))
+      cout << "Not saving weights (save_weights set to 0)." << endl;
+    else {
+      cout << "saving net to " << wfname.str() << endl;
+      theparam.save_x(wfname.str().c_str()); // save trained network
+      cout << "saved=" << wfname.str() << endl;
+    }
+    // test
+    test(iter, conf, conffname, theparam, thetrainer, train_ds, test_ds,
+	 trainmeter, testmeter, infp, gdp, shortname);
+    // set retrain to next iteration with current saved weights
+    ostringstream progress;
+    progress << "retrain_iteration = " << iter + 1 << endl
+	     << "retrain_weights = " << wfname.str() << endl;
+    if (iteration_seconds > 0)
+      progress << "meta_timeout = " << iteration_seconds * 1.2 << endl;
+    // save progress
+    job::write_progress(iter + 1, conf.get_uint("iterations"),
+			progress.str().c_str());
+    // save confusion
+    if (conf.exists_true("save_confusion")) {
+      string fname; fname << wname.str() << "_confusion_test.mat";
+      cout << "saving confusion to " << fname << endl;
+      save_matrix(testmeter.get_confusion(), fname.c_str());
+    }
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  void test(uint iter, configuration &conf, string &conffname,
+	    parameter<Tnet> &theparam,
+	    supervised_trainer<Tnet,Tdata,Tlabel> &thetrainer,
+	    labeled_datasource<Tnet,Tdata,Tlabel> &train_ds,
+	    labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
+	    classifier_meter &trainmeter,
+	    classifier_meter &testmeter,
+	    infer_param &infp, gd_param &gdp, string &shortname) {
     timer ttest;
     ostringstream wname, wfname;
 
@@ -73,7 +122,7 @@ namespace ebl {
     //       trainmeter.display_average(train_ds.name(), train_ds.lblstr, 
     // 				 train_ds.is_test());
     //     }
-    cout << "Testing..." << endl;
+    cout << "Testing on " << test_ds.size() << " samples..." << endl;
     uint maxtest = conf.exists("max_testing") ? conf.get_uint("max_testing") :0;
     ttest.start();
     if (!conf.exists_true("no_training_test"))
@@ -81,24 +130,6 @@ namespace ebl {
     if (!conf.exists_true("no_testing_test"))
       thetrainer.test(test_ds, testmeter, infp, maxtest);	// test
     cout << "testing_time="; ttest.pretty_elapsed(); cout << endl;
-    // save samples picking statistics
-    if (conf.exists_true("save_pickings")) {
-      string fname; fname << "pickings_" << iter;
-      train_ds.save_pickings(fname.c_str());
-    }
-    // save weights and confusion matrix for test set
-    wname.str("");
-    if (conf.exists("job_name"))
-      wname << conf.get_string("job_name");
-    wname << "_net" << setfill('0') << setw(5) << iter;
-    wfname.str(""); wfname << wname.str() << ".mat";
-    if (conf.exists_false("save_weights"))
-      cout << "Not saving weights (save_weights set to 0)." << endl;
-    else {
-      cout << "saving net to " << wfname.str() << endl;
-      theparam.save_x(wfname.str().c_str()); // save trained network
-      cout << "saved=" << wfname.str() << endl;
-    }
     // detection test
     if (conf.exists_true("detection_test")) {
       uint dt_nthreads = 1;
@@ -114,23 +145,11 @@ namespace ebl {
       }
       cmd << "cp " << conffname << " tmp.conf && echo \"silent=1\n"
 	  << "nthreads=" << dt_nthreads << "\nevaluate=1\nweights_file=" 
-	  << wfname.str() << "\n" << params << "\" >> tmp.conf && detect tmp.conf";
+	  << wfname.str() << "\n" << params
+	  << "\" >> tmp.conf && detect tmp.conf";
       if (std::system(cmd.c_str()))
 	cerr << "warning: failed to execute: " << cmd << endl;
       cout << "detection_test_time="; dtest.pretty_elapsed(); cout << endl;
-    }
-    // set retrain to next iteration with current saved weights
-    ostringstream progress;
-    progress << "retrain_iteration = " << iter + 1 << endl
-	     << "retrain_weights = " << wfname.str() << endl;
-    // save progress
-    job::write_progress(iter + 1, conf.get_uint("iterations"),
-			progress.str().c_str());
-    // save confusion
-    if (conf.exists_true("save_confusion")) {
-      string fname; fname << wname.str() << "_confusion_test.mat";
-      cout << "saving confusion to " << fname << endl;
-      save_matrix(testmeter.get_confusion(), fname.c_str());
     }
 #ifdef __GUI__ // display
     static supervised_trainer_gui<Tnet,Tdata,Tlabel> stgui(shortname.c_str());
@@ -183,6 +202,114 @@ namespace ebl {
       stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
     }
 #endif
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  labeled_datasource<Tnet,Tdata,Tlabel>* 
+  create_validation_set(configuration &conf, uint &noutputs, string &valdata) {
+    bool classification = conf.exists_true("classification");
+    valdata = conf.get_string("val");
+    string vallabels, valclasses, valjitters, valscales;
+    vallabels = conf.try_get_string("val_labels");
+    valclasses = conf.try_get_string("val_classes");
+    valjitters = conf.try_get_string("val_jitters");
+    valscales = conf.try_get_string("val_scales");
+    uint maxval = 0;
+    if (conf.exists("val_size")) maxval = conf.get_uint("val_size");
+    labeled_datasource<Tnet,Tdata,Tlabel> *val_ds = NULL;
+    if (classification) { // classification task
+      class_datasource<Tnet,Tdata,Tlabel> *ds =
+	new class_datasource<Tnet,Tdata,Tlabel>;
+      ds->init(valdata.c_str(), vallabels.c_str(), valjitters.c_str(),
+	       valscales.c_str(), valclasses.c_str(), "val", maxval);
+      if (conf.exists("limit_classes"))
+	ds->limit_classes(conf.get_int("limit_classes"), 0, 
+			  conf.exists_true("limit_classes_random"));
+      noutputs = ds->get_nclasses();
+      val_ds = ds;
+    } else { // regression task
+      val_ds = new labeled_datasource<Tnet,Tdata,Tlabel>;
+      val_ds->init(valdata.c_str(), vallabels.c_str(), valjitters.c_str(),
+		   valscales.c_str(), "val", maxval);
+      idxdim d = val_ds->label_dims();
+      noutputs = d.nelements();
+    }
+    val_ds->set_test(); // test is the test set, used for reporting
+    val_ds->pretty();
+    if (conf.exists("data_bias"))
+      val_ds->set_data_bias((Tnet)conf.get_double("data_bias"));
+    if (conf.exists("data_coeff"))
+      val_ds->set_data_coeff((Tnet)conf.get_double("data_coeff"));
+    if (conf.exists("label_bias"))
+      val_ds->set_label_bias((Tnet)conf.get_double("label_bias"));
+    if (conf.exists("label_coeff"))
+      val_ds->set_label_coeff((Tnet)conf.get_double("label_coeff"));
+    if (conf.exists("epoch_show_modulo"))
+      val_ds->set_epoch_show(conf.get_uint("epoch_show_modulo"));
+    val_ds->keep_outputs(conf.exists_true("keep_outputs"));
+    return val_ds;    
+  }
+
+  template <typename Tnet, typename Tdata, typename Tlabel>
+  labeled_datasource<Tnet,Tdata,Tlabel>* 
+  create_training_set(configuration &conf, uint &noutputs, string &traindata) {
+    bool classification = conf.exists_true("classification");
+    traindata = conf.get_string("train");
+    string trainlabels, trainclasses, trainjitters, trainscales;
+    trainlabels = conf.try_get_string("train_labels");
+    trainclasses = conf.try_get_string("train_classes");
+    trainjitters = conf.try_get_string("train_jitters");
+    trainscales = conf.try_get_string("train_scales");
+    uint maxtrain = 0;
+    if (conf.exists("train_size")) maxtrain = conf.get_uint("train_size");
+    labeled_datasource<Tnet,Tdata,Tlabel> *train_ds = NULL;
+    if (classification) { // classification task
+      class_datasource<Tnet,Tdata,Tlabel> *ds =
+	new class_datasource<Tnet,Tdata,Tlabel>;
+      ds->init(traindata.c_str(), trainlabels.c_str(),
+	       trainjitters.c_str(), trainscales.c_str(), 
+	       trainclasses.c_str(), "train", maxtrain);
+      if (conf.exists("balanced_training"))
+	ds->set_balanced(conf.get_bool("balanced_training"));
+      if (conf.exists("random_class_order"))
+	ds->set_random_class_order(conf.get_bool("random_class_order"));
+      if (conf.exists("limit_classes"))
+	ds->limit_classes(conf.get_int("limit_classes"), 0, 
+			  conf.exists_true("limit_classes_random"));
+      noutputs = ds->get_nclasses();
+      train_ds = ds;
+    } else { // regression task
+      train_ds = new labeled_datasource<Tnet,Tdata,Tlabel>;
+      train_ds->init(traindata.c_str(), trainlabels.c_str(),
+		     trainjitters.c_str(), trainscales.c_str(), 
+		     "train", maxtrain);
+      idxdim d = train_ds->label_dims();
+      noutputs = d.nelements();
+    }
+    train_ds->ignore_correct(conf.exists_true("ignore_correct"));
+    train_ds->set_weigh_samples(conf.exists_true("sample_probabilities"),
+				conf.exists_true("hardest_focus"),
+				conf.exists_true("per_class_norm"),
+				conf.exists("min_sample_weight") ?
+				conf.get_double("min_sample_weight") : 0.0);
+    train_ds->set_shuffle_passes(conf.exists_bool("shuffle_passes"));
+    if (conf.exists("epoch_size"))
+      train_ds->set_epoch_size(conf.get_int("epoch_size"));
+    if (conf.exists("epoch_mode"))
+      train_ds->set_epoch_mode(conf.get_uint("epoch_mode"));
+    if (conf.exists("epoch_show_modulo"))
+      train_ds->set_epoch_show(conf.get_uint("epoch_show_modulo"));
+    train_ds->pretty();
+    if (conf.exists("data_bias"))
+      train_ds->set_data_bias((Tnet)conf.get_double("data_bias"));
+    if (conf.exists("data_coeff"))
+      train_ds->set_data_coeff((Tnet)conf.get_double("data_coeff"));
+    if (conf.exists("label_bias"))
+      train_ds->set_label_bias((Tnet)conf.get_double("label_bias"));
+    if (conf.exists("label_coeff"))
+      train_ds->set_label_coeff((Tnet)conf.get_double("label_coeff"));
+    train_ds->keep_outputs(conf.exists_true("keep_outputs"));
+    return train_ds;
   }
   
 } // end namespace ebl

@@ -57,23 +57,31 @@ namespace ebl {
   template <typename T, class Tstate>
     module_1_1<T,Tstate>*
     create_network(parameter<T, Tstate> &theparam, configuration &conf,
-		   int noutputs = -1, const char *varname = "arch",
-		   intg thick = -1, bool isbranch = false, bool narrow = 0,
+		   intg &thick, int noutputs = -1, const char *varname = "arch",
+		   bool isbranch = false, bool narrow = 0,
 		   intg narrow_dim = 0, intg narrow_size = 0,
 		   intg narrow_offset = 0,
 		   vector<layers<T,Tstate>*>* branches = NULL,
-		   vector<intg> *branches_thick = NULL);
+		   vector<intg> *branches_thick = NULL,
+		   map<string,module_1_1<T,Tstate>*> *shared = NULL);
 
 
   //! Create a module of type 'type' (with full name 'name'),
   //! e.g. 'conv' and 'conv0' by querying variables in configuration 'conf'.
   //! This returns a module_1_1 or NULL if failed.
+  //! \param shared A map of parameters-shared modules.
   template <typename T, class Tstate>
     module_1_1<T,Tstate>*
     create_module(const string &name, parameter<T, Tstate> &theparam,
 		  configuration &conf, int &nout, intg &thick,
+		  map<string,module_1_1<T,Tstate>*> &shared,
 		  vector<layers<T,Tstate>*> *branches,
 		  vector<intg> *branches_thick);
+
+  //! Create an ebm1 module of type 'type' (with full name 'name') and returns
+  //! it or NULL if an error occured.
+  template <typename T, class Tstate>
+    ebm_1<T,Tstate>* create_ebm1(const string &name, configuration &conf);
 
   //! Create a module of type 'answer_module' given an existing configuration
   //! conf and variable name 'varname'.
@@ -90,6 +98,92 @@ namespace ebl {
 		   module_1_1<T,Tstate> &net,
 		   answer_module<T,Tds1,Tds2,Tstate> &answer,
 		   const char *varname = "trainer");
+
+  // preprocessing /////////////////////////////////////////////////////////////
+
+  //! Create a preprocessing module given a target 'height' and 'width'
+  //! and other parameters.
+  //! \param ppchan The channel preprocessing type 'ppchan'
+  //!   (e.g. "RGB" or "YnUV"), a resizing
+  //! \param kersz The kernel size for normalized channel preprocessings.
+  //! \param resize_method The resizing method (e.g. "bilinear").
+  //! \param keep_aspect_ratio If true, aspect ratio is kept, ignored otherwise.
+  //! \param lpyramid The number of Laplacian pyramid scales, 0 for no pyramid.
+  //! \param fovea The fovea ratios, none for no fovea.
+  //! \param fovea_scale_size The rectangle sizes for each fovea scale
+  //! \param color_norm If true, contrast-normalize color channels.
+  //! \param cnorm_across If true and color_norm is true, color is normalized
+  //!   across each other, rather than layer by layer.
+  template <typename T, class Tstate>
+    resizepp_module<T,Tstate>* 
+    create_preprocessing(uint height, uint width, const char *ppchan,
+			 idxdim &kersz, const char *resize_method = "bilinear",
+			 bool keep_aspect_ratio = true, int lpyramid = 0,
+			 vector<double> *fovea = NULL, 
+                         midxdim *fovea_scale_size = NULL, 
+                         bool globnorm = true,
+			 bool locnorm = false, bool locnorm2 = false,
+			 bool color_lnorm = false, bool cnorm_across = true,
+			 double hscale = 1.0, double wscale = 1.0,
+			 vector<float> *scalings = NULL);
+  
+  //! Create a preprocessing module given a target 'height' and 'width'
+  //! and other parameters. In this version, a vector of kernels dimensions
+  //! can be passed instead of just one.
+  //! \param ppchan The channel preprocessing type 'ppchan'
+  //!   (e.g. "RGB" or "YnUV"), a resizing
+  //! \param kersz The kernel size for normalized channel preprocessings.
+  //! \param resize_method The resizing method (e.g. "bilinear").
+  //! \param keep_aspect_ratio If true, aspect ratio is kept, ignored otherwise.
+  //! \param lpyramid The number of Laplacian pyramid scales, 0 for no pyramid.
+  //! \param fovea The fovea ratios, none for no fovea.
+  //! \param fovea_scale_size The rectangle sizes for each fovea scale
+  //! \param color_norm If true, contrast-normalize color channels.
+  //! \param cnorm_across If true and color_norm is true, color is normalized
+  //!   across each other, rather than layer by layer.
+  template <typename T, class Tstate>
+    resizepp_module<T,Tstate>* 
+    create_preprocessing(midxdim &dims, const char *ppchan,
+			 midxdim &kersz, midxdim &zpads,
+			 const char *resize_method = "bilinear", 
+			 bool keep_aspect_ratio = true, int lpyramid = 0,
+			 vector<double> *fovea = NULL, 
+                         midxdim *fovea_scale_size = NULL, 
+                         bool globnorm = true,
+			 bool locnorm = false, bool locnorm2 = false,
+			 bool color_lnorm = false, bool cnorm_across = true,
+			 double hscale = 1.0, double wscale = 1.0,
+			 vector<float> *scalings = NULL);
+  
+  //! Create a preprocessing module without target dimensions. These can be set
+  //! later with the set_dimensions() method.
+  //! In this version, a vector of kernels dimensions can be passed instead of
+  //! just one.
+  //! \param ppchan The channel preprocessing type 'ppchan'
+  //!   (e.g. "RGB" or "YnUV"), a resizing
+  //! \param kersz The kernel size for normalized channel preprocessings.
+  //! \param resize_method The resizing method (e.g. "bilinear").
+  //! \param keep_aspect_ratio If true, aspect ratio is kept, ignored otherwise.
+  //! \param lpyramid The number of Laplacian pyramid scales, 0 for no pyramid.
+  //! \param fovea The fovea ratios, none for no fovea.
+  //! \param fovea_scale_size The rectangle sizes for each fovea scale
+  //! \param color_norm If true, contrast-normalize color channels.
+  //! \param cnorm_across If true and color_norm is true, color is normalized
+  //!   across each other, rather than layer by layer.
+  template <typename T, class Tstate>
+    resizepp_module<T,Tstate>* 
+    create_preprocessing(const char *ppchan, midxdim &kersz, midxdim &zpads,
+			 const char *resize_method = "bilinear",
+			 bool keep_aspect_ratio = true, int lpyramid = 0,
+			 vector<double> *fovea = NULL, 
+                         midxdim *fovea_scale_size = NULL, 
+                         bool globnorm = true,
+			 bool locnorm = false, bool locnorm2 = false,
+			 bool color_lnorm = false, bool cnorm_across = true,
+			 double hscale = 1.0, double wscale = 1.0,
+			 vector<float> *scalings = NULL);
+
+  /////////////////////////////////////////////////////////////////////////////
   
   //! Create a new network based on a configuration. This is relying
   //! on the old-style variables like 'net_type' and 'net_c1h'. The more

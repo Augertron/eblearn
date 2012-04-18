@@ -252,7 +252,7 @@ namespace ebl {
 
   template <class T>
   penalty_l1<T>::penalty_l1(T threshold_)
-    : threshold(threshold_) { 
+    : ebm_1<T>("penalty_l1"), threshold(threshold_) {
   }
   
   template <class T>

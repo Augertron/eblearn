@@ -39,6 +39,7 @@
 #include "tools_utils.h"
 
 #ifdef __BOOST__
+#define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 using namespace boost::filesystem;
@@ -57,7 +58,8 @@ namespace ebl {
 					bool ignore_diff, bool ignore_trunc,
 					bool ignore_occl,
 					const char *annotations,
-					const char *ignore_path)
+					const char *ignore_path,
+					bool ignore_bb)
     : dataset<Tdata>(name_, inroot_),
       min_aspect_ratio(-1), max_aspect_ratio(-1), minborders(),
       max_jitter_match(1.0) {
@@ -76,6 +78,7 @@ namespace ebl {
     if (ignore_path && strcmp(ignore_path, ""))
       ignore_root = ignore_path;
     ignore_difficult = ignore_diff;
+    ignore_bbox = ignore_bb;
     ignore_truncated = ignore_trunc;
     ignore_occluded = ignore_occl;
 #ifndef __XML__ // return error if xml not enabled
@@ -94,7 +97,6 @@ namespace ebl {
 
   template <class Tdata>
   bool pascal_dataset<Tdata>::extract() {
-    this->init_preprocessing();
 #ifdef __BOOST__
 #ifdef __XML__    
     if (!allocated && !strcmp(save_mode.c_str(), DATASET_SAVE))
@@ -171,7 +173,7 @@ namespace ebl {
   }
 
   template <class Tdata>
-  bool pascal_dataset<Tdata>::count_samples() {
+  intg pascal_dataset<Tdata>::count_samples() {
     total_difficult = 0;
     total_truncated = 0;
     total_occluded = 0;
@@ -179,38 +181,34 @@ namespace ebl {
     total_samples = 0;
     string xmlpath;
     path p(annroot);
-    if (!exists(p))
-      eblerror("Annotation path " << annroot << " does not exist.");
+    if (!exists(p)) 
+      eblthrow("Annotation path " << annroot << " does not exist.");
+    cout << "Counting number of samples in " << annroot << " ..." << endl;
     // find all xml files recursively
     list<string> *files = find_fullfiles(annroot, XML_PATTERN, NULL, false,
 					 true);
     if (!files || files->size() == 0)
-      eblerror("no xml files found in " << annroot << " using file pattern "
+      eblthrow("no xml files found in " << annroot << " using file pattern "
 	       << XML_PATTERN);
     cout << "Found " << files->size() << " xml files." << endl;
     for (list<string>::iterator i = files->begin(); i != files->end(); ++i) {
       xmlpath = *i;
       // parse xml
-      try {
-	DomParser parser;
-	parser.parse_file(xmlpath);
-	if (parser) {
-	  // initialize root node and list
-	  const Node* pNode = parser.get_document()->get_root_node();
-	  Node::NodeList list = pNode->get_children();
-	  // parse all objects in image
-	  for(Node::NodeList::iterator iter = list.begin();
-	      iter != list.end(); ++iter) {
-	    if (!strcmp((*iter)->get_name().c_str(), "object")) {
-	      // check for difficult flag in object node
-	      Node::NodeList olist = (*iter)->get_children();
-	      count_sample(olist);
-	    }
+      DomParser parser;
+      parser.parse_file(xmlpath);
+      if (parser) {
+	// initialize root node and list
+	const Node* pNode = parser.get_document()->get_root_node();
+	Node::NodeList list = pNode->get_children();
+	// parse all objects in image
+	for(Node::NodeList::iterator iter = list.begin();
+	    iter != list.end(); ++iter) {
+	  if (!strcmp((*iter)->get_name().c_str(), "object")) {
+	    // check for difficult flag in object node
+	    Node::NodeList olist = (*iter)->get_children();
+	    count_sample(olist);
 	  }
 	}
-      } catch (const std::exception& ex) {
-	cerr << "Xml exception caught: " << ex.what() << endl;
-	return false;
       }
     }
     if (files) delete files;
@@ -224,7 +222,7 @@ namespace ebl {
     ignore_occluded ? cout << "Ignoring" : cout << "Using";
     cout << " occluded samples." << endl;
     total_samples = total_samples - total_ignored;
-    return true;
+    return total_samples;
   }
 
   template <class Tdata>
@@ -322,8 +320,9 @@ namespace ebl {
     rect<int> *cropr = NULL;
 
     // get image's properties
-    if (!get_properties(xmlfile, image_filename, image_fullname, folder, height,
-			width, depth, objects, &cropr, false))
+    if (!pascal_xml::get_properties(imgroot, xmlfile, image_filename,
+				    image_fullname, folder, height, width,
+				    depth, objects, &cropr, false))
       return false;
     // get ignored boxes if present
     if (!ignore_root.empty()) {
@@ -333,8 +332,8 @@ namespace ebl {
       int h = -1, w = -1, d = -1;
       xml << ignore_root << "/" << dname << "/" << bname;
       if (file_exists(xml)) {
-	if (!get_properties(xml, filename, fullname, folder,
-			    h, w, d, objects, &cropr, true))
+	if (!pascal_xml::get_properties(imgroot, xml, filename, fullname,
+					folder, h, w, d, objects, &cropr, true))
 	  return false;
 	// check that ignored properties matches original properties
 	if (fullname.compare(image_fullname) || (height != h) || (width != w))
@@ -355,216 +354,6 @@ namespace ebl {
     return true;
   }
 
-  ////////////////////////////////////////////////////////////////
-
-  template <class Tdata>
-  bool pascal_dataset<Tdata>::
-  get_properties(const string &xmlfile, string &image_filename,
-		 string &image_fullname, string &folder, int &height,
-		 int &width, int &depth, vector<object*> &objs,
-		 rect<int> **cropr, bool ignore) {
-    int cxmin, cymin, cxmax, cymax; // crop bbox
-    // parse xml file
-    try {
-      DomParser parser;
-      //    parser.set_validate();
-      parser.parse_file(xmlfile);
-      if (parser) {
-	// initialize root node and list
-	const Node* pNode = parser.get_document()->get_root_node();
-	Node::NodeList list = pNode->get_children();
-	// get image filename and folder
-	for(Node::NodeList::iterator iter = list.begin();
-	    iter != list.end(); ++iter) {
-	  if (!strcmp((*iter)->get_name().c_str(), "filename")) {
-	    xml_get_string(*iter, image_filename);
-	  } else if (!strcmp((*iter)->get_name().c_str(), "folder")) {
-	    xml_get_string(*iter, folder);
-	  } else if (!strcmp((*iter)->get_name().c_str(), "size")) {
-	    Node::NodeList blist = (*iter)->get_children();
-	    for(Node::NodeList::iterator biter = blist.begin();
-		biter != blist.end(); ++biter) {
-	      // get sizes
-	      if (!strcmp((*biter)->get_name().c_str(), "height"))
-		height = xml_get_int(*biter);
-	      if (!strcmp((*biter)->get_name().c_str(), "width"))
-		width = xml_get_int(*biter);
-	      if (!strcmp((*biter)->get_name().c_str(), "depth"))
-		depth = xml_get_int(*biter);
-	    }
-	  } else if (!strcmp((*iter)->get_name().c_str(), "crop")) {
-	    Node::NodeList blist = (*iter)->get_children();
-	    for(Node::NodeList::iterator biter = blist.begin();
-		biter != blist.end(); ++biter) {
-	      // save xmin, ymin, xmax and ymax
-	      if (!strcmp((*biter)->get_name().c_str(), "xmin"))
-		cymin = xml_get_int(*biter);
-	      else if (!strcmp((*biter)->get_name().c_str(), "ymin"))
-		cxmin = xml_get_int(*biter);
-	      else if (!strcmp((*biter)->get_name().c_str(), "xmax"))
-		cymax = xml_get_int(*biter);
-	      else if (!strcmp((*biter)->get_name().c_str(), "ymax"))
-		cxmax = xml_get_int(*biter);
-	    }
-	    *cropr = new rect<int>(cymin, cxmin, cymax - cymin, cxmax - cxmin);
-	  }
-	}
-	image_fullname = imgroot;
-	if (!folder.empty())
-	  image_fullname << "/" << folder << "/";
-	image_fullname << image_filename;
-	get_objects(list, objs, *cropr, ignore);
-      }
-    } catch (const std::exception& ex) {
-      cerr << "error: Xml exception caught: " << ex.what() << endl;
-      return false;
-    } catch (const char *err) {
-      cerr << "error: " << err << endl;
-      return false;
-    }
-    return true;
-  }
-  
-  template <class Tdata>
-  void pascal_dataset<Tdata>::
-  get_objects(Node::NodeList &list, vector<object*> &objs, rect<int> *cropr,
-	      bool ignore) {
-    uint n = 0;
-    // parse all objects in image
-    for(Node::NodeList::iterator iobjs = list.begin();
-	iobjs != list.end(); ++iobjs) {
-      if (!strcmp((*iobjs)->get_name().c_str(), "object")) {
-	// add a new object
-	objs.push_back(new object(n++));
-	object &o = *(objs.back());
-	o.ignored = ignore;
-	// get object attributes
-	uint ipart = 0;
-	Node::NodeList list = (*iobjs)->get_children();
-	for(Node::NodeList::iterator iter = list.begin();
-	    iter != list.end(); ++iter) {
-	  // parse bounding box
-	  if (!strcmp((*iter)->get_name().c_str(), "bndbox")) {
-	    Node::NodeList blist = (*iter)->get_children();
-	    int xmin = -1, ymin = -1, xmax = -1, ymax = -1;
-	    for(Node::NodeList::iterator biter = blist.begin();
-		biter != blist.end(); ++biter) {
-	      // save xmin, ymin, xmax and ymax
-	      if (!strcmp((*biter)->get_name().c_str(), "xmin"))
-		xmin = xml_get_int(*biter);
-	      else if (!strcmp((*biter)->get_name().c_str(), "ymin"))
-		ymin = xml_get_int(*biter);
-	      else if (!strcmp((*biter)->get_name().c_str(), "xmax"))
-		xmax = xml_get_int(*biter);
-	      else if (!strcmp((*biter)->get_name().c_str(), "ymax"))
-		ymax = xml_get_int(*biter);
-	    }
-	    // set bbox
-	    o.set_rect(xmin, ymin, xmax, ymax);
-	    // adjusting coordinates if cropping image
-	    if (cropr) {
-	      o.h0 -= cropr->h0;
-	      o.w0 -= cropr->w0;
-	    }
-	  }
-	  // parse visible bounding box
-	  else if (!strcmp((*iter)->get_name().c_str(), "visible")) {
-	    Node::NodeList blist = (*iter)->get_children();
-	    int vxmin = -1, vymin = -1, vxmax = -1, vymax = -1;
-	    for(Node::NodeList::iterator biter = blist.begin();
-		biter != blist.end(); ++biter) {
-	      // save xmin, ymin, xmax and ymax
-	      if (!strcmp((*biter)->get_name().c_str(), "xmin"))
-		vxmin = xml_get_int(*biter);
-	      else if (!strcmp((*biter)->get_name().c_str(), "ymin"))
-		vymin = xml_get_int(*biter);
-	      else if (!strcmp((*biter)->get_name().c_str(), "xmax"))
-		vxmax = xml_get_int(*biter);
-	      else if (!strcmp((*biter)->get_name().c_str(), "ymax"))
-		vymax = xml_get_int(*biter);
-	    }
-	    o.set_visible(vxmin, vymin, vxmax, vymax);
-	    // adjusting coordinates if cropping image
-	    if (cropr) {
-	      o.visible->h0 -= cropr->h0;
-	      o.visible->w0 -= cropr->w0;
-	    }
-	  }
-	  // parse centroid
-	  else if (!strcmp((*iter)->get_name().c_str(), "center")) {
-	    try {
-	      Node::NodeList blist = (*iter)->get_children();
-	      int x = -1, y = -1;
-	      for(Node::NodeList::iterator biter = blist.begin();
-		  biter != blist.end(); ++biter) {
-		if (!strcmp((*biter)->get_name().c_str(), "x"))
-		  x = xml_get_uint(*biter);
-		else if (!strcmp((*biter)->get_name().c_str(), "y"))
-		  y = xml_get_uint(*biter);
-	      }
-	      o.set_centroid(x, y);
-	      // adjusting coordinates if cropping image
-	      if (cropr) {
-		o.centroid->first -= cropr->h0;
-		o.centroid->second -= cropr->w0;
-	      }
-	    } catch(ebl::eblexception &e) { 
-	      cerr << "warning: no centroid found." << endl; }
-	  } // else get object class name
-	  else if (!strcmp((*iter)->get_name().c_str(), "name"))
-	    xml_get_string(*iter, o.name);
-	  else if (!strcmp((*iter)->get_name().c_str(), "difficult"))
-	    o.difficult = xml_get_uint(*iter);
-	  else if (!strcmp((*iter)->get_name().c_str(), "truncated"))
-	    o.truncated = xml_get_uint(*iter);
-	  else if (!strcmp((*iter)->get_name().c_str(), "occluded"))
-	    o.occluded = xml_get_uint(*iter);
-	  else if (!strcmp((*iter)->get_name().c_str(), "pose")) {
-	    xml_get_string(*iter, o.pose);
-	  }
-	  ////////////////////////////////////////////////////////////////
-	  // parts
-	  else if (!strcmp((*iter)->get_name().c_str(), "part")) {
-	    Node::NodeList plist = (*iter)->get_children();
-	    for(Node::NodeList::iterator piter = plist.begin();
-		piter != plist.end(); ++piter) {
-	      // add new part object
-	      o.parts.push_back(new object(ipart++));
-	      object &p = *(o.parts.back());
-	      // parse bounding box
-	      if (!strcmp((*piter)->get_name().c_str(), "bndbox")) {
-		Node::NodeList blist = (*piter)->get_children();
-		int xmin = -1, ymin = -1, xmax = -1, ymax = -1;
-		for(Node::NodeList::iterator biter = blist.begin();
-		    biter != blist.end(); ++biter) {
-		  // save xmin, ymin, xmax and ymax
-		  if (!strcmp((*biter)->get_name().c_str(), "xmin"))
-		    xmin = xml_get_uint(*biter);
-		  else if (!strcmp((*biter)->get_name().c_str(), "ymin"))
-		    ymin = xml_get_uint(*biter);
-		  else if (!strcmp((*biter)->get_name().c_str(), "xmax"))
-		    xmax = xml_get_uint(*biter);
-		  else if (!strcmp((*biter)->get_name().c_str(), "ymax"))
-		    ymax = xml_get_uint(*biter);
-		}
-		// set bbox
-		p.set_rect(xmin, ymin, xmax, ymax);
-		// adjusting coordinates if cropping image
-		if (cropr) {
-		  p.h0 -= cropr->h0;
-		  p.w0 -= cropr->w0;
-		}
-	      } // else get object class name
-	      else if (!strcmp((*piter)->get_name().c_str(), "name")) {
-		xml_get_string(*piter, p.name);
-	      }
-	    }
-	  }
-	}
-      }
-    }
-  }
-  
   ////////////////////////////////////////////////////////////////
   // process all objects
 
@@ -591,6 +380,7 @@ namespace ebl {
 	    }
 	  }
 	  // check that minimum aspect ratio is respected
+	  if (o.height == 0) continue ; // skip this object
 	  float ar = o.width / (float) o.height;
 	  if (min_aspect_ratio >= 0.0 && ar < min_aspect_ratio) {
 	    cout << "Rejecting object " << o.id << " from " << image_filename 
@@ -639,27 +429,18 @@ namespace ebl {
 		cerr << "Error: image not found " << image_fullname << endl;
 		return false;
 	      }
-	      // load image
-	      idx<Tdata> im = load_image<Tdata>(image_fullname);
-	      // check that image matches expected sizes
-	      if (im.dim(0) != height || im.dim(1) != width) {
-		cerr << "Error: expected image of size " << height << "x" << width
-		     << " but got " << im << " in " << image_fullname << endl;
-		return false;
-	      }
-	      // crop it
-	      if (cropr) {
-		im = im.narrow(0, cropr->height, cropr->h0);
-		im = im.narrow(1, cropr->width, cropr->w0);
-	      }
-	      img = new idx<Tdata>(im);
+              input_height = height;
+              input_width = width;
+              //load image
+	      load_data(image_fullname);
 	    }
 	    // remove jitters that overlap with other objects
 	    if (max_jitter_match > 0)
 	      remove_jitter_matches(objs, iobj, max_jitter_match);
 	    // extract object from image
-	    process_image(*img, o, o.name, o.difficult, 
-			  image_filename, o.centroid, o.visible, cropr);
+	    process_image(load_img, o, o.name, o.difficult, 
+			  image_fullname, o.centroid, o.visible, cropr);
+            load_img.clear();
 	  }
 	}
       }
@@ -667,19 +448,35 @@ namespace ebl {
     if (img) delete img;
     return true;
   }
+
+  template <class Tdata>
+  void pascal_dataset<Tdata>::load_data(const string &fname) {
+    // load image
+    dataset<Tdata>::load_data(fname);
+    // check that image matches expected sizes
+    if (load_img.get(0).dim(0) != input_height 
+        || load_img.get(0).dim(1) != input_width) {
+      eblerror( "Error: expected image of size is different \
+                 from loaded image size");
+    }
+  }
   
   ////////////////////////////////////////////////////////////////
   // process object's image
 
   template <class Tdata>
   void pascal_dataset<Tdata>::
-  process_image(idx<Tdata> &img, const rect<int> &r,
+  process_image(midx<Tdata> &imgs, const rect<int> &r,
 		string &obj_class, uint difficult, const string &image_filename,
 		pair<int,int> *center, const rect<int> *visr,
 		const rect<int> *cropr) {
     t_label label = this->get_label_from_class(obj_class);
-    add_data(img, label, &obj_class, image_filename.c_str(), &r, center,
+    rect<int> rr = r;
+    if (ignore_bbox)
+      rr = rect<int>(0, 0, imgs.get(0).dim(0), imgs.get(0).dim(1));
+    add_data(imgs, label, &obj_class, image_filename.c_str(), &rr, center,
 	     visr, cropr, &objects);
+    imgs.clear();
   }
 
   ////////////////////////////////////////////////////////////////
@@ -705,7 +502,7 @@ namespace ebl {
     // find ratio between current box and target
     float ratio = std::max(ri.height / (float) this->height,
 			   ri.width / (float) this->width);
-    DEBUG("jitter ratio is " << ratio);
+    EDEBUG("jitter ratio is " << ratio);
     // check overlaps with other objects
     vector<jitter>::iterator i = random_jitter.begin();
     for ( ; i != random_jitter.end(); ++i) {
@@ -732,6 +529,66 @@ namespace ebl {
 	}
       }
     }
+  }
+
+  template <class Tdata>
+  void pascal_dataset<Tdata>::extract_statistics() {
+    path p(annroot);
+    if (!exists(p))
+      eblerror("Annotation path " << annroot << " does not exist.");
+    // find all xml files recursively
+    list<string> *files = find_fullfiles(annroot, XML_PATTERN, NULL, true,
+					 true);
+    if (!files || files->size() == 0)
+      eblerror("no xml files found in " << annroot << " using file pattern "
+	       << XML_PATTERN);
+    cout << "Found " << files->size() << " xml files." << endl;
+    // open an output file
+    string fname;
+    mkdir_full(outdir.c_str());
+    fname << outdir << "/stats.csv";
+    ofstream *fp = new ofstream(fname.c_str());
+    if (!fp) eblerror("failed to open " << fname);
+    cout << "Extracting statistics into " << fname << " ..." << endl;
+    // write header
+    *fp << "filename; height; width; h/w ratio; bbox height; bbox width; bbox h/w ratio; "
+	<< "max context;" << endl;
+    // write stats
+    for (list<string>::iterator i = files->begin(); i != files->end(); ++i)
+      this->write_statistics(*i, *fp);
+    if (files) delete files;
+    delete fp;
+  }
+  
+  template <class Tdata>
+  void pascal_dataset<Tdata>::write_statistics(string &xml, ofstream &fp) {
+    string image_filename, image_fullname, folder;
+    int height = -1, width = -1, depth = -1;
+    rect<int> *cropr = NULL;
+
+    // get image's properties
+    if (!pascal_xml::get_properties(imgroot, xml, image_filename,
+				    image_fullname, folder, height, width,
+				    depth, objects, &cropr, false))
+      eblerror("error while getting properties of " << xml);
+    // loop on objects
+    for (uint i = 0; i < objects.size(); ++i) {
+      object &o = *objects[i];
+      // compute maximum context ratio of object
+      float maxh = (float) std::max(0, std::min(o.h0, height - o.h0 +o.height));
+      float maxw = (float) std::max(0, std::min(o.w0, width - o.w0 + o.width));
+      float cratio = std::min((maxh * 2 + o.height) / o.height,
+			      (maxw * 2 + o.width) / o.width);
+      fp << xml << "; " << height << "; " << width 
+	 << "; " << height / (float) width << "; "
+	 << o.height << "; " << o.width << "; " << o.height / (float) o.width
+	 << "; " << cratio << ';' << endl;
+    }
+    // delete all objects
+    for (uint i = 0; i < objects.size(); ++i)
+      delete objects[i];
+    objects.clear();
+    if (cropr) delete cropr;    
   }
   
 } // end namespace ebl

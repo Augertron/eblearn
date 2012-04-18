@@ -57,8 +57,9 @@ namespace ebl {
     //! \param height Resize input frame to this height if different than -1.
     //! \param width Resize input frame to this width if different than -1.
     //! \param grayscale If true, output grayscale directly.
+    //! \param mode_rgb sets the mode to RGB, if false, it sets YUV
     camera_v4l2(const char *device, int height = -1, int width = -1,
-		bool grayscale = false);
+		bool grayscale = false, bool mode_rgb_ = true);
 
     //! Destructor.
     virtual ~camera_v4l2();
@@ -68,7 +69,11 @@ namespace ebl {
 
     //! Return a new frame.
     virtual idx<Tdata> grab();
-
+    /* //! Return a new YUV frame. */
+    /* virtual idx<Tdata> grab_yuv(); */
+    /* //! Return a new RGB frame. */
+    /* virtual idx<Tdata> grab_rgb(); */
+    
   private:
 
 #ifdef __LINUX__
@@ -78,6 +83,7 @@ namespace ebl {
     void set_boolean_control(int id, bool val);
     void start();
 #endif    
+
 
     // members ////////////////////////////////////////////////////////
   protected:
@@ -93,6 +99,7 @@ namespace ebl {
     void* *buffers;
     int *sizes;
     int fd;
+    bool mode_rgb;
   };
 
 } // end namespace ebl

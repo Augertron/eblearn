@@ -115,8 +115,15 @@ namespace ebl {
     //! Scale width to height * 'woverh_ratio', and shift w0 accordingly
     //! to keep the same center.
     void scale_width(float woverh_ratio);
+    //! Scale height to width * 'woverh_ratio', and shift h0 accordingly
+    //! to keep the same center.
+    void scale_height(float woverh_ratio);
     //! Returns the radius of the circle passing by each corner of this rect.
     float radius();
+    //! Rotates the rectangle clockwise by 'alpha', with the center of the
+    //! rect as center of rotation.
+    //! \param degree_angle The rotation angle in degrees.
+    void rotate(float degree_angle);
 
     ////////////////////////////////////////////////////////////////////////////
     // operators
@@ -129,7 +136,13 @@ namespace ebl {
     template <typename T2>
       rect<T> operator=(rect<T2> &r2);
   
+    // internal methods ////////////////////////////////////////////////////////
+
+    //! Rotate a point (h,w) by alpha radians.
+    void rotate_point(float alpha, float &h, float &w);
+
     // members /////////////////////////////////////////////////////////////////
+  public:
     T h0, w0, height, width;
   };
 

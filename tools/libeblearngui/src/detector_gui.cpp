@@ -38,11 +38,13 @@ namespace ebl {
   // bbox parts
 
   void draw_bbox(bbox &bb, vector<string> &labels, uint h0, uint w0,
-		 double dzoom, float transparency, bool scaled) {
+		 double dzoom, float transparency, bool scaled,
+		 uint color_offset, bool show_class, bool show_conf) {
     ostringstream label;
     int classid, colorid;
+    bool show_text = show_class || show_conf;
     classid = bb.class_id;
-    colorid = classid % (sizeof (color_list) / 3);
+    colorid = (classid + color_offset) % (sizeof (color_list) / 3);
     int h = (int) (dzoom * bb.h0);
     int w = (int) (dzoom * bb.w0);
     int height = (int) (dzoom * bb.height);
@@ -56,19 +58,21 @@ namespace ebl {
     float conf = bb.confidence;
     label.str("");
     label.precision(2);
-    label << ((uint) classid < labels.size() ? labels[classid].c_str() : "***") 
-	  << " " << conf;
-    ubyte transp = 255;
-    if (transparency > 0)
-      transp = (ubyte) std::max((float) 50,
-				std::min((float) 255,
-					 (255 * (exp((conf - transparency + (float) .5) *12))
-						 / 60000)));
+    if (show_class)
+      label << ((uint) classid <labels.size()?labels[classid].c_str() : "***");
+    if (show_class && show_conf) label << " ";
+    if (show_conf) label << conf;
+    ubyte transp = 127;//255;
+    // if (transparency > 0)
+    //   transp = (ubyte) std::max((float) 50,
+    // 				std::min((float) 255,
+    // 					 (255 * (exp((conf - transparency + (float) .5) *12))
+    // 						 / 60000)));
     draw_box(h0 + h, w0 + w, height, width,
 	     color_list[colorid][0],
 	     color_list[colorid][1], 
 	     color_list[colorid][2], transp,
-	     new string((const char *)label.str().c_str()));
+	     show_text ? new string((const char *)label.str().c_str()): NULL);
   }
 
   ////////////////////////////////////////////////////////////////

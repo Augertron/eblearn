@@ -41,6 +41,7 @@
 #include "libeblearn.h"
 #include "libeblearntools.h"
 #include <stdio.h>
+#include "eblapp.h"
 
 #ifdef __MPI__
 #include <mpi.h>
@@ -60,14 +61,7 @@
 #include "libeblearngui.h"
 #endif
 
-using namespace std;
-using namespace ebl; // all eblearn objects are under the ebl namespace
-
-#ifdef __DEBUGMEM__
-INIT_DEBUGMEM()
-#endif
-
-  typedef float t_net; // network precision
+typedef float t_net; // network precision
 
 //////////////////////////////////////////////////////////////////////////
 // serialization functions
@@ -75,6 +69,7 @@ INIT_DEBUGMEM()
 namespace boost {
   namespace serialization {
     
+    //! Serializes an idx.
     template<class Archive>
     void serialize(Archive & ar, idx<ubyte>& mat, const unsigned int version) {
       intg d1, d2, d3;
@@ -108,6 +103,50 @@ namespace boost {
       }
     }
     
+    //! Serializes a svector<midx>.
+    template<class Archive>
+    void serialize(Archive &ar, midx<t_net> &mats, const unsigned int version) {
+      intg d0, d1, d2, d3;
+      if (Archive::is_saving::value) { // saving to stream
+	d0 = mats.dim(0);
+	ar & d0;
+	if (mats.order() != 1) eblerror("expected order 1 in " << mats);
+	for (intg j = 0; j < mats.dim(0); ++j) {
+	  idx<t_net> mat = mats.get(j);
+	  if (!mat.contiguousp())
+	    eblerror("expected contiguous idx for serialization");
+	  if (mat.order() != 3)
+	    eblerror("no support for idx order != 3 for now, got: " << mat);
+	  d1 = mat.dim(0); 
+	  d2 = mat.dim(1); 
+	  d3 = mat.dim(2); 	
+	  ar & d1;
+	  ar & d2;
+	  ar & d3;
+	  idx_aloop1(mm, mat, t_net) {
+	    ar & *mm;
+	  }
+	}
+      } else { // loading from stream
+	ar & d0;
+	midx<t_net> m(d0);
+	for (intg j = 0; j < m.dim(0); ++j) {
+	  ar & d1;
+	  ar & d2;
+	  ar & d3;
+	  idx<t_net> mat(d1, d2, d3);
+	  t_net b;
+	  idx_aloop1(mm, mat, t_net) {
+	    ar & b; // get ubyte
+	    *mm = b;
+	  }
+	  m.set(mat, j);
+	}
+	mats = m;
+      }
+    }
+
+    //! Serializes a bbox.    
     template<class Archive>
     void serialize(Archive & ar, bbox& b, const unsigned int version) {
       ar & b.class_id;
@@ -116,43 +155,30 @@ namespace boost {
       ar & b.w0;
       ar & b.height;
       ar & b.width;
+      ar & b.oscale_index;
       // we dont' really care about other members here
     }
 
-//     template<class Archive>
-//     void serialize(Archive & ar, bbox*& b, const unsigned int version) {
-//       if (b == NULL)
-//     	b = new bbox();
-//       ar & b->class_id;
-//       ar & b->confidence;
-//       ar & b->h0;
-//       ar & b->w0;
-//       ar & b->height;
-//       ar & b->width;
-//       // we dont' really care about other members here
-//     }
-    
   } // namespace serialization
 } // namespace boost
 
 enum tag { cmd_finished = 0, cmd_get_data = 1, cmd_set_data = 2, 
 	   cmd_available = 3, cmd_stop = 4 };
 
+// child //////////////////////////////////////////////////////////////
+
 class mpichild {
 public:
-
   //! Constructor.
   mpichild(configuration &conf, boost::mpi::communicator &world_,
 	   mutex &out_mutex, const char *thread_name, bool sync) 
     : dt(conf, &out_mutex, thread_name, NULL, sync), world(world_),
       mout(dt.get_mout()), merr(dt.get_merr()) {
   }
-
   virtual ~mpichild() {
   }
 
-  //////////////////////////////////////////////////////////////////////////
-  // comm methods
+  // comm methods //////////////////////////////////////////////////////////////
   
   // non-blocking check if question was asked, then blocking send data.
   void answer_get_data() {
@@ -160,18 +186,33 @@ public:
     idx<ubyte> frame;
     string frame_name;
     uint frame_id;
-    vector<bbox*> bb;
-    vector<bbox> bb2;
+    bboxes bb;
+    vector<bbox> bb2, bbs2;
     uint total_saved;
+    svector<midx<t_net> > samples; // extracted samples
+    vector<midx<t_net> > vsamples;
+    bboxes bbsamples; // boxes corresponding to samples
+    bool skipped = false; // the frame was not processed and skipped.
     // we got the question, answer it
-    bool new_data = dt.get_data(bb, frame, total_saved, frame_name, frame_id);
+    bool new_data = dt.get_data(bb, frame, total_saved, frame_name, frame_id,
+				samples, bbsamples, skipped);
     world.send(0, cmd_get_data, new_data);
+    world.send(0, cmd_get_data, skipped);
     if (!new_data)
       return ; // no new data, stop here
     // create a non-pointer vector
     for (uint i = 0; i < bb.size(); ++i) {
-      bb2.push_back(*(bb[i]));
+      bbox b = bb[i];
+      bb2.push_back(b);
     }
+    // create a non-pointer vector
+    for (uint i = 0; i < bbsamples.size(); ++i) {
+      bbox b = bbsamples[i];
+      bbs2.push_back(b);
+    }
+    // create a non-pointer vector
+    for (uint i = 0; i < samples.size(); ++i)
+      vsamples.push_back(samples[i]);
     int frame_height = frame.dim(0);
     int frame_width = frame.dim(1);
     // send the new data
@@ -182,6 +223,8 @@ public:
     world.send(0, cmd_get_data, total_saved);
     world.send(0, cmd_get_data, frame_name);
     world.send(0, cmd_get_data, frame_id);
+    world.send(0, cmd_get_data, vsamples);
+    world.send(0, cmd_get_data, bbs2);
   }
 
   //////////////////////////////////////////////////////////////////////////
@@ -191,8 +234,6 @@ public:
     // data variables
     string fullname, frame_name;
     uint frame_id;
-    vector<bbox*> bb;
-    uint total_saved;
     idx<ubyte> uframe;
     bool stopped = false, available = false, finished = false, loaded = false;
   
@@ -227,21 +268,10 @@ public:
 	  world.recv(0, cmd_set_data, frame_name);
 	  world.recv(0, cmd_set_data, frame_id);
 	  // try to set data until successful (meaning we got the mutex lock)
-	  loaded = false;
-	  try {
-	    uframe = load_image<ubyte>(fullname);
-	    mout << "mpi slave loaded image " << fullname 
-		 << " " << uframe << endl;
-	    loaded = true;
-	  } catch(eblexception &e) {
-	    merr << "exception: " << e << endl;
-	    mout << "Failed to process " << fullname << endl;
-	  }
+	  loaded = true; // we don't actually load the image here
+	  // confirm that image was loaded (fake)
 	  world.send(0, cmd_set_data, loaded);
-	  if (!loaded)
-	    break ; // failed to load image stop here
-	  // image is loaded, feed it to thread
-	  while (!dt.set_data(uframe, frame_name, frame_id))
+	  while (!dt.set_data(fullname, frame_name, frame_id))
 	    millisleep(5);
 	  break ;
 	case cmd_available:
@@ -264,7 +294,7 @@ public:
 	// wait for a new command
 	req = world.irecv(0, boost::mpi::any_tag);
       }
-      millisleep(100); // sleep to avoid eating cpu
+      millisleep(20); // sleep to avoid eating cpu
     }
   }
 
@@ -310,10 +340,14 @@ public:
   bool ask_get_data(int rank, vector<bbox> &bb,
 		    int &frame_height, int &frame_width, 
 		    uint &total_saved, string &frame_name,
-		    uint &frame_id) {
+		    uint &frame_id, svector<midx<t_net> > &samples,
+		    bboxes &bbsamples, bool &skipped) {
     bool new_data = 0;
+    vector<bbox> bbs2;
+    vector<midx<t_net> > vsamples;
     world.send(rank, cmd_get_data);
     world.recv(rank, cmd_get_data, new_data);
+    world.recv(rank, cmd_get_data, skipped);
     if (!new_data)
       return false; // no new data, stop here
     // get the new data
@@ -325,6 +359,13 @@ public:
     world.recv(rank, cmd_get_data, total_saved);
     world.recv(rank, cmd_get_data, frame_name);
     world.recv(rank, cmd_get_data, frame_id);
+    world.recv(rank, cmd_get_data, vsamples);
+    world.recv(rank, cmd_get_data, bbs2);
+    // convert outputs
+    bbsamples.clear();
+    for (uint i = 0; i < bbs2.size(); ++i) bbsamples.push_back_new(bbs2[i]);
+    samples.clear();
+    for (uint i = 0; i < vsamples.size();++i) samples.push_back_new(vsamples[i]);
     return true;
   }
 
@@ -376,15 +417,13 @@ public:
     bool        silent        		    = conf.exists_true("silent");
     bool        save_detections 	    = conf.exists_true("save_detections");
     uint 	save_bbox_period 	    = 1;
+    uint        timeout                     = conf.try_get_uint("timeout", 0);
     if (conf.exists("save_bbox_period")) 
       save_bbox_period = std::max((uint)1, conf.get_uint("save_bbox_period"));
     if (conf.exists("input_npasses"))
       npasses = conf.get_uint("input_npasses");
     // outputs
-    string outdir = conf.get_string("meta_output_dir");
-    outdir << "detections_" << tstamp();
-    outdir << "/";
-    mkdir_full(outdir);
+    string outdir = detection_thread<t_net>::get_output_directory(conf);
     mout << "Saving outputs to " << outdir << endl;
     string viddir;
     if (save_video) {
@@ -395,12 +434,17 @@ public:
     string cname = outdir;
     cname << filename(argv[1]);
     if (conf.write(cname.c_str()))
-      mout << "Wrote configuration to " << cname << endl;
+      mout << "Wrote configuration to " << cname << endl; 
+    idx<ubyte> classes(1,1);
+    try { // try loading classes names but do not stop upon failure
+      load_matrix<ubyte>(classes, conf.get_cstring("classes"));
+    } catch(string &err) { merr << "warning: " << err << endl; }
     // bbox saving
     t_bbox_saving bbsaving = bbox_none;
     if (conf.exists("bbox_saving"))
       bbsaving = (t_bbox_saving) conf.get_int("bbox_saving");
     bboxes boxes(bbsaving, &outdir, mout, merr);
+    bootstrapping<t_net> boot(conf);
 
     int nprocs = world.size();
     int nthreads = nprocs - 1;
@@ -408,7 +452,7 @@ public:
     
     // initialize camera (opencv, directory, shmem or video)
     idx<ubyte> frame;
-    camera<ubyte> *cam = NULL, *cam2 = NULL;
+    camera<ubyte> *cam = NULL;
     if (!strcmp(cam_type.c_str(), "directory")) {
       string dir;
       if (argc >= 3) // read input dir from command line
@@ -473,6 +517,8 @@ public:
     int frame_height = -1, frame_width = -1;
     idx<uint> total_saved(nthreads);
     idx_clear(total_saved);
+    svector<midx<t_net> > all_samples, samples; // extracted samples
+    bboxes all_bbsamples, bbsamples; // boxes corresponding to samples
     // bookkeep jobs assigments
     idx<int> jobs(world.size());
     idx_fill(jobs, -1);
@@ -482,7 +528,6 @@ public:
     toverall.start();
     while (!finished) {
       // check for results and send new image for each thread
-      uint i = 0;
       for (int rank = 1; rank < nprocs; ++rank) {
 	if (jobs.get(rank) == -2)
 	  continue ; // slave is finished, do nothing
@@ -490,12 +535,16 @@ public:
 	uint processed_id = 0;
 	if (jobs.get(rank) >= 0) { // slot is assigned a job
 	  // retrieve new data if present
+	  bool skipped = false;
 	  updated = ask_get_data(rank, bb, frame_height, frame_width,
 				 *(total_saved.idx_ptr() + rank - 1),
-				 processed_fname, processed_id);
+				 processed_fname, processed_id, samples,
+				 bbsamples, skipped);
+	  if (skipped) cnt++; // a new skipped frame was received
 	  // save bounding boxes
 	  if (updated) {
-	    mout << "received new data from Thread " << rank << endl;
+	    mout << "received new data of frame " << processed_id 
+		 << " from Thread " << rank << endl;
 	    updated = false;
 	    if (frame_height == -1 || frame_width == -1)
 	      eblerror("expected positive frame sizes but got: " << frame_height
@@ -508,28 +557,15 @@ public:
 	      boxes.add(bb, d, &processed_fname, processed_id);
 	      if (cnt % save_bbox_period == 0)
 		boxes.save();
+	      // avoid sample accumulation if not using bootstrapping
+	      mout << "Received " << all_samples.size() << " bootstrapping samples."
+		   << endl;
+	    }
+	    if (conf.exists_true("bootstrapping_save")) {
+	      all_samples.push_back_new(samples);
+	      all_bbsamples.push_back_new(bbsamples);
 	    }
 	    cnt++;
-	    // display processed frame
-	    // #ifdef __GUI__
-	    // 	if (display) {
-	    // 	  select_window(wid);
-	    // 	  disable_window_updates();
-	    // 	  clear_resize_window();
-	    // 	  detector_gui<t_net>::
-	    // 	    display_minimal(detframe, bb, 
-	    // 			    ((*ithreads)->pdetect ?
-	    // 			     (*ithreads)->pdetect->labels : classes),
-	    // 			    0, 0, 1, 0, 255,wid, show_parts);
-	    // 	  enable_window_updates();
-	    // 	  if (save_video && display) {
-	    // 	    string fname;
-	    // 	    fname << viddir << processed_fname;
-	    // 	    save_window(fname.c_str());
-	    // 	    if (!silent) mout << "saved " << fname << endl;
-	    // 	  }
-	    // 	}
-	    // #endif
 	    // output info
 	    if (!silent) {
 	      if (save_detections) {
@@ -538,6 +574,8 @@ public:
 		  mout << " / " << conf.get_uint("save_max");
 		mout << endl;
 	      }
+	      if (boot.activated())
+		mout << "total_bootstrapping=" << all_samples.size() << endl;
 	      mout << "remaining=" << (cam->size() - cnt)
 		   << " elapsed=" << toverall.elapsed();
 	      if (cam->size() > 0)
@@ -572,14 +610,9 @@ public:
 	      if (ask_thread_finished(rank))
 		jobs.set(-2, rank);
 	    } else {
-	      // if the pre-camera is defined use it until empty
-	      // 	    if (cam2 && !cam2->empty())
-	      // 	      frame = cam2->grab();
-	      // 	    else // empty pre-camera, use regular camera
-	      // 	      frame = cam->grab();
-	      // send new frame to this thread
 	      string fullname = cam->grab_filename();
 	      string frame_name = cam->frame_name();
+	      // send new frame to this thread
 	      if (ask_set_data(rank, fullname, frame_name, cam->frame_id())) {
 		jobs.set(cam->frame_id(), rank);
 		// we just sent a new frame
@@ -605,23 +638,27 @@ public:
       // 	  mout << "sleeping for " << display_sleep << "ms." << endl;
       // 	  millisleep(display_sleep);
       // 	}
-      if (conf.exists("save_max") && !stop &&
-	  idx_sum(total_saved) > conf.get_uint("save_max")) {
+      if ((conf.exists("save_max") && !stop &&
+	   idx_sum(total_saved) > conf.get_uint("save_max"))
+	  || (boot.activated() && all_samples.size() > boot.max_size())) {
 	mout << "Reached max number of detections, exiting." << endl;
 	stop = true; // limit number of detection saves
 	tstop.start(); // start countdown timer
       }
       // sleep a bit between each iteration
       millisleep(5);
-//       // check if stop countdown reached 0
-//       if (stop && tstop.elapsed_minutes() >= 5) {
-// 	merr << "threads did not all return 5 min after request, stopping"
-// 	     << endl;
-// 	break ; // program too long to stop, force exit
-//       }
+      // check if stop countdown reached 0
+      if (timeout > 0 && stop && tstop.elapsed_minutes() >= timeout) {
+	merr << "threads did not all return 5 min after request, stopping"
+	     << endl;
+	break ; // program too long to stop, force exit
+      }
     }
     // saving boxes
     boxes.save();
+    // saving bootstrapping
+    if (stop && conf.exists_true("bootstrapping_save"))
+      boot.save_dataset(all_samples, all_bbsamples, outdir, classes);
     mout << "Execution time: " << toverall.elapsed() << endl;
     // check all processes are correctly finished
     mout << "Checking all processes are finished..." << endl;
@@ -681,11 +718,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
     
       // load configuration
       configuration	conf(argv[1], false, true, false);
-      if (!conf.exists("root2")) {
+      if (!conf.exists("root2") || !conf.exists("current_dir")) {
 	string dir;
 	dir << dirname(argv[1]) << "/";
 	cout << "Looking for trained files in: " << dir << endl;
 	conf.set("root2", dir.c_str());
+	conf.set("current_dir", dir.c_str());
       }
       conf.resolve(); // manual call to resolving variable
       uint              ipp_cores     = 1;
@@ -710,6 +748,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       } else {
 	string tname;
 	tname << "Thread " << myid;
+	if (conf.exists("HOSTNAME")) 
+	  tname << " (" << conf.get_string("HOSTNAME") << ")";
 	mpichild child(conf, world, out_mutex, tname.c_str(), sync);
 	child.run();
       }

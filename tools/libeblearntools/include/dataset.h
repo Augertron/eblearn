@@ -143,129 +143,96 @@ namespace ebl {
 
     //! Extract data from files into dataset.
     virtual bool extract();
-
+    //! Extracts statistics about dataset into outdir/stats.csv.
+    virtual void extract_statistics();
     //! Split dataset into datasets ds1 and ds2, by limiting ds1 to max
     //! samples per class, putting anything left into ds2.
     //! Then save each dataset in outroot directory.
     bool split_max_and_save(const char *name1, const char *name2,
 			    intg max, const string &outroot);
-  
     //! Split dataset into datasets ds1 and ds2, by limiting ds1 to max
     //! samples per class, putting anything left into ds2.
     void split_max(dataset<Tdata> &ds1, dataset<Tdata> &ds2, intg max);
-
     //! merge datasets with names name1 and name2 found in outroot into
-    //! this dataset.
-    void merge(const char *name1, const char *name2, const string &outroot);
-
+    //! this dataset and save it.
+    void merge_and_save(const char *name1, const char *name2,
+			const string &outroot);
     //! Shuffle order of samples.
     void shuffle();
+    //! Set a unique label 'class_name' to all samples.
+    virtual void set_unique_label(const string &class_name);
 
     ////////////////////////////////////////////////////////////////
     // data preprocessing
 
-    //! Set type of image conversion with string conv_type.
-    //! con_type can accept a number of strings,
-    //! including RGB, Y, YUV, HSV, etc.
-    void set_pp_conversion(const char *conv_type, idxdim &ppkernel_size);
+    //! Input is loaded as planar (channels in first dimension).
+    void set_planar_loading();
 
     ////////////////////////////////////////////////////////////////
     // accessors    
 
     //! Get sample dimensions
     const idxdim &get_sample_outdim();
-
     //! Return the number of samples in the dataset.
     intg size();
-
     //! Return unsigned int label corresponding to class name
     t_label get_label_from_class(const string &class_name);
-    
     //! Turn display on or off.
     void set_display(bool display);
-
     //! Make the display sleep delay milliseconds between frames
     void set_sleepdisplay(uint delay);
-
-    //! Select the method for resizing. default is set to gaussian pyramids.
-    //! options are: "gaussian" or "bilinear" for bilinear interpolation.
-    void set_resize(const string &resize_mode);
-
+    //! Set a vector for preprocessing modules.
+    void set_preprocessing(vector<resizepp_module<fs(Tdata)>*> &p);
     //! Specify the dimensions of 1 output sample.
     //! The default is: 96x96x3
-    void set_outdims(const idxdim &d);
-
-    //! Specify output directory.
-    void set_outdir(const string &s);
-
+    virtual void set_outdims(const idxdim &d);
+    //! Specify output directory 's' and a temporary output directory 'tmp'.
+    virtual void set_outdir(const char *s, const char *tmp = NULL);
     //! Specify the minimum dimensions of input samples.
     //! The default is: 1x1
     void set_mindims(const idxdim &d);
-
     //! Specify the maximum dimensions of input samples.
     void set_maxdims(const idxdim &d);
-
     //! Setting scale mode and scales: preprocess and save each image
     //! in each scale in outdir directory.
     void set_scales(const vector<double> &sc, const string &od);
-    
     //! Setting fovea scales: the feature layer is duplicated for
     //! each scale factor provided here.
     void set_fovea(const vector<double> &scales);
-    
     //! Set all max per class to max.
     void set_max_per_class(intg max);
-
     //! Set maximum number of samples.
     void set_max_data(intg max);
-
     //! Set the pattern used to find image.
     void set_image_pattern(const string &p);
-
     //! Set the list of classes to exclude (including everything else).
     void set_exclude(const vector<string> &ex);
-
     //! Set the list of classes to include (excluding everything else).
     void set_include(const vector<string> &inc);
-
     //! Set saving mode, default is "dataset", saving everything in single
     //! lush matrix format. other values can be "ppm", "jpg", etc.
     void set_save(const string &save);
-
+    //! If 'b' is true, save each intermediate sample file individually.
+    void set_individual_save(bool b);
+    //! If 'b' is true, save each layer of each sample individually.
+    void set_separate_layers_save(bool b);
     //! Set name of dataset. This name will be used by load and save methods.
     //! It is usually set in the constructor, but one can also use this method
     //! instead.
     void set_name(const string &name);
-
     //! If called, this method will force the dataset to assign this one
     //! label to all collected images.
     void set_label(const string &label);
-
-    //! Multiply bounding boxes by factor. This is useful to move object's
-    //! boundaries away from borders when bounding boxes are too tight around
-    //! objects.
-    void set_bboxfact(float factor);
-
-    //! Multiply bounding boxes height by factor.
-    //! This is useful to move object's
-    //! boundaries away from borders when bounding boxes are too tight around
-    //! objects.
-    void set_bboxhfact(float factor);
-
-    //! Multiply bounding boxes width by factor. This is useful to move object's
-    //! boundaries away from borders when bounding boxes are too tight around
-    //! objects.
-    void set_bboxwfact(float factor);
-
     //! Force bounding box width to be h * factor.
     //! This is useful to normalize bounding boxes with varying width to a fixed
     //! height/width ratio.
     void set_bbox_woverh(float factor);
-
     //! If true, ignore samples with padded areas, i.e. too small for target 
     //! size.
     void set_nopadded(bool nopadded);
-
+    //! Extract temporal features in video sequences by extracting the 
+    //! bboxes over n multiple frames(with a stride)
+    void set_videobox(uint nframes, uint stride);
     //! Add n samples randomly jittered over in a (minradius,maxradius)
     //! spatial neighborhood around original location.
     void set_jitter(uint tjitter_step, uint tjitter_hmin, uint tjitter_hmax,
@@ -273,7 +240,6 @@ namespace ebl {
 		    uint scale_steps, float scale_min, float scale_max,
 		    uint rotation_steps, float rotation_range,
 		    uint njitter);
-
     //! Set minimum visibility ratio (between 0.0 and 1.0) of a sample.
     //! This may be used to ignore
     //! sample rects that are cropped too much while jittering.
@@ -281,35 +247,34 @@ namespace ebl {
     //! the ratio is computed using the overlap of the visible bounding box
     //! with the original bounding box.
     virtual void set_minvisibility(float minvis);
-
     //! Add sample mirrored with vertical-axis symmetry.
     void set_wmirror();
-
+    
     //! Saves all displayed frames to 'dir'.
     //! If h and w are different than 0, fix the saved frames to hxw.
     void save_display(const string &dir, uint h = 0, uint w = 0);
-    
     //! use pose information to separate classes. e.g. if for class "person"
     //! we have "front" and "side" pose, create 2 classes "person_front"
     //! and "person_side" instead of 1 class "person".
     void use_pose();
-
     //! also extract parts of objects if available.
     //! e.g. in pascal if for class "person", parts "face", "hand" and "foot"
     //! are available.
     void use_parts();
-
     //! only extract parts of objects if available.
     //! e.g. in pascal if for class "person", parts "face", "hand" and "foot"
     //! are available.
     void use_parts_only();
-
     //! Dataset has reached maximum sample capacity (this can be controlled
     //! by setting max_data variable).
     //! A label can be optionally passed to return if the dataset is full for
     //! a particular class (this is relevant only if set_max_per_class has been
     //! previously set.
     bool full(t_label label = -1);
+    //! Count how many samples will be present in dataset files to be compiled,
+    //! this may be more than count_samples() when jitter or mirroring
+    //! is activated. This returns the total.
+    virtual intg count_total();
     
     ////////////////////////////////////////////////////////////////
     // I/O
@@ -317,9 +282,9 @@ namespace ebl {
     //! Load dataset found in root. root should be including the name of the
     //! dataset, e.g.: "/data/dataset1" is going to load dataset1_*.mat
     bool load(const string &root);
-
-    //! Save dataset in root
-    bool save(const string &root);
+    //! Save dataset in root.
+    //! \param save_data If false, do not save data matrix.
+    bool save(const string &root, bool save_data = true);
 
     ////////////////////////////////////////////////////////////////
     // print methods
@@ -347,9 +312,6 @@ namespace ebl {
     //! be used as a buffer resize method.
     bool allocate(intg n, idxdim &d);
 
-    //! Allocate preprocessing and resizing modules.
-    void init_preprocessing();
-
     ////////////////////////////////////////////////////////////////
     // data manipulation
 
@@ -365,7 +327,7 @@ namespace ebl {
     //!    for display purposes.
     //! \param jittforce If not null, ignore other jittering and use only this
     //!   one.
-    virtual bool add_data(idx<Tdata> &d, const t_label label,
+    virtual bool add_data(midx<Tdata> &d, const t_label label,
 			  const string *class_name,
 			  const char *filename = NULL,
 			  const rect<int> *r = NULL,
@@ -374,20 +336,23 @@ namespace ebl {
 			  const rect<int> *cropr = NULL,
 			  const vector<object*> *objs = NULL,
 			  const jitter *jittforce = NULL);
-
-    //! add/save sample, called at the end of add_data.
-    void add_data2(idx<Tdata> &sample, t_label label, const string *class_name,
+    //! add/save sample, called at the end of add_data().
+    void add_data2(midx<Tdata> &sample, t_label label, const string *class_name,
 		   const char *filename, const jitter *jitt,
 		   idx<t_jitter> *js);
-    
+    //! Add/save label, called by add_data2().
+    void add_label(t_label label, const string *class_name,
+		   const char *filename, const jitter *jitt,
+		   idx<t_jitter> *js);
+    //! Clear the classes.
+    virtual void clear_classes();
     //! add a class name
-    bool add_class(const string &class_name);
-
+    virtual bool add_class(const string &class_name);
     //! set all classes directly using an idx of classes strings
-    void set_classes(idx<ubyte> &classidx);
+    virtual void set_classes(idx<ubyte> &classidx);
 
-    //! count how many samples are present in dataset files to be compiled.
-    virtual bool count_samples();
+    //! Count and returns how many samples are present in data.
+    virtual intg count_samples();
 
     //! split current dataset into ds1 and ds2, using their max_per_class
     //! array (first filling ds1 until full, then ds2, therefore assuming
@@ -397,7 +362,10 @@ namespace ebl {
     template <class Toriginal>
       bool save_scales(idx<Toriginal> &d, const string &filename);
 
-    //! return true if class_name is authorized (based on excluded and included
+    //! Returns true if label is authorized (based on excluded and included
+    //! variables).
+    virtual bool included(t_label &lab);
+    //! Returns true if class_name is authorized (based on excluded and included
     //! variables).
     virtual bool included(const string &class_name);
 
@@ -415,15 +383,15 @@ namespace ebl {
     //! \param scale Scale the input box by this factor.
     //! \param inr_out If not null, this rectangle will be filled with the
     //!          actual rectangle used for extraction.
-    idx<Tdata> preprocess_data(idx<Tdata> &d, const string *class_name,
-			       const char *filename = NULL,
-			       const rect<int> *r = NULL, double scale = 0,
-			       rect<int> *outr = NULL,
-			       pair<int,int> *center = NULL,
-			       jitter *jitt = NULL,
-			       const rect<int> *visr = NULL,
-			       const rect<int> *cropr = NULL,
-			       rect<int> *inr_out = NULL);
+    midx<Tdata> preprocess_data(midx<Tdata> &d, const string *class_name,
+				const char *filename = NULL,
+				const rect<int> *r = NULL, double scale = 0,
+				rect<int> *outr = NULL,
+				pair<int,int> *center = NULL,
+				jitter *jitt = NULL,
+				const rect<int> *visr = NULL,
+				const rect<int> *cropr = NULL,
+				rect<int> *inr_out = NULL);
 
     //! Display the added sample and the original image.
     //! \param visr An optional bounding box for the visible area of the object
@@ -432,7 +400,9 @@ namespace ebl {
     //! \param scale Scale the input box by this factor.
     //! \param inr The actual rectangle used for extraction.
     //! \param origr The original object bounding box.
-    void display_added(idx<Tdata> &added, idx<Tdata> &original, 
+    //! \param woriginal If defined, it gets filled with the width
+    //!   offset at which the original image gets painted.
+    void display_added(midx<Tdata> &added, idx<Tdata> &original, 
 		       const string *class_name, 
 		       const char *filename = NULL,
  		       const rect<int> *inr = NULL,  
@@ -443,7 +413,8 @@ namespace ebl {
 		       const rect<int> *cropr = NULL,
 		       const vector<object*> *objs = NULL,
 		       const jitter *jitt = NULL,
-		       idx<t_jitter> *js = NULL);
+		       idx<t_jitter> *js = NULL,
+		       uint *woriginal = NULL);
 
     ////////////////////////////////////////////////////////////////
     // Helper functions
@@ -474,9 +445,10 @@ namespace ebl {
     
   protected:
     // data ////////////////////////////////////////////////////////
-    idx<Tdata>		data;        	//!< data matrix
+    midx<Tdata>		data;        	//!< data matrix
     idx<t_label>	labels;	        //!< labels matrix
-    idxs<t_jitter>	jitters;        //!< jitter info matrix
+    idx<intg>	        ids;	        //!< indices matrix
+    midx<t_jitter>	jitters;        //!< jitter info matrix
     vector<string>	classes;	//!< list of classes strings
     idx<t_label>        classpairs;	//!< sample pairs class-wise
     idx<t_label>        deformpairs;	//!< sample pairs deformation-wise
@@ -490,6 +462,7 @@ namespace ebl {
     idxdim		maxdims;	//!< max dims of input samples
     bool		maxdims_set;	//!< max dims of input samples is set?
     idxdim		datadims;	//!< dimensions of data out dimensions
+    uint                nlayers;        //!< # layers per sample
     intg		data_cnt;	//!< number of samples added so far
     intg		processed_cnt;	//!< #processed (not necessarly added)
     intg		max_data;	//!< user can limit samples# with this
@@ -498,21 +471,22 @@ namespace ebl {
     idx<intg>           max_per_class;	//!< max # samples per class
     intg                mpc;            //!< value to put in max_per_class
     bool                max_per_class_set;	//!< mpc has been set or not
-    idx<Tdata>          load_img;       //!< temporary image loader
+    midx<Tdata>         load_img;       //!< temporary image loader
     bool                scale_mode;     //!< scales saving mode
     vector<double>      scales;         //!< integer scales
     bool                interleaved_input; //!< indicate input is interleaved
+    bool                load_planar;    //!< input is planar when loaded
     vector<string>      exclude;        //!< list of excluded classes
     vector<string>      include;        //!< list of included classes
     bool                usepose;        //!< use pose or not
     bool                useparts;       //!< use parts or not
     bool                usepartsonly;   //!< use parts only or not
     string              save_mode;      //!< saving mode (dataset, ppm, png..)
+    bool                individual_save; //!< Save individual files or not.
+    bool                separate_layers_save; //!< Save separate layers or not.
     list<string>        images_list;    //!< List of saved image files.
     bool                wmirror;        //!< add vertical-axis symmetry
     // bbox transformations /////////////////////////////////////////////////
-    float               bboxhfact;      //!< bounding boxes height factor
-    float               bboxwfact;      //!< bounding boxes width factor
     float               bbox_woverh;    //!< bounding boxes width over h factor
     string              force_label;    //!< force all labels to this one
     bool                nopadded;       //!< ignore too small samples
@@ -536,18 +510,18 @@ namespace ebl {
     string		data_fname;	//!< data filename
     string		labels_fname;	//!< labels filename
     string		jitters_fname;	//!< jitters filename
+    string		ids_fname;	//!< ids filename
     string		classes_fname;	//!< classes filename
     string		classpairs_fname;	//!< classpairs filename
     string		deformpairs_fname;	//!< deformpairs filename
     // directories /////////////////////////////////////////////////
     string		inroot;         //!< root directory of input files
     string		outdir;         //!< root directory of output files
+    string		outtmp;         //!< root directory of tmp output files
     string              extension;	//!< extension of files to extract
     // display /////////////////////////////////////////////////////
     bool		display_extraction;	//!< display during extraction
     bool		display_result;	//!< display extracted dataset
-    Tdata               minval;         //!< minimum value to display
-    Tdata               maxval;         //!< minimum value to display
     bool                sleep_display;	//!< enable sleeping when displaying
     uint                sleep_delay;	//!< display sleep delay in ms
     bool                bsave_display;
@@ -559,15 +533,15 @@ namespace ebl {
     uint                add_errors;     //!< Number of adding failures.
     timer               xtimer;         //!< Extraction timer.
     // preprocessing ///////////////////////////////////////////////
-    string		ppconv_type;	//!< name of image conversion
-    idxdim		ppkernel_size;	//!< size of kernel for pp
-    bool		ppconv_set;	//!< ppconv_type has been set or not
     bool		do_preprocessing;	//!< activate or deactivate pp
-    string              resize_mode;    //!< type of resizing (bilin, gaussian)
-    module_1_1<fs(Tdata)>  *ppmodule;       //!< pp module 
-    resizepp_module<fs(Tdata)> *resizepp;   //!< pp resizing module
+    vector<resizepp_module<fs(Tdata)>*> ppmods;   //!< pp resizing module
+    string              pp_names;       //!< All preprocessing names.
     rect<int>           original_bbox;  //!< bbox of image in resized image
     vector<double>      fovea; //!< fovea context
+    // videobox ///////////////////////////////////////////////
+    bool                do_videobox; //!< Activate or deactivate videobox
+    uint                videobox_nframes; //!< Number of future frames
+    uint                videobox_stride;//!< Stride of iterating over frames
   };
   
   ////////////////////////////////////////////////////////////////
@@ -587,6 +561,10 @@ namespace ebl {
   //! return success.
   template <typename T>
     bool loading_error(idx<T> &mat, string &fname);
+  //! required datasets, throw error if bool is false, otherwise print success.
+  //! return success.
+  template <typename T>
+    bool loading_error(midx<T> &mat, string &fname);
   //! optional datasets, issue warning if bool is false, otherwise print
   //! success. return succcess.
   template <typename T>
@@ -594,7 +572,7 @@ namespace ebl {
   //! Optionally load matrices from fname into 'mat', issue warning if bool is
   //! false, otherwise print success. return succcess.
   template <typename T>
-    bool loading_warning(idxs<T> &mat, string &fname);
+    bool loading_warning(midx<T> &mat, string &fname);
   //! optional datasets, no warning if bool is false, otherwise print
   //! success. return succcess.
   template <typename T>

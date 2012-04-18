@@ -48,7 +48,7 @@ namespace ebl {
       eblerror("rgb_to_yuv: dst must be different than src");
       return ;
     }
-    static double r, g, b;
+    double r, g, b;
     r = rgb.get(0);
     g = rgb.get(1);
     b = rgb.get(2);
@@ -84,7 +84,7 @@ namespace ebl {
       eblerror("rgb_to_y: dst must be different than src");
       return ;
     }
-    static double r, g, b;
+    double r, g, b;
     r = rgb.get(0);
     g = rgb.get(1);
     b = rgb.get(2);
@@ -127,7 +127,7 @@ namespace ebl {
       eblerror("bgr_to_yuv: dst must be different than src");
       return ;
     }
-    static double r, g, b;
+    double r, g, b;
     b = bgr.get(0);
     g = bgr.get(1);
     r = bgr.get(2);
@@ -143,7 +143,7 @@ namespace ebl {
       eblerror("bgr_to_y: dst must be different than src");
       return ;
     }
-    static double r, g, b;
+    double r, g, b;
     b = bgr.get(0);
     g = bgr.get(1);
     r = bgr.get(2);
@@ -172,16 +172,25 @@ namespace ebl {
   
   template<class T> void yuv_to_rgb_1D(idx<T> &yuv, idx<T> &rgb) {
     if (rgb.idx_ptr() == yuv.idx_ptr()) {
-      eblerror("yub_to_rgb: dst must be different than src");
+      eblerror("yuv_to_rgb: dst must be different than src");
       return ;
     }
-    static double y, u, v;
-    y = yuv.get(0);
-    u = (yuv.get(1) / 1.14678) - 111;
-    v = (yuv.get(2) / 0.81300) - 157;
-    rgb.set(1.0 * y + 0.00000 * u + 1.13983 * v, 0);
-    rgb.set(1.0 * y - 0.39465 * u - 0.58060 * v, 1);
-    rgb.set(1.0 * y + 2.03211 * u + 0.00000 * v, 2);
+    float y, u, v;
+    y = std::min((float) 255, std::max((float) 0, 
+                                       (float) ((float) 1.164383562 
+                                                * (yuv.get(0) - 16))));
+    u = std::min((float) 128, std::max((float) -127, 
+                             (float) ((float) 1.133928571 
+                                      * (yuv.get(1) - 128))));
+    v = std::min((float) 128, std::max((float) -127, 
+                             (float) ((float) 1.133928571 
+                                      * (yuv.get(2) - 128))));
+    rgb.set(std::min((T) 255, std::max((T) 0, 
+                             (T) (1.0 * y + 0.00000 * u + 1.402 * v))), 0);
+    rgb.set(std::min((T) 255, std::max((T) 0, 
+                             (T) (1.0 * y - 0.344 * u - 0.714 * v))), 1);
+    rgb.set(std::min((T) 255, std::max((T) 0, 
+                             (T) (1.0 * y + 1.772 * u + 0.00000 * v))), 2);
   }
 
   template<class T> void yuv_to_rgb(idx<T> &yuv, idx<T> &rgb) {
@@ -221,11 +230,11 @@ namespace ebl {
       eblerror("rgb_to_hsv: dst must be different than src");
       return ;
     }
-    static double r, g, b;
+    double r, g, b;
     r = rgb.get(0);
     g = rgb.get(1);
     b = rgb.get(2);
-    static double h, s, v;
+    double h, s, v;
     PIX_RGB_TO_HSV_COMMON(r, g, b, h, s, v, false);
     hsv.set((T) h, 0);
     hsv.set((T) s, 1);
@@ -237,11 +246,11 @@ namespace ebl {
       eblerror("rgb_to_h: dst must be different than src");
       return ;
     }
-    static double r, g, b;
+    double r, g, b;
     r = rgb.get(0);
     g = rgb.get(1);
     b = rgb.get(2);
-    static double h_, s_, v_;
+    double h_, s_, v_;
     PIX_RGB_TO_HSV_COMMON(r, g, b, h_, s_, v_, false);
     h.set((T) h_, 0);
   }
@@ -278,11 +287,11 @@ namespace ebl {
       eblerror("hsv_to_rgb: dst must be different than src");
       return ;
     }
-    static double h, s, v;
+    double h, s, v;
     h = hsv.get(0);
     s = hsv.get(1);
     v = hsv.get(2);
-    static double r, g, b;
+    double r, g, b;
     PIX_HSV_TO_RGB_COMMON(h, s, v, r, g, b);
     rgb.set((T)r, 0);
     rgb.set((T)g, 1);
@@ -327,11 +336,11 @@ namespace ebl {
       eblerror("rgb_to_hsv3: dst must be different than src");
       return ;
     }
-    static double r, g, b;
+    double r, g, b;
     r = rgb.get(0);
     g = rgb.get(1);
     b = rgb.get(2);
-    static double h, s, v;
+    double h, s, v;
     PIX_RGB_TO_HSV_COMMON(r, g, b, h, s, v, false);
     if ((s < threshold1) || (v < threshold2)) {
       h = 360 + 60 * v;
@@ -375,11 +384,11 @@ namespace ebl {
       eblerror("hsv3_to_rgb: dst must be different than src");
       return ;
     }
-    static double h, s, v;
+    double h, s, v;
     h = hsv3.get(0);
     s = hsv3.get(1);
     v = hsv3.get(2);
-    static double r, g, b;
+    double r, g, b;
     PIX_HSV3_TO_RGB_COMMON(h, s, v, r, g, b);
     rgb.set((T)r, 0);
     rgb.set((T)g, 1);
@@ -424,7 +433,7 @@ namespace ebl {
       eblerror("rgb_to_yh3: dst must be different than src");
       return ;
     }
-    static idx<T> hsv3(3);
+    idx<T> hsv3(3);
     rgb_to_hsv3_1D(rgb, hsv3, threshold1, threshold2);
     yh3.set((0.299 * rgb.get(0) + 0.587 * rgb.get(1) + 0.114 * rgb.get(2))
 	    /255.0, 0);
@@ -465,7 +474,7 @@ namespace ebl {
       eblerror("h3_to_rgb: dst must be different than src");
       return ;
     }
-    static double r, g, b;
+    double r, g, b;
     PIX_HSV3_TO_RGB_COMMON(h3.get(), .5, .5, r, g, b);
     rgb.set((T)r, 0);
     rgb.set((T)g, 1);
@@ -509,11 +518,11 @@ namespace ebl {
       eblerror("rgb_to_h2sv: dst must be different than src");
       return ;
     }
-    static double r, g, b;
+    double r, g, b;
     r = rgb.get(0);
     g = rgb.get(1);
     b = rgb.get(2);
-    static double h, s, v, h1, h2;
+    double h, s, v, h1, h2;
     PIX_RGB_TO_HSV_COMMON(r, g, b, h, s, v, false);
     PIX_HSV_TO_H2SV1_COMMON(h, h1, h2);
     h2sv.set((T)h1, 0);

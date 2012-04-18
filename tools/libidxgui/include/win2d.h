@@ -56,7 +56,7 @@ namespace ebl {
     Q_OBJECT
       
   public:
-    win2d(uint wid, const char *wname = NULL, uint height = 0, uint width = 0);
+    win2d(uint wid, const char *wname = NULL, uint height = 1, uint width = 1);
     virtual ~win2d();
 
     ////////////////////////////////////////////////////////////////
@@ -77,6 +77,9 @@ namespace ebl {
     //! Refresh display of the window.
     //! \param activate Raises the focus to this window if true.
     virtual void update_window(bool activate = false);
+    //! Repaints the pixmap and updates window. This will take changes in
+    //! drawing_mode into account.
+    virtual void repaint_pixmap();
     //! Set color of background.
     virtual void set_bg_colors(ubyte r, ubyte g, ubyte b);
 
@@ -110,7 +113,8 @@ namespace ebl {
     void buffer_resize(uint h, uint w, bool force = false);
     //! Fill given buffer with background color.
     void buffer_fill(idx<ubyte> *buf);
-    void update_qimage();
+    //! \param mode The channel(s) to display, 0: RGB, 1: R, 2: G, 3: B.
+    void update_qimage(uint mode = 0);
     void swap();
 
     ////////////////////////////////////////////////////////////////
@@ -122,19 +126,24 @@ namespace ebl {
     void draw_masks(QPainter &painter);
     void draw_images(bool update = false);
 
+    // member variables ////////////////////////////////////////////////////////
+  protected:
+    using win::buffer;
+    using win::drawing_mode;
+    
   private slots:
     void scroll_previous();
     void scroll_next();
-
+    
   private:
     QPixmap		*pixmap;
     QPoint		 pixmapOffset;
     QPoint		 lastDragPos;
     double		 pixmapScale;
-    idx<ubyte>		*buffer;
     uint		 buffer_maxh;
     uint		 buffer_maxw;
     QImage		*qimage;
+    idx<ubyte>          *channel_buffer;
   };
 
 } // namespace ebl {

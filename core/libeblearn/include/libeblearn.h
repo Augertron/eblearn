@@ -30,15 +30,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#ifndef libeblearn_H
-#define libeblearn_H
+#ifndef LIBEBLEARN_H
+#define LIBEBLEARN_H
 
 #include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_arch.h"
+#include "ebl_march.h"
+#include "ebl_merge.h"
 #include "ebl_states.h"
 #include "ebl_basic.h"
-#include "ebl_transfer.h"
+#include "ebl_pooling.h"
+#include "ebl_normalization.h"
 #include "ebl_cost.h"
 #include "ebl_energy.h"
 #include "ebl_answer.h"
@@ -51,6 +54,8 @@
 #include "ebl_utils.h"
 #include "bbox.h"
 #include "detector.h"
+#include "nms.h"
+#include "ebl_lua.h"
 
 #ifndef __NOSTL__
 #include "ebl_tester.h"
@@ -58,4 +63,4 @@
 #include "datasource.h"
 #endif
 
-#endif
+#endif // LIBEBLEARN_H

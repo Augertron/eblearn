@@ -58,12 +58,12 @@ namespace ebl {
   // data extraction
 
   template <class Tdata>
-  bool grid_dataset<Tdata>::count_samples() {
+  intg grid_dataset<Tdata>::count_samples() {
     // TODO: implement finding biggest sample size and divide by number of cells
     // and return the maximum possible number of samples
     dataset<Tdata>::count_samples();
     this->total_samples *= 100;
-    return true;
+    return this->total_samples;
   }
   
   template <class Tdata>
@@ -78,7 +78,10 @@ namespace ebl {
 	rect<int> roi(i, j, cell_height, cell_width);
 	cout << "roi: " << roi << endl;
 	t_label label = this->get_label_from_class(class_name);
-	ret = dataset<Tdata>::add_data(d, label, &class_name, filename, &roi);
+	midx<Tdata> dd(1);
+	dd.set(d, 0);
+	ret = dataset<Tdata>::add_data(dd, label, &class_name, filename, &roi);
+	dd.clear();
       }
     }
     return true;

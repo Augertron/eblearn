@@ -85,31 +85,27 @@ namespace ebl {
     //! This differs from alive() in that it indicates if the job
     //! is being run by anybody else or us.
     virtual bool running();
-
     //! Return pid of this job.
     virtual int getpid();
-
     //! Return the name of this job (its configuration filename).
     virtual string &name();
+    //! Return the short name of this job.
+    virtual string shortname();
 
     //! Return root directory of this job.
     virtual string get_root();
-
     //! Return job's running time in minutes.
     virtual double minutes();
-
     //! Force the start flag to be on. This is be useful to mpi job manager.
     virtual void force_started();
-
+    //! Force the start flag to be off. This is be useful to mpi job manager.
+    virtual void reset_started();
     //! Return elapsed running time string.
     virtual string elapsed();
-
     //! Returns true if this job is being resumed from before.
     virtual bool resumed();
-
     //! Returns true if this job is finished, false otherwise.
     virtual bool finished();
-
     //! Returns the progress percentage or -1 if not started.
     //! This value is updated after a check_progress() call only.
     virtual int progress() const;
@@ -121,21 +117,17 @@ namespace ebl {
     //! to show that this job is being processed.
     //! Returns false if writing the file failed.
     virtual bool declare_started();
-
     //! Create an empty file named 'finished' in the job's directory,
     //! to show that this job was finished.
     //! Returns false if writing the file failed.
     virtual bool declare_finished();
-
     //! Returns true if a file named 'progress' exists in the job's directory.
     virtual bool check_started();
-
     //! Returns true if job's progress file was modified less than an hour ago.
     //! This also updates the value returned by running() method.
     //! This information is different than alive(), in the sense that
     //! this job could be run by somebody else or ourselves.
     virtual bool check_running();
-
     //! Returns the percentage progress of the job by looking at the
     //! 'progress' file in the job's directory.
     //! If progress does not exist, returns -1.
@@ -143,10 +135,8 @@ namespace ebl {
     //! If 'retrain_iteration' and 'iterations' are defined, return
     //! retrain_iteration / iterations * 100 as percentage.
     virtual int check_progress();
-
     //! Returns true if a file named 'finished' exists in the job's directory.
     virtual bool check_finished();
-
     //! Write the file 'progress' in current directory or in root directory
     //! if specified, and write 'i' and 'total'
     //! variables to describre progress.
@@ -155,24 +145,23 @@ namespace ebl {
     static void write_progress(uint i, uint total,
 			       const char *additional = NULL,
 			       const char *root = NULL);
-    
+    //! Returns the filename where progress info is written by write_progress().
+    static string get_progress_filename(const char *root = NULL);
     //! Write the file 'finished' in current directory or in root directory
     //! if specified. If 'progress' file already exists, move it to 'finished'
     //! (to avoid having too many files, otherwise, just touch file 'finished'.
     static void write_finished(const char *root = NULL);
+    //! Figure out resume parameters from existing weights files.
+    //! \param dir If null, use job's output directory.
+    virtual void figure_resume_from_weights(const char *dir = NULL);
     
   protected:
-
     //! Execute child's code.
     virtual void run_child();
-
     //! Figure out resume parameters from 'progress' file.
     //! If no info found in progress file, this tries
     //! figure_resume_from_weights().
     virtual void figure_resume_out();
-
-    //! Figure out resume parameters from existing weights files.
-    virtual void figure_resume_from_weights();
 
     ////////////////////////////////////////////////////////////////
     // members
@@ -224,17 +213,16 @@ namespace ebl {
 			       const char *resume_name = NULL, 
 			       bool resumedir = false,
 			       bool nomax = false, int maxjobs = -1);
-
     //! Enable recursive copy of this path into jobs folders.
     virtual void set_copy(const string &path);
-    
     //! Prepare all jobs (create folders and copy/create files).
     //! \param reset_progress If true, ignore existing progress in target dir.
     virtual void prepare(bool reset_progress = false);
-
+    //! Set the weights initialization for each job given corresponding jobs
+    //! found in 'other' directory.
+    virtual void initialize_other(const string &other);
     //! Run all jobs (assumes a call to prepare() beforehand).
-    virtual void run();
-
+    virtual void run(bool force_start = false);
     //! Monitor progress of jobs given existing directories and
     //! progress files ('progress' and 'finished').
     virtual void monitor(const char *conffname);
@@ -243,17 +231,13 @@ namespace ebl {
 
     //! Release child processes that have terminated from their zombie state.
     virtual void release_dead_children();
-    
     //! Gather and print information about jobs, such as number of jobs running,
     //! number to run left, min/max running time.
     virtual void jobs_info();
-
     //! Analyze and send a report.
     virtual void report();
-
     //! Print stopping message and send last report.
     virtual void last_report();
-
     //! List all job directories found in conf's root directory and 
     //! return that list. Caller is responsible for delete the list.
     virtual list<string> *list_job_dirs(const char *conffname);
@@ -278,7 +262,7 @@ namespace ebl {
     uint		unstarted;
     uint                finished;
     uint                unfinished;
-    uint		ready_slots;
+    int		        ready_slots;
     ostringstream       infos;
     ostringstream       summary; //!< Jobs status summary.
     varmaplist          best; //!< best results

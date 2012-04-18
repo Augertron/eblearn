@@ -35,6 +35,7 @@
 #include "tools_utils.h"
 #include "configuration.h"
 #include "netconf.h"
+#include "eblapp.h"
 
 //#define NOCONSOLE
 
@@ -54,9 +55,6 @@
 #include "libeblearngui.h"
 #include "defines_windows.h"
 #endif
-
-using namespace std;
-using namespace ebl;
 
 ////////////////////////////////////////////////////////////////
 // global parameters
@@ -81,6 +79,7 @@ vector<double> range;
 int chans = -1; // -1: show all chans, 0: chan 0 only, etc
 uint maxwidth = 1000;
 bool interleaved = false;
+bool save_individually = false;
 				      
 ////////////////////////////////////////////////////////////////
 // interface
@@ -101,6 +100,8 @@ void print_usage() {
   cout << "  -filename (display filename within drawing area)" << endl;
   cout << "  -print (print all values of current matrix)" << endl;
   cout << "  -interleaved (channels are in dimension 0)" << endl;
+  cout << "  -save_individually (save each sub-matrix individually if midx)"
+       << endl;
 }
 
 // parse command line input
@@ -134,7 +135,9 @@ int display_net(list<string>::iterator &ifname,
   if (!answer) eblerror("no answer module found");
   uint noutputs = answer->get_nfeatures();
   parameter<fs(T)> theparam;
-  module_1_1<fs(T)> *net = create_network<fs(T)>(theparam, *conf, noutputs);
+  intg thick;
+  module_1_1<fs(T)> *net = create_network<fs(T)>(theparam, *conf, thick,
+						 noutputs);
   cout << "Network parameters: " << theparam.x << endl;
   vector<string> weights =
     string_to_stringvector(conf->get_string("weights_file"));
@@ -175,29 +178,60 @@ int display(list<string>::iterator &ifname,
     idxdim d = get_matrix_dims(ifname->c_str());
     if (interleaved)
       d.shift_dim(0, 2);
-    if (print || !(d.order() == 2 ||
+    if (save_individually || print || !(d.order() == 2 ||
 		   (d.order() == 3 && (d.dim(2) == 1 || d.dim(2) == 3)))) {
       // this is probably not an image, just display info and print matrix
       string type;
       get_matrix_type(ifname->c_str(), type);
       idx<T> m = load_matrix<T>(ifname->c_str());
       cout << "Matrix " << ifname->c_str() << " is of type " << type
-	   << " with dimensions " << d << ":" << endl << m.str() << endl;
+	   << " with dimensions " << d << " (min " << idx_min(m)
+	   << ", max " << idx_max(m) << ", mean " << idx_mean(m)
+	   << "):" << endl;
+      m.print();
+      if (has_multiple_matrices(ifname->c_str())) {
+	midx<T> ms = load_matrices<T>(ifname->c_str(), true);
+	// saving sub-matrices
+	if (save_individually) {
+	  cout << "Saving each sub-matrix of " << *ifname << " individually..."
+	       << endl;
+	  save_matrices_individually(ms, *ifname, true);
+	}
+	// printing sub-matrices
+	cout << "This file contains " << m << " matrices: ";
+	if (ms.order() == 1) {
+	  for (intg i = 0; i < ms.dim(0); ++i) {
+	    idx<T> tmp = ms.get(i);
+	    cout << tmp << " ";
+	  }
+	} else if (ms.order() == 2) {
+	  for (intg i = 0; i < ms.dim(0); ++i) {
+	    for (intg j = 0; j < ms.dim(1); ++j) {
+	      idx<T> tmp = ms.get(i, j);
+	      cout << tmp << " ";
+	    }
+	    cout << endl;
+	  }
+	}
+	cout << endl;
+      } else
+	cout << "This is a single-matrix file." << endl;
       return 0;
     }
   }
   // image mode
   int loaded = 0;
-#ifdef __GUI__
   static idx<T> mat;
   uint h = 0, w = 0, rowh = 0, maxh = 0;
   list<string>::iterator fname = ifname;
+#ifdef __GUI__
   disable_window_updates();
   clear_window();
   if (show_filename) {
     gui << at(h, w) << black_on_white() << ifname->c_str();
     h += 16;
   }
+#endif
   maxh = h;
   for (uint i = 0; i < nh; ++i) {
     rowh = maxh;
@@ -215,13 +249,14 @@ int display(list<string>::iterator &ifname,
 	loaded++;
 	maxh = (std::max)(maxh, (uint) (rowh + mat.dim(0)));
 	T min = 0, max = 0;
+#ifdef __GUI__
 	if (autorange || signd) {
 	  if (autorange) {
 	    min = idx_min(mat);
 	    max = idx_max(mat);
 	  } else if (signd) {
 	    T matmin = idx_min(mat);
-	    if (matmin < 0) {
+	    if ((double)matmin < 0) {
 	      min = -1; 
 	      max = -1;
 	    }
@@ -229,6 +264,7 @@ int display(list<string>::iterator &ifname,
 	  draw_matrix(mat, rowh, w, zoom, zoom, min, max);
 	} else
 	  draw_matrix(mat, rowh, w, zoom, zoom, (T) range[0], (T) range[1]);
+#endif
 	w += mat.dim(1) + 1;
       } catch(string &err) { 
 	ERROR_MSG(err.c_str());
@@ -242,6 +278,7 @@ int display(list<string>::iterator &ifname,
     maxh++;
     w = 0;
   }
+#ifdef __GUI__
   // info
   if (show_info) {
     set_text_colors(0, 0, 0, 255, 255, 255, 255, 200);
@@ -353,6 +390,8 @@ int main(int argc, char **argv) {
 	  print = true;
 	} else if (!strcmp(argv[i], "-interleaved")) {
 	  interleaved = true;
+	} else if (!strcmp(argv[i], "-save_individually")) {
+	  save_individually = true;
 	} else if (!strcmp(argv[i], "-filename")) {
 	  show_filename = true;
 	} else if (!strcmp(argv[i], "-range")) {

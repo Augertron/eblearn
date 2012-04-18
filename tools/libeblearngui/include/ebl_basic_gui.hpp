@@ -41,17 +41,17 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // linear_module
-  
+
 #define LINEAR_MODULE_GUI(dname, op, T, state)				\
   template <typename T, class Tstate>					\
   void linear_module_gui::dname(linear_module<T,Tstate> &nn,		\
 			       Tstate &in, Tstate &out,			\
-			       unsigned int &h0, unsigned int &w0,	\
+			       uint &h0, uint &w0,	\
 			       double zoom, T vmin, T vmax,		\
 			       bool show_out) {				\
     /* run it */							\
     nn.op(in, out);							\
-    unsigned int h = h0, w = w0;					\
+    uint h = h0, w = w0;					\
     /* display text */							\
     gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T;	\
     w += 150;								\
@@ -64,43 +64,25 @@ namespace ebl {
       }									\
     }									\
     h0 += (uint) (std::max((uint) 10, (uint) (m.dim(0) * zoom + 1)));	\
-  }									
-  
+  }
+
   LINEAR_MODULE_GUI(display_fprop, fprop, x, fstate_idx)
   LINEAR_MODULE_GUI(display_bprop, bprop, dx, bstate_idx)
   LINEAR_MODULE_GUI(display_bbprop, bbprop, ddx, bbstate_idx)
-  
+
   ////////////////////////////////////////////////////////////////
   // convolution_module
 
 #define CONVOLUTION_MODULE_GUI(dname, op, T, state)			\
   template <typename T, class Tstate>					\
   void convolution_module_gui::dname(convolution_module<T,Tstate> &nn,	\
-				    Tstate &in, Tstate &out,		\
-				    unsigned int &h0,			\
-				    unsigned int &w0,			\
-				    double zoom, T vmin, T vmax,	\
-				    bool show_out) {			\
-    /* run it */							\
-    nn.op(in, out);							\
-    unsigned int h = h0, w = w0;					\
-    /* display text */							\
-    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T	\
-	<< at(h + 15, w) << "min:" << idx_min(in.T)			\
-	<< at(h + 30, w) << "max:" << idx_max(in.T);			\
-    w += 150;								\
-    /* display inputs */						\
-    idx_bloop1(m, in.T, T) {						\
-      if (w - w0 < MAXWIDTH) {						\
-	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
-	w += (uint) (m.dim(1) * zoom + 1);				\
-      }									\
-    }									\
-    h0 += (uint) (m.dim(0) * zoom + 1);					\
-    w = w0;								\
-    h = h0;								\
+				     uint &h0, uint &w0, double zoom,	\
+				     T vmin, T vmax, bool show_out) {	\
+    uint h = h0, w = w0;						\
+    vmin = 0; vmax = 0;							\
     /* display kernels text */						\
-    gui << gui_only()<< at(h, w) << "kernels:" << nn.kernel.T;		\
+    gui << gui_only() << at(h, w) << "kernels:" << nn.kernel.T		\
+	<< " min " << idx_min(nn.kernel.T) << " max " << idx_max(nn.kernel.T); \
     w += 150;								\
     /* display kernels */						\
     /* zoom *= 4; */	 						\
@@ -116,21 +98,19 @@ namespace ebl {
   CONVOLUTION_MODULE_GUI(display_fprop, fprop, x, fstate_idx)
   CONVOLUTION_MODULE_GUI(display_bprop, bprop, dx, bstate_idx)
   CONVOLUTION_MODULE_GUI(display_bbprop, bbprop, ddx, bbstate_idx)
-    
+
   ////////////////////////////////////////////////////////////////
   // subsampling_module
 
 #define SUBSAMPLING_MODULE_GUI(dname, op, T, state)			\
   template <typename T, class Tstate>					\
   void subsampling_module_gui::dname(subsampling_module<T,Tstate> &nn,	\
-				    Tstate &in, Tstate &out,		\
-				    unsigned int &h0,			\
-				    unsigned int &w0,			\
-				    double zoom, T vmin, T vmax,	\
-				    bool show_out) {			\
+				     Tstate &in, Tstate &out, uint &h0,	\
+				     uint &w0, double zoom, T vmin, T vmax, \
+				     bool show_out) {			\
     /* run it */							\
     nn.op(in, out);							\
-    unsigned int h = h0, w = w0;					\
+    uint h = h0, w = w0;						\
     /* display input text	*/					\
     gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T;	\
     gui << at(h + 15, w) << "in min:" << idx_min(in.T);			\
@@ -155,11 +135,11 @@ namespace ebl {
     w += 150;								\
     h0 += 45;								\
   }
-  
+
   SUBSAMPLING_MODULE_GUI(display_fprop, fprop, x, fstate_idx)
   SUBSAMPLING_MODULE_GUI(display_bprop, bprop, dx, bstate_idx)
   SUBSAMPLING_MODULE_GUI(display_bbprop, bbprop, ddx, bbstate_idx)
 
 }
-  
+
 #endif /* ELB_BASIC_GUI_HPP_ */

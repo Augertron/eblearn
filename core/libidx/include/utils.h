@@ -48,7 +48,7 @@ using namespace std;
 
 namespace ebl {
 
-  #define COLOR_LIST_SIZE 12
+  #define COLOR_LIST_SIZE 13
   //! A pre-defined color list
   extern IDXEXPORT ubyte color_list[COLOR_LIST_SIZE][3];
 
@@ -95,6 +95,8 @@ namespace ebl {
   EXPORT bool touch_file(const std::string &s);
   //! Remove the file or empty directory 's' and return true on success.
   EXPORT bool rm_file(const char *s);
+  //! Move file 'src' to 'tgt' and return true on success.
+  EXPORT bool mv_file(const char *src, const char *tgt);
   //! Returns the directory part of 'fname'. E.g. when fname equals
   //! '/usr/lib', it will return '/usr'.
   EXPORT const char *dirname(const char *fname);  
@@ -106,6 +108,9 @@ namespace ebl {
   //! Returns a name without its extension, basically returns the
   //! first part before the last '.' character.
   EXPORT std::string noext_name(const char *fname);
+  //! Returns the extension of a name, basically returns the
+  //! second part before the last '.' character.
+  EXPORT std::string ext_name(const char *fname);
 
   // timing utilities //////////////////////////////////////////////////////////
 
@@ -120,14 +125,24 @@ namespace ebl {
     virtual ~timer();
     //! Start timer.
     void start();
-    //! Restart timer.
+    //! Stop timer.
+    void stop();
+    //! Restart timer (and call reset()).
     void restart();
+    //! Reset the accumulation of milliseconds.
+    void reset();
     //! Return elapsed time in minutes since start() or restart().
     double elapsed_minutes();
     //! Return elapsed time in seconds since start() or restart().
     long elapsed_seconds();
     //! Return elapsed time in milliseconds since start() or restart().
     long elapsed_milliseconds();
+    //! Return elapsed time in microseconds since start() or restart().
+    long elapsed_microseconds();
+
+    //! Return all accumulated milliseconds since last reset()/restart().
+    long accumulated_milliseconds();
+    
     //! Print elapsed time in a human-friendly way since start() or restart().
     void pretty_elapsed();
     //! Print the provided seconds in a human-friendly way.
@@ -142,6 +157,9 @@ namespace ebl {
     //! Return elapsed time in a human-friendly string since start()/restart(),
     //! with millisecond precision.
     string elapsed_ms();
+    //! Return elapsed time in a human-friendly string since start()/restart(),
+    //! with millisecond precision.
+    string accumulated_ms();
     //! Return a string with the human-friendly remaining time based on
     //! elapsed time and n/total progress.
     string eta(uint n, uint total);
@@ -151,6 +169,9 @@ namespace ebl {
 #else // linux & mac
     struct timeval t0, t1;
 #endif
+    long total_micros; //! Total accumulated micros since last reset.
+    long last_micros; //! Last elapsed microseconds after stop().
+    bool running; //! Timer is running or not.
   };
 
   //! Sleep for 'millis' milliseconds.
@@ -163,6 +184,71 @@ namespace ebl {
   //! Return PID of current process.
   EXPORT int pid();
   
+  // TIMING MACROS ////////////////////////////////////////////////
+
+#ifdef __TIMING__
+  
+  extern EXPORT ebl::timer debug_timer1;
+  extern EXPORT ebl::timer debug_timer2;
+  extern EXPORT ebl::timer debug_timer_resizing; // timing of resizing
+  extern EXPORT uint debug_resizing_cnt; // # of resizing
+
+#define INIT_TIMING()					\
+  ebl::timer debug_timer1;				\
+  ebl::timer debug_timer2;				\
+  ebl::timer debug_timer_resizing;			\
+  uint debug_resizing_cnt;
+
+#define TIMING(s, t) {							\
+    std::cout << s << ": " << t.elapsed_ms() << std::endl;		\
+    t.restart();							\
+  }
+#define TIMINGACC(s, t) {						\
+    std::cout << s << ": " << t.accumulated_ms() << std::endl;		\
+    t.restart();							\
+  }
+#define TIMING_ACCSTART(t) t.start();
+#define TIMING_ACCSTOP(t) t.stop();					
+#define TIMING_RESET(t) t.reset();
+#define LOCAL_TIMING_START() ebl::timer local_debug_timer;
+#define LOCAL_TIMING2_START() ebl::timer local_debug_timer2;
+#define LOCAL_TIMING_REPORT(s) TIMING(s, local_debug_timer)
+#define LOCAL_TIMING2_REPORT(s) TIMING(s, local_debug_timer2)
+
+#define TIMING1(s) TIMING(s, debug_timer1)
+#define TIMING2(s) TIMING(s, debug_timer2)
+#define TIMING_RESIZING_ACCSTART()		\
+  TIMING_ACCSTART(debug_timer_resizing);	\
+  debug_resizing_cnt++;
+#define TIMING_RESIZING_ACCSTOP() TIMING_ACCSTOP(debug_timer_resizing)
+#define TIMING_RESIZING_RESET()					\
+  TIMING_RESET(debug_timer_resizing);				\
+  debug_resizing_cnt = 0;
+#define TIMING_RESIZING(s)						\
+  TIMINGACC(s, debug_timer_resizing);					\
+  std::cout << s << ": number of resizings: " << debug_resizing_cnt <<std::endl;
+
+#else
+#define INIT_TIMING()
+#define TIMING(s, t)
+#define TIMING_START_ACC(t)
+#define TIMING_STOP_ACC(t)
+#define TIMING_RESET(t)
+#define TIMING_START()
+#define TIMING_REPORT()
+#define TIMING1(s)
+#define TIMING2(s)
+#define TIMING_RESIZING_ACCSTART()
+#define TIMING_RESIZING_ACCSTOP()
+#define TIMING_RESIZING_RESET()
+#define TIMING_RESIZING(s)
+#define LOCAL_TIMING_START()
+#define LOCAL_TIMING2_START()
+#define LOCAL_TIMING_REPORT(s)
+#define LOCAL_TIMING2_REPORT(s)
+
+#endif
+
 } // end namespace ebl
 
 #include "utils.hpp"

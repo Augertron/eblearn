@@ -73,20 +73,23 @@ namespace ebl {
   //! the IMAGE_PATTERN regular expression by default.
   //! If the directory does not exists, it returns NULL.
   //! The user is responsible for deleting the returned list.
-  //! \param fl A file list where new found files will be apprended if not null.
+  //! \param fl A file list where new found files will be appended if not null.
   //!           If null, a new list is allocated. This is used by the recursion.
   //! \param pattern The regular expression describing the file name pattern,
   //!           e.g. ".*[.](mat|MAT)".
   //!           The default pattern matches images extensions.
   //! \param randomize If true, randomize the returned list.
   //! \param finddir If true, include directories in results.
+  //! \param fullpattern If true, match pattern against entire path instead
+  //!   filename only.
   EXPORT list<string> *find_fullfiles(const string &dir,
 				      const char *pattern = IMAGE_PATTERN,
 				      list<string> *fl = NULL, 
 				      bool sort = true,
 				      bool recursive = true, 
 				      bool randomize = false,
-				      bool finddir = false);
+				      bool finddir = false,
+				      bool fullpattern = false);
   
   //! Counts recursively the number of files matching the pattern (default is
   //! an image extension pattern) in directory 'dir'.
@@ -94,6 +97,12 @@ namespace ebl {
   //!           The default pattern matches images extensions.
   EXPORT uint count_files(const string &dir, 
 			  const char *pattern = IMAGE_PATTERN);
+
+  //! Takes a filename and tries to return the next filename in the sequence
+  //! by assuming that the file is in "chars"+"number"."ext" format.
+  //! \param fullname The input filename including the full path
+  //! \param stride The increment value
+  EXPORT string increment_filename(const char *fullname, uint stride); 
 
   //! Convert a string to a bool. Throws a const char * exception
   //! upon failure.
@@ -135,6 +144,14 @@ namespace ebl {
   //! Convert a string containing a list of uint separated by commas, e.g.
   //! "1,2,3,4" into a list of uints.
   EXPORT list<uint> string_to_uintlist(const char *s);
+  //! Convert a string containing a list of int separated by commas, e.g.
+  //! "1,2,3,4" into a vector of ints.
+  //! \param sep Specifies the separating character, comma by default.
+  EXPORT vector<int> string_to_intvector(const string &s, char sep = ',');
+  //! Convert a string containing a list of int separated by commas, e.g.
+  //! "1,2,3,4" into a vector of ints.
+  //! \param sep Specifies the separating character, comma by default.
+  EXPORT vector<int> string_to_intvector(const char *s, char sep = ',');
   //! Convert a string containing a list of uint separated by commas, e.g.
   //! "1,2,3,4" into a vector of uints.
   //! \param sep Specifies the separating character, comma by default.
@@ -143,6 +160,14 @@ namespace ebl {
   //! "1,2,3,4" into a vector of uints.
   //! \param sep Specifies the separating character, comma by default.
   EXPORT vector<uint> string_to_uintvector(const char *s, char sep = ',');
+  //! Convert a string containing a list of intg separated by commas, e.g.
+  //! "1,2,3,4" into a vector of uints.
+  //! \param sep Specifies the separating character, comma by default.
+  EXPORT vector<intg> string_to_intgvector(const char *s, char sep = ',');
+  //! Convert a string containing a list of intg separated by commas, e.g.
+  //! "1,2,3,4" into a vector of floats.
+  //! \param sep Specifies the separating character, comma by default.
+  EXPORT vector<float> string_to_floatvector(const char *s, char sep = ',');
 
   //! Convert a string containing a list of numbers separated by 'sep', e.g.
   //! "1x2x3x4" into an idx<T>.
@@ -168,15 +193,14 @@ namespace ebl {
   //! commas, e.g. "10x10,20x20" into a vector of idxdim.
   //! \param vecsep Specifies the vector separating character, ',' by default.
   //! \param dimsep Specifies the dim separating character, 'x' by default.
-  EXPORT vector<idxdim> 
-    string_to_idxdimvector(const char *s, char vecsep = ',', char dimsep = 'x');
+  EXPORT midxdim string_to_idxdimvector(const char *s, char vecsep = ',',
+					char dimsep = 'x');
   //! Convert a string containing a list of float dimension strings separated by
   //! commas, e.g. "1.5x1.5,2.5x2.5" into a vector of fidxdim.
   //! \param vecsep Specifies the vector separating character, ',' by default.
   //! \param dimsep Specifies the dim separating character, 'x' by default.
-  EXPORT vector<fidxdim>
-    string_to_fidxdimvector(const char *s, char vecsep = ',',
-			    char dimsep = 'x');
+  EXPORT mfidxdim string_to_fidxdimvector(const char *s, char vecsep = ',',
+					  char dimsep = 'x');
 
   //! Convert a string containing a list of strings separated by commas, e.g.
   //! "errors,2,toto,4" into a list of strings.

@@ -173,6 +173,12 @@ namespace ebl {
     emit gui_add_arrow(h1, w1, h2, w2);
   }
 
+  void idxgui::draw_flow(idx<float> &flow, int h, int w) {
+    check_init();
+    idx<float> *f = new idx<float>(flow);
+    emit gui_add_flow(f, h, w);
+  }
+
   void idxgui::draw_box(float h0, float w0, float h, float w, ubyte r, ubyte g,
 			ubyte b, ubyte a, string *s) {
     check_init();
@@ -362,4 +368,22 @@ namespace ebl {
     emit gui_draw_text_3d(x, y, z, new string(s), r, g, b, a);
   }
   
+  void idxgui::draw_line_3d(float x, float y, float z,
+			    float x1, float y1, float z1, const char *s,
+			    int r, int g, int b, int a) {
+    check_init();
+    emit gui_draw_line_3d(x, y, z, x1, y1, z1,
+			  s ? new string(s) : NULL, r, g, b, a);
+  }
+  
+  idxgui& operator<<(idxgui& r, const ManipInfra<int,int> &manip) {
+    manip(r);
+    return r;
+  }
+
+  idxgui& operator<<(idxgui& r, const ManipInfra<uint,uint> &manip) {
+    manip(r);
+    return r;
+  }
+
 } // end namespace ebl

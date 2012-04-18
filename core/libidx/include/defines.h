@@ -63,17 +63,21 @@
 #define LABELS_NAME "labels"
 #define JITTERS_NAME "jitters"
 #define CLASSES_NAME "classes"
+#define SCALES_NAME "scales"
 #define CLASSPAIRS_NAME "classpairs"
 #define DEFORMPAIRS_NAME "deformpairs"
 
 // low-level debug
-#define DEBUG_LOW(s)
+#define DEBUG_LOW(s) //std::cout << s << std::endl;
 
 // debug message
 #ifdef __DEBUG__
-#define DEBUG(s) std::cout << s << std::endl;
+#define __DEBUG_PRINT__
+#define EDEBUG(s) std::cout << s << std::endl;
+#define MEDEBUG(s) mout << s << std::endl;
 #else
-#define DEBUG(s)
+#define EDEBUG(s)
+#define MEDEBUG(s)
 #endif
 
 ////////////////////////////////////////////////////////////////
@@ -120,6 +124,9 @@
     eblerror(e);					\
   }
 
+#define not_implemented() {			\
+    eblerror("not implemented"); }
+
 #if defined(__ANDROID__) ///////////////////////////////////////////////////
 
 #include <android/log.h>
@@ -132,6 +139,7 @@
     std::string s; s << info;					\
     __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,s.c_str()); }
 #define eblerror(s) LOGE(s)
+#define eblwarn(s) LOGE(s)
 
 #elif defined(__WINDOWS__) ///////////////////////////////////////////////////
 
@@ -162,6 +170,8 @@
     abort();								\
   }
 #endif /* __WINDOWS__ */
+
+#define eblwarn(s) { std::cerr << "Warning: " << s << "." << std::endl; }
 
 /* #ifndef MAX */
 /* # define MAX(a, b) (((a) > (b)) ? (a) : (b)) */
@@ -209,7 +219,6 @@ namespace ebl {
 #endif
 
   // iterators
-#define USING_STL_ITERS 0
 #define USING_FAST_ITERS 1
   
 #ifdef LIBIDX // we are inside the library

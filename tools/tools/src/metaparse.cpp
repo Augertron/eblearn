@@ -41,15 +41,7 @@
 
 #include "libeblearntools.h"
 #include "metaparser.h"
-
-using namespace std;
-using namespace ebl;
-
-using namespace ebl;
-
-#ifdef __DEBUGMEM__
-  INIT_DEBUGMEM()
-#endif
+#include "eblapp.h"
 
 // parse command line input
 bool parse_args(int argc, char **argv) {

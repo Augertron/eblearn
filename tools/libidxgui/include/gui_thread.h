@@ -86,6 +86,7 @@ namespace ebl {
     
     void add_text(const string *s);
     void add_arrow(int x1, int y1, int x2, int y2);
+    void add_flow(idx<float> *flow, int h, int w);
     void add_box(float h0, float w0, float h, float w, ubyte r, ubyte g,
 		 ubyte b, ubyte a, string *s);
     void add_ellipse(float h0, float w0, float h, float w,
@@ -148,6 +149,10 @@ namespace ebl {
     //! Draw 3d text 's' at (x,y,z) with color (r,g,b,a).    
     void draw_text_3d(float x, float y, float z, string *s,
 		      int r, int g, int b, int a);
+    //! Draw 3d line from (x,y,z) to (x1,y1,z1) with color (r,g,b,a)
+    //! and with text 's' at (x1,y1,z1).
+    void draw_line_3d(float x, float y, float z, float x1, float y1, float z1,
+		      string *s, int r, int g, int b, int a);
 
     ////////////////////////////////////////////////////////////////
     // class members

@@ -73,10 +73,10 @@ namespace ebl {
     else {
       std::string e;
       e << "invalid binary PNM file type: " << s;
-      delete s;
+      delete[] s;
       eblthrow(e);
     }
-    if (s) delete s;
+    if (s) delete[] s;
     skip_comments(35, fp);
     // read dimensions
     int ncol = fscan_int(fp), nlin = fscan_int(fp);

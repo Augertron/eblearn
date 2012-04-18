@@ -42,6 +42,44 @@
 using namespace std;
 #endif
 
+// DUMPING /////////////////////////////////////////////////////////////////////
+
+/* #ifdef __DUMP_STATES__ */
+
+#ifdef __ANDROID__
+#define DUMP_ROOT "/sdcard/"
+#else
+#define DUMP_ROOT "dump/";
+#endif
+
+extern uint dump_count;
+extern std::string dump_prefix;
+
+#define INIT_DUMP()				\
+    uint dump_count = 0;			\
+    std::string dump_prefix;
+
+#define RESET_DUMP() dump_count = 0;
+#define DUMP_PREFIX(s) { dump_prefix.clear(); dump_prefix << s << "_"; }
+#define DUMP(mat, fname) {						\
+    std::string n = DUMP_ROOT;						\
+    mkdir_full(n);							\
+    n << dump_prefix << (dump_count < 10? "00": (dump_count < 100? "0":"")) \
+      << dump_count << "_" << fname << "_" << mat << ".mat";		\
+    dump_count = dump_count + 1;					\
+    if (save_matrix(mat, n))						\
+      cout << "Dumped " << n << " (min " << idx_min(mat)		\
+	   << " max " << idx_max(mat) << " mean " << idx_mean(mat)	\
+	   << ")" <<endl;						\
+    else								\
+      cerr << "Failed to dump " << n << endl;				\
+  }
+
+/* #else */
+/* #define DUMP(mat, fname) */
+/* #endif /\* DUMP_STATES *\/ */
+////////////////////////////////////////////////////////////////////////////////
+
 // standard lush magic numbers
 #define MAGIC_FLOAT_MATRIX	0x1e3d4c51
 #define MAGIC_PACKED_MATRIX	0x1e3d4c52
@@ -108,9 +146,9 @@ namespace ebl {
   //! than requested type, it is casted (copied) into the new type.
   //! This throws string exceptions upon errors.
   //! \param ondemand If true, do not load matrices but keep a file pointer
-  //!   open and dynamically load each matrix when requested in the idxs object.
+  //!   open and dynamically load each matrix when requested in the midx object.
   template <typename T>
-    idxs<T> load_matrices(const std::string &filename, bool ondemand = true);
+    midx<T> load_matrices(const std::string &filename, bool ondemand = true);
   
   ////////////////////////////////////////////////////////////////
   // saving
@@ -134,17 +172,37 @@ namespace ebl {
   //! Returns true if successful, false otherwise.
   template <typename T>
     bool save_matrix(idx<T>& m, FILE *fp);
-  //! Saves a matrices m in file filename. Elements of m may be NULL and will
+  //! Saves matrices m in file filename. Elements of m may be NULL and will
   //! be remembered as empty when loaded back.
   //! Returns true if successful, false otherwise.
   template <typename T>
-    bool save_matrices(idxs<T>& m, const std::string &filename);
-  //! Saves a matrices with filenames 'filenames' in a collection of matrices
+    bool save_matrices(midx<T>& m, const std::string &filename);
+  //! Saves all matrices of m in 1 file per matrix, with filename of type
+  //! <root>_<index>.mat. Returns true if successful, false otherwise.
+  //! \param print If true, print saving of each file.
+  template <typename T>
+    bool save_matrices_individually(midx<T>& m, const std::string &root,
+				    bool print = false);
+  //! Concatenates and saves matrices m1 and m2 into file 'filename'.
+  //! The matrices of matrices should have the same dimensions except for
+  //! for the first dimension, which will be concatenated.
+  //! Elements of m may be NULL and will be remembered as empty when loaded
+  //! back. Returns true if successful, false otherwise.
+  template <typename T>
+    bool save_matrices(midx<T>& m1, midx<T> &m2, const std::string &filename);
+  //! Saves matrices with filenames 'filenames' in a collection of matrices
   //! in file 'filename'. 
   //! Returns true if successful, false otherwise.
   template <typename T>
     bool save_matrices(std::list<std::string> &filenames,
 		       const std::string &filename);
+  //! Saves matrices with filenames 'filenames' in a single matrix
+  //! of size filenames.size() x (dimensions of first element) in file 
+  //! 'filename'. All matrices must have the same dimensions.
+  //! Returns true if successful, false otherwise.
+  template <typename T>
+    bool save_matrix(std::list<std::string> &filenames,
+		     const std::string &filename);
 
   ////////////////////////////////////////////////////////////////
   // helper functions

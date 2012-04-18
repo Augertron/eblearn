@@ -21,10 +21,15 @@ IF (QT_FOUND) #-----------------------------------------------------------------
     src/datasource_gui.cpp
     src/detector_gui.cpp
 #    src/ebl_trainer_gui.cpp
-#    src/ebl_transfer_gui.cpp    
+#    src/ebl_transfer_gui.cpp
 #    src/ebl_layers_gui.cpp
     )
-  
+
+  # change target name if debugging
+  if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set_target_properties(eblearngui PROPERTIES OUTPUT_NAME "eblearngui_debug")
+  endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+
   # link executable with external libraries
   ##############################################################################
   target_link_libraries (eblearngui idx)
@@ -32,7 +37,7 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   target_link_libraries (eblearngui eblearn)
   target_link_libraries (eblearngui ${QT_QTCORE_LIBRARY})
   target_link_libraries (eblearngui ${QT_QTGUI_LIBRARY})
-  
+
 ELSE (QT_FOUND) #---------------------------------------------------------------
   MESSAGE("__ WARNING: libeblearngui won't be compiled because of missing QT libraries.")
 ENDIF (QT_FOUND) #--------------------------------------------------------------

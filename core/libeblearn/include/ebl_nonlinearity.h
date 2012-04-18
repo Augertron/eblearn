@@ -56,6 +56,8 @@ namespace ebl {
     virtual void bbprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module.
     virtual stdsigmoid_module<T,Tstate>* copy();
+  protected:
+    idx<T> tmp; //!< Temporary buffer.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -72,10 +74,10 @@ namespace ebl {
     void bprop(Tstate &in, Tstate &out);
     //! bbprop
     void bbprop(Tstate &in, Tstate &out);
-    void forget(forget_param_linear &fp);
-    void normalize();
     //! Returns a deep copy of this module.
     virtual tanh_module<T,Tstate>* copy();
+  protected:
+    idx<T> tmp; //!< Temporary buffer.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -105,6 +107,128 @@ namespace ebl {
     void fprop(Tstate &in, Tstate &out);
     void bprop(Tstate &in, Tstate &out);
     void bbprop(Tstate &in, Tstate &out);
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // abs_module
+  //! This module takes the absolute value of its input.
+  //! This module is spatially replicable 
+  //! (the input can have an order greater than 1 and the operation will apply
+  //! to all elements).
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class abs_module: public module_1_1<T, Tstate> {    
+  public:
+    //! Constructor. threshold makes the derivative of abs flat around zero
+    //! with radius threshold.
+    abs_module(double thresh = 0.0);
+    //! Destructor.
+    virtual ~abs_module();
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! backward propagation from out to in
+    virtual void bprop(Tstate &in, Tstate &out);
+    //! second-derivative backward propagation from out to in
+    virtual void bbprop(Tstate &in, Tstate &out);
+    //! Returns a deep copy of this module.
+    virtual abs_module<T,Tstate>* copy();
+  private:
+    double threshold;
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // linear_shrink_module
+  //! A piece-wise linear shrinkage module that parametrizes
+  //! the location of the shrinkage operator. This function is 
+  //! useful for learning since there is always gradients flowing 
+  //! through it.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class linear_shrink_module: public module_1_1<T, Tstate> {
+  public:
+    //! Constructor.
+    //! \param nf The number of features.
+    linear_shrink_module(parameter<T,Tstate> *p, intg nf, T bias = 0);
+    //! Destructor.
+    virtual ~linear_shrink_module();
+    //! forward
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! backward
+    virtual void bprop(Tstate &in, Tstate &out);
+    //! 2nd deriv backward
+    virtual void bbprop(Tstate &in, Tstate &out);
+    //! Returns a deep copy of this module.
+    virtual linear_shrink_module<T,Tstate>* copy();
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+  protected:
+    Tstate bias;
+    T default_bias;
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // smooth_shrink_module
+  //! A smoothed shrinkage module that parametrizes the steepnes
+  //! and location of the shrinkage operator. This function is 
+  //! useful for learning since there is always gradients flowing 
+  //! through it.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class smooth_shrink_module: public module_1_1<T, Tstate> {
+  public:
+    //! Constructor.
+    //! \param nf The number of features.
+    smooth_shrink_module(parameter<T,Tstate> *p, intg nf, T beta = 10,
+			 T bias = .3);
+    //! Destructor.
+    virtual ~smooth_shrink_module();
+    //! forward
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! backward
+    virtual void bprop(Tstate &in, Tstate &out);
+    //! 2nd deriv backward
+    virtual void bbprop(Tstate &in, Tstate &out);
+    //! Returns a deep copy of this module.
+    virtual smooth_shrink_module<T,Tstate>* copy();
+
+  public:
+    Tstate beta, bias;
+  private:
+    Tstate ebb, ebx, tin;
+    abs_module<T,Tstate> absmod;
+    T default_beta, default_bias;
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // tanh_shrink_module
+  //! A smoothed shrinkage module using (x - tanh(x))
+  //! that parametrizes the steepnes of the shrinkage operator.
+  //! This function is useful for learning since there is always gradients
+  //! flowing through it.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class tanh_shrink_module: public module_1_1<T, Tstate> {
+  public:
+    //! Constructor.
+    //! \param nf The number of features.
+    //! \param diags If true, alpha and beta coefficients are learned
+    //!   such that the output is: a * x - tanh(b * x)
+    tanh_shrink_module(parameter<T,Tstate> *p, intg nf, bool diags = false);
+    //! Destructor.
+    virtual ~tanh_shrink_module();
+    //! forward
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! backward
+    virtual void bprop(Tstate &in, Tstate &out);
+    //! 2nd deriv backward
+    virtual void bbprop(Tstate &in, Tstate &out);
+    //! Returns a deep copy of this module.
+    virtual tanh_shrink_module<T,Tstate>* copy();
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+  protected:
+    intg			 nfeatures;
+    Tstate			 abuf, tbuf, bbuf;
+    diag_module<T,Tstate>	*alpha, *beta;
+    tanh_module<T,Tstate>	 mtanh;
+    diff_module<T,Tstate>	 difmod;	//!< difference module
+    bool                         diags; //!< Use coefficients or not.
   };
 
 } // namespace ebl {

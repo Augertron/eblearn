@@ -51,7 +51,7 @@ namespace ebl {
 
   // TODO: derive all objects from a common drawable_object and hold
   // all of them in a same vector, to retain the drawing order.
-  
+
   ////////////////////////////////////////////////////////////////
   // string
 
@@ -61,9 +61,9 @@ namespace ebl {
     bool                pos_reset;
     unsigned char       fg_r, fg_g, fg_b, fg_a, bg_r, bg_g, bg_b, bg_a;
     text(float h0, float w0, bool pos_reset = false,
-	 unsigned char fg_r = 255, unsigned char fg_g = 255, 
+	 unsigned char fg_r = 255, unsigned char fg_g = 255,
 	 unsigned char fg_b = 255, unsigned char fg_a = 255,
-	 unsigned char bg_r = 0, unsigned char bg_g = 0, 
+	 unsigned char bg_r = 0, unsigned char bg_g = 0,
 	 unsigned char bg_b = 0, unsigned char bg_a = 127);
     ~text() {};
   };
@@ -74,7 +74,9 @@ namespace ebl {
   class arrow {
   public:
     int	                 h1, w1, h2, w2;
-    arrow(int h1, int w1, int h2, int w2);
+    bool head1, head2;
+    arrow(int h1, int w1, int h2, int w2,
+	  bool head1 = true, bool head2 = false);
     ~arrow() {};
   };
 
@@ -122,7 +124,7 @@ namespace ebl {
     imask(idx<ubyte> *img, uint h0, uint w0,
 	 ubyte r, ubyte g, ubyte b, ubyte a);
     ~imask() {};
-    
+
     // members
     uint        h0, w0;
     QPixmap     map;
@@ -136,7 +138,7 @@ namespace ebl {
     //! \param qwidj The instance QWidget of child class. This is necessary
     //!   because virtual inheritance is not possible with QWidget.
     win(QWidget *qwidj, uint wid, const char *wname = NULL,
-	uint height = 0, uint width = 0);
+	uint height = 1, uint width = 1);
     //! Empty constructor, do not use.
     win();
     virtual ~win();
@@ -144,7 +146,7 @@ namespace ebl {
     virtual void show();
     virtual QWidget* get_widget();
 
-    //! Save the Qt window to 'filename'.png.    
+    //! Save the Qt window to 'filename'.png.
     virtual void save(const string &filename, bool confirm = false);
     //! Save raw buffer matrix to 'filename'.mat (this will just contain
     //! images, not text or any Qt drawing.
@@ -173,10 +175,11 @@ namespace ebl {
 
     ////////////////////////////////////////////////////////////////
     // Objects adding methods
-    
+
     //! Add text a current text location (See 'set_text_origin()').
     virtual void add_text(const std::string *s);
     virtual void add_arrow(int h1, int w1, int h2, int w2);
+    virtual void add_flow(idx<float> *flow, int h, int w);
     virtual void add_box(float h0, float w0, float h, float w, ubyte r, ubyte g,
 		 ubyte b, ubyte a, string *s);
     virtual void add_cross(float h0, float w0, float length, ubyte r, ubyte g,
@@ -186,7 +189,7 @@ namespace ebl {
     virtual void add_image(idx<ubyte> &img, uint h0, uint w0);
     virtual void add_mask(idx<ubyte> *img, uint h0, uint w0,
 			  ubyte r, ubyte g, ubyte b, ubyte a);
-    
+
     //! Change current location of text to be drawn to (h0,w0).
     virtual void set_text_origin(float h0, float w0);
 
@@ -225,7 +228,7 @@ namespace ebl {
 
     ////////////////////////////////////////////////////////////////
     // Style methods
-    
+
     //! \param ignore_frozen Ignore style freeze and apply color changes anyway.
     virtual void set_text_colors(ubyte fg_r, ubyte fg_g, ubyte fg_b, ubyte fg_a,
 				 ubyte bg_r, ubyte bg_g, ubyte bg_b, ubyte bg_a,
@@ -234,21 +237,21 @@ namespace ebl {
     virtual void set_bg_colors(ubyte r, ubyte g, ubyte b);
     //! Set font to this size.
     virtual void set_font_size(int sz);
-    
+
     ////////////////////////////////////////////////////////////////
     // Events methods
-    
+
     //! Return first key pressed of the key-pressed even list for
     //! current window and pop it out of the list, or return -1 if no key.
     virtual int pop_key_pressed();
 
     ////////////////////////////////////////////////////////////////
     // Scrolling methods
-    
+
     virtual void add_scroll_box(scroll_box0 *sb);
     virtual void remove_scroll_box(scroll_box0 *sb);
     virtual void replace_scroll_box_with_copy(scroll_box0 *sb);
-    
+
     ////////////////////////////////////////////////////////////////
     // Painting methods
 
@@ -256,7 +259,7 @@ namespace ebl {
     virtual void paint(QPainter &painter, double scale = 1.0);
     //! Draw all text into painter with scale 'scale'.
     virtual void draw_text(QPainter &painter);
-    
+
   protected:
     ////////////////////////////////////////////////////////////////
     // event methods
@@ -318,8 +321,10 @@ namespace ebl {
     int                  font_size; //!< The size of the font.
     bool                 ctrl_on; //!< ctrl key is on or not.
     bool                 text_on; //!< Text is displayed or not.
+    bool                 images_only; //!< Only display images if true.
     scroll_box0         *scrollbox;
     bool                 busy; //!< Busy drawing.
+    uint                 drawing_mode;
   };
 
 } // namespace ebl {

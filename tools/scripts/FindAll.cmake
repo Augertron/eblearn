@@ -149,13 +149,24 @@ ENDIF ($ENV{NOKINECT})
 
 # find QT
 ##############################################################################
+
+# generic paths to look in
+set(paths "/usr/lib" "/usr/lib/x86_64-linux-gnu" "/usr/bin" "c:/Qt/bin" "c:/Qt/" "c:/Qt/lib")
 IF ($ENV{NOQT})
   MESSAGE(STATUS "QT DISABLED by env variable $NOQT=1.")
 ELSE ($ENV{NOQT})
   SET(DESIRED_QT_VERSION 4.3)
-  FIND_PACKAGE(Qt4)
+  IF (WINDOWS)
+    FIND_PACKAGE(Qt4)
+  ELSE(WINDOWS)
+    IF (LINUX)
+        FIND_PACKAGE(Qt4 QUIET PATHS ${paths})
+    ELSE(LINUX)
+       FIND_PACKAGE(Qt)
+    ENDIF (LINUX)
+  ENDIF (WINDOWS)
   IF (NOT QT4_FOUND)
-    FIND_PACKAGE(Qt)
+      FIND_PACKAGE(Qt QUIET PATHS ${paths})
   ENDIF (NOT QT4_FOUND)
 
 #  SET(DESIRED_QT_VERSION 4.3)
@@ -179,7 +190,11 @@ ELSE ($ENV{NOQT})
       ENDIF (NOT EXISTS ${QT_QMAKE_EXECUTABLE})
     ENDIF (NOT EXISTS ${QT_QMAKE_EXECUTABLE})
 
-  FIND_PACKAGE(Qt4)
+IF (LINUX)
+   FIND_PACKAGE(Qt4)
+ELSE (LINUX)
+   FIND_PACKAGE(Qt)
+ENDIF (LINUX)
     #  INCLUDE(${QT_USE_FILE})
     SET(QT4_FOUND TRUE)
     exec_program(${QT_QMAKE_EXECUTABLE} ARGS "-query QT_INSTALL_HEADERS"
@@ -236,8 +251,9 @@ IF ($ENV{QT3D})
 IF ($ENV{NOQT3D})
   MESSAGE(STATUS "QT3D DISABLED by env variable $NOQT3D=1.")
 ELSE ($ENV{NOQT3D})
-  set(root "/d/linux/installed/qt/qt-everywhere-opensource-src-4.7.1")
-#  set(root "/usr/local/Trolltech/Qt-4.7.1")
+  find_path(root NAMES lib/libQt3D.so PATHS
+    /d/linux/installed/qt/qt-everywhere-opensource-src-4.7.1/
+    /usr/local/Trolltech/Qt-4.7.1/)
   include_directories("${root}/include")
   include_directories("${root}/include/Qt")
   include_directories("${root}/include/QtGui")
@@ -275,21 +291,52 @@ IF (CPPUNIT_FOUND)
   include_directories(${CPPUNIT_INCLUDE_DIR})
 ENDIF (CPPUNIT_FOUND)
 
+# find TH
+################################################################################
+IF ($ENV{NOTH})
+  MESSAGE(STATUS "THC DISABLED by env variable $NOTH=1.")
+ELSE ($ENV{NOTH})
+  #IF (NOT THC_FOUND)
+  #  FIND_PACKAGE(THC)
+  #ENDIF (NOT THC_FOUND)
+  IF (THC_FOUND)
+    include_directories(${THC_INCLUDE_DIR})
+    link_directories(${THC_LIBRARIES_DIR})
+    FIND_PACKAGE(LAPACK)
+    IF (LAPACK_FOUND)
+       SET(THC_LIBRARIES  TH lapack)
+    ELSE (LAPACK_FOUND)
+       SET(THC_LIBRARIES  TH lapack)
+    ENDIF (LAPACK_FOUND)
+    set(CMAKE_CXX_DFLAGS "${CMAKE_CXX_DFLAGS} -D__TH__")
+    MESSAGE(STATUS "THC include path: ${THC_INCLUDE_DIR}")
+    MESSAGE(STATUS "THC library path: ${THC_LIBRARIES_DIR}")
+    MESSAGE(STATUS "THC Found.")
+    MESSAGE(STATUS "Disabling IPP because TH was found")
+  ELSE (THC_FOUND)
+    MESSAGE("__ WARNING: THC not found (optional).")
+  ENDIF (THC_FOUND)
+ENDIF ($ENV{NOTH})
+
+
+
 # find IPP
 ################################################################################
 FIND_PACKAGE(IPP)
 IF ($ENV{NOIPP})
   MESSAGE(STATUS "IPP DISABLED by env variable $NOIPP=1.")
+ELSEIF (THC_FOUND)
+  MESSAGE(STATUS "IPP DISABLED because TH was found")
 ELSE ($ENV{NOIPP})
   IF (IPP_FOUND)
     include_directories(${IPP_INCLUDE_DIR})
     LINK_DIRECTORIES(${IPP_LIBRARIES_DIR})
     IF (64BIT) # 64 bit libraries
-      SET(IPP_LIBRARIES
-	ippcoreem64t guide ippiem64t ippcvem64t ippsem64t ippccem64t pthread)
+      SET(IPP_LIBRARIES ippcoreem64t guide ippiem64t ippcvem64t ippmem64t
+	ippsem64t ippccem64t pthread)
       MESSAGE(STATUS "Found 64bit Intel IPP")
     ELSE (64BIT) # 32 bit libraries
-      SET(IPP_LIBRARIES ippcore guide ippi ippcv ipps ippcc pthread)
+      SET(IPP_LIBRARIES ippcore guide ippi ippm ippcv ipps ippcc pthread)
       MESSAGE(STATUS "Found 32bit Intel IPP")
     ENDIF (64BIT)
     IF ($ENV{IPPFAST})
@@ -384,16 +431,19 @@ if (APPLE OR LINUX)
   set(PTHREAD_FOUND TRUE) # present by default on apple and linux
   set(PTHREAD_INCLUDE_DIR "/usr/include")
   if (APPLE)
+    set(PTHREAD_LIBRARY_DIR "/usr/lib/")
     set(PTHREAD_LIBRARY "/usr/lib/libpthread.dylib")
   else (APPLE) # LINUX
     find_path(PTHREAD_LIBRARY "libpthread.so" paths
       "/usr/lib/"
+      "/usr/lib64/"
       "/lib/x86_64-linux-gnu/"
-      "/usr/lib/i386-linux-gnu/"
+      "/lib/i386-linux-gnu/"
       "/usr/lib/x86_64-linux-gnu/")
+    set(PTHREAD_LIBRARY_DIR ${PTHREAD_LIBRARY})
     set(PTHREAD_LIBRARY "${PTHREAD_LIBRARY}/libpthread.so")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   endif (APPLE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 else (APPLE OR LINUX) # installed manually under windows
   
 endif (APPLE OR LINUX)
@@ -404,7 +454,7 @@ if (PTHREAD_FOUND)
   message(STATUS "pthread library: ${PTHREAD_LIBRARY}")
   set(CMAKE_CXX_DFLAGS "${CMAKE_CXX_DFLAGS} -D__PTHREAD__")
   include_directories(${PTHREAD_INCLUDE_DIR})
-  link_directories(${PTHREAD_LIBRARY})
+  link_directories(${PTHREAD_LIBRARY_DIR})
 endif (PTHREAD_FOUND)
 
 # matlab (temporary) #############################################################
@@ -412,3 +462,57 @@ endif (PTHREAD_FOUND)
 #include_directories ("/opt/matlab/extern/include")
 #link_directories("/opt/matlab/bin/glnxa64/")
 
+# lua ############################################################################
+if ($ENV{EBLUA})
+  set(LUA_FOUND TRUE)
+  set(LUA_INCLUDE_DIR "")
+  set(LUA_LIBRARY_DIR "")
+  set(LUA_LIBRARY "lua;luaT;TH;selflua")
+
+  if (LUA_FOUND)
+    message(STATUS "Lua interface Found.")
+    message(STATUS "Lua include directory: ${LUA_INCLUDE_DIR}")
+    message(STATUS "Lua libraries directory: ${LUA_LIBRARY_DIR}")
+    message(STATUS "Lua libraries: ${LUA_LIBRARY}")
+    set(CMAKE_CXX_DFLAGS "${CMAKE_CXX_DFLAGS} -D__LUA__")
+    include_directories(${LUA_INCLUDE_DIR})
+    link_directories(${LUA_LIBRARY_DIR})
+  endif (LUA_FOUND)
+endif ($ENV{EBLUA})
+
+# find Google-Perftools
+################################################################################
+IF ($ENV{USE_PERFTOOLS})
+  IF (NOT GPROF_FOUND)
+    FIND_PACKAGE(GPROF_FOUND)
+  ENDIF (NOT GPROF_FOUND)
+  IF (GPROF_FOUND)
+    include_directories(${GPROF_INCLUDE_DIR})
+    link_directories(${GPROF_LIBRARIES_DIR})
+    SET(GPROF_LIBRARIES  profiler)
+    set(CMAKE_CXX_DFLAGS "${CMAKE_CXX_DFLAGS} -D__GPROF__")
+    MESSAGE(STATUS "Google-perftools-profiler include path: ${GPROF_INCLUDE_DIR}")
+    MESSAGE(STATUS "Google-perftools-profiler library path: ${GPROF_LIBRARIES_DIR}")
+    MESSAGE(STATUS "Google-perftools-profiler Found.")
+  ELSE (GPROF_FOUND)
+    MESSAGE("__ WARNING: GPROF not found (optional).")
+  ENDIF (GPROF_FOUND)
+ENDIF ($ENV{USE_PERFTOOLS})
+
+
+# # find Vlfeat
+# ################################################################################
+#   IF (NOT VLFEAT_FOUND)
+#     FIND_PACKAGE(VLFEAT_FOUND)
+#   ENDIF (NOT VLFEAT_FOUND)
+#   IF (VLFEAT_FOUND)
+#     include_directories(${VLFEAT_INCLUDE_DIR})
+#     link_directories(${VLFEAT_LIBRARIES_DIR})
+#     SET(VLFEAT_LIBRARIES  vl)
+#     set(CMAKE_CXX_DFLAGS "${CMAKE_CXX_DFLAGS} -D__VLFEAT__")
+#     MESSAGE(STATUS "VLFeat include path: ${VLFEAT_INCLUDE_DIR}")
+#     MESSAGE(STATUS "VLFeat library path: ${VLFEAT_LIBRARIES_DIR}")
+#     MESSAGE(STATUS "VLFeat Found.")
+#   ELSE (VLFEAT_FOUND)
+#     MESSAGE("__ WARNING: VLFEAT not found (optional).")
+#   ENDIF (VLFEAT_FOUND)

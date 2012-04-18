@@ -36,6 +36,9 @@
 #include <ostream>
 #include <iomanip>
 
+#define MAXWIDTH 1000
+#define MAXHEIGHT 1000
+
 using namespace std;
 
 namespace ebl {
@@ -110,24 +113,43 @@ namespace ebl {
       ds.next(); // FIXME add a seek(p) method to ds
       k++;
     }
-    unsigned int h = h0, w = w0;
+    unsigned int h = h0, w = w0, sh = 0, sw = 0;
     for (unsigned int ih = 0; (ih < nh) && (k < ds.size()); ++ih) {
+      if (sh + h > MAXHEIGHT) break ;
+      sh = h;
       for (unsigned int iw = 0; (iw < nw) && (k < ds.size()); ++iw) {
-	ds.fprop(s, lbl);
-	ds.next();
-	//m = s.x.select(0, 0);
-	m = s.x.shift_dim(0, 2);
-	draw_matrix(m, h, w, _zoom, _zoom, _rmin, _rmax);
+	if (sw + w > MAXWIDTH) break ;
 	// draw label if present
+	ds.fprop_label(lbl);
 	if ((lblstr.size() > 0) && (lblstr[(int)lbl.x.get()]))
 	  gui << at(h + 1, w + 1) << (lblstr[(int)lbl.x.get()])->c_str();
 	else if (ds.labels.order() == 1) // single continuous labels
 	  gui << at(h + 1, w + 1) << setprecision(1) << lbl.x.get();
-	w += m.dim(1) + 1;
+	// draw data
+	sw = w;
+	if (ds.mstate_samples()) { // dataset has multiple states per sample
+	  mstate<bbstate_idx<Tnet> > ms;
+	  ds.fprop_data(ms);
+	  for (uint i = 0; i < ms.size(); ++i) {
+	    idx<Tnet> mm = ms[i].x;
+	    mm = mm.shift_dim(0, 2);
+	    draw_matrix(mm, h, w, _zoom, _zoom, _rmin, _rmax);
+	    w += mm.dim(1) + 1;
+	  }
+	} else {
+	  ds.fprop_data(s);
+	  //m = s.x.select(0, 0);
+	  m = s.x.shift_dim(0, 2);
+	  draw_matrix(m, h, w, _zoom, _zoom, _rmin, _rmax);
+	  w += m.dim(1) + 1;
+	}
+	sw = w - sw;
+	ds.next();
 	k++;
       }
       w = w0;
       h += m.dim(0) + 1;
+      sh = h - sh;
     }
     ds.seek_begin();
     enable_window_updates();

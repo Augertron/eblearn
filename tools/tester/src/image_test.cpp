@@ -2,6 +2,7 @@
 
 #define __SHOW__
 
+#include "ebl_preprocessing.h"
 #ifdef __GUI__
 #include "libidxgui.h"
 #endif
@@ -49,7 +50,7 @@ void image_test::test_resize() {
     idx<ubyte> im = load_image<ubyte>(imgfile);
 #ifdef __GUI__  
 #ifdef __SHOW__
-    new_window("image_test");
+    new_window("Image Tests");
     draw_matrix(im, "Testing images operations...");
     gui << at(15, 0) << im;
     int h = 0, w = im.dim(1) + 2;
@@ -283,6 +284,114 @@ void image_test::test_gaussian_pyramid() {
   //   draw_matrix(in, oss.str().c_str(), h, w);
   //   w += in.dim(2) + 10;
   //#endif  
+}
+
+void image_test::test_deformations() {
+  try {
+    CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
+    string imgfile;
+    imgfile << *gl_data_dir << "/barn.png";
+    idx<ubyte> im_rgb = load_image<ubyte>(imgfile);
+    idx<float> im(im_rgb.get_idxdim());
+    idx_copy(im_rgb, im);
+
+    // idx<float> im(3, 1, 1);
+    // float n = 0;
+    // idx_aloop1(i, im, float) {
+    //   *i = n++;
+    // }
+
+    // deformations
+    idx<float> scaled(im.get_idxdim());
+    idx<float> flow;
+    {
+      float th = 75, tw = 0, deg = 45, sh = .5, sw = 1, shh = 0, shw = 0,
+	elasize = 50, elacoeff = 50;
+      flow = image_deformation_flow(im, th, tw, sh, sw, deg, shh, shw,
+				    elasize, elacoeff);
+      image_deformation(im, scaled, th, tw, sh, sw, deg, shh, shw, elasize,
+			elacoeff);
+    }
+    
+    // idxdim d(im);
+    // d.remove_dim(2);
+    // idx<float> grid = create_grid(d);
+    // idx<float> gridx = grid.select(0, 0);
+    // idx<float> gridy = grid.select(0, 1);
+    
+    idx<float> flowx = flow.select(0, 0);
+    idx<float> flowy = flow.select(0, 1);
+    
+#ifdef __GUI__
+    new_window("Image deformations");
+    unsigned int h = 0, w = 0;
+    // // input
+    // draw_matrix(im, "RGB", h, w);
+    // //    draw_flow(flow, h, w);
+    // w += im.dim(1) + 5;
+    // // scaled
+    // draw_matrix(scaled, "Scaled *2", h, w);
+    // w += scaled.dim(1) + 5;
+    // string s;
+    // s << "x flow " << flowx;
+    // draw_matrix(flowx, s.c_str(), h, w);
+    // w += flowx.dim(1) + 5;
+    // s = ""; s << "y flow " << flowy;
+    // draw_matrix(flowy, s.c_str(), h, w);
+    // cout << "flowx min " << idx_min(flowx) << " max " << idx_max(flowx) << endl;
+    // cout << "flowy min " << idx_min(flowy) << " max " << idx_max(flowy) << endl;
+    // w = 0;
+    // h += flowx.dim(0) + 5;
+
+    int trans[] = {-2,2,-2,2};
+    float rotations[] = {-20,20};
+    float scalings[] = {.8,1.2,.8,1.2};
+    float shears[] = {-.2,.2,-.2,.2};
+    float els[] = {0,20,0,20};
+    uint pads[] = {2,2,2,2};
+    
+    vector<int> tr(trans, trans + sizeof(trans) / sizeof(int));
+    vector<float> rot(rotations, rotations + sizeof(rotations) / sizeof(float));
+    vector<float> sc(scalings, scalings + sizeof(scalings) / sizeof(float));
+    vector<float> sh(shears, shears + sizeof(shears) / sizeof(float));
+    vector<float> el(els, els + sizeof(els) / sizeof(float));
+    vector<uint> pad(pads, pads + sizeof(pads) / sizeof(uint));
+
+    jitter_module<float> j;
+    j.set_translations(tr);
+    j.set_rotations(rot);
+    j.set_scalings(sc);
+    j.set_shears(sh);
+    j.set_elastics(el);
+    // j.set_padding(pad);
+    zpad_module<float> zp(2, 2, 2, 2);
+
+    string img2;
+    img2 << *gl_data_dir << "/2.mat";
+    idx<float> im2 = load_matrix<float>(img2);
+    bbstate_idx<float> in, out, out2;    
+    in.x = im2;
+    idx<float> o, i = im2.shift_dim(0, 2);
+    int num_deforms = 20;
+    while (num_deforms != 0) {
+      num_deforms--;
+      disable_window_updates();
+      clear_window();
+      w = 0;
+      double zm = 4;
+      j.fprop(in, out);
+      zp.fprop(out, out2);
+      o = out2.x.shift_dim(0, 2);
+      draw_matrix(i, h, w, zm, zm, (float)-1, (float)1);
+      w += i.dim(1) * zm + 5;
+      draw_matrix(o, h, w, zm, zm, (float)-1, (float)1);
+      enable_window_updates();
+      millisleep(200);
+    }
+#endif
+  } catch(string &err) {
+    cerr << err << endl;
+  }
 }
 
 void image_test::test_colorspaces() {

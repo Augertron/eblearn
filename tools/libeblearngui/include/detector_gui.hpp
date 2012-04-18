@@ -47,11 +47,13 @@ namespace ebl {
   detector_gui(uint draw_extracted_,
 	       bool show_detqueue_, uint step_, uint qheight_,
 	       uint qwidth_, bool show_detqueue2_, uint step2_,
-	       uint qheight2_, uint qwidth2_)
-    : draw_extracted(draw_extracted_),
+	       uint qheight2_, uint qwidth2_, bool show_class_, bool show_conf_)
+    : display_wid(-1), display_wid_fprop(-1), display_wid_gt(-1),
+      draw_extracted(draw_extracted_),
       show_detqueue(show_detqueue_), show_detqueue2(show_detqueue2_),
-      step(step_), step2(step2_), qheight(qheight_), qwidth(qwidth_), 
-      qheight2(qheight2_), qwidth2(qwidth2_), detcnt(0) {
+      step(step_), step2(step2_), qheight(qheight_), qwidth(qwidth_),
+      qheight2(qheight2_), qwidth2(qwidth2_), detcnt(0),
+      show_class(show_class_), show_conf(show_conf_) {
     cout << "detector_gui: " << (draw_extracted > 0 ? "" : "not ")
 	 << "showing extracted windows." << endl;
   }
@@ -59,21 +61,20 @@ namespace ebl {
   template <typename T, class Tstate>
   detector_gui<T,Tstate>::~detector_gui() {
   }
-  
+
   template <typename T, class Tstate> template <typename Tin>
-  vector<bbox*>& detector_gui<T,Tstate>::
+  bboxes& detector_gui<T,Tstate>::
   display(detector<T,Tstate> &cl, idx<Tin> &img, double threshold,
-	  const char *frame_name, unsigned int h0, unsigned int w0,
-	  double dzoom,  T vmin, T vmax, int wid, const char *wname,
-	  float transparency) {
+	  const char *frame_name, uint h0, uint w0, double dzoom,  T vmin,
+	  T vmax, int wid, const char *wname, float transparency) {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector"));
     select_window(display_wid);
 
     // run network
-    vector<bbox*>& vb = cl.fprop(img, threshold, frame_name);
+    bboxes& vb = cl.fprop(img, frame_name);
     display_minimal(img, vb, cl.labels, h0, w0, dzoom, vmin, vmax, display_wid,
-		    false, transparency);
+		    false, transparency, show_class, show_conf);
     // draw masks class
     if (!mask_class.empty()) {
       idx<T> mask = cl.get_mask(mask_class);
@@ -85,59 +86,126 @@ namespace ebl {
 
   template <typename T, class Tstate> template <typename Tin>
   void detector_gui<T,Tstate>::
-  display_minimal(idx<Tin> &img, vector<bbox*>& vb, vector<string> &labels,
-		  unsigned int h0, unsigned int w0,
-		  double dzoom,  T vmin, T vmax, int wid, bool show_parts,
-		  float transparency) {
+  display_minimal(idx<Tin> &img, bboxes& vb, vector<string> &labels, uint &h0,
+		  uint &w0, double dzoom,  T vmin, T vmax, int wid,
+		  bool show_parts, float transparency, bool show_class,
+		  bool show_conf, bboxes *bb2) {
     // draw image
-    draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);   
+    draw_matrix(img, h0, w0, dzoom, dzoom, (Tin)vmin, (Tin)vmax);
     // draw bboxes (in reverse order to display best on top)
-    bbox *bb = NULL;
     for (int i = vb.size() - 1; i >= 0; --i) {
-      bb = vb[(uint) i];
-      // draw parts
-      if (show_parts && dynamic_cast<bbox_parts*>(bb))
-	draw_bbox_parts(*((bbox_parts*) bb), labels, h0, w0, dzoom);
+      bbox &bb = vb[(uint) i];
+      // // draw parts
+      // if (show_parts && dynamic_cast<bbox_parts&>(bb))
+      // 	draw_bbox_parts(((bbox_parts&) bb), labels, h0, w0, dzoom);
       // draw box
-      draw_bbox(*bb, labels, h0, w0, dzoom, transparency);
+      draw_bbox(bb, labels, h0, w0, dzoom, transparency, true, 0, show_class,
+		show_conf);
     }
+    if (bb2) {
+      for (int i = bb2->size() - 1; i >= 0; --i) {
+	bbox &bb = (*bb2)[(uint) i];
+	draw_bbox(bb, labels, h0, w0, dzoom, transparency, true, 1, show_class,
+		  show_conf);
+      }
+    }
+    h0 += img.dim(0) + 5;
   }
 
-  template <typename T, class Tstate> template <typename Tin> 
-  vector<bbox*>& detector_gui<T,Tstate>::
+  template <typename T, class Tstate> template <typename Tin>
+  bboxes& detector_gui<T,Tstate>::
   display_input(detector<T,Tstate> &cl, idx<Tin> &img, double threshold,
-		const char *frame_name, 
-		unsigned int h0, unsigned int w0, double dzoom, T vmin,
+		const char *frame_name, uint h0, uint w0, double dzoom, T vmin,
 		T vmax, int wid, const char *wname, float transparency) {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: output"));
     select_window(display_wid);
     //    disable_window_updates();
-
-
-    vector<bbox*> &bb = display(cl, img, threshold, frame_name,
-				h0, w0, dzoom, vmin, vmax, wid, wname,
-				transparency);
-    w0 += (uint) (img.dim(1) * dzoom + 5);
+    bboxes &bb = display(cl, img, threshold, frame_name, h0, w0, dzoom, vmin,
+			 vmax, wid, wname, transparency);
+    uint w = w0 + (uint) (img.dim(1) * dzoom + 5);
     // draw input
-    draw_matrix(img, "input", h0, w0, dzoom, dzoom, (Tin) vmin, (Tin) vmax);
+    draw_matrix(img, "input", h0, w, dzoom, dzoom, (Tin) vmin, (Tin) vmax);
     return bb;
   }
 
   template <typename T, class Tstate> template <typename Tin>
-  vector<bbox*>& detector_gui<T,Tstate>::
+  void detector_gui<T,Tstate>::
+  display_groundtruth(detector<T,Tstate> &cl, idx<Tin> &img,
+		      bboxes &groundtruth, bboxes &filtered,
+		      bboxes &nonfiltered, bboxes &pos,
+		      bboxes &neg, svector<midx<T> > &pp_pos,
+		      svector<midx<T> > &pp_neg,
+		      uint h0, uint w0, double dzoom, T vmin, T vmax, int wid) {
+    if (wid >= 0) display_wid_gt = wid;
+    else if (display_wid_gt < 0)
+      display_wid_gt = new_window("detector: groundtruth");
+    select_window(display_wid_gt);
+    disable_window_updates();
+    clear_window();
+    night_mode();
+    uint w = w0, h = h0;
+    // draw image
+    draw_matrix(img, "all groundtruth", h, w, dzoom, dzoom);
+    // draw all groundtruth boxes
+    for (uint i = 0; i < groundtruth.size(); ++i) {
+      bbox &gt = groundtruth[i];
+      draw_bbox(gt, cl.labels, h, w, dzoom, 0, true, 3, false, false);
+    }
+    w += (uint) (img.dim(1) * dzoom + 5);
+    // draw image
+    draw_matrix(img, "positive bootstrapping", h, w, dzoom, dzoom);
+    // draw filtered groundtruth boxes
+    for (uint i = 0; i < filtered.size(); ++i) {
+      bbox &gt = filtered[i];
+      draw_bbox(gt, cl.labels, h, w, dzoom, 0, true, 5, false, false);
+    }
+    // draw gt-matched positives
+    for (uint i = 0; i < pos.size(); ++i) {
+      bbox &p = pos[i];
+      draw_bbox(p, cl.labels, h, w, dzoom, 0, true, 6, false, false);
+    }
+    w += (uint) (img.dim(1) * dzoom + 5);
+    // draw image
+    draw_matrix(img, "negative bootstrapping", h, w, dzoom, dzoom);
+    // draw filtered boxes
+    for (uint i = 0; i < filtered.size(); ++i) {
+      bbox &gt = filtered[i];
+      draw_bbox(gt, cl.labels, h, w, dzoom, 0, true, 5, false, false);
+    }
+    // draw non-filtered boxes
+    for (uint i = 0; i < nonfiltered.size(); ++i) {
+      bbox &gt = nonfiltered[i];
+      draw_bbox(gt, cl.labels, h, w, dzoom, 0, true, 3, false, false);
+    }
+    // draw negatives
+    for (uint i = 0; i < neg.size(); ++i) {
+      bbox &p = neg[i];
+      draw_bbox(p, cl.labels, h, w, dzoom, 0, true, 7, false, false);
+    }
+    // draw positive preprocessed bootstrappings
+    w = w0;
+    h += (uint) (img.dim(0) * dzoom + 5);
+    display_preprocessed(pp_pos, pos, cl.labels, h, w, dzoom, vmin, vmax);
+    // draw positive preprocessed bootstrappings
+    w = w0;
+    display_preprocessed(pp_neg, neg, cl.labels, h, w, dzoom, vmin, vmax);
+    enable_window_updates();
+  }
+
+  template <typename T, class Tstate> template <typename Tin>
+  bboxes& detector_gui<T,Tstate>::
   display_inputs_outputs(detector<T,Tstate> &cl, idx<Tin> &img,
-			 double threshold,
-			 const char *frame_name, 
-			 unsigned int h0, unsigned int w0, double dzoom,
+			 double threshold, const char *frame_name,
+			 uint h0, uint w0, double dzoom,
 			 T vmin, T vmax, int wid, const char *wname,
-			 T in_vmin, T in_vmax, float transparency) {
-    display_wid_fprop = (wid >= 0) ? wid : 
+			 T in_vmin, T in_vmax, float transparency, uint wmax) {
+    display_wid_fprop = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
 
     // draw input and output
-    vector<bbox*>& bb =
+    bboxes& bb =
       display_input(cl, img, threshold, frame_name,
 		    h0, w0, dzoom, in_vmin, in_vmax, display_wid_fprop, wname,
 		    transparency);
@@ -145,55 +213,37 @@ namespace ebl {
     bool first_time = true;
     if (vmin == vmax) {
       for (uint i = 0; i < cl.outputs.size(); ++i) {
-	idx<T> outx = cl.outputs[i]->x;
-	if (first_time) {
-	  vmin = idx_min(outx);
-	  vmax = idx_max(outx);
-	  first_time = false;
-	} else {
-	  vmin = MIN(vmin, idx_min(outx));
-	  vmax = std::max(vmax, idx_max(outx));	  
+	mstate<Tstate> &o = cl.outputs[i];
+	for (typename mstate<Tstate>::iterator j = o.begin();
+	     j != o.end(); ++j) {
+	  idx<T> outx = j->x;
+	  if (first_time) {
+	    vmin = idx_min(outx);
+	    vmax = idx_max(outx);
+	    first_time = false;
+	  } else {
+	    vmin = MIN(vmin, idx_min(outx));
+	    vmax = std::max(vmax, idx_max(outx));
+	  }
 	}
       }
     }
-    DEBUG("Displaying outputs in range [" << vmin << ", " << vmax
-	  << "], outputs actual range is [" << idx_min(cl.outputs[0]->x) << ", "
-	  << idx_max(cl.outputs[0]->x) << "]");
-    int h = (int) (cl.indim.dim(1) * dzoom + 20);
+    EDEBUG("Displaying outputs in range [" << vmin << ", " << vmax
+	  << "], outputs actual range is [" << idx_min(cl.outputs[0][0].x)
+	  << ", " << idx_max(cl.outputs[0][0].x) << "]");
+    h0 += (uint) (cl.indim.dim(1) * dzoom + 20);
     // draw extracted windows
     if (draw_extracted == 1) { // preprocessed
-      vector<idx<T> >& pp = cl.get_preprocessed();
-      idx<T> m;
-      if (pp.size() > 0) {
-	m = pp[0];
-	h += 15 * 3;
-	uint wpp = w0, hpp = h;
-	gui << black_on_white() << at(h - 15 * 4, w0) << pp.size()
-	    << " positive windows with dimensions " << m;
-	ostringstream o;
-	o.precision(3);
-	for (uint i = 0; i < pp.size() && wpp < 5000; ++i) {
-	  hpp = h;
-	  m = pp[i];
-	  bbox &b = *bb[i];
-	  // print bbox infos
-	  o.str(""); o << b.confidence; gui << at(hpp - 15 * 3, wpp) << o.str();
-	  gui << at(hpp - 15 * 2, wpp) << b.scale_index;
-	  gui << at(hpp - 15 * 1, wpp)
-	      << ((uint) b.class_id < cl.labels.size() ?
-		  cl.labels[b.class_id].c_str() : "***");
-	  // draw input box
-	  rect<float> r(hpp + b.i.h0 - b.i0.h0,
-		      wpp + b.i.w0 - b.i0.w0, b.i.height, b.i.width);
-	  draw_box(r, 0, 0, 255);
-	  idx_bloop1(chan, m, T) {
-	    // draw channel
-	    draw_matrix(chan, hpp, wpp, dzoom, dzoom, (T)vmin, (T)vmax);
-	    hpp += chan.dim(0) + 1;
-	  }
-	  wpp += m.dim(2) + 2;
-	}
-	h = hpp + 20;
+      bboxes bbs;
+      // display all preprocessed
+      svector<midx<T> >& pp = cl.get_preprocessed(bbs);
+      display_preprocessed(pp, bbs, cl.labels, h0, w0, dzoom, vmin, vmax, wmax);
+      // display diverse preprocessed when saving
+      if (cl.save_mode > 0 || cl.diverse_ordering) {
+	svector<midx<T> >& fpp =
+	  cl.get_preprocessed(bbs, cl.save_max_per_frame, cl.diverse_ordering);
+	display_preprocessed(fpp, bbs, cl.labels, h0, w0, dzoom, vmin, vmax,
+			     wmax);
       }
     }
     else if (draw_extracted == 2) { // originals
@@ -201,92 +251,36 @@ namespace ebl {
       idx<T> m;
       if (pp.size() > 0) {
 	m = pp[0];
-	h += 15 * 3;
-	uint wpp = w0, hpp = h;
-	gui << black_on_white() << at(h - 15 * 4, w0) << pp.size()
+	h0 += 15 * 3;
+	uint wpp = w0, hpp = h0;
+	gui << white_on_transparent() << at(h0 - 15 * 4, w0) << pp.size()
 	    << " positive windows with dimensions " << m;
 	ostringstream o;
 	o.precision(3);
 	for (uint i = 0; i < pp.size() && wpp < 5000; ++i) {
-	  hpp = h;
+	  hpp = h0;
 	  m = pp[i];
-	  bbox &b = *bb[i];
+	  bbox &b = bb[i];
 	  // print bbox infos
 	  o.str(""); o << b.confidence; gui << at(hpp - 15 * 3, wpp) << o.str();
-	  gui << at(hpp - 15 * 2, wpp) << b.scale_index;
-	  gui << at(hpp - 15 * 1, wpp)
-	      << ((uint) b.class_id < cl.labels.size() ?
-		  cl.labels[b.class_id].c_str() : "***");
+	  gui << at(hpp - 15 * 2, wpp) << b.iscale_index;
+	  gui << at(hpp - 15 * 1, wpp) << ((uint)b.class_id < cl.labels.size() ?
+					   cl.labels[b.class_id].c_str():"***");
 	  m = m.shift_dim(0, 2);
 	  draw_matrix(m, hpp, wpp, dzoom, dzoom, (T)0, (T)255);
 	  hpp += m.dim(0) + 1;
 	  wpp += m.dim(1) + 2;
 	}
-	h = hpp + 20;
+	h0 = hpp + 20;
       }
     }
-    // draw internal inputs and outputs
-    int scale = 0;
-    // maximum height of outputs to display
-    int ohmax = cl.outputs[0]->x.dim(1);
-    // find the maximum height of inputs to display
-    int ihmax = 0;
-    for (uint i = 0; i < cl.ppinputs[0]->size(); ++i) {
-      Tstate &t = (*(cl.ppinputs[0]))[i];
-      ihmax += t.x.dim(1) + 2;
-    }
-    ostringstream s;
-    // display all outputs
-    first_time = true;
-    for (uint i = 0; i < cl.ppinputs.size(); ++i) {
-      Tstate &t = (*cl.ppinputs[i])[0];
-      idx<T> outx = cl.outputs[i]->x;
-
-      // draw inputs
-      string ss;
-      ss << "scale #" << scale;
-      int htmp = h;
-      for (uint j = 0; j < cl.ppinputs[i]->size(); ++j) {
-	Tstate &t = (*(cl.ppinputs[i]))[j];
-	ss << " " << t.x.dim(1) << "x" << t.x.dim(2);
-	idx<T> tx = t.x.shift_dim(0, 2);
-	draw_matrix(tx, htmp, w0, dzoom, dzoom, (T)vmin, (T)vmax);
-	htmp += t.x.dim(1) + 2;
-      }
-      gui << black_on_white() << at(h - 15, w0) << ss;
-      gui << white_on_transparent();
-      // draw bboxes on scaled input
-      if (!cl.bboxes_off) {
-	for (vector<bbox*>::iterator i = bb.begin(); i != bb.end(); ++i) {
-	  if (scale == (*i)->scale_index)
-	    draw_bbox(**i, cl.labels, h, w0, dzoom, transparency, false);
-	}
-	// draw outputs
-	int hcat = 0;
-	double czoom = dzoom * 2.0;
-	uint lab = 0;
-	{ idx_bloop1(category, outx, T) {
-	    s.str("");
-	    if (first_time) {
-	      if (lab < cl.labels.size())
-		s << cl.labels[lab] << " ";
-	      else
-		s << "feature " << lab << " ";
-	    }
-	    s << category.dim(0) << "x" << category.dim(1);
-	    gui << at((uint) (h + ihmax * dzoom + 5 + hcat), 
-		      (uint) (w0 + category.dim(1) * czoom + 2));
-	    gui << black_on_white() << s.str();
-	    draw_matrix(category, (uint) (h + ihmax * dzoom + 5 + hcat), w0, 
-			czoom, czoom, vmin, vmax);
-	    hcat += (int) (ohmax * czoom + 2);
-	    lab++;
-	  }}
-      }
-      scale++;
-      w0 += (uint) (t.x.dim(2) * dzoom + 5);
-      first_time = false;
-    }
+    // display input states
+    uint htmp = h0;
+    display_inputs(cl, h0, w0, bb, dzoom, vmin, vmax, transparency);
+    h0 = htmp;
+    w0 += 20;
+    // display output states
+    display_outputs(cl, h0, w0, bb, dzoom, vmin, vmax, transparency);
 
     // display queues of detections
     if (show_detqueue || show_detqueue2) {
@@ -301,8 +295,194 @@ namespace ebl {
       detcnt += new_detections.size();
     }
     // reactive window drawing
-    // enable_window_updates();
+    enable_window_updates();
     return bb;
+  }
+
+  template <typename T, class Tstate> void detector_gui<T,Tstate>::
+  display_inputs(detector<T,Tstate> &cl, uint &h0, uint &w0, bboxes &bb,
+		 double dzoom, T vmin, T vmax, float transparency) {
+    int scale = 0;
+    uint wmax = 0;
+    ostringstream s;
+    // display all outputs
+    mstate<Tstate> &ins = cl.ppinputs[0];
+    for (uint i = 0; i < ins.size(); ++i) {
+      Tstate &t = ins[i];
+      // draw inputs
+      string ss;
+      ss << "scale #" << scale;
+      int htmp = h0;
+      ss << " " << t.x.dim(1) << "x" << t.x.dim(2);
+      idx<T> tx = t.x.shift_dim(0, 2);
+      draw_matrix(tx, htmp, w0, dzoom, dzoom, (T)vmin, (T)vmax);
+      wmax = std::max(wmax, (uint) (w0 + tx.dim(1)));
+      // // loop on all boxes of this scale and this state#
+      // for (bboxes::iterator q = bb.begin(); q != bb.end(); ++q) {
+      // 	bbox &b = *q;
+      // 	if (scale == b.iscale_index) {
+      // 	  // if (i >= b.mi.size()) eblerror("expected as many states as boxes");
+      // 	  // rect<float> r(htmp + b.mi[i].h0, w0 + b.mi[i].w0,
+      // 	  // 		b.mi[i].height, b.mi[i].width);
+      // 	  rect<float> r(htmp + b.mi[0].h0, w0 + b.mi[0].w0,
+      // 			b.mi[0].height, b.mi[0].width);
+      // 	  draw_box(r, 0, 0, 255);
+      // 	  draw_cross(r.hcenter(), r.wcenter(), 3, 0, 0, 255, 255);
+      // 	}
+      // 	htmp += t.x.dim(1) + states_separation;
+      // }
+
+      gui << white_on_transparent() << at(h0 - 18, w0) << ss;
+      // draw bboxes on scaled input
+      if (!cl.bboxes_off) {
+	for (bboxes::iterator ibb = bb.begin(); ibb != bb.end(); ++ibb) {
+	  if (scale == ibb->iscale_index)
+	    draw_bbox(*ibb, cl.labels, h0, w0, dzoom, transparency, false, 0,
+		      show_class, show_conf);
+	  // draw all sub boxes
+	  for (bboxes::iterator jbb = ibb->children.begin();
+	       jbb != ibb->children.end(); ++jbb) {
+	    if (scale == jbb->iscale_index)
+	      draw_bbox(*jbb, cl.labels, h0, w0, dzoom, transparency, false, 1,
+			show_class, show_conf);
+	  }
+	}
+      }
+      scale++;
+      h0 += (uint) (t.x.dim(1) * dzoom + 20);
+    }
+    w0 = wmax;
+  }
+
+
+  template <typename T, class Tstate> void detector_gui<T,Tstate>::
+  display_outputs(detector<T,Tstate> &cl, uint &h0, uint &w0, bboxes &bb,
+		  double dzoom, T vmin, T vmax, float transparency) {
+    uint h = h0, maxw = 0;
+    uint color = 0;
+    // draw answers
+    for (uint k = 0; k < cl.answers.size(); ++k) {
+      double czoom = dzoom;// * 2.0;
+      Tstate &o = cl.answers[k];
+
+      //uint lab = 0;
+      idx<T> out0 = o.x.select(0, 0);
+      idx<T> out1 = o.x.select(0, 1);
+      string s;
+      uint w = w0;
+      s << "classes " << out0.dim(0) << "x" << out0.dim(1);
+      gui << at((uint) (h - 20), (uint) w) << white_on_transparent() << s;
+      draw_matrix(out0, h, w, czoom, czoom, idx_min(out0), idx_max(out0));
+      // // draw crosses for found boxes
+      // for (bboxes::iterator i = bb.begin(); i != bb.end(); ++i) {
+      // 	color = 0;
+      // 	if (k == (uint) i->oscale_index && (uint) i->class_id == lab)
+      // 	  draw_cross(i->o.h0 * czoom + h0, i->o.w0 * czoom + w, 3,
+      // 		     color_list[color][0], color_list[color][1],
+      // 		     color_list[color][2]);
+      w += (uint) (out0.dim(1) * czoom + 10);
+      s = "";
+      s << "conf " << out0.dim(0) << "x" << out0.dim(1);
+      gui << at((uint) (h - 20), (uint) w) << white_on_transparent() << s;
+      draw_matrix(out1, h, w, czoom, czoom, (T) 0, (T) 1);
+      h += (uint) (out0.dim(0) * czoom + 20);
+      w += (uint) (out0.dim(1) * czoom + 10);
+      if (w > maxw) maxw = w;
+    }
+    w0 = maxw;
+    // draw outputs
+    mstate<Tstate> &oo = cl.outputs[0];
+    for (uint k = 0; k < oo.size(); ++k) {
+      double czoom = dzoom;// * 2.0;
+      Tstate &o = oo[k];
+      uint lab = 0;
+      idx<T> outx = o.x;
+      uint w = w0;
+      { idx_bloop1(category, outx, T) {
+	  string s;
+	  if (lab < cl.labels.size()) s << cl.labels[lab] << " ";
+	  else s << "feature " << lab << " ";
+	  s << category.dim(0) << "x" << category.dim(1);
+	  gui << at((uint) (h0 - 20), (uint) w) << white_on_transparent() << s;
+	  draw_matrix(category, h0, w, czoom, czoom, vmin, vmax);
+	  // draw crosses for found boxes
+	  for (bboxes::iterator i = bb.begin(); i != bb.end(); ++i) {
+	    color = 0;
+	    if (k == (uint) i->oscale_index && (uint) i->class_id == lab)
+	      draw_cross(i->o.h0 * czoom + h0, i->o.w0 * czoom + w, 3,
+			   color_list[color][0], color_list[color][1],
+			   color_list[color][2]);
+	    // draw children too
+	    color = 1;
+	    for (bboxes::iterator j = i->children.begin();
+		 j != i->children.end(); ++j) {
+	      if (k == (uint) j->oscale_index && (uint) j->class_id == lab)
+		draw_cross(j->o.h0 * czoom + h0, j->o.w0 * czoom + w, 3,
+			   color_list[color][0], color_list[color][1],
+			   color_list[color][2]);
+	    }
+	  }
+	  lab++;
+	  w += (uint) (outx.dim(2) * czoom + 10);
+	}}
+      h0 += (uint) (outx.dim(1) * czoom + 20);
+    }
+  }
+
+  template <typename T, class Tstate>
+  void detector_gui<T,Tstate>::
+  display_preprocessed(svector<midx<T> > &pp, bboxes &bbs,
+		       vector<string> &labels, uint &h0, uint &w0, double dzoom,
+		       T vmin, T vmax, uint wmax) {
+    if (pp.size() != bbs.size())
+      eblerror("expected same size pp and bbs but got " << pp.size()
+	       << " and " << bbs.size());
+    idx<T> l;
+    if (pp.size() > 0) {
+      midx<T> &m = pp[0];
+      h0 += 15 * 3;
+      uint w = w0, h = h0;
+      gui << white_on_transparent() << at(h0 - 15 * 4, w0) << pp.size()
+	  << " positive windows with dimensions " << m.str();
+      ostringstream o;
+      o.precision(3);
+      uint hmax = 0;
+      for (uint i = 0; i < pp.size() && w < wmax; ++i) {
+	h = h0;
+	m = pp[i];
+	bbox &b = bbs[i];
+	// print bbox infos
+	o.str(""); o << b.confidence; gui << at(h - 15 * 3, w) << o.str();
+	gui << at(h - 15 * 2, w) << b.oscale_index;
+	gui << at(h - 15 * 1, w)
+	    << ((uint) b.class_id < labels.size() ?
+		labels[b.class_id].c_str() : "***");
+	// // draw input box
+	// rect<float> r(h + b.i.h0 - b.i0.h0,
+	// 		w + b.i.w0 - b.i0.w0, b.i.height, b.i.width);
+	// draw_box(r, 0, 0, 255);
+
+	// loop on each layer of input to get maximum width
+	int maxw = 0;
+	for (uint j = 0; j < m.dim(0); ++j) {
+	  l = m.get(j);
+	  maxw = std::max(maxw, (int) l.dim(2));
+	}
+	// draw all layers of preprocessed region
+	for (uint j = 0; j < m.dim(0); ++j) {
+	  l = m.get(j);
+	  int ww = std::max(0, (int) (w + (maxw - l.dim(2)) / 2));
+	  l = l.shift_dim(0, 2);
+	  draw_matrix(l, h, ww, dzoom, dzoom, (T)vmin, (T)vmax);
+	  rect<float> r(h, ww, l.dim(0), l.dim(1));
+	  draw_cross(r.hcenter(), r.wcenter(), 3, 0, 0, 255, 255);
+	  h += l.dim(0) + 1;
+	}
+	w += maxw + 2;
+	hmax = std::max(h, hmax);
+      }
+      h0 = hmax + 20;
+    }
   }
 
   template <typename T, class Tstate> void detector_gui<T,Tstate>::
@@ -344,17 +524,16 @@ namespace ebl {
   }
 
   template <typename T, class Tstate> template <typename Tin>
-  vector<bbox*>& detector_gui<T,Tstate>::
+  bboxes& detector_gui<T,Tstate>::
   display_all(detector<T,Tstate> &cl, idx<Tin> &img, double threshold,
-	      const char *frame_name,
-	      unsigned int h0, unsigned int w0, double dzoom, T vmin,
+	      const char *frame_name, uint h0, uint w0, double dzoom, T vmin,
 	      T vmax, int wid, const char *wname) {
-    display_wid_fprop = (wid >= 0) ? wid : 
+    display_wid_fprop = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
 
     // draw input and output
-    vector<bbox*>& bb =
+    bboxes& bb =
       display_inputs_outputs(cl, img, threshold, frame_name,
 			     h0, w0, dzoom, vmin, vmax, display_wid_fprop);
 
@@ -362,21 +541,21 @@ namespace ebl {
     // draw internal states of first scale
     w0 = (cl.indim.dim(2) + 5) * 2 + 5;
     module_1_1_gui mg;
-    cl.prepare(img);
-    cl.prepare_scale(0);
+    // cl.prepare(img);
+    // cl.prepare_scale(0);
     mg.display_fprop(*(module_1_1<T,Tstate>*) &cl.thenet,
-    		     *cl.input, *cl.output, h0, w0, (double) 1.0,
-		     (T) -1.0, (T) 1.0, true, display_wid_fprop);
+    		     *cl.input, cl.output, h0, w0, (double) 1.0,
+    		     (T) -1.0, (T) 1.0, true, display_wid_fprop);
     //    enable_window_updates();
     return bb;
   }
 
   template <typename T, class Tstate> template <typename Tin>
-  void detector_gui<T,Tstate>::display_current(detector<T,Tstate> &cl, 
+  void detector_gui<T,Tstate>::display_current(detector<T,Tstate> &cl,
 					       idx<Tin> &sample,
 					       int wid, const char *wname,
 					       double dzoom){
-    display_wid_fprop = (wid >= 0) ? wid : 
+    display_wid_fprop = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: inputs, outputs & internals"));
     select_window(display_wid_fprop);
     disable_window_updates();
@@ -386,8 +565,8 @@ namespace ebl {
     cl.prepare(sample);
     cl.prepare_scale(0);
     mg.display_fprop(*(module_1_1<T,Tstate>*) &cl.thenet,
-    		     *cl.input, *cl.output, (uint) 0, (uint) 0, dzoom,
-		     (T) -1.0, (T) 1.0, true, display_wid_fprop);
+    		     *cl.input, cl.output, (uint) 0, (uint) 0, dzoom,
+    		     (T) -1.0, (T) 1.0, true, display_wid_fprop);
     enable_window_updates();
   }
 
@@ -398,7 +577,7 @@ namespace ebl {
       mask_threshold = threshold;
     }
   }
-  
+
 } // end namespace ebl
 
 #endif

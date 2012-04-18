@@ -324,4 +324,137 @@ namespace ebl {
     cxcy.set(dcy - ly, 1);
   }
 
+  // vector flows //////////////////////////////////////////////////////////////
+
+  idx<float> create_grid(idxdim &inputd) {
+    idxdim d(inputd);
+    d.insert_dim(0, 2);
+    idx<float> grid(d);
+    idx<float> fx = grid.select(0, 0), fy = grid.select(0, 1);
+    float xs = (float) (((inputd.dim(0) % 2 == 0) ?
+			 inputd.dim(0) : inputd.dim(0) - 1) * .5);
+    float ys = (float) (((inputd.dim(1) % 2 == 0) ?
+			 inputd.dim(1) : inputd.dim(1) - 1) * .5);
+    // fill x
+    for (intg i = 0; i < inputd.dim(0); ++i) {
+      idx<float> fxi = fx.select(0, i);
+      idx_fill(fxi, (float) ((float) i - xs));
+    }
+    // fill y
+    for (intg i = 0; i < inputd.dim(1); ++i) {
+      idx<float> fyi = fy.select(1, i);
+      idx_fill(fyi, (float) ((float) i - ys));
+    }
+    return grid;
+  }
+  
+  void translation_flow(idx<float> &grid, idx<float> &flow, float h, float w) {
+    if (flow.dim(0) != 2 && flow.order() <= 1)
+      eblerror("expected first dimension to be 2 and at least order 2");
+    idx<float> gh = grid.select(0, 0);
+    idx<float> gw = grid.select(0, 1);
+    idx<float> grid0(grid.get_idxdim());
+    idx_copy(grid, grid0);
+    idx_addc(gh, -h);
+    idx_addc(gw, -w);
+    // remove grid from flow
+    idx_subacc(grid, grid0, flow);
+  }
+  
+  void shear_flow(idx<float> &grid, idx<float> &flow, float h, float w) {
+    if (flow.dim(0) != 2 && flow.order() <= 1)
+      eblerror("expected first dimension to be 2 and at least order 2");
+    idx<float> gh = grid.select(0, 0);
+    idx<float> gw = grid.select(0, 1);
+    idx<float> grid0(grid.get_idxdim());
+    idx_copy(grid, grid0);
+    idx_dotcacc(gw, -h, gh);
+    idx_dotcacc(gh, -w, gw);
+    // remove grid from flow
+    idx_subacc(grid, grid0, flow);
+  }
+  
+  void scale_flow(idx<float> &grid, idx<float> &flow, float h, float w) {
+    if (h == 0 || w == 0) eblerror("expected non-zero scalings");
+    if (grid.dim(0) != 2 && grid.order() <= 1)
+      eblerror("expected first dimension to be 2 and at least order 2");
+    idx<float> gh = grid.select(0, 0), gw = grid.select(0, 1);
+    idx<float> fh = flow.select(0, 0), fw = flow.select(0, 1);
+    idx<float> grid0(grid.get_idxdim());
+    idx_copy(grid, grid0);
+    // multiply grid by scalings and accumulate to flow
+    idx_dotc(gh, 1/h, gh);
+    idx_dotc(gw, 1/w, gw);
+    // remove grid from flow
+    idx_subacc(grid, grid0, flow);
+  }
+
+  void rotation_flow(idx<float> &grid, idx<float> &flow, float deg) {
+    idx<float> rot(2, 2);
+    // make contiguous version of grid
+    idx<float> tmp = grid.shift_dim(0, 2);
+    idxdim d(tmp);
+    idx<float> tmp2(d), tmp3(d);
+    idx_copy(tmp, tmp2);
+    idx<float> grid0(grid.get_idxdim());
+    idx_copy(grid, grid0);
+      
+    float rad = deg / 180 * PI;
+    rot.set(cos(rad), 0, 0);
+    rot.set(-sin(rad), 0, 1);
+    rot.set(sin(rad), 1, 0);
+    rot.set(cos(rad), 1, 1);
+    idx_m2dotm3(rot, tmp2, tmp3);
+    tmp3 = tmp3.shift_dim(2, 0);
+    idx_copy(tmp3, grid);    
+    // remove grid values
+    idx_subacc(grid, grid0, flow);
+  }
+
+  void affine_flow(idx<float> &grid, idx<float> &flow, float th, float tw,
+		   float sh, float sw, float shh, float shw, float deg) {
+    if (sh == 0 || sw == 0) eblerror("expected non-zero scalings");
+    idx<float> t(2, 3);
+    // make contiguous version of grid
+    idx<float> tmp = grid.shift_dim(0, 2);
+    idxdim d(tmp), d2(tmp);
+    d2.setdim(2, 3);
+    idx<float> tmp2(d2), tmp3(d);
+    idx<float> l01 = tmp2.narrow(2, 2, 0), l2 = tmp2.select(2, 2);
+    idx_copy(tmp, l01);
+    idx_fill(l2, (float) 1);
+    idx<float> grid0(grid.get_idxdim());
+    idx_copy(grid, grid0);
+      
+    float rad = deg / 180 * PI;
+    t.set(cos(rad) / sh, 0, 0);
+    t.set((-sin(rad) + shh) / sh, 0, 1);
+    t.set(0, 0, 2);
+    // t.set(-th / sh, 0, 2);
+    
+    t.set((sin(rad) + shw) / sw, 1, 0);
+    t.set(cos(rad) / sw, 1, 1);
+    t.set(0, 1, 2);
+    // t.set(-tw / sw, 1, 2);
+    
+    idx_m2dotm3(t, tmp2, tmp3);
+    tmp3 = tmp3.shift_dim(2, 0);
+    idx_copy(tmp3, grid);    
+    // remove grid values
+    idx_subacc(grid, grid0, flow);
+  }
+
+  void elastic_flow(idx<float> &flow, uint sz, float coeff) {
+    // make contiguous version of grid
+    idxdim d(flow);
+    d.setdim(1, d.dim(1) + sz - 1);
+    d.setdim(2, d.dim(2) + sz - 1);
+    idx<float> f(d), f2(flow.get_idxdim());
+    idx_random(f, -.5, .5);
+    idx<float> g = create_gaussian_kernel<float>(sz);
+    idx_3dconvol(f, g, f2);
+    // remove grid values    
+    idx_dotcacc(f2, coeff, flow);
+  }
+
 } // end namespace ebl

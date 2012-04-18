@@ -44,18 +44,19 @@ namespace ebl {
   text3d::text3d(const char *s_, float x_, float y_, float z_,
 		 int r, int g, int b, int a)
     : s(s_), x(x_), y(y_), z(z_), col(r, g, b, a) {
-    // DEBUG("win3d added: " << describe());
+    //EDEBUG("win3d added: " << describe());
   }
 
   text3d::~text3d() {
   }    
 
   std::string text3d::describe() {
-    std::string s;
-    s << "text3d, string: " << s << ", center: (" << x << "," << y << "," << z
-      << "), color: (" << col.red() << "," << col.green() << "," << col.blue()
-      << "," << col.alpha() << ")";
-    return s;
+    std::string sd;
+    sd << "text3d, string: " << s.toStdString()
+       << ", center: (" << x << "," << y << "," << z
+       << "), color: (" << col.red() << "," << col.green() << "," << col.blue()
+       << "," << col.alpha() << ")";
+    return sd;
   }
 
   // sphere3d //////////////////////////////////////////////////////////////////
@@ -66,7 +67,7 @@ namespace ebl {
     QGLBuilder builder;
     builder << QGLSphere(radius * 2);
     node = builder.finalizedSceneNode();
-    //DEBUG("win3d added: " << describe());
+    //EDEBUG("win3d added: " << describe());
   }
 
   sphere3d::~sphere3d() {
@@ -94,7 +95,7 @@ namespace ebl {
     builder << QGLCylinder(top_radius * 2, base_radius * 2, length,
 			   10, 3, tops, tops);
     node = builder.finalizedSceneNode();
-    DEBUG("win3d added: " << describe());
+    //EDEBUG("win3d added: " << describe());
   }
 
   cylinder3d::~cylinder3d() {
@@ -108,6 +109,42 @@ namespace ebl {
       << top_radius << ", " << base_radius << ", drawing top: " << tops;
     return s;
   }
+
+  // line3d ////////////////////////////////////////////////////////////////
+  
+  line3d::line3d(float x_, float y_, float z_, float x1_, float y1_, float z1_,
+		 int r, int g, int b, int a)
+    : x(x_), y(y_), z(z_), x1(x1_), y1(y1_), z1(z1_), node(NULL),
+      col(r, g, b, a) {
+    QGLBuilder builder;
+    builder.addPane(1);
+    node = builder.finalizedSceneNode();
+    node->setDrawingMode(QGL::Lines);
+    //EDEBUG("win3d added: " << describe());
+    eblerror("not implemented");
+  }
+
+  line3d::~line3d() {
+  }
+
+  std::string line3d::describe() {
+    std::string s;
+    s << "line3d, from: (" << x << "," << y << "," << z
+      << "), to (" << x1 << "," << y1 << "," << z1 << ")";
+    return s;
+  }
+
+  // void line3d::drawGeometry(QGLPainter *painter) {
+  //   cout << "draw geometry $$$$$$$$$$$$$$$$$$" << endl;
+  //   painter->begin();
+  //   glLineWidth(1);
+  //   glBegin(GL_LINES);
+  //   glVertex3f(x, y, z);
+  //   glVertex3f(x1, y1, z1);
+  //   glEnd();
+  //   // call parent implementation to do actual draw
+  //   QGLSceneNode::drawGeometry(painter);
+  // }
 
   //////////////////////////////////////////////////////////////////////////////
   // win3d
@@ -205,12 +242,20 @@ namespace ebl {
     texts.push_back(new text3d(s, x, y, z, r, g, b, a));
   }
 
+  void win3d::add_line(float x, float y, float z, float x1, float y1, float z1,
+		       const char *s, int r, int g, int b, int a) {
+    lines.push_back(new line3d(x, y, z, x1, y1, z1));
+    if (s)
+      texts.push_back(new text3d(s, x1, y1, z1, r, g, b, a));
+  }
+
   // clear methods /////////////////////////////////////////////////////////////
 
   void win3d::clear() {
     clear_spheres();
     clear_cylinders();
     clear_texts();
+    clear_lines();
     win::clear();
   }
   
@@ -234,6 +279,12 @@ namespace ebl {
     texts.clear();
   }
 
+  void win3d::clear_lines() {
+    for (vector<line3d*>::iterator i = lines.begin(); i != lines.end(); ++i)
+      if (*i) delete *i;
+    lines.clear();
+  }
+
   ////////////////////////////////////////////////////////////////
   // painting/drawing methods
 
@@ -245,8 +296,8 @@ namespace ebl {
     glEnable(GL_BLEND);
     // setFormat(QGLFormat(QGL::SampleBuffers)); // enable anti-aliasing support
  
-    glEnable( GL_DEPTH_TEST );
-    glDisable(GL_CULL_FACE );
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
 
     // glShadeModel( GL_SMOOTH );
     // glDepthFunc( GL_LESS );
@@ -335,6 +386,51 @@ namespace ebl {
      repaint();
  }
 
+  void win3d::keyPressEvent(QKeyEvent *event) {
+    // push key on the list
+    keyspressed.push_back(event->key());
+    // // handle key events
+    // if (event->key() == Qt::Key_Escape)
+    //   close();
+    // else if (event->key() == Qt::Key_Left) {
+    //   if (scrollbox) {
+    // 	cout << "display_previous" << endl;
+    // 	scrollbox->display_previous();
+    //   }
+    // } else if (event->key() == Qt::Key_Right) {
+    //   if (scrollbox) {
+    // 	cout << "display_next" << endl;
+    // 	scrollbox->display_next();
+    //   }
+    // } else if (event->key() == Qt::Key_Control) {
+    //   ctrl_on = true;
+    // } else if (event->key() == Qt::Key_T) {
+    //   if (ctrl_on) {
+    // 	if (text_on) { // text is currently displayed
+    // 	  text_on = false;
+    // 	  // cout << "Disabling Text in window (ctrl + t)" << endl;
+    // 	  update();
+    // 	} else { // text not currently displayed
+    // 	  text_on = true;
+    // 	  // cout << "Enabling Text in window (ctrl + t)" << endl;
+    // 	  update();
+    // 	}
+    //   }
+    // } else if (event->key() == Qt::Key_S) {
+    //   string fname;
+    //   fname << "win" << id;
+    //   save(fname, true);
+    //   save_mat(fname, true);
+    // }
+  }
+
+  void win3d::keyReleaseEvent(QKeyEvent *event) {
+    // handle key events
+    if (event->key() == Qt::Key_Control) {
+      ctrl_on = false;
+    }
+  }
+  
  static void qNormalizeAngle(int &angle)
  {
      while (angle < 0)
@@ -404,6 +500,7 @@ namespace ebl {
     glEnable(GL_CULL_FACE);
     paint_spheres(&p);
     paint_cylinders(&p);
+    paint_lines(&p);
     
     // finishing 3d painting
     p.disableEffect(); // text painting crashes without this
@@ -497,6 +594,33 @@ namespace ebl {
   	painter->setFaceColor(QGL::AllFaces, s->col);
   	// draw
   	s->node->draw(painter);
+  	// put matrix back
+  	painter->modelViewMatrix().pop();
+      }
+    }
+  }
+
+  void win3d::paint_lines(QGLPainter *painter) {
+    for (vector<line3d*>::iterator i = lines.begin();
+  	 i != lines.end(); ++i) {
+      line3d *s = *i;
+      if (s) {
+  	// remember current matrix
+  	painter->modelViewMatrix().push();
+	// scale
+	painter->modelViewMatrix().scale(pixmapScale, pixmapScale, pixmapScale);
+	// rotate
+	painter->modelViewMatrix().rotate(xRot / 16.0, 1.0, 0.0, 0.0);
+	painter->modelViewMatrix().rotate(yRot / 16.0, 0.0, 1.0, 0.0);
+	painter->modelViewMatrix().rotate(zRot / 16.0, 0.0, 0.0, 1.0);
+  	// // now translate
+  	// painter->modelViewMatrix().translate(s->x, s->y, s->z);
+  	// set color
+  	painter->setFaceColor(QGL::AllFaces, s->col);
+  	// draw
+  	s->node->draw(painter);
+	//  	s->draw(painter);
+	cout << "painting line !!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
   	// put matrix back
   	painter->modelViewMatrix().pop();
       }

@@ -82,6 +82,88 @@ namespace ebl {
   }
     
   ////////////////////////////////////////////////////////////////
+  // l1_penalty
+  
+  template <typename T, class Tstate>
+  l1_penalty<T,Tstate>::l1_penalty(T t, T c) : threshold(t), coeff(c) { 
+  }
+  
+  template <typename T, class Tstate>
+  l1_penalty<T,Tstate>::~l1_penalty() { 
+  }
+  
+  template <typename T, class Tstate>
+  void l1_penalty<T,Tstate>::fprop(Tstate &in, Tstate &energy) {
+    idx_sumabs(in.x, energy.x.idx_ptr());
+    energy.x.set(energy.x.get() * coeff);
+  }
+  
+  template <typename T, class Tstate>
+  void l1_penalty<T,Tstate>::bprop(Tstate &in, Tstate &energy) {
+    idx_thresdotc_acc(in.x, energy.dx.get() * coeff, threshold, in.dx);
+  }
+  
+  template <typename T, class Tstate>
+  void l1_penalty<T,Tstate>::bbprop(Tstate &in, Tstate &energy) {
+    idx_addc(in.ddx, energy.ddx.get() * coeff * coeff, in.ddx);
+  }
+
+  template <typename T, class Tstate>
+  std::string l1_penalty<T,Tstate>::describe() {
+    std::string s;
+    s << "l1 penalty " << this->name()
+      << " with threshold " << threshold << " and coefficient " << coeff;
+    return s;
+  }
+  
+  ////////////////////////////////////////////////////////////////
+  // cross_entropy_energy
+  
+  template <typename T, class Tstate>
+  cross_entropy_energy<T,Tstate>::cross_entropy_energy(const char *name_)
+  : ebm_2<Tstate>(name_) { 
+  }
+  
+  template <typename T, class Tstate>
+  cross_entropy_energy<T,Tstate>::~cross_entropy_energy() { 
+  }
+  
+  template <typename T, class Tstate>
+  void cross_entropy_energy<T,Tstate>::fprop(Tstate &in1, Tstate &in2, Tstate &energy) {
+    idx_sqrdist(in1.x, in2.x, energy.x); // squared distance between in1 and in2
+    idx_dotc(energy.x, 0.5, energy.x); // multiply by .5
+  }
+  
+  template <typename T, class Tstate>
+  void cross_entropy_energy<T,Tstate>::bprop(Tstate &in1, Tstate &in2, Tstate &energy) {
+    idx_checkorder1(energy.x, 0); // energy.x must have an order of 0
+    idx_sub(in1.x, in2.x, in1.dx); // derivative with respect to in1
+    idx_dotc(in1.dx, energy.dx.get(), in1.dx); // multiply by energy derivative
+    idx_minus(in1.dx, in2.dx); // derivative with respect to in2
+  }
+  
+  template <typename T, class Tstate>
+  void cross_entropy_energy<T,Tstate>::bbprop(Tstate &in1, Tstate &in2, Tstate &energy) {
+    idx_addc(in1.ddx, energy.dx.get(), in1.ddx);
+    idx_addc(in2.ddx, energy.dx.get(), in2.ddx);
+  }
+  
+  template <typename T, class Tstate>
+  void cross_entropy_energy<T,Tstate>::infer2_copy(Tstate &in1, Tstate &in2,
+					Tstate &energy) {
+    idx_copy(in1.x, in2.x);
+    idx_clear(energy.x);
+  }
+    
+  template <typename T, class Tstate>
+  std::string cross_entropy_energy<T,Tstate>::describe() {
+    std::string s;
+    s << "energy " << this->name()
+      << " is the euclidean distance between inputs";
+    return s;
+  }
+    
+  ////////////////////////////////////////////////////////////////
   // scalerclass_energy
 
   template <typename T, class Tstate>
@@ -264,7 +346,7 @@ namespace ebl {
       e = .5 * idx_sqrdist(tmp.x, last_conf_target.x);
       energy.x.set(energy.x.get() + e);
     }
-    DEBUG("energy: " << energy.x.get() << " in: " << in.x.str() << " norm tgt: "
+    EDEBUG("energy: " << energy.x.get() << " in: " << in.x.str() << " norm tgt: "
 	  << last_target.x.str() << " raw tgt: " << last_target_raw.str()
 	  << " conf penalized: " << ((predict_conf && s > 0) ? "yes":"no")
 	  << " jitt penalized: "

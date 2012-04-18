@@ -82,10 +82,8 @@ namespace ebl {
     //! Constructor. argc and argv are used by mpi to initialize and
     //! manager communications.
     mpijob_manager(int argc, char **argv);
-
     //! Destructor.
     virtual ~mpijob_manager();
-
     //! Read meta configuration.
     //! @param tstamp An optional timestamp to be used for the job's name
     //!               instead of the current timestamp.
@@ -94,42 +92,33 @@ namespace ebl {
     //!                  conf file otherwise.
     virtual bool read_metaconf(const char *fname, const string *tstamp = NULL,
 			       const char *resume_name = NULL,
-			       bool resumedir = false);
-
+			       bool resumedir = false,
+			       bool nomax = false, int maxjobs = -1);
     //! Prepare all jobs (create folders and copy/create files).
-    virtual void prepare();
-
+    virtual void prepare(bool reset_progress = false);
     //! Run all jobs (assumes a call to prepare() beforehand).
-    virtual void run();
-
+    virtual void run(bool force_start = false);
     //! Return the size of the world (including master).
     virtual uint world_size();
-
     //! Returns true if this instance is the master.
     virtual bool is_master();
 
   protected:
-
     //! Run the master manager, which creates all initial files and
     //! configuration and controls jobs assignments to slaves managers.
     virtual void run_master();
-    
     //! Stop all slaves.
     virtual void stop_all();
-
     //! Assign job with id 'jobid' to slave with rank 'slave_id' and
     //! return true on success.
     virtual bool assign(uint jobid, uint slave_id);
-    
     //! Gather and print information about jobs, such as number of jobs running,
     //! number to run left, min/max running time.
     void jinfos(int running[]);
-
     //! Run a slave manager, which takes orders for the master manager.
     virtual void run_slave();
 
-    ////////////////////////////////////////////////////////////////
-    // members
+    // members /////////////////////////////////////////////////////////////////
   protected:
 #ifdef __MPI__
     boost::mpi::communicator world;
@@ -138,6 +127,7 @@ namespace ebl {
     int rank;
     int jslots;
     int id_running; //!< id of running job (-1 if none).
+    bool use_master; //!< Use master to run a job or not.
   };
 
 } // end namespace ebl

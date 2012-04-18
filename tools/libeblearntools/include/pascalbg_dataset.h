@@ -54,7 +54,7 @@ namespace ebl {
     pascalbg_dataset(const char *name, const char *inroot, const char *outdir, 
 		     uint max_folders = 1, bool ignore_diff = true,
 		     bool ignore_trunc = false, bool ignore_occl = false,
-		     const char *annotations = NULL);
+		     const char *annotations = NULL, const char *tmpout = NULL);
 
     //! Destructor.
     virtual ~pascalbg_dataset();
@@ -91,7 +91,7 @@ namespace ebl {
 		      vector<rect<int> > &objs_bboxes, const string &outdir,
 		      uint max_folders, const string &filename);
 
-    void display_patch(idx<Tdata> &patch, idx<Tdata> &img, 
+    void display_patch(midx<Tdata> &patch, idx<Tdata> &img, 
 		       const string &image_filename,
 		       const string &cname,
 		       rect<int> &pbbox, rect<int> &r,
@@ -116,7 +116,6 @@ namespace ebl {
     using dataset<Tdata>::print_stats;
     using dataset<Tdata>::data_cnt;
     using dataset<Tdata>::extension;
-    using dataset<Tdata>::ppconv_type;
     using dataset<Tdata>::scales;
     using dataset<Tdata>::max_data;
     using dataset<Tdata>::max_data_set;
@@ -134,6 +133,8 @@ namespace ebl {
     using dataset<Tdata>::xtimer;
     using dataset<Tdata>::processed_cnt;
     using dataset<Tdata>::fovea;
+    using dataset<Tdata>::images_list;
+    using dataset<Tdata>::outtmp;
   };
 
 } // end namespace ebl

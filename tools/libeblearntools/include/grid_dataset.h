@@ -60,7 +60,7 @@ namespace ebl {
     // data
 
     //! count how many samples are present in dataset files to be compiled.
-    virtual bool count_samples();
+    virtual intg count_samples();
 
     //! add sample d to the data with label class_name
     //! (and converting from Toriginal to Tdata type).

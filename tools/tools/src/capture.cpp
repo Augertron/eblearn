@@ -36,6 +36,7 @@
 
 #include "libidx.h"
 #include "libeblearn.h"
+#include "eblapp.h"
 
 #include "camera_opencv.h"
 
@@ -43,9 +44,6 @@
 #include "libidxgui.h"
 #include "libeblearngui.h"
 #endif
-
-using namespace std;
-using namespace ebl;
 
 // TODO: temporary, need cleaner solution
 typedef float t_data;

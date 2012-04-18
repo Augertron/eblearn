@@ -98,7 +98,8 @@ namespace ebl {
   }
 
   template<typename T>
-  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0) {
+  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0)
+  {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, s0);
     if (st)
       st->resize(st->footprint() + nelements());
@@ -106,7 +107,8 @@ namespace ebl {
   }
 
   template<typename T>
-  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0, intg s1) {
+  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0, intg s1)
+    {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1);
     if (st)
@@ -126,8 +128,8 @@ namespace ebl {
   
   template<typename T>
   fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, intg s0, intg s1,
-			    intg s2,
-			    intg s3, intg s4, intg s5, intg s6, intg s7) {
+			    intg s2, intg s3, intg s4, intg s5, intg s6,
+			    intg s7) {
     x = idx<T>(st ? st->x.getstorage() : NULL,
 	       st ? st->x.footprint() : 0, s0, s1, s2, s3, s4, s5, s6, s7);
     if (st)
@@ -136,7 +138,8 @@ namespace ebl {
   }
 
   template<typename T>
-  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, const idxdim &d) {
+  fstate_idx<T>::fstate_idx(parameter<T,fstate_idx<T> > *st, const idxdim &d)
+   {
     x = idx<T>(st ? st->x.getstorage() : NULL, st ? st->x.footprint() : 0, d);
     if (st)
       st->resize(st->footprint() + nelements());
@@ -1271,17 +1274,27 @@ namespace ebl {
   //////////////////////////////////////////////////////////////////////////////
   // mstate_idx
 
-  template <class Tstate> mstate<Tstate>::mstate() {}  
+  template <class Tstate> mstate<Tstate>::mstate() {}
 
-  template <class Tstate> mstate<Tstate>::mstate(intg n, mstate<Tstate> &ms) {
-    for (uint i = 0; i < ms.size(); ++i) {
-      idxdim d = ms[i].x.get_idxdim();
-      d.setdims(n);
-      this->push_back(d);
+  template <class Tstate>
+  mstate<Tstate>::mstate(const mstate<Tstate> &ms, intg dims, intg nstates) {
+    //EDEBUG("constructing new mstate from " << ms);
+    nstates = (nstates == -1 ? ms.size() : nstates);
+    for (uint i = 0; i < nstates; ++i) {
+      idxdim d = ms.at_const(i).x.get_idxdim();
+      d.setdims(dims);
+      Tstate *nt = new Tstate(d);
+      this->push_back(nt);
     }
   }  
 
-  template <class Tstate> mstate<Tstate>::~mstate() {}
+  template <class Tstate>
+  mstate<Tstate>::mstate(const mstate<Tstate> &other) {
+    svector<Tstate>::copy(other);
+  }
+
+  template <class Tstate> mstate<Tstate>::~mstate() {
+  }
 
   template <class Tstate>
   void mstate<Tstate>::clear_x() {
@@ -1303,11 +1316,49 @@ namespace ebl {
 
   template <class Tstate>
   void mstate<Tstate>::copy(mstate<Tstate> &s) {
-    for (uint i = 0; i < this->size(); ++i) {
-      Tstate& local = (*this)[i];
+    for (uint i = 0; i < s.size(); ++i) {
       Tstate& cpy = s[i];
+      // add more states if necessary
+      if (i >= this->size())
+	this->push_back(new Tstate(cpy.x.get_idxdim()));
+      // copy
+      Tstate& local = (*this)[i];
       local.copy(cpy);
     }
+  }
+
+  template <class Tstate> template <typename T>
+  void mstate<Tstate>::copy(midx<T> &s) {
+    for (int i = 0; i < s.dim(0); ++i) {
+      idx<T> d = s.get(i);
+      // add more states if necessary
+      if (i >= (int) this->size())
+	this->push_back(new Tstate(d.get_idxdim()));
+      Tstate& local = (*this)[i];
+      local.x = d;
+    }
+  }
+
+  template <class Tstate> template <typename T>
+  midx<T> mstate<Tstate>::copy() {
+    midx<T> s(this->size());
+    for (uint i = 0; i < this->size(); ++i) {
+      Tstate& local = (*this)[i];
+      s.set(local.x, i);
+    }
+    return s;
+  }
+
+  template <class Tstate>
+  mstate<Tstate> mstate<Tstate>::narrow(intg size, intg offset) {
+    if ((uint) (size + offset) > this->size())
+      eblerror("cannot narrow this vector of size " << this->size()
+	       << " to size " << size << " starting at offset " << offset);
+    mstate<Tstate> ms;
+    for (uint i = 0; i < size; ++i)
+      ms.push_back(this->at(i + offset));
+    EDEBUG("narrowed " << *this << " into " << ms);
+    return ms;
   }
 
   template <class Tstate>
@@ -1318,14 +1369,114 @@ namespace ebl {
   }
 
   template <class Tstate>
-  void mstate<Tstate>::resize(mstate<Tstate> &s2) {
-    if (this->size() != s2.size())
-      this->clear();
-    for (uint i = 0; i < s2.size(); ++i) {
+  mstate<Tstate> mstate<Tstate>::narrow(midxdim &dims) {
+    if (dims.size() != this->size())
+      eblerror("expected same size input regions and states but got: "
+	       << dims << " and " << *this);
+    mstate<Tstate> all;
+    for (uint i = 0; i < dims.size(); ++i) {
+      Tstate in = (*this)[i];
+      idxdim d = dims[i];
+      // narrow input, ignoring 1st dim
+      for (uint j = 1; j < d.order(); ++j)
+	in = in.narrow(j, d.dim(j), d.offset(j));
+      all.push_back(new Tstate(in));
+    }
+    return all;
+  }
+
+  template <class Tstate>
+  mstate<Tstate> mstate<Tstate>::narrow_max(mfidxdim &dims) {
+    if (dims.size() != this->size())
+      eblerror("expected same size input regions and states but got: "
+	       << dims << " and " << *this);
+    mstate<Tstate> all;
+    for (uint i = 0; i < dims.size(); ++i) {
+      Tstate in = (*this)[i];
+      fidxdim d = dims[i];
+      // narrow input, ignoring 1st dim
+      for (uint j = 1; j < d.order(); ++j)
+	in = in.narrow(j, (intg) std::min(in.x.dim(j) - d.offset(j), d.dim(j)),
+		       (intg) d.offset(j));
+      all.push_back(new Tstate(in));
+    }
+    return all;
+  }
+
+  template <class Tstate> template <class T>
+  void mstate<Tstate>::get_midx(mfidxdim &dims, midx<T> &all) {
+    // first narrow state
+    mstate<Tstate> n = this->narrow(dims);
+    // now set all x into an midx
+    all = midx<T>(n.size());
+    for (uint i = 0; i < n.size(); ++i)
+      all.set(n[i].x, i);
+  }  
+  
+  template <class Tstate> template <class T>
+  void mstate<Tstate>::get_max_midx(mfidxdim &dims, midx<T> &all) {
+    // first narrow state
+    mstate<Tstate> n = this->narrow_max(dims);
+    // now set all x into an midx
+    all = midx<T>(n.size());
+    for (uint i = 0; i < n.size(); ++i)
+      all.set(n[i].x, i);
+  }  
+  
+  template <class Tstate> template <class T>
+  void mstate<Tstate>::get_padded_midx(mfidxdim &dims, midx<T> &all) {
+    if (dims.size() != this->size())
+      eblerror("expected same size input regions and states but got: "
+	       << dims << " and " << *this);
+    all.clear();
+    all.resize(dims.size_existing());
+    uint ooff, ioff, osize, n = 0;
+    bool bcopy;
+    for (uint i = 0; i < dims.size(); ++i) {
+      if (dims.exists(i)) {
+	idx<T> in = (*this)[i].x;
+	idxdim d(dims[i]);
+	d.setdim(0, in.dim(0));
+	idx<T> out(d);
+	idx_clear(out);
+	all.set(out, n);
+	bcopy = true;
+	// narrow input, ignoring 1st dim
+	for (uint j = 1; j < d.order(); ++j) {
+	  // if no overlap, skip this state
+	  if (d.offset(j) >= in.dim(j) || d.offset(j) + d.dim(j) <= 0) {
+	    bcopy = false;
+	    break ;
+	  }
+	  // determine narrow params
+	  ooff = (uint) std::max(0, (int) - d.offset(j));
+	  ioff = (uint) std::max(0, (int) d.offset(j));
+	  osize = (uint) std::min(d.dim(j) - ooff, in.dim(j) - ioff);
+	  // narrow
+	  out = out.narrow(j, osize, ooff);
+	  in = in.narrow(j, osize, ioff);
+	}
+	// copy
+	if (bcopy) idx_copy(in, out);
+	n++;
+      }
+    }
+  }
+  
+  template <class Tstate>
+  void mstate<Tstate>::resize(mstate<Tstate> &s2, uint nmax) {
+    uint sz = s2.size();
+    if (nmax > 0)
+      sz = std::min((uint) s2.size(), nmax);
+    if (this->size() != sz)
+      mstate<Tstate>::clear();
+    for (uint i = 0; i < sz; ++i) {
       Tstate &t2 = s2[i];
       idxdim d = t2.x;
-      if (this->size() < s2.size())
-	this->push_back(d);
+      if (this->size() < sz) {
+	Tstate *nt = new Tstate(d);
+	this->push_back(nt);
+      }
       else { // state already exists
 	Tstate &t = (*this)[i];
 	if (t.x.order() != d.order()) // wrong order, reassign state
@@ -1334,6 +1485,36 @@ namespace ebl {
 	  t.resize(d);
       }
     }
+  }
+
+  template <class Tstate> template <class Tstate2>
+  void mstate<Tstate>::resize(mstate<Tstate2> &other) {
+    bool reset = false;
+    // check we have the right number of states in out
+    if (other.nstates() != this->nstates())
+      reset = true;
+    // check that all states have the right orders
+    for (uint i = 0; i < other.nstates() && !reset; ++i) {
+      Tstate2 &sother = other[i];
+      Tstate &sthis = (*this)[i];
+      if (sthis.x.order() != sother.x.order())
+	reset = true;
+    }
+    // allocate
+    if (reset) {
+      mstate<Tstate>::clear();
+      for (uint i = 0; i < other.nstates(); ++i) {
+	Tstate2 &sother = other[i];
+	Tstate *nt = new Tstate(sother.x.get_idxdim());
+	this->push_back(nt);
+      }
+    }
+  }
+
+  template <class Tstate>
+  idxdim& mstate<Tstate>::get_idxdim0() {
+    Tstate& s0 = (*this)[0];
+    return s0.x.get_idxdim();
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1363,10 +1544,12 @@ namespace ebl {
     if (m.size() == 0)
       out << "empty";
     else {
-      const Tstate &s = m[0];
+      // const Tstate &s = m[0];
+      const Tstate &s = m.at_const(0);
       out << s;
       for (uint i = 1; i < m.size(); ++i) {
-	const Tstate &st = m[i];
+	// const Tstate &st = m[i];
+	const Tstate &st = m.at_const(i);
 	out << "," << st;
       }
     }

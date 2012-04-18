@@ -240,6 +240,7 @@ ELSE (_boost_IN_CACHE)
 
   SET(_boost_LIBRARIES_SEARCH_DIRS
     /share/apps/boost/1.41.0/gnu/lib
+    /usr/lib64/mpich2/lib/	
     C:/boost/lib
     "C:/boost"
     "$ENV{ProgramFiles}/boost/boost_${Boost_FIND_VERSION_MAJOR}_${Boost_FIND_VERSION_MINOR}_${Boost_FIND_VERSION_PATCH}/lib"

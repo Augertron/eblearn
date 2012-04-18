@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun   *
- *   yann@cs.nyu.edu   *
+ *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 
 #include "defines.h"
 #include "stl.h"
+#include "smart.h"
 
 namespace ebl {
 
@@ -58,63 +59,12 @@ namespace ebl {
   //! So, if compiling your code produces an error like
   //! "srg<T>::~srg() is private", you mistakenly allocated
   //! an srg as an automatic variable instead of new.
-  template <typename T> class srg {
+  template <typename T> class srg : public smart_pointer {
   public:
-
-    //! pointer to data segment
-    T *data;
-
     //! builds an empty srg (no data is allocated)
     srg();
-
     //! allocate an srg of size s
     srg(intg s);
-
-    //! return the size (number of items)
-    intg size();
-
-    //! change size to s. This must be used with extreme caution,
-    //! because reducing the size of an srg ma cause some idx
-    //! that point to it to access non-existent data.
-    intg changesize(intg s);
-
-    //! increase size of data chunk
-    intg growsize(intg s);
-
-    //! increase size of data chunk by a given step s_chunk
-    intg growsize_chunk(intg s, intg s_chunk);
-
-    //! decrement reference counter and deallocate srg
-    //! if it reaches zero.
-    int unlock();
-
-    //! lock: increment reference counter.
-    //! This is called wheneve a new idx is created
-    //! on the srg.
-    int lock();
-
-    //! access method: return the i-th item.
-    T get(intg i);
-
-    //! sets i-th element to val.
-    void set(intg i, T val);
-
-    //! fill data with zeros.
-    void clear();
-
-    //! prints innards
-    void pretty(FILE *f);
-
-#ifdef __DEBUGMEM__
-    static intg memsize;
-#endif
-
-  private:
-    //! number of allocated items
-    intg size_;
-    //! reference counter: tells us how many idx point here
-    int refcount;
-
     //! destructor: deallocates the data.
     //! This is automatically called when the
     //! reference counter reaches 0.
@@ -123,33 +73,61 @@ namespace ebl {
     //! srg on the stack (as an automatic variable).
     //! An srg must ALWAYS be created with new.
     ~srg();
-  };
+    //! return the size (number of items)
+    intg size();
+    //! change size to s. This must be used with extreme caution,
+    //! because reducing the size of an srg ma cause some idx
+    //! that point to it to access non-existent data.
+    intg changesize(intg s);
+    //! increase size of data chunk
+    intg growsize(intg s);
+    //! increase size of data chunk by a given step s_chunk
+    intg growsize_chunk(intg s, intg s_chunk);
 
-  ////////////////////////////////////////////////////////////////
-  // helper
+    /* //! decrement reference counter and deallocate srg */
+    /* //! if it reaches zero. */
+    /* int unlock(); */
+    /* //! lock: increment reference counter. */
+    /* //! This is called wheneve a new idx is created */
+    /* //! on the srg. */
+    /* int lock(); */
 
+    //! access method: return the i-th item.
+    T get(intg i);
+    //! Returns a pointer to the beginning of the data segment.
+    T* get_data();
+    //! Sets a pointer to the beginning of the data segment.
+    void set_data(T* ptr);
+    //! sets i-th element to val.
+    void set(intg i, T val);
+    //! fill data with zeros.
+    void clear();
+    //! prints innards
+    void pretty(FILE *f);
+
+    // friends /////////////////////////////////////////////////////////////////
+    template <typename T2> friend class idx;
+    template <typename T2> friend class idxiter;
+    template <typename T2> friend class noncontiguous_idxiter;
+    template <typename T2> friend class contiguous_idxiter;
+    template <typename T2> friend class idxlooper;
+    
+    // member variables ////////////////////////////////////////////////////////
+  private:
+    T *data; //!< pointer to data segment
+    intg size_; //!< Number of allocated items.    
+
+    //    int refcount; //!< Reference counter: tells us how many idx point here.
+
+    // debug only //////////////////////////////////////////////////////////////
 #ifdef __DEBUGMEM__
-
-#define INIT_DEBUGMEM()							\
-  template <typename T> ebl::intg ebl::srg<T>::memsize = 0;		\
-  template <> EXPORT ebl::intg ebl::srg<double>::memsize = 0;		\
-  template <> EXPORT ebl::intg ebl::srg<float>::memsize = 0;		\
-  template <> EXPORT ebl::intg ebl::srg<int>::memsize = 0;		\
-  template <> EXPORT ebl::intg ebl::srg<long>::memsize = 0;		\
-  template <> EXPORT ebl::intg ebl::srg<short>::memsize = 0;		\
-  template <> EXPORT ebl::intg ebl::srg<unsigned char>::memsize = 0;	\
-  template <> EXPORT ebl::intg ebl::srg<const char*>::memsize = 0;	\
-  template <> EXPORT ebl::intg ebl::srg<void *>::memsize = 0;		\
-  template <> EXPORT ebl::intg ebl::srg<bool>::memsize = 0;		\
-  template <> EXPORT ebl::intg ebl::srg<uint>::memsize = 0;
-  
-  //! In debugmem mode, print the total usage of memory.
-  EXPORT void pretty_memory();
-#endif
+  public:
+    static intg memsize;
+#endif    
+  };
 
 } // end namespace ebl
 
 #include "srg.hpp"
 
 #endif	/* _SRG_H */
-

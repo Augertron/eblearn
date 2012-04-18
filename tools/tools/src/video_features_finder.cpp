@@ -42,6 +42,7 @@
 
 #include "libeblearn.h"
 #include "libidx.h"
+#include "eblapp.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"
@@ -56,8 +57,6 @@
 #define FRAME_JUMP 5
 #define FEATURE_ZOOM 2
 
-using namespace std;
-using namespace ebl;
 //namespace ebl {
 
   ////////////////////////////////////////////////////////////////

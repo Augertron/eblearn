@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet *
+ *   Copyright (C) 2011 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
@@ -44,9 +44,36 @@
 #include "grid_dataset.h"
 #include "tools_utils.h"
 #include "patch_dataset.h"
+#include "netconf.h"
+#include "ebl_defines.h"
+#include "eblapp.h"
 
-using namespace std;
-using namespace ebl;
+  //! A class containing preprocessing parameters.
+  class pp {
+  public:
+    pp(midxdim &dims_, const char *ppc, midxdim &kersz,
+       const char *rsz, bool keep, int lp, vector<double> *fov,
+       midxdim *fov_size, bool gn, bool divnorm_, bool divnorm2_,
+       bool colornorm_, bool colornorm_across_, double bbhf, double bbwf)
+      : dims(dims_), ppchan(ppc), resize_method(rsz), kernel_sz(kersz),
+        keep_aspect_ratio(keep), lpyramid(lp), fovea(fov), 
+        fovea_scales_size(fov_size), global_norm(gn),
+	divnorm(divnorm_), divnorm2(divnorm2_), colornorm(colornorm_),
+	colornorm_across(colornorm_across_), bboxhfact(bbhf), bboxwfact(bbwf) {
+    };
+    virtual ~pp() {}
+    
+    midxdim dims;
+    string ppchan, resize_method;
+    midxdim kernel_sz;
+    bool keep_aspect_ratio;
+    int lpyramid;
+    vector<double> *fovea;
+    midxdim *fovea_scales_size;
+    string name;
+    bool global_norm, divnorm, divnorm2, colornorm, colornorm_across;
+    double bboxhfact, bboxwfact;
+  };
 
 ////////////////////////////////////////////////////////////////
 // global variables
@@ -58,6 +85,7 @@ bool            preprocessing    = false;
 bool		display		 = false;
 bool		stereo		 = false;
 bool		ignore_difficult = false;
+bool		ignore_bbox      = false;
 bool		ignore_truncated = false;
 bool		ignore_occluded  = false;
 bool		shuffle		 = false;
@@ -65,20 +93,24 @@ bool		scale_mode	 = false;
 vector<double>  scales;
 bool		fovea_mode = false;
 vector<double>  fovea_scales;
+midxdim         fovea_scales_size;
+uint            lpyramid         = 0; //!< # scales in laplacian pyramid
+bool            keep_aspect_ratio= true;
 string		stereo_lpattern	 = "_L";
 string		stereo_rpattern	 = "_R";
 string		outdir		 = ".";
+string		tmpout   	 = "";
 string		dataset_name	 = "ds";
 intg		maxperclass	 = 0;	// 0 means no limitation
 intg            maxdata          = 0;	// 0 means no limitation
 unsigned int	mexican_hat_size = 0;
-idxdim		kernelsz	 = idxdim(9, 9); // kernel size for pp
+midxdim 	kernelsz;	 // kernel size for pp
 int		deformations	 = -1;	// <= means no deformations
 string		type		 = "regular";
-string          resize           = "mean";
+string          resize           = "bilinear";
 string		precision	 = "float";
 uint		sleep_delay	 = 0;	// sleep between frames displayed in ms
-idxdim          outdims;	        // dimensions of output sample
+midxdim         outdims;	        // dimensions of output sample
 bool		outdims_set	 = false;
 idxdim          mindims;	        // minimum dimensions in input
 bool		mindims_set	 = false;
@@ -89,8 +121,10 @@ vector<string>  include;
 bool            usepose          = false; // use pose if given
 bool            useparts         = false; // use parts if given
 bool            partsonly        = false; // use parts only if given
-string          save             = DATASET_SAVE;// save into lush dataset format
-bool            save_set         = false;
+string          save             = DYNSET_SAVE;// save into lush dataset format
+bool            save_set         = true;
+bool            individual_save  = true;
+bool            separate_layers_save = false;
 string          load             = ""; // dataset to load
 bool            load_set         = false;
 float           bboxfact         = 1.0;
@@ -113,8 +147,8 @@ uint            tjitter_hmax = 0; // translation max height in pixels
 uint            tjitter_wmin = 0; // translation min height in pixels
 uint            tjitter_wmax = 0; // translation max height in pixels
 uint            sjitter_steps    = 0; // number of possible scale jitters
-float           sjitter_min      = 0; // min scale jitter
-float           sjitter_max      = 0; // max scale jitter
+float           sjitter_min      = 1; // min scale jitter
+float           sjitter_max      = 1; // max scale jitter
 uint            rjitter_steps    = 0; // number of possible rotation jitters
 float           rjitter          = 0; // rotation jitter range around original
 uint            njitter          = 0; // number of jitters (including original)
@@ -132,6 +166,18 @@ float           min_aspect_ratio = 0.0; // minimum width/height aspect ratio
 bool            min_aspect_ratio_set = false; // has been set or not
 bool            nopp = false; // force disabling of preprocessing
 float           max_jitt_match = 0.0; // maximum jitter match with others.
+bool            stats_mode = false; // extract statistics
+bool            planar_loading = false;
+vector<pp*>     pp_params;
+bool            global_norm = true; // preprocessing uses global norm
+bool            nocount = false; // Do not count samples if true.
+bool            divnorm = true; // divisive normalization
+bool            divnorm2 = false; // 2nd divisive normalization
+bool            colornorm = false; // color normalization
+bool            colornorm_across = true; // color norm across channels
+bool            videobox = false; // read bboxes in video sequences
+uint            videobox_stride; // the stride for videobox
+uint            videobox_n; // number of images to read-ahead
 
 ////////////////////////////////////////////////////////////////
 // command line
@@ -154,13 +200,18 @@ bool parse_args(int argc, char **argv) {
     try {
       if (strcmp(argv[i], "-channels") == 0) {
 	++i; if (i >= argc) throw 0;
-	if ((strcmp(argv[i], "RGB") == 0) ||
-	    (strcmp(argv[i], "YpUV") == 0) ||
-	    (strcmp(argv[i], "HSV") == 0) ||
-	    (strcmp(argv[i], "Yp") == 0))
+	channels_mode = argv[i];
+	if ((strcmp(channels_mode.c_str(), "RGB") == 0) ||
+	    (strcmp(channels_mode.c_str(), "YnUV") == 0) ||
+	    (strcmp(channels_mode.c_str(), "YpUV") == 0) ||
+	    (strcmp(channels_mode.c_str(), "YnUVn") == 0) ||
+	    (strcmp(channels_mode.c_str(), "YUVn") == 0) ||
+	    (strcmp(channels_mode.c_str(), "RGBn") == 0) ||
+	    (strcmp(channels_mode.c_str(), "YUV") == 0) ||
+	    (strcmp(channels_mode.c_str(), "HSV") == 0) ||
+	    (strcmp(channels_mode.c_str(), "Yp") == 0))
 	  ;
 	else throw 3;
-	channels_mode = argv[i];
 	preprocessing = true;
       } else if (strcmp(argv[i], "-image_pattern") == 0) {
 	++i; if (i >= argc) throw 0;
@@ -168,6 +219,9 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-annotations") == 0) {
 	++i; if (i >= argc) throw 0;
 	annotations = argv[i];
+      } else if (strcmp(argv[i], "-tmpout") == 0) {
+	++i; if (i >= argc) throw 0;
+	tmpout = argv[i];
       } else if (strcmp(argv[i], "-ignore_path") == 0) {
 	++i; if (i >= argc) throw 0;
 	ignore_path = argv[i];
@@ -175,10 +229,23 @@ bool parse_args(int argc, char **argv) {
 	display = true;
       } else if (strcmp(argv[i], "-nopp") == 0) {
 	nopp = true;
+      } else if (strcmp(argv[i], "-addpp") == 0) {
+	// add current preprocessing configuration
+	if (!outdims_set)
+	  eblerror("output dimensions should be set before adding preprocessing"
+		   << " (using -dims options)");
+	pp_params.push_back(new pp(outdims,
+				   channels_mode.c_str(), kernelsz,
+				   resize.c_str(), keep_aspect_ratio, lpyramid,
+                                   &fovea_scales, &fovea_scales_size,
+                                   global_norm, divnorm, divnorm2, colornorm,
+                                   colornorm_across, bboxhfact, bboxwfact));
       } else if (strcmp(argv[i], "-wmirror") == 0) {
 	wmirror = true;
       } else if (strcmp(argv[i], "-ignore_difficult") == 0) {
 	ignore_difficult = true;
+      } else if (strcmp(argv[i], "-ignore_bbox") == 0) {
+	ignore_bbox = true;
       } else if (strcmp(argv[i], "-ignore_truncated") == 0) {
 	ignore_truncated = true;
       } else if (strcmp(argv[i], "-ignore_occluded") == 0) {
@@ -202,14 +269,28 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-outdir") == 0) {
 	++i; if (i >= argc) throw 0;
 	outdir = argv[i];
+	if (!strcmp(outdir.c_str(), images_root.c_str()))
+	  eblerror("Using the same directory for inputs and outputs "
+		   << "might produce conflicts, use a different output "
+		   << "directory.");
       } else if (strcmp(argv[i], "-save") == 0) {
 	++i; if (i >= argc) throw 0;
 	save = argv[i];
 	save_set = true;
+      } else if (strcmp(argv[i], "-nosave") == 0) {
+	save_set = false;
+      } else if (strcmp(argv[i], "-noindividualsave") == 0) {
+	individual_save = false;
+      } else if (strcmp(argv[i], "-save_layers_separately") == 0) {
+	separate_layers_save = true;
       } else if (strcmp(argv[i], "-load") == 0) {
 	++i; if (i >= argc) throw 0;
 	load = argv[i];
 	load_set = true;
+      } else if (strcmp(argv[i], "-stats") == 0) {
+	stats_mode = true;
+      } else if (strcmp(argv[i], "-planar_loading") == 0) {
+	planar_loading = true;
       } else if (strcmp(argv[i], "-type") == 0) {
 	++i; if (i >= argc) throw 0;
 	type = argv[i];
@@ -236,7 +317,7 @@ bool parse_args(int argc, char **argv) {
 	maxdata = atoi(argv[i]);
       } else if (strcmp(argv[i], "-kernelsz") == 0) {
 	++i; if (i >= argc) throw 1;
-	kernelsz = string_to_idxdim(argv[i]);
+	kernelsz = string_to_idxdimvector(argv[i]);
       } else if (strcmp(argv[i], "-sleep") == 0) {
 	++i; if (i >= argc) throw 1;
 	sleep_delay = atoi(argv[i]);
@@ -248,7 +329,7 @@ bool parse_args(int argc, char **argv) {
 	deformations = atoi(argv[i]);
       } else if (strcmp(argv[i], "-dims") == 0) {
 	++i; if (i >= argc) throw 0;
-	outdims = string_to_idxdim(argv[i]);
+	outdims = string_to_idxdimvector(argv[i]);
 	outdims_set = true;
 	preprocessing = true;
       } else if (strcmp(argv[i], "-mindims") == 0) {
@@ -282,8 +363,41 @@ bool parse_args(int argc, char **argv) {
 	++i; if (i >= argc) throw 0;
 	string s = argv[i];
 	fovea_scales = string_to_doublevector(s);
+        ++i; if (i >= argc) throw 0;
+        string s1 = argv[i];
+        fovea_scales_size = string_to_idxdimvector(s1.c_str(), ',', 'x');
 	fovea_mode = true;
 	preprocessing = true;
+      } else if (strcmp(argv[i], "-fovea") == 0) {
+	++i; if (i >= argc) throw 0;
+	fovea_mode = (bool) atoi(argv[i]);	
+	if (!fovea_mode) {
+	  fovea_scales.clear();
+	  fovea_scales_size.clear();
+	}
+      } else if (strcmp(argv[i], "-lpyramid") == 0) {
+	++i; if (i >= argc) throw 0;
+	lpyramid = (uint) atoi(argv[i]);	
+      } else if (strcmp(argv[i], "-aspect_ratio") == 0) {
+	++i; if (i >= argc) throw 0;
+	keep_aspect_ratio = (bool) atoi(argv[i]);	
+      } else if (strcmp(argv[i], "-global_norm") == 0) {
+	++i; if (i >= argc) throw 0;
+	global_norm = (bool) atoi(argv[i]);
+      } else if (strcmp(argv[i], "-divnorm") == 0) {
+	++i; if (i >= argc) throw 0;
+	divnorm = (bool) atoi(argv[i]);
+      } else if (strcmp(argv[i], "-divnorm2") == 0) {
+	++i; if (i >= argc) throw 0;
+	divnorm2 = (bool) atoi(argv[i]);
+      } else if (strcmp(argv[i], "-colornorm") == 0) {
+	++i; if (i >= argc) throw 0;
+	colornorm = (bool) atoi(argv[i]);
+      } else if (strcmp(argv[i], "-colornorm_across") == 0) {
+	++i; if (i >= argc) throw 0;
+	colornorm_across = (bool) atoi(argv[i]);
+      } else if (strcmp(argv[i], "-nocount") == 0) {
+	nocount = true;
       } else if (strcmp(argv[i], "-njitter") == 0) {
 	++i; if (i >= argc) throw 0;
 	njitter = (uint) atoi(argv[i]);	
@@ -319,6 +433,8 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-bboxfact") == 0) {
 	++i; if (i >= argc) throw 0;
 	bboxfact = (float) atof(argv[i]);
+	bboxhfact = bboxfact;
+	bboxwfact = bboxfact;
 	bboxfact_set = true;
       } else if (strcmp(argv[i], "-bboxhfact") == 0) {
 	++i; if (i >= argc) throw 0;
@@ -347,6 +463,14 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-max_jitt_match") == 0) {
 	++i; if (i >= argc) throw 0;
 	max_jitt_match = (float) atof(argv[i]);
+      } else if (strcmp(argv[i], "-videobox") == 0) {
+	++i; if (i >= argc) throw 0;
+	vector<uint> l = string_to_uintvector(argv[i]);
+	if (l.size() != 2)
+	  eblerror("expected 2 arguments to -videobox");
+        videobox = true;
+        videobox_n = l[0];
+        videobox_stride = l[1];
       } else if ((strcmp(argv[i], "-help") == 0) ||
 		 (strcmp(argv[i], "-h") == 0)) {
 	return false;
@@ -360,7 +484,7 @@ bool parse_args(int argc, char **argv) {
       case 0: cerr << "expecting string after " << argv[i-1]; break;
       case 1: cerr << "expecting integer after " << argv[i-1]; break;
       case 2: cerr << "unknown parameter " << argv[i-1]; break;
-      case 3: cerr << "unknown channel mode " << argv[i-1]; break;
+      case 3: cerr << "unknown channel mode " << channels_mode; break;
       default: cerr << "undefined error";
       }
       cerr << endl << endl;
@@ -389,16 +513,20 @@ void print_usage() {
   cout << "     grid: extract non-overlapping cells from each image."
        << "       cell sizes are determined by -gridsz option"<<endl;
   cout << "  -precision <float(default)|double|ubyte>" << endl;
+  cout << "  -tmpout <directory>" << endl
+       << "     A directory to put temporary files." << endl;
   cout << "  -annotations <directory>" << endl;
   cout << "  -ignore_path <directory>" << endl
        << "     Path of ignored annotations files." << endl;
   cout << "  -image_pattern <pattern>" << endl;
   cout << "     default: " << IMAGE_PATTERN_MAT << endl;
   cout << "  -channels <channel>" << endl;
-  cout << "     channels are: RGB (default), YpUV, HSV, Yp (Yp only in YpUV)";
-  cout << endl;
+  cout << "     channels are: RGB (default), RGBn, YUV, HSV, Yn, YnUV, YnUVn,"
+       << " YUVn (where is is a local normalization across channels)" << endl;
   cout << "  -disp (display extraction)" << endl;
   cout << "  -nopp (no preprocessing, i.e. no resizing or conversion)" << endl;
+  cout << "  -addpp "
+       << "    Add the current preprocessing config as one pp module." << endl;
   cout << "  -sleep <delay in ms> (sleep between frame display)" << endl;
   cout << "  -shuffle" << endl;
   cout << "  -usepose (separate classes with pose if available)" << endl;
@@ -408,13 +536,21 @@ void print_usage() {
   cout << "  -outdir <directory (default=images_root)>" << endl;
   cout << "  -load <dataset name> (this loads the dataset instead of compiling";
   cout << "     it from images found in root." << endl;
+  cout << "  -stats" << endl
+       << "     Extracts dataset statistics into a csv file." << endl;
   cout << "  -save <dynset(default)|dataset|mat|ppm|png|jpg|...>" << endl;
   cout << "     dynset: dynamically loadable dataset (more memory efficient)" << endl;
   cout << "     dataset: regular dataset (needs to entirely fit in memory)" << endl;
+  cout << "  -nosave" << endl
+       << "     Do not save as a single dataset (individual files still saved)" << endl;
+  cout << "  -noindividualsave" << endl
+       << "     Do not save individual samples." << endl;
+  cout << "  -save_layers_separately" << endl
+       << "     Save each layer of each sampe in separate files." << endl;
   cout << "  -dname <name>" << endl;
   cout << "  -maxperclass <integer>" << endl;
   cout << "  -maxdata <integer>" << endl;
-  cout << "  -kernelsz <dims, e.g.: 7x7>" << endl;
+  cout << "  -kernelsz <dims list, e.g.: 7x7 or 7x7,5x5,3x3>" << endl;
   cout << "  -mexican_hat_size <integer>" << endl;
   cout << "  -deformations <integer>" << endl;
   cout << "  -dims <dimensions (default: 96x96x3)>" << endl;
@@ -424,7 +560,20 @@ void print_usage() {
   cout << "     (exclude inputs for which one dimension is more than specified";
   cout << endl;
   cout << "  -scales <scales (e.g: 1.5,2,4)>" << endl;
-  cout << "  -fovea_scales <scales (e.g: 1.5,2,4)>" << endl;
+  cout << "  -lpyramid <uint>" << endl
+       << "     Input will be a Laplacian pyramid with <uint> scales." << endl;
+  cout << "  -divnorm <bool |0,1: add divisive normalization to preprocessing>"
+       << endl;
+  cout << "  -divnorm2 <bool |0,1: add 2nd divisive normalization to "
+       << " preprocessing>" << endl;
+  cout << "  -colornorm <bool |0,1: add contrast normalization to color>"
+       << endl;
+  cout << "  -colornorm_across <bool |0,1: color contrast normalization is "
+       << "across channels or independent for each channel>" << endl;
+  cout << "  -aspect_ratio <bool |0: not keeping 1: keeping (default)>" << endl;
+  cout <<"  -global_norm <bool |0,1: removes mean and divides by stddev>"<<endl;
+  cout << "  -fovea_scales <scales (e.g: 1.5,2,4)> <scalesizes (e.g: 10x10,20x20,30x30)>" << endl;
+  cout << "  -fovea <bool |0,1: deactivate or activate fovea mode>" << endl;
   cout << "  -bboxfact <float factor> (multiply bounding boxes by a factor)";
   cout << endl;
   cout << "  -bboxhfact <float factor> (multiply bboxes height by a factor)";
@@ -445,6 +594,7 @@ void print_usage() {
   cout << "e.g. person->(head,hand,foot)" << endl;
   cout << "  -ignore_difficult (ignore sample if \"difficult\" flag is on)";
   cout << endl;
+  cout << "  -ignore_bbox (Use entire image instead of bounding box)" << endl;
   cout << "  -ignore_truncated (ignore sample if \"truncated\" flag is on)";
   cout << endl;
   cout << "  -ignore_occluded (ignore sample if \"occluded\" flag is on)";
@@ -476,157 +626,145 @@ void print_usage() {
   cout << "  -max_aspect_ratio <ratio [0.0,1.0]>" << endl;
   cout << "     Maximum aspect ratio (width/height) allowed for input bb."
        << endl;
+  cout << "  -planar_loading" << endl
+       << "     Input is considered as planar (channels as 1st dim)." << endl;
+  cout << "  -nocount" << endl
+       << "     Do not count samples prior extraction." << endl;
+  cout << "  -videobox <n> <stride>" << endl
+       << "     For video sequences, the bbox regions in the next 'n' frames "
+       << endl <<"are taken, for every 'stride' frame and added as a feature." 
+       << endl;
 }
 
 ////////////////////////////////////////////////////////////////
 // compilation
 
-template <class Tds>
-void compile_ds(Tds &ds, bool imgpat = true) {
-  if (nopp) preprocessing = false; // force disabling of pp
-  ds.set_outdir(outdir);
-  if (wmirror) ds.set_wmirror();
+template <class Tdata>
+void compile() {
+  // create preprocessing modules
+  vector<resizepp_module<fs(Tdata)>*> ppmodules;
+  if (!nopp) {
+    midxdim dummy_zpad; // dummy var because we dont have zpad option in dscompile
+    if (pp_params.size() == 0) // no pp added yet, add only 1
+      ppmodules.push_back(create_preprocessing<fs(Tdata)>
+			  (outdims, channels_mode.c_str(),
+			   kernelsz, dummy_zpad, resize.c_str(),
+                           keep_aspect_ratio, lpyramid, &fovea_scales,
+                           &fovea_scales_size, global_norm, divnorm, divnorm2,
+                           colornorm, colornorm_across, bboxhfact, bboxwfact));
+    else // add vector of all preprocessing params
+      for (uint i = 0; i < pp_params.size(); ++i) {
+	pp &p = *(pp_params[i]);
+	ppmodules.push_back(create_preprocessing<fs(Tdata)>
+			    (p.dims, p.ppchan.c_str(), p.kernel_sz,
+			     dummy_zpad, p.resize_method.c_str(), 
+                             p.keep_aspect_ratio,
+			     p.lpyramid, p.fovea, p.fovea_scales_size,
+			     p.global_norm, p.divnorm, p.divnorm2, p.colornorm,
+			     p.colornorm_across, p.bboxhfact, p.bboxwfact));
+      }
+  }
+  // allocate datasets
+  dataset<Tdata> *ds = NULL;
+  if (!strcmp(type.c_str(), "grid"))
+    ds = new grid_dataset<Tdata>(dataset_name.c_str(), images_root.c_str(),
+				 gridsz.dim(0), gridsz.dim(1));
+  else if (!strcmp(type.c_str(), "pascal")) {
+    pascal_dataset<Tdata> *d =
+      new pascal_dataset<Tdata>(dataset_name.c_str(), images_root.c_str(),
+				ignore_difficult, ignore_truncated,
+				ignore_occluded, annotations.c_str(),
+				ignore_path.c_str(), ignore_bbox);
+    ds = d;
+    if (min_aspect_ratio_set) d->set_min_aspect_ratio(min_aspect_ratio);
+    if (max_aspect_ratio_set) d->set_max_aspect_ratio(max_aspect_ratio);
+    if (minborders_set) d->set_minborders(minborders);
+    if (max_jitt_match > 0.0) d->set_max_jitter_match(max_jitt_match);
+  } else if (!strcmp(type.c_str(), "pascalbg")) {
+    ds = new pascalbg_dataset<Tdata>
+      (dataset_name.c_str(), images_root.c_str(), outdir.c_str(), maxperclass,
+       ignore_difficult, ignore_truncated, ignore_occluded, annotations.c_str(),
+       tmpout.c_str());
+    if (force_label) { // force all labels to a unique "bg" background label
+      force_label = true;
+      label = "bg";
+    }
+  } else if (!strcmp(type.c_str(), "pascalclear"))
+    ds = new pascalclear_dataset<Tdata>
+      (dataset_name.c_str(), images_root.c_str(), outdir.c_str(),
+       annotations.c_str());
+  else if (!strcmp(type.c_str(), "pascalfull"))
+    ds = new pascalfull_dataset<Tdata>
+      (dataset_name.c_str(), images_root.c_str(), outdir.c_str(),
+       annotations.c_str());
+  else if (!strcmp(type.c_str(), "regular"))
+    ds = new dataset<Tdata>(dataset_name.c_str(), images_root.c_str());
+  else if (!strcmp(type.c_str(), "patch"))
+    ds = new patch_dataset<Tdata>(dataset_name.c_str(), images_root.c_str(),
+				  outdir.c_str(), maxperclass);
+  else eblerror("unknown dataset type " << type);
+  // set preprocessings
+  ds->set_preprocessing(ppmodules);
+  // set all parameters
+  ds->set_outdir(outdir.c_str(), tmpout.c_str());
+  if (wmirror) ds->set_wmirror();
   if (njitter > 0)
-    ds.set_jitter(tjitter_step, tjitter_hmin, tjitter_hmax,
+    ds->set_jitter(tjitter_step, tjitter_hmin, tjitter_hmax,
 		  tjitter_wmin, tjitter_wmax,
 		  sjitter_steps, sjitter_min, sjitter_max,
 		  rjitter_steps, rjitter, njitter);
-  if (bboxfact_set) ds.set_bboxfact(bboxfact);
-  if (bboxhfact_set) ds.set_bboxhfact(bboxhfact);
-  if (bboxwfact_set) ds.set_bboxwfact(bboxwfact);
-  if (bbox_woverh_set) ds.set_bbox_woverh(bbox_woverh);
-  if (usepose) ds.use_pose();
-  if (useparts) ds.use_parts();
-  if (partsonly) ds.use_parts_only();
-  ds.set_exclude(exclude);
-  ds.set_include(include);
-  if (outdims_set) ds.set_outdims(outdims);
-  if (mindims_set) ds.set_mindims(mindims);
-  if (maxdims_set) ds.set_maxdims(maxdims);
-  ds.set_display(display);
+  if(videobox)
+    ds->set_videobox(videobox_n, videobox_stride);
+  if (bbox_woverh_set) ds->set_bbox_woverh(bbox_woverh);
+  if (usepose) ds->use_pose();
+  if (useparts) ds->use_parts();
+  if (partsonly) ds->use_parts_only();
+  ds->set_exclude(exclude);
+  ds->set_include(include);
+  if (outdims_set) ds->set_outdims(outdims[0]);
+  if (mindims_set) ds->set_mindims(mindims);
+  if (maxdims_set) ds->set_maxdims(maxdims);
+  ds->set_display(display);
   if (save_display)
-    ds.save_display(save_display_dir, save_display_dims.dim(0),
+    ds->save_display(save_display_dir, save_display_dims.dim(0),
 		    save_display_dims.dim(1));
-  ds.set_nopadded(nopadded);
-  ds.set_sleepdisplay(sleep_delay);
-  ds.set_resize(resize);
-  if (save_set) ds.set_save(save);
-  if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
-  if (maxperclass > 0) ds.set_max_per_class(maxperclass);
-  if (maxdata > 0) ds.set_max_data(maxdata);
-  if (imgpat) ds.set_image_pattern(image_pattern);
-  if (force_label) ds.set_label(label);
-  if (fovea_mode) ds.set_fovea(fovea_scales);
-  if (minvisibility_set) ds.set_minvisibility(minvisibility);
+  ds->set_nopadded(nopadded);
+  ds->set_sleepdisplay(sleep_delay);
+  if (save_set) ds->set_save(save);
+  ds->set_individual_save(individual_save);
+  ds->set_separate_layers_save(separate_layers_save);
+  if (maxperclass > 0) ds->set_max_per_class(maxperclass);
+  if (maxdata > 0) ds->set_max_data(maxdata);
+  ds->set_image_pattern(image_pattern);
+  if (force_label) ds->set_label(label);
+  if (scale_mode) ds->set_scales(scales, outdir);
+  if (minvisibility_set) ds->set_minvisibility(minvisibility);
+  if (planar_loading) ds->set_planar_loading();  
+  // execute extraction
   // switch between load and normal mode
   if (load_set) { // in load mode, do nothing but loading dataset
-    ds.set_name(load); // dataset to load
-    ds.load(images_root); // directory in which dataset is
+    ds->set_name(load); // dataset to load
+    ds->load(images_root); // directory in which dataset is
+  } else if (stats_mode) { // extract statistics about dataset
+    ds->extract_statistics();
   } else { // normal mode, do extraction
-    if (scale_mode) ds.set_scales(scales, outdir);
-    else ds.alloc();
-    ds.extract();
+    if (!nocount)
+      ds->count_total();
+    if (scale_mode) ds->set_scales(scales, outdir);
+    else ds->alloc();
+    ds->extract();
   }
-  if (shuffle) ds.shuffle();
-  ds.save(outdir);
-}
-
-template <class Tdata>
-void compile() {
-  if (!strcmp(type.c_str(), "grid")) {
-    grid_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
-			   gridsz.dim(0), gridsz.dim(1));
-    compile_ds(ds);
+  // shuffle
+  if (shuffle) ds->shuffle();
+  // save dataset
+  if (save_set) {
+    if (force_label) ds->set_unique_label(label);
+    //ds->set_save(DYNSET_SAVE);
+    ds->save(outdir);
   }
-  else if (!strcmp(type.c_str(), "pascal")) {
-    pascal_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
-			     ignore_difficult, ignore_truncated,
-			     ignore_occluded, annotations.c_str(),
-			     ignore_path.c_str());
-    if (min_aspect_ratio_set)
-      ds.set_min_aspect_ratio(min_aspect_ratio);
-    if (max_aspect_ratio_set)
-      ds.set_max_aspect_ratio(max_aspect_ratio);
-    if (minborders_set)
-      ds.set_minborders(minborders);
-    if (max_jitt_match > 0.0)
-      ds.set_max_jitter_match(max_jitt_match);
-    compile_ds(ds);
-  }
-  else if (!strcmp(type.c_str(), "pascalbg")) {
-    pascalbg_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
-			       outdir.c_str(), maxperclass, ignore_difficult,
-			       ignore_truncated, ignore_occluded,
-			       annotations.c_str()); 
-    if (useparts) ds.use_parts();
-    if (partsonly) ds.use_parts_only();
-    ds.set_exclude(exclude);
-    ds.set_include(include);
-    ds.set_resize(resize);
-    if (outdims_set) ds.set_outdims(outdims);
-    if (mindims_set) ds.set_mindims(mindims);
-    if (maxdims_set) ds.set_maxdims(maxdims);
-    ds.set_nopadded(nopadded);
-    ds.set_display(display);
-    ds.set_sleepdisplay(sleep_delay);
-    ds.set_image_pattern(image_pattern);
-    if (maxdata > 0) ds.set_max_data(maxdata);
-    if (scale_mode) ds.set_scales(scales, outdir);
-    if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
-    if (fovea_mode) ds.set_fovea(fovea_scales);
-    if (save_set) ds.set_save(save);
-    ds.extract();
-  }
-  else if (!strcmp(type.c_str(), "pascalclear")) {
-    pascalclear_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
-				  outdir.c_str(), annotations.c_str());
-    if (useparts) ds.use_parts();
-    if (partsonly) ds.use_parts_only();
-    ds.set_exclude(exclude);
-    ds.set_include(include);
-    ds.set_resize(resize);
-    if (outdims_set) ds.set_outdims(outdims);
-    if (mindims_set) ds.set_mindims(mindims);
-    if (maxdims_set) ds.set_maxdims(maxdims);
-    ds.set_nopadded(nopadded);
-    ds.set_display(display);
-    ds.set_sleepdisplay(sleep_delay);
-    ds.set_image_pattern(image_pattern);
-    if (maxdata > 0) ds.set_max_data(maxdata);
-    if (scale_mode) ds.set_scales(scales, outdir);
-    if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
-    if (save_set) ds.set_save(save);
-    ds.extract();
-  }
-  else if (!strcmp(type.c_str(), "pascalfull")) {
-    pascalfull_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
-				 outdir.c_str(), annotations.c_str());
-    if (useparts) ds.use_parts();
-    if (partsonly) ds.use_parts_only();
-    ds.set_exclude(exclude);
-    ds.set_include(include);
-    ds.set_nopadded(nopadded);
-    ds.set_display(display);
-    ds.set_resize(resize);
-    ds.set_sleepdisplay(sleep_delay);
-    if (preprocessing) ds.set_pp_conversion(channels_mode.c_str(), kernelsz);
-    if (maxdata > 0)
-      ds.set_max_data(maxdata);
-    ds.extract();
-  }
-  else if (!strcmp(type.c_str(), "regular")) {
-    dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str());
-    compile_ds(ds);
-  }
-  else if (!strcmp(type.c_str(), "patch")) {
-    patch_dataset<Tdata> ds(dataset_name.c_str(), images_root.c_str(),
-			    outdir.c_str(), maxperclass);
-    compile_ds(ds);
-  }
-  else {
-    cerr << "unknown dataset type: " << type << endl;
-    eblerror("unknown dataset type");
-  }
+  // delete variables
+  for (uint i = 0; i < pp_params.size(); ++i)
+    delete pp_params[i];
 }
 
 #ifdef __GUI__
@@ -689,6 +827,7 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 		++i)
 	     cout << *i << " ";
       cout << endl;
+      cout << "  laplacian pyramid: " << lpyramid << endl;
       cout << "_______________________________________________________________";
       cout << endl;
 

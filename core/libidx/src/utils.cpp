@@ -62,12 +62,15 @@ using namespace std;
 
 namespace ebl {
 
+  INIT_TIMING()
+
   ubyte color_list[COLOR_LIST_SIZE][3] = {
     {0,0,255}, // blue
+    {69,91,255}, // sun blue
+    {0,255,255}, // light blue
     {0,255,0}, // green
     {255,0,0}, // red
     {255,255,255}, // white
-    {0,255,255}, // light blue
     {255,0,255}, // pink
     {255,255,0}, // yellow
     {255,128,0}, // orange
@@ -106,8 +109,10 @@ namespace ebl {
     s = fscanf(fp,"%s",buffer);
     if ( s < 1)
       buffer[0]=0;
-    res = new char[strlen(buffer) + 1];
-    strcpy(res, buffer);
+    try {
+      res = new char[strlen(buffer) + 1];
+      strcpy(res, buffer);
+    } catch (exception &e) { eblerror("error allocating memory"); }
     return res;
   }
 
@@ -274,6 +279,12 @@ namespace ebl {
 #endif
   }
 
+  bool mv_file(const char *src, const char *tgt) {
+    if (rename(src, tgt))
+      return false;
+    return true;
+  }
+
 //     string dirname(const char *s_) {
 // #ifdef __LINUX__
 //     char c = '/';
@@ -296,24 +307,22 @@ namespace ebl {
     const char *s = fname;
     const char *p = 0;
     char *q = string_buffer;
+    char *q0 = q;
     while (*s) {
-      if (s[0]=='/' && s[1])
-	p = s;
+      if (s[0]=='/' && s[1]) p = s;
       s++;
     }
     if (!p) {
-      if (fname[0]=='/')
-	return fname;
-      else
-	return ".";
+      if (fname[0]=='/') return fname;
+      else return ".";
     }
     s = fname;
-    if (p-s > STRING_BUFFER-1)
-      eblerror("filename is too long: " << fname);
-    do {
-      *q++ = *s++;
-    } while (s<p);
+    if (p-s > STRING_BUFFER-1) eblerror("filename is too long: " << fname);
+    do *q++ = *s++;
+    while (s<p);
     *q = 0;
+    // remove trailing /
+    while (*(--q) == '/' && q >= q0) *q = 0;
     return string_buffer;
 #else // WINDOWS
     const char *s, *p;
@@ -382,8 +391,7 @@ namespace ebl {
     if (strlen(fname) > STRING_BUFFER-4)
       eblerror("filename is too long: " << fname);
     s = (char *) strrchr(fname,'/');
-    if (s)
-      fname = s+1;
+    if (s) fname = s+1;
     /* Process suffix */
     if (suffix==0 || suffix[0]==0)
       return fname;
@@ -449,6 +457,12 @@ namespace ebl {
     res = res.substr(0, pos);
     return res;
   }
+  std::string ext_name(const char *fname) {
+    std::string res = fname;
+    size_t pos = res.find_last_of('.');
+    res = res.substr(pos, res.size() - pos);
+    return res;
+  }
 
   ////////////////////////////////////////////////////////////////
   // timing utilities
@@ -487,29 +501,45 @@ namespace ebl {
 // #endif
 //   }
 
-  timer::timer() {
+  timer::timer() : total_micros(0), last_micros(0), running(false) {
+    start();
   }
 
   timer::~timer() {
   }
 
   void timer::start() {
+    running = true;
 #ifdef __WINDOWS__
     // TODO
 #else // linux & mac
     gettimeofday(&t0, NULL);
 #endif
+  }
+
+  void timer::stop() {
+    last_micros = elapsed_microseconds();
+    total_micros += last_micros;
+    running = false;
   }
 
   void timer::restart() {
+    running = true;
 #ifdef __WINDOWS__
     // TODO
 #else // linux & mac
     gettimeofday(&t0, NULL);
 #endif
+    reset();
   }
 
+  void timer::reset() {
+    total_micros = 0;
+    last_micros = 0;
+  }
+  
   double timer::elapsed_minutes() {
+    if (!running) return last_micros / 60000000;
 #ifdef __WINDOWS__
     return 0; // TODO
 #else // linux & mac
@@ -519,6 +549,7 @@ namespace ebl {
   }
   
   long timer::elapsed_seconds() {
+    if (!running) return last_micros / 1000000;
 #ifdef __WINDOWS__
     return 0; // TODO
 #else // linux & mac
@@ -528,12 +559,29 @@ namespace ebl {
   }
   
   long timer::elapsed_milliseconds() {
+    if (!running) return last_micros / 1000;
 #ifdef __WINDOWS__
     return 0; // TODO
 #else // linux & mac
     gettimeofday(&t1, NULL);
+    // if running return accumulated + time since last start
     return (t1.tv_sec - t0.tv_sec) * 1000 + (t1.tv_usec - t0.tv_usec) / 1000;
 #endif
+  }
+
+  long timer::elapsed_microseconds() {
+    if (!running) return last_micros;
+#ifdef __WINDOWS__
+    return 0; // TODO
+#else // linux & mac
+    gettimeofday(&t1, NULL);
+    // if running return accumulated + time since last start
+    return (t1.tv_sec - t0.tv_sec) * 1000000 + (t1.tv_usec - t0.tv_usec);
+#endif
+  }
+
+  long timer::accumulated_milliseconds() {
+    return (total_micros + elapsed_microseconds()) / 1000;
   }
 
   void timer::pretty_elapsed() {
@@ -546,6 +594,10 @@ namespace ebl {
   
   string timer::elapsed_ms() {
     return elapsed_ms(elapsed_milliseconds());
+  }
+  
+  string timer::accumulated_ms() {
+    return elapsed_ms(accumulated_milliseconds());
   }
   
   void timer::pretty_secs(long seconds) {

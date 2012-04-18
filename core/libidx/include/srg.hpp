@@ -36,6 +36,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __DEBUG__
+#include <typeinfo>
+#endif
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -44,15 +48,18 @@ namespace ebl {
 
   // simplest constructor builds an empty srg
   template <typename T> srg<T>::srg() {
-    refcount = 0;
+    //    refcount = 0;
     data = (T *)NULL;
     size_ = 0;
+#ifdef __DEBUG__
+    smart_pointer::debug_name << "srg<" << typeid(T).name() << ">";
+#endif
   }
 
   // return size on success, and -1 on error
   template <typename T> srg<T>::srg(intg s) {
     intg r;
-    refcount = 0;
+    //    refcount = 0;
     data = (T *)NULL;
     if ( ( r=this->changesize(s) ) > 0 ) this->clear();
     if (r < 0) { eblerror("can't allocate srg"); }
@@ -62,11 +69,13 @@ namespace ebl {
   // is not dynamically allocated. Hence this must
   // make sure the data is not deallocated twice.
   template <typename T> srg<T>::~srg() {
-    DEBUG_LOW("srg::destructor: refcount = " << refcount);
-    if (refcount != 0) {
-      eblerror("can't delete an srg with non zero refcount"); }
+    // DEBUG_LOW("srg::destructor: refcount = " << refcount);
+    // if (refcount != 0) {
+    //   eblerror("can't delete an srg with non zero refcount"); }
+
     if (data != NULL) {
-      free((void *)data);
+      DEBUG_LOW("srg: freeing data " << (void*) data);
+      free((void *) data);
       data = NULL;
 #ifdef __DEBUGMEM__
       this->memsize -= size_ * sizeof (T);
@@ -88,19 +97,20 @@ namespace ebl {
     this->memsize -= size_ * sizeof (T);
 #endif    
     if (s == 0) {
-      free((void *)data);
-      data = (T *)NULL;
+      free((void*) data);
+      data = (T*) NULL;
       size_ = 0;
     } else {
       // TODO: malloc/realloc not thread safe
       // use google's tcalloc? (supposedly much faster:
       // http://google-perftools.googlecode.com/svn/trunk/doc/tcmalloc.html    
-      data = (T *)realloc((void *)data, s*sizeof(T));
+      data = (T*) realloc((void*) data, s * sizeof (T));
       if (data != NULL) {
 	size_ = s;
 #ifdef __DEBUGMEM__
 	this->memsize += size_ * sizeof (T);
-#endif    
+#endif
+	DEBUG_LOW("(re)allocated data " << (void*) data);
 	return size_;
       } else {
 	size_ = 0;
@@ -124,34 +134,41 @@ namespace ebl {
     if(s > size_) { return this->changesize(s + s_chunk); } else {return size_;}
   }
 
-  // decrement refcount and free if it reaches zero
-  template <typename T> int srg<T>::unlock() {
-    refcount--;
-    //if (refcount == 0) this->nopened--;
-    DEBUG_LOW("srg::unlock: refcount = " << refcount);
-    if (refcount<0) {
-      eblerror("srg negative reference counter: " << refcount);
-      return refcount;
-    }
-    else {
-      if (refcount == 0) {
-	delete this;
-	return 0;
-      } else {
-	return refcount;
-      }
-    }
-  }
+  // // decrement refcount and free if it reaches zero
+  // template <typename T> int srg<T>::unlock() {
+  //   refcount--;
+  //   //if (refcount == 0) this->nopened--;
+  //   DEBUG_LOW("srg::unlock: refcount = " << refcount << " srg " << this
+  // 	      << " data " << (void*) data);
+  //   if (refcount<0) {
+  //     eblerror("srg negative reference counter: " << refcount);
+  //     return refcount;
+  //   }
+  //   else {
+  //     if (refcount == 0) {
+  // 	delete this;
+  // 	return 0;
+  //     } else {
+  // 	return refcount;
+  //     }
+  //   }
+  // }
 
-  // increment refcount
-  template <typename T> int srg<T>::lock() {
-    //  if (refcount == 0) this->nopened++;
-    DEBUG_LOW("srg::lock: refcount=" << refcount+1);
-    return ++refcount;
-  }
+  // // increment refcount
+  // template <typename T> int srg<T>::lock() {
+  //   //  if (refcount == 0) this->nopened++;
+  //   DEBUG_LOW("srg::lock: refcount=" << refcount+1 << " srg " << this
+  // 	      << " data " << (void*) data);
+  //   return ++refcount;
+  // }
 
   // get i-th item
   template <typename T> T srg<T>::get(intg i) { return data[i]; }
+
+  // get i-th item
+  template <typename T> T* srg<T>::get_data() { return data; }
+  // set data pointer
+  template <typename T> void srg<T>::set_data(T* ptr) { data=ptr; }
 
   // set i-th item
   template <typename T> void srg<T>::set(intg i, T val) { data[i] = val; }
@@ -166,7 +183,7 @@ namespace ebl {
     fprintf(f,"srg at address %ld; ",(long)this);
     fprintf(f,"size=%ld; ",size_);
     fprintf(f,"data=%ld; ",(long)data);
-    fprintf(f,"refcount=%d\n",refcount);
+    //    fprintf(f,"refcount=%d\n",refcount);
   }
   
 } // end namespace ebl
