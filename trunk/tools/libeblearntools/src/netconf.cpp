@@ -44,6 +44,9 @@ namespace ebl {
 
     if (conf.exists(name)) { // request to load table from file
       std::string filename = conf.get_string(name.c_str());
+      if (!file_exists(filename)) 
+	eblerror("cannot find table file declared in variable " << name
+		 << ": " << filename);
       table = load_matrix<intg>(filename);
       cout << "Loaded " << name << " (" << table << ") from " << filename
 	   << endl;

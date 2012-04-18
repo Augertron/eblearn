@@ -29,29 +29,28 @@ void detector_test::test_face() {
     CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
 
     string name = "nens.gif";
-    ostringstream confname, imagename, root, ebl;
+    string confname, imagename, root, ebl;
     root << *gl_data_dir << "/face/";
     ebl << *gl_data_dir << "/../../";
-    confname << root.str() << "best.conf";
-    imagename << root.str() << name;
-    idx<ubyte> im = load_image<ubyte>(imagename.str());
+    confname << root << "best.conf";
+    imagename << root << name;
+    idx<ubyte> im = load_image<ubyte>(imagename);
     configuration conf;
-    conf.read(confname.str().c_str(), false, false, true);
-    conf.set("root2", root.str().c_str());
-    conf.set("current_dir", root.str().c_str());
-    conf.set("ebl", ebl.str().c_str());
+    conf.read(confname.c_str(), false, false, true);
+    conf.set("root2", root.c_str());
+    conf.set("current_dir", root.c_str());
+    conf.set("ebl", ebl.c_str());
     conf.resolve(true);
     mutex mut;
     detection_thread<t_net> dt(conf, &mut, "detection thread");
-    vector<bbox*> bboxes;
+    bboxes bboxes;
     idx<ubyte> detframe;
     idx<uint> total_saved(1);
     string processed_fname;
     uint cnt = 0;
     
     dt.start();
-    while (!dt.set_data(im, name, cnt))
-      millisleep(5);
+    while (!dt.set_data(im, imagename, name, cnt)) millisleep(5);
     bool updated = false;
     while (!updated) {
       updated = dt.get_data(bboxes, detframe, *(total_saved.idx_ptr()),
@@ -64,8 +63,8 @@ void detector_test::test_face() {
     // tests
     CPPUNIT_ASSERT_EQUAL((size_t) 16, bboxes.size()); // 16 faces to be found
     CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 5.89,
-    				 bboxes[0]->confidence, .01);
-    CPPUNIT_ASSERT_EQUAL((int) 1, bboxes[0]->class_id);
+    				 bboxes[0].confidence, .01);
+    CPPUNIT_ASSERT_EQUAL((int) 1, bboxes[0].class_id);
   }
   catch(string &err) { cerr << err << endl; }
 #endif

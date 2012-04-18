@@ -51,8 +51,7 @@ namespace ebl {
 
   template <class Tnet, class Tdata, class Tlabel>  
   supervised_trainer_gui<Tnet, Tdata, Tlabel>::~supervised_trainer_gui() {
-    if (w)
-      w->replace_scroll_box_with_copy(this);
+    if (w) w->replace_scroll_box_with_copy(this);
   }
   
   template <class Tnet, class Tdata, class Tlabel>  
@@ -142,10 +141,10 @@ namespace ebl {
 	if ((lblstr.size() > 0) && (lblstr[(int)st.answers->x.gget()]))
 	  gui << at(h1 + 2, w1 + 2)
 	      << (lblstr[(int)st.answers->x.gget()])->c_str();
-	w1 += d.dim(1) + 2;
+	w1 += d.dim(2) + 2;
 	if (((i + 1) % nw == 0) && (i > 1)) {  
 	  w1 = w01;
-	  h1 += d.dim(0) + 2;
+	  h1 += d.dim(1) + 2;
 	  nh1++;
 	}
       }
@@ -155,10 +154,10 @@ namespace ebl {
 	if ((lblstr.size() > 0) && (lblstr[(int)st.answers->x.gget()]))
 	  gui << at(h2 + 2, w2 + 2)
 	      << (lblstr[(int)st.answers->x.gget()])->c_str();
-	w2 += d.dim(1) + 2;
+	w2 += d.dim(2) + 2;
 	if (((i2 + 1) % nw == 0) && (i2 > 1)) {  
 	  w2 = w02;
-	  h2 += d.dim(0) + 2;
+	  h2 += d.dim(1) + 2;
 	}
 	i2++;
       }
@@ -258,6 +257,9 @@ namespace ebl {
 		      bool print_raw_outputs, bool draw_all_jitter,
 		      unsigned int h0, unsigned int w0, double zoom, int wid,
 		      const char *title, bool scrolling) {
+    if (!ds.bkeep_outputs) 
+      eblerror("answers are not kept in datasource, activate keeping by "
+	       << "setting keep_outputs = 1");
     // copy parameters
     _st = &st;
     _infp = &infp;
@@ -337,21 +339,27 @@ namespace ebl {
     // get the indices of incorrect or correct samples ordered by their energies
     // this assumes that all samples have already been tested for correctness
     intg tally = idx_sum<intg>(ds.correct);
-    if (incorrect) tally = ds.correct.dim(0) - tally;
+    if (incorrect) tally = ds.count_included_samples() - tally;
     idx<intg> indices(tally);
     idx<double> energies(tally);
     intg inc = 0, i = 0;
-    idx_bloop2(correct, ds.correct, ubyte, energy, ds.energies, double) {
-      if (correct.get() == !incorrect) { // found correct or incorrect sample
-	indices.set(i, inc);
-	energies.set(energy.get(), inc);
-	inc++;
+    if(!incorrect) {
+      idx_bloop2(correct, ds.correct, ubyte, energy, ds.energies, double) {
+        if (ds.included_sample(i)) {
+          if (correct.get() == !incorrect) { // found correct or incorrect sample
+            indices.set(i, inc);
+            energies.set(energy.get(), inc);
+            inc++;
+          }
+        }
+        i++; // data iterator
       }
-      i++; // data iterator
     }
-    if (inc != indices.dim(0))
-      eblerror("expected " << indices.dim(0) << " " << corname
-	       << " samples but found " << inc);
+    else return; // TODO: fix bug for incorrect samples.
+
+//     if (inc != indices.dim(0))
+//       eblerror("expected " << indices.dim(0) << " " << corname
+// 	       << " samples but found " << inc);
 
     // display top
     gui << set_colors(255, 0, 0, 255, 255, 255, 255, 127) << gui_only();
@@ -362,36 +370,51 @@ namespace ebl {
       enable_window_updates();
       return ;
     }
-    gui << indices.dim(0) << " / " << ds.correct.dim(0) << " "
-	<< corname << " samples with energies max: "
-	<< (double) idx_max(energies) << " min: " << (double) idx_min(energies);
+    // TODO: energies becomes unrealistic garbage sometimes, gets fp exceptions
+    // gui << indices.dim(0) << " / " << ds.correct.dim(0) << " "
+    //     << corname << " samples with energies max: "
+    //     << (double) idx_max(energies) << " min: " << (double) idx_min(energies);
     gui << white_on_transparent();
 
     // sort indices by energy
-    if (up)
-      idx_sortup(energies, indices);
-    else
-      idx_sortdown(energies, indices);
+    if (up) idx_sortup(energies, indices);
+    else idx_sortdown(energies, indices);
     
     // loop on nh * nw first samples
     Tlabel answer, bgid = -1;
     if (cds)
       cds->get_class_id("bg");
     bbstate_idx<Tnet> input(ds.sample_dims());
+    mstate<bbstate_idx<Tnet> > minput;
     bbstate_idx<Tlabel> label(ds.label_dims());
     bbstate_idx<Tnet> jitt(1, 1);
+    uint hmax = 0;
     for (unsigned int i = 0; (i < indices.dim(0)) && (i < nh * nw); ++i) {
+      if (indices.get(i) >= ds.raw_outputs.dim(0)) break ;
       idx<Tnet> raw = ds.raw_outputs.select(0, indices.get(i));
       idx<Tnet> answers = ds.answers.select(0, indices.get(i));
       idx<Tnet> target = ds.targets.select(0, indices.get(i));
       answer = (Tlabel) answers.get(0);
       ds.select_sample(indices.get(i));
-      ds.fprop(input, label);
-      idx<Tnet> m = input.x.shift_dim(0, 2);
-
+      minput.clear();
+      if (ds.mstate_samples()) ds.fprop_data(minput);
+      else {
+	ds.fprop_data(input);
+	minput.push_back(input);
+      }
+      ds.fprop_label(label);
+      uint ht = 0, wt = 0;
+      
       // 1. display dataset with incorrect and correct answers
       if (nh1 < nh) {
-	draw_matrix(m, h1, w1, zoom, zoom);
+	// draw sample
+	for (uint a = 0; a < minput.size(); ++a) {
+	  idx<Tnet> m = minput[a].x.shift_dim(0, 2);
+	  draw_matrix(m, h1, w1 + wt, zoom, zoom);
+	  wt += m.dim(1) + 2;
+	  ht = std::max(ht, (uint) m.dim(0));
+	  hmax = std::max(hmax, (uint) m.dim(0));
+	}
 	ostringstream s;
 	s.precision(2);
 	if (cds)
@@ -414,7 +437,7 @@ namespace ebl {
 	//ds.fprop_jitter(jitt);
 	for (uint a = 0; a < target.dim(0); ++a) {
 	  s.str(""); s << target.gget(a);
-	  gui << at(h1 + 17 + a * 15, w1 + m.dim(1) - 35) << s.str().c_str();
+	  gui << at(h1 + 17 + a * 15, w1 + wt - 35) << s.str().c_str();
 	}
 	// print correct info when incorrect
 	if (incorrect && cds) {
@@ -429,10 +452,10 @@ namespace ebl {
 	  if (scale > 0) {
 	    scale = 1 / scale;
 	    if (answers.dim(0) == 5) {
-	      hoff = answers.gget(3) * m.dim(0);
-	      woff = answers.gget(4) * m.dim(0);
+	      hoff = answers.gget(3) * ht;
+	      woff = answers.gget(4) * ht;
 	    }
-	    r = rect<float>(h1 + hoff, w1 + woff, m.dim(0), m.dim(1));
+	    r = rect<float>(h1 + hoff, w1 + woff, ht, wt);
 	    r.scale_centered(scale, scale);
 	    draw_box(r, 0, 0, 255);
 	    // draw all groundtruth
@@ -442,9 +465,9 @@ namespace ebl {
 		scale = ji.gget(0); // TODO: fix hardcoded offset
 		if (scale != 0) {
 		  scale = 1 / scale;
-		  hoff = ji.gget(1) * m.dim(0);// TODO: fix hardcoded offset
-		  woff = ji.gget(2) * m.dim(0);// TODO: fix hardcoded offset
-		  r = rect<float>(h1 + hoff, w1 + woff, m.dim(0), m.dim(1));
+		  hoff = ji.gget(1) * ht;// TODO: fix hardcoded offset
+		  woff = ji.gget(2) * ht;// TODO: fix hardcoded offset
+		  r = rect<float>(h1 + hoff, w1 + woff, ht, wt);
 		  r.scale_centered(scale, scale);
 		draw_box(r, 0, 255, 0);
 		}
@@ -455,9 +478,9 @@ namespace ebl {
 	  scale = target.gget(2); // TODO: fix hardcoded offset
 	  if (scale != 0) {
 	    scale = 1 / scale;
-	    hoff = target.gget(3) * m.dim(0);// TODO: fix hardcoded offset
-	    woff = target.gget(4) * m.dim(0);// TODO: fix hardcoded offset
-	    r = rect<float>(h1 + hoff, w1 + woff, m.dim(0), m.dim(1));
+	    hoff = target.gget(3) * ht;// TODO: fix hardcoded offset
+	    woff = target.gget(4) * ht;// TODO: fix hardcoded offset
+	    r = rect<float>(h1 + hoff, w1 + woff, ht, wt);
 	    r.scale_centered(scale, scale);
 	    draw_box(r, 255, 0, 0);
 	  }
@@ -465,11 +488,12 @@ namespace ebl {
 	// if ((ds.lblstr) && (ds.lblstr->at(st.answer.x.get())))
 	//   gui << at(h1 + 2, w1 + 2)
 	//       << (ds.lblstr->at(st.answer.x.get()))->c_str();
-	w1 += m.dim(1) + 2;
+	w1 += wt + 2;
 	if (((i + 1) % nw == 0) && (i > 1)) {  
 	  w1 = w01;
-	  h1 += m.dim(0) + 2;
+	  h1 += hmax + 2;
 	  nh1++;
+	  hmax = 0;
 	}
       }
     }

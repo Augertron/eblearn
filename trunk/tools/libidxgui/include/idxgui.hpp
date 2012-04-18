@@ -106,43 +106,6 @@ namespace ebl {
     // send image to main gui thread
     emit gui_draw_mask(uim, h0, w0, r, g, b, a);
   }
-
-  template<class T1, class T2>
-  class ManipInfra {
-  public:
-    ManipInfra(idxgui& (*pFun) (idxgui&))
-      : manipFun0(pFun), val1(0), val2(0), nval(0) {}
-    ManipInfra(idxgui& (*pFun) (idxgui&, T1), T1 val1_)
-      : manipFun1(pFun), val1(val1_), val2(0), nval(1) {}
-    ManipInfra(idxgui& (*pFun) (idxgui&, T1, T2), 
-	       T1 val1_, T2 val2_)
-      : manipFun2(pFun), val1(val1_), val2(val2_), nval(2) {}
-    ManipInfra(idxgui& (*pFun) (idxgui&, T1, T2, T2, T2, T2, T2, T2, T2), 
-	       T1 val1_, T2 val2_, T2 val3_, T2 val4_, 
-	       T2 val5_, T2 val6_, T2 val7_, T2 val8_)
-      : manipFun8(pFun), val1(val1_), val2(val2_), val3(val3_), val4(val4_), 
-	val5(val5_), val6(val6_), val7(val7_), val8(val8_), nval(8) {}
-
-    void operator() (idxgui& r) const {
-      switch (nval) {
-      case 0: manipFun0(r); break ;
-      case 1: manipFun1(r, val1); break ;
-      case 2: manipFun2(r, val1, val2); break ;
-      case 8: manipFun8(r, val1, val2, val3, val4, val5, val6, val7, val8);
-	break ;
-      default: eblerror("unknown mode");
-      }
-    }
-  private:
-    idxgui& (*manipFun0) (idxgui&);
-    idxgui& (*manipFun1) (idxgui&, T1);
-    idxgui& (*manipFun2) (idxgui&, T1, T2);
-    idxgui& (*manipFun8) (idxgui&, T1, T2, T2, T2, T2, T2, T2, T2);
-    T1 val1;
-    T2 val2, val3, val4, val5, val6, val7, val8;
-    int nval;
-  };
-
   
   template<class T1, class T2> 
   idxgui& operator<<(idxgui& r, const ManipInfra<T1, T2> &manip) {

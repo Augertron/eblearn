@@ -59,16 +59,13 @@ namespace ebl {
 
   // generic copy for the same type.
   template<class T> void idx_copy(const idx<T> &src, idx<T> &dst) {
+    idx_checknelems2_all(src, dst);
     // loop and copy
-    intg N1 = src.nelements();
-    intg N2 = dst.nelements();
-    if (N1 != N2)
-      eblerror("expected same number of elements in " << src << " and " << dst);
-    if ( (src.order() == 0) && (dst.order() == 0) ) {
+    if (src.order() == 0 && dst.order() == 0)
       *(dst.idx_ptr()) = *(src.idx_ptr());
-    } else if ( src.contiguousp() && dst.contiguousp() ) {
+    else if (src.contiguousp() && dst.contiguousp()) {
       /* they are both contiguous: call the stride 1 routine */
-      memcpy(dst.idx_ptr(), src.idx_ptr(), N1 * sizeof(T));
+      memcpy(dst.idx_ptr(), src.idx_ptr(), src.nelements() * sizeof(T));
     } else {
       // else, they don't have the same structure: do it "by hand".
       // This is slower
@@ -77,6 +74,7 @@ namespace ebl {
   }
 
   template<class T1, class T2> void idx_copy(const idx<T1> &src, idx<T2> &dst){
+    idx_checknelems2_all(src, dst);
     // loop and copy
     idx_aloop2(isrc, src, T1, idst, dst, T2) { *idst = (T2)(*isrc); }
   }
@@ -93,10 +91,11 @@ namespace ebl {
     return dst;
   }
 
-  template<class T1, class T2> void idx_copy_clip(const idx<T1> &src,
-						  idx<T2> &dst){
+  template<class T1, class T2>
+  void idx_copy_clip(const idx<T1> &src, idx<T2> &dst) {
+    idx_checknelems2_all(src, dst);
     // loop and copy
-    idx_aloop2(isrc, src, T1, idst, dst, T2) { 
+    idx_aloop2(isrc, src, T1, idst, dst, T2) {
       *idst = saturate(*isrc, T2);
     }
   }
@@ -105,38 +104,12 @@ namespace ebl {
   // idx_clear
 
   template<class T> void idx_clear(idx<T> &inp) {
-    if (inp.contiguousp()) {
+    if (inp.contiguousp())
       memset(inp.idx_ptr(), 0, inp.nelements() * sizeof (T));
-    } else {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-      idxiter<T> pinp;
-      idx_aloop1_on(pinp,inp) { *pinp = 0; }
-  #else
-      ScalarIter<T> pinp(inp);
-      idx_aloop1_on(pinp,inp) { *pinp = 0; }
-  #endif
-#else
+    else
       idx_aloopf1(pinp, inp, T, { *pinp = 0; });
-#endif
-    }
   }
 
-  template<class T> void idx_delete(idxs<T> &m) {
-    idx<T> *p = NULL;
-    if (m.order() == 0) {
-      p = ((idx<idx<T>*>&)m).get();
-      if (p)
-	delete p;
-    } else {
-      idx_bloop1(e, m, idx<T>*) {
-	p = e.get();
-	if (p != NULL)
-	  delete p;
-      }
-    }
-  }
-  
   ////////////////////////////////////////////////////////////////
   // idx_fill
 
@@ -145,23 +118,16 @@ namespace ebl {
   }
 
   template<class T> void idx_fill(idx<T> &inp, T v) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp;
-    idx_aloop1_on(pinp,inp) { *pinp = v; }
-  #else
-    ScalarIter<T> pinp(inp);
-    idx_aloop1_on(pinp,inp) { *pinp = v; }
-  #endif
-#else
     idx_aloopf1(it, inp, T, {*it = v;})
-#endif
+  }
+
+  template<class T> void idx_fill_index(idx<T> &inp) {
+    T i = 0;
+    idx_aloopf1(it, inp, T, {*it = i++;})
   }
 
   ////////////////////////////////////////////////////////////////
   // idx_shuffle_*
-
-#if USING_STL_ITERS == 0
 
   // TODO: can n random swaps be as random? (it would be more efficient)
   template<class T> void idx_shuffle(idx<T> &in_, intg d, idx<T> *out_) {
@@ -362,12 +328,6 @@ namespace ebl {
     }
   }
 
-#else
-
-#pragma message "shuffle_* with STD_ITERS not implemented"
-
-#endif
-
   ////////////////////////////////////////////////////////////////////////
   // idx_minus
 
@@ -386,40 +346,13 @@ namespace ebl {
   // idx_inv
 
   template<class T> void idx_inv(idx<T> &inp, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    #ifdef __DEBUG__
-    idx_aloop2_on(pinp,inp,pout,out) {
-      if (*pinp == 0)
-	eblerror("division by zero");
-      *pout = 1 / *pinp;
-    }
-    #else
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = 1 / *pinp; }
-    #endif
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-   #ifdef __DEBUG__
-    idx_aloop2_on(pinp,inp,pout,out) {
-      if (*pinp == 0)
-	eblerror("division by zero");
-      *pout = 1 / *pinp;
-    }
-    #else
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = 1 / *pinp; }    
-    #endif
-  #endif
-#else
-  #ifdef __DEBUG__
+#ifdef __DEBUG__
     idx_aloopf2(pinp, inp, T, pout, out, T, {
-      if (*pinp == 0)
-	eblerror("division by zero");
+	if (*pinp == 0) eblerror("division by zero");
 	*pout = 1 / *pinp;
       });
-  #else
+#else
     idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = 1 / *pinp; });
-  #endif
 #endif
   }
 
@@ -437,8 +370,16 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////////////
   // idx_sub
 
+  template<class T> void idx_sub(idx<T> &i1, idx<T> &i2) {
+    idx_aloopf2(pi1, i1, T, pi2, i2, T, { *pi1 = *pi1 - *pi2; });
+  }
+
   template<class T> void idx_sub(idx<T> &i1, idx<T> &i2, idx<T> &out) {
     idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {*pout = *pi1 - *pi2; });
+  }
+
+  template<class T> void idx_subacc(idx<T> &i1, idx<T> &i2, idx<T> &out) {
+    idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {*pout += *pi1 - *pi2; });
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -464,7 +405,6 @@ namespace ebl {
   // idx_spherical_add
 
   template<class T> void idx_spherical_add(idx<T> &i1, idx<T> &i2, idx<T> &out){
-    T tmp, tmpabs, tmpabs2;
     idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {
 	*pout = std::min(TWOPI - *pi1, *pi1) + std::min(TWOPI - *pi2, - *pi2);
       });
@@ -474,47 +414,27 @@ namespace ebl {
   // idx_mul
 
   template<class T> void idx_mul(idx<T> &i1, idx<T> &i2, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pi1, pi2; idxiter<T> pout;
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = (*pi1) * (*pi2); }
-  #else
-    ScalarIter<T> pi1(i1), pi2(i2); ScalarIter<T> pout(out);
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout = (*pi1) * (*pi2); }
-  #endif
-#else
-    idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {*pout = (*pi1) * (*pi2); });
-#endif
+    idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T,
+		{*pout = (*pi1) * (*pi2); });
+  }
+
+  template<class T> void idx_mulacc(idx<T> &i1, idx<T> &i2, idx<T> &out) {
+    idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T,
+		{*pout += (*pi1) * (*pi2); });
   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_div
 
   template<class T> void idx_div(idx<T> &i1, idx<T> &i2, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pi1, pi2; idxiter<T> pout;
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) {
-#ifdef __DEBUG
-      if (*pi2 == 0)
-	eblerror("division by zero");
-#endif
-      *pout = (*pi1) / (*pi2);
-    }
-  #else
-    ScalarIter<T> pi1(i1), pi2(i2); ScalarIter<T> pout(out);
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) {
-#ifdef __DEBUG
-      if (*pi2 == 0)
-	eblerror("division by zero");
-#endif
-      *pout = (*pi1) / (*pi2);
-    }
-  #endif
-#else
     idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {
-      if (*pi2 == 0)
-	eblerror("division by zero");
+      *pout = (*pi1) / (*pi2);
+    });
+    // since we cannot put a ifdef in a macro, we repeat the code here
+#ifdef __DEBUG__
+    idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {
+	if (*pi2 == 0)
+	  eblerror("division by zero");
       *pout = (*pi1) / (*pi2);
     });
 #endif
@@ -528,13 +448,11 @@ namespace ebl {
   }
 
   template<class T> void idx_addc(idx<T> &inp, T c, idx<T> &out) {
-#if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = *pinp + c; }
-#else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = *pinp + c; }
-#endif
+    idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = *pinp + c; });
+  }
+
+  template<class T> void idx_addc(idx<T> &inp, T c) {
+    idx_aloopf1(pinp, inp, T, { *pinp += c; });
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -547,21 +465,9 @@ namespace ebl {
 
 
   template<class T> void idx_addc_bounded(idx<T> &inp, T c, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { 
-      *pout = saturate(*pinp + c, T);
-    }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) {
-      *pout = saturate(*pinp + c, T);
-    }
-  #endif
-#else
-    idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = saturate(*pinp + c, T); });
-#endif
+    idx_aloopf2(pinp, inp, T, pout, out, T, {
+	*pout = saturate(*pinp + c, T);
+      });
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -574,21 +480,9 @@ namespace ebl {
 
 
   template<class T> void idx_subc_bounded(idx<T> &inp, T c, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { 
-      *pout = saturate(*pinp - c, T);
-    }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { 
-      *pout = saturate(*pinp - c, T);
-    }
-  #endif
-#else
-    idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = saturate(*pinp - c, T); });
-#endif
+    idx_aloopf2(pinp, inp, T, pout, out, T, {
+	*pout = saturate(*pinp - c, T);
+      });
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -600,34 +494,14 @@ namespace ebl {
   }
 
   template<class T> void idx_addcacc(idx<T> &inp, T c, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout += *pinp + c; }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout += *pinp + c; }
-  #endif
-#else
     idx_aloopf2(pinp, inp, T, pout, out, T, { *pout += *pinp + c; });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_dotc
 
   template<class T, class T2> void idx_dotc(idx<T> &inp, T2 c, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(*pinp * c); }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(*pinp * c); }
-  #endif
-#else
     idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = (T)(*pinp * c); });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -635,38 +509,16 @@ namespace ebl {
 
   template<class T, class T2>
   void idx_dotc_bounded(idx<T> &inp, T2 c, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { 
-      *pout = saturate(*pinp * c, T);
-    }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { 
-      *pout = saturate(*pinp * c, T);
-    }
-  #endif
-#else
-    idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = saturate(*pinp * c, T); });
-#endif
+    idx_aloopf2(pinp, inp, T, pout, out, T, {
+	*pout = saturate(*pinp * c, T);
+      });
   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_dotcacc
 
   template<class T, class T2> void idx_dotcacc(idx<T> &inp, T2 c, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout += (T)(*pinp * c); }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout += (T)(*pinp * c); }
-  #endif
-#else
     idx_aloopf2(pinp, inp, T, pout, out, T, { *pout += (T)(*pinp * c); });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -678,19 +530,9 @@ namespace ebl {
   }
 
   template<class T> void idx_signdotc(idx<T> &inp, T c, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (*pinp<0)?-c:c; }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (*pinp<0)?-c:c; }
-  #endif
-#else
     idx_aloopf2(pinp, inp, T, pout, out, T, {
-      *pout = (*pinp < 0) ? -c : c;
-    });
-#endif
+	*pout = (*pinp < 0) ? -c : c;
+      });
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -702,153 +544,84 @@ namespace ebl {
   }
 
   template<class T> void idx_signdotcacc(idx<T> &inp, T c, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout += (*pinp<0)?-c:c; }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout += (*pinp<0)?-c:c; }
-  #endif
-#else
     idx_aloopf2(pinp, inp, T, pout, out, T, {
-      *pout += (*pinp < 0) ? -c : c;
-    });
-#endif
+	*pout += (*pinp < 0) ? -c : c;
+      });
   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_subsquare
 
   template<class T> void idx_subsquare(idx<T> &i1, idx<T> &i2, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pi1; idxiter<T> pi2; idxiter<T> pout;
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { T d = *pi1 - *pi2; *pout = d*d; }
-  #else
-    ScalarIter<T> pi1; ScalarIter<T> pi2; ScalarIter<T> pout(out);
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { T d = *pi1 - *pi2; *pout = d*d; }
-  #endif
-#else
     idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {
-      T d = *pi1 - *pi2;
-      *pout = d*d;
-    });
-#endif
+	T d = *pi1 - *pi2;
+	*pout = d*d;
+      });
   }
 
   template<class T> void idx_subsquareacc(idx<T> &i1, idx<T> &i2, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pi1; idxiter<T> pi2; idxiter<T> pout;
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { T d = *pi1 - *pi2; *pout += d*d; }
-  #else
-    ScalarIter<T> pi1; ScalarIter<T> pi2; ScalarIter<T> pout(out);
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { T d = *pi1 - *pi2; *pout += d*d; }
-  #endif
-#else
     idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {
-      T d = *pi1 - *pi2;
-      *pout += d*d;
-    });
-#endif
+	T d = *pi1 - *pi2;
+	*pout += d*d;
+      });
   }
 
-  ////////////////////////////////////////////////////////////////////////
-  // idx_lincomb
+  // idx_lincom ////////////////////////////////////////////////////////////////
 
   // not very efficient. There must be a more parallel way of doing this
   template<class T>
   void idx_lincomb(idx<T> &i1, T k1, idx<T> &i2, T k2, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pi1; idxiter<T> pi2; idxiter<T> pout;
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout =  k1*(*pi1) + k2*(*pi2); }
-  #else
-    ScalarIter<T> pi1(i1); ScalarIter<T> pi2(i2); ScalarIter<T> pout(out);
-    idx_aloop3_on(pi1,i1,pi2,i2,pout,out) { *pout =  k1*(*pi1) + k2*(*pi2); }
-  #endif
-#else
     idx_aloopf3(pi1, i1, T, pi2, i2, T, pout, out, T, {
       *pout = k1 * (*pi1) + k2 * (*pi2);
     });
-#endif
   }
 
-  ////////////////////////////////////////////////////////////////////////
-  // idx_tanh
+  // idx_tanh //////////////////////////////////////////////////////////////////
 
   template<class T> void idx_tanh(idx<T> &inp, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(tanh((double)*pinp)); }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(tanh((double)*pinp)); }
-  #endif
+    idx_checknelems2_all(inp, out);
+#ifdef __OPENMP__
+    T* inptr = inp.idx_ptr();
+    T* outptr = out.idx_ptr();
+#pragma omp parallel for
+    for(int i=0; i< inp.nelements(); ++i) {
+      outptr[i] = (T)(tanh((double)inptr[i]));
+    }
 #else
-    idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = (T)(tanh((double)*pinp)); });
+    idx_aloopf2(pinp, inp, T, pout, out, T, {
+	*pout = (T)(tanh((double)*pinp));
+      });
 #endif
   }
 
-  ////////////////////////////////////////////////////////////////////////
-  // idx_dtanh
+  // idx_dtanh /////////////////////////////////////////////////////////////////
 
   template<class T> void idx_dtanh(idx<T> &inp, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(dtanh((double)*pinp)); }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(dtanh((double)*pinp)); }
-  #endif
-#else
-    idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = (T)(dtanh((double)*pinp)); });
-#endif
+    idx_checknelems2_all(inp, out);
+    idx_aloopf2(pinp, inp, T, pout, out, T, {
+	*pout = (T) (dtanh((double)*pinp));
+      });
   }
 
-  ////////////////////////////////////////////////////////////////////////
-  // idx_stdsigmoid
+  // idx_stdsigmoid ////////////////////////////////////////////////////////////
 
   template<class T> void idx_stdsigmoid(idx<T> &inp, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(stdsigmoid((double)*pinp)); }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(stdsigmoid((double)*pinp)); }
-  #endif
-#else
+    idx_checknelems2_all(inp, out);
     idx_aloopf2(pinp, inp, T, pout, out, T, {
-      *pout = (T)(stdsigmoid((double)*pinp));
-    });
-#endif
+	*pout = (T) (stdsigmoid((double)*pinp));
+      });
   }
 
-  ////////////////////////////////////////////////////////////////////////
-  // idx_dstdsigmoid
+  // idx_dstdsigmoid ///////////////////////////////////////////////////////////
 
   template<class T> void idx_dstdsigmoid(idx<T> &inp, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(dstdsigmoid((double)*pinp));}
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(dstdsigmoid((double)*pinp));}
-  #endif
-#else
+    idx_checknelems2_all(inp, out);
     idx_aloopf2(pinp, inp, T, pout, out, T, {
-      *pout = (T)(dstdsigmoid((double)*pinp));
-    });
-#endif
+	*pout = (T) (dstdsigmoid((double)*pinp));
+      });
   }
 
-  ////////////////////////////////////////////////////////////////////////
-  // idx_abs
+  // idx_abs ///////////////////////////////////////////////////////////////////
 
   template<class T> inline T abs2 (T a) {
     return (T)abs((float64)a);
@@ -868,19 +641,7 @@ namespace ebl {
   }
 
   template<class T> void idx_abs(idx<T>& inp, idx<T>& out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp; idxiter<T> pout;
-    //    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(fabs((double)*pinp)); }
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = abs2<T>(*pinp); }
-  #else
-    ScalarIter<T> pinp(inp); ScalarIter<T> pout(out);
-    //    idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(fabs((double)*pinp)); }
-    idx_aloop2_on(pinp,inp,pout,out) { *pout = abs2<T>(*pinp); }
-  #endif
-#else
     idx_aloopf2(pinp, inp, T, pout, out, T, { *pout = abs2<T>(*pinp); });
-#endif
   }
 
 
@@ -893,23 +654,9 @@ namespace ebl {
   }
 
   template<class T> void idx_thresdotc_acc(idx<T>& in, T c, T th, idx<T>& out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pin; idxiter<T> pout;
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout += (*pin < -th)? -c : (*pin > th) ? c : 0;
-    }
-  #else
-    ScalarIter<T> pin(in); ScalarIter<T> pout(out);
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout += (*pin < -th)? -c : (*pin > th) ? c : 0;
-    }
-  #endif
-#else
     idx_aloopf2(pin, in, T, pout, out, T, {
       *pout += (*pin < -th) ? -c : (*pin > th) ? c : 0;
     });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -920,43 +667,11 @@ namespace ebl {
   }
 
   template<class T> void idx_threshold(idx<T>& in, T th) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pin;
-    idx_aloop1_on(pin,in) {
-      if (*pin < th)
-	*pin = th;
-    }
-  #else
-    ScalarIter<T> pin(in);
-    idx_aloop1_on(pin,in) {
-      if (*pin < th)
-	*pin = th;
-    }
-  #endif
-#else
     idx_aloopf1(pin, in, T, { if (*pin < th) *pin = th; });
-#endif
   }
 
   template<class T> void idx_threshold2(idx<T>& in, T th) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pin;
-    idx_aloop1_on(pin,in) {
-      if (*pin > th)
-	*pin = th;
-    }
-  #else
-    ScalarIter<T> pin(in);
-    idx_aloop1_on(pin,in) {
-      if (*pin > th)
-	*pin = th;
-    }
-  #endif
-#else
     idx_aloopf1(pin, in, T, { if (*pin > th) *pin = th; });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -968,33 +683,13 @@ namespace ebl {
   }
 
   template<class T> void idx_threshold(idx<T>& in, T th, idx<T>& out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pin; idxiter<T> pout;
-    idx_aloop2_on(pin,in,pout,out) {
-      if (*pin < th)
-	*pout = th;
-      else
-	*pout = *pin;
-    }
-  #else
-    ScalarIter<T> pin(in); ScalarIter<T> pout(out);
-    idx_aloop2_on(pin,in,pout,out) {
-      if (*pin < th)
-	*pout = th;
-      else
-	*pout = *pin;
-    }
-  }
-  #endif
-#else
+    idx_checknelems2_all(in, out);
     idx_aloopf2(pin, in, T, pout, out, T, {
       if (*pin < th)
         *pout = th;
       else
 	*pout = *pin;
     });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -1006,23 +701,7 @@ namespace ebl {
   }
 
   template<class T> void idx_threshold(idx<T>& in, T th, T value) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pin;
-    idx_aloop1_on(pin,in) {
-      if (*pin < th)
-	*pin = value;
-    }
-  #else
-    ScalarIter<T> pin(in);
-    idx_aloop1_on(pin,in) {
-      if (*pin < th)
-	*pin = value;
-    }
-  #endif
-#else
     idx_aloopf1(pin, in, T, { if (*pin < th) *pin = value; });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -1035,132 +714,59 @@ namespace ebl {
 
 
   template<class T> void idx_threshold(idx<T>& in, T th, T value, idx<T>& out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pin; idxiter<T> pout;
-    idx_aloop2_on(pin,in,pout,out) {
-      if (*pin < th)
-	*pout = value;
-      else
-	*pout = *pin;
-    }
-  #else
-    ScalarIter<T> pin(in); ScalarIter<T> pout(out);
-    idx_aloop2_on(pin,in,pout,out) {
-      if (*pin < th)
-	*pout = value;
-      else
-	*pout = *pin;
-    }
-  #endif
-#else
     idx_aloopf2(pin, in, T, pout, out, T, {
 	if (*pin < th)
 	  *pout = value;
 	else
 	  *pout = *pin;
       });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_threshold (with above and below)
-  
+
   template<class T, class T2>
   void idx_threshold(idx<T>& in, T th, T2 below, T2 above, idx<T2>& out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pin; idxiter<T2> pout;
-    idx_aloop2_on(pin,in,pout,out) {
-      if (*pin < th)
-	*pout = below;
-      else
-	*pout = above;
-    }
-  #else
-    ScalarIter<T> pin(in); ScalarIter<T2> pout(out);
-    idx_aloop2_on(pin,in,pout,out) {
-      if (*pin < th)
-	*pout = below;
-      else
-	*pout = above;
-    }
-  #endif
-#else
+    idx_checknelems2_all(in, out);
     idx_aloopf2(pin, in, T, pout, out, T2, {
       *pout = (*pin < th) ? below : above;
     });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_sqrt
 
   template<class T> void idx_sqrt(idx<T>& in, idx<T>& out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pin; idxiter<T> pout;
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout = sqrt(*pin);
-    }
-  #else
-    ScalarIter<T> pin(in); ScalarIter<T> pout(out);
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout = sqrt(*pin);
-    }
-  #endif
-#else
-    idx_aloopf2(pin, in, T, pout, out, T, { *pout = (T)sqrt((float64)(*pin)); });
-#endif
+    idx_checknelems2_all(in, out);
+    idx_aloopf2(pin, in, T, pout, out, T, {
+	*pout = (T)sqrt((float64)(*pin));
+      });
   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_power
 
   template<class T, class T2> void idx_power(idx<T> & in, T2 p, idx<T> & out) {
+    idx_checknelems2_all(in, out);
     idx_power(in, saturate(p, T), out);
   }
 
   template<class T> void idx_power(idx<T>& in, T p, idx<T>& out) {
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pin; idxiter<T> pout;
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout = saturate(pow((double) *pin, (double) p), T);
-    }
-  #else
-    ScalarIter<T> pin(in); ScalarIter<T> pout(out);
-    idx_aloop2_on(pin,in,pout,out) {
-      *pout = saturate(pow((double) *pin, (double) p), T);
-    }
-  #endif
-#else
+    idx_checknelems2_all(in, out);
     idx_aloopf2(pin, in, T, pout, out, T, {
 	*pout = saturate(pow((double)(*pin), (double)p), T);
     });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
   // idx_sum
-
-#ifndef __OPENMP__
+//#ifndef __OPENMP__
 
   // there is a much faster and parallel way
   // of doing this using a tree.
-template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
+  template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
     Tout z = 0;
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp;
-    idx_aloop1_on(pinp,inp) { z += (Tout)(*pinp); }
-  #else
-    ScalarIter<T> pinp(inp);
-    idx_aloop1_on(pinp,inp) { z += (Tout)(*pinp); }
-  #endif
-#else
     idx_aloopf1(pinp, inp, T, { z += (Tout)(*pinp); });
-#endif
     return z;
   }
 
@@ -1177,21 +783,11 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   // of doing this using a tree.
   template<class T> T idx_sum(idx<T> &inp) {
     T z = 0;
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp;
-    idx_aloop1_on(pinp,inp) { z += (T)(*pinp); }
-  #else
-    ScalarIter<T> pinp(inp);
-    idx_aloop1_on(pinp,inp) { z += (T)(*pinp); }
-  #endif
-#else
     idx_aloopf1(pinp, inp, T, { z += (T)(*pinp); });
-#endif
     return z;
   }
 
-#endif /* ifndef __OPENMP__ */
+// #endif /* ifndef __OPENMP__ */
 
   ////////////////////////////////////////////////////////////////////////
   // idx_sumabs
@@ -1200,17 +796,7 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   // of doing this using a tree.
   template<class T> float64 idx_sumabs(idx<T> &inp, T *out) {
     float64 z = 0;
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp;
-    idx_aloop1_on(pinp,inp) { z += abs((float64)(*pinp)); }
-  #else
-    ScalarIter<T> pinp(inp);
-    idx_aloop1_on(pinp,inp) { z += abs((float64)(*pinp)); }
-  #endif
-#else
     idx_aloopf1(pinp, inp, T, { z += abs((float64)(*pinp)); });
-#endif
     if (out != NULL) {
       *out = saturate(z, T);
       return *out;
@@ -1225,17 +811,7 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   // of doing this using a tree.
   template<class T> float64 idx_sumsqr(idx<T> &inp) {
     float64 z = 0;
-#if USING_FAST_ITERS == 0
-  #if USING_STL_ITERS == 0
-    idxiter<T> pinp;
-    idx_aloop1_on(pinp,inp) { z += ((float64)(*pinp))*((float64)(*pinp)); }
-  #else
-    ScalarIter<T> pinp(inp);
-    idx_aloop1_on(pinp,inp) { z += ((float64)(*pinp))*((float64)(*pinp)); }
-  #endif
-#else
     idx_aloopf1(pinp, inp, T, { z += ((float64)(*pinp))*((float64)(*pinp)); });
-#endif
     return z;
   }
 
@@ -1269,15 +845,10 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   // idx_l1
 
   template<class T> float64 idx_l1(idx<T> &m1, idx<T> &m2) {
+    idx_checknelems2_all(m1, m2);
     float64 z = 0;
-#if USING_FAST_ITERS == 0
-    idxiter<T> pm1, pm2;
-    idx_aloop2_on(pm1,m1,pm2,m2) {
-      z += (float64) fabs((float64) (*pm1 - *pm2)); }
-#else
     idx_aloopf2(pm1, m1, T, pm2, m2, T,
 		{ z += (float64) fabs((float64) (*pm1 - *pm2)); });
-#endif
     return z;
   }
 
@@ -1293,19 +864,46 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   }
 
   template<class T> float64 idx_l2(idx<T> &m1, idx<T> &m2) {
+    idx_checknelems2_all(m1, m2);
     float64 z = 0;
     float64 tmp;
-#if USING_FAST_ITERS == 0
-    idxiter<T> pm1, pm2;
-    idx_aloop2_on(pm1,m1,pm2,m2) {
-      tmp = *pm1 - (float64) *pm2;
-      z += tmp * tmp;
-    }
-#else
     idx_aloopf2(pm1, m1, T, pm2, m2, T,
 		{ tmp = *pm1 - (float64) *pm2;
 		  z += tmp * tmp; });
-#endif
+    return sqrt(z);
+  }
+
+  template<class T> float64 idx_l2(midx<T> &m1, midx<T> &m2) {
+    idx_checknelems2_all(m1, m2);
+    float64 z = 0;
+    idx_aloopf2(pe1, ((idx<idx<T>*>&) m1), idx<T>*,
+		pe2, ((idx<idx<T>*>&) m2), idx<T>*, {
+		  idx<T> *e1 = *pe1; idx<T> *e2 = *pe2;
+		  if (e1 && e2)
+		    z += idx_l2(*e1, *e2);
+		  else if (e1 != e2)
+		    eblerror("expected both matrices to be empty in " << m1
+			     << " and " << m2);
+		});
+    return sqrt(z);
+  }
+
+  template<class T> float64 idx_l2common(midx<T> &m1, midx<T> &m2) {
+    idx_checknelems2_all(m1, m2);
+    float64 z = 0;
+    idx_aloopf2(pe1, ((idx<idx<T>*>&) m1), idx<T>*,
+		pe2, ((idx<idx<T>*>&) m2), idx<T>*, {
+		  idx<T> *e11 = *pe1; idx<T> *e22 = *pe2;
+		  if (e11 && e22) {
+		    idx<T> e1 = *e11; idx<T> e2 = *e22;
+		    idx_checkorder2_all(e1, e2);
+		    for (intg i = 0; i < e1.order(); ++i) {
+		      e1 = e1.narrow(i, std::min(e1.dim(i), e2.dim(i)), 0);
+		      e2 = e2.narrow(i, std::min(e1.dim(i), e2.dim(i)), 0);
+		    }
+		    z += idx_l2(e1, e2);
+		  }
+		});
     return sqrt(z);
   }
 
@@ -1323,23 +921,24 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   ////////////////////////////////////////////////////////////////////////
   // idx_std_normalize
 
-  template<typename T> void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean_) {
-    idx_checknelems2_all(in, out);
+  template<typename T>
+  void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean_) {
     T mean = mean_ ? *mean_ : idx_mean(in);
     idx_addc(in, (T)-mean, out); // remove mean
+    // std deviation
 #ifdef __WINDOWS__
-    T coeff = (T) sqrt((double) (idx_sumsqr(out) / out.nelements())); // std deviation
+    T coeff = (T) sqrt((double) (idx_sumsqr(out) / out.nelements()));
 #else
-    T coeff = (T) sqrt((T) (idx_sumsqr(out) / out.nelements())); // std deviation
+    T coeff = (T) sqrt((T) (idx_sumsqr(out) / out.nelements()));
 #endif
     if (coeff != 0)
       idx_dotc(out, 1 / coeff, out);
   }
 
   ////////////////////////////////////////////////////////////////////////
-  // rev_idx2*
+  // idx_flip
 
-  template<class T> idx<T> idx_flip(idx<T> &m, uint n, idx<T> *m2) {
+  template <class T> idx<T> idx_flip(idx<T> &m, uint n, idx<T> *m2) {
     if (m2 == NULL) {
       idx<T> flipped(m.get_idxdim());
       return idx_flip(m, n, &flipped);
@@ -1360,6 +959,37 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
 	  idx_bloop2(mm, m, T, mm2, *m2, T) {
 	    idx_flip(mm, n - 1, &mm2);
 	  }
+	}
+      }
+      return *m2;
+    }
+  }
+
+  template <class T> midx<T> idx_flip(midx<T> &m, uint n, midx<T> *m2) {
+    if (m2 == NULL) {
+      midx<T> flipped(m.get_idxdim());
+      // allocate all elements
+      flipped.resize(m);
+      return idx_flip(m, n, &flipped);
+    } else {
+      if (!m.same_dim(*m2)) {
+	eblerror("expected same dim idx in idx_flip, but got " << m
+		 << " and " << *m2);
+      } else {
+	// loop on each object of m and flip it
+	if (m.order() == 1) {
+	  for (intg i = 0; i < m.dim(0); ++i) {
+	    idx<T> tmp = m.get(i);
+	    tmp = idx_flip(tmp, n);
+	    m2->set(tmp, i);
+	  }
+	} else if (m.order() == 2) {
+	  for (intg i = 0; i < m.dim(0); ++i)
+	    for (intg j = 0; j < m.dim(1); ++j) {
+	      idx<T> tmp = m.get(i, j);
+	      tmp = idx_flip(tmp, n);
+	      m2->set(tmp, i, j);
+	    }
 	}
       }
       return *m2;
@@ -1400,65 +1030,119 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   /* matrix - vector product */
   template<class T>
   void idx_m2dotm1(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
-    T *c1, *c2, *c1_0, *ker; 
-    intg c1_m1 = i1.mod(1), c2_m0 = i2.mod(0); 
-    intg j, jmax = i2.dim(0); 
-    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0); 
-    T *d1, f; 
-    intg i, imax = o1.dim(0); 
+    T *c1, *c2, *c1_0, *ker;
+    intg c1_m1 = i1.mod(1), c2_m0 = i2.mod(0);
+    intg j, jmax = i2.dim(0);
+    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0);
+    T *d1, f;
+    intg i, imax = o1.dim(0);
     c1_0 = i1.idx_ptr();
     ker = i2.idx_ptr();
     d1 = o1.idx_ptr();
-    for (i=0; i<imax; i++){ 
-      f = 0; 
-      c1 = c1_0; 
-      c2 = ker; 
-      if(c1_m1==1 && c2_m0==1) 
-	for (j=0; j<jmax; j++)  
-	  f += (*c1++)*(*c2++); 
-      else 
-	for (j=0; j<jmax; j++) { 
-	  f += (*c1)*(*c2); 
-	  c1 += c1_m1; 
-	  c2 += c2_m0; 
-	} 
-      *d1 = f; 
-      d1 += d1_m0; 
-      c1_0 += c1_m0; 
-    } 
+    for (i=0; i<imax; i++){
+      f = 0;
+      c1 = c1_0;
+      c2 = ker;
+      if(c1_m1==1 && c2_m0==1)
+	for (j=0; j<jmax; j++)
+	  f += (*c1++)*(*c2++);
+      else
+	for (j=0; j<jmax; j++) {
+	  f += (*c1)*(*c2);
+	  c1 += c1_m1;
+	  c2 += c2_m0;
+	}
+      *d1 = f;
+      d1 += d1_m0;
+      c1_0 += c1_m0;
+    }
   }
-  
+
   /* multiply M2 by M1, result in M1 */
-  template<class T>
+  template <class T>
   void idx_m2dotm1acc(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
     T *c1, *c2, *c1_0, *ker;
-    intg c1_m1 = i1.mod(1), c2_m0 = i2.mod(0); 
-    intg j, jmax = i2.dim(0); 
-    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0); 
-    T *d1, f; 
-    intg i, imax = o1.dim(0); 
+    intg c1_m1 = i1.mod(1), c2_m0 = i2.mod(0);
+    intg j, jmax = i2.dim(0);
+    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0);
+    T *d1, f;
+    intg i, imax = o1.dim(0);
     c1_0 = i1.idx_ptr();
     ker = i2.idx_ptr();
     d1 = o1.idx_ptr();
-    for (i=0; i<imax; i++){ 
-      f = *d1; 
-      c1 = c1_0; 
-      c2 = ker; 
-      for (j=0; j<jmax; j++) { 
-	f += (*c1)*(*c2); 
-	c1 += c1_m1; 
-	c2 += c2_m0; 
-      } 
-      *d1 = f; 
-      d1 += d1_m0; 
-      c1_0 += c1_m0; 
-    } 
+    for (i=0; i<imax; i++){
+      f = *d1;
+      c1 = c1_0;
+      c2 = ker;
+      for (j=0; j<jmax; j++) {
+	f += (*c1)*(*c2);
+	c1 += c1_m1;
+	c2 += c2_m0;
+      }
+      *d1 = f;
+      d1 += d1_m0;
+      c1_0 += c1_m0;
+    }
+  }
+
+  template <class T>
+  void idx_m2dotm3(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
+    idx_bloop2(ii2, i2, T, oo1, o1, T) {
+      idx_bloop2(iii2, ii2, T, ooo1, oo1, T) {
+	idx_m2dotm1(i1, iii2, ooo1);
+      }
+    }      
   }
   
+  // m2dotm2 ///////////////////////////////////////////////////////////////////
+
+  template <class T>
+  void idx_m2dotm2(idx<T> &i1, idx<T> &i2, idx<T> &o) {
+    idx_checkorder3(i1, 2, i2, 2, o, 2);
+    if (i1.dim(1) != i2.dim(0) || i1.dim(0) != o.dim(0) ||
+	o.dim(1) != i2.dim(1))
+      eblerror("incompatible dimensions for matrix-matrix multiplication of "
+	       << i1 << " . " << i2 << " -> " << o);
+    T *c1, *c2, *c1_0, *ker;
+    intg c1_m1 = i1.mod(1), c2_m0 = i2.mod(0);
+    intg j, jmax = i2.dim(0);
+    intg c1_m0 = i1.mod(0), d1_m0 = o.mod(0);
+    T *d1, f;
+    intg i, imax = o.dim(0);
+    intg k, kmax = o.dim(1);
+    // loop on o.dim(1)
+    for (k = 0; k < kmax; ++k) {
+      c1_0 = i1.idx_ptr();
+      d1 = o.idx_ptr() + k;
+      ker = i2.idx_ptr() + k;
+      // loop on o.dim(0)
+      for (i=0; i<imax; i++){
+	f = 0;
+	c1 = c1_0;
+	c2 = ker;
+	// loop on
+	if(c1_m1==1 && c2_m0==1)
+	  for (j=0; j<jmax; j++)
+	    f += (*c1++)*(*c2++);
+	else
+	  for (j=0; j<jmax; j++) {
+	    f += (*c1)*(*c2);
+	    c1 += c1_m1;
+	    c2 += c2_m0;
+	  }
+	*d1 = f;
+	d1 += d1_m0;
+	c1_0 += c1_m0;
+      }
+    }
+  }
+
+  // m4dotm2 ///////////////////////////////////////////////////////////////////
+
   // TODO-0 write specialized blas version in cpp
   template<class T> void idx_m4dotm2(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
     idx_checkorder3(i1, 4, i2, 2, o1, 2); // check for compatible orders
-    if ((i1.dim(0) != o1.dim(0)) || (i1.dim(1) != o1.dim(1)) 
+    if ((i1.dim(0) != o1.dim(0)) || (i1.dim(1) != o1.dim(1))
 	|| (i1.dim(2) != i2.dim(0)) || (i1.dim(3) != i2.dim(1)))
       idx_compatibility_error3(i1, i2, o1, "incompatible dimensions");
     T *c1, *c1_2;
@@ -1505,7 +1189,7 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   // TODO-0 write specialized blas version in cpp
   template<class T> void idx_m4dotm2acc(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
     idx_checkorder3(i1, 4, i2, 2, o1, 2); // check for compatible orders
-    if ((i1.dim(0) != o1.dim(0)) || (i1.dim(1) != o1.dim(1)) 
+    if ((i1.dim(0) != o1.dim(0)) || (i1.dim(1) != o1.dim(1))
 	|| (i1.dim(2) != i2.dim(0)) || (i1.dim(3) != i2.dim(1)))
       idx_compatibility_error3(i1, i2, o1, "incompatible dimensions");
     T *c1, *c1_2;
@@ -1803,14 +1487,18 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
 
   template <class T> T idx_max(idx<T> &m) {
     T v = *(m.idx_ptr());
-#if USING_FAST_ITERS == 0
-    { idx_aloop1(i, m, T) {
-	if (*i > v) v = *i;
-      }}
-#else
     idx_aloopf1(i, m, T, { if (*i > v) v = *i; });
-#endif
     return v;
+  }
+
+  // idx_max (between 2 idx's, in-place)
+  template <class T> void idx_max(idx<T> &in1, idx<T> &in2) {
+    idx_aloopf2(i1, in1, T, i2, in2, T, { *i2 = std::max(*i1, *i2); });
+  }
+
+  // idx_max (between 2 idx's, not-in-place)
+  template <class T> void idx_max(idx<T> &in1, idx<T> &in2, idx<T> &out) {
+    idx_aloopf3(i1, in1, T, i2, in2, T, o, out, T, { *o = std::max(*i1, *i2);});
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -1818,27 +1506,13 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
 
   template <class T> T idx_min(idx<T> &m) {
     T v = *(m.idx_ptr());
-#if USING_FAST_ITERS == 0
-    { idx_aloop1(i, m, T) {
-	if (*i < v) v = *i;
-      }}
-#else
     idx_aloopf1(i, m, T, { if (*i < v) v = *i; });
-#endif
     return v;
   }
 
-  ////////////////////////////////////////////////////////////////////////
   // idx_min (between 2 idx's, in-place)
-
   template <class T> void idx_min(idx<T> &in1, idx<T> &in2) {
-#if USING_FAST_ITERS == 0
-    idx_aloop2(i1, in1, T, i2, in2, T) {
-      *i2 = std::min(*i1, *i2);
-    }
-#else
     idx_aloopf2(i1, in1, T, i2, in2, T, { *i2 = std::min(*i1, *i2); });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -1847,15 +1521,6 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   template<class T> intg idx_indexmax(idx<T> &m) {
     intg i = 0, imax = 0;
     T v = *(m.idx_ptr());
-#if USING_FAST_ITERS == 0
-    { idx_aloop1(me, m, T) {
-	if (*me > v) {
-	  v = *me;
-	  imax = i;
-	}
-	i++;
-      }}
-#else
     idx_aloopf1(me, m, T, {
 	if (*me > v) {
 	  v = *me;
@@ -1863,7 +1528,6 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
 	}
 	i++;
       });
-#endif
     return imax;
   }
 
@@ -1873,15 +1537,6 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
   template<class T> intg idx_indexmin(idx<T> &m) {
     intg i = 0, imin = 0;
     T v = *(m.idx_ptr());
-#if USING_FAST_ITERS == 0
-    { idx_aloop1(me, m, T) {
-	if (*me < v) {
-	  v = *me;
-	  imin = i;
-	}
-	i++;
-      }}
-#else
     idx_aloopf1(me, m, T, {
 	if (*me < v) {
 	  v = *me;
@@ -1889,34 +1544,7 @@ template<typename Tout, typename T> Tout idx_sum(idx<T> &inp) {
 	}
 	i++;
       });
-#endif
     return imin;
-  }
-
-  ////////////////////////////////////////////////////////////////////////
-  // idx_max (between 2 idx's, in-place)
-
-  template <class T> void idx_max(idx<T> &in1, idx<T> &in2) {
-#if USING_FAST_ITERS == 0
-    idx_aloop2(i1, in1, T, i2, in2, T) {
-      *i2 = std::max(*i1, *i2);
-    }
-#else
-    idx_aloopf2(i1, in1, T, i2, in2, T, { *i2 = std::max(*i1, *i2); });
-#endif
-  }
-
-  ////////////////////////////////////////////////////////////////////////
-  // idx_max (between 2 idx's, not-in-place)
-  
-  template <class T> void idx_max(idx<T> &in1, idx<T> &in2, idx<T> &out) {
-#if USING_FAST_ITERS == 0
-    { idx_aloop3(i1, in1, T, i2, in2, T, o, out, T) {
-	*o = std::max(*i1, *i2);
-      }}
-#else
-    idx_aloopf3(i1, in1, T, i2, in2, T, o, out, T, { *o = std::max(*i1, *i2); });
-#endif
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -1967,7 +1595,7 @@ template<class T1, class T2> void idx_sortdown(idx<T1> &m, idx<T2> &p) {
     }
   }
 
-//! Sorts in-place elements of (continuous) vector <m> 
+//! Sorts in-place elements of (continuous) vector <m>
 //! in ascending order.
 template<class T> void idx_sortup(idx<T> &m) {
   idx_checkorder1(m, 1);
@@ -1976,7 +1604,7 @@ template<class T> void idx_sortup(idx<T> &m) {
   if (n > 1) {
     int l,j,ir,i;
     T *ra, rra;
-    
+
     ra = m.idx_ptr() - 1;
     l=(n >> 1)+1;
     ir= n;
@@ -1988,7 +1616,7 @@ template<class T> void idx_sortup(idx<T> &m) {
 	ra[ir]=ra[1];
 	if (--ir == 1) {
 	  ra[1]=rra;
-	  goto end; 
+	  goto end;
 	}
       }
       i=l;
@@ -1998,15 +1626,15 @@ template<class T> void idx_sortup(idx<T> &m) {
 	if (rra < ra[j]) {
 	  ra[i]=ra[j];
 	  j += (i=j);
-	} else j=ir+1; 
+	} else j=ir+1;
       }
-      ra[i]=rra; 
+      ra[i]=rra;
     }
   }
  end:;
 }
 
-//! Sorts in-place elements of (continuous) vector <m> 
+//! Sorts in-place elements of (continuous) vector <m>
 //! in ascending order.
 template<class T1, class T2> void idx_sortup(idx<T1> &m, idx<T2> &m2) {
   idx_checkorder2(m, 1, m2, 1);
@@ -2017,7 +1645,7 @@ template<class T1, class T2> void idx_sortup(idx<T1> &m, idx<T2> &m2) {
     int l,j,ir,i;
     T1 *ra, rra;
     T2 *ra2, rra2;
-    
+
     ra = m.idx_ptr() - 1;
     ra2 = m2.idx_ptr() - 1;
     l=(n >> 1)+1;
@@ -2034,7 +1662,7 @@ template<class T1, class T2> void idx_sortup(idx<T1> &m, idx<T2> &m2) {
 	if (--ir == 1) {
 	  ra[1]=rra;
 	  ra2[1]=rra2;
-	  goto end; 
+	  goto end;
 	}
       }
       i=l;
@@ -2045,16 +1673,16 @@ template<class T1, class T2> void idx_sortup(idx<T1> &m, idx<T2> &m2) {
 	  ra[i]=ra[j];
 	  ra2[i]=ra2[j];
 	  j += (i=j);
-	} else j=ir+1; 
+	} else j=ir+1;
       }
-      ra[i]=rra; 
-      ra2[i]=rra2; 
+      ra[i]=rra;
+      ra2[i]=rra2;
     }
   }
  end:;
 }
 
-//! Sorts in-place elements of (continuous) vector <m> 
+//! Sorts in-place elements of (continuous) vector <m>
 //! in ascending order.
 template<class T1, class T2, class T3> void idx_sortup(idx<T1> &m, idx<T2> &m2,
 							idx<T3> &m3) {
@@ -2067,7 +1695,7 @@ template<class T1, class T2, class T3> void idx_sortup(idx<T1> &m, idx<T2> &m2,
     T1 *ra, rra;
     T2 *ra2, rra2;
     T3 *ra3, rra3;
-    
+
     ra = m.idx_ptr() - 1;
     ra2 = m2.idx_ptr() - 1;
     ra3 = m3.idx_ptr() - 1;
@@ -2089,7 +1717,7 @@ template<class T1, class T2, class T3> void idx_sortup(idx<T1> &m, idx<T2> &m2,
 	  ra[1]=rra;
 	  ra2[1]=rra2;
 	  ra3[1]=rra3;
-	  goto end; 
+	  goto end;
 	}
       }
       i=l;
@@ -2101,11 +1729,11 @@ template<class T1, class T2, class T3> void idx_sortup(idx<T1> &m, idx<T2> &m2,
 	  ra2[i]=ra2[j];
 	  ra3[i]=ra3[j];
 	  j += (i=j);
-	} else j=ir+1; 
+	} else j=ir+1;
       }
-      ra[i]=rra; 
-      ra2[i]=rra2; 
-      ra3[i]=rra3; 
+      ra[i]=rra;
+      ra2[i]=rra2;
+      ra3[i]=rra3;
     }
   }
  end:;
@@ -2118,7 +1746,7 @@ template<class T> void idx_sortdown(idx<T> &m) {
   if (n > 1) {
     int l,j,ir,i;
     T *ra, rra;
-    
+
     ra = m.idx_ptr() - 1;
     l=(n >> 1)+1;
     ir= n;
@@ -2139,7 +1767,7 @@ template<class T> void idx_sortdown(idx<T> &m) {
 	  ra[i]=ra[j];
 	  j += (i=j);
 	} else j=ir+1; }
-      ra[i]=rra; 
+      ra[i]=rra;
     }
   }
  end:;
@@ -2193,7 +1821,7 @@ template<class T> void idx_sortdown(idx<T> &m) {
   void idx_gaussian(idx<T> &in, double m, double sigma, idx<T> &out) {
     idx_aloopf2(i, in, T, o, out, T, {
 	*o = (T) gaussian((double) (*i), m, sigma);
-      });      
+      });
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -2294,50 +1922,56 @@ template<class T> void idx_sortdown(idx<T> &m) {
     idx_m4dotm2(uin, kernel, out);
   }
 
+  template<class T> void idx_3dconvol(idx<T> &in, idx<T> &kernel, idx<T> &out) {
+    idx_bloop2(i, in, T, o, out, T) {
+      idx_2dconvol(i, kernel, o);
+    }
+  }
+
   template <typename T>
   void idx_m1extm1(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
-    T *c2, *d1, *c1, *c2_0, *d1_0; 
-    intg c2_m0 = i2.mod(0), d1_m1 = o1.mod(1); 
-    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0); 
-    intg j, jmax = o1.dim(1); 
-    intg i, imax = o1.dim(0); 
+    T *c2, *d1, *c1, *c2_0, *d1_0;
+    intg c2_m0 = i2.mod(0), d1_m1 = o1.mod(1);
+    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0);
+    intg j, jmax = o1.dim(1);
+    intg i, imax = o1.dim(0);
     c1 = i1.idx_ptr();
     c2_0 = i2.idx_ptr();
     d1_0 = o1.idx_ptr();
-    for (i=0; i<imax; i++) { 
-      d1 = d1_0; 
-      c2 = c2_0; 
-      for (j=0; j<jmax; j++) { 
-	*d1 = (*c1)*(*c2); 
-	d1 += d1_m1; 
-	c2 += c2_m0; 
-      } 
-      d1_0 += d1_m0; 
-      c1 += c1_m0; 
-    } 
-  } 
+    for (i=0; i<imax; i++) {
+      d1 = d1_0;
+      c2 = c2_0;
+      for (j=0; j<jmax; j++) {
+	*d1 = (*c1)*(*c2);
+	d1 += d1_m1;
+	c2 += c2_m0;
+      }
+      d1_0 += d1_m0;
+      c1 += c1_m0;
+    }
+  }
 
   template <typename T>
   void idx_m1extm1acc(idx<T> &i1, idx<T> &i2, idx<T> &o1) {
-    T *c2, *d1, *c1, *c2_0, *d1_0; 
-    intg c2_m0 = i2.mod(0), d1_m1 = o1.mod(1); 
-    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0); 
-    intg j, jmax = o1.dim(1); 
-    intg i, imax = o1.dim(0); 
+    T *c2, *d1, *c1, *c2_0, *d1_0;
+    intg c2_m0 = i2.mod(0), d1_m1 = o1.mod(1);
+    intg c1_m0 = i1.mod(0), d1_m0 = o1.mod(0);
+    intg j, jmax = o1.dim(1);
+    intg i, imax = o1.dim(0);
     c1 = i1.idx_ptr();
     c2_0 = i2.idx_ptr();
     d1_0 = o1.idx_ptr();
-    for (i=0; i<imax; i++) { 
-      d1 = d1_0; 
-      c2 = c2_0; 
-      for (j=0; j<jmax; j++) { 
-	*d1 += (*c1)*(*c2); 
-	d1 += d1_m1; 
-	c2 += c2_m0; 
-      } 
-      d1_0 += d1_m0; 
-      c1 += c1_m0; 
-    } 
+    for (i=0; i<imax; i++) {
+      d1 = d1_0;
+      c2 = c2_0;
+      for (j=0; j<jmax; j++) {
+	*d1 += (*c1)*(*c2);
+	d1 += d1_m1;
+	c2 += c2_m0;
+      }
+      d1_0 += d1_m0;
+      c1 += c1_m0;
+    }
   }
 
   template <typename T>
@@ -2374,7 +2008,7 @@ template<class T> void idx_sortdown(idx<T> &m) {
   ////////////////////////////////////////////////////////////////
   // concatenation
 
-  template <typename T> 
+  template <typename T>
   idx<T> idx_concat(idx<T> &m1, idx<T> &m2, intg dim) {
     idxdim d(m1);
     // m1 and m2 must have the same order
@@ -2402,15 +2036,17 @@ template<class T> void idx_sortdown(idx<T> &m) {
     idx_aloopf1(mm, m, T, { *mm = (T) drand(v0, v1); });
   }
 
+  template <typename T>
+  void idx_random(idx<T> &m, double v) {
+    idx_aloopf1(mm, m, T, { *mm = (T) drand(v); });
+  }
 
 } // end namespace ebl
 
+/*
 #ifdef __OPENMP__
 #include "idxops_openmp.hpp"
 #endif
-
-#ifdef __IPP__
-#include "idxops_ipp.hpp"
-#endif
+*/
 
 #endif /* IDXOPS_HPP */

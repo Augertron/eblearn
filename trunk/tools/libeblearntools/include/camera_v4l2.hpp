@@ -56,11 +56,12 @@ namespace ebl {
 
   template <typename Tdata>
   camera_v4l2<Tdata>::camera_v4l2(const char *device, int height_, int width_,
-				  bool grayscale_)
+				  bool grayscale_, bool mode_rgb_)
     : camera<Tdata>(height_, width_), started(false),
       nbuffers(grayscale_ ? 1 : 3), buffers(new void*[nbuffers]),
-      sizes(new int[nbuffers]) {
-    cout << "Initializing V4l2 camera from device " << device << endl;
+      sizes(new int[nbuffers]), mode_rgb(mode_rgb_) {
+    cout << "Initializing V4l2 camera from device " << device
+	 << " to " << height_ << "x" << width_ << endl;
     if (grayscale_)
       cout << "V4l2 output is set to grayscale." << endl;
 #ifndef __LINUX__
@@ -71,8 +72,7 @@ namespace ebl {
     int width1 = -1; // width returned by camera 
     
     fd = open(device, O_RDWR);
-    if (fd == -1)
-      eblerror("could not open v4l2 device");
+    if (fd == -1) eblerror("could not open v4l2 device: " << device);
     struct v4l2_capability cap;
     struct v4l2_cropcap cropcap;
     struct v4l2_crop crop;
@@ -99,13 +99,21 @@ namespace ebl {
       crop.c = cropcap.defrect; 
       ioctl(fd, VIDIOC_S_CROP, &crop);
     }
+    // get list of supported image formats
+        memset((void*) &fmt, 0, sizeof(struct v4l2_format));
+        ioctl(fd, VIDIOC_G_FMT, &fmt);
+    
     // set format
     memset((void*) &fmt, 0, sizeof(struct v4l2_format));
     fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     // TODO: error when ratio not correct
     fmt.fmt.pix.width       = width_; 
     fmt.fmt.pix.height      = height_;
-    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+    // Looks like most cams dont support RGB output, converting it by hand
+    //    if(mode_rgb)
+    //      fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB;//V4L2_PIX_FMT_RGB32;
+    // else
+      fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
     fmt.fmt.pix.field       = V4L2_FIELD_ANY;
     if (ioctl(fd, VIDIOC_S_FMT, &fmt) < 0) {
       // (==> this cleanup)
@@ -353,7 +361,7 @@ namespace ebl {
   }
   
 #endif
-  
+
   template <typename Tdata>
   idx<Tdata> camera_v4l2<Tdata>::grab() {
 #ifdef __LINUX__
@@ -388,6 +396,16 @@ namespace ebl {
       dst += m0;
     }
     ret += ioctl(fd, VIDIOC_QBUF, &buf);
+    if(mode_rgb) {
+      // convert yuv to rgb
+      idx<float>  fyuv(height,width,nbuffers);
+      idx_copy(frame,fyuv);
+      idx<float> frame_frgb(height,width,nbuffers);
+      yuv_to_rgb(fyuv ,frame_frgb);
+      idx<Tdata> frame_rgb(height,width,nbuffers);
+      idx_copy(frame_frgb,frame_rgb);
+      frame = frame_rgb;
+    }
     // todo: resize in postprocessing if different size than expected
     //        e.g.: illegal ratio
 #endif

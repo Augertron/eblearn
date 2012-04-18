@@ -48,46 +48,37 @@ namespace ebl {
   template <typename T, class Tstate>
   detector<T,Tstate>::
   detector(module_1_1<T,Tstate> &thenet_, vector<string> &labels_,
-	   answer_module<T,T,T,Tstate> &answer_,
+	   answer_module<T,T,T,Tstate> *answer_,
 	   resizepp_module<T,Tstate> *resize, const char *background,
 	   std::ostream &o, std::ostream &e,
 	   bool adapt_scales_)
     : thenet(thenet_), resizepp(resize), resizepp_delete(false),
-      input(NULL), output(NULL), minput(NULL), bgclass(-1), mask_class(-1),
-      scales_step(0), min_scale(1.0), max_scale(1.0), restype(ORIGINAL),
-      silent(false), save_mode(false), save_dir(""),
-      save_counts(labels_.size(), 0), min_size(0),
-      max_size(limits<uint>::max()),
-      bodetections(false), bppdetections(false), pruning(pruning_overlap),
-      bbhfactor(1.0), bbwfactor(1.0), bb_woverh(1.0),
-      bbhfactor2(1.0), bbwfactor2(1.0),
-      mem_optimization(false), optimization_swap(false), keep_inputs(true),
-      mout(o), merr(e), min_hcenter_dist(0.0),
-      min_wcenter_dist(0.0), max_center_dist(0.0), max_center_dist2(0.0),
-      max_wcenter_dist(0.0), max_wcenter_dist2(0.0),
-      min_wcenter_dist2(0.0), min_scale_pred(0.0), max_scale_pred(0.0),
-      max_overlap(.5), max_overlap2(0.0), mean_bb(false),
-      max_object_hratio(0.0), min_input_height(-1), min_input_width(-1),
-      smoothing_type(0), initialized(false), bboxes_off(false),
-      adapt_scales(adapt_scales_), answer(answer_), cluster_nms(false) {
+      input(NULL), minput(NULL), netdim_fixed(false),
+      bgclass(-1), mask_class(-1), pnms(NULL), scales_step(0), min_scale(1.0),
+      max_scale(1.0), restype(ORIGINAL), silent(false), save_mode(false),
+      save_dir(""), save_counts(labels_.size(), 0), min_size(0), max_size(0),
+      bodetections(false), bppdetections(false), mem_optimization(false),
+      optimization_swap(false), keep_inputs(true), hzpad(0), wzpad(0),
+      mout(o), merr(e), smoothing_type(0), initialized(false),
+      bboxes_off(false), adapt_scales(adapt_scales_), answer(answer_),
+      ignore_outsiders(false), corners_inference(0), corners_infered(false),
+      pre_threshold(0), bbox_decision(0) {
     // // make sure the top module is an answer module
     // module_1_1<T,Tstate> *last = thenet.last_module();
     // if (!dynamic_cast<answer_module<T,Tstate>*>(last))
     //   eblerror("expected last module to be of type answer_module but found: "
     // 	       << last->name());
     scaler_mode = false;
-    if (dynamic_cast<scaler_answer<T,T,T,Tstate>*>(&answer) ||
-	dynamic_cast<scalerclass_answer<T,T,T,Tstate>*>(&answer))
+    if (answer && (dynamic_cast<scaler_answer<T,T,T,Tstate>*>(answer) ||
+		   dynamic_cast<scalerclass_answer<T,T,T,Tstate>*>(answer)))
       scaler_mode = true;
-    mout << "Using answer module: " << answer.describe() << endl;
+    if (answer) mout << "Using answer module: " << answer->describe() << endl;
     // look for resize module in network
     if (!resizepp) {
-      resizepp = find(&thenet, resizepp);
-      if (resizepp)
-	mout << "Found a resizepp module in network: " << resizepp->describe()
-	     << endl;
-      else
-	mout << "No resizepp module found in network." << endl;
+      resizepp = arch_find(&thenet, resizepp);
+      if (resizepp) mout << "Found a resizepp module in network: "
+			 << resizepp->describe() << endl;
+      else mout << "No resizepp module found in network." << endl;
     }
     // set default resizing module
     if (!resizepp) {
@@ -103,15 +94,24 @@ namespace ebl {
     //#endif
     // initilizations
     save_max_per_frame = limits<uint>::max();
-    share_parts = false;
+    diverse_ordering = false;
+    // set outpout streams of network
+    thenet.set_output_streams(o, e);
+    update_merge_alignment();
   }
-  
+
+  template <typename T, class Tstate>
+  detector<T,Tstate>::~detector() {
+    if (resizepp_delete && resizepp) delete resizepp;
+    if (pnms) delete pnms;
+  }
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_scaling_original() {
     nscales = 1;
     restype = ORIGINAL;
   }
-  
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_scaling_type(t_scaling type) {
     restype = type;
@@ -129,9 +129,9 @@ namespace ebl {
     }
     mout << ")" << endl;
   }
-  
+
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_resolutions(const vector<idxdim> &scales_) {
+  void detector<T,Tstate>::set_resolutions(const midxdim &scales_) {
     restype = MANUAL;
     manual_scales = scales_;
     if (manual_scales.size() == 0)
@@ -142,19 +142,26 @@ namespace ebl {
       d.insert_dim(0, 1);
     }
   }
-  
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_resolutions(const vector<double> &factors) {
     restype = SCALES;
     scale_factors = factors;
   }
-  
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_resolution(double factor) {
+    restype = SCALES;
+    scale_factors.clear();
+    scale_factors.push_back(factor);
+  }
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_resolutions(int nscales_) {
     nscales = (uint) nscales_;
     restype = NSCALES;
   }
-  
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_resolutions(double scales_step_,
 					   double max_scale_,
@@ -167,12 +174,14 @@ namespace ebl {
 	 << ", min/max resolution factor " << min_scale << ", " << max_scale
 	 << endl;
   }
-  
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_zpads(float hzpad_, float wzpad_) {
     if (hzpad_ != 0 || wzpad_ != 0) {
-      idxdim minodim(1, 1, 1); // min output dims
-      netdim = thenet.bprop_size(minodim); // compute min input dims
+      if (!netdim_fixed) {
+	fidxdim minodim(1, 1, 1); // min output dims
+	netdim = thenet.bprop_size(minodim); // compute min input dims
+      }
       hzpad = (uint) (hzpad_ * netdim.dim(1));
       wzpad = (uint) (wzpad_ * netdim.dim(2));
       resizepp->set_zpads(hzpad, wzpad);
@@ -182,17 +191,7 @@ namespace ebl {
 	eblerror("zero padding coeff should be in [0 1] range");
     }
   }
-					   
-  template <typename T, class Tstate>
-  detector<T,Tstate>::~detector() {
-    for (uint i = 0; i < ppinputs.size(); ++i) {
-      if (ppinputs[i]) delete ppinputs[i];
-      if (outputs[i]) delete outputs[i];
-    }
-	if (resizepp_delete && resizepp)
-      delete resizepp;
-  }
-    
+
   template <typename T, class Tstate>
   int detector<T,Tstate>::get_class_id(const string &name) {
     for (uint i = 0; i < labels.size(); ++i)
@@ -200,11 +199,11 @@ namespace ebl {
 	return i;
     return -1;
   }
-  
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_bgclass(const char *bg) {
     string name;
-    
+
     if (bg)
       name = bg;
     else
@@ -221,7 +220,7 @@ namespace ebl {
   template <typename T, class Tstate>
   bool detector<T,Tstate>::set_mask_class(const char *mask) {
     string name;
-    
+
     if (!mask)
       return false;
     name = mask;
@@ -241,17 +240,6 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  string& detector<T,Tstate>::set_save(const string directory) {
-    save_mode = true;
-    save_dir = directory;
-    // save_dir += "_";
-    // save_dir += tstamp();
-    mout << "Enabling saving of detected regions into: ";
-    mout << save_dir << endl;
-    return save_dir;
-  }
-
-  template <typename T, class Tstate>
   void detector<T,Tstate>::set_max_resolution(uint max_size_) {
     uint mzpad = std::max(hzpad * 2, wzpad * 2);
     max_size = max_size_ + mzpad;
@@ -259,127 +247,93 @@ namespace ebl {
 	 << max_size_ << " (add twice max(hzpad,wzpad): " << mzpad
 	 << ")" << endl;
   }
-  
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_min_resolution(uint min_size_) {
     mout << "Setting minimum input size to " << min_size_ << "x"
 	 << min_size_ << "." << endl;
     min_size = min_size_;
   }
-  
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::set_pruning(t_pruning type,
-				       float min_hcenter_dist_, 
-				       float min_wcenter_dist_, 
-				       float max_overlap_,
-				       bool share_parts_,
-				       T threshold2_,
-				       float max_center_dist_, 
-				       float max_center_dist2_, 
-				       float max_wcenter_dist_, 
-				       float max_wcenter_dist2_, 
-				       float min_wcenter_dist2_, 
-				       float max_overlap2_, bool mean_bb_,
-				       float ss_mhd, float ss_mwd,
-				       float min_scale_pred_,
-				       float max_scale_pred_) {
-    mean_bb = mean_bb_;
-    share_parts = share_parts_;
-    threshold2 = threshold2_;
-    min_hcenter_dist = min_hcenter_dist_;
-    min_wcenter_dist = min_wcenter_dist_;
-    max_overlap = max_overlap_;
-    max_center_dist = max_center_dist_;
-    max_center_dist2 = max_center_dist2_;
-    max_wcenter_dist = max_wcenter_dist_;
-    max_wcenter_dist2 = max_wcenter_dist2_;
-    min_wcenter_dist2 = min_wcenter_dist2_;
-    max_overlap2 = max_overlap2_;
-    same_scale_mhd = ss_mhd;
-    same_scale_mwd = ss_mwd;
-    min_scale_pred = min_scale_pred_;
-    max_scale_pred = max_scale_pred_;
 
-    pruning = type;
-    mout << "Pruning of bounding boxings: ";
-    switch (pruning) {
-    case pruning_none: mout << "none"; break ;
-    case pruning_overlap:
-      mout << " overlap, ignore matching bboxes (intersection/union) beyond "
-	   << "the max_overlap threshold (" << max_overlap << ") and centers "
-	   << "closer than " << min_hcenter_dist << " * height and "
-	   << min_wcenter_dist << " * width." << endl;
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_raw_thresholds(vector<float> &t) {
+    mout << "Using multiple thresholds for raw bbox extractions: " << t << endl;
+    raw_thresholds = t;
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::
+  set_nms(t_nms type, float pre_threshold_, float post_threshold,
+	  float pre_hfact, float pre_wfact, float post_hfact, float post_wfact,
+	  float woverh, float max_overlap, float max_hcenter_dist,
+	  float max_wcenter_dist, float vote_max_overlap,
+	  float vote_max_hcenter_dist, float vote_max_wcenter_dist) {
+    pre_threshold = pre_threshold_;
+    if (pnms) delete pnms;
+    switch (type) {
+    case nms_none: break ; // none
+    case nms_overlap: // traditional overlap only
+      pnms = new nms
+	(post_threshold, max_overlap, max_hcenter_dist, max_wcenter_dist,
+	 pre_hfact, pre_wfact, post_hfact, post_wfact, woverh, mout, merr);
       break ;
-    default:
-      eblerror("unknown type of pruning " << pruning);
+    case nms_voting: // voting only
+      pnms = new voting_nms
+	(post_threshold, vote_max_overlap, vote_max_hcenter_dist,
+	 vote_max_wcenter_dist,
+	 pre_hfact, pre_wfact, post_hfact, post_wfact, woverh, mout, merr);
+      break ;
+    case nms_voting_overlap: // voting + traditional overlap
+      pnms = new voting_nms
+	(post_threshold, max_overlap, max_hcenter_dist, max_wcenter_dist,
+	 pre_hfact, pre_wfact, post_hfact, post_wfact, woverh,
+	 vote_max_overlap, vote_max_hcenter_dist, vote_max_wcenter_dist,
+	 mout, merr);
+      break ;
+    default: // unknown
+      eblerror("unknown type of nms " << type);
     }
-    mout << endl;
+    mout << "Non-maximum suppression (nms): "
+	 << (pnms ? pnms->describe() : "none") << endl;
   }
 
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::set_cluster_nms(bool set) {
-    cluster_nms = set;    
-    mout << "Clustering nms is "
-	 << (cluster_nms ? "enabled" : "disabled") << "." << endl;
-  }
-  
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_scaler_mode(bool set) {
     scaler_mode = set;
     mout << "Scaler mode is "
 	 << (scaler_mode ? "enabled" : "disabled") << "." << endl;
   }
-  
+
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_bbox_factors(float hfactor, float wfactor,
-					    float woverh,
-					    float hfactor2, float wfactor2) {
-    bbhfactor = hfactor;
-    bbwfactor = wfactor;
-    bb_woverh = woverh;
-    bbhfactor2 = hfactor2;
-    bbwfactor2 = wfactor2;
-    mout << "Setting factors on output bounding boxes sizes, height: "
-	 << hfactor << ", width: " << wfactor << ", woverh: " << bb_woverh
-	 << ", height2: "
-	 << hfactor2 << ", width2: " << wfactor2 << endl;
+  void detector<T,Tstate>::set_netdim(idxdim &d) {
+    netdim = d;
+    netdim.insert_dim(0, 1);
+    netdim_fixed = true;
+    mout << "Manually setting network's minimum input to " << d << endl;
   }
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_max_object_hratio(double hratio) {
-    max_object_hratio = hratio;
-    mout << "Max image's height / object's height ratio is " << hratio << endl;
-  }
-
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::set_min_input(intg h, intg w) {
-    min_input_height = h;
-    min_input_width = w;
-    mout << "Manually setting network's minimum input: " << h << "x" << w 
-	 << endl;
-  }
-
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::set_mem_optimization(Tstate &in, Tstate &out, 
+  void detector<T,Tstate>::set_mem_optimization(Tstate &in, Tstate &out,
 						bool keep_inputs_) {
-    mout << "Optimizing memory usage by using only 2 alternating buffers";
-    mem_optimization = true;
-    keep_inputs = keep_inputs_;
-    mout << " (and " << (keep_inputs ? "":"not ")
-	 << "keeping multi-scale inputs)";
-    minput = &in;
-    input = &in;
-    output = &out;
-    // remember if we need to swap buffers because of odd operations.
-    optimization_swap = !thenet.optimize_fprop(*input, *output);
-    mout << endl;
+    eblwarn("mem optimization temporarly broken because out is now mstate");
+    // mout << "Optimizing memory usage by using only 2 alternating buffers";
+    // mem_optimization = true;
+    // keep_inputs = keep_inputs_;
+    // mout << " (and " << (keep_inputs ? "":"not ")
+    // 	 << "keeping multi-scale inputs)";
+    // minput = &in;
+    // input = &in;
+    // output = &out;
+    // // remember if we need to swap buffers because of odd operations.
+    // optimization_swap = !thenet.optimize_fprop(*input, *output);
+    // mout << endl;
   }
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_outputs_dumping(const char *name) {
     outputs_dump = name;
   }
-  
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_bboxes_off() {
     bboxes_off = true;
@@ -390,23 +344,47 @@ namespace ebl {
     return labels;
   }
 
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_ignore_outsiders() {
+    ignore_outsiders = true;
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_corners_inference(uint type) {
+    mout << "Setting corners inference type to " << type << endl;
+    corners_inference = type;
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_bbox_decision(uint type) {
+    bbox_decision = type;
+    mout << "Setting bbox decision type to " << type << endl;
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_bbox_scalings(mfidxdim &scalings) {
+    bbox_scalings = scalings;
+    mout << "Setting bbox scalings to " << bbox_scalings << endl;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // initialization
-  
+
   template <typename T, class Tstate>
-  void detector<T,Tstate>::init(idxdim &dsample) {
+  void detector<T,Tstate>::init(idxdim &dsample, const char *frame_name) {
     initialized = true;
     indim = dsample;
     // the network's minimum input dimensions
-    netdim = network_mindims(thenet, dsample.order());
-    mout << "Network's minimum input dimensions are: " << netdim
-	 << thenet.pretty(netdim) << endl;
+    if (!netdim_fixed)
+      netdim = network_mindims(thenet, dsample.order());
+    // mout << "Network's minimum input dimensions are: " << netdim
+    // 	 << thenet.pretty(netdim) << endl;
     // minimum input dimensions: factor of network's minimum input
     idxdim mindim = netdim * min_scale;
-    if (mindim.dim(1) + hzpad * 2 < netdim.dim(1))
-      mindim.setdim(1, netdim.dim(1) - hzpad * 2);
-    if (mindim.dim(2) + wzpad * 2 < netdim.dim(2))
-      mindim.setdim(2, netdim.dim(2) - wzpad * 2);
+    // if (mindim.dim(1) + hzpad * 2 < netdim.dim(1))
+    //   mindim.setdim(1, netdim.dim(1) - hzpad * 2);
+    // if (mindim.dim(2) + wzpad * 2 < netdim.dim(2))
+    //   mindim.setdim(2, netdim.dim(2) - wzpad * 2);
     mindim.setdim(0, dsample.dim(0)); // feature dimension is not scaled
     // maximum input dimensions: factor of original input
     idxdim maxdim = dsample * max_scale;
@@ -416,14 +394,11 @@ namespace ebl {
     maxdim.setdim(0, dsample.dim(0)); // feature dimension is not scaled
     // determine scales
     compute_scales(scales, netdim, mindim, maxdim, dsample, restype, nscales,
-		   scales_step);
+		   scales_step, frame_name);
     // reallocate buffers if number of scales has changed
     if (scales.size() != ppinputs.size()) {
-      // delete all buffers
-      for (uint i = 0; i < ppinputs.size(); ++i) {
-	if (ppinputs[i]) delete ppinputs[i];
-	if (outputs[i]) delete outputs[i];
-      }
+      EDEBUG("reallocating input and output buffers");
+      DEBUGMEM_PRETTY("detector init scales");
       ppinputs.clear();
       outputs.clear();
       actual_scales.clear();
@@ -432,12 +407,15 @@ namespace ebl {
       order.setdims(1); // minimum dims
       for (uint i = 0; i < scales.size(); ++i) {
 	mstate<Tstate> *ppin = new mstate<Tstate>();
-	ppin->push_back(order);
+	ppin->push_back(new Tstate(order));
 	ppinputs.push_back(ppin);
-	outputs.push_back(new Tstate(order));
+	mstate<Tstate> *ppout = new mstate<Tstate>();
+	ppout->push_back(new Tstate(order));
+	outputs.push_back(ppout);
       }
+      DEBUGMEM_PRETTY("detector end of init scales");
       // copy ideal scales to actual scales vector (to be modified later)
-      actual_scales = scales;
+      actual_scales.copy(scales);
     }
   }
 
@@ -446,53 +424,60 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::
-  compute_scales(vector<idxdim> &scales,
-		 idxdim &netdim, idxdim &mindim, idxdim &maxdim, idxdim &indim,
-		 t_scaling type, uint nscales, double scales_step) {
+  compute_scales(midxdim &scales, idxdim &netdim, idxdim &mindim,
+		 idxdim &maxdim, idxdim &indim, t_scaling type, uint nscales,
+		 double scales_step, const char *frame_name) {
     // fill scales based on scaling type
     scales.clear();
-    mout << "Scales: input: " << indim << " min: " << netdim
-	 << " max: " << maxdim << endl;
-    mout << "Scaling type " << type << ": ";
+    if (!silent)
+      mout << "Scales: input: " << indim << " min: " << netdim
+	   << " max: " << maxdim << endl
+	   << "Scaling type " << type << ": ";
     switch (type) {
     case ORIGINAL:
-      mout << "1 scale only, the image's original scale." << endl;
+      if (!silent) mout << "1 scale only, the image's original scale." << endl;
       scales.push_back(indim);
       break ;
     case MANUAL:
-      mout << "Manual specification of each scale size." << endl;
       scales = manual_scales;
+      if (!silent)
+	mout << "Manual specification of each scale size to: " << scales <<endl;
       break ;
     case SCALES:
-      mout << "Manual specification of each scale factor applied to "
-	   << "original dimensions." << endl;
+      if (!silent)
+	mout << "Manual specification of each scale factor applied to "
+	     << "original dimensions." << endl;
       compute_resolutions(scales, indim, scale_factors);
       break ;
     case NSCALES: // n scale between min and max resolutions
-      mout << nscales << " scales between min (" << netdim
-	   << ") and max (" << maxdim << ") scales." << endl;
+      if (!silent)
+	mout << nscales << " scales between min (" << netdim
+	     << ") and max (" << maxdim << ") scales." << endl;
       compute_resolutions(scales, netdim, maxdim, nscales);
       break ;
     case SCALES_STEP: // step fixed amount from scale from max down to min
-      mout << "Scale step of " << scales_step << " from max (" << maxdim
-	   << ") down to min (" << mindim << ") scale." << endl;
+      if (!silent)
+	mout << "Scale step of " << scales_step << " from max (" << maxdim
+	     << ") down to min (" << mindim << ") scale." << endl;
       compute_resolutions(scales, mindim, maxdim, scales_step);
       break ;
     case SCALES_STEP_UP: // step fixed amount from scale min up to max
-      mout << "Scale step of " << scales_step << " from min (" << mindim
-	   << ") up to max (" << maxdim << ") scale." << endl;
+      if (!silent)
+	mout << "Scale step of " << scales_step << " from min (" << mindim
+	     << ") up to max (" << maxdim << ") scale." << endl;
       compute_resolutions_up(scales, indim, mindim, maxdim, scales_step);
       break ;
     case NETWORK:
-      mout << "Resize all inputs to network's minimal size" << endl;
+      if (!silent)
+	mout << "Resize all inputs to network's minimal size" << endl;
       scales.push_back(netdim);
       break ;
     default: eblerror("unknown scaling mode");
     }
     // limit scales with max_size
-    for (vector<idxdim>::iterator i = scales.begin(); i != scales.end(); ) {
+    for (midxdim::iterator i = scales.begin(); i != scales.end(); ) {
       idxdim d = *i;
-      if (d.dim(1) > max_size || d.dim(2) > max_size) {
+      if (max_size > 0 && (d.dim(1) > max_size || d.dim(2) > max_size)) {
 	scales.erase(i);
 	mout << "removing scale " << d << " because of max size " << max_size
 	     << endl;
@@ -503,20 +488,18 @@ namespace ebl {
     for (uint i = 0; i < scales.size(); ++i)
       original_bboxes.push_back(bb);
     // print scales
-    mout << "multi-resolution detection initialized to ";
-    if (adapt_scales)
-      mout << "(network-adapted scales) ";
-    if (scales.size() == 0)
-      mout << "0 resolutions." << endl;
-    else
-      mout << scales.size() << " resolutions: " << scales;
+    mout << "Detection initialized to ";
+    if (adapt_scales) mout << "(network-adapted scales) ";
+    if (scales.size() == 0) mout << "0 resolutions." << endl;
+    else mout << scales.size() << " input resolutions: " << scales;
     mout << endl;
-    if (scales.size() == 0) eblerror("0 resolutions to compute");
+    if (scales.size() == 0)
+      eblthrow("0 resolutions to compute in " << frame_name);
   }
-  
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::
-  compute_resolutions(vector<idxdim> &scales,
+  compute_resolutions(midxdim &scales,
 		      idxdim &mindim, idxdim &maxdim, uint nscales) {
     scales.clear();
     if (nscales == 0)
@@ -534,7 +517,7 @@ namespace ebl {
       else
 	nscales = 2;
       merr << ") setting it to " << nscales << endl;
-    }    
+    }
     // only 1 scale if min == max or if only 1 scale requested.
     if ((mindim == maxdim) || (nscales == 1))
       scales.push_back(maxdim);
@@ -559,7 +542,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::
-  compute_resolutions(vector<idxdim> &scales,
+  compute_resolutions(midxdim &scales,
 		      idxdim &indims, vector<double> &scale_factors) {
     scales.clear();
     if (scale_factors.size() == 0)
@@ -575,7 +558,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::
-  compute_resolutions(vector<idxdim> &scales, idxdim &mindim, idxdim &maxdim,
+  compute_resolutions(midxdim &scales, idxdim &mindim, idxdim &maxdim,
 		      double scales_step) {
     scales.clear();
     double factor = 1 / scales_step;
@@ -586,14 +569,14 @@ namespace ebl {
     d.setdim(0, maxdim.dim(0)); // do not scale feature dimension
     while (d >= mindim) {
       scales.push_back(d);
-      d = d * factor;      
+      d = d * factor;
       d.setdim(0, maxdim.dim(0)); // do not scale feature dimension
     }
   }
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::
-  compute_resolutions_up(vector<idxdim> &scales, idxdim &indim, idxdim &mindim,
+  compute_resolutions_up(midxdim &scales, idxdim &indim, idxdim &mindim,
 			 idxdim &maxdim, double scales_step) {
     scales.clear();
     double factor = std::max(mindim.dim(1) / (double) indim.dim(1),
@@ -602,194 +585,13 @@ namespace ebl {
     d.setdim(0, maxdim.dim(0)); // do not scale feature dimension
     while (d <= maxdim) {
       d.set_max(mindim); // make sure each dimension is bigger than mindim
-      scales.insert(scales.begin(), 1, d);
+      scales.push_front_new(d);
       factor *= scales_step;
       d = indim * factor;
       d.setdim(0, maxdim.dim(0)); // do not scale feature dimension
     }
   }
 
-  //////////////////////////////////////////////////////////////////////////////
-  // pruning
-  
-  // prune a list of detections.
-  // only keep the largest scoring within an area
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::prune_overlap(vector<bbox*> &raw_bboxes,
-					 vector<bbox*> &pruned_bboxes,
-					 float max_match,
-					 bool same_class_only,
-					 float min_hcenter_dist,
-					 float min_wcenter_dist,
-					 float threshold,
-					 float same_scale_mhd,
-					 float same_scale_mwd) {
-    size_t ib, jb;
-    bbox *i, *j;
-//     // apply pre-process bb factors
-//     if (bbhfactor != 1.0 || bbwfactor != 1.0)
-//       for (ib = 0; ib < raw_bboxes.size(); ++ib)
-// 	raw_bboxes[ib]->scale_centered(bbhfactor, bbwfactor);
-    // for each bbox, check that matching with other bboxes does not go beyond
-    // the maximum authorized matching score (0 means no overlap, 1 is identity)
-    // and only keep ones with highest score when overlapping.
-    // prune
-    for (ib = 0; ib < raw_bboxes.size(); ++ib) {
-      i = raw_bboxes[ib];
-      if (i && i->class_id != bgclass && i->class_id != mask_class) {
-	if (i->confidence < threshold)
-	  continue ; // ignore if lower than threshold
-	bool add = true;
-	// check each other bbox
-	for (jb = 0; jb < raw_bboxes.size() && add; ++jb) {
-	  j = raw_bboxes[jb];
-	  if (j && i != j) {
-	    bool overlap = false;
-
-// 	    // horizontal matching
-// 	    float hmatch = (std::min(i->h0 + i->height, j->h0 + j->height) -
-// 			    std::max(i->h0, j->h0)) /
-// 	      (float) (std::max(i->height, j->height));
-// 	    float wmatch = (std::min(i->w0 + i->width, j->w0 + j->width) -
-// 			    std::max(i->w0, j->w0)) /
-// 	      (float) (std::max(i->width, j->width));
-// 	    if (hmatch > .8 && wmatch > max_match)
-// 	      overlap = true;
-
-	    // box matching
-	    float match = i->match(*j);
-	    if (match >= max_match)
-	      overlap = true; // there is overlap
-	    
-	    // forbid centers to be closer than min dist to each other in
-	    // each axis
-	    if ((i->center_hdistance(*j) < min_hcenter_dist
-	    	 && i->center_wdistance(*j) < min_wcenter_dist)
-	    	|| (j->center_hdistance(*i) < min_hcenter_dist
-	    	    && j->center_wdistance(*i) < min_wcenter_dist))
-	      overlap = true;
-	    // forbid centers to be closer than min dist to each other in
-	    // each axis
-	    // for boxes originating from the same scale.
-	    // similar to applying stride on output.
-	    if (i->scale_index == j->scale_index &&
-	    	((i->center_hdistance(*j) < same_scale_mhd
-	    	  && i->center_wdistance(*j) < same_scale_mwd)
-	    	 || (j->center_hdistance(*i) < same_scale_mhd
-	    	     && j->center_wdistance(*i) < same_scale_mwd)))
-	      overlap = true;
-	    // if same_class_only, allow pruning only if 2 bb are same class
-	    bool allow_pruning = !same_class_only ||
-	      (same_class_only && i->class_id == j->class_id);
-	    // keep only 1 bb if overlap and pruning is ok
-	    if (overlap && allow_pruning) {
-	      if (i->confidence < j->confidence) {
-		// it's not the highest confidence, stop here.
-		add = false;
-		break ;
-	      } else if (i->confidence == j->confidence) {
-		// we have a tie, keep the biggest one.
-		if (i->height * i->width > j->height * j->width) {
-		  delete j;
-		  raw_bboxes[jb] = NULL;
-		} else {
-		  delete i;
-		  raw_bboxes[ib] = NULL;
-		  add = false;
-		  break ;
-		}
-	      }
-	    }
-	  }
-	}
-	// if bbox survived, add it
-	if (add)
-	  pruned_bboxes.push_back(i);
-      }
-    }
-#ifdef __DEBUG__
-    mout << "Pruned " << raw_bboxes.size() << " bboxes to "
-	 << pruned_bboxes.size() << " bboxes." << endl;
-#endif
-    // // apply post process bb factors
-    // for (ib = 0; ib < pruned_bboxes.size(); ++ib) {
-    //   i = pruned_bboxes[ib];
-    //   // apply bbox factors
-    //   float h0 = i->h0 + (i->height - i->height * bbhfactor2)/2;
-    //   float w0 = i->w0 + (i->width - i->width * bbwfactor2)/2;
-    //   float height = i->height * bbhfactor2;
-    //   float width = i->width * bbwfactor2;
-    //   // // cut off bbox at image boundaries
-    //   // i->h0 = (int)std::max((float)0, h0);
-    //   // i->w0 = (int)std::max((float)0, w0);
-    //   // i->height = (int) MIN(height + h0, (int) image_dims.dim(1)) - i->h0;
-    //   // i->width = (int) MIN(width + w0, (int) image_dims.dim(2)) - i->w0;
-    // }
-  }
-	
-  // prune a list of detections, take average vote for overlapping areas
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::prune_vote(vector<bbox*> &raw_bboxes,
-				      vector<bbox*> &pruned_bboxes,
-				      float max_match,
-				      bool same_class_only,
-				      float min_hcenter_dist,
-				      float min_wcenter_dist,
-				      int classid) {
-    // for each bbox, check that matching with other bboxes does not go beyond
-    // the maximum authorized matching score (0 means no overlap, 1 is identity)
-    // and only keep ones with highest score when overlapping.
-    size_t ib, jb;
-    bbox *i, *j;
-    for (ib = 0; ib < raw_bboxes.size(); ++ib) {
-      i = raw_bboxes[ib];
-      if (i && i->class_id != bgclass && i->class_id != mask_class) {
-	// center of the box
-	rect<uint> this_bbox(i->h0, i->w0, i->height, i->width);
-	bool add = true;
-	vector<bbox*> overlaps;
-	overlaps.push_back(i);
-	// check each other bbox
-	for (jb = 0; jb < raw_bboxes.size() && add; ++jb) {
-	  j = raw_bboxes[jb];
-	  if (j && i != j) {
-	    rect<uint> other_bbox(j->h0, j->w0, j->height, j->width);
-	    float match = this_bbox.match(other_bbox);
-	    bool overlap = false;
-	    if (match >= max_match)
-	      overlap = true; // there is overlap
-// 	    // forbid centers to be closer than min dist to each other in each axis
-// 	    if ((this_bbox.center_hdistance(other_bbox) < min_hcenter_dist
-// 		 && this_bbox.center_wdistance(other_bbox) < min_wcenter_dist)
-// 		|| (other_bbox.center_hdistance(this_bbox) < min_hcenter_dist
-// 		    && other_bbox.center_wdistance(this_bbox) < min_wcenter_dist))
-// 	      overlap = true;
-	    // if same_class_only, allow pruning only if 2 bb are same class
-	    bool allow_pruning = !same_class_only ||
-	      (same_class_only && i->class_id == j->class_id);
-	    // keep only 1 bb if overlap and pruning is ok
-	    if (overlap && allow_pruning) {
-	      overlaps.push_back(j);
-	    }
-	  }
-	}
-	// ********** TODO: delete non kept bboxes
-
-	// take mean of overlaps
-	bbox mean = mean_bbox(overlaps, .01, same_class_only ? 
-			      i->class_id : classid);
-	bbox_parts *p = new bbox_parts(mean);
-	for (uint k = 0; k < overlaps.size(); ++k)
-	  p->add_part(*(overlaps[k]));
-	pruned_bboxes.push_back(p);
-      }
-    }
-#ifdef __DEBUG__
-    mout << "Pruned " << raw_bboxes.size() << " bboxes to "
-	 << pruned_bboxes.size() << " mean bboxes." << endl;
-#endif
-  }
-	
   //////////////////////////////////////////////////////////////////////////////
   // outputs smoothing
 
@@ -823,215 +625,484 @@ namespace ebl {
   template <typename T, class Tstate>
   void detector<T,Tstate>::smooth_outputs() {
     if (smoothing_type != 0) {
-      uint hpad = (uint) (smoothing_kernel.dim(0) / 2);
-      uint wpad = (uint) (smoothing_kernel.dim(1) / 2);
-      for (uint i = 0; i < outputs.size(); ++i) {
-	idx<T> &outx = outputs[i]->x;
-	intg h = outx.dim(1), w = outx.dim(2);
-	idx<T> in(h + 2 * hpad, w + 2 * wpad);
-	idx<T> inc = in.narrow(0, h, hpad);
-	inc = inc.narrow(1, w, wpad);
-	idx_clear(in);
-	idx_bloop1(out, outx, T) {
-	  idx_copy(out, inc);
-	  idx_2dconvol(in, smoothing_kernel, out);
-	}
-      }
+      eblerror("smoothing temporarly broken");
+      // FIXME! (outputs is no longer a single output)
+      // uint hpad = (uint) (smoothing_kernel.dim(0) / 2);
+      // uint wpad = (uint) (smoothing_kernel.dim(1) / 2);
+      // for (uint i = 0; i < outputs.size(); ++i) {
+      // 	idx<T> &outx = outputs[i]->x;
+      // 	intg h = outx.dim(1), w = outx.dim(2);
+      // 	idx<T> in(h + 2 * hpad, w + 2 * wpad);
+      // 	idx<T> inc = in.narrow(0, h, hpad);
+      // 	inc = inc.narrow(1, w, wpad);
+      // 	idx_clear(in);
+      // 	idx_bloop1(out, outx, T) {
+      // 	  idx_copy(out, inc);
+      // 	  idx_2dconvol(in, smoothing_kernel, out);
+      // 	}
+      // }
     }
   }
-    
-  //////////////////////////////////////////////////////////////////////////////
 
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::dfs(vector<bbox*> &bboxes, vector<bool> &explored,
-			       uint i, float match, float max_center_dist,
-			       vector<bbox*> &comp) {
-    if (explored[i] == true)
-      return ;
-    explored[i] = true;
-    bbox *ib = bboxes[i];
-    comp.push_back(ib);
-    for (uint j = 0; j < bboxes.size(); ++j) {
-      if (i != j && explored[j] == false) {
-	bbox *jb = bboxes[j];
-	bool add = true;
-	// a box is matched if matching by at least 'match'
-	if (ib->match(*jb) < match)
-	  add = false;
-	// and if its center is within 'center_dist' of all other boxes
-	// in this component
-	float jrad = jb->radius();
-	for (uint k = 0; add == true && k < comp.size(); ++k) {
-	  bbox *kb = comp[k];
-	  float krad = kb->radius();
-	  float maxdist = std::min(krad, jrad) * max_center_dist;
-	  if (kb->i.center_distance(jb->i) > maxdist)
-	    add = false;
-	}
-	if (add)
-	  dfs(bboxes, explored, j, match, max_center_dist, comp);
-      }
-    }
-  }
-  
-  // // TODO: optimization: track connected components as boxes are added (faster)
-  // // cf: http://en.wikipedia.org/wiki/Connected_component_(graph_theory)
   // template <typename T, class Tstate>
-  // void detector<T,Tstate>::cluster_bboxes(float match, float max_center_dist,
-  // 					  vector<bbox*> &bboxes,
-  // 					  float threshold) {
-  //   vector<vector<bbox*> > components;
-  //   vector<bool> explored(bboxes.size(), false);
-  //   for (uint i = 0; i < bboxes.size(); ++i)
-  //     if (explored[i] == false) {
-  // 	vector<bbox*> comp;
-  // 	dfs(bboxes, explored, i, match, max_center_dist, comp);
-  // 	components.push_back(comp);
+  // void detector<T,Tstate>::extract_bboxes(T threshold, bboxes &bbs) {
+  //   bbox::init_instance_id(); // reset unique ids to start from zero.
+  //   // make a list that contains the results
+  //   double original_h = indim.dim(1);
+  //   double original_w = indim.dim(2);
+  //   intg offset_h = 0, offset_w = 0;
+  //   int scale_index = 0;
+  //   for (uint i = 0; i < ppinputs.size(); ++i) {
+  //     bboxes bbtmp;
+  //     // select elements
+  //     Tstate &input = (*(ppinputs[i]))[0];
+  //     Tstate &output = *(outputs[i]);
+  //     rect<int> &robbox = original_bboxes[i];
+  //     // sizes
+  //     double in_h = (double) input.x.dim(1);
+  //     double in_w = (double) input.x.dim(2);
+  //     double out_h = (double) output.x.dim(1);
+  //     double out_w = (double) output.x.dim(2);
+  //     double neth = netdim.dim(1); // network's input height
+  //     double netw = netdim.dim(2); // network's input width
+  //     double scalehi = original_h / robbox.height; // input to original
+  //     double scalewi = original_w / robbox.width; // input to original
+  //     int image_h0 = (int) (robbox.h0 * scalehi);
+  //     int image_w0 = (int) (robbox.w0 * scalewi);
+  //     // offset factor in input map
+  //     double offset_h_factor = (in_h - neth) / std::max((double)1, (out_h - 1));
+  //     double offset_w_factor = (in_w - netw) / std::max((double)1, (out_w - 1));
+  //     offset_w = 0;
+  //     Tstate out(output.x.get_idxdim());
+  //     answer.fprop(output, out);
+  //     // loop on width
+  //     idx_eloop1(ro, out.x, T) {
+  // 	offset_h = 0;
+  // 	// loop on height
+  // 	idx_eloop1(roo, ro, T) {
+  // 	  int classid = (int) roo.get(0);
+  // 	  float conf = (float) roo.get(1);
+  // 	  // if ((offset_h == out_h - 1 || (int)(offset_h) % 3 == 0)
+  // 	  //     && (offset_w == out_w - 1 || (int)(offset_w) % 3 == 0)) {
+  // 	  // if (true) {
+  // 	  if (conf >= threshold && classid != bgclass) {
+  // 	    bbox bb;
+  // 	    bb.class_id = classid; // Class
+  // 	    bb.confidence = conf; // Confidence
+  // 	    bb.scale_index = scale_index; // scale index
+  // 	    // predicted offsets / scale
+  // 	    float hoff = 0, woff = 0, scale = 1.0;
+  // 	    if (scaler_mode) {
+  // 	      scale = (float) roo.gget(2);
+  // 	      if (roo.dim(0) == 5) { // class,conf,scale,h,w
+  // 		hoff = roo.gget(3) * neth;
+  // 		woff = roo.gget(4) * neth;
+  // 	      }
+  // 	      // cap scale
+  // 	      scale = std::max(min_scale_pred, std::min(max_scale_pred, scale));
+  // 	      scale = 1 / scale;
+  // 	    }
+  // 	    EDEBUG(roo.str());
+  // 	    // original box in input map
+  // 	    bb.iheight = (int) in_h; // input h
+  // 	    bb.iwidth = (int) in_w; // input w
+  // 	    bb.i0.h0 = (float) (offset_h * offset_h_factor);
+  // 	    bb.i0.w0 = (float) (offset_w * offset_w_factor);
+  // 	    bb.i0.height = (float) neth;
+  // 	    bb.i0.width = (float) netw;
+  // 	    // output map
+  // 	    bb.oheight = (int) out_h; // output height
+  // 	    bb.owidth = (int) out_w; // output width
+  // 	    bb.o.h0 = offset_h; // answer height in output
+  // 	    bb.o.w0 = offset_w; // answer height in output
+  // 	    // bb.o.h0 = 0;
+  // 	    // bb.o.w0 = 0;
+  // 	    // bb.o.h0 = out_h - 1;
+  // 	    // bb.o.w0 = out_w - 1;
+  // 	    bb.o.height = 1;
+  // 	    bb.o.width = 1;
+
+  // 	    // transformed box in input map
+  // 	    bb.i.h0 = bb.i0.h0 + hoff;
+  // 	    bb.i.w0 = bb.i0.w0 + woff;
+  // 	    bb.i.height = bb.i0.height;
+  // 	    bb.i.width = bb.i0.width;
+  // 	    if (scale != 1.0)
+  // 	      bb.i.scale_centered(scale, scale);
+
+  // 	    // infer original location through network
+  // 	    idxdim d(1, bb.o.height, bb.o.width);
+  // 	    d.setoffset(1, bb.o.h0);
+  // 	    d.setoffset(2, bb.o.w0);
+  // 	    mfidxdim md(d);
+  // 	    mfidxdim d2 = thenet.bprop_size(md);
+  // 	    fidxdim loc = d2[0];
+  // 	    bb.i.h0 = loc.offset(1);
+  // 	    bb.i.w0 = loc.offset(2);
+  // 	    bb.i.height = loc.dim(1);
+  // 	    bb.i.width = loc.dim(2);
+
+  // 	    // add all input boxes
+  // 	    for (uint q = 0; q < d2.size(); ++q)
+  // 	      bb.mi.push_back(rect<float>(d2[q].offset(1), d2[q].offset(2),
+  // 					  d2[q].dim(1), d2[q].dim(2)));
+
+  // 	    // bb.h0 = loc.offset(1) * scalehi;
+  // 	    // bb.w0 = loc.offset(2) * scalewi;
+  // 	    // bb.height = loc.dim(1) * scalehi;
+  // 	    // bb.width = loc.dim(2) * scalewi;
+
+
+  // 	    // original image
+  // 	    // bbox's rectangle in original image
+  // 	    // bb.h0 = bb.i.h0 * scalehi;
+  // 	    // bb.w0 = bb.i.w0 * scalewi;
+  // 	    bb.h0 = bb.i.h0 * scalehi - image_h0;
+  // 	    bb.w0 = bb.i.w0 * scalewi - image_w0;
+  // 	    bb.height = bb.i.height * scalehi;
+  // 	    bb.width = bb.i.width * scalewi;
+  // 	    // push bbox to list
+  // 	    bbtmp.push_back(new bbox(bb));
+  // 	  }
+  // 	  offset_h++;
+  // 	}
+  // 	offset_w++;
   //     }
-  //   DEBUG("merged " << bboxes.size() << " boxes into " << components.size()
-  // 	  << " component boxes");
-  //   // merge all components
-  //   bboxes.clear();
-  //   for (uint i = 0; i < components.size(); ++i) {
-  //     vector<bbox*> &comp = components[i];
-  //     bbox *bb = comp[0];
-  //     bbox *b = new bbox(*bb);
-  //     b->mul(b->confidence);
-  //     delete bb;
-  //     for (uint j = 1; j < comp.size(); ++j) {
-  // 	bb = comp[j];
-  // 	b->accumulate(*bb);
-  // 	delete bb;
-  //     }
-  //     b->mul(1 / b->confidence);
-  //     if (b->confidence >= threshold)
-  // 	bboxes.push_back(b);
+  //     // add scale boxes into all boxes
+  //     for (uint k = 0; k < bbtmp.size(); ++k)
+  // 	bbs.push_back(bbtmp[k]);
+  //     scale_index++;
   //   }
   // }
 
-  // TODO: use lists, more efficient than vector (especially 'erase')
   template <typename T, class Tstate>
-  void detector<T,Tstate>::cluster_bboxes(float match, float max_hcenter_dist,
-					  float max_wcenter_dist,
-					  vector<bbox*> &bboxes,
-					  float threshold) {
-    // vector of all bbox center distances
-    bbox *a = NULL, *b = NULL;
-    typedef std::pair<uint,uint> t_upair;
-    typedef std::pair<float,t_upair> t_pair;
-    vector<t_pair> alldist;
-    float dist = 0;
-    for (uint i = 0; i < bboxes.size(); ++i) {
-      a = bboxes[i];
-      for (uint j = i + 1; j < bboxes.size(); ++j) {
-	b = bboxes[j];
-	dist = a->center_distance(*b);
-	alldist.push_back(t_pair(dist, t_upair(i,j)));
-      }
-    }
-    // stop if no more pairs
-    if (alldist.size() == 0)
+  void detector<T,Tstate>::update_merge_alignment() {
+    // check presence of merging module
+    flat_merge_module<T,Tstate> *merger = NULL;
+    vector<flat_merge_module<T,Tstate>*> mergers =
+      arch_find_all(&thenet, merger);
+    if (mergers.size() > 0) {
+      mout << "Found merging module(s) in network: " << mergers << endl;
+      for (uint i = 0; i < mergers.size(); ++i)
+	mout << mergers[i]->describe()<< endl;
+    } else {
+      mout << "No merging module found in network." << endl;
       return ;
-    // sort by lowest distance first
-    std::sort(alldist.begin(), alldist.end());
-    // merge all
-    bool added = false;
-    pair<float,pair<uint,uint> > p;
-    for (uint k = 0; k < alldist.size(); ++k) {
-      p = alldist[k];
-      // ignore if one of the boxes doesn't exist anymore
-      a = bboxes[p.second.first];
-      b = bboxes[p.second.second];
-      if (!a || !b)
-	continue ;
-      // ignore if boxes don't match or too far away
-      //      float maxdist = std::min(a->radius(), b->radius()) * max_center_dist;
-      float maxhdist = std::max(a->radius() * max_hcenter_dist, b->radius()) * max_hcenter_dist;
-      float maxwdist = std::max(a->radius() * max_wcenter_dist, b->radius()) * max_wcenter_dist;
-      float hcenter_dist = fabs(a->hcenter() - b->hcenter());
-      float wcenter_dist = fabs(a->wcenter() - b->wcenter());
-      //      if (p.first > maxdist || a->match(*b) < match)
-      if (hcenter_dist > maxhdist || wcenter_dist > maxwdist || a->match(*b) < match)
-	continue ;
-      // // take only first 50 TODO: TMP FIX
-      // if (a->nacc > 25 || b->nacc > 25) {
-      // 	// delete bbox with least acc
-      // 	if (a->nacc > b->nacc) {
-      // 	  delete b;
-      // 	  bboxes[p.second.second] = NULL;
-      // 	} else {
-      // 	  delete a;
-      // 	  bboxes[p.second.first] = NULL;
-      // 	}
-      // 	continue ;
-      // }
-      // merge the pair into a new box
-      if (a->nacc > 25 || b->nacc > 25) {
-	DEBUG("merging box " << *a << " and " << *b << ":");
-      }
-      a->mul((float) a->nacc);
-      a->accumulate(*b);
-      delete b;
-      bboxes[p.second.first] = NULL;
-      bboxes[p.second.second] = NULL;
-      a->mul(1 / (float) a->nacc);
-      if (a->nacc > 6 || b->nacc > 6) {
-	DEBUG(*a);
-      }
-      bboxes.push_back(a);
-      added = true;
     }
-    // remove empty entries in bboxes
-	uint j = 0;
-    for (vector<bbox*>::iterator i = bboxes.begin(); i != bboxes.end(); ) {
-	  if (*i == NULL) {
-		bboxes.erase(i);
-		i = bboxes.begin() + j;
-	  }
-	  else {
-		  j++;
-		  i++;
-	  }
+    // align for each merger module
+    for (uint i = 0; i < mergers.size(); ++i) {
+      merger = mergers[i];
+      // get the network narrowed up to the merger module (included)
+      module_1_1<T,Tstate> *merger_net_included = arch_narrow(&thenet, merger);
+      module_1_1<T,Tstate> *merger_net = arch_narrow(&thenet, merger, false);
+      if (!merger_net || !merger_net_included)
+	eblerror("failed to narrow network up to " << merger);
+      EDEBUG("network narrowed up to merger module: " << merger->name());
+      mout << "Aligning merging centers on top left image origin." << endl;
+      //    for (uint i = 0; i < merger->get_ninputs(); ++i) {
+      fidxdim c(1, 1, 1), f(1, 1, 1), c0, c1;
+      mfidxdim m(c), m0, m0m, m1, paddings; //(merger->get_ninputs());
+      // determine input size and location of output pixel (0,0)
+      mfidxdim mf(f);
+      mf = resizepp->fprop_size(mf);
+      merger_net_included->fprop_size(mf);
+      m0m = merger->bprop_size(m);
+      EDEBUG(merger_net->name() << " m0m: " << m0m);
+      mfidxdim scales = merger->get_scales();
+      // EDEBUG("strides: " << strides);
+      vector<vector<int> > alloff;
+      mfidxdim allstrides;
+      float hs0 = 1, ws0 = 1;
+      for (uint k = 0; k < m0m.size(); ++k) {
+	//uint i = k - (k % 2);
+	uint i = k;
+	mfidxdim mm(m0m.size());
+	mm.set_new(m0m[i], i);
+	EDEBUG("mm: " << mm);
+	// determine input size and location of output pixel (0,0)
+	//merger_net_included->fprop_size(mf);
+	m0 = merger_net->bprop_size(mm);
+	// m0 = resizepp->bprop_size(m0);
+	m0.remove_empty();
+	// determine input size and location of output pixel (1,1)
+	mm[i].setoffset(1, 1);
+	mm[i].setoffset(2, 1);
+	//merger_net_included->fprop_size(mf);
+	m1 = merger_net->bprop_size(mm);
+	// m1 = resizepp->bprop_size(m1);
+	m1.remove_empty();
+	EDEBUG("m0: " << m0);
+	EDEBUG("m1: " << m1);
+
+	
+	//	uint fact = (uint) ceil(strides.size() / (float) m0.size());
+	// c0 = m0[i / fact];
+	// c1 = m1[i / fact];
+	c0 = m0[0];
+	c1 = m1[0];
+	//fidxdim &stride = strides[i];
+	// determine center of output pixel (0,0) in input space
+	rect<float> p0(c0.offset(1), c0.offset(2), c0.dim(1), c0.dim(2));
+	float hc = p0.hcenter(), wc = p0.wcenter();
+
+	// // determine input pixel (0,0) in output space
+	// fidxdim i0(1, 1)
+
+
+	// if (hc < 0) {
+	//   eblwarn("expected center's height to be >= 0 but got " << hc);
+	//   hc = 1;
+	// }
+	// if (wc < 0) {
+	//   eblwarn("expected center's width to be >= 0 but got " << wc);
+	//   wc = 1;
+	// }
+	// determine stride of output space in input space
+	float hs = (c1.offset(1) - c0.offset(1));// / scales[i].dim(0);
+	float ws = (c1.offset(2) - c0.offset(2));// / scales[i].dim(0);
+	// if (k == 0) {
+	//   hs = hs0 / (scales[i].dim(0));
+	//   ws = ws0 / (scales[i].dim(0));
+	//   hs0 = hs;
+	//   ws0 = ws;
+	// } else {
+	//   hs = hs0 / (scales[i].dim(0) * hs);
+	//   ws = ws0 / (scales[i].dim(0) * ws);
+	// }
+
+	if (k == 0) {
+	  hs0 = hs;
+	  ws0 = ws;
+	}
+	float hos = hs0 / (scales[i].dim(0) * hs);
+	float wos = ws0 / (scales[i].dim(0) * ws);
+	fidxdim fi(hos, wos);
+	allstrides.push_back_new(fi);
+	
+	// set paddings of merger
+	//fidxdim pads(hc * hs, wc * ws, hc * hs, wc * ws);
+
+	vector<int> offs;
+
+	offs.push_back((int)(hc/hs));
+	offs.push_back((int)(wc/ws));
+	offs.push_back((int)(hc/hs));
+	offs.push_back((int)(wc/ws));
+	
+	// offs.push_back((int)(hc*hos*scales[i].dim(0)));
+	// offs.push_back((int)(wc*wos*scales[i].dim(0)));
+	// offs.push_back((int)(hc*hos*scales[i].dim(0)));
+	// offs.push_back((int)(wc*wos*scales[i].dim(0)));
+
+	// offs.push_back((int)(hc*hos/hs0));
+	// offs.push_back((int)(wc*wos/ws0));
+	// offs.push_back((int)(hc*hos/hs0));
+	// offs.push_back((int)(wc*wos/ws0));
+	alloff.push_back(offs);
+	// fidxdim pads(stride.dim(0) * hc / hs, stride.dim(1) * wc / ws,
+	// 	     stride.dim(0) * hc / hs, stride.dim(1) * wc / ws);
+	// fidxdim pads(stride.dim(0) * hc / hs, stride.dim(1) * wc / ws, 0, 0);
+	//	paddings.push_back_new(pads);
+	mout << merger->name() << "'s input " << i << " must be padded/narrowed with "
+	     << offs << " to recenter " << p0 << " (center " << hc << "x" << wc
+	     << "), (output stride is " << hs << "x" << ws << ")" << std::endl;
+      }
+      merger->set_offsets(alloff);
+      merger->set_strides(allstrides);
     }
-    if (!added)
-      return ;
-    // recursively call until it stops (when alldist is empty)
-    cluster_bboxes(match, max_hcenter_dist, max_wcenter_dist, bboxes, threshold);   
   }
-      
+
   template <typename T, class Tstate>
-  void detector<T,Tstate>::extract_bboxes(T threshold, vector<bbox*> &bboxes) {
+  void detector<T,Tstate>::get_corners(mstate<Tstate> &outputs) {
+    if (!corners_infered) {
+      if (corners_inference == 0 || corners_inference == 1) { // infer from net
+	uint n = 0;
+	scale_indices.clear();
+	for (typename mstate<Tstate>::iterator o = outputs.begin();
+	     o != outputs.end(); ++o) {
+	  fidxdim d(o->x.get_idxdim());
+	  fidxdim c(1, 1, 1), mc0;
+	  mfidxdim mc(outputs.size());
+	  mc.set_new(c, n);
+	  mfidxdim m;
+	  // top left
+	  m = thenet.bprop_size(mc);
+	  m.remove_empty();
+	  mc0 = m[0];
+	  itl.push_back_new(mc0);
+	  m = resizepp->get_msize();
+	  // infer scale index for this output
+	  for (uint i = 0; i < m.size(); ++i)
+	    if (m.exists(i)) {
+	      scale_indices.push_back(i);
+	      break ;
+	    }
+	  m.remove_empty();
+	  mc0 = m[0];
+	  pptl.push_back_new(mc0);
+	  // top right
+	  mc[n].setoffset(2, d.dim(2));
+	  m = thenet.bprop_size(mc);
+	  m.remove_empty();
+	  mc0 = m[0];
+	  itr.push_back_new(mc0);
+	  m = resizepp->get_msize();
+	  m.remove_empty();
+	  mc0 = m[0];
+	  pptr.push_back_new(mc0);
+	  // bottom left
+	  mc[n].setoffset(1, d.dim(1));
+	  mc[n].setoffset(2, 0);
+	  m = thenet.bprop_size(mc);
+	  m.remove_empty();
+	  mc0 = m[0];
+	  ibl.push_back_new(mc0);
+	  m = resizepp->get_msize();
+	  m.remove_empty();
+	  mc0 = m[0];
+	  ppbl.push_back_new(mc0);
+	  // bottom right
+	  mc[n].setoffset(1, d.dim(1));
+	  mc[n].setoffset(2, d.dim(2));
+	  m = thenet.bprop_size(mc);
+	  m.remove_empty();
+	  mc0 = m[0];
+	  ibr.push_back_new(mc0);
+	  m = resizepp->get_msize();
+	  m.remove_empty();
+	  mc0 = m[0];
+	  ppbr.push_back_new(mc0);
+	  ++n;
+	}
+	EDEBUG("top left output " << itl);
+	EDEBUG("top right output " << itr);
+	EDEBUG("bottom left output " << ibl);
+	EDEBUG("bottom right output " << ibr);
+
+	if (corners_inference == 1) { // from net + save corners
+	  // save corners to matrix
+	  idx<float> scorners(itl.size(), 4, 4);
+	  for (uint i = 0; i < itl.size(); ++i) {
+	    scorners.set(itl[i].offset(1), i, 0, 0);
+	    scorners.set(itl[i].offset(2), i, 0, 1);
+	    scorners.set(itl[i].dim(1), i, 0, 2);
+	    scorners.set(itl[i].dim(2), i, 0, 3);
+	    scorners.set(itr[i].offset(1), i, 1, 0);
+	    scorners.set(itr[i].offset(2), i, 1, 1);
+	    scorners.set(itr[i].dim(1), i, 1, 2);
+	    scorners.set(itr[i].dim(2), i, 1, 3);
+	    scorners.set(ibl[i].offset(1), i, 2, 0);
+	    scorners.set(ibl[i].offset(2), i, 2, 1);
+	    scorners.set(ibl[i].dim(1), i, 2, 2);
+	    scorners.set(ibl[i].dim(2), i, 2, 3);
+	    scorners.set(ibr[i].offset(1), i, 3, 0);
+	    scorners.set(ibr[i].offset(2), i, 3, 1);
+	    scorners.set(ibr[i].dim(1), i, 3, 2);
+	    scorners.set(ibr[i].dim(2), i, 3, 3);
+	  }
+	  save_matrix(scorners, "corners.mat");
+	}
+	corners_infered = true;
+      } else if (corners_inference == 2) { // load corners
+	// load corners from matrix
+	idx<float> corners = load_matrix<float>("corners.mat");
+	itl.clear(); itr.clear(); ibl.clear(); ibr.clear();
+	for (uint i = 0; i < corners.dim(0); ++i) {
+	  // allocate
+	  fidxdim d(outputs[0].x.get_idxdim());
+	  d.setdims(1);
+	  itl.push_back_new(d);
+	  itr.push_back_new(d);
+	  ibl.push_back_new(d);
+	  ibr.push_back_new(d);
+	  // set
+	  itl[i].setoffset(1, corners.get(i, 0, 0));
+	  itl[i].setoffset(2, corners.get(i, 0, 1));
+	  itl[i].setdim(1, corners.get(i, 0, 2));
+	  itl[i].setdim(2, corners.get(i, 0, 3));
+	  itr[i].setoffset(1, corners.get(i, 1, 0));
+	  itr[i].setoffset(2, corners.get(i, 1, 1));
+	  itr[i].setdim(1, corners.get(i, 1, 2));
+	  itr[i].setdim(2, corners.get(i, 1, 3));
+	  ibl[i].setoffset(1, corners.get(i, 2, 0));
+	  ibl[i].setoffset(2, corners.get(i, 2, 1));
+	  ibl[i].setdim(1, corners.get(i, 2, 2));
+	  ibl[i].setdim(2, corners.get(i, 2, 3));
+	  ibr[i].setoffset(1, corners.get(i, 3, 0));
+	  ibr[i].setoffset(2, corners.get(i, 3, 1));
+	  ibr[i].setdim(1, corners.get(i, 3, 2));
+	  ibr[i].setdim(2, corners.get(i, 3, 3));
+	}
+	corners_infered = true;
+      }
+    }
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::extract_bboxes(T threshold, bboxes &bbs) {
     bbox::init_instance_id(); // reset unique ids to start from zero.
     // make a list that contains the results
     double original_h = indim.dim(1);
     double original_w = indim.dim(2);
     intg offset_h = 0, offset_w = 0;
     int scale_index = 0;
-    for (uint i = 0; i < ppinputs.size(); ++i) {
-      vector<bbox*> bbtmp;
+    // get 4 corners coordinates for each scale
+    mstate<Tstate> &oo = outputs[0];
+    answers.clear();
+    get_corners(oo);
+
+    // loop on output
+    for (uint o = 0; o < oo.size(); ++o) {
+      if (o < raw_thresholds.size()) threshold = raw_thresholds[o];
+      float thresh = threshold;
+      // Tstate &input = ppinputs[0][0];
+      Tstate &output = oo[o];
+      idx<T> outx = output.x;
+      fidxdim &tl = itl[o], &tr = itr[o], &bl = ibl[o];
+      fidxdim &ptl = pptl[o], &ptr = pptr[o], &pbl = ppbl[o];
+      // fidxdim &br = ibr[o];
+
+      // steps in input space
+      double hf = (bl.offset(1) - tl.offset(1)) / outx.dim(1);
+      double wf = (tr.offset(2) - tl.offset(2)) / outx.dim(2);
+      // steps in preprocessed space
+      double phf = (pbl.offset(1) - ptl.offset(1)) / outx.dim(1);
+      double pwf = (ptr.offset(2) - ptl.offset(2)) / outx.dim(2);
+      
+      // box scalings
+      double hscaling = 1.0, wscaling = 1.0;
+      if (o < bbox_scalings.size()) {
+	fidxdim &scaling = bbox_scalings[o];
+	hscaling = scaling.dim(0);
+	wscaling = scaling.dim(1);
+      }
+
+      bboxes bbtmp;
       // select elements
-      Tstate &input = (*(ppinputs[i]))[0];
-      Tstate &output = *(outputs[i]);
-      rect<int> &robbox = original_bboxes[i];
+      // rect<int> &robbox = original_bboxes[0];
       // sizes
-      double in_h = (double) input.x.dim(1);
-      double in_w = (double) input.x.dim(2);
-      double out_h = (double) output.x.dim(1);
-      double out_w = (double) output.x.dim(2);
-      double neth = netdim.dim(1); // network's input height
-      double netw = netdim.dim(2); // network's input width
-      double scalehi = original_h / robbox.height; // input to original
-      double scalewi = original_w / robbox.width; // input to original
-      int image_h0 = (int) (robbox.h0 * scalehi);
-      int image_w0 = (int) (robbox.w0 * scalewi);
+      // double in_h = (double) input.x.dim(1);
+      // double in_w = (double) input.x.dim(2);
+      // double out_h = (double) output.x.dim(1);
+      // double out_w = (double) output.x.dim(2);
+      // double neth = netdim.dim(1); // network's input height
+      // double netw = netdim.dim(2); // network's input width
+      // double scalehi = original_h / robbox.height; // input to original
+      // double scalewi = original_w / robbox.width; // input to original
+      // int image_h0 = (int) (robbox.h0 * scalehi);
+      // int image_w0 = (int) (robbox.w0 * scalewi);
       // offset factor in input map
-      double offset_h_factor = (in_h - neth)
-	/ std::max((double) 1, (out_h - 1));
-      double offset_w_factor = (in_w - netw)
-	/ std::max((double) 1, (out_w - 1));
+      // double offset_h_factor = (in_h - neth) / std::max((double)1, (out_h - 1));
+      // double offset_w_factor = (in_w - netw) / std::max((double)1, (out_w - 1));
       offset_w = 0;
-      Tstate out(output.x.get_idxdim());
-      answer.fprop(output, out);
+      Tstate out(outx.get_idxdim());
+      answer->fprop(output, out);
+      answers.push_back_new(out);
+
+      idx<T> tmp = outx.select(0, 1);
+      cout << "out " << o << " threshold " << thresh << " min " << idx_min(tmp)
+	   << " max " << idx_max(tmp) << endl;
+      
       // loop on width
       idx_eloop1(ro, out.x, T) {
 	offset_h = 0;
@@ -1039,196 +1110,196 @@ namespace ebl {
 	idx_eloop1(roo, ro, T) {
 	  int classid = (int) roo.get(0);
 	  float conf = (float) roo.get(1);
-	  if (conf >= threshold && classid != bgclass) {
+	  bool accept = false;
+	  // select decision criterion
+	  switch (bbox_decision) {
+	  case 0: accept = (conf >= thresh && classid != bgclass); break ;
+	  case 1: accept = ((offset_h == outx.dim(1) - 1 && offset_w == 0) ||
+			    (offset_h == 0 && offset_w == 0) ||
+			    (offset_h == outx.dim(1) - 1
+			     && offset_w == outx.dim(2) - 1) ||
+			    (offset_h == 0 && offset_w == outx.dim(2) - 0));
+	    break;
+	  case 2: accept = ((offset_h == outx.dim(1) - 1
+			     && offset_w == outx.dim(2) - 1));
+	    break;
+	  default: eblerror("unknown bbox decision type");
+	  }
+	  if (accept) {
 	    bbox bb;
 	    bb.class_id = classid; // Class
 	    bb.confidence = conf; // Confidence
-	    bb.scale_index = scale_index; // scale index
-	    // predicted offsets / scale
-	    float hoff = 0, woff = 0, scale = 1.0;
-	    if (scaler_mode) {
-	      scale = (float) roo.gget(2);
-	      if (roo.dim(0) == 5) { // class,conf,scale,h,w
-		hoff = roo.gget(3) * neth;
-		woff = roo.gget(4) * neth;
-	      }
-	      // cap scale
-	      scale = std::max(min_scale_pred, std::min(max_scale_pred, scale));
-	      scale = 1 / scale;
-	    }
-	    DEBUG(roo.str());
-	    // original box in input map
-	    bb.iheight = (int) in_h; // input h
-	    bb.iwidth = (int) in_w; // input w
-	    bb.i0.h0 = (float) (offset_h * offset_h_factor);
-	    bb.i0.w0 = (float) (offset_w * offset_w_factor);
-	    bb.i0.height = (float) neth;
-	    bb.i0.width = (float) netw;
-	    // transformed box in input map
-	    bb.i.h0 = bb.i0.h0 + hoff;
-	    bb.i.w0 = bb.i0.w0 + woff;
-	    bb.i.height = bb.i0.height;
-	    bb.i.width = bb.i0.width;
-	    if (scale != 1.0)
-	      bb.i.scale_centered(scale, scale);
-	    // original image
-	    // bbox's rectangle in original image
-	    bb.h0 = bb.i.h0 * scalehi - image_h0;
-	    bb.w0 = bb.i.w0 * scalewi - image_w0;
-	    bb.height = bb.i.height * scalehi;
-	    bb.width = bb.i.width * scalewi;
+	    bb.iscale_index = scale_indices[scale_index]; // scale index
+	    bb.oscale_index = scale_index; // scale index
+
+	    bb.h0 = tl.offset(1) + offset_h * hf;
+	    bb.w0 = tl.offset(2) + offset_w * wf;
+	    bb.height = tl.dim(1);
+	    bb.width = tl.dim(2);
+	    bb.scale_centered(hscaling, wscaling);
+
+	    bb.i.h0 = ptl.offset(1) + offset_h * phf;
+	    bb.i.w0 = ptl.offset(2) + offset_w * pwf;
+	    bb.i.height = ptl.dim(1);
+	    bb.i.width = ptl.dim(2);
+
+	    // // predicted offsets / scale
+	    // float hoff = 0, woff = 0, scale = 1.0;
+	    // if (scaler_mode) {
+	    //   scale = (float) roo.gget(2);
+	    //   if (roo.dim(0) == 5) { // class,conf,scale,h,w
+	    // 	hoff = roo.gget(3) * neth;
+	    // 	woff = roo.gget(4) * neth;
+	    //   }
+	    //   // cap scale
+	    //   scale = std::max(min_scale_pred, std::min(max_scale_pred, scale));
+	    //   scale = 1 / scale;
+	    // }
+	    // EDEBUG(roo.str());
+	    // // original box in input map
+	    // bb.iheight = (int) in_h; // input h
+	    // bb.iwidth = (int) in_w; // input w
+	    // bb.i0.h0 = (float) (offset_h * offset_h_factor);
+	    // bb.i0.w0 = (float) (offset_w * offset_w_factor);
+	    // bb.i0.height = (float) neth;
+	    // bb.i0.width = (float) netw;
 	    // output map
-	    bb.oheight = (int) out_h; // output height
-	    bb.owidth = (int) out_w; // output width
+	    // bb.oheight = (int) out_h; // output height
+	    // bb.owidth = (int) out_w; // output width
 	    bb.o.h0 = offset_h; // answer height in output
 	    bb.o.w0 = offset_w; // answer height in output
+	    bb.o.height = 1;
+	    bb.o.width = 1;
+	    // // bb.o.h0 = 0;
+	    // // bb.o.w0 = 0;
+	    // // bb.o.h0 = out_h - 1;
+	    // // bb.o.w0 = out_w - 1;
+
+	    // // transformed box in input map
+	    // bb.i.h0 = bb.i0.h0 + hoff;
+	    // bb.i.w0 = bb.i0.w0 + woff;
+	    // bb.i.height = bb.i0.height;
+	    // bb.i.width = bb.i0.width;
+	    // if (scale != 1.0)
+	    //   bb.i.scale_centered(scale, scale);
+
+	    // // infer original location through network
+	    // idxdim d(1, bb.o.height, bb.o.width);
+	    // d.setoffset(1, bb.o.h0);
+	    // d.setoffset(2, bb.o.w0);
+	    // mfidxdim md(d);
+	    // mfidxdim d2 = thenet.bprop_size(md);
+	    // fidxdim loc = d2[0];
+	    // bb.i.h0 = loc.offset(1);
+	    // bb.i.w0 = loc.offset(2);
+	    // bb.i.height = loc.dim(1);
+	    // bb.i.width = loc.dim(2);
+
+	    // // add all input boxes
+	    // for (uint q = 0; q < d2.size(); ++q)
+	    //   bb.mi.push_back(rect<float>(d2[q].offset(1), d2[q].offset(2),
+	    // 				  d2[q].dim(1), d2[q].dim(2)));
+
+	    // // bb.h0 = loc.offset(1) * scalehi;
+	    // // bb.w0 = loc.offset(2) * scalewi;
+	    // // bb.height = loc.dim(1) * scalehi;
+	    // // bb.width = loc.dim(2) * scalewi;
+
+
+	    // // original image
+	    // // bbox's rectangle in original image
+	    // // bb.h0 = bb.i.h0 * scalehi;
+	    // // bb.w0 = bb.i.w0 * scalewi;
+	    // bb.h0 = bb.i.h0 * scalehi - image_h0;
+	    // bb.w0 = bb.i.w0 * scalewi - image_w0;
+	    // bb.height = bb.i.height * scalehi;
+	    // bb.width = bb.i.width * scalewi;
+
+	    bool ignore = false;
+	    if (ignore_outsiders) { // ignore boxes that overlap outside
+	      if (bb.h0 < 0 || bb.w0 < 0
+  	          || bb.h0 + bb.height > original_h
+		  || bb.w0 + bb.width > original_w)
+		ignore = true;
+	    }
+
 	    // push bbox to list
-	    bbtmp.push_back(new bbox(bb));
+	    if (!ignore)
+	      bbtmp.push_back(new bbox(bb));
 	  }
 	  offset_h++;
 	}
 	offset_w++;
       }
-      // apply pre-process bb factors
-      if (bbhfactor != 1.0 || bbwfactor != 1.0)
-	for (uint ib = 0; ib < bbtmp.size(); ++ib)
-	  bbtmp[ib]->scale_centered(bbhfactor, bbwfactor);
-      // cluster
-      if (cluster_nms)
-	cluster_bboxes(max_overlap, max_center_dist, max_wcenter_dist, bbtmp);
       // add scale boxes into all boxes
       for (uint k = 0; k < bbtmp.size(); ++k)
-	bboxes.push_back(bbtmp[k]);
+	bbs.push_back(bbtmp[k]);
       scale_index++;
-    }
-    // cluster all boxes
-    if (cluster_nms)
-      cluster_bboxes(max_overlap2, max_center_dist2, max_wcenter_dist2, bboxes, threshold2);
-    // threshold boxes
-    for (vector<bbox*>::iterator i = bboxes.begin(); i != bboxes.end(); ) {
-      if ((*i)->confidence < threshold2)
-	bboxes.erase(i);
-      else
-	i++;
-    }
-  }
-  
-  template<typename T, class Tstate>
-  void detector<T,Tstate>::pretty_bboxes(vector<bbox*> &bboxes,
-					 std::ostream &out) {
-    out << endl << "detector: ";
-    if (bboxes.size() == 0)
-      out << "no objects found." << endl;
-    else {
-      out << "found " << bboxes.size() << " objects." << endl;
-      size_t ib;
-      for (ib = 0 ; ib < bboxes.size(); ++ib) {
-	bbox &i = *(bboxes[ib]);
-	out << "- " << (i.class_id < (int)labels.size() ? labels[i.class_id]:"")
-	    << " with confidence " << i.confidence
-	    << " in scale #" << i.scale_index
-	    << " (" << indim.dim(1) << "x" << indim.dim(2)
-	    << " / " << i.scaleh << "x" << i.scalew
-	    << " = " << i.iheight << "x" << i.iwidth << ")"
-	    << endl
-	    << "  bounding box: top left " << i.h0 << "x" << i.w0
-	    << " and size " << i.height << "x" << i.width
-	    << " out position: " << i.o.h0 << "x" << i.o.w0
-	    << " in " << i.oheight << "x" << i.owidth
-	    << endl;
-      }
     }
   }
 
-  template<typename T, class Tstate>
-  void detector<T,Tstate>::pretty_bboxes_short(vector<bbox*> &bboxes,
-					       std::ostream &out) {
-    if (bboxes.size() == 0)
-      out << "no objects found." << endl;
-    else {
-      out << "found " << bboxes.size() << " objects." << endl;
-      for (uint ib = 0 ; ib < bboxes.size(); ++ib) {
-	const bbox &i = *(bboxes[ib]);
-	out << (i.class_id < (int)labels.size() ? labels[i.class_id] : "")
-	    << " " << i << endl;
-      }
-    }
-  }
-  
   template <typename T, class Tstate> template <class Tin>
-  vector<bbox*>& detector<T,Tstate>::fprop(idx<Tin> &img, T threshold,
-					   const char *frame_name) {
+  bboxes& detector<T,Tstate>::fprop(idx<Tin> &img, const char *frame_name) {
+    TIMING1("t1 before prepare");
+    TIMING2("t2 before prepare");
+    TIMING_RESIZING_RESET();
     // prepare image and resolutions
-    prepare(img);
+    prepare(img, frame_name);
     // do a fprop for each scaled input, based on the 'image' slot prepared
     // by prepare().
+    TIMING2("preparation");
     multi_res_fprop();
+    TIMING2("net fprop");
+    TIMING1("end of network");
+    TIMING_RESIZING("total resizing time");
     // smooth outputs
     smooth_outputs();
 
     if (bboxes_off) // do not extract bboxes if off flag is true
       return raw_bboxes;
     // clear previous bounding boxes
-    size_t ib; bbox *i;
-    for (ib = 0 ; ib < raw_bboxes.size(); ++ib) {
-      i = raw_bboxes[ib];
-      if (i)
-	delete i;
-    }
     raw_bboxes.clear();
     // get new bboxes
-    extract_bboxes(threshold, raw_bboxes);
-    vector<bbox*> &bb = raw_bboxes;
+    if (answer) extract_bboxes(pre_threshold, raw_bboxes);
+    // sort bboxes by confidence (most confident first)
+    raw_bboxes.sort_by_confidence();
+    TIMING1("extract bboxes");
     // non-maximum suppression
-    nms(raw_bboxes, pruned_bboxes, threshold);
-    bb = pruned_bboxes; // assign pruned bb to bb
+    fprop_nms(raw_bboxes, pruned_bboxes);
+    // print results
+    if (!silent) mout << "found " << pruned_bboxes.pretty(&labels);
     // save positive response input windows in save mode
     if (save_mode)
-      save_bboxes(bb, save_dir, frame_name);
+      save_bboxes(pruned_bboxes, save_dir, frame_name);
     // backward connections
     back_module<T, Tstate>* back = (back_module<T, Tstate>*)((layers<T,Tstate>&)thenet).find("back");
     if (back) {
-      back->bb(bb);
+      back->bb(pruned_bboxes);
     }
+    TIMING1("end bboxes");
     // return bounding boxes
-    return bb;
+    TIMING2("post proc");
+    return pruned_bboxes;
   }
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::nms(vector<bbox*> &raw, vector<bbox*> &pruned,
-			       float threshold) {
-    // prune bounding boxes btwn scales
-    if (pruning != pruning_none) {
-      pruned.clear(); // reset pruned bb vector
-      switch (pruning) {
-      case pruning_overlap: 
-	prune_overlap(raw, pruned, max_overlap, false, min_hcenter_dist, 
-		      min_wcenter_dist, threshold,
-		      same_scale_mhd, same_scale_mwd); 
-	break ;
-      default: break;
-      }
-    } else
-      pruned = raw;
-    // sort bboxes by confidence (most confident first)
-    sort_bboxes(pruned);
-    // normalize boxes
-    if (bb_woverh != 1.0)
-      normalize_bboxes(pruned, bb_woverh);
-    // print results
-    if (!silent)
-      pretty_bboxes(pruned);
+  void detector<T,Tstate>::fprop_nms(bboxes &in, bboxes &out) {
+    if (pnms) pnms->fprop(in, out);
+    else out = in;
   }
+
+  // bboxes operations /////////////////////////////////////////////////////////
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::
-  save_bboxes(const vector<bbox*> &bboxes, const string &dir,
-	      const char *frame_name) {
+  save_bboxes(bboxes &boxes, const string &dir, const char *frame_name) {
+    bboxes bbs = boxes;
 #ifdef __NOSTL__
     eblerror("save_bboxes not implemented");
 #else
     ostringstream fname, cmd;
-    idx<T> inpp, inorig;
+    midx<T> inpp;
+    idx<T> inorig;
     vector<bool> dir_exists(labels.size(), false);
     string root = dir;
     root += "/";
@@ -1244,14 +1315,12 @@ namespace ebl {
       dir_orig[i] += labels[i];
       dir_orig[i] += "/";
     }
+    svector<midx<T> > &pp = get_preprocessed(bbs, save_max_per_frame,
+					     diverse_ordering);
     // loop on bounding boxes
-    for (uint i = 0; i < bboxes.size(); ++i) {
-      bbox &bb = *(bboxes[i]);
-      // TODO: for fovea, we need to concatenate all scales into ppinput
-      //Tstate &ppinput = (*ppinputs[bb.scale_index])[0];
-      // exclude background class
-      if ((bb.class_id == bgclass) || (bb.class_id == mask_class))
-	continue ;
+    for (uint i = 0; i < pp.size(); ++i) {
+      midx<T> &sample = pp[i];
+      const bbox &bb = bbs[i];
       // check if directory exists for this class, otherwise create it
       if (!dir_exists[bb.class_id]) {
 	mkdir_full(dir_pp[bb.class_id]);
@@ -1268,84 +1337,48 @@ namespace ebl {
       string d1 = dirname(fname.str().c_str());
       mkdir_full(d1);
       try {
-	// get bbox of preprocessed input at bbox's scale
-	inpp = get_preprocessed(bb);
 	// save preprocessed image as lush mat
-	if (save_matrix(inpp, fname.str()))
-	  mout << "saved " << fname.str() << ": " << inpp << " (confidence "
+	if (save_matrices(sample, fname.str()))
+	  mout << "saved " << fname.str() << ": " << sample << " (confidence "
 	       << bb.confidence << ")" << endl;
       } catch(eblexception &e) {};
-      ///////////////////////////////////////////////////////////////////////
-      // original
-      // get bbox of original input
-      if (bb.height + bb.h0 > image.dim(1) || 
-	  bb.width + bb.w0 > image.dim(2) || 
-	  bb.h0 < 0 || bb.w0 < 0)
-	merr << "warning: trying to crop bbox outside of image bounds: bbox "
-	     << bb << " in image " << image << endl;
-      // make sure we don't try to crop outside of image bounds
-      float h = std::max((float)0, bb.h0), w = std::max((float)0, bb.w0);
-      float height = std::min((float) image.dim(0) - h, h + bb.height);
-      float width = std::min((float) image.dim(1) - w, h + bb.width);
-      if (height <= 0 || width <= 0 ||
-	  height + h <= 0 || height + h > image.dim(1) ||
-	  width + w <= 0 || width + w > image.dim(2)) {
-	merr << "warning: ignoring bbox original save out of bounds (" 
-	     << h << "," << w << ")" << height << "x" << width << endl;
-      } else {
-	inorig = image.narrow(1, (int) height, (int) h);
-	inorig = inorig.narrow(2, (int) width, (int) w);
-	inorig = inorig.shift_dim(0, 2); // put channels back to dimension 2
-	// save original image as png
-	fname.str("");
-	fname << dir_orig[bb.class_id] << frame_name << "_"
-	      << labels[bb.class_id] << setw(3) << setfill('0')
-	      << save_counts[bb.class_id] << ".png";
-	// make sure directory exists
-	string d2 = dirname(fname.str().c_str());
-	mkdir_full(d2);
-	if (save_image(fname.str(), inorig, "png"))
-	  mout << "saved " << fname.str() << ": " << inorig << " (confidence "
-	       << bb.confidence << ")" << endl;
-      }
+      // ///////////////////////////////////////////////////////////////////////
+      // // original
+      // // get bbox of original input
+      // if (bb.height + bb.h0 > image.dim(1) ||
+      // 	  bb.width + bb.w0 > image.dim(2) ||
+      // 	  bb.h0 < 0 || bb.w0 < 0)
+      // 	merr << "warning: trying to crop bbox outside of image bounds: bbox "
+      // 	     << bb << " in image " << image << endl;
+      // // make sure we don't try to crop outside of image bounds
+      // float h = std::max((float)0, bb.h0), w = std::max((float)0, bb.w0);
+      // float height = std::min((float) image.dim(0) - h, h + bb.height);
+      // float width = std::min((float) image.dim(1) - w, h + bb.width);
+      // if (height <= 0 || width <= 0 ||
+      // 	  height + h <= 0 || height + h > image.dim(1) ||
+      // 	  width + w <= 0 || width + w > image.dim(2)) {
+      // 	merr << "warning: ignoring bbox original save out of bounds ("
+      // 	     << h << "," << w << ")" << height << "x" << width << endl;
+      // } else {
+      // 	inorig = image.narrow(1, (int) height, (int) h);
+      // 	inorig = inorig.narrow(2, (int) width, (int) w);
+      // 	inorig = inorig.shift_dim(0, 2); // put channels back to dimension 2
+      // 	// save original image as png
+      // 	fname.str("");
+      // 	fname << dir_orig[bb.class_id] << frame_name << "_"
+      // 	      << labels[bb.class_id] << setw(3) << setfill('0')
+      // 	      << save_counts[bb.class_id] << ".png";
+      // 	// make sure directory exists
+      // 	string d2 = dirname(fname.str().c_str());
+      // 	mkdir_full(d2);
+      // 	if (save_image(fname.str(), inorig, "png"))
+      // 	  mout << "saved " << fname.str() << ": " << inorig << " (confidence "
+      // 	       << bb.confidence << ")" << endl;
+      // }
       // increment file counter
       save_counts[bb.class_id]++;
-      // stop if reached max save per frame
-      if (i >= save_max_per_frame)
-	break ;
     }
 #endif
-  }
-  
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::sort_bboxes(vector<bbox*> &bboxes) {
-    bbox *tmp = NULL;
-    float confidence;
-    for (int i = 1; i < (int) bboxes.size(); ++i) {
-      int k = i;
-      confidence = bboxes[k]->confidence;
-      for (int j = i - 1; j >= 0; j--) {
-	if (confidence > bboxes[j]->confidence) {
-	  // swap them
-	  tmp = bboxes[j];
-	  bboxes[j] = bboxes[k];
-	  bboxes[k] = tmp;
-	  k = j;
-	}
-      }
-    }
-  }
-
-  template <typename T, class Tstate>
-  void detector<T,Tstate>::normalize_bboxes(vector<bbox*> &bboxes,
-					    float woverh) {
-    bbox *b = NULL;
-    for (int i = 0; i < (int) bboxes.size(); ++i) {
-      b = bboxes[i];
-      DEBUG("normalizing box ratio from " << b->width / b->height);
-      b->scale_width(woverh);
-      DEBUG("to " << b->width / b->height);
-    }
   }
 
   template <typename T, class Tstate>
@@ -1369,8 +1402,20 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_save_max_per_frame(uint max) {
-    save_max_per_frame = max;
+  string& detector<T,Tstate>::set_save(const string &directory, uint nmax,
+				       bool diverse) {
+    save_mode = true;
+    save_dir = directory;
+    // save_dir += "_";
+    // save_dir += tstamp();
+    diverse_ordering = diverse;
+    save_max_per_frame = nmax;
+    mout << "Enabling saving of detected regions into: ";
+    mout << save_dir << endl;
+    mout << "Saving at most " << save_max_per_frame << " positive windows"
+	 << (diverse_ordering ? " and ordering them by diversity." : ".")
+	 << endl;
+    return save_dir;
   }
 
   template <typename T, class Tstate>
@@ -1378,105 +1423,103 @@ namespace ebl {
     if (bodetections) // recompute only if not up-to-date
       return odetections;
     idx<T> input;
-    size_t i; bbox *bb;
+    size_t i;
     // clear vector
     odetections.clear();
     // loop on bounding boxes
     for (i = 0; i < pruned_bboxes.size(); ++i) {
-      bb = pruned_bboxes[i];
+      bbox &bb = pruned_bboxes[i];
       // exclude background class
-      if ((bb->class_id == bgclass) || (bb->class_id == mask_class))
+      if ((bb.class_id == bgclass) || (bb.class_id == mask_class))
 	continue ;
       // check the box is not out of bounds
-      if (bb->h0 < 0 || bb->w0 < 0
-	  || bb->h0 + bb->height > image.dim(1)
-	  || bb->w0 + bb->width > image.dim(2)) {
-	merr << "warning: box " << *bb << "is out of bounds in original image "
+      if (bb.h0 < 0 || bb.w0 < 0
+	  || bb.h0 + bb.height > image.dim(1)
+	  || bb.w0 + bb.width > image.dim(2)) {
+	merr << "warning: box " << bb << "is out of bounds in original image "
 	     << image << endl;
 	continue ;
       }
       // get bbox of input
-      input = image.narrow(1, (int) bb->height, (int) bb->h0);
-      input = input.narrow(2, (int) bb->width, (int) bb->w0);
+      input = image.narrow(1, (int) bb.height, (int) bb.h0);
+      input = input.narrow(2, (int) bb.width, (int) bb.w0);
       //input = input.shift_dim(0, 2); // put channels back to dimension 2
       odetections.push_back(input);
     }
     bodetections = true;
     return odetections;
   }
-  
+
   template <typename T, class Tstate>
-  idx<T> detector<T,Tstate>::get_preprocessed(const bbox &bb) {
-    mstate<Tstate> &states = (*ppinputs[bb.scale_index]);
-    if (states.size() > 1) { // fovea mode, multiple states
-      // get bbox of input given output bbox and its offsets
-      idxdim d(1, 1, 1); //bb.oheight, bb.owidth);
-      d.setoffset(1, bb.o.h0);
-      d.setoffset(2, bb.o.w0);
-      idxdim d2 = thenet.bprop_size(d);
-      DEBUG("bprop_size of " << d << " -> " << d2);
-      // get bboxes after the resizepp
-      vector<idxdim> dims = resizepp->get_msize();
-      if (dims.size() != states.size())
-	eblerror("expected same size dimensions and states but got "
-		 << dims.size() << " and " << states.size());
-      idxdim d0 = dims[0];
-      d0.setdim(0, states[0].x.dim(0));
-      idxdim alld(d0);
-      // multiply feature dim by number of states to be concatenated
-      alld.setdim(0, alld.dim(0) * dims.size());
-      idx<T> all(alld);
-      uint i;
-      for (i = 0; i < dims.size(); ++i) {
-	Tstate &ppinput = states[i];
-	idxdim id = dims[i];
-	idx<T> slice = all.narrow(0, d0.dim(0), d0.dim(0) * i);
-	// check that the box is valid wrt input
-	if (id.dim(1) + id.offset(1) >= ppinput.x.dim(1)
-	    || id.dim(2) + id.offset(2) >= ppinput.x.dim(2))
-	  eblthrow("warning: ignoring invalid box " << id << " for input "
-		   << ppinput.x << " in get_preprocessed()");
-	idx<T> input = ppinput.x.narrow(1, id.dim(1), id.offset(1));
-	input = input.narrow(2, id.dim(2), id.offset(2));
-	idx_copy(input, slice);
-	DEBUG("extracting window " << id << " in input " << i << " "
-	      << ppinput.x);
-      }
-      return all;
-    } else { // single state
-      Tstate &ppinput = states[0];
-      idx<T> input = ppinput.x.narrow(1, (int) bb.i0.height, (int) bb.i0.h0);
-      input = input.narrow(2, (int) bb.i0.width, (int) bb.i0.w0);
-      idx<T> all(input.dim(0), (int) bb.i0.height, (int) bb.i0.width);
-      idx_copy(input, all);
-      return all;
+  midx<T> detector<T,Tstate>::get_preprocessed(const bbox &bb) {
+    mstate<Tstate> &ins = ppinputs[0];
+    mstate<Tstate> &outs = outputs[0];
+    // get bbox of input given output bbox and its offsets
+    idxdim d(1, 1, 1); //bb.oheight, bb.owidth);
+    d.setoffset(1, bb.o.h0);
+    d.setoffset(2, bb.o.w0);
+    mfidxdim md;
+    for (uint i = 0; i < outs.size(); ++i) {
+      if (i == (uint) bb.oscale_index) md.push_back(d);
+      else md.push_back_empty();
     }
+    mfidxdim d2 = thenet.bprop_size(md);
+    EDEBUG("get_preprocessed: bprop_size of " << md << " -> " << d2
+	  << " from outputs " << outs << " to input " << ins);
+    // get bboxes after the resizepp
+    mfidxdim dims = resizepp->get_msize();
+    if (dims.size() != ins.size())
+      eblerror("expected same size dimensions and ins but got "
+	       << dims.size() << " and " << ins.size());
+    midx<T> all(1);
+    ins.get_padded_midx(dims, all);
+    return all;
   }
 
   template <typename T, class Tstate>
-  vector<idx<T> >& detector<T,Tstate>::get_preprocessed() {
-    if (bppdetections) // recompute only if not up-to-date
-      return ppdetections;
+  svector<midx<T> >& detector<T,Tstate>::
+  get_preprocessed(bboxes &out, uint nmax, bool diverse, uint pre_diverse_max) {
+    return get_preprocessed(pruned_bboxes, out, nmax, diverse, pre_diverse_max);
+  }
+
+  template <typename T, class Tstate>
+  svector<midx<T> >& detector<T,Tstate>::
+  get_preprocessed(bboxes &in, bboxes &out, uint nmax, bool diverse,
+		   uint pre_diverse_max) {
+    // if (bppdetections) // recompute only if not up-to-date
+    //   return ppdetections;
     idx<T> input;
-    size_t i; bbox *bb;
+    size_t i;
+    size_t n = in.size();
+    // limit number of samples fed to diversity if enabled
+    if (diverse && pre_diverse_max > 0) {
+      if (nmax > 0) pre_diverse_max = std::max(pre_diverse_max, nmax);
+      n = std::min((size_t) pre_diverse_max, n);
+    }
 
     // clear vector
     ppdetections.clear();
+    out.clear();
     // loop on bounding boxes
-    for (i = 0; i < pruned_bboxes.size(); ++i) {
-      bb = pruned_bboxes[i];
-      // exclude background class
-      if ((bb->class_id == bgclass) || (bb->class_id == mask_class))
-	continue ;
-      try {
-	idx<T> all = get_preprocessed(*bb);
-	ppdetections.push_back(all);
-      } catch(eblexception &e) {};
+    for (i = 0; i < n; ++i) {
+      bbox &bb = in[i];
+      midx<T> all = get_preprocessed(bb);
+      ppdetections.push_back_new(all);
+      // outs.push_back(out);
+      out.push_back(bb);
     }
+    // diverse ordering
+    if (diverse) out.sort_by_difference(ppdetections);
+    // cap to n
+    if (nmax > 0 && nmax < ppdetections.size()) {
+      ppdetections.erase(ppdetections.begin() + nmax, ppdetections.end());
+      out.erase(out.begin() + nmax, out.end());
+    }
+    // return
     bppdetections = true;
     return ppdetections;
   }
-  
+
   template <typename T, class Tstate>
   idx<T> detector<T,Tstate>::get_mask(string &classname) {
     int id = get_class_id(classname);
@@ -1488,30 +1531,31 @@ namespace ebl {
       idx_clear(mask);
       return mask;
     }
-    // merge all outputs of class 'id' into mask
-    for (uint i = 0; i < ppinputs.size(); ++i) {
-      Tstate &ppin = (*ppinputs[i])[0];
-      idx<T> in = ppin.x.select(0, 0);
-      idx<T> out = outputs[i]->x.select(0, id);
-      rect<int> ob = original_bboxes[i];
-      // resizing to inputs, then to original input, to avoid precision loss
-      out = image_resize(out, in.dim(0), in.dim(1), 1);
-      out = out.narrow(0, ob.height, ob.h0);
-      out = out.narrow(1, ob.width, ob.w0);
-      out = image_resize(out, mask.dim(0), mask.dim(1), 1);
-      if (i++ == 0)
-	idx_copy(out, mask);
-      else
-	idx_max(mask, out, mask);
-    }
+    eblerror("get_mask temporarly broken, outputs is now multi-state");
+    // // merge all outputs of class 'id' into mask
+    // for (uint i = 0; i < ppinputs.size(); ++i) {
+    //   Tstate &ppin = (*ppinputs[i])[0];
+    //   idx<T> in = ppin.x.select(0, 0);
+    //   idx<T> out = outputs[i]->x.select(0, id);
+    //   rect<int> ob = original_bboxes[i];
+    //   // resizing to inputs, then to original input, to avoid precision loss
+    //   out = image_resize(out, in.dim(0), in.dim(1), 1);
+    //   out = out.narrow(0, ob.height, ob.h0);
+    //   out = out.narrow(1, ob.width, ob.w0);
+    //   out = image_resize(out, mask.dim(0), mask.dim(1), 1);
+    //   if (i++ == 0)
+    // 	idx_copy(out, mask);
+    //   else
+    // 	idx_max(mask, out, mask);
+    // }
     return mask;
   }
-  
+
   //////////////////////////////////////////////////////////////////////////////
   // processing
-  
+
   template <typename T, class Tstate> template <class Tin>
-  void detector<T,Tstate>::prepare(idx<Tin> &img) {
+  void detector<T,Tstate>::prepare(idx<Tin> &img, const char *frame_name) {
     // tell detections vectors they are not up-to-date anymore
     bodetections = false;
     bppdetections = false;
@@ -1529,17 +1573,17 @@ namespace ebl {
     // if input size had changed, reinit resolutions
     if (!initialized ||
 	(!(indim == image.get_idxdim()) && restype != NETWORK)) {
-      init(image.get_idxdim());
+      init(image.get_idxdim(), frame_name);
     }
   }
-  
+
   template <typename T, class Tstate>
   void detector<T,Tstate>::prepare_scale(uint i) {
     if (i >= scales.size())
       eblthrow("cannot request scale " << i << ", there are only "
 	       << nscales << " scales");
     // select input/outputs buffers
-    output = outputs[i];
+    //    output = outputs[0];
     if (!mem_optimization || keep_inputs) // we use different bufs for each i
       input = &finput;
     else
@@ -1547,13 +1591,13 @@ namespace ebl {
     // set resizing of current scale
     idxdim d = scales[i];
     resizepp->set_dimensions(d.dim(1), d.dim(2));
-    // save actual resolutions
-    idxdim tmp = d;
-    idxdim actual = thenet.fprop_size(tmp);
-    actual = thenet.bprop_size(actual);
-    actual_scales[i] = actual;
-    DEBUG("requested resolution " << d << " at scale " << i
-	  << ": actual res " << actual);
+    // // save actual resolutions
+    // fidxdim tmp = d;
+    // idxdim actual = thenet.fprop_size(tmp);
+    // actual = thenet.bprop_size(actual);
+    // actual_scales[i] = actual;
+    // EDEBUG("requested resolution " << d << " at scale " << i
+    // 	  << ": actual res " << actual);
   }
 
   template <typename T, class Tstate>
@@ -1568,14 +1612,21 @@ namespace ebl {
       if (!mem_optimization || keep_inputs)
 	resizepp->set_output_copy(ppinputs[i]);
       // fprop
-      thenet.fprop(*input, *output);
+      mstate<Tstate> &out = outputs[0];
+      thenet.fprop(*input, out);
+      EDEBUG("detector outputs: " << out);
       // outputs dumping
       if (!outputs_dump.empty()) {
-	string fname = outputs_dump;
-	fname << "_" << output->x << ".mat";
-	save_matrix(output->x, fname);
-	mout << "Saved " << fname << " (min: " << idx_min(output->x)
-	     << ", max: " << idx_max(output->x) << ")" << endl;
+      	string fname = outputs_dump;
+	if (out.size() == 1) {
+	  idx<T> &o = out[0].x;
+	  fname << "_" << o << ".mat";
+	  save_matrix(o, fname);
+	  mout << "Saved " << fname << " (" << o << ", min: " << idx_min(o)
+	       << ", max: " << idx_max(o) << ")" << endl;
+	} else {
+	  // TODO: write code to save multi-state x components
+	}
       }
       // memorize original input's bbox in resized input
       rect<int> &bbox = original_bboxes[i];
@@ -1584,18 +1635,19 @@ namespace ebl {
       bbox.w0 = bb.w0;
       bbox.height = bb.height;
       bbox.width = bb.width;
-      
-#ifdef __DUMP_STATES__
-      DUMP(output->x, "detector_output_");
-#endif
-      
+
+// #ifdef __DUMP_STATES__
+//       DUMP(output->x, "detector_output_");
+// #endif
+
       if (optimization_swap) { // swap output and input
-      	tmp = input;
-      	input = output;
-      	output = tmp;
+	eblerror("mem optimization temporarly broken because out is now mstate");
+      	// tmp = input;
+      	// input = output;
+      	// output = tmp;
       }
     }
-    mout << "net_processing=" << t.elapsed_ms() << endl;
+    if (!silent) mout << "net_processing=" << t.elapsed_ms() << endl;
   }
 
 } // end namespace ebl

@@ -204,33 +204,29 @@ namespace ebl {
    try {
      // configuration
      bool       silent         = conf.exists_true("silent");
-     bool	color	       = conf.exists_true("color");
-     uint	norm_size      = conf.get_uint("normalization_size");
-     Tnet	threshold      = (Tnet) conf.get_double("threshold");
+     Tnet	threshold      = (Tnet) conf.try_get_double("threshold", 0);
      bool	display	       = false;
      bool	mindisplay     = conf.exists_true("minimal_display");
-     bool       save_video     = conf.exists_true("save_video");
      bool	display_states = conf.exists_true("display_states");
-     uint	display_sleep  = conf.get_uint("display_sleep");
+     uint	display_sleep  = conf.try_get_uint("display_sleep", 0);
      uint       wid	       = 0;	// window id
      uint       wid_states     = 0;	// window id
      display = conf.exists_true("display_threads");
-//      if (!display && save_video) {
-//        // we still want to output images but not show them
-//        display = true;
-// #ifdef __GUI__
-//        set_gui_silent();
-// #endif
-//      }
      // load network and weights in a forward-only parameter
      parameter<FPROP_SFUNC(Tnet)> theparam;
-     idx<ubyte> classes = load_matrix<ubyte>(conf.get_cstring("classes"));
-     vector<string> sclasses = ubyteidx_to_stringvector(classes);
-     answer_module<SFUNC2(Tnet)> *ans =
-       create_answer<SFUNC2(Tnet)>(conf, classes.dim(0));
-     uint noutputs = ans->get_nfeatures();
+     idx<ubyte> classes;
+     vector<string> sclasses;
+     answer_module<SFUNC2(Tnet)> *ans = NULL;
+     uint noutputs = 1;
+     intg thick = -1;
+     if (conf.exists("classes")) {
+       classes = load_matrix<ubyte>(conf.get_cstring("classes"));
+       sclasses = ubyteidx_to_stringvector(classes);
+       ans = create_answer<SFUNC2(Tnet)>(conf, classes.dim(0));
+       noutputs = ans->get_nfeatures();
+     }     
      module_1_1<FPROP_SFUNC(Tnet)> *net =
-       create_network<FPROP_SFUNC(Tnet)>(theparam, conf, noutputs);
+       create_network<FPROP_SFUNC(Tnet)>(theparam, conf, thick, noutputs);
      // loading weights
      if (!conf.exists("weights")) { // manual weights
        merr << "warning: \"weights\" variable not defined, loading manually "
@@ -244,57 +240,11 @@ namespace ebl {
        mout << "Loading weights from: " << w << endl;
        theparam.load_x(w);
      }
-
-#ifdef __DEBUGMEM__
-       pretty_memory();
-#endif
-
      // detector
-     detector<FPROP_SFUNC(Tnet)> detect(*net, sclasses, *ans, NULL, NULL,
+     detector<SFUNC(Tnet)> detect(*net, sclasses, ans, NULL, NULL,
 					mout, merr);
+     detection_thread<Tnet>::init_detector(detect, conf, outdir);
      pdetect = &detect;
-
-     // multi-scaling parameters
-     double maxs = conf.exists("max_scale")?conf.get_double("max_scale") : 1.0;
-     double mins = conf.exists("min_scale")?conf.get_double("min_scale") : 1.0;
-     t_scaling scaling_type = SCALES_STEP;
-     if (conf.exists("scaling_type"))
-       scaling_type = (t_scaling) conf.get_uint("scaling_type");
-     switch (scaling_type) {
-     case ORIGINAL: detect.set_scaling_original(); break ;
-     case SCALES_STEP:
-       detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
-       break ;
-     default:
-       detect.set_scaling_type(scaling_type);
-     }
-     detect.set_bboxes_off(); // do not attempt to extract bounding boxes
-
-     // optimize memory usage by using only 2 buffers for entire flow
-     SBUF<Tnet> input(1, 1, 1), output(1, 1, 1);
-     if (!conf.exists_false("mem_optimization"))
-       detect.set_mem_optimization(input, output, 
-				   (display && 
-				    !conf.exists_true("minimal_display")));
-     // zero padding
-     float hzpad = 0, wzpad = 0;
-     if (conf.exists("hzpad")) hzpad = conf.get_float("hzpad");
-     if (conf.exists("wzpad")) wzpad = conf.get_float("wzpad");
-     detect.set_zpads(hzpad, wzpad);
-     if (conf.exists("input_min")) // limit inputs size
-       detect.set_min_resolution(conf.get_uint("input_min"));
-     if (conf.exists("input_max")) // limit inputs size
-       detect.set_max_resolution(conf.get_uint("input_max"));
-     detect.set_silent();
-     if (conf.exists("net_min_height") && conf.exists("net_min_width"))
-       detect.set_min_input(conf.get_int("net_min_height"),
-			    conf.get_int("net_min_width"));
-     if (conf.exists("smoothing"))
-       detect.set_smoothing(conf.get_uint("smoothing"));
-
-     string viddir = outdir;
-     viddir += "video/";
-     mkdir_full(viddir);
      // gui
 #ifdef __GUI__
      Tnet display_min = -1.7, display_max = 1.7, display_in_min = 0,
@@ -355,7 +305,7 @@ namespace ebl {
 
        // run detector
        if (!display) { // fprop without display
-	 detect.fprop(frame, threshold, frame_name.c_str());
+	 detect.fprop(frame, frame_name.c_str());
        }
 #ifdef __GUI__
        else { // fprop and display
@@ -383,12 +333,12 @@ namespace ebl {
 	 dgui.display_current(detect, frame, wid_states, NULL, zoom);
 	 select_window(wid);
        }
-       if (save_video && display) {
-	 string fname = viddir;
-	 fname += frame_name;
-	 save_window(fname.c_str());
-	 if (!silent) mout << "saved " << fname << endl;
-       }
+       // if (save_video && display) {
+       // 	 string fname = viddir;
+       // 	 fname += frame_name;
+       // 	 save_window(fname.c_str());
+       // 	 if (!silent) mout << "saved " << fname << endl;
+       // }
 #endif
        ms = tpass.elapsed_milliseconds();
        if (!silent) {

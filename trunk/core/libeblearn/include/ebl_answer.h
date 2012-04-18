@@ -75,6 +75,8 @@ namespace ebl {
   public:
     answer_module(uint nfeatures, const char *name = "answer_module");
     virtual ~answer_module();
+
+    // single-state propagation ////////////////////////////////////////////////
     //! Produce a vector of answers given input 'in'. e.g. 'out' contains
     //! answers in this order: class id, confidence.
     virtual void fprop(Tstate &in, Tstate &out);
@@ -86,6 +88,21 @@ namespace ebl {
     //! Back-propagates 2nd derivatives. This might be useful if answer module
     //! has learnable internal parameters.
     virtual void bbprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
+
+    // multi-state propagation /////////////////////////////////////////////////
+    //! Produce target matrix into 'out' for training, given a datasource 'ds'.
+    virtual void fprop(labeled_datasource<T,Tds1,Tds2> &ds,
+		       mstate<Tstate> &out);
+    //! Back-propagates gradients. This might be useful if answer module has
+    //! learnable internal parameters.
+    virtual void bprop(labeled_datasource<T,Tds1,Tds2> &ds,
+		       mstate<Tstate> &out);
+    //! Back-propagates 2nd derivatives. This might be useful if answer module
+    //! has learnable internal parameters.
+    virtual void bbprop(labeled_datasource<T,Tds1,Tds2> &ds,
+			mstate<Tstate> &out);
+
+    ////////////////////////////////////////////////////////////////////////////
     //! Returns true if 'answer' matches with 'label'.
     virtual bool correct(Tstate &answer, Tstate &label);
     //! Update the 'log' according to this type of answer module.
@@ -114,12 +131,13 @@ namespace ebl {
     //! \param target_factor A factor applied to targets.
     //! \param binary_target If true, target is a scalar with -1 or 1.
     //! \param conf The type of confidence.
-    //! \param apply_tanh If true, a tanh is applied to inputs. 
+    //! \param apply_tanh If true, a tanh is applied to inputs.
+    //! \param force_class If >= 0, force answers to this class.
     class_answer(uint nclasses, double target_factor = 1.0,
 		 bool binary_target = false,
 		 t_confidence conf = confidence_max,
-		 bool apply_tanh = false,
-		 const char *name = "class_answer");
+		 bool apply_tanh = false, const char *name = "class_answer",
+		 int force_class = -1);
     virtual ~class_answer();
     //! Produce a vector of answers given input 'in'. 'out' contains answers
     //! in this order: class id and confidence.
@@ -148,6 +166,7 @@ namespace ebl {
     tanh_module<T,Tstate> mtanh;    //!< A tanh module.
     T                   target_min;
     T                   target_max;
+    int                 force_class;
   };
 
   //! This module gathers information from a labeled_datasource 'ds' and outputs
@@ -325,12 +344,14 @@ namespace ebl {
     //!   by default (null), will simply pass 'input' data from ds.
     //! \param dsmod2 The module that picks/preprocesses data from ds to mod2,
     //!   by default (null), will simply pass 'label' data from ds.
+    //! \param switcher Name of the module used to switch based on scale info.
     trainable_module(ebm_2<Tin1,Tin2,Ten> &energy,
-	   module_1_1<T,Tin1> &mod1,
-	   module_1_1<T,Tin2> *mod2 = NULL,
-	   answer_module<T,Tds1,Tds2,Tin1> *dsmod1 = NULL,
-	   answer_module<T,Tds1,Tds2,Tin2> *dsmod2 = NULL,
-	   const char *name = "trainable_module");
+		     module_1_1<T,Tin1> &mod1,
+		     module_1_1<T,Tin2> *mod2 = NULL,
+		     answer_module<T,Tds1,Tds2,Tin1> *dsmod1 = NULL,
+		     answer_module<T,Tds1,Tds2,Tin2> *dsmod2 = NULL,
+		     const char *name = "trainable_module",
+		     const char *switcher = "");
     virtual ~trainable_module();
 
     virtual void fprop(labeled_datasource<T,Tds1,Tds2> &ds, Ten &energy);
@@ -366,25 +387,37 @@ namespace ebl {
     friend class trainable_module_gui;
     template<class T1, class T2, class T3> friend class supervised_trainer;
     template<class T1, class T2, class T3> friend class supervised_trainer_gui;
+
+    // internal methods ////////////////////////////////////////////////////////
+  protected:
+    //! Update the scale switch if an ms module was found in mod1.
+    void update_scale(labeled_datasource<T,Tds1,Tds2> &ds);
   
     // members /////////////////////////////////////////////////////////////////
   protected:
-    ebm_2<Tin1,Tin2,Ten>	&energy_mod;
-    module_1_1<T,Tin1,Tin1>	&mod1;
-    module_1_1<T,Tin1,Tin1>	*mod2;
+    ebm_2<Tin1,Tin2,Ten>		&energy_mod;
+    module_1_1<T,Tin1,Tin1>		&mod1;
+    module_1_1<T,Tin1,Tin1>		*mod2;
     answer_module<T,Tds1,Tds2,Tin1>	*dsmod1;
     answer_module<T,Tds1,Tds2,Tin2>	*dsmod2;
     // intermediate buffers
-    Tin1			in1;
-    Tin1			out1; //!< Output of mod1.
-    Tin2			in2;
-    Tin2			out2;
-    Tin1                        answers;
-    Tin1                        targets;
-    string                      mod_name;
-    Ten                         tmp_energy;
+    mstate<Tin1>			 msin1;
+    Tin1				 in1;
+    Tin1				 out1;	//!< Output of mod1.
+    Tin2				 in2;
+    Tin2				 out2;
+    Tin1				 answers;
+    Tin1				 targets;
+    string				 mod_name;
+    Ten					 tmp_energy;
+    ms_module<T,Tin1>                    *ms_switch;
   };
 
+  // utility functions /////////////////////////////////////////////////////////
+  
+  template <typename T>
+    void print_targets(idx<T> &targets);
+    
 } // end namespace ebl
 
 #include "ebl_answer.hpp"

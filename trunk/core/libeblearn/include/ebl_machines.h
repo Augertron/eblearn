@@ -35,7 +35,7 @@
 #include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_states.h"
-#include "ebl_transfer.h"
+#include "ebl_normalization.h"
 #include "ebl_basic.h"
 #include "ebl_cost.h"
 #include "ebl_arch.h"

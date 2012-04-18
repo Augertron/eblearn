@@ -41,6 +41,7 @@
 #include "libidx.h"
 #include "libeblearn.h"
 #include "libeblearntools.h"
+#include "eblapp.h"
 
 #ifndef __WINDOWS__
 #include <fenv.h>
@@ -49,9 +50,6 @@
 #ifdef __GUI__
 #include "libeblearngui.h"
 #endif
-
-using namespace std;
-using namespace ebl; // all eblearn objects are under the ebl namespace
 
 typedef float t_net; // precision at which network is fprop (float ok)
 typedef int t_label; // label's type
@@ -83,10 +81,9 @@ int main(int argc, char **argv) { // regular main without gui
     bool extract_train = conf.exists("train");
     idxdim dims;
     intg outsize = 0, nsamples = 0;
-    string input_root = conf.get_string("root");
     string outdir = conf.get_string("out");
     // output synchronization
-    bool sync = conf.exists_true("sync_outputs");
+    bool sync = !conf.exists_false("sync_outputs");
     mutex out_mutex;
     mutex_ostream mutout(std::cout, &out_mutex, "Thread M");
     mutex_ostream muterr(std::cerr, &out_mutex, "Thread M");
@@ -99,37 +96,24 @@ int main(int argc, char **argv) { // regular main without gui
     uint              skip_frames   = conf.exists("skip_frames") ? 
       conf.get_uint("skip_frames") : 0;
 
-    ////////////////////////////////////////////////////////////////////////////
-    // camera
-    
-    string		cam_type;
-#ifdef __LINUX__ // default camera for linux if not defined
-    cam_type = "v4l2";
-#endif
-    if (conf.exists("camera"))
-      cam_type = conf.get_string("camera");
-    int		height        = -1;
-    int		width         = -1;
-    bool              input_random  = conf.exists_true("input_random");
-    uint              npasses       = 1;
-    if (conf.exists("input_npasses"))
-      npasses = conf.get_uint("input_npasses");
-    if (conf.exists("input_height")) height = conf.get_int("input_height");
-    if (conf.exists("input_width")) width = conf.get_int("input_width");
-    const char *fpattern = IMAGE_PATTERN_MAT;
-    if (conf.exists("file_pattern"))
-      fpattern = conf.get_cstring("file_pattern");
+    // camera //////////////////////////////////////////////////////////////////
+    string cam_type = conf.try_get_string("camera", "directory");
+    int	height = conf.try_get_int("input_height", -1);
+    int	width = conf.try_get_int("input_width", -1);
+    bool input_random  = conf.exists_true("input_random");
+    uint npasses = conf.try_get_uint("input_npasses", 1);
+    string patt = conf.try_get_string("file_pattern", IMAGE_PATTERN_MAT);
     idx<ubyte> frame(1,1,1);
     camera<ubyte> *cam = NULL;
     if (!strcmp(cam_type.c_str(), "directory")) {
       if (argc >= 3) // read input dir from command line
 	cam = new camera_directory<ubyte>(argv[2], height, width,
 					  input_random, npasses, mout, merr,
-					  fpattern);
+					  patt.c_str());
       else if (conf.exists("input_dir")) // read input dir from conf
 	cam = new camera_directory<ubyte>(conf.get_cstring("input_dir"), 
 					  height, width, input_random,
-					  npasses, mout, merr, fpattern);
+					  npasses, mout, merr, patt.c_str());
 	else eblerror("expected 2nd argument");
     } else if (!strcmp(cam_type.c_str(), "video")) {
       const char *file = conf.get_cstring("input_file");
@@ -142,20 +126,16 @@ int main(int argc, char **argv) { // regular main without gui
     dims = idxdim(3, height, width);
     nsamples = cam->size();
 
-    ////////////////////////////////////////////////////////////////////////////
-    // extraction
-
+    // extraction //////////////////////////////////////////////////////////////
     // now do training iterations
     ostringstream name, fname;
     // fstate_idx<t_net> in(dims), out(1,1,1);
     // fstate_idx<t_label> label(1);
 
     // allocate threads
-    uint nthreads = 1;
+    uint nthreads = conf.try_get_uint("nthreads", 1);
     bool updated = false;
     idx<ubyte> detframe; // frame returned by detection thread
-    if (conf.exists("nthreads"))
-	nthreads = (std::max)((uint) 1, conf.get_uint("nthreads"));
     list<fprop_thread<t_net>*>  threads;
     list<fprop_thread<t_net>*>::iterator ithreads;
     mout << "Initializing " << nthreads << " fprop threads." << endl;
@@ -173,9 +153,9 @@ int main(int argc, char **argv) { // regular main without gui
     // input/output names
     mkdir_full(outdir);
     mout << "Saving outputs to " << outdir << endl;
-    string arch_name = conf.get_string("arch_name");
-    string weights_name = outdir;
-    weights_name << arch_name << "_weights.mat";
+    string arch_name = conf.try_get_string("arch_name", "arch");
+    string out_name;
+    out_name << outdir << arch_name << "_";
     
     string in_fname, out_fname;
     bool threads_loading = conf.exists_true("threads_load");
@@ -208,15 +188,12 @@ int main(int argc, char **argv) { // regular main without gui
 	  updated = false;
 	  cnt++;
 	  // output info
-	  if (!silent) {
-	    mout << "remaining=" << (cam->size() - cnt)
-		   << " elapsed=" << toverall.elapsed();
-	    if (cam->size() > 0)
-	      mout << " ETA=" << toverall.eta(cnt, cam->size());
-	    mout << endl;
-	  }
-	  mout << "i=" << cnt << " processing: " << tpass.elapsed_ms()
-		 << " fps: " << cam->fps() << endl;
+	  mout << "i=" << cnt << " processing=" << tpass.elapsed_ms()
+	       << " fps=" << cam->fps() << " remaining=" << (cam->size() - cnt)
+	       << " elapsed=" << toverall.elapsed();
+	  if (cam->size() > 0)
+	    mout << " ETA=" << toverall.eta(cnt, cam->size());
+	  mout << endl;
 	}
 	// check if ready
 	if ((*ithreads)->available()) {
@@ -243,8 +220,8 @@ int main(int argc, char **argv) { // regular main without gui
 		  millisleep(5);
 	      } else { // thread loads data itself, just get filename
 		in_fname = cam->grab_filename();
-		out_fname = outdir;
-		out_fname << ebl::basename(in_fname.c_str());
+		out_fname = "";
+		out_fname << out_name << ebl::basename(in_fname.c_str());
 		while (!(*ithreads)->set_dump(in_fname, out_fname))
 		  millisleep(5);		
 	      }

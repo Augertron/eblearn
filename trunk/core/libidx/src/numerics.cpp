@@ -57,7 +57,7 @@ namespace ebl {
     double e = exp(-2*(double)(x));
     double e1 = 1+e;
     e1 = e1*e1;
-	if (isinf_local(e1))
+    if (isinf_local(e1))
       return 0.0;
     return ((4*e)/e1);
   }
@@ -216,6 +216,7 @@ dstdsigmoid(float x)
   void init_drand(int x){
     drand_ini = true;
     dseed(x);
+    srand(x);
   }
 
   int dynamic_init_drand(int argc, char **argv) {
@@ -226,11 +227,13 @@ dstdsigmoid(float x)
       std::string s = argv[i];
       // note: we don't care about overflow here.
       for (uint j = 0; j < s.size(); ++j) {
-	seed += (uint) drand(limits<uint32>::min(), limits<uint32>::max()) * (uint32) s[j];
+	seed += (uint) drand(limits<uint32>::min(),
+			     limits<uint32>::max()) * (uint32) s[j];
       }
     }
     // use pid to introduce more randomization
-    seed += (uint) drand(limits<uint32>::min(), limits<uint32>::max()) * (uint32) pid();
+    seed += (uint) drand(limits<uint32>::min(),
+			 limits<uint32>::max()) * (uint32) pid();
     init_drand((int) seed);
     return (int) seed;
   }
@@ -264,13 +267,10 @@ dstdsigmoid(float x)
     inextp = 31;			/* Special constant */
   }
 
-
   double drand(void) {
     register int mj;
-    if (++inext == 56)
-      inext = 1;
-    if (++inextp == 56)
-      inextp = 1;
+    if (++inext == 56) inext = 1;
+    if (++inextp == 56) inextp = 1;
     mj = ((ma[inext] - ma[inextp]) * 84589 + 45989) & MMASK;
     ma[inext] = mj;
     return (double)(mj * FAC);

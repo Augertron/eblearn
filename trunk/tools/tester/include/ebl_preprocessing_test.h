@@ -9,7 +9,8 @@
 //! Test class for Ebm class
 class ebl_preprocessing_test : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(ebl_preprocessing_test);
-  CPPUNIT_TEST(test_rgb_to_yp);
+  CPPUNIT_TEST(test_preprocessing_modules);
+  //  CPPUNIT_TEST(test_resizing);
   CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -22,7 +23,8 @@ public:
   void tearDown();
 
   // Test functions
-  void test_rgb_to_yp();
+  void test_resizing();
+  void test_preprocessing_modules();
 };
 
 #endif /* EBL_PREPROCESSING_TEST_H_ */

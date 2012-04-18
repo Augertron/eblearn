@@ -92,56 +92,56 @@ namespace ebl {
     // and feed the input of the following module.
     
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>
+    this->add_module(new convolution_module<T,Tstate>
 	       (&prm, ker0, stride, tbl0, "c0"));
     // bias
-    add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
+    this->add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
+      this->add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
     else if (tanh)
-      add_module(new tanh_module<T,Tstate>());
+      this->add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T,Tstate>());
+      this->add_module(new stdsigmoid_module<T,Tstate>());
     // feature coefficents
     if (diag)
-      add_module(new diag_module<T,Tstate>(&prm, thick0));
+      this->add_module(new diag_module<T,Tstate>(&prm, thick0));
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>
-		 (ker0, thick0, "w0", mirror, true, false));
+      this->add_module(new abs_module<T,Tstate>());
+      this->add_module(new contrast_norm_module<T,Tstate>
+		 (ker0, thick0, mirror, true, false, NULL, "w0"));
     }
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>(&prm, thick0,sker0,sker0, tanh));
+    this->add_module(new subsampling_layer<T,Tstate>(&prm, thick0,sker0,sker0, tanh));
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>
+    this->add_module(new convolution_module<T,Tstate>
 	       (&prm, ker1, stride, tbl1));
     // bias
-    add_module(new addc_module<T,Tstate>(&prm, thick1));
+    this->add_module(new addc_module<T,Tstate>(&prm, thick1));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
+      this->add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
     else if (tanh)
-      add_module(new tanh_module<T,Tstate>());
+      this->add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T,Tstate>());
+      this->add_module(new stdsigmoid_module<T,Tstate>());
     // feature coefficents
     if (diag)
-      add_module(new diag_module<T,Tstate>(&prm, thick1));
+      this->add_module(new diag_module<T,Tstate>(&prm, thick1));
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>
-		 (ker1, thick1, "w1", mirror, true, false));
+      this->add_module(new abs_module<T,Tstate>());
+      this->add_module(new contrast_norm_module<T,Tstate>
+		 (ker1, thick1, mirror, true, false, NULL, "w1"));
     }
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>(&prm, thick1,sker1,sker1, tanh));
+    this->add_module(new subsampling_layer<T,Tstate>(&prm, thick1,sker1,sker1, tanh));
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T,Tstate>
+    this->add_module(new convolution_layer<T,Tstate>
 	       (&prm, ker2, stride, tbl2, tanh));
     // full
-    add_module(new full_layer<T,Tstate>(&prm, thick2, outthick, tanh));
+    this->add_module(new full_layer<T,Tstate>(&prm, thick2, outthick, tanh));
   }
 
   ////////////////////////////////////////////////////////////////
@@ -199,64 +199,66 @@ namespace ebl {
     // and feed the input of the following module.
     
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>(&prm, ker0, stride,
+    this->add_module(new convolution_module<T,Tstate>(&prm, ker0, stride,
 							   tbl0, "c0"));
     // bias
-    add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
+    this->add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
+      this->add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
     else if (tanh)
-      add_module(new tanh_module<T,Tstate>());
+      this->add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T,Tstate>());
+      this->add_module(new stdsigmoid_module<T,Tstate>());
     // feature coefficents
     if (diag)
-      add_module(new diag_module<T,Tstate>(&prm, thick0));
+      this->add_module(new diag_module<T,Tstate>(&prm, thick0));
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>(ker0, thick0, "w0", mirror));
+      this->add_module(new abs_module<T,Tstate>());
+      this->add_module(new contrast_norm_module<T,Tstate>(ker0, thick0, mirror, NULL,
+						    "w0"));
     }
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>(&prm,thick0,sker0,sker0,tanh,"s0"));
+    this->add_module(new subsampling_layer<T,Tstate>(&prm,thick0,sker0,sker0,tanh,"s0"));
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>(&prm,ker1,stride,
+    this->add_module(new convolution_module<T,Tstate>(&prm,ker1,stride,
 							   tbl1,"c1"));
     // bias
-    add_module(new addc_module<T,Tstate>(&prm, thick1, "c1bias"));
+    this->add_module(new addc_module<T,Tstate>(&prm, thick1, "c1bias"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
+      this->add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
     else if (tanh)
-      add_module(new tanh_module<T,Tstate>());
+      this->add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T,Tstate>());
+      this->add_module(new stdsigmoid_module<T,Tstate>());
     // feature coefficents
     if (diag)
-      add_module(new diag_module<T,Tstate>(&prm, thick1));
+      this->add_module(new diag_module<T,Tstate>(&prm, thick1));
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>(ker1, thick1, "w1", mirror));
+      this->add_module(new abs_module<T,Tstate>());
+      this->add_module(new contrast_norm_module<T,Tstate>(ker1, thick1, mirror, NULL,
+						    "w1"));
     }
     if (lut_features)
-      add_module(new range_lut_module<T,Tstate>(lut));
+      this->add_module(new range_lut_module<T,Tstate>(lut));
     // full
-    add_module(new full_layer<T,Tstate>(&prm, thick1, outthick, tanh, "f2"));
+    this->add_module(new full_layer<T,Tstate>(&prm, thick1, outthick, tanh, "f2"));
 
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ker0,stride,tbl0,mirror,tanh));
+    //   this->add_module(new convabsnorm_layer<T,Tstate>(&prm, ker0,stride,tbl0,mirror,tanh));
     // else // old fashioned way
-    //   add_module(new convolution_layer<T,Tstate>(&prm, ker0, stride, tbl0, tanh));
+    //   this->add_module(new convolution_layer<T,Tstate>(&prm, ker0, stride, tbl0, tanh));
     // // subsampling
-    // add_module(new subsampling_layer<T,Tstate>(&prm,thick0,sker0, sker0, tanh));,
+    // this->add_module(new subsampling_layer<T,Tstate>(&prm,thick0,sker0, sker0, tanh));,
     // // convolution
     // if (norm) // absolute rectification + contrast normalization
-    //   add_module(new convabsnorm_layer<T,Tstate>(&prm, ker1,stride,tbl1,mirror,tanh));
+    //   this->add_module(new convabsnorm_layer<T,Tstate>(&prm, ker1,stride,tbl1,mirror,tanh));
     // else // old fashioned way
-    //   add_module(new convolution_layer<T,Tstate>(&prm, ker1, stride, tbl1, tanh));
+    //   this->add_module(new convolution_layer<T,Tstate>(&prm, ker1, stride, tbl1, tanh));
     // // full
     // add_last_module(new full_layer<T,Tstate>(&prm, thick1, outthick, tanh));
   }
@@ -316,49 +318,51 @@ namespace ebl {
     idxdim sker0(si0, sj0);
 
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>(&prm,ker0,stride,
+    this->add_module(new convolution_module<T,Tstate>(&prm,ker0,stride,
 							   tbl0,"c0"));
     // bias
-    add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
+    this->add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
+      this->add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
     else if (tanh)
-      add_module(new tanh_module<T,Tstate>());
+      this->add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T,Tstate>());
+      this->add_module(new stdsigmoid_module<T,Tstate>());
     // feature coefficents
     if (diag)
-      add_module(new diag_module<T,Tstate>(&prm, thick0));
+      this->add_module(new diag_module<T,Tstate>(&prm, thick0));
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>(ker0, thick0, "w0", mirror));
+      this->add_module(new abs_module<T,Tstate>());
+      this->add_module(new contrast_norm_module<T,Tstate>(ker0, thick0, mirror,
+						    NULL, "w0"));
     }
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>(&prm, thick0, sker0, sker0, tanh, "s0"));
+    this->add_module(new subsampling_layer<T,Tstate>(&prm, thick0, sker0, sker0, tanh, "s0"));
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>(&prm,ker1,stride,
+    this->add_module(new convolution_module<T,Tstate>(&prm,ker1,stride,
 						    tbl1,"c1"));
     // bias
-    add_module(new addc_module<T,Tstate>(&prm, thick1, "c1bias"));
+    this->add_module(new addc_module<T,Tstate>(&prm, thick1, "c1bias"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
+      this->add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
     else if (tanh)
-      add_module(new tanh_module<T,Tstate>());
+      this->add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T,Tstate>());
+      this->add_module(new stdsigmoid_module<T,Tstate>());
     // feature coefficents
     if (diag)
-      add_module(new diag_module<T,Tstate>(&prm, thick1));
+      this->add_module(new diag_module<T,Tstate>(&prm, thick1));
     // absolute rectification + contrast normalization
     if (norm) {
-      add_module(new abs_module<T,Tstate>());
-      add_module(new weighted_std_module<T,Tstate>(ker1, thick1, "w1", mirror));
+      this->add_module(new abs_module<T,Tstate>());
+      this->add_module(new contrast_norm_module<T,Tstate>(ker1, thick1, mirror,
+						    NULL, "w1"));
     }
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T,Tstate>(&prm, ker2, stride, tbl2, tanh,"c2"));
+    this->add_module(new convolution_layer<T,Tstate>(&prm, ker2, stride, tbl2, tanh,"c2"));
   }
 
   ////////////////////////////////////////////////////////////////
@@ -422,63 +426,63 @@ namespace ebl {
       cout << "Using contrast normalization " << (norm_pos?"after":"before")
 	   << " subsampling. " << endl;
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>
+    this->add_module(new convolution_module<T,Tstate>
 	       (&prm, ker0, stride, tbl0, "c0"));
     // bias
-    add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
+    this->add_module(new addc_module<T,Tstate>(&prm, thick0, "c0bias"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
+      this->add_module(new smooth_shrink_module<T,Tstate>(&prm, thick0));
     else if (tanh)
-      add_module(new tanh_module<T,Tstate>());
+      this->add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T,Tstate>());
+      this->add_module(new stdsigmoid_module<T,Tstate>());
     // feature coefficents
     if (diag)
-      add_module(new diag_module<T,Tstate>(&prm, thick0));
+      this->add_module(new diag_module<T,Tstate>(&prm, thick0));
     // absolute rectification
     if (norm)
-      add_module(new abs_module<T,Tstate>());
+      this->add_module(new abs_module<T,Tstate>());
     // contrast normalization (positioned before sub)
     if (norm && !norm_pos)
-      add_module(new weighted_std_module<T,Tstate>
-		 (ker0, thick0, "w0", mirror, true, false));
+      this->add_module(new contrast_norm_module<T,Tstate>
+		 (ker0, thick0, mirror, true, false, NULL, "w0"));
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>(&prm, thick0, sker0, sker0, tanh, "s0"));
+    this->add_module(new subsampling_layer<T,Tstate>(&prm, thick0, sker0, sker0, tanh, "s0"));
     // contrast normalization (positioned after sub)
     if (norm && norm_pos)
-      add_module(new weighted_std_module<T,Tstate>
-		 (ker1, thick0, "w0", mirror, true, false));
+      this->add_module(new contrast_norm_module<T,Tstate>
+		 (ker1, thick0, mirror, true, false, NULL, "w0"));
     // convolution
-    add_module(new convolution_module_replicable<T,Tstate>
+    this->add_module(new convolution_module<T,Tstate>
 	       (&prm, ker1, stride,tbl1, "c1"));
     // bias
-    add_module(new addc_module<T,Tstate>(&prm, thick1, "c1bias"));
+    this->add_module(new addc_module<T,Tstate>(&prm, thick1, "c1bias"));
     // non linearity
     if (shrink)
-      add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
+      this->add_module(new smooth_shrink_module<T,Tstate>(&prm, thick1));
     else if (tanh)
-      add_module(new tanh_module<T,Tstate>());
+      this->add_module(new tanh_module<T,Tstate>());
     else
-      add_module(new stdsigmoid_module<T,Tstate>());
+      this->add_module(new stdsigmoid_module<T,Tstate>());
     // feature coefficents
     if (diag)
-      add_module(new diag_module<T,Tstate>(&prm, thick1));
+      this->add_module(new diag_module<T,Tstate>(&prm, thick1));
     // absolute rectification
     if (norm)
-      add_module(new abs_module<T,Tstate>());
+      this->add_module(new abs_module<T,Tstate>());
     // contrast normalization (position before sub)
     if (norm && !norm_pos)
-      add_module(new weighted_std_module<T,Tstate>
-		 (ker1, thick1, "w1", mirror, true, false));
+      this->add_module(new contrast_norm_module<T,Tstate>
+		 (ker1, thick1, mirror, true, false, NULL, "w1"));
     // subsampling
-    add_module(new subsampling_layer<T,Tstate>(&prm, thick1, sker1, sker1, tanh, "s1"));
+    this->add_module(new subsampling_layer<T,Tstate>(&prm, thick1, sker1, sker1, tanh, "s1"));
     // contrast normalization (position after sub)
     if (norm && norm_pos)
-      add_module(new weighted_std_module<T,Tstate>
-		 (ker2, thick1, "w1", mirror, true, false));
+      this->add_module(new contrast_norm_module<T,Tstate>
+		 (ker2, thick1, mirror, true, false, NULL, "w1"));
     // convolution + bias + sigmoid
-    add_module(new convolution_layer<T,Tstate>
+    this->add_module(new convolution_layer<T,Tstate>
 	       (&prm, ker2, stride, tbl2, tanh,"c2"));
   }
 

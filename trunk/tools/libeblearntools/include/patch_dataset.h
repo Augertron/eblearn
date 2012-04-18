@@ -99,7 +99,6 @@ namespace ebl {
     using dataset<Tdata>::print_stats;
     using dataset<Tdata>::data_cnt;
     using dataset<Tdata>::extension;
-    using dataset<Tdata>::ppconv_type;
     using dataset<Tdata>::scales;
     using dataset<Tdata>::max_data;
     using dataset<Tdata>::max_data_set;

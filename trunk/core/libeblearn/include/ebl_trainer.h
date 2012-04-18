@@ -85,9 +85,13 @@ namespace ebl {
     //! return the average energy computed on-the-fly.
     //! <update-args> is a list of arguments for the parameter
     //! update method (e.g. learning rate and weight decay).
+    //! \param hessian_period Recompute 2nd order derivatives at every
+    //!   'hessian_period' samples if > 0.
+    //! \param nhessian Estimate 2nd order derivatives on 'nhessian' samples.
     void train(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
 	       classifier_meter &log, gd_param &args, int niter,
-	       infer_param &infp);
+	       infer_param &infp, 
+	       intg hessian_period = 0, intg nhessian = 0, double mu = .02);
     //! compute hessian
     void compute_diaghessian(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
 			     intg niter, double mu);
@@ -99,6 +103,13 @@ namespace ebl {
     void set_iteration(int i);
     //! pretty some information about training, e.g. input and network sizes.
     void pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds);
+    //! Sets the name of the file indicating progress of training.
+    //! If set, this file will be 'touched' after each sample is trained 
+    //! or tested to indicate that training is still going on.
+    void set_progress_file(const std::string &s);
+    //! If progress file is defined, touch the file to let outside world
+    //! know that training is still alive.
+    void update_progress();
 
     // friends /////////////////////////////////////////////////////////////////
     
@@ -125,6 +136,9 @@ namespace ebl {
     int			 iteration;
     void		*iteration_ptr;
     bool		 prettied;	//!< Flag used to pretty info just once.
+    std::string          progress_file; //!< Name of progress file.
+    intg                 progress_cnt;  //!< A count for updating progress.
+    bool                 test_running;//!< Show test on trained.
   };
 
 } // namespace ebl {

@@ -53,23 +53,23 @@
 #include "ebl_preprocessing_test.h"
 #include "idxIO_test.h"
 #include "datasource_test.h"
-#include "IdxTest.h"
-#include "IdxIteratorsTest.h"
+#include "idx_test.h"
+#include "idxiter_test.h"
 #include "detector_test.h"
 #include "ClusterTest.h"
 #include "image_test.h"
 #include "ebl_machines_test.h"
 #include "gui3d_test.h"
+#ifdef __TH__
+#include "thops_test.h"
+#endif
 
 #include "utils.h"
 #include "tools_utils.h"
+#include "eblapp.h"
 
 #ifdef __IPP__ 
 #include "ippops_test.h"
-#endif
-
-#ifdef __DEBUGMEM__
-  INIT_DEBUGMEM()
 #endif
   
 #ifdef __GUI__
@@ -261,26 +261,31 @@ int main(int argc, char **argv) {
   MyTextOutputter *outputter = new MyTextOutputter(&collector, cout);
   runner.setOutputter(outputter);
 
+  // fixed randomization
+  fixed_init_drand();
+  
   // adding test suites
-  runner.addTest(ClusterTest::suite());
-  runner.addTest(IdxTest::suite());
-  runner.addTest(IdxIteratorsTest::suite());
+  runner.addTest(idxIO_test::suite());
+  runner.addTest(idx_test::suite());
+  runner.addTest(idxiter_test::suite());
   runner.addTest(idxops_test::suite());
   runner.addTest(idxops_test2::suite());
 #ifdef __IPP__
   runner.addTest(ippops_test::suite());
 #endif
+#ifdef __TH__
+      runner.addTest(thops_test::suite());
+#endif
+  runner.addTest(ClusterTest::suite());
+  runner.addTest(datasource_test::suite());
   runner.addTest(ebl_basic_test::suite());
   runner.addTest(ebl_preprocessing_test::suite());
-  runner.addTest(idxIO_test::suite());
   runner.addTest(image_test::suite());
-  runner.addTest(datasource_test::suite());
-  runner.addTest(detector_test::suite());
+  // runner.addTest(detector_test::suite());
   runner.addTest(ebl_machines_test::suite());
-#ifdef __GUI3D__
-  runner.addTest(gui3d_test::suite());
-#endif
-  
+ #ifdef __GUI3D__
+  //   runner.addTest(gui3d_test::suite());
+ #endif  
 
   // run all tests
   runner.run();

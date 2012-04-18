@@ -41,11 +41,12 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // win2d
 
-  win2d::win2d(uint wid, const char *wname, uint height, uint width) 
-    : win((QWidget*) this, wid, wname, height, width),
-      pixmapScale(1.0) {
+  win2d::win2d(uint wid, const char *wname, uint height, uint width)
+    : win((QWidget*) this, wid, wname, height, width), pixmapScale(1.0) {
     pixmap = new QPixmap(1, 1);
     buffer = NULL;
+    channel_buffer = NULL;
+    drawing_mode = 0;
     qimage = NULL;
     clear();
     buffer_maxh = height;
@@ -57,10 +58,9 @@ namespace ebl {
 
   win2d::~win2d() {
     delete pixmap;
-    if (buffer)
-      delete buffer;
-    if (qimage)
-      delete qimage;
+    if (buffer) delete buffer;
+    if (channel_buffer) delete channel_buffer;
+    if (qimage) delete qimage;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -68,7 +68,7 @@ namespace ebl {
 
   void win2d::clear() {
     buffer_fill(buffer);
-    // if (pixmap) 
+    // if (pixmap)
     //   pixmap->fill(bg_color);
     // clear regular lists if we can update, temporary otherwise.
     win::clear_all(!wupdate);
@@ -78,14 +78,14 @@ namespace ebl {
   void win2d::clear_resize() {
     buffer_resize(1, 1, true);
     buffer_fill(buffer);
-    // if (pixmap) 
+    // if (pixmap)
     //   pixmap->fill(bg_color);
     // clear regular lists if we can update, temporary otherwise.
     win::clear_all(!wupdate);
     update_window();
   }
 
-  void win2d::resize_window(uint h, uint w, bool force) {    
+  void win2d::resize_window(uint h, uint w, bool force) {
     if ((h != 0) && (w != 0)) {
       buffer_resize(h, w, force);
     }
@@ -99,12 +99,11 @@ namespace ebl {
     if (frozen_size)
       return ;
     // arbitrary bounding of h and w to prevent gigantic erroneous values.
-    uint bound = 20000;
+    uint bound = WIN_MAX_SIZE;
     if (std::max(h, w) > bound) {
-      cerr << "error: trying to resize display buffer to " << h << "x" << w;
-      cerr << ", one of those dimensions is greater than " << bound;
-      cerr << " and probably erroneous." << endl;
-      eblerror("too big values for resizing");
+      eblerror("trying to resize display buffer to " << h << "x" << w
+	       << ", one of those dimensions is greater than " << bound
+	       << " and probably erroneous");
     }
     if ((!buffer || (((uint)buffer->dim(0)) < h) ||
 	 (((uint)buffer->dim(1)) < w) || force) && ((h != 0) && (w != 0))) {
@@ -133,19 +132,40 @@ namespace ebl {
     }
   }
 
-  void win2d::update_qimage() {
+  void win2d::update_qimage(uint mode) {
     if (buffer) {
-      if (qimage)
-      	delete qimage;
-      qimage = new QImage((unsigned char*) buffer->idx_ptr(), 
-			  buffer->dim(1), buffer->dim(0), 
-			  buffer->dim(1) * buffer->dim(2) *
-			  sizeof (unsigned char),
-			  QImage::Format_RGB888);
+      if (qimage) delete qimage;
+      switch (mode) {
+      case 0: // RGB
+	qimage = new QImage((unsigned char*) buffer->idx_ptr(),
+			    buffer->dim(1), buffer->dim(0),
+			    buffer->dim(1) * buffer->dim(2) *
+			    sizeof (unsigned char),
+			    QImage::Format_RGB888);
+	break ;
+      default: // R, G or B
+	if (mode > 3) eblerror("unknown mode " << mode);
+	// resize/allocate buffer
+	if (channel_buffer &&
+	    (channel_buffer->dim(0) != buffer->dim(0) ||
+	     channel_buffer->dim(1) != buffer->dim(1)))
+	  channel_buffer->resize(buffer->dim(0), buffer->dim(1), 1);
+	if (!channel_buffer)
+	  channel_buffer = new idx<ubyte>(buffer->dim(0), buffer->dim(1), 1);	
+	// copy channel into contiguous buffer
+	idx<ubyte> slice = buffer->select(2, mode - 1);
+	idx_copy(slice, *channel_buffer);
+	// create qimage
+	qimage = new QImage((unsigned char*) channel_buffer->idx_ptr(),
+			    channel_buffer->dim(1), channel_buffer->dim(0),
+			    channel_buffer->dim(1) * channel_buffer->dim(2) *
+			    sizeof (unsigned char),
+			    QImage::Format_Indexed8);
+      }
       qimage->setColorTable(colorTable);
     }
   }
-  
+
   void win2d::buffer_fill(idx<ubyte> *buf) {
     if (buf) {
       idx<ubyte> tmp = buf->select(2, 0);
@@ -154,10 +174,10 @@ namespace ebl {
       idx_fill(tmp, (ubyte) bg_color.green());
       tmp = buf->select(2, 2);
       idx_fill(tmp, (ubyte) bg_color.blue());
-    }    
+    }
   }
 
-  void win2d::update_pixmap(idx<ubyte> *img, unsigned int h0, 
+  void win2d::update_pixmap(idx<ubyte> *img, unsigned int h0,
 			     unsigned int w0, bool updatepix) {
     if (img) {
       update_pixmap(*img, h0, w0, updatepix);
@@ -167,14 +187,14 @@ namespace ebl {
 
   void win2d::update_pixmap(idx<ubyte> &img, uint h0, uint w0,
 			     bool updatepix) {
-    unsigned int h = std::max(buffer?(uint)buffer->dim(0):0, 
+    unsigned int h = std::max(buffer?(uint)buffer->dim(0):0,
 			      (uint) (h0 + img.dim(0)));
-    unsigned int w = std::max(buffer?(uint)buffer->dim(1):0, 
+    unsigned int w = std::max(buffer?(uint)buffer->dim(1):0,
 			      (uint) (w0 + img.dim(1)));
     if (wupdate) {
       if (!buffer)
 	buffer_resize(h, w);
-      else if ((h > (unsigned int) buffer->dim(0)) || 
+      else if ((h > (unsigned int) buffer->dim(0)) ||
 	       (w > (unsigned int) buffer->dim(1)))
 	buffer_resize(h, w);
       if (h0 < buffer->dim(0) && w0 < buffer->dim(1)) {
@@ -205,7 +225,7 @@ namespace ebl {
       // and ready to be displayed
       // copy buffer to pixmap
       if (updatepix) {
-	update_qimage();
+	update_qimage(drawing_mode);
 	*pixmap = QPixmap::fromImage(*qimage);
 	update_window();
       }
@@ -304,19 +324,20 @@ namespace ebl {
       if (buffer && (width() != buffer->dim(1) ||
 		     height() != buffer->dim(0)))
 	resize(buffer->dim(1), buffer->dim(0));
-      else
-	QWidget::update(); //repaint();
+      else QWidget::update(); //repaint();
       // saving pixmap if silent or show it otherwise
-      if (silent) 
-	save(savefname);
+      if (silent) save(savefname);
       else {
-	if (!isVisible())
-	  QWidget::show();
-	if (activate) {
-	  QWidget::activateWindow();
-	}
+	if (!isVisible()) QWidget::show();
+	if (activate) QWidget::activateWindow();
       }
     }
+  }
+
+  void win2d::repaint_pixmap() {
+    update_qimage(drawing_mode);
+    if (qimage) *pixmap = QPixmap::fromImage(*qimage);	
+    update_window();    
   }
   
   void win2d::set_bg_colors(ubyte r, ubyte g, ubyte b) {
@@ -353,7 +374,7 @@ namespace ebl {
     painter.translate(pixmapOffset);
     // painter.translate(p);
     painter.scale(scaleFactor, scaleFactor);
-    QRectF exposed = 
+    QRectF exposed =
       painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
     // painter.matrix().inverted().mapRect(rect());
     // cout << "exposed: "<< exposed.x() << "," << exposed.y()
@@ -363,7 +384,7 @@ namespace ebl {
     // cout << "hasclipping: " << painter.hasClipping() << endl;
     // exposed.setX(-500);
     // exposed.setY(-500);
-    // QRectF exposed2 = 
+    // QRectF exposed2 =
     //   painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
     // exposed2.setX(500);
     // exposed2.setY(500);
@@ -374,17 +395,19 @@ namespace ebl {
 
     // cout << "rect: "<< rect().x() << "," << rect().y()
     // 	 << " " << rect().height() << "x"  << rect().width() << endl;
-    
+
     painter.drawPixmap(exposed, *pixmap, exposed);
-    draw_masks(painter);
-    draw_boxes(painter);
-    draw_arrows(painter);
-    draw_crosses(painter);
-    draw_ellipses(painter);
+    if (!images_only) {
+      draw_masks(painter);
+      draw_boxes(painter);
+      draw_arrows(painter);
+      draw_crosses(painter);
+      draw_ellipses(painter);
+    }
 
     win::paint(painter, scaleFactor);
-    
-    
+
+
 
     // wt.translate(pixmapOffset.x() , pixmapOffset.y() );
     // painter.setWorldTransform(wt);
@@ -396,12 +419,12 @@ namespace ebl {
 //       int textWidth = metrics.width(txt);
 //       painter.setPen(Qt::NoPen);
 //       painter.setBrush(QColor(0, 0, 0, 127));
-//       painter.drawRect((width() - textWidth) / 2 - 5, height() - 15, 
+//       painter.drawRect((width() - textWidth) / 2 - 5, height() - 15,
 // 		       textWidth + 10,
 // 		       metrics.lineSpacing() + 5);
 //       painter.setPen(Qt::white);
 //       painter.drawText((width() - textWidth) / 2,
-// 		       height() - 15 + metrics.leading() + metrics.ascent(), 
+// 		       height() - 15 + metrics.leading() + metrics.ascent(),
 // 		       txt);
 //     }
   }
@@ -428,31 +451,59 @@ namespace ebl {
 	double angle = atan2( (double) ay1 - ay2, (double) ax1 - ax2);
 	double hypotenuse = sqrt( pow((float)ay1 - ay2, 2)
 				  + pow((float)ax1 - ax2, 2));
-	/* Here we lengthen the arrow by a factor of three. */
+	// draw body
 	ax2 = (int) (ax1 - len_factor * hypotenuse * cos(angle));
 	ay2 = (int) (ay1 - len_factor * hypotenuse * sin(angle));
 	painter.drawLine(ax1, ay1, ax2, ay2);
-	ax1 = (int) (ax2 + 9 * cos(angle + M_PI / 4));
-	ay1 = (int) (ay2 + 9 * sin(angle + M_PI / 4));
-	painter.drawLine(ax1, ay1, ax2, ay2);
-	ax1 = (int) (ax2 + 9 * cos(angle - M_PI / 4));
-	ay1 = (int) (ay2 + 9 * sin(angle - M_PI / 4));
-	painter.drawLine(ax1, ay1, ax2, ay2);
+	// draw head 1
+	if ((*i)->head1) {
+	  ax1 = (int) (ax2 + 9 * cos(angle + M_PI / 4));
+	  ay1 = (int) (ay2 + 9 * sin(angle + M_PI / 4));
+	  painter.drawLine(ax1, ay1, ax2, ay2);
+	  ax1 = (int) (ax2 + 9 * cos(angle - M_PI / 4));
+	  ay1 = (int) (ay2 + 9 * sin(angle - M_PI / 4));
+	  painter.drawLine(ax1, ay1, ax2, ay2);
+	}
       }
     }
     painter.setPen(Qt::black);
   }
 
+  // void win2d::draw_boxes(QPainter &painter) {
+  //   painter.setBrush(Qt::NoBrush);
+  //   for (vector<box*>::iterator i = boxes.begin(); i != boxes.end(); ++i) {
+  //     if (*i) {
+  // 	box &b = **i;
+  // 	// set color
+  // 	QPen qp(QColor(b.r, b.g, b.b, b.a));
+  // 	qp.setWidth(3);
+  // 	painter.setPen(qp);
+  // 	// draw box
+  // 	uint sz = (uint) (b.h * .1);
+  // 	painter.drawLine(b.w0, b.h0, b.w0 + b.w, b.h0);
+  // 	painter.drawLine(b.w0, b.h0 + b.h, b.w0 + b.w, b.h0 + b.h);
+  // 	painter.drawLine(b.w0, b.h0, b.w0, b.h0 + sz);
+  // 	painter.drawLine(b.w0 + b.w, b.h0, b.w0 + b.w, b.h0 + sz);
+  // 	painter.drawLine(b.w0, b.h0 + b.h - sz, b.w0, b.h0 + b.h);
+  // 	painter.drawLine(b.w0 + b.w, b.h0 + b.h - sz, b.w0 + b.w, b.h0 + b.h);
+  //     }
+  //   }
+  //   painter.setPen(Qt::black);
+  // }
+
   void win2d::draw_boxes(QPainter &painter) {
     painter.setBrush(Qt::NoBrush);
     for (vector<box*>::iterator i = boxes.begin(); i != boxes.end(); ++i) {
       if (*i) {
-	box &b = **i;
-	// set color
-	painter.setPen(QColor(b.r, b.g, b.b, b.a));
-	// draw box
-	QRectF r(b.w0, b.h0, b.w, b.h);
-	painter.drawRect(r);
+  	box &b = **i;
+  	// set color
+  	QPen qp(QColor(b.r, b.g, b.b, b.a));
+  	qp.setWidth(3);
+  	painter.setPen(qp);
+  	// draw box
+  	QRectF r(b.w0, b.h0, b.w, b.h);
+  	painter.drawRect(r);
+  	//painter.drawRoundedRect(r, 5, 5);
       }
     }
     painter.setPen(Qt::black);
@@ -498,7 +549,7 @@ namespace ebl {
 	delete (*i);
       }
     // now update pixmap
-    update_qimage();
+    update_qimage(drawing_mode);
     if (qimage) {
       *pixmap = QPixmap::fromImage(*qimage);
       if (update)
@@ -509,7 +560,8 @@ namespace ebl {
   }
 
   void win2d::draw_masks(QPainter &painter) {
-    buffer_resize(buffer_maxh, buffer_maxw); // resize to maximum size first
+    if (masks.size() > 0) 
+      buffer_resize(buffer_maxh, buffer_maxw); // resize to maximum size first
     // then display all images not displayed
     for (vector<imask*>::iterator i = masks.begin(); i != masks.end(); ++i)
       if (*i) {
@@ -563,7 +615,7 @@ namespace ebl {
     if (event->button() == Qt::LeftButton) {
       pixmapOffset += event->pos() - lastDragPos;
       lastDragPos = QPoint();
-      
+
       int deltaX = (width() - pixmap->width()) / 2 - pixmapOffset.x();
       int deltaY = (height() - pixmap->height()) / 2 - pixmapOffset.y();
       scroll(deltaX, deltaY);
@@ -603,11 +655,45 @@ namespace ebl {
 	  update();
 	}
       }
+    } else if (event->key() == Qt::Key_I) {
+      if (ctrl_on) {
+	if (images_only) {
+	  images_only = false;
+	  qw->update();
+	} else {
+	  images_only = true;
+	  qw->update();
+	}
+      }
     } else if (event->key() == Qt::Key_S) {
       string fname;
       fname << "win" << id;
       save(fname, true);
       save_mat(fname, true);
+    } else if (event->key() == Qt::Key_0) {
+      if (ctrl_on) {
+	drawing_mode = 0;
+	cout << "Gui: Showing all RGB channels" << endl;
+	repaint_pixmap();
+      }
+    } else if (event->key() == Qt::Key_1) {
+      if (ctrl_on) {
+	drawing_mode = 1;
+	cout << "Gui: Showing only channel 0" << endl;
+	repaint_pixmap();
+      }
+    } else if (event->key() == Qt::Key_2) {
+      if (ctrl_on) {
+	drawing_mode = 2;
+	cout << "Gui: Showing only channel 1" << endl;
+	repaint_pixmap();
+      }
+    } else if (event->key() == Qt::Key_3) {
+      if (ctrl_on) {
+	drawing_mode = 3;
+	cout << "Gui: Showing only channel 2" << endl;
+	repaint_pixmap();
+      }
     }
   }
 
@@ -626,7 +712,7 @@ namespace ebl {
       cerr << "sender: " << sender() << endl;
       cerr << "warning: trying to call operation on a scroll_box object ";
       cerr << "that no longer exists.";
-    }    
+    }
   }
 
   void win2d::scroll_next() {
@@ -637,7 +723,7 @@ namespace ebl {
       cerr << "sender: " << sender() << endl;
       cerr << "warning: trying to call operation on a scroll_box object ";
       cerr << "that no longer exists.";
-    }    
+    }
   }
-  
+
 } // end namespace ebl

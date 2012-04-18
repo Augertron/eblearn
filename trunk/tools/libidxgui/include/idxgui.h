@@ -48,7 +48,7 @@ using namespace std;
 namespace ebl {
 
   class EXPORT gui_thread;
-  template<class T1, class T2> class ManipInfra;
+  template <class T1, class T2> class ManipInfra;
 
   class idxgui : public QThread, public ostringstream {
     Q_OBJECT
@@ -56,7 +56,7 @@ namespace ebl {
     int			  argc;
     char		**argv;
     int	                  nwid;
-    const unsigned int   *nwindows; // owned by gui_thread
+    const uint   *nwindows; // owned by gui_thread
     gui_thread           *gt;
     QMutex                mutex1;
 
@@ -68,7 +68,7 @@ namespace ebl {
 
   public:
     idxgui();
-    EXPORT void init(int argc_, char **argv_, const unsigned int *nwindows,
+    EXPORT void init(int argc_, char **argv_, const uint *nwindows,
 		     gui_thread *gt_);
     virtual ~idxgui();
 
@@ -87,6 +87,8 @@ namespace ebl {
 
     //! draws an arrow from (h1, w1) to (h2, w2).
     EXPORT void draw_arrow(int h1, int w1, int h2, int w2);
+    //! draws a 'flow' at (h,w), where flow is 2xHxW flow field.
+    EXPORT void draw_flow(idx<float> &flow, int h, int w);
 
     //! draws a bounding box with top left corner (h0, w0) and size (h, w).
     //! the (r,g,b) color of the box can optionally be specified as well as
@@ -192,12 +194,12 @@ namespace ebl {
     //! draws text on the current window at origin (h0, w0).
     //! you can also use the << operator instead of this function to add text 
     //! to the gui. for example: gui << at(h0, w0) << "text" << endl;
-    EXPORT void draw_text(std::string *s, unsigned int h0, unsigned int w0);
+    EXPORT void draw_text(std::string *s, uint h0, uint w0);
 
     //! sets the origin of further calls to draw_text or gui << "text".
     //! you can also use the at() function instead of this one.
     //! for example: gui << at(42, 0) << "text";
-    EXPORT void set_text_origin(unsigned int h0, unsigned int w0);
+    EXPORT void set_text_origin(uint h0, uint w0);
 
     //! sets the text color for further calls to draw_text or gui << "text".
     //! you can also use the set_colors() function to set
@@ -270,6 +272,12 @@ namespace ebl {
     //! Draw 3d text 's' at (x,y,z) with color (r,g,b,a).
     EXPORT void draw_text_3d(float x, float y, float z, const char *s,
 			     int r = 255, int g = 255, int b = 255, int a =255);
+    //! Draw 3d line from (x,y,z) to (x1,y1,z1) with color (r,g,b,a)
+    //! and with text 's' at (x1,y1,z1).
+    EXPORT void draw_line_3d(float x, float y, float z,
+			     float x1, float y1, float z1,
+			     const char *s = NULL, int r = 255, int g = 255,
+			     int b = 255, int a = 255);
     
   private:
     // check that user used MAIN_QTHREAD instead of regular main
@@ -288,13 +296,14 @@ namespace ebl {
     EXPORT void gui_select_window(int wid);
     EXPORT void gui_add_text(const string *s);
     EXPORT void gui_add_arrow(int h1, int w1, int h2, int w2);
+    EXPORT void gui_add_flow(idx<float> *flow, int h, int w);
     EXPORT void gui_add_box(float h0, float w0, float h, float w, ubyte r,
 			    ubyte g, ubyte b, ubyte a, string *s);
     EXPORT void gui_add_cross(float h0, float w0, float length, ubyte r,
 			    ubyte g, ubyte b, ubyte a, string *s);
     EXPORT void gui_add_ellipse(float h0, float w0, float h, float w,
 				ubyte r, ubyte g, ubyte b, ubyte a, string *s);
-    EXPORT void gui_set_text_origin(unsigned int h0, unsigned int w0);
+    EXPORT void gui_set_text_origin(uint h0, uint w0);
     EXPORT void gui_set_text_colors(unsigned char fg_r, unsigned char fg_g, 
 			     unsigned char fg_b, unsigned char fg_a,
 			     unsigned char bg_r, unsigned char bg_g, 
@@ -317,21 +326,65 @@ namespace ebl {
 				 int r, int g, int b, int a, bool tops);
     EXPORT void gui_draw_text_3d(float x, float y, float z, string* s,
 				 int r, int g, int b, int a);
+    EXPORT void gui_draw_line_3d(float x, float y, float z,
+				 float x1, float y1, float z1, string* s,
+				 int r, int g, int b, int a);
     
   protected:
     virtual void run();
   };
 
+
+  template<class T1, class T2>
+  class ManipInfra {
+  public:
+    ManipInfra(idxgui& (*pFun) (idxgui&))
+      : manipFun0(pFun), val1(0), val2(0), nval(0) {}
+    ManipInfra(idxgui& (*pFun) (idxgui&, T1), T1 val1_)
+      : manipFun1(pFun), val1(val1_), val2(0), nval(1) {}
+    ManipInfra(idxgui& (*pFun) (idxgui&, T1, T2), 
+	       T1 val1_, T2 val2_)
+      : manipFun2(pFun), val1(val1_), val2(val2_), nval(2) {}
+    ManipInfra(idxgui& (*pFun) (idxgui&, T1, T2, T2, T2, T2, T2, T2, T2), 
+	       T1 val1_, T2 val2_, T2 val3_, T2 val4_, 
+	       T2 val5_, T2 val6_, T2 val7_, T2 val8_)
+      : manipFun8(pFun), val1(val1_), val2(val2_), val3(val3_), val4(val4_), 
+	val5(val5_), val6(val6_), val7(val7_), val8(val8_), nval(8) {}
+
+    void operator() (idxgui& r) const {
+      switch (nval) {
+      case 0: manipFun0(r); break ;
+      case 1: manipFun1(r, val1); break ;
+      case 2: manipFun2(r, val1, val2); break ;
+      case 8: manipFun8(r, val1, val2, val3, val4, val5, val6, val7, val8);
+	break ;
+      default: eblerror("unknown mode");
+      }
+    }
+  private:
+    idxgui& (*manipFun0) (idxgui&);
+    idxgui& (*manipFun1) (idxgui&, T1);
+    idxgui& (*manipFun2) (idxgui&, T1, T2);
+    idxgui& (*manipFun8) (idxgui&, T1, T2, T2, T2, T2, T2, T2, T2);
+    T1 val1;
+    T2 val2, val3, val4, val5, val6, val7, val8;
+    int nval;
+  };
+
+  template class ManipInfra<int,int>;
+  template class ManipInfra<uint,uint>;
+  idxgui& operator<<(idxgui& r, const ManipInfra<uint,uint> &manip);
+  idxgui& operator<<(idxgui& r, const ManipInfra<int,int> &manip);
+
   //! specifies the origin of the text to draw.
   //! calling 'gui << at(42, 0) << "text";' will draw "text" at height 42
   //! and with 0.
-  EXPORT ManipInfra<unsigned int, unsigned int> at(unsigned int h0, 
-						   unsigned int w0);
-  EXPORT idxgui& att(idxgui& r, unsigned int h0, unsigned int w0);
+  EXPORT ManipInfra<uint,uint> at(uint h0, uint w0);
+  EXPORT idxgui& att(idxgui& r, uint h0, uint w0);
 
   //! specifies to output text to both the gui and std::cout.
   //! usage: gui << cout_and_gui();
-  EXPORT ManipInfra<int, int> cout_and_gui();
+  EXPORT ManipInfra<int,int> cout_and_gui();
   EXPORT idxgui& fcout_and_gui(idxgui& r);
 
   //! specifies to output text to both the gui and std::cout.
@@ -346,8 +399,7 @@ namespace ebl {
   //! usage: gui << black_on_white(127);
   //! usage: gui << black_on_white(50, 255);
   EXPORT ManipInfra<unsigned char, unsigned char> 
-    black_on_white(unsigned char fg_a = 255,
-		   unsigned char bg_a = 255);
+    black_on_white(unsigned char fg_a = 255, unsigned char bg_a = 255);
   EXPORT idxgui& fblack_on_white(idxgui& r, unsigned char fg_a, 
 			  unsigned char bg_a);
 

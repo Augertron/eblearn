@@ -41,14 +41,13 @@
 #include "dataset.h"
 #include "pascal_dataset.h"
 #include "pascalbg_dataset.h"
-
-using namespace std;
-using namespace ebl;
+#include "eblapp.h"
 
 string inroot = ".";
 string ds0_name = "";
 string ds1_name = "";
 string ds2_name = "";
+bool fullnames = false;
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -66,23 +65,38 @@ bool parse_args(int argc, char **argv) {
   if ((strcmp(argv[1], "-help") == 0) ||
       (strcmp(argv[1], "-h") == 0))
     return false;
+  // loop over arguments
+  for (int i = 5; i < argc; ++i) {
+    if ((strcmp(argv[i], "-full") == 0))
+    fullnames = true;
+  }
   return true;
 }
 
 // print command line usage
 void print_usage() {
-  cout << "Usage: ./dataset_merge <root> <ds0 name> <ds1 name> <ds2 name>";
+  cout << "Usage: ./dsmerge <root> <ds0 name> <ds1 name> <ds2 name> [OPTIONS]" 
+       << endl
+       << "Options:" << endl
+       << "-full (expect full paths for each name)" << endl;
 }
 
 template <class Tdata>
 void merge() {
+  cout << "input parameters:" << endl;
+  cout << "  input directory: " << inroot << endl;
+  cout << "  output dataset name: " << ds0_name << endl;
+  cout << "  input dataset 1 name: " << ds1_name << endl;
+  cout << "  input dataset 2 name: " << ds2_name << endl;
+  cout << "___________________________________________________________________";
+  cout << endl;
   dataset<Tdata> ds0(ds0_name.c_str());
-  ds0.merge(ds1_name.c_str(), ds2_name.c_str(), inroot);
-  //ds0.shuffle();
-  ds0.save(inroot);
+  ds0.merge_and_save(ds1_name.c_str(), ds2_name.c_str(), inroot);
 }
 
 int main(int argc, char **argv) {
+  // std::system("hostname");
+  // return 0;
   cout << "___________________________________________________________________";
   cout << endl << endl;
   cout << "             Dataset merger for libeblearn library " << endl;
@@ -93,19 +107,21 @@ int main(int argc, char **argv) {
     print_usage();
     return -1;
   }
-  cout << "input parameters:" << endl;
-  cout << "  input directory: " << inroot << endl;
-  cout << "  output dataset name: " << ds0_name << endl;
-  cout << "  input dataset 1 name: " << ds1_name << endl;
-  cout << "  input dataset 2 name: " << ds2_name << endl;
-  cout << "___________________________________________________________________";
-  cout << endl;
+  // setup full paths
+  inroot << "/";
+  string inroot2 = inroot;
+  if (fullnames) inroot2 = "";
+  string tmp = ds0_name; ds0_name = inroot2;
+  ds0_name << tmp;
+  tmp = ds1_name; ds1_name = inroot2;
+  ds1_name << tmp;
+  tmp = ds2_name; ds2_name = inroot2;
+  ds2_name << tmp;
 
   // compile with specificed precision
   string precision;
-  string ds_fname = inroot;
-  ds_fname += "/";
-  ds_fname += ds1_name;
+  string ds_fname;
+  ds_fname << ds1_name; //<< inroot2
   string data_fname;
   build_fname(ds_fname, DATA_NAME, data_fname);
   try { // get matrix type

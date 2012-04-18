@@ -54,13 +54,13 @@ namespace ebl {
     //! CAUTION: This empty constructor requires a subsequent call to init().
     datasource(); 
     //! Construct a datasource from 'data', where data
-    //! is a multi-matrix matrix (idxs type). This allows for dynamic loading
+    //! is a multi-matrix matrix (midx type). This allows for dynamic loading
     //! of data and avoids the need to fit all data in memory.
     //! The first dimension of each data sample
     //! is expected to be the samples dimension, and the second one the
     //! feature dimension, or the channel dimension in case of images.
     //! \param name An optional name for this dataset.
-    datasource(idxs<Tdata> &data, const char *name = NULL);
+    datasource(midx<Tdata> &data, const char *name = NULL);
     //! Construct a datasource from 'data'. The first dimension of 'data'
     //! is expected to be the samples dimension, and the second one the
     //! feature dimension, or the channel dimension in case of images.
@@ -78,12 +78,15 @@ namespace ebl {
     // intialization ///////////////////////////////////////////////////////////
     
     //! Initialize from a multi-matrix data.
-    void init(idxs<Tdata> &data, const char *name);
+    void init(midx<Tdata> &data, const char *name);
     //! Initialize.
     void init(idx<Tdata> &data, const char *name);
     
     // data access methods /////////////////////////////////////////////////////
 
+    //! Copies current sample's data into s.
+    template <class Tstate>
+      void fprop_data(mstate<Tstate> &s);
     //! Copies current sample's data into s.
     virtual void fprop_data(fstate_idx<Tnet> &s);
     //! Copies current sample's data into s.
@@ -140,6 +143,9 @@ namespace ebl {
     //! Returns an idxdim object describing the order (number of dimensions)
     //! and the size of each dimension of a single sample outputed by fprop.
     virtual idxdim sample_dims();
+    //! Returns an idxdim object describing the order (number of dimensions)
+    //! and the size of each dimension of a single sample outputed by fprop.
+    virtual mfidxdim sample_mfdims();
     
     //! Set the distance (or energy) between the answer of the model to train 
     //! and the
@@ -166,20 +172,20 @@ namespace ebl {
 				   idx<Tnet> &raw_outputs,
 				   idx<Tnet> &answers,
 				   idx<Tnet> &target);
-
+    //! If 'keep' is true, then we keep for each sample the 'raw_outputs',
+    //! the 'answers' and the 'target' of the model (see set_sample_energy()).
+    //! This may be expensive in memory.
+    virtual void keep_outputs(bool keep = true);
     //! Normalize picking probabilities globally with maximum probability.
     virtual void normalize_all_probas();
     //! Normalize picking probabilities globally with maximum probability.
     virtual void normalize_probas(vector<intg> *cindinces = NULL);
-
     //! Move to the beginning of the data, for the test iterators only,
     //! i.e. only next() is affected, next_train() is unaffected.
     virtual void seek_begin();
-
     //! Move to the beginning of the data, for the train iterators only,
     //! i.e. only next_train() is affected, next() is unaffected.
     virtual void seek_begin_train();
-
     //! Activate or deactivate shuffling of list of samples for each class
     //! after reaching the end of the sample list. This has an effect only
     //! when set_balanced() is set.
@@ -208,61 +214,50 @@ namespace ebl {
     //!   Acceptable range is [0 .. 1].
     virtual void set_weigh_samples(bool activate, bool hardest_focus = false, 
 				   bool perclass_norm = true, 
-				   double min_proba = 0.0);
-    
-
+				   double min_proba = 0.0);    
     //! Set this datasource to be a test datasource. This is optional but
     //! useful for reporting and to verify that no training only methods are
     //! called on this datasrouces (e.g. next_train()).
     virtual void set_test();
-
     //! Returns true if this datasource is a test datasource only.
     virtual bool is_test();
-
     //! Returns the number of samples to train on for one epoch.
     //! By default, it returns the size of the smallest class times
     //! the number of classes (see get_lowest_common_size()).
     //! Default behavior can be overriden with set_epoch_size().
     virtual intg get_epoch_size();
-
     //! Return the number of samples this epoch has processed.
     virtual intg get_epoch_count();
-
     //! Set the number of samples to train on for one epoch.
     //! If not called, default number used is the one returned
     //! by get_lowest_common_size().
     virtual void set_epoch_size(intg sz);
-
     //! Set the epoch mode, i.e. how samples are presented for training.
     //! 0: show a fixed number of samples (set by set_epoch_size()).
     //! 1: show all samples at least once (samples may be shown multiple times
     //!    if a class is unbalanced and the balance mode is activated).
     virtual void set_epoch_mode(uint mode);
-
     //! Return true if current epoch is finished. Call init_epoch() to
     //! restart a new epoch.
     virtual bool epoch_done();
     //! Restarts a new epoch, i.e. resets counters but do not reset iterators
     //! positions.
     virtual void init_epoch();
-
     //! Output statistics of samples picking, i.e. the number of times each
     //! sample has been picked for training.
-    virtual void save_pickings(const char *name = NULL);
-    
+    virtual void save_pickings(const char *name = NULL);    
     //! Return true if counting of pickings is enabled.
-    virtual bool get_count_pickings();
-    
+    virtual bool get_count_pickings();    
     //! Enable or disable the counting of pickings.
-    virtual void set_count_pickings(bool count = true);
-    
+    virtual void set_count_pickings(bool count = true);    
     //! Return name of dataset.
     virtual string& name();
     //! Print training count every module samples.
     virtual void set_epoch_show(uint modulo);
     //! Do not train on correctly classified examples if ignore is true
     virtual void ignore_correct(bool ignore = true);
-
+    //! Each sample contains multiple states or not.
+    virtual bool mstate_samples();
 
     // state saving ////////////////////////////////////////////////////////////
     
@@ -302,7 +297,7 @@ namespace ebl {
     Tnet		coeff;
     // data
     idx<Tdata>		data;	// samples
-    idxs<Tdata>		datas;	// samples (multi-matrix).
+    midx<Tdata>		datas;	// samples (multi-matrix).
     idx<double>		probas;	//!< sample probabilities
     // predictions
     idx<double>		energies;	//!< sample energies
@@ -321,6 +316,7 @@ namespace ebl {
     vector<intg>        counts; // # of samples / class
     map<uint,intg>      picksmap;
     bool                multimat; //!< True if data is a multi-matrix matrix.
+    bool                bkeep_outputs; //!< Keep model outputs for each sample.
     ////////////////////////////////////////////////////////////////////////////
     // (unbalanced) iterating indices
     intg                it; //!< Index of current sample in data matrix.
@@ -334,6 +330,9 @@ namespace ebl {
     intg                it_test_saved; //!< Saving current test iterator.
     intg                it_train_saved; //!< Saving current train iterator.
     idx<intg>           indices_saved; //!< Saving sample indices.
+    intg                epoch_cnt_saved;
+    intg                epoch_pick_cnt_saved;	//!< # pickings
+    vector<intg>        epoch_done_counters_saved;
     ////////////////////////////////////////////////////////////////////////////
     // features switches
     bool                shuffle_passes; //!< Shuffle at end of each pass.
@@ -348,6 +347,7 @@ namespace ebl {
     intg                epoch_show_printed;
     uint                epoch_mode; //!< 0: fixed number, 1: all at least once
     timer               epoch_timer;
+    timer               test_timer;
     uint                not_picked;
     bool                hardest_focus; //!< Focus training on hardest samples.
     bool                _ignore_correct; //!< Do not train on correct samples.
@@ -357,6 +357,7 @@ namespace ebl {
     bool                perclass_norm; //!< Normalize probas per class.
     double              sample_min_proba; //!< Minimum proba of each sample.
     idxdim              sampledims; //!< Dimensions of a data sample.
+    mfidxdim            samplemfdims; //!< Dimensions of a data sample.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -372,10 +373,10 @@ namespace ebl {
     //! CAUTION: This empty constructor requires a subsequent call to init().
     labeled_datasource();
     //! Construct a datasource associating 'data' and its 'labels' where data
-    //! is a multi-matrix matrix (idxs type). This allows for dynamic loading
+    //! is a multi-matrix matrix (midx type). This allows for dynamic loading
     //! of data and avoids the need to fit all data in memory.
     //! \param name An optional name for this dataset.
-    labeled_datasource(idxs<Tdata> &data, idx<Tlabel> &labels, 
+    labeled_datasource(midx<Tdata> &data, idx<Tlabel> &labels, 
 		       const char *name = NULL);
     //! Construct a datasource associating 'data' and its 'labels'.
     //! \param name An optional name for this dataset.
@@ -392,25 +393,25 @@ namespace ebl {
     //! \param name An optional name for this dataset.
     labeled_datasource(const char *root, const char *data_name,
 		       const char *labels_name, const char *jitters_name = NULL,
-		       const char *name = NULL);
+		       const char *scales_name = NULL, const char *name = NULL);
     //! Destructor.
     virtual ~labeled_datasource();
 
     // init methods ////////////////////////////////////////////////////////////
     
     //! Initialize from matrices, where data is a multi-matrix.
-    void init(idxs<Tdata> &data, idx<Tlabel> &labels, const char *name);
+    void init(midx<Tdata> &data, idx<Tlabel> &labels, const char *name);
     //! Initialize from matrices.
     void init(idx<Tdata> &data, idx<Tlabel> &labels, const char *name);
     //! Intialize from matrices filenames.
     //! \param max_size If > 0, limit the number of samples to this value.
     void init(const char *data_fname, const char *labels_fname,
 	      const char *jitters_fname = NULL, const char *name = NULL,
-	      uint max_size = 0);
+	      const char *scales_fname = NULL, uint max_size = 0);
     //! Intialize from root and partial matrices filenames.
     void init_root(const char *root, const char *data_fname,
-	      const char *labels_fname, const char *jitters_fname = NULL,
-	      const char *name = NULL);
+		   const char *labels_fname, const char *jitters_fname = NULL,
+		   const char *scales_fname = NULL, const char *name = NULL);
     //! Initialize from data root and names for data, labels and classes files
     //! (appending names and extension of each subfile of a dataset created
     //!  with the dscompile tool).
@@ -432,23 +433,35 @@ namespace ebl {
     virtual void fprop_label_net(bbstate_idx<Tnet> &s);
     //! Copy current sample's jitter into s.
     virtual void fprop_jitter(bbstate_idx<Tnet> &s);
+    //! Returns a scale id for this sample.
+    virtual intg fprop_scale();
 
     // accessors ///////////////////////////////////////////////////////////////
     
+    //! This returns true if sample with 'index' is considered for training.
+    virtual bool included_sample(intg index);
+    //! This returns the number of samples actually considered for training.
+    virtual intg count_included_samples();
     //! Print info about the datasource on the standard output.
     virtual void pretty();
+    //! Print info about the scales data on the standard output.
+    virtual void pretty_scales();
     //! Returns the dimensions of a single label.
     virtual idxdim label_dims();
     //! Set the bias to add to the labels (before multiplying by coeff).
     virtual void set_label_bias(Tnet bias);
     //! Set the coefficient to multiply the labels with (after adding bias).
     virtual void set_label_coeff(Tnet coeff);
+    //! Returns true if this dataset contains scale information.
+    virtual bool has_scales();
 
     // friends //////////////////////////////////////////////////////////////
     template <typename T1, typename T2, typename T3>
       friend class labeled_datasource_gui;
     template <typename T1, typename T2, typename T3>
       friend class supervised_trainer;
+    template <typename T1, typename T2, typename T3>
+      friend class supervised_trainer_gui;
 
     // protected methods ///////////////////////////////////////////////////////
   protected:
@@ -464,7 +477,9 @@ namespace ebl {
     Tnet		label_coeff;
     using datasource<Tnet,Tdata>::data;
     idx<Tlabel>	labels;		// labels
-    idxs<float> jitters;	//!< Jitter information.
+    idx<intg>	scales;		// scales
+    midx<float> jitters;	//!< Jitter information.
+    bool        scales_loaded; //!< Scales info was loaded or not.
     // iterating
     using datasource<Tnet,Tdata>::it;
     using datasource<Tnet,Tdata>::epoch_sz;
@@ -472,6 +487,7 @@ namespace ebl {
     using datasource<Tnet,Tdata>::sampledims;
     idxdim      jitters_maxdim; //!< Maximum dimensions in jitters matrices.
     idxdim      labeldims;	//!< Dimensions of a label.
+    using datasource<Tnet,Tdata>::multimat;
   };
 
   ////////////////////////////////////////////////////////////////
@@ -487,11 +503,11 @@ namespace ebl {
     class_datasource();
 
     //! Construct dataset with 'data' and its corresponding 'labels', where data
-    //! is a multi-matrix matrix (idxs type). This allows for dynamic loading
+    //! is a multi-matrix matrix (midx type). This allows for dynamic loading
     //! of data and avoids the need to fit all data in memory.
     //! \param lblstr An optional vector of strings describing each class.
     //! \param name An optional name for this dataset.
-    class_datasource(idxs<Tdata> &data, idx<Tlabel> &labels, 
+    class_datasource(midx<Tdata> &data, idx<Tlabel> &labels, 
 		     vector<string*> *lblstr = NULL, const char *name = NULL);
     //! Construct dataset with 'data' and its corresponding 'labels'.
     //! \param lblstr An optional vector of strings describing each class.
@@ -499,11 +515,11 @@ namespace ebl {
     class_datasource(idx<Tdata> &data, idx<Tlabel> &labels, 
 		     vector<string*> *lblstr = NULL, const char *name = NULL);
     //! Construct dataset with 'data' and its corresponding 'labels', where data
-    //! is a multi-matrix matrix (idxs type). This allows for dynamic loading
+    //! is a multi-matrix matrix (midx type). This allows for dynamic loading
     //! of data and avoids the need to fit all data in memory.
     //! \param classes A vector of strings describing each class.
     //! \param name An optional name for this dataset.
-    class_datasource(idxs<Tdata> &data, idx<Tlabel> &labels,
+    class_datasource(midx<Tdata> &data, idx<Tlabel> &labels,
 		     idx<ubyte> &classes, const char *name = NULL);
     //! Construct dataset with 'data' and its corresponding 'labels'.
     //! \param classes A vector of strings describing each class.
@@ -515,6 +531,7 @@ namespace ebl {
     //! \param name An optional name for this dataset.
     class_datasource(const char *data_name,
 		     const char *labels_name, const char *jitters_name = NULL,
+		     const char *scales_name = NULL, 
 		     const char *classes_name = NULL, const char *name = NULL);
     //! (Shallow) copy constructor (only the class strings are deeply copied).
     class_datasource(const class_datasource<Tnet, Tdata, Tlabel> &ds);
@@ -522,14 +539,16 @@ namespace ebl {
     virtual ~class_datasource();
 
     // init methods ////////////////////////////////////////////////////////////
-    
+
+    //! Initialize variables to their default value.
+    void defaults();
     //! Allocate class strings vector from ubyte matrix 'classes'.
     virtual void init_strings(idx<ubyte> &classes);
     //! Initialize things specific to this class. The rest can be initialized
     //! with parent init methods.
     void init_local(vector<string*> *lblstr);
     //! Initialize from matrices where the data is a multi-matrix matrix.
-    void init(idxs<Tdata> &data, idx<Tlabel> &labels, 
+    void init(midx<Tdata> &data, idx<Tlabel> &labels, 
 	      vector<string*> *lblstr, const char *name);
     //! Initialize from matrices.
     void init(idx<Tdata> &data, idx<Tlabel> &labels, 
@@ -537,17 +556,23 @@ namespace ebl {
     //! Intialize from matrices filenames.
     //! \param max_size If > 0, limit the number of samples to this value.
     void init(const char *data_fname, const char *labels_fname,
-	      const char *jitters_fname = NULL,
+	      const char *jitters_fname = NULL, const char *scales_fname = NULL,
 	      const char *classes_fname = NULL, const char *name = NULL,
 	      uint max_size = 0);
     //! Intialize from root and partial matrices filenames.
     void init_root(const char *root, const char *data_fname,
 		   const char *labels_fname, const char *jitters_fname = NULL,
+		   const char *scales_fname = NULL,
 		   const char *classes_fname = NULL, const char *name = NULL);
     //! Constructor from directory 'root' and individual names for data,
     //! labels, jitters and classes files (appending names and extension of
     //! each subfile of a dataset created with dscompile tool).
     void init_root(const char *root_dsname, const char *name = NULL);
+    //! Fills 'clabels' and 'clblstr' which are the true class labels if
+    //! labels are not consecutive values starting from 0. If they are,
+    //! then 'clabels' is equivalent to 'labels', 
+    //! same for 'clblstr' and 'lblstr'.
+    virtual void init_class_labels();
     
     // data access /////////////////////////////////////////////////////////////
     
@@ -558,6 +583,23 @@ namespace ebl {
 
     // iterating ///////////////////////////////////////////////////////////////
     
+    //! This returns true if sample with 'index' is considered for training.
+    virtual bool included_sample(intg index);
+    //! This returns the number of samples actually considered for training.
+    virtual intg count_included_samples();
+    //! Move to the beginning of the data, for the test iterators only,
+    //! i.e. only next() is affected, next_train() is unaffected.
+    virtual void seek_begin();
+    //! Move to the beginning of the data, for the train iterators only,
+    //! i.e. only next_train() is affected, next() is unaffected.
+    virtual void seek_begin_train();
+    //! Move to the next datum (in the original order of the dataset).
+    //! Returns false if we reached the end.
+    //! This should be used during testing.
+    //! It will always return the data in the same order with the same
+    //! probability of 1. See next_train() for data returned with
+    //! variable probability, balance, etc. (used for training only).
+    virtual bool next();
     //! Move to the next datum in a way suited for training (_not_ for testing,
     //! for testing see next()).  If balance is activated (see set_balanced())
     //! this will return samples in a class-balanced way,
@@ -573,6 +615,20 @@ namespace ebl {
     //! the sample if selected, or only test and update its energy if not
     //! selected.
     virtual bool next_train();
+    //! This move class iterator 'class_it' to the next class. 
+    //! If reaching the end of the classes, then the class order is shuffled
+    //! and iterator starts at first class again.
+    virtual void next_balanced_class();
+    //! If 'random_class_order' is true, this will randomly change to order
+    //! in which classes are presented for balanced training, otherwise
+    //! it will do nothing and leave them in the original order.
+    virtual void reset_class_order();
+    //! If 'ran' is true, then the order in which classes are presented during
+    //! balanced training is randomized.
+    virtual void set_random_class_order(bool ran);
+    //! Excludes use of classes other than ones in [offset, offset + n] range.
+    //! \param random If true, keep only n classes at random.
+    virtual void limit_classes(intg n, intg offset = 0, bool random = false);
     //! If 'bal' is true, make the next_train() method call sequentially one 
     //! sample of each class instead of following the dataset's distribution.
     //! This is important to use when the dataset is unbalanced.
@@ -635,23 +691,38 @@ namespace ebl {
 
     //! Print info about the datasource on the standard output.
     virtual void pretty();
-    //! Pretty the progress of current epoch.
+    //! Print info about the scales data on the standard output.
+    virtual void pretty_scales();
+    //! Pretty the progress of current training epoch.
     //! \param newline If true, end pretty with a new line.
     virtual void pretty_progress(bool newline = true);
     
     // friends //////////////////////////////////////////////////////////////
     template <typename T1, typename T2, typename T3>
       friend class class_datasource_gui;
+    template <typename T1, typename T2, typename T3>
+      friend class supervised_trainer;
 
+  protected:
+    
+    //! Draw a random number between 0 and 1 and return true if higher
+    //! than current sample's probability.
+    virtual bool pick_current();
+    
     // members /////////////////////////////////////////////////////////////////
   protected:
     using datasource<Tnet,Tdata>::_name;
     // classes
     intg		 nclasses;	//!< Number of classes.
     vector<string*>	*lblstr;	//!< Name of each class.
+    vector<string*>	 clblstr;	//!< Name of each class, may differ.
+    bool                 bexclusion;    //!< Exclusion is used.
+    vector<bool>         excluded;      //!< Vector of excluded classes.
+    intg                 included;      //!< Number of included classes.
     // data
     using datasource<Tnet,Tdata>::data;
     using labeled_datasource<Tnet,Tdata,Tlabel>::labels;
+    idx<Tlabel> olabels; //!< Original class labels (may differ from labels).
     using datasource<Tnet,Tdata>::correct;
     using datasource<Tnet,Tdata>::energies;
     using datasource<Tnet,Tdata>::probas;
@@ -667,7 +738,10 @@ namespace ebl {
     bool		 balance;	//!< Balance iterating or not.
     vector<vector<intg> > bal_indices;	//!< Balanced iterating indices.
     vector<uint>	 bal_it;	//!< Sample iterators for each class.
+    vector<uint>	 class_order;	//!< Order in which to balance classes.
+    bool                 random_class_order;
     uint		 class_it;	//!< Iterator on classes.
+    uint		 class_it_it;	//!< Iterator on classes iterator.
     // sample picking with probabilities
     bool		 perclass_norm;	//!< Normalize probas per class.
     using datasource<Tnet,Tdata>::epoch_pick_cnt;	//!< # pickings
@@ -680,6 +754,7 @@ namespace ebl {
     vector<vector<intg> > bal_indices_saved;
     vector<uint>        bal_it_saved;
     uint                class_it_saved;
+    uint                class_it_it_saved;
     using datasource<Tnet,Tdata>::state_saved;
     using datasource<Tnet,Tdata>::count_pickings_save;
     using datasource<Tnet,Tdata>::it_saved;
@@ -786,7 +861,7 @@ namespace ebl {
     //! with N the number of classes and 2 the pair child/parent.
     //! \param lblstr An optional vector of strings describing each class.
     //! \param name An optional name for this dataset.
-    hierarchy_datasource(idxs<Tdata> &data, idx<Tlabel> &labels,
+    hierarchy_datasource(midx<Tdata> &data, idx<Tlabel> &labels,
 			 idx<Tlabel> *parents = NULL,
 			 vector<string*> *lblstr = NULL,
 			 const char *name = NULL);
@@ -816,6 +891,7 @@ namespace ebl {
     hierarchy_datasource(const char *data_name, const char *labels_name,
 			 const char *parents_name = NULL,
 			 const char *jitters_name = NULL,
+			 const char *scales_name = NULL,
 			 const char *classes_name = NULL,
 			 const char *name = NULL,
 			 uint max_size = 0);
@@ -826,6 +902,11 @@ namespace ebl {
 
     //! Initialize parents and check their validity.
     void init_parents(idx<Tlabel> *parents = NULL);
+    //! Fills 'clabels' and 'clblstr' which are the true class labels if
+    //! labels are not consecutive values starting from 0. If they are,
+    //! then 'clabels' is equivalent to 'labels', 
+    //! same for 'clblstr' and 'lblstr'.
+    virtual void init_class_labels();
     
     // data access /////////////////////////////////////////////////////////////
     
@@ -963,6 +1044,9 @@ namespace ebl {
     /* //! Pretty the progress of current epoch. */
     /* //! \param newline If true, end pretty with a new line. */
     /* virtual void pretty_progress(bool newline = true); */
+
+    //! Print path reaching class 'l'.
+    virtual void print_path(Tlabel l);
     
     // friends //////////////////////////////////////////////////////////////
     template <typename T1, typename T2, typename T3>
@@ -982,10 +1066,12 @@ namespace ebl {
     idx<Tlabel> *parents; //!< Parents matrix.
     idx<Tlabel> depth_labels; //!< All labels given a certain depth.
     using labeled_datasource<Tnet,Tdata,Tlabel>::labels;
+    using class_datasource<Tnet,Tdata,Tlabel>::olabels;
     using datasource<Tnet,Tdata>::_name;
     // classes
     using class_datasource<Tnet,Tdata,Tlabel>::nclasses;//!< Number of classes.
     using class_datasource<Tnet,Tdata,Tlabel>::lblstr;	//!< Name of each class.
+    using class_datasource<Tnet,Tdata,Tlabel>::clblstr;	//!< Name of each class.
     using datasource<Tnet,Tdata>::data;
     using datasource<Tnet,Tdata>::correct;
     using datasource<Tnet,Tdata>::energies;
@@ -1039,34 +1125,29 @@ namespace ebl {
     : public labeled_datasource<Tnet, Tdata, Tlabel> {
   public:
     idx<intg>					pairs;
-    typename idx<intg>::dimension_iterator	pairsIter;
+    /* typename idx<intg>::dimension_iterator	pairsIter; */
 
     //! Constructor from dataset file names.
     labeled_pair_datasource(const char *data_fname, const char *labels_fname,
 			    const char *classes_fname, const char *pairs_fname,
 			    const char *name_ = NULL,
 			    Tdata bias = 0, float coeff = 1.0);
-
     //! Constructor from dataset matrices.
     labeled_pair_datasource(idx<Tdata> &data_, idx<Tlabel> &labels_,
 			    idx<ubyte> &classes_, idx<intg> &pairs_,
 			    const char *name_ = NULL,
-			    Tdata bias = 0, float coeff = 1.0);
-    
+			    Tdata bias = 0, float coeff = 1.0);    
     //! destructor.
     virtual ~labeled_pair_datasource();
 
     //! Copies the current datum to a state and label.
     virtual void fprop(bbstate_idx<Tnet> &d1, bbstate_idx<Tnet> &d2,
 		       bbstate_idx<Tlabel> &label);
-
     //! Move to the next datum. Returns false if we reached the end.
     virtual bool next();
-
     //! Move to the beginning of the data, for the test iterators only,
     //! i.e. only next() is affected, next_train() is unaffected.
     virtual void seek_begin();
-
     //! Returns the number of pairs contained in this data source.
     virtual unsigned int size();
   };

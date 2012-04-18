@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2011 by Yann LeCun, Pierre Sermanet and Soumith Chintala*
+ *   yann@cs.nyu.edu, pierre.sermanet@gmail.com, soumith@gmail.com  *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // linear_module
-  //! This module applies a linears combination of the input <in> 
+  //! This module applies a linears combination of the input <in>
   //! with its internal weight matrix w and puts the result in the output.
   //! This module has a replicable order of 1, if the input has a bigger order,
   //! use the replicable version of this module: linear_module_replicable.
@@ -72,20 +72,26 @@ namespace ebl {
     virtual void forget(forget_param_linear &fp);
     //! normalize
     virtual void normalize();
-    //! resize the output based on input dimensions
-    virtual void resize_output(Tstate &in, Tstate &out);
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim fprop_size(idxdim &i_size);
+    virtual fidxdim fprop_size(fidxdim &i_size);
     //! Return dimensions compatible with this module given output dimensions.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim bprop_size(const idxdim &o_size);
+    virtual fidxdim bprop_size(const fidxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual linear_module<T,Tstate>* copy();
+    //! \param p If NULL, reuse current parameter space, otherwise allocate new
+    //!   weights on parameter 'p'.
+    virtual linear_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
     //! Copy passed weights into x component of internal weights.
     virtual void load_x(idx<T> &weights);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
+    //! Calls fprop and then dumps internal buffers, inputs and outputs
+    //! into files. This can be useful for debugging.
+    virtual void dump_fprop(Tstate &in, Tstate &out);
+
+  /* bool resize_output(Tstate &in, Tstate &out); */
+
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -93,29 +99,29 @@ namespace ebl {
   };
 
   //! The replicable version of linear_module.
-  //! If the input has a bigger order than the replicable_order() of 
+  //! If the input has a bigger order than the replicable_order() of
   //! linear_module, then this module loops on extra dimensions until
-  //! it reaches the replicable order, and then calls the base module 
+  //! it reaches the replicable order, and then calls the base module
   //! linear_module.
   //! For example, if the base module works on an order of 1, an input with
   //! dimensions <42x9x9> will produce a 9x9 grid where each box contains
   //! the output of the processing of each <42> slice.
-  DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable, 
+  DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable,
 				linear_module, T, Tstate,
-				(parameter<T,Tstate> *p, intg in, intg out, 
+				(parameter<T,Tstate> *p, intg in, intg out,
 				 const char *name = "linear_replicable"),
 				(p, in, out, name));
 
   ////////////////////////////////////////////////////////////////
   // convolution_module
-  //! This module applies 2D convolutions on dimensions 1 and 2 
+  //! This module applies 2D convolutions on dimensions 1 and 2
   //! (0 contains different layers of information).
   //! This module has a replicable order of 3, if the input has a bigger order,
   //! use the replicable version of this module:
   //! convolution_module_replicable.
   template <typename T, class Tstate = bbstate_idx<T> >
     class convolution_module : public module_1_1<T, Tstate> {
-  public:    
+  public:
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //!        If p is null, a local buffer will be used.
@@ -140,19 +146,25 @@ namespace ebl {
     //! order of operation
     virtual int replicable_order() { return 3; }
     //! resize the output based on input dimensions
-    virtual void resize_output(Tstate &in, Tstate &out);
+    //! This returns true if output was resized/reallocated, false otherwise.
+    virtual bool resize_output(Tstate &in, Tstate &out);
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim fprop_size(idxdim &i_size);
+    virtual fidxdim fprop_size(fidxdim &i_size);
     //! Return dimensions compatible with this module given output dimensions.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim bprop_size(const idxdim &o_size);
+    virtual fidxdim bprop_size(const fidxdim &o_size);
     //! Returns a deep copy of this module.
-    virtual convolution_module<T,Tstate>* copy();
+    //! \param p If NULL, reuse current parameter space, otherwise allocate new
+    //!   weights on parameter 'p'.
+    virtual convolution_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
     //! Copy passed weights into x component of internal weights.
     virtual void load_x(idx<T> &weights);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
+    //! Calls fprop and then dumps internal buffers, inputs and outputs
+    //! into files. This can be useful for debugging.
+    virtual void dump_fprop(Tstate &in, Tstate &out);
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -164,23 +176,26 @@ namespace ebl {
     idx<intg>		table;	//!< table of connections btw input and output
   protected:
     bool		warnings_shown;
-    bool                float_precision; //!< used for IPP
+    bool                fulltable; //!< indicating whether it is a full-table or not
+    bool                float_precision; //!< used for IPP and TH
+    bool                double_precision; //!< used for TH
     bool                crop; //! Crop input when size mismatch or not.
-#ifdef __IPP__
+  // IPP members ////////////////////////////////////////////////////////
     idx<T>              revkernel; //!< a reversed kernel for IPP
     idx<T>              outtmp; //!< a tmp buffer for IPP conv output
-#endif
+    bool                ipp_err_printed; //!< Print an error msg only once.
+    bool                use_ipp; //!< IPP is useable or not.
   };
 
   //! The replicable version of convolution_module.
-  //! If the input has a bigger order than the replicable_order() of 
+  //! If the input has a bigger order than the replicable_order() of
   //! convolution_module, then this module loops on extra dimensions until
-  //! it reaches the replicable order, and then calls the base module 
+  //! it reaches the replicable order, and then calls the base module
   //! convolution_module.
   //! For example, if the base module works on an order of 3, an input with
   //! dimensions <2x16x16x9x9> will produce a 9x9 grid where each box contains
   //! the output of the processing of each <2x16x16> slice.
-  DECLARE_REPLICABLE_MODULE_1_1(convolution_module_replicable, 
+  DECLARE_REPLICABLE_MODULE_1_1(convolution_module_replicable,
 				convolution_module, T, Tstate,
 				(parameter<T,Tstate> *p,
 				 idxdim &ker, idxdim &stride, idx<intg> &table,
@@ -188,81 +203,9 @@ namespace ebl {
 				(p, ker, stride, table, name));
 
   ////////////////////////////////////////////////////////////////
-  // subsampling_module
-  //! This module applies 2D subsampling on dimensions 1 and 2 
-  //! (0 contains different layers of information).
-  //! This module has a replicable order of 3, if the input has a bigger order,
-  //! use the replicable version of this module:
-  //! subsampling_module_replicable.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class subsampling_module: public module_1_1<T, Tstate> {
-  public:
-    //! Constructor.
-    //! \param p is used to store all parametric variables in a single place.
-    //!        If p is null, a local buffer will be used.
-    //! \param thickness The number of features.
-    //! \param kernel Size of subsampling kernel (without thickness).
-    //! \param stride Stride of subsampling kernel (without thickness).
-    //! \param crop If true, crop input when it does not match with the kernel.
-    //!          This allows to feed any input size to this module.
-    subsampling_module(parameter<T,Tstate> *p, uint thickness, idxdim &kernel,
-		       idxdim &stride, const char *name = "subsampling",
-		       bool crop = true);
-    //! destructor
-    virtual ~subsampling_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! forgetting weights by replacing with random values
-    virtual void forget(forget_param_linear &fp);
-    //! order of operation
-    virtual int replicable_order() { return 3; }
-    //! resize the output based on input dimensions
-    virtual void resize_output(Tstate &in, Tstate &out);
-    //! Return dimensions that are compatible with this module.
-    //! See module_1_1_gen's documentation for more details.
-    virtual idxdim fprop_size(idxdim &i_size);
-    //! Return dimensions compatible with this module given output dimensions.
-    //! See module_1_1_gen's documentation for more details.
-    virtual idxdim bprop_size(const idxdim &o_size);
-    //! Returns a deep copy of this module.
-    virtual subsampling_module<T,Tstate>* copy();
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-
-    // members ////////////////////////////////////////////////////////
-  public:
-    Tstate	        coeff; //!< Learned averaging coefficients.
-    Tstate	        sub; //!< Temporary buffer to hold sum of neighborhood.
-    uint                thickness; //!< Number of features.
-    idxdim              kernel; //!< Dimensions of subsampling kernel.
-    idxdim              stride; //!< Strides of subsampling.
-  protected:
-    bool                crop; //! Crop input when size mismatch or not.
-  };
-
-  //! The replicable version of subsampling_module.
-  //! If the input has a bigger order than the replicable_order() of 
-  //! subsampling_module, then this module loops on extra dimensions until
-  //! it reaches the replicable order, and then calls the base module 
-  //! subsampling_module.
-  //! For example, if the base module works on an order of 3, an input with
-  //! dimensions <2x16x16x9x9> will produce a 9x9 grid where each box contains
-  //! the output of the processing of each <2x16x16> slice.
-  DECLARE_REPLICABLE_MODULE_1_1(subsampling_module_replicable, 
-				subsampling_module, T, Tstate,
-				(parameter<T,Tstate> *p, uint thickness,
-				 idxdim &kernel, idxdim &strides,
-				 const char *name = "subsampling_replicable"),
-				(p, thickness, kernel, strides, name));
-
-  ////////////////////////////////////////////////////////////////
   // addc_module
   //! The constant add module adds biases to the first dimension of the input
-  //! and puts the results in the output. This module is spatially replicable 
+  //! and puts the results in the output. This module is spatially replicable
   //! (the input can have an order greater than 1 and the operation will apply
   //! to all elements).
   template <typename T, class Tstate = bbstate_idx<T> >
@@ -271,7 +214,7 @@ namespace ebl {
     //! Constructor.
     //! \param p is used to store all parametric variables in a single place.
     //!        If p is null, a local buffer will be used.
-    //! \param size is the number of biases, or the size of dimensions 0 of 
+    //! \param size is the number of biases, or the size of dimensions 0 of
     //! inputs and outputs.
     addc_module(parameter<T,Tstate> *p, intg size, const char *name = "addc");
     //! destructor
@@ -285,11 +228,16 @@ namespace ebl {
     //! forgetting weights by replacing with random values
     virtual void forget(forget_param_linear &fp);
     //! Returns a deep copy of this module.
-    virtual addc_module<T,Tstate>* copy();
+    //! \param p If NULL, reuse current parameter space, otherwise allocate new
+    //!   weights on parameter 'p'.
+    virtual addc_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
     //! Copy passed weights into x component of internal weights.
     virtual void load_x(idx<T> &weights);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
+    //! Calls fprop and then dumps internal buffers, inputs and outputs
+    //! into files. This can be useful for debugging.
+    virtual void dump_fprop(Tstate &in, Tstate &out);
 
     // members ////////////////////////////////////////////////////////
   public:
@@ -301,7 +249,7 @@ namespace ebl {
   //! x^p module. p can be nay real number
   //! the derivatives are implemented using
   //! polynomial derivative rules, so they are exact
-  //! The derivative implementation divides output by input 
+  //! The derivative implementation divides output by input
   //! to get x^(p-1), therefore this module assumes that
   //! the :input:x and :output:x is not modified until bprop
   // TODO: write specialized modules square and sqrt to run faster
@@ -312,7 +260,7 @@ namespace ebl {
     //! its <p>th power.
     power_module(T p);
     //! destructor
-    virtual ~power_module();    
+    virtual ~power_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
@@ -336,18 +284,14 @@ namespace ebl {
     //! constructor.
     diff_module();
     //! destructor
-    virtual ~diff_module();    
+    virtual ~diff_module();
     //! forward propagation from in to out
-    virtual void fprop(Tstate &in1, Tstate &in2,
-		       Tstate &out);
+    virtual void fprop(Tstate &in1, Tstate &in2, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(Tstate &in1, Tstate &in2,
-		       Tstate &out);
+    virtual void bprop(Tstate &in1, Tstate &in2, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in1, Tstate &in2,
-			Tstate &out);
+    virtual void bbprop(Tstate &in1, Tstate &in2, Tstate &out);
   };
-
 
   ////////////////////////////////////////////////////////////////
   // mul_module
@@ -357,28 +301,24 @@ namespace ebl {
     class mul_module : public module_2_1<T, Tstate> {
   private:
     idx<T> tmp; //!< temporary buffer
-    
+
   public:
     //! constructor.
     mul_module();
     //! destructor
-    virtual ~mul_module();    
+    virtual ~mul_module();
     //! forward propagation from in to out
-    virtual void fprop(Tstate &in1, Tstate &in2,
-		       Tstate &out);
+    virtual void fprop(Tstate &in1, Tstate &in2, Tstate &out);
     //! backward propagation from out to in
-    virtual void bprop(Tstate &in1, Tstate &in2,
-		       Tstate &out);
+    virtual void bprop(Tstate &in1, Tstate &in2, Tstate &out);
     //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in1, Tstate &in2,
-			Tstate &out);
+    virtual void bbprop(Tstate &in1, Tstate &in2, Tstate &out);
   };
 
   ////////////////////////////////////////////////////////////////
   // thres_module
-  //! a thresholding module that filters the input and
-  //! any entry that is smaller then a given threshold is 
-  //! set to a specified value.
+  //! A thresholding module that filters the input and any entry that is
+  //! smaller then a given threshold is set to a specified value.
   template <typename T, class Tstate = bbstate_idx<T> >
     class thres_module : public module_1_1<T,Tstate> {
   public:
@@ -392,7 +332,7 @@ namespace ebl {
     //! smaller than <thres>.
     thres_module(T thres, T val);
     //! destructor
-    virtual ~thres_module();    
+    virtual ~thres_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
@@ -400,11 +340,11 @@ namespace ebl {
     //! second-derivative backward propagation from out to in
     virtual void bbprop(Tstate &in, Tstate &out);
   };
-    
+
 
   ////////////////////////////////////////////////////////////////
   // cutborder_module
-  //! opposite of zero padding, sometimes one needs to 
+  //! opposite of zero padding, sometimes one needs to
   //! cut the borders of an input to make it usable with
   //! a convolved output
   template <typename T, class Tstate = bbstate_idx<T> >
@@ -419,7 +359,7 @@ namespace ebl {
     //! for each feature map.
     cutborder_module(int nr, int nc);
     //! destructor
-    virtual ~cutborder_module();    
+    virtual ~cutborder_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
@@ -427,7 +367,7 @@ namespace ebl {
     //! second-derivative backward propagation from out to in
     virtual void bbprop(Tstate &in, Tstate &out);
   };
-    
+
   ////////////////////////////////////////////////////////////////
   // zpad_module
   //! a simple zero padding module that is mostly usefull for doing
@@ -437,13 +377,13 @@ namespace ebl {
   public:
     //! Empty constructor. User should set paddings via the set_paddings()
     //! method.
-    zpad_module();
-    //! Constructor. Adding same size borders on each side.
-    //! \param nr The number of rows added on each side.
-    //! \param nc The number of cols added on each side.
+    zpad_module(const char *name = "zpad");
+    //! Constructs a zpad that adds same size borders on each side.
+    //! \param nrows The number of rows added on each side.
+    //! \param ncolumns The number of cols added on each side.
     //! the output size is enlarged by 2*nrow in rows and 2*ncols in cols
     //! for each feature map.
-    zpad_module(int nr, int nc);
+    zpad_module(int nrows, int ncolumns);
     //! Constructs a zpad module that adds padding on each side of a 2D input.
     //! (the 1st (features) dimension is left unchanged).
     //! \param top The number of rows added on to the top side.
@@ -455,59 +395,94 @@ namespace ebl {
     //! kernel had odd size, otherwise adding 1 pixel less on the right
     //! and bottom borders.
     //! \param kernel_size The sizes of the kernel for which to pad.
-    zpad_module(idxdim kernel_size);
+    zpad_module(idxdim &kernel_size, const char *name = "zpad");
+    //! Constructor adding zero borders with same size on each size if the
+    //! kernel had odd size, otherwise adding 1 pixel less on the right
+    //! and bottom borders. 
+    //! \param kernels A kernel for each input in case of multi-state input.
+    zpad_module(midxdim &kernels, const char *name = "zpad");
     //! destructor
-    virtual ~zpad_module();    
+    virtual ~zpad_module();
+    virtual void fprop(mstate<Tstate> &in, mstate<Tstate> &out);
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, idx<T> &out);
+    //! forward propagation from in to out
+    virtual void fprop(idx<T> &in, idx<T> &out);
     //! backward propagation from out to in
     virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(Tstate &in, Tstate &out);
     //! Return all paddings in an idxdim: top,left,bottom,right.
     virtual idxdim get_paddings();
+    //! Returns all paddings associated with a 'kernel': top,left,bottom,right.
+    //! This does not set any internal parameters of this module.
+    virtual idxdim get_paddings(idxdim &kernel);
+    //! Returns all paddings associated with a 'kernel': top,left,bottom,right.
+    //! This does not set any internal parameters of this module.
+    virtual midxdim get_paddings(midxdim &kernels);
+    //! Set all paddings for top, left, bottom and right sides.
+    virtual void set_paddings(int top, int left, int bottom, int right);
     //! Set all paddings from 'pads' in this order: top,left,bottom,right.
     virtual void set_paddings(idxdim &pads);
+    //! Set all paddings according to 'kernel'.
+    virtual void set_kernel(idxdim &kernel);
+    //! Set all paddings according to 'kernels' for multi-state inputs.
+    virtual void set_kernels(midxdim &kernels);
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim fprop_size(idxdim &i_size);
+    virtual fidxdim fprop_size(fidxdim &i_size);
     //! Return dimensions compatible with this module given output dimensions.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim bprop_size(const idxdim &o_size);
+    virtual fidxdim bprop_size(const fidxdim &o_size);
+    //! Returns multiple input dimensions corresponding to output dims 'osize'.
+    virtual mfidxdim fprop_size(mfidxdim &isize);
+    //! Returns multiple input dimensions corresponding to output dims 'osize'.
+    virtual mfidxdim bprop_size(mfidxdim &osize);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
-  
+    //! Returns a deep copy of this module.
+    //! \param p If NULL, reuse current parameter space, otherwise allocate new
+    //!   weights on parameter 'p'.
+    virtual zpad_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
+
   protected:
-    int nrow, ncol; //!< padding on left and top
-    int nrow2, ncol2; //!< padding on botton and right
-    idxdim pads; //!< all paddings: top,left,bottom,right
+    idxdim pad; //!< Current padding (top,left,bottom,right).
+    midxdim pads; //!< Paddings (top,left,bottom,right) for all scales.
   };
-  
+
   ////////////////////////////////////////////////////////////////
   // mirrorpad_module
   //! A simple mirror padding module that is mostly usefull for doing
   //! same size output convolutions.
   template <typename T, class Tstate = bbstate_idx<T> >
-    class mirrorpad_module : public module_1_1<T,Tstate> {
-  private:
-    int nrow, ncol;
-
+    class mirrorpad_module : public zpad_module<T,Tstate> {
   public:
     //! <nrow> is the number of rows in zero added border
     //! <ncol> is the number of cols in zero added border
     //! the output size is enlarged by 2*nrow in rows and 2*ncols in cols
     //! for each feature map.
     mirrorpad_module(int nr, int nc);
+    //! Constructor adding zero borders with same size on each size if the
+    //! kernel had odd size, otherwise adding 1 pixel less on the right
+    //! and bottom borders.
+    //! \param kernel_size The sizes of the kernel for which to pad.
+    mirrorpad_module(idxdim &kernel_size);
     //! destructor
-    virtual ~mirrorpad_module();    
+    virtual ~mirrorpad_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, idx<T> &out);
+    //! Returns a deep copy of this module.
+    //! \param p If NULL, reuse current parameter space, otherwise allocate new
+    //!   weights on parameter 'p'.
+    virtual mirrorpad_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
+  protected:
+    using zpad_module<T,Tstate>::pad;
   };
-  
+
   ////////////////////////////////////////////////////////////////
   // fsum_module
   //! This modules iterates of the last two dimenions and takes
@@ -516,15 +491,21 @@ namespace ebl {
     class fsum_module : public module_1_1<T,Tstate> {
   public:
     //! constructor.
-    fsum_module();
+    //! \param div If true, divide the sum by the number of elements used.
+    //! \param split If non-1, sum every consecutive groups of size
+    //!   (number of features) * split.
+    fsum_module(bool div = false, float split = 1.0);
     //! destructor
-    virtual ~fsum_module();    
+    virtual ~fsum_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
     virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(Tstate &in, Tstate &out);
+  protected:
+    bool div; //!< Normalize by number of elements used for sum.
+    float split; //!< Sum by groups of n elements, n = features * split.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -544,7 +525,7 @@ namespace ebl {
     //!        increasing order.
     range_lut_module(idx<T> *value_range);
     //! destructor
-    virtual ~range_lut_module();    
+    virtual ~range_lut_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     /* //! backward propagation from out to in */
@@ -565,7 +546,7 @@ namespace ebl {
     //! constructor.
     binarize_module(T threshold, T false_value, T true_value);
     //! destructor
-    virtual ~binarize_module();    
+    virtual ~binarize_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     /* //! backward propagation from out to in */
@@ -591,7 +572,7 @@ namespace ebl {
     diag_module(parameter<T,Tstate> *p, intg thickness,
 	        const char *name = "diag");
     //! Destructor.
-    virtual ~diag_module();    
+    virtual ~diag_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
@@ -599,12 +580,16 @@ namespace ebl {
     //! second-derivative backward propagation from out to in
     virtual void bbprop(Tstate &in, Tstate &out);
     //! resize the output based on input dimensions
-    virtual void resize_output(Tstate &in, Tstate &out);
+    //! This returns true if output was resized/reallocated, false otherwise.
+    virtual bool resize_output(Tstate &in, Tstate &out);
     //! Copy passed weights into x component of internal weights.
     virtual void load_x(idx<T> &weights);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
-  
+    //! Returns a deep copy of this module.
+    //! \param p If NULL, reuse current parameter space, otherwise allocate new
+    //!   weights on parameter 'p'.
+    virtual diag_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
   protected:
     Tstate	coeff;
   };
@@ -619,15 +604,13 @@ namespace ebl {
     //! Constructor.
     copy_module(const char *name = "copy");
     //! Destructor.
-    virtual ~copy_module();    
+    virtual ~copy_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
     virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(Tstate &in, Tstate &out);
-    //! resize the output based on input dimensions
-    virtual void resize_output(Tstate &in, Tstate &out);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
   };
@@ -640,18 +623,19 @@ namespace ebl {
     //! Constructor.
     back_module(const char *name = "back");
     //! Destructor.
-    virtual ~back_module();    
+    virtual ~back_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! resize the output based on input dimensions
-    virtual void resize_output(Tstate &in, Tstate &out);
+    //! This returns true if output was resized/reallocated, false otherwise.
+    virtual bool resize_output(Tstate &in, Tstate &out);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
     //! Return dimensions compatible with this module given output dimensions.
     //! See module_1_1_gen's documentation for more details.
     //! This module doesn't actually change the size, but we use it to know
     //! the corresponding size of 1 output pixel at this point.
-    virtual idxdim bprop_size(const idxdim &o_size);
+    virtual fidxdim bprop_size(const fidxdim &o_size);
     //! Apply boxes.
     void bb(std::vector<bbox*> &boxes);
 
@@ -663,46 +647,25 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-  // maxss_module
-  //! This module applies max subsampling.
+  // printer_module
+  //! It prints input and output states to standard output.
+  //! useful for debugging
   template <typename T, class Tstate = bbstate_idx<T> >
-    class maxss_module : public module_1_1<T,Tstate> {
+    class printer_module : module_1_1<T,Tstate> {
+
   public:
-    //! Constructor.
-    //! \param thickness The number of features.
-    //! \param kernel Size of subsampling kernel (without thickness).
-    //! \param stride Stride of subsampling kernel (without thickness).
-    maxss_module(uint thickness, idxdim &kernel, idxdim &stride,
-		 const char *name = "maxss");
-    //! Destructor.
-    virtual ~maxss_module();    
+    printer_module(const char *name = "printer");
+    //! destructor
+    virtual ~printer_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! backward propagation from out to in
     virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(Tstate &in, Tstate &out);
-    //! resize the output based on input dimensions
-    virtual void resize_output(Tstate &in, Tstate &out);
-    //! order of operation
-    virtual int replicable_order() { return 3; }
-    //! Return dimensions that are compatible with this module.
-    //! See module_1_1_gen's documentation for more details.
-    virtual idxdim fprop_size(idxdim &i_size);
-    //! Return dimensions compatible with this module given output dimensions.
-    //! See module_1_1_gen's documentation for more details.
-    virtual idxdim bprop_size(const idxdim &o_size);
-    //! Returns a deep copy of this module.
-    virtual maxss_module<T,Tstate>* copy();
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-    // members ////////////////////////////////////////////////////////
-  protected:
-    uint        thickness;    //!< Number of features.
-    idxdim	kernel;	      //!< Kernel dimensions (1st dim is thickness).
-    idxdim	stride;	      //!< Stride dimensions (stride 1 in 1st dim).
-    idx<int>    switches;     //!< Remember max locations
   };
+
+
 
 } // namespace ebl {
 

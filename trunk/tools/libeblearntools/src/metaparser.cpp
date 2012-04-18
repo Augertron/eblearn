@@ -44,6 +44,7 @@
 #endif
 
 #ifdef __BOOST__
+#define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 using namespace boost::filesystem;
@@ -91,7 +92,7 @@ namespace ebl {
     } else {
       id = vars_map[var];
     }
-    //DEBUG("var id of " << var << " is: " << id);
+    //EDEBUG("var id of " << var << " is: " << id);
     return id;
   }
 
@@ -110,7 +111,7 @@ namespace ebl {
     } else {
       id = vals_map[val];
     }
-    //DEBUG("val id of " << val << " is: " << id);
+    //EDEBUG("val id of " << val << " is: " << id);
     return id;
   }
 
@@ -245,12 +246,28 @@ namespace ebl {
     return flat;
   }
 
-  varmaplist pairtree::best(list<string> &keys, uint n, bool display) {
+  varmaplist pairtree::best(list<string> &keys, uint n, bool display, 
+			    int maxiter) {
     timer t; t.start();
     varmaplist flat = flatten();
     // sort
     list<uint> ukeys = pairtree::to_varid_list(keys);
     flat.sort(map_natural_less_uint(ukeys, vals_vector));
+    // remove all occurences of i > maxiter
+    if (maxiter >= 0) {
+      string sid = "i";
+      if (vars_map.find(sid) != vars_map.end()) {
+	uint id = vars_map[sid];	
+	varmaplist::iterator i = flat.begin();
+	for ( ; i != flat.end(); ) {
+	  string ival = vals_vector[(*i)[id]];
+	  if (atoi(ival.c_str()) > maxiter)
+	    i = flat.erase(i);
+	  else
+	    i++;
+	}
+      }
+    }
     // keep only first n entries
     varmaplist::iterator i = flat.begin();
     if (n == 0)
@@ -645,11 +662,13 @@ namespace ebl {
 	hierarchy.push_back(pairtree::get_var_id(i->c_str()));
     }
     // analyze
-    int iter = 0;
-    varmaplist besteach;
-    varmaplist best = analyze(conf, dir, iter, besteach, 
-			      conf.exists_true("meta_display_all"));
-    send_report(conf, dir, best, iter, confname, jobs_info, 0, 0, 0, &besteach);
+    int maxiter = 0, maxiter_common = 0;
+    varmaplist besteach, best_common;
+    varmaplist best = analyze(conf, dir, maxiter, besteach, 
+			      conf.exists_true("meta_display_all"),
+			      &maxiter_common, &best_common);
+    send_report(conf, dir, best, maxiter, confname, jobs_info, 0, 0, 0, 
+		&besteach, &best_common, &maxiter_common);
   }
   
   void metaparser::organize_plot(list<string> &names, varmaplist &flat, pairtree &p) {
@@ -871,7 +890,9 @@ namespace ebl {
 
   varmaplist metaparser::analyze(configuration &conf, const string &dir,
 				 int &maxiter, varmaplist &besteach,
-				 bool displayall) {
+				 bool displayall,
+				 int *maxiter_common,
+				 varmaplist *best_common) {
     list<string> sticky, watch, keycomb;
     varmaplist best;
     // get list of sticky variables
@@ -886,7 +907,9 @@ namespace ebl {
 	   << stringlist_to_string(watch) << endl;
     }
     parse_logs(dir, &sticky, &watch);
-    maxiter = get_max_common_iter();
+    maxiter = get_max_iter();
+    if (maxiter_common)
+      *maxiter_common = get_max_common_iter();
     if (!conf.exists("meta_minimize"))
       cerr << "Warning: meta_minimize not defined, not attempting to determine"
 	   << " variables minimum." << endl;
@@ -898,9 +921,15 @@ namespace ebl {
 	cout << "All sorted results at iteration " << maxiter << ":" << endl;
 	varmaplist b = tree.best(keys, 0, true);
       }
-      if (conf.exists_true("meta_ignore_iter0") // ignore iter 0's results
-	  && get_max_iter() > 0) // don't ignore if max iter == 0
-	tree.delete_pair("i", "0");
+      if (conf.exists_true("meta_ignore_iter0")) { // ignore up until iter0's results
+	int i0 = conf.get_int("meta_ignore_iter0");
+	int miter = get_max_iter();
+	for (int i = 0; i <= i0 && i < miter; ++i) {
+	  string s;
+	  s << i;
+	  tree.delete_pair("i", s.c_str());
+	}
+      }
       // get best value of each job
       if (conf.exists("meta_best_keycomb")) {
 	keycomb = string_to_stringlist(conf.get_string("meta_best_keycomb"));
@@ -915,6 +944,9 @@ namespace ebl {
       // get best values to be minimized
       uint nbest = conf.exists("meta_nbest") ? conf.get_uint("meta_nbest") : 1;
       best = tree.best(keys, std::max((uint) 1, nbest));
+      if (best_common && maxiter_common)
+	*best_common = tree.best(keys, std::max((uint) 1, nbest), false, 
+				 *maxiter_common);
       ostringstream dirbest, tmpdir, cmd;
       string job;
       int ret;
@@ -936,7 +968,7 @@ namespace ebl {
 	  cmd << "cp " << pairtree::vals_vector[i->find(configid)->second]
 	      << " " << tmpdir.str();
 	  ret = std::system(cmd.str().c_str());
-	}
+	} else eblwarn("config variable not defined");
 	// find job name
 	uint jobid = pairtree::get_var_id("job");
 	if (i->find(jobid) == i->end()) // not found, continue
@@ -944,16 +976,26 @@ namespace ebl {
 	else
 	  job = pairtree::vals_vector[i->find(jobid)->second];
 	// look for classes filename to save
-	uint classesid = pairtree::get_var_id("classes");
-	if (i->find(classesid) != i->end()) { // found classes
+	if (conf.exists("classes")) {
 	  cmd.str("");
-	  cmd << "cp " //<< dir << "/" << job << "/"
-	      << pairtree::vals_vector[i->find(classesid)->second] << " " << tmpdir.str();
+	  cmd << "cp " << conf.get_string("classes") << " " << tmpdir.str();
 	  ret = std::system(cmd.str().c_str());
 	  if (ret < 0) 
 	    cerr << "warning: failed to copy classes with cmd: "
 		 << cmd.str() << endl;
-	}
+	} else eblwarn("classes variable not defined");
+
+	// uint classesid = pairtree::get_var_id("classes");
+	// if (i->find(classesid) != i->end()) { // found classes
+	//   cmd.str("");
+	//   cmd << "cp " //<< dir << "/" << job << "/"
+	//       << pairtree::vals_vector[i->find(classesid)->second] << " " << tmpdir.str();
+	//   ret = std::system(cmd.str().c_str());
+	//   if (ret < 0) 
+	//     cerr << "warning: failed to copy classes with cmd: "
+	// 	 << cmd.str() << endl;
+	// } else eblwarn("classes file not found, classes=" 
+	// 	       << conf.get_string("classes"));
 	// save out log
 	cmd.str("");
 	cmd << "cp " << dir << "/" << job << "/"
@@ -992,7 +1034,8 @@ namespace ebl {
 			       varmaplist &best, int maxiter,
 			       string conf_fullfname, string jobs_info,
 			       uint nrunning, double maxminutes,
-			       double minminutes, varmaplist *besteach) {
+			       double minminutes, varmaplist *besteach,
+			       varmaplist *best_common, int *maxiter_common) {
     ostringstream cmd;
     string tmpfile = "report.tmp";
     int res;
@@ -1009,6 +1052,7 @@ namespace ebl {
       cmd.str("");
       cmd << "rm -f " << tmpfile; // remove tmp file first
       res = std::system(cmd.str().c_str());
+      res = res; // to avoid warning
       // print summary infos
       cmd.str("");
       cmd << "echo \"Iteration: " << maxiter << endl;
@@ -1022,7 +1066,7 @@ namespace ebl {
       cout << cmd.str();
       cmd << "\" >> " << tmpfile;
       res = std::system(cmd.str().c_str());
-      // print best results
+      // print best results at any iteration
       list<string> keys =
 	string_to_stringlist(conf.get_string("meta_minimize"));
       if (best.size() > 0) {
@@ -1030,6 +1074,16 @@ namespace ebl {
 	cmd << "echo \"Best " << best.size() << " results at iteration " 
 	    << maxiter << ":" << endl;
 	cmd << pairtree::flat_to_string(&best, &keys) << "\"";
+	res = std::system(cmd.str().c_str()); // print on screen
+	cmd << " >> " << tmpfile;
+	res = std::system(cmd.str().c_str());
+      }
+      // print best results at maximum common iter
+      if (best_common && maxiter_common && best_common->size() > 0) {
+	cmd.str("");
+	cmd << "echo \"Best " << best_common->size() << " results at iteration " 
+	    << *maxiter_common << " (maximum common iteration):" << endl;
+	cmd << pairtree::flat_to_string(best_common, &keys) << "\"";
 	res = std::system(cmd.str().c_str()); // print on screen
 	cmd << " >> " << tmpfile;
 	res = std::system(cmd.str().c_str());

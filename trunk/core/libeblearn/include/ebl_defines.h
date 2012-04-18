@@ -35,35 +35,6 @@
 
 #include "defines.h"
 
-#ifdef __DUMP_STATES__
-
-#ifdef __ANDROID__
-#define DUMP_ROOT "/sdcard/"
-#else
-#define DUMP_ROOT "";
-#endif
-
-#include "stl.h"
-
-extern uint dump_count;
-extern std::string dump_prefix;
-
-#define RESET_DUMP() dump_count = 0;
-#define DUMP_PREFIX(s) { dump_prefix.clear(); dump_prefix << s << "_"; }
-
-#define DUMP(mat, fname) {						\
-    string n = DUMP_ROOT;						\
-    n << dump_prefix << (dump_count < 10? "0":"") << dump_count++ << "_" \
-      << fname << "_" << mat << ".mat";					\
-    if (save_matrix(mat, n))						\
-      cout << "Dumped " << n << " (min: " << idx_min(mat)		\
-	   << " max: " << idx_max(mat) << ")" <<endl;			\
-    else								\
-      cerr << "Failed to dump " << n << endl;				\
-  }
-
-#endif /* DUMP_STATES */
-
 #define err_not_implemented() {						\
     eblerror("member function not implemented for this class"); }
 
@@ -73,5 +44,9 @@ extern bool drand_ini;
 #define check_drand_ini() {					      \
     if (!drand_ini) printf("You have not initialized random sequence. \
 Please call init_drand(time(NULL)) before using this function !\n"); }
+
+#define fs(T) T,fstate_idx<T>
+#define bs(T) T,bstate_idx<T>
+#define bbs(T) T,bbstate_idx<T>
 
 #endif /* EBL_DEFINES */

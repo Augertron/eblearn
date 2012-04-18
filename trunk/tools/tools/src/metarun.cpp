@@ -40,14 +40,7 @@
 #include "job.h"
 #include "mpijob.h"
 #include "tools_utils.h"
-
-using namespace std;
-using namespace ebl;
-
-#ifdef __DEBUGMEM__
-#include "libidx.h"
-  INIT_DEBUGMEM()
-#endif
+#include "eblapp.h"
 
 ////////////////////////////////////////////////////////////////
 // global variables
@@ -56,10 +49,13 @@ string 	copy_path     = ""; 	// path to copy to target folder
 string 	manual_tstamp = ""; 	// tstamp string prefix to the experiment name
 bool 	resume 	      = false;  // resume metajob or not
 bool 	resumedir     = false;  // resume metajob or not
+bool 	resume_other  = false;  // resume from metajob or not
+string  other_directory = "";
 bool 	create 	      = false;  // create metajob directories only
 bool    monitor       = false;  // monitor jobs from existing directories
 int     maxjobs       = -1;     // max concurrent number of jobs
 bool    reset_progress = false; // ignore existing progress in target dir
+bool    force_start   = false;  // ignore timeout wait if true.
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -100,12 +96,17 @@ bool parse_args(int argc, char **argv) {
       resume = true;
     } else if (strcmp(argv[i], "-resume") == 0) {
       resume = true;
+    } else if (strcmp(argv[i], "-resume_other") == 0) {
+      resume_other = true;
+      other_directory = argv[++i];
     } else if (strcmp(argv[i], "-monitor") == 0) {
       monitor = true;
     } else if (strcmp(argv[i], "-create") == 0) {
       create = true;
     } else if (strcmp(argv[i], "-reset_progress") == 0) {
       reset_progress = true;
+    } else if (strcmp(argv[i], "-force_start") == 0) {
+      force_start = true;
     } else {
       cerr << "input error: unknown parameter: " << argv[i] << endl;
       return false;
@@ -134,12 +135,19 @@ void print_usage() {
        << "      configuration file." << endl;
   cout << "  -resumedir" 
        << "      Resume an already created job from the directory " << endl
-       << "      of the give configuration file." << endl;
-  cout << "  -create" 
+       << "      of the given configuration file." << endl;
+  cout << "  -resume_other <other job directory>" 
+       << "      Start a new job directory but initialize each job from last "
+       << "      weights of another job" << endl;
+  cout << "  -create" << endl
        << "      Only create the directory structure and other files in " 
        << endl
        << "      preparation for running all possible configurations." << endl
        << "      Jobs can subsequently be started with -resume" << endl;
+  cout << "  -reset_progress" << endl
+       << "      Remove previous progress and finished files." << endl;
+  cout << "  -force_start" << endl
+       << "      Ignore timeout wait and starts all jobs." << endl;
 }
 
 int main(int argc, char **argv) {
@@ -174,6 +182,8 @@ int main(int argc, char **argv) {
   if (resume) { // extract metajob name to be resumed
     string dir = dirname(metaconf.c_str());
     resume_name = ebl::basename(dir.c_str());
+    cout << "Configuration file: " << metaconf << endl;
+    cout << "Directory: " << dir << endl;
     cout << "Resuming metajob with name: " << resume_name << endl;
   }
   if (monitor) // just monitor progress in job directories
@@ -183,12 +193,12 @@ int main(int argc, char **argv) {
 		      (resume_name.empty() ? NULL : resume_name.c_str()), 
 		      resumedir, false, maxjobs);
     jm->set_copy(copy_path);
-    if (!resume)
-      jm->prepare(reset_progress);
+    if (resume_other) jm->initialize_other(other_directory);
+    jm->prepare(reset_progress);    
+    //if (!resume) jm->prepare(reset_progress);
     if (create) // do not run if creating structure only
       cout << "Not running jobs, only creating directories and files." << endl;
-    else
-      jm->run();
+    else jm->run(force_start);
   }
   delete jm;
   return 0;

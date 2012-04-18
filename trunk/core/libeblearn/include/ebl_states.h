@@ -84,15 +84,18 @@ namespace ebl {
 
   class EXPORT forget_param_linear: public forget_param {
   public:
-    //! each random value will be drawn uniformly
-    //! from [-value/(fanin**exponent), +value/(fanin**exponent)]
-    double value;
-    double exponent;
-
     //! constructor.
     //! each random value will be drawn uniformly
     //! from [-v/(fanin**exponent), +v/(fanin**exponent)]
     forget_param_linear(double v, double e);
+
+    // public member variables /////////////////////////////////////////////////
+  public:
+    //! each random value will be drawn uniformly
+    //! from [-value/(fanin**exponent), +value/(fanin**exponent)]
+    double value;
+    double exponent;
+    random generator; //!< Random number generator.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -101,7 +104,7 @@ namespace ebl {
   //! clear (clear all), clear_x (clear values), clear_dx (clear gradients),
   //! clear_ddx (clear hessian), and update_gd(arg) (update
   //! with gradient descent.
-  class EXPORT state {
+  class EXPORT state : public smart_pointer {
   public:
     //! constructor
     state();
@@ -885,18 +888,22 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   //! A class that stores multiple states. Use regular STL vector accessors
   //! to access states.
-  template <class Tstate> class mstate : public std::vector<Tstate> {
+  template <class Tstate> class mstate : public svector<Tstate> {
   public:
     //! Empty constructor.
     mstate();
-    //! This constructor initializes the same number of states as 'ms',
+    //! This constructor initializes the same number of states as 'other',
     //! with the same number of dimensions for each state,
-    //! and sets all these dimensions to 'n'.
-    mstate(intg n, mstate<Tstate> &ms);
+    //! and sets all these dimensions to 'dims'.
+    //! \param nstates If >= 0, limit the number of states to 'nstates',
+    //!   otherwise allocate the same number of states as 'ms'.
+    mstate(const mstate<Tstate> &other, intg dims, intg nstates = -1);
+    //! Construct an mstate with the exact same elements as ms.
+    mstate(const mstate<Tstate> &other);
     //! Destructor.
     virtual ~mstate();
 
-    ////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
 
     //! Clears x field of all states.
     virtual void clear_x();
@@ -904,34 +911,66 @@ namespace ebl {
     virtual void clear_dx();
     //! Clears ddx field of all states.
     virtual void clear_ddx();
+    
     //! Copy mstate 'cpy' into internal buffers.
     virtual void copy(mstate<Tstate> &cpy);
-    //! Not implemented.
+    //! Copy matrices 'cpy' into internal 'x' buffers.
+    template <typename T> void copy(midx<T> &cpy);
+    //! Returns a matrix pointing to internal 'x' buffers.
+    template <typename T> midx<T> copy();
+    
+    //! Returns an mstate of size 'size' starting at 'offset' in current vector.
+    virtual mstate<Tstate> narrow(intg size, intg offset);
+    //! Not implemented.    
     virtual mstate<Tstate> narrow(int dimension, intg size, intg offset);
+    //! Narrows this multi-state given multiple input 'regions'.
+    virtual mstate<Tstate> narrow(midxdim &regions);
+    //! Narrows this multi-state given multiple input 'regions' to the maximum
+    //! possible region (output may be smaller than requested regions).
+    virtual mstate<Tstate> narrow_max(mfidxdim &regions);
+    
+    //! Narrows this multi-state's x buffer given multiple input 'regions'
+    //! and puts result in multi-idx 'all'.    
+    template <class T> void get_midx(mfidxdim &regions, midx<T> &all);
+    //! Narrows this multi-state's x buffer given multiple input 'regions'
+    //! to the maximum possible region (output may be smaller than requested
+    //! regions) and puts result in multi-idx 'all'.
+    template <class T> void get_max_midx(mfidxdim &regions, midx<T> &all);
+    //! Narrows this multi-state's x buffer given multiple input 'regions'
+    //! and pad areas that do not overlap, then puts result in multi-idx 'all'.
+    template <class T> void get_padded_midx(mfidxdim &regions, midx<T> &all);
     //! Resize to have the same number of states with the same dimensions as s2.
-    virtual void resize(mstate<Tstate> &s2);
-
-    ////////////////////////////////////////////////////////////////
-    //! member variables
+    //! \param nmax If > 0, limit the number of states to min(s2.size(), nmax).
+    
+    virtual void resize(mstate<Tstate> &s2, uint nmax = 0);
+    //! Resizes this mstate given another 'other' mstate. This makes sure this
+    //! mstate has the same number of states as 'other', and that each state
+    //! has the same order as in 'other'. It otherwise allocates the correct
+    //! number of states of the correct orders but with dimensions of size 1.
+    //! This does not resize each state to the same dimension sizes as 'other'.
+    template <class Tstate2> void resize(mstate<Tstate2> &other);
+    //! Returns dimensions of first state.
+    virtual idxdim& get_idxdim0();
+    
+    // member variables ////////////////////////////////////////////////////////
   protected:
-    typename std::vector<Tstate>::iterator it;
+    typename svector<Tstate>::iterator it;
   };
+
+  
 
   //////////////////////////////////////////////////////////////////////////////
   // stream operators
 
   template <typename T>
   EXPORT std::ostream& operator<<(std::ostream &out, const fstate_idx<T> &p);
-  
   template <typename T>
   EXPORT std::ostream& operator<<(std::ostream &out, const bstate_idx<T> &p);
-  
   template <typename T>
-  EXPORT std::ostream& operator<<(std::ostream &out, const bbstate_idx<T> &p);
-  
+  EXPORT std::ostream& operator<<(std::ostream &out, const bbstate_idx<T> &p);  
   template <class Tstate>
   EXPORT std::ostream& operator<<(std::ostream &out, const mstate<Tstate> &p);
-  
+
 } // namespace ebl {
 
 #include "ebl_states.hpp"

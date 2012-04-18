@@ -132,8 +132,7 @@ namespace ebl {
   //! e.g. angle_distance(0, 1.5 * PI) -> .5 * PI.
   template <typename T> EXPORT T angle_distance(T a1, T a2);
 
-  ////////////////////////////////////////////////////////////////
-  // limits
+  // limits ////////////////////////////////////////////////////////////////////
   
   template <typename T> class limits {
   public:

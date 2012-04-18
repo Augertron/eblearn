@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2009 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  ***************************************************************************/
 
 #include "ebl_layers_gui.h"
-#include "ebl_transfer_gui.h"
+#include "ebl_normalization_gui.h"
 
 using namespace std;
 

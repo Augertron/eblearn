@@ -36,6 +36,7 @@
 #include <algorithm>
 
 #ifdef __BOOST__
+#define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 using namespace boost::filesystem;
@@ -110,8 +111,12 @@ namespace ebl {
       // preprocess image
       rect<int>  r(0, 0, img.dim(0), img.dim(1));
       rect<int>  outr;
-      idx<Tdata> im =
-	this->preprocess_data(img, &cname, filename, &r, *i, &outr);
+      midx<Tdata> ims(1);
+      ims.set(img, 0);
+      ims = this->preprocess_data(ims, &cname, filename, &r, *i, &outr);
+      if (ims.dim(0) > 1) eblerror("expected single layer patch");
+      idx<Tdata> im = ims.get(0);
+      ims.clear();
       // extract all non overlapping patches with dimensions outdims that
       // do not overlap with bounding boxes
       rect<int>  patch(0, 0, outdims.dim(0), outdims.dim(1));
@@ -180,11 +185,11 @@ namespace ebl {
 	} else { // image file mode
 	  fname << "." << save_mode;
 	  idx<Tdata> tmp = patches[i];
-	  // scale image to 0 255 if preprocessed
-	  if (strcmp(ppconv_type.c_str(), "RGB")) {
-	    idx_addc(tmp, (Tdata) 1.0, tmp);
-	    idx_dotc(tmp, (Tdata) 127.5, tmp);
-	  }
+	  // // scale image to 0 255 if preprocessed
+	  // if (strcmp(ppconv_type.c_str(), "RGB")) {
+	  //   idx_addc(tmp, (Tdata) 1.0, tmp);
+	  //   idx_dotc(tmp, (Tdata) 127.5, tmp);
+	  // }
 	  save_image(fname.str(), tmp, save_mode.c_str());
 	}
 	cout << data_cnt << ": saved " << fname.str().c_str()

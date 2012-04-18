@@ -44,6 +44,7 @@
 #include <sstream>
 #include <vector>
 #include <list>
+#include <algorithm>
 #endif
 
 namespace ebl {
@@ -149,6 +150,9 @@ namespace std {
     
   //! Returns a copy of string with last digits removed.
   EXPORT string strip_last_num(const string &e);
+
+  //! Returns a copy of string with last digits
+  EXPORT string return_last_num(const string &e);
     
   //! Returns a copy of string s with all instance of 'toreplace' string
   //! replaced with 'replacement' string.
@@ -224,23 +228,17 @@ namespace std {
     //    void push_back(T &e);
     
     //! Resize vector and push a new element at the end.
-    void push_back(T e);
-    
+    void push_back(T e);    
     //! Returns size of the vector.
-    size_t size() const;
-    
+    size_t size() const;    
     //! Returns size of the vector.
     size_t length() const;
-
     //! Returns true if empty, false otherwise.
     bool empty() const;
-
     //! Clears the vector and resizes it to zero-length.
     void clear();
-
     //! Return a reference to element at index i.
     T& operator[](size_t i);
-
       //! Return a reference to element at index i.
     const T& operator[](size_t i) const;
   };
@@ -249,16 +247,13 @@ namespace std {
 
   //! Prints a vector into a stream.
   template<class T>
-    EXPORT string& operator<<(string &o, const vector<T> &v);
-  
+    EXPORT string& operator<<(string &o, const vector<T> &v);  
   //! Prints a vector into a stream.
   template<class T>
-    EXPORT ostream& operator<<(ostream &o, const vector<T> &v);
-  
+    EXPORT ostream& operator<<(ostream &o, const vector<T> &v);  
   //! Prints a list into a stream.
   template<class T>
-    EXPORT string& operator<<(string &o, const list<T> &v);
-  
+    EXPORT string& operator<<(string &o, const list<T> &v);  
   //! Prints a list into a stream.
   template<class T>
     EXPORT ostream& operator<<(ostream &o, const list<T> &v);
@@ -295,6 +290,8 @@ namespace std {
     void decr_ref();
     //! Returns true if no object refers to this instance.
     bool no_references();
+    //! Returns the number of references to this file pointer.
+    uint references();
     
   protected:
     FILE *fp;

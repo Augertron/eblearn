@@ -40,6 +40,7 @@
 #include <time.h>
 #include "libeblearn.h"
 #include "libeblearntools.h"
+#include "eblapp.h"
 
 #ifndef __WINDOWS__
 #include <fenv.h>
@@ -50,9 +51,6 @@
 #endif
 
 #define SFUNC2(T) T,T,T,SBUF<T>
-
-using namespace std;
-using namespace ebl; // all eblearn objects are under the ebl namespace
 
 ////////////////////////////////////////////////////////////////
 // network

@@ -116,6 +116,27 @@ namespace ebl {
     QColor col;
   };
   
+  class line3d { //: public QGLSceneNode {
+  public:
+    //! Construct a cylinder which base is centered at (x,y,z), with length,
+    //! with radiuses 'top_radius' and 'base_radius', with degree angles
+    //! 'ax', 'ay', 'az' and color (r,g,b,a).
+    //! \param tops If true, draw closing caps on each end of cylinder.
+    line3d(float x, float y, float z, float x1, float y1, float z1,
+	   int r = 255, int g = 255, int b = 255, int a = 255);
+    virtual ~line3d();
+    //! Returns a description of this line.
+    std::string describe();
+  /* protected: */
+  /*   virtual void drawGeometry(QGLPainter *painter); */
+    // members
+  public:
+    float x, y, z; //!< Center 1.
+    float x1, y1, z1; //!< Center 1.
+    QGLSceneNode *node;
+    QColor col;
+  };
+  
   ////////////////////////////////////////////////////////////////
   // win3d
   
@@ -160,6 +181,10 @@ namespace ebl {
     //! Draw 3d text 's' at (x,y,z) with color (r,g,b,a).    
     void add_text(float x, float y, float z, const char *s,
 		  int r = 255, int g = 255, int b = 255, int a = 255);
+    //! Draw 3d text 's' at (x,y,z) with color (r,g,b,a).    
+    void add_line(float x, float y, float z, float x1, float y1, float z1,
+		   const char *s, int r = 255, int g = 255, int b = 255,
+		   int a = 255);
 
     // clear methods ///////////////////////////////////////////////////////////
 
@@ -169,6 +194,7 @@ namespace ebl {
     void clear_spheres();
     void clear_cylinders();
     void clear_texts();
+    void clear_lines();
 
     ////////////////////////////////////////////////////////////////
     // event methods
@@ -185,16 +211,23 @@ namespace ebl {
     void paint_spheres(QGLPainter *painter);
     //! Paint cylinders.
     void paint_cylinders(QGLPainter *painter);
+    //! Paint cylinders.
+    void paint_lines(QGLPainter *painter);
 
+  protected:
+    ////////////////////////////////////////////////////////////////
+    // event methods
+
+    void wheelEvent(QWheelEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    //    void mouseReleaseEvent(QMouseEvent *event);
+    void keyPressEvent(QKeyEvent *event);
+    void keyReleaseEvent(QKeyEvent *event);
 
     /* void setupViewport(int width, int height); */
     //       void paintEvent(QPaintEvent *);
 
- void mousePressEvent(QMouseEvent *event);
-     void mouseMoveEvent(QMouseEvent *event);
-    void wheelEvent(QWheelEvent *event);
-
-       
     GLfloat rotationX;
     GLfloat rotationY;
     GLfloat rotationZ;
@@ -225,6 +258,7 @@ namespace ebl {
     vector<text3d*> texts;
     vector<sphere3d*> spheres;
     vector<cylinder3d*> cylinders;
+    vector<line3d*> lines;
   };
 
 #else // No 3D available, just define a dummy class

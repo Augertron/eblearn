@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -34,5 +35,50 @@
 using namespace std;
 
 namespace ebl {
+
+  ////////////////////////////////////////////////////////////////
+  // module
+
+  module::module(const char *n) : _name(n), mout(&std::cout), merr(&std::cerr),
+				  silent(false), _enabled(true) {
+  }
+
+  module::~module() {
+  }
+
+  const char *module::name() {
+    return this->_name.c_str();
+  }
+
+  void module::set_name(const char *n) {
+    _name = n;
+  }
+
+  void module::set_output_streams(std::ostream &out, std::ostream &err) {
+    mout = &out;
+    merr = &err;
+  }
+
+  std::string module::describe() {
+    std::string desc = _name; // default, just return the module's name
+    return desc;
+  }
+
+  std::string module::describe(uint indent) {
+    std::string desc;
+    for (uint j = 0; j < indent; ++j) desc << "\t"; 
+    desc << this->describe();
+    return desc;
+  }
+
+  void module::enable() {
+    _enabled = true;
+    cout << "Module " << this->name() << " is enabled." << endl;
+  }
+
+  void module::disable() {
+    _enabled = false;
+    cout << "Module " << this->name() << " is disabled." << endl;
+  }
 
 } // end namespace ebl

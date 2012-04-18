@@ -42,7 +42,8 @@ namespace ebl {
   supervised_trainer(trainable_module<Tnet,Tdata,Tlabel> &m,
 		     parameter<Tnet, bbstate_idx<Tnet> > &p)
     : machine(m), param(p), energy(), answers(NULL), label(NULL), age(0),
-      iteration(-1), iteration_ptr(NULL), prettied(false) {
+      iteration(-1), iteration_ptr(NULL), prettied(false), progress_cnt(0),
+      test_running(false) {
     energy.dx.set(1.0); // d(E)/dE is always 1
     energy.ddx.set(0.0); // dd(E)/dE is always 0
     cout << "Training with: " << m.describe() << endl;
@@ -66,10 +67,12 @@ namespace ebl {
   template <typename Tnet, typename Tdata, typename Tlabel>  
   Tnet supervised_trainer<Tnet, Tdata, Tlabel>::
   train_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds, gd_param &args) {
+    TIMING2("until train_sample");
     machine.fprop(ds, energy);
     param.clear_dx();
     machine.bprop(ds, energy);
     param.update(args);
+    TIMING2("entire train_sample");
     return energy.x.get();
   }
 
@@ -87,7 +90,9 @@ namespace ebl {
       cout << "Limiting the number of tested samples to " << ntest << endl;
     }
     // loop
-    for (unsigned int i = 0; i < ntest; ++i) {
+    uint i = 0;
+    do {
+      TIMING2("until beginning of sample test");
       ds.fprop_label_net(*label);
       machine.fprop(ds, energy);
       bool correct = test_sample(ds, *label, *answers, infp);
@@ -97,8 +102,10 @@ namespace ebl {
       // use energy as distance for samples probabilities to be used
       ds.set_sample_energy((double) energy.x.get(), correct, machine.out1.x,
 			   answers->x, target);
-      ds.next();
-    }
+      ds.pretty_progress();
+      update_progress(); // tell the outside world we're still running
+      TIMING2("sample test (" << machine.msin1 << ")");
+    } while (ds.next() && i++ < ntest);
     ds.normalize_all_probas();
     // TODO: simplify this
     vector<string*> lblstr;
@@ -113,7 +120,17 @@ namespace ebl {
   template <typename Tnet, typename Tdata, typename Tlabel> 
   void supervised_trainer<Tnet, Tdata, Tlabel>::
   train(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log, 
-	gd_param &gdp, int niter, infer_param &infp) {
+	gd_param &gdp, int niter, infer_param &infp, 
+	intg hessian_period, intg nhessian, double mu) {
+    cout << "training on " << niter * ds.get_epoch_size();
+    if (nhessian == 0) {
+      cout << " samples and disabling 2nd order derivative calculation" << endl;
+      param.set_epsilon(1.0);
+    } else {
+      cout << " samples and recomputing 2nd order "
+           << "derivatives on " << nhessian << " samples after every "
+           << hessian_period << " trained samples..." << endl;
+    }
     timer t;
     init(ds, &log);
     bool selected = true, correct;
@@ -123,11 +140,18 @@ namespace ebl {
       ds.init_epoch();
       // training on lowest size common to all classes (times # classes)
       while (!ds.epoch_done()) {
+	// recompute 2nd order derivatives
+	if (hessian_period > 0 && nhessian > 0 &&
+	    ds.get_epoch_count() % hessian_period == 0)
+	  compute_diaghessian(ds, nhessian, mu);
+	// get label
 	ds.fprop_label_net(*label);
 	if (selected) // selected for training
 	  train_sample(ds, gdp);
 	// test if answer is correct
 	correct = test_sample(ds, *label, *answers, infp);
+	machine.update_log(log, age, energy.x, answers->x, label->x, target,
+			   machine.out1.x);
 	// use energy and answer as distance for samples probabilities
 	target = machine.compute_targets(ds);
 	ds.set_sample_energy((double) energy.x.get(), correct, machine.out1.x,
@@ -136,17 +160,29 @@ namespace ebl {
 	age++;
 	// select next sample
 	selected = ds.next_train();
+	ds.pretty_progress();
 	// decrease learning rate if specified
 	if (gdp.anneal_period > 0 && ((age - 1) % gdp.anneal_period) == 0) {
 	  gdp.eta = gdp.eta /
 	    (1 + ((age / gdp.anneal_period) * gdp.anneal_value));
 	  cout << "age: " << age << " updated eta=" << gdp.eta << endl;
 	}
+	update_progress(); // tell the outside world we're still running
       }
       ds.normalize_all_probas();
       cout << "epoch_count=" << ds.get_epoch_count() << endl;
       cout << "training_time="; t.pretty_elapsed();
       cout << endl;
+      // report accuracy on trained sample
+      if (test_running) {
+	cout << "Training running test:" << endl;
+	// TODO: simplify this      
+	class_datasource<Tnet,Tdata,Tlabel> *cds =
+	  dynamic_cast<class_datasource<Tnet,Tdata,Tlabel>*>(&ds);
+	log.display(iteration, ds.name(), cds ? cds->lblstr : NULL,
+		    ds.is_test());
+	cout << endl;
+      }
     }
   }
 
@@ -154,10 +190,12 @@ namespace ebl {
   void supervised_trainer<Tnet,Tdata,Tlabel>::
   compute_diaghessian(labeled_datasource<Tnet,Tdata,Tlabel> &ds, intg niter, 
 		      double mu) {
+    cout << "computing 2nd order derivatives on " << niter
+	 << " samples..." << endl;
     timer t;
     t.start();
-    init(ds, NULL);
-    ds.init_epoch();
+//     init(ds, NULL);
+//     ds.init_epoch();
     ds.save_state(); // save current ds state
     ds.set_count_pickings(false); // do not counts those samples in training
     param.clear_ddeltax();
@@ -170,6 +208,8 @@ namespace ebl {
       machine.bbprop(ds, energy);
       param.update_ddeltax((1 / (double) niter), 1.0);
       while (!ds.next_train()) ; // skipping all non selected samples
+      ds.pretty_progress();
+      update_progress(); // tell the outside world we're still running
     }
     ds.restore_state(); // set ds state back
     param.compute_epsilons(mu);
@@ -191,13 +231,30 @@ namespace ebl {
   pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds) {
     if (!prettied) {
       // pretty sizes of input/output for each module the first time
-      idxdim d(ds.sample_dims());
+      mfidxdim d(ds.sample_mfdims());
       cout << "machine sizes: " << d << machine.mod1.pretty(d) << endl
 	   << "trainable parameters: " << param.x << endl;
       prettied = true;
     }
   }
 
+  template <typename Tnet, typename Tdata, typename Tlabel>  
+  void supervised_trainer<Tnet, Tdata, Tlabel>::
+  set_progress_file(const std::string &f) {
+    progress_file = f;
+    cout << "Setting progress file to \"" << f << "\"" << endl;
+  }
+		     
+  template <typename Tnet, typename Tdata, typename Tlabel>  
+  void supervised_trainer<Tnet, Tdata, Tlabel>::update_progress() {
+    progress_cnt++;
+#if __WINDOWS__ !=1
+    // tell the outside world we are still running every 20 samples
+    if (!progress_file.empty() && progress_cnt % 20 == 0)
+      touch_file(progress_file);
+#endif
+  }
+		     
   // internal methods //////////////////////////////////////////////////////////
   
   template <typename Tnet, typename Tdata, typename Tlabel>

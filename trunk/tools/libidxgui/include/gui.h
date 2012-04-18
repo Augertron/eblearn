@@ -115,6 +115,8 @@ namespace ebl {
 
   //! draws an arrow from (h1, w1) to (h2, w2).
   EXPORT void draw_arrow(int h1, int w1, int h2, int w2);
+  //! draws a 'flow' at (h,w), where flow is 2xHxW flow field.
+  EXPORT void draw_flow(idx<float> &flow, int h, int w);
   //! draws a bounding box with top left corner (h0, w0) and size (h, w).
   //! the (r,g,b,a) color of the box can optionally be specified as well as
   //! a caption string.
@@ -176,9 +178,9 @@ namespace ebl {
   //! this sets the text color to fully opaque white on a semi-transparent
   //! black background.
   EXPORT void set_text_colors(unsigned char fg_r, unsigned char fg_g,
-		       unsigned char fg_b, unsigned char fg_a,
-		       unsigned char bg_r, unsigned char bg_g,
-		       unsigned char bg_b, unsigned char bg_a);
+			      unsigned char fg_b, unsigned char fg_a,
+			      unsigned char bg_r, unsigned char bg_g,
+			      unsigned char bg_b, unsigned char bg_a);
   //! see unsigned char version.
   EXPORT void set_text_colors(int fg_r, int fg_g, int fg_b, int fg_a,
 		       int bg_r, int bg_g, int bg_b, int bg_a);
@@ -221,6 +223,12 @@ namespace ebl {
   //! Draw 3d text 's' at (x,y,z) with color (r,g,b,a).
   EXPORT void draw_text(float x, float y, float z, const char *s,
 			int r = 255, int g = 255, int b = 255, int a = 255);
+  //! Draw 3d line from (x,y,z) to (x1,y1,z1) with color (r,g,b,a)
+  //! and with text 's' at (x1,y1,z1).
+  EXPORT void draw_line(float x, float y, float z,
+			float x1, float y1, float z1,
+			const char *s = NULL, int r = 255, int g = 255,
+			int b = 255, int a = 255);
 			
   
 } // namespace ebl

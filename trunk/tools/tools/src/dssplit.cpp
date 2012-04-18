@@ -42,9 +42,7 @@
 #include "dataset.h"
 #include "pascal_dataset.h"
 #include "pascalbg_dataset.h"
-
-using namespace std;
-using namespace ebl;
+#include "eblapp.h"
 
 string inroot = ".";
 string ds0_name = "";

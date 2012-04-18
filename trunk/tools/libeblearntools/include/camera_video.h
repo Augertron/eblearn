@@ -37,6 +37,7 @@
 #include "camera_directory.h"
 
 #ifdef __BOOST__
+#define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 using namespace boost::filesystem;

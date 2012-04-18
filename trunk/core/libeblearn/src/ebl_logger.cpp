@@ -35,7 +35,9 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////////////
 
-  classifier_meter::classifier_meter() {
+  classifier_meter::classifier_meter() 
+    : energy(0), confidence(0), size(0), age(0), total_correct(0), 
+      total_error(0), total_punt(0), total_energy(0), nclasses(0) {
     init(1);
   }
 
@@ -121,6 +123,8 @@ namespace ebl {
       class_errors.resize(max + 1, 0); // resize to max and fill new with 0
       class_tpr.resize(max + 1, 0); // resize to max and fill new with 0
       class_fpr.resize(max + 1, 0); // resize to max and fill new with 0
+      confusion.resize(max + 1, max + 1);
+      total_confusion.resize(max + 1, max + 1);
     }
     // increment class examples total
     class_totals[desired] = class_totals[desired] + 1;
@@ -224,25 +228,29 @@ namespace ebl {
 	 << total_energy / (double) size << " ";
     // classes display
     if (nclasses > 0) {
-      cout << (ds_is_test ? "test_":"") << "errors=" 
-	   << class_normalized_average_error(confusion) << "% ";
-      cout << (ds_is_test ? "test_":"") << "overall_errors=" 
-	   << overall_average_error(confusion) << "% ";
-      cout << (ds_is_test ? "test_":"") << "rejects="
-	   << (total_punt * 100) / (double) size << "% ";
-      cout << (ds_is_test ? "test_":"") << "correct=" 
-	   << class_normalized_average_success(confusion) <<"% ";
-      cout << endl;
+      double errors = class_normalized_average_error(confusion);
+      double success = class_normalized_average_success(confusion);
+      double uerrors = overall_average_error(confusion);
+      double usuccess = 100 - uerrors;
+      string stest = ds_is_test ? "test_":"";
+      cout << "(class-normalized) " << stest << "errors=" << errors << "% "
+	   << stest << "uerrors=" << uerrors << "% "
+	   << stest << "rejects=" << (total_punt * 100) / (double) size << "% "
+	   << "(class-normalized) " << stest << "correct=" << success <<"% "
+	   << stest << "ucorrect=" << usuccess <<"% "
+	   << endl;
       cout << "errors per class: ";
       for (uint i = 0; i < class_errors.size(); ++i) {
 	if (class_totals[i] > 0) {
 	  // number of samples for this class
 	  cout << (ds_is_test ? "test_" : "");
-	  if (lblstr) cout << *((*lblstr)[i]); else cout << i;
+	  if (lblstr && lblstr->size() > i)
+	    cout << *((*lblstr)[i]); else cout << i;
 	  cout << "_samples=" << class_totals[i] << " ";
 	  // percentage of error for this class
 	  cout << (ds_is_test ? "test_" : "");
-	  if (lblstr) cout << *((*lblstr)[i]); else cout << i;
+	  if (lblstr && lblstr->size() > i)
+	    cout << *((*lblstr)[i]); else cout << i;
 	  cout << "_errors=" << class_errors[i] * 100.0
 	    / (float) ((class_totals[i]==0)?1:class_totals[i]) << "% ";
 	}
@@ -301,11 +309,11 @@ namespace ebl {
       int classerrors = get_class_errors(total_confusion, i);
       // number of samples for this class
       cout << (ds_is_test ? "test_" : "");
-      if (lblstr) cout << *((*lblstr)[i]); else cout << i;
+      if (lblstr && lblstr->size() > i) cout << *((*lblstr)[i]); else cout << i;
       cout << "_samples=" << classsamples << " ";
       // percentage of error for this class
       cout << (ds_is_test ? "test_" : "");
-      if (lblstr) cout << *((*lblstr)[i]); else cout << i;
+      if (lblstr && lblstr->size() > i) cout << *((*lblstr)[i]); else cout << i;
       cout << "_errors_avg=" << classerrors * 100.0
 	/ (float) ((classsamples==0)?1:classsamples) << "% ";
     }
@@ -316,7 +324,7 @@ namespace ebl {
 						std::vector<string*> *lblstr) {
     for (uint i = 0; i < class_fpr.size(); ++i) {
       cout << class_fpr[i] / (float) (size - class_totals[i]) << " ROC_";
-      if (lblstr) cout << *((*lblstr)[i]);
+      if (lblstr && lblstr->size() > i) cout << *((*lblstr)[i]);
       else cout << i;
       cout << "=" << class_tpr[i] / (float) class_totals[i];
       cout << " (" << class_totals[i] << " samples)" << endl;
@@ -324,7 +332,7 @@ namespace ebl {
     cout << threshold << " (threshold): errors per class: ";
     for (uint i = 0; i < class_errors.size(); ++i) {
       cout << "(" << class_totals[i] << ") ";
-      if (lblstr) cout << *((*lblstr)[i]);
+      if (lblstr && lblstr->size() > i) cout << *((*lblstr)[i]);
       else cout << i;
       cout << "=" << class_errors[i] * 100.0 / (float) class_totals[i] << "% ";
     }

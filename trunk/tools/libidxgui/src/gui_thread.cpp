@@ -73,6 +73,8 @@ namespace ebl {
 	    this, SLOT(add_text(const string*)));
     connect(&thread, SIGNAL(gui_add_arrow(int, int, int, int)), 
 	    this, SLOT(add_arrow(int, int, int, int)));
+    connect(&thread, SIGNAL(gui_add_flow(idx<float>*, int, int)), 
+	    this, SLOT(add_flow(idx<float>*, int, int)));
     connect(&thread, SIGNAL(gui_add_box(float, float, float, float, ubyte,
 					ubyte, ubyte, ubyte, string *)), 
 	    this, SLOT(add_box(float, float, float, float, ubyte, ubyte, ubyte,
@@ -129,6 +131,11 @@ namespace ebl {
 				    int,int,int,int)),
 	    this, SLOT(draw_text_3d(float,float,float,string*,
 				    int,int,int,int)));
+    connect(&thread,
+	    SIGNAL(gui_draw_line_3d(float,float,float,float,float,float,string*,
+				    int,int,int,int)),
+	    this, SLOT(draw_line_3d(float,float,float,float,float,float,string*,
+				    int,int,int,int)));
   }
 
   gui_thread::~gui_thread() {
@@ -162,6 +169,12 @@ namespace ebl {
     if (bquit) return ; // do not do any work if we are trying to quit
     if ((wcur >= 0) && (windows[wcur]))
       windows[wcur]->add_arrow(x1, y1, x2, y2);
+  }
+
+  void gui_thread::add_flow(idx<float> *flow, int h, int w) {
+    if (bquit) return ; // do not do any work if we are trying to quit
+    if ((wcur >= 0) && (windows[wcur]))
+      windows[wcur]->add_flow(flow, h, w);
   }
 
   void gui_thread::add_box(float h0, float w0, float h, float w,
@@ -445,6 +458,23 @@ namespace ebl {
       if (!w) eblerror("drawing a text3d requires a 3d window");
 #ifdef __GUI3D__
       w->add_text(x, y, z, s->c_str(), r, g, b, a);
+#endif
+    }
+    // if we don't delete this string, no one will
+    if (s) delete s;
+  }
+
+  void gui_thread::draw_line_3d(float x, float y, float z,
+				float x1, float y1, float z1, string *s,
+				int r, int g, int b, int a) {
+    if (bquit) return ; // do not do any work if we are trying to quit
+    if (nwindows == 0)
+      new_window();
+    if ((wcur >= 0) && (windows[wcur])) {
+      win3d *w = dynamic_cast<win3d*>(windows[wcur]);
+      if (!w) eblerror("drawing a line3d requires a 3d window");
+#ifdef __GUI3D__
+      w->add_line(x, y, z, x1, y1, z1, s ? s->c_str() : NULL, r, g, b, a);
 #endif
     }
     // if we don't delete this string, no one will

@@ -37,11 +37,14 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <iostream>
+#include <iomanip>
 
 #include "defines.h"
 #include "idx.h"
 #include "job.h"
-#include "tools_utils.h"
+#include "ebl_states.h"
+#include "ebl_trainer.h"
 
 #ifdef __GUI__
 #include "ebl_trainer_gui.h"
@@ -54,7 +57,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // training utilities
 
-  //! A function that performs training iterations and display.
+  //! A function that performs tests, saves current weights and display.
+  //! \param iteration_seconds An optional elapsed time for the iteration,
+  //!   to better estimate the timeout of the training.
   template <typename Tnet, typename Tdata, typename Tlabel>
     void test_and_save(uint iter, configuration &conf, string &conffname,
 		       parameter<Tnet> &theparam,
@@ -63,7 +68,35 @@ namespace ebl {
 		       labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
 		       classifier_meter &trainmeter,
 		       classifier_meter &testmeter,
-		       infer_param &infp, gd_param &gdp, string &shortname);
+		       infer_param &infp, gd_param &gdp, string &shortname,
+		       long iteration_seconds = 0);
+
+  //! A function that performs tests and display.
+  template <typename Tnet, typename Tdata, typename Tlabel>
+    void test(uint iter, configuration &conf, string &conffname,
+	      parameter<Tnet> &theparam,
+	      supervised_trainer<Tnet,Tdata,Tlabel> &thetrainer,
+	      labeled_datasource<Tnet,Tdata,Tlabel> &train_ds,
+	      labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
+	      classifier_meter &trainmeter,
+	      classifier_meter &testmeter,
+	      infer_param &infp, gd_param &gdp, string &shortname);
+
+  //! A function that create/loads a validation set given configuration 'conf'.
+  //! \param noutputs The number of outputs will be modified according 
+  //!   to the loaded dataset.
+  //! \param name This is updated to the root of all dataset filenames.
+  template <typename Tnet, typename Tdata, typename Tlabel>
+    labeled_datasource<Tnet,Tdata,Tlabel>* 
+    create_validation_set(configuration &conf, uint &noutputs, string &name);
+
+  //! A function that create/loads a training set given configuration 'conf'.
+  //! \param noutputs The number of outputs will be modified according 
+  //!   to the loaded dataset.
+  //! \param name This is updated to the root of all dataset filenames.
+  template <typename Tnet, typename Tdata, typename Tlabel>
+    labeled_datasource<Tnet,Tdata,Tlabel>* 
+    create_training_set(configuration &conf, uint &noutputs, string &name);
 
 } // end namespace ebl
 

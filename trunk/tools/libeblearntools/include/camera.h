@@ -108,6 +108,8 @@ namespace ebl {
     virtual uint frame_id();
     //! Return a name for current frame.
     virtual string frame_name();
+    //! Return the complete filename for current frame (including path).
+    virtual string frame_fullname();
     //! Return the number of frames left to process, -1 if unknown.
     virtual int remaining();
     //! Return the total number of frames to process from the initialization,

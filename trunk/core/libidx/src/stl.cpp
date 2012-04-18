@@ -65,6 +65,18 @@ namespace std {
     ret = str.substr(0, i);
     return ret;
   }
+
+  string return_last_num(const string &str) {
+    string ret;
+    const char *s = str.c_str();
+    int i = (int) str.size();
+    for ( ; i > 0; i--) {
+      if (!isdigit(s[i - 1]))
+	break ;
+    }
+    ret = str.substr(i, (int)str.size() - i);
+    return ret;
+  }
   
   string string_replace(const string &s,
 			const char *toreplace, 
@@ -382,6 +394,10 @@ namespace std {
 
   bool file::no_references() {
     return refcounter == 0;
+  }
+
+  uint file::references() {
+    return refcounter;
   }
 
 } // namespace std

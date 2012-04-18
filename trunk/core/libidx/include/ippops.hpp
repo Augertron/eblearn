@@ -59,14 +59,14 @@ namespace ebl {
 
 #ifdef __IPP_CHECKS__
   template <typename T>
-  inline void ipp_checks1(const idx<T> & in) {
+  inline void ipp_checks1(const idx<T> &in) {
     idx_check_contiguous1(in);
     if (in.nelements() > INT_MAX)
       eblerror("TODO: Cannot use long with IPP.");
   }
 
   template <typename T>
-  inline void ipp_checks2(const idx<T> & in1, const idx<T> & in2) {
+  inline void ipp_checks2(const idx<T> &in1, const idx<T> &in2) {
     idx_checknelems2_all(in1, in2);
     idx_check_contiguous2(in1, in2);
     if (in1.nelements() > INT_MAX)
@@ -74,8 +74,8 @@ namespace ebl {
   }
   
   template <typename T>
-  inline void ipp_checks3(const idx<T> & in1, const idx<T> & in2,
-			  const idx<T> & in3) {
+  inline void ipp_checks3(const idx<T> &in1, const idx<T> &in2,
+			  const idx<T> &in3) {
     idx_checknelems3_all(in1, in2, in3);
     idx_check_contiguous3(in1, in2, in3);
     if (in1.nelements() > INT_MAX)
@@ -91,7 +91,7 @@ namespace ebl {
   // ipp functions templates without specialization
 
   template <typename T>
-  void ipp_convolution(const idx<T> & in, const idx<T> & ker, idx<T> & out) {
+  void ipp_convolution(const idx<T> &in, const idx<T> &ker, idx<T> &out) {
     eblerror("ipp_convolution : type not available for IPP. Available types are ubyte, int16, float32");
   }
 
@@ -101,29 +101,29 @@ namespace ebl {
   }
 
   template <typename T>
-  void ipp_clear(idx<T> & inp) {
+  void ipp_clear(idx<T> &inp) {
     eblerror("ipp_clear : type not available for IPP. Available types are ubyte, uint16, int16, int32, float32");
   }
 
   template <typename T>
-  void ipp_fill(idx<T> & inp) {
+  void ipp_fill(idx<T> &inp) {
     eblerror("ipp_fill : type not available for IPP. Available types are ubyte, uint16, int16, int32, float32");
   }
 
   template <typename T>
-  void ipp_minus(const idx<T> & inp, idx<T> & out) {
+  void ipp_minus(const idx<T> &inp, idx<T> &out) {
     ipp_checks2(inp, out);
     ipp_clear(out);
     ipp_sub(out, inp);
   }
 
   template <typename T>
-  void ipp_add(const idx<T> & in, idx<T> & out) {
+  void ipp_add(const idx<T> &in, idx<T> &out) {
     eblerror("ipp_add in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_add(const idx<T> & in, const idx<T> & in2, idx<T> & out) {
+  void ipp_add(const idx<T> &in, const idx<T> &in2, idx<T> &out) {
     eblerror("ipp_add not-in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
@@ -143,87 +143,97 @@ namespace ebl {
   }
 
   template <typename T>
-  void ipp_subc(const idx<T> &in, T c, idx<T> & out) {
+  void ipp_subc(const idx<T> &in, T c, idx<T> &out) {
     eblerror("ipp_subc not-in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_sub(idx<T> & in1, const idx<T> & in2) {
+  void ipp_sub(idx<T> &in1, const idx<T> &in2) {
     eblerror("ipp_sub in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_sub(const idx<T> & in1, const idx<T> & in2, idx<T> & out) {
+  void ipp_sub(const idx<T> &in1, const idx<T> &in2, idx<T> &out) {
     eblerror("ipp_sub not-in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_mul(const idx<T> & in1, idx<T> & in2) {
+  void ipp_mul(const idx<T> &in1, idx<T> &in2) {
     eblerror("ipp_mul in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_mul(const idx<T> & in1, const idx<T> & in2, idx<T> & out) {
+  void ipp_mul(const idx<T> &in1, const idx<T> &in2, idx<T> &out) {
     eblerror("ipp_mul not-in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_dotc(idx<T> & in1, T c) {
+  void ipp_m2dotm1(const idx<T> &in1, const idx<T> &in2, idx<T> &out) {
+    eblerror("ipp_mul not-in-place : type not available for IPP. Available types are float32 and float64");
+  }
+
+  template <typename T>
+  void ipp_m2dotm2(const idx<T> &in1, const idx<T> &in2, idx<T> &out) {
+    eblerror("ipp_mul not-in-place : type not available for IPP. Available types are float32 and float 64");
+  }
+
+  template <typename T>
+  void ipp_dotc(idx<T> &in1, T c) {
     eblerror("ipp_dotc in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_dotc(const idx<T> & in1, T c, idx<T> & out) {
+  void ipp_dotc(const idx<T> &in1, T c, idx<T> &out) {
     eblerror("ipp_mul not-in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_div(idx<T> & in1, const idx<T> & in2) {
+  void ipp_div(idx<T> &in1, const idx<T> &in2) {
     eblerror("ipp_div in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_div(const idx<T> & in1, const idx<T> & in2, idx<T> & out) {
+  void ipp_div(const idx<T> &in1, const idx<T> &in2, idx<T> &out) {
     eblerror("ipp_div not-in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_abs(idx<T> & inp) {
+  void ipp_abs(idx<T> &inp) {
     eblerror("ipp_abs in-place : type not available for IPP. Available types are int16, float32");
   }
 
   template <typename T>
-  void ipp_abs(const idx<T> & in, idx<T> & out) {
+  void ipp_abs(const idx<T> &in, idx<T> &out) {
     eblerror("ipp_abs not-in-place : type not available for IPP. Available types are int16, float32");
   }
 
   template <typename T>
-  void ipp_sqrt(idx<T> & inp) {
+  void ipp_sqrt(idx<T> &inp) {
     eblerror("ipp_sqrt in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_sqrt(const idx<T> & in, idx<T> & out) {
+  void ipp_sqrt(const idx<T> &in, idx<T> &out) {
     eblerror("ipp_sqrt not-in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_exp(idx<T> & inp) {
+  void ipp_exp(idx<T> &inp) {
     eblerror("ipp_exp in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_exp(const idx<T> & in, idx<T> & out) {
+  void ipp_exp(const idx<T> &in, idx<T> &out) {
     eblerror("ipp_exp not-in-place : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  float64 ipp_sum(const idx<T> & inp) {
+  float64 ipp_sum(const idx<T> &inp) {
     eblerror("ipp_sum : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  float64 ipp_sumacc(const idx<T> & in, idx<T> & acc) {
+  float64 ipp_sumacc(const idx<T> &in, idx<T> &acc) {
     if (acc.order() != 0)
       eblerror("ipp_sumacc : acc must have order 0");
     float64 sum = ipp_sum(in) + (float64)acc.get();
@@ -232,29 +242,29 @@ namespace ebl {
   }
 
   template <typename T>
-  float64 ipp_l2norm(const idx<T> & in) {
+  float64 ipp_l2norm(const idx<T> &in) {
     eblerror("ipp_l3norm : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  float64 ipp_mean(const idx<T> & in) {
+  float64 ipp_mean(const idx<T> &in) {
     eblerror("ipp_mean : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_std_normalize(const idx<T> & in, idx<T> & out, T* mean) {
+  void ipp_std_normalize(const idx<T> &in, idx<T> &out, T* mean) {
     eblerror("ipp_std_normalize : type not available for IPP. Available types are ubyte, float32");
   }
 
 #ifdef __IPP_DOT__
   template <typename T>
-  float64 ipp_dot(const idx<T> & in1, const idx<T> & in2) {
+  float64 ipp_dot(const idx<T> &in1, const idx<T> &in2) {
     eblerror("ipp_dot : type not available for IPP. Available types are ubyte, byte, uint16, int16, uint32, int32, float32");
   }
 
   template <typename T>
-  float64 ipp_dotacc(const idx<T> & in1, const idx<T> & in2,
-		     idx<T> & acc) {
+  float64 ipp_dotacc(const idx<T> &in1, const idx<T> &in2,
+		     idx<T> &acc) {
     if (acc.order() != 0)
       eblerror("ipp_sumacc : acc must have order 0");
     float64 sum = ipp_dot(in1, in2) + (float64)acc.get();
@@ -264,43 +274,43 @@ namespace ebl {
 #endif
 
   template <typename T>
-  T ipp_max(const idx<T> & inp) {
+  T ipp_max(const idx<T> &inp) {
     eblerror("ipp_max : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  intg ipp_indexmax(const idx<T> & inp) {
+  intg ipp_indexmax(const idx<T> &inp) {
     eblerror("ipp_indexmax : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  T ipp_min(const idx<T> & inp) {
+  T ipp_min(const idx<T> &inp) {
     eblerror("ipp_min : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  intg ipp_indexmin(const idx<T> & inp) {
+  intg ipp_indexmin(const idx<T> &inp) {
     eblerror("ipp_indexmin : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_maxevery(const idx<T> & in1, idx<T> & in2) {
+  void ipp_maxevery(const idx<T> &in1, idx<T> &in2) {
     eblerror("ipp_maxevery : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_maxevery(const idx<T> & in1, const idx<T> & in2, idx<T> & out) {
+  void ipp_maxevery(const idx<T> &in1, const idx<T> &in2, idx<T> &out) {
     ipp_copy(in2, out);
     ipp_maxevery(in1, out);
   }
 
   template <typename T>
-  float64 ipp_sqrdist(const idx<T> & i1, const idx<T> & i2) {
+  float64 ipp_sqrdist(const idx<T> &i1, const idx<T> &i2) {
     eblerror("ipp_sqrdist : type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  float64 ipp_sqrdist(const idx<T> & in1, const idx<T> & in2, idx<T> & out) {
+  float64 ipp_sqrdist(const idx<T> &in1, const idx<T> &in2, idx<T> &out) {
     if (out.order() != 0)
       eblerror("ipp_sqrdist : out must have order 0");
     float64 ret = ipp_sqrdist(in1, in2);
@@ -309,22 +319,22 @@ namespace ebl {
   }
 
   template <typename T>
-  void ipp_threshold_lt(idx<T> & in, T th) {
+  void ipp_threshold_lt(idx<T> &in, T th) {
     eblerror("ipp_threshold_lt (in-place): type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_threshold_lt(const idx<T> & in, T th, idx<T> & out) {
+  void ipp_threshold_lt(const idx<T> &in, T th, idx<T> &out) {
     eblerror("ipp_threshold_lt (not-in-place): type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_threshold_gt(idx<T> & in, T th) {
+  void ipp_threshold_gt(idx<T> &in, T th) {
     eblerror("ipp_threshold_gt (in-place): type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
   template <typename T>
-  void ipp_threshold_gt(const idx<T> & in, T th, idx<T> & out) {
+  void ipp_threshold_gt(const idx<T> &in, T th, idx<T> &out) {
     eblerror("ipp_threshold_gt (not-in-place): type not available for IPP. Available types are ubyte, uint16, int16, float32");
   }
 
@@ -336,8 +346,8 @@ namespace ebl {
   
   //TODO : remove in release ?
   template <typename T>
-  inline void ipp_convolution_check_size (const idx<T> & in, const idx<T> & ker,
-					  idx<T> & out) {
+  inline void ipp_convolution_check_size (const idx<T> &in, const idx<T> &ker,
+					  idx<T> &out) {
     ipp_checks1(in);
     ipp_checks1(ker);
     ipp_checks1(out);
@@ -463,7 +473,7 @@ namespace ebl {
   // templates for ipp_clear
 
   template <>
-  void ipp_clear(idx<ubyte> & inp) {
+  void ipp_clear(idx<ubyte> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -472,7 +482,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_clear(idx<uint16> & inp) {
+  void ipp_clear(idx<uint16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -481,7 +491,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_clear(idx<int16> & inp) {
+  void ipp_clear(idx<int16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -490,7 +500,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_clear(idx<int32> & inp) {
+  void ipp_clear(idx<int32> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -499,7 +509,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_clear(idx<float32> & inp) {
+  void ipp_clear(idx<float32> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -510,7 +520,7 @@ namespace ebl {
   // templates for ipp_fill
 
   template <>
-  void ipp_fill(idx<ubyte> & inp, ubyte v) {
+  void ipp_fill(idx<ubyte> &inp, ubyte v) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -519,7 +529,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_fill(idx<uint16> & inp, uint16 v) {
+  void ipp_fill(idx<uint16> &inp, uint16 v) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -528,7 +538,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_fill(idx<int16> & inp, int16 v) {
+  void ipp_fill(idx<int16> &inp, int16 v) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -537,7 +547,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_fill(idx<int32> & inp, int32 v) {
+  void ipp_fill(idx<int32> &inp, int32 v) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -546,7 +556,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_fill(idx<float32> & inp, float32 v) {
+  void ipp_fill(idx<float32> &inp, float32 v) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -604,8 +614,8 @@ namespace ebl {
   // templates for not in place ipp_add
 
   template <>
-  void ipp_add(const idx<float32> & in1, const idx<float32> & in2,
-	      idx<float32> & out) {
+  void ipp_add(const idx<float32> &in1, const idx<float32> &in2,
+	      idx<float32> &out) {
     ipp_checks3(in1, in2, out);
 
     IppiSize insize;
@@ -618,8 +628,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_add(const idx<ubyte> & in1, const idx<ubyte> & in2,
-	      idx<ubyte> & out) {
+  void ipp_add(const idx<ubyte> &in1, const idx<ubyte> &in2,
+	      idx<ubyte> &out) {
     ipp_checks3(in1, in2, out);
 
     IppiSize insize;
@@ -632,8 +642,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_add(const idx<uint16> & in1, const idx<uint16> & in2,
-	      idx<uint16> & out) {
+  void ipp_add(const idx<uint16> &in1, const idx<uint16> &in2,
+	      idx<uint16> &out) {
     ipp_checks3(in1, in2, out);
 
     IppiSize insize;
@@ -646,8 +656,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_add(const idx<int16> & in1, const idx<int16> & in2,
-	      idx<int16> & out) {
+  void ipp_add(const idx<int16> &in1, const idx<int16> &in2,
+	      idx<int16> &out) {
     ipp_checks3(in1, in2, out);
 
     IppiSize insize;
@@ -742,7 +752,7 @@ namespace ebl {
   // templates for in-place ipp_subc
 
   template <>
-  void ipp_subc(idx<ubyte> & in, ubyte c) {
+  void ipp_subc(idx<ubyte> &in, ubyte c) {
     ipp_checks1(in);
     IppiSize insize;
     insize.height = in.nelements();
@@ -751,7 +761,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_subc(idx<uint16> & in, uint16 c) {
+  void ipp_subc(idx<uint16> &in, uint16 c) {
     ipp_checks1(in);
     IppiSize insize;
     insize.height = in.nelements();
@@ -760,7 +770,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_subc(idx<int16> & in, int16 c) {
+  void ipp_subc(idx<int16> &in, int16 c) {
     ipp_checks1(in);
     IppiSize insize;
     insize.height = in.nelements();
@@ -769,7 +779,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_subc(idx<float32> & in, float32 c) {
+  void ipp_subc(idx<float32> &in, float32 c) {
     ipp_checks1(in);
     IppiSize insize;
     insize.height = in.nelements();
@@ -780,7 +790,7 @@ namespace ebl {
   // templates for not-in-place ipp_subc
 
   template <>
-  void ipp_subc(const idx<ubyte> & in, ubyte c, idx<ubyte> & out) {
+  void ipp_subc(const idx<ubyte> &in, ubyte c, idx<ubyte> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.height = in.nelements();
@@ -791,7 +801,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_subc(const idx<uint16> & in, uint16 c, idx<uint16> & out) {
+  void ipp_subc(const idx<uint16> &in, uint16 c, idx<uint16> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.height = in.nelements();
@@ -802,7 +812,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_subc(const idx<int16> & in, int16 c, idx<int16> & out) {
+  void ipp_subc(const idx<int16> &in, int16 c, idx<int16> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.height = in.nelements();
@@ -813,7 +823,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_subc(const idx<float32> & in, float32 c, idx<float32> & out) {
+  void ipp_subc(const idx<float32> &in, float32 c, idx<float32> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.height = in.nelements();
@@ -826,7 +836,7 @@ namespace ebl {
   // templates for ipp_sub
 
   template <>
-  void ipp_sub(idx<float32> & in1, const idx<float32> & in2) {
+  void ipp_sub(idx<float32> &in1, const idx<float32> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -837,7 +847,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_sub(idx<ubyte> & in1, const idx<ubyte> & in2) {
+  void ipp_sub(idx<ubyte> &in1, const idx<ubyte> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -848,7 +858,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_sub(idx<uint16> & in1, const idx<uint16> & in2) {
+  void ipp_sub(idx<uint16> &in1, const idx<uint16> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -859,7 +869,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_sub(idx<int16> & in1, const idx<int16> & in2) {
+  void ipp_sub(idx<int16> &in1, const idx<int16> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -873,8 +883,8 @@ namespace ebl {
   // templates for not-in-place ipp_sub
 
   template <>
-  void ipp_sub(const idx<float32> & in1, const idx<float32> & in2,
-	      idx<float32> & out) {
+  void ipp_sub(const idx<float32> &in1, const idx<float32> &in2,
+	      idx<float32> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -886,8 +896,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_sub(const idx<ubyte> & in1, const idx<ubyte> & in2,
-	      idx<ubyte> & out) {
+  void ipp_sub(const idx<ubyte> &in1, const idx<ubyte> &in2,
+	      idx<ubyte> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -899,8 +909,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_sub(const idx<uint16> & in1, const idx<uint16> & in2,
-	      idx<uint16> & out) {
+  void ipp_sub(const idx<uint16> &in1, const idx<uint16> &in2,
+	      idx<uint16> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -912,8 +922,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_sub(const idx<int16> & in1, const idx<int16> & in2,
-	      idx<int16> & out) {
+  void ipp_sub(const idx<int16> &in1, const idx<int16> &in2,
+	      idx<int16> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -927,7 +937,7 @@ namespace ebl {
   // templates for in-place ipp_mul
 
   template <>
-  void ipp_mul(const idx<float32> & in1, idx<float32> & in2) {
+  void ipp_mul(const idx<float32> &in1, idx<float32> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -938,7 +948,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_mul(const idx<ubyte> & in1, idx<ubyte> & in2) {
+  void ipp_mul(const idx<ubyte> &in1, idx<ubyte> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -949,7 +959,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_mul(const idx<uint16> & in1, idx<uint16> & in2) {
+  void ipp_mul(const idx<uint16> &in1, idx<uint16> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -960,7 +970,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_mul(const idx<int16> & in1, idx<int16> & in2) {
+  void ipp_mul(const idx<int16> &in1, idx<int16> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -973,8 +983,8 @@ namespace ebl {
   // templates for not-in-place ipp_mul
 
   template <>
-  void ipp_mul(const idx<float32> & in1, const idx<float32> & in2,
-	      idx<float32> & out) {
+  void ipp_mul(const idx<float32> &in1, const idx<float32> &in2,
+	      idx<float32> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -986,8 +996,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_mul(const idx<ubyte> & in1, const idx<ubyte> & in2,
-	      idx<ubyte> & out) {
+  void ipp_mul(const idx<ubyte> &in1, const idx<ubyte> &in2,
+	      idx<ubyte> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1000,8 +1010,8 @@ namespace ebl {
 
 
   template <>
-  void ipp_mul(const idx<uint16> & in1, const idx<uint16> & in2,
-	      idx<uint16> & out) {
+  void ipp_mul(const idx<uint16> &in1, const idx<uint16> &in2,
+	      idx<uint16> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1014,8 +1024,8 @@ namespace ebl {
 
 
   template <>
-  void ipp_mul(const idx<int16> & in1, const idx<int16> & in2,
-	      idx<int16> & out) {
+  void ipp_mul(const idx<int16> &in1, const idx<int16> &in2,
+	      idx<int16> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1026,10 +1036,62 @@ namespace ebl {
 		       insize, 0);
   }
 
+  // templates for not-in-place ipp_m2dotm1 ////////////////////////////////////
+
+  template <>
+  void ipp_m2dotm1(const idx<float32> &in1, const idx<float32> &in2,
+		   idx<float32> &y){
+    idx_check_contiguous3(in1, in2, y);
+    int so = sizeof (float32);
+    ippmMul_mv_32f(in1.idx_ptr(), (int) in1.mod(0) * so, (int) in1.mod(1) * so,
+		   (int) in1.dim(1), (int) in1.dim(0),
+		   in2.idx_ptr(), (int) in2.mod(0) * so, (int) in2.dim(0),
+		   y.idx_ptr(), (int) y.mod(0) * so);
+  }
+
+  template <>
+  void ipp_m2dotm1(const idx<float64> &in1, const idx<float64> &in2,
+		   idx<float64> &y){
+    idx_check_contiguous3(in1, in2, y);
+    int so = sizeof (float64);
+    ippmMul_mv_64f(in1.idx_ptr(), (int) in1.mod(0) * so, (int) in1.mod(1) * so,
+		   (int) in1.dim(1), (int) in1.dim(0),
+		   in2.idx_ptr(), (int) in2.mod(0) * so, (int) in2.dim(0),
+		   y.idx_ptr(), (int) y.mod(0) * so);
+  }
+
+  // templates for not-in-place ipp_m2dotm1 ////////////////////////////////////
+
+  template <>
+  void ipp_m2dotm2(const idx<float32> &in1, const idx<float32> &in2,
+		   idx<float32> &y){
+    std::cout << "using ipp m2m2" << std::endl;
+    idx_check_contiguous3(in1, in2, y);
+    int so = sizeof (float32);
+    ippmMul_mm_32f(in1.idx_ptr(), (int) in1.mod(0) * so, (int) in1.mod(1) * so,
+		   (int) in1.dim(1), (int) in1.dim(0),
+		   in2.idx_ptr(), (int) in2.mod(0) * so, (int) in1.mod(1) * so,
+		   (int) in2.dim(1), (int) in2.dim(0),
+		   y.idx_ptr(), (int) y.mod(0) * so, (int) y.mod(1) * so);
+  }
+
+  template <>
+  void ipp_m2dotm2(const idx<float64> &in1, const idx<float64> &in2,
+		   idx<float64> &y){
+    std::cout << "using ipp m2m2" << std::endl;
+    idx_check_contiguous3(in1, in2, y);
+    int so = sizeof (float64);
+    ippmMul_mm_64f(in1.idx_ptr(), (int) in1.mod(0) * so, (int) in1.mod(1) * so,
+		   (int) in1.dim(1), (int) in1.dim(0),
+		   in2.idx_ptr(), (int) in2.mod(0) * so, (int) in1.mod(1) * so,
+		   (int) in2.dim(1), (int) in2.dim(0),
+		   y.idx_ptr(), (int) y.mod(0) * so, (int) y.mod(1) * so);
+  }
+
   // templates for in-place ipp_dotc
 
   template <>
-  void ipp_dotc(idx<float32> & inp, float32 c) {
+  void ipp_dotc(idx<float32> &inp, float32 c) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1038,7 +1100,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_dotc(idx<ubyte> & inp, ubyte c) {
+  void ipp_dotc(idx<ubyte> &inp, ubyte c) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1047,7 +1109,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_dotc(idx<uint16> & inp, uint16 c) {
+  void ipp_dotc(idx<uint16> &inp, uint16 c) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1056,7 +1118,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_dotc(idx<int16> & inp, int16 c) {
+  void ipp_dotc(idx<int16> &inp, int16 c) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1110,7 +1172,7 @@ namespace ebl {
   // templates for in-place ipp_div
 
   template <>
-  void ipp_div(idx<float32> & in1, const idx<float32> & in2) {
+  void ipp_div(idx<float32> &in1, const idx<float32> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1121,7 +1183,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_div(idx<ubyte> & in1, const idx<ubyte> & in2) {
+  void ipp_div(idx<ubyte> &in1, const idx<ubyte> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1132,7 +1194,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_div(idx<uint16> & in1, const idx<uint16> & in2) {
+  void ipp_div(idx<uint16> &in1, const idx<uint16> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1143,7 +1205,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_div(idx<int16> & in1, const idx<int16> & in2) {
+  void ipp_div(idx<int16> &in1, const idx<int16> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1156,8 +1218,8 @@ namespace ebl {
   // templates for not-in-place ipp_div
 
   template <>
-  void ipp_div(const idx<float32> & in1, const idx<float32> & in2,
-	      idx<float32> & out) {
+  void ipp_div(const idx<float32> &in1, const idx<float32> &in2,
+	      idx<float32> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1169,8 +1231,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_div(const idx<ubyte> & in1, const idx<ubyte> & in2,
-	      idx<ubyte> & out) {
+  void ipp_div(const idx<ubyte> &in1, const idx<ubyte> &in2,
+	      idx<ubyte> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1182,8 +1244,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_div(const idx<uint16> & in1, const idx<uint16> & in2,
-	      idx<uint16> & out) {
+  void ipp_div(const idx<uint16> &in1, const idx<uint16> &in2,
+	      idx<uint16> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1195,8 +1257,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_div(const idx<int16> & in1, const idx<int16> & in2,
-	      idx<int16> & out) {
+  void ipp_div(const idx<int16> &in1, const idx<int16> &in2,
+	      idx<int16> &out) {
     ipp_checks3(in1, in2, out);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -1209,7 +1271,7 @@ namespace ebl {
 
   // ipp_inv
 
-  void ipp_inv(const idx<float32> & in, idx<float32> & out) {
+  void ipp_inv(const idx<float32> &in, idx<float32> &out) {
     ipp_fill(out, 1.0f);
     ipp_div(out, in);
   }
@@ -1217,7 +1279,7 @@ namespace ebl {
   // templates for in-place ipp_abs
 
   template <>
-  void ipp_abs(idx<int16> & inp) {
+  void ipp_abs(idx<int16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1226,7 +1288,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_abs(idx<float32> & inp) {
+  void ipp_abs(idx<float32> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1237,7 +1299,7 @@ namespace ebl {
   // templates for not-in-place ipp_abs
 
   template <>
-  void ipp_abs(const idx<int16> & inp, idx<int16> & out) {
+  void ipp_abs(const idx<int16> &inp, idx<int16> &out) {
     ipp_checks2(inp, out);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1248,7 +1310,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_abs(const idx<float32> & inp, idx<float32> & out) {
+  void ipp_abs(const idx<float32> &inp, idx<float32> &out) {
     ipp_checks2(inp, out);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1261,7 +1323,7 @@ namespace ebl {
   // templates for in-place ipp_sqrt
 
   template <>
-  void ipp_sqrt(idx<ubyte> & inp) {
+  void ipp_sqrt(idx<ubyte> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1270,7 +1332,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_sqrt(idx<uint16> & inp) {
+  void ipp_sqrt(idx<uint16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1279,7 +1341,7 @@ namespace ebl {
   } 
 
   template <>
-  void ipp_sqrt(idx<int16> & inp) {
+  void ipp_sqrt(idx<int16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1288,7 +1350,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_sqrt(idx<float32> & inp) {
+  void ipp_sqrt(idx<float32> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1299,7 +1361,7 @@ namespace ebl {
   // templates for not-in-place ipp_sqrt
 
   template <>
-  void ipp_sqrt(const idx<ubyte> & inp, idx<ubyte> & out) {
+  void ipp_sqrt(const idx<ubyte> &inp, idx<ubyte> &out) {
     ipp_checks2(inp, out);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1310,7 +1372,7 @@ namespace ebl {
   }
   
   template <>
-  void ipp_sqrt(const idx<uint16> & inp, idx<uint16> & out) {
+  void ipp_sqrt(const idx<uint16> &inp, idx<uint16> &out) {
     ipp_checks2(inp, out);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1321,7 +1383,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_sqrt(const idx<int16> & inp, idx<int16> & out) {
+  void ipp_sqrt(const idx<int16> &inp, idx<int16> &out) {
     ipp_checks2(inp, out);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1332,7 +1394,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_sqrt(const idx<float32> & inp, idx<float32> & out) {
+  void ipp_sqrt(const idx<float32> &inp, idx<float32> &out) {
     ipp_checks2(inp, out);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1345,7 +1407,7 @@ namespace ebl {
   // templates for in-place ipp_exp
 
   template <>
-  void ipp_exp(idx<ubyte> & inp) {
+  void ipp_exp(idx<ubyte> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1354,7 +1416,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_exp(idx<uint16> & inp) {
+  void ipp_exp(idx<uint16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1363,7 +1425,7 @@ namespace ebl {
   } 
 
   template <>
-  void ipp_exp(idx<int16> & inp) {
+  void ipp_exp(idx<int16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1372,7 +1434,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_exp(idx<float32> & inp) {
+  void ipp_exp(idx<float32> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1383,7 +1445,7 @@ namespace ebl {
   // templates for not-in-place ipp_exp
 
   template <>
-  void ipp_exp(const idx<ubyte> & inp, idx<ubyte> & out) {
+  void ipp_exp(const idx<ubyte> &inp, idx<ubyte> &out) {
     ipp_checks2(inp, out);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1394,7 +1456,7 @@ namespace ebl {
   }
   
   template <>
-  void ipp_exp(const idx<uint16> & inp, idx<uint16> & out) {
+  void ipp_exp(const idx<uint16> &inp, idx<uint16> &out) {
     ipp_checks2(inp, out);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1405,7 +1467,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_exp(const idx<int16> & inp, idx<int16> & out) {
+  void ipp_exp(const idx<int16> &inp, idx<int16> &out) {
     ipp_checks2(inp, out);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1416,7 +1478,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_exp(const idx<float32> & inp, idx<float32> & out) {
+  void ipp_exp(const idx<float32> &inp, idx<float32> &out) {
     ipp_checks2(inp, out);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1661,7 +1723,7 @@ namespace ebl {
   // templates for ipp_std_normalize
 
   template <>
-  void ipp_std_normalize(const idx<ubyte> &inp, idx<ubyte> & out,
+  void ipp_std_normalize(const idx<ubyte> &inp, idx<ubyte> &out,
 			 ubyte* mean_p) {
     ipp_checks2(inp, out);
     IppiSize insize;
@@ -1684,7 +1746,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_std_normalize(const idx<float32> & inp, idx<float32> & out,
+  void ipp_std_normalize(const idx<float32> &inp, idx<float32> &out,
 			 float32* mean_p) {
     ipp_checks2(inp, out);
     IppiSize insize;
@@ -1810,7 +1872,7 @@ namespace ebl {
   // templates for ipp_max
 
   template <>
-  ubyte ipp_max(const idx<ubyte> & inp) {
+  ubyte ipp_max(const idx<ubyte> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1822,7 +1884,7 @@ namespace ebl {
   }
 
   template <>
-  uint16 ipp_max(const idx<uint16> & inp) {
+  uint16 ipp_max(const idx<uint16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1834,7 +1896,7 @@ namespace ebl {
   }
 
   template <>
-  int16 ipp_max(const idx<int16> & inp) {
+  int16 ipp_max(const idx<int16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1846,7 +1908,7 @@ namespace ebl {
   }
 
   template <>
-  float32 ipp_max(const idx<float32> & inp) {
+  float32 ipp_max(const idx<float32> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1860,7 +1922,7 @@ namespace ebl {
   // templates for ipp_indexmax
   
   template <>
-  intg ipp_indexmax(const idx<ubyte> & inp) {
+  intg ipp_indexmax(const idx<ubyte> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.width = inp.nelements();
@@ -1873,7 +1935,7 @@ namespace ebl {
   }
 
   template <>
-  intg ipp_indexmax(const idx<uint16> & inp) {
+  intg ipp_indexmax(const idx<uint16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.width = inp.nelements();
@@ -1886,7 +1948,7 @@ namespace ebl {
   }
 
   template <>
-  intg ipp_indexmax(const idx<int16> & inp) {
+  intg ipp_indexmax(const idx<int16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.width = inp.nelements();
@@ -1899,7 +1961,7 @@ namespace ebl {
   }
 
   template <>
-  intg ipp_indexmax(const idx<float32> & inp) {
+  intg ipp_indexmax(const idx<float32> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.width = inp.nelements();
@@ -1914,7 +1976,7 @@ namespace ebl {
   // templates for ipp_min
 
   template <>
-  ubyte ipp_min(const idx<ubyte> & inp) {
+  ubyte ipp_min(const idx<ubyte> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1926,7 +1988,7 @@ namespace ebl {
   }
 
   template <>
-  uint16 ipp_min(const idx<uint16> & inp) {
+  uint16 ipp_min(const idx<uint16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1938,7 +2000,7 @@ namespace ebl {
   }
 
   template <>
-  int16 ipp_min(const idx<int16> & inp) {
+  int16 ipp_min(const idx<int16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1950,7 +2012,7 @@ namespace ebl {
   }
 
   template <>
-  float32 ipp_min(const idx<float32> & inp) {
+  float32 ipp_min(const idx<float32> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.height = inp.nelements();
@@ -1964,7 +2026,7 @@ namespace ebl {
   // templates for ipp_indexmin
   
   template <>
-  intg ipp_indexmin(const idx<ubyte> & inp) {
+  intg ipp_indexmin(const idx<ubyte> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.width = inp.nelements();
@@ -1977,7 +2039,7 @@ namespace ebl {
   }
 
   template <>
-  intg ipp_indexmin(const idx<uint16> & inp) {
+  intg ipp_indexmin(const idx<uint16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.width = inp.nelements();
@@ -1990,7 +2052,7 @@ namespace ebl {
   }
 
   template <>
-  intg ipp_indexmin(const idx<int16> & inp) {
+  intg ipp_indexmin(const idx<int16> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.width = inp.nelements();
@@ -2003,7 +2065,7 @@ namespace ebl {
   }
 
   template <>
-  intg ipp_indexmin(const idx<float32> & inp) {
+  intg ipp_indexmin(const idx<float32> &inp) {
     ipp_checks1(inp);
     IppiSize insize;
     insize.width = inp.nelements();
@@ -2018,7 +2080,7 @@ namespace ebl {
   // templates for ipp_maxevery
 
   template <>
-  void ipp_maxevery(const idx<ubyte> & in1, idx<ubyte> & in2) {
+  void ipp_maxevery(const idx<ubyte> &in1, idx<ubyte> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -2029,7 +2091,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_maxevery(const idx<uint16> & in1, idx<uint16> & in2) {
+  void ipp_maxevery(const idx<uint16> &in1, idx<uint16> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -2040,7 +2102,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_maxevery(const idx<int16> & in1, idx<int16> & in2) {
+  void ipp_maxevery(const idx<int16> &in1, idx<int16> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -2051,7 +2113,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_maxevery(const idx<float32> & in1, idx<float32> & in2) {
+  void ipp_maxevery(const idx<float32> &in1, idx<float32> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.height = in1.nelements();
@@ -2064,7 +2126,7 @@ namespace ebl {
   // templates for ipp_sqrdist
 
   template <>
-  float64 ipp_sqrdist(const idx<ubyte> & in1, const idx<ubyte> & in2) {
+  float64 ipp_sqrdist(const idx<ubyte> &in1, const idx<ubyte> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.width = in1.nelements();
@@ -2077,7 +2139,7 @@ namespace ebl {
   }
 
   template <>
-  float64 ipp_sqrdist(const idx<uint16> & in1, const idx<uint16> & in2) {
+  float64 ipp_sqrdist(const idx<uint16> &in1, const idx<uint16> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.width = in1.nelements();
@@ -2090,7 +2152,7 @@ namespace ebl {
   }
 
   template <>
-  float64 ipp_sqrdist(const idx<int16> & in1, const idx<int16> & in2) {
+  float64 ipp_sqrdist(const idx<int16> &in1, const idx<int16> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.width = in1.nelements();
@@ -2103,7 +2165,7 @@ namespace ebl {
   }
 
   template <>
-  float64 ipp_sqrdist(const idx<float32> & in1, const idx<float32> & in2) {
+  float64 ipp_sqrdist(const idx<float32> &in1, const idx<float32> &in2) {
     ipp_checks2(in1, in2);
     IppiSize insize;
     insize.width = in1.nelements();
@@ -2127,7 +2189,7 @@ namespace ebl {
   // templates for ipp_threshold_lt (in-place)
 
   template <>
-  void ipp_threshold_lt(idx<ubyte> & in, ubyte th) {
+  void ipp_threshold_lt(idx<ubyte> &in, ubyte th) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2137,7 +2199,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(idx<uint16> & in, uint16 th) {
+  void ipp_threshold_lt(idx<uint16> &in, uint16 th) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2147,7 +2209,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(idx<int16> & in, int16 th) {
+  void ipp_threshold_lt(idx<int16> &in, int16 th) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2157,7 +2219,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(idx<float32> & in, float32 th) {
+  void ipp_threshold_lt(idx<float32> &in, float32 th) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2169,7 +2231,7 @@ namespace ebl {
   // templates for ipp_threshold_lt (not-in-place)
 
   template <>
-  void ipp_threshold_lt(const idx<ubyte> & in, ubyte th, idx<ubyte> & out) {
+  void ipp_threshold_lt(const idx<ubyte> &in, ubyte th, idx<ubyte> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2180,7 +2242,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(const idx<uint16> & in, uint16 th, idx<uint16> & out) {
+  void ipp_threshold_lt(const idx<uint16> &in, uint16 th, idx<uint16> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2191,7 +2253,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(const idx<int16> & in, int16 th, idx<int16> & out) {
+  void ipp_threshold_lt(const idx<int16> &in, int16 th, idx<int16> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2202,8 +2264,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(const idx<float32> & in, float32 th,
-			idx<float32> & out) {
+  void ipp_threshold_lt(const idx<float32> &in, float32 th,
+			idx<float32> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2216,7 +2278,7 @@ namespace ebl {
   // templates for ipp_threshold_gt (in-place)
 
   template <>
-  void ipp_threshold_gt(idx<ubyte> & in, ubyte th) {
+  void ipp_threshold_gt(idx<ubyte> &in, ubyte th) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2226,7 +2288,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(idx<uint16> & in, uint16 th) {
+  void ipp_threshold_gt(idx<uint16> &in, uint16 th) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2236,7 +2298,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(idx<int16> & in, int16 th) {
+  void ipp_threshold_gt(idx<int16> &in, int16 th) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2246,7 +2308,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(idx<float32> & in, float32 th) {
+  void ipp_threshold_gt(idx<float32> &in, float32 th) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2258,7 +2320,7 @@ namespace ebl {
   // templates for ipp_threshold_gt (not-in-place)
 
   template <>
-  void ipp_threshold_gt(const idx<ubyte> & in, ubyte th, idx<ubyte> & out) {
+  void ipp_threshold_gt(const idx<ubyte> &in, ubyte th, idx<ubyte> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2269,7 +2331,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(const idx<uint16> & in, uint16 th, idx<uint16> & out) {
+  void ipp_threshold_gt(const idx<uint16> &in, uint16 th, idx<uint16> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2280,7 +2342,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(const idx<int16> & in, int16 th, idx<int16> & out) {
+  void ipp_threshold_gt(const idx<int16> &in, int16 th, idx<int16> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2291,8 +2353,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(const idx<float32> & in, float32 th,
-			idx<float32> & out) {
+  void ipp_threshold_gt(const idx<float32> &in, float32 th,
+			idx<float32> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2305,7 +2367,7 @@ namespace ebl {
   // templates for ipp_threshold_lt (with value, in-place)
 
   template <>
-  void ipp_threshold_lt(idx<ubyte> & in, ubyte th, ubyte value) {
+  void ipp_threshold_lt(idx<ubyte> &in, ubyte th, ubyte value) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2315,7 +2377,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(idx<uint16> & in, uint16 th, uint16 value) {
+  void ipp_threshold_lt(idx<uint16> &in, uint16 th, uint16 value) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2325,7 +2387,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(idx<int16> & in, int16 th, int16 value) {
+  void ipp_threshold_lt(idx<int16> &in, int16 th, int16 value) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2335,7 +2397,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(idx<float32> & in, float32 th, float32 value) {
+  void ipp_threshold_lt(idx<float32> &in, float32 th, float32 value) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2347,8 +2409,8 @@ namespace ebl {
   // templates for ipp_threshold_lt (with value, not-in-place)
 
   template <>
-  void ipp_threshold_lt(const idx<ubyte> & in, ubyte th, ubyte value,
-			idx<ubyte> & out) {
+  void ipp_threshold_lt(const idx<ubyte> &in, ubyte th, ubyte value,
+			idx<ubyte> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2359,8 +2421,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(const idx<uint16> & in, uint16 th, uint16 value,
-			idx<uint16> & out) {
+  void ipp_threshold_lt(const idx<uint16> &in, uint16 th, uint16 value,
+			idx<uint16> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2371,8 +2433,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(const idx<int16> & in, int16 th, int16 value,
-			idx<int16> & out) {
+  void ipp_threshold_lt(const idx<int16> &in, int16 th, int16 value,
+			idx<int16> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2383,8 +2445,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_lt(const idx<float32> & in, float32 th,
-			float32 value, idx<float32> & out) {
+  void ipp_threshold_lt(const idx<float32> &in, float32 th,
+			float32 value, idx<float32> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2397,7 +2459,7 @@ namespace ebl {
   // templates for ipp_threshold_gt (with value, in-place)
 
   template <>
-  void ipp_threshold_gt(idx<ubyte> & in, ubyte th, ubyte value) {
+  void ipp_threshold_gt(idx<ubyte> &in, ubyte th, ubyte value) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2407,7 +2469,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(idx<uint16> & in, uint16 th, uint16 value) {
+  void ipp_threshold_gt(idx<uint16> &in, uint16 th, uint16 value) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2417,7 +2479,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(idx<int16> & in, int16 th, int16 value) {
+  void ipp_threshold_gt(idx<int16> &in, int16 th, int16 value) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2427,7 +2489,7 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(idx<float32> & in, float32 th, float32 value) {
+  void ipp_threshold_gt(idx<float32> &in, float32 th, float32 value) {
     ipp_checks1(in);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2439,8 +2501,8 @@ namespace ebl {
   // templates for ipp_threshold_gt (with value, not-in-place)
 
   template <>
-  void ipp_threshold_gt(const idx<ubyte> & in, ubyte th, ubyte value,
-			idx<ubyte> & out) {
+  void ipp_threshold_gt(const idx<ubyte> &in, ubyte th, ubyte value,
+			idx<ubyte> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2451,8 +2513,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(const idx<uint16> & in, uint16 th, uint16 value,
-			idx<uint16> & out) {
+  void ipp_threshold_gt(const idx<uint16> &in, uint16 th, uint16 value,
+			idx<uint16> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2463,8 +2525,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(const idx<int16> & in, int16 th, int16 value,
-			idx<int16> & out) {
+  void ipp_threshold_gt(const idx<int16> &in, int16 th, int16 value,
+			idx<int16> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2475,8 +2537,8 @@ namespace ebl {
   }
 
   template <>
-  void ipp_threshold_gt(const idx<float32> & in, float32 th,
-			float32 value, idx<float32> & out) {
+  void ipp_threshold_gt(const idx<float32> &in, float32 th,
+			float32 value, idx<float32> &out) {
     ipp_checks2(in, out);
     IppiSize insize;
     insize.width = in.nelements();
@@ -2485,7 +2547,6 @@ namespace ebl {
 				out.idx_ptr(), sizeof(float32),
 				insize, th, value);
   }
-
 
 #endif /* __IPP__ */
 

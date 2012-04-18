@@ -9,7 +9,7 @@
 //! Test class for ipp wrapper
 class ippops_test : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE(ippops_test);
-  CPPUNIT_TEST(test_ipp_convolve_float);
+  CPPUNIT_TEST(test_ipp_convolve_float); 
   CPPUNIT_TEST(test_ipp_convolve_ubyte);
   CPPUNIT_TEST(test_ipp_convolve_int16);
   CPPUNIT_TEST(test_ipp_copy);

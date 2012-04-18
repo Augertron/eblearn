@@ -42,20 +42,20 @@ namespace ebl {
   // text
 
   text::text(float h0_, float w0_, bool pos_reset_,
-	     unsigned char fg_r_, unsigned char fg_g_, 
+	     unsigned char fg_r_, unsigned char fg_g_,
 	     unsigned char fg_b_, unsigned char fg_a_,
-	     unsigned char bg_r_, unsigned char bg_g_, 
+	     unsigned char bg_r_, unsigned char bg_g_,
 	     unsigned char bg_b_, unsigned char bg_a_)
     : string(""), h0(h0_), w0(w0_), pos_reset(pos_reset_),
-      fg_r(fg_r_), fg_g(fg_g_), fg_b(fg_b_), fg_a(fg_a_), 
+      fg_r(fg_r_), fg_g(fg_g_), fg_b(fg_b_), fg_a(fg_a_),
       bg_r(bg_r_), bg_g(bg_g_), bg_b(bg_b_), bg_a(bg_a_) {
   }
 
   ////////////////////////////////////////////////////////////////
   // arrow
 
-  arrow::arrow(int h1_, int w1_, int h2_, int w2_)
-    : h1(h1_), w1(w1_), h2(h2_), w2(w2_) {
+  arrow::arrow(int h1_, int w1_, int h2_, int w2_, bool head1_, bool head2_)
+    : h1(h1_), w1(w1_), h2(h2_), w2(w2_), head1(head1_), head2(head2_) {
   }
 
   ////////////////////////////////////////////////////////////////
@@ -91,7 +91,7 @@ namespace ebl {
     // fill the pixmap with desired color
     map.fill(QColor(r, g, b, a));
     // set mask
-    QImage qim((unsigned char*) img->idx_ptr(), img->dim(1), img->dim(0), 
+    QImage qim((unsigned char*) img->idx_ptr(), img->dim(1), img->dim(0),
 	       img->dim(1) * img->dim(2) * sizeof (unsigned char),
 	       QImage::Format_RGB888);
     map.setMask(QBitmap::fromImage(qim));
@@ -101,12 +101,12 @@ namespace ebl {
   // win
 
   win::win(QWidget *qw_, uint wid, const char *wname,
-	   uint height, uint width) 
+	   uint height, uint width)
     : qw(qw_),
       pixmapScale(1.0), curScale(1.0), scaleIncr(1), colorTable(256),
       texts(), silent(false), id(wid), savefname(""), wupdate_ndisable(0),
       frozen_style(false), frozen_size(false), font_size(-1), ctrl_on(false),
-      text_on(true), scrollbox(NULL) {
+      text_on(true), images_only(false), scrollbox(NULL), drawing_mode(0) {
     if (!qw) eblerror("expected a non-null QWidget pointer in qw");
     qw->setAttribute(Qt::WA_DeleteOnClose);
     if (wname) {
@@ -144,7 +144,7 @@ namespace ebl {
   void win::show() {
     qw->show();
   }
-  
+
   QWidget* win::get_widget() {
     return qw;
   }
@@ -157,14 +157,14 @@ namespace ebl {
     cout << "warning: update_window not implemented" << endl;
   }
 
-  void win::resize_window(uint h, uint w, bool force) {    
+  void win::resize_window(uint h, uint w, bool force) {
     cout << "warning: resize_window not implemented" << endl;
   }
 
   bool win::busy_drawing() {
     return busy;
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // add methods
 
@@ -182,7 +182,7 @@ namespace ebl {
     update_window();
     pos_reset = false;
   }
-    
+
   void win::add_arrow(int h1, int w1, int h2, int w2) {
     arrow *a = new arrow(h1, w1, h2, w2);
     if (!wupdate)
@@ -191,7 +191,27 @@ namespace ebl {
       arrows.push_back(a);
     update_window();
   }
-  
+
+  void win::add_flow(idx<float> *flow, int h0, int w0) {
+    if (flow) {
+      for (uint h = 0; h < flow->dim(1); ++h) {
+	for (uint w = 0; w < flow->dim(2); ++w) {
+	  float fh = flow->get(0, h, w);
+	  float fw = flow->get(1, h, w);
+	  float hh = h0 + flow->dim(1) - h;
+	  float ww = w0 + flow->dim(2) - w;
+	  if (fh != 0 && fw != 0) {
+	    arrow *a = new arrow(ww, hh, ww + fw, hh + fh, false);
+	    if (!wupdate) arrows_tmp.push_back(a);
+	    else arrows.push_back(a);
+	  } 
+	}
+      }
+      update_window();
+      delete flow;
+    }
+  }
+
   void win::add_box(float h0, float w0, float h, float w, ubyte r, ubyte g,
 		       ubyte b, ubyte a, string *s) {
     box *bb = new box(h0, w0, h, w, r, g, b, a);
@@ -201,18 +221,19 @@ namespace ebl {
     else
       boxes.push_back(bb);
     // add caption
-    set_text_origin(h0 + 1, w0 + 1);
+    //    set_text_origin(h0 + 1, w0 + 1);
+    set_text_origin(h0 + h - 16, w0 + 1);
     // modulate caption transparency with bbox's transparency
     ubyte save_fga = fg_a, save_bga = bg_a;
     set_text_colors(fg_r, fg_g, fg_b, a, bg_r, bg_g, bg_b, a, true);
     if (s)
       add_text(s);
     // restore previous transparency
-    set_text_colors(fg_r, fg_g, fg_b, save_fga, bg_r, bg_g, bg_b, save_bga, 
+    set_text_colors(fg_r, fg_g, fg_b, save_fga, bg_r, bg_g, bg_b, save_bga,
 		    true);
     update_window();
   }
-  
+
   void win::add_cross(float h0, float w0, float length, ubyte r, ubyte g,
 			 ubyte b, ubyte a, string *s) {
     cross *c = new cross(w0, h0, length, r, g, b, a);
@@ -227,7 +248,7 @@ namespace ebl {
       add_text(s);
     update_window();
   }
-  
+
   void win::add_ellipse(float h0, float w0, float h, float w,
 			   ubyte r, ubyte g, ubyte b, ubyte a, string *s) {
     box *c = new box(w0, h0, h, w, r, g, b, a);
@@ -242,7 +263,7 @@ namespace ebl {
       add_text(s);
     update_window();
   }
-  
+
   void win::add_image(idx<ubyte> &img, unsigned int h0, unsigned int w0) {
     image *i = new image(img, h0, w0);
     if (!wupdate)
@@ -260,9 +281,9 @@ namespace ebl {
     else
       masks.push_back(m);
     // update maximum buffer size
-    buffer_maxh = std::max(buffer_maxh, std::max(buffer?(uint)buffer->dim(0):0, 
+    buffer_maxh = std::max(buffer_maxh, std::max(buffer?(uint)buffer->dim(0):0,
 						 (uint) (h0 + img->dim(0))));
-    buffer_maxw = std::max(buffer_maxw, std::max(buffer?(uint)buffer->dim(1):0, 
+    buffer_maxw = std::max(buffer_maxw, std::max(buffer?(uint)buffer->dim(1):0,
 						 (uint) (w0 + img->dim(1))));
     // we are responsible for deleting img
     delete img;
@@ -380,28 +401,31 @@ namespace ebl {
 
   void win::save(const string &filename, bool confirm) {
     QPixmap p = QPixmap::grabWidget(qw, qw->rect());
-    string fname = filename;
-    fname += ".png";
+    string fname;
+    fname << filename << ".png";
+    // make sure directory exists
+    string dir = dirname(fname.c_str());
+    mkdir_full(dir);
     if (!p.save(fname.c_str(), "PNG", 90))
       cerr << "Warning: failed to save window to " << filename << "." << endl;
     else if (confirm)
       cout << "Saved " << fname << endl;
   }
-  
+
   void win::save_mat(const string &filename, bool confirm) {
-    if (!buffer) {
+    if (!this->buffer) {
       cerr << "Warning: cannot save buffer matrix, not allocated." << endl;
       return ;
     }
     string fname = filename;
     fname += ".mat";
     try {
-      save_matrix(*buffer, fname);
+      save_matrix(*this->buffer, fname);
       if (confirm)
 	cout << "Saved " << fname << endl;
     } eblcatch();
   }
-  
+
   void win::set_silent(const std::string *filename) {
     silent = true;
     ostringstream o;
@@ -423,7 +447,7 @@ namespace ebl {
     cout << "Freezing window size to " << frozen_dims << endl;
     frozen_size = true;
   }
-  
+
   void win::set_title(const char *title) {
     QString t(title);
     qw->setWindowTitle(t);
@@ -447,7 +471,7 @@ namespace ebl {
     bg_b = bg_b_;
     bg_a = bg_a_;
   }
-  
+
   void win::set_bg_colors(ubyte r, ubyte g, ubyte b) {
     if (frozen_style)
       return ;
@@ -506,7 +530,7 @@ namespace ebl {
     if (event->button() == Qt::LeftButton) {
       pixmapOffset += event->pos() - lastDragPos;
       lastDragPos = QPoint();
-      
+
       int deltaX = (qw->width() - pixmap->width()) / 2 - pixmapOffset.x();
       int deltaY = (qw->height() - pixmap->height()) / 2 - pixmapOffset.y();
       qw->scroll(deltaX, deltaY);
@@ -592,16 +616,16 @@ namespace ebl {
   void win::paint(QPainter &painter, double scale) {
     draw_text(painter);
   }
-  
+
   void win::draw_text(QPainter &painter) {
-    if (!text_on) // text can be disabled
+    if (!text_on || images_only) // text can be disabled
       return ;
     unsigned int th = 0, tw = 0;
     for (vector<text*>::iterator i = texts.begin(); i != texts.end(); ++i) {
       if (*i) {
 	text &t = **i;
 	text_fg_color.setRgb(t.fg_r, t.fg_g, t.fg_b, t.fg_a);
-	text_bg_color.setRgb(t.bg_r, t.bg_g, t.bg_b, t.bg_a); 
+	text_bg_color.setRgb(t.bg_r, t.bg_g, t.bg_b, t.bg_a);
 	QString txt(t.c_str());
 	QRectF bg;
 	//	QFontMetrics metrics = painter.fontMetrics();
@@ -609,11 +633,11 @@ namespace ebl {
 	qr.setLeft(t.pos_reset ? t.w0 : tw);
 	qr.setTop( t.pos_reset ? t.h0 - 1 : th);
 	// 	// resize buffer if text is out?
-	// 	QRect br = painter.boundingRect(qr, Qt::AlignLeft & Qt::TextWordWrap 
+	// 	QRect br = painter.boundingRect(qr, Qt::AlignLeft & Qt::TextWordWrap
 	// 					& Qt::AlignTop, txt);
-	// 	buffer_maxh = std::max(buffer?(unsigned int)buffer->dim(0):0, 
+	// 	buffer_maxh = std::max(buffer?(unsigned int)buffer->dim(0):0,
 	// 			  t.h0 + br.height());
-	// 	buffer_maxw = std::max(buffer?(unsigned int)buffer->dim(1):0, 
+	// 	buffer_maxw = std::max(buffer?(unsigned int)buffer->dim(1):0,
 	// 			  t.w0 + br.width());
 	// 	buffer_resize(buffer_maxh, buffer_maxw);
 
@@ -628,6 +652,11 @@ namespace ebl {
 	bg.setTop(bg.top() + 1);
 	bg.setHeight(bg.height() - 3);
 	painter.setBrush(text_bg_color);
+	// QPen qp(Qt::SolidLine);
+	// qp.setWidth(5);
+	// painter.setPen(qp);
+	// painter.drawRoundedRect((int) bg.left(), (int) bg.top(),
+	// 			(int) bg.width(), (int) bg.height(), 20, 20);
 	painter.setPen(Qt::NoPen);
 	painter.drawRect((int) bg.left(), (int) bg.top(),
 			 (int) bg.width(), (int) bg.height());
@@ -639,5 +668,5 @@ namespace ebl {
       }
     }
   }
-  
+
 } // end namespace ebl

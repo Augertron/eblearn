@@ -36,16 +36,16 @@
 using namespace std;
 
 namespace ebl {
- 
+
   ////////////////////////////////////////////////////////////////
   // answer_module
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
-  answer_module<T,Tds1,Tds2,Tstate>::answer_module(uint nfeatures_, 
+  answer_module<T,Tds1,Tds2,Tstate>::answer_module(uint nfeatures_,
 						   const char *name_)
     : module_1_1<T,Tstate>(name_), nfeatures(nfeatures_) {
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   answer_module<T,Tds1,Tds2,Tstate>::~answer_module() {
   }
@@ -55,38 +55,62 @@ namespace ebl {
     eblerror("not implemented");
   }
 
+  // single-state propagation //////////////////////////////////////////////////
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::
   fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
     eblerror("not implemented");
   }
-    
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::
   bprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
     // empty bprop by default
   }
-    
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::
   bbprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
     // empty bbprop by default
   }
-    
+
+  // multi-state propagation ///////////////////////////////////////////////////
+
+  template <typename T, typename Tds1, typename Tds2, class Tstate>
+  void answer_module<T,Tds1,Tds2,Tstate>::
+  fprop(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
+    eblerror("not implemented");
+  }
+
+  template <typename T, typename Tds1, typename Tds2, class Tstate>
+  void answer_module<T,Tds1,Tds2,Tstate>::
+  bprop(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
+    // empty bprop by default
+  }
+
+  template <typename T, typename Tds1, typename Tds2, class Tstate>
+  void answer_module<T,Tds1,Tds2,Tstate>::
+  bbprop(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
+    // empty bbprop by default
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   bool answer_module<T,Tds1,Tds2,Tstate>::
   correct(Tstate &answer, Tstate &label) {
     eblerror("not implemented");
 	return false;
   }
-    
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::
   update_log(classifier_meter &log, intg age, idx<T> &energy, idx<T> &answer,
 	     idx<T> &label, idx<T> &target, idx<T> &rawout) {
     eblerror("not implemented");
   }
-    
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::forget(forget_param_linear &fp) {
   }
@@ -97,22 +121,23 @@ namespace ebl {
 	string s;
 	return s;
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   uint answer_module<T,Tds1,Tds2,Tstate>::get_nfeatures() {
     return nfeatures;
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // class_answer
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   class_answer<T,Tds1,Tds2,Tstate>::
   class_answer(uint nclasses, double target_factor, bool binary_target_,
-	       t_confidence conf, bool apply_tanh_, const char *name_)
-    : answer_module<T,Tds1,Tds2,Tstate>(binary_target_?1:nclasses, name_), 
-      conf_type(conf), binary_target(binary_target_), resize_output(true), 
-      apply_tanh(apply_tanh_), tmp(1,1,1) {
+	       t_confidence conf, bool apply_tanh_, const char *name_,
+	       int force)
+    : answer_module<T,Tds1,Tds2,Tstate>(binary_target_?1:nclasses, name_),
+      conf_type(conf), binary_target(binary_target_), resize_output(true),
+      apply_tanh(apply_tanh_), tmp(1,1,1), force_class(force) {
     // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
     targets = create_target_matrix<T>(nclasses, (T)1.0);
     // binary target
@@ -131,7 +156,7 @@ namespace ebl {
     }
     // target factor
     idx_dotc(targets, target_factor, targets);
-    cout << "Targets:" << endl; targets.printElems();
+    print_targets(targets);
     // set min/max of target
     target_min = idx_min(targets);
     target_max = idx_max(targets);
@@ -163,7 +188,7 @@ namespace ebl {
       eblerror("confidence type " << conf_type << " undefined");
     }
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   class_answer<T,Tds1,Tds2,Tstate>::~class_answer() {
   }
@@ -204,10 +229,11 @@ namespace ebl {
 	    oo.set((T) 1, 0); // class 1
 	    oo.set((T) (2 - fabs((double) a - t1)) / 2, 1); // conf
 	  }
-	} 
+	}
 	else { // 1-of-n target
 	  // set class answer
-	  classid = idx_indexmax(ii);
+	  if (force_class >= 0) classid = force_class;
+	  else classid = idx_indexmax(ii);
 	  oo.set((T) classid, 0);
 	  // set confidence
 	  intg p;
@@ -215,11 +241,14 @@ namespace ebl {
 	  switch (conf_type) {
 	  case confidence_sqrdist: // squared distance to target
 	    target = targets.select(0, classid);
-	    conf = (T) (1.0 - ((idx_sqrdist(target, ii) - conf_shift) 
+	    conf = (T) (1.0 - ((idx_sqrdist(target, ii) - conf_shift)
 			       / conf_ratio));
+	    oo.set(conf, 1);
 	    break ;
 	  case confidence_single: // simply return class' out (normalized)
 	    conf = (T) ((ii.get(classid) - conf_shift) / conf_ratio);
+	    oo.set(conf, 1);
+	    break ;
 	  case confidence_max: // distance with 2nd max answer
 	    conf = std::max(target_min, std::min(target_max, ii.get(classid)));
 	    for (p = 0; p < ii.dim(0); ++p) {
@@ -241,8 +270,19 @@ namespace ebl {
 	  }
 	}
       });
+    EDEBUG(this->name() << ": in " << in << " (in.x min " << idx_min(in.x)
+	  << " max " << idx_max(in.x) << ") out " << out << " (out.x min "
+	  << idx_min(out.x) << " max " << idx_max(out.x) << ")");
+#ifdef __DEBUG__
+    idx<T> ldec = out.x.select(0, 0);
+    EDEBUG(this->name() << ": class min " << idx_min(ldec)
+	  << " max " << idx_max(ldec));
+    idx<T> lconf = out.x.select(0, 1);
+    EDEBUG(this->name() << ": confidence min " << idx_min(lconf)
+	  << " max " << idx_max(lconf));
+#endif
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void class_answer<T,Tds1,Tds2,Tstate>::
   fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
@@ -277,7 +317,7 @@ namespace ebl {
   correct(Tstate &answer, Tstate &label) {
     return (answer.x.gget(0) == label.x.gget());
   }
-    
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void class_answer<T,Tds1,Tds2,Tstate>::
   update_log(classifier_meter &log, intg age, idx<T> &energy, idx<T> &answer,
@@ -285,7 +325,7 @@ namespace ebl {
     log.update(age, (uint) label.gget(0), (uint) answer.gget(0),
 	       (double) energy.gget());
   }
-    
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   std::string class_answer<T,Tds1,Tds2,Tstate>::describe() {
     std::string s;
@@ -294,8 +334,8 @@ namespace ebl {
       << targets;
     if (apply_tanh)
       s << ", a tanh is applied to inputs";
-    s << ". Targets:\n";
-    targets.printElems();
+    s << ". ";
+    print_targets(targets);
     return s;
   }
 
@@ -305,7 +345,7 @@ namespace ebl {
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   scalerclass_answer<T,Tds1,Tds2,Tstate>::
   scalerclass_answer(uint nclasses, double target_factor, bool binary_target,
-		     t_confidence conf, bool apply_tanh_, uint jsize_, 
+		     t_confidence conf, bool apply_tanh_, uint jsize_,
 		     uint joffset_, float mgauss, bool predict_conf_,
 		     bool predict_bconf_, idx<T> *biases_,
 		     idx<T> *coeffs_, const char *name_)
@@ -332,7 +372,7 @@ namespace ebl {
     if (biases_) biases = new idx<T>(*biases_);
     if (coeffs_) coeffs = new idx<T>(*coeffs_);
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   scalerclass_answer<T,Tds1,Tds2,Tstate>::~scalerclass_answer() {
     if (biases) delete biases;
@@ -401,7 +441,7 @@ namespace ebl {
     //   }
     // }
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void scalerclass_answer<T,Tds1,Tds2,Tstate>::
   fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
@@ -467,13 +507,14 @@ namespace ebl {
 				 / (2 * .2)) * 4 - 1)/2+.5));
 	// compute distance to center (the closer the higher the conf)
 	// set xrange[-1:1];set yrange[-1:1];plot exp(-2*sqrt(x*x))
-	T dconf = (T) (exp(-2 * sqrt((double) h*h + w*w)));
+	//T dconf = (T) (exp(-2 * sqrt((double) h*h + w*w)));
 	// take minimum of all confs for final confidence
 	//	T final_conf = std::min(visconf, std::min(dconf, sconf));
 	T final_conf = std::min(visconf, sconf);
-	DEBUG("s: " << s << " h: " << h << " w: " << w << " sconf: " << sconf
-	      << " visconf: " << visconf << " dconf: " << dconf << " final: "
-	      << final_conf);
+	EDEBUG("s: " << s << " h: " << h << " w: " << w << " sconf: " << sconf
+	      << " visconf: " << visconf
+	      //	      << " dconf: " << dconf
+	      << " final: " << final_conf);
 	// update confidence target
 	if (predict_conf) { // fill additional confidence feature
 	  if (predict_bconf) { // target conf is binary
@@ -490,7 +531,7 @@ namespace ebl {
       }
       }}
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void scalerclass_answer<T,Tds1,Tds2,Tstate>::
   update_log(classifier_meter &log, intg age, idx<T> &energy, idx<T> &answer,
@@ -544,7 +585,7 @@ namespace ebl {
       log.total_values[5] = 1; // normalization total
     }
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   std::string scalerclass_answer<T,Tds1,Tds2,Tstate>::describe() {
     std::string s;
@@ -567,8 +608,8 @@ namespace ebl {
       coeffs->printElems(s);
     else
       s <<"none";
-    s << ". Targets:\n";
-    targets.printElems(s);
+    s << ". ";
+    print_targets(targets);
     return s;
   }
 
@@ -584,7 +625,7 @@ namespace ebl {
       raw_confidence(raw_confidence_), jitter(1), threshold((T) threshold_),
 	  spatial(spatial_), jsize(answer_module<T,Tds1,Tds2,Tstate>::nfeatures) {
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   scaler_answer<T,Tds1,Tds2,Tstate>::~scaler_answer() {
   }
@@ -597,7 +638,7 @@ namespace ebl {
     // resize out if necessary
     idxdim d(in.x);
     // 5 outputs per pixel: class,confidence,scale,h,w
-    d.setdim(0, 2 + jsize); 
+    d.setdim(0, 2 + jsize);
     if (d != out.x.get_idxdim())
       out.resize(d);
     // loop on features (dimension 0) to set answers
@@ -608,7 +649,7 @@ namespace ebl {
 	T i = iii.get(0);
 	classid = ((i <= threshold) ? negative_id : positive_id);
 	ooo.set((T) classid, 0); // set classid answer
-	if (raw_confidence) { 
+	if (raw_confidence) {
 	  ooo.set(i, 1); // conf is simply the output
 	  ooo.set(i, 2);
 	} else { // confidence is the position in the margin area
@@ -674,20 +715,20 @@ namespace ebl {
     : answer_module<T,Tds1,Tds2,Tstate>(nfeatures_, name_),
       threshold(threshold_) {
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   regression_answer<T,Tds1,Tds2,Tstate>::~regression_answer() {
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
-  void regression_answer<T,Tds1,Tds2,Tstate>::fprop(Tstate &in, Tstate &out) {  
+  void regression_answer<T,Tds1,Tds2,Tstate>::fprop(Tstate &in, Tstate &out) {
     // resize out if necessary
     idxdim d(in.x);
     if (d != out.x.get_idxdim())
       out.resize(d);
     idx_copy(in.x, out.x);
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void regression_answer<T,Tds1,Tds2,Tstate>::
   fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
@@ -709,7 +750,7 @@ namespace ebl {
     log.update(age, (bool)(idx_l1(answer, label) <= threshold),
 	       (double) energy.gget());
   }
-    
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   std::string regression_answer<T,Tds1,Tds2,Tstate>::describe() {
     std::string s;
@@ -728,7 +769,7 @@ namespace ebl {
     : class_answer<T,Tds1,Tds2,Tstate>(nclasses, target_factor, binary_target_,
 				       conf, apply_tanh_, name_) {
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   vote_answer<T,Tds1,Tds2,Tstate>::~vote_answer() {
   }
@@ -744,7 +785,7 @@ namespace ebl {
     idx_clear(confidences);
     // loop on all concatenated outputs
     uint off;
-    uint bestid = 0;
+    //    uint bestid = 0;
     T bestconf = 0;
     for (off = 0; off < in.x.dim(0); off += this->nfeatures) {
       i = in.narrow(0, this->nfeatures, off);
@@ -755,7 +796,7 @@ namespace ebl {
       cout << "id: " << index << " conf: " << out.x.get(1) << endl;
       if (bestconf < out.x.get(1)) {
 	bestconf = out.x.get(1);
-	bestid = index;
+	//bestid = index;
       }
     }
     // take strongest confidence as vote
@@ -775,15 +816,27 @@ namespace ebl {
 	    class Ten>
   trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
   trainable_module(ebm_2<Tin1,Tin2,Ten> &energy_, module_1_1<T,Tin1> &mod1_,
-	 module_1_1<T,Tin2> *mod2_, answer_module<T,Tds1,Tds2,Tin1> *dsmod1_,
-	 answer_module<T,Tds1,Tds2,Tin2> *dsmod2_, const char *name_)
+		   module_1_1<T,Tin2> *mod2_, 
+		   answer_module<T,Tds1,Tds2,Tin1> *dsmod1_,
+		   answer_module<T,Tds1,Tds2,Tin2> *dsmod2_, const char *name_,
+		   const char *switcher)
     : energy_mod(energy_), mod1(mod1_), mod2(mod2_), dsmod1(dsmod1_),
-      dsmod2(dsmod2_) // TODO: fix hardcorded order
+      dsmod2(dsmod2_), ms_switch(NULL)
+      // TODO: fix hardcorded order
       // in1(1,1,1), out1(1,1,1), in2(1,1,1), out2(1,1,1), answers(1,1,1),
       // targets(1,1,1), mod_name(name_), tmp_energy(1,1,1)
-  {    
+  {
+    // try to find switcher module in mod1
+    if (switcher) {
+      std::vector<ms_module<T,Tin1>*> all = arch_find_all(&mod1, ms_switch);
+      for (uint i = 0; i < all.size(); ++i)
+	if (!strcmp(all[i]->name(), switcher)) {
+	  ms_switch = all[i];
+	  break ;
+	}
+    }
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
 	    class Ten>
   trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::~trainable_module() {
@@ -791,16 +844,40 @@ namespace ebl {
 
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
 	    class Ten>
+  void trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::update_scale
+  (labeled_datasource<T,Tds1,Tds2> &ds) {
+    // update switch data
+    if (ms_switch && ds.has_scales()) ms_switch->set_switch(ds.fprop_scale());
+  }
+
+  template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
+	    class Ten>
   void trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
   fprop(labeled_datasource<T,Tds1,Tds2> &ds, Ten &energy) {
     // flow 1 //////////////////////////////////////////////////////////////////
-    // produce state 1
-    if (dsmod1) // specific data production
-      dsmod1->fprop(ds, in1);
-    else // generic, simply take ds' input 1
-      ds.fprop_data(in1);
-    // fprop flow 1
-    mod1.fprop(in1, out1);
+    TIMING2("between end of fprop/bprop and sample retrieval");
+    if (ds.mstate_samples() || mod1.mstate_input()) {//input must be multi-state
+      // produce state 1
+      if (dsmod1) // specific data production
+	dsmod1->fprop(ds, msin1);
+      else // generic, simply take ds' input 1
+	ds.fprop_data(msin1);
+      TIMING2("sample retrieval");
+      // fprop flow 1
+      update_scale(ds);
+      mod1.fprop(msin1, out1);
+      TIMING2("entire fprop");
+    } else {
+      // produce state 1
+      if (dsmod1) // specific data production
+	dsmod1->fprop(ds, in1);
+      else // generic, simply take ds' input 1
+	ds.fprop_data(in1);
+      TIMING2("sample retrieval");
+      // fprop flow 1
+      mod1.fprop(in1, out1);
+      TIMING2("entire fprop");
+    }
 
     // flow 2 //////////////////////////////////////////////////////////////////
     Tin2 *i2 = &in2;
@@ -823,30 +900,40 @@ namespace ebl {
 	    class Ten>
   void trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
   bprop(labeled_datasource<T,Tds1,Tds2> &ds, Ten &energy) {
+    TIMING2("until beginning of bprop");
     // clear buffers
     out1.clear_dx();
     out2.clear_dx();
     // bprop
     energy_mod.bprop(out1, out2, energy);
-    mod1.bprop(in1, out1);
+    if (ds.mstate_samples() || mod1.mstate_input())
+      mod1.bprop(msin1, out1);
+    else
+      mod1.bprop(in1, out1);
     if (dsmod2)
       dsmod2->bprop(ds, out2);
+    TIMING2("entire bprop");
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
 	    class Ten>
   void trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
   bbprop(labeled_datasource<T,Tds1,Tds2> &ds, Ten &energy) {
+    TIMING2("until beginning of bbprop");
     // clear buffers
     out1.clear_ddx();
     out2.clear_ddx();
     // bbprop
     energy_mod.bbprop(out1, out2, energy);
-    mod1.bbprop(in1, out1);
+    if (ds.mstate_samples() || mod1.mstate_input())
+      mod1.bbprop(msin1, out1);
+    else
+      mod1.bbprop(in1, out1);
     if (dsmod2)
       dsmod2->bbprop(ds, out2);
+    TIMING2("entire bbprop");
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
 	    class Ten>
   int trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
@@ -854,7 +941,7 @@ namespace ebl {
     eblerror("not implemented");
 	return 0;
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
 	    class Ten>
   void trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
@@ -893,7 +980,7 @@ namespace ebl {
       eblerror("dsmod2 must be defined to update log");
     dsmod2->update_log(log, age, energy, answer, label, target, rawout);
   }
-    
+
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
 	    class Ten>
   void trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::compute_answers(Tin1 &ans) {
@@ -922,7 +1009,7 @@ namespace ebl {
   const char *trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::name() {
     return mod_name.c_str();
   }
-  
+
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
 	    class Ten>
   std::string trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::describe() {
@@ -932,7 +1019,16 @@ namespace ebl {
       s << ", " << dsmod2->describe();
     return s;
   }
-  
+
+  // utility functions /////////////////////////////////////////////////////////
+
+  template <typename T>
+  void print_targets(idx<T> &targets) {
+    cout << "Targets: " << targets << endl;
+    if (targets.nelements() < 500)
+      cout << targets.str() << endl;
+  }
+
 } // end namespace ebl
 
 #endif /*EBL_ANSWER_HPP_*/

@@ -178,7 +178,7 @@ namespace ebl {
   template <typename Tdata>
   string camera_directory<Tdata>::grab_filename() {
     next();
-    out << frame_id_ << "/" << flsize << ": processing ";
+    out << frame_id_ << "/" << flsize << ": grabbing ";
     out << fdir << fname << endl;
     oss.str(""); oss << fdir << "/" << fname;
     return oss.str();
@@ -187,7 +187,7 @@ namespace ebl {
   template <typename Tdata>
   idx<Tdata> camera_directory<Tdata>::grab() {
     next();
-    out << frame_id_ << "/" << flsize << ": processing ";
+    out << frame_id_ << "/" << flsize << ": grabbing ";
     out << fdir << fname << endl;
     oss.str(""); oss << fdir << "/" << fname;
     try {
@@ -235,6 +235,13 @@ namespace ebl {
   template <typename Tdata>
   string camera_directory<Tdata>::frame_name() {
     return frame_name_;
+  }
+  
+  template <typename Tdata>
+  string camera_directory<Tdata>::frame_fullname() {
+    string full;
+    full << fdir << fname;
+    return full;
   }
   
   template <typename Tdata>

@@ -39,7 +39,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // state
 
-  state::state() {
+  state::state() : smart_pointer() {
   }
 
   state::~state() {

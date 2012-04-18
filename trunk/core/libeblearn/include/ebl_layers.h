@@ -36,9 +36,10 @@
 #include "libidx.h"
 #include "ebl_states.h"
 #include "ebl_basic.h"
+#include "ebl_pooling.h"
 #include "ebl_arch.h"
 #include "ebl_nonlinearity.h"
-#include "ebl_transfer.h"
+#include "ebl_normalization.h"
 
 namespace ebl {
 
@@ -67,18 +68,21 @@ namespace ebl {
     void forget(forget_param_linear &fp);
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim fprop_size(idxdim &i_size);
+    virtual fidxdim fprop_size(fidxdim &i_size);
     //! Return dimensions compatible with this module given output dimensions.
     //! See module_1_1_gen's documentation for more details.
     virtual idxdim bprop_size(const idxdim &o_size);
     //! Returns a deep copy of this module.
     virtual full_layer<T,Tstate>* copy();
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
 
     // members ////////////////////////////////////////////////////////
   private:
     bool				 btanh;	//!< use tanh or stdsigmoid
   public:
-    linear_module_replicable<T,Tstate>	 linear;//!< linear module for weight
+     /* linear_module_replicable<T,Tstate>	 linear;//!< linear module for weight */
+    linear_module<T,Tstate>	         linear;//!< linear module for weight
     addc_module<T,Tstate>		 adder;	//!< bias vector
     module_1_1<T,Tstate>		*sigmoid;//!< the non-linear function
     Tstate				*sum;	//!< weighted sum
@@ -111,10 +115,10 @@ namespace ebl {
     void forget(forget_param_linear &fp);
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim fprop_size(idxdim &i_size);
+    virtual fidxdim fprop_size(fidxdim &i_size);
     //! Return dimensions compatible with this module given output dimensions.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim bprop_size(const idxdim &o_size);
+    virtual fidxdim bprop_size(const fidxdim &o_size);
     //! Returns a deep copy of this module.
     virtual convolution_layer<T,Tstate>* copy();
 
@@ -122,7 +126,8 @@ namespace ebl {
   private:
     bool					 btanh;	//!< tanh or stdsigmoid
   public:
-    convolution_module_replicable<T,Tstate>	 convol;//!< convolution module
+  //    convolution_module_replicable<T,Tstate>	 convol;//!< convolution module
+    convolution_module<T,Tstate>	 convol;//!< convolution module
     addc_module<T,Tstate>			 adder;	//!< bias vector
     module_1_1<T,Tstate>			*sigmoid;//!< non-linear funct
     Tstate					*sum;	//!< convolution result
@@ -138,12 +143,18 @@ namespace ebl {
     //! in which the trainable weights will be appended,
     //! the number of inputs, and the number of outputs.
     //! \param p is used to store all parametric variables in a single place.
-    //! \param kernel The convolution kernel sizes.
-    //! \param stride The convolution strides.
+    //! \param kerneli is the height of the convolution kernel
+    //! \param kernelj is the width of the convolution kernel
+    //! \param stridei is the stride at which convolutions are done on 
+    //!        the height axis.
+    //! \param stridej is the stride at which convolutions are done on 
+    //!        the width axis.
     //! \param table is the convolution connection table.
     //! \param tanh If true, use tanh squasher, stdsigmoid otherwise.
-    convabsnorm_layer(parameter<T,Tstate> *p, idxdim kernel, idxdim stride,
-		      idx<intg> &tbl, bool mirror = false, bool tanh = true,
+
+    convabsnorm_layer(parameter<T,Tstate> *p, intg kerneli, intg kernelj, 
+		      intg stridei, intg stridej, idx<intg> &tbl,
+		      bool mirror = false, bool tanh = true,
 		      const char *name = "convabsnorm_layer");
     //! Destructor.
     virtual ~convabsnorm_layer();
@@ -157,10 +168,10 @@ namespace ebl {
     void forget(forget_param_linear &fp);
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim fprop_size(idxdim &i_size);
+    virtual fidxdim fprop_size(fidxdim &i_size);
     //! Return dimensions compatible with this module given output dimensions.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim bprop_size(const idxdim &o_size);
+    virtual fidxdim bprop_size(const fidxdim &o_size);
     //! Returns a deep copy of this module.
     virtual convabsnorm_layer<T,Tstate>* copy();
 
@@ -170,7 +181,7 @@ namespace ebl {
   public:
     convolution_layer<T,Tstate>		 lconv;	//!< convolution layer
     abs_module<T,Tstate>		 abs;	//!< absolute rectification
-    weighted_std_module<T,Tstate>	 norm;	//!< constrast normalization
+    contrast_norm_module<T,Tstate>	 norm;	//!< constrast normalization
     Tstate				*tmp;	//!< temporary results
     Tstate				*tmp2;	//!< temporary results
   };
@@ -202,10 +213,10 @@ namespace ebl {
     void forget(forget_param_linear &fp);
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim fprop_size(idxdim &i_size);
+    virtual fidxdim fprop_size(fidxdim &i_size);
     //! Return dimensions compatible with this module given output dimensions.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim bprop_size(const idxdim &o_size);
+    virtual fidxdim bprop_size(const fidxdim &o_size);
     //! Returns a deep copy of this module.
     virtual subsampling_layer<T,Tstate>* copy();
     //! Returns a string describing this module and its parameters.

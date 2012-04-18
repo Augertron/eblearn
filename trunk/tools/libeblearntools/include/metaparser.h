@@ -119,7 +119,9 @@ namespace ebl {
     //! Return the n best sets of variables that minimize the keys in the order
     //! of their list, or all if n == 0.
     //! \param display If true, pretty best answers.
-    varmaplist best(list<string> &keys, uint n = 0, bool display = false);
+    //! \param maxiter If >= 0, remove all occurences of 'i' > maxiter.
+    varmaplist best(list<string> &keys, uint n = 0, bool display = false,
+		    int maxiter = -1);
     //! Return the best sets of variables that minimize the keys in the order
     //! of their list. Only 1 best answer per value of key 'key' is returned.
     //! \param display If true, pretty best answers.
@@ -256,16 +258,22 @@ namespace ebl {
     //! Analyze log files and return the best set of variables.
     //! \param maxiter Set this to the maximum iteration number found.
     //! \param besteach This will be set to the best answers of each job.
-    varmaplist analyze(configuration &conf, const string &dir, int &maxiter,
-		       varmaplist &besteach, bool displayall = false);
+    varmaplist analyze(configuration &conf, const string &dir, 
+		       int &maxiter, varmaplist &besteach, 
+		       bool displayall = false,
+		       int *maxiter_common = NULL, 
+		       varmaplist *best_common = NULL); 
 
     //! Send an email reporting the status of the runs.
     //! \param besteach An optional list of best results for each job.
     void send_report(configuration &conf, const string dir,
-		     varmaplist &best, int iteration, string conf_fullfname,
+		     varmaplist &best, int max_iter, 
+		     string conf_fullfname,
 		     string jobs_info, uint nrunning = 0,
 		     double maxminutes = 0.0, double minminutes = 0.0,
-		     varmaplist *besteach = NULL);
+		     varmaplist *besteach = NULL,
+		     varmaplist *best_common = NULL, 
+		     int *maxiter_common = NULL);
 
     ////////////////////////////////////////////////////////////////
     // internal methods

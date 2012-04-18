@@ -53,7 +53,9 @@ namespace ebl {
   //! \param scaled If false, scale box with respect to its original scale,
   //!           otherwise draw its unscaled size.
   EXPORT void draw_bbox(bbox &bb, vector<string> &labels, uint h0, uint w0,
-			double dzoom, float transparency, bool scaled = true);
+			double dzoom, float transparency, bool scaled = true,
+			uint color_offset = 0, bool show_class = true,
+			bool show_conf = true);
 
   ////////////////////////////////////////////////////////////////
   // detector_gui
@@ -78,93 +80,115 @@ namespace ebl {
     detector_gui(uint draw_extracted = 0,
 		 bool show_detqueue = false, uint step = 1, uint qheight = 5,
 		 uint qwidth = 5, bool show_detqueue2 = false, uint step2 = 1,
-		 uint qheight2 = 5, uint qwidth2 = 5);
+		 uint qheight2 = 5, uint qwidth2 = 5, bool show_class = true,
+		 bool show_conf = true);
 
     //! Destructor.
     virtual ~detector_gui();
 
-    //! displays only the output of the classifier after a a call to 
-    //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
-    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
+    //! displays only the output of the classifier after a a call to
+    //! detector::fprop(img, zoom, threshold, objsize) at coordinates
+    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified,
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <typename Tin>
-      vector<bbox*>& display(detector<T,Tstate> &cl, idx<Tin> &img,
-			     double threshold, const char *frame_name = NULL,
-			     unsigned int h0 = 0, unsigned int w0 = 0, 
-			     double dzoom = 1.0, T vmin = 0, T vmax = 0,
-			     int wid = -1, const char *wname = NULL,
-			     float transparency = 1.0);
-    
-    //! displays only the output of the classifier after a a call to 
-    //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
-    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
+      bboxes& display(detector<T,Tstate> &cl, idx<Tin> &img,
+		      double threshold, const char *frame_name = NULL,
+		      uint h0 = 0, uint w0 = 0, double dzoom = 1.0, T vmin = 0,
+		      T vmax = 0, int wid = -1, const char *wname = NULL,
+		      float transparency = 1.0);
+
+    template <typename Tin>
+      void display_groundtruth(detector<T,Tstate> &cl, idx<Tin> &img,
+			       bboxes &groundtruth, bboxes &filtered,
+			       bboxes &nonfiltered, bboxes &pos, bboxes &neg,
+			       svector<midx<T> > &pp_pos,
+			       svector<midx<T> > &pp_neg,
+			       uint h0 = 0, uint w0 = 0, double dzoom = 1.0,
+			       T vmin = 0, T vmax = 0, int wid = -1);
+  
+    //! displays only the output of the classifier after a a call to
+    //! detector::fprop(img, zoom, threshold, objsize) at coordinates
+    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified,
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <typename Tin>
-      static void display_minimal(idx<Tin> &img, vector<bbox*>& vb,
+      static void display_minimal(idx<Tin> &img, bboxes& vb,
 				  vector<string> &labels,
-				  unsigned int h0 = 0, unsigned int w0 = 0, 
+				  uint &h0, uint &w0,
 				  double dzoom = 1.0, T vmin = 0, T vmax = 0,
 				  int wid = -1, bool show_parts = false,
-				  float transparency = 1.0);
+				  float transparency = 1.0,
+				  bool show_class = true,
+				  bool show_conf = true,
+				  bboxes *bb2 = NULL);
 
-    //! displays only the output of the classifier after a a call to 
-    //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
-    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
+    //! displays only the output of the classifier after a a call to
+    //! detector::fprop(img, zoom, threshold, objsize) at coordinates
+    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified,
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <typename Tin>
-      vector<bbox*>& display_input(detector<T,Tstate> &cl, idx<Tin> &img,
-				   double threshold,
-				   const char *frame_name = NULL,
-				   unsigned int h0 = 0, unsigned int w0 = 0, 
-				   double dzoom = 1.0, T vmin = 0,
-				   T vmax = 0,
-				   int wid = -1, const char *wname = NULL,
-				   float transparency = 1.0); 
+      bboxes& display_input(detector<T,Tstate> &cl, idx<Tin> &img,
+			    double threshold,
+			    const char *frame_name = NULL,
+			    uint h0 = 0, uint w0 = 0,
+			    double dzoom = 1.0, T vmin = 0,
+			    T vmax = 0,
+			    int wid = -1, const char *wname = NULL,
+			    float transparency = 1.0);
+
+    void display_preprocessed(svector<midx<T> > &pp, bboxes &bbs,
+			      vector<string> &labels, uint &h0, uint &w0,
+			      double dzoom = 1.0, T vmin = 0, T vmax = 0,
+			      uint wmax = 3000);
 
     //! display the regular input/output display but also the inputs and outputs
-    //! corresponding to each scale, corresponding to a call to 
-    //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
-    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
+    //! corresponding to each scale, corresponding to a call to
+    //! detector::fprop(img, zoom, threshold, objsize) at coordinates
+    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified,
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <typename Tin>
-      vector<bbox*>& display_inputs_outputs(detector<T,Tstate> &cl, 
-					    idx<Tin> &img, double threshold,
-					    const char *frame_name = NULL,
-					    unsigned int h0 = 0,
-					    unsigned int w0 = 0, 
-					    double dzoom = 1.0, T vmin = 0,
-					    T vmax = 0, int wid = -1, 
-					    const char *wname = NULL,
-					    T in_vmin = 0, T in_vmax = 255,
-					    float transparency = 1.0); 
-    
-    //! display all, display_inputs_outputs and the internal states of the fprop
-    //! on the first scale, corresponding to a call to 
-    //! detector::fprop(img, zoom, threshold, objsize) at coordinates 
-    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified, 
-    //! use that window, otherwise create a new window and reuse it.
-    //! <wname> is an optional window title.
-    template <typename Tin>
-      vector<bbox*>& display_all(detector<T,Tstate> &cl, idx<Tin> &img, 
-				 double threshold,
-				 const char *frame_name = NULL,
-				 unsigned int h0 = 0,
-				 unsigned int w0 = 0, double dzoom = 1.0,
-				 T vmin = 0, T vmax = 0,
-				 int wid = -1,const char *wname = NULL);
+      bboxes& display_inputs_outputs(detector<T,Tstate> &cl, idx<Tin> &img,
+				     double threshold,
+				     const char *frame_name = NULL,
+				     uint h0 = 0, uint w0 = 0,
+				     double dzoom = 1.0, T vmin = 0,
+				     T vmax = 0, int wid = -1,
+				     const char *wname = NULL,
+				     T in_vmin = 0, T in_vmax = 255,
+				     float transparency = 1.0,
+				     uint wmax = 3000);
 
-    //! displays all the current state of the classifier. 
-    //! If a window id <wid> is specified, 
+    void display_inputs(detector<T,Tstate> &cl, uint &h0, uint &w0,
+			bboxes &bb, double dzoom = 1.0, T vmin = 0, T vmax = 0,
+			float transparency = 1.0);
+    void display_outputs(detector<T,Tstate> &cl, uint &h0, uint &w0,
+			 bboxes &bb, double dzoom = 1.0, T vmin = 0, T vmax = 0,
+			 float transparency = 1.0);
+
+    //! display all, display_inputs_outputs and the internal states of the fprop
+    //! on the first scale, corresponding to a call to
+    //! detector::fprop(img, zoom, threshold, objsize) at coordinates
+    //! (h0, w0), with zoom <dzoom>. If a window id <wid> is specified,
     //! use that window, otherwise create a new window and reuse it.
     //! <wname> is an optional window title.
     template <typename Tin>
-      void display_current(detector<T,Tstate> &cl, 
+      bboxes& display_all(detector<T,Tstate> &cl, idx<Tin> &img,
+			  double threshold, const char *frame_name = NULL,
+			  uint h0 = 0, uint w0 = 0, double dzoom = 1.0,
+			  T vmin = 0, T vmax = 0,
+			  int wid = -1,const char *wname = NULL);
+
+    //! displays all the current state of the classifier.
+    //! If a window id <wid> is specified,
+    //! use that window, otherwise create a new window and reuse it.
+    //! <wname> is an optional window title.
+    template <typename Tin>
+      void display_current(detector<T,Tstate> &cl,
 			   idx<Tin> &sample,
-			   int wid = -1, 
+			   int wid = -1,
 			   const char *wname = NULL, double dzoom = 1.0);
 
     void set_mask_class(const char *name, T threshold);
@@ -184,6 +208,7 @@ namespace ebl {
   private:
     int		display_wid;	//!< window id
     int		display_wid_fprop;	//!< window id for fprop
+    int		display_wid_gt;	//!< window id for groundtruth
     uint        draw_extracted;
     bool	show_detqueue;	//!< show queue of last detections or not
     bool	show_detqueue2; //!< show queue of last detections or not
@@ -197,7 +222,9 @@ namespace ebl {
     deque<idx<T> > detqueue2;	//!< queue of last detections
     uint        detcnt;         //!< counter of all detections
     string      mask_class;
-    T        mask_threshold;
+    T           mask_threshold;
+    bool        show_class;     //!< Print class name in bbox.
+    bool        show_conf;     //!< Print confidence in bbox.
   };
 
 } // end namespace ebl

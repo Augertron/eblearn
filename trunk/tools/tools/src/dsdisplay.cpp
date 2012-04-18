@@ -34,6 +34,7 @@
 
 #include "libidx.h"
 #include "libeblearn.h"
+#include "eblapp.h"
 
 #ifdef __GUI__
 #include "libidxgui.h"
@@ -41,9 +42,6 @@
 #endif
 
 #include "dataset.h" // different than datasource, for data compilation only
-
-using namespace std;
-using namespace ebl;
 
 // global variables: parameters
 idxdim		dims = idxdim(4, 8);	//!< number of samples to display (hxw)
@@ -167,6 +165,7 @@ template <typename Tdata, typename Tlabel>
 void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
   // file names
   string	classes_fname;
+  string	scales_fname;
   string	classpairs_fname;
   string	deformpairs_fname;
   // boolean successes of files loading
@@ -174,60 +173,71 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
   bool		bclasspairs = true;
   // data files
   idx<Tdata>	data;
-  idxs<Tdata>   datas;
+  midx<Tdata>   datas;
   idx<Tlabel>	labels;
   idx<ubyte>	classes;
+  idx<intg>	scales;
   idx<intg>	classpairs;
   idx<intg>	defpairs;
 
   // build file names
   build_fname(ds_name, CLASSES_NAME, classes_fname);
+  build_fname(ds_name, SCALES_NAME, scales_fname);
   build_fname(ds_name, CLASSPAIRS_NAME, classpairs_fname);
   build_fname(ds_name, DEFORMPAIRS_NAME, deformpairs_fname);
 
-  // check format of data file
-  bool multimat = has_multiple_matrices(data_fname.c_str());
+  // // check format of data file
+  // bool multimat = has_multiple_matrices(data_fname.c_str());
 
-  // if size is defined, only load data and print dimensions
-  if (size) {
-    if (multimat) {
-      datas = load_matrices<Tdata>(data_fname);
-      cout << datas.dim(0) << endl;
-    } else {
-      data = load_matrix<Tdata>(data_fname);
-      cout << data.dim(0) << endl;
-    }
-    return ;
-  }
-  // load data
-  if (multimat)
-    datas = load_matrices<Tdata>(data_fname);
-  else
-    data = load_matrix<Tdata>(data_fname);
-  loading_error(labels, labels_fname);
-  loading_warning(classes, classes_fname);
-  bclasspairs = loading_nowarning(classpairs, classpairs_fname);
-  bdefpairs = loading_nowarning(defpairs, deformpairs_fname);
+  // // if size is defined, only load data and print dimensions
+  // if (size) {
+  //   if (multimat) {
+  //     datas = load_matrices<Tdata>(data_fname);
+  //     cout << datas.dim(0) << endl;
+  //   } else {
+  //     data = load_matrix<Tdata>(data_fname);
+  //     cout << data.dim(0) << endl;
+  //   }
+  //   return ;
+  // }
+  // // load data
+  // if (multimat)
+  //   datas = load_matrices<Tdata>(data_fname);
+  // else
+  //   data = load_matrix<Tdata>(data_fname);
+  // loading_error(labels, labels_fname);
+  // loading_warning(classes, classes_fname);
+  // loading_warning(scales, scales_fname);
+  // bclasspairs = loading_nowarning(classpairs, classpairs_fname);
+  // bdefpairs = loading_nowarning(defpairs, deformpairs_fname);
 
-  // display only 1 channel
-  if (channel >= 0) {
-    if (multimat)
-      eblerror("showing only 1 channel is not supported with "
-	       << "multimats yet (TODO)");
-    if (channel >= data.dim(1)) {
-      cerr << "trying to select channel " << channel
-	   << " but channel dimension is of size " << data.dim(0)
-	   << " (in " << data << ")." << endl;
-      eblerror("trying to select unknown channel dimension");
-    }
-    data = data.select(1, channel);
-  }
-  // create datasource object
-  class_datasource<Tdata, Tdata, Tlabel> *train_ds = NULL;
-  if (multimat)
-    train_ds = new class_datasource<Tdata, Tdata, Tlabel>(datas, labels, classes, "Dataset");
-  else
-    train_ds = new class_datasource<Tdata, Tdata, Tlabel>(data, labels, classes, "Dataset");
+  // // display only 1 channel
+  // if (channel >= 0) {
+  //   if (multimat)
+  //     eblerror("showing only 1 channel is not supported with "
+  // 	       << "multimats yet (TODO)");
+  //   if (channel >= data.dim(1)) {
+  //     cerr << "trying to select channel " << channel
+  // 	   << " but channel dimension is of size " << data.dim(0)
+  // 	   << " (in " << data << ")." << endl;
+  //     eblerror("trying to select unknown channel dimension");
+  //   }
+  //   data = data.select(1, channel);
+  // }
+
+  class_datasource<Tdata, Tdata, Tlabel> *train_ds = 
+    new class_datasource<Tdata,Tdata,Tlabel>(data_fname.c_str(), labels_fname.c_str(), NULL,
+					     scales_fname.c_str(), classes_fname.c_str(), "Dataset");
+
+
+  // // create datasource object
+  // class_datasource<Tdata, Tdata, Tlabel> *train_ds = NULL;
+  // if (multimat)
+  //   train_ds = new class_datasource<Tdata, Tdata, Tlabel>(datas, labels, classes, "Dataset");
+  // else
+  //   train_ds = new class_datasource<Tdata, Tdata, Tlabel>(data, labels, classes, "Dataset");
+
+
   // display it
 #ifdef __GUI__
   if (!info) { // only display if info is false

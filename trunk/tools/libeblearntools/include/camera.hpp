@@ -195,6 +195,11 @@ namespace ebl {
   }
   
   template <typename Tdata>
+  string camera<Tdata>::frame_fullname() {
+    return frame_name();
+  }
+  
+  template <typename Tdata>
   int camera<Tdata>::remaining() {
     return -1;
   }

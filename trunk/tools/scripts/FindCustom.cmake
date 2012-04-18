@@ -2,6 +2,28 @@
 # Put here paths to manually installed libraries if necessary
 ################################################################################
 
+
+################################################################################
+# vlfeat (http://www.vlfeat.org/)
+################################################################################
+# SET(VLFEAT_FOUND TRUE)
+# SET(VLFEAT_INCLUDE_DIR "/home/sc3104/vlfeat/vlfeat-0.9.14/")
+# SET(VLFEAT_LIBRARIES_DIR "/home/sc3104/vlfeat/vlfeat-0.9.14/bin/glnxa64/")
+
+################################################################################
+# google-perftools-profiler(cpu)
+################################################################################
+# SET(GPROF_FOUND TRUE)
+# SET(GPROF_INCLUDE_DIR "/home/sc3104/include/")
+# SET(GPROF_LIBRARIES_DIR "/home/sc3104/lib/")
+
+################################################################################
+# Torch Cuda library(THC)
+################################################################################
+# SET(THC_FOUND TRUE)
+# SET(THC_INCLUDE_DIR "/home/sc3104/th/include/")
+# SET(THC_LIBRARIES_DIR "/home/sc3104/th/lib/")
+
 ################################################################################
 # Intel IPP
 ################################################################################
@@ -15,11 +37,25 @@
 #SET(Boost_LIBRARY_DIRS "$ENV{HOME}/installed/boost/lib")
 #SET(Boost_MINOR_VERSION 35)
 
- # SET(CPPUNIT_FOUND TRUE)
- # SET(CPPUNIT_INCLUDE_DIR "C:/Users/pierre/Downloads/cppunit-1.12.1/include")
- # SET(CPPUNIT_LIBRARY "C:/Users/pierre/Downloads/cppunit-1.12.1/lib/cppunitd.lib")
- # MESSAGE(STATUS "Found CPPUNIT")
+# SET(CPPUNIT_FOUND TRUE)
+# SET(CPPUNIT_INCLUDE_DIR "C:/eblinstall/cppunit-1.12.1/include")
+# SET(CPPUNIT_LIBRARY "C:/eblinstall/cppunit-1.12.1/lib/cppunitd.lib")
+# MESSAGE(STATUS "Found CPPUNIT")
+  
+#SET(PTHREAD_FOUND TRUE)
+#SET(PTHREAD_INCLUDE_DIR "c:/eblinstall/pthreads/Pre-built.2/include")
+#SET(PTHREAD_LIBRARY "c:/eblinstall/pthreads/Pre-built.2/lib/pthreadVC2.lib")
 
+#SET(QT_DIR "c:/Qt")
+#SET(QT_QMAKE_EXECUTABLE "c:/Qt/bin/qmake.exe")
+#SET(QT_MOC_EXECUTABLE "c:/Qt/bin/moc.exe")
+#SET(QT_RCC_EXECUTABLE "c:/Qt/bin/rcc.exe")
+#SET(QT_UIC_EXECUTABLE "c:/Qt/bin/uic.exe")
+#SET(QT_INCLUDE_DIR "c:/Qt/include")
+#SET(QT_LIBRARY_DIR "c:/Qt/lib")
+#SET(QT_QTCORE_LIBRARY "c:/Qt/lib/QtCore4.lib")
+#SET (QT_FOUND TRUE)
+  
 IF ($ENV{USEMPI})
   SET(MPI_FOUND TRUE)
 #  SET(MPI_INCLUDE_PATH "/share/apps/mvapich/1.1-2009-12-05/intel/include/")
@@ -55,3 +91,12 @@ ENDIF ($ENV{HPCUSQ})
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__MAGICKPP__")  
 ENDIF ($ENV{USEMAGICKPP})
 ENDIF ($ENV{HPCNYU})
+
+
+#IF ($ENV{USEMPI})
+#  SET(MPI_FOUND TRUE)
+#set(MPI_INCLUDE_PATH "/usr/include/openmpi-x86_64/")
+#set(MPI_LIBRARIES "/usr/lib64/compat-openmpi/lib/")
+#set(Boost_INCLUDE_DIRS "/usr/include/")   
+#INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
+#ENDIF ($ENV{USEMPI})

@@ -7,6 +7,7 @@ FIND_PATH(IPP_INCLUDE_DIR "ipp.h" PATHS
   "/opt/intel/ipp/*/ia32/include"
   "/opt/intel/ipp/*/em64t/include"
   "/usr/local/intel/ipp/*/ia32/include"
+  "/share/apps/intel/ipp/5.2/em64t/include"
   "$ENV{IPPROOT}/include")
 
 FIND_PATH(IPP_LIBRARIES_DIR "libguide.so" PATHS
@@ -14,6 +15,7 @@ FIND_PATH(IPP_LIBRARIES_DIR "libguide.so" PATHS
   "/opt/intel/ipp/*/ia32/sharedlib"
   "/opt/intel/ipp/*/em64t/sharedlib"
   "/usr/local/intel/ipp/*/ia32/sharedlib"
+  "/share/apps/intel/ipp/5.2/em64t/sharedlib"
   "$ENV{IPPROOT}/sharedlib")
 
 IF (DEFINED ENV{FORCE_IPP_DIR})

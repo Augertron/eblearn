@@ -90,6 +90,10 @@ namespace ebl {
     gui.draw_arrow(h1, w1, h2, w2);
   }
 
+  void draw_flow(idx<float> &flow, int h, int w) {
+    gui.draw_flow(flow, h, w);
+  }
+
   void draw_box(int h0, int w0, int h, int w, ubyte r, ubyte g, ubyte b,
 		ubyte a, string *s) {
     gui.draw_box((float) h0, (float) w0, (float) h, (float) w, r, g, b, a, s);
@@ -176,7 +180,7 @@ namespace ebl {
   void night_mode() {
     gui.set_bg_colors(0, 0, 0);
     gui.set_text_colors(255, 255, 255, 255, 0, 0, 0, 127);
-    gui.freeze_style(true);
+    //gui.freeze_style(true);
   }
 
   void set_window_title(const char *s) {
@@ -205,6 +209,11 @@ namespace ebl {
   void draw_text(float x, float y, float z, const char *s,
 		 int r, int g, int b, int a) {
     gui.draw_text_3d(x, y, z, s, r, g, b, a);
+  }
+  
+  void draw_line(float x, float y, float z, float x1, float y1, float z1,
+		 const char *s, int r, int g, int b, int a) {
+    gui.draw_line_3d(x, y, z, x1, y1, z1, s, r, g, b, a);
   }
   
 } // end namespace ebl

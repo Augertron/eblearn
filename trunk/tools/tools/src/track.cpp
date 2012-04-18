@@ -44,6 +44,7 @@
 #include <time.h>
 #include "libeblearn.h"
 #include "libeblearntools.h"
+#include "eblapp.h"
 
 #ifndef __WINDOWS__
 #include <fenv.h>
@@ -52,9 +53,6 @@
 #ifdef __GUI__
 #include "libeblearngui.h"
 #endif
-
-using namespace std;
-using namespace ebl; // all eblearn objects are under the ebl namespace
 
 ////////////////////////////////////////////////////////////////
 // drawing and position interpolation

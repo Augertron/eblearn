@@ -26,19 +26,19 @@ IF (QT_FOUND) #-----------------------------------------------------------------
       include/gui_thread.h include/idxgui.h include/win2d.h include/win3d.h
       OPTIONS  ${dflags})
     set(MOCSRC "include/")
-    SET_SOURCE_FILES_PROPERTIES(src/win3d.cpp PROPERTIES 
+    SET_SOURCE_FILES_PROPERTIES(src/win3d.cpp PROPERTIES
       OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MOCSRC}moc_win3d.cxx)
   else (qt3d_found)
     QT_WRAP_CPP(idxgui IDXGUI_SRC_MOC
       include/gui_thread.h include/idxgui.h include/win2d.h)
     set(MOCSRC "")
   endif (qt3d_found)
-  
-  SET_SOURCE_FILES_PROPERTIES(src/gui_thread.cpp PROPERTIES 
+
+  SET_SOURCE_FILES_PROPERTIES(src/gui_thread.cpp PROPERTIES
     OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MOCSRC}moc_gui_thread.cxx)
-  SET_SOURCE_FILES_PROPERTIES(src/idxgui.cpp PROPERTIES 
+  SET_SOURCE_FILES_PROPERTIES(src/idxgui.cpp PROPERTIES
     OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MOCSRC}moc_idxgui.cxx)
-  SET_SOURCE_FILES_PROPERTIES(src/win2d.cpp PROPERTIES 
+  SET_SOURCE_FILES_PROPERTIES(src/win2d.cpp PROPERTIES
     OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${MOCSRC}moc_win2d.cxx)
 
   # compile library
@@ -52,8 +52,13 @@ IF (QT_FOUND) #-----------------------------------------------------------------
     src/gui.cpp
     src/scroll_box0.cpp
     src/scroll_box.cpp
-   )
-  
+    )
+
+
+  # change target name if debugging
+  if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set_target_properties(idxgui PROPERTIES OUTPUT_NAME "idxgui_debug")
+  endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
   # tell the compiled files that we are building libidxgui
   SET_PROPERTY(TARGET idxgui PROPERTY COMPILE_DEFINITIONS LIBIDXGUI)
 
@@ -66,7 +71,7 @@ IF (QT_FOUND) #-----------------------------------------------------------------
   if (qt3d_found)
     target_link_libraries (idxgui QtCore Qt3D QtOpenGL)
   endif (qt3d_found)
-  
+
 ELSE (QT_FOUND) #---------------------------------------------------------------
   MESSAGE("__ WARNING: libidxgui won't be compiled because of missing QT libraries.")
 ENDIF (QT_FOUND) #--------------------------------------------------------------

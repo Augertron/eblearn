@@ -39,24 +39,4 @@ using namespace std;
 
 namespace ebl {
 
-#ifdef __DEBUGMEM__
-  
-  void pretty_memory() {
-    intg total = 0;
-    total += srg<double>::memsize;
-    total += srg<float>::memsize;
-    total += srg<int>::memsize;
-    total += srg<long>::memsize;
-    total += srg<short>::memsize;
-    total += srg<unsigned char>::memsize;
-    total += srg<const char *>::memsize; 
-    total += srg<void*>::memsize;
-    total += srg<uint>::memsize;
-    total += srg<bool>::memsize;
-    std::cout << "total_memory_usage=" << total / 1048576 << " Mb"
-  	      << std::endl;
-  }
-  
-#endif
-  
 } // end namespace ebl

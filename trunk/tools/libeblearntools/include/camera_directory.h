@@ -37,6 +37,7 @@
 #include "tools_utils.h"
 
 #ifdef __BOOST__
+#define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 using namespace boost::filesystem;
@@ -52,9 +53,7 @@ namespace ebl {
   //! to save gui outputs into video files.
   template <typename Tdata> class camera_directory : public camera<Tdata> {
   public:
-
-    ////////////////////////////////////////////////////////////////
-    // constructors/allocation
+    // constructors/allocation /////////////////////////////////////////////////
 
     //! Initialize a directory camera from a root directory.
     //! height and width are optional parameters that resize the input image
@@ -75,7 +74,6 @@ namespace ebl {
 		     std::ostream &err = std::cerr,
 		     const char *file_pattern = IMAGE_PATTERN_MAT,
 		     const list<string> *files = NULL);
-
     //! Initialize a directory camera without a root directory. This constructor
     //! requires a subsequent call to read_directory to initialize images.
     //! height and width are optional parameters that resize the input image
@@ -92,51 +90,41 @@ namespace ebl {
 		     std::ostream &out = std::cout,
 		     std::ostream &err = std::cerr,
 		     const char *file_pattern = IMAGE_PATTERN_MAT);
-
     //! Find all images recursively from this directory.
-    bool read_directory(const char *directory);
-    
+    bool read_directory(const char *directory);    
     //! Destructor.
     virtual ~camera_directory();
 
-    ////////////////////////////////////////////////////////////////
-    // frame grabbing
+    // frame grabbing //////////////////////////////////////////////////////////
 
     //! Return a new frame.
     virtual idx<Tdata> grab();
-
     //! Do not read the file, instead return the filename to be grabbed.
     virtual string grab_filename();
-
     //! Move to the next frame, without returning the frame.
     //! This is called by grab before grabbing.
     //! This can be used to get frames infos without grabbing.
     virtual void next();
-
     //! Move to the previous frame, without returning the frame.
     virtual void previous();
-
     //! Return true until all images have been processed.
     virtual bool empty();
-
     //! Skip n frames.
     virtual void skip(uint n);
-
     //! Return a name for current frame.
     virtual string frame_name();
-
+    //! Return the complete filename for current frame (including path).
+    virtual string frame_fullname();
     //! Return the subdirectory name for the current frame,
     //! relative to the global input directory.
     virtual string get_subdir();
-
     //! Return the number of frames left to process, -1 if unknown.
     virtual int remaining();
-
     //! Return the total number of frames to process from the initialization,
     //! of the camera, -1 if unknown.
     virtual int size();
 
-    // members ////////////////////////////////////////////////////////
+    // members /////////////////////////////////////////////////////////////////
   protected:
     using camera<Tdata>::frame;	//!< frame buffer 
     using camera<Tdata>::frame_id_;	//!< frame counter

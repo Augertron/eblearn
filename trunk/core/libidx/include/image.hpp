@@ -52,7 +52,7 @@ using namespace std;
 
 namespace ebl {
 
-  template<class T>
+  template <typename T>
   idx<T> image_crop(idx<T> &in, int x, int y, int w, int h) {
     idx<T> bla = in.narrow(0, h, y).narrow(1, w, x);
     idx<T> bla3(bla.dim(0), bla.dim(1), bla.order() < 3 ? -1 : bla.dim(2));
@@ -60,9 +60,12 @@ namespace ebl {
     return bla3;
   }
 
-  template<class T> idx<T> image_resize(idx<T> &image, double h, double w, 
-					int mode, rect<int> *iregion_,
-					rect<int> *oregion_) {
+  //////////////////////////////////////////////////////////////////////////////
+  // resize
+
+  template <typename T>
+  idx<T> image_resize(idx<T> &image, double h, double w, int mode,
+		      rect<int> *iregion_, rect<int> *oregion_) {
     if (image.order() < 2) eblerror("image must have at least an order of 2.");
     // iregion is optional, set it to entire image if not given
     rect<int> iregion = rect<int>(0, 0, image.dim(0), image.dim(1));
@@ -81,7 +84,7 @@ namespace ebl {
     }
     int imw = (int) contim.dim(1);
     int imh = (int) contim.dim(0);
-    int rw = 0, rh = 0;
+    //    int rw = 0, rh = 0;
     double ow = 0, oh = 0;
     if ((imw == 0) || (imh == 0))
       eblerror("cannot have dimensions of size 0"
@@ -102,8 +105,8 @@ namespace ebl {
       ratioh = ratiomin;
     }
     else if (mode == 1) { // possibly modify aspect ratio
-      ratiow = w; //ratiow;
-      ratioh = h; //ratioh;
+      // ratiow = w; //ratiow;
+      // ratioh = h; //ratioh;
     }
     else if (mode == 2) { // use w and h as scaling ratios
       ratiow = w;
@@ -121,13 +124,14 @@ namespace ebl {
       ow = w;//max(1.0, imw * ratiow);
       oh = h;//max(1.0, imh * ratioh);
     }
-    // compute closest integer subsampling ratio
-    rw = std::max(1, (int) (1 / ratiow));
-    rh = std::max(1, (int) (1 / ratioh));
+    // // compute closest integer subsampling ratio
+    // rw = std::max(1, (int) (1 / ratiow));
+    // rh = std::max(1, (int) (1 / ratioh));
     // compute output region
-    rect<int> oregion((uint)(iregion.h0 * ratioh), (uint)(iregion.w0 * ratiow),
-		 (uint)(iregion.height * ratioh),
-		 (uint)(iregion.width * ratiow));
+    rect<int> oregion((uint)(iregion.h0 * ratioh),
+		      (uint)(iregion.w0 * ratiow),
+		      (uint)(iregion.height * ratioh),
+		      (uint)(iregion.width * ratiow));
     if (oregion_)
       *oregion_ = oregion;
     // TODO: why is this useful? for ubyte images?
@@ -163,7 +167,7 @@ namespace ebl {
     return rez;
   }
 
-  template<class T>
+  template <typename T>
   idx<T> image_gaussian_resize(idx<T> &im, double oheight, double owidth,
 			       uint mode, rect<int> *iregion_,
 			       rect<int> *oregion) {
@@ -212,7 +216,7 @@ namespace ebl {
 	reductions = gp.count_reductions_exact(iregion, outr, exact_inr);
 	break ;
       default:
-	eblerror("unsupported mode");
+	eblerror("unsupported mode " << mode);
       }
       // bilinear resize at closest resolution to current resolution
       double exact_imh = (exact_inr.height / (double) iregion.height)
@@ -263,7 +267,7 @@ namespace ebl {
     return rim;
   }
 
-  template<class T>
+  template <typename T>
   idx<T> image_mean_resize(idx<T> &im, double oheight, double owidth,
 			   uint mode, rect<int> *iregion_, rect<int> *oregion) {
     // only accept 2D or 3D images
@@ -365,61 +369,7 @@ namespace ebl {
     return out;
   }
 
-  template<class T> 
-  idx<T> image_region_to_rect(idx<T> &im, const rect<int> &r, uint oheight,
-			      uint owidth, rect<int> &cropped) {
-    // TODO: check expecting 2D or 3D
-    // TODO: check that rectangle is within image
-    idxdim d(im);
-    uint dh = 0;
-    uint dw = 1;
-    d.setdim(dh, oheight);
-    d.setdim(dw, owidth);
-    idx<T> res(d);
-
-    float hcenter = r.h0 + (float) r.height / 2; // input height center
-    float wcenter = r.w0 + (float) r.width / 2; // input width center
-    // // limit centers to half the width/height away from borders
-    // // to handle incorrect regions
-    // hcenter = MIN((float)im.dim(dh) - (float)r.height/2,
-    // 		  std::max((float)r.height/2, hcenter));
-    // wcenter = MIN((float)im.dim(dw) - (float)r.width/2,
-    // 		  std::max((float)r.width/2, wcenter));
-    float h0 = hcenter - (float) oheight / 2; // out height offset in input
-    float w0 = wcenter - (float) owidth / 2; // out width offset in input
-    float h1 = hcenter + (float) oheight / 2;
-    float w1 = wcenter + (float) owidth / 2;
-    int gh0 = (int) std::max(0, (int) MIN(im.dim(dh), h0)); // input h offset
-    int gw0 = (int) std::max(0, (int) MIN(im.dim(dw), w0)); // input w offset
-    int gh1 = (int) std::max(0, (int) MIN(im.dim(dh), h1));
-    int gw1 = (int) std::max(0, (int) MIN(im.dim(dw), w1));
-    int h = gh1 - gh0 + std::max(0, -r.h0); // out height narrow
-    int w = gw1 - gw0 + std::max(0, -r.w0); // out width narrow
-    int fh0 = (int) std::max(0, (int) (gh0 - h0)); // out height offset narrow
-    int fw0 = (int) std::max(0, (int) (gw0 - w0)); // out width offset narrow
-
-    // narrow original image
-    int hmin = std::max(1, std::min((int)res.dim(0) - fh0,
-				    std::min((int)im.dim(0) - gh0, h)));
-    int wmin = std::max(1, std::min((int)res.dim(1) - fw0,
-				    std::min((int)im.dim(1) - gw0, w)));
-    idx<T> tmpim = im.narrow(dh, hmin, gh0);
-    tmpim = tmpim.narrow(dw, wmin, gw0);
-    // narrow target image
-    idx<T> tmpres = res.narrow(dh, hmin, fh0);
-    tmpres = tmpres.narrow(dw, wmin, fw0);
-    // copy original to target
-    idx_clear(res);
-    idx_copy(tmpim, tmpres);
-    // set cropped rectangle to region in the output image containing input
-    cropped.h0 = fh0;
-    cropped.w0 = fw0;
-    cropped.height = hmin;
-    cropped.width = wmin;
-    return res;
-  }
-  
-  template<class T> 
+  template <typename T> 
   idx<T> image_region_to_square(idx<T> &im, const rect<uint> &r) {
     // TODO: check expecting 2D or 3D
     // TODO: check that rectangle is within image
@@ -441,7 +391,7 @@ namespace ebl {
     return res;
   }
   
-  template<class T> 
+  template <typename T> 
   idx<ubyte> image_to_ubyte(idx<T> &im, double zoomh, double zoomw,
 			    T minv, T maxv) {
     // check the order and dimensions
@@ -487,7 +437,7 @@ namespace ebl {
     return image;
   }
 
-  template<class T>
+  template <typename T>
   idx<T> image_subsample_grayscale(idx<T> &in, int nlin, int ncol) {
     intg h = in.dim(0);
     intg w = in.dim(1);
@@ -539,7 +489,7 @@ namespace ebl {
     return out;
   }
 
-  template<class T> idx<T> image_subsample_rgb(idx<T> &in, int nlin, int ncol) {
+  template <typename T> idx<T> image_subsample_rgb(idx<T> &in, int nlin, int ncol) {
     intg h = in.dim(0);
     intg w = in.dim(1);
     intg nh = h / nlin;
@@ -575,7 +525,7 @@ namespace ebl {
     return out;
   }
 
-  template<class T> idx<T> image_subsample(idx<T> &in, int nlin, int ncol) {
+  template <typename T> idx<T> image_subsample(idx<T> &in, int nlin, int ncol) {
     switch (in.order()) {
     case 2:
       return image_subsample_grayscale(in, nlin, ncol);
@@ -587,7 +537,7 @@ namespace ebl {
     }
   }
 
-  template<class T>
+  template <typename T>
   void image_warp_quad(idx<T> &in, idx<T> &out,
 		       idx<T> &background, int mode,
 		       float x1, float y1, float x2, float y2,
@@ -606,8 +556,9 @@ namespace ebl {
   }
 
 
-  template<class T> void image_warp(idx<T> &in, idx<T> &out, idx<T> &background,
-				    idx<int> &pi, idx<int> &pj) {
+  template <typename T>
+  void image_warp(idx<T> &in, idx<T> &out, idx<T> &background,
+		  idx<int> &pi, idx<int> &pj) {
     T* pin = in.idx_ptr();
     int indimi = in.dim(0);
     int indimj = in.dim(1);
@@ -625,8 +576,9 @@ namespace ebl {
       }}
   }
 
-  template<class T> void image_warp_fast(idx<T> &in, idx<T> &out, T *background,
-					 idx<int> &pi, idx<int> &pj) {
+  template <typename T>
+  void image_warp_fast(idx<T> &in, idx<T> &out, T *background,
+		       idx<int> &pi, idx<int> &pj) {
     T* pin = in.idx_ptr();
     int indimi = in.dim(0);
     int indimj = in.dim(1);
@@ -665,11 +617,92 @@ namespace ebl {
       }}
   }
 
-  template<class T> void image_interpolate_bilin(T* background, T *pin,
-						 int indimi, int indimj,
-						 int inmodi, int inmodj,
-						 int ppi, int ppj,
-						 T* out, int outsize) {
+  template <typename T>
+  void image_warp_flow(idx<T> &src, idx<T> &dst, idx<float> &flow,
+  		       bool bilinear, bool use_bg, T background) {
+    // dims
+    int width = src.dim(1);
+    int height = src.dim(0);
+    int channels = src.dim(2);
+    intg *is = src.mod_ptr();
+    intg *os = dst.mod_ptr();
+    intg *fs = flow.mod_ptr();
+
+    // get raw pointers
+    T *dst_data = dst.idx_ptr();
+    T *src_data = src.idx_ptr();
+    float *flow_data = flow.idx_ptr();
+
+    // resample
+    intg k,x,y;
+    for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+  	// subpixel position:
+  	float flow_y = flow_data[ 0*fs[0] + y*fs[1] + x*fs[2] ];
+  	float flow_x = flow_data[ 1*fs[0] + y*fs[1] + x*fs[2] ];
+  	float iy = y + flow_y;
+  	float ix = x + flow_x;
+
+  	// when going beyond image's boundaries, use background value
+  	if (use_bg && (ix < 0 || ix >= width || iy < 0 || iy >= height)) {
+  	  for (k = 0; k < channels; k++)
+  	    dst_data[ y*os[0] + x*os[1] + k*os[2] ] = background;
+  	  continue ;
+  	}
+	
+  	// borders
+  	ix = std::max(ix,(float)0);
+  	ix = std::min(ix,(float)(width-1));
+  	iy = std::max(iy,(float)0);
+  	iy = std::min(iy,(float)(height-1));
+
+  	// bilinear?
+  	if (bilinear) {
+  	  // 4 nearest neighbors:
+  	  int ix_nw = (int) floor(ix);
+  	  int iy_nw = (int) floor(iy);
+  	  int ix_ne = ix_nw + 1;
+  	  int iy_ne = iy_nw;
+  	  int ix_sw = ix_nw;
+  	  int iy_sw = iy_nw + 1;
+  	  int ix_se = ix_nw + 1;
+  	  int iy_se = iy_nw + 1;
+	  
+  	  // get surfaces to each neighbor:
+  	  float nw = ((float)(ix_se-ix))*(iy_se-iy);
+  	  float ne = ((float)(ix-ix_sw))*(iy_sw-iy);
+  	  float sw = ((float)(ix_ne-ix))*(iy-iy_ne);
+  	  float se = ((float)(ix-ix_nw))*(iy-iy_nw);
+	  
+  	  // weighted sum of neighbors:
+  	  for (k=0; k<channels; k++) {
+  	    dst_data[ k*os[2] + y*os[0] + x*os[1] ] = 
+              src_data[ k*is[2] + iy_nw*is[0] + ix_nw*is[1] ] * nw
+  	      + src_data[ k*is[2] + iy_ne*is[0]
+  			  + std::min(ix_ne,width-1)*is[1]] * ne
+  	      + src_data[ k*is[2] + std::min(iy_sw,height-1)*is[0]
+  			  + ix_sw*is[1] ] * sw
+  	      + src_data[ k*is[2] + std::min(iy_se,height-1)*is[0]
+  			  + std::min(ix_se,width-1)*is[1] ] * se;
+  	  }
+  	} else {
+  	  // 1 nearest neighbor:
+  	  int ix_n = (int) floor(ix+0.5);
+  	  int iy_n = (int) floor(iy+0.5);
+	  
+  	  // weighted sum of neighbors:
+  	  for (k = 0; k < channels; k++)
+  	    dst_data[ y*os[0] + x*os[1] + k*os[2] ] =
+  	      src_data[ iy_n*is[0] + ix_n*is[1] + k*is[2] ];
+  	}
+      }
+    }
+  }
+
+  template <typename T>
+  void image_interpolate_bilin(T* background, T *pin, int indimi, int indimj,
+			       int inmodi, int inmodj, int ppi, int ppj,
+			       T* out, int outsize) {
     int li0, lj0;
     register int li1, lj1;
     int deltai, ndeltai;
@@ -782,7 +815,7 @@ namespace ebl {
     }
   }
 
-  template<class T> void compute_bilin_transform(idx<int> &dispi,
+  template <typename T> void compute_bilin_transform(idx<int> &dispi,
 						 idx<int> &dispj,
 						 float x1, float y1, float x2,
 						 float y2, float x3, float y3,
@@ -824,7 +857,7 @@ namespace ebl {
   }
 
 
-//   template<class T> void compute_bilin_transform2(idx<int> &dispi,
+//   template <typename T> void compute_bilin_transform2(idx<int> &dispi,
 // 						  idx<int> &dispj,
 // 						  float x1, float y1,
 // 						  float x2, float y2,
@@ -869,10 +902,9 @@ namespace ebl {
 //       }}
 //   }
 
-  template<class T> void image_rotscale(idx<T> &src, idx<T> &out,
-					double sx, double sy, double dx,
-					double dy, double angle, double coeff,
-					idx<T> &bg){
+  template <typename T>
+  idx<T> image_rotscale(idx<T> &src, double sx, double sy, double dx,
+			double dy, double angle, double coeff, T bg_val) {
     if (!src.contiguousp())
       eblerror("image must be contiguous");
     double q = 1000;
@@ -881,46 +913,50 @@ namespace ebl {
     double ca = q*cos(angle * 0.017453292);
     double ca_plus_sa = coeff_inv * (sa + ca);
     double ca_minus_sa = coeff_inv * (ca - sa);
-    float x1 = sx - ca_plus_sa;
-    float y1 = sy - ca_minus_sa;
-    float x2 = sx + ca_minus_sa;
-    float y2 = sy - ca_plus_sa;
-    float x3 = sx + ca_plus_sa;
-    float y3 = sy + ca_minus_sa;
-    float x4 = sx - ca_minus_sa;
-    float y4 = sy + ca_plus_sa;
-    float p1 = dx-q;
-    float q1 = dy-q;
-    float p3 = dx + q;
-    float q3 = dy + q;
+    float x1 = sy - ca_plus_sa;
+    float y1 = sx - ca_minus_sa;
+    float x2 = sy + ca_minus_sa;
+    float y2 = sx - ca_plus_sa;
+    float x3 = sy + ca_plus_sa;
+    float y3 = sx + ca_minus_sa;
+    float x4 = sy - ca_minus_sa;
+    float y4 = sx + ca_plus_sa;
+    float p1 = dy - q;
+    float q1 = dx - q;
+    float p3 = dy + q;
+    float q3 = dx + q;
+    idx<T> out(src.get_idxdim());
+    idx<T> bg(src.dim(0));
+    idx_fill(bg, bg_val);
     image_warp_quad(src, out, bg, 1, x1, y1, x2, y2, x3, y3, x4, y4,
 		    p1, q1, p3, q3);
+    return out;
   }
 
-  template<class T>
-  idx<T> image_rotate(idx<T> &src, double angle, int ch, int cw, T bg_val) {
+  template <typename T>
+  idx<T> image_rotate(idx<T> &src, double angle, float ch, float cw, T bg_val) {
     if (!src.contiguousp())
       eblerror("image must be contiguous");
-    if (ch == -1) ch = src.dim(0) / 2;
-    if (cw == -1) cw = src.dim(1) / 2;
+    if (ch == -1) ch = src.dim(0) / (float) 2;
+    if (cw == -1) cw = src.dim(1) / (float) 2;
     idx<T> rotated(src.get_idxdim());
     double q = 1000;
     double sa = q*sin(angle * 0.017453292);
     double ca = q*cos(angle * 0.017453292);
     double ca_plus_sa = sa + ca;
     double ca_minus_sa = ca - sa;
-    float x1 = ch - ca_plus_sa;
-    float y1 = cw - ca_minus_sa;
-    float x2 = ch + ca_minus_sa;
-    float y2 = cw - ca_plus_sa;
-    float x3 = ch + ca_plus_sa;
-    float y3 = cw + ca_minus_sa;
-    float x4 = ch - ca_minus_sa;
-    float y4 = cw + ca_plus_sa;
-    float p1 = ch - q;
-    float q1 = cw - q;
-    float p3 = ch + q;
-    float q3 = cw + q;
+    float x1 = cw - ca_plus_sa;
+    float y1 = ch - ca_minus_sa;
+    float x2 = cw + ca_minus_sa;
+    float y2 = ch - ca_plus_sa;
+    float x3 = cw + ca_plus_sa;
+    float y3 = ch + ca_minus_sa;
+    float x4 = cw - ca_minus_sa;
+    float y4 = ch + ca_plus_sa;
+    float p1 = cw - q;
+    float q1 = ch - q;
+    float p3 = cw + q;
+    float q3 = ch + q;
     idx<T> bg(src.dim(0));
     idx_fill(bg, bg_val);
     image_warp_quad(src, rotated, bg, 1, x1, y1, x2, y2, x3, y3, x4, y4,
@@ -931,7 +967,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // Drawing
 
-  template<class T> void image_draw_box(idx<T> &img, T val,
+  template <typename T> void image_draw_box(idx<T> &img, T val,
 					uint x, uint y, uint dx, uint dy) {
     idx_checkorder1(img, 2);
     for (unsigned int i = x; i < x + dx; ++i) {
@@ -947,86 +983,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // Filters
 
-  // TODO: cleanup
-  template<class T>
-  idx<T> create_mexican_hat(double s, int n) {
-    idx<T> m(n, n);
-    T vinv = (T) (1/(s*s));
-    T total = 0;
-    int cx = n/2;
-    int cy = n/2;
-    for(int x = 0; x < n; x++){
-      for(int y = 0; y < n; y++){
-	int dx = x - cx;
-	int dy = y - cy;
-	m.set(-exp(-sqrt(vinv*(dx*dx + dy*dy))), x, y);
-	total += m.get(x, y);
-      }
-    }
-    //! set center valus so it's zero sum
-    m.set(m.get(cx, cy) - total, cx, cy);
-    //! normalize so that energy is 1
-    T energy = sqrt(idx_sumsqr(m));
-    idx_dotc(m, 1/energy, m);
-    return m;
-  }
-
-  // TODO: cleanup
-  template<class T>
-  idx<T> create_gaussian_kernel(int n) {
-    idx<T> m(n, n);
-    double s = ((double)n)/4;
-    T vinv = (T) (1/(s*s));
-    T total = 0;
-    int cx = n/2;
-    int cy = n/2;
-    for(int x = 0; x < n; x++){
-      for(int y = 0; y < n; y++){
-	int dx = x - cx;
-	int dy = y - cy;
-	m.set(-exp(-(vinv*(dx*dx + dy*dy))), x, y);
-	total += m.get(x, y);
-      }
-    }
-    //! set center valus so it's zero sum
-    //    m.set(m.get(cx, cy) - total, cx, cy);
-    //! normalize so that energy is 1
-    //    T energy = sqrt(idx_sumsqr(m));
-    idx_dotc(m, 1/total, m);
-    return m;
-  }
-
-  // TODO: cleanup
-  template<class T>
-  idx<T> create_gaussian_kernel(uint h, uint w) {
-    idx<T> m(h, w);
-    uint min = MIN(h, w); // use smallest dim for gaussian
-    double s = (double)(min)/4;
-    T vinv = (T) (1 / (s*s));
-    T total = 0;
-    int cx = min/2;
-    int cy = min/2;
-    for(uint x = 0; x < h; x++){
-      for(uint y = 0; y < w; y++){
-	int dx = x - cx;
-	int dy = y - cy;
-#ifdef __WINDOWS__
-	m.set((T) (-exp((double)(-(vinv*(dx*dx + dy*dy))))), x, y);
-#else
-	m.set((T) (-exp(-(vinv*(dx*dx + dy*dy)))), x, y);
-#endif
-	total += m.get(x, y);
-      }
-    }
-    //! set center valus so it's zero sum
-    //    m.set(m.get(cx, cy) - total, cx, cy);
-    //! normalize so that energy is 1
-    //    T energy = sqrt(idx_sumsqr(m));
-    idx_dotc(m, 1/total, m);
-    return m;
-  }
-
-  template<class T>
+  template <typename T>
   void image_mexican_filter(idx<T> &in, idx<T> &out, double s, int n,
 			    idx<T> *filter_, idx<T> *tmp_) {
     idx<T> filter = filter_ ? *filter_ : create_mexican_hat<T>(s, n);
@@ -1038,29 +995,34 @@ namespace ebl {
 
   // TODO: handle empty sides
   // TODO: check for tmp size incompatibilities
-  // TODO: THIS ASSUMES DATA IS IN LAST DIMENSION. MAKE IT GENERIC 
-  template<class T>
+  template <typename T>
   void image_global_normalization(idx<T> &in) {
-    switch (in.order()) {
-    case 2:
-      idx_std_normalize(in, in); // zero-mean and divide by standard deviation
-      break ;
-    case 3:
-      // normalize layer by layer
-      { idx_eloop1(i, in, T) {
-	idx_std_normalize(i, i); // zero-mean and divide by standard deviation
-	}}
-      break ;
-    default:
-      eblerror("image_global_normalization: dimension not implemented");
-    }
+    idx_std_normalize(in, in);
+    // problem with code below: it separates by channels which are assumed to
+    // be in last dimension. this can lead to nasty bugs.
+    // switch (in.order()) {
+    // case 2:
+    //   idx_std_normalize(in, in); // zero-mean and divide by standard deviation
+    //   break ;
+    // case 3:
+    //   // normalize layer by layer
+    //   { idx_eloop1(i, in, T) {
+    // 	idx_std_normalize(i, i); // zero-mean and divide by standard deviation
+    // 	}}
+    //   break ;
+    // default:
+    //   eblerror("image_global_normalization: dimension not implemented");
+    // }
   }
 
   // TODO: handle empty sides
   // TODO: check for tmp size incompatibilities
   // TODO: cleanup
-  template<class T>
+  template <typename T>
   void image_local_normalization(idx<T> &in, idx<T> &out, int n) {
+    if (in.order() != 2 || out.order() != 2)
+      eblerror("this function only accepts 2D inputs, but got " << in
+	       << " and " << out);
     // 1. create normalized gaussian kernel (kernel / sum(kernel))
     idx<T> kernel = create_gaussian_kernel<T>(n);
     idx<T> tmp(in.dim(0) + n - 1, in.dim(1) + n - 1);
@@ -1117,7 +1079,7 @@ namespace ebl {
   }
 
   // TODO: get rid of this function
-  template<class T>
+  template <typename T>
   void image_apply_filter(idx<T> &in, idx<T> &out, idx<T> &filter,
 			  idx<T> *tmp_) {
     idxdim d(in);
@@ -1150,7 +1112,7 @@ namespace ebl {
 //     idx_2dconvol(tmp, filter, out);
   }
   
-  template<class T>
+  template <typename T>
   idx<T> image_filter(idx<T> &in, idx<T> &filter) {
     // check that image is bigger than filter
     if ((in.dim(0) < filter.dim(0)) ||
@@ -1167,11 +1129,10 @@ namespace ebl {
     idx_2dconvol(in, filter, out);
     return out;
   }
-  
-  ////////////////////////////////////////////////////////////////
-  // Deformations
+    
+  // deformations //////////////////////////////////////////////////////////////
 
-  template<class T>
+  template <typename T>
   void image_deformation_ranperspective(idx<T> &in, idx<T> &out,
 					int hrange, int wrange, T background) {
     idx<float> bg(1);
@@ -1192,6 +1153,43 @@ namespace ebl {
 		    -.5, -.5, in.dim(1) - .5, in.dim(0) - .5);
   }
 
+  template <typename T>
+  idx<float> image_deformation_flow(idx<T> &in, float th, float tw, 
+				    float sh, float sw, float deg,
+				    float shh, float shw,
+				    uint elsize, float elcoeff,
+				    T background) {
+    idxdim d(in);
+    d.remove_dim(2);
+    idx<float> grid = create_grid(d);
+    idx<float> flow(grid.get_idxdim());
+    idx<T> bg(in.dim(2));
+    idx_fill(bg, background);
+    idx_clear(flow);
+
+
+    if (th != 0 || tw != 0) translation_flow(grid, flow, th, tw);
+    if (deg != 0) rotation_flow(grid, flow, deg);
+    if (th != 1 || tw != 1) scale_flow(grid, flow, sh, sw);
+    if (shh != 0 || shw != 0) shear_flow(grid, flow, shh, shw);
+    if (elsize > 0) elastic_flow(flow, elsize, elcoeff);
+
+    // affine_flow(grid, flow, 0, 0, sh, sw, 0, 0, deg);
+    return flow;
+  }
+  
+  template <typename T>
+  void image_deformation(idx<T> &in, idx<T> &out, float th, float tw,
+			 float sh, float sw, float deg,
+			 float shh, float shw, uint elsize, float elcoeff,
+			 T background) {
+    idx<float> flow =
+      image_deformation_flow(in, th, tw, sh, sw, deg, shh, shw, elsize, elcoeff,
+			     background);
+    // apply flow
+    image_warp_flow(in, out, flow);
+  }
+  
 } // end namespace ebl
 
 #endif /* IMAGE_HPP_ */
