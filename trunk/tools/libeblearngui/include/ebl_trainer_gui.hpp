@@ -400,7 +400,7 @@ namespace ebl {
       if (ds.mstate_samples()) ds.fprop_data(minput);
       else {
 	ds.fprop_data(input);
-	minput.push_back(input);
+	minput.push_back_new(input);
       }
       ds.fprop_label(label);
       uint ht = 0, wt = 0;
