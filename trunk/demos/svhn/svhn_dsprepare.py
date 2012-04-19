@@ -18,9 +18,10 @@ dataroot = svhnroot
 out = os.path.join('svhn')
 #we're assuming that eblearn is installed in the system with the binaries in the path
 bin = ''
+ebl = ''
 # if not, uncomment the two lines below, filling out eblearn's path
 #ebl = 'path to eblearn dir'
-#bin = '' #os.path.join(ebl, 'bin') 
+#bin = os.path.join(ebl, 'bin') #'../../bin/
 
 dirpostfix = '_32x32'
 train = ['train']
