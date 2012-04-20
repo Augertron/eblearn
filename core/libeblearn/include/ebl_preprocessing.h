@@ -1002,7 +1002,7 @@ namespace ebl {
 
   //! This module jitters inputs into outputs.
   template<typename T, class Tstate = bbstate_idx<T> >
-    class jitter_module : public module_1_1<T,Tstate,Tstate> {
+    class EXPORT jitter_module : public module_1_1<T,Tstate,Tstate> {
   public:
     //! Creates a jitter module.
     jitter_module(const char *name = "jitter_module");
