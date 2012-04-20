@@ -53,7 +53,7 @@
 #ifdef __GUI__
 #include "libidxgui.h"
 #include "libeblearngui.h"
-#include "defines_windows.h"
+// #include "defines_windows.h"
 #endif
 
 ////////////////////////////////////////////////////////////////
@@ -338,9 +338,13 @@ int load_display(list<string>::iterator &ifname,
     case MAGIC_LONG_MATRIX:
       return display<long>(ifname, true, load, mats);
     break ;
-    case MAGIC_UINT_MATRIX:
-      return display<uint>(ifname, false, load, mats);
-      break ;
+	case MAGIC_UINT_MATRIX:
+#ifndef __WINDOWS__
+      return display<uint>(ifname, false, load, mats);      
+#else
+	eblerror("matshow for UINT disabled in Windows");
+#endif
+	break ;
     default: // not a matrix, try as regular float image
       return display<float>(ifname, true, load, mats);
     }

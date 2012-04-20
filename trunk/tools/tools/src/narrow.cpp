@@ -35,6 +35,8 @@
 #include "stl.h"
 #include <string.h>
 #include "libidx.h"
+
+#define APP_DOESNT_USE_GUI // needed to not include gui defs
 #include "eblapp.h"
 
 intg dim = 0, size = 0, off = 0;

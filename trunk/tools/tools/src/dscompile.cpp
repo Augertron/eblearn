@@ -836,8 +836,10 @@ MAIN_QTHREAD(int, argc, char**, argv) {
 	compile<float>();
       else if (!strcmp(precision.c_str(), "double"))
 	compile<double>();
+#ifndef __WINDOWS__ // TODO: check if its a compiler bug, works fine with gcc
       else if (!strcmp(precision.c_str(), "ubyte"))
 	compile<ubyte>();
+#endif
       else
 	eblerror("trying to compile dataset with unsupported precision \""
 		 << precision << "\"");
