@@ -1851,7 +1851,11 @@ template<class T> void idx_sortdown(idx<T> &m) {
       *i = log(*i);
     };
 #else
-    idx_aloopf1(i, m, T, { *i = (T)log(*i); });
+	#ifdef __WINDOWS__
+	  idx_aloopf1(i, m, T, { *i = (T)log((double)*i); });
+	#else
+		idx_aloopf1(i, m, T, { *i = (T)log(*i); });
+	#endif
 #endif
   }
 

@@ -42,7 +42,7 @@
 namespace ebl {
   
   //! A class capable of extracting pascal format bounding boxes from xml files.
-  class pascal_xml {
+  class EXPORT pascal_xml {
   public:
     pascal_xml();
     virtual ~pascal_xml();

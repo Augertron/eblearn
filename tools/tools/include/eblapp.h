@@ -42,8 +42,10 @@ using namespace std;
 using namespace ebl; // all eblearn objects are under the ebl namespace
 
 #ifdef __GUI__
+#ifndef APP_DOESNT_USE_GUI
 #include "libeblearngui.h"
 uint ebl::module_1_1_gui::cnt = 0;
+#endif
 #endif
 
 #endif /* EBLAPP_H_ */

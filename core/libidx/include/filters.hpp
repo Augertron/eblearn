@@ -135,7 +135,7 @@ namespace ebl {
       for(int y = 0; y < n; y++){
 	int dx = x - cx;
 	int dy = y - cy;
-	m.set((T) -exp(-(vinv*(dx*dx + dy*dy))), x, y);
+	m.set((T) -exp((double)-(vinv*(dx*dx + dy*dy))), x, y);
 	total += m.get(x, y);
       }
     }

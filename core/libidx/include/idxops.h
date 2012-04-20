@@ -480,7 +480,7 @@ namespace ebl {
   //! removes the mean of <in> and divide by the standard deviation.
   //! reuse <mean> if not null, otherwise recompute it.
   template <typename T>
-  EXPORT void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean = (T*)NULL);
+		 void idx_std_normalize(idx<T> &in, idx<T> &out, T *mean = (T*)NULL);
   //! his has no sense, it returns an error.
   template <>
   EXPORT void idx_std_normalize(idx<ubyte> &in, idx<ubyte> &out, ubyte *mean);

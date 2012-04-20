@@ -52,7 +52,7 @@ namespace ebl {
 
   //! A non-maximum suppression class for suppressing overlapping non-maximum
   //! answers in a detection task.
-  class nms {
+  class EXPORT nms {
   public:
     //! Construct an NMS that suppresses non-maximum bounding boxes,
     //! i.e. retaining only highest confidence boxes among all matching
@@ -122,7 +122,7 @@ namespace ebl {
   // voting nms ////////////////////////////////////////////////////////////////
 
   //! A type of NMS that accumulates bounding boxes.
-  class voting_nms : public nms {
+  class EXPORT voting_nms : public nms {
   public:
     //! Constructor for voting nms only. See nms() constructor for
     //! parameters descriptions.
