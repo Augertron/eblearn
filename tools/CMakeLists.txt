@@ -185,7 +185,7 @@ ENDMACRO(LINK_LUA)
 
 MACRO(LINK_MPI project)
 IF (MPI_FOUND)
-    TARGET_LINK_LIBRARIES(${project} mpi_cxx mpi) #pmpich++
+    TARGET_LINK_LIBRARIES(${project} ${MPI_LIBRARIES})  # mpi_cxx mpi) #pmpich++
 ENDIF (MPI_FOUND)
 ENDMACRO(LINK_MPI)
 
