@@ -984,8 +984,11 @@ namespace ebl {
     scales_loaded = false;
     if (scales_fname && strlen(scales_fname) != 0) {
       try {
+// TODO: Fix scale loading/saving in windows
+#ifndef __WINDOWS__
 	scales = load_matrix<intg>(scales_fname);
 	scales_loaded = true;
+#endif
       }
       catch (string &err) { cerr << "warning: " << err << endl; }
     } else cout << "No scale information loaded." << endl;
