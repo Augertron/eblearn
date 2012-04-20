@@ -373,8 +373,8 @@ namespace ebl {
 
   template class ManipInfra<int,int>;
   template class ManipInfra<uint,uint>;
-  idxgui& operator<<(idxgui& r, const ManipInfra<uint,uint> &manip);
-  idxgui& operator<<(idxgui& r, const ManipInfra<int,int> &manip);
+  EXPORT idxgui& operator<<(idxgui& r, const ManipInfra<uint,uint> &manip);
+  EXPORT idxgui& operator<<(idxgui& r, const ManipInfra<int,int> &manip);
 
   //! specifies the origin of the text to draw.
   //! calling 'gui << at(42, 0) << "text";' will draw "text" at height 42

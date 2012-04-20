@@ -366,27 +366,27 @@ namespace ebl {
   //! Creates a vector field corresponding to each input pixel location
   //! relative to the input's center. The returned grid's first dimension
   //! is of size 2 (x and y), and remaining dimensions are input's.
-  idx<float> create_grid(idxdim &inputd);
+  EXPORT idx<float> create_grid(idxdim &inputd);
   //! Accumulates the translation flow given translations offsets h and w
   //! into 'flow'.
   //! \param flow A 2xHxW matrix where dimension 0 contains h and w flows.
-  void translation_flow(idx<float> &grid, idx<float> &flow, float h, float w);
+  EXPORT void translation_flow(idx<float> &grid, idx<float> &flow, float h, float w);
   //! Accumulates the shear flow given shear factors h and w //! into 'flow'.
   //! \param flow A 2xHxW matrix where dimension 0 contains h and w flows.
-  void shear_flow(idx<float> &grid, idx<float> &flow, float h, float w);
+  EXPORT void shear_flow(idx<float> &grid, idx<float> &flow, float h, float w);
   //! Accumulates the 'flow' of 'grid' when scaled by ratios x and y.
   //! \param flow A 2xHxW matrix where dimension 0 contains h and w flows.
   //! \param h Height scaling ratio.
   //! \param w Width scaling ratio.
-  void scale_flow(idx<float> &grid, idx<float> &flow, float h, float w);
+  EXPORT void scale_flow(idx<float> &grid, idx<float> &flow, float h, float w);
   //! Accumulates the 'flow' of 'grid' when rotated by 'deg' degrees.
   //! \param flow A 2xHxW matrix where dimension 0 contains h and w flows.
   //! \param deg Rotation in degrees.
-  void rotation_flow(idx<float> &grid, idx<float> &flow, float deg);
-  void affine_flow(idx<float> &grid, idx<float> &flow,
+  EXPORT void rotation_flow(idx<float> &grid, idx<float> &flow, float deg);
+  EXPORT void affine_flow(idx<float> &grid, idx<float> &flow,
 		   float th, float tw, float sh, float sw,
 		   float shh, float shw, float deg);
-  void elastic_flow(idx<float> &flow, uint elsize, float elcoeff);
+  EXPORT void elastic_flow(idx<float> &flow, uint elsize, float elcoeff);
   
 } // end namespace ebl
 

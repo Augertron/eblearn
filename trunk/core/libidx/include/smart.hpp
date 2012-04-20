@@ -357,7 +357,7 @@ namespace ebl {
   template <class T>
   T& svector<T>::iterator::operator*() {
 #if __WINDOWS__ == 1
-    return **(this->_Myptr);
+    return **(this->_Ptr);
 #else
 	return **(this->_M_current);
 #endif
@@ -366,7 +366,7 @@ namespace ebl {
   template <class T>
   T* svector<T>::iterator::operator->() {
 #if __WINDOWS__ == 1
-	  return *(this->_Myptr);
+	  return *(this->_Ptr);
 #else
     return *(this->_M_current);
 #endif
@@ -375,7 +375,7 @@ namespace ebl {
   template <class T>
   T* svector<T>::iterator::ptr() {
 #if __WINDOWS__ == 1
-	  return *(this->_Myptr);
+	  return *(this->_Ptr);
 #else
     return *(this->_M_current);
 #endif
@@ -384,7 +384,7 @@ namespace ebl {
   template <class T>
   bool svector<T>::iterator::exists() const {
 #if __WINDOWS__ == 1
-	return *(this->_Myptr) != NULL;
+	return *(this->_Ptr) != NULL;
 #else
     return *(this->_M_current) != NULL;
 #endif
@@ -415,7 +415,7 @@ namespace ebl {
   template <class T>
   const T& svector<T>::const_iterator::operator*() const {
 #if __WINDOWS__ == 1
-	return **(this->_Myptr);
+	return **(this->_Ptr);
 #else
     return **(this->_M_current);
 #endif
@@ -424,7 +424,7 @@ namespace ebl {
   template <class T>
   const T* svector<T>::const_iterator::operator->() const {
 #if __WINDOWS__ == 1
-	return *(this->_Myptr);
+	return *(this->_Ptr);
 #else
     return *(this->_M_current);
 #endif
@@ -433,7 +433,7 @@ namespace ebl {
   template <class T>
   const T* svector<T>::const_iterator::ptr() const {
 #if __WINDOWS__ == 1
-	  return *(this->_Myptr);
+	  return *(this->_Ptr);
 #else
     return *(this->_M_current);
 #endif
@@ -442,7 +442,7 @@ namespace ebl {
   template <class T>
   bool svector<T>::const_iterator::exists() const {
 #if __WINDOWS__ == 1
-	  return *(this->_Myptr) != NULL;
+	  return *(this->_Ptr) != NULL;
 #else
     return *(this->_M_current) != NULL;
 #endif
