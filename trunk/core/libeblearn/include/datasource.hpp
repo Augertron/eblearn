@@ -984,8 +984,9 @@ namespace ebl {
     scales_loaded = false;
     if (scales_fname && strlen(scales_fname) != 0) {
       try {
-// TODO: Fix scale loading/saving in windows
-#ifndef __WINDOWS__
+// TODO: Fix scale loading/saving
+//#ifndef __WINDOWS__
+#if 0
 	scales = load_matrix<intg>(scales_fname);
 	scales_loaded = true;
 #endif
