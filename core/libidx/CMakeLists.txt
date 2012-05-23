@@ -45,10 +45,6 @@ endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 # link
 ################################################################################
 
-#TODO: temporary
-#TARGET_LINK_LIBRARIES(idx mat)
-
-
 IF(CBLAS_FOUND)
   TARGET_LINK_LIBRARIES(idx ${CBLAS_LIBRARIES})
 ENDIF(CBLAS_FOUND)
@@ -64,6 +60,10 @@ ENDIF (Magick++_FOUND)
 IF(THC_FOUND)
   TARGET_LINK_LIBRARIES(idx ${THC_LIBRARIES})
 ENDIF(THC_FOUND)
+
+IF(MATIO_FOUND)
+  TARGET_LINK_LIBRARIES(idx ${MATIO_LIBRARIES})
+ENDIF(MATIO_FOUND)
 
 # configuration
 ################################################################################

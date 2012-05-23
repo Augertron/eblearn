@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Soumith Chintala and Pierre Sermanet *
- *   soumith@gmail.com, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2011 by Soumith Chintala    *
+ *   soumith@gmail.com                         *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,25 +32,21 @@
 
 #include "matlab.h"
 
+#ifdef __MATLAB__
 namespace ebl {
   
-  matlab::matlab(const char* fname) : filename(fname), fp(NULL), nvar(-1) {
-#ifdef __MATLAB__
-    fp = matOpen(filename,"r");
-    if (!fp)
-      eblthrow("failed to open " << filename);
-    matGetDir(fp, &nvar);
-#endif
-    if (nvar == -1) {
-      eblthrow("empty matlab file : " << filename);
+  matlab::matlab(const char* fname) : filename(fname),mat(NULL) {
+    mat = Mat_Open(filename,MAT_ACC_RDONLY);    
+    if (mat == NULL) {
+      eblerror("matfile doesn't exist: " << filename);
     }
+    else 
+      Mat_Close(mat);
   }
 
   matlab::~matlab() {
-#ifdef __MATLAB__
-    if (fp && matClose(fp) != 0)
-      eblthrow("failed to close file pointer to " << filename);
-#endif
   }
 
 } //end of namespace ebl
+
+#endif
