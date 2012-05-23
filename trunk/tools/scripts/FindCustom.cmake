@@ -2,6 +2,21 @@
 # Put here paths to manually installed libraries if necessary
 ################################################################################
 
+################################################################################
+# matio (http://sourceforge.net/projects/matio/)
+# SET(MATIO_FOUND TRUE)
+# SET(MATIO_INCLUDE_DIR "/home/sc3104/matio/include/")
+# SET(MATIO_LIBRARIES "/home/sc3104/matio/lib/")
+
+
+
+
+################################################################################
+# SET(VLFEAT_FOUND TRUE)
+# SET(VLFEAT_INCLUDE_DIR "/home/sc3104/vlfeat/vlfeat-0.9.14/")
+# SET(VLFEAT_LIBRARIES_DIR "/home/sc3104/vlfeat/vlfeat-0.9.14/bin/glnxa64/")
+
+
 
 ################################################################################
 # vlfeat (http://www.vlfeat.org/)

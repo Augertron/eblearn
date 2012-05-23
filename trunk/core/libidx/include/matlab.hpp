@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Soumith Chintala and Pierre Sermanet *
- *   soumith@gmail.com, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2011 by Soumith Chintala
+ *   soumith@gmail.com
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,76 +30,77 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef MATLAB_HPP
-#define MATLAB_HPP
+#ifndef EBL_MATLAB_HPP
+#define EBL_MATLAB_HPP
 
+#ifdef __MATLAB__
 namespace ebl {
 
   template <typename T>
-  idx<T> matlab::load_matrix(const char *name) {
-    if (!fp) eblthrow("null file pointer");
-#ifdef __MATLAB__
-  
+  idx<T> matlab::load_matrix(char *name) {
+    mat = Mat_Open(filename,MAT_ACC_RDONLY);
+    if (mat == NULL) eblerror("null file pointer");  
     // get variable corresponding to name
-    mxArray *var = matGetVariable(fp, name);
-    if (!var)
-      eblthrow("variable \"" << name << "\" not found in matlab object");
-    int ndims = mxGetNumberOfDimensions(var);
+    matvar_t *matvar = Mat_VarRead(mat, name);
+    if (matvar == NULL)
+      eblerror("variable \"" << name << "\" not found in matlab object");
+    int ndims = matvar->rank;
     if (ndims > MAXDIMS)
-      eblthrow("cannot load matrix with " << ndims 
+      eblerror("cannot load matrix with " << ndims 
 	       << " dimensions, libidx was compiled to support " << MAXDIMS 
 	       << " at most. Modify MAXDIMS and recompile.");
-    intg nelements = mxGetNumberOfElements(var);
-    const mwSize *dims = mxGetDimensions(var);
+    int *dims = matvar->dims;
     // allocate matrix
     idxdim d;
+    intg nelements = 1;
     for (uint i = 0; i < ndims; ++i)
-      d.insert_dim(i, dims[i]);
+      d.insert_dim(i, dims[ndims-i-1]);
     idx<T> m(d);
-
     // load data
-    mxClassID type = mxGetClassID(var);
+    int type = matvar->class_type;
     switch (type) {
-    case mxCELL_CLASS: eblthrow("cannot load matrix from type cell"); break ;
-    case mxSTRUCT_CLASS: eblthrow("cannot load matrix from type struct"); break ;
-    case mxLOGICAL_CLASS: eblthrow("cannot load matrix from type logical"); break ;
-    case mxFUNCTION_CLASS: eblthrow("cannot load matrix from type function"); break ;
-    case mxINT8_CLASS:
-    case mxUINT8_CLASS:
-    case mxCHAR_CLASS: read_cast_matrix<ubyte>(var, m); break ;
-    case mxINT16_CLASS: read_cast_matrix<int16>(var, m); break ;
-    case mxUINT16_CLASS: read_cast_matrix<uint16>(var, m); break ;
-    case mxINT32_CLASS: read_cast_matrix<uint32>(var, m); break ;
-    case mxUINT32_CLASS: read_cast_matrix<uint32>(var, m); break ;
-    case mxINT64_CLASS: read_cast_matrix<int64>(var, m); break ;
-    case mxUINT64_CLASS: read_cast_matrix<uint64>(var, m); break ;
-    case mxSINGLE_CLASS: read_cast_matrix<float>(var, m); break ;
-    case mxDOUBLE_CLASS: read_cast_matrix<double>(var, m); break ;
-    case mxVOID_CLASS: eblthrow("unsupported type: void");
-    case mxUNKNOWN_CLASS: eblthrow("unknown type"); break ;
+    case MAT_C_CELL: eblerror("cannot load matrix from type cell"); break ;
+    case MAT_C_STRUCT: eblerror("cannot load matrix from type struct"); break ;
+    case MAT_C_OBJECT: eblerror("cannot load matrix from type object"); break ;
+    case MAT_C_FUNCTION: eblerror("cannot load matrix from type function"); break ;
+    case MAT_C_INT8:
+    case MAT_C_UINT8:
+    case MAT_C_CHAR: read_cast_matrix<ubyte>(matvar, m); break ;
+    case MAT_C_INT16: read_cast_matrix<int16>(matvar, m); break ;
+    case MAT_C_UINT16: read_cast_matrix<uint16>(matvar, m); break ;
+    case MAT_C_INT32: read_cast_matrix<uint32>(matvar, m); break ;
+    case MAT_C_UINT32: read_cast_matrix<uint32>(matvar, m); break ;
+    case MAT_C_INT64: read_cast_matrix<int64_t>(matvar, m); break ;
+    case MAT_C_UINT64: read_cast_matrix<uint64_t>(matvar, m); break ;
+    case MAT_C_SINGLE: read_cast_matrix<float>(matvar, m); break ;
+    case MAT_C_DOUBLE: read_cast_matrix<double>(matvar, m); break ;
     }
     // delete array
-    if (var) mxDestroyArray(var);
-#else
-    idx<T> m;
-#endif
+    if (matvar) Mat_VarFree(matvar);
+    Mat_Close(mat);
     return m;
   }
 
   template <typename Tmatlab, typename T>
-  void matlab::read_cast_matrix(mxArray *var, idx<T> &m) {
-#ifdef __MATLAB__
+  void matlab::read_cast_matrix(matvar_t *var, idx<T> &m) {
     // allocate a temporary matrix with same type as original matrix type
     idx<Tmatlab> tmp(m.get_idxdim());
-    // load data
-    void *data = mxGetData(var);
     // copy to idx 
-    memcpy(m.idx_ptr(), (Tmatlab*) data, m.nelements() * sizeof (Tmatlab));
+    memcpy(tmp.idx_ptr(), (Tmatlab*) var->data, m.nelements() * sizeof (Tmatlab));
     // copy-cast
     idx_copy(tmp, m);
-#endif
+    //transpose for dimension correction
+    int num_dims = m.order();
+    if(num_dims>1) {
+	    int *transpose_p = (int*)malloc(sizeof(int) * num_dims); 
+	    for(int i=0;i<num_dims;i++)
+		transpose_p[i]=num_dims-i-1;
+	    m = m.transpose(transpose_p);
+    }
   }
 
 } // namespace ebl
+
+#endif
 
 #endif /* MATLAB_HPP_ */

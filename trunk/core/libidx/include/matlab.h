@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Soumith Chintala and Pierre Sermanet *
- *   soumith@gmail.com, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2011 by Soumith Chintala
+ *   soumith@gmail.com
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,47 +30,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef MATLAB_H
-#define MATLAB_H
+#ifndef EBL_MATLAB_H
+#define EBL_MATLAB_H
 
 #include "idx.h"
+#include "idxIO.h"
 
 #ifdef __MATLAB__
 
-// TODO: temporary dependency
-#include "mat.h" //mat.h from MATLAB/extern/include directory
-
-#else
-
-typedef enum {
-  mxUNKNOWN_CLASS,
-  mxCELL_CLASS,
-  mxSTRUCT_CLASS,
-  mxLOGICAL_CLASS,
-  mxCHAR_CLASS,
-  mxVOID_CLASS,
-  mxDOUBLE_CLASS,
-  mxSINGLE_CLASS,
-  mxINT8_CLASS,
-  mxUINT8_CLASS,
-  mxINT16_CLASS,
-  mxUINT16_CLASS,
-  mxINT32_CLASS,
-  mxUINT32_CLASS,
-  mxINT64_CLASS,
-  mxUINT64_CLASS,
-  mxFUNCTION_CLASS
-} mxClassID;
-
-typedef FILE MATFile;
-typedef void mxArray;
-
-#endif
+#include <matio.h> // libmatio-dev
 
 namespace ebl {
   
   //! A class to directly import Matlab variables from Matlab .mat files into idx tensors
-  class matlab {
+  class EXPORT matlab {
   public:
     //! Constructs a matlab object by loading all headers but does not actually load the data.
     //! \param filename name of the .mat (matlab format) file to be read.
@@ -78,19 +51,18 @@ namespace ebl {
     //! Close file handle.
     virtual ~matlab();
     //! Loads data of element with name 'name' and returns a matrix of type T
-    template <typename T> idx<T> load_matrix(const char *name);
+    template <typename T> idx<T> load_matrix(char *name);
+  protected:
     //! Load and cast data from matlab 'var' with type 'Tmatlab' into 'm' with type 'T'.
     template <typename Tmatlab, typename T>
-      void read_cast_matrix(mxArray *var, idx<T> &m);
-    
-  protected:
+    void read_cast_matrix(matvar_t *var, idx<T> &m);
     const char* filename; //!< Loaded filename.
-    MATFile *fp; //!< File pointer.
-    int nvar; //!< Number of objects in matlab file.
+    mat_t *mat; //!< pointer to the opened mat.
   };  
   
 }
 
+#endif
 #include "matlab.hpp"
 
 #endif // MATLAB_H
