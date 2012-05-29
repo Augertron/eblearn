@@ -106,8 +106,8 @@ void idxIO_test::test_save_load_matrix_matrix() {
     all.set(im3, 2);
     
     save_matrices(all, sall);
-    midx<float> all2 = load_matrices<float>(sall, false);
-    
+    // midx<float> all2 = load_matrices<float>(sall, false);
+    midx<float> all2 = load_matrices<float>(sall);
     idx<float> m1 = all.get(0);
     idx<float> m2 = all.get(1);
     idx<float> m3 = all.get(2);

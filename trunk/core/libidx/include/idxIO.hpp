@@ -595,7 +595,8 @@ namespace ebl {
     for (std::list<std::string>::iterator i = filenames.begin();
 	 i != filenames.end(); ++i, ++j) {
       if (multi) { // each matrix is composed of multiple matrices
-	midx<T> e = load_matrices<T>(*i, false);
+        // TODO: check if this is breakng in 32.bit, false);
+	midx<T> e = load_matrices<T>(*i); 
 	for (uint k = 0; k < e.dim(0); ++k) {
 	  // save offset of matrix
 	  fgetpos(fp, &pos);
