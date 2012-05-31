@@ -219,6 +219,8 @@ namespace ebl {
 	    module = (module_1_1<T,Tstate>*)
 	      new merge_module<T,Tstate>(inputs, concat_dim, name.c_str(),
 					 strbranches.c_str());
+	  // update thickness after merging if specified by hand
+	  get_param(conf, name, "thickness", thick, true);
 	} else if (!type.compare("flat")) { // flatten
 	  string strides, ins, bstrides, bins;
 	  if (!get_param(conf, name, "in", ins)) return NULL;

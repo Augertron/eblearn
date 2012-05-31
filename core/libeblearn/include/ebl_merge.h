@@ -226,6 +226,10 @@ namespace ebl {
   protected:
     //! Merge all states in 'in' into one state 'out'.
     virtual void merge(mstate<Tstate> &in, Tstate &out);
+    //! Backpropagate dx weights.
+    virtual void merge_dx(mstate<Tstate> &in, Tstate &out);
+    //! Backpropagate ddx weights.
+    virtual void merge_ddx(mstate<Tstate> &in, Tstate &out);
 
   private:
     std::vector<Tstate**> inputs;

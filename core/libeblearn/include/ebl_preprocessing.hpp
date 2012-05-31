@@ -1338,6 +1338,7 @@ namespace ebl {
       idx_copy(tmp2, tmp3.x);
       zpad->fprop(tmp3, out);
     }
+    EDEBUG(this->name() << ": resized output is " << out)
   }
 
   template <typename T, class Tstate>
