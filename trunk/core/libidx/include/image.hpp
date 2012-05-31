@@ -105,8 +105,8 @@ namespace ebl {
       ratioh = ratiomin;
     }
     else if (mode == 1) { // possibly modify aspect ratio
-      // ratiow = w; //ratiow;
-      // ratioh = h; //ratioh;
+      ratiow = w; //ratiow;
+      ratioh = h; //ratioh;
     }
     else if (mode == 2) { // use w and h as scaling ratios
       ratiow = w;

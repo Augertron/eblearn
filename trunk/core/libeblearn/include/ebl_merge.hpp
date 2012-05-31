@@ -950,12 +950,40 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void merge_module<T, Tstate>::bprop(mstate<Tstate> &in, mstate<Tstate> &out) {
-    // TODO: implement
+    // loop on each merging
+    for (uint i = 0; i < states_list.size(); ++i) {
+      vector<uint> ids = states_list[i];
+      mstate<Tstate> mi;
+      // create multi-state of states to merge
+      for (uint j = 0; j < ids.size(); ++j) {
+	uint id = ids[j];
+	if (id >= in.size())
+	  eblerror("trying to access state " << id << " but multi-state only "
+		   << "contains " << in.size() << " states: " << in);
+	mi.push_back(new Tstate(in[id]));
+      }
+      // merge them
+      merge_dx(mi, out[i]);
+    }
   }
 
   template <typename T, class Tstate>
   void merge_module<T, Tstate>::bbprop(mstate<Tstate> &in, mstate<Tstate> &out) {
-    // TODO: implement
+    // loop on each merging
+    for (uint i = 0; i < states_list.size(); ++i) {
+      vector<uint> ids = states_list[i];
+      mstate<Tstate> mi;
+      // create multi-state of states to merge
+      for (uint j = 0; j < ids.size(); ++j) {
+	uint id = ids[j];
+	if (id >= in.size())
+	  eblerror("trying to access state " << id << " but multi-state only "
+		   << "contains " << in.size() << " states: " << in);
+	mi.push_back(new Tstate(in[id]));
+      }
+      // merge them
+      merge_ddx(mi, out[i]);
+    }
   }
 
   template <typename T, class Tstate>
@@ -1004,75 +1032,6 @@ namespace ebl {
     // TODO: implement
   }
 
-//   template <typename T, class Tstate>
-//   void merge_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
-//     idxdim d(in.x), dtmp(in.x);
-//     // check that all inputs are compatible and compute output size
-//     for (uint i = 0; i < inputs.size(); ++i) {
-//       Tstate *input = *(inputs[i]);
-//       dtmp.setdim(concat_dim, input->x.dim(concat_dim));
-//       if (!input->x.same_dim(dtmp))
-// 	eblerror("expected same dimensions but got " << input->x.get_idxdim()
-// 		 << " and " << dtmp);
-//       // increment dimension
-//       d.setdim(concat_dim, d.dim(concat_dim) + input->x.dim(concat_dim));
-//     }
-//     // check that output has the right size, if not, resize
-//     if (out.x.get_idxdim() != d)
-//       out.resize(d);
-//     // copy main input to out
-//     intg offset = 0;
-//     idx<T> o = out.x.narrow(concat_dim, in.x.dim(concat_dim), offset);
-//     idx_copy(in.x, o);
-//     offset += in.x.dim(concat_dim);
-//     // copy inputs to out
-//     for (uint i = 0; i < inputs.size(); ++i) {
-//       Tstate *input = *(inputs[i]);
-//       o = out.x.narrow(concat_dim, input->x.dim(concat_dim), offset);
-//       idx_copy(input->x, o);
-//       offset += input->x.dim(concat_dim);
-//     }
-// #ifdef __DEBUG__
-//     cout << describe() << ": " << in.x;
-//     for (uint i = 0; i < inputs.size(); ++i)
-//       cout << " + " << (*inputs[i])->x;
-//     cout << " -> " << out.x << endl;
-// #endif
-//   }
-
-  // template <typename T, class Tstate>
-  // void merge_module<T, Tstate>::bprop(Tstate &in, Tstate &out) {
-  //   // copy out to main input
-  //   intg offset = 0;
-  //   idx<T> o = out.dx.narrow(concat_dim, in.dx.dim(concat_dim), offset);
-  //   idx_add(o, in.dx, in.dx);
-  //   offset += in.dx.dim(concat_dim);
-  //   // copy out to inputs
-  //   for (uint i = 0; i < inputs.size(); ++i) {
-  //     Tstate *input = *(inputs[i]);
-  //     o = out.dx.narrow(concat_dim, input->dx.dim(concat_dim), offset);
-  //     idx_add(o, input->dx, input->dx);
-  //     offset += input->dx.dim(concat_dim);
-  //   }
-  // }
-
-  // template <typename T, class Tstate>
-  // void merge_module<T, Tstate>::bbprop(Tstate &in,
-  // 					Tstate &out) {
-  //   // copy out to main input
-  //   intg offset = 0;
-  //   idx<T> o = out.ddx.narrow(concat_dim, in.ddx.dim(concat_dim), offset);
-  //   idx_add(o, in.ddx, in.ddx);
-  //   offset += in.ddx.dim(concat_dim);
-  //   // copy out to inputs
-  //   for (uint i = 0; i < inputs.size(); ++i) {
-  //     Tstate *input = *(inputs[i]);
-  //     o = out.ddx.narrow(concat_dim, input->ddx.dim(concat_dim), offset);
-  //     idx_add(o, input->ddx, input->ddx);
-  //     offset += input->ddx.dim(concat_dim);
-  //   }
-  // }
-
   template <typename T, class Tstate>
   std::string merge_module<T, Tstate>::describe() {
     std::string desc;
@@ -1109,6 +1068,42 @@ namespace ebl {
     cout << describe() << ": " << in[0].x;
     for (uint i = 1; i < in.size(); ++i) cout << " + " << in[i].x;
     cout << " -> " << out.x << endl;
+#endif
+  }
+
+  template <typename T, class Tstate>
+  void merge_module<T, Tstate>::merge_dx(mstate<Tstate> &in, Tstate &out) {
+    // accumulate outputs to inputs
+    intg offset = 0;
+    idx<T> o;
+    for (uint i = 0; i < in.size(); ++i) {
+      Tstate &s = in[i];
+      o = out.dx.narrow(concat_dim, s.x.dim(concat_dim), offset);
+      idx_add(o, s.dx, s.dx);
+      offset += s.x.dim(concat_dim);
+    }
+#ifdef __DEBUG_PRINT__
+    cout << describe() << ": bprop " << in[0].x;
+    for (uint i = 1; i < in.size(); ++i) cout << " + " << in[i].x;
+    cout << " <- " << out.x << endl;
+#endif
+  }
+
+  template <typename T, class Tstate>
+  void merge_module<T, Tstate>::merge_ddx(mstate<Tstate> &in, Tstate &out) {
+    // accumulate outputs to inputs
+    intg offset = 0;
+    idx<T> o;
+    for (uint i = 0; i < in.size(); ++i) {
+      Tstate &s = in[i];
+      o = out.ddx.narrow(concat_dim, s.x.dim(concat_dim), offset);
+      idx_add(o, s.ddx, s.ddx);
+      offset += s.x.dim(concat_dim);
+    }
+#ifdef __DEBUG_PRINT__
+    cout << describe() << ": bbprop " << in[0].x;
+    for (uint i = 1; i < in.size(); ++i) cout << " + " << in[i].x;
+    cout << " <- " << out.x << endl;
 #endif
   }
 
