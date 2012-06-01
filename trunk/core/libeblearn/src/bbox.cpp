@@ -210,7 +210,8 @@ namespace ebl {
 	<< "nacc " << b.nacc << ", " << (rect<float>&) b << ">";
 #ifdef __DEBUG__
     out << " input win: " << b.i << " output win: " << b.o
-	<< " input scale: " << b.iheight << "x" << b.iwidth;
+	<< " input scale: " << b.iheight << "x" << b.iwidth
+	<< " iscale: " << b.iscale_index << " oscale: " << b.oscale_index;
     if (b.children.size() > 0) {
       out << ", " << (int) b.children.size() << " children:";
       for (bboxes::const_iterator i = b.children.begin();

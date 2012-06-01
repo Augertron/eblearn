@@ -593,7 +593,8 @@ namespace ebl {
       hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
       scale_hfactor(1.0), scale_wfactor(1.0),
       preserve_ratio(pratio), hratio(0), wratio(0), lastout(NULL),
-      out_copy(NULL), display_min(-1), display_max(1), original_bboxes(1) {
+      out_copy(NULL), display_min(-1), display_max(1), input_bboxes(1),
+      original_bboxes(1) {
     set_dimensions(size_.dim(0), size_.dim(1));
     if (dzpad_) {
       dzpad = new idxdim(*dzpad_);
@@ -612,7 +613,7 @@ namespace ebl {
       zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
       scale_hfactor(1.0), scale_wfactor(1.0), preserve_ratio(pratio), hratio(0),
       wratio(0), lastout(NULL), out_copy(NULL), display_min(-1), display_max(1),
-      original_bboxes(1) {
+      input_bboxes(1), original_bboxes(1) {
     if (dzpad_ && dzpad_->order() > 0) {
       dzpad = new idxdim(*dzpad_);
       set_zpads(dzpad->dim(0), dzpad->dim(1));
@@ -631,7 +632,7 @@ namespace ebl {
       zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
       scale_hfactor(1.0), scale_wfactor(1.0), preserve_ratio(pratio), hratio(0),
       wratio(0), lastout(NULL), out_copy(NULL), display_min(-1), display_max(1),
-      original_bboxes(1) {
+      input_bboxes(1), original_bboxes(1) {
     if (dzpad_) {
       dzpad = new idxdim(*dzpad_);
       set_zpads(dzpad->dim(0), dzpad->dim(1));
@@ -844,6 +845,7 @@ namespace ebl {
   void resizepp_module<T,Tstate>::fprop(Tstate &in, idx<T> &out) {
     // compute input/output regions
     rect<int> r = compute_regions(in);
+    input_bboxes[0] = r;
     EDEBUG("resizing " << in.x << " to " << outrect << " with ROI " << r);
     rect<int> outr;
     // resize input while preserving aspect ratio
@@ -981,7 +983,20 @@ namespace ebl {
   template <typename T, class Tstate>
   mfidxdim resizepp_module<T,Tstate>::bprop_size(mfidxdim &osize) {
     msize = osize;
-    return osize;
+    if (zpad) osize = zpad->bprop_size(osize);
+    mfidxdim isize;
+    for (uint i = 0; i < osize.size(); ++i) {
+       if (osize.exists(i) && original_bboxes[0].height != 0
+	   && original_bboxes[0].width != 0) {
+	fidxdim d(1, input_bboxes[0].height / (float) original_bboxes[0].height,
+		  input_bboxes[0].width / (float) original_bboxes[0].width);
+	fidxdim o = osize[i] * d;
+	isize.push_back_new(o);
+      }
+      else isize.push_back_empty();
+    }
+    EDEBUG(this->name() << ": " << osize << " b-> " << isize);
+    return isize;
   }
 
   template <typename T, class Tstate>

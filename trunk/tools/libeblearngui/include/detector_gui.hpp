@@ -302,58 +302,58 @@ namespace ebl {
   template <typename T, class Tstate> void detector_gui<T,Tstate>::
   display_inputs(detector<T,Tstate> &cl, uint &h0, uint &w0, bboxes &bb,
 		 double dzoom, T vmin, T vmax, float transparency) {
-    int scale = 0;
     uint wmax = 0;
     ostringstream s;
     // display all outputs
-    mstate<Tstate> &ins = cl.ppinputs[0];
-    for (uint i = 0; i < ins.size(); ++i) {
-      Tstate &t = ins[i];
-      // draw inputs
-      string ss;
-      ss << "scale #" << scale;
-      int htmp = h0;
-      ss << " " << t.x.dim(1) << "x" << t.x.dim(2);
-      idx<T> tx = t.x.shift_dim(0, 2);
-      draw_matrix(tx, htmp, w0, dzoom, dzoom, (T)vmin, (T)vmax);
-      wmax = std::max(wmax, (uint) (w0 + tx.dim(1)));
-      // // loop on all boxes of this scale and this state#
-      // for (bboxes::iterator q = bb.begin(); q != bb.end(); ++q) {
-      // 	bbox &b = *q;
-      // 	if (scale == b.iscale_index) {
-      // 	  // if (i >= b.mi.size()) eblerror("expected as many states as boxes");
-      // 	  // rect<float> r(htmp + b.mi[i].h0, w0 + b.mi[i].w0,
-      // 	  // 		b.mi[i].height, b.mi[i].width);
-      // 	  rect<float> r(htmp + b.mi[0].h0, w0 + b.mi[0].w0,
-      // 			b.mi[0].height, b.mi[0].width);
-      // 	  draw_box(r, 0, 0, 255);
-      // 	  draw_cross(r.hcenter(), r.wcenter(), 3, 0, 0, 255, 255);
-      // 	}
-      // 	htmp += t.x.dim(1) + states_separation;
-      // }
+    for (int scale = 0; scale < (int) cl.ppinputs.size(); ) {
+      mstate<Tstate> &ins = cl.ppinputs[scale];
+      for (uint i = 0; i < ins.size(); ++i) {
+	Tstate &t = ins[i];
+	// draw inputs
+	string ss;
+	ss << "scale #" << scale;
+	int htmp = h0;
+	ss << " " << t.x.dim(1) << "x" << t.x.dim(2);
+	idx<T> tx = t.x.shift_dim(0, 2);
+	draw_matrix(tx, htmp, w0, dzoom, dzoom, (T)vmin, (T)vmax);
+	wmax = std::max(wmax, (uint) (w0 + tx.dim(1)));
+	// // loop on all boxes of this scale and this state#
+	// for (bboxes::iterator q = bb.begin(); q != bb.end(); ++q) {
+	// 	bbox &b = *q;
+	// 	if (scale == b.iscale_index) {
+	// 	  // if (i >= b.mi.size()) eblerror("expected as many states as boxes");
+	// 	  // rect<float> r(htmp + b.mi[i].h0, w0 + b.mi[i].w0,
+	// 	  // 		b.mi[i].height, b.mi[i].width);
+	// 	  rect<float> r(htmp + b.mi[0].h0, w0 + b.mi[0].w0,
+	// 			b.mi[0].height, b.mi[0].width);
+	// 	  draw_box(r, 0, 0, 255);
+	// 	  draw_cross(r.hcenter(), r.wcenter(), 3, 0, 0, 255, 255);
+	// 	}
+	// 	htmp += t.x.dim(1) + states_separation;
+	// }
 
-      gui << white_on_transparent() << at(h0 - 18, w0) << ss;
-      // draw bboxes on scaled input
-      if (!cl.bboxes_off) {
-	for (bboxes::iterator ibb = bb.begin(); ibb != bb.end(); ++ibb) {
-	  if (scale == ibb->iscale_index)
-	    draw_bbox(*ibb, cl.labels, h0, w0, dzoom, transparency, false, 0,
-		      show_class, show_conf);
-	  // draw all sub boxes
-	  for (bboxes::iterator jbb = ibb->children.begin();
-	       jbb != ibb->children.end(); ++jbb) {
-	    if (scale == jbb->iscale_index)
-	      draw_bbox(*jbb, cl.labels, h0, w0, dzoom, transparency, false, 1,
+	gui << white_on_transparent() << at(h0 - 18, w0) << ss;
+	// draw bboxes on scaled input
+	if (!cl.bboxes_off) {
+	  for (bboxes::iterator ibb = bb.begin(); ibb != bb.end(); ++ibb) {
+	    if (scale == ibb->iscale_index)
+	      draw_bbox(*ibb, cl.labels, h0, w0, dzoom, transparency, false, 0,
 			show_class, show_conf);
+	    // draw all sub boxes
+	    for (bboxes::iterator jbb = ibb->children.begin();
+		 jbb != ibb->children.end(); ++jbb) {
+	      if (scale == jbb->iscale_index)
+		draw_bbox(*jbb, cl.labels, h0, w0, dzoom, transparency, false,
+			  1, show_class, show_conf);
+	    }
 	  }
 	}
+	scale++;
+	h0 += (uint) (t.x.dim(1) * dzoom + 20);
       }
-      scale++;
-      h0 += (uint) (t.x.dim(1) * dzoom + 20);
     }
     w0 = wmax;
   }
-
 
   template <typename T, class Tstate> void detector_gui<T,Tstate>::
   display_outputs(detector<T,Tstate> &cl, uint &h0, uint &w0, bboxes &bb,
@@ -391,41 +391,45 @@ namespace ebl {
     }
     w0 = maxw;
     // draw outputs
-    mstate<Tstate> &oo = cl.outputs[0];
-    for (uint k = 0; k < oo.size(); ++k) {
-      double czoom = dzoom;// * 2.0;
-      Tstate &o = oo[k];
-      uint lab = 0;
-      idx<T> outx = o.x;
-      uint w = w0;
-      { idx_bloop1(category, outx, T) {
-	  string s;
-	  if (lab < cl.labels.size()) s << cl.labels[lab] << " ";
-	  else s << "feature " << lab << " ";
-	  s << category.dim(0) << "x" << category.dim(1);
-	  gui << at((uint) (h0 - 20), (uint) w) << white_on_transparent() << s;
-	  draw_matrix(category, h0, w, czoom, czoom, vmin, vmax);
-	  // draw crosses for found boxes
-	  for (bboxes::iterator i = bb.begin(); i != bb.end(); ++i) {
-	    color = 0;
-	    if (k == (uint) i->oscale_index && (uint) i->class_id == lab)
-	      draw_cross(i->o.h0 * czoom + h0, i->o.w0 * czoom + w, 3,
+    for (uint scale = 0; scale < cl.outputs.size(); ++scale) {
+      mstate<Tstate> &oo = cl.outputs[scale];
+      for (uint k = 0; k < oo.size(); ++k) {
+	double czoom = dzoom;// * 2.0;
+	Tstate &o = oo[k];
+	uint lab = 0;
+	idx<T> outx = o.x;
+	uint w = w0;
+	{ idx_bloop1(category, outx, T) {
+	    string s;
+	    if (lab < cl.labels.size()) s << cl.labels[lab] << " ";
+	    else s << "feature " << lab << " ";
+	    s << category.dim(0) << "x" << category.dim(1);
+	    gui << at((uint) (h0 - 20), (uint) w) << white_on_transparent() <<s;
+	    draw_matrix(category, h0, w, czoom, czoom, vmin, vmax);
+	    // draw crosses for found boxes
+	    for (bboxes::iterator i = bb.begin(); i != bb.end(); ++i) {
+	      color = 0;
+	      if (scale + k == (uint) i->oscale_index
+		  && (uint) i->class_id == lab)
+		draw_cross(i->o.h0 * czoom + h0, i->o.w0 * czoom + w, 3,
 			   color_list[color][0], color_list[color][1],
 			   color_list[color][2]);
-	    // draw children too
-	    color = 1;
-	    for (bboxes::iterator j = i->children.begin();
-		 j != i->children.end(); ++j) {
-	      if (k == (uint) j->oscale_index && (uint) j->class_id == lab)
-		draw_cross(j->o.h0 * czoom + h0, j->o.w0 * czoom + w, 3,
-			   color_list[color][0], color_list[color][1],
-			   color_list[color][2]);
+	      // draw children too
+	      color = 1;
+	      for (bboxes::iterator j = i->children.begin();
+		   j != i->children.end(); ++j) {
+		if (scale + k == (uint) j->oscale_index
+		    && (uint) j->class_id == lab)
+		  draw_cross(j->o.h0 * czoom + h0, j->o.w0 * czoom + w, 3,
+			     color_list[color][0], color_list[color][1],
+			     color_list[color][2]);
+	      }
 	    }
-	  }
-	  lab++;
-	  w += (uint) (outx.dim(2) * czoom + 10);
-	}}
-      h0 += (uint) (outx.dim(1) * czoom + 20);
+	    lab++;
+	    w += (uint) (outx.dim(2) * czoom + 10);
+	  }}
+	h0 += (uint) (outx.dim(1) * czoom + 20);
+      }
     }
   }
 
