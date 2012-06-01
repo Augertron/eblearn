@@ -35,11 +35,11 @@ INCLUDES="../core/libidx/include/*" "../core/libeblearn/include/*" \
 LIBS=libidx.${LIB_EXT} libidxgui.${LIB_EXT} libeblearn.${LIB_EXT} \
 		       libeblearngui.${LIB_EXT} libeblearntools.${LIB_EXT}
 BINS=train detect dscompile dssplit dsmerge matshow dsdisplay narrow \
-metarun metaparse capture dsfprop imfprop tester
+metarun metaparse capture dsfprop imfprop tester maketable
 BINS_DEBUG=train_debug detect_debug dscompile_debug dssplit_debug \
 dsmerge_debug matshow_debug dsdisplay_debug narrow_debug \
 metarun_debug metaparse_debug capture_debug dsfprop_debug imfprop_debug \
-tester_debug
+tester_debug maketable_debug
 DEMOS=mnist_train mnist_reco
 
 all: release
