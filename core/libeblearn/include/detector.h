@@ -298,7 +298,7 @@ namespace ebl {
     void update_merge_alignment();
     //! Fills internal buffers with 4 image corners coordinates in input
     //! and preprocessing space given the output sizes of 'outputs'.
-    void get_corners(mstate<Tstate> &outputs);
+    void get_corners(mstate<Tstate> &outputs, uint scale, bool force = false);
     //! Extract bounding boxes with higher confidence than 'threshold'
     //! from internal 'outputs' into 'bboxes'.
     void extract_bboxes(T threshold, bboxes &bboxes);
@@ -401,11 +401,11 @@ namespace ebl {
     bool                 ignore_outsiders; //!< Ignore bbs overlapping outside.
     uint corners_inference; //!< 0: from net 1: from net + save 2: load
     bool corners_infered; //!< Allows to infer only once.
-    mfidxdim itl, itr, ibl, ibr; //!< 4 corners in input space.
-    mfidxdim pptl, pptr, ppbl, ppbr; //!< 4 corners in pp input space.
+    svector<mfidxdim> itl, itr, ibl, ibr; //!< 4 corners in input space.
+    svector<mfidxdim> pptl, pptr, ppbl, ppbr; //!< 4 corners in pp input space.
     float    pre_threshold; //!< Threshold for initial bbox extraction.
     vector<float> raw_thresholds; //!< Thresholds for each scale.
-    vector<uint>  scale_indices; //!< Input scales indices for each output.
+    vector<vector<uint> > scale_indices;//!< Input scales indices for each out
     uint bbox_decision; //!< Decision type, 0: regular, 1: corners only
     mfidxdim bbox_scalings;
 

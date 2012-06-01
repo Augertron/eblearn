@@ -97,7 +97,7 @@ namespace ebl {
     diverse_ordering = false;
     // set outpout streams of network
     thenet.set_output_streams(o, e);
-    update_merge_alignment();
+    //update_merge_alignment();
   }
 
   template <typename T, class Tstate>
@@ -180,13 +180,18 @@ namespace ebl {
     if (hzpad_ != 0 || wzpad_ != 0) {
       if (!netdim_fixed) {
 	fidxdim minodim(1, 1, 1); // min output dims
-	netdim = thenet.bprop_size(minodim); // compute min input dims
+	mfidxdim mm;
+	mm.push_back_new(minodim);
+	mfidxdim m = thenet.bprop_size(mm); // compute min input dims
+	m = resizepp->get_msize();
+	netdim = m[0];
       }
       hzpad = (uint) (hzpad_ * netdim.dim(1));
       wzpad = (uint) (wzpad_ * netdim.dim(2));
       resizepp->set_zpads(hzpad, wzpad);
       mout << "Adding zero padding on input (on each side): hpad: "
-	   << hzpad << " wpad: " << wzpad << endl;
+	   << hzpad << " wpad: " << wzpad << " (" << hzpad_ << ","
+	   << wzpad_ << " * " << netdim << ")" << endl;
       if (hzpad_ > 1 || wzpad_ > 1)
 	eblerror("zero padding coeff should be in [0 1] range");
     }
@@ -913,11 +918,27 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::get_corners(mstate<Tstate> &outputs) {
-    if (!corners_infered) {
+  void detector<T,Tstate>::get_corners(mstate<Tstate> &outputs, uint scale,
+				       bool force) {
+    if (!corners_infered || force) {
       if (corners_inference == 0 || corners_inference == 1) { // infer from net
 	uint n = 0;
-	scale_indices.clear();
+	// allocate corner vectors
+	while (scale >= itl.size()) {
+	  itl.push_back(new mfidxdim());
+	  ibl.push_back(new mfidxdim);
+	  itr.push_back(new mfidxdim);
+	  ibr.push_back(new mfidxdim);
+	  pptl.push_back(new mfidxdim);
+	  pptr.push_back(new mfidxdim);
+	  ppbl.push_back(new mfidxdim);
+	  ppbr.push_back(new mfidxdim);
+	  scale_indices.push_back(vector<uint>());
+	}
+	itl[scale].clear(); itr[scale].clear();
+	ibl[scale].clear(); ibr[scale].clear();
+	pptl[scale].clear(); pptr[scale].clear();
+	ppbl[scale].clear(); ppbr[scale].clear();
 	for (typename mstate<Tstate>::iterator o = outputs.begin();
 	     o != outputs.end(); ++o) {
 	  fidxdim d(o->x.get_idxdim());
@@ -929,76 +950,77 @@ namespace ebl {
 	  m = thenet.bprop_size(mc);
 	  m.remove_empty();
 	  mc0 = m[0];
-	  itl.push_back_new(mc0);
+	  itl[scale].push_back_new(mc0);
 	  m = resizepp->get_msize();
 	  // infer scale index for this output
+	  scale_indices[scale].clear();
 	  for (uint i = 0; i < m.size(); ++i)
 	    if (m.exists(i)) {
-	      scale_indices.push_back(i);
+	      scale_indices[scale].push_back(i);
 	      break ;
 	    }
 	  m.remove_empty();
 	  mc0 = m[0];
-	  pptl.push_back_new(mc0);
+	  pptl[scale].push_back_new(mc0);
 	  // top right
 	  mc[n].setoffset(2, d.dim(2));
 	  m = thenet.bprop_size(mc);
 	  m.remove_empty();
 	  mc0 = m[0];
-	  itr.push_back_new(mc0);
+	  itr[scale].push_back_new(mc0);
 	  m = resizepp->get_msize();
 	  m.remove_empty();
 	  mc0 = m[0];
-	  pptr.push_back_new(mc0);
+	  pptr[scale].push_back_new(mc0);
 	  // bottom left
 	  mc[n].setoffset(1, d.dim(1));
 	  mc[n].setoffset(2, 0);
 	  m = thenet.bprop_size(mc);
 	  m.remove_empty();
 	  mc0 = m[0];
-	  ibl.push_back_new(mc0);
+	  ibl[scale].push_back_new(mc0);
 	  m = resizepp->get_msize();
 	  m.remove_empty();
 	  mc0 = m[0];
-	  ppbl.push_back_new(mc0);
+	  ppbl[scale].push_back_new(mc0);
 	  // bottom right
 	  mc[n].setoffset(1, d.dim(1));
 	  mc[n].setoffset(2, d.dim(2));
 	  m = thenet.bprop_size(mc);
 	  m.remove_empty();
 	  mc0 = m[0];
-	  ibr.push_back_new(mc0);
+	  ibr[scale].push_back_new(mc0);
 	  m = resizepp->get_msize();
 	  m.remove_empty();
 	  mc0 = m[0];
-	  ppbr.push_back_new(mc0);
+	  ppbr[scale].push_back_new(mc0);
 	  ++n;
 	}
-	EDEBUG("top left output " << itl);
-	EDEBUG("top right output " << itr);
-	EDEBUG("bottom left output " << ibl);
-	EDEBUG("bottom right output " << ibr);
+	EDEBUG("top left output " << itl[scale]);
+	EDEBUG("top right output " << itr[scale]);
+	EDEBUG("bottom left output " << ibl[scale]);
+	EDEBUG("bottom right output " << ibr[scale]);
 
 	if (corners_inference == 1) { // from net + save corners
 	  // save corners to matrix
 	  idx<float> scorners(itl.size(), 4, 4);
 	  for (uint i = 0; i < itl.size(); ++i) {
-	    scorners.set(itl[i].offset(1), i, 0, 0);
-	    scorners.set(itl[i].offset(2), i, 0, 1);
-	    scorners.set(itl[i].dim(1), i, 0, 2);
-	    scorners.set(itl[i].dim(2), i, 0, 3);
-	    scorners.set(itr[i].offset(1), i, 1, 0);
-	    scorners.set(itr[i].offset(2), i, 1, 1);
-	    scorners.set(itr[i].dim(1), i, 1, 2);
-	    scorners.set(itr[i].dim(2), i, 1, 3);
-	    scorners.set(ibl[i].offset(1), i, 2, 0);
-	    scorners.set(ibl[i].offset(2), i, 2, 1);
-	    scorners.set(ibl[i].dim(1), i, 2, 2);
-	    scorners.set(ibl[i].dim(2), i, 2, 3);
-	    scorners.set(ibr[i].offset(1), i, 3, 0);
-	    scorners.set(ibr[i].offset(2), i, 3, 1);
-	    scorners.set(ibr[i].dim(1), i, 3, 2);
-	    scorners.set(ibr[i].dim(2), i, 3, 3);
+	    scorners.set(itl[scale][i].offset(1), i, 0, 0);
+	    scorners.set(itl[scale][i].offset(2), i, 0, 1);
+	    scorners.set(itl[scale][i].dim(1), i, 0, 2);
+	    scorners.set(itl[scale][i].dim(2), i, 0, 3);
+	    scorners.set(itr[scale][i].offset(1), i, 1, 0);
+	    scorners.set(itr[scale][i].offset(2), i, 1, 1);
+	    scorners.set(itr[scale][i].dim(1), i, 1, 2);
+	    scorners.set(itr[scale][i].dim(2), i, 1, 3);
+	    scorners.set(ibl[scale][i].offset(1), i, 2, 0);
+	    scorners.set(ibl[scale][i].offset(2), i, 2, 1);
+	    scorners.set(ibl[scale][i].dim(1), i, 2, 2);
+	    scorners.set(ibl[scale][i].dim(2), i, 2, 3);
+	    scorners.set(ibr[scale][i].offset(1), i, 3, 0);
+	    scorners.set(ibr[scale][i].offset(2), i, 3, 1);
+	    scorners.set(ibr[scale][i].dim(1), i, 3, 2);
+	    scorners.set(ibr[scale][i].dim(2), i, 3, 3);
 	  }
 	  save_matrix(scorners, "corners.mat");
 	}
@@ -1006,32 +1028,33 @@ namespace ebl {
       } else if (corners_inference == 2) { // load corners
 	// load corners from matrix
 	idx<float> corners = load_matrix<float>("corners.mat");
-	itl.clear(); itr.clear(); ibl.clear(); ibr.clear();
+	itl[scale].clear(); itr[scale].clear();
+	ibl[scale].clear(); ibr[scale].clear();
 	for (uint i = 0; i < corners.dim(0); ++i) {
 	  // allocate
 	  fidxdim d(outputs[0].x.get_idxdim());
 	  d.setdims(1);
-	  itl.push_back_new(d);
-	  itr.push_back_new(d);
-	  ibl.push_back_new(d);
-	  ibr.push_back_new(d);
+	  itl[scale].push_back_new(d);
+	  itr[scale].push_back_new(d);
+	  ibl[scale].push_back_new(d);
+	  ibr[scale].push_back_new(d);
 	  // set
-	  itl[i].setoffset(1, corners.get(i, 0, 0));
-	  itl[i].setoffset(2, corners.get(i, 0, 1));
-	  itl[i].setdim(1, corners.get(i, 0, 2));
-	  itl[i].setdim(2, corners.get(i, 0, 3));
-	  itr[i].setoffset(1, corners.get(i, 1, 0));
-	  itr[i].setoffset(2, corners.get(i, 1, 1));
-	  itr[i].setdim(1, corners.get(i, 1, 2));
-	  itr[i].setdim(2, corners.get(i, 1, 3));
-	  ibl[i].setoffset(1, corners.get(i, 2, 0));
-	  ibl[i].setoffset(2, corners.get(i, 2, 1));
-	  ibl[i].setdim(1, corners.get(i, 2, 2));
-	  ibl[i].setdim(2, corners.get(i, 2, 3));
-	  ibr[i].setoffset(1, corners.get(i, 3, 0));
-	  ibr[i].setoffset(2, corners.get(i, 3, 1));
-	  ibr[i].setdim(1, corners.get(i, 3, 2));
-	  ibr[i].setdim(2, corners.get(i, 3, 3));
+	  itl[scale][i].setoffset(1, corners.get(i, 0, 0));
+	  itl[scale][i].setoffset(2, corners.get(i, 0, 1));
+	  itl[scale][i].setdim(1, corners.get(i, 0, 2));
+	  itl[scale][i].setdim(2, corners.get(i, 0, 3));
+	  itr[scale][i].setoffset(1, corners.get(i, 1, 0));
+	  itr[scale][i].setoffset(2, corners.get(i, 1, 1));
+	  itr[scale][i].setdim(1, corners.get(i, 1, 2));
+	  itr[scale][i].setdim(2, corners.get(i, 1, 3));
+	  ibl[scale][i].setoffset(1, corners.get(i, 2, 0));
+	  ibl[scale][i].setoffset(2, corners.get(i, 2, 1));
+	  ibl[scale][i].setdim(1, corners.get(i, 2, 2));
+	  ibl[scale][i].setdim(2, corners.get(i, 2, 3));
+	  ibr[scale][i].setoffset(1, corners.get(i, 3, 0));
+	  ibr[scale][i].setoffset(2, corners.get(i, 3, 1));
+	  ibr[scale][i].setdim(1, corners.get(i, 3, 2));
+	  ibr[scale][i].setdim(2, corners.get(i, 3, 3));
 	}
 	corners_infered = true;
       }
@@ -1046,195 +1069,197 @@ namespace ebl {
     double original_w = indim.dim(2);
     intg offset_h = 0, offset_w = 0;
     int scale_index = 0;
-    // get 4 corners coordinates for each scale
-    mstate<Tstate> &oo = outputs[0];
-    answers.clear();
-    get_corners(oo);
+    for (uint scale = 0; scale < outputs.size(); ++scale) {
+      // get 4 corners coordinates for each scale
+      mstate<Tstate> &oo = outputs[scale];
+      answers.clear();
 
-    // loop on output
-    for (uint o = 0; o < oo.size(); ++o) {
-      if (o < raw_thresholds.size()) threshold = raw_thresholds[o];
-      float thresh = threshold;
-      // Tstate &input = ppinputs[0][0];
-      Tstate &output = oo[o];
-      idx<T> outx = output.x;
-      fidxdim &tl = itl[o], &tr = itr[o], &bl = ibl[o];
-      fidxdim &ptl = pptl[o], &ptr = pptr[o], &pbl = ppbl[o];
-      // fidxdim &br = ibr[o];
+      // loop on output
+      for (uint o = 0; o < oo.size(); ++o) {
+	if (o < raw_thresholds.size()) threshold = raw_thresholds[o];
+	float thresh = threshold;
+	// Tstate &input = ppinputs[0][0];
+	Tstate &output = oo[o];
+	idx<T> outx = output.x;
+	fidxdim &tl = itl[scale][o], &tr = itr[scale][o], &bl = ibl[scale][o];
+	fidxdim &ptl = pptl[scale][o], &ptr = pptr[scale][o],
+	  &pbl = ppbl[scale][o];
+	// fidxdim &br = ibr[o];
 
-      // steps in input space
-      double hf = (bl.offset(1) - tl.offset(1)) / outx.dim(1);
-      double wf = (tr.offset(2) - tl.offset(2)) / outx.dim(2);
-      // steps in preprocessed space
-      double phf = (pbl.offset(1) - ptl.offset(1)) / outx.dim(1);
-      double pwf = (ptr.offset(2) - ptl.offset(2)) / outx.dim(2);
+	// steps in input space
+	double hf = (bl.offset(1) - tl.offset(1)) / outx.dim(1);
+	double wf = (tr.offset(2) - tl.offset(2)) / outx.dim(2);
+	// steps in preprocessed space
+	double phf = (pbl.offset(1) - ptl.offset(1)) / outx.dim(1);
+	double pwf = (ptr.offset(2) - ptl.offset(2)) / outx.dim(2);
       
-      // box scalings
-      double hscaling = 1.0, wscaling = 1.0;
-      if (o < bbox_scalings.size()) {
-	fidxdim &scaling = bbox_scalings[o];
-	hscaling = scaling.dim(0);
-	wscaling = scaling.dim(1);
-      }
-
-      bboxes bbtmp;
-      // select elements
-      // rect<int> &robbox = original_bboxes[0];
-      // sizes
-      // double in_h = (double) input.x.dim(1);
-      // double in_w = (double) input.x.dim(2);
-      // double out_h = (double) output.x.dim(1);
-      // double out_w = (double) output.x.dim(2);
-      // double neth = netdim.dim(1); // network's input height
-      // double netw = netdim.dim(2); // network's input width
-      // double scalehi = original_h / robbox.height; // input to original
-      // double scalewi = original_w / robbox.width; // input to original
-      // int image_h0 = (int) (robbox.h0 * scalehi);
-      // int image_w0 = (int) (robbox.w0 * scalewi);
-      // offset factor in input map
-      // double offset_h_factor = (in_h - neth) / std::max((double)1, (out_h - 1));
-      // double offset_w_factor = (in_w - netw) / std::max((double)1, (out_w - 1));
-      offset_w = 0;
-      Tstate out(outx.get_idxdim());
-      answer->fprop(output, out);
-      answers.push_back_new(out);
-
-      idx<T> tmp = outx.select(0, 1);
-      cout << "out " << o << " threshold " << thresh << " min " << idx_min(tmp)
-	   << " max " << idx_max(tmp) << endl;
-      
-      // loop on width
-      idx_eloop1(ro, out.x, T) {
-	offset_h = 0;
-	// loop on height
-	idx_eloop1(roo, ro, T) {
-	  int classid = (int) roo.get(0);
-	  float conf = (float) roo.get(1);
-	  bool accept = false;
-	  // select decision criterion
-	  switch (bbox_decision) {
-	  case 0: accept = (conf >= thresh && classid != bgclass); break ;
-	  case 1: accept = ((offset_h == outx.dim(1) - 1 && offset_w == 0) ||
-			    (offset_h == 0 && offset_w == 0) ||
-			    (offset_h == outx.dim(1) - 1
-			     && offset_w == outx.dim(2) - 1) ||
-			    (offset_h == 0 && offset_w == outx.dim(2) - 0));
-	    break;
-	  case 2: accept = ((offset_h == outx.dim(1) - 1
-			     && offset_w == outx.dim(2) - 1));
-	    break;
-	  default: eblerror("unknown bbox decision type");
-	  }
-	  if (accept) {
-	    bbox bb;
-	    bb.class_id = classid; // Class
-	    bb.confidence = conf; // Confidence
-	    bb.iscale_index = scale_indices[scale_index]; // scale index
-	    bb.oscale_index = scale_index; // scale index
-
-	    bb.h0 = tl.offset(1) + offset_h * hf;
-	    bb.w0 = tl.offset(2) + offset_w * wf;
-	    bb.height = tl.dim(1);
-	    bb.width = tl.dim(2);
-	    bb.scale_centered(hscaling, wscaling);
-
-	    bb.i.h0 = ptl.offset(1) + offset_h * phf;
-	    bb.i.w0 = ptl.offset(2) + offset_w * pwf;
-	    bb.i.height = ptl.dim(1);
-	    bb.i.width = ptl.dim(2);
-
-	    // // predicted offsets / scale
-	    // float hoff = 0, woff = 0, scale = 1.0;
-	    // if (scaler_mode) {
-	    //   scale = (float) roo.gget(2);
-	    //   if (roo.dim(0) == 5) { // class,conf,scale,h,w
-	    // 	hoff = roo.gget(3) * neth;
-	    // 	woff = roo.gget(4) * neth;
-	    //   }
-	    //   // cap scale
-	    //   scale = std::max(min_scale_pred, std::min(max_scale_pred, scale));
-	    //   scale = 1 / scale;
-	    // }
-	    // EDEBUG(roo.str());
-	    // // original box in input map
-	    // bb.iheight = (int) in_h; // input h
-	    // bb.iwidth = (int) in_w; // input w
-	    // bb.i0.h0 = (float) (offset_h * offset_h_factor);
-	    // bb.i0.w0 = (float) (offset_w * offset_w_factor);
-	    // bb.i0.height = (float) neth;
-	    // bb.i0.width = (float) netw;
-	    // output map
-	    // bb.oheight = (int) out_h; // output height
-	    // bb.owidth = (int) out_w; // output width
-	    bb.o.h0 = offset_h; // answer height in output
-	    bb.o.w0 = offset_w; // answer height in output
-	    bb.o.height = 1;
-	    bb.o.width = 1;
-	    // // bb.o.h0 = 0;
-	    // // bb.o.w0 = 0;
-	    // // bb.o.h0 = out_h - 1;
-	    // // bb.o.w0 = out_w - 1;
-
-	    // // transformed box in input map
-	    // bb.i.h0 = bb.i0.h0 + hoff;
-	    // bb.i.w0 = bb.i0.w0 + woff;
-	    // bb.i.height = bb.i0.height;
-	    // bb.i.width = bb.i0.width;
-	    // if (scale != 1.0)
-	    //   bb.i.scale_centered(scale, scale);
-
-	    // // infer original location through network
-	    // idxdim d(1, bb.o.height, bb.o.width);
-	    // d.setoffset(1, bb.o.h0);
-	    // d.setoffset(2, bb.o.w0);
-	    // mfidxdim md(d);
-	    // mfidxdim d2 = thenet.bprop_size(md);
-	    // fidxdim loc = d2[0];
-	    // bb.i.h0 = loc.offset(1);
-	    // bb.i.w0 = loc.offset(2);
-	    // bb.i.height = loc.dim(1);
-	    // bb.i.width = loc.dim(2);
-
-	    // // add all input boxes
-	    // for (uint q = 0; q < d2.size(); ++q)
-	    //   bb.mi.push_back(rect<float>(d2[q].offset(1), d2[q].offset(2),
-	    // 				  d2[q].dim(1), d2[q].dim(2)));
-
-	    // // bb.h0 = loc.offset(1) * scalehi;
-	    // // bb.w0 = loc.offset(2) * scalewi;
-	    // // bb.height = loc.dim(1) * scalehi;
-	    // // bb.width = loc.dim(2) * scalewi;
-
-
-	    // // original image
-	    // // bbox's rectangle in original image
-	    // // bb.h0 = bb.i.h0 * scalehi;
-	    // // bb.w0 = bb.i.w0 * scalewi;
-	    // bb.h0 = bb.i.h0 * scalehi - image_h0;
-	    // bb.w0 = bb.i.w0 * scalewi - image_w0;
-	    // bb.height = bb.i.height * scalehi;
-	    // bb.width = bb.i.width * scalewi;
-
-	    bool ignore = false;
-	    if (ignore_outsiders) { // ignore boxes that overlap outside
-	      if (bb.h0 < 0 || bb.w0 < 0
-  	          || bb.h0 + bb.height > original_h
-		  || bb.w0 + bb.width > original_w)
-		ignore = true;
-	    }
-
-	    // push bbox to list
-	    if (!ignore)
-	      bbtmp.push_back(new bbox(bb));
-	  }
-	  offset_h++;
+	// box scalings
+	double hscaling = 1.0, wscaling = 1.0;
+	if (o < bbox_scalings.size()) {
+	  fidxdim &scaling = bbox_scalings[o];
+	  hscaling = scaling.dim(0);
+	  wscaling = scaling.dim(1);
 	}
-	offset_w++;
+
+	bboxes bbtmp;
+	// select elements
+	// rect<int> &robbox = original_bboxes[0];
+	// sizes
+	// double in_h = (double) input.x.dim(1);
+	// double in_w = (double) input.x.dim(2);
+	// double out_h = (double) output.x.dim(1);
+	// double out_w = (double) output.x.dim(2);
+	// double neth = netdim.dim(1); // network's input height
+	// double netw = netdim.dim(2); // network's input width
+	// double scalehi = original_h / robbox.height; // input to original
+	// double scalewi = original_w / robbox.width; // input to original
+	// int image_h0 = (int) (robbox.h0 * scalehi);
+	// int image_w0 = (int) (robbox.w0 * scalewi);
+	// offset factor in input map
+	// double offset_h_factor = (in_h - neth) / std::max((double)1, (out_h - 1));
+	// double offset_w_factor = (in_w - netw) / std::max((double)1, (out_w - 1));
+	offset_w = 0;
+	Tstate out(outx.get_idxdim());
+	answer->fprop(output, out);
+	answers.push_back_new(out);
+
+	idx<T> tmp = outx.select(0, 1);
+	// cout << "out " << o << " threshold " << thresh << " min " << idx_min(tmp)
+	//      << " max " << idx_max(tmp) << endl;
+      
+	// loop on width
+	idx_eloop1(ro, out.x, T) {
+	  offset_h = 0;
+	  // loop on height
+	  idx_eloop1(roo, ro, T) {
+	    int classid = (int) roo.get(0);
+	    float conf = (float) roo.get(1);
+	    bool accept = false;
+	    // select decision criterion
+	    switch (bbox_decision) {
+	    case 0: accept = (conf >= thresh && classid != bgclass); break ;
+	    case 1: accept = ((offset_h == outx.dim(1) - 1 && offset_w == 0) ||
+			      (offset_h == 0 && offset_w == 0) ||
+			      (offset_h == outx.dim(1) - 1
+			       && offset_w == outx.dim(2) - 1) ||
+			      (offset_h == 0 && offset_w == outx.dim(2) - 0));
+	      break;
+	    case 2: accept = ((offset_h == outx.dim(1) - 1
+			       && offset_w == outx.dim(2) - 1));
+	      break;
+	    default: eblerror("unknown bbox decision type");
+	    }
+	    if (accept) {
+	      bbox bb;
+	      bb.class_id = classid; // Class
+	      bb.confidence = conf; // Confidence
+	      bb.iscale_index = scale_index + scale_indices[scale][o];
+	      bb.oscale_index = scale_index; // scale index
+
+	      bb.h0 = tl.offset(1) + offset_h * hf;
+	      bb.w0 = tl.offset(2) + offset_w * wf;
+	      bb.height = tl.dim(1);
+	      bb.width = tl.dim(2);
+	      bb.scale_centered(hscaling, wscaling);
+
+	      bb.i.h0 = ptl.offset(1) + offset_h * phf;
+	      bb.i.w0 = ptl.offset(2) + offset_w * pwf;
+	      bb.i.height = ptl.dim(1);
+	      bb.i.width = ptl.dim(2);
+
+	      // // predicted offsets / scale
+	      // float hoff = 0, woff = 0, scale = 1.0;
+	      // if (scaler_mode) {
+	      //   scale = (float) roo.gget(2);
+	      //   if (roo.dim(0) == 5) { // class,conf,scale,h,w
+	      // 	hoff = roo.gget(3) * neth;
+	      // 	woff = roo.gget(4) * neth;
+	      //   }
+	      //   // cap scale
+	      //   scale = std::max(min_scale_pred, std::min(max_scale_pred, scale));
+	      //   scale = 1 / scale;
+	      // }
+	      // EDEBUG(roo.str());
+	      // // original box in input map
+	      // bb.iheight = (int) in_h; // input h
+	      // bb.iwidth = (int) in_w; // input w
+	      // bb.i0.h0 = (float) (offset_h * offset_h_factor);
+	      // bb.i0.w0 = (float) (offset_w * offset_w_factor);
+	      // bb.i0.height = (float) neth;
+	      // bb.i0.width = (float) netw;
+	      // output map
+	      // bb.oheight = (int) out_h; // output height
+	      // bb.owidth = (int) out_w; // output width
+	      bb.o.h0 = offset_h; // answer height in output
+	      bb.o.w0 = offset_w; // answer height in output
+	      bb.o.height = 1;
+	      bb.o.width = 1;
+	      // // bb.o.h0 = 0;
+	      // // bb.o.w0 = 0;
+	      // // bb.o.h0 = out_h - 1;
+	      // // bb.o.w0 = out_w - 1;
+
+	      // // transformed box in input map
+	      // bb.i.h0 = bb.i0.h0 + hoff;
+	      // bb.i.w0 = bb.i0.w0 + woff;
+	      // bb.i.height = bb.i0.height;
+	      // bb.i.width = bb.i0.width;
+	      // if (scale != 1.0)
+	      //   bb.i.scale_centered(scale, scale);
+
+	      // // infer original location through network
+	      // idxdim d(1, bb.o.height, bb.o.width);
+	      // d.setoffset(1, bb.o.h0);
+	      // d.setoffset(2, bb.o.w0);
+	      // mfidxdim md(d);
+	      // mfidxdim d2 = thenet.bprop_size(md);
+	      // fidxdim loc = d2[0];
+	      // bb.i.h0 = loc.offset(1);
+	      // bb.i.w0 = loc.offset(2);
+	      // bb.i.height = loc.dim(1);
+	      // bb.i.width = loc.dim(2);
+
+	      // // add all input boxes
+	      // for (uint q = 0; q < d2.size(); ++q)
+	      //   bb.mi.push_back(rect<float>(d2[q].offset(1), d2[q].offset(2),
+	      // 				  d2[q].dim(1), d2[q].dim(2)));
+
+	      // // bb.h0 = loc.offset(1) * scalehi;
+	      // // bb.w0 = loc.offset(2) * scalewi;
+	      // // bb.height = loc.dim(1) * scalehi;
+	      // // bb.width = loc.dim(2) * scalewi;
+
+
+	      // // original image
+	      // // bbox's rectangle in original image
+	      // // bb.h0 = bb.i.h0 * scalehi;
+	      // // bb.w0 = bb.i.w0 * scalewi;
+	      // bb.h0 = bb.i.h0 * scalehi - image_h0;
+	      // bb.w0 = bb.i.w0 * scalewi - image_w0;
+	      // bb.height = bb.i.height * scalehi;
+	      // bb.width = bb.i.width * scalewi;
+
+	      bool ignore = false;
+	      if (ignore_outsiders) { // ignore boxes that overlap outside
+		if (bb.h0 < 0 || bb.w0 < 0
+		    || bb.h0 + bb.height > original_h
+		    || bb.w0 + bb.width > original_w)
+		  ignore = true;
+	      }
+
+	      // push bbox to list
+	      if (!ignore)
+		bbtmp.push_back(new bbox(bb));
+	    }
+	    offset_h++;
+	  }
+	  offset_w++;
+	}
+	// add scale boxes into all boxes
+	for (uint k = 0; k < bbtmp.size(); ++k)
+	  bbs.push_back(bbtmp[k]);
+	scale_index++;
       }
-      // add scale boxes into all boxes
-      for (uint k = 0; k < bbtmp.size(); ++k)
-	bbs.push_back(bbtmp[k]);
-      scale_index++;
     }
   }
 
@@ -1612,8 +1637,9 @@ namespace ebl {
       if (!mem_optimization || keep_inputs)
 	resizepp->set_output_copy(ppinputs[i]);
       // fprop
-      mstate<Tstate> &out = outputs[0];
+      mstate<Tstate> &out = outputs[i];
       thenet.fprop(*input, out);
+      get_corners(out, i, true);
       EDEBUG("detector outputs: " << out);
       // outputs dumping
       if (!outputs_dump.empty()) {

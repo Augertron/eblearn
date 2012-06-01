@@ -71,8 +71,9 @@ namespace ebl {
 	// negs do not need groundtruth data
 	if (extract_neg)
 	  bbneg = get_negatives
-	    (detect.answers, gt_clean, gt_rest, detect.itl, detect.itr,
-	     detect.ibl, detect.ibr, conf.try_get_float("gt_neg_matching", .5),
+	    (detect.answers, gt_clean, gt_rest, detect.itl[0], detect.itr[0],
+	     detect.ibl[0], detect.ibr[0],
+	     conf.try_get_float("gt_neg_matching", .5),
 	     conf.try_get_uint("gt_neg_max", 5), detect.bgclass, neg_threshold);
 	// get bootstrapping boxes
 	if (extract_pos) {
@@ -82,8 +83,9 @@ namespace ebl {
 	    gt_clean.scale_centered(scale, scale);
 	  }	  
 	  bbpos = get_positives
-	    (detect.outputs[0], gt_clean, detect.itl, detect.itr, detect.ibl,
-	     detect.ibr, conf.try_get_float("gt_pos_matching", .5),
+	    (detect.outputs[0], gt_clean, detect.itl[0], detect.itr[0],
+	     detect.ibl[0], detect.ibr[0],
+	     conf.try_get_float("gt_pos_matching", .5),
 	     conf.try_get_float("gt_min_context", 1.0));
 	}
       } catch (eblexception &e) { eblwarn(e); }
