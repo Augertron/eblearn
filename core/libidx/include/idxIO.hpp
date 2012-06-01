@@ -245,6 +245,9 @@ namespace ebl {
 
   template <typename T>
   midx<T> load_matrices(const std::string &filename, bool ondemand){
+    if (!has_multiple_matrices(filename.c_str()))
+      eblthrow("trying to load multiple matrices from single-matrix file "
+	       << filename);
     // open file
     file *f = new file(filename.c_str(), "rb");
     FILE *fp = f->get_fp();

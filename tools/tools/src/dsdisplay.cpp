@@ -168,9 +168,9 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
   string	scales_fname;
   string	classpairs_fname;
   string	deformpairs_fname;
-  // boolean successes of files loading
-  bool		bdefpairs   = true;
-  bool		bclasspairs = true;
+  // // boolean successes of files loading
+  // bool		bdefpairs   = true;
+  // bool		bclasspairs = true;
   // data files
   idx<Tdata>	data;
   midx<Tdata>   datas;
