@@ -347,9 +347,11 @@ namespace ebl {
     //! Clear the classes.
     virtual void clear_classes();
     //! add a class name
-    virtual bool add_class(const string &class_name);
+    //! \param sort If true, resort all classes after adding them.
+    virtual bool add_class(const string &class_name, bool sort = true);
     //! set all classes directly using an idx of classes strings
-    virtual void set_classes(idx<ubyte> &classidx);
+    //! \param sort If true, resort all classes after adding them.
+    virtual void set_classes(idx<ubyte> &classidx, bool sort = true);
 
     //! Count and returns how many samples are present in data.
     virtual intg count_samples();

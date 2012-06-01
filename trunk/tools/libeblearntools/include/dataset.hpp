@@ -442,7 +442,7 @@ namespace ebl {
     classidx = idx<ubyte>(1,1);
     fname = root1; fname += classes_fname;
     if (loading_warning(classidx, fname))
-      set_classes(classidx);
+      set_classes(classidx, false);
     else
       nclasses = idx_max(labels) + 1;
     // load classpairs
@@ -1187,7 +1187,7 @@ namespace ebl {
   }
 
   template <class Tdata>
-  bool dataset<Tdata>::add_class(const string &class_name) {
+  bool dataset<Tdata>::add_class(const string &class_name, bool sort) {
     vector<string>::iterator res;
     string name = class_name;
     res = find(classes.begin(), classes.end(), name);
@@ -1199,17 +1199,17 @@ namespace ebl {
       //      cout << "found class " << name << " at index " << i << endl;
     }
     // sort all classes
-    std::sort(classes.begin(), classes.end(), natural_compare_less);
+    if (sort) std::sort(classes.begin(), classes.end(), natural_compare_less);
     return true;
   }
 
   template <class Tdata>
-  void dataset<Tdata>::set_classes(idx<ubyte> &classidx) {    
+  void dataset<Tdata>::set_classes(idx<ubyte> &classidx, bool sort) {    
     // add classes to each dataset
     string s;
     idx_bloop1(classe, classidx, ubyte) {
       s = (const char *) classe.idx_ptr();
-      add_class(s);
+      add_class(s, sort);
     }
     // init max_per_class
     max_per_class = idx<intg>(classes.size());
@@ -2047,7 +2047,18 @@ namespace ebl {
   template <typename T>
   bool loading_error(midx<T> &mat, string &fname) {
     try {
-      mat = load_matrices<T>(fname);
+      // in multi-matrix files, samples are separate
+      if (has_multiple_matrices(fname.c_str()))
+	mat = load_matrices<T>(fname);
+      else { // single-matrix, all samples are together
+	idx<T> single = load_matrix<T>(fname);
+	// break up first dimension into multi-matrix
+	mat = midx<T>(single.dim(0));
+	for (uint i = 0; i < single.dim(0); ++i) {
+	  idx<T> sample = single.select(0, i);
+	  mat.set(sample, i);
+	}
+      }
     } catch (const string &err) {
       cerr << "error: " << err << endl;
       cerr << "error: failed to load dataset file " << fname << endl;
