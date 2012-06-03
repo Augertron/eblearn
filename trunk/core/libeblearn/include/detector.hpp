@@ -178,14 +178,8 @@ namespace ebl {
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_zpads(float hzpad_, float wzpad_) {
     if (hzpad_ != 0 || wzpad_ != 0) {
-      if (!netdim_fixed) {
-	fidxdim minodim(1, 1, 1); // min output dims
-	mfidxdim mm;
-	mm.push_back_new(minodim);
-	mfidxdim m = thenet.bprop_size(mm); // compute min input dims
-	m = resizepp->get_msize();
-	netdim = m[0];
-      }
+      if (initialized) get_netdim(indim.order());
+      else get_netdim(3);
       hzpad = (uint) (hzpad_ * netdim.dim(1));
       wzpad = (uint) (wzpad_ * netdim.dim(2));
       resizepp->set_zpads(hzpad, wzpad);
@@ -380,8 +374,7 @@ namespace ebl {
     initialized = true;
     indim = dsample;
     // the network's minimum input dimensions
-    if (!netdim_fixed)
-      netdim = network_mindims(thenet, dsample.order());
+    get_netdim(dsample.order());
     // mout << "Network's minimum input dimensions are: " << netdim
     // 	 << thenet.pretty(netdim) << endl;
     // minimum input dimensions: factor of network's minimum input
@@ -597,6 +590,15 @@ namespace ebl {
     }
   }
 
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::get_netdim(intg order0) {
+    if (!netdim_fixed) {
+      netdim = network_mindims(thenet, order0);
+      mfidxdim m = resizepp->get_msize();
+      netdim = m[0];
+    }
+  }
+  
   //////////////////////////////////////////////////////////////////////////////
   // outputs smoothing
 
