@@ -453,10 +453,10 @@ namespace ebl {
     float post_hfact = conf.try_get_float("post_hfact", 1.0);
     float post_wfact = conf.try_get_float("post_wfact", 1.0);
     float woverh = conf.try_get_float("woverh", 1.0);
-    float max_overlap = conf.try_get_float("max_overlap", 1.0);
+    float max_overlap = conf.try_get_float("max_overlap", 0.0);
     float max_hcenter_dist = conf.try_get_float("max_hcenter_dist", 0.0);
     float max_wcenter_dist = conf.try_get_float("max_wcenter_dist", 0.0);
-    float vote_max_overlap = conf.try_get_float("vote_max_overlap", 1.0);
+    float vote_max_overlap = conf.try_get_float("vote_max_overlap", 0.0);
     float vote_mhd = conf.try_get_float("vote_max_hcenter_dist", 0.0);
     float vote_mwd = conf.try_get_float("vote_max_wcenter_dist", 0.0);
     detect.set_nms(nms_type, pre_threshold, post_threshold, pre_hfact,

@@ -1069,10 +1069,10 @@ namespace ebl {
     double original_w = indim.dim(2);
     intg offset_h = 0, offset_w = 0;
     int scale_index = 0;
+    answers.clear();
     for (uint scale = 0; scale < outputs.size(); ++scale) {
       // get 4 corners coordinates for each scale
       mstate<Tstate> &oo = outputs[scale];
-      answers.clear();
 
       // loop on output
       for (uint o = 0; o < oo.size(); ++o) {
