@@ -632,22 +632,23 @@ namespace ebl {
   template <typename T, class Tstate>
   void detector<T,Tstate>::smooth_outputs() {
     if (smoothing_type != 0) {
-      eblerror("smoothing temporarly broken");
-      // FIXME! (outputs is no longer a single output)
-      // uint hpad = (uint) (smoothing_kernel.dim(0) / 2);
-      // uint wpad = (uint) (smoothing_kernel.dim(1) / 2);
-      // for (uint i = 0; i < outputs.size(); ++i) {
-      // 	idx<T> &outx = outputs[i]->x;
-      // 	intg h = outx.dim(1), w = outx.dim(2);
-      // 	idx<T> in(h + 2 * hpad, w + 2 * wpad);
-      // 	idx<T> inc = in.narrow(0, h, hpad);
-      // 	inc = inc.narrow(1, w, wpad);
-      // 	idx_clear(in);
-      // 	idx_bloop1(out, outx, T) {
-      // 	  idx_copy(out, inc);
-      // 	  idx_2dconvol(in, smoothing_kernel, out);
-      // 	}
-      // }
+      uint hpad = (uint) (smoothing_kernel.dim(0) / 2);
+      uint wpad = (uint) (smoothing_kernel.dim(1) / 2);
+      for (uint j = 0; j < outputs.size(); ++j) {
+	mstate<Tstate> &o = outputs[j];
+	for (uint i = 0; i < o.size(); ++i) {
+	  idx<T> &outx = o[i].x;
+	  intg h = outx.dim(1), w = outx.dim(2);
+	  idx<T> in(h + 2 * hpad, w + 2 * wpad);
+	  idx<T> inc = in.narrow(0, h, hpad);
+	  inc = inc.narrow(1, w, wpad);
+	  idx_clear(in);
+	  idx_bloop1(out, outx, T) {
+	    idx_copy(out, inc);
+	    idx_2dconvol(in, smoothing_kernel, out);
+	  }
+	}
+      }
     }
   }
 
