@@ -288,6 +288,8 @@ namespace ebl {
     //! this method assumes nresolutions and resolutions members have already
     //! been initialized.
     void validate_resolutions();
+    //! Figure out mimimum input dimensions to network.
+    void get_netdim(intg order0);
 
     // bboxes operations ///////////////////////////////////////////////////////
 

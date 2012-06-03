@@ -1805,7 +1805,10 @@ namespace ebl {
     for (uint i = 0; i < order; ++i)
       d.insert_dim(0, 1);
     fidxdim fd = d;
-    d = m.bprop_size(fd);
+    mfidxdim mm;
+    mm.push_back_new(fd);
+    mm = m.bprop_size(mm);
+    if (mm.exists(0)) d = mm[0];
     return d;
   }
 
