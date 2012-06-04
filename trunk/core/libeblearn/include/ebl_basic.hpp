@@ -146,8 +146,10 @@ namespace ebl {
 	cerr << "Warning: loading weights partly (the first " << d.dim(0)
 	     << " features) from " << weights << " instead of entire weights ("
 	     << w.x << ")." << endl;
-	idx<T> slices = w.x.narrow(0, weights.dim(0), 0);
-	idx_copy(weights, slices);
+	intg sz = std::min(w.x.dim(0), weights.dim(0));
+	idx<T> slices = w.x.narrow(0, sz, 0);
+	idx<T> w = weights.narrow(0, sz, 0);
+	idx_copy(w, slices);
       } else
 	eblthrow("expected same dimension weights but got " << w.x << " and "
 		 << weights << " instead in " << this->name());
@@ -602,8 +604,10 @@ namespace ebl {
 	cerr << "Warning: loading weights partly (the first " << d.dim(0)
 	     << " features) from " << weights << " instead of entire weights ("
 	     << kernel.x << ")." << endl;
-	idx<T> slices = kernel.x.narrow(0, weights.dim(0), 0);
-	idx_copy(weights, slices);
+	intg sz = std::min(kernel.x.dim(0), weights.dim(0));
+	idx<T> slices = kernel.x.narrow(0, sz, 0);
+	idx<T> w = weights.narrow(0, sz, 0);
+	idx_copy(w, slices);
       } else
 	eblthrow("expected same dimension weights but got " << kernel.x
 		 << " and " << weights << " instead in " << this->name());
@@ -708,8 +712,10 @@ namespace ebl {
 	cerr << "Warning: loading weights partly (the first " << d.dim(0)
 	     << " features) from " << weights << " instead of entire weights ("
 	     << bias.x << ")." << endl;
-	idx<T> slices = bias.x.narrow(0, weights.dim(0), 0);
-	idx_copy(weights, slices);
+	intg sz = std::min(bias.x.dim(0), weights.dim(0));
+	idx<T> slices = bias.x.narrow(0, sz, 0);
+	idx<T> w = weights.narrow(0, sz, 0);
+	idx_copy(w, slices);
       } else
       eblthrow("expected same dimension weights but got " << bias.x << " and "
 	       << weights << " instead in " << this->name());
@@ -1547,8 +1553,10 @@ namespace ebl {
 	cerr << "Warning: loading weights partly (the first " << d.dim(0)
 	     << " features) from " << weights << " instead of entire weights ("
 	     << coeff.x << ")." << endl;
-	idx<T> slices = coeff.x.narrow(0, weights.dim(0), 0);
-	idx_copy(weights, slices);
+	intg sz = std::min(coeff.x.dim(0), weights.dim(0));
+	idx<T> slices = coeff.x.narrow(0, sz, 0);
+	idx<T> w = weights.narrow(0, sz, 0);
+	idx_copy(w, slices);
       } else
 	eblthrow("expected same dimension weights but got " << coeff.x <<
 		 " and " << weights << " instead in " << this->name());
