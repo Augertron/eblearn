@@ -293,6 +293,8 @@ namespace ebl {
 
     // bboxes operations ///////////////////////////////////////////////////////
 
+    //! Threshold outputs.
+    void threshold_outputs(T threshold);
     //! Smooth outputs.
     void smooth_outputs();
     //! If a merge module was found in the network, update its parameters so

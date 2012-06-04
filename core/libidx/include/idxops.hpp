@@ -697,7 +697,8 @@ namespace ebl {
 
   template<class T, class T2, class T3>
   void idx_threshold(idx<T> & in, T2 th, T3 value) {
-    idx_threshold(in, saturate(th, T), saturate(value, T));
+    idx_threshold(in, (T) th, (T) value);
+    //    idx_threshold(in, saturate(th, T), saturate(value, T));
   }
 
   template<class T> void idx_threshold(idx<T>& in, T th, T value) {
@@ -709,9 +710,9 @@ namespace ebl {
 
   template<class T, class T2, class T3>
   void idx_threshold(idx<T> & in, T2 th, T3 value, idx<T> & out) {
-    idx_threshold(in, saturate(th, T), saturate(value, T), out);
+    idx_threshold(in, (T) th, (T) value, out);
+    //    idx_threshold(in, saturate(th, T), saturate(value, T), out);
   }
-
 
   template<class T> void idx_threshold(idx<T>& in, T th, T value, idx<T>& out) {
     idx_aloopf2(pin, in, T, pout, out, T, {

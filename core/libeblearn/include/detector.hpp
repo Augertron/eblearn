@@ -623,9 +623,20 @@ namespace ebl {
       smoothing_kernel = ker;
       mout << "Smoothing outputs with kernel: " << endl;
       smoothing_kernel.printElems();
+      mout << endl;
       break ;
     default:
       eblerror("Unknown smoothing type " << type);
+    }
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::threshold_outputs(T t) {
+    for (uint j = 0; j < outputs.size(); ++j) {
+      mstate<Tstate> &o = outputs[j];
+      for (uint i = 0; i < o.size(); ++i) {
+	idx_threshold(o[i].x, t, -1);
+      }
     }
   }
 
@@ -643,145 +654,18 @@ namespace ebl {
 	  idx<T> inc = in.narrow(0, h, hpad);
 	  inc = inc.narrow(1, w, wpad);
 	  idx_clear(in);
+	  uint k = 0;
 	  idx_bloop1(out, outx, T) {
-	    idx_copy(out, inc);
-	    idx_2dconvol(in, smoothing_kernel, out);
+	    if (k != (uint) bgclass) { // do not smooth background class
+	      idx_copy(out, inc);
+	      idx_2dconvol(in, smoothing_kernel, out);
+	    }
+	    k++;
 	  }
 	}
       }
     }
   }
-
-  // template <typename T, class Tstate>
-  // void detector<T,Tstate>::extract_bboxes(T threshold, bboxes &bbs) {
-  //   bbox::init_instance_id(); // reset unique ids to start from zero.
-  //   // make a list that contains the results
-  //   double original_h = indim.dim(1);
-  //   double original_w = indim.dim(2);
-  //   intg offset_h = 0, offset_w = 0;
-  //   int scale_index = 0;
-  //   for (uint i = 0; i < ppinputs.size(); ++i) {
-  //     bboxes bbtmp;
-  //     // select elements
-  //     Tstate &input = (*(ppinputs[i]))[0];
-  //     Tstate &output = *(outputs[i]);
-  //     rect<int> &robbox = original_bboxes[i];
-  //     // sizes
-  //     double in_h = (double) input.x.dim(1);
-  //     double in_w = (double) input.x.dim(2);
-  //     double out_h = (double) output.x.dim(1);
-  //     double out_w = (double) output.x.dim(2);
-  //     double neth = netdim.dim(1); // network's input height
-  //     double netw = netdim.dim(2); // network's input width
-  //     double scalehi = original_h / robbox.height; // input to original
-  //     double scalewi = original_w / robbox.width; // input to original
-  //     int image_h0 = (int) (robbox.h0 * scalehi);
-  //     int image_w0 = (int) (robbox.w0 * scalewi);
-  //     // offset factor in input map
-  //     double offset_h_factor = (in_h - neth) / std::max((double)1, (out_h - 1));
-  //     double offset_w_factor = (in_w - netw) / std::max((double)1, (out_w - 1));
-  //     offset_w = 0;
-  //     Tstate out(output.x.get_idxdim());
-  //     answer.fprop(output, out);
-  //     // loop on width
-  //     idx_eloop1(ro, out.x, T) {
-  // 	offset_h = 0;
-  // 	// loop on height
-  // 	idx_eloop1(roo, ro, T) {
-  // 	  int classid = (int) roo.get(0);
-  // 	  float conf = (float) roo.get(1);
-  // 	  // if ((offset_h == out_h - 1 || (int)(offset_h) % 3 == 0)
-  // 	  //     && (offset_w == out_w - 1 || (int)(offset_w) % 3 == 0)) {
-  // 	  // if (true) {
-  // 	  if (conf >= threshold && classid != bgclass) {
-  // 	    bbox bb;
-  // 	    bb.class_id = classid; // Class
-  // 	    bb.confidence = conf; // Confidence
-  // 	    bb.scale_index = scale_index; // scale index
-  // 	    // predicted offsets / scale
-  // 	    float hoff = 0, woff = 0, scale = 1.0;
-  // 	    if (scaler_mode) {
-  // 	      scale = (float) roo.gget(2);
-  // 	      if (roo.dim(0) == 5) { // class,conf,scale,h,w
-  // 		hoff = roo.gget(3) * neth;
-  // 		woff = roo.gget(4) * neth;
-  // 	      }
-  // 	      // cap scale
-  // 	      scale = std::max(min_scale_pred, std::min(max_scale_pred, scale));
-  // 	      scale = 1 / scale;
-  // 	    }
-  // 	    EDEBUG(roo.str());
-  // 	    // original box in input map
-  // 	    bb.iheight = (int) in_h; // input h
-  // 	    bb.iwidth = (int) in_w; // input w
-  // 	    bb.i0.h0 = (float) (offset_h * offset_h_factor);
-  // 	    bb.i0.w0 = (float) (offset_w * offset_w_factor);
-  // 	    bb.i0.height = (float) neth;
-  // 	    bb.i0.width = (float) netw;
-  // 	    // output map
-  // 	    bb.oheight = (int) out_h; // output height
-  // 	    bb.owidth = (int) out_w; // output width
-  // 	    bb.o.h0 = offset_h; // answer height in output
-  // 	    bb.o.w0 = offset_w; // answer height in output
-  // 	    // bb.o.h0 = 0;
-  // 	    // bb.o.w0 = 0;
-  // 	    // bb.o.h0 = out_h - 1;
-  // 	    // bb.o.w0 = out_w - 1;
-  // 	    bb.o.height = 1;
-  // 	    bb.o.width = 1;
-
-  // 	    // transformed box in input map
-  // 	    bb.i.h0 = bb.i0.h0 + hoff;
-  // 	    bb.i.w0 = bb.i0.w0 + woff;
-  // 	    bb.i.height = bb.i0.height;
-  // 	    bb.i.width = bb.i0.width;
-  // 	    if (scale != 1.0)
-  // 	      bb.i.scale_centered(scale, scale);
-
-  // 	    // infer original location through network
-  // 	    idxdim d(1, bb.o.height, bb.o.width);
-  // 	    d.setoffset(1, bb.o.h0);
-  // 	    d.setoffset(2, bb.o.w0);
-  // 	    mfidxdim md(d);
-  // 	    mfidxdim d2 = thenet.bprop_size(md);
-  // 	    fidxdim loc = d2[0];
-  // 	    bb.i.h0 = loc.offset(1);
-  // 	    bb.i.w0 = loc.offset(2);
-  // 	    bb.i.height = loc.dim(1);
-  // 	    bb.i.width = loc.dim(2);
-
-  // 	    // add all input boxes
-  // 	    for (uint q = 0; q < d2.size(); ++q)
-  // 	      bb.mi.push_back(rect<float>(d2[q].offset(1), d2[q].offset(2),
-  // 					  d2[q].dim(1), d2[q].dim(2)));
-
-  // 	    // bb.h0 = loc.offset(1) * scalehi;
-  // 	    // bb.w0 = loc.offset(2) * scalewi;
-  // 	    // bb.height = loc.dim(1) * scalehi;
-  // 	    // bb.width = loc.dim(2) * scalewi;
-
-
-  // 	    // original image
-  // 	    // bbox's rectangle in original image
-  // 	    // bb.h0 = bb.i.h0 * scalehi;
-  // 	    // bb.w0 = bb.i.w0 * scalewi;
-  // 	    bb.h0 = bb.i.h0 * scalehi - image_h0;
-  // 	    bb.w0 = bb.i.w0 * scalewi - image_w0;
-  // 	    bb.height = bb.i.height * scalehi;
-  // 	    bb.width = bb.i.width * scalewi;
-  // 	    // push bbox to list
-  // 	    bbtmp.push_back(new bbox(bb));
-  // 	  }
-  // 	  offset_h++;
-  // 	}
-  // 	offset_w++;
-  //     }
-  //     // add scale boxes into all boxes
-  //     for (uint k = 0; k < bbtmp.size(); ++k)
-  // 	bbs.push_back(bbtmp[k]);
-  //     scale_index++;
-  //   }
-  // }
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::update_merge_alignment() {
@@ -1280,6 +1164,8 @@ namespace ebl {
     TIMING2("net fprop");
     TIMING1("end of network");
     TIMING_RESIZING("total resizing time");
+    // threshold before smoothing
+    threshold_outputs(pre_threshold);
     // smooth outputs
     smooth_outputs();
 
@@ -1288,7 +1174,7 @@ namespace ebl {
     // clear previous bounding boxes
     raw_bboxes.clear();
     // get new bboxes
-    if (answer) extract_bboxes(pre_threshold, raw_bboxes);
+    if (answer) extract_bboxes(0, raw_bboxes);//pre_threshold, raw_bboxes);
     // sort bboxes by confidence (most confident first)
     raw_bboxes.sort_by_confidence();
     TIMING1("extract bboxes");
