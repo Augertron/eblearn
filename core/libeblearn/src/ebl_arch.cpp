@@ -39,8 +39,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // module
 
-  module::module(const char *n) : _name(n), mout(&std::cout), merr(&std::cerr),
+  module::module(const char *n) : _name(""), mout(&std::cout), merr(&std::cerr),
 				  silent(false), _enabled(true) {
+    if (n) _name = n;
   }
 
   module::~module() {

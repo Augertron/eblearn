@@ -54,6 +54,8 @@ namespace ebl {
   // solution is to use -std=c++0x or -std=gnu++0x but not available everywhere
   // -> find test for these capabilities in cmake
   //! \param isbranch Return a layers that is a branch if true.
+  //! \param shared A map of parameters-shared modules.
+  //! \param loaded A map all of loaded modules so far.
   template <typename T, class Tstate>
     module_1_1<T,Tstate>*
     create_network(parameter<T, Tstate> &theparam, configuration &conf,
@@ -63,18 +65,21 @@ namespace ebl {
 		   intg narrow_offset = 0,
 		   vector<layers<T,Tstate>*>* branches = NULL,
 		   vector<intg> *branches_thick = NULL,
-		   map<string,module_1_1<T,Tstate>*> *shared = NULL);
+		   map<string,module_1_1<T,Tstate>*> *shared = NULL,
+		   map<string,module_1_1<T,Tstate>*> *loaded = NULL);
 
 
   //! Create a module of type 'type' (with full name 'name'),
   //! e.g. 'conv' and 'conv0' by querying variables in configuration 'conf'.
   //! This returns a module_1_1 or NULL if failed.
   //! \param shared A map of parameters-shared modules.
+  //! \param loaded A map all of loaded modules so far.
   template <typename T, class Tstate>
     module_1_1<T,Tstate>*
     create_module(const string &name, parameter<T, Tstate> &theparam,
 		  configuration &conf, int &nout, intg &thick,
 		  map<string,module_1_1<T,Tstate>*> &shared,
+		  map<string,module_1_1<T,Tstate>*> &loaded,
 		  vector<layers<T,Tstate>*> *branches,
 		  vector<intg> *branches_thick);
 
@@ -125,7 +130,8 @@ namespace ebl {
 			 bool locnorm = false, bool locnorm2 = false,
 			 bool color_lnorm = false, bool cnorm_across = true,
 			 double hscale = 1.0, double wscale = 1.0,
-			 vector<float> *scalings = NULL);
+			 vector<float> *scalings = NULL,
+			 const char *name = NULL);
   
   //! Create a preprocessing module given a target 'height' and 'width'
   //! and other parameters. In this version, a vector of kernels dimensions
@@ -153,7 +159,8 @@ namespace ebl {
 			 bool locnorm = false, bool locnorm2 = false,
 			 bool color_lnorm = false, bool cnorm_across = true,
 			 double hscale = 1.0, double wscale = 1.0,
-			 vector<float> *scalings = NULL);
+			 vector<float> *scalings = NULL,
+			 const char *name = NULL);
   
   //! Create a preprocessing module without target dimensions. These can be set
   //! later with the set_dimensions() method.
@@ -181,7 +188,8 @@ namespace ebl {
 			 bool locnorm = false, bool locnorm2 = false,
 			 bool color_lnorm = false, bool cnorm_across = true,
 			 double hscale = 1.0, double wscale = 1.0,
-			 vector<float> *scalings = NULL);
+			 vector<float> *scalings = NULL,
+			 const char *name = NULL);
 
   /////////////////////////////////////////////////////////////////////////////
   

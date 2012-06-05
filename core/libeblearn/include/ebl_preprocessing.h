@@ -386,7 +386,7 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
-  // resizepp_module
+  // resize_module
   //! Resize the input to the desired output (while preserving aspect ratio)
   //! and apply a preprocessing module.
   //! This is useful because in some situations preprocessing needs
@@ -395,84 +395,75 @@ namespace ebl {
   //! the true desired output dimensions, but preprocessing must be done before
   //! copying it to avoid edge detection between the empty parts of the image.
   template <typename T, class Tstate = bbstate_idx<T> >
-    class resizepp_module: virtual public module_1_1<T,Tstate> {
+    class resize_module: virtual public module_1_1<T,Tstate> {
   public:
     //! Constructor. Preprocessing module pp will be deleted upon destruction.
     //! \param size The target dimensions (heightxwidth)
-    //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
-    //!           preprocessing is performed. This module is responsible for
-    //!           destroying the preprocessing module.
     //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
     //!             GAUSSIAN_RESIZE).
     //! \param zpad Optional zero-padding is added on each side
     //! \param preserve_ratio If true, fit the image into target size while
     //!   keeping aspect ratio, potential empty areas are filled with zeros.
-    resizepp_module(idxdim &size, uint mode = MEAN_RESIZE,
-		    module_1_1<T,Tstate> *pp = NULL,
-		    bool own_pp = true, idxdim *zpad = NULL,
-		    bool preserve_ratio = true);
+    resize_module(idxdim &size, uint mode = MEAN_RESIZE, idxdim *zpad = NULL,
+		  bool preserve_ratio = true, const char *name = NULL);
     //! Constructor without target dimensions. set_dimensions should be called
-    //! later. Preprocessing module pp will be deleted upon destruction.
-    //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
-    //!           preprocessing is performed. This module is responsible for
-    //!           destroying the preprocessing module.
+    //! later.
     //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
     //!             GAUSSIAN_RESIZE).
     //! \param size The target dimensions (heightxwidth)
     //! \param zpad Optional zero-padding is added on each side
     //! \param preserve_ratio If true, fit the image into target size while
     //!   keeping aspect ratio, potential empty areas are filled with zeros.
-    resizepp_module(uint mode = MEAN_RESIZE, module_1_1<T,Tstate> *pp = NULL,
-		    bool own_pp = true, idxdim *zpad = NULL,
-		    bool preserve_ratio = true);
+    resize_module(uint mode = MEAN_RESIZE, idxdim *zpad = NULL,
+		  bool preserve_ratio = true, const char *name = NULL);
     //! This constructor specifies resizing ratio for each dimension instead
     //! of fixed target sizes. The default resizing method is bilinear, as
     //! as other methods do not currently implement ratio inputs.
-    //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
-    //!           preprocessing is performed. This module is responsible for
-    //!           destroying the preprocessing module.
     //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
     //!             GAUSSIAN_RESIZE).
     //! \param size The target dimensions (heightxwidth)
     //! \param zpad Optional zero-padding is added on each side
     //! \param preserve_ratio If true, fit the image into target size while
     //!   keeping aspect ratio, potential empty areas are filled with zeros.
-    resizepp_module(double hratio, double wratio,
-		    uint mode = MEAN_RESIZE, module_1_1<T,Tstate> *pp = NULL,
-		    bool own_pp = true, idxdim *zpad = NULL,
-		    bool preserve_ratio = true);
+    resize_module(double hratio, double wratio, uint mode = MEAN_RESIZE,
+		  idxdim *zpad = NULL, bool preserve_ratio = true,
+		  const char *name = NULL);
+    //! Resizes as the last outputs of module mod, plus "add" pixels.
+    resize_module(module_1_1<T,Tstate> *mod, idxdim &add,
+		  uint mode = MEAN_RESIZE, idxdim *zpad = NULL,
+		  const char *name = NULL);
     //! destructor
-    virtual ~resizepp_module();
+    virtual ~resize_module();
     //! sets the desired output dimensions.
-    void set_dimensions(intg height_, intg width_);
+    virtual void set_dimensions(intg height_, intg width_);
     //! set the region to use in the input image.
     //! by default, the input region is the entire image.
-    void set_input_region(const rect<int> &inr);
+    virtual void set_input_region(const rect<int> &inr);
     //! set the region to use in the output image.
     //! by default, the output region is the entire size defined by
     //! set_dimensions().
-    void set_output_region(const rect<int> &outr);
+    virtual void set_output_region(const rect<int> &outr);
     //! Shift input region by h and w pixels, multiply scale by s and 
     //! rotate by r.
-    void set_jitter(int h, int w, float s, float r);
+    virtual void set_jitter(int h, int w, float s, float r);
     //! Scale input region by factor s.
-    void set_scale_factor(double s);
+    virtual void set_scale_factor(double s);
     //! Scale input region hxw by factors shxsw.
-    void set_scale_factor(double sh, double sw);
+    virtual void set_scale_factor(double sh, double sw);
     //! Set zero padding on each side for each dimension.
-    void set_zpads(intg hpad, intg wpad);
+    virtual void set_zpads(intg hpad, intg wpad);
     //! Set zero padding based on 'kernel'.
-    void set_zpad(idxdim &kernel);
+    virtual void set_zpad(idxdim &kernel);
     //! Set zero padding based on 'kernel'.
-    void set_zpad(midxdim &kernels);
+    virtual void set_zpad(midxdim &kernels);
     //! Returns the input box in output space.
-    rect<int> get_original_bbox();
+    virtual rect<int> get_original_bbox();
     //! Returns the input box in input image space.
-    rect<int> get_input_bbox();
+    virtual rect<int> get_input_bbox();
     //! Returns all bounding boxes extracted in input space.
-    const vector<rect<int> >& get_input_bboxes();
+    virtual const vector<rect<int> >& get_input_bboxes();
     //! Returns all bounding boxes extracted in the output space.
-    const vector<rect<int> >& get_original_bboxes();
+    virtual const vector<rect<int> >& get_original_bboxes();
     //! Compute the input and output regions given 'in' and return input region.
     virtual rect<int> compute_regions(Tstate &in);
     //! Set the input_bbox given output height and width.
@@ -493,7 +484,7 @@ namespace ebl {
     virtual void fprop(Tstate &in, midx<T> &out);
 
     //! Returns a deep copy of this module.
-    virtual resizepp_module<T,Tstate>* copy();
+    virtual resize_module<T,Tstate>* copy();
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
     //! Returns a reference to the last output state set by fprop.
@@ -502,6 +493,11 @@ namespace ebl {
     //! This is useful to keep the preprocessed input around when discarding
     //! intermediate buffers for memory optimization.
     virtual void set_output_copy(mstate<Tstate> &out);
+    //! Modifies multi-input dimensions 'isize' to be compliant with module's
+    //! architecture, and returns corresponding output dimensions.
+    //! Implementation of this method helps automatic scaling of input data
+    //! but is optional.
+    virtual mfidxdim fprop_size(mfidxdim &isize);
     //! Returns input dimensions corresponding to output dimensions 'osize'.
     //! Implementation of this method helps automatic scaling of input data
     //! but is optional.
@@ -521,12 +517,9 @@ namespace ebl {
     
     // members /////////////////////////////////////////////////////////////////
   protected:
-    module_1_1<T,Tstate> *pp;	        //!< preprocessing module
-    bool                 own_pp;        //!< responsible for pp's deletion
     idxdim               size;          //!< target sizes
     intg		 height;	//!< target height
     intg		 width;         //!< target width
-    Tstate               inpp, outpp;   //!< input/output buffers for pp
     idx<T>               tmp;           //!< temporary buffer
     idx<T>               tmp2;          //!< temporary buffer
     Tstate               tmp3;          //!< temporary buffer
@@ -556,6 +549,114 @@ namespace ebl {
     T                    display_max;   //!< Higher bound of displayable range.
     vector<rect<int> >   input_bboxes;  //!< Vector of input bboxes.
     vector<rect<int> >   original_bboxes;//!< bbox of original inputs in outputs
+    module_1_1<T,Tstate> *mod;          //!< Module to mimic outputs sizes.
+    idxdim               modadd;        //!< Pixels to add to mod's mimiced size
+  };
+
+  ////////////////////////////////////////////////////////////////
+  // resizepp_module
+  //! Resize the input to the desired output (while preserving aspect ratio)
+  //! and apply a preprocessing module.
+  //! This is useful because in some situations preprocessing needs
+  //! to be done within the resizing operation. e.g. when resizing
+  //! while preserving aspect ratio, the output must eventually be copied into
+  //! the true desired output dimensions, but preprocessing must be done before
+  //! copying it to avoid edge detection between the empty parts of the image.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class resizepp_module: virtual public resize_module<T,Tstate> {
+  public:
+    //! Constructor. Preprocessing module pp will be deleted upon destruction.
+    //! \param size The target dimensions (heightxwidth)
+    //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
+    //!           preprocessing is performed. This module is responsible for
+    //!           destroying the preprocessing module.
+    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
+    //!             GAUSSIAN_RESIZE).
+    //! \param zpad Optional zero-padding is added on each side
+    //! \param preserve_ratio If true, fit the image into target size while
+    //!   keeping aspect ratio, potential empty areas are filled with zeros.
+    resizepp_module(idxdim &size, uint mode = MEAN_RESIZE,
+		    module_1_1<T,Tstate> *pp = NULL,
+		    bool own_pp = true, idxdim *zpad = NULL,
+		    bool preserve_ratio = true, const char *name = NULL);
+    //! Constructor without target dimensions. set_dimensions should be called
+    //! later. Preprocessing module pp will be deleted upon destruction.
+    //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
+    //!           preprocessing is performed. This module is responsible for
+    //!           destroying the preprocessing module.
+    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
+    //!             GAUSSIAN_RESIZE).
+    //! \param size The target dimensions (heightxwidth)
+    //! \param zpad Optional zero-padding is added on each side
+    //! \param preserve_ratio If true, fit the image into target size while
+    //!   keeping aspect ratio, potential empty areas are filled with zeros.
+    resizepp_module(uint mode = MEAN_RESIZE, module_1_1<T,Tstate> *pp = NULL,
+		    bool own_pp = true, idxdim *zpad = NULL,
+		    bool preserve_ratio = true, const char *name = NULL);
+    //! This constructor specifies resizing ratio for each dimension instead
+    //! of fixed target sizes. The default resizing method is bilinear, as
+    //! as other methods do not currently implement ratio inputs.
+    //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
+    //!           preprocessing is performed. This module is responsible for
+    //!           destroying the preprocessing module.
+    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
+    //!             GAUSSIAN_RESIZE).
+    //! \param size The target dimensions (heightxwidth)
+    //! \param zpad Optional zero-padding is added on each side
+    //! \param preserve_ratio If true, fit the image into target size while
+    //!   keeping aspect ratio, potential empty areas are filled with zeros.
+    resizepp_module(double hratio, double wratio,
+		    uint mode = MEAN_RESIZE, module_1_1<T,Tstate> *pp = NULL,
+		    bool own_pp = true, idxdim *zpad = NULL,
+		    bool preserve_ratio = true, const char *name = NULL);
+    //! destructor
+    virtual ~resizepp_module();
+    // fprop methods ///////////////////////////////////////////////////////////
+  
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, idx<T> &out);
+    //! Process 'in' into 'out' which will contain an array of idx, where each
+    //! idx has different scale with different dimensions.
+    virtual void fprop(Tstate &in, midx<T> &out);
+
+    //! Returns a deep copy of this module.
+    virtual resizepp_module<T,Tstate>* copy();
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+    
+    // members /////////////////////////////////////////////////////////////////
+  protected:
+    module_1_1<T,Tstate> *pp;	        //!< preprocessing module
+    bool                 own_pp;        //!< responsible for pp's deletion
+    Tstate               inpp, outpp;   //!< input/output buffers for pp
+
+    using resize_module<T,Tstate>::size;
+    using resize_module<T,Tstate>::height;
+    using resize_module<T,Tstate>::width;
+    using resize_module<T,Tstate>::tmp;
+    using resize_module<T,Tstate>::tmp2;
+    using resize_module<T,Tstate>::tmp3;
+    using resize_module<T,Tstate>::input_bbox;
+    using resize_module<T,Tstate>::input_bboxes;
+    using resize_module<T,Tstate>::original_bboxes;
+    using resize_module<T,Tstate>::preserve_ratio;
+    using resize_module<T,Tstate>::mode;
+    using resize_module<T,Tstate>::input_mode;
+    using resize_module<T,Tstate>::inrect;
+    using resize_module<T,Tstate>::outrect;
+    using resize_module<T,Tstate>::inrect_set;
+    using resize_module<T,Tstate>::outrect_set;
+    using resize_module<T,Tstate>::dzpad;
+    using resize_module<T,Tstate>::zpad;
+    using resize_module<T,Tstate>::rjitter;
+    using resize_module<T,Tstate>::hratio;
+    using resize_module<T,Tstate>::wratio;
+    using resize_module<T,Tstate>::scale_hfactor;
+    using resize_module<T,Tstate>::scale_wfactor;
+    using resize_module<T,Tstate>::lout;
+    using resize_module<T,Tstate>::lastout;
   };
 
   ////////////////////////////////////////////////////////////////
@@ -896,107 +997,107 @@ namespace ebl {
     virtual void bbprop(Tstate &in, mstate<Tstate> &out);
   };
 
-  ////////////////////////////////////////////////////////////////
-  // resize_module
-  //! Resize the input to the desired output (not preserving aspect ratio by
-  //! default, see 'preserve_ratio' parameter).
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class resize_module: public module_1_1<T,Tstate> {
-  public:
-    //! This constructor specifies resizing ratio for each dimension instead
-    //! of fixed target sizes. The default resizing method is bilinear, as
-    //! as other methods do not currently implement ratio inputs.
-    //! \param height target height for resizing.
-    //! \param width target width for resizing.
-    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
-    //!             GAUSSIAN_RESIZE).
-    //! \param hzpad Optional vertical zero-padding is added on each size
-    //!   and taken into account to reach the desired target size.
-    //! \param wzpad Optional horizontal zero-padding is added on each size
-    //!   and taken into account to reach the desired target size.
-    //! \param preserve_ratio If true, fit the image into target size while
-    //!   keeping aspect ratio, eventual empty areas are filled with zeros.
-    resize_module(double hratio, double wratio, uint mode = BILINEAR_RESIZE,
-		  uint hzpad = 0, uint wzpad = 0, bool preserve_ratio = false);
-    //! Constructor.
-    //! \param height target height for resizing.
-    //! \param width target width for resizing.
-    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
-    //!             GAUSSIAN_RESIZE).
-    //! \param hzpad Optional vertical zero-padding is added on each size
-    //!   and taken into account to reach the desired target size.
-    //! \param wzpad Optional horizontal zero-padding is added on each size
-    //!   and taken into account to reach the desired target size.
-    //! \param preserve_ratio If true, fit the image into target size while
-    //!   keeping aspect ratio, eventual empty areas are filled with zeros.
-    resize_module(intg height, intg width, uint mode = MEAN_RESIZE,
-		  uint hzpad = 0, uint wzpad = 0, bool preserve_ratio = false);
-    //! Constructor without target dimensions. set_dimensions should be called
-    //! later.
-    //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
-    //!             GAUSSIAN_RESIZE).
-    //! \param hzpad Optional vertical zero-padding is added on each size
-    //!   and taken into account to reach the desired target size.
-    //! \param wzpad Optional horizontal zero-padding is added on each size
-    //!   and taken into account to reach the desired target size.
-    //! \param preserve_ratio If true, fit the image into target size while
-    //!   keeping aspect ratio, potential empty areas are filled with zeros.
-    resize_module(uint mode = MEAN_RESIZE, uint hzpad = 0, uint wzpad = 0,
-		  bool preserve_ratio = false);
-    //! destructor
-    virtual ~resize_module();
-    //! sets the desired output dimensions.
-    void set_dimensions(intg height, intg width);
-    //! set the region to use in the input image.
-    //! by default, the input region is the entire image.
-    void set_input_region(const rect<int> &inr);
-    //! set the region to use in the output image.
-    //! by default, the output region is the entire size defined by
-    //! set_dimensions().
-    void set_output_region(const rect<int> &outr);
-    //! Shift output by h and w pixels, multiply scale by s and rotate by r.
-    void set_jitter(int h, int w, float s, float r);
-    //! Set zero padding on each side for each dimension.
-    void set_zpads(intg hpad, intg wpad);
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! bprop from in to out
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! bbprop from in to out
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! return the bounding box of the original input in the output coordinate
-    //! system.
-    rect<int> get_original_bbox();
-    //! Returns a deep copy of this module.
-    virtual resize_module<T,Tstate>* copy();
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
+  /* //////////////////////////////////////////////////////////////// */
+  /* // resize_module */
+  /* //! Resize the input to the desired output (not preserving aspect ratio by */
+  /* //! default, see 'preserve_ratio' parameter). */
+  /* template <typename T, class Tstate = bbstate_idx<T> > */
+  /*   class resize_module: public module_1_1<T,Tstate> { */
+  /* public: */
+  /*   //! This constructor specifies resizing ratio for each dimension instead */
+  /*   //! of fixed target sizes. The default resizing method is bilinear, as */
+  /*   //! as other methods do not currently implement ratio inputs. */
+  /*   //! \param height target height for resizing. */
+  /*   //! \param width target width for resizing. */
+  /*   //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE, */
+  /*   //!             GAUSSIAN_RESIZE). */
+  /*   //! \param hzpad Optional vertical zero-padding is added on each size */
+  /*   //!   and taken into account to reach the desired target size. */
+  /*   //! \param wzpad Optional horizontal zero-padding is added on each size */
+  /*   //!   and taken into account to reach the desired target size. */
+  /*   //! \param preserve_ratio If true, fit the image into target size while */
+  /*   //!   keeping aspect ratio, eventual empty areas are filled with zeros. */
+  /*   resize_module(double hratio, double wratio, uint mode = BILINEAR_RESIZE, */
+  /* 		  uint hzpad = 0, uint wzpad = 0, bool preserve_ratio = false); */
+  /*   //! Constructor. */
+  /*   //! \param height target height for resizing. */
+  /*   //! \param width target width for resizing. */
+  /*   //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE, */
+  /*   //!             GAUSSIAN_RESIZE). */
+  /*   //! \param hzpad Optional vertical zero-padding is added on each size */
+  /*   //!   and taken into account to reach the desired target size. */
+  /*   //! \param wzpad Optional horizontal zero-padding is added on each size */
+  /*   //!   and taken into account to reach the desired target size. */
+  /*   //! \param preserve_ratio If true, fit the image into target size while */
+  /*   //!   keeping aspect ratio, eventual empty areas are filled with zeros. */
+  /*   resize_module(intg height, intg width, uint mode = MEAN_RESIZE, */
+  /* 		  uint hzpad = 0, uint wzpad = 0, bool preserve_ratio = false); */
+  /*   //! Constructor without target dimensions. set_dimensions should be called */
+  /*   //! later. */
+  /*   //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE, */
+  /*   //!             GAUSSIAN_RESIZE). */
+  /*   //! \param hzpad Optional vertical zero-padding is added on each size */
+  /*   //!   and taken into account to reach the desired target size. */
+  /*   //! \param wzpad Optional horizontal zero-padding is added on each size */
+  /*   //!   and taken into account to reach the desired target size. */
+  /*   //! \param preserve_ratio If true, fit the image into target size while */
+  /*   //!   keeping aspect ratio, potential empty areas are filled with zeros. */
+  /*   resize_module(uint mode = MEAN_RESIZE, uint hzpad = 0, uint wzpad = 0, */
+  /* 		  bool preserve_ratio = false); */
+  /*   //! destructor */
+  /*   virtual ~resize_module(); */
+  /*   //! sets the desired output dimensions. */
+  /*   void set_dimensions(intg height, intg width); */
+  /*   //! set the region to use in the input image. */
+  /*   //! by default, the input region is the entire image. */
+  /*   void set_input_region(const rect<int> &inr); */
+  /*   //! set the region to use in the output image. */
+  /*   //! by default, the output region is the entire size defined by */
+  /*   //! set_dimensions(). */
+  /*   void set_output_region(const rect<int> &outr); */
+  /*   //! Shift output by h and w pixels, multiply scale by s and rotate by r. */
+  /*   void set_jitter(int h, int w, float s, float r); */
+  /*   //! Set zero padding on each side for each dimension. */
+  /*   void set_zpads(intg hpad, intg wpad); */
+  /*   //! forward propagation from in to out */
+  /*   virtual void fprop(Tstate &in, Tstate &out); */
+  /*   //! bprop from in to out */
+  /*   virtual void bprop(Tstate &in, Tstate &out); */
+  /*   //! bbprop from in to out */
+  /*   virtual void bbprop(Tstate &in, Tstate &out); */
+  /*   //! return the bounding box of the original input in the output coordinate */
+  /*   //! system. */
+  /*   rect<int> get_original_bbox(); */
+  /*   //! Returns a deep copy of this module. */
+  /*   virtual resize_module<T,Tstate>* copy(); */
+  /*   //! Returns a string describing this module and its parameters. */
+  /*   virtual std::string describe(); */
     
-    // members ////////////////////////////////////////////////////////
-  private:
-    intg		 height;	//!< target height
-    intg		 width;         //!< target width
-    idx<T>               tmp;           //!< temporary buffer
-    idx<T>               tmp2;          //!< temporary buffer
-    Tstate               tmp3;          //!< temporary buffer
-    rect<int>            original_bbox; //!< bbox of original input in output
-    uint                 mode;          //!< resizing mode.
-    int                  input_mode;    //!< mode parameter to resize function.
-    rect<int>            inrect;        //!< input region of image
-    rect<int>            outrect;       //!< input region in output image
-    bool                 inrect_set;    //!< use input region or not.
-    bool                 outrect_set;   //!< use output region or not.
-    uint                 hzpad;         //!< vertical zero-padding for each side
-    uint                 wzpad;         //!< horiz. zero-padding for each side
-    zpad_module<T,Tstate> *zpad;        //!< Zero padding module.
-    int                  hjitter;       //!< Shift output by this many pixels
-    int                  wjitter;       //!< Shift output by this many pixels
-    float                sjitter;       //!< Multiply scale by this
-    float                rjitter;       //!< Rotate by this degrees.
-    bool                 preserve_ratio;//!< Preserve aspect ratio or not.
-    double               hratio;        //!< Resizing ratio in height dim.
-    double               wratio;        //!< Resizing ratio in width dim.
-  };
+  /*   // members //////////////////////////////////////////////////////// */
+  /* private: */
+  /*   intg		 height;	//!< target height */
+  /*   intg		 width;         //!< target width */
+  /*   idx<T>               tmp;           //!< temporary buffer */
+  /*   idx<T>               tmp2;          //!< temporary buffer */
+  /*   Tstate               tmp3;          //!< temporary buffer */
+  /*   rect<int>            original_bbox; //!< bbox of original input in output */
+  /*   uint                 mode;          //!< resizing mode. */
+  /*   int                  input_mode;    //!< mode parameter to resize function. */
+  /*   rect<int>            inrect;        //!< input region of image */
+  /*   rect<int>            outrect;       //!< input region in output image */
+  /*   bool                 inrect_set;    //!< use input region or not. */
+  /*   bool                 outrect_set;   //!< use output region or not. */
+  /*   uint                 hzpad;         //!< vertical zero-padding for each side */
+  /*   uint                 wzpad;         //!< horiz. zero-padding for each side */
+  /*   zpad_module<T,Tstate> *zpad;        //!< Zero padding module. */
+  /*   int                  hjitter;       //!< Shift output by this many pixels */
+  /*   int                  wjitter;       //!< Shift output by this many pixels */
+  /*   float                sjitter;       //!< Multiply scale by this */
+  /*   float                rjitter;       //!< Rotate by this degrees. */
+  /*   bool                 preserve_ratio;//!< Preserve aspect ratio or not. */
+  /*   double               hratio;        //!< Resizing ratio in height dim. */
+  /*   double               wratio;        //!< Resizing ratio in width dim. */
+  /* }; */
 
   // jitter ////////////////////////////////////////////////////////////////////
 

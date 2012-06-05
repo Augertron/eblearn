@@ -83,6 +83,7 @@ namespace ebl {
     // set default resizing module
     if (!resizepp) {
       resizepp = new resizepp_module<T,Tstate>;
+      resizepp->set_name("detector resizpp");
       cout << "Using default resizing module: " << resizepp->describe() << endl;
       resizepp_delete = true;
     }
@@ -481,6 +482,8 @@ namespace ebl {
 	     << endl;
       } else i++;
     }
+    // // transform scales to be network sizes compatible
+    // network_compatible_sizes(scales);
     // initialize original bboxes to entire image
     rect<int> bb(0, 0, indim.dim(1), indim.dim(2));
     for (uint i = 0; i < scales.size(); ++i)
@@ -596,6 +599,18 @@ namespace ebl {
       netdim = network_mindims(thenet, order0);
       mfidxdim m = resizepp->get_msize();
       netdim = m[0];
+    }
+  }
+  
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::network_compatible_sizes(midxdim &sizes) {
+    for (uint i = 0; i < sizes.size(); ++i) {
+      fidxdim sz = sizes[i];
+      mfidxdim msz;
+      msz.push_back_new(sz);
+      cout << "original sz: " << msz;
+      mfidxdim r = thenet.fprop_size(msz);
+      cout << " sz2: " << msz << " returned: " << r << endl;
     }
   }
   

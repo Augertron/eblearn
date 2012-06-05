@@ -253,8 +253,8 @@ namespace ebl {
 
   template <typename T, class Tstate>
   lppooling_module<T,Tstate>::
-  lppooling_module(uint thick, idxdim &kernel_,
-		   idxdim &stride_, uint lppower_, const char *name_, bool crop_)
+  lppooling_module(uint thick, idxdim &kernel_, idxdim &stride_, uint lppower_,
+		   const char *name_, bool crop_)
     : module_1_1<T,Tstate>(name_), thickness(thick),
       kernel(kernel_), stride(stride_), crop(crop_),
       lp_pow(lppower_),  
@@ -298,6 +298,8 @@ namespace ebl {
     conv->fprop(squared, convolved);
     // in^1/p(gaussian-weighted neighborhood of in^p)
     sqrtmod.fprop(convolved, out);
+    // update last output size
+    this->update_outdims(out);
   }
 
   template <typename T, class Tstate>
