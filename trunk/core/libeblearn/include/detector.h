@@ -290,6 +290,8 @@ namespace ebl {
     void validate_resolutions();
     //! Figure out mimimum input dimensions to network.
     void get_netdim(intg order0);
+    //! Modifies all sizes so that they are network-compatible.
+    void network_compatible_sizes(midxdim &sizes);
 
     // bboxes operations ///////////////////////////////////////////////////////
 

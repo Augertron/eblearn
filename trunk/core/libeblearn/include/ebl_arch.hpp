@@ -194,9 +194,13 @@ namespace ebl {
   template <typename T, class Tin, class Tout>
   bool module_1_1<T,Tin,Tout>::resize_output(Tin &in, Tout &out, idxdim *d) {
     //if (!this->bresize) return false; // no resizing
-    if (&in == &out) return false; // resize only when in and out are different
+    if (&in == &out) {
+      outdims = out.x.get_idxdim(); // remember out size
+      return false; // resize only when in and out are different
+    }
     TIMING_RESIZING_ACCSTART(); // start accumulating resizing time
     if (d) { // use d as target dims
+      outdims = *d; // remember out size
       if (d->order() != out.x.order()) { // re-allocate buffer
 	EDEBUG(this->name() << ": reallocating output from " << out.x
 	      << " to " << d);
@@ -210,6 +214,7 @@ namespace ebl {
 	return false;
       }
     } else { // use in.x as target dims
+      outdims = in.x.get_idxdim(); // remember out size
       if (in.x.order() != out.x.order()) { // re-allocate buffer
 	EDEBUG(this->name() << ": reallocating output from " << out.x
 	      << " to " << in.x.get_idxdim());
@@ -230,21 +235,26 @@ namespace ebl {
   template <typename T, class Tin, class Tout>
   bool module_1_1<T,Tin,Tout>::resize_output(Tin &in, idx<T> &out, idxdim *d) {
     //if (!this->bresize) return false; // no resizing
-    if (&in.x == &out) return false; // resize only when different
+    if (&in.x == &out) {
+      outdims = out.get_idxdim(); // remember out size
+      return false; // resize only when different
+    }
     TIMING_RESIZING_ACCSTART(); // start accumulating resizing time
     if (d) { // use d as target dims
+      outdims = *d; // remember out size
       if (d->order() != out.order()) { // re-allocate buffer
 	EDEBUG(this->name() << ": reallocating output from " << out
 	      << " to " << d);
 	out = idx<T>(*d);
       } else if (*d != out.get_idxdim()) { // resize buffer
-	EDEBUG(this->name() << ": resizing output from " << out << " to " << *d);
+	EDEBUG(this->name() << ": resizing output from " << out << " to " <<*d);
 	out.resize(*d);
       } else {
 	TIMING_RESIZING_ACCSTOP(); // stop accumulating resizing time
 	return false;
       }
     } else { // use in.x as target dims
+      outdims = in.x.get_idxdim(); // remember out size
       if (in.x.order() != out.order()) { // re-allocate buffer
 	EDEBUG(this->name() << ": reallocating output from " << out
 	      << " to " << in.x.get_idxdim());
@@ -275,10 +285,12 @@ namespace ebl {
 
   template <typename T, class Tin, class Tout>
   mfidxdim module_1_1<T,Tin,Tout>::fprop_size(mfidxdim &isize) {
+    EDEBUG(this->name() << ": " << isize << " f-> ...");
     mfidxdim osize;
     for (uint i = 0; i < isize.size(); ++i)
       if (!isize.exists(i)) osize.push_back_empty();
       else osize.push_back(this->fprop_size(isize[i]));
+    EDEBUG(this->name() << ": " << isize << " f-> " << osize);
     return osize;
   }
 
@@ -376,6 +388,16 @@ namespace ebl {
   template <typename T, class Tin, class Tout>
   uint module_1_1<T,Tin,Tout>::get_noutputs() {
     return noutputs;
+  }
+
+  template <typename T, class Tin, class Tout>
+  idxdim module_1_1<T,Tin,Tout>::get_outdims() {
+    return outdims;
+  }
+
+  template <typename T, class Tin, class Tout>
+  void module_1_1<T,Tin,Tout>::update_outdims(Tout &out) {
+    outdims = out.x.get_idxdim();
   }
 
   ////////////////////////////////////////////////////////////////

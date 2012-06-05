@@ -580,23 +580,22 @@ namespace ebl {
   }
      
   ////////////////////////////////////////////////////////////////
-  // resizepp_module
+  // resize_module
 
   template <typename T, class Tstate>
-  resizepp_module<T,Tstate>::
-  resizepp_module(idxdim &size_, uint mode_, module_1_1<T,Tstate> *pp_, 
-		  bool own_pp_, idxdim *dzpad_, bool pratio)
-    : module_1_1<T,Tstate>("resizepp"), 
-      pp(pp_), own_pp(own_pp_), size(size_), inpp(1,1,1), outpp(1,1,1),
-      tmp3(1,1,1), mode(mode_), input_mode(0), inrect(0, 0, 0, 0), 
+  resize_module<T,Tstate>::
+  resize_module(idxdim &size_, uint mode_, idxdim *dzpad_, bool pratio,
+		const char *name)
+    : module_1_1<T,Tstate>(name), 
+      size(size_), tmp3(1,1,1), mode(mode_), input_mode(0), inrect(0, 0, 0, 0), 
       inrect_set(false), outrect_set(false), dzpad(NULL), zpad(NULL),
       hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
       scale_hfactor(1.0), scale_wfactor(1.0),
       preserve_ratio(pratio), hratio(0), wratio(0), lastout(NULL),
       out_copy(NULL), display_min(-1), display_max(1), input_bboxes(1),
-      original_bboxes(1) {
+      original_bboxes(1), mod(NULL) {
     set_dimensions(size_.dim(0), size_.dim(1));
-    if (dzpad_) {
+    if (dzpad_ && !dzpad_->empty()) {
       dzpad = new idxdim(*dzpad_);
       set_zpads(dzpad->dim(0), dzpad->dim(1));
     }
@@ -604,17 +603,17 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
-  resizepp_module<T,Tstate>::
-  resizepp_module(uint mode_, module_1_1<T,Tstate> *pp_,
-		  bool own_pp_, idxdim *dzpad_, bool pratio)
-    : pp(pp_), own_pp(own_pp_), size(1,1), height(0), width(0),
-      inpp(1,1,1), outpp(1,1,1), tmp3(1,1,1), mode(mode_), input_mode(0), 
+  resize_module<T,Tstate>::
+  resize_module(uint mode_, idxdim *dzpad_, bool pratio,
+		const char *name)
+    : module_1_1<T,Tstate>(name), size(1,1), height(0), width(0), tmp3(1,1,1),
+      mode(mode_), input_mode(0), 
       inrect(0, 0, 0, 0), inrect_set(false), outrect_set(false), dzpad(NULL),
       zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
       scale_hfactor(1.0), scale_wfactor(1.0), preserve_ratio(pratio), hratio(0),
       wratio(0), lastout(NULL), out_copy(NULL), display_min(-1), display_max(1),
-      input_bboxes(1), original_bboxes(1) {
-    if (dzpad_ && dzpad_->order() > 0) {
+      input_bboxes(1), original_bboxes(1), mod(NULL) {
+    if (dzpad_ && !dzpad_->empty()) {
       dzpad = new idxdim(*dzpad_);
       set_zpads(dzpad->dim(0), dzpad->dim(1));
     } 
@@ -622,18 +621,18 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
-  resizepp_module<T,Tstate>::
-  resizepp_module(double hratio_, double wratio_, uint mode_, 
-		  module_1_1<T,Tstate> *pp_,
-		  bool own_pp_, idxdim *dzpad_, bool pratio)
-    : pp(pp_), own_pp(own_pp_), size(1,1), height(0), width(0),
-      inpp(1,1,1), outpp(1,1,1), tmp3(1,1,1), mode(mode_), input_mode(0), 
+  resize_module<T,Tstate>::
+  resize_module(double hratio_, double wratio_, uint mode_, 
+		idxdim *dzpad_, bool pratio, const char *name)
+    : module_1_1<T,Tstate>(name), size(1,1), height(0), width(0), tmp3(1,1,1),
+      mode(mode_), input_mode(0), 
       inrect(0, 0, 0, 0), inrect_set(false), outrect_set(false), dzpad(NULL),
       zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
-      scale_hfactor(1.0), scale_wfactor(1.0), preserve_ratio(pratio), hratio(0),
-      wratio(0), lastout(NULL), out_copy(NULL), display_min(-1), display_max(1),
-      input_bboxes(1), original_bboxes(1) {
-    if (dzpad_) {
+      scale_hfactor(1.0), scale_wfactor(1.0), preserve_ratio(pratio),
+      hratio(hratio_), wratio(wratio_),
+      lastout(NULL), out_copy(NULL), display_min(-1), display_max(1),
+      input_bboxes(1), original_bboxes(1), mod(NULL) {
+    if (dzpad_ && !dzpad_->empty()) {
       dzpad = new idxdim(*dzpad_);
       set_zpads(dzpad->dim(0), dzpad->dim(1));
     }
@@ -642,16 +641,33 @@ namespace ebl {
     else
       input_mode = 1;
   }
+
+  template <typename T, class Tstate>
+  resize_module<T,Tstate>::
+  resize_module(module_1_1<T,Tstate> *mod_, idxdim &add, uint mode_,
+		idxdim *dzpad_, const char *name)
+    : module_1_1<T,Tstate>(name), size(1,1), height(0), width(0), tmp3(1,1,1),
+      mode(mode_), input_mode(0), 
+      inrect(0, 0, 0, 0), inrect_set(false), outrect_set(false), dzpad(NULL),
+      zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
+      scale_hfactor(1.0), scale_wfactor(1.0), preserve_ratio(false),
+      hratio(0), wratio(0),
+      lastout(NULL), out_copy(NULL), display_min(-1), display_max(1),
+      input_bboxes(1), original_bboxes(1), mod(mod_), modadd(add) {
+    if (dzpad_ && !dzpad_->empty()) {
+      dzpad = new idxdim(*dzpad_);
+      set_zpads(dzpad->dim(0), dzpad->dim(1));
+    }
+  }  
   
   template <typename T, class Tstate>
-  resizepp_module<T,Tstate>::~resizepp_module() {
-    if (pp && own_pp) delete pp;
+  resize_module<T,Tstate>::~resize_module() {
     if (zpad) delete zpad;
     if (dzpad) delete dzpad;
   }
   
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_dimensions(intg height_, intg width_) {
+  void resize_module<T,Tstate>::set_dimensions(intg height_, intg width_) {
     height = height_;
     width = width_;
     // if (dzpad) {
@@ -663,7 +679,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_zpads(intg hpad, intg wpad) {
+  void resize_module<T,Tstate>::set_zpads(intg hpad, intg wpad) {
     // // reset height/width without current zpad
     // if (dzpad) {
     //   height += dzpad->dim(0) * 2;
@@ -695,7 +711,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_zpad(idxdim &kernel) {
+  void resize_module<T,Tstate>::set_zpad(idxdim &kernel) {
     if (kernel.empty()) return ;
     // update zpad module
     if (zpad) {
@@ -708,7 +724,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_zpad(midxdim &kernels) {
+  void resize_module<T,Tstate>::set_zpad(midxdim &kernels) {
     if (kernels.empty()) return ;
     // update zpad module
     if (zpad) {
@@ -721,7 +737,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_jitter(int h, int w, float s, float r) {
+  void resize_module<T,Tstate>::set_jitter(int h, int w, float s, float r) {
     hjitter = h;
     wjitter = w;
     sjitter = s;
@@ -729,25 +745,25 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_scale_factor(double s) {
+  void resize_module<T,Tstate>::set_scale_factor(double s) {
     scale_hfactor = s;
     scale_wfactor = s;
   }
   
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_scale_factor(double sh, double sw) {
+  void resize_module<T,Tstate>::set_scale_factor(double sh, double sw) {
     scale_hfactor = sh;
     scale_wfactor = sw;
   }
   
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_input_region(const rect<int> &inr) {
+  void resize_module<T,Tstate>::set_input_region(const rect<int> &inr) {
     inrect = inr;
     inrect_set = true;
   }
 
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_output_region(const rect<int> &outr) {
+  void resize_module<T,Tstate>::set_output_region(const rect<int> &outr) {
     outrect = outr;
     // if (dzpad) {
     //   outrect.height -= dzpad->dim(0) * 2;
@@ -757,52 +773,65 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  rect<int> resizepp_module<T,Tstate>::get_original_bbox() {
+  rect<int> resize_module<T,Tstate>::get_original_bbox() {
     if (original_bboxes.size() == 0) eblerror("expected at least 1 box");
     return original_bboxes[0];
   }
   
   template <typename T, class Tstate>
-  rect<int> resizepp_module<T,Tstate>::get_input_bbox() {
+  rect<int> resize_module<T,Tstate>::get_input_bbox() {
     return input_bbox;
   }
 
   template <typename T, class Tstate>
-  const std::vector<rect<int> >& resizepp_module<T,Tstate>::get_input_bboxes() {
+  const std::vector<rect<int> >& resize_module<T,Tstate>::get_input_bboxes() {
     input_bboxes.clear();
     input_bboxes.push_back(this->get_input_bbox());
     return input_bboxes;
   }
   
   template <typename T, class Tstate>
-  const std::vector<rect<int> >& resizepp_module<T,Tstate>::
+  const std::vector<rect<int> >& resize_module<T,Tstate>::
   get_original_bboxes() {
     return original_bboxes;
   }
 
   template <typename T, class Tstate>
-  rect<int> resizepp_module<T,Tstate>::compute_regions(Tstate &in) {
+  rect<int> resize_module<T,Tstate>::compute_regions(Tstate &in) {
     // set input region to entire image if no input region is given
     rect<int> r = rect<int>(0, 0, in.x.dim(1), in.x.dim(2));
     if (inrect_set) // set input region
       r = inrect;
-    // set output region
-    if (!outrect_set)
-      outrect = rect<int>(0, 0, height, width);
-    // find ratio between input box and output box
-    float ratio = std::max(r.height / (float) outrect.height,
-			   r.width / (float) outrect.width);
+    float hhratio = hratio, wwratio = wratio;
+    if (mod) {
+      idxdim d = mod->get_outdims();
+      height = d.dim(1) + modadd.dim(0);
+      width = d.dim(2) + modadd.dim(1);
+    }
+    if (hratio == 0 || wratio == 0) {      
+      // set output region
+      if (!outrect_set)
+	outrect = rect<int>(0, 0, height, width);
+      // find ratio between input box and output box
+      hhratio = std::max(r.height / (float) outrect.height,
+			 r.width / (float) outrect.width);
+      wwratio = hhratio;
+    } else {
+      height = r.height * hratio;
+      width = r.width * wratio;
+      outrect = rect<int>(0, 0, r.height * hratio, r.width * wratio);
+    }
     // apply scale jitter (keeping same center)
     if (sjitter != 1.0 || scale_hfactor != 1.0 || scale_wfactor != 1.0)
       r.scale_centered(sjitter * scale_hfactor, sjitter * scale_wfactor);
     // apply spatial jitter
-    r.h0 -= (int) (hjitter * ratio);
-    r.w0 -= (int) (wjitter * ratio);
+    r.h0 -= (int) (hjitter * hhratio);
+    r.w0 -= (int) (wjitter * wwratio);
     return r;
   }
 
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::remember_regions(intg outh, intg outw,
+  void resize_module<T,Tstate>::remember_regions(intg outh, intg outw,
 						   rect<int> &r) {
     // remember input box
     input_bbox = r;
@@ -818,13 +847,13 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_display_range(T dmin, T dmax) {
+  void resize_module<T,Tstate>::set_display_range(T dmin, T dmax) {
     display_min = dmin;
     display_max = dmax;
   }
 
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::get_display_range(T &dmin, T &dmax) {
+  void resize_module<T,Tstate>::get_display_range(T &dmin, T &dmax) {
     dmin = display_min;
     dmax = display_max;
   }
@@ -832,14 +861,226 @@ namespace ebl {
   // fprop methods /////////////////////////////////////////////////////////////
   
   template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
-    fprop(in, out.x);
+  void resize_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+    this->fprop(in, out.x);
     // remember last output
     lout.clear();
     lout.push_back(new Tstate(out));
     lastout = &lout;
     copy_outputs(lout);
   }
+  
+  template <typename T, class Tstate>
+  void resize_module<T,Tstate>::fprop(Tstate &in, idx<T> &out) {
+    // compute input/output regions
+    rect<int> r = compute_regions(in);
+    input_bboxes[0] = r;
+    EDEBUG("resizing " << in.x << " to " << outrect << " with ROI " << r);
+    rect<int> outr;
+    // resize input while preserving aspect ratio
+    tmp = in.x.shift_dim(0, 2); // resize functions expect channels in 3rd dim
+    idx<T> resized;
+    switch (mode) {
+    case MEAN_RESIZE:
+      resized = image_mean_resize(tmp, outrect.height,
+				  outrect.width, input_mode, &r, &outr);
+      break ;
+    case GAUSSIAN_RESIZE:
+      resized = image_gaussian_resize(tmp, outrect.height,
+				      outrect.width, input_mode, &r,&outr);
+      break ;
+    case BILINEAR_RESIZE:
+      if (input_mode == 1 || input_mode == 2) { // use ratios
+	resized = image_resize(tmp, hratio, wratio, input_mode, &r, &outr);
+	EDEBUG(this->name() << ": resizing with ratios " << hratio
+	      << " and " << wratio);
+      }
+      else // use pixels
+	resized = image_resize(tmp, (double) outrect.height, 
+			       (double) outrect.width, input_mode, &r, &outr);
+      break ;
+    default:
+      eblerror("unknown resizing mode");
+    }
+    resized = resized.shift_dim(2, 0);
+    // resize out to target dimensions if necessary
+    if (((out.dim(1) != height) || (out.dim(2) != width)))
+      out.resize(in.x.dim(0), height, width);
+    idx_clear(out);
+    resized = resized.shift_dim(0, 2);
+    // apply rotation (around center of roi)
+    if (rjitter != 0.0) {
+      idx<T> r2 = idx_copy(resized); // make a contiguous copy
+      resized = image_rotate(r2, rjitter, (int) outr.hcenter(), 
+			     (int) outr.wcenter());
+    }
+    // copy out region to output
+    original_bboxes[0] = outr;
+    tmp2 = image_region_to_rect(resized, outr, out.dim(1),
+				out.dim(2), &original_bboxes[0]);
+    tmp2 = tmp2.shift_dim(2, 0);
+    //idx_copy(tmp2, tmp);
+    if (!zpad)
+      idx_copy(tmp2, out);
+    else { // zero padding
+      original_bboxes[0].shift(dzpad->dim(0), dzpad->dim(1));
+      tmp3.resize(tmp2.get_idxdim());
+      idx_copy(tmp2, tmp3.x);
+      zpad->fprop(tmp3, out);
+      EDEBUG("padded " << tmp3.x << " with " << zpad->get_paddings() << " -> "
+	    << out);
+    }
+    remember_regions(out.dim(1), out.dim(2), r);
+    EDEBUG("resized " << in.x << " to " << out);
+  }
+  
+  template <typename T, class Tstate>
+  void resize_module<T,Tstate>::fprop(Tstate &in, midx<T> &out) {
+    // expect 1D midx
+    if (out.order() != 1)
+      eblerror("expected a 1-dimensional midx but got order " << out.order());
+//     out.clear();
+//     out.resize(1);
+//     if (out.dim(0) != 1)
+//       eblerror("expected a 1-element midx but got dimension " << out.dim(0));
+    idxdim d(in.x.get_idxdim());
+    d.setdims(1);
+    idx<T> tmp(d);
+    // fprop
+    this->fprop(in, tmp);
+    out.set(tmp, 0);
+  }
+  
+  template <typename T, class Tstate>
+  resize_module<T,Tstate>* resize_module<T,Tstate>::copy() {
+    return new resize_module(size, mode, dzpad);
+  }
+  
+  template <typename T, class Tstate>
+  std::string resize_module<T,Tstate>::describe() {
+    std::string desc;
+    desc << "resize module " << this->name() << ", resizing with method "
+	 << mode;
+    if (input_mode == 1 || input_mode == 2) // using ratios
+      desc << " with height ratio " << hratio << " and width ratio " << wratio;
+    else
+      desc << " to " << height << "x" << width;
+    desc << " while "
+	 << (preserve_ratio ? "" : "not ") << "preserving aspect ratio";
+    if (zpad && dzpad)
+      desc << ", with zpad " << *dzpad;
+    if (scale_hfactor != 1.0 || scale_wfactor != 1.0)
+      desc << ", scaling input box by " << scale_hfactor << " x "
+	   << scale_wfactor;
+    return desc;
+  }
+    
+  template <typename T, class Tstate>
+  mstate<Tstate>* resize_module<T,Tstate>::last_output() {
+    return lastout;
+  }
+
+  template <typename T, class Tstate>
+  void resize_module<T,Tstate>::set_output_copy(mstate<Tstate> &out) {
+    out_copy = &out;
+  }
+
+  template <typename T, class Tstate>
+  mfidxdim resize_module<T,Tstate>::fprop_size(mfidxdim &isize) {
+    mfidxdim osize;
+    EDEBUG(this->name() << ": " << isize << " f-> ...");
+    if (zpad) osize = zpad->fprop_size(isize);
+    for (uint i = 0; i < isize.size(); ++i) {
+       if (isize.exists(i)) {
+	 fidxdim d(1, hratio, wratio);
+	 fidxdim o = isize[i] * d;
+	 osize.push_back_new(o);
+       }
+       else osize.push_back_empty();
+    }
+    EDEBUG(this->name() << ": " << isize << " f-> " << osize);
+    return osize;
+  }
+
+  template <typename T, class Tstate>
+  fidxdim resize_module<T,Tstate>::bprop_size(const fidxdim &osize) {
+    msize.clear();
+    msize.push_back(osize);
+    return osize;
+  }
+
+  template <typename T, class Tstate>
+  mfidxdim resize_module<T,Tstate>::bprop_size(mfidxdim &osize) {
+    msize = osize;
+    if (zpad) osize = zpad->bprop_size(osize);
+    mfidxdim isize;
+    for (uint i = 0; i < osize.size(); ++i) {
+       if (osize.exists(i) && original_bboxes[0].height != 0
+	   && original_bboxes[0].width != 0) {
+	fidxdim d(1, input_bboxes[0].height / (float) original_bboxes[0].height,
+		  input_bboxes[0].width / (float) original_bboxes[0].width);
+	fidxdim o = osize[i] * d;
+	isize.push_back_new(o);
+      }
+      else isize.push_back_empty();
+    }
+    EDEBUG(this->name() << ": " << osize << " b-> " << isize);
+    return isize;
+  }
+
+  template <typename T, class Tstate>
+  mfidxdim resize_module<T,Tstate>::get_msize() {
+    return msize;
+  }
+
+  template <typename T, class Tstate>
+  uint resize_module<T,Tstate>::nlayers() {
+    return 1;
+  }
+
+  template <typename T, class Tstate>
+  void resize_module<T,Tstate>::copy_outputs(mstate<Tstate> &out) {
+    // copy output to another copy
+    if (out_copy) {
+      out_copy->resize(out);
+      out_copy->copy(out);
+    }
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // resizepp_module
+
+  template <typename T, class Tstate>
+  resizepp_module<T,Tstate>::
+  resizepp_module(idxdim &size_, uint mode_, module_1_1<T,Tstate> *pp_, 
+		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name)
+    : resize_module<T,Tstate>(size_, mode_, dzpad_, pratio, name), 
+      pp(pp_), own_pp(own_pp_) {
+  }
+  
+  template <typename T, class Tstate>
+  resizepp_module<T,Tstate>::
+  resizepp_module(uint mode_, module_1_1<T,Tstate> *pp_,
+		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name)
+    : resize_module<T,Tstate>(mode_, dzpad_, pratio, name),
+      pp(pp_), own_pp(own_pp_) {
+  }
+  
+  template <typename T, class Tstate>
+  resizepp_module<T,Tstate>::
+  resizepp_module(double hratio_, double wratio_, uint mode_, 
+		  module_1_1<T,Tstate> *pp_,
+		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name)
+    : resize_module<T,Tstate>(hratio_, wratio_, mode_, dzpad_, pratio, name),
+      pp(pp_), own_pp(own_pp_) {
+  }
+  
+  template <typename T, class Tstate>
+  resizepp_module<T,Tstate>::~resizepp_module() {
+    if (pp && own_pp) delete pp;
+  }
+  
+  // fprop methods /////////////////////////////////////////////////////////////
   
   template <typename T, class Tstate>
   void resizepp_module<T,Tstate>::fprop(Tstate &in, idx<T> &out) {
@@ -915,6 +1156,16 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
+  void resizepp_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+    this->fprop(in, out.x);
+    // remember last output
+    lout.clear();
+    lout.push_back(new Tstate(out));
+    lastout = &lout;
+    copy_outputs(lout);
+  }
+  
+  template <typename T, class Tstate>
   void resizepp_module<T,Tstate>::fprop(Tstate &in, midx<T> &out) {
     // expect 1D midx
     if (out.order() != 1)
@@ -927,7 +1178,7 @@ namespace ebl {
     d.setdims(1);
     idx<T> tmp(d);
     // fprop
-    fprop(in, tmp);
+    this->fprop(in, tmp);
     out.set(tmp, 0);
   }
   
@@ -963,61 +1214,6 @@ namespace ebl {
     return desc;
   }
     
-  template <typename T, class Tstate>
-  mstate<Tstate>* resizepp_module<T,Tstate>::last_output() {
-    return lastout;
-  }
-
-  template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::set_output_copy(mstate<Tstate> &out) {
-    out_copy = &out;
-  }
-
-  template <typename T, class Tstate>
-  fidxdim resizepp_module<T,Tstate>::bprop_size(const fidxdim &osize) {
-    msize.clear();
-    msize.push_back(osize);
-    return osize;
-  }
-
-  template <typename T, class Tstate>
-  mfidxdim resizepp_module<T,Tstate>::bprop_size(mfidxdim &osize) {
-    msize = osize;
-    if (zpad) osize = zpad->bprop_size(osize);
-    mfidxdim isize;
-    for (uint i = 0; i < osize.size(); ++i) {
-       if (osize.exists(i) && original_bboxes[0].height != 0
-	   && original_bboxes[0].width != 0) {
-	fidxdim d(1, input_bboxes[0].height / (float) original_bboxes[0].height,
-		  input_bboxes[0].width / (float) original_bboxes[0].width);
-	fidxdim o = osize[i] * d;
-	isize.push_back_new(o);
-      }
-      else isize.push_back_empty();
-    }
-    EDEBUG(this->name() << ": " << osize << " b-> " << isize);
-    return isize;
-  }
-
-  template <typename T, class Tstate>
-  mfidxdim resizepp_module<T,Tstate>::get_msize() {
-    return msize;
-  }
-
-  template <typename T, class Tstate>
-  uint resizepp_module<T,Tstate>::nlayers() {
-    return 1;
-  }
-
-  template <typename T, class Tstate>
-  void resizepp_module<T,Tstate>::copy_outputs(mstate<Tstate> &out) {
-    // copy output to another copy
-    if (out_copy) {
-      out_copy->resize(out);
-      out_copy->copy(out);
-    }
-  }
-
   ////////////////////////////////////////////////////////////////
   // fovea_module
 
@@ -1181,216 +1377,216 @@ namespace ebl {
   void mschan_module<T,Tstate>::bbprop(Tstate &in, mstate<Tstate> &out) {    
   }
 
-  ////////////////////////////////////////////////////////////////
-  // resize_module
+  // ////////////////////////////////////////////////////////////////
+  // // resize_module
 
-  template <typename T, class Tstate>
-  resize_module<T,Tstate>::
-  resize_module(double hratio_, double wratio_, uint mode_,
-		uint hzpad_, uint wzpad_, bool pratio)
-    : module_1_1<T,Tstate>("resize"),
-      tmp3(1,1,1), mode(mode_), input_mode(0), inrect(0, 0, 0, 0),
-      inrect_set(false),
-      outrect_set(false), hzpad(hzpad_), wzpad(wzpad_), zpad(NULL),
-      hjitter(0), wjitter(0), sjitter(1.0), preserve_ratio(pratio),
-      hratio(hratio_), wratio(wratio_) {
-    set_zpads(hzpad_, wzpad_);
-    if (preserve_ratio)
-      input_mode = 2;
-    else
-      input_mode = 1;
-  }
+  // template <typename T, class Tstate>
+  // resize_module<T,Tstate>::
+  // resize_module(double hratio_, double wratio_, uint mode_,
+  // 		uint hzpad_, uint wzpad_, bool pratio)
+  //   : module_1_1<T,Tstate>("resize"),
+  //     tmp3(1,1,1), mode(mode_), input_mode(0), inrect(0, 0, 0, 0),
+  //     inrect_set(false),
+  //     outrect_set(false), hzpad(hzpad_), wzpad(wzpad_), zpad(NULL),
+  //     hjitter(0), wjitter(0), sjitter(1.0), preserve_ratio(pratio),
+  //     hratio(hratio_), wratio(wratio_) {
+  //   set_zpads(hzpad_, wzpad_);
+  //   if (preserve_ratio)
+  //     input_mode = 2;
+  //   else
+  //     input_mode = 1;
+  // }
   
-  template <typename T, class Tstate>
-  resize_module<T,Tstate>::
-  resize_module(intg height_, intg width_, uint mode_, uint hzpad_, uint wzpad_,
-		bool pratio)
-    : module_1_1<T,Tstate>("resize"), 
-      tmp3(1,1,1), mode(mode_), input_mode(0), inrect(0, 0, 0, 0),
-      inrect_set(false),
-      outrect_set(false), hzpad(hzpad_), wzpad(wzpad_), zpad(NULL),
-      hjitter(0), wjitter(0), sjitter(1.0), preserve_ratio(pratio) {
-    set_dimensions(height_, width_);
-    set_zpads(hzpad_, wzpad_);
-  }
+  // template <typename T, class Tstate>
+  // resize_module<T,Tstate>::
+  // resize_module(intg height_, intg width_, uint mode_, uint hzpad_, uint wzpad_,
+  // 		bool pratio)
+  //   : module_1_1<T,Tstate>("resize"), 
+  //     tmp3(1,1,1), mode(mode_), input_mode(0), inrect(0, 0, 0, 0),
+  //     inrect_set(false),
+  //     outrect_set(false), hzpad(hzpad_), wzpad(wzpad_), zpad(NULL),
+  //     hjitter(0), wjitter(0), sjitter(1.0), preserve_ratio(pratio) {
+  //   set_dimensions(height_, width_);
+  //   set_zpads(hzpad_, wzpad_);
+  // }
   
-  template <typename T, class Tstate>
-  resize_module<T,Tstate>::
-  resize_module(uint mode_, uint hzpad_, uint wzpad_, bool pratio)
-    : tmp3(1,1,1), mode(mode_), input_mode(0), inrect(0, 0, 0, 0),
-      inrect_set(false), outrect_set(false), hzpad(hzpad_), wzpad(wzpad_),
-      zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0), preserve_ratio(pratio) {
-    set_zpads(hzpad_, wzpad_);
-  }
+  // template <typename T, class Tstate>
+  // resize_module<T,Tstate>::
+  // resize_module(uint mode_, uint hzpad_, uint wzpad_, bool pratio)
+  //   : tmp3(1,1,1), mode(mode_), input_mode(0), inrect(0, 0, 0, 0),
+  //     inrect_set(false), outrect_set(false), hzpad(hzpad_), wzpad(wzpad_),
+  //     zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0), preserve_ratio(pratio) {
+  //   set_zpads(hzpad_, wzpad_);
+  // }
   
-  template <typename T, class Tstate>
-  resize_module<T,Tstate>::~resize_module() {
-    if (zpad)
-      delete zpad;
-  }
+  // template <typename T, class Tstate>
+  // resize_module<T,Tstate>::~resize_module() {
+  //   if (zpad)
+  //     delete zpad;
+  // }
   
-  template <typename T, class Tstate>
-  void resize_module<T,Tstate>::set_dimensions(intg height_, intg width_) {
-    height = height_ - hzpad * 2;
-    width = width_ - wzpad * 2;
-  }
+  // template <typename T, class Tstate>
+  // void resize_module<T,Tstate>::set_dimensions(intg height_, intg width_) {
+  //   height = height_ - hzpad * 2;
+  //   width = width_ - wzpad * 2;
+  // }
 
-  template <typename T, class Tstate>
-  void resize_module<T,Tstate>::set_zpads(intg hpad, intg wpad) {
-    // reset height/width without current zpad
-    height += hzpad * 2;
-    width += wzpad * 2;
-    // update zpads and height/width
-    hzpad = hpad;
-    wzpad = wpad;
-    height -= hzpad * 2;
-    width -= wzpad * 2;
-    // update zpad module
-    if (zpad) {
-      delete zpad;
-      zpad = NULL;
-    }
-    if (hzpad > 0 || wzpad > 0)
-      zpad = new zpad_module<T,Tstate>(hzpad, wzpad);
-  }
+  // template <typename T, class Tstate>
+  // void resize_module<T,Tstate>::set_zpads(intg hpad, intg wpad) {
+  //   // reset height/width without current zpad
+  //   height += hzpad * 2;
+  //   width += wzpad * 2;
+  //   // update zpads and height/width
+  //   hzpad = hpad;
+  //   wzpad = wpad;
+  //   height -= hzpad * 2;
+  //   width -= wzpad * 2;
+  //   // update zpad module
+  //   if (zpad) {
+  //     delete zpad;
+  //     zpad = NULL;
+  //   }
+  //   if (hzpad > 0 || wzpad > 0)
+  //     zpad = new zpad_module<T,Tstate>(hzpad, wzpad);
+  // }
 
-  template <typename T, class Tstate>
-  void resize_module<T,Tstate>::set_jitter(int h, int w, float s, float r) {
-    hjitter = h;
-    wjitter = w;
-    sjitter = s;
-    rjitter = r;
-  }
+  // template <typename T, class Tstate>
+  // void resize_module<T,Tstate>::set_jitter(int h, int w, float s, float r) {
+  //   hjitter = h;
+  //   wjitter = w;
+  //   sjitter = s;
+  //   rjitter = r;
+  // }
   
-  template <typename T, class Tstate>
-  void resize_module<T,Tstate>::set_input_region(const rect<int> &inr) {
-    inrect = inr;
-    inrect_set = true;
-  }
+  // template <typename T, class Tstate>
+  // void resize_module<T,Tstate>::set_input_region(const rect<int> &inr) {
+  //   inrect = inr;
+  //   inrect_set = true;
+  // }
 
-  template <typename T, class Tstate>
-  void resize_module<T,Tstate>::set_output_region(const rect<int> &outr) {
-    outrect = outr;
-    outrect.height -= hzpad * 2;
-    outrect.width -= wzpad * 2;
-    outrect_set = true;
-  }
+  // template <typename T, class Tstate>
+  // void resize_module<T,Tstate>::set_output_region(const rect<int> &outr) {
+  //   outrect = outr;
+  //   outrect.height -= hzpad * 2;
+  //   outrect.width -= wzpad * 2;
+  //   outrect_set = true;
+  // }
 
-  template <typename T, class Tstate>
-  void resize_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
-    // TODO: TMP FIX
-    float th = (in.x.dim(1) - 6) / 3 + 4;
-    float tw = (in.x.dim(2) - 6) / 3 + 4;
-    // float th = (in.x.dim(1) - 6) / 2 + 4;
-    // float tw = (in.x.dim(2) - 6) / 2 + 4;
-    hratio = th / (float) in.x.dim(1);
-    wratio = tw / (float) in.x.dim(2);
+  // template <typename T, class Tstate>
+  // void resize_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+  //   // TODO: TMP FIX
+  //   float th = (in.x.dim(1) - 6) / 3 + 4;
+  //   float tw = (in.x.dim(2) - 6) / 3 + 4;
+  //   // float th = (in.x.dim(1) - 6) / 2 + 4;
+  //   // float tw = (in.x.dim(2) - 6) / 2 + 4;
+  //   hratio = th / (float) in.x.dim(1);
+  //   wratio = tw / (float) in.x.dim(2);
 
-    // set input region to entire image if no input region is given
-    if (!inrect_set)
-      inrect = rect<int>(0, 0, in.x.dim(1), in.x.dim(2));
-    // apply scale jitter (keeping same center)
-    if (sjitter != 1.0)
-      inrect.scale_centered(sjitter, sjitter);
+  //   // set input region to entire image if no input region is given
+  //   if (!inrect_set)
+  //     inrect = rect<int>(0, 0, in.x.dim(1), in.x.dim(2));
+  //   // apply scale jitter (keeping same center)
+  //   if (sjitter != 1.0)
+  //     inrect.scale_centered(sjitter, sjitter);
 
-    if (!outrect_set)
-      outrect = rect<int>(0, 0, height, width);
-    rect<int> outr;
-    // resize input while preserving aspect ratio
-    tmp = in.x.shift_dim(0, 2);    
-    idx<T> resized;
-    switch (mode) {
-    case MEAN_RESIZE:
-      resized = image_mean_resize(tmp, outrect.height,
-				  outrect.width, input_mode, &inrect, &outr);
-      break ;
-    case GAUSSIAN_RESIZE:
-      resized = image_gaussian_resize(tmp, outrect.height,
-				      outrect.width, input_mode, &inrect,&outr);
-      break ;
-    case BILINEAR_RESIZE:
-      if (input_mode == 1 || input_mode == 2) { // use ratios
-	resized = image_resize(tmp, hratio, wratio, input_mode,
-			       &inrect, &outr);	
-	EDEBUG(this->name() << ": resizing with ratios " << hratio
-	      << " and " << wratio);
-      }
-      else // use pixels
-	resized = image_resize(tmp, (double) outrect.height,
-			       (double) outrect.width, input_mode,
-			       &inrect, &outr);
-      break ;
-    default:
-      eblerror("unknown resizing mode");
-    }
-    resized = resized.shift_dim(2, 0); 
-    // resize out to target dimensions if necessary
-    if (out.x.dim(0) != in.x.dim(0) || out.x.dim(1) != resized.dim(1)
-	 || out.x.dim(2) != resized.dim(2))
-      out.resize(in.x.dim(0), resized.dim(1), resized.dim(2));
-    idx_clear(out.x);
-    resized = resized.shift_dim(0, 2);
-    // apply rotation (around center of roi)
-    if (rjitter != 0.0) {
-      idx<T> r2 = idx_copy(resized); // make a contiguous copy
-      resized = image_rotate(r2, rjitter, (int) outr.hcenter(), 
-			     (int) outr.wcenter());
-    }
-    // apply spatial jitter
-    outr.h0 += hjitter;
-    outr.w0 += wjitter;
-    // copy out region to output
-    original_bbox = outr;
-    tmp2 = image_region_to_rect(resized, outr, out.x.dim(1),
-    				out.x.dim(2), &original_bbox);
-    tmp2 = tmp2.shift_dim(2, 0);
-    //idx_copy(tmp2, tmp);
-    if (!zpad)
-      idx_copy(tmp2, out.x);
-    else { // zero padding
-      original_bbox.shift(hzpad, wzpad);
-      tmp3.resize(tmp2.get_idxdim());
-      idx_copy(tmp2, tmp3.x);
-      zpad->fprop(tmp3, out);
-    }
-    EDEBUG(this->name() << ": resized output is " << out)
-  }
+  //   if (!outrect_set)
+  //     outrect = rect<int>(0, 0, height, width);
+  //   rect<int> outr;
+  //   // resize input while preserving aspect ratio
+  //   tmp = in.x.shift_dim(0, 2);    
+  //   idx<T> resized;
+  //   switch (mode) {
+  //   case MEAN_RESIZE:
+  //     resized = image_mean_resize(tmp, outrect.height,
+  // 				  outrect.width, input_mode, &inrect, &outr);
+  //     break ;
+  //   case GAUSSIAN_RESIZE:
+  //     resized = image_gaussian_resize(tmp, outrect.height,
+  // 				      outrect.width, input_mode, &inrect,&outr);
+  //     break ;
+  //   case BILINEAR_RESIZE:
+  //     if (input_mode == 1 || input_mode == 2) { // use ratios
+  // 	resized = image_resize(tmp, hratio, wratio, input_mode,
+  // 			       &inrect, &outr);	
+  // 	EDEBUG(this->name() << ": resizing with ratios " << hratio
+  // 	      << " and " << wratio);
+  //     }
+  //     else // use pixels
+  // 	resized = image_resize(tmp, (double) outrect.height,
+  // 			       (double) outrect.width, input_mode,
+  // 			       &inrect, &outr);
+  //     break ;
+  //   default:
+  //     eblerror("unknown resizing mode");
+  //   }
+  //   resized = resized.shift_dim(2, 0); 
+  //   // resize out to target dimensions if necessary
+  //   if (out.x.dim(0) != in.x.dim(0) || out.x.dim(1) != resized.dim(1)
+  // 	 || out.x.dim(2) != resized.dim(2))
+  //     out.resize(in.x.dim(0), resized.dim(1), resized.dim(2));
+  //   idx_clear(out.x);
+  //   resized = resized.shift_dim(0, 2);
+  //   // apply rotation (around center of roi)
+  //   if (rjitter != 0.0) {
+  //     idx<T> r2 = idx_copy(resized); // make a contiguous copy
+  //     resized = image_rotate(r2, rjitter, (int) outr.hcenter(), 
+  // 			     (int) outr.wcenter());
+  //   }
+  //   // apply spatial jitter
+  //   outr.h0 += hjitter;
+  //   outr.w0 += wjitter;
+  //   // copy out region to output
+  //   original_bbox = outr;
+  //   tmp2 = image_region_to_rect(resized, outr, out.x.dim(1),
+  //   				out.x.dim(2), &original_bbox);
+  //   tmp2 = tmp2.shift_dim(2, 0);
+  //   //idx_copy(tmp2, tmp);
+  //   if (!zpad)
+  //     idx_copy(tmp2, out.x);
+  //   else { // zero padding
+  //     original_bbox.shift(hzpad, wzpad);
+  //     tmp3.resize(tmp2.get_idxdim());
+  //     idx_copy(tmp2, tmp3.x);
+  //     zpad->fprop(tmp3, out);
+  //   }
+  //   EDEBUG(this->name() << ": resized output is " << out)
+  // }
 
-  template <typename T, class Tstate>
-  void resize_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
-    // do nothing
-    // unlikely to be needed by anyone
-  }
+  // template <typename T, class Tstate>
+  // void resize_module<T,Tstate>::bprop(Tstate &in, Tstate &out) {
+  //   // do nothing
+  //   // unlikely to be needed by anyone
+  // }
 
-  template <typename T, class Tstate>
-  void resize_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
-    // do nothing
-    // unlikely to be needed by anyone
-  }
+  // template <typename T, class Tstate>
+  // void resize_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
+  //   // do nothing
+  //   // unlikely to be needed by anyone
+  // }
   
-  template <typename T, class Tstate>
-  rect<int> resize_module<T,Tstate>::get_original_bbox() {
-    return original_bbox;
-  }
+  // template <typename T, class Tstate>
+  // rect<int> resize_module<T,Tstate>::get_original_bbox() {
+  //   return original_bbox;
+  // }
   
-  template <typename T, class Tstate>
-  resize_module<T,Tstate>* resize_module<T,Tstate>::copy() {
-    return new resize_module(*this);
-  }
+  // template <typename T, class Tstate>
+  // resize_module<T,Tstate>* resize_module<T,Tstate>::copy() {
+  //   return new resize_module(*this);
+  // }
   
-  template <typename T, class Tstate>
-  std::string resize_module<T,Tstate>::describe() {
-    std::string desc;
-    desc << "resize module " << this->name() << ", resizing with method "
-	 << mode;
-    if (input_mode == 1 || input_mode == 2) // using ratios
-      desc << " with height ratio " << hratio << " and width ratio " << wratio;
-    else
-      desc << " to " << height << "x" << width;
-    desc << " while "
-	 << (preserve_ratio ? "" : "not ") << "preserving aspect ratio";
-    return desc;
-  }
+  // template <typename T, class Tstate>
+  // std::string resize_module<T,Tstate>::describe() {
+  //   std::string desc;
+  //   desc << "resize module " << this->name() << ", resizing with method "
+  // 	 << mode;
+  //   if (input_mode == 1 || input_mode == 2) // using ratios
+  //     desc << " with height ratio " << hratio << " and width ratio " << wratio;
+  //   else
+  //     desc << " to " << height << "x" << width;
+  //   desc << " while "
+  // 	 << (preserve_ratio ? "" : "not ") << "preserving aspect ratio";
+  //   return desc;
+  // }
     
   ////////////////////////////////////////////////////////////////
   // laplacian_pyramid_module

@@ -196,6 +196,10 @@ namespace ebl {
     virtual uint get_ninputs();
     //! Returns the number of output states after last fprop.
     virtual uint get_noutputs();
+    //! Returns dimensions of last output(s).
+    virtual idxdim get_outdims();
+    //! Update internal "outdims" dimensions of last output.
+    virtual void update_outdims(Tout &out);
 
   // variable members //////////////////////////////////////////////////////////
   public:
@@ -209,6 +213,7 @@ namespace ebl {
     bool			bmstate_input;	//!< Input is multi-state.
     bool			bmstate_output;	//!< Output is multi-state.
     uint			ninputs, noutputs; //!< Current # of i/o states.
+    idxdim                      outdims; //!< Last out dimensions.
   };
 
   ////////////////////////////////////////////////////////////////

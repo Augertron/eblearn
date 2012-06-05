@@ -87,14 +87,17 @@ namespace ebl {
 		 intg narrow_dim, intg narrow_size, intg narrow_offset,
 		 vector<layers<T,Tstate>*> *branches,
 		 vector<intg> *branches_thick,
-		 map<string,module_1_1<T,Tstate>*> *shared_) {
+		 map<string,module_1_1<T,Tstate>*> *shared_,
+		 map<string,module_1_1<T,Tstate>*> *loaded_) {
     // if we don't find the generic architecture variable, try the old style
     // way with 'net-type'
     // if (!conf.exists(varname))
     // 	return create_network_old(theparam, conf, nout);
     // else, use the arch list
     map<string,module_1_1<T,Tstate>*> *shared = shared_;
+    map<string,module_1_1<T,Tstate>*> *loaded = loaded_;
     if (!shared) shared = new map<string,module_1_1<T,Tstate>*>;
+    if (!loaded) loaded = new map<string,module_1_1<T,Tstate>*>;
     list<string> arch = string_to_stringlist(conf.get_string(varname));
     uint arch_size = arch.size();
     layers<T,Tstate>* l =
@@ -120,7 +123,7 @@ namespace ebl {
 	module_1_1<T,Tstate> *module = NULL;
 	try {
 	  module = create_module<T,Tstate>
-	    (name, theparam, conf, nout, thick, *shared,
+	    (name, theparam, conf, nout, thick, *shared, *loaded,
 	     branches, branches_thick);
 	} catch (int err) { errid = err; }
 	// add module to layers, if not null
@@ -147,8 +150,8 @@ namespace ebl {
 		 << " were successfully loaded");
       cout << varname << ": loaded " << l->size() << " modules." << endl;
     } eblcatcherror();
-    if (!shared_) // shared was allocated here, we can delete it
-      delete shared;
+    if (!shared_) delete shared; // shared was allocated here, we can delete it
+    if (!loaded_) delete loaded; // loaded was allocated here, we can delete it
     return l;
   }
 
@@ -158,6 +161,7 @@ namespace ebl {
   create_module(const string &name, parameter<T, Tstate> &theparam,
 		configuration &conf, int &nout, intg &thick,
 		map<string,module_1_1<T,Tstate>*> &shared,
+		map<string,module_1_1<T,Tstate>*> &loaded,
 		vector<layers<T,Tstate>*> *branches,
 		vector<intg> *branches_thick) {
     string type = strip_last_num(name);
@@ -286,7 +290,7 @@ namespace ebl {
       branch = (layers<T,Tstate>*) create_network<T,Tstate>
 	(theparam, conf, thick, nout, name.c_str(), true,
 	 narrow, narrow_dim, narrow_size, narrow_offset, branches,
-	 branches_thick, &shared);
+	 branches_thick, &shared, &loaded);
       branches->push_back(branch);
       module = (module_1_1<T,Tstate>*) branch;
     }
@@ -369,7 +373,7 @@ namespace ebl {
 	  module_1_1<T,Tstate>* m =
 	    create_network<T,Tstate>(theparam, conf, thick2, nout, sp.c_str(),
 				     false, 0,0,0,0, branches, branches_thick,
-				     &shared);
+				     &shared, &loaded);
 	  // check the module was created
 	  if (!m) {
 	    cerr << "expected a module in " << spipe << endl;
@@ -461,7 +465,7 @@ namespace ebl {
       string pps_type = strip_last_num(pps);
       module_1_1<T,Tstate> *pp =
 	create_module<T,Tstate>(pps, theparam, conf, nout, thick, shared,
-				branches, branches_thick);
+				loaded, branches, branches_thick);
       if (!pp) {
 	cerr << "expected a preprocessing module in " << name << endl;
 	return NULL;
@@ -473,7 +477,8 @@ namespace ebl {
       if (get_param(conf, name, "size", ssize, true)) {
 	size = string_to_idxdim(ssize);
 	module = (module_1_1<T,Tstate>*)
-	  new resizepp_module<T,Tstate>(size, MEAN_RESIZE, pp, true, &zpad);
+	  new resizepp_module<T,Tstate>(size, MEAN_RESIZE, pp, true, &zpad,
+					true, name.c_str());
       } else if (get_param(conf, name, "fovea", sfovea, true)) {
         //TODO: might have to add fovea_scale_size
 	vector<double> fovea = string_to_doublevector(sfovea);
@@ -481,24 +486,37 @@ namespace ebl {
 	  new fovea_module<T,Tstate>(fovea, false, MEAN_RESIZE, pp, true,&zpad);
       } else
 	module = (module_1_1<T,Tstate>*)
-	  new resizepp_module<T,Tstate>(MEAN_RESIZE, pp, true, &zpad);
+	  new resizepp_module<T,Tstate>(MEAN_RESIZE, pp, true, &zpad,
+					true, name.c_str());
     }
     // resize /////////////////////////////////////////////////////////
     else if (!type.compare("resize")) {
       double resizeh, resizew;
-      uint hzpad = 0, wzpad = 0;
-      string szpad;
+      string szpad, smod;
+      idxdim pad;
       if (!get_param(conf, name, "hratio", resizeh)) return NULL;
       if (!get_param(conf, name, "wratio", resizew)) return NULL;
-      if (get_param(conf, name, "zpad", szpad, true)) {
-	vector<uint> zp = string_to_uintvector(szpad, 'x');
-	hzpad = zp[0];
-	wzpad= zp[1];
-      }
-      // create module
-      module = (module_1_1<T,Tstate>*)
-	new resize_module<T,Tstate>(resizeh, resizew, BILINEAR_RESIZE,
-				    hzpad, wzpad);
+      if (get_param(conf, name, "zpad", szpad, true))
+	pad = string_to_idxdim(szpad, 'x');
+      // resize as a module's outputs
+      if (get_param(conf, name, "as_module", smod, true)) {
+	string ssize;
+	if (!get_param(conf, name, "add", ssize)) return NULL;
+	idxdim size = string_to_idxdim(ssize);
+	// find module by name
+	typename map<string,module_1_1<T,Tstate>*>::iterator i =
+	  loaded.find(smod);
+	if (i != loaded.end()) {
+	  cout << "resizing as found module " << i->second->name() << endl;
+	  module = (module_1_1<T,Tstate>*)
+	    new resize_module<T,Tstate>(i->second, size, BILINEAR_RESIZE, &pad,
+					name.c_str());
+	} else
+	  eblerror("resizing as module " << smod << ", module not found");
+      } else 
+	module = (module_1_1<T,Tstate>*)
+	  new resize_module<T,Tstate>(resizeh, resizew, BILINEAR_RESIZE, &pad,
+				      true, name.c_str());
     }
     // resize /////////////////////////////////////////////////////////
     else if (!type.compare("lpyramid")) {
@@ -525,11 +543,11 @@ namespace ebl {
       // create module
       module = (module_1_1<T,Tstate>*)
 	create_preprocessing<T,Tstate>(pp.c_str(), kernels, zpads, "bilinear",
-				       true,
-				       nscales, NULL, NULL, globnorm, locnorm,
-				       locnorm2, color_lnorm,
+				       true, nscales, NULL, NULL, globnorm,
+				       locnorm, locnorm2, color_lnorm,
 				       cnorm_across, 1.0, 1.0,
-				       scalings.size() > 0 ? &scalings : NULL);
+				       scalings.size() > 0 ? &scalings : NULL,
+				       name.c_str());
     }
     // convolution /////////////////////////////////////////////////////////
     else if (!type.compare("conv") || !type.compare("convl")) {
@@ -589,7 +607,7 @@ namespace ebl {
 	new average_pyramid_module<T,Tstate>
 	(bshared_exists? NULL : &theparam, thick, strides, name.c_str());
     }
-    // wavg_pooling ///////////////////////////////////////////////////////////////
+    // wavg_pooling ////////////////////////////////////////////////////////////
     else if (!type.compare("wavgpool")) {
       string skernel, sstride;
       if (!get_param(conf, name, "kernel", skernel)) return NULL;
@@ -659,7 +677,7 @@ namespace ebl {
       module = (module_1_1<T,Tstate>*)
 	new lppooling_module<T,Tstate>(th, kernel, stride, 8, name.c_str());
     }
-    // l10pooling ///////////////////////////////////////////////////////////////
+    // l10pooling //////////////////////////////////////////////////////////////
     else if (!type.compare("l10pool")) {
       string skernel, sstride;
       if (!get_param(conf, name, "kernel", skernel)) return NULL;
@@ -671,7 +689,7 @@ namespace ebl {
       module = (module_1_1<T,Tstate>*)
 	new lppooling_module<T,Tstate>(th, kernel, stride, 10, name.c_str());
     }
-    // l12pooling ///////////////////////////////////////////////////////////////
+    // l12pooling //////////////////////////////////////////////////////////////
     else if (!type.compare("l12pool")) {
       string skernel, sstride;
       if (!get_param(conf, name, "kernel", skernel)) return NULL;
@@ -683,7 +701,7 @@ namespace ebl {
       module = (module_1_1<T,Tstate>*)
 	new lppooling_module<T,Tstate>(th, kernel, stride, 12, name.c_str());
     }
-    // l14pooling ///////////////////////////////////////////////////////////////
+    // l14pooling //////////////////////////////////////////////////////////////
     else if (!type.compare("l14pool")) {
       string skernel, sstride;
       if (!get_param(conf, name, "kernel", skernel)) return NULL;
@@ -695,7 +713,7 @@ namespace ebl {
       module = (module_1_1<T,Tstate>*)
 	new lppooling_module<T,Tstate>(th, kernel, stride, 14, name.c_str());
     }
-    // l16pooling ///////////////////////////////////////////////////////////////
+    // l16pooling //////////////////////////////////////////////////////////////
     else if (!type.compare("l16pool")) {
       string skernel, sstride;
       if (!get_param(conf, name, "kernel", skernel)) return NULL;
@@ -707,7 +725,7 @@ namespace ebl {
       module = (module_1_1<T,Tstate>*)
 	new lppooling_module<T,Tstate>(th, kernel, stride, 16, name.c_str());
     }
-    // l32pooling ///////////////////////////////////////////////////////////////
+    // l32pooling //////////////////////////////////////////////////////////////
     else if (!type.compare("l32pool")) {
       string skernel, sstride;
       if (!get_param(conf, name, "kernel", skernel)) return NULL;
@@ -719,7 +737,7 @@ namespace ebl {
       module = (module_1_1<T,Tstate>*)
 	new lppooling_module<T,Tstate>(th, kernel, stride, 32, name.c_str());
     }
-    // l64pooling ///////////////////////////////////////////////////////////////
+    // l64pooling //////////////////////////////////////////////////////////////
     else if (!type.compare("l64pool")) {
       string skernel, sstride;
       if (!get_param(conf, name, "kernel", skernel)) return NULL;
@@ -743,9 +761,10 @@ namespace ebl {
       intg th = thick;
       get_param(conf, name, "thickness", th, true);
       module = (module_1_1<T,Tstate>*)
-	new lppooling_module<T,Tstate>(th, kernel, stride, pool_power, name.c_str());
+	new lppooling_module<T,Tstate>(th, kernel, stride, pool_power,
+				       name.c_str());
     }
-    // linear //////////////////////////////////////////////////////////////
+    // linear //////////////////////////////////////////////////////////////////
     else if (!type.compare("linear") || !type.compare("linear_replicable")) {
       intg lin, lout;
       if (!get_param2(conf, name, "in", lin, thick, nout)) return NULL;
@@ -759,19 +778,19 @@ namespace ebl {
 	  (bshared_exists? NULL : &theparam, lin, lout, name.c_str());
       thick = lout; // update thickness
     }
-    // addc //////////////////////////////////////////////////////////////
+    // addc ////////////////////////////////////////////////////////////////////
     else if (!type.compare("addc"))
       module = (module_1_1<T,Tstate>*) new addc_module<T,Tstate>
 	(bshared_exists? NULL : &theparam, thick, name.c_str());
-    // diag //////////////////////////////////////////////////////////////
+    // diag ////////////////////////////////////////////////////////////////////
     else if (!type.compare("diag"))
       module = (module_1_1<T,Tstate>*) new diag_module<T,Tstate>
 	(bshared_exists? NULL : &theparam, thick, name.c_str());
-    // copy //////////////////////////////////////////////////////////////
+    // copy ////////////////////////////////////////////////////////////////////
     else if (!type.compare("copy"))
       module = (module_1_1<T,Tstate>*) new copy_module<T,Tstate>
 	(name.c_str());
-    // printer //////////////////////////////////////////////////////////////
+    // printer /////////////////////////////////////////////////////////////////
     else if (!type.compare("printer"))
       module = (module_1_1<T,Tstate>*) new printer_module<T,Tstate>
 	(name.c_str());
@@ -877,6 +896,8 @@ namespace ebl {
       // create hybrid penalty / module_1_1
       module = new ebm_module_1_1<T,Tstate>(module, e, sebm.c_str());
     }
+    // add this module to map of loaded modules
+    loaded[name] = module;
     return module;
   }
 
@@ -1088,13 +1109,14 @@ namespace ebl {
 		       vector<double> *fovea, midxdim *fovea_scale_size,
                        bool globnorm, bool locnorm, bool locnorm2,
 		       bool color_lnorm, bool cnorm_across,
-		       double hscale, double wscale, vector<float> *scalings) {
+		       double hscale, double wscale, vector<float> *scalings,
+		       const char *name) {
     midxdim kers;
     kers.push_back(kersz);
     return create_preprocessing<T,Tstate>
       (height, width, ppchan, kers, resize_method, keep_aspect_ratio, lpyramid,
        fovea, fovea_scale_size, globnorm, locnorm, locnorm2, color_lnorm,
-       cnorm_across, hscale, wscale, scalings);
+       cnorm_across, hscale, wscale, scalings, name);
   }
 
   template <typename T, class Tstate>
@@ -1103,19 +1125,21 @@ namespace ebl {
 		       midxdim &kers, midxdim &zpads, const char *resize_method,
 		       bool keep_aspect_ratio, int lpyramid,
 		       vector<double> *fovea, midxdim *fovea_scale_size,
-                       bool globnorm, bool locnorm,
-		       bool locnorm2, bool color_lnorm, bool cnorm_across,
-		       double hscale, double wscale, vector<float> *scalings) {
+                       bool globnorm, bool locnorm, bool locnorm2,
+		       bool color_lnorm, bool cnorm_across, double hscale,
+		       double wscale, vector<float> *scalings,
+		       const char *name_) {
     module_1_1<T,Tstate> *chanmodule = NULL;
     resizepp_module<T,Tstate> *ppmodule = NULL;
     if (kers.size() == 0) eblerror("expected at least 1 ker dims");
     idxdim kersz = kers[0];
     // set name of preprocessing
     string name;
+    if (name_) name << name_ << "_";
     if (dims.size() == 0) eblerror("expected at least 1 idxdim in dims");
     idxdim d = dims[0];
     int height = d.dim(0), width = d.dim(1);
-    name << ppchan << kersz << "_" << resize_method << height << "x" << width;
+    name << kersz << "_" << resize_method << height << "x" << width;
     if (!keep_aspect_ratio) name << "_noaspratio";
     if (!globnorm) name << "_nognorm";
     // set default min/max val for display
@@ -1188,15 +1212,16 @@ namespace ebl {
 		       midxdim &kers, midxdim &zpads, const char *resize_method,
 		       bool keep_aspect_ratio, int lpyramid,
 		       vector<double> *fovea, midxdim *fovea_scale_size,
-                       bool globnorm, bool locnorm,
-		       bool locnorm2, bool color_lnorm, bool cnorm_across,
-		       double hscale, double wscale, vector<float> *scalings) {
+                       bool globnorm, bool locnorm, bool locnorm2,
+		       bool color_lnorm, bool cnorm_across, double hscale,
+		       double wscale, vector<float> *scalings,
+		       const char *name) {
     midxdim d;
     d.push_back(idxdim(0, 0));
     return create_preprocessing<T,Tstate>
       (d, ppchan, kers, zpads, resize_method, keep_aspect_ratio, lpyramid,
        fovea, fovea_scale_size, globnorm, locnorm, locnorm2, color_lnorm,
-       cnorm_across, hscale, wscale, scalings);
+       cnorm_across, hscale, wscale, scalings, name);
   }
 
   // select network based on configuration, using old-style variables
