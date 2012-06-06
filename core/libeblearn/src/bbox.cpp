@@ -43,13 +43,13 @@ namespace ebl {
 
   bbox::bbox()
     : smart_pointer(), nacc(1), scaleh(1), scalew(1),
-      iscale_index(0), oscale_index(0) {
+      iscale_index(0), oscale_index(0), output_index(0) {
     new_instance_id();
   }
 
   bbox::bbox(float h0, float w0, float height, float width)
     : rect<float>(h0, w0, height, width), smart_pointer(), nacc(1),
-      scaleh(1), scalew(1), iscale_index(0), oscale_index(0) {
+      scaleh(1), scalew(1), iscale_index(0), oscale_index(0), output_index(0) {
   }
 
   bbox::bbox(const bbox &other)
@@ -60,6 +60,7 @@ namespace ebl {
       scaleh(other.scaleh),
       scalew(other.scalew),
       iscale_index(other.iscale_index), oscale_index(other.oscale_index),
+      output_index(other.output_index),
       i(other.i),
       mi(other.mi),
       i0(other.i0),

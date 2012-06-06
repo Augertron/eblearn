@@ -66,13 +66,13 @@ namespace ebl {
     try {
       try {
 	// load groundtruth data
-	gt_all = load_groundtruth(fname);
-	gt_clean = load_clean_groundtruth(fname, conf, gt_rest);
+	gt_all = load_groundtruth(fname, detect.labels);
+	gt_clean = load_clean_groundtruth(fname, conf, gt_rest, &detect.labels);
 	// negs do not need groundtruth data
 	if (extract_neg)
 	  bbneg = get_negatives
-	    (detect.answers, gt_clean, gt_rest, detect.itl[0], detect.itr[0],
-	     detect.ibl[0], detect.ibr[0],
+	    (detect.answers, gt_clean, gt_rest, detect.itl, detect.itr,
+	     detect.ibl, detect.ibr,
 	     conf.try_get_float("gt_neg_matching", .5),
 	     conf.try_get_uint("gt_neg_max", 5), detect.bgclass, neg_threshold);
 	// get bootstrapping boxes
@@ -83,8 +83,8 @@ namespace ebl {
 	    gt_clean.scale_centered(scale, scale);
 	  }	  
 	  bbpos = get_positives
-	    (detect.outputs[0], gt_clean, detect.itl[0], detect.itr[0],
-	     detect.ibl[0], detect.ibr[0],
+	    (detect.outputs, gt_clean, detect.itl, detect.itr,
+	     detect.ibl, detect.ibr,
 	     conf.try_get_float("gt_pos_matching", .5),
 	     conf.try_get_float("gt_min_context", 1.0));
 	}
@@ -183,6 +183,9 @@ namespace ebl {
     if (!_activated) return false;
     bool gtfound = groundtruth_found(frame_name);
     if (_activated && !extract_neg && !gtfound) {
+      if (!gtfound)
+	cout << "groundtruth not found in "
+	     << groundtruth_file(frame_name) << endl;
       return true;
     }
     if (extract_neg && neg_gt_only && !gtfound) {
@@ -277,13 +280,14 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
-  bboxes bootstrapping<T,Tstate>::load_groundtruth(string &frame_name) {
+  bboxes bootstrapping<T,Tstate>::load_groundtruth(string &frame_name,
+						   vector<string> &labels) {
     bboxes gt;
     // look for xml version
     xml_fullname = groundtruth_file(frame_name);
     if (file_exists(xml_fullname)) {
       if (!silent) cout << "Found groundtruth file: " << xml_fullname << endl;
-      gt = pascal_xml::get_bboxes(xml_fullname);
+      gt = pascal_xml::get_bboxes(xml_fullname, labels);
       EDEBUG("groundtruth boxes: " << gt);
     } else eblthrow("groundtruth file not found " << xml_fullname);
     return gt;
@@ -291,7 +295,8 @@ namespace ebl {
     
   template <typename T, class Tstate>
   bboxes bootstrapping<T,Tstate>::load_clean_groundtruth
-  (string &frame_name, configuration &conf, bboxes &rest) {
+  (string &frame_name, configuration &conf, bboxes &rest,
+   vector<string> *labels) {
     rest.clear();
     // load filtering settings
     float minvisibility = conf.try_get_float("gt_minvisibility", 0);
@@ -317,7 +322,7 @@ namespace ebl {
 	     << ", included classes: " << included << endl;
       gt = pascal_xml::get_filtered_bboxes(xml_fullname, minvisibility, min_ar,
 					   max_ar, mindims, minborders,
-					   included, rest);
+					   included, rest, labels);
       EDEBUG("clean groundtruth boxes: " << gt);
     } else eblthrow("groundtruth file not found " << xml_fullname);
     return gt;
@@ -325,8 +330,9 @@ namespace ebl {
   
   template <typename T, class Tstate>
   bboxes bootstrapping<T,Tstate>::get_positives
-  (mstate<Tstate> &outputs, bboxes &groundtruth, mfidxdim &topleft,
-   mfidxdim &topright, mfidxdim &bottomleft, mfidxdim &bottomright,
+  (svector<mstate<Tstate> > &outputs, bboxes &groundtruth,
+   svector<mfidxdim> &topleft, svector<mfidxdim> &topright,
+   svector<mfidxdim> &bottomleft, svector<mfidxdim> &bottomright,
    float matching, float mincontext) {
     bboxes res;
     float min_overlap = .9;
@@ -339,102 +345,111 @@ namespace ebl {
       bbox &gtraw = *i;
       bboxes candidates;
       // loop on outputs maps
-      for (uint o = 0; o < outputs.size(); ++o) {
-	Tstate &out = outputs[o];
-	// input space corners
-	fidxdim &tl = topleft[o], &tr = topright[o], &bl = bottomleft[o];
-	// steps in input space
-	double hf = (bl.offset(1) - tl.offset(1)) / out.x.dim(1);
-	double wf = (tr.offset(2) - tl.offset(2)) / out.x.dim(2);
-	// box size for this map
-	bbox b(0, 0, tl.dim(1), tl.dim(2));
-	b.o.height = 1;
-	b.o.width = 1;
-	// normalize width of gt
-	bbox gt = gtraw;
-	gt.scale_width(b.width / b.height);
-	bbox gtcontext = gt;
-	gtcontext.scale_centered(mincontext, mincontext);
-	if (gt.class_id >= out.x.dim(0))
-	  eblerror("expected dim 0 of " << out.x << " to be > than "
-		   << gt.class_id);	
-	// // box has to be able to include groundtruth entirely, otherwise skip
-	// rect<float> gt2(0, 0, gt.height, gt.width);
-	// float gt2_overlap = gt2.overlap_ratio(b);
-	// if (gt2_overlap > closest_overlap) {
-	//   closest_overlap = gt2_overlap;
-	//   closest_overlap_scale = o;
-	// }
-	// if (gt2_overlap < 1.0) {
-	//   EDEBUG("ruling out scale " << o << " because box " << b
-	//   << " doesn't overlap completely with gt " << gt2);
-	//   continue ;
-	// }
-	// apply scalings to box
-	float hscale = 1, wscale = 1;
-	if (o < bbox_scalings.size()) {
-	  fidxdim &scaling = bbox_scalings[o];
-	  hscale = scaling.dim(0);
-	  wscale = scaling.dim(1);
-	}
-	// loop on width
-	int wmax = (int) ceil((gt.w0 + gt.width) / wf);
-	int w = (int) std::max((double)0, floor((gt.w0 - b.width/2 - tl.offset(2)) / wf));
-	// force minimum region to explore to at least 4 pixels
-	int wadd = std::max(wmax - w, 2);
-	w -= wadd;
-	wmax += wadd;
-	for ( ; w < wmax; ++w) {
-	  // loop on height
-	  int hmax = (int) ceil((gt.h0 + gt.height) / hf);
-	  int h = (int) std::max((double)0, floor((gt.h0 - b.height/2 - tl.offset(1)) / hf));
+      for (uint oo = 0; oo < outputs.size(); ++oo) {
+	mstate<Tstate> &output = outputs[oo];
+	for (uint o = 0; o < output.size(); ++o) {
+	  Tstate &out = output[o];
+	  // input space corners
+	  fidxdim &tl = topleft[oo][o], &tr = topright[oo][o],
+	    &bl = bottomleft[oo][o];
+	  // steps in input space
+	  double hf = (bl.offset(1) - tl.offset(1)) / out.x.dim(1);
+	  double wf = (tr.offset(2) - tl.offset(2)) / out.x.dim(2);
+	  // box size for this map
+	  bbox b(0, 0, tl.dim(1), tl.dim(2));
+	  b.o.height = 1;
+	  b.o.width = 1;
+	  // normalize width of gt
+	  bbox gt = gtraw;
+	  gt.scale_width(b.width / b.height);
+	  bbox gtcontext = gt;
+	  gtcontext.scale_centered(mincontext, mincontext);
+	  if (gt.class_id >= out.x.dim(0))
+	    eblerror("expected dim 0 of " << out.x << " to be > than "
+		     << gt.class_id);	
+	  // // box has to be able to include groundtruth entirely, otherwise skip
+	  // rect<float> gt2(0, 0, gt.height, gt.width);
+	  // float gt2_overlap = gt2.overlap_ratio(b);
+	  // if (gt2_overlap > closest_overlap) {
+	  //   closest_overlap = gt2_overlap;
+	  //   closest_overlap_scale = o;
+	  // }
+	  // if (gt2_overlap < 1.0) {
+	  //   EDEBUG("ruling out scale " << o << " because box " << b
+	  //   << " doesn't overlap completely with gt " << gt2);
+	  //   continue ;
+	  // }
+	  // apply scalings to box
+	  float hscale = 1, wscale = 1;
+	  if (o < bbox_scalings.size()) {
+	    fidxdim &scaling = bbox_scalings[o];
+	    hscale = scaling.dim(0);
+	    wscale = scaling.dim(1);
+	  }
+	  // loop on width
+	  int wmax = (int) ceil((gt.w0 + gt.width) / wf);
+	  int w = (int) std::max((double)0, floor((gt.w0 - b.width/2
+						   - tl.offset(2)) / wf));
 	  // force minimum region to explore to at least 4 pixels
-	  int hadd = std::max(hmax - h, 2);
-	  h -= hadd;
-	  hmax += hadd;
-	  for ( ; h < hmax; ++h) {
-	    b.h0 = tl.offset(1) + h * hf;
-	    b.w0 = tl.offset(2) + w * wf;
-	    bbox b2 = b;
-	    b2.scale_centered(hscale, wscale);
-	    EDEBUG("scale " << o << " gt " << (rect<float>&)gt 
-		  << "gtcontext " << (rect<float>&)gtcontext << " b " << (rect<float>&)b2
-	    	  << " matching: " << b2.match(gtcontext));
- 	    // skip this box if not matching gt more than minimum match
-	    float bmatch = b2.match(gt);
-	    if (bmatch > closest_match) {
-	      closest_match = bmatch;
-	      closest_match_scale = o;
-	    }
-	    if (o > 0 && o < outputs.size() -1
-		&& bmatch < matching) continue ;
+	  int wadd = std::max(wmax - w, 2);
+	  w -= wadd;
+	  wmax += wadd;
+	  for ( ; w < wmax; ++w) {
+	    // loop on height
+	    int hmax = (int) ceil((gt.h0 + gt.height) / hf);
+	    int h = (int) std::max((double)0, floor((gt.h0 - b.height/2
+						     - tl.offset(1)) / hf));
+	    // force minimum region to explore to at least 4 pixels
+	    int hadd = std::max(hmax - h, 2);
+	    h -= hadd;
+	    hmax += hadd;
+	    for ( ; h < hmax; ++h) {
+	      b.h0 = tl.offset(1) + h * hf;
+	      b.w0 = tl.offset(2) + w * wf;
+	      bbox b2 = b;
+	      b2.scale_centered(hscale, wscale);
+	      EDEBUG("scale " << o << " gt " << (rect<float>&)gt 
+		     << "gtcontext " << (rect<float>&)gtcontext << " b "
+		     << (rect<float>&)b2 << " matching: " << b2.match(gtcontext));
+	      // skip this box if not matching gt more than minimum match
+	      float bmatch = b2.match(gt);
+	      if (bmatch > closest_match) {
+		closest_match = bmatch;
+		closest_match_scale = o;
+	      }
+	      //if (o > 0 && o < outputs.size() -1 && bmatch < matching) continue ;
+	      if (bmatch < matching) continue ;
 
-	    // skip this box if not including gt entirely
-	    EDEBUG("overlap ratio " << gt.overlap_ratio(b));
-	    float gtoverlap = gtcontext.overlap_ratio(b);
-	    if (gtoverlap > closest_overlap2) {
-	      closest_overlap2 = gtoverlap;
-	      closest_overlap2_scale = o;
+	      // skip this box if not including gt entirely
+	      float gtoverlap = gtcontext.overlap_ratio(b);
+	      if (gtoverlap > closest_overlap2) {
+		closest_overlap2 = gtoverlap;
+		closest_overlap2_scale = o;
+	      }
+	      EDEBUG("overlap ratio "<<gtoverlap << " minoverlap "<< min_overlap);
+	      //if (o < outputs.size() - 1 && gtoverlap < min_overlap) continue ;
+	      if (gtoverlap < min_overlap) continue ;
+	    
+	      // bbox is a potential candidate, add it
+	      // // use output value as confidence
+	      // b.confidence = (float) out.x.get(gt.class_id, h, w);
+	      // use matching value as confidence
+	      b.confidence = bmatch;
+	      // b.iscale_index = scale_indices[a]; // scale index
+	      // b.oscale_index = a; // scale index
+	      // b.i.h0 = ptl.offset(1) + h * phf;
+	      // b.i.w0 = ptl.offset(2) + w * pwf;
+	      // b.i.height = ptl.dim(1);
+	      // b.i.width = ptl.dim(2);
+	      b.o.h0 = h; // answer height in output
+	      b.o.w0 = w; // answer height in output
+	      b.class_id = gt.class_id;
+	      b.iscale_index = o;
+	      b.oscale_index = o;
+	      b.output_index = oo;
+	      EDEBUG("adding candidate " << (rect<float>&)b);
+	      candidates.push_back_new(b);
 	    }
-	    if (o < outputs.size() - 1 && gtoverlap < min_overlap) continue ;
-	    // bbox is a potential candidate, add it
-	    // // use output value as confidence
-	    // b.confidence = (float) out.x.get(gt.class_id, h, w);
-	    // use matching value as confidence
-	    b.confidence = bmatch;
-	    // b.iscale_index = scale_indices[a]; // scale index
-	    // b.oscale_index = a; // scale index
-	    // b.i.h0 = ptl.offset(1) + h * phf;
-	    // b.i.w0 = ptl.offset(2) + w * pwf;
-	    // b.i.height = ptl.dim(1);
-	    // b.i.width = ptl.dim(2);
-	    b.o.h0 = h; // answer height in output
-	    b.o.w0 = w; // answer height in output
-	    b.class_id = gt.class_id;
-	    b.iscale_index = o;
-	    b.oscale_index = o;
-	    EDEBUG("adding candidate " << (rect<float>&)b);
-	    candidates.push_back_new(b);
 	  }
 	}
       }
@@ -476,89 +491,96 @@ namespace ebl {
     
   template <typename T, class Tstate>
   bboxes bootstrapping<T,Tstate>::get_negatives
-  (mstate<Tstate> &answers, bboxes &filtered, bboxes &nonfiltered,
-   mfidxdim &topleft, mfidxdim &topright, mfidxdim &bottomleft,
-   mfidxdim &bottomright, float matching, uint nmax, int neg_id, T threshold) {
+  (svector<mstate<Tstate> > &answers, bboxes &filtered, bboxes &nonfiltered,
+   svector<mfidxdim> &topleft, svector<mfidxdim> &topright,
+   svector<mfidxdim> &bottomleft, svector<mfidxdim> &bottomright,
+   float matching, uint nmax, int neg_id, T threshold) {
     bboxes res;
     // extract all non-negative windows
     // loop on outputs maps
-    for (uint o = 0; o < answers.size(); ++o) {
-      bboxes pos2, res2;
-      Tstate &ans = answers[o];
-      // input space corners
-      fidxdim &tl = topleft[o], &tr = topright[o], &bl = bottomleft[o];
-      // steps in input space
-      double hf = (bl.offset(1) - tl.offset(1)) / ans.x.dim(1);
-      double wf = (tr.offset(2) - tl.offset(2)) / ans.x.dim(2);
-      // box size for this map
-      bbox b(0, 0, tl.dim(1), tl.dim(2));
-      b.o.height = 1;
-      b.o.width = 1;
+    bboxes pos2, res2;
+    for (uint oo = 0; oo < answers.size(); ++oo) {
+      mstate<Tstate> &answer = answers[oo];
+      for (uint o = 0; o < answer.size(); ++o) {
+	Tstate &ans = answer[o];
+	// input space corners
+	fidxdim &tl = topleft[oo][o], &tr = topright[oo][o],
+	  &bl = bottomleft[oo][o];
+	// steps in input space
+	double hf = (bl.offset(1) - tl.offset(1)) / ans.x.dim(1);
+	double wf = (tr.offset(2) - tl.offset(2)) / ans.x.dim(2);
+	// box size for this map
+	bbox b(0, 0, tl.dim(1), tl.dim(2));
+	b.o.height = 1;
+	b.o.width = 1;
+	// loop on width
+	for (uint w = 0; w < ans.x.dim(2); ++w) {
+	  // loop on height
+	  for (uint h = 0; h < ans.x.dim(1); ++h) {
+	    b.class_id = (int) ans.x.get(0, h, w);
+	    // ignore negative answers
+	    if (b.class_id == neg_id) continue ;
+	    b.confidence = (float) ans.x.get(1, h, w);
+	    // confidence is below threshold, ignore
+	    if (b.confidence < threshold) continue ;
+	    // not negative, enqueue
+	    b.h0 = tl.offset(1) + h * hf;
+	    b.w0 = tl.offset(2) + w * wf;
+	    b.o.h0 = h; // answer height in output
+	    b.o.w0 = w; // answer height in output
+	    b.oscale_index = o;
+	    b.output_index = oo;
+	    pos2.push_back_new(b);
+	  }
+	}
+      }
+    }
+    // sort positives by confidence
+    pos2.sort_by_confidence();
+    // extract nmax most confident
+    for (uint i = 0; i < pos2.size() && res2.size() < nmax; ++i) {
+      bbox &b = pos2[i];
+      bbox b2 = b;
       // apply scalings to box
       float hscale = 1, wscale = 1;
-      if (o < bbox_scalings.size()) {
-	fidxdim &scaling = bbox_scalings[o];
+      int off = std::min(b2.output_index, (int) bbox_scalings.size() - 1);
+      if (off >= 0) {
+	fidxdim &scaling = bbox_scalings[off];
 	hscale = scaling.dim(0);
 	wscale = scaling.dim(1);
       }
-      // loop on width
-      for (uint w = 0; w < ans.x.dim(2); ++w) {
-	// loop on height
-	for (uint h = 0; h < ans.x.dim(1); ++h) {
-	  b.class_id = (int) ans.x.get(0, h, w);
-	  // ignore negative answers
-	  if (b.class_id == neg_id) continue ;
-	  b.confidence = (float) ans.x.get(1, h, w);
-	  // confidence is below threshold, ignore
-	  if (b.confidence < threshold) continue ;
-	  // not negative, enqueue
-	  b.h0 = tl.offset(1) + h * hf;
-	  b.w0 = tl.offset(2) + w * wf;
-	  b.o.h0 = h; // answer height in output
-	  b.o.w0 = w; // answer height in output
-	  b.oscale_index = o;
-	  pos2.push_back_new(b);
+      b2.scale_centered(hscale, wscale);
+      bool accept = true;
+      // check that b doesn't overlap more than matching with filtered gt
+      for (bboxes::iterator j = filtered.begin();j != filtered.end();++j){
+	if (b.class_id == j->class_id && b2.match(*j) > matching) {
+	  accept = false;
+	  break ;
 	}
       }
-      // sort positives by confidence
-      pos2.sort_by_confidence();
-      // extract nmax most confident
-      for (uint i = 0; i < pos2.size() && res2.size() < nmax; ++i) {
-	bbox &b = pos2[i];
-	bbox b2 = b;
-	b2.scale_centered(hscale, wscale);
-	bool accept = true;
-	// check that b doesn't overlap more than matching with filtered gt
-	for (bboxes::iterator j = filtered.begin();j != filtered.end();++j){
-	  if (b.class_id == j->class_id && b2.match(*j) > matching) {
-	    accept = false;
-	    break ;
-	  }
+      if (!accept) continue ;
+      // check that b doesn't overlap at all with non-filtered gt
+      for (bboxes::iterator j = nonfiltered.begin();
+	   j != nonfiltered.end(); ++j) {
+	if (b.overlap(*j)) {
+	  accept = false;
+	  break ;
 	}
-	if (!accept) continue ;
-	// check that b doesn't overlap at all with non-filtered gt
-	for (bboxes::iterator j = nonfiltered.begin();
-	     j != nonfiltered.end(); ++j) {
-	  if (b.overlap(*j)) {
-	    accept = false;
-	    break ;
-	  }
-	}
-	if (!accept) continue ;
-	// check that b doesn't overlap at all with other accepted positives
-	for (bboxes::iterator j = res2.begin();j != res2.end();++j){
-	  if (b.overlap(*j)) {
-	    accept = false;
-	    break ;
-	  }
-	}
-	if (!accept) continue ;
-	// all checks passed, keep this box
-	if (accept) res2.push_back(b);
       }
-      res.push_back(res2);
-      if (res2.size() == 0) eblwarn("no negatives found for scale " << o);
+      if (!accept) continue ;
+      // check that b doesn't overlap at all with other accepted positives
+      for (bboxes::iterator j = res2.begin();j != res2.end();++j){
+	if (b.overlap(*j)) {
+	  accept = false;
+	  break ;
+	}
+      }
+      if (!accept) continue ;
+      // all checks passed, keep this box
+      if (accept) res2.push_back(b);
     }
+    res.push_back(res2);
+    //    if (res2.size() == 0) eblwarn("no negatives found for scale " << o);
     // set all boxes to negative id
     for (bboxes::iterator j = res.begin(); j != res.end(); ++j)
       j->class_id = neg_id;

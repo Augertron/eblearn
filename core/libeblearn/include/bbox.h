@@ -97,6 +97,7 @@ namespace ebl {
     double	scalew;		//!< scale factor at which object was detected
     int		iscale_index;	//!< Input scale index of bbox.
     int		oscale_index;	//!< Output scale index of bbox.
+    int		output_index;	//!< Output index of bbox.
     // input map /////////////////////////////////////////////////
     rect<float> i;        //!< Box in pyramid input space.
     vector<rect<float> > mi;        //!< All input boxes in inputs.

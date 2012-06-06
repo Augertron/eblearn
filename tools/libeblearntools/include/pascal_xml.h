@@ -50,14 +50,15 @@ namespace ebl {
     // bboxes extraction ///////////////////////////////////////////////////////
 
     //! Returns bboxes found in file 'xml_fname'.
-    static bboxes get_bboxes(const string &xml_fname);
+    static bboxes get_bboxes(const string &xml_fname, vector<string> &labels);
     //! Returns bboxes found in file 'xml_fname' and filtered with
     //! these parameters.
     //! \param filtered This will be filled with the rejected boxes.
     static bboxes get_filtered_bboxes
       (const string &xml_fname, float minvisibility, float min_aspect_ratio,
        float max_aspect_ratio, idxdim &mindims, idxdim &minborders,
-       vector<string> &included, bboxes &filtered);
+       vector<string> &included, bboxes &filtered,
+       vector<string> *labels = NULL);
     
     // xml extraction //////////////////////////////////////////////////////////
     

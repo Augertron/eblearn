@@ -361,33 +361,36 @@ namespace ebl {
     uint h = h0, maxw = 0;
     uint color = 0;
     // draw answers
-    for (uint k = 0; k < cl.answers.size(); ++k) {
-      double czoom = dzoom;// * 2.0;
-      Tstate &o = cl.answers[k];
+    for (uint l = 0; l < cl.answers.size(); ++l) {
+      mstate<Tstate> &answer = cl.answers[l];
+      for (uint k = 0; k < answer.size(); ++k) {
+	double czoom = dzoom;// * 2.0;
+	Tstate &o = answer[k];
 
-      //uint lab = 0;
-      idx<T> out0 = o.x.select(0, 0);
-      idx<T> out1 = o.x.select(0, 1);
-      string s;
-      uint w = w0;
-      s << "classes " << out0.dim(0) << "x" << out0.dim(1);
-      gui << at((uint) (h - 20), (uint) w) << white_on_transparent() << s;
-      draw_matrix(out0, h, w, czoom, czoom, idx_min(out0), idx_max(out0));
-      // // draw crosses for found boxes
-      // for (bboxes::iterator i = bb.begin(); i != bb.end(); ++i) {
-      // 	color = 0;
-      // 	if (k == (uint) i->oscale_index && (uint) i->class_id == lab)
-      // 	  draw_cross(i->o.h0 * czoom + h0, i->o.w0 * czoom + w, 3,
-      // 		     color_list[color][0], color_list[color][1],
-      // 		     color_list[color][2]);
-      w += (uint) (out0.dim(1) * czoom + 10);
-      s = "";
-      s << "conf " << out0.dim(0) << "x" << out0.dim(1);
-      gui << at((uint) (h - 20), (uint) w) << white_on_transparent() << s;
-      draw_matrix(out1, h, w, czoom, czoom, (T) 0, (T) 1);
-      h += (uint) (out0.dim(0) * czoom + 20);
-      w += (uint) (out0.dim(1) * czoom + 10);
-      if (w > maxw) maxw = w;
+	//uint lab = 0;
+	idx<T> out0 = o.x.select(0, 0);
+	idx<T> out1 = o.x.select(0, 1);
+	string s;
+	uint w = w0;
+	s << "classes " << out0.dim(0) << "x" << out0.dim(1);
+	gui << at((uint) (h - 20), (uint) w) << white_on_transparent() << s;
+	draw_matrix(out0, h, w, czoom, czoom, idx_min(out0), idx_max(out0));
+	// // draw crosses for found boxes
+	// for (bboxes::iterator i = bb.begin(); i != bb.end(); ++i) {
+	// 	color = 0;
+	// 	if (k == (uint) i->oscale_index && (uint) i->class_id == lab)
+	// 	  draw_cross(i->o.h0 * czoom + h0, i->o.w0 * czoom + w, 3,
+	// 		     color_list[color][0], color_list[color][1],
+	// 		     color_list[color][2]);
+	w += (uint) (out0.dim(1) * czoom + 10);
+	s = "";
+	s << "conf " << out0.dim(0) << "x" << out0.dim(1);
+	gui << at((uint) (h - 20), (uint) w) << white_on_transparent() << s;
+	draw_matrix(out1, h, w, czoom, czoom, (T) 0, (T) 1);
+	h += (uint) (out0.dim(0) * czoom + 20);
+	w += (uint) (out0.dim(1) * czoom + 10);
+	if (w > maxw) maxw = w;
+      }
     }
     w0 = maxw;
     // draw outputs

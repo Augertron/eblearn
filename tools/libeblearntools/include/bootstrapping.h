@@ -107,20 +107,24 @@ namespace ebl {
     //! Returns groundtruth filename given a frame name.
     string groundtruth_file(string &frame_name);
     //! Load groundtruth based on the image name.
-    bboxes load_groundtruth(string &frame_name);
+    bboxes load_groundtruth(string &frame_name, vector<string> &labels);
     //! Load groundtruth based on the image name, and filter it based
     //! on various criteria.
     bboxes load_clean_groundtruth(string &frame_name, configuration &conf,
-				  bboxes &rest);
+				  bboxes &rest, vector<string> *labels = NULL);
   
-    bboxes get_positives(mstate<Tstate> &outputs, bboxes &groundtruth,
-			 mfidxdim &topleft, mfidxdim &topright,
-			 mfidxdim &bottomleft, mfidxdim &bottomright,
+    bboxes get_positives(svector<mstate<Tstate> > &outputs, bboxes &groundtruth,
+			 svector<mfidxdim> &topleft,
+			 svector<mfidxdim> &topright,
+			 svector<mfidxdim> &bottomleft,
+			 svector<mfidxdim> &bottomright,
 			 float matching, float min_context);
-    bboxes get_negatives(mstate<Tstate> &answers, bboxes &filtered,
+    bboxes get_negatives(svector<mstate<Tstate> > &answers, bboxes &filtered,
 			 bboxes &nonfiltered,
-			 mfidxdim &topleft, mfidxdim &topright,
-			 mfidxdim &bottomleft, mfidxdim &bottomright,
+			 svector<mfidxdim> &topleft,
+			 svector<mfidxdim> &topright,
+			 svector<mfidxdim> &bottomleft,
+			 svector<mfidxdim> &bottomright,
 			 float matching, uint nmax, int neg_id, T threshold);
     //! Push mirror versions of all samples and their corresponding boxes
     //! at the end of 'samples' and 'boxes'.

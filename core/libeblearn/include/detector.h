@@ -403,7 +403,7 @@ namespace ebl {
     bool                 adapt_scales; //!< Adapt scales to network structure.
     bool                 scaler_mode;
     answer_module<T,T,T,Tstate> *answer;
-    mstate<Tstate>       answers; //!< Buffers holding last answers.
+    svector<mstate<Tstate> > answers; //!< Buffers holding last answers.
     bool                 ignore_outsiders; //!< Ignore bbs overlapping outside.
     uint corners_inference; //!< 0: from net 1: from net + save 2: load
     bool corners_infered; //!< Allows to infer only once.
