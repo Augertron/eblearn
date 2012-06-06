@@ -74,9 +74,10 @@ namespace ebl {
 	    (detect.answers, gt_clean, gt_rest, detect.itl, detect.itr,
 	     detect.ibl, detect.ibr,
 	     conf.try_get_float("gt_neg_matching", .5),
+	     conf.try_get_float("gt_negneg_matching", .5),
 	     conf.try_get_uint("gt_neg_max", 5), detect.bgclass, neg_threshold);
 	// get bootstrapping boxes
-	if (extract_pos) {
+	if (extract_pos && gt_clean.size() > 0) {
 	  // scale groundtruth (for positives only)
 	  if (scale != 1.0) {
 	    gt_all.scale_centered(scale, scale);
@@ -289,7 +290,7 @@ namespace ebl {
       if (!silent) cout << "Found groundtruth file: " << xml_fullname << endl;
       gt = pascal_xml::get_bboxes(xml_fullname, labels);
       EDEBUG("groundtruth boxes: " << gt);
-    } else eblthrow("groundtruth file not found " << xml_fullname);
+    } else eblwarn("groundtruth file not found " << xml_fullname);
     return gt;
   }
     
@@ -324,7 +325,7 @@ namespace ebl {
 					   max_ar, mindims, minborders,
 					   included, rest, labels);
       EDEBUG("clean groundtruth boxes: " << gt);
-    } else eblthrow("groundtruth file not found " << xml_fullname);
+    } else eblwarn("groundtruth file not found " << xml_fullname);
     return gt;
   }  
   
@@ -494,7 +495,7 @@ namespace ebl {
   (svector<mstate<Tstate> > &answers, bboxes &filtered, bboxes &nonfiltered,
    svector<mfidxdim> &topleft, svector<mfidxdim> &topright,
    svector<mfidxdim> &bottomleft, svector<mfidxdim> &bottomright,
-   float matching, uint nmax, int neg_id, T threshold) {
+   float matching, float neg_matching, uint nmax, int neg_id, T threshold) {
     bboxes res;
     // extract all non-negative windows
     // loop on outputs maps
@@ -570,7 +571,7 @@ namespace ebl {
       if (!accept) continue ;
       // check that b doesn't overlap at all with other accepted positives
       for (bboxes::iterator j = res2.begin();j != res2.end();++j){
-	if (b.overlap(*j)) {
+	if (b.match(*j) > neg_matching) {
 	  accept = false;
 	  break ;
 	}

@@ -125,7 +125,8 @@ namespace ebl {
 			 svector<mfidxdim> &topright,
 			 svector<mfidxdim> &bottomleft,
 			 svector<mfidxdim> &bottomright,
-			 float matching, uint nmax, int neg_id, T threshold);
+			 float matching, float neg_matching,
+			 uint nmax, int neg_id, T threshold);
     //! Push mirror versions of all samples and their corresponding boxes
     //! at the end of 'samples' and 'boxes'.
     void add_mirrors(svector<midx<T> > &samples, bboxes &boxes);
