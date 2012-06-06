@@ -411,6 +411,7 @@ namespace ebl {
 	mstate<Tstate> *ppout = new mstate<Tstate>();
 	ppout->push_back(new Tstate(order));
 	outputs.push_back(ppout);
+	answers.push_back(new mstate<Tstate>());
       }
       DEBUGMEM_PRETTY("detector end of init scales");
       // copy ideal scales to actual scales vector (to be modified later)
@@ -971,8 +972,8 @@ namespace ebl {
     double original_w = indim.dim(2);
     intg offset_h = 0, offset_w = 0;
     int scale_index = 0;
-    answers.clear();
     for (uint scale = 0; scale < outputs.size(); ++scale) {
+      answers[scale].clear();
       // get 4 corners coordinates for each scale
       mstate<Tstate> &oo = outputs[scale];
 
@@ -1023,7 +1024,7 @@ namespace ebl {
 	offset_w = 0;
 	Tstate out(outx.get_idxdim());
 	answer->fprop(output, out);
-	answers.push_back_new(out);
+	answers[scale].push_back_new(out);
 
 	idx<T> tmp = outx.select(0, 1);
 	// cout << "out " << o << " threshold " << thresh << " min " << idx_min(tmp)
@@ -1381,8 +1382,8 @@ namespace ebl {
 
   template <typename T, class Tstate>
   midx<T> detector<T,Tstate>::get_preprocessed(const bbox &bb) {
-    mstate<Tstate> &ins = ppinputs[0];
-    mstate<Tstate> &outs = outputs[0];
+    mstate<Tstate> &ins = ppinputs[bb.output_index];
+    mstate<Tstate> &outs = outputs[bb.output_index];
     // get bbox of input given output bbox and its offsets
     idxdim d(1, 1, 1); //bb.oheight, bb.owidth);
     d.setoffset(1, bb.o.h0);
@@ -1398,8 +1399,8 @@ namespace ebl {
     // get bboxes after the resizepp
     mfidxdim dims = resizepp->get_msize();
     if (dims.size() != ins.size())
-      eblerror("expected same size dimensions and ins but got "
-	       << dims.size() << " and " << ins.size());
+      eblerror("expected same size dimensions and ins but got " << dims.size()
+	       << " and " << ins.size() << " in " << dims << " and " << ins);
     midx<T> all(1);
     ins.get_padded_midx(dims, all);
     return all;

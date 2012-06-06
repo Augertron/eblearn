@@ -53,7 +53,8 @@ namespace ebl {
 
   // bboxes extraction /////////////////////////////////////////////////////////
 
-  bboxes pascal_xml::get_bboxes(const string &xml_fname) {
+  bboxes pascal_xml::get_bboxes(const string &xml_fname,
+				vector<string>& labels) {
     string imgroot = dirname(xml_fname.c_str());
     string fname, fullname, folder;
     int height, width, depth;
@@ -67,7 +68,9 @@ namespace ebl {
     for (uint i = 0; i < objs.size(); ++i) {
       object &o = *(objs[i]);
       bbox b(o.h0, o.w0, o.height, o.width);
-      b.class_id = 1; //o.id; TODO ignore id for now
+      for (uint l = 0; l < labels.size(); ++l)
+	if (!strcmp(labels[l].c_str(), o.name.c_str()))
+	  b.class_id = l;
       bb.push_back_new(b);
     }
     // delete all objects
@@ -79,7 +82,7 @@ namespace ebl {
   bboxes pascal_xml::get_filtered_bboxes
   (const string &xml_fname, float minvisibility, float min_aspect_ratio,
    float max_aspect_ratio, idxdim &mindims, idxdim &minborders,
-   vector<string> &included, bboxes &filtered) {
+   vector<string> &included, bboxes &filtered, vector<string> *labels) {
     string imgroot = dirname(xml_fname.c_str());
     string fname, fullname, folder;
     int height = -1, width = -1, depth = -1;
@@ -103,7 +106,7 @@ namespace ebl {
 	if (min_aspect_ratio >= 0.0 && ar < min_aspect_ratio) remove = true;
 	if (max_aspect_ratio >= 0.0 && ar > max_aspect_ratio) remove = true;
 	// check that object is larger than minimum size
-	if (o.height < mindims.dim(0) || o.width < mindims.dim(1)) remove = true;
+	if (o.height < mindims.dim(0) || o.width < mindims.dim(1)) remove =true;
 	// check that bbox is not below image border distances
 	if (!minborders.empty()) {
 	  if (height < 0 || width < 0) eblerror("image sizes not found in xml");
@@ -128,7 +131,12 @@ namespace ebl {
 	// add object to filtered vector
 	object &o = *(objs[i]);
 	bbox b(o.h0, o.w0, o.height, o.width);
-	b.class_id = 1; //o.id; TODO ignore id for now
+	if (labels) {
+	  for (uint l = 0; l < labels->size(); ++l) {
+	    if (!strcmp((*labels)[l].c_str(), o.name.c_str()))
+	      b.class_id = l;
+	  }
+	} else b.class_id = -1;
 	filtered.push_back_new(b);
 	// then remove it from current list
 	delete objs[i];
@@ -140,7 +148,12 @@ namespace ebl {
       if (objs[i] != NULL) {
 	object &o = *(objs[i]);
 	bbox b(o.h0, o.w0, o.height, o.width);
-	b.class_id = 1; //o.id; TODO ignore id for now
+	if (labels) {
+	  for (uint l = 0; l < labels->size(); ++l) {
+	    if (!strcmp((*labels)[l].c_str(), o.name.c_str()))
+	      b.class_id = l;
+	  }
+	} else b.class_id = -1;
 	bb.push_back_new(b);
       }
     }
