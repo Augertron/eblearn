@@ -35,10 +35,10 @@
 ################################################################################
 # Torch Cuda library(THC)
 ################################################################################
-SET(THC_FOUND TRUE)
-SET(THC_DIR "/home/sc3104/th")
-SET(THC_INCLUDE_DIR "${THC_DIR}/include/")
-SET(THC_LIBRARIES_DIR "${THC_DIR}/lib/")
+#SET(THC_FOUND TRUE)
+#SET(THC_DIR "/home/sc3104/th")
+#SET(THC_INCLUDE_DIR "${THC_DIR}/include/")
+#SET(THC_LIBRARIES_DIR "${THC_DIR}/lib/")
 
 ################################################################################
 # Intel IPP
