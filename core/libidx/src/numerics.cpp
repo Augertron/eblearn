@@ -214,6 +214,7 @@ dstdsigmoid(float x)
   bool drand_ini = false;
 
   void init_drand(int x){
+    // cout<<"CALLED SRAND. IF THIS APPEARS TWICE, SOMETHING's WRONG"<<endl;
     drand_ini = true;
     dseed(x);
     srand(x);

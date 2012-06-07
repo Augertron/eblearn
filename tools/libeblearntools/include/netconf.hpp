@@ -562,13 +562,20 @@ namespace ebl {
       // update thickness
       idx<intg> tblmax = table.select(1, 1);
       thick = 1 + idx_max(tblmax);
+      bool crop = true;
+      bool use_gpu = conf.exists_bool("use_gpu");
+      int gpu_deviceid = -1;
+      if (conf.exists("gpu_id"))
+        gpu_deviceid = conf.get_uint("gpu_id");
+      get_param(conf, name, "use_gpu", use_gpu, true);
+      get_param(conf, name, "gpu_id", gpu_deviceid, true);
       // create module
       if (!type.compare("conv")) // conv module
 	module = (module_1_1<T,Tstate>*)
 	  //	  new convolution_module_replicable<T,Tstate>
 	  new convolution_module<T,Tstate>
 	  (bshared_exists? NULL : &theparam, kernel, stride, table,
-	   name.c_str());
+	   name.c_str(), crop, use_gpu, gpu_deviceid);
       else if (!type.compare("convl")) // conv layer
 	module = (module_1_1<T,Tstate>*)
 	  new convolution_layer<T,Tstate>

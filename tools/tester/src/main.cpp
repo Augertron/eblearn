@@ -262,8 +262,8 @@ int main(int argc, char **argv) {
   runner.setOutputter(outputter);
 
   // fixed randomization
-  fixed_init_drand();
-  
+    fixed_init_drand();
+
   // adding test suites
   runner.addTest(idxIO_test::suite());
   runner.addTest(idx_test::suite());

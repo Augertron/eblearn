@@ -90,8 +90,8 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void linear_module<T, Tstate>::forget(forget_param_linear &fp) {
-    double fanin = w.x.dim(1);
-    double z = fp.value / pow(fanin, fp.exponent);
+    double fanin_ = w.x.dim(1);
+    double z = fp.value / pow(fanin_, fp.exponent);
     idx_aloop1(lx, w.x, T) {
       *lx = (T) fp.generator.drand(-z, z);
     }
@@ -178,10 +178,12 @@ namespace ebl {
   template <typename T, class Tstate>
   convolution_module<T, Tstate>::
   convolution_module(parameter<T,Tstate> *p, idxdim &ker_, idxdim &stride_,
-		     idx<intg> &tbl, const char *name_, bool crop_)
+		     idx<intg> &tbl, const char *name_, bool crop_,
+                     bool use_gpu_, int gpu_id_)
     : module_1_1<T,Tstate>(name_), ker(ker_), stride(stride_), table(tbl),
       warnings_shown(false), float_precision(false), double_precision(false),
-      crop(crop_), use_ipp(false) {
+      crop(crop_), use_ipp(false), use_gpu(use_gpu_), 
+      fanin(-1), revtable(1,1,1), gpu_id(gpu_id_) {
     idxdim d(ker);
     d.insert_dim(0, tbl.dim(0));
     kernel = Tstate(p, d);
@@ -204,15 +206,40 @@ namespace ebl {
     bool not_using_all_inputs = false;
     for (int i = 0; i <= tablemax; ++i) {
       if (tblcount.get(i) == false) {
-	cerr << "warning: input " << i;
-	cerr << " not used by connection table in convolution module." << endl;
+        eblwarn( "warning: input " << i 
+                  << " not used by connection table in convolution module." << endl);
         not_using_all_inputs = true;
       }
     }
+    fulltable = false;
     // check if its a full-table
-    if (((tablemax + 1) * thickness) == table.dim(0) && !not_using_all_inputs)
+    if ( (((tablemax + 1) * thickness) == table.dim(0)))// && !not_using_all_inputs)
       fulltable = true;
-#ifdef __TH__
+
+
+    // check it the table has fixed fanin and construct the revtable
+    if (!fulltable && (table.dim(0) % thickness == 0)) {
+      fanin = table.dim(0) / thickness;
+      revtable.resize(thickness, fanin, 2);
+      // do a proper fanin check
+      for (int i = 0; i < thickness; ++i) {
+        int tempfan = fanin;
+        for (int j=0; j < table.dim(0); ++j) {
+          if( table.get(j,1) == i) {
+            if(tempfan <= 0)
+              break;
+            revtable.set(table.get(j,0), i, tempfan - 1, 0);
+            revtable.set(j, i, tempfan - 1, 1);
+            tempfan--;
+          }
+        }
+        if (tempfan != 0) {
+          fanin = -1;
+          break;
+        }
+      }
+    }
+#if __TH__ || __CUDA__
     // check precision to decide if we use TH or not
     fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&kernel);
     if (cont) {
@@ -264,6 +291,24 @@ namespace ebl {
     if (crop && oj % stride.dim(1) != 0)
       inx = inx.narrow(2, inx.dim(2) - oj % sj, 0);
     idx_clear(out.x);
+
+#ifdef __CUDA__
+    if(float_precision && use_gpu) {
+      LOCAL_TIMING2_START();
+      if (fulltable)
+        cuda_convolution_3d(inx, kernel.x, out.x, stride.dim(0), stride.dim(1), 
+                            gpu_id);
+      else if (fanin != -1)
+           cuda_convolution_3dmap(inx, kernel.x, out.x, stride.dim(0), 
+                                  stride.dim(1), revtable, fanin, gpu_id);
+      else
+        eblerror(" Only full tables or fixed fanin tables are supported" 
+                 << "in convolution_module with CUDA");
+      LOCAL_TIMING2_REPORT("convgpu total execution time");
+      return;
+    }
+#endif
+
 #ifdef __TH__
     // a direct 3D-map optimization
     if((float_precision || double_precision) && in.x.order()==3) {
@@ -298,7 +343,7 @@ namespace ebl {
       //if (fulltable)
       // th_convolution_3d(inx, kernel.x, out.x, stride.dim(0), stride.dim(1));
       //else
-        th_convolution_3dmap(inx, kernel.x, out.x, table, stride.dim(0), stride.dim(1));
+      th_convolution_3dmap(inx, kernel.x, out.x, table, stride.dim(0), stride.dim(1));
 #endif // endif __OPENMP__
       return;
     }
@@ -315,6 +360,7 @@ namespace ebl {
     }
 #endif // endif __TH__
     
+    LOCAL_TIMING_START();
     // unfolding input for a faster convolution operation
     idx<T> uuin(inx.unfold(1, kernel.x.dim(1), stride.dim(0)));
     uuin = uuin.unfold(2, kernel.x.dim(2), stride.dim(1));
@@ -339,6 +385,7 @@ namespace ebl {
   #endif //endif __IPP__
       }
     }
+    LOCAL_TIMING_REPORT("convcpu total time");
   }
 
   template <typename T, class Tstate>
@@ -461,12 +508,12 @@ namespace ebl {
     intg vsize = kx.dim(1);
     intg hsize = kx.dim(2);
     idx<intg> ts(table.select(1, 1));
-    idx<int> fanin(1 + idx_max(ts));
-    idx_clear(fanin);
+    idx<int> fanin_(1 + idx_max(ts));
+    idx_clear(fanin_);
     { idx_bloop1(tab, table, intg)	{
-	fanin.set(1 + fanin.get(tab.get(1)), tab.get(1)); }}
+	fanin_.set(1 + fanin_.get(tab.get(1)), tab.get(1)); }}
     { idx_bloop2(tab, table, intg, x, kx, T) {
-	double s = fp.value / pow((vsize * hsize * fanin.get(tab.get(1))),
+	double s = fp.value / pow((vsize * hsize * fanin_.get(tab.get(1))),
 				  fp.exponent);
 	{ idx_bloop1(lx, x, T) {
 	    { idx_bloop1(llx, lx, T) {

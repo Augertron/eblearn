@@ -534,14 +534,14 @@ namespace ebl {
     LOCAL_TIMING_REPORT("merge copies");
 
 #ifdef __DEBUG_PRINT__
-    cout << describe() << ": " << in0 << " (in " << din
-	 << " stride " << stride << ")";
-    for (uint i = 1; i < padded.size(); ++i)
-      cout << " + " << padded[i].x
-	   << " (in " << dins[i] << " stride " << strides[i] << ")";
-    cout << " -> " << out.x << endl;
-    cout << "output min: " << idx_min(out.x) << " max: " << idx_max(out.x)
-	 << endl;
+    // cout << describe() << ": " << in0 << " (in " << din
+    //      << " stride " << stride << ")";
+    // for (uint i = 1; i < padded.size(); ++i)
+    //   cout << " + " << padded[i].x
+    //        << " (in " << dins[i] << " stride " << strides[i] << ")";
+    // cout << " -> " << out.x << endl;
+    // cout << "output min: " << idx_min(out.x) << " max: " << idx_max(out.x)
+    //      << endl;
 #endif
   }
 

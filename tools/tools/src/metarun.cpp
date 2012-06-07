@@ -182,6 +182,7 @@ int main(int argc, char **argv) {
   if (resume) { // extract metajob name to be resumed
     string dir = dirname(metaconf.c_str());
     resume_name = ebl::basename(dir.c_str());
+    resumedir = true;
     cout << "Configuration file: " << metaconf << endl;
     cout << "Directory: " << dir << endl;
     cout << "Resuming metajob with name: " << resume_name << endl;
@@ -194,8 +195,8 @@ int main(int argc, char **argv) {
 		      resumedir, false, maxjobs);
     jm->set_copy(copy_path);
     if (resume_other) jm->initialize_other(other_directory);
-    jm->prepare(reset_progress);    
-    //if (!resume) jm->prepare(reset_progress);
+    // jm->prepare(reset_progress);    
+    if (!resume) jm->prepare(reset_progress);
     if (create) // do not run if creating structure only
       cout << "Not running jobs, only creating directories and files." << endl;
     else jm->run(force_start);
