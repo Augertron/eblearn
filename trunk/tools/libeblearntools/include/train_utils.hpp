@@ -161,6 +161,7 @@ namespace ebl {
     bool show_train_correct = conf.exists_true("show_train_correct");
     bool show_val_errors = conf.exists_true("show_val_errors");
     bool show_val_correct = conf.exists_true("show_val_correct");
+    bool show_only_images = conf.exists_true("show_only_images");
     bool show_raw_outputs = conf.exists_true("show_raw_outputs");
     bool show_all_jitter = conf.exists_true("show_all_jitter");
     uint hsample = conf.exists("show_hsample") ?conf.get_uint("show_hsample"):5;
@@ -170,34 +171,34 @@ namespace ebl {
       if (show_train_errors) {
 	stgui2.display_correctness(true, true, thetrainer, train_ds, infp,
 				   hsample, wsample, show_raw_outputs,
-				   show_all_jitter);
+				   show_all_jitter, show_only_images);
 	stgui2.display_correctness(true, false, thetrainer, train_ds, infp,
 				   hsample, wsample, show_raw_outputs,
-				   show_all_jitter);
+				   show_all_jitter, show_only_images);
       }
       if (show_train_correct) {
 	stgui2.display_correctness(false, true, thetrainer, train_ds, infp,
 				   hsample, wsample, show_raw_outputs,
-				   show_all_jitter);
+				   show_all_jitter, show_only_images);
 	stgui2.display_correctness(false, false, thetrainer, train_ds, infp,
 				   hsample, wsample, show_raw_outputs,
-				   show_all_jitter);
+				   show_all_jitter, show_only_images);
       }
       if (show_val_errors) {
 	stgui.display_correctness(true, true, thetrainer, test_ds, infp,
 				  hsample, wsample, show_raw_outputs,
-				  show_all_jitter);
+				  show_all_jitter, show_only_images);
 	stgui.display_correctness(true, false, thetrainer, test_ds, infp,
 				  hsample, wsample, show_raw_outputs,
-				  show_all_jitter);
+				  show_all_jitter, show_only_images);
       }
       if (show_val_correct) {
 	stgui.display_correctness(false, true, thetrainer, test_ds, infp,
 				  hsample, wsample, show_raw_outputs,
-				  show_all_jitter);
+				  show_all_jitter, show_only_images);
 	stgui.display_correctness(false, false, thetrainer, test_ds, infp,
 				  hsample, wsample, show_raw_outputs,
-				  show_all_jitter);
+				  show_all_jitter, show_only_images);
       }
       stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
     }

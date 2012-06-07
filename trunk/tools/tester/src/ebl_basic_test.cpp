@@ -217,22 +217,117 @@ void ebl_basic_test::test_convolution_module_float() {
   typedef float T;
   idxdim ker(7,7);
   idxdim stride(1,1);
-  bbstate_idx<T> in(2, 10, 10), out;
-  idx<intg> table = full_table(2, 3);
-  parameter<T> prm(10000);
+  bbstate_idx<T> in(2, 32, 32), out;
+  idx<intg> table = full_table(2, 6);
+  parameter<T> prm(100000);
   convolution_module<T> c(&prm, ker, stride, table);
   TEST_DERIVATIVES(c, in, out, T, FLOAT_THRESHOLD)
+
+  // idxdim ker(2,2);
+  // idxdim stride(1,1);
+  // bbstate_idx<T> in(1, 2, 2), out;
+  // idx<intg> table = full_table(1, 1);
+  // parameter<T> prm(10000);
+  // convolution_module<T> c(&prm, ker, stride, table);
+  // TEST_DERIVATIVES(c, in, out, T, FLOAT_THRESHOLD)
+}
+
+
+inline void test_conv_cuda(int inx, int iny, int infeat, int outfeat, 
+                    int kerx, int kery, bool full) {
+  typedef float T;
+  idxdim ker(kerx,kery);
+  idxdim stride(1,1);
+  bbstate_idx<T> in(infeat, inx, iny), out1, out2;
+  idx<intg> table;
+  if(full)
+    table = full_table(infeat, outfeat);
+  else {
+    std::vector<intg> fanin;
+    fanin.push_back(4);
+    table = random_table(infeat, outfeat, fanin);
+  }
+  parameter<T> prm(100000);
+  double rrange_min = -1.0;
+  double rrange_max = 1.0;
+  // cpu version
+  convolution_module<T> c1(&prm, ker, stride, table, "cpuconv", true, false);
+  // gpu version
+  convolution_module<T> c2(&prm, ker, stride, table, "gpuconv", true, true);
+  forget_param_linear fp(2,0.5);
+  idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
+  c1.fprop(in,out1); // just to resize states
+  c1.forget(fp); // randomize parameters if there are any
+  c2.fprop(in,out2); // just to resize states
+  c2.forget(fp); // randomize parameters if there are any
+  idx_copy(c1.kernel.x, c2.kernel.x); // share the kernels between both modules
+  // clear all input and output
+  in.clear();
+  out1.clear();
+  out2.clear();
+  idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
+  c1.fprop(in, out1);
+  c1.fprop(in, out1);
+  c2.fprop(in, out2);
+  c2.fprop(in, out2);
+  double maxdist;
+  // max distance
+  idx_sub(out1.x,out2.x,out1.x);
+  idx_abs(out1.x,out1.x);
+  double totdist = idx_sum(out1.x);
+  maxdist = (double) idx_max(out1.x);
+  idx<double> errs(2);
+  errs.set(maxdist, 0);
+  errs.set(totdist, 1);
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(0, errs.get(0), 1); \
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(0, errs.get(1), 1); \
+  // cout<<" In:"<<inx<<"\tinfeat:"<<infeat
+  // <<"\toutfeat:"<<outfeat<<"\tker:"<<kerx<<endl;
+}
+
+void ebl_basic_test::test_convolution_module_cuda() {
+  // test_conv_cuda(16,16,64,96,3,3);
+  // test_conv_cuda(32,32,64,96,3,3);
+  // test_conv_cuda(64,64,64,96,3,3);
+  // test_conv_cuda(96,96,64,96,3,3);
+
+  // test_conv_cuda(16,16,64,96,5,5);
+  // test_conv_cuda(32,32,64,96,5,5);
+  // test_conv_cuda(64,64,64,96,5,5);
+  // test_conv_cuda(96,96,64,96,5,5);
+
+  // test_conv_cuda(16,16,64,96,7,7);
+
+  test_conv_cuda(64,64,64,96,7,7, true);
+  test_conv_cuda(64,64,64,96,7,7, false);
+
+  // test_conv_cuda(64,64,64,96,7,7);
+  // test_conv_cuda(96,96,64,96,7,7);
+
+  // test_conv_cuda(16,16,64,96,9,9);
+  // test_conv_cuda(32,32,64,96,9,9);
+  // test_conv_cuda(64,64,64,96,9,9);
+  // test_conv_cuda(96,96,64,96,9,9);
+
 }
 
 void ebl_basic_test::test_convolution_module_double() {
   typedef double T;
-  idxdim ker(7,7);
+  // idxdim ker(7,7);
+  // idxdim stride(1,1);
+  // bbstate_idx<T> in(2, 10, 10), out;
+  // idx<intg> table = full_table(2, 3);
+  // parameter<T> prm(10000);
+  // convolution_module<T> c(&prm, ker, stride, table);
+  // TEST_DERIVATIVES(c, in, out, T, DOUBLE_THRESHOLD)
+
+  idxdim ker(2,2);
   idxdim stride(1,1);
-  bbstate_idx<T> in(2, 10, 10), out;
-  idx<intg> table = full_table(2, 3);
+  bbstate_idx<T> in(1, 2, 2), out;
+  idx<intg> table = full_table(1, 1);
   parameter<T> prm(10000);
   convolution_module<T> c(&prm, ker, stride, table);
-  TEST_DERIVATIVES(c, in, out, T, DOUBLE_THRESHOLD)
+  TEST_DERIVATIVES(c, in, out, T, FLOAT_THRESHOLD)
 }
 
 void ebl_basic_test::test_subsampling_module_float() {

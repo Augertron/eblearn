@@ -318,6 +318,18 @@ namespace ebl {
     growstorage_chunk(s_chunk);
   }
 
+  template <class T>
+  void idx<T>::resize_copy(intg s0, intg s1, intg s2, intg s3,
+		      intg s4, intg s5, intg s6, intg s7) {
+    idx<T> oldt(*this);
+    idx_copy(*this, oldt);
+    resize(s0,s1,s2,s3,s4,s5,s6,s7);
+    idx<T> newt(*this);
+    for (int i = 0; i < oldt.order(); ++i)
+      newt = newt.narrow(i, 0, oldt.dim(i));
+    idx_copy(oldt,newt);
+  }
+
   // return true if this idx has same order and dimensions as idxdim d.
   // i.e. if all their dimensions are equal (regardless of strides).
   template <class T>

@@ -39,6 +39,7 @@
 #include "ebl_states.h"
 #include "ebl_utils.h"
 #include "bbox.h"
+#include "ebl_cudabasic.h"
 
 namespace ebl {
 
@@ -132,7 +133,7 @@ namespace ebl {
     //!          This allows to feed any input size to this module.
     convolution_module(parameter<T,Tstate> *p, idxdim &ker, idxdim &stride,
 		       idx<intg> &table, const char *name = "convolution",
-		       bool crop = true);
+		       bool crop = true, bool use_gpu = false, int gpu_id = -1);
     //! destructor
     virtual ~convolution_module();
     //! forward propagation from in to out
@@ -174,12 +175,16 @@ namespace ebl {
     idxdim		ker;
     idxdim		stride;
     idx<intg>		table;	//!< table of connections btw input and output
+    idx<intg>		revtable; //!< table of connections btw output and input
+    int                 fanin;  //!< the fanin of the connection table
   protected:
     bool		warnings_shown;
     bool                fulltable; //!< indicating whether it is a full-table or not
     bool                float_precision; //!< used for IPP and TH
     bool                double_precision; //!< used for TH
     bool                crop; //! Crop input when size mismatch or not.
+    bool                use_gpu; //!< Whether to use gpu or not
+    int                 gpu_id; //!< Whether to use gpu or not
   // IPP members ////////////////////////////////////////////////////////
     idx<T>              revkernel; //!< a reversed kernel for IPP
     idx<T>              outtmp; //!< a tmp buffer for IPP conv output

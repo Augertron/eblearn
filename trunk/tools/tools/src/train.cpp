@@ -133,6 +133,8 @@ int train(configuration &conf, string &conffname) {
 
     // a classifier-meter measures classification errors
     classifier_meter trainmeter, testmeter;
+    trainmeter.init(noutputs);
+    testmeter.init(noutputs);
     // find out if jitter module is present
     jitter_module<bbs2 > *jitt = NULL;
     jitt = arch_find(net, jitt);

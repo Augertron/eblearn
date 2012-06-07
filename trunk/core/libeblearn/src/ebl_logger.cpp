@@ -45,7 +45,7 @@ namespace ebl {
   }
 
   void classifier_meter::init(uint nclasses_) {
-    if (nclasses != nclasses_) { // 1st time only
+    if (nclasses != nclasses_ && nclasses_ > nclasses) { // 1st time only
       nclasses = nclasses_;
       confusion = idx<int>(nclasses, nclasses);
       total_confusion = idx<int>(nclasses, nclasses);
@@ -123,8 +123,8 @@ namespace ebl {
       class_errors.resize(max + 1, 0); // resize to max and fill new with 0
       class_tpr.resize(max + 1, 0); // resize to max and fill new with 0
       class_fpr.resize(max + 1, 0); // resize to max and fill new with 0
-      confusion.resize(max + 1, max + 1);
-      total_confusion.resize(max + 1, max + 1);
+      // confusion.resize_copy(max + 1, max + 1);
+      // total_confusion.resize_copy(max + 1, max + 1);
     }
     // increment class examples total
     class_totals[desired] = class_totals[desired] + 1;
@@ -141,7 +141,7 @@ namespace ebl {
     size++;
     // update confusion matrix
     confusion.set(confusion.get(infered, desired) + 1, infered, desired);
-    total_confusion.set(total_confusion.get(infered, desired) + 1, 
+    total_confusion.set(total_confusion.get(infered, desired) , 
 			infered, desired);
   }
 

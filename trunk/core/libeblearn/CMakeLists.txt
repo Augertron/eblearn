@@ -4,6 +4,7 @@
 #
 # Author(s):
 #   Pierre Sermanet, pierre.sermanet@gmail.com, New York University
+#   Soumith Chintala, soumith@gmail.com, New York University
 #
 ################################################################################
 
@@ -37,3 +38,12 @@ TARGET_LINK_LIBRARIES(eblearn idx)
 if (LUA_FOUND)
   TARGET_LINK_LIBRARIES(eblearn ${LUA_LIBRARIES})
 endif (LUA_FOUND)
+
+if (CUDA_FOUND)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+   SET(CUDA_NVCC_FLAGS " -g -G")
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  CUDA_ADD_LIBRARY(eblearn_cuda SHARED src/ebl_cudabasic.cu)
+  TARGET_LINK_LIBRARIES(eblearn_cuda ${CUDA_LIBRARIES})
+  TARGET_LINK_LIBRARIES(eblearn eblearn_cuda)
+endif (CUDA_FOUND)

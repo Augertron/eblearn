@@ -255,6 +255,7 @@ namespace ebl {
 		      infer_param &infp,
 		      unsigned int nh, unsigned int nw,
 		      bool print_raw_outputs, bool draw_all_jitter,
+                      bool show_only_images,
 		      unsigned int h0, unsigned int w0, double zoom, int wid,
 		      const char *title, bool scrolling) {
     if (!ds.bkeep_outputs) 
@@ -343,23 +344,22 @@ namespace ebl {
     idx<intg> indices(tally);
     idx<double> energies(tally);
     intg inc = 0, i = 0;
-    if(!incorrect) {
-      idx_bloop2(correct, ds.correct, ubyte, energy, ds.energies, double) {
-        if (ds.included_sample(i)) {
-          if (correct.get() == !incorrect) { // found correct or incorrect sample
-            indices.set(i, inc);
-            energies.set(energy.get(), inc);
-            inc++;
-          }
-        }
-        i++; // data iterator
-      }
-    }
-    else return; // TODO: fix bug for incorrect samples.
 
-//     if (inc != indices.dim(0))
-//       eblerror("expected " << indices.dim(0) << " " << corname
-// 	       << " samples but found " << inc);
+    idx_bloop2(correct, ds.correct, ubyte, energy, ds.energies, double) {
+      if (ds.included_sample(i)) {
+        if (correct.get() == !incorrect) { // correct or incorrect mode
+          indices.set(i, inc);
+          energies.set(energy.get(), inc);
+          inc++;
+        }
+      }
+      i++; // data iterator
+    }
+
+
+    //     if (inc != indices.dim(0))
+    //       eblerror("expected " << indices.dim(0) << " " << corname
+    // 	       << " samples but found " << inc);
 
     // display top
     gui << set_colors(255, 0, 0, 255, 255, 255, 255, 127) << gui_only();
@@ -368,7 +368,7 @@ namespace ebl {
     if (inc == 0) {
       gui << "no " << corname << " samples." << endl;
       enable_window_updates();
-      return ;
+      //      return ;
     }
     // TODO: energies becomes unrealistic garbage sometimes, gets fp exceptions
     // gui << indices.dim(0) << " / " << ds.correct.dim(0) << " "
@@ -415,86 +415,88 @@ namespace ebl {
 	  ht = std::max(ht, (uint) m.dim(0));
 	  hmax = std::max(hmax, (uint) m.dim(0));
 	}
-	ostringstream s;
-	s.precision(2);
-	if (cds)
-	  s << cds->get_class_name((int)answer) << " ";
-	s << energies.get(i);
-	gui << at(h1 + 2, w1 + 2) << s.str().c_str();
-	// print raw outputs
-	if (print_raw_outputs) {
-	  for (uint a = 0; a < raw.dim(0); ++a) {
-	    s.str(""); s << raw.get(a);
-	    gui << at(h1 + 17 + a * 15, w1 + 2) << s.str().c_str();
-	  }
-	} else { // print outputs answers
-	  for (uint a = 0; a < answers.dim(0); ++a) {
-	    s.str(""); s << answers.get(a);
-	    gui << at(h1 + 17 + a * 15, w1 + 2) << s.str().c_str();
-	  }
-	}
-	// print target info
-	//ds.fprop_jitter(jitt);
-	for (uint a = 0; a < target.dim(0); ++a) {
-	  s.str(""); s << target.gget(a);
-	  gui << at(h1 + 17 + a * 15, w1 + wt - 35) << s.str().c_str();
-	}
-	// print correct info when incorrect
-	if (incorrect && cds) {
-	  s.str("");
-	  s << "(" << cds->get_class_name((int) label.x.get(0)) << ")";
-	  gui << at(h1 + d.dim(0) - 15, w1 + 2) << s.str().c_str();
-	}
-	// draw scale box if not a background class
-	if (answer != bgid && answers.dim(0) > 2) {
-	  float scale = answers.gget(2), hoff = 0, woff = 0;
-	  rect<float> r;
-	  if (scale > 0) {
-	    scale = 1 / scale;
-	    if (answers.dim(0) == 5) {
-	      hoff = answers.gget(3) * ht;
-	      woff = answers.gget(4) * ht;
-	    }
-	    r = rect<float>(h1 + hoff, w1 + woff, ht, wt);
-	    r.scale_centered(scale, scale);
-	    draw_box(r, 0, 0, 255);
-	    // draw all groundtruth
-	    if (draw_all_jitter) {
-	      ds.fprop_jitter(jitt);
-	      idx_bloop1(ji, jitt.x, Tnet) {
-		scale = ji.gget(0); // TODO: fix hardcoded offset
-		if (scale != 0) {
-		  scale = 1 / scale;
-		  hoff = ji.gget(1) * ht;// TODO: fix hardcoded offset
-		  woff = ji.gget(2) * ht;// TODO: fix hardcoded offset
-		  r = rect<float>(h1 + hoff, w1 + woff, ht, wt);
-		  r.scale_centered(scale, scale);
-		draw_box(r, 0, 255, 0);
-		}
-	      }
-	    }
-	  }
-	  // draw groundtruth box
-	  scale = target.gget(2); // TODO: fix hardcoded offset
-	  if (scale != 0) {
-	    scale = 1 / scale;
-	    hoff = target.gget(3) * ht;// TODO: fix hardcoded offset
-	    woff = target.gget(4) * ht;// TODO: fix hardcoded offset
-	    r = rect<float>(h1 + hoff, w1 + woff, ht, wt);
-	    r.scale_centered(scale, scale);
-	    draw_box(r, 255, 0, 0);
-	  }
-	}
-	// if ((ds.lblstr) && (ds.lblstr->at(st.answer.x.get())))
-	//   gui << at(h1 + 2, w1 + 2)
-	//       << (ds.lblstr->at(st.answer.x.get()))->c_str();
-	w1 += wt + 2;
-	if (((i + 1) % nw == 0) && (i > 1)) {  
-	  w1 = w01;
-	  h1 += hmax + 2;
-	  nh1++;
-	  hmax = 0;
-	}
+        if (!show_only_images) {
+          ostringstream s;
+          s.precision(2);
+          if (cds)
+            s << cds->get_class_name((int)answer) << " ";
+          s << energies.get(i);
+          gui << at(h1 + 2, w1 + 2) << s.str().c_str();
+          // print raw outputs
+          if (print_raw_outputs) {
+            for (uint a = 0; a < raw.dim(0); ++a) {
+              s.str(""); s << raw.get(a);
+              gui << at(h1 + 17 + a * 15, w1 + 2) << s.str().c_str();
+            }
+          } else { // print outputs answers
+            for (uint a = 0; a < answers.dim(0); ++a) {
+              s.str(""); s << answers.get(a);
+              gui << at(h1 + 17 + a * 15, w1 + 2) << s.str().c_str();
+            }
+          }
+          // print target info
+          //ds.fprop_jitter(jitt);
+          for (uint a = 0; a < target.dim(0); ++a) {
+            s.str(""); s << target.gget(a);
+            gui << at(h1 + 17 + a * 15, w1 + wt - 35) << s.str().c_str();
+          }
+          // print correct info when incorrect
+          if (incorrect && cds) {
+            s.str("");
+            s << "(" << cds->get_class_name((int) label.x.get(0)) << ")";
+            gui << at(h1 + d.dim(0) - 15, w1 + 2) << s.str().c_str();
+          }
+          // draw scale box if not a background class
+          if (answer != bgid && answers.dim(0) > 2) {
+            float scale = answers.gget(2), hoff = 0, woff = 0;
+            rect<float> r;
+            if (scale > 0) {
+              scale = 1 / scale;
+              if (answers.dim(0) == 5) {
+                hoff = answers.gget(3) * ht;
+                woff = answers.gget(4) * ht;
+              }
+              r = rect<float>(h1 + hoff, w1 + woff, ht, wt);
+              r.scale_centered(scale, scale);
+              draw_box(r, 0, 0, 255);
+              // draw all groundtruth
+              if (draw_all_jitter) {
+                ds.fprop_jitter(jitt);
+                idx_bloop1(ji, jitt.x, Tnet) {
+                  scale = ji.gget(0); // TODO: fix hardcoded offset
+                  if (scale != 0) {
+                    scale = 1 / scale;
+                    hoff = ji.gget(1) * ht;// TODO: fix hardcoded offset
+                    woff = ji.gget(2) * ht;// TODO: fix hardcoded offset
+                    r = rect<float>(h1 + hoff, w1 + woff, ht, wt);
+                    r.scale_centered(scale, scale);
+                    draw_box(r, 0, 255, 0);
+                  }
+                }
+              }
+            }
+            // draw groundtruth box
+            scale = target.gget(2); // TODO: fix hardcoded offset
+            if (scale != 0) {
+              scale = 1 / scale;
+              hoff = target.gget(3) * ht;// TODO: fix hardcoded offset
+              woff = target.gget(4) * ht;// TODO: fix hardcoded offset
+              r = rect<float>(h1 + hoff, w1 + woff, ht, wt);
+              r.scale_centered(scale, scale);
+              draw_box(r, 255, 0, 0);
+            }
+          }
+        }
+        // if ((ds.lblstr) && (ds.lblstr->at(st.answer.x.get())))
+        //   gui << at(h1 + 2, w1 + 2)
+        //       << (ds.lblstr->at(st.answer.x.get()))->c_str();
+        w1 += wt + 2;
+        if (((i + 1) % nw == 0) && (i > 1)) {  
+          w1 = w01;
+          h1 += hmax + 2;
+          nh1++;
+          hmax = 0;
+        }
       }
     }
     enable_window_updates();

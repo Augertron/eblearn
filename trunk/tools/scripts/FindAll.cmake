@@ -293,6 +293,28 @@ ENDIF (CPPUNIT_FOUND)
 
 # find TH
 ################################################################################
+IF ($ENV{USECUDA})
+  IF (NOT CUDA_FOUND)
+    FIND_PACKAGE(CUDA)
+  ENDIF (NOT CUDA_FOUND)
+  IF (CUDA_FOUND)
+    include_directories(${CUDA_INCLUDE_DIRS})
+    #link_directories(${CUDA_LIBRARIES})
+    set(CMAKE_CXX_DFLAGS "${CMAKE_CXX_DFLAGS} -D__CUDA__")
+    MESSAGE(STATUS "NVidia CUDA include paths: ${CUDA_INCLUDE_DIRS}")
+    MESSAGE(STATUS "NVidia CUDA libraries: ${CUDA_LIBRARIES}")
+    MESSAGE(STATUS "NVidia CUDA toolkit dir: ${CUDA_TOOLKIT_ROOT_DIR}")
+    MESSAGE(STATUS "NVidia CUDA SDK dir: ${CUDA_SDK_ROOT_DIR}")
+    MESSAGE(STATUS "NVidia CUDA version: ${CUDA_VERSION_STRING}")
+    MESSAGE(STATUS "Nvidia CUDA Found.")
+  ELSE (CUDA_FOUND)
+    MESSAGE("__ WARNING: NVidia CUDA not found (optional).")
+  ENDIF (CUDA_FOUND)
+ENDIF ($ENV{USECUDA})
+
+
+# find TH
+################################################################################
 IF ($ENV{NOTH})
   MESSAGE(STATUS "THC DISABLED by env variable $NOTH=1.")
 ELSE ($ENV{NOTH})

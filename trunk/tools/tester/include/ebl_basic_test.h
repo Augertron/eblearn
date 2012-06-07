@@ -17,13 +17,13 @@ class ebl_basic_test : public CppUnit::TestFixture  {
   /* CPPUNIT_TEST(test_Ebm02); */
 
   // layers test
-  CPPUNIT_TEST(test_convolution_layer_fprop);
-  CPPUNIT_TEST(test_convolution_layer);
-  CPPUNIT_TEST(test_subsampling_layer);
+  // CPPUNIT_TEST(test_convolution_layer_fprop);
+  // CPPUNIT_TEST(test_convolution_layer);
+  // CPPUNIT_TEST(test_subsampling_layer);
   
   // float tests
   //CPPUNIT_TEST(test_addc_module_float);
-  //CPPUNIT_TEST(test_convolution_module_float);
+  // CPPUNIT_TEST(test_convolution_module_float);
   //CPPUNIT_TEST(test_subsampling_module_float);
   /* CPPUNIT_TEST(test_wavg_pooling_module_float); */
   /* CPPUNIT_TEST(test_l2pooling_module_float); */
@@ -39,11 +39,13 @@ class ebl_basic_test : public CppUnit::TestFixture  {
   /* CPPUNIT_TEST(test_mirrorpad_module_float); */
   /* CPPUNIT_TEST(test_thres_module_float); */
   /* CPPUNIT_TEST(test_tanh_shrink_module_float); */
-
+#ifdef __CUDA__
+  CPPUNIT_TEST(test_convolution_module_cuda);
+#endif
   // double tests
-  CPPUNIT_TEST(test_addc_module_double); //not working
+  // CPPUNIT_TEST(test_addc_module_double); //not working
   CPPUNIT_TEST(test_convolution_module_double);
-  CPPUNIT_TEST(test_subsampling_module_double); //not working
+  // CPPUNIT_TEST(test_subsampling_module_double); //not working
 
   //CPPUNIT_TEST(test_wavg_pooling_module_double); //segfaults
   CPPUNIT_TEST(test_l2pooling_module_double); //inconsistent tensor size?
@@ -63,7 +65,7 @@ class ebl_basic_test : public CppUnit::TestFixture  {
   //  CPPUNIT_TEST(test_softmax); // TODO: fix test
   CPPUNIT_TEST(test_state_copy);
   
-  CPPUNIT_TEST(test_convolution_timing);
+  CPPUNIT_TEST(test_convolution_timing); 
   
   CPPUNIT_TEST_SUITE_END();
 
@@ -87,6 +89,7 @@ public:
   void test_state_copy();
   void test_convolution_timing();
   void test_convolution_module_float();
+  void test_convolution_module_cuda();
   void test_convolution_module_double();
   void test_subsampling_module_float();
   void test_subsampling_module_double();

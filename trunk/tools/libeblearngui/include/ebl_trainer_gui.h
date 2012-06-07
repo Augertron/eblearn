@@ -84,6 +84,7 @@ namespace ebl {
 			     unsigned int nh, unsigned int nw,
 			     bool print_raw_outputs = false,
 			     bool draw_all_jitter = false,
+                             bool show_only_images = false,
 			     unsigned int h0 = 0, unsigned int w0 = 0, 
 			     double zoom = 1.0, int wid = -1,
 			     const char *title = NULL, bool scrolling = false);

@@ -28,6 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
+#include <iomanip>
 
 using namespace std;
 
@@ -40,7 +41,7 @@ namespace ebl {
       out(out_),
       jac_fprop(1,1), jac_bprop(1,1), jac_pfprop(1,1), jac_pbprop(1,1),
       hes_fprop(1,1), hes_bprop(1,1), hes_pfprop(1,1), hes_pbprop(1,1) {
-    dynamic_init_drand();
+    // dynamic_init_drand();
   }
 
   template <class T>
@@ -63,11 +64,11 @@ namespace ebl {
     out.clear_dx();
     out.clear_ddx();
     idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
-    // EDEBUG("in: " << in.x.str() << " out: " << out.x.str());
+    // EDEBUG("in: " << in.x.str() << std::endl << " out: " << out.x.str() << std::endl );
     get_jacobian_fprop(module, in, out, jac_fprop);
     get_jacobian_bprop(module, in, out, jac_bprop);
-    // EDEBUG(" jac_fprop: " << jac_fprop.str()
-    // 	  << " jac_bprop " << jac_bprop.str());
+    // EDEBUG(" jac_fprop: " << jac_fprop.str() << std::endl
+    //       << " jac_bprop " << jac_bprop.str() << std::endl);
     return get_errs(jac_fprop,jac_bprop);
   }
 
@@ -180,7 +181,7 @@ namespace ebl {
     bbstate_idx<T> sinb = in.make_copy(); //x+small
     bbstate_idx<T> souta = out.make_copy(); //f(x-small)
     bbstate_idx<T> soutb = out.make_copy(); //f(x+small)
-    T small = 1e-6;
+    T small = 1e-4; // TODO:
     int cnt = 0;
     // clear out jacobian matrix
     jac.resize(in.size(), out.size());
@@ -189,9 +190,12 @@ namespace ebl {
       idx_copy(in.x, sina.x);
       idx_copy(in.x, sinb.x);
       // perturb
+      std::setprecision(16);
       *sxa = *sx - small;
       *sxb = *sx + small;
-      
+      // cout << "sx,sxa,sxb:" << std::setprecision(16) << *sx 
+      // << "\t" << std::setprecision(16) << *sxa << "\t" 
+      // << std::setprecision(16) << *sxb << endl;
       // idx_addc(in.x, -small, sina.x);
       // idx_addc(in.x, small, sinb.x);
       // perturb
@@ -201,8 +205,9 @@ namespace ebl {
       // double t3 = (double) t2 - (double) t1;
       // cout << "t0 " << t0 << " t1 " << t1 << " t2 " << t2 << " t3 " << t3 << endl;
       // *sxa = *sx - small;
-      // cout << "sina: " << sina.x.gget() << " souta: " << souta.x.gget() <<endl;
-      // cout << "sinb: " << sinb.x.gget() << " soutb: " << soutb.x.gget() <<endl;
+      //cout << "sina: " << std::setprecision(16) << sina.x.gget() 
+      // << " souta: " <<std::setprecision(16) << souta.x.gget() <<endl;
+      //  cout << "sinb: " << sinb.x.gget() << " soutb: " << soutb.x.gget() <<endl;
       //      idx_sub(sinb.x, sina.x, soutb.x);
       // //      cout << "diff: " << soutb.x.gget() <<endl;
       // idx_clear(souta.x);
@@ -212,13 +217,13 @@ namespace ebl {
       //      *sxb = *sxa + 2 * small;
       module.fprop(sinb, soutb);
       idx_sub(soutb.x, souta.x, soutb.x);
-      // cout << "diff: " << soutb.x.gget() <<endl;
+      // cout << "diff: " <<std::setprecision(16) << soutb.x.gget() <<endl;
       idx<T> j = jac.select(0, cnt);
       idx_dotc(soutb.x, (T) (1.0 / (2 * small)), j);
-      // cout << "1/2small: " << (T) (1.0 / (2 * small)) <<endl;
-      // cout << "soutbx: " << soutb.x.gget() <<endl;
-      // cout << "soutbx/2small: " << (soutb.x.gget() / (2 * small)) <<endl;
-      // cout << "jac: " << (T) jac.gget() << endl;
+       // cout << "1/2small: " << (T) (1.0 / (2 * small)) <<endl;
+       // cout << "soutbx: " << soutb.x.gget() <<endl;
+       // cout << "soutbx/2small: " << (soutb.x.gget() / (2 * small)) <<endl;
+       // cout << "jac: " << (T) jac.gget() << endl;
       cnt++;
     }
   }
