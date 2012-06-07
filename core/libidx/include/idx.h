@@ -149,9 +149,9 @@ namespace ebl {
 			      intg s3=-1, intg s4=-1, intg s5=-1, intg s6=-1,
 			      intg s7=-1);
 
-    //! same as resize, but the element positions in the old tensor are retained
-    virtual void resize_copy(intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1, 
-                             intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1);
+    /* //! same as resize, but the element positions in the old tensor are retained */
+    /* virtual void resize_copy(intg s0=-1, intg s1=-1, intg s2=-1, intg s3=-1,  */
+    /*                          intg s4=-1, intg s5=-1, intg s6=-1, intg s7=-1); */
 
     // idx manipulation methods ////////////////////////////////////////////////
 
