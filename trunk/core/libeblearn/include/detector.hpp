@@ -400,6 +400,7 @@ namespace ebl {
       DEBUGMEM_PRETTY("detector init scales");
       ppinputs.clear();
       outputs.clear();
+      answers.clear();
       actual_scales.clear();
       // allocate buffers
       idxdim order(mindim);
