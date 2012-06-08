@@ -261,8 +261,8 @@ namespace ebl {
     // copy classes strings
     if (classes.size() > 0) {
       idx<ubyte> classidx = build_classes_idx(classes);
-      ds1.set_classes(classidx);
-      ds2.set_classes(classidx);
+      ds1.set_classes(classidx, false);
+      ds2.set_classes(classidx, false);
     }
     ds1.nclasses = nclasses;
     ds2.nclasses = nclasses;
@@ -1662,7 +1662,7 @@ namespace ebl {
     idx_clear(jitters);
     // update classes
     idx<ubyte> classidx = ds1.build_classes_idx(ds1.classes);
-    set_classes(classidx); // initialize with ds1's class names
+    set_classes(classidx, false); // initialize with ds1's class names
     cout << "Added all classes to new dataset from " << ds1.name << endl;
     // for each ds2 class name, push on new class names vector if not found
     vector<string>::iterator res, i;
