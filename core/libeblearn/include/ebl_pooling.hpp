@@ -254,10 +254,10 @@ namespace ebl {
   template <typename T, class Tstate>
   lppooling_module<T,Tstate>::
   lppooling_module(uint thick, idxdim &kernel_, idxdim &stride_, uint lppower_,
-		   const char *name_, bool crop_)
+		   const char *name_, bool crop_, bool use_gpu_, int gpu_id_)
     : module_1_1<T,Tstate>(name_), thickness(thick),
-      kernel(kernel_), stride(stride_), crop(crop_),
-      lp_pow(lppower_),  
+      kernel(kernel_), stride(stride_), crop(crop_), use_gpu(use_gpu_),
+      lp_pow(lppower_), gpu_id(gpu_id_), 
       sqmod((T)lppower_), sqrtmod((T)(1.0/(T)lppower_)) {
     // insert thickness dimension
     idxdim d = kernel;
@@ -268,7 +268,8 @@ namespace ebl {
     // prepare convolution
     idx<intg> table = one2one_table(thick);
     conv = new convolution_module<T,Tstate>
-      (&param, kernel, stride, table, "lppooling_convolution", crop);
+      (&param, kernel, stride, table, "lppooling_convolution", crop, 
+       use_gpu, gpu_id);
     // gaussian kernel
     idx<T> filter = create_gaussian_kernel<T>(kernel);
     idx_bloop1(k, conv->kernel.x, T) {

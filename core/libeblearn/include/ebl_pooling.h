@@ -139,7 +139,7 @@ namespace ebl {
   lppooling_module(uint thickness, idxdim &kernel, idxdim &stride,
                      uint lppower = 2, 
 		     const char *name = "lppooling", 
-                     bool crop = true);
+                   bool crop = true, bool use_gpu=false, int gpu_id=false);
     //! destructor
     virtual ~lppooling_module();
     //! forward propagation from in to out
@@ -169,6 +169,8 @@ namespace ebl {
     idxdim              stride; //!< Strides of subsampling.
     bool                crop; //! Crop input when size mismatch or not.
     uint                lp_pow; //!< the P in LP Pooling
+    bool                use_gpu; //!< Whether to use gpu or not
+    int                 gpu_id; //!< Whether to use gpu or not
     convolution_module<T,Tstate> *conv;
     power_module<T,Tstate> sqmod;
     power_module<T,Tstate> sqrtmod;

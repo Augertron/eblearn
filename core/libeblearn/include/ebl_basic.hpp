@@ -213,7 +213,7 @@ namespace ebl {
     }
     fulltable = false;
     // check if its a full-table
-    if ( (((tablemax + 1) * thickness) == table.dim(0)))// && !not_using_all_inputs)
+    if ( (((tablemax + 1) * thickness) == table.dim(0)) && !not_using_all_inputs)
       fulltable = true;
 
 
@@ -293,6 +293,19 @@ namespace ebl {
     idx_clear(out.x);
 
 #ifdef __CUDA__
+
+    if (in.x.dim(0) > tablemax + 1) {
+      if (tablemax == 0) {
+        inx = inx.narrow(0,1,0);
+      }
+      else {
+        cerr << "WARNING: CUDA WILL BE DISABLED FOR THIS MODULE: " << this->name()
+             << " because all inputs are not being used and tablemax is not 0 " 
+             << " (i.e. if all inputs are not used, the only supported case"
+             << "using CUDA is if tablemax is 0 " <<endl;
+        use_gpu = false;
+      }
+    }
     if(float_precision && use_gpu) {
       LOCAL_TIMING2_START();
       if (fulltable)
