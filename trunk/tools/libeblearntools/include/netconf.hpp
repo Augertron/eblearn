@@ -649,14 +649,14 @@ namespace ebl {
       idxdim stride = string_to_idxdim(sstride);
       intg th = thick;
       get_param(conf, name, "thickness", th, true);
-      bool crop = true;
-      bool use_gpu_m = use_gpu;
-      int gpu_id_m = gpu_id;
-      get_param(conf, name, "use_gpu", use_gpu_m, true);
-      get_param(conf, name, "gpu_id", gpu_id_m, true);
+      // bool crop = true;
+      // bool use_gpu_m = use_gpu;
+      // int gpu_id_m = gpu_id;
+      // get_param(conf, name, "use_gpu", use_gpu_m, true);
+      // get_param(conf, name, "gpu_id", gpu_id_m, true);
       module = (module_1_1<T,Tstate>*)
-	new lppooling_module<T,Tstate>(th, kernel, stride, 2, name.c_str(),
-                                       crop, use_gpu_m, gpu_id_m);
+	new lppooling_module<T,Tstate>(th, kernel, stride, 2, name.c_str());
+      // ,crop, use_gpu_m, gpu_id_m);
     }
     // l4pooling ///////////////////////////////////////////////////////////////
     else if (!type.compare("l4pool")) {
