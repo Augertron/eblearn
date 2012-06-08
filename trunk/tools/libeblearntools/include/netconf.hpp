@@ -164,6 +164,12 @@ namespace ebl {
 		map<string,module_1_1<T,Tstate>*> &loaded,
 		vector<layers<T,Tstate>*> *branches,
 		vector<intg> *branches_thick) {
+    // set some cuda variables
+    bool use_gpu = conf.exists_bool("use_gpu");
+    int gpu_id = -1;
+    if (conf.exists("gpu_id"))
+      gpu_id = conf.get_uint("gpu_id");
+
     string type = strip_last_num(name);
     module_1_1<T,Tstate> *module = NULL;
     // switch on each possible type of module
@@ -563,19 +569,17 @@ namespace ebl {
       idx<intg> tblmax = table.select(1, 1);
       thick = 1 + idx_max(tblmax);
       bool crop = true;
-      bool use_gpu = conf.exists_bool("use_gpu");
-      int gpu_deviceid = -1;
-      if (conf.exists("gpu_id"))
-        gpu_deviceid = conf.get_uint("gpu_id");
-      get_param(conf, name, "use_gpu", use_gpu, true);
-      get_param(conf, name, "gpu_id", gpu_deviceid, true);
+      bool use_gpu_m = use_gpu;
+      int gpu_id_m = gpu_id;
+      get_param(conf, name, "use_gpu", use_gpu_m, true);
+      get_param(conf, name, "gpu_id", gpu_id_m, true);
       // create module
       if (!type.compare("conv")) // conv module
 	module = (module_1_1<T,Tstate>*)
 	  //	  new convolution_module_replicable<T,Tstate>
 	  new convolution_module<T,Tstate>
 	  (bshared_exists? NULL : &theparam, kernel, stride, table,
-	   name.c_str(), crop, use_gpu, gpu_deviceid);
+	   name.c_str(), crop, use_gpu_m, gpu_id_m);
       else if (!type.compare("convl")) // conv layer
 	module = (module_1_1<T,Tstate>*)
 	  new convolution_layer<T,Tstate>
@@ -645,8 +649,14 @@ namespace ebl {
       idxdim stride = string_to_idxdim(sstride);
       intg th = thick;
       get_param(conf, name, "thickness", th, true);
+      bool crop = true;
+      bool use_gpu_m = use_gpu;
+      int gpu_id_m = gpu_id;
+      get_param(conf, name, "use_gpu", use_gpu_m, true);
+      get_param(conf, name, "gpu_id", gpu_id_m, true);
       module = (module_1_1<T,Tstate>*)
-	new lppooling_module<T,Tstate>(th, kernel, stride, 2, name.c_str());
+	new lppooling_module<T,Tstate>(th, kernel, stride, 2, name.c_str(),
+                                       crop, use_gpu_m, gpu_id_m);
     }
     // l4pooling ///////////////////////////////////////////////////////////////
     else if (!type.compare("l4pool")) {
