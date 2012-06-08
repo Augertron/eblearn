@@ -149,10 +149,19 @@ void fprop_and_save(configuration &conf, module_1_1<fs(Tnet)> &net,
   // saving outputs
   string out_fname;
   out_fname << output << "_data.mat";
-  save_matrices<Tnet>(files, out_fname);
-  midx<Tnet> allout = load_matrices<Tnet>(out_fname, true);
-  cout << "Saved output to " << out_fname << " (" << allout
-       << ")" << endl;
+  if (conf.exists_true("save_static")) {
+    cout << "Saving (static) matrix file to " << out_fname << "..." << endl;
+    save_matrix<Tnet>(files, out_fname);
+    idx<Tnet> allout = load_matrix<Tnet>(out_fname);
+    cout << "Saved output to " << out_fname << " (" << allout
+	 << ")" << endl;
+  } else {
+    cout << "Saving (static) matrix file to " << out_fname << "..." << endl;
+    save_matrices<Tnet>(files, out_fname);
+    midx<Tnet> allout = load_matrices<Tnet>(out_fname, true);
+    cout << "Saved output to " << out_fname << " (" << allout
+	 << ")" << endl;
+  }
   // delete temporary files
   list<string>::iterator fi = files.begin();
   for ( ; fi != files.end(); ++fi)
