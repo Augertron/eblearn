@@ -1022,6 +1022,16 @@ namespace ebl {
   }
 
   template <typename T>
+  void midx<T>::remove_trailing_dims() {
+    for (int i = this->order() - 1; i > 0; --i) {
+      if (this->dim(i) == 1) {
+	*((idx<idx<T>*>*)this) = ((idx<idx<T>*>*) this)->select(i, 0);
+	offsets = offsets.select(i, 0);
+      } else break ;
+    }
+  }
+
+  template <typename T>
   void midx<T>::remove(intg i0, intg i1) {
     idx<T> *e = idx<idx<T>*>::get(i0, i1);
     if (e) e->unlock();

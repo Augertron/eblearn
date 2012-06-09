@@ -417,6 +417,8 @@ namespace ebl {
     void resize(intg i0, intg i1);
     //! Allocate/resizes all elements of this to be the same as 'other'.
     void resize(midx<T> &other);
+    //! Removes highest order dimensions that are equal to 1.
+    void remove_trailing_dims();
 
     // deletions ///////////////////////////////////////////////////////////////
 
