@@ -177,6 +177,13 @@ namespace ebl {
   }
 
   template <typename T>
+  void idxd<T>::remove_trailing_dims() {
+    for (int i = ndim-1; i >= 0; --i)
+      if (dim(i) == 1) remove_dim(i);
+      else break ;
+  }
+
+  template <typename T>
   void idxd<T>::setdim(intg dimn, T size) {
     if (dimn >= ndim)
       eblerror("error: trying to set dimension " << dimn << " to size "
