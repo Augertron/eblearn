@@ -431,9 +431,14 @@ namespace ebl {
     fname = root1; fname += labels_fname;
     loading_error(labels, fname);
     // load ids
-    ids = idx<intg>(1);
+    ids = idx<intg>(labels.dim(0));
+    idx_clear(ids);
     fname = ""; fname << root1 << "/" << ids_fname;
-    loading_warning<intg>(ids, fname);
+    if (loading_warning<intg>(ids, fname)) {
+      if (ids.dim(0) != labels.dim(0))
+	eblerror("expected " << labels.dim(0) << " samples in scales file "
+		 << "but found " << ids.dim(0));
+    }
     // load jitter
     fname = root1; fname += jitters_fname;
     loading_warning<t_jitter>(jitters, fname);

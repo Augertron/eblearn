@@ -309,6 +309,8 @@ namespace ebl {
     //! all dimensions after pos and decrementing order by 1.
     //! This is valid only if all dimensions up to pos (excluded) are > 0.
     T remove_dim(intg pos);
+    //! Remove all dimensions of size 1 starting from the highest order.
+    void remove_trailing_dims();
     //! Set the offset of dimensions 'dimn' to 'offset'.
     void setoffset(intg dimn, T offset);
     //! Returns true if this object contains offsets or not.
