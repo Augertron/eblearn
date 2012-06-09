@@ -465,11 +465,11 @@ namespace ebl {
       perror("");
       return false;
     }
+    m1.remove_trailing_dims();
+    m2.remove_trailing_dims();
     // target dimensions
     idxdim d1 = m1, d2 = m2, dd1 = m1, dd2 = m2;
     dd1.remove_dim(0); dd2.remove_dim(0);
-    dd1.remove_trailing_dims();
-    dd2.remove_trailing_dims();
     if (dd1 != dd2)
       eblerror("expected same dimensions but got " << dd1 << " and " << dd2);
     idxdim dall(d1);
