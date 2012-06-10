@@ -817,9 +817,10 @@ namespace ebl {
 			 r.width / (float) outrect.width);
       wwratio = hhratio;
     } else {
-      height = r.height * hratio;
-      width = r.width * wratio;
-      outrect = rect<int>(0, 0, r.height * hratio, r.width * wratio);
+      height = (intg) (r.height * hratio);
+      width = (intg) (r.width * wratio);
+      outrect = rect<int>(0, 0, (int) (r.height * hratio), 
+			  (int) (r.width * wratio));
     }
     // apply scale jitter (keeping same center)
     if (sjitter != 1.0 || scale_hfactor != 1.0 || scale_wfactor != 1.0)
