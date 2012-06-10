@@ -953,6 +953,14 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
+  void resize_module<T,Tstate>::bprop(mstate<Tstate> &in, mstate<Tstate> &out) {    
+  }
+
+  template <typename T, class Tstate>
+  void resize_module<T,Tstate>::bbprop(mstate<Tstate> &in, mstate<Tstate> &out) {    
+  }
+
+  template <typename T, class Tstate>
   resize_module<T,Tstate>* resize_module<T,Tstate>::copy() {
     return new resize_module(size, mode, dzpad);
   }
