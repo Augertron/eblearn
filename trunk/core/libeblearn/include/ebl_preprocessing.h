@@ -482,6 +482,10 @@ namespace ebl {
     //! Process 'in' into 'out' which will contain an array of idx, where each
     //! idx has different scale with different dimensions.
     virtual void fprop(Tstate &in, midx<T> &out);
+    //! backward propagation from in to out (empty)
+    virtual void bprop(mstate<Tstate> &in, mstate<Tstate> &out);
+    //! bbackward propagation from in to out (empty)
+    virtual void bbprop(mstate<Tstate> &in, mstate<Tstate> &out);
 
     //! Returns a deep copy of this module.
     virtual resize_module<T,Tstate>* copy();
