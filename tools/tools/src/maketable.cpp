@@ -56,6 +56,8 @@ bool yuv = false; // yuv layer 0 table
 bool uv = false; // uv layer 0 table
 bool stereo = false;
 bool temporal3 = false;
+bool text = false; // create table from text file
+string text_filename; // filename for text file option
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -117,7 +119,12 @@ bool parse_args(int argc, char **argv) {
 	++i; if (i >= argc) throw 1;
 	end2 = atoi(argv[i]);
 	stereo = true;
-      } else if (strcmp(argv[i], "-temporal3") == 0) {
+      } else if(strcmp(argv[i], "-text") == 0) {
+        ++i; if (i >= argc) throw 1;
+        text_filename = argv[i];
+        text = true;
+      }
+      else if (strcmp(argv[i], "-temporal3") == 0) {
 	++i; if (i >= argc) throw 1; end0 = atoi(argv[i]);
 	++i; if (i >= argc) throw 1; end1 = atoi(argv[i]);
 	++i; if (i >= argc) throw 1; end2 = atoi(argv[i]);
@@ -181,6 +188,11 @@ void print_usage() {
        << "    from channels 1 & 2 to [end3 .. end12-1], from chans " << endl
        << "    2 & 3 to [end12 .. end23-1], from chans 1, 2 & 3 to " << endl
        << "    [end23 .. end123-1]." << endl;
+  cout << "  -text <filename> " << endl
+       << "    Create a table from a text file with the following example format:" << endl
+       << "    0,0; 0,1; 1,2; 3,1, 4,2; 1,5" << endl
+       << "    The file can have newline characters and spaces which "
+       << "    will be ignored " << endl;
 }
 
 int main(int argc, char **argv) {
@@ -258,6 +270,9 @@ int main(int argc, char **argv) {
     type << "temporal3_1-" << end0 << "_2-" << end1 << "_3-" << end2
 	 << "_4-" << end3 << "_5-" << end4 << "_6-" << end5;
     insize = 3;
+  } else if (text) {
+    table = text_table(text_filename);
+    type << text_filename;
   } else
     eblerror("unknown type");
   table.printElems();

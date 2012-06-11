@@ -58,6 +58,8 @@ namespace ebl {
   EXPORT int fscan_int(FILE *fp);
   //! Scan a float.
   EXPORT float fscan_float(FILE *fp);
+  //! Scan a single char.
+  EXPORT char fscan_char(FILE *fp);
   //! Scan a word and return it. The caller is responsible for deleting
   //! returned string.
   EXPORT char *fscan_str(FILE *fp);

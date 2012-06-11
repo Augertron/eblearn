@@ -270,6 +270,47 @@ namespace ebl {
     return all;
   }
 
+  idx<intg> text_table(string filename) {
+    vector<intg> inputs, outputs;
+    int scanint;
+    char scanchar;
+    FILE *fp = fopen(filename.c_str(), "rb");
+    while (!feof(fp)) {
+      // scanint = fscan_int(fp);
+      int ret = fscanf (fp, "%d", &scanint);
+      if (ret == EOF)
+        break;
+      if (scanint < 0)
+        eblwarn(" Wrong file format, expected number");
+      inputs.push_back(scanint);
+      // cout << scanint << " "<<endl;
+      fscanf (fp, "%c", &scanchar);
+      if (scanchar != ',')
+        eblwarn(" Wrong file format, expected a comma character ");
+      // scanchar = fscan_char(fp);
+      // cout << scanchar << " "<<endl;
+      // scanint = fscan_int(fp);
+      fscanf (fp, "%d", &scanint);
+      if (scanint < 0)
+        eblwarn(" Wrong file format, expected number");
+      outputs.push_back(scanint);
+      // cout << scanint << " "<<endl;
+      fscanf (fp, "%c", &scanchar);
+      if (scanchar != ';')
+        eblwarn(" Wrong file format, expected a semicolon character ");
+      // scanchar = fscan_char(fp);
+      // cout << scanchar << " " <<endl;
+    }
+    int n = inputs.size();
+    idx<intg> m(n, 2);
+    for (intg i = 0; i < n; ++i) {
+      m.set(inputs[i], i, 0);
+      m.set(outputs[i], i, 1);
+    }
+    return m;
+    
+  }
+
   bool check_table_duplicates(idx<intg> &table) {
     bool found = false;
     for (intg i = 0; i < table.dim(0); ++i)

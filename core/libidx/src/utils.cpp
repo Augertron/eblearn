@@ -101,6 +101,14 @@ namespace ebl {
     return res;
   }
 
+  //! Scan a single char.
+  char fscan_char(FILE *fp) {
+    char res = 0;
+    if (fscanf(fp, "%c", &res) < 1)
+      eblthrow("cannot read float from stream");
+    return res;
+  }
+
   //! Scan a word and return it. The caller is responsible for deleting
   //! returned string.
   char *fscan_str(FILE *fp) {
