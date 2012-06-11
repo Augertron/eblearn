@@ -84,6 +84,10 @@ namespace ebl {
   EXPORT idx<intg> temporal3_table(intg end1, intg end2, intg end3,
 				   intg end12, intg end23, intg end123,
 				   intg &maxend);
+  //! Create a table from a file with semi-colon separated csv values.
+  //! for example, the contents can be 0,0; 0,1; 1,2; 3,1, 4,2; 1,5
+  EXPORT idx<intg> text_table(string filename);
+
   //! Checks if duplicate inputs exist for each output and prints
   //! a warning for each duplicate.
   //! If duplicates are found, this returns true, false otherwise.
