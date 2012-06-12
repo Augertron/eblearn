@@ -191,6 +191,7 @@ namespace ebl {
       EDEBUG(this->name() << ": resizing output from " << out.x << " to " << d);
       if (out.x.order() != d.order()) out = Tstate(d);
       else out.resize(d);
+      this->update_outdims(out);
       TIMING_RESIZING_ACCSTOP(); // stop accumulating resizing time
       return true;
     }
