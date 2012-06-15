@@ -34,6 +34,7 @@
 #define EBLAPP_H_
 
 #include "libidx.h"
+#include "libeblearntools.h"
 
 INIT_DEBUGMEM()
 INIT_DUMP()
@@ -47,5 +48,7 @@ using namespace ebl; // all eblearn objects are under the ebl namespace
 uint ebl::module_1_1_gui::cnt = 0;
 #endif
 #endif
+
+uint ebl::thread::_id_counter = 0; // initialize static thread id
 
 #endif /* EBLAPP_H_ */

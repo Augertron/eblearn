@@ -69,7 +69,7 @@ namespace ebl {
     //! \param tc The channels type of the input image, e.g. brightness Y,
     //!    or color RGB.
     detection_thread(configuration &conf, mutex *om = NULL,
-		     const char *name = "",
+		     const char *name = NULL,
 		     const char *arg2 = NULL, bool sync = true,
 		     t_chans tc = CHANS_RGB);
     ~detection_thread();

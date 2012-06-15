@@ -82,7 +82,6 @@ namespace ebl {
   // Specialize a stringbuf to handle flushing to unblock mutex.
   class EXPORT sbuf : public std::stringbuf {
   public:
-
     //! Output to ostream o but prevent other
     //! \param m The mutex shared by all threads used to synchronize.
     //! \param prefix If not null, prefix is printed before each new line.
@@ -99,7 +98,7 @@ namespace ebl {
 
     friend class mutex_ostream;
     
-  private:
+  protected:
     std::ostream& out;
     bool new_line; //! Indicate if we are starting new line or not.
     bool own_lock; //! True if mutex was locked by this instance.
@@ -119,7 +118,9 @@ namespace ebl {
     //! \param prefix If not null, prefix is printed before each new line.
     mutex_ostream(std::ostream &o, mutex *m = NULL, const char *prefix = NULL);
     ~mutex_ostream();
-
+    // update buffer's prefix string
+    void update_prefix(const char *p);
+    
   protected:
     sbuf buffer;
   };
@@ -139,26 +140,20 @@ namespace ebl {
     virtual ~thread();
     //! Start the thread.
     int start();
-
     //! Stop the thread. If wait_seconds is zero, stop the thread right now,
     //! otherwise wait until the thread has finished its current task or force
     //! it to exit if it's not finished after wait_seconds seconds.
     void stop(long wait_seconds = 0);
-
     //! Tell the thread it should stop. The thread might be busy finishing
     //! some task, so this only tells it to quit when it is finished.
     //! One can check if the thread is finished with the finished() method.
     void ask_stop();
-
     //! Return true if thread has finished executing.
     bool finished();
-
     //! Return name of this thread.
     std::string& name();
-
     //! Return a reference this thread's output stream.
     std::ostream& get_mout();
-
     //! Return a reference this thread's output error stream.
     std::ostream& get_merr();
 
@@ -180,6 +175,8 @@ namespace ebl {
 #endif
     mutex 	        mutex1;
     bool 		_finished;
+    uint                _id;
+    static uint         _id_counter;
   };
 
 } // end namespace ebl
