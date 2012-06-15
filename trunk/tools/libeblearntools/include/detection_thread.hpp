@@ -91,7 +91,7 @@ namespace ebl {
      uint       wid	       = 0;	// window id
      uint       wid_states     = 0;	// window id
 #endif
-     uint	display_sleep  = conf.get_uint("display_sleep");
+     uint	display_sleep  = conf.try_get_uint("display_sleep", 0);
 //      if (!display && save_video) {
 //        // we still want to output images but not show them
 //        display = true;
@@ -160,32 +160,18 @@ namespace ebl {
      mkdir_full(viddir);
      // gui
 #ifdef __GUI__
-     Tnet display_min = -1.7, display_max = 1.7, display_in_min = 0,
-       display_in_max = 255;
      uint display_wmax = conf.try_get_uint("display_max_width", 3000);
-     if (conf.exists("display_min"))
-       display_min = (Tnet) conf.get_double("display_min");
-     if (conf.exists("display_max"))
-       display_max = (Tnet) conf.get_double("display_max");
-     if (conf.exists("display_in_max"))
-       display_in_max = (Tnet) conf.get_double("display_in_max");
-     if (conf.exists("display_in_min"))
-       display_in_min = (Tnet) conf.get_double("display_in_min");
-     float display_transp = 0.0;
-     if (conf.exists("display_bb_transparency"))
-       display_transp = conf.get_float("display_bb_transparency");
-     uint qstep1 = 0, qheight1 = 0, qwidth1 = 0,
-       qheight2 = 0, qwidth2 = 0, qstep2 = 0;
-     if (conf.exists_bool("queue1")) {
-       qstep1 = conf.get_uint("qstep1");
-       qheight1 = conf.get_uint("qheight1");
-       qwidth1 = conf.get_uint("qwidth1");
-     }
-     if (conf.exists_bool("queue2")) {
-       qstep2 = conf.get_uint("qstep2");
-       qheight2 = conf.get_uint("qheight2");
-       qwidth2 = conf.get_uint("qwidth2");
-     }
+     Tnet display_min = (Tnet) conf.try_get_double("display_min", -1.7);
+     Tnet display_max = (Tnet) conf.try_get_double("display_max", 1.7);
+     Tnet display_in_max = (Tnet) conf.try_get_double("display_in_max", 255);
+     Tnet display_in_min = (Tnet) conf.try_get_double("display_in_min", 0);
+     float display_transp = conf.try_get_float("display_bb_transparency", 0);
+     uint qstep1 = conf.try_get_uint("qstep1", 0);
+     uint qheight1 = conf.try_get_uint("qheight1", 0);
+     uint qwidth1 = conf.try_get_uint("qwidth1", 0);
+     uint qstep2 = conf.try_get_uint("qstep2", 0);
+     uint qheight2 = conf.try_get_uint("qheight2", 0);
+     uint qwidth2 = conf.try_get_uint("qwidth2", 0);
      module_1_1_gui	netgui;
      wid_states  = display_states ? new_window("network states"):0;
      night_mode();
@@ -196,18 +182,17 @@ namespace ebl {
        mout << "displaying in window " << wid << endl;
        night_mode();
      }
-     float		zoom = 1;
-     if (conf.exists("display_zoom")) zoom = conf.get_float("display_zoom");
+     float zoom = conf.try_get_float("display_zoom", 1);
      bool bbox_show_conf = !conf.exists_false("bbox_show_conf");
      bool bbox_show_class = !conf.exists_false("bbox_show_class");
      detector_gui<SFUNC(Tnet)>
-       dgui((conf.exists("show_extracted") ? conf.get_uint("show_extracted"):0),
+       dgui(conf.try_get_uint("show_extracted", 0),
 	    conf.exists_bool("queue1"), qstep1, qheight1,
 	    qwidth1, conf.exists_bool("queue2"), qstep2, qheight2, qwidth2,
 	    bbox_show_class, bbox_show_conf);
      if (bmask_class)
        dgui.set_mask_class(conf.get_cstring("mask_class"),
-			   (Tnet) conf.get_double("mask_threshold"));
+			   (Tnet) conf.try_get_double("mask_threshold", 0));
 #endif
      // timing variables
      timer tpass, toverall;
@@ -382,10 +367,11 @@ namespace ebl {
 					     configuration &conf,
 					     string &odir) {
     // multi-scaling parameters
-    double maxs = conf.exists("max_scale")?conf.get_double("max_scale") : 1.0;
-    double mins = conf.exists("min_scale")?conf.get_double("min_scale") : 1.0;
+    double maxs = conf.try_get_double("max_scale", 2.0);
+    double mins = conf.try_get_double("min_scale", 1.0);
     t_scaling scaling_type =
-      (t_scaling) conf.try_get_uint("scaling_type", ORIGINAL);
+      (t_scaling) conf.try_get_uint("scaling_type", SCALES_STEP);
+    double scaling = conf.try_get_double("scaling", 1.4);
     midxdim scales;    
     switch (scaling_type) {
     case MANUAL:
@@ -396,10 +382,10 @@ namespace ebl {
       break ;
     case ORIGINAL: detect.set_scaling_original(); break ;
     case SCALES_STEP:
-      detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
+      detect.set_resolutions(scaling, maxs, mins);
       break ;
     case SCALES_STEP_UP:
-      detect.set_resolutions(conf.get_double("scaling"), maxs, mins);
+      detect.set_resolutions(scaling, maxs, mins);
       detect.set_scaling_type(scaling_type);
       break ;
     default:
@@ -414,9 +400,8 @@ namespace ebl {
     // 				   conf.exists_true("save_detections") ||
     // 				   (display && !mindisplay));
     // zero padding
-    float hzpad = 0, wzpad = 0;
-    if (conf.exists("hzpad")) hzpad = conf.get_float("hzpad");
-    if (conf.exists("wzpad")) wzpad = conf.get_float("wzpad");
+    float hzpad = conf.try_get_float("hzpad", 0);
+    float wzpad = conf.try_get_float("wzpad", 0);
     detect.set_zpads(hzpad, wzpad);
     if (conf.exists("input_min")) // limit inputs size
       detect.set_min_resolution(conf.get_uint("input_min"));
@@ -426,9 +411,7 @@ namespace ebl {
     if (conf.exists_bool("save_detections")) {
       string detdir = odir;
       detdir += "detections";
-      uint nsave = 0;
-      if (conf.exists("save_max_per_frame"))
-	nsave = conf.get_uint("save_max_per_frame");
+      uint nsave = conf.try_get_uint("save_max_per_frame", 0);
       bool diverse = conf.exists_true("save_diverse");
       detdir = detect.set_save(detdir, nsave, diverse);
     }
