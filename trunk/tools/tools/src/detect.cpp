@@ -167,11 +167,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       idx_clear(total_saved);
       mout << "Initializing " << nthreads << " detection threads." << endl;
       for (uint i = 0; i < nthreads; ++i) {
-	ostringstream tname;
-	tname << "Thread " << i;
 	detection_thread<t_net> *dt =
-	  new detection_thread<t_net>(conf, &out_mutex, tname.str().c_str(),
-				      NULL, sync);
+	  new detection_thread<t_net>(conf, &out_mutex, NULL, NULL, sync);
 	threads.push_back(dt);
 	dt->start();
       }

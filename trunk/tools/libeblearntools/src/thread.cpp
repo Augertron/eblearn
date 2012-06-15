@@ -126,14 +126,23 @@ namespace ebl {
   mutex_ostream::~mutex_ostream() {
   }
   
+  void mutex_ostream::update_prefix(const char *p) {
+    buffer.prefix = p;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // thread
 
   thread::thread(mutex *outmutex, const char *name_, bool sync) 
-    : _stop(false), _name(name_), mutout(std::cout, outmutex, _name.c_str()),
+    : _stop(false), mutout(std::cout, outmutex, _name.c_str()),
       muterr(std::cerr, outmutex, _name.c_str()),
       mout(sync ? mutout : std::cout), merr(sync ? muterr : std::cerr),
-      _finished(false) {
+      _finished(false), _id(_id_counter++) {    
+    if (name_ == NULL) _name << "Thread " << _id;
+    else _name = name_;
+    // update name in mutex outs
+    mutout.update_prefix(_name.c_str());
+    muterr.update_prefix(_name.c_str());
     mout << "initializing thread (" << (sync ? "synched" : "unsynched" )
 	 << " outputs)" << endl;
   }
