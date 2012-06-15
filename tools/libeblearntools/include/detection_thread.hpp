@@ -80,9 +80,6 @@ namespace ebl {
   template <typename Tnet>
   void detection_thread<Tnet>::execute() {
    try {
-     //bool	color	       = conf.exists_true("color");
-     uint	norm_size      = conf.get_uint("normalization_size");
-     idxdim     dnorm          = idxdim(norm_size, norm_size);
      Tnet	threshold      = (Tnet) conf.get_double("threshold");
      bool	display        = false;
 #ifdef __GUI__
