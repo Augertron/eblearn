@@ -597,7 +597,7 @@ namespace ebl {
   template <typename T, class Tstate>
   fidxdim flat_merge_module<T,Tstate>::fprop_size(fidxdim &isize) {
     // feature size for main input
-    intg fsize = din.dim(0) * din.dim(1) * isize.dim(0);
+    intg fsize = (intg) (din.dim(0) * din.dim(1) * isize.dim(0));
     // number of possible windows
     intg nh = 1 + (intg) ((isize.dim(1) - din.dim(0)) / stride.dim(0));
     intg nw = 1 + (intg) ((isize.dim(2) - din.dim(1)) / stride.dim(1));

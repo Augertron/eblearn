@@ -41,6 +41,7 @@
 #define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
+#include <boost/exception/all.hpp>
 using namespace boost::filesystem;
 using namespace boost;
 #endif
@@ -135,21 +136,25 @@ namespace ebl {
     directory_iterator end_itr; // default construction yields past-the-end
     // first process all elements of current directory
     for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      bool match;
-      // apply pattern on full name or leaf only
-      if (fullpattern) match = regex_match(itr->path().string().c_str(), what, r);
-      else match = regex_match(itr->leaf().c_str(), what, r);
-      if ((finddirs || !is_directory(itr->status())) && match) {
-	// found an match, add it to the list
-	fl->push_back(itr->path().string());
-      }
+      try {
+	bool match;
+	// apply pattern on full name or leaf only
+	if (fullpattern) match = regex_match(itr->path().string().c_str(), what, r);
+	else match = regex_match(itr->leaf().c_str(), what, r);
+	if ((finddirs || !is_directory(itr->status())) && match) {
+	  // found an match, add it to the list
+	  fl->push_back(itr->path().string());
+	}
+      } catch(boost::exception &e) { eblwarn(boost::diagnostic_information(e)); }
     }
     // then explore subdirectories
     if (recursive) {
       for (directory_iterator itr(p); itr != end_itr; ++itr) {
-	if (is_directory(itr->status()))
-	  find_fullfiles(itr->path().string(), pattern, fl, sorted, 
-			 recursive, randomize, finddirs, fullpattern);
+	try {
+	  if (is_directory(itr->status()))
+	    find_fullfiles(itr->path().string(), pattern, fl, sorted, 
+			   recursive, randomize, finddirs, fullpattern);
+	} catch(boost::exception &e) { eblwarn(boost::diagnostic_information(e)); }
       }
     }
     // sort list
