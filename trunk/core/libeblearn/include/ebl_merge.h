@@ -94,7 +94,10 @@ namespace ebl {
     //////////////////////////////////////////////////////////////////
     //! Return dimensions that are compatible with this module.
     //! See module_1_1_gen's documentation for more details.
-    virtual idxdim fprop_size(idxdim &i_size);
+    virtual fidxdim fprop_size(fidxdim &i_size);
+    //! Return dimensions that are compatible with this module.
+    //! See module_1_1_gen's documentation for more details.
+    virtual mfidxdim fprop_size(mfidxdim &i_size);
     //! Return dimensions compatible with this module given output dimensions.
     //! See module_1_1_gen's documentation for more details.
     virtual fidxdim bprop_size(const fidxdim &o_size);
@@ -221,7 +224,14 @@ namespace ebl {
     virtual void bbprop(Tstate &in, Tstate &out);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
-
+    //! Returns a deep copy of current module.
+    virtual merge_module<T,Tstate>* copy();
+    //! Return dimensions that are compatible with this module.
+    //! See module_1_1_gen's documentation for more details.
+    virtual mfidxdim fprop_size(mfidxdim &isize);
+    //! Returns multiple input dimensions corresponding to output dims 'osize'.
+    virtual mfidxdim bprop_size(mfidxdim &osize);
+ 
     // internal members ////////////////////////////////////////////////////////
   protected:
     //! Merge all states in 'in' into one state 'out'.

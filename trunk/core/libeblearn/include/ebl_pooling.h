@@ -162,23 +162,24 @@ namespace ebl {
     //! into files. This can be useful for debugging.
     virtual void dump_fprop(Tstate &in, Tstate &out);
 
-    // members ////////////////////////////////////////////////////////
+    // members /////////////////////////////////////////////////////////////////
   protected:
     uint                thickness; //!< Number of features.
     idxdim              kernel; //!< Dimensions of subsampling kernel.
     idxdim              stride; //!< Strides of subsampling.
     bool                crop; //! Crop input when size mismatch or not.
     uint                lp_pow; //!< the P in LP Pooling
-    bool                use_gpu; //!< Whether to use gpu or not
-    int                 gpu_id; //!< Whether to use gpu or not
     convolution_module<T,Tstate> *conv;
     power_module<T,Tstate> sqmod;
     power_module<T,Tstate> sqrtmod;
     Tstate squared, convolved; //!< Intermediate buffer.
     parameter<T,Tstate>	param;
+    // GPU members /////////////////////////////////////////////////////////////
+    bool                use_gpu; //!< Whether to use gpu or not
+    int                 gpu_id; //!< Whether to use gpu or not
   };
 
-  ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // wavg_pooling_module
   
   //! This module takes a weighted average ofneighborhoods with a stride,

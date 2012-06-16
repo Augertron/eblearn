@@ -181,9 +181,9 @@ namespace ebl {
 		     idx<intg> &tbl, const char *name_, bool crop_,
                      bool use_gpu_, int gpu_id_)
     : module_1_1<T,Tstate>(name_), ker(ker_), stride(stride_), table(tbl),
-      warnings_shown(false), float_precision(false), double_precision(false),
-      crop(crop_), use_ipp(false), use_gpu(use_gpu_), 
-      fanin(-1), revtable(1,1,1), gpu_id(gpu_id_) {
+      revtable(1,1,1), fanin(-1), warnings_shown(false),
+      float_precision(false), double_precision(false), crop(crop_),
+      use_ipp(false), use_gpu(use_gpu_), gpu_id(gpu_id_) {
     idxdim d(ker);
     d.insert_dim(0, tbl.dim(0));
     kernel = Tstate(p, d);

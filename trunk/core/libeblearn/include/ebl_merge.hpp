@@ -595,17 +595,29 @@ namespace ebl {
   //////////////////////////////////////////////////////////////////////////////
 
   template <typename T, class Tstate>
-  idxdim flat_merge_module<T,Tstate>::fprop_size(idxdim &isize) {
+  fidxdim flat_merge_module<T,Tstate>::fprop_size(fidxdim &isize) {
     // feature size for main input
     intg fsize = din.dim(0) * din.dim(1) * isize.dim(0);
     // number of possible windows
     intg nh = 1 + (intg) ((isize.dim(1) - din.dim(0)) / stride.dim(0));
     intg nw = 1 + (intg) ((isize.dim(2) - din.dim(1)) / stride.dim(1));
     //! Extract its dimensions, update output size
-    idxdim osize(fsize, std::max((intg) 1, nh),
+    fidxdim osize(fsize, std::max((intg) 1, nh),
 		 std::max((intg) 1, nw));
-    fidxdim os = osize;
-    isize = bprop_size(os);
+    isize = bprop_size(osize);
+    return osize;
+  }
+
+  template <typename T, class Tstate>
+  mfidxdim flat_merge_module<T,Tstate>::fprop_size(mfidxdim &isize) {
+    EDEBUG(this->name() << ": " << isize << " f-> ...");    
+    mfidxdim osize;
+    if (isize.exists(0)) {
+      fidxdim d = isize[0];
+      d = this->fprop_size(d);
+      osize.push_back(d);
+    }
+    EDEBUG(this->name() << ": " << isize << " f-> " << osize);
     return osize;
   }
 
@@ -968,7 +980,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void merge_module<T, Tstate>::bbprop(mstate<Tstate> &in, mstate<Tstate> &out) {
+  void merge_module<T, Tstate>::bbprop(mstate<Tstate> &in, mstate<Tstate> &out){
     // loop on each merging
     for (uint i = 0; i < states_list.size(); ++i) {
       vector<uint> ids = states_list[i];
@@ -1039,6 +1051,41 @@ namespace ebl {
     return desc;
   }
 
+  template <typename T, class Tstate>
+  merge_module<T,Tstate>* merge_module<T,Tstate>::copy() {
+    merge_module<T,Tstate> *m =
+      new merge_module<T,Tstate>(states_list, concat_dim, this->name());
+    m->merge_list = merge_list;
+    m->inputs = inputs;
+    m->msinputs = msinputs;
+    return m;
+  }
+
+  template <typename T, class Tstate>
+  mfidxdim merge_module<T,Tstate>::fprop_size(mfidxdim &isize) {
+    EDEBUG(this->name() << ": " << isize << " f-> ...");
+    mfidxdim osize;
+    if (isize.exists(0)) {
+      fidxdim d = isize[0];
+      d.setdim(concat_dim, 0);
+      for (uint i = 0; i < isize.size(); ++i)
+	d.setdim(concat_dim, d.dim(concat_dim) + isize[i].dim(concat_dim));
+      osize.push_back(d);
+    }
+    EDEBUG(this->name() << ": " << isize << " f-> " << osize);
+    return osize;
+  }
+
+  template <typename T, class Tstate>
+  mfidxdim merge_module<T,Tstate>::bprop_size(mfidxdim &osize) {
+    EDEBUG(this->name() << ": " << osize << " b-> ...");
+    mfidxdim isize = osize;
+    EDEBUG(this->name() << ": " << osize << " b-> " << isize);
+    return isize;
+  }
+
+  // internal members //////////////////////////////////////////////////////////
+  
   template <typename T, class Tstate>
   void merge_module<T, Tstate>::merge(mstate<Tstate> &in, Tstate &out) {
     if (in.size() == 0) eblerror("expected at least 1 state in input");

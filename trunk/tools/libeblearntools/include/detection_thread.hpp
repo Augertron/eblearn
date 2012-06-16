@@ -175,7 +175,7 @@ namespace ebl {
      module_1_1_gui	netgui;
      wid_states  = display_states ? new_window("network states"):0;
      night_mode();
-     string title = "eblearn object recognition: ";
+     string title = "EBLearn detector: ";
      title += _name;
      if (display) {
        wid = new_window(title.c_str());
