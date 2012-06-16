@@ -167,7 +167,7 @@ namespace ebl {
     //! into files. This can be useful for debugging.
     virtual void dump_fprop(Tstate &in, Tstate &out);
 
-    // members ////////////////////////////////////////////////////////
+    // members /////////////////////////////////////////////////////////////////
   public:
     intg		tablemax;
     Tstate	        kernel;
@@ -179,17 +179,18 @@ namespace ebl {
     int                 fanin;  //!< the fanin of the connection table
   protected:
     bool		warnings_shown;
-    bool                fulltable; //!< indicating whether it is a full-table or not
+    bool                fulltable; //!< indicating if full-table or not
     bool                float_precision; //!< used for IPP and TH
     bool                double_precision; //!< used for TH
     bool                crop; //! Crop input when size mismatch or not.
-    bool                use_gpu; //!< Whether to use gpu or not
-    int                 gpu_id; //!< Whether to use gpu or not
-  // IPP members ////////////////////////////////////////////////////////
+    // IPP members /////////////////////////////////////////////////////////////
     idx<T>              revkernel; //!< a reversed kernel for IPP
     idx<T>              outtmp; //!< a tmp buffer for IPP conv output
     bool                ipp_err_printed; //!< Print an error msg only once.
     bool                use_ipp; //!< IPP is useable or not.
+    // GPU members /////////////////////////////////////////////////////////////
+    bool                use_gpu; //!< Whether to use gpu or not
+    int                 gpu_id; //!< Whether to use gpu or not
   };
 
   //! The replicable version of convolution_module.

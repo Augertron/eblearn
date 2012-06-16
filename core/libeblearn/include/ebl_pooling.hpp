@@ -32,7 +32,7 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // subsampling_module
 
   template <typename T, class Tstate>
@@ -72,12 +72,12 @@ namespace ebl {
     // temporarly crop input if mismatch in size      
     if (crop && (inx.dim(1) % stride.dim(0)) != 0) {
       inx = inx.narrow(1, in1, 0);
-      outx = outx.narrow(1, (intg) floor((float)(inx.dim(1) / stride.dim(0))), 0);
+      outx = outx.narrow(1, (intg) floor((float)(inx.dim(1)/stride.dim(0))), 0);
       clear = true; // clear outx for untouched padded area
     }
     if (crop && (inx.dim(2) % stride.dim(1)) != 0) {
       inx = inx.narrow(2, in2, 0);
-      outx = outx.narrow(2, (intg) floor((float)(inx.dim(2) / stride.dim(1))), 0);
+      outx = outx.narrow(2, (intg) floor((float)(inx.dim(2)/stride.dim(1))), 0);
       clear = true; // clear outx for untouched padded area
     }
     if (clear) idx_clear(out.x);
@@ -106,11 +106,11 @@ namespace ebl {
     // temporarly crop input if mismatch in size
     if (crop && (indx.dim(1) % stride.dim(0)) != 0) {
       indx = indx.narrow(1, in1, 0);
-      outdx = outdx.narrow(1, (int) floor((float)(indx.dim(1) / stride.dim(0))), 0);
+      outdx = outdx.narrow(1, (int)floor((float)(indx.dim(1)/stride.dim(0))),0);
     }
     if (crop && (indx.dim(2) % stride.dim(1)) != 0) {
       indx = indx.narrow(2, in2, 0);
-      outdx = outdx.narrow(2, (intg) floor((float)(indx.dim(2) / stride.dim(1))), 0);
+      outdx = outdx.narrow(2,(intg)floor((float)(indx.dim(2)/stride.dim(1))),0);
     }
     // update internal coefficient's dx
     idx_bloop3(lcdx, coeff.dx, T, ltdx, outdx, T, lsx, sub.x, T) {
@@ -134,11 +134,13 @@ namespace ebl {
     // temporarly crop input if mismatch in size
     if (crop && (inddx.dim(1) % stride.dim(0)) != 0) {
       inddx = inddx.narrow(1, in1,0);
-      outddx = outddx.narrow(1, (intg) floor((float)(inddx.dim(1) / stride.dim(0))), 0);
+      outddx = outddx.narrow(1, (intg) floor((float)(inddx.dim(1)
+						     / stride.dim(0))), 0);
     }
     if (crop && (inddx.dim(2) % stride.dim(1)) != 0) {
       inddx = inddx.narrow(2, in2,0);
-      outddx = outddx.narrow(2, (intg) floor((float)(inddx.dim(2) / stride.dim(1))), 0);
+      outddx = outddx.narrow(2, (intg) floor((float)(inddx.dim(2)
+						     / stride.dim(1))), 0);
     }
     // update internal coefficient's ddx
     idx_bloop3(lcdx, coeff.ddx, T, ltdx, outddx, T, lsx, sub.x, T) {
@@ -249,17 +251,17 @@ namespace ebl {
     DUMP(out.x, this->name() << "_subsampling_module_out.x");
   }
 
-  ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // lppooling_module
 
   template <typename T, class Tstate>
   lppooling_module<T,Tstate>::
   lppooling_module(uint thick, idxdim &kernel_, idxdim &stride_, uint lppower_,
 		   const char *name_, bool crop_, bool use_gpu_, int gpu_id_)
-    : module_1_1<T,Tstate>(name_), thickness(thick),
-      kernel(kernel_), stride(stride_), crop(crop_), use_gpu(use_gpu_),
-      lp_pow(lppower_), gpu_id(gpu_id_), 
-      sqmod((T)lppower_), sqrtmod((T)(1.0/(T)lppower_)) {
+    : module_1_1<T,Tstate>(name_), thickness(thick), 
+      kernel(kernel_), stride(stride_), crop(crop_), lp_pow(lppower_), 
+      sqmod((T)lppower_), sqrtmod((T)(1.0/(T)lppower_)),
+      use_gpu(use_gpu_), gpu_id(gpu_id_) {
     // insert thickness dimension
     idxdim d = kernel;
     d.insert_dim(0, thick);
@@ -365,7 +367,8 @@ namespace ebl {
   template <typename T, class Tstate>
   lppooling_module<T,Tstate>* lppooling_module<T,Tstate>::copy() {
     lppooling_module<T,Tstate> *l2 =
-      new lppooling_module<T, Tstate>(thickness, kernel, stride, lp_pow, this->name());
+      new lppooling_module<T, Tstate>(thickness, kernel, stride, lp_pow,
+				      this->name());
     return l2;
   }
  
@@ -568,7 +571,7 @@ namespace ebl {
   //   return ibboxes;
   // }
 
-  ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // average_pyramid_module
 
   template <typename T, class Tstate>
@@ -697,13 +700,13 @@ namespace ebl {
       fidxdim d2 = osize[i] * s;
       // TEMPORARY CHECK REMOVE
       // if (d1 != d2)
-      // 	eblerror("all inputs should match but got " << d1 << " and " << d2);
+      //   eblerror("all inputs should match but got " << d1 << " and " << d2);
     }
     mfidxdim m(d1);
     return m;
   }
 
-    ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // maxss_module
 
   template <typename T, class Tstate>
@@ -841,7 +844,8 @@ namespace ebl {
     // update spatial dimensions
     for (uint i = 1; i < isize.order(); ++i)
       osize.setdim(i, std::max((intg) 1,
-			       (intg) floor((float) (isize.dim(i) / stride.dim(i - 1)))));
+			       (intg) floor((float) (isize.dim(i)
+						     / stride.dim(i - 1)))));
     //! Recompute the input size to be compliant with the output
     isize = bprop_size(osize);
     return osize;
