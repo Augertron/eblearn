@@ -63,11 +63,11 @@ namespace ebl {
     if (show_class && show_conf) label << " ";
     if (show_conf) label << conf;
     ubyte transp = 127;//255;
-    // if (transparency > 0)
-    //   transp = (ubyte) std::max((float) 50,
-    // 				std::min((float) 255,
-    // 					 (255 * (exp((conf - transparency + (float) .5) *12))
-    // 						 / 60000)));
+    if (transparency > 0)
+      transp = (ubyte) std::max((float) 50,
+    				std::min((float) 255,
+    					 (255 * (exp((conf - transparency + (float) .5) *12))
+    						 / 60000)));
     draw_box(h0 + h, w0 + w, height, width,
 	     color_list[colorid][0],
 	     color_list[colorid][1], 
