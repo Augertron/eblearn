@@ -42,7 +42,7 @@ namespace ebl {
 		    const char *name_, const char *list)
     : m2s_module<T,Tstate>(inputs_.size() + 1, name_), inputs(inputs_),
       din(in_), dins(ins_), stride(stride_), strides(strides_), in0(NULL),
-      use_pinputs(false) {
+      use_pinputs(false), reference_scale(0) {
     if (list)
       merge_list = list;
     default_scales(ins_.size());
@@ -57,7 +57,7 @@ namespace ebl {
 		    mfidxdim &strides_, const char *name_, const char *list)
     : m2s_module<T,Tstate>(inputs_.size() + 1, name_), //msinputs(inputs_),
       din(in_), dins(ins_), stride(stride_), strides(strides_),
-      use_pinputs(false)  {
+      use_pinputs(false), reference_scale(0)  {
     if (list)
       merge_list = list;
     // allocate zpad vector
@@ -71,9 +71,9 @@ namespace ebl {
 		    const char *name_, mfidxdim *scales_,
 		    /*TEMP*/ intg hextra_, intg wextra_, float ss_, float edge_)
     : m2s_module<T,Tstate>(ins_.size(), name_), in0(NULL), use_pinputs(true),
-      bpad(bpad_),
+      bpad(bpad_), reference_scale(0),
       //TEMP
-      hextra(hextra_), wextra(wextra_), subsampling(ss_), edge(edge_)
+      hextra(hextra_), wextra(wextra_), subsampling(ss_), edge(edge_)      
   {
     if (scales_) scales = *scales_;
     else default_scales(ins_.size());
@@ -274,11 +274,150 @@ namespace ebl {
     for (uint i = 0; i < n; ++i) scales.push_back_new(f);
   }
 
-  // template <typename T, class Tstate>
-  // void flat_merge_module<T, Tstate>::set_paddings(mfidxdim &pads) {
-  //   paddings = pads;
-  //   EDEBUG(this->name() << ": setting paddings to " << paddings);
-  // }
+  template <typename T, class Tstate>
+  idxdim flat_merge_module<T, Tstate>::compute_output_sizes(mstate<Tstate> &in, uint k,
+							    idxdim *dref) {
+    // template <typename T, class Tstate>
+    // void flat_merge_module<T, Tstate>::set_paddings(mfidxdim &pads) {
+    //   paddings = pads;
+    //   EDEBUG(this->name() << ": setting paddings to " << paddings);
+    // }
+
+
+    Tstate i = in[k];
+    Tstate &p = padded[k];
+    idxdim d = dins[k];
+    fidxdim &s = strides[k];
+    // pad each input so that all windows start centered on the first actual
+    // pixel top right
+    if (bpad) {
+      // narrow input if specified
+      if (k < offsets.size()) {
+	vector<int> &off = offsets[k];
+	if (off.size() != 4) eblerror("expected 4");
+	int oh0 = (int) (off[0]);
+	int ow0 = (int) (off[1]);
+	int oh1 = (int) (off[2]);
+	int ow1 = (int) (off[3]);
+	// int oh0 = (int) (off[0] * s.dim(0));
+	// int ow0 = (int) (off[1] * s.dim(1));
+	// int oh1 = (int) (off[2] * s.dim(0));
+	// int ow1 = (int) (off[3] * s.dim(1));
+	if (oh0 < 0) {
+	  int sz2 = i.x.dim(1) + oh0 + oh1;
+	  if (sz2 <= 0) {
+	    eblwarn("trying to narrow dim 1 of " << i.x << " to size "<< sz2);
+	  } else {
+	    EDEBUG("narrowing height with offset " << -oh0 << " in " << i.x);
+	    i = i.narrow(1, sz2, -oh0);
+	  }
+	}
+	if (ow0 < 0) {
+	  int sz2 = i.x.dim(2) + ow0 + ow1;
+	  if (sz2 <= 0) {
+	    eblwarn("trying to narrow dim 2 of " << i.x << " to size "<< sz2);
+	  } else {
+	    EDEBUG("narrowing width with offset " << -ow0 << " in " << i.x);
+	    i = i.narrow(2, sz2, -ow0);
+	  }
+	}
+      }
+
+      if (scales.size() != strides.size())
+	eblerror("expected scales to be the same size as strides but got "
+		 << scales << " when strides are " << strides);
+      //if (k % 4 == 0) pix1 *= 2;
+      //float pix1 = scales[k].dim(0);
+      //idxdim d4 = compute_pad(d, subsampling, edge, pix1, s);
+      // fidxdim fpads;
+      // if (k < paddings.size()) fpads = paddings[k];
+      // idxdim d4 = fpads;
+
+      // //idxdim d4 = compute_pad(d, 1, 0, pix1, s);
+      // //	idxdim d4 = compute_pad(d, 4, 6, pix1, s);
+      // // idxdim d4 = compute_pad(d, 6, 12, pix1, s);
+      // //padder.set_kernel(d4);
+      // padder.set_paddings(d4);
+      // // add extra padding at ends if necessary to match target
+      // //	intg hextra = 2, wextra = 2;
+      // idxdim pads = padder.get_paddings();
+      // // if (k > 0) {
+      // //   hextra = (intg) (dref.dim(0) - ((i.x.dim(1) + pads.dim(0) + pads.dim(2)
+      // // 				  - (d.dim(0) -d.dim(0) % 2)) / s.dim(0)));
+      // //   wextra = (intg) (dref.dim(1) - ((i.x.dim(2) + pads.dim(1) + pads.dim(3)
+      // // 				   - (d.dim(1) -d.dim(1) % 2)) / s.dim(1)));
+      // // }
+      // if (k > 0) {
+      //   pads.setdim(2, pads.dim(2) + std::max(0, (int) hextra));
+      //   pads.setdim(3, pads.dim(3) + std::max(0, (int) wextra));
+      // }
+      // padder.set_paddings(pads);
+
+      // add padding if missing to reach target (failsafe)
+      idxdim pads(0,0,0,0);// = padder.get_paddings();
+      intg sh = (intg) ((i.x.dim(1) + pads.dim(0) + pads.dim(2)
+			 - d.dim(0) + 1) / s.dim(0));
+      intg sw = (intg) ((i.x.dim(2) + pads.dim(1) + pads.dim(3)
+			 - d.dim(1) + 1) / s.dim(1));
+      bool w = false;
+      if (dref) {
+	if (k > 0 && sh < dref->dim(0)) {
+	  pads.setdim(2, pads.dim(2) + std::max(0, (int) (dref->dim(0) - sh)));
+	  w = true;
+	}
+	if (k > 0 && sw < dref->dim(1)) {
+	  pads.setdim(3, pads.dim(3) + std::max(0, (int) (dref->dim(1) - sw)));
+	  if (!this->silent && pads.maxdim() > 2)
+	    w = true;
+	}
+	if (w && !this->silent && pads.maxdim() > 2)
+	  eblwarn("adding extra padding "<<pads<<" to match target " << *dref);
+      }
+
+      padder.set_paddings(pads);
+
+      // EDEBUG("before adding padding: " << pads);
+      // // add fixed extra padding
+      // pads = padder.get_paddings();
+      // sh = (intg) (4 * s.dim(0));
+      // sw = (intg) (4 * s.dim(1));
+      // pads.setdim(0, pads.dim(0) + sh);
+      // pads.setdim(2, pads.dim(2) + sh);
+      // pads.setdim(1, pads.dim(1) + sw);
+      // pads.setdim(3, pads.dim(3) + sw);
+      // padder.set_paddings(pads);
+      // EDEBUG("after adding padding: " << pads);
+      // pad
+      padder.fprop(i, p);
+      // } else {
+      //   if (i.x.contiguousp()) padded[k] = i;
+      //   else {
+      //     if (padded[k].x.get_idxdim() != i.x.get_idxdim())
+      //       padded[k] = Tstate(i.x.get_idxdim());
+      //     idx_copy(i.x, padded[k].x);
+      //   }
+      // }
+    } else padded[k] = in[k];
+    // compute number of outputs for this kernel
+    idxdim dout((intg) ((p.x.dim(1) - d.dim(0) + 1) / s.dim(0)),
+		(intg) ((p.x.dim(2) - d.dim(1) + 1) / s.dim(1)));
+    string msg;
+    msg << this->name() << ": in " << p.x << " (min: " << idx_min(p.x)
+	<< ", max: " << idx_max(p.x) << ") with window " << d
+	<< " and stride " << s << " -> " << dout;
+    EDEBUG(msg);
+    if (dout.dim(0) <= 0 || dout.dim(1) <= 0)
+      eblerror("input is too small for this network: " << msg);
+    // // adjust strides so that all states produce dref outputs
+    // fidxdim ss(1.0, 1.0);
+    // if (k > 0)
+    // 	ss = fidxdim(dout2.dim(0) / (float) dref2.dim(0),
+    // 		     dout2.dim(1) / (float) dref2.dim(1));
+    // strides[k] = ss;
+    // EDEBUG("setting stride to " << ss << " for input " << p.x << " and window "
+    // 	    << d << " to produce " << dref << " outputs");
+    return dout;
+  }
 
   template <typename T, class Tstate>
   void flat_merge_module<T, Tstate>::set_offsets(vector<vector<int> > &off) {
@@ -289,7 +428,12 @@ namespace ebl {
   template <typename T, class Tstate>
   void flat_merge_module<T, Tstate>::set_strides(mfidxdim &s) {
     strides = s;
-    cout << this->name() << ": setting strides to " << strides << endl;
+    fidxdim ref(1, 1);
+    for (uint i = 0; i < strides.size(); ++i)
+      if (ref == strides[i]) reference_scale = i;
+    cout << this->name() << ": setting strides to " << strides 
+	 << " with reference scale " << reference_scale << " with stride: " 
+	 << strides[reference_scale] << endl;
   }
 
   template <typename T, class Tstate>
@@ -300,148 +444,13 @@ namespace ebl {
 	  << strides << ", scales: " << scales << ", paddings: " << paddings);
     padded.resize(in);
     //    strides.clear();
-    idxdim dref, dref2;
-    // loop on each state
-    //float pix1 = .5;
-    for (uint k = 0; k < in.size(); ++k) {
-      Tstate i = in[k];
-      Tstate &p = padded[k];
-      idxdim d = dins[k];
-      fidxdim &s = strides[k];
-      // pad each input so that all windows start centered on the first actual
-      // pixel top right
-      if (bpad) {
-	// narrow input if specified
-	if (k < offsets.size()) {
-	  vector<int> &off = offsets[k];
-	  if (off.size() != 4) eblerror("expected 4");
-	  int oh0 = (int) (off[0]);
-	  int ow0 = (int) (off[1]);
-	  int oh1 = (int) (off[2]);
-	  int ow1 = (int) (off[3]);
-	  // int oh0 = (int) (off[0] * s.dim(0));
-	  // int ow0 = (int) (off[1] * s.dim(1));
-	  // int oh1 = (int) (off[2] * s.dim(0));
-	  // int ow1 = (int) (off[3] * s.dim(1));
-	  if (oh0 < 0) {
-	    int sz2 = i.x.dim(1) + oh0 + oh1;
-	    if (sz2 <= 0) {
-	      eblwarn("trying to narrow dim 1 of " << i.x << " to size "<< sz2);
-	    } else {
-	      EDEBUG("narrowing height with offset " << -oh0 << " in " << i.x);
-	      i = i.narrow(1, sz2, -oh0);
-	    }
-	  }
-	  if (ow0 < 0) {
-	    int sz2 = i.x.dim(2) + ow0 + ow1;
-	    if (sz2 <= 0) {
-	      eblwarn("trying to narrow dim 2 of " << i.x << " to size "<< sz2);
-	    } else {
-	      EDEBUG("narrowing width with offset " << -ow0 << " in " << i.x);
-	      i = i.narrow(2, sz2, -ow0);
-	    }
-	  }
-	}
 
-	if (scales.size() != strides.size())
-	  eblerror("expected scales to be the same size as strides but got "
-		   << scales << " when strides are " << strides);
-	//if (k % 4 == 0) pix1 *= 2;
-	//float pix1 = scales[k].dim(0);
-	//idxdim d4 = compute_pad(d, subsampling, edge, pix1, s);
-	// fidxdim fpads;
-	// if (k < paddings.size()) fpads = paddings[k];
-	// idxdim d4 = fpads;
+    // output size for reference scale
+    idxdim dref = compute_output_sizes(in, reference_scale); 
+    // check/pad output sizes for all non-reference scales to match the reference output size
+    for (uint k = 0; k < in.size(); ++k)
+      if (k != reference_scale) compute_output_sizes(in, k, &dref);
 
-	// //idxdim d4 = compute_pad(d, 1, 0, pix1, s);
-	// //	idxdim d4 = compute_pad(d, 4, 6, pix1, s);
-	// // idxdim d4 = compute_pad(d, 6, 12, pix1, s);
-	// //padder.set_kernel(d4);
-	// padder.set_paddings(d4);
-	// // add extra padding at ends if necessary to match target
-	// //	intg hextra = 2, wextra = 2;
-	// idxdim pads = padder.get_paddings();
-	// // if (k > 0) {
-	// //   hextra = (intg) (dref.dim(0) - ((i.x.dim(1) + pads.dim(0) + pads.dim(2)
-	// // 				  - (d.dim(0) -d.dim(0) % 2)) / s.dim(0)));
-	// //   wextra = (intg) (dref.dim(1) - ((i.x.dim(2) + pads.dim(1) + pads.dim(3)
-	// // 				   - (d.dim(1) -d.dim(1) % 2)) / s.dim(1)));
-	// // }
-	// if (k > 0) {
-	//   pads.setdim(2, pads.dim(2) + std::max(0, (int) hextra));
-	//   pads.setdim(3, pads.dim(3) + std::max(0, (int) wextra));
-	// }
-	// padder.set_paddings(pads);
-
-	// add padding if missing to reach target (failsafe)
-	idxdim pads(0,0,0,0);// = padder.get_paddings();
-	intg sh = (intg) ((i.x.dim(1) + pads.dim(0) + pads.dim(2)
-			   - d.dim(0) + 1) / s.dim(0));
-	intg sw = (intg) ((i.x.dim(2) + pads.dim(1) + pads.dim(3)
-			   - d.dim(1) + 1) / s.dim(1));
-	bool w = false;
-	if (k > 0 && sh < dref.dim(0)) {
-	  pads.setdim(2, pads.dim(2) + std::max(0, (int) (dref.dim(0) - sh)));
-	  w = true;
-	}
-	if (k > 0 && sw < dref.dim(1)) {
-	  pads.setdim(3, pads.dim(3) + std::max(0, (int) (dref.dim(1) - sw)));
-	  if (!this->silent && pads.maxdim() > 2)
-	  w = true;
-	}
-	if (w && !this->silent && pads.maxdim() > 2)
-	    eblwarn("adding extra padding "<<pads<<" to match target " << dref);
-
-	padder.set_paddings(pads);
-
-	// EDEBUG("before adding padding: " << pads);
-	// // add fixed extra padding
-	// pads = padder.get_paddings();
-	// sh = (intg) (4 * s.dim(0));
-	// sw = (intg) (4 * s.dim(1));
-	// pads.setdim(0, pads.dim(0) + sh);
-	// pads.setdim(2, pads.dim(2) + sh);
-	// pads.setdim(1, pads.dim(1) + sw);
-	// pads.setdim(3, pads.dim(3) + sw);
-	// padder.set_paddings(pads);
-	// EDEBUG("after adding padding: " << pads);
-	// pad
-	padder.fprop(i, p);
-	// } else {
-	//   if (i.x.contiguousp()) padded[k] = i;
-	//   else {
-	//     if (padded[k].x.get_idxdim() != i.x.get_idxdim())
-	//       padded[k] = Tstate(i.x.get_idxdim());
-	//     idx_copy(i.x, padded[k].x);
-	//   }
-	// }
-      } else padded[k] = in[k];
-      // compute number of outputs for this kernel
-      idxdim dout((intg) ((p.x.dim(1) - d.dim(0) + 1) / s.dim(0)),
-		  (intg) ((p.x.dim(2) - d.dim(1) + 1) / s.dim(1)));
-      idxdim dout2((intg) ((p.x.dim(1) - d.dim(0) + 1)),
-		   (intg) ((p.x.dim(2) - d.dim(1) + 1)));
-//       idxdim dout((p.x.dim(1) - (d.dim(0) - d.dim(0) % 2)) / s.dim(0),
-// 		  (p.x.dim(2) - (d.dim(1) - d.dim(1) % 2)) / s.dim(1));
-      // use 1st dout as reference
-      if (k == 0) {
-	dref = dout;
-	dref2 = dout2;
-      }
-      EDEBUG(this->name() << ": in " << p.x << " (min: " << idx_min(p.x)
-	    << ", max: " << idx_max(p.x) << ") with window " << d
-	    << " and stride " << s << " -> " << dout);
-
-
-      // // adjust strides so that all states produce dref outputs
-      // fidxdim ss(1.0, 1.0);
-      // if (k > 0)
-      // 	ss = fidxdim(dout2.dim(0) / (float) dref2.dim(0),
-      // 		     dout2.dim(1) / (float) dref2.dim(1));
-      // strides[k] = ss;
-      // EDEBUG("setting stride to " << ss << " for input " << p.x << " and window "
-      // 	    << d << " to produce " << dref << " outputs");
-    }
     LOCAL_TIMING_REPORT("merge padding");
 
 
