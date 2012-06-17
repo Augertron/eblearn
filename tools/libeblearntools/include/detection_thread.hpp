@@ -80,7 +80,6 @@ namespace ebl {
   template <typename Tnet>
   void detection_thread<Tnet>::execute() {
    try {
-     Tnet	threshold      = (Tnet) conf.get_double("threshold");
      bool	display        = false;
 #ifdef __GUI__
      display = conf.exists_true("display")
@@ -272,14 +271,14 @@ namespace ebl {
 	 try {
 	   if (mindisplay) {
 	     bboxes &bb =
-	       dgui.display(detect, frame, threshold, frame_name.c_str(),
+	       dgui.display(detect, frame, frame_name.c_str(),
 			    0, 0, zoom, display_min, display_max,
 			    wid, _name.c_str(), display_transp);
 	     copy_bboxes(bb); // make a copy of bounding boxes
 	   } else {
 	     // extract & display boxes
 	     bboxes &bb =
-	       dgui.display_inputs_outputs(detect, frame, threshold,
+	       dgui.display_inputs_outputs(detect, frame,
 					   frame_name.c_str(), 0, 0, zoom,
 					   display_min, display_max, wid,
 					   _name.c_str(),

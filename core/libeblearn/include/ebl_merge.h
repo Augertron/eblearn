@@ -130,6 +130,8 @@ namespace ebl {
     //! This returns the padding to apply to input.
     idxdim compute_pad(idxdim &window, float subsampling, float edge,
 		       float scale, fidxdim &stride);
+    //! Set n default scales of input for merging.
+    void default_scales(uint n);
 
   private:
     std::vector<Tstate**> inputs;

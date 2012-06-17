@@ -64,7 +64,7 @@ namespace ebl {
 
   template <typename T, class Tstate> template <typename Tin>
   bboxes& detector_gui<T,Tstate>::
-  display(detector<T,Tstate> &cl, idx<Tin> &img, double threshold,
+  display(detector<T,Tstate> &cl, idx<Tin> &img,
 	  const char *frame_name, uint h0, uint w0, double dzoom,  T vmin,
 	  T vmax, int wid, const char *wname, float transparency) {
     display_wid = (wid >= 0) ? wid :
@@ -114,14 +114,14 @@ namespace ebl {
 
   template <typename T, class Tstate> template <typename Tin>
   bboxes& detector_gui<T,Tstate>::
-  display_input(detector<T,Tstate> &cl, idx<Tin> &img, double threshold,
+  display_input(detector<T,Tstate> &cl, idx<Tin> &img,
 		const char *frame_name, uint h0, uint w0, double dzoom, T vmin,
 		T vmax, int wid, const char *wname, float transparency) {
     display_wid = (wid >= 0) ? wid :
       new_window((wname ? wname : "detector: output"));
     select_window(display_wid);
     //    disable_window_updates();
-    bboxes &bb = display(cl, img, threshold, frame_name, h0, w0, dzoom, vmin,
+    bboxes &bb = display(cl, img, frame_name, h0, w0, dzoom, vmin,
 			 vmax, wid, wname, transparency);
     uint w = w0 + (uint) (img.dim(1) * dzoom + 5);
     // draw input
@@ -196,7 +196,7 @@ namespace ebl {
   template <typename T, class Tstate> template <typename Tin>
   bboxes& detector_gui<T,Tstate>::
   display_inputs_outputs(detector<T,Tstate> &cl, idx<Tin> &img,
-			 double threshold, const char *frame_name,
+			 const char *frame_name,
 			 uint h0, uint w0, double dzoom,
 			 T vmin, T vmax, int wid, const char *wname,
 			 T in_vmin, T in_vmax, float transparency, uint wmax) {
@@ -206,7 +206,7 @@ namespace ebl {
 
     // draw input and output
     bboxes& bb =
-      display_input(cl, img, threshold, frame_name,
+      display_input(cl, img, frame_name,
 		    h0, w0, dzoom, in_vmin, in_vmax, display_wid_fprop, wname,
 		    transparency);
     // compute min and max of all outputs, to maximize intensity display range
@@ -532,7 +532,7 @@ namespace ebl {
 
   template <typename T, class Tstate> template <typename Tin>
   bboxes& detector_gui<T,Tstate>::
-  display_all(detector<T,Tstate> &cl, idx<Tin> &img, double threshold,
+  display_all(detector<T,Tstate> &cl, idx<Tin> &img,
 	      const char *frame_name, uint h0, uint w0, double dzoom, T vmin,
 	      T vmax, int wid, const char *wname) {
     display_wid_fprop = (wid >= 0) ? wid :
@@ -541,7 +541,7 @@ namespace ebl {
 
     // draw input and output
     bboxes& bb =
-      display_inputs_outputs(cl, img, threshold, frame_name,
+      display_inputs_outputs(cl, img, frame_name,
 			     h0, w0, dzoom, vmin, vmax, display_wid_fprop);
 
     // disable_window_updates();

@@ -405,7 +405,7 @@ namespace ebl {
     //! \param preserve_ratio If true, fit the image into target size while
     //!   keeping aspect ratio, potential empty areas are filled with zeros.
     resize_module(idxdim &size, uint mode = MEAN_RESIZE, idxdim *zpad = NULL,
-		  bool preserve_ratio = true, const char *name = NULL);
+		  bool preserve_ratio = true, const char *name = "resize");
     //! Constructor without target dimensions. set_dimensions should be called
     //! later.
     //! \param mode The type of resizing (MEAN_RESIZE, BILINEAR_RESIZE,
@@ -415,7 +415,7 @@ namespace ebl {
     //! \param preserve_ratio If true, fit the image into target size while
     //!   keeping aspect ratio, potential empty areas are filled with zeros.
     resize_module(uint mode = MEAN_RESIZE, idxdim *zpad = NULL,
-		  bool preserve_ratio = true, const char *name = NULL);
+		  bool preserve_ratio = true, const char *name = "resize");
     //! This constructor specifies resizing ratio for each dimension instead
     //! of fixed target sizes. The default resizing method is bilinear, as
     //! as other methods do not currently implement ratio inputs.
@@ -427,11 +427,11 @@ namespace ebl {
     //!   keeping aspect ratio, potential empty areas are filled with zeros.
     resize_module(double hratio, double wratio, uint mode = MEAN_RESIZE,
 		  idxdim *zpad = NULL, bool preserve_ratio = true,
-		  const char *name = NULL);
+		  const char *name = "resize");
     //! Resizes as the last outputs of module mod, plus "add" pixels.
     resize_module(module_1_1<T,Tstate> *mod, idxdim &add,
 		  uint mode = MEAN_RESIZE, idxdim *zpad = NULL,
-		  const char *name = NULL);
+		  const char *name = "resize");
     //! destructor
     virtual ~resize_module();
     //! sets the desired output dimensions.
@@ -582,7 +582,7 @@ namespace ebl {
     resizepp_module(idxdim &size, uint mode = MEAN_RESIZE,
 		    module_1_1<T,Tstate> *pp = NULL,
 		    bool own_pp = true, idxdim *zpad = NULL,
-		    bool preserve_ratio = true, const char *name = NULL);
+		    bool preserve_ratio = true, const char *name = "resizepp");
     //! Constructor without target dimensions. set_dimensions should be called
     //! later. Preprocessing module pp will be deleted upon destruction.
     //! \param pp An optional pointer to a  preprocessing module. If NULL, no 
@@ -596,7 +596,7 @@ namespace ebl {
     //!   keeping aspect ratio, potential empty areas are filled with zeros.
     resizepp_module(uint mode = MEAN_RESIZE, module_1_1<T,Tstate> *pp = NULL,
 		    bool own_pp = true, idxdim *zpad = NULL,
-		    bool preserve_ratio = true, const char *name = NULL);
+		    bool preserve_ratio = true, const char *name = "resizepp");
     //! This constructor specifies resizing ratio for each dimension instead
     //! of fixed target sizes. The default resizing method is bilinear, as
     //! as other methods do not currently implement ratio inputs.
@@ -612,7 +612,7 @@ namespace ebl {
     resizepp_module(double hratio, double wratio,
 		    uint mode = MEAN_RESIZE, module_1_1<T,Tstate> *pp = NULL,
 		    bool own_pp = true, idxdim *zpad = NULL,
-		    bool preserve_ratio = true, const char *name = NULL);
+		    bool preserve_ratio = true, const char *name = "resizepp");
     //! destructor
     virtual ~resizepp_module();
     // fprop methods ///////////////////////////////////////////////////////////

@@ -98,7 +98,7 @@ namespace ebl {
     diverse_ordering = false;
     // set outpout streams of network
     thenet.set_output_streams(o, e);
-    //update_merge_alignment();
+    update_merge_alignment();
   }
 
   template <typename T, class Tstate>
@@ -709,7 +709,7 @@ namespace ebl {
       EDEBUG("network narrowed up to merger module: " << merger->name());
       mout << "Aligning merging centers on top left image origin." << endl;
       //    for (uint i = 0; i < merger->get_ninputs(); ++i) {
-      fidxdim c(1, 1, 1), f(1, 1, 1), c0, c1;
+      fidxdim c(1, 1, 1), f(1, 1, 1), f2(1, 1, 1), c0, c1;
       mfidxdim m(c), m0, m0m, m1, paddings; //(merger->get_ninputs());
       // determine input size and location of output pixel (0,0)
       mfidxdim mf(f);
@@ -743,7 +743,6 @@ namespace ebl {
 	EDEBUG("m0: " << m0);
 	EDEBUG("m1: " << m1);
 
-	
 	//	uint fact = (uint) ceil(strides.size() / (float) m0.size());
 	// c0 = m0[i / fact];
 	// c1 = m1[i / fact];

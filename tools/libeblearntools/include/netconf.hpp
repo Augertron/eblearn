@@ -269,7 +269,8 @@ namespace ebl {
 	EDEBUG("bstride " << bstride);
 	module = (module_1_1<T,Tstate>*)
 	  new flat_merge_module<T,Tstate>
-	  (bin, bstride, bpad, name.c_str(), &scales,
+	  (bin, bstride, bpad, name.c_str(),
+	   scales.size() > 0 ? &scales : NULL,
 	   hextra, wextra, ss, edge);
       } else eblerror("unknown merge_type " << type);
     }
