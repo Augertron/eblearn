@@ -585,8 +585,8 @@ namespace ebl {
   template <typename T, class Tstate>
   resize_module<T,Tstate>::
   resize_module(idxdim &size_, uint mode_, idxdim *dzpad_, bool pratio,
-		const char *name)
-    : module_1_1<T,Tstate>(name), 
+		const char *name_)
+    : module_1_1<T,Tstate>(name_), 
       size(size_), tmp3(1,1,1), mode(mode_), input_mode(0), inrect(0, 0, 0, 0), 
       inrect_set(false), outrect_set(false), dzpad(NULL), zpad(NULL),
       hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
@@ -605,8 +605,8 @@ namespace ebl {
   template <typename T, class Tstate>
   resize_module<T,Tstate>::
   resize_module(uint mode_, idxdim *dzpad_, bool pratio,
-		const char *name)
-    : module_1_1<T,Tstate>(name), size(1,1), height(0), width(0), tmp3(1,1,1),
+		const char *name_)
+    : module_1_1<T,Tstate>(name_), size(1,1), height(0), width(0), tmp3(1,1,1),
       mode(mode_), input_mode(0), 
       inrect(0, 0, 0, 0), inrect_set(false), outrect_set(false), dzpad(NULL),
       zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
@@ -623,8 +623,8 @@ namespace ebl {
   template <typename T, class Tstate>
   resize_module<T,Tstate>::
   resize_module(double hratio_, double wratio_, uint mode_, 
-		idxdim *dzpad_, bool pratio, const char *name)
-    : module_1_1<T,Tstate>(name), size(1,1), height(0), width(0), tmp3(1,1,1),
+		idxdim *dzpad_, bool pratio, const char *name_)
+    : module_1_1<T,Tstate>(name_), size(1,1), height(0), width(0), tmp3(1,1,1),
       mode(mode_), input_mode(0), 
       inrect(0, 0, 0, 0), inrect_set(false), outrect_set(false), dzpad(NULL),
       zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
@@ -645,8 +645,8 @@ namespace ebl {
   template <typename T, class Tstate>
   resize_module<T,Tstate>::
   resize_module(module_1_1<T,Tstate> *mod_, idxdim &add, uint mode_,
-		idxdim *dzpad_, const char *name)
-    : module_1_1<T,Tstate>(name), size(1,1), height(0), width(0), tmp3(1,1,1),
+		idxdim *dzpad_, const char *name_)
+    : module_1_1<T,Tstate>(name_), size(1,1), height(0), width(0), tmp3(1,1,1),
       mode(mode_), input_mode(0), 
       inrect(0, 0, 0, 0), inrect_set(false), outrect_set(false), dzpad(NULL),
       zpad(NULL), hjitter(0), wjitter(0), sjitter(1.0), rjitter(0.0), 
@@ -1024,14 +1024,15 @@ namespace ebl {
     if (zpad) osize = zpad->bprop_size(osize);
     mfidxdim isize;
     for (uint i = 0; i < osize.size(); ++i) {
-       if (osize.exists(i) && original_bboxes[0].height != 0
-	   && original_bboxes[0].width != 0) {
-	fidxdim d(1, input_bboxes[0].height / (float) original_bboxes[0].height,
-		  input_bboxes[0].width / (float) original_bboxes[0].width);
-	fidxdim o = osize[i] * d;
-	isize.push_back_new(o);
-      }
-      else isize.push_back_empty();
+      if (osize.exists(i)) {
+	if (original_bboxes[0].height != 0
+	    && original_bboxes[0].width != 0) {
+	  fidxdim d(1, input_bboxes[0].height / (float) original_bboxes[0].height,
+		    input_bboxes[0].width / (float) original_bboxes[0].width);
+	  fidxdim o = osize[i] * d;
+	  isize.push_back_new(o);
+	} else isize.push_back(osize[i]);
+      } else isize.push_back_empty();
     }
     EDEBUG(this->name() << ": " << osize << " b-> " << isize);
     return isize;
@@ -1062,16 +1063,16 @@ namespace ebl {
   template <typename T, class Tstate>
   resizepp_module<T,Tstate>::
   resizepp_module(idxdim &size_, uint mode_, module_1_1<T,Tstate> *pp_, 
-		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name)
-    : resize_module<T,Tstate>(size_, mode_, dzpad_, pratio, name), 
+		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name_)
+    : resize_module<T,Tstate>(size_, mode_, dzpad_, pratio, name_), 
       pp(pp_), own_pp(own_pp_) {
   }
   
   template <typename T, class Tstate>
   resizepp_module<T,Tstate>::
   resizepp_module(uint mode_, module_1_1<T,Tstate> *pp_,
-		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name)
-    : resize_module<T,Tstate>(mode_, dzpad_, pratio, name),
+		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name_)
+    : resize_module<T,Tstate>(mode_, dzpad_, pratio, name_),
       pp(pp_), own_pp(own_pp_) {
   }
   
@@ -1079,8 +1080,8 @@ namespace ebl {
   resizepp_module<T,Tstate>::
   resizepp_module(double hratio_, double wratio_, uint mode_, 
 		  module_1_1<T,Tstate> *pp_,
-		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name)
-    : resize_module<T,Tstate>(hratio_, wratio_, mode_, dzpad_, pratio, name),
+		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name_)
+    : resize_module<T,Tstate>(hratio_, wratio_, mode_, dzpad_, pratio, name_),
       pp(pp_), own_pp(own_pp_) {
   }
   

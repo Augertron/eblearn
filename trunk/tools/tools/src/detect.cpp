@@ -124,7 +124,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       bool              input_random  = conf.exists_true("input_random");
       uint              npasses       = 1;
       char              next_on_key   = 0;
-      bool              bkey_msg      = false; // display key message
       if (conf.exists("next_on_key")) {
 	next_on_key = conf.get_char("next_on_key");
 	mout << "Press " << next_on_key << " to process next frame." << endl;
@@ -243,6 +242,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 
       // gui
 #ifdef __GUI__
+      bool              bkey_msg      = false; // display key message
       bool display	     = conf.exists_bool("display");
       bool show_parts        = conf.exists_true("show_parts");
       bool bbox_show_conf = !conf.exists_false("bbox_show_conf");

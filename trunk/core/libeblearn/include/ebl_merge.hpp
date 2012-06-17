@@ -45,6 +45,7 @@ namespace ebl {
       use_pinputs(false) {
     if (list)
       merge_list = list;
+    default_scales(ins_.size());
     // allocate zpad vector
     zpads.assign(strides.size(), NULL);
   }
@@ -74,8 +75,8 @@ namespace ebl {
       //TEMP
       hextra(hextra_), wextra(wextra_), subsampling(ss_), edge(edge_)
   {
-    if (scales_)
-      scales = *scales_;
+    if (scales_) scales = *scales_;
+    else default_scales(ins_.size());
     // check there are enough elements
     if (ins_.size() < 1 || strides_.size() < 1
 	|| ins_.size() != strides_.size())
@@ -264,6 +265,13 @@ namespace ebl {
     d.setdim(0, (int) (d.dim(0) + hoff * 2));
     d.setdim(1, (int) (d.dim(1) + woff * 2));
     return d;
+  }
+
+  template <typename T, class Tstate>
+  void flat_merge_module<T, Tstate>::default_scales(uint n) {
+    scales.clear();
+    fidxdim f(1, 1);
+    for (uint i = 0; i < n; ++i) scales.push_back_new(f);
   }
 
   // template <typename T, class Tstate>
@@ -623,7 +631,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   fidxdim flat_merge_module<T,Tstate>::bprop_size(const fidxdim &osize) {
-    //EDEBUG(this->name() << ": " << osize << " -> ...");
+    EDEBUG(this->name() << ": " << osize << " -> ...");
     // feature size for main input
     intg fsize = (intg) (osize.dim(0) / din.dim(0) / din.dim(1));
     // number of possible windows
@@ -639,7 +647,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   mfidxdim flat_merge_module<T,Tstate>::bprop_size(mfidxdim &osize) {
-    //EDEBUG(this->name() << ": " << osize << " -> ...");
+    EDEBUG(this->name() << ": " << osize << " b-> ...");
     if (osize.size() == 0) eblerror("expected at least 1 idxdim");
     mfidxdim isize;
     idxdim pa, d;
@@ -690,7 +698,7 @@ namespace ebl {
       }
       isize.push_back(fd);
     }
-    //EDEBUG(this->name() << ": " << osize << " -> " << isize);
+    EDEBUG(this->name() << ": " << osize << " -> " << isize);
     return isize;
   }
 
@@ -931,6 +939,7 @@ namespace ebl {
   merge_module(std::vector<std::vector<uint> > &states, intg concat_dim_,
 	       const char *name_)
     : module_1_1<T,Tstate>(name_), states_list(states), concat_dim(concat_dim_){
+    this->ninputs = states[0].size();
   }
 
   template <typename T, class Tstate>
@@ -1072,6 +1081,8 @@ namespace ebl {
 	d.setdim(concat_dim, d.dim(concat_dim) + isize[i].dim(concat_dim));
       osize.push_back(d);
     }
+    this->ninputs = isize.size();
+    this->noutputs = osize.size();
     EDEBUG(this->name() << ": " << isize << " f-> " << osize);
     return osize;
   }
@@ -1079,7 +1090,8 @@ namespace ebl {
   template <typename T, class Tstate>
   mfidxdim merge_module<T,Tstate>::bprop_size(mfidxdim &osize) {
     EDEBUG(this->name() << ": " << osize << " b-> ...");
-    mfidxdim isize = osize;
+    mfidxdim isize;
+    for (uint i = 0; i < this->ninputs; ++i) isize.push_back_new(osize);
     EDEBUG(this->name() << ": " << osize << " b-> " << isize);
     return isize;
   }

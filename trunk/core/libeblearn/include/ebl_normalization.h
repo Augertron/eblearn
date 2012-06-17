@@ -83,6 +83,10 @@ namespace ebl {
     virtual bool optimize_fprop(Tstate &in, Tstate &out);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
+    //! Returns input dimensions corresponding to multiple output dimensions
+    //! 'osize'. Implementation of this method helps automatic scaling of input
+    //! data but is optional.
+    virtual mfidxdim bprop_size(mfidxdim &osize);
 
     // friends
     friend class divisive_norm_module_gui;
@@ -225,6 +229,10 @@ namespace ebl {
     virtual bool optimize_fprop(Tstate &in, Tstate &out);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
+    //! Returns input dimensions corresponding to multiple output dimensions
+    //! 'osize'. Implementation of this method helps automatic scaling of input
+    //! data but is optional.
+    virtual mfidxdim bprop_size(mfidxdim &osize);
 
     // friends
     friend class contrast_norm_module_gui;
