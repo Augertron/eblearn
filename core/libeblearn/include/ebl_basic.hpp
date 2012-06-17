@@ -188,11 +188,9 @@ namespace ebl {
     d.insert_dim(0, tbl.dim(0));
     kernel = Tstate(p, d);
     // check sanity of connection table
-    if (table.dim(1) != 2) { // check table order
-      cerr << "error: expecting a table with dim 1 equal to 2 but found: ";
-      cerr << table << endl;
-      eblerror("connection table error");
-    }
+    if (table.dim(1) != 2) // check table order
+      eblerror("error: expecting table with dim 1 equal to 2 but found: " 
+	       << table);
     check_table_duplicates(table);
     idx<intg> tbl0 = table.select(1, 0);
     tablemax = idx_max(tbl0);
@@ -206,8 +204,8 @@ namespace ebl {
     bool not_using_all_inputs = false;
     for (int i = 0; i <= tablemax; ++i) {
       if (tblcount.get(i) == false) {
-        eblwarn( "warning: input " << i 
-                  << " not used by connection table in convolution module." << endl);
+        eblwarn("input " << i 
+		<< " not used by connection table in convolution module");
         not_using_all_inputs = true;
       }
     }

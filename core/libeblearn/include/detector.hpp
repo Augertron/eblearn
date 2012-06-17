@@ -720,8 +720,8 @@ namespace ebl {
       mfidxdim scales = merger->get_scales();
       // EDEBUG("strides: " << strides);
       vector<vector<int> > alloff;
-      mfidxdim allstrides;
-      float hs0 = 1, ws0 = 1;
+      mfidxdim allstrides, tmpstrides;
+      vector<rect<float> > centers;
       for (uint k = 0; k < m0m.size(); ++k) {
 	//uint i = k - (k % 2);
 	uint i = k;
@@ -751,7 +751,7 @@ namespace ebl {
 	//fidxdim &stride = strides[i];
 	// determine center of output pixel (0,0) in input space
 	rect<float> p0(c0.offset(1), c0.offset(2), c0.dim(1), c0.dim(2));
-	float hc = p0.hcenter(), wc = p0.wcenter();
+	centers.push_back(p0);
 
 	// // determine input pixel (0,0) in output space
 	// fidxdim i0(1, 1)
@@ -768,6 +768,18 @@ namespace ebl {
 	// determine stride of output space in input space
 	float hs = (c1.offset(1) - c0.offset(1));// / scales[i].dim(0);
 	float ws = (c1.offset(2) - c0.offset(2));// / scales[i].dim(0);
+	fidxdim s(hs, ws);
+	tmpstrides.push_back_new(s);
+      }
+      // find minimum stride among all scales
+      fidxdim smallest = tmpstrides[0];
+      for (uint k = 1; k < tmpstrides.size(); ++k) {
+	if (tmpstrides[k] <= smallest)
+	  smallest = tmpstrides[k];
+      }
+      // compute merge step factors
+      for (uint k = 0; k < m0m.size(); ++k) {
+	uint i = k;
 	// if (k == 0) {
 	//   hs = hs0 / (scales[i].dim(0));
 	//   ws = ws0 / (scales[i].dim(0));
@@ -777,13 +789,12 @@ namespace ebl {
 	//   hs = hs0 / (scales[i].dim(0) * hs);
 	//   ws = ws0 / (scales[i].dim(0) * ws);
 	// }
-
-	if (k == 0) {
-	  hs0 = hs;
-	  ws0 = ws;
-	}
-	float hos = hs0 / (scales[i].dim(0) * hs);
-	float wos = ws0 / (scales[i].dim(0) * ws);
+	rect<float> p0 = centers[i];
+	float hc = p0.hcenter(), wc = p0.wcenter();
+	float hs = tmpstrides[i].dim(0);
+	float ws = tmpstrides[i].dim(1);
+	float hos = smallest.dim(0) / (scales[i].dim(0) * hs);
+	float wos = smallest.dim(1) / (scales[i].dim(0) * ws);
 	fidxdim fi(hos, wos);
 	allstrides.push_back_new(fi);
 	
@@ -824,6 +835,7 @@ namespace ebl {
   void detector<T,Tstate>::get_corners(mstate<Tstate> &outputs, uint scale,
 				       bool force) {
     if (!corners_infered || force) {
+      //timer tc;
       if (corners_inference == 0 || corners_inference == 1) { // infer from net
 	uint n = 0;
 	// allocate corner vectors
@@ -961,6 +973,7 @@ namespace ebl {
 	}
 	corners_infered = true;
       }
+      //mout << "corner inference: " << tc.elapsed_milliseconds() << endl;
     }
   }
 

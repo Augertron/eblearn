@@ -201,18 +201,6 @@ namespace ebl {
     return desc;
   }
 
-  template <typename T, class Tstate>
-  mfidxdim divisive_norm_module<T,Tstate>::bprop_size(mfidxdim &osize) {
-    EDEBUG(this->name() << ": " << osize << " b-> ...");
-    mfidxdim isize;
-    for (mfidxdim::iterator i = osize.begin(); i != osize.end(); ++i) {
-      if (i.exists()) isize.push_back(divconv->bprop_size(*i));
-      else isize.push_back_empty();
-    }
-    EDEBUG(this->name() << ": " << osize << " b-> " << isize);
-    return isize;
-  }
-
   ////////////////////////////////////////////////////////////////
   // subtractive_norm_module
 
@@ -412,11 +400,6 @@ namespace ebl {
     desc << "contrast_norm module with " << subnorm.describe()
 	 << " and " << divnorm.describe();
     return desc;
-  }
-
-  template <typename T, class Tstate>
-  mfidxdim contrast_norm_module<T,Tstate>::bprop_size(mfidxdim &osize) {
-    return divnorm.bprop_size(osize);
   }
 
   ////////////////////////////////////////////////////////////////

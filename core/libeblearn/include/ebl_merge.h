@@ -132,6 +132,10 @@ namespace ebl {
 		       float scale, fidxdim &stride);
     //! Set n default scales of input for merging.
     void default_scales(uint n);
+    //! Returns the output size yielded by scale k of in.
+    //! \param dref If non-null, check that output size is at least as big as reference
+    //!   target size and pad if necessary.
+    idxdim compute_output_sizes(mstate<Tstate> &in, uint k, idxdim *dref = NULL);
 
   private:
     std::vector<Tstate**> inputs;
@@ -150,6 +154,7 @@ namespace ebl {
     mfidxdim scales; //!< Scale of each input wrt input image.
     mfidxdim paddings; //!< Padding for each scale.
     vector<vector<int> > offsets; //!< Offsets.
+    uint reference_scale; //!< This scale's step is one and is the reference.
 
   // TEMP
   intg hextra, wextra;
