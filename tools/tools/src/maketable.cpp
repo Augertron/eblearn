@@ -56,7 +56,7 @@ bool yuv = false; // yuv layer 0 table
 bool uv = false; // uv layer 0 table
 bool stereo = false;
 bool temporal3 = false;
-bool text = false; // create table from text file
+bool btext = false; // create table from text file
 string text_filename; // filename for text file option
 
 // parse command line input
@@ -122,7 +122,7 @@ bool parse_args(int argc, char **argv) {
       } else if(strcmp(argv[i], "-text") == 0) {
         ++i; if (i >= argc) throw 1;
         text_filename = argv[i];
-        text = true;
+        btext = true;
       }
       else if (strcmp(argv[i], "-temporal3") == 0) {
 	++i; if (i >= argc) throw 1; end0 = atoi(argv[i]);
@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
     type << "temporal3_1-" << end0 << "_2-" << end1 << "_3-" << end2
 	 << "_4-" << end3 << "_5-" << end4 << "_6-" << end5;
     insize = 3;
-  } else if (text) {
+  } else if (btext) {
     table = text_table(text_filename);
     type << text_filename;
   } else
