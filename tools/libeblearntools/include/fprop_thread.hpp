@@ -204,7 +204,6 @@ namespace ebl {
    try {
      // configuration
      bool       silent         = conf.exists_true("silent");
-     Tnet	threshold      = (Tnet) conf.try_get_double("threshold", 0);
      bool	display	       = false;
      bool	mindisplay     = conf.exists_true("minimal_display");
      bool	display_states = conf.exists_true("display_states");
@@ -247,16 +246,11 @@ namespace ebl {
      pdetect = &detect;
      // gui
 #ifdef __GUI__
-     Tnet display_min = -1.7, display_max = 1.7, display_in_min = 0,
-       display_in_max = 255;
-     if (conf.exists("display_min"))
-       display_min = (Tnet) conf.get_double("display_min");
-     if (conf.exists("display_max"))
-       display_max = (Tnet) conf.get_double("display_max");
-     if (conf.exists("display_in_max"))
-       display_in_max = (Tnet) conf.get_double("display_in_max");
-     if (conf.exists("display_in_min"))
-       display_in_min = (Tnet) conf.get_double("display_in_min");
+     Tnet display_min = (Tnet) conf.try_get_double("display_min", -1.7);
+     Tnet display_max = (Tnet) conf.try_get_double("display_max", 1.7);
+     Tnet display_in_max = (Tnet) conf.try_get_double("display_in_max", 255);
+     Tnet display_in_min = (Tnet) conf.try_get_double("display_in_min", 0);
+     float zoom = conf.try_get_float("display_zoom", 1);
      module_1_1_gui	netgui;
      wid_states  = display_states ? new_window("network states"):0;
      night_mode();
@@ -267,8 +261,6 @@ namespace ebl {
        mout << "displaying in window " << wid << endl;
        night_mode();
      }
-     float		zoom = 1;
-     if (conf.exists("display_zoom")) zoom = conf.get_float("display_zoom");
      detector_gui<FPROP_SFUNC(Tnet)> dgui;
 #endif  
      // timing variables
@@ -317,11 +309,11 @@ namespace ebl {
 	 set_window_title(title.c_str());
 	 //	 clear_resize_window();
 	 if (mindisplay) {
-	   dgui.display(detect, frame, threshold, frame_name.c_str(),
+	   dgui.display(detect, frame, frame_name.c_str(),
 			0, 0, zoom, display_min, display_max,
 			wid, _name.c_str());
 	 } else {
-	   dgui.display_inputs_outputs(detect, frame, threshold,
+	   dgui.display_inputs_outputs(detect, frame,
 				       frame_name.c_str(), 0, 0, zoom,
 				       display_min, display_max, wid,
 				       _name.c_str(),
