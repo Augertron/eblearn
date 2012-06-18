@@ -106,7 +106,7 @@ intg            maxdata          = 0;	// 0 means no limitation
 unsigned int	mexican_hat_size = 0;
 midxdim 	kernelsz;	 // kernel size for pp
 int		deformations	 = -1;	// <= means no deformations
-string		type		 = "regular";
+string		stype		 = "regular";
 string          resize           = "bilinear";
 string		precision	 = "float";
 uint		sleep_delay	 = 0;	// sleep between frames displayed in ms
@@ -293,7 +293,7 @@ bool parse_args(int argc, char **argv) {
 	planar_loading = true;
       } else if (strcmp(argv[i], "-type") == 0) {
 	++i; if (i >= argc) throw 0;
-	type = argv[i];
+	stype = argv[i];
       } else if (strcmp(argv[i], "-precision") == 0) {
 	++i; if (i >= argc) throw 0;
 	precision = argv[i];
@@ -666,10 +666,10 @@ void compile() {
   }
   // allocate datasets
   dataset<Tdata> *ds = NULL;
-  if (!strcmp(type.c_str(), "grid"))
+  if (!strcmp(stype.c_str(), "grid"))
     ds = new grid_dataset<Tdata>(dataset_name.c_str(), images_root.c_str(),
 				 gridsz.dim(0), gridsz.dim(1));
-  else if (!strcmp(type.c_str(), "pascal")) {
+  else if (!strcmp(stype.c_str(), "pascal")) {
     pascal_dataset<Tdata> *d =
       new pascal_dataset<Tdata>(dataset_name.c_str(), images_root.c_str(),
 				ignore_difficult, ignore_truncated,
@@ -680,7 +680,7 @@ void compile() {
     if (max_aspect_ratio_set) d->set_max_aspect_ratio(max_aspect_ratio);
     if (minborders_set) d->set_minborders(minborders);
     if (max_jitt_match > 0.0) d->set_max_jitter_match(max_jitt_match);
-  } else if (!strcmp(type.c_str(), "pascalbg")) {
+  } else if (!strcmp(stype.c_str(), "pascalbg")) {
     ds = new pascalbg_dataset<Tdata>
       (dataset_name.c_str(), images_root.c_str(), outdir.c_str(), maxperclass,
        ignore_difficult, ignore_truncated, ignore_occluded, annotations.c_str(),
@@ -689,20 +689,20 @@ void compile() {
       force_label = true;
       label = "bg";
     }
-  } else if (!strcmp(type.c_str(), "pascalclear"))
+  } else if (!strcmp(stype.c_str(), "pascalclear"))
     ds = new pascalclear_dataset<Tdata>
       (dataset_name.c_str(), images_root.c_str(), outdir.c_str(),
        annotations.c_str());
-  else if (!strcmp(type.c_str(), "pascalfull"))
+  else if (!strcmp(stype.c_str(), "pascalfull"))
     ds = new pascalfull_dataset<Tdata>
       (dataset_name.c_str(), images_root.c_str(), outdir.c_str(),
        annotations.c_str());
-  else if (!strcmp(type.c_str(), "regular"))
+  else if (!strcmp(stype.c_str(), "regular"))
     ds = new dataset<Tdata>(dataset_name.c_str(), images_root.c_str());
-  else if (!strcmp(type.c_str(), "patch"))
+  else if (!strcmp(stype.c_str(), "patch"))
     ds = new patch_dataset<Tdata>(dataset_name.c_str(), images_root.c_str(),
 				  outdir.c_str(), maxperclass);
-  else eblerror("unknown dataset type " << type);
+  else eblerror("unknown dataset type " << stype);
   // set preprocessings
   ds->set_preprocessing(ppmodules);
   // set all parameters
@@ -786,7 +786,7 @@ MAIN_QTHREAD(int, argc, char**, argv) {
       // print info
       cout << "input parameters:" << endl;
       cout << "  dataset name: " << dataset_name << endl;
-      cout << "  dataset type: " << type << endl;
+      cout << "  dataset type: " << stype << endl;
       cout << "  dataset precision: " << precision << endl;
       cout << "  images root directory: " << images_root << endl;
       cout << "  annotations directory: " << annotations << endl;
