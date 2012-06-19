@@ -41,7 +41,7 @@ void test_lenet5_mnist(string *dir, string *errmsg, double eta) {
   typedef ubyte Tdata;
   typedef ubyte Tlab;
   bool display = true;
-  uint ninternals = 1;
+  //uint ninternals = 1;
   cout << endl;
   // for testing purposes, we always initialize the randomization with 0 so 
   // that we know the exact results. 
@@ -75,7 +75,7 @@ void test_lenet5_mnist(string *dir, string *errmsg, double eta) {
 
   l2_energy<Tnet> energy;
   class_answer<Tnet,Tdata,Tlab> answer(nclasses);
-  trainable_module<Tnet,Tdata,Tlab> trainable(energy, net, NULL, NULL, &answer);
+  trainable_module<Tnet,Tdata,Tlab> trainable(energy, net, NULL, &answer);
   supervised_trainer<Tnet, ubyte, ubyte> thetrainer(trainable, theparam);
 
 #ifdef __GUI__

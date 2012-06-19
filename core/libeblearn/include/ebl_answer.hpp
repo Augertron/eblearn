@@ -37,7 +37,7 @@ using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // answer_module
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
@@ -50,48 +50,51 @@ namespace ebl {
   answer_module<T,Tds1,Tds2,Tstate>::~answer_module() {
   }
 
+  // output interface //////////////////////////////////////////////////////////
+  
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::fprop(Tstate &in, Tstate &out) {
     eblerror("not implemented");
   }
 
-  // single-state propagation //////////////////////////////////////////////////
+  // datasource interface 1 ////////////////////////////////////////////////////
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::
-  fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
-    eblerror("not implemented");
+  fprop1(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
+    ds.fprop_data(out);
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::
-  bprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
+  bprop1(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
     // empty bprop by default
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::
-  bbprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
+  bbprop1(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
     // empty bbprop by default
   }
 
-  // multi-state propagation ///////////////////////////////////////////////////
+  // datasource interface 2 ////////////////////////////////////////////////////
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::
-  fprop(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
-    eblerror("not implemented");
+  fprop2(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
+    if (out.size() == 0) out.push_back(new Tstate());
+    ds.fprop_label_net(out[0]);
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::
-  bprop(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
+  bprop2(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
     // empty bprop by default
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void answer_module<T,Tds1,Tds2,Tstate>::
-  bbprop(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
+  bbprop2(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &out) {
     // empty bbprop by default
   }
 
@@ -285,23 +288,24 @@ namespace ebl {
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void class_answer<T,Tds1,Tds2,Tstate>::
-  fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
+  fprop2(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &outm) {
     // get label, i.e. input 2
     ds.fprop_label(last_label);
     // select the target given the class id
     idx<T> target = targets.select(0, (int) last_label.x.get());
+    // output size
+    idxdim d(ds.sample_dims()), dt(target.get_idxdim());
+    d.setdims(1);
+    for (uint i = 0; i < dt.order(); ++i)
+      d.setdim(i, dt.dim(i));    
     // resize out if necessary
+    if (outm.size() == 0) outm.push_back(new Tstate(d));
+    Tstate &out = outm[0];
     idx<T> outx = out.x;
     if (resize_output) {
-      idxdim d(ds.sample_dims()), dt(target.get_idxdim());
-      d.setdims(1);
-      for (uint i = 0; i < dt.order(); ++i)
-	d.setdim(i, dt.dim(i));
-      if (out.x.get_idxdim() != d) {
-	if (out.x.order() != d.order())
-	  out = Tstate(d); // re-allocating
-	else
-	  out.resize(d); // just resizing
+      if (outx.get_idxdim() != d) {
+	if (outx.order() != d.order()) out = Tstate(d); // re-allocating
+	else out.resize(d); // just resizing
 	outx = out.x;
       }
     } else { // if not resizing, narrow to the number of targets
@@ -444,8 +448,10 @@ namespace ebl {
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void scalerclass_answer<T,Tds1,Tds2,Tstate>::
-  fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
+  fprop2(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &outm) {
     // if out has the wrong order, allocate.
+    if (outm.size() == 0) outm.push_back(new Tstate);
+    Tstate &out = outm[0];
     if (out.x.order() != ds.sample_dims().order()) {
       idxdim d = ds.sample_dims();
       d.setdims(1);
@@ -456,7 +462,9 @@ namespace ebl {
     if (out_class.x.get_idxdim() != target.get_idxdim())
       out_class.resize(target.get_idxdim());
     // fprop regular target
-    class_answer<T,Tds1,Tds2,Tstate>::fprop(ds, out_class);
+    mstate<Tstate> mout_class;
+    mout_class.push_back(out_class);
+    class_answer<T,Tds1,Tds2,Tstate>::fprop2(ds, mout_class);
     uint jitt_offset = out_class.x.dim(0);
     // get jitter info
     ds.fprop_jitter(jitter);
@@ -623,7 +631,7 @@ namespace ebl {
     : answer_module<T,Tds1,Tds2,Tstate>(spatial_ ? 3 : 1, name_),
       negative_id(negative_id_), positive_id(positive_id_),
       raw_confidence(raw_confidence_), jitter(1), threshold((T) threshold_),
-	  spatial(spatial_), jsize(answer_module<T,Tds1,Tds2,Tstate>::nfeatures) {
+      spatial(spatial_), jsize(answer_module<T,Tds1,Tds2,Tstate>::nfeatures) {
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
@@ -670,7 +678,7 @@ namespace ebl {
 	      ooo.set(iii.get(1), 3); // h answer
 	      ooo.set(iii.get(2), 4); // w answer
 	    }
-	    //ooo.set((T) std::min((T) 1, std::max((T) 0, i / 2 + 1)), 1); // conf
+	  //ooo.set((T) std::min((T) 1, std::max((T) 0, i / 2 + 1)), 1); // conf
 	  //	  ooo.set(std::max((T) 0, i + 1), 1); // conf
 	  }
 	}
@@ -680,7 +688,9 @@ namespace ebl {
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void scaler_answer<T,Tds1,Tds2,Tstate>::
-  fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out){
+  fprop2(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &outm){
+    if (outm.size() == 0) outm.push_back(new Tstate);
+    Tstate &out = outm[0];
     // check output size
     idxdim d(out.x);
     d.setdim(0, jsize);
@@ -731,7 +741,9 @@ namespace ebl {
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
   void regression_answer<T,Tds1,Tds2,Tstate>::
-  fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out) {
+  fprop2(labeled_datasource<T,Tds1,Tds2> &ds, mstate<Tstate> &outm) {
+    if (outm.size() == 0) outm.push_back(new Tstate);
+    Tstate &out = outm[0];
     ds.fprop_label_net(out);
   }
 
@@ -817,15 +829,17 @@ namespace ebl {
   trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
   trainable_module(ebm_2<Tin1,Tin2,Ten> &energy_, module_1_1<T,Tin1> &mod1_,
 		   module_1_1<T,Tin2> *mod2_, 
-		   answer_module<T,Tds1,Tds2,Tin1> *dsmod1_,
-		   answer_module<T,Tds1,Tds2,Tin2> *dsmod2_, const char *name_,
-		   const char *switcher)
-    : energy_mod(energy_), mod1(mod1_), mod2(mod2_), dsmod1(dsmod1_),
-      dsmod2(dsmod2_), ms_switch(NULL)
+		   answer_module<T,Tds1,Tds2,Tin1> *dsmod_,
+		   const char *name_, const char *switcher)
+    : energy_mod(energy_), mod1(mod1_), mod2(mod2_), dsmod(dsmod_),
+      ms_switch(NULL)
       // TODO: fix hardcorded order
       // in1(1,1,1), out1(1,1,1), in2(1,1,1), out2(1,1,1), answers(1,1,1),
       // targets(1,1,1), mod_name(name_), tmp_energy(1,1,1)
   {
+    targets.push_back(new Tin1);
+    msin2.push_back(new Tin2);
+    msout2.push_back(new Tin2);
     // try to find switcher module in mod1
     if (switcher) {
       std::vector<ms_module<T,Tin1>*> all = arch_find_all(&mod1, ms_switch);
@@ -856,42 +870,23 @@ namespace ebl {
   fprop(labeled_datasource<T,Tds1,Tds2> &ds, Ten &energy) {
     // flow 1 //////////////////////////////////////////////////////////////////
     TIMING2("between end of fprop/bprop and sample retrieval");
-    if (ds.mstate_samples() || mod1.mstate_input()) {//input must be multi-state
-      // produce state 1
-      if (dsmod1) // specific data production
-	dsmod1->fprop(ds, msin1);
-      else // generic, simply take ds' input 1
-	ds.fprop_data(msin1);
-      TIMING2("sample retrieval");
-      // fprop flow 1
-      update_scale(ds);
-      mod1.fprop(msin1, out1);
-      TIMING2("entire fprop");
-    } else {
-      // produce state 1
-      if (dsmod1) // specific data production
-	dsmod1->fprop(ds, in1);
-      else // generic, simply take ds' input 1
-	ds.fprop_data(in1);
-      TIMING2("sample retrieval");
-      // fprop flow 1
-      mod1.fprop(in1, out1);
-      TIMING2("entire fprop");
-    }
+    // produce input state 1
+    if (dsmod) dsmod->fprop1(ds, msin1); // specific data production
+    else ds.fprop_data(msin1);           // generic, simply take ds' input 1
+    TIMING2("sample retrieval");
+    // fprop flow 1
+    update_scale(ds);
+    mod1.fprop(msin1, out1);
+    TIMING2("entire fprop");
 
     // flow 2 //////////////////////////////////////////////////////////////////
-    Tin2 *i2 = &in2;
-    if (!mod2) // no main module in flow 2, put input directly into out2
-      i2 = &out2;
-    // produce state 2
-    if (dsmod2) // specific data production
-      dsmod2->fprop(ds, *i2);
-    else // generic, simply take ds' input 2
-      ds.fprop_label_net(*i2);
+    msin2[0] = in2;
+    // produce input state 2
+    if (dsmod) dsmod->fprop2(ds, msin2); // specific data production
+    else ds.fprop_label_net(msin2[0]);      // generic, simply take ds' input 2
     // fprop flow 2
-    if (mod2)
-      mod2->fprop(*i2, out2);
-
+    if (mod2) mod2->fprop(msin2[0], out2);
+    else out2 = msin2[0];
     // energy //////////////////////////////////////////////////////////////////
     energy_mod.fprop(out1, out2, energy);
   }
@@ -906,12 +901,11 @@ namespace ebl {
     out2.clear_dx();
     // bprop
     energy_mod.bprop(out1, out2, energy);
-    if (ds.mstate_samples() || mod1.mstate_input())
-      mod1.bprop(msin1, out1);
-    else
-      mod1.bprop(in1, out1);
-    if (dsmod2)
-      dsmod2->bprop(ds, out2);
+    mod1.bprop(msin1, out1);
+    if (dsmod) {
+      msout2[0] = out2;
+      dsmod->bprop2(ds, msout2);
+    }
     TIMING2("entire bprop");
   }
 
@@ -925,12 +919,11 @@ namespace ebl {
     out2.clear_ddx();
     // bbprop
     energy_mod.bbprop(out1, out2, energy);
-    if (ds.mstate_samples() || mod1.mstate_input())
-      mod1.bbprop(msin1, out1);
-    else
-      mod1.bbprop(in1, out1);
-    if (dsmod2)
-      dsmod2->bbprop(ds, out2);
+    mod1.bbprop(msin1, out1);
+    if (dsmod) {
+      msout2[0] = out2;
+      dsmod->bbprop2(ds, msout2);
+    }
     TIMING2("entire bbprop");
   }
 
@@ -947,18 +940,15 @@ namespace ebl {
   void trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
   forget(forget_param_linear &fp) {
     mod1.forget(fp);
-    if (mod2)
-      mod2->forget(fp);
-    if (dsmod2)
-      dsmod2->forget(fp);
+    if (mod2) mod2->forget(fp);
+    if (dsmod) dsmod->forget(fp);
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
 	    class Ten>
   const Tin1& trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::compute_answers() {
-    if (!dsmod2)
-      eblerror("dsmod2 must be defined to compute answers");
-    dsmod2->fprop(out1, answers);
+    if (!dsmod) eblerror("dsmod must be defined to compute answers");
+    dsmod->fprop(out1, answers);
     return answers;
   }
 
@@ -966,9 +956,8 @@ namespace ebl {
 	    class Ten>
   bool trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::correct(Tin1 &answer,
 							    Tin1 &label) {
-    if (!dsmod2)
-      eblerror("dsmod2 must be defined to compute correctness");
-    return dsmod2->correct(answer, label);
+    if (!dsmod) eblerror("dsmod must be defined to compute correctness");
+    return dsmod->correct(answer, label);
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
@@ -976,32 +965,27 @@ namespace ebl {
   void trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
   update_log(classifier_meter &log, intg age, idx<T> &energy, idx<T> &answer,
 	     idx<T> &label, idx<T> &target, idx<T> &rawout) {
-    if (!dsmod2)
-      eblerror("dsmod2 must be defined to update log");
-    dsmod2->update_log(log, age, energy, answer, label, target, rawout);
+    if (!dsmod) eblerror("dsmod must be defined to update log");
+    dsmod->update_log(log, age, energy, answer, label, target, rawout);
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
 	    class Ten>
   void trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::compute_answers(Tin1 &ans) {
-    if (!dsmod2)
-      eblerror("dsmod2 must be defined to compute answers");
-    dsmod2->fprop(out1, ans);
+    if (!dsmod) eblerror("dsmod must be defined to compute answers");
+    dsmod->fprop(out1, ans);
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
 	    class Ten>
   idx<T> trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::
   compute_targets(labeled_datasource<T,Tds1,Tds2> &ds) {
-    if (!dsmod2)
-      eblerror("dsmod2 must be defined to compute targets");
+    if (!dsmod) eblerror("dsmod must be defined to compute targets");
     scalerclass_energy<T,Tin1> *sce =
       dynamic_cast<scalerclass_energy<T,Tin1>*>(&energy_mod);
-    if (sce)
-      targets.x = sce->last_target_raw;
-    else
-      dsmod2->fprop(ds, targets);
-    return targets.x;
+    if (sce) targets[0].x = sce->last_target_raw;
+    else dsmod->fprop2(ds, targets);
+    return targets[0].x;
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tin1, class Tin2,
@@ -1015,8 +999,7 @@ namespace ebl {
   std::string trainable_module<T,Tds1,Tds2,Tin1,Tin2,Ten>::describe() {
     std::string s;
     s << "trainer module " << this->name() << ": " << energy_mod.describe();
-    if (dsmod2)
-      s << ", " << dsmod2->describe();
+    if (dsmod) s << ", " << dsmod->describe();
     return s;
   }
 

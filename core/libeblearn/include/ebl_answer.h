@@ -76,31 +76,36 @@ namespace ebl {
     answer_module(uint nfeatures, const char *name = "answer_module");
     virtual ~answer_module();
 
-    // single-state propagation ////////////////////////////////////////////////
+    // output interface ////////////////////////////////////////////////////////
     //! Produce a vector of answers given input 'in'. e.g. 'out' contains
     //! answers in this order: class id, confidence.
     virtual void fprop(Tstate &in, Tstate &out);
-    //! Produce target matrix into 'out' for training, given a datasource 'ds'.
-    virtual void fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
-    //! Back-propagates gradients. This might be useful if answer module has
-    //! learnable internal parameters.
-    virtual void bprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
-    //! Back-propagates 2nd derivatives. This might be useful if answer module
-    //! has learnable internal parameters.
-    virtual void bbprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
 
-    // multi-state propagation /////////////////////////////////////////////////
+    // datasource interface for flow 1 /////////////////////////////////////////
     //! Produce target matrix into 'out' for training, given a datasource 'ds'.
-    virtual void fprop(labeled_datasource<T,Tds1,Tds2> &ds,
-		       mstate<Tstate> &out);
+    virtual void fprop1(labeled_datasource<T,Tds1,Tds2> &ds,
+			mstate<Tstate> &out);
     //! Back-propagates gradients. This might be useful if answer module has
     //! learnable internal parameters.
-    virtual void bprop(labeled_datasource<T,Tds1,Tds2> &ds,
-		       mstate<Tstate> &out);
+    virtual void bprop1(labeled_datasource<T,Tds1,Tds2> &ds,
+			mstate<Tstate> &out);
     //! Back-propagates 2nd derivatives. This might be useful if answer module
     //! has learnable internal parameters.
-    virtual void bbprop(labeled_datasource<T,Tds1,Tds2> &ds,
+    virtual void bbprop1(labeled_datasource<T,Tds1,Tds2> &ds,
+			 mstate<Tstate> &out);
+  
+    // datasource interface for flow 2 /////////////////////////////////////////
+    //! Produce target matrix into 'out' for training, given a datasource 'ds'.
+    virtual void fprop2(labeled_datasource<T,Tds1,Tds2> &ds,
 			mstate<Tstate> &out);
+    //! Back-propagates gradients. This might be useful if answer module has
+    //! learnable internal parameters.
+    virtual void bprop2(labeled_datasource<T,Tds1,Tds2> &ds,
+			mstate<Tstate> &out);
+    //! Back-propagates 2nd derivatives. This might be useful if answer module
+    //! has learnable internal parameters.
+    virtual void bbprop2(labeled_datasource<T,Tds1,Tds2> &ds,
+			 mstate<Tstate> &out);
 
     ////////////////////////////////////////////////////////////////////////////
     //! Returns true if 'answer' matches with 'label'.
@@ -142,7 +147,10 @@ namespace ebl {
     //! Produce a vector of answers given input 'in'. 'out' contains answers
     //! in this order: class id and confidence.
     virtual void fprop(Tstate &in, Tstate &out);
-    virtual void fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
+    //! Custom transformation of flow 2: datasource's labels are converted
+    //! to target vectors and placed in 'out'.
+    virtual void fprop2(labeled_datasource<T,Tds1,Tds2> &ds,
+			mstate<Tstate> &out);
     //! Returns true if 'answer' matches with 'label'.
     virtual bool correct(Tstate &answer, Tstate &label);
     //! Update the 'log' according to this type of answer module.
@@ -201,7 +209,8 @@ namespace ebl {
     //! Produce a vector of answers given input 'in'. 'out' contains answers
     //! in this order: class id and confidence.
     virtual void fprop(Tstate &in, Tstate &out);
-    virtual void fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
+    virtual void fprop2(labeled_datasource<T,Tds1,Tds2> &ds,
+			mstate<Tstate> &out);
     //! Update the 'log' according to this type of answer module.
     virtual void update_log(classifier_meter &log, intg age, idx<T> &energy,
 			    idx<T> &answer, idx<T> &label, idx<T> &target,
@@ -251,7 +260,8 @@ namespace ebl {
     virtual void fprop(Tstate &in, Tstate &out);
     //! Copy a single target value into 'out' given datasource 'ds'.
     //! If negative class, target value is 0, the scale otherwise.
-    virtual void fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
+    virtual void fprop2(labeled_datasource<T,Tds1,Tds2> &ds,
+			mstate<Tstate> &out);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
     // members
@@ -286,7 +296,8 @@ namespace ebl {
     virtual void fprop(Tstate &in, Tstate &out);
     //! This method simply takes the current label in 'ds' and copies it to
     //! the output without transformation.
-    virtual void fprop(labeled_datasource<T,Tds1,Tds2> &ds, Tstate &out);
+    virtual void fprop2(labeled_datasource<T,Tds1,Tds2> &ds,
+			mstate<Tstate> &out);
     //! Returns true if the L1 distance between 'answer' and 'label' is less
     //! than internal threshold.
     virtual bool correct(Tstate &answer, Tstate &label);
@@ -340,16 +351,13 @@ namespace ebl {
     //! \param mod1 The 1st module.
     //! \param mod2 The 2nd module, optional because sometimes no processing
     //!   is required on the 2nd flow of data.
-    //! \param dsmod1 The module that picks/preprocesses data from ds to mod1,
-    //!   by default (null), will simply pass 'input' data from ds.
-    //! \param dsmod2 The module that picks/preprocesses data from ds to mod2,
-    //!   by default (null), will simply pass 'label' data from ds.
+    //! \param dsmod The module that picks/preprocesses data from ds to mod1
+    //!   and mod2. If NULL, will simply pass 'input' and 'label' data from ds.
     //! \param switcher Name of the module used to switch based on scale info.
     trainable_module(ebm_2<Tin1,Tin2,Ten> &energy,
 		     module_1_1<T,Tin1> &mod1,
 		     module_1_1<T,Tin2> *mod2 = NULL,
-		     answer_module<T,Tds1,Tds2,Tin1> *dsmod1 = NULL,
-		     answer_module<T,Tds1,Tds2,Tin2> *dsmod2 = NULL,
+		     answer_module<T,Tds1,Tds2,Tin1> *dsmod = NULL,
 		     const char *name = "trainable_module",
 		     const char *switcher = "");
     virtual ~trainable_module();
@@ -398,16 +406,16 @@ namespace ebl {
     ebm_2<Tin1,Tin2,Ten>		&energy_mod;
     module_1_1<T,Tin1,Tin1>		&mod1;
     module_1_1<T,Tin1,Tin1>		*mod2;
-    answer_module<T,Tds1,Tds2,Tin1>	*dsmod1;
-    answer_module<T,Tds1,Tds2,Tin2>	*dsmod2;
+    answer_module<T,Tds1,Tds2,Tin1>	*dsmod;
     // intermediate buffers
     mstate<Tin1>			 msin1;
-    Tin1				 in1;
+    mstate<Tin2>			 msin2;
+    mstate<Tin2>			 msout2;
     Tin1				 out1;	//!< Output of mod1.
     Tin2				 in2;
     Tin2				 out2;
     Tin1				 answers;
-    Tin1				 targets;
+    mstate<Tin1>			 targets;
     string				 mod_name;
     Ten					 tmp_energy;
     ms_module<T,Tin1>                    *ms_switch;
@@ -415,8 +423,7 @@ namespace ebl {
 
   // utility functions /////////////////////////////////////////////////////////
   
-  template <typename T>
-    void print_targets(idx<T> &targets);
+  template <typename T> void print_targets(idx<T> &targets);
     
 } // end namespace ebl
 

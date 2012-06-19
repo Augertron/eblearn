@@ -133,7 +133,7 @@ namespace ebl {
       ds.fprop_label_net(*st.label);
       correct = st.test_sample(ds, *st.label, *st.answers, infp);
       ds.next();
-      idx<Tnet> m = st.machine.in1.x.select(0, 0);
+      idx<Tnet> m = st.machine.msin1[0].x.select(0, 0);
 
       // 1. display dataset with incorrect and correct answers
       if (nh1 < nh) {
