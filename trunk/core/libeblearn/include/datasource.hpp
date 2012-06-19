@@ -301,36 +301,35 @@ namespace ebl {
     if (multimat) { // multiple matrices per sample
       for (uint i = 0; i < nstates; ++i) {
 	idx<Tdata> dat;
-	if (datas.order() == 2)
-	  dat = datas.get(it, i);
-	else if (datas.order() == 1)
-	  dat = datas.get(it);
+	if (datas.order() == 2) dat = datas.get(it, i);
+	else if (datas.order() == 1) dat = datas.get(it);
 	else eblerror("not implemented");
 	// resize if necessary
-	idxdim d(dat);
+	idxdim d(dat);	
 	Tstate &ts = out[i];
-	if (ts.x.get_idxdim() != d)
-	  ts.resize(d);
-	// copy (and cast) data
-	idx_copy(dat, ts.x);
-	if (bias != 0.0)
-	  idx_addc(ts.x, bias, ts.x);
-	if (coeff != 1.0)
-	  idx_dotc(ts.x, coeff, ts.x);
+	if (ts.x.get_idxdim() != d) ts.resize(d);
+	fprop_data(ts);
+	
+	// // copy (and cast) data
+	// idx_copy(dat, ts.x);
+	// if (bias != 0.0)
+	//   idx_addc(ts.x, bias, ts.x);
+	// if (coeff != 1.0)
+	//   idx_dotc(ts.x, coeff, ts.x);
       }
-    } else { // single matrix per sample
-      // resize if necessary
-      Tstate &ts = out[0];
-      if (ts.x.get_idxdim() != sampledims)
-	ts.resize(sampledims);
-      // copy data
-      idx<Tdata> dat = data[it];
-      idx_copy(dat, ts.x);
-      if (bias != 0.0)
-	idx_addc(ts.x, bias, ts.x);
-      if (coeff != 1.0)
-	idx_dotc(ts.x, coeff, ts.x);
-    }
+    } else fprop_data(out[0]); // single matrix per sample
+    //   // resize if necessary
+    //   Tstate &ts = out[0];
+    //   if (ts.x.get_idxdim() != sampledims)
+    // 	ts.resize(sampledims);
+    //   // copy data
+    //   idx<Tdata> dat = data[it];
+    //   idx_copy(dat, ts.x);
+    //   if (bias != 0.0)
+    // 	idx_addc(ts.x, bias, ts.x);
+    //   if (coeff != 1.0)
+    // 	idx_dotc(ts.x, coeff, ts.x);
+    // }
   }
 
   template <typename Tnet, typename Tdata>
@@ -3087,7 +3086,7 @@ namespace ebl {
     if (coeff != 1)
       idx_dotc(out.x, coeff, out.x);
   }
-
+  
   template <typename Tnet, typename Tdata, typename Tlabel>
   void mnist_datasource<Tnet, Tdata, Tlabel>::
   init(idx<Tdata> &data_, idx<Tlabel> &labels_, const char *name_) {

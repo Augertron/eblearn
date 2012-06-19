@@ -567,7 +567,7 @@ namespace ebl {
   //! the true desired output dimensions, but preprocessing must be done before
   //! copying it to avoid edge detection between the empty parts of the image.
   template <typename T, class Tstate = bbstate_idx<T> >
-    class resizepp_module: virtual public resize_module<T,Tstate> {
+    class resizepp_module: public resize_module<T,Tstate> {
   public:
     //! Constructor. Preprocessing module pp will be deleted upon destruction.
     //! \param size The target dimensions (heightxwidth)

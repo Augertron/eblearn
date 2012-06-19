@@ -1112,7 +1112,7 @@ namespace ebl {
 
       // allocate trainer module
       module = new trainable_module<T,Tds1,Tds2,Tstate>
-	(*energy, net, NULL, NULL, &answer, name.c_str(), switcher.c_str());
+	(*energy, net, NULL, &answer, name.c_str(), switcher.c_str());
     }
     if (!module)
       eblerror("no trainer module found");

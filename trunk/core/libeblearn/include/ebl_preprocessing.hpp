@@ -808,7 +808,7 @@ namespace ebl {
       height = d.dim(1) + modadd.dim(0);
       width = d.dim(2) + modadd.dim(1);
     }
-    if (hratio == 0 || wratio == 0) {      
+    if ((height != 0 && width != 0) && (hratio == 0 || wratio == 0)) {      
       // set output region
       if (!outrect_set)
 	outrect = rect<int>(0, 0, height, width);
@@ -833,7 +833,7 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void resize_module<T,Tstate>::remember_regions(intg outh, intg outw,
-						   rect<int> &r) {
+						 rect<int> &r) {
     // remember input box
     input_bbox = r;
     if (preserve_ratio) { // fit input ratio into target ratio
@@ -953,11 +953,11 @@ namespace ebl {
   }
   
   template <typename T, class Tstate>
-  void resize_module<T,Tstate>::bprop(mstate<Tstate> &in, mstate<Tstate> &out) {    
+  void resize_module<T,Tstate>::bprop(mstate<Tstate> &in, mstate<Tstate> &out){
   }
 
   template <typename T, class Tstate>
-  void resize_module<T,Tstate>::bbprop(mstate<Tstate> &in, mstate<Tstate> &out) {    
+  void resize_module<T,Tstate>::bbprop(mstate<Tstate> &in, mstate<Tstate> &out){
   }
 
   template <typename T, class Tstate>
@@ -1027,7 +1027,7 @@ namespace ebl {
       if (osize.exists(i)) {
 	if (original_bboxes[0].height != 0
 	    && original_bboxes[0].width != 0) {
-	  fidxdim d(1, input_bboxes[0].height / (float) original_bboxes[0].height,
+	  fidxdim d(1, input_bboxes[0].height /(float)original_bboxes[0].height,
 		    input_bboxes[0].width / (float) original_bboxes[0].width);
 	  fidxdim o = osize[i] * d;
 	  isize.push_back_new(o);
@@ -1673,12 +1673,9 @@ namespace ebl {
 
   template <typename T, class Tstate>
   laplacian_pyramid_module<T,Tstate>::~laplacian_pyramid_module() {
-    for (uint i = 0; i < norms.size(); ++i)
-      delete norms[i];
-    for (uint i = 0; i < cnorms.size(); ++i)
-      delete cnorms[i];
-    for (uint i = 0; i < pads.size(); ++i)
-      delete pads[i];
+    for (uint i = 0; i < norms.size(); ++i)  delete norms[i];
+    for (uint i = 0; i < cnorms.size(); ++i) delete cnorms[i];
+    for (uint i = 0; i < pads.size(); ++i)   delete pads[i];
   }
   
   template <typename T, class Tstate>
@@ -1876,7 +1873,7 @@ namespace ebl {
       // shift dim 0 to 2 and copy to have continuous data
       idx<T> im = in.x.shift_dim(0, 2);
       // if input is big enough start with tgt0
-      if (false) {//ind >= tgt0) { // input region is big enough to start at tgt0
+      if (false) {//ind >= tgt0) { //input region is big enough to start at tgt0
 	// resize bilinearly to tgt0
 	resize(im, tgt0, inr, outr);
 	// blur im into blurred
