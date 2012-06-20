@@ -289,7 +289,7 @@ endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 add_executable (${NARROW_BINARY_NAME} src/narrow.cpp)
 # link executable with external libraries
-target_link_libraries (${NARROW_BINARY_NAME} idx)
+target_link_libraries (${NARROW_BINARY_NAME} idx eblearntools)
 
 # compile executable: videoffinder
 ################################################################################
