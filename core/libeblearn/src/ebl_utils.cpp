@@ -284,18 +284,18 @@ namespace ebl {
         eblwarn(" Wrong file format, expected number");
       inputs.push_back(scanint);
       // cout << scanint << " "<<endl;
-      fscanf (fp, "%c", &scanchar);
+      ret = fscanf (fp, "%c", &scanchar);
       if (scanchar != ',')
         eblwarn(" Wrong file format, expected a comma character ");
       // scanchar = fscan_char(fp);
       // cout << scanchar << " "<<endl;
       // scanint = fscan_int(fp);
-      fscanf (fp, "%d", &scanint);
+      ret = fscanf (fp, "%d", &scanint);
       if (scanint < 0)
         eblwarn(" Wrong file format, expected number");
       outputs.push_back(scanint);
       // cout << scanint << " "<<endl;
-      fscanf (fp, "%c", &scanchar);
+      ret = fscanf (fp, "%c", &scanchar);
       if (scanchar != ';')
         eblwarn(" Wrong file format, expected a semicolon character ");
       // scanchar = fscan_char(fp);
