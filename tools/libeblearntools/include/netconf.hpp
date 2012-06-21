@@ -172,7 +172,7 @@ namespace ebl {
     int num_devices = eblcuda_count_devices();    
     if (tid != -1 && num_devices > 0) {
       gpu_id = tid % num_devices;
-      // cout << "Thread " << tid <<":\tUsing GPU:" << gpu_id << endl;
+      cout << "Thread " << tid <<":\tUsing GPU:" << gpu_id << endl;
     }
     if (conf.exists("gpu_id"))
       gpu_id = conf.get_uint("gpu_id");
