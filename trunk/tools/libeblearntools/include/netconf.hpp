@@ -83,7 +83,7 @@ namespace ebl {
   module_1_1<T,Tstate>*
   create_network(parameter<T, Tstate> &theparam, configuration &conf,
 		 intg &thick, int nout,
-		 const char *varname, bool isbranch, bool narrow,
+		 const char *varname, int tid, bool isbranch, bool narrow,
 		 intg narrow_dim, intg narrow_size, intg narrow_offset,
 		 vector<layers<T,Tstate>*> *branches,
 		 vector<intg> *branches_thick,
@@ -124,7 +124,7 @@ namespace ebl {
 	try {
 	  module = create_module<T,Tstate>
 	    (name, theparam, conf, nout, thick, *shared, *loaded,
-	     branches, branches_thick);
+	     branches, branches_thick, tid);
 	} catch (int err) { errid = err; }
 	// add module to layers, if not null
 	if (module) {
@@ -163,13 +163,20 @@ namespace ebl {
 		map<string,module_1_1<T,Tstate>*> &shared,
 		map<string,module_1_1<T,Tstate>*> &loaded,
 		vector<layers<T,Tstate>*> *branches,
-		vector<intg> *branches_thick) {
+		vector<intg> *branches_thick,
+                int tid) {
+#ifdef __CUDA__
     // set some cuda variables
     bool use_gpu = conf.exists_bool("use_gpu");
     int gpu_id = -1;
+    int num_devices = eblcuda_count_devices();    
+    if (tid != -1 && num_devices > 0) {
+      gpu_id = tid % num_devices;
+      // cout << "Thread " << tid <<":\tUsing GPU:" << gpu_id << endl;
+    }
     if (conf.exists("gpu_id"))
       gpu_id = conf.get_uint("gpu_id");
-
+#endif
     string type = strip_last_num(name);
     module_1_1<T,Tstate> *module = NULL;
     // switch on each possible type of module
@@ -223,8 +230,8 @@ namespace ebl {
 	  }
 	  // create module
 	  if (states.size() > 0)
-	  module = (module_1_1<T,Tstate>*)
-	    new merge_module<T,Tstate>(states, concat_dim, name.c_str());
+            module = (module_1_1<T,Tstate>*)
+              new merge_module<T,Tstate>(states, concat_dim, name.c_str());
 	  else // old-style with branches (TODO: remove)
 	    module = (module_1_1<T,Tstate>*)
 	      new merge_module<T,Tstate>(inputs, concat_dim, name.c_str(),
@@ -295,7 +302,7 @@ namespace ebl {
       cout << endl;
       // add branch
       branch = (layers<T,Tstate>*) create_network<T,Tstate>
-	(theparam, conf, thick, nout, name.c_str(), true,
+	(theparam, conf, thick, nout, name.c_str(), tid, true,
 	 narrow, narrow_dim, narrow_size, narrow_offset, branches,
 	 branches_thick, &shared, &loaded);
       branches->push_back(branch);
@@ -379,7 +386,8 @@ namespace ebl {
 	if (conf.exists(sp)) {
 	  module_1_1<T,Tstate>* m =
 	    create_network<T,Tstate>(theparam, conf, thick2, nout, sp.c_str(),
-				     false, 0,0,0,0, branches, branches_thick,
+                                     tid, false, 0,0,0,0, branches, 
+                                     branches_thick,
 				     &shared, &loaded);
 	  // check the module was created
 	  if (!m) {
@@ -570,17 +578,23 @@ namespace ebl {
       idx<intg> tblmax = table.select(1, 1);
       thick = 1 + idx_max(tblmax);
       bool crop = true;
+#ifdef __CUDA__
       bool use_gpu_m = use_gpu;
       int gpu_id_m = gpu_id;
       get_param(conf, name, "use_gpu", use_gpu_m, true);
       get_param(conf, name, "gpu_id", gpu_id_m, true);
+#endif
       // create module
       if (!type.compare("conv")) // conv module
 	module = (module_1_1<T,Tstate>*)
 	  //	  new convolution_module_replicable<T,Tstate>
 	  new convolution_module<T,Tstate>
 	  (bshared_exists? NULL : &theparam, kernel, stride, table,
-	   name.c_str(), crop, use_gpu_m, gpu_id_m);
+	   name.c_str(), crop
+#ifdef __CUDA__
+           , use_gpu_m, gpu_id_m
+#endif
+           );
       else if (!type.compare("convl")) // conv layer
 	module = (module_1_1<T,Tstate>*)
 	  new convolution_layer<T,Tstate>
@@ -650,13 +664,20 @@ namespace ebl {
       idxdim stride = string_to_idxdim(sstride);
       intg th = thick;
       get_param(conf, name, "thickness", th, true);
-      // bool crop = true;
-      // bool use_gpu_m = use_gpu;
-      // int gpu_id_m = gpu_id;
-      // get_param(conf, name, "use_gpu", use_gpu_m, true);
-      // get_param(conf, name, "gpu_id", gpu_id_m, true);
+      bool crop = true;
+#ifdef __CUDA__
+      bool use_gpu_m = use_gpu;
+      int gpu_id_m = gpu_id;
+      get_param(conf, name, "use_gpu", use_gpu_m, true);
+      get_param(conf, name, "gpu_id", gpu_id_m, true);
+#endif
       module = (module_1_1<T,Tstate>*)
-	new lppooling_module<T,Tstate>(th, kernel, stride, 2, name.c_str());
+	new lppooling_module<T,Tstate>(th, kernel, stride, 2, name.c_str()
+                                       ,crop
+#ifdef __CUDA__
+                                       , use_gpu_m, gpu_id_m
+#endif
+                                       );
       // ,crop, use_gpu_m, gpu_id_m);
     }
     // l4pooling ///////////////////////////////////////////////////////////////
@@ -874,8 +895,19 @@ namespace ebl {
       module = (module_1_1<T,Tstate>*) new tanh_shrink_module<T,Tstate>
 	(bshared_exists? NULL : &theparam, thick, diags);
       // tanh ///////////////////////////////////////////////////////////////
-    } else if (!type.compare("tanh"))
-      module = (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>();
+    } else if (!type.compare("tanh")) {
+#ifdef __CUDA__
+      bool use_gpu_m = use_gpu;
+      int gpu_id_m = gpu_id;
+      get_param(conf, name, "use_gpu", use_gpu_m, true);
+      get_param(conf, name, "gpu_id", gpu_id_m, true);
+#endif
+      module = (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>(
+#ifdef __CUDA__
+                                       use_gpu_m, gpu_id_m
+#endif
+);
+    }
     // stdsig //////////////////////////////////////////////////////////////
     else if (!type.compare("stdsig"))
       module = (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>();

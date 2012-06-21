@@ -163,10 +163,14 @@ namespace ebl {
 	// copy flat input to output
 	// TODO: tmp buffer less efficient than direct copy which but requires
 	// continuous data, make idx pointing to oo with flat's dims?
-	idx<T> tmp(iw.get_idxdim());
-	idx_copy(iw, tmp);
-	iw = tmp.view_as_order(1);
-	idx_copy(iw, o);
+        if (iw.contiguousp())
+          idx_copy(iw, o);
+        else {
+          idx<T> tmp(iw.get_idxdim());
+          idx_copy(iw, tmp);
+          iw = tmp.view_as_order(1);
+          idx_copy(iw, o);
+        }
       }
     }
     offset += fsize;

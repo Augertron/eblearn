@@ -222,7 +222,7 @@ namespace ebl {
     // prepare convolutions and their kernels
     idx<intg> table = one2one_table(nfeatures);
     meanconv = new convolution_module<T,Tstate>(param, kerdim, stride, table, 
-					       "subnorm_conv");
+                                                "subnorm_conv");
     idx_bloop1(kx, meanconv->kernel.x, T)
       idx_copy(w, kx);
     //! normalize the kernel    

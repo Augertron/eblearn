@@ -113,7 +113,8 @@ namespace ebl {
      uint noutputs = ans->get_nfeatures();
      intg thick = -1;
      module_1_1<SFUNC(Tnet)> *net =
-       create_network<SFUNC(Tnet)>(theparam, conf, thick, noutputs);
+       create_network<SFUNC(Tnet)>(theparam, conf, thick, noutputs, 
+                                   "arch", this->_id);
      // loading weights
      if (conf.exists("weights")) { // manual weights
        // concatenate weights if multiple ones

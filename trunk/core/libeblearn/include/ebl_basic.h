@@ -58,7 +58,11 @@ namespace ebl {
     //! \param in the size of the input to the linear combination.
     //! \param out the size of the output to the linear combination.
     linear_module(parameter<T,Tstate> *p, intg in, intg out,
-		  const char *name = "linear");
+		  const char *name = "linear"
+#ifdef __CUDA__
+                   , bool use_gpu=false, int gpu_id=false
+#endif
+);
     //! destructor
     virtual ~linear_module();
     //! forward propagation from in to out
@@ -97,6 +101,13 @@ namespace ebl {
     // members ////////////////////////////////////////////////////////
   public:
     Tstate w;
+#ifdef __CUDA__
+  public:
+    // GPU members /////////////////////////////////////////////////////////////
+    bool                use_gpu; //!< Whether to use gpu or not
+    int                 gpu_id; //!< Whether to use gpu or not
+    bool                float_precision; //!< used for CUDA
+#endif
   };
 
   //! The replicable version of linear_module.
@@ -133,7 +144,11 @@ namespace ebl {
     //!          This allows to feed any input size to this module.
     convolution_module(parameter<T,Tstate> *p, idxdim &ker, idxdim &stride,
 		       idx<intg> &table, const char *name = "convolution",
-		       bool crop = true, bool use_gpu = false, int gpu_id = -1);
+		       bool crop = true
+#ifdef __CUDA__
+                       , bool use_gpu = false, int gpu_id = -1
+#endif
+                       );
     //! destructor
     virtual ~convolution_module();
     //! forward propagation from in to out
@@ -188,9 +203,11 @@ namespace ebl {
     idx<T>              outtmp; //!< a tmp buffer for IPP conv output
     bool                ipp_err_printed; //!< Print an error msg only once.
     bool                use_ipp; //!< IPP is useable or not.
+#ifdef __CUDA__
     // GPU members /////////////////////////////////////////////////////////////
     bool                use_gpu; //!< Whether to use gpu or not
     int                 gpu_id; //!< Whether to use gpu or not
+#endif
   };
 
   //! The replicable version of convolution_module.
@@ -264,7 +281,11 @@ namespace ebl {
   public:
     //! <p> is double number, every element of input is raised to
     //! its <p>th power.
-    power_module(T p);
+    power_module(T p
+#ifdef __CUDA__
+                   , bool use_gpu=false, int gpu_id=false
+#endif
+);
     //! destructor
     virtual ~power_module();
     //! forward propagation from in to out
@@ -278,6 +299,13 @@ namespace ebl {
   private:
     T p;
     idx<T> tt; //!< temporary buffer
+#ifdef __CUDA__
+  public:
+    // GPU members /////////////////////////////////////////////////////////////
+    bool                use_gpu; //!< Whether to use gpu or not
+    int                 gpu_id; //!< Whether to use gpu or not
+    bool                float_precision; //!< used for CUDA
+#endif
   };
 
   ////////////////////////////////////////////////////////////////
