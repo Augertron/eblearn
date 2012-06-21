@@ -98,7 +98,7 @@ namespace ebl {
     diverse_ordering = false;
     // set outpout streams of network
     thenet.set_output_streams(o, e);
-    //update_merge_alignment();
+    update_merge_alignment();
   }
 
   template <typename T, class Tstate>

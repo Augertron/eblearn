@@ -309,27 +309,8 @@ namespace ebl {
 	Tstate &ts = out[i];
 	if (ts.x.get_idxdim() != d) ts.resize(d);
 	fprop_data(ts);
-	
-	// // copy (and cast) data
-	// idx_copy(dat, ts.x);
-	// if (bias != 0.0)
-	//   idx_addc(ts.x, bias, ts.x);
-	// if (coeff != 1.0)
-	//   idx_dotc(ts.x, coeff, ts.x);
       }
     } else fprop_data(out[0]); // single matrix per sample
-    //   // resize if necessary
-    //   Tstate &ts = out[0];
-    //   if (ts.x.get_idxdim() != sampledims)
-    // 	ts.resize(sampledims);
-    //   // copy data
-    //   idx<Tdata> dat = data[it];
-    //   idx_copy(dat, ts.x);
-    //   if (bias != 0.0)
-    // 	idx_addc(ts.x, bias, ts.x);
-    //   if (coeff != 1.0)
-    // 	idx_dotc(ts.x, coeff, ts.x);
-    // }
   }
 
   template <typename Tnet, typename Tdata>
