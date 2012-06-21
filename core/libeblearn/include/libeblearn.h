@@ -63,4 +63,9 @@
 #include "datasource.h"
 #endif
 
+#ifdef __CUDA__
+#include "ebl_cudabasic.h"
+#include "ebl_cudautils.h"
+#endif
+
 #endif // LIBEBLEARN_H

@@ -65,8 +65,12 @@ namespace ebl {
   template <typename T, class Tstate = bbstate_idx<T> >
     class tanh_module: public module_1_1<T,Tstate> {
   public:
-    //! empty constructor
-    tanh_module();
+    //! default constructor
+    tanh_module(
+#ifdef __CUDA__
+                     bool use_gpu_ = false, int gpu_id_ = -1
+#endif
+);
     virtual ~tanh_module();
     //! fprop from in to out
     void fprop(Tstate &in, Tstate &out);
@@ -78,6 +82,13 @@ namespace ebl {
     virtual tanh_module<T,Tstate>* copy();
   protected:
     idx<T> tmp; //!< Temporary buffer.
+#ifdef __CUDA__
+    // GPU members /////////////////////////////////////////////////////////////
+    bool                use_gpu; //!< Whether to use gpu or not
+    int                 gpu_id; //!< Whether to use gpu or not
+    bool                float_precision; //!< used for CUDA
+#endif
+
   };
 
   ////////////////////////////////////////////////////////////////

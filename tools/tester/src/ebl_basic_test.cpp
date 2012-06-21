@@ -232,20 +232,21 @@ void ebl_basic_test::test_convolution_module_float() {
   // TEST_DERIVATIVES(c, in, out, T, FLOAT_THRESHOLD)
 }
 
-
+#ifdef __CUDA__
 inline void test_conv_cuda(int inx, int iny, int infeat, int outfeat, 
-                    int kerx, int kery, bool full) {
+                           int kerx, int kery, bool full, int fanin,
+                           int stridex, int stridey) {
   typedef float T;
   idxdim ker(kerx,kery);
-  idxdim stride(1,1);
+  idxdim stride(stridex,stridey);
   bbstate_idx<T> in(infeat, inx, iny), out1, out2;
   idx<intg> table;
   if(full)
     table = full_table(infeat, outfeat);
   else {
-    std::vector<intg> fanin;
-    fanin.push_back(4);
-    table = random_table(infeat, outfeat, fanin);
+    std::vector<intg> faninv;
+    faninv.push_back(fanin);
+    table = random_table(infeat, outfeat, faninv);
   }
   parameter<T> prm(100000);
   double rrange_min = -1.0;
@@ -279,37 +280,48 @@ inline void test_conv_cuda(int inx, int iny, int infeat, int outfeat,
   idx<double> errs(2);
   errs.set(maxdist, 0);
   errs.set(totdist, 1);
-  CPPUNIT_ASSERT_DOUBLES_EQUAL(0, errs.get(0), 1); \
-  CPPUNIT_ASSERT_DOUBLES_EQUAL(0, errs.get(1), 1); \
-  // cout<<" In:"<<inx<<"\tinfeat:"<<infeat
-  // <<"\toutfeat:"<<outfeat<<"\tker:"<<kerx<<endl;
+  // cout<<endl<<" FANIN: "<<fanin<<"\tTotal Distance:" << errs.get(0) << 
+  // "\tMax Distance:" << errs.get(1) << endl;
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(0, errs.get(0), 1e-5);           \
+  CPPUNIT_ASSERT_DOUBLES_EQUAL(0, errs.get(1), 100);            \
 }
 
 void ebl_basic_test::test_convolution_module_cuda() {
-  // test_conv_cuda(16,16,64,96,3,3);
-  // test_conv_cuda(32,32,64,96,3,3);
-  // test_conv_cuda(64,64,64,96,3,3);
-  // test_conv_cuda(96,96,64,96,3,3);
+  // test_conv_cuda(16,16,1,1,3,3, true, 4,2,2);
+  // test_conv_cuda(32,32,64,96,3,3, false, 4,1,1);
+  // test_conv_cuda(64,64,64,96,3,3, false, 4,1,1);
+  // test_conv_cuda(96,96,64,96,3,3, false, 4,1,1);
 
-  // test_conv_cuda(16,16,64,96,5,5);
-  // test_conv_cuda(32,32,64,96,5,5);
-  // test_conv_cuda(64,64,64,96,5,5);
-  // test_conv_cuda(96,96,64,96,5,5);
+  // test_conv_cuda(16,16,64,96,5,5, false, 4,1,1);
+  // test_conv_cuda(32,32,64,96,5,5, false, 4,1,1);
+  // test_conv_cuda(64,64,64,96,5,5, false, 4,1,1);
+  // test_conv_cuda(96,96,64,96,5,5, false, 4,1,1);
 
-  // test_conv_cuda(16,16,64,96,7,7);
+  // test_conv_cuda(16,16,64,96,7,7, false, 4,1,1);
 
-  test_conv_cuda(64,64,64,96,7,7, true);
-  test_conv_cuda(64,64,64,96,7,7, false);
+  // // test_conv_cuda(64,64,64,96,7,7, true,1,1);
+  // test_conv_cuda(64,64,64,96,7,7, false, 4,1,1);
 
-  // test_conv_cuda(64,64,64,96,7,7);
-  // test_conv_cuda(96,96,64,96,7,7);
+  // test_conv_cuda(64,64,64,96,7,7, false, 4,1,1);
+  // test_conv_cuda(96,96,64,96,7,7, false, 4,1,1);
 
-  // test_conv_cuda(16,16,64,96,9,9);
-  // test_conv_cuda(32,32,64,96,9,9);
-  // test_conv_cuda(64,64,64,96,9,9);
-  // test_conv_cuda(96,96,64,96,9,9);
+  // test_conv_cuda(16,16,64,96,9,9, false, 4,1,1);
+  // test_conv_cuda(32,32,64,96,9,9, false, 4,1,1);
+  // test_conv_cuda(64,64,64,96,9,9, false, 4,1,1);
+  // test_conv_cuda(96,96,64,96,9,9, false, 4,1,1);
+  //  test_conv_cuda(500,500,64,96,5,5, false, 1,2,2);
+  test_conv_cuda(432,642,37,45,5,5, false, 2,3,3);
+  // test_conv_cuda(823,495,23,74,5,5, false, 3,4,4);
+  // test_conv_cuda(384,435,64,96,5,5, false, 4,5,5);
+  // test_conv_cuda(536,349,64,96,5,5, false, 5,1,1);
+  // test_conv_cuda(536,349,64,96,5,5, false, 6,1,1);
+  // test_conv_cuda(536,349,64,96,5,5, false, 7,1,1);
+  // test_conv_cuda(536,349,64,96,5,5, false, 8,1,1);
+  // test_conv_cuda(536,349,64,96,5,5, false, 9,1,1);
 
 }
+
+#endif
 
 void ebl_basic_test::test_convolution_module_double() {
   typedef double T;

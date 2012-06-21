@@ -175,7 +175,9 @@ namespace ebl {
 #endif
     mutex 	        mutex1;
     bool 		_finished;
+  protected:
     uint                _id;
+  private:
     static uint         _id_counter;
   };
 

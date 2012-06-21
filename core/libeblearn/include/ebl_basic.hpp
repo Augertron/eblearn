@@ -37,8 +37,25 @@ namespace ebl {
 
   template <typename T, class Tstate>
   linear_module<T, Tstate>::linear_module(parameter<T,Tstate> *p,
-					  intg in, intg out, const char *name_)
-    : module_1_1<T,Tstate>(name_), w(p, out, in) {
+					  intg in, intg out, const char *name_
+#ifdef __CUDA__
+, bool use_gpu_, int gpu_id_
+#endif
+)
+    : module_1_1<T,Tstate>(name_), w(p, out, in) 
+#ifdef __CUDA__
+    ,use_gpu(use_gpu_), gpu_id(gpu_id_) 
+#endif
+{
+
+#if __CUDA__
+    // check precision to decide if we use TH or not
+  float_precision = false;
+  fstate_idx<T> temp;
+  fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&temp);
+  if (cont) 
+    float_precision = true;
+#endif
   }
 
   template <typename T, class Tstate>
@@ -49,6 +66,12 @@ namespace ebl {
   void linear_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
     if (!in.x.contiguousp() || !out.x.contiguousp())
       eblerror("input should be contiguous");
+// #ifdef __CUDA__
+//     if(float_precision && use_gpu) {
+//       cuda_m2dotm2(in.x, out.x, w.x, gpu_id);
+//       return;
+//     }
+// #endif
     // flatten dimensions starting from second one
     idxdim d(in.x);
     d.remove_dim(0);
@@ -178,12 +201,19 @@ namespace ebl {
   template <typename T, class Tstate>
   convolution_module<T, Tstate>::
   convolution_module(parameter<T,Tstate> *p, idxdim &ker_, idxdim &stride_,
-		     idx<intg> &tbl, const char *name_, bool crop_,
-                     bool use_gpu_, int gpu_id_)
+		     idx<intg> &tbl, const char *name_, bool crop_
+#ifdef __CUDA__
+                     , bool use_gpu_, int gpu_id_
+#endif
+                     )
     : module_1_1<T,Tstate>(name_), ker(ker_), stride(stride_), table(tbl),
       revtable(1,1,1), fanin(-1), warnings_shown(false),
       float_precision(false), double_precision(false), crop(crop_),
-      use_ipp(false), use_gpu(use_gpu_), gpu_id(gpu_id_) {
+      use_ipp(false)
+#ifdef __CUDA__
+    , use_gpu(use_gpu_), gpu_id(gpu_id_) 
+#endif
+  {
     idxdim d(ker);
     d.insert_dim(0, tbl.dim(0));
     kernel = Tstate(p, d);
@@ -278,26 +308,15 @@ namespace ebl {
   void convolution_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
     if (!convolution_module<T, Tstate>::resize_output(in, out))
       return ; // do nothing if resizing failed
-    // temporarly crop input if mismatch in size
     // inx = input tensor over which the kernel has to be applied
     idx<T> inx = in.x;
-    intg ki = kernel.x.dim(1), kj = kernel.x.dim(2);
-    intg si = stride.dim(0), sj = stride.dim(1);
-    intg oi = inx.dim(1) - (ki - si), oj = inx.dim(2) - (kj - sj);
-    if (crop && oi % stride.dim(0) != 0)
-      inx = inx.narrow(1, inx.dim(1) - oi % si, 0);
-    if (crop && oj % stride.dim(1) != 0)
-      inx = inx.narrow(2, inx.dim(2) - oj % sj, 0);
-    idx_clear(out.x);
-
 #ifdef __CUDA__
-
     if (in.x.dim(0) > tablemax + 1) {
       if (tablemax == 0) {
-        inx = inx.narrow(0,1,0);
+        inx = in.x.narrow(0,1,0);
       }
       else {
-        cerr << "WARNING: CUDA WILL BE DISABLED FOR THIS MODULE: " << this->name()
+        cerr << "WARNING: CUDA WILL BE DISABLED FOR MODULE: " << this->name()
              << " because all inputs are not being used and tablemax is not 0 " 
              << " (i.e. if all inputs are not used, the only supported case"
              << "using CUDA is if tablemax is 0 " <<endl;
@@ -319,7 +338,15 @@ namespace ebl {
       return;
     }
 #endif
-
+    // temporarly crop input if mismatch in size
+    intg ki = kernel.x.dim(1), kj = kernel.x.dim(2);
+    intg si = stride.dim(0), sj = stride.dim(1);
+    intg oi = inx.dim(1) - (ki - si), oj = inx.dim(2) - (kj - sj);
+    if (crop && oi % stride.dim(0) != 0)
+      inx = inx.narrow(1, inx.dim(1) - oi % si, 0);
+    if (crop && oj % stride.dim(1) != 0)
+      inx = inx.narrow(2, inx.dim(2) - oj % sj, 0);
+    idx_clear(out.x);
 #ifdef __TH__
     // a direct 3D-map optimization
     if((float_precision || double_precision) && in.x.order()==3) {
@@ -801,8 +828,26 @@ namespace ebl {
   // power_module
 
   template <typename T, class Tstate>
-  power_module<T,Tstate>::power_module(T p_)
-    : module_1_1<T,Tstate>("power"), p(p_) {
+  power_module<T,Tstate>::power_module(T p_
+#ifdef __CUDA__
+, bool use_gpu_, int gpu_id_
+#endif
+)
+    : module_1_1<T,Tstate>("power"), p(p_) 
+#ifdef __CUDA__
+    ,use_gpu(use_gpu_), gpu_id(gpu_id_) 
+#endif
+{
+
+#if __CUDA__
+    // check precision to decide if we use TH or not
+  float_precision = false;
+  fstate_idx<T> temp;
+  fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&temp);
+  if (cont) 
+    float_precision = true;
+#endif
+  
   }
 
   template <typename T, class Tstate>
@@ -812,6 +857,14 @@ namespace ebl {
   template <typename T, class Tstate>
   void power_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     this->resize_output(in, out); // resize iff necessary
+
+#ifdef __CUDA__
+    if(float_precision && use_gpu) {
+      cuda_power(in.x, out.x, p, gpu_id);
+      return;
+    }
+#endif
+
 // #ifdef __TH__
 //     th_pow(in.x, out.x, p);
 // #else

@@ -58,7 +58,6 @@ bool stereo = false;
 bool temporal3 = false;
 bool btext = false; // create table from text file
 string text_filename; // filename for text file option
-
 // parse command line input
 bool parse_args(int argc, char **argv) {
   // Read arguments from shell input

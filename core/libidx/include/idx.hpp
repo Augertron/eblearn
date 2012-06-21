@@ -66,11 +66,19 @@ namespace ebl {
     spec.mod = NULL;
     storage = NULL;
     pidxdim = NULL;
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T> idx<T>::idx(const idx<T>& other)
     : spec(other.spec), storage(other.storage), pidxdim(NULL) {
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   ////////////////////////////////////////////////////////////////
@@ -82,6 +90,10 @@ namespace ebl {
     growstorage();
     storage->lock();
     memcpy(idx_ptr(), mat, nelements() * sizeof (T));
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T> idx<T>::idx(const T *mat, intg s0, intg s1, intg s2)
@@ -90,6 +102,10 @@ namespace ebl {
     growstorage();
     storage->lock();
     memcpy(idx_ptr(), mat, nelements() * sizeof (T));
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   ////////////////////////////////////////////////////////////////
@@ -99,6 +115,10 @@ namespace ebl {
     storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T> idx<T>::idx(intg size0)
@@ -106,6 +126,10 @@ namespace ebl {
     storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T> idx<T>::idx(intg size0, intg size1)
@@ -113,6 +137,10 @@ namespace ebl {
     storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T> idx<T>::idx(intg size0, intg size1, intg size2)
@@ -120,6 +148,10 @@ namespace ebl {
     storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T>
@@ -129,6 +161,10 @@ namespace ebl {
     storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T> idx<T>::idx(const idxdim &d)
@@ -136,6 +172,10 @@ namespace ebl {
     storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   ////////////////////////////////////////////////////////////////
@@ -150,6 +190,10 @@ namespace ebl {
       storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T>
@@ -161,6 +205,10 @@ namespace ebl {
       storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T>
@@ -172,6 +220,10 @@ namespace ebl {
       storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T>
@@ -183,6 +235,10 @@ namespace ebl {
       storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T>
@@ -194,6 +250,10 @@ namespace ebl {
       storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T>
@@ -205,6 +265,10 @@ namespace ebl {
       storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T>
@@ -217,6 +281,10 @@ namespace ebl {
       storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   template <class T>
@@ -228,6 +296,10 @@ namespace ebl {
       storage = new srg<T>();
     growstorage();
     storage->lock();
+#ifdef __CUDA__
+    gpuptr = NULL;
+    on_gpu = false;
+#endif
   }
 
   ////////////////////////////////////////////////////////////////
@@ -329,6 +401,7 @@ namespace ebl {
   //     newt = newt.narrow(i, 0, oldt.dim(i));
   //   idx_copy(oldt,newt);
   // }
+
 
   // return true if this idx has same order and dimensions as idxdim d.
   // i.e. if all their dimensions are equal (regardless of strides).

@@ -61,7 +61,7 @@ class ebl_basic_test : public CppUnit::TestFixture  {
   //CPPUNIT_TEST(test_mirrorpad_module_double); //not working
   CPPUNIT_TEST(test_thres_module_double);
   CPPUNIT_TEST(test_tanh_shrink_module_double);
-  
+
   //  CPPUNIT_TEST(test_softmax); // TODO: fix test
   CPPUNIT_TEST(test_state_copy);
   

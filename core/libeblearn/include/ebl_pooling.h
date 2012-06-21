@@ -139,7 +139,11 @@ namespace ebl {
   lppooling_module(uint thickness, idxdim &kernel, idxdim &stride,
                      uint lppower = 2, 
 		     const char *name = "lppooling", 
-                   bool crop = true, bool use_gpu=false, int gpu_id=false);
+                   bool crop = true
+#ifdef __CUDA__
+                   , bool use_gpu=false, int gpu_id=false
+#endif
+);
     //! destructor
     virtual ~lppooling_module();
     //! forward propagation from in to out
@@ -174,9 +178,11 @@ namespace ebl {
     power_module<T,Tstate> sqrtmod;
     Tstate squared, convolved; //!< Intermediate buffer.
     parameter<T,Tstate>	param;
+#ifdef __CUDA__
     // GPU members /////////////////////////////////////////////////////////////
     bool                use_gpu; //!< Whether to use gpu or not
     int                 gpu_id; //!< Whether to use gpu or not
+#endif
   };
 
   //////////////////////////////////////////////////////////////////////////////

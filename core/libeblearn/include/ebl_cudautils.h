@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBL_CUDABASIC_H_
-#define EBL_CUDABASIC_H_
+#ifndef EBL_CUDAUTILS_H_
+#define EBL_CUDAUTILS_H_
 
 #include "ebl_defines.h"
 #include "libidx.h"
@@ -39,57 +39,17 @@
 #ifdef __CUDA__
 
 namespace ebl {
-  //! compute a 3D convolution of 3D <in> with 4D kernel <ker>
-  //! and write result into 3D <out>
-  template <typename T>
-  void cuda_convolution_3d(idx<T> &in, idx<T> &ker,
-			      idx<T> &out, 
-                        intg stride_x, intg stride_y, int devid);
 
-  //! compute a 3D convolution of 3D <in> with 4D kernel <ker>
-  //! and write result into 3D <out>
-  template <>
-    EXPORT void cuda_convolution_3d(idx<float32> &in, idx<float32> &ker,
-        		      idx<float32> &out,
-                        intg stride_x, intg stride_y, int devid);
+  //! Query how many CUDA supported devices are there on the system
+  int eblcuda_count_devices();
 
-  //! compute a 3D convolution of 3D <in> with 4D kernel <ker>
-  //! and write result into 3D <out>, but the connections can be sparse
-  template <typename T>
-  void cuda_convolution_3dmap(idx<T> &in, idx<T> &ker,
-			      idx<T> &out, 
-                           intg stride_x, intg stride_y, 
-                           idx<intg> table, int fanin, int devid);
-
-  //! compute a 3D convolution of 3D <in> with 4D kernel <ker>
-  //! and write result into 3D <out>, but the connections can be sparse
-  template <>
-    EXPORT void cuda_convolution_3dmap(idx<float32> &in, idx<float32> &ker,
-        		      idx<float32> &out,
-                                  intg stride_x, intg stride_y,
-                                  idx<intg> table, int fanin, int devid);
-
-  //! Applies a tanh function to the input idx and copies it to the output idx
-  template <typename T>
-  void cuda_tanh(idx<T> &in, idx<T> &out,  int devid);
-
-  //! Applies a tanh function to the input idx and copies it to the output idx
-  template <>
-    EXPORT void cuda_tanh(idx<float32> &in, idx<float32> &out,  int devid);
-
-  //! Applies a power function to the input idx and copies it to the output idx
-  template <typename T>
-    EXPORT void cuda_power(idx<T> &in, idx<T> &out,  
-                           float pow, int devid);
-  template <>
-    EXPORT void cuda_power(idx<float32> &in, idx<float32> &out,  
-                           float pow, int devid);
-
+  //! Query how much shared mem is there on a particular device
+  long eblcuda_get_device_shared_mem(uint devid=0);
 
 } // namespace ebl
 
-#include "ebl_cudabasic.hpp"
+#include "ebl_cudautils.hpp"
 
 #endif // __CUDA__
 
-#endif /* EBL_CUDABASIC_H_ */
+#endif /* EBL_CUDAUTILS_H_ */

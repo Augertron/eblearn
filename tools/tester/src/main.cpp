@@ -50,6 +50,7 @@
 #include "idxops_test.h"
 #include "idxops_test2.h"
 #include "ebl_basic_test.h"
+
 #include "ebl_preprocessing_test.h"
 #include "idxIO_test.h"
 #include "datasource_test.h"

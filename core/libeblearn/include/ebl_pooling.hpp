@@ -257,11 +257,18 @@ namespace ebl {
   template <typename T, class Tstate>
   lppooling_module<T,Tstate>::
   lppooling_module(uint thick, idxdim &kernel_, idxdim &stride_, uint lppower_,
-		   const char *name_, bool crop_, bool use_gpu_, int gpu_id_)
+		   const char *name_, bool crop_
+#ifdef __CUDA__
+, bool use_gpu_, int gpu_id_
+#endif
+)
     : module_1_1<T,Tstate>(name_), thickness(thick), 
       kernel(kernel_), stride(stride_), crop(crop_), lp_pow(lppower_), 
-      sqmod((T)lppower_), sqrtmod((T)(1.0/(T)lppower_)),
-      use_gpu(use_gpu_), gpu_id(gpu_id_) {
+      sqmod((T)lppower_), sqrtmod((T)(1.0/(T)lppower_))
+#ifdef __CUDA__
+    ,use_gpu(use_gpu_), gpu_id(gpu_id_) 
+#endif
+{
     // insert thickness dimension
     idxdim d = kernel;
     d.insert_dim(0, thick);
@@ -271,12 +278,23 @@ namespace ebl {
     // prepare convolution
     idx<intg> table = one2one_table(thick);
     conv = new convolution_module<T,Tstate>
-      (&param, kernel, stride, table, "lppooling_convolution", crop, 
-       use_gpu, gpu_id);
+      (&param, kernel, stride, table, "lppooling_convolution", crop
+#ifdef __CUDA__
+       , use_gpu, gpu_id
+#endif
+);
+
+#ifdef __CUDA__
+    sqmod.use_gpu = use_gpu;
+    sqmod.gpu_id = gpu_id;
+    sqrtmod.use_gpu = use_gpu;
+    sqrtmod.gpu_id = gpu_id;
+#endif
     // gaussian kernel
     idx<T> filter = create_gaussian_kernel<T>(kernel);
     idx_bloop1(k, conv->kernel.x, T) {
       idx_copy(filter, k); }
+
   }
 
   template <typename T, class Tstate>
@@ -288,6 +306,7 @@ namespace ebl {
   void lppooling_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     // avoid div by 0 when bproping
     idx_addc(in.x, 1e-10, in.x); // TODO: temporary
+
     // special case for l1pool
     if (lp_pow == 1) {
       // gaussian-weighted neighborhood of in^2
@@ -295,7 +314,8 @@ namespace ebl {
       return;
     }
     // if it is an odd lp, example l3, l5 take an abs of the input
-    if ((lp_pow % 2) == 1) idx_abs(in.x, in.x);
+    // if ((lp_pow % 2) == 1) 
+    idx_abs(in.x, in.x);
     // in^p
     sqmod.fprop(in, squared);
     // gaussian-weighted neighborhood of in^p

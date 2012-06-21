@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBL_CUDABASIC_HPP_
-#define EBL_CUDABASIC_HPP_
+#ifndef EBL_CUDAUTILS_HPP_
+#define EBL_CUDAUTILS_HPP_
 
 #ifdef __CUDA__
 #include "idx.h"
@@ -39,33 +39,9 @@
 namespace ebl {
 
 
-  template <typename T>
-  void cuda_convolution_3d(idx<T> &in, idx<T> &ker, idx<T> &out, 
-                        intg stride_x, intg stride_y, int devid) {
-    eblerror("cuda_convolution_3d : type not implemented."
-             << "Available types are float32");
-  }
-
-  template <typename T>
-  void cuda_convolution_3dmap(idx<T> &in, idx<T> &ker, idx<T> &out, 
-                           intg stride_x, intg stride_y,
-                              idx<intg> table, int fanin, int devid) {
-    eblerror("cuda_convolution_3dmap : type not implemented. " 
-             << "Available types are float32");
-  }
-
-  template <typename T>
-  void cuda_tanh(idx<T> &in, idx<T> &out,  int devid) {
-    eblerror("cuda_tanh : type not implemented. Available types are float32");
-  }
-
-  template <typename T>
-  void cuda_power(idx<T> &in, idx<T> &out, float pow, int devid) {
-    eblerror("cuda_power : type not implemented. Available types are float32");
-  }
 
 } // end ebl namespace
 
 #endif // end __CUDA__
 
-#endif // EBL_CUDABASIC_HPP_
+#endif // EBL_CUDAUTILS_HPP_

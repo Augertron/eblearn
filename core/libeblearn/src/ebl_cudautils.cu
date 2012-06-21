@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2012 by Soumith Chintala *
- *   soumith@gmail.com *
+ *   Copyright (C) 2011 by Soumith Chintala*
+ *   soumith@gmail.com  *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,42 +30,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef EBL_CUDABASIC_HPP_
-#define EBL_CUDABASIC_HPP_
+#include "ebl_cudabasic.h"
 
 #ifdef __CUDA__
-#include "idx.h"
 
 namespace ebl {
 
-
-  template <typename T>
-  void cuda_convolution_3d(idx<T> &in, idx<T> &ker, idx<T> &out, 
-                        intg stride_x, intg stride_y, int devid) {
-    eblerror("cuda_convolution_3d : type not implemented."
-             << "Available types are float32");
+  int eblcuda_count_devices() {
+    cudaError_t errcode;
+    int numdevs = 0;
+    errcode = cudaGetDeviceCount(&numdevs);
+    if (errcode == cudaSuccess)
+      return numdevs;
+    else if (errcode == cudaErrorNoDevice)
+      eblerror("No compatible CUDA device found. " 
+               << "Recompile without float support or use" 
+               << " non-float precision");
+    return 0;
   }
 
-  template <typename T>
-  void cuda_convolution_3dmap(idx<T> &in, idx<T> &ker, idx<T> &out, 
-                           intg stride_x, intg stride_y,
-                              idx<intg> table, int fanin, int devid) {
-    eblerror("cuda_convolution_3dmap : type not implemented. " 
-             << "Available types are float32");
+  long eblcuda_get_device_shared_mem(uint devid) {
+    // TODO
+    return 0;
   }
 
-  template <typename T>
-  void cuda_tanh(idx<T> &in, idx<T> &out,  int devid) {
-    eblerror("cuda_tanh : type not implemented. Available types are float32");
-  }
+} // end of namespace ebl
 
-  template <typename T>
-  void cuda_power(idx<T> &in, idx<T> &out, float pow, int devid) {
-    eblerror("cuda_power : type not implemented. Available types are float32");
-  }
-
-} // end ebl namespace
-
-#endif // end __CUDA__
-
-#endif // EBL_CUDABASIC_HPP_
+#endif // __CUDA__

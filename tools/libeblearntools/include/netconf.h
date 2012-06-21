@@ -56,11 +56,12 @@ namespace ebl {
   //! \param isbranch Return a layers that is a branch if true.
   //! \param shared A map of parameters-shared modules.
   //! \param loaded A map all of loaded modules so far.
+  //! \param tid Optional thread-id for multi-thread branching
   template <typename T, class Tstate>
     module_1_1<T,Tstate>*
     create_network(parameter<T, Tstate> &theparam, configuration &conf,
 		   intg &thick, int noutputs = -1, const char *varname = "arch",
-		   bool isbranch = false, bool narrow = 0,
+		   int tid = -1, bool isbranch = false, bool narrow = 0,
 		   intg narrow_dim = 0, intg narrow_size = 0,
 		   intg narrow_offset = 0,
 		   vector<layers<T,Tstate>*>* branches = NULL,
@@ -74,6 +75,7 @@ namespace ebl {
   //! This returns a module_1_1 or NULL if failed.
   //! \param shared A map of parameters-shared modules.
   //! \param loaded A map all of loaded modules so far.
+  //! \param tid optional thread_id to do branch optimizations
   template <typename T, class Tstate>
     module_1_1<T,Tstate>*
     create_module(const string &name, parameter<T, Tstate> &theparam,
@@ -81,7 +83,8 @@ namespace ebl {
 		  map<string,module_1_1<T,Tstate>*> &shared,
 		  map<string,module_1_1<T,Tstate>*> &loaded,
 		  vector<layers<T,Tstate>*> *branches,
-		  vector<intg> *branches_thick);
+		  vector<intg> *branches_thick,
+                  int tid = -1);
 
   //! Create an ebm1 module of type 'type' (with full name 'name') and returns
   //! it or NULL if an error occured.

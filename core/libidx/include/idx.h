@@ -362,6 +362,11 @@ namespace ebl {
     // members variables ///////////////////////////////////////////////////////
   public:
     idxspec spec; //!< Contains the order, offset, dimensions and strides.
+#ifdef __CUDA__
+    // CUDA Variables
+    T *gpuptr;
+    bool on_gpu;
+#endif
   protected:
     srg<T> *storage; //!< Pointer to the srg structure that contains the data.
     //! A pointer to a dimensions descriptor.
