@@ -69,7 +69,8 @@ namespace ebl {
     //! not be used with this constructor.
     //! \param pad If true, pad inputs so that windows are centered on edge
     //!    pixels at image borders. This should be false during training
-    //!    and true during detection.
+    //!    and true during detection if merging multiple windows that do not
+    //!    exactly overlap in the input space.
     flat_merge_module(midxdim &ins, mfidxdim &strides, bool pad = false,
 		      const char *name_ = "flatmerge", mfidxdim *scales = NULL,
 		      intg hextra = 0, intg wextra = 0, float ss = 1,
@@ -120,6 +121,8 @@ namespace ebl {
     //! Set strides.
     virtual void set_strides(mfidxdim &s);
 
+    virtual void set_paddings(mfidxdim &pads);
+
   protected:
     //! Compute appropriate padding for current input in order to align
     //! all inputs, given current window of merging, subsampling ratio of this
@@ -160,6 +163,110 @@ namespace ebl {
   intg hextra, wextra;
   float subsampling, edge;
   };
+
+  /* // linear_merge //////////////////////////////////////////////////////////////// */
+
+  /* //! This module is equivalent to a flat_merge_module followed by a linear_module */
+  /* //! but executes much faster. */
+  /* template <typename T, class Tstate = bbstate_idx<T> > */
+  /*   class linear_merge_module : public flat_merge_module<T, Tstate> { */
+  /* public: */
+  /*   //! Constructor for mstate inputs only. Buffers to be merge are not */
+  /*   //! specified here, rather in fprop(mstate..). fprop(Tstate...) should */
+  /*   //! not be used with this constructor. */
+  /*   //! \param pad If true, pad inputs so that windows are centered on edge */
+  /*   //!    pixels at image borders. This should be false during training */
+  /*   //!    and true during detection. */
+  /*   linear_merge_module(midxdim &ins, mfidxdim &strides, bool pad = false, */
+  /* 		      const char *name_ = "flatmerge", mfidxdim *scales = NULL, */
+  /* 		      intg hextra = 0, intg wextra = 0, float ss = 1, */
+  /* 		      float edge = 0); */
+  /*   virtual ~linear_merge_module(); */
+  /*   ////////////////////////////////////////////////////////////////// */
+  /*   // generic states methods */
+  /*   //! forward propagation from in to out, using internal bufs for merging. */
+  /*   virtual void fprop(Tstate &in, Tstate &out); */
+  /*   //! backward propagation from out to in, using internal bufs for merging. */
+  /*   virtual void bprop(Tstate &in, Tstate &out); */
+  /*   //! second-derivative backward propagation from out to in */
+  /*   virtual void bbprop(Tstate &in, Tstate &out); */
+  /*   ////////////////////////////////////////////////////////////////// */
+  /*   // multi-states methods */
+  /*   //! forward propagation from in to out */
+  /*   virtual void fprop(mstate<Tstate> &in, Tstate &out); */
+  /*   //! backward propagation from out to in */
+  /*   virtual void bprop(mstate<Tstate> &in, Tstate &out); */
+  /*   //! second-derivative backward propagation from out to in */
+  /*   virtual void bbprop(mstate<Tstate> &in, Tstate &out); */
+  /*   ////////////////////////////////////////////////////////////////// */
+  /*   //! Return dimensions that are compatible with this module. */
+  /*   //! See module_1_1_gen's documentation for more details. */
+  /*   virtual fidxdim fprop_size(fidxdim &i_size); */
+  /*   //! Return dimensions that are compatible with this module. */
+  /*   //! See module_1_1_gen's documentation for more details. */
+  /*   virtual mfidxdim fprop_size(mfidxdim &i_size); */
+  /*   //! Return dimensions compatible with this module given output dimensions. */
+  /*   //! See module_1_1_gen's documentation for more details. */
+  /*   virtual fidxdim bprop_size(const fidxdim &o_size); */
+  /*   //! Returns multiple input dimensions corresponding to output dims 'osize'. */
+  /*   virtual mfidxdim bprop_size(mfidxdim &osize); */
+  /*   //! Returns a string describing this module and its parameters. */
+  /*   virtual std::string describe(); */
+  /*   //! Returns the number of expected inputs. */
+  /*   virtual uint get_ninputs(); */
+  /*   //! Returns the strides for each input. */
+  /*   virtual mfidxdim get_strides(); */
+  /*   //! Returns the scales for each input. */
+  /*   virtual mfidxdim get_scales(); */
+  /*   //! Returns a deep copy of current module. */
+  /*   virtual linear_merge_module<T,Tstate>* copy(); */
+  /*   /\* //! Set paddings to be applied to each input scale. *\/ */
+  /*   /\* virtual void set_paddings(mfidxdim &pads); *\/ */
+  /*   //! Set offsets to be applied to each input scale. */
+  /*   virtual void set_offsets(vector<vector<int> > &off); */
+  /*   //! Set strides. */
+  /*   virtual void set_strides(mfidxdim &s); */
+
+  /* protected: */
+  /*   //! Compute appropriate padding for current input in order to align */
+  /*   //! all inputs, given current window of merging, subsampling ratio of this */
+  /*   //! input w.r.t to image input, the edge or top-left coordinate of */
+  /*   //! center of top-left pixel in image input (assuming square kernel), */
+  /*   //! the scale of the input w.r.t to the original scale of the image, */
+  /*   //! and finally the stride of this window. */
+  /*   //! This returns the padding to apply to input. */
+  /*   idxdim compute_pad(idxdim &window, float subsampling, float edge, */
+  /* 		       float scale, fidxdim &stride); */
+  /*   //! Set n default scales of input for merging. */
+  /*   void default_scales(uint n); */
+  /*   //! Returns the output size yielded by scale k of in. */
+  /*   //! \param dref If non-null, check that output size is at least as big as reference */
+  /*   //!   target size and pad if necessary. */
+  /*   idxdim compute_output_sizes(mstate<Tstate> &in, uint k, idxdim *dref = NULL); */
+
+  /* private: */
+  /*   std::vector<Tstate**> inputs; */
+  /*   idxdim din; */
+  /*   midxdim dins; */
+  /*   fidxdim stride; */
+  /*   mfidxdim strides; */
+  /*   std::string merge_list; //!< Names of elements to be merged. */
+  /*   std::vector<zpad_module<T,Tstate>*> zpads; */
+  /*   Tstate *in0; */
+  /*   std::vector<Tstate*> pinputs; */
+  /*   bool use_pinputs; */
+  /*   mstate<Tstate> padded; */
+  /*   zpad_module<T,Tstate> padder; */
+  /*   bool bpad; //!< Pad inputs to center windows at edges. */
+  /*   mfidxdim scales; //!< Scale of each input wrt input image. */
+  /*   mfidxdim paddings; //!< Padding for each scale. */
+  /*   vector<vector<int> > offsets; //!< Offsets. */
+  /*   uint reference_scale; //!< This scale's step is one and is the reference. */
+
+  /* // TEMP */
+  /* intg hextra, wextra; */
+  /* float subsampling, edge; */
+  /* }; */
 
   // mstate_merge //////////////////////////////////////////////////////////////
 

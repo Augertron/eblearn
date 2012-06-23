@@ -279,15 +279,14 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
+  void flat_merge_module<T, Tstate>::set_paddings(mfidxdim &pads) {
+    paddings = pads;
+    EDEBUG(this->name() << ": setting paddings to " << paddings);
+  }
+
+  template <typename T, class Tstate>
   idxdim flat_merge_module<T, Tstate>::compute_output_sizes(mstate<Tstate> &in, uint k,
 							    idxdim *dref) {
-    // template <typename T, class Tstate>
-    // void flat_merge_module<T, Tstate>::set_paddings(mfidxdim &pads) {
-    //   paddings = pads;
-    //   EDEBUG(this->name() << ": setting paddings to " << paddings);
-    // }
-
-
     Tstate i = in[k];
     Tstate &p = padded[k];
     idxdim d = dins[k];

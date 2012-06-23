@@ -1838,4 +1838,29 @@ namespace ebl {
     return d;
   }
 
+  template <typename T, class Tstate>
+  idxdim network_strides(module_1_1<T,Tstate> &m, uint order) {
+    fidxdim d;
+    for (uint i = 0; i < order; ++i) d.insert_dim(0, 1);
+    fidxdim d1 = d;
+    for (uint i = 0; i < d1.order(); ++i) d1.setoffset(i, 1);
+    mfidxdim mm, mm1;
+    mm.push_back_new(d);
+    mm1.push_back_new(d1);
+    EDEBUG("netstride bprop 0: " << mm);
+    mm = m.bprop_size(mm);
+    EDEBUG("netstride bprop 1: " << mm1);
+    mm1 = m.bprop_size(mm1);
+    if (!mm.exists(0) || !mm1.exists(0))
+      eblerror("expected dimensions in first element of " << mm
+	       << " and " << mm1);
+    EDEBUG("bprop size results for netstride: " << mm << " and " << mm1);
+    d = mm[0];
+    d1 = mm1[0];
+    idxdim s;
+    for (uint i = 1; i < d.order(); ++i)
+      s.insert_dim(i - 1, d1.offset(i) - d.offset(i));
+    return s;
+  }
+
 } // end namespace ebl

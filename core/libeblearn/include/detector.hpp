@@ -52,8 +52,8 @@ namespace ebl {
 	   resizepp_module<T,Tstate> *resize, const char *background,
 	   std::ostream &o, std::ostream &e,
 	   bool adapt_scales_)
-    : thenet(thenet_), resizepp(resize), resizepp_delete(false),
-      input(NULL), minput(NULL), netdim_fixed(false),
+    : thenet(thenet_), thenet_nopp(NULL), resizepp(resize), 
+      resizepp_delete(false), input(NULL), minput(NULL), netdim_fixed(false),
       bgclass(-1), mask_class(-1), pnms(NULL), scales_step(0), min_scale(1.0),
       max_scale(1.0), restype(ORIGINAL), silent(false), save_mode(false),
       save_dir(""), save_counts(labels_.size(), 0), min_size(0), max_size(0),
@@ -96,6 +96,11 @@ namespace ebl {
     // initilizations
     save_max_per_frame = limits<uint>::max();
     diverse_ordering = false;
+    // cut network up to first resizepp module
+    thenet_nopp = arch_narrow(&thenet, resizepp, false, true);
+    // infer network stride
+    netstrides = network_strides(*thenet_nopp, 3);
+    cout << "network strides: " << netstrides << endl;
     // set outpout streams of network
     thenet.set_output_streams(o, e);
     update_merge_alignment();
@@ -179,17 +184,27 @@ namespace ebl {
   template <typename T, class Tstate>
   void detector<T,Tstate>::set_zpads(float hzpad_, float wzpad_) {
     if (hzpad_ != 0 || wzpad_ != 0) {
+      if (hzpad_ > 1 || wzpad_ > 1)
+	eblerror("zero padding coeff should be in [0 1] range");
       if (initialized) get_netdim(indim.order());
       else get_netdim(3);
       hzpad = (uint) (hzpad_ * netdim.dim(1));
       wzpad = (uint) (wzpad_ * netdim.dim(2));
-      resizepp->set_zpads(hzpad, wzpad);
       mout << "Adding zero padding on input (on each side): hpad: "
 	   << hzpad << " wpad: " << wzpad << " (" << hzpad_ << ","
 	   << wzpad_ << " * " << netdim << ")" << endl;
-      if (hzpad_ > 1 || wzpad_ > 1)
-	eblerror("zero padding coeff should be in [0 1] range");
+      set_zpads_size(hzpad, wzpad);
     }
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_zpads_size(uint hzpad_, uint wzpad_) {
+    // update internal padding values
+    hzpad = hzpad_;
+    wzpad = wzpad_;    
+    resizepp->set_zpads(hzpad, wzpad);
+    mout << "Setting zero padding on inputs to: " << hzpad << "x"
+	 << wzpad << "x" << hzpad << "x" << wzpad << endl;
   }
 
   template <typename T, class Tstate>
@@ -600,6 +615,8 @@ namespace ebl {
     if (!netdim_fixed) {
       netdim = network_mindims(thenet, order0);
       mfidxdim m = resizepp->get_msize();
+      if (m.size() == 0)
+	eblerror("expected at least 1 input size from resizepp but got: " << m);
       netdim = m[0];
     }
   }
@@ -795,8 +812,8 @@ namespace ebl {
 	float ws = tmpstrides[i].dim(1);
 	float hos = smallest.dim(0) / (scales[i].dim(0) * hs);
 	float wos = smallest.dim(1) / (scales[i].dim(0) * ws);
-	fidxdim fi(hos, wos);
-	allstrides.push_back_new(fi);
+	fidxdim stride(hos, wos);
+	allstrides.push_back_new(stride);
 	
 	// set paddings of merger
 	//fidxdim pads(hc * hs, wc * ws, hc * hs, wc * ws);
@@ -821,11 +838,12 @@ namespace ebl {
 	// fidxdim pads(stride.dim(0) * hc / hs, stride.dim(1) * wc / ws,
 	// 	     stride.dim(0) * hc / hs, stride.dim(1) * wc / ws);
 	// fidxdim pads(stride.dim(0) * hc / hs, stride.dim(1) * wc / ws, 0, 0);
-	//	paddings.push_back_new(pads);
+	// 	paddings.push_back_new(pads);
 	mout << merger->name() << "'s input " << i << " must be padded/narrowed with "
 	     << offs << " to recenter " << p0 << " (center " << hc << "x" << wc
 	     << "), (output stride is " << hs << "x" << ws << ")" << std::endl;
       }
+      // cout << "merge paddings: " << paddings << endl;
       merger->set_offsets(alloff);
       merger->set_strides(allstrides);
     }

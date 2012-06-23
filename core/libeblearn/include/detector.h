@@ -115,6 +115,8 @@ namespace ebl {
     //! Add zero padding of (hzpad * the network's minimum input height)
     //! on each vertical sides and (wzpad * min width) on horizontal sides.
     void set_zpads(float hzpad, float wzpad);
+    //! Add zero padding of hzpad x wzpad pixels on each side.
+    void set_zpads_size(uint hzpad, uint wzpad);
     //! Specify resolutions by the factor step, starting from factor 1
     //! (network's size), adding factor_steps until reaching the original
     //! resolution.
@@ -336,6 +338,7 @@ namespace ebl {
     // member variables ////////////////////////////////////////////////////////
   protected:
     module_1_1<T,Tstate>	&thenet; //!< The network.
+    module_1_1<T,Tstate>	*thenet_nopp; //!< The network after resizepp.
     resizepp_module<T,Tstate>   *resizepp; //!< Resize module for multi-scaling.
     bool                 resizepp_delete; //!< We are responsible for deleting.
     idx<T>		 image;
@@ -354,6 +357,7 @@ namespace ebl {
     // dimensions //////////////////////////////////////////////////////////////
     idxdim               indim; //!< Input dimensions.
     idxdim		 netdim; //!< network's input dimensions
+    idxdim		 netstrides; //!< network's input dimensions
     bool                 netdim_fixed; //!< Do not update netdim if true.
     // bboxes //////////////////////////////////////////////////////////////////
     vector<rect<int> >	 original_bboxes; //!< Bboxes in image after resizing.
