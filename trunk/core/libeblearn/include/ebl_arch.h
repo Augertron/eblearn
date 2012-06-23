@@ -693,6 +693,9 @@ namespace ebl {
   //! that can be fed to network m.
   template <typename T, class Tstate>
     EXPORT idxdim network_mindims(module_1_1<T,Tstate> &m, uint order);
+  //! Returns the strides of the network in the input space.
+  template <typename T, class Tstate>
+    EXPORT idxdim network_strides(module_1_1<T,Tstate> &m, uint order);
 
 } // namespace ebl {
 

@@ -773,7 +773,7 @@ template <typename T, class Tstate>
 
   template <typename T, class Tstate, class Tcast>
   module_1_1<T,Tstate>* arch_narrow(module_1_1<T,Tstate> *m, Tcast *c,
-				    bool included, bool *found) {
+				    bool included, bool post, bool *found) {
     if (!m) return NULL;
     Tcast *ret = dynamic_cast<Tcast*>(m);
     if (ret == c) { // this module matches the target type Tcast*
@@ -782,31 +782,41 @@ template <typename T, class Tstate>
       else return NULL; // do not include found module
     }
     layers<T,Tstate> *l = dynamic_cast<layers<T,Tstate>*>(m);
-    if (l) return (module_1_1<T,Tstate>*) arch_narrow(l, c, included, found);
+    if (l) return (module_1_1<T,Tstate>*) arch_narrow(l, c, included, post, found);
     ms_module<T,Tstate> *ms = dynamic_cast<ms_module<T,Tstate>*>(m);
-    if (ms) return (module_1_1<T,Tstate>*) arch_narrow(ms, c, included, found);
+    if (ms) return (module_1_1<T,Tstate>*) arch_narrow(ms, c, included, post, found);
+    // postfix narrow and haven't found pivot module yet, do not add
+    if (!*found && post) return NULL;
+    // prefix narrow and haven't found pivot module yet, add it
     return m->copy();
   }
 
   template <typename T, class Tstate, class Tcast>
   layers<T,Tstate>* arch_narrow(layers<T,Tstate> *m, Tcast *c,
-				bool included, bool *found) {
+				bool included, bool post, bool *found) {
     if (!m) return NULL;
     bool lfound = false;
     if (!found) found = &lfound;
     layers<T,Tstate> *m2 = new layers<T,Tstate>(true, m->name());
     for (uint i = 0; i < m->modules.size(); ++i) {
       module_1_1<T,Tstate,Tstate>* mo = m->modules[i];
-      mo = arch_narrow(mo, c, included, found);
-      if (mo) m2->add_module(mo);
-      if (*found) return m2;
+      mo = arch_narrow(mo, c, included, post, found);
+      if (*found) {
+	if (post) {
+	  // we want postfix copy and have reached pivot module, add current
+	  if (mo) m2->add_module(mo);
+	} else return m2; // prefix, reach module, stop and return
+      } else {
+	// we want prefix copy and haven't reached pivot module yet, add current
+	if (!post && mo) m2->add_module(mo);
+      }
     }
     return m2;
   }
 
   template <typename T, class Tstate, class Tcast>
   ms_module<T,Tstate>* arch_narrow(ms_module<T,Tstate> *m, Tcast *c,
-				   bool included, bool *found) {
+				   bool included, bool post, bool *found) {
     if (!m) return NULL;
     bool lfound = false;
     if (!found) found = &lfound;
@@ -814,7 +824,7 @@ template <typename T, class Tstate>
       new ms_module<T,Tstate>(m->replicate_inputs, m->name());
     for (uint i = 0; i < m->pipes.size(); ++i) {
       module_1_1<T,Tstate> *p2 = NULL;
-      if (m->pipes[i]) p2 = arch_narrow(m->pipes[i], c, included, found);
+      if (m->pipes[i]) p2 = arch_narrow(m->pipes[i], c, included, post, found);
       m2->pipes.push_back(p2);
       if (*found) {
 	m2->pipes.clear();

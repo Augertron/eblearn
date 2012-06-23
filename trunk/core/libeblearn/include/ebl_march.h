@@ -192,7 +192,7 @@ namespace ebl {
 						 std::vector<Tc*> *);
     template <typename T1, class Ts, class Tc>
     friend EXPORT ms_module<T1,Ts>*
-      arch_narrow(ms_module<T1,Ts> *m, Tc *c, bool i, bool *f);
+      arch_narrow(ms_module<T1,Ts> *m, Tc *c, bool i, bool p, bool *f);
     friend class ms_module_gui;
   };
 
@@ -286,26 +286,29 @@ namespace ebl {
   //! occurence of module of type 'Tcast' with same address 'c' (included).
   //! If no occurence is found, a copy of the entire network is returned.
   //! \param included If true, also include target module.
+  //! \param post If true, return the postfix network rather than prefix.
   template <typename T, class Tstate, class Tcast>
     EXPORT module_1_1<T,Tstate>*
     arch_narrow(module_1_1<T,Tstate> *m, Tcast *c, bool included = true,
-		bool *found = NULL);
+		bool post = false, bool *found = NULL);
   //! Returns a copy of network 'm' which is narrowed up to the first
   //! occurence of module of type 'Tcast' with same address 'c' (included).
   //! If no occurence is found, a copy of the entire network is returned.
   //! \param included If true, also include target module.
+  //! \param post If true, return the postfix network rather than prefix.
   template <typename T, class Tstate, class Tcast>
     EXPORT layers<T,Tstate>*
     arch_narrow(layers<T,Tstate> *m, Tcast *c, bool included = true,
-		bool *found = NULL);
+		bool post = false, bool *found = NULL);
   //! Returns a copy of network 'm' which is narrowed up to the first
   //! occurence of module of type 'Tcast' with same address 'c' (included).
   //! If no occurence is found, a copy of the entire network is returned.
   //! \param included If true, also include target module.
+  //! \param post If true, return the postfix network rather than prefix.
   template <typename T, class Tstate, class Tcast>
     EXPORT ms_module<T,Tstate>*
     arch_narrow(ms_module<T,Tstate> *m, Tcast *c, bool included = true,
-		bool *found = NULL);
+		bool post = false, bool *found = NULL);
 
 } // namespace ebl {
 
