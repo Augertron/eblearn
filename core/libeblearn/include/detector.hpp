@@ -1401,10 +1401,12 @@ namespace ebl {
     odetections.clear();
     // loop on bounding boxes
     for (i = 0; i < pruned_bboxes.size(); ++i) {
-      bbox &bb = pruned_bboxes[i];
+      bbox bb = pruned_bboxes[i];
       // exclude background class
       if ((bb.class_id == bgclass) || (bb.class_id == mask_class))
 	continue ;
+      // narrow box if overlapping outside of image
+      bb.narrow(image.dim(1), image.dim(2));
       // check the box is not out of bounds
       if (bb.h0 < 0 || bb.w0 < 0
 	  || bb.h0 + bb.height > image.dim(1)

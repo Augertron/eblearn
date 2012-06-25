@@ -75,6 +75,9 @@ namespace ebl {
     //! Multiply all spatial values of this box by d.
     //! This can be useful to compute an average of boxes.
     void mul(float d);
+    //! Narrow this bbox so that it doesn't overlap outside of image with
+    //! dimensions imh x imw.
+    void narrow(uint imh, uint imw);
 
     // printing ////////////////////////////////////////////////////////////////
 

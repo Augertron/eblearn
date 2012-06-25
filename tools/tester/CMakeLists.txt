@@ -42,7 +42,7 @@ endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
     src/ebl_basic_test.cpp
     src/ebl_preprocessing_test.cpp
     src/image_test.cpp
-    # src/detector_test.cpp
+    src/detector_test.cpp
     src/ebl_machines_test.cpp
 #    src/gui3d_test.cpp
     src/main.cpp

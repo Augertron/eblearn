@@ -129,6 +129,13 @@ namespace ebl {
     o.w0 = (int) (o.w0 * d);
   }
 
+  void bbox::narrow(uint imh, uint imw) {
+    h0 = std::max((float) 0, h0);
+    w0 = std::max((float) 0, w0);
+    height = std::min(height, (float) imh - h0);
+    width = std::min(width, (float) imw - w0);
+  }
+
   string bbox::pretty(vector<string> *labels) {
     string s;
     if (labels && class_id < (int)labels->size()) s << (*labels)[class_id];
