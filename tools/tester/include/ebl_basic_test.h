@@ -49,9 +49,9 @@ class ebl_basic_test : public CppUnit::TestFixture  {
 
   //CPPUNIT_TEST(test_wavg_pooling_module_double); //segfaults
   CPPUNIT_TEST(test_l2pooling_module_double); //inconsistent tensor size?
-  CPPUNIT_TEST(test_sqrt_power_module_double);
+  // CPPUNIT_TEST(test_sqrt_power_module_double);
   CPPUNIT_TEST(test_power2_module_double);
-  CPPUNIT_TEST(test_power_inv_module_double);
+  // CPPUNIT_TEST(test_power_inv_module_double);
   CPPUNIT_TEST(test_linear_module_double);
   CPPUNIT_TEST(test_subtractive_norm_module_double);
   CPPUNIT_TEST(test_divisive_norm_module_double);
