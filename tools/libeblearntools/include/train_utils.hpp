@@ -56,9 +56,10 @@ namespace ebl {
     }
     // save weights and confusion matrix for test set
     wname.str("");
-    if (conf.exists("job_name"))
-      wname << conf.get_string("job_name");
-    wname << "_net" << setfill('0') << setw(5) << iter;
+    if (conf.exists("job_name")) wname << conf.get_string("job_name");
+    else if (conf.exists("name")) wname << conf.get_string("name");
+    if (wname.str().length() > 0) wname << "_";
+    wname << "net" << setfill('0') << setw(5) << iter;
     wfname.str(""); wfname << wname.str() << ".mat";
     if (conf.exists_false("save_weights"))
       cout << "Not saving weights (save_weights set to 0)." << endl;

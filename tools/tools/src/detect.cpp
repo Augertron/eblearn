@@ -81,6 +81,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	conf.set("root2", dir.c_str());
 	conf.set("current_dir", dir.c_str());
       }
+      conf.set("run_type", "detect"); // tell conf that we are in detect mode
       conf.resolve(); // manual call to resolving variable
       bool              silent        = conf.exists_true("silent");
       if (conf.exists_true("show_conf") && !silent) conf.pretty();
@@ -274,8 +275,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       // timing variables
       timer tpass, toverall, tstop;
       uint cnt = 0;
-      if (!silent)
-	mout << "i=" << cnt << endl;
       bool stop = false, finished = false;
 
       // loop
@@ -309,8 +308,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	      boxes.add(bb, d, &processed_fname, processed_id);
 	      if (cnt % save_bbox_period == 0) boxes.save();
 	      // avoid sample accumulation if not using bootstrapping
-	      mout << "Received " << samples.size() << " bootstrapping samples."
-		   << endl;
+	      if (boot.activated())
+		mout << "Received " << samples.size()
+		     << " bootstrapping samples." << endl;
 	    }
 	    if (conf.exists_true("bootstrapping_save")) {
 	      all_samples.push_back_new(samples);

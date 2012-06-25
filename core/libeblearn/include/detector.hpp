@@ -53,7 +53,8 @@ namespace ebl {
 	   std::ostream &o, std::ostream &e,
 	   bool adapt_scales_)
     : thenet(thenet_), thenet_nopp(NULL), resizepp(resize), 
-      resizepp_delete(false), input(NULL), minput(NULL), netdim_fixed(false),
+      resizepp_delete(false), resizepp_outside(false), input_gain(1),
+      input(NULL), minput(NULL), netdim_fixed(false),
       bgclass(-1), mask_class(-1), pnms(NULL), scales_step(0), min_scale(1.0),
       max_scale(1.0), restype(ORIGINAL), silent(false), save_mode(false),
       save_dir(""), save_counts(labels_.size(), 0), min_size(0), max_size(0),
@@ -86,6 +87,7 @@ namespace ebl {
       resizepp->set_name("detector resizpp");
       cout << "Using default resizing module: " << resizepp->describe() << endl;
       resizepp_delete = true;
+      resizepp_outside = true;
     }
     labels = labels_;
     mout << "Classes labels: " << labels << endl;
@@ -382,6 +384,12 @@ namespace ebl {
     mout << "Setting bbox scalings to " << bbox_scalings << endl;
   }
 
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_input_gain(double gain) {
+    input_gain = (T) gain;
+    mout << "Setting input gain to " << gain << endl;
+  }
+  
   //////////////////////////////////////////////////////////////////////////////
   // initialization
 
@@ -614,10 +622,14 @@ namespace ebl {
   void detector<T,Tstate>::get_netdim(intg order0) {
     if (!netdim_fixed) {
       netdim = network_mindims(thenet, order0);
-      mfidxdim m = resizepp->get_msize();
-      if (m.size() == 0)
-	eblerror("expected at least 1 input size from resizepp but got: " << m);
-      netdim = m[0];
+      // resizepp is contained in network, use size in resizepp
+      if (!resizepp_outside) {
+	mfidxdim m = resizepp->get_msize();
+	if (m.size() == 0)
+	  eblerror("expected at least 1 input size from resizepp but got: "
+		   << m);
+	netdim = m[0];
+      }
     }
   }
   
@@ -884,7 +896,7 @@ namespace ebl {
 	  m.remove_empty();
 	  mc0 = m[0];
 	  itl[scale].push_back_new(mc0);
-	  m = resizepp->get_msize();
+	  if (!resizepp_outside) m = resizepp->get_msize();
 	  // infer scale index for this output
 	  scale_indices[scale].clear();
 	  for (uint i = 0; i < m.size(); ++i)
@@ -901,7 +913,7 @@ namespace ebl {
 	  m.remove_empty();
 	  mc0 = m[0];
 	  itr[scale].push_back_new(mc0);
-	  m = resizepp->get_msize();
+	  if (!resizepp_outside) m = resizepp->get_msize();
 	  m.remove_empty();
 	  mc0 = m[0];
 	  pptr[scale].push_back_new(mc0);
@@ -912,7 +924,7 @@ namespace ebl {
 	  m.remove_empty();
 	  mc0 = m[0];
 	  ibl[scale].push_back_new(mc0);
-	  m = resizepp->get_msize();
+	  if (!resizepp_outside) m = resizepp->get_msize();
 	  m.remove_empty();
 	  mc0 = m[0];
 	  ppbl[scale].push_back_new(mc0);
@@ -923,7 +935,7 @@ namespace ebl {
 	  m.remove_empty();
 	  mc0 = m[0];
 	  ibr[scale].push_back_new(mc0);
-	  m = resizepp->get_msize();
+	  if (!resizepp_outside) m = resizepp->get_msize();
 	  m.remove_empty();
 	  mc0 = m[0];
 	  ppbr[scale].push_back_new(mc0);
@@ -1536,6 +1548,8 @@ namespace ebl {
 	(!(indim == image.get_idxdim()) && restype != NETWORK)) {
       init(image.get_idxdim(), frame_name);
     }
+    // apply gain on input
+    if (input_gain != 0) idx_dotc(image, input_gain, image);
   }
 
   template <typename T, class Tstate>

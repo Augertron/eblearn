@@ -3001,7 +3001,7 @@ namespace ebl {
       labs = labs.narrow(0, MIN(labs.dim(0), (intg) size), 0);
       mnist_datasource<Tnet,Tdata,Tlabel>::init(dat, labs, name.c_str());
       if (!train_data)
-      	this->set_test(); // remember that this is the testing set
+	this->set_test(); // remember that this is the testing set
       this->init_epoch();
       this->pretty(); // print info about dataset
     } catch(string &err) {
@@ -3048,10 +3048,8 @@ namespace ebl {
     else
       out.resize(this->sample_dims());
     idx<Tdata> dat;
-    if (multimat)
-      dat = datas.get(it);
-    else
-      dat = data[it];
+    if (multimat) dat = datas.get(it);
+    else dat = data[it];
     uint ni = data.dim(1);
     uint nj = data.dim(2);
     uint di = (uint) (0.5 * (height - ni));
@@ -3062,10 +3060,8 @@ namespace ebl {
     tgt = tgt.narrow(1, nj, dj);
     idx_copy(dat, tgt);
     // bias and coeff
-    if (bias != 0)
-      idx_addc(out.x, bias, out.x);
-    if (coeff != 1)
-      idx_dotc(out.x, coeff, out.x);
+    if (bias != 0) idx_addc(out.x, bias, out.x);
+    if (coeff != 1) idx_dotc(out.x, coeff, out.x);
   }
   
   template <typename Tnet, typename Tdata, typename Tlabel>
@@ -3086,9 +3082,7 @@ namespace ebl {
     // fill matrix with 1-of-n code
     idx<Tdata> targets(nclasses, nclasses);
     idx_fill(targets, -target);
-    for (int i = 0; i < nclasses; ++i) {
-      targets.set(target, i, i);
-    }
+    for (int i = 0; i < nclasses; ++i) targets.set(target, i, i);
     return targets; // return by copy
   }
 

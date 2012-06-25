@@ -302,6 +302,7 @@ int main(int argc, char **argv) { // regular main without gui
   curdir << dirname(argv[1]) << "/";
   cout << "Setting conf directory to: " << curdir << endl;
   conf.set("current_dir", curdir.c_str());
+  conf.set("run_type", "train"); // tell conf that we are in train mode
   conf.resolve();
   if (conf.exists_true("show_conf")) conf.pretty();
   const char *precision = "double";

@@ -197,6 +197,8 @@ namespace ebl {
     //! 1: only extract output corners.
     void set_bbox_decision(uint type);
     void set_bbox_scalings(mfidxdim &scalings);
+    //! Apply a gain to input image.
+    void set_input_gain(double gain);
 
     ////////////////////////////////////////////////////////////////
     // execution
@@ -341,9 +343,9 @@ namespace ebl {
     module_1_1<T,Tstate>	*thenet_nopp; //!< The network after resizepp.
     resizepp_module<T,Tstate>   *resizepp; //!< Resize module for multi-scaling.
     bool                 resizepp_delete; //!< We are responsible for deleting.
+    bool                 resizepp_outside; //!< resizepp is not contained in net
     idx<T>		 image;
-    double		 contrast;
-    double		 brightness;
+    T                    input_gain; //!< Factor on input image.
     idx<float>		 sizes;
     fstate_idx<T>        finput; //! A forward buffer containing input image.
     Tstate              *input;        //!< input buffer

@@ -461,6 +461,8 @@ namespace ebl {
       detect.set_ignore_outsiders();
     if (conf.exists("corners_inference"))
       detect.set_corners_inference(conf.get_uint("corners_inference"));
+    if (conf.exists("input_gain"))
+      detect.set_input_gain(conf.get_double("input_gain"));
   }
 
   template <typename Tnet>
@@ -577,6 +579,7 @@ namespace ebl {
   string detection_thread<Tnet>::get_output_directory(configuration &conf) {
     string s;
     if (conf.exists("output_dir")) s << conf.get_string("output_dir");
+    else s << conf.get_string("current_dir");
     s << "/detections";
     if (conf.exists_true("nms")) s << "_" << tstamp();
     s << "/";
