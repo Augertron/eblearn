@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
   runner.addTest(ebl_basic_test::suite());
   runner.addTest(ebl_preprocessing_test::suite());
   runner.addTest(image_test::suite());
-  // runner.addTest(detector_test::suite());
+  runner.addTest(detector_test::suite());
   runner.addTest(ebl_machines_test::suite());
  #ifdef __GUI3D__
   //   runner.addTest(gui3d_test::suite());

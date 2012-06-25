@@ -257,6 +257,7 @@ namespace ebl {
 	    << " positive windows with dimensions " << m;
 	ostringstream o;
 	o.precision(3);
+	uint hmax = 0;
 	for (uint i = 0; i < pp.size() && wpp < 5000; ++i) {
 	  hpp = h0;
 	  m = pp[i];
@@ -270,8 +271,9 @@ namespace ebl {
 	  draw_matrix(m, hpp, wpp, dzoom, dzoom, (T)0, (T)255);
 	  hpp += m.dim(0) + 1;
 	  wpp += m.dim(1) + 2;
+	  hmax = std::max(hmax, hpp);
 	}
-	h0 = hpp + 20;
+	h0 = hmax + 20;
       }
     }
     // display input states

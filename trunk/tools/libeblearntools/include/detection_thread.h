@@ -94,12 +94,15 @@ namespace ebl {
     //! We get the frame back even though it was set via set_data,
     //! because we do not know which frame was actually used.
     //! (could use some kind of id, and remember frames to avoid copy).
-    //! \param samples Extracted samples corresponding to bboxes.
+    //! \param frame_id An optional variable that will be filled with frame's id
+    //! \param samples Extracted samples corresponding to bboxes (optional)
     //! \param skipped If frame was ignored, skipped == true.
     virtual bool get_data(bboxes &bb, idx<ubyte> &frame,
 			  uint &total_saved, string &frame_name,
-			  uint &frame_id, svector<midx<Tnet> > &samples,
-			  bboxes &bbsamples, bool &skipped);
+			  uint *frame_id = NULL,
+			  svector<midx<Tnet> > *samples = NULL,
+			  bboxes *bbsamples = NULL,
+			  bool *skipped = NULL);
     //! Return true if the thread is available to process a new frame, false
     //! otherwise.
     virtual bool available();

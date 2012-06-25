@@ -468,8 +468,8 @@ namespace ebl {
   template <typename Tnet>
   bool detection_thread<Tnet>::get_data(bboxes &bboxes2, idx<ubyte> &frame2,
 					uint &total_saved_, string &frame_name_,
-					uint &id, svector<midx<Tnet> > &samples,
-					bboxes &bbsamples, bool &skipped) {
+					uint *id, svector<midx<Tnet> > *samples,
+					bboxes *bbsamples, bool *skipped) {
     // lock data
     mutex_out.lock();
     // only read data if it has been updated
@@ -480,7 +480,7 @@ namespace ebl {
     }
     // data is updated, but just to tell we skipped the frame
     if (frame_skipped) {
-      skipped = true;
+      if (skipped) *skipped = true;
       frame_skipped = false;
       // reset updated flag
       out_updated = false;
@@ -490,7 +490,7 @@ namespace ebl {
       mutex_out.unlock();
       return false;
     }
-    skipped = false;
+    if (skipped) *skipped = false;
     // clear bboxes
     bboxes2.clear();
     bboxes2.push_back_new(bbs);
@@ -507,14 +507,18 @@ namespace ebl {
     // set frame name
     frame_name_ = frame_name;
     // set frame id
-    id = frame_id;
+    if (id) *id = frame_id;
     // overwrite samples
-    samples.clear();
-    bbsamples.clear();
-    samples.push_back_new(returned_samples);
-    bbsamples.push_back_new(returned_samples_bboxes);
-    returned_samples.clear();
-    returned_samples_bboxes.clear();
+    if (samples) {
+      samples->clear();
+      samples->push_back_new(returned_samples);
+      returned_samples.clear();
+    }
+    if (bbsamples) {
+      bbsamples->clear();
+      bbsamples->push_back_new(returned_samples_bboxes);
+      returned_samples_bboxes.clear();
+    }
     // reset updated flag
     out_updated = false;
     // declare thread as available

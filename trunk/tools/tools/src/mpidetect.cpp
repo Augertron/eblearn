@@ -194,8 +194,8 @@ public:
     bboxes bbsamples; // boxes corresponding to samples
     bool skipped = false; // the frame was not processed and skipped.
     // we got the question, answer it
-    bool new_data = dt.get_data(bb, frame, total_saved, frame_name, frame_id,
-				samples, bbsamples, skipped);
+    bool new_data = dt.get_data(bb, frame, total_saved, frame_name, &frame_id,
+				&samples, &bbsamples, &skipped);
     world.send(0, cmd_get_data, new_data);
     world.send(0, cmd_get_data, skipped);
     if (!new_data)

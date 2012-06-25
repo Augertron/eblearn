@@ -294,7 +294,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  bool skipped = false;
 	  updated = (*ithreads)->get_data
 	    (bb, detframe, *(total_saved.idx_ptr() + i), processed_fname,
-	     processed_id, samples, bbsamples, skipped);
+	     &processed_id, &samples, &bbsamples, &skipped);
 	  if (skipped) cnt++; // a new skipped frame was received
 	  // save bounding boxes
 	  if (updated) {

@@ -54,15 +54,15 @@ void detector_test::test_face() {
     bool updated = false;
     while (!updated) {
       updated = dt.get_data(bboxes, detframe, *(total_saved.idx_ptr()),
-			    processed_fname, cnt);
+			    processed_fname);
       millisleep(5);
     }
     sleep(2);
     dt.stop(true);
 
     // tests
-    CPPUNIT_ASSERT_EQUAL((size_t) 16, bboxes.size()); // 16 faces to be found
-    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 5.89,
+    CPPUNIT_ASSERT_EQUAL((size_t) 17, bboxes.size()); // 16 faces to be found
+    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 7.47,
     				 bboxes[0].confidence, .01);
     CPPUNIT_ASSERT_EQUAL((int) 1, bboxes[0].class_id);
   }
