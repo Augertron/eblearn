@@ -149,7 +149,7 @@ namespace ebl {
 
   thread::~thread() {
     //      pthread_exit((void*)&threadptr);
-    mout << "destroyed." << endl;
+    //mout << "destroyed." << endl;
   }
 
   int thread::start() {
@@ -219,7 +219,7 @@ namespace ebl {
     thread *pt = (thread*) pthis;
     pt->run();
     pt->_finished = true;
-    pt->mout << "finished" << endl;
+    //pt->mout << "finished" << endl;
     return pt;
   }
 

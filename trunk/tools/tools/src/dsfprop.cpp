@@ -229,6 +229,8 @@ int main(int argc, char **argv) { // regular main without gui
     timer gtimer;
     gtimer.start(); // total running time
     configuration conf(argv[1]); // configuration file
+    conf.set("run_type", "fprop"); // tell conf that we are in fprop mode
+    conf.resolve();
     string input_root = conf.get_string("root");
     string outdir = input_root;
     if (conf.exists("root_out")) outdir = conf.get_string("root_out");
