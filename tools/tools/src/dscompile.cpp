@@ -759,6 +759,7 @@ void compile() {
   // save dataset
   if (save_set) {
     if (force_label) ds->set_unique_label(label);
+    ds->set_name(dataset_name);
     //ds->set_save(DYNSET_SAVE);
     ds->save(outdir);
   }

@@ -172,6 +172,11 @@ namespace ebl {
   //! Returns true if successful, false otherwise.
   template <typename T>
     bool save_matrix(idx<T>& m, FILE *fp);
+  //! Saves a midx m into file 'filename'. 
+  //! Returns true if successful, false otherwise.
+  template <typename T>
+  bool save_matrix(midx<T> m,
+		   const std::string &filename);
   //! Saves matrices m in file filename. Elements of m may be NULL and will
   //! be remembered as empty when loaded back.
   //! Returns true if successful, false otherwise.
