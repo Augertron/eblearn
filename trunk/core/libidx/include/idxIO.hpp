@@ -693,6 +693,36 @@ namespace ebl {
     // save matrix
     return save_matrix(all, filename);
   }
+
+  template <typename T>
+  bool save_matrix(midx<T> m,
+		   const std::string &filename) {
+    FILE *fp = fopen(filename.c_str(), "wb+");
+    if (!fp) {
+      cerr << "save_matrix failed (" << filename << "): ";
+      perror("");
+      return false;
+    }
+    // determine matrices dims
+    if (m.order() != 1) eblerror("expected order 1");
+    if (m.dim(0) < 1) eblerror("expected atleast 1 sample");
+    idxdim alld(m.dim(0));
+    idx<T> e = m.get(0);
+    if (e.order() != 3) eblerror("expected only 3 channels");
+    idxdim d = e.get_idxdim();
+    for (uint i = 0; i < d.order(); ++i)
+      alld.insert_dim(alld.order(), d.dim(i));
+    // allocate matrix
+    idx<T> all(alld);
+    idx_clear(all);
+    // add all matrices
+    for (long i = 0; i < m.dim(0); ++i) {
+      idx<T> e = all.select(0,i);
+      idx_copy(m.get(i), e);
+    }
+    // save matrix
+    return save_matrix(all, filename);
+  }
   
 } // end namespace ebl
 

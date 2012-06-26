@@ -488,6 +488,7 @@ namespace ebl {
     bool                separate_layers_save; //!< Save separate layers or not.
     list<string>        images_list;    //!< List of saved image files.
     bool                wmirror;        //!< add vertical-axis symmetry
+    bool                dataset_loaded; //!< Indicator to point if load is already called
     // bbox transformations /////////////////////////////////////////////////
     float               bbox_woverh;    //!< bounding boxes width over h factor
     string              force_label;    //!< force all labels to this one

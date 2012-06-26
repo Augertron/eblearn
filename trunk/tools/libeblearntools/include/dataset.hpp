@@ -99,6 +99,7 @@ namespace ebl {
     display_extraction = false;
     display_result = false;
     bsave_display = false;
+    dataset_loaded = false;
     // preprocessing
     extension = IMAGE_PATTERN_MAT;
     sleep_display = false;
@@ -468,6 +469,7 @@ namespace ebl {
       sample = data.get(0);
     outdims = sample.get_idxdim();
     print_stats();
+    dataset_loaded = true;
     return true;
   }
   
@@ -526,10 +528,21 @@ namespace ebl {
 	  // 	// make sure dat can be transformed into a single idx
 	  // 	idx<Tdata> single = dat.pack();
 	  // 	if (!save_matrix(single, fname)) {
-	  if (!save_matrix<Tdata>(images_list, fname)) {
-	    cerr << "error: failed to save " << fname << endl;
-	    return false;
-	  } else cout << "Saved " << fname << endl;
+
+          // save from dynamic to static
+          if (images_list.size() == 0 && dataset_loaded == true) {
+            if (data.order() != 1) eblerror("In dataset mode, multiscale not supported");
+            if (!save_matrix<Tdata>(data, fname)) {
+              cerr << "error: failed to save " << fname << endl;
+              return false;
+            } else cout << "Saved " << fname << endl;
+          }
+          else {
+            if (!save_matrix<Tdata>(images_list, fname)) {
+              cerr << "error: failed to save " << fname << endl;
+              return false;
+            } else cout << "Saved " << fname << endl;
+          }
 	} else if (!strcmp(save_mode.c_str(), DYNSET_SAVE)) { // compile data file from existing files
 	  if (images_list.size() > 0) {
 	    cout << "Saving dynamic dataset from a list of "
