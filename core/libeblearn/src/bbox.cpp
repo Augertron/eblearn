@@ -331,14 +331,14 @@ namespace ebl {
       new_group(dims, name, index);
     if (index < 0) { // addition ordering, just push_back
       current_group = grouped_boxes[grouped_boxes.size() - 1];
-      current_group->push_back(*b);
+      current_group->push_back_new(*b);
     } else { // force ordering by index
       if (grouped_boxes.size() < (uint) (index + 1))
 	new_group(dims, name, index);
       current_group = grouped_boxes[index];
-      current_group->push_back(*b);
+      current_group->push_back_new(*b);
     }
-    this->push_back(b); // also add to non-grouped vector
+    this->push_back_new(b); // also add to non-grouped vector
   }
 
   void bboxes::add(bbox &b, idxdim &dims, string *name, int index) {
@@ -405,10 +405,13 @@ namespace ebl {
       eblerror("open failed");
     }
     string name, lastname;
+    try {
       while (!feof(fp)) {
 	char *str = fscan_str(fp);
 	name = str;
 	delete str;
+        if(feof(fp))
+          break;
 	int imh = fscan_int(fp);
 	int imw = fscan_int(fp);
 	idxdim d(imh, imw);
@@ -435,6 +438,7 @@ namespace ebl {
 	  break ;
 	ungetc(c, fp);
       }
+    } catch(string &err) { eblerror(err.c_str()); }
       fclose(fp);
     (*mout) << "Loaded " << describe() << " from " << fname << endl;
   }
