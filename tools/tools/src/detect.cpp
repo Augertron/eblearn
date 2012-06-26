@@ -129,8 +129,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	next_on_key = conf.get_char("next_on_key");
 	mout << "Press " << next_on_key << " to process next frame." << endl;
       }
-      uint              skip_frames   = conf.exists("skip_frames") ?
-	conf.get_uint("skip_frames") : 0;
+      uint skip_frames = conf.try_get_uint("skip_frames", 0);
       if (conf.exists("input_npasses"))
 	npasses = conf.get_uint("input_npasses");
       string viddir;
@@ -139,9 +138,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	mkdir_full(viddir);
       }
       bool precomputed_boxes = conf.exists("bbox_file");
-      uint 	save_bbox_period 	    = 1;
-      if (conf.exists("save_bbox_period"))
-	save_bbox_period = std::max((uint)1, conf.get_uint("save_bbox_period"));
+      uint save_bbox_period = conf.try_get_uint("save_bbox_period", 500);
       idxdim crop(1, 1, 1);
       if (conf.exists("input_crop"))
 	crop = string_to_idxdim(conf.get_string("input_crop"));
@@ -298,6 +295,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  if (skipped) cnt++; // a new skipped frame was received
 	  // save bounding boxes
 	  if (updated) {
+	    timer tupdate;
 	    updated = false;
 	    idxdim d(detframe);
 	    if (boot.activated()) bb.clear();
@@ -316,6 +314,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	      all_samples.push_back_new(samples);
 	      all_bbsamples.push_back_new(bbsamples);
 	    }
+	    mout << "bbox update time: " << tupdate.elapsed() << endl;
 	    cnt++;
 	    // display processed frame
 #ifdef __GUI__
