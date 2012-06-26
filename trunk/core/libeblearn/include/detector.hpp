@@ -1236,20 +1236,20 @@ namespace ebl {
     if (answer) extract_bboxes(0, raw_bboxes);//pre_threshold, raw_bboxes);
     // sort bboxes by confidence (most confident first)
     raw_bboxes.sort_by_confidence();
-    TIMING1("extract bboxes");
+    TIMING1("bbox sorting");
     // non-maximum suppression
     fprop_nms(raw_bboxes, pruned_bboxes);
+    TIMING1("bbox nms");
     // print results
     if (!silent) mout << "found " << pruned_bboxes.pretty(&labels);
     // save positive response input windows in save mode
-    if (save_mode)
-      save_bboxes(pruned_bboxes, save_dir, frame_name);
+    if (save_mode) save_bboxes(pruned_bboxes, save_dir, frame_name);
     // backward connections
     back_module<T, Tstate>* back = (back_module<T, Tstate>*)((layers<T,Tstate>&)thenet).find("back");
     if (back) {
       back->bb(pruned_bboxes);
     }
-    TIMING1("end bboxes");
+    TIMING1("bbox saving");
     // return bounding boxes
     TIMING2("post proc");
     return pruned_bboxes;
