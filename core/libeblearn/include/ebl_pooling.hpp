@@ -314,8 +314,7 @@ namespace ebl {
       return;
     }
     // if it is an odd lp, example l3, l5 take an abs of the input
-    // if ((lp_pow % 2) == 1) 
-    idx_abs(in.x, in.x);
+    if ((lp_pow % 2) == 1) idx_abs(in.x, in.x);
     // in^p
     sqmod.fprop(in, squared);
     // gaussian-weighted neighborhood of in^p
