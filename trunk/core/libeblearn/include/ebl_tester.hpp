@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
-#include <iomanip>
+// #include <iomanip>
 
 using namespace std;
 
@@ -41,7 +41,7 @@ namespace ebl {
       out(out_),
       jac_fprop(1,1), jac_bprop(1,1), jac_pfprop(1,1), jac_pbprop(1,1),
       hes_fprop(1,1), hes_bprop(1,1), hes_pfprop(1,1), hes_pbprop(1,1) {
-    // dynamic_init_drand();
+    dynamic_init_drand();
   }
 
   template <class T>
@@ -64,7 +64,8 @@ namespace ebl {
     out.clear_dx();
     out.clear_ddx();
     idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
-    // EDEBUG("in: " << in.x.str() << std::endl << " out: " << out.x.str() << std::endl );
+    // EDEBUG("in: " << in.x.str() << std::endl << " out: " 
+    // << out.x.str() << std::endl );
     get_jacobian_fprop(module, in, out, jac_fprop);
     get_jacobian_bprop(module, in, out, jac_bprop);
     // EDEBUG(" jac_fprop: " << jac_fprop.str() << std::endl
@@ -181,7 +182,7 @@ namespace ebl {
     bbstate_idx<T> sinb = in.make_copy(); //x+small
     bbstate_idx<T> souta = out.make_copy(); //f(x-small)
     bbstate_idx<T> soutb = out.make_copy(); //f(x+small)
-    T small = 1e-4; // TODO:
+    T small = 1e-6;
     int cnt = 0;
     // clear out jacobian matrix
     jac.resize(in.size(), out.size());
@@ -190,7 +191,7 @@ namespace ebl {
       idx_copy(in.x, sina.x);
       idx_copy(in.x, sinb.x);
       // perturb
-      std::setprecision(16);
+      // std::setprecision(16);
       *sxa = *sx - small;
       *sxb = *sx + small;
       // cout << "sx,sxa,sxb:" << std::setprecision(16) << *sx 

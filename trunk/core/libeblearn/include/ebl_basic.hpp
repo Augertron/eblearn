@@ -865,11 +865,11 @@ namespace ebl {
     }
 #endif
 
- #ifdef __TH__
-     th_pow(in.x, out.x, p);
- #else
+ // #ifdef __TH__
+ //     th_pow(in.x, out.x, p);
+ // #else
     idx_power(in.x, p, out.x);
-#endif
+ // #endif
   }
 
   template <typename T, class Tstate>
@@ -882,11 +882,11 @@ namespace ebl {
       tt = idx<T>(d);
     }
     // compute derivative
- #ifdef __TH__
-     th_pow(in.x, tt, p - 1);
- #else
+ // #ifdef __TH__
+ //     th_pow(in.x, tt, p - 1);
+ // #else
     idx_power(in.x, p - 1, tt);
-#endif
+//#endif
     idx_mul(out.dx, tt, tt); //! tt = outdx*x^(p-1)
     idx_dotcacc(tt, p, in.dx);
   }
@@ -901,11 +901,11 @@ namespace ebl {
       tt = idx<T>(d);
     }
     // compute 2nd derivative
- #ifdef __TH__
-     th_pow(in.x, tt, p - 1);
- #else
+// #ifdef __TH__
+//     th_pow(in.x, tt, p - 1);
+// #else
     idx_power(in.x, p - 1, tt);
-#endif
+//#endif
     idx_mul(tt, tt, tt); //! tt = (x^(p-1))^2
     idx_mul(out.ddx, tt, tt); //! tt = outddx*(x^(p-1))^2
     idx_dotcacc(tt, (p * p), in.ddx);
