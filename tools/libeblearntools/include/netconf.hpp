@@ -172,7 +172,7 @@ namespace ebl {
     int num_devices = eblcuda_count_devices();    
     if (tid != -1 && num_devices > 0) {
       gpu_id = tid % num_devices;
-      cout << "Thread " << tid <<":\tUsing GPU:" << gpu_id << endl;
+      //cout << "Thread " << tid <<":\tUsing GPU:" << gpu_id << endl;
     }
     if (conf.exists("gpu_id"))
       gpu_id = conf.get_uint("gpu_id");
@@ -194,91 +194,51 @@ namespace ebl {
       string type, strbranches;
       if (!get_param(conf, name, "type", type)) return NULL;
       // switch on merging type
-      if (type.compare("mflat")) { // all types but mflat
-	get_param(conf, name, "branches", strbranches, true);
-	// get vector of branch buffers to merge
-	vector<mstate<Tstate>**> inputs;
-	list<string> b = string_to_stringlist(strbranches);
-	for (list<string>::iterator bi = b.begin(); bi != b.end(); bi++) {
-	  layers<T,Tstate> *branch = NULL;
-	  for (uint k = 0; k < branches->size(); ++k) {
-	    if (!strcmp((*branches)[k]->name(), (*bi).c_str())) {
-	      branch = (*branches)[k];
-	      thick += (*branches_thick)[k]; // update thickness
-	      break ;
-	    }
+      if (!type.compare("concat")) { // concatenate
+	intg concat_dim;
+	string sstates;
+	vector<vector<uint> > states;
+	if (!get_param(conf, name, "dim", concat_dim)) return NULL;
+	if (get_param(conf, name, "states", sstates, true)) {
+	  vector<string> s = string_to_stringvector(sstates, ';');
+	  for (uint i = 0; i < s.size(); ++i) {
+	    vector<uint> v = string_to_uintvector(s[i]);
+	    states.push_back(v);
 	  }
-	  if (!branch)
-	    eblerror(name << " is trying to merge branch " << *bi
-		     << " but branch not found");
-	  inputs.push_back(&(branch->intern_out));
 	}
-	// switch on merging type
-	if (!type.compare("concat")) { // concatenate
-	  intg concat_dim;
-	  string sstates;
-	  vector<vector<uint> > states;
-	  if (!get_param(conf, name, "dim", concat_dim)) return NULL;
-	  if (get_param(conf, name, "states", sstates, true)) {
-	    vector<string> s = string_to_stringvector(sstates, ';');
-	    EDEBUG("s: " << s);
-	    for (uint i = 0; i < s.size(); ++i) {
-	      vector<uint> v = string_to_uintvector(s[i]);
-	      EDEBUG("v: " << v);
-	      states.push_back(v);
-	    }
-	  }
-	  // create module
-	  if (states.size() > 0)
-            module = (module_1_1<T,Tstate>*)
-              new merge_module<T,Tstate>(states, concat_dim, name.c_str());
-	  else // old-style with branches (TODO: remove)
-	    module = (module_1_1<T,Tstate>*)
-	      new merge_module<T,Tstate>(inputs, concat_dim, name.c_str(),
-					 strbranches.c_str());
-	  // update thickness after merging if specified by hand
-	  get_param(conf, name, "thickness", thick, true);
-	} else if (!type.compare("flat")) { // flatten
-	  string strides, ins, bstrides, bins;
-	  if (!get_param(conf, name, "in", ins)) return NULL;
-	  if (!get_param(conf, name, "stride", strides)) return NULL;
-	  if (!get_param(conf, name, "branches_in", bins)) return NULL;
-	  if (!get_param(conf, name, "branches_stride", bstrides))
-	    return NULL;
-	  idxdim in = string_to_idxdim(ins);
-	  fidxdim stride = string_to_fidxdim(strides.c_str());
-	  midxdim bin = string_to_idxdimvector(bins.c_str());
-	  mfidxdim bstride = string_to_fidxdimvector(bstrides.c_str());
+	// create module
+	if (states.size() > 0)
 	  module = (module_1_1<T,Tstate>*)
-	    new flat_merge_module<T,Tstate>(inputs, in, bin, stride,
-					    bstride, name.c_str(),
-					    strbranches.c_str());
-	} else eblerror("unknown merge_type " << type);
-      } else if (!type.compare("mflat")) { // multi-state flatten
+	    new merge_module<T,Tstate>(states, concat_dim, name.c_str());
+	else eblerror("expected a _states id list to be concatenated");
+	// update thickness after merging if specified by hand
+	get_param(conf, name, "thickness", thick, true);
+      } else if (!type.compare("flat") 
+		 || !type.compare("mflat")
+		 || !type.compare("linear")) { // flatten
 	string strides, ins, sscales;
-	bool bpad = false;
 	mfidxdim bstride, scales;
-	get_param(conf, name, "pad", bpad, true);
 	if (!get_param(conf, name, "ins", ins)) return NULL;
 	if (!get_param(conf, name, "strides", strides)) return NULL;
 	if (get_param(conf, name, "scales", sscales, true))
 	  scales = string_to_fidxdimvector(sscales.c_str());
-	intg hextra = 0, wextra = 0;
-	float ss = 1, edge = 0;
-	get_param(conf, name, "hextra", hextra, true);
-	get_param(conf, name, "wextra", wextra, true);
-	get_param(conf, name, "subsampling", ss, true);
-	get_param(conf, name, "edge", edge, true);
 
 	midxdim bin = string_to_idxdimvector(ins.c_str());
-	EDEBUG("flat_merge " << strides);
 	bstride = string_to_fidxdimvector(strides.c_str());
-	EDEBUG("bstride " << bstride);
-	module = (module_1_1<T,Tstate>*)
-	  new flat_merge_module<T,Tstate>
-	  (bin, bstride, bpad, name.c_str(),
-	   scales.size() > 0 ? &scales : NULL,
-	   hextra, wextra, ss, edge);
+	mfidxdim *pscales = scales.size() > 0 ? &scales : NULL;
+	if (!type.compare("linear")) {
+	  intg lout;
+	  if (!get_param2(conf, name, "out", lout, thick, nout)) return NULL;
+	  module = (module_1_1<T,Tstate>*)
+	    new linear_merge_module<T,Tstate>(bshared_exists? NULL : &theparam,
+					      lout, bin, bstride, 
+					      name.c_str(), pscales);
+	  thick = lout; // update thickness
+	} else {
+	  module = (module_1_1<T,Tstate>*)
+	    new flat_merge_module<T,Tstate>(bin, bstride, name.c_str(),
+					    pscales);
+	}
       } else eblerror("unknown merge_type " << type);
     }
     // branch //////////////////////////////////////////////////////////////
