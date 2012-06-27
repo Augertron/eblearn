@@ -137,10 +137,11 @@ namespace ebl {
   class_answer<T,Tds1,Tds2,Tstate>::
   class_answer(uint nclasses, double target_factor, bool binary_target_,
 	       t_confidence conf, bool apply_tanh_, const char *name_,
-	       int force)
+	       int force, int single)
     : answer_module<T,Tds1,Tds2,Tstate>(binary_target_?1:nclasses, name_),
       conf_type(conf), binary_target(binary_target_), resize_output(true),
-      apply_tanh(apply_tanh_), tmp(1,1,1), force_class(force) {
+      apply_tanh(apply_tanh_), tmp(1,1,1), force_class(force),
+      single_output(single) {
     // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
     targets = create_target_matrix<T>(nclasses, (T)1.0);
     // binary target
@@ -163,6 +164,7 @@ namespace ebl {
     // set min/max of target
     target_min = idx_min(targets);
     target_max = idx_max(targets);
+    target_range = target_max - target_min;
     // set confidence parameters
     T max_dist;
     switch (conf_type) {
@@ -232,8 +234,10 @@ namespace ebl {
 	    oo.set((T) 1, 0); // class 1
 	    oo.set((T) (2 - fabs((double) a - t1)) / 2, 1); // conf
 	  }
-	}
-	else { // 1-of-n target
+	} else if (single_output >= 0) {
+	  oo.set((T) single_output, 0); // all answers are the same class
+	  oo.set((T) ((ii.get(single_output) - target_min) / target_range), 1);
+	} else { // 1-of-n target
 	  // set class answer
 	  if (force_class >= 0) classid = force_class;
 	  else classid = idx_indexmax(ii);

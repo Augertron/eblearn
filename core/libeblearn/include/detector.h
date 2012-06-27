@@ -149,6 +149,9 @@ namespace ebl {
     void set_max_resolution(uint max_size);
     //! Set different thresholds for each scale during raw extraction.
     void set_raw_thresholds(vector<float> &t);
+    //! Applies a threshold on raw outputs before any processing,
+    //! in particular before outputs smoothing.
+    void set_outputs_threshold(T t);
 
     //! Enable nms of type 'type'. Refer to t_pruning declaration for
     //! different types. Default type is 1, regular pruning.
@@ -415,7 +418,8 @@ namespace ebl {
     bool corners_infered; //!< Allows to infer only once.
     svector<mfidxdim> itl, itr, ibl, ibr; //!< 4 corners in input space.
     svector<mfidxdim> pptl, pptr, ppbl, ppbr; //!< 4 corners in pp input space.
-    float    pre_threshold; //!< Threshold for initial bbox extraction.
+    float    pre_threshold; //!< Confidence threshold for initial bbox extraction.
+    float    outputs_threshold; //!< Threshold on raw outputs.
     vector<float> raw_thresholds; //!< Thresholds for each scale.
     vector<vector<uint> > scale_indices;//!< Input scales indices for each out
     uint bbox_decision; //!< Decision type, 0: regular, 1: corners only

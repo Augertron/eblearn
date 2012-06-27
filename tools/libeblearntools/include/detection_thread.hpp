@@ -448,6 +448,8 @@ namespace ebl {
       vector<float> rt = string_to_floatvector(srt.c_str());
       detect.set_raw_thresholds(rt);
     }
+    if (conf.exists("outputs_threshold"))
+      detect.set_outputs_threshold(conf.get_double("outputs_threshold"));
     ///////////////////////////////////////////////////////////////////////////
     if (conf.exists("netdims")) {
       idxdim d = string_to_idxdim(conf.get_string("netdims"));
