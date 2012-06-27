@@ -976,11 +976,14 @@ namespace ebl {
     answer_module<T,Tds1,Tds2,Tstate> *module = NULL;
     // loop on possible answer modules /////////////////////////////////////////
     if (!type.compare("class_answer")) {
-      string factor_name, binary_name, tconf_name, tanh_name, force_name;
+      string factor_name, binary_name, tconf_name, tanh_name, force_name, 
+	single_name;
       t_confidence tconf = confidence_max;
       bool binary = false, btanh = false;
       float factor = 1.0;
-      int force = -1;
+      int force = -1, single = -1;
+      if (get_param(conf, name, "single_output", single_name, true))
+	single = string_to_int(single_name);
       if (get_param(conf, name, "factor", factor_name, true))
 	factor = string_to_float(factor_name);
       if (get_param(conf, name, "binary", binary_name, true))
@@ -992,7 +995,7 @@ namespace ebl {
       if (get_param(conf, name, "force_class", force_name, true))
 	force = string_to_int(force_name);
       module = new class_answer<T,Tds1,Tds2,Tstate>
-	(noutputs, factor, binary, tconf, btanh, name.c_str(), force);
+	(noutputs, factor, binary, tconf, btanh, name.c_str(), force, single);
       //////////////////////////////////////////////////////////////////////////
     } else if (!type.compare("vote_answer")) {
       string factor_name, binary_name, tconf_name, tanh_name;

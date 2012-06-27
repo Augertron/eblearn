@@ -63,7 +63,7 @@ namespace ebl {
       mout(o), merr(e), smoothing_type(0), initialized(false),
       bboxes_off(false), adapt_scales(adapt_scales_), answer(answer_),
       ignore_outsiders(false), corners_inference(0), corners_infered(false),
-      pre_threshold(0), bbox_decision(0) {
+      pre_threshold(0), outputs_threshold(-1), bbox_decision(0) {
     // // make sure the top module is an answer module
     // module_1_1<T,Tstate> *last = thenet.last_module();
     // if (!dynamic_cast<answer_module<T,Tstate>*>(last))
@@ -276,6 +276,12 @@ namespace ebl {
   void detector<T,Tstate>::set_raw_thresholds(vector<float> &t) {
     mout << "Using multiple thresholds for raw bbox extractions: " << t << endl;
     raw_thresholds = t;
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_outputs_threshold(T t) {
+    mout << "Setting raw outputs threshold to " << t << endl;
+    outputs_threshold = t;
   }
 
   template <typename T, class Tstate>
@@ -1224,7 +1230,7 @@ namespace ebl {
     TIMING1("end of network");
     TIMING_RESIZING("total resizing time");
     // threshold before smoothing
-    threshold_outputs(pre_threshold);
+    if (outputs_threshold > -1) threshold_outputs(outputs_threshold);
     // smooth outputs
     smooth_outputs();
 
@@ -1233,7 +1239,7 @@ namespace ebl {
     // clear previous bounding boxes
     raw_bboxes.clear();
     // get new bboxes
-    if (answer) extract_bboxes(0, raw_bboxes);//pre_threshold, raw_bboxes);
+    if (answer) extract_bboxes(pre_threshold, raw_bboxes);
     // sort bboxes by confidence (most confident first)
     raw_bboxes.sort_by_confidence();
     TIMING1("bbox sorting");
