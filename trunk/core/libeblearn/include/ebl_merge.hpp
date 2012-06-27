@@ -37,44 +37,9 @@ namespace ebl {
 
   template <typename T, class Tstate>
   flat_merge_module<T, Tstate>::
-  flat_merge_module(std::vector<Tstate**> &inputs_, idxdim &in_, midxdim &ins_,
-		    fidxdim &stride_, mfidxdim &strides_,
-		    const char *name_, const char *list)
-    : m2s_module<T,Tstate>(inputs_.size() + 1, name_), inputs(inputs_),
-      din(in_), dins(ins_), stride(stride_), strides(strides_), in0(NULL),
-      use_pinputs(false), reference_scale(0) {
-    if (list)
-      merge_list = list;
-    default_scales(ins_.size());
-    // allocate zpad vector
-    zpads.assign(strides.size(), NULL);
-  }
-
-  template <typename T, class Tstate>
-  flat_merge_module<T, Tstate>::
-  flat_merge_module(std::vector<mstate<Tstate>**> &inputs_,
-  		    idxdim &in_, midxdim &ins_, fidxdim &stride_,
-		    mfidxdim &strides_, const char *name_, const char *list)
-    : m2s_module<T,Tstate>(inputs_.size() + 1, name_), //msinputs(inputs_),
-      din(in_), dins(ins_), stride(stride_), strides(strides_),
-      use_pinputs(false), reference_scale(0)  {
-    if (list)
-      merge_list = list;
-    // allocate zpad vector
-    zpads.assign(strides.size(), NULL);
-    eblerror("not implemented");
-  }
-
-  template <typename T, class Tstate>
-  flat_merge_module<T, Tstate>::
-  flat_merge_module(midxdim &ins_, mfidxdim &strides_, bool bpad_,
-		    const char *name_, mfidxdim *scales_,
-		    /*TEMP*/ intg hextra_, intg wextra_, float ss_, float edge_)
-    : m2s_module<T,Tstate>(ins_.size(), name_), in0(NULL), use_pinputs(true),
-      bpad(bpad_), reference_scale(0),
-      //TEMP
-      hextra(hextra_), wextra(wextra_), subsampling(ss_), edge(edge_)      
-  {
+  flat_merge_module(midxdim &ins_, mfidxdim &strides_,
+		    const char *name_, mfidxdim *scales_)
+    : m2s_module<T,Tstate>(ins_.size(), name_), reference_scale(0) {
     if (scales_) scales = *scales_;
     else default_scales(ins_.size());
     // check there are enough elements
@@ -84,359 +49,18 @@ namespace ebl {
 	       << ins_.size() << " strides: " << strides_.size());
     // separate first dim/strides from rest
     din = ins_[0];
+    din2 = ins_[0];
     stride = strides_[0];
     // add remaining ones
     for (uint i = 0; i < ins_.size(); ++i) {
       dins.push_back(ins_[i]);
+      dins2.push_back(ins_[i]);
       strides.push_back(strides_[i]);
     }
-    // allocate zpad vector
-    zpads.assign(strides.size(), NULL);
   }
 
   template <typename T, class Tstate>
   flat_merge_module<T, Tstate>::~flat_merge_module() {
-    // clean up zero padding modules
-    for (uint i = 0; i < zpads.size(); ++i)
-      if (zpads[i])
-	delete zpads[i];
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // generic state methods
-
-  template <typename T, class Tstate>
-  void flat_merge_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
-    // pad each input so that all windows start centered on the first actual
-    // pixel top right
-
-    // if (inputs.size() == 0)
-    //   eblerror("no inputs to merge");
-    // feature size for main input
-    intg fsize = din.dim(0) * din.dim(1) * in.x.dim(0);
-    // number of possible windows
-    intg nh = 1 + (intg) ((in.x.dim(1) - din.dim(0)) / stride.dim(0));
-    intg nw = 1 + (intg) ((in.x.dim(2) - din.dim(1)) / stride.dim(1));
-    // compute new size and resize output if necessary
-    for (uint i = 0; i < std::max(inputs.size(), pinputs.size()); ++i) {
-      idxdim &d = dins[i];
-      fidxdim &s = strides[i];
-      idx<T> input = (use_pinputs ? pinputs[i]->x : (*inputs[i])->x);
-      fsize += d.nelements() * input.dim(0);
-      // check that strides match possible windows
-      intg nh2 = (intg) (1 + (input.dim(1) - d.dim(0)) / s.dim(0));
-      intg nw2 = (intg) (1 + (input.dim(2) - d.dim(1)) / s.dim(1));
-      if (nh2 < nh || nw2 < nw) {
-	eblerror("input " << input << " and window " << d << " with stride " <<s
-		 << " produce " << nh2 << "x" << nw2
-		 << " outputs but expected at least " << nh << "x" << nw);
-      } else if (nh2 != nh || nw2 != nw)
-	EDEBUG("warning: input " << input << " and window " << d
-	      << " with stride " <<s << " produce " << nh2 << "x" << nw2
-	      << ", ignoring extra cells and using only " <<nh << "x" << nw);
-    }
-    idxdim d(fsize, nh, nw);
-    if (!out.x.same_dim(d)) {
-      if (out.x.order() != d.order())
-	out = Tstate(d);
-      else
-	out.resize(d);
-    }
-    intg offset = 0;
-    // copy main input to out
-    fsize = din.nelements() * in.x.dim(0); // feat size for main input
-    // loop on all possible windows for this state
-    float fh, fw;
-    uint uh, uw, h, w;
-    for (h = 0, fh = 0; h < nh; h++, fh += stride.dim(0)) {
-      for (w = 0, fw = 0; w < nw; w++, fw += stride.dim(1)) {
-	// integer positions
-	uh = (uint) fh;
-	uw = (uint) fw;
-	// select 1 output pixel in the correct feature range
-	idx<T> o = out.x.select(2, w);
-	o = o.select(1, h);
-	o = o.narrow(0, fsize, offset);
-	// select input window
-	idx<T> iw = in.x.narrow(2, din.dim(1), uw);
-	iw = iw.narrow(1, din.dim(0), uh);
-	// copy flat input to output
-	// TODO: tmp buffer less efficient than direct copy which but requires
-	// continuous data, make idx pointing to oo with flat's dims?
-        if (iw.contiguousp())
-          idx_copy(iw, o);
-        else {
-          idx<T> tmp(iw.get_idxdim());
-          idx_copy(iw, tmp);
-          iw = tmp.view_as_order(1);
-          idx_copy(iw, o);
-        }
-      }
-    }
-    offset += fsize;
-    // copy inputs to out
-    for (uint i = 0; i < std::max(inputs.size(), pinputs.size()); ++i) {
-      idxdim dd = dins[i];
-      fidxdim s = strides[i];
-      idx<T> input = (use_pinputs ? pinputs[i]->x : (*inputs[i])->x);
-      fsize = dd.nelements() * input.dim(0); // feature size from input
-      // copy
-      for (h = 0, fh = 0; h < nh; h++, fh += s.dim(0)) {
-	for (w = 0, fw = 0; w < nw; w++, fw += s.dim(1)) {
-	  // integer positions
-	  uh = (uint) fh;
-	  uw = (uint) fw;
-	  // select 1 output pixel in the correct feature range
-	  idx<T> o = out.x.select(2, w);
-	  o = o.select(1, h);
-	  o = o.narrow(0, fsize, offset);
-	  // select input window
-	  idx<T> iw = input.narrow(2, dd.dim(1), uw);
-	  iw = iw.narrow(1, dd.dim(0), uh);
-	  // copy flat input to output
-	  // TODO: tmp buffer less efficient than direct copy which but requires
-	  // continuous data, make idx pointing to oo with flat's dims?
-	  idx<T> tmp(iw.get_idxdim());
-	  idx_copy(iw, tmp);
-	  iw = tmp.view_as_order(1);
-	  idx_copy(iw, o);
-	}
-      }
-      offset += fsize;
-    }
-#ifdef __DEBUG_PRINT__
-    cout << describe() << ": " << in.x << " (in " << din
-	 << " stride " << stride << ")";
-    for (uint i = 0; i < std::max(inputs.size(), pinputs.size()); ++i)
-      cout << " + " << (use_pinputs ? pinputs[i]->x : (*inputs[i])->x)
-	   << " (in " << dins[i] << " stride " << strides[i] << ")";
-    cout << " -> " << out.x << endl;
-#endif
-  }
-
-  template <typename T, class Tstate>
-  void flat_merge_module<T, Tstate>::bprop(Tstate &in, Tstate &out) {
-    // if (inputs.size() == 0)
-    //   eblerror("no inputs to merge");
-    // copy out to main input
-    intg offset = 0;
-    idx<T> o1 = out.dx.view_as_order(1);
-    idx<T> o = o1.narrow(0, in.dx.nelements(), offset);
-    idx<T> input = in.dx.view_as_order(1);
-    idx_add(o, input, input);
-    offset += input.nelements();
-    // copy out to inputs
-    for (uint i = 0; i < std::max(inputs.size(), pinputs.size()); ++i) {
-      input = (use_pinputs ? pinputs[i]->dx : (*inputs[i])->dx);
-      input = input.view_as_order(1);
-      o = o1.narrow(0, input.nelements(), offset);
-      idx_add(o, input, input);
-      offset += input.nelements();
-    }
-  }
-
-  template <typename T, class Tstate>
-  void flat_merge_module<T, Tstate>::bbprop(Tstate &in,
-					Tstate &out) {
-    // if (inputs.size() == 0)
-    //   eblerror("no inputs to merge");
-    // copy out to main input
-    intg offset = 0;
-    idx<T> o1 = out.ddx.view_as_order(1);
-    idx<T> o = o1.narrow(0, in.ddx.nelements(), offset);
-    idx<T> input = in.ddx.view_as_order(1);
-    idx_add(o, input, input);
-    offset += input.nelements();
-    // copy out to inputs
-    for (uint i = 0; i < std::max(inputs.size(), pinputs.size()); ++i) {
-      input = (use_pinputs ? pinputs[i]->ddx : (*inputs[i])->ddx);
-      input = input.view_as_order(1);
-      o = o1.narrow(0, input.nelements(), offset);
-      idx_add(o, input, input);
-      offset += input.nelements();
-    }
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  template <typename T, class Tstate>
-  idxdim flat_merge_module<T, Tstate>::
-  compute_pad(idxdim &window, float subsampling, float edge,
-	      float scale, fidxdim &stride) {
-    float hoff = (edge * scale * stride.dim(0)) / subsampling + .5;
-    float woff = (edge * scale * stride.dim(1)) / subsampling + .5;
-    idxdim d = window;
-    d.setdim(0, (int) (d.dim(0) + hoff * 2));
-    d.setdim(1, (int) (d.dim(1) + woff * 2));
-    return d;
-  }
-
-  template <typename T, class Tstate>
-  void flat_merge_module<T, Tstate>::default_scales(uint n) {
-    scales.clear();
-    fidxdim f(1, 1);
-    for (uint i = 0; i < n; ++i) scales.push_back_new(f);
-  }
-
-  template <typename T, class Tstate>
-  void flat_merge_module<T, Tstate>::set_paddings(mfidxdim &pads) {
-    paddings = pads;
-    EDEBUG(this->name() << ": setting paddings to " << paddings);
-  }
-
-  template <typename T, class Tstate>
-  idxdim flat_merge_module<T, Tstate>::compute_output_sizes(mstate<Tstate> &in, uint k,
-							    idxdim *dref) {
-    Tstate i = in[k];
-    Tstate &p = padded[k];
-    idxdim d = dins[k];
-    fidxdim &s = strides[k];
-    // pad each input so that all windows start centered on the first actual
-    // pixel top right
-    if (bpad) {
-      // narrow input if specified
-      if (k < offsets.size()) {
-	vector<int> &off = offsets[k];
-	if (off.size() != 4) eblerror("expected 4");
-	int oh0 = (int) (off[0]);
-	int ow0 = (int) (off[1]);
-	int oh1 = (int) (off[2]);
-	int ow1 = (int) (off[3]);
-	// int oh0 = (int) (off[0] * s.dim(0));
-	// int ow0 = (int) (off[1] * s.dim(1));
-	// int oh1 = (int) (off[2] * s.dim(0));
-	// int ow1 = (int) (off[3] * s.dim(1));
-	if (oh0 < 0) {
-	  int sz2 = i.x.dim(1) + oh0 + oh1;
-	  if (sz2 <= 0) {
-	    eblwarn("trying to narrow dim 1 of " << i.x << " to size "<< sz2);
-	  } else {
-	    EDEBUG("narrowing height with offset " << -oh0 << " in " << i.x);
-	    i = i.narrow(1, sz2, -oh0);
-	  }
-	}
-	if (ow0 < 0) {
-	  int sz2 = i.x.dim(2) + ow0 + ow1;
-	  if (sz2 <= 0) {
-	    eblwarn("trying to narrow dim 2 of " << i.x << " to size "<< sz2);
-	  } else {
-	    EDEBUG("narrowing width with offset " << -ow0 << " in " << i.x);
-	    i = i.narrow(2, sz2, -ow0);
-	  }
-	}
-      }
-
-      if (scales.size() != strides.size())
-	eblerror("expected scales to be the same size as strides but got "
-		 << scales << " when strides are " << strides);
-      //if (k % 4 == 0) pix1 *= 2;
-      //float pix1 = scales[k].dim(0);
-      //idxdim d4 = compute_pad(d, subsampling, edge, pix1, s);
-      // fidxdim fpads;
-      // if (k < paddings.size()) fpads = paddings[k];
-      // idxdim d4 = fpads;
-
-      // //idxdim d4 = compute_pad(d, 1, 0, pix1, s);
-      // //	idxdim d4 = compute_pad(d, 4, 6, pix1, s);
-      // // idxdim d4 = compute_pad(d, 6, 12, pix1, s);
-      // //padder.set_kernel(d4);
-      // padder.set_paddings(d4);
-      // // add extra padding at ends if necessary to match target
-      // //	intg hextra = 2, wextra = 2;
-      // idxdim pads = padder.get_paddings();
-      // // if (k > 0) {
-      // //   hextra = (intg) (dref.dim(0) - ((i.x.dim(1) + pads.dim(0) + pads.dim(2)
-      // // 				  - (d.dim(0) -d.dim(0) % 2)) / s.dim(0)));
-      // //   wextra = (intg) (dref.dim(1) - ((i.x.dim(2) + pads.dim(1) + pads.dim(3)
-      // // 				   - (d.dim(1) -d.dim(1) % 2)) / s.dim(1)));
-      // // }
-      // if (k > 0) {
-      //   pads.setdim(2, pads.dim(2) + std::max(0, (int) hextra));
-      //   pads.setdim(3, pads.dim(3) + std::max(0, (int) wextra));
-      // }
-      // padder.set_paddings(pads);
-
-      // add padding if missing to reach target (failsafe)
-      idxdim pads(0,0,0,0);// = padder.get_paddings();
-      intg sh = (intg) ((i.x.dim(1) + pads.dim(0) + pads.dim(2)
-			 - d.dim(0) + 1) / s.dim(0));
-      intg sw = (intg) ((i.x.dim(2) + pads.dim(1) + pads.dim(3)
-			 - d.dim(1) + 1) / s.dim(1));
-      bool w = false;
-      if (dref) {
-	if (k > 0 && sh < dref->dim(0)) {
-	  pads.setdim(2, pads.dim(2) + std::max(0, (int) (dref->dim(0) - sh)));
-	  w = true;
-	}
-	if (k > 0 && sw < dref->dim(1)) {
-	  pads.setdim(3, pads.dim(3) + std::max(0, (int) (dref->dim(1) - sw)));
-	  if (!this->silent && pads.maxdim() > 2)
-	    w = true;
-	}
-	if (w && !this->silent && pads.maxdim() > 2)
-	  eblwarn("adding extra padding "<<pads<<" to match target " << *dref);
-      }
-
-      padder.set_paddings(pads);
-
-      // EDEBUG("before adding padding: " << pads);
-      // // add fixed extra padding
-      // pads = padder.get_paddings();
-      // sh = (intg) (4 * s.dim(0));
-      // sw = (intg) (4 * s.dim(1));
-      // pads.setdim(0, pads.dim(0) + sh);
-      // pads.setdim(2, pads.dim(2) + sh);
-      // pads.setdim(1, pads.dim(1) + sw);
-      // pads.setdim(3, pads.dim(3) + sw);
-      // padder.set_paddings(pads);
-      // EDEBUG("after adding padding: " << pads);
-      // pad
-      padder.fprop(i, p);
-      // } else {
-      //   if (i.x.contiguousp()) padded[k] = i;
-      //   else {
-      //     if (padded[k].x.get_idxdim() != i.x.get_idxdim())
-      //       padded[k] = Tstate(i.x.get_idxdim());
-      //     idx_copy(i.x, padded[k].x);
-      //   }
-      // }
-    } else padded[k] = in[k];
-    // compute number of outputs for this kernel
-    idxdim dout((intg) ((p.x.dim(1) - d.dim(0) + 1) / s.dim(0)),
-		(intg) ((p.x.dim(2) - d.dim(1) + 1) / s.dim(1)));
-    string msg;
-    msg << this->name() << ": in " << p.x << " (min: " << idx_min(p.x)
-	<< ", max: " << idx_max(p.x) << ") with window " << d
-	<< " and stride " << s << " -> " << dout;
-    EDEBUG(msg);
-    if (dout.dim(0) <= 0 || dout.dim(1) <= 0)
-      eblerror("input is too small for this network: " << msg);
-    // // adjust strides so that all states produce dref outputs
-    // fidxdim ss(1.0, 1.0);
-    // if (k > 0)
-    // 	ss = fidxdim(dout2.dim(0) / (float) dref2.dim(0),
-    // 		     dout2.dim(1) / (float) dref2.dim(1));
-    // strides[k] = ss;
-    // EDEBUG("setting stride to " << ss << " for input " << p.x << " and window "
-    // 	    << d << " to produce " << dref << " outputs");
-    return dout;
-  }
-
-  template <typename T, class Tstate>
-  void flat_merge_module<T, Tstate>::set_offsets(vector<vector<int> > &off) {
-    offsets = off;
-    EDEBUG(this->name() << ": setting offsets to " << offsets);
-  }
-
-  template <typename T, class Tstate>
-  void flat_merge_module<T, Tstate>::set_strides(mfidxdim &s) {
-    strides = s;
-    fidxdim ref(1, 1);
-    for (uint i = 0; i < strides.size(); ++i)
-      if (ref == strides[i]) reference_scale = i;
-    cout << this->name() << ": setting strides to " << strides 
-	 << " with reference scale " << reference_scale << " with stride: " 
-	 << strides[reference_scale] << endl;
   }
 
   template <typename T, class Tstate>
@@ -444,8 +68,7 @@ namespace ebl {
   fprop(mstate<Tstate> &in, Tstate &out) {
     LOCAL_TIMING_START(); // profiling
     EDEBUG(this->name() << ": " << in << ", wins: " << dins << ", strides: "
-	  << strides << ", scales: " << scales << ", paddings: " << paddings);
-    padded.resize(in);
+	  << strides << ", scales: " << scales);
     //    strides.clear();
 
     // output size for reference scale
@@ -460,17 +83,17 @@ namespace ebl {
     // if (inputs.size() == 0)
     //   eblerror("no inputs to merge");
     // feature size for main input
-    idx<T> &in0 = padded[0].x;
+    idx<T> &in0 = in[0].x;
     intg fsize = din.dim(0) * din.dim(1) * in0.dim(0);
     // number of possible windows
     // intg nh = 1 + (intg) ((in0.dim(1) - din.dim(0)) / stride.dim(0));
     // intg nw = 1 + (intg) ((in0.dim(2) - din.dim(1)) / stride.dim(1));
     intg nh = dref.dim(0), nw = dref.dim(1);
     // compute new size and resize output if necessary
-    for (uint i = 1; i < padded.size(); ++i) {
+    for (uint i = 1; i < in.size(); ++i) {
       idxdim &d = dins[i];
       fidxdim &s = strides[i];
-      idx<T> &input = padded[i].x;
+      idx<T> &input = in[i].x;
       fsize += d.nelements() * input.dim(0);
       // check that strides match possible windows
       intg nh2 = (intg) ceil((input.dim(1) - d.dim(0) + 1)
@@ -509,12 +132,12 @@ namespace ebl {
     uint uh = 0, uw = 0, uw0 = 0;
     idx<T> iw, ow, onarrowed, inarrowed;
     // copy inputs to out
-    for (uint i = 0; i < padded.size(); ++i) {
+    for (uint i = 0; i < in.size(); ++i) {
       idxdim dd = dins[i];
       intg dd0 = dd.dim(0), dd1 = dd.dim(1);
       fidxdim s = strides[i];
       float s0 = s.dim(0), s1 = s.dim(1);
-      idx<T> &input = padded[i].x;
+      idx<T> &input = in[i].x;
       if (!input.contiguousp()) eblerror("expected contiguous");
       fsize = dd.nelements() * input.dim(0); // feature size from input
       onarrowed = out.x.narrow(0, fsize, offset);
@@ -556,8 +179,8 @@ namespace ebl {
 #ifdef __DEBUG_PRINT__
     // cout << describe() << ": " << in0 << " (in " << din
     //      << " stride " << stride << ")";
-    // for (uint i = 1; i < padded.size(); ++i)
-    //   cout << " + " << padded[i].x
+    // for (uint i = 1; i < in.size(); ++i)
+    //   cout << " + " << in[i].x
     //        << " (in " << dins[i] << " stride " << strides[i] << ")";
     // cout << " -> " << out.x << endl;
     // cout << "output min: " << idx_min(out.x) << " max: " << idx_max(out.x)
@@ -594,33 +217,15 @@ namespace ebl {
     }
   }
 
-//   template <typename T, class Tstate>
-//   void flat_merge_module<T, Tstate>::bprop(mstate<Tstate> &in, Tstate &out) {
-//     bprop(*in0, out);
-//   }
-
-//   template <typename T, class Tstate>
-//   void flat_merge_module<T, Tstate>::bbprop(mstate<Tstate> &in, Tstate &out) {
-//     bbprop(*in0, out);
-//   }
-
-  template <typename T, class Tstate>
-  flat_merge_module<T,Tstate>* flat_merge_module<T,Tstate>::copy() {
-    flat_merge_module<T,Tstate> *l2 =
-      new flat_merge_module<T,Tstate>(dins, strides, bpad, this->name(),
-				      &scales);
-    return l2;
-  }
-
   //////////////////////////////////////////////////////////////////////////////
 
   template <typename T, class Tstate>
   fidxdim flat_merge_module<T,Tstate>::fprop_size(fidxdim &isize) {
     // feature size for main input
-    intg fsize = (intg) (din.dim(0) * din.dim(1) * isize.dim(0));
+    intg fsize = (intg) (din2.dim(0) * din2.dim(1) * isize.dim(0));
     // number of possible windows
-    intg nh = 1 + (intg) ((isize.dim(1) - din.dim(0)) / stride.dim(0));
-    intg nw = 1 + (intg) ((isize.dim(2) - din.dim(1)) / stride.dim(1));
+    intg nh = 1 + (intg) ((isize.dim(1) - din2.dim(0)) / stride.dim(0));
+    intg nw = 1 + (intg) ((isize.dim(2) - din2.dim(1)) / stride.dim(1));
     //! Extract its dimensions, update output size
     fidxdim osize(fsize, std::max((intg) 1, nh),
 		 std::max((intg) 1, nw));
@@ -645,10 +250,10 @@ namespace ebl {
   fidxdim flat_merge_module<T,Tstate>::bprop_size(const fidxdim &osize) {
     EDEBUG(this->name() << ": " << osize << " -> ...");
     // feature size for main input
-    intg fsize = (intg) (osize.dim(0) / din.dim(0) / din.dim(1));
+    intg fsize = (intg) (osize.dim(0) / din2.dim(0) / din2.dim(1));
     // number of possible windows
-    intg ih = (intg) (((osize.dim(1) - 1) * stride.dim(0)) + din.dim(0));
-    intg iw = (intg) (((osize.dim(2) - 1) * stride.dim(1)) + din.dim(1));
+    intg ih = (intg) (((osize.dim(1) - 1) * stride.dim(0)) + din2.dim(0));
+    intg iw = (intg) (((osize.dim(2) - 1) * stride.dim(1)) + din2.dim(1));
     // extract its dimensions, update output size
     fidxdim isize(fsize, ih, iw);
     // set offsets
@@ -666,40 +271,14 @@ namespace ebl {
     fidxdim s;
     // all inputs
     //float pix1 = .5;
-    for (uint i = 0; i < dins.size(); ++i) {
+    for (uint i = 0; i < dins2.size(); ++i) {
       if (!osize.exists(0)) {
 	isize.push_back_empty();
 	continue ;
       }
       idxdim o0 = osize[0];
-      d = dins[i];
+      d = dins2[i];
       s = strides[i];
-      if (bpad) {
-	//if (i % 4 == 0) pix1 *= 2; // TODO: get from user
-	//float pix1 = scales[i].dim(0);
-	//	idxdim d4 = compute_pad(d, subsampling, edge, pix1, s);
-	if (i < paddings.size()) {
-	  fidxdim fpads = paddings[i];
-	  pa = fpads;
-	}
-	if (i < offsets.size()) {
-	  vector<int> &off = offsets[i];
-	  d.setoffset(0, (int) (-off[0] / s.dim(0)));
-	  d.setoffset(1, (int) (-off[1] / s.dim(1)));
-	}
-
-	// idxdim d4 = compute_pad(d, 1, 0, pix1, s);
-	//idxdim d4 = compute_pad(d, 4, 6, pix1, s);
-	//	idxdim d4 = compute_pad(d, 6, 12, pix1, s);
-	//pa = padder.get_paddings(d4);
-
-	// TMP
-	// intg sh = (intg) (4 * s.dim(0));
-	// intg sw = (intg) (4 * s.dim(1));
-	// pa.setdim(0, pa.dim(0) + sh);
-	// pa.setdim(1, pa.dim(1) + sh);
-
-      }
       d.insert_dim(0, o0.dim(0)); // add feature dimension
       // set offsets
       fidxdim fd(d);
@@ -724,8 +303,6 @@ namespace ebl {
       if (i < scales.size()) desc << " scale " << scales[i];
       desc << "), ";
     }
-    if (bpad)
-      desc << ", inputs are padded to center windows on borders";
     return desc;
   }
 
@@ -742,6 +319,173 @@ namespace ebl {
   template <typename T, class Tstate>
   mfidxdim flat_merge_module<T, Tstate>::get_scales() {
     return scales;
+  }
+
+  template <typename T, class Tstate>
+  flat_merge_module<T,Tstate>* flat_merge_module<T,Tstate>::copy() {
+    flat_merge_module<T,Tstate> *l2 =
+      new flat_merge_module<T,Tstate>(dins, strides, this->name(),
+				      &scales);
+    return l2;
+  }
+
+  template <typename T, class Tstate>
+  void flat_merge_module<T, Tstate>::set_offsets(vector<vector<int> > &off) {
+    offsets = off;
+    EDEBUG(this->name() << ": setting offsets to " << offsets);
+  }
+
+  template <typename T, class Tstate>
+  void flat_merge_module<T, Tstate>::set_strides(mfidxdim &s) {
+    strides = s;
+    fidxdim ref(1, 1);
+    for (uint i = 0; i < strides.size(); ++i)
+      if (ref == strides[i]) reference_scale = i;
+    cout << this->name() << ": setting strides to " << strides 
+	 << " with reference scale " << reference_scale << " with stride: " 
+	 << strides[reference_scale] << endl;
+  }
+
+  // protected /////////////////////////////////////////////////////////////////
+
+  template <typename T, class Tstate>
+  idxdim flat_merge_module<T, Tstate>::
+  compute_pad(idxdim &window, float subsampling, float edge,
+	      float scale, fidxdim &stride) {
+    float hoff = (edge * scale * stride.dim(0)) / subsampling + .5;
+    float woff = (edge * scale * stride.dim(1)) / subsampling + .5;
+    idxdim d = window;
+    d.setdim(0, (int) (d.dim(0) + hoff * 2));
+    d.setdim(1, (int) (d.dim(1) + woff * 2));
+    return d;
+  }
+
+  template <typename T, class Tstate>
+  void flat_merge_module<T, Tstate>::default_scales(uint n) {
+    scales.clear();
+    fidxdim f(1, 1);
+    for (uint i = 0; i < n; ++i) scales.push_back_new(f);
+  }
+
+  template <typename T, class Tstate>
+  idxdim flat_merge_module<T, Tstate>::compute_output_sizes(mstate<Tstate> &in, uint k,
+							    idxdim *dref) {
+    Tstate i = in[k];
+    idxdim d = dins[k];
+    fidxdim &s = strides[k];
+    // compute number of outputs for this kernel
+    idxdim dout((intg) ((i.x.dim(1) - d.dim(0) + 1) / s.dim(0)),
+		(intg) ((i.x.dim(2) - d.dim(1) + 1) / s.dim(1)));
+    string msg;
+    msg << this->name() << ": in " << i.x << " (min: " << idx_min(i.x)
+	<< ", max: " << idx_max(i.x) << ") with window " << d
+	<< " and stride " << s << " -> " << dout;
+    EDEBUG(msg);
+    if (dout.dim(0) <= 0 || dout.dim(1) <= 0)
+      eblerror("input is too small for this network: " << msg);
+    return dout;
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // linear_merge_module
+
+  template <typename T, class Tstate>
+  linear_merge_module<T, Tstate>::
+  linear_merge_module(parameter<T,Tstate> *p, intg nout_,
+		      midxdim &ins_, mfidxdim &strides_,
+		      const char *name_, mfidxdim *scales_)
+    : flat_merge_module<T,Tstate>(ins_, strides_, name_, scales_),
+      dins_original(ins_), nout(nout_) {
+    // allocate convolutions for each state
+    idxdim cstride(1, 1);
+    for (uint i = 0; i < ins_.size(); ++i) {
+      idxdim in = ins_[i];
+      intg f = in.remove_dim(0);
+      idx<intg> table = full_table(f, nout);
+      string cname;
+      cname << "linear_merge_conv" << i;
+      convs.push_back(new convolution_module<T,Tstate>
+		      (p, in, cstride, table, cname.c_str()));
+      buffers1.push_back(new Tstate);
+      // set original window sizes
+      dins2[i] = in;
+      if (i == 0) din2 = in;
+      // set inputs windows of 1x1 for flat_merge
+      in.setdims(1);
+      dins[i] = in;
+      if (i == 0) din = in;
+    }
+  }
+
+  template <typename T, class Tstate>
+  linear_merge_module<T, Tstate>::~linear_merge_module() {
+    for (uint i = 0; i < convs.size(); ++i) delete convs[i];
+  }
+
+  template <typename T, class Tstate>
+  void linear_merge_module<T, Tstate>::
+  fprop(mstate<Tstate> &in, Tstate &out) {
+    LOCAL_TIMING_START(); // profiling
+    EDEBUG(this->name() << " (linear merge): " << in << ", wins: " << dins2 
+	   << ", strides: " << strides << ", scales: " << scales);
+
+    if (in.size() != convs.size())
+      eblerror("expected " << convs.size() << " inputs but got "
+	       << in.size());
+    // linear combinations
+    for (uint i = 0; i < convs.size(); ++i)
+      convs[i]->fprop(in[i], buffers1[i]);
+    // combine each state
+    flat_merge_module<T,Tstate>::fprop(buffers1, buffer2);
+    // add states together
+    idxdim d(buffer2.x);
+    intg thick = d.dim(0) / dins.size();
+    d.setdim(0, thick);
+    this->resize_output(in[0], out, &d);
+    idx_clear(out.x);
+    for (uint i = 0; i < dins.size(); ++i) {
+      idx<T> slice = buffer2.x.narrow(0, thick, i * thick);
+      idx_add(slice, out.x);
+    }
+    LOCAL_TIMING_REPORT("linear merge");
+  }
+
+  template <typename T, class Tstate>
+  void linear_merge_module<T, Tstate>::bprop(mstate<Tstate> &in, Tstate &out) {
+    eblerror("not implemented");
+  }
+
+  template <typename T, class Tstate>
+  void linear_merge_module<T, Tstate>::bbprop(mstate<Tstate> &in,
+					    Tstate &out) {
+    eblerror("not implemented");
+  }
+
+  template <typename T, class Tstate>
+  std::string linear_merge_module<T, Tstate>::describe() {
+    std::string desc;
+    desc << "linear_merge module " << this->name() << ", merging "
+	 << (int) dins_original.size() << " inputs: ";
+    for (uint i = 0; i < dins_original.size(); ++i) {
+      desc << " (in " << dins_original[i] << " stride " << strides[i];
+      if (i < scales.size()) desc << " scale " << scales[i];
+      desc << "), ";
+    }
+    return desc;
+  }
+
+  template <typename T, class Tstate>
+  linear_merge_module<T,Tstate>* linear_merge_module<T,Tstate>::
+  copy(parameter<T,Tstate> *p) {
+    linear_merge_module<T,Tstate> *l2 =
+      new linear_merge_module<T,Tstate>(p, nout, dins_original, strides, 
+					this->name(), &scales);
+    // assign same parameter state if no parameters were specified
+    if (!p) {
+      for (uint i = 0; i < convs.size(); ++i)
+	l2->convs[i]->kernel = convs[i]->kernel;
+    }
+    return l2;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -926,27 +670,6 @@ namespace ebl {
   // merge
 
   template <typename T, class Tstate>
-  merge_module<T, Tstate>::merge_module(std::vector<Tstate**> &ins,
-					intg concat_dim_,
-					const char *name_,
-					const char *list)
-    : module_1_1<T,Tstate>(name_), inputs(ins), concat_dim(concat_dim_),
-      merge_list(list) {
-    // for (uint i = 0; i < ins.size(); ++i)
-    //   inputs.push_back(ins[i]);
-  }
-
-  template <typename T, class Tstate>
-  merge_module<T, Tstate>::merge_module(std::vector<mstate<Tstate>**> &ins,
-					intg concat_dim_,
-					const char *name_,
-					const char *list)
-    : module_1_1<T,Tstate>(name_), msinputs(ins), merge_list(list),
-      concat_dim(concat_dim_) {
-    eblerror("not implemented");
-  }
-
-  template <typename T, class Tstate>
   merge_module<T, Tstate>::
   merge_module(std::vector<std::vector<uint> > &states, intg concat_dim_,
 	       const char *name_)
@@ -1020,52 +743,6 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void merge_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
-    idxdim d(in.x), dtmp(in.x);
-    // check that all inputs are compatible and compute output size
-    for (uint i = 0; i < inputs.size(); ++i) {
-      Tstate *input = *(inputs[i]);
-      dtmp.setdim(concat_dim, input->x.dim(concat_dim));
-      if (!input->x.same_dim(dtmp))
-	eblerror("expected same dimensions but got " << input->x.get_idxdim()
-		 << " and " << dtmp);
-      // increment dimension
-      d.setdim(concat_dim, d.dim(concat_dim) + input->x.dim(concat_dim));
-    }
-    // check that output has the right size, if not, resize
-    if (out.x.get_idxdim() != d)
-      out.resize(d);
-    // copy main input to out
-    intg offset = 0;
-    idx<T> o = out.x.narrow(concat_dim, in.x.dim(concat_dim), offset);
-    idx_copy(in.x, o);
-    offset += in.x.dim(concat_dim);
-    // copy inputs to out
-    for (uint i = 0; i < inputs.size(); ++i) {
-      Tstate *input = *(inputs[i]);
-      o = out.x.narrow(concat_dim, input->x.dim(concat_dim), offset);
-      idx_copy(input->x, o);
-      offset += input->x.dim(concat_dim);
-    }
-#ifdef __DEBUG_PRINT__
-    cout << describe() << ": " << in.x;
-    for (uint i = 0; i < inputs.size(); ++i)
-      cout << " + " << (*inputs[i])->x;
-    cout << " -> " << out.x << endl;
-#endif
-  }
-
-  template <typename T, class Tstate>
-  void merge_module<T, Tstate>::bprop(Tstate &in, Tstate &out) {
-    // TODO: implement
-  }
-
-  template <typename T, class Tstate>
-  void merge_module<T, Tstate>::bbprop(Tstate &in, Tstate &out) {
-    // TODO: implement
-  }
-
-  template <typename T, class Tstate>
   std::string merge_module<T, Tstate>::describe() {
     std::string desc;
     desc << "merge module " << this->name();
@@ -1076,9 +753,6 @@ namespace ebl {
   merge_module<T,Tstate>* merge_module<T,Tstate>::copy() {
     merge_module<T,Tstate> *m =
       new merge_module<T,Tstate>(states_list, concat_dim, this->name());
-    m->merge_list = merge_list;
-    m->inputs = inputs;
-    m->msinputs = msinputs;
     return m;
   }
 
