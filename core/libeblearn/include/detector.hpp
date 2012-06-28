@@ -750,6 +750,7 @@ namespace ebl {
       mfidxdim mf(f);
       mf = resizepp->fprop_size(mf);
       merger_net_included->fprop_size(mf);
+      merger_net->fprop_size(mf);
       m0m = merger->bprop_size(m);
       EDEBUG(merger_net->name() << " m0m: " << m0m);
       mfidxdim scales = merger->get_scales();
@@ -763,6 +764,8 @@ namespace ebl {
 	mfidxdim mm(m0m.size());
 	mm.set_new(m0m[i], i);
 	EDEBUG("mm: " << mm);
+	EDEBUG("determining input window given output pixel of scale"
+	       << k << ": " << mm);
 	// determine input size and location of output pixel (0,0)
 	//merger_net_included->fprop_size(mf);
 	m0 = merger_net->bprop_size(mm);
@@ -772,6 +775,8 @@ namespace ebl {
 	mm[i].setoffset(1, 1);
 	mm[i].setoffset(2, 1);
 	//merger_net_included->fprop_size(mf);
+	EDEBUG("determining input window given output pixel of scale"
+	       << k << ": " << mm);
 	m1 = merger_net->bprop_size(mm);
 	// m1 = resizepp->bprop_size(m1);
 	m1.remove_empty();

@@ -260,7 +260,8 @@ namespace ebl {
     out.clear();
     // replicate input states if only 1 state but multiple pipes
     // or if manually requested with replicate_inputs
-    if ((in.size() == 1 && pipes.size() > 1) || replicate_inputs)
+    if (in.size() == 1 && pipes.size() > 1) replicate_inputs = 1;
+    if (replicate_inputs)
       for (uint i = 0; i < pipes.size(); ++i) ins.push_back(in);
     else ins.push_back(in); // just feed in to pipes
     EDEBUG("input " << in << " -> " << ins << " in " << this->name());
@@ -301,7 +302,9 @@ namespace ebl {
     mfidxdim osize;
     for (uint i = 0; i < pipes.size(); ++i) {
       mfidxdim o;
-      if (replicate_inputs || (isize.size() == 1 && pipes.size() > 1))
+      if (isize.size() == 1 && pipes.size() > 1) 
+	replicate_inputs = 1;
+      if (replicate_inputs)
 	o = isize;
       else {
 	if (isize.exists(i)) o.push_back(isize[i]);
@@ -500,7 +503,8 @@ namespace ebl {
     switch_pipes(in);
     // replicate input states if only 1 state but multiple pipes
     // or if manually requested with replicate_inputs
-    if ((in.size() == 1 && used_pipes.size() > 1) || replicate_inputs)
+    if (in.size() == 1 && used_pipes.size() > 1) replicate_inputs = 1;
+    if (replicate_inputs)
       for (uint i = 0; i < used_pipes.size(); ++i) ins.push_back_new(in);
     else if (in.size() == used_pipes.size())
       for (uint i = 0; i < used_pipes.size(); ++i) {
