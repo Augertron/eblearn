@@ -296,7 +296,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  if (skipped) cnt++; // a new skipped frame was received
 	  // save bounding boxes
 	  if (updated) {
-	    timer tupdate;
 	    updated = false;
 	    idxdim d(detframe);
 	    if (boot.activated()) bb.clear();
@@ -315,7 +314,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	      all_samples.push_back_new(samples);
 	      all_bbsamples.push_back_new(bbsamples);
 	    }
-	    mout << "bbox update time: " << tupdate.elapsed() << endl;
 	    cnt++;
 	    // display processed frame
 #ifdef __GUI__
@@ -361,20 +359,20 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 		if (conf.exists("save_max")) mout << " / " << tot;
 		mout << endl;
 	      }
-	      if (boot.activated())
-		mout << "total_bootstrapping=" << all_samples.size() << endl;
-	      mout << "remaining=" << (cam->size() - cnt)
-		   << " elapsed=" << toverall.elapsed();
-	      if (cam->size() > 0)
-		mout << " ETA=" << toverall.eta(cnt, cam->size());
-	      if (conf.exists("save_max") && save_detections) {
-		k = idx_sum(total_saved);
-		mout << " save_max_ETA=" << toverall.eta(k, tot);
-	      }
-	      mout << endl;
-	      mout << "i=" << cnt << " processing: " << tpass.elapsed_ms()
-		   << " fps: " << cam->fps() << endl;
 	    }
+	    if (boot.activated())
+	      mout << "total_bootstrapping=" << all_samples.size() << endl;
+	    mout << "remaining=" << (cam->size() - cnt)
+		 << " elapsed=" << toverall.elapsed();
+	    if (cam->size() > 0)
+	      mout << " ETA=" << toverall.eta(cnt, cam->size());
+	    if (conf.exists("save_max") && save_detections) {
+	      k = idx_sum(total_saved);
+	      mout << " save_max_ETA=" << toverall.eta(k, tot);
+	    }
+	    mout << endl;
+	    mout << "i=" << cnt << " processing: " << tpass.elapsed_ms()
+		 << " fps: " << cam->fps() << endl;
 	    // save progress
 	    if (!conf.exists_false("save_progress"))
 	      job::write_progress(k, tot);
