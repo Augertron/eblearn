@@ -139,16 +139,20 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_resolutions(const midxdim &scales_) {
+  void detector<T,Tstate>::set_resolutions(const vector<midxdim> &scales_) {
     restype = MANUAL;
     manual_scales = scales_;
     if (manual_scales.size() == 0)
       eblerror("expected at least 1 scale but found 0");
     // add the feature dimension for each scale
     for (uint i = 0; i < manual_scales.size(); ++i) {
-      idxdim &d = manual_scales[i];
-      d.insert_dim(0, 1);
+      midxdim &sc = manual_scales[i];
+      for (uint j = 0; j < sc.size(); ++j) {
+	idxdim &d = sc[j];
+	d.insert_dim(0, 1);
+      }
     }
+    mout << "Using manual scales specification: " << manual_scales << endl;
   }
 
   template <typename T, class Tstate>
@@ -400,7 +404,8 @@ namespace ebl {
   // initialization
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::init(idxdim &dsample, const char *frame_name) {
+  void detector<T,Tstate>::init(idxdim &dsample, const char *frame_name,
+				int frame_id) {
     initialized = true;
     indim = dsample;
     // the network's minimum input dimensions
@@ -422,7 +427,7 @@ namespace ebl {
     maxdim.setdim(0, dsample.dim(0)); // feature dimension is not scaled
     // determine scales
     compute_scales(scales, netdim, mindim, maxdim, dsample, restype, nscales,
-		   scales_step, frame_name);
+		   scales_step, frame_name, frame_id);
     // reallocate buffers if number of scales has changed
     if (scales.size() != ppinputs.size()) {
       EDEBUG("reallocating input and output buffers");
@@ -456,7 +461,7 @@ namespace ebl {
   void detector<T,Tstate>::
   compute_scales(midxdim &scales, idxdim &netdim, idxdim &mindim,
 		 idxdim &maxdim, idxdim &indim, t_scaling type, uint nscales,
-		 double scales_step, const char *frame_name) {
+		 double scales_step, const char *frame_name, int frame_id) {
     // fill scales based on scaling type
     scales.clear();
     if (!silent)
@@ -469,9 +474,17 @@ namespace ebl {
       scales.push_back(indim);
       break ;
     case MANUAL:
-      scales = manual_scales;
       if (!silent)
-	mout << "Manual specification of each scale size to: " << scales <<endl;
+	mout << "Manual specification of each scale size";
+      if (frame_id > 0) {
+	uint sc = std::min((uint)frame_id, (uint)manual_scales.size());
+	scales = manual_scales[sc];
+	if (!silent) mout << " for image " << frame_id << " from scales set "
+			  << sc << ":" << scales << endl;
+      } else {
+	scales = manual_scales[0];
+	if (!silent) mout << " to: " << endl;
+      }
       break ;
     case SCALES:
       if (!silent)
@@ -1221,12 +1234,13 @@ namespace ebl {
   }
 
   template <typename T, class Tstate> template <class Tin>
-  bboxes& detector<T,Tstate>::fprop(idx<Tin> &img, const char *frame_name) {
+  bboxes& detector<T,Tstate>::fprop(idx<Tin> &img, const char *frame_name,
+				    int frame_id) {
     TIMING1("t1 before prepare");
     TIMING2("t2 before prepare");
     TIMING_RESIZING_RESET();
     // prepare image and resolutions
-    prepare(img, frame_name);
+    prepare(img, frame_name, frame_id);
     // do a fprop for each scaled input, based on the 'image' slot prepared
     // by prepare().
     TIMING2("preparation");
@@ -1541,7 +1555,8 @@ namespace ebl {
   // processing
 
   template <typename T, class Tstate> template <class Tin>
-  void detector<T,Tstate>::prepare(idx<Tin> &img, const char *frame_name) {
+  void detector<T,Tstate>::prepare(idx<Tin> &img, const char *frame_name,
+				   int frame_id) {
     // tell detections vectors they are not up-to-date anymore
     bodetections = false;
     bppdetections = false;
@@ -1559,7 +1574,7 @@ namespace ebl {
     // if input size had changed, reinit resolutions
     if (!initialized ||
 	(!(indim == image.get_idxdim()) && restype != NETWORK)) {
-      init(image.get_idxdim(), frame_name);
+      init(image.get_idxdim(), frame_name, frame_id);
     }
     // apply gain on input
     if (input_gain != 0) idx_dotc(image, input_gain, image);

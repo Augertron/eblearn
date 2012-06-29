@@ -195,6 +195,13 @@ namespace ebl {
   //! \param dimsep Specifies the dim separating character, 'x' by default.
   EXPORT midxdim string_to_idxdimvector(const char *s, char vecsep = ',',
 					char dimsep = 'x');
+  //! Convert a string containing a list of dimension strings separated by 
+  //! commas, e.g. "10x10,20x20" into a vector of idxdim.
+  //! \param vecsep Specifies the vector separating character, ',' by default.
+  //! \param dimsep Specifies the dim separating character, 'x' by default.
+  EXPORT vector<midxdim> string_to_midxdimvector(const char *s, char msep = ',',
+						 char vecsep = ';', 
+						 char dimsep = 'x');
   //! Convert a string containing a list of float dimension strings separated by
   //! commas, e.g. "1.5x1.5,2.5x2.5" into a vector of fidxdim.
   //! \param vecsep Specifies the vector separating character, ',' by default.

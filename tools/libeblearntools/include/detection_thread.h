@@ -113,7 +113,7 @@ namespace ebl {
 
     //! Initialize detector settings given configuration.
     static void init_detector(detector<SFUNC(Tnet)> &detector,
-			      configuration &conf, string &odir);
+			      configuration &conf, string &odir, bool silent = true);
 
     // internal methods ////////////////////////////////////////////////////////
   private:
