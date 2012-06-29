@@ -925,6 +925,37 @@ namespace ebl {
     return true;
   }
 
+  template <typename T>
+  void parameter<T,fstate_idx<T> >::permute_x(vector<intg> &blocks, 
+					      vector<uint> &permutations) {
+    if (blocks.size() != permutations.size())
+      eblerror("expected same number of elements in " << blocks
+	       << " and " << permutations);
+    // copy all blocks into temporaries
+    svector<idx<T> > copies;
+    intg offset = 0;
+    for (uint i = 0; i < blocks.size(); ++i) {
+      intg sz = blocks[i] - offset;
+      idx<T> *m = new idx<T>(sz);
+      idx<T> b = x.narrow(0, sz, offset);
+      idx_copy(b, *m);
+      copies.push_back(m);
+      offset += sz;
+    }
+    // permute list of blocks
+    copies.permute(permutations);
+    // copy blocks back
+    offset = 0;
+    for (uint i = 0; i < copies.size(); ++i) {
+      intg sz = copies[i].nelements();
+      idx<T> b = x.narrow(0, sz, offset);
+      idx_copy(copies[i], b);
+      offset += sz;
+    }
+    cout << "Permuted weight blocks " << blocks 
+	 << " with permutation vector " << permutations << endl;
+  }
+  
   ////////////////////////////////////////////////////////////////
   // parameter<T,bstate_idx<T> >
 

@@ -253,6 +253,20 @@ namespace ebl {
   }
 
   template <class T>
+  void svector<T>::permute(std::vector<uint> &permutations) {
+    if (permutations.size() > this->size())
+      eblerror("expected permutation vector " << permutations
+	       << " to be smaller than vector " << *this);
+    std::vector<bool> swapped(permutations.size(), false);
+    for (uint i = 0; i < permutations.size(); ++i)
+      if (!swapped[i] && i != permutations[i]) {
+	this->swap(i, permutations[i]);
+	swapped[i] = true;
+	swapped[permutations[i]] = true;
+      }
+  }
+
+  template <class T>
   svector<T> svector<T>::copy() {
     svector<T> c;
     for (it = std::vector<T*>::begin(); it != std::vector<T*>::end(); ++it)

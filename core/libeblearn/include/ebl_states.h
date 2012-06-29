@@ -630,6 +630,8 @@ namespace ebl {
     bool load_x(idx<T> &m);
     //! save the x component to a file.
     bool save_x(const char *param_filename);
+    //! Permute blocks in x following permutation vector.
+    void permute_x(vector<intg> &blocks, vector<uint> &permutations);
 
     ////////////////////////////////////////////////////////////////
     //! information methods
