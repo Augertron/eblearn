@@ -122,20 +122,14 @@ namespace ebl {
 	 string_to_stringvector(conf.get_string("weights"));
        mout << "Loading weights from: " << w << endl;
        theparam.load_x(w);
-
-       // TEMP ////////////////////////////////////////////////////
-       if (conf.exists_true("temp_pierre")) {
-	 idx<Tnet> p1 = theparam.x.narrow(0, 1320, 50942);
-	 idx<Tnet> p2 = theparam.x.narrow(0, 8192, 52262);
-	 idx<Tnet> tmp1(p1.get_idxdim()), tmp2(p2.get_idxdim());
-	 idx_copy(p1, tmp1);
-	 idx_copy(p2, tmp2);
-	 idx<Tnet> o1 = theparam.x.narrow(0, 8192, 50942);
-	 idx<Tnet> o2 = theparam.x.narrow(0, 1320, 59134);
-	 idx_copy(tmp2, o1);
-	 idx_copy(tmp1, o2);
+       // permute weights by blocks
+       if (conf.exists("weights_permutation")) {
+	 string sblocks = conf.get_string("weights_blocks");
+	 string spermut = conf.get_string("weights_permutation");
+	 vector<intg> blocks = string_to_intgvector(sblocks.c_str());
+	 vector<uint> permut = string_to_uintvector(spermut.c_str());
+	 theparam.permute_x(blocks, permut);
        }
-
      } else {
        if (conf.exists_true("manual_load")) { // manual load
 	 eblwarn("\"weights\" variable not defined, loading manually "

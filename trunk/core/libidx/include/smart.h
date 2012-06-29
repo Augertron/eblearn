@@ -157,6 +157,8 @@ namespace ebl {
 
     //! Swap elements 'i' and 'j'.
     virtual void swap(uint i, uint j);
+    //! Permute elements according to permutation vector.
+    virtual void permute(std::vector<uint> &permutations);
 
     //! Returns a svector that contains copies of each element of this.
     virtual svector<T> copy();
