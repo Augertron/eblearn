@@ -93,7 +93,7 @@ namespace ebl {
     //! <wname> is an optional window title.
     template <typename Tin>
       bboxes& display(detector<T,Tstate> &cl, idx<Tin> &img,
-		      const char *frame_name = NULL,
+		      const char *frame_name = NULL, int frame_id = -1,
 		      uint h0 = 0, uint w0 = 0, double dzoom = 1.0, T vmin = 0,
 		      T vmax = 0, int wid = -1, const char *wname = NULL,
 		      float transparency = 1.0);
@@ -130,7 +130,7 @@ namespace ebl {
     //! <wname> is an optional window title.
     template <typename Tin>
       bboxes& display_input(detector<T,Tstate> &cl, idx<Tin> &img,
-			    const char *frame_name = NULL,
+			    const char *frame_name = NULL, int frame_id = -1,
 			    uint h0 = 0, uint w0 = 0,
 			    double dzoom = 1.0, T vmin = 0,
 			    T vmax = 0,
@@ -150,7 +150,8 @@ namespace ebl {
     //! <wname> is an optional window title.
     template <typename Tin>
       bboxes& display_inputs_outputs(detector<T,Tstate> &cl, idx<Tin> &img,
-				     const char *frame_name = NULL,
+				     const char *frame_name = NULL, 
+				     int frame_id = -1,
 				     uint h0 = 0, uint w0 = 0,
 				     double dzoom = 1.0, T vmin = 0,
 				     T vmax = 0, int wid = -1,
@@ -174,7 +175,7 @@ namespace ebl {
     //! <wname> is an optional window title.
     template <typename Tin>
       bboxes& display_all(detector<T,Tstate> &cl, idx<Tin> &img,
-			  const char *frame_name = NULL,
+			  const char *frame_name = NULL, int frame_id = -1,
 			  uint h0 = 0, uint w0 = 0, double dzoom = 1.0,
 			  T vmin = 0, T vmax = 0,
 			  int wid = -1,const char *wname = NULL);

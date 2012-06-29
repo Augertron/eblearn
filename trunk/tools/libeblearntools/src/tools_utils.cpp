@@ -490,6 +490,15 @@ namespace ebl {
     return v;
   }
 
+  vector<midxdim> string_to_midxdimvector(const char *s_, char msep, char vecsep, char dimsep) {
+    vector<midxdim> v;
+    list<string> l = string_to_stringlist(s_, vecsep);
+    list<string>::iterator i;
+    for (i = l.begin(); i != l.end(); ++i)
+      v.push_back(string_to_idxdimvector(i->c_str(), msep, dimsep));
+    return v;
+  }
+
   mfidxdim string_to_fidxdimvector(const char *s_, char vecsep, char dimsep) {
     mfidxdim v;
     list<string> l = string_to_stringlist(s_, vecsep);

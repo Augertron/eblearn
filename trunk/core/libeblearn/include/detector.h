@@ -99,7 +99,7 @@ namespace ebl {
     //! Set the scaling type.
     void set_scaling_type(t_scaling type);
     //! Set all scales manually.
-    void set_resolutions(const midxdim &scales);
+    void set_resolutions(const vector<midxdim> &scales);
     //! Set scales a factors of the input sizes.
     void set_resolutions(const vector<double> &factors);
     //! Set 1 scale only as a factor of the input sizes.
@@ -211,7 +211,10 @@ namespace ebl {
     //! through an idx_copy (avoid for better performance).
     //! \param fname Optional name for the frame being processed, used
     //!          in the output files to be saved.
-    template <class Tin> bboxes& fprop(idx<Tin> &img, const char *fname = NULL);
+    //! \param frame_id Optional id of frame, it can be used when using manual
+    //!   scales for each input image.
+    template <class Tin> bboxes& fprop(idx<Tin> &img, const char *fname = NULL,
+				       int frame_id = -1);
     //! Run non-maximum suppression on 'in' and put result in 'out'.
     void fprop_nms(bboxes &in, bboxes &out);
     //! Return a reference to a vector of windows in the original image that
@@ -255,7 +258,7 @@ namespace ebl {
     string& set_save(const string &directory, uint nmax = 0,
 		     bool diversity = false);
     //! initialize dimensions and multi-resolution buffers.
-    void init(idxdim &dinput, const char *frame_name = NULL);
+  void init(idxdim &dinput, const char *frame_name = NULL, int frame_id = -1);
 
   protected:
     // scales methods //////////////////////////////////////////////////////////
@@ -269,7 +272,7 @@ namespace ebl {
     void compute_scales(midxdim &scales, idxdim &netdim, idxdim &mindim,
 			idxdim &maxdim, idxdim &indim, t_scaling type,
 			uint nscales, double scales_step,
-			const char *frame_name = NULL);
+			const char *frame_name = NULL, int frame_id = -1);
     //! Compute 'nscales' scales between 'mindim' and 'maxdim' resolutions
     //! and push them into 'scales' vector.
     void compute_resolutions(midxdim &scales,
@@ -330,7 +333,8 @@ namespace ebl {
     //! preprocess_resolution().
     //! This mostly involves casting image into network's type and computing
     //! each scale's dimensions (no resizing) based on image's size.
-    template <class Tin> void prepare(idx<Tin> &img, const char *fname = NULL);
+    template <class Tin> void prepare(idx<Tin> &img, const char *fname = NULL,
+				      int frame_id = -1);
     //! Do preprocessing (resizing and channel/edge processing) for a particular
     //! resolution. This will set 'input' and 'output' buffers, that can then
     //! be used to fprop the network. This uses the 'image' member prepared
@@ -373,7 +377,7 @@ namespace ebl {
     // scales //////////////////////////////////////////////////////////////
     midxdim		 scales; //!< Multi-scale (ideal) scales.
     midxdim		 actual_scales;	//!< Actually used scales.
-    midxdim		 manual_scales;	//!< Scales set manually.
+    vector<midxdim>	 manual_scales;	//!< Scales set manually.
     vector<double>       scale_factors;	//!< A list of scale factors.
     uint		 nscales; //!< Number of scales if set by hand.
     double               scales_step;

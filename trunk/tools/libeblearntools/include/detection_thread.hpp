@@ -144,7 +144,7 @@ namespace ebl {
      DEBUGMEM_PRETTY("before detection");
      // detector
      detector<SFUNC(Tnet)> detect(*net, sclasses, ans, NULL, NULL, mout, merr);
-     init_detector(detect, conf, outdir);
+     init_detector(detect, conf, outdir, silent);
      // keep pointer to detector
      pdetect = &detect;
      bootstrapping<SFUNC(Tnet)> boot(conf);
@@ -259,7 +259,7 @@ namespace ebl {
 	 } else {
 	   try {
 	     mout << "starting processing of frame " << frame_name << endl;
-	     bboxes &bb = detect.fprop(frame, frame_name.c_str());
+	     bboxes &bb = detect.fprop(frame, frame_name.c_str(), frame_id);
 	     copy_bboxes(bb); // make a copy of bounding boxes
 	   } catch(ebl::eblexception &e) { // detection failed
 	     eblwarn("detection failed: " << e);
@@ -280,15 +280,15 @@ namespace ebl {
 	 try {
 	   if (mindisplay) {
 	     bboxes &bb =
-	       dgui.display(detect, frame, frame_name.c_str(),
+	       dgui.display(detect, frame, frame_name.c_str(), frame_id,
 			    0, 0, zoom, display_min, display_max,
 			    wid, _name.c_str(), display_transp);
 	     copy_bboxes(bb); // make a copy of bounding boxes
 	   } else {
 	     // extract & display boxes
 	     bboxes &bb =
-	       dgui.display_inputs_outputs(detect, frame,
-					   frame_name.c_str(), 0, 0, zoom,
+	       dgui.display_inputs_outputs(detect, frame, frame_name.c_str(),
+					   frame_id, 0, 0, zoom,
 					   display_min, display_max, wid,
 					   _name.c_str(),
 					   display_in_min, display_in_max,
@@ -326,7 +326,7 @@ namespace ebl {
 	     // downsample input by f
 	     detect.set_resolution(f);
 	     detect.init(frame.get_idxdim(), frame_name.c_str());
-	     detect.fprop(frame, frame_name.c_str());
+	     detect.fprop(frame, frame_name.c_str(), frame_id);
 	     boot.fprop(detect, frame_name, false, f);
 	   }
 	   detect.set_scaling_original();
@@ -373,19 +373,19 @@ namespace ebl {
   template <typename Tnet>
   void detection_thread<Tnet>::init_detector(detector<SFUNC(Tnet)> &detect,
 					     configuration &conf,
-					     string &odir) {
+					     string &odir, bool silent) {
     // multi-scaling parameters
     double maxs = conf.try_get_double("max_scale", 2.0);
     double mins = conf.try_get_double("min_scale", 1.0);
     t_scaling scaling_type =
       (t_scaling) conf.try_get_uint("scaling_type", SCALES_STEP);
     double scaling = conf.try_get_double("scaling", 1.4);
-    midxdim scales;    
+    vector<midxdim> scales;    
     switch (scaling_type) {
     case MANUAL:
       if (!conf.exists("scales"))
 	eblerror("expected \"scales\" variable to be defined in manual mode");
-      scales = string_to_idxdimvector(conf.get_cstring("scales"));
+      scales = string_to_midxdimvector(conf.get_cstring("scales"));
       detect.set_resolutions(scales);
       break ;
     case ORIGINAL: detect.set_scaling_original(); break ;
@@ -415,7 +415,7 @@ namespace ebl {
       detect.set_min_resolution(conf.get_uint("input_min"));
     if (conf.exists("input_max")) // limit inputs size
       detect.set_max_resolution(conf.get_uint("input_max"));
-    detect.set_silent();
+    if (silent) detect.set_silent();
     if (conf.exists_bool("save_detections")) {
       string detdir = odir;
       detdir += "detections";

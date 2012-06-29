@@ -154,6 +154,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       uint nthreads = 1;
       bool updated = false;
       idx<ubyte> detframe; // frame returned by detection thread
+      uint frame_id = 0;
       svector<midx<t_net> > all_samples, samples; // extracted samples
       bboxes all_bbsamples, bbsamples; // boxes corresponding to samples
       if (conf.exists("nthreads"))
@@ -409,6 +410,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 		}
 #endif
 		bool frame_grabbed = false;
+		frame_id = cam->frame_id();
 		// if the pre-camera is defined use it until empty
 		if (cam2 && !cam2->empty())
 		  frame = cam2->grab();
@@ -437,11 +439,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 		string ffname = cam->frame_fullname();
 		string fname = cam->frame_name();
 		if (frame_grabbed) {
-		  while (!(*ithreads)->set_data(frame, ffname, fname,
-						cam->frame_id()))
+		  while (!(*ithreads)->set_data(frame, ffname, fname, frame_id))
 		  millisleep(5);
 		} else {
-		  while (!(*ithreads)->set_data(ffname, fname, cam->frame_id()))
+		  while (!(*ithreads)->set_data(ffname, fname, frame_id))
 		    millisleep(5);
 		}
 		// we just sent a new frame
