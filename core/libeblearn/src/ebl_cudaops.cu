@@ -356,9 +356,9 @@ namespace ebl {
 
 
 
-    LOCAL_TIMING2_REPORT("convgpu kernel execution time");
     // sync & clean
     cudaDeviceSynchronize();
+    LOCAL_TIMING2_REPORT("convgpu kernel execution time");
     cudaMemcpy(out.idx_ptr(), output_data, out.nelements() * sizeof(float), 
                cudaMemcpyDeviceToHost);
     cudaFree(input_data);

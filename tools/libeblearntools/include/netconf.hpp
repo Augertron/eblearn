@@ -229,6 +229,18 @@ namespace ebl {
 	if (!type.compare("linear")) {
 	  intg lout;
 	  if (!get_param2(conf, name, "out", lout, thick, nout)) return NULL;
+#ifdef __CUDA__
+          bool use_gpu_m = use_gpu;
+          int gpu_id_m = gpu_id;
+          get_param(conf, name, "use_gpu", use_gpu_m, true);
+          get_param(conf, name, "gpu_id", gpu_id_m, true);
+          if (use_gpu_m)
+	  module = (module_1_1<T,Tstate>*)
+	    new cuda_linear_merge_module<T,Tstate>(bshared_exists? NULL : &theparam,
+					      lout, bin, bstride, 
+					      name.c_str(), pscales, gpu_id_m);
+          else
+#endif
 	  module = (module_1_1<T,Tstate>*)
 	    new linear_merge_module<T,Tstate>(bshared_exists? NULL : &theparam,
 					      lout, bin, bstride, 
