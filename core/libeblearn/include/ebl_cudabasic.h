@@ -145,6 +145,33 @@ namespace ebl {
   Tstate temp;
   };
 
+  ////////////////////////////////////////////////////////////////
+  // cuda_fsum_module
+  //! This modules iterates of the last two dimenions and takes
+  //! the sum of the remaining dimensions.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class cuda_fsum_module : public fsum_module<T,Tstate> {
+  public:
+    //! constructor.
+    //! \param div If true, divide the sum by the number of elements used.
+    //! \param split If non-1, sum every consecutive groups of size
+    //!   (number of features) * split.
+  cuda_fsum_module(bool div = false, float split = 1.0, int gpu_id_ = -1);
+    //! destructor
+    virtual ~cuda_fsum_module();
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+  protected:
+  using fsum_module<T, Tstate>:: div; //!< Normalize by number of elements used for sum.
+  //! Sum by groups of n elements, n = features * split.
+  using fsum_module<T, Tstate>::split; 
+
+  // GPU members /////////////////////////////////////////////////////////////
+  int                 gpu_id; //!< Whether to use gpu or not
+  using module_1_1<T, Tstate>::gpu_support;
+  };
+
+
 
 } // namespace ebl
 

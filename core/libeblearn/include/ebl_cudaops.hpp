@@ -72,6 +72,11 @@ namespace ebl {
     eblerror("cuda_div : type not implemented. Available types are float32");
   }
 
+  template <typename T>
+  void cuda_fsum(idx<T> &in, idx<T> &out, bool div, int devid) {
+    eblerror("cuda_fsum : type not implemented. Available types are float32");
+  }
+
 
 } // end ebl namespace
 

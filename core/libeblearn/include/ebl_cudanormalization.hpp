@@ -83,7 +83,7 @@ namespace ebl {
       //! this might be implemented by making the table in above conv module
       //! all to all connection, but that would be very inefficient
       if (across_features)
-        convvar.add_module(new fsum_module<T,Tstate>(fsum_div, fsum_split));
+        convvar.add_module(new cuda_fsum_module<T,Tstate>(fsum_div, fsum_split, gpu_id_));
     }
 
   template <typename T, class Tstate>
@@ -175,7 +175,7 @@ namespace ebl {
     //! this might be implemented by making the table in above conv module
     //! all to all connection, but that would be very inefficient
     if (across_features)
-      convmean.add_module(new fsum_module<T,Tstate>(fsum_div, fsum_split));
+      convmean.add_module(new cuda_fsum_module<T,Tstate>(fsum_div, fsum_split, gpu_id_));
   }
 
     template <typename T, class Tstate>

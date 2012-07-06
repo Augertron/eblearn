@@ -979,6 +979,68 @@ void ebl::cuda_div(idx<float32> &in1, idx<float32> &in2,
     if (err != cudaSuccess)
       eblerror("Cuda Error:\t" << cudaGetErrorString(err));
 }
+
+
+  /////////////////////////////////////////////////////////////////////////////
+  //////////////////////
+  /// cuda_fsum
+  /////////////////////////////////////////////////////////////////////////////
+struct fsum_functor
+{
+  __host__ __device__ float operator()(const float& x, const float& y) const { 
+    return (x+y);
+  }
+};
+
+struct fsumdiv_functor
+{
+  const float value;
+  fsumdiv_functor(float value_) : value(value_) {}
+  __host__ __device__ float operator()(const float& x, const float& y) const { 
+    return (x+y)/value;
+  }
+};
+
+void ebl::cuda_fsum(idx<float32> &in, idx<float32> &out, bool div, int devid) {
+  if (!in.contiguousp() || !out.contiguousp())
+      eblerror("Tensor inputs to cuda kernel are not contiguous");
+    if(in.nelements() != out.nelements())
+      eblerror("in and out tensors have different number of elements in addc module");
+    // cout << "Executing on Device " << devid << " (CUDA)"<<endl;
+    if (devid != -1)
+      cudaSetDevice(devid);
+    // copy input on gpu
+    cudaError_t err;
+    float *input_data;
+    cudaMalloc((void**) &input_data, in.nelements() * sizeof(float));
+    cudaMemcpy(input_data, in.idx_ptr(), in.nelements() * sizeof(float), 
+               cudaMemcpyHostToDevice);
+    // apply addc for each slice using add
+    int nslices = in.dim(0);
+    long elements_per_slice = in.nelements() / nslices;
+    thrust::device_ptr<float> in_thrustptr(input_data);
+    for (int i=1; i < nslices; i++) {
+      thrust::device_ptr<float> in2_thrustptr(input_data + elements_per_slice * i);
+      if(div)
+        thrust::transform(in2_thrustptr, in2_thrustptr + elements_per_slice, 
+                        in_thrustptr, in_thrustptr,
+                        fsumdiv_functor(nslices));
+      else
+        thrust::transform(in2_thrustptr, in2_thrustptr + elements_per_slice, 
+                        in_thrustptr, in_thrustptr,
+                        fsum_functor());
+    }
+    cudaMemcpy(out.idx_ptr(), input_data, elements_per_slice * sizeof(float), 
+               cudaMemcpyDeviceToHost);
+    // sync & clean
+    cudaDeviceSynchronize();
+    cudaFree(input_data);
+
+    // check for errors
+    err = cudaGetLastError();
+    if (err != cudaSuccess)
+      eblerror("Cuda Error:\t" << cudaGetErrorString(err));
+}
   
 
 } // end namespace ebl
