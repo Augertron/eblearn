@@ -154,7 +154,6 @@ namespace ebl {
     fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&temp);
     if (!cont) 
       eblerror ("CUDA mode needs float precision");
-    cout <<"CUDA ADDC :)"<<endl;
   }
 
   template <typename T, class Tstate>
@@ -183,6 +182,37 @@ namespace ebl {
     // assign same parameter state if no parameters were specified
     if (!p) l2->bias = bias;
     return l2;
+  }
+
+
+  // cuda_fsum_module ///////////////////////////////////////////////////////////////
+
+  template <typename T, class Tstate>
+  cuda_fsum_module<T,Tstate>::cuda_fsum_module(bool div_, float split_, int gpu_id_)
+    : fsum_module<T,Tstate>(div_, split_), gpu_id(gpu_id_){
+    if (split != 1.0) eblerror("split != 1.0 not implemented in cuda_fsum");
+  }
+
+  template <typename T, class Tstate>
+  cuda_fsum_module<T,Tstate>::~cuda_fsum_module() {
+  }
+
+  template <typename T, class Tstate>
+  void cuda_fsum_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+    this->resize_output(in, out); // resize iff necessary
+    cuda_fsum(in.x, out.x, div, gpu_id);
+    idx<T> outx0 = out.x[0];
+    for (int i=1; i < out.x.dim(0); i++) {
+      idx<T> outxi = out.x[i];
+      idx_copy(outx0, outxi);
+    }
+    // idx_eloop2(inx2, in.x, T, outx2, out.x, T) {
+    //   idx_eloop2(inx1, inx2, T, outx1, outx2, T) {
+    //     sum = idx_sum(inx1);
+    //     if (div) sum = sum / inx1.nelements();
+    //     idx_fill(outx1, sum);
+    //   }
+    // }
   }
 
 

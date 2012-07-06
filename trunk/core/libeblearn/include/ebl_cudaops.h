@@ -101,6 +101,14 @@ namespace ebl {
     EXPORT void cuda_div(idx<float32> &in1, idx<float32> &in2, 
                                 idx<float32> &out, int devid);
 
+  //! Applies fsum function to the input idx and copies 
+  //  it to the output idx
+  template <typename T>
+    void cuda_fsum(idx<T> &in, idx<T> &out, bool div, int devid);
+  template <>
+    EXPORT void cuda_fsum(idx<float32> &in, 
+                          idx<float32> &out, bool div, int devid);
+
 } // namespace ebl
 
 #include "ebl_cudaops.hpp"
