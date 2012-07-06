@@ -30,7 +30,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "ebl_cudabasic.h"
+#include "ebl_cudautils.h"
 
 #ifdef __CUDA__
 

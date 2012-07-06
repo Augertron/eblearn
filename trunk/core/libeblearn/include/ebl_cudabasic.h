@@ -33,57 +33,117 @@
 #ifndef EBL_CUDABASIC_H_
 #define EBL_CUDABASIC_H_
 
-#include "ebl_defines.h"
-#include "libidx.h"
+#include "ebl_basic.h"
+#include "ebl_cudaops.h"
 
 #ifdef __CUDA__
 
 namespace ebl {
-  //! compute a 3D convolution of 3D <in> with 4D kernel <ker>
-  //! and write result into 3D <out>
-  template <typename T>
-  void cuda_convolution_3d(idx<T> &in, idx<T> &ker,
-			      idx<T> &out, 
-                        intg stride_x, intg stride_y, int devid);
 
-  //! compute a 3D convolution of 3D <in> with 4D kernel <ker>
-  //! and write result into 3D <out>
-  template <>
-    EXPORT void cuda_convolution_3d(idx<float32> &in, idx<float32> &ker,
-        		      idx<float32> &out,
-                        intg stride_x, intg stride_y, int devid);
+  ///////////////////////////////////////////////////////////////////////////////
+  ////         CUDA Basic Modules
+  //////////////////////////////////////////////////////////////////////////////
 
-  //! compute a 3D convolution of 3D <in> with 4D kernel <ker>
-  //! and write result into 3D <out>, but the connections can be sparse
-  template <typename T>
-  void cuda_convolution_3dmap(idx<T> &in, idx<T> &ker,
-			      idx<T> &out, 
-                           intg stride_x, intg stride_y, 
-                           idx<intg> table, int fanin, int devid);
+  // cuda_convolution_module
+  //! CUDA version of the convolution module
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class cuda_convolution_module : public convolution_module<T, Tstate> {
+  public:
+    //! Constructor.
+    //! \param p is used to store all parametric variables in a single place.
+    //!        If p is null, a local buffer will be used.
+    //! \param ker The convolution kernel sizes.
+    //! \param stride The convolution strides.
+    //! \param table is the convolution connection table.
+    //! \param crop If true, crop input when it does not match with the kernel.
+    //!          This allows to feed any input size to this module.
+    //! \param gpu_id Specifies which GPU to use (in case of multiple GPUs)
+    cuda_convolution_module(parameter<T,Tstate> *p, idxdim &ker, idxdim &stride,
+		       idx<intg> &table, const char *name = "convolution",
+		       bool crop = true, int gpu_id = -1);
+    //! destructor
+      virtual ~cuda_convolution_module();
+      //! forward propagation from in to out
+      virtual void fprop(Tstate &in, Tstate &out);
+      /////// members //////////////////////////////////////////////
+      idx<intg>		revtable; //!< table of connections btw output and input
+      int                 fanin;  //!< the fanin of the connection table
+      using module_1_1<T, Tstate>::gpu_support;
+      using convolution_module<T, Tstate>::fulltable;
+      using convolution_module<T, Tstate>::table;
+      using convolution_module<T, Tstate>::thickness;
+      using convolution_module<T, Tstate>::tablemax;
+      using convolution_module<T, Tstate>::kernel;
+      using convolution_module<T, Tstate>::stride;
+  protected:
+      // GPU members /////////////////////////////////////////////////////////////
+      int                 gpu_id; //!< Whether to use gpu or not
+  };
 
-  //! compute a 3D convolution of 3D <in> with 4D kernel <ker>
-  //! and write result into 3D <out>, but the connections can be sparse
-  template <>
-    EXPORT void cuda_convolution_3dmap(idx<float32> &in, idx<float32> &ker,
-        		      idx<float32> &out,
-                                  intg stride_x, intg stride_y,
-                                  idx<intg> table, int fanin, int devid);
+  ////////////////////////////////////////////////////////////////
+  // cuda_power_module
+  //! x^p module. p can be nay real number
+  //! the derivatives are implemented using
+  //! polynomial derivative rules, so they are exact
+  //! The derivative implementation divides output by input
+  //! to get x^(p-1), therefore this module assumes that
+  //! the :input:x and :output:x is not modified until bprop
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class cuda_power_module : public power_module<T,Tstate> {
+  public:
+    //! <p> is double number, every element of input is raised to
+    //! its <p>th power.
+  cuda_power_module(T p, int gpu_id=-1);
+    //! destructor
+    virtual ~cuda_power_module();
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
 
-  //! Applies a tanh function to the input idx and copies it to the output idx
-  template <typename T>
-  void cuda_tanh(idx<T> &in, idx<T> &out,  int devid);
+    // members ////////////////////////////////////////////////////////
+  protected:
+  using power_module<T, Tstate>::p;
+  fstate_idx<T> temp;
+  public:
+  // GPU members /////////////////////////////////////////////////////////////
+  int                 gpu_id; //!< Whether to use gpu or not
+  using module_1_1<T, Tstate>::gpu_support;
+  };
 
-  //! Applies a tanh function to the input idx and copies it to the output idx
-  template <>
-    EXPORT void cuda_tanh(idx<float32> &in, idx<float32> &out,  int devid);
 
-  //! Applies a power function to the input idx and copies it to the output idx
-  template <typename T>
-    EXPORT void cuda_power(idx<T> &in, idx<T> &out,  
-                           float pow, int devid);
-  template <>
-    EXPORT void cuda_power(idx<float32> &in, idx<float32> &out,  
-                           float pow, int devid);
+  ////////////////////////////////////////////////////////////////
+  // cuda_addc_module
+  //! The constant add module adds biases to the first dimension of the input
+  //! and puts the results in the output. This module is spatially replicable
+  //! (the input can have an order greater than 1 and the operation will apply
+  //! to all elements).
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class cuda_addc_module: public addc_module<T, Tstate> {
+  public:
+    //! Constructor.
+    //! \param p is used to store all parametric variables in a single place.
+    //!        If p is null, a local buffer will be used.
+    //! \param size is the number of biases, or the size of dimensions 0 of
+    //! inputs and outputs.
+  cuda_addc_module(parameter<T,Tstate> *p, intg size, 
+                   const char *name = "addc", int gpu_id_=-1);
+    //! destructor
+    virtual ~cuda_addc_module();
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! Copy passed weights into x component of internal weights.
+    virtual void load_x(idx<T> &weights);
+    //! Returns a deep copy of this module.
+    //! \param p If NULL, reuse current parameter space, otherwise allocate new
+    //!   weights on parameter 'p'.
+    virtual cuda_addc_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
+    // members ////////////////////////////////////////////////////////
+  public:
+  using addc_module<T, Tstate>::bias;
+  // GPU members /////////////////////////////////////////////////////////////
+  int                 gpu_id; //!< Whether to use gpu or not
+  using module_1_1<T, Tstate>::gpu_support;
+  Tstate temp;
+  };
 
 
 } // namespace ebl
