@@ -1400,6 +1400,12 @@ namespace ebl {
   }
 
   template <class Tstate>
+  mstate<Tstate> mstate<Tstate>::narrow(mfidxdim &dims) {
+    midxdim d = dims;
+    return this->narrow(d);
+  }
+
+  template <class Tstate>
   mstate<Tstate> mstate<Tstate>::narrow(midxdim &dims) {
     if (dims.size() != this->size())
       eblerror("expected same size input regions and states but got: "

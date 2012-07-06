@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2011 by Soumith Chintala*
+ *   soumith@gmail.com  *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,48 +28,37 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARN_H
-#define LIBEBLEARN_H
+#ifndef EBL_CUDANONLINEARITY_H_
+#define EBL_CUDANONLINEARITY_H_
 
-#include "ebl_defines.h"
-#include "libidx.h"
-#include "ebl_arch.h"
-#include "ebl_march.h"
-#include "ebl_merge.h"
-#include "ebl_states.h"
-#include "ebl_basic.h"
-#include "ebl_pooling.h"
-#include "ebl_normalization.h"
-#include "ebl_cost.h"
-#include "ebl_energy.h"
-#include "ebl_answer.h"
-#include "ebl_codec.h"
-#include "ebl_layers.h"
-#include "ebl_machines.h"
 #include "ebl_nonlinearity.h"
-#include "ebl_logger.h"
-#include "ebl_preprocessing.h"
-#include "ebl_utils.h"
-#include "bbox.h"
-#include "detector.h"
-#include "nms.h"
-#include "ebl_lua.h"
-
-#ifndef __NOSTL__
-#include "ebl_tester.h"
-#include "ebl_trainer.h"
-#include "datasource.h"
-#endif
+#include "ebl_cudaops.h"
 
 #ifdef __CUDA__
-#include "ebl_cudaops.h"
-#include "ebl_cudabasic.h"
-#include "ebl_cudapooling.h"
-#include "ebl_cudanonlinearity.h"
-#include "ebl_cudanormalization.h"
-#include "ebl_cudautils.h"
-#endif
 
-#endif // LIBEBLEARN_H
+namespace ebl {
+    ////////////////////////////////////////////////////////////////
+  //! a slab of cuda_tanh
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class cuda_tanh_module: public tanh_module<T,Tstate> {
+  public:
+    //! default constructor
+  cuda_tanh_module(int gpu_id_ = -1);
+    virtual ~cuda_tanh_module();
+    //! fprop from in to out
+    void fprop(Tstate &in, Tstate &out);
+    //! Returns a deep copy of this module.
+    virtual cuda_tanh_module<T,Tstate>* copy();
+  protected:
+    // GPU members /////////////////////////////////////////////////////////////
+    int                 gpu_id; //!< Whether to use gpu or not
+  };
+} // namespace ebl
+
+#include "ebl_cudanonlinearity.hpp"
+
+#endif // __CUDA__
+
+#endif /* EBL_CUDANONLINEARITY_H_ */

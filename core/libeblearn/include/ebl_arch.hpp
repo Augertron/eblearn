@@ -36,12 +36,9 @@ namespace ebl {
 
   template <typename T, class Tin, class Tout>
   module_1_1<T,Tin,Tout>::module_1_1(const char *name, bool bresize_)
-    : module(name), bresize(bresize_), memoptimized(false),
-      bmstate_input(false), bmstate_output(false), ninputs(1), noutputs(1)
-#ifdef __CUDA__
-    , in_gpu(false), out_gpu(false) 
-#endif
-{
+    : module(name), gpu_support(false), bresize(bresize_), memoptimized(false),
+      bmstate_input(false), bmstate_output(false), ninputs(1), 
+      noutputs(1){
   }
 
   template <typename T, class Tin, class Tout>

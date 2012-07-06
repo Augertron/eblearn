@@ -34,35 +34,158 @@
 #define EBL_CUDABASIC_HPP_
 
 #ifdef __CUDA__
-#include "idx.h"
 
 namespace ebl {
 
+  ///////////////////////////////////////////////////////////////////////////////
+  ////         CUDA Basic Modules
+  //////////////////////////////////////////////////////////////////////////////
+  template <typename T, class Tstate>
+  cuda_convolution_module<T, Tstate>::
+  cuda_convolution_module(parameter<T,Tstate> *p, idxdim &ker_, idxdim &stride_,
+                          idx<intg> &tbl, const char *name_, bool crop_, 
+                          int gpu_id_)
+    : convolution_module <T, Tstate> (p, ker_, stride_, tbl, name_, crop_),
+      revtable(1,1,1), fanin(-1) ,gpu_id(gpu_id_) {
+    gpu_support = true;
 
-  template <typename T>
-  void cuda_convolution_3d(idx<T> &in, idx<T> &ker, idx<T> &out, 
-                        intg stride_x, intg stride_y, int devid) {
-    eblerror("cuda_convolution_3d : type not implemented."
-             << "Available types are float32");
+    // check precision to decide if we use CUDA or not
+    fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&kernel);
+    if (!cont) 
+      eblerror ("CUDA mode needs float precision");
+      
+    // check it the table has fixed fanin and construct the revtable
+    if (!fulltable && (table.dim(0) % thickness == 0)) {
+      fanin = table.dim(0) / thickness;
+      revtable.resize(thickness, fanin, 2);
+      // do a proper fanin check
+      for (int i = 0; i < thickness; ++i) {
+        int tempfan = fanin;
+        for (int j=0; j < table.dim(0); ++j) {
+          if( table.get(j,1) == i) {
+            if(tempfan <= 0)
+              break;
+            revtable.set(table.get(j,0), i, tempfan - 1, 0);
+            revtable.set(j, i, tempfan - 1, 1);
+            tempfan--;
+          }
+        }
+        if (tempfan != 0) {
+          fanin = -1;
+          break;
+        }
+      }
+    }
   }
 
-  template <typename T>
-  void cuda_convolution_3dmap(idx<T> &in, idx<T> &ker, idx<T> &out, 
-                           intg stride_x, intg stride_y,
-                              idx<intg> table, int fanin, int devid) {
-    eblerror("cuda_convolution_3dmap : type not implemented. " 
-             << "Available types are float32");
+  template <typename T, class Tstate>
+  cuda_convolution_module<T, Tstate>::~cuda_convolution_module() {
   }
 
-  template <typename T>
-  void cuda_tanh(idx<T> &in, idx<T> &out,  int devid) {
-    eblerror("cuda_tanh : type not implemented. Available types are float32");
+  template <typename T, class Tstate>
+  void cuda_convolution_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
+    if (!convolution_module<T, Tstate>::resize_output(in, out))
+      return ; // do nothing if resizing failed
+    // inx = input tensor over which the kernel has to be applied
+    idx<T> inx = in.x;
+
+    // check if all input channels are actually used
+    if (in.x.dim(0) > tablemax + 1) {
+      // case where input is 3-channel but table uses only 1-channel
+      if (tablemax == 0) {
+        inx = in.x.narrow(0,1,0);
+      }
+      else {
+        cerr << "WARNING: CUDA WILL BE DISABLED FOR MODULE: " << this->name()
+             << " because all inputs are not being used and tablemax is not 0 " 
+             << " (i.e. if all inputs are not used, the only supported case"
+             << "using CUDA is if tablemax is 0 " <<endl;
+        convolution_module<T, Tstate>::fprop(in, out);
+        return;
+      }
+    }
+
+    // execute cuda kernel
+    LOCAL_TIMING2_START();
+    if (fulltable)
+      cuda_convolution_3d(inx, kernel.x, out.x, stride.dim(0), stride.dim(1), 
+                          gpu_id);
+    else if (fanin != -1)
+      cuda_convolution_3dmap(inx, kernel.x, out.x, stride.dim(0), 
+                             stride.dim(1), revtable, fanin, gpu_id);
+    else
+      eblerror(" Only full tables or fixed fanin tables are supported" 
+               << "in convolution_module with CUDA");
+    LOCAL_TIMING2_REPORT("convgpu total execution time");
   }
 
-  template <typename T>
-  void cuda_power(idx<T> &in, idx<T> &out, float pow, int devid) {
-    eblerror("cuda_power : type not implemented. Available types are float32");
+  ////////////////////////////////////////////////////////////////////////
+  ///// cuda_power_module
+  ////////////////////////////////////////////////////////////////////////
+  template <typename T, class Tstate>
+  cuda_power_module<T,Tstate>::cuda_power_module(T p_, int gpu_id_)
+    : power_module<T,Tstate>(p_), gpu_id(gpu_id_) {
+    gpu_support = true;
+    
+    // check precision to decide if we use CUDA or not
+    fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&temp);
+    if (!cont) 
+      eblerror ("CUDA mode needs float precision");
+  
   }
+
+  template <typename T, class Tstate>
+  cuda_power_module<T,Tstate>::~cuda_power_module() {}
+
+  template <typename T, class Tstate>
+  void cuda_power_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+    this->resize_output(in, out); // resize iff necessary
+    cuda_power(in.x, out.x, p, gpu_id);
+  }
+
+  ////////////////////////////////////////////////////////////////////////
+  ///// cuda_addc_module
+  ////////////////////////////////////////////////////////////////////////
+  template <typename T, class Tstate>
+  cuda_addc_module<T,Tstate>::cuda_addc_module(parameter<T,Tstate> *p, intg size,
+                                               const char *name_, int gpu_id_)
+    : addc_module<T,Tstate> (p, size, name_), gpu_id(gpu_id_) {
+    // check precision to decide if we use CUDA or not
+    fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&temp);
+    if (!cont) 
+      eblerror ("CUDA mode needs float precision");
+    cout <<"CUDA ADDC :)"<<endl;
+  }
+
+  template <typename T, class Tstate>
+  cuda_addc_module<T,Tstate>::~cuda_addc_module() {}
+
+    template <typename T, class Tstate>
+    void cuda_addc_module<T,Tstate>::fprop(Tstate& in, Tstate& out) {
+    if (&in != &out) { // resize only when input and output are different
+      idxdim d(in.x.spec); // use same dimensions as in
+      d.setdim(0, bias.x.dim(0)); // except for the first one
+      this->resize_output(in, out, &d); // resize iff necessary
+    }
+    cuda_addc(in.x, bias.x, out.x, gpu_id);
+  }
+  template <typename T, class Tstate>
+  void cuda_addc_module<T,Tstate>::load_x(idx<T> &weights) {
+    eblerror("load_x not implemented for cuda_addc");
+  }
+
+  template <typename T, class Tstate>
+  cuda_addc_module<T,Tstate>* 
+  cuda_addc_module<T,Tstate>::copy(parameter<T,Tstate> *p) {
+    // new module (with its own local parameter buffers)
+    cuda_addc_module<T,Tstate> *l2 =
+      new cuda_addc_module<T, Tstate>(p, bias.x.dim(0), this->name(), gpu_id);
+    // assign same parameter state if no parameters were specified
+    if (!p) l2->bias = bias;
+    return l2;
+  }
+
+
 
 } // end ebl namespace
 

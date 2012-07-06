@@ -207,10 +207,7 @@ namespace ebl {
     // by external display objects.
     std::vector<idx<T> >     internals;	//!< Internal buffers to display
     std::vector<std::string>	internals_str;	//!< Internal buffers desc.
-#ifdef __CUDA__
-  bool in_gpu; //!< Whether previous module in chain is gpu-enabled
-  bool out_gpu; //!< Whether next module in chain is gpu-enabled
-#endif
+    bool gpu_support; //!< Whether module is gpu-enabled
   protected:
     bool			bresize; //!< Tells module to resize output.
     bool			memoptimized; //!< Using mem optim or not.

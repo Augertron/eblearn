@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2012 by Soumith Chintala *
+ *   soumith@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,48 +28,41 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARN_H
-#define LIBEBLEARN_H
-
-#include "ebl_defines.h"
-#include "libidx.h"
-#include "ebl_arch.h"
-#include "ebl_march.h"
-#include "ebl_merge.h"
-#include "ebl_states.h"
-#include "ebl_basic.h"
-#include "ebl_pooling.h"
-#include "ebl_normalization.h"
-#include "ebl_cost.h"
-#include "ebl_energy.h"
-#include "ebl_answer.h"
-#include "ebl_codec.h"
-#include "ebl_layers.h"
-#include "ebl_machines.h"
-#include "ebl_nonlinearity.h"
-#include "ebl_logger.h"
-#include "ebl_preprocessing.h"
-#include "ebl_utils.h"
-#include "bbox.h"
-#include "detector.h"
-#include "nms.h"
-#include "ebl_lua.h"
-
-#ifndef __NOSTL__
-#include "ebl_tester.h"
-#include "ebl_trainer.h"
-#include "datasource.h"
-#endif
+#ifndef EBL_CUDANONLINEARITY_HPP_
+#define EBL_CUDANONLINEARITY_HPP_
 
 #ifdef __CUDA__
-#include "ebl_cudaops.h"
-#include "ebl_cudabasic.h"
-#include "ebl_cudapooling.h"
-#include "ebl_cudanonlinearity.h"
-#include "ebl_cudanormalization.h"
-#include "ebl_cudautils.h"
-#endif
 
-#endif // LIBEBLEARN_H
+namespace ebl {
+
+  template <typename T, class Tstate>
+  cuda_tanh_module<T,Tstate>::cuda_tanh_module(int gpu_id_) 
+  : tanh_module<T,Tstate>(), gpu_id(gpu_id_) {
+    // check precision to decide if we use CUDA or not
+    fstate_idx<T> temp;
+    fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&temp);
+    if (!cont) eblerror("cuda_tanh_module needs float precision");
+  }
+
+  template <typename T, class Tstate>
+  cuda_tanh_module<T,Tstate>::~cuda_tanh_module() {}
+
+  // cuda_tanh module
+  template <typename T, class Tstate>
+  void cuda_tanh_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+    this->resize_output(in, out); // resize iff necessary
+    cuda_tanh(in.x, out.x, gpu_id);
+  }
+  template <typename T, class Tstate>
+  cuda_tanh_module<T,Tstate>* cuda_tanh_module<T,Tstate>::copy() {
+    return new cuda_tanh_module<T,Tstate>();
+  }
+
+
+} // end ebl namespace
+
+#endif // end __CUDA__
+
+#endif // EBL_CUDANONLINEARITY_HPP_

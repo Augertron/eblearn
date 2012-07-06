@@ -926,6 +926,8 @@ namespace ebl {
     //! Not implemented.    
     virtual mstate<Tstate> narrow(int dimension, intg size, intg offset);
     //! Narrows this multi-state given multiple input 'regions'.
+    virtual mstate<Tstate> narrow(mfidxdim &regions);
+    //! Narrows this multi-state given multiple input 'regions'.
     virtual mstate<Tstate> narrow(midxdim &regions);
     //! Narrows this multi-state given multiple input 'regions' to the maximum
     //! possible region (output may be smaller than requested regions).

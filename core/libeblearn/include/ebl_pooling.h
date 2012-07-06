@@ -39,6 +39,7 @@
 #include "ebl_states.h"
 #include "ebl_utils.h"
 #include "ebl_preprocessing.h"
+#include "ebl_cudabasic.h"
 
 namespace ebl {
 
@@ -138,12 +139,7 @@ namespace ebl {
     //!          This allows to feed any input size to this module.
   lppooling_module(uint thickness, idxdim &kernel, idxdim &stride,
                      uint lppower = 2, 
-		     const char *name = "lppooling", 
-                   bool crop = true
-#ifdef __CUDA__
-                   , bool use_gpu=false, int gpu_id=false
-#endif
-);
+		     const char *name = "lppooling", bool crop = true);
     //! destructor
     virtual ~lppooling_module();
     //! forward propagation from in to out
@@ -176,13 +172,8 @@ namespace ebl {
     convolution_module<T,Tstate> *conv;
     power_module<T,Tstate> sqmod;
     power_module<T,Tstate> sqrtmod;
-    Tstate squared, convolved; //!< Intermediate buffer.
+  Tstate squared, convolved; //!< Intermediate buffer.
     parameter<T,Tstate>	param;
-#ifdef __CUDA__
-    // GPU members /////////////////////////////////////////////////////////////
-    bool                use_gpu; //!< Whether to use gpu or not
-    int                 gpu_id; //!< Whether to use gpu or not
-#endif
   };
 
   //////////////////////////////////////////////////////////////////////////////

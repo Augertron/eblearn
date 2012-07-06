@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
- *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
+ *   Copyright (C) 2012 by Soumith Chintala *
+ *   soumith@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,48 +28,55 @@
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+ ***************************************************************************/
 
-#ifndef LIBEBLEARN_H
-#define LIBEBLEARN_H
-
-#include "ebl_defines.h"
-#include "libidx.h"
-#include "ebl_arch.h"
-#include "ebl_march.h"
-#include "ebl_merge.h"
-#include "ebl_states.h"
-#include "ebl_basic.h"
-#include "ebl_pooling.h"
-#include "ebl_normalization.h"
-#include "ebl_cost.h"
-#include "ebl_energy.h"
-#include "ebl_answer.h"
-#include "ebl_codec.h"
-#include "ebl_layers.h"
-#include "ebl_machines.h"
-#include "ebl_nonlinearity.h"
-#include "ebl_logger.h"
-#include "ebl_preprocessing.h"
-#include "ebl_utils.h"
-#include "bbox.h"
-#include "detector.h"
-#include "nms.h"
-#include "ebl_lua.h"
-
-#ifndef __NOSTL__
-#include "ebl_tester.h"
-#include "ebl_trainer.h"
-#include "datasource.h"
-#endif
+#ifndef EBL_CUDAOPS_HPP_
+#define EBL_CUDAOPS_HPP_
 
 #ifdef __CUDA__
-#include "ebl_cudaops.h"
-#include "ebl_cudabasic.h"
-#include "ebl_cudapooling.h"
-#include "ebl_cudanonlinearity.h"
-#include "ebl_cudanormalization.h"
-#include "ebl_cudautils.h"
-#endif
 
-#endif // LIBEBLEARN_H
+namespace ebl {
+
+  template <typename T>
+  void cuda_convolution_3d(idx<T> &in, idx<T> &ker, idx<T> &out, 
+                        intg stride_x, intg stride_y, int devid) {
+    eblerror("cuda_convolution_3d : type not implemented."
+             << "Available types are float32");
+  }
+
+  template <typename T>
+  void cuda_convolution_3dmap(idx<T> &in, idx<T> &ker, idx<T> &out, 
+                           intg stride_x, intg stride_y,
+                              idx<intg> table, int fanin, int devid) {
+    eblerror("cuda_convolution_3dmap : type not implemented. " 
+             << "Available types are float32");
+  }
+
+  template <typename T>
+  void cuda_tanh(idx<T> &in, idx<T> &out,  int devid) {
+    eblerror("cuda_tanh : type not implemented. Available types are float32");
+  }
+
+  template <typename T>
+  void cuda_power(idx<T> &in, idx<T> &out, float pow, int devid) {
+    eblerror("cuda_power : type not implemented. Available types are float32");
+  }
+
+  template <typename T>
+  void cuda_addc(idx<T> &in, idx<T> &bias, idx<T> &out, int devid) {
+    eblerror("cuda_addc : type not implemented. Available types are float32");
+  }
+
+  template <typename T>
+  void cuda_div(idx<T> &in1, idx<T> &in2, idx<T> &out, int devid) {
+    eblerror("cuda_div : type not implemented. Available types are float32");
+  }
+
+
+} // end ebl namespace
+
+#endif // end __CUDA__
+
+#endif // EBL_CUDAOPS_HPP_
+
+

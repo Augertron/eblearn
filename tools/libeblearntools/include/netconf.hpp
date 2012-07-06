@@ -538,23 +538,26 @@ namespace ebl {
       idx<intg> tblmax = table.select(1, 1);
       thick = 1 + idx_max(tblmax);
       bool crop = true;
-#ifdef __CUDA__
-      bool use_gpu_m = use_gpu;
-      int gpu_id_m = gpu_id;
-      get_param(conf, name, "use_gpu", use_gpu_m, true);
-      get_param(conf, name, "gpu_id", gpu_id_m, true);
-#endif
       // create module
-      if (!type.compare("conv")) // conv module
-	module = (module_1_1<T,Tstate>*)
-	  //	  new convolution_module_replicable<T,Tstate>
-	  new convolution_module<T,Tstate>
-	  (bshared_exists? NULL : &theparam, kernel, stride, table,
-	   name.c_str(), crop
+      if (!type.compare("conv")) { // conv module 
 #ifdef __CUDA__
-           , use_gpu_m, gpu_id_m
+        bool use_gpu_m = use_gpu;
+        int gpu_id_m = gpu_id;
+        get_param(conf, name, "use_gpu", use_gpu_m, true);
+        get_param(conf, name, "gpu_id", gpu_id_m, true);
+        if (use_gpu_m)
+          module = (module_1_1<T,Tstate>*)
+            new cuda_convolution_module<T,Tstate>
+            (bshared_exists? NULL : &theparam, kernel, stride, table,
+             name.c_str(), crop, gpu_id_m);
+        else
 #endif
-           );
+          module = (module_1_1<T,Tstate>*)
+            //	  new convolution_module_replicable<T,Tstate>
+            new convolution_module<T,Tstate>
+            (bshared_exists? NULL : &theparam, kernel, stride, table,
+             name.c_str(), crop);
+      }
       else if (!type.compare("convl")) // conv layer
 	module = (module_1_1<T,Tstate>*)
 	  new convolution_layer<T,Tstate>
@@ -630,15 +633,15 @@ namespace ebl {
       int gpu_id_m = gpu_id;
       get_param(conf, name, "use_gpu", use_gpu_m, true);
       get_param(conf, name, "gpu_id", gpu_id_m, true);
+      if (use_gpu_m)
+        module = (module_1_1<T,Tstate>*)
+          new cuda_lppooling_module<T,Tstate>(th, kernel, stride, 
+                                              2, name.c_str(), crop, 
+                                              gpu_id);
+      else
 #endif
-      module = (module_1_1<T,Tstate>*)
-	new lppooling_module<T,Tstate>(th, kernel, stride, 2, name.c_str()
-                                       ,crop
-#ifdef __CUDA__
-                                       , use_gpu_m, gpu_id_m
-#endif
-                                       );
-      // ,crop, use_gpu_m, gpu_id_m);
+        module = (module_1_1<T,Tstate>*)
+          new lppooling_module<T,Tstate>(th, kernel, stride, 2, name.c_str());
     }
     // l4pooling ///////////////////////////////////////////////////////////////
     else if (!type.compare("l4pool")) {
@@ -778,9 +781,20 @@ namespace ebl {
       thick = lout; // update thickness
     }
     // addc ////////////////////////////////////////////////////////////////////
-    else if (!type.compare("addc"))
-      module = (module_1_1<T,Tstate>*) new addc_module<T,Tstate>
-	(bshared_exists? NULL : &theparam, thick, name.c_str());
+    else if (!type.compare("addc")) {
+#ifdef __CUDA__
+      bool use_gpu_m = use_gpu;
+      int gpu_id_m = gpu_id;
+      get_param(conf, name, "use_gpu", use_gpu_m, true);
+      get_param(conf, name, "gpu_id", gpu_id_m, true);
+      if (use_gpu_m)
+      module = (module_1_1<T,Tstate>*) new cuda_addc_module<T,Tstate>
+	(bshared_exists? NULL : &theparam, thick, name.c_str(), gpu_id_m);
+      else
+#endif
+        module = (module_1_1<T,Tstate>*) new addc_module<T,Tstate>
+          (bshared_exists? NULL : &theparam, thick, name.c_str());
+    }
     // diag ////////////////////////////////////////////////////////////////////
     else if (!type.compare("diag"))
       module = (module_1_1<T,Tstate>*) new diag_module<T,Tstate>
@@ -812,21 +826,60 @@ namespace ebl {
       get_param(conf, name, "fsum_split", fsum_split, true);
       get_param(conf, name, "epsilon", epsilon, true);
       // normalization modules
-      if (!type.compare("wstd") || !type.compare("cnorm"))
+      if (!type.compare("wstd") || !type.compare("cnorm")) {
+#ifdef __CUDA__
+      bool use_gpu_m = use_gpu;
+      int gpu_id_m = gpu_id;
+      get_param(conf, name, "use_gpu", use_gpu_m, true);
+      get_param(conf, name, "gpu_id", gpu_id_m, true);
+      if (use_gpu_m)
+	module = (module_1_1<T,Tstate>*) new cuda_contrast_norm_module<T,Tstate>
+	  (ker, wthick, conf.exists_true("mirror"), true, false,
+	   learn ? &theparam : NULL, name.c_str(), true, learn_mean, cgauss,
+	   fsum_div, fsum_split, epsilon, gpu_id_m);
+      else
+#endif
 	module = (module_1_1<T,Tstate>*) new contrast_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), true, false,
 	   learn ? &theparam : NULL, name.c_str(), true, learn_mean, cgauss,
 	   fsum_div, fsum_split, epsilon);
-      else if (!type.compare("snorm"))
+      }
+      else if (!type.compare("snorm")) {
+#ifdef __CUDA__
+      bool use_gpu_m = use_gpu;
+      int gpu_id_m = gpu_id;
+      get_param(conf, name, "use_gpu", use_gpu_m, true);
+      get_param(conf, name, "gpu_id", gpu_id_m, true);
+      if (use_gpu_m)
+	module = (module_1_1<T,Tstate>*) new cuda_subtractive_norm_module<T,Tstate>
+	  (ker, wthick, conf.exists_true("mirror"), false,
+	   learn ? &theparam : NULL, name.c_str(), true, cgauss,
+	   fsum_div, fsum_split, gpu_id_m);
+      else
+#endif
 	module = (module_1_1<T,Tstate>*) new subtractive_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), false,
 	   learn ? &theparam : NULL, name.c_str(), true, cgauss,
 	   fsum_div, fsum_split);
-      else if (!type.compare("dnorm"))
+      }
+      else if (!type.compare("dnorm")) {
+#ifdef __CUDA__
+      bool use_gpu_m = use_gpu;
+      int gpu_id_m = gpu_id;
+      get_param(conf, name, "use_gpu", use_gpu_m, true);
+      get_param(conf, name, "gpu_id", gpu_id_m, true);
+      if (use_gpu_m)
+	module = (module_1_1<T,Tstate>*) new cuda_divisive_norm_module<T,Tstate>
+	  (ker, wthick, conf.exists_true("mirror"), true,
+	   learn ? &theparam : NULL, name.c_str(), true, cgauss, fsum_div,
+	   fsum_split, epsilon, gpu_id_m);
+      else
+#endif
 	module = (module_1_1<T,Tstate>*) new divisive_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), true,
 	   learn ? &theparam : NULL, name.c_str(), true, cgauss, fsum_div,
 	   fsum_split, epsilon);
+      }
     }
     // smooth shrink ///////////////////////////////////////////////////////////
     else if (!type.compare("sshrink")) {
@@ -861,12 +914,11 @@ namespace ebl {
       int gpu_id_m = gpu_id;
       get_param(conf, name, "use_gpu", use_gpu_m, true);
       get_param(conf, name, "gpu_id", gpu_id_m, true);
+      if (use_gpu_m)
+        module = (module_1_1<T,Tstate>*) new cuda_tanh_module<T,Tstate>(gpu_id_m);
+      else
 #endif
-      module = (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>(
-#ifdef __CUDA__
-                                       use_gpu_m, gpu_id_m
-#endif
-);
+        module = (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>();
     }
     // stdsig //////////////////////////////////////////////////////////////
     else if (!type.compare("stdsig"))

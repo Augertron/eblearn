@@ -71,41 +71,16 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   template <typename T, class Tstate>
-  tanh_module<T,Tstate>::tanh_module(
-#ifdef __CUDA__
-                     bool use_gpu_, int gpu_id_
-#endif
-                                     ) : module_1_1<T,Tstate>("tanh")
-#ifdef __CUDA__
-                                       ,use_gpu(use_gpu_), gpu_id(gpu_id_) 
-#endif
-  {
-#if __CUDA__
-    // check precision to decide if we use CUDA or not
-    float_precision = false;
-    fstate_idx<T> temp;
-    fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&temp);
-    if (cont) {
-      float_precision = true;
-    }
-#endif
-  }
+  tanh_module<T,Tstate>::tanh_module() : module_1_1<T,Tstate>("tanh") {}
 
   template <typename T, class Tstate>
-  tanh_module<T,Tstate>::~tanh_module() {
-  }
+  tanh_module<T,Tstate>::~tanh_module() {}
 
   // tanh module
   template <typename T, class Tstate>
   void tanh_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     this->resize_output(in, out); // resize iff necessary
     this->resize_output(in, tmp); // resize iff necessary
-#ifdef __CUDA__
-    if(float_precision && use_gpu) {
-      cuda_tanh(in.x, out.x, gpu_id);
-      return;
-    }
-#endif
     idx_tanh(in.x, out.x);
   }
 
