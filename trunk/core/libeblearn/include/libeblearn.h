@@ -69,6 +69,7 @@
 #include "ebl_cudapooling.h"
 #include "ebl_cudanonlinearity.h"
 #include "ebl_cudanormalization.h"
+#include "ebl_cudamerge.h"
 #include "ebl_cudautils.h"
 #endif
 
