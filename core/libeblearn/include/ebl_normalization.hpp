@@ -268,8 +268,8 @@ namespace ebl {
     // local initializations
     meanconv = new convolution_module<T,Tstate>
       (param, kerdim, stride, conv_table, "subnorm_conv");
-    convmean.add_module(meanconv);
     set_kernel(gaussian_kernel);
+    convmean.add_module(meanconv);
     //! feature sum module to sum along features 
     //! this might be implemented by making the table in above conv module
     //! all to all connection, but that would be very inefficient

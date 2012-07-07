@@ -35,6 +35,7 @@
 
 #include "ebl_normalization.h"
 #include "ebl_cudaops.h"
+#include "ebl_cudabasic.h"
 
 #ifdef __CUDA__
 
@@ -59,7 +60,7 @@ namespace ebl {
 			      bool across_features = true, double cgauss = 2.0,
 			      bool fsum_div = false, float fsum_split = 1.0,
 			      double epsilon = NORM_EPSILON, 
-			      double espilon2 = 0, int gpu_id_=-1);
+			      double espilon2 = 0, int gpu_id_ = -1);
     //! destructor
     virtual ~cuda_divisive_norm_module();
     //! Returns a deep copy of this module.
@@ -78,7 +79,7 @@ namespace ebl {
     //! out = in / thstd
     virtual void invert(Tstate &in, Tstate &thstd, Tstate &out);
 
-    // members ////////////////////////////////////////////////////////
+    // members /////////////////////////////////////////////////////////////////
   protected:
     using divisive_norm_module<T,Tstate>::convvar;
     using divisive_norm_module<T,Tstate>::sqrtmod;
@@ -133,8 +134,6 @@ namespace ebl {
 				 float fsum_split = 1.0, int gpu_id_ = -1);
     //! destructor
     virtual ~cuda_subtractive_norm_module();    
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module.
     //! \param p If NULL, reuse current parameter space, otherwise allocate new
     //!   weights on parameter 'p'.
@@ -164,6 +163,7 @@ namespace ebl {
     using subtractive_norm_module<T,Tstate>::cgauss; 
     using subtractive_norm_module<T,Tstate>::fsum_div;
     using subtractive_norm_module<T,Tstate>::fsum_split;
+    using subtractive_norm_module<T,Tstate>::mirror;
   public:
     // GPU members /////////////////////////////////////////////////////////////
     int                 gpu_id; //!< Whether to use gpu or not
@@ -174,7 +174,7 @@ namespace ebl {
   //! over a local neighborhood. An input set of feature maps is locally
   //! normalized to be zero mean and unit standard deviation.
   template <typename T, class Tstate = bbstate_idx<T> >
-    class cuda_contrast_norm_module : contrast_norm_module<T,Tstate> {
+    class cuda_contrast_norm_module : public contrast_norm_module<T,Tstate> {
   public:
     //! \param kerdim The kernel dimensions.
     //! \param nf The number of feature maps input to this module.

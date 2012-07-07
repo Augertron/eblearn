@@ -316,7 +316,7 @@ namespace ebl {
 	     || !type.compare("y_to_yp")) {
       // get parameters for normalization
       string skernel; idxdim kernel;
-      bool mirror = true, globn = true;
+      bool mirror = DEFAULT_PP_MIRROR, globn = true;
       t_norm mode = WSTD_NORM;
       double eps = NORM_EPSILON, eps2 = 0;
       if (get_param(conf, name, "kernel", skernel))

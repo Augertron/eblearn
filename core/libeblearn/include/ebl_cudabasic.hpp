@@ -45,9 +45,10 @@ namespace ebl {
   cuda_convolution_module(parameter<T,Tstate> *p, idxdim &ker_, idxdim &stride_,
                           idx<intg> &tbl, const char *name_, bool crop_, 
                           int gpu_id_)
-    : convolution_module <T, Tstate> (p, ker_, stride_, tbl, name_, crop_),
-      revtable(1,1,1), fanin(-1) ,gpu_id(gpu_id_) {
+    : convolution_module<T,Tstate>(p, ker_, stride_, tbl, name_, crop_),
+      revtable(1,1,1), fanin(-1), gpu_id(gpu_id_) {
     gpu_support = true;
+    this->_name << "_cuda";
 
     // check precision to decide if we use CUDA or not
     fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&kernel);
@@ -149,6 +150,7 @@ namespace ebl {
   cuda_addc_module<T,Tstate>::cuda_addc_module(parameter<T,Tstate> *p, intg size,
                                                const char *name_, int gpu_id_)
     : addc_module<T,Tstate> (p, size, name_), gpu_id(gpu_id_) {
+    this->_name << "_cuda";
     // check precision to decide if we use CUDA or not
     fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&temp);
     if (!cont) 
@@ -189,6 +191,7 @@ namespace ebl {
   template <typename T, class Tstate>
   cuda_fsum_module<T,Tstate>::cuda_fsum_module(bool div_, float split_, int gpu_id_)
     : fsum_module<T,Tstate>(div_, split_), gpu_id(gpu_id_){
+    this->_name << "_cuda";
     if (split != 1.0) eblerror("split != 1.0 not implemented in cuda_fsum");
   }
 
@@ -214,10 +217,7 @@ namespace ebl {
     // }
   }
 
-
-
 } // end ebl namespace
 
 #endif // end __CUDA__
-
 #endif // EBL_CUDABASIC_HPP_
