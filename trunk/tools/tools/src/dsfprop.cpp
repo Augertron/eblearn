@@ -156,7 +156,7 @@ void fprop_and_save(configuration &conf, module_1_1<fs(Tnet)> &net,
     cout << "Saved output to " << out_fname << " (" << allout
 	 << ")" << endl;
   } else {
-    cout << "Saving (static) matrix file to " << out_fname << "..." << endl;
+    cout << "Saving (dynamic) matrix file to " << out_fname << "..." << endl;
     save_matrices<Tnet>(files, out_fname);
     midx<Tnet> allout = load_matrices<Tnet>(out_fname, true);
     cout << "Saved output to " << out_fname << " (" << allout
@@ -285,11 +285,14 @@ int main(int argc, char **argv) { // regular main without gui
     cout << "Saved weights to " << weights_name << endl;     
     
     // fprop network ///////////////////////////////////////////////////////////
-    uint total_size = test_ds->size() + train_ds->size();
+    uint total_size = 0;
+    if (test_ds) total_size += test_ds->size();
+    if (train_ds) total_size += train_ds->size();
     uint counter = 0;
-    fprop_and_save(conf, *net, *test_ds, outdir, valdata, arch_name, 
-		   counter, total_size);
-    if (!dump)
+    if (test_ds)
+      fprop_and_save(conf, *net, *test_ds, outdir, valdata, arch_name, 
+		     counter, total_size);
+    if (!dump && train_ds)
       fprop_and_save(conf, *net, *train_ds, outdir, traindata, arch_name, 
 		     counter, total_size);    
     

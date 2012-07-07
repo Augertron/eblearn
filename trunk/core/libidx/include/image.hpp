@@ -63,9 +63,9 @@ namespace ebl {
   //////////////////////////////////////////////////////////////////////////////
   // resize
 
-  template <typename T>
-  idx<T> image_resize(idx<T> &image, double h, double w, int mode,
-		      rect<int> *iregion_, rect<int> *oregion_) {
+  template<class T> idx<T> image_resize(idx<T> &image, double h, double w, 
+					int mode, rect<int> *iregion_,
+					rect<int> *oregion_) {
     if (image.order() < 2) eblerror("image must have at least an order of 2.");
     // iregion is optional, set it to entire image if not given
     rect<int> iregion = rect<int>(0, 0, image.dim(0), image.dim(1));
@@ -105,8 +105,8 @@ namespace ebl {
       ratioh = ratiomin;
     }
     else if (mode == 1) { // possibly modify aspect ratio
-      ratiow = w; //ratiow;
-      ratioh = h; //ratioh;
+      //      ratiow = w; //ratiow;
+      //      ratioh = h; //ratioh;
     }
     else if (mode == 2) { // use w and h as scaling ratios
       ratiow = w;
@@ -120,18 +120,19 @@ namespace ebl {
     if (iregion_ || (mode == 2) || (mode == 0) || (mode == 3)) {
       ow = rint(max(1.0, imw * ratiow));
       oh = rint(max(1.0, imh * ratioh));
+      //ow = (int)(max(1.0, imw * ratiow));
+      //oh = (int)(max(1.0, imh * ratioh));
     } else {
       ow = w;//max(1.0, imw * ratiow);
       oh = h;//max(1.0, imh * ratioh);
     }
-    // // compute closest integer subsampling ratio
-    // rw = std::max(1, (int) (1 / ratiow));
-    // rh = std::max(1, (int) (1 / ratioh));
+    // compute closest integer subsampling ratio
+    //rw = std::max(1, (int) (1 / ratiow));
+    //rh = std::max(1, (int) (1 / ratioh));
     // compute output region
-    rect<int> oregion((uint)(iregion.h0 * ratioh),
-		      (uint)(iregion.w0 * ratiow),
-		      (uint)(iregion.height * ratioh),
-		      (uint)(iregion.width * ratiow));
+    rect<int> oregion((uint)(iregion.h0 * ratioh), (uint)(iregion.w0 * ratiow),
+		 (uint)(iregion.height * ratioh),
+		 (uint)(iregion.width * ratiow));
     if (oregion_)
       *oregion_ = oregion;
     // TODO: why is this useful? for ubyte images?

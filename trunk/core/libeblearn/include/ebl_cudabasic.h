@@ -65,7 +65,7 @@ namespace ebl {
       virtual ~cuda_convolution_module();
       //! forward propagation from in to out
       virtual void fprop(Tstate &in, Tstate &out);
-      /////// members //////////////////////////////////////////////
+      // members ///////////////////////////////////////////////////////////////
       idx<intg>		revtable; //!< table of connections btw output and input
       int                 fanin;  //!< the fanin of the connection table
       using module_1_1<T, Tstate>::gpu_support;
@@ -76,11 +76,11 @@ namespace ebl {
       using convolution_module<T, Tstate>::kernel;
       using convolution_module<T, Tstate>::stride;
   protected:
-      // GPU members /////////////////////////////////////////////////////////////
+      // GPU members ///////////////////////////////////////////////////////////
       int                 gpu_id; //!< Whether to use gpu or not
   };
 
-  ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // cuda_power_module
   //! x^p module. p can be nay real number
   //! the derivatives are implemented using
@@ -93,24 +93,24 @@ namespace ebl {
   public:
     //! <p> is double number, every element of input is raised to
     //! its <p>th power.
-  cuda_power_module(T p, int gpu_id=-1);
+    cuda_power_module(T p, int gpu_id = -1, 
+		      const char *name = "cuda_power");
     //! destructor
     virtual ~cuda_power_module();
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
 
-    // members ////////////////////////////////////////////////////////
+    // members /////////////////////////////////////////////////////////////////
   protected:
-  using power_module<T, Tstate>::p;
-  fstate_idx<T> temp;
+    using power_module<T, Tstate>::p;
+    fstate_idx<T> temp;
   public:
-  // GPU members /////////////////////////////////////////////////////////////
-  int                 gpu_id; //!< Whether to use gpu or not
-  using module_1_1<T, Tstate>::gpu_support;
+    // GPU members /////////////////////////////////////////////////////////////
+    int                 gpu_id; //!< Whether to use gpu or not
+    using module_1_1<T, Tstate>::gpu_support;
   };
 
-
-  ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // cuda_addc_module
   //! The constant add module adds biases to the first dimension of the input
   //! and puts the results in the output. This module is spatially replicable

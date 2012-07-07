@@ -39,50 +39,77 @@ namespace ebl {
 
   template <typename T, class Tstate>
   divisive_norm_module<T,Tstate>::
+  divisive_norm_module(const char *name_) 
+    : module_1_1<T,Tstate>(name_), convvar(true, name_), invmod(-1),
+      thres((T) 1.0, (T) 1.0) {
+  }
+
+  template <typename T, class Tstate>
+  divisive_norm_module<T,Tstate>::
   divisive_norm_module(idxdim &kerdim_, int nf, bool mirror_, bool threshold_,
 		       parameter<T,Tstate> *param_, const char *name_, bool af,
-		       double cgauss, bool fsum_div, float fsum_split,
-		       double epsilon_)
-    : module_1_1<T,Tstate>(name_), mirror(mirror_), param(param_),
-      convvar(true, name_),
-      sqrtmod((T) .5), // square root module
-      invmod(-1), // inverse module
-      sqmod(2), // square module
-      // by default, pass 0 for threshold and values
-      // but every fprop updates these values
-      thres((T) 1.0, (T) 1.0), // threshold module
-      // create internal states, explanations are in fprop
-      threshold(threshold_), nfeatures(nf), kerdim(kerdim_),
-      across_features(af), epsilon(epsilon_) {
-    // create weighting kernel
-    if (kerdim.order() != 2)
-      eblerror("expected kernel dimensions with order 2 but found order "
-	       << kerdim.order() << " in " << kerdim);
-    w = create_gaussian_kernel<T>(kerdim, cgauss);
-    idxdim stride(1, 1);
-    // prepare convolutions and their kernels
-    idx<intg> table = one2one_table(nfeatures);
-    divconv = new convolution_module<T,Tstate>(param, kerdim, stride, table, 
-					       "divnorm_conv");
-    idx_bloop1(kx, divconv->kernel.x, T)
-      idx_copy(w, kx);
-    //! normalize the kernel    
-    if (across_features)
-      idx_dotc(divconv->kernel.x, 1 / idx_sum(divconv->kernel.x),
-	       divconv->kernel.x);
-    // convvar
-    if (mirror) // switch between zero and mirror padding
-      padding = new mirrorpad_module<T,Tstate>((w.dim(0) - 1)/2,
-						(w.dim(1) - 1)/2);
-    else
-      padding = new zpad_module<T,Tstate>(w.get_idxdim());
-    convvar.add_module(padding);
+		       double cgauss_, bool fsum_div_, float fsum_split_,
+		       double epsilon_, double epsilon2_)
+    : module_1_1<T,Tstate>(name_), convvar(true, name_), invmod(-1),
+      thres((T) 1.0, (T) 1.0) {
+    // common initializations
+    init(kerdim_, nf, mirror_, threshold_, param_, af, cgauss, fsum_div_, 
+	 fsum_split_, epsilon_, epsilon2_);
+    // local initializations
+    divconv = new convolution_module<T,Tstate>
+      (param, kerdim, stride, conv_table, "divnorm_conv");
+    set_kernel(gaussian_kernel);
     convvar.add_module(divconv);
     //! feature sum module to sum along features 
     //! this might be implemented by making the table in above conv module
     //! all to all connection, but that would be very inefficient
     if (across_features)
       convvar.add_module(new fsum_module<T,Tstate>(fsum_div, fsum_split));
+    // allocate power modules
+    sqrtmod = new power_module<T,Tstate>((T) .5);
+    sqmod = new power_module<T,Tstate>((T) 2);
+  }
+
+  template <typename T, class Tstate>
+  void divisive_norm_module<T,Tstate>::
+  init(idxdim &kerdim_, int nf, bool mirror_, bool threshold_, 
+       parameter<T,Tstate> *param_, bool af, double cgauss_, bool fsum_div_, 
+       float fsum_split_, double epsilon_, double epsilon2_) {
+    mirror = mirror_;
+    param = param_;
+    threshold = threshold_;
+    nfeatures = nf;
+    kerdim = kerdim_;
+    across_features = af;
+    epsilon = epsilon_;
+    epsilon2 = epsilon2_;
+    cgauss = cgauss_;
+    fsum_div = fsum_div_;
+    fsum_split = fsum_split_;
+    // create weighting kernel
+    if (kerdim.order() != 2)
+      eblerror("expected kernel dimensions with order 2 but found order "
+	       << kerdim.order() << " in " << kerdim);
+    gaussian_kernel = create_gaussian_kernel<T>(kerdim, cgauss);
+    stride = idxdim(1, 1);
+    // convolution table
+    conv_table = one2one_table(nfeatures);
+    // convvar
+    if (mirror) // switch between zero and mirror padding
+      padding = new mirrorpad_module<T,Tstate>
+	((gaussian_kernel.dim(0) - 1)/2, (gaussian_kernel.dim(1) - 1)/2);
+    else padding = new zpad_module<T,Tstate>(gaussian_kernel.get_idxdim());
+    convvar.add_module(padding);
+  }
+
+  template <typename T, class Tstate>
+  void divisive_norm_module<T,Tstate>::set_kernel(idx<T> &w) {
+    // copy kernel to convolution param
+    idx_bloop1(kx, divconv->kernel.x, T) idx_copy(w, kx);
+    //! normalize the kernel
+    if (across_features)
+      idx_dotc(divconv->kernel.x, 1 / idx_sum(divconv->kernel.x),
+	       divconv->kernel.x);
   }
 
   template <typename T, class Tstate>
@@ -101,19 +128,23 @@ namespace ebl {
   
   template <typename T, class Tstate>
   divisive_norm_module<T,Tstate>::~divisive_norm_module() {
+    if (sqrtmod) delete sqrtmod;
+    if (sqmod) delete sqmod;
   }
       
   template <typename T, class Tstate>
-  void divisive_norm_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {  
+  void divisive_norm_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+    if (epsilon2 != 0) 
+      idx_addc(in.x, (T) epsilon2, in.x); // avoid div by 0
     //! insq = in^2 TODO: would this be faster with idx_mul(in, in, insq)?
-    sqmod.fprop(in, insq);
+    sqmod->fprop(in, insq);
     //! invar = sum_j (w_j in^2)
     convvar.fprop(insq, invar);
-    idx_addc(invar.x, (T) epsilon, invar.x); // TODO: temporary, avoid div by 0
+    if (epsilon != 0) idx_addc(invar.x, (T) epsilon, invar.x); // avoid div by 0
     // if learning filters, make sure they stay positive
     //    if (param) idx_abs(divconv->kernel.x, divconv->kernel.x);
     //! instd = sqrt(sum_j (w_j in^2))
-    sqrtmod.fprop(invar, instd);
+    sqrtmod->fprop(invar, instd);
     // the threshold is the average of all the standard deviations over
     // the entire input. values below it will be set to the threshold.
     if (threshold) { // don't update threshold for inputs
@@ -124,8 +155,15 @@ namespace ebl {
     }
     //! std(std<mean(std)) = mean(std)
     thres.fprop(instd, thstd);
+    //! out = in / thstd
+    this->invert(in, thstd, out);
+  }
+
+  template <typename T, class Tstate>
+  void divisive_norm_module<T,Tstate>::invert(Tstate &in, Tstate &thstd_, 
+					      Tstate &out) {
     //! invstd = 1 / thstd
-    invmod.fprop(thstd, invstd);
+    invmod.fprop(thstd_, invstd);
     //! out = in / thstd
     mcw.fprop(in, invstd, out);
   }
@@ -146,11 +184,11 @@ namespace ebl {
     //! std(std<mean(std)) = mean(std)
     thres.bprop(instd, thstd);
     //! sqrt(sum_j (w_j in^2))
-    sqrtmod.bprop(invar, instd);
+    sqrtmod->bprop(invar, instd);
     //! sum_j (w_j in^2)
     convvar.bprop(insq, invar);
     //! in^2
-    sqmod.bprop(in, insq);
+    sqmod->bprop(in, insq);
   }
 
   template <typename T, class Tstate>
@@ -168,11 +206,11 @@ namespace ebl {
     //! std(std<mean(std)) = mean(std)
     thres.bbprop(instd, thstd);
     //! sqrt(sum_j (w_j in^2))
-    sqrtmod.bbprop(invar, instd);
+    sqrtmod->bbprop(invar, instd);
     //! sum_j (w_j in^2)
     convvar.bbprop(insq, invar);
     //! in^2
-    sqmod.bbprop(in, insq);
+    sqmod->bbprop(in, insq);
   }
 
   template <typename T, class Tstate>
@@ -185,8 +223,9 @@ namespace ebl {
   divisive_norm_module<T,Tstate>* divisive_norm_module<T,Tstate>::
   copy(parameter<T,Tstate> *p) {
     divisive_norm_module<T,Tstate> *d =
-      new divisive_norm_module<T,Tstate>(kerdim, nfeatures, mirror,
-					 threshold, p, this->name());
+      new divisive_norm_module<T,Tstate>
+      (kerdim, nfeatures, mirror, threshold, p, this->name(), across_features,
+       cgauss, fsum_div, fsum_split, epsilon, epsilon2);
     if (!p) // assign same parameter state if no parameters were specified      
       d->divconv->kernel = divconv->kernel;
     return d;
@@ -197,51 +236,85 @@ namespace ebl {
     std::string desc;
     desc << "divisive_norm module " << this->name() << " with kernel "
 	 << kerdim << ", using " << (mirror ? "mirror" : "zero") << " padding"
-	 << ", using " << (param ? "learned" : "fixed") << " filter " << w;
+	 << ", using " << (param ? "learned" : "fixed") 
+	 << " filter " << gaussian_kernel;
     return desc;
   }
 
-  ////////////////////////////////////////////////////////////////
+  template <typename T, class Tstate>
+  void divisive_norm_module<T, Tstate>::set_epsilon(double eps) {
+    epsilon = eps;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
   // subtractive_norm_module
+
+  template <typename T, class Tstate>
+  subtractive_norm_module<T,Tstate>::
+  subtractive_norm_module(const char *name_) 
+    : module_1_1<T,Tstate>(name_), convmean(true, name_) {
+  }
 
   template <typename T, class Tstate>
   subtractive_norm_module<T,Tstate>::
   subtractive_norm_module(idxdim &kerdim_, int nf, bool mirror_,
 			  bool global_norm_, parameter<T,Tstate> *param_,
-			  const char *name_, bool af, double cgauss,
-			  bool fsum_div, float fsum_split)
-    : module_1_1<T,Tstate>(name_), param(param_), convmean(true, name_), 
-      global_norm(global_norm_), nfeatures(nf),
-      kerdim(kerdim_), across_features(af), mirror(mirror_) {
-    // create weighting kernel
-    if (kerdim.order() != 2)
-      eblerror("expected kernel dimensions with order 2 but found order "
-	       << kerdim.order() << " in " << kerdim);
-    w = create_gaussian_kernel<T>(kerdim, cgauss);
-    idxdim stride(1, 1);
-    // prepare convolutions and their kernels
-    idx<intg> table = one2one_table(nfeatures);
-    meanconv = new convolution_module<T,Tstate>(param, kerdim, stride, table, 
-                                                "subnorm_conv");
-    idx_bloop1(kx, meanconv->kernel.x, T)
-      idx_copy(w, kx);
-    //! normalize the kernel    
-    if (across_features)
-      idx_dotc(meanconv->kernel.x, 1 / idx_sum(meanconv->kernel.x),
-	       meanconv->kernel.x);
-    // convvar    
-    if (mirror) // switch between zero and mirror padding
-      padding = new mirrorpad_module<T,Tstate>((w.dim(0) - 1)/2,
-    					       (w.dim(1) - 1)/2);
-    else
-      padding = new zpad_module<T,Tstate>(w.get_idxdim());
-    convmean.add_module(padding);
+			  const char *name_, bool af, double cgauss_,
+			  bool fsum_div_, float fsum_split_)
+    : module_1_1<T,Tstate>(name_), convmean(true, name_) {
+    // common initializations
+    init(kerdim_, nf, mirror_, global_norm_, param_, af, cgauss, fsum_div_, 
+	 fsum_split_);
+    // local initializations
+    meanconv = new convolution_module<T,Tstate>
+      (param, kerdim, stride, conv_table, "subnorm_conv");
     convmean.add_module(meanconv);
+    set_kernel(gaussian_kernel);
     //! feature sum module to sum along features 
     //! this might be implemented by making the table in above conv module
     //! all to all connection, but that would be very inefficient
     if (across_features)
       convmean.add_module(new fsum_module<T,Tstate>(fsum_div, fsum_split));
+  }
+
+  template <typename T, class Tstate>
+  void subtractive_norm_module<T,Tstate>::
+  init(idxdim &kerdim_, int nf, bool mirror_, bool global_norm_, 
+       parameter<T,Tstate> *param_, bool af, double cgauss_,
+       bool fsum_div_, float fsum_split_) {
+    param = param_;
+    global_norm = global_norm_;
+    nfeatures = nf;
+    kerdim = kerdim_;
+    across_features = af;
+    mirror = mirror_;
+    cgauss = cgauss_;
+    fsum_div = fsum_div_;
+    fsum_split = fsum_split_;
+    // create weighting kernel
+    if (kerdim.order() != 2)
+      eblerror("expected kernel dimensions with order 2 but found order "
+	       << kerdim.order() << " in " << kerdim);
+    gaussian_kernel = create_gaussian_kernel<T>(kerdim, cgauss);
+    stride = idxdim(1, 1);
+    // convolution table
+    conv_table = one2one_table(nfeatures);
+    // convvar    
+    if (mirror) // switch between zero and mirror padding
+      padding = new mirrorpad_module<T,Tstate>
+	((gaussian_kernel.dim(0) - 1)/2, (gaussian_kernel.dim(1) - 1)/2);
+    else padding = new zpad_module<T,Tstate>(gaussian_kernel.get_idxdim());
+    convmean.add_module(padding);
+  }
+
+  template <typename T, class Tstate>
+  void subtractive_norm_module<T,Tstate>::set_kernel(idx<T> &w) {
+    // copy kernel to convolution param
+    idx_bloop1(kx, meanconv->kernel.x, T) idx_copy(w, kx);
+    // normalize the kernel    
+    if (across_features)
+      idx_dotc(meanconv->kernel.x, 1 / idx_sum(meanconv->kernel.x),
+	       meanconv->kernel.x);
   }
 
   template <typename T, class Tstate>
@@ -267,6 +340,8 @@ namespace ebl {
     convmean.fprop(in, inmean);
     // inzmean = in - inmean
     difmod.fprop(in, inmean, out);
+    EDEBUG(this->name() << ": out.x " << out.x << " min " << idx_min(out.x)
+	   << " max " << idx_max(out.x));
   }
 
   template <typename T, class Tstate>
@@ -302,7 +377,7 @@ namespace ebl {
   copy(parameter<T,Tstate> *p) {
     subtractive_norm_module<T,Tstate> *d = new subtractive_norm_module<T,Tstate>
       (kerdim, nfeatures, mirror, global_norm, p, this->name(),
-       across_features);
+       across_features, cgauss, fsum_div, fsum_split);
     if (!p) // assign same parameter state if no parameters were specified
       d->meanconv->kernel = meanconv->kernel;
     return d;
@@ -322,17 +397,24 @@ namespace ebl {
   // contrast_norm_module
 
   template <typename T, class Tstate>
+  contrast_norm_module<T,Tstate>::contrast_norm_module(const char *name_)
+    : module_1_1<T,Tstate>(name_), subnorm(NULL), divnorm(NULL) {
+  }
+
+  template <typename T, class Tstate>
   contrast_norm_module<T,Tstate>::
   contrast_norm_module(idxdim &kerdim, int nf, bool mirror, bool threshold,
 		       bool gnorm_, parameter<T,Tstate> *param,
 		       const char *name_, bool af, bool lm, double cgauss,
-		       bool fsum_div, float fsum_split, double epsilon)
-    : module_1_1<T,Tstate>(name_),
-      subnorm(kerdim, nf, mirror, gnorm_, lm ? param : NULL, name_, af, cgauss,
-	      fsum_div, fsum_split),
-      divnorm(kerdim, nf, mirror, threshold, param, name_, af, cgauss,
-	      fsum_div, fsum_split, epsilon),
-      learn_mean(lm) {
+		       bool fsum_div, float fsum_split, double epsilon,
+		       double epsilon2)
+    : module_1_1<T,Tstate>(name_), learn_mean(lm) {
+    subnorm = new subtractive_norm_module<T,Tstate>
+      (kerdim, nf, mirror, gnorm_, lm ? param : NULL, name_, af, cgauss,
+       fsum_div, fsum_split);
+    divnorm = new divisive_norm_module<T,Tstate>
+      (kerdim, nf, mirror, threshold, param, name_, af, cgauss,
+       fsum_div, fsum_split, epsilon, epsilon2);
   }
 
   template <typename T, class Tstate>
@@ -346,14 +428,16 @@ namespace ebl {
   
   template <typename T, class Tstate>
   contrast_norm_module<T,Tstate>::~contrast_norm_module() {
+    if (divnorm) delete divnorm;
+    if (subnorm) delete subnorm;
   }
       
   template <typename T, class Tstate>
   void contrast_norm_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
     // subtractive normalization
-    subnorm.fprop(in, tmp);
+    subnorm->fprop(in, tmp);
     // divisive normalization
-    divnorm.fprop(tmp, out);
+    divnorm->fprop(tmp, out);
   }
 
   template <typename T, class Tstate>
@@ -361,35 +445,37 @@ namespace ebl {
     // clear derivatives
     tmp.clear_dx();
     // divisive normalization
-    divnorm.bprop(tmp, out);
+    divnorm->bprop(tmp, out);
     // subtractive normalization
-    subnorm.bprop(in, tmp);
+    subnorm->bprop(in, tmp);
   }
 
   template <typename T, class Tstate>
   void contrast_norm_module<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
     tmp.clear_ddx();
     // divisive normalization
-    divnorm.bbprop(tmp, out);
+    divnorm->bbprop(tmp, out);
     // subtractive normalization
-    subnorm.bbprop(in, tmp);
+    subnorm->bbprop(in, tmp);
   }
 
   template <typename T, class Tstate>
   void contrast_norm_module<T,Tstate>::dump_fprop(Tstate &in, Tstate &out) {
-    subnorm.dump_fprop(in, tmp);
-    divnorm.dump_fprop(tmp, out);    
+    subnorm->dump_fprop(in, tmp);
+    divnorm->dump_fprop(tmp, out);    
   }
 
   template <typename T, class Tstate>
   contrast_norm_module<T,Tstate>* contrast_norm_module<T,Tstate>::
   copy(parameter<T,Tstate> *p) {
     contrast_norm_module<T,Tstate> *d = new contrast_norm_module<T,Tstate>
-      (divnorm.kerdim, divnorm.nfeatures, divnorm.mirror, divnorm.threshold,
-       global_norm, p, this->name(), divnorm.across_features, learn_mean);
+      (divnorm->kerdim, divnorm->nfeatures, divnorm->mirror, divnorm->threshold,
+       global_norm, p, this->name(), divnorm->across_features, learn_mean, 
+       divnorm->cgauss, divnorm->fsum_div, divnorm->fsum_split, divnorm->epsilon,
+       divnorm->epsilon2);
     if (!p) { // assign same parameter state if no parameters were specified
-      d->divnorm.divconv->kernel = divnorm.divconv->kernel;
-      d->subnorm.meanconv->kernel = subnorm.meanconv->kernel;
+      d->divnorm->divconv->kernel = divnorm->divconv->kernel;
+      d->subnorm->meanconv->kernel = subnorm->meanconv->kernel;
     }
     return d;
   }
@@ -397,9 +483,14 @@ namespace ebl {
   template <typename T, class Tstate>
   std::string contrast_norm_module<T, Tstate>::describe() {
     std::string desc;
-    desc << "contrast_norm module with " << subnorm.describe()
-	 << " and " << divnorm.describe();
+    desc << "contrast_norm module with " << subnorm->describe()
+	 << " and " << divnorm->describe();
     return desc;
+  }
+
+  template <typename T, class Tstate>
+  void contrast_norm_module<T, Tstate>::set_epsilon(double eps) {
+    divnorm->set_epsilon(eps);
   }
 
   ////////////////////////////////////////////////////////////////

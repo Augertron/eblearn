@@ -366,7 +366,7 @@ namespace ebl {
     for (uint l = 0; l < cl.answers.size(); ++l) {
       mstate<Tstate> &answer = cl.answers[l];
       for (uint k = 0; k < answer.size(); ++k) {
-	double czoom = dzoom;// * 2.0;
+	double czoom = dzoom;//* 2.0;
 	Tstate &o = answer[k];
 
 	//uint lab = 0;

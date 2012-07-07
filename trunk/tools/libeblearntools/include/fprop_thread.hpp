@@ -309,12 +309,12 @@ namespace ebl {
 	 set_window_title(title.c_str());
 	 //	 clear_resize_window();
 	 if (mindisplay) {
-	   dgui.display(detect, frame, frame_name.c_str(),
+	   dgui.display(detect, frame, frame_name.c_str(), frame_id,
 			0, 0, zoom, display_min, display_max,
 			wid, _name.c_str());
 	 } else {
-	   dgui.display_inputs_outputs(detect, frame,
-				       frame_name.c_str(), 0, 0, zoom,
+	   dgui.display_inputs_outputs(detect, frame, frame_name.c_str(),
+				       frame_id, 0, 0, zoom,
 				       display_min, display_max, wid,
 				       _name.c_str(),
 				       display_in_min, display_in_max);

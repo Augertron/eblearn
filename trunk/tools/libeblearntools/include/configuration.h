@@ -138,6 +138,8 @@ namespace ebl {
 
     //! Get variable with name varname as an intg into v.
     void get(intg &v, const char *varname);
+    //! Get variable with name varname as an int into v.
+    void get(int &v, const char *varname);
     //! Get variable with name varname as an uint into v.
     void get(uint &v, const char *varname);
     //! Get variable with name varname as a double into v.

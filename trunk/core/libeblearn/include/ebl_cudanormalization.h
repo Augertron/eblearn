@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Soumith Chintala*
- *   soumith@gmail.com  *
+ *   Copyright (C) 2011 by Soumith Chintala and Pierre Sermanet *
+ *   soumith@gmail.com, pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ namespace ebl {
   //////////////////////////////////////////////////////////////////////////////
   //! This module divides local neighborhoods by they standard deviation.
   template <typename T, class Tstate = bbstate_idx<T> >
-    class cuda_divisive_norm_module : public module_1_1<T, Tstate> {
+    class cuda_divisive_norm_module : public divisive_norm_module<T, Tstate> {
   public:
     //! \param kerdim The neighborhood dimensions.
     //! \param nf The number of feature maps input to this module.
@@ -53,45 +53,57 @@ namespace ebl {
     //! \param across_features If true, normalize across feature dimensions
     //!   in addition to spatial dimensions.
     //! \param cgauss Gaussian kernel coefficient.
-  cuda_divisive_norm_module(idxdim &kerdim, int nf, bool mirror = false,
-			 bool threshold = true, parameter<T,Tstate> *p = NULL,
-			 const char *name = "divisive_norm",
-			 bool across_features = true, double cgauss = 2.0,
-			 bool fsum_div = false, float fsum_split = 1.0,
-                            double epsilon = 1e-6, int gpu_id_=-1);
+    cuda_divisive_norm_module(idxdim &kerdim, int nf, bool mirror = false,
+			      bool threshold = true, parameter<T,Tstate> *p = NULL,
+			      const char *name = "divisive_norm",
+			      bool across_features = true, double cgauss = 2.0,
+			      bool fsum_div = false, float fsum_split = 1.0,
+			      double epsilon = NORM_EPSILON, 
+			      double espilon2 = 0, int gpu_id_=-1);
     //! destructor
-    virtual ~cuda_divisive_norm_module();    
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    virtual cuda_divisive_norm_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
+    virtual ~cuda_divisive_norm_module();
+    //! Returns a deep copy of this module.
+    //! \param p If NULL, reuse current parameter space, otherwise allocate new
+    //!   weights on parameter 'p'.
+    virtual cuda_divisive_norm_module<T,Tstate>* 
+      copy(parameter<T,Tstate> *p = NULL);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
 
-  // friends
-  template <typename T1, class Tstate1> friend class cuda_contrast_norm_module;
+    // friends
+    template <typename T1, class Tstate1> friend class cuda_contrast_norm_module;
+
+    // internal methods ////////////////////////////////////////////////////////
+  protected:
+    //! out = in / thstd
+    virtual void invert(Tstate &in, Tstate &thstd, Tstate &out);
 
     // members ////////////////////////////////////////////////////////
   protected:
-    parameter<T,Tstate> 		*param;
-    layers<T, Tstate>           	 convvar;
-  cuda_power_module<T,Tstate>		 sqrtmod;	//!< square root module
-  cuda_power_module<T,Tstate>		 sqmod;	//!< square module
-    thres_module<T,Tstate>		 thres;	//!< threshold module
-  cuda_convolution_module<T,Tstate> 	*divconv;
-    module_1_1<T,Tstate>        	*padding;
-    idx<T>              		 w;	//!< weights
-    Tstate  	        		 insq, invar, instd, thstd;
-    bool                		 threshold;
-    int                 		 nfeatures;
-    idxdim              		 kerdim;
-    bool 				 across_features;//!< Norm across feats.
-    double                               epsilon; //!< bias to avoid div by 0.
-    double                               cgauss; 
-    bool fsum_div;
-    bool fsum_split;
+    using divisive_norm_module<T,Tstate>::convvar;
+    using divisive_norm_module<T,Tstate>::sqrtmod;
+    using divisive_norm_module<T,Tstate>::sqmod;
+    using divisive_norm_module<T,Tstate>::divconv;
+    using divisive_norm_module<T,Tstate>::gaussian_kernel;
+    using divisive_norm_module<T,Tstate>::conv_table;
+    using divisive_norm_module<T,Tstate>::stride;
+    using divisive_norm_module<T,Tstate>::mirror;
+    using divisive_norm_module<T,Tstate>::insq;
+    using divisive_norm_module<T,Tstate>::invar;
+    using divisive_norm_module<T,Tstate>::instd;
+    using divisive_norm_module<T,Tstate>::thstd;
+    using divisive_norm_module<T,Tstate>::threshold;
+    using divisive_norm_module<T,Tstate>::nfeatures;
+    using divisive_norm_module<T,Tstate>::kerdim;
+    using divisive_norm_module<T,Tstate>::across_features;//!< Norm across feats
+    using divisive_norm_module<T,Tstate>::epsilon; //!< bias to avoid div by 0.
+    using divisive_norm_module<T,Tstate>::epsilon2; //!< bias to avoid div by 0.
+    using divisive_norm_module<T,Tstate>::cgauss;
+    using divisive_norm_module<T,Tstate>::fsum_div;
+    using divisive_norm_module<T,Tstate>::fsum_split;
   public:
-  // GPU members /////////////////////////////////////////////////////////////
-  int                 gpu_id; //!< Whether to use gpu or not
+    // GPU members /////////////////////////////////////////////////////////////
+    int                 gpu_id; //!< Whether to use gpu or not
   };
 
   //////////////////////////////////////////////////////////////////////////////
@@ -99,68 +111,8 @@ namespace ebl {
   //! over a local neighborhood. An input set of feature maps is locally
   //! normalized to be zero mean.
   template <typename T, class Tstate = bbstate_idx<T> >
-    class cuda_subtractive_norm_module : public module_1_1<T, Tstate> {
-  public:
-  //! \param kerdim The kernel dimensions.
-  //! \param nf The number of feature maps input to this module.
-  //! \param mirror Use mirroring of the input to pad border if true,
-  //!               or use zero-padding otherwise (default).
-  //! \param global_norm If true, apply global normalization first.
-  //! \param p If specified, parameter p holds learned weights.
-  //! \param across_features If true, normalize across feature dimensions
-  //!   in addition to spatial dimensions.
-  //! \param learn_mean If true, learn mean weighting.
-  //! \param cgauss Gaussian kernel coefficient.
-  cuda_subtractive_norm_module(idxdim &kerdim, int nf, bool mirror = false,
-                               bool global_norm = false,
-                               parameter<T,Tstate> *p = NULL,
-                               const char *name = "subtractive_norm",
-                               bool across_features = true,
-                               double cgauss = 2.0, bool fsum_div = false,
-                               float fsum_split = 1.0, int gpu_id_ = -1);
-  //! destructor
-  virtual ~cuda_subtractive_norm_module();    
-  //! forward propagation from in to out
-  virtual void fprop(Tstate &in, Tstate &out);
-  //! Returns a deep copy of this module.
-  //! \param p If NULL, reuse current parameter space, otherwise allocate new
-  //!   weights on parameter 'p'.
-  virtual cuda_subtractive_norm_module<T,Tstate>*
-  copy(parameter<T,Tstate> *p = NULL);
-  //! Returns a string describing this module and its parameters.
-  virtual std::string describe();
-
-  // friends
-  template <typename T1, class Tstate1> friend class cuda_contrast_norm_module;
-  
-  // members ////////////////////////////////////////////////////////
-  protected:
-  parameter<T,Tstate> 		*param;
-  layers<T, Tstate>   		 convmean;
-  cuda_convolution_module<T,Tstate> 	*meanconv;
-  module_1_1<T,Tstate>        	*padding;
-  idx<T>              		 w;	//!< weights
-  diff_module<T,Tstate>		 difmod;//!< difference module
-  Tstate  	        		 inmean;
-  bool                		 global_norm;//!< global norm first
-  int                 		 nfeatures;
-  idxdim              		 kerdim;
-  bool 				 across_features;//!< Norm across feats.
-  double                               cgauss; 
-  bool fsum_div;
-  bool fsum_split;
-  public:
-  // GPU members /////////////////////////////////////////////////////////////
-  int                 gpu_id; //!< Whether to use gpu or not
-  };
-
-
-  //////////////////////////////////////////////////////////////////////////////
-  //! Local contrast normalization operation using a weighted expectation
-  //! over a local neighborhood. An input set of feature maps is locally
-  //! normalized to be zero mean and unit standard deviation.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class cuda_contrast_norm_module : module_1_1<T,Tstate> {
+    class cuda_subtractive_norm_module 
+    : public subtractive_norm_module<T, Tstate> {
   public:
     //! \param kerdim The kernel dimensions.
     //! \param nf The number of feature maps input to this module.
@@ -172,44 +124,103 @@ namespace ebl {
     //!   in addition to spatial dimensions.
     //! \param learn_mean If true, learn mean weighting.
     //! \param cgauss Gaussian kernel coefficient.
-  cuda_contrast_norm_module(idxdim &kerdim, int nf, bool mirror = false,
-			 bool threshold = true, bool global_norm = false,
-			 parameter<T,Tstate> *p = NULL,
-			 const char *name = "contrast_norm",
-			 bool across_features = true, bool learn_mean = false,
-			 double cnorm = 2.0, bool fsum_div = false,
-                            float fsum_split = 1.0, double epsilon = 1e-6, 
-                            int gpu_id = -1);
+    cuda_subtractive_norm_module(idxdim &kerdim, int nf, bool mirror = false,
+				 bool global_norm = false,
+				 parameter<T,Tstate> *p = NULL,
+				 const char *name = "subtractive_norm",
+				 bool across_features = true,
+				 double cgauss = 2.0, bool fsum_div = false,
+				 float fsum_split = 1.0, int gpu_id_ = -1);
     //! destructor
-    virtual ~cuda_contrast_norm_module();    
+    virtual ~cuda_subtractive_norm_module();    
     //! forward propagation from in to out
     virtual void fprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module.
     //! \param p If NULL, reuse current parameter space, otherwise allocate new
     //!   weights on parameter 'p'.
-    virtual cuda_contrast_norm_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
+    virtual cuda_subtractive_norm_module<T,Tstate>*
+      copy(parameter<T,Tstate> *p = NULL);
+    //! Returns a string describing this module and its parameters.
+    virtual std::string describe();
+
+    // friends
+    template <typename T1, class Tstate1> friend class cuda_contrast_norm_module;
+  
+    // members /////////////////////////////////////////////////////////////////
+  protected:
+    using subtractive_norm_module<T,Tstate>::param;
+    using subtractive_norm_module<T,Tstate>::convmean;
+    using subtractive_norm_module<T,Tstate>::meanconv;
+    using subtractive_norm_module<T,Tstate>::padding;
+    using subtractive_norm_module<T,Tstate>::gaussian_kernel;
+    using subtractive_norm_module<T,Tstate>::conv_table;
+    using subtractive_norm_module<T,Tstate>::stride;
+    using subtractive_norm_module<T,Tstate>::difmod;
+    using subtractive_norm_module<T,Tstate>::inmean;
+    using subtractive_norm_module<T,Tstate>::global_norm;//!< global norm first
+    using subtractive_norm_module<T,Tstate>::nfeatures;
+    using subtractive_norm_module<T,Tstate>::kerdim;
+    using subtractive_norm_module<T,Tstate>::across_features;//!< Norm across feats.
+    using subtractive_norm_module<T,Tstate>::cgauss; 
+    using subtractive_norm_module<T,Tstate>::fsum_div;
+    using subtractive_norm_module<T,Tstate>::fsum_split;
+  public:
+    // GPU members /////////////////////////////////////////////////////////////
+    int                 gpu_id; //!< Whether to use gpu or not
+  };
+
+  //////////////////////////////////////////////////////////////////////////////
+  //! Local contrast normalization operation using a weighted expectation
+  //! over a local neighborhood. An input set of feature maps is locally
+  //! normalized to be zero mean and unit standard deviation.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class cuda_contrast_norm_module : contrast_norm_module<T,Tstate> {
+  public:
+    //! \param kerdim The kernel dimensions.
+    //! \param nf The number of feature maps input to this module.
+    //! \param mirror Use mirroring of the input to pad border if true,
+    //!               or use zero-padding otherwise (default).
+    //! \param global_norm If true, apply global normalization first.
+    //! \param p If specified, parameter p holds learned weights.
+    //! \param across_features If true, normalize across feature dimensions
+    //!   in addition to spatial dimensions.
+    //! \param learn_mean If true, learn mean weighting.
+    //! \param cgauss Gaussian kernel coefficient.
+    cuda_contrast_norm_module(idxdim &kerdim, int nf, bool mirror = false,
+			      bool threshold = true, bool global_norm = false,
+			      parameter<T,Tstate> *p = NULL,
+			      const char *name = "contrast_norm",
+			      bool across_features = true, 
+			      bool learn_mean = false,
+			      double cnorm = 2.0, bool fsum_div = false,
+			      float fsum_split = 1.0, 
+			      double epsilon = NORM_EPSILON, 
+			      double epsilon2 = 0, int gpu_id = -1);
+    //! destructor
+    virtual ~cuda_contrast_norm_module();    
+    //! Returns a deep copy of this module.
+    //! \param p If NULL, reuse current parameter space, otherwise allocate new
+    //!   weights on parameter 'p'.
+    virtual cuda_contrast_norm_module<T,Tstate>* 
+      copy(parameter<T,Tstate> *p = NULL);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
 
     // members ////////////////////////////////////////////////////////
   protected:
-  cuda_subtractive_norm_module<T, Tstate> 	subnorm;
-  cuda_divisive_norm_module<T, Tstate> 	divnorm;
-  Tstate  	        		tmp;
-  bool                		global_norm;//!< global norm first
-  bool                		learn_mean;//!< Learn mean weighting.
+    using contrast_norm_module<T, Tstate>::subnorm;
+    using contrast_norm_module<T, Tstate>::divnorm;
+    using contrast_norm_module<T, Tstate>::tmp;
+    using contrast_norm_module<T, Tstate>::global_norm;//!< global norm first
+    using contrast_norm_module<T, Tstate>::learn_mean;//!< Learn mean weighting.
   public:
-  // GPU members /////////////////////////////////////////////////////////////
-  int                 gpu_id; //!< Whether to use gpu or not
-
+    // GPU members /////////////////////////////////////////////////////////////
+    int                 gpu_id; //!< Whether to use gpu or not
   };
-
-
 
 } // namespace ebl
 
 #include "ebl_cudanormalization.hpp"
 
 #endif // __CUDA__
-
 #endif /* EBL_CUDANORMALIZATION_H_ */

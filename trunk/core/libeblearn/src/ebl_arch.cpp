@@ -39,8 +39,9 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // module
 
-  module::module(const char *n) : _name(""), mout(&std::cout), merr(&std::cerr),
-				  silent(false), _enabled(true) {
+  module::module(const char *n) 
+  : _name(""), mout(&std::cout), merr(&std::cerr),
+    silent(false), _enabled(true), gpu_support(false) {
     if (n) _name = n;
   }
 

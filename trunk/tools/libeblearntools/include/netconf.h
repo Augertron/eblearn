@@ -122,6 +122,7 @@ namespace ebl {
   //! \param color_norm If true, contrast-normalize color channels.
   //! \param cnorm_across If true and color_norm is true, color is normalized
   //!   across each other, rather than layer by layer.
+  //! \param epsilon Small value added in normalization to avoid 0-divisions.
   template <typename T, class Tstate>
     resizepp_module<T,Tstate>* 
     create_preprocessing(uint height, uint width, const char *ppchan,
@@ -134,7 +135,8 @@ namespace ebl {
 			 bool color_lnorm = false, bool cnorm_across = true,
 			 double hscale = 1.0, double wscale = 1.0,
 			 vector<float> *scalings = NULL,
-			 const char *name = NULL);
+			 const char *name = NULL, double epsilon = NORM_EPSILON,
+			 double epsilon2 = 0);
   
   //! Create a preprocessing module given a target 'height' and 'width'
   //! and other parameters. In this version, a vector of kernels dimensions
@@ -150,6 +152,7 @@ namespace ebl {
   //! \param color_norm If true, contrast-normalize color channels.
   //! \param cnorm_across If true and color_norm is true, color is normalized
   //!   across each other, rather than layer by layer.
+  //! \param epsilon Small value added in normalization to avoid 0-divisions.
   template <typename T, class Tstate>
     resizepp_module<T,Tstate>* 
     create_preprocessing(midxdim &dims, const char *ppchan,
@@ -163,7 +166,8 @@ namespace ebl {
 			 bool color_lnorm = false, bool cnorm_across = true,
 			 double hscale = 1.0, double wscale = 1.0,
 			 vector<float> *scalings = NULL,
-			 const char *name = NULL);
+			 const char *name = NULL, 
+			 double epsilon = NORM_EPSILON, double epsilon2 = 0);
   
   //! Create a preprocessing module without target dimensions. These can be set
   //! later with the set_dimensions() method.
@@ -180,6 +184,7 @@ namespace ebl {
   //! \param color_norm If true, contrast-normalize color channels.
   //! \param cnorm_across If true and color_norm is true, color is normalized
   //!   across each other, rather than layer by layer.
+  //! \param epsilon Small value added in normalization to avoid 0-divisions.
   template <typename T, class Tstate>
     resizepp_module<T,Tstate>* 
     create_preprocessing(const char *ppchan, midxdim &kersz, midxdim &zpads,
@@ -192,7 +197,8 @@ namespace ebl {
 			 bool color_lnorm = false, bool cnorm_across = true,
 			 double hscale = 1.0, double wscale = 1.0,
 			 vector<float> *scalings = NULL,
-			 const char *name = NULL);
+			 const char *name = NULL, 
+			 double epsilon = NORM_EPSILON, double epsilon2 = 0);
 
   /////////////////////////////////////////////////////////////////////////////
   

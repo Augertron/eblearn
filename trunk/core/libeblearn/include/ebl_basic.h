@@ -259,7 +259,7 @@ namespace ebl {
   public:
     //! <p> is double number, every element of input is raised to
     //! its <p>th power.
-    power_module(T p);
+    power_module(T p, const char *name = "power");
     //! destructor
     virtual ~power_module();
     //! forward propagation from in to out

@@ -42,11 +42,16 @@
 
 namespace ebl {
 
+  //! Small value added in normalization to avoid 0-divisions.
+#define NORM_EPSILON 1e-6
+
   //////////////////////////////////////////////////////////////////////////////
   //! This module divides local neighborhoods by they standard deviation.
   template <typename T, class Tstate = bbstate_idx<T> >
     class divisive_norm_module : public module_1_1<T, Tstate> {
   public:
+    //! Empty constructor to be used by a child class.
+    divisive_norm_module(const char *name = "divisive_norm");
     //! \param kerdim The neighborhood dimensions.
     //! \param nf The number of feature maps input to this module.
     //! \param mirror Use mirroring of the input to pad border if true,
@@ -60,7 +65,7 @@ namespace ebl {
 			 const char *name = "divisive_norm",
 			 bool across_features = true, double cgauss = 2.0,
 			 bool fsum_div = false, float fsum_split = 1.0,
-			 double epsilon = 1e-6);
+			 double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~divisive_norm_module();    
     //! forward propagation from in to out
@@ -83,32 +88,53 @@ namespace ebl {
     virtual bool optimize_fprop(Tstate &in, Tstate &out);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
+    //! Update epsilon value.
+    virtual void set_epsilon(double eps);
 
     // friends
     friend class divisive_norm_module_gui;
     friend class contrast_norm_module_gui;
     template <typename T1, class Tstate1> friend class contrast_norm_module;
+    template <typename T1, class Tstate1> 
+      friend class cuda_contrast_norm_module;
+
+    // internal methods ////////////////////////////////////////////////////////
+  protected:
+    //! Common initializations.
+    virtual void init(idxdim &kerdim_, int nf, bool mirror_, bool threshold_, 
+		      parameter<T,Tstate> *param_, bool af, double cgauss_, 
+		      bool fsum_div_, float fsum_split_, double epsilon_, 
+		      double epsilon2_);
+    //! Copies and replicates kernel into divconv.
+    virtual void set_kernel(idx<T> &kernel);
+    //! out = in / thstd
+    virtual void invert(Tstate &in, Tstate &thstd, Tstate &out);
 
     // members ////////////////////////////////////////////////////////
   public:
     bool                		 mirror; //!< mirror input or not.
   protected:
-    parameter<T,Tstate> 		*param;
-    layers<T, Tstate>           	 convvar;
-    power_module<T,Tstate>		 sqrtmod;	//!< square root module
-    power_module<T,Tstate>		 invmod;	//!< inverse module
-    power_module<T,Tstate>		 sqmod;	//!< square module
-    thres_module<T,Tstate>		 thres;	//!< threshold module
-    mul_module<T,Tstate>		 mcw;
-    convolution_module<T,Tstate> 	*divconv;
-    module_1_1<T,Tstate>        	*padding;
-    idx<T>              		 w;	//!< weights
-    Tstate  	        		 insq, invar, instd, thstd, invstd;
-    bool                		 threshold;
-    int                 		 nfeatures;
-    idxdim              		 kerdim;
-    bool 				 across_features;//!< Norm across feats.
-    double                               epsilon; //!< bias to avoid div by 0.
+    parameter<T,Tstate> 	 *param;
+    layers<T, Tstate>             convvar;
+    power_module<T,Tstate>	 *sqrtmod;	//!< square root module
+    power_module<T,Tstate>	  invmod;	//!< inverse module
+    power_module<T,Tstate>	 *sqmod;	//!< square module
+    thres_module<T,Tstate>	  thres;	//!< threshold module
+    mul_module<T,Tstate>	  mcw;
+    convolution_module<T,Tstate> *divconv;
+    module_1_1<T,Tstate>         *padding;
+    idx<T>              	  gaussian_kernel;
+    idx<intg>              	  conv_table;
+    idxdim                        stride;
+    Tstate  	        	  insq, invar, instd, thstd, invstd;
+    bool                	  threshold;
+    int                 	  nfeatures;
+    idxdim              	  kerdim;
+    bool 			  across_features;//!< Norm across feats.
+    double                        epsilon; //!< bias to avoid div by 0.
+    double                        epsilon2; //!< bias to avoid div by 0.
+    double                        cgauss; //!< Gaussian coefficient.
+    bool                          fsum_div, fsum_split;  
   };
 
   //////////////////////////////////////////////////////////////////////////////
@@ -118,6 +144,8 @@ namespace ebl {
   template <typename T, class Tstate = bbstate_idx<T> >
     class subtractive_norm_module : public module_1_1<T, Tstate> {
   public:
+    //! Empty constructor to be used by a child class.
+    subtractive_norm_module(const char *name = "subtractive_norm");
     //! \param kerdim The kernel dimensions.
     //! \param nf The number of feature maps input to this module.
     //! \param mirror Use mirroring of the input to pad border if true,
@@ -162,21 +190,36 @@ namespace ebl {
     // friends
     friend class contrast_norm_module_gui;
     template <typename T1, class Tstate1> friend class contrast_norm_module;
+    template <typename T1, class Tstate1> 
+      friend class cuda_contrast_norm_module;
   
+    // internal methods ////////////////////////////////////////////////////////
+  protected:
+    //! Common initializations.
+    virtual void init(idxdim &kerdim_, int nf, bool mirror, bool global_norm, 
+		      parameter<T,Tstate> *param_, bool af, double cgauss, 
+		      bool fsum_div, float fsum_split_);
+    //! Copies and replicates kernel into divconv.
+    virtual void set_kernel(idx<T> &kernel);
+
     // members ////////////////////////////////////////////////////////
   protected:
-    parameter<T,Tstate> 		*param;
-    layers<T, Tstate>   		 convmean;
-    convolution_module<T,Tstate> 	*meanconv;
-    module_1_1<T,Tstate>        	*padding;
-    idx<T>              		 w;	//!< weights
-    diff_module<T,Tstate>		 difmod;//!< difference module
-    Tstate  	        		 inmean;
-    bool                		 global_norm;//!< global norm first
-    int                 		 nfeatures;
-    idxdim              		 kerdim;
-    bool 				 across_features;//!< Norm across feats.
-    bool                		 mirror; //!< mirror input or not.
+    parameter<T,Tstate> 	 *param;
+    layers<T, Tstate>   	  convmean;
+    convolution_module<T,Tstate> *meanconv;
+    module_1_1<T,Tstate>         *padding;
+    idx<T>              	  gaussian_kernel;
+    idx<intg>              	  conv_table;
+    diff_module<T,Tstate>	  difmod;//!< difference module
+    idxdim                        stride;
+    Tstate  	        	  inmean;
+    bool                	  global_norm;//!< global norm first
+    int                 	  nfeatures;
+    idxdim              	  kerdim;
+    bool 			  across_features;//!< Norm across feats.
+    bool                	  mirror; //!< mirror input or not.
+    double                        cgauss; //!< Gaussian coefficient.
+    bool                          fsum_div, fsum_split;  
   };
 
   //////////////////////////////////////////////////////////////////////////////
@@ -186,6 +229,8 @@ namespace ebl {
   template <typename T, class Tstate = bbstate_idx<T> >
     class contrast_norm_module : public module_1_1<T,Tstate> {
   public:
+    //! Empty constructor to be used by a child class.
+    contrast_norm_module(const char *name = "contrast_norm");
     //! \param kerdim The kernel dimensions.
     //! \param nf The number of feature maps input to this module.
     //! \param mirror Use mirroring of the input to pad border if true,
@@ -202,7 +247,8 @@ namespace ebl {
 			 const char *name = "contrast_norm",
 			 bool across_features = true, bool learn_mean = false,
 			 double cnorm = 2.0, bool fsum_div = false,
-			 float fsum_split = 1.0, double epsilon = 1e-6);
+			 float fsum_split = 1.0, double epsilon = NORM_EPSILON,
+			 double epsilon2 = 0.0);
     //! destructor
     virtual ~contrast_norm_module();    
     //! forward propagation from in to out
@@ -225,14 +271,16 @@ namespace ebl {
     virtual bool optimize_fprop(Tstate &in, Tstate &out);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
+    //! Update epsilon value.
+    virtual void set_epsilon(double eps);
 
     // friends
     friend class contrast_norm_module_gui;
 
     // members ////////////////////////////////////////////////////////
   protected:
-    subtractive_norm_module<T, Tstate> 	subnorm;
-    divisive_norm_module<T, Tstate> 	divnorm;
+    subtractive_norm_module<T,Tstate>  *subnorm;
+    divisive_norm_module<T,Tstate>     *divnorm;
     Tstate  	        		tmp;
     bool                		global_norm;//!< global norm first
     bool                		learn_mean;//!< Learn mean weighting.

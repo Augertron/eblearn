@@ -123,15 +123,14 @@ namespace ebl {
   ///// cuda_power_module
   ////////////////////////////////////////////////////////////////////////
   template <typename T, class Tstate>
-  cuda_power_module<T,Tstate>::cuda_power_module(T p_, int gpu_id_)
-    : power_module<T,Tstate>(p_), gpu_id(gpu_id_) {
+  cuda_power_module<T,Tstate>::
+  cuda_power_module(T p_, int gpu_id_, const char *name_)
+    : power_module<T,Tstate>(p_, name_), gpu_id(gpu_id_) {
     gpu_support = true;
     
     // check precision to decide if we use CUDA or not
     fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&temp);
-    if (!cont) 
-      eblerror ("CUDA mode needs float precision");
-  
+    if (!cont) eblerror ("CUDA mode needs float precision");
   }
 
   template <typename T, class Tstate>

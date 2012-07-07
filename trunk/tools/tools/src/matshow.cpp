@@ -102,6 +102,8 @@ void print_usage() {
   cout << "  -interleaved (channels are in dimension 0)" << endl;
   cout << "  -save_individually (save each sub-matrix individually if midx)"
        << endl;
+  cout << "  -diff <other.mat> (prints sum of differences between 2 matrices"
+       << " with same dimensions)" << endl;
 }
 
 // parse command line input
@@ -372,7 +374,7 @@ int main(int argc, char **argv) {
     // variables
     range.push_back(-1.0); // default range min
     range.push_back(1.0); // default range max
-    string conf_fname;
+    string conf_fname, diff_fname;
     // show mat images
     list<string> *argmats = new list<string>();
     list<string>::iterator i;
@@ -382,6 +384,9 @@ int main(int argc, char **argv) {
 	if (!strcmp(argv[i], "-conf")) {
 	  ++i; if (i >= argc) throw 0;
 	  conf_fname = argv[i];
+	} else if (!strcmp(argv[i], "-diff")) {
+	  ++i; if (i >= argc) throw 0;
+	  diff_fname = argv[i];
 	} else if (!strcmp(argv[i], "-zoom")) {
 	  ++i; if (i >= argc) throw 0;
 	  zoom = (float) atof(argv[i]);
@@ -451,6 +456,21 @@ int main(int argc, char **argv) {
       // enable auto range by default in conf mode
       if (!fixed_range)
 	autorange = true;
+    }
+    // diff mode, just print matrices differences
+    if (!diff_fname.empty()) {
+      i = argmats->begin();
+      idx<double> m1 = load_matrix<double>((*i).c_str());
+      idx<double> m2 = load_matrix<double>(diff_fname);
+      if (!m1.same_dim(m2.get_idxdim())) {
+	eblerror("cannot compare matrices of different dimensions " << m1
+		 << " and " << m2);
+	return -1;
+      }
+      idx_sub(m1, m2);
+      double sum = idx_sum(m1);
+      cout << "sum(m1 - m2) = " << sum << endl;
+      return 0;
     }
     
     // display first matrix/image
@@ -600,14 +620,11 @@ int main(int argc, char **argv) {
       }
     }
     // free objects
-    if (mats)
-      delete mats;
+    if (mats) delete mats;
 #endif /* __BOOST__ */
 #endif /* __GUI__ */
-    if (argmats)
-      delete argmats;
-    if (conf)
-      delete conf;
+    if (argmats) delete argmats;
+    if (conf) delete conf;
   } catch(string &err) {
     ERROR_MSG(err.c_str());
   }

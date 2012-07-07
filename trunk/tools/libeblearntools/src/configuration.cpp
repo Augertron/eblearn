@@ -620,6 +620,11 @@ namespace ebl {
     v = (intg) string_to_int(get_cstr(varname));
   }
 
+  void configuration::get(int &v, const char *varname) {
+    exists_throw(varname);
+    v = string_to_int(get_cstr(varname));
+  }
+
   void configuration::get(uint &v, const char *varname) {
     exists_throw(varname);
     v = string_to_uint(get_cstr(varname));

@@ -318,20 +318,25 @@ namespace ebl {
       string skernel; idxdim kernel;
       bool mirror = true, globn = true;
       t_norm mode = WSTD_NORM;
+      double eps = NORM_EPSILON, eps2 = 0;
       if (get_param(conf, name, "kernel", skernel))
 	kernel = string_to_idxdim(skernel);
       get_param(conf, name, "mirror", mirror, true);
+      get_param(conf, name, "epsilon", eps, true);
+      get_param(conf, name, "epsilon2", eps2, true);
       get_param(conf, name, "global_norm", globn, true);
       // create modules
       if (!type.compare("rgb_to_ypuv") || !type.compare("rgb_to_ynuv")) {
 	module = (module_1_1<T,Tstate>*)
-	  new rgb_to_ynuv_module<T,Tstate>(kernel, mirror, mode, globn);
+	  new rgb_to_ynuv_module<T,Tstate>(kernel, mirror, mode, globn, 
+					   eps, eps2);
       } else if (!type.compare("rgb_to_yp") || !type.compare("rgb_to_yn")) {
 	module = (module_1_1<T,Tstate>*)
-	  new rgb_to_yn_module<T,Tstate>(kernel, mirror, mode, globn);
+	  new rgb_to_yn_module<T,Tstate>(kernel, mirror, mode, globn, 
+					 eps, eps2);
       } else if (!type.compare("y_to_yp")) {
 	module = (module_1_1<T,Tstate>*)
-	  new y_to_yp_module<T,Tstate>(kernel, mirror);
+	  new y_to_yp_module<T,Tstate>(kernel, mirror, mode, globn, eps, eps2);
       }
     } else if (!type.compare("rgb_to_yuv"))
       module = (module_1_1<T,Tstate>*) new rgb_to_yuv_module<T,Tstate>();
@@ -457,32 +462,42 @@ namespace ebl {
 	cerr << "expected a preprocessing module in " << name << endl;
 	return NULL;
       }
-      string szpad, ssize, sfovea;
+      string szpad, ssize, sfovea, smode;
       idxdim zpad, size;
+      uint mode = MEAN_RESIZE;
+      bool preserve_ratio = true;
+      get_param(conf, name, "preserve_ratio", preserve_ratio, true);
+      if (get_param(conf, name, "mode", smode, true))
+	mode = get_resize_type(smode.c_str());
       if (get_param(conf, name, "zpad", szpad, true))
 	zpad = string_to_idxdim(szpad);
       if (get_param(conf, name, "size", ssize, true)) {
 	size = string_to_idxdim(ssize);
 	module = (module_1_1<T,Tstate>*)
-	  new resizepp_module<T,Tstate>(size, MEAN_RESIZE, pp, true, &zpad,
-					true, name.c_str());
+	  new resizepp_module<T,Tstate>(size, mode, pp, true, &zpad,
+					preserve_ratio, name.c_str());
       } else if (get_param(conf, name, "fovea", sfovea, true)) {
         //TODO: might have to add fovea_scale_size
 	vector<double> fovea = string_to_doublevector(sfovea);
 	module = (module_1_1<T,Tstate>*)
-	  new fovea_module<T,Tstate>(fovea, false, MEAN_RESIZE, pp, true,&zpad);
+	  new fovea_module<T,Tstate>(fovea, false, mode, pp, true,&zpad);
       } else
 	module = (module_1_1<T,Tstate>*)
-	  new resizepp_module<T,Tstate>(MEAN_RESIZE, pp, true, &zpad,
-					true, name.c_str());
+	  new resizepp_module<T,Tstate>(mode, pp, true, &zpad,
+					preserve_ratio, name.c_str());
     }
     // resize /////////////////////////////////////////////////////////
     else if (!type.compare("resize")) {
       double resizeh, resizew;
-      string szpad, smod;
+      string szpad, smod, smode;
       idxdim pad;
+      bool preserve_ratio = true;
+      uint mode = MEAN_RESIZE;
       if (!get_param(conf, name, "hratio", resizeh)) return NULL;
       if (!get_param(conf, name, "wratio", resizew)) return NULL;
+      get_param(conf, name, "preserve_ratio", preserve_ratio);
+      if (get_param(conf, name, "mode", smode, true))
+	mode = get_resize_type(smode.c_str());
       if (get_param(conf, name, "zpad", szpad, true))
 	pad = string_to_idxdim(szpad, 'x');
       // resize as a module's outputs
@@ -496,14 +511,14 @@ namespace ebl {
 	if (i != loaded.end()) {
 	  cout << "resizing as found module " << i->second->name() << endl;
 	  module = (module_1_1<T,Tstate>*)
-	    new resize_module<T,Tstate>(i->second, size, BILINEAR_RESIZE, &pad,
+	    new resize_module<T,Tstate>(i->second, size, mode, &pad,
 					name.c_str());
 	} else
 	  eblerror("resizing as module " << smod << ", module not found");
       } else 
 	module = (module_1_1<T,Tstate>*)
-	  new resize_module<T,Tstate>(resizeh, resizew, BILINEAR_RESIZE, &pad,
-				      true, name.c_str());
+	  new resize_module<T,Tstate>(resizeh, resizew, mode, &pad,
+				      preserve_ratio, name.c_str());
     }
     // resize /////////////////////////////////////////////////////////
     else if (!type.compare("lpyramid")) {
@@ -512,6 +527,7 @@ namespace ebl {
       bool globnorm = true, locnorm = true, locnorm2 = false,
 	color_lnorm = false, cnorm_across = true;
       midxdim zpads;
+      double eps = NORM_EPSILON, eps2 = 0;
       if (!get_param(conf, name, "nscales", nscales)) return NULL;
       get_param(conf, name, "pp", pp, true);
       if (!get_param(conf, name, "kernels", skernels)) return NULL;
@@ -521,6 +537,8 @@ namespace ebl {
       get_param(conf, name, "localnorm2", locnorm2, true);
       get_param(conf, name, "cnorm_across", cnorm_across, true);
       get_param(conf, name, "color_lnorm", color_lnorm, true);
+      get_param(conf, name, "epsilon", eps, true);
+      get_param(conf, name, "epsilon2", eps2, true);
       if (get_param(conf, name, "zpad", szpad, true))
 	zpads = string_to_idxdimvector(szpad.c_str());
 
@@ -534,7 +552,7 @@ namespace ebl {
 				       locnorm, locnorm2, color_lnorm,
 				       cnorm_across, 1.0, 1.0,
 				       scalings.size() > 0 ? &scalings : NULL,
-				       name.c_str());
+				       name.c_str(), eps, eps2);
     }
     // convolution /////////////////////////////////////////////////////////
     else if (!type.compare("conv") || !type.compare("convl")) {
@@ -825,7 +843,7 @@ namespace ebl {
       intg wthick = thick;
       string skernel;
       bool learn = false, learn_mean = false, fsum_div = false;
-      double cgauss = 2.0, epsilon = 1e-6;
+      double cgauss = 2.0, epsilon = NORM_EPSILON, epsilon2 = 0;
       float fsum_split = 1.0;
       if (!get_param(conf, name, "kernel", skernel)) return NULL;
       idxdim ker = string_to_idxdim(skernel);
@@ -837,6 +855,7 @@ namespace ebl {
       get_param(conf, name, "fsum_div", fsum_div, true);
       get_param(conf, name, "fsum_split", fsum_split, true);
       get_param(conf, name, "epsilon", epsilon, true);
+      get_param(conf, name, "epsilon2", epsilon2, true);
       // normalization modules
       if (!type.compare("wstd") || !type.compare("cnorm")) {
 #ifdef __CUDA__
@@ -848,13 +867,13 @@ namespace ebl {
 	module = (module_1_1<T,Tstate>*) new cuda_contrast_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), true, false,
 	   learn ? &theparam : NULL, name.c_str(), true, learn_mean, cgauss,
-	   fsum_div, fsum_split, epsilon, gpu_id_m);
+	   fsum_div, fsum_split, epsilon, epsilon2, gpu_id_m);
       else
 #endif
 	module = (module_1_1<T,Tstate>*) new contrast_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), true, false,
 	   learn ? &theparam : NULL, name.c_str(), true, learn_mean, cgauss,
-	   fsum_div, fsum_split, epsilon);
+	   fsum_div, fsum_split, epsilon, epsilon2);
       }
       else if (!type.compare("snorm")) {
 #ifdef __CUDA__
@@ -884,13 +903,13 @@ namespace ebl {
 	module = (module_1_1<T,Tstate>*) new cuda_divisive_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), true,
 	   learn ? &theparam : NULL, name.c_str(), true, cgauss, fsum_div,
-	   fsum_split, epsilon, gpu_id_m);
+	   fsum_split, epsilon, epsilon2, gpu_id_m);
       else
 #endif
 	module = (module_1_1<T,Tstate>*) new divisive_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), true,
 	   learn ? &theparam : NULL, name.c_str(), true, cgauss, fsum_div,
-	   fsum_split, epsilon);
+	   fsum_split, epsilon, epsilon2);
       }
     }
     // smooth shrink ///////////////////////////////////////////////////////////
@@ -1000,26 +1019,25 @@ namespace ebl {
     answer_module<T,Tds1,Tds2,Tstate> *module = NULL;
     // loop on possible answer modules /////////////////////////////////////////
     if (!type.compare("class_answer")) {
-      string factor_name, binary_name, tconf_name, tanh_name, force_name, 
-	single_name;
-      t_confidence tconf = confidence_max;
+      string kerd_name;
+      uint tconf = confidence_max;
       bool binary = false, btanh = false;
       float factor = 1.0;
       int force = -1, single = -1;
-      if (get_param(conf, name, "single_output", single_name, true))
-	single = string_to_int(single_name);
-      if (get_param(conf, name, "factor", factor_name, true))
-	factor = string_to_float(factor_name);
-      if (get_param(conf, name, "binary", binary_name, true))
-	binary = (bool) string_to_uint(binary_name);
-      if (get_param(conf, name, "confidence", tconf_name, true))
-	tconf = (t_confidence) string_to_uint(tconf_name);
-      if (get_param(conf, name, "tanh", tanh_name, true))
-	btanh = (bool) string_to_uint(tanh_name);
-      if (get_param(conf, name, "force_class", force_name, true))
-	force = string_to_int(force_name);
+      idxdim kerd;
+      double sigma_scale = 3;
+      get_param(conf, name, "single_output", single, true);
+      get_param(conf, name, "factor", factor, true);
+      get_param(conf, name, "binary", binary, true);
+      get_param(conf, name, "confidence", tconf, true);
+      get_param(conf, name, "tanh", btanh, true);
+      get_param(conf, name, "force_class", force, true);
+      get_param(conf, name, "sigma_scale", sigma_scale, true);
+      if (get_param(conf, name, "kernel", kerd_name, true))
+	kerd = string_to_idxdim(kerd_name);
       module = new class_answer<T,Tds1,Tds2,Tstate>
-	(noutputs, factor, binary, tconf, btanh, name.c_str(), force, single);
+	(noutputs, factor, binary, (t_confidence) tconf, btanh, name.c_str(), 
+	 force, single, &kerd, sigma_scale);
       //////////////////////////////////////////////////////////////////////////
     } else if (!type.compare("vote_answer")) {
       string factor_name, binary_name, tconf_name, tanh_name;
@@ -1187,13 +1205,13 @@ namespace ebl {
                        bool globnorm, bool locnorm, bool locnorm2,
 		       bool color_lnorm, bool cnorm_across,
 		       double hscale, double wscale, vector<float> *scalings,
-		       const char *name) {
+		       const char *name, double epsilon, double epsilon2) {
     midxdim kers;
     kers.push_back(kersz);
     return create_preprocessing<T,Tstate>
       (height, width, ppchan, kers, resize_method, keep_aspect_ratio, lpyramid,
        fovea, fovea_scale_size, globnorm, locnorm, locnorm2, color_lnorm,
-       cnorm_across, hscale, wscale, scalings, name);
+       cnorm_across, hscale, wscale, scalings, name, epsilon, epsilon2);
   }
 
   template <typename T, class Tstate>
@@ -1205,7 +1223,7 @@ namespace ebl {
                        bool globnorm, bool locnorm, bool locnorm2,
 		       bool color_lnorm, bool cnorm_across, double hscale,
 		       double wscale, vector<float> *scalings,
-		       const char *name_) {
+		       const char *name_, double e, double e2) {
     module_1_1<T,Tstate> *chanmodule = NULL;
     resizepp_module<T,Tstate> *ppmodule = NULL;
     if (kers.size() == 0) eblerror("expected at least 1 ker dims");
@@ -1224,17 +1242,23 @@ namespace ebl {
     t_norm tn = WSTD_NORM; bool mir = true;
     // create channel preprocessing module
     if (!strcmp(ppchan, "YpUV") || !strcmp(ppchan, "YnUV")) {
-      chanmodule = new rgb_to_ynuv_module<T,Tstate>(kersz, mir, tn, globnorm);
+      chanmodule = 
+	new rgb_to_ynuv_module<T,Tstate>(kersz, mir, tn, globnorm, e, e2);
     } else if (!strcmp(ppchan, "Yp") || !strcmp(ppchan, "Yn")) {
-      chanmodule = new rgb_to_yn_module<T,Tstate>(kersz, mir, tn, globnorm);
+      chanmodule = 
+	new rgb_to_yn_module<T,Tstate>(kersz, mir, tn, globnorm, e, e2);
     } else if (!strcmp(ppchan, "YnUVn")) {
-      chanmodule = new rgb_to_ynuvn_module<T,Tstate>(kersz, mir, tn, globnorm);
+      chanmodule = 
+	new rgb_to_ynuvn_module<T,Tstate>(kersz, mir, tn,globnorm, e, e2);
     } else if (!strcmp(ppchan, "YnUnVn")) {
-      chanmodule = new rgb_to_ynunvn_module<T,Tstate>(kersz, mir, tn, globnorm);
+      chanmodule = 
+	new rgb_to_ynunvn_module<T,Tstate>(kersz, mir,tn,globnorm, e, e2);
     } else if (!strcmp(ppchan, "YUVn")) {
-      chanmodule = new rgb_to_yuvn_module<T,Tstate>(kersz, mir, tn, globnorm);
+      chanmodule = 
+	new rgb_to_yuvn_module<T,Tstate>(kersz, mir, tn, globnorm, e, e2);
     } else if (!strcmp(ppchan, "RGBn")) {
-      chanmodule = new rgb_to_rgbn_module<T,Tstate>(kersz, mir, tn, globnorm);
+      chanmodule = 
+	new rgb_to_rgbn_module<T,Tstate>(kersz, mir, tn, globnorm, e, e2);
     } else if (!strcmp(ppchan, "YUV")) {
       chanmodule = new rgb_to_yuv_module<T,Tstate>(globnorm);
     } else if (!strcmp(ppchan, "HSV")) {
@@ -1245,11 +1269,7 @@ namespace ebl {
       maxval = (T) 255;
     } else eblerror("undefined channel preprocessing " << ppchan);
     // initialize resizing method
-    uint resiz = 0;
-    if (!strcmp(resize_method, "bilinear")) resiz = BILINEAR_RESIZE;
-    else if (!strcmp(resize_method, "gaussian")) resiz = GAUSSIAN_RESIZE;
-    else if (!strcmp(resize_method, "mean")) resiz = MEAN_RESIZE;
-    else eblerror("undefined resizing method" << resize_method);
+    uint resiz = get_resize_type(resize_method);
     // create resizing module
     // fovea resize
     if (fovea && fovea->size() > 0) {
@@ -1292,13 +1312,13 @@ namespace ebl {
                        bool globnorm, bool locnorm, bool locnorm2,
 		       bool color_lnorm, bool cnorm_across, double hscale,
 		       double wscale, vector<float> *scalings,
-		       const char *name) {
+		       const char *name, double epsilon, double epsilon2) {
     midxdim d;
     d.push_back(idxdim(0, 0));
     return create_preprocessing<T,Tstate>
       (d, ppchan, kers, zpads, resize_method, keep_aspect_ratio, lpyramid,
        fovea, fovea_scale_size, globnorm, locnorm, locnorm2, color_lnorm,
-       cnorm_across, hscale, wscale, scalings, name);
+       cnorm_across, hscale, wscale, scalings, name, epsilon, epsilon2);
   }
 
   // select network based on configuration, using old-style variables
@@ -1384,13 +1404,12 @@ namespace ebl {
       eblerror("cannot cast module " << module_name << " (\"" << m.name()
 	       << "\") into a " << type << " type");
     string name = module_name; name << "_weights";
-    if (!conf.exists(name))
-      return false; // do nothing if variable not found
-    string filename = conf.get_string(name.c_str());
-    idx<T> w = load_matrix<T>(filename);
+    if (!conf.exists(name)) return false; // do nothing if variable not found
+    vector<string> filenames = string_to_stringvector(conf.get_string(name.c_str()));
+    idx<T> w = load_matrix<T>(filenames, 0);
     m.load_x(w);
     cout << "Loaded weights " << w << " into " << module_name << " from "
-	 << filename << " (dims " << w << " min " << idx_min(w) << " max "
+	 << filenames << " (dims " << w << " min " << idx_min(w) << " max "
 	 << idx_max(w) << " mean " << idx_mean(w) << ")" << endl;
     return true;
   }

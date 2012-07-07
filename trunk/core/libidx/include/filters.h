@@ -43,6 +43,9 @@ namespace ebl {
 
   //! Returns a mexican-hat filter.
   template <typename T> idx<T> create_mexican_hat(double s, int n);
+  //! Returns a mexican-hat filter.
+  template <typename T> idx<T> 
+    create_mexican_hat2(int h, int w, double sigma = 1, double sigma_scale = 3);
 
   //! Returns a 1D gaussian kernel of size n, with variance 'sigma'.
   template <typename T> idx<T>

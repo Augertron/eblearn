@@ -457,4 +457,12 @@ namespace ebl {
     idx_dotcacc(f2, coeff, flow);
   }
 
+  uint get_resize_type(const char *resize_method) {
+    if (!strcmp(resize_method, "bilinear")) return BILINEAR_RESIZE;
+    else if (!strcmp(resize_method, "gaussian")) return GAUSSIAN_RESIZE;
+    else if (!strcmp(resize_method, "mean")) return MEAN_RESIZE;
+    eblerror("undefined resizing method" << resize_method);
+    return -1;
+  }
+
 } // end namespace ebl

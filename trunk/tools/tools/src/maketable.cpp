@@ -170,7 +170,7 @@ void print_usage() {
        << "   Y to [0 .. yend - 1], U to [yend .. uend - 1] and V to "
        << "   [uend .. vend - 1] and jointly connecting Y,U,V to [vend .. yuvend - 1]"
        << "   and U,V to [yuvend - 1 .. uvend]." << endl;
-  cout << "  -uv <yend> <uend> <vend>" << endl
+  cout << "  -uv <uend> <vend>" << endl
        << "   Connect 2-channel input (e.g. UV) independently for layer 0, "
        << "   U to [0 .. uend - 1] and V to "
        << "   [uend .. vend - 1]." << endl;
@@ -200,6 +200,7 @@ int main(int argc, char **argv) {
   cout << "             maketable for eblearn" << endl;
   cout << "___________________________________________________________________";
   cout << endl;
+
   // parse arguments
   if (!parse_args(argc, argv)) {
     print_usage();

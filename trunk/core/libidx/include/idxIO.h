@@ -122,6 +122,14 @@ namespace ebl {
   //! This throws string exceptions upon errors.
   template <typename T>
     idx<T> load_matrix(const std::string &filename);
+  //! Returns matrix that is the concatenation along dimension 'concat_dim'
+  //! of multiple matrices with corresponding filenames. 
+  //! If original matrix type is different
+  //! than requested type, it is casted (copied) into the new type.
+  //! This throws string exceptions upon errors.
+  template <typename T>
+    idx<T> load_matrix(const std::vector<std::string> &filenames, 
+		       intg concat_dim = 0);
   //! Loads a matrix from file filename into given matrix m.
   //! m if resized if necessary. Data is cast into m's type if different.
   //! This throws string exceptions upon errors.
@@ -172,11 +180,10 @@ namespace ebl {
   //! Returns true if successful, false otherwise.
   template <typename T>
     bool save_matrix(idx<T>& m, FILE *fp);
-  //! Saves a midx m into file 'filename'. 
+  //! Saves a midx m into a single static matrix in file 'filename'. 
   //! Returns true if successful, false otherwise.
   template <typename T>
-  bool save_matrix(midx<T> m,
-		   const std::string &filename);
+  bool save_matrix(midx<T> m, const std::string &filename);
   //! Saves matrices m in file filename. Elements of m may be NULL and will
   //! be remembered as empty when loaded back.
   //! Returns true if successful, false otherwise.
