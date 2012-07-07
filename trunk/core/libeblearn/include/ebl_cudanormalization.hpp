@@ -63,8 +63,8 @@ namespace ebl {
       convvar.add_module(new cuda_fsum_module<T,Tstate>
 			 (fsum_div, fsum_split, gpu_id_));
     // allocate power modules
-    sqrtmod = new cuda_power_module<T,Tstate>((T) .5);
-    sqmod = new cuda_power_module<T,Tstate>((T) 2);
+    sqrtmod = new cuda_power_module<T,Tstate>((T) .5, gpu_id_);
+    sqmod = new cuda_power_module<T,Tstate>((T) 2, gpu_id_);
   }
 
   template <typename T, class Tstate>

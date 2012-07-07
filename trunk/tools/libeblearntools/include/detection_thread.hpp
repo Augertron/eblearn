@@ -609,8 +609,12 @@ namespace ebl {
     string s;
     if (conf.exists("output_dir")) s << conf.get_string("output_dir");
     else s << conf.get_string("current_dir");
-    s << "/detections";
-    if (conf.exists_true("nms")) s << "_" << tstamp();
+    if (conf.exists("detections_dir"))
+      s << conf.get_string("detections_dir");
+    else {
+      s << "/detections";
+      if (conf.exists_true("nms")) s << "_" << tstamp();
+    }
     s << "/";
     mkdir_full(s);
     return s;
