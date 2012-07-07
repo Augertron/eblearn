@@ -918,8 +918,7 @@ namespace ebl {
     default:
       eblerror("unknown resizing mode");
     }
-    EDEBUG(this->name() << ": resized: " << resized
-	   << " (min " << idx_min(resized) << " max " << idx_max(resized) << ")");
+    EDEBUG_MAT(this->name() << ": resized", resized);
     resized = resized.shift_dim(2, 0);
     // resize out to target dimensions if necessary
     if (((out.dim(1) != height) || (out.dim(2) != width)))
@@ -932,8 +931,7 @@ namespace ebl {
       resized = image_rotate(r2, rjitter, (int) outr.hcenter(), 
 			     (int) outr.wcenter());
     }
-    EDEBUG(this->name() << ": resized: " << resized
-	   << " (min " << idx_min(resized) << " max " << idx_max(resized) << ")");
+    EDEBUG_MAT(this->name() << ": resized", resized);
     // copy out region to output
     original_bboxes[0] = outr;
     tmp2 = image_region_to_rect(resized, outr, out.dim(1),
@@ -951,8 +949,7 @@ namespace ebl {
 	    << out);
     }
     remember_regions(out.dim(1), out.dim(2), r);
-    EDEBUG(this->name() << ": resized " << in.x << " to " << out
-	   << " (min " << idx_min(out) << " max " << idx_max(out) << ")");
+    EDEBUG_MAT(this->name() << ": out", out);
   }
   
   template <typename T, class Tstate>
@@ -1156,8 +1153,7 @@ namespace ebl {
     default:
       eblerror("unknown resizing mode");
     }
-    EDEBUG(this->name() << ": resized: " << resized
-	   << " (min " << idx_min(resized) << " max " << idx_max(resized) << ")");
+    EDEBUG_MAT(this->name() << ": resized", resized);
     resized = resized.shift_dim(2, 0);
     // call preprocessing
     if (pp) { // no preprocessing if NULL module
@@ -1186,8 +1182,7 @@ namespace ebl {
     tmp2 = image_region_to_rect(resized, outr, out.dim(1),
 				out.dim(2), &original_bboxes[0]);
     tmp2 = tmp2.shift_dim(2, 0); 
-    EDEBUG(this->name() << ": resized: " << resized
-	   << " (min " << idx_min(resized) << " max " << idx_max(resized) << ")");
+    EDEBUG_MAT(this->name() << ": resized", resized);
     remember_regions(out.dim(1), out.dim(2), r);
     //idx_copy(tmp2, tmp);
     if (!zpad)
@@ -1201,6 +1196,7 @@ namespace ebl {
 	    << out);
     }
     EDEBUG("resized " << in.x << " to " << out);
+    EDEBUG_MAT(this->name() << ": out", out);
   }
   
   template <typename T, class Tstate>

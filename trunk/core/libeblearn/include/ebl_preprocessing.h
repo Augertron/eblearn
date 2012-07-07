@@ -39,6 +39,7 @@
 #include "ebl_march.h"
 #include "ebl_states.h"
 #include "ebl_normalization.h"
+#include "ebl_cudanormalization.h"
 #include "ebl_basic.h"
 
 namespace ebl {
@@ -47,6 +48,9 @@ namespace ebl {
   enum t_norm { WSTD_NORM = 0, /* local contrast normalization */
 		LAPLACIAN_NORM = 1 /* laplacian normalization */
   };
+
+  //! Use mirror padding for preprocessing or not
+#define DEFAULT_PP_MIRROR true
   
   ////////////////////////////////////////////////////////////////
   // channels_module
@@ -82,7 +86,7 @@ namespace ebl {
     //! \param nf The number of features to normalize across.
     //! \param globnorm Normalize channels globally or not.
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    channorm_module(idxdim &kerdim, bool mirror = true,
+    channorm_module(idxdim &kerdim, bool mirror = DEFAULT_PP_MIRROR,
 		    t_norm norm_mode = WSTD_NORM,
 		    const char *name = "channorm", int nf = 1,
 		    bool globnorm = true, double epsilon = NORM_EPSILON,
@@ -129,7 +133,7 @@ namespace ebl {
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    rgb_to_ynuv_module(idxdim &norm_kernel, bool mirror = true,
+    rgb_to_ynuv_module(idxdim &norm_kernel, bool mirror = DEFAULT_PP_MIRROR,
 		       t_norm norm_mode = WSTD_NORM, bool globnorm = true,
 		       double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
@@ -155,7 +159,7 @@ namespace ebl {
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    rgb_to_ynuvn_module(idxdim &norm_kernel, bool mirror = true,
+    rgb_to_ynuvn_module(idxdim &norm_kernel, bool mirror = DEFAULT_PP_MIRROR,
 			t_norm norm_mode = WSTD_NORM, bool globnorm = true,
 			double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
@@ -183,7 +187,7 @@ namespace ebl {
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    rgb_to_ynunvn_module(idxdim &norm_kernel, bool mirror = true,
+    rgb_to_ynunvn_module(idxdim &norm_kernel, bool mirror = DEFAULT_PP_MIRROR,
 			 t_norm norm_mode = WSTD_NORM, bool globnorm = true,
 			 double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
@@ -225,7 +229,7 @@ namespace ebl {
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    rgb_to_yuvn_module(idxdim &norm_kernel, bool mirror = true,
+    rgb_to_yuvn_module(idxdim &norm_kernel, bool mirror = DEFAULT_PP_MIRROR,
 		       t_norm norm_mode = WSTD_NORM, bool globnorm = true,
 		       double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
@@ -251,7 +255,7 @@ namespace ebl {
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    rgb_to_rgbn_module(idxdim &norm_kernel, bool mirror = true,
+    rgb_to_rgbn_module(idxdim &norm_kernel, bool mirror = DEFAULT_PP_MIRROR,
 		       t_norm norm_mode = WSTD_NORM, bool globnorm = true,
 		       double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
@@ -293,7 +297,7 @@ namespace ebl {
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    rgb_to_yn_module(idxdim &norm_kernel, bool mirror = true,
+    rgb_to_yn_module(idxdim &norm_kernel, bool mirror = DEFAULT_PP_MIRROR,
 		     t_norm norm_mode = WSTD_NORM, bool globnorm = true,
 		     double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
@@ -319,7 +323,7 @@ namespace ebl {
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    y_to_yp_module(idxdim &norm_kernel, bool mirror = true,
+    y_to_yp_module(idxdim &norm_kernel, bool mirror = DEFAULT_PP_MIRROR,
 		   t_norm norm_mode = WSTD_NORM, bool globnorm = true,
 		   double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
@@ -345,7 +349,7 @@ namespace ebl {
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    bgr_to_ypuv_module(idxdim &norm_kernel, bool mirror = true,
+    bgr_to_ypuv_module(idxdim &norm_kernel, bool mirror = DEFAULT_PP_MIRROR,
 		       t_norm norm_mode = WSTD_NORM, bool globnorm = true,
 		       double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
@@ -371,7 +375,7 @@ namespace ebl {
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    bgr_to_yp_module(idxdim &norm_kernel, bool mirror = true,
+    bgr_to_yp_module(idxdim &norm_kernel, bool mirror = DEFAULT_PP_MIRROR,
 		     t_norm norm_mode = WSTD_NORM, bool globnorm = true,
 		     double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
@@ -397,7 +401,7 @@ namespace ebl {
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param epsilon Small value added in normalization to avoid 0-divisions.
-    rgb_to_hp_module(idxdim &norm_kernel, bool mirror = true,
+    rgb_to_hp_module(idxdim &norm_kernel, bool mirror = DEFAULT_PP_MIRROR,
 		     t_norm norm_mode = WSTD_NORM, bool globnorm = true,
 		     double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor

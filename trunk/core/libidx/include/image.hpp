@@ -120,8 +120,6 @@ namespace ebl {
     if (iregion_ || (mode == 2) || (mode == 0) || (mode == 3)) {
       ow = rint(max(1.0, imw * ratiow));
       oh = rint(max(1.0, imh * ratioh));
-      //ow = (int)(max(1.0, imw * ratiow));
-      //oh = (int)(max(1.0, imh * ratioh));
     } else {
       ow = w;//max(1.0, imw * ratiow);
       oh = h;//max(1.0, imh * ratioh);

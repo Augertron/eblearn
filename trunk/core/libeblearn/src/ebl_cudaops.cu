@@ -973,6 +973,7 @@ void ebl::cuda_div(idx<float32> &in1, idx<float32> &in2,
     cudaDeviceSynchronize();
     cudaFree(input1_data);
     cudaFree(input2_data);
+    cudaFree(output_data);
 
     // check for errors
     err = cudaGetLastError();

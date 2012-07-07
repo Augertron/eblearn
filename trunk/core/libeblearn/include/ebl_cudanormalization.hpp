@@ -128,20 +128,10 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void cuda_subtractive_norm_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
-    if (global_norm) // global normalization
-      idx_std_normalize(in.x, in.x, (T*) NULL);
-    // inmean = sum_j (w_j * in_j)
-    convmean.fprop(in, inmean);
-    // inzmean = in - inmean
-    difmod.fprop(in, inmean, out);
-  }
-
-  template <typename T, class Tstate>
   cuda_subtractive_norm_module<T,Tstate>* cuda_subtractive_norm_module<T,Tstate>::
   copy(parameter<T,Tstate> *p) {
     cuda_subtractive_norm_module<T,Tstate> *d = new cuda_subtractive_norm_module<T,Tstate>
-      (kerdim, nfeatures, false, global_norm, p, this->name(),
+      (kerdim, nfeatures, mirror, global_norm, p, this->name(),
        across_features, cgauss, fsum_div, fsum_split, gpu_id);
     if (!p) // assign same parameter state if no parameters were specified
       d->meanconv->kernel = meanconv->kernel;
@@ -184,7 +174,7 @@ namespace ebl {
   cuda_contrast_norm_module<T,Tstate>* cuda_contrast_norm_module<T,Tstate>::
   copy(parameter<T,Tstate> *p) {
     cuda_contrast_norm_module<T,Tstate> *d = new cuda_contrast_norm_module<T,Tstate>
-      (divnorm->kerdim, divnorm->nfeatures, false, divnorm->threshold,
+      (divnorm->kerdim, divnorm->nfeatures, divnorm->mirror, divnorm->threshold,
        global_norm, p, this->name(), divnorm->across_features, learn_mean, 
        divnorm->cgauss, divnorm->fsum_div, divnorm->fsum_split, divnorm->epsilon,
        divnorm->epsilon2, gpu_id);
