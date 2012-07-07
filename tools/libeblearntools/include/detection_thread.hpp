@@ -399,7 +399,8 @@ namespace ebl {
     default:
       detect.set_scaling_type(scaling_type);
     }
-
+    // remove pads from target scales if requested
+    if (conf.exists_true("scaling_remove_pad")) detect.set_scaling_rpad(true);
     // optimize memory usage by using only 2 buffers for entire flow
     SBUF<Tnet> input(1, 1, 1), output(1, 1, 1);
     if (!conf.exists_false("mem_optimization"))
@@ -457,14 +458,23 @@ namespace ebl {
       detect.set_raw_thresholds(rt);
     }
     if (conf.exists("outputs_threshold"))
-      detect.set_outputs_threshold(conf.get_double("outputs_threshold"));
+      detect.set_outputs_threshold(conf.get_double("outputs_threshold"),
+				   conf.try_get_double("outputs_threshold_val",
+						       -1));
     ///////////////////////////////////////////////////////////////////////////
     if (conf.exists("netdims")) {
       idxdim d = string_to_idxdim(conf.get_string("netdims"));
       detect.set_netdim(d);
     }
-    if (conf.exists("smoothing"))
-      detect.set_smoothing(conf.get_uint("smoothing"));
+    if (conf.exists("smoothing")) {
+      idxdim ker;
+      if (conf.exists("smoothing_kernel"))
+	ker = string_to_idxdim(conf.get_string("smoothing_kernel"));
+      detect.set_smoothing(conf.get_uint("smoothing"),
+			   conf.try_get_double("smoothing_sigma", 1),
+			   &ker,
+			   conf.try_get_double("smoothing_sigma_scale", 1));
+    }
     if (conf.exists("background_name"))
       detect.set_bgclass(conf.get_cstring("background_name"));
     if (conf.exists_true("bbox_ignore_outsiders"))
@@ -473,6 +483,11 @@ namespace ebl {
       detect.set_corners_inference(conf.get_uint("corners_inference"));
     if (conf.exists("input_gain"))
       detect.set_input_gain(conf.get_double("input_gain"));
+    if (conf.exists_true("dump_outputs")) {
+      string fname;
+      fname << odir << "/dump/detect_out";
+      detect.set_outputs_dumping(fname.c_str());
+    }
   }
 
   template <typename Tnet>

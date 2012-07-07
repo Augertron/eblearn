@@ -143,7 +143,8 @@ namespace ebl {
 		 bool binary_target = false,
 		 t_confidence conf = confidence_max,
 		 bool apply_tanh = false, const char *name = "class_answer",
-		 int force_class = -1, int single_output = -1);
+		 int force_class = -1, int single_output = -1, 
+		 idxdim *kerd = NULL, double sigma_scale = 3);
     virtual ~class_answer();
     //! Produce a vector of answers given input 'in'. 'out' contains answers
     //! in this order: class id and confidence.
@@ -178,6 +179,7 @@ namespace ebl {
     T                   target_range; //!< target_min - target_max
     int                 force_class;
     int                 single_output; //!< If true, use only this output id.
+    idx<T>              smoothing_kernel;
   };
 
   //! This module gathers information from a labeled_datasource 'ds' and outputs

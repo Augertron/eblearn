@@ -36,7 +36,7 @@ namespace ebl {
 
   template <typename T, class Tin, class Tout>
   module_1_1<T,Tin,Tout>::module_1_1(const char *name, bool bresize_)
-    : module(name), gpu_support(false), bresize(bresize_), memoptimized(false),
+    : module(name), bresize(bresize_), memoptimized(false),
       bmstate_input(false), bmstate_output(false), ninputs(1), 
       noutputs(1){
   }
@@ -79,8 +79,6 @@ namespace ebl {
 	    << in << " and out: " << out);
       Tin &fin = in[i];
       Tout &fout = out[i];
-      EDEBUG(this->name() << ": in.x " << fin.x << ", min " << idx_min(fin.x)
-	    << " max " << idx_max(fin.x));
       fprop(fin, fout);
     }
     // remember number of input/outputs
@@ -836,6 +834,7 @@ namespace ebl {
       //      modules[i]->fprop(*hi, *ho);
       module_1_1<T,Tstate> *mod = modules[i];
       DEBUGMEM_PRETTY("before " << mod->name() << " fprop: ");
+      EDEBUG_MAT(mod->name() << ": in", ((*hi)[0].x))
       if (mod->mstate_input() == mod->mstate_output()) // s-s or ms-ms
 	mod->fprop(*hi, *ho);
       else { // s-ms or ms-s
@@ -848,6 +847,7 @@ namespace ebl {
 	  mod->fprop(*hi, sout);
 	}
       }
+      EDEBUG_MAT(mod->name() << ": out", ((*ho)[0].x))
 
       // keep same input if current module is a branch, otherwise take out as in
       bool isbranch = false;
@@ -1699,7 +1699,14 @@ namespace ebl {
   mfidxdim narrow_module<T,Tstate>::fprop_size(mfidxdim &isize) {
     EDEBUG(this->name() << ": " << isize << " f-> ...");
     mfidxdim osize;
-    if (narrow_states) { eblerror("not implemented");
+    if (narrow_states) {
+      for (uint i = 0; i < isize.size(); ++i) {
+	if (isize.exists(i)) {
+	  fidxdim d = isize[i];
+	  d.setdim(dim, size);
+	  osize.push_back_new(d);
+	} else osize.push_back_empty();
+      }
     } else {
       if (dim == 0) { // narrow on states
 	osize.resize_default(offsets.size() * size);

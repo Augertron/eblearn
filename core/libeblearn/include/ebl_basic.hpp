@@ -741,8 +741,8 @@ namespace ebl {
   // power_module
 
   template <typename T, class Tstate>
-  power_module<T,Tstate>::power_module(T p_)
-    : module_1_1<T,Tstate>("power"), p(p_) {}
+  power_module<T,Tstate>::power_module(T p_, const char *name_)
+    : module_1_1<T,Tstate>(name_), p(p_) {}
 
   template <typename T, class Tstate>
   power_module<T,Tstate>::~power_module() {}
@@ -1227,7 +1227,7 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  mfidxdim zpad_module<T, Tstate>::bprop_size(mfidxdim &osize) {
+  mfidxdim zpad_module<T, Tstate>::bprop_size(mfidxdim &osize) { 
     mfidxdim isize;
     for (uint i = 0; i < osize.size(); ++i) {
       if (i < pads.size()) pad = pads[i];
@@ -1236,7 +1236,7 @@ namespace ebl {
 	isize.push_back(s);
       } else isize.push_back_empty();
     }
-    //EDEBUG(this->name() << ": " << osize << " -> " << isize);
+    EDEBUG(this->name() << ": " << osize << " -> " << isize);
     return isize;
   }
 

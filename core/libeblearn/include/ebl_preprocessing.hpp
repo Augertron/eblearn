@@ -61,10 +61,11 @@ namespace ebl {
   template <typename T, class Tstate>
   channorm_module<T,Tstate>:: 
   channorm_module(idxdim &kerdim_, bool mirror_, t_norm norm_mode_,
-		  const char *name_, int nf, bool globnorm)
+		  const char *name_, int nf, bool globnorm, double epsilon,
+		  double epsilon2)
     : channels_module<T,Tstate>(globnorm, name_), normker(kerdim_),
       tmp(1,1,1), norm(NULL), mirror(mirror_), norm_mode(norm_mode_) {
-    norm = new_norm(normker, mirror, norm_mode, nf);
+    norm = new_norm(normker, mirror, norm_mode, nf, epsilon, epsilon2);
     EDEBUG(this->describe());
   }
 
@@ -94,11 +95,13 @@ namespace ebl {
   
   template <typename T, class Tstate>
   module_1_1<T,Tstate>* channorm_module<T,Tstate>::
-  new_norm(idxdim &normker, bool mirror, t_norm norm_mode, int nf) {
+  new_norm(idxdim &normker, bool mirror, t_norm norm_mode, int nf, 
+	   double epsilon, double epsilon2) {
     switch (norm_mode) {
     case WSTD_NORM:
-      return new contrast_norm_module<T,Tstate>(normker, nf, mirror,
-						false, true);
+      return new contrast_norm_module<T,Tstate>
+	(normker, nf, mirror, false, true, NULL, "chan_cnorm", true, false, 0,
+	 false, 1.0, epsilon, epsilon2);
       break ;
     case LAPLACIAN_NORM:
       return new laplacian_module<T,Tstate>(nf, mirror, true);
@@ -114,9 +117,9 @@ namespace ebl {
   template <typename T, class Tstate>
   rgb_to_ynuv_module<T,Tstate>::
   rgb_to_ynuv_module(idxdim &normker_, bool mirror, t_norm norm_mode,
-		     bool globnorm)
+		     bool globnorm, double epsilon, double epsilon2)
     : channorm_module<T,Tstate>(normker_, mirror, norm_mode, "rgb_to_ynuv",
-				1, globnorm) {
+				1, globnorm, epsilon, epsilon2) {
   }
 
   template <typename T, class Tstate>
@@ -136,11 +139,8 @@ namespace ebl {
 	idx_eloop2(inxx, inx, T, outxx, outx, T) {
 	  rgb_to_yuv_1D(inxx, outxx); }}
     }
-    // normalize Y
-    this->tmp.x = out.x.narrow(0, 1, 0);
-    this->norm->fprop(this->tmp, this->tmp); // local
-    // remove global mean and divide by stddev
-    if (this->globnorm) image_global_normalization(this->tmp.x);
+    EDEBUG(this->name() << ": yuv " << out.x << " min " << idx_min(out.x)
+	   << " max " << idx_max(out.x));
     // remove global mean and divide by stddev of UV
     idx<T> uv = out.x.narrow(0, 2, 1);
     if (this->globnorm) image_global_normalization(uv);
@@ -148,6 +148,15 @@ namespace ebl {
       idx_addc(uv, (T)-128, uv);
       idx_dotc(uv, (T).01, uv);
     }
+    EDEBUG(this->name() << ": y(uv-normalizeed) " << out.x << " min " 
+	   << idx_min(out.x) << " max " << idx_max(out.x));
+    // normalize Y
+    this->tmp.x = out.x.narrow(0, 1, 0);
+    this->norm->fprop(this->tmp, this->tmp); // local
+    // remove global mean and divide by stddev
+    if (this->globnorm) image_global_normalization(this->tmp.x);
+    EDEBUG(this->name() << ": out.x " << out.x << " min " << idx_min(out.x)
+	   << " max " << idx_max(out.x));
   }
 
   template <typename T, class Tstate>
@@ -162,10 +171,10 @@ namespace ebl {
   template <typename T, class Tstate>
   rgb_to_ynuvn_module<T,Tstate>::
   rgb_to_ynuvn_module(idxdim &normker_, bool mirror, t_norm norm_mode,
-		      bool globnorm)
+		      bool globnorm, double epsilon, double epsilon2)
     : channorm_module<T,Tstate>(normker_, mirror, norm_mode, "rgb_to_ynuvn",
-				1, globnorm) {
-    norm2 = this->new_norm(normker_, mirror, norm_mode, 2);
+				1, globnorm, epsilon, epsilon2) {
+    norm2 = this->new_norm(normker_, mirror, norm_mode, 2, epsilon, epsilon2);
   }
 
   template <typename T, class Tstate>
@@ -210,9 +219,9 @@ namespace ebl {
   template <typename T, class Tstate>
   rgb_to_ynunvn_module<T,Tstate>::
   rgb_to_ynunvn_module(idxdim &normker_, bool mirror, t_norm norm_mode,
-		       bool globnorm)
+		       bool globnorm, double epsilon, double epsilon2)
     : channorm_module<T,Tstate>(normker_, mirror, norm_mode, "rgb_to_ynunvn",
-				1, globnorm) {
+				1, globnorm, epsilon, epsilon2) {
   }
 
   template <typename T, class Tstate>
@@ -304,9 +313,9 @@ namespace ebl {
   template <typename T, class Tstate>
   rgb_to_yuvn_module<T,Tstate>::
   rgb_to_yuvn_module(idxdim &normker_, bool mirror, t_norm norm_mode,
-		     bool globnorm)
+		     bool globnorm, double epsilon, double epsilon2)
     : channorm_module<T,Tstate>(normker_, mirror, norm_mode, "rgb_to_yuvn", 3,
-				globnorm) {
+				globnorm, epsilon, epsilon2) {
   }
 
   template <typename T, class Tstate>
@@ -348,9 +357,9 @@ namespace ebl {
   template <typename T, class Tstate>
   rgb_to_rgbn_module<T,Tstate>::
   rgb_to_rgbn_module(idxdim &normker_, bool mirror, t_norm norm_mode,
-		     bool globnorm)
+		     bool globnorm, double epsilon, double epsilon2)
     : channorm_module<T,Tstate>(normker_, mirror, norm_mode, "rgb_to_rgbn", 3,
-				globnorm) {
+				globnorm, epsilon, epsilon2) {
   }
 
   template <typename T, class Tstate>
@@ -409,9 +418,10 @@ namespace ebl {
 
   template <typename T, class Tstate>
   rgb_to_yn_module<T,Tstate>::rgb_to_yn_module(idxdim &normker, bool mirror,
-					       t_norm norm_mode, bool globnorm)
+					       t_norm norm_mode, bool globnorm,
+					       double epsilon, double epsilon2)
     : channorm_module<T,Tstate>(normker, mirror, norm_mode, "rgb_to_yn", 1,
-				globnorm) {
+				globnorm, epsilon, epsilon2) {
   }
 
   template <typename T, class Tstate>
@@ -449,9 +459,10 @@ namespace ebl {
 
   template <typename T, class Tstate>
   y_to_yp_module<T,Tstate>::y_to_yp_module(idxdim &normker, bool mirror,
-					   t_norm norm_mode, bool globnorm)
+					   t_norm norm_mode, bool globnorm,
+					   double epsilon, double epsilon2)
     : channorm_module<T,Tstate>(normker, mirror, norm_mode, "y_to_yp", 1,
-				globnorm) {
+				globnorm, epsilon, epsilon2) {
   }
 
   template <typename T, class Tstate>
@@ -477,9 +488,9 @@ namespace ebl {
   template <typename T, class Tstate>
   bgr_to_ypuv_module<T,Tstate>::
   bgr_to_ypuv_module(idxdim &normker, bool mirror, t_norm norm_mode,
-		     bool globnorm)
+		     bool globnorm, double epsilon, double epsilon2)
     : channorm_module<T,Tstate>(normker, mirror, norm_mode, "bgr_to_ypuv", 1,
-				globnorm) {
+				globnorm, epsilon, epsilon2) {
   }
 
   template <typename T, class Tstate>
@@ -518,9 +529,10 @@ namespace ebl {
 
   template <typename T, class Tstate>
   bgr_to_yp_module<T,Tstate>::bgr_to_yp_module(idxdim &normker, bool mirror,
-					       t_norm norm_mode, bool globnorm)
+					       t_norm norm_mode, bool globnorm,
+					       double epsilon, double epsilon2)
     : channorm_module<T,Tstate>(normker, mirror, norm_mode, "bgr_to_yp", 1,
-				globnorm) {
+				globnorm, epsilon, epsilon2) {
   }
 
   template <typename T, class Tstate>
@@ -551,9 +563,10 @@ namespace ebl {
 
   template <typename T, class Tstate>
   rgb_to_hp_module<T,Tstate>::rgb_to_hp_module(idxdim &normker, bool mirror,
-					       t_norm norm_mode, bool globnorm)
+					       t_norm norm_mode, bool globnorm,
+					       double epsilon, double epsilon2)
     : channorm_module<T,Tstate>(normker, mirror, norm_mode, "rgb_to_hp", 1,
-				globnorm) {
+				globnorm, epsilon, epsilon2) {
   }
 
   template <typename T, class Tstate>
@@ -636,10 +649,8 @@ namespace ebl {
       dzpad = new idxdim(*dzpad_);
       set_zpads(dzpad->dim(0), dzpad->dim(1));
     }
-    if (preserve_ratio)
-      input_mode = 2;
-    else
-      input_mode = 1;
+    if (preserve_ratio) input_mode = 2;
+    else input_mode = 1;
   }
 
   template <typename T, class Tstate>
@@ -658,6 +669,7 @@ namespace ebl {
       dzpad = new idxdim(*dzpad_);
       set_zpads(dzpad->dim(0), dzpad->dim(1));
     }
+    if (!preserve_ratio) input_mode = 1;
   }  
   
   template <typename T, class Tstate>
@@ -706,8 +718,11 @@ namespace ebl {
       dzpad = NULL;
     }
     dzpad = new idxdim(hpad, wpad);      
-    if (dzpad && (dzpad->dim(0) > 0 || dzpad->dim(1) > 0))
+    if (dzpad && (dzpad->dim(0) > 0 || dzpad->dim(1) > 0)) {
       zpad = new zpad_module<T,Tstate>(dzpad->dim(0), dzpad->dim(1));
+      EDEBUG(this->name() << ": set zpad module " << zpad
+	     << " to " << zpad->describe());
+    }
   }
 
   template <typename T, class Tstate>
@@ -807,20 +822,21 @@ namespace ebl {
       idxdim d = mod->get_outdims();
       height = d.dim(1) + modadd.dim(0);
       width = d.dim(2) + modadd.dim(1);
+      EDEBUG("resizing as " << mod->name() << "'s output " << d 
+	     << " and adding " << modadd << ": height " << height 
+	     << " width " << width);
     }
-    if ((height != 0 && width != 0) && (hratio == 0 || wratio == 0)) {      
+    if ((height != 0 && width != 0) && (hratio == 0 || wratio == 0)) {
       // set output region
-      if (!outrect_set)
-	outrect = rect<int>(0, 0, height, width);
+      if (!outrect_set) outrect = rect<int>(0, 0, height, width);
       // find ratio between input box and output box
       hhratio = std::max(r.height / (float) outrect.height,
 			 r.width / (float) outrect.width);
       wwratio = hhratio;
     } else {
-      height = (intg) (r.height * hratio);
-      width = (intg) (r.width * wratio);
-      outrect = rect<int>(0, 0, (int) (r.height * hratio), 
-			  (int) (r.width * wratio));
+      height = (intg) round(r.height * hratio);
+      width = (intg) round(r.width * wratio);
+      outrect = rect<int>(0, 0, height, width);
     }
     // apply scale jitter (keeping same center)
     if (sjitter != 1.0 || scale_hfactor != 1.0 || scale_wfactor != 1.0)
@@ -882,27 +898,28 @@ namespace ebl {
     tmp = in.x.shift_dim(0, 2); // resize functions expect channels in 3rd dim
     idx<T> resized;
     switch (mode) {
-    case MEAN_RESIZE:
-      resized = image_mean_resize(tmp, outrect.height,
-				  outrect.width, input_mode, &r, &outr);
+    case BILINEAR_RESIZE:
+      if (input_mode == 2) { // use ratios
+	resized = image_resize(tmp, hratio, wratio, input_mode, &r, &outr);
+	EDEBUG(this->name() << ": resizing with ratios " << hratio
+	      << " and " << wratio);
+      } else // use pixels
+	resized = image_resize(tmp, (double) outrect.height, 
+			       (double) outrect.width, input_mode, &r, &outr);
       break ;
     case GAUSSIAN_RESIZE:
       resized = image_gaussian_resize(tmp, outrect.height,
 				      outrect.width, input_mode, &r,&outr);
       break ;
-    case BILINEAR_RESIZE:
-      if (input_mode == 1 || input_mode == 2) { // use ratios
-	resized = image_resize(tmp, hratio, wratio, input_mode, &r, &outr);
-	EDEBUG(this->name() << ": resizing with ratios " << hratio
-	      << " and " << wratio);
-      }
-      else // use pixels
-	resized = image_resize(tmp, (double) outrect.height, 
-			       (double) outrect.width, input_mode, &r, &outr);
+    case MEAN_RESIZE:
+      resized = image_mean_resize(tmp, outrect.height,
+				  outrect.width, input_mode, &r, &outr);
       break ;
     default:
       eblerror("unknown resizing mode");
     }
+    EDEBUG(this->name() << ": resized: " << resized
+	   << " (min " << idx_min(resized) << " max " << idx_max(resized) << ")");
     resized = resized.shift_dim(2, 0);
     // resize out to target dimensions if necessary
     if (((out.dim(1) != height) || (out.dim(2) != width)))
@@ -915,6 +932,8 @@ namespace ebl {
       resized = image_rotate(r2, rjitter, (int) outr.hcenter(), 
 			     (int) outr.wcenter());
     }
+    EDEBUG(this->name() << ": resized: " << resized
+	   << " (min " << idx_min(resized) << " max " << idx_max(resized) << ")");
     // copy out region to output
     original_bboxes[0] = outr;
     tmp2 = image_region_to_rect(resized, outr, out.dim(1),
@@ -932,7 +951,8 @@ namespace ebl {
 	    << out);
     }
     remember_regions(out.dim(1), out.dim(2), r);
-    EDEBUG("resized " << in.x << " to " << out);
+    EDEBUG(this->name() << ": resized " << in.x << " to " << out
+	   << " (min " << idx_min(out) << " max " << idx_max(out) << ")");
   }
   
   template <typename T, class Tstate>
@@ -1021,17 +1041,27 @@ namespace ebl {
   template <typename T, class Tstate>
   mfidxdim resize_module<T,Tstate>::bprop_size(mfidxdim &osize) {
     msize = osize;
-    if (zpad) osize = zpad->bprop_size(osize);
+    // zpad is already applied via the original_bboxes offset below
+    //if (zpad) osize = zpad->bprop_size(osize);
     mfidxdim isize;
+    // compute inverse scaling factors
+    fidxdim d(1, 1, 1);
+    if (original_bboxes[0].height != 0
+	&& original_bboxes[0].width != 0) {
+      d = fidxdim(1, input_bboxes[0].height /(float)original_bboxes[0].height,
+		  input_bboxes[0].width / (float) original_bboxes[0].width);
+    }
+    EDEBUG(this->name() << ": inverse scaling factors: " << d 
+	   << " original_bboxes: " << original_bboxes
+	   << " input_bboxes: " << input_bboxes);
+    // apply factors to all outputs
     for (uint i = 0; i < osize.size(); ++i) {
       if (osize.exists(i)) {
-	if (original_bboxes[0].height != 0
-	    && original_bboxes[0].width != 0) {
-	  fidxdim d(1, input_bboxes[0].height /(float)original_bboxes[0].height,
-		    input_bboxes[0].width / (float) original_bboxes[0].width);
-	  fidxdim o = osize[i] * d;
-	  isize.push_back_new(o);
-	} else isize.push_back(osize[i]);
+	fidxdim o = osize[i];
+	o.setoffset(1, o.offset(1) - original_bboxes[0].h0);
+	o.setoffset(2, o.offset(2) - original_bboxes[0].w0);
+	o = o * d;
+	isize.push_back_new(o);
       } else isize.push_back_empty();
     }
     EDEBUG(this->name() << ": " << osize << " b-> " << isize);
@@ -1066,6 +1096,7 @@ namespace ebl {
 		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name_)
     : resize_module<T,Tstate>(size_, mode_, dzpad_, pratio, name_), 
       pp(pp_), own_pp(own_pp_) {
+    this->set_name(name_);
   }
   
   template <typename T, class Tstate>
@@ -1074,6 +1105,7 @@ namespace ebl {
 		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name_)
     : resize_module<T,Tstate>(mode_, dzpad_, pratio, name_),
       pp(pp_), own_pp(own_pp_) {
+    this->set_name(name_);
   }
   
   template <typename T, class Tstate>
@@ -1083,6 +1115,7 @@ namespace ebl {
 		  bool own_pp_, idxdim *dzpad_, bool pratio, const char *name_)
     : resize_module<T,Tstate>(hratio_, wratio_, mode_, dzpad_, pratio, name_),
       pp(pp_), own_pp(own_pp_) {
+    this->set_name(name_);
   }
   
   template <typename T, class Tstate>
@@ -1103,33 +1136,36 @@ namespace ebl {
     tmp = in.x.shift_dim(0, 2); // resize functions expect channels in 3rd dim
     idx<T> resized;
     switch (mode) {
-    case MEAN_RESIZE:
-      resized = image_mean_resize(tmp, outrect.height,
-				  outrect.width, input_mode, &r, &outr);
+    case BILINEAR_RESIZE:
+      if (input_mode == 2) { // use ratios
+	resized = image_resize(tmp, hratio, wratio, input_mode, &r, &outr);
+	EDEBUG(this->name() << ": resizing with ratios " << hratio
+	      << " and " << wratio);
+      } else // use pixels
+	resized = image_resize(tmp, (double) outrect.height, 
+			       (double) outrect.width, input_mode, &r, &outr);
       break ;
     case GAUSSIAN_RESIZE:
       resized = image_gaussian_resize(tmp, outrect.height,
 				      outrect.width, input_mode, &r,&outr);
       break ;
-    case BILINEAR_RESIZE:
-      if (input_mode == 1 || input_mode == 2) { // use ratios
-	resized = image_resize(tmp, hratio, wratio, input_mode, &r, &outr);
-	EDEBUG(this->name() << ": resizing with ratios " << hratio
-	      << " and " << wratio);
-      }
-      else // use pixels
-	resized = image_resize(tmp, (double) outrect.height, 
-			       (double) outrect.width, input_mode, &r, &outr);
+    case MEAN_RESIZE:
+      resized = image_mean_resize(tmp, outrect.height,
+				  outrect.width, input_mode, &r, &outr);
       break ;
     default:
       eblerror("unknown resizing mode");
     }
+    EDEBUG(this->name() << ": resized: " << resized
+	   << " (min " << idx_min(resized) << " max " << idx_max(resized) << ")");
     resized = resized.shift_dim(2, 0);
     // call preprocessing
     if (pp) { // no preprocessing if NULL module
+      EDEBUG_MAT(pp->name() << ": in", resized);
       inpp.x = resized;
       pp->fprop(inpp, outpp);
       resized = outpp.x;
+      EDEBUG_MAT(pp->name() << ": out", resized);
     }
     // resize out to target dimensions if necessary
     if (((out.dim(1) != height) || (out.dim(2) != width)) && !pp)
@@ -1149,7 +1185,9 @@ namespace ebl {
     original_bboxes[0] = outr;
     tmp2 = image_region_to_rect(resized, outr, out.dim(1),
 				out.dim(2), &original_bboxes[0]);
-    tmp2 = tmp2.shift_dim(2, 0);
+    tmp2 = tmp2.shift_dim(2, 0); 
+    EDEBUG(this->name() << ": resized: " << resized
+	   << " (min " << idx_min(resized) << " max " << idx_max(resized) << ")");
     remember_regions(out.dim(1), out.dim(2), r);
     //idx_copy(tmp2, tmp);
     if (!zpad)

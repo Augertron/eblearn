@@ -137,7 +137,7 @@ namespace ebl {
   class_answer<T,Tds1,Tds2,Tstate>::
   class_answer(uint nclasses, double target_factor, bool binary_target_,
 	       t_confidence conf, bool apply_tanh_, const char *name_,
-	       int force, int single)
+	       int force, int single, idxdim *kerd, double sigma_scale)
     : answer_module<T,Tds1,Tds2,Tstate>(binary_target_?1:nclasses, name_),
       conf_type(conf), binary_target(binary_target_), resize_output(true),
       apply_tanh(apply_tanh_), tmp(1,1,1), force_class(force),
@@ -184,14 +184,29 @@ namespace ebl {
 	   << conf_ratio << " and shift value " << conf_shift << endl;
       break ;
     case confidence_max:
-      conf_ratio = target_max - target_min;
-      conf_shift = 0; // no shift needed, the difference min is 0.
+      if (force >= 0) {
+	conf_ratio = target_max - target_min;
+	conf_shift = -conf_ratio;
+	conf_ratio *= 2;
+      } else {
+	conf_ratio = target_max - target_min;
+	conf_shift = 0; // no shift needed, the difference min is 0.
+      }
       cout << "Using max confidence formula with normalization ratio "
 	   << conf_ratio << endl;
       break ;
     default:
       eblerror("confidence type " << conf_type << " undefined");
     }
+    if (kerd && kerd->order() == 2)
+      smoothing_kernel = 
+	create_mexican_hat2<T>(kerd->dim(0), kerd->dim(1), 1, 
+			       sigma_scale);
+    else
+      smoothing_kernel = 
+	create_mexican_hat2<T>(9, 9, 1, sigma_scale);
+    cout << "smoothing kernel:" << endl;
+    smoothing_kernel.print();
   }
 
   template <typename T, typename Tds1, typename Tds2, class Tstate>
@@ -270,13 +285,25 @@ namespace ebl {
 	      }
 	    }
 	    max2 = std::max(target_min, std::min(target_max, max2));
-	    oo.set((T) ((conf - max2) / conf_ratio), 1);
+	    oo.set((T) (((conf - max2) - conf_shift) / conf_ratio), 1);
 	    break ;
 	  default:
 	    eblerror("confidence type " << conf_type << " undefined");
 	  }
 	}
       });
+    // // confidence smoothing
+    // idx<T> c = outx.select(0, 1);
+    // uint hpad = (uint) (smoothing_kernel.dim(0) / 2);
+    // uint wpad = (uint) (smoothing_kernel.dim(1) / 2);
+    // idx<T> tmp(c.dim(0) + 2 * hpad, c.dim(1) + 2 * wpad);
+    // idx_clear(tmp);
+    // idx<T> tmp2 = tmp.narrow(0, c.dim(0), hpad);
+    // tmp2 = tmp2.narrow(1, c.dim(1), wpad);
+    // idx_copy(c, tmp2);
+    // idx_2dconvol(tmp, smoothing_kernel, c);
+    // idx_addc(c, (T)1);
+
     EDEBUG(this->name() << ": in " << in << " (in.x min " << idx_min(in.x)
 	  << " max " << idx_max(in.x) << ") out " << out << " (out.x min "
 	  << idx_min(out.x) << " max " << idx_max(out.x) << ")");

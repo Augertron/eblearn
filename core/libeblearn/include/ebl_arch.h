@@ -79,6 +79,7 @@ namespace ebl {
     std::ostream *mout, *merr; //!< Output streams.
     bool silent;
     bool _enabled;
+    bool gpu_support; //!< Whether module is gpu-enabled
   };
 
   ////////////////////////////////////////////////////////////////
@@ -207,7 +208,6 @@ namespace ebl {
     // by external display objects.
     std::vector<idx<T> >     internals;	//!< Internal buffers to display
     std::vector<std::string>	internals_str;	//!< Internal buffers desc.
-    bool gpu_support; //!< Whether module is gpu-enabled
   protected:
     bool			bresize; //!< Tells module to resize output.
     bool			memoptimized; //!< Using mem optim or not.

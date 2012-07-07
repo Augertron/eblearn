@@ -62,6 +62,35 @@ namespace ebl {
     return m;
   }
 
+  // TODO: cleanup
+  template <typename T>
+  idx<T> create_mexican_hat2(int h, int w, double sigma, double sigma_scale) {
+    if (h % 2 == 0 || w % 2 == 0) eblerror("expected odd kernel sizes");
+    idx<T> m(h, w);
+    double sum=0;
+    double cons=2.0/(sqrt(3*sigma)*pow(PI,0.75));
+
+    int xoffset=(int)std::floor(w/2.0);
+    int yoffset=(int)std::floor(h/2.0);
+    double ymult=(double)xoffset/yoffset;
+    double maxd=sqrt(pow(w-xoffset-1,2)+pow(ymult*(h-yoffset-1),2));
+    //maxd=Math.max(w-xoffset-1,ymult*(h-yoffset-1));
+    for (int x=0;x<w;x++){
+      for (int y=0;y<h;y++){
+	double t=sigma_scale*sigma
+	  *sqrt(pow(x-xoffset,2)+pow(ymult*(y-yoffset),2))/maxd;
+	//t=1.3*sigma*std::max(abs(x-xoffset),abs((y-yoffset)*ymult))/maxd;
+	double v=cons*(1.0-(pow(t,2)/pow(sigma,2)))
+	  *exp((-pow(t,2))/(2*pow(sigma,2)));
+	sum+=v;
+	m.set(v, x, y);
+      }
+    }
+    sum=abs(sum);
+    idx_dotc(m, 1/abs(sum), m);
+    return m;
+  }
+
   template <typename T>
   idx<T> create_gaussian_kernel2(uint n, double sig) {
     idx<T> g(n);    

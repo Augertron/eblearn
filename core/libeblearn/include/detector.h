@@ -98,6 +98,8 @@ namespace ebl {
     void set_scaling_original();
     //! Set the scaling type.
     void set_scaling_type(t_scaling type);
+    //! Enable or disable removal of pad sizes from target scales.
+    void set_scaling_rpad(bool remove_pad);
     //! Set all scales manually.
     void set_resolutions(const vector<midxdim> &scales);
     //! Set scales a factors of the input sizes.
@@ -150,8 +152,9 @@ namespace ebl {
     //! Set different thresholds for each scale during raw extraction.
     void set_raw_thresholds(vector<float> &t);
     //! Applies a threshold on raw outputs before any processing,
-    //! in particular before outputs smoothing.
-    void set_outputs_threshold(T t);
+    //! in particular before outputs smoothing and replaces values
+    //! below with new_val.
+    void set_outputs_threshold(T t, T new_val);
 
     //! Enable nms of type 'type'. Refer to t_pruning declaration for
     //! different types. Default type is 1, regular pruning.
@@ -167,7 +170,8 @@ namespace ebl {
     //! Enable or disable scaler mode, i.e. using scale prediction for boxes.
     void set_scaler_mode(bool set);
     //! Set output smoothing type. 0: none, 1: 3x3 kernel.
-    void set_smoothing(uint type);
+    void set_smoothing(uint type, double sigma = 1.0, idxdim *kerdims = NULL,
+		       double sigma_scale = 2.0);
 
     //! Enable memory optimization by using only 2 buffers (in and out)
     //! for entire flow. Those same buffers must have been passed to the
@@ -305,8 +309,8 @@ namespace ebl {
 
     // bboxes operations ///////////////////////////////////////////////////////
 
-    //! Threshold outputs.
-    void threshold_outputs(T threshold);
+    //! Replace outputs below threshold with val.
+    void threshold_outputs(T threshold, T val);
     //! Smooth outputs.
     void smooth_outputs();
     //! If a merge module was found in the network, update its parameters so
@@ -423,11 +427,14 @@ namespace ebl {
     svector<mfidxdim> itl, itr, ibl, ibr; //!< 4 corners in input space.
     svector<mfidxdim> pptl, pptr, ppbl, ppbr; //!< 4 corners in pp input space.
     float    pre_threshold; //!< Confidence threshold for initial bbox extraction.
+    float    post_threshold; //!< Confidence threshold after nms.
     float    outputs_threshold; //!< Threshold on raw outputs.
+    float    outputs_threshold_val; //!< Replacement value.
     vector<float> raw_thresholds; //!< Thresholds for each scale.
     vector<vector<uint> > scale_indices;//!< Input scales indices for each out
     uint bbox_decision; //!< Decision type, 0: regular, 1: corners only
     mfidxdim bbox_scalings;
+    bool scale_remove_pad; //!< If true, remove padding from target scales.
 
     // friends /////////////////////////////////////////////////////////////////
     template <typename T2, class Tstate2> friend class detector_gui;

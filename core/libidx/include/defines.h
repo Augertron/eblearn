@@ -74,9 +74,13 @@
 #ifdef __DEBUG__
 #define __DEBUG_PRINT__
 #define EDEBUG(s) std::cout << s << std::endl;
+#define EDEBUG_MAT(s, m) \
+  std::cout << s << " " << m << " min " << idx_min(m) \
+  << " max " << idx_max(m) << " mean " << idx_mean(m) << std::endl;
 #define MEDEBUG(s) mout << s << std::endl;
 #else
 #define EDEBUG(s)
+#define EDEBUG_MAT(s,m)
 #define MEDEBUG(s)
 #endif
 

@@ -430,7 +430,7 @@ namespace ebl {
     // load labels
     labels = idx<t_label>(1);
     fname = root1; fname += labels_fname;
-    loading_error(labels, fname);
+    loading_warning<t_label>(labels, fname);
     // load ids
     ids = idx<intg>(labels.dim(0));
     idx_clear(ids);

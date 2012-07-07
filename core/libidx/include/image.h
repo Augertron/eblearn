@@ -387,6 +387,11 @@ namespace ebl {
 		   float th, float tw, float sh, float sw,
 		   float shh, float shw, float deg);
   EXPORT void elastic_flow(idx<float> &flow, uint elsize, float elcoeff);
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  //! This returns 0, 1 or 2 if type contains "bilinear", "gaussian" or "mean".
+  uint get_resize_type(const char *type);
   
 } // end namespace ebl
 

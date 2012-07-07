@@ -16,43 +16,41 @@ IF (QT_FOUND)
   include_directories(${LIBIDXGUI_INCLUDE_DIR})
   include_directories(${LIBEBLEARNGUI_INCLUDE_DIR})
 ENDIF (QT_FOUND)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+   set(NAME_EXTRA "_debug")
+else (CMAKE_BUILD_TYPE STREQUAL "Debug")
+   set(NAME_EXTRA "")
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # compile executable: train
 ################################################################################
 # change target name if debugging	
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (TRAIN_BINARY_NAME train_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (TRAIN_BINARY_NAME train)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
- add_executable (${TRAIN_BINARY_NAME} src/train.cpp)
- # link executable with external libraries
- target_link_libraries (${TRAIN_BINARY_NAME} idx eblearn eblearntools ${GPROF_LIBRARIES})
- LINK_QT(${TRAIN_BINARY_NAME} idxgui)
- LINK_QT(${TRAIN_BINARY_NAME} eblearngui)
+set(TRAIN "train${NAME_EXTRA}")
+add_executable (${TRAIN} src/train.cpp)
+# link executable with external libraries
+target_link_libraries (${TRAIN} idx eblearn eblearntools ${GPROF_LIBRARIES})
+LINK_QT(${TRAIN} idxgui)
+LINK_QT(${TRAIN} eblearngui)
  
 # compile executable: dsfprop
 ################################################################################
-add_executable (dsfprop src/dsfprop.cpp)
+set(DSFPROP "dsfprop${NAME_EXTRA}")
+add_executable (${DSFPROP} src/dsfprop.cpp)
 # link executable with external libraries
-target_link_libraries (dsfprop eblearn idx eblearntools)
-LINK_QT(dsfprop idxgui)
-LINK_QT(dsfprop eblearngui)
-LINK_MAGICKPP(dsfprop)
+target_link_libraries (${DSFPROP} eblearn idx eblearntools)
+LINK_QT(${DSFPROP} idxgui)
+LINK_QT(${DSFPROP} eblearngui)
+LINK_MAGICKPP(${DSFPROP})
 
 # compile executable: imfprop
 ################################################################################
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (IMFPROP_BINARY_NAME imfprop_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (IMFPROP_BINARY_NAME imfprop)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-add_executable (${IMFPROP_BINARY_NAME} src/imfprop.cpp)
+set(IMFPROP "imfprop${NAME_EXTRA}")
+add_executable (${IMFPROP} src/imfprop.cpp)
 # link executable with external libraries
-target_link_libraries (${IMFPROP_BINARY_NAME} eblearn idx eblearntools)
-LINK_QT(${IMFPROP_BINARY_NAME} idxgui)
-LINK_QT(${IMFPROP_BINARY_NAME} eblearngui)
-LINK_MAGICKPP(${IMFPROP_BINARY_NAME})
+target_link_libraries (${IMFPROP} eblearn idx eblearntools)
+LINK_QT(${IMFPROP} idxgui)
+LINK_QT(${IMFPROP} eblearngui)
+LINK_MAGICKPP(${IMFPROP})
 
 # # compile executable: stdetect
 # ################################################################################
@@ -68,21 +66,17 @@ LINK_MAGICKPP(${IMFPROP_BINARY_NAME})
 
 # compile executable: detect
 ################################################################################
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (DETECT_BINARY_NAME detect_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (DETECT_BINARY_NAME detect)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-add_executable (${DETECT_BINARY_NAME} src/detect.cpp)
+set(DETECT "detect${NAME_EXTRA}")
+add_executable (${DETECT} src/detect.cpp)
 # link executable with external libraries
-target_link_libraries (${DETECT_BINARY_NAME} eblearn idx eblearntools)
-LINK_QT(${DETECT_BINARY_NAME} idxgui)
-LINK_QT(${DETECT_BINARY_NAME} eblearngui)
-LINK_BOOST(${DETECT_BINARY_NAME} system)
-LINK_BOOST(${DETECT_BINARY_NAME} filesystem)
-LINK_BOOST(${DETECT_BINARY_NAME} regex)
-LINK_MAGICKPP(${DETECT_BINARY_NAME})
-LINK_LUA(${DETECT_BINARY_NAME})
+target_link_libraries (${DETECT} eblearn idx eblearntools)
+LINK_QT(${DETECT} idxgui)
+LINK_QT(${DETECT} eblearngui)
+LINK_BOOST(${DETECT} system)
+LINK_BOOST(${DETECT} filesystem)
+LINK_BOOST(${DETECT} regex)
+LINK_MAGICKPP(${DETECT})
+LINK_LUA(${DETECT})
 
 # compile executable: mpidetect
 ################################################################################
@@ -90,23 +84,18 @@ IF (MPI_FOUND AND Boost_SERIALIZATION_FOUND AND Boost_MPI_FOUND)
 IF (WINDOWS) # do not compile this project under windows
   MESSAGE("__ WARNING: Not generating mpidetect project under Windows")
 ELSE (WINDOWS) # do not compile this project under windows
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (MPIDETECT_BINARY_NAME mpidetect_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (MPIDETECT_BINARY_NAME mpidetect)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-add_executable (${MPIDETECT_BINARY_NAME} src/mpidetect.cpp)
+set(MPIDETECT "mpidetect${NAME_EXTRA}")
+add_executable (${MPIDETECT} src/mpidetect.cpp)
 # link executable with external libraries
-target_link_libraries (${MPIDETECT_BINARY_NAME} eblearn idx eblearntools)
-LINK_QT(${MPIDETECT_BINARY_NAME} idxgui)
-LINK_QT(${MPIDETECT_BINARY_NAME} eblearngui)
-LINK_BOOST(${MPIDETECT_BINARY_NAME} system)
-LINK_BOOST(${MPIDETECT_BINARY_NAME} filesystem)
-LINK_BOOST(${MPIDETECT_BINARY_NAME} regex)
-LINK_BOOST(${MPIDETECT_BINARY_NAME} serialization)
-LINK_BOOST(${MPIDETECT_BINARY_NAME} mpi)
-#LINK_MPI(${MPIDETECT_BINARY_NAME})
+target_link_libraries (${MPIDETECT} eblearn idx eblearntools)
+LINK_QT(${MPIDETECT} idxgui)
+LINK_QT(${MPIDETECT} eblearngui)
+LINK_BOOST(${MPIDETECT} system)
+LINK_BOOST(${MPIDETECT} filesystem)
+LINK_BOOST(${MPIDETECT} regex)
+LINK_BOOST(${MPIDETECT} serialization)
+LINK_BOOST(${MPIDETECT} mpi)
+#LINK_MPI(${MPIDETECT})
 
 ENDIF (WINDOWS) # do not compile this project under windows
 ELSE (MPI_FOUND AND Boost_SERIALIZATION_FOUND AND Boost_MPI_FOUND)
@@ -129,73 +118,53 @@ ENDIF (MPI_FOUND AND Boost_SERIALIZATION_FOUND AND Boost_MPI_FOUND)
 
 # compile executable: dscompile
 ################################################################################
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (DSCOMPILE_BINARY_NAME dscompile_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (DSCOMPILE_BINARY_NAME dscompile)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-add_executable (${DSCOMPILE_BINARY_NAME} src/dscompile.cpp)
+set(DSCOMPILE "dscompile${NAME_EXTRA}")
+add_executable (${DSCOMPILE} src/dscompile.cpp)
 # link executable with external libraries
-target_link_libraries (${DSCOMPILE_BINARY_NAME} idx eblearn eblearntools)
-LINK_QT(${DSCOMPILE_BINARY_NAME} idxgui)
-LINK_BOOST(${DSCOMPILE_BINARY_NAME} system)
-LINK_BOOST(${DSCOMPILE_BINARY_NAME} filesystem)
-LINK_BOOST(${DSCOMPILE_BINARY_NAME} regex)
-LINK_MAGICKPP(${DSCOMPILE_BINARY_NAME})
+target_link_libraries (${DSCOMPILE} idx eblearn eblearntools)
+LINK_QT(${DSCOMPILE} idxgui)
+LINK_BOOST(${DSCOMPILE} system)
+LINK_BOOST(${DSCOMPILE} filesystem)
+LINK_BOOST(${DSCOMPILE} regex)
+LINK_MAGICKPP(${DSCOMPILE})
 
 # compile executable: dssplit
 ################################################################################
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (DSSPLIT_BINARY_NAME dssplit_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (DSSPLIT_BINARY_NAME dssplit)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-add_executable (${DSSPLIT_BINARY_NAME} src/dssplit.cpp)
+set(DSSPLIT "dssplit${NAME_EXTRA}")
+add_executable (${DSSPLIT} src/dssplit.cpp)
 # link executable with external libraries
-target_link_libraries (${DSSPLIT_BINARY_NAME} eblearn idx eblearntools)
-LINK_QT(${DSSPLIT_BINARY_NAME} idxgui)
-LINK_QT(${DSSPLIT_BINARY_NAME} eblearngui)
-LINK_BOOST(${DSSPLIT_BINARY_NAME} system)
-LINK_BOOST(${DSSPLIT_BINARY_NAME} filesystem)
-LINK_BOOST(${DSSPLIT_BINARY_NAME} regex)
-LINK_MAGICKPP(${DSSPLIT_BINARY_NAME})
+target_link_libraries (${DSSPLIT} eblearn idx eblearntools)
+LINK_QT(${DSSPLIT} idxgui)
+LINK_QT(${DSSPLIT} eblearngui)
+LINK_BOOST(${DSSPLIT} system)
+LINK_BOOST(${DSSPLIT} filesystem)
+LINK_BOOST(${DSSPLIT} regex)
+LINK_MAGICKPP(${DSSPLIT})
 
 # compile executable: dsmerge
 ################################################################################
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (DSMERGE_BINARY_NAME dsmerge_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (DSMERGE_BINARY_NAME dsmerge)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-add_executable (${DSMERGE_BINARY_NAME} src/dsmerge.cpp)
+set(DSMERGE "dsmerge${NAME_EXTRA}")
+add_executable (${DSMERGE} src/dsmerge.cpp)
 # link executable with external libraries
-target_link_libraries (${DSMERGE_BINARY_NAME} eblearn idx eblearntools)
-LINK_QT(${DSMERGE_BINARY_NAME} idxgui)
-LINK_QT(${DSMERGE_BINARY_NAME} eblearngui)
-LINK_BOOST(${DSMERGE_BINARY_NAME} system)
-LINK_BOOST(${DSMERGE_BINARY_NAME} filesystem)
-LINK_BOOST(${DSMERGE_BINARY_NAME} regex)
-LINK_MAGICKPP(${DSMERGE_BINARY_NAME})
+target_link_libraries (${DSMERGE} eblearn idx eblearntools)
+LINK_QT(${DSMERGE} idxgui)
+LINK_QT(${DSMERGE} eblearngui)
+LINK_BOOST(${DSMERGE} system)
+LINK_BOOST(${DSMERGE} filesystem)
+LINK_BOOST(${DSMERGE} regex)
+LINK_MAGICKPP(${DSMERGE})
 
 # compile executable: dsdisplay
 ################################################################################
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (DSDISPLAY_BINARY_NAME dsdisplay_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (DSDISPLAY_BINARY_NAME dsdisplay)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-add_executable (${DSDISPLAY_BINARY_NAME} src/dsdisplay.cpp)
+set(DSDISPLAY "dsdisplay${NAME_EXTRA}")
+add_executable (${DSDISPLAY} src/dsdisplay.cpp)
 # link executable with external libraries
-target_link_libraries (${DSDISPLAY_BINARY_NAME} eblearn idx eblearntools)
-LINK_QT(${DSDISPLAY_BINARY_NAME} idxgui)
-LINK_QT(${DSDISPLAY_BINARY_NAME} eblearngui)
-LINK_BOOST(${DSDISPLAY_BINARY_NAME} system)
-LINK_BOOST(${DSDISPLAY_BINARY_NAME} filesystem)
-LINK_BOOST(${DSDISPLAY_BINARY_NAME} regex)
+target_link_libraries (${DSDISPLAY} eblearn idx eblearntools)
+LINK_QT(${DSDISPLAY} idxgui)
+LINK_QT(${DSDISPLAY} eblearngui)
+LINK_BOOST(${DSDISPLAY} system)
+LINK_BOOST(${DSDISPLAY} filesystem)
+LINK_BOOST(${DSDISPLAY} regex)
 
 # compile executable: matshow
 ################################################################################
@@ -209,87 +178,63 @@ IF (WINDOWS)
 #  MESSAGE(STATUS "Building matshow as a windowed application (not console)")
 ENDIF (WINDOWS)
 
-add_executable (matshow ${WINTYPE} src/matshow.cpp)
+set(MATSHOW "matshow${NAME_EXTRA}")
+add_executable (${MATSHOW} ${WINTYPE} src/matshow.cpp)
 # link executable with external libraries
-target_link_libraries (matshow idx eblearntools)
-LINK_QT(matshow idxgui)
-LINK_QT(matshow eblearngui)
+target_link_libraries (${MATSHOW} idx eblearntools)
+LINK_QT(${MATSHOW} idxgui)
+LINK_QT(${MATSHOW} eblearngui)
 LINK_MAGICKPP(matshow)
 
 ENDIF (WINDOWS AND NOT QT_FOUND)
 
 # compile executable: capture
 ################################################################################
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (CAPTURE_BINARY_NAME capture_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (CAPTURE_BINARY_NAME capture)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-add_executable (${CAPTURE_BINARY_NAME} src/capture.cpp)
+set(CAPTURE "capture${NAME_EXTRA}")
+add_executable (${CAPTURE} src/capture.cpp)
 # link executable with external libraries
-target_link_libraries (${CAPTURE_BINARY_NAME} idx eblearntools)
-LINK_QT(${CAPTURE_BINARY_NAME} idxgui)
+target_link_libraries (${CAPTURE} idx eblearntools)
+LINK_QT(${CAPTURE} idxgui)
 
 # compile executable: metarun
 ################################################################################
 IF (WINDOWS) # do not compile this project under windows
   MESSAGE("__ WARNING: Not generating metarun project under Windows")
 ELSE (WINDOWS) # do not compile this project under windows
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (METARUN_BINARY_NAME metarun_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (METARUN_BINARY_NAME metarun)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-add_executable (${METARUN_BINARY_NAME}
+set(METARUN "metarun${NAME_EXTRA}")
+add_executable (${METARUN}
   src/metarun.cpp
   )
 # link executable with external libraries
-target_link_libraries (${METARUN_BINARY_NAME} idx eblearntools)
-#LINK_BOOST(${METARUN_BINARY_NAME} system)
-#LINK_BOOST(${METARUN_BINARY_NAME} filesystem)
-#LINK_BOOST(${METARUN_BINARY_NAME} regex)
+target_link_libraries (${METARUN} idx eblearntools)
+#LINK_BOOST(${METARUN} system)
+#LINK_BOOST(${METARUN} filesystem)
+#LINK_BOOST(${METARUN} regex)
 ENDIF (WINDOWS) # do not compile this project under windows
 
 # compile executable: metaparse
 ################################################################################
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (METAPARSE_BINARY_NAME metaparse_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (METAPARSE_BINARY_NAME metaparse)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-add_executable (${METAPARSE_BINARY_NAME} src/metaparse.cpp)
+set(METAPARSE "metaparse${NAME_EXTRA}")
+add_executable (${METAPARSE} src/metaparse.cpp)
 # link executable with external libraries
-target_link_libraries (${METAPARSE_BINARY_NAME} eblearntools)
-LINK_BOOST(${METAPARSE_BINARY_NAME} system)
-LINK_BOOST(${METAPARSE_BINARY_NAME} filesystem)
-LINK_BOOST(${METAPARSE_BINARY_NAME} regex)
+target_link_libraries (${METAPARSE} eblearntools)
+LINK_BOOST(${METAPARSE} system)
+LINK_BOOST(${METAPARSE} filesystem)
+LINK_BOOST(${METAPARSE} regex)
 
 # compile executable: maketable
 ################################################################################
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (MAKETABLE_BINARY_NAME maketable_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (MAKETABLE_BINARY_NAME maketable)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-add_executable (${MAKETABLE_BINARY_NAME} src/maketable.cpp)
+set(MAKETABLE "maketable${NAME_EXTRA}")
+add_executable (${MAKETABLE} src/maketable.cpp)
 # link executable with external libraries
-target_link_libraries (${MAKETABLE_BINARY_NAME} idx eblearn eblearntools)
+target_link_libraries (${MAKETABLE} idx eblearn eblearntools)
 
 # compile executable: narrow
 ################################################################################
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (NARROW_BINARY_NAME narrow_debug)
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-   SET (NARROW_BINARY_NAME narrow)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-add_executable (${NARROW_BINARY_NAME} src/narrow.cpp)
+set(NARROW "narrow${NAME_EXTRA}")
+add_executable(${NARROW} src/narrow.cpp)
 # link executable with external libraries
-target_link_libraries (${NARROW_BINARY_NAME} idx eblearntools)
+target_link_libraries (${NARROW} idx eblearntools)
 
 # compile executable: videoffinder
 ################################################################################

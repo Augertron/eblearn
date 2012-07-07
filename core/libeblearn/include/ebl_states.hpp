@@ -875,14 +875,12 @@ namespace ebl {
 
   template <typename T>
   bool parameter<T,fstate_idx<T> >::load_x(std::vector<string> &files) {
-    if (files.size() == 0) eblerror("expected at least 1 file to load");
-    idx<T> w = load_matrix<T>(files[0]);
-    for (uint i = 1; i < files.size(); ++i) {
-      idx<T> tmp = load_matrix<T>(files[i]);
-      w = idx_concat(w, tmp);
-    }
-    cout << "Concatenated " << files.size() << " matrices into 1: "
-	 << w << " from " << files << endl;
+    idx<T> w = load_matrix<T>(files);
+    if (files.size() > 1)
+      cout << "Concatenated " << files.size() << " matrices into 1: "
+	   << w << " from " << files << endl;
+    else 
+      cout << "Loaded weights " << w << " from " << files[0] << endl;
     return load_x(w);
   }
   

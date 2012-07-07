@@ -63,7 +63,8 @@ namespace ebl {
       mout(o), merr(e), smoothing_type(0), initialized(false),
       bboxes_off(false), adapt_scales(adapt_scales_), answer(answer_),
       ignore_outsiders(false), corners_inference(0), corners_infered(false),
-      pre_threshold(0), outputs_threshold(-1), bbox_decision(0) {
+      pre_threshold(0), outputs_threshold(-1), outputs_threshold_val(-1),
+      bbox_decision(0), scale_remove_pad(false) {
     // // make sure the top module is an answer module
     // module_1_1<T,Tstate> *last = thenet.last_module();
     // if (!dynamic_cast<answer_module<T,Tstate>*>(last))
@@ -136,6 +137,11 @@ namespace ebl {
       eblerror("unknown type");
     }
     mout << ")" << endl;
+  }
+
+  template <typename T, class Tstate>
+  void detector<T,Tstate>::set_scaling_rpad(bool remove_pad) {
+    scale_remove_pad = remove_pad;
   }
 
   template <typename T, class Tstate>
@@ -264,9 +270,8 @@ namespace ebl {
   void detector<T,Tstate>::set_max_resolution(uint max_size_) {
     uint mzpad = std::max(hzpad * 2, wzpad * 2);
     max_size = max_size_ + mzpad;
-    mout << "Setting maximum input size to " << max_size_ << "x"
-	 << max_size_ << " (add twice max(hzpad,wzpad): " << mzpad
-	 << ")" << endl;
+    mout << "Setting maximum input height or width to " 
+	 << max_size << " (" << max_size_ << " + " << mzpad << ")" << endl;
   }
 
   template <typename T, class Tstate>
@@ -283,19 +288,22 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_outputs_threshold(T t) {
-    mout << "Setting raw outputs threshold to " << t << endl;
+  void detector<T,Tstate>::set_outputs_threshold(T t, T new_val) {
+    mout << "Setting raw outputs threshold to " << t 
+	 << ", replacing values below with " << new_val << endl;
     outputs_threshold = t;
+    outputs_threshold_val = new_val;
   }
 
   template <typename T, class Tstate>
   void detector<T,Tstate>::
-  set_nms(t_nms type, float pre_threshold_, float post_threshold,
+  set_nms(t_nms type, float pre_threshold_, float post_threshold_,
 	  float pre_hfact, float pre_wfact, float post_hfact, float post_wfact,
 	  float woverh, float max_overlap, float max_hcenter_dist,
 	  float max_wcenter_dist, float vote_max_overlap,
 	  float vote_max_hcenter_dist, float vote_max_wcenter_dist) {
     pre_threshold = pre_threshold_;
+    post_threshold = post_threshold_;
     if (pnms) delete pnms;
     switch (type) {
     case nms_none: break ; // none
@@ -476,7 +484,7 @@ namespace ebl {
     case MANUAL:
       if (!silent)
 	mout << "Manual specification of each scale size";
-      if (frame_id > 0) {
+      if (frame_id >= 0) {
 	uint sc = std::min((uint)frame_id, (uint)manual_scales.size());
 	scales = manual_scales[sc];
 	if (!silent) mout << " for image " << frame_id << " from scales set "
@@ -517,6 +525,15 @@ namespace ebl {
       break ;
     default: eblerror("unknown scaling mode");
     }
+    // remove pad from target scales
+    if (scale_remove_pad) {
+      for (uint i = 0; i < scales.size(); ++i) {
+	cout << "removing pad from " << scales[i] << ": ";
+	scales[i].setdim(1, scales[i].dim(1) - 74);
+	scales[i].setdim(2, scales[i].dim(2) - 46);
+	cout << scales[i] << endl;
+      }
+    }
     // limit scales with max_size
     for (midxdim::iterator i = scales.begin(); i != scales.end(); ) {
       idxdim d = *i;
@@ -532,6 +549,7 @@ namespace ebl {
     rect<int> bb(0, 0, indim.dim(1), indim.dim(2));
     for (uint i = 0; i < scales.size(); ++i)
       original_bboxes.push_back(bb);
+    EDEBUG("original boxes: " << original_bboxes);
     // print scales
     mout << "Detection initialized to ";
     if (adapt_scales) mout << "(network-adapted scales) ";
@@ -668,7 +686,8 @@ namespace ebl {
   // outputs smoothing
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::set_smoothing(uint type) {
+  void detector<T,Tstate>::set_smoothing(uint type, double sigma, idxdim *kerd,
+					 double sigma_scale) {
     smoothing_type = type;
     idx<T> ker;
     switch (smoothing_type) {
@@ -686,21 +705,31 @@ namespace ebl {
       ker.set(.3, 2, 2);
       idx_dotc(ker, (T) (1 / (double) idx_sum(ker)), ker);
       smoothing_kernel = ker;
-      mout << "Smoothing outputs with kernel: " << endl;
-      smoothing_kernel.printElems();
-      mout << endl;
+      break ;
+    case 2:
+      if (kerd && kerd->order() == 2) 
+	smoothing_kernel = 
+	  create_mexican_hat2<T>(kerd->dim(0), kerd->dim(1), sigma, 
+				 sigma_scale);
+      else smoothing_kernel = create_mexican_hat2<T>(9, 9, sigma, sigma_scale);
+      mout << "Mexican hat sigma: " << sigma 
+	   << " scale: " << sigma_scale << endl;
       break ;
     default:
       eblerror("Unknown smoothing type " << type);
     }
+    if (smoothing_type > 0) {
+      mout << "Smoothing outputs with kernel: " << endl;
+      smoothing_kernel.print();
+    }
   }
 
   template <typename T, class Tstate>
-  void detector<T,Tstate>::threshold_outputs(T t) {
+  void detector<T,Tstate>::threshold_outputs(T t, T val) {
     for (uint j = 0; j < outputs.size(); ++j) {
       mstate<Tstate> &o = outputs[j];
       for (uint i = 0; i < o.size(); ++i) {
-	idx_threshold(o[i].x, t, -1);
+	idx_threshold(o[i].x, t, val);
       }
     }
   }
@@ -1107,13 +1136,16 @@ namespace ebl {
 	    bool accept = false;
 	    // select decision criterion
 	    switch (bbox_decision) {
+	      // accept if confidence is >= threshold
 	    case 0: accept = (conf >= thresh && classid != bgclass); break ;
+	      // accept if one of 4 corners
 	    case 1: accept = ((offset_h == outx.dim(1) - 1 && offset_w == 0) ||
 			      (offset_h == 0 && offset_w == 0) ||
 			      (offset_h == outx.dim(1) - 1
 			       && offset_w == outx.dim(2) - 1) ||
 			      (offset_h == 0 && offset_w == outx.dim(2) - 0));
 	      break;
+	      // accept if bottom left corner
 	    case 2: accept = ((offset_h == outx.dim(1) - 1
 			       && offset_w == outx.dim(2) - 1));
 	      break;
@@ -1249,7 +1281,8 @@ namespace ebl {
     TIMING1("end of network");
     TIMING_RESIZING("total resizing time");
     // threshold before smoothing
-    if (outputs_threshold > -1) threshold_outputs(outputs_threshold);
+    if (outputs_threshold > -1)
+      threshold_outputs(outputs_threshold, outputs_threshold_val);
     // smooth outputs
     smooth_outputs();
 
@@ -1283,7 +1316,10 @@ namespace ebl {
   template <typename T, class Tstate>
   void detector<T,Tstate>::fprop_nms(bboxes &in, bboxes &out) {
     if (pnms) pnms->fprop(in, out);
-    else out = in;
+    else {
+      out = in;
+      out.threshold(post_threshold);
+    }
   }
 
   // bboxes operations /////////////////////////////////////////////////////////
@@ -1618,10 +1654,12 @@ namespace ebl {
       mstate<Tstate> &out = outputs[i];
       thenet.fprop(*input, out);
       get_corners(out, i, true);
-      EDEBUG("detector outputs: " << out);
+      EDEBUG_MAT("detector outputs:", (out[0].x));
       // outputs dumping
       if (!outputs_dump.empty()) {
       	string fname = outputs_dump;
+	string dir = ebl::dirname(fname.c_str());
+	mkdir_full(dir);
 	if (out.size() == 1) {
 	  idx<T> &o = out[0].x;
 	  fname << "_" << o << ".mat";
@@ -1633,12 +1671,14 @@ namespace ebl {
 	}
       }
       // memorize original input's bbox in resized input
+      EDEBUG("updating original boxes from " << original_bboxes);
       rect<int> &bbox = original_bboxes[i];
       rect<int> bb = resizepp->get_original_bbox();
       bbox.h0 = bb.h0;
       bbox.w0 = bb.w0;
       bbox.height = bb.height;
       bbox.width = bb.width;
+      EDEBUG("to " << original_bboxes);
 
 // #ifdef __DUMP_STATES__
 //       DUMP(output->x, "detector_output_");

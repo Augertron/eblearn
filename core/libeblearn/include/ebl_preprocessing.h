@@ -81,10 +81,12 @@ namespace ebl {
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
     //! \param nf The number of features to normalize across.
     //! \param globnorm Normalize channels globally or not.
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     channorm_module(idxdim &kerdim, bool mirror = true,
 		    t_norm norm_mode = WSTD_NORM,
 		    const char *name = "channorm", int nf = 1,
-		    bool globnorm = true);
+		    bool globnorm = true, double epsilon = NORM_EPSILON,
+		    double epsilon2 = 0);
     //! Destructor
     virtual ~channorm_module();
     //! Forward propagation from in to out (abstract).
@@ -95,7 +97,8 @@ namespace ebl {
     virtual std::string describe();
     //! Returns a new norm module.
     module_1_1<T,Tstate>* new_norm(idxdim &normker, bool mirror, 
-				   t_norm norm_mode, int nf);
+				   t_norm norm_mode, int nf,
+				   double epsilon, double epsilon2 = 0);
   protected:
     //! Resize the output based on input dimensions
     //! \param dim0 An optional size for the first dimension. Set it to 1
@@ -125,8 +128,10 @@ namespace ebl {
     //!   instead of with zeros. This can be useful in object detection when
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     rgb_to_ynuv_module(idxdim &norm_kernel, bool mirror = true,
-		       t_norm norm_mode = WSTD_NORM, bool globnorm = true);
+		       t_norm norm_mode = WSTD_NORM, bool globnorm = true,
+		       double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~rgb_to_ynuv_module();
     //! forward propagation from in to out
@@ -149,8 +154,10 @@ namespace ebl {
     //!   instead of with zeros. This can be useful in object detection when
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     rgb_to_ynuvn_module(idxdim &norm_kernel, bool mirror = true,
-			t_norm norm_mode = WSTD_NORM, bool globnorm = true);
+			t_norm norm_mode = WSTD_NORM, bool globnorm = true,
+			double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~rgb_to_ynuvn_module();
     //! forward propagation from in to out
@@ -175,8 +182,10 @@ namespace ebl {
     //!   instead of with zeros. This can be useful in object detection when
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     rgb_to_ynunvn_module(idxdim &norm_kernel, bool mirror = true,
-			t_norm norm_mode = WSTD_NORM, bool globnorm = true);
+			 t_norm norm_mode = WSTD_NORM, bool globnorm = true,
+			 double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~rgb_to_ynunvn_module();
     //! forward propagation from in to out
@@ -215,8 +224,10 @@ namespace ebl {
     //!   instead of with zeros. This can be useful in object detection when
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     rgb_to_yuvn_module(idxdim &norm_kernel, bool mirror = true,
-		       t_norm norm_mode = WSTD_NORM, bool globnorm = true);
+		       t_norm norm_mode = WSTD_NORM, bool globnorm = true,
+		       double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~rgb_to_yuvn_module();
     //! forward propagation from in to out
@@ -239,8 +250,10 @@ namespace ebl {
     //!   instead of with zeros. This can be useful in object detection when
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     rgb_to_rgbn_module(idxdim &norm_kernel, bool mirror = true,
-		       t_norm norm_mode = WSTD_NORM, bool globnorm = true);
+		       t_norm norm_mode = WSTD_NORM, bool globnorm = true,
+		       double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~rgb_to_rgbn_module();
     //! forward propagation from in to out
@@ -279,8 +292,10 @@ namespace ebl {
     //!   instead of with zeros. This can be useful in object detection when
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     rgb_to_yn_module(idxdim &norm_kernel, bool mirror = true,
-		     t_norm norm_mode = WSTD_NORM, bool globnorm = true);
+		     t_norm norm_mode = WSTD_NORM, bool globnorm = true,
+		     double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~rgb_to_yn_module();
     //! forward propagation from in to out
@@ -303,8 +318,10 @@ namespace ebl {
     //!   instead of with zeros. This can be useful in object detection when
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     y_to_yp_module(idxdim &norm_kernel, bool mirror = true,
-		   t_norm norm_mode = WSTD_NORM, bool globnorm = true);
+		   t_norm norm_mode = WSTD_NORM, bool globnorm = true,
+		   double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~y_to_yp_module();
     //! forward propagation from in to out
@@ -327,8 +344,10 @@ namespace ebl {
     //!   instead of with zeros. This can be useful in object detection when
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     bgr_to_ypuv_module(idxdim &norm_kernel, bool mirror = true,
-		       t_norm norm_mode = WSTD_NORM, bool globnorm = true);
+		       t_norm norm_mode = WSTD_NORM, bool globnorm = true,
+		       double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~bgr_to_ypuv_module();
     //! forward propagation from in to out
@@ -351,8 +370,10 @@ namespace ebl {
     //!   instead of with zeros. This can be useful in object detection when
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     bgr_to_yp_module(idxdim &norm_kernel, bool mirror = true,
-		     t_norm norm_mode = WSTD_NORM, bool globnorm = true);
+		     t_norm norm_mode = WSTD_NORM, bool globnorm = true,
+		     double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~bgr_to_yp_module();
     //! forward propagation from in to out
@@ -375,8 +396,10 @@ namespace ebl {
     //!   instead of with zeros. This can be useful in object detection when
     //!   objects are close to borders.
     //! \param norm_mode The type of normalization (WSTD_NORM by default).
+    //! \param epsilon Small value added in normalization to avoid 0-divisions.
     rgb_to_hp_module(idxdim &norm_kernel, bool mirror = true,
-		     t_norm norm_mode = WSTD_NORM, bool globnorm = true);
+		     t_norm norm_mode = WSTD_NORM, bool globnorm = true,
+		     double epsilon = NORM_EPSILON, double epsilon2 = 0);
     //! destructor
     virtual ~rgb_to_hp_module();
     //! forward propagation from in to out
