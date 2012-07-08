@@ -251,7 +251,7 @@ namespace ebl {
     string		mconf_fname;	//!< Filename of metaconf
     vector<job*>	jobs;	   //!< A vector of jobs to run
     string              copy_path; //!< Copy path to jobs folders.
-    uint                max_jobs;  //!< Max number of jobs at the same time.
+    int                 max_jobs;  //!< Max number of jobs at the same time.
     metaparser          parser;
     int			maxiter;
     int			maxiter_tmp;
