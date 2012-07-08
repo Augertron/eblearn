@@ -253,7 +253,6 @@ inline void test_conv_cuda(int inx, int iny, int infeat, int outfeat,
   double rrange_max = 1.0;
   // cpu version
   convolution_module<T> c1(&prm, ker, stride, table, "cpuconv");
-  // gpu version
   cuda_convolution_module<T> c2(&prm, ker, stride, table, "gpuconv");
   forget_param_linear fp(2,0.5);
   idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
