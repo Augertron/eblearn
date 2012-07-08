@@ -492,7 +492,7 @@ namespace ebl {
       string szpad, smod, smode;
       idxdim pad;
       bool preserve_ratio = true;
-      uint mode = MEAN_RESIZE;
+      uint mode = BILINEAR_RESIZE;
       if (!get_param(conf, name, "hratio", resizeh)) return NULL;
       if (!get_param(conf, name, "wratio", resizew)) return NULL;
       get_param(conf, name, "preserve_ratio", preserve_ratio);
