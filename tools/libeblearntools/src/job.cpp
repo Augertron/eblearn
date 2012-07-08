@@ -494,7 +494,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // job manager
 
-  job_manager::job_manager() : copy_path(""), max_jobs(limits<uint32>::max()),
+  job_manager::job_manager() : copy_path(""), max_jobs(limits<int32>::max()),
 			       maxiter(-1), mintime(0.0), maxtime(0.0),
 			       nalive(1), nrunning(0), unstarted(0), finished(0),
 			       unfinished(1),
@@ -570,10 +570,9 @@ namespace ebl {
     }
     // some minor parameters
     if (!nomax && (rmconf.exists("meta_max_jobs") || maxjobs > 0)) {
-      if (maxjobs > 0)
-	max_jobs = maxjobs;
+      if (maxjobs > 0) max_jobs = maxjobs;
       else if (rmconf.exists("meta_max_jobs"))
-	max_jobs = rmconf.get_uint("meta_max_jobs");
+	max_jobs = rmconf.get_int("meta_max_jobs");
       cout << "Limiting to " << max_jobs << " jobs at the time." << endl;
     }
     if (rmconf.exists("meta_watch_interval"))

@@ -53,7 +53,7 @@ namespace ebl {
     : module_1_1<T,Tstate>(name_), convvar(true, name_), invmod(-1),
       thres((T) 1.0, (T) 1.0) {
     // common initializations
-    init(kerdim_, nf, mirror_, threshold_, param_, af, cgauss, fsum_div_, 
+    init(kerdim_, nf, mirror_, threshold_, param_, af, cgauss_, fsum_div_, 
 	 fsum_split_, epsilon_, epsilon2_);
     // local initializations
     divconv = new convolution_module<T,Tstate>
@@ -263,7 +263,7 @@ namespace ebl {
 			  bool fsum_div_, float fsum_split_)
     : module_1_1<T,Tstate>(name_), convmean(true, name_) {
     // common initializations
-    init(kerdim_, nf, mirror_, global_norm_, param_, af, cgauss, fsum_div_, 
+    init(kerdim_, nf, mirror_, global_norm_, param_, af, cgauss_, fsum_div_, 
 	 fsum_split_);
     // local initializations
     meanconv = new convolution_module<T,Tstate>
