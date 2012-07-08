@@ -62,22 +62,22 @@ namespace ebl {
 		       idx<intg> &table, const char *name = "convolution",
 		       bool crop = true, int gpu_id = -1);
     //! destructor
-      virtual ~cuda_convolution_module();
-      //! forward propagation from in to out
-      virtual void fprop(Tstate &in, Tstate &out);
-      // members ///////////////////////////////////////////////////////////////
-      idx<intg>		revtable; //!< table of connections btw output and input
-      int                 fanin;  //!< the fanin of the connection table
-      using module_1_1<T, Tstate>::gpu_support;
-      using convolution_module<T, Tstate>::fulltable;
-      using convolution_module<T, Tstate>::table;
-      using convolution_module<T, Tstate>::thickness;
-      using convolution_module<T, Tstate>::tablemax;
-      using convolution_module<T, Tstate>::kernel;
-      using convolution_module<T, Tstate>::stride;
+    virtual ~cuda_convolution_module();
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    // members /////////////////////////////////////////////////////////////////
+    idx<intg>		revtable; //!< table of connections btw output and input
+    int                 fanin;  //!< the fanin of the connection table
+    using module_1_1<T, Tstate>::gpu_support;
+    using convolution_module<T, Tstate>::fulltable;
+    using convolution_module<T, Tstate>::table;
+    using convolution_module<T, Tstate>::thickness;
+    using convolution_module<T, Tstate>::tablemax;
+    using convolution_module<T, Tstate>::kernel;
+    using convolution_module<T, Tstate>::stride;
   protected:
-      // GPU members ///////////////////////////////////////////////////////////
-      int                 gpu_id; //!< Whether to use gpu or not
+    // GPU members /////////////////////////////////////////////////////////////
+    int                 gpu_id; //!< Whether to use gpu or not
   };
 
   //////////////////////////////////////////////////////////////////////////////

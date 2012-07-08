@@ -4,7 +4,8 @@
 #ifdef __WINDOWS__
 #define TEST_FILE "C:/Windows/Temp/eblearn_tester_matrix.mat"
 #else
-#define TEST_FILE "/tmp/eblearn_tester_matrix_2.mat"
+//#define TEST_FILE "/tmp/eblearn_tester_matrix_2.mat"
+#define TEST_FILE "./eblearn_tester_matrix_2.mat"
 #endif
 
 extern string *gl_data_dir;
