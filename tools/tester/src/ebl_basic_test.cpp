@@ -252,9 +252,9 @@ inline void test_conv_cuda(int inx, int iny, int infeat, int outfeat,
   double rrange_min = -1.0;
   double rrange_max = 1.0;
   // cpu version
-  convolution_module<T> c1(&prm, ker, stride, table, "cpuconv", true, false);
+  convolution_module<T> c1(&prm, ker, stride, table, "cpuconv");
   // gpu version
-  convolution_module<T> c2(&prm, ker, stride, table, "gpuconv", true, true);
+  cuda_convolution_module<T> c2(&prm, ker, stride, table, "gpuconv");
   forget_param_linear fp(2,0.5);
   idx_random(in.x, rrange_min, rrange_max); // randomize input for fprop
   c1.fprop(in,out1); // just to resize states
