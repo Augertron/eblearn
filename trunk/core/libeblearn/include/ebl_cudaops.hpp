@@ -77,6 +77,11 @@ namespace ebl {
     eblerror("cuda_fsum : type not implemented. Available types are float32");
   }
 
+  template <typename T>
+  void cuda_threshold(idx<T> &in, idx<T> &out, T thres, T val, int devid) {
+    eblerror("cuda_threshold : type not implemented. Available types are float32");
+  }
+
 
 } // end ebl namespace
 

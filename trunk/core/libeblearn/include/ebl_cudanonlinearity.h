@@ -52,6 +52,7 @@ namespace ebl {
     //! Returns a deep copy of this module.
     virtual cuda_tanh_module<T,Tstate>* copy();
   protected:
+  fstate_idx<T> temp;
     // GPU members /////////////////////////////////////////////////////////////
     int                 gpu_id; //!< Whether to use gpu or not
   };

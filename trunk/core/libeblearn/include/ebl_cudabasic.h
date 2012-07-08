@@ -171,6 +171,31 @@ namespace ebl {
   using module_1_1<T, Tstate>::gpu_support;
   };
 
+  ////////////////////////////////////////////////////////////////
+  // cuda_thres_module
+  //! A thresholding module that filters the input and any entry that is
+  //! smaller then a given threshold is set to a specified value.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class cuda_thres_module : public thres_module<T,Tstate> {
+  public:
+  using thres_module<T,Tstate>::thres;
+  using thres_module<T,Tstate>::val;
+
+  public:
+    //! <thres> is the threshold value that is used to filter the
+    //! input.
+    //! <val> is the value that is used to replace any input entry.
+    //! smaller than <thres>.
+  cuda_thres_module(T thres, T val, int gpu_id_= -1);
+    //! destructor
+    virtual ~cuda_thres_module();
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+  // GPU members /////////////////////////////////////////////////////////////
+  int                 gpu_id; //!< Whether to use gpu or not
+  using module_1_1<T, Tstate>::gpu_support;
+  };
+
 
 
 } // namespace ebl

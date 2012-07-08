@@ -109,6 +109,15 @@ namespace ebl {
     EXPORT void cuda_fsum(idx<float32> &in, 
                           idx<float32> &out, bool div, int devid);
 
+  //! Applies threshold function to the input idx and copies 
+  //  it to the output idx
+  template <typename T>
+    void cuda_threshold(idx<T> &in, idx<T> &out, T thres, T val, int devid);
+  template <>
+    EXPORT void cuda_threshold(idx<float32> &in, 
+                               idx<float32> &out, float32 thres, float32 val,
+                               int devid);
+
 } // namespace ebl
 
 #include "ebl_cudaops.hpp"

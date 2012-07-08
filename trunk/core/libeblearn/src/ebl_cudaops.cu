@@ -1042,6 +1042,48 @@ void ebl::cuda_fsum(idx<float32> &in, idx<float32> &out, bool div, int devid) {
     if (err != cudaSuccess)
       eblerror("Cuda Error:\t" << cudaGetErrorString(err));
 }
+
+////////////////////////////////////////////////////////////////////////////
+///// cuda_threshold
+struct threshold_functor
+{
+  const float thres;
+  const float val;
+  threshold_functor(float thres_, float value_) : val(value_), thres(thres_) {}
+  __host__ __device__ float operator()(const float& x) const { 
+    return (x > thres ? x : val);
+  }
+};
+void ebl::cuda_threshold(idx<float32> &in, 
+                               idx<float32> &out, float32 thres, float32 val,
+                         int devid) {
+  if (!in.contiguousp() || !out.contiguousp())
+      eblerror("Tensor inputs to cuda kernel are not contiguous");
+    if(in.nelements() != out.nelements())
+      eblerror("in and out tensors have different number of elements in addc module");
+    // cout << "Executing on Device " << devid << " (CUDA)"<<endl;
+    if (devid != -1)
+      cudaSetDevice(devid);
+    // copy input on gpu
+    cudaError_t err;
+    float *input_data;
+    cudaMalloc((void**) &input_data, in.nelements() * sizeof(float));
+    cudaMemcpy(input_data, in.idx_ptr(), in.nelements() * sizeof(float), 
+               cudaMemcpyHostToDevice);
+    thrust::device_ptr<float> in_thrustptr(input_data);
+    thrust::transform(in_thrustptr, in_thrustptr + in.nelements(), 
+                      in_thrustptr, threshold_functor(thres, val));
+    cudaMemcpy(out.idx_ptr(), input_data, in.nelements() * sizeof(float), 
+               cudaMemcpyDeviceToHost);
+    // sync & clean
+    cudaDeviceSynchronize();
+    cudaFree(input_data);
+
+    // check for errors
+    err = cudaGetLastError();
+    if (err != cudaSuccess)
+      eblerror("Cuda Error:\t" << cudaGetErrorString(err));
+}
   
 
 } // end namespace ebl
