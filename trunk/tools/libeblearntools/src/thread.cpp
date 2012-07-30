@@ -132,6 +132,8 @@ namespace ebl {
   
   ////////////////////////////////////////////////////////////////
   // thread
+  // Initialize it to satisfy the linker (correct behavior)
+  uint thread::_id_counter=0;
 
   thread::thread(mutex *outmutex, const char *name_, bool sync) 
     : _stop(false), mutout(std::cout, outmutex, _name.c_str()),
