@@ -338,7 +338,7 @@ namespace ebl {
   template<class T1, class T2>
   class ManipInfra {
   public:
-    ManipInfra(idxgui& (*pFun) (idxgui&))
+  ManipInfra(idxgui& (*pFun) (idxgui&))
       : manipFun0(pFun), val1(0), val2(0), nval(0) {}
     ManipInfra(idxgui& (*pFun) (idxgui&, T1), T1 val1_)
       : manipFun1(pFun), val1(val1_), val2(0), nval(1) {}
@@ -371,8 +371,8 @@ namespace ebl {
     int nval;
   };
 
-  template class ManipInfra<int,int>;
-  template class ManipInfra<uint,uint>;
+  inline template class ManipInfra<int,int>;
+  inline template class ManipInfra<uint,uint>;
   EXPORT idxgui& operator<<(idxgui& r, const ManipInfra<uint,uint> &manip);
   EXPORT idxgui& operator<<(idxgui& r, const ManipInfra<int,int> &manip);
 
