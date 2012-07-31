@@ -49,10 +49,9 @@ namespace ebl {
       eblerror("cannot load matrix with " << ndims 
 	       << " dimensions, libidx was compiled to support " << MAXDIMS 
 	       << " at most. Modify MAXDIMS and recompile.");
-    int *dims = matvar->dims;
+    size_t *dims = matvar->dims;
     // allocate matrix
     idxdim d;
-    intg nelements = 1;
     for (uint i = 0; i < ndims; ++i)
       d.insert_dim(i, dims[ndims-i-1]);
     idx<T> m(d);
