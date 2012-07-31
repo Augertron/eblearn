@@ -131,7 +131,7 @@ namespace ebl {
       Mat_VarFree(matvar);
       // create array
       matvar = create_matvar<T>(corrected_in, name);
-      int errcode = Mat_VarWrite(mat, matvar, 0);
+      int errcode = Mat_VarWrite(mat, matvar, MAT_COMPRESSION_NONE);
       if (errcode != 0) 
         eblerror("Unknown Error: Failed write to matlab format");
       // delete array

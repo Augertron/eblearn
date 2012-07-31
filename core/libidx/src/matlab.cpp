@@ -41,11 +41,11 @@ namespace ebl {
   }
   
 
-  int* intgarray_to_intarray(const intg *in, intg order) {
-    int *out = (int *) malloc(sizeof(int) * order);
+  size_t* intg_array_to_size_t_array(const intg *in, intg order) {
+    size_t *out = (size_t *) malloc(sizeof(size_t) * order);
     for (uint i=0; i < order; ++i) {
-      if ( in[i] > INT_MAX ) {
-        eblerror ("MATIO supports dimensions within integer limits only :(");
+      if ( in[i] > INT_MAX || in[i] < 0) {
+        eblerror ("MATIO supports dimensions within unsigned integer limits only :(");
       }
       else
         out[i] = in[i];
@@ -56,7 +56,7 @@ namespace ebl {
 #define CREATE_MATVAR_MACRO(T1, T2, T3)                                 \
   template <>                                                           \
   matvar_t* matlab::create_matvar(idx<T1> in, char* name) {             \
-    int * intdims = intgarray_to_intarray(in.dims(), in.order());       \
+    size_t * intdims = intg_array_to_size_t_array(in.dims(), in.order()); \
     matvar_t* retval = Mat_VarCreate(name, T2, T3,            \
                                    in.order(), intdims, in.idx_ptr(), 0); \
     free(intdims);                                                      \
