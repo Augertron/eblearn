@@ -47,16 +47,34 @@ namespace ebl {
   public:
     //! Constructs a matlab object by loading all headers but does not actually load the data.
     //! \param filename name of the .mat (matlab format) file to be read.
-    matlab(const char *filename);
+    matlab(const char *filename="ebl_matlab.mat");
     //! Close file handle.
     virtual ~matlab();
     //! Loads data of element with name 'name' and returns a matrix of type T
     template <typename T> idx<T> load_matrix(char *name);
+    //! Saves the idx 'in' into file 'filename' with the variable name 'name'
+    template <typename T>
+      void save_matrix(idx<T> in, char *name="eblearn_var");
+
   protected:
-    //! Load and cast data from matlab 'var' with type 'Tmatlab' into 'm' with type 'T'.
+    //! Load and cast data from matlab 'var' with type 'Tmatlab' 
+    //! into 'm' with type 'T'.
     template <typename Tmatlab, typename T>
     void read_cast_matrix(matvar_t *var, idx<T> &m);
-    const char* filename; //!< Loaded filename.
+    //! Creates a 'matvar_t' object that can be written into a 'mat_t' object
+    template <typename T>
+      matvar_t* create_matvar(idx<T> in, char *name);
+    matvar_t* create_matvar(idx<ubyte> in, char *name);
+    matvar_t* create_matvar(idx<int16> in, char *name);
+    matvar_t* create_matvar(idx<uint16> in, char *name);
+    matvar_t* create_matvar(idx<int32> in, char *name);
+    matvar_t* create_matvar(idx<uint32> in, char *name);
+    matvar_t* create_matvar(idx<int64> in, char *name);
+    matvar_t* create_matvar(idx<uint64> in, char *name);
+    matvar_t* create_matvar(idx<float> in, char *name);
+    matvar_t* create_matvar(idx<double> in, char *name);
+  protected:
+    const char* filename; //!<  filename to use
     mat_t *mat; //!< pointer to the opened mat.
   };  
   

@@ -39,7 +39,7 @@ namespace ebl {
   template <typename T>
   idx<T> matlab::load_matrix(char *name) {
     mat = Mat_Open(filename,MAT_ACC_RDONLY);
-    if (mat == NULL) eblerror("null file pointer");  
+    if (mat == NULL) eblerror("file doesn't exist" << filename);  
     // get variable corresponding to name
     matvar_t *matvar = Mat_VarRead(mat, name);
     if (matvar == NULL)
@@ -97,6 +97,47 @@ namespace ebl {
 		transpose_p[i]=num_dims-i-1;
 	    m = m.transpose(transpose_p);
     }
+  }
+
+  template <typename T>
+  matvar_t* create_matvar(idx<T> in, char* name) {
+    eblerror("Unsupported save type");
+  }
+
+  template <typename T>
+  void matlab::save_matrix(idx<T> in, char *name) {
+    idxdim indim = in.get_idxdim();
+    //transpose for dimension correction
+    int num_dims = in.order();
+    if(num_dims>1) {
+	    int *transpose_p = (int*)malloc(sizeof(int) * num_dims); 
+	    for(int i=0;i<num_dims;i++)
+		transpose_p[i]=num_dims-i-1;
+	    in = in.transpose(transpose_p);
+    }
+    idx<T> corrected_in(indim);
+    idx_copy(in, corrected_in);
+    // Open file for writing
+    mat = Mat_Open(filename,MAT_ACC_RDWR);
+    if (mat == NULL) {
+      eblerror("File could not be opened: " << filename);
+    }
+    else {
+      matvar_t *matvar = NULL;
+      // check if var already exists
+      matvar = Mat_VarReadInfo(mat, name);
+      if (matvar != NULL)
+        eblerror("variable name already exists in file:" << filename);
+      Mat_VarFree(matvar);
+      // create array
+      matvar = create_matvar<T>(corrected_in, name);
+      int errcode = Mat_VarWrite(mat, matvar, 0);
+      if (errcode != 0) 
+        eblerror("Unknown Error: Failed write to matlab format");
+      // delete array
+      if (matvar) Mat_VarFree(matvar);
+    }
+    Mat_Close(mat);
   }
 
 } // namespace ebl

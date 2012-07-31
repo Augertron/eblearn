@@ -35,17 +35,43 @@
 #ifdef __MATLAB__
 namespace ebl {
   
-  matlab::matlab(const char* fname) : filename(fname),mat(NULL) {
-    mat = Mat_Open(filename,MAT_ACC_RDONLY);    
-    if (mat == NULL) {
-      eblerror("matfile doesn't exist: " << filename);
-    }
-    else 
-      Mat_Close(mat);
-  }
+  matlab::matlab(const char* fname) : filename(fname),mat(NULL) {}
 
   matlab::~matlab() {
   }
+  
+
+  int* intgarray_to_intarray(const intg *in, intg order) {
+    int *out = (int *) malloc(sizeof(int) * order);
+    for (uint i=0; i < order; ++i) {
+      if ( in[i] > INT_MAX ) {
+        eblerror ("MATIO supports dimensions within integer limits only :(");
+      }
+      else
+        out[i] = in[i];
+    }
+    return out;
+  }
+
+#define CREATE_MATVAR_MACRO(T1, T2, T3)                                 \
+  template <>                                                           \
+  matvar_t* matlab::create_matvar(idx<T1> in, char* name) {             \
+    int * intdims = intgarray_to_intarray(in.dims(), in.order());       \
+    matvar_t* retval = Mat_VarCreate(name, T2, T3,            \
+                                   in.order(), intdims, in.idx_ptr(), 0); \
+    free(intdims);                                                      \
+    return retval;                                                      \
+  }
+
+  CREATE_MATVAR_MACRO(ubyte,  MAT_C_UINT8, MAT_T_UINT8)
+  CREATE_MATVAR_MACRO(uint16, MAT_C_UINT16, MAT_T_UINT16)
+  CREATE_MATVAR_MACRO(uint32, MAT_C_UINT32, MAT_T_UINT32)
+  CREATE_MATVAR_MACRO(uint64, MAT_C_UINT64, MAT_T_UINT64)
+  CREATE_MATVAR_MACRO(int16,  MAT_C_INT16, MAT_T_INT16)
+  CREATE_MATVAR_MACRO(int32,  MAT_C_INT32, MAT_T_INT32)
+  CREATE_MATVAR_MACRO(int64,  MAT_C_INT64, MAT_T_INT64)
+  CREATE_MATVAR_MACRO(float,  MAT_C_SINGLE, MAT_T_SINGLE)
+  CREATE_MATVAR_MACRO(double, MAT_C_DOUBLE, MAT_T_DOUBLE)
 
 } //end of namespace ebl
 

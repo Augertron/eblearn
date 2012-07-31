@@ -236,6 +236,17 @@ add_executable(${NARROW} src/narrow.cpp)
 # link executable with external libraries
 target_link_libraries (${NARROW} idx eblearntools)
 
+# compile executable: ebl2matlab
+################################################################################
+IF (MATIO_FOUND)
+  set(EBL2MATLAB "ebl2matlab${NAME_EXTRA}")
+  add_executable(${EBL2MATLAB} src/ebl2matlab.cpp)
+  # link executable with external libraries
+  target_link_libraries (${EBL2MATLAB} idx eblearntools)
+ELSE (MATIO_FOUND)
+  MESSAGE("__ WARNING: Not generating ebl2matlab because MATIO was not found")
+ENDIF (MATIO_FOUND)
+
 # compile executable: videoffinder
 ################################################################################
 # IF (OpenCV_FOUND) #-------------------------------------------------------------
