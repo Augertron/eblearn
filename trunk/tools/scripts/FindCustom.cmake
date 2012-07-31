@@ -5,8 +5,8 @@
 ################################################################################
 # matio (http://sourceforge.net/projects/matio/)
 # SET(MATIO_FOUND TRUE)
-# SET(MATIO_INCLUDE_DIR "/usr/include/")
-# SET(MATIO_LIBRARIES "/usr/lib/")
+# SET(MATIO_INCLUDE_DIR "/home/sc3104/matio/include")
+# SET(MATIO_LIBRARIES "/home/sc3104/matio/lib/libmatio.so")
 
 
 
