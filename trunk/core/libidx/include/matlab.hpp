@@ -108,20 +108,19 @@ namespace ebl {
     idxdim indim = in.get_idxdim();
     //transpose for dimension correction
     int num_dims = in.order();
-    if(num_dims>1) {
-	    int *transpose_p = (int*)malloc(sizeof(int) * num_dims); 
-	    for(int i=0;i<num_dims;i++)
-		transpose_p[i]=num_dims-i-1;
-	    in = in.transpose(transpose_p);
+    if(num_dims > 1) {
+      int *transpose_p = (int*)malloc(sizeof(int) * num_dims); 
+      for(int i = 0; i < num_dims; i++)
+	transpose_p[i] = num_dims - i - 1;
+      in = in.transpose(transpose_p);
     }
     idx<T> corrected_in(indim);
     idx_copy(in, corrected_in);
     // Open file for writing
-    mat = Mat_Open(filename,MAT_ACC_RDWR);
+    mat = Mat_Open(filename, MAT_FT_MAT73 | MAT_ACC_RDWR);
     if (mat == NULL) {
       eblerror("File could not be opened: " << filename);
-    }
-    else {
+    } else {
       matvar_t *matvar = NULL;
       // check if var already exists
       matvar = Mat_VarReadInfo(mat, name);
