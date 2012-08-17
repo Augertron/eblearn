@@ -359,7 +359,8 @@ namespace ebl {
 	// switch saving behavior
 	fname.str("");
 	fname << folder.str() << filename << ".bg" << i+1;
-	if (!strcmp(save_mode.c_str(), "mat")) { // lush matrix mode
+	if (!strcmp(save_mode.c_str(), "mat") 
+            || !strcmp(save_mode.c_str(), "dynset")) { // lush matrix mode
 	  fname << MATRIX_EXTENSION;
 	  //	  idx<Tdata> patch2 = patch.shift_dim(2, 0);
 	  patch2.shift_dim_internal(2, 0);
@@ -368,7 +369,7 @@ namespace ebl {
 	    throw fname.str();
 	  }
 	} else { // image file mode
-	  eblerror("fix implementation");
+	  eblerror("fix implementation." << save_mode.c_str());
 	  // fname << "." << save_mode;
 	  // idx<Tdata> tmp = patch;
 	  // // scale image to 0 255 if preprocessed
