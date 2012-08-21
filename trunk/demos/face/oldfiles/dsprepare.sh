@@ -17,10 +17,11 @@ meta_email=${myemail}
 # directories
 #dataroot=/data
 #dataroot=~/texieradata
-dataroot=~/humairadata
+dataroot=/misc/vlgscratch1/LecunGroup/sc3104/datasets/vision/
 #dataroot=~/blakeyadata
 pascal=$dataroot/pascal
-pascalroot=$pascal/VOCdevkit_trainval09/VOC2009/
+pascalroot=$pascal/VOCdevkit_trainval09/VOCdevkit/VOC2009/
+pascalroot_annotations=$pascalroot/Annotations/
 root=$dataroot/face/data
 out=$dataroot/face/ds/
 nopersons_root=$dataroot/nopersons/
@@ -35,8 +36,8 @@ max=1000 # number of samples in test AND validation set
 maxtest=500 # number of samples in the test set
 draws=5 # number of train/val sets to draw
 precision=float
-pp=YpUV
-kernel=7 #9
+pp=YnUVn
+kernel=7x7 #9
 resize=mean #bilinear
 nbg=2
 bgscales=8,4,2,1
@@ -111,13 +112,14 @@ mkdir -p "$false_positive_root/bg/"
 # dataset compilations
 ###############################################################################
 
-# # extract background images at different scales from all images parts that
-# # don't contain persons
-# ~/eblearn/bin/dscompile $pascalroot -type pascalbg -precision $precision \
-#     -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
-#     -maxperclass $nbg $maxdata -include "person" \
-#     -channels $pp -resize $resize -kernelsz $kernel \
-#     $maxdata $ddisplay # debug
+# extract background images at different scales from all images parts that
+# don't contain persons
+~/ebltrunk/bin/dscompile $pascalroot -type pascalbg -precision $precision \
+    -outdir $outbg/bg -scales $bgscales -dims ${h}x${w}x3 \
+    -maxperclass $nbg $maxdata -include "person" \
+    -channels $pp -resize $resize -kernelsz $kernel \
+    $maxdata $ddisplay -annotations $pascalroot_annotations
+# debug
 
 # # # extract faces from pascal
 # # ~/eblearn/bin/dscompile $pascalroot -type pascal -precision $precision \
@@ -184,33 +186,33 @@ mkdir -p "$false_positive_root/bg/"
 #     -dims ${h}x${w}x3 \
 #     $maxdata $maxperclass $ddisplay # debug
 
-# merge normal dataset with background dataset
-~/eblearn/bin/dsmerge $out ${all_fp} ${fp_name} ${namebg}
+# # merge normal dataset with background dataset
+# ~/eblearn/bin/dsmerge $out ${all_fp} ${fp_name} ${namebg}
 
-# split dataset into training and {validation/test}
-~/eblearn/bin/dssplit $out ${all_fp} \
-    ${all_fp}_testval_${maxtest}_ \
-    ${all_fp}_train_${maxtest}_ -maxperclass ${max} -draws $draws
+# # split dataset into training and {validation/test}
+# ~/eblearn/bin/dssplit $out ${all_fp} \
+#     ${all_fp}_testval_${maxtest}_ \
+#     ${all_fp}_train_${maxtest}_ -maxperclass ${max} -draws $draws
 
-# split validation and test
-for i in `seq 1 ${draws}`
-do
-~/eblearn/bin/dssplit $out ${all_fp}_testval_${maxtest}_$i \
-    ${all_fp}_test_${maxtest}_$i \
-    ${all_fp}_val_${maxtest}_$i -maxperclass ${maxtest} -draws 1
-done
+# # split validation and test
+# for i in `seq 1 ${draws}`
+# do
+# ~/eblearn/bin/dssplit $out ${all_fp}_testval_${maxtest}_$i \
+#     ${all_fp}_test_${maxtest}_$i \
+#     ${all_fp}_val_${maxtest}_$i -maxperclass ${maxtest} -draws 1
+# done
 
-# print out information about extracted datasets to check that their are ok
-~/eblearn/bin/dsdisplay $out/${all_fp} -info
+# # print out information about extracted datasets to check that their are ok
+# ~/eblearn/bin/dsdisplay $out/${all_fp} -info
 
-###############################################################################
-# reporting
-###############################################################################
+# ###############################################################################
+# # reporting
+# ###############################################################################
 
-# email yourself the results
-here=`pwd`
-base="`basename ${here}`"
-tgz_name="logs_${base}.tgz"
-tar czvf ${tgz_name} out*.log
-cat $0 | mutt $meta_email -s "face dsprepare" -a ${tgz_name}
+# # email yourself the results
+# here=`pwd`
+# base="`basename ${here}`"
+# tgz_name="logs_${base}.tgz"
+# tar czvf ${tgz_name} out*.log
+# cat $0 | mutt $meta_email -s "face dsprepare" -a ${tgz_name}
 
