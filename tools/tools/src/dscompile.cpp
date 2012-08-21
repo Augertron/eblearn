@@ -757,7 +757,7 @@ void compile() {
   // shuffle
   if (shuffle) ds->shuffle();
   // save dataset
-  if (save_set) {
+  if (save_set && !scale_mode) {
     if (force_label) ds->set_unique_label(label);
     ds->set_name(dataset_name);
     //ds->set_save(DYNSET_SAVE);
