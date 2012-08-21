@@ -74,7 +74,7 @@ namespace ebl {
 
   template <class Tdata>
   bool patch_dataset<Tdata>::
-  add_data(idx<Tdata> &img, const t_label label,
+  add_data(midx<Tdata> &mimg, const t_label label,
 	   const string *class_name, const char *filename, const rect<int> *r,
 	   pair<int,int> *center, const rect<int> *visr,
 	   const rect<int> *cropr, const vector<object*> *objs,
@@ -84,6 +84,7 @@ namespace ebl {
     string cname = "patch";
     ostringstream fname;
     vector<idx<Tdata> > patches;
+    idx<Tdata> img  = mimg.get(0);
     
     // check for capacity
     if (this->full(label)) // reached full capacity
@@ -178,11 +179,14 @@ namespace ebl {
 	fname.str("");
 	fname << folder.str() << "img_" << setw(5) << setfill('0') << data_cnt 
 	      << "_bg" << i+1 << "_scale" << scale;
-	if (!strcmp(save_mode.c_str(), "mat")) { // lush matrix mode
-	  fname << MATRIX_EXTENSION;
-	  if (!save_matrix(patches[i], fname.str()))
-	    throw fname.str();
-	} else { // image file mode
+	if (!strcmp(save_mode.c_str(), "mat") 
+            || !strcmp(save_mode.c_str(), "dataset") 
+            || !strcmp(save_mode.c_str(), "dynset") )
+          { // lush matrix mode
+            fname << MATRIX_EXTENSION;
+            if (!save_matrix(patches[i], fname.str()))
+              throw fname.str();
+          } else { // image file mode
 	  fname << "." << save_mode;
 	  idx<Tdata> tmp = patches[i];
 	  // // scale image to 0 255 if preprocessed

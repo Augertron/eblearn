@@ -66,7 +66,7 @@ namespace ebl {
     // data
  
     //! Extract patches from image.
-    virtual bool add_data(idx<Tdata> &d, const t_label label,
+    virtual bool add_data(midx<Tdata> &d, const t_label label,
 			  const string *class_name,
 			  const char *filename = NULL,
 			  const rect<int> *r = NULL,
