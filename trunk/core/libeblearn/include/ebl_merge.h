@@ -144,6 +144,9 @@ namespace ebl {
     virtual void bprop(mstate<Tstate> &in, Tstate &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(mstate<Tstate> &in, Tstate &out);
+    //! Calls fprop and then dumps internal buffers, inputs and outputs
+    //! into files. This can be useful for debugging.
+    virtual void dump_fprop(mstate<Tstate> &in, Tstate &out);
 
     ///////////////////////////////////////////////////////////////////////////
     //! Returns a string describing this module and its parameters.
@@ -221,6 +224,9 @@ namespace ebl {
     virtual void bprop(mstate<Tstate> &in, mstate<Tstate> &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(mstate<Tstate> &in, mstate<Tstate> &out);
+    //! Calls fprop and then dumps internal buffers, inputs and outputs
+    //! into files. This can be useful for debugging.
+    virtual void dump_fprop(mstate<Tstate> &in, mstate<Tstate> &out);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
     //! Returns a deep copy of current module.

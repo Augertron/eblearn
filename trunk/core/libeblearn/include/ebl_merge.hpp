@@ -462,6 +462,15 @@ namespace ebl {
   }
 
   template <typename T, class Tstate>
+  void linear_merge_module<T, Tstate>::dump_fprop(mstate<Tstate> &in, 
+						  Tstate &out) {
+    for (uint i = 0; i < in.size(); ++i)
+      DUMP(in[i].x, this->name() << "_linear_merge_module_in[" << i << "].x");
+    fprop(in, out);
+    DUMP(out.x, this->name() << "_linear_merge_module_out.x");
+  }
+
+  template <typename T, class Tstate>
   std::string linear_merge_module<T, Tstate>::describe() {
     std::string desc;
     desc << "linear_merge module " << this->name() << ", merging "
@@ -740,6 +749,12 @@ namespace ebl {
       // merge them
       merge_ddx(mi, out[i]);
     }
+  }
+
+  template <typename T, class Tstate>
+  void merge_module<T, Tstate>::dump_fprop(mstate<Tstate> &in, 
+					   mstate<Tstate> &out) {
+    fprop(in, out);
   }
 
   template <typename T, class Tstate>

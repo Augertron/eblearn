@@ -71,7 +71,8 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   template <typename T, class Tstate>
-  tanh_module<T,Tstate>::tanh_module() : module_1_1<T,Tstate>("tanh") {}
+  tanh_module<T,Tstate>::tanh_module(const char *name_)
+  : module_1_1<T,Tstate>(name_) {}
 
   template <typename T, class Tstate>
   tanh_module<T,Tstate>::~tanh_module() {}
@@ -95,6 +96,13 @@ namespace ebl {
     idx_dtanh(in.x, tmp);
     idx_mul(tmp, tmp, tmp);
     idx_mulacc(tmp, out.ddx, in.ddx);
+  }
+
+  template <typename T, class Tstate>
+  void tanh_module<T, Tstate>::dump_fprop(Tstate &in, Tstate &out) {
+    DUMP(in.x, this->name() << "_tanh_module_in.x");
+    fprop(in, out);
+    DUMP(out.x, this->name() << "_tanh_module_out.x");
   }
 
   template <typename T, class Tstate>

@@ -322,7 +322,7 @@ namespace ebl {
 	}
 	break ;
       default:
-	eblerror("unsupported mode");
+	eblerror("unsupported mode " << mode);
       }
       // find closest multiple of target area that is smaller than input area
       // (smaller to avoid upsampling)

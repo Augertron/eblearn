@@ -1652,6 +1652,7 @@ namespace ebl {
 	resizepp->set_output_copy(ppinputs[i]);
       // fprop
       mstate<Tstate> &out = outputs[i];
+      //      thenet.dump_fprop(*input, out);
       thenet.fprop(*input, out);
       get_corners(out, i, true);
       EDEBUG_MAT("detector outputs:", (out[0].x));

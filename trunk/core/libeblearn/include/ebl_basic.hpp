@@ -166,8 +166,8 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void linear_module<T, Tstate>::dump_fprop(Tstate &in, Tstate &out) {
-    fprop(in, out);
     DUMP(in.x, this->name() << "_linear_module_in.x");
+    fprop(in, out);
     DUMP(w.x, this->name() << "_linear_module_weights");
   }
 
@@ -252,6 +252,8 @@ namespace ebl {
   void convolution_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
     if (!convolution_module<T, Tstate>::resize_output(in, out))
       return ; // do nothing if resizing failed
+    EDEBUG_MAT(this->name() << ": kernel", kernel.x);
+    EDEBUG_MAT(this->name() << ": table", table);
     // inx = input tensor over which the kernel has to be applied
     idx<T> inx = in.x;
     // temporarly crop input if mismatch in size
@@ -625,10 +627,10 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void convolution_module<T, Tstate>::dump_fprop(Tstate &in, Tstate &out) {
-    fprop(in, out);
     DUMP(in.x, this->name() << "_convolution_module_in.x");
     DUMP(kernel.x, this->name() << "_convolution_module_ker.x");
     DUMP(table, this->name() << "_convolution_module_table");
+    fprop(in, out);
     DUMP(out.x, this->name() << "_convolution_module_out.x");
   }
 
@@ -731,9 +733,9 @@ namespace ebl {
 
   template <typename T, class Tstate>
   void addc_module<T,Tstate>::dump_fprop(Tstate& in, Tstate& out) {
-    fprop(in, out);
     DUMP(in.x, this->name() << "_addc_module_in.x");
     DUMP(bias.x, this->name() << "_addc_module_weights");
+    fprop(in, out);
     DUMP(out.x, this->name() << "_addc_module_out.x");
   }
 
@@ -1526,6 +1528,14 @@ namespace ebl {
       idx_dotcacc(odd, c.get() * c.get(), idd); // bprop to input
       idx_m2squdotm2acc(i, odd, cdd); // bprop to weights
     }
+  }
+
+  template <typename T, class Tstate>
+  void diag_module<T, Tstate>::dump_fprop(Tstate &in, Tstate &out) {
+    DUMP(in.x, this->name() << "_diag_module_in.x");
+    DUMP(coeff.x, this->name() << "_diag_module_coeff");
+    fprop(in, out);
+    DUMP(out.x, this->name() << "_diag_module_out.x");
   }
 
   template <typename T, class Tstate>

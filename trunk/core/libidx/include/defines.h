@@ -35,6 +35,9 @@
 
 #ifdef __ANDROID__
 #define __NOSTL__
+#else
+#include <iostream>
+#include <iomanip>
 #endif
 
 #include "config.h"
@@ -75,8 +78,9 @@
 #define __DEBUG_PRINT__
 #define EDEBUG(s) std::cout << s << std::endl;
 #define EDEBUG_MAT(s, m) \
-  std::cout << s << " " << m << " min " << idx_min(m) \
-  << " max " << idx_max(m) << " mean " << idx_mean(m) << std::endl;
+  std::cout << s << " " << m << setprecision(20) << " min " << idx_min(m) \
+  << " max " << idx_max(m) << " mean " << idx_mean(m) << " sum " << idx_sum(m) \
+  << std::endl;
 #define MEDEBUG(s) mout << s << std::endl;
 #else
 #define EDEBUG(s)

@@ -580,6 +580,9 @@ namespace ebl {
     virtual void bprop(Tstate &in, Tstate &out);
     //! second-derivative backward propagation from out to in
     virtual void bbprop(Tstate &in, Tstate &out);
+    //! Calls fprop and then dumps internal buffers, inputs and outputs
+    //! into files. This can be useful for debugging.
+    virtual void dump_fprop(Tstate &in, Tstate &out);
     //! resize the output based on input dimensions
     //! This returns true if output was resized/reallocated, false otherwise.
     virtual bool resize_output(Tstate &in, Tstate &out);

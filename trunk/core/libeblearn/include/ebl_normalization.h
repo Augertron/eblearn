@@ -156,13 +156,14 @@ namespace ebl {
     //!   in addition to spatial dimensions.
     //! \param learn_mean If true, learn mean weighting.
     //! \param cgauss Gaussian kernel coefficient.
+    //! \param valid If true, perform a valid convolution rather than a 'same' one.
     subtractive_norm_module(idxdim &kerdim, int nf, bool mirror = false,
 			    bool global_norm = false,
 			    parameter<T,Tstate> *p = NULL,
 			    const char *name = "subtractive_norm",
 			    bool across_features = true,
 			    double cgauss = 2.0, bool fsum_div = false,
-			    float fsum_split = 1.0);
+			    float fsum_split = 1.0, bool valid = false);
     //! destructor
     virtual ~subtractive_norm_module();    
     //! forward propagation from in to out
@@ -198,7 +199,7 @@ namespace ebl {
     //! Common initializations.
     virtual void init(idxdim &kerdim_, int nf, bool mirror, bool global_norm, 
 		      parameter<T,Tstate> *param_, bool af, double cgauss, 
-		      bool fsum_div, float fsum_split_);
+		      bool fsum_div, float fsum_split_, bool valid);
     //! Copies and replicates kernel into divconv.
     virtual void set_kernel(idx<T> &kernel);
 
@@ -220,6 +221,7 @@ namespace ebl {
     bool                	  mirror; //!< mirror input or not.
     double                        cgauss; //!< Gaussian coefficient.
     bool                          fsum_div, fsum_split;  
+    bool                          valid;
   };
 
   //////////////////////////////////////////////////////////////////////////////
@@ -241,6 +243,7 @@ namespace ebl {
     //!   in addition to spatial dimensions.
     //! \param learn_mean If true, learn mean weighting.
     //! \param cgauss Gaussian kernel coefficient.
+    //! \param valid If true, perform a valid convolution rather than a 'same' one.
     contrast_norm_module(idxdim &kerdim, int nf, bool mirror = false,
 			 bool threshold = true, bool global_norm = false,
 			 parameter<T,Tstate> *p = NULL,
@@ -248,7 +251,7 @@ namespace ebl {
 			 bool across_features = true, bool learn_mean = false,
 			 double cnorm = 2.0, bool fsum_div = false,
 			 float fsum_split = 1.0, double epsilon = NORM_EPSILON,
-			 double epsilon2 = 0.0);
+			 double epsilon2 = 0.0, bool valid = false);
     //! destructor
     virtual ~contrast_norm_module();    
     //! forward propagation from in to out

@@ -38,8 +38,9 @@
 namespace ebl {
 
   template <typename T, class Tstate>
-  cuda_tanh_module<T,Tstate>::cuda_tanh_module(int gpu_id_) 
-  : tanh_module<T,Tstate>(), gpu_id(gpu_id_) {
+  cuda_tanh_module<T,Tstate>::cuda_tanh_module(const char *name_, int gpu_id_) 
+  : tanh_module<T,Tstate>(name_), gpu_id(gpu_id_) {
+    this->_name << "_cuda";
     // check precision to decide if we use CUDA or not
     fstate_idx<float> *cont = dynamic_cast<fstate_idx<float>*>(&temp);
     if (!cont) eblerror("cuda_tanh_module needs float precision");

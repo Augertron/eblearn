@@ -60,6 +60,11 @@ namespace ebl {
   public:
     channels_module(bool global_norm = true, const char *name = "channels");
     virtual ~channels_module();
+    //! Implement empty backprop, assuming training is not needed prior 
+    //! preprocessing.
+    virtual void bprop(Tstate &in, Tstate &out) {};
+    virtual void bbprop(Tstate &in, Tstate &out) {};
+  
   protected:
     //! Resize the output based on input dimensions
     //! \param dim0 An optional size for the first dimension. Set it to 1
