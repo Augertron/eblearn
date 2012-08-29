@@ -313,6 +313,10 @@ namespace ebl {
     // preprocessing //////////////////////////////////////////////////////
     else if (!type.compare("rgb_to_ypuv") || !type.compare("rgb_to_ynuv")
 	     || !type.compare("rgb_to_yp") || !type.compare("rgb_to_yn")
+	     || !type.compare("rgb_to_yuvp") || !type.compare("rgb_to_yuvn")
+	     || !type.compare("rgb_to_ypuvp") || !type.compare("rgb_to_ynuvn")
+	     || !type.compare("rgb_to_ypupvp") || !type.compare("rgb_to_ynunvn")
+	     || !type.compare("rgb_to_rgbp") || !type.compare("rgb_to_rgbn")
 	     || !type.compare("y_to_yp")) {
       // get parameters for normalization
       string skernel; idxdim kernel;
@@ -334,6 +338,22 @@ namespace ebl {
 	module = (module_1_1<T,Tstate>*)
 	  new rgb_to_yn_module<T,Tstate>(kernel, mirror, mode, globn, 
 					 eps, eps2);
+      } else if (!type.compare("rgb_to_yuvp") || !type.compare("rgb_to_yuvn")) {
+	module = (module_1_1<T,Tstate>*)
+	  new rgb_to_yuvn_module<T,Tstate>(kernel, mirror, mode, globn, 
+					   eps, eps2);
+      } else if (!type.compare("rgb_to_ypuvp") || !type.compare("rgb_to_ynuvn")) {
+	module = (module_1_1<T,Tstate>*)
+	  new rgb_to_ynuvn_module<T,Tstate>(kernel, mirror, mode, globn, 
+					   eps, eps2);
+      } else if (!type.compare("rgb_to_ypupvp") || !type.compare("rgb_to_ynunvn")) {
+	module = (module_1_1<T,Tstate>*)
+	  new rgb_to_ynunvn_module<T,Tstate>(kernel, mirror, mode, globn, 
+					   eps, eps2);
+      } else if (!type.compare("rgb_to_rgbp") || !type.compare("rgb_to_rgbn")) {
+	module = (module_1_1<T,Tstate>*)
+	  new rgb_to_rgbn_module<T,Tstate>(kernel, mirror, mode, globn, 
+					   eps, eps2);
       } else if (!type.compare("y_to_yp")) {
 	module = (module_1_1<T,Tstate>*)
 	  new y_to_yp_module<T,Tstate>(kernel, mirror, mode, globn, eps, eps2);
@@ -845,6 +865,7 @@ namespace ebl {
       bool learn = false, learn_mean = false, fsum_div = false;
       double cgauss = 2.0, epsilon = NORM_EPSILON, epsilon2 = 0;
       float fsum_split = 1.0;
+      bool valid = false;
       if (!get_param(conf, name, "kernel", skernel)) return NULL;
       idxdim ker = string_to_idxdim(skernel);
       // set optional number of features (default is 'thick')
@@ -856,6 +877,7 @@ namespace ebl {
       get_param(conf, name, "fsum_split", fsum_split, true);
       get_param(conf, name, "epsilon", epsilon, true);
       get_param(conf, name, "epsilon2", epsilon2, true);
+      get_param(conf, name, "valid", valid, true);
       // normalization modules
       if (!type.compare("wstd") || !type.compare("cnorm")) {
 #ifdef __CUDA__
@@ -867,13 +889,13 @@ namespace ebl {
 	module = (module_1_1<T,Tstate>*) new cuda_contrast_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), true, false,
 	   learn ? &theparam : NULL, name.c_str(), true, learn_mean, cgauss,
-	   fsum_div, fsum_split, epsilon, epsilon2, gpu_id_m);
+	   fsum_div, fsum_split, epsilon, epsilon2, gpu_id_m, valid);
       else
 #endif
 	module = (module_1_1<T,Tstate>*) new contrast_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), true, false,
 	   learn ? &theparam : NULL, name.c_str(), true, learn_mean, cgauss,
-	   fsum_div, fsum_split, epsilon, epsilon2);
+	   fsum_div, fsum_split, epsilon, epsilon2, valid);
       }
       else if (!type.compare("snorm")) {
 #ifdef __CUDA__
@@ -885,13 +907,13 @@ namespace ebl {
 	module = (module_1_1<T,Tstate>*) new cuda_subtractive_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), false,
 	   learn ? &theparam : NULL, name.c_str(), true, cgauss,
-	   fsum_div, fsum_split, gpu_id_m);
+	   fsum_div, fsum_split, gpu_id_m, valid);
       else
 #endif
 	module = (module_1_1<T,Tstate>*) new subtractive_norm_module<T,Tstate>
 	  (ker, wthick, conf.exists_true("mirror"), false,
 	   learn ? &theparam : NULL, name.c_str(), true, cgauss,
-	   fsum_div, fsum_split);
+	   fsum_div, fsum_split, valid);
       }
       else if (!type.compare("dnorm")) {
 #ifdef __CUDA__
@@ -946,10 +968,12 @@ namespace ebl {
       get_param(conf, name, "use_gpu", use_gpu_m, true);
       get_param(conf, name, "gpu_id", gpu_id_m, true);
       if (use_gpu_m)
-        module = (module_1_1<T,Tstate>*) new cuda_tanh_module<T,Tstate>(gpu_id_m);
+        module = (module_1_1<T,Tstate>*) 
+	  new cuda_tanh_module<T,Tstate>(name.c_str(), gpu_id_m);
       else
 #endif
-        module = (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>();
+        module = (module_1_1<T,Tstate>*) 
+	  new tanh_module<T,Tstate>(name.c_str());
     }
     // stdsig //////////////////////////////////////////////////////////////
     else if (!type.compare("stdsig"))

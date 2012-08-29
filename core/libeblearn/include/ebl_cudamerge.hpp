@@ -79,6 +79,10 @@ namespace ebl {
     LOCAL_TIMING_START(); // profiling
     EDEBUG(this->name() << " (linear merge): " << in << ", wins: " << dins2 
 	   << ", strides: " << strides << ", scales: " << scales);
+#ifdef __DEBUG__
+    for (uint i = 0; i < in.size(); ++i)
+      EDEBUG_MAT("input " << i << ": ", (in[i].x));
+#endif
 
     if (in.size() != convs.size())
       eblerror("expected " << convs.size() << " inputs but got "

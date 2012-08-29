@@ -125,13 +125,15 @@ namespace ebl {
     //!   in addition to spatial dimensions.
     //! \param learn_mean If true, learn mean weighting.
     //! \param cgauss Gaussian kernel coefficient.
+    //! \param valid If true, perform a valid convolution rather than a 'same' one.
     cuda_subtractive_norm_module(idxdim &kerdim, int nf, bool mirror = false,
 				 bool global_norm = false,
 				 parameter<T,Tstate> *p = NULL,
 				 const char *name = "subtractive_norm",
 				 bool across_features = true,
 				 double cgauss = 2.0, bool fsum_div = false,
-				 float fsum_split = 1.0, int gpu_id_ = -1);
+				 float fsum_split = 1.0, int gpu_id_ = -1,
+				 bool valid = false);
     //! destructor
     virtual ~cuda_subtractive_norm_module();    
     //! Returns a deep copy of this module.
@@ -186,6 +188,7 @@ namespace ebl {
     //!   in addition to spatial dimensions.
     //! \param learn_mean If true, learn mean weighting.
     //! \param cgauss Gaussian kernel coefficient.
+    //! \param valid If true, perform a valid convolution rather than a 'same' one.
     cuda_contrast_norm_module(idxdim &kerdim, int nf, bool mirror = false,
 			      bool threshold = true, bool global_norm = false,
 			      parameter<T,Tstate> *p = NULL,
@@ -195,7 +198,8 @@ namespace ebl {
 			      double cnorm = 2.0, bool fsum_div = false,
 			      float fsum_split = 1.0, 
 			      double epsilon = NORM_EPSILON, 
-			      double epsilon2 = 0, int gpu_id = -1);
+			      double epsilon2 = 0, int gpu_id = -1,
+			      bool valid = false);
     //! destructor
     virtual ~cuda_contrast_norm_module();    
     //! Returns a deep copy of this module.

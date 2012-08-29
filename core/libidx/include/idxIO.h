@@ -64,8 +64,9 @@ extern std::string dump_prefix;
 #define DUMP(mat, fname) {						\
     std::string n = DUMP_ROOT;						\
     mkdir_full(n);							\
-    n << dump_prefix << (dump_count < 10? "00": (dump_count < 100? "0":"")) \
-      << dump_count << "_" << fname << "_" << mat << ".mat";		\
+    /*    n << dump_prefix << (dump_count < 10? "00": (dump_count < 100? "0":""))*/ \
+    /*  << dump_count << "_" << fname << "_" << mat << ".mat";*/	\
+    n << fname << "_" << mat << ".mat";		\
     dump_count = dump_count + 1;					\
     if (save_matrix(mat, n))						\
       cout << "Dumped " << n << " (min " << idx_min(mat)		\

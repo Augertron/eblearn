@@ -87,6 +87,8 @@ namespace ebl {
   void cuda_convolution_module<T, Tstate>::fprop(Tstate &in, Tstate &out) {
     if (!convolution_module<T, Tstate>::resize_output(in, out))
       return ; // do nothing if resizing failed
+    EDEBUG_MAT(this->name() << ": kernel", kernel.x)
+    EDEBUG_MAT(this->name() << ": table", table);
     // inx = input tensor over which the kernel has to be applied
     idx<T> inx = in.x;
 

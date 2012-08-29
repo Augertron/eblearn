@@ -31,12 +31,13 @@ void ebl_preprocessing_test::test_resizing() {
   idx<float> im = load_image<float>(path);
   path = ""; path << *gl_data_dir << "/2008_007714.jpg";
   idx<float> imbird = load_image<float>(path);
+  bool glob_norm = false;
   idxdim kd(9, 9), ind(100, 300), kd5(5, 5);
-  rgb_to_yn_module<fs(float)> pp(kd);
-  rgb_to_yn_module<fs(float)> ppl(kd, true, LAPLACIAN_NORM);
-  rgb_to_yn_module<fs(float)> pp5(kd5);
-  rgb_to_ynuv_module<fs(float)> ppuv(kd);
-  rgb_to_ynuv_module<fs(float)> ppuv5(kd5);
+  rgb_to_yn_module<fs(float)> pp(kd, false, WSTD_NORM, glob_norm);
+  rgb_to_yn_module<fs(float)> ppl(kd, true, LAPLACIAN_NORM, glob_norm);
+  rgb_to_yn_module<fs(float)> pp5(kd5, false, WSTD_NORM, glob_norm);
+  rgb_to_ynuv_module<fs(float)> ppuv(kd, false, WSTD_NORM, glob_norm);
+  rgb_to_ynuv_module<fs(float)> ppuv5(kd5, false, WSTD_NORM, glob_norm);
   rgb_to_y_module<fs(float)> ppy;
   rgb_to_yuv_module<fs(float)> ppyuv;
   rgb_to_hp_module<fs(float)> pph(kd);

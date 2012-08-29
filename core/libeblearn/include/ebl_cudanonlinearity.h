@@ -39,13 +39,14 @@
 #ifdef __CUDA__
 
 namespace ebl {
-    ////////////////////////////////////////////////////////////////
+  
+  ////////////////////////////////////////////////////////////////
   //! a slab of cuda_tanh
   template <typename T, class Tstate = bbstate_idx<T> >
     class cuda_tanh_module: public tanh_module<T,Tstate> {
   public:
     //! default constructor
-  cuda_tanh_module(int gpu_id_ = -1);
+    cuda_tanh_module(const char *name = "tanh", int gpu_id_ = -1);
     virtual ~cuda_tanh_module();
     //! fprop from in to out
     void fprop(Tstate &in, Tstate &out);

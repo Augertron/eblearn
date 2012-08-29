@@ -66,7 +66,7 @@ namespace ebl {
     class tanh_module: public module_1_1<T,Tstate> {
   public:
     //! default constructor
-    tanh_module();
+    tanh_module(const char *name = "tanh");
     virtual ~tanh_module();
     //! fprop from in to out
     void fprop(Tstate &in, Tstate &out);
@@ -74,6 +74,9 @@ namespace ebl {
     void bprop(Tstate &in, Tstate &out);
     //! bbprop
     void bbprop(Tstate &in, Tstate &out);
+    //! Calls fprop and then dumps internal buffers, inputs and outputs
+    //! into files. This can be useful for debugging.
+    virtual void dump_fprop(Tstate &in, Tstate &out);
     //! Returns a deep copy of this module.
     virtual tanh_module<T,Tstate>* copy();
   protected:

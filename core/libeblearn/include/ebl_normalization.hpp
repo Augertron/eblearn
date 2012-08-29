@@ -57,7 +57,7 @@ namespace ebl {
 	 fsum_split_, epsilon_, epsilon2_);
     // local initializations
     divconv = new convolution_module<T,Tstate>
-      (param, kerdim, stride, conv_table, "divnorm_conv");
+      (param, kerdim, stride, conv_table, name_);
     set_kernel(gaussian_kernel);
     convvar.add_module(divconv);
     //! feature sum module to sum along features 
@@ -260,14 +260,14 @@ namespace ebl {
   subtractive_norm_module(idxdim &kerdim_, int nf, bool mirror_,
 			  bool global_norm_, parameter<T,Tstate> *param_,
 			  const char *name_, bool af, double cgauss_,
-			  bool fsum_div_, float fsum_split_)
-    : module_1_1<T,Tstate>(name_), convmean(true, name_) {
+			  bool fsum_div_, float fsum_split_, bool valid_)
+    : module_1_1<T,Tstate>(name_), convmean(true, name_), valid(valid_) {
     // common initializations
     init(kerdim_, nf, mirror_, global_norm_, param_, af, cgauss_, fsum_div_, 
-	 fsum_split_);
+	 fsum_split_, valid);
     // local initializations
     meanconv = new convolution_module<T,Tstate>
-      (param, kerdim, stride, conv_table, "subnorm_conv");
+      (param, kerdim, stride, conv_table, name_);
     set_kernel(gaussian_kernel);
     convmean.add_module(meanconv);
     //! feature sum module to sum along features 
@@ -281,7 +281,7 @@ namespace ebl {
   void subtractive_norm_module<T,Tstate>::
   init(idxdim &kerdim_, int nf, bool mirror_, bool global_norm_, 
        parameter<T,Tstate> *param_, bool af, double cgauss_,
-       bool fsum_div_, float fsum_split_) {
+       bool fsum_div_, float fsum_split_, bool valid) {
     param = param_;
     global_norm = global_norm_;
     nfeatures = nf;
@@ -304,7 +304,8 @@ namespace ebl {
       padding = new mirrorpad_module<T,Tstate>
 	((gaussian_kernel.dim(0) - 1)/2, (gaussian_kernel.dim(1) - 1)/2);
     else padding = new zpad_module<T,Tstate>(gaussian_kernel.get_idxdim());
-    convmean.add_module(padding);
+    if (!valid) // do not pad if valid convolution
+      convmean.add_module(padding);
   }
 
   template <typename T, class Tstate>
@@ -338,8 +339,14 @@ namespace ebl {
       idx_std_normalize(in.x, in.x, (T*) NULL);
     // inmean = sum_j (w_j * in_j)
     convmean.fprop(in, inmean);
+    // crop in if valid convolution
+    Tstate cin(in);
+    if (valid) {
+      cin = cin.narrow(1, inmean.x.dim(1), (in.x.dim(1) - inmean.x.dim(1)) / 2);
+      cin = cin.narrow(2, inmean.x.dim(2), (in.x.dim(2) - inmean.x.dim(2)) / 2);
+    }
     // inzmean = in - inmean
-    difmod.fprop(in, inmean, out);
+    difmod.fprop(cin, inmean, out);
     EDEBUG(this->name() << ": out.x " << out.x << " min " << idx_min(out.x)
 	   << " max " << idx_max(out.x));
   }
@@ -349,8 +356,14 @@ namespace ebl {
     // clear derivatives
     inmean.clear_dx();
     convmean.clear_dx();
+    // crop in if valid convolution
+    Tstate cin(in);
+    if (valid) {
+      cin = cin.narrow(1, inmean.x.dim(1), (in.x.dim(1) - inmean.x.dim(1)) / 2);
+      cin = cin.narrow(2, inmean.x.dim(2), (in.x.dim(2) - inmean.x.dim(2)) / 2);
+    }
     // in - mean
-    difmod.bprop(in, inmean, out);
+    difmod.bprop(cin, inmean, out);
     // sum_j (w_j * in_j)
     convmean.bprop(in, inmean);
   }
@@ -360,8 +373,14 @@ namespace ebl {
     // clear derivatives
     inmean.clear_ddx();
     convmean.clear_ddx();
+    // crop in if valid convolution
+    Tstate cin(in);
+    if (valid) {
+      cin = cin.narrow(1, inmean.x.dim(1), (in.x.dim(1) - inmean.x.dim(1)) / 2);
+      cin = cin.narrow(2, inmean.x.dim(2), (in.x.dim(2) - inmean.x.dim(2)) / 2);
+    }
     //! in - mean
-    difmod.bbprop(in, inmean, out);
+    difmod.bbprop(cin, inmean, out);
     //! sum_j (w_j * in_j)
     convmean.bbprop(in, inmean);
   }
@@ -377,7 +396,7 @@ namespace ebl {
   copy(parameter<T,Tstate> *p) {
     subtractive_norm_module<T,Tstate> *d = new subtractive_norm_module<T,Tstate>
       (kerdim, nfeatures, mirror, global_norm, p, this->name(),
-       across_features, cgauss, fsum_div, fsum_split);
+       across_features, cgauss, fsum_div, fsum_split, valid);
     if (!p) // assign same parameter state if no parameters were specified
       d->meanconv->kernel = meanconv->kernel;
     return d;
@@ -390,6 +409,9 @@ namespace ebl {
 	 << " mean weighting and kernel " << meanconv->kernel.x
 	 << ", " << (global_norm ? "" : "not ")
 	 << "using global normalization";
+    if (valid) desc << ", and valid";
+    else desc << ", and same";
+    desc << " convolution";
     return desc;
   }
 
@@ -407,13 +429,20 @@ namespace ebl {
 		       bool gnorm_, parameter<T,Tstate> *param,
 		       const char *name_, bool af, bool lm, double cgauss,
 		       bool fsum_div, float fsum_split, double epsilon,
-		       double epsilon2)
+		       double epsilon2, bool valid)
     : module_1_1<T,Tstate>(name_), learn_mean(lm) {
+    // setting names
+    string sname, dname;
+    if (name_) sname << name_ << "_";
+    if (name_) dname << name_ << "_";
+    sname << "subnorm";
+    dname << "divnorm";
+    // allocating
     subnorm = new subtractive_norm_module<T,Tstate>
-      (kerdim, nf, mirror, gnorm_, lm ? param : NULL, name_, af, cgauss,
-       fsum_div, fsum_split);
+      (kerdim, nf, mirror, gnorm_, lm ? param : NULL, sname.c_str(), af, cgauss,
+       fsum_div, fsum_split, valid);
     divnorm = new divisive_norm_module<T,Tstate>
-      (kerdim, nf, mirror, threshold, param, name_, af, cgauss,
+      (kerdim, nf, mirror, threshold, param, dname.c_str(), af, cgauss,
        fsum_div, fsum_split, epsilon, epsilon2);
   }
 
@@ -472,7 +501,7 @@ namespace ebl {
       (divnorm->kerdim, divnorm->nfeatures, divnorm->mirror, divnorm->threshold,
        global_norm, p, this->name(), divnorm->across_features, learn_mean, 
        divnorm->cgauss, divnorm->fsum_div, divnorm->fsum_split, divnorm->epsilon,
-       divnorm->epsilon2);
+       divnorm->epsilon2, subnorm->valid);
     if (!p) { // assign same parameter state if no parameters were specified
       d->divnorm->divconv->kernel = divnorm->divconv->kernel;
       d->subnorm->meanconv->kernel = subnorm->meanconv->kernel;
