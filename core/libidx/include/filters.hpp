@@ -73,12 +73,14 @@ namespace ebl {
     int xoffset=(int)std::floor(w/2.0);
     int yoffset=(int)std::floor(h/2.0);
     double ymult=(double)xoffset/yoffset;
-    double maxd=sqrt(pow(w-xoffset-1,2)+pow(ymult*(h-yoffset-1),2));
+    double maxd=sqrt(pow((double)(w-xoffset-1),2)
+		     + pow((double) (ymult*(h-yoffset-1)),2));
     //maxd=Math.max(w-xoffset-1,ymult*(h-yoffset-1));
     for (int x=0;x<w;x++){
       for (int y=0;y<h;y++){
 	double t=sigma_scale*sigma
-	  *sqrt(pow(x-xoffset,2)+pow(ymult*(y-yoffset),2))/maxd;
+	  *sqrt(pow((double) (x-xoffset),2)
+		+ pow((double) (ymult*(y-yoffset)),2))/maxd;
 	//t=1.3*sigma*std::max(abs(x-xoffset),abs((y-yoffset)*ymult))/maxd;
 	double v=cons*(1.0-(pow(t,2)/pow(sigma,2)))
 	  *exp((-pow(t,2))/(2*pow(sigma,2)));
