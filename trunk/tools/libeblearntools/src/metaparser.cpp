@@ -831,7 +831,11 @@ namespace ebl {
 	    outp << kvar << ".plot\" using 1:"
 		 << ijob + 2 << " title \"";
 	    if (usefont) outp << "{/" << gpfont;
-	    outp << " " << job;
+	    string title = pairtree::vals_vector[job];
+	    if (i->second.exists("meta_conf_variables"))
+	      title = pairtree::vals_vector[i->second.get_var_id
+					    ("meta_conf_variables")];
+	    outp << " " << title;
 	    if (usefont) outp << "}";
 	    outp << "\" with linespoints " << gpline;
 	  }
@@ -896,16 +900,18 @@ namespace ebl {
     list<string> sticky, watch, keycomb;
     varmaplist best;
     // get list of sticky variables
-    if (conf.exists("meta_sticky_vars")) {
+    if (conf.exists("meta_sticky_vars"))
       sticky = string_to_stringlist(conf.get_string("meta_sticky_vars"));
-      cout << "Sticky variables: " << stringlist_to_string(sticky) << endl;
-    }
     // get list of variables to watch for
-    if (conf.exists("meta_watch_vars")) {
+    if (conf.exists("meta_watch_vars"))
       watch = string_to_stringlist(conf.get_string("meta_watch_vars"));
-      cout << "Variables to watch (ignoring others): " 
-	   << stringlist_to_string(watch) << endl;
-    }
+    // default watch list
+    watch.push_back("meta_conf_variables");
+    // default sticky list
+    sticky.push_back("meta_conf_variables");
+    cout << "Sticky variables: " << stringlist_to_string(sticky) << endl;
+    cout << "Variables to watch (ignoring others): " 
+	 << stringlist_to_string(watch) << endl;
     parse_logs(dir, &sticky, &watch);
     maxiter = get_max_iter();
     if (maxiter_common)

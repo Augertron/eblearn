@@ -352,6 +352,33 @@ namespace ebl {
   }
   
   ////////////////////////////////////////////////////////////////
+  // rgb_to_rgb_module
+
+  template <typename T, class Tstate>
+  rgb_to_rgb_module<T,Tstate>::
+  rgb_to_rgb_module(bool globnorm)
+    : channels_module<T,Tstate>(globnorm, "rgb_to_rgb") {
+  }
+
+  template <typename T, class Tstate>
+  rgb_to_rgb_module<T,Tstate>::~rgb_to_rgb_module() {
+  }
+
+  template <typename T, class Tstate>
+  void rgb_to_rgb_module<T,Tstate>::fprop(Tstate &in, Tstate &out) {
+    this->resize_output(in, out); // resize (iff necessary)
+    // plain copy
+    idx_copy(in.x, out.x);
+    // remove global mean and divide by stddev
+    if (this->globnorm) image_global_normalization(out.x);    
+  }
+
+  template <typename T, class Tstate>
+  rgb_to_rgb_module<T,Tstate>* rgb_to_rgb_module<T,Tstate>::copy() {
+    return new rgb_to_rgb_module<T,Tstate>(this->globnorm);
+  }
+  
+  ////////////////////////////////////////////////////////////////
   // rgb_to_rgbn_module
 
   template <typename T, class Tstate>

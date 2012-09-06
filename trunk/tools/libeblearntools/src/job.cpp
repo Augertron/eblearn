@@ -443,6 +443,8 @@ namespace ebl {
     cmd << "cd " << outdir << " && echo \"job=" << rconf.get_name();
     if (conf.exists("meta_conf_shortname"))
       cmd << " meta_conf_shortname=" << conf.get_string("meta_conf_shortname");
+    if (conf.exists("meta_conf_variables"))
+      cmd << " meta_conf_variables=" << conf.get_string("meta_conf_variables");
     // resume params
     if (resumed_) {
       figure_resume_out();
