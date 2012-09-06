@@ -246,6 +246,22 @@ namespace ebl {
   };
 
   ////////////////////////////////////////////////////////////////
+  // rgb_to_rgb_module
+  //! Simple copy of RGB and global normalization if specified.
+  template <typename T, class Tstate = bbstate_idx<T> >
+    class rgb_to_rgb_module: public channels_module<T,Tstate> {
+  public:
+    //! Constructor.
+    rgb_to_rgb_module(bool globnorm = true);
+    //! destructor
+    virtual ~rgb_to_rgb_module();
+    //! forward propagation from in to out
+    virtual void fprop(Tstate &in, Tstate &out);
+    //! Returns a deep copy of this module (abstract).
+    virtual rgb_to_rgb_module<T,Tstate>* copy();
+  };
+
+  ////////////////////////////////////////////////////////////////
   // rgb_to_rgbn_module
   //! Convert an RGB input into a YUVn output, where YUV is normalized
   //! locally across all channels.

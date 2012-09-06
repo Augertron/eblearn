@@ -362,6 +362,8 @@ namespace ebl {
       module = (module_1_1<T,Tstate>*) new rgb_to_yuv_module<T,Tstate>();
     else if (!type.compare("rgb_to_y"))
       module = (module_1_1<T,Tstate>*) new rgb_to_y_module<T,Tstate>();
+    else if (!type.compare("rgb_to_rgb"))
+      module = (module_1_1<T,Tstate>*) new rgb_to_rgb_module<T,Tstate>();
     else if (!type.compare("mschan")) {
       string snstates;
       if (!get_param(conf, name, "nstates", snstates)) return NULL;
@@ -1280,6 +1282,8 @@ namespace ebl {
     } else if (!strcmp(ppchan, "YUVn")) {
       chanmodule = 
 	new rgb_to_yuvn_module<T,Tstate>(kersz, mir, tn, globnorm, e, e2);
+    } else if (!strcmp(ppchan, "RGB")) {
+      chanmodule = new rgb_to_rgb_module<T,Tstate>(globnorm);
     } else if (!strcmp(ppchan, "RGBn")) {
       chanmodule = 
 	new rgb_to_rgbn_module<T,Tstate>(kersz, mir, tn, globnorm, e, e2);

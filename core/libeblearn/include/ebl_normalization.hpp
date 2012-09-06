@@ -157,6 +157,8 @@ namespace ebl {
     thres.fprop(instd, thstd);
     //! out = in / thstd
     this->invert(in, thstd, out);
+    //! remember output dimensions
+    this->update_outdims(out);
   }
 
   template <typename T, class Tstate>
@@ -347,6 +349,8 @@ namespace ebl {
     }
     // inzmean = in - inmean
     difmod.fprop(cin, inmean, out);
+    //! remember output dimensions
+    this->update_outdims(out);
     EDEBUG(this->name() << ": out.x " << out.x << " min " << idx_min(out.x)
 	   << " max " << idx_max(out.x));
   }
@@ -467,6 +471,8 @@ namespace ebl {
     subnorm->fprop(in, tmp);
     // divisive normalization
     divnorm->fprop(tmp, out);
+    //! remember output dimensions
+    this->update_outdims(out);
   }
 
   template <typename T, class Tstate>
