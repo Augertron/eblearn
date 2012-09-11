@@ -184,7 +184,7 @@ add_executable (${MATSHOW} ${WINTYPE} src/matshow.cpp)
 target_link_libraries (${MATSHOW} idx eblearntools)
 LINK_QT(${MATSHOW} idxgui)
 LINK_QT(${MATSHOW} eblearngui)
-LINK_MAGICKPP(matshow)
+LINK_MAGICKPP(${MATSHOW})
 
 ENDIF (WINDOWS AND NOT QT_FOUND)
 
