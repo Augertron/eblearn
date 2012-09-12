@@ -44,6 +44,7 @@
 #include <sstream>
 #include <vector>
 #include <list>
+#include <map>
 #include <algorithm>
 #endif
 
@@ -257,6 +258,12 @@ namespace std {
   //! Prints a list into a stream.
   template<class T>
     EXPORT ostream& operator<<(ostream &o, const list<T> &v);
+  //! Prints a map into a stream.
+  template <typename T1, typename T2> 
+    EXPORT string& operator<<(string &o, const map<T1,T2> &v);  
+  //! Prints a map into a stream.
+  template <typename T1, typename T2> 
+    EXPORT ostream& operator<<(ostream &o, const map<T1,T2> &v);
   
   ////////////////////////////////////////////////////////////////
   // min/max

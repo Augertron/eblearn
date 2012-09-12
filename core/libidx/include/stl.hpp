@@ -107,6 +107,26 @@ namespace std {
     return o;
   }
 
+  template <typename T1, typename T2> 
+  string& operator<<(string &o, const map<T1,T2> &v) {
+    o << "[ ";
+    for (typename map<T1,T2>::const_iterator i = v.begin(); 
+	 i != v.end(); ++i)
+      o << i->first << "=" << i->second << " ";
+    o << "]";
+    return o;
+  }
+
+  template <typename T1, typename T2> 
+  ostream& operator<<(ostream &o, const map<T1,T2> &v) {
+    o << "[ ";
+    for (typename map<T1,T2>::const_iterator i = v.begin(); 
+	 i != v.end(); ++i)
+      o << i->first << "=" << i->second << " ";
+    o << "]";
+    return o;
+  }
+
   ////////////////////////////////////////////////////////////////
   // vector
 

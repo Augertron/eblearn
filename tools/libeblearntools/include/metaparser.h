@@ -90,9 +90,17 @@ namespace ebl {
     //! Returns the string id of variable 'val'. If not present, 'val' is added
     //! and assigned a new id.
     static uint get_val_id(const string &val);
+    //! Returns the variable string corresponding to id.
+    static string& get_var(uint id);
+    //! Returns the value string corresponding to id.
+    static string& get_val(uint id);
     //! Returns list of ids corresponding to the list of strings 'l'. All strings
     //! are added to static internal members if not assigned yet.
     static list<uint> to_varid_list(list<string> &l);
+    //! Returns the string list corresponding to ids list.
+    static list<string> to_vars(list<uint> &ids);
+    //! Returns the string map corresponding to ids map.
+    static map<string,string> to_pairs(map<uint,uint> &p);
     //! Add variable/value pair to this tree.
     void add(const string &var, string &val);
     //! Add a set of variable/value pairs, organized by the 'subvar'
