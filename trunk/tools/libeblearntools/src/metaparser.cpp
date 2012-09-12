@@ -101,6 +101,20 @@ namespace ebl {
     return get_var_id(s);
   }
 
+  string& pairtree::get_var(uint id) {
+    if (id >= vars_vector.size())
+      eblerror("trying to access elements " << id << " of vector of size " 
+	       << vars_vector.size() << ": " << vars_vector);
+    return vars_vector[id];
+  }
+
+  string& pairtree::get_val(uint id) {
+    if (id >= vals_vector.size())
+      eblerror("trying to access elements " << id << " of vector of size " 
+	       << vals_vector.size() << ": " << vals_vector);
+    return vals_vector[id];
+  }
+
   uint pairtree::get_val_id(const string &val) {
     uint id = 0;
     map<string,uint>::iterator i = vals_map.find(val);
@@ -122,11 +136,26 @@ namespace ebl {
     return ret;
   }
 
+  list<string> pairtree::to_vars(list<uint> &ids) {
+    list<string> ret;
+    for (list<uint>::iterator i = ids.begin(); i != ids.end(); ++i)
+      ret.push_back(get_var(*i));
+    return ret;
+  }
+
+  map<string,string> pairtree::to_pairs(map<uint,uint> &p) {
+    map<string,string> ret;
+    for (map<uint,uint>::iterator i = p.begin(); i != p.end(); ++i)
+      ret[get_var(i->first)] = get_val(i->second);
+    return ret;
+  }
+
   void pairtree::add(const string &var, string &val) {
     vars[get_var_id(var)] = get_val_id(val);
   }
 
   map<uint,uint> pairtree::add(list<uint> &subvar_, map<uint,uint> &ivars) {
+    //    EDEBUG("adding path " << to_vars(subvar_) << " with: " << to_pairs(ivars));
     list<uint> subvar = subvar_;
     uint subval;
     // the path leading to the current node 
@@ -386,15 +415,15 @@ namespace ebl {
   void pairtree::pretty(string offset) {
     string off = offset;
     off += "--";
-    cout << off << " (" << variable << ", " << value << ")" << endl
+    cout << off << " (" << get_var(variable) << ", " 
+	 << get_val(value) << ")" << endl
 	 << off << " vars: ";
     for (map<uint,uint>::iterator i = vars.begin(); i != vars.end(); ++i)
-      cout << "(" << vars_vector[i->first] << ", " << vals_vector[i->second] << ") ";
+      cout << "(" << vars_vector[i->first] << ", " 
+	   << vals_vector[i->second] << ") ";
     cout << endl << off << " subtree:" << endl;
     for (map<uint,pairtree>::iterator i = subtree.begin();
 	 i != subtree.end(); ++i) {
-      cout << off << " (" << vars_vector[subvariable] << ", "
-	   << vars_vector[i->first] << ") " << endl;
       i->second.pretty(off);
     }
   }
@@ -437,9 +466,9 @@ namespace ebl {
 	}
       }
       s << endl;
-      for (map<uint,uint>::iterator j = i->begin();
-	   j != i->end(); ++j)
-	s << vars_vector[j->first] << ": " << vals_vector[j->second] << endl;
+      for (map<uint,uint>::iterator j = i->begin(); j != i->end(); ++j) {
+	s << get_var(j->first) << ": " << get_val(j->second) << endl;
+      }
       s << "________________________________________________________" << endl;
     }
     return s.str();
@@ -584,6 +613,9 @@ namespace ebl {
       tree.add(hierarchy, vars);
     }
     in.close();
+#ifdef __DEBUG__
+    tree.pretty();
+#endif
     return true;
   }
 
@@ -902,13 +934,14 @@ namespace ebl {
     // get list of sticky variables
     if (conf.exists("meta_sticky_vars"))
       sticky = string_to_stringlist(conf.get_string("meta_sticky_vars"));
-    // get list of variables to watch for
-    if (conf.exists("meta_watch_vars"))
-      watch = string_to_stringlist(conf.get_string("meta_watch_vars"));
-    // default watch list
-    watch.push_back("meta_conf_variables");
+//     // get list of variables to watch for
+//     if (conf.exists("meta_watch_vars"))
+//       watch = string_to_stringlist(conf.get_string("meta_watch_vars"));
     // default sticky list
-    sticky.push_back("meta_conf_variables");
+    //    sticky.push_back("meta_conf_variables");
+//     // default watch list
+//     for (list<string>::iterator i = sticky.begin(); i != sticky.end(); ++i)
+//       watch.push_back(*i);
     cout << "Sticky variables: " << stringlist_to_string(sticky) << endl;
     cout << "Variables to watch (ignoring others): " 
 	 << stringlist_to_string(watch) << endl;
@@ -922,6 +955,7 @@ namespace ebl {
     else {
       list<string> keys =
 	string_to_stringlist(conf.get_string("meta_minimize"));
+      EDEBUG("minimizing keys in that order: " << keys);
       // display all (sorted) results if required
       if (displayall) {
 	cout << "All sorted results at iteration " << maxiter << ":" << endl;
