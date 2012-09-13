@@ -199,7 +199,10 @@ int main(int argc, char **argv) {
     if (!resume) jm->prepare(reset_progress);
     if (create) // do not run if creating structure only
       cout << "Not running jobs, only creating directories and files." << endl;
-    else jm->run(force_start);
+    else {
+      cout << "Running..." << endl;
+      jm->run(force_start);
+    }
   }
   delete jm;
   return 0;
