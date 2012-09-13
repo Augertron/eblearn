@@ -259,6 +259,7 @@ namespace ebl {
   // protected members
   
   void mpijob_manager::run_master() {
+    cout << "Running master job." << endl;
 #ifdef __MPI__
     time.start();
     // print info
