@@ -1082,7 +1082,7 @@ namespace ebl {
 	fseek(fp->get_fp(), 0, SEEK_END);
 	fpos_t fppos;
 	fgetpos(fp->get_fp(), &fppos);
-#if defined(__WINDOWS__) || defined(__MAC__)
+#if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
 	eblerror("fseek to position " << offsets.get(i0) << " failed, "
 		 << "file is " << (intg) fppos << " big");
 #else
@@ -1106,7 +1106,7 @@ namespace ebl {
 	fseek(fp->get_fp(), 0, SEEK_END);
 	fpos_t fppos;
 	fgetpos(fp->get_fp(), &fppos);
-#if defined(__WINDOWS__) || defined(__MAC__)
+#if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
 	eblerror("fseek to position " << offsets.get(i0, i1) << " failed, "
 		 << "file is " << (intg) fppos << " big");
 #else

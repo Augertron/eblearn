@@ -40,13 +40,13 @@
 #include <limits>
 #endif
 
-#ifdef __ANDROID__
-#include <math.h>
-#include <float.h>
-#else
+//#ifdef __ANDROID__
+//#include <math.h>
+//#include <float.h>
+//#else
 #include <cfloat>
 #include <cmath>
-#endif
+//#endif
 
 #ifdef __WINDOWS__
 #define isinf(a) (!_finite(a))

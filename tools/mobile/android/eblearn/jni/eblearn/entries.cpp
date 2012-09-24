@@ -36,6 +36,8 @@
 #include "libidx.h"
 #include "libeblearn.h"
 
+INIT_DUMP()
+
 using namespace ebl;
 
 extern "C" {
@@ -141,6 +143,50 @@ extern "C" {
       net_s2h = 2, net_s2w = 2, noutputs = classnames.dim(0);
     bool absnorm = true, color = false, mirror = false, use_tanh = true,
       use_shrink = false, pruning = true;
+
+    // load classes
+    vector<string> sclasses;
+    idx_bloop1(uu, classnames, ubyte) {
+      sclasses.push_back((const char *) uu.idx_ptr());
+    }
+
+    // create answer module
+    bool binary = false, btanh = false;
+    float factor = 1.0;
+    int force = -1, single = -1;
+    idxdim kerd;
+    double sigma_scale = 3;
+    t_confidence tconf = confidence_max;
+    answer_module<t_net, t_net, t_net, fstate_idx<t_net> > *ans = 
+      new class_answer<t_net,t_net,t_net, fstate_idx<t_net> >
+      (noutputs, factor, binary, (t_confidence) tconf, btanh, "class_answer", 
+       force, single, &kerd, sigma_scale);
+
+    // create preprocessing
+    module_1_1<t_net,fstate_idx<t_net> > *chanmodule = NULL;
+    resizepp_module<t_net,fstate_idx<t_net> > *ppmodule = NULL;
+    bool globn = false; // global normalization
+    idxdim norm_dim(norm_size,norm_size);
+    t_norm mode = WSTD_NORM;
+    double eps = NORM_EPSILON, eps2 = 0;
+    if (im.dim(2) == 1) // grayscale input
+      chanmodule = new y_to_yp_module<t_net,fstate_idx<t_net> >(norm_dim, mirror, 
+					      mode, globn, eps, eps2);
+    else if (im.dim(2) == 3) // color input
+      chanmodule = new rgb_to_yn_module<t_net,fstate_idx<t_net> >(norm_dim, mirror, mode, 
+						globn, eps, eps2);
+    else {
+      cerr << "image format not supported: " << im << endl;
+      return -1;
+    }   
+    idxdim d(net_ih, net_iw);
+    uint resize_type = MEAN_RESIZE;
+    bool keep_aspect_ratio = true;
+    ppmodule = new resizepp_module<t_net, fstate_idx<t_net> >(d, resize_type, 
+							      chanmodule, true,
+					       NULL, keep_aspect_ratio);
+
+    // create network
     parameter<t_net, fstate_idx<t_net> > theparam;
     // build net
     lenet_cscsc<t_net, fstate_idx<t_net> >
@@ -149,32 +195,27 @@ extern "C" {
 	  use_shrink);
     // load net
     theparam.load_x(weights);
-    // build preprocessing
-    module_1_1<t_net, fstate_idx<t_net> >* pp = NULL;
-    if (im.dim(2) == 1) // grayscale input
-      pp = new y_to_yp_module<t_net, fstate_idx<t_net> >(norm_size);
-    else if (im.dim(2) == 3) // color input
-      pp = new rgb_to_yp_module<t_net, fstate_idx<t_net> >(norm_size);
-    else {
-      cerr << "image format not supported: " << im << endl;
-      return -1;
-    }
     // build detector
-    detector<t_net, fstate_idx<t_net> > detect(net, classnames, pp, norm_size);
+    detector<t_net, fstate_idx<t_net> > detect(net, sclasses, NULL, ppmodule);
     detect.set_resolutions(scaling, max_scale, min_scale);
     fstate_idx<t_net> input(1,1,1), output(1,1,1);
-    detect.set_mem_optimization(input, output);
+    // detect.set_mem_optimization(input, output);
     detect.set_max_resolution(input_max);
-    detect.set_pruning(pruning);
-    detect.set_bbox_factors(bbhfactor, bbwfactor);
-    detect.set_bbox_overlaps(bbh_overlap, bbw_overlap);
+    // TODO: change pruning to nms calls
+    //detect.set_pruning(pruning);
+    //detect.set_bbox_factors(bbhfactor, bbwfactor);
+    //detect.set_bbox_overlaps(bbh_overlap, bbw_overlap);
     detect.set_zpads(hzpad, wzpad);
     detect.set_silent();
     // detection
     cout << "Detection threshold: " << threshold << endl;
-    vector<bbox*> &bb = detect.fprop(im, threshold);
+    detect.set_outputs_threshold(threshold, -1);
+    // vector<bbox*> &bb = detect.fprop(im);
+    bboxes bb = detect.fprop(im);
+    
     cout << "Detection finished" << endl;
-    detect.pretty_bboxes_short(bb);
+    bb.pretty_short(sclasses);
+    // detect.pretty_bboxes_short(bb);
 
     jclass cls = env->GetObjectClass(jbb);
     jmethodID mid = env->GetMethodID(cls, "add", "(FIIII)V");
@@ -184,7 +225,7 @@ extern "C" {
     }
     bbox *b;
     for (size_t i = 0; i < bb.size(); ++i) {
-      b = bb[i];
+      b = &bb[i];
       env->CallVoidMethod(jbb, mid, b->confidence, b->h0, b->w0, b->height,
 			  b->width);
     }

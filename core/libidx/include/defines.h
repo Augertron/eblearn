@@ -33,12 +33,12 @@
 #ifndef LIBIDX_DEFINES_H_
 #define LIBIDX_DEFINES_H_
 
-#ifdef __ANDROID__
-#define __NOSTL__
-#else
+//#ifdef __ANDROID__
+//#define __NOSTL__
+//#else
 #include <iostream>
 #include <iomanip>
-#endif
+//#endif
 
 #include "config.h"
 
@@ -104,17 +104,17 @@
 ////////////////////////////////////////////////////////////////
 // error reporting macros
 
-#ifdef __ANDROID__ // no exceptions
-#define eblthrow(s) {					\
-    eblerror(s);					\
-  }
-#else
+/* #ifdef __ANDROID__ // no exceptions */
+/* #define eblthrow(s) {					\ */
+/*     eblerror(s);					\ */
+/*   } */
+/* #else */
 #define eblthrow(s) {					\
     std::string eblthrow_error;				\
     eblthrow_error << s;				\
     throw ebl::eblexception(eblthrow_error);		\
   }
-#endif
+//#endif
 
 #define eblcatch()					\
   catch(ebl::eblexception &e) {				\
@@ -141,12 +141,14 @@
 
 #define LOG_TAG    "eblearn"
 #define LOGI(info) {						\
-    std::string s; s << info;					\
-    __android_log_print(ANDROID_LOG_INFO,LOG_TAG,s.c_str()); }
+    std::stringstream ANDs; ANDs << info;					\
+    std::string ANDs2 = ANDs.str();						\
+    __android_log_print(ANDROID_LOG_INFO,LOG_TAG,ANDs2.c_str()); }
 #define LOGE(info) {						\
-    std::string s; s << info;					\
-    __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,s.c_str()); }
-#define eblerror(s) LOGE(s)
+    std::stringstream ANDs; ANDs << info;					\
+    std::string ANDs2 = ANDs.str();						\
+    __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,ANDs2.c_str()); }
+#define eblerror(s) LOGE(s) 
 #define eblwarn(s) LOGE(s)
 
 #elif defined(__WINDOWS__) ///////////////////////////////////////////////////
@@ -179,8 +181,9 @@
   }
 #endif /* __WINDOWS__ */
 
+#ifndef __ANDROID__
 #define eblwarn(s) { std::cerr << "Warning: " << s << "." << std::endl; }
-
+#endif 
 /* #ifndef MAX */
 /* # define MAX(a, b) (((a) > (b)) ? (a) : (b)) */
 /* #endif */
