@@ -280,7 +280,7 @@ namespace ebl {
 	    fseek(fp, 0, SEEK_END);
 	    fpos_t fppos;
 	    fgetpos(fp, &fppos);
-#if defined(__WINDOWS__) || defined(__MAC__)
+#if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
 	    eblerror("fseek to position " << p.get(i) << " failed, "
 		     << "file is " << (intg) fppos << " big");
 #else
@@ -408,7 +408,7 @@ namespace ebl {
 	if (m.exists(i)) {
 	  // save offset of matrix
 	  fgetpos(fp, &pos);
-#if defined(__WINDOWS__) || defined(__MAC__)
+#if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
 	  offsets.set((int64) pos, i);
 #else
 	  offsets.set((int64) pos.__pos, i);
@@ -430,7 +430,7 @@ namespace ebl {
 	  if (m.exists(i, j)) {
 	    // save offset of matrix
 	    fgetpos(fp, &pos);
-#if defined(__WINDOWS__) || defined(__MAC__)
+#if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
 	    offsets.set((int64) pos, i, j);
 #else
 	    offsets.set((int64) pos.__pos, i, j);
@@ -540,7 +540,7 @@ namespace ebl {
 	if (m->exists(k)) {
 	  // save offset of matrix
 	  fgetpos(fp, &pos);
-#if defined(__WINDOWS__) || defined(__MAC__)
+#if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
 	  offsets.set((int64) pos, i);
 #else
 	  offsets.set((int64) pos.__pos, i);
@@ -567,7 +567,7 @@ namespace ebl {
 	  if (m->exists(k, j)) {
 	    // save offset of matrix
 	    fgetpos(fp, &pos);
-#if defined(__WINDOWS__) || defined(__MAC__)
+#if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
 	    offsets.set((int64) pos, i, j);
 #else
 	    offsets.set((int64) pos.__pos, i, j);
@@ -646,7 +646,7 @@ namespace ebl {
 	for (uint k = 0; k < e.dim(0); ++k) {
 	  // save offset of matrix
 	  fgetpos(fp, &pos);
-#if defined(__WINDOWS__) || defined(__MAC__)
+#if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
 	  offsets.set((int64) pos, j, k);
 #else
 	  offsets.set((int64) pos.__pos, j, k);
@@ -665,7 +665,7 @@ namespace ebl {
 	idx<T> e = load_matrix<T>(*i);
 	// save offset of matrix
 	fgetpos(fp, &pos);
-#if defined(__WINDOWS__) || defined(__MAC__)
+#if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
 	offsets.set((int64) pos, j);
 #else
 	offsets.set((int64) pos.__pos, j);

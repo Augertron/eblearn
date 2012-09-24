@@ -6,21 +6,23 @@ name=eblearn
 pkg=com.eblearn
 app=${ndk}/apps/${name}
 atools=${sdk}/tools
-apkname=${name}-unsigned
+aptools=${sdk}/platform-tools
+apkname=${name}-release-unsigned
 dapkname=${name}-debug
 
 all: lib
 	cd ${app} && ant release
 
 lib:
-	cd ${app}/../.. && make APP=${name} APP_OPTIM=release
+	cd ${app}/../.. && make APP=${name} APP_OPTIM=release APP_STL=gnustl_static APP_CPPFLAGS="-fexceptions -frtti"
 
 debug:
-	cd ${app}/../.. && make APP=${name} APP_OPTIM=debug V=1
+	cd ${app}/../.. && make APP=${name} APP_OPTIM=debug V=1  NDK_DEBUG=1  APP_STL=gnustl_static APP_CPPFLAGS="-fexceptions -frtti"
 	cd ${app} && ant debug
 
 gdb: debug dinstall
-	cd ${ndk} && ${ndk}/ndk-gdb --verbose --project=${app} #--launch=${name}
+	cd ${ndk} && ${ndk}/ndk-gdb --verbose --project=${app} --launch=.${name}
+	#cd ${app} && ndk-gdb --launch=.${name}
 
 create: # create project files
 	${atools}/android update project -p `pwd`
@@ -29,28 +31,30 @@ create: # create project files
 # 	--path ${app}
 
 install:
-	jarsigner -verbose -keystore ${keystore}/${keyname}.keystore \
+	jarsigner -sigalg MD5withRSA -digestalg SHA1 \
+	-verbose -keystore ${keystore}/${keyname}.keystore \
 	-signedjar ${app}/bin/${name}-signed.apk \
 	${app}/bin/${apkname}.apk ${keyname}.keystore
 	cp ${app}/bin/${name}-signed.apk ${atools}/
-	cd ${atools} && ${atools}/adb install -r ${name}-signed.apk
+	cd ${atools} && ${aptools}/adb install -r ${name}-signed.apk
 
 dinstall: # install debug package
-	jarsigner -verbose -keystore ${keystore}/${keyname}.keystore \
+	jarsigner -sigalg MD5withRSA -digestalg SHA1 \
+	 -verbose -keystore ${keystore}/${keyname}.keystore \
 	-signedjar ${app}/bin/${name}-signed.apk \
 	${app}/bin/${dapkname}.apk ${keyname}.keystore
 	cp ${app}/bin/${name}-signed.apk ${atools}/
-	cd ${atools} && ${atools}/adb install -r ${name}-signed.apk
+	cd ${atools} && ${aptools}/adb install -r ${name}-signed.apk
 
 uninstall:
-	cd ${atools} && ${atools}/adb uninstall ${pkg}
+	cd ${atools} && ${aptools}/adb uninstall ${pkg}
 
 clean:
 	cd ${app} && ${ndk}/ndk-build clean
 	rm -Rf ${app}/bin/*
 
 log:
-	${atools}/adb logcat
+	${aptools}/adb logcat
 
 key:
 	@@echo "Your JAVA_HOME is: ${JAVA_HOME}"

@@ -104,9 +104,9 @@ namespace std {
     string& operator<<(float v);
     string& operator<<(double v);
     string& operator<<(long v);
-/* #ifndef __ANDROID__ */
-/*     string& operator<<(size_t v); */
-/* #endif */
+#ifndef __ANDROID__
+    string& operator<<(size_t v); 
+#endif 
 
   protected:
     char *s;
@@ -137,10 +137,10 @@ namespace std {
     EXPORT string& operator<<(string& e, const long v); 
   template<>
     EXPORT string& operator<<(string& e, const ebl::intg v); 
-#ifndef __ANDROID__
+  //#ifndef __ANDROID__
   template<>
     EXPORT string& operator<<(string& e, const size_t &v);
-#endif
+  //#endif
     
 #endif
 

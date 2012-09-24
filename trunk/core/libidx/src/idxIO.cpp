@@ -233,7 +233,7 @@ namespace ebl {
     fgetpos(fp, &endpos);
     fclose(fp);
     // compare
-#if defined(__WINDOWS__) || defined(__MAC__)
+#if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
     if (pos != endpos)
 #else
     if (pos.__pos != endpos.__pos)
